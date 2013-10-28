@@ -289,8 +289,10 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	freerdp* instance;
 	rdpSettings* settings;
 
+	/*
 	if (transport->layer == TRANSPORT_LAYER_TSG || transport->layer == TRANSPORT_LAYER_TSG_TLS)
 		return TRUE;
+		*/
 
 	if (!transport_connect_tls(transport))
 		return FALSE;

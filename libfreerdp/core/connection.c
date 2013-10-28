@@ -210,10 +210,12 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		nego_set_cookie(rdp->nego, cookie);
 		free(cookie);
 
+		/*
 		settings->RdpSecurity = TRUE;
 		settings->TlsSecurity = TRUE;
 		settings->NlaSecurity = FALSE;
 		settings->ExtSecurity = FALSE;
+		*/
 
 	}
 	else
@@ -272,6 +274,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	{
 		if (rdp_check_fds(rdp) < 0)
 			return FALSE;
+		usleep(100);
 	}
 
 	return TRUE;

@@ -37,6 +37,7 @@
 #include <winpr/registry.h>
 
 #include "nla.h"
+#include "lwd.h"
 
 /**
  * TSRequest ::= SEQUENCE {
@@ -137,8 +138,18 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 		(char*) credssp->identity.User, (char*) credssp->identity.Domain, (char*) credssp->identity.Password);
 #endif
 
-	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
-	CopyMemory(credssp->PublicKey.pvBuffer, credssp->transport->TlsIn->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
+	rdpTls *tls = NULL;
+	if(credssp->transport->layer == TRANSPORT_LAYER_TLS) {
+		tls = credssp->transport->TlsIn;
+	} else if(credssp->transport->layer == TRANSPORT_LAYER_TSG_TLS) {
+		tls = credssp->transport->TsgTls;
+	} else {
+		fprintf(stderr, "Unknown NLA transport layer\n");
+		return 0;
+	}
+
+	sspi_SecBufferAlloc(&credssp->PublicKey, tls->PublicKeyLength);
+	CopyMemory(credssp->PublicKey.pvBuffer, tls->PublicKey, tls->PublicKeyLength);
 
 	length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->ServerHostname);
 
@@ -191,10 +202,14 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	BOOL have_input_buffer;
 	BOOL have_pub_key_auth;
 
+	LWD("");
+
 	sspi_GlobalInit();
 
-	if (credssp_ntlm_client_init(credssp) == 0)
+	if (credssp_ntlm_client_init(credssp) == 0) {
+		LWD("ret 0 at init");
 		return 0;
+	}
 
 #ifdef WITH_NATIVE_SSPI
 	{
@@ -220,6 +235,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	if (status != SEC_E_OK)
 	{
 		fprintf(stderr, "QuerySecurityPackageInfo status: 0x%08X\n", status);
+		LWD("QSPI status 0x%X", status);
 		return 0;
 	}
 
@@ -231,6 +247,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	if (status != SEC_E_OK)
 	{
 		fprintf(stderr, "AcquireCredentialsHandle status: 0x%08X\n", status);
+		LWD("ACH status 0x%X", status);
 		return 0;
 	}
 
@@ -282,6 +299,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
 			{
 				fprintf(stderr, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+				LWD("QCA fail ret 0");
 				return 0;
 			}
 
@@ -319,8 +337,10 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 		input_buffer_desc.pBuffers = &input_buffer;
 		input_buffer.BufferType = SECBUFFER_TOKEN;
 
-		if (credssp_recv(credssp) < 0)
+		if (credssp_recv(credssp) < 0) {
+			LWD("credssp_recv ret -1 point 1");
 			return -1;
+		}
 
 #ifdef WITH_DEBUG_CREDSSP
 		fprintf(stderr, "Receiving Authentication Token (%d)\n", (int) credssp->negoToken.cbBuffer);
@@ -335,8 +355,10 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	}
 
 	/* Encrypted Public Key +1 */
-	if (credssp_recv(credssp) < 0)
+	if (credssp_recv(credssp) < 0) {
+		LWD("credssp_recv ret -1 point 2");
 		return -1;
+	}
 
 	/* Verify Server Public Key Echo */
 
@@ -346,6 +368,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	if (status != SEC_E_OK)
 	{
 		fprintf(stderr, "Could not verify public key echo!\n");
+		LWD("verify fail public key ret -1");
 		return -1;
 	}
 
@@ -356,6 +379,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	if (status != SEC_E_OK)
 	{
 		fprintf(stderr, "credssp_encrypt_ts_credentials status: 0x%08X\n", status);
+		LWD("credssp encrypt ts cred ret 0");
 		return 0;
 	}
 
@@ -367,6 +391,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	credssp->table->FreeCredentialsHandle(&credentials);
 	credssp->table->FreeContextBuffer(pPackageInfo);
 
+	LWD("ret 1");
 	return 1;
 }
 
@@ -1069,6 +1094,10 @@ void credssp_send(rdpCredssp* credssp)
 
 	ts_request_length = credssp_sizeof_ts_request(length);
 
+	LWD("nego_len %d pub_len %d auth_len %d len %d ts_len %d",
+		nego_tokens_length, pub_key_auth_length, auth_info_length,
+		length, ts_request_length);
+
 	s = Stream_New(NULL, ber_sizeof_sequence(ts_request_length));
 
 	/* TSRequest */
@@ -1111,7 +1140,10 @@ void credssp_send(rdpCredssp* credssp)
 
 	Stream_SealLength(s);
 
+	LWD("len %d", Stream_Length(s));
 	transport_write(credssp->transport, s);
+
+	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
 
 	Stream_Free(s, TRUE);
 }
