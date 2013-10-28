@@ -348,7 +348,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	if (credssp_recv(credssp) < 0)
 		return -1;
 
-
 	/* Verify Server Public Key Echo */
 
 	status = credssp_decrypt_public_key_echo(credssp);

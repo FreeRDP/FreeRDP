@@ -106,11 +106,6 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 
 long transport_bio_tsg_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
 {
-	/*
-	printf("transport_bio_tsg_callback: mode: %d argp: %p argi: %d argl: %d ret: %d\n",
-			mode, argp, argi, argl, ret);
-			*/
-
 	return 1;
 }
 
@@ -152,19 +147,16 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 
 static int transport_bio_tsg_puts(BIO* bio, const char* str)
 {
-/*         printf("transport_bio_tsg_puts: %d\n", strlen(str)); */
 	return 1;
 }
 
 static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
 {
-/*         printf("transport_bio_tsg_gets: %d\n", size); */
 	return 1;
 }
 
 static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
-/*         printf("transport_bio_tsg_ctrl: cmd: %d arg1: %d arg2: %p\n", cmd, arg1, arg2); */
 	if(cmd == BIO_CTRL_FLUSH) {
 		return 1;
 	}
@@ -173,8 +165,6 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 static int transport_bio_tsg_new(BIO* bio)
 {
-/*         printf("transport_bio_tsg_new\n"); */
-
 	bio->init = 1;
 	bio->num = 0;
 	bio->ptr = NULL;
@@ -185,7 +175,6 @@ static int transport_bio_tsg_new(BIO* bio)
 
 static int transport_bio_tsg_free(BIO* bio)
 {
-/*         printf("transport_bio_tsg_free\n"); */
 	return 1;
 }
 
@@ -400,7 +389,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	if (transport->TlsIn == NULL)
 		transport->TlsIn = tls_new(transport->settings);
-	
+
 	if (transport->TlsOut == NULL)
 		transport->TlsOut = transport->TlsIn;
 
@@ -494,24 +483,6 @@ UINT32 nla_header_length(wStream* s)
 	}
 
 	return length;
-}
-
-char *want(rdpTls *tls)
-{
-	int what = SSL_want(tls->ssl);
-	switch(what)
-	{
-	case SSL_NOTHING:
-		return "NOTHING";
-	case SSL_WRITING:
-		return "WRITING";
-	case SSL_READING:
-		return "READING";
-	case SSL_X509_LOOKUP:
-		return "X509_LOOKUP";
-	default:
-		return "UNKNOWN";
-	}
 }
 
 int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
