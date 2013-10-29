@@ -59,6 +59,7 @@ struct rdp_transport
 	rdpTcp* TcpOut;
 	rdpTls* TlsIn;
 	rdpTls* TlsOut;
+	rdpTls* TsgTls;
 	rdpCredssp* credssp;
 	rdpSettings* settings;
 	UINT32 SleepInterval;

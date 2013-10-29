@@ -43,11 +43,16 @@ static const char* const NEGO_STATE_STRINGS[] =
 	"NEGO_STATE_FINAL"
 };
 
-static const char PROTOCOL_SECURITY_STRINGS[4][4] =
+static const char PROTOCOL_SECURITY_STRINGS[9][4] =
 {
 	"RDP",
 	"TLS",
 	"NLA",
+	"UNK",
+	"UNK",
+	"UNK",
+	"UNK",
+	"UNK",
 	"EXT"
 };
 

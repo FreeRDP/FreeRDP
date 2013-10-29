@@ -209,14 +209,6 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 		nego_set_cookie(rdp->nego, cookie);
 		free(cookie);
-
-		settings->RdpSecurity = TRUE;
-		settings->TlsSecurity = FALSE;
-		settings->NlaSecurity = FALSE;
-		settings->ExtSecurity = FALSE;
-
-		//settings->TlsSecurity = TRUE;
-		//settings->NlaSecurity = TRUE;
 	}
 	else
 	{
