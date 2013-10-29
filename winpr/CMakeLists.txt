@@ -79,3 +79,21 @@ add_subdirectory(libwinpr)
 if(NOT ANDROID AND NOT IOS)
 	add_subdirectory(tools)
 endif()
+
+# Exporting
+
+export(PACKAGE winpr)
+
+set(WINPR_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/WinPR/cmake")
+
+configure_package_config_file(WinPRConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake
+	INSTALL_DESTINATION ${WINPR_CMAKE_INSTALL_DIR}
+	PATH_VARS CMAKE_INSTALL_INCLUDEDIR)
+
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/WinPRConfigVersion.cmake
+	VERSION ${WINPR_VERSION} COMPATIBILITY SameMajorVersion)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfigVersion.cmake
+	DESTINATION ${WINPR_CMAKE_INSTALL_DIR})
+
+install(EXPORT WinPRTargets DESTINATION ${WINPR_CMAKE_INSTALL_DIR})

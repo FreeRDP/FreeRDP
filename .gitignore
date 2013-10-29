@@ -17,6 +17,8 @@ _CPack_Packages
 LICENSE.txt
 /external/*
 !external/README
+*Config.cmake
+*ConfigVersion.cmake
 
 *.a.objlist.cmake
 *.a.objlist
