@@ -22,7 +22,8 @@ macro(enable_cmake_compat CMVERSION)
 	endif()
 endmacro()
 
-# Compatibility includes - oder does matter!
+# Compatibility includes - order does matter!
+enable_cmake_compat(2.8.11)
 enable_cmake_compat(2.8.6)
 enable_cmake_compat(2.8.3)
 enable_cmake_compat(2.8.2)

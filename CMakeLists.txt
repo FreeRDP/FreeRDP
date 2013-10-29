@@ -554,21 +554,27 @@ endif()
 
 # Exporting
 
-export(PACKAGE freerdp)
+if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
 
-set(FREERDP_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/FreeRDP/cmake")
+	export(PACKAGE freerdp)
 
-configure_package_config_file(FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
-	INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR}
-	PATH_VARS CMAKE_INSTALL_INCLUDEDIR)
+	set(FREERDP_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/FreeRDP/cmake")
 
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
-	VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
+	set(FREERDP_INCLUDE_DIR "include")
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
-	DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
+	configure_package_config_file(FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
+		INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR}
+		PATH_VARS FREERDP_INCLUDE_DIR)
 
-install(EXPORT FreeRDPTargets DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
+	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
+		VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
+
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
+		DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
+
+	install(EXPORT FreeRDPTargets DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
+
+endif()
 
 # Packaging
 

@@ -45,7 +45,7 @@ include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
 
 # Soname versioning
-set(WINPR_VERSION_MAJOR "0")
+set(WINPR_VERSION_MAJOR "1")
 set(WINPR_VERSION_MINOR "1")
 set(WINPR_VERSION_REVISION "0")
 set(WINPR_VERSION "${WINPR_VERSION_MAJOR}.${WINPR_VERSION_MINOR}")
@@ -82,18 +82,27 @@ endif()
 
 # Exporting
 
-export(PACKAGE winpr)
+if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
 
-set(WINPR_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/WinPR/cmake")
+	export(PACKAGE winpr)
 
-configure_package_config_file(WinPRConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake
-	INSTALL_DESTINATION ${WINPR_CMAKE_INSTALL_DIR}
-	PATH_VARS CMAKE_INSTALL_INCLUDEDIR)
+	set(WINPR_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/WinPR/cmake")
 
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/WinPRConfigVersion.cmake
-	VERSION ${WINPR_VERSION} COMPATIBILITY SameMajorVersion)
+	set(WINPR_INCLUDE_DIR "include")
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfigVersion.cmake
-	DESTINATION ${WINPR_CMAKE_INSTALL_DIR})
+	message(STATUS "WINPR_VERSION: ${WINPR_VERSION}")
 
-install(EXPORT WinPRTargets DESTINATION ${WINPR_CMAKE_INSTALL_DIR})
+	configure_package_config_file(WinPRConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake
+		INSTALL_DESTINATION ${WINPR_CMAKE_INSTALL_DIR}
+		PATH_VARS WINPR_INCLUDE_DIR)
+
+	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/WinPRConfigVersion.cmake
+		VERSION ${WINPR_VERSION} COMPATIBILITY SameMajorVersion)
+
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfigVersion.cmake
+		DESTINATION ${WINPR_CMAKE_INSTALL_DIR})
+
+	install(EXPORT WinPRTargets DESTINATION ${WINPR_CMAKE_INSTALL_DIR})
+
+endif()
+
