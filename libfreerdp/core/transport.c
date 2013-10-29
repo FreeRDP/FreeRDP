@@ -77,7 +77,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 	if (transport->layer == TRANSPORT_LAYER_TLS)
 		status &= tls_disconnect(transport->TlsIn);
 
-	if (transport->layer == TRANSPORT_LAYER_TSG)
+	if (transport->layer == TRANSPORT_LAYER_TSG || transport->layer == TRANSPORT_LAYER_TSG_TLS)
 	{
 		tsg_disconnect(transport->tsg);
 	}
@@ -104,10 +104,126 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 	return TRUE;
 }
 
+long transport_bio_tsg_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
+{
+	return 1;
+}
+
+static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
+{
+	int status;
+	rdpTsg* tsg;
+
+	tsg = (rdpTsg*) bio->ptr;
+	status = tsg_write(tsg, (BYTE*) buf, num);
+
+	BIO_clear_retry_flags(bio);
+
+	if (status <= 0)
+	{
+		BIO_set_retry_write(bio);
+	}
+
+	return num;
+}
+
+static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
+{
+	int status;
+	rdpTsg* tsg;
+
+	tsg = (rdpTsg*) bio->ptr;
+	status = tsg_read(bio->ptr, (BYTE*) buf, size);
+
+	BIO_clear_retry_flags(bio);
+
+	if (status <= 0)
+	{
+		BIO_set_retry_read(bio);
+	}
+
+	return status > 0 ? status : -1;
+}
+
+static int transport_bio_tsg_puts(BIO* bio, const char* str)
+{
+	return 1;
+}
+
+static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
+{
+	return 1;
+}
+
+static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
+{
+	if(cmd == BIO_CTRL_FLUSH) {
+		return 1;
+	}
+	return 0;
+}
+
+static int transport_bio_tsg_new(BIO* bio)
+{
+	bio->init = 1;
+	bio->num = 0;
+	bio->ptr = NULL;
+	bio->flags = 0;
+
+	return 1;
+}
+
+static int transport_bio_tsg_free(BIO* bio)
+{
+	return 1;
+}
+
+#define BIO_TYPE_TSG	65
+
+static BIO_METHOD transport_bio_tsg_methods =
+{
+	BIO_TYPE_TSG,
+	"TSGateway",
+	transport_bio_tsg_write,
+	transport_bio_tsg_read,
+	transport_bio_tsg_puts,
+	transport_bio_tsg_gets,
+	transport_bio_tsg_ctrl,
+	transport_bio_tsg_new,
+	transport_bio_tsg_free,
+	NULL,
+};
+
+BIO_METHOD* BIO_s_tsg(void)
+{
+	return &transport_bio_tsg_methods;
+}
+
 BOOL transport_connect_tls(rdpTransport* transport)
 {
 	if (transport->layer == TRANSPORT_LAYER_TSG)
+	{
+		transport->TsgTls = tls_new(transport->settings);
+
+		transport->TsgTls->methods = BIO_s_tsg();
+		transport->TsgTls->tsg = (void*) transport->tsg;
+
+		transport->layer = TRANSPORT_LAYER_TSG_TLS;
+
+		if (tls_connect(transport->TsgTls) != TRUE)
+		{
+			if (!connectErrorCode)
+				connectErrorCode = TLSCONNECTERROR;
+
+			tls_free(transport->TsgTls);
+
+			transport->TsgTls = NULL;
+
+			return FALSE;
+		}
+
 		return TRUE;
+	}
 
 	if (transport->TlsIn == NULL)
 		transport->TlsIn = tls_new(transport->settings);
@@ -140,9 +256,6 @@ BOOL transport_connect_nla(rdpTransport* transport)
 {
 	freerdp* instance;
 	rdpSettings* settings;
-
-	if (transport->layer == TRANSPORT_LAYER_TSG)
-		return TRUE;
 
 	if (!transport_connect_tls(transport))
 		return FALSE;
@@ -385,6 +498,9 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 			status = tcp_read(transport->TcpIn, data + read, bytes - read);
 		else if (transport->layer == TRANSPORT_LAYER_TSG)
 			status = tsg_read(transport->tsg, data + read, bytes - read);
+		else if (transport->layer == TRANSPORT_LAYER_TSG_TLS) {
+			status = tls_read(transport->TsgTls, data + read, bytes - read);
+		}
 
 		/* blocking means that we can't continue until this is read */
 
@@ -540,6 +656,8 @@ int transport_write(rdpTransport* transport, wStream* s)
 			status = tcp_write(transport->TcpOut, Stream_Pointer(s), length);
 		else if (transport->layer == TRANSPORT_LAYER_TSG)
 			status = tsg_write(transport->tsg, Stream_Pointer(s), length);
+		else if (transport->layer == TRANSPORT_LAYER_TSG_TLS)
+			status = tls_write(transport->TsgTls, Stream_Pointer(s), length);
 
 		if (status < 0)
 			break; /* error occurred */
@@ -558,6 +676,8 @@ int transport_write(rdpTransport* transport, wStream* s)
 				tls_wait_write(transport->TlsOut);
 			else if (transport->layer == TRANSPORT_LAYER_TCP)
 				tcp_wait_write(transport->TcpOut);
+			else if (transport->layer == TRANSPORT_LAYER_TSG_TLS)
+				tls_wait_write(transport->TsgTls);
 			else
 				USleep(transport->SleepInterval);
 		}
@@ -784,7 +904,7 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 		status &= tcp_set_blocking_mode(transport->TcpIn, blocking);
 	}
 
-	if (transport->layer == TRANSPORT_LAYER_TSG)
+	if (transport->layer == TRANSPORT_LAYER_TSG || transport->layer == TRANSPORT_LAYER_TSG_TLS)
 	{
 		tsg_set_blocking_mode(transport->tsg, blocking);
 	}

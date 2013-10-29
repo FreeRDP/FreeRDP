@@ -25,6 +25,7 @@ typedef enum
 	TRANSPORT_LAYER_TCP,
 	TRANSPORT_LAYER_TLS,
 	TRANSPORT_LAYER_TSG,
+	TRANSPORT_LAYER_TSG_TLS,
 	TRANSPORT_LAYER_CLOSED
 } TRANSPORT_LAYER;
 
@@ -57,6 +58,7 @@ struct rdp_transport
 	rdpTcp* TcpOut;
 	rdpTls* TlsIn;
 	rdpTls* TlsOut;
+	rdpTls* TsgTls;
 	rdpCredssp* credssp;
 	rdpSettings* settings;
 	UINT32 SleepInterval;
