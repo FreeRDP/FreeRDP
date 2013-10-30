@@ -113,6 +113,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 {
 	char* spn;
 	int length;
+	rdpTls* tls = NULL;
 	freerdp* instance;
 	rdpSettings* settings;
 
@@ -138,12 +139,16 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 		(char*) credssp->identity.User, (char*) credssp->identity.Domain, (char*) credssp->identity.Password);
 #endif
 
-	rdpTls *tls = NULL;
-	if(credssp->transport->layer == TRANSPORT_LAYER_TLS) {
+	if (credssp->transport->layer == TRANSPORT_LAYER_TLS)
+	{
 		tls = credssp->transport->TlsIn;
-	} else if(credssp->transport->layer == TRANSPORT_LAYER_TSG_TLS) {
+	}
+	else if (credssp->transport->layer == TRANSPORT_LAYER_TSG_TLS)
+	{
 		tls = credssp->transport->TsgTls;
-	} else {
+	}
+	else
+	{
 		fprintf(stderr, "Unknown NLA transport layer\n");
 		return 0;
 	}
