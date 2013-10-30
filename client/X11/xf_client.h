@@ -46,6 +46,8 @@ extern "C" {
 
 
 FREERDP_API int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
+BOOL xf_authenticate_(rdpSettings* settings, char** username, char** password,
+		char** domain);
 
 #ifdef __cplusplus
 }

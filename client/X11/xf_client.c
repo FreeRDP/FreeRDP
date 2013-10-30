@@ -1030,9 +1030,19 @@ static void replace_characters(char *in, char *what, char rep)
  */
 BOOL xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
+	return xf_authenticate_(instance->settings, username, password, domain);
+}
+
+BOOL xf_authenticate_(rdpSettings *settings, char** username, char** password, char** domain)
+{
 	BOOL rc = TRUE;
 
-	if (!instance->settings->CredentialsFromStdin)
+	assert(settings);
+	assert(username);
+	assert(password);
+	assert(domain);
+
+	if (!settings->CredentialsFromStdin)
 		return FALSE;
 
 	if (*username == NULL)
@@ -1057,10 +1067,30 @@ BOOL xf_authenticate(freerdp* instance, char** username, char** password, char**
 	if (*password == NULL)
 	{
 		*password = freerdp_passphrase_read("Password: ", *password, 0,
-					instance->settings->CredentialsFromStdin);
+					settings->CredentialsFromStdin);
 
 		if (!*password)
 			rc = FALSE;
+	}
+
+	if (*domain == NULL)
+	{
+		size_t s=0, r;
+		char *in = NULL;
+
+		printf("Domain: ");
+		r = getline(&in, &s, stdin);
+		if (r)
+		{
+			replace_characters(in, "\r\n", '\0');
+			if (in)
+				*domain = _strdup(in);
+		}
+		else
+			rc = FALSE;
+
+		if (in)
+			free(in);
 	}
 
 	if (!rc)
