@@ -140,7 +140,7 @@ char* FindApplicationPath(char* application)
 		return NULL;
 
 	if (application[0] == '/')
-		return strdup(application);
+		return _strdup(application);
 
 	nSize = GetEnvironmentVariableA("PATH", NULL, 0);
 
