@@ -19,7 +19,9 @@ set(MODULE_NAME "winpr-io")
 set(MODULE_PREFIX "WINPR_IO")
 
 set(${MODULE_PREFIX}_SRCS
-	io.c)
+	device.c
+	io.c
+	io.h)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
@@ -30,6 +32,11 @@ add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	SOURCES ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
+	MODULE winpr
+	MODULES winpr-crt winpr-path)
 
 if(MONOLITHIC_BUILD)
 
