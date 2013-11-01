@@ -38,9 +38,14 @@
 void xf_kbd_init(xfContext* xfc)
 {
 	xf_kbd_clear(xfc);
+
 	xfc->keyboard_layout_id = xfc->instance->settings->KeyboardLayout;
 	xfc->keyboard_layout_id = freerdp_keyboard_init(xfc->keyboard_layout_id);
 	xfc->instance->settings->KeyboardLayout = xfc->keyboard_layout_id;
+
+	if (xfc->modifier_map)
+		XFreeModifiermap(xfc->modifier_map);
+
 	xfc->modifier_map = XGetModifierMapping(xfc->display);
 }
 

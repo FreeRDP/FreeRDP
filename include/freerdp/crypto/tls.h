@@ -58,7 +58,6 @@ FREERDP_API BOOL tls_disconnect(rdpTls* tls);
 FREERDP_API int tls_read(rdpTls* tls, BYTE* data, int length);
 FREERDP_API int tls_write(rdpTls* tls, BYTE* data, int length);
 
-FREERDP_API int tls_read_all(rdpTls* tls, BYTE* data, int length);
 FREERDP_API int tls_write_all(rdpTls* tls, BYTE* data, int length);
 
 FREERDP_API int tls_wait_read(rdpTls* tls);

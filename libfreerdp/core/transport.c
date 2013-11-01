@@ -218,7 +218,6 @@ BOOL transport_connect_tls(rdpTransport* transport)
 				connectErrorCode = TLSCONNECTERROR;
 
 			tls_free(transport->TsgTls);
-
 			transport->TsgTls = NULL;
 
 			return FALSE;
@@ -537,6 +536,12 @@ int transport_read(rdpTransport* transport, wStream* s)
 	pduLength = 0;
 	transport_status = 0;
 
+	if (!transport)
+		return -1;
+
+	if (!s)
+		return -1;
+
 	/* first check if we have header */
 	streamPosition = Stream_GetPosition(s);
 
@@ -790,6 +795,9 @@ int transport_check_fds(rdpTransport** ptransport)
 	wStream* received;
 	rdpTransport* transport = *ptransport;
 
+	if (!transport)
+		return -1;
+
 #ifdef _WIN32
 	WSAResetEvent(transport->TcpIn->wsa_event);
 #endif
@@ -881,10 +889,11 @@ int transport_check_fds(rdpTransport** ptransport)
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 
 		if (transport == *ptransport)
+		{
 			/* transport might now have been freed by rdp_client_redirect and a new rdp->transport created */
 			/* so only release if still valid */
 			Stream_Release(received);
-			
+		}
 
 		if (recv_status < 0)
 			status = -1;
@@ -1029,12 +1038,20 @@ void transport_free(rdpTransport* transport)
 		if (transport->TlsOut != transport->TlsIn)
 			tls_free(transport->TlsOut);
 
-		tcp_free(transport->TcpIn);
+		transport->TlsIn = NULL;
+		transport->TlsOut = NULL;
+
+		if (transport->TcpIn)
+			tcp_free(transport->TcpIn);
 
 		if (transport->TcpOut != transport->TcpIn)
 			tcp_free(transport->TcpOut);
 
+		transport->TcpIn = NULL;
+		transport->TcpOut = NULL;
+
 		tsg_free(transport->tsg);
+		transport->tsg = NULL;
 
 		CloseHandle(transport->ReadMutex);
 		CloseHandle(transport->WriteMutex);

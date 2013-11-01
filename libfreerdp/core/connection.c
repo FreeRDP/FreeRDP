@@ -286,22 +286,22 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	/* FIXME: this is a subset of rdp_free */
 	/* --> this should really go into rdp.c */
 	crypto_rc4_free(rdp->rc4_decrypt_key);
-	rdp->rc4_decrypt_key = NULL ;
+	rdp->rc4_decrypt_key = NULL;
 	crypto_rc4_free(rdp->rc4_encrypt_key);
 	rdp->rc4_encrypt_key = NULL;
 	crypto_des3_free(rdp->fips_encrypt);
-	rdp->fips_encrypt = NULL ;
+	rdp->fips_encrypt = NULL;
 	crypto_des3_free(rdp->fips_decrypt);
-	rdp->fips_decrypt = NULL ;
+	rdp->fips_decrypt = NULL;
 	crypto_hmac_free(rdp->fips_hmac);
-	rdp->fips_hmac = NULL ;
+	rdp->fips_hmac = NULL;
 
 	free(settings->ServerRandom);
 	settings->ServerRandom = NULL ;
 	free(settings->ServerCertificate);
-	settings->ServerCertificate = NULL ;
+	settings->ServerCertificate = NULL;
 	free(settings->ClientAddress);
-	settings->ClientAddress = NULL ;
+	settings->ClientAddress = NULL;
 
 	mppc_enc_free(rdp->mppc_enc);
 	mppc_dec_free(rdp->mppc_dec);
@@ -364,6 +364,8 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	return rdp_client_connect(rdp);
 }
 
+static BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
+
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
 	BYTE* mod;
@@ -380,10 +382,17 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	/* encrypt client random */
-	if (rdp->settings->ClientRandom) free(rdp->settings->ClientRandom);
+
+	if (rdp->settings->ClientRandom)
+		free(rdp->settings->ClientRandom);
+
 	rdp->settings->ClientRandom = malloc(CLIENT_RANDOM_LENGTH);
-	if (rdp->settings->ClientRandom == NULL) return FALSE;
+
+	if (!rdp->settings->ClientRandom)
+		return FALSE;
+
 	ZeroMemory(crypt_client_random, sizeof(crypt_client_random));
+
 	crypto_nonce(rdp->settings->ClientRandom, CLIENT_RANDOM_LENGTH);
 	key_len = rdp->settings->RdpServerCertificate->cert_info.ModulusLength;
 	mod = rdp->settings->RdpServerCertificate->cert_info.Modulus;
@@ -422,7 +431,6 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
 
@@ -503,7 +511,6 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
 

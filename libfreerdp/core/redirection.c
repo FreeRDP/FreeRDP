@@ -96,6 +96,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 12)
 		return FALSE;
+
 	Stream_Read_UINT16(s, flags); /* flags (2 bytes) */
 	Stream_Read_UINT16(s, length); /* length (2 bytes) */
 	Stream_Read_UINT32(s, redirection->sessionID); /* sessionID (4 bytes) */

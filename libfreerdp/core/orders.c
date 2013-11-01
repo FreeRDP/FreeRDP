@@ -1669,7 +1669,11 @@ BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_
 				return FALSE;
 
 			if (glyph->aj)
+			{
 				free(glyph->aj);
+				glyph->aj = NULL;
+			}
+
 			glyph->aj = (BYTE*) malloc(glyph->cb);
 			Stream_Read(s, glyph->aj, glyph->cb);
 		}

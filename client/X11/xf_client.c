@@ -728,8 +728,12 @@ static void xf_post_disconnect(freerdp *instance)
 	assert(NULL != xfc);
 	assert(NULL != instance->settings);
 
-	WaitForSingleObject(xfc->mutex, INFINITE);
-	CloseHandle(xfc->mutex);
+	if (xfc->mutex)
+	{
+		WaitForSingleObject(xfc->mutex, INFINITE);
+		CloseHandle(xfc->mutex);
+		xfc->mutex = NULL;
+	}
 
 	xf_monitors_free(xfc, instance->settings);
 }
@@ -938,6 +942,10 @@ BOOL xf_post_connect(freerdp* instance)
 	xf_create_window(xfc);
 
 	ZeroMemory(&gcv, sizeof(gcv));
+
+	if (xfc->modifier_map)
+		XFreeModifiermap(xfc->modifier_map);
+
 	xfc->modifier_map = XGetModifierMapping(xfc->display);
 
 	xfc->gc = XCreateGC(xfc->display, xfc->drawable, GCGraphicsExposures, &gcv);
@@ -1389,6 +1397,15 @@ void* xf_thread(void* param)
 
 	if (!status)
 	{
+		if (xfc->mutex)
+		{
+			WaitForSingleObject(xfc->mutex, INFINITE);
+			CloseHandle(xfc->mutex);
+			xfc->mutex = NULL;
+		}
+
+		xf_monitors_free(xfc, instance->settings);
+
 		exit_code = XF_EXIT_CONN_FAILED;
 		ExitThread(exit_code);
 	}
@@ -1829,7 +1846,6 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
 	PubSub_SubscribeParamChange(context->pubSub, (pParamChangeEventHandler) xf_ParamChangeEventHandler);
 	PubSub_SubscribeScalingFactorChange(context->pubSub, (pScalingFactorChangeEventHandler) xf_ScalingFactorChangeEventHandler);
-
 
 	return 0;
 }
