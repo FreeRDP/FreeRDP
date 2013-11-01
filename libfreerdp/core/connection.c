@@ -329,30 +329,30 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 		if (redirection->flags & LB_TARGET_NET_ADDRESS)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->targetNetAddress.ascii);
+			settings->ServerHostname = _strdup(redirection->TargetNetAddress);
 		}
 		else if (redirection->flags & LB_TARGET_FQDN)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->targetFQDN.ascii);
+			settings->ServerHostname = _strdup(redirection->TargetFQDN);
 		}
 		else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->targetNetBiosName.ascii);
+			settings->ServerHostname = _strdup(redirection->TargetNetBiosName);
 		}
 	}
 
 	if (redirection->flags & LB_USERNAME)
 	{
 		free(settings->Username);
-		settings->Username = _strdup(redirection->username.ascii);
+		settings->Username = _strdup(redirection->Username);
 	}
 
 	if (redirection->flags & LB_DOMAIN)
 	{
 		free(settings->Domain);
-		settings->Domain = _strdup(redirection->domain.ascii);
+		settings->Domain = _strdup(redirection->Domain);
 	}
 
 	if (redirection->flags & LB_PASSWORD)

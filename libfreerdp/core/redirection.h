@@ -27,30 +27,22 @@
 
 #include <winpr/stream.h>
 
-struct rdp_string
-{
-	char* ascii;
-	char* unicode;
-	UINT32 length;
-};
-typedef struct rdp_string rdpString;
-
 struct rdp_redirection
 {
 	UINT32 flags;
 	UINT32 sessionID;
-	rdpString tsvUrl;
-	rdpString username;
-	rdpString domain;
+	char* TsvUrl;
+	char* Username;
+	char* Domain;
 	BYTE* PasswordCookie;
 	DWORD PasswordCookieLength;
-	rdpString targetFQDN;
+	char* TargetFQDN;
 	BYTE* LoadBalanceInfo;
 	DWORD LoadBalanceInfoLength;
-	rdpString targetNetBiosName;
-	rdpString targetNetAddress;
-	UINT32 targetNetAddressesCount;
-	rdpString* targetNetAddresses;
+	char* TargetNetBiosName;
+	char* TargetNetAddress;
+	UINT32 TargetNetAddressesCount;
+	char** TargetNetAddresses;
 };
 typedef struct rdp_redirection rdpRedirection;
 

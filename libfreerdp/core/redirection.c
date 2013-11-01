@@ -61,31 +61,21 @@ void rdp_print_redirection_flags(UINT32 flags)
 	fprintf(stderr, "}\n");
 }
 
-BOOL rdp_string_read_length32(wStream* s, rdpString* string)
+BOOL rdp_redirection_read_string(wStream* s, char** str)
 {
-	if(Stream_GetRemainingLength(s) < 4)
+	UINT32 length;
+
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	Stream_Read_UINT32(s, string->length);
+	Stream_Read_UINT32(s, length);
 
-	if(Stream_GetRemainingLength(s) < string->length)
+	if (Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
-	string->unicode = (char*) malloc(string->length);
-	Stream_Read(s, string->unicode, string->length);
-
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) string->unicode, string->length / 2, &string->ascii, 0, NULL, NULL);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Buffer(s), length / 2, str, 0, NULL, NULL);
 
 	return TRUE;
-}
-
-void rdp_string_free(rdpString* string)
-{
-	if (string->unicode != NULL)
-		free(string->unicode);
-
-	if (string->ascii != NULL)
-		free(string->ascii);
 }
 
 BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
@@ -110,16 +100,17 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESS)
 	{
-		if (!rdp_string_read_length32(s, &redirection->targetNetAddress))
+		if (!rdp_redirection_read_string(s, &(redirection->TargetNetAddress)))
 			return FALSE;
-		DEBUG_REDIR("targetNetAddress: %s", redirection->targetNetAddress.ascii);
 	}
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
+
 		Stream_Read_UINT32(s, redirection->LoadBalanceInfoLength);
+
 		if (Stream_GetRemainingLength(s) < redirection->LoadBalanceInfoLength)
 			return FALSE;
 
@@ -133,16 +124,14 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_USERNAME)
 	{
-		if (!rdp_string_read_length32(s, &redirection->username))
+		if (!rdp_redirection_read_string(s, &(redirection->Username)))
 			return FALSE;
-		DEBUG_REDIR("username: %s", redirection->username.ascii);
 	}
 
 	if (redirection->flags & LB_DOMAIN)
 	{
-		if (!rdp_string_read_length32(s, &redirection->domain))
+		if (!rdp_redirection_read_string(s, &(redirection->Domain)))
 			return FALSE;
-		DEBUG_REDIR("domain: %s", redirection->domain.ascii);
 	}
 
 	if (redirection->flags & LB_PASSWORD)
@@ -150,6 +139,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		/* Note: length (hopefully) includes double zero termination */
 		if (Stream_GetRemainingLength(s) < 4)
 			return FALSE;
+
 		Stream_Read_UINT32(s, redirection->PasswordCookieLength);
 		redirection->PasswordCookie = (BYTE*) malloc(redirection->PasswordCookieLength);
 		Stream_Read(s, redirection->PasswordCookie, redirection->PasswordCookieLength);
@@ -162,23 +152,20 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_FQDN)
 	{
-		if (!rdp_string_read_length32(s, &redirection->targetFQDN))
+		if (!rdp_redirection_read_string(s, &(redirection->TargetFQDN)))
 			return FALSE;
-		DEBUG_REDIR("targetFQDN: %s", redirection->targetFQDN.ascii);
 	}
 
 	if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 	{
-		if (!rdp_string_read_length32(s, &redirection->targetNetBiosName))
+		if (!rdp_redirection_read_string(s, &(redirection->TargetNetBiosName)))
 			return FALSE;
-		DEBUG_REDIR("targetNetBiosName: %s", redirection->targetNetBiosName.ascii);
 	}
 
 	if (redirection->flags & LB_CLIENT_TSV_URL)
 	{
-		if (!rdp_string_read_length32(s, &redirection->tsvUrl))
+		if (!rdp_redirection_read_string(s, &(redirection->TsvUrl)))
 			return FALSE;
-		DEBUG_REDIR("tsvUrl: %s", redirection->tsvUrl.ascii);
 	}
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
@@ -189,19 +176,19 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 		if (Stream_GetRemainingLength(s) < 8)
 			return FALSE;
+
 		Stream_Read_UINT32(s, targetNetAddressesLength);
 
-		Stream_Read_UINT32(s, redirection->targetNetAddressesCount);
-		count = redirection->targetNetAddressesCount;
+		Stream_Read_UINT32(s, redirection->TargetNetAddressesCount);
+		count = redirection->TargetNetAddressesCount;
 
-		redirection->targetNetAddresses = (rdpString*) malloc(count * sizeof(rdpString));
-		ZeroMemory(redirection->targetNetAddresses, count * sizeof(rdpString));
+		redirection->TargetNetAddresses = (char**) malloc(count * sizeof(char*));
+		ZeroMemory(redirection->TargetNetAddresses, count * sizeof(char*));
 
 		for (i = 0; i < (int) count; i++)
 		{
-			if (!rdp_string_read_length32(s, &redirection->targetNetAddresses[i]))
+			if (!rdp_redirection_read_string(s, &(redirection->TargetNetAddresses[i])))
 				return FALSE;
-			DEBUG_REDIR("targetNetAddresses: %s", (&redirection->targetNetAddresses[i])->ascii);
 		}
 	}
 
@@ -232,7 +219,7 @@ rdpRedirection* redirection_new()
 
 	redirection = (rdpRedirection*) malloc(sizeof(rdpRedirection));
 
-	if (redirection != NULL)
+	if (redirection)
 	{
 		ZeroMemory(redirection, sizeof(rdpRedirection));
 	}
@@ -242,14 +229,25 @@ rdpRedirection* redirection_new()
 
 void redirection_free(rdpRedirection* redirection)
 {
-	if (redirection != NULL)
+	if (redirection)
 	{
-		rdp_string_free(&redirection->tsvUrl);
-		rdp_string_free(&redirection->username);
-		rdp_string_free(&redirection->domain);
-		rdp_string_free(&redirection->targetFQDN);
-		rdp_string_free(&redirection->targetNetBiosName);
-		rdp_string_free(&redirection->targetNetAddress);
+		if (redirection->TsvUrl)
+			free(redirection->TsvUrl);
+
+		if (redirection->Username)
+			free(redirection->Username);
+
+		if (redirection->Domain)
+			free(redirection->Domain);
+
+		if (redirection->TargetFQDN)
+			free(redirection->TargetFQDN);
+
+		if (redirection->TargetNetBiosName)
+			free(redirection->TargetNetBiosName);
+
+		if (redirection->TargetNetAddress)
+			free(redirection->TargetNetAddress);
 
 		if (redirection->LoadBalanceInfo)
 			free(redirection->LoadBalanceInfo);
@@ -257,18 +255,20 @@ void redirection_free(rdpRedirection* redirection)
 		if (redirection->PasswordCookie)
 			free(redirection->PasswordCookie);
 
-		if (redirection->targetNetAddresses != NULL)
+		if (redirection->TargetNetAddresses)
 		{
 			int i;
 
-			for (i = 0; i < (int) redirection->targetNetAddressesCount; i++)
-				rdp_string_free(&redirection->targetNetAddresses[i]);
+			for (i = 0; i < (int) redirection->TargetNetAddressesCount; i++)
+			{
+				if (redirection->TargetNetAddresses[i])
+					free(redirection->TargetNetAddresses[i]);
+			}
 
-			free(redirection->targetNetAddresses);
+			free(redirection->TargetNetAddresses);
 		}
 
 		free(redirection);
 	}
 }
-
 
