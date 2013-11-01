@@ -73,7 +73,7 @@ BOOL rdp_redirection_read_string(wStream* s, char** str)
 	if (Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Buffer(s), length / 2, str, 0, NULL, NULL);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), length / 2, str, 0, NULL, NULL);
 
 	return TRUE;
 }
@@ -92,7 +92,8 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT32(s, redirection->sessionID); /* sessionID (4 bytes) */
 	Stream_Read_UINT32(s, redirection->flags); /* redirFlags (4 bytes) */
 
-	DEBUG_REDIR("flags: 0x%04X, length:%d, sessionID:0x%08X", flags, length, redirection->sessionID);
+	WLog_Print(redirection->log, WLOG_DEBUG, "flags: 0x%04X, length: %d, sessionID: 0x%08X",
+			flags, length, redirection->sessionID);
 
 #ifdef WITH_DEBUG_REDIR
 	rdp_print_redirection_flags(redirection->flags);
@@ -126,12 +127,16 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_redirection_read_string(s, &(redirection->Username)))
 			return FALSE;
+
+		WLog_Print(redirection->log, WLOG_DEBUG, "Username: %s", redirection->Username);
 	}
 
 	if (redirection->flags & LB_DOMAIN)
 	{
 		if (!rdp_redirection_read_string(s, &(redirection->Domain)))
 			return FALSE;
+
+		WLog_Print(redirection->log, WLOG_DEBUG, "Domain: %s", redirection->Domain);
 	}
 
 	if (redirection->flags & LB_PASSWORD)
@@ -154,18 +159,24 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_redirection_read_string(s, &(redirection->TargetFQDN)))
 			return FALSE;
+
+		WLog_Print(redirection->log, WLOG_DEBUG, "TargetFQDN: %s", redirection->TargetFQDN);
 	}
 
 	if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 	{
 		if (!rdp_redirection_read_string(s, &(redirection->TargetNetBiosName)))
 			return FALSE;
+
+		WLog_Print(redirection->log, WLOG_DEBUG, "TargetNetBiosName: %s", redirection->TargetNetBiosName);
 	}
 
 	if (redirection->flags & LB_CLIENT_TSV_URL)
 	{
 		if (!rdp_redirection_read_string(s, &(redirection->TsvUrl)))
 			return FALSE;
+
+		WLog_Print(redirection->log, WLOG_DEBUG, "TsvUrl: %s", redirection->TsvUrl);
 	}
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
@@ -185,10 +196,14 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		redirection->TargetNetAddresses = (char**) malloc(count * sizeof(char*));
 		ZeroMemory(redirection->TargetNetAddresses, count * sizeof(char*));
 
+		WLog_Print(redirection->log, WLOG_DEBUG, "TargetNetAddressesCount: %d", redirection->TargetNetAddressesCount);
+
 		for (i = 0; i < (int) count; i++)
 		{
 			if (!rdp_redirection_read_string(s, &(redirection->TargetNetAddresses[i])))
 				return FALSE;
+
+			WLog_Print(redirection->log, WLOG_DEBUG, "TargetNetAddresses[%d]: %s", i, redirection->TargetNetAddresses[i]);
 		}
 	}
 
@@ -208,9 +223,9 @@ BOOL rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)
 {
-	return Stream_SafeSeek(s, 2) && 					/* pad2Octets (2 bytes) */
+	return Stream_SafeSeek(s, 2) && /* pad2Octets (2 bytes) */
 		rdp_recv_server_redirection_pdu(rdp, s) &&
-		Stream_SafeSeek(s, 1);							/* pad2Octets (1 byte) */
+		Stream_SafeSeek(s, 1);	/* pad2Octets (1 byte) */
 }
 
 rdpRedirection* redirection_new()
@@ -222,6 +237,13 @@ rdpRedirection* redirection_new()
 	if (redirection)
 	{
 		ZeroMemory(redirection, sizeof(rdpRedirection));
+
+		WLog_Init();
+		redirection->log = WLog_Get("com.freerdp.core.redirection");
+
+#ifdef WITH_DEBUG_REDIR
+		WLog_SetLogLevel(redirection->log, WLOG_TRACE);
+#endif
 	}
 
 	return redirection;

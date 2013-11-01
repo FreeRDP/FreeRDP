@@ -25,10 +25,12 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/debug.h>
 
+#include <winpr/wlog.h>
 #include <winpr/stream.h>
 
 struct rdp_redirection
 {
+	wLog* log;
 	UINT32 flags;
 	UINT32 sessionID;
 	char* TsvUrl;
