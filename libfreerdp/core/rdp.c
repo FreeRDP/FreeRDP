@@ -816,7 +816,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			 */
 			Stream_Rewind(s, 2);
 			rdp_recv_enhanced_security_redirection_packet(rdp, s);
-			return -1;
+			return 1; /* 1 = redirection */
 		}
 	}
 
@@ -976,7 +976,9 @@ void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking)
 
 int rdp_check_fds(rdpRdp* rdp)
 {
-	return transport_check_fds(&(rdp->transport));
+	int status;
+	status = transport_check_fds(&(rdp->transport));
+	return status;
 }
 
 /**
@@ -1035,7 +1037,7 @@ rdpRdp* rdp_new(rdpContext* context)
 
 void rdp_free(rdpRdp* rdp)
 {
-	if (rdp != NULL)
+	if (rdp)
 	{
 		crypto_rc4_free(rdp->rc4_decrypt_key);
 		crypto_rc4_free(rdp->rc4_encrypt_key);
@@ -1043,6 +1045,7 @@ void rdp_free(rdpRdp* rdp)
 		crypto_des3_free(rdp->fips_decrypt);
 		crypto_hmac_free(rdp->fips_hmac);
 		freerdp_settings_free(rdp->settings);
+		freerdp_settings_free(rdp->settingsCopy);
 		extension_free(rdp->extension);
 		transport_free(rdp->transport);
 		license_free(rdp->license);

@@ -94,6 +94,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 		CloseHandle(transport->thread);
 		CloseHandle(transport->stopEvent);
 	}
+
 	return status;
 }
 
@@ -889,23 +890,32 @@ int transport_check_fds(rdpTransport** ptransport)
 		Stream_SealLength(received);
 		Stream_SetPosition(received, 0);
 
+		/**
+		 * status:
+		 * 	-1: error
+		 * 	 0: success
+		 * 	 1: redirection
+		 */
+
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 
-		if (transport == *ptransport)
+		if (recv_status == 1)
 		{
-			/* transport might now have been freed by rdp_client_redirect and a new rdp->transport created */
-			/* so only release if still valid */
-			Stream_Release(received);
+			/**
+			 * Last call to ReceiveCallback resulted in a session redirection,
+			 * which means the current rdpTransport* transport pointer has been freed.
+			 * Return 0 for success, the rest of this function is meant for non-redirected cases.
+			 */
+			return 0;
 		}
+
+		Stream_Release(received);
 
 		if (recv_status < 0)
 			status = -1;
 
 		if (status < 0)
 			return status;
-
-		/* transport might now have been freed by rdp_client_redirect and a new rdp->transport created */
-		transport = *ptransport;
 	}
 
 	return 0;

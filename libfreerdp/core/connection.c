@@ -170,6 +170,14 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 {
 	rdpSettings* settings = rdp->settings;
 
+	if (rdp->settingsCopy)
+	{
+		freerdp_settings_free(rdp->settingsCopy);
+		rdp->settingsCopy = NULL;
+	}
+
+	rdp->settingsCopy = freerdp_settings_clone(settings);
+
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
 
@@ -278,6 +286,7 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 
 BOOL rdp_client_redirect(rdpRdp* rdp)
 {
+	BOOL status;
 	rdpSettings* settings = rdp->settings;
 	rdpRedirection* redirection = rdp->redirection;
 
@@ -297,7 +306,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	rdp->fips_hmac = NULL;
 
 	free(settings->ServerRandom);
-	settings->ServerRandom = NULL ;
+	settings->ServerRandom = NULL;
 	free(settings->ServerCertificate);
 	settings->ServerCertificate = NULL;
 	free(settings->ClientAddress);
@@ -361,7 +370,9 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 		settings->RedirectionPasswordLength = redirection->PasswordCookieLength;
 	}
 
-	return rdp_client_connect(rdp);
+	status = rdp_client_connect(rdp);
+
+	return status;
 }
 
 static BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };

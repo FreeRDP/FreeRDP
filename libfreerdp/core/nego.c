@@ -964,7 +964,7 @@ void nego_init(rdpNego* nego)
  * @return
  */
 
-rdpNego* nego_new(struct rdp_transport * transport)
+rdpNego* nego_new(rdpTransport* transport)
 {
 	rdpNego* nego = (rdpNego*) malloc(sizeof(rdpNego));
 

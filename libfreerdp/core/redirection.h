@@ -20,6 +20,8 @@
 #ifndef __REDIRECTION_H
 #define __REDIRECTION_H
 
+typedef struct rdp_redirection rdpRedirection;
+
 #include "rdp.h"
 
 #include <freerdp/freerdp.h>
@@ -46,7 +48,6 @@ struct rdp_redirection
 	UINT32 TargetNetAddressesCount;
 	char** TargetNetAddresses;
 };
-typedef struct rdp_redirection rdpRedirection;
 
 BOOL rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s);
 BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);

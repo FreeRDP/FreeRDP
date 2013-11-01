@@ -301,6 +301,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		ZeroMemory(settings->ClientHostname, 32);
 		ZeroMemory(settings->ClientProductId, 32);
 
+		gethostname(settings->ClientHostname, 31);
+		settings->ClientHostname[31] = 0;
+
 		settings->ColorPointerFlag = TRUE;
 		settings->LargePointerFlag = TRUE;
 		settings->PointerCacheSize = 20;
@@ -381,9 +384,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->FastPathOutput = TRUE;
 
 		settings->FrameAcknowledge = 2;
-
-		gethostname(settings->ClientHostname, 31);
-		settings->ClientHostname[31] = 0;
 		settings->MouseMotion = TRUE;
 
 		settings->AutoReconnectionEnabled = TRUE;

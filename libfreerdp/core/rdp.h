@@ -121,16 +121,16 @@ struct rdp_rdp
 	int state;
 	freerdp* instance;
 	rdpContext* context;
-	struct rdp_mcs* mcs;
-	struct rdp_nego* nego;
-	struct rdp_input* input;
-	struct rdp_update* update;
-	struct rdp_fastpath* fastpath;
-	struct rdp_license* license;
-	struct rdp_redirection* redirection;
-	struct rdp_settings* settings;
-	struct rdp_transport* transport;
-	struct rdp_extension* extension;
+	rdpMcs* mcs;
+	rdpNego* nego;
+	rdpInput* input;
+	rdpUpdate* update;
+	rdpFastPath* fastpath;
+	rdpLicense* license;
+	rdpRedirection* redirection;
+	rdpSettings* settings;
+	rdpTransport* transport;
+	rdpExtension* extension;
 	struct rdp_mppc_dec* mppc_dec;
 	struct rdp_mppc_enc* mppc_enc;
 	struct crypto_rc4_struct* rc4_decrypt_key;
@@ -160,6 +160,7 @@ struct rdp_rdp
 	BOOL resendFocus;
 	BOOL deactivation_reactivation;
 	BOOL AwaitCapabilities;
+	rdpSettings* settingsCopy;
 };
 
 BOOL rdp_read_security_header(wStream* s, UINT16* flags);
