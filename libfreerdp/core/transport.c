@@ -325,15 +325,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
 
-	transport->async = transport->settings->AsyncTransport;
-
-	if (transport->async)
-	{
-		transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-		transport->thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
-	}
+	transport->async = settings->AsyncTransport;
 
 	if (transport->settings->GatewayEnabled)
 	{
@@ -354,6 +346,17 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 		transport->SplitInputOutput = FALSE;
 		transport->TcpOut = transport->TcpIn;
+	}
+
+	if (status)
+	{
+		if (transport->async)
+		{
+			transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+			transport->thread = CreateThread(NULL, 0,
+					(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
+		}
 	}
 
 	return status;

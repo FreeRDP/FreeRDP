@@ -210,7 +210,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	UINT32 Pointer;
 	PTSG_PACKET packet;
 	UINT32 SwitchValue;
-	UINT32 MessageSwitchValue;
+	UINT32 MessageSwitchValue = 0;
 	UINT32 IsMessagePresent;
 	UINT32 MsgBytes;
 	rdpRpc* rpc = tsg->rpc;
@@ -340,7 +340,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		tsgCaps->tsgPacket.tsgCapNap.capabilities = *((UINT32*) &buffer[offset]); /* Capabilities */
 		offset += 4;
 
-		switch(MessageSwitchValue)
+		switch (MessageSwitchValue)
 		{
 			case TSG_ASYNC_MESSAGE_CONSENT_MESSAGE:
 			case TSG_ASYNC_MESSAGE_SERVICE_MESSAGE:
