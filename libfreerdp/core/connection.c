@@ -175,12 +175,12 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if (settings->GatewayEnabled)
 	{
-		char* user;
-		char* domain;
-		char* cookie;
+		char* user = NULL;
+		char* domain = NULL;
+		char* cookie = NULL;
 		int user_length = 0;
-		int domain_length;
-		int cookie_length;
+		int domain_length = 0;
+		int cookie_length = 0;
 
 		if (settings->Username)
 		{
