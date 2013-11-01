@@ -66,14 +66,21 @@ BOOL rdp_redirection_read_string(wStream* s, char** str)
 	UINT32 length;
 
 	if (Stream_GetRemainingLength(s) < 4)
+	{
+		fprintf(stderr, "rdp_redirection_read_string failure: cannot read length\n");
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, length);
 
 	if (Stream_GetRemainingLength(s) < length)
+	{
+		fprintf(stderr, "rdp_redirection_read_string failure: incorrect length %d\n", length);
 		return FALSE;
+	}
 
 	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), length / 2, str, 0, NULL, NULL);
+	Stream_Seek(s, length);
 
 	return TRUE;
 }
@@ -92,8 +99,8 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT32(s, redirection->sessionID); /* sessionID (4 bytes) */
 	Stream_Read_UINT32(s, redirection->flags); /* redirFlags (4 bytes) */
 
-	WLog_Print(redirection->log, WLOG_DEBUG, "flags: 0x%04X, length: %d, sessionID: 0x%08X",
-			flags, length, redirection->sessionID);
+	WLog_Print(redirection->log, WLOG_DEBUG, "flags: 0x%04X, redirFlags: 0x%04X length: %d, sessionID: 0x%08X",
+			flags, redirection->flags, length, redirection->sessionID);
 
 #ifdef WITH_DEBUG_REDIR
 	rdp_print_redirection_flags(redirection->flags);
