@@ -750,12 +750,40 @@ BOOL xf_pre_connect(freerdp* instance)
 	rdpSettings* settings;
 	xfContext* xfc = (xfContext*) instance->context;
 
-	xfc->mutex = CreateMutex(NULL, FALSE, NULL);
 	xfc->settings = instance->settings;
 	xfc->instance = instance;
 
 	settings = instance->settings;
 	channels = instance->context->channels;
+
+	xfc->UseXThreads = TRUE;
+
+	if (xfc->UseXThreads)
+	{
+		if (!XInitThreads())
+		{
+			fprintf(stderr, "warning: XInitThreads() failure\n");
+			xfc->UseXThreads = FALSE;
+		}
+	}
+
+	xfc->display = XOpenDisplay(NULL);
+
+	if (!xfc->display)
+	{
+		fprintf(stderr, "xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
+		fprintf(stderr, "Please check that the $DISPLAY environment variable is properly set.\n");
+		return FALSE;
+	}
+
+	if (xfc->debug)
+	{
+		fprintf(stderr, "Enabling X11 debug mode.\n");
+		XSynchronize(xfc->display, TRUE);
+		_def_error_handler = XSetErrorHandler(_xf_error_handler);
+	}
+
+	xfc->mutex = CreateMutex(NULL, FALSE, NULL);
 
 	PubSub_SubscribeChannelConnected(instance->context->pubSub,
 			(pChannelConnectedEventHandler) xf_OnChannelConnectedEventHandler);
@@ -783,33 +811,6 @@ BOOL xf_pre_connect(freerdp* instance)
 		fprintf(stderr, "%s:%d: Authentication only. Don't connect to X.\n", __FILE__, __LINE__);
 		/* Avoid XWindows initialization and configuration below. */
 		return TRUE;
-	}
-
-	xfc->UseXThreads = TRUE;
-
-	if (xfc->UseXThreads)
-	{
-		if (!XInitThreads())
-		{
-			fprintf(stderr, "warning: XInitThreads() failure\n");
-			xfc->UseXThreads = FALSE;
-		}
-	}
-
-	xfc->display = XOpenDisplay(NULL);
-
-	if (!xfc->display)
-	{
-		fprintf(stderr, "xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
-		fprintf(stderr, "Please check that the $DISPLAY environment variable is properly set.\n");
-		return FALSE;
-	}
-
-	if (xfc->debug)
-	{
-		fprintf(stderr, "Enabling X11 debug mode.\n");
-		XSynchronize(xfc->display, TRUE);
-		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
 
 	xfc->_NET_WM_ICON = XInternAtom(xfc->display, "_NET_WM_ICON", False);
@@ -1754,6 +1755,7 @@ static int xfreerdp_client_stop(rdpContext* context)
 	xfContext* xfc = (xfContext*) context;
 
 	assert(NULL != context);
+
 	if (context->settings->AsyncInput)
 	{
 		wMessageQueue* queue;
