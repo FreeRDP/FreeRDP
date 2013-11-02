@@ -269,6 +269,9 @@ int tcp_attach(rdpTcp* tcp, int sockfd)
 
 HANDLE tcp_get_event_handle(rdpTcp* tcp)
 {
+	if (!tcp)
+		return NULL;
+	
 #ifndef _WIN32
 	return tcp->event;
 #else

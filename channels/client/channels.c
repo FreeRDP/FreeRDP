@@ -74,10 +74,10 @@ CHANNEL_INIT_DATA g_ChannelInitData;
 static wArrayList* g_ChannelsList = NULL;
 
 /* To generate unique sequence for all open handles */
-int g_open_handle_sequence;
+int g_open_handle_sequence = 1;
 
 /* For locking the global resources */
-static HANDLE g_mutex_init;
+static HANDLE g_mutex_init = NULL;
 
 rdpChannels* freerdp_channels_find_by_open_handle(int open_handle, int* pindex)
 {
@@ -324,8 +324,8 @@ UINT32 FreeRDP_VirtualChannelEventPush(UINT32 openHandle, wMessage* event)
  */
 int freerdp_channels_global_init(void)
 {
-	g_open_handle_sequence = 1;
-	g_mutex_init = CreateMutex(NULL, FALSE, NULL);
+	if (!g_mutex_init)
+		g_mutex_init = CreateMutex(NULL, FALSE, NULL);
 
 	if (!g_ChannelsList)
 		g_ChannelsList = ArrayList_New(TRUE);
@@ -335,10 +335,6 @@ int freerdp_channels_global_init(void)
 
 int freerdp_channels_global_uninit(void)
 {
-	/* TODO: free channels list */
-
-	CloseHandle(g_mutex_init);
-
 	return 0;
 }
 
