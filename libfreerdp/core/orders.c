@@ -1356,6 +1356,7 @@ BOOL update_read_memblt_order(wStream* s, ORDER_INFO* orderInfo, MEMBLT_ORDER* m
 
 	memblt->colorIndex = (memblt->cacheId >> 8);
 	memblt->cacheId = (memblt->cacheId & 0xFF);
+	memblt->bitmap = NULL;
 
 	return TRUE;
 }
@@ -1422,6 +1423,7 @@ BOOL update_read_mem3blt_order(wStream* s, ORDER_INFO* orderInfo, MEM3BLT_ORDER*
 	ORDER_FIELD_UINT16(16, mem3blt->cacheIndex);
 	mem3blt->colorIndex = (mem3blt->cacheId >> 8);
 	mem3blt->cacheId = (mem3blt->cacheId & 0xFF);
+	mem3blt->bitmap = NULL;
 
 	return TRUE;
 }

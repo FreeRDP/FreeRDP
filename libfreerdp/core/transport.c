@@ -88,11 +88,17 @@ BOOL transport_disconnect(rdpTransport* transport)
 
 	if (transport->async)
 	{
-		SetEvent(transport->stopEvent);
-		WaitForSingleObject(transport->thread, INFINITE);
+		if (transport->stopEvent)
+		{
+			SetEvent(transport->stopEvent);
+			WaitForSingleObject(transport->thread, INFINITE);
 
-		CloseHandle(transport->thread);
-		CloseHandle(transport->stopEvent);
+			CloseHandle(transport->thread);
+			CloseHandle(transport->stopEvent);
+
+			transport->thread = NULL;
+			transport->stopEvent = NULL;
+		}
 	}
 
 	return status;
@@ -1035,8 +1041,6 @@ void transport_free(rdpTransport* transport)
 {
 	if (transport)
 	{
-		SetEvent(transport->stopEvent);
-        
 		if (transport->ReceiveBuffer)
 			Stream_Release(transport->ReceiveBuffer);
 
