@@ -444,8 +444,8 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->Username = _strdup(settings->Username); /* 21 */
 		_settings->Password = _strdup(settings->Password); /* 22 */
 		_settings->Domain = _strdup(settings->Domain); /* 23 */
-		_settings->ClientHostname = _strdup(settings->ClientHostname); /* 134 */
-		_settings->ClientProductId = _strdup(settings->ClientProductId); /* 135 */
+		//_settings->ClientHostname = _strdup(settings->ClientHostname); /* 134 */
+		//_settings->ClientProductId = _strdup(settings->ClientProductId); /* 135 */
 		_settings->AlternateShell = _strdup(settings->AlternateShell); /* 640 */
 		_settings->ShellWorkingDirectory = _strdup(settings->ShellWorkingDirectory); /* 641 */
 		_settings->ClientAddress = _strdup(settings->ClientAddress); /* 769 */
