@@ -796,14 +796,13 @@ void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* 
 	}
 }
 
-int transport_check_fds(rdpTransport** ptransport)
+int transport_check_fds(rdpTransport* transport)
 {
 	int pos;
 	int status;
 	UINT16 length;
 	int recv_status;
 	wStream* received;
-	rdpTransport* transport = *ptransport;
 
 	if (!transport)
 		return -1;

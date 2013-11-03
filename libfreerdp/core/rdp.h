@@ -197,6 +197,7 @@ void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking);
 int rdp_check_fds(rdpRdp* rdp);
 
 rdpRdp* rdp_new(rdpContext* context);
+void rdp_reset(rdpRdp* rdp);
 void rdp_free(rdpRdp* rdp);
 
 #ifdef WITH_DEBUG_RDP

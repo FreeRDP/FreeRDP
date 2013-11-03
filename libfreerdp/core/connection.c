@@ -292,82 +292,43 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 	rdp_client_disconnect(rdp);
 
-	/* FIXME: this is a subset of rdp_free */
-	/* --> this should really go into rdp.c */
-	crypto_rc4_free(rdp->rc4_decrypt_key);
-	rdp->rc4_decrypt_key = NULL;
-	crypto_rc4_free(rdp->rc4_encrypt_key);
-	rdp->rc4_encrypt_key = NULL;
-	crypto_des3_free(rdp->fips_encrypt);
-	rdp->fips_encrypt = NULL;
-	crypto_des3_free(rdp->fips_decrypt);
-	rdp->fips_decrypt = NULL;
-	crypto_hmac_free(rdp->fips_hmac);
-	rdp->fips_hmac = NULL;
+	rdp_reset(rdp);
 
-	free(settings->ServerRandom);
-	settings->ServerRandom = NULL;
-	free(settings->ServerCertificate);
-	settings->ServerCertificate = NULL;
-	free(settings->ClientAddress);
-	settings->ClientAddress = NULL;
+	rdp_redirection_apply_settings(rdp);
 
-	mppc_enc_free(rdp->mppc_enc);
-	mppc_dec_free(rdp->mppc_dec);
-	mcs_free(rdp->mcs);
-	nego_free(rdp->nego);
-	license_free(rdp->license);
-	transport_free(rdp->transport);
-
-	rdp->transport = transport_new(settings);
-	rdp->license = license_new(rdp);
-	rdp->nego = nego_new(rdp->transport);
-	rdp->mcs = mcs_new(rdp->transport);
-	rdp->mppc_dec = mppc_dec_new();
-	rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
-
-	rdp->transport->layer = TRANSPORT_LAYER_TCP;
-	settings->RedirectedSessionId = redirection->sessionID;
-
-	if (redirection->flags & LB_LOAD_BALANCE_INFO)
+	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
 	{
-		nego_set_routing_token(rdp->nego, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
+		nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
 	}
 	else
 	{
-		if (redirection->flags & LB_TARGET_NET_ADDRESS)
+		if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->TargetNetAddress);
+			settings->ServerHostname = _strdup(settings->TargetNetAddress);
 		}
-		else if (redirection->flags & LB_TARGET_FQDN)
+		else if (settings->RedirectionFlags & LB_TARGET_FQDN)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->TargetFQDN);
+			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
 		}
-		else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
+		else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->TargetNetBiosName);
+			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
 		}
 	}
 
-	if (redirection->flags & LB_USERNAME)
+	if (settings->RedirectionFlags & LB_USERNAME)
 	{
 		free(settings->Username);
-		settings->Username = _strdup(redirection->Username);
+		settings->Username = _strdup(settings->RedirectionUsername);
 	}
 
-	if (redirection->flags & LB_DOMAIN)
+	if (settings->RedirectionFlags & LB_DOMAIN)
 	{
 		free(settings->Domain);
-		settings->Domain = _strdup(redirection->Domain);
-	}
-
-	if (redirection->flags & LB_PASSWORD)
-	{
-		settings->RedirectionPassword = redirection->PasswordCookie;
-		settings->RedirectionPasswordLength = redirection->PasswordCookieLength;
+		settings->Domain = _strdup(settings->RedirectionDomain);
 	}
 
 	status = rdp_client_connect(rdp);
@@ -678,7 +639,7 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		 * so that could result in a bad offset.
 		 */
 
-		if (rdp_recv_out_of_sequence_pdu(rdp, s) != TRUE)
+		if (!rdp_recv_out_of_sequence_pdu(rdp, s))
 			return FALSE;
 
 		return TRUE;

@@ -94,7 +94,7 @@ BOOL transport_accept_nla(rdpTransport* transport);
 int transport_read(rdpTransport* transport, wStream* s);
 int transport_write(rdpTransport* transport, wStream* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
-int transport_check_fds(rdpTransport** ptransport);
+int transport_check_fds(rdpTransport* transport);
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
 void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count);
 

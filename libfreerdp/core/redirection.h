@@ -35,11 +35,12 @@ struct rdp_redirection
 	wLog* log;
 	UINT32 flags;
 	UINT32 sessionID;
-	char* TsvUrl;
+	BYTE* TsvUrl;
+	DWORD TsvUrlLength;
 	char* Username;
 	char* Domain;
-	BYTE* PasswordCookie;
-	DWORD PasswordCookieLength;
+	BYTE* Password;
+	DWORD PasswordLength;
 	char* TargetFQDN;
 	BYTE* LoadBalanceInfo;
 	DWORD LoadBalanceInfoLength;
@@ -51,6 +52,8 @@ struct rdp_redirection
 
 BOOL rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s);
 BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
+
+int rdp_redirection_apply_settings(rdpRdp* rdp);
 
 rdpRedirection* redirection_new(void);
 void redirection_free(rdpRedirection* redirection);

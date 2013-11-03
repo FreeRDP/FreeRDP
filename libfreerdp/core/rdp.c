@@ -977,7 +977,7 @@ void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking)
 int rdp_check_fds(rdpRdp* rdp)
 {
 	int status;
-	status = transport_check_fds(&(rdp->transport));
+	status = transport_check_fds(rdp->transport);
 	return status;
 }
 
@@ -1028,6 +1028,46 @@ rdpRdp* rdp_new(rdpContext* context)
 	}
 
 	return rdp;
+}
+
+void rdp_reset(rdpRdp* rdp)
+{
+	rdpSettings* settings;
+
+	settings = rdp->settings;
+
+	crypto_rc4_free(rdp->rc4_decrypt_key);
+	rdp->rc4_decrypt_key = NULL;
+	crypto_rc4_free(rdp->rc4_encrypt_key);
+	rdp->rc4_encrypt_key = NULL;
+	crypto_des3_free(rdp->fips_encrypt);
+	rdp->fips_encrypt = NULL;
+	crypto_des3_free(rdp->fips_decrypt);
+	rdp->fips_decrypt = NULL;
+	crypto_hmac_free(rdp->fips_hmac);
+	rdp->fips_hmac = NULL;
+
+	mppc_enc_free(rdp->mppc_enc);
+	mppc_dec_free(rdp->mppc_dec);
+	mcs_free(rdp->mcs);
+	nego_free(rdp->nego);
+	license_free(rdp->license);
+	transport_free(rdp->transport);
+
+	free(settings->ServerRandom);
+	settings->ServerRandom = NULL;
+	free(settings->ServerCertificate);
+	settings->ServerCertificate = NULL;
+	free(settings->ClientAddress);
+	settings->ClientAddress = NULL;
+
+	rdp->transport = transport_new(rdp->settings);
+	rdp->license = license_new(rdp);
+	rdp->nego = nego_new(rdp->transport);
+	rdp->mcs = mcs_new(rdp->transport);
+	rdp->mppc_dec = mppc_dec_new();
+	rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
+	rdp->transport->layer = TRANSPORT_LAYER_TCP;
 }
 
 /**
