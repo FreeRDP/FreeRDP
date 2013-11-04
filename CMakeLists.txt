@@ -51,6 +51,7 @@ include(ComplexLibrary)
 include(FeatureSummary)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
+include(CMakePackageConfigHelpers)
 
 # Soname versioning
 set(FREERDP_VERSION_MAJOR "1")
@@ -549,6 +550,31 @@ endif()
 
 if(WITH_SERVER)
 	add_subdirectory(server)
+endif()
+
+# Exporting
+
+if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
+
+	export(PACKAGE freerdp)
+
+	set(FREERDP_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/FreeRDP")
+
+	set(FREERDP_INCLUDE_DIR "include")
+	set(FREERDP_MONOLITHIC_BUILD ${MONOLITHIC_BUILD})
+
+	configure_package_config_file(FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
+		INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR}
+		PATH_VARS FREERDP_INCLUDE_DIR FREERDP_MONOLITHIC_BUILD)
+
+	write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
+		VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
+
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfigVersion.cmake
+		DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
+
+	install(EXPORT FreeRDPTargets DESTINATION ${FREERDP_CMAKE_INSTALL_DIR})
+
 endif()
 
 # Packaging

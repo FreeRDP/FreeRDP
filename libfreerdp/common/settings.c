@@ -402,6 +402,19 @@ void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
 	settings->DynamicChannelCount = 0;
 }
 
+void freerdp_target_net_addresses_free(rdpSettings* settings)
+{
+	UINT32 index;
+
+	for (index = 0; index < settings->TargetNetAddressCount; index++)
+		free(settings->TargetNetAddresses[index]);
+
+	free(settings->TargetNetAddresses);
+
+	settings->TargetNetAddressCount = 0;
+	settings->TargetNetAddresses = NULL;
+}
+
 void freerdp_performance_flags_make(rdpSettings* settings)
 {
 	settings->PerformanceFlags = PERF_FLAG_NONE;
@@ -1533,24 +1546,8 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 			return settings->LoadBalanceInfoLength;
 			break;
 
-		case FreeRDP_RedirectionUsernameLength:
-			return settings->RedirectionUsernameLength;
-			break;
-
-		case FreeRDP_RedirectionDomainLength:
-			return settings->RedirectionDomainLength;
-			break;
-
 		case FreeRDP_RedirectionPasswordLength:
 			return settings->RedirectionPasswordLength;
-			break;
-
-		case FreeRDP_RedirectionTargetFQDNLength:
-			return settings->RedirectionTargetFQDNLength;
-			break;
-
-		case FreeRDP_RedirectionTargetNetBiosNameLength:
-			return settings->RedirectionTargetNetBiosNameLength;
 			break;
 
 		case FreeRDP_RedirectionTsvUrlLength:
@@ -1853,24 +1850,8 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			settings->LoadBalanceInfoLength = param;
 			break;
 
-		case FreeRDP_RedirectionUsernameLength:
-			settings->RedirectionUsernameLength = param;
-			break;
-
-		case FreeRDP_RedirectionDomainLength:
-			settings->RedirectionDomainLength = param;
-			break;
-
 		case FreeRDP_RedirectionPasswordLength:
 			settings->RedirectionPasswordLength = param;
-			break;
-
-		case FreeRDP_RedirectionTargetFQDNLength:
-			settings->RedirectionTargetFQDNLength = param;
-			break;
-
-		case FreeRDP_RedirectionTargetNetBiosNameLength:
-			settings->RedirectionTargetNetBiosNameLength = param;
 			break;
 
 		case FreeRDP_RedirectionTsvUrlLength:

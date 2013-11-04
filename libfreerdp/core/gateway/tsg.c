@@ -210,7 +210,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	UINT32 Pointer;
 	PTSG_PACKET packet;
 	UINT32 SwitchValue;
-	UINT32 MessageSwitchValue;
+	UINT32 MessageSwitchValue = 0;
 	UINT32 IsMessagePresent;
 	UINT32 MsgBytes;
 	rdpRpc* rpc = tsg->rpc;
@@ -340,7 +340,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		tsgCaps->tsgPacket.tsgCapNap.capabilities = *((UINT32*) &buffer[offset]); /* Capabilities */
 		offset += 4;
 
-		switch(MessageSwitchValue)
+		switch (MessageSwitchValue)
 		{
 			case TSG_ASYNC_MESSAGE_CONSENT_MESSAGE:
 			case TSG_ASYNC_MESSAGE_SERVICE_MESSAGE:
@@ -350,23 +350,29 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 				offset += 4;
 				Pointer = *((UINT32*) &buffer[offset]);
 				offset += 4;
-				if(Pointer) {
+
+				if (Pointer)
+				{
 					offset += 4; // MaxCount
 					offset += 8; // UnicodeString Offset, Length
 				}
-				if(MsgBytes > TSG_MESSAGING_MAX_MESSAGE_LENGTH) {
+
+				if (MsgBytes > TSG_MESSAGING_MAX_MESSAGE_LENGTH)
+				{
 					fprintf(stderr, "Out of Spec Message Length %d", MsgBytes);
 					return FALSE;
 				}
 				offset += MsgBytes;
 				break;
+
 			case TSG_ASYNC_MESSAGE_REAUTH:
 				rpc_offset_align(&offset, 8);
 				offset += 8; // UINT64 TunnelContext, not to be confused with
 					     // the ContextHandle TunnelContext below.
 				break;
+
 			default:
-				fprintf(stderr, "Unexpected Message Type: 0x%X\n", MessageSwitchValue);
+				fprintf(stderr, "Unexpected Message Type: 0x%X\n", (int) MessageSwitchValue);
 				return FALSE;
 
 		}

@@ -30,6 +30,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/platform.h>
 
 #include "synch.h"
 #include "../thread/thread.h"
@@ -114,29 +115,30 @@ static int pthread_timedjoin_np(pthread_t td, void **res,
 	return ETIMEDOUT;
 }
 
-static int pthread_mutex_timedlock(pthread_mutex_t *mutex,
-	const struct timespec *timeout)
+static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
 {
- struct timeval timenow;
- struct timespec sleepytime;
- int retcode;
- 
- /* This is just to avoid a completely busy wait */
- sleepytime.tv_sec = 0;
- sleepytime.tv_nsec = 10000000; /* 10ms */
- 
- while ((retcode = pthread_mutex_trylock (mutex)) == EBUSY) {
-  gettimeofday (&timenow, NULL);
-  
-  if (timenow.tv_sec >= timeout->tv_sec &&
-      (timenow.tv_usec * 1000) >= timeout->tv_nsec) {
-   return ETIMEDOUT;
-  }
-  
-  nanosleep (&sleepytime, NULL);
- }
- 
- return retcode;
+	struct timeval timenow;
+	struct timespec sleepytime;
+	int retcode;
+
+	/* This is just to avoid a completely busy wait */
+	sleepytime.tv_sec = 0;
+	sleepytime.tv_nsec = 10000000; /* 10ms */
+
+	while ((retcode = pthread_mutex_trylock (mutex)) == EBUSY)
+	{
+		gettimeofday (&timenow, NULL);
+
+		if (timenow.tv_sec >= timeout->tv_sec &&
+				(timenow.tv_usec * 1000) >= timeout->tv_nsec)
+		{
+			return ETIMEDOUT;
+		}
+
+		nanosleep (&sleepytime, NULL);
+	}
+
+	return retcode;
 }
 #endif
 
@@ -170,6 +172,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		if (thread->started)
 		{
+#ifdef __linux__
 			if (dwMilliseconds != INFINITE)
 			{
 				struct timespec timeout;
@@ -183,10 +186,12 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 				ts_add_ms(&timeout, dwMilliseconds);
 
 				status = pthread_timedjoin_np(thread->thread, &thread_status, &timeout);
+
 				if (ETIMEDOUT == status)
 					return WAIT_TIMEOUT;
 			}
 			else
+#endif
 				status = pthread_join(thread->thread, &thread_status);
 
 			if (status != 0)
@@ -214,26 +219,27 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
-		int status;
 		WINPR_MUTEX* mutex;
 
 		mutex = (WINPR_MUTEX*) Object;
 
+#ifdef __linux__
 		if (dwMilliseconds != INFINITE)
 		{
+			int status;
 			struct timespec timeout;
 
 			clock_gettime(CLOCK_REALTIME, &timeout);
 			ts_add_ms(&timeout, dwMilliseconds);	
 
 			status = pthread_mutex_timedlock(&mutex->mutex, &timeout);
+
 			if (ETIMEDOUT == status)
 				return WAIT_TIMEOUT;
 		}
 		else
-		{
+#endif
 			pthread_mutex_lock(&mutex->mutex);
-		}
 	}
 	else if (Type == HANDLE_TYPE_EVENT)
 	{

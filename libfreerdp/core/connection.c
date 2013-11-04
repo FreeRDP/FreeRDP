@@ -170,17 +170,25 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 {
 	rdpSettings* settings = rdp->settings;
 
+	if (rdp->settingsCopy)
+	{
+		freerdp_settings_free(rdp->settingsCopy);
+		rdp->settingsCopy = NULL;
+	}
+
+	rdp->settingsCopy = freerdp_settings_clone(settings);
+
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
 
 	if (settings->GatewayEnabled)
 	{
-		char* user;
-		char* domain;
-		char* cookie;
+		char* user = NULL;
+		char* domain = NULL;
+		char* cookie = NULL;
 		int user_length = 0;
-		int domain_length;
-		int cookie_length;
+		int domain_length = 0;
+		int cookie_length = 0;
 
 		if (settings->Username)
 		{
@@ -209,14 +217,6 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 		nego_set_cookie(rdp->nego, cookie);
 		free(cookie);
-
-		settings->RdpSecurity = TRUE;
-		settings->TlsSecurity = FALSE;
-		settings->NlaSecurity = FALSE;
-		settings->ExtSecurity = FALSE;
-
-		//settings->TlsSecurity = TRUE;
-		//settings->NlaSecurity = TRUE;
 	}
 	else
 	{
@@ -286,91 +286,56 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 
 BOOL rdp_client_redirect(rdpRdp* rdp)
 {
+	BOOL status;
 	rdpSettings* settings = rdp->settings;
-	rdpRedirection* redirection = rdp->redirection;
 
 	rdp_client_disconnect(rdp);
 
-	/* FIXME: this is a subset of rdp_free */
-	/* --> this should really go into rdp.c */
-	crypto_rc4_free(rdp->rc4_decrypt_key);
-	rdp->rc4_decrypt_key = NULL ;
-	crypto_rc4_free(rdp->rc4_encrypt_key);
-	rdp->rc4_encrypt_key = NULL;
-	crypto_des3_free(rdp->fips_encrypt);
-	rdp->fips_encrypt = NULL ;
-	crypto_des3_free(rdp->fips_decrypt);
-	rdp->fips_decrypt = NULL ;
-	crypto_hmac_free(rdp->fips_hmac);
-	rdp->fips_hmac = NULL ;
+	rdp_reset(rdp);
 
-	free(settings->ServerRandom);
-	settings->ServerRandom = NULL ;
-	free(settings->ServerCertificate);
-	settings->ServerCertificate = NULL ;
-	free(settings->ClientAddress);
-	settings->ClientAddress = NULL ;
+	rdp_redirection_apply_settings(rdp);
 
-	mppc_enc_free(rdp->mppc_enc);
-	mppc_dec_free(rdp->mppc_dec);
-	mcs_free(rdp->mcs);
-	nego_free(rdp->nego);
-	license_free(rdp->license);
-	transport_free(rdp->transport);
-
-	rdp->transport = transport_new(settings);
-	rdp->license = license_new(rdp);
-	rdp->nego = nego_new(rdp->transport);
-	rdp->mcs = mcs_new(rdp->transport);
-	rdp->mppc_dec = mppc_dec_new();
-	rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
-
-	rdp->transport->layer = TRANSPORT_LAYER_TCP;
-	settings->RedirectedSessionId = redirection->sessionID;
-
-	if (redirection->flags & LB_LOAD_BALANCE_INFO)
+	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
 	{
-		nego_set_routing_token(rdp->nego, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
+		nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
 	}
 	else
 	{
-		if (redirection->flags & LB_TARGET_NET_ADDRESS)
+		if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->targetNetAddress.ascii);
+			settings->ServerHostname = _strdup(settings->TargetNetAddress);
 		}
-		else if (redirection->flags & LB_TARGET_FQDN)
+		else if (settings->RedirectionFlags & LB_TARGET_FQDN)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->targetFQDN.ascii);
+			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
 		}
-		else if (redirection->flags & LB_TARGET_NETBIOS_NAME)
+		else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 		{
 			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(redirection->targetNetBiosName.ascii);
+			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
 		}
 	}
 
-	if (redirection->flags & LB_USERNAME)
+	if (settings->RedirectionFlags & LB_USERNAME)
 	{
 		free(settings->Username);
-		settings->Username = _strdup(redirection->username.ascii);
+		settings->Username = _strdup(settings->RedirectionUsername);
 	}
 
-	if (redirection->flags & LB_DOMAIN)
+	if (settings->RedirectionFlags & LB_DOMAIN)
 	{
 		free(settings->Domain);
-		settings->Domain = _strdup(redirection->domain.ascii);
+		settings->Domain = _strdup(settings->RedirectionDomain);
 	}
 
-	if (redirection->flags & LB_PASSWORD)
-	{
-		settings->RedirectionPassword = redirection->PasswordCookie;
-		settings->RedirectionPasswordLength = redirection->PasswordCookieLength;
-	}
+	status = rdp_client_connect(rdp);
 
-	return rdp_client_connect(rdp);
+	return status;
 }
+
+static BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
@@ -388,10 +353,17 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	/* encrypt client random */
-	if (rdp->settings->ClientRandom) free(rdp->settings->ClientRandom);
+
+	if (rdp->settings->ClientRandom)
+		free(rdp->settings->ClientRandom);
+
 	rdp->settings->ClientRandom = malloc(CLIENT_RANDOM_LENGTH);
-	if (rdp->settings->ClientRandom == NULL) return FALSE;
+
+	if (!rdp->settings->ClientRandom)
+		return FALSE;
+
 	ZeroMemory(crypt_client_random, sizeof(crypt_client_random));
+
 	crypto_nonce(rdp->settings->ClientRandom, CLIENT_RANDOM_LENGTH);
 	key_len = rdp->settings->RdpServerCertificate->cert_info.ModulusLength;
 	mod = rdp->settings->RdpServerCertificate->cert_info.Modulus;
@@ -430,7 +402,6 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
 
@@ -511,7 +482,6 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
 
@@ -668,7 +638,7 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		 * so that could result in a bad offset.
 		 */
 
-		if (rdp_recv_out_of_sequence_pdu(rdp, s) != TRUE)
+		if (!rdp_recv_out_of_sequence_pdu(rdp, s))
 			return FALSE;
 
 		return TRUE;

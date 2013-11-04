@@ -22,6 +22,7 @@
 #define FREERDP_CHANNEL_RDPDR_H
 
 #include <winpr/nt.h>
+#include <winpr/io.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/synch.h>
@@ -262,11 +263,14 @@ enum FSCTL_STRUCTURE
 #endif
 
 /* [MS-FSCC] FileFsDeviceInformation.DeviceType */
-enum FILE_FS_DEVICE_TYPE
-{
-	FILE_DEVICE_CD_ROM = 0x00000002,
-	FILE_DEVICE_DISK = 0x00000007
-};
+
+#ifndef FILE_DEVICE_CD_ROM
+#define FILE_DEVICE_CD_ROM	0x00000002
+#endif
+
+#ifndef FILE_DEVICE_DISK
+#define FILE_DEVICE_DISK	0x00000007
+#endif
 
 /* [MS-FSCC] FileFsDeviceInformation.Characteristics */
 enum FILE_FS_DEVICE_FLAG

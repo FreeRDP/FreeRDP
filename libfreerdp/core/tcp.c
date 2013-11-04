@@ -79,6 +79,13 @@ void tcp_get_ip_address(rdpTcp * tcp)
 	tcp->ip_address[sizeof(tcp->ip_address) - 1] = 0;
 
 	tcp->settings->IPv6Enabled = 0;
+
+	if (tcp->settings->ClientAddress)
+	{
+		free(tcp->settings->ClientAddress);
+		tcp->settings->ClientAddress = NULL;
+	}
+
 	tcp->settings->ClientAddress = _strdup(tcp->ip_address);
 }
 
@@ -262,6 +269,9 @@ int tcp_attach(rdpTcp* tcp, int sockfd)
 
 HANDLE tcp_get_event_handle(rdpTcp* tcp)
 {
+	if (!tcp)
+		return NULL;
+	
 #ifndef _WIN32
 	return tcp->event;
 #else

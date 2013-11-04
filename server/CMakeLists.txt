@@ -35,8 +35,8 @@ else()
 	add_subdirectory(Windows)
 endif()
 
-if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/xrdp-ng")
-	add_subdirectory("xrdp-ng")
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/FreeRDS")
+	add_subdirectory("FreeRDS")
 endif()
 
 # Pick up other clients

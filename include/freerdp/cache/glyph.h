@@ -24,6 +24,7 @@
 #include <freerdp/types.h>
 #include <freerdp/update.h>
 
+#include <winpr/wlog.h>
 #include <winpr/stream.h>
 
 typedef struct _GLYPH_CACHE GLYPH_CACHE;
@@ -56,6 +57,7 @@ struct rdp_glyph_cache
 	FRAGMENT_CACHE fragCache;
 	GLYPH_CACHE glyphCache[10];
 
+	wLog* log;
 	rdpContext* context;
 	rdpSettings* settings;
 };

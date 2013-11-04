@@ -301,6 +301,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		ZeroMemory(settings->ClientHostname, 32);
 		ZeroMemory(settings->ClientProductId, 32);
 
+		gethostname(settings->ClientHostname, 31);
+		settings->ClientHostname[31] = 0;
+
 		settings->ColorPointerFlag = TRUE;
 		settings->LargePointerFlag = TRUE;
 		settings->PointerCacheSize = 20;
@@ -381,9 +384,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->FastPathOutput = TRUE;
 
 		settings->FrameAcknowledge = 2;
-
-		gethostname(settings->ClientHostname, 31);
-		settings->ClientHostname[31] = 0;
 		settings->MouseMotion = TRUE;
 
 		settings->AutoReconnectionEnabled = TRUE;
@@ -444,8 +444,8 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->Username = _strdup(settings->Username); /* 21 */
 		_settings->Password = _strdup(settings->Password); /* 22 */
 		_settings->Domain = _strdup(settings->Domain); /* 23 */
-		_settings->ClientHostname = _strdup(settings->ClientHostname); /* 134 */
-		_settings->ClientProductId = _strdup(settings->ClientProductId); /* 135 */
+		//_settings->ClientHostname = _strdup(settings->ClientHostname); /* 134 */
+		//_settings->ClientProductId = _strdup(settings->ClientProductId); /* 135 */
 		_settings->AlternateShell = _strdup(settings->AlternateShell); /* 640 */
 		_settings->ShellWorkingDirectory = _strdup(settings->ShellWorkingDirectory); /* 641 */
 		_settings->ClientAddress = _strdup(settings->ClientAddress); /* 769 */
@@ -515,11 +515,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->PreconnectionId = settings->PreconnectionId; /* 1154 */
 		_settings->RedirectionFlags = settings->RedirectionFlags; /* 1216 */
 		_settings->LoadBalanceInfoLength = settings->LoadBalanceInfoLength; /* 1218 */
-		_settings->RedirectionUsernameLength = settings->RedirectionUsernameLength; /* 1220 */
-		_settings->RedirectionDomainLength = settings->RedirectionDomainLength; /* 1222 */
 		_settings->RedirectionPasswordLength = settings->RedirectionPasswordLength; /* 1224 */
-		_settings->RedirectionTargetFQDNLength = settings->RedirectionTargetFQDNLength; /* 1226 */
-		_settings->RedirectionTargetNetBiosNameLength = settings->RedirectionTargetNetBiosNameLength; /* 1228 */
 		_settings->RedirectionTsvUrlLength = settings->RedirectionTsvUrlLength; /* 1230 */
 		_settings->TargetNetAddressCount = settings->TargetNetAddressCount; /* 1231 */
 		_settings->Password51Length = settings->Password51Length; /* 1281 */
@@ -725,6 +721,16 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->ClientTimeZone = (TIME_ZONE_INFO*) malloc(sizeof(TIME_ZONE_INFO));
 		CopyMemory(_settings->ClientTimeZone, _settings->ClientTimeZone, sizeof(TIME_ZONE_INFO));
 
+		_settings->TargetNetAddressCount = settings->TargetNetAddressCount;
+
+		if (settings->TargetNetAddressCount > 0)
+		{
+			_settings->TargetNetAddresses = (char**) malloc(sizeof(char*) * settings->TargetNetAddressCount);
+
+			for (index = 0; index < settings->TargetNetAddressCount; index++)
+				_settings->TargetNetAddresses[index] = _strdup(settings->TargetNetAddresses[index]);
+		}
+
 		_settings->DeviceCount = settings->DeviceCount;
 		_settings->DeviceArraySize = settings->DeviceArraySize;
 		_settings->DeviceArray = (RDPDR_DEVICE**) malloc(sizeof(RDPDR_DEVICE*) * _settings->DeviceArraySize);
@@ -801,6 +807,14 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->CurrentPath);
 		free(settings->HomePath);
 		free(settings->LoadBalanceInfo);
+		free(settings->TargetNetAddress);
+		free(settings->RedirectionTargetFQDN);
+		free(settings->RedirectionTargetNetBiosName);
+		free(settings->RedirectionUsername);
+		free(settings->RedirectionDomain);
+		free(settings->RedirectionPassword);
+		free(settings->RedirectionTsvUrl);
+		freerdp_target_net_addresses_free(settings);
 		freerdp_device_collection_free(settings);
 		freerdp_static_channel_collection_free(settings);
 		freerdp_dynamic_channel_collection_free(settings);

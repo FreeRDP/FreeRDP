@@ -6,6 +6,7 @@
 
 int TestEnvironmentMergeEnvironmentStrings(int argc, char* argv[])
 {
+#ifndef _WIN32
 	TCHAR* p;
 	int length;
 	LPTCH lpszEnvironmentBlock;
@@ -17,8 +18,6 @@ int TestEnvironmentMergeEnvironmentStrings(int argc, char* argv[])
 
 	p = (TCHAR*) lpszMergedEnvironmentBlock;
 
-
-
 	while (p[0] && p[1])
 	{
 		printf("%s\n", p);
@@ -27,6 +26,7 @@ int TestEnvironmentMergeEnvironmentStrings(int argc, char* argv[])
 	}
 
 	FreeEnvironmentStrings(lpszEnvironmentBlock);
+#endif
 
 	return 0;
 }
