@@ -142,7 +142,7 @@ extern "C" {
 #endif
 
 FREERDP_API BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name);
-FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, BYTE* buffer, size_t size);
+FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer, size_t size);
 FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings);
 
 FREERDP_API BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, rdpSettings* settings);

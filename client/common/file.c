@@ -323,7 +323,7 @@ void freerdp_client_parse_rdp_file_option_ascii(rdpFile* file, char* option)
 	freerdp_client_add_option(file, option);
 }
 
-BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, BYTE* buffer, size_t size)
+BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE* buffer, size_t size)
 {
 	int length;
 	char* line;
@@ -395,7 +395,7 @@ next_line:
 	return TRUE;
 }
 
-BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, BYTE* buffer, size_t size)
+BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BYTE* buffer, size_t size)
 {
 	int length;
 	WCHAR* line;
@@ -468,7 +468,7 @@ next_line:
 	return TRUE;
 }
 
-BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, BYTE* buffer, size_t size)
+BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer, size_t size)
 {
 	if (size < 2)
 		return FALSE;
