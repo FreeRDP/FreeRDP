@@ -288,7 +288,6 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 {
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
-	rdpRedirection* redirection = rdp->redirection;
 
 	rdp_client_disconnect(rdp);
 
