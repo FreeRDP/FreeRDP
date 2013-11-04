@@ -199,7 +199,6 @@ void AppDelegate_ConnectionResultEventHandler(void* ctx, ConnectionResultEventAr
 			
 			// Making sure this should be invoked on the main UI thread.
 			[_singleDelegate performSelectorOnMainThread:@selector(rdpConnectError:) withObject:message waitUntilDone:FALSE];
-			[message release];
 		}
 	}
 }
