@@ -986,11 +986,6 @@ static void* transport_client_thread(void* arg)
 		nCount = 0;
 		handles[nCount++] = transport->stopEvent;
 
-		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
-
-		if (status == WAIT_OBJECT_0)
-			break;
-
 		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
 
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
