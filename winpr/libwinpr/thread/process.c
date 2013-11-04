@@ -68,7 +68,9 @@
 #include <errno.h>
 #include <spawn.h>
 #include <string.h>
+#include <signal.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 
 #include <pthread.h>
 

@@ -43,11 +43,16 @@ static const char* const NEGO_STATE_STRINGS[] =
 	"NEGO_STATE_FINAL"
 };
 
-static const char PROTOCOL_SECURITY_STRINGS[4][4] =
+static const char PROTOCOL_SECURITY_STRINGS[9][4] =
 {
 	"RDP",
 	"TLS",
 	"NLA",
+	"UNK",
+	"UNK",
+	"UNK",
+	"UNK",
+	"UNK",
 	"EXT"
 };
 
@@ -959,13 +964,14 @@ void nego_init(rdpNego* nego)
  * @return
  */
 
-rdpNego* nego_new(struct rdp_transport * transport)
+rdpNego* nego_new(rdpTransport* transport)
 {
 	rdpNego* nego = (rdpNego*) malloc(sizeof(rdpNego));
 
-	if (nego != NULL)
+	if (nego)
 	{
 		ZeroMemory(nego, sizeof(rdpNego));
+
 		nego->transport = transport;
 		nego_init(nego);
 	}
@@ -980,6 +986,7 @@ rdpNego* nego_new(struct rdp_transport * transport)
 
 void nego_free(rdpNego* nego)
 {
+	free(nego->RoutingToken);
 	free(nego->cookie);
 	free(nego);
 }
@@ -1066,8 +1073,10 @@ void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
 
 void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength)
 {
-	nego->RoutingToken = RoutingToken;
+	free(nego->RoutingToken);
 	nego->RoutingTokenLength = RoutingTokenLength;
+	nego->RoutingToken = (BYTE*) malloc(nego->RoutingTokenLength);
+	CopyMemory(nego->RoutingToken, RoutingToken, nego->RoutingTokenLength);
 }
 
 /**

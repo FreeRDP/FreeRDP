@@ -37,7 +37,7 @@ else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR" EXPORT WinPRTargets)
 
 if(BUILD_TESTING)
 	add_subdirectory(test)

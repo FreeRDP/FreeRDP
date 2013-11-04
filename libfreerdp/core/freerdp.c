@@ -428,6 +428,9 @@ int freerdp_context_new(freerdp* instance)
  */
 void freerdp_context_free(freerdp* instance)
 {
+	if (!instance)
+		return;
+
 	if (!instance->context)
 		return;
 

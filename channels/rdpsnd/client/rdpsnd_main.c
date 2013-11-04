@@ -297,8 +297,15 @@ void rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 		Stream_Read_UINT16(s, format->wBitsPerSample); /* wBitsPerSample */
 		Stream_Read_UINT16(s, format->cbSize); /* cbSize */
 
-		format->data = (BYTE*) malloc(format->cbSize);
-		Stream_Read(s, format->data, format->cbSize);
+		if (format->cbSize > 0)
+		{
+			format->data = (BYTE*) malloc(format->cbSize);
+			Stream_Read(s, format->data, format->cbSize);
+		}
+		else
+		{
+			format->data = NULL;
+		}
 	}
 
 	rdpsnd_select_supported_audio_formats(rdpsnd);

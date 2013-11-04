@@ -73,48 +73,48 @@ void update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 	brush->style = style;
 }
 
-static void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cache_brush)
+static void update_gdi_cache_brush(rdpContext* context, CACHE_BRUSH_ORDER* cacheBrush)
 {
 	int length;
 	void* data = NULL;
 	rdpCache* cache = context->cache;
 
-	length = cache_brush->bpp * 64 / 8;
+	length = cacheBrush->bpp * 64 / 8;
 
 	data = malloc(length);
-	CopyMemory(data, cache_brush->data, length);
+	CopyMemory(data, cacheBrush->data, length);
 
-	brush_cache_put(cache->brush, cache_brush->index, data, cache_brush->bpp);
+	brush_cache_put(cache->brush, cacheBrush->index, data, cacheBrush->bpp);
 }
 
-void* brush_cache_get(rdpBrushCache* brush, UINT32 index, UINT32* bpp)
+void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 {
 	void* entry;
 
-	assert(brush);
+	assert(brushCache);
 	assert(bpp);
 
 	if (*bpp == 1)
 	{
-		if (index >= brush->maxMonoEntries)
+		if (index >= brushCache->maxMonoEntries)
 		{
 			fprintf(stderr, "invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
 			return NULL;
 		}
 
-		*bpp = brush->monoEntries[index].bpp;
-		entry = brush->monoEntries[index].entry;
+		*bpp = brushCache->monoEntries[index].bpp;
+		entry = brushCache->monoEntries[index].entry;
 	}
 	else
 	{
-		if (index >= brush->maxEntries)
+		if (index >= brushCache->maxEntries)
 		{
 			fprintf(stderr, "invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
 			return NULL;
 		}
 
-		*bpp = brush->entries[index].bpp;
-		entry = brush->entries[index].entry;
+		*bpp = brushCache->entries[index].bpp;
+		entry = brushCache->entries[index].entry;
 	}
 
 	if (entry == NULL)
@@ -126,45 +126,49 @@ void* brush_cache_get(rdpBrushCache* brush, UINT32 index, UINT32* bpp)
 	return entry;
 }
 
-void brush_cache_put(rdpBrushCache* brush, UINT32 index, void* entry, UINT32 bpp)
+void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT32 bpp)
 {
 	void* prevEntry;
 
 	if (bpp == 1)
 	{
-		if (index >= brush->maxMonoEntries)
+		if (index >= brushCache->maxMonoEntries)
 		{
 			fprintf(stderr, "invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
+
 			if (entry)
 				free(entry);
+
 			return;
 		}
 
-		prevEntry = brush->monoEntries[index].entry;
+		prevEntry = brushCache->monoEntries[index].entry;
 
 		if (prevEntry != NULL)
 			free(prevEntry);
 
-		brush->monoEntries[index].bpp = bpp;
-		brush->monoEntries[index].entry = entry;
+		brushCache->monoEntries[index].bpp = bpp;
+		brushCache->monoEntries[index].entry = entry;
 	}
 	else
 	{
-		if (index >= brush->maxEntries)
+		if (index >= brushCache->maxEntries)
 		{
 			fprintf(stderr, "invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
+
 			if (entry)
 				free(entry);
+
 			return;
 		}
 
-		prevEntry = brush->entries[index].entry;
+		prevEntry = brushCache->entries[index].entry;
 
 		if (prevEntry != NULL)
 			free(prevEntry);
 
-		brush->entries[index].bpp = bpp;
-		brush->entries[index].entry = entry;
+		brushCache->entries[index].bpp = bpp;
+		brushCache->entries[index].entry = entry;
 	}
 }
 
@@ -184,56 +188,57 @@ void brush_cache_register_callbacks(rdpUpdate* update)
 
 rdpBrushCache* brush_cache_new(rdpSettings* settings)
 {
-	rdpBrushCache* brush;
+	rdpBrushCache* brushCache;
 
-	brush = (rdpBrushCache*) malloc(sizeof(rdpBrushCache));
-	ZeroMemory(brush, sizeof(rdpBrushCache));
+	brushCache = (rdpBrushCache*) malloc(sizeof(rdpBrushCache));
 
-	if (brush != NULL)
+	if (brushCache)
 	{
-		brush->settings = settings;
+		ZeroMemory(brushCache, sizeof(rdpBrushCache));
 
-		brush->maxEntries = 64;
-		brush->maxMonoEntries = 64;
+		brushCache->settings = settings;
 
-		brush->entries = (BRUSH_ENTRY*) malloc(sizeof(BRUSH_ENTRY) * brush->maxEntries);
-		ZeroMemory(brush->entries, sizeof(BRUSH_ENTRY) * brush->maxEntries);
+		brushCache->maxEntries = 64;
+		brushCache->maxMonoEntries = 64;
 
-		brush->monoEntries = (BRUSH_ENTRY*) malloc(sizeof(BRUSH_ENTRY) * brush->maxMonoEntries);
-		ZeroMemory(brush->monoEntries, sizeof(BRUSH_ENTRY) * brush->maxMonoEntries);
+		brushCache->entries = (BRUSH_ENTRY*) malloc(sizeof(BRUSH_ENTRY) * brushCache->maxEntries);
+		ZeroMemory(brushCache->entries, sizeof(BRUSH_ENTRY) * brushCache->maxEntries);
+
+		brushCache->monoEntries = (BRUSH_ENTRY*) malloc(sizeof(BRUSH_ENTRY) * brushCache->maxMonoEntries);
+		ZeroMemory(brushCache->monoEntries, sizeof(BRUSH_ENTRY) * brushCache->maxMonoEntries);
 	}
 
-	return brush;
+	return brushCache;
 }
 
-void brush_cache_free(rdpBrushCache* brush)
+void brush_cache_free(rdpBrushCache* brushCache)
 {
 	int i;
 
-	if (brush != NULL)
+	if (brushCache)
 	{
-		if (brush->entries != NULL)
+		if (brushCache->entries)
 		{
-			for (i = 0; i < (int) brush->maxEntries; i++)
+			for (i = 0; i < (int) brushCache->maxEntries; i++)
 			{
-				if (brush->entries[i].entry != NULL)
-					free(brush->entries[i].entry);
+				if (brushCache->entries[i].entry != NULL)
+					free(brushCache->entries[i].entry);
 			}
 
-			free(brush->entries);
+			free(brushCache->entries);
 		}
 
-		if (brush->monoEntries != NULL)
+		if (brushCache->monoEntries)
 		{
-			for (i = 0; i < (int) brush->maxMonoEntries; i++)
+			for (i = 0; i < (int) brushCache->maxMonoEntries; i++)
 			{
-				if (brush->monoEntries[i].entry != NULL)
-					free(brush->monoEntries[i].entry);
+				if (brushCache->monoEntries[i].entry != NULL)
+					free(brushCache->monoEntries[i].entry);
 			}
 
-			free(brush->monoEntries);
+			free(brushCache->monoEntries);
 		}
 
-		free(brush);
+		free(brushCache);
 	}
 }

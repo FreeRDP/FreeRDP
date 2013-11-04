@@ -816,7 +816,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			 */
 			Stream_Rewind(s, 2);
 			rdp_recv_enhanced_security_redirection_packet(rdp, s);
-			return -1;
+			return 1; /* 1 = redirection */
 		}
 	}
 
@@ -976,7 +976,9 @@ void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking)
 
 int rdp_check_fds(rdpRdp* rdp)
 {
-	return transport_check_fds(&(rdp->transport));
+	int status;
+	status = transport_check_fds(rdp->transport);
+	return status;
 }
 
 /**
@@ -1028,6 +1030,46 @@ rdpRdp* rdp_new(rdpContext* context)
 	return rdp;
 }
 
+void rdp_reset(rdpRdp* rdp)
+{
+	rdpSettings* settings;
+
+	settings = rdp->settings;
+
+	crypto_rc4_free(rdp->rc4_decrypt_key);
+	rdp->rc4_decrypt_key = NULL;
+	crypto_rc4_free(rdp->rc4_encrypt_key);
+	rdp->rc4_encrypt_key = NULL;
+	crypto_des3_free(rdp->fips_encrypt);
+	rdp->fips_encrypt = NULL;
+	crypto_des3_free(rdp->fips_decrypt);
+	rdp->fips_decrypt = NULL;
+	crypto_hmac_free(rdp->fips_hmac);
+	rdp->fips_hmac = NULL;
+
+	mppc_enc_free(rdp->mppc_enc);
+	mppc_dec_free(rdp->mppc_dec);
+	mcs_free(rdp->mcs);
+	nego_free(rdp->nego);
+	license_free(rdp->license);
+	transport_free(rdp->transport);
+
+	free(settings->ServerRandom);
+	settings->ServerRandom = NULL;
+	free(settings->ServerCertificate);
+	settings->ServerCertificate = NULL;
+	free(settings->ClientAddress);
+	settings->ClientAddress = NULL;
+
+	rdp->transport = transport_new(rdp->settings);
+	rdp->license = license_new(rdp);
+	rdp->nego = nego_new(rdp->transport);
+	rdp->mcs = mcs_new(rdp->transport);
+	rdp->mppc_dec = mppc_dec_new();
+	rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
+	rdp->transport->layer = TRANSPORT_LAYER_TCP;
+}
+
 /**
  * Free RDP module.
  * @param rdp RDP module to be freed
@@ -1035,7 +1077,7 @@ rdpRdp* rdp_new(rdpContext* context)
 
 void rdp_free(rdpRdp* rdp)
 {
-	if (rdp != NULL)
+	if (rdp)
 	{
 		crypto_rc4_free(rdp->rc4_decrypt_key);
 		crypto_rc4_free(rdp->rc4_encrypt_key);
@@ -1043,6 +1085,7 @@ void rdp_free(rdpRdp* rdp)
 		crypto_des3_free(rdp->fips_decrypt);
 		crypto_hmac_free(rdp->fips_hmac);
 		freerdp_settings_free(rdp->settings);
+		freerdp_settings_free(rdp->settingsCopy);
 		extension_free(rdp->extension);
 		transport_free(rdp->transport);
 		license_free(rdp->license);

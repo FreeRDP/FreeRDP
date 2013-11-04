@@ -217,6 +217,8 @@ static void update_message_PatBlt(rdpContext* context, PATBLT_ORDER* patBlt)
 	wParam = (PATBLT_ORDER*) malloc(sizeof(PATBLT_ORDER));
 	CopyMemory(wParam, patBlt, sizeof(PATBLT_ORDER));
 
+	wParam->brush.data = (BYTE*) wParam->brush.p8x8;
+
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(PrimaryUpdate, PatBlt), (void*) wParam, NULL);
 }
@@ -271,6 +273,8 @@ static void update_message_MultiPatBlt(rdpContext* context, MULTI_PATBLT_ORDER* 
 
 	wParam = (MULTI_PATBLT_ORDER*) malloc(sizeof(MULTI_PATBLT_ORDER));
 	CopyMemory(wParam, multiPatBlt, sizeof(MULTI_PATBLT_ORDER));
+
+	wParam->brush.data = (BYTE*) wParam->brush.p8x8;
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(PrimaryUpdate, MultiPatBlt), (void*) wParam, NULL);
@@ -354,6 +358,8 @@ static void update_message_Mem3Blt(rdpContext* context, MEM3BLT_ORDER* mem3Blt)
 	wParam = (MEM3BLT_ORDER*) malloc(sizeof(MEM3BLT_ORDER));
 	CopyMemory(wParam, mem3Blt, sizeof(MEM3BLT_ORDER));
 
+	wParam->brush.data = (BYTE*) wParam->brush.p8x8;
+
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(PrimaryUpdate, Mem3Blt), (void*) wParam, NULL);
 }
@@ -376,6 +382,8 @@ static void update_message_GlyphIndex(rdpContext* context, GLYPH_INDEX_ORDER* gl
 	wParam = (GLYPH_INDEX_ORDER*) malloc(sizeof(GLYPH_INDEX_ORDER));
 	CopyMemory(wParam, glyphIndex, sizeof(GLYPH_INDEX_ORDER));
 
+	wParam->brush.data = (BYTE*) wParam->brush.p8x8;
+
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(PrimaryUpdate, GlyphIndex), (void*) wParam, NULL);
 }
@@ -397,6 +405,16 @@ static void update_message_FastGlyph(rdpContext* context, FAST_GLYPH_ORDER* fast
 
 	wParam = (FAST_GLYPH_ORDER*) malloc(sizeof(FAST_GLYPH_ORDER));
 	CopyMemory(wParam, fastGlyph, sizeof(FAST_GLYPH_ORDER));
+
+	if (wParam->cbData > 1)
+	{
+		wParam->glyphData.aj = (BYTE*) malloc(fastGlyph->glyphData.cb);
+		CopyMemory(wParam->glyphData.aj, fastGlyph->glyphData.aj, fastGlyph->glyphData.cb);
+	}
+	else
+	{
+		wParam->glyphData.aj = NULL;
+	}
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(PrimaryUpdate, FastGlyph), (void*) wParam, NULL);
@@ -426,6 +444,8 @@ static void update_message_PolygonCB(rdpContext* context, POLYGON_CB_ORDER* poly
 	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numPoints);
 	CopyMemory(wParam->points, polygonCB, sizeof(DELTA_POINT) * wParam->numPoints);
 
+	wParam->brush.data = (BYTE*) wParam->brush.p8x8;
+
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(PrimaryUpdate, PolygonCB), (void*) wParam, NULL);
 }
@@ -447,6 +467,8 @@ static void update_message_EllipseCB(rdpContext* context, ELLIPSE_CB_ORDER* elli
 
 	wParam = (ELLIPSE_CB_ORDER*) malloc(sizeof(ELLIPSE_CB_ORDER));
 	CopyMemory(wParam, ellipseCB, sizeof(ELLIPSE_CB_ORDER));
+
+	wParam->brush.data = (BYTE*) wParam->brush.p8x8;
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(PrimaryUpdate, EllipseCB), (void*) wParam, NULL);
@@ -994,6 +1016,7 @@ int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* msg, in
 #endif
 				}
 
+				free(wParam->rectangles);
 				free(wParam);
 			}
 			break;
@@ -1159,7 +1182,12 @@ int update_message_process_primary_update_class(rdpUpdateProxy* proxy, wMessage*
 
 		case PrimaryUpdate_FastGlyph:
 			IFCALL(proxy->FastGlyph, msg->context, (FAST_GLYPH_ORDER*) msg->wParam);
-			free(msg->wParam);
+			{
+				FAST_GLYPH_ORDER* wParam = (FAST_GLYPH_ORDER*) msg->wParam;
+				if (wParam->glyphData.aj)
+					free(wParam->glyphData.aj);
+				free(wParam);
+			}
 			break;
 
 		case PrimaryUpdate_PolygonSC:

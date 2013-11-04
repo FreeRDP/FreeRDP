@@ -1036,7 +1036,7 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	gdi->tile = gdi_bitmap_new_ex(gdi, 64, 64, 32, NULL);
 	gdi->image = gdi_bitmap_new_ex(gdi, 64, 64, 32, NULL);
 
-	if (cache == NULL)
+	if (!cache)
 	{
 		cache = cache_new(instance->settings);
 		instance->context->cache = cache;

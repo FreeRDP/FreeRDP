@@ -27,7 +27,7 @@ BOOL mf_peer_check_fds(freerdp_peer* client);
 
 void mf_peer_rfx_update(freerdp_peer* client);
 
-void mf_peer_context_new(freerdp_peer* client, mfPeerContext* context);
+int mf_peer_context_new(freerdp_peer* client, mfPeerContext* context);
 void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context);
 
 void mf_peer_init(freerdp_peer* client);

@@ -568,22 +568,19 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_PreconnectionBlob				1155
 #define FreeRDP_SendPreconnectionPdu				1156
 #define FreeRDP_RedirectionFlags				1216
-#define FreeRDP_LoadBalanceInfo					1217
-#define FreeRDP_LoadBalanceInfoLength				1218
-#define FreeRDP_RedirectionUsername				1219
-#define FreeRDP_RedirectionUsernameLength			1220
+#define FreeRDP_TargetNetAddress				1217
+#define FreeRDP_LoadBalanceInfo					1218
+#define FreeRDP_LoadBalanceInfoLength				1219
+#define FreeRDP_RedirectionUsername				1220
 #define FreeRDP_RedirectionDomain				1221
-#define FreeRDP_RedirectionDomainLength				1222
-#define FreeRDP_RedirectionPassword				1223
-#define FreeRDP_RedirectionPasswordLength			1224
-#define FreeRDP_RedirectionTargetFQDN				1225
-#define FreeRDP_RedirectionTargetFQDNLength			1226
-#define FreeRDP_RedirectionTargetNetBiosName			1227
-#define FreeRDP_RedirectionTargetNetBiosNameLength		1228
-#define FreeRDP_RedirectionTsvUrl				1229
-#define FreeRDP_RedirectionTsvUrlLength				1230
-#define FreeRDP_TargetNetAddressCount				1231
-#define FreeRDP_TargetNetAddresses				1232
+#define FreeRDP_RedirectionPassword				1222
+#define FreeRDP_RedirectionPasswordLength			1223
+#define FreeRDP_RedirectionTargetFQDN				1224
+#define FreeRDP_RedirectionTargetNetBiosName			1225
+#define FreeRDP_RedirectionTsvUrl				1226
+#define FreeRDP_RedirectionTsvUrlLength				1227
+#define FreeRDP_TargetNetAddressCount				1228
+#define FreeRDP_TargetNetAddresses				1229
 #define FreeRDP_Password51					1280
 #define FreeRDP_Password51Length				1281
 #define FreeRDP_KerberosKdc					1344
@@ -922,23 +919,20 @@ struct rdp_settings
 
 	/* Server Redirection */
 	ALIGN64 UINT32 RedirectionFlags; /* 1216 */
-	ALIGN64 BYTE* LoadBalanceInfo; /* 1217 */
-	ALIGN64 UINT32 LoadBalanceInfoLength; /* 1218 */
-	ALIGN64 BYTE* RedirectionUsername; /* 1219 */
-	ALIGN64 UINT32 RedirectionUsernameLength; /* 1220 */
-	ALIGN64 BYTE* RedirectionDomain; /* 1221 */
-	ALIGN64 UINT32 RedirectionDomainLength; /* 1222 */
-	ALIGN64 BYTE* RedirectionPassword; /* 1223 */
-	ALIGN64 UINT32 RedirectionPasswordLength; /* 1224 */
-	ALIGN64 BYTE* RedirectionTargetFQDN; /* 1225 */
-	ALIGN64 UINT32 RedirectionTargetFQDNLength; /* 1226 */
-	ALIGN64 BYTE* RedirectionTargetNetBiosName; /* 1227 */
-	ALIGN64 UINT32 RedirectionTargetNetBiosNameLength; /* 1228 */
-	ALIGN64 BYTE* RedirectionTsvUrl; /* 1229 */
-	ALIGN64 UINT32 RedirectionTsvUrlLength; /* 1230 */
-	ALIGN64 UINT32 TargetNetAddressCount; /* 1231 */
-	ALIGN64 TARGET_NET_ADDRESS* TargetNetAddresses; /* 1232 */
-	UINT64 padding1280[1280 - 1233]; /* 1233 */
+	ALIGN64 char* TargetNetAddress; /* 1217 */
+	ALIGN64 BYTE* LoadBalanceInfo; /* 1218 */
+	ALIGN64 UINT32 LoadBalanceInfoLength; /* 1219 */
+	ALIGN64 char* RedirectionUsername; /* 1220 */
+	ALIGN64 char* RedirectionDomain; /* 1221 */
+	ALIGN64 BYTE* RedirectionPassword; /* 1222 */
+	ALIGN64 UINT32 RedirectionPasswordLength; /* 1223 */
+	ALIGN64 char* RedirectionTargetFQDN; /* 1224 */
+	ALIGN64 char* RedirectionTargetNetBiosName; /* 1225 */
+	ALIGN64 BYTE* RedirectionTsvUrl; /* 1226 */
+	ALIGN64 UINT32 RedirectionTsvUrlLength; /* 1227 */
+	ALIGN64 UINT32 TargetNetAddressCount; /* 1228 */
+	ALIGN64 char** TargetNetAddresses; /* 1229 */
+	UINT64 padding1280[1280 - 1230]; /* 1230 */
 
 	/**
 	 * Security
@@ -1330,6 +1324,8 @@ FREERDP_API void freerdp_dynamic_channel_collection_add(rdpSettings* settings, A
 FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings, const char* name);
 FREERDP_API ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel);
 FREERDP_API void freerdp_dynamic_channel_collection_free(rdpSettings* settings);
+
+FREERDP_API void freerdp_target_net_addresses_free(rdpSettings* settings);
 
 FREERDP_API void freerdp_performance_flags_make(rdpSettings* settings);
 FREERDP_API void freerdp_performance_flags_split(rdpSettings* settings);

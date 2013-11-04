@@ -113,6 +113,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 {
 	char* spn;
 	int length;
+	rdpTls* tls = NULL;
 	freerdp* instance;
 	rdpSettings* settings;
 
@@ -138,8 +139,22 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 		(char*) credssp->identity.User, (char*) credssp->identity.Domain, (char*) credssp->identity.Password);
 #endif
 
-	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
-	CopyMemory(credssp->PublicKey.pvBuffer, credssp->transport->TlsIn->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
+	if (credssp->transport->layer == TRANSPORT_LAYER_TLS)
+	{
+		tls = credssp->transport->TlsIn;
+	}
+	else if (credssp->transport->layer == TRANSPORT_LAYER_TSG_TLS)
+	{
+		tls = credssp->transport->TsgTls;
+	}
+	else
+	{
+		fprintf(stderr, "Unknown NLA transport layer\n");
+		return 0;
+	}
+
+	sspi_SecBufferAlloc(&credssp->PublicKey, tls->PublicKeyLength);
+	CopyMemory(credssp->PublicKey.pvBuffer, tls->PublicKey, tls->PublicKeyLength);
 
 	length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->ServerHostname);
 
