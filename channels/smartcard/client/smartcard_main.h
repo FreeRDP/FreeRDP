@@ -29,6 +29,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/collections.h>
 
 #define BOOL PCSC_BOOL
 #include <PCSC/pcsclite.h>
@@ -106,14 +107,8 @@ struct _SMARTCARD_DEVICE
 	char* name;
 	char* path;
 
-	PSLIST_HEADER pIrpList;
-
 	HANDLE thread;
-	HANDLE irpEvent;
-	HANDLE stopEvent;
-
-	LIST* CompletionIds;
-	HANDLE CompletionIdsMutex;
+	wMessageQueue* IrpQueue;
 
 	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
@@ -126,7 +121,7 @@ typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
 #define DEBUG_SCARD(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-BOOL smartcard_async_op(IRP*);
-void smartcard_device_control(SMARTCARD_DEVICE*, IRP*);
+BOOL smartcard_async_op(IRP* irp);
+void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp);
 
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H */

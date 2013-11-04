@@ -35,6 +35,9 @@
 
 static void irp_free(IRP* irp)
 {
+	if (!irp)
+		return;
+
 	Stream_Free(irp->input, TRUE);
 	Stream_Free(irp->output, TRUE);
 
@@ -66,9 +69,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s)
 	device = devman_get_device_by_id(devman, DeviceId);
 
 	if (!device)
-	{
 		return NULL;
-	}
 
 	irp = (IRP*) _aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
 	ZeroMemory(irp, sizeof(IRP));

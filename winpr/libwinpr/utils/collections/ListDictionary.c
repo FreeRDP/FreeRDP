@@ -415,9 +415,10 @@ wListDictionary* ListDictionary_New(BOOL synchronized)
 		listDictionary->head = NULL;
 
 		InitializeCriticalSectionAndSpinCount(&listDictionary->lock, 4000);
+
+		ZeroMemory(&(listDictionary->object), sizeof(wObject));
 	}
 
-	ZeroMemory(&listDictionary->object, sizeof(wObject));
 	return listDictionary;
 }
 

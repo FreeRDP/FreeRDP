@@ -38,7 +38,7 @@
 
 #include "devman.h"
 
-static void devman_device_free(DEVICE* device)
+void devman_device_free(DEVICE* device)
 {
 	IFCALL(device->Free, device);
 }
