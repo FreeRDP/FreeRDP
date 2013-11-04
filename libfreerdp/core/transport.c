@@ -727,7 +727,6 @@ int transport_write(rdpTransport* transport, wStream* s)
 	return status;
 }
 
-
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
 	void* pfd;
@@ -955,7 +954,7 @@ static void* transport_client_thread(void* arg)
 {
 	DWORD status;
 	DWORD nCount;
-	HANDLE events[32];
+	HANDLE handles[8];
 	freerdp* instance;
 	rdpContext* context;
 	rdpTransport* transport;
@@ -969,21 +968,32 @@ static void* transport_client_thread(void* arg)
 	
 	context = instance->context;
 	assert(NULL != instance->context);
+	
+	nCount = 0;
+	handles[nCount++] = transport->stopEvent;
+	handles[nCount++] = transport->connectedEvent;
+	
+	status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+	
+	if (status == WAIT_OBJECT_0)
+	{
+		ExitThread(0);
+		return NULL;
+	}
 
 	while (1)
 	{
 		nCount = 0;
-		events[nCount++] = transport->stopEvent;
-		events[nCount] = transport->connectedEvent;
+		handles[nCount++] = transport->stopEvent;
 
-		status = WaitForMultipleObjects(nCount + 1, events, FALSE, INFINITE);
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (status == WAIT_OBJECT_0)
 			break;
 
-		transport_get_read_handles(transport, (HANDLE*) &events, &nCount);
+		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
 
-		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (status == WAIT_OBJECT_0)
 			break;
@@ -993,7 +1003,6 @@ static void* transport_client_thread(void* arg)
 	}
 
 	ExitThread(0);
-
 	return NULL;
 }
 
