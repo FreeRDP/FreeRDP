@@ -56,9 +56,7 @@ struct _DRIVE_DEVICE
 	wListDictionary* files;
 
 	HANDLE thread;
-	HANDLE irpEvent;
-	HANDLE stopEvent;
-	PSLIST_HEADER pIrpList;
+	wMessageQueue* IrpQueue;
 
 	DEVMAN* devman;
 };
@@ -576,77 +574,47 @@ static void drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
 	}
 }
 
-static void drive_process_irp_list(DRIVE_DEVICE* drive)
-{
-	IRP* irp;
-
-	while (1)
-	{
-		if (WaitForSingleObject(drive->stopEvent, 0) == WAIT_OBJECT_0)
-			break;
-
-		irp = (IRP*) InterlockedPopEntrySList(drive->pIrpList);
-
-		if (irp == NULL)
-			break;
-
-		drive_process_irp(drive, irp);
-	}
-}
-
 static void* drive_thread_func(void* arg)
 {
-	DWORD status;
-	DWORD nCount;
-	HANDLE handles[8];
-	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) arg;
+        IRP* irp;
+        wMessage message;
+        DRIVE_DEVICE* drive = (DRIVE_DEVICE*) arg;
 
-	nCount = 0;
-	handles[nCount++] = drive->stopEvent;
-	handles[nCount++] = drive->irpEvent;
+        while (1)
+        {
+                if (!MessageQueue_Wait(drive->IrpQueue))
+                        break;
 
-	while (1)
-	{
-		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+                if (!MessageQueue_Peek(drive->IrpQueue, &message, TRUE))
+                        break;
 
-		if (WaitForSingleObject(drive->stopEvent, 0) == WAIT_OBJECT_0)
-		{
-			break;
-		}
+                if (message.id == WMQ_QUIT)
+                        break;
 
-		ResetEvent(drive->irpEvent);
-		drive_process_irp_list(drive);
-	}
+                irp = (IRP*) message.wParam;
 
-	ExitThread(0);
-	return NULL;
+                if (irp)
+                	drive_process_irp(drive, irp);
+        }
+
+        ExitThread(0);
+        return NULL;
 }
 
 static void drive_irp_request(DEVICE* device, IRP* irp)
 {
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) device;
-
-	InterlockedPushEntrySList(drive->pIrpList, &(irp->ItemEntry));
-
-	SetEvent(drive->irpEvent);
+	MessageQueue_Post(drive->IrpQueue, NULL, 0, (void*) irp, NULL);
 }
 
 static void drive_free(DEVICE* device)
 {
-	IRP* irp;
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) device;
 
-	SetEvent(drive->stopEvent);
+	MessageQueue_PostQuit(drive->IrpQueue, 0);
 	WaitForSingleObject(drive->thread, INFINITE);
 
 	CloseHandle(drive->thread);
-	CloseHandle(drive->irpEvent);
-	CloseHandle(drive->stopEvent);
-
-	while ((irp = (IRP*) InterlockedPopEntrySList(drive->pIrpList)) != NULL)
-		irp->Discard(irp);
-
-	_aligned_free(drive->pIrpList);
 
 	ListDictionary_Free(drive->files);
 
@@ -693,11 +661,7 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 		drive->files = ListDictionary_New(TRUE);
 		ListDictionary_Object(drive->files)->fnObjectFree = (OBJECT_FREE_FN) drive_file_free;
 
-		drive->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
-		InitializeSListHead(drive->pIrpList);
-
-		drive->irpEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-		drive->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		drive->IrpQueue = MessageQueue_New();
 		drive->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) drive_thread_func, drive, CREATE_SUSPENDED, NULL);
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) drive);
