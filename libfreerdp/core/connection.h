@@ -52,9 +52,9 @@ BOOL rdp_client_redirect(rdpRdp* rdp);
 BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, wStream* s);
 BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, wStream* s);
 BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s);
-BOOL rdp_client_connect_license(rdpRdp* rdp, wStream* s);
-BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s);
-BOOL rdp_client_connect_finalize(rdpRdp* rdp);
+int rdp_client_connect_license(rdpRdp* rdp, wStream* s);
+int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s);
+int rdp_client_connect_finalize(rdpRdp* rdp);
 int rdp_client_transition_to_state(rdpRdp* rdp, int state);
 
 BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s);

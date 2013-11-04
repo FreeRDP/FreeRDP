@@ -50,8 +50,7 @@ struct rdp_redirection
 	char** TargetNetAddresses;
 };
 
-BOOL rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s);
-BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
+int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
 
 int rdp_redirection_apply_settings(rdpRdp* rdp);
 

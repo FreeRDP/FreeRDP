@@ -175,7 +175,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	rdpRedirection* redirection = rdp->redirection;
 
 	if (Stream_GetRemainingLength(s) < 12)
-		return FALSE;
+		return -1;
 
 	Stream_Read_UINT16(s, flags); /* flags (2 bytes) */
 	Stream_Read_UINT16(s, length); /* length (2 bytes) */
@@ -192,18 +192,18 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_TARGET_NET_ADDRESS)
 	{
 		if (!rdp_redirection_read_string(s, &(redirection->TargetNetAddress)))
-			return FALSE;
+			return -1;
 	}
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
 	{
 		if (Stream_GetRemainingLength(s) < 4)
-			return FALSE;
+			return -1;
 
 		Stream_Read_UINT32(s, redirection->LoadBalanceInfoLength);
 
 		if (Stream_GetRemainingLength(s) < redirection->LoadBalanceInfoLength)
-			return FALSE;
+			return -1;
 
 		redirection->LoadBalanceInfo = (BYTE*) malloc(redirection->LoadBalanceInfoLength);
 		Stream_Read(s, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
@@ -216,7 +216,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_USERNAME)
 	{
 		if (!rdp_redirection_read_string(s, &(redirection->Username)))
-			return FALSE;
+			return -1;
 
 		WLog_Print(redirection->log, WLOG_DEBUG, "Username: %s", redirection->Username);
 	}
@@ -233,7 +233,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	{
 		/* Note: length (hopefully) includes double zero termination */
 		if (Stream_GetRemainingLength(s) < 4)
-			return FALSE;
+			return -1;
 
 		Stream_Read_UINT32(s, redirection->PasswordLength);
 		redirection->Password = (BYTE*) malloc(redirection->PasswordLength);
@@ -248,7 +248,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_TARGET_FQDN)
 	{
 		if (!rdp_redirection_read_string(s, &(redirection->TargetFQDN)))
-			return FALSE;
+			return -1;
 
 		WLog_Print(redirection->log, WLOG_DEBUG, "TargetFQDN: %s", redirection->TargetFQDN);
 	}
@@ -256,7 +256,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_TARGET_NETBIOS_NAME)
 	{
 		if (!rdp_redirection_read_string(s, &(redirection->TargetNetBiosName)))
-			return FALSE;
+			return -1;
 
 		WLog_Print(redirection->log, WLOG_DEBUG, "TargetNetBiosName: %s", redirection->TargetNetBiosName);
 	}
@@ -264,12 +264,12 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_CLIENT_TSV_URL)
 	{
 		if (Stream_GetRemainingLength(s) < 4)
-			return FALSE;
+			return -1;
 
 		Stream_Read_UINT32(s, redirection->TsvUrlLength);
 
 		if (Stream_GetRemainingLength(s) < redirection->TsvUrlLength)
-			return FALSE;
+			return -1;
 
 		redirection->TsvUrl = (BYTE*) malloc(redirection->TsvUrlLength);
 		Stream_Read(s, redirection->TsvUrl, redirection->TsvUrlLength);
@@ -287,7 +287,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		UINT32 targetNetAddressesLength;
 
 		if (Stream_GetRemainingLength(s) < 8)
-			return FALSE;
+			return -1;
 
 		Stream_Read_UINT32(s, targetNetAddressesLength);
 
@@ -309,24 +309,37 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	}
 
 	if (!Stream_SafeSeek(s, 8)) /* pad (8 bytes) */
-		return FALSE;
+		return -1;
 
 	if (redirection->flags & LB_NOREDIRECT)
-		return TRUE;
-	else
-		return rdp_client_redirect(rdp);
+		return 0;
+
+	return rdp_client_redirect(rdp);
 }
 
-BOOL rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s)
+int rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s)
 {
-	return rdp_recv_server_redirection_pdu(rdp, s);
+	int status = 0;
+	status = rdp_recv_server_redirection_pdu(rdp, s);
+	return status;
 }
 
-BOOL rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)
+int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)
 {
-	return Stream_SafeSeek(s, 2) && /* pad2Octets (2 bytes) */
-		rdp_recv_server_redirection_pdu(rdp, s) &&
-		Stream_SafeSeek(s, 1);	/* pad2Octets (1 byte) */
+	int status = 0;
+
+	if (!Stream_SafeSeek(s, 2)) /* pad2Octets (2 bytes) */
+		return -1;
+
+	status = rdp_recv_server_redirection_pdu(rdp, s);
+
+	if (status < 0)
+		return status;
+
+	if (!Stream_SafeSeek(s, 1)) /* pad2Octets (1 byte) */
+		return -1;
+
+	return status;
 }
 
 rdpRedirection* redirection_new()

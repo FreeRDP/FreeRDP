@@ -969,6 +969,8 @@ static void* transport_client_thread(void* arg)
 	context = instance->context;
 	assert(NULL != instance->context);
 	
+	WLog_Print(transport->log, WLOG_DEBUG, "Starting transport thread");
+
 	nCount = 0;
 	handles[nCount++] = transport->stopEvent;
 	handles[nCount++] = transport->connectedEvent;
@@ -977,9 +979,12 @@ static void* transport_client_thread(void* arg)
 	
 	if (status == WAIT_OBJECT_0)
 	{
+		WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
 		ExitThread(0);
 		return NULL;
 	}
+
+	WLog_Print(transport->log, WLOG_DEBUG, "Asynchronous transport activated");
 
 	while (1)
 	{
@@ -996,6 +1001,8 @@ static void* transport_client_thread(void* arg)
 		if (!freerdp_check_fds(instance))
 			break;
 	}
+
+	WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
 
 	ExitThread(0);
 	return NULL;

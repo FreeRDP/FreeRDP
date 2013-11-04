@@ -672,18 +672,18 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 	return 0;
 }
 
-BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
+int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT16 type;
 	UINT16 length;
 	UINT16 channelId;
 
 	if (!rdp_read_share_control_header(s, &length, &type, &channelId))
-		return FALSE;
+		return -1;
 
 	if (type == PDU_TYPE_DATA)
 	{
-		return (rdp_recv_data_pdu(rdp, s) < 0) ? FALSE : TRUE;
+		return rdp_recv_data_pdu(rdp, s);
 	}
 	else if (type == PDU_TYPE_SERVER_REDIRECTION)
 	{
@@ -691,7 +691,7 @@ BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
 	}
 	else
 	{
-		return FALSE;
+		return -1;
 	}
 }
 
@@ -815,8 +815,8 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			 *  - no share control header, nor the 2 byte pad
 			 */
 			Stream_Rewind(s, 2);
-			rdp_recv_enhanced_security_redirection_packet(rdp, s);
-			return 1; /* 1 = redirection */
+
+			return rdp_recv_enhanced_security_redirection_packet(rdp, s);
 		}
 	}
 
@@ -854,8 +854,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 					break;
 
 				case PDU_TYPE_SERVER_REDIRECTION:
-					if (!rdp_recv_enhanced_security_redirection_packet(rdp, s))
-						return -1;
+					return rdp_recv_enhanced_security_redirection_packet(rdp, s);
 					break;
 
 				default:
@@ -928,13 +927,11 @@ static int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_LICENSING:
-			if (!rdp_client_connect_license(rdp, s))
-				status = -1;
+			status = rdp_client_connect_license(rdp, s);
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
-			if (!rdp_client_connect_demand_active(rdp, s))
-				status = -1;
+			status = rdp_client_connect_demand_active(rdp, s);
 			break;
 
 		case CONNECTION_STATE_FINALIZATION:

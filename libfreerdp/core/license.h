@@ -200,7 +200,7 @@ struct rdp_license
 	SCOPE_LIST* ScopeList;
 };
 
-BOOL license_recv(rdpLicense* license, wStream* s);
+int license_recv(rdpLicense* license, wStream* s);
 BOOL license_send(rdpLicense* license, wStream* s, BYTE type);
 wStream* license_send_stream_init(rdpLicense* license);
 
