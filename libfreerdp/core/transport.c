@@ -977,7 +977,7 @@ static void* transport_client_thread(void* arg)
 	
 	status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 	
-	if (status == WAIT_OBJECT_0)
+	if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
 	{
 		WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
 		ExitThread(0);
@@ -995,7 +995,7 @@ static void* transport_client_thread(void* arg)
 
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
-		if (status == WAIT_OBJECT_0)
+		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
 		if (!freerdp_check_fds(instance))
