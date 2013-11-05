@@ -481,6 +481,7 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, BYTE* buffer, size_t si
 
 BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 {
+	BOOL status;
 	BYTE* buffer;
 	FILE* fp = NULL;
 	size_t read_size;
@@ -521,7 +522,11 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 	buffer[file_size] = '\0';
 	buffer[file_size + 1] = '\0';
 
-	return freerdp_client_parse_rdp_file_buffer(file, buffer, file_size);
+	status = freerdp_client_parse_rdp_file_buffer(file, buffer, file_size);
+
+	free(buffer);
+
+	return status;
 }
 
 #define WRITE_ALL_SETTINGS TRUE
@@ -966,6 +971,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	return TRUE;
 }
 
+void freerdp_client_file_string_check_free(LPSTR str)
+{
+	if (~((size_t) str))
+		free(str);
+}
+
 rdpFile* freerdp_client_rdp_file_new()
 {
 	rdpFile* file;
@@ -999,6 +1010,26 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 
 			free(file->argv);
 		}
+
+		freerdp_client_file_string_check_free(file->Username);
+		freerdp_client_file_string_check_free(file->Domain);
+		freerdp_client_file_string_check_free(file->FullAddress);
+		freerdp_client_file_string_check_free(file->AlternateFullAddress);
+		freerdp_client_file_string_check_free(file->UsbDevicesToRedirect);
+		freerdp_client_file_string_check_free(file->LoadBalanceInfo);
+		freerdp_client_file_string_check_free(file->RemoteApplicationName);
+		freerdp_client_file_string_check_free(file->RemoteApplicationIcon);
+		freerdp_client_file_string_check_free(file->RemoteApplicationProgram);
+		freerdp_client_file_string_check_free(file->RemoteApplicationFile);
+		freerdp_client_file_string_check_free(file->RemoteApplicationGuid);
+		freerdp_client_file_string_check_free(file->RemoteApplicationCmdLine);
+		freerdp_client_file_string_check_free(file->AlternateShell);
+		freerdp_client_file_string_check_free(file->ShellWorkingDirectory);
+		freerdp_client_file_string_check_free(file->GatewayHostname);
+		freerdp_client_file_string_check_free(file->KdcProxyName);
+		freerdp_client_file_string_check_free(file->DrivesToRedirect);
+		freerdp_client_file_string_check_free(file->DevicesToRedirect);
+		freerdp_client_file_string_check_free(file->WinPosStr);
 
 		free(file);
 	}
