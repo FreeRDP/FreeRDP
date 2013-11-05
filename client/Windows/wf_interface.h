@@ -63,6 +63,7 @@ struct wf_pointer
 };
 typedef struct wf_pointer wfPointer;
 
+typedef struct cliprdr_context cliprdrContext;
 struct wf_context
 {
 	rdpContext context;
@@ -130,6 +131,7 @@ struct wf_context
 	int yMinScroll;       // minimum vertical scroll value
 	int yCurrentScroll;   // current vertical scroll value
 	int yMaxScroll;       // maximum vertical scroll value
+	cliprdrContext *cliprdr_context;
 };
 typedef struct wf_context wfContext;
 
