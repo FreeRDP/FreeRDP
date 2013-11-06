@@ -17,6 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/version.h)
+
 file(GLOB FREERDP_HEADERS "freerdp/*.h")
 install(FILES ${FREERDP_HEADERS} DESTINATION include/freerdp COMPONENT headers)
 

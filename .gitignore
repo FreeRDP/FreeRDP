@@ -15,6 +15,7 @@ DartConfiguration.tcl
 _CPack_Packages
 external/*
 !external/README
+include/freerdp/version.h
 
 # Packages
 *.zip
