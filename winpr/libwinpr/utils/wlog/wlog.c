@@ -261,7 +261,7 @@ int WLog_ParseName(wLog* log, LPCSTR name)
 	return 0;
 }
 
-wLog* WLog_New(LPCSTR name)
+wLog* WLog_New(LPCSTR name , wLog* rootLogger)
 {
 	wLog* log;
 	char* env;
@@ -284,7 +284,12 @@ wLog* WLog_New(LPCSTR name)
 
 		log->Appender = NULL;
 
-		log->Level = WLOG_WARN;
+		if (rootLogger) {
+			log->Level = rootLogger->Level;
+		} else {
+			log->Level = WLOG_WARN;
+		}
+
 
 		nSize = GetEnvironmentVariableA("WLOG_LEVEL", NULL, 0);
 
@@ -351,7 +356,7 @@ wLog* WLog_GetRoot()
 
 	if (!g_RootLog)
 	{
-		g_RootLog = WLog_New("");
+		g_RootLog = WLog_New("",NULL);
 		g_RootLog->IsRoot = TRUE;
 
 		logAppenderType = WLOG_APPENDER_CONSOLE;
@@ -430,7 +435,7 @@ wLog* WLog_Get(LPCSTR name)
 
 	if (!log)
 	{
-		log = WLog_New(name);
+		log = WLog_New(name,root);
 		WLog_AddChild(root, log);
 	}
 
