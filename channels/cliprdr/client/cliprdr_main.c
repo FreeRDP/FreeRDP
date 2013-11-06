@@ -110,6 +110,7 @@ static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 {
 	UINT32 version;
 	UINT32 generalFlags;
+	RDP_CB_CLIP_CAPS *caps_event;
 
 	Stream_Read_UINT32(s, version); /* version (4 bytes) */
 	Stream_Read_UINT32(s, generalFlags); /* generalFlags (4 bytes) */
@@ -119,6 +120,9 @@ static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 #ifdef WITH_DEBUG_CLIPRDR
 	cliprdr_print_general_capability_flags(generalFlags);
 #endif
+
+	caps_event = (RDP_CB_CLIP_CAPS *)freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_ClipCaps, NULL, NULL);
+	caps_event->capabilities = generalFlags;
 
 	if (generalFlags & CB_USE_LONG_FORMAT_NAMES)
 		cliprdr->use_long_format_names = TRUE;
@@ -133,6 +137,9 @@ static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 		cliprdr->can_lock_clipdata = TRUE;
 
 	cliprdr->received_caps = TRUE;
+
+	svc_plugin_send_event((rdpSvcPlugin *)cliprdr, (wMessage *)caps_event);
+
 }
 
 static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT16 length, UINT16 flags)
@@ -188,14 +195,14 @@ static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 
 static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UINT16 length, UINT16 flags)
 {
-	wMessage* event;
+	RDP_CB_MONITOR_READY_EVENT* event;
 
 	if (cliprdr->received_caps)
 		cliprdr_send_clip_caps(cliprdr);
 
-	event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_MonitorReady, NULL, NULL);
+	event = (RDP_CB_MONITOR_READY_EVENT *)freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_MonitorReady, NULL, NULL);
 
-	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, event);
+	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage *)event);
 }
 
 static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)

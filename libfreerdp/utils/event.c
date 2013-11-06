@@ -67,6 +67,12 @@ static wMessage* freerdp_cliprdr_event_new(UINT16 event_type)
 			ZeroMemory(event.v, sizeof(RDP_CB_DATA_RESPONSE_EVENT));
 			event.m->id = MakeMessageId(CliprdrChannel, DataResponse);
 			break;
+
+		case CliprdrChannel_ClipCaps:
+			event.v = malloc(sizeof(RDP_CB_CLIP_CAPS));
+			ZeroMemory(event.v, sizeof(RDP_CB_CLIP_CAPS));
+			event.m->id = MakeMessageId(CliprdrChannel, ClipCaps);
+			break;
 	}
 
 	return event.v;
