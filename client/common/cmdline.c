@@ -33,6 +33,7 @@
 #include <freerdp/locale/keyboard.h>
 
 #include <freerdp/client/cmdline.h>
+#include <freerdp/version.h>
 
 #include "compatibility.h"
 
