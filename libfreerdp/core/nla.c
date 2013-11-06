@@ -939,12 +939,33 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp)
 {
 	wStream* s;
 	int length;
+	int DomainLength;
+	int UserLength;
+	int PasswordLength;
+
+	DomainLength = credssp->identity.DomainLength;
+	UserLength = credssp->identity.UserLength;
+	PasswordLength = credssp->identity.PasswordLength;
+
+	if (credssp->settings->RestrictedAdminModeRequired)
+	{
+		credssp->identity.DomainLength = 0;
+		credssp->identity.UserLength = 0;
+		credssp->identity.PasswordLength = 0;
+	}
 
 	length = ber_sizeof_sequence(credssp_sizeof_ts_credentials(credssp));
 	sspi_SecBufferAlloc(&credssp->ts_credentials, length);
 
 	s = Stream_New(credssp->ts_credentials.pvBuffer, length);
 	credssp_write_ts_credentials(credssp, s);
+
+	if (credssp->settings->RestrictedAdminModeRequired)
+	{
+		credssp->identity.DomainLength = DomainLength;
+		credssp->identity.UserLength = UserLength;
+		credssp->identity.PasswordLength = PasswordLength;
+	}
 
 	Stream_Free(s, FALSE);
 }

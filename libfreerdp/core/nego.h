@@ -84,6 +84,9 @@ enum RDP_NEG_MSG
 #define PRECONNECTION_PDU_V1					1
 #define PRECONNECTION_PDU_V2					2
 
+#define RESTRICTED_ADMIN_MODE_REQUIRED				0x01
+#define CORRELATION_INFO_PRESENT				0x08
+
 struct rdp_nego
 {
 	int port;
@@ -106,6 +109,7 @@ struct rdp_nego
 	UINT32 requested_protocols;
 	BOOL NegotiateSecurityLayer;
 	BYTE enabled_protocols[16];
+	BOOL RestrictedAdminModeRequired;
 
 	rdpTransport* transport;
 };
@@ -137,6 +141,7 @@ void nego_free(rdpNego* nego);
 void nego_init(rdpNego* nego);
 void nego_set_target(rdpNego* nego, char* hostname, int port);
 void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer_enabled);
+void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdminModeRequired);
 void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp);
 void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
 void nego_enable_nla(rdpNego* nego, BOOL enable_nla);

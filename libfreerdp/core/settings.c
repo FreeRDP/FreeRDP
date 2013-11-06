@@ -223,6 +223,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->TlsSecurity = TRUE;
 		settings->RdpSecurity = TRUE;
 		settings->NegotiateSecurityLayer = TRUE;
+		settings->RestrictedAdminModeRequired = FALSE;
 		settings->MstscCookieMode = FALSE;
 		settings->CookieMaxLength = DEFAULT_COOKIE_MAX_LENGTH;
 		settings->ClientBuild = 2600;
@@ -614,6 +615,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->ExtSecurity = settings->ExtSecurity; /* 1091 */
 		_settings->Authentication = settings->Authentication; /* 1092 */
 		_settings->NegotiateSecurityLayer = settings->NegotiateSecurityLayer; /* 1096 */
+		_settings->RestrictedAdminModeRequired = settings->RestrictedAdminModeRequired; /* 1097 */
 		_settings->MstscCookieMode = settings->MstscCookieMode; /* 1152 */
 		_settings->SendPreconnectionPdu = settings->SendPreconnectionPdu; /* 1156 */
 		_settings->IgnoreCertificate = settings->IgnoreCertificate; /* 1408 */
