@@ -191,7 +191,7 @@ BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id);
 
 int rdp_send_channel_data(rdpRdp* rdp, int channel_id, BYTE* data, int size);
 
-BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
+int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
 
 void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking);
 int rdp_check_fds(rdpRdp* rdp);

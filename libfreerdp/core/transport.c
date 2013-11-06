@@ -727,7 +727,6 @@ int transport_write(rdpTransport* transport, wStream* s)
 	return status;
 }
 
-
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
 	void* pfd;
@@ -955,7 +954,7 @@ static void* transport_client_thread(void* arg)
 {
 	DWORD status;
 	DWORD nCount;
-	HANDLE events[32];
+	HANDLE handles[8];
 	freerdp* instance;
 	rdpContext* context;
 	rdpTransport* transport;
@@ -969,31 +968,43 @@ static void* transport_client_thread(void* arg)
 	
 	context = instance->context;
 	assert(NULL != instance->context);
+	
+	WLog_Print(transport->log, WLOG_DEBUG, "Starting transport thread");
+
+	nCount = 0;
+	handles[nCount++] = transport->stopEvent;
+	handles[nCount++] = transport->connectedEvent;
+	
+	status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+	
+	if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+	{
+		WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
+		ExitThread(0);
+		return NULL;
+	}
+
+	WLog_Print(transport->log, WLOG_DEBUG, "Asynchronous transport activated");
 
 	while (1)
 	{
 		nCount = 0;
-		events[nCount++] = transport->stopEvent;
-		events[nCount] = transport->connectedEvent;
+		handles[nCount++] = transport->stopEvent;
 
-		status = WaitForMultipleObjects(nCount + 1, events, FALSE, INFINITE);
+		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
 
-		if (status == WAIT_OBJECT_0)
-			break;
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
-		transport_get_read_handles(transport, (HANDLE*) &events, &nCount);
-
-		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
-
-		if (status == WAIT_OBJECT_0)
+		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
 		if (!freerdp_check_fds(instance))
 			break;
 	}
 
-	ExitThread(0);
+	WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
 
+	ExitThread(0);
 	return NULL;
 }
 

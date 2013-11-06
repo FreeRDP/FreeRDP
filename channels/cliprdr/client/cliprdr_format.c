@@ -227,6 +227,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 		cb_event->raw_format_data = (BYTE*) malloc(dataLen);
 		memcpy(cb_event->raw_format_data, Stream_Pointer(s), dataLen);
 		cb_event->raw_format_data_size = dataLen;
+		cb_event->raw_format_unicode = (msgFlags & CB_ASCII_NAMES) ? FALSE : TRUE;
 	}
 
 	if (cliprdr->use_long_format_names)

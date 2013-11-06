@@ -99,7 +99,24 @@ typedef struct _CLIPRDR_FORMAT_NAME CLIPRDR_FORMAT_NAME;
 /**
  * Clipboard Events
  */
-typedef wMessage RDP_CB_MONITOR_READY_EVENT;
+#define CAPS_USE_LONG_FORMAT_NAMES		0x00000002
+#define CAPS_STREAM_FILECLIP_ENABLED	0x00000004
+#define CAPS_FILECLIP_NO_FILE_PATH		0x00000008
+#define CAPS_CAN_LOCK_CLIPDATA			0x00000010
+
+struct _RDP_CB_CLIP_CAPS
+{
+	wMessage event;
+	UINT32 capabilities;
+};
+typedef struct _RDP_CB_CLIP_CAPS RDP_CB_CLIP_CAPS;
+
+struct _RDP_CB_MONITOR_READY_EVENT
+{
+	wMessage event;
+	UINT32 capabilities;
+};
+typedef struct _RDP_CB_MONITOR_READY_EVENT RDP_CB_MONITOR_READY_EVENT;
 
 struct _RDP_CB_FORMAT_LIST_EVENT
 {
@@ -108,6 +125,7 @@ struct _RDP_CB_FORMAT_LIST_EVENT
 	UINT16 num_formats;
 	BYTE* raw_format_data;
 	UINT32 raw_format_data_size;
+	BOOL raw_format_unicode;
 };
 typedef struct _RDP_CB_FORMAT_LIST_EVENT RDP_CB_FORMAT_LIST_EVENT;
 

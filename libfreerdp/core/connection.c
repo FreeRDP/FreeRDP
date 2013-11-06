@@ -228,6 +228,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_set_preconnection_blob(rdp->nego, settings->PreconnectionBlob);
 
 	nego_set_negotiation_enabled(rdp->nego, settings->NegotiateSecurityLayer);
+	nego_set_restricted_admin_mode_required(rdp->nego, settings->RestrictedAdminModeRequired);
 
 	nego_enable_rdp(rdp->nego, settings->RdpSecurity);
 	nego_enable_tls(rdp->nego, settings->TlsSecurity);
@@ -598,15 +599,19 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 	return TRUE;
 }
 
-BOOL rdp_client_connect_license(rdpRdp* rdp, wStream* s)
+int rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 {
-	if (!license_recv(rdp->license, s))
-		return FALSE;
+	int status;
+
+	status = license_recv(rdp->license, s);
+
+	if (status < 0)
+		return status;
 
 	if (rdp->license->state == LICENSE_STATE_ABORTED)
 	{
 		fprintf(stderr, "license connection sequence aborted.\n");
-		return FALSE;
+		return -1;
 	}
 
 	if (rdp->license->state == LICENSE_STATE_COMPLETED)
@@ -614,10 +619,10 @@ BOOL rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 		rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
 	}
 
-	return TRUE;
+	return 0;
 }
 
-BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
+int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 {
 	BYTE* mark;
 	UINT16 width;
@@ -631,24 +636,23 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	if (!rdp_recv_demand_active(rdp, s))
 	{
 		UINT16 channelId;
+
 		Stream_SetPointer(s, mark);
 		rdp_recv_get_active_header(rdp, s, &channelId);
+
 		/* Was Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 		 * but the headers aren't always that length,
 		 * so that could result in a bad offset.
 		 */
 
-		if (!rdp_recv_out_of_sequence_pdu(rdp, s))
-			return FALSE;
-
-		return TRUE;
+		return rdp_recv_out_of_sequence_pdu(rdp, s);
 	}
 
 	if (rdp->disconnect)
-		return TRUE;
+		return 0;
 
 	if (!rdp_send_confirm_active(rdp))
-		return FALSE;
+		return -1;
 
 	input_register_client_callbacks(rdp->input);
 
@@ -666,7 +670,7 @@ BOOL rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	return rdp_client_connect_finalize(rdp);
 }
 
-BOOL rdp_client_connect_finalize(rdpRdp* rdp)
+int rdp_client_connect_finalize(rdpRdp* rdp)
 {
 	/**
 	 * [MS-RDPBCGR] 1.3.1.1 - 8.
@@ -675,13 +679,13 @@ BOOL rdp_client_connect_finalize(rdpRdp* rdp)
 	 */
 
 	if (!rdp_send_client_synchronize_pdu(rdp))
-		return FALSE;
+		return -1;
 
 	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_COOPERATE))
-		return FALSE;
+		return -1;
 
 	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL))
-		return FALSE;
+		return -1;
 	/**
 	 * [MS-RDPBCGR] 2.2.1.17
 	 * Client persistent key list must be sent if a bitmap is
@@ -692,13 +696,13 @@ BOOL rdp_client_connect_finalize(rdpRdp* rdp)
 	if (!rdp->deactivation_reactivation && rdp->settings->BitmapCachePersistEnabled)
 	{
 		if (!rdp_send_client_persistent_key_list_pdu(rdp))
-			return FALSE;
+			return -1;
 	}
 
 	if (!rdp_send_client_font_list_pdu(rdp, FONTLIST_FIRST | FONTLIST_LAST))
-		return FALSE;
+		return -1;
 
-	return TRUE;
+	return 0;
 }
 
 int rdp_client_transition_to_state(rdpRdp* rdp, int state)

@@ -669,6 +669,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	wStream* s;
 	int length;
 	int bm, em;
+	BYTE flags = 0;
 	int cookie_length;
 
 	s = Stream_New(NULL, 512);
@@ -703,8 +704,12 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	if ((nego->requested_protocols > PROTOCOL_RDP) || (nego->sendNegoData))
 	{
 		/* RDP_NEG_DATA must be present for TLS and NLA */
+
+		if (nego->RestrictedAdminModeRequired)
+			flags |= RESTRICTED_ADMIN_MODE_REQUIRED;
+
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_REQ);
-		Stream_Write_UINT8(s, 0); /* flags, must be set to zero */
+		Stream_Write_UINT8(s, flags);
 		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
 		Stream_Write_UINT32(s, nego->requested_protocols); /* requestedProtocols */
 		length += 8;
@@ -1017,6 +1022,18 @@ void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer)
 }
 
 /**
+ * Enable restricted admin mode.
+ * @param nego pointer to the negotiation structure
+ * @param enable_restricted whether to enable security layer negotiation (TRUE for enabled, FALSE for disabled)
+ */
+
+void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdminModeRequired)
+{
+	DEBUG_NEGO("Enabling restricted admin mode: %s", RestrictedAdminModeRequired ? "TRUE" : "FALSE");
+	nego->RestrictedAdminModeRequired = RestrictedAdminModeRequired;
+}
+
+/**
  * Enable RDP security protocol.
  * @param nego pointer to the negotiation structure
  * @param enable_rdp whether to enable normal RDP protocol (TRUE for enabled, FALSE for disabled)
@@ -1033,12 +1050,12 @@ void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp)
  * @param nego pointer to the negotiation structure
  * @param enable_tls whether to enable TLS + RDP protocol (TRUE for enabled, FALSE for disabled)
  */
+
 void nego_enable_tls(rdpNego* nego, BOOL enable_tls)
 {
 	DEBUG_NEGO("Enabling TLS security: %s", enable_tls ? "TRUE" : "FALSE");
 	nego->enabled_protocols[PROTOCOL_TLS] = enable_tls;
 }
-
 
 /**
  * Enable NLA security protocol.

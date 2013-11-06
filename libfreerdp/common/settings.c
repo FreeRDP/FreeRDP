@@ -649,6 +649,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->NegotiateSecurityLayer;
 			break;
 
+		case FreeRDP_RestrictedAdminModeRequired:
+			return settings->RestrictedAdminModeRequired;
+			break;
+
 		case FreeRDP_MstscCookieMode:
 			return settings->MstscCookieMode;
 			break;
@@ -1107,6 +1111,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_NegotiateSecurityLayer:
 			settings->NegotiateSecurityLayer = param;
+			break;
+
+		case FreeRDP_RestrictedAdminModeRequired:
+			settings->RestrictedAdminModeRequired = param;
 			break;
 
 		case FreeRDP_MstscCookieMode:
@@ -2088,6 +2096,10 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 			return settings->Domain;
 			break;
 
+		case FreeRDP_PasswordHash:
+			return settings->PasswordHash;
+			break;
+
 		case FreeRDP_ClientHostname:
 			return settings->ClientHostname;
 			break;
@@ -2237,154 +2249,197 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 	switch (id)
 	{
 		case FreeRDP_ServerHostname:
+			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(param);
 			break;
 
 		case FreeRDP_Username:
+			free(settings->Username);
 			settings->Username = _strdup(param);
 			break;
 
 		case FreeRDP_Password:
+			free(settings->Password);
 			settings->Password = _strdup(param);
 			break;
 
 		case FreeRDP_Domain:
+			free(settings->Domain);
 			settings->Domain = _strdup(param);
 			break;
 
+		case FreeRDP_PasswordHash:
+			free(settings->PasswordHash);
+			settings->PasswordHash = _strdup(param);
+			break;
+
 		case FreeRDP_ClientHostname:
+			free(settings->ClientHostname);
 			settings->ClientHostname = _strdup(param);
 			break;
 
 		case FreeRDP_ClientProductId:
+			free(settings->ClientProductId);
 			settings->ClientProductId = _strdup(param);
 			break;
 
 		case FreeRDP_AlternateShell:
+			free(settings->AlternateShell);
 			settings->AlternateShell = _strdup(param);
 			break;
 
 		case FreeRDP_ShellWorkingDirectory:
+			free(settings->ShellWorkingDirectory);
 			settings->ShellWorkingDirectory = _strdup(param);
 			break;
 
 		case FreeRDP_ClientAddress:
+			free(settings->ClientAddress);
 			settings->ClientAddress = _strdup(param);
 			break;
 
 		case FreeRDP_ClientDir:
+			free(settings->ClientDir);
 			settings->ClientDir = _strdup(param);
 			break;
 
 		case FreeRDP_DynamicDSTTimeZoneKeyName:
+			free(settings->DynamicDSTTimeZoneKeyName);
 			settings->DynamicDSTTimeZoneKeyName = _strdup(param);
 			break;
 
 		case FreeRDP_PreconnectionBlob:
+			free(settings->PreconnectionBlob);
 			settings->PreconnectionBlob = _strdup(param);
 			break;
 
 		case FreeRDP_KerberosKdc:
+			free(settings->KerberosKdc);
 			settings->KerberosKdc = _strdup(param);
 			break;
 
 		case FreeRDP_KerberosRealm:
+			free(settings->KerberosRealm);
 			settings->KerberosRealm = _strdup(param);
 			break;
 
 		case FreeRDP_CertificateName:
+			free(settings->CertificateName);
 			settings->CertificateName = _strdup(param);
 			break;
 
 		case FreeRDP_CertificateFile:
+			free(settings->CertificateFile);
 			settings->CertificateFile = _strdup(param);
 			break;
 
 		case FreeRDP_PrivateKeyFile:
+			free(settings->PrivateKeyFile);
 			settings->PrivateKeyFile = _strdup(param);
 			break;
 
 		case FreeRDP_RdpKeyFile:
+			free(settings->RdpKeyFile);
 			settings->RdpKeyFile = _strdup(param);
 			break;
 
 		case FreeRDP_WindowTitle:
+			free(settings->WindowTitle);
 			settings->WindowTitle = _strdup(param);
 			break;
 
 		case FreeRDP_ComputerName:
+			free(settings->ComputerName);
 			settings->ComputerName = _strdup(param);
 			break;
 
 		case FreeRDP_ConnectionFile:
+			free(settings->ConnectionFile);
 			settings->ConnectionFile = _strdup(param);
 			break;
 
 		case FreeRDP_HomePath:
+			free(settings->HomePath);
 			settings->HomePath = _strdup(param);
 			break;
 
 		case FreeRDP_ConfigPath:
+			free(settings->ConfigPath);
 			settings->ConfigPath = _strdup(param);
 			break;
 
 		case FreeRDP_CurrentPath:
+			free(settings->CurrentPath);
 			settings->CurrentPath = _strdup(param);
 			break;
 
 		case FreeRDP_DumpRemoteFxFile:
+			free(settings->DumpRemoteFxFile);
 			settings->DumpRemoteFxFile = _strdup(param);
 			break;
 
 		case FreeRDP_PlayRemoteFxFile:
+			free(settings->PlayRemoteFxFile);
 			settings->PlayRemoteFxFile = _strdup(param);
 			break;
 
 		case FreeRDP_GatewayHostname:
+			free(settings->GatewayHostname);
 			settings->GatewayHostname = _strdup(param);
 			break;
 
 		case FreeRDP_GatewayUsername:
+			free(settings->GatewayUsername);
 			settings->GatewayUsername = _strdup(param);
 			break;
 
 		case FreeRDP_GatewayPassword:
+			free(settings->GatewayPassword);
 			settings->GatewayPassword = _strdup(param);
 			break;
 
 		case FreeRDP_GatewayDomain:
+			free(settings->GatewayDomain);
 			settings->GatewayDomain = _strdup(param);
 			break;
 
 		case FreeRDP_RemoteApplicationName:
+			free(settings->RemoteApplicationName);
 			settings->RemoteApplicationName = _strdup(param);
 			break;
 
 		case FreeRDP_RemoteApplicationIcon:
+			free(settings->RemoteApplicationIcon);
 			settings->RemoteApplicationIcon = _strdup(param);
 			break;
 
 		case FreeRDP_RemoteApplicationProgram:
+			free(settings->RemoteApplicationProgram);
 			settings->RemoteApplicationProgram = _strdup(param);
 			break;
 
 		case FreeRDP_RemoteApplicationFile:
+			free(settings->RemoteApplicationFile);
 			settings->RemoteApplicationFile = _strdup(param);
 			break;
 
 		case FreeRDP_RemoteApplicationGuid:
+			free(settings->RemoteApplicationGuid);
 			settings->RemoteApplicationGuid = _strdup(param);
 			break;
 
 		case FreeRDP_RemoteApplicationCmdLine:
+			free(settings->RemoteApplicationCmdLine);
 			settings->RemoteApplicationCmdLine = _strdup(param);
 			break;
 
 		case FreeRDP_ImeFileName:
+			free(settings->ImeFileName);
 			settings->ImeFileName = _strdup(param);
 			break;
 
 		case FreeRDP_DrivesToRedirect:
+			free(settings->DrivesToRedirect);
 			settings->DrivesToRedirect = _strdup(param);
 			break;
 

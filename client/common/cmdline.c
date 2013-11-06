@@ -33,6 +33,7 @@
 #include <freerdp/locale/keyboard.h>
 
 #include <freerdp/client/cmdline.h>
+#include <freerdp/version.h>
 
 #include "compatibility.h"
 
@@ -51,6 +52,8 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "kbd-subtype", COMMAND_LINE_VALUE_REQUIRED, "<subtype id>", NULL, NULL, -1, NULL, "Keyboard subtype" },
 	{ "kbd-fn-key", COMMAND_LINE_VALUE_REQUIRED, "<function key count>", NULL, NULL, -1, NULL, "Keyboard function key count" },
 	{ "admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "console", "Admin (or console) session" },
+	{ "restricted-admin", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "restrictedAdmin", "Restricted admin mode" },
+	{ "pth", COMMAND_LINE_VALUE_REQUIRED, "<password hash>", NULL, NULL, -1, "pass-the-hash", "Pass the hash (restricted admin mode)" },
 	{ "multimon", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Use multiple monitors" },
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use available work area" },
 	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<0,1,2...>", NULL, NULL, -1, NULL, "Select monitors to use" },
@@ -1231,6 +1234,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->ConsoleSession = TRUE;
 		}
+		CommandLineSwitchCase(arg, "restricted-admin")
+		{
+			settings->ConsoleSession = TRUE;
+			settings->RestrictedAdminModeRequired = TRUE;
+		}
+		CommandLineSwitchCase(arg, "pth")
+		{
+			settings->ConsoleSession = TRUE;
+			settings->RestrictedAdminModeRequired = TRUE;
+			settings->PasswordHash = _strdup(arg->Value);
+		}
 		CommandLineSwitchCase(arg, "kbd")
 		{
 			int id;
@@ -1747,7 +1761,7 @@ int freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings*
 {
 	void* entry;
 
-	entry = freerdp_load_channel_addin_entry(name, NULL, NULL, 0);
+	entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
 
 	if (entry)
 	{

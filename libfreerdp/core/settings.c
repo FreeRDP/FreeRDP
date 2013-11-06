@@ -223,6 +223,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->TlsSecurity = TRUE;
 		settings->RdpSecurity = TRUE;
 		settings->NegotiateSecurityLayer = TRUE;
+		settings->RestrictedAdminModeRequired = FALSE;
 		settings->MstscCookieMode = FALSE;
 		settings->CookieMaxLength = DEFAULT_COOKIE_MAX_LENGTH;
 		settings->ClientBuild = 2600;
@@ -444,6 +445,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->Username = _strdup(settings->Username); /* 21 */
 		_settings->Password = _strdup(settings->Password); /* 22 */
 		_settings->Domain = _strdup(settings->Domain); /* 23 */
+		_settings->PasswordHash = _strdup(settings->PasswordHash); /* 24 */
 		//_settings->ClientHostname = _strdup(settings->ClientHostname); /* 134 */
 		//_settings->ClientProductId = _strdup(settings->ClientProductId); /* 135 */
 		_settings->AlternateShell = _strdup(settings->AlternateShell); /* 640 */
@@ -614,6 +616,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->ExtSecurity = settings->ExtSecurity; /* 1091 */
 		_settings->Authentication = settings->Authentication; /* 1092 */
 		_settings->NegotiateSecurityLayer = settings->NegotiateSecurityLayer; /* 1096 */
+		_settings->RestrictedAdminModeRequired = settings->RestrictedAdminModeRequired; /* 1097 */
 		_settings->MstscCookieMode = settings->MstscCookieMode; /* 1152 */
 		_settings->SendPreconnectionPdu = settings->SendPreconnectionPdu; /* 1156 */
 		_settings->IgnoreCertificate = settings->IgnoreCertificate; /* 1408 */
@@ -778,6 +781,7 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->Username);
 		free(settings->Password);
 		free(settings->Domain);
+		free(settings->PasswordHash);
 		free(settings->AlternateShell);
 		free(settings->ShellWorkingDirectory);
 		free(settings->ComputerName);

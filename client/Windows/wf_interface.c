@@ -543,12 +543,26 @@ int wf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int si
 
 void wf_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
+	wfContext* wfc;
 	wMessage* event;
 
+	wfc = (wfContext*) instance->context;
 	event = freerdp_channels_pop_event(channels);
 
 	if (event)
+	{
+		switch (GetMessageClass(event->id))
+		{
+			case CliprdrChannel_Class:
+				wf_process_cliprdr_event(wfc, event);
+				break;
+
+			default:
+				break;
+		}
+
 		freerdp_event_free(event);
+	}
 }
 
 BOOL wf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
