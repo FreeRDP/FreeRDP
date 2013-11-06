@@ -17,6 +17,7 @@ _CPack_Packages
 LICENSE.txt
 external/*
 !external/README
+include/freerdp/version.h
 
 *.a.objlist.cmake
 *.a.objlist
