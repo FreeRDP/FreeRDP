@@ -740,31 +740,6 @@ static void rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 	}
 }
 
-static void rdpsnd_process_terminate(rdpsndPlugin* rdpsnd)
-{
-	if (rdpsnd->device)
-		IFCALL(rdpsnd->device->Free, rdpsnd->device);
-
-	MessageQueue_PostQuit(rdpsnd->MsgPipe->Out, 0);
-
-	WaitForSingleObject(rdpsnd->ScheduleThread, INFINITE);
-	CloseHandle(rdpsnd->ScheduleThread);
-
-	if (rdpsnd->subsystem)
-		free(rdpsnd->subsystem);
-
-	if (rdpsnd->device_name)
-		free(rdpsnd->device_name);
-
-	rdpsnd_free_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
-	rdpsnd->NumberOfServerFormats = 0;
-	rdpsnd->ServerFormats = NULL;
-
-	rdpsnd_free_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
-	rdpsnd->NumberOfClientFormats = 0;
-	rdpsnd->ClientFormats = NULL;
-}
-
 
 /****************************************************************************************/
 
@@ -951,26 +926,41 @@ static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, void* p
 			(LPTHREAD_START_ROUTINE) rdpsnd_virtual_channel_client_thread, (void*) plugin, 0, NULL);
 }
 
-static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* plugin)
+static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 {
-	MessagePipe_PostQuit(plugin->MsgPipe, 0);
-	WaitForSingleObject(plugin->thread, INFINITE);
+	MessagePipe_PostQuit(rdpsnd->MsgPipe, 0);
+	WaitForSingleObject(rdpsnd->thread, INFINITE);
 
-	MessagePipe_Free(plugin->MsgPipe);
-	CloseHandle(plugin->thread);
+	MessagePipe_Free(rdpsnd->MsgPipe);
+	CloseHandle(rdpsnd->thread);
 
-	plugin->channelEntryPoints.pVirtualChannelClose(plugin->OpenHandle);
+	rdpsnd->channelEntryPoints.pVirtualChannelClose(rdpsnd->OpenHandle);
 
-	if (plugin->data_in)
+	if (rdpsnd->data_in)
 	{
-		Stream_Free(plugin->data_in, TRUE);
-		plugin->data_in = NULL;
+		Stream_Free(rdpsnd->data_in, TRUE);
+		rdpsnd->data_in = NULL;
 	}
 
-	rdpsnd_process_terminate(plugin);
+	if (rdpsnd->device)
+		IFCALL(rdpsnd->device->Free, rdpsnd->device);
 
-	rdpsnd_remove_open_handle_data(plugin->OpenHandle);
-	rdpsnd_remove_init_handle_data(plugin->InitHandle);
+	if (rdpsnd->subsystem)
+		free(rdpsnd->subsystem);
+
+	if (rdpsnd->device_name)
+		free(rdpsnd->device_name);
+
+	rdpsnd_free_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
+	rdpsnd->NumberOfServerFormats = 0;
+	rdpsnd->ServerFormats = NULL;
+
+	rdpsnd_free_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
+	rdpsnd->NumberOfClientFormats = 0;
+	rdpsnd->ClientFormats = NULL;
+
+	rdpsnd_remove_open_handle_data(rdpsnd->OpenHandle);
+	rdpsnd_remove_init_handle_data(rdpsnd->InitHandle);
 }
 
 static void rdpsnd_virtual_channel_init_event(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength)

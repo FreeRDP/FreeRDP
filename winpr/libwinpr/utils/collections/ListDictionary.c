@@ -206,7 +206,7 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 		{
 			nextItem = item->next;
 			if (listDictionary->object.fnObjectFree)
-				listDictionary->object.fnObjectFree(item);
+				listDictionary->object.fnObjectFree(item->value);
 			free(item);
 			item = nextItem;
 		}
