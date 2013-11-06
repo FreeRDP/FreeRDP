@@ -76,7 +76,7 @@ int freerdp_tcp_connect(const char* hostname, int port)
 	struct addrinfo* res;
 	struct addrinfo hints = { 0 };
 
-	memset(&hints, 0, sizeof(struct addrinfo));
+	ZeroMemory(&hints, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
@@ -166,8 +166,8 @@ int freerdp_tcp_write(int sockfd, BYTE* data, int length)
 		/* No data available */
 		if (wsa_error == WSAEWOULDBLOCK)
 			status = 0;
-                else
-                        perror("send");
+		else
+			perror("send");
 #else
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			status = 0;
@@ -182,11 +182,13 @@ int freerdp_tcp_write(int sockfd, BYTE* data, int length)
 int freerdp_tcp_wait_read(int sockfd)
 {
 	fd_set fds;
-	if(sockfd<1)
+
+	if (sockfd < 1)
 	{
-	    fprintf(stderr, "Invalid socket to watch: %d\n", sockfd);
-	    return 0 ;	    
+		fprintf(stderr, "Invalid socket to watch: %d\n", sockfd);
+		return 0 ;
 	}
+
 	FD_ZERO(&fds);
 	FD_SET(sockfd, &fds);
 	select(sockfd+1, &fds, NULL, NULL, NULL);
@@ -197,10 +199,11 @@ int freerdp_tcp_wait_read(int sockfd)
 int freerdp_tcp_wait_write(int sockfd)
 {
 	fd_set fds;
-	if(sockfd<1)
+
+	if (sockfd < 1)
 	{
-	    fprintf(stderr, "Invalid socket to watch: %d\n", sockfd);
-	    return 0;
+		fprintf(stderr, "Invalid socket to watch: %d\n", sockfd);
+		return 0;
 	}
 
 	FD_ZERO(&fds);

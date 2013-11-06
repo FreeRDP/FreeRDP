@@ -24,9 +24,12 @@
 
 #include <freerdp/rail.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/debug.h>
 #include <freerdp/utils/svc_plugin.h>
 
+#include <freerdp/client/rail.h>
+
+#include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/stream.h>
 
 #include "../rail_common.h"
@@ -34,13 +37,15 @@
 struct rail_plugin
 {
 	rdpSvcPlugin plugin;
+
+	wLog* log;
 	rdpRailOrder* rail_order;
 };
 typedef struct rail_plugin railPlugin;
 
+RailClientContext* rail_get_client_interface(void* railObject);
+
 void rail_send_channel_event(void* rail_object, UINT16 event_type, void* param);
 void rail_send_channel_data(void* rail_object, void* data, size_t length);
-
-
 
 #endif /* FREERDP_CHANNEL_CLIENT_RAIL_MAIN_H */

@@ -23,6 +23,7 @@
 typedef struct rdp_update rdpUpdate;
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -198,6 +199,8 @@ struct rdp_update
 	UINT32 paddingE[80 - 68]; /* 68 */
 
 	/* internal */
+
+	wLog* log;
 
 	BOOL dump_rfx;
 	BOOL play_rfx;

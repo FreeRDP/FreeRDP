@@ -261,10 +261,16 @@ BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 void xf_monitors_free(xfContext *xfc, rdpSettings *settings)
 {
 #ifdef WITH_XINERAMA
-	if(xfc->vscreen.monitors)
+	if (xfc->vscreen.monitors)
+	{
 		free(xfc->vscreen.monitors);
+		xfc->vscreen.monitors = NULL;
+	}
 #endif
 
-	if(settings->MonitorIds)
+	if (settings->MonitorIds)
+	{
 		free(settings->MonitorIds);
+		settings->MonitorIds = NULL;
+	}
 }

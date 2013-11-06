@@ -97,17 +97,17 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] =
 	VK_BACK, /* APPLE_VK_Delete (0x33) */
 	0, /* APPLE_VK_0x34 (0x34) */
 	VK_ESCAPE, /* APPLE_VK_Escape (0x35) */
-	0, /* APPLE_VK_0x36 (0x36) */
+	VK_RWIN | KBDEXT, /* APPLE_VK_RightCommand (0x36) */
 	VK_LWIN | KBDEXT, /* APPLE_VK_Command (0x37) */
 	VK_LSHIFT, /* APPLE_VK_Shift (0x38) */
 	VK_CAPITAL, /* APPLE_VK_CapsLock (0x39) */
 	VK_LMENU, /* APPLE_VK_Option (0x3A) */
 	VK_LCONTROL, /* APPLE_VK_Control (0x3B) */
 	VK_RSHIFT, /* APPLE_VK_RightShift (0x3C) */
-	VK_RMENU, /* APPLE_VK_RightOption (0x3D) */
-	0, /* APPLE_VK_RightControl (0x3E) */
+	VK_RMENU | KBDEXT, /* APPLE_VK_RightOption (0x3D) */
+	VK_RWIN | KBDEXT, /* APPLE_VK_RightControl (0x3E) */
 	VK_RWIN | KBDEXT, /* APPLE_VK_Function (0x3F) */
-	0, /* APPLE_VK_F17 (0x40) */
+	VK_F17, /* APPLE_VK_F17 (0x40) */
 	VK_DECIMAL, /* APPLE_VK_ANSI_KeypadDecimal (0x41) */
 	0, /* APPLE_VK_0x42 (0x42) */
 	VK_MULTIPLY, /* APPLE_VK_ANSI_KeypadMultiply (0x43) */
@@ -115,16 +115,16 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] =
 	VK_ADD, /* APPLE_VK_ANSI_KeypadPlus (0x45) */
 	0, /* APPLE_VK_0x46 (0x46) */
 	VK_NUMLOCK, /* APPLE_VK_ANSI_KeypadClear (0x47) */
-	0, /* APPLE_VK_VolumeUp (0x48) */
-	0, /* APPLE_VK_VolumeDown (0x49) */
-	0, /* APPLE_VK_Mute (0x4A) */
+	VK_VOLUME_UP, /* APPLE_VK_VolumeUp (0x48) */
+	VK_VOLUME_DOWN, /* APPLE_VK_VolumeDown (0x49) */
+	VK_VOLUME_MUTE, /* APPLE_VK_Mute (0x4A) */
 	VK_DIVIDE | KBDEXT, /* APPLE_VK_ANSI_KeypadDivide (0x4B) */
 	VK_RETURN | KBDEXT, /* APPLE_VK_ANSI_KeypadEnter (0x4C) */
 	0, /* APPLE_VK_0x4D (0x4D) */
 	VK_SUBTRACT, /* APPLE_VK_ANSI_KeypadMinus (0x4E) */
-	0, /* APPLE_VK_F18 (0x4F) */
-	0, /* APPLE_VK_F19 (0x50) */
-	0, /* APPLE_VK_ANSI_KeypadEquals (0x51) */
+	VK_F18, /* APPLE_VK_F18 (0x4F) */
+	VK_F19, /* APPLE_VK_F19 (0x50) */
+	VK_CLEAR | KBDEXT, /* APPLE_VK_ANSI_KeypadEquals (0x51) */
 	VK_NUMPAD0, /* APPLE_VK_ANSI_Keypad0 (0x52) */
 	VK_NUMPAD1, /* APPLE_VK_ANSI_Keypad1 (0x53) */
 	VK_NUMPAD2, /* APPLE_VK_ANSI_Keypad2 (0x54) */
@@ -133,7 +133,7 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] =
 	VK_NUMPAD5, /* APPLE_VK_ANSI_Keypad5 (0x57) */
 	VK_NUMPAD6, /* APPLE_VK_ANSI_Keypad6 (0x58) */
 	VK_NUMPAD7, /* APPLE_VK_ANSI_Keypad7 (0x59) */
-	0, /* APPLE_VK_F20 (0x5A) */
+	VK_F20, /* APPLE_VK_F20 (0x5A) */
 	VK_NUMPAD8, /* APPLE_VK_ANSI_Keypad8 (0x5B) */
 	VK_NUMPAD9, /* APPLE_VK_ANSI_Keypad9 (0x5C) */
 	0, /* APPLE_VK_JIS_Yen (0x5D) */
@@ -149,8 +149,8 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] =
 	VK_F11, /* APPLE_VK_F11 (0x67) */
 	0, /* APPLE_VK_JIS_Kana (0x68) */
 	VK_SNAPSHOT | KBDEXT, /* APPLE_VK_F13 (0x69) */
-	0, /* APPLE_VK_F16 (0x6A) */
-	VK_SCROLL, /* APPLE_VK_F14 (0x6B) */
+	VK_F16, /* APPLE_VK_F16 (0x6A) */
+	VK_F14, /* APPLE_VK_F14 (0x6B) */
 	0, /* APPLE_VK_0x6C (0x6C) */
 	VK_F10, /* APPLE_VK_F10 (0x6D) */
 	0, /* APPLE_VK_0x6E (0x6E) */

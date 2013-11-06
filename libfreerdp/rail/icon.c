@@ -46,7 +46,7 @@ ICON_INFO* icon_cache_get(rdpIconCache* cache, BYTE id, UINT16 index, void** ext
 
 	entry = cache->caches[id].entries[index].entry;
 
-	if (extra != NULL)
+	if (extra)
 		*extra = cache->caches[id].entries[index].extra;
 
 	return entry;
@@ -106,7 +106,7 @@ rdpIconCache* icon_cache_new(rdpRail* rail)
 
 void icon_cache_free(rdpIconCache* cache)
 {
-	if (cache != NULL)
+	if (cache)
 	{
 		int i;
 

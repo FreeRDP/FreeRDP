@@ -69,8 +69,10 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	{
 		if (pReadPipe)
 			free(pReadPipe);
+
 		if (pWritePipe)
 			free(pWritePipe);
+
 		return FALSE;
 	}
 
@@ -96,7 +98,6 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	int status;
 	HANDLE hNamedPipe;
 	char* lpPipePath;
-	unsigned long flags;
 	struct sockaddr_un s;
 	WINPR_NAMED_PIPE* pNamedPipe;
 
@@ -123,36 +124,50 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
 
 	if (!PathFileExistsA(lpPipePath))
+	{
 		CreateDirectoryA(lpPipePath, 0);
+		UnixChangeFileMode(lpPipePath, 0xFFFF);
+	}
 
 	free(lpPipePath);
 
-	pNamedPipe->clientfd = -1;
-	pNamedPipe->serverfd = socket(PF_LOCAL, SOCK_STREAM, 0);
-
-	if (0)
+	if (PathFileExistsA(pNamedPipe->lpFilePath))
 	{
-		flags = fcntl(pNamedPipe->serverfd, F_GETFL);
-		flags = flags | O_NONBLOCK;
-		fcntl(pNamedPipe->serverfd, F_SETFL, flags);
+		DeleteFileA(pNamedPipe->lpFilePath);
+	}
+
+	pNamedPipe->clientfd = -1;
+	pNamedPipe->ServerMode = TRUE;
+
+	pNamedPipe->serverfd = socket(AF_UNIX, SOCK_STREAM, 0);
+
+	if (pNamedPipe->serverfd == -1)
+	{
+		fprintf(stderr, "CreateNamedPipeA: socket error\n");
+		return NULL;
 	}
 
 	ZeroMemory(&s, sizeof(struct sockaddr_un));
 	s.sun_family = AF_UNIX;
 	strcpy(s.sun_path, pNamedPipe->lpFilePath);
-	unlink(s.sun_path);
 
 	status = bind(pNamedPipe->serverfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
 
-	if (status == 0)
+	if (status != 0)
 	{
-		status = listen(pNamedPipe->serverfd, 2);
-
-		if (status == 0)
-		{
-			UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
-		}
+		fprintf(stderr, "CreateNamedPipeA: bind error\n");
+		return NULL;
 	}
+
+	status = listen(pNamedPipe->serverfd, 2);
+
+	if (status != 0)
+	{
+		fprintf(stderr, "CreateNamedPipeA: listen error\n");
+		return NULL;
+	}
+
+	UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
 
 	return hNamedPipe;
 }
@@ -175,20 +190,37 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
 
-	length = sizeof(struct sockaddr_un);
-	ZeroMemory(&s, sizeof(struct sockaddr_un));
+	if (!(pNamedPipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
+	{
+		length = sizeof(struct sockaddr_un);
+		ZeroMemory(&s, sizeof(struct sockaddr_un));
 
-	status = accept(pNamedPipe->serverfd, (struct sockaddr*) &s, &length);
+		status = accept(pNamedPipe->serverfd, (struct sockaddr*) &s, &length);
 
-	if (status < 0)
-		return FALSE;
+		if (status < 0)
+		{
+			fprintf(stderr, "ConnectNamedPipe: accept error\n");
+			return FALSE;
+		}
 
-	pNamedPipe->clientfd = status;
-
-	if (pNamedPipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
+		pNamedPipe->clientfd = status;
+		pNamedPipe->ServerMode = FALSE;
+	}
+	else
 	{
 		if (!lpOverlapped)
 			return FALSE;
+
+		if (pNamedPipe->serverfd == -1)
+			return FALSE;
+
+		pNamedPipe->lpOverlapped = lpOverlapped;
+
+		/* synchronous behavior */
+
+		lpOverlapped->Internal = 2;
+		lpOverlapped->InternalHigh = (ULONG_PTR) 0;
+		lpOverlapped->Pointer = (PVOID) NULL;
 
 		SetEvent(lpOverlapped->hEvent);
 	}
@@ -225,7 +257,36 @@ BOOL TransactNamedPipe(HANDLE hNamedPipe, LPVOID lpInBuffer, DWORD nInBufferSize
 
 BOOL WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut)
 {
-	return TRUE;
+	BOOL status;
+	DWORD nWaitTime;
+	char* lpFilePath;
+	DWORD dwSleepInterval;
+
+	if (!lpNamedPipeName)
+		return FALSE;
+
+	lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpNamedPipeName);
+
+	if (nTimeOut == NMPWAIT_USE_DEFAULT_WAIT)
+		nTimeOut = 50;
+
+	nWaitTime = 0;
+	status = TRUE;
+	dwSleepInterval = 10;
+
+	while (!PathFileExistsA(lpFilePath))
+	{
+		Sleep(dwSleepInterval);
+		nWaitTime += dwSleepInterval;
+
+		if (nWaitTime >= nTimeOut)
+		{
+			status = FALSE;
+			break;
+		}
+	}
+	free(lpFilePath);
+	return status;
 }
 
 BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
@@ -235,12 +296,40 @@ BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 
 BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout)
 {
+	int fd;
+	unsigned long flags;
 	WINPR_NAMED_PIPE* pNamedPipe;
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
 
 	if (lpMode)
+	{
 		pNamedPipe->dwPipeMode = *lpMode;
+
+		fd = (pNamedPipe->ServerMode) ? pNamedPipe->serverfd : pNamedPipe->clientfd;
+
+		if (fd == -1)
+			return FALSE;
+
+		flags = fcntl(fd, F_GETFL);
+
+		if (pNamedPipe->dwPipeMode & PIPE_NOWAIT)
+			flags = (flags | O_NONBLOCK);
+		else
+			flags = (flags & ~(O_NONBLOCK));
+
+		fcntl(fd, F_SETFL, flags);
+	}
+
+	if (lpMaxCollectionCount)
+	{
+
+	}
+
+	if (lpCollectDataTimeout)
+	{
+
+	}
 
 	return TRUE;
 }

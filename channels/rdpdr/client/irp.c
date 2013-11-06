@@ -27,9 +27,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
-
 #include <winpr/stream.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #include "rdpdr_main.h"
 #include "devman.h"
@@ -37,8 +35,6 @@
 
 static void irp_free(IRP* irp)
 {
-	DEBUG_SVC("DeviceId %d FileId %d CompletionId %d", irp->device->id, irp->FileId, irp->CompletionId);
-
 	Stream_Free(irp->input, TRUE);
 	Stream_Free(irp->output, TRUE);
 
@@ -49,31 +45,28 @@ static void irp_complete(IRP* irp)
 {
 	int pos;
 
-	DEBUG_SVC("DeviceId %d FileId %d CompletionId %d", irp->device->id, irp->FileId, irp->CompletionId);
-
 	pos = Stream_GetPosition(irp->output);
 	Stream_SetPosition(irp->output, 12);
 	Stream_Write_UINT32(irp->output, irp->IoStatus);
 	Stream_SetPosition(irp->output, pos);
 
-	svc_plugin_send(irp->devman->plugin, irp->output);
+	rdpdr_send((rdpdrPlugin*) irp->devman->plugin, irp->output);
 	irp->output = NULL;
 
 	irp_free(irp);
 }
 
-IRP* irp_new(DEVMAN* devman, wStream* data_in)
+IRP* irp_new(DEVMAN* devman, wStream* s)
 {
 	IRP* irp;
 	UINT32 DeviceId;
 	DEVICE* device;
 
-	Stream_Read_UINT32(data_in, DeviceId);
+	Stream_Read_UINT32(s, DeviceId);
 	device = devman_get_device_by_id(devman, DeviceId);
 
-	if (device == NULL)
+	if (!device)
 	{
-		DEBUG_WARN("unknown DeviceId %d", DeviceId);
 		return NULL;
 	}
 
@@ -82,11 +75,11 @@ IRP* irp_new(DEVMAN* devman, wStream* data_in)
 
 	irp->device = device;
 	irp->devman = devman;
-	Stream_Read_UINT32(data_in, irp->FileId);
-	Stream_Read_UINT32(data_in, irp->CompletionId);
-	Stream_Read_UINT32(data_in, irp->MajorFunction);
-	Stream_Read_UINT32(data_in, irp->MinorFunction);
-	irp->input = data_in;
+	Stream_Read_UINT32(s, irp->FileId);
+	Stream_Read_UINT32(s, irp->CompletionId);
+	Stream_Read_UINT32(s, irp->MajorFunction);
+	Stream_Read_UINT32(s, irp->MinorFunction);
+	irp->input = s;
 
 	irp->output = Stream_New(NULL, 256);
 	Stream_Write_UINT16(irp->output, RDPDR_CTYP_CORE);
@@ -97,9 +90,6 @@ IRP* irp_new(DEVMAN* devman, wStream* data_in)
 
 	irp->Complete = irp_complete;
 	irp->Discard = irp_free;
-
-	DEBUG_SVC("DeviceId %d FileId %d CompletionId %d MajorFunction 0x%X MinorFunction 0x%x",
-		irp->device->id, irp->FileId, irp->CompletionId, irp->MajorFunction, irp->MinorFunction);
 
 	return irp;
 }

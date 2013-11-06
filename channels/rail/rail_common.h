@@ -24,19 +24,13 @@
 
 #include <freerdp/rail.h>
 
-#ifdef WITH_DEBUG_RAIL
-#define DEBUG_RAIL(fmt, ...) DEBUG_CLASS(RAIL, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_RAIL(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
-
 extern const char* const RAIL_ORDER_TYPE_STRINGS[];
-
 
 #define RAIL_PDU_HEADER_LENGTH			4
 
 /* Fixed length of PDUs, excluding variable lengths */
 #define RAIL_HANDSHAKE_ORDER_LENGTH		4 /* fixed */
+#define RAIL_HANDSHAKE_EX_ORDER_LENGTH		8 /* fixed */
 #define RAIL_CLIENT_STATUS_ORDER_LENGTH		4 /* fixed */
 #define RAIL_EXEC_ORDER_LENGTH			8 /* variable */
 #define RAIL_SYSPARAM_ORDER_LENGTH		4 /* variable */
@@ -74,6 +68,8 @@ typedef struct rdp_rail_order rdpRailOrder;
 void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_string);
 BOOL rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
 void rail_write_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake);
+BOOL rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
+void rail_write_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx);
 
 wStream* rail_pdu_init(int length);
 BOOL rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength);

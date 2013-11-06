@@ -301,6 +301,8 @@ int command_line_pre_filter(MAKECERT_CONTEXT* context, int index, int argc, LPCS
 	{
 		if (argv[index][0] != '-')
 			context->output_file = (char*) argv[index];
+
+		return 1;
 	}
 
 	return 0;

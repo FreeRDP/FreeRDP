@@ -45,6 +45,7 @@ struct winpr_named_pipe
 	const char* lpFileName;
 	const char* lpFilePath;
 
+	BOOL ServerMode;
 	DWORD dwOpenMode;
 	DWORD dwPipeMode;
 	DWORD nMaxInstances;

@@ -221,6 +221,15 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	context->priv = (RFX_CONTEXT_PRIV*) malloc(sizeof(RFX_CONTEXT_PRIV));
 	ZeroMemory(context->priv, sizeof(RFX_CONTEXT_PRIV));
 
+	WLog_Init();
+
+	context->priv->log = WLog_Get("com.freerdp.codec.rfx");
+	WLog_OpenAppender(context->priv->log);
+
+#ifdef WITH_DEBUG_RFX
+	WLog_SetLogLevel(context->priv->log, WLOG_DEBUG);
+#endif
+
 	context->priv->TilePool = ObjectPool_New(TRUE);
 	ObjectPool_Object(context->priv->TilePool)->fnObjectInit = (OBJECT_INIT_FN) rfx_tile_init;
 
@@ -422,7 +431,8 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 		return FALSE;
 	}
 
-	DEBUG_RFX("version 0x%X", context->version);
+	WLog_Print(context->priv->log, WLOG_DEBUG, "version 0x%X", context->version);
+
 	return TRUE;
 }
 
@@ -453,7 +463,8 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 	Stream_Read_UINT8(s, context->codec_id); /* codecId (1 byte) */
 	Stream_Read_UINT8(s, context->codec_version); /* version (2 bytes) */
 
-	DEBUG_RFX("id %d version 0x%X.", context->codec_id, context->codec_version);
+	WLog_Print(context->priv->log, WLOG_DEBUG, "id %d version 0x%X.", context->codec_id, context->codec_version);
+
 	return TRUE;
 }
 
@@ -493,8 +504,9 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 	/* Now, only the first monitor can be used, therefore the other channels will be ignored. */
 	Stream_Seek(s, 5 * (numChannels - 1));
 
-	DEBUG_RFX("numChannels %d id %d, %dx%d.",
+	WLog_Print(context->priv->log, WLOG_DEBUG, "numChannels %d id %d, %dx%d.",
 		numChannels, channelId, context->width, context->height);
+
 	return TRUE;
 }
 
@@ -514,32 +526,38 @@ static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 	Stream_Read_UINT16(s, tileSize); /* tileSize (2 bytes), must be set to CT_TILE_64x64 (0x0040) */
 	Stream_Read_UINT16(s, properties); /* properties (2 bytes) */
 
-	DEBUG_RFX("ctxId %d tileSize %d properties 0x%X.", ctxId, tileSize, properties);
+	WLog_Print(context->priv->log, WLOG_DEBUG, "ctxId %d tileSize %d properties 0x%X.",
+			ctxId, tileSize, properties);
 
 	context->properties = properties;
 	context->flags = (properties & 0x0007);
 
 	if (context->flags == CODEC_MODE)
-		DEBUG_RFX("codec is in image mode.");
+	{
+		WLog_Print(context->priv->log, WLOG_DEBUG, "codec is in image mode.");
+	}
 	else
-		DEBUG_RFX("codec is in video mode.");
+	{
+		WLog_Print(context->priv->log, WLOG_DEBUG, "codec is in video mode.");
+	}
 
 	switch ((properties & 0x1E00) >> 9)
 	{
 		case CLW_ENTROPY_RLGR1:
 			context->mode = RLGR1;
-			DEBUG_RFX("RLGR1.");
+			WLog_Print(context->priv->log, WLOG_DEBUG, "RLGR1.");
 			break;
 
 		case CLW_ENTROPY_RLGR3:
 			context->mode = RLGR3;
-			DEBUG_RFX("RLGR3.");
+			WLog_Print(context->priv->log, WLOG_DEBUG, "RLGR3.");
 			break;
 
 		default:
 			DEBUG_WARN("unknown RLGR algorithm.");
 			break;
 	}
+
 	return TRUE;
 }
 
@@ -553,16 +571,18 @@ static BOOL rfx_process_message_frame_begin(RFX_CONTEXT* context, RFX_MESSAGE* m
 		DEBUG_WARN("RfxMessageFrameBegin packet too small");
 		return FALSE;
 	}
+
 	Stream_Read_UINT32(s, frameIdx); /* frameIdx (4 bytes), if codec is in video mode, must be ignored */
 	Stream_Read_UINT16(s, numRegions); /* numRegions (2 bytes) */
 
-	DEBUG_RFX("RFX_FRAME_BEGIN: frameIdx:%d numRegions:%d", frameIdx, numRegions);
+	WLog_Print(context->priv->log, WLOG_DEBUG, "RFX_FRAME_BEGIN: frameIdx: %d numRegions: %d", frameIdx, numRegions);
+
 	return TRUE;
 }
 
 static void rfx_process_message_frame_end(RFX_CONTEXT* context, RFX_MESSAGE* message, wStream* s)
 {
-	DEBUG_RFX("RFX_FRAME_END");
+	WLog_Print(context->priv->log, WLOG_DEBUG, "RFX_FRAME_END");
 }
 
 static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* message, wStream* s)
@@ -604,9 +624,10 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		Stream_Read_UINT16(s, message->rects[i].width); /* width (2 bytes) */
 		Stream_Read_UINT16(s, message->rects[i].height); /* height (2 bytes) */
 
-		DEBUG_RFX("rect %d (%d %d %d %d).",
+		WLog_Print(context->priv->log, WLOG_DEBUG, "rect %d (%d %d %d %d).",
 			i, message->rects[i].x, message->rects[i].y, message->rects[i].width, message->rects[i].height);
 	}
+
 	return TRUE;
 }
 
@@ -678,6 +699,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		context->quants = (UINT32*) realloc((void*) context->quants, context->numQuant * 10 * sizeof(UINT32));
 	else
 		context->quants = (UINT32*) malloc(context->numQuant * 10 * sizeof(UINT32));
+
 	quants = context->quants;
 
 	/* quantVals */
@@ -706,7 +728,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		*quants++ = (quant & 0x0F);
 		*quants++ = (quant >> 4);
 
-		DEBUG_RFX("quant %d (%d %d %d %d %d %d %d %d %d %d).",
+		WLog_Print(context->priv->log, WLOG_DEBUG, "quant %d (%d %d %d %d %d %d %d %d %d %d).",
 			i, context->quants[i * 10], context->quants[i * 10 + 1],
 			context->quants[i * 10 + 2], context->quants[i * 10 + 3],
 			context->quants[i * 10 + 4], context->quants[i * 10 + 5],
@@ -729,12 +751,14 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 				free(params);
 			return FALSE;
 		}
+
 		if (!params)
 		{
 			if (work_objects)
 				free(work_objects);
 			return FALSE;
 		}
+
 		ZeroMemory(work_objects, sizeof(PTP_WORK) * message->numTiles);
 		ZeroMemory(params, sizeof(RFX_TILE_PROCESS_WORK_PARAM) * message->numTiles);
 	}
@@ -858,7 +882,7 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 		Stream_Read_UINT16(s, blockType); /* blockType (2 bytes) */
 		Stream_Read_UINT32(s, blockLen); /* blockLen (4 bytes) */
 
-		DEBUG_RFX("blockType 0x%X blockLen %d", blockType, blockLen);
+		WLog_Print(context->priv->log, WLOG_DEBUG, "blockType 0x%X blockLen %d", blockType, blockLen);
 
 		if (blockLen == 0)
 		{
@@ -1120,6 +1144,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 	RFX_TILE_COMPOSE_WORK_PARAM* params = NULL;
 
 	message = (RFX_MESSAGE*) malloc(sizeof(RFX_MESSAGE));
+
 	if (!message)
 		return NULL;
 
@@ -1159,7 +1184,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 		ZeroMemory(message->tiles, sizeof(RFX_TILE*) * message->numTiles);
 	}
 
-	DEBUG_RFX("x: %d y: %d width: %d height: %d scanline: %d BytesPerPixel: %d",
+	WLog_Print(context->priv->log, WLOG_DEBUG, "x: %d y: %d width: %d height: %d scanline: %d BytesPerPixel: %d",
 			rect->x, rect->y, width, height, scanline, BytesPerPixel);
 
 	if (context->priv->UseThreads)
@@ -1372,7 +1397,7 @@ static void rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s, RFX_MESS
 		rfx_write_tile(context, s, tile);
 	}
 
-	DEBUG_RFX("numQuant: %d numTiles: %d tilesDataSize: %d",
+	WLog_Print(context->priv->log, WLOG_DEBUG, "numQuant: %d numTiles: %d tilesDataSize: %d",
 			message->numQuant, message->numTiles, message->tilesDataSize);
 }
 

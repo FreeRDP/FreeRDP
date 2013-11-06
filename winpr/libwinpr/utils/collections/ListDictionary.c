@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/collections.h>
+#include <winpr/memory.h>
 
 /**
  * C equivalent of the C# ListDictionary Class:
@@ -95,6 +96,60 @@ BOOL ListDictionary_IsSynchronized(wListDictionary* listDictionary)
  */
 
 /**
+ * Gets the list of keys as an array
+ */
+
+int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
+{
+	int index;
+	int count;
+	ULONG_PTR* pKeys;
+	wListDictionaryItem* item;
+
+	if (!ppKeys)
+		return -1;
+
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	count = 0;
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+
+		while (item)
+		{
+			count++;
+			item = item->next;
+		}
+	}
+
+	pKeys = (ULONG_PTR*) malloc(sizeof(ULONG_PTR*) * count);
+	ZeroMemory(pKeys, sizeof(ULONG_PTR*) * count);
+
+	index = 0;
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+
+		while (item)
+		{
+			pKeys[index++] = (ULONG_PTR) item->key;
+			item = item->next;
+		}
+	}
+
+	*ppKeys = pKeys;
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
+
+	return count;
+}
+
+/**
  * Adds an entry with the specified key and value into the ListDictionary.
  */
 
@@ -150,6 +205,8 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 		while (item)
 		{
 			nextItem = item->next;
+			if (listDictionary->object.fnObjectFree)
+				listDictionary->object.fnObjectFree(item->value);
 			free(item);
 			item = nextItem;
 		}
@@ -198,8 +255,9 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key)
  * Removes the entry with the specified key from the ListDictionary.
  */
 
-void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
+void* ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 {
+	void* value = NULL;
 	wListDictionaryItem* item;
 	wListDictionaryItem* prevItem;
 
@@ -213,6 +271,7 @@ void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 		if (listDictionary->head->key == key)
 		{
 			listDictionary->head = listDictionary->head->next;
+			value = item->value;
 			free(item);
 		}
 		else
@@ -227,10 +286,12 @@ void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 					if (item->key == key)
 					{
 						prevItem->next = item->next;
+						value = item->value;
 						free(item);
 						break;
 					}
 
+					prevItem = item;
 					item = item->next;
 				}
 			}
@@ -239,6 +300,33 @@ void ListDictionary_Remove(wListDictionary* listDictionary, void* key)
 
 	if (listDictionary->synchronized)
 		LeaveCriticalSection(&listDictionary->lock);
+
+	return value;
+}
+
+/**
+ * Removes the first (head) entry from the list
+ */
+
+void *ListDictionary_Remove_Head(wListDictionary* listDictionary)
+{
+	wListDictionaryItem* item;
+	void *value = NULL;
+
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	if (listDictionary->head)
+	{
+		item = listDictionary->head;
+		listDictionary->head = listDictionary->head->next;
+		value = item->value;
+		free(item);
+	}
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
+	return value;
 }
 
 /**
@@ -329,6 +417,7 @@ wListDictionary* ListDictionary_New(BOOL synchronized)
 		InitializeCriticalSectionAndSpinCount(&listDictionary->lock, 4000);
 	}
 
+	ZeroMemory(&listDictionary->object, sizeof(wObject));
 	return listDictionary;
 }
 

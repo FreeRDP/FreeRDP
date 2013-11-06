@@ -20,11 +20,11 @@
 #ifndef __FASTPATH_H
 #define __FASTPATH_H
 
+typedef struct rdp_fastpath rdpFastPath;
+
 #include "rdp.h"
 
 #include <winpr/stream.h>
-
-typedef struct rdp_fastpath rdpFastPath;
 
 enum FASTPATH_INPUT_ACTION_TYPE
 {

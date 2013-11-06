@@ -46,10 +46,10 @@
 
 BYTE TsProxyCreateTunnelUnknownTrailerBytes[60] =
 {
-	0x8A, 0xE3, 0x13, 0x71, 0x02, 0xF4, 0x36, 0x71, 0x01, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
-	0x02, 0x40, 0x28, 0x00, 0xDD, 0x65, 0xE2, 0x44, 0xAF, 0x7D, 0xCD, 0x42, 0x85, 0x60, 0x3C, 0xDB,
-	0x6E, 0x7A, 0x27, 0x29, 0x01, 0x00, 0x03, 0x00, 0x04, 0x5D, 0x88, 0x8A, 0xEB, 0x1C, 0xC9, 0x11,
-	0x9F, 0xE8, 0x08, 0x00, 0x2B, 0x10, 0x48, 0x60, 0x02, 0x00, 0x00, 0x00
+		0x8A, 0xE3, 0x13, 0x71, 0x02, 0xF4, 0x36, 0x71, 0x01, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
+		0x02, 0x40, 0x28, 0x00, 0xDD, 0x65, 0xE2, 0x44, 0xAF, 0x7D, 0xCD, 0x42, 0x85, 0x60, 0x3C, 0xDB,
+		0x6E, 0x7A, 0x27, 0x29, 0x01, 0x00, 0x03, 0x00, 0x04, 0x5D, 0x88, 0x8A, 0xEB, 0x1C, 0xC9, 0x11,
+		0x9F, 0xE8, 0x08, 0x00, 0x2B, 0x10, 0x48, 0x60, 0x02, 0x00, 0x00, 0x00
 };
 
 DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count, UINT32* lengths)
@@ -210,7 +210,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	UINT32 Pointer;
 	PTSG_PACKET packet;
 	UINT32 SwitchValue;
-	UINT32 MessageSwitchValue;
+	UINT32 MessageSwitchValue = 0;
 	UINT32 IsMessagePresent;
 	UINT32 MsgBytes;
 	rdpRpc* rpc = tsg->rpc;
@@ -340,7 +340,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		tsgCaps->tsgPacket.tsgCapNap.capabilities = *((UINT32*) &buffer[offset]); /* Capabilities */
 		offset += 4;
 
-		switch(MessageSwitchValue)
+		switch (MessageSwitchValue)
 		{
 			case TSG_ASYNC_MESSAGE_CONSENT_MESSAGE:
 			case TSG_ASYNC_MESSAGE_SERVICE_MESSAGE:
@@ -350,23 +350,29 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 				offset += 4;
 				Pointer = *((UINT32*) &buffer[offset]);
 				offset += 4;
-				if(Pointer) {
+
+				if (Pointer)
+				{
 					offset += 4; // MaxCount
 					offset += 8; // UnicodeString Offset, Length
 				}
-				if(MsgBytes > TSG_MESSAGING_MAX_MESSAGE_LENGTH) {
-					fprintf(stderr, "Out of Spec Message Length %d");
+
+				if (MsgBytes > TSG_MESSAGING_MAX_MESSAGE_LENGTH)
+				{
+					fprintf(stderr, "Out of Spec Message Length %d", MsgBytes);
 					return FALSE;
 				}
 				offset += MsgBytes;
 				break;
+
 			case TSG_ASYNC_MESSAGE_REAUTH:
 				rpc_offset_align(&offset, 8);
 				offset += 8; // UINT64 TunnelContext, not to be confused with
 					     // the ContextHandle TunnelContext below.
 				break;
+
 			default:
-				fprintf(stderr, "Unexpected Message Type: 0x%X\n", MessageSwitchValue);
+				fprintf(stderr, "Unexpected Message Type: 0x%X\n", (int) MessageSwitchValue);
 				return FALSE;
 
 		}
@@ -428,7 +434,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			Pointer = *((UINT32*) &buffer[offset]); /* Ptr (4 bytes): 0x00020008 */
 			offset += 4;
 		}
-        
+
 		versionCaps = (PTSG_PACKET_VERSIONCAPS) malloc(sizeof(TSG_PACKET_VERSIONCAPS));
 		ZeroMemory(versionCaps, sizeof(TSG_PACKET_VERSIONCAPS));
 		packetQuarEncResponse->versionCaps = versionCaps;
@@ -440,7 +446,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		if (versionCaps->tsgHeader.ComponentId != TS_GATEWAY_TRANSPORT)
 		{
 			fprintf(stderr, "Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
-				versionCaps->tsgHeader.ComponentId);
+					versionCaps->tsgHeader.ComponentId);
 			free(versionCaps);
 			free(packetQuarEncResponse);
 			free(packet);
@@ -785,61 +791,61 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	switch (SwitchValue)
 	{
-		case TSG_ASYNC_MESSAGE_CONSENT_MESSAGE:
-			packetStringMessage = (PTSG_PACKET_STRING_MESSAGE) malloc(sizeof(TSG_PACKET_STRING_MESSAGE));
-			ZeroMemory(packetStringMessage, sizeof(TSG_PACKET_STRING_MESSAGE));
-			packetMsgResponse->messagePacket.consentMessage = packetStringMessage;
+	case TSG_ASYNC_MESSAGE_CONSENT_MESSAGE:
+		packetStringMessage = (PTSG_PACKET_STRING_MESSAGE) malloc(sizeof(TSG_PACKET_STRING_MESSAGE));
+		ZeroMemory(packetStringMessage, sizeof(TSG_PACKET_STRING_MESSAGE));
+		packetMsgResponse->messagePacket.consentMessage = packetStringMessage;
 
-			Pointer = *((UINT32*) &buffer[offset + 28]); /* ConsentMessagePtr */
-			packetStringMessage->isDisplayMandatory = *((INT32*) &buffer[offset + 32]); /* IsDisplayMandatory */
-			packetStringMessage->isConsentMandatory = *((INT32*) &buffer[offset + 36]); /* IsConsentMandatory */
-			packetStringMessage->msgBytes = *((UINT32*) &buffer[offset + 40]); /* MsgBytes */
+		Pointer = *((UINT32*) &buffer[offset + 28]); /* ConsentMessagePtr */
+		packetStringMessage->isDisplayMandatory = *((INT32*) &buffer[offset + 32]); /* IsDisplayMandatory */
+		packetStringMessage->isConsentMandatory = *((INT32*) &buffer[offset + 36]); /* IsConsentMandatory */
+		packetStringMessage->msgBytes = *((UINT32*) &buffer[offset + 40]); /* MsgBytes */
 
-			Pointer = *((UINT32*) &buffer[offset + 44]); /* MsgPtr */
-			MaxCount = *((UINT32*) &buffer[offset + 48]); /* MaxCount */
-			/* Offset */
-			ActualCount = *((UINT32*) &buffer[offset + 56]); /* ActualCount */
+		Pointer = *((UINT32*) &buffer[offset + 44]); /* MsgPtr */
+		MaxCount = *((UINT32*) &buffer[offset + 48]); /* MaxCount */
+		/* Offset */
+		ActualCount = *((UINT32*) &buffer[offset + 56]); /* ActualCount */
 
-			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) &buffer[offset + 60], ActualCount, &messageText, 0, NULL, NULL);
-			fprintf(stderr, "Consent Message: %s\n", messageText);
-			free(messageText);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) &buffer[offset + 60], ActualCount, &messageText, 0, NULL, NULL);
+		fprintf(stderr, "Consent Message: %s\n", messageText);
+		free(messageText);
 
-			break;
+		break;
 
-		case TSG_ASYNC_MESSAGE_SERVICE_MESSAGE:
-			packetStringMessage = (PTSG_PACKET_STRING_MESSAGE) malloc(sizeof(TSG_PACKET_STRING_MESSAGE));
-			ZeroMemory(packetStringMessage, sizeof(TSG_PACKET_STRING_MESSAGE));
-			packetMsgResponse->messagePacket.serviceMessage = packetStringMessage;
+	case TSG_ASYNC_MESSAGE_SERVICE_MESSAGE:
+		packetStringMessage = (PTSG_PACKET_STRING_MESSAGE) malloc(sizeof(TSG_PACKET_STRING_MESSAGE));
+		ZeroMemory(packetStringMessage, sizeof(TSG_PACKET_STRING_MESSAGE));
+		packetMsgResponse->messagePacket.serviceMessage = packetStringMessage;
 
-			Pointer = *((UINT32*) &buffer[offset + 28]); /* ServiceMessagePtr */
-			packetStringMessage->isDisplayMandatory = *((INT32*) &buffer[offset + 32]); /* IsDisplayMandatory */
-			packetStringMessage->isConsentMandatory = *((INT32*) &buffer[offset + 36]); /* IsConsentMandatory */
-			packetStringMessage->msgBytes = *((UINT32*) &buffer[offset + 40]); /* MsgBytes */
+		Pointer = *((UINT32*) &buffer[offset + 28]); /* ServiceMessagePtr */
+		packetStringMessage->isDisplayMandatory = *((INT32*) &buffer[offset + 32]); /* IsDisplayMandatory */
+		packetStringMessage->isConsentMandatory = *((INT32*) &buffer[offset + 36]); /* IsConsentMandatory */
+		packetStringMessage->msgBytes = *((UINT32*) &buffer[offset + 40]); /* MsgBytes */
 
-			Pointer = *((UINT32*) &buffer[offset + 44]); /* MsgPtr */
-			MaxCount = *((UINT32*) &buffer[offset + 48]); /* MaxCount */
-			/* Offset */
-			ActualCount = *((UINT32*) &buffer[offset + 56]); /* ActualCount */
+		Pointer = *((UINT32*) &buffer[offset + 44]); /* MsgPtr */
+		MaxCount = *((UINT32*) &buffer[offset + 48]); /* MaxCount */
+		/* Offset */
+		ActualCount = *((UINT32*) &buffer[offset + 56]); /* ActualCount */
 
-			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) &buffer[offset + 60], ActualCount, &messageText, 0, NULL, NULL);
-			fprintf(stderr, "Service Message: %s\n", messageText);
-			free(messageText);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) &buffer[offset + 60], ActualCount, &messageText, 0, NULL, NULL);
+		fprintf(stderr, "Service Message: %s\n", messageText);
+		free(messageText);
 
-			break;
+		break;
 
-		case TSG_ASYNC_MESSAGE_REAUTH:
-			packetReauthMessage = (PTSG_PACKET_REAUTH_MESSAGE) malloc(sizeof(TSG_PACKET_REAUTH_MESSAGE));
-			ZeroMemory(packetReauthMessage, sizeof(TSG_PACKET_REAUTH_MESSAGE));
-			packetMsgResponse->messagePacket.reauthMessage = packetReauthMessage;
+	case TSG_ASYNC_MESSAGE_REAUTH:
+		packetReauthMessage = (PTSG_PACKET_REAUTH_MESSAGE) malloc(sizeof(TSG_PACKET_REAUTH_MESSAGE));
+		ZeroMemory(packetReauthMessage, sizeof(TSG_PACKET_REAUTH_MESSAGE));
+		packetMsgResponse->messagePacket.reauthMessage = packetReauthMessage;
 
-			Pointer = *((UINT32*) &buffer[offset + 28]); /* ReauthMessagePtr */
-			break;
+		Pointer = *((UINT32*) &buffer[offset + 28]); /* ReauthMessagePtr */
+		break;
 
-		default:
-			fprintf(stderr, "TsProxyMakeTunnelCallReadResponse: unexpected message type: %d\n",
-					SwitchValue);
-			rc = FALSE;
-			break;
+	default:
+		fprintf(stderr, "TsProxyMakeTunnelCallReadResponse: unexpected message type: %d\n",
+				SwitchValue);
+		rc = FALSE;
+		break;
 	}
 
 	if (packet)
@@ -1441,19 +1447,19 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 	 */
 
 
-    if (tsg == NULL)
-        return FALSE;
+	if (tsg == NULL)
+		return FALSE;
 
 	tsg->rpc->client->SynchronousReceive = TRUE;
 
-    /* if we are already in state pending (i.e. if a server initiated disconnect was issued)
+	/* if we are already in state pending (i.e. if a server initiated disconnect was issued)
        we have to skip TsProxyCloseChannel - see Figure 13 in section 3.2.3
-     */
-    if (tsg->state != TSG_STATE_TUNNEL_CLOSE_PENDING)
-    {
-        if (!TsProxyCloseChannel(tsg, NULL))
-            return FALSE;
-    }
+	 */
+	if (tsg->state != TSG_STATE_TUNNEL_CLOSE_PENDING)
+	{
+		if (!TsProxyCloseChannel(tsg, NULL))
+			return FALSE;
+	}
 
 	if (!TsProxyMakeTunnelCall(tsg, &tsg->TunnelContext, TSG_TUNNEL_CANCEL_ASYNC_MSG_REQUEST, NULL, NULL))
 		return FALSE;
@@ -1467,12 +1473,12 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int CopyLength;
-    rdpRpc* rpc;
+	rdpRpc* rpc;
 
-    if (tsg == NULL)
-        return -1;
+	if (tsg == NULL)
+		return -1;
 
-    rpc = tsg->rpc;
+	rpc = tsg->rpc;
 
 	if (tsg->PendingPdu)
 	{

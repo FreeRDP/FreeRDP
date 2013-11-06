@@ -1556,6 +1556,9 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 		ZeroMemory(update, sizeof(rdpUpdate));
 
+		WLog_Init();
+		update->log = WLog_Get("com.freerdp.core.update");
+
 		update->bitmap_update.count = 64;
 		update->bitmap_update.rectangles = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
 		ZeroMemory(update->bitmap_update.rectangles, sizeof(BITMAP_DATA) * update->bitmap_update.count);
@@ -1609,7 +1612,7 @@ void update_free(rdpUpdate* update)
 
 		free(update->primary->polyline.points);
 		free(update->primary->polygon_sc.points);
-		if (NULL != update->primary->fast_glyph.glyphData.aj)
+		if (update->primary->fast_glyph.glyphData.aj)
 			free(update->primary->fast_glyph.glyphData.aj);
 		free(update->primary);
 

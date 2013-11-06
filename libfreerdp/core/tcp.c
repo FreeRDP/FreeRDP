@@ -79,6 +79,13 @@ void tcp_get_ip_address(rdpTcp * tcp)
 	tcp->ip_address[sizeof(tcp->ip_address) - 1] = 0;
 
 	tcp->settings->IPv6Enabled = 0;
+
+	if (tcp->settings->ClientAddress)
+	{
+		free(tcp->settings->ClientAddress);
+		tcp->settings->ClientAddress = NULL;
+	}
+
 	tcp->settings->ClientAddress = _strdup(tcp->ip_address);
 }
 
@@ -120,7 +127,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
 	UINT32 option_value;
 	socklen_t option_len;
 
-	if (hostname == NULL)
+	if (!hostname)
 		return FALSE;
 
 	if (hostname[0] == '/')
@@ -262,6 +269,9 @@ int tcp_attach(rdpTcp* tcp, int sockfd)
 
 HANDLE tcp_get_event_handle(rdpTcp* tcp)
 {
+	if (!tcp)
+		return NULL;
+	
 #ifndef _WIN32
 	return tcp->event;
 #else
@@ -275,7 +285,7 @@ rdpTcp* tcp_new(rdpSettings* settings)
 
 	tcp = (rdpTcp*) malloc(sizeof(rdpTcp));
 
-	if (tcp != NULL)
+	if (tcp)
 	{
 		ZeroMemory(tcp, sizeof(rdpTcp));
 

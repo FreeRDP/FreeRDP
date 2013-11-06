@@ -30,16 +30,16 @@
 #include <freerdp/rail/rail.h>
 #include <freerdp/rail/window_list.h>
 
-static void rail_WindowCreate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
+static void rail_WindowCreate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
 {
 	rdpRail* rail = context->rail;
-	window_list_create(rail->list, orderInfo, window_state);
+	window_list_create(rail->list, orderInfo, windowState);
 }
 
-static void rail_WindowUpdate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
+static void rail_WindowUpdate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
 {
 	rdpRail* rail = context->rail;
-	window_list_update(rail->list, orderInfo, window_state);
+	window_list_update(rail->list, orderInfo, windowState);
 }
 
 static void rail_WindowDelete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
@@ -48,30 +48,31 @@ static void rail_WindowDelete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 	window_list_delete(rail->list, orderInfo);
 }
 
-static void rail_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* window_icon)
+static void rail_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
 {
 	rdpIcon* icon;
 	rdpWindow* window;
 	rdpRail* rail = context->rail;
 
-	if (window_icon->iconInfo->cacheEntry != 0xFFFF)
+	if (windowIcon->iconInfo->cacheEntry != 0xFFFF)
 	{
 		/* cache icon */
 	}
 
 	window = window_list_get_by_id(rail->list, orderInfo->windowId);
+
 	if (!window)
-		return ;
+		return;
 
 	icon = (rdpIcon*) malloc(sizeof(rdpIcon));
 	ZeroMemory(icon, sizeof(rdpIcon));
 
-	icon->entry = window_icon->iconInfo;
+	icon->entry = windowIcon->iconInfo;
 	icon->big = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? TRUE : FALSE;
 
 	DEBUG_RAIL("Window Icon: %dx%d@%dbpp cbBitsColor:%d cbBitsMask:%d cbColorTable:%d",
-			window_icon->iconInfo->width, window_icon->iconInfo->height, window_icon->iconInfo->bpp,
-			window_icon->iconInfo->cbBitsColor, window_icon->iconInfo->cbBitsMask, window_icon->iconInfo->cbColorTable);
+			windowIcon->iconInfo->width, windowIcon->iconInfo->height, windowIcon->iconInfo->bpp,
+			windowIcon->iconInfo->cbBitsColor, windowIcon->iconInfo->cbBitsMask, windowIcon->iconInfo->cbColorTable);
 
 	if (icon->big)
 		window->bigIcon = icon;
@@ -81,17 +82,17 @@ static void rail_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, W
 	IFCALL(rail->rail_SetWindowIcon, rail, window, icon);
 }
 
-static void rail_WindowCachedIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* window_cached_icon)
+static void rail_WindowCachedIcon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
 
 }
 
-static void rail_NotifyIconCreate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
+static void rail_NotifyIconCreate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 
 }
 
-static void rail_NotifyIconUpdate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notify_icon_state)
+static void rail_NotifyIconUpdate(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
 
 }
@@ -101,15 +102,18 @@ static void rail_NotifyIconDelete(rdpContext* context, WINDOW_ORDER_INFO* orderI
 
 }
 
-static void rail_MonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitored_desktop)
+static void rail_MonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
 
 }
 
-//This is used to switch FreeRDP back to showing the full desktop under remote app mode
-//to handle cases where the screen is locked, etc. The rail server informs us that it is
-//no longer monitoring the desktop. Once the desktop becomes monitored again. The full desktop 
-//window will be automatically destroyed and we will switch back into remote app mode.
+/**
+ * This is used to switch FreeRDP back to showing the full desktop under remote app mode
+ * to handle cases where the screen is locked, etc. The rail server informs us that it is
+ * no longer monitoring the desktop. Once the desktop becomes monitored again. The full desktop
+ * window will be automatically destroyed and we will switch back into remote app mode.
+ */
+
 static void rail_NonMonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
 	rdpWindow* window;
@@ -121,8 +125,6 @@ static void rail_NonMonitoredDesktop(rdpContext* context, WINDOW_ORDER_INFO* ord
 
         window_list_clear(rail->list);
 }
-
-
 
 void rail_register_update_callbacks(rdpRail* rail, rdpUpdate* update)
 {
@@ -146,7 +148,7 @@ rdpRail* rail_new(rdpSettings* settings)
 
 	rail = (rdpRail*) malloc(sizeof(rdpRail));
 
-	if (rail != NULL)
+	if (rail)
 	{
 		ZeroMemory(rail, sizeof(rdpRail));
 
@@ -163,7 +165,7 @@ rdpRail* rail_new(rdpSettings* settings)
 
 void rail_free(rdpRail* rail)
 {
-	if (rail != NULL)
+	if (rail)
 	{
 		icon_cache_free(rail->cache);
 		window_list_free(rail->list);

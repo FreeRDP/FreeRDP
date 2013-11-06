@@ -7,7 +7,6 @@
 
 int TestCredUIConfirmCredentials(int argc, char* argv[])
 {
-
 	return 0;
 }
 

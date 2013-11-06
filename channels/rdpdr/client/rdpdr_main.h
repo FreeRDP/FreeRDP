@@ -21,14 +21,30 @@
 #ifndef FREERDP_CHANNEL_RDPDR_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_RDPDR_CLIENT_MAIN_H
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/stream.h>
+#include <winpr/collections.h>
+
+#include <freerdp/api.h>
+#include <freerdp/svc.h>
+#include <freerdp/addin.h>
+
 #include <freerdp/channels/rdpdr.h>
-#include <freerdp/utils/svc_plugin.h>
 
 typedef struct rdpdr_plugin rdpdrPlugin;
 
 struct rdpdr_plugin
 {
-	rdpSvcPlugin plugin;
+	CHANNEL_DEF channelDef;
+	CHANNEL_ENTRY_POINTS_EX channelEntryPoints;
+
+	HANDLE thread;
+	wStream* data_in;
+	void* InitHandle;
+	UINT32 OpenHandle;
+	wMessagePipe* MsgPipe;
 
 	DEVMAN* devman;
 
@@ -37,5 +53,7 @@ struct rdpdr_plugin
 	UINT16 clientID;
 	char computerName[256];
 };
+
+int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
 
 #endif /* FREERDP_CHANNEL_RDPDR_CLIENT_MAIN_H */

@@ -672,18 +672,18 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 	return 0;
 }
 
-BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
+int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT16 type;
 	UINT16 length;
 	UINT16 channelId;
 
 	if (!rdp_read_share_control_header(s, &length, &type, &channelId))
-		return FALSE;
+		return -1;
 
 	if (type == PDU_TYPE_DATA)
 	{
-		return (rdp_recv_data_pdu(rdp, s) < 0) ? FALSE : TRUE;
+		return rdp_recv_data_pdu(rdp, s);
 	}
 	else if (type == PDU_TYPE_SERVER_REDIRECTION)
 	{
@@ -691,7 +691,7 @@ BOOL rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
 	}
 	else
 	{
-		return FALSE;
+		return -1;
 	}
 }
 
@@ -815,8 +815,8 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			 *  - no share control header, nor the 2 byte pad
 			 */
 			Stream_Rewind(s, 2);
-			rdp_recv_enhanced_security_redirection_packet(rdp, s);
-			return -1;
+
+			return rdp_recv_enhanced_security_redirection_packet(rdp, s);
 		}
 	}
 
@@ -854,8 +854,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 					break;
 
 				case PDU_TYPE_SERVER_REDIRECTION:
-					if (!rdp_recv_enhanced_security_redirection_packet(rdp, s))
-						return -1;
+					return rdp_recv_enhanced_security_redirection_packet(rdp, s);
 					break;
 
 				default:
@@ -928,13 +927,11 @@ static int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_LICENSING:
-			if (!rdp_client_connect_license(rdp, s))
-				status = -1;
+			status = rdp_client_connect_license(rdp, s);
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE:
-			if (!rdp_client_connect_demand_active(rdp, s))
-				status = -1;
+			status = rdp_client_connect_demand_active(rdp, s);
 			break;
 
 		case CONNECTION_STATE_FINALIZATION:
@@ -976,7 +973,9 @@ void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking)
 
 int rdp_check_fds(rdpRdp* rdp)
 {
-	return transport_check_fds(&(rdp->transport));
+	int status;
+	status = transport_check_fds(rdp->transport);
+	return status;
 }
 
 /**
@@ -987,6 +986,7 @@ int rdp_check_fds(rdpRdp* rdp)
 rdpRdp* rdp_new(rdpContext* context)
 {
 	rdpRdp* rdp;
+	DWORD flags;
 
 	rdp = (rdpRdp*) malloc(sizeof(rdpRdp));
 
@@ -995,9 +995,18 @@ rdpRdp* rdp_new(rdpContext* context)
 		ZeroMemory(rdp, sizeof(rdpRdp));
 
 		rdp->context = context;
-
 		rdp->instance = context->instance;
-		rdp->settings = freerdp_settings_new((void*) context->instance);
+
+		flags = 0;
+
+		if (context->ServerMode)
+			flags |= FREERDP_SETTINGS_SERVER_MODE;
+
+		if (!context->settings)
+			context->settings = freerdp_settings_new(flags);
+
+		rdp->settings = context->settings;
+		rdp->settings->instance = context->instance;
 
 		if (context->instance)
 			context->instance->settings = rdp->settings;
@@ -1018,6 +1027,46 @@ rdpRdp* rdp_new(rdpContext* context)
 	return rdp;
 }
 
+void rdp_reset(rdpRdp* rdp)
+{
+	rdpSettings* settings;
+
+	settings = rdp->settings;
+
+	crypto_rc4_free(rdp->rc4_decrypt_key);
+	rdp->rc4_decrypt_key = NULL;
+	crypto_rc4_free(rdp->rc4_encrypt_key);
+	rdp->rc4_encrypt_key = NULL;
+	crypto_des3_free(rdp->fips_encrypt);
+	rdp->fips_encrypt = NULL;
+	crypto_des3_free(rdp->fips_decrypt);
+	rdp->fips_decrypt = NULL;
+	crypto_hmac_free(rdp->fips_hmac);
+	rdp->fips_hmac = NULL;
+
+	mppc_enc_free(rdp->mppc_enc);
+	mppc_dec_free(rdp->mppc_dec);
+	mcs_free(rdp->mcs);
+	nego_free(rdp->nego);
+	license_free(rdp->license);
+	transport_free(rdp->transport);
+
+	free(settings->ServerRandom);
+	settings->ServerRandom = NULL;
+	free(settings->ServerCertificate);
+	settings->ServerCertificate = NULL;
+	free(settings->ClientAddress);
+	settings->ClientAddress = NULL;
+
+	rdp->transport = transport_new(rdp->settings);
+	rdp->license = license_new(rdp);
+	rdp->nego = nego_new(rdp->transport);
+	rdp->mcs = mcs_new(rdp->transport);
+	rdp->mppc_dec = mppc_dec_new();
+	rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
+	rdp->transport->layer = TRANSPORT_LAYER_TCP;
+}
+
 /**
  * Free RDP module.
  * @param rdp RDP module to be freed
@@ -1025,7 +1074,7 @@ rdpRdp* rdp_new(rdpContext* context)
 
 void rdp_free(rdpRdp* rdp)
 {
-	if (rdp != NULL)
+	if (rdp)
 	{
 		crypto_rc4_free(rdp->rc4_decrypt_key);
 		crypto_rc4_free(rdp->rc4_encrypt_key);
@@ -1033,6 +1082,7 @@ void rdp_free(rdpRdp* rdp)
 		crypto_des3_free(rdp->fips_decrypt);
 		crypto_hmac_free(rdp->fips_hmac);
 		freerdp_settings_free(rdp->settings);
+		freerdp_settings_free(rdp->settingsCopy);
 		extension_free(rdp->extension);
 		transport_free(rdp->transport);
 		license_free(rdp->license);

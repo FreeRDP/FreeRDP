@@ -88,12 +88,19 @@ BOOL transport_disconnect(rdpTransport* transport)
 
 	if (transport->async)
 	{
-		SetEvent(transport->stopEvent);
-		WaitForSingleObject(transport->thread, INFINITE);
+		if (transport->stopEvent)
+		{
+			SetEvent(transport->stopEvent);
+			WaitForSingleObject(transport->thread, INFINITE);
 
-		CloseHandle(transport->thread);
-		CloseHandle(transport->stopEvent);
+			CloseHandle(transport->thread);
+			CloseHandle(transport->stopEvent);
+
+			transport->thread = NULL;
+			transport->stopEvent = NULL;
+		}
 	}
+
 	return status;
 }
 
@@ -157,9 +164,11 @@ static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
 
 static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
-	if(cmd == BIO_CTRL_FLUSH) {
+	if (cmd == BIO_CTRL_FLUSH)
+	{
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -216,7 +225,6 @@ BOOL transport_connect_tls(rdpTransport* transport)
 				connectErrorCode = TLSCONNECTERROR;
 
 			tls_free(transport->TsgTls);
-
 			transport->TsgTls = NULL;
 
 			return FALSE;
@@ -324,15 +332,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
 
-	transport->async = transport->settings->AsyncTransport;
-
-	if (transport->async)
-	{
-		transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-		transport->thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
-	}
+	transport->async = settings->AsyncTransport;
 
 	if (transport->settings->GatewayEnabled)
 	{
@@ -353,6 +353,17 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 		transport->SplitInputOutput = FALSE;
 		transport->TcpOut = transport->TcpIn;
+	}
+
+	if (status)
+	{
+		if (transport->async)
+		{
+			transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+			transport->thread = CreateThread(NULL, 0,
+					(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
+		}
 	}
 
 	return status;
@@ -535,6 +546,12 @@ int transport_read(rdpTransport* transport, wStream* s)
 	pduLength = 0;
 	transport_status = 0;
 
+	if (!transport)
+		return -1;
+
+	if (!s)
+		return -1;
+
 	/* first check if we have header */
 	streamPosition = Stream_GetPosition(s);
 
@@ -613,6 +630,11 @@ int transport_read(rdpTransport* transport, wStream* s)
 	}
 #endif
 
+	if (streamPosition + status >= pduLength)
+	{
+		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
+	}
+
 	return transport_status;
 }
 
@@ -647,6 +669,11 @@ int transport_write(rdpTransport* transport, wStream* s)
 		winpr_HexDump(Stream_Buffer(s), length);
 	}
 #endif
+
+	if (length > 0)
+	{
+		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length, WLOG_PACKET_OUTBOUND);
+	}
 
 	while (length > 0)
 	{
@@ -699,7 +726,6 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 	return status;
 }
-
 
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
@@ -769,14 +795,16 @@ void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* 
 	}
 }
 
-int transport_check_fds(rdpTransport** ptransport)
+int transport_check_fds(rdpTransport* transport)
 {
 	int pos;
 	int status;
 	UINT16 length;
 	int recv_status;
 	wStream* received;
-	rdpTransport* transport = *ptransport;
+
+	if (!transport)
+		return -1;
 
 #ifdef _WIN32
 	WSAResetEvent(transport->TcpIn->wsa_event);
@@ -866,22 +894,32 @@ int transport_check_fds(rdpTransport** ptransport)
 		Stream_SealLength(received);
 		Stream_SetPosition(received, 0);
 
+		/**
+		 * status:
+		 * 	-1: error
+		 * 	 0: success
+		 * 	 1: redirection
+		 */
+
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 
-		if (transport == *ptransport)
-			/* transport might now have been freed by rdp_client_redirect and a new rdp->transport created */
-			/* so only release if still valid */
-			Stream_Release(received);
-			
+		if (recv_status == 1)
+		{
+			/**
+			 * Last call to ReceiveCallback resulted in a session redirection,
+			 * which means the current rdpTransport* transport pointer has been freed.
+			 * Return 0 for success, the rest of this function is meant for non-redirected cases.
+			 */
+			return 0;
+		}
+
+		Stream_Release(received);
 
 		if (recv_status < 0)
 			status = -1;
 
 		if (status < 0)
 			return status;
-
-		/* transport might now have been freed by rdp_client_redirect and a new rdp->transport created */
-		transport = *ptransport;
 	}
 
 	return 0;
@@ -916,7 +954,7 @@ static void* transport_client_thread(void* arg)
 {
 	DWORD status;
 	DWORD nCount;
-	HANDLE events[32];
+	HANDLE handles[8];
 	freerdp* instance;
 	rdpContext* context;
 	rdpTransport* transport;
@@ -930,28 +968,43 @@ static void* transport_client_thread(void* arg)
 	
 	context = instance->context;
 	assert(NULL != instance->context);
+	
+	WLog_Print(transport->log, WLOG_DEBUG, "Starting transport thread");
+
+	nCount = 0;
+	handles[nCount++] = transport->stopEvent;
+	handles[nCount++] = transport->connectedEvent;
+	
+	status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+	
+	if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+	{
+		WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
+		ExitThread(0);
+		return NULL;
+	}
+
+	WLog_Print(transport->log, WLOG_DEBUG, "Asynchronous transport activated");
 
 	while (1)
 	{
 		nCount = 0;
-		events[nCount++] = transport->stopEvent;
-		events[nCount] = transport->connectedEvent;
+		handles[nCount++] = transport->stopEvent;
 
-		status = WaitForMultipleObjects(nCount + 1, events, FALSE, INFINITE);
-		if (status == WAIT_OBJECT_0)
-			break;
+		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
 
-		transport_get_read_handles(transport, (HANDLE*) &events, &nCount);
-		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
-		if (status == WAIT_OBJECT_0)
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+
+		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
 		if (!freerdp_check_fds(instance))
 			break;
 	}
 
-	ExitThread(0);
+	WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
 
+	ExitThread(0);
 	return NULL;
 }
 
@@ -961,9 +1014,12 @@ rdpTransport* transport_new(rdpSettings* settings)
 
 	transport = (rdpTransport*) malloc(sizeof(rdpTransport));
 
-	if (transport != NULL)
+	if (transport)
 	{
 		ZeroMemory(transport, sizeof(rdpTransport));
+
+		WLog_Init();
+		transport->log = WLog_Get("com.freerdp.core.transport");
 
 		transport->TcpIn = tcp_new(settings);
 
@@ -993,10 +1049,8 @@ rdpTransport* transport_new(rdpSettings* settings)
 
 void transport_free(rdpTransport* transport)
 {
-	if (transport != NULL)
+	if (transport)
 	{
-        SetEvent(transport->stopEvent);
-        
 		if (transport->ReceiveBuffer)
 			Stream_Release(transport->ReceiveBuffer);
 
@@ -1011,12 +1065,20 @@ void transport_free(rdpTransport* transport)
 		if (transport->TlsOut != transport->TlsIn)
 			tls_free(transport->TlsOut);
 
-		tcp_free(transport->TcpIn);
+		transport->TlsIn = NULL;
+		transport->TlsOut = NULL;
+
+		if (transport->TcpIn)
+			tcp_free(transport->TcpIn);
 
 		if (transport->TcpOut != transport->TcpIn)
 			tcp_free(transport->TcpOut);
 
+		transport->TcpIn = NULL;
+		transport->TcpOut = NULL;
+
 		tsg_free(transport->tsg);
+		transport->tsg = NULL;
 
 		CloseHandle(transport->ReadMutex);
 		CloseHandle(transport->WriteMutex);

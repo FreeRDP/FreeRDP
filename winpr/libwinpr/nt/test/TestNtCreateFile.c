@@ -5,28 +5,46 @@
 
 int TestNtCreateFile(int argc, char* argv[])
 {
-#if 0
 	HANDLE handle;
 	NTSTATUS ntstatus;
 	ULONG CreateOptions;
 	ANSI_STRING aString;
 	UNICODE_STRING uString;
+	ULONG CreateDisposition;
 	ACCESS_MASK DesiredAccess = 0;
 	OBJECT_ATTRIBUTES attributes;
 	IO_STATUS_BLOCK ioStatusBlock;
 
-	RtlInitAnsiString(&aString, "\\Device\\FreeRDP\\TEST");
-	RtlAnsiStringToUnicodeString(&uString, &aString, TRUE);
+	_RtlInitAnsiString(&aString, "\\??\\C:\\Users\\Public\\foo.txt");
+	_RtlAnsiStringToUnicodeString(&uString, &aString, TRUE);
 
-	InitializeObjectAttributes(&attributes, NULL, 0, NULL, NULL);
+	handle = NULL;
+	ZeroMemory(&ioStatusBlock, sizeof(IO_STATUS_BLOCK));
+
+	_InitializeObjectAttributes(&attributes, &uString, 0, NULL, NULL);
 
 	DesiredAccess = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
 	CreateOptions = FILE_DIRECTORY_FILE | FILE_WRITE_THROUGH;
+	CreateDisposition = FILE_OVERWRITE_IF;
 
-	ntstatus = NtCreateFile(&handle, DesiredAccess, &attributes, &ioStatusBlock, 0, 0, 0, CreateOptions, 0, 0, 0);
+	ntstatus = _NtCreateFile(&handle, DesiredAccess, &attributes, &ioStatusBlock,
+		0, 0, CreateDisposition, CreateOptions, 0, 0, 0);
 
-	RtlFreeUnicodeString(&uString);
-#endif
+	if (ntstatus != STATUS_SUCCESS)
+	{
+		printf("NtCreateFile failure: 0x%04X\n", ntstatus);
+		return -1;
+	}
+
+	_RtlFreeUnicodeString(&uString);
+
+	ntstatus = _NtClose(handle);
+
+	if (ntstatus != STATUS_SUCCESS)
+	{
+		printf("NtClose failure: 0x%04X\n", ntstatus);
+		return -1;
+	}
 
 	return 0;
 }

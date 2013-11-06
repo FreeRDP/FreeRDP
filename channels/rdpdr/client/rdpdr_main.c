@@ -27,12 +27,11 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <winpr/stream.h>
 #include <freerdp/channels/rdpdr.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -45,15 +44,14 @@
 
 #include "rdpdr_main.h"
 
-static void rdpdr_process_connect(rdpSvcPlugin* plugin)
+static void rdpdr_process_connect(rdpdrPlugin* rdpdr)
 {
 	int index;
 	RDPDR_DEVICE* device;
 	rdpSettings* settings;
-	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
 
-	rdpdr->devman = devman_new(plugin);
-	settings = (rdpSettings*) plugin->channel_entry_points.pExtendedData;
+	rdpdr->devman = devman_new(rdpdr);
+	settings = (rdpSettings*) rdpdr->channelEntryPoints.pExtendedData;
 
 	strncpy(rdpdr->computerName, settings->ComputerName, sizeof(rdpdr->computerName) - 1);
 
@@ -64,34 +62,32 @@ static void rdpdr_process_connect(rdpSvcPlugin* plugin)
 	}
 }
 
-static void rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* data_in)
+static void rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s)
 {
-	Stream_Read_UINT16(data_in, rdpdr->versionMajor);
-	Stream_Read_UINT16(data_in, rdpdr->versionMinor);
-	Stream_Read_UINT32(data_in, rdpdr->clientID);
-
-	DEBUG_SVC("version %d.%d clientID %d", rdpdr->versionMajor, rdpdr->versionMinor, rdpdr->clientID);
+	Stream_Read_UINT16(s, rdpdr->versionMajor);
+	Stream_Read_UINT16(s, rdpdr->versionMinor);
+	Stream_Read_UINT32(s, rdpdr->clientID);
 }
 
 static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 {
-	wStream* data_out;
+	wStream* s;
 
-	data_out = Stream_New(NULL, 12);
+	s = Stream_New(NULL, 12);
 
-	Stream_Write_UINT16(data_out, RDPDR_CTYP_CORE);
-	Stream_Write_UINT16(data_out, PAKID_CORE_CLIENTID_CONFIRM);
+	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);
+	Stream_Write_UINT16(s, PAKID_CORE_CLIENTID_CONFIRM);
 
-	Stream_Write_UINT16(data_out, rdpdr->versionMajor);
-	Stream_Write_UINT16(data_out, rdpdr->versionMinor);
-	Stream_Write_UINT32(data_out, (UINT32) rdpdr->clientID);
+	Stream_Write_UINT16(s, rdpdr->versionMajor);
+	Stream_Write_UINT16(s, rdpdr->versionMinor);
+	Stream_Write_UINT32(s, (UINT32) rdpdr->clientID);
 
-	svc_plugin_send((rdpSvcPlugin*) rdpdr, data_out);
+	rdpdr_send(rdpdr, s);
 }
 
 static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 {
-	wStream* data_out;
+	wStream* s;
 	WCHAR* computerNameW = NULL;
 	size_t computerNameLenW;
 
@@ -100,70 +96,74 @@ static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 
 	computerNameLenW = ConvertToUnicode(CP_UTF8, 0, rdpdr->computerName, -1, &computerNameW, 0) * 2;
 
-	data_out = Stream_New(NULL, 16 + computerNameLenW + 2);
+	s = Stream_New(NULL, 16 + computerNameLenW + 2);
 
-	Stream_Write_UINT16(data_out, RDPDR_CTYP_CORE);
-	Stream_Write_UINT16(data_out, PAKID_CORE_CLIENT_NAME);
+	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);
+	Stream_Write_UINT16(s, PAKID_CORE_CLIENT_NAME);
 
-	Stream_Write_UINT32(data_out, 1); /* unicodeFlag, 0 for ASCII and 1 for Unicode */
-	Stream_Write_UINT32(data_out, 0); /* codePage, must be set to zero */
-	Stream_Write_UINT32(data_out, computerNameLenW + 2); /* computerNameLen, including null terminator */
-	Stream_Write(data_out, computerNameW, computerNameLenW);
-	Stream_Write_UINT16(data_out, 0); /* null terminator */
+	Stream_Write_UINT32(s, 1); /* unicodeFlag, 0 for ASCII and 1 for Unicode */
+	Stream_Write_UINT32(s, 0); /* codePage, must be set to zero */
+	Stream_Write_UINT32(s, computerNameLenW + 2); /* computerNameLen, including null terminator */
+	Stream_Write(s, computerNameW, computerNameLenW);
+	Stream_Write_UINT16(s, 0); /* null terminator */
 
 	free(computerNameW);
 
-	svc_plugin_send((rdpSvcPlugin*) rdpdr, data_out);
+	rdpdr_send(rdpdr, s);
 }
 
-static void rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* data_in)
+static void rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 versionMajor;
 	UINT16 versionMinor;
 	UINT32 clientID;
 
-	Stream_Read_UINT16(data_in, versionMajor);
-	Stream_Read_UINT16(data_in, versionMinor);
-	Stream_Read_UINT32(data_in, clientID);
+	Stream_Read_UINT16(s, versionMajor);
+	Stream_Read_UINT16(s, versionMinor);
+	Stream_Read_UINT32(s, clientID);
 
 	if (versionMajor != rdpdr->versionMajor || versionMinor != rdpdr->versionMinor)
 	{
-		DEBUG_WARN("unmatched version %d.%d", versionMajor, versionMinor);
 		rdpdr->versionMajor = versionMajor;
 		rdpdr->versionMinor = versionMinor;
 	}
 
 	if (clientID != rdpdr->clientID)
 	{
-		DEBUG_WARN("unmatched clientID %d", clientID);
 		rdpdr->clientID = clientID;
 	}
 }
 
-static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL user_loggedon)
+static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL userLoggedOn)
 {
 	int i;
-	int pos;
 	BYTE c;
+	int pos;
+	int index;
+	wStream* s;
 	UINT32 count;
 	int data_len;
 	int count_pos;
-	wStream* data_out;
 	DEVICE* device;
-	LIST_ITEM* item;
+	int keyCount;
+	ULONG_PTR* pKeys;
 
-	data_out = Stream_New(NULL, 256);
+	s = Stream_New(NULL, 256);
 
-	Stream_Write_UINT16(data_out, RDPDR_CTYP_CORE);
-	Stream_Write_UINT16(data_out, PAKID_CORE_DEVICELIST_ANNOUNCE);
+	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);
+	Stream_Write_UINT16(s, PAKID_CORE_DEVICELIST_ANNOUNCE);
 
-	count_pos = Stream_GetPosition(data_out);
+	count_pos = Stream_GetPosition(s);
 	count = 0;
-	Stream_Seek_UINT32(data_out); /* deviceCount */
 
-	for (item = rdpdr->devman->devices->head; item; item = item->next)
+	Stream_Seek_UINT32(s); /* deviceCount */
+
+	pKeys = NULL;
+	keyCount = ListDictionary_GetKeys(rdpdr->devman->devices, &pKeys);
+
+	for (index = 0; index < keyCount; index++)
 	{
-		device = (DEVICE*) item->data;
+		device = (DEVICE*) ListDictionary_GetItemValue(rdpdr->devman->devices, (void*) pKeys[index]);
 
 		/**
 		 * 1. versionMinor 0x0005 doesn't send PAKID_CORE_USER_LOGGEDON
@@ -173,29 +173,29 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		 */
 
 		if ((rdpdr->versionMinor == 0x0005) ||
-			(device->type == RDPDR_DTYP_SMARTCARD) || user_loggedon)
+			(device->type == RDPDR_DTYP_SMARTCARD) || userLoggedOn)
 		{
 			data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
-			Stream_EnsureRemainingCapacity(data_out, 20 + data_len);
+			Stream_EnsureRemainingCapacity(s, 20 + data_len);
 
-			Stream_Write_UINT32(data_out, device->type); /* deviceType */
-			Stream_Write_UINT32(data_out, device->id); /* deviceID */
-			strncpy((char*) Stream_Pointer(data_out), device->name, 8);
+			Stream_Write_UINT32(s, device->type); /* deviceType */
+			Stream_Write_UINT32(s, device->id); /* deviceID */
+			strncpy((char*) Stream_Pointer(s), device->name, 8);
 
 			for (i = 0; i < 8; i++)
 			{
-				Stream_Peek_UINT8(data_out, c);
+				Stream_Peek_UINT8(s, c);
 
 				if (c > 0x7F)
-					Stream_Write_UINT8(data_out, '_');
+					Stream_Write_UINT8(s, '_');
 				else
-					Stream_Seek_UINT8(data_out);
+					Stream_Seek_UINT8(s);
 			}
 
-			Stream_Write_UINT32(data_out, data_len);
+			Stream_Write_UINT32(s, data_len);
 
 			if (data_len > 0)
-				Stream_Write(data_out, Stream_Buffer(device->data), data_len);
+				Stream_Write(s, Stream_Buffer(device->data), data_len);
 
 			count++;
 
@@ -204,22 +204,25 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		}
 	}
 
-	pos = Stream_GetPosition(data_out);
-	Stream_SetPosition(data_out, count_pos);
-	Stream_Write_UINT32(data_out, count);
-	Stream_SetPosition(data_out, pos);
-	Stream_SealLength(data_out);
+	if (pKeys)
+		free(pKeys);
 
-	svc_plugin_send((rdpSvcPlugin*) rdpdr, data_out);
+	pos = Stream_GetPosition(s);
+	Stream_SetPosition(s, count_pos);
+	Stream_Write_UINT32(s, count);
+	Stream_SetPosition(s, pos);
+	Stream_SealLength(s);
+
+	rdpdr_send(rdpdr, s);
 }
 
-static BOOL rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* data_in)
+static BOOL rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 {
 	IRP* irp;
 
-	irp = irp_new(rdpdr->devman, data_in);
+	irp = irp_new(rdpdr->devman, s);
 
-	if (irp == NULL)
+	if (!irp)
 		return FALSE;
 
 	IFCALL(irp->device->IRPRequest, irp->device, irp);
@@ -227,87 +230,312 @@ static BOOL rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* data_in)
 	return TRUE;
 }
 
-static void rdpdr_process_receive(rdpSvcPlugin* plugin, wStream* data_in)
+static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 component;
 	UINT16 packetID;
 	UINT32 deviceID;
 	UINT32 status;
-	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
 
-	Stream_Read_UINT16(data_in, component);
-	Stream_Read_UINT16(data_in, packetID);
+	Stream_Read_UINT16(s, component);
+	Stream_Read_UINT16(s, packetID);
 
 	if (component == RDPDR_CTYP_CORE)
 	{
 		switch (packetID)
 		{
 			case PAKID_CORE_SERVER_ANNOUNCE:
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_SERVER_ANNOUNCE");
-				rdpdr_process_server_announce_request(rdpdr, data_in);
+				rdpdr_process_server_announce_request(rdpdr, s);
 				rdpdr_send_client_announce_reply(rdpdr);
 				rdpdr_send_client_name_request(rdpdr);
 				break;
 
 			case PAKID_CORE_SERVER_CAPABILITY:
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_SERVER_CAPABILITY");
-				rdpdr_process_capability_request(rdpdr, data_in);
+				rdpdr_process_capability_request(rdpdr, s);
 				rdpdr_send_capability_response(rdpdr);
 				break;
 
 			case PAKID_CORE_CLIENTID_CONFIRM:
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_CLIENTID_CONFIRM");
-				rdpdr_process_server_clientid_confirm(rdpdr, data_in);
+				rdpdr_process_server_clientid_confirm(rdpdr, s);
 				rdpdr_send_device_list_announce_request(rdpdr, FALSE);
 				break;
 
 			case PAKID_CORE_USER_LOGGEDON:
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_USER_LOGGEDON");
 				rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 				break;
 
 			case PAKID_CORE_DEVICE_REPLY:
 				/* connect to a specific resource */
-				Stream_Read_UINT32(data_in, deviceID);
-				Stream_Read_UINT32(data_in, status);
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_DEVICE_REPLY (deviceID=%d status=0x%08X)", deviceID, status);
+				Stream_Read_UINT32(s, deviceID);
+				Stream_Read_UINT32(s, status);
 				break;
 
 			case PAKID_CORE_DEVICE_IOREQUEST:
-				DEBUG_SVC("RDPDR_CTYP_CORE / PAKID_CORE_DEVICE_IOREQUEST");
-				if (rdpdr_process_irp(rdpdr, data_in))
-					data_in = NULL;
+				if (rdpdr_process_irp(rdpdr, s))
+					s = NULL;
 				break;
 
 			default:
-				DEBUG_WARN("RDPDR_CTYP_CORE / unknown packetID: 0x%02X", packetID);
 				break;
 
 		}
 	}
 	else if (component == RDPDR_CTYP_PRN)
 	{
-		DEBUG_SVC("RDPDR_CTYP_PRN");
+
 	}
 	else
 	{
-		DEBUG_WARN("RDPDR component: 0x%02X packetID: 0x%02X", component, packetID);
+
 	}
 
-	Stream_Free(data_in, TRUE);
+	Stream_Free(s, TRUE);
 }
 
-static void rdpdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
+
+/****************************************************************************************/
+
+
+static wListDictionary* g_InitHandles;
+static wListDictionary* g_OpenHandles;
+
+void rdpdr_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
-	freerdp_event_free(event);
+	if (!g_InitHandles)
+		g_InitHandles = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
 }
 
-static void rdpdr_process_terminate(rdpSvcPlugin* plugin)
+void* rdpdr_get_init_handle_data(void* pInitHandle)
 {
-	rdpdrPlugin* rdpdr = (rdpdrPlugin*) plugin;
+	void* pUserData = NULL;
+	pUserData = ListDictionary_GetItemValue(g_InitHandles, pInitHandle);
+	return pUserData;
+}
 
-	devman_free(rdpdr->devman);
-	free(plugin);
+void rdpdr_remove_init_handle_data(void* pInitHandle)
+{
+	ListDictionary_Remove(g_InitHandles, pInitHandle);
+}
+
+void rdpdr_add_open_handle_data(DWORD openHandle, void* pUserData)
+{
+	void* pOpenHandle = (void*) (size_t) openHandle;
+
+	if (!g_OpenHandles)
+		g_OpenHandles = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+}
+
+void* rdpdr_get_open_handle_data(DWORD openHandle)
+{
+	void* pUserData = NULL;
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	pUserData = ListDictionary_GetItemValue(g_OpenHandles, pOpenHandle);
+	return pUserData;
+}
+
+void rdpdr_remove_open_handle_data(DWORD openHandle)
+{
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+}
+
+int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
+{
+	UINT32 status = 0;
+	rdpdrPlugin* plugin = (rdpdrPlugin*) rdpdr;
+
+	if (!plugin)
+		status = CHANNEL_RC_BAD_INIT_HANDLE;
+	else
+		status = plugin->channelEntryPoints.pVirtualChannelWrite(plugin->OpenHandle,
+			Stream_Buffer(s), Stream_GetPosition(s), s);
+
+	if (status != CHANNEL_RC_OK)
+	{
+		Stream_Free(s, TRUE);
+		fprintf(stderr, "rdpdr_send: VirtualChannelWrite failed %d\n", status);
+	}
+
+	return status;
+}
+
+static void rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
+		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+{
+	wStream* data_in;
+
+	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
+	{
+		/*
+		 * According to MS-RDPBCGR 2.2.6.1, "All virtual channel traffic MUST be suspended.
+		 * This flag is only valid in server-to-client virtual channel traffic. It MUST be
+		 * ignored in client-to-server data." Thus it would be best practice to cease data
+		 * transmission. However, simply returning here avoids a crash.
+		 */
+		return;
+	}
+
+	if (dataFlags & CHANNEL_FLAG_FIRST)
+	{
+		if (rdpdr->data_in != NULL)
+			Stream_Free(rdpdr->data_in, TRUE);
+
+		rdpdr->data_in = Stream_New(NULL, totalLength);
+	}
+
+	data_in = rdpdr->data_in;
+	Stream_EnsureRemainingCapacity(data_in, (int) dataLength);
+	Stream_Write(data_in, pData, dataLength);
+
+	if (dataFlags & CHANNEL_FLAG_LAST)
+	{
+		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
+		{
+			fprintf(stderr, "svc_plugin_process_received: read error\n");
+		}
+
+		rdpdr->data_in = NULL;
+		Stream_SealLength(data_in);
+		Stream_SetPosition(data_in, 0);
+
+		MessageQueue_Post(rdpdr->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
+	}
+}
+
+static void rdpdr_virtual_channel_open_event(UINT32 openHandle, UINT32 event,
+		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+{
+	rdpdrPlugin* rdpdr;
+
+	rdpdr = (rdpdrPlugin*) rdpdr_get_open_handle_data(openHandle);
+
+	if (!rdpdr)
+	{
+		fprintf(stderr, "rdpdr_virtual_channel_open_event: error no match\n");
+		return;
+	}
+
+	switch (event)
+	{
+		case CHANNEL_EVENT_DATA_RECEIVED:
+			rdpdr_virtual_channel_event_data_received(rdpdr, pData, dataLength, totalLength, dataFlags);
+			break;
+
+		case CHANNEL_EVENT_WRITE_COMPLETE:
+			Stream_Free((wStream*) pData, TRUE);
+			break;
+
+		case CHANNEL_EVENT_USER:
+			break;
+	}
+}
+
+static void* rdpdr_virtual_channel_client_thread(void* arg)
+{
+	wStream* data;
+	wMessage message;
+	rdpdrPlugin* rdpdr = (rdpdrPlugin*) arg;
+
+	rdpdr_process_connect(rdpdr);
+
+	while (1)
+	{
+		if (!MessageQueue_Wait(rdpdr->MsgPipe->In))
+			break;
+
+		if (MessageQueue_Peek(rdpdr->MsgPipe->In, &message, TRUE))
+		{
+			if (message.id == WMQ_QUIT)
+				break;
+
+			if (message.id == 0)
+			{
+				data = (wStream*) message.wParam;
+				rdpdr_process_receive(rdpdr, data);
+			}
+		}
+	}
+
+	ExitThread(0);
+	return NULL;
+}
+
+static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, void* pData, UINT32 dataLength)
+{
+	UINT32 status;
+
+	status = rdpdr->channelEntryPoints.pVirtualChannelOpen(rdpdr->InitHandle,
+		&rdpdr->OpenHandle, rdpdr->channelDef.name, rdpdr_virtual_channel_open_event);
+
+	rdpdr_add_open_handle_data(rdpdr->OpenHandle, rdpdr);
+
+	if (status != CHANNEL_RC_OK)
+	{
+		fprintf(stderr, "rdpdr_virtual_channel_event_connected: open failed: status: %d\n", status);
+		return;
+	}
+
+	rdpdr->MsgPipe = MessagePipe_New();
+
+	rdpdr->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) rdpdr_virtual_channel_client_thread, (void*) rdpdr, 0, NULL);
+}
+
+static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
+{
+	MessagePipe_PostQuit(rdpdr->MsgPipe, 0);
+	WaitForSingleObject(rdpdr->thread, INFINITE);
+
+	MessagePipe_Free(rdpdr->MsgPipe);
+	CloseHandle(rdpdr->thread);
+
+	rdpdr->channelEntryPoints.pVirtualChannelClose(rdpdr->OpenHandle);
+
+	if (rdpdr->data_in)
+	{
+		Stream_Free(rdpdr->data_in, TRUE);
+		rdpdr->data_in = NULL;
+	}
+
+	if (rdpdr->devman)
+	{
+		devman_free(rdpdr->devman);
+		rdpdr->devman = NULL;
+	}
+
+	rdpdr_remove_open_handle_data(rdpdr->OpenHandle);
+	rdpdr_remove_init_handle_data(rdpdr->InitHandle);
+}
+
+static void rdpdr_virtual_channel_init_event(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength)
+{
+	rdpdrPlugin* rdpdr;
+
+	rdpdr = (rdpdrPlugin*) rdpdr_get_init_handle_data(pInitHandle);
+
+	if (!rdpdr)
+	{
+		fprintf(stderr, "rdpdr_virtual_channel_init_event: error no match\n");
+		return;
+	}
+
+	switch (event)
+	{
+		case CHANNEL_EVENT_CONNECTED:
+			rdpdr_virtual_channel_event_connected(rdpdr, pData, dataLength);
+			break;
+
+		case CHANNEL_EVENT_DISCONNECTED:
+			break;
+
+		case CHANNEL_EVENT_TERMINATED:
+			rdpdr_virtual_channel_event_terminated(rdpdr);
+			break;
+	}
 }
 
 /* rdpdr is always built-in */
@@ -315,24 +543,24 @@ static void rdpdr_process_terminate(rdpSvcPlugin* plugin)
 
 int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
-	rdpdrPlugin* _p;
+	rdpdrPlugin* rdpdr;
 
-	_p = (rdpdrPlugin*) malloc(sizeof(rdpdrPlugin));
-	ZeroMemory(_p, sizeof(rdpdrPlugin));
+	rdpdr = (rdpdrPlugin*) malloc(sizeof(rdpdrPlugin));
+	ZeroMemory(rdpdr, sizeof(rdpdrPlugin));
 
-	_p->plugin.channel_def.options =
+	rdpdr->channelDef.options =
 			CHANNEL_OPTION_INITIALIZED |
 			CHANNEL_OPTION_ENCRYPT_RDP |
 			CHANNEL_OPTION_COMPRESS_RDP;
 
-	strcpy(_p->plugin.channel_def.name, "rdpdr");
+	strcpy(rdpdr->channelDef.name, "rdpdr");
 
-	_p->plugin.connect_callback = rdpdr_process_connect;
-	_p->plugin.receive_callback = rdpdr_process_receive;
-	_p->plugin.event_callback = rdpdr_process_event;
-	_p->plugin.terminate_callback = rdpdr_process_terminate;
+	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, pEntryPoints->cbSize);
 
-	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
+	rdpdr->channelEntryPoints.pVirtualChannelInit(&rdpdr->InitHandle,
+		&rdpdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpdr_virtual_channel_init_event);
+
+	rdpdr_add_init_handle_data(rdpdr->InitHandle, (void*) rdpdr);
 
 	return 1;
 }

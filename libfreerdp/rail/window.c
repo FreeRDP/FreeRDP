@@ -387,7 +387,7 @@ void rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 {
 	IFCALL(rail->rail_DestroyWindow, rail, window);
 
-	if (window != NULL)
+	if (window)
 	{
 		free(window);
 	}

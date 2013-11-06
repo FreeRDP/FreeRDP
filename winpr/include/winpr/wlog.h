@@ -20,10 +20,17 @@
 #ifndef WINPR_LOG_H
 #define WINPR_LOG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 
 typedef struct _wLog wLog;
 typedef struct _wLogMessage wLogMessage;
@@ -46,7 +53,10 @@ typedef struct _wLogAppender wLogAppender;
  * Log Message
  */
 
-#define WLOG_MESSAGE_STRING	0
+#define WLOG_MESSAGE_TEXT	0
+#define WLOG_MESSAGE_DATA	1
+#define WLOG_MESSAGE_IMAGE	2
+#define WLOG_MESSAGE_PACKET	3
 
 struct _wLogMessage
 {
@@ -56,12 +66,30 @@ struct _wLogMessage
 
 	LPSTR PrefixString;
 
-	LPSTR FormatString;
+	LPCSTR FormatString;
 	LPSTR TextString;
 
 	DWORD LineNumber; /* __LINE__ */
 	LPCSTR FileName; /* __FILE__ */
 	LPCSTR FunctionName; /* __FUNCTION__ */
+
+	/* Data Message */
+
+	void* Data;
+	int Length;
+
+	/* Image Message */
+
+	void* ImageData;
+	int ImageWidth;
+	int ImageHeight;
+	int ImageBpp;
+
+	/* Packet Message */
+
+	void* PacketData;
+	int PacketLength;
+	DWORD PacketFlags;
 };
 
 /**
@@ -81,17 +109,33 @@ struct _wLogLayout
 
 #define WLOG_APPENDER_CONSOLE	0
 #define WLOG_APPENDER_FILE	1
+#define WLOG_APPENDER_BINARY	2
+
+#define WLOG_PACKET_INBOUND	1
+#define WLOG_PACKET_OUTBOUND	2
 
 typedef int (*WLOG_APPENDER_OPEN_FN)(wLog* log, wLogAppender* appender);
 typedef int (*WLOG_APPENDER_CLOSE_FN)(wLog* log, wLogAppender* appender);
 typedef int (*WLOG_APPENDER_WRITE_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
+typedef int (*WLOG_APPENDER_WRITE_DATA_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
+typedef int (*WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
+typedef int (*WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN)(wLog* log, wLogAppender* appender, wLogMessage* message);
 
 #define WLOG_APPENDER_COMMON() \
 	DWORD Type; \
+	DWORD State; \
 	wLogLayout* Layout; \
+	CRITICAL_SECTION lock; \
+	void* TextMessageContext; \
+	void* DataMessageContext; \
+	void* ImageMessageContext; \
+	void* PacketMessageContext; \
 	WLOG_APPENDER_OPEN_FN Open; \
 	WLOG_APPENDER_CLOSE_FN Close; \
-	WLOG_APPENDER_WRITE_MESSAGE_FN WriteMessage
+	WLOG_APPENDER_WRITE_MESSAGE_FN WriteMessage; \
+	WLOG_APPENDER_WRITE_DATA_MESSAGE_FN WriteDataMessage; \
+	WLOG_APPENDER_WRITE_IMAGE_MESSAGE_FN WriteImageMessage; \
+	WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN WritePacketMessage
 
 struct _wLogAppender
 {
@@ -114,9 +158,22 @@ struct _wLogFileAppender
 	WLOG_APPENDER_COMMON();
 
 	char* FileName;
+	char* FilePath;
+	char* FullFileName;
 	FILE* FileDescriptor;
 };
 typedef struct _wLogFileAppender wLogFileAppender;
+
+struct _wLogBinaryAppender
+{
+	WLOG_APPENDER_COMMON();
+
+	char* FileName;
+	char* FilePath;
+	char* FullFileName;
+	FILE* FileDescriptor;
+};
+typedef struct _wLogBinaryAppender wLogBinaryAppender;
 
 /**
  * Logger
@@ -127,17 +184,61 @@ struct _wLog
 	LPSTR Name;
 	DWORD Level;
 
+	BOOL IsRoot;
+	LPSTR* Names;
+	DWORD NameCount;
 	wLogAppender* Appender;
+
+	wLog* Parent;
+	wLog** Children;
+	DWORD ChildrenCount;
+	DWORD ChildrenSize;
 };
 
 WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 
 #define WLog_Print(_log, _log_level, _fmt, ...) \
-	if (_log_level <= _log->Level) { \
+	if (_log_level >= _log->Level) { \
 		wLogMessage _log_message; \
-		_log_message.Type = WLOG_MESSAGE_STRING; \
+		_log_message.Type = WLOG_MESSAGE_TEXT; \
 		_log_message.Level = _log_level; \
 		_log_message.FormatString = _fmt; \
+		_log_message.LineNumber = __LINE__; \
+		_log_message.FileName = __FILE__; \
+		_log_message.FunctionName = __FUNCTION__; \
+		WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
+	}
+
+#define WLog_Data(_log, _log_level, ...) \
+	if (_log_level >= _log->Level) { \
+		wLogMessage _log_message; \
+		_log_message.Type = WLOG_MESSAGE_DATA; \
+		_log_message.Level = _log_level; \
+		_log_message.FormatString = NULL; \
+		_log_message.LineNumber = __LINE__; \
+		_log_message.FileName = __FILE__; \
+		_log_message.FunctionName = __FUNCTION__; \
+		WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
+	}
+
+#define WLog_Image(_log, _log_level, ...) \
+	if (_log_level >= _log->Level) { \
+		wLogMessage _log_message; \
+		_log_message.Type = WLOG_MESSAGE_IMAGE; \
+		_log_message.Level = _log_level; \
+		_log_message.FormatString = NULL; \
+		_log_message.LineNumber = __LINE__; \
+		_log_message.FileName = __FILE__; \
+		_log_message.FunctionName = __FUNCTION__; \
+		WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
+	}
+
+#define WLog_Packet(_log, _log_level, ...) \
+	if (_log_level >= _log->Level) { \
+		wLogMessage _log_message; \
+		_log_message.Type = WLOG_MESSAGE_PACKET; \
+		_log_message.Level = _log_level; \
+		_log_message.FormatString = NULL; \
 		_log_message.LineNumber = __LINE__; \
 		_log_message.FileName = __FILE__; \
 		_log_message.FunctionName = __FUNCTION__; \
@@ -156,11 +257,19 @@ WINPR_API int WLog_CloseAppender(wLog* log);
 WINPR_API void WLog_ConsoleAppender_SetOutputStream(wLog* log, wLogConsoleAppender* appender, int outputStream);
 
 WINPR_API void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename);
+WINPR_API void WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, const char* filepath);
 
 WINPR_API wLogLayout* WLog_GetLogLayout(wLog* log);
 WINPR_API void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format);
 
-WINPR_API wLog* WLog_New(LPCSTR name);
-WINPR_API void WLog_Free(wLog* log);
+WINPR_API wLog* WLog_GetRoot(void);
+WINPR_API wLog* WLog_Get(LPCSTR name);
+
+WINPR_API void WLog_Init(void);
+WINPR_API void WLog_Uninit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WINPR_WLOG_H */

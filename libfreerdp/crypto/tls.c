@@ -198,7 +198,7 @@ BOOL tls_connect(rdpTls* tls)
 
 	cert = tls_get_certificate(tls, TRUE);
 
-	if (cert == NULL)
+	if (!cert)
 	{
 		fprintf(stderr, "tls_connect: tls_get_certificate failed to return the server certificate.\n");
 		return FALSE;
@@ -371,6 +371,12 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 	int error;
 	int status;
 
+	if (!tls)
+		return -1;
+
+	if (!tls->ssl)
+		return -1;
+
 	status = SSL_read(tls->ssl, data, length);
 
 	if (status <= 0)
@@ -412,25 +418,16 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 	return status;
 }
 
-int tls_read_all(rdpTls* tls, BYTE* data, int length)
-{
-	int status;
-
-	do
-	{
-		status = tls_read(tls, data, length);
-		if (status == 0)
-			tls_wait_read(tls);
-	}
-	while (status == 0);
-
-	return status;
-}
-
 int tls_write(rdpTls* tls, BYTE* data, int length)
 {
 	int error;
 	int status;
+
+	if (!tls)
+		return -1;
+
+	if (!tls->ssl)
+		return -1;
 
 	status = SSL_write(tls->ssl, data, length);
 
@@ -777,7 +774,7 @@ rdpTls* tls_new(rdpSettings* settings)
 
 	tls = (rdpTls*) malloc(sizeof(rdpTls));
 
-	if (tls != NULL)
+	if (tls)
 	{
 		ZeroMemory(tls, sizeof(rdpTls));
 
@@ -793,24 +790,35 @@ rdpTls* tls_new(rdpSettings* settings)
 
 void tls_free(rdpTls* tls)
 {
-	if (tls != NULL)
+	if (tls)
 	{
 		if (tls->ssl)
+		{
 			SSL_free(tls->ssl);
+			tls->ssl = NULL;
+		}
 
 		if (tls->ctx)
+		{
 			SSL_CTX_free(tls->ctx);
+			tls->ctx = NULL;
+		}
 
 		if (tls->PublicKey)
+		{
 			free(tls->PublicKey);
+			tls->PublicKey = NULL;
+		}
 
 		if (tls->Bindings)
 		{
 			free(tls->Bindings->Bindings);
 			free(tls->Bindings);
+			tls->Bindings = NULL;
 		}
 
 		certificate_store_free(tls->certificate_store);
+		tls->certificate_store = NULL;
 
 		free(tls);
 	}

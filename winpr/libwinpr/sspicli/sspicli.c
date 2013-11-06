@@ -30,6 +30,8 @@
  * EnumerateSecurityPackagesW
  * GetUserNameExW
  * ImportSecurityContextA
+ * LogonUser
+ * LogonUserEx
  * LogonUserExExW
  * SspiCompareAuthIdentities
  * SspiCopyAuthIdentity
@@ -52,8 +54,74 @@
 
 #ifndef _WIN32
 
-#include <unistd.h>
 #include <winpr/crt.h>
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include <pwd.h>
+#include <grp.h>
+
+#include "../handle/handle.h"
+
+#include "../security/security.h"
+
+BOOL LogonUserA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken)
+{
+	struct passwd* pw;
+	WINPR_ACCESS_TOKEN* token;
+
+	if (!lpszUsername)
+		return FALSE;
+
+	token = (WINPR_ACCESS_TOKEN*) malloc(sizeof(WINPR_ACCESS_TOKEN));
+
+	if (!token)
+		return FALSE;
+
+	ZeroMemory(token, sizeof(WINPR_ACCESS_TOKEN));
+
+	WINPR_HANDLE_SET_TYPE(token, HANDLE_TYPE_ACCESS_TOKEN);
+
+	token->Username = _strdup(lpszUsername);
+
+	if (lpszDomain)
+		token->Domain = _strdup(lpszDomain);
+
+	pw = getpwnam(lpszUsername);
+
+	if (pw)
+	{
+		token->UserId = (DWORD) pw->pw_uid;
+		token->GroupId = (DWORD) pw->pw_gid;
+	}
+
+	*((ULONG_PTR*) phToken) = (ULONG_PTR) token;
+
+	return TRUE;
+}
+
+BOOL LogonUserW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken)
+{
+	return TRUE;
+}
+
+BOOL LogonUserExA(LPCSTR lpszUsername, LPCSTR lpszDomain, LPCSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid,
+		PVOID* ppProfileBuffer, LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits)
+{
+	return TRUE;
+}
+
+BOOL LogonUserExW(LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPassword,
+		DWORD dwLogonType, DWORD dwLogonProvider, PHANDLE phToken, PSID* ppLogonSid,
+		PVOID* ppProfileBuffer, LPDWORD pdwProfileLength, PQUOTA_LIMITS pQuotaLimits)
+{
+	return TRUE;
+}
 
 BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize)
 {

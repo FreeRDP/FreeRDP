@@ -139,18 +139,28 @@ BOOL rdp_read_extended_info_packet(wStream* s, rdpSettings* settings)
 	if (Stream_GetRemainingLength(s) < cbClientAddress)
 		return FALSE;
 
+	if (settings->ClientAddress)
+	{
+		free(settings->ClientAddress);
+		settings->ClientAddress = NULL;
+	}
+
 	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbClientAddress / 2, &settings->ClientAddress, 0, NULL, NULL);
 	Stream_Seek(s, cbClientAddress);
 
 	if (Stream_GetRemainingLength(s) < 2)
 		return FALSE;
+
 	Stream_Read_UINT16(s, cbClientDir); /* cbClientDir */
 
 	if (Stream_GetRemainingLength(s) < cbClientDir)
 		return FALSE;
 
 	if (settings->ClientDir)
+	{
 		free(settings->ClientDir);
+		settings->ClientDir = NULL;
+	}
 
 	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s), cbClientDir / 2, &settings->ClientDir, 0, NULL, NULL);
 	Stream_Seek(s, cbClientDir);
@@ -238,10 +248,12 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 		clientCookie->logonId = serverCookie->logonId;
 
 		hmac = crypto_hmac_new();
+
 		crypto_hmac_md5_init(hmac, serverCookie->arcRandomBits, 16);
+
 		if (settings->SelectedProtocol == PROTOCOL_RDP)
 		{
-			crypto_hmac_update(hmac, (BYTE *) (settings->ClientRandom), 32);
+			crypto_hmac_update(hmac, (BYTE*) (settings->ClientRandom), 32);
 		}
 		else
 		{
@@ -289,7 +301,7 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	Stream_Seek_UINT32(s); /* CodePage */
 	Stream_Read_UINT32(s, flags); /* flags */
 
-	settings->AudioCapture = ((flags & RNS_INFO_AUDIOCAPTURE) ? TRUE : FALSE);
+	settings->AudioCapture = ((flags & INFO_AUDIOCAPTURE) ? TRUE : FALSE);
 	settings->AudioPlayback = ((flags & INFO_NOAUDIOPLAYBACK) ? FALSE : TRUE);
 	settings->AutoLogonEnabled = ((flags & INFO_AUTOLOGON) ? TRUE : FALSE);
 	settings->RemoteApplicationMode = ((flags & INFO_RAIL) ? TRUE : FALSE);
@@ -389,10 +401,13 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 		INFO_DISABLECTRLALTDEL;
 
 	if (settings->AudioCapture)
-		flags |= RNS_INFO_AUDIOCAPTURE;
+		flags |= INFO_AUDIOCAPTURE;
 
 	if (!settings->AudioPlayback)
 		flags |= INFO_NOAUDIOPLAYBACK;
+
+	if (settings->VideoDisable)
+		flags |= INFO_VIDEO_DISABLE;
 
 	if (settings->AutoLogonEnabled)
 		flags |= INFO_AUTOLOGON;

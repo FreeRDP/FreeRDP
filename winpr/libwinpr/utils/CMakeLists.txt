@@ -18,6 +18,8 @@
 set(MODULE_NAME "winpr-utils")
 set(MODULE_PREFIX "WINPR_UTILS")
 
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
 set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/Queue.c
 	collections/Stack.c
@@ -45,18 +47,42 @@ set(${MODULE_PREFIX}_TRIO_SRCS
 	trio/triop.h
 	trio/triostr.c
 	trio/triostr.h)
+	
+set(${MODULE_PREFIX}_WLOG_SRCS
+	wlog/wlog.c
+	wlog/wlog.h
+	wlog/Layout.c
+	wlog/Layout.h
+	wlog/Message.c
+	wlog/Message.h
+	wlog/TextMessage.c
+	wlog/TextMessage.h
+	wlog/DataMessage.c
+	wlog/DataMessage.h
+	wlog/ImageMessage.c
+	wlog/ImageMessage.h
+	wlog/PacketMessage.c
+	wlog/PacketMessage.h
+	wlog/Appender.c
+	wlog/Appender.h
+	wlog/FileAppender.c
+	wlog/FileAppender.h
+	wlog/BinaryAppender.c
+	wlog/BinaryAppender.h
+	wlog/ConsoleAppender.c
+	wlog/ConsoleAppender.h)
 
 set(${MODULE_PREFIX}_SRCS
 	sam.c
 	ntlm.c
 	print.c
 	stream.c
-	cmdline.c
-	wlog.c)
+	cmdline.c)
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
 	${${MODULE_PREFIX}_COLLECTIONS_SRCS}
-	${${MODULE_PREFIX}_TRIO_SRCS})
+	${${MODULE_PREFIX}_TRIO_SRCS}
+	${${MODULE_PREFIX}_WLOG_SRCS})
 
 include_directories("trio")
 include_directories(${ZLIB_INCLUDE_DIRS})
@@ -79,13 +105,13 @@ endif()
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE winpr
-	MODULES winpr-crt winpr-synch winpr-sysinfo)
+	MODULES winpr-crt winpr-file winpr-path winpr-synch winpr-sysinfo)
 
 if(MONOLITHIC_BUILD)
 	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()	
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT WinPRTargets)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")

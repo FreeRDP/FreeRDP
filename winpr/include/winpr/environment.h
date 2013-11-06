@@ -3,6 +3,8 @@
  * Process Environment Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Thinstuff Technologies GmbH
+ * Copyright 2013 DI (FH) Martin Haimberger <martin.haimberger@thinstuff.at>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +56,11 @@ WINPR_API DWORD GetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD n
 WINPR_API BOOL SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue);
 WINPR_API BOOL SetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue);
 
+/**
+ * A brief history of the GetEnvironmentStrings functions:
+ * http://blogs.msdn.com/b/oldnewthing/archive/2013/01/17/10385718.aspx
+ */
+
 WINPR_API LPCH GetEnvironmentStrings(VOID);
 WINPR_API LPWCH GetEnvironmentStringsW(VOID);
 
@@ -65,6 +72,11 @@ WINPR_API DWORD ExpandEnvironmentStringsW(LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSi
 
 WINPR_API BOOL FreeEnvironmentStringsA(LPCH lpszEnvironmentBlock);
 WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
+
+WINPR_API LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge);
+
+WINPR_API DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
+WINPR_API BOOL SetEnvironmentVariableEBA(LPSTR * envBlock,LPCSTR lpName, LPCSTR lpValue);
 
 #ifdef __cplusplus
 }
@@ -79,6 +91,7 @@ WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
 #define NeedCurrentDirectoryForExePath	NeedCurrentDirectoryForExePathW
 #define GetEnvironmentVariable		GetEnvironmentVariableW
 #define SetEnvironmentVariable		SetEnvironmentVariableW
+#define GetEnvironmentStrings		GetEnvironmentStringsW
 #define SetEnvironmentStrings		SetEnvironmentStringsW
 #define ExpandEnvironmentStrings	ExpandEnvironmentStringsW
 #define FreeEnvironmentStrings		FreeEnvironmentStringsW
@@ -90,6 +103,7 @@ WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
 #define NeedCurrentDirectoryForExePath	NeedCurrentDirectoryForExePathA
 #define GetEnvironmentVariable		GetEnvironmentVariableA
 #define SetEnvironmentVariable		SetEnvironmentVariableA
+#define GetEnvironmentStringsA		GetEnvironmentStrings
 #define SetEnvironmentStrings		SetEnvironmentStringsA
 #define ExpandEnvironmentStrings	ExpandEnvironmentStringsA
 #define FreeEnvironmentStrings		FreeEnvironmentStringsA

@@ -475,7 +475,9 @@ static BOOL xf_event_MappingNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (event->xmapping.request == MappingModifier)
 	{
-		XFreeModifiermap(xfc->modifier_map);
+		if (xfc->modifier_map)
+			XFreeModifiermap(xfc->modifier_map);
+
 		xfc->modifier_map = XGetModifierMapping(xfc->display);
 	}
 

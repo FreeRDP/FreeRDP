@@ -40,9 +40,14 @@ const char* const RAIL_ORDER_TYPE_STRINGS[] =
 	"Language Bar Info",
 	"Get Application ID Request",
 	"Get Application ID Response",
-	"Execute Result"
+	"Execute Result",
+	"",
+	"",
+	"",
+	"",
+	"",
+	""
 };
-
 
 void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_string)
 {
@@ -55,7 +60,7 @@ void rail_string_to_unicode_string(char* string, RAIL_UNICODE_STRING* unicode_st
 	unicode_string->string = NULL;
 	unicode_string->length = 0;
 
-	if (string == NULL || strlen(string) < 1)
+	if (!string || strlen(string) < 1)
 		return;
 
 	length = ConvertToUnicode(CP_UTF8, 0, string, -1, &buffer, 0) * 2;
@@ -68,8 +73,10 @@ BOOL rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
 {
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
+
 	Stream_Read_UINT16(s, *orderType); /* orderType (2 bytes) */
 	Stream_Read_UINT16(s, *orderLength); /* orderLength (2 bytes) */
+
 	return TRUE;
 }
 
@@ -91,7 +98,9 @@ BOOL rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 {
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
+
 	Stream_Read_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
+
 	return TRUE;
 }
 
@@ -100,3 +109,19 @@ void rail_write_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 	Stream_Write_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
 }
 
+BOOL rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+{
+	if (Stream_GetRemainingLength(s) < 8)
+		return FALSE;
+
+	Stream_Read_UINT32(s, handshakeEx->buildNumber); /* buildNumber (4 bytes) */
+	Stream_Read_UINT32(s, handshakeEx->railHandshakeFlags); /* railHandshakeFlags (4 bytes) */
+
+	return TRUE;
+}
+
+void rail_write_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+{
+	Stream_Write_UINT32(s, handshakeEx->buildNumber); /* buildNumber (4 bytes) */
+	Stream_Write_UINT32(s, handshakeEx->railHandshakeFlags); /* railHandshakeFlags (4 bytes) */
+}

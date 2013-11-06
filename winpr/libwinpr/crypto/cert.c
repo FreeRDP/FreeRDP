@@ -2,7 +2,7 @@
  * WinPR: Windows Portable Runtime
  * Cryptography API (CryptoAPI)
  *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012-2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,11 +150,37 @@
  * CertVerifyValidityNesting
  */
 
+#include <winpr/crt.h>
+
 #ifndef _WIN32
+
+#include "crypto.h"
+
+HCERTSTORE CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwMsgAndCertEncodingType,
+		HCRYPTPROV_LEGACY hCryptProv, DWORD dwFlags, const void* pvPara)
+{
+	WINPR_CERTSTORE* certstore;
+
+	certstore = (WINPR_CERTSTORE*) malloc(sizeof(WINPR_CERTSTORE));
+
+	if (certstore)
+	{
+		ZeroMemory(certstore, sizeof(WINPR_CERTSTORE));
+
+		certstore->lpszStoreProvider = lpszStoreProvider;
+		certstore->dwMsgAndCertEncodingType = dwMsgAndCertEncodingType;
+	}
+
+	return (HCERTSTORE) certstore;
+}
 
 HCERTSTORE CertOpenSystemStoreW(HCRYPTPROV_LEGACY hProv, LPCWSTR szSubsystemProtocol)
 {
-	return (HCERTSTORE) 1;
+	HCERTSTORE hCertStore;
+
+	hCertStore = CertOpenStore(CERT_STORE_PROV_FILE, X509_ASN_ENCODING, hProv, 0, NULL);
+
+	return hCertStore;
 }
 
 HCERTSTORE CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv, LPCSTR szSubsystemProtocol)
@@ -164,6 +190,15 @@ HCERTSTORE CertOpenSystemStoreA(HCRYPTPROV_LEGACY hProv, LPCSTR szSubsystemProto
 
 BOOL CertCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 {
+	WINPR_CERTSTORE* certstore;
+
+	certstore = (WINPR_CERTSTORE*) hCertStore;
+
+	if (certstore)
+	{
+		free(certstore);
+	}
+
 	return TRUE;
 }
 

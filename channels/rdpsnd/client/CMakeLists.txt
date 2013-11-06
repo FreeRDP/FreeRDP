@@ -37,6 +37,8 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)
+
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
 
 if(WITH_ALSA)
@@ -44,7 +46,7 @@ if(WITH_ALSA)
 endif()
 
 if(WITH_IOSAUDIO)
-	add_channel_client_subsystem($(MODULE_PREFIX) $(CHANNEL_NAME) "ios" "")
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "ios" "")
 endif()
 
 if(WITH_PULSE)

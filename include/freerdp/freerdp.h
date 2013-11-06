@@ -82,7 +82,9 @@ struct rdp_context
 						   Pointer to the client peer.
 						   This is set by a call to freerdp_peer_context_new() during peer initialization.
 						   This field is used only on the server side. */
-	UINT64 paddingA[16 - 2]; /* 2 */
+	ALIGN64 BOOL ServerMode; /**< (offset 2) true when context is in server mode */
+
+	UINT64 paddingA[16 - 3]; /* 3 */
 
 	ALIGN64 int argc;	/**< (offset 16)
 				   Number of arguments given to the program at launch time.

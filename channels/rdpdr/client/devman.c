@@ -27,50 +27,64 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <winpr/stream.h>
 #include <freerdp/utils/list.h>
-#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/channels.h>
 
 #include "rdpdr_main.h"
 
 #include "devman.h"
 
-DEVMAN* devman_new(rdpSvcPlugin* plugin)
+static void devman_device_free(DEVICE* device)
+{
+	IFCALL(device->Free, device);
+}
+
+DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 {
 	DEVMAN* devman;
 
 	devman = (DEVMAN*) malloc(sizeof(DEVMAN));
 	ZeroMemory(devman, sizeof(DEVMAN));
 
-	devman->plugin = plugin;
+	devman->plugin = (void*) rdpdr;
 	devman->id_sequence = 1;
-	devman->devices = list_new();
+
+	devman->devices = ListDictionary_New(TRUE);
+
+	ListDictionary_Object(devman->devices)->fnObjectFree =
+			(OBJECT_FREE_FN) devman_device_free;
 
 	return devman;
 }
 
 void devman_free(DEVMAN* devman)
 {
-	DEVICE* device;
-
-	while ((device = (DEVICE*) list_dequeue(devman->devices)) != NULL)
-		IFCALL(device->Free, device);
-
-	list_free(devman->devices);
-
+	ListDictionary_Free(devman->devices);
 	free(devman);
 }
 
 static void devman_register_device(DEVMAN* devman, DEVICE* device)
 {
-	device->id = devman->id_sequence++;
-	list_add(devman->devices, device);
+	void* key = NULL;
 
-	DEBUG_SVC("device %d.%s registered", device->id, device->name);
+	device->id = devman->id_sequence++;
+	key = (void*) (size_t) device->id;
+
+	ListDictionary_Add(devman->devices, key, device);
+}
+
+DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)
+{
+	DEVICE* device = NULL;
+	void* key = (void*) (size_t) id;
+
+	device = (DEVICE*) ListDictionary_GetItemValue(devman->devices, key);
+
+	return device;
 }
 
 static char DRIVE_SERVICE_NAME[] = "drive";
@@ -102,7 +116,7 @@ BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device)
 	fprintf(stderr, "Loading device service %s (static)\n", ServiceName);
 	entry = (PDEVICE_SERVICE_ENTRY) freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
 
-	if (entry == NULL)
+	if (!entry)
 		return FALSE;
 
 	ep.devman = devman;
@@ -112,20 +126,4 @@ BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device)
 	entry(&ep);
 
 	return TRUE;
-}
-
-DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)
-{
-	LIST_ITEM* item;
-	DEVICE* device;
-
-	for (item = devman->devices->head; item; item = item->next)
-	{
-		device = (DEVICE*) item->data;
-
-		if (device->id == id)
-			return device;
-	}
-
-	return NULL;
 }

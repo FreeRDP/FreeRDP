@@ -47,12 +47,13 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/list.h>
-#include <winpr/stream.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/utils/svc_plugin.h>
 
 typedef struct _SERIAL_DEVICE SERIAL_DEVICE;
 
