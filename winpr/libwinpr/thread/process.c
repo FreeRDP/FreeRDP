@@ -140,7 +140,7 @@ char* FindApplicationPath(char* application)
 		return NULL;
 
 	if (application[0] == '/')
-		return application;
+		return _strdup(application);
 
 	nSize = GetEnvironmentVariableA("PATH", NULL, 0);
 
@@ -183,7 +183,7 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	int numArgs;
 	LPSTR* pArgs;
 	char** envp;
-	char* filename;
+	char* filename = NULL;
 	WINPR_THREAD* thread;
 	WINPR_PROCESS* process;
 	WINPR_ACCESS_TOKEN* token;
