@@ -476,6 +476,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_Username					21
 #define FreeRDP_Password					22
 #define FreeRDP_Domain						23
+#define FreeRDP_PasswordHash					24
 #define FreeRDP_RdpVersion					128
 #define FreeRDP_DesktopWidth					129
 #define FreeRDP_DesktopHeight					130
@@ -760,7 +761,8 @@ struct rdp_settings
 	ALIGN64 char* Username; /* 21 */
 	ALIGN64 char* Password; /* 22 */
 	ALIGN64 char* Domain; /* 23 */
-	UINT64 padding0064[64 - 24]; /* 24 */
+	ALIGN64 char* PasswordHash; /* 24 */
+	UINT64 padding0064[64 - 25]; /* 25 */
 	UINT64 padding0128[128 - 64]; /* 64 */
 
 	/**

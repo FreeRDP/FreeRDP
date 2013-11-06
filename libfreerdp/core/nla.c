@@ -113,26 +113,72 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 {
 	char* spn;
 	int length;
+	BOOL PromptPassword;
 	rdpTls* tls = NULL;
 	freerdp* instance;
 	rdpSettings* settings;
 
+	PromptPassword = FALSE;
 	settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
-	if ((settings->Password == NULL ) || (settings->Username == NULL)
+	if ((!settings->Password) || (!settings->Username)
 			|| (!strlen(settings->Password)) || (!strlen(settings->Username)))
+	{
+		PromptPassword = TRUE;
+	}
+
+#ifndef _WIN32
+	if (PromptPassword)
+	{
+		if (settings->RestrictedAdminModeRequired)
+		{
+			if ((settings->PasswordHash) && (strlen(settings->PasswordHash) > 0))
+				PromptPassword = FALSE;
+		}
+	}
+#endif
+
+	if (PromptPassword)
 	{
 		if (instance->Authenticate)
 		{
 			BOOL proceed = instance->Authenticate(instance,
 					&settings->Username, &settings->Password, &settings->Domain);
+
 			if (!proceed)
 				return 0;
 		}
 	}
 
 	sspi_SetAuthIdentity(&(credssp->identity), settings->Username, settings->Domain, settings->Password);
+
+#ifndef _WIN32
+	{
+		SEC_WINNT_AUTH_IDENTITY* identity = &(credssp->identity);
+
+		if (settings->RestrictedAdminModeRequired)
+		{
+			if (settings->PasswordHash)
+			{
+				if (strlen(settings->PasswordHash) == 32)
+				{
+					if (identity->Password)
+						free(identity->Password);
+
+					identity->PasswordLength = ConvertToUnicode(CP_UTF8, 0,
+							settings->PasswordHash, -1, &identity->Password, 0) - 1;
+
+					/**
+					 * Multiply password hash length by 64 to obtain a length exceeding
+					 * the maximum (256) and use it this for hash identification in WinPR.
+					 */
+					identity->PasswordLength = 32 * 64; /* 2048 */
+				}
+			}
+		}
+	}
+#endif
 
 #ifdef WITH_DEBUG_NLA
 	_tprintf(_T("User: %s Domain: %s Password: %s\n"),

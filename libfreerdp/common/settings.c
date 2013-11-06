@@ -2096,6 +2096,10 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 			return settings->Domain;
 			break;
 
+		case FreeRDP_PasswordHash:
+			return settings->PasswordHash;
+			break;
+
 		case FreeRDP_ClientHostname:
 			return settings->ClientHostname;
 			break;
@@ -2262,6 +2266,11 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 		case FreeRDP_Domain:
 			free(settings->Domain);
 			settings->Domain = _strdup(param);
+			break;
+
+		case FreeRDP_PasswordHash:
+			free(settings->PasswordHash);
+			settings->PasswordHash = _strdup(param);
 			break;
 
 		case FreeRDP_ClientHostname:

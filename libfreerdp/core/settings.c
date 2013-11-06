@@ -445,6 +445,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->Username = _strdup(settings->Username); /* 21 */
 		_settings->Password = _strdup(settings->Password); /* 22 */
 		_settings->Domain = _strdup(settings->Domain); /* 23 */
+		_settings->PasswordHash = _strdup(settings->PasswordHash); /* 24 */
 		//_settings->ClientHostname = _strdup(settings->ClientHostname); /* 134 */
 		//_settings->ClientProductId = _strdup(settings->ClientProductId); /* 135 */
 		_settings->AlternateShell = _strdup(settings->AlternateShell); /* 640 */
@@ -780,6 +781,7 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->Username);
 		free(settings->Password);
 		free(settings->Domain);
+		free(settings->PasswordHash);
 		free(settings->AlternateShell);
 		free(settings->ShellWorkingDirectory);
 		free(settings->ComputerName);
