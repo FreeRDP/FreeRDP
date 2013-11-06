@@ -61,6 +61,8 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
 	set(BUILD_SHARED_LIBS ON)
 endif()
 
+include_directories(${OPENSSL_INCLUDE_DIR})
+
 if(FREERDP_BUILD)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)
 	include_directories(${CMAKE_CURRENT_BINARY_DIR}/include PARENT_SCOPE)

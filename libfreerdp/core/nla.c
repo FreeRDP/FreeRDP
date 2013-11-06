@@ -115,6 +115,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	int length;
 	freerdp* instance;
 	rdpSettings* settings;
+	rdpTls *tls = NULL;
 
 	settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
@@ -137,7 +138,6 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 		(char*) credssp->identity.User, (char*) credssp->identity.Domain, (char*) credssp->identity.Password);
 #endif
 
-	rdpTls *tls = NULL;
 	if(credssp->transport->layer == TRANSPORT_LAYER_TLS) {
 		tls = credssp->transport->TlsIn;
 	} else if(credssp->transport->layer == TRANSPORT_LAYER_TSG_TLS) {
