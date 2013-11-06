@@ -1760,7 +1760,7 @@ int freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings*
 {
 	void* entry;
 
-	entry = freerdp_load_channel_addin_entry(name, NULL, NULL, 0);
+	entry = freerdp_load_channel_addin_entry(name, NULL, NULL, FREERDP_ADDIN_CHANNEL_STATIC);
 
 	if (entry)
 	{
