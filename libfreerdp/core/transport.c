@@ -219,7 +219,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 		transport->layer = TRANSPORT_LAYER_TSG_TLS;
 
-		if (tls_connect(transport->TsgTls) != TRUE)
+		if (!tls_connect(transport->TsgTls))
 		{
 			if (!connectErrorCode)
 				connectErrorCode = TLSCONNECTERROR;
@@ -233,16 +233,16 @@ BOOL transport_connect_tls(rdpTransport* transport)
 		return TRUE;
 	}
 
-	if (transport->TlsIn == NULL)
+	if (!transport->TlsIn)
 		transport->TlsIn = tls_new(transport->settings);
 
-	if (transport->TlsOut == NULL)
+	if (!transport->TlsOut)
 		transport->TlsOut = transport->TlsIn;
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->TlsIn->sockfd = transport->TcpIn->sockfd;
 
-	if (tls_connect(transport->TlsIn) != TRUE)
+	if (!tls_connect(transport->TlsIn))
 	{
 		if (!connectErrorCode)
 			connectErrorCode = TLSCONNECTERROR;
@@ -265,16 +265,16 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	freerdp* instance;
 	rdpSettings* settings;
 
+	settings = transport->settings;
+	instance = (freerdp*) settings->instance;
+
 	if (!transport_connect_tls(transport))
 		return FALSE;
 
 	/* Network Level Authentication */
 
-	if (transport->settings->Authentication != TRUE)
+	if (!settings->Authentication)
 		return TRUE;
-
-	settings = transport->settings;
-	instance = (freerdp*) settings->instance;
 
 	if (!transport->credssp)
 		transport->credssp = credssp_new(instance, transport, settings);
@@ -293,6 +293,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	}
 
 	credssp_free(transport->credssp);
+	transport->credssp = NULL;
 
 	return TRUE;
 }
@@ -315,10 +316,10 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 	transport->TlsOut->sockfd = transport->TcpOut->sockfd;
 
-	if (tls_connect(transport->TlsIn) != TRUE)
+	if (!tls_connect(transport->TlsIn))
 		return FALSE;
 
-	if (tls_connect(transport->TlsOut) != TRUE)
+	if (!tls_connect(transport->TlsOut))
 		return FALSE;
 
 	if (!tsg_connect(tsg, hostname, port))
@@ -387,7 +388,7 @@ BOOL transport_accept_tls(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->TlsIn->sockfd = transport->TcpIn->sockfd;
 
-	if (tls_accept(transport->TlsIn, transport->settings->CertificateFile, transport->settings->PrivateKeyFile) != TRUE)
+	if (!tls_accept(transport->TlsIn, transport->settings->CertificateFile, transport->settings->PrivateKeyFile))
 		return FALSE;
 
 	return TRUE;
@@ -398,6 +399,9 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	freerdp* instance;
 	rdpSettings* settings;
 
+	settings = transport->settings;
+	instance = (freerdp*) settings->instance;
+
 	if (!transport->TlsIn)
 		transport->TlsIn = tls_new(transport->settings);
 
@@ -407,18 +411,15 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->TlsIn->sockfd = transport->TcpIn->sockfd;
 
-	if (tls_accept(transport->TlsIn, transport->settings->CertificateFile, transport->settings->PrivateKeyFile) != TRUE)
+	if (!tls_accept(transport->TlsIn, transport->settings->CertificateFile, transport->settings->PrivateKeyFile))
 		return FALSE;
 
 	/* Network Level Authentication */
 
-	if (transport->settings->Authentication != TRUE)
+	if (!settings->Authentication)
 		return TRUE;
 
-	settings = transport->settings;
-	instance = (freerdp*) settings->instance;
-
-	if (transport->credssp == NULL)
+	if (!transport->credssp)
 		transport->credssp = credssp_new(instance, transport, settings);
 
 	if (credssp_authenticate(transport->credssp) < 0)
@@ -496,7 +497,7 @@ UINT32 nla_header_length(wStream* s)
 	return length;
 }
 
-int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
+int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 {
 	int read = 0;
 	int status = -1;
@@ -539,10 +540,12 @@ int transport_read_layer(rdpTransport* transport, UINT8* data, int bytes)
 int transport_read(rdpTransport* transport, wStream* s)
 {
 	int status;
+	int position;
 	int pduLength;
-	int streamPosition;
+	BYTE header[4];
 	int transport_status;
 
+	position = 0;
 	pduLength = 0;
 	transport_status = 0;
 
@@ -553,54 +556,57 @@ int transport_read(rdpTransport* transport, wStream* s)
 		return -1;
 
 	/* first check if we have header */
-	streamPosition = Stream_GetPosition(s);
+	position = Stream_GetPosition(s);
 
-	if (streamPosition < 4)
+	if (position < 4)
 	{
-		status = transport_read_layer(transport, Stream_Buffer(s) + streamPosition, 4 - streamPosition);
+		status = transport_read_layer(transport, Stream_Buffer(s) + position, 4 - position);
 
 		if (status < 0)
 			return status;
 
 		transport_status += status;
 
-		if ((status + streamPosition) < 4)
+		if ((status + position) < 4)
 			return transport_status;
 
-		streamPosition += status;
+		position += status;
 	}
 
+	Stream_Peek(s, header, 4); /* peek at first 4 bytes */
+
 	/* if header is present, read in exactly one PDU */
-	if (Stream_Buffer(s)[0] == 0x03)
+	if (header[0] == 0x03)
 	{
 		/* TPKT header */
 
-		pduLength = (Stream_Buffer(s)[2] << 8) | Stream_Buffer(s)[3];
+		pduLength = (header[2] << 8) | header[3];
 	}
-	else if (Stream_Buffer(s)[0] == 0x30)
+	else if (header[0] == 0x30)
 	{
 		/* TSRequest (NLA) */
 
-		if (Stream_Buffer(s)[1] & 0x80)
+		if (header[1] & 0x80)
 		{
-			if ((Stream_Buffer(s)[1] & ~(0x80)) == 1)
+			if ((header[1] & ~(0x80)) == 1)
 			{
-				pduLength = Stream_Buffer(s)[2];
+				pduLength = header[2];
 				pduLength += 3;
 			}
-			else if ((Stream_Buffer(s)[1] & ~(0x80)) == 2)
+			else if ((header[1] & ~(0x80)) == 2)
 			{
-				pduLength = (Stream_Buffer(s)[2] << 8) | Stream_Buffer(s)[3];
+				pduLength = (header[2] << 8) | header[3];
 				pduLength += 4;
 			}
 			else
 			{
 				fprintf(stderr, "Error reading TSRequest!\n");
+				return -1;
 			}
 		}
 		else
 		{
-			pduLength = Stream_Buffer(s)[1];
+			pduLength = header[1];
 			pduLength += 2;
 		}
 	}
@@ -608,13 +614,13 @@ int transport_read(rdpTransport* transport, wStream* s)
 	{
 		/* Fast-Path Header */
 
-		if (Stream_Buffer(s)[1] & 0x80)
-			pduLength = ((Stream_Buffer(s)[1] & 0x7F) << 8) | Stream_Buffer(s)[2];
+		if (header[1] & 0x80)
+			pduLength = ((header[1] & 0x7F) << 8) | header[2];
 		else
-			pduLength = Stream_Buffer(s)[1];
+			pduLength = header[1];
 	}
 
-	status = transport_read_layer(transport, Stream_Buffer(s) + streamPosition, pduLength - streamPosition);
+	status = transport_read_layer(transport, Stream_Buffer(s) + position, pduLength - position);
 
 	if (status < 0)
 		return status;
@@ -623,14 +629,14 @@ int transport_read(rdpTransport* transport, wStream* s)
 
 #ifdef WITH_DEBUG_TRANSPORT
 	/* dump when whole PDU is read */
-	if (streamPosition + status >= pduLength)
+	if (position + status >= pduLength)
 	{
 		fprintf(stderr, "Local < Remote\n");
 		winpr_HexDump(Stream_Buffer(s), pduLength);
 	}
 #endif
 
-	if (streamPosition + status >= pduLength)
+	if (position + status >= pduLength)
 	{
 		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
 	}
@@ -799,7 +805,7 @@ int transport_check_fds(rdpTransport* transport)
 {
 	int pos;
 	int status;
-	UINT16 length;
+	int length;
 	int recv_status;
 	wStream* received;
 
