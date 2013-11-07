@@ -153,7 +153,7 @@ WINPR_API int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2);
 #endif
 
 #define	 sprintf_s	snprintf
-#define _scprintf(_fmt, …) snprintf(NULL, 0, _fmt, ## __VAR_ARGS__)
+#define _scprintf(_fmt, ...) snprintf(NULL, 0, _fmt, ## __VA_ARGS__)
 
 /* Unicode Conversion */
 
