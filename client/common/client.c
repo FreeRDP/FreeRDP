@@ -133,7 +133,7 @@ int freerdp_client_settings_parse_connection_file(rdpSettings* settings, const c
 	return 0;
 }
 
-int freerdp_client_settings_parse_connection_file_buffer(rdpSettings* settings, BYTE* buffer, size_t size)
+int freerdp_client_settings_parse_connection_file_buffer(rdpSettings* settings, const BYTE* buffer, size_t size)
 {
 	rdpFile* file;
 	int status = -1;
