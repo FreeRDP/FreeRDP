@@ -89,7 +89,7 @@ void tcp_get_ip_address(rdpTcp * tcp)
 	tcp->settings->ClientAddress = _strdup(tcp->ip_address);
 }
 
-void tcp_get_mac_address(rdpTcp * tcp)
+void tcp_get_mac_address(rdpTcp* tcp)
 {
 #ifdef LINUX
 	BYTE* mac;

@@ -77,7 +77,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 	if (transport->layer == TRANSPORT_LAYER_TLS)
 		status &= tls_disconnect(transport->TlsIn);
 
-	if (transport->layer == TRANSPORT_LAYER_TSG || transport->layer == TRANSPORT_LAYER_TSG_TLS)
+	if ((transport->layer == TRANSPORT_LAYER_TSG) || (transport->layer == TRANSPORT_LAYER_TSG_TLS))
 	{
 		tsg_disconnect(transport->tsg);
 	}
@@ -276,7 +276,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	settings = transport->settings;
 	instance = (freerdp*) settings->instance;
 
-	if (transport->credssp == NULL)
+	if (!transport->credssp)
 		transport->credssp = credssp_new(instance, transport, settings);
 
 	if (credssp_authenticate(transport->credssp) < 0)
@@ -305,12 +305,12 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	transport->tsg = tsg;
 	transport->SplitInputOutput = TRUE;
 
-	if (transport->TlsIn == NULL)
+	if (!transport->TlsIn)
 		transport->TlsIn = tls_new(transport->settings);
 
 	transport->TlsIn->sockfd = transport->TcpIn->sockfd;
 
-	if (transport->TlsOut == NULL)
+	if (!transport->TlsOut)
 		transport->TlsOut = tls_new(transport->settings);
 
 	transport->TlsOut->sockfd = transport->TcpOut->sockfd;
@@ -378,10 +378,10 @@ BOOL transport_accept_rdp(rdpTransport* transport)
 
 BOOL transport_accept_tls(rdpTransport* transport)
 {
-	if (transport->TlsIn == NULL)
+	if (!transport->TlsIn)
 		transport->TlsIn = tls_new(transport->settings);
 
-	if (transport->TlsOut == NULL)
+	if (!transport->TlsOut)
 		transport->TlsOut = transport->TlsIn;
 
 	transport->layer = TRANSPORT_LAYER_TLS;
@@ -398,10 +398,10 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	freerdp* instance;
 	rdpSettings* settings;
 
-	if (transport->TlsIn == NULL)
+	if (!transport->TlsIn)
 		transport->TlsIn = tls_new(transport->settings);
 
-	if (transport->TlsOut == NULL)
+	if (!transport->TlsOut)
 		transport->TlsOut = transport->TlsIn;
 
 	transport->layer = TRANSPORT_LAYER_TLS;
@@ -436,7 +436,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 BOOL nla_verify_header(wStream* s)
 {
-	if ((s->pointer[0] == 0x30) && (s->pointer[1] & 0x80))
+	if ((Stream_Pointer(s)[0] == 0x30) && (Stream_Pointer(s)[1] & 0x80))
 		return TRUE;
 
 	return FALSE;
@@ -446,17 +446,17 @@ UINT32 nla_read_header(wStream* s)
 {
 	UINT32 length = 0;
 
-	if (s->pointer[1] & 0x80)
+	if (Stream_Pointer(s)[1] & 0x80)
 	{
-		if ((s->pointer[1] & ~(0x80)) == 1)
+		if ((Stream_Pointer(s)[1] & ~(0x80)) == 1)
 		{
-			length = s->pointer[2];
+			length = Stream_Pointer(s)[2];
 			length += 3;
 			Stream_Seek(s, 3);
 		}
-		else if ((s->pointer[1] & ~(0x80)) == 2)
+		else if ((Stream_Pointer(s)[1] & ~(0x80)) == 2)
 		{
-			length = (s->pointer[2] << 8) | s->pointer[3];
+			length = (Stream_Pointer(s)[2] << 8) | Stream_Pointer(s)[3];
 			length += 4;
 			Stream_Seek(s, 4);
 		}
@@ -467,7 +467,7 @@ UINT32 nla_read_header(wStream* s)
 	}
 	else
 	{
-		length = s->pointer[1];
+		length = Stream_Pointer(s)[1];
 		length += 2;
 		Stream_Seek(s, 2);
 	}
@@ -479,11 +479,11 @@ UINT32 nla_header_length(wStream* s)
 {
 	UINT32 length = 0;
 
-	if (s->pointer[1] & 0x80)
+	if (Stream_Pointer(s)[1] & 0x80)
 	{
-		if ((s->pointer[1] & ~(0x80)) == 1)
+		if ((Stream_Pointer(s)[1] & ~(0x80)) == 1)
 			length = 3;
-		else if ((s->pointer[1] & ~(0x80)) == 2)
+		else if ((Stream_Pointer(s)[1] & ~(0x80)) == 2)
 			length = 4;
 		else
 			fprintf(stderr, "Error reading TSRequest!\n");
@@ -571,26 +571,26 @@ int transport_read(rdpTransport* transport, wStream* s)
 	}
 
 	/* if header is present, read in exactly one PDU */
-	if (s->buffer[0] == 0x03)
+	if (Stream_Buffer(s)[0] == 0x03)
 	{
 		/* TPKT header */
 
-		pduLength = (s->buffer[2] << 8) | s->buffer[3];
+		pduLength = (Stream_Buffer(s)[2] << 8) | Stream_Buffer(s)[3];
 	}
-	else if (s->buffer[0] == 0x30)
+	else if (Stream_Buffer(s)[0] == 0x30)
 	{
 		/* TSRequest (NLA) */
 
-		if (s->buffer[1] & 0x80)
+		if (Stream_Buffer(s)[1] & 0x80)
 		{
-			if ((s->buffer[1] & ~(0x80)) == 1)
+			if ((Stream_Buffer(s)[1] & ~(0x80)) == 1)
 			{
-				pduLength = s->buffer[2];
+				pduLength = Stream_Buffer(s)[2];
 				pduLength += 3;
 			}
-			else if ((s->buffer[1] & ~(0x80)) == 2)
+			else if ((Stream_Buffer(s)[1] & ~(0x80)) == 2)
 			{
-				pduLength = (s->buffer[2] << 8) | s->buffer[3];
+				pduLength = (Stream_Buffer(s)[2] << 8) | Stream_Buffer(s)[3];
 				pduLength += 4;
 			}
 			else
@@ -600,7 +600,7 @@ int transport_read(rdpTransport* transport, wStream* s)
 		}
 		else
 		{
-			pduLength = s->buffer[1];
+			pduLength = Stream_Buffer(s)[1];
 			pduLength += 2;
 		}
 	}
@@ -608,10 +608,10 @@ int transport_read(rdpTransport* transport, wStream* s)
 	{
 		/* Fast-Path Header */
 
-		if (s->buffer[1] & 0x80)
-			pduLength = ((s->buffer[1] & 0x7F) << 8) | s->buffer[2];
+		if (Stream_Buffer(s)[1] & 0x80)
+			pduLength = ((Stream_Buffer(s)[1] & 0x7F) << 8) | Stream_Buffer(s)[2];
 		else
-			pduLength = s->buffer[1];
+			pduLength = Stream_Buffer(s)[1];
 	}
 
 	status = transport_read_layer(transport, Stream_Buffer(s) + streamPosition, pduLength - streamPosition);
@@ -657,7 +657,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 	int length;
 	int status = -1;
 
-	WaitForSingleObject(transport->WriteMutex, INFINITE);
+	EnterCriticalSection(&(transport->WriteLock));
 
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
@@ -722,7 +722,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 	if (s->pool)
 		Stream_Release(s);
 
-	ReleaseMutex(transport->WriteMutex);
+	LeaveCriticalSection(&(transport->WriteLock));
 
 	return status;
 }
@@ -1038,8 +1038,8 @@ rdpTransport* transport_new(rdpSettings* settings)
 
 		transport->blocking = TRUE;
 
-		transport->ReadMutex = CreateMutex(NULL, FALSE, NULL);
-		transport->WriteMutex = CreateMutex(NULL, FALSE, NULL);
+		InitializeCriticalSectionAndSpinCount(&(transport->ReadLock), 4000);
+		InitializeCriticalSectionAndSpinCount(&(transport->WriteLock), 4000);
 
 		transport->layer = TRANSPORT_LAYER_TCP;
 	}
@@ -1080,8 +1080,8 @@ void transport_free(rdpTransport* transport)
 		tsg_free(transport->tsg);
 		transport->tsg = NULL;
 
-		CloseHandle(transport->ReadMutex);
-		CloseHandle(transport->WriteMutex);
+		DeleteCriticalSection(&(transport->ReadLock));
+		DeleteCriticalSection(&(transport->WriteLock));
 
 		free(transport);
 	}
