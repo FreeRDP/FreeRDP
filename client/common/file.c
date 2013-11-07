@@ -327,7 +327,6 @@ void freerdp_client_parse_rdp_file_option_ascii(rdpFile* file, char* option)
 
 BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE* buffer, size_t size)
 {
-	fprintf(stderr, "freerdp_client_parse_rdp_file_buffer_ascii");
 	int length;
 	char* line;
 	char* type;
@@ -400,7 +399,6 @@ next_line:
 
 BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BYTE* buffer, size_t size)
 {
-	fprintf(stderr, "freerdp_client_parse_rdp_file_buffer_unicode\n");
 	int length;
 	WCHAR* line;
 	WCHAR* type;
