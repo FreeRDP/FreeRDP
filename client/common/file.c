@@ -655,7 +655,7 @@ if (~__rdpFile->_field) \
 #define WRITE_RDP_FILE_VALUE_STRING(_format, _field) \
 	if (~((size_t) __rdpFile->_field) && __rdpFile->_field != NULL) \
 	{ \
-		if (buffer) \
+		if (__buffer) \
 			__count = sprintf_s(__buffer + __current, __size - __required_size, _format, __rdpFile->_field); \
 		else \
 			__count = _scprintf(_format, __rdpFile->_field); \
