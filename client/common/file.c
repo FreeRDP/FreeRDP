@@ -633,7 +633,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 }
 
 #define WRITE_RDP_FILE_DECLARE(_file, _buffer, _size) \
-	rdpFile* __rdpFile = file; \
+	const rdpFile* __rdpFile = file; \
 	char* __buffer = _buffer; \
 	size_t __size = _size; \
 	size_t __required_size = 0; \
