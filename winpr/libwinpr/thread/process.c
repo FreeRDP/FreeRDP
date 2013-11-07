@@ -66,7 +66,6 @@
 #include <grp.h>
 
 #include <errno.h>
-#include <spawn.h>
 #include <string.h>
 #include <signal.h>
 #include <sys/wait.h>
