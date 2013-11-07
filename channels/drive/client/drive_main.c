@@ -735,8 +735,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			if (*dev > 'B')
                         {
 				/* Suppress disk drives A and B to avoid pesty messages */
-				_snprintf(buf, sizeof(buf) - 4, "%s", drive->Name);
-				len = strlen(buf);
+				len = _snprintf(buf, sizeof(buf) - 4, "%s", drive->Name);
 				buf[len] = '_';
 				buf[len + 1] = dev[0];
 				buf[len + 2] = 0;
