@@ -491,6 +491,7 @@ BOOL nego_recv_response(rdpNego* nego)
 	status = nego_recv(nego->transport, s, nego);
 
 	Stream_Free(s, TRUE);
+
 	if (status < 0)
 		return FALSE;
 
