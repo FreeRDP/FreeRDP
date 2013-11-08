@@ -20,7 +20,14 @@
 #ifndef FREERDP_UTILS_DEBUG_H
 #define FREERDP_UTILS_DEBUG_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define DEBUG_NULL(fmt, ...) do { } while (0)
+
+/* When building for android redirect all debug messages
+ * to logcat. */
 #if defined(ANDROID)
 #include <android/log.h>
 
@@ -38,7 +45,9 @@
 #define DEBUG_WARN(fmt, ...) \
 	ANDROID_DEBUG_PRINT(ANDROID_LOG_WARN, APP_NAME, "Warning %s (%s:%d): " \
 			fmt, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__)
+
 #else
+/* By default all log messages are written to stdout */
 #include <stdio.h>
 
 #define DEBUG_PRINT(_dbg_str, fmt, ...) do { \
