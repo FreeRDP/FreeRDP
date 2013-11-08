@@ -27,6 +27,7 @@ if(NDK_COMMAND STREQUAL "ANT_COMMAND-NOTFOUND")
 	message(FATAL_ERROR "ndk-build not found but required to build native lib")
 endif()
 
+set(NDK_LIB_CFG "${CMAKE_CURRENT_BINARY_DIR}/FreeRDPCore/jni/Android.mk")
 if(ANDROID_BUILD_JAVA)
 	if (NOT ANDROID_SDK)
 		message(FATAL_ERROR "ANDROID_SDK not set but required for building the java gui (ANDROID_BUILD_JAVA)")
