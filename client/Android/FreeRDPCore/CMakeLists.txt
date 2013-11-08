@@ -44,15 +44,5 @@ endif()
 
 add_subdirectory(jni)
 
-if(ANDROID_BUILD_JAVA)
-  # command to create the android package
-	add_custom_target(android-lib ALL 
-		COMMAND ${ANT_COMMAND} ${ANDROID_BUILD_TYPE}
-		WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-		DEPENDS freerdp-android
-		SOURCES AndroidManifest.xml ${CMAKE_CURRENT_BINARY_DIR}/local.properties
-	)
-endif()
-	
 SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "gen;bin;obj;libs")
 

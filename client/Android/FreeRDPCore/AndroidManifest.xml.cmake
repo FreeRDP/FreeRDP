@@ -4,7 +4,6 @@
 	android:installLocation="auto"
 	package="com.freerdp.freerdpcore"
 	android:versionCode="@ANDROID_APP_VERSION@"
-	android:debuggable="@ANDROID_DEBUG_ENABLE@"
 	android:versionName="@GIT_REVISION@" >
 
 	<uses-sdk
@@ -25,7 +24,8 @@
 		android:largeScreens="true"
 		android:xlargeScreens="true" />
 
-	<application>
+	<application
+		android:debuggable="@ANDROID_DEBUG_ENABLE@">
 
 		<!-- Activity to create shortcuts -->
 		<activity android:name=".presentation.ShortcutsActivity"
