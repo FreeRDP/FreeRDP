@@ -19,7 +19,6 @@
 			
 	<application android:name="com.freerdp.afreerdp.application.GlobalApp"
 		android:label="aFreeRDP"
-		android:allowBackup = "true"
 		android:debuggable="@ANDROID_DEBUG_ENABLE@"
 		android:icon="@drawable/icon_launcher_freerdp" >
 

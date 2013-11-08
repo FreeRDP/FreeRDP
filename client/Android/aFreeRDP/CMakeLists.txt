@@ -18,6 +18,8 @@
 
 set(ANDROID_PACKAGE_NAME "aFreeRDP")
 
+add_subdirectory(jni)
+
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/AndroidManifest.xml.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml @ONLY)
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/build.xml.cmake
@@ -45,6 +47,7 @@ if(ANDROID_BUILD_JAVA)
   # command to create the android package
 	add_custom_command(
 		OUTPUT "${APK}"
+		COMMAND ${NDK_COMMAND} NDK_DEBUG=${NDK_DEBUG}
 		COMMAND ${ANT_COMMAND} ${ANDROID_BUILD_TYPE}
 		WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 		MAIN_DEPENDENCY AndroidManifest.xml
