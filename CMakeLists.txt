@@ -273,7 +273,11 @@ endif(APPLE)
 if(ANDROID)
 	if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 		add_definitions(-DNDK_DEBUG=1)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
+
+		# NOTE: Manually add -gdwarf-3, as newer toolchains default to -gdwarf-4,
+		#       which is not supported by the gdbserver binary shipped with
+		#       the android NDK (tested with r9b)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG} -gdwarf-3")
 	endif()
 	set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -llog")
 	if (NOT FREERDP_ANDROID_EXTERNAL_SSL_PATH)
