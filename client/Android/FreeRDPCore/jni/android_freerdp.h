@@ -28,11 +28,6 @@ struct android_context
 };
 typedef struct android_context androidContext;
 
-
-
-void copy_remotefx_tile(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int width, int height, int bpp);
-void copy_pixel_buffer(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int width, int height, int wBuf, int hBuf, int bpp);
-
 JNIEXPORT jint JNICALL jni_freerdp_new(JNIEnv *env, jclass cls);
 JNIEXPORT void JNICALL jni_freerdp_free(JNIEnv *env, jclass cls, jint instance);
 JNIEXPORT jboolean JNICALL jni_freerdp_connect(JNIEnv *env, jclass cls, jint instance);

@@ -11,6 +11,7 @@
 			
 	<application android:name="com.freerdp.afreerdp.application.GlobalApp"
 		android:label="aFreeRDP"
+		android:debuggable="true"
 		android:icon="@drawable/icon_launcher_freerdp" >
 
 			<!-- Main activity -->
