@@ -573,7 +573,7 @@ int transport_read(rdpTransport* transport, wStream* s)
 		position += status;
 	}
 
-	Stream_Peek(s, header, 4); /* peek at first 4 bytes */
+	CopyMemory(header, Stream_Buffer(s), 4); /* peek at first 4 bytes */
 
 	/* if header is present, read in exactly one PDU */
 	if (header[0] == 0x03)

@@ -67,7 +67,7 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 
 	s = malloc(sizeof(wStream));
 
-	if (s != NULL)
+	if (s)
 	{
 		if (buffer)
 			s->buffer = buffer;
@@ -87,11 +87,11 @@ wStream* Stream_New(BYTE* buffer, size_t size)
 
 void Stream_Free(wStream* s, BOOL bFreeBuffer)
 {
-	if (s != NULL)
+	if (s)
 	{
 		if (bFreeBuffer)
 		{
-			if (s->buffer != NULL)
+			if (s->buffer)
 				free(s->buffer);
 		}
 
