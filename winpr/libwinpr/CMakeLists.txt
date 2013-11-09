@@ -56,6 +56,9 @@ if(MONOLITHIC_BUILD)
 	target_link_libraries(${MODULE_NAME} ${WINPR_LIBS})
 
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT WinPRTargets)
+	
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc @ONLY)
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 	set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/libwinpr")
 endif()

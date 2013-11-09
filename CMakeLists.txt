@@ -508,12 +508,6 @@ include_directories("${CMAKE_BINARY_DIR}/winpr/include")
 
 add_subdirectory(winpr)
 
-# Generate pkg-config
-if(NOT MSVC)
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-endif()
-
 if(WITH_CUNIT)
 	message(FATAL_ERROR "cunit (WITH_CUNIT) is deprecated please use BUILD_TESTING to build ctest tests.
 The cunit directory contains the old tests and is kept until all tests are converted.")

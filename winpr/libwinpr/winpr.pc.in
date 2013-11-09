@@ -1,0 +1,12 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_PREFIX@/include
+
+Name: WinPR
+Description: WinPR: Windows Portable Runtime
+URL: http://www.freerdp.com/
+Version: @WINPR_VERSION_FULL@
+Requires: 
+Libs: -L${libdir} -lwinpr
+Cflags: -I${includedir}
