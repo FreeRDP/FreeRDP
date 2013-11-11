@@ -33,6 +33,8 @@
  * RPC Client Stubs
  */
 
+
+
 BOOL RpcStartRemoteControlSession(void* context, LPWSTR pTargetServerName,
 		ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
@@ -166,5 +168,50 @@ BOOL RpcGetChildSessionId(void* context, PULONG pSessionId)
 {
 	return TRUE;
 }
+
+char * RpcVirtualChannelOpen(DWORD SessionId, LPSTR pVirtualName) {
+	return NULL;
+}
+
+char * RpcVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags) {
+	return NULL;
+}
+BOOL RpcVirtualChannelClose(DWORD SessionId, LPSTR pVirtualName) {
+	return FALSE;
+}
+
+
+const WTSFunctionTable WTSApiSTdFunctionTable =
+{
+	1, /* dwVersion */
+	RpcStartRemoteControlSession,
+	RpcStopRemoteControlSession,
+	RpcConnectSession,
+	RpcEnumerateServers,
+	RpcOpenServer,
+	RpcOpenServerEx,
+	RpcCloseServer,
+	RpcEnumerateSessions,
+	RpcEnumerateSessionsEx,
+	RpcEnumerateProcesses,
+	RpcTerminateProcess,
+	RpcQuerySessionInformation,
+	RpcQueryUserConfig,
+	RpcSetUserConfig,
+	RpcSendMessage,
+	RpcDisconnectSession,
+	RpcLogoffSession,
+	RpcShutdownSystem,
+	RpcRegisterSessionNotification,
+	RpcUnRegisterSessionNotification,
+	RpcRegisterSessionNotificationEx,
+	RpcUnRegisterSessionNotificationEx,
+	RpcEnableChildSessions,
+	RpcIsChildSessionsEnabled,
+	RpcGetChildSessionId,
+	RpcVirtualChannelOpen,
+	RpcVirtualChannelOpenEx,
+	RpcVirtualChannelClose
+};
 
 #endif
