@@ -178,7 +178,7 @@ int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove)
  * Construction, Destruction
  */
 
-wMessageQueue* MessageQueue_New()
+wMessageQueue* MessageQueue_New(const wObject *callback)
 {
 	wMessageQueue* queue = NULL;
 
@@ -196,6 +196,11 @@ wMessageQueue* MessageQueue_New()
 
 		InitializeCriticalSectionAndSpinCount(&queue->lock, 4000);
 		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+		if (callback)
+			queue->object = *callback;
+		else
+			ZeroMemory(&queue->object, sizeof(queue->object));
 	}
 
 	return queue;
@@ -209,3 +214,32 @@ void MessageQueue_Free(wMessageQueue* queue)
 	free(queue->array);
 	free(queue);
 }
+
+int MessageQueue_Clear(wMessageQueue *queue)
+{
+	int status = 0;
+
+	EnterCriticalSection(&queue->lock);
+
+	while(queue->size > 0)
+	{
+		wMessage *msg = &(queue->array[queue->head]);
+
+		/* Free resources of message. */
+		if (queue->object.fnObjectUninit)
+			queue->object.fnObjectUninit(msg);
+		if (queue->object.fnObjectFree)
+			queue->object.fnObjectFree(msg);
+
+		ZeroMemory(msg, sizeof(wMessage));
+
+		queue->head = (queue->head + 1) % queue->capacity;
+		queue->size--;
+	}
+	ResetEvent(queue->event);
+
+	LeaveCriticalSection(&queue->lock);
+
+	return status;
+}
+

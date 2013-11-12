@@ -1051,6 +1051,12 @@ void transport_free(rdpTransport* transport)
 {
 	if (transport)
 	{
+		if (transport->async)
+		{
+			assert(!transport->thread);
+			assert(!transport->stopEvent);
+		}
+
 		if (transport->ReceiveBuffer)
 			Stream_Release(transport->ReceiveBuffer);
 
