@@ -11,7 +11,6 @@
 #define __ANDROID_FREERDP_H
 
 #include <jni.h>
-#include <pthread.h>
 #include <freerdp/freerdp.h>
 
 #include "android_event.h"
@@ -21,7 +20,8 @@ struct android_context
 	rdpContext rdpCtx;
 
 	ANDROID_EVENT_QUEUE* event_queue;
-	pthread_t thread;
+	HANDLE thread;
+
 	BOOL is_connected;
 
 	void* clipboard_context;
