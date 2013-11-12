@@ -54,8 +54,8 @@ wMessagePipe* MessagePipe_New()
 
 	if (pipe)
 	{
-		pipe->In = MessageQueue_New();
-		pipe->Out = MessageQueue_New();
+		pipe->In = MessageQueue_New(NULL);
+		pipe->Out = MessageQueue_New(NULL);
 	}
 
 	return pipe;
