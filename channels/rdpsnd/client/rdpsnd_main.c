@@ -930,8 +930,6 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 {
 	MessagePipe_PostQuit(rdpsnd->MsgPipe, 0);
 	WaitForSingleObject(rdpsnd->thread, INFINITE);
-
-	MessagePipe_Free(rdpsnd->MsgPipe);
 	CloseHandle(rdpsnd->thread);
 
 	rdpsnd->channelEntryPoints.pVirtualChannelClose(rdpsnd->OpenHandle);

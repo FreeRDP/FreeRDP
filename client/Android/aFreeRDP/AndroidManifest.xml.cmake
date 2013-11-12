@@ -3,14 +3,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	android:installLocation="auto"
 	package="com.freerdp.afreerdp"
-	android:versionCode="3"
+	android:versionCode="@ANDROID_APP_VERSION@"
 	android:versionName="@GIT_REVISION@" >
 
-	<uses-sdk android:targetSdkVersion="@ANDROID_APP_TARGET_SDK@" android:minSdkVersion="@ANDROID_APP_MIN_SDK@"/>
-	<supports-screens android:anyDensity="true" android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" android:xlargeScreens="true" />
+	<uses-sdk
+		android:targetSdkVersion="@ANDROID_APP_TARGET_SDK@"
+		android:minSdkVersion="@ANDROID_APP_MIN_SDK@"/>
+
+	<supports-screens
+		android:anyDensity="true"
+		android:smallScreens="true"
+		android:normalScreens="true"
+		android:largeScreens="true"
+		android:xlargeScreens="true" />
 			
 	<application android:name="com.freerdp.afreerdp.application.GlobalApp"
 		android:label="aFreeRDP"
+		android:debuggable="@ANDROID_DEBUG_ENABLE@"
 		android:icon="@drawable/icon_launcher_freerdp" >
 
 			<!-- Main activity -->

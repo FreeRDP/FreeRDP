@@ -16,19 +16,15 @@
 #include "config.h"
 #endif
 
-#include <android/log.h>
-
-#define TAG	"LibFreeRDP"
-
-#define DEBUG_ANDROID_NULL(fmt, ...) do { } while (0)
-#define DEBUG_ANDROID_PRINT(_dbg_str, fmt, ...) __android_log_print(ANDROID_LOG_INFO, TAG, _dbg_str fmt "\n" , __FUNCTION__, __LINE__, ## __VA_ARGS__)
-#define DEBUG_ANDROID_CLASS(_dbg_class, fmt, ...) DEBUG_ANDROID_PRINT("DBG_" #_dbg_class " %s (%d): ", fmt, ## __VA_ARGS__)
+#include <freerdp/utils/debug.h>
 
 #ifdef WITH_DEBUG_ANDROID_JNI
-#define DEBUG_ANDROID(fmt, ...)	DEBUG_ANDROID_PRINT("DBG %s (%d): ", fmt, ## __VA_ARGS__)
+#define DEBUG_ANDROID(fmt, ...)	DEBUG_CLASS(JNI, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_ANDROID(fmt, ...) DEBUG_ANDROID_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_ANDROID(fmt, ...)	DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
+
+
 
 #endif /* FREERDP_ANDROID_DEBUG_H */
 
