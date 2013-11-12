@@ -37,6 +37,13 @@ if (ANDROID_SDK)
 		${CMAKE_CURRENT_BINARY_DIR}/local.properties @ONLY)
 endif()
 
+# command to create the android package
+add_custom_target( ndk-build ALL
+	COMMAND ${NDK_COMMAND} NDK_DEBUG=${NDK_DEBUG}
+	WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+	DEPENDS freerdp-android 
+)
+
 if(ANDROID_BUILD_JAVA)
 	if(NOT ANDROID_BUILD_JAVA_DEBUG)
 		set(APK "${CMAKE_CURRENT_BINARY_DIR}/bin/${ANDROID_PACKAGE_NAME}-release-unsigned.apk")
@@ -47,11 +54,10 @@ if(ANDROID_BUILD_JAVA)
   # command to create the android package
 	add_custom_command(
 		OUTPUT "${APK}"
-		COMMAND ${NDK_COMMAND} NDK_DEBUG=${NDK_DEBUG}
 		COMMAND ${ANT_COMMAND} ${ANDROID_BUILD_TYPE}
 		WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 		MAIN_DEPENDENCY AndroidManifest.xml
-		DEPENDS freerdp-android
+		DEPENDS ndk-build
 			${CMAKE_CURRENT_BINARY_DIR}/local.properties
 	)
 	add_custom_target(android-package ALL SOURCES "${APK}")
