@@ -17,7 +17,6 @@
 # limitations under the License.
 
 set(ANDROID_PACKAGE_NAME "aFreeRDPCore")
-file(MAKE_DIRECTORY ${ANDROID_BINARY_DIR})
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/AndroidManifest.xml.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml @ONLY)
@@ -45,20 +44,5 @@ endif()
 
 add_subdirectory(jni)
 
+SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "gen;bin;obj;libs")
 
-if(ANDROID_BUILD_JAVA)
-	file(MAKE_DIRECTORY "${ANDROID_BINARY_DIR}/bin")
-	set(ANDROIDLIB "${ANDROID_BINARY_DIR}/bin/classes.jar")
-
-  # command to create the android package
-	add_custom_command(
-		OUTPUT "${ANDROIDLIB}"
-		COMMAND ${ANT_COMMAND} ${ANDROID_BUILD_TYPE}
-		WORKING_DIRECTORY "${ANDROID_BINARY_DIR}"
-		MAIN_DEPENDENCY AndroidManifest.xml
-		DEPENDS freerdp-android
-			${CMAKE_CURRENT_BINARY_DIR}/local.properties
-	)
-	add_custom_target(android-lib ALL SOURCES "${ANDROIDLIB}")
-	SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "gen;bin")
-endif()

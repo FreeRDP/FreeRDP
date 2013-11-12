@@ -11,7 +11,6 @@
 #define __ANDROID_FREERDP_H
 
 #include <jni.h>
-#include <pthread.h>
 #include <freerdp/freerdp.h>
 
 #include "android_event.h"
@@ -21,17 +20,13 @@ struct android_context
 	rdpContext rdpCtx;
 
 	ANDROID_EVENT_QUEUE* event_queue;
-	pthread_t thread;
+	HANDLE thread;
+
 	BOOL is_connected;
 
 	void* clipboard_context;
 };
 typedef struct android_context androidContext;
-
-
-
-void copy_remotefx_tile(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int width, int height, int bpp);
-void copy_pixel_buffer(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int width, int height, int wBuf, int hBuf, int bpp);
 
 JNIEXPORT jint JNICALL jni_freerdp_new(JNIEnv *env, jclass cls);
 JNIEXPORT void JNICALL jni_freerdp_free(JNIEnv *env, jclass cls, jint instance);

@@ -661,7 +661,7 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 		drive->files = ListDictionary_New(TRUE);
 		ListDictionary_Object(drive->files)->fnObjectFree = (OBJECT_FREE_FN) drive_file_free;
 
-		drive->IrpQueue = MessageQueue_New();
+		drive->IrpQueue = MessageQueue_New(NULL);
 		drive->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) drive_thread_func, drive, CREATE_SUSPENDED, NULL);
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) drive);
@@ -735,8 +735,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			if (*dev > 'B')
                         {
 				/* Suppress disk drives A and B to avoid pesty messages */
-				_snprintf(buf, sizeof(buf) - 4, "%s", drive->Name);
-				len = strlen(buf);
+				len = _snprintf(buf, sizeof(buf) - 4, "%s", drive->Name);
 				buf[len] = '_';
 				buf[len + 1] = dev[0];
 				buf[len + 2] = 0;

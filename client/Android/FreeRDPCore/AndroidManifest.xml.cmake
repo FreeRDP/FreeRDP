@@ -3,19 +3,29 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	android:installLocation="auto"
 	package="com.freerdp.freerdpcore"
-	android:versionCode="2"
+	android:versionCode="@ANDROID_APP_VERSION@"
 	android:versionName="@GIT_REVISION@" >
 
-	<uses-sdk android:targetSdkVersion="@ANDROID_APP_TARGET_SDK@" android:minSdkVersion="@ANDROID_APP_MIN_SDK@"/>
+	<uses-sdk
+		android:targetSdkVersion="@ANDROID_APP_TARGET_SDK@"
+		android:minSdkVersion="@ANDROID_APP_MIN_SDK@"/>
+
 	<uses-permission android:name="android.permission.INTERNET"/>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
   <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
   <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-	<supports-screens android:anyDensity="true" android:smallScreens="true" android:normalScreens="true" android:largeScreens="true" android:xlargeScreens="true" />
+	
+	<supports-screens
+		android:anyDensity="true"
+		android:smallScreens="true"
+		android:normalScreens="true"
+		android:largeScreens="true"
+		android:xlargeScreens="true" />
 
-	<application>
+	<application
+		android:debuggable="@ANDROID_DEBUG_ENABLE@">
 
 		<!-- Activity to create shortcuts -->
 		<activity android:name=".presentation.ShortcutsActivity"

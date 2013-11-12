@@ -208,6 +208,10 @@ BOOL freerdp_check_fds(freerdp* instance)
 	int status;
 	rdpRdp* rdp;
 
+	assert(instance);
+	assert(instance->context);
+	assert(instance->context->rdp);
+
 	rdp = instance->context->rdp;
 
 	status = rdp_check_fds(rdp);

@@ -486,8 +486,15 @@ int input_process_events(rdpInput* input)
 	return input_message_queue_process_pending_messages(input);
 }
 
+static void input_free_queued_message(void *obj)
+{
+	wMessage *msg = (wMessage*)obj;
+	input_message_queue_free_message(msg);
+}
+
 rdpInput* input_new(rdpRdp* rdp)
 {
+	const wObject cb = { .fnObjectFree = input_free_queued_message };
 	rdpInput* input;
 
 	input = (rdpInput*) malloc(sizeof(rdpInput));
@@ -496,7 +503,7 @@ rdpInput* input_new(rdpRdp* rdp)
 	{
 		ZeroMemory(input, sizeof(rdpInput));
 
-		input->queue = MessageQueue_New();
+		input->queue = MessageQueue_New(&cb);
 	}
 
 	return input;

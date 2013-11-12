@@ -327,7 +327,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		parallel->path = path;
 
-		parallel->queue = MessageQueue_New();
+		parallel->queue = MessageQueue_New(NULL);
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) parallel);
 
