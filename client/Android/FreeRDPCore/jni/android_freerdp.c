@@ -44,12 +44,6 @@
 #include "jni/prof.h"
 #endif
 
-struct thread_data
-{
-	freerdp* instance;
-};
-
-
 int android_context_new(freerdp* instance, rdpContext* context)
 {
 	context->channels = freerdp_channels_new();
@@ -74,28 +68,33 @@ void android_begin_paint(rdpContext* context)
 
 void android_end_paint(rdpContext* context)
 {
+	androidContext *ctx = (androidContext*)context;
+	rdpSettings* settings = context->instance->settings;
+	
 	DEBUG_ANDROID("ui_update");
 
-	rdpGdi *gdi = context->gdi;
-	if (gdi->primary->hdc->hwnd->invalid->null)
-		return;
+	assert(ctx);
+	assert(settings);
+	assert(context->instance);
 
-	int x = gdi->primary->hdc->hwnd->invalid->x;
-	int y = gdi->primary->hdc->hwnd->invalid->y;
-	int w = gdi->primary->hdc->hwnd->invalid->w;
-	int h = gdi->primary->hdc->hwnd->invalid->h;
-
-	DEBUG_ANDROID("ui_update: x:%d y:%d w:%d h:%d", x, y, w, h);
-
-	freerdp_callback("OnGraphicsUpdate", "(IIIII)V", context->instance, x, y, w, h);
+	DEBUG_ANDROID("width=%d, height=%d, bpp=%d", settings->DesktopWidth,
+			settings->DesktopHeight, settings->ColorDepth);
+	
+	freerdp_callback("OnGraphicsUpdate", "(IIIII)V", context->instance,
+		0, 0, settings->DesktopWidth, settings->DesktopHeight);
 }
 
 void android_desktop_resize(rdpContext* context)
 {
 	DEBUG_ANDROID("ui_desktop_resize");
 
-	rdpGdi *gdi = context->gdi;
-	freerdp_callback("OnGraphicsResize", "(IIII)V", context->instance, gdi->width, gdi->height, gdi->dstBpp);
+	assert(context);
+	assert(context->settings);
+	assert(context->instance);
+
+	freerdp_callback("OnGraphicsResize", "(IIII)V",
+			context->instance, context->settings->DesktopWidth,
+			context->settings->DesktopHeight, context->settings->ColorDepth);
 }
 
 
@@ -330,6 +329,9 @@ static void* jni_input_thread(void* arg)
 	do
 	{
 		DWORD rc = WaitForMultipleObjects(3, event, FALSE, INFINITE);
+		if ((rc < WAIT_OBJECT_0) || (rc > WAIT_OBJECT_0 + 2))
+			continue;
+	
 		if (rc == WAIT_OBJECT_0 + 2)
 		{
 			wMessage msg;
@@ -338,9 +340,6 @@ static void* jni_input_thread(void* arg)
 			if (msg.id == WMQ_QUIT)
 				break;
 		}
-		if ((rc < WAIT_OBJECT_0) && (rc > WAIT_OBJECT_0 + 1))
-			break;
-	
 		if (android_check_fds(instance) != TRUE)
 			break;
 	}
@@ -603,19 +602,15 @@ static int android_freerdp_run(freerdp* instance)
 	return 0;
 }
 
-void* android_thread_func(void* param)
+static void* android_thread_func(void* param)
 {
-	struct thread_data* data;
-	data = (struct thread_data*) param;
-
-	assert(data);
-	assert(data->instance);
+	freerdp* instance = param;
 	
 	DEBUG_ANDROID("Start.");
 
-	freerdp* instance = data->instance;
+	assert(instance);
+
 	android_freerdp_run(instance);
-	free(data);
 
 	DEBUG_ANDROID("Quit.");
 
@@ -667,15 +662,13 @@ JNIEXPORT void JNICALL jni_freerdp_free(JNIEnv *env, jclass cls, jint instance)
 JNIEXPORT jboolean JNICALL jni_freerdp_connect(JNIEnv *env, jclass cls, jint instance)
 {
 	freerdp* inst = (freerdp*)instance;
-	struct thread_data* data = (struct thread_data*) malloc(sizeof(struct thread_data));
-	data->instance = inst;
+	androidContext* ctx = (androidContext*)inst->context;
 
 	assert(inst);
-	assert(data);
-	assert(inst->context);
+	assert(ctx);
 
-	androidContext* ctx = (androidContext*)inst->context;
-	pthread_create(&ctx->thread, 0, android_thread_func, data);
+	ctx->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE)android_thread_func, inst, 0, NULL);
 
 	return JNI_TRUE;
 }
@@ -692,7 +685,10 @@ JNIEXPORT jboolean JNICALL jni_freerdp_disconnect(JNIEnv *env, jclass cls, jint 
 
 	android_push_event(inst, event);
 
-	pthread_join(ctx->thread, NULL);
+	WaitForSingleObject(ctx->thread, INFINITE);
+	CloseHandle(ctx->thread);
+	ctx->thread = NULL;
+
 	freerdp_callback("OnDisconnecting", "(I)V", instance);
 
 	return (jboolean) JNI_TRUE;
@@ -700,15 +696,7 @@ JNIEXPORT jboolean JNICALL jni_freerdp_disconnect(JNIEnv *env, jclass cls, jint 
 
 JNIEXPORT void JNICALL jni_freerdp_cancel_connection(JNIEnv *env, jclass cls, jint instance)
 {
-	DEBUG_ANDROID("Cancelling connection ...");
-	freerdp* inst = (freerdp*)instance;
-	androidContext* ctx = (androidContext*)inst->context;
-	
-	ANDROID_EVENT* event = (ANDROID_EVENT*)android_event_disconnect_new();
-	android_push_event(inst, event);
-
-	pthread_join(ctx->thread, NULL);
-	freerdp_callback("OnDisconnecting", "(I)V", instance);
+	jni_freerdp_disconnect(env, cls, instance);
 }
 
 JNIEXPORT void JNICALL jni_freerdp_set_data_directory(JNIEnv *env, jclass cls, jint instance, jstring jdirectory)
