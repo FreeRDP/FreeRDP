@@ -9,6 +9,7 @@
 
 package com.freerdp.freerdpcore.presentation;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -530,7 +531,15 @@ public class SessionActivity extends Activity
 	protected void onDestroy() {
 		super.onDestroy();
 		Log.v(TAG, "Session.onDestroy");
-		
+
+		// Cancel running disconnect timers.
+		GlobalApp.cancelDisconnectTimer();
+
+		// Disconnect all remaining sessions.
+		Collection<SessionState> sessions = GlobalApp.getSessions();
+		for (SessionState session : sessions)
+			LibFreeRDP.disconnect(session.getInstance());
+
 		// unregister freerdp events broadcast receiver
 		unregisterReceiver(libFreeRDPBroadcastReceiver);
 

@@ -335,6 +335,16 @@ int freerdp_channels_global_init(void)
 
 int freerdp_channels_global_uninit(void)
 {
+	EnterCriticalSection(&g_channels_lock);
+	DeleteCriticalSection(&g_channels_lock);
+
+	if (g_ChannelsList)
+	{
+		ArrayList_Lock(g_ChannelsList);
+		ArrayList_Free(g_ChannelsList);
+		g_ChannelsList = NULL;
+	}
+
 	return 0;
 }
 
@@ -356,7 +366,9 @@ void freerdp_channels_free(rdpChannels* channels)
 {
 	MessagePipe_Free(channels->MsgPipe);
 
-	/* TODO: remove from channels list */
+	ArrayList_Lock(g_ChannelsList);
+	ArrayList_Remove(g_ChannelsList, channels);
+	ArrayList_Unlock(g_ChannelsList);
 
 	free(channels);
 }
@@ -496,8 +508,8 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 {
 	int index;
 	char* name;
-        char* hostname;
-        int hostnameLength;
+	char* hostname;
+	int hostnameLength;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 
 	channels->is_connected = 1;

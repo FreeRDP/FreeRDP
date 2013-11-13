@@ -70,6 +70,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#ifdef __MACOSX__
+#include <mach-o/dyld.h>
+#endif
+
 DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory)
 {
 	return NULL;
@@ -166,8 +170,8 @@ DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 }
 
 DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
-{
-#ifdef __linux__
+{	
+#if defined(__linux__)
 	int status;
 	int length;
 	char path[64];
@@ -198,6 +202,46 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 			lpFilename[nSize - 1] = '\0';
 		}
 
+		return 0;
+	}
+#elif defined(__MACOSX__)
+	int status;
+	int length;
+	
+	if (!hModule)
+	{
+		char path[4096];
+		char buffer[4096];
+		uint32_t size = sizeof(path);
+	
+		status = _NSGetExecutablePath(path, &size);
+	
+		if (status != 0)
+		{
+			/* path too small */
+			return 0;
+		}
+		
+		/*
+		 * _NSGetExecutablePath may not return the canonical path,
+		 * so use realpath to find the absolute, canonical path.
+		 */
+		
+		realpath(path, buffer);
+	
+		length = strlen(buffer);
+	
+		if (length < nSize)
+		{
+			CopyMemory(lpFilename, buffer, length);
+			lpFilename[length] = '\0';
+		}
+		else
+		{
+			CopyMemory(lpFilename, buffer, nSize - 1);
+			lpFilename[nSize - 1] = '\0';
+		}
+		
 		return 0;
 	}
 #endif

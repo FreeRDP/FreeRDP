@@ -402,6 +402,8 @@ struct _wMessageQueue
 	wMessage* array;
 	CRITICAL_SECTION lock;
 	HANDLE event;
+
+	wObject object;
 };
 typedef struct _wMessageQueue wMessageQueue;
 
@@ -418,7 +420,43 @@ WINPR_API void MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
 WINPR_API int MessageQueue_Get(wMessageQueue* queue, wMessage* message);
 WINPR_API int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove);
 
-WINPR_API wMessageQueue* MessageQueue_New(void);
+/*! \brief Clears all elements in a message queue.
+ *
+ *  \note If dynamically allocated data is part of the messages,
+ *        a custom cleanup handler must be passed in the 'callback'
+ *        argument for MessageQueue_New.
+ *
+ *  \param queue The queue to clear.
+ *
+ *  \return 0 in case of success or a error code otherwise.
+ */
+WINPR_API int MessageQueue_Clear(wMessageQueue *queue);
+
+/*! \brief Creates a new message queue.
+ * 				 If 'callback' is null, no custom cleanup will be done
+ * 				 on message queue deallocation.
+ * 				 If the 'callback' argument contains valid uninit or
+ * 				 free functions those will be called by
+ * 				 'MessageQueue_Clear'.
+ *
+ * \param callback a pointer to custom initialization / cleanup functions.
+ * 								 Can be NULL if not used.
+ *
+ * \return A pointer to a newly allocated MessageQueue or NULL.
+ */
+WINPR_API wMessageQueue* MessageQueue_New(const wObject *callback);
+
+/*! \brief Frees resources allocated by a message queue.
+ * 				 This function will only free resources allocated
+ *				 internally.
+ *
+ * \note Empty the queue before calling this function with
+ * 			 'MessageQueue_Clear', 'MessageQueue_Get' or
+ * 			 'MessageQueue_Peek' to free all resources allocated
+ * 			 by the message contained.
+ *
+ * \param queue A pointer to the queue to be freed.
+ */
 WINPR_API void MessageQueue_Free(wMessageQueue* queue);
 
 /* Message Pipe */
