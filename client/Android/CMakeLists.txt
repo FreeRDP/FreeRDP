@@ -15,8 +15,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(ANDROID_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/aFreeRDP")
+if (NOT ANDROID_NDK)
+	message(FATAL_ERROR "ANDROID_NDK not set but required for building android native library.")
+endif()
 
+SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER, BOTH)
+find_program(NDK_COMMAND ndk-build)
+SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER, ONLY)
+
+if(NDK_COMMAND STREQUAL "ANT_COMMAND-NOTFOUND")
+	message(FATAL_ERROR "ndk-build not found but required to build native lib")
+endif()
+
+set(NDK_LIB_CFG "${CMAKE_CURRENT_BINARY_DIR}/FreeRDPCore/jni/Android.mk")
 if(ANDROID_BUILD_JAVA)
 	if (NOT ANDROID_SDK)
 		message(FATAL_ERROR "ANDROID_SDK not set but required for building the java gui (ANDROID_BUILD_JAVA)")
@@ -30,18 +41,20 @@ if(ANDROID_BUILD_JAVA)
 	if(ANT_COMMAND STREQUAL "ANT_COMMAND-NOTFOUND")
 		message(FATAL_ERROR "ant not found but required to build android java")
 	endif()
-
-	if(ANDROID_BUILD_JAVA_DEBUG)
-		set(ANDROID_BUILD_TYPE "debug")
-	else()
-		set(ANDROID_BUILD_TYPE "release")
-	endif()
 endif(ANDROID_BUILD_JAVA)
+
+if(ANDROID_BUILD_JAVA_DEBUG)
+	set(ANDROID_BUILD_TYPE "debug")
+else()
+	set(ANDROID_BUILD_TYPE "release")
+endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 	set(ANDROID_DEBUG_ENABLE "true")
+	set(NDK_DEBUG "1")
 else()
 	set(ANDROID_DEBUG_ENABLE "false")
+	set(NDK_DEBUG "0")
 endif()
 
 add_subdirectory(FreeRDPCore)

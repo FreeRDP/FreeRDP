@@ -199,7 +199,12 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 			{
 				return -1;
 			}
-			freerdp_client_old_parse_hostname((char*) argv[index], &settings->ServerHostname, &settings->ServerPort);
+
+			if (settings)
+			{
+				freerdp_client_old_parse_hostname((char*) argv[index],
+						&settings->ServerHostname, &settings->ServerPort);
+			}
 		}
 		else
 		{
@@ -280,14 +285,19 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 				index++;
 				i++;
 			}
-		} else {
+		}
+		else
+		{
+			if (settings)
+			{
 				if (settings->instance)
 				{
 					freerdp_client_old_process_plugin(settings, args);
 				}
+			}
 		}
 
-		for (i=0; i<args->argc; i++)
+		for (i = 0; i < args->argc; i++)
 			free(args->argv[i]);
 		free(args->argv);
 		free(args);

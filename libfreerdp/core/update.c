@@ -1544,8 +1544,16 @@ int update_process_messages(rdpUpdate* update)
 	return update_message_queue_process_pending_messages(update);
 }
 
+static void update_free_queued_message(void *obj)
+{
+	wMessage *msg = (wMessage*)obj;
+
+	update_message_queue_free_message(msg);
+}
+
 rdpUpdate* update_new(rdpRdp* rdp)
 {
+	const wObject cb = { .fnObjectFree = update_free_queued_message };
 	rdpUpdate* update;
 
 	update = (rdpUpdate*) malloc(sizeof(rdpUpdate));
@@ -1587,7 +1595,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 		update->initialState = TRUE;
 
-		update->queue = MessageQueue_New();
+		update->queue = MessageQueue_New(&cb);
 	}
 
 	return update;

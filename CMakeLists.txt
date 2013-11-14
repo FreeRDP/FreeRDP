@@ -273,7 +273,11 @@ endif(APPLE)
 if(ANDROID)
 	if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 		add_definitions(-DNDK_DEBUG=1)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
+
+		# NOTE: Manually add -gdwarf-3, as newer toolchains default to -gdwarf-4,
+		#       which is not supported by the gdbserver binary shipped with
+		#       the android NDK (tested with r9b)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG} -gdwarf-3")
 	endif()
 	set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -llog")
 	if (NOT FREERDP_ANDROID_EXTERNAL_SSL_PATH)
@@ -294,9 +298,12 @@ if(ANDROID)
 	endif()
 endif()
 	set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_ANDROID_EXTERNAL_SSL_PATH})
-	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/client/Android/FreeRDPCore/libs/${ANDROID_ABI})
-	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/scripts/regenerate_jni_headers.sh.cmake
-		${CMAKE_CURRENT_SOURCE_DIR}/scripts/regenerate_jni_headers.sh @ONLY)
+	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/client/Android/FreeRDPCore/jni/${ANDROID_ABI})
+	CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/regenerate_jni_headers.sh.cmake
+		${CMAKE_BINARY_DIR}/scripts/regenerate_jni_headers.sh @ONLY)
+	CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/gprof_generate.sh.cmake
+		${CMAKE_BINARY_DIR}/scripts/gprof_generate.sh @ONLY)
+
 endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
@@ -507,12 +514,6 @@ include_directories("${CMAKE_SOURCE_DIR}/winpr/include")
 include_directories("${CMAKE_BINARY_DIR}/winpr/include")
 
 add_subdirectory(winpr)
-
-# Generate pkg-config
-if(NOT MSVC)
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-endif()
 
 if(WITH_CUNIT)
 	message(FATAL_ERROR "cunit (WITH_CUNIT) is deprecated please use BUILD_TESTING to build ctest tests.
