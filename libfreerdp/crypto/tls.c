@@ -360,6 +360,9 @@ BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 
 BOOL tls_disconnect(rdpTls* tls)
 {
+	if (!tls)
+		return FALSE;
+
 	if (tls->ssl)
 		SSL_shutdown(tls->ssl);
 
