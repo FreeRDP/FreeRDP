@@ -819,6 +819,54 @@ BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channel_id)
 }
 
 /**
+ * Receive MCS Disconnect Provider Ultimatum PDU.\n
+ * @param mcs mcs module
+ */
+
+BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason)
+{
+	BYTE b1, b2;
+
+	/*
+	 * http://msdn.microsoft.com/en-us/library/cc240872.aspx:
+	 *
+	 * PER encoded (ALIGNED variant of BASIC-PER) PDU contents:
+	 * 21 80
+	 *
+	 * 0x21:
+	 * 0 - --\
+	 * 0 -   |
+	 * 1 -   | CHOICE: From DomainMCSPDU select disconnectProviderUltimatum (8)
+	 * 0 -   | of type DisconnectProviderUltimatum
+	 * 0 -   |
+	 * 0 - --/
+	 * 0 - --\
+	 * 1 -   |
+	 *       | DisconnectProviderUltimatum::reason = rn-user-requested (3)
+	 * 0x80: |
+	 * 1 - --/
+	 * 0 - padding
+	 * 0 - padding
+	 * 0 - padding
+	 * 0 - padding
+	 * 0 - padding
+	 * 0 - padding
+	 * 0 - padding
+	 */
+
+	if (Stream_GetRemainingLength(s) < 1)
+		return FALSE;
+
+	Stream_Rewind_UINT8(s);
+	Stream_Read_UINT8(s, b1);
+	Stream_Read_UINT8(s, b2);
+
+	*reason = ((b1 & 0x01) << 1) | (b2 >> 7);
+
+	return TRUE;
+}
+
+/**
  * Send MCS Disconnect Provider Ultimatum PDU.\n
  * @param mcs mcs module
  */
