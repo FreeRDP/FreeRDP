@@ -9,6 +9,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestSynchMutex.c
 	TestSynchCritical.c
 	TestSynchSemaphore.c
+	TestSynchThread.c
 	TestSynchWaitableTimer.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

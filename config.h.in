@@ -24,6 +24,7 @@
 #cmakedefine HAVE_TIMERFD_H
 #cmakedefine HAVE_TM_GMTOFF
 #cmakedefine HAVE_AIO_H
+#cmakedefine HAVE_PTHREAD_GNU_EXT
 
 
 /* Options */
