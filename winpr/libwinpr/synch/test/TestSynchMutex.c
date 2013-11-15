@@ -1,7 +1,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
-#include <winpr/wait.h>
 
 int TestSynchMutex(int argc, char* argv[])
 {

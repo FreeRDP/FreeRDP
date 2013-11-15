@@ -1,7 +1,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
-#include <winpr/wait.h>
+#include <winpr/thread.h>
 
 static void *test_thread(void *arg)
 {
@@ -11,7 +11,7 @@ static void *test_thread(void *arg)
 	return NULL;
 }
 
-int TestSynchthread(int argc, char* argv[])
+int TestSynchThread(int argc, char* argv[])
 {
 	DWORD rc;
 	HANDLE thread;
