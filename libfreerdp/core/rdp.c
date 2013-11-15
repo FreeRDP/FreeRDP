@@ -290,7 +290,12 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 			 * to a ERRINFO_LOGOFF_BY_USER when the errinfo code is ERRINFO_SUCCESS.
 			 */
 
-			rdp_set_error_info(rdp, ERRINFO_LOGOFF_BY_USER);
+			if (reason == MCS_Reason_provider_initiated)
+				rdp_set_error_info(rdp, ERRINFO_RPC_INITIATED_DISCONNECT);
+			else if (reason == MCS_Reason_user_requested)
+				rdp_set_error_info(rdp, ERRINFO_LOGOFF_BY_USER);
+			else
+				rdp_set_error_info(rdp, ERRINFO_RPC_INITIATED_DISCONNECT);
 		}
 
 		fprintf(stderr, "DisconnectProviderUltimatum: reason: %d\n", reason);
