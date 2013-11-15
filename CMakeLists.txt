@@ -312,6 +312,11 @@ if(NOT IOS AND NOT ANDROID)
 	find_package(Threads REQUIRED)
 endif()
 
+list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+check_library_exists(pthread pthread_tryjoin_np "" HAVE_PTHREAD_GNU_EXT)
+list(REMOVE_ITEM CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+
+
 if(UNIX OR CYGWIN)
 	check_include_files(sys/eventfd.h HAVE_AIO_H)
 	check_include_files(sys/eventfd.h HAVE_EVENTFD_H)
