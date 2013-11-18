@@ -35,6 +35,7 @@ However, any other static build should work as well.
 
 To build openssl:
 
+Set up ANDROID_NDK and ANDROID_SDK to the absolute paths on your machine.
 From the project root folder run './scripts/android_setup_build_env.sh'
 This will set up openssl and gprof helper libraries as required for FreeRDP.
 
