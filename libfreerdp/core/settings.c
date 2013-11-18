@@ -620,6 +620,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->MstscCookieMode = settings->MstscCookieMode; /* 1152 */
 		_settings->SendPreconnectionPdu = settings->SendPreconnectionPdu; /* 1156 */
 		_settings->IgnoreCertificate = settings->IgnoreCertificate; /* 1408 */
+		_settings->ExternalCertificateManagement = settings->ExternalCertificateManagement; /* 1415 */
 		_settings->Workarea = settings->Workarea; /* 1536 */
 		_settings->Fullscreen = settings->Fullscreen; /* 1537 */
 		_settings->GrabKeyboard = settings->GrabKeyboard; /* 1539 */
