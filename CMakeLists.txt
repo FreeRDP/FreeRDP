@@ -301,8 +301,9 @@ endif()
 	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/client/Android/FreeRDPCore/jni/${ANDROID_ABI})
 	CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/regenerate_jni_headers.sh.cmake
 		${CMAKE_BINARY_DIR}/scripts/regenerate_jni_headers.sh @ONLY)
-	CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/gprof_generate.sh.cmake
-		${CMAKE_BINARY_DIR}/scripts/gprof_generate.sh @ONLY)
+	if (WITH_GPROF)
+		CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/gprof_generate.sh.cmake ${CMAKE_BINARY_DIR}/scripts/gprof_generate.sh @ONLY)
+	endif(WITH_GPROF)
 
 endif()
 
