@@ -259,7 +259,21 @@ HANDLE WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName
 	if (connectAdress == NULL) {
 		return handle;
 	}
-	handle = freerds_named_pipe_connect(connectAdress,5000);
+
+	if (!WaitNamedPipeA(connectAdress, 5000))
+	{
+		fprintf(stderr, "WaitNamedPipe failure: %s\n", connectAdress);
+		return NULL;
+	}
+
+	handle = CreateFileA(connectAdress,
+			GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+
+	if ((!handle) || (handle == INVALID_HANDLE_VALUE))
+	{
+		fprintf(stderr, "Failed to create named pipe %s\n", connectAdress);
+		return NULL;
+	}
 
 	return handle;
 }
