@@ -500,6 +500,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		CommandLineSwitchCase(arg, "n")
 		{
 			settings->ClientHostname = _strdup(arg->Value);
+			fprintf(stderr, "-n -> /client-hostname:%s\n", arg->Value);
 		}
 		CommandLineSwitchCase(arg, "o")
 		{

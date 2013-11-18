@@ -20,6 +20,8 @@
 #ifndef __MCS_H
 #define __MCS_H
 
+typedef struct rdp_mcs rdpMcs;
+
 #include "transport.h"
 
 #include <freerdp/crypto/ber.h>
@@ -50,6 +52,15 @@ enum MCS_Result
 	MCS_Result_unspecified_failure = 14,
 	MCS_Result_user_rejected = 15,
 	MCS_Result_enum_length = 16
+};
+
+enum MCS_Reason
+{
+	MCS_Reason_domain_disconnected = 0,
+	MCS_Reason_provider_initiated = 1,
+	MCS_Reason_token_purged = 2,
+	MCS_Reason_user_requested = 3,
+	MCS_Reason_channel_purged = 4
 };
 
 enum DomainMCSPDU
@@ -115,7 +126,7 @@ typedef struct
 struct rdp_mcs
 {
 	UINT16 user_id;
-	struct rdp_transport* transport;
+	rdpTransport* transport;
 	DomainParameters domainParameters;
 	DomainParameters targetParameters;
 	DomainParameters minimumParameters;
@@ -124,7 +135,6 @@ struct rdp_mcs
 	BOOL user_channel_joined;
 	BOOL global_channel_joined;
 };
-typedef struct rdp_mcs rdpMcs;
 
 #define MCS_SEND_DATA_HEADER_MAX_LENGTH		8
 
@@ -148,6 +158,7 @@ BOOL mcs_recv_channel_join_request(rdpMcs* mcs, wStream* s, UINT16* channel_id);
 BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channel_id);
 BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channel_id);
 BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channel_id);
+BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason);
 BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs);
 BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU, UINT16* length);
 void mcs_write_domain_mcspdu_header(wStream* s, enum DomainMCSPDU domainMCSPDU, UINT16 length, BYTE options);

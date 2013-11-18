@@ -18,13 +18,8 @@
 set(MODULE_NAME "winpr-synch")
 set(MODULE_PREFIX "WINPR_SYNCH")
 
-INCLUDE (CheckLibraryExists) 
-list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
-check_library_exists(pthread pthread_tryjoin_np "" HAVE_PTHREAD_GNU_EXT)
-list(REMOVE_ITEM CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
-
 if(HAVE_PTHREAD_GNU_EXT)
-	add_definitions(-D_GNU_SOURCE -DHAVE_PTHREAD_GNU_EXT)
+	add_definitions(-D_GNU_SOURCE)
 endif(HAVE_PTHREAD_GNU_EXT)
 	
 include_directories(../thread)

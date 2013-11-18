@@ -229,6 +229,25 @@ wStream* rdp_data_pdu_init(rdpRdp* rdp)
 	return s;
 }
 
+BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
+{
+	rdp->errorInfo = errorInfo;
+
+	if (rdp->errorInfo != ERRINFO_SUCCESS)
+	{
+		ErrorInfoEventArgs e;
+		rdpContext* context = rdp->instance->context;
+
+		rdp_print_errinfo(rdp->errorInfo);
+
+		EventArgsInit(&e, "freerdp");
+		e.code = rdp->errorInfo;
+		PubSub_OnErrorInfo(context->pubSub, context, &e);
+	}
+
+	return TRUE;
+}
+
 /**
  * Read an RDP packet header.\n
  * @param rdp rdp module
@@ -256,12 +275,30 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 
 	if (MCSPDU == DomainMCSPDU_DisconnectProviderUltimatum)
 	{
-		BYTE reason;
+		int reason = 0;
 		TerminateEventArgs e;
 		rdpContext* context = rdp->instance->context;
 
-		(void) per_read_enumerated(s, &reason, 0);
-		DEBUG_RDP("DisconnectProviderUltimatum from server, reason code 0x%02x\n", reason);
+		if (!mcs_recv_disconnect_provider_ultimatum(rdp->mcs, s, &reason))
+			return FALSE;
+
+		if (rdp->errorInfo == ERRINFO_SUCCESS)
+		{
+			/**
+			 * Some servers like Windows Server 2008 R2 do not send the error info pdu
+			 * when the user logs off like they should. Map DisconnectProviderUltimatum
+			 * to a ERRINFO_LOGOFF_BY_USER when the errinfo code is ERRINFO_SUCCESS.
+			 */
+
+			if (reason == MCS_Reason_provider_initiated)
+				rdp_set_error_info(rdp, ERRINFO_RPC_INITIATED_DISCONNECT);
+			else if (reason == MCS_Reason_user_requested)
+				rdp_set_error_info(rdp, ERRINFO_LOGOFF_BY_USER);
+			else
+				rdp_set_error_info(rdp, ERRINFO_RPC_INITIATED_DISCONNECT);
+		}
+
+		fprintf(stderr, "DisconnectProviderUltimatum: reason: %d\n", reason);
 
 		rdp->disconnect = TRUE;
 
@@ -503,22 +540,14 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 
 BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 {
+	UINT32 errorInfo;
+
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
-	Stream_Read_UINT32(s, rdp->errorInfo); /* errorInfo (4 bytes) */
+	Stream_Read_UINT32(s, errorInfo); /* errorInfo (4 bytes) */
 
-	if (rdp->errorInfo != ERRINFO_SUCCESS)
-	{
-		ErrorInfoEventArgs e;
-		rdpContext* context = rdp->instance->context;
-
-		rdp_print_errinfo(rdp->errorInfo);
-
-		EventArgsInit(&e, "freerdp");
-		e.code = rdp->errorInfo;
-		PubSub_OnErrorInfo(context->pubSub, context, &e);
-	}
+	rdp_set_error_info(rdp, errorInfo);
 
 	return TRUE;
 }

@@ -74,6 +74,9 @@ BOOL transport_disconnect(rdpTransport* transport)
 {
 	BOOL status = TRUE;
 
+	if (!transport)
+		return FALSE;
+
 	if (transport->layer == TRANSPORT_LAYER_TLS)
 		status &= tls_disconnect(transport->TlsIn);
 
