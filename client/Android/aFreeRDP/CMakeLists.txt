@@ -26,6 +26,14 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/build.xml.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/build.xml @ONLY)
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/project.properties.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/project.properties @ONLY)
+
+# The following is required if building android out of tree
+if (${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_BINARY_DIR})
+set (AFREERDP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+else()
+set (AFREERDP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src:${CMAKE_CURRENT_SOURCE_DIR}/../FreeRDPCore/src")
+endif()
+
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/ant.properties.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/ant.properties @ONLY)
 
