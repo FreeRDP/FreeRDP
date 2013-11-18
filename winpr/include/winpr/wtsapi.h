@@ -1130,9 +1130,9 @@ typedef BOOL (*fpRpcEnableChildSessions)(void* context, BOOL bEnable);
 typedef BOOL (*fpRpcIsChildSessionsEnabled)(void* context, PBOOL pbEnabled);
 typedef BOOL (*fpRpcGetChildSessionId)(void* context, PULONG pSessionId);
 
-typedef char * (*fpRpcVirtualChannelOpen)(DWORD SessionId, LPSTR pVirtualName);
-typedef char * (*fpRpcVirtualChannelOpenEx)(DWORD SessionId, LPSTR pVirtualName, DWORD flags);
-typedef BOOL (*fpRpcVirtualChannelClose)(DWORD SessionId, LPSTR pVirtualName);
+typedef HANDLE (*fpRpcVirtualChannelOpen)(DWORD sessionId, LPSTR pVirtualName);
+typedef HANDLE (*fpRpcVirtualChannelOpenEx)(DWORD sessionId, LPSTR pVirtualName, DWORD flags);
+typedef BOOL (*fpRpcVirtualChannelClose)(HANDLE virtualChannelHandle);
 
 
 struct _WTSFunctionTable

@@ -247,21 +247,13 @@ BOOL WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags)
 
 HANDLE WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
 {
-	HANDLE handle = NULL;
-	char * connectAdress = NULL;
-
+	CHECKANDLOADDLL();
 	if (hServer != WTS_CURRENT_SERVER_HANDLE)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return NULL;
 	}
-	connectAdress = gWTSApiFunctionTable->rpcVirtualChannelOpen(SessionId,pVirtualName);
-	if (connectAdress == NULL) {
-		return handle;
-	}
-	handle = freerds_named_pipe_connect(connectAdress,5000);
-
-	return handle;
+	return gWTSApiFunctionTable->rpcVirtualChannelOpen(SessionId,pVirtualName);
 }
 
 HANDLE WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
