@@ -639,6 +639,7 @@ if( BUILD_WITH_STANDALONE_TOOLCHAIN )
 endif()
 
 macro( __GLOB_NDK_TOOLCHAINS __availableToolchainsVar __availableToolchainsLst __toolchain_subpath )
+ list( REMOVE_ITEM ${__availableToolchainsLst} "renderscript" )
  foreach( __toolchain ${${__availableToolchainsLst}} )
   if( "${__toolchain}" MATCHES "-clang3[.][0-9]$" AND NOT EXISTS "${ANDROID_NDK_TOOLCHAINS_PATH}/${__toolchain}${__toolchain_subpath}" )
    string( REGEX REPLACE "-clang3[.][0-9]$" "-4.6" __gcc_toolchain "${__toolchain}" )
