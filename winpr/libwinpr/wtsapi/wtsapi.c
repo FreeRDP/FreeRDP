@@ -254,6 +254,7 @@ HANDLE WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName
 		return NULL;
 	}
 	return gWTSApiFunctionTable->rpcVirtualChannelOpen(SessionId,pVirtualName);
+
 }
 
 HANDLE WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
