@@ -65,6 +65,7 @@ struct rdpsnd_plugin
 	HANDLE ScheduleThread;
 
 	BYTE cBlockNo;
+	UINT16 wQualityMode;
 	int wCurrentFormatNo;
 
 	AUDIO_FORMAT* ServerFormats;
@@ -139,7 +140,7 @@ void rdpsnd_send_quality_mode_pdu(rdpsndPlugin* rdpsnd)
 	Stream_Write_UINT8(pdu, SNDC_QUALITYMODE); /* msgType */
 	Stream_Write_UINT8(pdu, 0); /* bPad */
 	Stream_Write_UINT16(pdu, 4); /* BodySize */
-	Stream_Write_UINT16(pdu, HIGH_QUALITY); /* wQualityMode */
+	Stream_Write_UINT16(pdu, rdpsnd->wQualityMode); /* wQualityMode */
 	Stream_Write_UINT16(pdu, 0); /* Reserved */
 
 	rdpsnd_virtual_channel_write(rdpsnd, pdu);
@@ -597,6 +598,7 @@ COMMAND_LINE_ARGUMENT_A rdpsnd_args[] =
 	{ "rate", COMMAND_LINE_VALUE_REQUIRED, "<rate>", NULL, NULL, -1, NULL, "rate" },
 	{ "channel", COMMAND_LINE_VALUE_REQUIRED, "<channel>", NULL, NULL, -1, NULL, "channel" },
 	{ "latency", COMMAND_LINE_VALUE_REQUIRED, "<latency>", NULL, NULL, -1, NULL, "latency" },
+	{ "quality", COMMAND_LINE_VALUE_REQUIRED, "<quality mode>", NULL, NULL, -1, NULL, "quality mode" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -606,10 +608,13 @@ static void rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
+	rdpsnd->wQualityMode = HIGH_QUALITY; /* default quality mode */
+
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 
 	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			rdpsnd_args, flags, rdpsnd, NULL, NULL);
+
 	if (status < 0)
 		return;
 
@@ -645,6 +650,24 @@ static void rdpsnd_process_addin_args(rdpsndPlugin* rdpsnd, ADDIN_ARGV* args)
 		CommandLineSwitchCase(arg, "latency")
 		{
 			rdpsnd->latency = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "quality")
+		{
+			int wQualityMode = DYNAMIC_QUALITY;
+
+			if (_stricmp(arg->Value, "dynamic") == 0)
+				wQualityMode = DYNAMIC_QUALITY;
+			else if (_stricmp(arg->Value, "medium") == 0)
+				wQualityMode = MEDIUM_QUALITY;
+			else if (_stricmp(arg->Value, "high") == 0)
+				wQualityMode = HIGH_QUALITY;
+			else
+				wQualityMode = atoi(arg->Value);
+
+			if ((wQualityMode < 0) || (wQualityMode > 2))
+				wQualityMode = DYNAMIC_QUALITY;
+
+			rdpsnd->wQualityMode = (UINT16) wQualityMode;
 		}
 		CommandLineSwitchDefault(arg)
 		{
