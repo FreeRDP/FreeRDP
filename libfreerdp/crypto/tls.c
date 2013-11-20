@@ -400,7 +400,7 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 				break;
 
 			case SSL_ERROR_SYSCALL:
-				if (errno == EAGAIN)
+				if ((errno == EAGAIN) || (errno == 0))
 				{
 					status = 0;
 				}
