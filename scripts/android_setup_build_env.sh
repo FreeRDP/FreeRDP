@@ -52,6 +52,7 @@ make clean
 # first compilation. Rerun make to build the whole lib.
 make
 make
+make
 RETVAL=0 # TODO: Check, why 2 is returned.
 if [ $RETVAL -ne 0 ]; then
 	echo "Failed to execute make command [$RETVAL]"
@@ -60,11 +61,16 @@ fi
 # Copy the created library to the default openssl directory,
 # so that CMake will detect it automatically.
 SSL_ROOT=`find $OPENSSL_SRC -type d -name "openssl-?.?.*"`
+if [ -z "$SSL_ROOT" ]; then
+	echo "OpenSSL was not build successfully, aborting."
+	exit -42
+fi
+mkdir -p $SSL_ROOT/obj/local/armeabi/
+cp $SSL_ROOT/libssl.a $SSL_ROOT/obj/local/armeabi/
+cp $SSL_ROOT/libcrypto.a $SSL_ROOT/obj/local/armeabi/
+
 rm -f $ROOT/openssl
 ln -s $SSL_ROOT $ROOT/openssl
-mkdir -p $ROOT/openssl/obj/local/armeabi/
-cp $ROOT/openssl/libssl.a $ROOT/openssl/obj/local/armeabi/
-cp $ROOT/openssl/libcrypto.a $ROOT/openssl/obj/local/armeabi/
 
 echo "Preparing NDK profiler..."
 NDK_PROFILER_SRC=$ROOT/android-ndk-profiler
