@@ -104,6 +104,7 @@ static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MED
 	mdecoder->codec_context->channels = media_type->Channels;
 	mdecoder->codec_context->block_align = media_type->BlockAlign;
 
+#if LIBAVCODEC_VERSION_MAJOR < 55
 #ifdef AV_CPU_FLAG_SSE2
 	mdecoder->codec_context->dsp_mask = AV_CPU_FLAG_SSE2 | AV_CPU_FLAG_MMX2;
 #else
@@ -113,6 +114,13 @@ static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MED
 	mdecoder->codec_context->dsp_mask = FF_MM_SSE2 | FF_MM_MMX2;
 #endif
 #endif
+#else  /* LIBAVCODEC_VERSION_MAJOR < 55 */
+#ifdef AV_CPU_FLAG_SSE2
+	av_set_cpu_flags_mask(AV_CPU_FLAG_SSE2 | AV_CPU_FLAG_MMX2);
+#else
+	av_set_cpu_flags_mask(FF_MM_SSE2 | FF_MM_MMX2);
+#endif
+#endif /* LIBAVCODEC_VERSION_MAJOR < 55 */
 
 	return TRUE;
 }
