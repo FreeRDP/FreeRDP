@@ -101,7 +101,7 @@ static void clear_format_map(cliprdrContext *cliprdr)
 
 	if (cliprdr->format_mappings)
 	{
-		for (i = 0; i < cliprdr->map_size; i++)
+		for (i = 0; i < cliprdr->map_capacity; i++)
 		{
 			map = &cliprdr->format_mappings[i];
 			map->remote_format_id = 0;
@@ -155,15 +155,13 @@ static void cliprdr_send_format_list(cliprdrContext *cliprdr)
 		}
 		else
 		{
-			ZeroMemory(format_data + len, 32);
 			if (format >= CF_MAX)
 			{
 				static wchar_t wName[MAX_PATH] = {0};
 				int wLen;
 
 				ZeroMemory(wName, MAX_PATH*2);
-				GetClipboardFormatNameW(format, wName, MAX_PATH);
-				wLen = wcslen(wName);
+				wLen = GetClipboardFormatNameW(format, wName, MAX_PATH);
 				if (wLen < 16)
 				{
 					memcpy(format_data + len, wName, wLen * sizeof(WCHAR));
@@ -205,6 +203,8 @@ int cliprdr_send_data_request(cliprdrContext *cliprdr, UINT32 format)
 		return -1;
 
 	cliprdr_event->format = get_remote_format_id(cliprdr, format);
+	if (cliprdr_event->format == 0)
+		return -1;
 
 	ret = freerdp_channels_send_event(cliprdr->channels, (wMessage *)cliprdr_event);
 
@@ -227,7 +227,8 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			cliprdr = (cliprdrContext *)((CREATESTRUCT *)lParam)->lpCreateParams;
 			cliprdr->hwndNextViewer = SetClipboardViewer(hWnd);
 
-			if (cliprdr->hwndNextViewer == NULL && GetLastError() != 0) {
+			if (cliprdr->hwndNextViewer == NULL && GetLastError() != 0)
+			{
 				DEBUG_CLIPRDR("error: SetClipboardViewer failed with 0x%0x.", GetLastError());
 			}
 			cliprdr->hwndClipboard = hWnd;
