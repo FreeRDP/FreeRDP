@@ -54,7 +54,11 @@ typedef struct _TSMFFFmpegDecoder
 	ITSMFDecoder iface;
 
 	int media_type;
+#if LIBAVCODEC_VERSION_MAJOR < 55
 	enum CodecID codec_id;
+#else
+	enum AVCodecID codec_id;
+#endif
 	AVCodecContext* codec_context;
 	AVCodec* codec;
 	AVFrame* frame;
