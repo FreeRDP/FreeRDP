@@ -83,7 +83,7 @@ static void map_ensure_capacity(cliprdrContext *cliprdr)
 {
 	if (cliprdr->map_size >= cliprdr->map_capacity) {
 		cliprdr->format_mappings = (formatMapping *)realloc(cliprdr->format_mappings,
-			cliprdr->map_capacity * 2);
+			sizeof(formatMapping) * cliprdr->map_capacity * 2);
 		cliprdr->map_capacity *= 2;
 	}
 }
@@ -475,6 +475,7 @@ static void wf_cliprdr_process_cb_format_list_event(wfContext *wfc, RDP_CB_FORMA
 			map = &cliprdr->format_mappings[i++];
 
 			Read_UINT32(p, map->remote_format_id);
+			map->name = NULL;
 
 			/* get name_len */
 			for (tmp = p, name_len = 0; tmp + 1 < end_mark; tmp += 2, name_len += 2) {
@@ -508,6 +509,7 @@ static void wf_cliprdr_process_cb_format_list_event(wfContext *wfc, RDP_CB_FORMA
 			map = &cliprdr->format_mappings[i++];
 
 			Read_UINT32(p, map->remote_format_id);
+			map->name = NULL;
 
 			if (event->raw_format_unicode) {
 				/* get name_len, in bytes, if the file name is truncated, no terminated null will be included. */
