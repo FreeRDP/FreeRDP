@@ -143,10 +143,19 @@ static void cliprdr_send_format_list(cliprdrContext *cliprdr)
 			ZeroMemory(format_data + len, 32);
 			if (format >= CF_MAX) {
 				static wchar_t wName[MAX_PATH] = {0};
+				int wLen;
 
 				ZeroMemory(wName, MAX_PATH*2);
 				GetClipboardFormatNameW(format, wName, MAX_PATH);
-				memcpy(format_data + len, wName, 32);	/* truncate the long name to 32 bytes */
+				wLen = wcslen(wName);
+				if (wLen < 16)
+				{
+					memcpy(format_data + len, wName, wLen * sizeof(WCHAR));
+				}
+				else
+				{
+					memcpy(format_data + len, wName, 32);	/* truncate the long name to 32 bytes */
+				}
 			}
 			len += 32;
 		}
