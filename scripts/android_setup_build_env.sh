@@ -65,9 +65,8 @@ if [ -z "$SSL_ROOT" ]; then
 	echo "OpenSSL was not build successfully, aborting."
 	exit -42
 fi
-mkdir -p $SSL_ROOT/obj/local/armeabi/
-cp $SSL_ROOT/libssl.a $SSL_ROOT/obj/local/armeabi/
-cp $SSL_ROOT/libcrypto.a $SSL_ROOT/obj/local/armeabi/
+mkdir -p $SSL_ROOT/lib
+cp $SSL_ROOT/*.a $SSL_ROOT/lib/
 
 rm -f $ROOT/openssl
 ln -s $SSL_ROOT $ROOT/openssl
@@ -117,6 +116,8 @@ if [ $RETVAL -ne 0 ]; then
 	echo "Failed to execute ndk-build command [$RETVAL]"
 	exit -7
 fi
+mkdir -p $JPEG_LIBRARY_SRC/lib
+cp $JPEG_LIBRARY_SRC/obj/local/armeabi-v7a/*.a $JPEG_LIBRARY_SRC/lib/
 
 echo "Prepared external libraries, you can now build the application."
 exit 0
