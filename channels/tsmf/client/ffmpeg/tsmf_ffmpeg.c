@@ -43,6 +43,12 @@
 #define AVMEDIA_TYPE_AUDIO 1
 #endif
 
+#if LIBAVCODEC_VERSION_MAJOR < 54
+#define MAX_AUDIO_FRAME_SIZE AVCODEC_MAX_AUDIO_FRAME_SIZE
+#else
+#define MAX_AUDIO_FRAME_SIZE 192000
+#endif
+
 typedef struct _TSMFFFmpegDecoder
 {
 	ITSMFDecoder iface;
@@ -351,7 +357,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 #endif
 
 	if (mdecoder->decoded_size_max == 0)
-		mdecoder->decoded_size_max = AVCODEC_MAX_AUDIO_FRAME_SIZE + 16;
+		mdecoder->decoded_size_max = MAX_AUDIO_FRAME_SIZE + 16;
 	mdecoder->decoded_data = malloc(mdecoder->decoded_size_max);
 	ZeroMemory(mdecoder->decoded_data, mdecoder->decoded_size_max);
 	/* align the memory for SSE2 needs */
@@ -363,7 +369,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 	while (src_size > 0)
 	{
 		/* Ensure enough space for decoding */
-		if (mdecoder->decoded_size_max - mdecoder->decoded_size < AVCODEC_MAX_AUDIO_FRAME_SIZE)
+		if (mdecoder->decoded_size_max - mdecoder->decoded_size < MAX_AUDIO_FRAME_SIZE)
 		{
 			mdecoder->decoded_size_max = mdecoder->decoded_size_max * 2 + 16;
 			mdecoder->decoded_data = realloc(mdecoder->decoded_data, mdecoder->decoded_size_max);
