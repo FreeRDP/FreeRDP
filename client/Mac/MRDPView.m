@@ -660,6 +660,8 @@ DWORD mac_client_thread(void* param)
 	if (!is_connected)
 		return;
 	
+	gdi_free(context->instance);
+
 	freerdp_channels_global_uninit();
 	
 	if (pixel_data)
