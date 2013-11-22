@@ -494,7 +494,7 @@ static void input_free_queued_message(void *obj)
 
 rdpInput* input_new(rdpRdp* rdp)
 {
-	const wObject cb = { .fnObjectFree = input_free_queued_message };
+	const wObject cb = { NULL, NULL, NULL, input_free_queued_message , NULL };
 	rdpInput* input;
 
 	input = (rdpInput*) malloc(sizeof(rdpInput));
