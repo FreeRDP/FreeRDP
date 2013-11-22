@@ -32,7 +32,11 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE freerdp
 	MODULES freerdp-codec freerdp-utils)
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${PULSE_LIBRARY})
+list(APPEND ${MODULE_PREFIX}_LIBS ${PULSE_LIBRARY})
+
+if(GSM_FOUND)
+	list(APPEND ${MODULE_PREFIX}_LIBS ${GSM_LIBRARIES})
+endif()
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
