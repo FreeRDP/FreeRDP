@@ -29,14 +29,15 @@ FreeRDP requires openssl libraries for building but they are not part of the
 Android NDK and therefore they need to be prebuild manually.
 Multiple source versions and builds of static openssl libraries are floating around.
 At the time of writing we have tested and used:
-https://github.com/bmiklautz/Android-external-openssl-ndk-static.
+https://github.com/bmiklautz/Android-external-openssl-ndk-static
+https://github.com/akallabeth/openssl-android
 However, any other static build should work as well.
 
 To build openssl:
 
-git clone git@github.com:bmiklautz/android-external-openssl-ndk-static.git
-cd android-external-openssl-ndk-static
-ndk-build # found in the Android NDK
+Set up ANDROID_NDK and ANDROID_SDK to the absolute paths on your machine.
+From the project root folder run './scripts/android_setup_build_env.sh'
+This will set up openssl and gprof helper libraries as required for FreeRDP.
 
 
 Building
