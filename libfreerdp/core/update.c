@@ -1553,10 +1553,9 @@ static void update_free_queued_message(void *obj)
 
 rdpUpdate* update_new(rdpRdp* rdp)
 {
-	wObject cb; 
+	const wObject cb = { NULL, NULL, NULL,  update_free_queued_message, NULL };
 	rdpUpdate* update;
 
-	cb.fnObjectFree = update_free_queued_message;
 	update = (rdpUpdate*) malloc(sizeof(rdpUpdate));
 
 	if (update)
