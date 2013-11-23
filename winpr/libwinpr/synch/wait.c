@@ -87,13 +87,13 @@ int clock_gettime(int clk_id, struct timespec *t)
 #if !defined(HAVE_PTHREAD_GNU_EXT)
 #include <pthread.h>
 
-static long long ts_difftime(struct timespec *o,
-		struct timespec *n)
+static long long ts_difftime(const struct timespec *o,
+		const struct timespec *n)
 {
-	long long old = o->tv_sec * 1000000000LL + o->tv_nsec;
-	long long new = n->tv_sec * 1000000000LL + n->tv_nsec;
+	long long oldValue = o->tv_sec * 1000000000LL + o->tv_nsec;
+	long long newValue = n->tv_sec * 1000000000LL + n->tv_nsec;
 
-	return new - old;
+	return newValue - oldValue;
 }
 
 static int pthread_timedjoin_np(pthread_t td, void **res,

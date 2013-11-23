@@ -92,7 +92,7 @@ struct _COMMAND_LINE_ARGUMENT_A
 {
 	LPCSTR Name;
 	DWORD Flags;
-	LPSTR Format;
+	LPCSTR Format;
 	LPSTR Default;
 	LPSTR Value;
 	LONG Index;
@@ -104,7 +104,7 @@ struct _COMMAND_LINE_ARGUMENT_W
 {
 	LPCWSTR Name;
 	DWORD Flags;
-	LPSTR Format;
+	LPCSTR Format;
 	LPWSTR Default;
 	LPWSTR Value;
 	LONG Index;
