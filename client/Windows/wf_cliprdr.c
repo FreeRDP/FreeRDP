@@ -54,7 +54,7 @@ static UINT32 get_local_format_id_by_name(cliprdrContext *cliprdr, void *format_
 	for (i = 0; i < cliprdr->map_size; i++)
 	{
 		map = &cliprdr->format_mappings[i];
-		if ((cliprdr->capabilities & CAPS_USE_LONG_FORMAT_NAMES) != 0)
+		if ((cliprdr->capabilities & CB_USE_LONG_FORMAT_NAMES) != 0)
 		{
 			if (map->name)
 			{
@@ -144,7 +144,7 @@ static void cliprdr_send_format_list(cliprdrContext *cliprdr)
 	{
 		Write_UINT32(format_data + len, format);
 		len += 4;
-		if ((cliprdr->capabilities & CAPS_USE_LONG_FORMAT_NAMES) != 0)
+		if ((cliprdr->capabilities & CB_USE_LONG_FORMAT_NAMES) != 0)
 		{
 			if (format >= CF_MAX)
 			{
@@ -518,7 +518,7 @@ static void wf_cliprdr_process_cb_format_list_event(wfContext *wfc, RDP_CB_FORMA
 
 	clear_format_map(cliprdr);
 
-	if ((cliprdr->capabilities & CAPS_USE_LONG_FORMAT_NAMES) != 0)
+	if ((cliprdr->capabilities & CB_USE_LONG_FORMAT_NAMES) != 0)
 	{
 		while (left_size >= 6)
 		{
