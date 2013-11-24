@@ -38,8 +38,10 @@ typedef int (*pcCliprdrClientFormatList)(CliprdrClientContext* context, CLIPRDR_
 typedef int (*pcCliprdrServerFormatList)(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList);
 typedef int (*pcCliprdrClientFormatListResponse)(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse);
 typedef int (*pcCliprdrServerFormatListResponse)(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse);
-typedef int (*pcCliprdrDataRequest)(CliprdrClientContext* context);
-typedef int (*pcCliprdrDataResponse)(CliprdrClientContext* context);
+typedef int (*pcCliprdrClientFormatDataRequest)(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest);
+typedef int (*pcCliprdrServerFormatDataRequest)(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest);
+typedef int (*pcCliprdrClientFormatDataResponse)(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse);
+typedef int (*pcCliprdrServerFormatDataResponse)(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse);
 
 struct _cliprdr_client_context
 {
@@ -53,8 +55,10 @@ struct _cliprdr_client_context
 	pcCliprdrServerFormatList ServerFormatList;
 	pcCliprdrClientFormatListResponse ClientFormatListResponse;
 	pcCliprdrServerFormatListResponse ServerFormatListResponse;
-	pcCliprdrDataRequest DataRequest;
-	pcCliprdrDataResponse DataResponse;
+	pcCliprdrClientFormatDataRequest ClientFormatDataRequest;
+	pcCliprdrServerFormatDataRequest ServerFormatDataRequest;
+	pcCliprdrClientFormatDataResponse ClientFormatDataResponse;
+	pcCliprdrServerFormatDataResponse ServerFormatDataResponse;
 };
 
 struct _CLIPRDR_FORMAT_NAME

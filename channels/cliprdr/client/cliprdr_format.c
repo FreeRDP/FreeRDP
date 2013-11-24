@@ -405,13 +405,31 @@ void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
-	RDP_CB_DATA_REQUEST_EVENT* cb_event;
+	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 
-	cb_event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
-			CliprdrChannel_DataRequest, NULL, NULL);
+	if (context->custom)
+	{
+		CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest;
 
-	Stream_Read_UINT32(s, cb_event->format);
-	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+		formatDataRequest.msgType = CB_FORMAT_DATA_REQUEST;
+		formatDataRequest.msgFlags = msgFlags;
+		formatDataRequest.dataLen = dataLen;
+
+		Stream_Read_UINT32(s, formatDataRequest.requestedFormatId); /* requestedFormatId (4 bytes) */
+
+		if (context->ServerFormatDataRequest)
+			context->ServerFormatDataRequest(context, &formatDataRequest);
+	}
+	else
+	{
+		RDP_CB_DATA_REQUEST_EVENT* cb_event;
+
+		cb_event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+				CliprdrChannel_DataRequest, NULL, NULL);
+
+		Stream_Read_UINT32(s, cb_event->format);
+		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+	}
 }
 
 void cliprdr_process_format_data_response_event(cliprdrPlugin* cliprdr, RDP_CB_DATA_RESPONSE_EVENT* cb_event)

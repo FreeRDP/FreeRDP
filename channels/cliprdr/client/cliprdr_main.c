@@ -429,13 +429,34 @@ int cliprdr_client_format_list_response(CliprdrClientContext* context, CLIPRDR_F
 	return 0;
 }
 
-int cliprdr_data_request(CliprdrClientContext* context)
+int cliprdr_client_format_data_request(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
+	wStream* s;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
+	formatDataRequest->msgType = CB_FORMAT_DATA_REQUEST;
+	formatDataRequest->dataLen = 4;
+
+	s = cliprdr_packet_new(formatDataRequest->msgType, formatDataRequest->msgFlags, formatDataRequest->dataLen);
+	Stream_Write_UINT32(s, formatDataRequest->requestedFormatId); /* requestedFormatId (4 bytes) */
+
+	cliprdr_packet_send(cliprdr, s);
+
 	return 0;
 }
 
-int cliprdr_data_response(CliprdrClientContext* context)
+int cliprdr_client_format_data_response(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
+	wStream* s;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
+	formatDataResponse->msgType = CB_FORMAT_DATA_RESPONSE;
+
+	s = cliprdr_packet_new(formatDataResponse->msgType, formatDataResponse->msgFlags, formatDataResponse->dataLen);
+	Stream_Write(s, formatDataResponse->requestedFormatData, formatDataResponse->dataLen);
+
+	cliprdr_packet_send(cliprdr, s);
+
 	return 0;
 }
 
@@ -477,8 +498,8 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		context->ClientCapabilities = cliprdr_client_capabilities;
 		context->ClientFormatList = cliprdr_client_format_list;
 		context->ClientFormatListResponse = cliprdr_client_format_list_response;
-		context->DataRequest = cliprdr_data_request;
-		context->DataResponse = cliprdr_data_response;
+		context->ClientFormatDataRequest = cliprdr_client_format_data_request;
+		context->ClientFormatDataResponse = cliprdr_client_format_data_response;
 
 		*(pEntryPointsEx->ppInterface) = (void*) context;
 	}
