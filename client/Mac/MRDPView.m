@@ -1051,6 +1051,10 @@ void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap)
 void mac_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
+	
+	if (!gdi)
+		return;
+	
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 }
 
@@ -1063,11 +1067,15 @@ void mac_end_paint(rdpContext* context)
 	int i;
 	rdpGdi* gdi;
 	NSRect drawRect;
+	int ww, wh, dw, dh;
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
-	
-	int ww, wh, dw, dh;
 
+	gdi = context->gdi;
+	
+	if (!gdi)
+		return;
+	
 	ww = mfc->client_width;
 	wh = mfc->client_height;
 	dw = mfc->context.settings->DesktopWidth;
@@ -1081,8 +1089,6 @@ void mac_end_paint(rdpContext* context)
 	
 	if (context->gdi->drawing != context->gdi->primary)
 		return;
-	
-	gdi = context->gdi;
 
 	for (i = 0; i < gdi->primary->hdc->hwnd->ninvalid; i++)
 	{

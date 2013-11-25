@@ -28,14 +28,6 @@
 
 #define CLIPRDR_HEADER_LENGTH	8
 
-struct _CLIPRDR_HEADER
-{
-	UINT16 msgType;
-	UINT16 msgFlags;
-	UINT32 dataLen;
-};
-typedef struct _CLIPRDR_HEADER CLIPRDR_HEADER;
-
 struct _cliprdr_server_private
 {
 	HANDLE Thread;

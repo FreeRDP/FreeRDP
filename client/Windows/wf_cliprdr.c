@@ -51,10 +51,13 @@ static UINT32 get_local_format_id_by_name(cliprdrContext *cliprdr, void *format_
 	formatMapping *map;
 	int i;
 
-	for (i = 0; i < cliprdr->map_size; i++) {
+	for (i = 0; i < cliprdr->map_size; i++)
+	{
 		map = &cliprdr->format_mappings[i];
-		if ((cliprdr->capabilities & CAPS_USE_LONG_FORMAT_NAMES) != 0) {
-			if (map->name) {
+		if ((cliprdr->capabilities & CB_USE_LONG_FORMAT_NAMES) != 0)
+		{
+			if (map->name)
+			{
 				if (memcmp(map->name, format_name, wcslen((LPCWSTR)format_name)) == 0)
 					return map->local_format_id;
 			}
@@ -69,9 +72,11 @@ static UINT32 get_remote_format_id(cliprdrContext *cliprdr, UINT32 local_format)
 	formatMapping *map;
 	int i;
 
-	for (i = 0; i < cliprdr->map_size; i++) {
+	for (i = 0; i < cliprdr->map_size; i++)
+	{
 		map = &cliprdr->format_mappings[i];
-		if (map->local_format_id == local_format) {
+		if (map->local_format_id == local_format)
+		{
 			return map->remote_format_id;
 		}
 	}
@@ -81,9 +86,10 @@ static UINT32 get_remote_format_id(cliprdrContext *cliprdr, UINT32 local_format)
 
 static void map_ensure_capacity(cliprdrContext *cliprdr)
 {
-	if (cliprdr->map_size >= cliprdr->map_capacity) {
+	if (cliprdr->map_size >= cliprdr->map_capacity)
+	{
 		cliprdr->format_mappings = (formatMapping *)realloc(cliprdr->format_mappings,
-			cliprdr->map_capacity * 2);
+			sizeof(formatMapping) * cliprdr->map_capacity * 2);
 		cliprdr->map_capacity *= 2;
 	}
 }
@@ -93,13 +99,16 @@ static void clear_format_map(cliprdrContext *cliprdr)
 	formatMapping *map;
 	int i;
 
-	if (cliprdr->format_mappings) {
-		for (i = 0; i < cliprdr->map_size; i++) {
+	if (cliprdr->format_mappings)
+	{
+		for (i = 0; i < cliprdr->map_capacity; i++)
+		{
 			map = &cliprdr->format_mappings[i];
 			map->remote_format_id = 0;
 			map->local_format_id = 0;
 
-			if (map->name) {
+			if (map->name)
+			{
 				free(map->name);
 				map->name = NULL;
 			}
@@ -119,7 +128,8 @@ static void cliprdr_send_format_list(cliprdrContext *cliprdr)
 	int len = 0;
 	int namelen;
 
-	if (!OpenClipboard(cliprdr->hwndClipboard)) {
+	if (!OpenClipboard(cliprdr->hwndClipboard))
+	{
 		DEBUG_CLIPRDR("OpenClipboard failed with 0x%x", GetLastError());
 		return;
 	}
@@ -130,23 +140,36 @@ static void cliprdr_send_format_list(cliprdrContext *cliprdr)
 	format_data = (BYTE *)calloc(1, data_size);
 	assert(format_data != NULL);
 
-	while (format = EnumClipboardFormats(format)) {
+	while (format = EnumClipboardFormats(format))
+	{
 		Write_UINT32(format_data + len, format);
 		len += 4;
-		if ((cliprdr->capabilities & CAPS_USE_LONG_FORMAT_NAMES) != 0) {
-			if (format >= CF_MAX) {
+		if ((cliprdr->capabilities & CB_USE_LONG_FORMAT_NAMES) != 0)
+		{
+			if (format >= CF_MAX)
+			{
 				namelen = GetClipboardFormatNameW(format, (LPWSTR)(format_data + len), MAX_PATH);
 				len += namelen * sizeof(WCHAR);
 			}
 			len += 2;							/* end of Unicode string */
-		} else {
-			ZeroMemory(format_data + len, 32);
-			if (format >= CF_MAX) {
+		}
+		else
+		{
+			if (format >= CF_MAX)
+			{
 				static wchar_t wName[MAX_PATH] = {0};
+				int wLen;
 
 				ZeroMemory(wName, MAX_PATH*2);
-				GetClipboardFormatNameW(format, wName, MAX_PATH);
-				memcpy(format_data + len, wName, 32);	/* truncate the long name to 32 bytes */
+				wLen = GetClipboardFormatNameW(format, wName, MAX_PATH);
+				if (wLen < 16)
+				{
+					memcpy(format_data + len, wName, wLen * sizeof(WCHAR));
+				}
+				else
+				{
+					memcpy(format_data + len, wName, 32);	/* truncate the long name to 32 bytes */
+				}
 			}
 			len += 32;
 		}
@@ -180,6 +203,8 @@ int cliprdr_send_data_request(cliprdrContext *cliprdr, UINT32 format)
 		return -1;
 
 	cliprdr_event->format = get_remote_format_id(cliprdr, format);
+	if (cliprdr_event->format == 0)
+		return -1;
 
 	ret = freerdp_channels_send_event(cliprdr->channels, (wMessage *)cliprdr_event);
 
@@ -196,12 +221,14 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 {
 	static cliprdrContext *cliprdr = NULL;
 
-	switch (Msg) {
+	switch (Msg)
+	{
 		case WM_CREATE:
 			cliprdr = (cliprdrContext *)((CREATESTRUCT *)lParam)->lpCreateParams;
 			cliprdr->hwndNextViewer = SetClipboardViewer(hWnd);
 
-			if (cliprdr->hwndNextViewer == NULL && GetLastError() != 0) {
+			if (cliprdr->hwndNextViewer == NULL && GetLastError() != 0)
+			{
 				DEBUG_CLIPRDR("error: SetClipboardViewer failed with 0x%0x.", GetLastError());
 			}
 			cliprdr->hwndClipboard = hWnd;
@@ -212,17 +239,23 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			break;
 
 		case WM_CHANGECBCHAIN:
-			if (cliprdr->hwndNextViewer == (HWND)wParam) {
+			if (cliprdr->hwndNextViewer == (HWND)wParam)
+			{
 				cliprdr->hwndNextViewer = (HWND)lParam;
-			} else if (cliprdr->hwndNextViewer != NULL) {
+			}
+			else if (cliprdr->hwndNextViewer != NULL)
+			{
 				SendMessage(cliprdr->hwndNextViewer, Msg, wParam, lParam);
 			}
 			break;
 
 		case WM_DRAWCLIPBOARD:
-			if (cliprdr->channel_initialized) {
-				if (GetClipboardOwner() != cliprdr->hwndClipboard) {
-						if (!cliprdr->hmem) {
+			if (cliprdr->channel_initialized)
+			{
+				if (GetClipboardOwner() != cliprdr->hwndClipboard)
+				{
+						if (!cliprdr->hmem)
+						{
 							cliprdr->hmem = GlobalFree(cliprdr->hmem);
 						}
 						cliprdr_send_format_list(cliprdr);
@@ -234,7 +267,8 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 
 		case WM_RENDERALLFORMATS:
 			/* discard all contexts in clipboard */
-			if (!OpenClipboard(cliprdr->hwndClipboard)) {
+			if (!OpenClipboard(cliprdr->hwndClipboard))
+			{
 				DEBUG_CLIPRDR("OpenClipboard failed with 0x%x", GetLastError());
 				break;
 			}
@@ -243,12 +277,14 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			break;
 
 		case WM_RENDERFORMAT:
-			if (cliprdr_send_data_request(cliprdr, (UINT32)wParam) != 0) {
+			if (cliprdr_send_data_request(cliprdr, (UINT32)wParam) != 0)
+			{
 				DEBUG_CLIPRDR("error: cliprdr_send_data_request failed.");
 				break;
 			}
 
-			if (SetClipboardData(wParam, cliprdr->hmem) == NULL) {
+			if (SetClipboardData(wParam, cliprdr->hmem) == NULL)
+			{
 				DEBUG_CLIPRDR("SetClipboardData failed with 0x%x", GetLastError());
 				cliprdr->hmem = GlobalFree(cliprdr->hmem);
 			}
@@ -292,7 +328,8 @@ static int create_cliprdr_window(cliprdrContext *cliprdr)
 		L"rdpclip",
 		0, 0, 0, 0, 0, HWND_MESSAGE, NULL, GetModuleHandle(NULL), cliprdr);
 
-	if (cliprdr->hwndClipboard == NULL) {
+	if (cliprdr->hwndClipboard == NULL)
+	{
 		DEBUG_CLIPRDR("error: CreateWindowEx failed with %x.", GetLastError());
 		return -1;
 	}
@@ -308,16 +345,21 @@ static void *cliprdr_thread_func(void *arg)
 	int ret;
 	HRESULT result;
 
-	if ((ret = create_cliprdr_window(cliprdr)) != 0) {
+	if ((ret = create_cliprdr_window(cliprdr)) != 0)
+	{
 		DEBUG_CLIPRDR("error: create clipboard window failed.");
 		return NULL;
 	}
 
-	while ((mcode = GetMessage(&msg, 0, 0, 0) != 0)) {
-		if (mcode == -1) {
+	while ((mcode = GetMessage(&msg, 0, 0, 0) != 0))
+	{
+		if (mcode == -1)
+		{
 			DEBUG_CLIPRDR("error: clipboard thread GetMessage failed.");
 			break;
-		} else {
+		}
+		else
+		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
@@ -362,7 +404,8 @@ void wf_cliprdr_uninit(wfContext* wfc)
 	if (cliprdr->hwndClipboard)
 		PostMessage(cliprdr->hwndClipboard, WM_QUIT, 0, 0);
 
-	if (cliprdr->cliprdr_thread) {
+	if (cliprdr->cliprdr_thread)
+	{
 		WaitForSingleObject(cliprdr->cliprdr_thread, INFINITE);
 		CloseHandle(cliprdr->cliprdr_thread);
 	}
@@ -406,23 +449,32 @@ static void wf_cliprdr_process_cb_data_request_event(wfContext *wfc, RDP_CB_DATA
 
 	local_format = event->format;
 
-	if (local_format == 0x9) {             /* FORMAT_ID_PALETTE */
+	if (local_format == 0x9)			/* FORMAT_ID_PALETTE */
+	{
 		/* TODO: implement this */
 		DEBUG_CLIPRDR("FORMAT_ID_PALETTE is not supported yet.");
-	} else if (local_format == 0x3) {      /* FORMAT_ID_MATEFILE */
+	}
+	else if (local_format == 0x3)		/* FORMAT_ID_MATEFILE */
+	{
 		/* TODO: implement this */
 		DEBUG_CLIPRDR("FORMAT_ID_MATEFILE is not supported yet.");
-	} else if (local_format == RegisterClipboardFormatW(L"FileGroupDescriptorW")) {
+	}
+	else if (local_format == RegisterClipboardFormatW(L"FileGroupDescriptorW"))
+	{
 		/* TODO: implement this */
 		DEBUG_CLIPRDR("FileGroupDescriptorW is not supported yet.");
-	} else {
-		if (!OpenClipboard(cliprdr->hwndClipboard)) {
+	}
+	else
+	{
+		if (!OpenClipboard(cliprdr->hwndClipboard))
+		{
 			DEBUG_CLIPRDR("OpenClipboard failed with 0x%x", GetLastError());
 			return;
 		}
 
 		hClipdata = GetClipboardData(event->format);
-		if (!hClipdata) {
+		if (!hClipdata)
+		{
 			DEBUG_CLIPRDR("GetClipboardData failed.");
 			CloseClipboard();
 			return;
@@ -466,8 +518,10 @@ static void wf_cliprdr_process_cb_format_list_event(wfContext *wfc, RDP_CB_FORMA
 
 	clear_format_map(cliprdr);
 
-	if ((cliprdr->capabilities & CAPS_USE_LONG_FORMAT_NAMES) != 0) {
-		while (left_size >= 6) {
+	if ((cliprdr->capabilities & CB_USE_LONG_FORMAT_NAMES) != 0)
+	{
+		while (left_size >= 6)
+		{
 			formatMapping *map;
 			BYTE* tmp;
 			int name_len;
@@ -475,19 +529,24 @@ static void wf_cliprdr_process_cb_format_list_event(wfContext *wfc, RDP_CB_FORMA
 			map = &cliprdr->format_mappings[i++];
 
 			Read_UINT32(p, map->remote_format_id);
+			map->name = NULL;
 
 			/* get name_len */
-			for (tmp = p, name_len = 0; tmp + 1 < end_mark; tmp += 2, name_len += 2) {
+			for (tmp = p, name_len = 0; tmp + 1 < end_mark; tmp += 2, name_len += 2)
+			{
 				if (*((unsigned short*) tmp) == 0)
 					break;
 			}
 
-			if (name_len > 0) {
+			if (name_len > 0)
+			{
 				map->name = malloc(name_len + 2);
 				memcpy(map->name, p, name_len + 2);
 
 				map->local_format_id = RegisterClipboardFormatW((LPCWSTR)map->name);
-			} else {
+			}
+			else
+			{
 				map->local_format_id = map->remote_format_id;
 			}
 
@@ -498,43 +557,58 @@ static void wf_cliprdr_process_cb_format_list_event(wfContext *wfc, RDP_CB_FORMA
 
 			map_ensure_capacity(cliprdr);
 		}
-	} else {
+	}
+	else
+	{
 		int k;
 
-		for (k = 0; k < event->raw_format_data_size / 36; k++) {
+		for (k = 0; k < event->raw_format_data_size / 36; k++)
+		{
 			formatMapping *map;
 			int name_len;
 
 			map = &cliprdr->format_mappings[i++];
 
 			Read_UINT32(p, map->remote_format_id);
+			map->name = NULL;
 
-			if (event->raw_format_unicode) {
+			if (event->raw_format_unicode)
+			{
 				/* get name_len, in bytes, if the file name is truncated, no terminated null will be included. */
-				for (name_len = 0; name_len < 32; name_len += 2) {
+				for (name_len = 0; name_len < 32; name_len += 2)
+				{
 					if (*((unsigned short*) (p + name_len)) == 0)
 						break;
 				}
 
-				if (name_len > 0) {
+				if (name_len > 0)
+				{
 					map->name = calloc(1, name_len + 2);
 					memcpy(map->name, p, name_len);
 					map->local_format_id = RegisterClipboardFormatW((LPCWSTR)map->name);
-				} else {
+				}
+				else
+				{
 					map->local_format_id = map->remote_format_id;
 				}
-			} else {
+			}
+			else
+			{
 				/* get name_len, in bytes, if the file name is truncated, no terminated null will be included. */
-				for (name_len = 0; name_len < 32; name_len += 1) {
+				for (name_len = 0; name_len < 32; name_len += 1)
+				{
 					if (*((unsigned char*) (p + name_len)) == 0)
 						break;
 				}
 
-				if (name_len > 0) {
+				if (name_len > 0)
+				{
 					map->name = calloc(1, name_len + 1);
 					memcpy(map->name, p, name_len);
 					map->local_format_id = RegisterClipboardFormatA((LPCSTR)map->name);
-				} else {
+				}
+				else
+				{
 					map->local_format_id = map->remote_format_id;
 				}
 			}
@@ -545,18 +619,21 @@ static void wf_cliprdr_process_cb_format_list_event(wfContext *wfc, RDP_CB_FORMA
 		}
 	}
 
-	if (!OpenClipboard(cliprdr->hwndClipboard)) {
+	if (!OpenClipboard(cliprdr->hwndClipboard))
+	{
 		DEBUG_CLIPRDR("OpenClipboard failed with 0x%x", GetLastError());
 		return;
 	}
 
-	if (!EmptyClipboard()) {
+	if (!EmptyClipboard())
+	{
 		DEBUG_CLIPRDR("EmptyClipboard failed with 0x%x", GetLastError());
 		CloseClipboard();
 		return;
 	}
 
-	for (i = 0; i < cliprdr->map_size; i++) {
+	for (i = 0; i < cliprdr->map_size; i++)
+	{
 		SetClipboardData(cliprdr->format_mappings[i].local_format_id, NULL);
 	}
 
@@ -580,7 +657,8 @@ static void wf_cliprdr_process_cb_data_response_event(wfContext *wfc, RDP_CB_DAT
 
 void wf_process_cliprdr_event(wfContext *wfc, wMessage *event)
 {
-	switch (GetMessageType(event->id)) {
+	switch (GetMessageType(event->id))
+	{
 		case CliprdrChannel_ClipCaps:
 			wf_cliprdr_process_cb_clip_caps_event(wfc, (RDP_CB_CLIP_CAPS *)event);
 			break;

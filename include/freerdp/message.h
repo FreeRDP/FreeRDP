@@ -263,10 +263,10 @@
 #define CliprdrChannel_ClipCaps					5
 
 #define FREERDP_CLIPRDR_CHANNEL_MONITOR_READY			MakeMessageId(CliprdrChannel, MonitorReady)
-#define FREERDP_CLIPRDR_CHANNEL_FORMAT_LIST				MakeMessageId(CliprdrChannel, FormatList)
+#define FREERDP_CLIPRDR_CHANNEL_FORMAT_LIST			MakeMessageId(CliprdrChannel, FormatList)
 #define FREERDP_CLIPRDR_CHANNEL_DATA_REQUEST			MakeMessageId(CliprdrChannel, DataRequest)
 #define FREERDP_CLIPRDR_CHANNEL_DATA_RESPONSE			MakeMessageId(CliprdrChannel, DataResponse)
-#define FREERDP_CLIPRDR_CHANNEL_CLIP_CAPS				MakeMessageId(CliprdrChannel, ClipCaps)
+#define FREERDP_CLIPRDR_CHANNEL_CLIP_CAPS			MakeMessageId(CliprdrChannel, ClipCaps)
 
 /**
  * Multimedia Redirection Channel

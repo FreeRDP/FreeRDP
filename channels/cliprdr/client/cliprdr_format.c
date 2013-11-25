@@ -213,120 +213,223 @@ void cliprdr_process_long_format_names(cliprdrPlugin* cliprdr, wStream* s, UINT3
 
 void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
-	int i;
-	UINT32 format;
-	BOOL supported;
-	CLIPRDR_FORMAT_NAME* format_name;
-	RDP_CB_FORMAT_LIST_EVENT* cb_event;
+	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 
-	cb_event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
-			CliprdrChannel_FormatList, NULL, NULL);
-
-	if (dataLen > 0)
+	if (context->custom)
 	{
-		cb_event->raw_format_data = (BYTE*) malloc(dataLen);
-		memcpy(cb_event->raw_format_data, Stream_Pointer(s), dataLen);
-		cb_event->raw_format_data_size = dataLen;
-		cb_event->raw_format_unicode = (msgFlags & CB_ASCII_NAMES) ? FALSE : TRUE;
-	}
+		int index;
+		int formatNameLength;
+		CLIPRDR_FORMAT* formats;
+		CLIPRDR_FORMAT_LIST formatList;
 
-	if (cliprdr->use_long_format_names)
-		cliprdr_process_long_format_names(cliprdr, s, dataLen, msgFlags);
-	else
-		cliprdr_process_short_format_names(cliprdr, s, dataLen, msgFlags);
+		formatList.msgType = CB_FORMAT_LIST;
+		formatList.msgFlags = msgFlags;
+		formatList.dataLen = dataLen;
 
-	if (cliprdr->num_format_names > 0)
-		cb_event->formats = (UINT32*) malloc(sizeof(UINT32) * cliprdr->num_format_names);
+		formatList.cFormats = 0;
 
-	cb_event->num_formats = 0;
-
-	for (i = 0; i < cliprdr->num_format_names; i++)
-	{
-		supported = TRUE;
-		format_name = &cliprdr->format_names[i];
-		format = format_name->id;
-
-		switch (format)
+		while (dataLen)
 		{
-			case CB_FORMAT_TEXT:
-			case CB_FORMAT_DIB:
-			case CB_FORMAT_UNICODETEXT:
-				break;
+			Stream_Seek(s, 4); /* formatId */
+			dataLen -= 4;
 
-			default:
-
-				if (format_name->length > 0)
-				{
-					DEBUG_CLIPRDR("format: %s", format_name->name);
-
-					if (strcmp(format_name->name, "HTML Format") == 0)
-					{
-						format = CB_FORMAT_HTML;
-						break;
-					}
-					if (strcmp(format_name->name, "PNG") == 0)
-					{
-						format = CB_FORMAT_PNG;
-						break;
-					}
-					if (strcmp(format_name->name, "JFIF") == 0)
-					{
-						format = CB_FORMAT_JPEG;
-						break;
-					}
-					if (strcmp(format_name->name, "GIF") == 0)
-					{
-						format = CB_FORMAT_GIF;
-						break;
-					}
-				}
-				else
-				{
-					supported = FALSE;
-				}
-				
-				break;
+			formatNameLength = _wcslen((WCHAR*) Stream_Pointer(s));
+			Stream_Seek(s, (formatNameLength + 1) * 2);
+			dataLen -= ((formatNameLength + 1) * 2);
+			formatList.cFormats++;
 		}
 
-		if (supported)
-			cb_event->formats[cb_event->num_formats++] = format;
+		index = 0;
+		dataLen = formatList.dataLen;
+		Stream_Rewind(s, dataLen);
 
-		if (format_name->length > 0)
-			free(format_name->name);
+		formats = (CLIPRDR_FORMAT*) malloc(sizeof(CLIPRDR_FORMAT) * formatList.cFormats);
+		formatList.formats = formats;
+
+		while (dataLen)
+		{
+			Stream_Read_UINT32(s, formats[index].formatId); /* formatId */
+			dataLen -= 4;
+
+			formats[index].formatName = NULL;
+			formatNameLength = _wcslen((WCHAR*) Stream_Pointer(s));
+
+			if (formatNameLength)
+			{
+				formatNameLength = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s),
+					-1, &(formats[index].formatName), 0, NULL, NULL);
+
+				Stream_Seek(s, formatNameLength * 2);
+				dataLen -= (formatNameLength * 2);
+			}
+			else
+			{
+				Stream_Seek(s, 2);
+				dataLen -= 2;
+			}
+
+			index++;
+		}
+
+		if (context->ServerFormatList)
+			context->ServerFormatList(context, &formatList);
+
+		for (index = 0; index < formatList.cFormats; index++)
+			free(formats[index].formatName);
+
+		free(formats);
 	}
+	else
+	{
+		int i;
+		UINT32 format;
+		BOOL supported;
+		CLIPRDR_FORMAT_NAME* format_name;
+		RDP_CB_FORMAT_LIST_EVENT* cb_event;
 
-	free(cliprdr->format_names);
-	cliprdr->format_names = NULL;
+		cb_event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+				CliprdrChannel_FormatList, NULL, NULL);
 
-	cliprdr->num_format_names = 0;
+		if (dataLen > 0)
+		{
+			cb_event->raw_format_data = (BYTE*) malloc(dataLen);
+			memcpy(cb_event->raw_format_data, Stream_Pointer(s), dataLen);
+			cb_event->raw_format_data_size = dataLen;
+			cb_event->raw_format_unicode = (msgFlags & CB_ASCII_NAMES) ? FALSE : TRUE;
+		}
 
-	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
-	cliprdr_send_format_list_response(cliprdr);
+		if (cliprdr->use_long_format_names)
+			cliprdr_process_long_format_names(cliprdr, s, dataLen, msgFlags);
+		else
+			cliprdr_process_short_format_names(cliprdr, s, dataLen, msgFlags);
+
+		if (cliprdr->num_format_names > 0)
+			cb_event->formats = (UINT32*) malloc(sizeof(UINT32) * cliprdr->num_format_names);
+
+		cb_event->num_formats = 0;
+
+		for (i = 0; i < cliprdr->num_format_names; i++)
+		{
+			supported = TRUE;
+			format_name = &cliprdr->format_names[i];
+			format = format_name->id;
+
+			switch (format)
+			{
+				case CB_FORMAT_TEXT:
+				case CB_FORMAT_DIB:
+				case CB_FORMAT_UNICODETEXT:
+					break;
+
+				default:
+
+					if (format_name->length > 0)
+					{
+						DEBUG_CLIPRDR("format: %s", format_name->name);
+
+						if (strcmp(format_name->name, "HTML Format") == 0)
+						{
+							format = CB_FORMAT_HTML;
+							break;
+						}
+						if (strcmp(format_name->name, "PNG") == 0)
+						{
+							format = CB_FORMAT_PNG;
+							break;
+						}
+						if (strcmp(format_name->name, "JFIF") == 0)
+						{
+							format = CB_FORMAT_JPEG;
+							break;
+						}
+						if (strcmp(format_name->name, "GIF") == 0)
+						{
+							format = CB_FORMAT_GIF;
+							break;
+						}
+					}
+					else
+					{
+						supported = FALSE;
+					}
+
+					break;
+			}
+
+			if (supported)
+				cb_event->formats[cb_event->num_formats++] = format;
+
+			if (format_name->length > 0)
+				free(format_name->name);
+		}
+
+		free(cliprdr->format_names);
+		cliprdr->format_names = NULL;
+
+		cliprdr->num_format_names = 0;
+
+		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+		cliprdr_send_format_list_response(cliprdr);
+	}
 }
 
 void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
-	/* http://msdn.microsoft.com/en-us/library/hh872154.aspx */
-	wMessage* event;
+	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 
-	if ((msgFlags & CB_RESPONSE_FAIL) != 0)
+	/* http://msdn.microsoft.com/en-us/library/hh872154.aspx */
+
+	if (context->custom)
 	{
-		/* In case of an error the clipboard will not be synchronized with the server.
-		 * Post this event to restart format negociation and data transfer. */
-		event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_MonitorReady, NULL, NULL);
-		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, event);
+		CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse;
+
+		formatListResponse.msgType = CB_FORMAT_LIST_RESPONSE;
+		formatListResponse.msgFlags = msgFlags;
+		formatListResponse.dataLen = dataLen;
+
+		if (context->ServerFormatListResponse)
+			context->ServerFormatListResponse(context, &formatListResponse);
+	}
+	else
+	{
+		if ((msgFlags & CB_RESPONSE_FAIL) != 0)
+		{
+			/* In case of an error the clipboard will not be synchronized with the server.
+			 * Post this event to restart format negotiation and data transfer. */
+
+			wMessage* event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_MonitorReady, NULL, NULL);
+			svc_plugin_send_event((rdpSvcPlugin*) cliprdr, event);
+		}
 	}
 }
 
 void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
-	RDP_CB_DATA_REQUEST_EVENT* cb_event;
+	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 
-	cb_event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
-			CliprdrChannel_DataRequest, NULL, NULL);
+	if (context->custom)
+	{
+		CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest;
 
-	Stream_Read_UINT32(s, cb_event->format);
-	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+		formatDataRequest.msgType = CB_FORMAT_DATA_REQUEST;
+		formatDataRequest.msgFlags = msgFlags;
+		formatDataRequest.dataLen = dataLen;
+
+		Stream_Read_UINT32(s, formatDataRequest.requestedFormatId); /* requestedFormatId (4 bytes) */
+
+		if (context->ServerFormatDataRequest)
+			context->ServerFormatDataRequest(context, &formatDataRequest);
+	}
+	else
+	{
+		RDP_CB_DATA_REQUEST_EVENT* cb_event;
+
+		cb_event = (RDP_CB_DATA_REQUEST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+				CliprdrChannel_DataRequest, NULL, NULL);
+
+		Stream_Read_UINT32(s, cb_event->format);
+		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+	}
 }
 
 void cliprdr_process_format_data_response_event(cliprdrPlugin* cliprdr, RDP_CB_DATA_RESPONSE_EVENT* cb_event)
@@ -361,17 +464,42 @@ void cliprdr_process_format_data_request_event(cliprdrPlugin* cliprdr, RDP_CB_DA
 
 void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
-	RDP_CB_DATA_RESPONSE_EVENT* cb_event;
-
-	cb_event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(CliprdrChannel_Class,
-			CliprdrChannel_DataResponse, NULL, NULL);
-
-	if (dataLen > 0)
+	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
+	
+	if (context->custom)
 	{
-		cb_event->size = dataLen;
-		cb_event->data = (BYTE*) malloc(dataLen);
-		CopyMemory(cb_event->data, Stream_Pointer(s), dataLen);
+		CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse;
+		
+		formatDataResponse.msgType = CB_FORMAT_DATA_RESPONSE;
+		formatDataResponse.msgFlags = msgFlags;
+		formatDataResponse.dataLen = dataLen;
+		formatDataResponse.requestedFormatData = NULL;
+		
+		if (dataLen)
+		{
+			formatDataResponse.requestedFormatData = (BYTE*) malloc(dataLen);
+			Stream_Read(s, formatDataResponse.requestedFormatData, dataLen);
+		}
+		
+		if (context->ClientFormatDataResponse)
+			context->ClientFormatDataResponse(context, &formatDataResponse);
+		
+		free(formatDataResponse.requestedFormatData);
 	}
+	else
+	{
+		RDP_CB_DATA_RESPONSE_EVENT* cb_event;
 
-	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+		cb_event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+				CliprdrChannel_DataResponse, NULL, NULL);
+	
+		if (dataLen > 0)
+		{
+			cb_event->size = dataLen;
+			cb_event->data = (BYTE*) malloc(dataLen);
+			CopyMemory(cb_event->data, Stream_Pointer(s), dataLen);
+		}
+
+		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+	}
 }
