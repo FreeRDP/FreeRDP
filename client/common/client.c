@@ -133,7 +133,7 @@ int freerdp_client_settings_parse_connection_file(rdpSettings* settings, const c
 	return 0;
 }
 
-int freerdp_client_settings_parse_connection_file_buffer(rdpSettings* settings, BYTE* buffer, size_t size)
+int freerdp_client_settings_parse_connection_file_buffer(rdpSettings* settings, const BYTE* buffer, size_t size)
 {
 	rdpFile* file;
 	int status = -1;
@@ -151,7 +151,7 @@ int freerdp_client_settings_parse_connection_file_buffer(rdpSettings* settings, 
 	return status;
 }
 
-int freerdp_client_settings_write_connection_file(rdpSettings* settings, const char* filename, BOOL unicode)
+int freerdp_client_settings_write_connection_file(const rdpSettings* settings, const char* filename, BOOL unicode)
 {
 	rdpFile* file;
 	int status = -1;
