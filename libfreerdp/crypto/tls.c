@@ -596,14 +596,33 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		 */
 
 		bio = BIO_new(BIO_s_mem());
+		
+		if (!bio)
+		{
+			fprintf(stderr, "tls_verify_certificate: BIO_new() failure\n");
+			return FALSE;
+		}
 
 		status = PEM_write_bio_X509(bio, cert->px509);
 
+		if (status < 0)
+		{
+			fprintf(stderr, "tls_verify_certificate: PEM_write_bio_X509 failure: %d\n", status);
+			return FALSE;
+		}
+		
 		offset = 0;
 		length = 2048;
 		pemCert = (BYTE*) malloc(length + 1);
 
 		status = BIO_read(bio, pemCert, length);
+		
+		if (status < 0)
+		{
+			fprintf(stderr, "tls_verify_certificate: failed to read certificate\n");
+			return FALSE;
+		}
+		
 		offset += status;
 
 		while (offset >= length)
@@ -619,17 +638,27 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 			offset += status;
 		}
 
+		if (status < 0)
+		{
+			fprintf(stderr, "tls_verify_certificate: failed to read certificate\n");
+			return FALSE;
+		}
+		
 		length = offset;
 		pemCert[length] = '\0';
 
 		status = -1;
-
+		
 		if (instance->VerifyX509Certificate)
 		{
 			status = instance->VerifyX509Certificate(instance, pemCert, length, 0);
 		}
+		
+		fprintf(stderr, "VerifyX509Certificate: (length = %d) status: %d\n%s\n",
+			length, status, pemCert);
 
 		free(pemCert);
+		BIO_free(bio);
 
 		return (status < 0) ? FALSE : TRUE;
 	}
