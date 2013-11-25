@@ -395,7 +395,7 @@ void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 		if ((msgFlags & CB_RESPONSE_FAIL) != 0)
 		{
 			/* In case of an error the clipboard will not be synchronized with the server.
-			 * Post this event to restart format negociation and data transfer. */
+			 * Post this event to restart format negotiation and data transfer. */
 
 			wMessage* event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_MonitorReady, NULL, NULL);
 			svc_plugin_send_event((rdpSvcPlugin*) cliprdr, event);

@@ -40,7 +40,6 @@
 #include <freerdp/event.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/version.h>
-#include <freerdp/gdi/gdi.h>
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
 
@@ -447,8 +446,6 @@ void freerdp_context_free(freerdp* instance)
 
 	graphics_free(instance->context->graphics);
 	instance->context->graphics = NULL;
-
-	gdi_free(instance);
 
 	PubSub_Free(instance->context->pubSub);
 

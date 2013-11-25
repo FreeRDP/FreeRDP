@@ -435,6 +435,7 @@ int cliprdr_client_format_data_request(CliprdrClientContext* context, CLIPRDR_FO
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
 
 	formatDataRequest->msgType = CB_FORMAT_DATA_REQUEST;
+	formatDataRequest->msgFlags = 0;
 	formatDataRequest->dataLen = 4;
 
 	s = cliprdr_packet_new(formatDataRequest->msgType, formatDataRequest->msgFlags, formatDataRequest->dataLen);
