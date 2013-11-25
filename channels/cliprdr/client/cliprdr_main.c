@@ -265,7 +265,7 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 
 	DEBUG_CLIPRDR("msgType: %s (%d), msgFlags: %d dataLen: %d",
 		CB_MSG_TYPE_STRINGS[msgType], msgType, msgFlags, dataLen);
-
+	
 #ifdef WITH_DEBUG_CLIPRDR
 	winpr_HexDump(Stream_Buffer(s), dataLen + 8);
 #endif
