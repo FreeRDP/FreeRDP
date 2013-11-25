@@ -466,7 +466,6 @@ void wf_gdi_multi_opaque_rect(wfContext* wfc, MULTI_OPAQUE_RECT_ORDER* multi_opa
 		rect.bottom = rectangle->top + rectangle->height;
 		brush = CreateSolidBrush(brush_color);
 
-		brush = CreateSolidBrush(brush_color);
 		FillRect(wfc->drawing->hdc, &rect, brush);
 
 		if (wfc->drawing == wfc->primary)
