@@ -22,6 +22,8 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/codec/color.h>
+
 struct _RDP6_RLE_SEGMENT
 {
 	/**
@@ -41,20 +43,24 @@ struct _RDP6_RLE_SEGMENTS
 };
 typedef struct _RDP6_RLE_SEGMENTS RDP6_RLE_SEGMENTS;
 
+#define PLANAR_FORMAT_HEADER_CS		(1 << 3)
+#define PLANAR_FORMAT_HEADER_RLE	(1 << 4)
+#define PLANAR_FORMAT_HEADER_NA		(1 << 5)
+
 struct _RDP6_BITMAP_STREAM
 {
 	/**
 	 * formatHeader:
-	 * [0-2]: CCL
-	 *  [3] : CS
-	 *  [4] : RLE
-	 *  [5] : NA
+	 * [0-2]: Color Loss Level (CLL)
+	 *  [3] : Chroma Subsampling (CS)
+	 *  [4] : Run Length Encoding (RLE)
+	 *  [5] : No Alpha (NA)
 	 * [6-7]: Reserved
 	 */
 	BYTE formatHeader;
 };
 typedef struct _RDP6_BITMAP_STREAM RDP6_BITMAP_STREAM;
 
-int freerdp_split_color_planes(BYTE* data, int width, int height, int scanline, BYTE* planes[4]);
+int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[4]);
 
 #endif /* FREERDP_CODEC_PLANAR_PRIVATE_H */

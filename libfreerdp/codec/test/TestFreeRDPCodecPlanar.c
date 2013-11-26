@@ -1,6 +1,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/codec/bitmap.h>
 
 /**
  * [MS-RDPEGDI] Test Bitmap 32x32 (16bpp)
@@ -156,16 +157,11 @@ const BYTE TEST_RLE_COMPRESSED_BITMAP[220] =
 	"\xC3\x80\x61\x00\x00\x00\x00\x00\xCC\x89\x52\x03\x6E\xFF\xFF\x02"
 	"\xCB\x18\xC6\x84\x08\x42\x08\x42\x08\x42\xFF\xFF";
 
-#include "../planar.h"
-
 int TestFreeRDPCodecPlanar(int argc, char* argv[])
 {
-	BYTE* planes[4];
+	int dstSize;
+	UINT32 format;
 	HCLRCONV clrconv;
-	BYTE planeA[1024];
-	BYTE planeR[1024];
-	BYTE planeG[1024];
-	BYTE planeB[1024];
 	BYTE* srcBitmap32;
 	BYTE* srcBitmap16;
 
@@ -174,12 +170,9 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	srcBitmap32 = freerdp_image_convert(srcBitmap16, NULL, 32, 32, 16, 32, clrconv);
 
-	planes[0] = planeA;
-	planes[1] = planeR;
-	planes[2] = planeG;
-	planes[3] = planeB;
+	format = FREERDP_PIXEL_FORMAT(32, FREERDP_PIXEL_FORMAT_TYPE_ARGB, FREERDP_PIXEL_FLIP_NONE);
 
-	freerdp_split_color_planes(srcBitmap32, 32, 32, 32 * 4, planes);
+	freerdp_bitmap_compress_planar(srcBitmap32, format, 32, 32, 32 * 4, NULL, &dstSize);
 
 	freerdp_clrconv_free(clrconv);
 	free(srcBitmap32);

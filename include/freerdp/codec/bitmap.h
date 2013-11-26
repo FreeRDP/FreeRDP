@@ -23,6 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <freerdp/codec/color.h>
+
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
@@ -30,5 +32,8 @@ FREERDP_API BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int 
 
 FREERDP_API int freerdp_bitmap_compress(char* in_data, int width, int height,
 		wStream* s, int bpp, int byte_limit, int start_line, wStream* temp_s, int e);
+
+FREERDP_API BYTE* freerdp_bitmap_compress_planar(BYTE* data, UINT32 format, int width, int height,
+		int scanline, BYTE* dstData, int* dstSize);
 
 #endif /* FREERDP_CODEC_BITMAP_H */
