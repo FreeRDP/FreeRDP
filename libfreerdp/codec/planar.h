@@ -24,6 +24,12 @@
 
 #include <freerdp/codec/color.h>
 
+#define PLANAR_CONTROL_BYTE(_nRunLength, _cRawBytes) \
+	(_nRunLength & 0x0F) | ((_cRawBytes & 0x0F) << 4)
+
+#define PLANAR_CONTROL_BYTE_RUN_LENGTH(_controlByte)	(_controlByte & 0x0F)
+#define PLANAR_CONTROL_BYTE_RAW_BYTES(_controlByte)	((_controlByte >> 4) & 0x0F)
+
 struct _RDP6_RLE_SEGMENT
 {
 	/**
@@ -61,8 +67,9 @@ struct _RDP6_BITMAP_STREAM
 };
 typedef struct _RDP6_BITMAP_STREAM RDP6_BITMAP_STREAM;
 
-int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[4]);
-int freerdp_bitmap_compress_planar_rle_plane_scanline(BYTE* plane, int size);
-int freerdp_bitmap_planar_delta_encode_scanlines(BYTE* plane, int width, int height);
+int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[5]);
+BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* plane, int width, int height, BYTE* outPlane);
+BYTE* freerdp_bitmap_planar_delta_encode_scanlines(BYTE* inPlane, int width, int height, BYTE* outPlane);
+int freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[5], int width, int height, BYTE* outPlanes[5]);
 
 #endif /* FREERDP_CODEC_PLANAR_PRIVATE_H */
