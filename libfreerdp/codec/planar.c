@@ -150,6 +150,7 @@ int freerdp_bitmap_compress_planar_rle_plane_scanline(BYTE* plane, int size)
 int freerdp_bitmap_planar_delta_encode_scanlines(BYTE* plane, int width, int height)
 {
 	char s2c;
+	BYTE u2c;
 	int delta;
 	int i, j, k;
 
@@ -225,6 +226,72 @@ int freerdp_bitmap_planar_delta_encode_scanlines(BYTE* plane, int width, int hei
 				printf("%4d%s", s2c,
 					(j + 1 == width) ? " }\n" : ", ");
 			}
+
+			k++;
+		}
+	}
+
+	printf("\n");
+
+	k = 0;
+
+	for (i = 0; i < height; i++)
+	{
+		printf("{ ");
+
+		for (j = 0; j < width; j++)
+		{
+			if (i < 1)
+			{
+				delta = plane[j];
+
+				s2c = (delta >= 0) ? (char) delta : (char) (~((BYTE) (delta * -1)) + 1);
+			}
+			else
+			{
+				delta = plane[(i * width) + j] - plane[((i - 1) * width) + j];
+
+				s2c = (delta >= 0) ? (char) delta : (char) (~((BYTE) (delta * -1)) + 1);
+
+				s2c = (s2c >= 0) ? (s2c << 1) : (char) (((~((BYTE) s2c) + 1) << 1) - 1);
+			}
+
+			printf("%4d%s", s2c,
+				(j + 1 == width) ? " }\n" : ", ");
+
+			k++;
+		}
+	}
+
+	printf("\n");
+
+	k = 0;
+
+	for (i = 0; i < height; i++)
+	{
+		printf("{ ");
+
+		for (j = 0; j < width; j++)
+		{
+			if (i < 1)
+			{
+				delta = plane[j];
+
+				s2c = (delta >= 0) ? (char) delta : (char) (~((BYTE) (delta * -1)) + 1);
+			}
+			else
+			{
+				delta = plane[(i * width) + j] - plane[((i - 1) * width) + j];
+
+				s2c = (delta >= 0) ? (char) delta : (char) (~((BYTE) (delta * -1)) + 1);
+
+				s2c = (s2c >= 0) ? (s2c << 1) : (char) (((~((BYTE) s2c) + 1) << 1) - 1);
+			}
+
+			u2c = (BYTE) s2c;
+
+			printf("0x%02X%s", u2c,
+				(j + 1 == width) ? " }\n" : ", ");
 
 			k++;
 		}
