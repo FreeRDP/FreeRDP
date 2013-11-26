@@ -31,45 +31,42 @@
 int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[4])
 {
 	int bpp;
-	BYTE* srcp;
 	int i, j, k;
 
 	k = 0;
-	srcp = data;
-
 	bpp = FREERDP_PIXEL_FORMAT_BPP(format);
 
 	if (bpp == 32)
 	{
-		UINT32 pixel;
+		UINT32* pixel;
 
-		for (i = 0; i < height; i++)
+		for (i = height - 1; i >= 0; i--)
 		{
+			pixel = (UINT32*) &data[scanline * i];
+
 			for (j = 0; j < width; j++)
 			{
-				pixel = *((UINT32*) srcp);
-				GetARGB32(planes[0][k], planes[0][k], planes[2][k], planes[3][k], pixel);
+				GetARGB32(planes[0][k], planes[0][k], planes[2][k], planes[3][k], *pixel);
+				pixel++;
 				k++;
 			}
-
-			srcp += scanline;
 		}
 	}
 	else if (bpp == 24)
 	{
-		UINT32 pixel;
+		UINT32* pixel;
 
-		for (i = 0; i < height; i++)
+		for (i = height - 1; i >= 0; i--)
 		{
+			pixel = (UINT32*) &data[scanline * i];
+
 			for (j = 0; j < width; j++)
 			{
-				pixel = *((UINT32*) srcp);
-				GetRGB32(planes[0][k], planes[2][k], planes[3][k], pixel);
-				planes[0][k] = 0; /* A */
+				GetRGB32(planes[1][k], planes[2][k], planes[3][k], *pixel);
+				planes[0][k] = 0xFF; /* A */
+				pixel++;
 				k++;
 			}
-
-			srcp += scanline;
 		}
 	}
 
@@ -88,7 +85,7 @@ BYTE* freerdp_bitmap_compress_planar(BYTE* data, UINT32 format, int width, int h
 	FormatHeader = 0;
 	FormatHeader |= PLANAR_FORMAT_HEADER_NA;
 
-	planeSize = width;
+	planeSize = width * height;
 	planesBuffer = malloc(planeSize * 4);
 	planes[0] = &planesBuffer[planeSize * 0];
 	planes[1] = &planesBuffer[planeSize * 1];
