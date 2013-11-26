@@ -73,6 +73,80 @@ int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height,
 	return 0;
 }
 
+int freerdp_bitmap_compress_planar_rle_plane_scanline(BYTE* plane, int size)
+{
+	int i, j;
+	BYTE symbol;
+	int nRunLength;
+	int cRawBytes;
+	BYTE* rawValues;
+	int nSequenceLength;
+
+	cRawBytes = 0;
+	nRunLength = 0;
+	rawValues = plane;
+
+	nSequenceLength = 0;
+
+	for (i = 0; i <= size; i++)
+	{
+		if ((!nSequenceLength) && (i != size))
+		{
+			symbol = plane[i];
+			nSequenceLength = 1;
+		}
+		else
+		{
+			if ((i != size) && (plane[i] == symbol))
+			{
+				nSequenceLength++;
+			}
+			else
+			{
+				if (nSequenceLength > 3)
+				{
+					cRawBytes += 1;
+					nRunLength = nSequenceLength - 1;
+
+					printf("RAW[");
+
+					for (j = 0; j < cRawBytes; j++)
+						printf("%c", rawValues[j]);
+
+					printf("] RUN[%d]\n", nRunLength);
+
+					rawValues = &plane[i];
+					cRawBytes = 0;
+				}
+				else
+				{
+					cRawBytes += nSequenceLength;
+
+					if (i == size)
+					{
+						nRunLength = 0;
+
+						printf("RAW[");
+
+						for (j = 0; j < cRawBytes; j++)
+							printf("%c", rawValues[j]);
+
+						printf("] RUN[%d]\n", nRunLength);
+					}
+				}
+
+				if (i != size)
+				{
+					symbol = plane[i];
+					nSequenceLength = 1;
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
 BYTE* freerdp_bitmap_compress_planar(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* dstData, int* dstSize)
 {
 	int size;

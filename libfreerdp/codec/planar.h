@@ -62,5 +62,6 @@ struct _RDP6_BITMAP_STREAM
 typedef struct _RDP6_BITMAP_STREAM RDP6_BITMAP_STREAM;
 
 int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[4]);
+int freerdp_bitmap_compress_planar_rle_plane_scanline(BYTE* plane, int size);
 
 #endif /* FREERDP_CODEC_PLANAR_PRIVATE_H */
