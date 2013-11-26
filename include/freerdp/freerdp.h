@@ -61,7 +61,7 @@ typedef void (*pPostDisconnect)(freerdp* instance);
 typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
 typedef BOOL (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
 typedef BOOL (*pVerifyChangedCertificate)(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint);
-typedef int (*pVerifyX509Certificate)(freerdp* instance, BYTE* data, int length, DWORD flags);
+typedef int (*pVerifyX509Certificate)(freerdp* instance, BYTE* data, int length, const char* hostname, int port, DWORD flags);
 
 typedef int (*pLogonErrorInfo)(freerdp* instance, UINT32 data, UINT32 type);
 

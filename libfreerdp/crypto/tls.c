@@ -111,6 +111,7 @@ BOOL tls_connect(rdpTls* tls)
 	long options = 0;
 	int connection_status;
 	char *hostname;
+	int port;
 
 	tls->ctx = SSL_CTX_new(TLSv1_client_method());
 
@@ -214,11 +215,17 @@ BOOL tls_connect(rdpTls* tls)
 	}
 
 	if (tls->settings->GatewayEnabled)
+	{
 		hostname = tls->settings->GatewayHostname;
+		port = tls->settings->GatewayPort;
+	}
 	else
+	{
 		hostname = tls->settings->ServerHostname;
+		port = tls->settings->ServerPort;
+	}
 
-	if (!tls_verify_certificate(tls, cert, hostname))
+	if (!tls_verify_certificate(tls, cert, hostname, port))
 	{
 		fprintf(stderr, "tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
@@ -568,7 +575,7 @@ BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname)
 	return FALSE;
 }
 
-BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
+BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int port)
 {
 	int match;
 	int index;
@@ -651,7 +658,7 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 		
 		if (instance->VerifyX509Certificate)
 		{
-			status = instance->VerifyX509Certificate(instance, pemCert, length, 0);
+			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, 0);
 		}
 		
 		fprintf(stderr, "VerifyX509Certificate: (length = %d) status: %d\n%s\n",
