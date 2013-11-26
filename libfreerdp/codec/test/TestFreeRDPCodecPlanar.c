@@ -160,6 +160,55 @@ const BYTE TEST_RLE_COMPRESSED_BITMAP[220] =
 const BYTE TEST_RLE_SCANLINE_UNCOMPRESSED[12] =
 	"AAAABBCCCCCD";
 
+/**
+ * [MS-RDPEGDI] 3.1.9.2.1 Encoding Run-Length Sequences
+ */
+
+/* Scanline Absolute Values */
+
+const BYTE TEST_RDP6_SCANLINES_ABSOLUTE[3][6] =
+{
+	{  255,  255,  255,  255,  254,  253 },
+	{  254,  192,  132,   96,   75,   25 },
+	{  253,  140,   62,   14,  135,  193 }
+};
+
+/* Scanline Delta Values */
+
+const int TEST_RDP6_SCANLINES_DELTA[3][6] =
+{
+	{  255, 255,  255,  255,  254,  253 },
+	{   -1, -63, -123, -159, -179, -228 },
+	{   -1, -52,  -70,  -82,   60,  168 }
+};
+
+/* Scanline Delta Values (1-byte two's complement) */
+
+const char TEST_RDP6_SCANLINES_DELTA_2C[3][6] =
+{
+	{   -1,  -1,   -1,   -1,   -2,   -3 },
+	{   -1, -63, -123,   97,   77,   28 },
+	{   -1, -52,  -70,  -82,   60,  -88 }
+};
+
+/* Scanline Delta Values (1-byte two's complement, encoded) */
+
+const char TEST_RDP6_SCANLINES_DELTA_2C_ENCODED[3][6] =
+{
+	{   -1,  -1,   -1,   -1,   -2,   -3 },
+	{   -1, 125,   11,  -62, -102,   56 },
+	{    1, 103, -117,  -93,  120,  -81 }
+};
+
+/* Scanline Delta Values (1-byte two's complement, encoded, unsigned) */
+
+const BYTE TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED[3][6] =
+{
+	{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFD },
+	{ 0x01, 0x7D, 0xF5, 0xC2, 0x9A, 0x38 },
+	{ 0x01, 0x67, 0x8B, 0xA3, 0x78, 0xAF }
+};
+
 #include "../planar.h"
 
 int TestFreeRDPCodecPlanar(int argc, char* argv[])
@@ -180,6 +229,8 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	freerdp_bitmap_compress_planar(srcBitmap32, format, 32, 32, 32 * 4, NULL, &dstSize);
 
 	freerdp_bitmap_compress_planar_rle_plane_scanline((BYTE*) TEST_RLE_SCANLINE_UNCOMPRESSED, 12);
+
+	freerdp_bitmap_planar_delta_encode_scanlines((BYTE*) TEST_RDP6_SCANLINES_ABSOLUTE, 6, 3);
 
 	freerdp_clrconv_free(clrconv);
 	free(srcBitmap32);
