@@ -139,8 +139,6 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 
 				while (cRawBytes > 15)
 				{
-					printf("handling cRawBytes > 15\n");
-
 					nControlBytes = 1;
 					outSegmentSize = 15 + nControlBytes;
 
@@ -281,14 +279,26 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 
 				if (j == width)
 				{
-					printf("end of scanline: cRawBytes: %d nRunLength: %d\n", cRawBytes, nRunLength);
-
 					nRunLength = 0;
 
-					if (cRawBytes > 15)
+					while (cRawBytes > 15)
 					{
-						printf("cRawBytes > 15 unhandled\n");
-						return NULL;
+						nControlBytes = 1;
+						outSegmentSize = 15 + nControlBytes;
+
+						if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
+						{
+							printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
+							return NULL;
+						}
+
+						*dstp = PLANAR_CONTROL_BYTE(0, 15);
+						dstp++;
+
+						CopyMemory(dstp, rawValues, 15);
+						cRawBytes -= 15;
+						rawValues += 15;
+						dstp += 15;
 					}
 
 #if 0
@@ -315,7 +325,9 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 					dstp++;
 
 					CopyMemory(dstp, rawValues, cRawBytes);
+					rawValues += cRawBytes;
 					dstp += cRawBytes;
+					cRawBytes = 0;
 				}
 			}
 
@@ -337,7 +349,7 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 
 int freerdp_bitmap_planar_compress_planes_rle(BYTE* inPlanes[5], int width, int height, BYTE* outPlanes, int* dstSizes)
 {
-	int outPlanesSize = width * height;
+	int outPlanesSize = width * height * 4;
 
 	dstSizes[0] = outPlanesSize;
 
@@ -465,12 +477,21 @@ BYTE* freerdp_bitmap_compress_planar(BYTE* data, UINT32 format, int width, int h
 
 	if (freerdp_bitmap_planar_compress_planes_rle(deltaPlanes, width, height, rlePlanesBuffer, (int*) &dstSizes) > 0)
 	{
+		int offset = 0;
+
 		FormatHeader |= PLANAR_FORMAT_HEADER_RLE;
 
-		rlePlanes[0] = &rlePlanesBuffer[0];
-		rlePlanes[1] = &rlePlanesBuffer[dstSizes[0]];
-		rlePlanes[2] = &rlePlanesBuffer[dstSizes[0] + dstSizes[1]];
-		rlePlanes[3] = &rlePlanesBuffer[dstSizes[0] + dstSizes[1] + dstSizes[2]];
+		rlePlanes[0] = &rlePlanesBuffer[offset];
+		offset += dstSizes[0];
+
+		rlePlanes[1] = &rlePlanesBuffer[offset];
+		offset += dstSizes[1];
+
+		rlePlanes[2] = &rlePlanesBuffer[offset];
+		offset += dstSizes[2];
+
+		rlePlanes[3] = &rlePlanesBuffer[offset];
+		offset += dstSizes[3];
 
 		printf("R: [%d/%d] G: [%d/%d] B: [%d/%d]\n",
 				dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3], planeSize);
