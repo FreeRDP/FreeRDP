@@ -87,10 +87,16 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 	int nControlBytes;
 
 	cSegments = 0;
-	outPlaneSize = width * height;
 
 	if (!outPlane)
+	{
+		outPlaneSize = width * height * 2;
 		outPlane = malloc(outPlaneSize);
+	}
+	else
+	{
+		outPlaneSize = *dstSize;
+	}
 
 	dstp = outPlane;
 
@@ -112,12 +118,178 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 			if ((j != width) && (inPlane[(i * width) + j] == symbol))
 			{
 				nRunLength++;
+				continue;
+			}
+
+			if (nRunLength >= 3)
+			{
+				cRawBytes += 1;
+
+#if 0
+				printf("RAW[");
+
+				for (k = 0; k < cRawBytes; k++)
+				{
+					printf("0x%02X%s", rawValues[k],
+							((k + 1) == cRawBytes) ? "" : ", ");
+				}
+
+				printf("] RUN[%d]\n", nRunLength);
+#endif
+
+				while (cRawBytes > 15)
+				{
+					printf("handling cRawBytes > 15\n");
+
+					nControlBytes = 1;
+					outSegmentSize = 15 + nControlBytes;
+
+					if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
+					{
+						printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
+						return NULL;
+					}
+
+					*dstp = PLANAR_CONTROL_BYTE(0, 15);
+					dstp++;
+
+					CopyMemory(dstp, rawValues, 15);
+					cRawBytes -= 15;
+					rawValues += 15;
+					dstp += 15;
+				}
+
+				if (nRunLength > 47)
+				{
+					nControlBytes = (((nRunLength - 15) + 46) / 47) + 1;
+
+					outSegmentSize = cRawBytes + nControlBytes;
+
+					if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
+					{
+						printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
+						return NULL;
+					}
+
+					*dstp = PLANAR_CONTROL_BYTE(15, cRawBytes);
+					nRunLength -= 15;
+					nControlBytes--;
+					dstp++;
+
+					CopyMemory(dstp, rawValues, cRawBytes);
+					dstp += cRawBytes;
+
+					while (nControlBytes--)
+					{
+						if (nRunLength > 47)
+						{
+							*dstp = PLANAR_CONTROL_BYTE(2, (47 - 32));
+							nRunLength -= 47;
+							dstp++;
+						}
+						else if (nRunLength > 31)
+						{
+							*dstp = PLANAR_CONTROL_BYTE(2, (nRunLength - 32));
+							nRunLength = 0;
+							dstp++;
+						}
+						else if (nRunLength > 15)
+						{
+							*dstp = PLANAR_CONTROL_BYTE(1, (nRunLength - 16));
+							nRunLength = 0;
+							dstp++;
+						}
+						else
+						{
+							*dstp = PLANAR_CONTROL_BYTE(0, nRunLength);
+							nRunLength = 0;
+							dstp++;
+						}
+					}
+
+					return NULL;
+				}
+				else if (nRunLength > 31)
+				{
+					nControlBytes = 2;
+					outSegmentSize = cRawBytes + nControlBytes;
+
+					if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
+					{
+						printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
+						return NULL;
+					}
+
+					*dstp = PLANAR_CONTROL_BYTE(15, cRawBytes);
+					dstp++;
+
+					CopyMemory(dstp, rawValues, cRawBytes);
+					rawValues += cRawBytes;
+					dstp += cRawBytes;
+					cRawBytes = 0;
+
+					nRunLength -= 32;
+					*dstp = PLANAR_CONTROL_BYTE(2, nRunLength);
+					dstp++;
+				}
+				else if (nRunLength > 15)
+				{
+					nControlBytes = 2;
+					outSegmentSize = cRawBytes + nControlBytes;
+
+					if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
+					{
+						printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
+						return NULL;
+					}
+
+					*dstp = PLANAR_CONTROL_BYTE(15, cRawBytes);
+					dstp++;
+
+					CopyMemory(dstp, rawValues, cRawBytes);
+					rawValues += cRawBytes;
+					dstp += cRawBytes;
+					cRawBytes = 0;
+
+					nRunLength -= 16;
+					*dstp = PLANAR_CONTROL_BYTE(1, nRunLength);
+					dstp++;
+				}
+				else
+				{
+					nControlBytes = 1;
+					outSegmentSize = cRawBytes + nControlBytes;
+
+					if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
+					{
+						printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
+						return NULL;
+					}
+
+					*dstp = PLANAR_CONTROL_BYTE(nRunLength, cRawBytes);
+					dstp++;
+
+					CopyMemory(dstp, rawValues, cRawBytes);
+					rawValues += cRawBytes;
+					dstp += cRawBytes;
+					cRawBytes = 0;
+				}
 			}
 			else
 			{
-				if (nRunLength >= 3)
+				cRawBytes += (nRunLength + 1);
+
+				if (j == width)
 				{
-					cRawBytes += 1;
+					printf("end of scanline: cRawBytes: %d nRunLength: %d\n", cRawBytes, nRunLength);
+
+					nRunLength = 0;
+
+					if (cRawBytes > 15)
+					{
+						printf("cRawBytes > 15 unhandled\n");
+						return NULL;
+					}
 
 #if 0
 					printf("RAW[");
@@ -131,193 +303,28 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 					printf("] RUN[%d]\n", nRunLength);
 #endif
 
-					while (cRawBytes > 15)
+					outSegmentSize = cRawBytes + 1;
+
+					if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
 					{
-						printf("handling cRawBytes > 15\n");
-
-						nControlBytes = 1;
-						outSegmentSize = 15 + nControlBytes;
-
-						if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
-						{
-							printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
-							return NULL;
-						}
-
-						*dstp = PLANAR_CONTROL_BYTE(0, 15);
-						dstp++;
-
-						CopyMemory(dstp, rawValues, 15);
-						cRawBytes -= 15;
-						rawValues += 15;
-						dstp += 15;
-
+						printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
 						return NULL;
 					}
 
-					if (nRunLength > 47)
-					{
-						nControlBytes = (((nRunLength - 15) + 46) / 47) + 1;
+					*dstp = PLANAR_CONTROL_BYTE(nRunLength, cRawBytes);
+					dstp++;
 
-						outSegmentSize = cRawBytes + nControlBytes;
-
-						if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
-						{
-							printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
-							return NULL;
-						}
-
-						*dstp = PLANAR_CONTROL_BYTE(15, cRawBytes);
-						nRunLength -= 15;
-						nControlBytes--;
-						dstp++;
-
-						CopyMemory(dstp, rawValues, cRawBytes);
-						dstp += cRawBytes;
-
-						while (nControlBytes--)
-						{
-							if (nRunLength > 47)
-							{
-								*dstp = PLANAR_CONTROL_BYTE(2, (47 - 32));
-								nRunLength -= 47;
-								dstp++;
-							}
-							else if (nRunLength > 31)
-							{
-								*dstp = PLANAR_CONTROL_BYTE(2, (nRunLength - 32));
-								nRunLength = 0;
-								dstp++;
-							}
-							else if (nRunLength > 15)
-							{
-								*dstp = PLANAR_CONTROL_BYTE(1, (nRunLength - 16));
-								nRunLength = 0;
-								dstp++;
-							}
-							else
-							{
-								*dstp = PLANAR_CONTROL_BYTE(0, nRunLength);
-								nRunLength = 0;
-								dstp++;
-							}
-						}
-
-						return NULL;
-					}
-					else if (nRunLength > 31)
-					{
-						nControlBytes = 2;
-						outSegmentSize = cRawBytes + nControlBytes;
-
-						if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
-						{
-							printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
-							return NULL;
-						}
-
-						*dstp = PLANAR_CONTROL_BYTE(15, cRawBytes);
-						dstp++;
-
-						CopyMemory(dstp, rawValues, cRawBytes);
-						dstp += cRawBytes;
-
-						nRunLength -= 32;
-						*dstp = PLANAR_CONTROL_BYTE(2, nRunLength);
-						dstp++;
-					}
-					else if (nRunLength > 15)
-					{
-						nControlBytes = 2;
-						outSegmentSize = cRawBytes + nControlBytes;
-
-						if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
-						{
-							printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
-							return NULL;
-						}
-
-						*dstp = PLANAR_CONTROL_BYTE(15, cRawBytes);
-						dstp++;
-
-						CopyMemory(dstp, rawValues, cRawBytes);
-						dstp += cRawBytes;
-
-						nRunLength -= 16;
-						*dstp = PLANAR_CONTROL_BYTE(1, nRunLength);
-						dstp++;
-					}
-					else
-					{
-						nControlBytes = 1;
-						outSegmentSize = cRawBytes + nControlBytes;
-
-						if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
-						{
-							printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
-							return NULL;
-						}
-
-						*dstp = PLANAR_CONTROL_BYTE(nRunLength, cRawBytes);
-						dstp++;
-
-						CopyMemory(dstp, rawValues, cRawBytes);
-						dstp += cRawBytes;
-					}
-
-					rawValues = &inPlane[(i * width) + j];
-					cRawBytes = 0;
-				}
-				else
-				{
-					cRawBytes += (nRunLength + 1);
-
-					if (j == width)
-					{
-						nRunLength = 0;
-
-						if (cRawBytes > 15)
-						{
-							printf("cRawBytes > 15 unhandled\n");
-							return NULL;
-						}
-
-#if 0
-						printf("RAW[");
-
-						for (k = 0; k < cRawBytes; k++)
-						{
-							printf("0x%02X%s", rawValues[k],
-									((k + 1) == cRawBytes) ? "" : ", ");
-						}
-
-						printf("] RUN[%d]\n", nRunLength);
-#endif
-
-						outSegmentSize = cRawBytes + 1;
-
-						if (((dstp - outPlane) + outSegmentSize) > outPlaneSize)
-						{
-							printf("overflow: %d > %d\n", ((dstp - outPlane) + outSegmentSize), outPlaneSize);
-							return NULL;
-						}
-
-						*dstp = PLANAR_CONTROL_BYTE(nRunLength, cRawBytes);
-						dstp++;
-
-						CopyMemory(dstp, rawValues, cRawBytes);
-						dstp += cRawBytes;
-					}
-				}
-
-				if (j != width)
-				{
-					symbol = inPlane[(i * width) + j];
-					nRunLength = 0;
+					CopyMemory(dstp, rawValues, cRawBytes);
+					dstp += cRawBytes;
 				}
 			}
-		}
 
+			if (j != width)
+			{
+				symbol = inPlane[(i * width) + j];
+				nRunLength = 0;
+			}
+		}
 		//printf("---\n");
 	}
 
@@ -328,19 +335,38 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 	return outPlane;
 }
 
-int freerdp_bitmap_planar_compress_planes_rle(BYTE* inPlanes[5], int width, int height, BYTE* outPlanes[5], int* dstSizes)
+int freerdp_bitmap_planar_compress_planes_rle(BYTE* inPlanes[5], int width, int height, BYTE* outPlanes, int* dstSizes)
 {
-	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[0], width, height, outPlanes[0], &dstSizes[0]))
+	int outPlanesSize = width * height;
+
+	dstSizes[0] = outPlanesSize;
+
+	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[0], width, height, outPlanes, &dstSizes[0]))
 		return 0;
 
-	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[1], width, height, outPlanes[1], &dstSizes[1]))
+	outPlanes += dstSizes[0];
+	outPlanesSize -= dstSizes[0];
+	dstSizes[1] = outPlanesSize;
+
+	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[1], width, height, outPlanes, &dstSizes[1]))
 		return 0;
 
-	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[2], width, height, outPlanes[2], &dstSizes[2]))
+	outPlanes += dstSizes[1];
+	outPlanesSize -= dstSizes[1];
+	dstSizes[2] = outPlanesSize;
+
+	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[2], width, height, outPlanes, &dstSizes[2]))
 		return 0;
 
-	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[3], width, height, outPlanes[3], &dstSizes[3]))
+	outPlanes += dstSizes[2];
+	outPlanesSize -= dstSizes[2];
+	dstSizes[3] = outPlanesSize;
+
+	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[3], width, height, outPlanes, &dstSizes[3]))
 		return 0;
+
+	outPlanes += dstSizes[3];
+	outPlanesSize -= dstSizes[3];
 
 	return 1;
 }
@@ -404,12 +430,12 @@ BYTE* freerdp_bitmap_compress_planar(BYTE* data, UINT32 format, int width, int h
 	int size;
 	BYTE* dstp;
 	int planeSize;
-	int dstSizes[5];
+	int dstSizes[4];
 	BYTE* planes[5];
 	BYTE* planesBuffer;
 	BYTE* deltaPlanes[5];
 	BYTE* deltaPlanesBuffer;
-	BYTE* rlePlanes[5];
+	BYTE* rlePlanes[4];
 	BYTE* rlePlanesBuffer;
 	BYTE FormatHeader = 0;
 
@@ -431,20 +457,20 @@ BYTE* freerdp_bitmap_compress_planar(BYTE* data, UINT32 format, int width, int h
 	deltaPlanes[3] = &deltaPlanesBuffer[planeSize * 3];
 	deltaPlanes[4] = &deltaPlanesBuffer[planeSize * 4];
 
-	rlePlanesBuffer = malloc(planeSize * 5);
-	rlePlanes[0] = &rlePlanesBuffer[planeSize * 0];
-	rlePlanes[1] = &rlePlanesBuffer[planeSize * 1];
-	rlePlanes[2] = &rlePlanesBuffer[planeSize * 2];
-	rlePlanes[3] = &rlePlanesBuffer[planeSize * 3];
-	rlePlanes[4] = &rlePlanesBuffer[planeSize * 4];
+	rlePlanesBuffer = malloc(planeSize * 4);
 
 	freerdp_split_color_planes(data, format, width, height, scanline, planes);
 
 	freerdp_bitmap_planar_delta_encode_planes(planes, width, height, deltaPlanes);
 
-	if (freerdp_bitmap_planar_compress_planes_rle(deltaPlanes, width, height, rlePlanes, (int*) &dstSizes) > 0)
+	if (freerdp_bitmap_planar_compress_planes_rle(deltaPlanes, width, height, rlePlanesBuffer, (int*) &dstSizes) > 0)
 	{
 		FormatHeader |= PLANAR_FORMAT_HEADER_RLE;
+
+		rlePlanes[0] = &rlePlanesBuffer[0];
+		rlePlanes[1] = &rlePlanesBuffer[dstSizes[0]];
+		rlePlanes[2] = &rlePlanesBuffer[dstSizes[0] + dstSizes[1]];
+		rlePlanes[3] = &rlePlanesBuffer[dstSizes[0] + dstSizes[1] + dstSizes[2]];
 
 		printf("R: [%d/%d] G: [%d/%d] B: [%d/%d]\n",
 				dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3], planeSize);
