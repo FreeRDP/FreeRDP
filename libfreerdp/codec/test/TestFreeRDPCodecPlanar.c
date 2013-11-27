@@ -226,13 +226,13 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	format = FREERDP_PIXEL_FORMAT(32, FREERDP_PIXEL_FORMAT_TYPE_ARGB, FREERDP_PIXEL_FLIP_NONE);
 
-	//freerdp_bitmap_compress_planar(srcBitmap32, format, 32, 32, 32 * 4, NULL, &dstSize);
+	freerdp_bitmap_compress_planar(srcBitmap32, format, 32, 32, 32 * 4, NULL, &dstSize);
 
-	//freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RLE_SCANLINE_UNCOMPRESSED, 12, 1, NULL);
+	freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RLE_SCANLINE_UNCOMPRESSED, 12, 1, NULL, &dstSize);
 
-	//freerdp_bitmap_planar_delta_encode_scanlines((BYTE*) TEST_RDP6_SCANLINES_ABSOLUTE, 6, 3, NULL);
+	freerdp_bitmap_planar_delta_encode_plane((BYTE*) TEST_RDP6_SCANLINES_ABSOLUTE, 6, 3, NULL);
 
-	freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED, 6, 3, NULL);
+	freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED, 6, 3, NULL, &dstSize);
 
 	freerdp_clrconv_free(clrconv);
 	free(srcBitmap32);

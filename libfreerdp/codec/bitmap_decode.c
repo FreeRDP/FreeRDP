@@ -388,52 +388,51 @@ static BOOL bitmap_decompress4(BYTE* srcData, BYTE* dstData, int width, int heig
 	int RLE;
 	int code;
 	int NoAlpha;
-	int bytes_processed;
-	int total_processed;
+	int bytesProcessed;
+	int totalProcessed;
 
 	code = IN_UINT8_MV(srcData);
 	RLE = code & 0x10;
 
-	total_processed = 1;
+	totalProcessed = 1;
 	NoAlpha = code & 0x20;
 
 	if (NoAlpha == 0)
 	{
-		bytes_processed = process_rle_plane(srcData, width, height, dstData + 3, size - total_processed);
-		total_processed += bytes_processed;
-		srcData += bytes_processed;
+		bytesProcessed = process_rle_plane(srcData, width, height, dstData + 3, size - totalProcessed);
+		totalProcessed += bytesProcessed;
+		srcData += bytesProcessed;
 	}
 
 	if (RLE != 0)
 	{
-		bytes_processed = process_rle_plane(srcData, width, height, dstData + 2, size - total_processed);
-		total_processed += bytes_processed;
-		srcData += bytes_processed;
+		bytesProcessed = process_rle_plane(srcData, width, height, dstData + 2, size - totalProcessed);
+		totalProcessed += bytesProcessed;
+		srcData += bytesProcessed;
 
-		bytes_processed = process_rle_plane(srcData, width, height, dstData + 1, size - total_processed);
-		total_processed += bytes_processed;
-		srcData += bytes_processed;
+		bytesProcessed = process_rle_plane(srcData, width, height, dstData + 1, size - totalProcessed);
+		totalProcessed += bytesProcessed;
+		srcData += bytesProcessed;
 
-		bytes_processed = process_rle_plane(srcData, width, height, dstData + 0, size - total_processed);
-		total_processed += bytes_processed;
+		bytesProcessed = process_rle_plane(srcData, width, height, dstData + 0, size - totalProcessed);
+		totalProcessed += bytesProcessed;
 	}
 	else
 	{
-		bytes_processed = process_raw_plane(srcData, width, height, dstData + 2, size - total_processed);
-		total_processed += bytes_processed;
-		srcData += bytes_processed;
+		bytesProcessed = process_raw_plane(srcData, width, height, dstData + 2, size - totalProcessed);
+		totalProcessed += bytesProcessed;
+		srcData += bytesProcessed;
 
-		bytes_processed = process_raw_plane(srcData, width, height, dstData + 1, size - total_processed);
-		total_processed += bytes_processed;
-		srcData += bytes_processed;
+		bytesProcessed = process_raw_plane(srcData, width, height, dstData + 1, size - totalProcessed);
+		totalProcessed += bytesProcessed;
+		srcData += bytesProcessed;
 
-		bytes_processed = process_raw_plane(srcData, width, height, dstData + 0, size - total_processed);
-		total_processed += bytes_processed + 1;
+		bytesProcessed = process_raw_plane(srcData, width, height, dstData + 0, size - totalProcessed);
+		totalProcessed += bytesProcessed + 1;
 	}
 
-	return (size == total_processed) ? TRUE : FALSE;
+	return (size == totalProcessed) ? TRUE : FALSE;
 }
-
 
 /**
  * bitmap decompression routine
