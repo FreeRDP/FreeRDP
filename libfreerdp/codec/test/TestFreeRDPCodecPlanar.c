@@ -1,4 +1,6 @@
 
+#include <winpr/crt.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
@@ -213,11 +215,17 @@ const BYTE TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED[3][6] =
 
 int TestFreeRDPCodecPlanar(int argc, char* argv[])
 {
+	int i;
 	int dstSize;
 	UINT32 format;
 	HCLRCONV clrconv;
 	BYTE* srcBitmap32;
 	BYTE* srcBitmap16;
+	int width, height;
+	BYTE* blackBitmap;
+	BYTE* whiteBitmap;
+	BYTE* compressedBitmap;
+	BYTE* decompressedBitmap;
 
 	clrconv = freerdp_clrconv_new(0);
 	srcBitmap16 = (BYTE*) TEST_RLE_UNCOMPRESSED_BITMAP_16BPP;
@@ -233,6 +241,70 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	freerdp_bitmap_planar_delta_encode_plane((BYTE*) TEST_RDP6_SCANLINES_ABSOLUTE, 6, 3, NULL);
 
 	freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED, 6, 3, NULL, &dstSize);
+
+	return 0;
+
+	for (i = 17; i < 64; i++)
+	{
+		width = i;
+		height = i;
+
+		if ((width > 17) && (width < 65))
+			continue;
+
+		whiteBitmap = (BYTE*) malloc(width * height * 4);
+		FillMemory(whiteBitmap, width * height * 4, 0xFF);
+
+		compressedBitmap = freerdp_bitmap_compress_planar(whiteBitmap, format, width, height, width * 4, NULL, &dstSize);
+
+		decompressedBitmap = (BYTE*) malloc(width * height * 4);
+		ZeroMemory(decompressedBitmap, width * height * 4);
+
+		if (!bitmap_decompress(compressedBitmap, decompressedBitmap, width, height, dstSize, 32, 32))
+		{
+			printf("failed to decompress bitmap: width: %d height: %d\n", width, height);
+			//return -1;
+		}
+		else
+		{
+			printf("success decompressing bitmap: width: %d height: %d\n", width, height);
+		}
+
+		free(compressedBitmap);
+		free(decompressedBitmap);
+	}
+
+	return 0;
+
+	for (i = 17; i < 64; i++)
+	{
+		width = i;
+		height = i;
+
+		if ((width > 17) && (width < 65))
+			continue;
+
+		blackBitmap = (BYTE*) malloc(width * height * 4);
+		ZeroMemory(blackBitmap, width * height * 4);
+
+		compressedBitmap = freerdp_bitmap_compress_planar(blackBitmap, format, width, height, width * 4, NULL, &dstSize);
+
+		decompressedBitmap = (BYTE*) malloc(width * height * 4);
+		ZeroMemory(decompressedBitmap, width * height * 4);
+
+		if (!bitmap_decompress(compressedBitmap, decompressedBitmap, width, height, dstSize, 32, 32))
+		{
+			printf("failed to decompress bitmap: width: %d height: %d\n", width, height);
+			//return -1;
+		}
+		else
+		{
+			printf("success decompressing bitmap: width: %d height: %d\n", width, height);
+		}
+
+		free(compressedBitmap);
+		free(decompressedBitmap);
+	}
 
 	freerdp_clrconv_free(clrconv);
 	free(srcBitmap32);

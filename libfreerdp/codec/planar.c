@@ -75,13 +75,13 @@ int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height,
 
 BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int height, BYTE* outPlane, int* dstSize)
 {
-	int i, j;
+	int i, j, k;
 	BYTE* dstp;
-	BYTE symbol;
 	int cSegments;
 	int nRunLength;
 	int cRawBytes;
 	BYTE* rawValues;
+	BYTE* rawScanline;
 	int outPlaneSize;
 	int outSegmentSize;
 	int nControlBytes;
@@ -102,31 +102,28 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 
 	for (i = 0; i < height; i++)
 	{
-		cRawBytes = 0;
-		nRunLength = -1;
-		rawValues = &inPlane[i * width];
+		cRawBytes = 1;
+		nRunLength = 0;
+		rawScanline = &inPlane[i * width];
+		rawValues = rawScanline;
 
-		for (j = 0; j <= width; j++)
+		for (j = 1; j <= width; j++)
 		{
-			if ((nRunLength < 0) && (j != width))
+			if (j != width)
 			{
-				symbol = inPlane[(i * width) + j];
-				nRunLength = 0;
-				continue;
-			}
-
-			if ((j != width) && (inPlane[(i * width) + j] == symbol))
-			{
-				nRunLength++;
-				continue;
+				if (rawScanline[j] == rawValues[cRawBytes - 1])
+				{
+					nRunLength++;
+					continue;
+				}
 			}
 
 			if (nRunLength >= 3)
 			{
-				cRawBytes += 1;
+				printf("nRunLength: %d cRawBytes: %d\n", nRunLength, cRawBytes);
 
-#if 0
-				printf("RAW[");
+#if 1
+				printf("B RAW[");
 
 				for (k = 0; k < cRawBytes; k++)
 				{
@@ -204,8 +201,6 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 							dstp++;
 						}
 					}
-
-					return NULL;
 				}
 				else if (nRunLength > 31)
 				{
@@ -268,16 +263,23 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 					dstp++;
 
 					CopyMemory(dstp, rawValues, cRawBytes);
-					rawValues += cRawBytes;
 					dstp += cRawBytes;
+
+					rawValues += (cRawBytes + nRunLength);
+					nRunLength = 0;
 					cRawBytes = 0;
+
+					j--;
+					continue;
 				}
 			}
 			else
 			{
-				cRawBytes += (nRunLength + 1);
-
-				if (j == width)
+				if (j != width)
+				{
+					cRawBytes++;
+				}
+				else
 				{
 					nRunLength = 0;
 
@@ -301,8 +303,8 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 						dstp += 15;
 					}
 
-#if 0
-					printf("RAW[");
+#if 1
+					printf("E RAW[");
 
 					for (k = 0; k < cRawBytes; k++)
 					{
@@ -330,17 +332,8 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 					cRawBytes = 0;
 				}
 			}
-
-			if (j != width)
-			{
-				symbol = inPlane[(i * width) + j];
-				nRunLength = 0;
-			}
 		}
-		//printf("---\n");
 	}
-
-	//printf("\n");
 
 	*dstSize = (dstp - outPlane);
 
