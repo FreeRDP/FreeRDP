@@ -25,7 +25,8 @@
 #include <freerdp/codec/color.h>
 
 #define PLANAR_CONTROL_BYTE(_nRunLength, _cRawBytes) \
-	(_nRunLength & 0x0F) | ((_cRawBytes & 0x0F) << 4)
+	((_nRunLength & 0x0F) | ((_cRawBytes & 0x0F) << 4)) + \
+	(printf("CONTROL_BYTE(%d, %d)\n", _cRawBytes, _nRunLength) * 0)
 
 #define PLANAR_CONTROL_BYTE_RUN_LENGTH(_controlByte)	(_controlByte & 0x0F)
 #define PLANAR_CONTROL_BYTE_RAW_BYTES(_controlByte)	((_controlByte >> 4) & 0x0F)
@@ -66,6 +67,8 @@ struct _RDP6_BITMAP_STREAM
 	BYTE formatHeader;
 };
 typedef struct _RDP6_BITMAP_STREAM RDP6_BITMAP_STREAM;
+
+int freerdp_bitmap_planar_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size);
 
 int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[5]);
 BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* plane, int width, int height, BYTE* outPlane, int* dstSize);
