@@ -213,9 +213,17 @@ const BYTE TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED[3][6] =
 
 #include "../planar.h"
 
+static unsigned long next = 1;
+
+static int simple_rand(void)
+{
+	next = next * 1103515245 + 12345;
+	return ((unsigned int) (next / 65536) % 32768);
+}
+
 int TestFreeRDPCodecPlanar(int argc, char* argv[])
 {
-	int i;
+	int i, j;
 	int dstSize;
 	UINT32 format;
 	HCLRCONV clrconv;
@@ -224,6 +232,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	int width, height;
 	BYTE* blackBitmap;
 	BYTE* whiteBitmap;
+	BYTE* randomBitmap;
 	BYTE* compressedBitmap;
 	BYTE* decompressedBitmap;
 
@@ -242,15 +251,10 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED, 6, 3, NULL, &dstSize);
 
-	return 0;
-
-	for (i = 17; i < 64; i++)
+	for (i = 4; i < 64; i += 4)
 	{
 		width = i;
 		height = i;
-
-		if ((width > 17) && (width < 65))
-			continue;
 
 		whiteBitmap = (BYTE*) malloc(width * height * 4);
 		FillMemory(whiteBitmap, width * height * 4, 0xFF);
@@ -262,27 +266,22 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 		if (!bitmap_decompress(compressedBitmap, decompressedBitmap, width, height, dstSize, 32, 32))
 		{
-			printf("failed to decompress bitmap: width: %d height: %d\n", width, height);
-			//return -1;
+			printf("failed to decompress white bitmap: width: %d height: %d\n", width, height);
+			return -1;
 		}
 		else
 		{
-			printf("success decompressing bitmap: width: %d height: %d\n", width, height);
+			printf("success decompressing white bitmap: width: %d height: %d\n", width, height);
 		}
 
 		free(compressedBitmap);
 		free(decompressedBitmap);
 	}
 
-	return 0;
-
-	for (i = 17; i < 64; i++)
+	for (i = 4; i < 64; i += 4)
 	{
 		width = i;
 		height = i;
-
-		if ((width > 17) && (width < 65))
-			continue;
 
 		blackBitmap = (BYTE*) malloc(width * height * 4);
 		ZeroMemory(blackBitmap, width * height * 4);
@@ -294,12 +293,43 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 		if (!bitmap_decompress(compressedBitmap, decompressedBitmap, width, height, dstSize, 32, 32))
 		{
-			printf("failed to decompress bitmap: width: %d height: %d\n", width, height);
-			//return -1;
+			printf("failed to decompress black bitmap: width: %d height: %d\n", width, height);
+			return -1;
 		}
 		else
 		{
-			printf("success decompressing bitmap: width: %d height: %d\n", width, height);
+			printf("success decompressing black bitmap: width: %d height: %d\n", width, height);
+		}
+
+		free(compressedBitmap);
+		free(decompressedBitmap);
+	}
+
+	for (i = 4; i < 64; i += 4)
+	{
+		width = i;
+		height = i;
+
+		randomBitmap = (BYTE*) malloc(width * height * 4);
+
+		for (j = 0; j < width * height * 4; j++)
+		{
+			randomBitmap[j] = (BYTE) (simple_rand() % 256);
+		}
+
+		compressedBitmap = freerdp_bitmap_compress_planar(randomBitmap, format, width, height, width * 4, NULL, &dstSize);
+
+		decompressedBitmap = (BYTE*) malloc(width * height * 4);
+		ZeroMemory(decompressedBitmap, width * height * 4);
+
+		if (!bitmap_decompress(compressedBitmap, decompressedBitmap, width, height, dstSize, 32, 32))
+		{
+			printf("failed to decompress random bitmap: width: %d height: %d\n", width, height);
+			return -1;
+		}
+		else
+		{
+			printf("success decompressing random bitmap: width: %d height: %d\n", width, height);
 		}
 
 		free(compressedBitmap);
