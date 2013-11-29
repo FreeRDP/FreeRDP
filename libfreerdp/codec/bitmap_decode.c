@@ -271,7 +271,7 @@ BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int 
 	}
 	else if (srcBpp == 32 && dstBpp == 32)
 	{
-		if (!freerdp_bitmap_planar_decompress(srcData, dstData, width, height, size))
+		if (freerdp_bitmap_planar_decompress(srcData, dstData, width, height, size) < 0)
 			return FALSE;
 	}
 	else if (srcBpp == 15 && dstBpp == 15)

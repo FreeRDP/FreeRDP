@@ -1306,6 +1306,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED, 6, 3, NULL, &dstSize);
 #endif
 
+#if 1
 	for (i = 4; i < 64; i += 4)
 	{
 		width = i;
@@ -1345,6 +1346,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 		free(compressedBitmap);
 		free(decompressedBitmap);
 	}
+#endif
 
 #if 1
 	for (i = 4; i < 64; i += 4)
