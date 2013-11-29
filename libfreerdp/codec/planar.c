@@ -28,124 +28,121 @@
 
 #include "planar.h"
 
-#define IN_UINT8_MV(_p) (*((_p)++))
-
-static int freerdp_bitmap_planar_decompress_plane_rle(BYTE* in, int width, int height, BYTE* out, int size)
+static int freerdp_bitmap_planar_decompress_plane_rle(BYTE* inPlane, int width, int height, BYTE* outPlane, int size)
 {
-	int indexw;
-	int indexh;
-	int code;
-	int collen;
-	int replen;
-	int color;
-	int x;
-	int revcode;
-	BYTE* last_line;
-	BYTE* this_line;
-	BYTE* org_in;
-	BYTE* org_out;
+	int x, y;
+	BYTE* srcp;
+	BYTE* dstp;
+	UINT32 pixel;
+	int scanline;
+	int cRawBytes;
+	int nRunLength;
+	int deltaValue;
+	BYTE controlByte;
+	BYTE* currentScanline;
+	BYTE* previousScanline;
 
-	org_in = in;
-	org_out = out;
-	last_line = 0;
-	indexh = 0;
+	srcp = inPlane;
+	dstp = outPlane;
+	scanline = width * 4;
+	previousScanline = NULL;
 
-	while (indexh < height)
+	y = 0;
+
+	while (y < height)
 	{
-		out = (org_out + width * height * 4) - ((indexh + 1) * width * 4);
-		color = 0;
-		this_line = out;
-		indexw = 0;
+		pixel = 0;
+		dstp = (outPlane + height * scanline) - ((y + 1) * scanline);
+		currentScanline = dstp;
 
-		if (last_line == 0)
+		x = 0;
+
+		while (x < width)
 		{
-			while (indexw < width)
+			controlByte = *srcp;
+			srcp++;
+
+			nRunLength = PLANAR_CONTROL_BYTE_RUN_LENGTH(controlByte);
+			cRawBytes = PLANAR_CONTROL_BYTE_RAW_BYTES(controlByte);
+
+			if (nRunLength == 1)
 			{
-				code = IN_UINT8_MV(in);
+				nRunLength = cRawBytes + 16;
+				cRawBytes = 0;
+			}
+			else if (nRunLength == 2)
+			{
+				nRunLength = cRawBytes + 32;
+				cRawBytes = 0;
+			}
 
-				replen = code & 0xf;
-				collen = (code >> 4) & 0xf;
-				revcode = (replen << 4) | collen;
+			if (!previousScanline)
+			{
+				/* first scanline, absolute values */
 
-				if ((revcode <= 47) && (revcode >= 16))
+				while (cRawBytes > 0)
 				{
-					replen = revcode;
-					collen = 0;
+					pixel = *srcp;
+					srcp++;
+
+					*dstp = pixel;
+					dstp += 4;
+					x++;
+					cRawBytes--;
 				}
 
-				while (collen > 0)
+				while (nRunLength > 0)
 				{
-					color = IN_UINT8_MV(in);
-					*out = color;
-					out += 4;
-					indexw++;
-					collen--;
-				}
-
-				while (replen > 0)
-				{
-					*out = color;
-					out += 4;
-					indexw++;
-					replen--;
+					*dstp = pixel;
+					dstp += 4;
+					x++;
+					nRunLength--;
 				}
 			}
-		}
-		else
-		{
-			while (indexw < width)
+			else
 			{
-				code = IN_UINT8_MV(in);
+				/* delta values relative to previous scanline */
 
-				replen = code & 0xf;
-				collen = (code >> 4) & 0xf;
-				revcode = (replen << 4) | collen;
-
-				if ((revcode <= 47) && (revcode >= 16))
+				while (cRawBytes > 0)
 				{
-					replen = revcode;
-					collen = 0;
-				}
+					deltaValue = *srcp;
+					srcp++;
 
-				while (collen > 0)
-				{
-					x = IN_UINT8_MV(in);
-
-					if (x & 1)
+					if (deltaValue & 1)
 					{
-						x = x >> 1;
-						x = x + 1;
-						color = -x;
+						deltaValue = deltaValue >> 1;
+						deltaValue = deltaValue + 1;
+						pixel = -deltaValue;
 					}
 					else
 					{
-						x = x >> 1;
-						color = x;
+						deltaValue = deltaValue >> 1;
+						pixel = deltaValue;
 					}
 
-					x = last_line[indexw * 4] + color;
-					*out = x;
-					out += 4;
-					indexw++;
-					collen--;
+					deltaValue = previousScanline[x * 4] + pixel;
+					*dstp = deltaValue;
+					dstp += 4;
+					x++;
+					cRawBytes--;
 				}
 
-				while (replen > 0)
+				while (nRunLength > 0)
 				{
-					x = last_line[indexw * 4] + color;
-					*out = x;
-					out += 4;
-					indexw++;
-					replen--;
+					deltaValue = previousScanline[x * 4] + pixel;
+					*dstp = deltaValue;
+					dstp += 4;
+					x++;
+					nRunLength--;
 				}
 			}
 		}
 
-		indexh++;
-		last_line = this_line;
+		previousScanline = currentScanline;
+		y++;
 	}
 
-	return (int) (in - org_in);
+	return (int) (srcp - inPlane);
 }
 
 static int freerdp_bitmap_planar_decompress_plane_raw(BYTE* srcData, int width, int height, BYTE* dstData, int size)
@@ -166,62 +163,53 @@ static int freerdp_bitmap_planar_decompress_plane_raw(BYTE* srcData, int width, 
 int freerdp_bitmap_planar_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size)
 {
 	BYTE* srcp;
+	int dstSize;
 	BYTE FormatHeader;
-	int bytesProcessed;
-	int totalProcessed;
 
 	srcp = srcData;
 
 	FormatHeader = *srcp;
-	totalProcessed = 1;
 	srcp++;
 
 	if (!(FormatHeader & PLANAR_FORMAT_HEADER_NA))
 	{
 		if (FormatHeader & PLANAR_FORMAT_HEADER_RLE)
 		{
-			bytesProcessed = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 3, size - totalProcessed);
-			totalProcessed += bytesProcessed;
-			srcp += bytesProcessed;
+			dstSize = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 3, size - (srcp - srcData));
+			srcp += dstSize;
 		}
 		else
 		{
-			bytesProcessed = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 3, size - totalProcessed);
-			totalProcessed += bytesProcessed;
-			srcp += bytesProcessed;
+			dstSize = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 3, size - (srcp - srcData));
+			srcp += dstSize;
 		}
 	}
 
 	if (FormatHeader & PLANAR_FORMAT_HEADER_RLE)
 	{
-		bytesProcessed = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 2, size - totalProcessed);
-		totalProcessed += bytesProcessed;
-		srcp += bytesProcessed;
+		dstSize = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 2, size - (srcp - srcData));
+		srcp += dstSize;
 
-		bytesProcessed = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 1, size - totalProcessed);
-		totalProcessed += bytesProcessed;
-		srcp += bytesProcessed;
+		dstSize = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 1, size - (srcp - srcData));
+		srcp += dstSize;
 
-		bytesProcessed = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 0, size - totalProcessed);
-		totalProcessed += bytesProcessed;
-		srcp += bytesProcessed;
+		dstSize = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 0, size - (srcp - srcData));
+		srcp += dstSize;
 	}
 	else
 	{
-		bytesProcessed = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 2, size - totalProcessed);
-		totalProcessed += bytesProcessed;
-		srcp += bytesProcessed;
+		dstSize = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 2, size - (srcp - srcData));
+		srcp += dstSize;
 
-		bytesProcessed = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 1, size - totalProcessed);
-		totalProcessed += bytesProcessed;
-		srcp += bytesProcessed;
+		dstSize = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 1, size - (srcp - srcData));
+		srcp += dstSize;
 
-		bytesProcessed = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 0, size - totalProcessed);
-		totalProcessed += bytesProcessed + 1;
-		srcp += bytesProcessed;
+		dstSize = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 0, size - (srcp - srcData));
+		srcp += dstSize;
+		srcp++;
 	}
 
-	return (size == totalProcessed) ? 1 : 0;
+	return (size == (srcp - srcData)) ? 1 : 0;
 }
 
 int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[5])
