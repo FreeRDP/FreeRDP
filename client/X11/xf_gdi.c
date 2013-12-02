@@ -312,6 +312,10 @@ void xf_gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 
 	if (xfc->drawing == xfc->primary)
 	{
+		if (xfi->remote_app != TRUE)
+		{
+			XFillRectangle(xfi->display, xfi->drawable, xfi->gc, dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth, dstblt->nHeight);
+		}
 		gdi_InvalidateRegion(xfc->hdc, dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth, dstblt->nHeight);
 	}
 
@@ -399,6 +403,11 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 	if (xfc->drawing == xfc->primary)
 	{
+		XSetFunction(xfi->display, xfi->gc, GXcopy);
+		if (xfi->remote_app != TRUE)
+		{
+			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight, patblt->nLeftRect, patblt->nTopRect);
+		}
 		gdi_InvalidateRegion(xfc->hdc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight);
 	}
 
@@ -420,6 +429,19 @@ void xf_gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 
 	if (xfc->drawing == xfc->primary)
 	{
+		if (xfi->remote_app != TRUE)
+		{
+			if (xfi->unobscured)
+			{
+				XCopyArea(xfi->display, xfi->drawable, xfi->drawable, xfi->gc, scrblt->nXSrc, scrblt->nYSrc,
+						scrblt->nWidth, scrblt->nHeight, scrblt->nLeftRect, scrblt->nTopRect);
+			}
+		}
+		else
+		{
+			XSetFunction(xfi->display, xfi->gc, GXcopy);
+			XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, scrblt->nLeftRect, scrblt->nTopRect, scrblt->nWidth, scrblt->nHeight, scrblt->nLeftRect, scrblt->nTopRect);
+		}
 		gdi_InvalidateRegion(xfc->hdc, scrblt->nLeftRect, scrblt->nTopRect, scrblt->nWidth, scrblt->nHeight);
 	}
 
@@ -447,6 +469,12 @@ void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 
 	if (xfc->drawing == xfc->primary)
 	{
+		if (xfi->remote_app != TRUE)
+		{
+			XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
+					opaque_rect->nLeftRect, opaque_rect->nTopRect,
+					opaque_rect->nWidth, opaque_rect->nHeight);
+		}
 		gdi_InvalidateRegion(xfc->hdc, opaque_rect->nLeftRect, opaque_rect->nTopRect,
 				opaque_rect->nWidth, opaque_rect->nHeight);
 	}
@@ -479,6 +507,12 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 
 		if (xfc->drawing == xfc->primary)
 		{
+			if (xfi->remote_app != TRUE)
+			{
+				XFillRectangle(xfi->display, xfi->drawable, xfi->gc,
+						rectangle->left, rectangle->top,
+						rectangle->width, rectangle->height);
+			}
 			gdi_InvalidateRegion(xfc->hdc, rectangle->left, rectangle->top, rectangle->width, rectangle->height);
 		}
 	}
@@ -509,6 +543,11 @@ void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 
 	if (xfc->drawing == xfc->primary)
 	{
+		if (xfi->remote_app != TRUE)
+		{
+			XDrawLine(xfi->display, xfi->drawable, xfi->gc,
+					line_to->nXStart, line_to->nYStart, line_to->nXEnd, line_to->nYEnd);
+		}
 		int width, height;
 
 		width = line_to->nXStart - line_to->nXEnd;
@@ -565,6 +604,10 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 
 	if (xfc->drawing == xfc->primary)
 	{
+		if (xfi->remote_app != TRUE)
+		{
+			XDrawLines(xfi->display, xfi->drawable, xfi->gc, points, npoints, CoordModePrevious);
+		}
 		x1 = points[0].x;
 		y1 = points[0].y;
 
@@ -608,6 +651,12 @@ void xf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 	if (xfc->drawing == xfc->primary)
 	{
+		if (xfi->remote_app != TRUE)
+		{
+			XCopyArea(xfi->display, bitmap->pixmap, xfi->drawable, xfi->gc,
+					memblt->nXSrc, memblt->nYSrc, memblt->nWidth, memblt->nHeight,
+					memblt->nLeftRect, memblt->nTopRect);
+		}
 		gdi_InvalidateRegion(xfc->hdc, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight);
 	}
 
@@ -673,6 +722,12 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 	if (xfc->drawing == xfc->primary)
 	{
+		if (xfi->remote_app != TRUE)
+		{
+			XCopyArea(xfi->display, bitmap->pixmap, xfi->drawable, xfi->gc,
+					mem3blt->nXSrc, mem3blt->nYSrc, mem3blt->nWidth, mem3blt->nHeight,
+					mem3blt->nLeftRect, mem3blt->nTopRect);
+		}
 		gdi_InvalidateRegion(xfc->hdc, mem3blt->nLeftRect, mem3blt->nTopRect, mem3blt->nWidth, mem3blt->nHeight);
 	}
 
@@ -970,6 +1025,10 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		{
 			tx = message->rects[i].x + surface_bits_command->destLeft;
 			ty = message->rects[i].y + surface_bits_command->destTop;
+			if (xfi->remote_app != TRUE)
+			{
+				XCopyArea(xfi->display, xfi->primary, xfi->drawable, xfi->gc, tx, ty, message->rects[i].width, message->rects[i].height, tx, ty);
+			}
 
 			xf_gdi_surface_update_frame(xfc, tx, ty, message->rects[i].width, message->rects[i].height);
 		}
@@ -1001,6 +1060,13 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		free(xfc->bmp_codec_nsc);
 		xfc->bmp_codec_nsc = NULL;
 
+		if (xfi->remote_app != TRUE)
+		{
+			XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, 
+					surface_bits_command->destLeft, surface_bits_command->destTop,
+					surface_bits_command->width, surface_bits_command->height,
+					surface_bits_command->destLeft, surface_bits_command->destTop);
+		}
 		xf_gdi_surface_update_frame(xfc,
 			surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height);
@@ -1031,6 +1097,13 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 			free(xfc->bmp_codec_none);
 			xfc->bmp_codec_none = NULL;
 
+			if (xfi->remote_app != TRUE)
+			{
+				XCopyArea(xfi->display, xfi->primary, xfi->window->handle, xfi->gc, 
+						surface_bits_command->destLeft, surface_bits_command->destTop,
+						surface_bits_command->width, surface_bits_command->height,
+						surface_bits_command->destLeft, surface_bits_command->destTop);
+			}
 			xf_gdi_surface_update_frame(xfc,
 				surface_bits_command->destLeft, surface_bits_command->destTop,
 				surface_bits_command->width, surface_bits_command->height);
