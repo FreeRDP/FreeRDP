@@ -37,7 +37,9 @@
 #include <unistd.h>
 #endif
 
-#ifdef __MACOSX__
+#if defined(__IOS__)
+
+#elif defined(__MACOSX__)
 #include <crt_externs.h>
 #define environ (*_NSGetEnviron())
 #endif
