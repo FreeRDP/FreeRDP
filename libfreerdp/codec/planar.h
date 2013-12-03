@@ -25,8 +25,7 @@
 #include <freerdp/codec/color.h>
 
 #define PLANAR_CONTROL_BYTE(_nRunLength, _cRawBytes) \
-	((_nRunLength & 0x0F) | ((_cRawBytes & 0x0F) << 4)) + \
-	(printf("CONTROL_BYTE(%d, %d)\n", _cRawBytes, _nRunLength) * 0)
+	(_nRunLength & 0x0F) | ((_cRawBytes & 0x0F) << 4)
 
 #define PLANAR_CONTROL_BYTE_RUN_LENGTH(_controlByte)	(_controlByte & 0x0F)
 #define PLANAR_CONTROL_BYTE_RAW_BYTES(_controlByte)	((_controlByte >> 4) & 0x0F)

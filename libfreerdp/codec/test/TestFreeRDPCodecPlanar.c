@@ -10,7 +10,7 @@
  * Experimental Case 01: 64x64 (32bpp)
  */
 
-const BYTE TEST_RLE_BITMAP_EXPERIMENTAL_01[16384] =
+static BYTE TEST_RLE_BITMAP_EXPERIMENTAL_01[16384] =
 	"\x1B\x1A\x16\xFF\x1C\x1A\x16\xFF\x18\x17\x13\xFF\x19\x18\x14\xFF\x17\x16\x12\xFF\x18\x16\x12\xFF\x19\x18\x14\xFF\x19\x18\x14\xFF"
 	"\x1D\x1C\x17\xFF\x1D\x1B\x17\xFF\x1C\x1B\x17\xFF\x1B\x1A\x16\xFF\x1A\x19\x15\xFF\x1A\x19\x15\xFF\x18\x17\x13\xFF\x1A\x19\x15\xFF"
 	"\x1B\x1A\x16\xFF\x19\x18\x14\xFF\x19\x18\x14\xFF\x18\x16\x14\xFF\x1C\x1A\x16\xFF\x1A\x18\x14\xFF\x1B\x1A\x16\xFF\x19\x17\x13\xFF"
@@ -529,7 +529,7 @@ const BYTE TEST_RLE_BITMAP_EXPERIMENTAL_01[16384] =
  * Experimental Case 02: 64x64 (32bpp)
  */
 
-const BYTE TEST_RLE_BITMAP_EXPERIMENTAL_02[16384] =
+static BYTE TEST_RLE_BITMAP_EXPERIMENTAL_02[16384] =
 	"\x1C\x1C\x17\xFF\x1D\x1B\x18\xFF\x1B\x19\x15\xFF\x19\x18\x13\xFF\x19\x18\x14\xFF\x17\x16\x12\xFF\x17\x17\x13\xFF\x19\x17\x14\xFF"
 	"\x15\x14\x11\xFF\x13\x13\x10\xFF\x4F\x4B\x3E\xFF\x21\x20\x1A\xFF\x22\x21\x1B\xFF\x22\x21\x1C\xFF\x22\x21\x1B\xFF\x21\x21\x1A\xFF"
 	"\x22\x21\x1B\xFF\x21\x20\x1A\xFF\x21\x20\x1A\xFF\x21\x20\x1A\xFF\x22\x21\x1B\xFF\x23\x22\x1D\xFF\x22\x20\x1A\xFF\x21\x20\x1A\xFF"
@@ -1274,6 +1274,66 @@ static void fill_bitmap_alpha_channel(BYTE* data, int width, int height, BYTE va
 	}
 }
 
+void fill_bitmap_red_channel(BYTE* data, int width, int height, BYTE value)
+{
+	int i, j;
+	UINT32* pixel;
+
+	for (i = 0; i < height; i++)
+	{
+		for (j = 0; j < width; j++)
+		{
+			pixel = (UINT32*) &data[((i * width) + j) * 4];
+			*pixel = ((*pixel & 0xFF00FFFF) | (value << 16));
+		}
+	}
+}
+
+void fill_bitmap_green_channel(BYTE* data, int width, int height, BYTE value)
+{
+	int i, j;
+	UINT32* pixel;
+
+	for (i = 0; i < height; i++)
+	{
+		for (j = 0; j < width; j++)
+		{
+			pixel = (UINT32*) &data[((i * width) + j) * 4];
+			*pixel = ((*pixel & 0xFFFF00FF) | (value << 8));
+		}
+	}
+}
+
+void fill_bitmap_blue_channel(BYTE* data, int width, int height, BYTE value)
+{
+	int i, j;
+	UINT32* pixel;
+
+	for (i = 0; i < height; i++)
+	{
+		for (j = 0; j < width; j++)
+		{
+			pixel = (UINT32*) &data[((i * width) + j) * 4];
+			*pixel = ((*pixel & 0xFFFFFF00) | (value));
+		}
+	}
+}
+
+void dump_color_channel(BYTE* data, int width, int height)
+{
+	int i, j;
+
+	for (i = 0; i < height; i++)
+	{
+		for (j = 0; j < width; j++)
+		{
+			printf("%02X%s", *data,
+					((j + 1) == width)? "\n" : " ");
+			data += 4;
+		}
+	}
+}
+
 int TestFreeRDPCodecPlanar(int argc, char* argv[])
 {
 	int i, j;
@@ -1304,9 +1364,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	freerdp_bitmap_planar_delta_encode_plane((BYTE*) TEST_RDP6_SCANLINES_ABSOLUTE, 6, 3, NULL);
 
 	freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RDP6_SCANLINES_DELTA_2C_ENCODED_UNSIGNED, 6, 3, NULL, &dstSize);
-#endif
 
-#if 1
 	for (i = 4; i < 64; i += 4)
 	{
 		width = i;
@@ -1346,9 +1404,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 		free(compressedBitmap);
 		free(decompressedBitmap);
 	}
-#endif
 
-#if 1
 	for (i = 4; i < 64; i += 4)
 	{
 		width = i;
@@ -1457,14 +1513,17 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	}
 
 	fill_bitmap_alpha_channel(decompressedBitmap, width, height, 0xFF);
+	fill_bitmap_alpha_channel((BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_01, width, height, 0xFF);
 
 	if (memcmp(decompressedBitmap, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_01, width * height * 4) != 0)
 	{
-		//printf("experimental bitmap 01\n");
-		//winpr_HexDump((BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_01, width * height * 4);
+#if 0
+		printf("experimental bitmap 01\n");
+		winpr_HexDump((BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_01, width * height * 4);
 
-		//printf("decompressed bitmap\n");
-		//winpr_HexDump(decompressedBitmap, width * height * 4);
+		printf("decompressed bitmap\n");
+		winpr_HexDump(decompressedBitmap, width * height * 4);
+#endif
 
 		printf("error: decompressed experimental bitmap 01 is corrupted\n");
 		return -1;
@@ -1472,6 +1531,8 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	free(compressedBitmap);
 	free(decompressedBitmap);
+
+	return 0;
 
 	/* Experimental Case 02 */
 
@@ -1493,6 +1554,9 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	{
 		printf("success decompressing experimental bitmap 02: width: %d height: %d\n", width, height);
 	}
+
+	fill_bitmap_alpha_channel(decompressedBitmap, width, height, 0xFF);
+	fill_bitmap_alpha_channel((BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_02, width, height, 0xFF);
 
 	if (memcmp(decompressedBitmap, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_02, width * height * 4) != 0)
 	{
