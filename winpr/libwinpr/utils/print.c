@@ -60,6 +60,32 @@ void winpr_HexDump(BYTE* data, int length)
 	}
 }
 
+void winpr_CArrayDump(BYTE* data, int length, int width)
+{
+	BYTE* p = data;
+	int i, line, offset = 0;
+
+	while (offset < length)
+	{
+		line = length - offset;
+
+		if (line > width)
+			line = width;
+
+		printf("\t\"");
+
+		for (i = 0; i < line; i++)
+			printf("\\x%02X", p[i]);
+
+		printf("\"\n");
+
+		offset += line;
+		p += line;
+	}
+
+	printf("\n");
+}
+
 int wvprintfx(const char *fmt, va_list args)
 {
 	return trio_vprintf(fmt, args);

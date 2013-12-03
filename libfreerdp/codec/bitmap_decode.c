@@ -21,7 +21,11 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
 #include <winpr/stream.h>
+
+#include "planar.h"
+
 #include <freerdp/codec/color.h>
 
 #include <freerdp/codec/bitmap.h>
@@ -251,196 +255,12 @@ static UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* advance)
 #define RLEEXTRA
 #include "include/bitmap.c"
 
-#define IN_UINT8_MV(_p) (*((_p)++))
-
-/**
- * decompress an RLE color plane
- * RDP6_BITMAP_STREAM
- */
-static int process_rle_plane(BYTE* in, int width, int height, BYTE* out, int size)
-{
-	int indexw;
-	int indexh;
-	int code;
-	int collen;
-	int replen;
-	int color;
-	int x;
-	int revcode;
-	BYTE* last_line;
-	BYTE* this_line;
-	BYTE* org_in;
-	BYTE* org_out;
-
-	org_in = in;
-	org_out = out;
-	last_line = 0;
-	indexh = 0;
-	while (indexh < height)
-	{
-		out = (org_out + width * height * 4) - ((indexh + 1) * width * 4);
-		color = 0;
-		this_line = out;
-		indexw = 0;
-		if (last_line == 0)
-		{
-			while (indexw < width)
-			{
-				code = IN_UINT8_MV(in);
-				replen = code & 0xf;
-				collen = (code >> 4) & 0xf;
-				revcode = (replen << 4) | collen;
-				if ((revcode <= 47) && (revcode >= 16))
-				{
-					replen = revcode;
-					collen = 0;
-				}
-				while (collen > 0)
-				{
-					color = IN_UINT8_MV(in);
-					*out = color;
-					out += 4;
-					indexw++;
-					collen--;
-				}
-				while (replen > 0)
-				{
-					*out = color;
-					out += 4;
-					indexw++;
-					replen--;
-				}
-			}
-		}
-		else
-		{
-			while (indexw < width)
-			{
-				code = IN_UINT8_MV(in);
-				replen = code & 0xf;
-				collen = (code >> 4) & 0xf;
-				revcode = (replen << 4) | collen;
-				if ((revcode <= 47) && (revcode >= 16))
-				{
-					replen = revcode;
-					collen = 0;
-				}
-				while (collen > 0)
-				{
-					x = IN_UINT8_MV(in);
-					if (x & 1)
-					{
-						x = x >> 1;
-						x = x + 1;
-						color = -x;
-					}
-					else
-					{
-						x = x >> 1;
-						color = x;
-					}
-					x = last_line[indexw * 4] + color;
-					*out = x;
-					out += 4;
-					indexw++;
-					collen--;
-				}
-				while (replen > 0)
-				{
-					x = last_line[indexw * 4] + color;
-					*out = x;
-					out += 4;
-					indexw++;
-					replen--;
-				}
-			}
-		}
-		indexh++;
-		last_line = this_line;
-	}
-	return (int) (in - org_in);
-}
-
-/**
- * process a raw color plane
- */
-static int process_raw_plane(BYTE* srcData, int width, int height, BYTE* dstData, int size)
-{
-	int x, y;
-
-	for (y = 0; y < height; y++)
-	{
-		for (x = 0; x < width; x++)
-		{
-			dstData[(((height - y - 1) * width) + x) * 4] = srcData[((y * width) + x)];
-		}
-	}
-
-	return (width * height);
-}
-
-/**
- * 4 byte bitmap decompress
- * RDP6_BITMAP_STREAM
- */
-static BOOL bitmap_decompress4(BYTE* srcData, BYTE* dstData, int width, int height, int size)
-{
-	int RLE;
-	int code;
-	int NoAlpha;
-	int bytes_processed;
-	int total_processed;
-
-	code = IN_UINT8_MV(srcData);
-	RLE = code & 0x10;
-
-	total_processed = 1;
-	NoAlpha = code & 0x20;
-
-	if (NoAlpha == 0)
-	{
-		bytes_processed = process_rle_plane(srcData, width, height, dstData + 3, size - total_processed);
-		total_processed += bytes_processed;
-		srcData += bytes_processed;
-	}
-
-	if (RLE != 0)
-	{
-		bytes_processed = process_rle_plane(srcData, width, height, dstData + 2, size - total_processed);
-		total_processed += bytes_processed;
-		srcData += bytes_processed;
-
-		bytes_processed = process_rle_plane(srcData, width, height, dstData + 1, size - total_processed);
-		total_processed += bytes_processed;
-		srcData += bytes_processed;
-
-		bytes_processed = process_rle_plane(srcData, width, height, dstData + 0, size - total_processed);
-		total_processed += bytes_processed;
-	}
-	else
-	{
-		bytes_processed = process_raw_plane(srcData, width, height, dstData + 2, size - total_processed);
-		total_processed += bytes_processed;
-		srcData += bytes_processed;
-
-		bytes_processed = process_raw_plane(srcData, width, height, dstData + 1, size - total_processed);
-		total_processed += bytes_processed;
-		srcData += bytes_processed;
-
-		bytes_processed = process_raw_plane(srcData, width, height, dstData + 0, size - total_processed);
-		total_processed += bytes_processed + 1;
-	}
-
-	return (size == total_processed) ? TRUE : FALSE;
-}
-
-
 /**
  * bitmap decompression routine
  */
 BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size, int srcBpp, int dstBpp)
 {
-        BYTE * TmpBfr;
+        BYTE* TmpBfr;
 
 	if (srcBpp == 16 && dstBpp == 16)
 	{
@@ -451,7 +271,7 @@ BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int 
 	}
 	else if (srcBpp == 32 && dstBpp == 32)
 	{
-		if (!bitmap_decompress4(srcData, dstData, width, height, size))
+		if (freerdp_bitmap_planar_decompress(srcData, dstData, width, height, size) < 0)
 			return FALSE;
 	}
 	else if (srcBpp == 15 && dstBpp == 15)
