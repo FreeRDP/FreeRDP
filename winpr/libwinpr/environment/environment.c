@@ -31,9 +31,17 @@
 #define strnicmp strncasecmp
 
 #include <winpr/crt.h>
+#include <winpr/platform.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+#if defined(__IOS__)
+
+#elif defined(__MACOSX__)
+#include <crt_externs.h>
+#define environ (*_NSGetEnviron())
 #endif
 
 DWORD GetCurrentDirectoryA(DWORD nBufferLength, LPSTR lpBuffer)

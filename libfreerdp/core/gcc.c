@@ -232,36 +232,46 @@ BOOL gcc_read_conference_create_response(wStream* s, rdpSettings* settings)
 	BYTE number;
 
 	/* ConnectData */
-	per_read_choice(s, &choice);
-	per_read_object_identifier(s, t124_02_98_oid);
+	if (!per_read_choice(s, &choice) ||
+		!per_read_object_identifier(s, t124_02_98_oid))
+		return FALSE;
 
 	/* ConnectData::connectPDU (OCTET_STRING) */
-	per_read_length(s, &length);
+	if (!per_read_length(s, &length))
+		return FALSE;
 
 	/* ConnectGCCPDU */
-	per_read_choice(s, &choice);
+	if (!per_read_choice(s, &choice))
+		return FALSE;
 
 	/* ConferenceCreateResponse::nodeID (UserID) */
-	per_read_integer16(s, &nodeID, 1001);
+	if (!per_read_integer16(s, &nodeID, 1001))
+		return FALSE;
 
 	/* ConferenceCreateResponse::tag (INTEGER) */
-	per_read_integer(s, &tag);
+	if (!per_read_integer(s, &tag))
+		return FALSE;
 
 	/* ConferenceCreateResponse::result (ENUMERATED) */
-	per_read_enumerated(s, &result, MCS_Result_enum_length);
+	if (!per_read_enumerated(s, &result, MCS_Result_enum_length))
+		return FALSE;
 
 	/* number of UserData sets */
-	per_read_number_of_sets(s, &number);
+	if (!per_read_number_of_sets(s, &number))
+		return FALSE;
 
 	/* UserData::value present + select h221NonStandard (1) */
-	per_read_choice(s, &choice);
+	if (!per_read_choice(s, &choice))
+		return FALSE;
 
 	/* h221NonStandard */
 	if (!per_read_octet_string(s, h221_sc_key, 4, 4)) /* h221NonStandard, server-to-client H.221 key, "McDn" */
 		return FALSE;
 
 	/* userData (OCTET_STRING) */
-	per_read_length(s, &length);
+	if (!per_read_length(s, &length))
+		return FALSE;
+
 	if (!gcc_read_server_data_blocks(s, settings, length))
 	{
 		fprintf(stderr, "gcc_read_conference_create_response: gcc_read_server_data_blocks failed\n");
@@ -1125,7 +1135,7 @@ BOOL gcc_read_server_network_data(wStream* s, rdpSettings* settings)
 {
 	int i;
 	UINT16 MCSChannelId;
-	UINT16 channelCount;
+	UINT16 channelCount, channelsToTreat;
 	UINT16 channelId;
 
 	if(Stream_GetRemainingLength(s) < 4)
@@ -1133,16 +1143,21 @@ BOOL gcc_read_server_network_data(wStream* s, rdpSettings* settings)
 	Stream_Read_UINT16(s, MCSChannelId); /* MCSChannelId */
 	Stream_Read_UINT16(s, channelCount); /* channelCount */
 
+	channelsToTreat = channelCount;
 	if (channelCount != settings->ChannelCount)
 	{
 		fprintf(stderr, "requested %d channels, got %d instead\n",
 				settings->ChannelCount, channelCount);
+
+		// we ensure that the response is not bigger than the request
+		if (channelCount > settings->ChannelCount)
+			channelsToTreat = settings->ChannelCount;
 	}
 
 	if(Stream_GetRemainingLength(s) < channelCount * 2)
 		return FALSE;
 
-	for (i = 0; i < channelCount; i++)
+	for (i = 0; i < channelsToTreat; i++)
 	{
 		Stream_Read_UINT16(s, channelId); /* channelId */
 		settings->ChannelDefArray[i].ChannelId = channelId;
