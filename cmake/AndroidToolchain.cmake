@@ -470,6 +470,7 @@ if( ANDROID_FORBID_SYGWIN )
  endif()
 endif()
 
+# FIXME: properly detect 64-bit host, currently reported as 32-bit
 
 # detect current host platform
 if( NOT DEFINED ANDROID_NDK_HOST_X64 AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "amd64|x86_64|AMD64")
@@ -493,7 +494,7 @@ else()
 endif()
 
 if( NOT ANDROID_NDK_HOST_X64 )
- set( ANDROID_NDK_HOST_SYSTEM_NAME ${ANDROID_NDK_HOST_SYSTEM_NAME2} )
+ #set( ANDROID_NDK_HOST_SYSTEM_NAME ${ANDROID_NDK_HOST_SYSTEM_NAME2} )
 endif()
 
 # see if we have path to Android NDK
