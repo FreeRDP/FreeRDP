@@ -1,7 +1,7 @@
 /*
  bookmarks and active session view controller
  
- Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+ Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
  
  This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -840,12 +840,12 @@
 
 - (NSURL*)manualBookmarksDataStoreURL
 {
-	return [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/%@", [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject], @"com.thinstuff.tsx-rdc-ios.bookmarks.plist"]];
+	return [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/%@", [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject], @"com.freerdp.ifreerdp.bookmarks.plist"]];
 }
 
 - (NSURL*)connectionHistoryDataStoreURL
 {
-	return [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/%@", [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject], @"com.thinstuff.tsx-rdc-ios.connection_history.plist"]];
+	return [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/%@", [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject], @"com.freerdp.ifreerdp.connection_history.plist"]];
 }
 
 @end

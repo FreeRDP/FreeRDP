@@ -16,7 +16,7 @@
 		<string>Icon-72@2x.png</string>
 	</array>
 	<key>CFBundleIdentifier</key>
-	<string>at.thinstuff.ifreerdp</string>
+	<string>com.freerdp.ifreerdp</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
