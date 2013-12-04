@@ -191,11 +191,15 @@ static int freerdp_bitmap_planar_decompress_plane_raw(BYTE* srcData, int width, 
 	return (width * height);
 }
 
+//int g_DecompressCount = 0;
+
 int freerdp_bitmap_planar_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size)
 {
 	BYTE* srcp;
 	int dstSize;
 	BYTE FormatHeader;
+
+	//printf("freerdp_bitmap_planar_decompress: %d\n", ++g_DecompressCount);
 
 	srcp = srcData;
 
@@ -719,6 +723,8 @@ int freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[5], int width, int 
 	return 0;
 }
 
+//static int g_Count = 0;
+
 BYTE* freerdp_bitmap_compress_planar(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* dstData, int* dstSize)
 {
 	int size;
@@ -756,6 +762,28 @@ BYTE* freerdp_bitmap_compress_planar(BYTE* data, UINT32 format, int width, int h
 	freerdp_split_color_planes(data, format, width, height, scanline, planes);
 
 	freerdp_bitmap_planar_delta_encode_planes(planes, width, height, deltaPlanes);
+
+#if 0
+	{
+		g_Count++;
+		BYTE* bitmap;
+		int bitmapLength;
+
+		bitmapLength = width * height * 4;
+		bitmap = malloc(width * height * 4);
+		ZeroMemory(bitmap, bitmapLength);
+
+		freerdp_bitmap_planar_decompress_plane_raw(planes[0], width, height, bitmap + 3, planeSize); /* A */
+		freerdp_bitmap_planar_decompress_plane_raw(planes[1], width, height, bitmap + 2, planeSize); /* R */
+		freerdp_bitmap_planar_decompress_plane_raw(planes[2], width, height, bitmap + 1, planeSize); /* G */
+		freerdp_bitmap_planar_decompress_plane_raw(planes[3], width, height, bitmap + 0, planeSize); /* B */
+
+		printf("Bitmap %02d\n", g_Count);
+		winpr_CArrayDump(bitmap, bitmapLength, 32);
+
+		free(bitmap);
+	}
+#endif
 
 	if (freerdp_bitmap_planar_compress_planes_rle(deltaPlanes, width, height, rlePlanesBuffer, (int*) &dstSizes) > 0)
 	{
