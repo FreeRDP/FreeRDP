@@ -263,6 +263,8 @@ static char testRdpFileUTF8[] =
 int TestClientRdpFile(int argc, char* argv[])
 {
 	int index;
+	int iValue;
+	char* sValue;
 	rdpFile* file;
 	rdpFileLine* line;
 
@@ -327,6 +329,17 @@ int TestClientRdpFile(int argc, char* argv[])
 				file->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local");
 		return -1;
 	}
+
+	iValue = freerdp_client_rdp_file_get_integer_option(file, "vendor integer");
+	freerdp_client_rdp_file_set_integer_option(file, "vendor integer", 456);
+	iValue = freerdp_client_rdp_file_get_integer_option(file, "vendor integer");
+
+	sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
+	freerdp_client_rdp_file_set_string_option(file, "vendor string", "apple");
+	sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
+
+	freerdp_client_rdp_file_set_string_option(file, "fruits", "banana,oranges");
+	freerdp_client_rdp_file_set_integer_option(file, "numbers", 123456789);
 
 	for (index = 0; index < file->lineCount; index++)
 	{

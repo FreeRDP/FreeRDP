@@ -295,7 +295,7 @@ BOOL freerdp_client_rdp_file_set_string(rdpFile* file, char* name, char* value, 
 		if (bStandard)
 			file->lines[index].flags |= RDP_FILE_LINE_FLAG_STANDARD;
 
-		file->lines[index].valueLength = strlen(file->lines[index].sValue);
+		file->lines[index].valueLength = 0;
 	}
 
 	return bStandard;
@@ -313,8 +313,11 @@ void freerdp_client_add_option(rdpFile* file, char* option)
 	(file->argc)++;
 }
 
-void freerdp_client_parse_rdp_file_add_line(rdpFile* file, char* line, int index)
+int freerdp_client_parse_rdp_file_add_line(rdpFile* file, char* line, int index)
 {
+	if (index < 0)
+		index = file->lineCount;
+
 	while ((file->lineCount + 1) > file->lineSize)
 	{
 		file->lineSize *= 2;
@@ -325,6 +328,8 @@ void freerdp_client_parse_rdp_file_add_line(rdpFile* file, char* line, int index
 	file->lines[file->lineCount].text = _strdup(line);
 	file->lines[file->lineCount].index = index;
 	(file->lineCount)++;
+
+	return index;
 }
 
 void freerdp_client_parse_rdp_file_add_line_unicode(rdpFile* file, WCHAR* line, int index)
@@ -1055,6 +1060,137 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	}
 
 	return TRUE;
+}
+
+rdpFileLine* freerdp_client_rdp_file_find_line_index(rdpFile* file, int index)
+{
+	rdpFileLine* line;
+
+	line = &(file->lines[index]);
+
+	return line;
+}
+
+rdpFileLine* freerdp_client_rdp_file_find_line_by_name(rdpFile* file, const char* name)
+{
+	int index;
+	BOOL bFound = FALSE;
+	rdpFileLine* line = NULL;
+
+	for (index = 0; index < file->lineCount; index++)
+	{
+		line = &(file->lines[index]);
+
+		if (line->flags & RDP_FILE_LINE_FLAG_FORMATTED)
+		{
+			if (strcmp(name, line->name) == 0)
+			{
+				bFound = TRUE;
+				break;
+			}
+		}
+	}
+
+	return (bFound) ? line : NULL;
+}
+
+int freerdp_client_rdp_file_set_string_option(rdpFile* file, const char* name, const char* value)
+{
+	int index;
+	int length;
+	char* text;
+	rdpFileLine* line;
+
+	line = freerdp_client_rdp_file_find_line_by_name(file, name);
+
+	length = _scprintf("%s:s:%s", name, value);
+	text = (char*) malloc(length + 1);
+	sprintf_s(text, length, "%s:s:%s", name, value);
+	text[length] = '\0';
+
+	if (line)
+	{
+		free(line->sValue);
+		line->sValue = _strdup(value);
+
+		free(line->text);
+		line->text = text;
+	}
+	else
+	{
+		index = freerdp_client_parse_rdp_file_add_line(file, text, -1);
+		line = freerdp_client_rdp_file_find_line_index(file, index);
+
+		freerdp_client_rdp_file_set_string(file, (char*) name, (char*) value, index);
+
+		free(text);
+	}
+
+	return 0;
+}
+
+char* freerdp_client_rdp_file_get_string_option(rdpFile* file, const char* name)
+{
+	rdpFileLine* line;
+
+	line = freerdp_client_rdp_file_find_line_by_name(file, name);
+
+	if (!line)
+		return NULL;
+
+	if (!(line->flags & RDP_FILE_LINE_FLAG_TYPE_STRING))
+		return NULL;
+
+	return line->sValue;
+}
+
+int freerdp_client_rdp_file_set_integer_option(rdpFile* file, const char* name, int value)
+{
+	int index;
+	int length;
+	char* text;
+	rdpFileLine* line;
+
+	line = freerdp_client_rdp_file_find_line_by_name(file, name);
+
+	length = _scprintf("%s:i:%d", name, value);
+	text = (char*) malloc(length + 1);
+	sprintf_s(text, length, "%s:i:%d", name, value);
+	text[length] = '\0';
+
+	if (line)
+	{
+		line->iValue = value;
+
+		free(line->text);
+		line->text = text;
+	}
+	else
+	{
+		index = freerdp_client_parse_rdp_file_add_line(file, text, -1);
+		line = freerdp_client_rdp_file_find_line_index(file, index);
+
+		freerdp_client_rdp_file_set_integer(file, (char*) name, value, index);
+
+		free(text);
+	}
+
+	return 0;
+}
+
+int freerdp_client_rdp_file_get_integer_option(rdpFile* file, const char* name)
+{
+	rdpFileLine* line;
+
+	line = freerdp_client_rdp_file_find_line_by_name(file, name);
+
+	if (!line)
+		return -1;
+
+	if (!(line->flags & RDP_FILE_LINE_FLAG_TYPE_INTEGER))
+		return -1;
+
+	return line->iValue;
 }
 
 void freerdp_client_file_string_check_free(LPSTR str)
