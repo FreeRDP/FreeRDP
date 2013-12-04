@@ -862,37 +862,6 @@ int freerdp_client_load_settings_from_rdp_file(wfContext* wfc, char* filename)
 	return 0;
 }
 
-int freerdp_client_save_settings_to_rdp_file(wfContext* wfc, char* filename)
-{
-	if (!filename)
-		return 1;
-
-	if (wfc->instance->settings->ConnectionFile)
-	{
-		free(wfc->instance->settings->ConnectionFile);
-	}
-
-	wfc->instance->settings->ConnectionFile = _strdup(filename);
-
-	// Reuse existing rdpFile structure if available, to preserve unsupported settings when saving to disk.
-	if (wfc->connectionRdpFile == NULL)
-	{
-		wfc->connectionRdpFile = freerdp_client_rdp_file_new();
-	}
-
-	if (!freerdp_client_populate_rdp_file_from_settings(wfc->connectionRdpFile, wfc->instance->settings))
-	{
-		return 1;
-	}
-
-	if (!freerdp_client_write_rdp_file(wfc->connectionRdpFile, filename, UNICODE));
-	{
-		return 2;
-	}
-
-	return 0;
-}
-
 void wf_size_scrollbars(wfContext* wfc, int client_width, int client_height)
 {
 	BOOL rc;
