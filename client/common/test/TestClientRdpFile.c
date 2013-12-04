@@ -256,11 +256,15 @@ static char testRdpFileUTF8[] =
 	"rdgiskdcproxy:i:0\n"
 	"kdcproxyname:s:\n"
 	"drivestoredirect:s:*\n"
-	"username:s:LAB1\\JohnDoe\n";
+	"username:s:LAB1\\JohnDoe\n"
+	"vendor integer:i:123\n"
+	"vendor string:s:microsoft\n";
 
 int TestClientRdpFile(int argc, char* argv[])
 {
+	int index;
 	rdpFile* file;
+	rdpFileLine* line;
 
 	/* Unicode */
 
@@ -322,6 +326,27 @@ int TestClientRdpFile(int argc, char* argv[])
 		printf("GatewayHostname mismatch: Actual: %s, Expected: %s\n",
 				file->GatewayHostname, "LAB1-W2K8R2-GW.lab1.awake.local");
 		return -1;
+	}
+
+	for (index = 0; index < file->lineCount; index++)
+	{
+		line = &(file->lines[index]);
+
+		if (line->flags & RDP_FILE_LINE_FLAG_FORMATTED)
+		{
+			if (line->flags & RDP_FILE_LINE_FLAG_TYPE_STRING)
+			{
+				printf("line %02d: name: %s value: %s, %s\n",
+					line->index, line->name, line->sValue,
+					(line->flags & RDP_FILE_LINE_FLAG_STANDARD) ? "standard" : "non-standard");
+			}
+			else if (line->flags & RDP_FILE_LINE_FLAG_TYPE_INTEGER)
+			{
+				printf("line %02d: name: %s value: %d, %s\n",
+					line->index, line->name, line->iValue,
+					(line->flags & RDP_FILE_LINE_FLAG_STANDARD) ? "standard" : "non-standard");
+			}
+		}
 	}
 
 	freerdp_client_rdp_file_free(file);

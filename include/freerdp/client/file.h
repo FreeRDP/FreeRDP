@@ -23,6 +23,25 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
+#define RDP_FILE_LINE_FLAG_FORMATTED		0x00000001
+#define RDP_FILE_LINE_FLAG_STANDARD		0x00000002
+#define RDP_FILE_LINE_FLAG_TYPE_STRING		0x00000010
+#define RDP_FILE_LINE_FLAG_TYPE_INTEGER		0x00000020
+#define RDP_FILE_LINE_FLAG_TYPE_BINARY		0x00000040
+
+struct rdp_file_line
+{
+	int index;
+	char* text;
+	DWORD flags;
+	char* name;
+	LPSTR sValue;
+	DWORD iValue;
+	PBYTE bValue;
+	int valueLength;
+};
+typedef struct rdp_file_line rdpFileLine;
+
 struct rdp_file
 {
 	DWORD UseMultiMon; /* use multimon */
@@ -129,6 +148,10 @@ struct rdp_file
 	LPSTR DrivesToRedirect; /* drivestoredirect */
 	LPSTR DevicesToRedirect; /* devicestoredirect */
 	LPSTR WinPosStr; /* winposstr */
+
+	int lineCount;
+	int lineSize;
+	rdpFileLine* lines;
 
 	int argc;
 	char** argv;
