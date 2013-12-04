@@ -101,24 +101,25 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 		settings->LoadBalanceInfo = (BYTE*) malloc(settings->LoadBalanceInfoLength);
 		CopyMemory(settings->LoadBalanceInfo, redirection->LoadBalanceInfo, settings->LoadBalanceInfoLength);
 	}
-	else
+	
+	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 	{
-		if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
-		{
 			free(settings->TargetNetAddress);
 			settings->TargetNetAddress = _strdup(redirection->TargetNetAddress);
-		}
-		else if (settings->RedirectionFlags & LB_TARGET_FQDN)
+	}
+	
+	if (settings->RedirectionFlags & LB_TARGET_FQDN)
 		{
 			free(settings->RedirectionTargetFQDN);
 			settings->RedirectionTargetFQDN = _strdup(redirection->TargetFQDN);
 		}
-		else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
-		{
+	
+	if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
+	{
 			free(settings->RedirectionTargetNetBiosName);
 			settings->RedirectionTargetNetBiosName = _strdup(redirection->TargetNetBiosName);
-		}
 	}
+	
 
 	if (settings->RedirectionFlags & LB_USERNAME)
 	{
@@ -190,9 +191,15 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 #endif
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESS)
-	{
-		if (!rdp_redirection_read_string(s, &(redirection->TargetNetAddress)))
-			return -1;
+	{	if (!rdp_redirection_read_string(s, &(redirection->TargetNetAddress)))
+			{
+				DEBUG_REDIR("Failed to read target net address");
+				return -1;	
+			}
+		#ifdef WITH_DEBUG_REDIR
+			else
+				WLog_Print(redirection->log, WLOG_DEBUG, "Redirection address: %s",	redirection->TargetNetAddress);
+		#endif		
 	}
 
 	if (redirection->flags & LB_LOAD_BALANCE_INFO)
@@ -247,7 +254,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_FQDN)
 	{
-		if (!rdp_redirection_read_string(s, &(redirection->TargetFQDN)))
+			if (!rdp_redirection_read_string(s, &(redirection->TargetFQDN)))
 			return -1;
 
 		WLog_Print(redirection->log, WLOG_DEBUG, "TargetFQDN: %s", redirection->TargetFQDN);
@@ -308,11 +315,24 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	if (!Stream_SafeSeek(s, 8)) /* pad (8 bytes) */
-		return -1;
+	 if (!Stream_SafeSeek(s, 8)) /* pad (8 bytes) */
+	 {
+		if (redirection->flags & LB_NOREDIRECT)
+		{
+			DEBUG_REDIR("8 byte pad stream seek failed, but we're not reconnecting so ignore for now");
+			return 0;
+		}
 
+		DEBUG_REDIR("Stream seek for 8 byte pad failed, but ignore - ideally check for server 2003 first...");
+		// return -1;
+	}
+
+#ifdef WITH_DEBUG_REDIR
 	if (redirection->flags & LB_NOREDIRECT)
-		return 0;
+	{
+		DEBUG_REDIR("No redirect requested but should reconnect anyway");
+	}
+#endif
 
 	return rdp_client_redirect(rdp);
 }

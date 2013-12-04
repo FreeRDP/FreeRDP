@@ -295,14 +295,17 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	rdp_reset(rdp);
 
 	rdp_redirection_apply_settings(rdp);
-
+	
 	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
 	{
 		nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
+		#ifdef WITH_DEBUG_REDIR
+			fprintf(stderr, "Using token based routing\n");
+		#endif
 	}
-	else
-	{
-		if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+	
+	// this used to be an else against the token routing, however for 2003 we may get both LB info & a noredirect for a token based initial connect
+	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->TargetNetAddress);
@@ -317,7 +320,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->RedirectionTargetNetBiosName);
 		}
-	}
+	// end of token routed alternative branch...
 
 	if (settings->RedirectionFlags & LB_USERNAME)
 	{

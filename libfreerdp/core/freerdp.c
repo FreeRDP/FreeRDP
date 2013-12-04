@@ -218,6 +218,9 @@ BOOL freerdp_check_fds(freerdp* instance)
 
 	if (status < 0)
 	{
+#ifdef WITH_DEBUG_REDIR
+		fprintf(stderr, "Exiting due to fds check fail\n");
+#endif
 		TerminateEventArgs e;
 		rdpContext* context = instance->context;
 

@@ -74,6 +74,10 @@ BOOL transport_disconnect(rdpTransport* transport)
 {
 	BOOL status = TRUE;
 
+	#ifdef WITH_DEBUG_REDIR
+		fprintf(stderr, "Disconnecting server..\n");
+	#endif
+
 	if (!transport)
 		return FALSE;
 
@@ -336,6 +340,10 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	rdpSettings* settings = transport->settings;
 
 	transport->async = settings->AsyncTransport;
+
+	#ifdef WITH_DEBUG_REDIR
+		fprintf(stderr, "Connecting server..\n");
+	#endif
 
 	if (transport->settings->GatewayEnabled)
 	{
@@ -905,6 +913,12 @@ int transport_check_fds(rdpTransport* transport)
 		 */
 
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
+
+		if (recv_status == -1) //ignore errr for 2003 farm compatibility. 
+		{
+			DEBUG_REDIR("Callback status overridden: -1\n");
+			return 0;
+		}
 
 		if (recv_status == 1)
 		{
