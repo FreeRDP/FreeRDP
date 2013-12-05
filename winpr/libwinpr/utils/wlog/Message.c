@@ -39,6 +39,9 @@ char* WLog_Message_GetOutputFileName(int id, const char* ext)
 
 	FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
 
+	if (!PathFileExistsA(FilePath))
+		CreateDirectoryA(FilePath, NULL);
+
 	FileName = (char*) malloc(256);
 
 	if (id >= 0)
