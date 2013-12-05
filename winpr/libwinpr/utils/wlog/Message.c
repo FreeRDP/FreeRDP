@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/file.h>
 
 #include <winpr/wlog.h>
 
