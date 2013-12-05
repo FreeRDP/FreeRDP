@@ -430,12 +430,6 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
 		[[self delegate] sessionBitmapContextDidChange:self];
 }
 
-- (void)showGoProScreen
-{
-	if ([[self delegate] respondsToSelector:@selector(showGoProScreen:)])
-		[[self delegate] showGoProScreen:self];    
-}
-
 - (void)sessionRequestsAuthenticationWithParams:(NSMutableDictionary*)params
 {
 	if ([[self delegate] respondsToSelector:@selector(session:requestsAuthenticationWithParams:)])

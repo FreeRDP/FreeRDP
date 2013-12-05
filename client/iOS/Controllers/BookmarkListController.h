@@ -26,12 +26,10 @@
    
 	// array with search results (or nil if no search active)
 	NSMutableArray* _manual_search_result;
-	NSMutableArray* _tsxconnect_search_result;   
     NSMutableArray* _history_search_result;
 
     // bookmark arrays
     NSMutableArray* _manual_bookmarks;
-    NSMutableArray* _tsxconnect_bookmarks;
     
     // bookmark star images
     UIImage* _star_on_img;
@@ -45,9 +43,6 @@
     
     // temporary bookmark when asking if the user wants to store a bookmark for a session initiated by a quick connect
     ComputerBookmark* _temporary_bookmark;
-    
-    // reachability notification helper for tsx connect
-    Reachability* _tsxconnect_reachability;
 }
 
 @property (nonatomic, retain) IBOutlet UISearchBar* searchBar;

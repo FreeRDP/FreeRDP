@@ -33,7 +33,6 @@ extern NSString* TSXSessionDidFailToConnectNotification;
 - (void)sessionBitmapContextDidChange:(RDPSession*)session;
 - (void)session:(RDPSession*)session needsRedrawInRect:(CGRect)rect;
 - (CGSize)sizeForFitScreenForSession:(RDPSession*)session;
-- (void)showGoProScreen:(RDPSession*)session;
 
 - (void)session:(RDPSession*)session requestsAuthenticationWithParams:(NSMutableDictionary*)params;
 - (void)session:(RDPSession*)session verifyCertificateWithParams:(NSMutableDictionary*)params;
