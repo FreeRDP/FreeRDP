@@ -893,8 +893,6 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationIcon, file->RemoteApplicationIcon);
 	if (~((size_t) file->RemoteApplicationFile))
 		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationGuid, file->RemoteApplicationGuid);
-	if (~((size_t) file->RemoteApplicationGuid))
-		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationGuid, file->RemoteApplicationGuid);
 	if (~((size_t) file->RemoteApplicationCmdLine))
 		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationCmdLine, file->RemoteApplicationCmdLine);
 
