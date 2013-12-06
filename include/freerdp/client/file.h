@@ -173,7 +173,7 @@ FREERDP_API BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* 
 FREERDP_API size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, size_t size);
 
 FREERDP_API int freerdp_client_rdp_file_set_string_option(rdpFile* file, const char* name, const char* value);
-FREERDP_API char* freerdp_client_rdp_file_get_string_option(rdpFile* file, const char* name);
+FREERDP_API const char* freerdp_client_rdp_file_get_string_option(rdpFile* file, const char* name);
 
 FREERDP_API int freerdp_client_rdp_file_set_integer_option(rdpFile* file, const char* name, int value);
 FREERDP_API int freerdp_client_rdp_file_get_integer_option(rdpFile* file, const char* name);
