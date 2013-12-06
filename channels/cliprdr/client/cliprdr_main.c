@@ -57,7 +57,7 @@ CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr)
 {
 	CliprdrClientContext* pInterface;
 	rdpSvcPlugin* plugin = (rdpSvcPlugin*) cliprdr;
-	pInterface = (CliprdrClientContext*) *(plugin->channel_entry_points.ppInterface);
+	pInterface = (CliprdrClientContext*) plugin->channel_entry_points.pInterface;
 	return pInterface;
 }
 

@@ -42,7 +42,7 @@ RailClientContext* rail_get_client_interface(void* railObject)
 {
 	RailClientContext* pInterface;
 	rdpSvcPlugin* plugin = (rdpSvcPlugin*) railObject;
-	pInterface = (RailClientContext*) *(plugin->channel_entry_points.ppInterface);
+	pInterface = (RailClientContext*) plugin->channel_entry_points.pInterface;
 	return pInterface;
 }
 
@@ -503,25 +503,25 @@ int rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RE
 
 int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
-	railPlugin* _p;
+	railPlugin* rail;
 	RailClientContext* context;
 	CHANNEL_ENTRY_POINTS_EX* pEntryPointsEx;
 
-	_p = (railPlugin*) malloc(sizeof(railPlugin));
-	ZeroMemory(_p, sizeof(railPlugin));
+	rail = (railPlugin*) malloc(sizeof(railPlugin));
+	ZeroMemory(rail, sizeof(railPlugin));
 
-	_p->plugin.channel_def.options =
+	rail->plugin.channel_def.options =
 			CHANNEL_OPTION_INITIALIZED |
 			CHANNEL_OPTION_ENCRYPT_RDP |
 			CHANNEL_OPTION_COMPRESS_RDP |
 			CHANNEL_OPTION_SHOW_PROTOCOL;
 
-	strcpy(_p->plugin.channel_def.name, "rail");
+	strcpy(rail->plugin.channel_def.name, "rail");
 
-	_p->plugin.connect_callback = rail_process_connect;
-	_p->plugin.receive_callback = rail_process_receive;
-	_p->plugin.event_callback = rail_process_event;
-	_p->plugin.terminate_callback = rail_process_terminate;
+	rail->plugin.connect_callback = rail_process_connect;
+	rail->plugin.receive_callback = rail_process_receive;
+	rail->plugin.event_callback = rail_process_event;
+	rail->plugin.terminate_callback = rail_process_terminate;
 
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_EX*) pEntryPoints;
 
@@ -530,7 +530,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	{
 		context = (RailClientContext*) malloc(sizeof(RailClientContext));
 
-		context->handle = (void*) _p;
+		context->handle = (void*) rail;
 
 		context->ClientExecute = rail_client_execute;
 		context->ClientActivate = rail_client_activate;
@@ -557,11 +557,11 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	}
 
 	WLog_Init();
-	_p->log = WLog_Get("com.freerdp.channels.rail.client");
+	rail->log = WLog_Get("com.freerdp.channels.rail.client");
 
-	WLog_Print(_p->log, WLOG_DEBUG, "VirtualChannelEntry");
+	WLog_Print(rail->log, WLOG_DEBUG, "VirtualChannelEntry");
 
-	svc_plugin_init((rdpSvcPlugin*) _p, pEntryPoints);
+	svc_plugin_init((rdpSvcPlugin*) rail, pEntryPoints);
 
 	return 1;
 }
