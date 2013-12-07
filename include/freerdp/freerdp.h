@@ -204,7 +204,11 @@ struct rdp_freerdp
 																						Callback for cleaning up resources allocated
 																						by connect callbacks. */
 
-	UINT64 paddingD[64 - 56]; /* 56 */
+	ALIGN64 pAuthenticate GatewayAuthenticate; /**< (offset 56)
+									 Callback for gateway authentication.
+									 It is used to get the username/password when it was not provided at connection time. */
+
+	UINT64 paddingD[64 - 57]; /* 57 */
 
 	ALIGN64 pSendChannelData SendChannelData; /* (offset 64)
 										 Callback for sending data to a channel.

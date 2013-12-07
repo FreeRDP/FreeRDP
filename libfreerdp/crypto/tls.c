@@ -214,18 +214,7 @@ BOOL tls_connect(rdpTls* tls)
 		return FALSE;
 	}
 
-	if (tls->settings->GatewayEnabled)
-	{
-		hostname = tls->settings->GatewayHostname;
-		port = tls->settings->GatewayPort;
-	}
-	else
-	{
-		hostname = tls->settings->ServerHostname;
-		port = tls->settings->ServerPort;
-	}
-
-	if (!tls_verify_certificate(tls, cert, hostname, port))
+	if (!tls_verify_certificate(tls, cert, tls->hostname, tls->port))
 	{
 		fprintf(stderr, "tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
