@@ -699,6 +699,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_CompDeskSupportLevel				3456
 #define FreeRDP_SurfaceCommandsEnabled				3520
 #define FreeRDP_FrameMarkerCommandEnabled			3521
+#define FreeRDP_SurfaceFrameMarkerEnabled			3522
 #define FreeRDP_RemoteFxOnly					3648
 #define FreeRDP_RemoteFxCodec					3649
 #define FreeRDP_RemoteFxCodecId					3650
@@ -1175,7 +1176,8 @@ struct rdp_settings
 	/* Surface Commands Capabilities */
 	ALIGN64 BOOL SurfaceCommandsEnabled; /* 3520 */
 	ALIGN64 BOOL FrameMarkerCommandEnabled; /* 3521 */
-	UINT64 padding3584[3584 - 3522]; /* 3522 */
+	ALIGN64 BOOL SurfaceFrameMarkerEnabled; /* 3522 */
+	UINT64 padding3584[3584 - 3523]; /* 3523 */
 	UINT64 padding3648[3648 - 3584]; /* 3584 */
 
 	/*
