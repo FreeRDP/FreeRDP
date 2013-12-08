@@ -22,7 +22,11 @@ set(${MODULE_PREFIX}_SRCS
 	interlocked.c)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+	if (${CMAKE_SYSTEM_VERSION} GREATER "5.1")
+		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+	else()
+		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module_5.1.def)
+	endif()
 endif()
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"

@@ -25,6 +25,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/version.h>
 
 #include <android/bitmap.h>
 
