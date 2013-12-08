@@ -313,7 +313,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->DrawGdiPlusEnabled = FALSE;
 
 		settings->FrameMarkerCommandEnabled = FALSE;
-		settings->SurfaceCommandsEnabled = FALSE;
+		settings->SurfaceFrameMarkerEnabled = TRUE;
 		settings->BitmapCacheV3Enabled = FALSE;
 
 		settings->BitmapCacheEnabled = TRUE;
