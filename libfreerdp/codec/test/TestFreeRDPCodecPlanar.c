@@ -1858,6 +1858,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	int dstSize;
 	UINT32 format;
 	HCLRCONV clrconv;
+	DWORD planarFlags;
 	BYTE* srcBitmap32;
 	BYTE* srcBitmap16;
 	int width, height;
@@ -1866,6 +1867,12 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	BYTE* randomBitmap;
 	BYTE* compressedBitmap;
 	BYTE* decompressedBitmap;
+	BITMAP_PLANAR_CONTEXT* planar;
+
+	planarFlags = PLANAR_FORMAT_HEADER_NA;
+	//planarFlags |= PLANAR_FORMAT_HEADER_RLE;
+
+	planar = freerdp_bitmap_planar_context_new(planarFlags, 64, 64);
 
 	clrconv = freerdp_clrconv_new(0);
 	srcBitmap16 = (BYTE*) TEST_RLE_UNCOMPRESSED_BITMAP_16BPP;
@@ -1874,8 +1881,8 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	format = FREERDP_PIXEL_FORMAT(32, FREERDP_PIXEL_FORMAT_TYPE_ARGB, FREERDP_PIXEL_FLIP_NONE);
 
-#if 0
-	freerdp_bitmap_compress_planar(srcBitmap32, format, 32, 32, 32 * 4, NULL, &dstSize);
+#if 1
+	freerdp_bitmap_compress_planar(planar, srcBitmap32, format, 32, 32, 32 * 4, NULL, &dstSize);
 
 	freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RLE_SCANLINE_UNCOMPRESSED, 12, 1, NULL, &dstSize);
 
@@ -1892,7 +1899,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 		FillMemory(whiteBitmap, width * height * 4, 0xFF);
 		fill_bitmap_alpha_channel(whiteBitmap, width, height, 0x00);
 
-		compressedBitmap = freerdp_bitmap_compress_planar(whiteBitmap, format, width, height, width * 4, NULL, &dstSize);
+		compressedBitmap = freerdp_bitmap_compress_planar(planar, whiteBitmap, format, width, height, width * 4, NULL, &dstSize);
 
 		decompressedBitmap = (BYTE*) malloc(width * height * 4);
 		ZeroMemory(decompressedBitmap, width * height * 4);
@@ -1932,7 +1939,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 		ZeroMemory(blackBitmap, width * height * 4);
 		fill_bitmap_alpha_channel(blackBitmap, width, height, 0x00);
 
-		compressedBitmap = freerdp_bitmap_compress_planar(blackBitmap, format, width, height, width * 4, NULL, &dstSize);
+		compressedBitmap = freerdp_bitmap_compress_planar(planar, blackBitmap, format, width, height, width * 4, NULL, &dstSize);
 
 		decompressedBitmap = (BYTE*) malloc(width * height * 4);
 		ZeroMemory(decompressedBitmap, width * height * 4);
@@ -1977,7 +1984,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 		fill_bitmap_alpha_channel(randomBitmap, width, height, 0x00);
 
-		compressedBitmap = freerdp_bitmap_compress_planar(randomBitmap, format, width, height, width * 4, NULL, &dstSize);
+		compressedBitmap = freerdp_bitmap_compress_planar(planar, randomBitmap, format, width, height, width * 4, NULL, &dstSize);
 
 		decompressedBitmap = (BYTE*) malloc(width * height * 4);
 		ZeroMemory(decompressedBitmap, width * height * 4);
@@ -2009,13 +2016,13 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	}
 #endif
 
-#if 0
+#if 1
 	/* Experimental Case 01 */
 
 	width = 64;
 	height = 64;
 
-	compressedBitmap = freerdp_bitmap_compress_planar((BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_01,
+	compressedBitmap = freerdp_bitmap_compress_planar(planar, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_01,
 			format, width, height, width * 4, NULL, &dstSize);
 
 	decompressedBitmap = (BYTE*) malloc(width * height * 4);
@@ -2052,13 +2059,13 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	free(decompressedBitmap);
 #endif
 
-#if 0
+#if 1
 	/* Experimental Case 02 */
 
 	width = 64;
 	height = 64;
 
-	compressedBitmap = freerdp_bitmap_compress_planar((BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_02,
+	compressedBitmap = freerdp_bitmap_compress_planar(planar, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_02,
 			format, width, height, width * 4, NULL, &dstSize);
 
 	decompressedBitmap = (BYTE*) malloc(width * height * 4);
@@ -2100,7 +2107,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	width = 64;
 	height = 64;
 
-	compressedBitmap = freerdp_bitmap_compress_planar((BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_03,
+	compressedBitmap = freerdp_bitmap_compress_planar(planar, (BYTE*) TEST_RLE_BITMAP_EXPERIMENTAL_03,
 			format, width, height, width * 4, NULL, &dstSize);
 
 	decompressedBitmap = (BYTE*) malloc(width * height * 4);
@@ -2138,6 +2145,8 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	freerdp_clrconv_free(clrconv);
 	free(srcBitmap32);
+
+	freerdp_bitmap_planar_context_free(planar);
 
 	return 0;
 }

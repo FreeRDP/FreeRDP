@@ -313,6 +313,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->DrawGdiPlusEnabled = FALSE;
 
 		settings->FrameMarkerCommandEnabled = FALSE;
+		settings->SurfaceFrameMarkerEnabled = TRUE;
 		settings->BitmapCacheV3Enabled = FALSE;
 
 		settings->BitmapCacheEnabled = TRUE;
@@ -668,6 +669,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->SoundBeepsEnabled = settings->SoundBeepsEnabled; /* 2944 */
 		_settings->SurfaceCommandsEnabled = settings->SurfaceCommandsEnabled; /* 3520 */
 		_settings->FrameMarkerCommandEnabled = settings->FrameMarkerCommandEnabled; /* 3521 */
+		_settings->SurfaceFrameMarkerEnabled = settings->SurfaceFrameMarkerEnabled; /* 3522 */
 		_settings->RemoteFxOnly = settings->RemoteFxOnly; /* 3648 */
 		_settings->RemoteFxCodec = settings->RemoteFxCodec; /* 3649 */
 		_settings->RemoteFxImageCodec = settings->RemoteFxImageCodec; /* 3652 */

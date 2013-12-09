@@ -23,6 +23,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/codec/color.h>
+#include <freerdp/codec/bitmap.h>
 
 #define PLANAR_CONTROL_BYTE(_nRunLength, _cRawBytes) \
 	(_nRunLength & 0x0F) | ((_cRawBytes & 0x0F) << 4)
@@ -49,10 +50,6 @@ struct _RDP6_RLE_SEGMENTS
 };
 typedef struct _RDP6_RLE_SEGMENTS RDP6_RLE_SEGMENTS;
 
-#define PLANAR_FORMAT_HEADER_CS		(1 << 3)
-#define PLANAR_FORMAT_HEADER_RLE	(1 << 4)
-#define PLANAR_FORMAT_HEADER_NA		(1 << 5)
-
 struct _RDP6_BITMAP_STREAM
 {
 	/**
@@ -67,11 +64,34 @@ struct _RDP6_BITMAP_STREAM
 };
 typedef struct _RDP6_BITMAP_STREAM RDP6_BITMAP_STREAM;
 
+struct _BITMAP_PLANAR_CONTEXT
+{
+	int maxWidth;
+	int maxHeight;
+	int maxPlaneSize;
+
+	BOOL AllowSkipAlpha;
+	BOOL AllowRunLengthEncoding;
+	BOOL AllowColorSubsampling;
+	BOOL AllowDynamicColorFidelity;
+
+	int ColorLossLevel;
+
+	BYTE* planes[4];
+	BYTE* planesBuffer;
+
+	BYTE* deltaPlanes[4];
+	BYTE* deltaPlanesBuffer;
+
+	BYTE* rlePlanes[4];
+	BYTE* rlePlanesBuffer;
+};
+
 int freerdp_bitmap_planar_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size);
 
-int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[5]);
+int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[4]);
 BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* plane, int width, int height, BYTE* outPlane, int* dstSize);
 BYTE* freerdp_bitmap_planar_delta_encode_plane(BYTE* inPlane, int width, int height, BYTE* outPlane);
-int freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[5], int width, int height, BYTE* outPlanes[5]);
+int freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[4], int width, int height, BYTE* outPlanes[4]);
 
 #endif /* FREERDP_CODEC_PLANAR_PRIVATE_H */
