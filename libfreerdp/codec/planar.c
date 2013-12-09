@@ -449,12 +449,9 @@ int freerdp_bitmap_planar_compress_plane_rle_segment(PLANAR_RLE_CONTEXT* rle)
 				*rle->output = PLANAR_CONTROL_BYTE(rle->nRunLength, rle->cRawBytes);
 				rle->output++;
 
-				if (rle->cRawBytes)
-				{
-					CopyMemory(rle->output, rle->rawValues, rle->cRawBytes);
-					rle->rawValues += (rle->cRawBytes + rle->nRunLength);
-					rle->output += rle->cRawBytes;
-				}
+				CopyMemory(rle->output, rle->rawValues, rle->cRawBytes);
+				rle->rawValues += (rle->cRawBytes + rle->nRunLength);
+				rle->output += rle->cRawBytes;
 
 				rle->cRawBytes = 0;
 				rle->nRunLength = 0;
@@ -466,7 +463,7 @@ int freerdp_bitmap_planar_compress_plane_rle_segment(PLANAR_RLE_CONTEXT* rle)
 		{
 			if (rle->nRunLength > 15)
 			{
-				rle->nControlBytes = 2;
+				rle->nControlBytes = 1;
 				rle->outSegmentSize = rle->cRawBytes + rle->nControlBytes;
 
 				if (((rle->output - rle->outPlane) + rle->outSegmentSize) > rle->outPlaneSize)
@@ -484,12 +481,9 @@ int freerdp_bitmap_planar_compress_plane_rle_segment(PLANAR_RLE_CONTEXT* rle)
 				*rle->output = PLANAR_CONTROL_BYTE(15, rle->cRawBytes);
 				rle->output++;
 
-				if (rle->cRawBytes)
-				{
-					CopyMemory(rle->output, rle->rawValues, rle->cRawBytes);
-					rle->rawValues += (rle->cRawBytes + rle->nRunLength);
-					rle->output += rle->cRawBytes;
-				}
+				CopyMemory(rle->output, rle->rawValues, rle->cRawBytes);
+				rle->rawValues += (rle->cRawBytes + 15);
+				rle->output += rle->cRawBytes;
 
 				rle->nRunLength -= 15;
 				rle->cRawBytes = 0;
@@ -516,12 +510,9 @@ int freerdp_bitmap_planar_compress_plane_rle_segment(PLANAR_RLE_CONTEXT* rle)
 				*rle->output = PLANAR_CONTROL_BYTE(rle->nRunLength, rle->cRawBytes);
 				rle->output++;
 
-				if (rle->cRawBytes)
-				{
-					CopyMemory(rle->output, rle->rawValues, rle->cRawBytes);
-					rle->rawValues += (rle->cRawBytes + rle->nRunLength);
-					rle->output += rle->cRawBytes;
-				}
+				CopyMemory(rle->output, rle->rawValues, rle->cRawBytes);
+				rle->rawValues += (rle->cRawBytes + rle->nRunLength);
+				rle->output += rle->cRawBytes;
 
 				rle->cRawBytes = 0;
 				rle->nRunLength = 0;
@@ -564,6 +555,8 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 
 		rle->rawScanline = &inPlane[i * width];
 		rle->rawValues = rle->rawScanline;
+
+		//winpr_HexDump(rle->rawScanline, width);
 
 		for (j = 1; j < width; j++)
 		{
