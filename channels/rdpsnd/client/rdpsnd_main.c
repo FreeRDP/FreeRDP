@@ -718,7 +718,7 @@ static void rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 #if defined(WITH_MACAUDIO)
 	if (!rdpsnd->device)
 	{
-		rdpsnd_set_subsystem(rdpsnd, "macaudio");
+		rdpsnd_set_subsystem(rdpsnd, "mac");
 		rdpsnd_set_device_name(rdpsnd, "default");
 		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
