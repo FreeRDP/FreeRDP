@@ -94,7 +94,13 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 	}
 	
 	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv);
-	status = freerdp_client_settings_command_line_status_print(context->settings, status, context->argc, context->argv);
+
+	if (context->argc && context->argv)
+		status = freerdp_client_settings_command_line_status_print(context->settings, status, context->argc, context->argv);
+	else
+	{
+		freerdp_client_print_command_line_help(argc, argv);
+	}
 
 	return status;
 }
