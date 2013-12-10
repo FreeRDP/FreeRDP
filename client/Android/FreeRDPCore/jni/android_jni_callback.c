@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Android JNI Callback Helpers
  *
- * Copyright 2011-2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+ * Copyright 2011-2013 Thincast Technologies GmbH, Author: Martin Fleisz
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this

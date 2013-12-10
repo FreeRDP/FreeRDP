@@ -3,7 +3,7 @@
  * Android JNI Callback Helpers
  *
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2011-2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+ * Copyright 2011-2013 Thincast Technologies GmbH, Author: Martin Fleisz
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,6 @@ jboolean jni_attach_thread(JNIEnv** env);
 void jni_detach_thread(void);
 void freerdp_callback(const char * callback, const char * signature, ...);
 jboolean freerdp_callback_bool_result(const char * callback, const char * signature, ...);
-void tsxconnect_callback(const char * callback, const char * signature, ...);
 
 #endif /* FREERDP_ANDROID_JNI_CALLBACK_H */
 

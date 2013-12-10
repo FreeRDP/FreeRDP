@@ -2,7 +2,7 @@
    FreeRDP: A Remote Desktop Protocol Implementation
    RemoteFX Codec Library - NEON Optimizations
 
-   Copyright 2011 Martin Fleisz <mfleisz@thinstuff.com>
+   Copyright 2011 Martin Fleisz <martin.fleisz@thincast.com>
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

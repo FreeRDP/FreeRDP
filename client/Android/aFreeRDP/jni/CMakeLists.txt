@@ -1,7 +1,7 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # Android Client
 #
-# Copyright 2013 Armin Novak <anovak@thinstuff.at>
+# Copyright 2013 Armin Novak <armin.novak@thincast.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.

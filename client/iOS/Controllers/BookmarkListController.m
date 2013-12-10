@@ -1,7 +1,7 @@
 /*
  bookmarks and active session view controller
  
- Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+ Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
  
  This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -87,11 +87,6 @@
     
     // set edit button to allow bookmark list editing
     [[self navigationItem] setRightBarButtonItem:[self editButtonItem]];
-    
-/*
-    if (![[InAppPurchaseManager sharedInAppPurchaseManager] isProVersion])
-        [[self navigationItem] setLeftBarButtonItem:[[UIBarButtonItem alloc] initWithTitle:@"Go Pro" style:UIBarButtonItemStyleDone target:self action:@selector(goProButtonPressed:)]];
-*/
 }
 
 
@@ -139,19 +134,14 @@
 
 
 - (void)dealloc 
-{	   
-    [_tsxconnect_reachability stopNotifier];
-    [_tsxconnect_reachability release];
-
+{
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     [_temporary_bookmark release];
     [_connection_history release];
     [_active_sessions release];
-	[_tsxconnect_search_result release];
 	[_manual_search_result release];
     [_manual_bookmarks release];
-    [_tsxconnect_bookmarks release];
     
     [_star_on_img release];
     [_star_off_img release];
@@ -242,8 +232,6 @@
             RDPSession* session = [_active_sessions objectAtIndex:[indexPath row]];        
             [[cell title] setText:[session sessionName]];
             [[cell server] setText:[[session params] StringForKey:@"hostname"]];
-            if([[[cell server] text] length] == 0)
-                [[cell server] setText:@"TSX Connect"];
             [[cell username] setText:[[session params] StringForKey:@"username"]];
             [[cell screenshot] setImage:[session getScreenshotWithSize:[[cell screenshot] bounds].size]];
             [[cell disconnectButton] setTag:[indexPath row]];        
@@ -390,7 +378,7 @@
     //  - the quick connect/quick create bookmark cell
     //  - any item while a search is applied
     if([proposedDestinationIndexPath row] == 0 || ([sourceIndexPath section] != [proposedDestinationIndexPath section]) || 
-       _manual_search_result != nil || _tsxconnect_search_result != nil)
+       _manual_search_result != nil)
     {
         return sourceIndexPath;
     }
@@ -579,8 +567,6 @@
 - (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
 {
 	// clear search result
-	[_tsxconnect_search_result release];
-	_tsxconnect_search_result = nil;
 	[_manual_search_result release];
 	_manual_search_result = nil;
 	
@@ -619,14 +605,13 @@
     RDPSession* session = (RDPSession*)[notification object];
     [_active_sessions removeObject:session];
 
-    // if this view is currently active refresh tsxconnect entries
+    // if this view is currently active refresh entries
     if([[self navigationController] visibleViewController] == self)
         [_tableView reloadSections:[NSIndexSet indexSetWithIndex:SECTION_SESSIONS] withRowAnimation:UITableViewRowAnimationNone];	
     
     // if session's bookmark is not in the bookmark list ask the user if he wants to add it
     // (this happens if the session is created using the quick connect feature)
-    if (![[session bookmark] isKindOfClass:NSClassFromString(@"TSXConnectComputerBookmark")] &&  
-        ![_manual_bookmarks containsObject:[session bookmark]])
+    if (![_manual_bookmarks containsObject:[session bookmark]])
     {
         // retain the bookmark in case we want to save it later
         _temporary_bookmark = [[session bookmark] retain];
@@ -711,7 +696,7 @@
 
 - (BOOL)hasNoBookmarks
 {
-    return ([_manual_bookmarks count] == 0 && [_tsxconnect_bookmarks count] == 0);
+    return ([_manual_bookmarks count] == 0);
 }
 
 - (UIButton*)disclosureButtonWithImage:(UIImage*)image
@@ -728,18 +713,15 @@
 - (void)performSearch:(NSString*)searchText
 {
     [_manual_search_result autorelease];
-    [_tsxconnect_search_result autorelease];
     
 	if([searchText length] > 0)
 	{
 		_manual_search_result = [FilterBookmarks(_manual_bookmarks, [searchText componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]) retain];
-		_tsxconnect_search_result = [FilterBookmarks(_tsxconnect_bookmarks, [searchText componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]) retain];        
         _history_search_result = [FilterHistory(_connection_history, searchText) retain];
     }
 	else
 	{
         _history_search_result = nil;
-		_tsxconnect_search_result = nil;
 		_manual_search_result = nil;
 	}    
 }
@@ -840,12 +822,12 @@
 
 - (NSURL*)manualBookmarksDataStoreURL
 {
-	return [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/%@", [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject], @"com.thinstuff.tsx-rdc-ios.bookmarks.plist"]];
+	return [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/%@", [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject], @"com.freerdp.ifreerdp.bookmarks.plist"]];
 }
 
 - (NSURL*)connectionHistoryDataStoreURL
 {
-	return [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/%@", [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject], @"com.thinstuff.tsx-rdc-ios.connection_history.plist"]];
+	return [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/%@", [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject], @"com.freerdp.ifreerdp.connection_history.plist"]];
 }
 
 @end

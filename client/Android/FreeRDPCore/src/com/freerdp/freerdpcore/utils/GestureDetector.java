@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * 
- * Modified for aFreeRDP by Martin Fleisz (mfleisz@thinstuff.at)
+ * Modified for aFreeRDP by Martin Fleisz (martin.fleisz@thincast.com)
  */
 
 package com.freerdp.freerdpcore.utils;

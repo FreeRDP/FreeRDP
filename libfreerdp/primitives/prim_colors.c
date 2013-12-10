@@ -3,8 +3,8 @@
  * vi:ts=4 sw=4:
  *
  * Copyright 2011 Stephen Erisman
- * Copyright 2011 Norbert Federa <nfedera@thinstuff.com>
- * Copyright 2011 Martin Fleisz <mfleisz@thinstuff.com>
+ * Copyright 2011 Norbert Federa <norbert.federa@thincast.com>
+ * Copyright 2011 Martin Fleisz <martin.fleisz@thincast.com>
  * (c) Copyright 2012 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may

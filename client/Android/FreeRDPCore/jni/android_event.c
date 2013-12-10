@@ -3,7 +3,7 @@
  * Android Event System
  *
  * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+ * Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this

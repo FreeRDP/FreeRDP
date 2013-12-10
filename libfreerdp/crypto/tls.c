@@ -389,6 +389,11 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 
 	status = SSL_read(tls->ssl, data, length);
 
+	if (status == 0)
+	{
+		return -1; /* peer disconnected */
+	}
+
 	if (status <= 0)
 	{
 		error = SSL_get_error(tls->ssl, status);
