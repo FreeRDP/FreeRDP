@@ -1483,9 +1483,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "gdi")
 		{
-			if (strcmp(arg->Value, "sw") == 0)
+			if (_stricmp(arg->Value, "sw") == 0)
 				settings->SoftwareGdi = TRUE;
-			else if (strcmp(arg->Value, "hw") == 0)
+			else if (_stricmp(arg->Value, "hw") == 0)
 				settings->SoftwareGdi = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gfx")

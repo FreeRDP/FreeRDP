@@ -113,6 +113,10 @@
 #define GDI_OPAQUE			0x00000001
 #define GDI_TRANSPARENT			0x00000002
 
+/* Fill Modes */
+#define GDI_FILL_ALTERNATE		0x01
+#define GDI_FILL_WINDING		0x02
+
 /* GDI Object Types */
 #define GDIOBJECT_BITMAP		0x00
 #define GDIOBJECT_PEN			0x01
