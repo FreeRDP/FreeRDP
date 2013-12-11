@@ -65,10 +65,6 @@ DEFINE_EVENT_BEGIN(ErrorInfo)
 	UINT32 code;
 DEFINE_EVENT_END(ErrorInfo)
 
-DEFINE_EVENT_BEGIN(ParamChange)
-	int id;
-DEFINE_EVENT_END(ParamChange)
-
 DEFINE_EVENT_BEGIN(Terminate)
 	int code;
 DEFINE_EVENT_END(Terminate)

@@ -364,7 +364,6 @@ static wEventType FreeRDP_Events[] =
 		DEFINE_EVENT_ENTRY(PanningChange)
 		DEFINE_EVENT_ENTRY(ScalingFactorChange)
 		DEFINE_EVENT_ENTRY(ErrorInfo)
-		DEFINE_EVENT_ENTRY(ParamChange)
 		DEFINE_EVENT_ENTRY(Terminate)
 		DEFINE_EVENT_ENTRY(ConnectionResult)
 		DEFINE_EVENT_ENTRY(ChannelConnected)

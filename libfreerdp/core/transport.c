@@ -222,6 +222,12 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 		transport->layer = TRANSPORT_LAYER_TSG_TLS;
 
+		transport->TsgTls->hostname = transport->settings->ServerHostname;
+		transport->TsgTls->port = transport->settings->ServerPort;
+
+		if (transport->TsgTls->port == 0)
+			transport->TsgTls->port = 3389;
+
 		if (!tls_connect(transport->TsgTls))
 		{
 			if (!connectErrorCode)
@@ -244,6 +250,12 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 	transport->TlsIn->sockfd = transport->TcpIn->sockfd;
+
+	transport->TlsIn->hostname = transport->settings->ServerHostname;
+	transport->TlsIn->port = transport->settings->ServerPort;
+
+	if (transport->TlsIn->port == 0)
+		transport->TlsIn->port = 3389;
 
 	if (!tls_connect(transport->TlsIn))
 	{
@@ -313,11 +325,21 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 		transport->TlsIn = tls_new(transport->settings);
 
 	transport->TlsIn->sockfd = transport->TcpIn->sockfd;
+	transport->TlsIn->hostname = transport->settings->GatewayHostname;
+	transport->TlsIn->port = transport->settings->GatewayPort;
+
+	if (transport->TlsIn->port == 0)
+		transport->TlsIn->port = 443;
 
 	if (!transport->TlsOut)
 		transport->TlsOut = tls_new(transport->settings);
 
 	transport->TlsOut->sockfd = transport->TcpOut->sockfd;
+	transport->TlsOut->hostname = transport->settings->GatewayHostname;
+	transport->TlsOut->port = transport->settings->GatewayPort;
+
+	if (transport->TlsOut->port == 0)
+		transport->TlsOut->port = 443;
 
 	if (!tls_connect(transport->TlsIn))
 		return FALSE;

@@ -1075,7 +1075,7 @@ int freerdp_client_rdp_file_set_string_option(rdpFile* file, const char* name, c
 	return 0;
 }
 
-char* freerdp_client_rdp_file_get_string_option(rdpFile* file, const char* name)
+const char* freerdp_client_rdp_file_get_string_option(rdpFile* file, const char* name)
 {
 	rdpFileLine* line;
 

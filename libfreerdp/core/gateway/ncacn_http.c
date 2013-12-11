@@ -113,14 +113,39 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
 int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 {
 	rdpNtlm* ntlm = NULL;
-	rdpSettings* settings;
-
-	settings = rpc->settings;
+	rdpSettings* settings = rpc->settings;
+	freerdp* instance = (freerdp*) rpc->settings->instance;
+	BOOL promptPassword = FALSE;
 
 	if (channel == TSG_CHANNEL_IN)
 		ntlm = rpc->NtlmHttpIn->ntlm;
 	else if (channel == TSG_CHANNEL_OUT)
 		ntlm = rpc->NtlmHttpOut->ntlm;
+
+	if ((!settings->GatewayPassword) || (!settings->GatewayUsername)
+			|| (!strlen(settings->GatewayPassword)) || (!strlen(settings->GatewayUsername)))
+	{
+		promptPassword = TRUE;
+	}
+
+	if (promptPassword)
+	{
+		if (instance->GatewayAuthenticate)
+		{
+			BOOL proceed = instance->GatewayAuthenticate(instance,
+					&settings->GatewayUsername, &settings->GatewayPassword, &settings->GatewayDomain);
+
+			if (!proceed)
+				return 0;
+
+			if (settings->GatewayUseSameCredentials)
+			{
+				settings->Username = _strdup(settings->GatewayUsername);
+				settings->Domain = _strdup(settings->GatewayDomain);
+				settings->Password = _strdup(settings->GatewayPassword);
+			}
+		}
+	}
 
 	ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
 			settings->GatewayDomain, settings->GatewayPassword,
@@ -180,7 +205,7 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 
 int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 {
-	int ntlm_token_length;
+	int ntlm_token_length = 0;
 	BYTE* ntlm_token_data;
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
@@ -188,8 +213,11 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 	http_response = http_response_recv(rpc->TlsOut);
 
 	ntlm_token_data = NULL;
-	crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
-			&ntlm_token_data, &ntlm_token_length);
+	if (http_response && http_response->AuthParam)
+	{
+		crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
+				&ntlm_token_data, &ntlm_token_length);
+	}
 
 	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
 	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
