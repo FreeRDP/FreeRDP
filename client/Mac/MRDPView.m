@@ -59,6 +59,8 @@
 #import "freerdp/types.h"
 #import "freerdp/channels/channels.h"
 #import "freerdp/gdi/gdi.h"
+#import "freerdp/gdi/dc.h"
+#import "freerdp/gdi/region.h"
 #import "freerdp/graphics.h"
 #import "freerdp/utils/event.h"
 #import "freerdp/client/cliprdr.h"
@@ -745,7 +747,6 @@ DWORD mac_client_thread(void* param)
 BOOL mac_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
-	BOOL bitmap_cache;
 
 	// setup callbacks
 	instance->update->BeginPaint = mac_begin_paint;
@@ -761,6 +762,9 @@ BOOL mac_pre_connect(freerdp* instance)
 		[NSApp terminate:nil];
 		return -1;
 	}
+
+	settings->ColorDepth = 32;
+	settings->SoftwareGdi = TRUE;
 
 	settings->OsMajorType = OSMAJORTYPE_MACINTOSH;
 	settings->OsMinorType = OSMINORTYPE_MACINTOSH;
@@ -792,44 +796,6 @@ BOOL mac_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
-
-	settings = instance->settings;
-	bitmap_cache = settings->BitmapCacheEnabled;
-
-	instance->settings->ColorDepth = 32;
-	instance->settings->SoftwareGdi = TRUE;
-
-	settings->OsMajorType = OSMAJORTYPE_UNIX;
-	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
-
-	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
-	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
-	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MEMBLT_INDEX] = bitmap_cache;
-
-	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->SoftwareGdi) ? TRUE : FALSE;
-
-	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
-	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
-	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
-	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
-	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
-	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
-
-	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
-	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
-
-	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
-	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 	
@@ -885,7 +851,6 @@ BOOL mac_post_connect(freerdp* instance)
 
 	return TRUE;
 }
-
 
 BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
@@ -1093,9 +1058,9 @@ void mac_begin_paint(rdpContext* context)
 
 void mac_end_paint(rdpContext* context)
 {
-	int i;
 	rdpGdi* gdi;
-	NSRect drawRect;
+	HGDI_RGN invalid;
+	NSRect newDrawRect;
 	int ww, wh, dw, dh;
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
@@ -1110,7 +1075,7 @@ void mac_end_paint(rdpContext* context)
 	dw = mfc->context.settings->DesktopWidth;
 	dh = mfc->context.settings->DesktopHeight;
 
-	if ((context == 0) || (context->gdi == 0))
+	if ((!context) || (!context->gdi))
 		return;
 	
 	if (context->gdi->primary->hdc->hwnd->invalid->null)
@@ -1119,36 +1084,32 @@ void mac_end_paint(rdpContext* context)
 	if (context->gdi->drawing != context->gdi->primary)
 		return;
 
-	for (i = 0; i < gdi->primary->hdc->hwnd->ninvalid; i++)
+	invalid = gdi->primary->hdc->hwnd->invalid;
+
+	newDrawRect.origin.x = invalid->x;
+	newDrawRect.origin.y = invalid->y;
+	newDrawRect.size.width = invalid->w;
+	newDrawRect.size.height = invalid->h;
+
+	if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
 	{
-		drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x;
-		drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y;
-		drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w;
-		drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h;
-
-		if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
-		{
-			drawRect.origin.y = drawRect.origin.y * wh / dh - 1;
-			drawRect.size.height = drawRect.size.height * wh / dh + 1;
-			drawRect.origin.x = drawRect.origin.x * ww / dw - 1;
-			drawRect.size.width = drawRect.size.width * ww / dw + 1;
-		}
-		else
-		{
-			drawRect.origin.y = drawRect.origin.y - 1;
-			drawRect.size.height = drawRect.size.height + 1;
-			drawRect.origin.x = drawRect.origin.x - 1;
-			drawRect.size.width = drawRect.size.width + 1;
-		}
-
-		windows_to_apple_cords(mfc->view, &drawRect);
-
-		// Note: The xCurrentScroll and yCurrentScroll values do not need to be taken into account
-		//       because the current frame is always at full size, since the scrolling is handled by the external container.
-
-		[view setNeedsDisplayInRect:drawRect];
+		newDrawRect.origin.y = newDrawRect.origin.y * wh / dh - 1;
+		newDrawRect.size.height = newDrawRect.size.height * wh / dh + 1;
+		newDrawRect.origin.x = newDrawRect.origin.x * ww / dw - 1;
+		newDrawRect.size.width = newDrawRect.size.width * ww / dw + 1;
 	}
-	
+	else
+	{
+		newDrawRect.origin.y = newDrawRect.origin.y - 1;
+		newDrawRect.size.height = newDrawRect.size.height + 1;
+		newDrawRect.origin.x = newDrawRect.origin.x - 1;
+		newDrawRect.size.width = newDrawRect.size.width + 1;
+	}
+
+	windows_to_apple_cords(mfc->view, &newDrawRect);
+
+	[view setNeedsDisplayInRect:newDrawRect];
+
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
