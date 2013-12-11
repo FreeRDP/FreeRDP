@@ -51,9 +51,7 @@ struct rdpsnd_mac_plugin
 	int audioBufferIndex;
     
 	AudioQueueRef audioQueue;
-	AudioConverterRef audioConverter;
-	AudioStreamBasicDescription inputAudioFormat;
-	AudioStreamBasicDescription outputAudioFormat;
+	AudioStreamBasicDescription audioFormat;
 	AudioQueueBufferRef audioBuffers[MAC_AUDIO_QUEUE_NUM_BUFFERS];
 };
 typedef struct rdpsnd_mac_plugin rdpsndMacPlugin;
@@ -65,7 +63,6 @@ static void mac_audio_queue_output_cb(void* inUserData, AudioQueueRef inAQ, Audi
 
 static void rdpsnd_mac_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, int latency)
 {
-	OSStatus status;
 	rdpsndMacPlugin* mac = (rdpsndMacPlugin*) device;
 	
 	mac->latency = (UINT32) latency;
@@ -74,61 +71,33 @@ static void rdpsnd_mac_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* form
 	switch (format->wFormatTag)
 	{
 		case WAVE_FORMAT_ALAW:
-			mac->inputAudioFormat.mFormatID = kAudioFormatALaw;
+			mac->audioFormat.mFormatID = kAudioFormatALaw;
 			break;
 			
 		case WAVE_FORMAT_MULAW:
-			mac->inputAudioFormat.mFormatID = kAudioFormatULaw;
+			mac->audioFormat.mFormatID = kAudioFormatULaw;
 			break;
 			
 		case WAVE_FORMAT_PCM:
-			mac->inputAudioFormat.mFormatID = kAudioFormatLinearPCM;
+			mac->audioFormat.mFormatID = kAudioFormatLinearPCM;
 			break;
 			
 		case WAVE_FORMAT_GSM610:
-			mac->inputAudioFormat.mFormatID = kAudioFormatMicrosoftGSM;
+			mac->audioFormat.mFormatID = kAudioFormatMicrosoftGSM;
 			break;
 			
 		default:
 			break;
 	}
 	
-	mac->inputAudioFormat.mSampleRate = format->nSamplesPerSec;
-	mac->inputAudioFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
-	mac->inputAudioFormat.mFramesPerPacket = 1;
-	mac->inputAudioFormat.mChannelsPerFrame = format->nChannels;
-	mac->inputAudioFormat.mBitsPerChannel = format->wBitsPerSample;
-	mac->inputAudioFormat.mBytesPerFrame = (format->wBitsPerSample * format->nChannels) / 8;
-	mac->inputAudioFormat.mBytesPerPacket = format->nBlockAlign;
-	
-	mac->outputAudioFormat.mFormatID = kAudioFormatLinearPCM;
-	mac->outputAudioFormat.mSampleRate = 44100;
-	mac->outputAudioFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
-	mac->outputAudioFormat.mFramesPerPacket = 1;
-	mac->outputAudioFormat.mChannelsPerFrame = 2;
-	mac->outputAudioFormat.mBitsPerChannel = 16;
-	mac->outputAudioFormat.mBytesPerFrame = (16 * 2) / 8;
-	mac->outputAudioFormat.mBytesPerPacket = 4;
-	
-	status = AudioConverterNew(&(mac->inputAudioFormat),
-				   &(mac->outputAudioFormat), &(mac->audioConverter));
-	
-	if (status != 0)
-	{
-		fprintf(stderr, "AudioConverterNew failure\n");
-		return;
-	}
-	
-	SInt32 channelMap[2] = { 0, 0 };
-	
-	status = AudioConverterSetProperty(mac->audioConverter, kAudioConverterChannelMap,
-					   sizeof(channelMap), channelMap);
-	
-	if (status != 0)
-	{
-		fprintf(stderr, "AudioConverterSetProperty kAudioConverterChannelMap failure\n");
-		return;
-	}
+	mac->audioFormat.mSampleRate = format->nSamplesPerSec;
+	mac->audioFormat.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+	mac->audioFormat.mFramesPerPacket = 1;
+	mac->audioFormat.mChannelsPerFrame = format->nChannels;
+	mac->audioFormat.mBitsPerChannel = format->wBitsPerSample;
+	mac->audioFormat.mBytesPerFrame = (format->wBitsPerSample * format->nChannels) / 8;
+	mac->audioFormat.mBytesPerPacket = format->nBlockAlign;
+	mac->audioFormat.mReserved = 0;
 	
 	rdpsnd_print_audio_format(format);
 }
@@ -147,7 +116,7 @@ static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
     
 	device->SetFormat(device, format, 0);
     
-	status = AudioQueueNewOutput(&(mac->inputAudioFormat),
+	status = AudioQueueNewOutput(&(mac->audioFormat),
 				     mac_audio_queue_output_cb, mac,
 				     NULL, NULL, 0, &(mac->audioQueue));
 	
@@ -217,11 +186,11 @@ static BOOL rdpsnd_mac_format_supported(rdpsndDevicePlugin* device, AUDIO_FORMAT
         }
         else if (format->wFormatTag == WAVE_FORMAT_ALAW)
         {
-                return FALSE;
+                return TRUE;
         }
         else if (format->wFormatTag == WAVE_FORMAT_MULAW)
         {
-                return FALSE;
+                return TRUE;
         }
         else if (format->wFormatTag == WAVE_FORMAT_GSM610)
         {
@@ -288,7 +257,7 @@ static void rdpsnd_mac_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 
 	audioBuffer = mac->audioBuffers[mac->audioBufferIndex];
     
-	length = size > MAC_AUDIO_QUEUE_BUFFER_SIZE ? MAC_AUDIO_QUEUE_BUFFER_SIZE : size;
+	length = size > audioBuffer->mAudioDataBytesCapacity ? audioBuffer->mAudioDataBytesCapacity : size;
     
 	CopyMemory(audioBuffer->mAudioData, data, length);
 	audioBuffer->mAudioDataByteSize = length;

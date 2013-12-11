@@ -29,14 +29,24 @@ UINT32 rdpsnd_compute_audio_time_length(AUDIO_FORMAT* format, int size)
 {
 	UINT32 mstime;
 	UINT32 wSamples;
+	UINT16 nSamplesPerBlock;
 
 	/**
 	 * [MSDN-AUDIOFORMAT]:
 	 * http://msdn.microsoft.com/en-us/library/ms713497.aspx
 	 */
 
-	wSamples = (size * 8) / format->wBitsPerSample;
-	mstime = (((wSamples * 1000) / format->nSamplesPerSec) / format->nChannels);
+	if (format->wFormatTag == WAVE_FORMAT_GSM610)
+	{
+		nSamplesPerBlock = *((UINT16*) format->data);
+		wSamples = (size / format->nBlockAlign) * nSamplesPerBlock;
+		mstime = (((wSamples * 1000) / format->nSamplesPerSec) / format->nChannels);
+	}
+	else
+	{
+		wSamples = (size * 8) / format->wBitsPerSample;
+		mstime = (((wSamples * 1000) / format->nSamplesPerSec) / format->nChannels);
+	}
 
 	return mstime;
 }
