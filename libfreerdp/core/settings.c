@@ -380,7 +380,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 		settings->MultifragMaxRequestSize = 0xFFFF;
 
-		settings->GatewayUseSameCredentials = TRUE;
+		settings->GatewayUseSameCredentials = FALSE;
 
 		settings->FastPathInput = TRUE;
 		settings->FastPathOutput = TRUE;
