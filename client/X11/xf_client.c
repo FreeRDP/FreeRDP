@@ -1702,37 +1702,6 @@ void xf_TerminateEventHandler(rdpContext* context, TerminateEventArgs* e)
 	}
 }
 
-void xf_ParamChangeEventHandler(rdpContext* context, ParamChangeEventArgs* e)
-{
-
-	xfContext* xfc = (xfContext*) context;
-
-	switch (e->id)
-	{
-	case FreeRDP_ScalingFactor:
-
-		xfc->currentWidth = xfc->originalWidth * xfc->settings->ScalingFactor;
-		xfc->currentHeight = xfc->originalHeight * xfc->settings->ScalingFactor;
-
-		xf_transform_window(xfc);
-
-		{
-			ResizeWindowEventArgs e;
-
-			EventArgsInit(&e, "xfreerdp");
-			e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
-			e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
-			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
-		}
-		xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
-
-		break;
-
-	default:
-		break;
-	}
-}
-
 static void xf_ScalingFactorChangeEventHandler(rdpContext* context, ScalingFactorChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
@@ -1845,7 +1814,6 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->settings = instance->context->settings;
 
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
-	PubSub_SubscribeParamChange(context->pubSub, (pParamChangeEventHandler) xf_ParamChangeEventHandler);
 	PubSub_SubscribeScalingFactorChange(context->pubSub, (pScalingFactorChangeEventHandler) xf_ScalingFactorChangeEventHandler);
 
 	return 0;
