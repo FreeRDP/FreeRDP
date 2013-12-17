@@ -428,7 +428,10 @@ void rdpsnd_confirm_wave(rdpsndPlugin* rdpsnd, RDPSND_WAVE* wave)
 
 static void rdpsnd_device_send_wave_confirm_pdu(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 {
-	MessageQueue_Post(device->rdpsnd->MsgPipe->Out, NULL, 0, (void*) wave, NULL);
+	if (device->DisableConfirmThread)
+		rdpsnd_confirm_wave(device->rdpsnd, wave);
+	else
+		MessageQueue_Post(device->rdpsnd->MsgPipe->Out, NULL, 0, (void*) wave, NULL);
 }
 
 static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
@@ -461,6 +464,7 @@ static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 
 	wave->data = data;
 	wave->length = size;
+	wave->AutoConfirm = TRUE;
 
 	format = &rdpsnd->ClientFormats[rdpsnd->wCurrentFormatNo];
 	wave->wAudioLength = rdpsnd_compute_audio_time_length(format, size);
@@ -470,6 +474,9 @@ static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 
 	if (!rdpsnd->device)
 	{
+		wave->wLocalTimeB = wave->wLocalTimeA;
+		wave->wTimeStampB = wave->wTimeStampA;
+		rdpsnd_confirm_wave(rdpsnd, wave);
 		free(wave);
 		return;
 	}
@@ -493,7 +500,9 @@ static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 		wave->wTimeStampB = rdpsnd->wTimeStamp + wave->wAudioLength + TIME_DELAY_MS;
 		wave->wLocalTimeB = wave->wLocalTimeA + wave->wAudioLength + TIME_DELAY_MS;
 	}
-	rdpsnd->device->WaveConfirm(rdpsnd->device, wave);
+
+	if (wave->AutoConfirm)
+		rdpsnd->device->WaveConfirm(rdpsnd->device, wave);
 }
 
 static void rdpsnd_recv_close_pdu(rdpsndPlugin* rdpsnd)
@@ -718,10 +727,6 @@ static void rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 
 	rdpsnd->latency = -1;
 
-	rdpsnd->ScheduleThread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) rdpsnd_schedule_thread,
-			(void*) rdpsnd, 0, NULL);
-
 	args = (ADDIN_ARGV*) rdpsnd->channelEntryPoints.pExtendedData;
 
 	if (args)
@@ -730,7 +735,9 @@ static void rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 	if (rdpsnd->subsystem)
 	{
 		if (strcmp(rdpsnd->subsystem, "fake") == 0)
+		{
 			return;
+		}
 
 		rdpsnd_load_device_plugin(rdpsnd, rdpsnd->subsystem, args);
 	}
@@ -793,6 +800,13 @@ static void rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 	{
 		DEBUG_WARN("no sound device.");
 		return;
+	}
+
+	if (!rdpsnd->device->DisableConfirmThread)
+	{
+		rdpsnd->ScheduleThread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) rdpsnd_schedule_thread,
+			(void*) rdpsnd, 0, NULL);
 	}
 }
 
@@ -1075,7 +1089,8 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints, pEntryPoints->cbSize);
 
 		rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");
-		//WLog_SetLogLevel(rdpsnd->log, WLOG_TRACE);
+		
+		WLog_SetLogLevel(rdpsnd->log, WLOG_TRACE);
 
 		rdpsnd->channelEntryPoints.pVirtualChannelInit(&rdpsnd->InitHandle,
 			&rdpsnd->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpsnd_virtual_channel_init_event);
