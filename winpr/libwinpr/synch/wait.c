@@ -553,7 +553,8 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 	if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
 	{
-		timeout.tv_usec = dwMilliseconds * 1000;
+		timeout.tv_sec = dwMilliseconds / 1000;
+		timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 	}
 
 	status = select(maxfd + 1, &fds, 0, 0,
