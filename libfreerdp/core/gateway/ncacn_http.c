@@ -99,12 +99,7 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
 
 	http_response = http_response_recv(rpc->TlsIn);
 
-	if (http_response->StatusCode == HTTP_STATUS_DENIED)
-	{
-		if (!connectErrorCode)
-			connectErrorCode = AUTHENTICATIONERROR;
-	}
-	else if (http_response->AuthParam)
+	if (http_response->AuthParam)
 	{
 		ntlm_token_data = NULL;
 		crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
