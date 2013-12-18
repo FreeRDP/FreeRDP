@@ -916,10 +916,7 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 
 	freerdp_alpha_cursor_convert(cursor_data, pointer->xorMaskData, pointer->andMaskData,
 				     pointer->width, pointer->height, pointer->xorBpp, context->gdi->clrconv);
-	
-	// TODO if xorBpp is > 24 need to call freerdp_image_swap_color_order
-	//         see file df_graphics.c
-	
+
 	/* store cursor bitmap image in representation - required by NSImage */
 	bmiRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:(unsigned char **) &cursor_data
 											pixelsWide:rect.size.width
