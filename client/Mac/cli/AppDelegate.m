@@ -195,7 +195,7 @@ void AppDelegate_ConnectionResultEventHandler(void* ctx, ConnectionResultEventAr
 			NSString* message = nil;
 			if (connectErrorCode == AUTHENTICATIONERROR)
 			{
-				message = [NSString stringWithFormat:@"%@:\n%@", message, @"Authentication failure, check credentials."];
+				message = [NSString stringWithFormat:@"%@", @"Authentication failure, check credentials."];
 			}
 			
 			

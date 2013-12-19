@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/winhttp.h>
 
 #include "ncacn_http.h"
 #include "rpc_client.h"
@@ -147,11 +148,17 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	http_response = http_response_recv(rpc->TlsOut);
 
-	if (http_response->StatusCode != 200)
+	if (http_response->StatusCode != HTTP_STATUS_OK)
 	{
 		fprintf(stderr, "rts_connect error! Status Code: %d\n", http_response->StatusCode);
 		http_response_print(http_response);
 		http_response_free(http_response);
+
+		if (!connectErrorCode && http_response->StatusCode == HTTP_STATUS_DENIED)
+		{
+			connectErrorCode = AUTHENTICATIONERROR;
+		}
+
 		return FALSE;
 	}
 

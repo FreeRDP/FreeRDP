@@ -248,8 +248,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->DisableThemes = FALSE;
 		settings->ConnectionType = CONNECTION_TYPE_LAN;
 
-		settings->AutoReconnectionEnabled = TRUE;
-
 		settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
 		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 
@@ -380,7 +378,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 		settings->MultifragMaxRequestSize = 0xFFFF;
 
-		settings->GatewayUseSameCredentials = TRUE;
+		settings->GatewayUseSameCredentials = FALSE;
 
 		settings->FastPathInput = TRUE;
 		settings->FastPathOutput = TRUE;

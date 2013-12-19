@@ -1367,6 +1367,9 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	pdu = rpc_recv_dequeue_pdu(rpc);
 
+	if (!pdu)
+		return FALSE;
+
 	call = rpc_client_call_find_by_id(rpc, pdu->CallId);
 
 	if (call->OpNum == TsProxyMakeTunnelCallOpnum)
@@ -1408,6 +1411,9 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 #if 0
 	pdu = rpc_recv_dequeue_pdu(rpc);
+
+	if (!pdu)
+		return FALSE;
 
 	if (!TsProxySetupReceivePipeReadResponse(tsg, pdu))
 	{

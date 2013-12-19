@@ -147,7 +147,11 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 					&settings->Username, &settings->Password, &settings->Domain);
 
 			if (!proceed)
+			{
+				connectErrorCode = CANCELEDBYUSER;
 				return 0;
+			}
+
 		}
 	}
 

@@ -118,7 +118,10 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 					&settings->GatewayUsername, &settings->GatewayPassword, &settings->GatewayDomain);
 
 			if (!proceed)
+			{
+				connectErrorCode = CANCELEDBYUSER;
 				return 0;
+			}
 
 			if (settings->GatewayUseSameCredentials)
 			{

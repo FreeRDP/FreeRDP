@@ -49,7 +49,7 @@ static WCHAR CR_LF_STR_W[] = { '\r', '\n', '\0' };
 
 #define INVALID_INTEGER_VALUE		0xFFFFFFFF
 
-BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, char* name, int value, int index)
+BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, int value, int index)
 {
 	BOOL bStandard = TRUE;
 
@@ -229,13 +229,13 @@ void freerdp_client_parse_rdp_file_integer_unicode(rdpFile* file, WCHAR* name, W
 	free(valueA);
 }
 
-void freerdp_client_parse_rdp_file_integer_ascii(rdpFile* file, char* name, char* value, int index)
+void freerdp_client_parse_rdp_file_integer_ascii(rdpFile* file, const char* name, const char* value, int index)
 {
 	int ivalue = atoi(value);
 	freerdp_client_rdp_file_set_integer(file, name, ivalue, index);
 }
 
-BOOL freerdp_client_rdp_file_set_string(rdpFile* file, char* name, char* value, int index)
+BOOL freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, const char* value, int index)
 {
 	BOOL bStandard = TRUE;
 
@@ -436,8 +436,6 @@ BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE* buffe
 			if ((d2 - d1) != 2)
 				goto next_line; /* improper type length */
 
-			if (d2 == end)
-				goto next_line; /* no value */
 
 			*d1 = 0;
 			*d2 = 0;
@@ -514,8 +512,6 @@ BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BYTE* buf
 			if ((d2 - d1) != 2)
 				goto next_line; /* improper type length */
 
-			if (d2 == end)
-				goto next_line; /* no value */
 
 			*d1 = 0;
 			*d2 = 0;
@@ -881,7 +877,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	}
 
 	if (~file->PromptCredentialOnce)
-		freerdp_set_param_bool(settings, FreeRDP_GatewayUseSameCredentials, TRUE);
+		freerdp_set_param_bool(settings, FreeRDP_GatewayUseSameCredentials, file->PromptCredentialOnce);
 	
 	if (~file->RemoteApplicationMode)
 		freerdp_set_param_bool(settings, FreeRDP_RemoteApplicationMode, file->RemoteApplicationMode);
@@ -1067,7 +1063,7 @@ int freerdp_client_rdp_file_set_string_option(rdpFile* file, const char* name, c
 		index = freerdp_client_parse_rdp_file_add_line(file, text, -1);
 		line = freerdp_client_rdp_file_find_line_index(file, index);
 
-		freerdp_client_rdp_file_set_string(file, (char*) name, (char*) value, index);
+		freerdp_client_rdp_file_set_string(file, name, value, index);
 
 		free(text);
 	}
