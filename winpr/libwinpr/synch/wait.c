@@ -370,11 +370,11 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			if (status != 1)
 				return WAIT_TIMEOUT;
 
-			length = read(timer->fd, (void*) &expirations, sizeof(UINT64));
+			status = read(timer->fd, (void*) &expirations, sizeof(UINT64));
 
-			if (length != 8)
+			if (status != 8)
 			{
-				if (length == -1)
+				if (status == -1)
 				{
 					if (errno == ETIMEDOUT)
 						return WAIT_TIMEOUT;
@@ -415,7 +415,6 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			fprintf(stderr, "WaitForSingleObject: invalid pipe file descriptor\n");
 			return WAIT_FAILED;
 		}
-
 
 		FD_ZERO(&rfds);
 		FD_SET(fd, &rfds);

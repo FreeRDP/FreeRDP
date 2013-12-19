@@ -29,6 +29,7 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/stream.h>
+#include <winpr/winsock.h>
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
