@@ -110,8 +110,6 @@ BOOL tls_connect(rdpTls* tls)
 	CryptoCert cert;
 	long options = 0;
 	int connection_status;
-	char *hostname;
-	int port;
 
 	tls->ctx = SSL_CTX_new(TLSv1_client_method());
 
@@ -360,7 +358,38 @@ BOOL tls_disconnect(rdpTls* tls)
 		return FALSE;
 
 	if (tls->ssl)
-		SSL_shutdown(tls->ssl);
+	{
+		if (tls->alertDescription != TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY)
+		{
+			/**
+			 * OpenSSL doesn't really expose an API for sending a TLS alert manually.
+			 *
+			 * The following code disables the sending of the default "close notify"
+			 * and then proceeds to force sending a custom TLS alert before shutting down.
+			 *
+			 * Manually sending a TLS alert is necessary in certain cases,
+			 * like when server-side NLA results in an authentication failure.
+			 */
+
+			SSL_set_quiet_shutdown(tls->ssl, 1);
+
+			if ((tls->alertLevel == TLS_ALERT_LEVEL_FATAL) && (tls->ssl->session))
+				SSL_CTX_remove_session(tls->ssl->ctx, tls->ssl->session);
+
+			tls->ssl->s3->alert_dispatch = 1;
+			tls->ssl->s3->send_alert[0] = tls->alertLevel;
+			tls->ssl->s3->send_alert[1] = tls->alertDescription;
+
+			if (tls->ssl->s3->wbuf.left == 0)
+				tls->ssl->method->ssl_dispatch_alert(tls->ssl);
+
+			SSL_shutdown(tls->ssl);
+		}
+		else
+		{
+			SSL_shutdown(tls->ssl);
+		}
+	}
 
 	return TRUE;
 }
@@ -547,6 +576,14 @@ BOOL tls_print_error(char* func, SSL* connection, int value)
 			tls_errors(func);
 			return TRUE;
 	}
+}
+
+int tls_set_alert_code(rdpTls* tls, int level, int description)
+{
+	tls->alertLevel = level;
+	tls->alertDescription = description;
+
+	return 0;
 }
 
 BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname)
@@ -868,6 +905,9 @@ rdpTls* tls_new(rdpSettings* settings)
 
 		tls->settings = settings;
 		tls->certificate_store = certificate_store_new(settings);
+
+		tls->alertLevel = TLS_ALERT_LEVEL_WARNING;
+		tls->alertDescription = TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY;
 	}
 
 	return tls;

@@ -452,6 +452,9 @@ BOOL transport_accept_nla(rdpTransport* transport)
 		fprintf(stderr, "client authentication failure\n");
 		credssp_free(transport->credssp);
 		transport->credssp = NULL;
+
+		tls_set_alert_code(transport->TlsIn, TLS_ALERT_LEVEL_FATAL, TLS_ALERT_DESCRIPTION_ACCESS_DENIED);
+
 		return FALSE;
 	}
 
