@@ -567,10 +567,11 @@ static DWORD KBD7X[128] =
 
 DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 {
-	DWORD code_index;
+	DWORD codeIndex;
 
-	code_index = scancode & 0xff;
-	if (code_index > 127)
+	codeIndex = scancode & 0xFF;
+
+	if (codeIndex > 127)
 		return VK_NONE;
 
 	if ((dwKeyboardType != 4) && (dwKeyboardType != 7))
@@ -578,11 +579,11 @@ DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 
 	if (dwKeyboardType == 4)
 	{
-		return (scancode & KBDEXT) ? KBD4X[code_index] : KBD4T[code_index];
+		return (scancode & KBDEXT) ? KBD4X[codeIndex] : KBD4T[codeIndex];
 	}
 	else if (dwKeyboardType == 7)
 	{
-		return (scancode & KBDEXT) ? KBD7X[code_index] : KBD7T[code_index];
+		return (scancode & KBDEXT) ? KBD7X[codeIndex] : KBD7T[codeIndex];
 	}
 
 	return VK_NONE;
@@ -592,8 +593,10 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 {
 	int i;
 	DWORD scancode;
+	DWORD codeIndex;
 
 	scancode = 0;
+	codeIndex = vkcode & 0xFF;
 
 	if ((dwKeyboardType != 4) && (dwKeyboardType != 7))
 		dwKeyboardType = 4;
@@ -604,7 +607,7 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 		{
 			for (i = 0; i < 128; i++)
 			{
-				if (KBD4X[i] == (vkcode & 0xFF))
+				if (KBD4X[i] == codeIndex)
 				{
 					scancode = (i | KBDEXT);
 					break;
@@ -615,7 +618,7 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 		{
 			for (i = 0; i < 128; i++)
 			{
-				if (KBD4T[i] == (vkcode & 0xFF))
+				if (KBD4T[i] == codeIndex)
 				{
 					scancode = i;
 					break;
@@ -629,7 +632,7 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 		{
 			for (i = 0; i < 128; i++)
 			{
-				if (KBD7X[i] == (vkcode & 0xFF))
+				if (KBD7X[i] == codeIndex)
 				{
 					scancode = (i | KBDEXT);
 					break;
@@ -640,7 +643,7 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 		{
 			for (i = 0; i < 128; i++)
 			{
-				if (KBD7T[i] == (vkcode & 0xFF))
+				if (KBD7T[i] == codeIndex)
 				{
 					scancode = i;
 					break;
