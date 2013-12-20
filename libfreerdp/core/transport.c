@@ -82,7 +82,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 
 	if ((transport->layer == TRANSPORT_LAYER_TSG) || (transport->layer == TRANSPORT_LAYER_TSG_TLS))
 	{
-		tsg_disconnect(transport->tsg);
+		status &= tsg_disconnect(transport->tsg);
 	}
 	else
 	{
@@ -129,12 +129,12 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 
 	BIO_clear_retry_flags(bio);
 
-	if (status <= 0)
+	if (status == 0)
 	{
 		BIO_set_retry_write(bio);
 	}
 
-	return num;
+	return status < 0 ? 0 : num;
 }
 
 static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
@@ -147,12 +147,17 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 
 	BIO_clear_retry_flags(bio);
 
-	if (status <= 0)
+	if (status == 0)
 	{
 		BIO_set_retry_read(bio);
+		status = -1;
+	}
+	else if (status == -1)
+	{
+		status = 0;
 	}
 
-	return status > 0 ? status : -1;
+	return status >= 0 ? status : -1;
 }
 
 static int transport_bio_tsg_puts(BIO* bio, const char* str)
