@@ -2984,7 +2984,7 @@ int test_individual_planes_encoding_rle()
 
 	dstSizes[1] = availableSize;
 
-	if (!freerdp_bitmap_planar_compress_plane_rle(planar->planes[1], width, height, pOutput, &dstSizes[1]))
+	if (!freerdp_bitmap_planar_compress_plane_rle(planar->deltaPlanes[1], width, height, pOutput, &dstSizes[1]))
 	{
 		printf("failed to encode red plane\n");
 		return 0;
@@ -2998,7 +2998,7 @@ int test_individual_planes_encoding_rle()
 	{
 		printf("RedPlaneRle unexpected size: actual: %d, expected: %d\n",
 				dstSizes[1], sizeof(TEST_64X64_RED_PLANE_RLE));
-		//return -1;
+		return -1;
 	}
 
 	compareSize = (dstSizes[1] > sizeof(TEST_64X64_RED_PLANE_RLE)) ? sizeof(TEST_64X64_RED_PLANE_RLE) : dstSizes[1];
@@ -3008,19 +3008,19 @@ int test_individual_planes_encoding_rle()
 		printf("RedPlaneRle doesn't match expected output\n");
 
 		printf("RedPlaneRle Expected (%d):\n", sizeof(TEST_64X64_RED_PLANE_RLE));
-		winpr_HexDump((BYTE*) TEST_64X64_RED_PLANE_RLE, sizeof(TEST_64X64_RED_PLANE_RLE));
+		//winpr_HexDump((BYTE*) TEST_64X64_RED_PLANE_RLE, sizeof(TEST_64X64_RED_PLANE_RLE));
 
 		printf("RedPlaneRle Actual (%d):\n", dstSizes[1]);
 		winpr_HexDump(planar->rlePlanes[1], dstSizes[1]);
 
-		//return -1;
+		return -1;
 	}
 
 	/* Green */
 
 	dstSizes[2] = availableSize;
 
-	if (!freerdp_bitmap_planar_compress_plane_rle(planar->planes[2], width, height, pOutput, &dstSizes[2]))
+	if (!freerdp_bitmap_planar_compress_plane_rle(planar->deltaPlanes[2], width, height, pOutput, &dstSizes[2]))
 	{
 		printf("failed to encode green plane\n");
 		return 0;
@@ -3034,7 +3034,7 @@ int test_individual_planes_encoding_rle()
 	{
 		printf("GreenPlaneRle unexpected size: actual: %d, expected: %d\n",
 				dstSizes[1], sizeof(TEST_64X64_GREEN_PLANE_RLE));
-		//return -1;
+		return -1;
 	}
 
 	compareSize = (dstSizes[2] > sizeof(TEST_64X64_GREEN_PLANE_RLE)) ? sizeof(TEST_64X64_GREEN_PLANE_RLE) : dstSizes[2];
@@ -3049,14 +3049,14 @@ int test_individual_planes_encoding_rle()
 		printf("GreenPlaneRle Actual (%d):\n", dstSizes[2]);
 		winpr_HexDump(planar->rlePlanes[2], dstSizes[2]);
 
-		//return -1;
+		return -1;
 	}
 
 	/* Blue */
 
 	dstSizes[3] = availableSize;
 
-	if (!freerdp_bitmap_planar_compress_plane_rle(planar->planes[3], width, height, pOutput, &dstSizes[3]))
+	if (!freerdp_bitmap_planar_compress_plane_rle(planar->deltaPlanes[3], width, height, pOutput, &dstSizes[3]))
 	{
 		printf("failed to encode blue plane\n");
 		return 0;
@@ -3070,7 +3070,7 @@ int test_individual_planes_encoding_rle()
 	{
 		printf("BluePlaneRle unexpected size: actual: %d, expected: %d\n",
 				dstSizes[1], sizeof(TEST_64X64_BLUE_PLANE_RLE));
-		//return -1;
+		return -1;
 	}
 
 	compareSize = (dstSizes[3] > sizeof(TEST_64X64_BLUE_PLANE_RLE)) ? sizeof(TEST_64X64_BLUE_PLANE_RLE) : dstSizes[3];
@@ -3085,7 +3085,7 @@ int test_individual_planes_encoding_rle()
 		printf("BluePlaneRle Actual (%d):\n", dstSizes[3]);
 		winpr_HexDump(planar->rlePlanes[3], dstSizes[3]);
 
-		//return -1;
+		return -1;
 	}
 
 	freerdp_bitmap_planar_context_free(planar);
@@ -3111,7 +3111,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	BITMAP_PLANAR_CONTEXT* planar;
 
 	planarFlags = PLANAR_FORMAT_HEADER_NA;
-	//planarFlags |= PLANAR_FORMAT_HEADER_RLE;
+	planarFlags |= PLANAR_FORMAT_HEADER_RLE;
 
 	planar = freerdp_bitmap_planar_context_new(planarFlags, 64, 64);
 
@@ -3122,7 +3122,6 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	format = FREERDP_PIXEL_FORMAT(32, FREERDP_PIXEL_FORMAT_TYPE_ARGB, FREERDP_PIXEL_FLIP_NONE);
 
-#if 1
 	freerdp_bitmap_compress_planar(planar, srcBitmap32, format, 32, 32, 32 * 4, NULL, &dstSize);
 
 	freerdp_bitmap_planar_compress_plane_rle((BYTE*) TEST_RLE_SCANLINE_UNCOMPRESSED, 12, 1, NULL, &dstSize);
@@ -3255,9 +3254,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 		free(compressedBitmap);
 		free(decompressedBitmap);
 	}
-#endif
 
-#if 1
 	/* Experimental Case 01 */
 
 	width = 64;
@@ -3298,9 +3295,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	free(compressedBitmap);
 	free(decompressedBitmap);
-#endif
 
-#if 1
 	/* Experimental Case 02 */
 
 	width = 64;
@@ -3341,11 +3336,12 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	free(compressedBitmap);
 	free(decompressedBitmap);
-#endif
 
-	//test_individual_planes_encoding_rle();
+	if (test_individual_planes_encoding_rle() < 0)
+	{
+		//return -1;
+	}
 
-#if 1
 	/* Experimental Case 03 */
 
 	width = 64;
@@ -3386,7 +3382,6 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	free(compressedBitmap);
 	free(decompressedBitmap);
-#endif
 
 	freerdp_clrconv_free(clrconv);
 	free(srcBitmap32);
