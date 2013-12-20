@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <freerdp/utils/tcp.h>
+
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/synch.h>
@@ -36,6 +38,8 @@
 #include "rpc_client.h"
 
 #include "../rdp.h"
+
+#define SYNCHRONOUS_TIMEOUT 5000
 
 wStream* rpc_client_fragment_pool_take(rdpRpc* rpc)
 {
@@ -360,6 +364,7 @@ void rpc_client_call_free(RpcClientCall* clientCall)
 int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	RPC_PDU* pdu;
+	int status;
 
 	pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
 	pdu->s = Stream_New(buffer, length);
@@ -368,7 +373,13 @@ int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	if (rpc->client->SynchronousSend)
 	{
-		WaitForSingleObject(rpc->client->PduSentEvent, INFINITE);
+		status = WaitForSingleObject(rpc->client->PduSentEvent, SYNCHRONOUS_TIMEOUT);
+		if (status == WAIT_TIMEOUT)
+		{
+			fprintf(stderr, "rpc_send_enqueue_pdu: timed out waiting for pdu sent event\n");
+			return -1;
+		}
+
 		ResetEvent(rpc->client->PduSentEvent);
 	}
 
@@ -425,9 +436,16 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 	DWORD dwMilliseconds;
 
 	pdu = NULL;
-	dwMilliseconds = rpc->client->SynchronousReceive ? INFINITE : 0;
+	dwMilliseconds = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT : 0;
 
-	if (WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds) == WAIT_OBJECT_0)
+	DWORD result = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
+	if (result == WAIT_TIMEOUT)
+	{
+		fprintf(stderr, "rpc_recv_dequeue_pdu: timed out waiting for receive event\n");
+		return NULL;
+	}
+
+	if (result == WAIT_OBJECT_0)
 	{
 		pdu = (RPC_PDU*) Queue_Dequeue(rpc->client->ReceiveQueue);
 
@@ -450,11 +468,18 @@ RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc)
 {
 	RPC_PDU* pdu;
 	DWORD dwMilliseconds;
+	DWORD result;
 
 	pdu = NULL;
-	dwMilliseconds = rpc->client->SynchronousReceive ? INFINITE : 0;
+	dwMilliseconds = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT : 0;
 
-	if (WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds) == WAIT_OBJECT_0)
+	result = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
+	if (result == WAIT_TIMEOUT)
+	{
+		return NULL;
+	}
+
+	if (result == WAIT_OBJECT_0)
 	{
 		pdu = (RPC_PDU*) Queue_Peek(rpc->client->ReceiveQueue);
 		return pdu;

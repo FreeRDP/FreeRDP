@@ -553,7 +553,11 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 			return status;
 
 		if (status < 0)
+		{
+			/* A read error indicates that the peer has dropped the connection */
+			transport->layer = TRANSPORT_LAYER_CLOSED;
 			return status;
+		}
 
 		read += status;
 
@@ -1032,13 +1036,19 @@ static void* transport_client_thread(void* arg)
 
 		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
 
-		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
-
-		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+		status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
+		if (transport->layer == TRANSPORT_LAYER_CLOSED)
+		{
 			break;
+		}
+		else if (status != WAIT_TIMEOUT)
+		{
+			if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+				break;
 
-		if (!freerdp_check_fds(instance))
-			break;
+			if (!freerdp_check_fds(instance))
+				break;
+		}
 	}
 
 	WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
