@@ -505,24 +505,27 @@ static void* rpc_client_thread(void* arg)
 	events[nCount++] = Queue_Event(rpc->client->SendQueue);
 	events[nCount++] = ReadEvent;
 
-	while (1)
+	while (rpc->transport->layer != TRANSPORT_LAYER_CLOSED)
 	{
-		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		status = WaitForMultipleObjects(nCount, events, FALSE, 100);
 
-		if (WaitForSingleObject(rpc->client->StopEvent, 0) == WAIT_OBJECT_0)
+		if (status != WAIT_TIMEOUT)
 		{
-			break;
-		}
-
-		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
-		{
-			if (rpc_client_on_read_event(rpc) < 0)
+			if (WaitForSingleObject(rpc->client->StopEvent, 0) == WAIT_OBJECT_0)
+			{
 				break;
-		}
+			}
 
-		if (WaitForSingleObject(Queue_Event(rpc->client->SendQueue), 0) == WAIT_OBJECT_0)
-		{
-			rpc_send_dequeue_pdu(rpc);
+			if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
+			{
+				if (rpc_client_on_read_event(rpc) < 0)
+					break;
+			}
+
+			if (WaitForSingleObject(Queue_Event(rpc->client->SendQueue), 0) == WAIT_OBJECT_0)
+			{
+				rpc_send_dequeue_pdu(rpc);
+			}
 		}
 	}
 
