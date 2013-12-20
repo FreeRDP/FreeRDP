@@ -46,6 +46,7 @@
 #include "tpkt.h"
 #include "fastpath.h"
 #include "transport.h"
+#include "rdp.h"
 
 #define BUFFER_SIZE 16384
 
@@ -1039,6 +1040,8 @@ static void* transport_client_thread(void* arg)
 		status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
 		if (transport->layer == TRANSPORT_LAYER_CLOSED)
 		{
+			rdpRdp* rdp = (rdpRdp*) transport->rdp;
+			rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
 			break;
 		}
 		else if (status != WAIT_TIMEOUT)
