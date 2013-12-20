@@ -1544,6 +1544,12 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
+	if (tsg->rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
+	{
+		fprintf(stderr, "tsg_write error: connection lost\n");
+		return -1;
+	}
+
 	return TsProxySendToServer((handle_t) tsg, data, 1, &length);
 }
 
