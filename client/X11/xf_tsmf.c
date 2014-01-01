@@ -371,9 +371,8 @@ static void xf_process_tsmf_redraw_event(xfContext* xfc, RDP_REDRAW_EVENT* reven
 {
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-	puts("X tsmf");
-//	XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc,
-//		revent->x, revent->y, revent->width, revent->height, revent->x, revent->y);
+	XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc,
+		revent->x, revent->y, revent->width, revent->height, revent->x, revent->y);
 }
 
 void xf_process_tsmf_event(xfContext* xfc, wMessage* event)

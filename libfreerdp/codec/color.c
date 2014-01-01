@@ -1280,12 +1280,12 @@ BYTE* freerdp_mono_image_convert(BYTE* srcData, int width, int height, int srcBp
 
 void freerdp_alpha_cursor_convert(BYTE* alphaData, BYTE* xorMask, BYTE* andMask, int width, int height, int bpp, int depth, HCLRCONV clrconv)
 {
+	if (depth==30) depth = 24; //? on deep color cursor still 24 bit
 	int xpixel;
 	int apixel;
 	int i, j, jj;
 	uint32_t colormask = 0xffffffff >> (32-depth);
 
-	fprintf(stderr, "cursor: %d to %d\n", bpp, depth);
 	for (j = 0; j < height; j++)
 	{
 		jj = (bpp == 1) ? j : (height - 1) - j;
@@ -1295,13 +1295,10 @@ void freerdp_alpha_cursor_convert(BYTE* alphaData, BYTE* xorMask, BYTE* andMask,
 			xpixel = freerdp_color_convert_rgb(xpixel, bpp, depth, clrconv); //conver from bpp to depth
 			apixel = freerdp_get_pixel(andMask, i, jj, width, height, 1);
 
-			if (apixel==0)
-			    xpixel|=~colormask;
-			else
-			    xpixel=0;
-			//printf("%08X\n", xpixel);
-
-
+//			if (apixel==0)
+//			    xpixel|=~colormask;
+//			else
+//			    xpixel=0;
 //			if (apixel != 0)
 //			{
 //				if ((xpixel & colormask) > (colormask/2)) // bright enough

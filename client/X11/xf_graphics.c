@@ -52,13 +52,11 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 
 	if (bitmap->data != NULL)
 	{
-		//printf("%d %d\n", xfc->depth, xfc->srcBpp);
 		data = freerdp_image_convert(bitmap->data, NULL,
 				bitmap->width, bitmap->height, xfc->srcBpp, xfc->bpp, xfc->depth, xfc->clrconv);
 
 		if (bitmap->ephemeral != TRUE)
 		{
-			//printf("X bitmap new %d %d\n", xfc->bpp, xfc->depth);
 			image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 				ZPixmap, 0, (char*) data, bitmap->width, bitmap->height, xfc->scanline_pad, 0);
 
@@ -108,7 +106,6 @@ void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 
-	//printf("bitmap paint bpp %d\n", bitmap->bpp);
 	image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 			ZPixmap, 0, (char*) bitmap->data, bitmap->width, bitmap->height, xfc->scanline_pad, 0);
 
@@ -354,7 +351,6 @@ void xf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 	image->bitmap_bit_order = MSBFirst;
 
 	XInitImage(image);
-	//puts("X glyph new");
 	XPutImage(xfc->display, xf_glyph->pixmap, xfc->gc_mono, image, 0, 0, 0, 0, glyph->cx, glyph->cy);
 	XFree(image);
 

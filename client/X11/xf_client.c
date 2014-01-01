@@ -228,7 +228,6 @@ void xf_sw_end_paint(rdpContext* context)
 
 			xf_lock_x11(xfc, FALSE);
 
-			//puts("X sw end");
 			XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
 
 			if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
@@ -263,7 +262,6 @@ void xf_sw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 				
-				//puts("X sw end 2");
 				//combine xfc->primary with xfc->image
 				XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
 
@@ -354,7 +352,6 @@ void xf_hw_end_paint(rdpContext* context)
 			
 			xf_lock_x11(xfc, FALSE);
 
-			//puts("hw end");
 			if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 			{
 				xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
@@ -380,7 +377,6 @@ void xf_hw_end_paint(rdpContext* context)
 
 			xf_lock_x11(xfc, FALSE);
 
-			//puts("hw end 2");
 			for (i = 0; i < ninvalid; i++)
 			{
 				x = cinvalid[i].x;
@@ -566,7 +562,6 @@ void xf_toggle_fullscreen(xfContext* xfc)
 
 	xf_lock_x11(xfc, TRUE);
 
-	puts("X toggle");
 	contents = XCreatePixmap(xfc->display, xfc->window->handle, xfc->width, xfc->height, xfc->depth);
 	XCopyArea(xfc->display, xfc->primary, contents, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
 

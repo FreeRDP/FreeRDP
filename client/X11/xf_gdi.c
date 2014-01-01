@@ -228,7 +228,6 @@ Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp, BYTE* data)
 
 		cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfc->bpp, xfc->depth, xfc->clrconv);
 
-		//puts("X xf_brush_new");
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 						ZPixmap, 0, (char*) cdata, width, height, xfc->scanline_pad, 0);
 
@@ -255,7 +254,6 @@ Pixmap xf_mono_bitmap_new(xfContext* xfc, int width, int height, BYTE* data)
 
 	bitmap = XCreatePixmap(xfc->display, xfc->drawable, width, height, 1);
 
-//	puts("X mono bitmap new");
 	image = XCreateImage(xfc->display, xfc->visual, 1,
 			ZPixmap, 0, (char*) data, width, height, 8, scanline);
 
@@ -1012,7 +1010,6 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		/* Draw the tiles to primary surface, each is 64x64. */
 		for (i = 0; i < message->numTiles; i++)
 		{
-			puts("surface bits");
 			image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
 				(char*) message->tiles[i]->data, 64, 64, 32, 0);
 
@@ -1053,7 +1050,6 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		freerdp_image_flip(nsc_context->BitmapData, xfc->bmp_codec_nsc,
 				surface_bits_command->width, surface_bits_command->height, 32);
 
-		puts("surface bits 2");
 		image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
 			(char*) xfc->bmp_codec_nsc, surface_bits_command->width, surface_bits_command->height, 32, 0);
 
@@ -1091,7 +1087,6 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 			freerdp_image_flip(surface_bits_command->bitmapData, xfc->bmp_codec_none,
 					surface_bits_command->width, surface_bits_command->height, 32);
 
-			puts("surface bits 3");
 			image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
 				(char*) xfc->bmp_codec_none, surface_bits_command->width, surface_bits_command->height, 32, 0);
 
