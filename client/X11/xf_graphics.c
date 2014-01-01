@@ -52,11 +52,13 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 
 	if (bitmap->data != NULL)
 	{
+		//printf("%d %d\n", xfc->depth, xfc->srcBpp);
 		data = freerdp_image_convert(bitmap->data, NULL,
-				bitmap->width, bitmap->height, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+				bitmap->width, bitmap->height, xfc->srcBpp, xfc->bpp, xfc->depth, xfc->clrconv);
 
 		if (bitmap->ephemeral != TRUE)
 		{
+			//printf("create image %d %d\n", xfc->bpp, xfc->depth);
 			image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 				ZPixmap, 0, (char*) data, bitmap->width, bitmap->height, xfc->scanline_pad, 0);
 
@@ -237,7 +239,7 @@ void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	if ((pointer->andMaskData != 0) && (pointer->xorMaskData != 0))
 	{
 		freerdp_alpha_cursor_convert((BYTE*) (ci.pixels), pointer->xorMaskData, pointer->andMaskData,
-				pointer->width, pointer->height, pointer->xorBpp, xfc->clrconv);
+				pointer->width, pointer->height, pointer->xorBpp, xfc->depth, xfc->clrconv);
 	}
 
 	((xfPointer*) pointer)->cursor = XcursorImageLoadCursor(xfc->display, &ci);

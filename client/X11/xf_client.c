@@ -909,7 +909,7 @@ BOOL xf_post_connect(freerdp* instance)
 		xfc->srcBpp = instance->settings->ColorDepth;
 		xf_gdi_register_update_callbacks(instance->update);
 
-		xfc->hdc = gdi_CreateDC(xfc->clrconv, xfc->bpp);
+		xfc->hdc = gdi_CreateDC(xfc->clrconv, xfc->bpp, xfc->depth);
 
 		if (instance->settings->RemoteFxCodec)
 		{

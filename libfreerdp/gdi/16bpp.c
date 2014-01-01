@@ -43,6 +43,7 @@ UINT16 gdi_get_color_16bpp(HGDI_DC hdc, GDI_COLOR color)
 	BYTE r, g, b;
 	UINT16 color16;
 
+	printf("get color 16: depth %d\n", hdc->depth);
 	GetBGR32(r, g, b, color);
 
 	if (hdc->rgb555)

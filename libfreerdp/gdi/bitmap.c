@@ -133,12 +133,13 @@ INLINE void gdi_SetPixel_32bpp(HGDI_BITMAP hBmp, int X, int Y, UINT32 pixel)
  * @return new bitmap
  */
 
-HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, BYTE* data)
+HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int bpp, int depth, BYTE* data)
 {
 	HGDI_BITMAP hBitmap = (HGDI_BITMAP) malloc(sizeof(GDI_BITMAP));
 	hBitmap->objectType = GDIOBJECT_BITMAP;
-	hBitmap->bitsPerPixel = cBitsPerPixel;
-	hBitmap->bytesPerPixel = (cBitsPerPixel + 1) / 8;
+	hBitmap->bpp = bpp;
+	hBitmap->depth = depth;
+	hBitmap->bytesPerPixel = (bpp + 7) / 8;
 	hBitmap->scanline = nWidth * hBitmap->bytesPerPixel;
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
@@ -160,7 +161,8 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
 	HGDI_BITMAP hBitmap = (HGDI_BITMAP) malloc(sizeof(GDI_BITMAP));
 	hBitmap->objectType = GDIOBJECT_BITMAP;
 	hBitmap->bytesPerPixel = hdc->bytesPerPixel;
-	hBitmap->bitsPerPixel = hdc->bitsPerPixel;
+	hBitmap->bpp = hdc->bpp;
+	hBitmap->depth = hdc->depth;
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
 	hBitmap->data = malloc(nWidth * nHeight * hBitmap->bytesPerPixel);
@@ -185,7 +187,7 @@ HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
 
 int gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop)
 {
-	p_BitBlt _BitBlt = BitBlt_[IBPP(hdcDest->bitsPerPixel)];
+	p_BitBlt _BitBlt = BitBlt_[IBPP(hdcDest->bpp)]; //? hope it will work with any depth
 
 	if (_BitBlt != NULL)
 		return _BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, rop);

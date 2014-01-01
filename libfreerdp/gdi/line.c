@@ -54,7 +54,7 @@ p_LineTo LineTo_[5] =
 
 int gdi_LineTo(HGDI_DC hdc, int nXEnd, int nYEnd)
 {
-	p_LineTo _LineTo = LineTo_[IBPP(hdc->bitsPerPixel)];
+	p_LineTo _LineTo = LineTo_[IBPP(hdc->bpp)]; //?
 
 	if (_LineTo != NULL)
 		return _LineTo(hdc, nXEnd, nYEnd);

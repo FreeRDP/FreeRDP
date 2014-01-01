@@ -46,15 +46,21 @@ UINT32 gdi_get_color_32bpp(HGDI_DC hdc, GDI_COLOR color)
 	a = 0xFF;
 	GetBGR32(r, g, b, color);
 
-	if (hdc->invert)
-	{
+	if (hdc->depth==24) {
+	    if (hdc->invert) {
 		color32 = ABGR32(a, r, g, b);
-	}
-	else
-	{
+	    } else {
 		color32 = ARGB32(a, r, g, b);
+	    }
+	} else if (hdc->depth==30) {
+	    if (hdc->invert) {
+		color32 = ABGR30(a, r, g, b);
+	    } else {
+		color32 = ARGB30(a, r, g, b);
+	    }
+	} else {
+	    fprintf(stderr, "cannot get color for depth %d\n", hdc->depth);
 	}
-
 	return color32;
 }
 

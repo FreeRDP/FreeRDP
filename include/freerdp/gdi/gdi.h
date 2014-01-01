@@ -159,7 +159,8 @@ struct _GDI_BITMAP
 {
 	BYTE objectType;
 	int bytesPerPixel;
-	int bitsPerPixel;
+	int bpp;
+	int depth;
 	int width;
 	int height;
 	int scanline;
@@ -228,7 +229,8 @@ struct _GDI_DC
 {
 	HGDIOBJECT selectedObject;
 	int bytesPerPixel;
-	int bitsPerPixel;
+	int bpp;
+	int depth;
 	GDI_COLOR bkColor;
 	GDI_COLOR textColor;
 	HGDI_BRUSH brush;
@@ -270,7 +272,8 @@ struct rdp_gdi
 
 	int width;
 	int height;
-	int dstBpp;
+	int dst_bpp;
+	int dst_depth;
 	int srcBpp;
 	int cursor_x;
 	int cursor_y;

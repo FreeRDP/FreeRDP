@@ -55,7 +55,7 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 	BYTE pixel8;
 	UINT16 pixel16;
 	UINT32 pixel32;
-	int bpp = hdc->bitsPerPixel;
+	int bpp = hdc->bpp; //?
 
 	a = (x1 < x2) ? x2 - x1 : x1 - x2;
 	b = (y1 < y2) ? y2 - y1 : y1 - y2;
@@ -180,7 +180,7 @@ int gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nB
 
 int gdi_FillRect(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
 {
-	p_FillRect _FillRect = FillRect_[IBPP(hdc->bitsPerPixel)];
+	p_FillRect _FillRect = FillRect_[IBPP(hdc->bpp)]; //?
 
 	if (_FillRect != NULL)
 		return _FillRect(hdc, rect, hbr);

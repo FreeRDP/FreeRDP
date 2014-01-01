@@ -226,7 +226,7 @@ Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp, BYTE* data)
 	{
 		GC gc;
 
-		cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfc->bpp, xfc->clrconv);
+		cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfc->bpp, xfc->depth, xfc->clrconv);
 
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 						ZPixmap, 0, (char*) cdata, width, height, xfc->scanline_pad, 0);
