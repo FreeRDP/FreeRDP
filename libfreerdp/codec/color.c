@@ -1299,6 +1299,7 @@ void freerdp_alpha_cursor_convert(BYTE* alphaData, BYTE* xorMask, BYTE* andMask,
 			    xpixel|=~colormask;
 			else
 			    xpixel=0;
+			//printf("%08X\n", xpixel);
 
 
 //			if (apixel != 0)

@@ -228,8 +228,8 @@ void xf_sw_end_paint(rdpContext* context)
 
 			xf_lock_x11(xfc, FALSE);
 
-			puts("X sw end");
-			//XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
+			//puts("X sw end");
+			XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
 
 			if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 			{
@@ -237,7 +237,7 @@ void xf_sw_end_paint(rdpContext* context)
 			}
 			else
 			{
-				//XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
+				XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
 			}
 
 			xf_unlock_x11(xfc, FALSE);
@@ -263,9 +263,9 @@ void xf_sw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 				
-				puts("X sw end 2");
+				//puts("X sw end 2");
 				//combine xfc->primary with xfc->image
-				//XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
+				XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
 
 				if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
 				{
@@ -273,7 +273,7 @@ void xf_sw_end_paint(rdpContext* context)
 				}
 				else
 				{
-					//XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
+					XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
 				}
 			}
 
@@ -568,13 +568,13 @@ void xf_toggle_fullscreen(xfContext* xfc)
 
 	puts("X toggle");
 	contents = XCreatePixmap(xfc->display, xfc->window->handle, xfc->width, xfc->height, xfc->depth);
-	//XCopyArea(xfc->display, xfc->primary, contents, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
+	XCopyArea(xfc->display, xfc->primary, contents, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
 
 	XDestroyWindow(xfc->display, xfc->window->handle);
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
 	xf_create_window(xfc);
 
-	//XCopyArea(xfc->display, contents, xfc->primary, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
+	XCopyArea(xfc->display, contents, xfc->primary, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
 	XFreePixmap(xfc->display, contents);
 
 	xf_unlock_x11(xfc, TRUE);
