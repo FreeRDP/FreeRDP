@@ -108,11 +108,7 @@ void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 
-	printf("bitmap paint bpp %d\n", bitmap->bpp);
-//	BYTE *data = freerdp_image_convert(bitmap->data, NULL,
-//				bitmap->width, bitmap->height, xfc->srcBpp, xfc->bpp, xfc->depth, xfc->clrconv);
-
-
+	//printf("bitmap paint bpp %d\n", bitmap->bpp);
 	image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 			ZPixmap, 0, (char*) bitmap->data, bitmap->width, bitmap->height, xfc->scanline_pad, 0);
 

@@ -241,7 +241,7 @@ struct _GDI_DC
 	int bkMode;
 	int alpha;
 	int invert;
-	int rgb555;
+	//int rgb555;
 };
 typedef struct _GDI_DC GDI_DC;
 typedef GDI_DC* HGDI_DC;

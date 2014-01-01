@@ -1039,12 +1039,12 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	gdi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
 	gdi->clrconv->alpha = (flags & CLRCONV_ALPHA) ? 1 : 0;
 	gdi->clrconv->invert = (flags & CLRCONV_INVERT) ? 1 : 0;
-	gdi->clrconv->rgb555 = (flags & CLRCONV_RGB555) ? 1 : 0;
+	//gdi->clrconv->rgb555 = (flags & CLRCONV_RGB555) ? 1 : 0;
 	gdi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
 
 	gdi->hdc->alpha = gdi->clrconv->alpha;
 	gdi->hdc->invert = gdi->clrconv->invert;
-	gdi->hdc->rgb555 = gdi->clrconv->rgb555;
+	//gdi->hdc->rgb555 = gdi->clrconv->rgb555;
 
 	gdi_init_primary(gdi);
 

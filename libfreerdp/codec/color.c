@@ -198,15 +198,15 @@ static INLINE void freerdp_color_split_bgr(UINT32* color, int bpp, BYTE* red, BY
 	}
 }
 
-static INLINE void freerdp_color_make_rgb(UINT32* color, int bpp, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
+static INLINE void freerdp_color_make_rgb(UINT32* color, int depth, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
 {
-	switch (bpp)
+	switch (depth)
 	{
-		case 32:
-			*color = ARGB32(*alpha, *red, *green, *blue);
-			break;
+//		case 32:
+//			*color = ARGB32(*alpha, *red, *green, *blue);
+//			break;
 		case 30:
-			*color = RGB30(*red, *green, *blue) | ((*alpha>>6)<<30);
+			*color = RGB30(*red, *green, *blue);// | ((*alpha>>6)<<30);
 			break;
 
 		case 24:
@@ -214,23 +214,23 @@ static INLINE void freerdp_color_make_rgb(UINT32* color, int bpp, BYTE* red, BYT
 			break;
 
 		case 16:
-			if (clrconv->rgb555)
-			{
-				*color = RGB15(*red, *green, *blue);
-			}
-			else
-			{
+//			if (clrconv->rgb555)
+//			{
+//				*color = RGB15(*red, *green, *blue);
+//			}
+//			else
+//			{
 				*color = RGB16(*red, *green, *blue);
-			}
+//			}
 			break;
 
 		case 15:
 			*color = RGB15(*red, *green, *blue);
 			break;
 
-		case 8:
-			*color = RGB24(*red, *green, *blue);
-			break;
+//		case 8: 
+//			*color = RGB24(*red, *green, *blue);
+//			break;
 
 		case 1:
 			if ((*red != 0) || (*green != 0) || (*blue != 0))
@@ -238,21 +238,21 @@ static INLINE void freerdp_color_make_rgb(UINT32* color, int bpp, BYTE* red, BYT
 			break;
 
 		default:
-			fprintf(stderr, "cannot compose %d-bit rgb color\n", bpp);
+			fprintf(stderr, "cannot compose %d-bit rgb color\n", depth);
 			break;
 	}
 }
 
-static INLINE void freerdp_color_make_bgr(UINT32* color, int bpp, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
+static INLINE void freerdp_color_make_bgr(UINT32* color, int depth, BYTE* red, BYTE* green, BYTE* blue, BYTE* alpha, HCLRCONV clrconv)
 {
-	switch (bpp)
+	switch (depth)
 	{
-		case 32:
-			*color = ABGR32(*alpha, *red, *green, *blue);
-			break;
+//		case 32:
+//			*color = ABGR32(*alpha, *red, *green, *blue);
+//			break;
 
 		case 30:
-			*color = ABGR30(*alpha, *red, *green, *blue);
+			*color = BGR30(*red, *green, *blue);
 			break;
 
 		case 24:
@@ -260,23 +260,23 @@ static INLINE void freerdp_color_make_bgr(UINT32* color, int bpp, BYTE* red, BYT
 			break;
 
 		case 16:
-			if (clrconv->rgb555)
-			{
-				*color = BGR15(*red, *green, *blue);
-			}
-			else
-			{
+//			if (clrconv->rgb555)
+//			{
+//				*color = BGR15(*red, *green, *blue);
+//			}
+//			else
+//			{
 				*color = BGR16(*red, *green, *blue);
-			}
+//			}
 			break;
 
 		case 15:
 			*color = BGR15(*red, *green, *blue);
 			break;
 
-		case 8:
-			*color = BGR24(*red, *green, *blue);
-			break;
+//		case 8:
+//			*color = BGR24(*red, *green, *blue);
+//			break;
 
 		case 1:
 			if ((*red != 0) || (*green != 0) || (*blue != 0))
@@ -284,7 +284,7 @@ static INLINE void freerdp_color_make_bgr(UINT32* color, int bpp, BYTE* red, BYT
 			break;
 
 		default:
-			fprintf(stderr, "cannot compose %d-bit bgr color\n", bpp);
+			fprintf(stderr, "cannot compose %d-bit bgr color\n", depth);
 			break;
 	}
 }
@@ -410,7 +410,7 @@ BYTE* freerdp_image_convert_8bpp(BYTE* srcData, BYTE* dstData, int width, int he
 		memcpy(dstData, srcData, width * height);
 		return dstData;
 	}
-	else if (dstBpp == 15 || (dstBpp == 16 && clrconv->rgb555))
+	else if (dstBpp == 15) // || (dstBpp == 16 && clrconv->rgb555))
 	{
 		if (dstData == NULL)
 			dstData = (BYTE*) malloc(width * height * 2);
@@ -475,6 +475,33 @@ BYTE* freerdp_image_convert_8bpp(BYTE* srcData, BYTE* dstData, int width, int he
 		}
 		return dstData;
 	}
+	else if (dstBpp == 32 && dstDepth==30)
+	{
+		if (dstData == NULL)
+			dstData = (BYTE*) malloc(width * height * 4);
+
+		src8 = (BYTE*) srcData;
+		dst32 = (UINT32*) dstData;
+		for (i = width * height; i > 0; i--)
+		{
+			pixel = *src8;
+			src8++;
+			red = clrconv->palette->entries[pixel].red;
+			green = clrconv->palette->entries[pixel].green;
+			blue = clrconv->palette->entries[pixel].blue;
+			if (clrconv->alpha)
+			{
+				pixel = (clrconv->invert) ? ARGB30(0xFF, red, green, blue) : ABGR30(0xFF, red, green, blue);
+			}
+			else
+			{
+				pixel = (clrconv->invert) ? RGB30(red, green, blue) : BGR30(red, green, blue);
+			}
+			*dst32 = pixel;
+			dst32++;
+		}
+		return dstData;
+	}
 	fprintf(stderr, "cannot convert image properly %d -> %d, %d\n", srcBpp, dstBpp, dstDepth);
 	return srcData;
 }
@@ -490,7 +517,7 @@ BYTE* freerdp_image_convert_15bpp(BYTE* srcData, BYTE* dstData, int width, int h
 	UINT16 *dst16;
 	UINT32 *dst32;
 
-	if (dstBpp == 15 || (dstBpp == 16 && clrconv->rgb555))
+	if (dstBpp == 15) // || (dstBpp == 16 && clrconv->rgb555))
 	{
 		if (dstData == NULL)
 			dstData = (BYTE*) malloc(width * height * 2);
@@ -518,6 +545,31 @@ BYTE* freerdp_image_convert_15bpp(BYTE* srcData, BYTE* dstData, int width, int h
 			else
 			{
 				pixel = (clrconv->invert) ? RGB32(red, green, blue) : BGR32(red, green, blue);
+			}
+			*dst32 = pixel;
+			dst32++;
+		}
+		return dstData;
+	}
+	else if (dstBpp == 32 && dstDepth==30)
+	{
+		if (dstData == NULL)
+			dstData = (BYTE*) malloc(width * height * 4);
+
+		src16 = (UINT16 *) srcData;
+		dst32 = (UINT32 *) dstData;
+		for (i = width * height; i > 0; i--)
+		{
+			pixel = *src16;
+			src16++;
+			GetBGR15(red, green, blue, pixel);
+			if (clrconv->alpha)
+			{
+				pixel = (clrconv->invert) ? ARGB30(0xFF, red, green, blue) : ABGR30(0xFF, red, green, blue);
+			}
+			else
+			{
+				pixel = (clrconv->invert) ? RGB30(red, green, blue) : BGR30(red, green, blue);
 			}
 			*dst32 = pixel;
 			dst32++;
@@ -557,7 +609,7 @@ BYTE* freerdp_image_convert_16bpp(BYTE* srcData, BYTE* dstData, int width, int h
 		if (dstData == NULL)
 			dstData = (BYTE*) malloc(width * height * 2);
 
-		if (clrconv->rgb555)
+		if (dstDepth==15)//(clrconv->rgb555)
 		{
 			int i;
 			BYTE red, green, blue;
@@ -787,12 +839,13 @@ BYTE* freerdp_image_convert_24bpp(BYTE* srcData, BYTE* dstData, int width, int h
 
 BYTE* freerdp_image_convert_32bpp(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, int dstDepth, HCLRCONV clrconv)
 {
+	int index;
+	UINT16 *dst16;
+	UINT32 *src32, *dst32;
+	BYTE red, green, blue;
+
 	if (dstBpp == 16)
 	{
-		int index;
-		UINT16 *dst16;
-		UINT32 *src32;
-		BYTE red, green, blue;
 
 		if (dstData == NULL)
 			dstData = (BYTE*) malloc(width * height * 2);
@@ -812,8 +865,6 @@ BYTE* freerdp_image_convert_32bpp(BYTE* srcData, BYTE* dstData, int width, int h
 	else if (dstBpp == 24)
 	{
 		BYTE *dstp;
-		int index;
-		BYTE red, green, blue;
 
 		if (dstData == NULL)
 			dstData = (BYTE*) malloc(width * height * 3);
@@ -875,6 +926,23 @@ BYTE* freerdp_image_convert_32bpp(BYTE* srcData, BYTE* dstData, int width, int h
 
 		return dstData;
 	}
+	else if (dstBpp == 32 && dstDepth==30)
+	{
+		if (dstData == NULL)
+			dstData = (BYTE*) malloc(width * height * 4);
+
+		src32 = (UINT32 *)srcData;
+		dst32 = (UINT32 *)dstData;
+		UINT32 alpha = clrconv->alpha ? 0xC0000000 : 0;
+		for (index = 0; index < width*height; index++)
+		{
+			GetBGR32(blue, green, red, *src32);
+			src32++;
+			*dst32++ = (clrconv->invert) ? BGR30(red, green, blue) : RGB30(red, green, blue) | alpha;
+		}
+
+		return dstData;
+	}
 
 	fprintf(stderr, "cannot convert image properly %d -> %d, %d\n", srcBpp, dstBpp, dstDepth);
 	return srcData;
@@ -892,8 +960,6 @@ p_freerdp_image_convert freerdp_image_convert_[5] =
 BYTE* freerdp_image_convert(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, int dstDepth, HCLRCONV clrconv)
 {
 	p_freerdp_image_convert _p_freerdp_image_convert = freerdp_image_convert_[IBPP(srcBpp)];
-
-	if(dstDepth!=30) puts("!30!");
 
 	if (_p_freerdp_image_convert != NULL)
 		return _p_freerdp_image_convert(srcData, dstData, width, height, srcBpp, dstBpp, dstDepth, clrconv);
@@ -974,11 +1040,11 @@ BYTE* freerdp_icon_convert(BYTE* srcData, BYTE* dstData, BYTE* mask, int width, 
 	int x, y, bit;
 	int maskIndex;
 
-	if (bpp == 16)
-	{
-		/* Server sends 16 bpp field, but data is usually 15-bit 555 */
-		bpp = 15;
-	}
+//	if (bpp == 16)
+//	{
+//		/* Server sends 16 bpp field, but data is usually 15-bit 555 */
+//		bpp = 15;
+//	}
 	
 	data = freerdp_image_flip(srcData, dstData, width, height, bpp);
 	dstData = freerdp_image_convert(data, NULL, width, height, bpp, 32, 24, clrconv); // internal or output??
@@ -1107,7 +1173,7 @@ BYTE* freerdp_mono_image_convert(BYTE* srcData, int width, int height, int srcBp
 
 	if (dstBpp == 16)
 	{
-		if (clrconv->rgb555)
+		if (dstDepth==15)//(clrconv->rgb555)
 		{
 			if (srcBpp == 16)
 			{
@@ -1229,20 +1295,26 @@ void freerdp_alpha_cursor_convert(BYTE* alphaData, BYTE* xorMask, BYTE* andMask,
 			xpixel = freerdp_color_convert_rgb(xpixel, bpp, depth, clrconv); //conver from bpp to depth
 			apixel = freerdp_get_pixel(andMask, i, jj, width, height, 1);
 
-			if (apixel != 0)
-			{
-				if ((xpixel & colormask) == colormask)
-				{
-					/* use pattern (not solid black) for xor area */
-					xpixel = (i & 1) == (j & 1);
-					xpixel = xpixel ? colormask : 0;
-					xpixel |= ~colormask;
-				}
-				else if (xpixel == ~colormask)
-				{
-					xpixel = 0;
-				}
-			}
+			if (apixel==0)
+			    xpixel|=~colormask;
+			else
+			    xpixel=0;
+
+
+//			if (apixel != 0)
+//			{
+//				if ((xpixel & colormask) > (colormask/2)) // bright enough
+//				{
+//					/* use pattern (not solid black) for xor area */
+//					xpixel = (i & 1) == (j & 1);
+//					xpixel = xpixel ? colormask : 0;
+//					xpixel |= ~colormask;
+//				}
+//				else if (xpixel == ~colormask)
+//				{
+//					xpixel = 0;
+//				}
+//			}
 
 			freerdp_set_pixel(alphaData, i, j, width, height, 32, xpixel);
 		}
@@ -1277,7 +1349,7 @@ HCLRCONV freerdp_clrconv_new(UINT32 flags)
 
 	clrconv->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
 	clrconv->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
-	clrconv->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
+	//clrconv->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
 
 	clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
 	ZeroMemory(clrconv->palette, sizeof(rdpPalette));

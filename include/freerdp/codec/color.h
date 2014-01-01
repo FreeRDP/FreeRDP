@@ -238,7 +238,7 @@ struct _CLRCONV
 {
 	int alpha;
 	int invert;
-	int rgb555;
+	//int rgb555;
 	rdpPalette* palette;
 };
 typedef struct _CLRCONV CLRCONV;

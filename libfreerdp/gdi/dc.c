@@ -75,7 +75,7 @@ HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp, int depth)
 
 	hDC->alpha = clrconv->alpha;
 	hDC->invert = clrconv->invert;
-	hDC->rgb555 = clrconv->rgb555;
+	//hDC->rgb555 = clrconv->rgb555;
 
 	hDC->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
 	hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
@@ -107,7 +107,7 @@ HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 	hDC->hwnd = NULL;
 	hDC->alpha = hdc->alpha;
 	hDC->invert = hdc->invert;
-	hDC->rgb555 = hdc->rgb555;
+//	hDC->rgb555 = hdc->rgb555;
 	return hDC;
 }
 
