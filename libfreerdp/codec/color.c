@@ -1280,43 +1280,43 @@ BYTE* freerdp_mono_image_convert(BYTE* srcData, int width, int height, int srcBp
 
 void freerdp_alpha_cursor_convert(BYTE* alphaData, BYTE* xorMask, BYTE* andMask, int width, int height, int bpp, int depth, HCLRCONV clrconv)
 {
-	if (depth==30) depth = 24; //? on deep color cursor still 24 bit
-	int xpixel;
-	int apixel;
-	int i, j, jj;
-	uint32_t colormask = 0xffffffff >> (32-depth);
+        int xpixel, prvpixel, npixel;
+        int apixel;
+        int i, j, jj;
 
-	for (j = 0; j < height; j++)
-	{
-		jj = (bpp == 1) ? j : (height - 1) - j;
-		for (i = 0; i < width; i++)
-		{
-			xpixel = freerdp_get_pixel(xorMask, i, jj, width, height, bpp);
-			xpixel = freerdp_color_convert_rgb(xpixel, bpp, depth, clrconv); //conver from bpp to depth
-			apixel = freerdp_get_pixel(andMask, i, jj, width, height, 1);
+        for (j = 0; j < height; j++)
+        {
+                jj = (bpp == 1) ? j : (height - 1) - j;
+                prvpixel = 0;
+                for (i = 0; i < width; i++)
+                {
+                        xpixel = freerdp_get_pixel(xorMask, i, jj, width, height, bpp);
+                        xpixel = freerdp_color_convert_rgb(xpixel, bpp, 24, clrconv);
+                        if (xpixel&0xffffff) xpixel |= 0xff000000;
+                        apixel = freerdp_get_pixel(andMask, i, jj, width, height, 1);
 
-//			if (apixel==0)
-//			    xpixel|=~colormask;
-//			else
-//			    xpixel=0;
-//			if (apixel != 0)
-//			{
-//				if ((xpixel & colormask) > (colormask/2)) // bright enough
-//				{
-//					/* use pattern (not solid black) for xor area */
-//					xpixel = (i & 1) == (j & 1);
-//					xpixel = xpixel ? colormask : 0;
-//					xpixel |= ~colormask;
-//				}
-//				else if (xpixel == ~colormask)
-//				{
-//					xpixel = 0;
-//				}
-//			}
+                        if (apixel != 0)
+                        {
+                                if ((xpixel & 0xffffff) == 0xffffff)
+                                {
+                                        /* use pattern (not solid black) for xor area */
+                                        xpixel = (i & 1) == (j & 1);
+                                        xpixel = xpixel ? 0xFFFFFF : 0;
+                                        xpixel |= 0xFF000000;
+                                }
+                                else if (xpixel == 0xFF000000)
+                                {
+                                        xpixel = 0;
+                                }
+                        }
+                        npixel = xpixel;
+                        if (bpp==1 && prvpixel==0 && xpixel!=0) xpixel = 0xff000000;
+                        if (bpp==1 && prvpixel!=0 && xpixel==0) xpixel = 0xffffffff;
 
-			freerdp_set_pixel(alphaData, i, j, width, height, 32, xpixel);
-		}
-	}
+                        freerdp_set_pixel(alphaData, i, j, width, height, 32, xpixel);
+                        prvpixel = npixel;
+                }
+        }
 }
 
 void freerdp_image_swap_color_order(BYTE* data, int width, int height)
