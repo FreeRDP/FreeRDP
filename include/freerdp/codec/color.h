@@ -248,8 +248,8 @@ typedef CLRCONV* HCLRCONV;
 
 typedef BYTE* (*p_freerdp_image_convert)(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, int dstdepth, HCLRCONV clrconv);
 
-FREERDP_API int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp);
-FREERDP_API void freerdp_set_pixel(BYTE* data, int x, int y, int width, int height, int bpp, int pixel);
+FREERDP_API UINT32 freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp);
+FREERDP_API void freerdp_set_pixel(BYTE* data, int x, int y, int width, int height, int bpp, UINT32 pixel);
 
 FREERDP_API BYTE* freerdp_image_convert(BYTE* srcData, BYTE *dstData, int width, int height, int srcBpp, int dstBpp, int dstdepth, HCLRCONV clrconv);
 FREERDP_API BYTE* freerdp_glyph_convert(int width, int height, BYTE* data);

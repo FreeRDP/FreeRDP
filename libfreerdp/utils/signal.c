@@ -87,9 +87,9 @@ const int fatal_signals[] =
 #ifdef SIGPOLL
 	SIGPOLL,
 #endif
-#ifdef SIGPROF
-	SIGPROF,
-#endif
+//#ifdef SIGPROF WTF??
+//	SIGPROF,
+//#endif
 #ifdef SIGSYS
 	SIGSYS,
 #endif

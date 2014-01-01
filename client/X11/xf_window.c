@@ -933,9 +933,9 @@ void xf_UpdateWindowArea(xfContext* xfc, xfWindow* window, int x, int y, int wid
 		XPutImage(xfc->display, xfc->primary, window->gc, xfc->image,
 			ax, ay, ax, ay, width, height);
 	}
-
-	XCopyArea(xfc->display, xfc->primary, window->handle, window->gc,
-			ax, ay, width, height, x, y);
+	puts("X update");
+	///XCopyArea(xfc->display, xfc->primary, window->handle, window->gc,
+	///		ax, ay, width, height, x, y);
 
 	XFlush(xfc->display);
 

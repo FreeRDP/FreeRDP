@@ -58,7 +58,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 
 		if (bitmap->ephemeral != TRUE)
 		{
-			//printf("create image %d %d\n", xfc->bpp, xfc->depth);
+			//printf("X bitmap new %d %d\n", xfc->bpp, xfc->depth);
 			image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 				ZPixmap, 0, (char*) data, bitmap->width, bitmap->height, xfc->scanline_pad, 0);
 
@@ -74,6 +74,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 				free(bitmap->data);
 
 			bitmap->data = data;
+			bitmap->bpp = xfc->bpp;
 		}
 	}
 
@@ -106,6 +107,11 @@ void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 	xf_lock_x11(xfc, FALSE);
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
+
+	printf("bitmap paint bpp %d\n", bitmap->bpp);
+//	BYTE *data = freerdp_image_convert(bitmap->data, NULL,
+//				bitmap->width, bitmap->height, xfc->srcBpp, xfc->bpp, xfc->depth, xfc->clrconv);
+
 
 	image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 			ZPixmap, 0, (char*) bitmap->data, bitmap->width, bitmap->height, xfc->scanline_pad, 0);
@@ -352,6 +358,7 @@ void xf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 	image->bitmap_bit_order = MSBFirst;
 
 	XInitImage(image);
+	//puts("X glyph new");
 	XPutImage(xfc->display, xf_glyph->pixmap, xfc->gc_mono, image, 0, 0, 0, 0, glyph->cx, glyph->cy);
 	XFree(image);
 
@@ -393,12 +400,12 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 	xfContext* xfc = (xfContext*) context;
 
 	bgcolor = (xfc->clrconv->invert)?
-		freerdp_color_convert_var_bgr(bgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv):
-		freerdp_color_convert_var_rgb(bgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+		freerdp_color_convert_var_bgr(bgcolor, context_->settings->ColorDepth, xfc->depth, xfc->clrconv):
+		freerdp_color_convert_var_rgb(bgcolor, context_->settings->ColorDepth, xfc->depth, xfc->clrconv);
 
 	fgcolor = (xfc->clrconv->invert)?
-		freerdp_color_convert_var_bgr(fgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv):
-		freerdp_color_convert_var_rgb(fgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+		freerdp_color_convert_var_bgr(fgcolor, context_->settings->ColorDepth, xfc->depth, xfc->clrconv):
+		freerdp_color_convert_var_rgb(fgcolor, context_->settings->ColorDepth, xfc->depth, xfc->clrconv);
 
 	xf_lock_x11(xfc, FALSE);
 

@@ -32,7 +32,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
 
-int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp)
+UINT32 freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp)
 {
 	int start;
 	int shift;
@@ -49,7 +49,7 @@ int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp)
 			return (data[start] & (0x80 >> shift)) != 0;
 		case 8:
 			return data[y * width + x];
-		case 15:
+		//case 15:
 		case 16:
 			src16 = (UINT16*) data;
 			return src16[y * width + x];
@@ -64,17 +64,16 @@ int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp)
 			src32 = (UINT32*) data;
 			return src32[y * width + x];
 		default:
+			fprintf(stderr, "cannot have %d bits per pixel\n", bpp);
 			break;
 	}
-
 	return 0;
 }
 
-void freerdp_set_pixel(BYTE* data, int x, int y, int width, int height, int bpp, int pixel)
+void freerdp_set_pixel(BYTE* data, int x, int y, int width, int height, int bpp, UINT32 pixel)
 {
 	int start;
 	int shift;
-	int *dst32;
 
 	if (bpp == 1)
 	{
@@ -88,8 +87,10 @@ void freerdp_set_pixel(BYTE* data, int x, int y, int width, int height, int bpp,
 	}
 	else if (bpp == 32)
 	{
-		dst32 = (int*) data;
-		dst32[y * width + x] = pixel;
+		((UINT32 *)data)[y * width + x] = pixel;
+	}
+	else {
+	    fprintf(stderr, "cannot write %d bpp pixel\n", bpp);
 	}
 }
 
@@ -140,6 +141,7 @@ static INLINE void freerdp_color_split_rgb(UINT32* color, int bpp, BYTE* red, BY
 			break;
 
 		default:
+			fprintf(stderr, "cannot split color %d bits per pixel\n", bpp);
 			break;
 	}
 }
@@ -191,6 +193,7 @@ static INLINE void freerdp_color_split_bgr(UINT32* color, int bpp, BYTE* red, BY
 			break;
 
 		default:
+			fprintf(stderr, "cannot split color %d bits per pixel\n", bpp);
 			break;
 	}
 }
@@ -246,6 +249,10 @@ static INLINE void freerdp_color_make_bgr(UINT32* color, int bpp, BYTE* red, BYT
 	{
 		case 32:
 			*color = ABGR32(*alpha, *red, *green, *blue);
+			break;
+
+		case 30:
+			*color = ABGR30(*alpha, *red, *green, *blue);
 			break;
 
 		case 24:
@@ -885,6 +892,8 @@ p_freerdp_image_convert freerdp_image_convert_[5] =
 BYTE* freerdp_image_convert(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, int dstDepth, HCLRCONV clrconv)
 {
 	p_freerdp_image_convert _p_freerdp_image_convert = freerdp_image_convert_[IBPP(srcBpp)];
+
+	if(dstDepth!=30) puts("!30!");
 
 	if (_p_freerdp_image_convert != NULL)
 		return _p_freerdp_image_convert(srcData, dstData, width, height, srcBpp, dstBpp, dstDepth, clrconv);
