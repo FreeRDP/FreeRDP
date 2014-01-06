@@ -330,6 +330,7 @@ struct _PLANAR_RLE_CONTEXT
 	BYTE* outPlane;
 	int outPlaneSize;
 	int outSegmentSize;
+	int nRunLengthPrev;
 };
 typedef struct _PLANAR_RLE_CONTEXT PLANAR_RLE_CONTEXT;
 
@@ -339,12 +340,12 @@ int freerdp_bitmap_planar_compress_plane_rle_segment(PLANAR_RLE_CONTEXT* rle)
 	{
 		int k;
 
-		printf("RAW[");
+		printf("RAW(%d)[", rle->cRawBytes);
 
 		for (k = 0; k < rle->cRawBytes; k++)
 		{
-			printf("0x%02X%s", rle->rawValues[k],
-					((k + 1) == rle->cRawBytes) ? "" : ", ");
+			printf("%02x%s", rle->rawValues[k],
+					((k + 1) == rle->cRawBytes) ? "" : " ");
 		}
 
 		printf("] RUN[%d]\n", rle->nRunLength);
@@ -416,8 +417,13 @@ int freerdp_bitmap_planar_compress_plane_rle_segment(PLANAR_RLE_CONTEXT* rle)
 				}
 
 				*rle->output = PLANAR_CONTROL_BYTE(2, (rle->nRunLength - 32));
-				rle->nRunLength -= 32;
 				rle->output++;
+
+				rle->rawValues += (rle->cRawBytes + rle->nRunLength);
+				rle->output += rle->cRawBytes;
+
+				rle->cRawBytes = 0;
+				rle->nRunLength = 0;
 
 				return 0; /* finish */
 			}
@@ -432,8 +438,13 @@ int freerdp_bitmap_planar_compress_plane_rle_segment(PLANAR_RLE_CONTEXT* rle)
 				}
 
 				*rle->output = PLANAR_CONTROL_BYTE(1, (rle->nRunLength - 16));
-				rle->nRunLength -= 16;
 				rle->output++;
+
+				rle->rawValues += (rle->cRawBytes + rle->nRunLength);
+				rle->output += rle->cRawBytes;
+
+				rle->cRawBytes = 0;
+				rle->nRunLength = 0;
 
 				return 0; /* finish */
 			}
@@ -450,7 +461,6 @@ int freerdp_bitmap_planar_compress_plane_rle_segment(PLANAR_RLE_CONTEXT* rle)
 				*rle->output = PLANAR_CONTROL_BYTE(rle->nRunLength, rle->cRawBytes);
 				rle->output++;
 
-				CopyMemory(rle->output, rle->rawValues, rle->cRawBytes);
 				rle->rawValues += (rle->cRawBytes + rle->nRunLength);
 				rle->output += rle->cRawBytes;
 
@@ -543,32 +553,34 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 		rle->rawScanline = &inPlane[i * width];
 		rle->rawValues = rle->rawScanline;
 
+		rle->nRunLengthPrev = 0;
+
 		//winpr_HexDump(rle->rawScanline, width);
 
-		for (j = 1; j < width; j++)
+		for (j = 1; j <= width; j++)
 		{
 			bSymbolMatch = FALSE;
-			bSequenceEnd = ((j + 1) == width) ? TRUE : FALSE;
+			bSequenceEnd = (j == width) ? TRUE : FALSE;
 
-			if (rle->rawScanline[j] == rle->rawValues[rle->cRawBytes - 1])
+			if (!bSequenceEnd)
 			{
-				bSymbolMatch = TRUE;
-			}
-			else
-			{
-				//printf("mismatch: nRunLength: %d cRawBytes: %d\n", rle->nRunLength, rle->cRawBytes);
-
-				if (bSequenceEnd)
-					rle->cRawBytes++;
-
-				if (rle->nRunLength < 3)
+				if (rle->rawScanline[j] == rle->rawValues[rle->cRawBytes - 1])
 				{
-					rle->cRawBytes += rle->nRunLength;
-					rle->nRunLength = 0;
+					bSymbolMatch = TRUE;
 				}
 				else
 				{
-					bSequenceEnd = TRUE;
+					//printf("mismatch: nRunLength: %d cRawBytes: %d\n", rle->nRunLength, rle->cRawBytes);
+
+					if (rle->nRunLength < 3)
+					{
+						rle->cRawBytes += rle->nRunLength;
+						rle->nRunLength = 0;
+					}
+					else
+					{
+						bSequenceEnd = TRUE;
+					}
 				}
 			}
 
@@ -582,14 +594,29 @@ BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* inPlane, int width, int hei
 
 			if (bSequenceEnd)
 			{
+				int nRunLengthPrev;
+
 				if (rle->nRunLength < 3)
 				{
 					rle->cRawBytes += rle->nRunLength;
 					rle->nRunLength = 0;
 				}
 
+				if ((rle->cRawBytes == 1) && (*rle->rawValues == 0))
+				{
+					if (!rle->nRunLengthPrev)
+					{
+						rle->cRawBytes = 0;
+						rle->nRunLength++;
+					}
+				}
+
+				nRunLengthPrev = rle->nRunLength;
+
 				if (freerdp_bitmap_planar_compress_plane_rle_segment(rle) < 0)
 					return NULL;
+
+				rle->nRunLengthPrev = nRunLengthPrev;
 
 				rle->nRunLength = 0;
 				rle->cRawBytes = 1;
@@ -756,8 +783,8 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data,
 			context->rlePlanes[3] = &context->rlePlanesBuffer[offset];
 			offset += dstSizes[3];
 
-			printf("R: [%d/%d] G: [%d/%d] B: [%d/%d]\n",
-					dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3], planeSize);
+			//printf("R: [%d/%d] G: [%d/%d] B: [%d/%d]\n",
+			//		dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3], planeSize);
 		}
 	}
 
