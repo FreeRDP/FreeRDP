@@ -3162,7 +3162,15 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 
 		rdp_read_capability_set_header(s, &length, &type);
 
-		settings->ReceivedCapabilities[type] = TRUE;
+		if (type < 32)
+		{
+			settings->ReceivedCapabilities[type] = TRUE;
+		}
+		else
+		{
+			fprintf(stderr, "%s: not handling capability type %d yet\n", __FUNCTION__, type);
+		}
+
 		em = bm + length;
 
 		if (Stream_GetRemainingLength(s) < length - 4)
@@ -3333,6 +3341,12 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 		numberCapabilities--;
 	}
 
+	if (numberCapabilities)
+	{
+		fprintf(stderr, "%s: strange we haven't read the number of announced capacity sets, read=%d expected=%d\n",
+				__FUNCTION__, count-numberCapabilities, count);
+	}
+
 #ifdef WITH_DEBUG_CAPABILITIES
 	Stream_GetPointer(s, em);
 	Stream_SetPointer(s, mark);
@@ -3340,11 +3354,6 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 	rdp_print_capability_sets(s, numberCapabilities, TRUE);
 	Stream_SetPointer(s, em);
 #endif
-	if (numberCapabilities)
-	{
-		fprintf(stderr, "%s: strange we haven't read the number of announced capacity sets, read=%d expected=%d\n",
-				__FUNCTION__, count-numberCapabilities, count);
-	}
 
 	return TRUE;
 }
