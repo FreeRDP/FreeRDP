@@ -669,6 +669,8 @@ BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList)
 		return FALSE;
 
 	Stream_Read_UINT32(s, scopeCount); /* ScopeCount (4 bytes) */
+	if (scopeCount * 4 > Stream_GetRemainingLength(s))  /* every blob is at least 4 bytes */
+		return FALSE;
 
 	scopeList->count = scopeCount;
 	scopeList->array = (LICENSE_BLOB*) malloc(sizeof(LICENSE_BLOB) * scopeCount);
