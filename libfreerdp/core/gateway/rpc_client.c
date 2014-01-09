@@ -434,11 +434,12 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 {
 	RPC_PDU* pdu;
 	DWORD dwMilliseconds;
+	DWORD result;
 
 	pdu = NULL;
 	dwMilliseconds = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT : 0;
 
-	DWORD result = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
+	result = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
 	if (result == WAIT_TIMEOUT)
 	{
 		fprintf(stderr, "rpc_recv_dequeue_pdu: timed out waiting for receive event\n");
