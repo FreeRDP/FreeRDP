@@ -355,7 +355,7 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 		flags |= INFO_REMOTECONSOLEAUDIO;
 
 	if (settings->CompressionEnabled)
-		flags |= INFO_COMPRESSION | INFO_PACKET_COMPR_TYPE_RDP6;
+		flags |= INFO_COMPRESSION | INFO_PACKET_COMPR_TYPE_64K;
 
 	if (settings->Domain)
 	{
