@@ -538,6 +538,41 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	return TRUE;
 }
 
+BOOL rdp_recv_server_shutdown_denied_pdu(rdpRdp* rdp, wStream* s)
+{
+	return TRUE;
+}
+
+BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
+{
+	UINT16 unitId;
+	UINT16 ledFlags;
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
+
+	Stream_Read_UINT16(s, unitId); /* unitId (2 bytes) */
+	Stream_Read_UINT16(s, ledFlags); /* ledFlags (2 bytes) */
+
+	return TRUE;
+}
+
+BOOL rdp_recv_server_set_keyboard_ime_status_pdu(rdpRdp* rdp, wStream* s)
+{
+	UINT16 unitId;
+	UINT32 imeState;
+	UINT32 imeConvMode;
+
+	if (Stream_GetRemainingLength(s) < 10)
+		return FALSE;
+
+	Stream_Read_UINT16(s, unitId); /* unitId (2 bytes) */
+	Stream_Read_UINT32(s, imeState); /* imeState (4 bytes) */
+	Stream_Read_UINT32(s, imeConvMode); /* imeConvMode (4 bytes) */
+
+	return TRUE;
+}
+
 BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT32 errorInfo;
@@ -548,6 +583,87 @@ BOOL rdp_recv_set_error_info_data_pdu(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT32(s, errorInfo); /* errorInfo (4 bytes) */
 
 	rdp_set_error_info(rdp, errorInfo);
+
+	return TRUE;
+}
+
+BOOL rdp_recv_server_auto_reconnect_status_pdu(rdpRdp* rdp, wStream* s)
+{
+	UINT32 arcStatus;
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
+
+	Stream_Read_UINT32(s, arcStatus); /* arcStatus (4 bytes) */
+
+	return TRUE;
+}
+
+BOOL rdp_recv_server_status_info_pdu(rdpRdp* rdp, wStream* s)
+{
+	UINT32 statusCode;
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
+
+	Stream_Read_UINT32(s, statusCode); /* statusCode (4 bytes) */
+
+	return TRUE;
+}
+
+BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
+{
+	int index;
+	UINT32 monitorCount;
+	MONITOR_DEF* monitor;
+	MONITOR_DEF* monitorDefArray;
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
+
+	Stream_Read_UINT32(s, monitorCount); /* monitorCount (4 bytes) */
+
+	if (Stream_GetRemainingLength(s) < (monitorCount * 20))
+		return FALSE;
+
+	monitorDefArray = (MONITOR_DEF*) malloc(sizeof(MONITOR_DEF) * monitorCount);
+	ZeroMemory(monitorDefArray, sizeof(MONITOR_DEF) * monitorCount);
+
+	for (index = 0; index < monitorCount; index++)
+	{
+		monitor = &(monitorDefArray[index]);
+
+		Stream_Read_UINT32(s, monitor->left); /* left (4 bytes) */
+		Stream_Read_UINT32(s, monitor->top); /* top (4 bytes) */
+		Stream_Read_UINT32(s, monitor->right); /* right (4 bytes) */
+		Stream_Read_UINT32(s, monitor->bottom); /* bottom (4 bytes) */
+		Stream_Read_UINT32(s, monitor->flags); /* flags (4 bytes) */
+	}
+
+	free(monitorDefArray);
+
+	return TRUE;
+}
+
+BOOL rdp_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount, MONITOR_DEF* monitorDefArray)
+{
+	int index;
+	MONITOR_DEF* monitor;
+
+	Stream_EnsureRemainingCapacity(s, 4 + (monitorCount * 20));
+
+	Stream_Write_UINT32(s, monitorCount); /* monitorCount (4 bytes) */
+
+	for (index = 0; index < monitorCount; index++)
+	{
+		monitor = &(monitorDefArray[index]);
+
+		Stream_Write_UINT32(s, monitor->left); /* left (4 bytes) */
+		Stream_Write_UINT32(s, monitor->top); /* top (4 bytes) */
+		Stream_Write_UINT32(s, monitor->right); /* right (4 bytes) */
+		Stream_Write_UINT32(s, monitor->bottom); /* bottom (4 bytes) */
+		Stream_Write_UINT32(s, monitor->flags); /* flags (4 bytes) */
+	}
 
 	return TRUE;
 }
@@ -618,15 +734,9 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 				return -1;
 			break;
 
-		case DATA_PDU_TYPE_INPUT:
-			break;
-
 		case DATA_PDU_TYPE_SYNCHRONIZE:
 			if (!rdp_recv_synchronize_pdu(rdp, cs))
 				return -1;
-			break;
-
-		case DATA_PDU_TYPE_REFRESH_RECT:
 			break;
 
 		case DATA_PDU_TYPE_PLAY_SOUND:
@@ -634,21 +744,14 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 				return -1;
 			break;
 
-		case DATA_PDU_TYPE_SUPPRESS_OUTPUT:
-			break;
-
-		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
-			break;
-
 		case DATA_PDU_TYPE_SHUTDOWN_DENIED:
+			if (!rdp_recv_server_shutdown_denied_pdu(rdp, cs))
+				return -1;
 			break;
 
 		case DATA_PDU_TYPE_SAVE_SESSION_INFO:
 			if (!rdp_recv_save_session_info(rdp, cs))
 				return -1;
-			break;
-
-		case DATA_PDU_TYPE_FONT_LIST:
 			break;
 
 		case DATA_PDU_TYPE_FONT_MAP:
@@ -657,18 +760,13 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			break;
 
 		case DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS:
-			break;
-
-		case DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST:
-			break;
-
-		case DATA_PDU_TYPE_BITMAP_CACHE_ERROR:
+			if (!rdp_recv_server_set_keyboard_indicators_pdu(rdp, cs))
+				return -1;
 			break;
 
 		case DATA_PDU_TYPE_SET_KEYBOARD_IME_STATUS:
-			break;
-
-		case DATA_PDU_TYPE_OFFSCREEN_CACHE_ERROR:
+			if (!rdp_recv_server_set_keyboard_ime_status_pdu(rdp, cs))
+				return -1;
 			break;
 
 		case DATA_PDU_TYPE_SET_ERROR_INFO:
@@ -676,19 +774,19 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 				return -1;
 			break;
 
-		case DATA_PDU_TYPE_DRAW_NINEGRID_ERROR:
-			break;
-
-		case DATA_PDU_TYPE_DRAW_GDIPLUS_ERROR:
-			break;
-
 		case DATA_PDU_TYPE_ARC_STATUS:
+			if (!rdp_recv_server_auto_reconnect_status_pdu(rdp, cs))
+				return -1;
 			break;
 
 		case DATA_PDU_TYPE_STATUS_INFO:
+			if (!rdp_recv_server_status_info_pdu(rdp, cs))
+				return -1;
 			break;
 
 		case DATA_PDU_TYPE_MONITOR_LAYOUT:
+			if (!rdp_recv_monitor_layout_pdu(rdp, cs))
+				return -1;
 			break;
 
 		default:
