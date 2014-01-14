@@ -618,41 +618,31 @@ int freerdp_bitmap_planar_compress_planes_rle(BYTE* inPlanes[4], int width, int 
 BYTE* freerdp_bitmap_planar_delta_encode_plane(BYTE* inPlane, int width, int height, BYTE* outPlane)
 {
 	char s2c;
-	BYTE u2c;
 	int delta;
-	int i, j, k;
+	int y, x;
+	BYTE *outPtr, *srcPtr, *prevLinePtr;
 
 	if (!outPlane)
-	{
 		outPlane = (BYTE*) malloc(width * height);
-	}
 
-	k = 0;
+	// first line is copied as is
+	CopyMemory(outPlane, inPlane, width);
 
-	for (i = 0; i < height; i++)
+	outPtr = outPlane + width;
+	srcPtr = inPlane + width;
+	prevLinePtr = inPlane;
+
+	for (y = 1; y < height; y++)
 	{
-		for (j = 0; j < width; j++)
+		for (x = 0; x < width; x++, outPtr++, srcPtr++, prevLinePtr++)
 		{
-			if (i < 1)
-			{
-				delta = inPlane[j];
+			delta = *srcPtr - *prevLinePtr;
 
-				s2c = (delta >= 0) ? (char) delta : (char) (~((BYTE) (delta * -1)) + 1);
-			}
-			else
-			{
-				delta = inPlane[(i * width) + j] - inPlane[((i - 1) * width) + j];
+			s2c = (delta >= 0) ? (char) delta : (char) (~((BYTE) (-delta)) + 1);
 
-				s2c = (delta >= 0) ? (char) delta : (char) (~((BYTE) (delta * -1)) + 1);
+			s2c = (s2c >= 0) ? (s2c << 1) : (char) (((~((BYTE) s2c) + 1) << 1) - 1);
 
-				s2c = (s2c >= 0) ? (s2c << 1) : (char) (((~((BYTE) s2c) + 1) << 1) - 1);
-			}
-
-			u2c = (BYTE) s2c;
-
-			outPlane[(i * width) + j] = u2c;
-
-			k++;
+			*outPtr = (BYTE)s2c;
 		}
 	}
 
