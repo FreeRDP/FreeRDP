@@ -21,6 +21,13 @@ set(MODULE_PREFIX "FREERDP_CLIENT")
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
 
+#  Policy CMP0022: INTERFACE_LINK_LIBRARIES defines the link
+#  interface.  Run "cmake --help-policy CMP0022" for policy details.  Use the
+#  cmake_policy command to set the policy and suppress this warning.
+if(POLICY CMP0022)
+  cmake_policy(SET CMP0022 NEW)
+endif()
+
 set(${MODULE_PREFIX}_SRCS
 	client.c
 	cmdline.c
@@ -52,8 +59,6 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHI
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
 	MODULES winpr-crt winpr-utils)
-
-set_target_properties(${MODULE_NAME} PROPERTIES LINK_INTERFACE_LIBRARIES "")
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
