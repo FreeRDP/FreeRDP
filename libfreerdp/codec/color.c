@@ -297,6 +297,7 @@ UINT32 freerdp_color_convert_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCO
 	BYTE alpha = 0xFF;
 	UINT32 dstColor = 0;
 
+	//fprintf(stderr, "color_covert_rgb %d->%d\n", srcBpp, dstBpp);
 	freerdp_color_split_rgb(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
 	freerdp_color_make_rgb(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
 
@@ -311,6 +312,7 @@ UINT32 freerdp_color_convert_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCO
 	BYTE alpha = 0xFF;
 	UINT32 dstColor = 0;
 
+	//fprintf(stderr, "color_covert_bgr %d->%d\n", srcBpp, dstBpp);
 	freerdp_color_split_bgr(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
 	freerdp_color_make_bgr(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
 
@@ -325,6 +327,7 @@ UINT32 freerdp_color_convert_rgb_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HC
 	BYTE alpha = 0xFF;
 	UINT32 dstColor = 0;
 
+	//fprintf(stderr, "color_covert_rgb_bgr %d->%d\n", srcBpp, dstBpp);
 	freerdp_color_split_rgb(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
 	freerdp_color_make_bgr(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
 
@@ -339,6 +342,7 @@ UINT32 freerdp_color_convert_bgr_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HC
 	BYTE alpha = 0xFF;
 	UINT32 dstColor = 0;
 
+	//fprintf(stderr, "color_covert_bgr_rgb %d->%d\n", srcBpp, dstBpp);
 	freerdp_color_split_bgr(&srcColor, srcBpp, &red, &green, &blue, &alpha, clrconv);
 	freerdp_color_make_rgb(&dstColor, dstBpp, &red, &green, &blue, &alpha, clrconv);
 
@@ -347,6 +351,7 @@ UINT32 freerdp_color_convert_bgr_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HC
 
 UINT32 freerdp_color_convert_var(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
+	//fprintf(stderr, "color_covert_var %d->%d\n", srcBpp, dstBpp);
 	if (clrconv->invert)
 		return freerdp_color_convert_var_bgr(srcColor, srcBpp, dstBpp, clrconv);
 	else
@@ -355,6 +360,7 @@ UINT32 freerdp_color_convert_var(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCO
 
 UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
+	//fprintf(stderr, "color_covert_var_rgb %d->%d\n", srcBpp, dstBpp);
 	if (srcBpp == 8)
 	{
 		BYTE alpha = 0xFF;
@@ -374,6 +380,7 @@ UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HC
 
 UINT32 freerdp_color_convert_var_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv)
 {
+	//fprintf(stderr, "color_covert_var_bgr %d->%d\n", srcBpp, dstBpp);
 	if (srcBpp == 8)
 	{
 		BYTE alpha = 0xFF;
