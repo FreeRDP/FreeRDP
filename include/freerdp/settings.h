@@ -240,6 +240,15 @@ typedef struct _TARGET_NET_ADDRESS TARGET_NET_ADDRESS;
 #define LOGON_FAILED_OTHER			0x00000002
 #define LOGON_WARNING				0x00000003
 
+/* Server Status Info */
+#define STATUS_FINDING_DESTINATION		0x00000401
+#define STATUS_LOADING_DESTINATION		0x00000402
+#define STATUS_BRINGING_SESSION_ONLINE		0x00000403
+#define STATUS_REDIRECTING_TO_DESTINATION	0x00000404
+#define STATUS_VM_LOADING			0x00000501
+#define STATUS_VM_WAKING			0x00000502
+#define STATUS_VM_BOOTING			0x00000503
+
 /* SYSTEM_TIME */
 typedef struct
 {
@@ -388,6 +397,16 @@ struct rdp_monitor
 	UINT32 is_primary;
 };
 typedef struct rdp_monitor rdpMonitor;
+
+struct _MONITOR_DEF
+{
+	INT32 left;
+	INT32 top;
+	INT32 right;
+	INT32 bottom;
+	UINT32 flags;
+};
+typedef struct _MONITOR_DEF MONITOR_DEF;
 
 /* Device Redirection */
 

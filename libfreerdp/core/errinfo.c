@@ -572,4 +572,3 @@ void rdp_print_errinfo(UINT32 code)
 
 	fprintf(stderr, "ERRINFO_UNKNOWN 0x%08X: Unknown error.\n", code);
 }
-
