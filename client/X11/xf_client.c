@@ -1418,6 +1418,13 @@ void* xf_thread(void* param)
 	async_channels = settings->AsyncChannels;
 	async_transport = settings->AsyncTransport;
 
+	#ifdef WITH_DEBUG_REDIR
+		if (async_transport)
+		{
+			fprintf(stderr, "using async transport");
+		}
+	#endif
+
 	if (async_update)
 	{
 		update_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_update_thread, instance, 0, NULL);
@@ -1523,10 +1530,14 @@ void* xf_thread(void* param)
 		}
 
 		if (!async_transport)
-		{
+		{	 if (xfc->disconnect || freerdp_shall_disconnect(instance))
+			{
+				fprintf(stderr, "XfreeRDP synchronous connection closing\n");
+			}	
+
 			if (freerdp_check_fds(instance) != TRUE)
 			{
-				fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
+				fprintf(stderr, "Failed to check FreeRDP file descriptor while closing synchronously\n");
 				break;
 			}
 		}
