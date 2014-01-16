@@ -336,6 +336,33 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	return status;
 }
 
+BOOL rdp_client_reconnect(rdpRdp* rdp)
+{
+	int i;
+
+	transport_disconnect(rdp->transport);
+
+	mcs_free(rdp->mcs);
+	nego_free(rdp->nego);
+	license_free(rdp->license);
+	transport_free(rdp->transport);
+
+	/* Reset virtual channel status */
+	for (i = 0; i < rdp->settings->ChannelCount; i++)
+	{
+		rdp->settings->ChannelDefArray[i].joined = FALSE;
+	}
+
+	rdp->transport = transport_new(rdp->settings);
+	rdp->license = license_new(rdp);
+	rdp->nego = nego_new(rdp->transport);
+	rdp->mcs = mcs_new(rdp->transport);
+
+	rdp->transport->layer = TRANSPORT_LAYER_TCP;
+
+	return rdp_client_connect(rdp);
+}
+
 static BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
