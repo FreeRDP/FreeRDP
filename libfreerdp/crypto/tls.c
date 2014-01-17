@@ -369,7 +369,7 @@ BOOL tls_disconnect(rdpTls* tls)
 		{
 			/**
 			 * In cases where the underlying socket has become disconnected,
-		     * there is no need to send a "close notify" shutdown alert.  In
+			 * there is no need to send a "close notify" shutdown alert.  In
 			 * fact, attempting to do so can cause a crash in SSL_shutdown.
 			 *
 			 * The following code disables sending the "close notify".
