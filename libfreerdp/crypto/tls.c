@@ -364,7 +364,22 @@ BOOL tls_disconnect(rdpTls* tls)
 		return FALSE;
 
 	if (tls->ssl)
+	{
+		if (tls->disconnected)
+		{
+			/**
+			 * In cases where the underlying socket has become disconnected,
+		     * there is no need to send a "close notify" shutdown alert.  In
+			 * fact, attempting to do so can cause a crash in SSL_shutdown.
+			 *
+			 * The following code disables sending the "close notify".
+			 */
+
+			SSL_set_quiet_shutdown(tls->ssl, 1);
+		}
+
 		SSL_shutdown(tls->ssl);
+	}
 
 	return TRUE;
 }
@@ -412,6 +427,7 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 				else
 				{
 					tls_print_error("SSL_read", tls->ssl, status);
+					tls->disconnected = 1;
 					status = -1;
 				}
 				break;
@@ -421,13 +437,6 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 				status = -1;
 				break;
 		}
-	}
-
-	/* No need to send "close notify" shutdown alert to peer.  In
-	  fact, some circumstances will cause SSL_shutdown to crash. */
-	if (status == -1)
-	{
-		SSL_set_shutdown(tls->ssl, SSL_SENT_SHUTDOWN);
 	}
 
 	return status;
@@ -470,6 +479,7 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 				else
 				{
 					tls_print_error("SSL_write", tls->ssl, status);
+					tls->disconnected = 1;
 					status = -1;
 				}
 				break;
@@ -479,13 +489,6 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 				status = -1;
 				break;
 		}
-	}
-
-	/* No need to send "close notify" shutdown alert to peer.  In
-	  fact, some circumstances will cause SSL_shutdown to crash. */
-	if (status == -1)
-	{
-		SSL_set_shutdown(tls->ssl, SSL_SENT_SHUTDOWN);
 	}
 
 	return status;

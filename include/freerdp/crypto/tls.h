@@ -43,6 +43,7 @@ struct rdp_tls
 	void* tsg;
 	int sockfd;
 	SSL_CTX* ctx;
+	int disconnected;
 	BYTE* PublicKey;
 	BIO_METHOD* methods;
 	DWORD PublicKeyLength;
