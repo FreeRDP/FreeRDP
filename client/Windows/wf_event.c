@@ -31,6 +31,7 @@
 
 #include "wf_gdi.h"
 #include "wf_event.h"
+#include "freerdp/event.h"
 
 static HWND g_focus_hWnd;
 
@@ -576,6 +577,8 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	int ww, wh, dw, dh;
+	rdpContext* context;
+	MouseEventEventArgs eventArgs;
 
 	if (!wfc->client_width)
 		wfc->client_width = wfc->width;
@@ -592,4 +595,10 @@ void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 
 		input->MouseEvent(input, flags, x + wfc->xCurrentScroll, y + wfc->yCurrentScroll);
 	else
 		input->MouseEvent(input, flags, x * dw / ww + wfc->xCurrentScroll, y * dh / wh + wfc->yCurrentScroll);
+
+	eventArgs.flags = flags;
+	eventArgs.x = x;
+	eventArgs.y = y;
+	context = (rdpContext*) wfc;
+	PubSub_OnMouseEvent(context->pubSub, context, &eventArgs);
 }

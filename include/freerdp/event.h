@@ -83,6 +83,12 @@ DEFINE_EVENT_BEGIN(ChannelDisconnected)
 	void* pInterface;
 DEFINE_EVENT_END(ChannelDisconnected)
 
+DEFINE_EVENT_BEGIN(MouseEvent)
+	UINT16 flags;
+	UINT16 x;
+	UINT16 y;
+DEFINE_EVENT_END(MouseEvent)
+
 #ifdef	__cplusplus
 }
 #endif
