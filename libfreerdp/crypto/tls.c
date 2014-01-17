@@ -423,6 +423,13 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 		}
 	}
 
+	/* No need to send "close notify" shutdown alert to peer.  In
+	  fact, some circumstances will cause SSL_shutdown to crash. */
+	if (status == -1)
+	{
+		SSL_set_shutdown(tls->ssl, SSL_SENT_SHUTDOWN);
+	}
+
 	return status;
 }
 
@@ -472,6 +479,13 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 				status = -1;
 				break;
 		}
+	}
+
+	/* No need to send "close notify" shutdown alert to peer.  In
+	  fact, some circumstances will cause SSL_shutdown to crash. */
+	if (status == -1)
+	{
+		SSL_set_shutdown(tls->ssl, SSL_SENT_SHUTDOWN);
 	}
 
 	return status;
