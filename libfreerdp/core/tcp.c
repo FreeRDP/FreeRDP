@@ -42,7 +42,7 @@
 
 #ifdef __APPLE__
 #ifndef SOL_TCP
-#define SOL_TCP	6
+#define SOL_TCP	IPPROTO_TCP
 #endif
 #ifndef TCP_KEEPIDLE
 #define TCP_KEEPIDLE TCP_KEEPALIVE
