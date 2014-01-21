@@ -41,6 +41,9 @@
 #include <net/if.h>
 
 #ifdef __APPLE__
+#ifndef SOL_TCP
+#define SOL_TCP	6
+#endif
 #ifndef TCP_KEEPIDLE
 #define TCP_KEEPIDLE TCP_KEEPALIVE
 #endif
