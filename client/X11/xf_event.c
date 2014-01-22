@@ -68,11 +68,6 @@ static const char* const X11_EVENT_STRINGS[] =
 	"GenericEvent",
 };
 
-void xf_send_mouse_motion_event(rdpInput* input, boolean down, uint32 button, uint16 x, uint16 y)
-{
-	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
-}
-
 boolean xf_event_Expose(xfInfo* xfi, XEvent* event, boolean app)
 {
 	int x, y;
