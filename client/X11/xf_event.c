@@ -29,6 +29,8 @@
 
 #include "xf_event.h"
 
+#define CLAMP_ZERO(val) val < 0 ? 0 : val
+
 static const char* const X11_EVENT_STRINGS[] =
 {
 	"", "",
@@ -120,7 +122,7 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 				return true;
 		}
 
-		input->MouseEvent(input, PTR_FLAGS_MOVE, event->xmotion.x, event->xmotion.y);
+		input->MouseEvent(input, PTR_FLAGS_MOVE, CLAMP_ZERO(event->xmotion.x), CLAMP_ZERO(event->xmotion.y));
 
 		if (xfi->fullscreen)
 			XSetInputFocus(xfi->display, xfi->window->handle, RevertToPointerRoot, CurrentTime);
@@ -138,7 +140,7 @@ boolean xf_event_MotionNotify(xfInfo* xfi, XEvent* event, boolean app)
 		{
 			x += window->windowOffsetX;
 			y += window->windowOffsetY;
-			input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
+			input->MouseEvent(input, PTR_FLAGS_MOVE, CLAMP_ZERO(x), CLAMP_ZERO(y));
 		}
 	}
 
@@ -218,7 +220,7 @@ boolean xf_event_ButtonPress(xfInfo* xfi, XEvent* event, boolean app)
 				}
 			}
 
-			input->MouseEvent(input, flags, x, y);
+			input->MouseEvent(input, flags, CLAMP_ZERO(x), CLAMP_ZERO(y));
 		}
 	}
 
@@ -278,7 +280,7 @@ boolean xf_event_ButtonRelease(xfInfo* xfi, XEvent* event, boolean app)
 			}
 		}
 
-		input->MouseEvent(input, flags, x, y);
+		input->MouseEvent(input, flags, CLAMP_ZERO(x), CLAMP_ZERO(y));
 	}
 
 	return true;
