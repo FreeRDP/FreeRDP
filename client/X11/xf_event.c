@@ -34,6 +34,8 @@
 #include "xf_event.h"
 #include "xf_input.h"
 
+#define CLAMP_COORDINATES(x, y) if (x < 0) x = 0; if (y < 0) y = 0
+
 const char* const X11_EVENT_STRINGS[] =
 {
 	"", "",
@@ -167,6 +169,7 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 		x = (int)((x - xfc->offset_x) * (1.0 / xfc->settings->ScalingFactor) );
 		y = (int)((y - xfc->offset_y) * (1.0 / xfc->settings->ScalingFactor) );
 	}
+	CLAMP_COORDINATES(x,y);
 
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 
@@ -276,6 +279,7 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 					   * (1.0 / xfc->settings->ScalingFactor));
 			}
 
+			CLAMP_COORDINATES(x,y);
 			if (extended)
 				input->ExtendedMouseEvent(input, flags, x, y);
 			else
@@ -363,6 +367,8 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 			x = (int) ((x - xfc->offset_x) * (1.0 / xfc->settings->ScalingFactor));
 			y = (int) ((y - xfc->offset_y) * (1.0 / xfc->settings->ScalingFactor));
 		}
+
+		CLAMP_COORDINATES(x,y);
 
 		if (extended)
 			input->ExtendedMouseEvent(input, flags, x, y);
