@@ -51,13 +51,14 @@
 #define CS_CLUSTER		0xC004
 #define CS_MONITOR		0xC005
 #define CS_MCS_MSGCHANNEL	0xC006
-#define CS_MULTITRANSPORT	0xC008
+#define CS_MULTITRANSPORT	0xC00A
 
 /* Server to Client (SC) data blocks */
 #define SC_CORE			0x0C01
 #define SC_SECURITY		0x0C02
 #define SC_NET			0x0C03
-#define SC_MULTITRANSPORT	0x0C06
+#define SC_MCS_MSGCHANNEL	0x0C04
+#define SC_MULTITRANSPORT	0x0C08
 
 /* RDP version */
 #define RDP_VERSION_4		0x00080001
@@ -493,6 +494,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_SupportMonitorLayoutPdu				141
 #define FreeRDP_SupportGraphicsPipeline				142
 #define FreeRDP_SupportDynamicTimeZone				143
+#define FreeRDP_SupportHeartbeatPdu				144
 #define FreeRDP_DisableEncryption				192
 #define FreeRDP_EncryptionMethods				193
 #define FreeRDP_ExtEncryptionMethods				194
@@ -516,6 +518,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_DesktopPosX					390
 #define FreeRDP_DesktopPosY					391
 #define FreeRDP_MultitransportFlags				512
+#define FreeRDP_SupportMultitransport			513
 #define FreeRDP_AlternateShell					640
 #define FreeRDP_ShellWorkingDirectory				641
 #define FreeRDP_AutoLogonEnabled				704
@@ -786,7 +789,8 @@ struct rdp_settings
 	ALIGN64 BOOL SupportMonitorLayoutPdu; /* 141 */
 	ALIGN64 BOOL SupportGraphicsPipeline; /* 142 */
 	ALIGN64 BOOL SupportDynamicTimeZone; /* 143 */
-	UINT64 padding0192[192 - 143]; /* 143 */
+	ALIGN64 BOOL SupportHeartbeatPdu; /* 144 */
+	UINT64 padding0192[192 - 145]; /* 145 */
 
 	/* Client/Server Security Data */
 	ALIGN64 BOOL DisableEncryption; /* 192 */
@@ -831,7 +835,8 @@ struct rdp_settings
 
 	/* Client Multitransport Channel Data */
 	ALIGN64 UINT32 MultitransportFlags; /* 512 */
-	UINT64 padding0576[576 - 513]; /* 513 */
+	ALIGN64 BOOL SupportMultitransport; /* 513 */
+	UINT64 padding0576[576 - 514]; /* 514 */
 	UINT64 padding0640[640 - 576]; /* 576 */
 
 	/*
@@ -1291,7 +1296,7 @@ struct rdp_settings
 	/* Extensions */
 	ALIGN64 int num_extensions; /*  */
 	ALIGN64 struct rdp_ext_set extensions[16]; /*  */
-	
+
 	ALIGN64 BYTE* SettingsModified; /* byte array marking fields that have been modified from their default value */
 };
 typedef struct rdp_settings rdpSettings;

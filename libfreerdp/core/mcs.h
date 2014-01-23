@@ -115,6 +115,7 @@ typedef struct
 struct rdp_mcs
 {
 	UINT16 user_id;
+	UINT16 message_channel_id;
 	struct rdp_transport* transport;
 	DomainParameters domainParameters;
 	DomainParameters targetParameters;
@@ -123,6 +124,7 @@ struct rdp_mcs
 
 	BOOL user_channel_joined;
 	BOOL global_channel_joined;
+	BOOL message_channel_joined;
 };
 typedef struct rdp_mcs rdpMcs;
 

@@ -83,6 +83,10 @@ set(${MODULE_PREFIX}_SRCS
 	connection.h
 	redirection.c
 	redirection.h
+	autodetect.c
+	autodetect.h
+	multitransport.c
+	multitransport.h
 	timezone.c
 	timezone.h
 	rdp.c
