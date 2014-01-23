@@ -58,7 +58,8 @@
 #define SC_CORE			0x0C01
 #define SC_SECURITY		0x0C02
 #define SC_NET			0x0C03
-#define SC_MULTITRANSPORT	0x0C06
+#define SC_MCS_MSGCHANNEL	0x0C04
+#define SC_MULTITRANSPORT	0x0C08
 
 /* RDP version */
 #define RDP_VERSION_4		0x00080001

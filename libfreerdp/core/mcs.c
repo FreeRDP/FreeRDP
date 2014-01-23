@@ -584,11 +584,22 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 BOOL mcs_recv_erect_domain_request(rdpMcs* mcs, wStream* s)
 {
 	UINT16 length;
+	UINT32 subHeight;
+	UINT32 subInterval;
 	enum DomainMCSPDU MCSPDU;
 
 	MCSPDU = DomainMCSPDU_ErectDomainRequest;
 
-	return mcs_read_domain_mcspdu_header(s, &MCSPDU, &length);
+	if (!mcs_read_domain_mcspdu_header(s, &MCSPDU, &length))
+		return FALSE;
+
+	if (!per_read_integer(s, &subHeight)) /* subHeight (INTEGER) */
+		return FALSE;
+
+	if (!per_read_integer(s, &subInterval)) /* subInterval (INTEGER) */
+		return FALSE;
+
+	return TRUE;
 }
 
 /**

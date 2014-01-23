@@ -59,7 +59,9 @@ BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpSettings* settings, UI
 void gcc_write_client_monitor_extended_data(wStream* s, rdpSettings* settings);
 BOOL gcc_read_client_message_channel_data(wStream* s, rdpSettings* settings, UINT16 blockLength);
 void gcc_write_client_message_channel_data(wStream* s, rdpSettings* settings);
+void gcc_write_server_message_channel_data(wStream* s, rdpSettings* settings);
 BOOL gcc_read_client_multitransport_channel_data(wStream* s, rdpSettings* settings, UINT16 blockLength);
 void gcc_write_client_multitransport_channel_data(wStream* s, rdpSettings* settings);
+void gcc_write_server_multitransport_channel_data(wStream* s, rdpSettings* settings);
 
 #endif /* FREERDP_CORE_GCC_H */

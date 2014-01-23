@@ -485,9 +485,13 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpSettings* settings, int length)
 
 void gcc_write_server_data_blocks(wStream* s, rdpSettings* settings)
 {
-	gcc_write_server_core_data(s, settings);
-	gcc_write_server_network_data(s, settings);
-	gcc_write_server_security_data(s, settings);
+	gcc_write_server_core_data(s, settings); /* serverCoreData */
+	gcc_write_server_network_data(s, settings); /* serverNetworkData */
+	gcc_write_server_security_data(s, settings); /* serverSecurityData */
+
+	/* TODO: Send these GCC data blocks only when the client sent them */
+	//gcc_write_server_message_channel_data(s, settings); /* serverMessageChannelData */
+	//gcc_write_server_multitransport_channel_data(s, settings); /* serverMultitransportChannelData */
 }
 
 BOOL gcc_read_user_data_header(wStream* s, UINT16* type, UINT16* length)
@@ -959,6 +963,24 @@ BOOL gcc_read_server_security_data(wStream* s, rdpSettings* settings)
 	}
 
 	return TRUE;
+}
+
+void gcc_write_server_message_channel_data(wStream* s, rdpSettings* settings)
+{
+	UINT16 mcsChannelId = 0;
+
+	gcc_write_user_data_header(s, SC_MCS_MSGCHANNEL, 6);
+
+	Stream_Write_UINT16(s, mcsChannelId); /* mcsChannelId (2 bytes) */
+}
+
+void gcc_write_server_multitransport_channel_data(wStream* s, rdpSettings* settings)
+{
+	UINT32 flags = 0;
+
+	gcc_write_user_data_header(s, SC_MULTITRANSPORT, 8);
+
+	Stream_Write_UINT32(s, flags); /* flags (4 bytes) */
 }
 
 static const BYTE initial_signature[] =
