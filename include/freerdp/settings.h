@@ -51,7 +51,8 @@
 #define CS_CLUSTER		0xC004
 #define CS_MONITOR		0xC005
 #define CS_MCS_MSGCHANNEL	0xC006
-#define CS_MULTITRANSPORT	0xC008
+#define CS_MONITOR_EX		0xC008
+#define CS_MULTITRANSPORT	0xC00A
 
 /* Server to Client (SC) data blocks */
 #define SC_CORE			0x0C01
@@ -407,6 +408,16 @@ struct _MONITOR_DEF
 	UINT32 flags;
 };
 typedef struct _MONITOR_DEF MONITOR_DEF;
+
+struct _MONITOR_ATTRIBUTES
+{
+	UINT32 physicalWidth;
+	UINT32 physicalHeight;
+	UINT32 orientation;
+	UINT32 desktopScaleFactor;
+	UINT32 deviceScaleFactor;
+};
+typedef struct _MONITOR_ATTRIBUTES MONITOR_ATTRIBUTES;
 
 /* Device Redirection */
 
