@@ -140,6 +140,7 @@ struct rdp_rdp
 	rdpTransport* transport;
 	rdpExtension* extension;
 	rdpAutoDetect* autodetect;
+	rdpHeartbeat* heartbeat;
 	rdpMultitransport* multitransport;
 	struct rdp_mppc_dec* mppc_dec;
 	struct rdp_mppc_enc* mppc_enc;

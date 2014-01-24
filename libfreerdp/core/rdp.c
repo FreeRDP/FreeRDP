@@ -1088,6 +1088,7 @@ rdpRdp* rdp_new(rdpContext* context)
 		rdp->mcs = mcs_new(rdp->transport);
 		rdp->redirection = redirection_new();
 		rdp->autodetect = autodetect_new();
+		rdp->heartbeat = heartbeat_new();
 		rdp->multitransport = multitransport_new();
 		rdp->mppc_dec = mppc_dec_new();
 		rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
@@ -1162,6 +1163,7 @@ void rdp_free(rdpRdp* rdp)
 		mcs_free(rdp->mcs);
 		redirection_free(rdp->redirection);
 		autodetect_free(rdp->autodetect);
+		heartbeat_free(rdp->heartbeat);
 		multitransport_free(rdp->multitransport);
 		mppc_dec_free(rdp->mppc_dec);
 		mppc_enc_free(rdp->mppc_enc);
