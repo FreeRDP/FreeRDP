@@ -834,26 +834,38 @@ BOOL gcc_read_server_core_data(wStream* s, rdpSettings* settings)
 {
 	UINT32 version;
 	UINT32 clientRequestedProtocols;
+	UINT32 earlyCapabilityFlags;
 
-	if (Stream_GetRemainingLength(s) < 8)
+	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
+
 	Stream_Read_UINT32(s, version); /* version */
-	Stream_Read_UINT32(s, clientRequestedProtocols); /* clientRequestedProtocols */
 
 	if (version == RDP_VERSION_4 && settings->RdpVersion > 4)
 		settings->RdpVersion = 4;
 	else if (version == RDP_VERSION_5_PLUS && settings->RdpVersion < 5)
 		settings->RdpVersion = 7;
 
+	if (Stream_GetRemainingLength(s) >= 4)
+	{
+		Stream_Read_UINT32(s, clientRequestedProtocols); /* clientRequestedProtocols */
+	}
+
+	if (Stream_GetRemainingLength(s) >= 4)
+	{
+		Stream_Read_UINT32(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
+	}
+
 	return TRUE;
 }
 
 void gcc_write_server_core_data(wStream* s, rdpSettings* settings)
 {
-	gcc_write_user_data_header(s, SC_CORE, 12);
+	gcc_write_user_data_header(s, SC_CORE, 16);
 
 	Stream_Write_UINT32(s, settings->RdpVersion == 4 ? RDP_VERSION_4 : RDP_VERSION_5_PLUS);
 	Stream_Write_UINT32(s, settings->RequestedProtocols); /* clientRequestedProtocols */
+	Stream_Write_UINT32(s, settings->EarlyCapabilityFlags); /* earlyCapabilityFlags */
 }
 
 /**
