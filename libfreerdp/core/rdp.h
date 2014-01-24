@@ -35,6 +35,7 @@
 #include "errinfo.h"
 #include "extension.h"
 #include "autodetect.h"
+#include "heartbeat.h"
 #include "multitransport.h"
 #include "security.h"
 #include "transport.h"

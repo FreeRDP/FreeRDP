@@ -720,6 +720,12 @@ int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s)
 		return rdp_recv_autodetect_packet(rdp, s);
 	}
 
+	if (securityFlags & SEC_HEARTBEAT)
+	{
+		/* Heartbeat PDU */
+		return rdp_recv_heartbeat_packet(rdp, s);
+	}
+
 	if (securityFlags & SEC_TRANSPORT_REQ)
 	{
 		/* Initiate Multitransport Request PDU */

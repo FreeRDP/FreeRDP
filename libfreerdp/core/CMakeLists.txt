@@ -85,6 +85,8 @@ set(${MODULE_PREFIX}_SRCS
 	redirection.h
 	autodetect.c
 	autodetect.h
+	heartbeat.c
+	heartbeat.h
 	multitransport.c
 	multitransport.h
 	timezone.c
