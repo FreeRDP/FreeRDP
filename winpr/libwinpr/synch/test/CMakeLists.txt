@@ -10,6 +10,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestSynchCritical.c
 	TestSynchSemaphore.c
 	TestSynchThread.c
+	TestSynchTimerQueue.c
 	TestSynchWaitableTimer.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

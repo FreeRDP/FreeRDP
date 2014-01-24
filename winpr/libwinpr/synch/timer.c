@@ -31,6 +31,10 @@
 
 #include "../handle/handle.h"
 
+/**
+ * Waitable Timer
+ */
+
 HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManualReset, LPCSTR lpTimerName)
 {
 	HANDLE handle = NULL;
@@ -202,6 +206,100 @@ HANDLE OpenWaitableTimerW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lp
 
 BOOL CancelWaitableTimer(HANDLE hTimer)
 {
+	return TRUE;
+}
+
+/**
+ * Timer-Queue Timer
+ */
+
+HANDLE CreateTimerQueue(void)
+{
+	HANDLE handle = NULL;
+	WINPR_TIMER_QUEUE* timerQueue;
+
+	timerQueue = (WINPR_TIMER_QUEUE*) malloc(sizeof(WINPR_TIMER_QUEUE));
+
+	if (timerQueue)
+	{
+		WINPR_HANDLE_SET_TYPE(timerQueue, HANDLE_TYPE_TIMER_QUEUE);
+		handle = (HANDLE) timerQueue;
+	}
+
+	return handle;
+}
+
+BOOL DeleteTimerQueue(HANDLE TimerQueue)
+{
+	WINPR_TIMER_QUEUE* timerQueue;
+
+	if (!TimerQueue)
+		return FALSE;
+
+	timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
+
+	free(timerQueue);
+
+	return TRUE;
+}
+
+BOOL DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
+{
+	WINPR_TIMER_QUEUE* timerQueue;
+
+	if (!TimerQueue)
+		return FALSE;
+
+	timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
+
+	free(timerQueue);
+
+	return TRUE;
+}
+
+BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
+		WAITORTIMERCALLBACK Callback, PVOID Parameter, DWORD DueTime, DWORD Period, ULONG Flags)
+{
+	WINPR_TIMER_QUEUE_TIMER* timer;
+
+	timer = (WINPR_TIMER_QUEUE_TIMER*) malloc(sizeof(WINPR_TIMER_QUEUE_TIMER));
+
+	if (!timer)
+		return FALSE;
+
+	WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER_QUEUE_TIMER);
+	*((UINT_PTR*) phNewTimer) = (UINT_PTR) (HANDLE) timer;
+
+	return TRUE;
+}
+
+BOOL ChangeTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, ULONG DueTime, ULONG Period)
+{
+	WINPR_TIMER_QUEUE* timerQueue;
+	WINPR_TIMER_QUEUE_TIMER* timer;
+
+	if (!TimerQueue || !Timer)
+		return FALSE;
+
+	timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
+	timer = (WINPR_TIMER_QUEUE_TIMER*) Timer;
+
+	return TRUE;
+}
+
+BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE CompletionEvent)
+{
+	WINPR_TIMER_QUEUE* timerQueue;
+	WINPR_TIMER_QUEUE_TIMER* timer;
+
+	if (!TimerQueue || !Timer)
+		return FALSE;
+
+	timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
+	timer = (WINPR_TIMER_QUEUE_TIMER*) Timer;
+
+	free(timer);
+
 	return TRUE;
 }
 

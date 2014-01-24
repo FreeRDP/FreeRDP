@@ -269,6 +269,32 @@ WINPR_API BOOL CancelWaitableTimer(HANDLE hTimer);
 #define OpenWaitableTimer		OpenWaitableTimerA
 #endif
 
+/**
+ * Timer-Queue Timer
+ */
+
+#define WT_EXECUTEDEFAULT			0x00000000
+#define WT_EXECUTEINIOTHREAD			0x00000001
+#define WT_EXECUTEINUITHREAD			0x00000002
+#define WT_EXECUTEINWAITTHREAD			0x00000004
+#define WT_EXECUTEONLYONCE			0x00000008
+#define WT_EXECUTELONGFUNCTION			0x00000010
+#define WT_EXECUTEINTIMERTHREAD			0x00000020
+#define WT_EXECUTEINPERSISTENTIOTHREAD		0x00000040
+#define WT_EXECUTEINPERSISTENTTHREAD		0x00000080
+#define WT_TRANSFER_IMPERSONATION		0x00000100
+
+typedef VOID (*WAITORTIMERCALLBACK)(PVOID lpParameter, BOOLEAN TimerOrWaitFired);
+
+WINPR_API HANDLE CreateTimerQueue(void);
+WINPR_API BOOL DeleteTimerQueue(HANDLE TimerQueue);
+WINPR_API BOOL DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent);
+
+WINPR_API BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
+		WAITORTIMERCALLBACK Callback, PVOID Parameter, DWORD DueTime, DWORD Period, ULONG Flags);
+WINPR_API BOOL ChangeTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, ULONG DueTime, ULONG Period);
+WINPR_API BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE CompletionEvent);
+
 #endif
 
 #if ((_WIN32) && (_WIN32_WINNT < 0x0600))

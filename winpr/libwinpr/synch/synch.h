@@ -97,6 +97,18 @@ struct winpr_timer
 };
 typedef struct winpr_timer WINPR_TIMER;
 
+struct winpr_timer_queue
+{
+	WINPR_HANDLE_DEF();
+};
+typedef struct winpr_timer_queue WINPR_TIMER_QUEUE;
+
+struct winpr_timer_queue_timer
+{
+	WINPR_HANDLE_DEF();
+};
+typedef struct winpr_timer_queue_timer WINPR_TIMER_QUEUE_TIMER;
+
 #endif
 
 #endif /* WINPR_SYNCH_PRIVATE_H */

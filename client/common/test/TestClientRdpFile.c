@@ -334,9 +334,9 @@ int TestClientRdpFile(int argc, char* argv[])
 	freerdp_client_rdp_file_set_integer_option(file, "vendor integer", 456);
 	iValue = freerdp_client_rdp_file_get_integer_option(file, "vendor integer");
 
-	sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
+	sValue = (char*) freerdp_client_rdp_file_get_string_option(file, "vendor string");
 	freerdp_client_rdp_file_set_string_option(file, "vendor string", "apple");
-	sValue = freerdp_client_rdp_file_get_string_option(file, "vendor string");
+	sValue = (char*) freerdp_client_rdp_file_get_string_option(file, "vendor string");
 
 	freerdp_client_rdp_file_set_string_option(file, "fruits", "banana,oranges");
 	freerdp_client_rdp_file_set_integer_option(file, "numbers", 123456789);
