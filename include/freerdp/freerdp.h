@@ -228,6 +228,7 @@ FREERDP_API void freerdp_context_free(freerdp* instance);
 FREERDP_API BOOL freerdp_connect(freerdp* instance);
 FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
+FREERDP_API BOOL freerdp_reconnect(freerdp* instance);
 
 FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
 FREERDP_API BOOL freerdp_check_fds(freerdp* instance);

@@ -41,6 +41,9 @@
 #include <net/if.h>
 
 #ifdef __APPLE__
+#ifndef SOL_TCP
+#define SOL_TCP	IPPROTO_TCP
+#endif
 #ifndef TCP_KEEPIDLE
 #define TCP_KEEPIDLE TCP_KEEPALIVE
 #endif
@@ -245,7 +248,29 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
 	{
-		perror("setsockopt() IPPROTO_TCP, SO_KEEPIDLE:");
+		perror("setsockopt() IPPROTO_TCP, TCP_KEEPIDLE:");
+		return FALSE;
+	}
+#endif
+
+#ifdef TCP_KEEPCNT
+	option_value = 3;
+	option_len = sizeof(option_value);
+
+	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPCNT, (void *) &option_value, option_len) < 0)
+	{
+		perror("setsockopt() SOL_TCP, TCP_KEEPCNT:");
+		return FALSE;
+	}
+#endif
+
+#ifdef TCP_KEEPINTVL
+	option_value = 2;
+	option_len = sizeof(option_value);
+
+	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPINTVL, (void *) &option_value, option_len) < 0)
+	{
+		perror("setsockopt() SOL_TCP, TCP_KEEPINTVL:");
 		return FALSE;
 	}
 #endif
