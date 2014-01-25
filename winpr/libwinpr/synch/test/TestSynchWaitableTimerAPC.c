@@ -1,54 +1,68 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/sysinfo.h>
 
-HANDLE gDoneEvent;
+static int g_Count = 0;
+static HANDLE g_Event = NULL;
+
+struct apc_data
+{
+	UINT32 StartTime;
+};
+typedef struct apc_data APC_DATA;
 
 VOID CALLBACK TimerAPCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
 {
-	int param;
+	APC_DATA* apcData;
+	UINT32 CurrentTime = GetTickCount();
 
 	if (!lpArg)
 		return;
 
-	param = *((int*) lpArg);
+	apcData = (APC_DATA*) lpArg;
 
-	printf("TimerAPCProc: %d\n", param);
+	printf("TimerAPCProc: time: %d\n", CurrentTime - apcData->StartTime);
 
-	SetEvent(gDoneEvent);
+	g_Count++;
+
+	if (g_Count >= 5)
+	{
+		SetEvent(g_Event);
+	}
 }
 
 int TestSynchWaitableTimerAPC(int argc, char* argv[])
 {
-	int arg = 123;
 	HANDLE hTimer;
 	BOOL bSuccess;
-	INT64 qwDueTime;
-	LARGE_INTEGER liDueTime;
+	LARGE_INTEGER due;
+	APC_DATA* apcData;
 
+	apcData = (APC_DATA*) malloc(sizeof(APC_DATA));
+	g_Event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	hTimer = CreateWaitableTimer(NULL, FALSE, NULL);
 
 	if (!hTimer)
 		return -1;
 
-	qwDueTime = -5 * 10000000;
-	liDueTime.LowPart = (DWORD) (qwDueTime & 0xFFFFFFFF);
-	liDueTime.HighPart = (LONG) (qwDueTime >> 32);
+	due.QuadPart = -15000000LL; /* 1.5 seconds */
 
-	bSuccess = SetWaitableTimer(hTimer, &liDueTime, 2000, TimerAPCProc, &arg, FALSE);
+	apcData->StartTime = GetTickCount();
+	bSuccess = SetWaitableTimer(hTimer, &due, 2000, TimerAPCProc, apcData, FALSE);
 
 	if (!bSuccess)
 		return -1;
 
-	if (WaitForSingleObject(gDoneEvent, INFINITE) != WAIT_OBJECT_0)
+	if (WaitForSingleObject(g_Event, INFINITE) != WAIT_OBJECT_0)
 	{
 		printf("WaitForSingleObject failed (%d)\n", GetLastError());
 		return -1;
 	}
 
-	CloseHandle(gDoneEvent);
-
 	CloseHandle(hTimer);
+	CloseHandle(g_Event);
+	free(apcData);
 
 	return 0;
 }

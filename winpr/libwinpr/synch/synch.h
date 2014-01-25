@@ -86,6 +86,8 @@ struct winpr_timer
 	WINPR_HANDLE_DEF();
 
 	int fd;
+	BOOL bInit;
+	timer_t tid;
 	LONG lPeriod;
 	BOOL bManualReset;
 	PTIMERAPCROUTINE pfnCompletionRoutine;
@@ -106,6 +108,12 @@ typedef struct winpr_timer_queue WINPR_TIMER_QUEUE;
 struct winpr_timer_queue_timer
 {
 	WINPR_HANDLE_DEF();
+
+	ULONG Flags;
+	DWORD DueTime;
+	DWORD Period;
+	PVOID Parameter;
+	WAITORTIMERCALLBACK Callback;
 };
 typedef struct winpr_timer_queue_timer WINPR_TIMER_QUEUE_TIMER;
 

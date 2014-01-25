@@ -25,11 +25,110 @@
 
 #include <winpr/synch.h>
 
+#ifndef _WIN32
+#include <sys/time.h>
+#include <signal.h>
+#endif
+
 #include "synch.h"
 
 #ifndef _WIN32
 
 #include "../handle/handle.h"
+
+static BOOL g_WaitableTimerSignalHandlerInstalled = FALSE;
+
+void WaitableTimerSignalHandler(int signum, siginfo_t* siginfo, void* arg)
+{
+	WINPR_TIMER* timer = siginfo->si_value.sival_ptr;
+
+	if (!timer || (signum != SIGALRM))
+		return;
+
+	if (timer->pfnCompletionRoutine)
+	{
+		timer->pfnCompletionRoutine(timer->lpArgToCompletionRoutine, 0, 0);
+
+		if (timer->lPeriod)
+		{
+			timer->timeout.it_interval.tv_sec = (timer->lPeriod / 1000); /* seconds */
+			timer->timeout.it_interval.tv_nsec = ((timer->lPeriod % 1000) * 1000000); /* nanoseconds */
+
+			if ((timer_settime(timer->tid, 0, &(timer->timeout), NULL)) != 0)
+			{
+				perror("timer_settime");
+			}
+		}
+	}
+}
+
+int InstallWaitableTimerSignalHandler()
+{
+	if (!g_WaitableTimerSignalHandlerInstalled)
+	{
+		struct sigaction action;
+
+		sigemptyset(&action.sa_mask);
+		sigaddset(&action.sa_mask, SIGALRM);
+
+		action.sa_flags = SA_RESTART | SA_SIGINFO;
+		action.sa_sigaction = (void*) &WaitableTimerSignalHandler;
+
+		sigaction(SIGALRM, &action, NULL);
+
+		g_WaitableTimerSignalHandlerInstalled = TRUE;
+	}
+
+	return 0;
+}
+
+int InitializeWaitableTimer(WINPR_TIMER* timer)
+{
+	int status;
+
+	if (!timer->lpArgToCompletionRoutine)
+	{
+#ifdef HAVE_TIMERFD_H
+		timer->fd = timerfd_create(CLOCK_MONOTONIC, 0);
+
+		if (timer->fd <= 0)
+		{
+			free(timer);
+			return -1;
+		}
+
+		status = fcntl(timer->fd, F_SETFL, O_NONBLOCK);
+
+		if (status)
+		{
+			close(timer->fd);
+			return -1;
+		}
+#endif
+	}
+	else
+	{
+		struct sigevent sigev;
+
+		InstallWaitableTimerSignalHandler();
+
+		ZeroMemory(&sigev, sizeof(struct sigevent));
+
+		sigev.sigev_notify = SIGEV_SIGNAL;
+		sigev.sigev_signo = SIGALRM;
+		sigev.sigev_value.sival_ptr = (void*) timer;
+
+		if ((timer_create(CLOCK_MONOTONIC, &sigev, &(timer->tid))) != 0)
+		{
+			perror("timer_create");
+			return -1;
+		}
+	}
+
+	timer->bInit = TRUE;
+
+	return 0;
+}
 
 /**
  * Waitable Timer
@@ -44,8 +143,6 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 
 	if (timer)
 	{
-		int status = 0;
-
 		WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER);
 		handle = (HANDLE) timer;
 
@@ -54,24 +151,7 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 		timer->bManualReset = bManualReset;
 		timer->pfnCompletionRoutine = NULL;
 		timer->lpArgToCompletionRoutine = NULL;
-
-#ifdef HAVE_TIMERFD_H
-		timer->fd = timerfd_create(CLOCK_MONOTONIC, 0);
-		if (timer->fd <= 0)
-		{
-			free(timer);
-			return NULL;
-		}
-
-		status = fcntl(timer->fd, F_SETFL, O_NONBLOCK);
-
-		if (status)
-		{
-			close(timer->fd);
-			free(timer);
-			return NULL;
-		}
-#endif
+		timer->bInit = FALSE;
 	}
 
 	return handle;
@@ -124,7 +204,12 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 	timer->pfnCompletionRoutine = pfnCompletionRoutine;
 	timer->lpArgToCompletionRoutine = lpArgToCompletionRoutine;
 
-#ifdef HAVE_TIMERFD_H
+	if (!timer->bInit)
+	{
+		if (InitializeWaitableTimer(timer) < 0)
+			return FALSE;
+	}
+
 	ZeroMemory(&(timer->timeout), sizeof(struct itimerspec));
 
 	if (lpDueTime->QuadPart < 0)
@@ -163,14 +248,26 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 		timer->timeout.it_value.tv_nsec = timer->timeout.it_interval.tv_nsec; /* nanoseconds */
 	}
 
-	status = timerfd_settime(timer->fd, 0, &(timer->timeout), NULL);
-
-	if (status)
+	if (!timer->pfnCompletionRoutine)
 	{
-		printf("SetWaitableTimer timerfd_settime failure: %d\n", status);
-		return FALSE;
-	}
+#ifdef HAVE_TIMERFD_H
+		status = timerfd_settime(timer->fd, 0, &(timer->timeout), NULL);
+
+		if (status)
+		{
+			printf("SetWaitableTimer timerfd_settime failure: %d\n", status);
+			return FALSE;
+		}
 #endif
+	}
+	else
+	{
+		if ((timer_settime(timer->tid, 0, &(timer->timeout), NULL)) != 0)
+		{
+			perror("timer_settime");
+			return FALSE;
+		}
+	}
 
 	return TRUE;
 }
@@ -269,6 +366,12 @@ BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
 
 	WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER_QUEUE_TIMER);
 	*((UINT_PTR*) phNewTimer) = (UINT_PTR) (HANDLE) timer;
+
+	timer->Flags = Flags;
+	timer->DueTime = DueTime;
+	timer->Period = Period;
+	timer->Callback = Callback;
+	timer->Parameter = Parameter;
 
 	return TRUE;
 }
