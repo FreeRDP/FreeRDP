@@ -524,6 +524,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_SupportMonitorLayoutPdu				141
 #define FreeRDP_SupportGraphicsPipeline				142
 #define FreeRDP_SupportDynamicTimeZone				143
+#define FreeRDP_SupportHeartbeatPdu				144
 #define FreeRDP_DisableEncryption				192
 #define FreeRDP_EncryptionMethods				193
 #define FreeRDP_ExtEncryptionMethods				194
@@ -547,6 +548,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_DesktopPosX					390
 #define FreeRDP_DesktopPosY					391
 #define FreeRDP_MultitransportFlags				512
+#define FreeRDP_SupportMultitransport			513
 #define FreeRDP_AlternateShell					640
 #define FreeRDP_ShellWorkingDirectory				641
 #define FreeRDP_AutoLogonEnabled				704
@@ -819,7 +821,8 @@ struct rdp_settings
 	ALIGN64 BOOL SupportMonitorLayoutPdu; /* 141 */
 	ALIGN64 BOOL SupportGraphicsPipeline; /* 142 */
 	ALIGN64 BOOL SupportDynamicTimeZone; /* 143 */
-	UINT64 padding0192[192 - 143]; /* 143 */
+	ALIGN64 BOOL SupportHeartbeatPdu; /* 144 */
+	UINT64 padding0192[192 - 145]; /* 145 */
 
 	/* Client/Server Security Data */
 	ALIGN64 BOOL DisableEncryption; /* 192 */
@@ -864,7 +867,8 @@ struct rdp_settings
 
 	/* Client Multitransport Channel Data */
 	ALIGN64 UINT32 MultitransportFlags; /* 512 */
-	UINT64 padding0576[576 - 513]; /* 513 */
+	ALIGN64 BOOL SupportMultitransport; /* 513 */
+	UINT64 padding0576[576 - 514]; /* 514 */
 	UINT64 padding0640[640 - 576]; /* 576 */
 
 	/*
@@ -1326,7 +1330,7 @@ struct rdp_settings
 	/* Extensions */
 	ALIGN64 int num_extensions; /*  */
 	ALIGN64 struct rdp_ext_set extensions[16]; /*  */
-	
+
 	ALIGN64 BYTE* SettingsModified; /* byte array marking fields that have been modified from their default value */
 };
 typedef struct rdp_settings rdpSettings;

@@ -405,10 +405,12 @@ void gcc_write_client_data_blocks(wStream* s, rdpSettings* settings)
 
 	if (settings->NegotiationFlags & EXTENDED_CLIENT_DATA_SUPPORTED)
 	{
-		if (!settings->SpanMonitors)
+		if (settings->SpanMonitors)
 		{
 			gcc_write_client_monitor_data(s, settings);
 		}
+		gcc_write_client_message_channel_data(s, settings);
+		gcc_write_client_multitransport_channel_data(s, settings);
 	}
 	else
 	{
@@ -468,6 +470,22 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpSettings* settings, int length)
 				if (!gcc_read_server_network_data(s, settings))
 				{
 					fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_server_network_data failed\n");
+					return FALSE;
+				}
+				break;
+
+			case SC_MCS_MSGCHANNEL:
+				if (!gcc_read_server_message_channel_data(s, settings))
+				{
+					fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_server_message_channel_data failed\n");
+					return FALSE;
+				}
+				break;
+
+			case SC_MULTITRANSPORT:
+				if (!gcc_read_server_multitransport_channel_data(s, settings))
+				{
+					fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_server_multitransport_channel_data failed\n");
 					return FALSE;
 				}
 				break;
@@ -803,6 +821,9 @@ void gcc_write_client_core_data(wStream* s, rdpSettings* settings)
 	if (settings->NetworkAutoDetect)
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT;
 
+	if (settings->SupportHeartbeatPdu)
+		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_HEARTBEAT_PDU;
+
 	if (settings->SupportGraphicsPipeline)
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL;
 
@@ -975,24 +996,6 @@ BOOL gcc_read_server_security_data(wStream* s, rdpSettings* settings)
 	}
 
 	return TRUE;
-}
-
-void gcc_write_server_message_channel_data(wStream* s, rdpSettings* settings)
-{
-	UINT16 mcsChannelId = 0;
-
-	gcc_write_user_data_header(s, SC_MCS_MSGCHANNEL, 6);
-
-	Stream_Write_UINT16(s, mcsChannelId); /* mcsChannelId (2 bytes) */
-}
-
-void gcc_write_server_multitransport_channel_data(wStream* s, rdpSettings* settings)
-{
-	UINT32 flags = 0;
-
-	gcc_write_user_data_header(s, SC_MULTITRANSPORT, 8);
-
-	Stream_Write_UINT32(s, flags); /* flags (4 bytes) */
 }
 
 static const BYTE initial_signature[] =
@@ -1449,6 +1452,13 @@ void gcc_write_client_monitor_extended_data(wStream* s, rdpSettings* settings)
 
 }
 
+/**
+ * Read a client message channel data block (TS_UD_CS_MCS_MSGCHANNEL).\n
+ * @msdn{jj217627}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
 BOOL gcc_read_client_message_channel_data(wStream* s, rdpSettings* settings, UINT16 blockLength)
 {
 	UINT32 flags;
@@ -1461,10 +1471,57 @@ BOOL gcc_read_client_message_channel_data(wStream* s, rdpSettings* settings, UIN
 	return TRUE;
 }
 
+/**
+ * Write a client message channel data block (TS_UD_CS_MCS_MSGCHANNEL).\n
+ * @msdn{jj217627}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
 void gcc_write_client_message_channel_data(wStream* s, rdpSettings* settings)
 {
+	if (settings->NetworkAutoDetect ||
+		settings->SupportHeartbeatPdu ||
+		settings->SupportMultitransport)
+	{
+		gcc_write_user_data_header(s, CS_MCS_MSGCHANNEL, 8);
 
+		Stream_Write_UINT32(s, 0); /* flags */
+	}
 }
+
+BOOL gcc_read_server_message_channel_data(wStream* s, rdpSettings* settings)
+{
+	freerdp* instance;
+	UINT16 MCSChannelId;
+
+	if (Stream_GetRemainingLength(s) < 2)
+		return FALSE;
+
+	Stream_Read_UINT16(s, MCSChannelId); /* MCSChannelId */
+
+	/* Save the MCS message channel id */
+	instance = (freerdp*) settings->instance;
+	instance->context->rdp->mcs->message_channel_id = MCSChannelId;
+
+	return TRUE;
+}
+
+void gcc_write_server_message_channel_data(wStream* s, rdpSettings* settings)
+{
+	UINT16 mcsChannelId = 0;
+
+	gcc_write_user_data_header(s, SC_MCS_MSGCHANNEL, 6);
+
+	Stream_Write_UINT16(s, mcsChannelId); /* mcsChannelId (2 bytes) */
+}
+
+/**
+ * Read a client multitransport channel data block (TS_UD_CS_MULTITRANSPORT).\n
+ * @msdn{jj217498}
+ * @param s stream
+ * @param settings rdp settings
+ */
 
 BOOL gcc_read_client_multitransport_channel_data(wStream* s, rdpSettings* settings, UINT16 blockLength)
 {
@@ -1478,7 +1535,40 @@ BOOL gcc_read_client_multitransport_channel_data(wStream* s, rdpSettings* settin
 	return TRUE;
 }
 
+/**
+ * Write a client multitransport channel data block (TS_UD_CS_MULTITRANSPORT).\n
+ * @msdn{jj217498}
+ * @param s stream
+ * @param settings rdp settings
+ */
+
 void gcc_write_client_multitransport_channel_data(wStream* s, rdpSettings* settings)
 {
+	if (settings->MultitransportFlags != 0)
+	{
+		gcc_write_user_data_header(s, CS_MULTITRANSPORT, 8);
 
+		Stream_Write_UINT32(s, settings->MultitransportFlags); /* flags */
+	}
+}
+
+BOOL gcc_read_server_multitransport_channel_data(wStream* s, rdpSettings* settings)
+{
+	UINT32 flags;
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return FALSE;
+
+	Stream_Read_UINT32(s, flags); /* flags */
+
+	return TRUE;
+}
+
+void gcc_write_server_multitransport_channel_data(wStream* s, rdpSettings* settings)
+{
+	UINT32 flags = 0;
+
+	gcc_write_user_data_header(s, SC_MULTITRANSPORT, 8);
+
+	Stream_Write_UINT32(s, flags); /* flags (4 bytes) */
 }

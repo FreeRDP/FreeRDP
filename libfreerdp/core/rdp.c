@@ -248,6 +248,15 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 	return TRUE;
 }
 
+wStream* rdp_message_channel_pdu_init(rdpRdp* rdp)
+{
+	wStream* s;
+	s = transport_send_stream_init(rdp->transport, 2048);
+	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
+	rdp_security_stream_init(rdp, s);
+	return s;
+}
+
 /**
  * Read an RDP packet header.\n
  * @param rdp rdp module
@@ -365,13 +374,12 @@ void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 	Stream_Write_UINT16_BE(s, length); /* userData (OCTET_STRING) */
 }
 
-static UINT32 rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length)
+static UINT32 rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 sec_flags)
 {
 	BYTE* data;
-	UINT32 sec_flags;
 	UINT32 pad = 0;
 
-	sec_flags = rdp->sec_flags;
+	sec_flags |= rdp->sec_flags;
 
 	if (sec_flags != 0)
 	{
@@ -468,7 +476,7 @@ BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id)
 	Stream_Seek(s, sec_bytes);
 
 	Stream_SetPosition(s, secm);
-	length += rdp_security_stream_out(rdp, s, length);
+	length += rdp_security_stream_out(rdp, s, length, 0);
 
 	Stream_SetPosition(s, length);
 	Stream_SealLength(s);
@@ -497,7 +505,7 @@ BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id)
 	rdp_write_share_control_header(s, length - sec_bytes, type, channel_id);
 
 	Stream_SetPosition(s, sec_hold);
-	length += rdp_security_stream_out(rdp, s, length);
+	length += rdp_security_stream_out(rdp, s, length, 0);
 
 	Stream_SetPosition(s, length);
 	Stream_SealLength(s);
@@ -527,7 +535,34 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	rdp_write_share_data_header(s, length - sec_bytes, type, rdp->settings->ShareId);
 
 	Stream_SetPosition(s, sec_hold);
-	length += rdp_security_stream_out(rdp, s, length);
+	length += rdp_security_stream_out(rdp, s, length, 0);
+
+	Stream_SetPosition(s, length);
+	Stream_SealLength(s);
+
+	if (transport_write(rdp->transport, s) < 0)
+		return FALSE;
+
+	return TRUE;
+}
+
+BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
+{
+	UINT16 length;
+	UINT32 sec_bytes;
+	int sec_hold;
+
+	length = Stream_GetPosition(s);
+	Stream_SetPosition(s, 0);
+
+	rdp_write_header(rdp, s, length, rdp->mcs->message_channel_id);
+
+	sec_bytes = rdp_get_sec_bytes(rdp);
+	sec_hold = Stream_GetPosition(s);
+	Stream_Seek(s, sec_bytes);
+
+	Stream_SetPosition(s, sec_hold);
+	length += rdp_security_stream_out(rdp, s, length, sec_flags);
 
 	Stream_SetPosition(s, length);
 	Stream_SealLength(s);
@@ -714,7 +749,7 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 
 #ifdef WITH_DEBUG_RDP
 	printf("recv %s Data PDU (0x%02X), length: %d\n",
-		type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
+				type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
 #endif
 
 	switch (type)
@@ -797,6 +832,34 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 		Stream_Release(cs);
 
 	return 0;
+}
+
+int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s)
+{
+	UINT16 securityFlags;
+
+	if (!rdp_read_security_header(s, &securityFlags))
+		return -1;
+
+	if (securityFlags & SEC_AUTODETECT_REQ)
+	{
+		/* Server Auto-Detect Request PDU */
+		return rdp_recv_autodetect_packet(rdp, s);
+	}
+
+	if (securityFlags & SEC_HEARTBEAT)
+	{
+		/* Heartbeat PDU */
+		return rdp_recv_heartbeat_packet(rdp, s);
+	}
+
+	if (securityFlags & SEC_TRANSPORT_REQ)
+	{
+		/* Initiate Multitransport Request PDU */
+		return rdp_recv_multitransport_packet(rdp, s);
+	}
+
+	return -1;
 }
 
 int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
@@ -947,12 +1010,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	if (channelId != MCS_GLOBAL_CHANNEL_ID)
-	{
-		if (!freerdp_channel_process(rdp->instance, s, channelId))
-			return -1;
-	}
-	else
+	if (channelId == MCS_GLOBAL_CHANNEL_ID)
 	{
 		while (Stream_GetRemainingLength(s) > 3)
 		{
@@ -991,6 +1049,15 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 
 			Stream_SetPosition(s, nextPosition);
 		}
+	}
+	else if (channelId == rdp->mcs->message_channel_id)
+	{
+		return rdp_recv_message_channel_pdu(rdp, s);
+	}
+	else
+	{
+		if (!freerdp_channel_process(rdp->instance, s, channelId))
+			return -1;
 	}
 
 	return 0;
@@ -1147,6 +1214,9 @@ rdpRdp* rdp_new(rdpContext* context)
 		rdp->nego = nego_new(rdp->transport);
 		rdp->mcs = mcs_new(rdp->transport);
 		rdp->redirection = redirection_new();
+		rdp->autodetect = autodetect_new();
+		rdp->heartbeat = heartbeat_new();
+		rdp->multitransport = multitransport_new();
 		rdp->mppc_dec = mppc_dec_new();
 		rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
 	}
@@ -1219,6 +1289,9 @@ void rdp_free(rdpRdp* rdp)
 		nego_free(rdp->nego);
 		mcs_free(rdp->mcs);
 		redirection_free(rdp->redirection);
+		autodetect_free(rdp->autodetect);
+		heartbeat_free(rdp->heartbeat);
+		multitransport_free(rdp->multitransport);
 		mppc_dec_free(rdp->mppc_dec);
 		mppc_enc_free(rdp->mppc_enc);
 		free(rdp);

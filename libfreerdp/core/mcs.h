@@ -125,8 +125,11 @@ typedef struct
 
 struct rdp_mcs
 {
-	UINT16 user_id;
 	rdpTransport* transport;
+
+	UINT16 user_id;
+	UINT16 message_channel_id;
+
 	DomainParameters domainParameters;
 	DomainParameters targetParameters;
 	DomainParameters minimumParameters;
@@ -134,6 +137,7 @@ struct rdp_mcs
 
 	BOOL user_channel_joined;
 	BOOL global_channel_joined;
+	BOOL message_channel_joined;
 };
 
 #define MCS_SEND_DATA_HEADER_MAX_LENGTH		8
