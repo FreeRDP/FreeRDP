@@ -1,30 +1,56 @@
 
 #include <winpr/crt.h>
+#include <winpr/sysinfo.h>
+
 #include <winpr/synch.h>
 
-HANDLE gDoneEvent;
+#define FIRE_COUNT	5
+#define TIMER_COUNT	4
+
+static int g_Count = 0;
+static HANDLE g_Event = NULL;
+
+struct apc_data
+{
+	int TimerId;
+	UINT32 StartTime;
+};
+typedef struct apc_data APC_DATA;
 
 VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 {
-	int param;
+	UINT32 TimerTime;
+	APC_DATA* apcData;
+	UINT32 CurrentTime = GetTickCount();
 
 	if (!lpParam)
 		return;
 
-	param = *((int*) lpParam);
+	apcData = (APC_DATA*) lpParam;
 
-	printf("TimerRoutine: Param: %d TimerOrWaitFired: %d\n", param, TimerOrWaitFired);
+	TimerTime = CurrentTime - apcData->StartTime;
 
-	SetEvent(gDoneEvent);
+	printf("TimerRoutine: TimerId: %d Time: %d Discrepancy: %d\n",
+			apcData->TimerId, TimerTime, TimerTime % 100);
+
+	g_Count++;
+
+	if (g_Count >= (TIMER_COUNT * FIRE_COUNT))
+	{
+		SetEvent(g_Event);
+	}
 }
 
 int TestSynchTimerQueue(int argc, char* argv[])
 {
-	int arg = 123;
+	int index;
+	DWORD DueTime;
+	DWORD Period;
 	HANDLE hTimer = NULL;
 	HANDLE hTimerQueue = NULL;
+	APC_DATA apcData[TIMER_COUNT];
 
-	gDoneEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	g_Event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	hTimerQueue = CreateTimerQueue();
 
@@ -34,19 +60,27 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		return -1;
 	}
 
-	if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, (WAITORTIMERCALLBACK) TimerRoutine, &arg , 1000, 0, 0))
+	for (index = 0; index < TIMER_COUNT; index++)
 	{
-		printf("CreateTimerQueueTimer failed (%d)\n", GetLastError());
-		return -1;
+		apcData[index].TimerId = index;
+		apcData[index].StartTime = GetTickCount();
+
+		DueTime = (index * 100) + 500;
+		Period = 1000;
+
+		if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, (WAITORTIMERCALLBACK) TimerRoutine,
+				&apcData[index], DueTime, Period, 0))
+		{
+			printf("CreateTimerQueueTimer failed (%d)\n", GetLastError());
+			return -1;
+		}
 	}
 
-	if (WaitForSingleObject(gDoneEvent, INFINITE) != WAIT_OBJECT_0)
+	if (WaitForSingleObject(g_Event, INFINITE) != WAIT_OBJECT_0)
 	{
 		printf("WaitForSingleObject failed (%d)\n", GetLastError());
 		return -1;
 	}
-
-	CloseHandle(gDoneEvent);
 
 	if (!DeleteTimerQueueTimer(hTimerQueue, hTimer, NULL))
 	{
@@ -59,6 +93,8 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		printf("DeleteTimerQueue failed (%d)\n", GetLastError());
 		return -1;
 	}
+
+	CloseHandle(g_Event);
 
 	return 0;
 }

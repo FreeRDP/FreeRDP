@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/sysinfo.h>
 
 #include <winpr/synch.h>
 
@@ -325,27 +326,6 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
  * http://www.cs.wustl.edu/~schmidt/Timer_Queue.html
  */
 
-static void* TimerQueueThread(void* arg)
-{
-	//WINPR_TIMER_QUEUE* timerQueue = (WINPR_TIMER_QUEUE*) arg;
-	
-	return NULL;
-}
-
-int StartTimerQueueThread(WINPR_TIMER_QUEUE* timerQueue)
-{
-	pthread_cond_init(&(timerQueue->cond), NULL);
-	pthread_mutex_init(&(timerQueue->mutex), NULL);
-	
-	pthread_attr_init(&(timerQueue->attr));
-	timerQueue->param.sched_priority = sched_get_priority_max(SCHED_FIFO);
-	pthread_attr_setschedparam(&(timerQueue->attr), &(timerQueue->param));
-	pthread_attr_setschedpolicy(&(timerQueue->attr), SCHED_FIFO);
-	pthread_create(&(timerQueue->thread), &(timerQueue->attr), TimerQueueThread, timerQueue);
-	
-	return 0;
-}
-
 int InsertTimerQueueTimer(WINPR_TIMER_QUEUE* timerQueue, WINPR_TIMER_QUEUE_TIMER* timer)
 {
 	WINPR_TIMER_QUEUE_TIMER* node;
@@ -360,16 +340,73 @@ int InsertTimerQueueTimer(WINPR_TIMER_QUEUE* timerQueue, WINPR_TIMER_QUEUE_TIMER
 	
 	node = timerQueue->head;
 	
-	do
+	while (node->next)
 	{
 		node = node->next;
 	}
-	while (node->next);
 	
 	node->next = timer;
 	timer->prev = node;
 	timer->next = NULL;
 	
+	return 0;
+}
+
+int FireExpiredTimerQueueTimers(WINPR_TIMER_QUEUE* timerQueue)
+{
+	UINT64 currentTime;
+	WINPR_TIMER_QUEUE_TIMER* node;
+
+	if (!timerQueue->head)
+		return 0;
+
+	currentTime = GetTickCount64();
+
+	node = timerQueue->head;
+
+	while (node)
+	{
+		if (currentTime >= node->ExpirationTime)
+		{
+			node->Callback(node->Parameter, TRUE);
+			node->FireCount++;
+
+			if (node->Period)
+			{
+				node->ExpirationTime = node->StartTime + (node->FireCount * node->Period);
+			}
+		}
+
+		node = node->next;
+	}
+
+	return 0;
+}
+
+static void* TimerQueueThread(void* arg)
+{
+	WINPR_TIMER_QUEUE* timerQueue = (WINPR_TIMER_QUEUE*) arg;
+
+	while (1)
+	{
+		FireExpiredTimerQueueTimers(timerQueue);
+		Sleep(timerQueue->resolution);
+	}
+
+	return NULL;
+}
+
+int StartTimerQueueThread(WINPR_TIMER_QUEUE* timerQueue)
+{
+	pthread_cond_init(&(timerQueue->cond), NULL);
+	pthread_mutex_init(&(timerQueue->mutex), NULL);
+
+	pthread_attr_init(&(timerQueue->attr));
+	timerQueue->param.sched_priority = sched_get_priority_max(SCHED_FIFO);
+	pthread_attr_setschedparam(&(timerQueue->attr), &(timerQueue->param));
+	pthread_attr_setschedpolicy(&(timerQueue->attr), SCHED_FIFO);
+	pthread_create(&(timerQueue->thread), &(timerQueue->attr), TimerQueueThread, timerQueue);
+
 	return 0;
 }
 
@@ -385,24 +422,12 @@ HANDLE CreateTimerQueue(void)
 		WINPR_HANDLE_SET_TYPE(timerQueue, HANDLE_TYPE_TIMER_QUEUE);
 		handle = (HANDLE) timerQueue;
 		
+		timerQueue->resolution = 5;
+
 		StartTimerQueueThread(timerQueue);
 	}
 
 	return handle;
-}
-
-BOOL DeleteTimerQueue(HANDLE TimerQueue)
-{
-	WINPR_TIMER_QUEUE* timerQueue;
-
-	if (!TimerQueue)
-		return FALSE;
-
-	timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
-
-	free(timerQueue);
-
-	return TRUE;
 }
 
 BOOL DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
@@ -414,21 +439,31 @@ BOOL DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
 
 	timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
 
+	pthread_cond_destroy(&(timerQueue->cond));
+	pthread_mutex_destroy(&(timerQueue->mutex));
+
 	free(timerQueue);
 
 	return TRUE;
 }
 
+BOOL DeleteTimerQueue(HANDLE TimerQueue)
+{
+	return DeleteTimerQueueEx(TimerQueue, NULL);
+}
+
 BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
 		WAITORTIMERCALLBACK Callback, PVOID Parameter, DWORD DueTime, DWORD Period, ULONG Flags)
 {
+	UINT64 currentTime;
 	WINPR_TIMER_QUEUE* timerQueue;
 	WINPR_TIMER_QUEUE_TIMER* timer;
 
+	currentTime = GetTickCount64();
 	timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
 	timer = (WINPR_TIMER_QUEUE_TIMER*) malloc(sizeof(WINPR_TIMER_QUEUE_TIMER));
 
-	if (timer || !TimerQueue)
+	if (!timer || !TimerQueue)
 		return FALSE;
 
 	WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER_QUEUE_TIMER);
@@ -441,6 +476,12 @@ BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
 	timer->Parameter = Parameter;
 	
 	timer->timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
+
+	timer->FireCount = 0;
+	timer->StartTime = currentTime + DueTime;
+	timer->ExpirationTime = timer->StartTime;
+
+	InsertTimerQueueTimer(timerQueue, timer);
 
 	return TRUE;
 }

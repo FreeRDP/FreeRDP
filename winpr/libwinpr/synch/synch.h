@@ -119,6 +119,8 @@ struct winpr_timer_queue
 	pthread_mutex_t mutex;
 	struct sched_param param;
 	
+	int resolution;
+
 	WINPR_TIMER_QUEUE_TIMER* head;
 };
 typedef struct winpr_timer_queue WINPR_TIMER_QUEUE;
@@ -133,6 +135,10 @@ struct winpr_timer_queue_timer
 	PVOID Parameter;
 	WAITORTIMERCALLBACK Callback;
 	
+	int FireCount;
+	UINT64 StartTime;
+	UINT64 ExpirationTime;
+
 	WINPR_TIMER_QUEUE* timerQueue;
 	
 	WINPR_TIMER_QUEUE_TIMER* prev;
