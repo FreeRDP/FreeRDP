@@ -107,9 +107,19 @@ struct winpr_timer
 };
 typedef struct winpr_timer WINPR_TIMER;
 
+typedef struct winpr_timer_queue_timer WINPR_TIMER_QUEUE_TIMER;
+
 struct winpr_timer_queue
 {
 	WINPR_HANDLE_DEF();
+	
+	pthread_t thread;
+	pthread_attr_t attr;
+	pthread_cond_t cond;
+	pthread_mutex_t mutex;
+	struct sched_param param;
+	
+	WINPR_TIMER_QUEUE_TIMER* head;
 };
 typedef struct winpr_timer_queue WINPR_TIMER_QUEUE;
 
@@ -122,8 +132,12 @@ struct winpr_timer_queue_timer
 	DWORD Period;
 	PVOID Parameter;
 	WAITORTIMERCALLBACK Callback;
+	
+	WINPR_TIMER_QUEUE* timerQueue;
+	
+	WINPR_TIMER_QUEUE_TIMER* prev;
+	WINPR_TIMER_QUEUE_TIMER* next;
 };
-typedef struct winpr_timer_queue_timer WINPR_TIMER_QUEUE_TIMER;
 
 #endif
 

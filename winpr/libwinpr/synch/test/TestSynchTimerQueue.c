@@ -48,6 +48,12 @@ int TestSynchTimerQueue(int argc, char* argv[])
 
 	CloseHandle(gDoneEvent);
 
+	if (!DeleteTimerQueueTimer(hTimerQueue, hTimer, NULL))
+	{
+		printf("DeleteTimerQueueTimer failed (%d)\n", GetLastError());
+		return -1;
+	}
+	
 	if (!DeleteTimerQueue(hTimerQueue))
 	{
 		printf("DeleteTimerQueue failed (%d)\n", GetLastError());

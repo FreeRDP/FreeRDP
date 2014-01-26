@@ -320,6 +320,59 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
  * Timer-Queue Timer
  */
 
+/**
+ * Design, Performance, and Optimization of Timer Strategies for Real-time ORBs:
+ * http://www.cs.wustl.edu/~schmidt/Timer_Queue.html
+ */
+
+static void* TimerQueueThread(void* arg)
+{
+	//WINPR_TIMER_QUEUE* timerQueue = (WINPR_TIMER_QUEUE*) arg;
+	
+	return NULL;
+}
+
+int StartTimerQueueThread(WINPR_TIMER_QUEUE* timerQueue)
+{
+	pthread_cond_init(&(timerQueue->cond), NULL);
+	pthread_mutex_init(&(timerQueue->mutex), NULL);
+	
+	pthread_attr_init(&(timerQueue->attr));
+	timerQueue->param.sched_priority = sched_get_priority_max(SCHED_FIFO);
+	pthread_attr_setschedparam(&(timerQueue->attr), &(timerQueue->param));
+	pthread_attr_setschedpolicy(&(timerQueue->attr), SCHED_FIFO);
+	pthread_create(&(timerQueue->thread), &(timerQueue->attr), TimerQueueThread, timerQueue);
+	
+	return 0;
+}
+
+int InsertTimerQueueTimer(WINPR_TIMER_QUEUE* timerQueue, WINPR_TIMER_QUEUE_TIMER* timer)
+{
+	WINPR_TIMER_QUEUE_TIMER* node;
+	
+	if (!timerQueue->head)
+	{
+		timerQueue->head = timer;
+		timer->prev = NULL;
+		timer->next = NULL;
+		return 0;
+	}
+	
+	node = timerQueue->head;
+	
+	do
+	{
+		node = node->next;
+	}
+	while (node->next);
+	
+	node->next = timer;
+	timer->prev = node;
+	timer->next = NULL;
+	
+	return 0;
+}
+
 HANDLE CreateTimerQueue(void)
 {
 	HANDLE handle = NULL;
@@ -331,6 +384,8 @@ HANDLE CreateTimerQueue(void)
 	{
 		WINPR_HANDLE_SET_TYPE(timerQueue, HANDLE_TYPE_TIMER_QUEUE);
 		handle = (HANDLE) timerQueue;
+		
+		StartTimerQueueThread(timerQueue);
 	}
 
 	return handle;
@@ -367,11 +422,13 @@ BOOL DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
 BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
 		WAITORTIMERCALLBACK Callback, PVOID Parameter, DWORD DueTime, DWORD Period, ULONG Flags)
 {
+	WINPR_TIMER_QUEUE* timerQueue;
 	WINPR_TIMER_QUEUE_TIMER* timer;
 
+	timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
 	timer = (WINPR_TIMER_QUEUE_TIMER*) malloc(sizeof(WINPR_TIMER_QUEUE_TIMER));
 
-	if (!timer)
+	if (timer || !TimerQueue)
 		return FALSE;
 
 	WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER_QUEUE_TIMER);
@@ -382,6 +439,8 @@ BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
 	timer->Period = Period;
 	timer->Callback = Callback;
 	timer->Parameter = Parameter;
+	
+	timer->timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
 
 	return TRUE;
 }
