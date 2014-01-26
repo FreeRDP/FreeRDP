@@ -36,6 +36,8 @@
 
 #include "../handle/handle.h"
 
+#ifdef WITH_POSIX_TIMER
+
 static BOOL g_WaitableTimerSignalHandlerInstalled = FALSE;
 
 void WaitableTimerSignalHandler(int signum, siginfo_t* siginfo, void* arg)
@@ -82,13 +84,15 @@ int InstallWaitableTimerSignalHandler()
 	return 0;
 }
 
+#endif
+
 int InitializeWaitableTimer(WINPR_TIMER* timer)
 {
-	int status;
-
 	if (!timer->lpArgToCompletionRoutine)
 	{
 #ifdef HAVE_TIMERFD_H
+		int status;
+		
 		timer->fd = timerfd_create(CLOCK_MONOTONIC, 0);
 
 		if (timer->fd <= 0)
@@ -108,6 +112,7 @@ int InitializeWaitableTimer(WINPR_TIMER* timer)
 	}
 	else
 	{
+#ifdef WITH_POSIX_TIMER
 		struct sigevent sigev;
 
 		InstallWaitableTimerSignalHandler();
@@ -123,6 +128,7 @@ int InitializeWaitableTimer(WINPR_TIMER* timer)
 			perror("timer_create");
 			return -1;
 		}
+#endif
 	}
 
 	timer->bInit = TRUE;
@@ -210,6 +216,8 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 			return FALSE;
 	}
 
+#ifdef WITH_POSIX_TIMER
+	
 	ZeroMemory(&(timer->timeout), sizeof(struct itimerspec));
 
 	if (lpDueTime->QuadPart < 0)
@@ -268,6 +276,8 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 			return FALSE;
 		}
 	}
+
+#endif
 
 	return TRUE;
 }

@@ -28,6 +28,10 @@
 
 #include <winpr/synch.h>
 
+#ifdef __linux__
+#define WITH_POSIX_TIMER	1
+#endif
+
 #ifndef _WIN32
 
 #include "../handle/handle.h"
@@ -36,6 +40,7 @@
 
 #if defined __APPLE__
 #include <pthread.h>
+#include <sys/time.h>
 #include <semaphore.h>
 #include <mach/mach.h>
 #include <mach/semaphore.h>
@@ -87,11 +92,14 @@ struct winpr_timer
 
 	int fd;
 	BOOL bInit;
-	timer_t tid;
 	LONG lPeriod;
 	BOOL bManualReset;
 	PTIMERAPCROUTINE pfnCompletionRoutine;
 	LPVOID lpArgToCompletionRoutine;
+	
+#ifdef WITH_POSIX_TIMER
+	timer_t tid;
+#endif
 
 #ifdef HAVE_TIMERFD_H
 	struct itimerspec timeout;
