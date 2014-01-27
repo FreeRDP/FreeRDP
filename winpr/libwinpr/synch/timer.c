@@ -406,10 +406,18 @@ int FireExpiredTimerQueueTimers(WINPR_TIMER_QUEUE* timerQueue)
 			if (node->Period)
 			{
 				timespec_add_ms(&(node->ExpirationTime), node->Period);
+
+				timerQueue->head = node->next;
+				node->next = NULL;
+
+				InsertTimerQueueTimer(&(timerQueue->head), node);
+				node = timerQueue->head;
 			}
 		}
-
-		node = node->next;
+		else
+		{
+			break;
+		}
 	}
 
 	return 0;
@@ -418,17 +426,24 @@ int FireExpiredTimerQueueTimers(WINPR_TIMER_QUEUE* timerQueue)
 static void* TimerQueueThread(void* arg)
 {
 	int status;
-	struct timespec tspec;
+	struct timespec timeout;
 	WINPR_TIMER_QUEUE* timerQueue = (WINPR_TIMER_QUEUE*) arg;
 
 	while (1)
 	{
 		pthread_mutex_lock(&(timerQueue->cond_mutex));
 
-		timespec_gettimeofday(&tspec);
-		timespec_add_ms(&tspec, 23);
+		if (!timerQueue->head)
+		{
+			timespec_gettimeofday(&timeout);
+			timespec_add_ms(&timeout, 20);
+		}
+		else
+		{
+			timespec_copy(&timeout, &(timerQueue->head->ExpirationTime));
+		}
 
-		status = pthread_cond_timedwait(&(timerQueue->cond), &(timerQueue->cond_mutex), &tspec);
+		status = pthread_cond_timedwait(&(timerQueue->cond), &(timerQueue->cond_mutex), &timeout);
 
 		FireExpiredTimerQueueTimers(timerQueue);
 
