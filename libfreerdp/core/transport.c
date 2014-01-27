@@ -342,10 +342,10 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		transport->layer = TRANSPORT_LAYER_TSG;
 		transport->TcpOut = tcp_new(settings);
 
-		status = tcp_connect(transport->TcpIn, settings->GatewayHostname, 443);
+		status = tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort);
 
 		if (status)
-			status = tcp_connect(transport->TcpOut, settings->GatewayHostname, 443);
+			status = tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort);
 
 		if (status)
 			status = transport_tsg_connect(transport, hostname, port);
