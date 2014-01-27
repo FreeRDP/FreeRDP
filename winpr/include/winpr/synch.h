@@ -271,7 +271,7 @@ WINPR_API BOOL CancelWaitableTimer(HANDLE hTimer);
 
 #endif
 
-#if ((_WIN32) && (_WIN32_WINNT < 0x0600))
+#if ((_WIN32) && (_WIN32_WINNT < 0x0403))
 
 WINPR_API BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
 
