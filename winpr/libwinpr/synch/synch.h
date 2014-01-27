@@ -115,11 +115,10 @@ struct winpr_timer_queue
 	
 	pthread_t thread;
 	pthread_attr_t attr;
-	pthread_cond_t cond;
 	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+	pthread_mutex_t cond_mutex;
 	struct sched_param param;
-	
-	int resolution;
 
 	WINPR_TIMER_QUEUE_TIMER* head;
 };
@@ -136,12 +135,11 @@ struct winpr_timer_queue_timer
 	WAITORTIMERCALLBACK Callback;
 	
 	int FireCount;
-	UINT64 StartTime;
-	UINT64 ExpirationTime;
+
+	struct timespec StartTime;
+	struct timespec ExpirationTime;
 
 	WINPR_TIMER_QUEUE* timerQueue;
-	
-	WINPR_TIMER_QUEUE_TIMER* prev;
 	WINPR_TIMER_QUEUE_TIMER* next;
 };
 

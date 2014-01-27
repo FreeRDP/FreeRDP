@@ -5,7 +5,7 @@
 #include <winpr/synch.h>
 
 #define FIRE_COUNT	5
-#define TIMER_COUNT	4
+#define TIMER_COUNT	5
 
 static int g_Count = 0;
 static HANDLE g_Event = NULL;
@@ -13,6 +13,9 @@ static HANDLE g_Event = NULL;
 struct apc_data
 {
 	int TimerId;
+	int FireCount;
+	DWORD DueTime;
+	DWORD Period;
 	UINT32 StartTime;
 };
 typedef struct apc_data APC_DATA;
@@ -21,6 +24,7 @@ VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 {
 	UINT32 TimerTime;
 	APC_DATA* apcData;
+	UINT32 expectedTime;
 	UINT32 CurrentTime = GetTickCount();
 
 	if (!lpParam)
@@ -29,10 +33,12 @@ VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 	apcData = (APC_DATA*) lpParam;
 
 	TimerTime = CurrentTime - apcData->StartTime;
+	expectedTime = apcData->DueTime + (apcData->Period * apcData->FireCount);
 
-	printf("TimerRoutine: TimerId: %d Time: %d Discrepancy: %d\n",
-			apcData->TimerId, TimerTime, TimerTime % 100);
+	printf("TimerRoutine: TimerId: %d ActualTime: %d ExpectedTime: %d Discrepancy: %d\n",
+			apcData->TimerId, TimerTime, expectedTime, TimerTime - expectedTime);
 
+	apcData->FireCount++;
 	g_Count++;
 
 	if (g_Count >= (TIMER_COUNT * FIRE_COUNT))
@@ -44,8 +50,6 @@ VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 int TestSynchTimerQueue(int argc, char* argv[])
 {
 	int index;
-	DWORD DueTime;
-	DWORD Period;
 	HANDLE hTimer = NULL;
 	HANDLE hTimerQueue = NULL;
 	APC_DATA apcData[TIMER_COUNT];
@@ -64,12 +68,12 @@ int TestSynchTimerQueue(int argc, char* argv[])
 	{
 		apcData[index].TimerId = index;
 		apcData[index].StartTime = GetTickCount();
-
-		DueTime = (index * 100) + 500;
-		Period = 1000;
+		apcData[index].DueTime = (index * 100) + 500;
+		apcData[index].Period = 1000;
+		apcData[index].FireCount = 0;
 
 		if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, (WAITORTIMERCALLBACK) TimerRoutine,
-				&apcData[index], DueTime, Period, 0))
+				&apcData[index], apcData[index].DueTime, apcData[index].Period, 0))
 		{
 			printf("CreateTimerQueueTimer failed (%d)\n", GetLastError());
 			return -1;

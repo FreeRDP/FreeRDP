@@ -326,54 +326,86 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
  * http://www.cs.wustl.edu/~schmidt/Timer_Queue.html
  */
 
-int InsertTimerQueueTimer(WINPR_TIMER_QUEUE* timerQueue, WINPR_TIMER_QUEUE_TIMER* timer)
+static void timespec_add_ms(struct timespec* tspec, UINT32 ms)
+{
+	UINT64 ns = tspec->tv_nsec + (ms * 1000000);
+	tspec->tv_sec += (ns / 1000000000);
+	tspec->tv_nsec = (ns % 1000000000);
+}
+
+static void timespec_gettimeofday(struct timespec* tspec)
+{
+	struct timeval tval;
+	gettimeofday(&tval, NULL);
+	tspec->tv_sec = tval.tv_sec;
+	tspec->tv_nsec = tval.tv_usec * 1000;
+}
+
+static int timespec_compare(const struct timespec* tspec1, const struct timespec* tspec2)
+{
+	if (tspec1->tv_sec < tspec2->tv_sec)
+		return -1;
+
+	if (tspec1->tv_sec > tspec2->tv_sec)
+		return 1;
+
+	return tspec1->tv_nsec - tspec2->tv_nsec;
+}
+
+static void timespec_copy(struct timespec* dst, struct timespec* src)
+{
+	dst->tv_sec = src->tv_sec;
+	dst->tv_nsec = src->tv_nsec;
+}
+
+void InsertTimerQueueTimer(WINPR_TIMER_QUEUE_TIMER** pHead, WINPR_TIMER_QUEUE_TIMER* timer)
 {
 	WINPR_TIMER_QUEUE_TIMER* node;
-	
-	if (!timerQueue->head)
+
+	if (!(*pHead))
 	{
-		timerQueue->head = timer;
-		timer->prev = NULL;
-		timer->next = NULL;
-		return 0;
+		*pHead = timer;
+		return;
 	}
-	
-	node = timerQueue->head;
-	
+
+	node = *pHead;
+
 	while (node->next)
 	{
+		if (timespec_compare(&(timer->ExpirationTime), &(node->ExpirationTime)) < 0)
+			break;
+
 		node = node->next;
 	}
-	
+
+	if (node->next)
+		timer->next = node->next->next;
+
 	node->next = timer;
-	timer->prev = node;
-	timer->next = NULL;
-	
-	return 0;
 }
 
 int FireExpiredTimerQueueTimers(WINPR_TIMER_QUEUE* timerQueue)
 {
-	UINT64 currentTime;
+	struct timespec CurrentTime;
 	WINPR_TIMER_QUEUE_TIMER* node;
 
 	if (!timerQueue->head)
 		return 0;
 
-	currentTime = GetTickCount64();
+	timespec_gettimeofday(&CurrentTime);
 
 	node = timerQueue->head;
 
 	while (node)
 	{
-		if (currentTime >= node->ExpirationTime)
+		if (timespec_compare(&CurrentTime, &(node->ExpirationTime)) >= 0)
 		{
 			node->Callback(node->Parameter, TRUE);
 			node->FireCount++;
 
 			if (node->Period)
 			{
-				node->ExpirationTime = node->StartTime + (node->FireCount * node->Period);
+				timespec_add_ms(&(node->ExpirationTime), node->Period);
 			}
 		}
 
@@ -385,12 +417,22 @@ int FireExpiredTimerQueueTimers(WINPR_TIMER_QUEUE* timerQueue)
 
 static void* TimerQueueThread(void* arg)
 {
+	int status;
+	struct timespec tspec;
 	WINPR_TIMER_QUEUE* timerQueue = (WINPR_TIMER_QUEUE*) arg;
 
 	while (1)
 	{
+		pthread_mutex_lock(&(timerQueue->cond_mutex));
+
+		timespec_gettimeofday(&tspec);
+		timespec_add_ms(&tspec, 23);
+
+		status = pthread_cond_timedwait(&(timerQueue->cond), &(timerQueue->cond_mutex), &tspec);
+
 		FireExpiredTimerQueueTimers(timerQueue);
-		Sleep(timerQueue->resolution);
+
+		pthread_mutex_unlock(&(timerQueue->cond_mutex));
 	}
 
 	return NULL;
@@ -399,6 +441,8 @@ static void* TimerQueueThread(void* arg)
 int StartTimerQueueThread(WINPR_TIMER_QUEUE* timerQueue)
 {
 	pthread_cond_init(&(timerQueue->cond), NULL);
+	pthread_mutex_init(&(timerQueue->cond_mutex), NULL);
+
 	pthread_mutex_init(&(timerQueue->mutex), NULL);
 
 	pthread_attr_init(&(timerQueue->attr));
@@ -421,8 +465,6 @@ HANDLE CreateTimerQueue(void)
 	{
 		WINPR_HANDLE_SET_TYPE(timerQueue, HANDLE_TYPE_TIMER_QUEUE);
 		handle = (HANDLE) timerQueue;
-		
-		timerQueue->resolution = 5;
 
 		StartTimerQueueThread(timerQueue);
 	}
@@ -440,7 +482,11 @@ BOOL DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
 	timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
 
 	pthread_cond_destroy(&(timerQueue->cond));
+	pthread_mutex_destroy(&(timerQueue->cond_mutex));
+
 	pthread_mutex_destroy(&(timerQueue->mutex));
+
+	pthread_attr_destroy(&(timerQueue->attr));
 
 	free(timerQueue);
 
@@ -455,11 +501,9 @@ BOOL DeleteTimerQueue(HANDLE TimerQueue)
 BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
 		WAITORTIMERCALLBACK Callback, PVOID Parameter, DWORD DueTime, DWORD Period, ULONG Flags)
 {
-	UINT64 currentTime;
 	WINPR_TIMER_QUEUE* timerQueue;
 	WINPR_TIMER_QUEUE_TIMER* timer;
 
-	currentTime = GetTickCount64();
 	timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
 	timer = (WINPR_TIMER_QUEUE_TIMER*) malloc(sizeof(WINPR_TIMER_QUEUE_TIMER));
 
@@ -468,6 +512,10 @@ BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
 
 	WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER_QUEUE_TIMER);
 	*((UINT_PTR*) phNewTimer) = (UINT_PTR) (HANDLE) timer;
+
+	timespec_gettimeofday(&(timer->StartTime));
+	timespec_add_ms(&(timer->StartTime), DueTime);
+	timespec_copy(&(timer->ExpirationTime), &(timer->StartTime));
 
 	timer->Flags = Flags;
 	timer->DueTime = DueTime;
@@ -478,10 +526,8 @@ BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
 	timer->timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
 
 	timer->FireCount = 0;
-	timer->StartTime = currentTime + DueTime;
-	timer->ExpirationTime = timer->StartTime;
 
-	InsertTimerQueueTimer(timerQueue, timer);
+	InsertTimerQueueTimer(&(timerQueue->head), timer);
 
 	return TRUE;
 }
