@@ -121,7 +121,8 @@ struct winpr_timer_queue
 	struct sched_param param;
 
 	BOOL bCancelled;
-	WINPR_TIMER_QUEUE_TIMER* head;
+	WINPR_TIMER_QUEUE_TIMER* activeHead;
+	WINPR_TIMER_QUEUE_TIMER* inactiveHead;
 };
 typedef struct winpr_timer_queue WINPR_TIMER_QUEUE;
 
