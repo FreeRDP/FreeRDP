@@ -35,11 +35,11 @@ VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 	TimerTime = CurrentTime - apcData->StartTime;
 	expectedTime = apcData->DueTime + (apcData->Period * apcData->FireCount);
 
-	printf("TimerRoutine: TimerId: %d ActualTime: %d ExpectedTime: %d Discrepancy: %d\n",
-			apcData->TimerId, TimerTime, expectedTime, TimerTime - expectedTime);
-
 	apcData->FireCount++;
 	g_Count++;
+
+	printf("TimerRoutine: TimerId: %d FireCount: %d ActualTime: %d ExpectedTime: %d Discrepancy: %d\n",
+			apcData->TimerId, apcData->FireCount, TimerTime, expectedTime, TimerTime - expectedTime);
 
 	if (g_Count >= (TIMER_COUNT * FIRE_COUNT))
 	{
@@ -50,8 +50,8 @@ VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 int TestSynchTimerQueue(int argc, char* argv[])
 {
 	int index;
-	HANDLE hTimer = NULL;
-	HANDLE hTimerQueue = NULL;
+	HANDLE hTimerQueue;
+	HANDLE hTimers[TIMER_COUNT];
 	APC_DATA apcData[TIMER_COUNT];
 
 	g_Event = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -72,7 +72,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		apcData[index].Period = 1000;
 		apcData[index].FireCount = 0;
 
-		if (!CreateTimerQueueTimer(&hTimer, hTimerQueue, (WAITORTIMERCALLBACK) TimerRoutine,
+		if (!CreateTimerQueueTimer(&hTimers[index], hTimerQueue, (WAITORTIMERCALLBACK) TimerRoutine,
 				&apcData[index], apcData[index].DueTime, apcData[index].Period, 0))
 		{
 			printf("CreateTimerQueueTimer failed (%d)\n", GetLastError());
@@ -86,10 +86,13 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		return -1;
 	}
 
-	if (!DeleteTimerQueueTimer(hTimerQueue, hTimer, NULL))
+	for (index = 0; index < TIMER_COUNT; index++)
 	{
-		printf("DeleteTimerQueueTimer failed (%d)\n", GetLastError());
-		return -1;
+		if (!DeleteTimerQueueTimer(hTimerQueue, hTimers[index], NULL))
+		{
+			printf("DeleteTimerQueueTimer failed (%d)\n", GetLastError());
+			return -1;
+		}
 	}
 	
 	if (!DeleteTimerQueue(hTimerQueue))

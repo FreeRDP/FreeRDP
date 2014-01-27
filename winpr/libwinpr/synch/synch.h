@@ -120,6 +120,7 @@ struct winpr_timer_queue
 	pthread_mutex_t cond_mutex;
 	struct sched_param param;
 
+	BOOL bCancelled;
 	WINPR_TIMER_QUEUE_TIMER* head;
 };
 typedef struct winpr_timer_queue WINPR_TIMER_QUEUE;
