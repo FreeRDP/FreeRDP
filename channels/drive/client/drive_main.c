@@ -159,7 +159,8 @@ static void drive_process_irp_create(DRIVE_DEVICE* disk, IRP* irp)
 
 		/* map errno to windows result */
 		irp->IoStatus = drive_map_posix_err(file->err);
-		drive_file_free(file);
+		/* Already in the error path, no need to check return value here. */
+		(void) drive_file_free(file, TRUE);
 	}
 	else
 	{
@@ -208,10 +209,12 @@ static void drive_process_irp_close(DRIVE_DEVICE* disk, IRP* irp)
 	}
 	else
 	{
+		int err;
 		DEBUG_SVC("%s(%d) closed.", file->fullpath, file->id);
 
 		list_remove(disk->files, file);
-		drive_file_free(file);
+		if ((err = drive_file_free(file, FALSE)) != 0)
+			irp->IoStatus = drive_map_posix_err(err);
 	}
 
 	Stream_Zero(irp->output, 5); /* Padding(5) */
@@ -672,8 +675,9 @@ static void drive_free(DEVICE* device)
 
 	_aligned_free(disk->pIrpList);
 
+	/* Cleaning up; no need to check for drive_file_free error. */
 	while ((file = (DRIVE_FILE*) list_dequeue(disk->files)) != NULL)
-		drive_file_free(file);
+		(void) drive_file_free(file, TRUE);
 
 	list_free(disk->files);
 

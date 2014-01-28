@@ -108,11 +108,11 @@ struct _DRIVE_FILE
 
 DRIVE_FILE* drive_file_new(const char* base_path, const char* path, UINT32 id,
 	UINT32 DesiredAccess, UINT32 CreateDisposition, UINT32 CreateOptions);
-void drive_file_free(DRIVE_FILE* file);
+int drive_file_free(DRIVE_FILE* file, BOOL recursive);
 
 BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset);
 BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length);
-BOOL drive_file_write(DRIVE_FILE* file, BYTE* buffer, UINT32 Length);
+BOOL drive_file_write(DRIVE_FILE* file, const BYTE* buffer, UINT32 Length);
 BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, wStream* output);
 BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length, wStream* input);
 BOOL drive_file_query_directory(DRIVE_FILE* file, UINT32 FsInformationClass, BYTE InitialQuery,
