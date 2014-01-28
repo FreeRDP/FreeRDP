@@ -498,32 +498,84 @@ DWORD mac_client_thread(void* param)
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
+DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
+{
+	/**
+	 * In 99% of cases, the given key code is truly keyboard independent.
+	 * This function handles the remaining 1% of edge cases.
+	 *
+	 * Hungarian Keyboard: This is 'QWERTZ' and not 'QWERTY'.
+	 * The '0' key is on the left of the '1' key, where '~' is on a US keyboard.
+	 * A special 'i' letter key with acute is found on the right of the left shift key.
+	 * On the hungarian keyboard, the 'i' key is at the left of the 'Y' key
+	 * Some international keyboards have a corresponding key which would be at
+	 * the left of the 'Z' key when using a QWERTY layout.
+	 *
+	 * The Apple Hungarian keyboard sends inverted key codes for the '0' and 'i' keys.
+	 * When using the US keyboard layout, key codes are left as-is (inverted).
+	 * When using the Hungarian keyboard layout, key codes are swapped (non-inverted).
+	 * This means that when using the Hungarian keyboard layout with a US keyboard,
+	 * the keys corresponding to '0' and 'i' will effectively be inverted.
+	 *
+	 * To fix the '0' and 'i' key inversion, we use the corresponding output character
+	 * provided by OS X and check for a character to key code mismatch: for instance,
+	 * when the output character is '0' for the key code corresponding to the 'i' key.
+	 */
+	
+	switch (keyChar)
+	{
+		case '0':
+		case 0x00A7: /* section sign */
+			if (keyCode == APPLE_VK_ISO_Section)
+				keyCode = APPLE_VK_ANSI_Grave;
+			break;
+			
+		case 0x00ED: /* latin small letter i with acute */
+		case 0x00CD: /* latin capital letter i with acute */
+			if (keyCode == APPLE_VK_ANSI_Grave)
+				keyCode = APPLE_VK_ISO_Section;
+			break;
+	}
+	
+	return keyCode;
+}
+
 /** *********************************************************************
  * called when a key is pressed
  ***********************************************************************/
 
 - (void) keyDown:(NSEvent *) event
 {
-	int key;
+	DWORD keyCode;
 	DWORD keyFlags;
 	DWORD vkcode;
 	DWORD scancode;
+	unichar keyChar;
+	NSString* characters;
 	
 	if (!is_connected)
 		return;
 	
 	keyFlags = KBD_FLAGS_DOWN;
-	key = [event keyCode] + 8;
+	keyCode = [event keyCode];
 	
-	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
+	characters = [event charactersIgnoringModifiers];
+	
+	if ([characters length] > 0)
+	{
+		keyChar = [characters characterAtIndex:0];
+		keyCode = fixKeyCode(keyCode, keyChar);
+	}
+	
+	vkcode = GetVirtualKeyCodeFromKeycode(keyCode + 8, KEYCODE_TYPE_APPLE);
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
 	keyFlags |= (scancode & KBDEXT) ? KBDEXT : 0;
 	scancode &= 0xFF;
 	vkcode &= 0xFF;
-
+	
 #if 0
-	fprintf(stderr, "keyDown: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
-	       key - 8, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
+	fprintf(stderr, "keyDown: keyCode: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
+	       keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
 	
 	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
@@ -535,18 +587,28 @@ DWORD mac_client_thread(void* param)
 
 - (void) keyUp:(NSEvent *) event
 {
-	int key;
+	DWORD keyCode;
 	DWORD keyFlags;
 	DWORD vkcode;
 	DWORD scancode;
+	unichar keyChar;
+	NSString* characters;
 
 	if (!is_connected)
 		return;
 
-	key = [event keyCode] + 8;
 	keyFlags = KBD_FLAGS_RELEASE;
+	keyCode = [event keyCode];
+	
+	characters = [event charactersIgnoringModifiers];
+	
+	if ([characters length] > 0)
+	{
+		keyChar = [characters characterAtIndex:0];
+		keyCode = fixKeyCode(keyCode, keyChar);
+	}
 
-	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
+	vkcode = GetVirtualKeyCodeFromKeycode(keyCode + 8, KEYCODE_TYPE_APPLE);
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
 	keyFlags |= (scancode & KBDEXT) ? KBDEXT : 0;
 	scancode &= 0xFF;
@@ -554,7 +616,7 @@ DWORD mac_client_thread(void* param)
 
 #if 0
 	fprintf(stderr, "keyUp: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
-	       key - 8, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
+	       keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
 
 	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
