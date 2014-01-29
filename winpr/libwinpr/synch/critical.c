@@ -235,7 +235,7 @@ VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 
 #endif
 
-#if ((_WIN32) && (_WIN32_WINNT < 0x0600))
+#if ((_WIN32) && (_WIN32_WINNT < 0x0403))
 
 typedef BOOL (WINAPI * PINITIALIZE_CRITICAL_SECTION_EX_FN)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
 
