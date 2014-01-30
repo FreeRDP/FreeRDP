@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#define WITH_DEBUG_AUTODETECT
+//#define WITH_DEBUG_AUTODETECT
 
 #include "autodetect.h"
 
@@ -111,7 +111,7 @@ static BOOL autodetect_recv_bandwidth_measure_start(rdpRdp* rdp, wStream* s, AUT
 	if (autodetectReqPdu->headerLength != 0x06)
 		return FALSE;
 
-	DEBUG_AUTODETECT("received Bandwidth Measure Start PDU");
+	DEBUG_AUTODETECT("received Bandwidth Measure Start PDU - time=%lu", GetTickCount());
 
 	/* Initialize bandwidth measurement parameters */
 	rdp->autodetect->bandwidthMeasureStartTime = GetTickCount();
@@ -221,6 +221,11 @@ int rdp_recv_autodetect_packet(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT8(s, autodetectReqPdu.headerTypeId); /* headerTypeId (1 byte) */
 	Stream_Read_UINT16(s, autodetectReqPdu.sequenceNumber); /* sequenceNumber (2 bytes) */
 	Stream_Read_UINT16(s, autodetectReqPdu.requestType); /* requestType (2 bytes) */
+
+	DEBUG_AUTODETECT(
+		"rdp_recv_autodetect_packet: headerLength=%u, headerTypeId=%u, sequenceNumber=%u, requestType=%04x",
+		autodetectReqPdu.headerLength, autodetectReqPdu.headerTypeId,
+		autodetectReqPdu.sequenceNumber, autodetectReqPdu.requestType);
 
 	if (autodetectReqPdu.headerTypeId != TYPE_ID_AUTODETECT_REQUEST)
 		return -1;
