@@ -464,7 +464,7 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	client_data = Stream_New(NULL, 512);
 	gcc_write_client_data_blocks(client_data, mcs->transport->settings);
 
-	gcc_CCrq = Stream_New(NULL, 512);
+	gcc_CCrq = Stream_New(NULL, 1024);
 	gcc_write_conference_create_request(gcc_CCrq, client_data);
 	length = Stream_GetPosition(gcc_CCrq) + 7;
 
