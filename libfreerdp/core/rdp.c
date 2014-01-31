@@ -1103,6 +1103,19 @@ static int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 	int status = 0;
 	rdpRdp* rdp = (rdpRdp*) extra;
 
+	/* 
+	 * At any point in the connection sequence between when all
+	 * MCS channels have been joined and when the RDP connection
+	 * enters the active state, an auto-detect PDU can be received
+	 * on the MCS message channel.
+	 */
+	if ((rdp->state > CONNECTION_STATE_MCS_CHANNEL_JOIN) &&
+		(rdp->state < CONNECTION_STATE_ACTIVE))
+	{
+		if (rdp_client_connect_auto_detect(rdp, s))
+			return 0;
+	}
+
 	switch (rdp->state)
 	{
 		case CONNECTION_STATE_NEGO:
