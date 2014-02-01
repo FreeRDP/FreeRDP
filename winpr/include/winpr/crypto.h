@@ -23,6 +23,8 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#include <winpr/error.h>
+
 #ifdef _WIN32
 
 #include <wincrypt.h>
@@ -490,6 +492,94 @@ DWORD CertGetNameStringA(PCCERT_CONTEXT pCertContext, DWORD dwType,
 #define CertGetNameString	CertGetNameStringW
 #else
 #define CertGetNameString	CertGetNameStringA
+#endif
+
+/**
+ * Data Protection API (DPAPI)
+ */
+
+#define CRYPTPROTECTMEMORY_BLOCK_SIZE		16
+
+#define CRYPTPROTECTMEMORY_SAME_PROCESS		0x00000000
+#define CRYPTPROTECTMEMORY_CROSS_PROCESS	0x00000001
+#define CRYPTPROTECTMEMORY_SAME_LOGON		0x00000002
+
+#define CRYPTPROTECT_PROMPT_ON_UNPROTECT	0x00000001
+#define CRYPTPROTECT_PROMPT_ON_PROTECT		0x00000002
+#define CRYPTPROTECT_PROMPT_RESERVED		0x00000004
+#define CRYPTPROTECT_PROMPT_STRONG		0x00000008
+#define CRYPTPROTECT_PROMPT_REQUIRE_STRONG	0x00000010
+
+#define CRYPTPROTECT_UI_FORBIDDEN		0x1
+#define CRYPTPROTECT_LOCAL_MACHINE		0x4
+#define CRYPTPROTECT_CRED_SYNC			0x8
+#define CRYPTPROTECT_AUDIT			0x10
+#define CRYPTPROTECT_NO_RECOVERY		0x20
+#define CRYPTPROTECT_VERIFY_PROTECTION		0x40
+#define CRYPTPROTECT_CRED_REGENERATE		0x80
+
+#define CRYPTPROTECT_FIRST_RESERVED_FLAGVAL	0x0FFFFFFF
+#define CRYPTPROTECT_LAST_RESERVED_FLAGVAL	0xFFFFFFFF
+
+typedef struct _CRYPTPROTECT_PROMPTSTRUCT
+{
+	DWORD cbSize;
+	DWORD dwPromptFlags;
+	HWND hwndApp;
+	LPCWSTR szPrompt;
+} CRYPTPROTECT_PROMPTSTRUCT, *PCRYPTPROTECT_PROMPTSTRUCT;
+
+#define CRYPTPROTECT_DEFAULT_PROVIDER	{ 0xdf9d8cd0, 0x1501, 0x11d1, { 0x8c, 0x7a, 0x00, 0xc0, 0x4f, 0xc2, 0x97, 0xeb } }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags);
+WINPR_API BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags);
+
+WINPR_API BOOL CryptProtectData(DATA_BLOB* pDataIn, LPCWSTR szDataDescr, DATA_BLOB* pOptionalEntropy,
+		PVOID pvReserved, CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut);
+WINPR_API BOOL CryptUnprotectData(DATA_BLOB* pDataIn, LPWSTR* ppszDataDescr, DATA_BLOB* pOptionalEntropy,
+		PVOID pvReserved, CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut);
+
+#ifdef __cplusplus
+}
+#endif
+
+#define CRYPT_STRING_BASE64HEADER			0x00000000
+#define CRYPT_STRING_BASE64				0x00000001
+#define CRYPT_STRING_BINARY				0x00000002
+#define CRYPT_STRING_BASE64REQUESTHEADER		0x00000003
+#define CRYPT_STRING_HEX				0x00000004
+#define CRYPT_STRING_HEXASCII				0x00000005
+#define CRYPT_STRING_BASE64_ANY				0x00000006
+#define CRYPT_STRING_ANY				0x00000007
+#define CRYPT_STRING_HEX_ANY				0x00000008
+#define CRYPT_STRING_BASE64X509CRLHEADER		0x00000009
+#define CRYPT_STRING_HEXADDR				0x0000000A
+#define CRYPT_STRING_HEXASCIIADDR			0x0000000B
+#define CRYPT_STRING_HEXRAW				0x0000000C
+
+#define CRYPT_STRING_HASHDATA				0x10000000
+#define CRYPT_STRING_STRICT				0x20000000
+#define CRYPT_STRING_NOCRLF				0x40000000
+#define CRYPT_STRING_NOCR				0x80000000
+
+BOOL CryptStringToBinaryW(LPCWSTR pszString, DWORD cchString, DWORD dwFlags, BYTE* pbBinary,
+		DWORD* pcbBinary, DWORD* pdwSkip, DWORD* pdwFlags);
+BOOL CryptStringToBinaryA(LPCSTR pszString, DWORD cchString, DWORD dwFlags, BYTE* pbBinary,
+		DWORD* pcbBinary, DWORD* pdwSkip, DWORD* pdwFlags);
+
+BOOL CryptBinaryToStringW(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, LPWSTR pszString, DWORD* pcchString);
+BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, LPSTR pszString, DWORD* pcchString);
+
+#ifdef UNICODE
+#define CryptStringToBinary	CryptStringToBinaryW
+#define CryptBinaryToString	CryptBinaryToStringW
+#else
+#define CryptStringToBinary	CryptStringToBinaryA
+#define CryptBinaryToString	CryptBinaryToStringA
 #endif
 
 #endif
