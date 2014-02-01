@@ -58,6 +58,14 @@ WINPR_API BOOL UnmapViewOfFile(LPCVOID lpBaseAddress);
 }
 #endif
 
+#ifdef UNICODE
+#define CreateFileMapping	CreateFileMappingW
+#define OpenFileMapping		OpenFileMappingW
+#else
+#define CreateFileMapping	CreateFileMappingA
+#define OpenFileMapping		OpenFileMappingA
+#endif
+
 #endif
 
 #endif /* WINPR_MEMORY_H */

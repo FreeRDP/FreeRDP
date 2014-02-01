@@ -81,6 +81,11 @@
 HANDLE CreateFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpAttributes, DWORD flProtect,
 		DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCSTR lpName)
 {
+	if (hFile != INVALID_HANDLE_VALUE)
+	{
+		return NULL; /* not yet implemented */
+	}
+
 	return NULL;
 }
 
