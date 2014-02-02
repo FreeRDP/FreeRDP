@@ -74,8 +74,6 @@ set(${MODULE_PREFIX}_LIBS
 
 if(WIN32)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
-else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ZLIB_LIBRARIES})
 endif()
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
