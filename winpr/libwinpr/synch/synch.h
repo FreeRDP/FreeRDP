@@ -99,9 +99,6 @@ struct winpr_timer
 	
 #ifdef WITH_POSIX_TIMER
 	timer_t tid;
-#endif
-
-#ifdef HAVE_TIMERFD_H
 	struct itimerspec timeout;
 #endif
 };

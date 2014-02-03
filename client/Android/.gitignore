@@ -8,3 +8,7 @@ libs/armeabi*
 AndroidManifest.xml
 local.properties
 !.project
+
+FreeRDPCore/project.properties
+FreeRDPCore/src/com/freerdp/freerdpcore/utils/BuildConfiguration.java
+aFreeRDP/project.properties
