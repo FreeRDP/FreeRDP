@@ -22,7 +22,7 @@ project(WinPR C)
 set(CMAKE_COLOR_MAKEFILE ON)
 
 if(FREERDP_VERSION)
-	set(FREERDP_BUILD)
+	set(FREERDP_BUILD 1)
 endif()
 
 # Include cmake modules
@@ -37,12 +37,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
 
 # Check for cmake compatibility (enable/disable features)
 include(CheckCmakeCompat)
-
 include(FindFeature)
+include(ComplexLibrary)
 include(AutoVersioning)
 include(ConfigOptions)
 include(CheckCCompilerFlag)
 include(GNUInstallDirsWrapper)
+include(CMakePackageConfigHelpers)
 
 # Soname versioning
 set(WINPR_VERSION_MAJOR "1")
@@ -60,6 +61,8 @@ endif()
 if(NOT DEFINED BUILD_SHARED_LIBS)
 	set(BUILD_SHARED_LIBS ON)
 endif()
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_EXPORTS")
 
 if(FREERDP_BUILD)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include PARENT_SCOPE)

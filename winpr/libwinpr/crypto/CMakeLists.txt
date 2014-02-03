@@ -45,8 +45,6 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE winpr
 	MODULES winpr-crt winpr-utils)
 
-message(STATUS "OPENSSL_LIBRARIES: ${OPENSSL_LIBRARIES} ZLIB_LIBRARIES: ${ZLIB_LIBRARIES}")
-
 if(WIN32)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} crypt32)
 endif()
