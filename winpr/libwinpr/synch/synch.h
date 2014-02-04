@@ -28,6 +28,10 @@
 
 #include <winpr/synch.h>
 
+#ifdef __linux__
+#define WITH_POSIX_TIMER	1
+#endif
+
 #ifndef _WIN32
 
 #include "../handle/handle.h"
@@ -36,6 +40,7 @@
 
 #if defined __APPLE__
 #include <pthread.h>
+#include <sys/time.h>
 #include <semaphore.h>
 #include <mach/mach.h>
 #include <mach/semaphore.h>
@@ -86,16 +91,56 @@ struct winpr_timer
 	WINPR_HANDLE_DEF();
 
 	int fd;
+	BOOL bInit;
 	LONG lPeriod;
 	BOOL bManualReset;
 	PTIMERAPCROUTINE pfnCompletionRoutine;
 	LPVOID lpArgToCompletionRoutine;
-
-#ifdef HAVE_TIMERFD_H
+	
+#ifdef WITH_POSIX_TIMER
+	timer_t tid;
 	struct itimerspec timeout;
 #endif
 };
 typedef struct winpr_timer WINPR_TIMER;
+
+typedef struct winpr_timer_queue_timer WINPR_TIMER_QUEUE_TIMER;
+
+struct winpr_timer_queue
+{
+	WINPR_HANDLE_DEF();
+	
+	pthread_t thread;
+	pthread_attr_t attr;
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+	pthread_mutex_t cond_mutex;
+	struct sched_param param;
+
+	BOOL bCancelled;
+	WINPR_TIMER_QUEUE_TIMER* activeHead;
+	WINPR_TIMER_QUEUE_TIMER* inactiveHead;
+};
+typedef struct winpr_timer_queue WINPR_TIMER_QUEUE;
+
+struct winpr_timer_queue_timer
+{
+	WINPR_HANDLE_DEF();
+
+	ULONG Flags;
+	DWORD DueTime;
+	DWORD Period;
+	PVOID Parameter;
+	WAITORTIMERCALLBACK Callback;
+	
+	int FireCount;
+
+	struct timespec StartTime;
+	struct timespec ExpirationTime;
+
+	WINPR_TIMER_QUEUE* timerQueue;
+	WINPR_TIMER_QUEUE_TIMER* next;
+};
 
 #endif
 

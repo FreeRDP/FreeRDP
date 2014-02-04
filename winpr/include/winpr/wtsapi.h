@@ -25,7 +25,11 @@
 
 #include <winpr/file.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#include <wtsapi32.h>
+
+#else
 
 /**
  * Virtual Channel Protocol (Common)

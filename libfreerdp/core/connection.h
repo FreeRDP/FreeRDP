@@ -49,9 +49,11 @@ enum CONNECTION_STATE
 
 BOOL rdp_client_connect(rdpRdp* rdp);
 BOOL rdp_client_redirect(rdpRdp* rdp);
+BOOL rdp_client_reconnect(rdpRdp* rdp);
 BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, wStream* s);
 BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, wStream* s);
 BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s);
+BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s);
 int rdp_client_connect_license(rdpRdp* rdp, wStream* s);
 int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s);
 int rdp_client_connect_finalize(rdpRdp* rdp);

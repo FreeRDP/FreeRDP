@@ -148,6 +148,8 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "auth-only", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Authenticate only." },
 	{ "reconnect-cookie", COMMAND_LINE_VALUE_REQUIRED, "<base64 cookie>", NULL, NULL, -1, NULL, "Pass base64 reconnect cookie to the connection" },
 	{ "print-reconnect-cookie", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Print base64 reconnect cookie after connecting" },
+	{ "heartbeat", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support heartbeat PDUs" },
+	{ "multitransport", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support multitransport protocol" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -718,6 +720,15 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 
 			freerdp_client_add_dynamic_channel(settings, count, p);
 		}
+	}
+	CommandLineSwitchCase(arg, "heartbeat")
+	{
+		settings->SupportHeartbeatPdu = TRUE;
+	}
+	CommandLineSwitchCase(arg, "multitransport")
+	{
+		settings->SupportMultitransport = TRUE;
+		settings->MultitransportFlags = (TRANSPORT_TYPE_UDP_FECR | TRANSPORT_TYPE_UDP_FECL | TRANSPORT_TYPE_UDP_PREFERRED);
 	}
 
 	CommandLineSwitchEnd(arg)
@@ -1794,6 +1805,13 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (freerdp_dynamic_channel_collection_find(settings, "audin"))
 	{
 		settings->AudioCapture = TRUE;
+	}
+
+	if (settings->NetworkAutoDetect ||
+		settings->SupportHeartbeatPdu ||
+		settings->SupportMultitransport)
+	{
+		settings->DeviceRedirection = TRUE; /* these RDP 8 features require rdpdr to be registered */
 	}
 
 	if (settings->RedirectDrives)

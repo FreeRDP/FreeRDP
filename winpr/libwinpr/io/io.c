@@ -57,7 +57,7 @@ BOOL GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumb
 
 	else if (Type == HANDLE_TYPE_NAMED_PIPE)
 	{
-		int status;
+		int status = -1;
 		DWORD request;
 		PVOID lpBuffer;
 		DWORD nNumberOfBytes;

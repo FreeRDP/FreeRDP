@@ -3389,8 +3389,13 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 
 	if (*pChannelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		fprintf(stderr, "expected MCS_GLOBAL_CHANNEL_ID %04x, got %04x\n", MCS_GLOBAL_CHANNEL_ID, *pChannelId);
-		return FALSE;
+		UINT16 mcsMessageChannelId = rdp->mcs->message_channel_id;
+
+		if ((mcsMessageChannelId == 0) || (*pChannelId != mcsMessageChannelId))
+		{
+			fprintf(stderr, "unexpected MCS channel id %04x received\n", *pChannelId);
+			return FALSE;
+		}
 	}
 
 	return TRUE;

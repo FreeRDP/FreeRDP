@@ -244,7 +244,9 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 				return WAIT_TIMEOUT;
 		}
 		else
+		{
 			pthread_mutex_lock(&mutex->mutex);
+		}
 	}
 	else if (Type == HANDLE_TYPE_EVENT)
 	{
@@ -265,8 +267,12 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 		}
 
-		status = select(event->pipe_fd[0] + 1, &rfds, NULL, NULL,
-				(dwMilliseconds == INFINITE) ? NULL : &timeout);
+		do
+		{
+			status = select(event->pipe_fd[0] + 1, &rfds, NULL, NULL,
+					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+		}
+		while (status < 0 && (errno == EINTR));
 
 		if (status < 0)
 		{
@@ -301,8 +307,12 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 				timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 			}
 
-			status = select(semaphore->pipe_fd[0] + 1, &rfds, 0, 0,
-					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+			do
+			{
+				status = select(semaphore->pipe_fd[0] + 1, &rfds, 0, 0,
+						(dwMilliseconds == INFINITE) ? NULL : &timeout);
+			}
+			while (status < 0 && (errno == EINTR));
 
 			if (status < 0)
 			{
@@ -355,8 +365,12 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 				timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 			}
 
-			status = select(timer->fd + 1, &rfds, 0, 0,
-					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+			do
+			{
+				status = select(timer->fd + 1, &rfds, 0, 0,
+						(dwMilliseconds == INFINITE) ? NULL : &timeout);
+			}
+			while (status < 0 && (errno == EINTR));
 
 			if (status < 0)
 			{
@@ -423,8 +437,12 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 		}
 
-		status = select(fd + 1, &rfds, NULL, NULL,
-				(dwMilliseconds == INFINITE) ? NULL : &timeout);
+		do
+		{
+			status = select(fd + 1, &rfds, NULL, NULL,
+					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+		}
+		while (status < 0 && (errno == EINTR));
 
 		if (status < 0)
 		{
@@ -468,7 +486,6 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		fprintf(stderr, "WaitForMultipleObjects: invalid handles count\n");
 		return WAIT_FAILED;
 	}
-
 
 	maxfd = 0;
 	FD_ZERO(&fds);
@@ -553,8 +570,12 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 	}
 
-	status = select(maxfd + 1, &fds, 0, 0,
-			(dwMilliseconds == INFINITE) ? NULL : &timeout);
+	do
+	{
+		status = select(maxfd + 1, &fds, 0, 0,
+				(dwMilliseconds == INFINITE) ? NULL : &timeout);
+	}
+	while (status < 0 && errno == EINTR);
 
 	if (status < 0)
 	{

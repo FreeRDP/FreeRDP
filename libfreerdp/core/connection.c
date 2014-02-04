@@ -336,6 +336,33 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	return status;
 }
 
+BOOL rdp_client_reconnect(rdpRdp* rdp)
+{
+	int i;
+
+	transport_disconnect(rdp->transport);
+
+	mcs_free(rdp->mcs);
+	nego_free(rdp->nego);
+	license_free(rdp->license);
+	transport_free(rdp->transport);
+
+	/* Reset virtual channel status */
+	for (i = 0; i < rdp->settings->ChannelCount; i++)
+	{
+		rdp->settings->ChannelDefArray[i].joined = FALSE;
+	}
+
+	rdp->transport = transport_new(rdp->settings);
+	rdp->license = license_new(rdp);
+	rdp->nego = nego_new(rdp->transport);
+	rdp->mcs = mcs_new(rdp->transport);
+
+	rdp->transport->layer = TRANSPORT_LAYER_TCP;
+
+	return rdp_client_connect(rdp);
+}
+
 static BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
@@ -554,6 +581,31 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 
 		rdp->mcs->global_channel_joined = TRUE;
 
+		if (rdp->mcs->message_channel_id != 0)
+		{
+			if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->message_channel_id))
+				return FALSE;
+
+			all_joined = FALSE;
+		}
+		else
+		{
+			if (rdp->settings->ChannelCount > 0)
+			{
+				if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[0].ChannelId))
+					return FALSE;
+
+				all_joined = FALSE;
+			}
+		}
+	}
+	else if ((rdp->mcs->message_channel_id != 0) && !rdp->mcs->message_channel_joined)
+	{
+		if (channel_id != rdp->mcs->message_channel_id)
+			return FALSE;
+
+		rdp->mcs->message_channel_joined = TRUE;
+
 		if (rdp->settings->ChannelCount > 0)
 		{
 			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[0].ChannelId))
@@ -597,6 +649,33 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 	}
 
 	return TRUE;
+}
+
+BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream *s)
+{
+	BYTE* mark;
+	UINT16 length;
+	UINT16 channelId;
+
+	/* If the MCS message channel has been joined... */
+	if (rdp->mcs->message_channel_id != 0)
+	{
+		/* Process any MCS message channel PDUs. */
+		Stream_GetPointer(s, mark);
+
+		if (rdp_read_header(rdp, s, &length, &channelId))
+		{
+			if (channelId == rdp->mcs->message_channel_id)
+			{
+				if (rdp_recv_message_channel_pdu(rdp, s) == 0)
+					return TRUE;
+			}
+		}
+
+		Stream_SetPointer(s, mark);
+	}
+
+	return FALSE;
 }
 
 int rdp_client_connect_license(rdpRdp* rdp, wStream* s)

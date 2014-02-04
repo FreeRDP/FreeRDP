@@ -12,7 +12,7 @@
 #include <cryptuiapi.h>
 #endif
 
-int TestCertEnumCertificatesInStore(int argc, char* argv[])
+int TestCryptoCertEnumCertificatesInStore(int argc, char* argv[])
 {
 	int index;
 	DWORD status;
