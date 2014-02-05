@@ -53,9 +53,25 @@ if(MONOLITHIC_BUILD)
 	set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
 	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 
+	list(REMOVE_DUPLICATES WINPR_LIBS)
 	target_link_libraries(${MODULE_NAME} ${WINPR_LIBS})
 
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT WinPRTargets)
+	
+	set(WINPR_PC_LIBS "-lwinpr")
+	
+	foreach(WINPR_LIB ${WINPR_LIBS})
+		if(${WINPR_LIB} MATCHES "^-l.*")
+			set(WINPR_PC_LIBS "${WINPR_PC_LIBS} ${WINPR_LIB}")
+		elseif(${WINPR_LIB} MATCHES "^/.*")
+			
+		else()
+			set(WINPR_PC_LIBS "${WINPR_PC_LIBS} -l${WINPR_LIB}")
+		endif()
+	endforeach()
+	
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc @ONLY)
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 	set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/libwinpr")
 endif()

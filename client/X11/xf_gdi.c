@@ -830,11 +830,11 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 
 	switch (polygon_cb->fillMode)
 	{
-		case 1: /* alternate */
+		case GDI_FILL_ALTERNATE: /* alternate */
 			XSetFillRule(xfc->display, xfc->gc, EvenOddRule);
 			break;
 
-		case 2: /* winding */
+		case GDI_FILL_WINDING: /* winding */
 			XSetFillRule(xfc->display, xfc->gc, WindingRule);
 			break;
 

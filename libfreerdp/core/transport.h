@@ -75,8 +75,8 @@ struct rdp_transport
 	HANDLE stopEvent;
 	HANDLE thread;
 	BOOL async;
-	HANDLE ReadMutex;
-	HANDLE WriteMutex;
+	CRITICAL_SECTION ReadLock;
+	CRITICAL_SECTION WriteLock;
 	wLog* log;
 };
 

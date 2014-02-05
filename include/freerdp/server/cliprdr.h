@@ -23,6 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/channels/wtsvc.h>
+
+#include <freerdp/channels/cliprdr.h>
 #include <freerdp/client/cliprdr.h>
 
 /**

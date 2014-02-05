@@ -109,7 +109,8 @@ struct _CHANNEL_ENTRY_POINTS_EX
 	/* Extended Fields */
 	UINT32 MagicNumber; /* identifies FreeRDP */
 	void* pExtendedData; /* extended initial data */
-	void** ppInterface; /* channel callback interface */
+	void* pInterface; /* channel callback interface, use after initialization */
+	void** ppInterface; /* channel callback interface, use for initialization */
 	PVIRTUALCHANNELEVENTPUSH pVirtualChannelEventPush;
 };
 typedef struct _CHANNEL_ENTRY_POINTS_EX CHANNEL_ENTRY_POINTS_EX;

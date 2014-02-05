@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/file.h>
 
 #include <winpr/wlog.h>
 
@@ -38,6 +39,9 @@ char* WLog_Message_GetOutputFileName(int id, const char* ext)
 	ProcessId = GetCurrentProcessId();
 
 	FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
+
+	if (!PathFileExistsA(FilePath))
+		CreateDirectoryA(FilePath, NULL);
 
 	FileName = (char*) malloc(256);
 

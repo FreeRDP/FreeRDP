@@ -50,8 +50,8 @@ struct rdp_svc_plugin
 
 	HANDLE thread;
 	wStream* data_in;
-	void* init_handle;
-	UINT32 open_handle;
+	void* InitHandle;
+	UINT32 OpenHandle;
 	wMessagePipe* MsgPipe;
 };
 

@@ -61,6 +61,7 @@ typedef void (*pPostDisconnect)(freerdp* instance);
 typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password, char** domain);
 typedef BOOL (*pVerifyCertificate)(freerdp* instance, char* subject, char* issuer, char* fingerprint);
 typedef BOOL (*pVerifyChangedCertificate)(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint);
+typedef int (*pVerifyX509Certificate)(freerdp* instance, BYTE* data, int length, const char* hostname, int port, DWORD flags);
 
 typedef int (*pLogonErrorInfo)(freerdp* instance, UINT32 data, UINT32 type);
 
@@ -195,13 +196,19 @@ struct rdp_freerdp
 															 Used when a certificate differs from stored fingerprint.
 															 If returns TRUE, the new fingerprint will be trusted and old thrown out. */
 
-	ALIGN64 pLogonErrorInfo LogonErrorInfo; /**< (offset 53)  Callback for logon error info, important for logon system messages with RemoteApp */
+	ALIGN64 pVerifyX509Certificate VerifyX509Certificate;  /**< (offset 53)  Callback for X509 certificate verification (PEM format) */
 
-	ALIGN64 pPostDisconnect PostDisconnect; /**< (offset 54)
+	ALIGN64 pLogonErrorInfo LogonErrorInfo; /**< (offset 54)  Callback for logon error info, important for logon system messages with RemoteApp */
+
+	ALIGN64 pPostDisconnect PostDisconnect; /**< (offset 55)
 																						Callback for cleaning up resources allocated
 																						by connect callbacks. */
 
-	UINT64 paddingD[64 - 55]; /* 55 */
+	ALIGN64 pAuthenticate GatewayAuthenticate; /**< (offset 56)
+									 Callback for gateway authentication.
+									 It is used to get the username/password when it was not provided at connection time. */
+
+	UINT64 paddingD[64 - 57]; /* 57 */
 
 	ALIGN64 pSendChannelData SendChannelData; /* (offset 64)
 										 Callback for sending data to a channel.

@@ -27,11 +27,26 @@
 #include <winpr/winpr.h>
 
 #include <winpr/string.h>
-#include <winpr/memory.h>
-
-/* Data Alignment */
+#include <winpr/heap.h>
 
 #ifndef _WIN32
+
+#define CopyMemory(Destination, Source, Length)		memcpy((Destination), (Source), (Length))
+#define MoveMemory(Destination, Source, Length)		memmove((Destination), (Source), (Length))
+#define	FillMemory(Destination, Length, Fill)		memset((Destination), (Fill), (Length))
+#define ZeroMemory(Destination, Length)			memset((Destination), 0, (Length))
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API PVOID SecureZeroMemory(PVOID ptr, SIZE_T cnt);
+
+#ifdef __cplusplus
+}
+#endif
+
+/* Data Alignment */
 
 #ifndef _ERRNO_T_DEFINED
 #define _ERRNO_T_DEFINED

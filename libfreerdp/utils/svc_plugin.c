@@ -37,79 +37,57 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
 
-static wArrayList* g_AddinList = NULL;
+static wListDictionary* g_InitHandles;
+static wListDictionary* g_OpenHandles;
 
-rdpSvcPlugin* svc_plugin_find_by_init_handle(void* init_handle)
+void svc_plugin_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
-	int index;
-	BOOL found = FALSE;
-	rdpSvcPlugin* plugin;
+	if (!g_InitHandles)
+		g_InitHandles = ListDictionary_New(TRUE);
 
-	ArrayList_Lock(g_AddinList);
-
-	index = 0;
-	plugin = (rdpSvcPlugin*) ArrayList_GetItem(g_AddinList, index++);
-
-	while (plugin)
-	{
-		if (plugin->init_handle == init_handle)
-		{
-			found = TRUE;
-			break;
-		}
-
-		plugin = (rdpSvcPlugin*) ArrayList_GetItem(g_AddinList, index++);
-	}
-
-	ArrayList_Unlock(g_AddinList);
-
-	return (found) ? plugin : NULL;
+	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
 }
 
-rdpSvcPlugin* svc_plugin_find_by_open_handle(UINT32 open_handle)
+void* svc_plugin_get_init_handle_data(void* pInitHandle)
 {
-	int index;
-	BOOL found = FALSE;
-	rdpSvcPlugin* plugin;
-
-	ArrayList_Lock(g_AddinList);
-
-	index = 0;
-	plugin = (rdpSvcPlugin*) ArrayList_GetItem(g_AddinList, index++);
-
-	while (plugin)
-	{
-		if (plugin->open_handle == open_handle)
-		{
-			found = TRUE;
-			break;
-		}
-
-		plugin = (rdpSvcPlugin*) ArrayList_GetItem(g_AddinList, index++);
-	}
-
-	ArrayList_Unlock(g_AddinList);
-
-	return (found) ? plugin : NULL;
+	void* pUserData = NULL;
+	pUserData = ListDictionary_GetItemValue(g_InitHandles, pInitHandle);
+	return pUserData;
 }
 
-void svc_plugin_add(rdpSvcPlugin* plugin)
+void svc_plugin_remove_init_handle_data(void* pInitHandle)
 {
-	if (!g_AddinList)
-		g_AddinList = ArrayList_New(TRUE);
-
-	ArrayList_Add(g_AddinList, (void*) plugin);
+	ListDictionary_Remove(g_InitHandles, pInitHandle);
 }
 
-void svc_plugin_remove(rdpSvcPlugin* plugin)
+void svc_plugin_add_open_handle_data(DWORD openHandle, void* pUserData)
 {
-	ArrayList_Remove(g_AddinList, (void*) plugin);
+	void* pOpenHandle = (void*) (size_t) openHandle;
+
+	if (!g_OpenHandles)
+		g_OpenHandles = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+}
+
+void* svc_plugin_get_open_handle_data(DWORD openHandle)
+{
+	void* pUserData = NULL;
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	pUserData = ListDictionary_GetItemValue(g_OpenHandles, pOpenHandle);
+	return pUserData;
+}
+
+void svc_plugin_remove_open_handle_data(DWORD openHandle)
+{
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
 }
 
 static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT32 dataLength,
 	UINT32 totalLength, UINT32 dataFlags)
 {
-	wStream* data_in;
+	wStream* s;
 	
 	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
 	{
@@ -130,22 +108,22 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 		plugin->data_in = Stream_New(NULL, totalLength);
 	}
 
-	data_in = plugin->data_in;
-	Stream_EnsureRemainingCapacity(data_in, (int) dataLength);
-	Stream_Write(data_in, pData, dataLength);
+	s = plugin->data_in;
+	Stream_EnsureRemainingCapacity(s, (int) dataLength);
+	Stream_Write(s, pData, dataLength);
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
-		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
+		if (Stream_Capacity(s) != Stream_GetPosition(s))
 		{
 			fprintf(stderr, "svc_plugin_process_received: read error\n");
 		}
 
 		plugin->data_in = NULL;
-		Stream_SealLength(data_in);
-		Stream_SetPosition(data_in, 0);
+		Stream_SealLength(s);
+		Stream_SetPosition(s, 0);
 
-		MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
+		MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) s, NULL);
 	}
 }
 
@@ -162,7 +140,7 @@ static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, 
 	DEBUG_SVC("openHandle %d event %d dataLength %d totalLength %d dataFlags %d",
 		openHandle, event, dataLength, totalLength, dataFlags);
 
-	plugin = (rdpSvcPlugin*) svc_plugin_find_by_open_handle(openHandle);
+	plugin = (rdpSvcPlugin*) svc_plugin_get_open_handle_data(openHandle);
 
 	if (!plugin)
 	{
@@ -233,14 +211,16 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, UINT
 {
 	UINT32 status;
 
-	status = plugin->channel_entry_points.pVirtualChannelOpen(plugin->init_handle,
-		&plugin->open_handle, plugin->channel_def.name, svc_plugin_open_event);
+	status = plugin->channel_entry_points.pVirtualChannelOpen(plugin->InitHandle,
+		&(plugin->OpenHandle), plugin->channel_def.name, svc_plugin_open_event);
 
 	if (status != CHANNEL_RC_OK)
 	{
 		fprintf(stderr, "svc_plugin_process_connected: open failed: status: %d\n", status);
 		return;
 	}
+
+	svc_plugin_add_open_handle_data(plugin->OpenHandle, plugin);
 
 	plugin->MsgPipe = MessagePipe_New();
 
@@ -255,9 +235,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 	MessagePipe_Free(plugin->MsgPipe);
 	CloseHandle(plugin->thread);
 
-	plugin->channel_entry_points.pVirtualChannelClose(plugin->open_handle);
-
-	svc_plugin_remove(plugin);
+	plugin->channel_entry_points.pVirtualChannelClose(plugin->OpenHandle);
 
 	if (plugin->data_in)
 	{
@@ -266,6 +244,9 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 	}
 
 	IFCALL(plugin->terminate_callback, plugin);
+
+	svc_plugin_remove_open_handle_data(plugin->OpenHandle);
+	svc_plugin_remove_init_handle_data(plugin->InitHandle);
 }
 
 static void svc_plugin_init_event(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength)
@@ -274,7 +255,7 @@ static void svc_plugin_init_event(void* pInitHandle, UINT32 event, void* pData, 
 
 	DEBUG_SVC("event %d", event);
 
-	plugin = (rdpSvcPlugin*) svc_plugin_find_by_init_handle(pInitHandle);
+	plugin = (rdpSvcPlugin*) svc_plugin_get_init_handle_data(pInitHandle);
 
 	if (!plugin)
 	{
@@ -304,12 +285,15 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 	 * VirtualChannelInit at a time. So this should be safe.
 	 */
 
-	CopyMemory(&plugin->channel_entry_points, pEntryPoints, pEntryPoints->cbSize);
+	CopyMemory(&(plugin->channel_entry_points), pEntryPoints, pEntryPoints->cbSize);
 
-	svc_plugin_add(plugin);
+	plugin->channel_entry_points.pVirtualChannelInit(&(plugin->InitHandle),
+		&(plugin->channel_def), 1, VIRTUAL_CHANNEL_VERSION_WIN2000, svc_plugin_init_event);
 
-	plugin->channel_entry_points.pVirtualChannelInit(&plugin->init_handle,
-		&plugin->channel_def, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, svc_plugin_init_event);
+	plugin->channel_entry_points.pInterface = *(plugin->channel_entry_points.ppInterface);
+	plugin->channel_entry_points.ppInterface = &(plugin->channel_entry_points.pInterface);
+
+	svc_plugin_add_init_handle_data(plugin->InitHandle, plugin);
 }
 
 int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)
@@ -321,7 +305,7 @@ int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)
 	if (!plugin)
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
 	else
-		status = plugin->channel_entry_points.pVirtualChannelWrite(plugin->open_handle,
+		status = plugin->channel_entry_points.pVirtualChannelWrite(plugin->OpenHandle,
 			Stream_Buffer(data_out), Stream_GetPosition(data_out), data_out);
 
 	if (status != CHANNEL_RC_OK)
@@ -340,7 +324,7 @@ int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event)
 	DEBUG_SVC("event class: %d type: %d",
 			GetMessageClass(event->id), GetMessageType(event->id));
 
-	status = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->open_handle, event);
+	status = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->OpenHandle, event);
 
 	if (status != CHANNEL_RC_OK)
 		fprintf(stderr, "svc_plugin_send_event: VirtualChannelEventPush failed %d\n", status);

@@ -41,14 +41,14 @@ enum X224_TPDU_TYPE
 #define TPDU_CONNECTION_CONFIRM_LENGTH		(TPKT_HEADER_LENGTH + TPDU_CONNECTION_CONFIRM_HEADER_LENGTH)
 #define TPDU_DISCONNECT_REQUEST_LENGTH		(TPKT_HEADER_LENGTH + TPDU_DISCONNECT_REQUEST_HEADER_LENGTH)
 
-BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE *li);
+BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li);
 void tpdu_write_header(wStream* s, UINT16 length, BYTE code);
-BOOL tpdu_read_connection_request(wStream* s, BYTE *li);
+BOOL tpdu_read_connection_request(wStream* s, BYTE* li);
 void tpdu_write_connection_request(wStream* s, UINT16 length);
-BOOL tpdu_read_connection_confirm(wStream* s, BYTE *li);
+BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li);
 void tpdu_write_connection_confirm(wStream* s, UINT16 length);
 void tpdu_write_disconnect_request(wStream* s, UINT16 length);
-BOOL tpdu_read_data(wStream* s, UINT16 *li);
+BOOL tpdu_read_data(wStream* s, UINT16* li);
 void tpdu_write_data(wStream* s);
 
 #endif /* __TPDU_H */

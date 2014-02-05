@@ -11,7 +11,7 @@
 
 LPSTR tmp = NULL;
 
-LPSTR tr_esc_str(LPSTR arg)
+LPSTR tr_esc_str(LPCSTR arg)
 {
 	size_t cs = 0, x, ds;
 	size_t s;

@@ -97,10 +97,40 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	p_cont_elem_t* p_cont_elem;
 	rpcconn_bind_hdr_t* bind_pdu;
 	rdpSettings* settings = rpc->settings;
+	BOOL promptPassword = FALSE;
+	freerdp* instance = (freerdp*) settings->instance;
 
 	DEBUG_RPC("Sending bind PDU");
 
 	rpc->ntlm = ntlm_new();
+
+	if ((!settings->GatewayPassword) || (!settings->GatewayUsername)
+			|| (!strlen(settings->GatewayPassword)) || (!strlen(settings->GatewayUsername)))
+	{
+		promptPassword = TRUE;
+	}
+
+	if (promptPassword)
+	{
+		if (instance->GatewayAuthenticate)
+		{
+			BOOL proceed = instance->GatewayAuthenticate(instance,
+					&settings->GatewayUsername, &settings->GatewayPassword, &settings->GatewayDomain);
+
+			if (!proceed)
+			{
+				connectErrorCode = CANCELEDBYUSER;
+				return 0;
+			}
+
+			if (settings->GatewayUseSameCredentials)
+			{
+				settings->Username = _strdup(settings->GatewayUsername);
+				settings->Domain = _strdup(settings->GatewayDomain);
+				settings->Password = _strdup(settings->GatewayPassword);
+			}
+		}
+	}
 
 	ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain, settings->GatewayPassword, NULL);
 	ntlm_client_make_spn(rpc->ntlm, NULL, settings->GatewayHostname);

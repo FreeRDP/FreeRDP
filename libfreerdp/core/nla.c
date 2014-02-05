@@ -147,7 +147,11 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 					&settings->Username, &settings->Password, &settings->Domain);
 
 			if (!proceed)
+			{
+				connectErrorCode = CANCELEDBYUSER;
 				return 0;
+			}
+
 		}
 	}
 
@@ -623,7 +627,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 		if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED))
 		{
 			fprintf(stderr, "AcceptSecurityContext status: 0x%08X\n", status);
-			return -1;
+			return -1; /* Access Denied */
 		}
 
 		/* send authentication token */

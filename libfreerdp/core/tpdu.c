@@ -121,11 +121,11 @@ void tpdu_write_header(wStream* s, UINT16 length, BYTE code)
  * @return length indicator (LI)
  */
 
-BOOL tpdu_read_connection_request(wStream* s, BYTE *li)
+BOOL tpdu_read_connection_request(wStream* s, BYTE* li)
 {
 	BYTE code;
 
-	if(!tpdu_read_header(s, &code, li))
+	if (!tpdu_read_header(s, &code, li))
 		return FALSE;
 
 	if (code != X224_TPDU_CONNECTION_REQUEST)
@@ -154,11 +154,11 @@ void tpdu_write_connection_request(wStream* s, UINT16 length)
  * @return length indicator (LI)
  */
 
-BOOL tpdu_read_connection_confirm(wStream* s, BYTE *li)
+BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 {
 	BYTE code;
 
-	if(!tpdu_read_header(s, &code, li))
+	if (!tpdu_read_header(s, &code, li))
 		return FALSE;
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)

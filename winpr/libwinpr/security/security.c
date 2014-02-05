@@ -85,13 +85,6 @@
  * GetKernelObjectSecurity
  * GetLengthSid
  * GetPrivateObjectSecurity
- * GetSecurityDescriptorControl
- * GetSecurityDescriptorDacl
- * GetSecurityDescriptorGroup
- * GetSecurityDescriptorLength
- * GetSecurityDescriptorOwner
- * GetSecurityDescriptorRMControl
- * GetSecurityDescriptorSacl
  * GetSidIdentifierAuthority
  * GetSidLengthRequired
  * GetSidSubAuthority
@@ -102,11 +95,9 @@
  * ImpersonateLoggedOnUser
  * ImpersonateSelf
  * InitializeAcl
- * InitializeSecurityDescriptor
  * InitializeSid
  * IsTokenRestricted
  * IsValidAcl
- * IsValidSecurityDescriptor
  * IsValidSid
  * IsWellKnownSid
  * MakeAbsoluteSD
@@ -127,18 +118,89 @@
  * SetPrivateObjectSecurity
  * SetPrivateObjectSecurityEx
  * SetSecurityAccessMask
- * SetSecurityDescriptorControl
- * SetSecurityDescriptorDacl
- * SetSecurityDescriptorGroup
- * SetSecurityDescriptorOwner
- * SetSecurityDescriptorRMControl
- * SetSecurityDescriptorSacl
  * SetTokenInformation
  */
 
 #ifndef _WIN32
 
 #include "security.h"
+
+BOOL InitializeSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD dwRevision)
+{
+	return TRUE;
+}
+
+DWORD GetSecurityDescriptorLength(PSECURITY_DESCRIPTOR pSecurityDescriptor)
+{
+	return 0;
+}
+
+BOOL IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor)
+{
+	return TRUE;
+}
+
+BOOL GetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
+		PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision)
+{
+	return TRUE;
+}
+
+BOOL SetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
+		SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest, SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet)
+{
+	return TRUE;
+}
+
+BOOL GetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbDaclPresent, PACL* pDacl, LPBOOL lpbDaclDefaulted)
+{
+	return TRUE;
+}
+
+BOOL SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bDaclPresent, PACL pDacl, BOOL bDaclDefaulted)
+{
+	return TRUE;
+}
+
+BOOL GetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pGroup, LPBOOL lpbGroupDefaulted)
+{
+	return TRUE;
+}
+
+BOOL SetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pGroup, BOOL bGroupDefaulted)
+{
+	return TRUE;
+}
+
+BOOL GetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID* pOwner, LPBOOL lpbOwnerDefaulted)
+{
+	return TRUE;
+}
+
+BOOL SetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pOwner, BOOL bOwnerDefaulted)
+{
+	return TRUE;
+}
+
+DWORD GetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR SecurityDescriptor, PUCHAR RMControl)
+{
+	return 0;
+}
+
+DWORD SetSecurityDescriptorRMControl(PSECURITY_DESCRIPTOR SecurityDescriptor, PUCHAR RMControl)
+{
+	return 0;
+}
+
+BOOL GetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbSaclPresent, PACL* pSacl, LPBOOL lpbSaclDefaulted)
+{
+	return TRUE;
+}
+
+BOOL SetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bSaclPresent, PACL pSacl, BOOL bSaclDefaulted)
+{
+	return TRUE;
+}
 
 #endif
 

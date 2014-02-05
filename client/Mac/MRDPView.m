@@ -59,6 +59,8 @@
 #import "freerdp/types.h"
 #import "freerdp/channels/channels.h"
 #import "freerdp/gdi/gdi.h"
+#import "freerdp/gdi/dc.h"
+#import "freerdp/gdi/region.h"
 #import "freerdp/graphics.h"
 #import "freerdp/utils/event.h"
 #import "freerdp/client/cliprdr.h"
@@ -496,32 +498,84 @@ DWORD mac_client_thread(void* param)
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
+DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
+{
+	/**
+	 * In 99% of cases, the given key code is truly keyboard independent.
+	 * This function handles the remaining 1% of edge cases.
+	 *
+	 * Hungarian Keyboard: This is 'QWERTZ' and not 'QWERTY'.
+	 * The '0' key is on the left of the '1' key, where '~' is on a US keyboard.
+	 * A special 'i' letter key with acute is found on the right of the left shift key.
+	 * On the hungarian keyboard, the 'i' key is at the left of the 'Y' key
+	 * Some international keyboards have a corresponding key which would be at
+	 * the left of the 'Z' key when using a QWERTY layout.
+	 *
+	 * The Apple Hungarian keyboard sends inverted key codes for the '0' and 'i' keys.
+	 * When using the US keyboard layout, key codes are left as-is (inverted).
+	 * When using the Hungarian keyboard layout, key codes are swapped (non-inverted).
+	 * This means that when using the Hungarian keyboard layout with a US keyboard,
+	 * the keys corresponding to '0' and 'i' will effectively be inverted.
+	 *
+	 * To fix the '0' and 'i' key inversion, we use the corresponding output character
+	 * provided by OS X and check for a character to key code mismatch: for instance,
+	 * when the output character is '0' for the key code corresponding to the 'i' key.
+	 */
+	
+	switch (keyChar)
+	{
+		case '0':
+		case 0x00A7: /* section sign */
+			if (keyCode == APPLE_VK_ISO_Section)
+				keyCode = APPLE_VK_ANSI_Grave;
+			break;
+			
+		case 0x00ED: /* latin small letter i with acute */
+		case 0x00CD: /* latin capital letter i with acute */
+			if (keyCode == APPLE_VK_ANSI_Grave)
+				keyCode = APPLE_VK_ISO_Section;
+			break;
+	}
+	
+	return keyCode;
+}
+
 /** *********************************************************************
  * called when a key is pressed
  ***********************************************************************/
 
 - (void) keyDown:(NSEvent *) event
 {
-	int key;
+	DWORD keyCode;
 	DWORD keyFlags;
 	DWORD vkcode;
 	DWORD scancode;
+	unichar keyChar;
+	NSString* characters;
 	
 	if (!is_connected)
 		return;
 	
 	keyFlags = KBD_FLAGS_DOWN;
-	key = [event keyCode] + 8;
+	keyCode = [event keyCode];
 	
-	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
+	characters = [event charactersIgnoringModifiers];
+	
+	if ([characters length] > 0)
+	{
+		keyChar = [characters characterAtIndex:0];
+		keyCode = fixKeyCode(keyCode, keyChar);
+	}
+	
+	vkcode = GetVirtualKeyCodeFromKeycode(keyCode + 8, KEYCODE_TYPE_APPLE);
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
 	keyFlags |= (scancode & KBDEXT) ? KBDEXT : 0;
 	scancode &= 0xFF;
 	vkcode &= 0xFF;
-
+	
 #if 0
-	fprintf(stderr, "keyDown: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
-	       key - 8, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
+	fprintf(stderr, "keyDown: keyCode: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
+	       keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
 	
 	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
@@ -533,18 +587,28 @@ DWORD mac_client_thread(void* param)
 
 - (void) keyUp:(NSEvent *) event
 {
-	int key;
+	DWORD keyCode;
 	DWORD keyFlags;
 	DWORD vkcode;
 	DWORD scancode;
+	unichar keyChar;
+	NSString* characters;
 
 	if (!is_connected)
 		return;
 
-	key = [event keyCode] + 8;
 	keyFlags = KBD_FLAGS_RELEASE;
+	keyCode = [event keyCode];
+	
+	characters = [event charactersIgnoringModifiers];
+	
+	if ([characters length] > 0)
+	{
+		keyChar = [characters characterAtIndex:0];
+		keyCode = fixKeyCode(keyCode, keyChar);
+	}
 
-	vkcode = GetVirtualKeyCodeFromKeycode(key, KEYCODE_TYPE_APPLE);
+	vkcode = GetVirtualKeyCodeFromKeycode(keyCode + 8, KEYCODE_TYPE_APPLE);
 	scancode = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
 	keyFlags |= (scancode & KBDEXT) ? KBDEXT : 0;
 	scancode &= 0xFF;
@@ -552,7 +616,7 @@ DWORD mac_client_thread(void* param)
 
 #if 0
 	fprintf(stderr, "keyUp: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
-	       key - 8, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
+	       keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
 
 	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
@@ -660,6 +724,8 @@ DWORD mac_client_thread(void* param)
 	if (!is_connected)
 		return;
 	
+	gdi_free(context->instance);
+
 	freerdp_channels_global_uninit();
 	
 	if (pixel_data)
@@ -743,7 +809,6 @@ DWORD mac_client_thread(void* param)
 BOOL mac_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
-	BOOL bitmap_cache;
 
 	// setup callbacks
 	instance->update->BeginPaint = mac_begin_paint;
@@ -760,17 +825,13 @@ BOOL mac_pre_connect(freerdp* instance)
 		return -1;
 	}
 
-	freerdp_client_load_addins(instance->context->channels, instance->settings);
+	settings->ColorDepth = 32;
+	settings->SoftwareGdi = TRUE;
 
-	settings = instance->settings;
-	bitmap_cache = settings->BitmapCacheEnabled;
+	settings->OsMajorType = OSMAJORTYPE_MACINTOSH;
+	settings->OsMinorType = OSMINORTYPE_MACINTOSH;
 
-	instance->settings->ColorDepth = 32;
-	instance->settings->SoftwareGdi = TRUE;
-
-	settings->OsMajorType = OSMAJORTYPE_UNIX;
-	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
-
+	ZeroMemory(settings->OrderSupport, 32);
 	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
@@ -783,22 +844,20 @@ BOOL mac_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
 	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
 	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MEMBLT_INDEX] = bitmap_cache;
-
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = settings->BitmapCacheEnabled;
 	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->SoftwareGdi) ? TRUE : FALSE;
-
-	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = bitmap_cache;
+	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
 	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
 	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
 	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
 	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
 	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
-
 	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
 	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
-
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
+
+	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 	
@@ -854,7 +913,6 @@ BOOL mac_post_connect(freerdp* instance)
 
 	return TRUE;
 }
-
 
 BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
@@ -920,10 +978,7 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 
 	freerdp_alpha_cursor_convert(cursor_data, pointer->xorMaskData, pointer->andMaskData,
 				     pointer->width, pointer->height, pointer->xorBpp, context->gdi->clrconv);
-	
-	// TODO if xorBpp is > 24 need to call freerdp_image_swap_color_order
-	//         see file df_graphics.c
-	
+
 	/* store cursor bitmap image in representation - required by NSImage */
 	bmiRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:(unsigned char **) &cursor_data
 											pixelsWide:rect.size.width
@@ -1049,6 +1104,10 @@ void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap)
 void mac_begin_paint(rdpContext* context)
 {
 	rdpGdi* gdi = context->gdi;
+	
+	if (!gdi)
+		return;
+	
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 }
 
@@ -1058,20 +1117,24 @@ void mac_begin_paint(rdpContext* context)
 
 void mac_end_paint(rdpContext* context)
 {
-	int i;
 	rdpGdi* gdi;
-	NSRect drawRect;
+	HGDI_RGN invalid;
+	NSRect newDrawRect;
+	int ww, wh, dw, dh;
 	mfContext* mfc = (mfContext*) context;
 	MRDPView* view = (MRDPView*) mfc->view;
-	
-	int ww, wh, dw, dh;
 
+	gdi = context->gdi;
+	
+	if (!gdi)
+		return;
+	
 	ww = mfc->client_width;
 	wh = mfc->client_height;
 	dw = mfc->context.settings->DesktopWidth;
 	dh = mfc->context.settings->DesktopHeight;
 
-	if ((context == 0) || (context->gdi == 0))
+	if ((!context) || (!context->gdi))
 		return;
 	
 	if (context->gdi->primary->hdc->hwnd->invalid->null)
@@ -1079,39 +1142,33 @@ void mac_end_paint(rdpContext* context)
 	
 	if (context->gdi->drawing != context->gdi->primary)
 		return;
-	
-	gdi = context->gdi;
 
-	for (i = 0; i < gdi->primary->hdc->hwnd->ninvalid; i++)
+	invalid = gdi->primary->hdc->hwnd->invalid;
+
+	newDrawRect.origin.x = invalid->x;
+	newDrawRect.origin.y = invalid->y;
+	newDrawRect.size.width = invalid->w;
+	newDrawRect.size.height = invalid->h;
+
+	if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
 	{
-		drawRect.origin.x = gdi->primary->hdc->hwnd->cinvalid[i].x;
-		drawRect.origin.y = gdi->primary->hdc->hwnd->cinvalid[i].y;
-		drawRect.size.width = gdi->primary->hdc->hwnd->cinvalid[i].w;
-		drawRect.size.height = gdi->primary->hdc->hwnd->cinvalid[i].h;
-
-		if (mfc->context.settings->SmartSizing && (ww != dw || wh != dh))
-		{
-			drawRect.origin.y = drawRect.origin.y * wh / dh - 1;
-			drawRect.size.height = drawRect.size.height * wh / dh + 1;
-			drawRect.origin.x = drawRect.origin.x * ww / dw - 1;
-			drawRect.size.width = drawRect.size.width * ww / dw + 1;
-		}
-		else
-		{
-			drawRect.origin.y = drawRect.origin.y - 1;
-			drawRect.size.height = drawRect.size.height + 1;
-			drawRect.origin.x = drawRect.origin.x - 1;
-			drawRect.size.width = drawRect.size.width + 1;
-		}
-
-		windows_to_apple_cords(mfc->view, &drawRect);
-
-		// Note: The xCurrentScroll and yCurrentScroll values do not need to be taken into account
-		//       because the current frame is always at full size, since the scrolling is handled by the external container.
-
-		[view setNeedsDisplayInRect:drawRect];
+		newDrawRect.origin.y = newDrawRect.origin.y * wh / dh - 1;
+		newDrawRect.size.height = newDrawRect.size.height * wh / dh + 1;
+		newDrawRect.origin.x = newDrawRect.origin.x * ww / dw - 1;
+		newDrawRect.size.width = newDrawRect.size.width * ww / dw + 1;
 	}
-	
+	else
+	{
+		newDrawRect.origin.y = newDrawRect.origin.y - 1;
+		newDrawRect.size.height = newDrawRect.size.height + 1;
+		newDrawRect.origin.x = newDrawRect.origin.x - 1;
+		newDrawRect.size.width = newDrawRect.size.width + 1;
+	}
+
+	windows_to_apple_cords(mfc->view, &newDrawRect);
+
+	[view setNeedsDisplayInRect:newDrawRect];
+
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 

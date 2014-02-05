@@ -84,7 +84,7 @@
 #include <winpr/crt.h>
 #include <winpr/platform.h>
 
-#if defined(__MACOSX__) || \
+#if defined(__MACOSX__) || defined(__IOS__) || \
 defined(__FreeBSD__) || defined(__NetBSD__) || \
 defined(__OpenBSD__) || defined(__DragonFly__)
 #include <sys/sysctl.h>

@@ -360,6 +360,12 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	ntlm = rpc->ntlm;
 
+	if ((!ntlm) || (!ntlm->table))
+	{
+		fprintf(stderr, "rpc_write: invalid ntlm context\n");
+		return -1;
+	}
+
 	if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 	{
 		fprintf(stderr, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");

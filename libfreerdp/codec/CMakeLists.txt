@@ -22,6 +22,8 @@ set(${MODULE_PREFIX}_SRCS
 	dsp.c
 	color.c
 	audio.c
+	planar.c
+	planar.h
 	bitmap_decode.c
 	bitmap_encode.c
 	rfx_bitstream.h
@@ -106,3 +108,8 @@ else()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
+

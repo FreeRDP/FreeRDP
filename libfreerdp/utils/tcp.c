@@ -71,16 +71,21 @@ int freerdp_tcp_connect(const char* hostname, int port)
 {
 	int status;
 	int sockfd;
-	char servname[10];
-	struct addrinfo* ai;
-	struct addrinfo* res;
-	struct addrinfo hints = { 0 };
+	char servname[32];
+	struct addrinfo hints;
+	struct addrinfo* ai = NULL;
+	struct addrinfo* res = NULL;
 
 	ZeroMemory(&hints, sizeof(struct addrinfo));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_protocol = 0;
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
 
-	sprintf_s(servname, sizeof(servname), "%d", port);
+	sprintf_s(servname, 32, "%d", port);
 	status = getaddrinfo(hostname, servname, &hints, &res);
 
 	if (status != 0)

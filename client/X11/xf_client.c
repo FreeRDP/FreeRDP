@@ -762,6 +762,35 @@ BOOL xf_pre_connect(freerdp* instance)
 	settings = instance->settings;
 	channels = instance->context->channels;
 
+	settings->OsMajorType = OSMAJORTYPE_UNIX;
+	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
+
+	ZeroMemory(settings->OrderSupport, 32);
+	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = settings->BitmapCacheEnabled;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->SoftwareGdi) ? TRUE : FALSE;
+	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
+	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
+	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
+
 	xfc->UseXThreads = TRUE;
 
 	if (xfc->UseXThreads)
@@ -1728,37 +1757,6 @@ void xf_TerminateEventHandler(rdpContext* context, TerminateEventArgs* e)
 	}
 }
 
-void xf_ParamChangeEventHandler(rdpContext* context, ParamChangeEventArgs* e)
-{
-
-	xfContext* xfc = (xfContext*) context;
-
-	switch (e->id)
-	{
-	case FreeRDP_ScalingFactor:
-
-		xfc->currentWidth = xfc->originalWidth * xfc->settings->ScalingFactor;
-		xfc->currentHeight = xfc->originalHeight * xfc->settings->ScalingFactor;
-
-		xf_transform_window(xfc);
-
-		{
-			ResizeWindowEventArgs e;
-
-			EventArgsInit(&e, "xfreerdp");
-			e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
-			e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
-			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
-		}
-		xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
-
-		break;
-
-	default:
-		break;
-	}
-}
-
 static void xf_ScalingFactorChangeEventHandler(rdpContext* context, ScalingFactorChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
@@ -1870,36 +1868,7 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	settings = instance->settings;
 	xfc->settings = instance->context->settings;
 
-	settings->OsMajorType = OSMAJORTYPE_UNIX;
-	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
-
-	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
-	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
-	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MEMBLT_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->SoftwareGdi) ? TRUE : FALSE;
-	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
-	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
-	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
-	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
-	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
-	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
-	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
-	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
-	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
-
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
-	PubSub_SubscribeParamChange(context->pubSub, (pParamChangeEventHandler) xf_ParamChangeEventHandler);
 	PubSub_SubscribeScalingFactorChange(context->pubSub, (pScalingFactorChangeEventHandler) xf_ScalingFactorChangeEventHandler);
 
 	return 0;

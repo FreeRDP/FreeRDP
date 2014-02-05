@@ -2387,13 +2387,15 @@ BOOL rdp_print_large_pointer_capability_set(wStream* s, UINT16 length)
 
 BOOL rdp_read_surface_commands_capability_set(wStream* s, UINT16 length, rdpSettings* settings)
 {
+	UINT32 cmdFlags;
 	if (length < 12)
 		return FALSE;
 
-	Stream_Seek_UINT32(s); /* cmdFlags (4 bytes) */
+	Stream_Read_UINT32(s, cmdFlags); /* cmdFlags (4 bytes) */
 	Stream_Seek_UINT32(s); /* reserved (4 bytes) */
 
 	settings->SurfaceCommandsEnabled = TRUE;
+	settings->SurfaceFrameMarkerEnabled = (cmdFlags & SURFCMDS_FRAME_MARKER);
 
 	return TRUE;
 }
@@ -2414,9 +2416,10 @@ void rdp_write_surface_commands_capability_set(wStream* s, rdpSettings* settings
 
 	header = rdp_capability_set_start(s);
 
-	cmdFlags = SURFCMDS_FRAME_MARKER |
-			SURFCMDS_SET_SURFACE_BITS |
+	cmdFlags = SURFCMDS_SET_SURFACE_BITS |
 			SURFCMDS_STREAM_SURFACE_BITS;
+	if (settings->SurfaceFrameMarkerEnabled)
+		cmdFlags |= SURFCMDS_FRAME_MARKER;
 
 	Stream_Write_UINT32(s, cmdFlags); /* cmdFlags (4 bytes) */
 	Stream_Write_UINT32(s, 0); /* reserved (4 bytes) */
@@ -3386,8 +3389,13 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 
 	if (*pChannelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		fprintf(stderr, "expected MCS_GLOBAL_CHANNEL_ID %04x, got %04x\n", MCS_GLOBAL_CHANNEL_ID, *pChannelId);
-		return FALSE;
+		UINT16 mcsMessageChannelId = rdp->mcs->message_channel_id;
+
+		if ((mcsMessageChannelId == 0) || (*pChannelId != mcsMessageChannelId))
+		{
+			fprintf(stderr, "unexpected MCS channel id %04x received\n", *pChannelId);
+			return FALSE;
+		}
 	}
 
 	return TRUE;

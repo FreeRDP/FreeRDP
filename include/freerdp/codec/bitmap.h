@@ -23,6 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <freerdp/codec/color.h>
+
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
@@ -30,5 +32,18 @@ FREERDP_API BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int 
 
 FREERDP_API int freerdp_bitmap_compress(char* in_data, int width, int height,
 		wStream* s, int bpp, int byte_limit, int start_line, wStream* temp_s, int e);
+
+#define PLANAR_FORMAT_HEADER_CS		(1 << 3)
+#define PLANAR_FORMAT_HEADER_RLE	(1 << 4)
+#define PLANAR_FORMAT_HEADER_NA		(1 << 5)
+#define PLANAR_FORMAT_HEADER_CLL_MASK	0x07
+
+typedef struct _BITMAP_PLANAR_CONTEXT BITMAP_PLANAR_CONTEXT;
+
+FREERDP_API BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data, UINT32 format,
+		int width, int height, int scanline, BYTE* dstData, int* dstSize);
+
+FREERDP_API BITMAP_PLANAR_CONTEXT* freerdp_bitmap_planar_context_new(DWORD flags, int maxWidth, int maxHeight);
+FREERDP_API void freerdp_bitmap_planar_context_free(BITMAP_PLANAR_CONTEXT* context);
 
 #endif /* FREERDP_CODEC_BITMAP_H */

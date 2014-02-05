@@ -148,6 +148,8 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "auth-only", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Authenticate only." },
 	{ "reconnect-cookie", COMMAND_LINE_VALUE_REQUIRED, "<base64 cookie>", NULL, NULL, -1, NULL, "Pass base64 reconnect cookie to the connection" },
 	{ "print-reconnect-cookie", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Print base64 reconnect cookie after connecting" },
+	{ "heartbeat", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support heartbeat PDUs" },
+	{ "multitransport", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support multitransport protocol" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -719,6 +721,15 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 			freerdp_client_add_dynamic_channel(settings, count, p);
 		}
 	}
+	CommandLineSwitchCase(arg, "heartbeat")
+	{
+		settings->SupportHeartbeatPdu = TRUE;
+	}
+	CommandLineSwitchCase(arg, "multitransport")
+	{
+		settings->SupportMultitransport = TRUE;
+		settings->MultitransportFlags = (TRANSPORT_TYPE_UDP_FECR | TRANSPORT_TYPE_UDP_FECL | TRANSPORT_TYPE_UDP_PREFERRED);
+	}
 
 	CommandLineSwitchEnd(arg)
 
@@ -990,7 +1001,7 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 	*flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	*flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
 
-	if (windows_cli_count > posix_cli_count)
+	if (windows_cli_count >= posix_cli_count)
 	{
 		*flags = COMMAND_LINE_SEPARATOR_COLON;
 		*flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
@@ -1099,7 +1110,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			return status;
 	}
 
-
 	arg = CommandLineFindArgumentA(args, "v");
 
 	arg = args;
@@ -1138,10 +1148,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				settings->SendPreconnectionPdu = TRUE;
 				settings->PreconnectionBlob = _strdup(arg->Value);
 			}
-		}
-		CommandLineSwitchCase(arg, "port")
-		{
-			settings->ServerPort = atoi(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "w")
 		{
@@ -1484,9 +1490,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "gdi")
 		{
-			if (strcmp(arg->Value, "sw") == 0)
+			if (_stricmp(arg->Value, "sw") == 0)
 				settings->SoftwareGdi = TRUE;
-			else if (strcmp(arg->Value, "hw") == 0)
+			else if (_stricmp(arg->Value, "hw") == 0)
 				settings->SoftwareGdi = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gfx")
@@ -1745,6 +1751,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 	}
 
+	arg = CommandLineFindArgumentA(args, "port");
+
+	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	{
+		settings->ServerPort = atoi(arg->Value);
+	}
+
 	arg = CommandLineFindArgumentA(args, "p");
 
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
@@ -1795,6 +1808,13 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	if (freerdp_dynamic_channel_collection_find(settings, "audin"))
 	{
 		settings->AudioCapture = TRUE;
+	}
+
+	if (settings->NetworkAutoDetect ||
+		settings->SupportHeartbeatPdu ||
+		settings->SupportMultitransport)
+	{
+		settings->DeviceRedirection = TRUE; /* these RDP 8 features require rdpdr to be registered */
 	}
 
 	if (settings->RedirectDrives)

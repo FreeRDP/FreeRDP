@@ -798,39 +798,6 @@ int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
 	return 0;
 }
 
-void wf_ParamChangeEventHandler(rdpContext* context, ParamChangeEventArgs* e)
-{
-	RECT rect;
-	HMENU hMenu;
-	wfContext* wfc = (wfContext*) context;
-
-	// specific processing here
-	switch (e->id)
-	{
-		case FreeRDP_SmartSizing:
-			fprintf(stderr, "SmartSizing changed.\n");
-
-			if (!context->settings->SmartSizing && (wfc->client_width > context->settings->DesktopWidth || wfc->client_height > context->settings->DesktopHeight))
-			{
-				GetWindowRect(wfc->hwnd, &rect);
-				SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, MIN(wfc->client_width + wfc->offset_x, rect.right - rect.left), MIN(wfc->client_height + wfc->offset_y, rect.bottom - rect.top), SWP_NOMOVE | SWP_FRAMECHANGED);
-				wf_update_canvas_diff(wfc);
-			}
-
-			hMenu = GetSystemMenu(wfc->hwnd, FALSE);
-			CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING, context->settings->SmartSizing);
-			wf_size_scrollbars(wfc, wfc->client_width, wfc->client_height);
-			GetClientRect(wfc->hwnd, &rect);
-			InvalidateRect(wfc->hwnd, &rect, TRUE);
-			break;
-
-		case FreeRDP_ConnectionType:
-			fprintf(stderr, "ConnectionType changed.\n");
-			freerdp_set_connection_type(wfc->instance->settings, wfc->instance->settings->ConnectionType);
-			break;
-	}
-}
-
 // TODO: Some of that code is a duplicate of wf_pre_connect. Refactor?
 int freerdp_client_load_settings_from_rdp_file(wfContext* wfc, char* filename)
 {
@@ -857,37 +824,6 @@ int freerdp_client_load_settings_from_rdp_file(wfContext* wfc, char* filename)
 		{
 			return 2;
 		}
-	}
-
-	return 0;
-}
-
-int freerdp_client_save_settings_to_rdp_file(wfContext* wfc, char* filename)
-{
-	if (!filename)
-		return 1;
-
-	if (wfc->instance->settings->ConnectionFile)
-	{
-		free(wfc->instance->settings->ConnectionFile);
-	}
-
-	wfc->instance->settings->ConnectionFile = _strdup(filename);
-
-	// Reuse existing rdpFile structure if available, to preserve unsupported settings when saving to disk.
-	if (wfc->connectionRdpFile == NULL)
-	{
-		wfc->connectionRdpFile = freerdp_client_rdp_file_new();
-	}
-
-	if (!freerdp_client_populate_rdp_file_from_settings(wfc->connectionRdpFile, wfc->instance->settings))
-	{
-		return 1;
-	}
-
-	if (!freerdp_client_write_rdp_file(wfc->connectionRdpFile, filename, UNICODE));
-	{
-		return 2;
 	}
 
 	return 0;
@@ -1047,8 +983,6 @@ int wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	wfc->instance = instance;
 	context->channels = freerdp_channels_new();
-
-	PubSub_SubscribeParamChange(context->pubSub, wf_ParamChangeEventHandler);
 	
 	return 0;
 }

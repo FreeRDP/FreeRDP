@@ -23,6 +23,20 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
+#define FREERDP_PIXEL_FORMAT_TYPE_ARGB		1
+#define FREERDP_PIXEL_FORMAT_TYPE_ABGR		2
+
+#define FREERDP_PIXEL_FLIP_NONE			0
+#define FREERDP_PIXEL_FLIP_VERTICAL		1
+#define FREERDP_PIXEL_FLIP_HORIZONTAL		2
+
+#define FREERDP_PIXEL_FORMAT(_bpp, _type, _flip) \
+	((_bpp << 24) | (_type << 16) | (_flip << 8))
+
+#define FREERDP_PIXEL_FORMAT_BPP(_format)	(((_format) >> 24) & 0xFF)
+#define FREERDP_PIXEL_FORMAT_TYPE(_format)	(((_format) >> 16) & 0xFF)
+#define FREERDP_PIXEL_FORMAT_FLIP(_format)	(((_format) >> 8) & 0xFF)
+
 #ifdef __cplusplus
 extern "C" {
 #endif

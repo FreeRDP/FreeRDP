@@ -27,6 +27,7 @@
 #include <winpr/tchar.h>
 #include <winpr/stream.h>
 #include <winpr/dsparse.h>
+#include <winpr/winhttp.h>
 
 #include <openssl/rand.h>
 
@@ -98,12 +99,15 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
 
 	http_response = http_response_recv(rpc->TlsIn);
 
-	ntlm_token_data = NULL;
-	crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
-			&ntlm_token_data, &ntlm_token_length);
+	if (http_response->AuthParam)
+	{
+		ntlm_token_data = NULL;
+		crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
+				&ntlm_token_data, &ntlm_token_length);
 
-	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
-	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
+		ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
+		ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
+	}
 
 	http_response_free(http_response);
 
@@ -113,49 +117,88 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
 int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 {
 	rdpNtlm* ntlm = NULL;
-	rdpSettings* settings;
-
-	settings = rpc->settings;
+	rdpSettings* settings = rpc->settings;
+	freerdp* instance = (freerdp*) rpc->settings->instance;
+	BOOL promptPassword = FALSE;
 
 	if (channel == TSG_CHANNEL_IN)
 		ntlm = rpc->NtlmHttpIn->ntlm;
 	else if (channel == TSG_CHANNEL_OUT)
 		ntlm = rpc->NtlmHttpOut->ntlm;
 
-	ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
+	if ((!settings->GatewayPassword) || (!settings->GatewayUsername)
+			|| (!strlen(settings->GatewayPassword)) || (!strlen(settings->GatewayUsername)))
+	{
+		promptPassword = TRUE;
+	}
+
+	if (promptPassword)
+	{
+		if (instance->GatewayAuthenticate)
+		{
+			BOOL proceed = instance->GatewayAuthenticate(instance,
+					&settings->GatewayUsername, &settings->GatewayPassword, &settings->GatewayDomain);
+
+			if (!proceed)
+			{
+				connectErrorCode = CANCELEDBYUSER;
+				return 0;
+			}
+
+			if (settings->GatewayUseSameCredentials)
+			{
+				settings->Username = _strdup(settings->GatewayUsername);
+				settings->Domain = _strdup(settings->GatewayDomain);
+				settings->Password = _strdup(settings->GatewayPassword);
+			}
+		}
+	}
+
+	if (!ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
 			settings->GatewayDomain, settings->GatewayPassword,
-			rpc->TlsIn->Bindings);
+			rpc->TlsIn->Bindings))
+	{
+		return 0;
+	}
 
 	//ntlm_client_make_spn(ntlm, NULL, settings->GatewayHostname);
-	ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname);
+	if (!ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname))
+	{
+		return 0;
+	}
 
-	return 0;
+	return 1;
 }
 
 BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 {
 	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
+	BOOL success = FALSE;
 
-	rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN);
+	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN) == 1)
+	{
+		success = TRUE;
 
-	/* Send IN Channel Request */
+		/* Send IN Channel Request */
 
-	rpc_ncacn_http_send_in_channel_request(rpc);
+		rpc_ncacn_http_send_in_channel_request(rpc);
 
-	/* Receive IN Channel Response */
+		/* Receive IN Channel Response */
 
-	rpc_ncacn_http_recv_in_channel_response(rpc);
+		rpc_ncacn_http_recv_in_channel_response(rpc);
 
-	/* Send IN Channel Request */
+		/* Send IN Channel Request */
 
-	rpc_ncacn_http_send_in_channel_request(rpc);
+		rpc_ncacn_http_send_in_channel_request(rpc);
 
-	ntlm_client_uninit(ntlm);
+		ntlm_client_uninit(ntlm);
+	}
+
 	ntlm_free(ntlm);
 
 	rpc->NtlmHttpIn->ntlm = NULL;
 
-	return TRUE;
+	return success;
 }
 
 int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
@@ -180,7 +223,7 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 
 int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 {
-	int ntlm_token_length;
+	int ntlm_token_length = 0;
 	BYTE* ntlm_token_data;
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
@@ -188,8 +231,11 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 	http_response = http_response_recv(rpc->TlsOut);
 
 	ntlm_token_data = NULL;
-	crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
-			&ntlm_token_data, &ntlm_token_length);
+	if (http_response && http_response->AuthParam)
+	{
+		crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
+				&ntlm_token_data, &ntlm_token_length);
+	}
 
 	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
 	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
@@ -202,25 +248,32 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 {
 	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
+	BOOL success = FALSE;
 
-	rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT);
+	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT) == 1)
+	{
+		success = TRUE;
 
-	/* Send OUT Channel Request */
+		/* Send OUT Channel Request */
 
-	rpc_ncacn_http_send_out_channel_request(rpc);
+		rpc_ncacn_http_send_out_channel_request(rpc);
 
-	/* Receive OUT Channel Response */
+		/* Receive OUT Channel Response */
 
-	rpc_ncacn_http_recv_out_channel_response(rpc);
+		rpc_ncacn_http_recv_out_channel_response(rpc);
 
-	/* Send OUT Channel Request */
+		/* Send OUT Channel Request */
 
-	rpc_ncacn_http_send_out_channel_request(rpc);
+		rpc_ncacn_http_send_out_channel_request(rpc);
 
-	ntlm_client_uninit(ntlm);
+		ntlm_client_uninit(ntlm);
+	}
+
 	ntlm_free(ntlm);
 
-	return TRUE;
+	rpc->NtlmHttpOut->ntlm = NULL;
+
+	return success;
 }
 
 void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL channel)

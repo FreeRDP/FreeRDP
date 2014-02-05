@@ -110,7 +110,6 @@ BOOL tls_connect(rdpTls* tls)
 	CryptoCert cert;
 	long options = 0;
 	int connection_status;
-	char *hostname;
 
 	tls->ctx = SSL_CTX_new(TLSv1_client_method());
 
@@ -213,12 +212,7 @@ BOOL tls_connect(rdpTls* tls)
 		return FALSE;
 	}
 
-	if (tls->settings->GatewayEnabled)
-		hostname = tls->settings->GatewayHostname;
-	else
-		hostname = tls->settings->ServerHostname;
-
-	if (!tls_verify_certificate(tls, cert, hostname))
+	if (!tls_verify_certificate(tls, cert, tls->hostname, tls->port))
 	{
 		fprintf(stderr, "tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
@@ -364,7 +358,38 @@ BOOL tls_disconnect(rdpTls* tls)
 		return FALSE;
 
 	if (tls->ssl)
-		SSL_shutdown(tls->ssl);
+	{
+		if (tls->alertDescription != TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY)
+		{
+			/**
+			 * OpenSSL doesn't really expose an API for sending a TLS alert manually.
+			 *
+			 * The following code disables the sending of the default "close notify"
+			 * and then proceeds to force sending a custom TLS alert before shutting down.
+			 *
+			 * Manually sending a TLS alert is necessary in certain cases,
+			 * like when server-side NLA results in an authentication failure.
+			 */
+
+			SSL_set_quiet_shutdown(tls->ssl, 1);
+
+			if ((tls->alertLevel == TLS_ALERT_LEVEL_FATAL) && (tls->ssl->session))
+				SSL_CTX_remove_session(tls->ssl->ctx, tls->ssl->session);
+
+			tls->ssl->s3->alert_dispatch = 1;
+			tls->ssl->s3->send_alert[0] = tls->alertLevel;
+			tls->ssl->s3->send_alert[1] = tls->alertDescription;
+
+			if (tls->ssl->s3->wbuf.left == 0)
+				tls->ssl->method->ssl_dispatch_alert(tls->ssl);
+
+			SSL_shutdown(tls->ssl);
+		}
+		else
+		{
+			SSL_shutdown(tls->ssl);
+		}
+	}
 
 	return TRUE;
 }
@@ -405,7 +430,7 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 				break;
 
 			case SSL_ERROR_SYSCALL:
-				if (errno == EAGAIN)
+				if ((errno == EAGAIN) || (errno == 0))
 				{
 					status = 0;
 				}
@@ -553,6 +578,14 @@ BOOL tls_print_error(char* func, SSL* connection, int value)
 	}
 }
 
+int tls_set_alert_code(rdpTls* tls, int level, int description)
+{
+	tls->alertLevel = level;
+	tls->alertDescription = description;
+
+	return 0;
+}
+
 BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname)
 {
 	if (strlen(hostname) == pattern_length)
@@ -573,7 +606,7 @@ BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname)
 	return FALSE;
 }
 
-BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
+BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int port)
 {
 	int match;
 	int index;
@@ -586,6 +619,87 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname)
 	BOOL hostname_match = FALSE;
 	BOOL verification_status = FALSE;
 	rdpCertificateData* certificate_data;
+
+	if (tls->settings->ExternalCertificateManagement)
+	{
+		BIO* bio;
+		int status;
+		int length;
+		int offset;
+		BYTE* pemCert;
+		freerdp* instance = (freerdp*) tls->settings->instance;
+
+		/**
+		 * Don't manage certificates internally, leave it up entirely to the external client implementation
+		 */
+
+		bio = BIO_new(BIO_s_mem());
+		
+		if (!bio)
+		{
+			fprintf(stderr, "tls_verify_certificate: BIO_new() failure\n");
+			return FALSE;
+		}
+
+		status = PEM_write_bio_X509(bio, cert->px509);
+
+		if (status < 0)
+		{
+			fprintf(stderr, "tls_verify_certificate: PEM_write_bio_X509 failure: %d\n", status);
+			return FALSE;
+		}
+		
+		offset = 0;
+		length = 2048;
+		pemCert = (BYTE*) malloc(length + 1);
+
+		status = BIO_read(bio, pemCert, length);
+		
+		if (status < 0)
+		{
+			fprintf(stderr, "tls_verify_certificate: failed to read certificate\n");
+			return FALSE;
+		}
+		
+		offset += status;
+
+		while (offset >= length)
+		{
+			length *= 2;
+			pemCert = (BYTE*) realloc(pemCert, length + 1);
+
+			status = BIO_read(bio, &pemCert[offset], length);
+
+			if (status < 0)
+				break;
+
+			offset += status;
+		}
+
+		if (status < 0)
+		{
+			fprintf(stderr, "tls_verify_certificate: failed to read certificate\n");
+			return FALSE;
+		}
+		
+		length = offset;
+		pemCert[length] = '\0';
+
+		status = -1;
+		
+		if (instance->VerifyX509Certificate)
+		{
+			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, 0);
+		}
+		
+		fprintf(stderr, "VerifyX509Certificate: (length = %d) status: %d\n%s\n",
+			length, status, pemCert);
+
+		free(pemCert);
+		BIO_free(bio);
+
+		return (status < 0) ? FALSE : TRUE;
+	}
 
 	/* ignore certificate verification if user explicitly required it (discouraged) */
 	if (tls->settings->IgnoreCertificate)
@@ -791,6 +905,9 @@ rdpTls* tls_new(rdpSettings* settings)
 
 		tls->settings = settings;
 		tls->certificate_store = certificate_store_new(settings);
+
+		tls->alertLevel = TLS_ALERT_LEVEL_WARNING;
+		tls->alertDescription = TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY;
 	}
 
 	return tls;

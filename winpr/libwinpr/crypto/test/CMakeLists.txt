@@ -5,7 +5,9 @@ set(MODULE_PREFIX "TEST_CRYPTO")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestCertEnumCertificatesInStore.c)
+	TestCryptoProtectData.c
+	TestCryptoProtectMemory.c
+	TestCryptoCertEnumCertificatesInStore.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
