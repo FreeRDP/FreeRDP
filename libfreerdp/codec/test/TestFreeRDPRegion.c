@@ -24,7 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include <freerdp/utils/region.h>
+#include <freerdp/codec/region.h>
 
 
 static BOOL compareRectangles(const RECTANGLE_16 *src1, const RECTANGLE_16 *src2, int nb)

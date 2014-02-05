@@ -39,7 +39,7 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/constants.h>
 #include <freerdp/primitives.h>
-#include <freerdp/utils/region.h>
+#include <freerdp/codec/region.h>
 
 #include "rfx_constants.h"
 #include "rfx_types.h"
@@ -51,14 +51,6 @@
 
 #include "rfx_sse2.h"
 #include "rfx_neon.h"
-
-void *zmalloc(int size) {
-	void *ret;
-	ret = malloc(size);
-	if (ret)
-		ZeroMemory(ret, size);
-	return ret;
-}
 
 
 #ifndef RFX_INIT_SIMD
@@ -193,7 +185,7 @@ void rfx_decoder_tile_free(RFX_TILE* tile)
 
 RFX_TILE* rfx_encoder_tile_new()
 {
-	return (RFX_TILE *)zmalloc( sizeof(RFX_TILE) );
+	return (RFX_TILE *)calloc(1, sizeof(RFX_TILE));
 }
 
 void rfx_encoder_tile_free(RFX_TILE* tile)
@@ -214,12 +206,12 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	wObject *pool;
 	RFX_CONTEXT_PRIV *priv;
 
-	context = (RFX_CONTEXT*) zmalloc(sizeof(RFX_CONTEXT));
+	context = (RFX_CONTEXT*)calloc(1, sizeof(RFX_CONTEXT));
 	if (!context)
 		return NULL;
 
 	context->encoder = encoder;
-	context->priv = priv = (RFX_CONTEXT_PRIV *)zmalloc( sizeof(RFX_CONTEXT_PRIV) );
+	context->priv = priv = (RFX_CONTEXT_PRIV *)calloc(1, sizeof(RFX_CONTEXT_PRIV) );
 	if (!priv)
 		goto error_priv;
 
@@ -638,6 +630,8 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 	}
 
 	message->rects = (RFX_RECT*) realloc(message->rects, message->numRects * sizeof(RFX_RECT));
+	if (!message->rects)
+		return FALSE;
 
 	/* rects */
 	for (i = 0; i < message->numRects; i++)
@@ -1208,7 +1202,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 	const RECTANGLE_16 *regionRect;
 	const RECTANGLE_16 *extents;
 
-	message = (RFX_MESSAGE *)zmalloc(sizeof(RFX_MESSAGE));
+	message = (RFX_MESSAGE *)calloc(1, sizeof(RFX_MESSAGE));
 	if (!message)
 		return NULL;
 
@@ -1240,7 +1234,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 	maxTilesY = 1 + TILE_NO(extents->bottom - 1) - TILE_NO(extents->top);
 	maxNbTiles = maxTilesX * maxTilesY;
 
-	message->tiles = zmalloc(maxNbTiles * sizeof(RFX_TILE*));
+	message->tiles = calloc(maxNbTiles, sizeof(RFX_TILE*));
 	if (!message->tiles)
 		goto out_free_message;
 
@@ -1254,7 +1248,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 	}
 
 	regionRect = region16_rects(&rectsRegion, &regionNbRects);
-	message->rects = rfxRect = zmalloc(regionNbRects * sizeof(RFX_RECT));
+	message->rects = rfxRect = calloc(regionNbRects, sizeof(RFX_RECT));
 	if (!message->rects)
 		goto out_clean_tiles;
 	message->numRects = regionNbRects;

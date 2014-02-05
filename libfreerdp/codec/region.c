@@ -23,7 +23,7 @@
 
 #include <assert.h>
 #include <winpr/memory.h>
-#include <freerdp/utils/region.h>
+#include <freerdp/codec/region.h>
 
 /*
  * The functions in this file implement the Region abstraction largely inspired from
@@ -380,7 +380,7 @@ static BOOL rectangle_contained_in_band(const RECTANGLE_16 *band, const RECTANGL
 
 BOOL region16_simplify_bands(REGION16 *region)
 {
-	/** Simplify bands consecutive band that touch and have the same items
+	/** Simplify consecutive bands that touch and have the same items
 	 *
 	 *  ====================          ====================
 	 *     | 1 |  | 2   |               |   |  |     |
@@ -434,6 +434,11 @@ BOOL region16_simplify_bands(REGION16 *region)
 	{
 		int allocSize = sizeof(REGION16_DATA) + finalNbRects * sizeof(RECTANGLE_16);
 		region->data = realloc(region->data, allocSize);
+		if (!region->data)
+		{
+			region->data = &empty_region;
+			return FALSE;
+		}
 		region->data->nbRects = finalNbRects;
 		region->data->size = allocSize;
 	}

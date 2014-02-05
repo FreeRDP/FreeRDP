@@ -26,7 +26,6 @@ set(${MODULE_PREFIX}_SRCS
 	pcap.c
 	profiler.c
 	rail.c
-	region.c
 	signal.c
 	stopwatch.c
 	svc_plugin.c
@@ -69,7 +68,3 @@ else()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
-
-if(BUILD_TESTING)
-	add_subdirectory(test)
-endif()
