@@ -49,6 +49,8 @@ static void fatal_handler(int signum)
 	struct sigaction default_sigaction;
 	sigset_t this_mask;
 
+	printf("fatal_handler: signum=%d\n", signum);
+
 	if (terminal_needs_reset)
 		tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);
 
@@ -74,7 +76,6 @@ const int fatal_signals[] =
 	SIGILL,
 	SIGINT,
 	SIGKILL,
-	SIGPIPE,
 	SIGQUIT,
 	SIGSEGV,
 	SIGSTOP,
@@ -127,6 +128,9 @@ int freerdp_handle_signals(void)
 	}
 
 	pthread_sigmask(SIG_SETMASK, &orig_set, NULL);
+
+	/* Ignore SIGPIPE signal. */
+	signal(SIGPIPE, SIG_IGN);
 
 	return 0;
 }
