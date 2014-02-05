@@ -1149,8 +1149,6 @@ void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE insta
 	rfx_encode_rgb(param->context, param->tile);
 }
 
-#define ALIGN_DOWN(value, alignto) ((value) - ((value) % (alignto)))
-#define ALIGN_UP(value, alignto) ( (((value) + (alignto) - 1) / (alignto) ) * (alignto) )
 
 static BOOL computeRegion(const RFX_RECT* rects, int numRects, REGION16 *region)
 {
@@ -1171,6 +1169,7 @@ static BOOL computeRegion(const RFX_RECT* rects, int numRects, REGION16 *region)
 	return TRUE;
 }
 
+#define TILE_NO(v) ((v) / 64)
 
 BOOL setupWorkers(RFX_CONTEXT *context, int nbTiles)
 {
@@ -1201,23 +1200,13 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 	RFX_TILE* tile;
 	RFX_RECT* rfxRect;
 	RFX_MESSAGE* message = NULL;
-	PTP_WORK* workObject;
-	RFX_TILE_COMPOSE_WORK_PARAM *workParam;
+	PTP_WORK* workObject = NULL;
+	RFX_TILE_COMPOSE_WORK_PARAM *workParam = NULL;
 
 	REGION16 rectsRegion, tilesRegion;
 	RECTANGLE_16 currentTileRect;
 	const RECTANGLE_16 *regionRect;
 	const RECTANGLE_16 *extents;
-
-#if 0
-	const RFX_RECT *tt = rects;
-	fprintf(stderr, "input with %d rect(s)\n", numRects);
-	for (i = 0; i < numRects; i++, tt++)
-		fprintf(stderr, "%d: %d,%d -> %d,%d (w=%d h=%d)\n", i,
-				tt->x, tt->y, tt->x + tt->width, tt->y + tt->height,
-				tt->width, tt->height
-		);
-#endif
 
 	message = (RFX_MESSAGE *)zmalloc(sizeof(RFX_MESSAGE));
 	if (!message)
@@ -1239,21 +1228,16 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 	message->numQuant = context->numQuant;
 	message->quantVals = context->quants;
 
-	rfxRect = (RFX_RECT*) &rects[0];
+	rfxRect = (RFX_RECT *)&rects[0];
 	bytesPerPixel = (context->bits_per_pixel / 8);
 
 	region16_init(&rectsRegion);
 	if (!computeRegion(rects, numRects, &rectsRegion))
 		goto out_free_message;
 	extents = region16_extents(&rectsRegion);
-/*	fprintf(stderr, "\n\n%s: nrects(in/simplified)=%d/%d width=%d height=%d bounds=(%d,%d-%d,%d)\n", __FUNCTION__,
-			numRects, region16_n_rects(&rectsRegion),
-			width, height,
-			extents->left, extents->top,
-			extents->right, extents->bottom);*/
 
-	maxTilesX = ALIGN_UP(extents->right - extents->left, 64) / 64;
-	maxTilesY = ALIGN_UP(extents->bottom - extents->top, 64) / 64;
+	maxTilesX = 1 + TILE_NO(extents->right - 1) - TILE_NO(extents->left);
+	maxTilesY = 1 + TILE_NO(extents->bottom - 1) - TILE_NO(extents->top);
 	maxNbTiles = maxTilesX * maxTilesY;
 
 	message->tiles = zmalloc(maxNbTiles * sizeof(RFX_TILE*));
@@ -1290,13 +1274,6 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 		rfxRect->width = (regionRect->right - regionRect->left);
 		rfxRect->height = (regionRect->bottom - regionRect->top);
 
-		/*fprintf(stderr, "%s: rect[%d,%d->%d,%d] start=(%d,%d) end=(%d,%d)\n",
-				__FUNCTION__,
-				regionRect->left, regionRect->top, regionRect->right, regionRect->bottom,
-				startTileX, startTileY,
-				endTileX, endTileY
-		);
-		fprintf(stderr, "rfxRect=%d,%d w/h=%d,%d\n", rfxRect->x, rfxRect->y, rfxRect->width, rfxRect->height);*/
 
 		for (yIdx = startTileY, gridRelY = startTileY * 64; yIdx <= endTileY; yIdx++, gridRelY += 64 )
 		{
@@ -1317,13 +1294,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 				currentTileRect.right = gridRelX + tileWidth;
 
 				/* checks if this tile is already treated */
-				if (region16_intersects_rect(&tilesRegion, &currentTileRect)) {
-					/*fprintf(stderr, "skipping %d,%d -> %d,%d\n",
-							currentTileRect.left, currentTileRect.top,
-							currentTileRect.right, currentTileRect.bottom
-					);*/
+				if (region16_intersects_rect(&tilesRegion, &currentTileRect))
 					continue;
-				}
 
 				tile = (RFX_TILE *)ObjectPool_Take(context->priv->TilePool);
 				if (!tile)
@@ -1336,14 +1308,6 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 				tile->scanline = scanline;
 				tile->width = tileWidth;
 				tile->height = tileHeight;
-
-				/*fprintf(stderr, "tile(%d,%d) - %d,%d->%d,%d (x=%d,y=%d,w=%d,h=%d),\n",
-						tile->xIdx, tile->yIdx,
-						currentTileRect.left, currentTileRect.top,
-						currentTileRect.right, currentTileRect.bottom,
-						tile->x, tile->y,
-						tile->width, tile->height
-				);*/
 
 				ax = gridRelX;
 				ay = gridRelY;
