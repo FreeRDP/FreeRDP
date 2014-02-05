@@ -625,6 +625,7 @@ int TestFreeRDPCodecMppc(int argc, char* argv[])
 	}
 
 	mppc_dec_free(rmppc);
+	rmppc = mppc_dec_new();
 
 	/* Compression */
 
@@ -636,6 +637,31 @@ int TestFreeRDPCodecMppc(int argc, char* argv[])
 	{
 		printf("RDP5 decompression failure: %d\n", status);
 		return -1;
+	}
+
+	if (enc->flags & PACKET_COMPRESSED)
+	{
+		status = decompress_rdp_5(rmppc, (BYTE*) enc->outputBuffer,
+				enc->bytes_in_opb, enc->flags, &roff, &rlen);
+
+		if (!status)
+		{
+			printf("RDP5 compression/decompression failure: %d\n", status);
+			return -1;
+		}
+
+		if (rlen != sizeof(TEST_RDP5_UNCOMPRESSED_DATA))
+		{
+			printf("RDP5 compression/decompression failure: size mismatch: Actual: %d, Expected: %d\n",
+					rlen, sizeof(TEST_RDP5_UNCOMPRESSED_DATA));
+			return -1;
+		}
+
+		if (memcmp(TEST_RDP5_UNCOMPRESSED_DATA, &rmppc->history_buf[roff], rlen) != 0)
+		{
+			printf("RDP5 compression/decompression failure\n");
+			return -1;
+		}
 	}
 
 	if (enc->bytes_in_opb != sizeof(TEST_RDP5_UNCOMPRESSED_DATA))
@@ -652,6 +678,7 @@ int TestFreeRDPCodecMppc(int argc, char* argv[])
 	}
 
 	mppc_enc_free(enc);
+	mppc_dec_free(rmppc);
 
 	return 0;
 }
