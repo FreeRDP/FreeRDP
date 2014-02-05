@@ -27,6 +27,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/heap.h>
 

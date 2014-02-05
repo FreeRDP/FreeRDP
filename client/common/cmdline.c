@@ -1149,10 +1149,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				settings->PreconnectionBlob = _strdup(arg->Value);
 			}
 		}
-		CommandLineSwitchCase(arg, "port")
-		{
-			settings->ServerPort = atoi(arg->Value);
-		}
 		CommandLineSwitchCase(arg, "w")
 		{
 			settings->DesktopWidth = atoi(arg->Value);
@@ -1753,6 +1749,13 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (settings->Password)
 				settings->GatewayPassword = _strdup(settings->Password);
 		}
+	}
+
+	arg = CommandLineFindArgumentA(args, "port");
+
+	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	{
+		settings->ServerPort = atoi(arg->Value);
 	}
 
 	arg = CommandLineFindArgumentA(args, "p");
