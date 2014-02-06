@@ -104,13 +104,6 @@ check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 # Libraries that we have a hard dependency on
 find_required_package(OpenSSL)
 
-# Mac OS X
-if(APPLE)
-	include_directories(/opt/local/include)
-	link_directories(/opt/local/lib)
-	set(CMAKE_SHARED_LINKER_FLAGS "-mmacosx-version-min=10.4")
-endif()
-
 if(NOT WIN32)
 	find_required_package(ZLIB)
 	find_optional_package(PulseAudio)
