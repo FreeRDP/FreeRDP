@@ -262,10 +262,18 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 {
 	ULONG Type;
 	PVOID Object;
+	BOOL ret;
+
+	/* from http://msdn.microsoft.com/en-us/library/windows/desktop/aa365467%28v=vs.85%29.aspx
+	 * lpNumberOfBytesRead can be NULL only when the lpOverlapped parameter is not NULL.
+	 */
+	if (!lpNumberOfBytesRead && !lpOverlapped)
+		return FALSE;
 
 	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
 		return FALSE;
 
+	ret = TRUE;
 	if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
 	{
 		int status;
@@ -275,9 +283,21 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		status = read(pipe->fd, lpBuffer, nNumberOfBytesToRead);
 
-		*lpNumberOfBytesRead = status;
+		if (status < 0)
+		{
+			ret = FALSE;
+			switch (errno)
+			{
+				case EWOULDBLOCK:
+					SetLastError(ERROR_NO_DATA);
+					break;
+			}
+		}
 
-		return TRUE;
+		if (lpNumberOfBytesRead)
+			*lpNumberOfBytesRead = status;
+
+		return ret;
 	}
 	else if (Type == HANDLE_TYPE_NAMED_PIPE)
 	{
@@ -305,11 +325,15 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 						break;
 				}
 			}
-
-			if (status < 0)
+			else if (status < 0)
 			{
-				*lpNumberOfBytesRead = 0;
-				return FALSE;
+				ret = FALSE;
+				switch (errno)
+				{
+					case EWOULDBLOCK:
+						SetLastError(ERROR_NO_DATA);
+						break;
+				}
 			}
 
 			*lpNumberOfBytesRead = status;
@@ -358,7 +382,7 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 #endif
 		}
 
-		return TRUE;
+		return ret;
 	}
 
 	return FALSE;
@@ -381,6 +405,7 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 {
 	ULONG Type;
 	PVOID Object;
+	BOOL ret;
 
 	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
 		return FALSE;
@@ -394,6 +419,9 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 
 		status = write(pipe->fd, lpBuffer, nNumberOfBytesToWrite);
 
+		if ((status < 0) && (errno == EWOULDBLOCK))
+			status = 0;
+
 		*lpNumberOfBytesWritten = status;
 
 		return TRUE;
@@ -405,6 +433,7 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 
 		pipe = (WINPR_NAMED_PIPE*) Object;
 
+		ret = TRUE;
 		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 		{
 			status = nNumberOfBytesToWrite;
@@ -417,10 +446,20 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 			if (status < 0)
 			{
 				*lpNumberOfBytesWritten = 0;
-				return FALSE;
+
+				switch(errno)
+				{
+					case EWOULDBLOCK:
+						status = 0;
+						ret = TRUE;
+						break;
+					default:
+						ret = FALSE;
+				}
 			}
 
 			*lpNumberOfBytesWritten = status;
+			return ret;
 		}
 		else
 		{
