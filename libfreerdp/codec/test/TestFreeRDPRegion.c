@@ -618,6 +618,52 @@ out:
 	return retCode;
 }
 
+static int test_norbert_case() {
+	REGION16 region, intersection;
+	int retCode = -1;
+	const RECTANGLE_16 *rects;
+	int nbRects, i;
+
+	RECTANGLE_16 inRectangles[5] = {
+			{1680,    0, 1920,  242},
+			{ 294,  242,  971,  776},
+			{1680,  242, 1920,  776},
+			{1680,  776, 1920, 1036},
+			{   2, 1040,   53, 1078}
+	};
+
+	RECTANGLE_16 screenRect = {
+		0, 0, 1920, 1080
+	};
+	RECTANGLE_16 expected_inter_extents = {
+		0, 0, 1920, 1078
+	};
+
+	region16_init(&region);
+	region16_init(&intersection);
+
+	for (i = 0; i < 5; i++)
+	{
+		if (!region16_union_rect(&region, &region, &inRectangles[i]))
+			goto out;
+	}
+
+	if (!region16_intersect_rect(&intersection, &region, &screenRect))
+		goto out;
+	rects = region16_rects(&intersection, &nbRects);
+	if (!rects || nbRects != 5 || !compareRectangles(rects, inRectangles, nbRects))
+		goto out;
+
+	if (!compareRectangles(region16_extents(&intersection), &expected_inter_extents, 1) )
+		goto out;
+
+	retCode = 0;
+out:
+	region16_uninit(&intersection);
+	region16_uninit(&region);
+	return retCode;
+}
+
 
 typedef int (*TestFunction)();
 struct UnitaryTest {
@@ -637,6 +683,7 @@ struct UnitaryTest tests[] = {
 	{"data from weston",        test_from_weston},
 	{"R1 & R3",					test_r1_inter_r3},
 	{"(R1+R3)&R11 (band merge)",test_r1_r3_inter_r11},
+	{"norbert case",			test_norbert_case},
 
 	{NULL, NULL}
 };

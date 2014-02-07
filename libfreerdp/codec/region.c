@@ -667,7 +667,7 @@ BOOL region16_intersects_rect(const REGION16 *src, const RECTANGLE_16 *arg2) {
 
 	endPtr = rect + nbRects;
 
-	for (endPtr = rect + nbRects; rect < endPtr; rect++)
+	for (endPtr = rect + nbRects; (rect < endPtr) && (arg2->bottom > rect->top); rect++)
 	{
 		if (rectangles_intersects(rect, arg2))
 			return TRUE;
@@ -715,7 +715,7 @@ BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE
 	/* accumulate intersecting rectangles, the final region16_simplify_bands() will
 	 * do all the bad job to recreate correct rectangles
 	 */
-	for(endPtr = srcPtr + nbRects; srcPtr < endPtr; srcPtr++)
+	for(endPtr = srcPtr + nbRects; (srcPtr < endPtr) && (rect->bottom > srcPtr->top); srcPtr++)
 	{
 		if (rectangles_intersection(srcPtr, rect, &common))
 		{
@@ -726,7 +726,7 @@ BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE
 			newExtents.top = MIN(common.top, newExtents.top);
 			newExtents.left = MIN(common.left, newExtents.left);
 			newExtents.bottom = MAX(common.bottom, newExtents.bottom);
-			newExtents.right = MIN(common.right, newExtents.right);
+			newExtents.right = MAX(common.right, newExtents.right);
 		}
 	}
 
