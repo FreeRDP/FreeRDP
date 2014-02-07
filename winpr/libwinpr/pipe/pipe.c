@@ -37,6 +37,7 @@
 #include "../handle/handle.h"
 
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -143,8 +144,8 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	if (pNamedPipe->serverfd == -1)
 	{
-		fprintf(stderr, "CreateNamedPipeA: socket error\n");
-		return NULL;
+		fprintf(stderr, "CreateNamedPipeA: socket error, %s\n", strerror(errno));
+		return INVALID_HANDLE_VALUE;
 	}
 
 	ZeroMemory(&s, sizeof(struct sockaddr_un));
@@ -155,16 +156,16 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	if (status != 0)
 	{
-		fprintf(stderr, "CreateNamedPipeA: bind error\n");
-		return NULL;
+		fprintf(stderr, "CreateNamedPipeA: bind error, %s\n", strerror(errno));
+		return INVALID_HANDLE_VALUE;
 	}
 
 	status = listen(pNamedPipe->serverfd, 2);
 
 	if (status != 0)
 	{
-		fprintf(stderr, "CreateNamedPipeA: listen error\n");
-		return NULL;
+		fprintf(stderr, "CreateNamedPipeA: listen error, %s\n", strerror(errno));
+		return INVALID_HANDLE_VALUE;
 	}
 
 	UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
