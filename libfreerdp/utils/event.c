@@ -73,30 +73,6 @@ static wMessage* freerdp_cliprdr_event_new(UINT16 event_type)
 			ZeroMemory(event.v, sizeof(RDP_CB_CLIP_CAPS));
 			event.m->id = MakeMessageId(CliprdrChannel, ClipCaps);
 			break;
-
-		case CliprdrChannel_FileContentsRequest:
-			event.v = malloc(sizeof(RDP_CB_FILE_CONTENTS_REQUEST_EVENT));
-			ZeroMemory(event.v, sizeof(RDP_CB_FILE_CONTENTS_REQUEST_EVENT));
-			event.m->id = MakeMessageId(CliprdrChannel, FileContentsRequest);
-			break;
-
-		case CliprdrChannel_FileContentsResponse:
-			event.v = malloc(sizeof(RDP_CB_FILE_CONTENTS_RESPONSE_EVENT));
-			ZeroMemory(event.v, sizeof(RDP_CB_FILE_CONTENTS_RESPONSE_EVENT));
-			event.m->id = MakeMessageId(CliprdrChannel, FileContentsResponse);
-			break;
-
-		case CliprdrChannel_Capabilities:
-			event.v = malloc(sizeof(RDP_CB_CAPS_EVENT));
-			ZeroMemory(event.v, sizeof(RDP_CB_CAPS_EVENT));
-			event.m->id = MakeMessageId(CliprdrChannel, Capabilities);
-			break;
-
-		case CliprdrChannel_TemporaryDirectory:
-			event.v = malloc(sizeof(RDP_CB_TEMPORARY_DIRECTORY_EVENT));
-			ZeroMemory(event.v, sizeof(RDP_CB_TEMPORARY_DIRECTORY_EVENT));
-			event.m->id = MakeMessageId(CliprdrChannel, TemporaryDirectory);
-			break;
 	}
 
 	return event.v;
