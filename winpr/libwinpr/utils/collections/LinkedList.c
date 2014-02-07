@@ -192,8 +192,11 @@ void LinkedList_Remove(wLinkedList* list, void* value)
 			if (node->next)
 				node->next->prev = node->prev;
 
-			if ((!node->prev) && (!node->next))
-				list->head = list->tail = NULL;
+			if (node == list->head)
+				list->head = node->next;
+
+			if (node == list->tail)
+				list->tail = node->prev;
 
 			free(node);
 
