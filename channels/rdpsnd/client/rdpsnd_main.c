@@ -453,7 +453,7 @@ static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	CopyMemory(Stream_Buffer(s), rdpsnd->waveData, 4);
 
 	data = Stream_Buffer(s);
-	size = Stream_Capacity(s);
+	size = (int) Stream_Capacity(s);
 
 	wave = (RDPSND_WAVE*) malloc(sizeof(RDPSND_WAVE));
 
@@ -866,10 +866,14 @@ int rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 	UINT32 status = 0;
 
 	if (!rdpsnd)
+	{
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
+	}
 	else
+	{
 		status = rdpsnd->channelEntryPoints.pVirtualChannelWrite(rdpsnd->OpenHandle,
-			Stream_Buffer(s), Stream_GetPosition(s), s);
+			Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{

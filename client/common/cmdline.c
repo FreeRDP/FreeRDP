@@ -195,7 +195,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 
 			if (arg->Format)
 			{
-				length = strlen(arg->Name) + strlen(arg->Format) + 2;
+				length = (int) (strlen(arg->Name) + strlen(arg->Format) + 2);
 				str = (char*) malloc(length + 1);
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
 				printf("%-20s", str);
@@ -210,7 +210,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 		}
 		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
 		{
-			length = strlen(arg->Name) + 32;
+			length = (int) strlen(arg->Name) + 32;
 			str = (char*) malloc(length + 1);
 			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
 					arg->Default ? "on" : "off");
@@ -266,7 +266,7 @@ int freerdp_client_command_line_pre_filter(void* context, int index, int argc, L
 		int length;
 		rdpSettings* settings;
 
-		length = strlen(argv[index]);
+		length = (int) strlen(argv[index]);
 
 		if (length > 4)
 		{
@@ -745,7 +745,7 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 
 	if (p)
 	{
-		length = p - username;
+		length = (int) (p - username);
 		*domain = (char*) malloc(length + 1);
 		strncpy(*domain, username, length);
 		(*domain)[length] = '\0';
@@ -757,7 +757,7 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 
 		if (p)
 		{
-			length = p - username;
+			length = (int) (p - username);
 			*user = (char*) malloc(length + 1);
 			strncpy(*user, username, length);
 			(*user)[length] = '\0';
@@ -893,7 +893,7 @@ int freerdp_detect_command_line_pre_filter(void* context, int index, int argc, L
 
 	if (index == 1)
 	{
-		length = strlen(argv[index]);
+		length = (int) strlen(argv[index]);
 
 		if (length > 4)
 		{
@@ -1127,7 +1127,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			if (p)
 			{
-				length = p - arg->Value;
+				length = (int) (p - arg->Value);
 				settings->ServerPort = atoi(&p[1]);
 				settings->ServerHostname = (char*) malloc(length + 1);
 				strncpy(settings->ServerHostname, arg->Value, length);
@@ -1202,7 +1202,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
 				char** p;
-				int i, count = 0;
+				UINT32 i, count = 0;
 
 				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
 
@@ -1316,7 +1316,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 				if (p)
 				{
-					length = p - arg->Value;
+					length = (int) (p - arg->Value);
 					settings->GatewayPort = atoi(&p[1]);
 					settings->GatewayHostname = (char*) malloc(length + 1);
 					strncpy(settings->GatewayHostname, arg->Value, length);
@@ -1371,7 +1371,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "load-balance-info")
 		{
 			settings->LoadBalanceInfo = (BYTE*) _strdup(arg->Value);
-			settings->LoadBalanceInfoLength = strlen((char*) settings->LoadBalanceInfo);
+			settings->LoadBalanceInfoLength = (UINT32) strlen((char*) settings->LoadBalanceInfo);
 		}
 		CommandLineSwitchCase(arg, "app-name")
 		{
@@ -1795,7 +1795,7 @@ int freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings*
 
 int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 {
-	int index;
+	UINT32 index;
 	ADDIN_ARGV* args;
 
 	if ((freerdp_static_channel_collection_find(settings, "rdpsnd")) ||

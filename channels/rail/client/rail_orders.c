@@ -35,7 +35,7 @@ void rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 {
 	UINT16 orderLength;
 
-	orderLength = Stream_GetPosition(s);
+	orderLength = (UINT16) Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 
 	rail_write_pdu_header(s, orderType, orderLength);

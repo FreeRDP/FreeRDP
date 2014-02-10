@@ -46,7 +46,7 @@
 
 static void rdpdr_process_connect(rdpdrPlugin* rdpdr)
 {
-	int index;
+	UINT32 index;
 	RDPDR_DEVICE* device;
 	rdpSettings* settings;
 
@@ -153,7 +153,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);
 	Stream_Write_UINT16(s, PAKID_CORE_DEVICELIST_ANNOUNCE);
 
-	count_pos = Stream_GetPosition(s);
+	count_pos = (int) Stream_GetPosition(s);
 	count = 0;
 
 	Stream_Seek_UINT32(s); /* deviceCount */
@@ -175,7 +175,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		if ((rdpdr->versionMinor == 0x0005) ||
 			(device->type == RDPDR_DTYP_SMARTCARD) || userLoggedOn)
 		{
-			data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
+			data_len = (int) (device->data == NULL ? 0 : Stream_GetPosition(device->data));
 			Stream_EnsureRemainingCapacity(s, 20 + data_len);
 
 			Stream_Write_UINT32(s, device->type); /* deviceType */
@@ -207,7 +207,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	if (pKeys)
 		free(pKeys);
 
-	pos = Stream_GetPosition(s);
+	pos = (int) Stream_GetPosition(s);
 	Stream_SetPosition(s, count_pos);
 	Stream_Write_UINT32(s, count);
 	Stream_SetPosition(s, pos);
@@ -349,10 +349,14 @@ int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	rdpdrPlugin* plugin = (rdpdrPlugin*) rdpdr;
 
 	if (!plugin)
+	{
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
+	}
 	else
+	{
 		status = plugin->channelEntryPoints.pVirtualChannelWrite(plugin->OpenHandle,
-			Stream_Buffer(s), Stream_GetPosition(s), s);
+			Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{

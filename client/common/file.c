@@ -212,12 +212,12 @@ void freerdp_client_parse_rdp_file_integer_unicode(rdpFile* file, WCHAR* name, W
 	char* nameA;
 	char* valueA;
 
-	length = _wcslen(name);
+	length = (int) _wcslen(name);
 	nameA = (char*) malloc(length + 1);
 	WideCharToMultiByte(CP_UTF8, 0, name, length, nameA, length, NULL, NULL);
 	nameA[length] = '\0';
 
-	length = _wcslen(value);
+	length = (int) _wcslen(value);
 	valueA = (char*) malloc(length + 1);
 	WideCharToMultiByte(CP_UTF8, 0, value, length, valueA, length, NULL, NULL);
 	valueA[length] = '\0';
@@ -353,12 +353,12 @@ void freerdp_client_parse_rdp_file_string_unicode(rdpFile* file, WCHAR* name, WC
 	char* nameA;
 	char* valueA;
 
-	length = _wcslen(name);
+	length = (int) _wcslen(name);
 	nameA = (char*) malloc(length + 1);
 	WideCharToMultiByte(CP_UTF8, 0, name, length, nameA, length, NULL, NULL);
 	nameA[length] = '\0';
 
-	length = _wcslen(value);
+	length = (int) _wcslen(value);
 	valueA = (char*) malloc(length + 1);
 	WideCharToMultiByte(CP_UTF8, 0, value, length, valueA, length, NULL, NULL);
 	valueA[length] = '\0';
@@ -407,7 +407,7 @@ BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE* buffe
 
 	while (line)
 	{
-		length = strlen(line);
+		length = (int) strlen(line);
 
 		if (length > 1)
 		{
@@ -482,7 +482,7 @@ BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BYTE* buf
 
 	while (line != NULL)
 	{
-		length = _wcslen(line);
+		length = (int) _wcslen(line);
 
 		if (length > 1)
 		{
@@ -661,7 +661,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 	int status = 0;
 	WCHAR* unicodestr = NULL;
 
-	length = freerdp_client_write_rdp_file_buffer(file, NULL, 0);
+	length = (int) freerdp_client_write_rdp_file_buffer(file, NULL, 0);
 
 	if (length < 0)
 	{
@@ -722,7 +722,7 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	{
 		line = &(file->lines[index]);
 
-		length = strlen(line->text);
+		length = (int) strlen(line->text);
 
 		if (!buffer)
 		{
@@ -812,7 +812,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t) file->LoadBalanceInfo))
 	{
 		settings->LoadBalanceInfo = (BYTE*) _strdup(file->LoadBalanceInfo);
-		settings->LoadBalanceInfoLength = strlen((char*) settings->LoadBalanceInfo);
+		settings->LoadBalanceInfoLength = (int) strlen((char*) settings->LoadBalanceInfo);
 	}
 
 	if (~file->AuthenticationLevel)

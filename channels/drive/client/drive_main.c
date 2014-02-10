@@ -650,7 +650,7 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 		drive->device.IRPRequest = drive_irp_request;
 		drive->device.Free = drive_free;
 
-		length = strlen(name);
+		length = (int) strlen(name);
 		drive->device.data = Stream_New(NULL, length + 1);
 
 		for (i = 0; i <= length; i++)

@@ -102,7 +102,7 @@ static int audin_process_version(IWTSVirtualChannelCallback* pChannelCallback, w
 	out = Stream_New(NULL, 5);
 	Stream_Write_UINT8(out, MSG_SNDIN_VERSION);
 	Stream_Write_UINT32(out, Version);
-	error = callback->channel->Write(callback->channel, Stream_GetPosition(s), Stream_Buffer(s), NULL);
+	error = callback->channel->Write(callback->channel, (UINT32) Stream_GetPosition(s), Stream_Buffer(s), NULL);
 	Stream_Free(out, TRUE);
 
 	return error;
@@ -183,7 +183,7 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, w
 
 	audin_send_incoming_data_pdu(pChannelCallback);
 
-	cbSizeFormatsPacket = Stream_GetPosition(out);
+	cbSizeFormatsPacket = (UINT32) Stream_GetPosition(out);
 	Stream_SetPosition(out, 0);
 
 	Stream_Write_UINT8(out, MSG_SNDIN_FORMATS); /* Header (1 byte) */
@@ -240,7 +240,7 @@ static BOOL audin_receive_wave_data(BYTE* data, int size, void* user_data)
 	out = Stream_New(NULL, size + 1);
 	Stream_Write_UINT8(out, MSG_SNDIN_DATA);
 	Stream_Write(out, data, size);
-	error = callback->channel->Write(callback->channel, Stream_GetPosition(out), Stream_Buffer(out), NULL);
+	error = callback->channel->Write(callback->channel, (UINT32) Stream_GetPosition(out), Stream_Buffer(out), NULL);
 	Stream_Free(out, TRUE);
 
 	return (error == 0 ? TRUE : FALSE);

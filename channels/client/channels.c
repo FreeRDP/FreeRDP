@@ -514,7 +514,7 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 
 	channels->is_connected = 1;
 	hostname = instance->settings->ServerHostname;
-	hostnameLength = strlen(hostname);
+	hostnameLength = (int) strlen(hostname);
 
 	for (index = 0; index < channels->clientDataCount; index++)
 	{
