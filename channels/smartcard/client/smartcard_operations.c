@@ -31,8 +31,24 @@
 
 #define BOOL PCSC_BOOL
 #include <PCSC/pcsclite.h>
-#include <PCSC/reader.h>
 #include <PCSC/winscard.h>
+#if !defined(__APPLE__)
+#include <PCSC/reader.h>
+#else
+/* On OS X reader.h isn't available so define it here */
+#endif
+#define SCARD_ATTR_VALUE(Class, Tag) ((((ULONG)(Class)) << 16) | ((ULONG)(Tag)))
+#define SCARD_CLASS_SYSTEM     0x7fff   /**< System-specific definitions */
+#define SCARD_ATTR_DEVICE_FRIENDLY_NAME_A SCARD_ATTR_VALUE(SCARD_CLASS_SYSTEM, 0x0003)
+#define SCARD_ATTR_DEVICE_FRIENDLY_NAME_W SCARD_ATTR_VALUE(SCARD_CLASS_SYSTEM, 0x0005)
+#ifdef UNICODE
+#define SCARD_ATTR_DEVICE_FRIENDLY_NAME SCARD_ATTR_DEVICE_FRIENDLY_NAME_W /**< Reader's display name. */
+#define SCARD_ATTR_DEVICE_SYSTEM_NAME SCARD_ATTR_DEVICE_SYSTEM_NAME_W /**< Reader's system name. */
+#else
+#define SCARD_ATTR_DEVICE_FRIENDLY_NAME SCARD_ATTR_DEVICE_FRIENDLY_NAME_A /**< Reader's display name. */
+#define SCARD_ATTR_DEVICE_SYSTEM_NAME SCARD_ATTR_DEVICE_SYSTEM_NAME_A /**< Reader's system name. */
+#define SCARD_CTL_CODE(code) (0x42000000 + (code))
+#endif
 #undef BOOL
 
 #include <winpr/crt.h>
