@@ -59,8 +59,6 @@
 
 #include "resource.h"
 
-void wf_size_scrollbars(wfContext* wfc, int client_width, int client_height);
-
 int wf_create_console(void)
 {
 	if (!AllocConsole())
@@ -312,7 +310,7 @@ void wf_add_system_menu(wfContext* wfc)
 	item_info.wID = SYSCOMMAND_ID_SMARTSIZING;
 	item_info.fType = MFT_STRING;
 	item_info.dwTypeData = _wcsdup(_T("Smart sizing"));
-	item_info.cch = _wcslen(_T("Smart sizing"));
+	item_info.cch = (UINT) _wcslen(_T("Smart sizing"));
 	item_info.dwItemData = (ULONG_PTR) wfc;
 
 	InsertMenuItem(hMenu, 6, TRUE, &item_info);
@@ -829,14 +827,10 @@ int freerdp_client_load_settings_from_rdp_file(wfContext* wfc, char* filename)
 	return 0;
 }
 
-void wf_size_scrollbars(wfContext* wfc, int client_width, int client_height)
+void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_height)
 {
-	BOOL rc;
-
-	if (wfc->disablewindowtracking == TRUE)
-	{
+	if (wfc->disablewindowtracking)
 		return;
-	}
 
 	// prevent infinite message loop
 	wfc->disablewindowtracking = TRUE;
