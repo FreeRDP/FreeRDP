@@ -257,12 +257,15 @@ WINPR_API void LinkedList_Free(wLinkedList* list);
 
 /* System.Collections.Generic.KeyValuePair<TKey,TValue> */
 
+typedef struct _wKeyValuePair wKeyValuePair;
+
 struct _wKeyValuePair
 {
 	void* key;
 	void* value;
+
+	wKeyValuePair* next;
 };
-typedef struct _wKeyValuePair wKeyValuePair;
 
 /* Reference Table */
 
@@ -314,6 +317,37 @@ WINPR_API void CountdownEvent_Reset(wCountdownEvent* countdown, DWORD count);
 
 WINPR_API wCountdownEvent* CountdownEvent_New(DWORD initialCount);
 WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
+
+/* Hash Table */
+
+struct _wHashTable
+{
+	long numOfBuckets;
+	long numOfElements;
+	float idealRatio;
+	float lowerRehashThreshold;
+	float upperRehashThreshold;
+	wKeyValuePair** bucketArray;
+	int (*keycmp)(void* key1, void* key2);
+	int (*valuecmp)(void* value1, void* value2);
+	unsigned long (*hashFunction)(void* key);
+	void (*keyDeallocator)(void* key);
+	void (*valueDeallocator)(void* value);
+};
+typedef struct _wHashTable wHashTable;
+
+WINPR_API int HashTable_Count(wHashTable* table);
+WINPR_API int HashTable_Add(wHashTable* table, void* key, void* value);
+WINPR_API BOOL HashTable_Remove(wHashTable* table, void* key);
+WINPR_API void HashTable_Clear(wHashTable* table);
+WINPR_API BOOL HashTable_Contains(wHashTable* table, void* key);
+WINPR_API BOOL HashTable_ContainsKey(wHashTable* table, void* key);
+WINPR_API BOOL HashTable_ContainsValue(wHashTable* table, void* value);
+WINPR_API void* HashTable_GetItemValue(wHashTable* table, void* key);
+WINPR_API BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value);
+
+WINPR_API wHashTable* HashTable_New();
+WINPR_API void HashTable_Free(wHashTable* table);
 
 /* BufferPool */
 
