@@ -15,41 +15,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel_client("audin")
+define_channel_client_subsystem("audin" "winmm" "")
 
 set(${MODULE_PREFIX}_SRCS
-	audin_main.c
-	audin_main.h)
+	audin_winmm.c)
 
 include_directories(..)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
+add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
-	MODULES freerdp-common freerdp-utils)
+	MODULES freerdp-utils)
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winmm.lib)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
+
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
-
-if(WITH_ALSA)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "alsa" "")
-endif()
-
-if(WITH_PULSE)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "pulse" "")
-endif()
-
-if(WITH_OPENSLES)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "opensles" "")
-endif()
-
-if(WITH_WINMM)
-	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "winmm" "")
-endif()
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client/winmm")
