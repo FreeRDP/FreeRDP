@@ -38,8 +38,11 @@ static BOOL autodetect_send_rtt_measure_response(rdpRdp* rdp, UINT16 sequenceNum
 	wStream* s;
 
 	/* Send the response PDU to the server */
+
 	s = rdp_message_channel_pdu_init(rdp);
-	if (s == NULL) return FALSE;
+
+	if (s == NULL)
+		return FALSE;
 
 	DEBUG_AUTODETECT("sending RTT Measure Response PDU");
 
@@ -60,8 +63,11 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpRdp* rdp, UINT16 respon
 	timeDelta = GetTickCount() - rdp->autodetect->bandwidthMeasureStartTime;
 	
 	/* Send the result PDU to the server */
+
 	s = rdp_message_channel_pdu_init(rdp);
-	if (s == NULL) return FALSE;
+
+	if (s == NULL)
+		return FALSE;
 
 	DEBUG_AUTODETECT("sending Bandwidth Measure Results PDU -> timeDelta=%u, byteCount=%u", timeDelta, rdp->autodetect->bandwidthMeasureByteCount);
 
@@ -75,13 +81,16 @@ static BOOL autodetect_send_bandwidth_measure_results(rdpRdp* rdp, UINT16 respon
 	return rdp_send_message_channel_pdu(rdp, s, SEC_AUTODETECT_RSP);
 }
 
-static BOOL autodetect_send_netchar_sync(rdpRdp* rdp, UINT16 sequenceNumber)
+BOOL autodetect_send_netchar_sync(rdpRdp* rdp, UINT16 sequenceNumber)
 {
 	wStream* s;
 	
 	/* Send the response PDU to the server */
+
 	s = rdp_message_channel_pdu_init(rdp);
-	if (s == NULL) return FALSE;
+
+	if (s == NULL)
+		return FALSE;
 
 	DEBUG_AUTODETECT("sending Network Characteristics Sync PDU -> bandwidth=%u, rtt=%u", rdp->autodetect->netCharBandwidth, rdp->autodetect->netCharAverageRTT);
 
@@ -273,16 +282,17 @@ int rdp_recv_autodetect_packet(rdpRdp* rdp, wStream* s)
 
 rdpAutoDetect* autodetect_new(void)
 {
-	rdpAutoDetect* autodetect = (rdpAutoDetect*)malloc(sizeof(rdpAutoDetect));
-	if (autodetect)
+	rdpAutoDetect* autoDetect = (rdpAutoDetect*) malloc(sizeof(rdpAutoDetect));
+
+	if (autoDetect)
 	{
-		memset(autodetect, 0, sizeof(rdpAutoDetect));
+		ZeroMemory(autoDetect, sizeof(rdpAutoDetect));
 	}
 	
-	return autodetect;
+	return autoDetect;
 }
 
-void autodetect_free(rdpAutoDetect* autodetect)
+void autodetect_free(rdpAutoDetect* autoDetect)
 {
-	free(autodetect);
+	free(autoDetect);
 }
