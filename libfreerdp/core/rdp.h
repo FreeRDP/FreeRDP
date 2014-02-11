@@ -42,7 +42,7 @@
 #include "connection.h"
 #include "redirection.h"
 #include "capabilities.h"
-#include "channel.h"
+#include "channels.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>

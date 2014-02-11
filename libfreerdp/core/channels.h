@@ -20,6 +20,8 @@
 #ifndef __CHANNEL_H
 #define __CHANNEL_H
 
+#include "client.h"
+
 BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size);
 BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channel_id);
 BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 channel_id);

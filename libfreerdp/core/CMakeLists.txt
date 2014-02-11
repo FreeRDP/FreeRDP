@@ -75,6 +75,8 @@ set(${MODULE_PREFIX}_SRCS
 	orders.h
 	freerdp.c
 	graphics.c
+	client.c
+	client.h
 	capabilities.c
 	capabilities.h
 	certificate.c
@@ -109,8 +111,8 @@ set(${MODULE_PREFIX}_SRCS
 	update.h
 	message.c
 	message.h
-	channel.c
-	channel.h
+	channels.c
+	channels.h
 	window.c
 	window.h
 	listener.c
