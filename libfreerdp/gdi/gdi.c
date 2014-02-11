@@ -667,14 +667,17 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	UINT32 foreColor;
 	UINT32 backColor;
 	gdiBitmap* bitmap;
+	GDI_COLOR originalColor;
 	HGDI_BRUSH originalBrush;
 	rdpGdi* gdi = context->gdi;
 
 	brush = &mem3blt->brush;
 	bitmap = (gdiBitmap*) mem3blt->bitmap;
 
-	foreColor = freerdp_color_convert_var_bgr(mem3blt->foreColor, gdi->srcBpp, 32, gdi->clrconv);
-	backColor = freerdp_color_convert_var_bgr(mem3blt->backColor, gdi->srcBpp, 32, gdi->clrconv);
+	foreColor = freerdp_color_convert_rgb(mem3blt->foreColor, gdi->srcBpp, 24, gdi->clrconv);
+	backColor = freerdp_color_convert_rgb(mem3blt->backColor, gdi->srcBpp, 24, gdi->clrconv);
+
+	originalColor = gdi_SetTextColor(gdi->drawing->hdc, foreColor);
 
 	if (brush->style == GDI_BS_SOLID)
 	{
@@ -718,6 +721,8 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	{
 		fprintf(stderr, "Mem3Blt unimplemented brush style:%d\n", brush->style);
 	}
+
+	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
 }
 
 void gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
