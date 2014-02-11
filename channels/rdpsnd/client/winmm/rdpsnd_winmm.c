@@ -95,7 +95,6 @@ static void rdpsnd_winmm_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* fo
 
 static void CALLBACK rdpsnd_winmm_callback_function(HWAVEOUT hwo, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
-	MMRESULT mmResult;
 	RDPSND_WAVE* wave;
 	LPWAVEHDR lpWaveHdr;
 	rdpsndWinmmPlugin* winmm = (rdpsndWinmmPlugin*) dwInstance;

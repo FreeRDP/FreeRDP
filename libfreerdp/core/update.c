@@ -1460,7 +1460,7 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 	Stream_Read_UINT8(s, numberOfAreas);
 	Stream_Seek(s, 3); /* pad3Octects */
 
-	if (Stream_GetRemainingLength(s) < numberOfAreas * 4 * 2)
+	if (Stream_GetRemainingLength(s) < ((size_t) numberOfAreas * 4 * 2))
 		return FALSE;
 
 	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);

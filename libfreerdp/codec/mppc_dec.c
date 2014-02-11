@@ -172,18 +172,18 @@ int decompress_rdp(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UIN
 
 int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
-	BYTE*    history_buf;    /* uncompressed data goes here */
-	BYTE*    history_ptr;    /* points to next free slot in history_buf */
-	UINT32    d32;            /* we process 4 compressed bytes at a time */
-	UINT16    copy_offset;    /* location to copy data from */
-	UINT16    lom;            /* length of match */
-	BYTE*    src_ptr;        /* used while copying compressed data */
-	BYTE*    cptr;           /* points to next byte in cbuf */
-	BYTE     cur_byte;       /* last byte fetched from cbuf */
-	unsigned int	bits_left;      /* bits left in d34 for processing */
-	unsigned int  cur_bits_left;  /* bits left in cur_byte for processing */
-	int       tmp;
-	UINT32    i32;
+	BYTE* history_buf; /* uncompressed data goes here */
+	BYTE* history_ptr; /* points to next free slot in history_buf */
+	UINT32 d32; /* we process 4 compressed bytes at a time */
+	UINT16 copy_offset; /* location to copy data from */
+	UINT16 lom; /* length of match */
+	BYTE* src_ptr; /* used while copying compressed data */
+	BYTE* cptr; /* points to next byte in cbuf */
+	BYTE cur_byte; /* last byte fetched from cbuf */
+	unsigned int bits_left; /* bits left in d34 for processing */
+	unsigned int cur_bits_left; /* bits left in cur_byte for processing */
+	int tmp;
+	UINT32 i32;
 
 	fprintf(stderr, "decompress_rdp_4:\n");
 

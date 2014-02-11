@@ -369,7 +369,7 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 
 	if (!ber_read_universal_tag(s, BER_TAG_INTEGER, FALSE) ||
 		!ber_read_length(s, &length) ||
-		Stream_GetRemainingLength(s) < length)
+		((int) Stream_GetRemainingLength(s)) < length)
 		return FALSE;
 
 	if (value == NULL)

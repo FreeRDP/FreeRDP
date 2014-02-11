@@ -403,7 +403,7 @@ int WLog_AddChild(wLog* parent, wLog* child)
 
 wLog* WLog_FindChild(LPCSTR name)
 {
-	int index;
+	DWORD index;
 	wLog* root;
 	wLog* child = NULL;
 	BOOL found = FALSE;

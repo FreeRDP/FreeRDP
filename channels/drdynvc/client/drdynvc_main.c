@@ -356,7 +356,7 @@ static void drdynvc_process_receive(rdpSvcPlugin* plugin, wStream* s)
 
 static void drdynvc_process_connect(rdpSvcPlugin* plugin)
 {
-	int index;
+	UINT32 index;
 	ADDIN_ARGV* args;
 	rdpSettings* settings;
 	drdynvcPlugin* drdynvc = (drdynvcPlugin*)plugin;

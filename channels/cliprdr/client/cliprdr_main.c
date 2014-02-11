@@ -362,8 +362,8 @@ int cliprdr_client_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILIT
 
 int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList)
 {
-	int index;
 	wStream* s;
+	UINT32 index;
 	int length = 0;
 	int formatNameSize;
 	CLIPRDR_FORMAT* format;

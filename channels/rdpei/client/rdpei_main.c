@@ -252,7 +252,7 @@ void rdpei_print_contact_flags(UINT32 contactFlags)
 
 int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 {
-	int index;
+	UINT32 index;
 	int rectSize = 2;
 	RDPINPUT_CONTACT_DATA* contact;
 

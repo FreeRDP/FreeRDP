@@ -594,10 +594,11 @@ BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname)
 			return TRUE;
 	}
 
-	if (pattern_length > 2 && pattern[0] == '*' && pattern[1] == '.' && strlen(hostname) >= pattern_length)
+	if ((pattern_length > 2) && (pattern[0] == '*') && (pattern[1] == '.') && (((int) strlen(hostname)) >= pattern_length))
 	{
-		char *check_hostname = &hostname[ strlen(hostname) - pattern_length+1 ];
-		if (memcmp((void*) check_hostname, (void*) &pattern[1], pattern_length - 1) == 0 )
+		char* check_hostname = &hostname[strlen(hostname) - pattern_length + 1];
+
+		if (memcmp((void*) check_hostname, (void*) &pattern[1], pattern_length - 1) == 0)
 		{
 			return TRUE;
 		}

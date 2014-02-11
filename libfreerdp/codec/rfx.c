@@ -453,7 +453,7 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) <  2 * numCodecs)
+	if (Stream_GetRemainingLength(s) < (size_t) (2 * numCodecs))
 	{
 		DEBUG_WARN("RfxCodecVersion packet too small for numCodecs=%d", numCodecs);
 		return FALSE;
@@ -490,7 +490,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 		return TRUE;
 	}
 
-	if (Stream_GetRemainingLength(s) < numChannels * 5)
+	if (Stream_GetRemainingLength(s) < (size_t) (numChannels * 5))
 	{
 		DEBUG_WARN("RfxMessageChannels packet too small for numChannels=%d", numChannels);
 		return FALSE;
@@ -604,7 +604,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		return TRUE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 8 * message->numRects)
+	if (Stream_GetRemainingLength(s) < (size_t) (8 * message->numRects))
 	{
 		DEBUG_WARN("RfxMessageRegion packet too small for num_rects=%d", message->numRects);
 		return FALSE;
@@ -703,7 +703,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	quants = context->quants;
 
 	/* quantVals */
-	if (Stream_GetRemainingLength(s) < context->numQuant * 5)
+	if (Stream_GetRemainingLength(s) < (size_t) (context->numQuant * 5))
 	{
 		DEBUG_WARN("RfxMessageTileSet packet too small for num_quants=%d", context->numQuant);
 		return FALSE;
@@ -1313,7 +1313,7 @@ RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message, int* 
 	{
 		tileDataSize = rfx_tile_length(message->tiles[i]);
 
-		if ((messages[j].tilesDataSize + tileDataSize) > maxDataSize)
+		if ((messages[j].tilesDataSize + tileDataSize) > ((UINT32) maxDataSize))
 			j++;
 
 		if (!messages[j].numTiles)

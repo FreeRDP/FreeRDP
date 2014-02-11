@@ -50,7 +50,7 @@ static int isProbablePrime(long oddNumber)
 
 static long calculateIdealNumOfBuckets(wHashTable* table)
 {
-	long idealNumOfBuckets = table->numOfElements / table->idealRatio;
+	long idealNumOfBuckets = table->numOfElements / ((long) table->idealRatio);
 
 	if (idealNumOfBuckets < 5)
 		idealNumOfBuckets = 5;

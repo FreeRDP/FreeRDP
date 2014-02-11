@@ -328,7 +328,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpSettings* settings, int length)
 		if (!gcc_read_user_data_header(s, &type, &blockLength))
 			return FALSE;
 
-		if (Stream_GetRemainingLength(s) < (blockLength - 4))
+		if (Stream_GetRemainingLength(s) < (size_t) (blockLength - 4))
 			return FALSE;
 
 		switch (type)
@@ -520,7 +520,7 @@ BOOL gcc_read_user_data_header(wStream* s, UINT16* type, UINT16* length)
 	Stream_Read_UINT16(s, *type); /* type */
 	Stream_Read_UINT16(s, *length); /* length */
 
-	if (Stream_GetRemainingLength(s) < *length - 4)
+	if (Stream_GetRemainingLength(s) < (size_t) (*length - 4))
 		return FALSE;
 
 	return TRUE;
@@ -1175,14 +1175,16 @@ void gcc_write_server_security_data(wStream* s, rdpSettings* settings)
 
 BOOL gcc_read_client_network_data(wStream* s, rdpSettings* settings, UINT16 blockLength)
 {
-	int i;
+	UINT32 i;
 
 	if (blockLength < 4)
 		return FALSE;
 
 	Stream_Read_UINT32(s, settings->ChannelCount); /* channelCount */
+
 	if (blockLength < 4 + settings->ChannelCount * 12)
 		return FALSE;
+	
 	if (settings->ChannelCount > 16)
 		return FALSE;
 
@@ -1207,7 +1209,7 @@ BOOL gcc_read_client_network_data(wStream* s, rdpSettings* settings, UINT16 bloc
 
 void gcc_write_client_network_data(wStream* s, rdpSettings* settings)
 {
-	int i;
+	UINT32 i;
 	UINT16 length;
 
 	if (settings->ChannelCount > 0)
@@ -1252,7 +1254,7 @@ BOOL gcc_read_server_network_data(wStream* s, rdpSettings* settings)
 			channelsToTreat = settings->ChannelCount;
 	}
 
-	if (Stream_GetRemainingLength(s) < channelCount * 2)
+	if (Stream_GetRemainingLength(s) < (size_t) channelCount * 2)
 		return FALSE;
 
 	for (i = 0; i < channelsToTreat; i++)
@@ -1269,7 +1271,7 @@ BOOL gcc_read_server_network_data(wStream* s, rdpSettings* settings)
 
 void gcc_write_server_network_data(wStream* s, rdpSettings* settings)
 {
-	int i;
+	UINT32 i;
 
 	gcc_write_user_data_header(s, SC_NET, 8 + settings->ChannelCount * 2 + (settings->ChannelCount % 2 == 1 ? 2 : 0));
 

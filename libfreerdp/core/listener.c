@@ -27,6 +27,7 @@
 #include <fcntl.h>
 
 #include <winpr/crt.h>
+#include <winpr/windows.h>
 
 #ifndef _WIN32
 #include <netdb.h>
@@ -45,7 +46,7 @@
 
 #ifdef _WIN32
 #if _WIN32_WINNT < 0x0600
-static const char *inet_ntop(int af, const void* src, char* dst, socklen_t cnt)
+static const char* inet_ntop(int af, const void* src, char* dst, size_t cnt)
 {
 	if (af == AF_INET)
 	{
@@ -64,7 +65,7 @@ static const char *inet_ntop(int af, const void* src, char* dst, socklen_t cnt)
 		memset(&in, 0, sizeof(in));
 		in.sin6_family = AF_INET6;
 		memcpy(&in.sin6_addr, src, sizeof(struct in_addr6));
-		getnameinfo((struct sockaddr *)&in, sizeof(struct sockaddr_in6), dst, cnt, NULL, 0, NI_NUMERICHOST);
+		getnameinfo((struct sockaddr*) &in, sizeof(struct sockaddr_in6), dst, cnt, NULL, 0, NI_NUMERICHOST);
 		return dst;
 	}
 	

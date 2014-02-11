@@ -426,7 +426,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 {
-	int index;
+	UINT32 index;
 	rdpSettings* _settings;
 
 	_settings = (rdpSettings*) malloc(sizeof(rdpSettings));
