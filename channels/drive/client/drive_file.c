@@ -513,10 +513,16 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			fullpath = drive_file_combine_fullpath(file->basepath, s);
 			free(s);
 
-			/* TODO rename does not work on win32 */
+#ifdef _WIN32
+			if (file->fd)
+				close(file->fd);
+#endif
 			if (rename(file->fullpath, fullpath) == 0)
 			{
 				drive_file_set_fullpath(file, fullpath);
+#ifdef _WIN32
+				file->fd = OPEN(fullpath, O_RDWR | O_BINARY);
+#endif
 			}
 			else
 			{
