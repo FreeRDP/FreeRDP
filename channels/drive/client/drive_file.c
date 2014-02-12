@@ -267,6 +267,8 @@ static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 Creat
 		{
 			oflag |= O_LARGEFILE;
 		}
+#else
+		oflag |= O_BINARY;
 #endif
 		file->fd = OPEN(file->fullpath, oflag, mode);
 
