@@ -576,29 +576,29 @@ static void drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
 
 static void* drive_thread_func(void* arg)
 {
-        IRP* irp;
-        wMessage message;
-        DRIVE_DEVICE* drive = (DRIVE_DEVICE*) arg;
+	IRP* irp;
+	wMessage message;
+	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) arg;
 
-        while (1)
-        {
-                if (!MessageQueue_Wait(drive->IrpQueue))
-                        break;
+	while (1)
+	{
+		if (!MessageQueue_Wait(drive->IrpQueue))
+			break;
 
-                if (!MessageQueue_Peek(drive->IrpQueue, &message, TRUE))
-                        break;
+		if (!MessageQueue_Peek(drive->IrpQueue, &message, TRUE))
+			break;
 
-                if (message.id == WMQ_QUIT)
-                        break;
+		if (message.id == WMQ_QUIT)
+			break;
 
-                irp = (IRP*) message.wParam;
+		irp = (IRP*) message.wParam;
 
-                if (irp)
-                	drive_process_irp(drive, irp);
-        }
+		if (irp)
+			drive_process_irp(drive, irp);
+	}
 
-        ExitThread(0);
-        return NULL;
+	ExitThread(0);
+	return NULL;
 }
 
 static void drive_irp_request(DEVICE* device, IRP* irp)
@@ -712,13 +712,13 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			drive->Path = _strdup("/");
 	}
 
-        drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
+	drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
 
 #else
 	sys_code_page = GetACP();
-        /* Special case: path[0] == '*' -> export all drives */
+	/* Special case: path[0] == '*' -> export all drives */
 	/* Special case: path[0] == '%' -> user home dir */
-        if (strcmp(drive->Path, "%") == 0)
+	if (strcmp(drive->Path, "%") == 0)
 	{
 		_snprintf(buf, sizeof(buf), "%s\\", getenv("USERPROFILE"));
 		drive_register_drive_path(pEntryPoints, drive->Name, _strdup(buf));
@@ -733,7 +733,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		for (dev = devlist, i = 0; *dev; dev += 4, i++)
 		{
 			if (*dev > 'B')
-                        {
+			{
 				/* Suppress disk drives A and B to avoid pesty messages */
 				len = _snprintf(buf, sizeof(buf) - 4, "%s", drive->Name);
 				buf[len] = '_';
@@ -744,11 +744,11 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			}
 		}
 	}
-        else
-        {
+	else
+	{
 		drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
 	}
 #endif
-	
-        return 0;
- }
+
+	return 0;
+}

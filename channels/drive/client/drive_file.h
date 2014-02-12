@@ -40,13 +40,13 @@
 #endif
 
 #ifdef _WIN32
-#define STAT stat
+#define STAT __stat64
 #define OPEN _open
 #define close _close
 #define read  _read
 #define write _write
-#define LSEEK _lseek
-#define FSTAT fstat
+#define LSEEK _lseeki64
+#define FSTAT _fstat64
 #define STATVFS statvfs
 #define mkdir(a,b) _mkdir(a)
 #define rmdir _rmdir
