@@ -597,6 +597,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_NegotiationFlags				1095
 #define FreeRDP_NegotiateSecurityLayer				1096
 #define FreeRDP_RestrictedAdminModeRequired			1097
+#define FreeRDP_AuthenticationServiceClass 			1098
 #define FreeRDP_MstscCookieMode					1152
 #define FreeRDP_CookieMaxLength					1153
 #define FreeRDP_PreconnectionId					1154
@@ -948,7 +949,8 @@ struct rdp_settings
 	ALIGN64 UINT32 NegotiationFlags; /* 1095 */
 	ALIGN64 BOOL NegotiateSecurityLayer; /* 1096 */
 	ALIGN64 BOOL RestrictedAdminModeRequired; /* 1097 */
-	UINT64 padding1152[1152 - 1098]; /* 1098 */
+	ALIGN64 char* AuthenticationServiceClass; /* 1098 */
+	UINT64 padding1152[1152 - 1099]; /* 1099 */
 
 	/* Connection Cookie */
 	ALIGN64 BOOL MstscCookieMode; /* 1152 */

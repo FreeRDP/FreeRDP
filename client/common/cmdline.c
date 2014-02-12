@@ -124,6 +124,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "ignore certificate" },
 	{ "pcb", COMMAND_LINE_VALUE_REQUIRED, "<blob>", NULL, NULL, -1, NULL, "Preconnection Blob" },
 	{ "pcid", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL, "Preconnection Id" },
+	{ "spn-class", COMMAND_LINE_VALUE_REQUIRED, "<service class>", NULL, NULL, -1, NULL, "SPN authentication service class" },
 	{ "vmconnect", COMMAND_LINE_VALUE_OPTIONAL, "<vmid>", NULL, NULL, -1, NULL, "Hyper-V console (use port 2179, disable negotiation)" },
 	{ "authentication", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "authentication (hack!)" },
 	{ "encryption", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "encryption (hack!)" },
@@ -1137,6 +1138,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			{
 				settings->ServerHostname = _strdup(arg->Value);
 			}
+		}
+		CommandLineSwitchCase(arg, "spn-class")
+		{
+			settings->AuthenticationServiceClass = _strdup(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "vmconnect")
 		{
