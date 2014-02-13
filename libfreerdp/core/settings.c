@@ -453,6 +453,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->ClientAddress = _strdup(settings->ClientAddress); /* 769 */
 		_settings->ClientDir = _strdup(settings->ClientDir); /* 770 */
 		_settings->DynamicDSTTimeZoneKeyName = _strdup(settings->DynamicDSTTimeZoneKeyName); /* 897 */
+		_settings->AuthenticationServiceClass = _strdup(settings->AuthenticationServiceClass); /* 1098 */
 		_settings->PreconnectionBlob = _strdup(settings->PreconnectionBlob); /* 1155 */
 		_settings->KerberosKdc = _strdup(settings->KerberosKdc); /* 1344 */
 		_settings->KerberosRealm = _strdup(settings->KerberosRealm); /* 1345 */
@@ -820,6 +821,7 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->RedirectionDomain);
 		free(settings->RedirectionPassword);
 		free(settings->RedirectionTsvUrl);
+		free(settings->AuthenticationServiceClass);
 		freerdp_target_net_addresses_free(settings);
 		freerdp_device_collection_free(settings);
 		freerdp_static_channel_collection_free(settings);

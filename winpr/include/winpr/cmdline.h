@@ -93,7 +93,7 @@ struct _COMMAND_LINE_ARGUMENT_A
 	LPCSTR Name;
 	DWORD Flags;
 	LPCSTR Format;
-	LPSTR Default;
+	LPCSTR Default;
 	LPSTR Value;
 	LONG Index;
 	LPCSTR Alias;

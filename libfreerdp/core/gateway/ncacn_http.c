@@ -161,7 +161,6 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 		return 0;
 	}
 
-	//ntlm_client_make_spn(ntlm, NULL, settings->GatewayHostname);
 	if (!ntlm_client_make_spn(ntlm, _T("HTTP"), settings->GatewayHostname))
 	{
 		return 0;
