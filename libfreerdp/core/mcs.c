@@ -485,7 +485,7 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 	if (!ber_read_octet_string_tag(s, &length) || ((int) Stream_GetRemainingLength(s)) < length)
 		return FALSE;
 
-	if (!gcc_read_conference_create_request(s, mcs->transport->settings))
+	if (!gcc_read_conference_create_request(s, mcs))
 		return FALSE;
 
 	if (!mcs_merge_domain_parameters(&mcs->targetParameters, &mcs->minimumParameters,
@@ -580,7 +580,7 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	wStream* client_data;
 
 	client_data = Stream_New(NULL, 512);
-	gcc_write_client_data_blocks(client_data, mcs->transport->settings);
+	gcc_write_client_data_blocks(client_data, mcs);
 
 	gcc_CCrq = Stream_New(NULL, 1024);
 	gcc_write_conference_create_request(gcc_CCrq, client_data);
@@ -637,7 +637,7 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 		return FALSE;
 	}
 
-	if (!gcc_read_conference_create_response(s, mcs->transport->settings))
+	if (!gcc_read_conference_create_response(s, mcs))
 	{
 		fprintf(stderr, "mcs_recv_connect_response: gcc_read_conference_create_response failed\n");
 		return FALSE;
@@ -662,7 +662,7 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	wStream* server_data;
 
 	server_data = Stream_New(NULL, 512);
-	gcc_write_server_data_blocks(server_data, mcs->transport->settings);
+	gcc_write_server_data_blocks(server_data, mcs);
 
 	gcc_CCrsp = Stream_New(NULL, 512);
 	gcc_write_conference_create_response(gcc_CCrsp, server_data);
@@ -1041,9 +1041,12 @@ rdpMcs* mcs_new(rdpTransport* transport)
 		ZeroMemory(mcs, sizeof(rdpMcs));
 
 		mcs->transport = transport;
+		mcs->settings = transport->settings;
+
 		mcs_init_domain_parameters(&mcs->targetParameters, 34, 2, 0, 0xFFFF);
 		mcs_init_domain_parameters(&mcs->minimumParameters, 1, 1, 1, 0x420);
 		mcs_init_domain_parameters(&mcs->maximumParameters, 0xFFFF, 0xFC17, 0xFFFF, 0xFFFF);
+		mcs_init_domain_parameters(&mcs->domainParameters, 0, 0, 0, 0xFFFF);
 	}
 
 	return mcs;

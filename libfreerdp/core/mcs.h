@@ -126,6 +126,7 @@ typedef struct
 struct rdp_mcs
 {
 	rdpTransport* transport;
+	rdpSettings* settings;
 
 	UINT16 userId;
 	UINT16 messageChannelId;
