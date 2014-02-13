@@ -361,7 +361,7 @@ void rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 	}
 
 	mcs_write_domain_mcspdu_header(s, MCSPDU, length, 0);
-	per_write_integer16(s, rdp->mcs->user_id, MCS_BASE_CHANNEL_ID); /* initiator */
+	per_write_integer16(s, rdp->mcs->userId, MCS_BASE_CHANNEL_ID); /* initiator */
 	per_write_integer16(s, channelId, 0); /* channelId */
 	Stream_Write_UINT8(s, 0x70); /* dataPriority + segmentation */
 	/*
@@ -555,7 +555,7 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 
-	rdp_write_header(rdp, s, length, rdp->mcs->message_channel_id);
+	rdp_write_header(rdp, s, length, rdp->mcs->messageChannelId);
 
 	sec_bytes = rdp_get_sec_bytes(rdp);
 	sec_hold = Stream_GetPosition(s);
@@ -1050,7 +1050,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			Stream_SetPosition(s, nextPosition);
 		}
 	}
-	else if (channelId == rdp->mcs->message_channel_id)
+	else if (channelId == rdp->mcs->messageChannelId)
 	{
 		return rdp_recv_message_channel_pdu(rdp, s);
 	}
@@ -1161,9 +1161,9 @@ static int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 	return status;
 }
 
-int rdp_send_channel_data(rdpRdp* rdp, int channel_id, BYTE* data, int size)
+int rdp_send_channel_data(rdpRdp* rdp, int channelId, BYTE* data, int size)
 {
-	return freerdp_channel_send(rdp, channel_id, data, size);
+	return freerdp_channel_send(rdp, channelId, data, size);
 }
 
 /**

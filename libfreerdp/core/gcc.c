@@ -281,14 +281,14 @@ BOOL gcc_read_conference_create_response(wStream* s, rdpSettings* settings)
 	return TRUE;
 }
 
-void gcc_write_conference_create_response(wStream* s, wStream* user_data)
+void gcc_write_conference_create_response(wStream* s, wStream* userData)
 {
 	/* ConnectData */
 	per_write_choice(s, 0);
 	per_write_object_identifier(s, t124_02_98_oid);
 
 	/* ConnectData::connectPDU (OCTET_STRING) */
-	per_write_length(s, Stream_GetPosition(user_data) + 2);
+	per_write_length(s, Stream_GetPosition(userData) + 2);
 
 	/* ConnectGCCPDU */
 	per_write_choice(s, 0x14);
@@ -312,7 +312,7 @@ void gcc_write_conference_create_response(wStream* s, wStream* user_data)
 	per_write_octet_string(s, h221_sc_key, 4, 4); /* h221NonStandard, server-to-client H.221 key, "McDn" */
 
 	/* userData (OCTET_STRING) */
-	per_write_octet_string(s, user_data->buffer, Stream_GetPosition(user_data), 0); /* array of server data blocks */
+	per_write_octet_string(s, userData->buffer, Stream_GetPosition(userData), 0); /* array of server data blocks */
 }
 
 BOOL gcc_read_client_data_blocks(wStream* s, rdpSettings* settings, int length)
@@ -1504,7 +1504,7 @@ BOOL gcc_read_server_message_channel_data(wStream* s, rdpSettings* settings)
 
 	/* Save the MCS message channel id */
 	instance = (freerdp*) settings->instance;
-	instance->context->rdp->mcs->message_channel_id = MCSChannelId;
+	instance->context->rdp->mcs->messageChannelId = MCSChannelId;
 
 	return TRUE;
 }

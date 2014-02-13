@@ -547,7 +547,7 @@ BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, wStream* s)
 	if (!mcs_recv_attach_user_confirm(rdp->mcs, s))
 		return FALSE;
 
-	if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->user_id))
+	if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->userId))
 		return FALSE;
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN);
@@ -558,35 +558,35 @@ BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, wStream* s)
 BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 {
 	UINT32 i;
-	UINT16 channel_id;
-	BOOL all_joined = TRUE;
+	UINT16 channelId;
+	BOOL allJoined = TRUE;
 
-	if (!mcs_recv_channel_join_confirm(rdp->mcs, s, &channel_id))
+	if (!mcs_recv_channel_join_confirm(rdp->mcs, s, &channelId))
 		return FALSE;
 
-	if (!rdp->mcs->user_channel_joined)
+	if (!rdp->mcs->userChannelJoined)
 	{
-		if (channel_id != rdp->mcs->user_id)
+		if (channelId != rdp->mcs->userId)
 			return FALSE;
 
-		rdp->mcs->user_channel_joined = TRUE;
+		rdp->mcs->userChannelJoined = TRUE;
 
 		if (!mcs_send_channel_join_request(rdp->mcs, MCS_GLOBAL_CHANNEL_ID))
 			return FALSE;
 	}
-	else if (!rdp->mcs->global_channel_joined)
+	else if (!rdp->mcs->globalChannelJoined)
 	{
-		if (channel_id != MCS_GLOBAL_CHANNEL_ID)
+		if (channelId != MCS_GLOBAL_CHANNEL_ID)
 			return FALSE;
 
-		rdp->mcs->global_channel_joined = TRUE;
+		rdp->mcs->globalChannelJoined = TRUE;
 
-		if (rdp->mcs->message_channel_id != 0)
+		if (rdp->mcs->messageChannelId != 0)
 		{
-			if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->message_channel_id))
+			if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->messageChannelId))
 				return FALSE;
 
-			all_joined = FALSE;
+			allJoined = FALSE;
 		}
 		else
 		{
@@ -595,23 +595,23 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 				if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[0].ChannelId))
 					return FALSE;
 
-				all_joined = FALSE;
+				allJoined = FALSE;
 			}
 		}
 	}
-	else if ((rdp->mcs->message_channel_id != 0) && !rdp->mcs->message_channel_joined)
+	else if ((rdp->mcs->messageChannelId != 0) && !rdp->mcs->messageChannelJoined)
 	{
-		if (channel_id != rdp->mcs->message_channel_id)
+		if (channelId != rdp->mcs->messageChannelId)
 			return FALSE;
 
-		rdp->mcs->message_channel_joined = TRUE;
+		rdp->mcs->messageChannelJoined = TRUE;
 
 		if (rdp->settings->ChannelCount > 0)
 		{
 			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[0].ChannelId))
 				return FALSE;
 
-			all_joined = FALSE;
+			allJoined = FALSE;
 		}
 	}
 	else
@@ -621,7 +621,7 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 			if (rdp->settings->ChannelDefArray[i].joined)
 				continue;
 
-			if (rdp->settings->ChannelDefArray[i].ChannelId != channel_id)
+			if (rdp->settings->ChannelDefArray[i].ChannelId != channelId)
 				return FALSE;
 
 			rdp->settings->ChannelDefArray[i].joined = TRUE;
@@ -633,11 +633,11 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 			if (!mcs_send_channel_join_request(rdp->mcs, rdp->settings->ChannelDefArray[i + 1].ChannelId))
 				return FALSE;
 
-			all_joined = FALSE;
+			allJoined = FALSE;
 		}
 	}
 
-	if (rdp->mcs->user_channel_joined && rdp->mcs->global_channel_joined && all_joined)
+	if (rdp->mcs->userChannelJoined && rdp->mcs->globalChannelJoined && allJoined)
 	{
 		if (!rdp_client_establish_keys(rdp))
 			return FALSE;
@@ -658,14 +658,14 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream *s)
 	UINT16 channelId;
 
 	/* If the MCS message channel has been joined... */
-	if (rdp->mcs->message_channel_id != 0)
+	if (rdp->mcs->messageChannelId != 0)
 	{
 		/* Process any MCS message channel PDUs. */
 		Stream_GetPointer(s, mark);
 
 		if (rdp_read_header(rdp, s, &length, &channelId))
 		{
-			if (channelId == rdp->mcs->message_channel_id)
+			if (channelId == rdp->mcs->messageChannelId)
 			{
 				if (rdp_recv_message_channel_pdu(rdp, s) == 0)
 					return TRUE;
@@ -970,30 +970,30 @@ BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s)
 BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 {
 	UINT32 i;
-	UINT16 channel_id;
-	BOOL all_joined = TRUE;
+	UINT16 channelId;
+	BOOL allJoined = TRUE;
 
-	if (!mcs_recv_channel_join_request(rdp->mcs, s, &channel_id))
+	if (!mcs_recv_channel_join_request(rdp->mcs, s, &channelId))
 		return FALSE;
 
-	if (!mcs_send_channel_join_confirm(rdp->mcs, channel_id))
+	if (!mcs_send_channel_join_confirm(rdp->mcs, channelId))
 		return FALSE;
 
-	if (channel_id == rdp->mcs->user_id)
-		rdp->mcs->user_channel_joined = TRUE;
-	else if (channel_id == MCS_GLOBAL_CHANNEL_ID)
-		rdp->mcs->global_channel_joined = TRUE;
+	if (channelId == rdp->mcs->userId)
+		rdp->mcs->userChannelJoined = TRUE;
+	else if (channelId == MCS_GLOBAL_CHANNEL_ID)
+		rdp->mcs->globalChannelJoined = TRUE;
 
 	for (i = 0; i < rdp->settings->ChannelCount; i++)
 	{
-		if (rdp->settings->ChannelDefArray[i].ChannelId == channel_id)
+		if (rdp->settings->ChannelDefArray[i].ChannelId == channelId)
 			rdp->settings->ChannelDefArray[i].joined = TRUE;
 
 		if (!rdp->settings->ChannelDefArray[i].joined)
-			all_joined = FALSE;
+			allJoined = FALSE;
 	}
 
-	if ((rdp->mcs->user_channel_joined) && (rdp->mcs->global_channel_joined) && all_joined)
+	if ((rdp->mcs->userChannelJoined) && (rdp->mcs->globalChannelJoined) && allJoined)
 	{
 		rdp_server_transition_to_state(rdp, CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT);
 	}

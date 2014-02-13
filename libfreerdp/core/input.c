@@ -52,7 +52,7 @@ wStream* rdp_client_input_pdu_init(rdpRdp* rdp, UINT16 type)
 
 void rdp_send_client_input_pdu(rdpRdp* rdp, wStream* s)
 {
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_INPUT, rdp->mcs->user_id);
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_INPUT, rdp->mcs->userId);
 }
 
 void input_write_synchronize_event(wStream* s, UINT32 flags)

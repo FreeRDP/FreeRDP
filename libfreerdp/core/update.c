@@ -749,7 +749,7 @@ static void update_send_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_
 		s = rdp_data_pdu_init(rdp);
 		update_write_refresh_rect(s, count, areas);
 
-		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->user_id);
+		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->userId);
 		Stream_Release(s);
 	}
 }
@@ -778,7 +778,7 @@ static void update_send_suppress_output(rdpContext* context, BYTE allow, RECTANG
 		s = rdp_data_pdu_init(rdp);
 		update_write_suppress_output(s, allow, area);
 
-		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->user_id);
+		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->userId);
 		Stream_Release(s);
 	}
 }
@@ -838,7 +838,7 @@ static void update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 	{
 		s = rdp_data_pdu_init(rdp);
 		Stream_Write_UINT32(s, frameId);
-		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->user_id);
+		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->userId);
 		Stream_Release(s);
 	}
 }

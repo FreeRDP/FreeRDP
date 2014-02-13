@@ -68,33 +68,6 @@ rdpChannels* freerdp_channels_find_by_open_handle(int OpenHandle, int* pindex)
 	return (found) ? channels : NULL;
 }
 
-rdpChannels* freerdp_channels_find_by_instance(freerdp* instance)
-{
-	int index;
-	BOOL found = FALSE;
-	rdpChannels* channels = NULL;
-
-	ArrayList_Lock(g_ChannelsList);
-
-	index = 0;
-	channels = (rdpChannels*) ArrayList_GetItem(g_ChannelsList, index++);
-
-	while (channels)
-	{
-		if (channels->instance == instance)
-		{
-			found = TRUE;
-			break;
-		}
-
-		channels = (rdpChannels*) ArrayList_GetItem(g_ChannelsList, index++);
-	}
-
-	ArrayList_Unlock(g_ChannelsList);
-
-	return (found) ? channels : NULL;
-}
-
 CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpChannels* channels, const char* channel_name)
 {
 	int index;
@@ -160,105 +133,6 @@ rdpChannel* freerdp_channels_find_channel_by_name(rdpChannels* channels,
 	}
 
 	return NULL;
-}
-
-UINT32 FreeRDP_VirtualChannelWrite(UINT32 openHandle, void* pData, UINT32 dataLength, void* pUserData)
-{
-	int index;
-	rdpChannels* channels;
-	CHANNEL_OPEN_EVENT* item;
-	CHANNEL_OPEN_DATA* pChannelOpenData;
-
-	channels = freerdp_channels_find_by_open_handle(openHandle, &index);
-
-	if ((!channels) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
-	{
-		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
-	}
-
-	if (!channels->is_connected)
-	{
-		return CHANNEL_RC_NOT_CONNECTED;
-	}
-
-	if (!pData)
-	{
-		return CHANNEL_RC_NULL_DATA;
-	}
-
-	if (!dataLength)
-	{
-		return CHANNEL_RC_ZERO_LENGTH;
-	}
-
-	pChannelOpenData = &channels->openDataList[index];
-
-	if (pChannelOpenData->flags != 2)
-	{
-		return CHANNEL_RC_NOT_OPEN;
-	}
-
-	if (!channels->is_connected)
-	{
-		return CHANNEL_RC_NOT_CONNECTED;
-	}
-
-	item = (CHANNEL_OPEN_EVENT*) malloc(sizeof(CHANNEL_OPEN_EVENT));
-	item->Data = pData;
-	item->DataLength = dataLength;
-	item->UserData = pUserData;
-	item->Index = index;
-
-	MessageQueue_Post(channels->MsgPipe->Out, (void*) channels, 0, (void*) item, NULL);
-
-	return CHANNEL_RC_OK;
-}
-
-UINT32 FreeRDP_VirtualChannelEventPush(UINT32 openHandle, wMessage* event)
-{
-	int index;
-	rdpChannels* channels;
-	CHANNEL_OPEN_DATA* pChannelOpenData;
-
-	channels = freerdp_channels_find_by_open_handle(openHandle, &index);
-
-	if ((!channels) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
-	{
-		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
-	}
-
-	if (!channels->is_connected)
-	{
-		return CHANNEL_RC_NOT_CONNECTED;
-	}
-
-	if (!event)
-	{
-		return CHANNEL_RC_NULL_DATA;
-	}
-
-	pChannelOpenData = &channels->openDataList[index];
-
-	if (pChannelOpenData->flags != 2)
-	{
-		return CHANNEL_RC_NOT_OPEN;
-	}
-
-	if (!channels->is_connected)
-	{
-		return CHANNEL_RC_NOT_CONNECTED;
-	}
-
-	/**
-	 * We really intend to use the In queue for events, but we're pushing on both
-	 * to wake up threads waiting on the out queue. Doing this cleanly would require
-	 * breaking freerdp_pop_event() a bit too early in this refactoring.
-	 */
-
-	MessageQueue_Post(channels->MsgPipe->In, (void*) channels, 1, (void*) event, NULL);
-	MessageQueue_Post(channels->MsgPipe->Out, (void*) channels, 1, (void*) event, NULL);
-
-	return CHANNEL_RC_OK;
 }
 
 /**
@@ -428,21 +302,21 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
  * data coming from the server to the client
  * called only from main thread
  */
-int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int data_size, int flags, int total_size)
+int freerdp_channels_data(freerdp* instance, int channelId, void* data, int dataSize, int flags, int totalSize)
 {
 	int index;
 	rdpChannel* channel;
 	rdpChannels* channels;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 
-	channels = freerdp_channels_find_by_instance(instance);
+	channels = instance->context->channels;
 
 	if (!channels)
 	{
 		return 1;
 	}
 
-	channel = freerdp_channels_find_channel_by_id(channels, instance->settings, channel_id, &index);
+	channel = freerdp_channels_find_channel_by_id(channels, instance->settings, channelId, &index);
 
 	if (!channel)
 	{
@@ -459,7 +333,7 @@ int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int dat
 	if (pChannelOpenData->pChannelOpenEventProc)
 	{
 		pChannelOpenData->pChannelOpenEventProc(pChannelOpenData->OpenHandle,
-			CHANNEL_EVENT_DATA_RECEIVED, data, data_size, total_size, flags);
+			CHANNEL_EVENT_DATA_RECEIVED, data, dataSize, totalSize, flags);
 	}
 
 	return 0;
@@ -863,6 +737,105 @@ UINT32 FreeRDP_VirtualChannelClose(UINT32 openHandle)
 	}
 
 	pChannelOpenData->flags = 0;
+
+	return CHANNEL_RC_OK;
+}
+
+UINT32 FreeRDP_VirtualChannelWrite(UINT32 openHandle, void* pData, UINT32 dataLength, void* pUserData)
+{
+	int index;
+	rdpChannels* channels;
+	CHANNEL_OPEN_EVENT* item;
+	CHANNEL_OPEN_DATA* pChannelOpenData;
+
+	channels = freerdp_channels_find_by_open_handle(openHandle, &index);
+
+	if ((!channels) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
+	{
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+	}
+
+	if (!channels->is_connected)
+	{
+		return CHANNEL_RC_NOT_CONNECTED;
+	}
+
+	if (!pData)
+	{
+		return CHANNEL_RC_NULL_DATA;
+	}
+
+	if (!dataLength)
+	{
+		return CHANNEL_RC_ZERO_LENGTH;
+	}
+
+	pChannelOpenData = &channels->openDataList[index];
+
+	if (pChannelOpenData->flags != 2)
+	{
+		return CHANNEL_RC_NOT_OPEN;
+	}
+
+	if (!channels->is_connected)
+	{
+		return CHANNEL_RC_NOT_CONNECTED;
+	}
+
+	item = (CHANNEL_OPEN_EVENT*) malloc(sizeof(CHANNEL_OPEN_EVENT));
+	item->Data = pData;
+	item->DataLength = dataLength;
+	item->UserData = pUserData;
+	item->Index = index;
+
+	MessageQueue_Post(channels->MsgPipe->Out, (void*) channels, 0, (void*) item, NULL);
+
+	return CHANNEL_RC_OK;
+}
+
+UINT32 FreeRDP_VirtualChannelEventPush(UINT32 openHandle, wMessage* event)
+{
+	int index;
+	rdpChannels* channels;
+	CHANNEL_OPEN_DATA* pChannelOpenData;
+
+	channels = freerdp_channels_find_by_open_handle(openHandle, &index);
+
+	if ((!channels) || (index < 0) || (index >= CHANNEL_MAX_COUNT))
+	{
+		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+	}
+
+	if (!channels->is_connected)
+	{
+		return CHANNEL_RC_NOT_CONNECTED;
+	}
+
+	if (!event)
+	{
+		return CHANNEL_RC_NULL_DATA;
+	}
+
+	pChannelOpenData = &channels->openDataList[index];
+
+	if (pChannelOpenData->flags != 2)
+	{
+		return CHANNEL_RC_NOT_OPEN;
+	}
+
+	if (!channels->is_connected)
+	{
+		return CHANNEL_RC_NOT_CONNECTED;
+	}
+
+	/**
+	 * We really intend to use the In queue for events, but we're pushing on both
+	 * to wake up threads waiting on the out queue. Doing this cleanly would require
+	 * breaking freerdp_pop_event() a bit too early in this refactoring.
+	 */
+
+	MessageQueue_Post(channels->MsgPipe->In, (void*) channels, 1, (void*) event, NULL);
+	MessageQueue_Post(channels->MsgPipe->Out, (void*) channels, 1, (void*) event, NULL);
 
 	return CHANNEL_RC_OK;
 }
