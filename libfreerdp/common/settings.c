@@ -654,6 +654,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->RestrictedAdminModeRequired;
 			break;
 
+		case FreeRDP_DisableCredentialsDelegation:
+			return settings->DisableCredentialsDelegation;
+			break;
+
 		case FreeRDP_MstscCookieMode:
 			return settings->MstscCookieMode;
 			break;
@@ -1120,6 +1124,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_RestrictedAdminModeRequired:
 			settings->RestrictedAdminModeRequired = param;
+			break;
+
+		case FreeRDP_DisableCredentialsDelegation:
+			settings->DisableCredentialsDelegation = param;
 			break;
 
 		case FreeRDP_MstscCookieMode:

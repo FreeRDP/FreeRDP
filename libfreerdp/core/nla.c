@@ -123,6 +123,9 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
+	if (settings->RestrictedAdminModeRequired)
+		settings->DisableCredentialsDelegation = TRUE;
+
 	if ((!settings->Password) || (!settings->Username)
 			|| (!strlen(settings->Password)) || (!strlen(settings->Username)))
 	{
@@ -998,7 +1001,7 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp)
 	UserLength = credssp->identity.UserLength;
 	PasswordLength = credssp->identity.PasswordLength;
 
-	if (credssp->settings->RestrictedAdminModeRequired)
+	if (credssp->settings->DisableCredentialsDelegation)
 	{
 		credssp->identity.DomainLength = 0;
 		credssp->identity.UserLength = 0;
@@ -1008,10 +1011,10 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp)
 	length = ber_sizeof_sequence(credssp_sizeof_ts_credentials(credssp));
 	sspi_SecBufferAlloc(&credssp->ts_credentials, length);
 
-	s = Stream_New(credssp->ts_credentials.pvBuffer, length);
+	s = Stream_New((BYTE*) credssp->ts_credentials.pvBuffer, length);
 	credssp_write_ts_credentials(credssp, s);
 
-	if (credssp->settings->RestrictedAdminModeRequired)
+	if (credssp->settings->DisableCredentialsDelegation)
 	{
 		credssp->identity.DomainLength = DomainLength;
 		credssp->identity.UserLength = UserLength;
