@@ -52,6 +52,12 @@ struct rdpdr_plugin
 	UINT16 versionMinor;
 	UINT16 clientID;
 	char computerName[256];
+
+	/* hotplug support */
+#ifdef _WIN32
+	HWND hotplug_wnd;
+#else
+#endif
 };
 
 int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
