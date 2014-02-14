@@ -322,6 +322,9 @@ WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
 
 struct _wHashTable
 {
+	BOOL synchronized;
+	CRITICAL_SECTION lock;
+
 	long numOfBuckets;
 	long numOfElements;
 	float idealRatio;
@@ -346,7 +349,7 @@ WINPR_API BOOL HashTable_ContainsValue(wHashTable* table, void* value);
 WINPR_API void* HashTable_GetItemValue(wHashTable* table, void* key);
 WINPR_API BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value);
 
-WINPR_API wHashTable* HashTable_New();
+WINPR_API wHashTable* HashTable_New(BOOL synchronized);
 WINPR_API void HashTable_Free(wHashTable* table);
 
 /* BufferPool */

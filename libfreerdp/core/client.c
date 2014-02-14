@@ -34,7 +34,7 @@ int g_open_handle_sequence = 1;
 /* For locking the global resources */
 static CRITICAL_SECTION g_channels_lock;
 
-rdpChannels* freerdp_channels_find_by_open_handle(int OpenHandle, int* pindex)
+rdpChannels* freerdp_channels_find_by_open_handle(UINT32 OpenHandle, int* pindex)
 {
 	int i, j;
 	BOOL found = FALSE;

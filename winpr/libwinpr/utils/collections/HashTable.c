@@ -178,12 +178,16 @@ int HashTable_Count(wHashTable* table)
 
 int HashTable_Add(wHashTable* table, void* key, void* value)
 {
+	int status = 0;
 	long hashValue;
 	wKeyValuePair* pair;
 	wKeyValuePair* newPair;
 
 	if (!key || !value)
 		return -1;
+
+	if (table->synchronized)
+		EnterCriticalSection(&table->lock);
 
 	hashValue = table->hashFunction(key) % table->numOfBuckets;
 	pair = table->bucketArray[hashValue];
@@ -213,7 +217,7 @@ int HashTable_Add(wHashTable* table, void* key, void* value)
 
 		if (!newPair)
 		{
-			return -1;
+			status = -1;
 		}
 		else
 		{
@@ -233,7 +237,10 @@ int HashTable_Add(wHashTable* table, void* key, void* value)
 		}
 	}
 
-	return 0;
+	if (table->synchronized)
+		LeaveCriticalSection(&table->lock);
+
+	return status;
 }
 
 /**
@@ -242,43 +249,54 @@ int HashTable_Add(wHashTable* table, void* key, void* value)
 
 BOOL HashTable_Remove(wHashTable* table, void* key)
 {
+	BOOL status = TRUE;
 	long hashValue = table->hashFunction(key) % table->numOfBuckets;
 	wKeyValuePair* pair = table->bucketArray[hashValue];
 	wKeyValuePair* previousPair = NULL;
 
-	while (pair != NULL && table->keycmp(key, pair->key) != 0)
+	if (table->synchronized)
+		EnterCriticalSection(&table->lock);
+
+	while (pair && table->keycmp(key, pair->key) != 0)
 	{
 		previousPair = pair;
 		pair = pair->next;
 	}
 
 	if (!pair)
-		return FALSE;
-
-	if (table->keyDeallocator)
-		table->keyDeallocator((void*) pair->key);
-
-	if (table->valueDeallocator)
-		table->valueDeallocator(pair->value);
-
-	if (previousPair != NULL)
-		previousPair->next = pair->next;
-	else
-		table->bucketArray[hashValue] = pair->next;
-
-	free(pair);
-
-	table->numOfElements--;
-
-	if (table->lowerRehashThreshold > 0.0)
 	{
-		float elementToBucketRatio = (float) table->numOfElements / (float) table->numOfBuckets;
+		status = FALSE;
+	}
+	else
+	{
+		if (table->keyDeallocator)
+			table->keyDeallocator((void*) pair->key);
 
-		if (elementToBucketRatio < table->lowerRehashThreshold)
-			HashTable_Rehash(table, 0);
+		if (table->valueDeallocator)
+			table->valueDeallocator(pair->value);
+
+		if (previousPair)
+			previousPair->next = pair->next;
+		else
+			table->bucketArray[hashValue] = pair->next;
+
+		free(pair);
+
+		table->numOfElements--;
+
+		if (table->lowerRehashThreshold > 0.0)
+		{
+			float elementToBucketRatio = (float) table->numOfElements / (float) table->numOfBuckets;
+
+			if (elementToBucketRatio < table->lowerRehashThreshold)
+				HashTable_Rehash(table, 0);
+		}
 	}
 
-	return TRUE;
+	if (table->synchronized)
+		LeaveCriticalSection(&table->lock);
+
+	return status;
 }
 
 /**
@@ -287,14 +305,21 @@ BOOL HashTable_Remove(wHashTable* table, void* key)
 
 void* HashTable_GetItemValue(wHashTable* table, void* key)
 {
+	void* value = NULL;
 	wKeyValuePair* pair;
+
+	if (table->synchronized)
+		EnterCriticalSection(&table->lock);
 
 	pair = HashTable_Get(table, key);
 
-	if (!pair)
-		return NULL;
+	if (pair)
+		value = pair->value;
 
-	return pair->value;
+	if (table->synchronized)
+		LeaveCriticalSection(&table->lock);
+
+	return value;
 }
 
 /**
@@ -303,16 +328,23 @@ void* HashTable_GetItemValue(wHashTable* table, void* key)
 
 BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value)
 {
+	BOOL status = TRUE;
 	wKeyValuePair* pair;
+
+	if (table->synchronized)
+		EnterCriticalSection(&table->lock);
 
 	pair = HashTable_Get(table, key);
 
 	if (!pair)
-		return FALSE;
+		status = FALSE;
+	else
+		pair->value = value;
 
-	pair->value = value;
+	if (table->synchronized)
+		LeaveCriticalSection(&table->lock);
 
-	return TRUE;
+	return status;
 }
 
 /**
@@ -325,11 +357,14 @@ void HashTable_Clear(wHashTable* table)
 	wKeyValuePair* pair;
 	wKeyValuePair* nextPair;
 
+	if (table->synchronized)
+		EnterCriticalSection(&table->lock);
+
 	for (index = 0; index < table->numOfBuckets; index++)
 	{
 		pair = table->bucketArray[index];
 
-		while (pair != NULL)
+		while (pair)
 		{
 			nextPair = pair->next;
 
@@ -349,6 +384,9 @@ void HashTable_Clear(wHashTable* table)
 
 	table->numOfElements = 0;
 	HashTable_Rehash(table, 5);
+
+	if (table->synchronized)
+		LeaveCriticalSection(&table->lock);
 }
 
 /**
@@ -357,7 +395,17 @@ void HashTable_Clear(wHashTable* table)
 
 BOOL HashTable_Contains(wHashTable* table, void* key)
 {
-	return (HashTable_Get(table, key) != NULL) ? TRUE : FALSE;
+	BOOL status;
+
+	if (table->synchronized)
+		EnterCriticalSection(&table->lock);
+
+	status = (HashTable_Get(table, key) != NULL) ? TRUE : FALSE;
+
+	if (table->synchronized)
+		LeaveCriticalSection(&table->lock);
+
+	return status;
 }
 
 /**
@@ -366,7 +414,17 @@ BOOL HashTable_Contains(wHashTable* table, void* key)
 
 BOOL HashTable_ContainsKey(wHashTable* table, void* key)
 {
-	return (HashTable_Get(table, key) != NULL) ? TRUE : FALSE;
+	BOOL status;
+
+	if (table->synchronized)
+		EnterCriticalSection(&table->lock);
+
+	status = (HashTable_Get(table, key) != NULL) ? TRUE : FALSE;
+
+	if (table->synchronized)
+		LeaveCriticalSection(&table->lock);
+
+	return status;
 }
 
 /**
@@ -376,29 +434,42 @@ BOOL HashTable_ContainsKey(wHashTable* table, void* key)
 BOOL HashTable_ContainsValue(wHashTable* table, void* value)
 {
 	int index;
+	BOOL status = FALSE;
 	wKeyValuePair* pair;
+
+	if (table->synchronized)
+		EnterCriticalSection(&table->lock);
 
 	for (index = 0; index < table->numOfBuckets; index++)
 	{
 		pair = table->bucketArray[index];
 
-		while (pair != NULL)
+		while (pair)
 		{
 			if (table->valuecmp(value, pair->value) == 0)
-				return TRUE;
+			{
+				status = TRUE;
+				break;
+			}
 
 			pair = pair->next;
 		}
+
+		if (status)
+			break;
 	}
 
-	return FALSE;
+	if (table->synchronized)
+		LeaveCriticalSection(&table->lock);
+
+	return status;
 }
 
 /**
  * Construction, Destruction
  */
 
-wHashTable* HashTable_New()
+wHashTable* HashTable_New(BOOL synchronized)
 {
 	int index;
 	wHashTable* table;
@@ -407,6 +478,9 @@ wHashTable* HashTable_New()
 
 	if (table)
 	{
+		table->synchronized = synchronized;
+		InitializeCriticalSectionAndSpinCount(&table->lock, 4000);
+
 		table->numOfBuckets = 64;
 		table->numOfElements = 0;
 

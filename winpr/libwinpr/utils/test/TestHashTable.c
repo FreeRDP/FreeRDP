@@ -17,7 +17,7 @@ int TestHashTable(int argc, char* argv[])
 	char* value;
 	wHashTable* table;
 
-	table = HashTable_New();
+	table = HashTable_New(TRUE);
 
 	HashTable_Add(table, key1, val1);
 	HashTable_Add(table, key2, val2);
