@@ -49,6 +49,14 @@
 
 #include "rdpdr_main.h"
 
+typedef struct _DEVICE_DRIVE_EXT DEVICE_DRIVE_EXT;
+
+struct _DEVICE_DRIVE_EXT
+{
+	DEVICE device;
+	char* path;
+};
+
 static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL userLoggedOn);
 
 static void rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 count, UINT32 ids[])
@@ -125,7 +133,7 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 						char drive_name_upper, drive_name_lower;
 
 						ULONG_PTR *keys;
-						DEVICE *dev;
+						DEVICE_DRIVE_EXT *device_ext;
 						UINT32 ids[1];
 
 						for (i = 0; i < 26; i++)
@@ -139,8 +147,8 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
 								for (j = 0; j < count; j++)
 								{
-									dev = (DEVICE *)ListDictionary_GetItemValue(rdpdr->devman->devices, (void *)keys[j]);
-									if (dev->name[0] == drive_name_upper || dev->name[0] == drive_name_lower)
+									device_ext = (DEVICE_DRIVE_EXT *)ListDictionary_GetItemValue(rdpdr->devman->devices, (void *)keys[j]);
+									if (device_ext->path[0] == drive_name_upper || device_ext->path[0] == drive_name_lower)
 									{
 										devman_unregister_device(rdpdr->devman, (void *)keys[j]);
 										ids[0] = keys[j];
@@ -165,7 +173,7 @@ LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, Msg, wParam, lParam);
 }
 
-static void* drive_hotplug_thread_func(void *arg)
+static void* drive_hotplug_thread_func(void* arg)
 {
 	rdpdrPlugin *rdpdr;
 	WNDCLASSEX wnd_cls;
@@ -231,7 +239,7 @@ static void drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 
 #else
 
-static void* drive_hotplug_thread_func(void *arg)
+static void* drive_hotplug_thread_func(void* arg)
 {
 
 }
