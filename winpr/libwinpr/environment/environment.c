@@ -165,50 +165,57 @@ DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 
 DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 {
-	int length = 0;
+	int vLength = 0;
 	char* env = NULL;
 	const char * penvb = envBlock;
 	char *foundEquals;
+	int nLength, fLength, lpNameLength;
+
+	if (!lpName)
+		return 0;
+
+	lpNameLength = strlen(lpName);
+	if (0 == lpNameLength)
+		return 0;
 
 	while (*penvb && *(penvb+1))
 	{
-
-		length = strlen(penvb);
+		fLength = strlen(penvb);
 		foundEquals = strstr(penvb,"=");
-		if (foundEquals == NULL) {
+		if (foundEquals == NULL)
+		{
 			/* if no = sign is found the envBlock is broken */
 			return 0;
 		}
-#ifdef _WIN32
-		if (strnicmp(penvb,lpName,foundEquals - penvb) == 0) {
-#else
-		if (strncmp(penvb,lpName,foundEquals - penvb) == 0) {
-#endif
-			if (*(penvb + (foundEquals - penvb)) == '=') {
-				// found variable ...
-				if (foundEquals == NULL) {
-					return 0;
-				} else {
-					env = foundEquals + 1;
-					break;
-				}
-			}
+		nLength = foundEquals - penvb;
+		if (nLength != lpNameLength)
+		{
+			penvb += (fLength +1);
+			continue;
 		}
-		penvb += (length +1);
+#ifdef _WIN32
+		if (strnicmp(penvb,lpName,nLength) == 0)
+#else
+		if (strncmp(penvb,lpName,nLength) == 0)
+#endif
+		{
+			env = foundEquals + 1;
+			break;
+		}
+		penvb += (fLength +1);
 	}
-
 
 	if (!env)
 		return 0;
 
-	length = strlen(env);
+	vLength = strlen(env);
 
-	if ((length + 1 > nSize) || (!lpBuffer))
-		return length + 1;
+	if ((vLength + 1 > nSize) || (!lpBuffer))
+		return vLength + 1;
 
-	CopyMemory(lpBuffer, env, length + 1);
+	CopyMemory(lpBuffer, env, vLength + 1);
 
-	return length;
+	return vLength;
 }
 
 
