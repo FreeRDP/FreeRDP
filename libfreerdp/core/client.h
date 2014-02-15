@@ -52,6 +52,7 @@ struct rdp_channel_open_data
 	int options;
 	int flags;
 	void* pInterface;
+	rdpChannels* channels;
 	PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc;
 };
 typedef struct rdp_channel_open_data CHANNEL_OPEN_DATA;
@@ -61,7 +62,7 @@ struct _CHANNEL_OPEN_EVENT
 	void* Data;
 	UINT32 DataLength;
 	void* UserData;
-	int Index;
+	CHANNEL_OPEN_DATA* pChannelOpenData;
 };
 typedef struct _CHANNEL_OPEN_EVENT CHANNEL_OPEN_EVENT;
 
