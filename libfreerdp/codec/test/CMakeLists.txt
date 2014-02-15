@@ -5,6 +5,7 @@ set(MODULE_PREFIX "TEST_FREERDP_CODEC")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
+	TestFreeRDPRegion.c
 	TestFreeRDPCodecMppc.c
 	TestFreeRDPCodecPlanar.c
 	TestFreeRDPCodecRemoteFX.c)
