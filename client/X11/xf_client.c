@@ -1122,11 +1122,6 @@ int xf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	return 1;
 }
 
-int xf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
-{
-	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
-}
-
 void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	xfContext* xfc;
@@ -1861,7 +1856,6 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->Authenticate = xf_authenticate;
 	instance->VerifyCertificate = xf_verify_certificate;
 	instance->LogonErrorInfo = xf_logon_error_info;
-	instance->ReceiveChannelData = xf_receive_channel_data;
 
 	context->channels = freerdp_channels_new();
 

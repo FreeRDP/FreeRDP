@@ -242,11 +242,7 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	return 0;
 }
 
-/**
- * data coming from the server to the client
- * called only from main thread
- */
-int freerdp_channels_data(freerdp* instance, int channelId, void* data, int dataSize, int flags, int totalSize)
+int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data, int dataSize, int flags, int totalSize)
 {
 	int index;
 	rdpChannel* channel;

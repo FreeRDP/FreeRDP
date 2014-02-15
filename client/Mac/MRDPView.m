@@ -1257,15 +1257,6 @@ static void channel_activity_cb(freerdp* instance)
 	}
 }
 
-/** *********************************************************************
- * called when channel data is available
- ***********************************************************************/
-
-int mac_receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size)
-{
-	return freerdp_channels_data(instance, chan_id, data, size, flags, total_size);
-}
-
 /**
  * Used to load plugins based on the commandline parameters.
  * This function is provided as a parameter to freerdp_parse_args(), that will call it

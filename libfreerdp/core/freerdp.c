@@ -39,6 +39,7 @@
 #include <freerdp/error.h>
 #include <freerdp/event.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/channels/channels.h>
 #include <freerdp/version.h>
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
@@ -298,7 +299,7 @@ int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id)
 	return status;
 }
 
-static int freerdp_send_channel_data(freerdp* instance, int channelId, BYTE* data, int size)
+static int freerdp_send_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int size)
 {
 	return rdp_send_channel_data(instance->context->rdp, channelId, data, size);
 }
@@ -476,6 +477,7 @@ freerdp* freerdp_new()
 		ZeroMemory(instance, sizeof(freerdp));
 		instance->ContextSize = sizeof(rdpContext);
 		instance->SendChannelData = freerdp_send_channel_data;
+		instance->ReceiveChannelData = freerdp_channels_data;
 	}
 
 	return instance;

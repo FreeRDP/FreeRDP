@@ -65,8 +65,8 @@ typedef int (*pVerifyX509Certificate)(freerdp* instance, BYTE* data, int length,
 
 typedef int (*pLogonErrorInfo)(freerdp* instance, UINT32 data, UINT32 type);
 
-typedef int (*pSendChannelData)(freerdp* instance, int channelId, BYTE* data, int size);
-typedef int (*pReceiveChannelData)(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size);
+typedef int (*pSendChannelData)(freerdp* instance, UINT16 channelId, BYTE* data, int size);
+typedef int (*pReceiveChannelData)(freerdp* instance, UINT16 channelId, BYTE* data, int size, int flags, int totalSize);
 
 /**
  * Defines the context for a given instance of RDP connection.

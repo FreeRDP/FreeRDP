@@ -41,6 +41,7 @@
 #include <freerdp/channels/channels.h>
 
 #include "rdp.h"
+#include "client.h"
 #include "channels.h"
 
 BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
@@ -117,8 +118,16 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId)
 	Stream_Read_UINT32(s, flags);
 	chunkLength = Stream_GetRemainingLength(s);
 
-	IFCALL(instance->ReceiveChannelData, instance,
-		channelId, Stream_Pointer(s), chunkLength, flags, length);
+	if (instance->ReceiveChannelData)
+	{
+		IFCALL(instance->ReceiveChannelData, instance,
+				channelId, Stream_Pointer(s), chunkLength, flags, length);
+	}
+	else
+	{
+		freerdp_channels_data(instance,
+				channelId, Stream_Pointer(s), chunkLength, flags, length);
+	}
 
 	return TRUE;
 }
