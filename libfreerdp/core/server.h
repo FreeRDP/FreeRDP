@@ -27,6 +27,7 @@
 
 #include <winpr/synch.h>
 #include <winpr/stream.h>
+#include <winpr/collections.h>
 
 #include "rdp.h"
 
@@ -68,9 +69,7 @@ struct rdp_peer_channel
 	UINT16 index;
 
 	wStream* receiveData;
-	HANDLE receiveEvent;
-	LIST* receiveQueue;
-	HANDLE mutex;
+	wMessagePipe* MsgPipe;
 
 	BYTE dvc_open_state;
 	UINT32 dvc_total_length;
@@ -81,9 +80,7 @@ struct WTSVirtualChannelManager
 	rdpRdp* rdp;
 	freerdp_peer* client;
 
-	HANDLE sendEvent;
-	LIST* sendQueue;
-	HANDLE mutex;
+	wMessagePipe* MsgPipe;
 
 	rdpPeerChannel* drdynvc_channel;
 	BYTE drdynvc_state;
