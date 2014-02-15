@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include "rdp.h"
+
 #include "client.h"
 
 static void* g_pInterface;
@@ -50,43 +52,18 @@ CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpChannels* 
 	return NULL;
 }
 
-/* returns rdpChannel for the channel id passed in */
-rdpChannel* freerdp_channels_find_channel_by_id(rdpChannels* channels, rdpSettings* settings, int channel_id, int* pindex)
-{
-	int index;
-	int count;
-	rdpChannel* channel;
-
-	count = settings->ChannelCount;
-
-	for (index = 0; index < count; index++)
-	{
-		channel = &settings->ChannelDefArray[index];
-
-		if (channel->ChannelId == channel_id)
-		{
-			if (pindex != 0)
-				*pindex = index;
-
-			return channel;
-		}
-	}
-
-	return NULL;
-}
-
 /* returns rdpChannel for the channel name passed in */
-rdpChannel* freerdp_channels_find_channel_by_name(rdpChannels* channels,
-		rdpSettings* settings, const char* channelName)
+rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const char* name)
 {
 	int index;
-	rdpChannel* channel;
+	rdpMcsChannel* channel;
+	rdpMcs* mcs = rdp->mcs;
 
-	for (index = 0; index < settings->ChannelCount; index++)
+	for (index = 0; index < mcs->channelCount; index++)
 	{
-		channel = &settings->ChannelDefArray[index];
+		channel = &mcs->channels[index];
 
-		if (strcmp(channelName, channel->Name) == 0)
+		if (strcmp(name, channel->Name) == 0)
 		{
 			return channel;
 		}
@@ -245,18 +222,29 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data, int dataSize, int flags, int totalSize)
 {
 	int index;
-	rdpChannel* channel;
+	rdpMcs* mcs;
 	rdpChannels* channels;
+	rdpMcsChannel* channel = NULL;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 
+	mcs = instance->context->rdp->mcs;
 	channels = instance->context->channels;
 
-	if (!channels)
+	if (!channels || !mcs)
 	{
 		return 1;
 	}
 
-	channel = freerdp_channels_find_channel_by_id(channels, instance->settings, channelId, &index);
+	for (index = 0; index < mcs->channelCount; index++)
+	{
+		channel = &mcs->channels[index];
+
+		if (mcs->channels[index].ChannelId == channelId)
+		{
+			channel = &mcs->channels[index];
+			break;
+		}
+	}
 
 	if (!channel)
 	{
@@ -337,10 +325,10 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, wMessage* eve
  */
 static int freerdp_channels_process_sync(rdpChannels* channels, freerdp* instance)
 {
-	int rc = TRUE;
+	int status = TRUE;
 	wMessage message;
 	wMessage* event;
-	rdpChannel* channel;
+	rdpMcsChannel* channel;
 	CHANNEL_OPEN_EVENT* item;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 
@@ -348,7 +336,7 @@ static int freerdp_channels_process_sync(rdpChannels* channels, freerdp* instanc
 	{
 		if (message.id == WMQ_QUIT)
 		{
-			rc = FALSE;
+			status = FALSE;
 			break;
 		}
 
@@ -361,8 +349,7 @@ static int freerdp_channels_process_sync(rdpChannels* channels, freerdp* instanc
 
 			pChannelOpenData = item->pChannelOpenData;
 
-			channel = freerdp_channels_find_channel_by_name(channels,
-					instance->settings, pChannelOpenData->name);
+			channel = freerdp_channels_find_channel_by_name(instance->context->rdp, pChannelOpenData->name);
 
 			if (channel)
 				instance->SendChannelData(instance, channel->ChannelId, item->Data, item->DataLength);
@@ -386,7 +373,7 @@ static int freerdp_channels_process_sync(rdpChannels* channels, freerdp* instanc
 		}
 	}
 
-	return rc;
+	return status;
 }
 
 /**

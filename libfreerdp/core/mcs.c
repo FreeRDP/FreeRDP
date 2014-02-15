@@ -28,6 +28,7 @@
 #include "mcs.h"
 #include "tpdu.h"
 #include "tpkt.h"
+#include "client.h"
 
 /**
  * T.125 MCS is defined in:
@@ -182,6 +183,25 @@ static const char* const mcs_result_enumerated[] =
 		"rt-user-rejected"
 };
 */
+
+int mcs_initialize_client_channels(rdpMcs* mcs, rdpSettings* settings)
+{
+	int index;
+	mcs->channelCount = settings->ChannelCount;
+
+	if (mcs->channelCount > mcs->channelMaxCount)
+		mcs->channelCount = mcs->channelMaxCount;
+
+	ZeroMemory(mcs->channels, sizeof(rdpMcsChannel) * mcs->channelMaxCount);
+
+	for (index = 0; index < mcs->channelCount; index++)
+	{
+		CopyMemory(mcs->channels[index].Name, settings->ChannelDefArray[index].Name, 8);
+		mcs->channels[index].options = settings->ChannelDefArray[index].options;
+	}
+
+	return 0;
+}
 
 /**
  * Read a DomainMCSPDU header.
@@ -578,6 +598,8 @@ BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	int bm, em;
 	wStream* gcc_CCrq;
 	wStream* client_data;
+
+	mcs_initialize_client_channels(mcs, mcs->settings);
 
 	client_data = Stream_New(NULL, 512);
 	gcc_write_client_data_blocks(client_data, mcs);
@@ -1047,6 +1069,10 @@ rdpMcs* mcs_new(rdpTransport* transport)
 		mcs_init_domain_parameters(&mcs->minimumParameters, 1, 1, 1, 0x420);
 		mcs_init_domain_parameters(&mcs->maximumParameters, 0xFFFF, 0xFC17, 0xFFFF, 0xFFFF);
 		mcs_init_domain_parameters(&mcs->domainParameters, 0, 0, 0, 0xFFFF);
+
+		mcs->channelCount = 0;
+		mcs->channelMaxCount = CHANNEL_MAX_COUNT;
+		mcs->channels = (rdpMcsChannel*) calloc(mcs->channelMaxCount, sizeof(rdpMcsChannel));
 	}
 
 	return mcs;

@@ -400,7 +400,7 @@ static void WTSProcessChannelData(rdpPeerChannel* channel, int channelId, BYTE* 
 	}
 }
 
-static int WTSReceiveChannelData(freerdp_peer* client, int channelId, BYTE* data, int size, int flags, int total_size)
+static int WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, BYTE* data, int size, int flags, int totalSize)
 {
 	int i;
 	BOOL result = FALSE;
@@ -418,7 +418,7 @@ static int WTSReceiveChannelData(freerdp_peer* client, int channelId, BYTE* data
 
 		if (channel != NULL)
 		{
-			WTSProcessChannelData(channel, channelId, data, size, flags, total_size);
+			WTSProcessChannelData(channel, channelId, data, size, flags, totalSize);
 			result = TRUE;
 		}
 	}

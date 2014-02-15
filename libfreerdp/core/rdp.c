@@ -1161,7 +1161,7 @@ static int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 	return status;
 }
 
-int rdp_send_channel_data(rdpRdp* rdp, int channelId, BYTE* data, int size)
+int rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 {
 	return freerdp_channel_send(rdp, channelId, data, size);
 }

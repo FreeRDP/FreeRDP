@@ -1191,26 +1191,25 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 {
 	UINT32 i;
-	rdpSettings* settings = mcs->settings;
 
 	if (blockLength < 4)
 		return FALSE;
 
-	Stream_Read_UINT32(s, settings->ChannelCount); /* channelCount */
+	Stream_Read_UINT32(s, mcs->channelCount); /* channelCount */
 
-	if (blockLength < 4 + settings->ChannelCount * 12)
+	if (blockLength < 4 + mcs->channelCount * 12)
 		return FALSE;
 	
-	if (settings->ChannelCount > 16)
+	if (mcs->channelCount > 16)
 		return FALSE;
 
 	/* channelDefArray */
-	for (i = 0; i < settings->ChannelCount; i++)
+	for (i = 0; i < mcs->channelCount; i++)
 	{
 		/* CHANNEL_DEF */
-		Stream_Read(s, settings->ChannelDefArray[i].Name, 8); /* name (8 bytes) */
-		Stream_Read_UINT32(s, settings->ChannelDefArray[i].options); /* options (4 bytes) */
-		settings->ChannelDefArray[i].ChannelId = MCS_GLOBAL_CHANNEL_ID + 1 + i;
+		Stream_Read(s, mcs->channels[i].Name, 8); /* name (8 bytes) */
+		Stream_Read_UINT32(s, mcs->channels[i].options); /* options (4 bytes) */
+		mcs->channels[i].ChannelId = MCS_GLOBAL_CHANNEL_ID + 1 + i;
 	}
 
 	return TRUE;
@@ -1227,21 +1226,20 @@ void gcc_write_client_network_data(wStream* s, rdpMcs* mcs)
 {
 	UINT32 i;
 	UINT16 length;
-	rdpSettings* settings = mcs->settings;
 
-	if (settings->ChannelCount > 0)
+	if (mcs->channelCount > 0)
 	{
-		length = settings->ChannelCount * 12 + 8;
+		length = mcs->channelCount * 12 + 8;
 		gcc_write_user_data_header(s, CS_NET, length);
 
-		Stream_Write_UINT32(s, settings->ChannelCount); /* channelCount */
+		Stream_Write_UINT32(s, mcs->channelCount); /* channelCount */
 
 		/* channelDefArray */
-		for (i = 0; i < settings->ChannelCount; i++)
+		for (i = 0; i < mcs->channelCount; i++)
 		{
 			/* CHANNEL_DEF */
-			Stream_Write(s, settings->ChannelDefArray[i].Name, 8); /* name (8 bytes) */
-			Stream_Write_UINT32(s, settings->ChannelDefArray[i].options); /* options (4 bytes) */
+			Stream_Write(s, mcs->channels[i].Name, 8); /* name (8 bytes) */
+			Stream_Write_UINT32(s, mcs->channels[i].options); /* options (4 bytes) */
 		}
 	}
 }
@@ -1249,10 +1247,10 @@ void gcc_write_client_network_data(wStream* s, rdpMcs* mcs)
 BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 {
 	int i;
-	UINT16 MCSChannelId;
-	UINT16 channelCount, channelsToTreat;
 	UINT16 channelId;
-	rdpSettings* settings = mcs->settings;
+	UINT16 MCSChannelId;
+	UINT16 channelCount;
+	UINT16 parsedChannelCount;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -1260,25 +1258,26 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 	Stream_Read_UINT16(s, MCSChannelId); /* MCSChannelId */
 	Stream_Read_UINT16(s, channelCount); /* channelCount */
 
-	channelsToTreat = channelCount;
+	parsedChannelCount = channelCount;
 
-	if (channelCount != settings->ChannelCount)
+	if (channelCount != mcs->channelCount)
 	{
 		fprintf(stderr, "requested %d channels, got %d instead\n",
-				settings->ChannelCount, channelCount);
+				mcs->channelCount, channelCount);
 
 		/* we ensure that the response is not bigger than the request */
-		if (channelCount > settings->ChannelCount)
-			channelsToTreat = settings->ChannelCount;
+
+		if (channelCount > mcs->channelCount)
+			parsedChannelCount = mcs->channelCount;
 	}
 
 	if (Stream_GetRemainingLength(s) < (size_t) channelCount * 2)
 		return FALSE;
 
-	for (i = 0; i < channelsToTreat; i++)
+	for (i = 0; i < parsedChannelCount; i++)
 	{
 		Stream_Read_UINT16(s, channelId); /* channelId */
-		settings->ChannelDefArray[i].ChannelId = channelId;
+		mcs->channels[i].ChannelId = channelId;
 	}
 
 	if (channelCount % 2 == 1)
@@ -1290,19 +1289,18 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 void gcc_write_server_network_data(wStream* s, rdpMcs* mcs)
 {
 	UINT32 i;
-	rdpSettings* settings = mcs->settings;
 
-	gcc_write_user_data_header(s, SC_NET, 8 + settings->ChannelCount * 2 + (settings->ChannelCount % 2 == 1 ? 2 : 0));
+	gcc_write_user_data_header(s, SC_NET, 8 + mcs->channelCount * 2 + (mcs->channelCount % 2 == 1 ? 2 : 0));
 
 	Stream_Write_UINT16(s, MCS_GLOBAL_CHANNEL_ID); /* MCSChannelId */
-	Stream_Write_UINT16(s, settings->ChannelCount); /* channelCount */
+	Stream_Write_UINT16(s, mcs->channelCount); /* channelCount */
 
-	for (i = 0; i < settings->ChannelCount; i++)
+	for (i = 0; i < mcs->channelCount; i++)
 	{
-		Stream_Write_UINT16(s, settings->ChannelDefArray[i].ChannelId);
+		Stream_Write_UINT16(s, mcs->channels[i].ChannelId);
 	}
 
-	if (settings->ChannelCount % 2 == 1)
+	if (mcs->channelCount % 2 == 1)
 		Stream_Write_UINT16(s, 0);
 }
 

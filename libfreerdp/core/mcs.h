@@ -123,6 +123,16 @@ typedef struct
 	UINT32 protocolVersion;
 } DomainParameters;
 
+struct rdp_mcs_channel
+{
+	char Name[8];
+	UINT32 options;
+	int ChannelId;
+	BOOL joined;
+	void* handle;
+};
+typedef struct rdp_mcs_channel rdpMcsChannel;
+
 struct rdp_mcs
 {
 	rdpTransport* transport;
@@ -139,6 +149,10 @@ struct rdp_mcs
 	BOOL userChannelJoined;
 	BOOL globalChannelJoined;
 	BOOL messageChannelJoined;
+
+	UINT32 channelCount;
+	UINT32 channelMaxCount;
+	rdpMcsChannel* channels;
 };
 
 #define MCS_SEND_DATA_HEADER_MAX_LENGTH		8

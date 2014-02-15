@@ -51,20 +51,21 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 	wStream* s;
 	UINT32 flags;
 	int chunkSize;
-	rdpChannel* channel = NULL;
+	rdpMcs* mcs = rdp->mcs;
+	rdpMcsChannel* channel = NULL;
 
-	for (i = 0; i < rdp->settings->ChannelCount; i++)
+	for (i = 0; i < mcs->channelCount; i++)
 	{
-		if (rdp->settings->ChannelDefArray[i].ChannelId == channelId)
+		if (mcs->channels[i].ChannelId == channelId)
 		{
-			channel = &rdp->settings->ChannelDefArray[i];
+			channel = &mcs->channels[i];
 			break;
 		}
 	}
 
 	if (!channel)
 	{
-		fprintf(stderr, "freerdp_channel_send: unknown channel_id %d\n", channelId);
+		fprintf(stderr, "freerdp_channel_send: unknown channelId %d\n", channelId);
 		return FALSE;
 	}
 
@@ -118,16 +119,8 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId)
 	Stream_Read_UINT32(s, flags);
 	chunkLength = Stream_GetRemainingLength(s);
 
-	if (instance->ReceiveChannelData)
-	{
-		IFCALL(instance->ReceiveChannelData, instance,
-				channelId, Stream_Pointer(s), chunkLength, flags, length);
-	}
-	else
-	{
-		freerdp_channels_data(instance,
-				channelId, Stream_Pointer(s), chunkLength, flags, length);
-	}
+	IFCALL(instance->ReceiveChannelData, instance,
+			channelId, Stream_Pointer(s), chunkLength, flags, length);
 
 	return TRUE;
 }
