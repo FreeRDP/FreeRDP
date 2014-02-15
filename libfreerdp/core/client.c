@@ -36,7 +36,7 @@ int g_open_handle_sequence = 1;
 /* For locking the global resources */
 static CRITICAL_SECTION g_channels_lock;
 
-CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpChannels* channels, const char* channel_name)
+CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpChannels* channels, const char* name)
 {
 	int index;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
@@ -45,7 +45,7 @@ CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpChannels* 
 	{
 		pChannelOpenData = &channels->openDataList[index];
 
-		if (strcmp(channel_name, pChannelOpenData->name) == 0)
+		if (strcmp(name, pChannelOpenData->name) == 0)
 			return pChannelOpenData;
 	}
 
@@ -508,6 +508,7 @@ UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
 	UINT32 OpenHandle;
 	rdpChannel* channel;
 	rdpChannels* channels;
+	rdpSettings* settings;
 	PCHANNEL_DEF pChannelDef;
 	CHANNEL_INIT_DATA* pChannelInitData;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
@@ -558,6 +559,8 @@ UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
 	pChannelClientData->pInitHandle = *ppInitHandle;
 	channels->clientDataCount++;
 
+	settings = channels->settings;
+
 	for (index = 0; index < channelCount; index++)
 	{
 		pChannelDef = &pChannel[index];
@@ -574,16 +577,12 @@ UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
 		strncpy(pChannelOpenData->name, pChannelDef->name, CHANNEL_NAME_LEN);
 		pChannelOpenData->options = pChannelDef->options;
 
-		if (channels->settings->ChannelCount < CHANNEL_MAX_COUNT)
+		if (settings->ChannelCount < CHANNEL_MAX_COUNT)
 		{
-			channel = channels->settings->ChannelDefArray + channels->settings->ChannelCount;
+			channel = &settings->ChannelDefArray[settings->ChannelCount];
 			strncpy(channel->Name, pChannelDef->name, 7);
 			channel->options = pChannelDef->options;
 			channels->settings->ChannelCount++;
-		}
-		else
-		{
-
 		}
 
 		channels->openDataCount++;

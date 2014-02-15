@@ -22,7 +22,5 @@
 
 #include <freerdp/api.h>
 
-FREERDP_API void* freerdp_channels_server_find_static_entry(const char* name, const char* entry);
-
 #endif /* FREERDP_CHANNELS_SERVER */
 

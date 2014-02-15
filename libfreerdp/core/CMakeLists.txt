@@ -77,6 +77,8 @@ set(${MODULE_PREFIX}_SRCS
 	graphics.c
 	client.c
 	client.h
+	server.c
+	server.h
 	capabilities.c
 	capabilities.h
 	certificate.c
