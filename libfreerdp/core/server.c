@@ -42,55 +42,58 @@
 #define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
-typedef struct wts_data_item
-{
-	UINT16 channelId;
-	BYTE* buffer;
-	UINT32 length;
-} wts_data_item;
-
-static void wts_data_item_free(wts_data_item* item)
-{
-	free(item->buffer);
-	free(item);
-}
-
 static rdpPeerChannel* wts_get_dvc_channel_by_id(WTSVirtualChannelManager* vcm, UINT32 ChannelId)
 {
-	LIST_ITEM* item;
+	int index;
+	int count;
+	BOOL found = FALSE;
 	rdpPeerChannel* channel = NULL;
 
-	for (item = vcm->dvc_channel_list->head; item; item = item->next)
+	ArrayList_Lock(vcm->dynamicVirtualChannels);
+
+	count = ArrayList_Count(vcm->dynamicVirtualChannels);
+
+	for (index = 0; index < count; index++)
 	{
-		channel = (rdpPeerChannel*) item->data;
+		channel = (rdpPeerChannel*) ArrayList_GetItem(vcm->dynamicVirtualChannels, index);
 
 		if (channel->channelId == ChannelId)
+		{
+			found = TRUE;
 			break;
+		}
 	}
 
-	return channel;
+	ArrayList_Unlock(vcm->dynamicVirtualChannels);
+
+	return found ? channel : NULL;
 }
 
-static void wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* buffer, UINT32 length)
+static void wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* Buffer, UINT32 Length)
 {
-	wts_data_item* item;
+	BYTE* buffer;
+	UINT32 length;
+	UINT16 channelId;
 
-	item = (wts_data_item*) malloc(sizeof(wts_data_item));
-	ZeroMemory(item, sizeof(wts_data_item));
+	length = Length;
+	buffer = (BYTE*) malloc(length);
+	CopyMemory(buffer, Buffer, length);
+	channelId = channel->channelId;
 
-	item->length = length;
-	item->buffer = malloc(length);
-	CopyMemory(item->buffer, buffer, length);
-
-	MessageQueue_Post(channel->MsgPipe->In, (void*) channel, 0, (void*) item, NULL);
+	MessageQueue_Post(channel->queue, (void*) (UINT_PTR) channelId, 0, (void*) buffer, (void*) (UINT_PTR) length);
 }
 
-static void wts_queue_send_item(rdpPeerChannel* channel, wts_data_item* item)
+static void wts_queue_send_item(rdpPeerChannel* channel, const BYTE* Buffer, UINT32 Length)
 {
-	WTSVirtualChannelManager* vcm = channel->vcm;
+	BYTE* buffer;
+	UINT32 length;
+	UINT16 channelId;
 
-	item->channelId = channel->channelId;
-	MessageQueue_Post(vcm->MsgPipe->Out, (void*) channel, 0, (void*) item, NULL);
+	buffer = Buffer;
+	length = Length;
+	channelId = channel->channelId;
+
+	MessageQueue_Post(channel->vcm->queue, (void*) (UINT_PTR) channelId, 0, (void*) buffer, (void*) (UINT_PTR) length);
 }
 
 static int wts_read_variable_uint(wStream* s, int cbLen, UINT32* val)
@@ -390,10 +393,10 @@ WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client)
 		vcm->client = client;
 		vcm->rdp = client->context->rdp;
 
-		vcm->MsgPipe = MessagePipe_New();
+		vcm->queue = MessageQueue_New(NULL);
 
 		vcm->dvc_channel_id_seq = 1;
-		vcm->dvc_channel_list = list_new();
+		vcm->dynamicVirtualChannels = ArrayList_New(TRUE);
 
 		client->ReceiveChannelData = WTSReceiveChannelData;
 	}
@@ -403,16 +406,25 @@ WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client)
 
 void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm)
 {
+	int index;
+	int count;
 	rdpPeerChannel* channel;
 
 	if (vcm)
 	{
-		while ((channel = (rdpPeerChannel*) list_dequeue(vcm->dvc_channel_list)) != NULL)
+		ArrayList_Lock(vcm->dynamicVirtualChannels);
+
+		count = ArrayList_Count(vcm->dynamicVirtualChannels);
+
+		for (index = 0; index < count; index++)
 		{
+			channel = (rdpPeerChannel*) ArrayList_GetItem(vcm->dynamicVirtualChannels, index);
 			WTSVirtualChannelClose(channel);
 		}
 
-		list_free(vcm->dvc_channel_list);
+		ArrayList_Unlock(vcm->dynamicVirtualChannels);
+
+		ArrayList_Free(vcm->dynamicVirtualChannels);
 
 		if (vcm->drdynvc_channel)
 		{
@@ -420,7 +432,7 @@ void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm)
 			vcm->drdynvc_channel = NULL;
 		}
 
-		MessagePipe_Free(vcm->MsgPipe);
+		MessageQueue_Free(vcm->queue);
 
 		free(vcm);
 	}
@@ -430,7 +442,7 @@ void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm, vo
 {
 	void* fd;
 
-	fd = GetEventWaitObject(MessageQueue_Event(vcm->MsgPipe->Out));
+	fd = GetEventWaitObject(MessageQueue_Event(vcm->queue));
 
 	if (fd)
 	{
@@ -456,7 +468,6 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 {
 	wMessage message;
 	BOOL status = TRUE;
-	wts_data_item* item;
 	rdpPeerChannel* channel;
 	UINT32 dynvc_caps;
 
@@ -475,16 +486,22 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 		}
 	}
 
-	while (MessageQueue_Peek(vcm->MsgPipe->Out, &message, TRUE))
+	while (MessageQueue_Peek(vcm->queue, &message, TRUE))
 	{
-		item = (wts_data_item*) message.wParam;
+		BYTE* buffer;
+		UINT32 length;
+		UINT16 channelId;
 
-		if (vcm->client->SendChannelData(vcm->client, item->channelId, item->buffer, item->length) == FALSE)
+		channelId = (UINT16) (UINT_PTR) message.context;
+		buffer = (BYTE*) message.wParam;
+		length = (UINT32) (UINT_PTR) message.lParam;
+
+		if (vcm->client->SendChannelData(vcm->client, channelId, buffer, length) == FALSE)
 		{
 			status = FALSE;
 		}
 
-		wts_data_item_free(item);
+		free(buffer);
 
 		if (!status)
 			break;
@@ -495,7 +512,7 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 
 HANDLE WTSVirtualChannelManagerGetEventHandle(WTSVirtualChannelManager* vcm)
 {
-	return MessageQueue_Event(vcm->MsgPipe->Out);
+	return MessageQueue_Event(vcm->queue);
 }
 
 BOOL WTSVirtualChannelManagerIsChannelJoined(WTSVirtualChannelManager* vcm, const char* name)
@@ -558,17 +575,15 @@ HANDLE WTSVirtualChannelManagerOpenEx(WTSVirtualChannelManager* vcm, LPSTR pVirt
 		channel->client = client;
 		channel->channelType = RDP_PEER_CHANNEL_TYPE_DVC;
 		channel->receiveData = Stream_New(NULL, client->settings->VirtualChannelChunkSize);
-		channel->MsgPipe = MessagePipe_New();
+		channel->queue = MessageQueue_New(NULL);
 
 		channel->channelId = vcm->dvc_channel_id_seq++;
-		list_enqueue(vcm->dvc_channel_list, channel);
+		ArrayList_Add(vcm->dynamicVirtualChannels, channel);
 
 		s = Stream_New(NULL, 64);
 		wts_write_drdynvc_create_request(s, channel->channelId, pVirtualName);
 		WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
 		Stream_Free(s, TRUE);
-
-		DEBUG_DVC("ChannelId %d.%s (total %d)", channel->channelId, pVirtualName, list_size(vcm->dvc_channel_list));
 	}
 	else
 	{
@@ -607,7 +622,7 @@ HANDLE WTSVirtualChannelManagerOpenEx(WTSVirtualChannelManager* vcm, LPSTR pVirt
 			channel->index = i;
 			channel->channelType = RDP_PEER_CHANNEL_TYPE_SVC;
 			channel->receiveData = Stream_New(NULL, client->settings->VirtualChannelChunkSize);
-			channel->MsgPipe = MessagePipe_New();
+			channel->queue = MessageQueue_New(NULL);
 
 			mcs->channels[i].handle = channel;
 		}
@@ -627,7 +642,7 @@ BOOL WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualC
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 	ZeroMemory(fds, sizeof(fds));
 
-	hEvent = MessageQueue_Event(channel->MsgPipe->In);
+	hEvent = MessageQueue_Event(channel->queue);
 
 	switch (WtsVirtualClass)
 	{
@@ -699,58 +714,54 @@ VOID WTSFreeMemory(PVOID pMemory)
 
 BOOL WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
 {
+	BYTE* buffer;
+	UINT32 length;
+	UINT16 channelId;
 	wMessage message;
-	wts_data_item* item;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 
-	if (!MessageQueue_Peek(channel->MsgPipe->In, &message, TRUE))
+	if (!MessageQueue_Peek(channel->queue, &message, TRUE))
 	{
 		*pBytesRead = 0;
 		return TRUE;
 	}
 
-	item = (wts_data_item*) message.wParam;
+	channelId = (UINT16) (UINT_PTR) message.context;
+	buffer = (BYTE*) message.wParam;
+	length = (UINT32) (UINT_PTR) message.lParam;
 
-	if (!item)
-	{
-		*pBytesRead = 0;
-		return TRUE;
-	}
+	*pBytesRead = length;
 
-	*pBytesRead = item->length;
-
-	if (item->length > BufferSize)
+	if (length > BufferSize)
 		return FALSE;
 
-	CopyMemory(Buffer, item->buffer, item->length);
-	wts_data_item_free(item);
+	CopyMemory(Buffer, buffer, length);
+	free(buffer);
 
 	return TRUE;
 }
 
 BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, PULONG pBytesWritten)
 {
-	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
-	wts_data_item* item;
 	wStream* s;
 	int cbLen;
 	int cbChId;
 	int first;
+	BYTE* buffer;
+	UINT32 length;
 	UINT32 written;
+	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 
 	if (!channel)
 		return FALSE;
 
 	if (channel->channelType == RDP_PEER_CHANNEL_TYPE_SVC)
 	{
-		item = (wts_data_item*) malloc(sizeof(wts_data_item));
-		ZeroMemory(item, sizeof(wts_data_item));
+		length = Length;
+		buffer = (BYTE*) malloc(length);
+		CopyMemory(buffer, Buffer, length);
 
-		item->buffer = malloc(Length);
-		item->length = Length;
-		CopyMemory(item->buffer, Buffer, Length);
-
-		wts_queue_send_item(channel, item);
+		wts_queue_send_item(channel, buffer, length);
 	}
 	else if (!channel->vcm->drdynvc_channel || (channel->vcm->drdynvc_state != DRDYNVC_STATE_READY))
 	{
@@ -763,11 +774,8 @@ BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, P
 
 		while (Length > 0)
 		{
-			item = (wts_data_item*) malloc(sizeof(wts_data_item));
-			ZeroMemory(item, sizeof(wts_data_item));
-
 			s = Stream_New(NULL, channel->client->settings->VirtualChannelChunkSize);
-			item->buffer = Stream_Buffer(s);
+			buffer = Stream_Buffer(s);
 
 			Stream_Seek_UINT8(s);
 			cbChId = wts_write_variable_uint(s, channel->channelId);
@@ -775,11 +783,11 @@ BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, P
 			if (first && (Length > (UINT32) Stream_GetRemainingLength(s)))
 			{
 				cbLen = wts_write_variable_uint(s, Length);
-				item->buffer[0] = (DATA_FIRST_PDU << 4) | (cbLen << 2) | cbChId;
+				buffer[0] = (DATA_FIRST_PDU << 4) | (cbLen << 2) | cbChId;
 			}
 			else
 			{
-				item->buffer[0] = (DATA_PDU << 4) | cbChId;
+				buffer[0] = (DATA_PDU << 4) | cbChId;
 			}
 
 			first = FALSE;
@@ -789,17 +797,17 @@ BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, P
 				written = Length;
 
 			Stream_Write(s, Buffer, written);
-			item->length = Stream_GetPosition(s);
+			length = Stream_GetPosition(s);
 			Stream_Free(s, FALSE);
 
 			Length -= written;
 			Buffer += written;
 
-			wts_queue_send_item(channel->vcm->drdynvc_channel, item);
+			wts_queue_send_item(channel->vcm->drdynvc_channel, buffer, length);
 		}
 	}
 
-	if (pBytesWritten != NULL)
+	if (pBytesWritten)
 		*pBytesWritten = Length;
 
 	return TRUE;
@@ -824,7 +832,7 @@ BOOL WTSVirtualChannelClose(HANDLE hChannelHandle)
 		}
 		else
 		{
-			list_remove(vcm->dvc_channel_list, channel);
+			ArrayList_Remove(vcm->dynamicVirtualChannels, channel);
 
 			if (channel->dvc_open_state == DVC_OPEN_STATE_SUCCEEDED)
 			{
@@ -838,10 +846,10 @@ BOOL WTSVirtualChannelClose(HANDLE hChannelHandle)
 		if (channel->receiveData)
 			Stream_Free(channel->receiveData, TRUE);
 
-		if (channel->MsgPipe)
+		if (channel->queue)
 		{
-			MessagePipe_Free(channel->MsgPipe);
-			channel->MsgPipe = NULL;
+			MessageQueue_Free(channel->queue);
+			channel->queue = NULL;
 		}
 
 		free(channel);

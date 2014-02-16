@@ -64,12 +64,13 @@ struct rdp_peer_channel
 {
 	WTSVirtualChannelManager* vcm;
 	freerdp_peer* client;
+
 	UINT32 channelId;
 	UINT16 channelType;
 	UINT16 index;
 
 	wStream* receiveData;
-	wMessagePipe* MsgPipe;
+	wMessageQueue* queue;
 
 	BYTE dvc_open_state;
 	UINT32 dvc_total_length;
@@ -80,12 +81,13 @@ struct WTSVirtualChannelManager
 	rdpRdp* rdp;
 	freerdp_peer* client;
 
-	wMessagePipe* MsgPipe;
+	wMessageQueue* queue;
 
 	rdpPeerChannel* drdynvc_channel;
 	BYTE drdynvc_state;
 	UINT32 dvc_channel_id_seq;
-	LIST* dvc_channel_list;
+
+	wArrayList* dynamicVirtualChannels;
 };
 
 #endif /* FREERDP_CORE_SERVER_H */
