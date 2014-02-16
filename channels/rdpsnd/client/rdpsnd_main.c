@@ -60,7 +60,7 @@ struct rdpsnd_plugin
 	HANDLE thread;
 	wStream* data_in;
 	void* InitHandle;
-	UINT32 OpenHandle;
+	DWORD OpenHandle;
 	wMessagePipe* MsgPipe;
 
 	wLog* log;
@@ -921,8 +921,8 @@ static void rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 	}
 }
 
-static void rdpsnd_virtual_channel_open_event(UINT32 openHandle, UINT32 event,
-		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+static VOID rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT event,
+		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	rdpsndPlugin* plugin;
 
@@ -979,7 +979,7 @@ static void* rdpsnd_virtual_channel_client_thread(void* arg)
 	return NULL;
 }
 
-static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, void* pData, UINT32 dataLength)
+static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
 
@@ -1090,7 +1090,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 		strcpy(rdpsnd->channelDef.name, "rdpsnd");
 
-		CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints, pEntryPoints->cbSize);
+		CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_EX));
 
 		rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");
 		

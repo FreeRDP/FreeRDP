@@ -33,20 +33,18 @@
 
 #define CHANNEL_NAME_LEN 7
 
-struct _CHANNEL_DEF
+typedef struct tagCHANNEL_DEF
 {
-	char name[8];
-	UINT32 options;
-};
+	char name[CHANNEL_NAME_LEN + 1];
+	ULONG options;
+} CHANNEL_DEF;
+typedef CHANNEL_DEF *PCHANNEL_DEF;
+typedef PCHANNEL_DEF *PPCHANNEL_DEF;
 
-typedef struct _CHANNEL_DEF CHANNEL_DEF;
-typedef CHANNEL_DEF* PCHANNEL_DEF;
-typedef CHANNEL_DEF** PPCHANNEL_DEF;
+typedef VOID (FREERDP_CC * PCHANNEL_INIT_EVENT_FN)(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength);
 
-typedef void (FREERDP_CC * PCHANNEL_INIT_EVENT_FN)(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength);
-
-typedef void (FREERDP_CC * PCHANNEL_OPEN_EVENT_FN)(UINT32 openHandle, UINT32 event,
-		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags);
+typedef VOID (FREERDP_CC * PCHANNEL_OPEN_EVENT_FN)(DWORD openHandle, UINT event,
+		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags);
 
 #define CHANNEL_RC_OK					0
 #define CHANNEL_RC_ALREADY_INITIALIZED			1
@@ -69,22 +67,22 @@ typedef void (FREERDP_CC * PCHANNEL_OPEN_EVENT_FN)(UINT32 openHandle, UINT32 eve
 
 #define VIRTUAL_CHANNEL_VERSION_WIN2000			1
 
-typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELINIT)(void** ppInitHandle, PCHANNEL_DEF pChannel,
-		int channelCount, UINT32 versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc);
+typedef UINT (FREERDP_CC * PVIRTUALCHANNELINIT)(LPVOID* ppInitHandle, PCHANNEL_DEF pChannel,
+		INT channelCount, ULONG versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc);
 
-typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELOPEN)(void* pInitHandle, UINT32* pOpenHandle,
-		char* pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc);
+typedef UINT (FREERDP_CC * PVIRTUALCHANNELOPEN)(LPVOID pInitHandle, LPDWORD pOpenHandle,
+		PCHAR pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc);
 
-typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELCLOSE)(UINT32 openHandle);
+typedef UINT (FREERDP_CC * PVIRTUALCHANNELCLOSE)(DWORD openHandle);
 
-typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELWRITE)(UINT32 openHandle, void* pData, UINT32 dataLength, void* pUserData);
+typedef UINT (FREERDP_CC * PVIRTUALCHANNELWRITE)(DWORD openHandle, LPVOID pData, ULONG dataLength, LPVOID pUserData);
 
-typedef UINT32 (FREERDP_CC * PVIRTUALCHANNELEVENTPUSH)(UINT32 openHandle, wMessage* event);
+typedef UINT (FREERDP_CC * PVIRTUALCHANNELEVENTPUSH)(DWORD openHandle, wMessage* event);
 
 struct _CHANNEL_ENTRY_POINTS
 {
-	UINT32 cbSize;
-	UINT32 protocolVersion;
+	DWORD cbSize;
+	DWORD protocolVersion;
 	PVIRTUALCHANNELINIT  pVirtualChannelInit;
 	PVIRTUALCHANNELOPEN  pVirtualChannelOpen;
 	PVIRTUALCHANNELCLOSE pVirtualChannelClose;

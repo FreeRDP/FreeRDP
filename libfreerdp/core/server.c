@@ -83,7 +83,7 @@ static void wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* Buffer, 
 	MessageQueue_Post(channel->queue, (void*) (UINT_PTR) channelId, 0, (void*) buffer, (void*) (UINT_PTR) length);
 }
 
-static void wts_queue_send_item(rdpPeerChannel* channel, const BYTE* Buffer, UINT32 Length)
+static void wts_queue_send_item(rdpPeerChannel* channel, BYTE* Buffer, UINT32 Length)
 {
 	BYTE* buffer;
 	UINT32 length;

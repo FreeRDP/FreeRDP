@@ -43,7 +43,7 @@ struct rdpdr_plugin
 	HANDLE thread;
 	wStream* data_in;
 	void* InitHandle;
-	UINT32 OpenHandle;
+	DWORD OpenHandle;
 	wMessagePipe* MsgPipe;
 
 	DEVMAN* devman;

@@ -500,12 +500,12 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	MessagePipe_PostQuit(channels->MsgPipe, 0);
 }
 
-UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
-	int channelCount, UINT32 versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc)
+UINT FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_DEF pChannel,
+	INT channelCount, ULONG versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc)
 {
 	int index;
 	void* pInterface;
-	UINT32 OpenHandle;
+	DWORD OpenHandle;
 	rdpChannel* channel;
 	rdpChannels* channels;
 	rdpSettings* settings;
@@ -591,8 +591,8 @@ UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
 	return CHANNEL_RC_OK;
 }
 
-UINT32 FreeRDP_VirtualChannelOpen(void* pInitHandle, UINT32* pOpenHandle,
-	char* pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc)
+UINT FreeRDP_VirtualChannelOpen(LPVOID pInitHandle, LPDWORD pOpenHandle,
+	PCHAR pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc)
 {
 	void* pInterface;
 	rdpChannels* channels;
@@ -628,7 +628,7 @@ UINT32 FreeRDP_VirtualChannelOpen(void* pInitHandle, UINT32* pOpenHandle,
 	return CHANNEL_RC_OK;
 }
 
-UINT32 FreeRDP_VirtualChannelClose(UINT32 openHandle)
+UINT FreeRDP_VirtualChannelClose(DWORD openHandle)
 {
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 
@@ -645,7 +645,7 @@ UINT32 FreeRDP_VirtualChannelClose(UINT32 openHandle)
 	return CHANNEL_RC_OK;
 }
 
-UINT32 FreeRDP_VirtualChannelWrite(UINT32 openHandle, void* pData, UINT32 dataLength, void* pUserData)
+UINT FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData, ULONG dataLength, LPVOID pUserData)
 {
 	rdpChannels* channels;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
@@ -688,7 +688,7 @@ UINT32 FreeRDP_VirtualChannelWrite(UINT32 openHandle, void* pData, UINT32 dataLe
 	return CHANNEL_RC_OK;
 }
 
-UINT32 FreeRDP_VirtualChannelEventPush(UINT32 openHandle, wMessage* event)
+UINT FreeRDP_VirtualChannelEventPush(DWORD openHandle, wMessage* event)
 {
 	rdpChannels* channels;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
@@ -727,7 +727,7 @@ UINT32 FreeRDP_VirtualChannelEventPush(UINT32 openHandle, wMessage* event)
 int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, void* entry, void* data)
 {
 	int status;
-	CHANNEL_ENTRY_POINTS_EX ep;
+	CHANNEL_ENTRY_POINTS_EX EntryPoints;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 
 	if (channels->clientDataCount + 1 >= CHANNEL_MAX_COUNT)
@@ -739,18 +739,20 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 	pChannelClientData = &channels->clientDataList[channels->clientDataCount];
 	pChannelClientData->entry = (PVIRTUALCHANNELENTRY) entry;
 
-	ep.cbSize = sizeof(ep);
-	ep.protocolVersion = VIRTUAL_CHANNEL_VERSION_WIN2000;
-	ep.pVirtualChannelInit = FreeRDP_VirtualChannelInit;
-	ep.pVirtualChannelOpen = FreeRDP_VirtualChannelOpen;
-	ep.pVirtualChannelClose = FreeRDP_VirtualChannelClose;
-	ep.pVirtualChannelWrite = FreeRDP_VirtualChannelWrite;
+	ZeroMemory(&EntryPoints, sizeof(CHANNEL_ENTRY_POINTS_EX));
+
+	EntryPoints.cbSize = sizeof(EntryPoints);
+	EntryPoints.protocolVersion = VIRTUAL_CHANNEL_VERSION_WIN2000;
+	EntryPoints.pVirtualChannelInit = FreeRDP_VirtualChannelInit;
+	EntryPoints.pVirtualChannelOpen = FreeRDP_VirtualChannelOpen;
+	EntryPoints.pVirtualChannelClose = FreeRDP_VirtualChannelClose;
+	EntryPoints.pVirtualChannelWrite = FreeRDP_VirtualChannelWrite;
 
 	g_pInterface = NULL;
-	ep.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER;
-	ep.ppInterface = &g_pInterface;
-	ep.pExtendedData = data;
-	ep.pVirtualChannelEventPush = FreeRDP_VirtualChannelEventPush;
+	EntryPoints.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER;
+	EntryPoints.ppInterface = &g_pInterface;
+	EntryPoints.pExtendedData = data;
+	EntryPoints.pVirtualChannelEventPush = FreeRDP_VirtualChannelEventPush;
 
 	/* enable VirtualChannelInit */
 	channels->can_call_init = TRUE;
@@ -759,7 +761,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 	EnterCriticalSection(&g_channels_lock);
 
 	g_ChannelInitData.channels = channels;
-	status = pChannelClientData->entry((PCHANNEL_ENTRY_POINTS) &ep);
+	status = pChannelClientData->entry((PCHANNEL_ENTRY_POINTS) &EntryPoints);
 
 	LeaveCriticalSection(&g_channels_lock);
 

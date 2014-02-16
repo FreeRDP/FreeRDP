@@ -37,6 +37,7 @@
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+
 //#include <winpr/wtsapi.h>
 
 typedef enum _WTS_VIRTUAL_CLASS

@@ -410,8 +410,8 @@ static void rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 	}
 }
 
-static void rdpdr_virtual_channel_open_event(UINT32 openHandle, UINT32 event,
-		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+static VOID rdpdr_virtual_channel_open_event(DWORD openHandle, UINT event,
+		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	rdpdrPlugin* rdpdr;
 
@@ -468,7 +468,7 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 	return NULL;
 }
 
-static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, void* pData, UINT32 dataLength)
+static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
 
@@ -549,8 +549,10 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	rdpdrPlugin* rdpdr;
 
-	rdpdr = (rdpdrPlugin*) malloc(sizeof(rdpdrPlugin));
-	ZeroMemory(rdpdr, sizeof(rdpdrPlugin));
+	rdpdr = (rdpdrPlugin*) calloc(1, sizeof(rdpdrPlugin));
+
+	if (!rdpdr)
+		return -1;
 
 	rdpdr->channelDef.options =
 			CHANNEL_OPTION_INITIALIZED |
@@ -559,7 +561,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	strcpy(rdpdr->channelDef.name, "rdpdr");
 
-	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, pEntryPoints->cbSize);
+	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_EX));
 
 	rdpdr->channelEntryPoints.pVirtualChannelInit(&rdpdr->InitHandle,
 		&rdpdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpdr_virtual_channel_init_event);

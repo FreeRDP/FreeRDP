@@ -132,7 +132,7 @@ static void svc_plugin_process_event(rdpSvcPlugin* plugin, wMessage* event_in)
 	MessageQueue_Post(plugin->MsgPipe->In, NULL, 1, (void*) event_in, NULL);
 }
 
-static void svc_plugin_open_event(UINT32 openHandle, UINT32 event, void* pData, UINT32 dataLength,
+static VOID svc_plugin_open_event(DWORD openHandle, UINT event, LPVOID pData, UINT32 dataLength,
 	UINT32 totalLength, UINT32 dataFlags)
 {
 	rdpSvcPlugin* plugin;
@@ -207,7 +207,7 @@ static void* svc_plugin_thread_func(void* arg)
 	return 0;
 }
 
-static void svc_plugin_process_connected(rdpSvcPlugin* plugin, void* pData, UINT32 dataLength)
+static void svc_plugin_process_connected(rdpSvcPlugin* plugin, LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
 
@@ -285,7 +285,7 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 	 * VirtualChannelInit at a time. So this should be safe.
 	 */
 
-	CopyMemory(&(plugin->channel_entry_points), pEntryPoints, pEntryPoints->cbSize);
+	CopyMemory(&(plugin->channel_entry_points), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_EX));
 
 	plugin->channel_entry_points.pVirtualChannelInit(&(plugin->InitHandle),
 		&(plugin->channel_def), 1, VIRTUAL_CHANNEL_VERSION_WIN2000, svc_plugin_init_event);
