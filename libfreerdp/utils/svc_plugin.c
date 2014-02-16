@@ -285,7 +285,7 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 	 * VirtualChannelInit at a time. So this should be safe.
 	 */
 
-	CopyMemory(&(plugin->channel_entry_points), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_EX));
+	CopyMemory(&(plugin->channel_entry_points), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 
 	plugin->channel_entry_points.pVirtualChannelInit(&(plugin->InitHandle),
 		&(plugin->channel_def), 1, VIRTUAL_CHANNEL_VERSION_WIN2000, svc_plugin_init_event);

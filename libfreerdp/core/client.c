@@ -727,7 +727,7 @@ UINT FreeRDP_VirtualChannelEventPush(DWORD openHandle, wMessage* event)
 int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, void* entry, void* data)
 {
 	int status;
-	CHANNEL_ENTRY_POINTS_EX EntryPoints;
+	CHANNEL_ENTRY_POINTS_FREERDP EntryPoints;
 	CHANNEL_CLIENT_DATA* pChannelClientData;
 
 	if (channels->clientDataCount + 1 >= CHANNEL_MAX_COUNT)
@@ -739,7 +739,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 	pChannelClientData = &channels->clientDataList[channels->clientDataCount];
 	pChannelClientData->entry = (PVIRTUALCHANNELENTRY) entry;
 
-	ZeroMemory(&EntryPoints, sizeof(CHANNEL_ENTRY_POINTS_EX));
+	ZeroMemory(&EntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 
 	EntryPoints.cbSize = sizeof(EntryPoints);
 	EntryPoints.protocolVersion = VIRTUAL_CHANNEL_VERSION_WIN2000;

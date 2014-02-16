@@ -411,7 +411,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	drdynvcPlugin* _p;
 	DrdynvcClientContext* context;
-	CHANNEL_ENTRY_POINTS_EX* pEntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 
 	_p = (drdynvcPlugin*) malloc(sizeof(drdynvcPlugin));
 	ZeroMemory(_p, sizeof(drdynvcPlugin));
@@ -428,9 +428,9 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	_p->plugin.event_callback = drdynvc_process_event;
 	_p->plugin.terminate_callback = drdynvc_process_terminate;
 
-	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_EX*) pEntryPoints;
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
 
-	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_EX)) &&
+	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
 			(pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
 		context = (DrdynvcClientContext*) malloc(sizeof(DrdynvcClientContext));

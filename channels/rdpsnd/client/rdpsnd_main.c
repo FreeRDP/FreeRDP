@@ -55,7 +55,7 @@
 struct rdpsnd_plugin
 {
 	CHANNEL_DEF channelDef;
-	CHANNEL_ENTRY_POINTS_EX channelEntryPoints;
+	CHANNEL_ENTRY_POINTS_FREERDP channelEntryPoints;
 
 	HANDLE thread;
 	wStream* data_in;
@@ -1090,7 +1090,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 		strcpy(rdpsnd->channelDef.name, "rdpsnd");
 
-		CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_EX));
+		CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 
 		rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");
 		

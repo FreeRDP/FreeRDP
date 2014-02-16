@@ -468,7 +468,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	cliprdrPlugin* cliprdr;
 	CliprdrClientContext* context;
-	CHANNEL_ENTRY_POINTS_EX* pEntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 
 	cliprdr = (cliprdrPlugin*) calloc(1, sizeof(cliprdrPlugin));
 
@@ -485,9 +485,9 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	cliprdr->plugin.event_callback = cliprdr_process_event;
 	cliprdr->plugin.terminate_callback = cliprdr_process_terminate;
 
-	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_EX*) pEntryPoints;
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
 
-	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_EX)) &&
+	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
 			(pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
 		context = (CliprdrClientContext*) calloc(1, sizeof(CliprdrClientContext));
