@@ -110,7 +110,7 @@ const RECTANGLE_16 *region16_rects(const REGION16 *region, int *nbRects)
 	return (RECTANGLE_16 *)(data + 1);
 }
 
-static inline RECTANGLE_16 *region16_rects_noconst(REGION16 *region)
+static INLINE RECTANGLE_16 *region16_rects_noconst(REGION16 *region)
 {
 	REGION16_DATA *data;
 
@@ -168,7 +168,7 @@ void region16_clear(REGION16 *region)
 	ZeroMemory(&region->extents, sizeof(region->extents));
 }
 
-static inline REGION16_DATA *allocateRegion(long nbItems)
+static INLINE REGION16_DATA *allocateRegion(long nbItems)
 {
 	long allocSize = sizeof(REGION16_DATA) + nbItems * sizeof(RECTANGLE_16);
 	REGION16_DATA *ret = (REGION16_DATA *)malloc(allocSize);
@@ -647,12 +647,13 @@ BOOL region16_union_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 
 }
 
 
-BOOL region16_intersects_rect(const REGION16 *src, const RECTANGLE_16 *arg2) {
+BOOL region16_intersects_rect(const REGION16 *src, const RECTANGLE_16 *arg2)
+{
+	const RECTANGLE_16 *rect, *endPtr, *srcExtents;
+	int nbRects;
+
 	assert(src);
 	assert(src->data);
-
-	const RECTANGLE_16 *rect, *endPtr, *srcExtents;;
-	int nbRects;
 
 	rect = region16_rects(src, &nbRects);
 	if (!nbRects)
@@ -678,14 +679,14 @@ BOOL region16_intersects_rect(const REGION16 *src, const RECTANGLE_16 *arg2) {
 
 BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 *rect)
 {
-	assert(src);
-	assert(src->data);
-
 	REGION16_DATA *newItems;
 	const RECTANGLE_16 *srcPtr, *endPtr, *srcExtents;
 	RECTANGLE_16 *dstPtr;
 	int nbRects, usedRects;
 	RECTANGLE_16 common, newExtents;
+
+	assert(src);
+	assert(src->data);
 
 	srcPtr = region16_rects(src, &nbRects);
 	if (!nbRects)
