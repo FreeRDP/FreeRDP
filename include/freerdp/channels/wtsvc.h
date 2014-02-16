@@ -83,8 +83,6 @@ FREERDP_API BOOL WTSVirtualChannelManagerIsChannelJoined(WTSVirtualChannelManage
  * can be opened from any thread.
  */
 
-// WINPR_API HANDLE WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags);
-
 WINPR_API HANDLE WTSVirtualChannelManagerOpenEx(WTSVirtualChannelManager* vcm, LPSTR pVirtualName, DWORD flags);
 
 /**
