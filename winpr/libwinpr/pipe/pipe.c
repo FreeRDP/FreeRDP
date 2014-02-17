@@ -170,6 +170,16 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
 
+	if (dwOpenMode & FILE_FLAG_OVERLAPPED)
+	{
+#if 0
+		int flags = fcntl(pNamedPipe->serverfd, F_GETFL);
+
+		if (flags != -1)
+			fcntl(pNamedPipe->serverfd, F_SETFL, flags | O_NONBLOCK);
+#endif
+	}
+
 	return hNamedPipe;
 }
 
