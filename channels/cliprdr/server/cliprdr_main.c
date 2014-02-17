@@ -468,7 +468,7 @@ static void* cliprdr_server_thread(void* arg)
 
 static int cliprdr_server_start(CliprdrServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelManagerOpenEx(context->vcm, "cliprdr", 0);
+	context->priv->ChannelHandle = WTSVirtualChannelOpen((HANDLE) context->vcm, WTS_CURRENT_SESSION, "cliprdr");
 
 	if (!context->priv->ChannelHandle)
 		return -1;

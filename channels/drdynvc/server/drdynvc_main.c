@@ -86,7 +86,7 @@ static void* drdynvc_server_thread(void* arg)
 
 static int drdynvc_server_start(DrdynvcServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpdr", 0);
+	context->priv->ChannelHandle = WTSVirtualChannelOpen((HANDLE) context->vcm, WTS_CURRENT_SESSION, "drdynvc");
 
 	if (!context->priv->ChannelHandle)
 		return -1;

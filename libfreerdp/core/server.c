@@ -476,7 +476,7 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 		/* Initialize drdynvc channel once and only once. */
 		vcm->drdynvc_state = DRDYNVC_STATE_INITIALIZED;
 
-		channel = WTSVirtualChannelManagerOpenEx(vcm, "drdynvc", 0);
+		channel = (rdpPeerChannel*) WTSVirtualChannelOpen((HANDLE) vcm, WTS_CURRENT_SESSION, "drdynvc");
 
 		if (channel)
 		{
@@ -673,7 +673,39 @@ HANDLE FreeRDP_WTSOpenServerW(LPWSTR pServerName)
 
 HANDLE FreeRDP_WTSOpenServerA(LPSTR pServerName)
 {
-	return INVALID_HANDLE_VALUE;
+	rdpContext* context;
+	freerdp_peer* client;
+	WTSVirtualChannelManager* vcm;
+	HANDLE hServer = INVALID_HANDLE_VALUE;
+
+	context = (rdpContext*) pServerName;
+
+	if (!context)
+		return INVALID_HANDLE_VALUE;
+
+	client = context->peer;
+
+	if (!client)
+		return INVALID_HANDLE_VALUE;
+
+	vcm = (WTSVirtualChannelManager*) calloc(1, sizeof(WTSVirtualChannelManager));
+
+	if (vcm)
+	{
+		vcm->client = client;
+		vcm->rdp = context->rdp;
+
+		vcm->queue = MessageQueue_New(NULL);
+
+		vcm->dvc_channel_id_seq = 1;
+		vcm->dynamicVirtualChannels = ArrayList_New(TRUE);
+
+		client->ReceiveChannelData = WTSReceiveChannelData;
+
+		hServer = (HANDLE) vcm;
+	}
+
+	return hServer;
 }
 
 HANDLE FreeRDP_WTSOpenServerExW(LPWSTR pServerName)
@@ -683,12 +715,44 @@ HANDLE FreeRDP_WTSOpenServerExW(LPWSTR pServerName)
 
 HANDLE FreeRDP_WTSOpenServerExA(LPSTR pServerName)
 {
-	return INVALID_HANDLE_VALUE;
+	return FreeRDP_WTSOpenServerA(pServerName);
 }
 
 VOID FreeRDP_WTSCloseServer(HANDLE hServer)
 {
-	return;
+	int index;
+	int count;
+	rdpPeerChannel* channel;
+	WTSVirtualChannelManager* vcm;
+
+	vcm = (WTSVirtualChannelManager*) hServer;
+
+	if (vcm)
+	{
+		ArrayList_Lock(vcm->dynamicVirtualChannels);
+
+		count = ArrayList_Count(vcm->dynamicVirtualChannels);
+
+		for (index = 0; index < count; index++)
+		{
+			channel = (rdpPeerChannel*) ArrayList_GetItem(vcm->dynamicVirtualChannels, index);
+			WTSVirtualChannelClose(channel);
+		}
+
+		ArrayList_Unlock(vcm->dynamicVirtualChannels);
+
+		ArrayList_Free(vcm->dynamicVirtualChannels);
+
+		if (vcm->drdynvc_channel)
+		{
+			WTSVirtualChannelClose(vcm->drdynvc_channel);
+			vcm->drdynvc_channel = NULL;
+		}
+
+		MessageQueue_Free(vcm->queue);
+
+		free(vcm);
+	}
 }
 
 BOOL FreeRDP_WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount)
@@ -790,12 +854,80 @@ BOOL FreeRDP_WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFl
 
 HANDLE FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
 {
-	return INVALID_HANDLE_VALUE;
+	int index;
+	int length;
+	rdpMcs* mcs;
+	BOOL joined = FALSE;
+	freerdp_peer* client;
+	rdpPeerChannel* channel;
+	WTSVirtualChannelManager* vcm;
+	HANDLE hChannelHandle = NULL;
+
+	vcm = (WTSVirtualChannelManager*) hServer;
+
+	if (!vcm)
+		return NULL;
+
+	client = vcm->client;
+	mcs = client->context->rdp->mcs;
+
+	length = strlen(pVirtualName);
+
+	if (length > 8)
+	{
+		SetLastError(ERROR_NOT_FOUND);
+		return NULL;
+	}
+
+	for (index = 0; index < mcs->channelCount; index++)
+	{
+		if (mcs->channels[index].joined && (strncmp(mcs->channels[index].Name, pVirtualName, length) == 0))
+		{
+			joined = TRUE;
+			break;
+		}
+	}
+
+	if (!joined)
+	{
+		SetLastError(ERROR_NOT_FOUND);
+		return NULL;
+	}
+
+	channel = (rdpPeerChannel*) mcs->channels[index].handle;
+
+	if (!channel)
+	{
+		channel = (rdpPeerChannel*) calloc(1, sizeof(rdpPeerChannel));
+
+		channel->vcm = vcm;
+		channel->client = client;
+		channel->channelId = mcs->channels[index].ChannelId;
+		channel->index = index;
+		channel->channelType = RDP_PEER_CHANNEL_TYPE_SVC;
+		channel->receiveData = Stream_New(NULL, client->settings->VirtualChannelChunkSize);
+		channel->queue = MessageQueue_New(NULL);
+
+		mcs->channels[index].handle = channel;
+	}
+
+	hChannelHandle = (HANDLE) channel;
+
+	return hChannelHandle;
 }
 
 HANDLE FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
 {
-	return INVALID_HANDLE_VALUE;
+	if (!(flags & WTS_CHANNEL_OPTION_DYNAMIC))
+	{
+
+	}
+	else
+	{
+
+	}
+
+	return NULL;
 }
 
 BOOL FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
