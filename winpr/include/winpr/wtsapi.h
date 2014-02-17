@@ -1266,7 +1266,7 @@ struct _WtsApiFunctionTable
 	WTS_SET_USER_CONFIG_FN_W SetUserConfigW;
 	WTS_SET_USER_CONFIG_FN_A SetUserConfigA;
 	WTS_SEND_MESSAGE_FN_W SendMessageW;
-	WTS_SEND_MESSAGE_FN_A SendMessageWA;
+	WTS_SEND_MESSAGE_FN_A SendMessageA;
 	WTS_DISCONNECT_SESSION_FN DisconnectSession;
 	WTS_LOGOFF_SESSION_FN LogoffSession;
 	WTS_SHUTDOWN_SYSTEM_FN ShutdownSystem;
@@ -1305,6 +1305,16 @@ struct _WtsApiFunctionTable
 };
 typedef struct _WtsApiFunctionTable WtsApiFunctionTable;
 typedef WtsApiFunctionTable* PWtsApiFunctionTable;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WINPR_WTSAPI_H */
 

@@ -31,494 +31,530 @@
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa383464/
  */
 
+static PWtsApiFunctionTable g_WtsApi;
+
 #ifndef _WIN32
 
 #include "wtsrpc_c.h"
 
 BOOL WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
-	return RpcStartRemoteControlSession(NULL, pTargetServerName, TargetLogonId, HotkeyVk, HotkeyModifiers);
+	if (!g_WtsApi || !g_WtsApi->StartRemoteControlSessionW)
+		return FALSE;
+
+	return g_WtsApi->StartRemoteControlSessionW(pTargetServerName, TargetLogonId, HotkeyVk, HotkeyModifiers);
 }
 
 BOOL WTSStartRemoteControlSessionA(LPSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->StartRemoteControlSessionA)
+		return FALSE;
+
+	return g_WtsApi->StartRemoteControlSessionA(pTargetServerName, TargetLogonId, HotkeyVk, HotkeyModifiers);
 }
 
 BOOL WTSStopRemoteControlSession(ULONG LogonId)
 {
-	return RpcStopRemoteControlSession(NULL, LogonId);
+	if (!g_WtsApi || !g_WtsApi->StopRemoteControlSession)
+		return FALSE;
+
+	return g_WtsApi->StopRemoteControlSession(LogonId);
 }
 
 BOOL WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId, PWSTR pPassword, BOOL bWait)
 {
-	return RpcConnectSession(NULL, LogonId, TargetLogonId, pPassword, bWait);
+	if (!g_WtsApi || !g_WtsApi->ConnectSessionW)
+		return FALSE;
+
+	return g_WtsApi->ConnectSessionW(LogonId, TargetLogonId, pPassword, bWait);
 }
 
 BOOL WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId, PSTR pPassword, BOOL bWait)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->ConnectSessionA)
+		return FALSE;
+
+	return g_WtsApi->ConnectSessionA(LogonId, TargetLogonId, pPassword, bWait);
 }
 
 BOOL WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOW* ppServerInfo, DWORD* pCount)
 {
-	return RpcEnumerateServers(NULL, pDomainName, Reserved, Version, ppServerInfo, pCount);
+	if (!g_WtsApi || !g_WtsApi->EnumerateServersW)
+		return FALSE;
+
+	return g_WtsApi->EnumerateServersW(pDomainName, Reserved, Version, ppServerInfo, pCount);
 }
 
 BOOL WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOA* ppServerInfo, DWORD* pCount)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->EnumerateServersA)
+		return FALSE;
+
+	return g_WtsApi->EnumerateServersA(pDomainName, Reserved, Version, ppServerInfo, pCount);
 }
 
 HANDLE WTSOpenServerW(LPWSTR pServerName)
 {
-	return RpcOpenServer(NULL, pServerName);
+	if (!g_WtsApi || !g_WtsApi->OpenServerW)
+		return FALSE;
+
+	return g_WtsApi->OpenServerW(pServerName);
 }
 
 HANDLE WTSOpenServerA(LPSTR pServerName)
 {
-	return NULL;
+	if (!g_WtsApi || !g_WtsApi->OpenServerA)
+		return FALSE;
+
+	return g_WtsApi->OpenServerA(pServerName);
 }
 
 HANDLE WTSOpenServerExW(LPWSTR pServerName)
 {
-	return RpcOpenServerEx(NULL, pServerName);
+	if (!g_WtsApi || !g_WtsApi->OpenServerExW)
+		return FALSE;
+
+	return g_WtsApi->OpenServerExW(pServerName);
 }
 
 HANDLE WTSOpenServerExA(LPSTR pServerName)
 {
-	return NULL;
+	if (!g_WtsApi || !g_WtsApi->OpenServerExA)
+		return FALSE;
+
+	return g_WtsApi->OpenServerExA(pServerName);
 }
 
 VOID WTSCloseServer(HANDLE hServer)
 {
-	RpcCloseServer(NULL, hServer);
+	if (!g_WtsApi || !g_WtsApi->CloseServer)
+		return;
+
+	g_WtsApi->CloseServer(hServer);
 }
 
 BOOL WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount)
 {
-	return RpcEnumerateSessions(NULL, hServer, Reserved, Version, ppSessionInfo, pCount);
+	if (!g_WtsApi || !g_WtsApi->EnumerateSessionsW)
+		return FALSE;
+
+	return g_WtsApi->EnumerateSessionsW(hServer, Reserved, Version, ppSessionInfo, pCount);
 }
 
 BOOL WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOA* ppSessionInfo, DWORD* pCount)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->EnumerateSessionsA)
+		return FALSE;
+
+	return g_WtsApi->EnumerateSessionsA(hServer, Reserved, Version, ppSessionInfo, pCount);
 }
 
 BOOL WTSEnumerateSessionsExW(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1W* ppSessionInfo, DWORD* pCount)
 {
-	return RpcEnumerateSessionsEx(NULL, hServer, pLevel, Filter, ppSessionInfo, pCount);
+	if (!g_WtsApi || !g_WtsApi->EnumerateSessionsExW)
+		return FALSE;
+
+	return g_WtsApi->EnumerateSessionsExW(hServer, pLevel, Filter, ppSessionInfo, pCount);
 }
 
 BOOL WTSEnumerateSessionsExA(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1A* ppSessionInfo, DWORD* pCount)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->EnumerateSessionsExA)
+		return FALSE;
+
+	return g_WtsApi->EnumerateSessionsExA(hServer, pLevel, Filter, ppSessionInfo, pCount);
 }
 
 BOOL WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOW* ppProcessInfo, DWORD* pCount)
 {
-	return RpcEnumerateProcesses(NULL, hServer, Reserved, Version, ppProcessInfo, pCount);
+	if (!g_WtsApi || !g_WtsApi->EnumerateProcessesW)
+		return FALSE;
+
+	return g_WtsApi->EnumerateProcessesW(hServer, Reserved, Version, ppProcessInfo, pCount);
 }
 
 BOOL WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOA* ppProcessInfo, DWORD* pCount)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->EnumerateProcessesA)
+		return FALSE;
+
+	return g_WtsApi->EnumerateProcessesA(hServer, Reserved, Version, ppProcessInfo, pCount);
 }
 
 BOOL WTSTerminateProcess(HANDLE hServer, DWORD ProcessId, DWORD ExitCode)
 {
-	return RpcTerminateProcess(NULL, hServer, ProcessId, ExitCode);
+	if (!g_WtsApi || !g_WtsApi->TerminateProcess)
+		return FALSE;
+
+	return g_WtsApi->TerminateProcess(hServer, ProcessId, ExitCode);
 }
 
 BOOL WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPWSTR* ppBuffer, DWORD* pBytesReturned)
 {
-	return RpcQuerySessionInformation(NULL, hServer, SessionId, WTSInfoClass, ppBuffer, pBytesReturned);
+	if (!g_WtsApi || !g_WtsApi->QuerySessionInformationW)
+		return FALSE;
+
+	return g_WtsApi->QuerySessionInformationW(hServer, SessionId, WTSInfoClass, ppBuffer, pBytesReturned);
 }
 
 BOOL WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPSTR* ppBuffer, DWORD* pBytesReturned)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->QuerySessionInformationA)
+		return FALSE;
+
+	return g_WtsApi->QuerySessionInformationA(hServer, SessionId, WTSInfoClass, ppBuffer, pBytesReturned);
 }
 
 BOOL WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR* ppBuffer, DWORD* pBytesReturned)
 {
-	return RpcQueryUserConfig(NULL, pServerName, pUserName, WTSConfigClass, ppBuffer, pBytesReturned);
+	if (!g_WtsApi || !g_WtsApi->QueryUserConfigW)
+		return FALSE;
+
+	return g_WtsApi->QueryUserConfigW(pServerName, pUserName, WTSConfigClass, ppBuffer, pBytesReturned);
 }
 
 BOOL WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR* ppBuffer, DWORD* pBytesReturned)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->QueryUserConfigA)
+		return FALSE;
+
+	return g_WtsApi->QueryUserConfigA(pServerName, pUserName, WTSConfigClass, ppBuffer, pBytesReturned);
 }
 
 BOOL WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer, DWORD DataLength)
 {
-	return RpcSetUserConfig(NULL, pServerName, pUserName, WTSConfigClass, pBuffer, DataLength);
+	if (!g_WtsApi || !g_WtsApi->SetUserConfigW)
+		return FALSE;
+
+	return g_WtsApi->SetUserConfigW(pServerName, pUserName, WTSConfigClass, pBuffer, DataLength);
 }
 
 BOOL WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer, DWORD DataLength)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->SetUserConfigA)
+		return FALSE;
+
+	return g_WtsApi->SetUserConfigA(pServerName, pUserName, WTSConfigClass, pBuffer, DataLength);
 }
 
 BOOL WTSSendMessageW(HANDLE hServer, DWORD SessionId, LPWSTR pTitle, DWORD TitleLength,
 		LPWSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
 {
-	return RpcSendMessage(NULL, hServer, SessionId, pTitle, TitleLength,
+	if (!g_WtsApi || !g_WtsApi->SendMessageW)
+		return FALSE;
+
+	return g_WtsApi->SendMessageW(hServer, SessionId, pTitle, TitleLength,
 			pMessage, MessageLength, Style, Timeout, pResponse, bWait);
 }
 
 BOOL WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle, DWORD TitleLength,
 		LPSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->SendMessageA)
+		return FALSE;
+
+	return g_WtsApi->SendMessageA(hServer, SessionId, pTitle, TitleLength,
+			pMessage, MessageLength, Style, Timeout, pResponse, bWait);
 }
 
 BOOL WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
 {
-	return RpcDisconnectSession(NULL, hServer, SessionId, bWait);
+	if (!g_WtsApi || !g_WtsApi->DisconnectSession)
+		return FALSE;
+
+	return g_WtsApi->DisconnectSession(hServer, SessionId, bWait);
 }
 
 BOOL WTSLogoffSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
 {
-	return RpcLogoffSession(NULL, hServer, SessionId, bWait);
+	if (!g_WtsApi || !g_WtsApi->LogoffSession)
+		return FALSE;
+
+	return g_WtsApi->LogoffSession(hServer, SessionId, bWait);
 }
 
 BOOL WTSShutdownSystem(HANDLE hServer, DWORD ShutdownFlag)
 {
-	return RpcShutdownSystem(NULL, hServer, ShutdownFlag);
+	if (!g_WtsApi || !g_WtsApi->ShutdownSystem)
+		return FALSE;
+
+	return g_WtsApi->ShutdownSystem(hServer, ShutdownFlag);
 }
 
 BOOL WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->WaitSystemEvent)
+		return FALSE;
+
+	return g_WtsApi->WaitSystemEvent(hServer, EventMask, pEventFlags);
 }
 
 HANDLE WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
 {
-	HANDLE handle = NULL;
+	if (!g_WtsApi || !g_WtsApi->VirtualChannelOpen)
+		return FALSE;
 
-	if (hServer != WTS_CURRENT_SERVER_HANDLE)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return NULL;
-	}
-
-	return handle;
+	return g_WtsApi->VirtualChannelOpen(hServer, SessionId, pVirtualName);
 }
 
 HANDLE WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
 {
-	HANDLE handle = NULL;
+	if (!g_WtsApi || !g_WtsApi->VirtualChannelOpenEx)
+		return FALSE;
 
-	if (!flags)
-		handle = WTSVirtualChannelOpen(WTS_CURRENT_SERVER_HANDLE, SessionId, pVirtualName);
-
-	return handle;
+	return g_WtsApi->VirtualChannelOpenEx(SessionId, pVirtualName, flags);
 }
 
 BOOL WTSVirtualChannelClose(HANDLE hChannelHandle)
 {
-	if (!hChannelHandle || (hChannelHandle == INVALID_HANDLE_VALUE))
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
+	if (!g_WtsApi || !g_WtsApi->VirtualChannelClose)
 		return FALSE;
-	}
 
-	/* TODO: properly close handle */
-
-	return TRUE;
+	return g_WtsApi->VirtualChannelClose(hChannelHandle);
 }
 
 BOOL WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
 {
-	OVERLAPPED overlapped;
-
-	if (!hChannelHandle || (hChannelHandle == INVALID_HANDLE_VALUE))
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
-
-	overlapped.hEvent = 0;
-	overlapped.Offset = 0;
-	overlapped.OffsetHigh = 0;
-
-	if (ReadFile(hChannelHandle, Buffer, BufferSize, pBytesRead, &overlapped))
-		return TRUE;
-
-	if (GetLastError() != ERROR_IO_PENDING)
+	if (!g_WtsApi || !g_WtsApi->VirtualChannelRead)
 		return FALSE;
 
-	if (!TimeOut)
-	{
-		CancelIo(hChannelHandle);
-		*pBytesRead = 0;
-		return TRUE;
-	}
-
-	if (WaitForSingleObject(hChannelHandle, TimeOut) == WAIT_TIMEOUT)
-	{
-		CancelIo(hChannelHandle);
-		SetLastError(ERROR_IO_INCOMPLETE);
-		return FALSE;
-	}
-
-	return GetOverlappedResult(hChannelHandle, &overlapped, pBytesRead, 0);
+	return g_WtsApi->VirtualChannelRead(hChannelHandle, TimeOut, Buffer, BufferSize, pBytesRead);
 }
 
 BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, PULONG pBytesWritten)
 {
-	OVERLAPPED overlapped;
-
-	if (!hChannelHandle || (hChannelHandle == INVALID_HANDLE_VALUE))
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
+	if (!g_WtsApi || !g_WtsApi->VirtualChannelWrite)
 		return FALSE;
-	}
 
-	overlapped.hEvent = 0;
-	overlapped.Offset = 0;
-	overlapped.OffsetHigh = 0;
-
-	if (WriteFile(hChannelHandle, Buffer, Length, pBytesWritten, &overlapped))
-		return TRUE;
-
-	if (GetLastError() == ERROR_IO_PENDING)
-		return GetOverlappedResult(hChannelHandle, &overlapped, pBytesWritten, 1);
-
-	return FALSE;
+	return g_WtsApi->VirtualChannelWrite(hChannelHandle, Buffer, Length, pBytesWritten);
 }
-
-BOOL VirtualChannelIoctl(HANDLE hChannelHandle, ULONG IoControlCode)
-{
-	DWORD error;
-	NTSTATUS ntstatus;
-	IO_STATUS_BLOCK ioStatusBlock;
-
-	if (!hChannelHandle || (hChannelHandle == INVALID_HANDLE_VALUE))
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
-
-	ntstatus = _NtDeviceIoControlFile(hChannelHandle, 0, 0, 0, &ioStatusBlock, IoControlCode, 0, 0, 0, 0);
-
-	if (ntstatus == STATUS_PENDING)
-	{
-		ntstatus = _NtWaitForSingleObject(hChannelHandle, 0, 0);
-
-		if (ntstatus >= 0)
-			ntstatus = ioStatusBlock.status;
-	}
-
-	if (ntstatus == STATUS_BUFFER_OVERFLOW)
-	{
-		ntstatus = STATUS_BUFFER_TOO_SMALL;
-		error = _RtlNtStatusToDosError(ntstatus);
-		SetLastError(error);
-		return FALSE;
-	}
-
-	if (ntstatus < 0)
-	{
-		error = _RtlNtStatusToDosError(ntstatus);
-		SetLastError(error);
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-#define FILE_DEVICE_TERMSRV		0x00000038
 
 BOOL WTSVirtualChannelPurgeInput(HANDLE hChannelHandle)
 {
-	return VirtualChannelIoctl(hChannelHandle, (FILE_DEVICE_TERMSRV << 16) | 0x0107);
+	if (!g_WtsApi || !g_WtsApi->VirtualChannelPurgeInput)
+		return FALSE;
+
+	return g_WtsApi->VirtualChannelPurgeInput(hChannelHandle);
 }
 
 BOOL WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle)
 {
-	return VirtualChannelIoctl(hChannelHandle, (FILE_DEVICE_TERMSRV << 16) | 0x010B);
+	if (!g_WtsApi || !g_WtsApi->VirtualChannelPurgeOutput)
+		return FALSE;
+
+	return g_WtsApi->VirtualChannelPurgeOutput(hChannelHandle);
 }
 
 BOOL WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned)
 {
-	if (!hChannelHandle || (hChannelHandle == INVALID_HANDLE_VALUE))
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
+	if (!g_WtsApi || !g_WtsApi->VirtualChannelQuery)
 		return FALSE;
-	}
 
-	if (WtsVirtualClass == WTSVirtualFileHandle)
-	{
-		*ppBuffer = malloc(sizeof(void*));
-		CopyMemory(*ppBuffer, &hChannelHandle, sizeof(void*));
-		*pBytesReturned = sizeof(void*);
-		return TRUE;
-	}
-
-	return FALSE;
+	return g_WtsApi->VirtualChannelQuery(hChannelHandle, WtsVirtualClass, ppBuffer, pBytesReturned);
 }
 
 VOID WTSFreeMemory(PVOID pMemory)
 {
-	free(pMemory);
+	if (!g_WtsApi || !g_WtsApi->FreeMemory)
+		return;
+
+	g_WtsApi->FreeMemory(pMemory);
 }
 
 BOOL WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
 {
-	BOOL status = TRUE;
+	if (!g_WtsApi || !g_WtsApi->FreeMemoryExW)
+		return FALSE;
 
-	switch (WTSTypeClass)
-	{
-		case WTSTypeProcessInfoLevel0:
-			break;
-
-		case WTSTypeProcessInfoLevel1:
-			break;
-
-		case WTSTypeSessionInfoLevel1:
-			break;
-
-		default:
-			status = FALSE;
-			break;
-	}
-
-	return status;
+	return g_WtsApi->FreeMemoryExW(WTSTypeClass, pMemory, NumberOfEntries);
 }
 
 BOOL WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
 {
-	BOOL status = TRUE;
+	if (!g_WtsApi || !g_WtsApi->FreeMemoryExA)
+		return FALSE;
 
-	switch (WTSTypeClass)
-	{
-		case WTSTypeProcessInfoLevel0:
-			break;
-
-		case WTSTypeProcessInfoLevel1:
-			break;
-
-		case WTSTypeSessionInfoLevel1:
-			break;
-
-		default:
-			status = FALSE;
-			break;
-	}
-
-	return status;
+	return g_WtsApi->FreeMemoryExA(WTSTypeClass, pMemory, NumberOfEntries);
 }
 
 BOOL WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
 {
-	return RpcRegisterSessionNotification(NULL, hWnd, dwFlags);
+	if (!g_WtsApi || !g_WtsApi->RegisterSessionNotification)
+		return FALSE;
+
+	return g_WtsApi->RegisterSessionNotification(hWnd, dwFlags);
 }
 
 BOOL WTSUnRegisterSessionNotification(HWND hWnd)
 {
-	return RpcUnRegisterSessionNotification(NULL, hWnd);
+	if (!g_WtsApi || !g_WtsApi->UnRegisterSessionNotification)
+		return FALSE;
+
+	return g_WtsApi->UnRegisterSessionNotification(hWnd);
 }
 
 BOOL WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags)
 {
-	return RpcRegisterSessionNotificationEx(NULL, hServer, hWnd, dwFlags);
+	if (!g_WtsApi || !g_WtsApi->RegisterSessionNotificationEx)
+		return FALSE;
+
+	return g_WtsApi->RegisterSessionNotificationEx(hServer, hWnd, dwFlags);
 }
 
 BOOL WTSUnRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd)
 {
-	return RpcUnRegisterSessionNotificationEx(NULL, hServer, hWnd);
+	if (!g_WtsApi || !g_WtsApi->UnRegisterSessionNotificationEx)
+		return FALSE;
+
+	return g_WtsApi->UnRegisterSessionNotificationEx(hServer, hWnd);
 }
 
 BOOL WTSQueryUserToken(ULONG SessionId, PHANDLE phToken)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->QueryUserToken)
+		return FALSE;
+
+	return g_WtsApi->QueryUserToken(SessionId, phToken);
 }
 
 BOOL WTSEnumerateProcessesExW(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPWSTR* ppProcessInfo, DWORD* pCount)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->EnumerateProcessesExW)
+		return FALSE;
+
+	return g_WtsApi->EnumerateProcessesExW(hServer, pLevel, SessionId, ppProcessInfo, pCount);
 }
 
 BOOL WTSEnumerateProcessesExA(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPSTR* ppProcessInfo, DWORD* pCount)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->EnumerateProcessesExA)
+		return FALSE;
+
+	return g_WtsApi->EnumerateProcessesExA(hServer, pLevel, SessionId, ppProcessInfo, pCount);
 }
 
 BOOL WTSEnumerateListenersW(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEW pListeners, DWORD* pCount)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->EnumerateListenersW)
+		return FALSE;
+
+	return g_WtsApi->EnumerateListenersW(hServer, pReserved, Reserved, pListeners, pCount);
 }
 
 BOOL WTSEnumerateListenersA(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEA pListeners, DWORD* pCount)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->EnumerateListenersA)
+		return FALSE;
+
+	return g_WtsApi->EnumerateListenersA(hServer, pReserved, Reserved, pListeners, pCount);
 }
 
 BOOL WTSQueryListenerConfigW(HANDLE hServer, PVOID pReserved, DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->QueryListenerConfigW)
+		return FALSE;
+
+	return g_WtsApi->QueryListenerConfigW(hServer, pReserved, Reserved, pListenerName, pBuffer);
 }
 
 BOOL WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved, DWORD Reserved, LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->QueryListenerConfigA)
+		return FALSE;
+
+	return g_WtsApi->QueryListenerConfigA(hServer, pReserved, Reserved, pListenerName, pBuffer);
 }
 
 BOOL WTSCreateListenerW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->CreateListenerW)
+		return FALSE;
+
+	return g_WtsApi->CreateListenerW(hServer, pReserved, Reserved, pListenerName, pBuffer, flag);
 }
 
 BOOL WTSCreateListenerA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer, DWORD flag)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->CreateListenerA)
+		return FALSE;
+
+	return g_WtsApi->CreateListenerA(hServer, pReserved, Reserved, pListenerName, pBuffer, flag);
 }
 
 BOOL WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
 		PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->SetListenerSecurityW)
+		return FALSE;
+
+	return g_WtsApi->SetListenerSecurityW(hServer, pReserved, Reserved,
+			pListenerName, SecurityInformation, pSecurityDescriptor);
 }
 
 BOOL WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
 		PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->SetListenerSecurityA)
+		return FALSE;
+
+	return g_WtsApi->SetListenerSecurityA(hServer, pReserved, Reserved,
+			pListenerName, SecurityInformation, pSecurityDescriptor);
 }
 
 BOOL WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
 		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->GetListenerSecurityW)
+		return FALSE;
+
+	return g_WtsApi->GetListenerSecurityW(hServer, pReserved, Reserved, pListenerName,
+			SecurityInformation, pSecurityDescriptor, nLength, lpnLengthNeeded);
 }
 
 BOOL WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
 		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
 {
-	return TRUE;
+	if (!g_WtsApi || !g_WtsApi->GetListenerSecurityA)
+		return FALSE;
+
+	return g_WtsApi->GetListenerSecurityA(hServer, pReserved, Reserved, pListenerName,
+			SecurityInformation, pSecurityDescriptor, nLength, lpnLengthNeeded);
 }
 
 BOOL WTSEnableChildSessions(BOOL bEnable)
 {
-	return RpcEnableChildSessions(NULL, bEnable);
+	if (!g_WtsApi || !g_WtsApi->EnableChildSessions)
+		return FALSE;
+
+	return g_WtsApi->EnableChildSessions(bEnable);
 }
 
 BOOL WTSIsChildSessionsEnabled(PBOOL pbEnabled)
 {
-	return RpcIsChildSessionsEnabled(NULL, pbEnabled);
+	if (!g_WtsApi || !g_WtsApi->IsChildSessionsEnabled)
+		return FALSE;
+
+	return g_WtsApi->IsChildSessionsEnabled(pbEnabled);
 }
 
 BOOL WTSGetChildSessionId(PULONG pSessionId)
 {
-	return RpcGetChildSessionId(NULL, pSessionId);
+	if (!g_WtsApi || !g_WtsApi->GetChildSessionId)
+		return FALSE;
+
+	return g_WtsApi->GetChildSessionId(pSessionId);
 }
 
 #endif
+
+BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)
+{
+	g_WtsApi = table;
+	return TRUE;
+}
