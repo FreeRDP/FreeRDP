@@ -90,4 +90,14 @@ struct WTSVirtualChannelManager
 	wArrayList* dynamicVirtualChannels;
 };
 
+BOOL FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned);
+VOID FreeRDP_WTSFreeMemory(PVOID pMemory);
+
+HANDLE FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName);
+HANDLE FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags);
+BOOL FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle);
+
+BOOL FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead);
+BOOL FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, PULONG pBytesWritten);
+
 #endif /* FREERDP_CORE_SERVER_H */

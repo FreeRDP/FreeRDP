@@ -43,6 +43,7 @@
 
 #include "rdp.h"
 #include "client.h"
+#include "server.h"
 #include "channels.h"
 
 BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
@@ -181,15 +182,15 @@ static WtsApiFunctionTable FreeRDP_WtsApiFunctionTable =
 	NULL, /* LogoffSession */
 	NULL, /* ShutdownSystem */
 	NULL, /* WaitSystemEvent */
-	NULL, /* VirtualChannelOpen */
-	NULL, /* VirtualChannelOpenEx */
-	NULL, /* VirtualChannelClose */
-	NULL, /* VirtualChannelRead */
-	NULL, /* VirtualChannelWrite */
+	FreeRDP_WTSVirtualChannelOpen, /* VirtualChannelOpen */
+	FreeRDP_WTSVirtualChannelOpenEx, /* VirtualChannelOpenEx */
+	FreeRDP_WTSVirtualChannelClose, /* VirtualChannelClose */
+	FreeRDP_WTSVirtualChannelRead, /* VirtualChannelRead */
+	FreeRDP_WTSVirtualChannelWrite, /* VirtualChannelWrite */
 	NULL, /* VirtualChannelPurgeInput */
 	NULL, /* VirtualChannelPurgeOutput */
-	NULL, /* VirtualChannelQuery */
-	NULL, /* FreeMemory */
+	FreeRDP_WTSVirtualChannelQuery, /* VirtualChannelQuery */
+	FreeRDP_WTSFreeMemory, /* FreeMemory */
 	NULL, /* RegisterSessionNotification */
 	NULL, /* UnRegisterSessionNotification */
 	NULL, /* RegisterSessionNotificationEx */

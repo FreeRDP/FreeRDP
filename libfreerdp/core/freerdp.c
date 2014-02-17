@@ -34,6 +34,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
+#include <winpr/wtsapi.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/error.h>

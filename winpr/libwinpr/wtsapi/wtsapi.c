@@ -31,11 +31,9 @@
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa383464/
  */
 
-static PWtsApiFunctionTable g_WtsApi;
+static PWtsApiFunctionTable g_WtsApi = NULL;
 
 #ifndef _WIN32
-
-#include "wtsrpc_c.h"
 
 BOOL WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
