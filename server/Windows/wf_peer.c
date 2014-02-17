@@ -41,7 +41,7 @@
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
 	context->info = wf_info_get_instance();
-	context->vcm = WTSCreateVirtualChannelManager(client);
+	context->vcm = (WTSVirtualChannelManager*) WTSOpenServerA((LPSTR) client->context);
 	wf_info_peer_register(context->info, context);
 }
 
@@ -57,7 +57,7 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 		wf_rdpsnd_unlock();
 	}
 
-	WTSDestroyVirtualChannelManager(context->vcm);
+	WTSCloseServer((HANDLE) context->vcm);
 }
 
 void wf_peer_init(freerdp_peer* client)

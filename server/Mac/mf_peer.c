@@ -187,7 +187,7 @@ int mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 	context->s = Stream_New(NULL, 0xFFFF);
 	
 	//#ifdef WITH_SERVER_CHANNELS
-	context->vcm = WTSCreateVirtualChannelManager(client);
+	context->vcm = (WTSVirtualChannelManager*) WTSOpenServerA((LPSTR) client->context);
 	//#endif
 	
 	mf_info_peer_register(context->info, context);
@@ -222,7 +222,7 @@ void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 		//#endif
 		
 		//#ifdef WITH_SERVER_CHANNELS
-		WTSDestroyVirtualChannelManager(context->vcm);
+		WTSCloseServer((HANDLE) context->vcm);
 		//#endif
 	}
 }

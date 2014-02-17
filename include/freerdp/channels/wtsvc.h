@@ -52,16 +52,12 @@ extern "C" {
 /**
  * WTSVirtualChannelManager functions are FreeRDP extensions to the API.
  */
-FREERDP_API WTSVirtualChannelManager* WTSCreateVirtualChannelManager(freerdp_peer* client);
-FREERDP_API void WTSDestroyVirtualChannelManager(WTSVirtualChannelManager* vcm);
 
 FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm, void** fds, int* fds_count);
 FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm);
 FREERDP_API HANDLE WTSVirtualChannelManagerGetEventHandle(WTSVirtualChannelManager* vcm);
 
 FREERDP_API BOOL WTSVirtualChannelManagerIsChannelJoined(WTSVirtualChannelManager* vcm, const char* name);
-
-FREERDP_API HANDLE WTSVirtualChannelManagerOpenEx(WTSVirtualChannelManager* vcm, LPSTR pVirtualName, DWORD flags);
 
 #ifdef __cplusplus
 }

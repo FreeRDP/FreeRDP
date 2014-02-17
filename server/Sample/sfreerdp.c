@@ -63,7 +63,7 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 	context->icon_x = -1;
 	context->icon_y = -1;
 
-	context->vcm = WTSCreateVirtualChannelManager(client);
+	context->vcm = (WTSVirtualChannelManager*) WTSOpenServerA((LPSTR) client->context);
 }
 
 void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
@@ -93,7 +93,7 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 		if (context->rdpsnd)
 			rdpsnd_server_context_free(context->rdpsnd);
 
-		WTSDestroyVirtualChannelManager(context->vcm);
+		WTSCloseServer((HANDLE) context->vcm);
 	}
 }
 
