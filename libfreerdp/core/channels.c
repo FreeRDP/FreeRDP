@@ -27,6 +27,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
+#include <winpr/wtsapi.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
@@ -142,4 +143,79 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 		channelId, Stream_Pointer(s), chunkLength, flags, length);
 
 	return TRUE;
+}
+
+static WtsApiFunctionTable FreeRDP_WtsApiFunctionTable =
+{
+	0, /* dwVersion */
+	0, /* dwFlags */
+
+	NULL, /* StopRemoteControlSession */
+	NULL, /* StartRemoteControlSessionW */
+	NULL, /* StartRemoteControlSessionA */
+	NULL, /* ConnectSessionW */
+	NULL, /* ConnectSessionA */
+	NULL, /* EnumerateServersW */
+	NULL, /* EnumerateServersA */
+	NULL, /* OpenServerW */
+	NULL, /* OpenServerA */
+	NULL, /* OpenServerExW */
+	NULL, /* OpenServerExA */
+	NULL, /* CloseServer */
+	NULL, /* EnumerateSessionsW */
+	NULL, /* EnumerateSessionsA */
+	NULL, /* EnumerateSessionsExW */
+	NULL, /* EnumerateSessionsExA */
+	NULL, /* EnumerateProcessesW */
+	NULL, /* EnumerateProcessesA */
+	NULL, /* TerminateProcess */
+	NULL, /* QuerySessionInformationW */
+	NULL, /* QuerySessionInformationA */
+	NULL, /* QueryUserConfigW */
+	NULL, /* QueryUserConfigA */
+	NULL, /* SetUserConfigW */
+	NULL, /* SetUserConfigA */
+	NULL, /* SendMessageW */
+	NULL, /* SendMessageA */
+	NULL, /* DisconnectSession */
+	NULL, /* LogoffSession */
+	NULL, /* ShutdownSystem */
+	NULL, /* WaitSystemEvent */
+	NULL, /* VirtualChannelOpen */
+	NULL, /* VirtualChannelOpenEx */
+	NULL, /* VirtualChannelClose */
+	NULL, /* VirtualChannelRead */
+	NULL, /* VirtualChannelWrite */
+	NULL, /* VirtualChannelPurgeInput */
+	NULL, /* VirtualChannelPurgeOutput */
+	NULL, /* VirtualChannelQuery */
+	NULL, /* FreeMemory */
+	NULL, /* RegisterSessionNotification */
+	NULL, /* UnRegisterSessionNotification */
+	NULL, /* RegisterSessionNotificationEx */
+	NULL, /* UnRegisterSessionNotificationEx */
+	NULL, /* QueryUserToken */
+	NULL, /* FreeMemoryExW */
+	NULL, /* FreeMemoryExA */
+	NULL, /* EnumerateProcessesExW */
+	NULL, /* EnumerateProcessesExA */
+	NULL, /* EnumerateListenersW */
+	NULL, /* EnumerateListenersA */
+	NULL, /* QueryListenerConfigW */
+	NULL, /* QueryListenerConfigA */
+	NULL, /* CreateListenerW */
+	NULL, /* CreateListenerA */
+	NULL, /* SetListenerSecurityW */
+	NULL, /* SetListenerSecurityA */
+	NULL, /* GetListenerSecurityW */
+	NULL, /* GetListenerSecurityA */
+	NULL, /* EnableChildSessions */
+	NULL, /* IsChildSessionsEnabled */
+	NULL, /* GetChildSessionId */
+	NULL /* GetActiveConsoleSessionId */
+};
+
+PWtsApiFunctionTable FreeRDP_InitWtsApi(void)
+{
+	return &FreeRDP_WtsApiFunctionTable;
 }

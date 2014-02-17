@@ -551,6 +551,14 @@ BOOL WTSGetChildSessionId(PULONG pSessionId)
 	return g_WtsApi->GetChildSessionId(pSessionId);
 }
 
+DWORD WTSGetActiveConsoleSessionId(void)
+{
+	if (!g_WtsApi || !g_WtsApi->GetActiveConsoleSessionId)
+		return 0xFFFFFFFF;
+
+	return g_WtsApi->GetActiveConsoleSessionId();
+}
+
 #endif
 
 BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)

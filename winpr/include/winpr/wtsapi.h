@@ -29,6 +29,11 @@
 
 #include <wtsapi32.h>
 
+/**
+ * Workaround for X11 "CurrentTime" header conflict
+ */
+#define CurrentTime	_CurrentTime
+
 #else
 
 /**
@@ -437,12 +442,12 @@ typedef struct _WTSINFOW
 	DWORD OutgoingCompressedBytes;
 	WCHAR WinStationName[WINSTATIONNAME_LENGTH];
 	WCHAR Domain[DOMAIN_LENGTH];
-	WCHAR UserName[USERNAME_LENGTH+1];
+	WCHAR UserName[USERNAME_LENGTH + 1];
 	LARGE_INTEGER ConnectTime;
 	LARGE_INTEGER DisconnectTime;
 	LARGE_INTEGER LastInputTime;
 	LARGE_INTEGER LogonTime;
-	LARGE_INTEGER CurrentTime;
+	LARGE_INTEGER _CurrentTime; /* Conflicts with X11 headers */
 } WTSINFOW, *PWTSINFOW;
 
 typedef struct _WTSINFOA
@@ -462,7 +467,7 @@ typedef struct _WTSINFOA
 	LARGE_INTEGER DisconnectTime;
 	LARGE_INTEGER LastInputTime;
 	LARGE_INTEGER LogonTime;
-	LARGE_INTEGER CurrentTime;
+	LARGE_INTEGER _CurrentTime; /* Conflicts with X11 headers */
 } WTSINFOA, *PWTSINFOA;
 
 #define WTS_SESSIONSTATE_UNKNOWN		0xFFFFFFFF
@@ -481,7 +486,7 @@ typedef struct _WTSINFOEX_LEVEL1_W
 	LARGE_INTEGER ConnectTime;
 	LARGE_INTEGER DisconnectTime;
 	LARGE_INTEGER LastInputTime;
-	LARGE_INTEGER CurrentTime;
+	LARGE_INTEGER _CurrentTime; /* Conflicts with X11 headers */
 	DWORD IncomingBytes;
 	DWORD OutgoingBytes;
 	DWORD IncomingFrames;
@@ -502,7 +507,7 @@ typedef struct _WTSINFOEX_LEVEL1_A
 	LARGE_INTEGER ConnectTime;
 	LARGE_INTEGER DisconnectTime;
 	LARGE_INTEGER LastInputTime;
-	LARGE_INTEGER CurrentTime;
+	LARGE_INTEGER _CurrentTime; /* Conflicts with X11 headers */
 	DWORD IncomingBytes;
 	DWORD OutgoingBytes;
 	DWORD IncomingFrames;
@@ -711,7 +716,7 @@ typedef struct _WTSUSERCONFIGW
 #define WTS_EVENT_LOGOFF				0x00000040
 #define WTS_EVENT_STATECHANGE				0x00000080
 #define WTS_EVENT_LICENSE				0x00000100
-#define WTS_EVENT_ALL					0x7fffffff
+#define WTS_EVENT_ALL					0x7FFFFFFF
 #define WTS_EVENT_FLUSH					0x80000000
 
 #define REMOTECONTROL_KBDSHIFT_HOTKEY			0x1
@@ -1046,6 +1051,8 @@ WINPR_API BOOL WTSIsChildSessionsEnabled(PBOOL pbEnabled);
 
 WINPR_API BOOL WTSGetChildSessionId(PULONG pSessionId);
 
+WINPR_API DWORD WTSGetActiveConsoleSessionId(void);
+
 #ifdef __cplusplus
 }
 #endif
@@ -1235,6 +1242,8 @@ typedef BOOL (WTSAPI * WTS_IS_CHILD_SESSIONS_ENABLED_FN)(PBOOL pbEnabled);
 
 typedef BOOL (WTSAPI * WTS_GET_CHILD_SESSION_ID_FN)(PULONG pSessionId);
 
+typedef DWORD (WTSAPI * WTS_GET_ACTIVE_CONSOLE_SESSION_ID_FN)(void);
+
 struct _WtsApiFunctionTable
 {
 	DWORD dwVersion;
@@ -1302,6 +1311,7 @@ struct _WtsApiFunctionTable
 	WTS_ENABLE_CHILD_SESSIONS_FN EnableChildSessions;
 	WTS_IS_CHILD_SESSIONS_ENABLED_FN IsChildSessionsEnabled;
 	WTS_GET_CHILD_SESSION_ID_FN GetChildSessionId;
+	WTS_GET_ACTIVE_CONSOLE_SESSION_ID_FN GetActiveConsoleSessionId;
 };
 typedef struct _WtsApiFunctionTable WtsApiFunctionTable;
 typedef WtsApiFunctionTable* PWtsApiFunctionTable;

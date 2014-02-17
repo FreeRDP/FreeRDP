@@ -25,6 +25,8 @@
 
 #include <winpr/wtsapi.h>
 
+#define CHANNEL_EVENT_USER	1000
+
 #define CHANNEL_EXPORT_FUNC_NAME "VirtualChannelEntry"
 
 typedef UINT (FREERDP_CC * PVIRTUALCHANNELEVENTPUSH)(DWORD openHandle, wMessage* event);

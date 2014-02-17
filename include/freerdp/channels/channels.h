@@ -21,6 +21,9 @@
 #ifndef FREERDP_CHANNELS_H
 #define FREERDP_CHANNELS_H
 
+#include <winpr/crt.h>
+#include <winpr/wtsapi.h>
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
@@ -53,6 +56,8 @@ FREERDP_API int freerdp_channels_process_pending_messages(freerdp* instance);
 
 FREERDP_API int freerdp_channels_data(freerdp* instance,
 		UINT16 channelId, BYTE* data, int dataSize, int flags, int totalSize);
+
+FREERDP_API PWtsApiFunctionTable FreeRDP_InitWtsApi(void);
 
 #ifdef __cplusplus
 }
