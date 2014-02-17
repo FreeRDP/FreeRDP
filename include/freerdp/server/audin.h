@@ -36,7 +36,7 @@ typedef void (*psAudinServerReceiveSamples)(audin_server_context* context, const
 
 struct _audin_server_context
 {
-	WTSVirtualChannelManager* vcm;
+	HANDLE vcm;
 
 	/* Server self-defined pointer. */
 	void* data;

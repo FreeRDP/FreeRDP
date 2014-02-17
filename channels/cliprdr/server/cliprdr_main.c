@@ -495,12 +495,10 @@ CliprdrServerContext* cliprdr_server_context_new(WTSVirtualChannelManager* vcm)
 {
 	CliprdrServerContext* context;
 
-	context = (CliprdrServerContext*) malloc(sizeof(CliprdrServerContext));
+	context = (CliprdrServerContext*) calloc(1, sizeof(CliprdrServerContext));
 
 	if (context)
 	{
-		ZeroMemory(context, sizeof(CliprdrServerContext));
-
 		context->vcm = vcm;
 
 		context->Start = cliprdr_server_start;

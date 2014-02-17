@@ -42,6 +42,9 @@
 #define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
+static DWORD g_SessionId = 1;
+static wHashTable* g_ServerHandles = NULL;
+
 static rdpPeerChannel* wts_get_dvc_channel_by_id(WTSVirtualChannelManager* vcm, UINT32 ChannelId)
 {
 	int index;
@@ -695,6 +698,13 @@ HANDLE FreeRDP_WTSOpenServerA(LPSTR pServerName)
 		vcm->client = client;
 		vcm->rdp = context->rdp;
 
+		vcm->SessionId = g_SessionId++;
+
+		if (!g_ServerHandles)
+			g_ServerHandles = HashTable_New(TRUE);
+
+		HashTable_Add(g_ServerHandles, (void*) (UINT_PTR) vcm->SessionId, (void*) vcm);
+
 		vcm->queue = MessageQueue_New(NULL);
 
 		vcm->dvc_channel_id_seq = 1;
@@ -729,6 +739,8 @@ VOID FreeRDP_WTSCloseServer(HANDLE hServer)
 
 	if (vcm)
 	{
+		HashTable_Remove(g_ServerHandles, (void*) (UINT_PTR) vcm->SessionId);
+
 		ArrayList_Lock(vcm->dynamicVirtualChannels);
 
 		count = ArrayList_Count(vcm->dynamicVirtualChannels);
@@ -797,6 +809,29 @@ BOOL FreeRDP_WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId, WTS_IN
 
 BOOL FreeRDP_WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPSTR* ppBuffer, DWORD* pBytesReturned)
 {
+	DWORD BytesReturned;
+	WTSVirtualChannelManager* vcm;
+
+	vcm = (WTSVirtualChannelManager*) hServer;
+
+	if (!vcm)
+		return FALSE;
+
+	if (WTSInfoClass == WTSSessionId)
+	{
+		ULONG* pBuffer;
+
+		BytesReturned = sizeof(ULONG);
+		pBuffer = (ULONG*) malloc(sizeof(BytesReturned));
+
+		*pBuffer = vcm->SessionId;
+
+		*ppBuffer = (LPSTR) pBuffer;
+		*pBytesReturned = BytesReturned;
+
+		return TRUE;
+	}
+
 	return FALSE;
 }
 
@@ -918,14 +953,66 @@ HANDLE FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVir
 
 HANDLE FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
 {
+	int index;
+	wStream* s;
+	rdpMcs* mcs;
+	BOOL joined = FALSE;
+	freerdp_peer* client;
+	rdpPeerChannel* channel;
+	WTSVirtualChannelManager* vcm;
+
+	if (SessionId == WTS_CURRENT_SESSION)
+		return NULL;
+
+	vcm = (WTSVirtualChannelManager*) HashTable_GetItemValue(g_ServerHandles, (void*) (UINT_PTR) SessionId);
+
+	if (!vcm)
+		return NULL;
+
 	if (!(flags & WTS_CHANNEL_OPTION_DYNAMIC))
 	{
-
+		return FreeRDP_WTSVirtualChannelOpen((HANDLE) vcm, SessionId, pVirtualName);
 	}
-	else
+
+	client = vcm->client;
+	mcs = client->context->rdp->mcs;
+
+	for (index = 0; index < mcs->channelCount; index++)
 	{
-
+		if (mcs->channels[index].joined && (strncmp(mcs->channels[index].Name, "drdynvc", 7) == 0))
+		{
+			joined = TRUE;
+			break;
+		}
 	}
+
+	if (!joined)
+	{
+		SetLastError(ERROR_NOT_FOUND);
+		return NULL;
+	}
+
+	if (!vcm->drdynvc_channel || (vcm->drdynvc_state != DRDYNVC_STATE_READY))
+	{
+		SetLastError(ERROR_NOT_READY);
+		return NULL;
+	}
+
+	channel = (rdpPeerChannel*) calloc(1, sizeof(rdpPeerChannel));
+
+	channel->vcm = vcm;
+	channel->client = client;
+	channel->channelType = RDP_PEER_CHANNEL_TYPE_DVC;
+	channel->receiveData = Stream_New(NULL, client->settings->VirtualChannelChunkSize);
+	channel->queue = MessageQueue_New(NULL);
+
+	channel->channelId = vcm->dvc_channel_id_seq++;
+	ArrayList_Add(vcm->dynamicVirtualChannels, channel);
+
+	s = Stream_New(NULL, 64);
+	wts_write_drdynvc_create_request(s, channel->channelId, pVirtualName);
+	WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
+	Stream_Free(s, TRUE);
 
 	return NULL;
 }
@@ -1099,7 +1186,7 @@ BOOL FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS Wts
 
 	hEvent = MessageQueue_Event(channel->queue);
 
-	switch (WtsVirtualClass)
+	switch ((UINT32) WtsVirtualClass)
 	{
 		case WTSVirtualFileHandle:
 

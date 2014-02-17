@@ -81,6 +81,7 @@ struct WTSVirtualChannelManager
 	rdpRdp* rdp;
 	freerdp_peer* client;
 
+	DWORD SessionId;
 	wMessageQueue* queue;
 
 	rdpPeerChannel* drdynvc_channel;

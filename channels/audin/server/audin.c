@@ -55,6 +55,8 @@ typedef struct _audin_server
 	HANDLE thread;
 	void* audin_channel;
 
+	DWORD SessionId;
+
 	FREERDP_DSP_CONTEXT* dsp_context;
 
 } audin_server;
@@ -397,7 +399,20 @@ static BOOL audin_server_open(audin_server_context* context)
 
 	if (!audin->thread)
 	{
-		audin->audin_channel = WTSVirtualChannelManagerOpenEx(context->vcm, "AUDIO_INPUT", WTS_CHANNEL_OPTION_DYNAMIC);
+		PULONG pSessionId = NULL;
+		DWORD BytesReturned = 0;
+
+		audin->SessionId = WTS_CURRENT_SESSION;
+
+		if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION,
+				WTSSessionId, (LPSTR*) pSessionId, &BytesReturned))
+		{
+			audin->SessionId = (DWORD) *pSessionId;
+			WTSFreeMemory(pSessionId);
+		}
+
+		audin->audin_channel = WTSVirtualChannelOpenEx(audin->SessionId,
+				"AUDIO_INPUT", WTS_CHANNEL_OPTION_DYNAMIC);
 
 		if (!audin->audin_channel)
 			return FALSE;
