@@ -631,85 +631,161 @@ HANDLE WTSVirtualChannelManagerOpenEx(WTSVirtualChannelManager* vcm, LPSTR pVirt
 	return channel;
 }
 
-BOOL FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned)
+BOOL FreeRDP_WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
-	void* pfd;
-	BOOL bval;
-	void* fds[10];
-	HANDLE hEvent;
-	int fds_count = 0;
-	BOOL status = FALSE;
-	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
-	ZeroMemory(fds, sizeof(fds));
-
-	hEvent = MessageQueue_Event(channel->queue);
-
-	switch (WtsVirtualClass)
-	{
-		case WTSVirtualFileHandle:
-
-			pfd = GetEventWaitObject(hEvent);
-
-			if (pfd)
-			{
-				fds[fds_count] = pfd;
-				(fds_count)++;
-			}
-
-			*ppBuffer = malloc(sizeof(void*));
-			CopyMemory(*ppBuffer, &fds[0], sizeof(void*));
-			*pBytesReturned = sizeof(void*);
-			status = TRUE;
-			break;
-
-		case WTSVirtualEventHandle:
-			*ppBuffer = malloc(sizeof(HANDLE));
-			CopyMemory(*ppBuffer, &(hEvent), sizeof(HANDLE));
-			*pBytesReturned = sizeof(void*);
-			status = TRUE;
-			break;
-
-		case WTSVirtualChannelReady:
-			if (channel->channelType == RDP_PEER_CHANNEL_TYPE_SVC)
-			{
-				bval = TRUE;
-				status = TRUE;
-			}
-			else
-			{
-				switch (channel->dvc_open_state)
-				{
-					case DVC_OPEN_STATE_NONE:
-						bval = FALSE;
-						status = TRUE;
-						break;
-
-					case DVC_OPEN_STATE_SUCCEEDED:
-						bval = TRUE;
-						status = TRUE;
-						break;
-
-					default:
-						bval = FALSE;
-						status = FALSE;
-						break;
-				}
-			}
-
-			*ppBuffer = malloc(sizeof(BOOL));
-			CopyMemory(*ppBuffer, &bval, sizeof(BOOL));
-			*pBytesReturned = sizeof(BOOL);
-			break;
-
-		default:
-			break;
-	}
-	return status;
+	return FALSE;
 }
 
-VOID FreeRDP_WTSFreeMemory(PVOID pMemory)
+BOOL FreeRDP_WTSStartRemoteControlSessionA(LPSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
-	free(pMemory);
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSStopRemoteControlSession(ULONG LogonId)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId, PWSTR pPassword, BOOL bWait)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId, PSTR pPassword, BOOL bWait)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOW* ppServerInfo, DWORD* pCount)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOA* ppServerInfo, DWORD* pCount)
+{
+	return FALSE;
+}
+
+HANDLE FreeRDP_WTSOpenServerW(LPWSTR pServerName)
+{
+	return INVALID_HANDLE_VALUE;
+}
+
+HANDLE FreeRDP_WTSOpenServerA(LPSTR pServerName)
+{
+	return INVALID_HANDLE_VALUE;
+}
+
+HANDLE FreeRDP_WTSOpenServerExW(LPWSTR pServerName)
+{
+	return INVALID_HANDLE_VALUE;
+}
+
+HANDLE FreeRDP_WTSOpenServerExA(LPSTR pServerName)
+{
+	return INVALID_HANDLE_VALUE;
+}
+
+VOID FreeRDP_WTSCloseServer(HANDLE hServer)
+{
+	return;
+}
+
+BOOL FreeRDP_WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOA* ppSessionInfo, DWORD* pCount)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnumerateSessionsExW(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1W* ppSessionInfo, DWORD* pCount)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnumerateSessionsExA(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1A* ppSessionInfo, DWORD* pCount)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOW* ppProcessInfo, DWORD* pCount)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOA* ppProcessInfo, DWORD* pCount)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSTerminateProcess(HANDLE hServer, DWORD ProcessId, DWORD ExitCode)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPWSTR* ppBuffer, DWORD* pBytesReturned)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPSTR* ppBuffer, DWORD* pBytesReturned)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR* ppBuffer, DWORD* pBytesReturned)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR* ppBuffer, DWORD* pBytesReturned)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer, DWORD DataLength)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer, DWORD DataLength)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSSendMessageW(HANDLE hServer, DWORD SessionId, LPWSTR pTitle, DWORD TitleLength,
+		LPWSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle, DWORD TitleLength,
+		LPSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSLogoffSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSShutdownSystem(HANDLE hServer, DWORD ShutdownFlag)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags)
+{
+	return FALSE;
 }
 
 HANDLE FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
@@ -766,7 +842,6 @@ BOOL FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 
 	return TRUE;
 }
-
 
 BOOL FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
 {
@@ -867,4 +942,220 @@ BOOL FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG L
 		*pBytesWritten = Length;
 
 	return TRUE;
+}
+
+BOOL FreeRDP_WTSVirtualChannelPurgeInput(HANDLE hChannelHandle)
+{
+	return TRUE;
+}
+
+BOOL FreeRDP_WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle)
+{
+	return TRUE;
+}
+
+BOOL FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned)
+{
+	void* pfd;
+	BOOL bval;
+	void* fds[10];
+	HANDLE hEvent;
+	int fds_count = 0;
+	BOOL status = FALSE;
+	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
+	ZeroMemory(fds, sizeof(fds));
+
+	hEvent = MessageQueue_Event(channel->queue);
+
+	switch (WtsVirtualClass)
+	{
+		case WTSVirtualFileHandle:
+
+			pfd = GetEventWaitObject(hEvent);
+
+			if (pfd)
+			{
+				fds[fds_count] = pfd;
+				(fds_count)++;
+			}
+
+			*ppBuffer = malloc(sizeof(void*));
+			CopyMemory(*ppBuffer, &fds[0], sizeof(void*));
+			*pBytesReturned = sizeof(void*);
+			status = TRUE;
+			break;
+
+		case WTSVirtualEventHandle:
+			*ppBuffer = malloc(sizeof(HANDLE));
+			CopyMemory(*ppBuffer, &(hEvent), sizeof(HANDLE));
+			*pBytesReturned = sizeof(void*);
+			status = TRUE;
+			break;
+
+		case WTSVirtualChannelReady:
+			if (channel->channelType == RDP_PEER_CHANNEL_TYPE_SVC)
+			{
+				bval = TRUE;
+				status = TRUE;
+			}
+			else
+			{
+				switch (channel->dvc_open_state)
+				{
+					case DVC_OPEN_STATE_NONE:
+						bval = FALSE;
+						status = TRUE;
+						break;
+
+					case DVC_OPEN_STATE_SUCCEEDED:
+						bval = TRUE;
+						status = TRUE;
+						break;
+
+					default:
+						bval = FALSE;
+						status = FALSE;
+						break;
+				}
+			}
+
+			*ppBuffer = malloc(sizeof(BOOL));
+			CopyMemory(*ppBuffer, &bval, sizeof(BOOL));
+			*pBytesReturned = sizeof(BOOL);
+			break;
+
+		default:
+			break;
+	}
+	return status;
+}
+
+VOID FreeRDP_WTSFreeMemory(PVOID pMemory)
+{
+	free(pMemory);
+}
+
+BOOL FreeRDP_WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSUnRegisterSessionNotification(HWND hWnd)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSUnRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSQueryUserToken(ULONG SessionId, PHANDLE phToken)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnumerateProcessesExW(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPWSTR* ppProcessInfo, DWORD* pCount)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnumerateProcessesExA(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPSTR* ppProcessInfo, DWORD* pCount)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnumerateListenersW(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEW pListeners, DWORD* pCount)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnumerateListenersA(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEA pListeners, DWORD* pCount)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSQueryListenerConfigW(HANDLE hServer, PVOID pReserved, DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved, DWORD Reserved, LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSCreateListenerW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+		LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSCreateListenerA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+		LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer, DWORD flag)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+		PSECURITY_DESCRIPTOR pSecurityDescriptor)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+		PSECURITY_DESCRIPTOR pSecurityDescriptor)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSEnableChildSessions(BOOL bEnable)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSIsChildSessionsEnabled(PBOOL pbEnabled)
+{
+	return FALSE;
+}
+
+BOOL FreeRDP_WTSGetChildSessionId(PULONG pSessionId)
+{
+	return FALSE;
+}
+
+DWORD FreeRDP_WTSGetActiveConsoleSessionId(void)
+{
+	return 0xFFFFFFFF;
 }
