@@ -377,10 +377,6 @@ set(IPP_FEATURE_TYPE "OPTIONAL")
 set(IPP_FEATURE_PURPOSE "performance")
 set(IPP_FEATURE_DESCRIPTION "Intel Integrated Performance Primitives library")
 
-set(NPP_FEATURE_TYPE "OPTIONAL")
-set(NPP_FEATURE_PURPOSE "performance")
-set(NPP_FEATURE_DESCRIPTION "NVIDIA Performance Primitives library")
-
 set(JPEG_FEATURE_TYPE "OPTIONAL")
 set(JPEG_FEATURE_PURPOSE "codec")
 set(JPEG_FEATURE_DESCRIPTION "use JPEG library")
@@ -458,7 +454,6 @@ if(TARGET_ARCH MATCHES "x86|x64")
 		# Intel Performance Primitives
 		find_feature(IPP ${IPP_FEATURE_TYPE} ${IPP_FEATURE_PURPOSE} ${IPP_FEATURE_DESCRIPTION})
 	endif()
-	find_feature(NPP ${NPP_FEATURE_TYPE} ${NPP_FEATURE_PURPOSE} ${NPP_FEATURE_DESCRIPTION})
 endif()
 
 # Path to put FreeRDP data

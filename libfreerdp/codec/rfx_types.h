@@ -38,12 +38,18 @@
 #define DEBUG_RFX(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
+struct _RFX_TILE_COMPOSE_WORK_PARAM;
+typedef struct _RFX_TILE_COMPOSE_WORK_PARAM RFX_TILE_COMPOSE_WORK_PARAM;
+
 struct _RFX_CONTEXT_PRIV
 {
 	wLog* log;
 	wObjectPool* TilePool;
 
 	BOOL UseThreads;
+	PTP_WORK* workObjects;
+	RFX_TILE_COMPOSE_WORK_PARAM* tileWorkParams;
+
 	DWORD MinThreadCount;
 	DWORD MaxThreadCount;
 
