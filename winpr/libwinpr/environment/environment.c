@@ -171,7 +171,7 @@ DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, 
 	char *foundEquals;
 	int nLength, fLength, lpNameLength;
 
-	if (!lpName)
+	if (!lpName || NULL == envBlock)
 		return 0;
 
 	lpNameLength = strlen(lpName);
