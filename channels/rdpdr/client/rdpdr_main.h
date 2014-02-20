@@ -54,9 +54,11 @@ struct rdpdr_plugin
 	char computerName[256];
 
 	/* hotplug support */
+	HANDLE hotplug_thread;
 #ifdef _WIN32
 	HWND hotplug_wnd;
 #else
+	HANDLE stop_event;
 #endif
 };
 

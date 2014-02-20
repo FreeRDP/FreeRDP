@@ -36,6 +36,10 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <dbt.h>
+#else
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
@@ -239,14 +243,237 @@ static void drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 
 #else
 
+#define MAX_USB_DEVICES 100
+
+typedef struct _hotplug_dev {
+	char* path;
+	BOOL  to_add;
+} hotplug_dev;
+
+static char* next_line(FILE* fd, size_t* len)
+{
+	size_t newsiz;
+	int c;
+	char* newbuf;
+	char* lrbuf;
+	int lrsiz;
+
+	*len = 0;
+	lrsiz = 0;
+	lrbuf = NULL;
+	newbuf = NULL;
+
+	for (;;)
+	{
+		c = fgetc(fd);
+		if (ferror(fd))
+			return NULL;
+
+		if (c == EOF)
+		{
+			if (*len == 0)
+				return NULL;
+			else
+			{
+				lrbuf[(*len)] = '\0';
+				return lrbuf;
+			}
+		}
+		else
+		{
+			if (*len == lrsiz)
+			{
+				newsiz = lrsiz + 4096;
+				newbuf = realloc(lrbuf, newsiz);
+				if (newbuf == NULL)
+					return NULL;
+				lrbuf = newbuf;
+				lrsiz = newsiz;
+			}
+			lrbuf[(*len)] = c;
+
+			if (c == '\n')
+			{
+				lrbuf[(*len)] = '\0';
+				return lrbuf;
+			}
+
+			(*len)++;
+		}
+	}
+}
+
+static char* get_word(char* str, unsigned int* offset)
+{
+	char* p;
+	char* tmp;
+	int wlen;
+
+	if (*offset >= strlen(str))
+		return NULL;
+
+	p = str + *offset;
+	tmp = p;
+
+	while (*tmp != ' ' && *tmp  != '\0')
+		tmp++;
+
+	wlen = tmp - p;
+	*offset += wlen;
+
+	/* in case there are more than one space between words */
+	while (*(str + *offset) == ' ')
+		(*offset)++;
+
+	return strndup(p, wlen);
+}
+
+static void handle_hotplug(rdpdrPlugin* rdpdr)
+{
+	FILE *f;
+	size_t len;
+	char *line;
+	char *word;
+	unsigned int wlen;
+
+	hotplug_dev dev_array[MAX_USB_DEVICES];
+	int i, j;
+	int size = 0;
+
+	int count;
+	DEVICE_DRIVE_EXT *device_ext;
+	ULONG_PTR *keys;
+	UINT32 ids[1];
+
+	f = fopen("/proc/mounts", "r");
+	if (f == NULL)
+	{
+		return;
+	}
+
+	while ((line = next_line(f, &len)))
+	{
+		wlen = 0;
+		while ((word = get_word(line, &wlen)))
+		{
+			/* copy hotpluged device mount point to the dev_array */
+			if (strstr(word, "/mnt/") != NULL || strstr(word, "/media/") != NULL)
+			{
+				dev_array[size].path = strdup(word);
+				dev_array[size++].to_add = TRUE;
+			}
+			free(word);
+		}
+		free(line);
+	}
+
+	fclose(f);
+
+	/* delete removed devices */
+	count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
+
+	for (j = 0; j < count; j++)
+	{
+		BOOL dev_found = FALSE;
+
+		device_ext = (DEVICE_DRIVE_EXT *)ListDictionary_GetItemValue(rdpdr->devman->devices, (void *)keys[j]);
+
+		/* not plugable device */
+		if (strstr(device_ext->path, "/mnt/") == NULL && strstr(device_ext->path, "/media/") == NULL)
+			continue;
+
+		for (i = 0; i < size; i++)
+		{
+			if (strstr(device_ext->path, dev_array[i].path) != NULL)
+			{
+				dev_found = TRUE;
+				dev_array[i].to_add = FALSE;
+				break;
+			}
+		}
+
+		if (!dev_found)
+		{
+			devman_unregister_device(rdpdr->devman, (void *)keys[j]);
+			ids[0] = keys[j];
+			rdpdr_send_device_list_remove_request(rdpdr, 1, ids);
+		}
+	}
+
+	/* add new devices */
+	for (i = 0; i < size; i++)
+	{
+		RDPDR_DRIVE* drive;
+
+		if (dev_array[i].to_add)
+		{
+			char* name;
+
+			drive = (RDPDR_DRIVE*) malloc(sizeof(RDPDR_DRIVE));
+			ZeroMemory(drive, sizeof(RDPDR_DRIVE));
+
+			drive->Type = RDPDR_DTYP_FILESYSTEM;
+
+			drive->Path = _strdup(dev_array[i].path);
+			name = strrchr(drive->Path, '/') + 1;
+			drive->Name = _strdup(name);
+			devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE *)drive);
+		}
+
+		free(dev_array[i].path);
+		dev_array[i].path = NULL;
+	}
+	rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+}
+
 static void* drive_hotplug_thread_func(void* arg)
 {
+	rdpdrPlugin* rdpdr;
+	int mfd;
+	fd_set rfds;
+	struct timeval tv;
+	int rv;
 
+	rdpdr = (rdpdrPlugin *)arg;
+
+	rdpdr->stop_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	mfd = open("/proc/mounts", O_RDONLY, 0);
+	if (mfd < 0)
+	{
+	    fprintf(stderr, "ERROR: Unable to open /proc/mounts.");
+	    return NULL;
+	}
+
+	FD_ZERO(&rfds);
+	FD_SET(mfd, &rfds);
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+
+	while ((rv = select(mfd+1, NULL, NULL, &rfds, &tv)) >= 0)
+	{
+		if (WaitForSingleObject(rdpdr->stop_event, 0) == WAIT_OBJECT_0)
+			break;
+
+		if (FD_ISSET(mfd, &rfds))
+		{
+			/* file /proc/mounts changed, handle this */
+			handle_hotplug(rdpdr);
+		}
+
+		FD_ZERO(&rfds);
+		FD_SET(mfd, &rfds);
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+	}
+
+    return NULL;
 }
 
 static void drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 {
-
+	if (rdpdr->stop_event)
+		SetEvent(rdpdr->stop_event);
 }
 
 #endif
@@ -268,7 +495,7 @@ static void rdpdr_process_connect(rdpdrPlugin* rdpdr)
 		device = settings->DeviceArray[index];
 		if (strcmp(device->Name, "*") == 0)
 		{
-			CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)drive_hotplug_thread_func, rdpdr, 0, NULL);
+			rdpdr->hotplug_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)drive_hotplug_thread_func, rdpdr, 0, NULL);
 			continue;
 		}
 		devman_load_device_service(rdpdr->devman, device);
@@ -707,6 +934,8 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 	CloseHandle(rdpdr->thread);
 
 	drive_hotplug_thread_terminate(rdpdr);
+
+	WaitForSingleObject(rdpdr->hotplug_thread, INFINITE);
 
 	rdpdr->channelEntryPoints.pVirtualChannelClose(rdpdr->OpenHandle);
 
