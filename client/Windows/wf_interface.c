@@ -265,17 +265,15 @@ BOOL wf_pre_connect(freerdp* instance)
 	{
 		if (settings->UseMultimon)
 		{
-			settings->DesktopWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-			settings->DesktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+			desktopWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			desktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 		}
 		else
 		{
-			settings->DesktopWidth = GetSystemMetrics(SM_CXSCREEN);
-			settings->DesktopHeight = GetSystemMetrics(SM_CYSCREEN);
+			desktopWidth = GetSystemMetrics(SM_CXSCREEN);
+			desktopHeight = GetSystemMetrics(SM_CYSCREEN);
 		}
 	}
-
-	desktopWidth = (desktopWidth + 3) & (~3);
 
 	if (desktopWidth != settings->DesktopWidth)
 	{
