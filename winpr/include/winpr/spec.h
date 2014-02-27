@@ -830,7 +830,7 @@
 #define __deref_out_opt
 #define __ecount(size)
 #define __ecount_opt(size)
-#define __in
+//#define __in			/* Conflicts with libstdc++ header macros */
 #define __in_bcount(size)
 #define __in_bcount_opt(size)
 #define __in_ecount(size)
@@ -850,7 +850,7 @@
 #define __inout_ecount_part(size,length)
 #define __inout_ecount_part_opt(size,length)
 #define __inout_opt
-#define __out
+//#define __out			/* Conflicts with libstdc++ header macros */
 #define __out_bcount(size)
 #define __out_bcount_full(size)
 #define __out_bcount_full_opt(size)
@@ -896,8 +896,15 @@ char (*__countof_helper(_CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
 
 #define MINCHAR		0x80
 #define MAXCHAR		0x7F
+
+#ifndef MINSHORT
 #define MINSHORT	0x8000
+#endif
+
+#ifndef MAXSHORT
 #define MAXSHORT	0x7FFF
+#endif
+
 #define MINLONG		0x80000000
 #define MAXLONG		0x7FFFFFFF
 #define MAXBYTE		0xFF
