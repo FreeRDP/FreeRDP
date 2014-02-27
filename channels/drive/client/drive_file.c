@@ -299,15 +299,19 @@ DRIVE_FILE* drive_file_new(const char* base_path, const char* path, UINT32 id,
 
 	if (!drive_file_init(file, DesiredAccess, CreateDisposition, CreateOptions))
 	{
-		drive_file_free(file);
+		(void) drive_file_free(file, TRUE);
 		return NULL;
 	}
 
 	return file;
 }
 
-void drive_file_free(DRIVE_FILE* file)
+int drive_file_free(DRIVE_FILE* file, BOOL recursive)
 {
+	int retval;
+
+	retval = 0;
+
 	if (file->fd != -1)
 		close(file->fd);
 
@@ -317,14 +321,36 @@ void drive_file_free(DRIVE_FILE* file)
 	if (file->delete_pending)
 	{
 		if (file->is_dir)
-			drive_file_remove_dir(file->fullpath);
+		{
+			if (recursive)
+			{
+				if (!drive_file_remove_dir(file->fullpath))
+				{
+					retval = EPERM;
+				}
+			}
+			else
+			{
+				if (rmdir(file->fullpath) != 0)
+				{
+					retval = errno;
+				}
+			}
+		}
 		else
-			unlink(file->fullpath);
+		{
+			if (unlink(file->fullpath) != 0)
+			{
+				retval = errno;
+			}
+		}
 	}
 
 	free(file->pattern);
 	free(file->fullpath);
 	free(file);
+
+	return retval;
 }
 
 BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset)
@@ -340,37 +366,55 @@ BOOL drive_file_seek(DRIVE_FILE* file, UINT64 Offset)
 
 BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length)
 {
-	ssize_t r;
+	size_t left;
+	BYTE *bufptr;
 
 	if (file->is_dir || file->fd == -1)
 		return FALSE;
 
-	r = read(file->fd, buffer, *Length);
+	bufptr = buffer;
+	left = *Length;
+	while (left > 0)
+	{
+		ssize_t bytesRead;
+		bytesRead = read(file->fd, bufptr, left);
+		if (bytesRead < 0)
+		{
+			if ((errno == EAGAIN) || (errno == EINTR))
+				continue;
+			else
+				return FALSE;
+		}
+		else if (bytesRead == 0) break;		/* EOF */
+		bufptr += bytesRead;
+		left -= bytesRead;
+	}
 
-	if (r < 0)
-		return FALSE;
-
-	*Length = (UINT32) r;
+	*Length -= left;
 
 	return TRUE;
 }
 
-BOOL drive_file_write(DRIVE_FILE* file, BYTE* buffer, UINT32 Length)
+BOOL drive_file_write(DRIVE_FILE* file, const BYTE* buffer, UINT32 Length)
 {
-	ssize_t r;
-
 	if (file->is_dir || file->fd == -1)
 		return FALSE;
 
 	while (Length > 0)
 	{
-		r = write(file->fd, buffer, Length);
+		ssize_t bytesWritten;
+		bytesWritten = write(file->fd, buffer, Length);
 
-		if (r == -1)
-			return FALSE;
+		if (bytesWritten < 0)
+		{
+			if ((errno == EAGAIN) || (errno == EINTR))
+				continue;
+			else
+				return FALSE;
+		}
 
-		Length -= r;
-		buffer += r;
+		Length -= bytesWritten;
+		buffer += bytesWritten;
 	}
 
 	return TRUE;
@@ -476,7 +520,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 				else
 					m &= ~S_IWUSR;
 				if (m != st.st_mode)
-					fchmod(file->fd, st.st_mode);
+					fchmod(file->fd, m);
 			}
 #endif
                         break;
@@ -497,6 +541,25 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 				Stream_Read_UINT8(input, file->delete_pending);
 			else
 				file->delete_pending = 1;
+			if (file->delete_pending && file->is_dir)
+			{
+				/* mstsc causes this to FAIL if the directory is not empty,
+				 * and that's what the server is expecting.  If we wait for
+				 * the close to flag a failure, cut and paste of a folder
+				 * will lose the folder's contents.
+				 */
+				int status;
+				status = rmdir(file->fullpath);
+				if (status == 0)
+				{
+					/* Put it back so the normal pending delete will work. */
+					mkdir(file->fullpath, 0755);
+				}
+				else
+				{
+					return FALSE;
+				}
+			}
 			break;
 
 		case FileRenameInformation:
