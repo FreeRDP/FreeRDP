@@ -40,7 +40,7 @@ typedef void (*psRdpsndServerActivated)(RdpsndServerContext* context);
 
 struct _rdpsnd_server_context
 {
-	WTSVirtualChannelManager* vcm;
+	HANDLE vcm;
 
 	psRdpsndStart Start;
 	psRdpsndStop Stop;
@@ -105,7 +105,7 @@ struct _rdpsnd_server_context
 extern "C" {
 #endif
 
-FREERDP_API RdpsndServerContext* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm);
+FREERDP_API RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm);
 FREERDP_API void rdpsnd_server_context_free(RdpsndServerContext* context);
 
 #ifdef __cplusplus

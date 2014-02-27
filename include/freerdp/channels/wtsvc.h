@@ -43,8 +43,6 @@
 #define WTSVirtualEventHandle	3 /* Extended */
 #define WTSVirtualChannelReady	4 /* Extended */
 
-typedef struct WTSVirtualChannelManager WTSVirtualChannelManager;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -53,11 +51,11 @@ extern "C" {
  * WTSVirtualChannelManager functions are FreeRDP extensions to the API.
  */
 
-FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm, void** fds, int* fds_count);
-FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm);
-FREERDP_API HANDLE WTSVirtualChannelManagerGetEventHandle(WTSVirtualChannelManager* vcm);
+FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* fds_count);
+FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer);
+FREERDP_API HANDLE WTSVirtualChannelManagerGetEventHandle(HANDLE hServer);
 
-FREERDP_API BOOL WTSVirtualChannelManagerIsChannelJoined(WTSVirtualChannelManager* vcm, const char* name);
+FREERDP_API BOOL WTSVirtualChannelManagerIsChannelJoined(HANDLE hServer, const char* name);
 
 #ifdef __cplusplus
 }

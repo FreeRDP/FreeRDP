@@ -29,6 +29,8 @@
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
+typedef struct WTSVirtualChannelManager WTSVirtualChannelManager;
+
 #include "rdp.h"
 
 #define CREATE_REQUEST_PDU			0x01

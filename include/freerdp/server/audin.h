@@ -94,7 +94,7 @@ struct _audin_server_context
 extern "C" {
 #endif
 
-FREERDP_API audin_server_context* audin_server_context_new(WTSVirtualChannelManager* vcm);
+FREERDP_API audin_server_context* audin_server_context_new(HANDLE vcm);
 FREERDP_API void audin_server_context_free(audin_server_context* context);
 
 #ifdef __cplusplus

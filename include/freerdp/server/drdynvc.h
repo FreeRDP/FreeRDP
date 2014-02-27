@@ -36,7 +36,7 @@ typedef int (*psDrdynvcStop)(DrdynvcServerContext* context);
 
 struct _drdynvc_client_context
 {
-	WTSVirtualChannelManager* vcm;
+	HANDLE vcm;
 
 	psDrdynvcStart Start;
 	psDrdynvcStop Stop;
@@ -44,7 +44,7 @@ struct _drdynvc_client_context
 	DrdynvcServerPrivate* priv;
 };
 
-FREERDP_API DrdynvcServerContext* drdynvc_server_context_new(WTSVirtualChannelManager* vcm);
+FREERDP_API DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm);
 FREERDP_API void drdynvc_server_context_free(DrdynvcServerContext* context);
 
 #endif /* FREERDP_CHANNEL_SERVER_DRDYNVC_H */

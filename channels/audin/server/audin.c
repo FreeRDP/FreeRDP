@@ -453,12 +453,11 @@ static BOOL audin_server_close(audin_server_context* context)
 	return TRUE;
 }
 
-audin_server_context* audin_server_context_new(WTSVirtualChannelManager* vcm)
+audin_server_context* audin_server_context_new(HANDLE vcm)
 {
 	audin_server* audin;
 
-	audin = (audin_server*) malloc(sizeof(audin_server));
-	ZeroMemory(audin, sizeof(audin_server));
+	audin = (audin_server*) calloc(1, sizeof(audin_server));
 
 	audin->context.vcm = vcm;
 	audin->context.selected_client_format = -1;

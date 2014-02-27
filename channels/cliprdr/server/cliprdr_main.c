@@ -468,7 +468,7 @@ static void* cliprdr_server_thread(void* arg)
 
 static int cliprdr_server_start(CliprdrServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelOpen((HANDLE) context->vcm, WTS_CURRENT_SESSION, "cliprdr");
+	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "cliprdr");
 
 	if (!context->priv->ChannelHandle)
 		return -1;
@@ -491,7 +491,7 @@ static int cliprdr_server_stop(CliprdrServerContext* context)
 	return 0;
 }
 
-CliprdrServerContext* cliprdr_server_context_new(WTSVirtualChannelManager* vcm)
+CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 {
 	CliprdrServerContext* context;
 

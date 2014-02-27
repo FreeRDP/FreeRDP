@@ -488,7 +488,7 @@ static BOOL rdpsnd_server_close(RdpsndServerContext* context)
 
 static int rdpsnd_server_start(RdpsndServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelOpen((HANDLE) context->vcm, WTS_CURRENT_SESSION, "rdpsnd");
+	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "rdpsnd");
 
 	if (!context->priv->ChannelHandle)
 		return -1;
@@ -513,7 +513,7 @@ static int rdpsnd_server_stop(RdpsndServerContext* context)
 	return 0;
 }
 
-RdpsndServerContext* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm)
+RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm)
 {
 	RdpsndServerContext* context;
 

@@ -383,9 +383,10 @@ static int WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, BYTE* d
 	return status;
 }
 
-void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm, void** fds, int* fds_count)
+void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* fds_count)
 {
 	void* fd;
+	WTSVirtualChannelManager* vcm = (WTSVirtualChannelManager*) hServer;
 
 	fd = GetEventWaitObject(MessageQueue_Event(vcm->queue));
 
@@ -409,12 +410,13 @@ void WTSVirtualChannelManagerGetFileDescriptor(WTSVirtualChannelManager* vcm, vo
 #endif
 }
 
-BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
+BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer)
 {
 	wMessage message;
 	BOOL status = TRUE;
 	rdpPeerChannel* channel;
 	UINT32 dynvc_caps;
+	WTSVirtualChannelManager* vcm = (WTSVirtualChannelManager*) hServer;
 
 	if ((vcm->drdynvc_state == DRDYNVC_STATE_NONE) && vcm->client->activated)
 	{
@@ -455,16 +457,20 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(WTSVirtualChannelManager* vcm)
 	return status;
 }
 
-HANDLE WTSVirtualChannelManagerGetEventHandle(WTSVirtualChannelManager* vcm)
+HANDLE WTSVirtualChannelManagerGetEventHandle(HANDLE hServer)
 {
+	WTSVirtualChannelManager* vcm = (WTSVirtualChannelManager*) hServer;
 	return MessageQueue_Event(vcm->queue);
 }
 
-BOOL WTSVirtualChannelManagerIsChannelJoined(WTSVirtualChannelManager* vcm, const char* name)
+BOOL WTSVirtualChannelManagerIsChannelJoined(HANDLE hServer, const char* name)
 {
+	rdpMcs* mcs;
 	UINT32 index;
 	BOOL joined = FALSE;
-	rdpMcs* mcs = vcm->rdp->mcs;
+	WTSVirtualChannelManager* vcm = (WTSVirtualChannelManager*) hServer;
+
+	mcs = vcm->rdp->mcs;
 
 	for (index = 0; index < mcs->channelCount; index++)
 	{

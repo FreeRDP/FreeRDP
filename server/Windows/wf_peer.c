@@ -41,7 +41,7 @@
 void wf_peer_context_new(freerdp_peer* client, wfPeerContext* context)
 {
 	context->info = wf_info_get_instance();
-	context->vcm = (WTSVirtualChannelManager*) WTSOpenServerA((LPSTR) client->context);
+	context->vcm = WTSOpenServerA((LPSTR) client->context);
 	wf_info_peer_register(context->info, context);
 }
 

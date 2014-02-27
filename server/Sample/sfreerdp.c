@@ -63,7 +63,7 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 	context->icon_x = -1;
 	context->icon_y = -1;
 
-	context->vcm = (WTSVirtualChannelManager*) WTSOpenServerA((LPSTR) client->context);
+	context->vcm = WTSOpenServerA((LPSTR) client->context);
 }
 
 void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
