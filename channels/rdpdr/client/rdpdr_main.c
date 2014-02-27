@@ -33,6 +33,15 @@
 #include <freerdp/constants.h>
 #include <freerdp/channels/rdpdr.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <dbt.h>
+#else
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -43,6 +52,432 @@
 #include "irp.h"
 
 #include "rdpdr_main.h"
+
+typedef struct _DEVICE_DRIVE_EXT DEVICE_DRIVE_EXT;
+
+struct _DEVICE_DRIVE_EXT
+{
+	DEVICE device;
+	char* path;
+};
+
+static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL userLoggedOn);
+
+static void rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 count, UINT32 ids[])
+{
+	wStream* s;
+	int i;
+
+	s = Stream_New(NULL, 256);
+
+	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);
+	Stream_Write_UINT16(s, PAKID_CORE_DEVICELIST_REMOVE);
+	Stream_Write_UINT32(s, count);
+
+	for (i = 0; i < count; i++)
+		Stream_Write_UINT32(s, ids[i]);
+
+	Stream_SealLength(s);
+
+	rdpdr_send(rdpdr, s);
+}
+
+#ifdef _WIN32
+
+LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	rdpdrPlugin *rdpdr;
+	PDEV_BROADCAST_HDR lpdb = (PDEV_BROADCAST_HDR)lParam;
+
+	rdpdr = (rdpdrPlugin *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+
+	switch(Msg)
+	{
+		case WM_DEVICECHANGE:
+			switch (wParam)
+			{
+				case DBT_DEVICEARRIVAL:
+					if (lpdb -> dbch_devicetype == DBT_DEVTYP_VOLUME)
+					{
+						PDEV_BROADCAST_VOLUME lpdbv = (PDEV_BROADCAST_VOLUME)lpdb;
+						DWORD unitmask = lpdbv->dbcv_unitmask;
+						int i;
+						char drive_path[4] = { 'c', ':', '/', '\0'};
+
+						for (i = 0; i < 26; i++)
+						{
+							if (unitmask & 0x01)
+							{
+								RDPDR_DRIVE* drive;
+
+								drive_path[0] = 'A' + i;
+
+								drive = (RDPDR_DRIVE*) malloc(sizeof(RDPDR_DRIVE));
+								ZeroMemory(drive, sizeof(RDPDR_DRIVE));
+
+								drive->Type = RDPDR_DTYP_FILESYSTEM;
+
+								drive->Path = _strdup(drive_path);
+								drive_path[1] = '\0';
+								drive->Name = _strdup(drive_path);
+								devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE *)drive);
+								rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+							}
+							unitmask = unitmask >> 1;
+						}
+					}
+					break;
+
+				case DBT_DEVICEREMOVECOMPLETE:
+					if (lpdb -> dbch_devicetype == DBT_DEVTYP_VOLUME)
+					{
+						PDEV_BROADCAST_VOLUME lpdbv = (PDEV_BROADCAST_VOLUME)lpdb;
+						DWORD unitmask = lpdbv->dbcv_unitmask;
+						int i, j, count;
+						char drive_name_upper, drive_name_lower;
+
+						ULONG_PTR *keys;
+						DEVICE_DRIVE_EXT *device_ext;
+						UINT32 ids[1];
+
+						for (i = 0; i < 26; i++)
+						{
+							if (unitmask & 0x01)
+							{
+								drive_name_upper = 'A' + i;
+								drive_name_lower = 'a' + i;
+
+								count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
+
+								for (j = 0; j < count; j++)
+								{
+									device_ext = (DEVICE_DRIVE_EXT *)ListDictionary_GetItemValue(rdpdr->devman->devices, (void *)keys[j]);
+									if (device_ext->path[0] == drive_name_upper || device_ext->path[0] == drive_name_lower)
+									{
+										devman_unregister_device(rdpdr->devman, (void *)keys[j]);
+										ids[0] = keys[j];
+										rdpdr_send_device_list_remove_request(rdpdr, 1, ids);
+										break;
+									}
+								}
+							}
+							unitmask = unitmask >> 1;
+						}
+					}
+					break;
+
+				default:
+					break;
+			}
+			break;
+
+		default:
+			return DefWindowProc(hWnd, Msg, wParam, lParam);
+	}
+	return DefWindowProc(hWnd, Msg, wParam, lParam);
+}
+
+static void* drive_hotplug_thread_func(void* arg)
+{
+	rdpdrPlugin *rdpdr;
+	WNDCLASSEX wnd_cls;
+	HWND hwnd;
+	MSG msg;
+	BOOL bRet;
+	DEV_BROADCAST_HANDLE NotificationFilter;
+	HDEVNOTIFY hDevNotify;
+
+	rdpdr = (rdpdrPlugin *)arg;
+
+	/* init windows class */
+	wnd_cls.cbSize        = sizeof(WNDCLASSEX);
+	wnd_cls.style         = CS_HREDRAW | CS_VREDRAW;
+	wnd_cls.lpfnWndProc   = hotplug_proc;
+	wnd_cls.cbClsExtra    = 0;
+	wnd_cls.cbWndExtra    = 0;
+	wnd_cls.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
+	wnd_cls.hCursor       = NULL;
+	wnd_cls.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	wnd_cls.lpszMenuName  = NULL;
+	wnd_cls.lpszClassName = L"DRIVE_HOTPLUG";
+	wnd_cls.hInstance     = NULL;
+	wnd_cls.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
+	RegisterClassEx(&wnd_cls);
+
+	/* create window */
+	hwnd = CreateWindowEx(0, L"DRIVE_HOTPLUG", NULL,
+			0, 0, 0, 0, 0,
+			NULL, NULL, NULL, NULL);
+	SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)rdpdr);
+
+	rdpdr->hotplug_wnd = hwnd;
+	/* register device interface to hwnd */
+	NotificationFilter.dbch_size = sizeof(DEV_BROADCAST_HANDLE);
+	NotificationFilter.dbch_devicetype = DBT_DEVTYP_HANDLE;
+	hDevNotify = RegisterDeviceNotification(hwnd, &NotificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE);
+
+	/* message loop */
+	while ((bRet = GetMessage(&msg, 0, 0, 0)) != 0)
+	{
+		if (bRet == -1)
+		{
+			break;
+		}
+		else
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+
+	UnregisterDeviceNotification(hDevNotify);
+
+	return NULL;
+}
+
+static void drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
+{
+	if (rdpdr->hotplug_wnd)
+		PostMessage(rdpdr->hotplug_wnd, WM_QUIT, 0, 0);
+}
+
+#else
+
+#define MAX_USB_DEVICES 100
+
+typedef struct _hotplug_dev {
+	char* path;
+	BOOL  to_add;
+} hotplug_dev;
+
+static char* next_line(FILE* fd, size_t* len)
+{
+	size_t newsiz;
+	int c;
+	char* newbuf;
+	char* lrbuf;
+	int lrsiz;
+
+	*len = 0;
+	lrsiz = 0;
+	lrbuf = NULL;
+	newbuf = NULL;
+
+	for (;;)
+	{
+		c = fgetc(fd);
+		if (ferror(fd))
+			return NULL;
+
+		if (c == EOF)
+		{
+			if (*len == 0)
+				return NULL;
+			else
+			{
+				lrbuf[(*len)] = '\0';
+				return lrbuf;
+			}
+		}
+		else
+		{
+			if (*len == lrsiz)
+			{
+				newsiz = lrsiz + 4096;
+				newbuf = realloc(lrbuf, newsiz);
+				if (newbuf == NULL)
+					return NULL;
+				lrbuf = newbuf;
+				lrsiz = newsiz;
+			}
+			lrbuf[(*len)] = c;
+
+			if (c == '\n')
+			{
+				lrbuf[(*len)] = '\0';
+				return lrbuf;
+			}
+
+			(*len)++;
+		}
+	}
+}
+
+static char* get_word(char* str, unsigned int* offset)
+{
+	char* p;
+	char* tmp;
+	int wlen;
+
+	if (*offset >= strlen(str))
+		return NULL;
+
+	p = str + *offset;
+	tmp = p;
+
+	while (*tmp != ' ' && *tmp  != '\0')
+		tmp++;
+
+	wlen = tmp - p;
+	*offset += wlen;
+
+	/* in case there are more than one space between words */
+	while (*(str + *offset) == ' ')
+		(*offset)++;
+
+	return strndup(p, wlen);
+}
+
+static void handle_hotplug(rdpdrPlugin* rdpdr)
+{
+	FILE *f;
+	size_t len;
+	char *line;
+	char *word;
+	unsigned int wlen;
+
+	hotplug_dev dev_array[MAX_USB_DEVICES];
+	int i, j;
+	int size = 0;
+
+	int count;
+	DEVICE_DRIVE_EXT *device_ext;
+	ULONG_PTR *keys;
+	UINT32 ids[1];
+
+	f = fopen("/proc/mounts", "r");
+	if (f == NULL)
+	{
+		return;
+	}
+
+	while ((line = next_line(f, &len)))
+	{
+		wlen = 0;
+		while ((word = get_word(line, &wlen)))
+		{
+			/* copy hotpluged device mount point to the dev_array */
+			if (strstr(word, "/mnt/") != NULL || strstr(word, "/media/") != NULL)
+			{
+				dev_array[size].path = strdup(word);
+				dev_array[size++].to_add = TRUE;
+			}
+			free(word);
+		}
+		free(line);
+	}
+
+	fclose(f);
+
+	/* delete removed devices */
+	count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
+
+	for (j = 0; j < count; j++)
+	{
+		BOOL dev_found = FALSE;
+
+		device_ext = (DEVICE_DRIVE_EXT *)ListDictionary_GetItemValue(rdpdr->devman->devices, (void *)keys[j]);
+
+		/* not plugable device */
+		if (strstr(device_ext->path, "/mnt/") == NULL && strstr(device_ext->path, "/media/") == NULL)
+			continue;
+
+		for (i = 0; i < size; i++)
+		{
+			if (strstr(device_ext->path, dev_array[i].path) != NULL)
+			{
+				dev_found = TRUE;
+				dev_array[i].to_add = FALSE;
+				break;
+			}
+		}
+
+		if (!dev_found)
+		{
+			devman_unregister_device(rdpdr->devman, (void *)keys[j]);
+			ids[0] = keys[j];
+			rdpdr_send_device_list_remove_request(rdpdr, 1, ids);
+		}
+	}
+
+	/* add new devices */
+	for (i = 0; i < size; i++)
+	{
+		RDPDR_DRIVE* drive;
+
+		if (dev_array[i].to_add)
+		{
+			char* name;
+
+			drive = (RDPDR_DRIVE*) malloc(sizeof(RDPDR_DRIVE));
+			ZeroMemory(drive, sizeof(RDPDR_DRIVE));
+
+			drive->Type = RDPDR_DTYP_FILESYSTEM;
+
+			drive->Path = _strdup(dev_array[i].path);
+			name = strrchr(drive->Path, '/') + 1;
+			drive->Name = _strdup(name);
+			devman_load_device_service(rdpdr->devman, (RDPDR_DEVICE *)drive);
+		}
+
+		free(dev_array[i].path);
+		dev_array[i].path = NULL;
+	}
+	rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+}
+
+static void* drive_hotplug_thread_func(void* arg)
+{
+	rdpdrPlugin* rdpdr;
+	int mfd;
+	fd_set rfds;
+	struct timeval tv;
+	int rv;
+
+	rdpdr = (rdpdrPlugin *)arg;
+
+	rdpdr->stop_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	mfd = open("/proc/mounts", O_RDONLY, 0);
+	if (mfd < 0)
+	{
+	    fprintf(stderr, "ERROR: Unable to open /proc/mounts.");
+	    return NULL;
+	}
+
+	FD_ZERO(&rfds);
+	FD_SET(mfd, &rfds);
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+
+	while ((rv = select(mfd+1, NULL, NULL, &rfds, &tv)) >= 0)
+	{
+		if (WaitForSingleObject(rdpdr->stop_event, 0) == WAIT_OBJECT_0)
+			break;
+
+		if (FD_ISSET(mfd, &rfds))
+		{
+			/* file /proc/mounts changed, handle this */
+			handle_hotplug(rdpdr);
+		}
+
+		FD_ZERO(&rfds);
+		FD_SET(mfd, &rfds);
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+	}
+
+    return NULL;
+}
+
+static void drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
+{
+	if (rdpdr->stop_event)
+		SetEvent(rdpdr->stop_event);
+}
+
+#endif
+
 
 static void rdpdr_process_connect(rdpdrPlugin* rdpdr)
 {
@@ -58,6 +493,11 @@ static void rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	for (index = 0; index < settings->DeviceCount; index++)
 	{
 		device = settings->DeviceArray[index];
+		if (strcmp(device->Name, "*") == 0)
+		{
+			rdpdr->hotplug_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)drive_hotplug_thread_func, rdpdr, 0, NULL);
+			continue;
+		}
 		devman_load_device_service(rdpdr->devman, device);
 	}
 }
@@ -492,6 +932,10 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 
 	MessagePipe_Free(rdpdr->MsgPipe);
 	CloseHandle(rdpdr->thread);
+
+	drive_hotplug_thread_terminate(rdpdr);
+
+	WaitForSingleObject(rdpdr->hotplug_thread, INFINITE);
 
 	rdpdr->channelEntryPoints.pVirtualChannelClose(rdpdr->OpenHandle);
 
