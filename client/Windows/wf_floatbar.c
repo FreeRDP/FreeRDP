@@ -382,7 +382,8 @@ LRESULT CALLBACK floatbar_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				case TIMER_HIDE:
 				{
 					KillTimer(hWnd, TIMER_HIDE);
-					floatbar_animation(floatbar, FALSE);
+					if (!floatbar->locked)
+						floatbar_animation(floatbar, FALSE);
 					break;
 				}
 				case TIMER_ANIMAT_SHOW:
