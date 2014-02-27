@@ -340,6 +340,11 @@ typedef DECIMAL *LPDECIMAL;
 #define DECIMAL_NEG		((BYTE) 0x80)
 #define DECIMAL_SETZERO(dec)	{ (dec).Lo64 = 0; (dec).Hi32 = 0; (dec).signscale = 0; }
 
+typedef char CCHAR;
+typedef DWORD LCID;
+typedef PDWORD PLCID;
+typedef WORD LANGID;
+
 #endif
 
 #endif /* WINPR_WTYPES_H */
