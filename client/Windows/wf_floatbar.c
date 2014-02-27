@@ -41,12 +41,12 @@ typedef struct _Button Button;
 #define BTN_MAX             4
 
 /* bmp size */
-#define BACKGROUND_X        581
-#define BACKGROUND_Y        29
+#define BACKGROUND_W        581
+#define BACKGROUND_H        29
 #define LOCK_X              13
-#define MINIMIZE_X          (BACKGROUND_X - 91)
-#define CLOSE_X             (BACKGROUND_X - 37)
-#define RESTORE_X           (BACKGROUND_X - 64)
+#define MINIMIZE_X          (BACKGROUND_W - 91)
+#define CLOSE_X             (BACKGROUND_W - 37)
+#define RESTORE_X           (BACKGROUND_W - 64)
 
 #define BUTTON_Y            2
 #define BUTTON_WIDTH        24
@@ -77,6 +77,7 @@ struct _FloatBar {
 	Button* buttons[BTN_MAX];
 	BOOL shown;
 	BOOL locked;
+	HDC hdcmem;
 	HBITMAP background;
 };
 
@@ -122,22 +123,12 @@ static int button_hit(Button* button)
 	return 0;
 }
 
-static int button_paint(Button* button)
+static int button_paint(Button* button, HDC hdc)
 {
 	FloatBar* floatbar = button->floatbar;
-	HDC hDC = GetDC(floatbar->hwnd);
-	HDC hMemDC = CreateCompatibleDC(hDC);
-	HBITMAP hOldBitmap;
-	BITMAP bm;
 
-	hOldBitmap = (HBITMAP)SelectObject(hMemDC, button->active ? button->bmp_act : button->bmp);
-
-	StretchBlt(hDC, button->x, button->y, button->w, button->h, hMemDC, 0, 0, button->w, button->h, SRCCOPY);
-
-	SelectObject(hMemDC, hOldBitmap);
-
-	DeleteDC(hMemDC);
-	ReleaseDC(floatbar->hwnd, hDC);
+	SelectObject(floatbar->hdcmem, button->active ? button->bmp_act : button->bmp);
+	StretchBlt(hdc, button->x, button->y, button->w, button->h, floatbar->hdcmem, 0, 0, button->w, button->h, SRCCOPY);
 
 	return 0;
 }
@@ -202,32 +193,20 @@ static Button* floatbar_get_button(FloatBar* floatbar, int x, int y)
 	return NULL;
 }
 
-static int floatbar_paint(FloatBar* floatbar)
+static int floatbar_paint(FloatBar* floatbar, HDC hdc)
 {
 	int i;
-	HDC hDC;
-	HDC hMemDC;
-	HBITMAP hOldBitmap;
-	BITMAP bm;
 
 	if (!floatbar->wfc->fullscreen)
 		return -1;
 
 	/* paint background */
-	hDC = GetDC(floatbar->hwnd);
-	hMemDC = CreateCompatibleDC(hDC);
-	GetObject(floatbar->background, sizeof(bm), &bm);
-
-	hOldBitmap = (HBITMAP)SelectObject(hMemDC, floatbar->background);
-	StretchBlt(hDC, 0, 0, BACKGROUND_X, BACKGROUND_Y, hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
-	(HBITMAP)SelectObject(hMemDC, hOldBitmap);
-
-	DeleteDC(hMemDC);
-	ReleaseDC(floatbar->hwnd, hDC);
+	SelectObject(floatbar->hdcmem, floatbar->background);
+	StretchBlt(hdc, 0, 0, BACKGROUND_W, BACKGROUND_H, floatbar->hdcmem, 0, 0, BACKGROUND_W, BACKGROUND_H, SRCCOPY);
 
 	/* paint buttons */
 	for (i = 0; i < BTN_MAX; i++)
-		button_paint(floatbar->buttons[i]);
+		button_paint(floatbar->buttons[i], hdc);
 
 	return 0;
 }
@@ -249,6 +228,7 @@ LRESULT CALLBACK floatbar_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 	PAINTSTRUCT ps;
 	Button* button;
+	HDC hdc;
 	int pos_x;
 	int pos_y;
 
@@ -265,6 +245,10 @@ LRESULT CALLBACK floatbar_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			floatbar->width = floatbar->rect.right - floatbar->rect.left;
 			floatbar->height = floatbar->rect.bottom - floatbar->rect.top;
 
+			hdc = GetDC(hWnd);
+			floatbar->hdcmem = CreateCompatibleDC(hdc);
+			ReleaseDC(hWnd, hdc);
+
 			tme.cbSize = sizeof(TRACKMOUSEEVENT);
 			tme.dwFlags = TME_LEAVE;
 			tme.hwndTrack = hWnd;
@@ -274,8 +258,8 @@ LRESULT CALLBACK floatbar_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_PAINT:
-			BeginPaint(hWnd, &ps);
-			floatbar_paint(floatbar);
+			hdc = BeginPaint(hWnd, &ps);
+			floatbar_paint(floatbar, hdc);
 			EndPaint(hWnd, &ps);
 			break;
 
@@ -403,7 +387,9 @@ LRESULT CALLBACK floatbar_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					break;
 			}
 			break;
+
 		case WM_DESTROY:
+			DeleteDC(floatbar->hdcmem);
 			PostQuitMessage(0);
 			break;
 
@@ -427,8 +413,9 @@ static FloatBar* floatbar_create(wfContext* wfc)
 	floatbar->hwnd = NULL;
 	floatbar->parent = wfc->hwnd;
 	floatbar->wfc = wfc;
+	floatbar->hdcmem = NULL;
 
-	floatbar->background = (HBITMAP)LoadImage(wfc->hInstance, MAKEINTRESOURCE(IDB_BACKGROUND), IMAGE_BITMAP, BACKGROUND_X, BACKGROUND_Y, LR_DEFAULTCOLOR);
+	floatbar->background = (HBITMAP)LoadImage(wfc->hInstance, MAKEINTRESOURCE(IDB_BACKGROUND), IMAGE_BITMAP, BACKGROUND_W, BACKGROUND_H, LR_DEFAULTCOLOR);
 	floatbar->buttons[0] = floatbar_create_button(floatbar, BUTTON_MINIMIZE, IDB_MINIMIZE, IDB_MINIMIZE_ACT, MINIMIZE_X, BUTTON_Y, BUTTON_HEIGHT, BUTTON_WIDTH);
 	floatbar->buttons[1] = floatbar_create_button(floatbar, BUTTON_RESTORE, IDB_RESTORE, IDB_RESTORE_ACT, RESTORE_X, BUTTON_Y, BUTTON_HEIGHT, BUTTON_WIDTH);
 	floatbar->buttons[2] = floatbar_create_button(floatbar, BUTTON_CLOSE, IDB_CLOSE, IDB_CLOSE_ACT, CLOSE_X, BUTTON_Y, BUTTON_HEIGHT, BUTTON_WIDTH);
@@ -453,7 +440,7 @@ void floatbar_window_create(wfContext *wfc)
 {
 	WNDCLASSEX wnd_cls;
 	HWND barWnd;
-	int x = (GetSystemMetrics(SM_CXSCREEN) - BACKGROUND_X) / 2;
+	int x = (GetSystemMetrics(SM_CXSCREEN) - BACKGROUND_W) / 2;
 
 	wnd_cls.cbSize        = sizeof(WNDCLASSEX);
 	wnd_cls.style         = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -472,7 +459,7 @@ void floatbar_window_create(wfContext *wfc)
 
 	wfc->floatbar = floatbar_create(wfc);
 
-	barWnd = CreateWindowEx(WS_EX_TOPMOST, L"floatbar", L"floatbar", WS_CHILD, x, 0, BACKGROUND_X, BACKGROUND_Y, wfc->hwnd, NULL, wfc->hInstance, wfc->floatbar);
+	barWnd = CreateWindowEx(WS_EX_TOPMOST, L"floatbar", L"floatbar", WS_CHILD, x, 0, BACKGROUND_W, BACKGROUND_H, wfc->hwnd, NULL, wfc->hInstance, wfc->floatbar);
 	if (barWnd == NULL)
 		return;
 	ShowWindow(barWnd, SW_SHOWNORMAL);
