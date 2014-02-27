@@ -387,7 +387,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->FrameAcknowledge = 2;
 		settings->MouseMotion = TRUE;
 
-		settings->AutoReconnectionEnabled = TRUE;
+		settings->AutoReconnectionEnabled = FALSE;
 		settings->AutoReconnectMaxRetries = 20;
 
 		settings->ClientAutoReconnectCookie = (ARC_CS_PRIVATE_PACKET*) malloc(sizeof(ARC_CS_PRIVATE_PACKET));
