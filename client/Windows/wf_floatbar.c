@@ -29,28 +29,28 @@
 typedef struct _Button Button;
 
 /* TIMERs */
-#define TIMER_HIDE 1
-#define TIMER_ANIMAT_SHOW 2
-#define TIMER_ANIMAT_HIDE 3
+#define TIMER_HIDE          1
+#define TIMER_ANIMAT_SHOW   2
+#define TIMER_ANIMAT_HIDE   3
 
 /* Button Type */
+#define BUTTON_LOCKPIN      0
 #define BUTTON_MINIMIZE     1
 #define BUTTON_RESTORE      2
 #define BUTTON_CLOSE        3
-#define BUTTON_LOCKPIN      4
-#define BTN_MAX 4
+#define BTN_MAX             4
 
 /* bmp size */
-#define BACKGROUND_X 581
-#define BACKGROUND_Y 29
-#define LOCK_X 13
-#define MINIMIZE_X (BACKGROUND_X - 91)
-#define CLOSE_X (BACKGROUND_X - 37)
-#define RESTORE_X (BACKGROUND_X - 64)
+#define BACKGROUND_X        581
+#define BACKGROUND_Y        29
+#define LOCK_X              13
+#define MINIMIZE_X          (BACKGROUND_X - 91)
+#define CLOSE_X             (BACKGROUND_X - 37)
+#define RESTORE_X           (BACKGROUND_X - 64)
 
-#define BUTTON_Y 2
-#define BUTTON_WIDTH 24
-#define BUTTON_HEIGHT 24
+#define BUTTON_Y            2
+#define BUTTON_WIDTH        24
+#define BUTTON_HEIGHT       24
 
 struct _Button {
 	FloatBar* floatbar;
@@ -234,53 +234,42 @@ static int floatbar_paint(FloatBar* floatbar)
 
 static int floatbar_animation(FloatBar* floatbar, BOOL show)
 {
-	LONG width, height, y;
-
 	SetTimer(floatbar->hwnd, show ? TIMER_ANIMAT_SHOW : TIMER_ANIMAT_HIDE, 10, NULL);
-
 	floatbar->shown = show;
-
 	return 0;
 }
 
 LRESULT CALLBACK floatbar_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-	PAINTSTRUCT ps;
-	RECT rect;
 	static int dragging = FALSE;
 	static int lbtn_dwn = FALSE;
 	static int btn_dwn_x = 0;
-
-	int nWidth, nHeight;
-	int drag_left = 0;
-	int xScreen = GetSystemMetrics(SM_CXSCREEN);
-	HWND hParentWnd = GetParent(hWnd);
-
 	static FloatBar* floatbar;
+	static TRACKMOUSEEVENT tme;
+
+	PAINTSTRUCT ps;
 	Button* button;
 	int pos_x;
 	int pos_y;
 
-	TRACKMOUSEEVENT tme;
-
-	tme.cbSize = sizeof(TRACKMOUSEEVENT);
-	tme.dwFlags = TME_LEAVE;
-	tme.hwndTrack = hWnd;
-	tme.dwHoverTime = HOVER_DEFAULT;
-
-	GetWindowRect(hWnd, &rect);
-	nWidth = rect.right - rect.left;
-	nHeight = rect.bottom - rect.top;
+	int xScreen = GetSystemMetrics(SM_CXSCREEN);
 
 	switch(Msg)
 	{
 		case WM_CREATE:
 			floatbar = (FloatBar *)((CREATESTRUCT *)lParam)->lpCreateParams;
 			floatbar->hwnd = hWnd;
-			floatbar->parent = hParentWnd;
+			floatbar->parent = GetParent(hWnd);
+
 			GetWindowRect(floatbar->hwnd, &floatbar->rect);
 			floatbar->width = floatbar->rect.right - floatbar->rect.left;
 			floatbar->height = floatbar->rect.bottom - floatbar->rect.top;
+
+			tme.cbSize = sizeof(TRACKMOUSEEVENT);
+			tme.dwFlags = TME_LEAVE;
+			tme.hwndTrack = hWnd;
+			tme.dwHoverTime = HOVER_DEFAULT;
+
 			SetTimer(hWnd, TIMER_HIDE, 3000, NULL);
 			break;
 
@@ -328,18 +317,18 @@ LRESULT CALLBACK floatbar_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			pos_y = (lParam >> 16) & 0xffff;
 
 			if (!floatbar->shown)
-					floatbar_animation(floatbar, TRUE);
+				floatbar_animation(floatbar, TRUE);
 
 			if (dragging)
 			{
-				drag_left = rect.left + (lParam & 0xffff) - btn_dwn_x;
+				floatbar->rect.left = floatbar->rect.left + (lParam & 0xffff) - btn_dwn_x;
 
-				if (drag_left < 0)
-					drag_left = 0;
-				else if (drag_left > xScreen - floatbar->width)
-					drag_left = xScreen - floatbar->width;
+				if (floatbar->rect.left < 0)
+					floatbar->rect.left = 0;
+				else if (floatbar->rect.left > xScreen - floatbar->width)
+					floatbar->rect.left = xScreen - floatbar->width;
 
-				MoveWindow(hWnd, drag_left, rect.top, floatbar->width, floatbar->height, TRUE);
+				MoveWindow(hWnd, floatbar->rect.left, floatbar->rect.top, floatbar->width, floatbar->height, TRUE);
 			}
 			else
 			{
@@ -390,7 +379,7 @@ LRESULT CALLBACK floatbar_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				{
 					static int y = 0;
 
-					MoveWindow(floatbar->hwnd, rect.left, (y++ - floatbar->height), floatbar->width, floatbar->height, TRUE);
+					MoveWindow(floatbar->hwnd, floatbar->rect.left, (y++ - floatbar->height), floatbar->width, floatbar->height, TRUE);
 					if (y == floatbar->height)
 					{
 						y = 0;
@@ -402,12 +391,11 @@ LRESULT CALLBACK floatbar_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				{
 					static int y = 0;
 
-					MoveWindow(floatbar->hwnd, rect.left, -y++, floatbar->width, floatbar->height, TRUE);
+					MoveWindow(floatbar->hwnd, floatbar->rect.left, -y++, floatbar->width, floatbar->height, TRUE);
 					if (y == floatbar->height)
 					{
 						y = 0;
 						KillTimer(hWnd, wParam);
-						printf("kill timer hide\n");
 					}
 					break;
 				}
@@ -433,7 +421,6 @@ static FloatBar* floatbar_create(wfContext* wfc)
 
 	if (!floatbar)
 		return NULL;
-
 
 	floatbar->locked = FALSE;
 	floatbar->shown = TRUE;
