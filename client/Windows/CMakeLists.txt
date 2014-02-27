@@ -33,6 +33,8 @@ set(${MODULE_PREFIX}_SRCS
 	wf_rail.h
 	wf_interface.c
 	wf_interface.h
+	wf_floatbar.c
+	wf_floatbar.h
 	wfreerdp.rc
 	resource.h)
 
