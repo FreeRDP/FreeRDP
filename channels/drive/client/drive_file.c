@@ -177,9 +177,9 @@ static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 Creat
 	struct STAT st;
 	BOOL exists;
 #ifdef WIN32
-        const static int mode = _S_IREAD | _S_IWRITE ;
+	const static int mode = _S_IREAD | _S_IWRITE ;
 #else
-        const static int mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+	const static int mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
 	BOOL largeFile = FALSE;
 #endif
 	int oflag = 0;
@@ -265,8 +265,10 @@ static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 Creat
 #ifndef WIN32
 		if (largeFile)
 		{
-		    oflag |= O_LARGEFILE;
+			oflag |= O_LARGEFILE;
 		}
+#else
+		oflag |= O_BINARY;
 #endif
 		file->fd = OPEN(file->fullpath, oflag, mode);
 
@@ -426,7 +428,7 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length, wStream* input)
 {
 	char* s = NULL;
-        mode_t m;
+	mode_t m;
 	UINT64 size;
 	int status;
 	char* fullpath;
@@ -456,7 +458,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			tv[1].tv_sec = (LastWriteTime > 0 ? FILE_TIME_RDP_TO_SYSTEM(LastWriteTime) : st.st_mtime);
 			tv[1].tv_usec = 0;
 #ifndef WIN32
-/* TODO on win32 */                        
+			/* TODO on win32 */
 #ifdef ANDROID
 			utimes(file->fullpath, tv);
 #else
@@ -474,15 +476,17 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 					fchmod(file->fd, st.st_mode);
 			}
 #endif
-                        break;
+			break;
 
 		case FileEndOfFileInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232067.aspx */
 		case FileAllocationInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232076.aspx */
+#ifndef _WIN32
 			Stream_Read_UINT64(input, size);
 			if (ftruncate(file->fd, size) != 0)
 				return FALSE;
+#endif
 			break;
 
 		case FileDispositionInformation:
@@ -509,10 +513,16 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			fullpath = drive_file_combine_fullpath(file->basepath, s);
 			free(s);
 
-			/* TODO rename does not work on win32 */
-                        if (rename(file->fullpath, fullpath) == 0)
+#ifdef _WIN32
+			if (file->fd)
+				close(file->fd);
+#endif
+			if (rename(file->fullpath, fullpath) == 0)
 			{
 				drive_file_set_fullpath(file, fullpath);
+#ifdef _WIN32
+				file->fd = OPEN(fullpath, O_RDWR | O_BINARY);
+#endif
 			}
 			else
 			{

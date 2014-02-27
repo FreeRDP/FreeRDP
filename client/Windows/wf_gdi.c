@@ -322,6 +322,11 @@ void wf_toggle_fullscreen(wfContext* wfc)
 		wfc->disablewindowtracking = TRUE;
 	}
 
+	if (wfc->fullscreen)
+		floatbar_show(wfc->floatbar);
+	else
+		floatbar_hide(wfc->floatbar);
+
 	SetParent(wfc->hwnd, wfc->fullscreen ? NULL : wfc->hWndParent);
 	wf_resize_window(wfc);
 	ShowWindow(wfc->hwnd, SW_SHOW);
@@ -515,12 +520,18 @@ void wf_gdi_polyline(wfContext* wfc, POLYLINE_ORDER* polyline)
 
 	if (polyline->numPoints > 0)
 	{
+		POINT temp;
+
+		temp.x = polyline->xStart;
+		temp.y = polyline->yStart;
 		pts = (POINT*) malloc(sizeof(POINT) * polyline->numPoints);
 
 		for (i = 0; i < (int) polyline->numPoints; i++)
 		{
-			pts[i].x = polyline->points[i].x;
-			pts[i].y = polyline->points[i].y;
+			temp.x += polyline->points[i].x;
+			temp.y += polyline->points[i].y;
+			pts[i].x = temp.x;
+			pts[i].y = temp.y;
 
 			if (wfc->drawing == wfc->primary)
 				wf_invalidate_region(wfc, pts[i].x, pts[i].y, pts[i].x + 1, pts[i].y + 1);

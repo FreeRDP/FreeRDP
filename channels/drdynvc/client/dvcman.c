@@ -413,12 +413,12 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 
 		IFCALL(context->OnChannelDisconnected, context, channel->channel_name, channel->pInterface);
 
+		free(channel->channel_name);
+
 		DEBUG_DVC("dvcman_close_channel: channel %d closed", ChannelId);
 		ichannel = (IWTSVirtualChannel*) channel;
 		ichannel->Close(ichannel);
 	}
-
-	free(channel->channel_name);
 
 	return 0;
 }
