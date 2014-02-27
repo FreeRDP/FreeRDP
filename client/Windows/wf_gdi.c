@@ -328,6 +328,11 @@ void wf_toggle_fullscreen(wfContext* wfc)
 		wfc->disablewindowtracking = TRUE;
 	}
 
+	if (wfc->fullscreen)
+		floatbar_show(wfc->floatbar);
+	else
+		floatbar_hide(wfc->floatbar);
+
 	SetParent(wfc->hwnd, wfc->fullscreen ? NULL : wfc->hWndParent);
 	wf_resize_window(wfc);
 	ShowWindow(wfc->hwnd, SW_SHOW);

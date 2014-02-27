@@ -448,6 +448,7 @@ BOOL wf_post_connect(freerdp* instance)
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
 	wf_cliprdr_init(wfc, instance->context->channels);
+	float_bar_window_create(wfc);
 
 	return TRUE;
 }
