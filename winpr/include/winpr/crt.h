@@ -26,6 +26,7 @@
 
 #include <winpr/winpr.h>
 
+#include <winpr/spec.h>
 #include <winpr/string.h>
 #include <winpr/heap.h>
 
@@ -52,12 +53,6 @@ WINPR_API PVOID SecureZeroMemory(PVOID ptr, SIZE_T cnt);
 #define _ERRNO_T_DEFINED
 typedef int errno_t;
 #endif
-
-#define RTL_NUMBER_OF_V1(A)	(sizeof(A) / sizeof((A)[0]))
-#define RTL_NUMBER_OF_V2(A)	RTL_NUMBER_OF_V1(A)
-
-#define ARRAYSIZE(A)		RTL_NUMBER_OF_V2(A)
-#define _ARRAYSIZE(A)		RTL_NUMBER_OF_V1(A)
 
 #ifdef __cplusplus
 extern "C" {

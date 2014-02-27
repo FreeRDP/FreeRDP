@@ -26,6 +26,8 @@
 
 #include <winpr/midl.h>
 
+#ifndef _WIN32
+
 void* MIDL_user_allocate(size_t cBytes)
 {
     return (malloc(cBytes));
@@ -35,3 +37,5 @@ void MIDL_user_free(void* p)
 {
 	free(p);
 }
+
+#endif
