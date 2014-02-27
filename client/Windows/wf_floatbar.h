@@ -1,9 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Device Redirection Virtual Channel
+ * Windows Float Bar
  *
- * Copyright 2010-2011 Vic Lee
- * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Zhang Zhaolong <zhangzl2013@126.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CHANNEL_RDPDR_CLIENT_DEVMAN_H
-#define FREERDP_CHANNEL_RDPDR_CLIENT_DEVMAN_H
+#ifndef __WF_FLOATBAR_H__
+#define __WF_FLOATBAR_H__
 
-#include "rdpdr_main.h"
+typedef struct _FloatBar FloatBar;
+typedef struct wf_context wfContext;
 
-void devman_unregister_device(DEVMAN* devman, void* key);
-BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device);
-DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id);
+void floatbar_window_create(wfContext* wfc);
+int floatbar_show(FloatBar* floatbar);
+int floatbar_hide(FloatBar* floatbar);
 
-DEVMAN* devman_new(rdpdrPlugin* rdpdr);
-void devman_free(DEVMAN* devman);
-
-#endif /* FREERDP_CHANNEL_RDPDR_CLIENT_DEVMAN_H */
+#endif

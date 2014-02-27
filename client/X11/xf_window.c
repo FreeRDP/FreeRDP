@@ -539,8 +539,7 @@ xfWindow* xf_CreateWindow(xfContext* xfc, rdpWindow* wnd, int x, int y, int widt
 
 	window->handle = XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen),
 		x, y, window->width, window->height, 0, xfc->depth, InputOutput, xfc->visual,
-		CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap | 
-		CWBorderPixel | CWWinGravity | CWBitGravity, &xfc->attribs);
+		0, &xfc->attribs);
 
 	DEBUG_X11_LMS("Create window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d  rdp=0x%X",
 			(UINT32) window->handle, window->left, window->top, window->right, window->bottom,

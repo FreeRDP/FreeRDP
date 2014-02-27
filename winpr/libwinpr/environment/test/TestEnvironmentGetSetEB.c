@@ -13,8 +13,12 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 	LPTCH lpszEnvironmentBlock = "SHELL=123\0test=1\0test1=2\0DISPLAY=WINPR_TEST_VALUE\0\0";
 	LPTCH lpszEnvironmentBlockNew = NULL;
 
+	/* Get length of an variable */
 	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock,"DISPLAY", NULL, 0);
+	if (0 == length)
+		return -1;
 
+	/* Get the variable itself */
 	p = (LPSTR) malloc(length);
 	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock,"DISPLAY", p, length);
 
@@ -22,14 +26,47 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 
 	if (strcmp(p, "WINPR_TEST_VALUE") != 0)
 	{
+		free(p);
 		return -1;
 	}
 
 	free(p);
 
-	lpszEnvironmentBlockNew = (LPTCH) malloc(1024);
-	memcpy(lpszEnvironmentBlockNew,lpszEnvironmentBlock,56);
+	/* Get length of an non-existing variable */
+	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock,"BLA", NULL, 0);
+	if (0 != length)
+	{
+		printf("Unset variable returned\n");
+		return -1;
+	}
 
+	/* Get length of an similar called variables */
+	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock,"XDISPLAY", NULL, 0);
+	if (0 != length)
+	{
+		printf("Similar named variable returned (XDISPLAY, length %d)\n", length);
+		return -1;
+	}
+	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock,"DISPLAYX", NULL, 0);
+	if (0 != length)
+	{
+		printf("Similar named variable returned (DISPLAYX, length %d)\n", length);
+		return -1;
+	}
+	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock,"DISPLA", NULL, 0);
+	if (0 != length)
+	{
+		printf("Similar named variable returned (DISPLA, length %d)\n", length);
+		return -1;
+	}
+	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock,"ISPLAY", NULL, 0);
+	if (0 != length)
+	{
+		printf("Similar named variable returned (ISPLAY, length %d)\n", length);
+		return -1;
+	}
+
+	/* Set variable in empty environment block */
 	if (SetEnvironmentVariableEBA(&lpszEnvironmentBlockNew, "test", "5"))
 	{
 		if (GetEnvironmentVariableEBA(lpszEnvironmentBlockNew,"test", test, 1023))
@@ -44,18 +81,45 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 			return -1;
 		}
 	}
-
-	//free(lpszEnvironmentBlockNew);
-
+	/* Clear variable */
 	if (SetEnvironmentVariableEBA(&lpszEnvironmentBlockNew, "test", NULL))
 	{
 		if (GetEnvironmentVariableEBA(lpszEnvironmentBlockNew,"test", test, 1023))
 		{
+			free(lpszEnvironmentBlockNew);
 			return -1;
 		}
 		else
 		{
 			// not found .. this is expected
+		}
+	}
+	free(lpszEnvironmentBlockNew);
+
+	lpszEnvironmentBlockNew = (LPTCH) malloc(1024);
+	memcpy(lpszEnvironmentBlockNew,lpszEnvironmentBlock,56);
+
+	/* Set variable in empty environment block */
+	if (SetEnvironmentVariableEBA(&lpszEnvironmentBlockNew, "test", "5"))
+	{
+		if (0 != GetEnvironmentVariableEBA(lpszEnvironmentBlockNew,"testr", test, 1023))
+		{
+			printf("GetEnvironmentVariableEBA returned unset variable\n");
+			free(lpszEnvironmentBlockNew);
+			return -1;
+		}
+		if (GetEnvironmentVariableEBA(lpszEnvironmentBlockNew,"test", test, 1023))
+		{
+			if (strcmp(test,"5") != 0)
+			{
+				free(lpszEnvironmentBlockNew);
+				return -1;
+			}
+		}
+		else
+		{
+			free(lpszEnvironmentBlockNew);
+			return -1;
 		}
 	}
 

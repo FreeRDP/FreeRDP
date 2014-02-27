@@ -201,12 +201,7 @@ static void* rdpsnd_server_thread(void* arg)
 		Stream_SetPosition(s, 0);
 
 		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
-				(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
-		{
-			if (BytesReturned)
-				Stream_Seek(s, BytesReturned);
-		}
-		else
+				(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			if (!BytesReturned)
 				break;

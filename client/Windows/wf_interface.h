@@ -37,6 +37,7 @@
 #include <freerdp/codec/nsc.h>
 #include <freerdp/client/file.h>
 
+#include "wf_floatbar.h"
 #include "wf_event.h"
 
 #ifdef __cplusplus
@@ -132,6 +133,7 @@ struct wf_context
 	int yCurrentScroll;   // current vertical scroll value
 	int yMaxScroll;       // maximum vertical scroll value
 	cliprdrContext *cliprdr_context;
+	FloatBar* floatbar;
 };
 typedef struct wf_context wfContext;
 
