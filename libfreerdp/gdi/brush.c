@@ -100,7 +100,7 @@ HGDI_BRUSH gdi_CreateHatchBrush(HGDI_BITMAP hbmp)
 
 int gdi_PatBlt(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop)
 {
-	p_PatBlt _PatBlt = PatBlt_[IBPP(hdc->bitsPerPixel)];
+	p_PatBlt _PatBlt = PatBlt_[IBPP(hdc->bpp)]; //?
 
 	if (_PatBlt != NULL)
 		return _PatBlt(hdc, nXLeft, nYLeft, nWidth, nHeight, rop);

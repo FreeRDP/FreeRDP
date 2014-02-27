@@ -392,12 +392,14 @@ gdiBitmap* gdi_glyph_new(rdpGdi* gdi, GLYPH_DATA* glyph)
 
 	gdi_bmp->hdc = gdi_GetDC();
 	gdi_bmp->hdc->bytesPerPixel = 1;
-	gdi_bmp->hdc->bitsPerPixel = 1;
+	gdi_bmp->hdc->bpp = 1;
+	gdi_bmp->hdc->depth = 1;
 
 	extra = freerdp_glyph_convert(glyph->cx, glyph->cy, glyph->aj);
-	gdi_bmp->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, extra);
+	gdi_bmp->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, 1, extra);
 	gdi_bmp->bitmap->bytesPerPixel = 1;
-	gdi_bmp->bitmap->bitsPerPixel = 1;
+	gdi_bmp->bitmap->bpp = 1;
+	gdi_bmp->bitmap->depth = 1;
 
 	gdi_SelectObject(gdi_bmp->hdc, (HGDIOBJECT) gdi_bmp->bitmap);
 	gdi_bmp->org_bitmap = NULL;
@@ -416,19 +418,19 @@ void gdi_glyph_free(gdiBitmap *gdi_bmp)
 	}
 }
 
-gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* data)
+gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, int depth, BYTE* data)
 {
 	gdiBitmap* bitmap;
 
 	bitmap = (gdiBitmap*) malloc(sizeof(gdiBitmap));
 	bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
 
-	DEBUG_GDI("gdi_bitmap_new: width:%d height:%d bpp:%d", width, height, bpp);
+	DEBUG_GDI("gdi_bitmap_new: width:%d height:%d bpp:%d depth:%d", width, height, bpp, depth);
 
 	if (data == NULL)
 		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, width, height);
 	else
-		bitmap->bitmap = gdi_create_bitmap(gdi, width, height, bpp, data);
+		bitmap->bitmap = gdi_create_bitmap(gdi, width, height, bpp, depth, data);
 
 	gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->bitmap);
 	bitmap->org_bitmap = NULL;
@@ -504,9 +506,9 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		HGDI_BITMAP hBmp;
 
 		data = freerdp_mono_image_convert(GDI_BS_HACHTED_PATTERNS + 8 * brush->hatch, 8, 8, 1,
-		gdi->dstBpp, patblt->backColor, patblt->foreColor, gdi->clrconv);
+		gdi->dst_bpp, gdi->dst_depth, patblt->backColor, patblt->foreColor, gdi->clrconv);
 
-		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
+		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bpp, gdi->drawing->hdc->depth, data);
 
 		originalBrush = gdi->drawing->hdc->brush;
 		gdi->drawing->hdc->brush = gdi_CreateHatchBrush(hBmp);
@@ -523,15 +525,15 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 		if (brush->bpp > 1)
 		{
-			data = freerdp_image_convert(brush->data, NULL, 8, 8, gdi->srcBpp, gdi->dstBpp, gdi->clrconv);
+			data = freerdp_image_convert(brush->data, NULL, 8, 8, gdi->srcBpp, gdi->dst_bpp, gdi->dst_depth, gdi->clrconv);
 		}
 		else
 		{
-			data = freerdp_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dstBpp,
+			data = freerdp_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dst_bpp, gdi->dst_depth,
 				patblt->backColor, patblt->foreColor, gdi->clrconv);
 		}
 
-		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
+		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bpp, gdi->drawing->hdc->depth, data);
 
 		originalBrush = gdi->drawing->hdc->brush;
 		gdi->drawing->hdc->brush = gdi_CreatePatternBrush(hBmp);
@@ -694,15 +696,15 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 		if (brush->bpp > 1)
 		{
-			data = freerdp_image_convert(brush->data, NULL, 8, 8, gdi->srcBpp, gdi->dstBpp, gdi->clrconv);
+			data = freerdp_image_convert(brush->data, NULL, 8, 8, gdi->srcBpp, gdi->dst_bpp, gdi->dst_depth, gdi->clrconv);
 		}
 		else
 		{
-			data = freerdp_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dstBpp,
+			data = freerdp_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dst_bpp, gdi->dst_depth,
 					mem3blt->backColor, mem3blt->foreColor, gdi->clrconv);
 		}
 
-		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
+		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bpp, gdi->drawing->hdc->depth, data);
 
 		originalBrush = gdi->drawing->hdc->brush;
 		gdi->drawing->hdc->brush = gdi_CreatePatternBrush(hBmp);
@@ -798,7 +800,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 			tx = message->tiles[i]->x + surface_bits_command->destLeft;
 			ty = message->tiles[i]->y + surface_bits_command->destTop;
 
-			freerdp_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
+			freerdp_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, 24, gdi->clrconv); //? internal?
 
 #ifdef DUMP_REMOTEFX_TILES
 			sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
@@ -826,8 +828,10 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 		gdi->image->bitmap->width = surface_bits_command->width;
 		gdi->image->bitmap->height = surface_bits_command->height;
-		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
-		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
+		gdi->image->bitmap->bpp = surface_bits_command->bpp;
+		gdi->image->bitmap->depth = surface_bits_command->bpp; // do not know how to determine, may be from bpp? 8->8, 16->15, 24,32->24
+		if (gdi->image->bitmap->depth > 24) gdi->image->bitmap->depth=24;
+		gdi->image->bitmap->bytesPerPixel = (gdi->image->bitmap->bpp+7) / 8;
 		gdi->image->bitmap->data = (BYTE*) realloc(gdi->image->bitmap->data, gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
 		freerdp_image_flip(nsc_context->BitmapData, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
@@ -836,8 +840,10 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 	{
 		gdi->image->bitmap->width = surface_bits_command->width;
 		gdi->image->bitmap->height = surface_bits_command->height;
-		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
-		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
+		gdi->image->bitmap->bpp = surface_bits_command->bpp;
+		gdi->image->bitmap->depth = surface_bits_command->bpp; //? do not know how to determine, may be from bpp? 8->8, 16->15, 24,32->24
+		if (gdi->image->bitmap->depth > 24) gdi->image->bitmap->depth=24;
+		gdi->image->bitmap->bytesPerPixel = (gdi->image->bitmap->bpp+7) / 8;
 
 		gdi->image->bitmap->data = (BYTE*) realloc(gdi->image->bitmap->data,
 				gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
@@ -848,7 +854,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 
 			freerdp_image_convert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
 				gdi->image->bitmap->width, gdi->image->bitmap->height,
-				gdi->image->bitmap->bitsPerPixel, 32, gdi->clrconv);
+				gdi->image->bitmap->bpp, 32, 24, gdi->clrconv); //? internal
 
 			surface_bits_command->bpp = 32;
 			surface_bits_command->bitmapData = gdi->image->bitmap->data;
@@ -924,7 +930,7 @@ void gdi_init_primary(rdpGdi* gdi)
 	if (!gdi->primary_buffer)
 		gdi->primary->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, gdi->width, gdi->height);
 	else
-		gdi->primary->bitmap = gdi_CreateBitmap(gdi->width, gdi->height, gdi->dstBpp, gdi->primary_buffer);
+		gdi->primary->bitmap = gdi_CreateBitmap(gdi->width, gdi->height, gdi->dst_bpp, gdi->dst_depth, gdi->primary_buffer);
 
 	gdi_SelectObject(gdi->primary->hdc, (HGDIOBJECT) gdi->primary->bitmap);
 	gdi->primary->org_bitmap = NULL;
@@ -983,24 +989,28 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	gdi->primary_buffer = buffer;
 
 	/* default internal buffer format */
-	gdi->dstBpp = 32;
+	gdi->dst_bpp = 32;
+	gdi->dst_depth = 24;
 	gdi->bytesPerPixel = 4;
 
 	if (gdi->srcBpp > 16)
 	{
 		if (flags & CLRBUF_32BPP)
 		{
-			gdi->dstBpp = 32;
+			gdi->dst_bpp = 32;
+			gdi->dst_depth = 24;
 			gdi->bytesPerPixel = 4;
 		}
 		else if (flags & CLRBUF_24BPP)
 		{
-			gdi->dstBpp = 24;
+			gdi->dst_bpp = 24;
+			gdi->dst_depth = 24;
 			gdi->bytesPerPixel = 3;
 		}
 		else if (flags & CLRBUF_16BPP)
 		{
-			gdi->dstBpp = 16;
+			gdi->dst_bpp = 16;
+			gdi->dst_depth = 15;
 			gdi->bytesPerPixel = 2;
 		}
 	}
@@ -1008,34 +1018,39 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	{
 		if (flags & CLRBUF_16BPP)
 		{
-			gdi->dstBpp = 16;
+			gdi->dst_bpp = 16;
+			gdi->dst_depth = 15;
 			gdi->bytesPerPixel = 2;
 		}
 		else if (flags & CLRBUF_32BPP)
 		{
-			gdi->dstBpp = 32;
+			gdi->dst_bpp = 32;
+			gdi->dst_depth = 24;
 			gdi->bytesPerPixel = 4;
 		}
 	}
+	
+	fprintf(stderr, "have set dstbpp=%d dstdepth=%d\n", gdi->dst_bpp, gdi->dst_depth);
 
 	gdi->hdc = gdi_GetDC();
-	gdi->hdc->bitsPerPixel = gdi->dstBpp;
+	gdi->hdc->bpp = gdi->dst_bpp;
+	gdi->hdc->depth = gdi->dst_depth;
 	gdi->hdc->bytesPerPixel = gdi->bytesPerPixel;
 
 	gdi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
 	gdi->clrconv->alpha = (flags & CLRCONV_ALPHA) ? 1 : 0;
 	gdi->clrconv->invert = (flags & CLRCONV_INVERT) ? 1 : 0;
-	gdi->clrconv->rgb555 = (flags & CLRCONV_RGB555) ? 1 : 0;
+	//gdi->clrconv->rgb555 = (flags & CLRCONV_RGB555) ? 1 : 0;
 	gdi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
 
 	gdi->hdc->alpha = gdi->clrconv->alpha;
 	gdi->hdc->invert = gdi->clrconv->invert;
-	gdi->hdc->rgb555 = gdi->clrconv->rgb555;
+	//gdi->hdc->rgb555 = gdi->clrconv->rgb555;
 
 	gdi_init_primary(gdi);
 
-	gdi->tile = gdi_bitmap_new_ex(gdi, 64, 64, 32, NULL);
-	gdi->image = gdi_bitmap_new_ex(gdi, 64, 64, 32, NULL);
+	gdi->tile = gdi_bitmap_new_ex(gdi, 64, 64, 32, 24, NULL);
+	gdi->image = gdi_bitmap_new_ex(gdi, 64, 64, 32, 24, NULL);
 
 	if (!cache)
 	{

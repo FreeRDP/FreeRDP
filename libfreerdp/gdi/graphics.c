@@ -42,13 +42,13 @@
 
 /* Bitmap Class */
 
-HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, BYTE* data)
+HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, int depth, BYTE* data)
 {
 	BYTE* bmpData;
 	HGDI_BITMAP bitmap;
 
-	bmpData = freerdp_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, gdi->clrconv);
-	bitmap = gdi_CreateBitmap(width, height, gdi->dstBpp, bmpData);
+	bmpData = freerdp_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, depth, gdi->clrconv);
+	bitmap = gdi_CreateBitmap(width, height, gdi->dst_bpp, gdi->dst_depth, bmpData);
 
 	return bitmap;
 }
@@ -64,7 +64,7 @@ void gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (bitmap->data == NULL)
 		gdi_bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, bitmap->width, bitmap->height);
 	else
-		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, gdi->dstBpp, bitmap->data);
+		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, gdi->dst_bpp, gdi->dst_depth, bitmap->data);
 
 	gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->bitmap);
 	gdi_bitmap->org_bitmap = NULL;
@@ -199,12 +199,14 @@ void gdi_Glyph_New(rdpContext* context, rdpGlyph* glyph)
 
 	gdi_glyph->hdc = gdi_GetDC();
 	gdi_glyph->hdc->bytesPerPixel = 1;
-	gdi_glyph->hdc->bitsPerPixel = 1;
+	gdi_glyph->hdc->bpp = 1;
+	gdi_glyph->hdc->depth = 1;
 
 	data = freerdp_glyph_convert(glyph->cx, glyph->cy, glyph->aj);
-	gdi_glyph->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, data);
+	gdi_glyph->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, 1, data);
 	gdi_glyph->bitmap->bytesPerPixel = 1;
-	gdi_glyph->bitmap->bitsPerPixel = 1;
+	gdi_glyph->bitmap->bpp = 1;
+	gdi_glyph->bitmap->depth = 1;
 
 	gdi_SelectObject(gdi_glyph->hdc, (HGDIOBJECT) gdi_glyph->bitmap);
 	gdi_glyph->org_bitmap = NULL;

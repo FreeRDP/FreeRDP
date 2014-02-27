@@ -53,7 +53,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (bitmap->data != NULL)
 	{
 		data = freerdp_image_convert(bitmap->data, NULL,
-				bitmap->width, bitmap->height, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+				bitmap->width, bitmap->height, xfc->srcBpp, xfc->bpp, xfc->depth, xfc->clrconv);
 
 		if (bitmap->ephemeral != TRUE)
 		{
@@ -72,6 +72,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 				free(bitmap->data);
 
 			bitmap->data = data;
+			bitmap->bpp = xfc->bpp;
 		}
 	}
 
@@ -237,7 +238,7 @@ void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	if ((pointer->andMaskData != 0) && (pointer->xorMaskData != 0))
 	{
 		freerdp_alpha_cursor_convert((BYTE*) (ci.pixels), pointer->xorMaskData, pointer->andMaskData,
-				pointer->width, pointer->height, pointer->xorBpp, xfc->clrconv);
+				pointer->width, pointer->height, pointer->xorBpp, xfc->depth, xfc->clrconv);
 	}
 
 	((xfPointer*) pointer)->cursor = XcursorImageLoadCursor(xfc->display, &ci);
@@ -391,12 +392,12 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 	xfContext* xfc = (xfContext*) context;
 
 	bgcolor = (xfc->clrconv->invert)?
-		freerdp_color_convert_var_bgr(bgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv):
-		freerdp_color_convert_var_rgb(bgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+		freerdp_color_convert_var_bgr(bgcolor, context_->settings->ColorDepth, xfc->depth, xfc->clrconv):
+		freerdp_color_convert_var_rgb(bgcolor, context_->settings->ColorDepth, xfc->depth, xfc->clrconv);
 
 	fgcolor = (xfc->clrconv->invert)?
-		freerdp_color_convert_var_bgr(fgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv):
-		freerdp_color_convert_var_rgb(fgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+		freerdp_color_convert_var_bgr(fgcolor, context_->settings->ColorDepth, xfc->depth, xfc->clrconv):
+		freerdp_color_convert_var_rgb(fgcolor, context_->settings->ColorDepth, xfc->depth, xfc->clrconv);
 
 	xf_lock_x11(xfc, FALSE);
 

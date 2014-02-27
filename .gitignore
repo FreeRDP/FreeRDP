@@ -118,3 +118,5 @@ default.log
 *.txt.user
 
 *.autosave
+
+gmon.out

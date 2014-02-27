@@ -45,7 +45,8 @@ HGDI_DC gdi_GetDC()
 {
 	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
 	hDC->bytesPerPixel = 4;
-	hDC->bitsPerPixel = 32;
+	hDC->bpp = 32;
+	hDC->depth = 24;
 	hDC->drawMode = GDI_R2_BLACK;
 	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
 	hDC->clip->null = 1;
@@ -59,7 +60,7 @@ HGDI_DC gdi_GetDC()
  * @return new device context
  */
 
-HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp)
+HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp, int depth)
 {
 	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
 
@@ -68,12 +69,13 @@ HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp)
 	hDC->clip->null = 1;
 	hDC->hwnd = NULL;
 
-	hDC->bitsPerPixel = bpp;
-	hDC->bytesPerPixel = bpp / 8;
+	hDC->bpp = bpp;
+	hDC->depth = bpp;
+	hDC->bytesPerPixel = (bpp+7) / 8;
 
 	hDC->alpha = clrconv->alpha;
 	hDC->invert = clrconv->invert;
-	hDC->rgb555 = clrconv->rgb555;
+	//hDC->rgb555 = clrconv->rgb555;
 
 	hDC->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
 	hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
@@ -97,14 +99,15 @@ HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 {
 	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
 	hDC->bytesPerPixel = hdc->bytesPerPixel;
-	hDC->bitsPerPixel = hdc->bitsPerPixel;
+	hDC->bpp = hdc->bpp;
+	hDC->depth = hdc->depth;
 	hDC->drawMode = hdc->drawMode;
 	hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0);
 	hDC->clip->null = 1;
 	hDC->hwnd = NULL;
 	hDC->alpha = hdc->alpha;
 	hDC->invert = hdc->invert;
-	hDC->rgb555 = hdc->rgb555;
+//	hDC->rgb555 = hdc->rgb555;
 	return hDC;
 }
 
