@@ -33,9 +33,7 @@
 
 static PWtsApiFunctionTable g_WtsApi = NULL;
 
-#ifndef _WIN32
-
-BOOL WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
+BOOL WINAPI WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
 	if (!g_WtsApi || !g_WtsApi->StartRemoteControlSessionW)
 		return FALSE;
@@ -43,7 +41,7 @@ BOOL WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId
 	return g_WtsApi->StartRemoteControlSessionW(pTargetServerName, TargetLogonId, HotkeyVk, HotkeyModifiers);
 }
 
-BOOL WTSStartRemoteControlSessionA(LPSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
+BOOL WINAPI WTSStartRemoteControlSessionA(LPSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
 {
 	if (!g_WtsApi || !g_WtsApi->StartRemoteControlSessionA)
 		return FALSE;
@@ -51,7 +49,7 @@ BOOL WTSStartRemoteControlSessionA(LPSTR pTargetServerName, ULONG TargetLogonId,
 	return g_WtsApi->StartRemoteControlSessionA(pTargetServerName, TargetLogonId, HotkeyVk, HotkeyModifiers);
 }
 
-BOOL WTSStopRemoteControlSession(ULONG LogonId)
+BOOL WINAPI WTSStopRemoteControlSession(ULONG LogonId)
 {
 	if (!g_WtsApi || !g_WtsApi->StopRemoteControlSession)
 		return FALSE;
@@ -59,7 +57,7 @@ BOOL WTSStopRemoteControlSession(ULONG LogonId)
 	return g_WtsApi->StopRemoteControlSession(LogonId);
 }
 
-BOOL WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId, PWSTR pPassword, BOOL bWait)
+BOOL WINAPI WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId, PWSTR pPassword, BOOL bWait)
 {
 	if (!g_WtsApi || !g_WtsApi->ConnectSessionW)
 		return FALSE;
@@ -67,7 +65,7 @@ BOOL WTSConnectSessionW(ULONG LogonId, ULONG TargetLogonId, PWSTR pPassword, BOO
 	return g_WtsApi->ConnectSessionW(LogonId, TargetLogonId, pPassword, bWait);
 }
 
-BOOL WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId, PSTR pPassword, BOOL bWait)
+BOOL WINAPI WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId, PSTR pPassword, BOOL bWait)
 {
 	if (!g_WtsApi || !g_WtsApi->ConnectSessionA)
 		return FALSE;
@@ -75,7 +73,7 @@ BOOL WTSConnectSessionA(ULONG LogonId, ULONG TargetLogonId, PSTR pPassword, BOOL
 	return g_WtsApi->ConnectSessionA(LogonId, TargetLogonId, pPassword, bWait);
 }
 
-BOOL WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOW* ppServerInfo, DWORD* pCount)
+BOOL WINAPI WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOW* ppServerInfo, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateServersW)
 		return FALSE;
@@ -83,7 +81,7 @@ BOOL WTSEnumerateServersW(LPWSTR pDomainName, DWORD Reserved, DWORD Version, PWT
 	return g_WtsApi->EnumerateServersW(pDomainName, Reserved, Version, ppServerInfo, pCount);
 }
 
-BOOL WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOA* ppServerInfo, DWORD* pCount)
+BOOL WINAPI WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved, DWORD Version, PWTS_SERVER_INFOA* ppServerInfo, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateServersA)
 		return FALSE;
@@ -91,7 +89,7 @@ BOOL WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved, DWORD Version, PWTS
 	return g_WtsApi->EnumerateServersA(pDomainName, Reserved, Version, ppServerInfo, pCount);
 }
 
-HANDLE WTSOpenServerW(LPWSTR pServerName)
+HANDLE WINAPI WTSOpenServerW(LPWSTR pServerName)
 {
 	if (!g_WtsApi || !g_WtsApi->OpenServerW)
 		return FALSE;
@@ -99,7 +97,7 @@ HANDLE WTSOpenServerW(LPWSTR pServerName)
 	return g_WtsApi->OpenServerW(pServerName);
 }
 
-HANDLE WTSOpenServerA(LPSTR pServerName)
+HANDLE WINAPI WTSOpenServerA(LPSTR pServerName)
 {
 	if (!g_WtsApi || !g_WtsApi->OpenServerA)
 		return FALSE;
@@ -107,7 +105,7 @@ HANDLE WTSOpenServerA(LPSTR pServerName)
 	return g_WtsApi->OpenServerA(pServerName);
 }
 
-HANDLE WTSOpenServerExW(LPWSTR pServerName)
+HANDLE WINAPI WTSOpenServerExW(LPWSTR pServerName)
 {
 	if (!g_WtsApi || !g_WtsApi->OpenServerExW)
 		return FALSE;
@@ -115,7 +113,7 @@ HANDLE WTSOpenServerExW(LPWSTR pServerName)
 	return g_WtsApi->OpenServerExW(pServerName);
 }
 
-HANDLE WTSOpenServerExA(LPSTR pServerName)
+HANDLE WINAPI WTSOpenServerExA(LPSTR pServerName)
 {
 	if (!g_WtsApi || !g_WtsApi->OpenServerExA)
 		return FALSE;
@@ -123,7 +121,7 @@ HANDLE WTSOpenServerExA(LPSTR pServerName)
 	return g_WtsApi->OpenServerExA(pServerName);
 }
 
-VOID WTSCloseServer(HANDLE hServer)
+VOID WINAPI WTSCloseServer(HANDLE hServer)
 {
 	if (!g_WtsApi || !g_WtsApi->CloseServer)
 		return;
@@ -131,7 +129,7 @@ VOID WTSCloseServer(HANDLE hServer)
 	g_WtsApi->CloseServer(hServer);
 }
 
-BOOL WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount)
+BOOL WINAPI WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateSessionsW)
 		return FALSE;
@@ -139,7 +137,7 @@ BOOL WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_S
 	return g_WtsApi->EnumerateSessionsW(hServer, Reserved, Version, ppSessionInfo, pCount);
 }
 
-BOOL WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOA* ppSessionInfo, DWORD* pCount)
+BOOL WINAPI WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_SESSION_INFOA* ppSessionInfo, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateSessionsA)
 		return FALSE;
@@ -147,7 +145,7 @@ BOOL WTSEnumerateSessionsA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_S
 	return g_WtsApi->EnumerateSessionsA(hServer, Reserved, Version, ppSessionInfo, pCount);
 }
 
-BOOL WTSEnumerateSessionsExW(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1W* ppSessionInfo, DWORD* pCount)
+BOOL WINAPI WTSEnumerateSessionsExW(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1W* ppSessionInfo, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateSessionsExW)
 		return FALSE;
@@ -155,7 +153,7 @@ BOOL WTSEnumerateSessionsExW(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_S
 	return g_WtsApi->EnumerateSessionsExW(hServer, pLevel, Filter, ppSessionInfo, pCount);
 }
 
-BOOL WTSEnumerateSessionsExA(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1A* ppSessionInfo, DWORD* pCount)
+BOOL WINAPI WTSEnumerateSessionsExA(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_SESSION_INFO_1A* ppSessionInfo, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateSessionsExA)
 		return FALSE;
@@ -163,7 +161,7 @@ BOOL WTSEnumerateSessionsExA(HANDLE hServer, DWORD* pLevel, DWORD Filter, PWTS_S
 	return g_WtsApi->EnumerateSessionsExA(hServer, pLevel, Filter, ppSessionInfo, pCount);
 }
 
-BOOL WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOW* ppProcessInfo, DWORD* pCount)
+BOOL WINAPI WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOW* ppProcessInfo, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateProcessesW)
 		return FALSE;
@@ -171,7 +169,7 @@ BOOL WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_
 	return g_WtsApi->EnumerateProcessesW(hServer, Reserved, Version, ppProcessInfo, pCount);
 }
 
-BOOL WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOA* ppProcessInfo, DWORD* pCount)
+BOOL WINAPI WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_PROCESS_INFOA* ppProcessInfo, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateProcessesA)
 		return FALSE;
@@ -179,7 +177,7 @@ BOOL WTSEnumerateProcessesA(HANDLE hServer, DWORD Reserved, DWORD Version, PWTS_
 	return g_WtsApi->EnumerateProcessesA(hServer, Reserved, Version, ppProcessInfo, pCount);
 }
 
-BOOL WTSTerminateProcess(HANDLE hServer, DWORD ProcessId, DWORD ExitCode)
+BOOL WINAPI WTSTerminateProcess(HANDLE hServer, DWORD ProcessId, DWORD ExitCode)
 {
 	if (!g_WtsApi || !g_WtsApi->TerminateProcess)
 		return FALSE;
@@ -187,7 +185,7 @@ BOOL WTSTerminateProcess(HANDLE hServer, DWORD ProcessId, DWORD ExitCode)
 	return g_WtsApi->TerminateProcess(hServer, ProcessId, ExitCode);
 }
 
-BOOL WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPWSTR* ppBuffer, DWORD* pBytesReturned)
+BOOL WINAPI WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPWSTR* ppBuffer, DWORD* pBytesReturned)
 {
 	if (!g_WtsApi || !g_WtsApi->QuerySessionInformationW)
 		return FALSE;
@@ -195,7 +193,7 @@ BOOL WTSQuerySessionInformationW(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS
 	return g_WtsApi->QuerySessionInformationW(hServer, SessionId, WTSInfoClass, ppBuffer, pBytesReturned);
 }
 
-BOOL WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPSTR* ppBuffer, DWORD* pBytesReturned)
+BOOL WINAPI WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS WTSInfoClass, LPSTR* ppBuffer, DWORD* pBytesReturned)
 {
 	if (!g_WtsApi || !g_WtsApi->QuerySessionInformationA)
 		return FALSE;
@@ -203,7 +201,7 @@ BOOL WTSQuerySessionInformationA(HANDLE hServer, DWORD SessionId, WTS_INFO_CLASS
 	return g_WtsApi->QuerySessionInformationA(hServer, SessionId, WTSInfoClass, ppBuffer, pBytesReturned);
 }
 
-BOOL WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR* ppBuffer, DWORD* pBytesReturned)
+BOOL WINAPI WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR* ppBuffer, DWORD* pBytesReturned)
 {
 	if (!g_WtsApi || !g_WtsApi->QueryUserConfigW)
 		return FALSE;
@@ -211,7 +209,7 @@ BOOL WTSQueryUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS 
 	return g_WtsApi->QueryUserConfigW(pServerName, pUserName, WTSConfigClass, ppBuffer, pBytesReturned);
 }
 
-BOOL WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR* ppBuffer, DWORD* pBytesReturned)
+BOOL WINAPI WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR* ppBuffer, DWORD* pBytesReturned)
 {
 	if (!g_WtsApi || !g_WtsApi->QueryUserConfigA)
 		return FALSE;
@@ -219,7 +217,7 @@ BOOL WTSQueryUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WT
 	return g_WtsApi->QueryUserConfigA(pServerName, pUserName, WTSConfigClass, ppBuffer, pBytesReturned);
 }
 
-BOOL WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer, DWORD DataLength)
+BOOL WINAPI WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPWSTR pBuffer, DWORD DataLength)
 {
 	if (!g_WtsApi || !g_WtsApi->SetUserConfigW)
 		return FALSE;
@@ -227,7 +225,7 @@ BOOL WTSSetUserConfigW(LPWSTR pServerName, LPWSTR pUserName, WTS_CONFIG_CLASS WT
 	return g_WtsApi->SetUserConfigW(pServerName, pUserName, WTSConfigClass, pBuffer, DataLength);
 }
 
-BOOL WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer, DWORD DataLength)
+BOOL WINAPI WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSConfigClass, LPSTR pBuffer, DWORD DataLength)
 {
 	if (!g_WtsApi || !g_WtsApi->SetUserConfigA)
 		return FALSE;
@@ -235,7 +233,7 @@ BOOL WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLASS WTSC
 	return g_WtsApi->SetUserConfigA(pServerName, pUserName, WTSConfigClass, pBuffer, DataLength);
 }
 
-BOOL WTSSendMessageW(HANDLE hServer, DWORD SessionId, LPWSTR pTitle, DWORD TitleLength,
+BOOL WINAPI WTSSendMessageW(HANDLE hServer, DWORD SessionId, LPWSTR pTitle, DWORD TitleLength,
 		LPWSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
 {
 	if (!g_WtsApi || !g_WtsApi->SendMessageW)
@@ -245,7 +243,7 @@ BOOL WTSSendMessageW(HANDLE hServer, DWORD SessionId, LPWSTR pTitle, DWORD Title
 			pMessage, MessageLength, Style, Timeout, pResponse, bWait);
 }
 
-BOOL WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle, DWORD TitleLength,
+BOOL WINAPI WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle, DWORD TitleLength,
 		LPSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
 {
 	if (!g_WtsApi || !g_WtsApi->SendMessageA)
@@ -255,7 +253,7 @@ BOOL WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle, DWORD TitleL
 			pMessage, MessageLength, Style, Timeout, pResponse, bWait);
 }
 
-BOOL WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
+BOOL WINAPI WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
 {
 	if (!g_WtsApi || !g_WtsApi->DisconnectSession)
 		return FALSE;
@@ -263,7 +261,7 @@ BOOL WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
 	return g_WtsApi->DisconnectSession(hServer, SessionId, bWait);
 }
 
-BOOL WTSLogoffSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
+BOOL WINAPI WTSLogoffSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
 {
 	if (!g_WtsApi || !g_WtsApi->LogoffSession)
 		return FALSE;
@@ -271,7 +269,7 @@ BOOL WTSLogoffSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
 	return g_WtsApi->LogoffSession(hServer, SessionId, bWait);
 }
 
-BOOL WTSShutdownSystem(HANDLE hServer, DWORD ShutdownFlag)
+BOOL WINAPI WTSShutdownSystem(HANDLE hServer, DWORD ShutdownFlag)
 {
 	if (!g_WtsApi || !g_WtsApi->ShutdownSystem)
 		return FALSE;
@@ -279,7 +277,7 @@ BOOL WTSShutdownSystem(HANDLE hServer, DWORD ShutdownFlag)
 	return g_WtsApi->ShutdownSystem(hServer, ShutdownFlag);
 }
 
-BOOL WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags)
+BOOL WINAPI WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags)
 {
 	if (!g_WtsApi || !g_WtsApi->WaitSystemEvent)
 		return FALSE;
@@ -287,7 +285,7 @@ BOOL WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* pEventFlags)
 	return g_WtsApi->WaitSystemEvent(hServer, EventMask, pEventFlags);
 }
 
-HANDLE WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
+HANDLE WINAPI WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
 {
 	if (!g_WtsApi || !g_WtsApi->VirtualChannelOpen)
 		return FALSE;
@@ -295,7 +293,7 @@ HANDLE WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName
 	return g_WtsApi->VirtualChannelOpen(hServer, SessionId, pVirtualName);
 }
 
-HANDLE WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
+HANDLE WINAPI WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
 {
 	if (!g_WtsApi || !g_WtsApi->VirtualChannelOpenEx)
 		return FALSE;
@@ -303,7 +301,7 @@ HANDLE WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
 	return g_WtsApi->VirtualChannelOpenEx(SessionId, pVirtualName, flags);
 }
 
-BOOL WTSVirtualChannelClose(HANDLE hChannelHandle)
+BOOL WINAPI WTSVirtualChannelClose(HANDLE hChannelHandle)
 {
 	if (!g_WtsApi || !g_WtsApi->VirtualChannelClose)
 		return FALSE;
@@ -311,7 +309,7 @@ BOOL WTSVirtualChannelClose(HANDLE hChannelHandle)
 	return g_WtsApi->VirtualChannelClose(hChannelHandle);
 }
 
-BOOL WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
+BOOL WINAPI WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
 {
 	if (!g_WtsApi || !g_WtsApi->VirtualChannelRead)
 		return FALSE;
@@ -319,7 +317,7 @@ BOOL WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, U
 	return g_WtsApi->VirtualChannelRead(hChannelHandle, TimeOut, Buffer, BufferSize, pBytesRead);
 }
 
-BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, PULONG pBytesWritten)
+BOOL WINAPI WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, PULONG pBytesWritten)
 {
 	if (!g_WtsApi || !g_WtsApi->VirtualChannelWrite)
 		return FALSE;
@@ -327,7 +325,7 @@ BOOL WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, ULONG Length, P
 	return g_WtsApi->VirtualChannelWrite(hChannelHandle, Buffer, Length, pBytesWritten);
 }
 
-BOOL WTSVirtualChannelPurgeInput(HANDLE hChannelHandle)
+BOOL WINAPI WTSVirtualChannelPurgeInput(HANDLE hChannelHandle)
 {
 	if (!g_WtsApi || !g_WtsApi->VirtualChannelPurgeInput)
 		return FALSE;
@@ -335,7 +333,7 @@ BOOL WTSVirtualChannelPurgeInput(HANDLE hChannelHandle)
 	return g_WtsApi->VirtualChannelPurgeInput(hChannelHandle);
 }
 
-BOOL WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle)
+BOOL WINAPI WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle)
 {
 	if (!g_WtsApi || !g_WtsApi->VirtualChannelPurgeOutput)
 		return FALSE;
@@ -343,7 +341,7 @@ BOOL WTSVirtualChannelPurgeOutput(HANDLE hChannelHandle)
 	return g_WtsApi->VirtualChannelPurgeOutput(hChannelHandle);
 }
 
-BOOL WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned)
+BOOL WINAPI WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualClass, PVOID* ppBuffer, DWORD* pBytesReturned)
 {
 	if (!g_WtsApi || !g_WtsApi->VirtualChannelQuery)
 		return FALSE;
@@ -351,7 +349,7 @@ BOOL WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLASS WtsVirtualC
 	return g_WtsApi->VirtualChannelQuery(hChannelHandle, WtsVirtualClass, ppBuffer, pBytesReturned);
 }
 
-VOID WTSFreeMemory(PVOID pMemory)
+VOID WINAPI WTSFreeMemory(PVOID pMemory)
 {
 	if (!g_WtsApi || !g_WtsApi->FreeMemory)
 		return;
@@ -359,7 +357,7 @@ VOID WTSFreeMemory(PVOID pMemory)
 	g_WtsApi->FreeMemory(pMemory);
 }
 
-BOOL WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
+BOOL WINAPI WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
 {
 	if (!g_WtsApi || !g_WtsApi->FreeMemoryExW)
 		return FALSE;
@@ -367,7 +365,7 @@ BOOL WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOf
 	return g_WtsApi->FreeMemoryExW(WTSTypeClass, pMemory, NumberOfEntries);
 }
 
-BOOL WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
+BOOL WINAPI WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)
 {
 	if (!g_WtsApi || !g_WtsApi->FreeMemoryExA)
 		return FALSE;
@@ -375,7 +373,7 @@ BOOL WTSFreeMemoryExA(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOf
 	return g_WtsApi->FreeMemoryExA(WTSTypeClass, pMemory, NumberOfEntries);
 }
 
-BOOL WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
+BOOL WINAPI WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
 {
 	if (!g_WtsApi || !g_WtsApi->RegisterSessionNotification)
 		return FALSE;
@@ -383,7 +381,7 @@ BOOL WTSRegisterSessionNotification(HWND hWnd, DWORD dwFlags)
 	return g_WtsApi->RegisterSessionNotification(hWnd, dwFlags);
 }
 
-BOOL WTSUnRegisterSessionNotification(HWND hWnd)
+BOOL WINAPI WTSUnRegisterSessionNotification(HWND hWnd)
 {
 	if (!g_WtsApi || !g_WtsApi->UnRegisterSessionNotification)
 		return FALSE;
@@ -391,7 +389,7 @@ BOOL WTSUnRegisterSessionNotification(HWND hWnd)
 	return g_WtsApi->UnRegisterSessionNotification(hWnd);
 }
 
-BOOL WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags)
+BOOL WINAPI WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags)
 {
 	if (!g_WtsApi || !g_WtsApi->RegisterSessionNotificationEx)
 		return FALSE;
@@ -399,7 +397,7 @@ BOOL WTSRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd, DWORD dwFlags)
 	return g_WtsApi->RegisterSessionNotificationEx(hServer, hWnd, dwFlags);
 }
 
-BOOL WTSUnRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd)
+BOOL WINAPI WTSUnRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd)
 {
 	if (!g_WtsApi || !g_WtsApi->UnRegisterSessionNotificationEx)
 		return FALSE;
@@ -407,7 +405,7 @@ BOOL WTSUnRegisterSessionNotificationEx(HANDLE hServer, HWND hWnd)
 	return g_WtsApi->UnRegisterSessionNotificationEx(hServer, hWnd);
 }
 
-BOOL WTSQueryUserToken(ULONG SessionId, PHANDLE phToken)
+BOOL WINAPI WTSQueryUserToken(ULONG SessionId, PHANDLE phToken)
 {
 	if (!g_WtsApi || !g_WtsApi->QueryUserToken)
 		return FALSE;
@@ -415,7 +413,7 @@ BOOL WTSQueryUserToken(ULONG SessionId, PHANDLE phToken)
 	return g_WtsApi->QueryUserToken(SessionId, phToken);
 }
 
-BOOL WTSEnumerateProcessesExW(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPWSTR* ppProcessInfo, DWORD* pCount)
+BOOL WINAPI WTSEnumerateProcessesExW(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPWSTR* ppProcessInfo, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateProcessesExW)
 		return FALSE;
@@ -423,7 +421,7 @@ BOOL WTSEnumerateProcessesExW(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LP
 	return g_WtsApi->EnumerateProcessesExW(hServer, pLevel, SessionId, ppProcessInfo, pCount);
 }
 
-BOOL WTSEnumerateProcessesExA(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPSTR* ppProcessInfo, DWORD* pCount)
+BOOL WINAPI WTSEnumerateProcessesExA(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LPSTR* ppProcessInfo, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateProcessesExA)
 		return FALSE;
@@ -431,7 +429,7 @@ BOOL WTSEnumerateProcessesExA(HANDLE hServer, DWORD* pLevel, DWORD SessionId, LP
 	return g_WtsApi->EnumerateProcessesExA(hServer, pLevel, SessionId, ppProcessInfo, pCount);
 }
 
-BOOL WTSEnumerateListenersW(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEW pListeners, DWORD* pCount)
+BOOL WINAPI WTSEnumerateListenersW(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEW pListeners, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateListenersW)
 		return FALSE;
@@ -439,7 +437,7 @@ BOOL WTSEnumerateListenersW(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWT
 	return g_WtsApi->EnumerateListenersW(hServer, pReserved, Reserved, pListeners, pCount);
 }
 
-BOOL WTSEnumerateListenersA(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEA pListeners, DWORD* pCount)
+BOOL WINAPI WTSEnumerateListenersA(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWTSLISTENERNAMEA pListeners, DWORD* pCount)
 {
 	if (!g_WtsApi || !g_WtsApi->EnumerateListenersA)
 		return FALSE;
@@ -447,7 +445,7 @@ BOOL WTSEnumerateListenersA(HANDLE hServer, PVOID pReserved, DWORD Reserved, PWT
 	return g_WtsApi->EnumerateListenersA(hServer, pReserved, Reserved, pListeners, pCount);
 }
 
-BOOL WTSQueryListenerConfigW(HANDLE hServer, PVOID pReserved, DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer)
+BOOL WINAPI WTSQueryListenerConfigW(HANDLE hServer, PVOID pReserved, DWORD Reserved, LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer)
 {
 	if (!g_WtsApi || !g_WtsApi->QueryListenerConfigW)
 		return FALSE;
@@ -455,7 +453,7 @@ BOOL WTSQueryListenerConfigW(HANDLE hServer, PVOID pReserved, DWORD Reserved, LP
 	return g_WtsApi->QueryListenerConfigW(hServer, pReserved, Reserved, pListenerName, pBuffer);
 }
 
-BOOL WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved, DWORD Reserved, LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer)
+BOOL WINAPI WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved, DWORD Reserved, LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer)
 {
 	if (!g_WtsApi || !g_WtsApi->QueryListenerConfigA)
 		return FALSE;
@@ -463,7 +461,7 @@ BOOL WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved, DWORD Reserved, LP
 	return g_WtsApi->QueryListenerConfigA(hServer, pReserved, Reserved, pListenerName, pBuffer);
 }
 
-BOOL WTSCreateListenerW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+BOOL WINAPI WTSCreateListenerW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag)
 {
 	if (!g_WtsApi || !g_WtsApi->CreateListenerW)
@@ -472,7 +470,7 @@ BOOL WTSCreateListenerW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 	return g_WtsApi->CreateListenerW(hServer, pReserved, Reserved, pListenerName, pBuffer, flag);
 }
 
-BOOL WTSCreateListenerA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+BOOL WINAPI WTSCreateListenerA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer, DWORD flag)
 {
 	if (!g_WtsApi || !g_WtsApi->CreateListenerA)
@@ -481,7 +479,7 @@ BOOL WTSCreateListenerA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 	return g_WtsApi->CreateListenerA(hServer, pReserved, Reserved, pListenerName, pBuffer, flag);
 }
 
-BOOL WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+BOOL WINAPI WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
 		PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
@@ -492,7 +490,7 @@ BOOL WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 			pListenerName, SecurityInformation, pSecurityDescriptor);
 }
 
-BOOL WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+BOOL WINAPI WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
 		PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
@@ -503,7 +501,7 @@ BOOL WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 			pListenerName, SecurityInformation, pSecurityDescriptor);
 }
 
-BOOL WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+BOOL WINAPI WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
 		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
 {
@@ -514,7 +512,7 @@ BOOL WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 			SecurityInformation, pSecurityDescriptor, nLength, lpnLengthNeeded);
 }
 
-BOOL WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
+BOOL WINAPI WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
 		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
 {
@@ -525,7 +523,7 @@ BOOL WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
 			SecurityInformation, pSecurityDescriptor, nLength, lpnLengthNeeded);
 }
 
-BOOL WTSEnableChildSessions(BOOL bEnable)
+BOOL CDECL WTSEnableChildSessions(BOOL bEnable)
 {
 	if (!g_WtsApi || !g_WtsApi->EnableChildSessions)
 		return FALSE;
@@ -533,7 +531,7 @@ BOOL WTSEnableChildSessions(BOOL bEnable)
 	return g_WtsApi->EnableChildSessions(bEnable);
 }
 
-BOOL WTSIsChildSessionsEnabled(PBOOL pbEnabled)
+BOOL CDECL WTSIsChildSessionsEnabled(PBOOL pbEnabled)
 {
 	if (!g_WtsApi || !g_WtsApi->IsChildSessionsEnabled)
 		return FALSE;
@@ -541,7 +539,7 @@ BOOL WTSIsChildSessionsEnabled(PBOOL pbEnabled)
 	return g_WtsApi->IsChildSessionsEnabled(pbEnabled);
 }
 
-BOOL WTSGetChildSessionId(PULONG pSessionId)
+BOOL CDECL WTSGetChildSessionId(PULONG pSessionId)
 {
 	if (!g_WtsApi || !g_WtsApi->GetChildSessionId)
 		return FALSE;
@@ -549,7 +547,13 @@ BOOL WTSGetChildSessionId(PULONG pSessionId)
 	return g_WtsApi->GetChildSessionId(pSessionId);
 }
 
-DWORD WTSGetActiveConsoleSessionId(void)
+#ifndef _WIN32
+
+/**
+ * WTSGetActiveConsoleSessionId is declared in WinBase.h and exported by kernel32.dll
+ */
+
+DWORD WINAPI WTSGetActiveConsoleSessionId(void)
 {
 	if (!g_WtsApi || !g_WtsApi->GetActiveConsoleSessionId)
 		return 0xFFFFFFFF;

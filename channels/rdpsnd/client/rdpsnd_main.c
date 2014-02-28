@@ -921,7 +921,7 @@ static void rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 	}
 }
 
-static VOID rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT event,
+static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT event,
 		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	rdpsndPlugin* plugin;
@@ -1035,7 +1035,7 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 	rdpsnd_remove_init_handle_data(rdpsnd->InitHandle);
 }
 
-static void rdpsnd_virtual_channel_init_event(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength)
+static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	rdpsndPlugin* plugin;
 

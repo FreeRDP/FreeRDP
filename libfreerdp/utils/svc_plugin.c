@@ -132,7 +132,7 @@ static void svc_plugin_process_event(rdpSvcPlugin* plugin, wMessage* event_in)
 	MessageQueue_Post(plugin->MsgPipe->In, NULL, 1, (void*) event_in, NULL);
 }
 
-static VOID svc_plugin_open_event(DWORD openHandle, UINT event, LPVOID pData, UINT32 dataLength,
+static VOID VCAPITYPE svc_plugin_open_event(DWORD openHandle, UINT event, LPVOID pData, UINT32 dataLength,
 	UINT32 totalLength, UINT32 dataFlags)
 {
 	rdpSvcPlugin* plugin;
@@ -249,7 +249,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 	svc_plugin_remove_init_handle_data(plugin->InitHandle);
 }
 
-static void svc_plugin_init_event(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength)
+static VOID VCAPITYPE svc_plugin_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	rdpSvcPlugin* plugin;
 

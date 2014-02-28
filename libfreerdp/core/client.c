@@ -500,7 +500,7 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	MessagePipe_PostQuit(channels->MsgPipe, 0);
 }
 
-UINT FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_DEF pChannel,
+UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_DEF pChannel,
 	INT channelCount, ULONG versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc)
 {
 	int index;
@@ -591,7 +591,7 @@ UINT FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_DEF pChannel,
 	return CHANNEL_RC_OK;
 }
 
-UINT FreeRDP_VirtualChannelOpen(LPVOID pInitHandle, LPDWORD pOpenHandle,
+UINT VCAPITYPE FreeRDP_VirtualChannelOpen(LPVOID pInitHandle, LPDWORD pOpenHandle,
 	PCHAR pChannelName, PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc)
 {
 	void* pInterface;
@@ -628,7 +628,7 @@ UINT FreeRDP_VirtualChannelOpen(LPVOID pInitHandle, LPDWORD pOpenHandle,
 	return CHANNEL_RC_OK;
 }
 
-UINT FreeRDP_VirtualChannelClose(DWORD openHandle)
+UINT VCAPITYPE FreeRDP_VirtualChannelClose(DWORD openHandle)
 {
 	CHANNEL_OPEN_DATA* pChannelOpenData;
 
@@ -645,7 +645,7 @@ UINT FreeRDP_VirtualChannelClose(DWORD openHandle)
 	return CHANNEL_RC_OK;
 }
 
-UINT FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData, ULONG dataLength, LPVOID pUserData)
+UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData, ULONG dataLength, LPVOID pUserData)
 {
 	rdpChannels* channels;
 	CHANNEL_OPEN_DATA* pChannelOpenData;
