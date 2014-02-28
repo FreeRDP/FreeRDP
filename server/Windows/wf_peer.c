@@ -23,11 +23,11 @@
 #endif
 
 #include <winpr/tchar.h>
+#include <winpr/stream.h>
 #include <winpr/windows.h>
 
 #include <freerdp/listener.h>
 #include <freerdp/codec/rfx.h>
-#include <winpr/stream.h>
 
 #include "wf_info.h"
 #include "wf_input.h"
@@ -57,7 +57,7 @@ void wf_peer_context_free(freerdp_peer* client, wfPeerContext* context)
 		wf_rdpsnd_unlock();
 	}
 
-	WTSCloseServer((HANDLE) context->vcm);
+	WTSCloseServer(context->vcm);
 }
 
 void wf_peer_init(freerdp_peer* client)
@@ -79,7 +79,7 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 	wfi = context->info;
 	settings = client->settings;
 
-	if (	(get_screen_info(wfi->screenID, NULL, &wfi->servscreen_width, &wfi->servscreen_height, &wfi->bitsPerPixel) == 0) ||
+	if ((get_screen_info(wfi->screenID, NULL, &wfi->servscreen_width, &wfi->servscreen_height, &wfi->bitsPerPixel) == 0) ||
 		(wfi->servscreen_width == 0) ||
 		(wfi->servscreen_height == 0) ||
 		(wfi->bitsPerPixel == 0) )
@@ -254,7 +254,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 	wfi = context->info;
 
-	if (wfi->input_disabled == TRUE)
+	if (wfi->input_disabled)
 	{
 		printf("client input is disabled\n");
 		client->input->KeyboardEvent = wf_peer_keyboard_event_dummy;
@@ -309,7 +309,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 		}
 
 		//force disconnect
-		if(wfi->force_all_disconnect == TRUE)
+		if (wfi->force_all_disconnect == TRUE)
 		{
 			printf("Forcing Disconnect -> ");
 			break;

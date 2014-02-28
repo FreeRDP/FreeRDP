@@ -108,10 +108,8 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 	return 0;
 }
 
-
 void wf_update_encode(wfInfo* wfi)
 {
-
 	RFX_RECT rect;
 	long height, width;
 	BYTE* pDataBits = NULL;
@@ -135,6 +133,7 @@ void wf_update_encode(wfInfo* wfi)
 	//printf("x:%d y:%d w:%d h:%d\n", wfi->invalid.left, wfi->invalid.top, width, height);
 
 	Stream_Clear(wfi->s);
+
 	rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
 		pDataBits, width, height, stride);
 
