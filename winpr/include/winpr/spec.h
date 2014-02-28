@@ -874,7 +874,7 @@
 #define __nullterminated
 #define __out_awcount(expr,size)
 #define __override
-#define __reserved
+//#define __reserved			/* Conflicts with header included by CarbonCore.h on OS X */
 #define __success(expr)
 #define __typefix(ctype)
 
