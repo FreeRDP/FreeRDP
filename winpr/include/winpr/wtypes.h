@@ -39,6 +39,7 @@
 #ifndef _WIN32
 
 #define WINAPI
+#define CDECL
 
 #define __int8	char
 #define __int16 short
