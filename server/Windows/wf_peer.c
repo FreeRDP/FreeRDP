@@ -103,15 +103,9 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 		client->update->DesktopResize(client->update->context);
 	}
 
-	for (i = 0; i < client->settings->ChannelCount; i++)
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpsnd"))
 	{
-		if (client->settings->ChannelDefArray[i].joined)
-		{
-			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
-			{
-				wf_peer_rdpsnd_init(context); /* Audio Output */
-			}
-		}
+		wf_peer_rdpsnd_init(context); /* Audio Output */
 	}
 
 	return TRUE;

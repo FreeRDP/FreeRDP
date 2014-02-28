@@ -338,16 +338,6 @@ typedef struct rdp_rsa_key rdpRsaKey;
 
 /* Channels */
 
-struct rdp_channel
-{
-	char Name[8];
-	UINT32 options;
-	int ChannelId;
-	BOOL joined;
-	void* handle;
-};
-typedef struct rdp_channel rdpChannel;
-
 struct _ADDIN_ARGV
 {
 	int argc;
@@ -841,7 +831,7 @@ struct rdp_settings
 	/* Client Network Data */
 	ALIGN64 UINT32 ChannelCount; /* 256 */
 	ALIGN64 UINT32 ChannelDefArraySize; /* 257 */
-	ALIGN64 rdpChannel* ChannelDefArray; /* 258 */
+	ALIGN64 CHANNEL_DEF* ChannelDefArray; /* 258 */
 	UINT64 padding0320[320 - 259]; /* 259 */
 
 	/* Client Cluster Data */

@@ -258,8 +258,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 		settings->ChannelCount = 0;
 		settings->ChannelDefArraySize = 32;
-		settings->ChannelDefArray = (rdpChannel*) malloc(sizeof(rdpChannel) * settings->ChannelDefArraySize);
-		ZeroMemory(settings->ChannelDefArray, sizeof(rdpChannel) * settings->ChannelDefArraySize);
+		settings->ChannelDefArray = (CHANNEL_DEF*) malloc(sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
+		ZeroMemory(settings->ChannelDefArray, sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
 
 		settings->MonitorCount = 0;
 		settings->MonitorDefArraySize = 32;
@@ -694,8 +694,8 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 
 		_settings->ChannelCount = settings->ChannelCount;
 		_settings->ChannelDefArraySize = settings->ChannelDefArraySize;
-		_settings->ChannelDefArray = (rdpChannel*) malloc(sizeof(rdpChannel) * settings->ChannelDefArraySize);
-		CopyMemory(_settings->ChannelDefArray, settings->ChannelDefArray, sizeof(rdpChannel) * settings->ChannelDefArraySize);
+		_settings->ChannelDefArray = (CHANNEL_DEF*) malloc(sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
+		CopyMemory(_settings->ChannelDefArray, settings->ChannelDefArray, sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
 
 		_settings->MonitorCount = settings->MonitorCount;
 		_settings->MonitorDefArraySize = settings->MonitorDefArraySize;

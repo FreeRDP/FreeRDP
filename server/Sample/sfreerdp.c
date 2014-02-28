@@ -490,31 +490,24 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	/* A real server should tag the peer as activated here and start sending updates in main loop. */
 	test_peer_load_icon(client);
 
-	/* Iterate all channel names requested by the client and activate those supported by the server */
-
-	for (i = 0; i < client->settings->ChannelCount; i++)
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpdbg"))
 	{
-		if (client->settings->ChannelDefArray[i].joined)
+		context->debug_channel = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpdbg", 0);
+
+		if (context->debug_channel != NULL)
 		{
-			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpdbg", 6) == 0)
-			{
-				context->debug_channel = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpdbg", 0);
+			printf("Open channel rdpdbg.\n");
 
-				if (context->debug_channel != NULL)
-				{
-					printf("Open channel rdpdbg.\n");
+			context->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-					context->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-					context->debug_channel_thread = CreateThread(NULL, 0,
-							(LPTHREAD_START_ROUTINE) tf_debug_channel_thread_func, (void*) context, 0, NULL);
-				}
-			}
-			else if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
-			{
-				sf_peer_rdpsnd_init(context); /* Audio Output */
-			}
+			context->debug_channel_thread = CreateThread(NULL, 0,
+					(LPTHREAD_START_ROUTINE) tf_debug_channel_thread_func, (void*) context, 0, NULL);
 		}
+	}
+
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpsnd"))
+	{
+		sf_peer_rdpsnd_init(context); /* Audio Output */
 	}
 
 	/* Dynamic Virtual Channels */

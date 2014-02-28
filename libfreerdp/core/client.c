@@ -506,7 +506,7 @@ UINT FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_DEF pChannel,
 	int index;
 	void* pInterface;
 	DWORD OpenHandle;
-	rdpChannel* channel;
+	CHANNEL_DEF* channel;
 	rdpChannels* channels;
 	rdpSettings* settings;
 	PCHANNEL_DEF pChannelDef;
@@ -580,7 +580,7 @@ UINT FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_DEF pChannel,
 		if (settings->ChannelCount < CHANNEL_MAX_COUNT)
 		{
 			channel = &settings->ChannelDefArray[settings->ChannelCount];
-			strncpy(channel->Name, pChannelDef->name, 7);
+			strncpy(channel->name, pChannelDef->name, 7);
 			channel->options = pChannelDef->options;
 			channels->settings->ChannelCount++;
 		}

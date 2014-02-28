@@ -294,25 +294,12 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	mfi->mouse_down_right = FALSE;
 	mfi->mouse_down_other = FALSE;
 
-	
-	//#ifdef WITH_SERVER_CHANNELS
-	/* Iterate all channel names requested by the client and activate those supported by the server */
-	int i;
-	for (i = 0; i < client->settings->ChannelCount; i++)
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpsnd"))
 	{
-		if (client->settings->ChannelDefArray[i].joined)
-		{
-			//#ifdef CHANNEL_RDPSND_SERVER
-			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
-			{
-				mf_peer_rdpsnd_init(context); /* Audio Output */
-			}
-			//#endif
-		}
+		mf_peer_rdpsnd_init(context); /* Audio Output */
 	}
 	
 	/* Dynamic Virtual Channels */
-	//#endif
 	
 #ifdef CHANNEL_AUDIN_SERVER
 	mf_peer_audin_init(context); /* Audio Input */

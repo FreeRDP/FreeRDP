@@ -196,7 +196,7 @@ int mcs_initialize_client_channels(rdpMcs* mcs, rdpSettings* settings)
 
 	for (index = 0; index < mcs->channelCount; index++)
 	{
-		CopyMemory(mcs->channels[index].Name, settings->ChannelDefArray[index].Name, 8);
+		CopyMemory(mcs->channels[index].Name, settings->ChannelDefArray[index].name, 8);
 		mcs->channels[index].options = settings->ChannelDefArray[index].options;
 	}
 
