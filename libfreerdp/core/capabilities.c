@@ -2977,7 +2977,7 @@ BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOOL recei
 
 		em = bm + length;
 
-		if (Stream_GetRemainingLength(s) < length - 4)
+		if (Stream_GetRemainingLength(s) < (size_t) (length - 4))
 		{
 			fprintf(stderr, "error processing stream\n");
 			return FALSE;
@@ -3176,7 +3176,7 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 
 		em = bm + length;
 
-		if (Stream_GetRemainingLength(s) < length - 4)
+		if (Stream_GetRemainingLength(s) < ((size_t) length - 4))
 		{
 			fprintf(stderr, "error processing stream\n");
 			return FALSE;
@@ -3389,7 +3389,7 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 
 	if (*pChannelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		UINT16 mcsMessageChannelId = rdp->mcs->message_channel_id;
+		UINT16 mcsMessageChannelId = rdp->mcs->messageChannelId;
 
 		if ((mcsMessageChannelId == 0) || (*pChannelId != mcsMessageChannelId))
 		{
@@ -3526,11 +3526,11 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 	s = Stream_New(NULL, 4096);
 	rdp_init_stream_pdu(rdp, s);
 
-	rdp->settings->ShareId = 0x10000 + rdp->mcs->user_id;
+	rdp->settings->ShareId = 0x10000 + rdp->mcs->userId;
 
 	rdp_write_demand_active(s, rdp->settings);
 
-	status = rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->user_id);
+	status = rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->userId);
 
 	Stream_Free(s, TRUE);
 
@@ -3555,7 +3555,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 	Stream_Read_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < lengthSourceDescriptor + 4)
+	if (((int) Stream_GetRemainingLength(s)) < lengthSourceDescriptor + 4)
 		return FALSE;
 
 	Stream_Seek(s, lengthSourceDescriptor); /* sourceDescriptor */
@@ -3741,7 +3741,7 @@ BOOL rdp_send_confirm_active(rdpRdp* rdp)
 
 	rdp_write_confirm_active(s, rdp->settings);
 
-	status = rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->user_id);
+	status = rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->userId);
 
 	Stream_Free(s, TRUE);
 

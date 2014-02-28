@@ -283,7 +283,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 				break;
 			}
 
-			if (SetClipboardData(wParam, cliprdr->hmem) == NULL)
+			if (SetClipboardData((UINT) wParam, cliprdr->hmem) == NULL)
 			{
 				DEBUG_CLIPRDR("SetClipboardData failed with 0x%x", GetLastError());
 				cliprdr->hmem = GlobalFree(cliprdr->hmem);
@@ -339,11 +339,10 @@ static int create_cliprdr_window(cliprdrContext *cliprdr)
 
 static void *cliprdr_thread_func(void *arg)
 {
-	cliprdrContext *cliprdr = (cliprdrContext *)arg;
-	BOOL mcode;
-	MSG msg;
 	int ret;
-	HRESULT result;
+	MSG msg;
+	BOOL mcode;
+	cliprdrContext* cliprdr = (cliprdrContext*) arg;
 
 	if ((ret = create_cliprdr_window(cliprdr)) != 0)
 	{
@@ -437,15 +436,15 @@ static void wf_cliprdr_process_cb_monitor_ready_event(wfContext *wfc, RDP_CB_MON
 	cliprdr_send_format_list(wfc->cliprdr_context);
 }
 
-static void wf_cliprdr_process_cb_data_request_event(wfContext *wfc, RDP_CB_DATA_REQUEST_EVENT *event)
+static void wf_cliprdr_process_cb_data_request_event(wfContext* wfc, RDP_CB_DATA_REQUEST_EVENT* event)
 {
-	cliprdrContext *cliprdr = (cliprdrContext *)wfc->cliprdr_context;
-	RDP_CB_DATA_RESPONSE_EVENT *responce_event;
 	HANDLE hClipdata;
 	int size = 0;
-	char *buff = NULL;
-	char *globlemem = NULL;
+	char* buff = NULL;
+	char* globlemem = NULL;
 	UINT32 local_format;
+	cliprdrContext* cliprdr = (cliprdrContext*) wfc->cliprdr_context;
+	RDP_CB_DATA_RESPONSE_EVENT* response_event;
 
 	local_format = event->format;
 
@@ -473,6 +472,7 @@ static void wf_cliprdr_process_cb_data_request_event(wfContext *wfc, RDP_CB_DATA
 		}
 
 		hClipdata = GetClipboardData(event->format);
+
 		if (!hClipdata)
 		{
 			DEBUG_CLIPRDR("GetClipboardData failed.");
@@ -480,10 +480,10 @@ static void wf_cliprdr_process_cb_data_request_event(wfContext *wfc, RDP_CB_DATA
 			return;
 		}
 
-		globlemem = (char *)GlobalLock(hClipdata);
-		size = GlobalSize(hClipdata);
+		globlemem = (char*) GlobalLock(hClipdata);
+		size = (int) GlobalSize(hClipdata);
 
-		buff = (char *)malloc(size);
+		buff = (char*) malloc(size);
 		memcpy(buff, globlemem, size);
 
 		GlobalUnlock(hClipdata);
@@ -491,15 +491,15 @@ static void wf_cliprdr_process_cb_data_request_event(wfContext *wfc, RDP_CB_DATA
 		CloseClipboard();
 	}
 
-	responce_event = (RDP_CB_DATA_RESPONSE_EVENT *)freerdp_event_new(CliprdrChannel_Class,
+	response_event = (RDP_CB_DATA_RESPONSE_EVENT*) freerdp_event_new(CliprdrChannel_Class,
 			CliprdrChannel_DataResponse, NULL, NULL);
 
-	responce_event->data = (BYTE *)buff;
-	responce_event->size = size;
+	response_event->data = (BYTE *)buff;
+	response_event->size = size;
 
-	freerdp_channels_send_event(cliprdr->channels, (wMessage *) responce_event);
+	freerdp_channels_send_event(cliprdr->channels, (wMessage*) response_event);
 
-	/* Note: don't free buff here. */
+	/* Note: don't free buffer here. */
 }
 
 static void wf_cliprdr_process_cb_format_list_event(wfContext *wfc, RDP_CB_FORMAT_LIST_EVENT *event)
@@ -560,12 +560,12 @@ static void wf_cliprdr_process_cb_format_list_event(wfContext *wfc, RDP_CB_FORMA
 	}
 	else
 	{
-		int k;
+		UINT32 k;
 
 		for (k = 0; k < event->raw_format_data_size / 36; k++)
 		{
-			formatMapping *map;
 			int name_len;
+			formatMapping* map;
 
 			map = &cliprdr->format_mappings[i++];
 

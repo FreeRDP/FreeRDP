@@ -292,7 +292,15 @@ BOOL transport_connect_nla(rdpTransport* transport)
 		return TRUE;
 
 	if (!transport->credssp)
+	{
 		transport->credssp = credssp_new(instance, transport, settings);
+
+		if (settings->AuthenticationServiceClass)
+		{
+			transport->credssp->ServicePrincipalName =
+				credssp_make_spn(settings->AuthenticationServiceClass, settings->ServerHostname);
+		}
+	}
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{

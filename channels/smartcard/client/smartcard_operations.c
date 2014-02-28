@@ -23,12 +23,15 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
+#include <assert.h>
 
+#ifdef _WIN32
+#include <winscard.h>
+#else
+#include <strings.h>
 #define BOOL PCSC_BOOL
 #include <PCSC/pcsclite.h>
 #include <PCSC/winscard.h>
@@ -50,6 +53,7 @@
 #define SCARD_CTL_CODE(code) (0x42000000 + (code))
 #endif
 #undef BOOL
+#endif
 
 #include <winpr/crt.h>
 #include <winpr/print.h>

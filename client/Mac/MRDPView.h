@@ -98,7 +98,7 @@
 BOOL mac_pre_connect(freerdp* instance);
 BOOL mac_post_connect(freerdp*	instance);
 BOOL mac_authenticate(freerdp* instance, char** username, char** password, char** domain);
-int mac_receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size);
+
 DWORD mac_client_thread(void* param);
 
 #endif // MRDPVIEW_H

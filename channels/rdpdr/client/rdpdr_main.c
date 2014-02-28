@@ -481,7 +481,7 @@ static void drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 
 static void rdpdr_process_connect(rdpdrPlugin* rdpdr)
 {
-	int index;
+	UINT32 index;
 	RDPDR_DEVICE* device;
 	rdpSettings* settings;
 
@@ -593,7 +593,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);
 	Stream_Write_UINT16(s, PAKID_CORE_DEVICELIST_ANNOUNCE);
 
-	count_pos = Stream_GetPosition(s);
+	count_pos = (int) Stream_GetPosition(s);
 	count = 0;
 
 	Stream_Seek_UINT32(s); /* deviceCount */
@@ -615,7 +615,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		if ((rdpdr->versionMinor == 0x0005) ||
 			(device->type == RDPDR_DTYP_SMARTCARD) || userLoggedOn)
 		{
-			data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
+			data_len = (int) (device->data == NULL ? 0 : Stream_GetPosition(device->data));
 			Stream_EnsureRemainingCapacity(s, 20 + data_len);
 
 			Stream_Write_UINT32(s, device->type); /* deviceType */
@@ -647,7 +647,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	if (pKeys)
 		free(pKeys);
 
-	pos = Stream_GetPosition(s);
+	pos = (int) Stream_GetPosition(s);
 	Stream_SetPosition(s, count_pos);
 	Stream_Write_UINT32(s, count);
 	Stream_SetPosition(s, pos);
@@ -789,10 +789,14 @@ int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	rdpdrPlugin* plugin = (rdpdrPlugin*) rdpdr;
 
 	if (!plugin)
+	{
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
+	}
 	else
+	{
 		status = plugin->channelEntryPoints.pVirtualChannelWrite(plugin->OpenHandle,
-			Stream_Buffer(s), Stream_GetPosition(s), s);
+			Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -846,8 +850,8 @@ static void rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 	}
 }
 
-static void rdpdr_virtual_channel_open_event(UINT32 openHandle, UINT32 event,
-		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle, UINT event,
+		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	rdpdrPlugin* rdpdr;
 
@@ -904,7 +908,7 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 	return NULL;
 }
 
-static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, void* pData, UINT32 dataLength)
+static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
 
@@ -955,7 +959,7 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 	rdpdr_remove_init_handle_data(rdpdr->InitHandle);
 }
 
-static void rdpdr_virtual_channel_init_event(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength)
+static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	rdpdrPlugin* rdpdr;
 
@@ -989,8 +993,10 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	rdpdrPlugin* rdpdr;
 
-	rdpdr = (rdpdrPlugin*) malloc(sizeof(rdpdrPlugin));
-	ZeroMemory(rdpdr, sizeof(rdpdrPlugin));
+	rdpdr = (rdpdrPlugin*) calloc(1, sizeof(rdpdrPlugin));
+
+	if (!rdpdr)
+		return -1;
 
 	rdpdr->channelDef.options =
 			CHANNEL_OPTION_INITIALIZED |
@@ -999,7 +1005,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	strcpy(rdpdr->channelDef.name, "rdpdr");
 
-	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, pEntryPoints->cbSize);
+	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 
 	rdpdr->channelEntryPoints.pVirtualChannelInit(&rdpdr->InitHandle,
 		&rdpdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpdr_virtual_channel_init_event);

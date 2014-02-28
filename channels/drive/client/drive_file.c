@@ -64,7 +64,7 @@ static void drive_file_fix_path(char* path)
 	int i;
 	int length;
 
-	length = strlen(path);
+	length = (int) strlen(path);
 
 	for (i = 0; i < length; i++)
 	{

@@ -313,7 +313,7 @@ static const UINT32 rop3_code_table[] =
 };
 
 /* Hatch Patterns as monochrome data */
-static BYTE GDI_BS_HACHTED_PATTERNS[] =
+static BYTE GDI_BS_HATCHED_PATTERNS[] =
 {
 	0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, /* HS_HORIZONTAL */
 	0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, 0xF7, /* HS_VERTICAL */
@@ -438,7 +438,7 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* 
 
 void gdi_bitmap_free_ex(gdiBitmap* bitmap)
 {
-	if (bitmap != NULL)
+	if (bitmap)
 	{
 		gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->org_bitmap);
 		gdi_DeleteObject((HGDIOBJECT) bitmap->bitmap);
@@ -457,7 +457,7 @@ void gdi_set_bounds(rdpContext* context, rdpBounds* bounds)
 {
 	rdpGdi* gdi = context->gdi;
 
-	if (bounds != NULL)
+	if (bounds)
 	{
 		gdi_SetClipRgn(gdi->drawing->hdc, bounds->left, bounds->top,
 				bounds->right - bounds->left + 1, bounds->bottom - bounds->top + 1);
@@ -480,18 +480,24 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
 	BYTE* data;
 	rdpBrush* brush;
+	UINT32 foreColor;
+	UINT32 backColor;
+	GDI_COLOR originalColor;
 	HGDI_BRUSH originalBrush;
 	rdpGdi* gdi = context->gdi;
 
 	brush = &patblt->brush;
 
+	foreColor = freerdp_color_convert_rgb(patblt->foreColor, gdi->srcBpp, 24, gdi->clrconv);
+	backColor = freerdp_color_convert_rgb(patblt->backColor, gdi->srcBpp, 24, gdi->clrconv);
+
+	originalColor = gdi_SetTextColor(gdi->drawing->hdc, foreColor);
+
 	if (brush->style == GDI_BS_SOLID)
 	{
-		UINT32 color;
 		originalBrush = gdi->drawing->hdc->brush;
 
-		color = freerdp_color_convert_rgb(patblt->foreColor, gdi->srcBpp, 32, gdi->clrconv);
-		gdi->drawing->hdc->brush = gdi_CreateSolidBrush(color);
+		gdi->drawing->hdc->brush = gdi_CreateSolidBrush(foreColor);
 
 		gdi_PatBlt(gdi->drawing->hdc, patblt->nLeftRect, patblt->nTopRect,
 				patblt->nWidth, patblt->nHeight, gdi_rop3_code(patblt->bRop));
@@ -503,7 +509,7 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	{
 		HGDI_BITMAP hBmp;
 
-		data = freerdp_mono_image_convert(GDI_BS_HACHTED_PATTERNS + 8 * brush->hatch, 8, 8, 1,
+		data = freerdp_mono_image_convert(GDI_BS_HATCHED_PATTERNS + 8 * brush->hatch, 8, 8, 1,
 		gdi->dstBpp, patblt->backColor, patblt->foreColor, gdi->clrconv);
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
@@ -546,6 +552,8 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	{
 		fprintf(stderr, "unimplemented brush style:%d\n", brush->style);
 	}
+
+	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
 }
 
 void gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
@@ -562,7 +570,7 @@ void gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 	GDI_RECT rect;
 	HGDI_BRUSH hBrush;
 	UINT32 brush_color;
-	rdpGdi *gdi = context->gdi;
+	rdpGdi* gdi = context->gdi;
 
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 			opaque_rect->nWidth, opaque_rect->nHeight, &rect);
@@ -582,7 +590,7 @@ void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_o
 	HGDI_BRUSH hBrush;
 	UINT32 brush_color;
 	DELTA_RECT* rectangle;
-	rdpGdi *gdi = context->gdi;
+	rdpGdi* gdi = context->gdi;
 
 	for (i = 1; i < (int) multi_opaque_rect->numRectangles + 1; i++)
 	{
@@ -600,19 +608,19 @@ void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_o
 	}
 }
 
-void gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
+void gdi_line_to(rdpContext* context, LINE_TO_ORDER* lineTo)
 {
 	UINT32 color;
 	HGDI_PEN hPen;
-	rdpGdi *gdi = context->gdi;
+	rdpGdi* gdi = context->gdi;
 
-	color = freerdp_color_convert_rgb(line_to->penColor, gdi->srcBpp, 32, gdi->clrconv);
-	hPen = gdi_CreatePen(line_to->penStyle, line_to->penWidth, (GDI_COLOR) color);
+	color = freerdp_color_convert_rgb(lineTo->penColor, gdi->srcBpp, 32, gdi->clrconv);
+	hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, (GDI_COLOR) color);
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
-	gdi_SetROP2(gdi->drawing->hdc, line_to->bRop2);
+	gdi_SetROP2(gdi->drawing->hdc, lineTo->bRop2);
 
-	gdi_MoveToEx(gdi->drawing->hdc, line_to->nXStart, line_to->nYStart, NULL);
-	gdi_LineTo(gdi->drawing->hdc, line_to->nXEnd, line_to->nYEnd);
+	gdi_MoveToEx(gdi->drawing->hdc, lineTo->nXStart, lineTo->nYStart, NULL);
+	gdi_LineTo(gdi->drawing->hdc, lineTo->nXEnd, lineTo->nYEnd);
 
 	gdi_DeleteObject((HGDIOBJECT) hPen);
 }
@@ -620,12 +628,12 @@ void gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 void gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 {
 	int i;
+	INT32 x;
+	INT32 y;
 	UINT32 color;
 	HGDI_PEN hPen;
 	DELTA_POINT* points;
 	rdpGdi* gdi = context->gdi;
-	INT32 x;
-	INT32 y;
 
 	color = freerdp_color_convert_rgb(polyline->penColor, gdi->srcBpp, 32, gdi->clrconv);
 	hPen = gdi_CreatePen(GDI_PS_SOLID, 1, (GDI_COLOR) color);
@@ -667,14 +675,17 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	UINT32 foreColor;
 	UINT32 backColor;
 	gdiBitmap* bitmap;
+	GDI_COLOR originalColor;
 	HGDI_BRUSH originalBrush;
 	rdpGdi* gdi = context->gdi;
 
 	brush = &mem3blt->brush;
 	bitmap = (gdiBitmap*) mem3blt->bitmap;
 
-	foreColor = freerdp_color_convert_rgb(mem3blt->foreColor, gdi->srcBpp, 32, gdi->clrconv);
-	backColor = freerdp_color_convert_rgb(mem3blt->backColor, gdi->srcBpp, 32, gdi->clrconv);
+	foreColor = freerdp_color_convert_rgb(mem3blt->foreColor, gdi->srcBpp, 24, gdi->clrconv);
+	backColor = freerdp_color_convert_rgb(mem3blt->backColor, gdi->srcBpp, 24, gdi->clrconv);
+
+	originalColor = gdi_SetTextColor(gdi->drawing->hdc, foreColor);
 
 	if (brush->style == GDI_BS_SOLID)
 	{
@@ -718,6 +729,8 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	{
 		fprintf(stderr, "Mem3Blt unimplemented brush style:%d\n", brush->style);
 	}
+
+	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
 }
 
 void gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)

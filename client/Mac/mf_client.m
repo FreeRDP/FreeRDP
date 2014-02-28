@@ -93,7 +93,6 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
-	context->instance->ReceiveChannelData = mac_receive_channel_data;
 	context->instance->Authenticate = mac_authenticate;
 
 	context->channels = freerdp_channels_new();

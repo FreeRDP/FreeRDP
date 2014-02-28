@@ -248,7 +248,7 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 
 	error++;
 
-	if (Stream_GetRemainingLength(s) < modulus_length)
+	if (((int) Stream_GetRemainingLength(s)) < modulus_length)
 		goto error1;
 
 	info->ModulusLength = modulus_length;
@@ -261,7 +261,7 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 
 	error++;
 
-	if (Stream_GetRemainingLength(s) < exponent_length || exponent_length > 4)
+	if ((((int) Stream_GetRemainingLength(s)) < exponent_length) || (exponent_length > 4))
 		goto error2;
 
 	Stream_Read(s, &info->exponent[4 - exponent_length], exponent_length);

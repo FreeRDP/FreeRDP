@@ -505,6 +505,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
 		{
 			fprintf(stderr, "WaitForMultipleObjects: invalid handle\n");
+
 			return WAIT_FAILED;
 		}
 

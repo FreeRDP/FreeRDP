@@ -505,7 +505,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	railPlugin* rail;
 	RailClientContext* context;
-	CHANNEL_ENTRY_POINTS_EX* pEntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 
 	rail = (railPlugin*) malloc(sizeof(railPlugin));
 	ZeroMemory(rail, sizeof(railPlugin));
@@ -523,9 +523,9 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	rail->plugin.event_callback = rail_process_event;
 	rail->plugin.terminate_callback = rail_process_terminate;
 
-	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_EX*) pEntryPoints;
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
 
-	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_EX)) &&
+	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
 			(pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
 		context = (RailClientContext*) malloc(sizeof(RailClientContext));

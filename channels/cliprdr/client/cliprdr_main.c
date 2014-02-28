@@ -362,8 +362,8 @@ int cliprdr_client_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILIT
 
 int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList)
 {
-	int index;
 	wStream* s;
+	UINT32 index;
 	int length = 0;
 	int formatNameSize;
 	CLIPRDR_FORMAT* format;
@@ -468,10 +468,9 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	cliprdrPlugin* cliprdr;
 	CliprdrClientContext* context;
-	CHANNEL_ENTRY_POINTS_EX* pEntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 
-	cliprdr = (cliprdrPlugin*) malloc(sizeof(cliprdrPlugin));
-	ZeroMemory(cliprdr, sizeof(cliprdrPlugin));
+	cliprdr = (cliprdrPlugin*) calloc(1, sizeof(cliprdrPlugin));
 
 	cliprdr->plugin.channel_def.options =
 			CHANNEL_OPTION_INITIALIZED |
@@ -486,13 +485,12 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	cliprdr->plugin.event_callback = cliprdr_process_event;
 	cliprdr->plugin.terminate_callback = cliprdr_process_terminate;
 
-	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_EX*) pEntryPoints;
+	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
 
-	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_EX)) &&
+	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
 			(pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
-		context = (CliprdrClientContext*) malloc(sizeof(CliprdrClientContext));
-		ZeroMemory(context, sizeof(CliprdrClientContext));
+		context = (CliprdrClientContext*) calloc(1, sizeof(CliprdrClientContext));
 
 		context->handle = (void*) cliprdr;
 

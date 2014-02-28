@@ -34,8 +34,8 @@
 
 static HWND g_focus_hWnd;
 
-#define X_POS(lParam) (lParam & 0xFFFF)
-#define Y_POS(lParam) ((lParam >> 16) & 0xFFFF)
+#define X_POS(lParam) ((UINT16) (lParam & 0xFFFF))
+#define Y_POS(lParam) ((UINT16) ((lParam >> 16) & 0xFFFF))
 
 BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1, int y1, DWORD rop);
 void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
@@ -189,14 +189,13 @@ void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
-	LONG ptr;
+	LONG_PTR ptr;
 	wfContext* wfc;
 	int x, y, w, h;
 	PAINTSTRUCT ps;
 	rdpInput* input;
 	BOOL processed;
 	RECT windowRect;
-	RECT clientRect;
 	MINMAXINFO* minmax;
 	SCROLLINFO si;
 
@@ -286,7 +285,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			case WM_LBUTTONDOWN:
-				wf_scale_mouse_event(wfc, input,PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
+				wf_scale_mouse_event(wfc, input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
 				break;
 
 			case WM_LBUTTONUP:

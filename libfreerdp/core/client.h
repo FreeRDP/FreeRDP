@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Client Channels
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,23 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_PRIVATE_CLIENT_CHANNELS
-#define FREERDP_PRIVATE_CLIENT_CHANNELS
+#ifndef FREERDP_CORE_CLIENT_H
+#define FREERDP_CORE_CLIENT_H
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/collections.h>
+#include <winpr/stream.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 
 #include <freerdp/svc.h>
+#include <freerdp/peer.h>
 #include <freerdp/addin.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/drdynvc.h>
 #include <freerdp/channels/channels.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #define CHANNEL_MAX_COUNT 30
 
@@ -56,6 +52,7 @@ struct rdp_channel_open_data
 	int options;
 	int flags;
 	void* pInterface;
+	rdpChannels* channels;
 	PCHANNEL_OPEN_EVENT_FN pChannelOpenEventProc;
 };
 typedef struct rdp_channel_open_data CHANNEL_OPEN_DATA;
@@ -65,7 +62,7 @@ struct _CHANNEL_OPEN_EVENT
 	void* Data;
 	UINT32 DataLength;
 	void* UserData;
-	int Index;
+	CHANNEL_OPEN_DATA* pChannelOpenData;
 };
 typedef struct _CHANNEL_OPEN_EVENT CHANNEL_OPEN_EVENT;
 
@@ -110,13 +107,4 @@ struct rdp_channels
 	DrdynvcClientContext* drdynvc;
 };
 
-#ifdef WITH_DEBUG_CHANNELS
-#define DEBUG_CHANNELS(fmt, ...) DEBUG_CLASS(CHANNELS, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_CHANNELS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
-
-rdpChannels* freerdp_channels_find_by_open_handle(int open_handle, int* pindex);
-CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpChannels* channels, const char* channel_name);
-
-#endif /* FREERDP_PRIVATE_CLIENT_CHANNELS */
+#endif /* FREERDP_CORE_CLIENT_H */

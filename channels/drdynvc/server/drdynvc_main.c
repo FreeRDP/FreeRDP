@@ -86,7 +86,7 @@ static void* drdynvc_server_thread(void* arg)
 
 static int drdynvc_server_start(DrdynvcServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpdr", 0);
+	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "drdynvc");
 
 	if (!context->priv->ChannelHandle)
 		return -1;
@@ -109,27 +109,20 @@ static int drdynvc_server_stop(DrdynvcServerContext* context)
 	return 0;
 }
 
-DrdynvcServerContext* drdynvc_server_context_new(WTSVirtualChannelManager* vcm)
+DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm)
 {
 	DrdynvcServerContext* context;
 
-	context = (DrdynvcServerContext*) malloc(sizeof(DrdynvcServerContext));
+	context = (DrdynvcServerContext*) calloc(1, sizeof(DrdynvcServerContext));
 
 	if (context)
 	{
-		ZeroMemory(context, sizeof(DrdynvcServerContext));
-
 		context->vcm = vcm;
 
 		context->Start = drdynvc_server_start;
 		context->Stop = drdynvc_server_stop;
 
-		context->priv = (DrdynvcServerPrivate*) malloc(sizeof(DrdynvcServerPrivate));
-
-		if (context->priv)
-		{
-			ZeroMemory(context->priv, sizeof(DrdynvcServerPrivate));
-		}
+		context->priv = (DrdynvcServerPrivate*) calloc(1, sizeof(DrdynvcServerPrivate));
 	}
 
 	return context;
