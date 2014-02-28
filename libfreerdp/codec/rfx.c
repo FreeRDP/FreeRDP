@@ -1135,7 +1135,6 @@ struct _RFX_TILE_COMPOSE_WORK_PARAM
 	RFX_TILE* tile;
 	RFX_CONTEXT* context;
 };
-typedef struct _RFX_TILE_COMPOSE_WORK_PARAM RFX_TILE_COMPOSE_WORK_PARAM;
 
 void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {

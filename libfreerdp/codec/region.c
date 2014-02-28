@@ -71,7 +71,6 @@ struct _REGION16_DATA {
 	long size;
 	long nbRects;
 };
-typedef struct _REGION16_DATA REGION16_DATA;
 
 static REGION16_DATA empty_region = { 0, 0 };
 
