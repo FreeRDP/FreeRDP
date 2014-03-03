@@ -22,23 +22,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-/*
- #import "freerdp/freerdp.h"
-#import "freerdp/types.h"
-#import "freerdp/channels/channels.h"
-#import "freerdp/gdi/gdi.h"
-#import "freerdp/graphics.h"
-#import "freerdp/utils/event.h"
-#import "freerdp/client/cliprdr.h"
-#import "freerdp/client/file.h"
-#import "freerdp/client/cmdline.h"
-#import "freerdp/rail/rail.h"
-#import "freerdp/rail.h"
-#import "freerdp/utils/rail.h"
-
-#import "mf_interface.h"
-*/
-
 #import "mfreerdp.h"
 #import "mf_client.h"
 
