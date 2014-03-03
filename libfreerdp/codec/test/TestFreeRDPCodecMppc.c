@@ -2,6 +2,7 @@
 #include <winpr/print.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/codec/mppc.h>
 #include <freerdp/codec/mppc_dec.h>
 #include <freerdp/codec/mppc_enc.h>
 
@@ -597,7 +598,7 @@ static BYTE TEST_RDP5_UNCOMPRESSED_DATA[] =
 	0x0b, 0x00, 0x00, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x51, 0x0a, 0x40, 0xc8,
 };
 
-int TestFreeRDPCodecMppc(int argc, char* argv[])
+int test_mppc_old()
 {
 	BOOL status;
 	UINT32 roff;
@@ -653,7 +654,7 @@ int TestFreeRDPCodecMppc(int argc, char* argv[])
 		if (rlen != sizeof(TEST_RDP5_UNCOMPRESSED_DATA))
 		{
 			printf("RDP5 compression/decompression failure: size mismatch: Actual: %d, Expected: %d\n",
-					rlen, sizeof(TEST_RDP5_UNCOMPRESSED_DATA));
+					rlen, (int) sizeof(TEST_RDP5_UNCOMPRESSED_DATA));
 			return -1;
 		}
 
@@ -667,7 +668,7 @@ int TestFreeRDPCodecMppc(int argc, char* argv[])
 	if (enc->bytes_in_opb != sizeof(TEST_RDP5_UNCOMPRESSED_DATA))
 	{
 		printf("RDP5 decompression failure: size mismatch: Actual: %d, Expected: %d\n",
-				enc->bytes_in_opb, sizeof(TEST_RDP5_UNCOMPRESSED_DATA));
+				enc->bytes_in_opb, (int) sizeof(TEST_RDP5_UNCOMPRESSED_DATA));
 		return -1;
 	}
 
@@ -679,6 +680,29 @@ int TestFreeRDPCodecMppc(int argc, char* argv[])
 
 	mppc_enc_free(enc);
 	mppc_dec_free(rmppc);
+
+	return 0;
+}
+
+const char TEST_MPPC_BELL_TOLLS[] = "for.whom.the.bell.tolls,.the.bell.tolls.for.thee!";
+
+int TestFreeRDPCodecMppc(int argc, char* argv[])
+{
+	int size;
+	BYTE* pSrcData;
+	MPPC_CONTEXT* mppc;
+	BYTE OutputBuffer[65536];
+
+	mppc = mppc_context_new(1, TRUE);
+
+	size = sizeof(TEST_MPPC_BELL_TOLLS) - 1;
+	pSrcData = (BYTE*) TEST_MPPC_BELL_TOLLS;
+
+	printf("%s\n", pSrcData);
+
+	mppc_compress(mppc, pSrcData, OutputBuffer, size);
+
+	mppc_context_free(mppc);
 
 	return 0;
 }
