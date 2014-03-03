@@ -33,8 +33,8 @@
 extern "C" {
 #endif
 
-WINPR_API void winpr_HexDump(BYTE* data, int length);
-WINPR_API void winpr_CArrayDump(BYTE* data, int length, int width);
+WINPR_API void winpr_HexDump(BYTE* data, unsigned int length);
+WINPR_API void winpr_CArrayDump(BYTE* data, unsigned int length, int width);
 
 WINPR_API int wprintfx(const char *fmt, ...);
 WINPR_API int wvprintfx(const char *fmt, va_list args);

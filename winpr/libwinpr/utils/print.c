@@ -30,10 +30,10 @@
 
 #include "trio.h"
 
-void winpr_HexDump(BYTE* data, int length)
+void winpr_HexDump(BYTE* data, unsigned int length)
 {
 	BYTE* p = data;
-	int i, line, offset = 0;
+	unsigned int i, line, offset = 0;
 
 	while (offset < length)
 	{
@@ -60,16 +60,16 @@ void winpr_HexDump(BYTE* data, int length)
 	}
 }
 
-void winpr_CArrayDump(BYTE* data, int length, int width)
+void winpr_CArrayDump(BYTE* data, unsigned int length, int width)
 {
 	BYTE* p = data;
-	int i, line, offset = 0;
+	unsigned int i, line, offset = 0;
 
 	while (offset < length)
 	{
 		line = length - offset;
 
-		if (line > width)
+		if (line > (unsigned int)width)
 			line = width;
 
 		printf("\t\"");
