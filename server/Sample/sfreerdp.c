@@ -30,6 +30,9 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/channels/channels.h>
+
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/tcp.h>
@@ -450,7 +453,6 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 BOOL tf_peer_post_connect(freerdp_peer* client)
 {
-	int i;
 	testPeerContext* context = (testPeerContext*) client->context;
 
 	/**
@@ -492,7 +494,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 
 	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpdbg"))
 	{
-		context->debug_channel = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpdbg", 0);
+		context->debug_channel = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "rdpdbg");
 
 		if (context->debug_channel != NULL)
 		{
@@ -825,6 +827,7 @@ int main(int argc, char* argv[])
 {
 	freerdp_listener* instance;
 
+	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	instance = freerdp_listener_new();
 
 	instance->PeerAccepted = test_peer_accepted;
