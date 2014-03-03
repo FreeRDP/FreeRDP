@@ -261,6 +261,11 @@
 #define CliprdrChannel_DataRequest				3
 #define CliprdrChannel_DataResponse				4
 #define CliprdrChannel_ClipCaps					5
+#define CliprdrChannel_FilecontentsRequest		6
+#define CliprdrChannel_FilecontentsResponse		7
+#define CliprdrChannel_LockClipdata				8
+#define CliprdrChannel_UnLockClipdata			9
+#define CliprdrChannel_TemporaryDirectory		10
 
 #define FREERDP_CLIPRDR_CHANNEL_MONITOR_READY			MakeMessageId(CliprdrChannel, MonitorReady)
 #define FREERDP_CLIPRDR_CHANNEL_FORMAT_LIST			MakeMessageId(CliprdrChannel, FormatList)

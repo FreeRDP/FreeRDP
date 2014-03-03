@@ -113,4 +113,48 @@ struct _RDP_CB_DATA_RESPONSE_EVENT
 };
 typedef struct _RDP_CB_DATA_RESPONSE_EVENT RDP_CB_DATA_RESPONSE_EVENT;
 
+
+struct _RDP_CB_FILECONTENTS_REQUEST_EVENT
+{
+	wMessage event;
+	UINT32 streamId;
+	UINT32 lindex;
+	UINT32 dwFlags;
+	UINT32 nPositionLow;
+	UINT32 nPositionHigh;
+	UINT32 cbRequested;
+	UINT32 clipDataId;
+};
+typedef struct _RDP_CB_FILECONTENTS_REQUEST_EVENT RDP_CB_FILECONTENTS_REQUEST_EVENT;
+
+struct _RDP_CB_FILECONTENTS_RESPONSE_EVENT
+{
+	wMessage event;
+	BYTE* data;
+	UINT32 size;
+	UINT32 streamId;
+};
+typedef struct _RDP_CB_FILECONTENTS_RESPONSE_EVENT RDP_CB_FILECONTENTS_RESPONSE_EVENT;
+
+struct _RDP_CB_LOCK_CLIPDATA_EVENT
+{
+	wMessage event;
+	UINT32 clipDataId;
+};
+typedef struct _RDP_CB_LOCK_CLIPDATA_EVENT RDP_CB_LOCK_CLIPDATA_EVENT ;
+
+struct _RDP_CB_UNLOCK_CLIPDATA_EVENT
+{
+	wMessage event;
+	UINT32 clipDataId;
+};
+typedef struct _RDP_CB_UNLOCK_CLIPDATA_EVENT RDP_CB_UNLOCK_CLIPDATA_EVENT ;
+
+struct _RDP_CB_TEMPDIR_EVENT
+{
+	wMessage event;
+	char dirname[520];
+};
+typedef struct _RDP_CB_TEMPDIR_EVENT RDP_CB_TEMPDIR_EVENT;
+
 #endif /* FREERDP_CHANNEL_CLIENT_CLIPRDR_H */

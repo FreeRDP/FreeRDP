@@ -252,6 +252,27 @@ static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UI
 	}
 }
 
+static void cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+{
+
+}
+
+static void cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+{
+
+}
+
+static void cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+{
+
+}
+
+
+static void cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+{
+
+}
+
 static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 {
 	UINT16 msgType;
@@ -296,12 +317,53 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 			cliprdr_process_format_data_response(cliprdr, s, dataLen, msgFlags);
 			break;
 
+		case CB_FILECONTENTS_REQUEST:
+			cliprdr_process_filecontents_request(cliprdr, s, dataLen, msgFlags);
+			break;
+
+		case CB_FILECONTENTS_RESPONSE:
+			cliprdr_process_filecontents_response(cliprdr, s, dataLen, msgFlags);
+			break;
+
+		case CB_LOCK_CLIPDATA:
+			cliprdr_process_lock_clipdata(cliprdr, s, dataLen, msgFlags);
+			break;
+
+		case CB_UNLOCK_CLIPDATA:
+			cliprdr_process_unlock_clipdata(cliprdr, s, dataLen, msgFlags);
+			break;
+
 		default:
 			DEBUG_WARN("unknown msgType %d", msgType);
 			break;
 	}
 
 	Stream_Free(s, TRUE);
+}
+
+static void cliprdr_process_filecontents_request_event(cliprdrPlugin* plugin, RDP_CB_FILECONTENTS_REQUEST_EVENT * event)
+{
+
+}
+
+static void cliprdr_process_filecontents_response_event(cliprdrPlugin* plugin, RDP_CB_FILECONTENTS_RESPONSE_EVENT * event)
+{
+
+}
+
+static void cliprdr_process_lock_clipdata_event(cliprdrPlugin* plugin, RDP_CB_LOCK_CLIPDATA_EVENT * event)
+{
+
+}
+
+static void cliprdr_process_unlock_clipdata_event(cliprdrPlugin* plugin, RDP_CB_UNLOCK_CLIPDATA_EVENT * event)
+{
+
+}
+
+static void cliprdr_process_tempdir_event(cliprdrPlugin* plugin, RDP_CB_TEMPDIR_EVENT * event)
+{
+
 }
 
 static void cliprdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
@@ -318,6 +380,26 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
 
 		case CliprdrChannel_DataResponse:
 			cliprdr_process_format_data_response_event((cliprdrPlugin*) plugin, (RDP_CB_DATA_RESPONSE_EVENT*) event);
+			break;
+
+		case CliprdrChannel_FilecontentsRequest:
+			cliprdr_process_filecontents_request_event((cliprdrPlugin*) plugin, (RDP_CB_FILECONTENTS_REQUEST_EVENT *) event);
+			break;
+
+		case CliprdrChannel_FilecontentsResponse:
+			cliprdr_process_filecontents_response_event((cliprdrPlugin*) plugin, (RDP_CB_FILECONTENTS_RESPONSE_EVENT *) event);
+			break;
+
+		case CliprdrChannel_LockClipdata:
+			cliprdr_process_lock_clipdata_event((cliprdrPlugin*) plugin, (RDP_CB_LOCK_CLIPDATA_EVENT *) event);
+			break;
+
+		case CliprdrChannel_UnLockClipdata:
+			cliprdr_process_unlock_clipdata_event((cliprdrPlugin*) plugin, (RDP_CB_UNLOCK_CLIPDATA_EVENT *) event);
+			break;
+
+		case CliprdrChannel_TemporaryDirectory:
+			cliprdr_process_tempdir_event((cliprdrPlugin*) plugin, (RDP_CB_TEMPDIR_EVENT *) event);
 			break;
 
 		default:

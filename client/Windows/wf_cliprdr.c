@@ -655,6 +655,26 @@ static void wf_cliprdr_process_cb_data_response_event(wfContext *wfc, RDP_CB_DAT
 	SetEvent(cliprdr->response_data_event);
 }
 
+static void wf_cliprdr_process_cb_filecontents_request_event(wfContext *wfc, RDP_CB_FILECONTENTS_REQUEST_EVENT *event)
+{
+
+}
+
+static void wf_cliprdr_process_cb_filecontents_response_event(wfContext *wfc, RDP_CB_FILECONTENTS_RESPONSE_EVENT *event)
+{
+
+}
+
+static void wf_cliprdr_process_cb_lock_clipdata_event(wfContext *wfc, RDP_CB_LOCK_CLIPDATA_EVENT *event)
+{
+
+}
+
+static void wf_cliprdr_process_cb_unlock_clipdata_event(wfContext *wfc, RDP_CB_UNLOCK_CLIPDATA_EVENT *event)
+{
+
+}
+
 void wf_process_cliprdr_event(wfContext *wfc, wMessage *event)
 {
 	switch (GetMessageType(event->id))
@@ -677,6 +697,22 @@ void wf_process_cliprdr_event(wfContext *wfc, wMessage *event)
 
 		case CliprdrChannel_DataResponse:
 			wf_cliprdr_process_cb_data_response_event(wfc, (RDP_CB_DATA_RESPONSE_EVENT *) event);
+			break;
+
+		case CliprdrChannel_FilecontentsRequest:
+			wf_cliprdr_process_cb_filecontents_request_event(wfc, (RDP_CB_FILECONTENTS_REQUEST_EVENT *) event);
+			break;
+
+		case CliprdrChannel_FilecontentsResponse:
+			wf_cliprdr_process_cb_filecontents_response_event(wfc, (RDP_CB_FILECONTENTS_RESPONSE_EVENT *) event);
+			break;
+
+		case CliprdrChannel_LockClipdata:
+			wf_cliprdr_process_cb_lock_clipdata_event(wfc, (RDP_CB_LOCK_CLIPDATA_EVENT *) event);
+			break;
+
+		case CliprdrChannel_UnLockClipdata:
+			wf_cliprdr_process_cb_unlock_clipdata_event(wfc, (RDP_CB_UNLOCK_CLIPDATA_EVENT *) event);
 			break;
 
 		default:
