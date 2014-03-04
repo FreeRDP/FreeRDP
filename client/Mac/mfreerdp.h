@@ -20,6 +20,7 @@ typedef struct mf_context mfContext;
 #include <winpr/thread.h>
 
 #include "MRDPView.h"
+#include "Keyboard.h"
 #include <AppKit/NSView.h>
 
 struct mf_context
@@ -43,8 +44,9 @@ struct mf_context
 	int client_width;
 	int client_height;
 
-	HANDLE keyboardThread;
 	HANDLE stopEvent;
+	HANDLE keyboardThread;
+	enum APPLE_KEYBOARD_TYPE appleKeyboardType;
 	
 	HGDI_DC hdc;
 	UINT16 srcBpp;

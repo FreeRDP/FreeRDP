@@ -533,7 +533,7 @@ DWORD mac_client_thread(void* param)
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
-DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
+DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 {
 	/**
 	 * In 99% of cases, the given key code is truly keyboard independent.
@@ -557,6 +557,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 	 * when the output character is '0' for the key code corresponding to the 'i' key.
 	 */
 	
+#if 0
 	switch (keyChar)
 	{
 		case '0':
@@ -570,6 +571,17 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 			if (keyCode == APPLE_VK_ANSI_Grave)
 				keyCode = APPLE_VK_ISO_Section;
 			break;
+	}
+#endif
+	
+	/* Perform keycode correction for all ISO keyboards */
+	
+	if (type == APPLE_KEYBOARD_TYPE_ISO)
+	{
+		if (keyCode == APPLE_VK_ANSI_Grave)
+			keyCode = APPLE_VK_ISO_Section;
+		else if (keyCode == APPLE_VK_ISO_Section)
+			keyCode = APPLE_VK_ANSI_Grave;
 	}
 	
 	return keyCode;
@@ -595,7 +607,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 	if ([characters length] > 0)
 	{
 		keyChar = [characters characterAtIndex:0];
-		keyCode = fixKeyCode(keyCode, keyChar);
+		keyCode = fixKeyCode(keyCode, keyChar, mfc->appleKeyboardType);
 	}
 	
 	vkcode = GetVirtualKeyCodeFromKeycode(keyCode + 8, KEYCODE_TYPE_APPLE);
@@ -632,7 +644,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 	if ([characters length] > 0)
 	{
 		keyChar = [characters characterAtIndex:0];
-		keyCode = fixKeyCode(keyCode, keyChar);
+		keyCode = fixKeyCode(keyCode, keyChar, mfc->appleKeyboardType);
 	}
 
 	vkcode = GetVirtualKeyCodeFromKeycode(keyCode + 8, KEYCODE_TYPE_APPLE);
@@ -874,7 +886,7 @@ BOOL mac_post_connect(freerdp* instance)
 	mfContext* mfc = (mfContext*) instance->context;
 
 	MRDPView* view = (MRDPView*) mfc->view;
-
+	
 	ZeroMemory(&rdp_pointer, sizeof(rdpPointer));
 	rdp_pointer.size = sizeof(rdpPointer);
 	rdp_pointer.New = mf_Pointer_New;
@@ -882,7 +894,7 @@ BOOL mac_post_connect(freerdp* instance)
 	rdp_pointer.Set = mf_Pointer_Set;
 	rdp_pointer.SetNull = mf_Pointer_SetNull;
 	rdp_pointer.SetDefault = mf_Pointer_SetDefault;
-
+	
 	settings = instance->settings;
 	
 	flags = CLRCONV_ALPHA | CLRCONV_RGB555;
@@ -909,6 +921,8 @@ BOOL mac_post_connect(freerdp* instance)
 	view->pasteboard_rd = [NSPasteboard generalPasteboard];
 	view->pasteboard_changecount = (int) [view->pasteboard_rd changeCount];
 	view->pasteboard_timer = [NSTimer scheduledTimerWithTimeInterval:0.5 target:mfc->view selector:@selector(onPasteboardTimerFired:) userInfo:nil repeats:YES];
+	
+	mfc->appleKeyboardType = mac_detect_keyboard_type();
 
 	return TRUE;
 }

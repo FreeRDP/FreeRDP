@@ -24,6 +24,7 @@
 
 #import "mfreerdp.h"
 #import "mf_client.h"
+#import "Keyboard.h"
 
 @interface MRDPView : NSView
 {
