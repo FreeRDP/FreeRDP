@@ -236,7 +236,8 @@ BOOL wf_pre_connect(freerdp* instance)
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 
 	wfc->fullscreen = settings->Fullscreen;
-	wfc->fs_toggle = 1;
+	if (wfc->fullscreen)
+		wfc->fs_toggle = 1;
 	wfc->sw_gdi = settings->SoftwareGdi;
 
 	wfc->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
@@ -444,7 +445,8 @@ BOOL wf_post_connect(freerdp* instance)
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
 	wf_cliprdr_init(wfc, instance->context->channels);
-	floatbar_window_create(wfc);
+	if (wfc->fullscreen)
+		floatbar_window_create(wfc);
 
 	return TRUE;
 }
