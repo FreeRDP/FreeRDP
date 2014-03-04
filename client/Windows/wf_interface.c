@@ -259,7 +259,7 @@ BOOL wf_pre_connect(freerdp* instance)
 		desktopHeight = (GetSystemMetrics(SM_CYSCREEN) * wfc->percentscreen) / 100;
 		settings->DesktopHeight = desktopHeight;
 	}
-	
+
 	if (wfc->fullscreen)
 	{
 		if (settings->UseMultimon)
@@ -273,6 +273,10 @@ BOOL wf_pre_connect(freerdp* instance)
 			desktopHeight = GetSystemMetrics(SM_CYSCREEN);
 		}
 	}
+
+	/* FIXME: desktopWidth has a limitation that it should be divisible by 4,
+	 *        otherwise the screen will crash when connecting to an XP desktop.*/
+	desktopWidth = (desktopWidth + 3) & (~3);
 
 	if (desktopWidth != settings->DesktopWidth)
 	{
