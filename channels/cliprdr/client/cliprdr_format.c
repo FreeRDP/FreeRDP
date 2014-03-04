@@ -217,7 +217,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 	if (context->custom)
 	{
-		int index;
+		UINT32 index;
 		int formatNameLength;
 		CLIPRDR_FORMAT* formats;
 		CLIPRDR_FORMAT_LIST formatList;

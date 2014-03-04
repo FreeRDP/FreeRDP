@@ -630,7 +630,7 @@ static void* rdpdr_server_thread(void* arg)
 
 static int rdpdr_server_start(RdpdrServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpdr", 0);
+	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "rdpdr");
 
 	if (!context->priv->ChannelHandle)
 		return -1;
@@ -653,7 +653,7 @@ static int rdpdr_server_stop(RdpdrServerContext* context)
 	return 0;
 }
 
-RdpdrServerContext* rdpdr_server_context_new(WTSVirtualChannelManager* vcm)
+RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm)
 {
 	RdpdrServerContext* context;
 

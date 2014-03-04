@@ -37,7 +37,7 @@ typedef int (*psRdpdrStop)(RdpdrServerContext* context);
 
 struct _rdpdr_server_context
 {
-	WTSVirtualChannelManager* vcm;
+	HANDLE vcm;
 
 	psRdpdrStart Start;
 	psRdpdrStop Stop;
@@ -45,7 +45,7 @@ struct _rdpdr_server_context
 	RdpdrServerPrivate* priv;
 };
 
-FREERDP_API RdpdrServerContext* rdpdr_server_context_new(WTSVirtualChannelManager* vcm);
+FREERDP_API RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm);
 FREERDP_API void rdpdr_server_context_free(RdpdrServerContext* context);
 
 #endif /* FREERDP_CHANNEL_SERVER_RDPDR_H */

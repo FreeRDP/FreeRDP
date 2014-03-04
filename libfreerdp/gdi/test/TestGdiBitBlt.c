@@ -407,6 +407,7 @@ BYTE bmp_PATINVERT[256] =
 
 int CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2)
 {
+	int bpp;
 	int x, y;
 	BYTE *p1, *p2;
 
@@ -417,7 +418,7 @@ int CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2)
 	{
 		p1 = hBmp1->data;
 		p2 = hBmp2->data;
-		int bpp = hBmp1->bitsPerPixel;
+		bpp = hBmp1->bitsPerPixel;
 
 		if (bpp == 32)
 		{

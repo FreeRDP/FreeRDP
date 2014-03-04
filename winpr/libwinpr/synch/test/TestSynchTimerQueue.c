@@ -45,6 +45,8 @@ VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 	{
 		SetEvent(g_Event);
 	}
+
+	Sleep(50);
 }
 
 int TestSynchTimerQueue(int argc, char* argv[])
@@ -60,7 +62,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 
 	if (!hTimerQueue)
 	{
-		printf("CreateTimerQueue failed (%d)\n", GetLastError());
+		printf("CreateTimerQueue failed (%d)\n", (int) GetLastError());
 		return -1;
 	}
 
@@ -75,14 +77,14 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		if (!CreateTimerQueueTimer(&hTimers[index], hTimerQueue, (WAITORTIMERCALLBACK) TimerRoutine,
 				&apcData[index], apcData[index].DueTime, apcData[index].Period, 0))
 		{
-			printf("CreateTimerQueueTimer failed (%d)\n", GetLastError());
+			printf("CreateTimerQueueTimer failed (%d)\n", (int) GetLastError());
 			return -1;
 		}
 	}
 
 	if (WaitForSingleObject(g_Event, INFINITE) != WAIT_OBJECT_0)
 	{
-		printf("WaitForSingleObject failed (%d)\n", GetLastError());
+		printf("WaitForSingleObject failed (%d)\n", (int) GetLastError());
 		return -1;
 	}
 
@@ -90,14 +92,14 @@ int TestSynchTimerQueue(int argc, char* argv[])
 	{
 		if (!DeleteTimerQueueTimer(hTimerQueue, hTimers[index], NULL))
 		{
-			printf("DeleteTimerQueueTimer failed (%d)\n", GetLastError());
+			printf("DeleteTimerQueueTimer failed (%d)\n", (int) GetLastError());
 			return -1;
 		}
 	}
 	
 	if (!DeleteTimerQueue(hTimerQueue))
 	{
-		printf("DeleteTimerQueue failed (%d)\n", GetLastError());
+		printf("DeleteTimerQueue failed (%d)\n", (int) GetLastError());
 		return -1;
 	}
 

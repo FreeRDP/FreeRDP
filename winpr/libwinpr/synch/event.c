@@ -41,6 +41,7 @@
 #endif
 
 #include "../handle/handle.h"
+#include "../pipe/pipe.h"
 
 CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
 
@@ -267,6 +268,12 @@ int GetEventFileDescriptor(HANDLE hEvent)
 		return -1;
 
 	event = (WINPR_EVENT*) Object;
+	if (Type == HANDLE_TYPE_NAMED_PIPE)
+	{
+		WINPR_NAMED_PIPE *named = (WINPR_NAMED_PIPE *)hEvent;
+		if (named->ServerMode)
+			return named->serverfd;
+	}
 
 	return event->pipe_fd[0];
 #else

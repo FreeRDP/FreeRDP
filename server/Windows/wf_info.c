@@ -88,7 +88,6 @@ int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
 
 int wf_info_unlock(wfInfo* wfi)
 {
-	
 	if (ReleaseMutex(wfi->mutex) == 0)
 	{
 		printf("wf_info_unlock failed with 0x%08X\n", GetLastError());
@@ -101,12 +100,6 @@ int wf_info_unlock(wfInfo* wfi)
 wfInfo* wf_info_init()
 {
 	wfInfo* wfi;
-
-	/*
-	OSVERSIONINFOEX osvi;
-	SYSTEM_INFO si;
-	BOOL bOsVersionInfoEx;
-	*/
 
 	wfi = (wfInfo*) malloc(sizeof(wfInfo));
 	ZeroMemory(wfi, sizeof(wfInfo));
@@ -125,9 +118,6 @@ wfInfo* wf_info_init()
 		{
 			_tprintf(_T("CreateMutex error: %d\n"), GetLastError());
 		}
-
-		//wfi->updateEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-		//printf("updateEvent created\n");
 
 		wfi->updateSemaphore = CreateSemaphore(NULL, 0, 32, NULL);
 
@@ -165,29 +155,6 @@ wfInfo* wf_info_init()
 			}
 		}
 		RegCloseKey(hKey);
-
-		//detect windows version
-		/*
-		ZeroMemory(&si, sizeof(SYSTEM_INFO));
-		ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
-
-		osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-		bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO*) &osvi);
-
-		wfi->win8 = FALSE;
-		if(bOsVersionInfoEx != 0 )
-		{
-		if ( VER_PLATFORM_WIN32_NT==osvi.dwPlatformId && 
-		osvi.dwMajorVersion > 4 )
-		{
-		if ( osvi.dwMajorVersion == 6 && 
-		osvi.dwMinorVersion == 2)
-		{
-		wfi->win8 = TRUE;
-		}
-		}
-		}
-		*/
 	}
 
 	return wfi;

@@ -20,12 +20,7 @@ set(MODULE_PREFIX "WINPR_WTSAPI")
 
 set(${MODULE_PREFIX}_SRCS
 	wtsapi.c
-	wtsrpc_c.c
-	wtsrpc_c.h)
-
-if(MSVC AND (NOT MONOLITHIC_BUILD))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
-endif()
+	wtsapi.h)
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}

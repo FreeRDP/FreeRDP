@@ -201,12 +201,7 @@ static void* rdpsnd_server_thread(void* arg)
 		Stream_SetPosition(s, 0);
 
 		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
-				(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
-		{
-			if (BytesReturned)
-				Stream_Seek(s, BytesReturned);
-		}
-		else
+				(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
 			if (!BytesReturned)
 				break;
@@ -488,7 +483,7 @@ static BOOL rdpsnd_server_close(RdpsndServerContext* context)
 
 static int rdpsnd_server_start(RdpsndServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpsnd", 0);
+	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "rdpsnd");
 
 	if (!context->priv->ChannelHandle)
 		return -1;
@@ -513,7 +508,7 @@ static int rdpsnd_server_stop(RdpsndServerContext* context)
 	return 0;
 }
 
-RdpsndServerContext* rdpsnd_server_context_new(WTSVirtualChannelManager* vcm)
+RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm)
 {
 	RdpsndServerContext* context;
 

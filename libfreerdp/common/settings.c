@@ -147,7 +147,7 @@ void freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 
 RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name)
 {
-	int index;
+	UINT32 index;
 	RDPDR_DEVICE* device;
 
 	for (index = 0; index < settings->DeviceCount; index++)
@@ -234,7 +234,7 @@ RDPDR_DEVICE* freerdp_device_clone(RDPDR_DEVICE* device)
 
 void freerdp_device_collection_free(rdpSettings* settings)
 {
-	int index;
+	UINT32 index;
 	RDPDR_DEVICE* device;
 
 	for (index = 0; index < settings->DeviceCount; index++)
@@ -288,7 +288,7 @@ void freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* ch
 
 ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings, const char* name)
 {
-	int index;
+	UINT32 index;
 	ADDIN_ARGV* channel;
 
 	for (index = 0; index < settings->StaticChannelCount; index++)
@@ -322,7 +322,8 @@ ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel)
 
 void freerdp_static_channel_collection_free(rdpSettings* settings)
 {
-	int i, j;
+	int j;
+	UINT32 i;
 
 	for (i = 0; i < settings->StaticChannelCount; i++)
 	{
@@ -354,7 +355,7 @@ void freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 
 ADDIN_ARGV* freerdp_dynamic_channel_collection_find(rdpSettings* settings, const char* name)
 {
-	int index;
+	UINT32 index;
 	ADDIN_ARGV* channel;
 
 	for (index = 0; index < settings->DynamicChannelCount; index++)
@@ -388,7 +389,7 @@ ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel)
 
 void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
 {
-	int index;
+	UINT32 index;
 
 	for (index = 0; index < settings->DynamicChannelCount; index++)
 	{
@@ -651,6 +652,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 
 		case FreeRDP_RestrictedAdminModeRequired:
 			return settings->RestrictedAdminModeRequired;
+			break;
+
+		case FreeRDP_DisableCredentialsDelegation:
+			return settings->DisableCredentialsDelegation;
 			break;
 
 		case FreeRDP_MstscCookieMode:
@@ -1119,6 +1124,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_RestrictedAdminModeRequired:
 			settings->RestrictedAdminModeRequired = param;
+			break;
+
+		case FreeRDP_DisableCredentialsDelegation:
+			settings->DisableCredentialsDelegation = param;
 			break;
 
 		case FreeRDP_MstscCookieMode:
@@ -2136,6 +2145,10 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 			return settings->DynamicDSTTimeZoneKeyName;
 			break;
 
+		case FreeRDP_AuthenticationServiceClass:
+			return settings->AuthenticationServiceClass;
+			break;
+
 		case FreeRDP_PreconnectionBlob:
 			return settings->PreconnectionBlob;
 			break;
@@ -2314,6 +2327,11 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 		case FreeRDP_DynamicDSTTimeZoneKeyName:
 			free(settings->DynamicDSTTimeZoneKeyName);
 			settings->DynamicDSTTimeZoneKeyName = _strdup(param);
+			break;
+
+		case FreeRDP_AuthenticationServiceClass:
+			free(settings->AuthenticationServiceClass);
+			settings->AuthenticationServiceClass = _strdup(param);
 			break;
 
 		case FreeRDP_PreconnectionBlob:

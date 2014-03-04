@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * Virtual Channels
+ * WinPR: Windows Portable Runtime
+ * Memory Functions
  *
- * Copyright 2011 Vic Lee
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,18 @@
  * limitations under the License.
  */
 
-#ifndef __CHANNEL_H
-#define __CHANNEL_H
+#ifndef WINPR_MEMORY_PRIVATE_H
+#define WINPR_MEMORY_PRIVATE_H
 
-BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channel_id, BYTE* data, int size);
-BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channel_id);
-BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 channel_id);
+#ifndef _WIN32
 
-#endif /* __CHANNEL_H */
+#include <winpr/crt.h>
+#include <winpr/memory.h>
+
+
+
+#endif
+
+#endif /* WINPR_MEMORY_PRIVATE_H */
+
+

@@ -75,6 +75,10 @@ set(${MODULE_PREFIX}_SRCS
 	orders.h
 	freerdp.c
 	graphics.c
+	client.c
+	client.h
+	server.c
+	server.h
 	capabilities.c
 	capabilities.h
 	certificate.c
@@ -109,8 +113,8 @@ set(${MODULE_PREFIX}_SRCS
 	update.h
 	message.c
 	message.h
-	channel.c
-	channel.h
+	channels.c
+	channels.h
 	window.c
 	window.h
 	listener.c
@@ -142,7 +146,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-registry winpr-utils winpr-interlocked winpr-dsparse winpr-sspi winpr-rpc winpr-handle winpr-crt)
+	MODULES winpr-registry winpr-utils winpr-interlocked winpr-dsparse winpr-sspi winpr-rpc winpr-wtsapi winpr-handle winpr-crt)
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

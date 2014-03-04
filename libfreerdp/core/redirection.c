@@ -152,7 +152,7 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 
 	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESSES)
 	{
-		int i;
+		UINT32 i;
 
 		freerdp_target_net_addresses_free(settings);
 

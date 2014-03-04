@@ -142,7 +142,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) bind_pdu);
 
-	bind_pdu->auth_length = rpc->ntlm->outputBuffer[0].cbBuffer;
+	bind_pdu->auth_length = (UINT16) rpc->ntlm->outputBuffer[0].cbBuffer;
 	bind_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer[0].pvBuffer;
 
 	bind_pdu->ptype = PTYPE_BIND;
@@ -291,7 +291,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) auth_3_pdu);
 
-	auth_3_pdu->auth_length = rpc->ntlm->outputBuffer[0].cbBuffer;
+	auth_3_pdu->auth_length = (UINT16) rpc->ntlm->outputBuffer[0].cbBuffer;
 	auth_3_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer[0].pvBuffer;
 
 	auth_3_pdu->ptype = PTYPE_RPC_AUTH_3;

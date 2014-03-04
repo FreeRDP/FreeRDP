@@ -39,6 +39,7 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/constants.h>
 #include <freerdp/primitives.h>
+#include <freerdp/codec/region.h>
 
 #include "rfx_constants.h"
 #include "rfx_types.h"
@@ -50,6 +51,7 @@
 
 #include "rfx_sse2.h"
 #include "rfx_neon.h"
+
 
 #ifndef RFX_INIT_SIMD
 #define RFX_INIT_SIMD(_rfx_context) do { } while (0)
@@ -183,24 +185,13 @@ void rfx_decoder_tile_free(RFX_TILE* tile)
 
 RFX_TILE* rfx_encoder_tile_new()
 {
-	RFX_TILE* tile = NULL;
-
-	tile = (RFX_TILE*) malloc(sizeof(RFX_TILE));
-
-	if (tile)
-	{
-		ZeroMemory(tile, sizeof(RFX_TILE));
-	}
-
-	return tile;
+	return (RFX_TILE *)calloc(1, sizeof(RFX_TILE));
 }
 
 void rfx_encoder_tile_free(RFX_TILE* tile)
 {
 	if (tile)
-	{
 		free(tile);
-	}
 }
 
 RFX_CONTEXT* rfx_context_new(BOOL encoder)
@@ -212,36 +203,42 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	DWORD dwValue;
 	SYSTEM_INFO sysinfo;
 	RFX_CONTEXT* context;
+	wObject *pool;
+	RFX_CONTEXT_PRIV *priv;
 
-	context = (RFX_CONTEXT*) malloc(sizeof(RFX_CONTEXT));
-	ZeroMemory(context, sizeof(RFX_CONTEXT));
+	context = (RFX_CONTEXT*)calloc(1, sizeof(RFX_CONTEXT));
+	if (!context)
+		return NULL;
 
 	context->encoder = encoder;
-
-	context->priv = (RFX_CONTEXT_PRIV*) malloc(sizeof(RFX_CONTEXT_PRIV));
-	ZeroMemory(context->priv, sizeof(RFX_CONTEXT_PRIV));
+	context->priv = priv = (RFX_CONTEXT_PRIV *)calloc(1, sizeof(RFX_CONTEXT_PRIV) );
+	if (!priv)
+		goto error_priv;
 
 	WLog_Init();
 
-	context->priv->log = WLog_Get("com.freerdp.codec.rfx");
-	WLog_OpenAppender(context->priv->log);
+	priv->log = WLog_Get("com.freerdp.codec.rfx");
+	WLog_OpenAppender(priv->log);
 
 #ifdef WITH_DEBUG_RFX
-	WLog_SetLogLevel(context->priv->log, WLOG_DEBUG);
+	WLog_SetLogLevel(priv->log, WLOG_DEBUG);
 #endif
 
-	context->priv->TilePool = ObjectPool_New(TRUE);
-	ObjectPool_Object(context->priv->TilePool)->fnObjectInit = (OBJECT_INIT_FN) rfx_tile_init;
+	priv->TilePool = ObjectPool_New(TRUE);
+	if (!priv->TilePool)
+		goto error_tilePool;
+	pool = ObjectPool_Object(priv->TilePool);
+	pool->fnObjectInit = (OBJECT_INIT_FN) rfx_tile_init;
 
 	if (context->encoder)
 	{
-		ObjectPool_Object(context->priv->TilePool)->fnObjectNew = (OBJECT_NEW_FN) rfx_encoder_tile_new;
-		ObjectPool_Object(context->priv->TilePool)->fnObjectFree = (OBJECT_FREE_FN) rfx_encoder_tile_free;
+		pool->fnObjectNew = (OBJECT_NEW_FN) rfx_encoder_tile_new;
+		pool->fnObjectFree = (OBJECT_FREE_FN) rfx_encoder_tile_free;
 	}
 	else
 	{
-		ObjectPool_Object(context->priv->TilePool)->fnObjectNew = (OBJECT_NEW_FN) rfx_decoder_tile_new;
-		ObjectPool_Object(context->priv->TilePool)->fnObjectFree = (OBJECT_FREE_FN) rfx_decoder_tile_free;
+		pool->fnObjectNew = (OBJECT_NEW_FN) rfx_decoder_tile_new;
+		pool->fnObjectFree = (OBJECT_FREE_FN) rfx_decoder_tile_free;
 	}
 
 	/*
@@ -258,7 +255,9 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	 * We then multiply by 3 to use a single, partioned buffer for all 3 channels.
 	 */
 
-	context->priv->BufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
+	priv->BufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
+	if (!priv->BufferPool)
+		goto error_BufferPool;
 
 #ifdef _WIN32
 	{
@@ -271,16 +270,16 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 		GetVersionExA(&verinfo);
 		isVistaOrLater = ((verinfo.dwMajorVersion >= 6) && (verinfo.dwMinorVersion >= 0)) ? TRUE : FALSE;
 
-		context->priv->UseThreads = isVistaOrLater;
+		priv->UseThreads = isVistaOrLater;
 	}
 #else
-	context->priv->UseThreads = TRUE;
+	priv->UseThreads = TRUE;
 #endif
 
 	GetNativeSystemInfo(&sysinfo);
 
-	context->priv->MinThreadCount = sysinfo.dwNumberOfProcessors;
-	context->priv->MaxThreadCount = 0;
+	priv->MinThreadCount = sysinfo.dwNumberOfProcessors;
+	priv->MaxThreadCount = 0;
 
 	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\RemoteFX"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -289,33 +288,35 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 		dwSize = sizeof(dwValue);
 
 		if (RegQueryValueEx(hKey, _T("UseThreads"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-			context->priv->UseThreads = dwValue ? 1 : 0;
+			priv->UseThreads = dwValue ? 1 : 0;
 
 		if (RegQueryValueEx(hKey, _T("MinThreadCount"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-			context->priv->MinThreadCount = dwValue;
+			priv->MinThreadCount = dwValue;
 
 		if (RegQueryValueEx(hKey, _T("MaxThreadCount"), NULL, &dwType, (BYTE*) &dwValue, &dwSize) == ERROR_SUCCESS)
-			context->priv->MaxThreadCount = dwValue;
+			priv->MaxThreadCount = dwValue;
 
 		RegCloseKey(hKey);
 	}
 
-	if (context->priv->UseThreads)
+	if (priv->UseThreads)
 	{
 		/* Call primitives_get here in order to avoid race conditions when using primitives_get */
 		/* from multiple threads. This call will initialize all function pointers correctly     */
 		/* before any decoding threads are started */
 		primitives_get();
 
-		context->priv->ThreadPool = CreateThreadpool(NULL);
-		InitializeThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
-		SetThreadpoolCallbackPool(&context->priv->ThreadPoolEnv, context->priv->ThreadPool);
+		priv->ThreadPool = CreateThreadpool(NULL);
+		if (!priv->ThreadPool)
+			goto error_threadPool;
+		InitializeThreadpoolEnvironment(&priv->ThreadPoolEnv);
+		SetThreadpoolCallbackPool(&priv->ThreadPoolEnv, priv->ThreadPool);
 
-		if (context->priv->MinThreadCount)
-			SetThreadpoolThreadMinimum(context->priv->ThreadPool, context->priv->MinThreadCount);
+		if (priv->MinThreadCount)
+			SetThreadpoolThreadMinimum(priv->ThreadPool, priv->MinThreadCount);
 
-		if (context->priv->MaxThreadCount)
-			SetThreadpoolThreadMaximum(context->priv->ThreadPool, context->priv->MaxThreadCount);
+		if (priv->MaxThreadCount)
+			SetThreadpoolThreadMaximum(priv->ThreadPool, priv->MaxThreadCount);
 	}
 
 	/* initialize the default pixel format */
@@ -335,29 +336,47 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	RFX_INIT_SIMD(context);
 	
 	context->state = RFX_STATE_SEND_HEADERS;
-
 	return context;
+
+error_threadPool:
+	BufferPool_Free(priv->BufferPool);
+error_BufferPool:
+	ObjectPool_Free(priv->TilePool);
+error_tilePool:
+	free(priv);
+error_priv:
+	free(context);
+	return NULL;
 }
 
 void rfx_context_free(RFX_CONTEXT* context)
 {
+	RFX_CONTEXT_PRIV *priv;
+
 	assert(NULL != context);
 	assert(NULL != context->priv);
 	assert(NULL != context->priv->TilePool);
 	assert(NULL != context->priv->BufferPool);
 
+	priv = context->priv;
 	if (context->quants)
 		free(context->quants);
 
-	ObjectPool_Free(context->priv->TilePool);
+	ObjectPool_Free(priv->TilePool);
 
 	rfx_profiler_print(context);
 	rfx_profiler_free(context);
 
-	if (context->priv->UseThreads)
+	if (priv->UseThreads)
 	{
 		CloseThreadpool(context->priv->ThreadPool);
 		DestroyThreadpoolEnvironment(&context->priv->ThreadPoolEnv);
+
+		if (priv->workObjects)
+			free(priv->workObjects);
+		if (priv->tileWorkParams)
+			free(priv->tileWorkParams);
+
 #ifdef WITH_PROFILER
 		fprintf(stderr, "\nWARNING: Profiling results probably unusable with multithreaded RemoteFX codec!\n");
 #endif
@@ -453,7 +472,7 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) <  2 * numCodecs)
+	if (Stream_GetRemainingLength(s) < (size_t) (2 * numCodecs))
 	{
 		DEBUG_WARN("RfxCodecVersion packet too small for numCodecs=%d", numCodecs);
 		return FALSE;
@@ -490,7 +509,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 		return TRUE;
 	}
 
-	if (Stream_GetRemainingLength(s) < numChannels * 5)
+	if (Stream_GetRemainingLength(s) < (size_t) (numChannels * 5))
 	{
 		DEBUG_WARN("RfxMessageChannels packet too small for numChannels=%d", numChannels);
 		return FALSE;
@@ -604,16 +623,15 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		return TRUE;
 	}
 
-	if (Stream_GetRemainingLength(s) < 8 * message->numRects)
+	if (Stream_GetRemainingLength(s) < (size_t) (8 * message->numRects))
 	{
 		DEBUG_WARN("RfxMessageRegion packet too small for num_rects=%d", message->numRects);
 		return FALSE;
 	}
 
-	if (message->rects)
-		message->rects = (RFX_RECT*) realloc(message->rects, message->numRects * sizeof(RFX_RECT));
-	else
-		message->rects = (RFX_RECT*) malloc(message->numRects * sizeof(RFX_RECT));
+	message->rects = (RFX_RECT*) realloc(message->rects, message->numRects * sizeof(RFX_RECT));
+	if (!message->rects)
+		return FALSE;
 
 	/* rects */
 	for (i = 0; i < message->numRects; i++)
@@ -624,8 +642,9 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		Stream_Read_UINT16(s, message->rects[i].width); /* width (2 bytes) */
 		Stream_Read_UINT16(s, message->rects[i].height); /* height (2 bytes) */
 
-		WLog_Print(context->priv->log, WLOG_DEBUG, "rect %d (%d %d %d %d).",
-			i, message->rects[i].x, message->rects[i].y, message->rects[i].width, message->rects[i].height);
+		WLog_Print(context->priv->log, WLOG_DEBUG, "rect %d (x,y=%d,%d w,h=%d %d).", i,
+				message->rects[i].x, message->rects[i].y,
+				message->rects[i].width, message->rects[i].height);
 	}
 
 	return TRUE;
@@ -695,15 +714,12 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	Stream_Read_UINT32(s, tilesDataSize); /* tilesDataSize (4 bytes) */
 
-	if (context->quants != NULL)
-		context->quants = (UINT32*) realloc((void*) context->quants, context->numQuant * 10 * sizeof(UINT32));
-	else
-		context->quants = (UINT32*) malloc(context->numQuant * 10 * sizeof(UINT32));
+	context->quants = (UINT32 *)realloc((void*) context->quants, context->numQuant * 10 * sizeof(UINT32));
 
 	quants = context->quants;
 
 	/* quantVals */
-	if (Stream_GetRemainingLength(s) < context->numQuant * 5)
+	if (Stream_GetRemainingLength(s) < (size_t) (context->numQuant * 5))
 	{
 		DEBUG_WARN("RfxMessageTileSet packet too small for num_quants=%d", context->numQuant);
 		return FALSE;
@@ -1119,7 +1135,6 @@ struct _RFX_TILE_COMPOSE_WORK_PARAM
 	RFX_TILE* tile;
 	RFX_CONTEXT* context;
 };
-typedef struct _RFX_TILE_COMPOSE_WORK_PARAM RFX_TILE_COMPOSE_WORK_PARAM;
 
 void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {
@@ -1127,37 +1142,82 @@ void CALLBACK rfx_compose_message_tile_work_callback(PTP_CALLBACK_INSTANCE insta
 	rfx_encode_rgb(param->context, param->tile);
 }
 
-RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
-		int numRects, BYTE* data, int width, int height, int scanline)
+
+static BOOL computeRegion(const RFX_RECT* rects, int numRects, REGION16 *region, int width, int height)
 {
-	int i, close_cnt;
-	int xIdx;
-	int yIdx;
-	int numTilesX;
-	int numTilesY;
-	UINT16 ax, ay;
+	int i;
+	const RFX_RECT *rect = rects;
+	const RECTANGLE_16 mainRect = { 0, 0, width, height };
+
+	for(i = 0; i < numRects; i++, rect++) {
+		RECTANGLE_16 rect16;
+
+		rect16.left = rect->x;
+		rect16.top = rect->y;
+		rect16.right = rect->x + rect->width;
+		rect16.bottom = rect->y + rect->height;
+
+		if (!region16_union_rect(region, region, &rect16))
+			return FALSE;
+	}
+
+	return region16_intersect_rect(region, region, &mainRect);
+}
+
+#define TILE_NO(v) ((v) / 64)
+
+BOOL setupWorkers(RFX_CONTEXT *context, int nbTiles)
+{
+	RFX_CONTEXT_PRIV *priv = context->priv;
+
+	if (!context->priv->UseThreads)
+		return TRUE;
+
+	priv->workObjects = (PTP_WORK *)realloc(priv->workObjects, sizeof(PTP_WORK) * nbTiles);
+	if (!priv->workObjects)
+	 return FALSE;
+
+	priv->tileWorkParams = (RFX_TILE_COMPOSE_WORK_PARAM *)
+			realloc(priv->tileWorkParams, sizeof(RFX_TILE_COMPOSE_WORK_PARAM) * nbTiles);
+	if (!priv->tileWorkParams)
+		return FALSE;
+
+	return TRUE;
+}
+
+
+RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int numRects,
+		BYTE* data, int width, int height, int scanline)
+{
+	int i, maxNbTiles, maxTilesX, maxTilesY;
+	int xIdx, yIdx, regionNbRects;
+	int gridRelX, gridRelY, ax, ay, bytesPerPixel;
 	RFX_TILE* tile;
-	RFX_RECT* rect;
-	int BytesPerPixel;
+	RFX_RECT* rfxRect;
 	RFX_MESSAGE* message = NULL;
-	PTP_WORK* work_objects = NULL;
-	RFX_TILE_COMPOSE_WORK_PARAM* params = NULL;
+	PTP_WORK* workObject = NULL;
+	RFX_TILE_COMPOSE_WORK_PARAM *workParam = NULL;
 
-	message = (RFX_MESSAGE*) malloc(sizeof(RFX_MESSAGE));
+	REGION16 rectsRegion, tilesRegion;
+	RECTANGLE_16 currentTileRect;
+	const RECTANGLE_16 *regionRect;
+	const RECTANGLE_16 *extents;
 
+	assert(data);
+	assert(rects);
+	assert(numRects > 0);
+	assert(width > 0);
+	assert(height > 0);
+	assert(scanline > 0);
+
+	message = (RFX_MESSAGE *)calloc(1, sizeof(RFX_MESSAGE));
 	if (!message)
 		return NULL;
-
-	ZeroMemory(message, sizeof(RFX_MESSAGE));
 
 	if (context->state == RFX_STATE_SEND_HEADERS)
 		rfx_update_context_properties(context);
 
 	message->frameIdx = context->frameIdx++;
-
-	message->numRects = numRects;
-	message->rects = (RFX_RECT*) rects;
-
 	if (!context->numQuant)
 	{
 		context->numQuant = 1;
@@ -1167,132 +1227,186 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects,
 		context->quantIdxCb = 0;
 		context->quantIdxCr = 0;
 	}
-
-	rect = (RFX_RECT*) &rects[0];
-	BytesPerPixel = (context->bits_per_pixel / 8);
-
 	message->numQuant = context->numQuant;
 	message->quantVals = context->quants;
 
-	numTilesX = (width + 63) / 64;
-	numTilesY = (height + 63) / 64;
+	bytesPerPixel = (context->bits_per_pixel / 8);
 
-	message->numTiles = numTilesX * numTilesY;
-	if (message->numTiles)
-	{
-		message->tiles = (RFX_TILE**) malloc(sizeof(RFX_TILE*) * message->numTiles);
-		ZeroMemory(message->tiles, sizeof(RFX_TILE*) * message->numTiles);
-	}
+	region16_init(&rectsRegion);
+	if (!computeRegion(rects, numRects, &rectsRegion, width, height))
+		goto out_free_message;
 
-	WLog_Print(context->priv->log, WLOG_DEBUG, "x: %d y: %d width: %d height: %d scanline: %d BytesPerPixel: %d",
-			rect->x, rect->y, width, height, scanline, BytesPerPixel);
+	extents = region16_extents(&rectsRegion);
+	assert(extents->right - extents->left > 0);
+	assert(extents->bottom - extents->top > 0);
+
+	maxTilesX = 1 + TILE_NO(extents->right - 1) - TILE_NO(extents->left);
+	maxTilesY = 1 + TILE_NO(extents->bottom - 1) - TILE_NO(extents->top);
+	maxNbTiles = maxTilesX * maxTilesY;
+
+	message->tiles = calloc(maxNbTiles, sizeof(RFX_TILE*));
+	if (!message->tiles)
+		goto out_free_message;
+
+	if (!setupWorkers(context, maxNbTiles))
+		goto out_clean_tiles;
 
 	if (context->priv->UseThreads)
 	{
-		if (message->numTiles)
-			work_objects = (PTP_WORK*) malloc(sizeof(PTP_WORK) * message->numTiles);
-		if (!work_objects)
-		{
-			free(message);
-			return NULL;
-		}
-		params = (RFX_TILE_COMPOSE_WORK_PARAM*)
-			malloc(sizeof(RFX_TILE_COMPOSE_WORK_PARAM) * message->numTiles);
-		if (!params)
-		{
-			if (message->tiles)
-				free(message->tiles);
-			free(message);
-			free(work_objects);
-			return NULL;
-		}
-		ZeroMemory(work_objects, sizeof(PTP_WORK) * message->numTiles);
-		ZeroMemory(params, sizeof(RFX_TILE_COMPOSE_WORK_PARAM) * message->numTiles);
+		workObject = context->priv->workObjects;
+		workParam = context->priv->tileWorkParams;
 	}
 
-	close_cnt = 0;
-	for (yIdx = 0; yIdx < numTilesY; yIdx++)
+	regionRect = region16_rects(&rectsRegion, &regionNbRects);
+	message->rects = rfxRect = calloc(regionNbRects, sizeof(RFX_RECT));
+	if (!message->rects)
+		goto out_clean_tiles;
+	message->numRects = regionNbRects;
+
+	region16_init(&tilesRegion);
+
+	for (i = 0; i < regionNbRects; i++, regionRect++, rfxRect++)
 	{
-		for (xIdx = 0; xIdx < numTilesX; xIdx++)
+		int startTileX = regionRect->left / 64;
+		int endTileX = (regionRect->right - 1) / 64;
+
+		int startTileY = regionRect->top / 64;
+		int endTileY = (regionRect->bottom - 1) / 64;
+
+		rfxRect->x = regionRect->left;
+		rfxRect->y = regionRect->top;
+		rfxRect->width = (regionRect->right - regionRect->left);
+		rfxRect->height = (regionRect->bottom - regionRect->top);
+
+
+		for (yIdx = startTileY, gridRelY = startTileY * 64; yIdx <= endTileY; yIdx++, gridRelY += 64 )
 		{
-			i = yIdx * numTilesX + xIdx;
+			int tileHeight = 64;
+			if ((yIdx == endTileY) && (gridRelY + 64 > height))
+				tileHeight = height - gridRelY;
 
-			tile = message->tiles[i] = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
+			currentTileRect.top = gridRelY;
+			currentTileRect.bottom = gridRelY + tileHeight;
 
-			tile->xIdx = xIdx;
-			tile->yIdx = yIdx;
-			tile->x = tile->xIdx * 64;
-			tile->y = tile->yIdx * 64;
-			tile->scanline = scanline;
-			tile->width = (xIdx < numTilesX - 1) ? 64 : width - xIdx * 64;
-			tile->height = (yIdx < numTilesY - 1) ? 64 : height - yIdx * 64;
-
-			ax = rect->x + tile->x;
-			ay = rect->y + tile->y;
-			if (tile->data && tile->allocated)
+			for (xIdx = startTileX, gridRelX = startTileX * 64; xIdx <= endTileX; xIdx++, gridRelX += 64)
 			{
-				free(tile->data);
-				tile->allocated = FALSE;
-			}
-			tile->data = &data[(ay * scanline) + (ax * BytesPerPixel)];
+				int tileWidth = 64;
+				if ((xIdx == endTileX) && (gridRelX + 64 > width))
+					tileWidth = width - gridRelX;
 
-			tile->quantIdxY = context->quantIdxY;
-			tile->quantIdxCb = context->quantIdxCb;
-			tile->quantIdxCr = context->quantIdxCr;
+				currentTileRect.left = gridRelX;
+				currentTileRect.right = gridRelX + tileWidth;
 
-			tile->YLen = 0;
-			tile->CbLen = 0;
-			tile->CrLen = 0;
+				/* checks if this tile is already treated */
+				if (region16_intersects_rect(&tilesRegion, &currentTileRect))
+					continue;
 
-			tile->YCbCrData = (BYTE*) BufferPool_Take(context->priv->BufferPool, -1);
+				tile = (RFX_TILE *)ObjectPool_Take(context->priv->TilePool);
+				if (!tile)
+					goto out_clean_rects;;
 
-			tile->YData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 0) + 16]);
-			tile->CbData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 1) + 16]);
-			tile->CrData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 2) + 16]);
+				tile->xIdx = xIdx;
+				tile->yIdx = yIdx;
+				tile->x = gridRelX;
+				tile->y = gridRelY;
+				tile->scanline = scanline;
+				tile->width = tileWidth;
+				tile->height = tileHeight;
 
-			if (context->priv->UseThreads)
-			{
-				assert(params);
+				ax = gridRelX;
+				ay = gridRelY;
+				if (tile->data && tile->allocated)
+				{
+					free(tile->data);
+					tile->allocated = FALSE;
+				}
+				tile->data = &data[(ay * scanline) + (ax * bytesPerPixel)];
 
-				params[i].context = context;
-				params[i].tile = tile;
+				tile->quantIdxY = context->quantIdxY;
+				tile->quantIdxCb = context->quantIdxCb;
+				tile->quantIdxCr = context->quantIdxCr;
 
-				work_objects[i] = CreateThreadpoolWork((PTP_WORK_CALLBACK) rfx_compose_message_tile_work_callback,
-					(void*) &params[i], &context->priv->ThreadPoolEnv);
+				tile->YLen = tile->CbLen = tile->CrLen = 0;
 
-				SubmitThreadpoolWork(work_objects[i]);
-				close_cnt = i + 1;
-			}
-			else
-			{
-				rfx_encode_rgb(context, tile);
-			}
-		}
+				tile->YCbCrData = (BYTE *)BufferPool_Take(context->priv->BufferPool, -1);
+				if (!tile->YCbCrData)
+					goto out_clean_rects;
+
+				tile->YData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 0) + 16]);
+				tile->CbData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 1) + 16]);
+				tile->CrData = (BYTE*) &(tile->YCbCrData[((8192 + 32) * 2) + 16]);
+
+				if (context->priv->UseThreads)
+				{
+					workParam->context = context;
+					workParam->tile = tile;
+
+					*workObject = CreateThreadpoolWork(
+							(PTP_WORK_CALLBACK)rfx_compose_message_tile_work_callback,
+							(void *)workParam,
+							&context->priv->ThreadPoolEnv
+					);
+
+					SubmitThreadpoolWork(*workObject);
+
+					workObject++;
+					workParam++;
+				}
+				else
+				{
+					rfx_encode_rgb(context, tile);
+				}
+
+				message->tiles[message->numTiles] = tile;
+				message->numTiles++;
+
+				if (!region16_union_rect(&tilesRegion, &tilesRegion, &currentTileRect))
+					goto out_clean_rects;
+			} /* xIdx */
+		}  /* yIdx */
+	}  /* rects */
+
+	if (message->numTiles != maxNbTiles)
+	{
+		message->tiles = realloc(message->tiles, sizeof(RFX_TILE *) * message->numTiles);
+		if (!message->tiles)
+			goto out_clean_rects;
 	}
 
-	message->tilesDataSize = 0;
+	region16_uninit(&tilesRegion);
 
-	for (i = 0; i < close_cnt; i++)
+	/* when using threads ensure all computations are done */
+	message->tilesDataSize = 0;
+	workObject = context->priv->workObjects;
+	for (i = 0; i < message->numTiles; i++)
 	{
 		tile = message->tiles[i];
-
-		if (context->priv->UseThreads && work_objects)
+		if (context->priv->UseThreads)
 		{
-			WaitForThreadpoolWorkCallbacks(work_objects[i], FALSE);
-			CloseThreadpoolWork(work_objects[i]);
+			WaitForThreadpoolWorkCallbacks(*workObject, FALSE);
+			CloseThreadpoolWork(*workObject);
+			workObject++;
 		}
 
 		message->tilesDataSize += rfx_tile_length(tile);
 	}
 
-	if (work_objects)
-		free(work_objects);
 
-	if (params)
-		free(params);
-
+	region16_uninit(&rectsRegion);
 	return message;
+
+out_clean_rects:
+	free(message->rects);
+out_clean_tiles:
+	free(message->tiles);
+	region16_uninit(&tilesRegion);
+out_free_message:
+	fprintf(stderr, "remoteFx error\n");
+	region16_uninit(&rectsRegion);
+	free(message);
+	return 0;
 }
+
 
 RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message, int* numMessages, int maxDataSize)
 {
@@ -1313,7 +1427,7 @@ RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message, int* 
 	{
 		tileDataSize = rfx_tile_length(message->tiles[i]);
 
-		if ((messages[j].tilesDataSize + tileDataSize) > maxDataSize)
+		if ((messages[j].tilesDataSize + tileDataSize) > ((UINT32) maxDataSize))
 			j++;
 
 		if (!messages[j].numTiles)
@@ -1432,14 +1546,8 @@ void rfx_write_message_region(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* mes
 	{
 		/* Clipping rectangles are relative to destLeft, destTop */
 
-#if 1
-		Stream_Write_UINT16(s, 0); /* x (2 bytes) */
-		Stream_Write_UINT16(s, 0); /* y (2 bytes) */
-#else
 		Stream_Write_UINT16(s, message->rects[i].x); /* x (2 bytes) */
 		Stream_Write_UINT16(s, message->rects[i].y); /* y (2 bytes) */
-#endif
-
 		Stream_Write_UINT16(s, message->rects[i].width); /* width (2 bytes) */
 		Stream_Write_UINT16(s, message->rects[i].height); /* height (2 bytes) */
 	}
@@ -1483,3 +1591,4 @@ void rfx_compose_message(RFX_CONTEXT* context, wStream* s,
 
 	rfx_message_free(context, message);
 }
+

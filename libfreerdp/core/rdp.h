@@ -42,7 +42,7 @@
 #include "connection.h"
 #include "redirection.h"
 #include "capabilities.h"
-#include "channel.h"
+#include "channels.h"
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
@@ -198,9 +198,9 @@ wStream* rdp_data_pdu_init(rdpRdp* rdp);
 BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id);
 int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s);
 
-BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id);
+BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channelId);
 
-int rdp_send_channel_data(rdpRdp* rdp, int channel_id, BYTE* data, int size);
+int rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size);
 
 wStream* rdp_message_channel_pdu_init(rdpRdp* rdp);
 BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags);

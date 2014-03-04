@@ -246,11 +246,6 @@ BOOL android_verify_changed_certificate(freerdp* instance, char* subject, char* 
 	return android_verify_certificate(instance, subject, issuer, new_fingerprint);
 }
 
-int android_receive_channel_data(freerdp* instance, int channelId, UINT8* data, int size, int flags, int total_size)
-{
-	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
-}
-
 static void android_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	wMessage* event;
@@ -635,8 +630,6 @@ JNIEXPORT jint JNICALL jni_freerdp_new(JNIEnv *env, jclass cls)
 	instance->Authenticate = android_authenticate;
 	instance->VerifyCertificate = android_verify_certificate;
 	instance->VerifyChangedCertificate = android_verify_changed_certificate;
-	instance->ReceiveChannelData = android_receive_channel_data;
-	
 
 	// create context
 	instance->ContextSize = sizeof(androidContext);

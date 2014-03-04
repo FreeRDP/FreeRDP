@@ -99,9 +99,6 @@ struct winpr_timer
 	
 #ifdef WITH_POSIX_TIMER
 	timer_t tid;
-#endif
-
-#ifdef HAVE_TIMERFD_H
 	struct itimerspec timeout;
 #endif
 };
@@ -121,7 +118,8 @@ struct winpr_timer_queue
 	struct sched_param param;
 
 	BOOL bCancelled;
-	WINPR_TIMER_QUEUE_TIMER* head;
+	WINPR_TIMER_QUEUE_TIMER* activeHead;
+	WINPR_TIMER_QUEUE_TIMER* inactiveHead;
 };
 typedef struct winpr_timer_queue WINPR_TIMER_QUEUE;
 

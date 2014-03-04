@@ -38,12 +38,12 @@ typedef struct rdpdr_plugin rdpdrPlugin;
 struct rdpdr_plugin
 {
 	CHANNEL_DEF channelDef;
-	CHANNEL_ENTRY_POINTS_EX channelEntryPoints;
+	CHANNEL_ENTRY_POINTS_FREERDP channelEntryPoints;
 
 	HANDLE thread;
 	wStream* data_in;
 	void* InitHandle;
-	UINT32 OpenHandle;
+	DWORD OpenHandle;
 	wMessagePipe* MsgPipe;
 
 	DEVMAN* devman;
@@ -52,6 +52,14 @@ struct rdpdr_plugin
 	UINT16 versionMinor;
 	UINT16 clientID;
 	char computerName[256];
+
+	/* hotplug support */
+	HANDLE hotplug_thread;
+#ifdef _WIN32
+	HWND hotplug_wnd;
+#else
+	HANDLE stop_event;
+#endif
 };
 
 int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);

@@ -52,7 +52,7 @@ wStream* rdp_client_input_pdu_init(rdpRdp* rdp, UINT16 type)
 
 void rdp_send_client_input_pdu(rdpRdp* rdp, wStream* s)
 {
-	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_INPUT, rdp->mcs->user_id);
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_INPUT, rdp->mcs->userId);
 }
 
 void input_write_synchronize_event(wStream* s, UINT32 flags)
@@ -400,7 +400,7 @@ BOOL input_recv(rdpInput* input, wStream* s)
 	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
 	/* Each input event uses 6 exactly bytes. */
-	if (Stream_GetRemainingLength(s) < 6 * numberEvents)
+	if (Stream_GetRemainingLength(s) < (size_t) (6 * numberEvents))
 		return FALSE;
 
 	for (i = 0; i < numberEvents; i++)

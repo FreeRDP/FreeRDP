@@ -29,10 +29,10 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/print.h>
+#include <winpr/stream.h>
 
 #include <freerdp/error.h>
 #include <freerdp/utils/tcp.h>
-#include <winpr/stream.h>
 
 #include <time.h>
 #include <errno.h>
@@ -292,7 +292,15 @@ BOOL transport_connect_nla(rdpTransport* transport)
 		return TRUE;
 
 	if (!transport->credssp)
+	{
 		transport->credssp = credssp_new(instance, transport, settings);
+
+		if (settings->AuthenticationServiceClass)
+		{
+			transport->credssp->ServicePrincipalName =
+				credssp_make_spn(settings->AuthenticationServiceClass, settings->ServerHostname);
+		}
+	}
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
@@ -365,10 +373,10 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		transport->layer = TRANSPORT_LAYER_TSG;
 		transport->TcpOut = tcp_new(settings);
 
-		status = tcp_connect(transport->TcpIn, settings->GatewayHostname, 443);
+		status = tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort);
 
 		if (status)
-			status = tcp_connect(transport->TcpOut, settings->GatewayHostname, 443);
+			status = tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort);
 
 		if (status)
 			status = transport_tsg_connect(transport, hostname, port);

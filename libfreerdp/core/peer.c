@@ -394,7 +394,7 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 	transport_disconnect(client->context->rdp->transport);
 }
 
-static int freerdp_peer_send_channel_data(freerdp_peer* client, int channelId, BYTE* data, int size)
+static int freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId, BYTE* data, int size)
 {
 	return rdp_send_channel_data(client->context->rdp, channelId, data, size);
 }

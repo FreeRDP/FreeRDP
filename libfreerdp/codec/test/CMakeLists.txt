@@ -5,7 +5,10 @@ set(MODULE_PREFIX "TEST_FREERDP_CODEC")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestFreeRDPCodecPlanar.c)
+	TestFreeRDPRegion.c
+	TestFreeRDPCodecMppc.c
+	TestFreeRDPCodecPlanar.c
+	TestFreeRDPCodecRemoteFX.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}

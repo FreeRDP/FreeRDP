@@ -5,7 +5,14 @@ set(MODULE_PREFIX "TEST_WTSAPI")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestWtsApiEnumerate.c)
+	TestWtsApiEnumerateProcesses.c
+	TestWtsApiEnumerateSessions.c
+	TestWtsApiQuerySessionInformation.c
+	TestWtsApiLogoffSession.c
+	TestWtsApiShutdownSystem.c
+	TestWtsApiSessionNotification.c
+	TestWtsApiWaitSystemEvent.c
+	TestWtsApiVirtualChannel.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}

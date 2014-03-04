@@ -39,7 +39,7 @@ typedef int (*psCliprdrStop)(CliprdrServerContext* context);
 
 struct _cliprdr_server_context
 {
-	WTSVirtualChannelManager* vcm;
+	HANDLE vcm;
 
 	psCliprdrStart Start;
 	psCliprdrStop Stop;
@@ -47,7 +47,7 @@ struct _cliprdr_server_context
 	CliprdrServerPrivate* priv;
 };
 
-FREERDP_API CliprdrServerContext* cliprdr_server_context_new(WTSVirtualChannelManager* vcm);
+FREERDP_API CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm);
 FREERDP_API void cliprdr_server_context_free(CliprdrServerContext* context);
 
 #endif /* FREERDP_CHANNEL_SERVER_CLIPRDR_H */

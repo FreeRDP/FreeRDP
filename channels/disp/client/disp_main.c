@@ -73,10 +73,10 @@ typedef struct _DISP_PLUGIN DISP_PLUGIN;
 
 int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback, UINT32 NumMonitors, DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
-	int index;
 	int status;
 	wStream* s;
 	UINT32 type;
+	UINT32 index;
 	UINT32 length;
 	DISP_PLUGIN* disp;
 	UINT32 MonitorLayoutSize;
@@ -155,7 +155,7 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 
 	Stream_SealLength(s);
 
-	status = callback->channel->Write(callback->channel, Stream_Length(s), Stream_Buffer(s), NULL);
+	status = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s), Stream_Buffer(s), NULL);
 
 	Stream_Free(s, TRUE);
 

@@ -33,6 +33,8 @@ set(${MODULE_PREFIX}_SRCS
 	wf_rail.h
 	wf_interface.c
 	wf_interface.h
+	wf_floatbar.c
+	wf_floatbar.h
 	wfreerdp.rc
 	resource.h)
 
@@ -63,7 +65,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_CLIENT_INTERFACE)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT WinPRTargets)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
 	add_subdirectory(cli)
 else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)

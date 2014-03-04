@@ -22,6 +22,7 @@
 #define FREERDP_TYPES_H
 
 #include <winpr/wtypes.h>
+#include <winpr/wtsapi.h>
 
 #ifndef MIN
 #define MIN(x,y)	(((x) < (y)) ? (x) : (y))
