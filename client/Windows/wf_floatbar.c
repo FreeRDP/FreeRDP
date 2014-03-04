@@ -136,11 +136,6 @@ static int button_paint(Button* button, HDC hdc)
 static Button* floatbar_create_button(FloatBar* floatbar, int type, int resid, int resid_act, int x, int y, int h, int w)
 {
 	Button *button;
-	HDC hDC;
-	HDC hMemDC;
-	HBITMAP hBitmap;
-	HBITMAP hOldBitmap;
-	BITMAP bm;
 
 	button = (Button *)malloc(sizeof(Button));
 
