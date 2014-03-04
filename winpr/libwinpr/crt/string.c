@@ -30,6 +30,8 @@
 
 #ifndef _WIN32
 
+#include "casing.c"
+
 char* _strdup(const char* strSource)
 {
 	char* strDestination;
@@ -213,25 +215,10 @@ DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 {
 	DWORD i;
-	unsigned char* p;
-	unsigned int wc, uwc;
-
-	p = (unsigned char*) lpsz;
 
 	for (i = 0; i < cchLength; i++)
 	{
-		wc = (unsigned int) (*p);
-		wc += (unsigned int) (*(p + 1)) << 8;
-
-		uwc = towupper(wc);
-
-		if (uwc != wc)
-		{
-			*p = uwc & 0xFF;
-			*(p + 1) = (uwc >> 8) & 0xFF;
-		}
-
-		p += 2;
+		lpsz[i] = WINPR_TOUPPERW(lpsz[i]);
 	}
 
 	return cchLength;
@@ -297,25 +284,10 @@ DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength)
 {
 	DWORD i;
-	unsigned char* p;
-	unsigned int wc, uwc;
-
-	p = (unsigned char*) lpsz;
 
 	for (i = 0; i < cchLength; i++)
 	{
-		wc = (unsigned int) (*p);
-		wc += (unsigned int) (*(p + 1)) << 8;
-
-		uwc = towlower(wc);
-
-		if (uwc != wc)
-		{
-			*p = uwc & 0xFF;
-			*(p + 1) = (uwc >> 8) & 0xFF;
-		}
-
-		p += 2;
+		lpsz[i] = WINPR_TOLOWERW(lpsz[i]);
 	}
 
 	return cchLength;
