@@ -8,6 +8,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestQueue.c
 	TestPrint.c
 	TestPubSub.c
+	TestBitStream.c
 	TestArrayList.c
 	TestLinkedList.c
 	TestListDictionary.c

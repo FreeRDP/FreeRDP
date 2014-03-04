@@ -596,6 +596,22 @@ WINPR_API int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* conte
 WINPR_API wPubSub* PubSub_New(BOOL synchronized);
 WINPR_API void PubSub_Free(wPubSub* pubSub);
 
+/* BitStream */
+
+struct _wBitStream
+{
+	BYTE* buffer;
+	BYTE* pointer;
+	DWORD boffset;
+	DWORD position;
+	DWORD length;
+	DWORD capacity;
+};
+typedef struct _wBitStream wBitStream;
+
+WINPR_API wBitStream* BitStream_New();
+WINPR_API void BitStream_Free(wBitStream* bs);
+
 #ifdef __cplusplus
 }
 #endif
