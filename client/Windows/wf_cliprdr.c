@@ -118,6 +118,21 @@ static void clear_format_map(cliprdrContext *cliprdr)
 	cliprdr->map_size= 0;
 }
 
+int cliprdr_send_tempdir(cliprdrContext *cliprdr)
+{
+	RDP_CB_TEMPDIR_EVENT *cliprdr_event;
+
+	cliprdr_event = (RDP_CB_TEMPDIR_EVENT *)freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_TemporaryDirectory, NULL, NULL);
+
+	if (!cliprdr_event)
+		return -1;
+
+	GetEnvironmentVariableW(L"TEMP", (LPWSTR)cliprdr_event->dirname, 260);
+
+	return freerdp_channels_send_event(cliprdr->channels, (wMessage *)cliprdr_event);
+}
+
 static void cliprdr_send_format_list(cliprdrContext *cliprdr)
 {
 	RDP_CB_FORMAT_LIST_EVENT *cliprdr_event;
@@ -430,6 +445,8 @@ static void wf_cliprdr_process_cb_clip_caps_event(wfContext *wfc, RDP_CB_CLIP_CA
 static void wf_cliprdr_process_cb_monitor_ready_event(wfContext *wfc, RDP_CB_MONITOR_READY_EVENT *ready_event)
 {
 	cliprdrContext *cliprdr = (cliprdrContext *)wfc->cliprdr_context;
+
+	cliprdr_send_tempdir(cliprdr);
 
 	cliprdr->channel_initialized = TRUE;
 

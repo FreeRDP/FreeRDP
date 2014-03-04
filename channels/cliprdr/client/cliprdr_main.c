@@ -363,7 +363,14 @@ static void cliprdr_process_unlock_clipdata_event(cliprdrPlugin* plugin, RDP_CB_
 
 static void cliprdr_process_tempdir_event(cliprdrPlugin* plugin, RDP_CB_TEMPDIR_EVENT * event)
 {
+	wStream* s;
 
+	DEBUG_CLIPRDR("Sending Temporary Directory.");
+	s = cliprdr_packet_new(CB_TEMP_DIRECTORY, 0, 520);
+
+	Stream_Write(s, event->dirname, 520);
+
+	cliprdr_packet_send(plugin, s);
 }
 
 static void cliprdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
