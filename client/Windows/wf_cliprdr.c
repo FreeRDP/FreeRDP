@@ -350,7 +350,7 @@ static void *cliprdr_thread_func(void *arg)
 		return NULL;
 	}
 
-	while ((mcode = GetMessage(&msg, 0, 0, 0) != 0))
+	while ((mcode = GetMessage(&msg, 0, 0, 0)) != 0)
 	{
 		if (mcode == -1)
 		{
