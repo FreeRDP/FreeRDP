@@ -27,17 +27,16 @@
 
 struct _MPPC_CONTEXT
 {
-	DWORD Flags;
 	wBitStream* bs;
 	BOOL Compressor;
-	DWORD HistoryPtr;
+	UINT32 HistoryPtr;
 	BYTE* pHistoryPtr;
-	DWORD HistoryOffset;
+	UINT32 HistoryOffset;
 	BYTE* pHistoryOffset;
-	DWORD HistoryBufferSize;
+	UINT32 HistoryBufferSize;
 	BYTE HistoryBuffer[65536];
 	UINT16 MatchBuffer[32768];
-	DWORD CompressionLevel;
+	UINT32 CompressionLevel;
 };
 typedef struct _MPPC_CONTEXT MPPC_CONTEXT;
 
@@ -45,7 +44,7 @@ typedef struct _MPPC_CONTEXT MPPC_CONTEXT;
 extern "C" {
 #endif
 
-FREERDP_API int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, int size);
+FREERDP_API UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize);
 
 FREERDP_API MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor);
 FREERDP_API void mppc_context_free(MPPC_CONTEXT* mppc);

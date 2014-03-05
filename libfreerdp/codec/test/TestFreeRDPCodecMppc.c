@@ -688,20 +688,33 @@ const char TEST_MPPC_BELL_TOLLS[] = "for.whom.the.bell.tolls,.the.bell.tolls.for
 
 int TestFreeRDPCodecMppc(int argc, char* argv[])
 {
-	int size;
+	UINT32 size;
+	UINT32 flags;
 	BYTE* pSrcData;
 	MPPC_CONTEXT* mppc;
 	BYTE OutputBuffer[65536];
 
 	mppc = mppc_context_new(1, TRUE);
 
+#if 0
 	size = sizeof(TEST_MPPC_BELL_TOLLS) - 1;
 	pSrcData = (BYTE*) TEST_MPPC_BELL_TOLLS;
 
 	printf("%s\n", pSrcData);
+	flags = mppc_compress(mppc, pSrcData, OutputBuffer, &size);
+	printf("flags: 0x%04X size: %d\n", flags, size);
+#endif
 
-	mppc_compress(mppc, pSrcData, OutputBuffer, size);
-	printf("\n");
+	size = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
+	pSrcData = (BYTE*) TEST_RDP5_UNCOMPRESSED_DATA;
+
+	flags = mppc_compress(mppc, pSrcData, OutputBuffer, &size);
+	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	winpr_HexDump(OutputBuffer, size);
+	//winpr_HexDump(TEST_RDP5_COMPRESSED_DATA, sizeof(TEST_RDP5_COMPRESSED_DATA));
+
+	printf("sizeof(TEST_RDP5_COMPRESSED_DATA): %d\n", (int) sizeof(TEST_RDP5_COMPRESSED_DATA));
 
 	mppc_context_free(mppc);
 

@@ -636,10 +636,14 @@ typedef struct _wBitStream wBitStream;
 }
 
 #define BitStream_Flush(_bs) { \
-	*(_bs->pointer + 0) = (_bs->accumulator >> 0); \
-	*(_bs->pointer + 1) = (_bs->accumulator >> 8); \
-	*(_bs->pointer + 2) = (_bs->accumulator >> 16); \
-	*(_bs->pointer + 3) = (_bs->accumulator >> 24); \
+	if ((_bs->pointer - _bs->buffer) > 0) \
+		*(_bs->pointer + 0) = (_bs->accumulator >> 0); \
+	if ((_bs->pointer - _bs->buffer) > 1) \
+		*(_bs->pointer + 1) = (_bs->accumulator >> 8); \
+	if ((_bs->pointer - _bs->buffer) > 2) \
+		*(_bs->pointer + 2) = (_bs->accumulator >> 16); \
+	if ((_bs->pointer - _bs->buffer) > 3) \
+		*(_bs->pointer + 3) = (_bs->accumulator >> 24); \
 }
 
 #define BITDUMP_MSB_FIRST	0x00000001
