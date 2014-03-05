@@ -602,10 +602,11 @@ struct _wBitStream
 {
 	BYTE* buffer;
 	BYTE* pointer;
-	DWORD boffset;
 	DWORD position;
 	DWORD length;
 	DWORD capacity;
+	UINT32 offset;
+	UINT32 accumulator;
 };
 typedef struct _wBitStream wBitStream;
 

@@ -212,36 +212,41 @@ void BitDump(BYTE* buffer, DWORD length, BOOL msbFirst)
 
 void BitStream_Attach(wBitStream* bs, BYTE* buffer, DWORD capacity)
 {
-	bs->boffset = 0;
 	bs->position = 0;
 	bs->buffer = buffer;
+
+	bs->offset = 0;
+	bs->accumulator = 0;
+
 	bs->pointer = bs->buffer;
 	bs->capacity = capacity;
 	bs->length = bs->capacity;
 }
 
+void BitStream_Flush(wBitStream* bs)
+{
+	*(bs->pointer + 0) = (bs->accumulator >> 0);
+	*(bs->pointer + 1) = (bs->accumulator >> 8);
+	*(bs->pointer + 2) = (bs->accumulator >> 16);
+	*(bs->pointer + 3) = (bs->accumulator >> 24);
+}
+
 void BitStream_Write_Bits(wBitStream* bs, UINT32 bits, UINT32 nbits)
 {
-	while ((bs->boffset + nbits) >= 8)
-	{
-		*(bs->pointer) |= (bits << bs->boffset);
-		bs->position += (8 - bs->boffset);
-		nbits -= (8 - bs->boffset);
-		bs->boffset = 0;
-		bs->pointer++;
-	}
+	bs->accumulator |= (bits << bs->offset);
+	bs->position += nbits;
+	bs->offset += nbits;
 
-	if (nbits)
+	if (bs->offset >= 32)
 	{
-		*(bs->pointer) |= (bits << bs->boffset);
-		bs->position += nbits;
-		bs->boffset += nbits;
+		*(bs->pointer + 0) = (bs->accumulator >> 0);
+		*(bs->pointer + 1) = (bs->accumulator >> 8);
+		*(bs->pointer + 2) = (bs->accumulator >> 16);
+		*(bs->pointer + 3) = (bs->accumulator >> 24);
 
-		if (bs->boffset >= 8)
-		{
-			bs->boffset = bs->boffset % 8;
-			bs->pointer++;
-		}
+		bs->offset = bs->offset - 32;
+		bs->accumulator = bits >> (nbits - bs->offset);
+		bs->pointer += 4;
 	}
 }
 
@@ -260,15 +265,29 @@ int TestBitStream(int argc, char* argv[])
 	BitStream_Write_Bits(bs, 0xF, 4); /* 1111 */
 	BitStream_Write_Bits(bs, 0xA, 4); /* 0101 */
 
+	BitStream_Flush(bs);
+	BitDump(buffer, bs->position, TRUE);
+
 	BitStream_Write_Bits(bs, 3, 2); /* 11 */
 	BitStream_Write_Bits(bs, 0, 3); /* 000 */
 	BitStream_Write_Bits(bs, 0x2D, 6); /* 101101 */
 	BitStream_Write_Bits(bs, 0x19, 5); /* 11001 */
 
+	//BitStream_Flush(bs); /* flush should be done automatically here (32 bits written) */
 	BitDump(buffer, bs->position, TRUE);
 
-	BitStream_Write_Bits(bs, 0xAF0A, 16);
+	BitStream_Write_Bits(bs, 3, 2); /* 11 */
 
+	BitStream_Flush(bs);
+	BitDump(buffer, bs->position, TRUE);
+
+	BitStream_Write_Bits(bs, 00, 2); /* 00 */
+	BitStream_Write_Bits(bs, 0xF, 4); /* 1111 */
+
+	BitStream_Write_Bits(bs, 0, 20);
+	BitStream_Write_Bits(bs, 0xAFF, 12); /* 111111110101 */
+
+	BitStream_Flush(bs);
 	BitDump(buffer, bs->position, TRUE);
 
 	BitStream_Free(bs);
