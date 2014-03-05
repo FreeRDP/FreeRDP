@@ -20,6 +20,9 @@
 #ifndef __WF_CLIPRDR_DATAOBJECT_H__
 #define __WF_CLIPRDR_DATAOBJECT_H__
 
+#define CINTERFACE
+#define COBJMACROS
+
 #include <windows.h>
 #include <Ole2.h>
 #include <ShlObj.h>
@@ -32,7 +35,7 @@ typedef struct _CliprdrDataObject {
 	FORMATETC         *m_pFormatEtc;
 	STGMEDIUM         *m_pStgMedium;
 	LONG               m_nNumFormats;
-	UINT               m_nStreams;
+	LONG               m_nStreams;
 	IStream          **m_pStream;
 	void              *m_pData;
 }CliprdrDataObject;

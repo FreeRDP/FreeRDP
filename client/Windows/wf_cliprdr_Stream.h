@@ -20,6 +20,9 @@
 #ifndef __WF_CLIPRDR_STREAM_H__
 #define __WF_CLIPRDR_STREAM_H__
 
+#define CINTERFACE
+#define COBJMACROS
+
 #include <windows.h>
 #include <Ole2.h>
 

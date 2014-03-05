@@ -83,7 +83,9 @@ ULONG STDMETHODCALLTYPE CliprdrDataObject_Release(IDataObject *This)
 HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(IDataObject *This, FORMATETC *pFormatEtc, STGMEDIUM *pMedium)
 {
 	CliprdrDataObject *instance = (CliprdrDataObject *)This;
+	cliprdrContext *cliprdr = (cliprdrContext *)instance->m_pData;
 	int idx;
+	int i;
 
 	if (pFormatEtc == NULL || pMedium == NULL)
 	{
@@ -95,7 +97,65 @@ HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(IDataObject *This, FORMATETC
 		return DV_E_FORMATETC;
 	}
 
-	return E_NOTIMPL;
+	pMedium->tymed = instance->m_pFormatEtc[idx].tymed;
+	pMedium->pUnkForRelease = 0;
+
+	if (instance->m_pFormatEtc[idx].cfFormat == cliprdr->ID_FILEDESCRIPTORW)
+	{
+		if (cliprdr_send_data_request(cliprdr, instance->m_pFormatEtc[idx].cfFormat) != 0)
+			return E_UNEXPECTED;
+
+		pMedium->hGlobal = cliprdr->hmem;   /* points to a FILEGROUPDESCRIPTOR structure */
+
+		/* GlobalLock returns a pointer to the first byte of the memory block,
+		* in which is a FILEGROUPDESCRIPTOR structure, whose first UINT member
+		* is the number of FILEDESCRIPTOR's */
+		instance->m_nStreams = *(PUINT)GlobalLock(cliprdr->hmem);
+		GlobalUnlock(cliprdr->hmem);
+
+		if (instance->m_nStreams > 0)
+		{
+			if (!instance->m_pStream)
+			{
+				instance->m_pStream = (LPSTREAM *)calloc(instance->m_nStreams, sizeof(LPSTREAM));
+				if (instance->m_pStream)
+					for(i = 0; i < instance->m_nStreams; i++)
+						instance->m_pStream[i] = (IStream *)CliprdrStream_New(i, cliprdr);
+			}
+		}
+
+		if (!instance->m_pStream)
+		{
+			cliprdr->hmem = GlobalFree(cliprdr->hmem);
+			pMedium->hGlobal = cliprdr->hmem;
+			return E_OUTOFMEMORY;
+		}
+	}
+	else if (instance->m_pFormatEtc[idx].cfFormat == cliprdr->ID_FILECONTENTS)
+	{
+		if (pFormatEtc->lindex < instance->m_nStreams)
+		{
+			pMedium->pstm = instance->m_pStream[pFormatEtc->lindex];
+			IDataObject_AddRef(instance->m_pStream[pFormatEtc->lindex]);
+		}
+		else
+		{
+			return E_INVALIDARG;
+		}
+	}
+	else if (instance->m_pFormatEtc[idx].cfFormat == cliprdr->ID_PREFERREDDROPEFFECT)
+	{
+		if (cliprdr_send_data_request(cliprdr, instance->m_pFormatEtc[idx].cfFormat) != 0)
+			return E_UNEXPECTED;
+
+		pMedium->hGlobal = cliprdr->hmem;
+	}
+	else
+	{
+		return E_UNEXPECTED;
+	}
+
+	return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetDataHere(IDataObject *This, FORMATETC *pformatetc, STGMEDIUM *pmedium)
@@ -251,4 +311,51 @@ void CliprdrDataObject_Delete(CliprdrDataObject *instance)
 
 		free(instance);
 	}
+}
+
+
+BOOL wf_create_file_obj(cliprdrContext *cliprdr, IDataObject **ppDataObject)
+{
+	FORMATETC fmtetc[3];
+	STGMEDIUM stgmeds[3];
+
+	if(!ppDataObject)
+		return FALSE;
+
+	fmtetc[0].cfFormat        = RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW);
+	fmtetc[0].dwAspect        = DVASPECT_CONTENT;
+	fmtetc[0].lindex          = 0;
+	fmtetc[0].ptd             = NULL;
+	fmtetc[0].tymed           = TYMED_HGLOBAL;
+	stgmeds[0].tymed          = TYMED_HGLOBAL;
+	stgmeds[0].hGlobal        = NULL;
+	stgmeds[0].pUnkForRelease = NULL;
+
+	fmtetc[1].cfFormat        = RegisterClipboardFormatW(CFSTR_FILECONTENTS);
+	fmtetc[1].dwAspect        = DVASPECT_CONTENT;
+	fmtetc[1].lindex          = 0;
+	fmtetc[1].ptd             = NULL;
+	fmtetc[1].tymed           = TYMED_ISTREAM;
+	stgmeds[1].tymed          = TYMED_ISTREAM;
+	stgmeds[1].pstm           = NULL;
+	stgmeds[1].pUnkForRelease = NULL;
+
+	fmtetc[2].cfFormat        = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECT);
+	fmtetc[2].dwAspect        = DVASPECT_CONTENT;
+	fmtetc[2].lindex          = 0;
+	fmtetc[2].ptd             = NULL;
+	fmtetc[2].tymed           = TYMED_HGLOBAL;
+	stgmeds[2].tymed          = TYMED_HGLOBAL;
+	stgmeds[2].hGlobal        = NULL;
+	stgmeds[2].pUnkForRelease = NULL;
+
+	*ppDataObject = (IDataObject *)CliprdrDataObject_New(fmtetc, stgmeds, 3, cliprdr);
+
+	return (*ppDataObject) ? TRUE : FALSE;
+}
+
+void wf_destroy_file_obj(IDataObject *instance)
+{
+	if(instance)
+		IDataObject_Release(instance);
 }

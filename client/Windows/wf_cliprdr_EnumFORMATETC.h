@@ -20,6 +20,9 @@
 #ifndef __WF_CLIPRDR_ENUMFORMATETC_H__
 #define __WF_CLIPRDR_ENUMFORMATETC_H__
 
+#define CINTERFACE
+#define COBJMACROS
+
 #include <windows.h>
 #include <Ole2.h>
 
@@ -28,8 +31,8 @@ typedef struct _CliprdrEnumFORMATETC {
 
 	// private
 	LONG           m_lRefCount;
-	ULONG          m_nIndex;
-	ULONG          m_nNumFormats;
+	LONG           m_nIndex;
+	LONG           m_nNumFormats;
 	FORMATETC     *m_pFormatEtc;
 } CliprdrEnumFORMATETC;
 

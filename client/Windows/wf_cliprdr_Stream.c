@@ -62,23 +62,42 @@ ULONG STDMETHODCALLTYPE CliprdrStream_Release(IStream * This)
 	}
 }
 
-#define FILECONTENTS_SIZE     0x1
-#define FILECONTENTS_RANGE    0x2
+#define FILECONTENTS_SIZE     0x00000001
+#define FILECONTENTS_RANGE    0x00000002
 
 HRESULT STDMETHODCALLTYPE CliprdrStream_Read(IStream *This, void *pv, ULONG cb, ULONG *pcbRead)
 {
 	CliprdrStream *instance = (CliprdrStream *)This;
+	cliprdrContext *cliprdr = (cliprdrContext *)instance->m_pData;
+	int ret;
 
 	if (pv == NULL || pcbRead == NULL)
 		return E_INVALIDARG;
 
+	*pcbRead = 0;
 	if (instance->m_lOffset.QuadPart >= instance->m_lSize.QuadPart)
-	{
-		*pcbRead = 0;
 		return S_FALSE;
+
+	ret = cliprdr_send_request_filecontents(cliprdr, (void *)This,
+									instance->m_lIndex, FILECONTENTS_RANGE,
+									instance->m_lOffset.HighPart, instance->m_lOffset.LowPart,
+									cb);
+	if (ret < 0)
+		return S_FALSE;
+
+	if (cliprdr->req_fdata)
+	{
+		memcpy(pv, cliprdr->req_fdata, cliprdr->req_fsize);
+		free(cliprdr->req_fdata);
 	}
 
-	return E_NOTIMPL;
+	*pcbRead = cliprdr->req_fsize;
+	instance->m_lOffset.QuadPart += cliprdr->req_fsize;
+
+	if (cliprdr->req_fsize < cb)
+		return S_FALSE;
+
+	return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CliprdrStream_Write(IStream *This, const void *pv, ULONG cb, ULONG *pcbWritten)
@@ -91,7 +110,7 @@ HRESULT STDMETHODCALLTYPE CliprdrStream_Write(IStream *This, const void *pv, ULO
 HRESULT STDMETHODCALLTYPE CliprdrStream_Seek(IStream *This, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
 	CliprdrStream *instance = (CliprdrStream *)This;
-	LONGLONG newoffset;
+	ULONGLONG newoffset;
 
 	newoffset = instance->m_lOffset.QuadPart;
 
@@ -203,6 +222,7 @@ HRESULT STDMETHODCALLTYPE CliprdrStream_Clone(IStream *This, IStream **ppstm)
 
 CliprdrStream *CliprdrStream_New(LONG index, void *pData)
 {
+	cliprdrContext *cliprdr = (cliprdrContext *)pData;
 	CliprdrStream *instance;
 	IStream *iStream;
 
@@ -234,7 +254,11 @@ CliprdrStream *CliprdrStream_New(LONG index, void *pData)
 			instance->m_lIndex           = index;
 			instance->m_pData            = pData;
 			instance->m_lOffset.QuadPart = 0;
-			instance->m_lSize.QuadPart   = -1;
+
+			/* get content size of this stream */
+			cliprdr_send_request_filecontents(cliprdr, (void *)instance, instance->m_lIndex, FILECONTENTS_SIZE, 0, 0, 8);
+			instance->m_lSize.QuadPart = *(LONGLONG *)cliprdr->req_fdata;
+			free(cliprdr->req_fdata);
 		}
 		else
 		{
