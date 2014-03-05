@@ -407,7 +407,7 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, int x, int y,
 	maxDataSize -= 1024; /* reserve enough space for headers */
 
 	messages = (NSC_MESSAGE*) malloc(sizeof(NSC_MESSAGE) * (*numMessages));
-	ZeroMemory(messages, sizeof(sizeof(NSC_MESSAGE) * (*numMessages)));
+	ZeroMemory(messages, sizeof(NSC_MESSAGE) * (*numMessages));
 
 	for (i = 0; i < rows; i++)
 	{
