@@ -82,6 +82,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, int size)
 	if (((mppc->HistoryOffset + size) < (mppc->HistoryBufferSize - 3)) /* && mppc->HistoryOffset */)
 	{
 		/* SrcData fits into HistoryBuffer? (YES) */
+
 		CopyMemory(&(mppc->HistoryBuffer[mppc->HistoryOffset]), pSrcData, size);
 
 		mppc->HistoryPtr = 0;
@@ -163,6 +164,125 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, int size)
 				}
 
 				printf("<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
+
+				/* Encode CopyOffset */
+
+				if (CopyOffset < 64)
+				{
+					/* 11111 + lower 6 bits of CopyOffset */
+					accumulator = 0x07C0 | (CopyOffset & 0x003F);
+					BitStream_Write_Bits(mppc->bs, accumulator, 11);
+				}
+				else if ((CopyOffset >= 64) && (CopyOffset < 320))
+				{
+					/* 11110 + lower 8 bits of (CopyOffset - 64) */
+					accumulator = 0x1E00 | ((CopyOffset - 64) & 0x00FF);
+					BitStream_Write_Bits(mppc->bs, accumulator, 13);
+				}
+				else if ((CopyOffset >= 320) && (CopyOffset < 2368))
+				{
+					/* 1110 + lower 11 bits of (CopyOffset - 320) */
+					accumulator = 0x7000 | ((CopyOffset - 320) & 0x07FF);
+					BitStream_Write_Bits(mppc->bs, accumulator, 15);
+				}
+				else
+				{
+					/* 110 + lower 16 bits of (CopyOffset - 2368) */
+					accumulator = 0x060000 | ((CopyOffset - 2368) & 0xFFFF);
+					BitStream_Write_Bits(mppc->bs, accumulator, 19);
+				}
+
+				/* Encode LengthOfMatch */
+
+				if (LengthOfMatch == 3)
+				{
+					/* 0 + 0 lower bits of LengthOfMatch */
+					BitStream_Write_Bits(mppc->bs, 0, 1);
+				}
+				else if ((LengthOfMatch >= 4) && (LengthOfMatch < 8))
+				{
+					/* 10 + 2 lower bits of LengthOfMatch */
+					accumulator = 0x0008 | (LengthOfMatch & 0x0003);
+					BitStream_Write_Bits(mppc->bs, accumulator, 4);
+				}
+				else if ((LengthOfMatch >= 8) && (LengthOfMatch < 16))
+				{
+					/* 110 + 3 lower bits of LengthOfMatch */
+					accumulator = 0x0030 | (LengthOfMatch & 0x0007);
+					BitStream_Write_Bits(mppc->bs, accumulator, 6);
+				}
+				else if ((LengthOfMatch >= 16) && (LengthOfMatch < 32))
+				{
+					/* 1110 + 4 lower bits of LengthOfMatch */
+					accumulator = 0x00E0 | (LengthOfMatch & 0x000F);
+					BitStream_Write_Bits(mppc->bs, accumulator, 8);
+				}
+				else if ((LengthOfMatch >= 32) && (LengthOfMatch < 64))
+				{
+					/* 11110 + 5 lower bits of LengthOfMatch */
+					accumulator = 0x03C0 | (LengthOfMatch & 0x001F);
+					BitStream_Write_Bits(mppc->bs, accumulator, 10);
+				}
+				else if ((LengthOfMatch >= 64) && (LengthOfMatch < 128))
+				{
+					/* 111110 + 6 lower bits of LengthOfMatch */
+					accumulator = 0x0F80 | (LengthOfMatch & 0x003F);
+					BitStream_Write_Bits(mppc->bs, accumulator, 12);
+				}
+				else if ((LengthOfMatch >= 128) && (LengthOfMatch < 256))
+				{
+					/* 1111110 + 7 lower bits of LengthOfMatch */
+					accumulator = 0x3F00 | (LengthOfMatch & 0x007F);
+					BitStream_Write_Bits(mppc->bs, accumulator, 14);
+				}
+				else if ((LengthOfMatch >= 256) && (LengthOfMatch < 512))
+				{
+					/* 11111110 + 8 lower bits of LengthOfMatch */
+					accumulator = 0xFE00 | (LengthOfMatch & 0x00FF);
+					BitStream_Write_Bits(mppc->bs, accumulator, 16);
+				}
+				else if ((LengthOfMatch >= 512) && (LengthOfMatch < 1024))
+				{
+					/* 111111110 + 9 lower bits of LengthOfMatch */
+					accumulator = 0x3FC00 | (LengthOfMatch & 0x01FF);
+					BitStream_Write_Bits(mppc->bs, accumulator, 18);
+				}
+				else if ((LengthOfMatch >= 1024) && (LengthOfMatch < 2048))
+				{
+					/* 1111111110 + 10 lower bits of LengthOfMatch */
+					accumulator = 0xFF800 | (LengthOfMatch & 0x03FF);
+					BitStream_Write_Bits(mppc->bs, accumulator, 20);
+				}
+				else if ((LengthOfMatch >= 2048) && (LengthOfMatch < 4096))
+				{
+					/* 11111111110 + 11 lower bits of LengthOfMatch */
+					accumulator = 0x3FF000 | (LengthOfMatch & 0x07FF);
+					BitStream_Write_Bits(mppc->bs, accumulator, 22);
+				}
+				else if ((LengthOfMatch >= 4096) && (LengthOfMatch < 8192))
+				{
+					/* 111111111110 + 12 lower bits of LengthOfMatch */
+					accumulator = 0xFFE000 | (LengthOfMatch & 0x0FFF);
+					BitStream_Write_Bits(mppc->bs, accumulator, 24);
+				}
+				else if ((LengthOfMatch >= 8192) && (LengthOfMatch < 16384))
+				{
+					/* 1111111111110 + 13 lower bits of LengthOfMatch */
+					accumulator = 0x3FFC000 | (LengthOfMatch & 0x1FFF);
+					BitStream_Write_Bits(mppc->bs, accumulator, 26);
+				}
+				else if ((LengthOfMatch >= 16384) && (LengthOfMatch < 32768))
+				{
+					/* 11111111111110 + 14 lower bits of LengthOfMatch */
+					accumulator = 0xFFF8000 | (LengthOfMatch & 0x3FFF);
+					BitStream_Write_Bits(mppc->bs, accumulator, 28);
+				}
+				else if ((LengthOfMatch >= 32768) && (LengthOfMatch < 65536))
+				{
+					/* 111111111111110 + 15 lower bits of LengthOfMatch */
+					accumulator = 0x3FFF0000 | (LengthOfMatch & 0x7FFF);
+					BitStream_Write_Bits(mppc->bs, accumulator, 30);
+				}
 
 				mppc->HistoryPtr += LengthOfMatch;
 				mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
