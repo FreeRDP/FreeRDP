@@ -464,7 +464,7 @@ int cliprdr_client_format_data_response(CliprdrClientContext* context, CLIPRDR_F
 /* cliprdr is always built-in */
 #define VirtualChannelEntry	cliprdr_VirtualChannelEntry
 
-int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	cliprdrPlugin* cliprdr;
 	CliprdrClientContext* context;
