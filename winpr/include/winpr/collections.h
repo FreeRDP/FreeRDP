@@ -610,6 +610,43 @@ struct _wBitStream
 };
 typedef struct _wBitStream wBitStream;
 
+#define BitStream_Attach(_bs, _buffer, _capacity) { \
+	_bs->position = 0; \
+	_bs->buffer = _buffer; \
+	_bs->offset = 0; \
+	_bs->accumulator = 0; \
+	_bs->pointer = _bs->buffer; \
+	_bs->capacity = _capacity; \
+	_bs->length = _bs->capacity; \
+}
+
+#define BitStream_Write_Bits(_bs, _bits, _nbits) { \
+	_bs->accumulator |= (_bits << _bs->offset); \
+	_bs->position += _nbits; \
+	_bs->offset += _nbits; \
+	if (_bs->offset >= 32) { \
+		*(_bs->pointer + 0) = (_bs->accumulator >> 0); \
+		*(_bs->pointer + 1) = (_bs->accumulator >> 8); \
+		*(_bs->pointer + 2) = (_bs->accumulator >> 16); \
+		*(_bs->pointer + 3) = (_bs->accumulator >> 24); \
+		_bs->offset = _bs->offset - 32; \
+		_bs->accumulator = _bits >> (_nbits - _bs->offset); \
+		_bs->pointer += 4; \
+	} \
+}
+
+#define BitStream_Flush(_bs) { \
+	*(_bs->pointer + 0) = (_bs->accumulator >> 0); \
+	*(_bs->pointer + 1) = (_bs->accumulator >> 8); \
+	*(_bs->pointer + 2) = (_bs->accumulator >> 16); \
+	*(_bs->pointer + 3) = (_bs->accumulator >> 24); \
+}
+
+#define BITDUMP_MSB_FIRST	0x00000001
+#define BITDUMP_STDERR		0x00000002
+
+WINPR_API void BitDump(BYTE* buffer, UINT32 length, UINT32 flags);
+
 WINPR_API wBitStream* BitStream_New();
 WINPR_API void BitStream_Free(wBitStream* bs);
 
