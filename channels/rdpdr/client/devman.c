@@ -67,6 +67,15 @@ void devman_free(DEVMAN* devman)
 	free(devman);
 }
 
+void devman_unregister_device(DEVMAN* devman, void* key)
+{
+	DEVICE* device;
+
+	device = (DEVICE *)ListDictionary_Remove(devman->devices, key);
+	if (device)
+		devman_device_free(device);
+}
+
 static void devman_register_device(DEVMAN* devman, DEVICE* device)
 {
 	void* key = NULL;

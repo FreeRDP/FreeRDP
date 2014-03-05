@@ -651,7 +651,7 @@ static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, i
 	int i;
 	BYTE flags = 0;
 	BYTE* zeroBits;
-	int zeroBitsSize;
+	UINT32 zeroBitsSize;
 
 	if (number > 45)
 		number = 45;
@@ -711,7 +711,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 	int i;
 	BYTE flags = 0;
 	BYTE* zeroBits;
-	int zeroBitsSize;
+	UINT32 zeroBitsSize;
 
 	zeroBitsSize = ((number + 3) / 4);
 
@@ -2464,7 +2464,7 @@ BOOL update_read_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush, U
 			else
 			{
 				/* uncompressed brush */
-				int scanline = (cache_brush->bpp / 8) * 8;
+				UINT32 scanline = (cache_brush->bpp / 8) * 8;
 
 				if (Stream_GetRemainingLength(s) < scanline * 8)
 					return FALSE;

@@ -1012,7 +1012,7 @@ extern "C" {
 WINPR_API void sspi_GlobalInit(void);
 WINPR_API void sspi_GlobalFinish(void);
 
-WINPR_API void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size);
+WINPR_API void sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size);
 WINPR_API void sspi_SecBufferFree(PSecBuffer SecBuffer);
 
 WINPR_API void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* domain, char* password);

@@ -33,10 +33,12 @@
 #include <CoreGraphics/CGEvent.h>
 
 #include <winpr/crt.h>
+#include <winpr/wtsapi.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-//#include <freerdp/utils/sleep.h>
-//#include <freerdp/utils/memory.h>
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/channels/channels.h>
 
 #include "mfreerdp.h"
 #include "mf_peer.h"
@@ -107,6 +109,8 @@ int main(int argc, char* argv[])
 
 	signal(SIGPIPE, SIG_IGN);
 
+	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
+	
 	instance = freerdp_listener_new();
 
 	instance->PeerAccepted = mf_peer_accepted;

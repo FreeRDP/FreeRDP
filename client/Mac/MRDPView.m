@@ -17,31 +17,6 @@
  * limitations under the License.
  */
 
-/*
- * TODO
- *  + provide a UI for configuring optional parameters, but keep cmd line args
- *  + audio redirection is delayed considerably
- *  + caps lock key needs to be sent in func flagsChanged()
- *  + libfreerdp-utils.1.0.dylib needs to be installed to /usr/local/lib
- *
- *  - MRDPView implementation is incomplete
- *  - all variables should have consistent nameing scheme - camel case
- *  - all funcs same as above
- *  - PolygonSc seems to create a transparent rect
- *  - ensure mouse cursor changes are working ok after moving to NSTracking area
- *  - RAIL:
- *  -
- *  -
- *  -       tool tips to be correctly positioned
- *  -       dragging is slightly of
- *  -       resize after dragging not working
- *  -       dragging app from macbook to monitor gives exec/access err
- *  -       unable to drag rect out of monitor boundaries
- *  -
- *  -
- *  -
- */
-
 #include <winpr/windows.h>
 
 #include "mf_client.h"
@@ -52,6 +27,8 @@
 
 #include <winpr/crt.h>
 #include <winpr/input.h>
+#include <winpr/synch.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/constants.h>
 
@@ -67,26 +44,20 @@
 #import "freerdp/client/file.h"
 #import "freerdp/client/cmdline.h"
 
-/******************************************
- Forward declarations
- ******************************************/
-
-
 void mf_Pointer_New(rdpContext* context, rdpPointer* pointer);
 void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer);
 void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
 void mf_Pointer_SetNull(rdpContext* context);
 void mf_Pointer_SetDefault(rdpContext* context);
-// int rdp_connect(void);
-void mac_set_bounds(rdpContext* context, rdpBounds* bounds);
-void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap);
+
 void mac_begin_paint(rdpContext* context);
 void mac_end_paint(rdpContext* context);
-void mac_save_state_info(freerdp* instance, rdpContext* context);
+void mac_desktop_resize(rdpContext* context);
+
 static void update_activity_cb(freerdp* instance);
 static void input_activity_cb(freerdp* instance);
 static void channel_activity_cb(freerdp* instance);
-int invoke_draw_rect(rdpContext* context);
+
 int process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data);
 int receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size);
 
@@ -98,7 +69,6 @@ void cliprdr_process_cb_data_response_event(freerdp* instance, RDP_CB_DATA_RESPO
 void cliprdr_process_text(freerdp* instance, BYTE* data, int len);
 void cliprdr_send_supported_format_list(freerdp* instance);
 int register_channel_fds(int* fds, int count, freerdp* instance);
-
 
 DWORD mac_client_thread(void* param);
 
@@ -140,10 +110,10 @@ struct rgba_data
 	e.handle = (void*) self;
 	PubSub_OnEmbedWindow(context->pubSub, context, &e);
 
-	NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
+	NSScreen* screen = [[NSScreen screens] objectAtIndex:0];
 	NSRect screenFrame = [screen frame];
 
-	if(instance->settings->Fullscreen)
+	if (instance->settings->Fullscreen)
 	{
 		instance->settings->DesktopWidth  = screenFrame.size.width;
 		instance->settings->DesktopHeight = screenFrame.size.height;
@@ -157,15 +127,108 @@ struct rgba_data
 	return 0;
 }
 
+DWORD mac_client_update_thread(void* param)
+{
+	int status;
+	wMessage message;
+	wMessageQueue* queue;
+	rdpContext* context = (rdpContext*) param;
+	
+	status = 1;
+	queue = freerdp_get_message_queue(context->instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+	
+	while (MessageQueue_Wait(queue))
+	{
+		while (MessageQueue_Peek(queue, &message, TRUE))
+		{
+			status = freerdp_message_queue_process_message(context->instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message);
+			
+			if (!status)
+				break;
+		}
+		
+		if (!status)
+			break;
+	}
+	
+	ExitThread(0);
+	return NULL;
+}
+
+DWORD mac_client_input_thread(void* param)
+{
+	int status;
+	wMessage message;
+	wMessageQueue* queue;
+	rdpContext* context = (rdpContext*) param;
+	
+	status = 1;
+	queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
+	
+	while (MessageQueue_Wait(queue))
+	{
+		while (MessageQueue_Peek(queue, &message, TRUE))
+		{
+			status = freerdp_message_queue_process_message(context->instance, FREERDP_INPUT_MESSAGE_QUEUE, &message);
+			
+			if (!status)
+				break;
+		}
+	}
+	
+	ExitThread(0);
+	return NULL;
+}
+
+DWORD mac_client_channels_thread(void* param)
+{
+	int status;
+	wMessage* event;
+	HANDLE channelsEvent;
+	rdpChannels* channels;
+	rdpContext* context = (rdpContext*) param;
+	
+	channels = context->channels;
+	channelsEvent = freerdp_channels_get_event_handle(context->instance);
+	
+	while (WaitForSingleObject(channelsEvent, INFINITE) == WAIT_OBJECT_0)
+	{
+		status = freerdp_channels_process_pending_messages(context->instance);
+		
+		if (!status)
+			break;
+		
+		event = freerdp_channels_pop_event(context->channels);
+		
+		if (event)
+		{
+			switch (GetMessageClass(event->id))
+			{
+				case CliprdrChannel_Class:
+					process_cliprdr_event(context->instance, event);
+					break;
+			}
+			
+			freerdp_event_free(event);
+		}
+	}
+	
+	ExitThread(0);
+	return NULL;
+}
+
 DWORD mac_client_thread(void* param)
 {
 	@autoreleasepool
 	{
 		int status;
 		HANDLE events[4];
-		HANDLE input_event;
-		HANDLE update_event;
-		HANDLE channels_event;
+		HANDLE inputEvent;
+		HANDLE inputThread;
+		HANDLE updateEvent;
+		HANDLE updateThread;
+		HANDLE channelsEvent;
+		HANDLE channelsThread;
 		
 		DWORD nCount;
 		rdpContext* context = (rdpContext*) param;
@@ -190,17 +253,29 @@ DWORD mac_client_thread(void* param)
 		
 		if (settings->AsyncUpdate)
 		{
-			events[nCount++] = update_event = freerdp_get_message_queue_event_handle(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+			updateThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mac_client_update_thread, context, 0, NULL);
+		}
+		else
+		{
+			events[nCount++] = updateEvent = freerdp_get_message_queue_event_handle(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
 		}
 		
 		if (settings->AsyncInput)
 		{
-			events[nCount++] = input_event = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+			inputThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mac_client_input_thread, context, 0, NULL);
+		}
+		else
+		{
+			events[nCount++] = inputEvent = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
 		}
 		
 		if (settings->AsyncChannels)
 		{
-			events[nCount++] = channels_event = freerdp_channels_get_event_handle(instance);
+			channelsThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mac_client_channels_thread, context, 0, NULL);
+		}
+		else
+		{
+			events[nCount++] = channelsEvent = freerdp_channels_get_event_handle(instance);
 		}
 		
 		while (1)
@@ -213,43 +288,57 @@ DWORD mac_client_thread(void* param)
 				break;
 			}
 			
-			if (settings->AsyncUpdate)
+			if (!settings->AsyncUpdate)
 			{
-				if (WaitForSingleObject(update_event, 0) == WAIT_OBJECT_0)
+				if (WaitForSingleObject(updateEvent, 0) == WAIT_OBJECT_0)
 				{
 					update_activity_cb(instance);
 				}
 			}
 			
-			if (settings->AsyncInput)
+			if (!settings->AsyncInput)
 			{
-				if (WaitForSingleObject(input_event, 0) == WAIT_OBJECT_0)
+				if (WaitForSingleObject(inputEvent, 0) == WAIT_OBJECT_0)
 				{
 					input_activity_cb(instance);
 				}
 			}
 			
-			if (settings->AsyncChannels)
+			if (!settings->AsyncChannels)
 			{
-				if (WaitForSingleObject(channels_event, 0) == WAIT_OBJECT_0)
+				if (WaitForSingleObject(channelsEvent, 0) == WAIT_OBJECT_0)
 				{
 					channel_activity_cb(instance);
 				}
 			}
 		}
 		
+		if (settings->AsyncUpdate)
+		{
+			wMessageQueue* updateQueue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
+			MessageQueue_PostQuit(updateQueue, 0);
+			WaitForSingleObject(updateThread, INFINITE);
+			CloseHandle(updateThread);
+		}
+		
+		if (settings->AsyncInput)
+		{
+			wMessageQueue* inputQueue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+			MessageQueue_PostQuit(inputQueue, 0);
+			WaitForSingleObject(inputThread, INFINITE);
+			CloseHandle(inputThread);
+		}
+		
+		if (settings->AsyncChannels)
+		{
+			WaitForSingleObject(channelsThread, INFINITE);
+			CloseHandle(channelsThread);
+		}
+		
 		ExitThread(0);
 		return 0;
 	}
 }
-
-/************************************************************************
- methods we override
- ************************************************************************/
-
-/** *********************************************************************
- * create MRDPView with specified rectangle
- ***********************************************************************/
 
 - (id)initWithFrame:(NSRect)frame
 {
@@ -263,12 +352,6 @@ DWORD mac_client_thread(void* param)
 	return self;
 }
 
-/** *********************************************************************
- * called when MRDPView has been successfully created from the NIB
- ***********************************************************************/
-
-//TODO - Expose this code as a public method, because awakeFromNib
-//       won't be called if the view is created dynamically
 - (void) viewDidLoad
 {
 	[self initializeView];
@@ -298,34 +381,15 @@ DWORD mac_client_thread(void* param)
 	[[self window] invalidateCursorRectsForView:self];
 }
 
-
-// Set the current cursor
 - (void) resetCursorRects
 {
 	[self addCursorRect:[self visibleRect] cursor:currentCursor];
 }
 
-/** *********************************************************************
- * become first responder so we can get keyboard and mouse events
- ***********************************************************************/
-
 - (BOOL)acceptsFirstResponder
 {
 	return YES;
 }
-
-/** *********************************************************************
- * called when a mouse move event occurrs
- *
- * ideally we want to be called when the mouse moves over NSView client area,
- * but in reality we get called any time the mouse moves anywhere on the screen;
- * we could use NSTrackingArea class to handle this but this class is available
- * on Mac OS X v10.5 and higher; since we want to be compatible with older
- * versions, we do this manually.
- *
- * TODO: here is how it can be done using legacy methods
- * http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/EventOverview/MouseTrackingEvents/MouseTrackingEvents.html#//apple_ref/doc/uid/10000060i-CH11-SW1
- ***********************************************************************/
 
 - (void) mouseMoved:(NSEvent *)event
 {
@@ -341,10 +405,6 @@ DWORD mac_client_thread(void* param)
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
-/** *********************************************************************
- * called when left mouse button is pressed down
- ***********************************************************************/
-
 - (void)mouseDown:(NSEvent *) event
 {
 	[super mouseDown:event];
@@ -358,10 +418,6 @@ DWORD mac_client_thread(void* param)
 	
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, x, y);
 }
-
-/** *********************************************************************
- * called when left mouse button is released
- ***********************************************************************/
 
 - (void) mouseUp:(NSEvent *) event
 {
@@ -377,10 +433,6 @@ DWORD mac_client_thread(void* param)
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON1, x, y);
 }
 
-/** *********************************************************************
- * called when right mouse button is pressed down
- ***********************************************************************/
-
 - (void) rightMouseDown:(NSEvent *)event
 {
 	[super rightMouseDown:event];
@@ -394,10 +446,6 @@ DWORD mac_client_thread(void* param)
 	
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2, x, y);
 }
-
-/** *********************************************************************
- * called when right mouse button is released
- ***********************************************************************/
 
 - (void) rightMouseUp:(NSEvent *)event
 {
@@ -413,10 +461,6 @@ DWORD mac_client_thread(void* param)
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_BUTTON2, x, y);
 }
 
-/** *********************************************************************
- * called when middle mouse button is pressed
- ***********************************************************************/
-
 - (void) otherMouseDown:(NSEvent *)event
 {
 	[super otherMouseDown:event];
@@ -430,10 +474,6 @@ DWORD mac_client_thread(void* param)
 	
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON3, x, y);
 }
-
-/** *********************************************************************
- * called when middle mouse button is released
- ***********************************************************************/
 
 - (void) otherMouseUp:(NSEvent *)event
 {
@@ -478,11 +518,6 @@ DWORD mac_client_thread(void* param)
 	}
 }
 
-/** *********************************************************************
- * called when mouse is moved with left button pressed
- * note: invocation order is: mouseDown, mouseDragged, mouseUp
- ***********************************************************************/
-
 - (void) mouseDragged:(NSEvent *)event
 {
 	[super mouseDragged:event];
@@ -498,7 +533,7 @@ DWORD mac_client_thread(void* param)
 	mf_scale_mouse_event(context, instance->input, PTR_FLAGS_MOVE, x, y);
 }
 
-DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
+DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 {
 	/**
 	 * In 99% of cases, the given key code is truly keyboard independent.
@@ -522,6 +557,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 	 * when the output character is '0' for the key code corresponding to the 'i' key.
 	 */
 	
+#if 0
 	switch (keyChar)
 	{
 		case '0':
@@ -536,13 +572,20 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 				keyCode = APPLE_VK_ISO_Section;
 			break;
 	}
+#endif
+	
+	/* Perform keycode correction for all ISO keyboards */
+	
+	if (type == APPLE_KEYBOARD_TYPE_ISO)
+	{
+		if (keyCode == APPLE_VK_ANSI_Grave)
+			keyCode = APPLE_VK_ISO_Section;
+		else if (keyCode == APPLE_VK_ISO_Section)
+			keyCode = APPLE_VK_ANSI_Grave;
+	}
 	
 	return keyCode;
 }
-
-/** *********************************************************************
- * called when a key is pressed
- ***********************************************************************/
 
 - (void) keyDown:(NSEvent *) event
 {
@@ -564,7 +607,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 	if ([characters length] > 0)
 	{
 		keyChar = [characters characterAtIndex:0];
-		keyCode = fixKeyCode(keyCode, keyChar);
+		keyCode = fixKeyCode(keyCode, keyChar, mfc->appleKeyboardType);
 	}
 	
 	vkcode = GetVirtualKeyCodeFromKeycode(keyCode + 8, KEYCODE_TYPE_APPLE);
@@ -580,10 +623,6 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 	
 	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
 }
-
-/** *********************************************************************
- * called when a key is released
- ***********************************************************************/
 
 - (void) keyUp:(NSEvent *) event
 {
@@ -605,7 +644,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 	if ([characters length] > 0)
 	{
 		keyChar = [characters characterAtIndex:0];
-		keyCode = fixKeyCode(keyCode, keyChar);
+		keyCode = fixKeyCode(keyCode, keyChar, mfc->appleKeyboardType);
 	}
 
 	vkcode = GetVirtualKeyCodeFromKeycode(keyCode + 8, KEYCODE_TYPE_APPLE);
@@ -621,10 +660,6 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 
 	freerdp_input_send_keyboard_event(instance->input, keyFlags, scancode);
 }
-
-/** *********************************************************************
- * called when shift, control, alt and meta keys are pressed/released
- ***********************************************************************/
 
 - (void) flagsChanged:(NSEvent*) event
 {
@@ -732,37 +767,33 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 		free(pixel_data);
 }
 
-/** *********************************************************************
- * called when our view needs refreshing
- ***********************************************************************/
-
 - (void) drawRect:(NSRect)rect
 {
 	if (!context)
 		return;
-
+	
 	if (self->bitmap_context)
 	{
 		CGContextRef cgContext = [[NSGraphicsContext currentContext] graphicsPort];
 		CGImageRef cgImage = CGBitmapContextCreateImage(self->bitmap_context);
-
+		
+		CGContextSaveGState(cgContext);
+		
 		CGContextClipToRect(cgContext, CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height));
-		CGContextDrawImage(cgContext, CGRectMake(0,
-							 0, [self bounds].size.width, [self bounds].size.height), cgImage);
 
+		CGContextDrawImage(cgContext, CGRectMake(0, 0, [self bounds].size.width, [self bounds].size.height), cgImage);
+		
+		CGContextRestoreGState(cgContext);
+		
 		CGImageRelease(cgImage);
 	}
 	else
 	{
-		// just clear the screen with black
+		/* Fill the screen with black */
 		[[NSColor blackColor] set];
 		NSRectFill([self bounds]);
 	}
 }
-
-/************************************************************************
- instance methods
- ************************************************************************/
 
 - (void) onPasteboardTimerFired :(NSTimer*) timer
 {
@@ -791,30 +822,13 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar)
 	mfc->client_width = width;
 }
 
-/************************************************************************
- *                                                                      *
- *                              C functions                             *
- *                                                                      *
- ***********************************************************************/
-
-/** *********************************************************************
- * a callback given to freerdp_connect() to process the pre-connect operations.
- *
- * @param inst  - pointer to a rdp_freerdp struct that contains the connection's parameters, and
- *                will be filled with the appropriate informations.
- *
- * @return true if successful. false otherwise.
- ************************************************************************/
-
 BOOL mac_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
 
-	// setup callbacks
 	instance->update->BeginPaint = mac_begin_paint;
 	instance->update->EndPaint = mac_end_paint;
-	instance->update->SetBounds = mac_set_bounds;
-	//instance->update->BitmapUpdate = mac_bitmap_update;
+	instance->update->DesktopResize = mac_desktop_resize;
 
 	settings = instance->settings;
 
@@ -825,7 +839,6 @@ BOOL mac_pre_connect(freerdp* instance)
 		return -1;
 	}
 
-	settings->ColorDepth = 32;
 	settings->SoftwareGdi = TRUE;
 
 	settings->OsMajorType = OSMAJORTYPE_MACINTOSH;
@@ -852,8 +865,8 @@ BOOL mac_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
 	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
 	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
-	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
-	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
@@ -864,25 +877,16 @@ BOOL mac_pre_connect(freerdp* instance)
 	return TRUE;
 }
 
-/** *********************************************************************
- * a callback registered with freerdp_connect() to perform post-connection operations.
- * we get called only if the connection was initialized properly, and will continue
- * the initialization based on the newly created connection.
- *
- * @param   inst  - pointer to a rdp_freerdp struct
- *
- * @return true on success, false on failure
- *
- ************************************************************************/
-
 BOOL mac_post_connect(freerdp* instance)
 {
+	rdpGdi* gdi;
 	UINT32 flags;
+	rdpSettings* settings;
 	rdpPointer rdp_pointer;
-	mfContext *mfc = (mfContext*) instance->context;
+	mfContext* mfc = (mfContext*) instance->context;
 
 	MRDPView* view = (MRDPView*) mfc->view;
-
+	
 	ZeroMemory(&rdp_pointer, sizeof(rdpPointer));
 	rdp_pointer.size = sizeof(rdpPointer);
 	rdp_pointer.New = mf_Pointer_New;
@@ -890,14 +894,21 @@ BOOL mac_post_connect(freerdp* instance)
 	rdp_pointer.Set = mf_Pointer_Set;
 	rdp_pointer.SetNull = mf_Pointer_SetNull;
 	rdp_pointer.SetDefault = mf_Pointer_SetDefault;
-
-	flags = CLRBUF_32BPP | CLRCONV_ALPHA;
+	
+	settings = instance->settings;
+	
+	flags = CLRCONV_ALPHA | CLRCONV_RGB555;
+	
+	if (settings->ColorDepth > 16)
+		flags |= CLRBUF_32BPP;
+	else
+		flags |= CLRBUF_16BPP;
+	
 	gdi_init(instance, flags, NULL);
-
-	rdpGdi* gdi = instance->context->gdi;
-	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-	view->bitmap_context = CGBitmapContextCreate(gdi->primary_buffer, gdi->width, gdi->height, 8, gdi->width * 4, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
-
+	gdi = instance->context->gdi;
+	
+	view->bitmap_context = mac_create_bitmap_context(instance->context);
+	
 	pointer_cache_register_callbacks(instance->update);
 	graphics_register_pointer(instance->context->graphics, &rdp_pointer);
 
@@ -910,6 +921,8 @@ BOOL mac_post_connect(freerdp* instance)
 	view->pasteboard_rd = [NSPasteboard generalPasteboard];
 	view->pasteboard_changecount = (int) [view->pasteboard_rd changeCount];
 	view->pasteboard_timer = [NSTimer scheduledTimerWithTimeInterval:0.5 target:mfc->view selector:@selector(onPasteboardTimerFired:) userInfo:nil repeats:YES];
+	
+	mfc->appleKeyboardType = mac_detect_keyboard_type();
 
 	return TRUE;
 }
@@ -942,14 +955,6 @@ BOOL mac_authenticate(freerdp* instance, char** username, char** password, char*
 	return ok;
 }
 
-/** *********************************************************************
- * create a new mouse cursor
- *
- * @param context our context state
- * @param pointer information about the cursor to create
- *
- ************************************************************************/
-
 void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
 	NSRect rect;
@@ -978,7 +983,7 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 
 	freerdp_alpha_cursor_convert(cursor_data, pointer->xorMaskData, pointer->andMaskData,
 				     pointer->width, pointer->height, pointer->xorBpp, context->gdi->clrconv);
-
+	
 	/* store cursor bitmap image in representation - required by NSImage */
 	bmiRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:(unsigned char **) &cursor_data
 											pixelsWide:rect.size.width
@@ -1012,10 +1017,6 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	[ma addObject:mrdpCursor];
 }
 
-/** *********************************************************************
- * release resources on specified cursor
- ************************************************************************/
-
 void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
 	mfContext* mfc = (mfContext*) context;
@@ -1036,10 +1037,6 @@ void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	}
 }
 
-/** *********************************************************************
- * set specified cursor as the current cursor
- ************************************************************************/
-
 void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	mfContext* mfc = (mfContext*) context;
@@ -1059,18 +1056,10 @@ void mf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	NSLog(@"Cursor not found");
 }
 
-/** *********************************************************************
- * do not display any mouse cursor
- ***********************************************************************/
-
 void mf_Pointer_SetNull(rdpContext* context)
 {
 	
 }
-
-/** *********************************************************************
- * display default mouse cursor
- ***********************************************************************/
 
 void mf_Pointer_SetDefault(rdpContext* context)
 {
@@ -1079,27 +1068,30 @@ void mf_Pointer_SetDefault(rdpContext* context)
 	[view setCursor:[NSCursor arrowCursor]];
 }
 
-/** *********************************************************************
- * clip drawing surface so nothing is drawn outside specified bounds
- ***********************************************************************/
-
-void mac_set_bounds(rdpContext* context, rdpBounds* bounds)
+CGContextRef mac_create_bitmap_context(rdpContext* context)
 {
+	CGContextRef bitmap_context;
+	rdpGdi* gdi = context->gdi;
 	
-}
-
-/** *********************************************************************
- * we don't do much over here
- ***********************************************************************/
-
-void mac_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap)
-{
+	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 	
+	if (gdi->dstBpp == 16)
+	{
+		bitmap_context = CGBitmapContextCreate(gdi->primary_buffer,
+						       gdi->width, gdi->height, 5, gdi->width * 2, colorSpace,
+						       kCGBitmapByteOrder16Little | kCGImageAlphaNoneSkipFirst);
+	}
+	else
+	{
+		bitmap_context = CGBitmapContextCreate(gdi->primary_buffer,
+						       gdi->width, gdi->height, 8, gdi->width * 4, colorSpace,
+						       kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
+	}
+	
+	CGColorSpaceRelease(colorSpace);
+	
+	return bitmap_context;
 }
-
-/** *********************************************************************
- * we don't do much over here
- ***********************************************************************/
 
 void mac_begin_paint(rdpContext* context)
 {
@@ -1110,10 +1102,6 @@ void mac_begin_paint(rdpContext* context)
 	
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 }
-
-/** *********************************************************************
- * RDP server wants us to draw new data in the view
- ***********************************************************************/
 
 void mac_end_paint(rdpContext* context)
 {
@@ -1138,9 +1126,6 @@ void mac_end_paint(rdpContext* context)
 		return;
 	
 	if (context->gdi->primary->hdc->hwnd->invalid->null)
-		return;
-	
-	if (context->gdi->drawing != context->gdi->primary)
 		return;
 
 	invalid = gdi->primary->hdc->hwnd->invalid;
@@ -1172,17 +1157,36 @@ void mac_end_paint(rdpContext* context)
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
-
-/** *********************************************************************
- * called when update data is available
- ***********************************************************************/
+void mac_desktop_resize(rdpContext* context)
+{
+	mfContext* mfc = (mfContext*) context;
+	MRDPView* view = (MRDPView*) mfc->view;
+	rdpSettings* settings = context->settings;
+	
+	/**
+	 * TODO: Fix resizing race condition. We should probably implement a message to be
+	 * put on the update message queue to be able to properly flush pending updates,
+	 * resize, and then continue with post-resizing graphical updates.
+	 */
+	
+	CGContextRef old_context = view->bitmap_context;
+	view->bitmap_context = NULL;
+	CGContextRelease(old_context);
+	
+	mfc->width = settings->DesktopWidth;
+	mfc->height = settings->DesktopHeight;
+	
+	gdi_resize(context->gdi, mfc->width, mfc->height);
+	
+	view->bitmap_context = mac_create_bitmap_context(context);
+}
 
 static void update_activity_cb(freerdp* instance)
 {
 	int status;
 	wMessage message;
 	wMessageQueue* queue;
-
+	
 	status = 1;
 	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
 	
@@ -1191,7 +1195,7 @@ static void update_activity_cb(freerdp* instance)
 		while (MessageQueue_Peek(queue, &message, TRUE))
 		{
 			status = freerdp_message_queue_process_message(instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message);
-
+			
 			if (!status)
 				break;
 		}
@@ -1201,10 +1205,6 @@ static void update_activity_cb(freerdp* instance)
 		fprintf(stderr, "update_activity_cb: No queue!\n");
 	}
 }
-
-/** *********************************************************************
- * called when input data is available
- ***********************************************************************/
 
 static void input_activity_cb(freerdp* instance)
 {
@@ -1231,10 +1231,6 @@ static void input_activity_cb(freerdp* instance)
 	}
 }
 
-/** *********************************************************************
- * called when data is available on a virtual channel
- ***********************************************************************/
-
 static void channel_activity_cb(freerdp* instance)
 {
 	wMessage* event;
@@ -1257,29 +1253,6 @@ static void channel_activity_cb(freerdp* instance)
 	}
 }
 
-/** *********************************************************************
- * called when channel data is available
- ***********************************************************************/
-
-int mac_receive_channel_data(freerdp* instance, int chan_id, BYTE* data, int size, int flags, int total_size)
-{
-	return freerdp_channels_data(instance, chan_id, data, size, flags, total_size);
-}
-
-/**
- * Used to load plugins based on the commandline parameters.
- * This function is provided as a parameter to freerdp_parse_args(), that will call it
- * each time a plugin name is found on the command line.
- * This function just calls freerdp_channels_load_plugin() for the given plugin, and always returns 1.
- *
- * @param settings
- * @param name
- * @param plugin_data
- * @param user_data
- *
- * @return 1
- */
-
 int process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA* plugin_data, void* user_data)
 {
 	rdpChannels* channels = (rdpChannels*) user_data;
@@ -1291,10 +1264,6 @@ int process_plugin_args(rdpSettings* settings, const char* name, RDP_PLUGIN_DATA
 
 /*
  * stuff related to clipboard redirection
- */
-
-/**
- * remote system has requested clipboard data from local system
  */
 
 void cliprdr_process_cb_data_request_event(freerdp* instance)

@@ -117,9 +117,6 @@ int WLog_FileAppender_WriteMessage(wLog* log, wLogFileAppender* appender, wLogMe
 	FILE* fp;
 	char prefix[WLOG_MAX_PREFIX_SIZE];
 
-	if (message->Level > log->Level)
-		return 0;
-
 	fp = appender->FileDescriptor;
 
 	if (!fp)
@@ -130,8 +127,10 @@ int WLog_FileAppender_WriteMessage(wLog* log, wLogFileAppender* appender, wLogMe
 
 	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
 
-	//fflush(fp); /* slow! */
-
+#ifdef _WIN32
+	fflush(fp); /* slow! */
+#endif
+	
 	return 1;
 }
 

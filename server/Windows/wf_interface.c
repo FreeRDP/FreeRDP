@@ -22,11 +22,15 @@
 #include "config.h"
 #endif
 
-
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
+
+#include <freerdp/freerdp.h>
+#include <freerdp/listener.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/tcp.h>
-#include <freerdp\listener.h>
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/channels/channels.h>
 
 #include "wf_peer.h"
 #include "wf_settings.h"
@@ -180,6 +184,8 @@ wfServer* wfreerdp_server_new()
 		server->port = 3389;
 	}
 
+	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
+
 	cbEvent = NULL;
 
 	return server;
@@ -229,7 +235,6 @@ FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr)
 	wfi = wf_info_get_instance();
 	peer = wfi->peers[pId];
 
-	
 	if (peer)
 	{
 		UINT32 sLen;
@@ -243,7 +248,6 @@ FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr)
 		printf("nonexistent peer id=%d\n", pId);
 		return 0;
 	}
-
 }
 
 FREERDP_API BOOL wfreerdp_server_peer_is_local(int pId)
@@ -254,7 +258,6 @@ FREERDP_API BOOL wfreerdp_server_peer_is_local(int pId)
 	wfi = wf_info_get_instance();
 	peer = wfi->peers[pId];
 
-	
 	if (peer)
 	{
 		return peer->local;
@@ -264,6 +267,7 @@ FREERDP_API BOOL wfreerdp_server_peer_is_local(int pId)
 		return FALSE;
 	}
 }
+
 FREERDP_API BOOL wfreerdp_server_peer_is_connected(int pId)
 {
 	wfInfo* wfi;
@@ -290,7 +294,6 @@ FREERDP_API BOOL wfreerdp_server_peer_is_activated(int pId)
 
 	wfi = wf_info_get_instance();
 	peer = wfi->peers[pId];
-
 	
 	if (peer)
 	{
@@ -310,7 +313,6 @@ FREERDP_API BOOL wfreerdp_server_peer_is_authenticated(int pId)
 	wfi = wf_info_get_instance();
 	peer = wfi->peers[pId];
 
-	
 	if (peer)
 	{
 		return peer->authenticated;

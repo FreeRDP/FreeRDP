@@ -58,6 +58,7 @@ struct rdp_credssp
 };
 
 int credssp_authenticate(rdpCredssp* credssp);
+LPTSTR credssp_make_spn(const char* ServiceClass, const char* hostname);
 
 rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings* settings);
 void credssp_free(rdpCredssp* credssp);

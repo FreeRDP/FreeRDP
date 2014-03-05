@@ -196,7 +196,7 @@ int rdpei_send_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId,
 	Stream_Write_UINT32(s, pduLength); /* pduLength (4 bytes) */
 	Stream_SetPosition(s, Stream_Length(s));
 
-	status = callback->channel->Write(callback->channel, Stream_Length(s), Stream_Buffer(s), NULL);
+	status = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s), Stream_Buffer(s), NULL);
 
 #ifdef WITH_DEBUG_RDPEI
 	fprintf(stderr, "rdpei_send_pdu: eventId: %d (%s) length: %d status: %d\n",
@@ -252,7 +252,7 @@ void rdpei_print_contact_flags(UINT32 contactFlags)
 
 int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 {
-	int index;
+	UINT32 index;
 	int rectSize = 2;
 	RDPINPUT_CONTACT_DATA* contact;
 
@@ -269,7 +269,7 @@ int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 	 */
 	rdpei_write_8byte_unsigned(s, frame->frameOffset * 1000); /* frameOffset (EIGHT_BYTE_UNSIGNED_INTEGER) */
 
-	Stream_EnsureRemainingCapacity(s, frame->contactCount * 64);
+	Stream_EnsureRemainingCapacity(s, (size_t) frame->contactCount * 64);
 
 	for (index = 0; index < frame->contactCount; index++)
 	{
@@ -345,7 +345,7 @@ int rdpei_send_touch_event_pdu(RDPEI_CHANNEL_CALLBACK* callback, RDPINPUT_TOUCH_
 	 * the time that has elapsed (in milliseconds) from when the oldest touch frame
 	 * was generated to when it was encoded for transmission by the client.
 	 */
-	rdpei_write_4byte_unsigned(s, frame->frameOffset); /* encodeTime (FOUR_BYTE_UNSIGNED_INTEGER) */
+	rdpei_write_4byte_unsigned(s, (UINT32) frame->frameOffset); /* encodeTime (FOUR_BYTE_UNSIGNED_INTEGER) */
 
 	rdpei_write_2byte_unsigned(s, 1); /* (frameCount) TWO_BYTE_UNSIGNED_INTEGER */
 

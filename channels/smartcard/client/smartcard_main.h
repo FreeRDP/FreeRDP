@@ -21,8 +21,6 @@
 #ifndef FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H
 
-#include <inttypes.h>
-
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/channels/rdpdr.h>

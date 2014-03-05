@@ -33,14 +33,13 @@ int wf_rdpsnd_set_latest_peer(wfPeerContext* peer)
 	return 0;
 }
 
-
 int wf_wasapi_activate(RdpsndServerContext* context)
 {
 	wchar_t * pattern = L"Stereo Mix";
 
 	wf_wasapi_get_device_string(pattern, &devStr);
 
-	if(devStr == NULL)
+	if (devStr == NULL)
 	{
 		_tprintf(_T("Failed to match for output device! Disabling rdpsnd.\n"));
 		return 1;
@@ -99,7 +98,6 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr)
 			exit(1);
 		}
 
-
 		hr = pEndpoint->lpVtbl->GetId(pEndpoint, &pwszID);
 		if ( FAILED(hr) )
 		{
@@ -107,15 +105,12 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr)
 			exit(1);
 		}
 
-
-
 		hr = pEndpoint->lpVtbl->OpenPropertyStore(pEndpoint, STGM_READ, &pProps);
 		if ( FAILED(hr) )
 		{
 			_tprintf(_T("Failed to open property store\n"));
 			exit(1);
 		}
-
 
 		hr = pProps->lpVtbl->GetValue(pProps, &PKEY_Device_FriendlyName, &nameVar);
 		if ( FAILED(hr) )
@@ -157,7 +152,6 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr)
 
 	return 0;
 }
-
 
 DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 {
@@ -210,7 +204,6 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 		exit(1);
 	}
 
-
 	pwfx->wFormatTag = wfi->agreed_format->wFormatTag;
 	pwfx->nChannels = wfi->agreed_format->nChannels;
 	pwfx->nSamplesPerSec = wfi->agreed_format->nSamplesPerSec;
@@ -220,13 +213,9 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 	pwfx->cbSize = wfi->agreed_format->cbSize;
 
 	hr = pAudioClient->lpVtbl->Initialize(
-		pAudioClient,
-		AUDCLNT_SHAREMODE_SHARED,
-		0,
-		hnsRequestedDuration,
-		0,
-		pwfx,
-		NULL);
+		pAudioClient, AUDCLNT_SHAREMODE_SHARED, 0,
+		hnsRequestedDuration, 0, pwfx, NULL);
+
 	if (FAILED(hr))
 	{
 		_tprintf(_T("Failed to initialize the audio client\n"));
@@ -247,7 +236,6 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 		exit(1);
 	}
 
-
 	hnsActualDuration = (UINT32)REFTIMES_PER_SEC * bufferFrameCount / pwfx->nSamplesPerSec;
 
 	hr = pAudioClient->lpVtbl->Start(pAudioClient);
@@ -262,7 +250,6 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 	{
 		DWORD flags;
 
-
 		Sleep(hnsActualDuration/REFTIMES_PER_MILLISEC/2);
 
 		hr = pCaptureClient->lpVtbl->GetNextPacketSize(pCaptureClient, &packetLength);
@@ -272,7 +259,7 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 			exit(1);
 		}
 
-		while(packetLength != 0)
+		while (packetLength != 0)
 		{
 			hr = pCaptureClient->lpVtbl->GetBuffer(pCaptureClient, &pData, &numFramesAvailable, &flags, NULL, NULL);
 			if (FAILED(hr))

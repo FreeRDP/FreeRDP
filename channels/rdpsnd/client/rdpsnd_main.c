@@ -55,12 +55,12 @@
 struct rdpsnd_plugin
 {
 	CHANNEL_DEF channelDef;
-	CHANNEL_ENTRY_POINTS_EX channelEntryPoints;
+	CHANNEL_ENTRY_POINTS_FREERDP channelEntryPoints;
 
 	HANDLE thread;
 	wStream* data_in;
 	void* InitHandle;
-	UINT32 OpenHandle;
+	DWORD OpenHandle;
 	wMessagePipe* MsgPipe;
 
 	wLog* log;
@@ -453,7 +453,7 @@ static void rdpsnd_recv_wave_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	CopyMemory(Stream_Buffer(s), rdpsnd->waveData, 4);
 
 	data = Stream_Buffer(s);
-	size = Stream_Capacity(s);
+	size = (int) Stream_Capacity(s);
 
 	wave = (RDPSND_WAVE*) malloc(sizeof(RDPSND_WAVE));
 
@@ -866,10 +866,14 @@ int rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 	UINT32 status = 0;
 
 	if (!rdpsnd)
+	{
 		status = CHANNEL_RC_BAD_INIT_HANDLE;
+	}
 	else
+	{
 		status = rdpsnd->channelEntryPoints.pVirtualChannelWrite(rdpsnd->OpenHandle,
-			Stream_Buffer(s), Stream_GetPosition(s), s);
+			Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
+	}
 
 	if (status != CHANNEL_RC_OK)
 	{
@@ -917,8 +921,8 @@ static void rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 	}
 }
 
-static void rdpsnd_virtual_channel_open_event(UINT32 openHandle, UINT32 event,
-		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT event,
+		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
 	rdpsndPlugin* plugin;
 
@@ -975,7 +979,7 @@ static void* rdpsnd_virtual_channel_client_thread(void* arg)
 	return NULL;
 }
 
-static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, void* pData, UINT32 dataLength)
+static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID pData, UINT32 dataLength)
 {
 	UINT32 status;
 
@@ -1031,7 +1035,7 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 	rdpsnd_remove_init_handle_data(rdpsnd->InitHandle);
 }
 
-static void rdpsnd_virtual_channel_init_event(void* pInitHandle, UINT32 event, void* pData, UINT32 dataLength)
+static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
 {
 	rdpsndPlugin* plugin;
 
@@ -1086,7 +1090,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 		strcpy(rdpsnd->channelDef.name, "rdpsnd");
 
-		CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints, pEntryPoints->cbSize);
+		CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 
 		rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");
 		

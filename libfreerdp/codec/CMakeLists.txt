@@ -42,6 +42,7 @@ set(${MODULE_PREFIX}_SRCS
 	rfx_rlgr.h
 	rfx_types.h
 	rfx.c
+	region.c	
 	nsc.c
 	nsc_encode.c
 	nsc_encode.h

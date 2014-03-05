@@ -20,6 +20,11 @@
 #ifndef __XF_CLIENT_H
 #define __XF_CLIENT_H
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/collections.h>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/client.h>
@@ -30,11 +35,6 @@
 #include <freerdp/rail/rail.h>
 #include <freerdp/cache/cache.h>
 #include <freerdp/channels/channels.h>
-
-#include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
-#include <winpr/collections.h>
 
 #ifdef __cplusplus
 extern "C" {

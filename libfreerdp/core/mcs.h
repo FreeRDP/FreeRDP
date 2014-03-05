@@ -123,21 +123,36 @@ typedef struct
 	UINT32 protocolVersion;
 } DomainParameters;
 
+struct rdp_mcs_channel
+{
+	char Name[8];
+	UINT32 options;
+	int ChannelId;
+	BOOL joined;
+	void* handle;
+};
+typedef struct rdp_mcs_channel rdpMcsChannel;
+
 struct rdp_mcs
 {
 	rdpTransport* transport;
+	rdpSettings* settings;
 
-	UINT16 user_id;
-	UINT16 message_channel_id;
+	UINT16 userId;
+	UINT16 messageChannelId;
 
 	DomainParameters domainParameters;
 	DomainParameters targetParameters;
 	DomainParameters minimumParameters;
 	DomainParameters maximumParameters;
 
-	BOOL user_channel_joined;
-	BOOL global_channel_joined;
-	BOOL message_channel_joined;
+	BOOL userChannelJoined;
+	BOOL globalChannelJoined;
+	BOOL messageChannelJoined;
+
+	UINT32 channelCount;
+	UINT32 channelMaxCount;
+	rdpMcsChannel* channels;
 };
 
 #define MCS_SEND_DATA_HEADER_MAX_LENGTH		8
@@ -145,8 +160,11 @@ struct rdp_mcs
 #define MCS_TYPE_CONNECT_INITIAL		0x65
 #define MCS_TYPE_CONNECT_RESPONSE		0x66
 
-void mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* user_data);
-void mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* user_data);
+BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters, DomainParameters* minimumParameters,
+		DomainParameters* maximumParameters, DomainParameters* pOutParameters);
+
+void mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData);
+void mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData);
 
 BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s);
 BOOL mcs_send_connect_initial(rdpMcs* mcs);
@@ -158,10 +176,10 @@ BOOL mcs_recv_attach_user_request(rdpMcs* mcs, wStream* s);
 BOOL mcs_send_attach_user_request(rdpMcs* mcs);
 BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, wStream* s);
 BOOL mcs_send_attach_user_confirm(rdpMcs* mcs);
-BOOL mcs_recv_channel_join_request(rdpMcs* mcs, wStream* s, UINT16* channel_id);
-BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channel_id);
-BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channel_id);
-BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channel_id);
+BOOL mcs_recv_channel_join_request(rdpMcs* mcs, wStream* s, UINT16* channelId);
+BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channelId);
+BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId);
+BOOL mcs_send_channel_join_confirm(rdpMcs* mcs, UINT16 channelId);
 BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason);
 BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs);
 BOOL mcs_read_domain_mcspdu_header(wStream* s, enum DomainMCSPDU* domainMCSPDU, UINT16* length);

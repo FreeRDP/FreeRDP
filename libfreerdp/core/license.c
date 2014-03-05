@@ -77,7 +77,7 @@ static const char* const  state_transitions[] =
 	"ST_RESEND_LAST_MESSAGE"
 };
 
-void license_print_product_info(PRODUCT_INFO* productInfo)
+void license_print_product_info(LICENSE_PRODUCT_INFO* productInfo)
 {
 	char* CompanyName = NULL;
 	char* ProductId = NULL;
@@ -473,7 +473,7 @@ void license_decrypt_platform_challenge(rdpLicense* license)
  * @param productInfo product information
  */
 
-BOOL license_read_product_info(wStream* s, PRODUCT_INFO* productInfo)
+BOOL license_read_product_info(wStream* s, LICENSE_PRODUCT_INFO* productInfo)
 {
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
@@ -504,16 +504,16 @@ BOOL license_read_product_info(wStream* s, PRODUCT_INFO* productInfo)
 }
 
 /**
- * Allocate New Product Information (PRODUCT_INFO).\n
+ * Allocate New Product Information (LICENSE_PRODUCT_INFO).\n
  * @msdn{cc241915}
  * @return new product information
  */
 
-PRODUCT_INFO* license_new_product_info()
+LICENSE_PRODUCT_INFO* license_new_product_info()
 {
-	PRODUCT_INFO* productInfo;
+	LICENSE_PRODUCT_INFO* productInfo;
 
-	productInfo = (PRODUCT_INFO*) malloc(sizeof(PRODUCT_INFO));
+	productInfo = (LICENSE_PRODUCT_INFO*) malloc(sizeof(LICENSE_PRODUCT_INFO));
 
 	productInfo->dwVersion = 0;
 	productInfo->cbCompanyName = 0;
@@ -525,12 +525,12 @@ PRODUCT_INFO* license_new_product_info()
 }
 
 /**
- * Free Product Information (PRODUCT_INFO).\n
+ * Free Product Information (LICENSE_PRODUCT_INFO).\n
  * @msdn{cc241915}
  * @param productInfo product information
  */
 
-void license_free_product_info(PRODUCT_INFO* productInfo)
+void license_free_product_info(LICENSE_PRODUCT_INFO* productInfo)
 {
 	if (productInfo->pbCompanyName != NULL)
 		free(productInfo->pbCompanyName);

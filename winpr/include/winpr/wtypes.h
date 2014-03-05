@@ -26,11 +26,20 @@
 #include <wchar.h>
 #include <winpr/windows.h>
 
+#include <winpr/spec.h>
+
+#ifdef _WIN32
+#include <wtypes.h>
+#endif
+
 #if defined(__OBJC__) && defined(__APPLE__)
 #include <objc/objc.h>
 #endif
 
 #ifndef _WIN32
+
+#define WINAPI
+#define CDECL
 
 #define __int8	char
 #define __int16 short
@@ -303,6 +312,40 @@ typedef unsigned long error_status_t;
 #ifndef _NTDEF_
 typedef LONG NTSTATUS;
 typedef NTSTATUS *PNTSTATUS;
+#endif
+
+#ifndef _WIN32
+
+typedef struct tagDEC
+{
+	USHORT wReserved;
+	union {
+		struct {
+			BYTE scale;
+			BYTE sign;
+		} DUMMYSTRUCTNAME;
+		USHORT signscale;
+	} DUMMYUNIONNAME;
+	ULONG Hi32;
+	union {
+		struct {
+			ULONG Lo32;
+			ULONG Mid32;
+		} DUMMYSTRUCTNAME2;
+		ULONGLONG Lo64;
+	} DUMMYUNIONNAME2;
+} DECIMAL;
+
+typedef DECIMAL *LPDECIMAL;
+
+#define DECIMAL_NEG		((BYTE) 0x80)
+#define DECIMAL_SETZERO(dec)	{ (dec).Lo64 = 0; (dec).Hi32 = 0; (dec).signscale = 0; }
+
+typedef char CCHAR;
+typedef DWORD LCID;
+typedef PDWORD PLCID;
+typedef WORD LANGID;
+
 #endif
 
 #endif /* WINPR_WTYPES_H */

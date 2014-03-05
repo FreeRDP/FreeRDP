@@ -59,8 +59,6 @@
 
 #include "resource.h"
 
-void wf_size_scrollbars(wfContext* wfc, int client_width, int client_height);
-
 int wf_create_console(void)
 {
 	if (!AllocConsole())
@@ -265,17 +263,15 @@ BOOL wf_pre_connect(freerdp* instance)
 	{
 		if (settings->UseMultimon)
 		{
-			settings->DesktopWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-			settings->DesktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+			desktopWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+			desktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 		}
 		else
 		{
-			settings->DesktopWidth = GetSystemMetrics(SM_CXSCREEN);
-			settings->DesktopHeight = GetSystemMetrics(SM_CYSCREEN);
+			desktopWidth = GetSystemMetrics(SM_CXSCREEN);
+			desktopHeight = GetSystemMetrics(SM_CYSCREEN);
 		}
 	}
-
-	desktopWidth = (desktopWidth + 3) & (~3);
 
 	if (desktopWidth != settings->DesktopWidth)
 	{
@@ -312,7 +308,7 @@ void wf_add_system_menu(wfContext* wfc)
 	item_info.wID = SYSCOMMAND_ID_SMARTSIZING;
 	item_info.fType = MFT_STRING;
 	item_info.dwTypeData = _wcsdup(_T("Smart sizing"));
-	item_info.cch = _wcslen(_T("Smart sizing"));
+	item_info.cch = (UINT) _wcslen(_T("Smart sizing"));
 	item_info.dwItemData = (ULONG_PTR) wfc;
 
 	InsertMenuItem(hMenu, 6, TRUE, &item_info);
@@ -448,6 +444,7 @@ BOOL wf_post_connect(freerdp* instance)
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
 	wf_cliprdr_init(wfc, instance->context->channels);
+	floatbar_window_create(wfc);
 
 	return TRUE;
 }
@@ -829,14 +826,10 @@ int freerdp_client_load_settings_from_rdp_file(wfContext* wfc, char* filename)
 	return 0;
 }
 
-void wf_size_scrollbars(wfContext* wfc, int client_width, int client_height)
+void wf_size_scrollbars(wfContext* wfc, UINT32 client_width, UINT32 client_height)
 {
-	BOOL rc;
-
-	if (wfc->disablewindowtracking == TRUE)
-	{
+	if (wfc->disablewindowtracking)
 		return;
-	}
 
 	// prevent infinite message loop
 	wfc->disablewindowtracking = TRUE;

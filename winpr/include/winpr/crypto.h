@@ -31,6 +31,16 @@
 
 #else
 
+/* ncrypt.h */
+
+typedef ULONG_PTR NCRYPT_HANDLE;
+typedef ULONG_PTR NCRYPT_PROV_HANDLE;
+typedef ULONG_PTR NCRYPT_KEY_HANDLE;
+typedef ULONG_PTR NCRYPT_HASH_HANDLE;
+typedef ULONG_PTR NCRYPT_SECRET_HANDLE;
+
+/* wincrypt.h */
+
 #define GET_ALG_CLASS(x)		(x & (7 << 13))
 #define GET_ALG_TYPE(x)			(x & (15 << 9))
 #define GET_ALG_SID(x)			(x & (511))

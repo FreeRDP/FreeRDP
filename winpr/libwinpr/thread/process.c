@@ -251,6 +251,10 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 
 			if (token->UserId)
 				setuid((uid_t) token->UserId);
+
+			/* TODO: add better cwd handling and error checking */
+			if (lpCurrentDirectory && strlen(lpCurrentDirectory) > 0)
+				chdir(lpCurrentDirectory);
 		}
 
 		if (execve(filename, pArgs, envp) < 0)

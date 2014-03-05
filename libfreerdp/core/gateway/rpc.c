@@ -379,7 +379,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	request_pdu->ptype = PTYPE_REQUEST;
 	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	request_pdu->auth_length = ntlm->ContextSizes.cbMaxSignature;
+	request_pdu->auth_length = (UINT16) ntlm->ContextSizes.cbMaxSignature;
 	request_pdu->call_id = rpc->CallId++;
 	request_pdu->alloc_hint = length;
 	request_pdu->p_cont_id = 0x0000;

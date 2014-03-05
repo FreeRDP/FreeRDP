@@ -28,6 +28,7 @@ set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/ArrayList.c
 	collections/Dictionary.c
 	collections/LinkedList.c
+	collections/HashTable.c
 	collections/ListDictionary.c
 	collections/KeyValuePair.c
 	collections/CountdownEvent.c

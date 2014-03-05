@@ -92,11 +92,6 @@ static BOOL ios_post_connect(freerdp* instance)
 	return TRUE;
 }
 
-static int ios_receive_channel_data(freerdp* instance, int channelId, UINT8* data, int size, int flags, int total_size)
-{
-    return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
-}
-
 void ios_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
     wMessage* event = freerdp_channels_pop_event(channels);
@@ -283,7 +278,6 @@ freerdp* ios_freerdp_new()
 	inst->Authenticate = ios_ui_authenticate;
 	inst->VerifyCertificate = ios_ui_check_certificate;
     inst->VerifyChangedCertificate = ios_ui_check_changed_certificate;
-    inst->ReceiveChannelData = ios_receive_channel_data;
     
 	inst->ContextSize = sizeof(mfContext);
 	inst->ContextNew = ios_context_new;

@@ -209,11 +209,13 @@ void sspi_CredentialsFree(CREDENTIALS* credentials)
 	free(credentials);
 }
 
-void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size)
+void sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size)
 {
 	SecBuffer->cbBuffer = size;
 	SecBuffer->pvBuffer = malloc(size);
-	ZeroMemory(SecBuffer->pvBuffer, SecBuffer->cbBuffer);
+
+	if (SecBuffer->pvBuffer)
+		ZeroMemory(SecBuffer->pvBuffer, SecBuffer->cbBuffer);
 }
 
 void sspi_SecBufferFree(PSecBuffer SecBuffer)
@@ -380,7 +382,7 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 
 PSecBuffer sspi_FindSecBuffer(PSecBufferDesc pMessage, ULONG BufferType)
 {
-	int index;
+	ULONG index;
 	PSecBuffer pSecBuffer = NULL;
 
 	for (index = 0; index < pMessage->cBuffers; index++)

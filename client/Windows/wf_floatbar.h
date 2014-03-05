@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Client Channels
+ * Windows Float Bar
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013 Zhang Zhaolong <zhangzl2013@126.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_PRIVATE_CLIENT_CHANNELS_INIT
-#define FREERDP_PRIVATE_CLIENT_CHANNELS_INIT
+#ifndef __WF_FLOATBAR_H__
+#define __WF_FLOATBAR_H__
 
-#include "channels.h"
+typedef struct _FloatBar FloatBar;
+typedef struct wf_context wfContext;
 
-UINT32 FreeRDP_VirtualChannelInit(void** ppInitHandle, PCHANNEL_DEF pChannel,
-	int channelCount, UINT32 versionRequested, PCHANNEL_INIT_EVENT_FN pChannelInitEventProc);
+void floatbar_window_create(wfContext* wfc);
+int floatbar_show(FloatBar* floatbar);
+int floatbar_hide(FloatBar* floatbar);
 
-#endif /* FREERDP_PRIVATE_CLIENT_CHANNELS_INIT */
+#endif

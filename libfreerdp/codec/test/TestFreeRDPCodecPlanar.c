@@ -3120,7 +3120,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 
 	srcBitmap32 = freerdp_image_convert(srcBitmap16, NULL, 32, 32, 16, 32, clrconv);
 
-	format = FREERDP_PIXEL_FORMAT(32, FREERDP_PIXEL_FORMAT_TYPE_ARGB, FREERDP_PIXEL_FLIP_NONE);
+	format = PIXEL_FORMAT_ARGB32;
 
 #if 0
 	freerdp_bitmap_compress_planar(planar, srcBitmap32, format, 32, 32, 32 * 4, NULL, &dstSize);

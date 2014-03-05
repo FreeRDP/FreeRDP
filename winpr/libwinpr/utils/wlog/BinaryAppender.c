@@ -122,9 +122,6 @@ int WLog_BinaryAppender_WriteMessage(wLog* log, wLogBinaryAppender* appender, wL
 	int FunctionNameLength;
 	int TextStringLength;
 
-	if (message->Level > log->Level)
-		return 0;
-
 	fp = appender->FileDescriptor;
 
 	if (!fp)
