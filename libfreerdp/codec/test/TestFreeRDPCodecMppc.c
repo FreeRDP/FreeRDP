@@ -701,6 +701,7 @@ int TestFreeRDPCodecMppc(int argc, char* argv[])
 	printf("%s\n", pSrcData);
 
 	mppc_compress(mppc, pSrcData, OutputBuffer, size);
+	printf("\n");
 
 	mppc_context_free(mppc);
 

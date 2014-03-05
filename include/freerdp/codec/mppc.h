@@ -23,9 +23,12 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <winpr/collections.h>
+
 struct _MPPC_CONTEXT
 {
 	DWORD Flags;
+	wBitStream* bs;
 	BOOL Compressor;
 	DWORD HistoryPtr;
 	BYTE* pHistoryPtr;

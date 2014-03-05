@@ -23,11 +23,15 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/collections.h>
 
 #include <freerdp/codec/mppc_enc.h>
 #include <freerdp/codec/mppc_dec.h>
 
 #include <freerdp/codec/mppc.h>
+
+#define MPPC_MATCH_INDEX(_sym1, _sym2, _sym3) \
+	((((MPPC_MATCH_TABLE[_sym3] << 16) + (MPPC_MATCH_TABLE[_sym2] << 8) + MPPC_MATCH_TABLE[_sym1]) & 0x07FFF000) >> 12)
 
 const UINT32 MPPC_MATCH_TABLE[256] =
 {
@@ -70,8 +74,10 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, int size)
 	DWORD Flags = 0;
 	BYTE* pMatch;
 	DWORD MatchIndex;
+	UINT32 accumulator;
 	BYTE* pEnd;
-	//BYTE* OutputBuffer = pDstData;
+
+	BitStream_Attach(mppc->bs, pDstData, size);
 
 	if (((mppc->HistoryOffset + size) < (mppc->HistoryBufferSize - 3)) /* && mppc->HistoryOffset */)
 	{
@@ -108,27 +114,32 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, int size)
 
 		pEnd = &(mppc->HistoryBuffer[size - 1]);
 
-		int index = 0;
-
 		while (mppc->pHistoryPtr < (pEnd - 2))
 		{
-			MatchIndex = ((((MPPC_MATCH_TABLE[mppc->pHistoryPtr[2]] << 16) +
-					(MPPC_MATCH_TABLE[mppc->pHistoryPtr[1]] << 8) +
-					MPPC_MATCH_TABLE[mppc->pHistoryPtr[0]]) & 0x07FFF000) >> 12);
+			MatchIndex = MPPC_MATCH_INDEX(mppc->pHistoryPtr[0], mppc->pHistoryPtr[1], mppc->pHistoryPtr[2]);
 
 			pMatch = &(mppc->HistoryBuffer[mppc->MatchBuffer[MatchIndex]]);
 
 			mppc->MatchBuffer[MatchIndex] = (UINT16) mppc->HistoryPtr;
 
-			printf("[%d] MatchIndex: %d pMatch: %p pHistoryPtr: %p HistoryPtr: %d\n",
-					index, (int) MatchIndex, pMatch, mppc->pHistoryPtr, (int) mppc->HistoryPtr);
-
-			if ((mppc->pHistoryPtr[0] != pMatch[0]) || (mppc->pHistoryPtr[1] != pMatch[1])
-					|| (mppc->pHistoryPtr[2] != pMatch[2]) || (mppc->pHistoryPtr == pMatch))
+			if ((mppc->pHistoryPtr[0] != pMatch[0]) || (mppc->pHistoryPtr[1] != pMatch[1]) ||
+					(mppc->pHistoryPtr[2] != pMatch[2]) || (mppc->pHistoryPtr == pMatch))
 			{
-				printf("no match: %c%c%c %c%c%c\n",
-						mppc->pHistoryPtr[0], mppc->pHistoryPtr[1], mppc->pHistoryPtr[2],
-						pMatch[0], pMatch[1], pMatch[2]);
+				accumulator = *(mppc->pHistoryPtr);
+
+				printf("%c", accumulator);
+
+				if (accumulator < 0x80)
+				{
+					/* 8 bits of literal are encoded as-is */
+					BitStream_Write_Bits(mppc->bs, accumulator, 8);
+				}
+				else
+				{
+					/* bits 10 followed by lower 7 bits of literal */
+					accumulator = 0x100 | (accumulator & 0x7F);
+					BitStream_Write_Bits(mppc->bs, accumulator, 9);
+				}
 
 				mppc->HistoryPtr++;
 				mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
@@ -136,25 +147,56 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, int size)
 			else
 			{
 				DWORD CopyOffset;
-				DWORD LengthOfMatch = 3;
+				DWORD LengthOfMatch = 1;
 
 				CopyOffset = (DWORD) (mppc->pHistoryPtr - pMatch);
 
 				while ((mppc->pHistoryPtr[LengthOfMatch] == pMatch[LengthOfMatch]) &&
 						((mppc->HistoryPtr + LengthOfMatch) < (size - 1)))
 				{
+					MatchIndex = MPPC_MATCH_INDEX(mppc->pHistoryPtr[LengthOfMatch],
+						mppc->pHistoryPtr[LengthOfMatch + 1], mppc->pHistoryPtr[LengthOfMatch + 2]);
+
+					mppc->MatchBuffer[MatchIndex] = (UINT16) (mppc->HistoryPtr + LengthOfMatch);
+
 					LengthOfMatch++;
 				}
 
-				printf("MATCH: <%d, %d> %.*s\n",
-						(int) CopyOffset, (int) LengthOfMatch,
-						(int) LengthOfMatch, pMatch);
+				printf("<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
 
 				mppc->HistoryPtr += LengthOfMatch;
 				mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
 			}
+		}
 
-			index++;
+		/* Encode trailing symbols as literals */
+
+		while (mppc->pHistoryPtr <= pEnd)
+		{
+			MatchIndex = MPPC_MATCH_INDEX(mppc->pHistoryPtr[0], mppc->pHistoryPtr[1], mppc->pHistoryPtr[2]);
+
+			pMatch = &(mppc->HistoryBuffer[mppc->MatchBuffer[MatchIndex]]);
+
+			mppc->MatchBuffer[MatchIndex] = (UINT16) mppc->HistoryPtr;
+
+			accumulator = *(mppc->pHistoryPtr);
+
+			printf("%c", accumulator);
+
+			if (accumulator < 0x80)
+			{
+				/* 8 bits of literal are encoded as-is */
+				BitStream_Write_Bits(mppc->bs, accumulator, 8);
+			}
+			else
+			{
+				/* bits 10 followed by lower 7 bits of literal */
+				accumulator = 0x100 | (accumulator & 0x7F);
+				BitStream_Write_Bits(mppc->bs, accumulator, 9);
+			}
+
+			mppc->HistoryPtr++;
+			mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
 		}
 	}
 	else
@@ -193,6 +235,8 @@ MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor)
 
 		ZeroMemory(&(mppc->HistoryBuffer), sizeof(mppc->HistoryBuffer));
 		ZeroMemory(&(mppc->MatchBuffer), sizeof(mppc->MatchBuffer));
+
+		mppc->bs = BitStream_New();
 	}
 
 	return mppc;
@@ -202,6 +246,8 @@ void mppc_context_free(MPPC_CONTEXT* mppc)
 {
 	if (mppc)
 	{
+		BitStream_Free(mppc->bs);
+
 		free(mppc);
 	}
 }
