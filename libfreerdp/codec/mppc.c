@@ -24,7 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
-#include <winpr/collections.h>
+#include <winpr/bitstream.h>
 
 #include <freerdp/codec/mppc_enc.h>
 #include <freerdp/codec/mppc_dec.h>
@@ -72,6 +72,179 @@ const UINT32 MPPC_MATCH_TABLE[256] =
 
 //#define DEBUG_MPPC	1
 
+void BitStream_Prefetch(wBitStream* bs)
+{
+	(bs->prefetch) = 0;
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 4))
+		(bs->prefetch) |= (*(bs->pointer + 4) << 24);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 5))
+		(bs->prefetch) |= (*(bs->pointer + 5) << 16);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 6))
+		(bs->prefetch) |= (*(bs->pointer + 6) << 8);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 7))
+		(bs->prefetch) |= (*(bs->pointer + 7) << 0);
+}
+
+void BitStream_Fetch(wBitStream* bs)
+{
+	(bs->accumulator) = 0;
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 0))
+		(bs->accumulator) |= (*(bs->pointer + 0) << 24);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 1))
+		(bs->accumulator) |= (*(bs->pointer + 1) << 16);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 2))
+		(bs->accumulator) |= (*(bs->pointer + 2) << 8);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 3))
+		(bs->accumulator) |= (*(bs->pointer + 3) << 0);
+
+	BitStream_Prefetch(bs);
+}
+
+void BitStream_Shift(wBitStream* bs, UINT32 nbits)
+{
+	printf("BitStream_Shift: nbits: %d position: %d offset: %d Accumulator: 0x%04X\n",
+			nbits, bs->position, bs->offset, bs->accumulator);
+
+	bs->accumulator <<= nbits;
+	bs->position += nbits;
+	bs->offset += nbits;
+
+	printf("BitStream_Shift Accumulator shifted: 0x%04X\n", bs->accumulator);
+
+	bs->mask = ((1 << nbits) - 1);
+	bs->accumulator |= ((bs->prefetch >> (32 - nbits)) & bs->mask);
+	bs->prefetch <<= nbits;
+
+	if (bs->offset >= 32)
+	{
+		bs->offset = bs->offset - 32;
+		bs->pointer += 4;
+
+		if (bs->offset)
+			printf("%d bits missing\n", bs->offset);
+
+		BitStream_Prefetch(bs);
+	}
+}
+
+UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize, UINT32 flags)
+{
+	int index;
+	BYTE Literal;
+	UINT32 CopyOffset;
+	UINT32 accumulator;
+	wBitStream* bs = mppc->bs;
+
+	BitStream_Attach(bs, pSrcData, *pSize);
+
+	if (flags & PACKET_AT_FRONT)
+	{
+		mppc->HistoryPtr = 0;
+		mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
+	}
+
+	if (flags & PACKET_FLUSHED)
+	{
+		mppc->HistoryPtr = 0;
+		mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
+
+		ZeroMemory(mppc->HistoryBuffer, mppc->HistoryBufferSize);
+	}
+
+	if (!(flags & PACKET_COMPRESSED))
+	{
+		CopyMemory(mppc->pHistoryPtr, pSrcData, *pSize);
+		mppc->HistoryPtr += *pSize;
+		mppc->pHistoryPtr += *pSize;
+		return 0;
+	}
+
+	BitStream_Fetch(bs);
+
+	for (index = 0; index < *pSize; index++)
+	{
+		accumulator = bs->accumulator;
+
+		if ((accumulator & 0x80000000) == 0x00000000)
+		{
+			/**
+			 * Literal, less than 0x80
+			 * bit 0 followed by the lower 7 bits of the literal
+			 */
+
+			Literal = ((accumulator & 0x7F000000) >> 24);
+			printf("%c\n", Literal);
+
+			BitStream_Shift(bs, 8);
+		}
+		else if ((accumulator & 0xC0000000) == 0x80000000)
+		{
+			/**
+			 * Literal, greater than 0x7F
+			 * bits 10 followed by the lower 7 bits of the literal
+			 */
+
+			Literal = ((accumulator & 0x3F800000) >> 23) + 0x80;
+			printf("%c\n", Literal);
+
+			BitStream_Shift(bs, 9);
+		}
+		else if ((accumulator & 0xF8000000) == 0xF8000000)
+		{
+			/**
+			 * CopyOffset, range [0, 63]
+			 * bits 11111 + lower 6 bits of CopyOffset
+			 */
+
+			CopyOffset = ((accumulator >> 21) & 0x3F);
+			printf("CopyOffset: %d\n", (int) CopyOffset);
+			BitStream_Shift(bs, 11);
+		}
+		else if ((accumulator & 0xF8000000) == 0xF0000000)
+		{
+			/**
+			 * CopyOffset, range [64, 319]
+			 * bits 11110 + lower 8 bits of (CopyOffset - 64)
+			 */
+
+			CopyOffset = ((accumulator >> 19) & 0xFF) + 64;
+			printf("CopyOffset: %d\n", (int) CopyOffset);
+
+			BitStream_Shift(bs, 13);
+		}
+		else if ((accumulator & 0xF0000000) == 0xE0000000)
+		{
+			/**
+			 * CopyOffset, range [320, 2367]
+			 * bits 1110 + lower 11 bits of (CopyOffset - 320)
+			 */
+
+			CopyOffset = ((accumulator >> 17) & 0x7FF) + 320;
+			printf("CopyOffset: %d\n", (int) CopyOffset);
+
+			BitStream_Shift(bs, 15);
+		}
+		else if ((accumulator & 0xE0000000) == 0xC0000000)
+		{
+			/**
+			 * CopyOffset, range [2368, ]
+			 * bits 110 + lower 16 bits of (CopyOffset - 2368)
+			 */
+
+			CopyOffset = ((accumulator >> 13) & 0xFFFF) + 2368;
+			printf("CopyOffset: %d\n", (int) CopyOffset);
+
+			BitStream_Shift(bs, 19);
+		}
+		else
+		{
+			/* invalid encoding */
+		}
+	}
+
+	return 0;
+}
+
 UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize)
 {
 	BYTE* pEnd;
@@ -80,31 +253,27 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 	UINT32 MatchIndex;
 	UINT32 accumulator;
 
-	Flags = mppc->CompressionLevel;
-
 	BitStream_Attach(mppc->bs, pDstData, *pSize);
 
-	if (((mppc->HistoryOffset + *pSize) < (mppc->HistoryBufferSize - 3)) /* && mppc->HistoryOffset */)
+	CopyMemory(&(mppc->HistoryBuffer[mppc->HistoryOffset]), pSrcData, *pSize);
+
+	mppc->HistoryPtr = 0;
+	mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
+
+	if (((mppc->HistoryOffset + *pSize) < (mppc->HistoryBufferSize - 3)) && mppc->HistoryOffset)
 	{
-		/* SrcData fits into HistoryBuffer? (YES) */
-
-		CopyMemory(&(mppc->HistoryBuffer[mppc->HistoryOffset]), pSrcData, *pSize);
-
-		mppc->HistoryPtr = 0;
-		mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
-
-		mppc->HistoryOffset += *pSize;
-		mppc->pHistoryOffset = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
+		Flags = mppc->CompressionLevel;
 	}
 	else
 	{
-		/* SrcData fits into HistoryBuffer? (NO) */
-
 		mppc->HistoryOffset = 0;
 		mppc->pHistoryOffset = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
 
-		Flags |= PACKET_AT_FRONT;
+		Flags = PACKET_AT_FRONT | mppc->CompressionLevel;
 	}
+
+	mppc->HistoryOffset += *pSize;
+	mppc->pHistoryOffset = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
 
 	if (mppc->HistoryPtr < mppc->HistoryOffset)
 	{

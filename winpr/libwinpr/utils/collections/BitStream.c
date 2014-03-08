@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include <winpr/collections.h>
+#include <winpr/bitstream.h>
 
 const char* BYTE_BIT_STRINGS_LSB[256] =
 {
@@ -159,7 +159,7 @@ const char* BYTE_BIT_STRINGS_MSB[256] =
 	"00111111", "10111111", "01111111", "11111111"
 };
 
-void BitDump(BYTE* buffer, UINT32 length, UINT32 flags)
+void BitDump(const BYTE* buffer, UINT32 length, UINT32 flags)
 {
 	DWORD i;
 	int nbits;
@@ -173,6 +173,9 @@ void BitDump(BYTE* buffer, UINT32 length, UINT32 flags)
 		str = strs[buffer[i / 8]];
 
 		nbits = (length - i) > 8 ? 8 : (length - i);
+
+		if ((i % 64) == 0)
+			printf("\n");
 
 		printf("%.*s ", nbits, str);
 	}
