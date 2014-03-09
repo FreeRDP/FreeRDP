@@ -208,49 +208,89 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT3
 
 		CopyOffset = 0;
 
-		if ((accumulator & 0xF8000000) == 0xF8000000)
+		if (mppc->CompressionLevel) /* RDP5 */
 		{
-			/**
-			 * CopyOffset, range [0, 63]
-			 * bits 11111 + lower 6 bits of CopyOffset
-			 */
+			if ((accumulator & 0xF8000000) == 0xF8000000)
+			{
+				/**
+				 * CopyOffset, range [0, 63]
+				 * bits 11111 + lower 6 bits of CopyOffset
+				 */
 
-			CopyOffset = ((accumulator >> 21) & 0x3F);
-			BitStream_Shift(bs, 11);
-		}
-		else if ((accumulator & 0xF8000000) == 0xF0000000)
-		{
-			/**
-			 * CopyOffset, range [64, 319]
-			 * bits 11110 + lower 8 bits of (CopyOffset - 64)
-			 */
+				CopyOffset = ((accumulator >> 21) & 0x3F);
+				BitStream_Shift(bs, 11);
+			}
+			else if ((accumulator & 0xF8000000) == 0xF0000000)
+			{
+				/**
+				 * CopyOffset, range [64, 319]
+				 * bits 11110 + lower 8 bits of (CopyOffset - 64)
+				 */
 
-			CopyOffset = ((accumulator >> 19) & 0xFF) + 64;
-			BitStream_Shift(bs, 13);
-		}
-		else if ((accumulator & 0xF0000000) == 0xE0000000)
-		{
-			/**
-			 * CopyOffset, range [320, 2367]
-			 * bits 1110 + lower 11 bits of (CopyOffset - 320)
-			 */
+				CopyOffset = ((accumulator >> 19) & 0xFF) + 64;
+				BitStream_Shift(bs, 13);
+			}
+			else if ((accumulator & 0xF0000000) == 0xE0000000)
+			{
+				/**
+				 * CopyOffset, range [320, 2367]
+				 * bits 1110 + lower 11 bits of (CopyOffset - 320)
+				 */
 
-			CopyOffset = ((accumulator >> 17) & 0x7FF) + 320;
-			BitStream_Shift(bs, 15);
-		}
-		else if ((accumulator & 0xE0000000) == 0xC0000000)
-		{
-			/**
-			 * CopyOffset, range [2368, ]
-			 * bits 110 + lower 16 bits of (CopyOffset - 2368)
-			 */
+				CopyOffset = ((accumulator >> 17) & 0x7FF) + 320;
+				BitStream_Shift(bs, 15);
+			}
+			else if ((accumulator & 0xE0000000) == 0xC0000000)
+			{
+				/**
+				 * CopyOffset, range [2368, ]
+				 * bits 110 + lower 16 bits of (CopyOffset - 2368)
+				 */
 
-			CopyOffset = ((accumulator >> 13) & 0xFFFF) + 2368;
-			BitStream_Shift(bs, 19);
+				CopyOffset = ((accumulator >> 13) & 0xFFFF) + 2368;
+				BitStream_Shift(bs, 19);
+			}
+			else
+			{
+				/* Invalid CopyOffset Encoding */
+			}
 		}
-		else
+		else /* RDP4 */
 		{
-			/* Invalid CopyOffset Encoding */
+			if ((accumulator & 0xF0000000) == 0xF0000000)
+			{
+				/**
+				 * CopyOffset, range [0, 63]
+				 * bits 1111 + lower 6 bits of CopyOffset
+				 */
+
+				CopyOffset = ((accumulator >> 22) & 0x3F);
+				BitStream_Shift(bs, 10);
+			}
+			else if ((accumulator & 0xF0000000) == 0xE0000000)
+			{
+				/**
+				 * CopyOffset, range [64, 319]
+				 * bits 1110 + lower 8 bits of (CopyOffset - 64)
+				 */
+
+				CopyOffset = ((accumulator >> 20) & 0xFF) + 64;
+				BitStream_Shift(bs, 12);
+			}
+			else if ((accumulator & 0xE0000000) == 0xC0000000)
+			{
+				/**
+				 * CopyOffset, range [320, 8191]
+				 * bits 110 + lower 13 bits of (CopyOffset - 320)
+				 */
+
+				CopyOffset = ((accumulator >> 16) & 0x1FFF) + 320;
+				BitStream_Shift(bs, 16);
+			}
+			else
+			{
+				/* Invalid CopyOffset Encoding */
+			}
 		}
 
 		/**
@@ -380,7 +420,7 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT3
 			LengthOfMatch = ((accumulator >> 8) & 0x0FFF) + 0x1000;
 			BitStream_Shift(bs, 24);
 		}
-		else if ((accumulator & 0xFFF80000) == 0xFFF00000)
+		else if (((accumulator & 0xFFF80000) == 0xFFF00000) && mppc->CompressionLevel) /* RDP5 */
 		{
 			/**
 			 * LengthOfMatch [8192, 16383]
@@ -390,7 +430,7 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT3
 			LengthOfMatch = ((accumulator >> 6) & 0x1FFF) + 0x2000;
 			BitStream_Shift(bs, 26);
 		}
-		else if ((accumulator & 0xFFFC0000) == 0xFFF80000)
+		else if (((accumulator & 0xFFFC0000) == 0xFFF80000) && mppc->CompressionLevel) /* RDP5 */
 		{
 			/**
 			 * LengthOfMatch [16384, 32767]
@@ -400,7 +440,7 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT3
 			LengthOfMatch = ((accumulator >> 4) & 0x3FFF) + 0x4000;
 			BitStream_Shift(bs, 28);
 		}
-		else if ((accumulator & 0xFFFE0000) == 0xFFFC0000)
+		else if (((accumulator & 0xFFFE0000) == 0xFFFC0000) && mppc->CompressionLevel) /* RDP5 */
 		{
 			/**
 			 * LengthOfMatch [32768, 65535]
@@ -521,29 +561,53 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 
 				/* Encode CopyOffset */
 
-				if (CopyOffset < 64)
+				if (mppc->CompressionLevel) /* RDP5 */
 				{
-					/* bits 11111 + lower 6 bits of CopyOffset */
-					accumulator = 0x07C0 | (CopyOffset & 0x003F);
-					BitStream_Write_Bits(mppc->bs, accumulator, 11);
+					if (CopyOffset < 64)
+					{
+						/* bits 11111 + lower 6 bits of CopyOffset */
+						accumulator = 0x07C0 | (CopyOffset & 0x003F);
+						BitStream_Write_Bits(mppc->bs, accumulator, 11);
+					}
+					else if ((CopyOffset >= 64) && (CopyOffset < 320))
+					{
+						/* bits 11110 + lower 8 bits of (CopyOffset - 64) */
+						accumulator = 0x1E00 | ((CopyOffset - 64) & 0x00FF);
+						BitStream_Write_Bits(mppc->bs, accumulator, 13);
+					}
+					else if ((CopyOffset >= 320) && (CopyOffset < 2368))
+					{
+						/* bits 1110 + lower 11 bits of (CopyOffset - 320) */
+						accumulator = 0x7000 | ((CopyOffset - 320) & 0x07FF);
+						BitStream_Write_Bits(mppc->bs, accumulator, 15);
+					}
+					else
+					{
+						/* bits 110 + lower 16 bits of (CopyOffset - 2368) */
+						accumulator = 0x060000 | ((CopyOffset - 2368) & 0xFFFF);
+						BitStream_Write_Bits(mppc->bs, accumulator, 19);
+					}
 				}
-				else if ((CopyOffset >= 64) && (CopyOffset < 320))
+				else /* RDP4 */
 				{
-					/* bits 11110 + lower 8 bits of (CopyOffset - 64) */
-					accumulator = 0x1E00 | ((CopyOffset - 64) & 0x00FF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 13);
-				}
-				else if ((CopyOffset >= 320) && (CopyOffset < 2368))
-				{
-					/* bits 1110 + lower 11 bits of (CopyOffset - 320) */
-					accumulator = 0x7000 | ((CopyOffset - 320) & 0x07FF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 15);
-				}
-				else
-				{
-					/* bits 110 + lower 16 bits of (CopyOffset - 2368) */
-					accumulator = 0x060000 | ((CopyOffset - 2368) & 0xFFFF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 19);
+					if (CopyOffset < 64)
+					{
+						/* bits 1111 + lower 6 bits of CopyOffset */
+						accumulator = 0x03C0 | (CopyOffset & 0x003F);
+						BitStream_Write_Bits(mppc->bs, accumulator, 10);
+					}
+					else if ((CopyOffset >= 64) && (CopyOffset < 320))
+					{
+						/* bits 1110 + lower 8 bits of (CopyOffset - 64) */
+						accumulator = 0x0E00 | ((CopyOffset - 64) & 0x00FF);
+						BitStream_Write_Bits(mppc->bs, accumulator, 12);
+					}
+					else if ((CopyOffset >= 320) && (CopyOffset < 8192))
+					{
+						/* bits 110 + lower 13 bits of (CopyOffset - 320) */
+						accumulator = 0xC000 | ((CopyOffset - 320) & 0x1FFF);
+						BitStream_Write_Bits(mppc->bs, accumulator, 16);
+					}
 				}
 
 				/* Encode LengthOfMatch */
@@ -619,19 +683,19 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 					accumulator = 0xFFE000 | (LengthOfMatch & 0x0FFF);
 					BitStream_Write_Bits(mppc->bs, accumulator, 24);
 				}
-				else if ((LengthOfMatch >= 8192) && (LengthOfMatch < 16384))
+				else if (((LengthOfMatch >= 8192) && (LengthOfMatch < 16384)) && mppc->CompressionLevel) /* RDP5 */
 				{
 					/* 1111111111110 + 13 lower bits of LengthOfMatch */
 					accumulator = 0x3FFC000 | (LengthOfMatch & 0x1FFF);
 					BitStream_Write_Bits(mppc->bs, accumulator, 26);
 				}
-				else if ((LengthOfMatch >= 16384) && (LengthOfMatch < 32768))
+				else if (((LengthOfMatch >= 16384) && (LengthOfMatch < 32768)) && mppc->CompressionLevel) /* RDP5 */
 				{
 					/* 11111111111110 + 14 lower bits of LengthOfMatch */
 					accumulator = 0xFFF8000 | (LengthOfMatch & 0x3FFF);
 					BitStream_Write_Bits(mppc->bs, accumulator, 28);
 				}
-				else if ((LengthOfMatch >= 32768) && (LengthOfMatch < 65536))
+				else if (((LengthOfMatch >= 32768) && (LengthOfMatch < 65536)) && mppc->CompressionLevel) /* RDP5 */
 				{
 					/* 111111111111110 + 15 lower bits of LengthOfMatch */
 					accumulator = 0x3FFF0000 | (LengthOfMatch & 0x7FFF);

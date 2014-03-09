@@ -706,7 +706,7 @@ const BYTE TEST_MPPC_BELLS_RDP5[] =
 	"\x6c\x2e\x74\x6f\x6c\x6c\x73\x2c\xfa\x1b\x97\x33\x7e\x87\xe3\x32"
 	"\x90\x80";
 
-int test_MppcCompressBells()
+int test_MppcCompressBellsRdp5()
 {
 	UINT32 size;
 	UINT32 flags;
@@ -738,7 +738,39 @@ int test_MppcCompressBells()
 	return 0;
 }
 
-int test_MppcDecompressBells()
+int test_MppcCompressBellsRdp4()
+{
+	UINT32 size;
+	UINT32 flags;
+	BYTE* pSrcData;
+	MPPC_CONTEXT* mppc;
+	BYTE OutputBuffer[65536];
+
+	mppc = mppc_context_new(0, TRUE);
+
+	size = sizeof(TEST_MPPC_BELLS) - 1;
+	pSrcData = (BYTE*) TEST_MPPC_BELLS;
+
+	printf("%s\n", pSrcData);
+	flags = mppc_compress(mppc, pSrcData, OutputBuffer, &size);
+
+	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	if (memcmp(OutputBuffer, TEST_MPPC_BELLS_RDP4, size) != 0)
+	{
+		printf("Actual:\n");
+		BitDump(OutputBuffer, size * 8, BITDUMP_MSB_FIRST);
+
+		printf("Expected:\n");
+		BitDump(TEST_MPPC_BELLS_RDP4, size * 8, BITDUMP_MSB_FIRST);
+	}
+
+	mppc_context_free(mppc);
+
+	return 0;
+}
+
+int test_MppcDecompressBellsRdp5()
 {
 	UINT32 size;
 	UINT32 flags;
@@ -775,6 +807,30 @@ int test_MppcDecompressBells()
 	return 0;
 }
 
+int test_MppcDecompressBellsRdp4()
+{
+	UINT32 size;
+	UINT32 flags;
+	BYTE* pSrcData;
+	MPPC_CONTEXT* mppc;
+	BYTE OutputBuffer[65536];
+
+	mppc = mppc_context_new(0, FALSE);
+
+	size = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
+	pSrcData = (BYTE*) TEST_MPPC_BELLS_RDP4;
+	flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 0;
+
+	flags = mppc_decompress(mppc, pSrcData, OutputBuffer, &size, flags);
+
+	printf("flags: 0x%04X size: %d\n", flags, size);
+	printf("%s\n", OutputBuffer);
+
+	mppc_context_free(mppc);
+
+	return 0;
+}
+
 int test_MppcCompressBuffer()
 {
 	UINT32 size;
@@ -803,8 +859,11 @@ int test_MppcCompressBuffer()
 
 int TestFreeRDPCodecMppc(int argc, char* argv[])
 {
-	//test_MppcCompressBells();
-	test_MppcDecompressBells();
+	//test_MppcCompressBellsRdp5();
+	//test_MppcDecompressBellsRdp5();
+
+	test_MppcCompressBellsRdp4();
+	//test_MppcDecompressBellsRdp4();
 
 	return 0;
 }
