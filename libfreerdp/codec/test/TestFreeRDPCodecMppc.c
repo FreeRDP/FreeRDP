@@ -686,8 +686,73 @@ int test_mppc_old()
 }
 
 /**
+ *
  * for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
- * for.whom.the.bell.tolls,<16,15>.<40,4><19,3>e!
+ * for.whom.the.bell.tolls,<16,15>.<40,4><19,3>e! ([MS-RDPBCGR])
+ * for.whom.the.bell.tolls,<16,15>.f<40,3><35,3>e! (Microsoft Encoder)
+ *
+ * RDP5:
+ * 01100110 Literal 'f'
+ * 01101111 Literal 'o'
+ * 01110010 Literal 'r'
+ * 00101110 Literal '.'
+ * 01110111 Literal 'w'
+ * 01101000 Literal 'h'
+ * 01101111 Literal 'o'
+ * 01101101 Literal 'm'
+ * 00101110 Literal '.'
+ * 01110100 Literal 't'
+ * 01101000 Literal 'h'
+ * 01100101 Literal 'e'
+ * 00101110 Literal '.'
+ * 01100010 Literal 'b'
+ * 01100101 Literal 'e'
+ * 01101100 Literal 'l'
+ * 01101100 Literal 'l'
+ * 00101110 Literal '.'
+ * 01110100 Literal 't'
+ * 01101111 Literal 'o'
+ * 01101100 Literal 'l'
+ * 01101100 Literal 'l'
+ * 01110011 Literal 's'
+ * 00101100 Literal ','
+ *
+ * RDP4:
+ * 01100110 Literal 'f'
+ * 01101111 Literal 'o'
+ * 01110010 Literal 'r'
+ * 00101110 Literal '.'
+ * 01110111 Literal 'w'
+ * 01101000 Literal 'h'
+ * 01101111 Literal 'o'
+ * 01101101 Literal 'm'
+ * 00101110 Literal '.'
+ * 01110100 Literal 't'
+ * 01101000 Literal 'h'
+ * 01100101 Literal 'e'
+ * 00101110 Literal '.'
+ * 01100010 Literal 'b'
+ * 01100101 Literal 'e'
+ * 01101100 Literal 'l'
+ * 01101100 Literal 'l'
+ * 00101110 Literal '.'
+ * 01110100 Literal 't'
+ * 01101111 Literal 'o'
+ * 01101100 Literal 'l'
+ * 01101100 Literal 'l'
+ * 01110011 Literal 's'
+ * 00101100 Literal ','
+ * 1111+010000 CopyOffset 16
+ * 110+111 LengthOfMatch 15
+ * 00101110 Literal '.'
+ * 01100110 Literal 'f'
+ * 1111+101000 CopyOffset 40
+ * 0 LengthOfMatch 3
+ * 1111+100011 CopyOffset 35
+ * 0 LengthOfMatch 3
+ * 01100101 Literal 'e'
+ * 00100001 Literal '!'
+ * 00 Trailing Bits
  */
 
 const BYTE TEST_MPPC_BELLS[] = "for.whom.the.bell.tolls,.the.bell.tolls.for.thee!";
@@ -789,19 +854,6 @@ int test_MppcDecompressBellsRdp5()
 	printf("flags: 0x%04X size: %d\n", flags, size);
 	printf("%s\n", OutputBuffer);
 
-#if 0
-	size = sizeof(TEST_MPPC_BELLS) - 1;
-
-	if (memcmp(OutputBuffer, TEST_MPPC_BELLS, sizeof(TEST_MPPC_BELLS) - 1) != 0)
-	{
-		printf("Actual:\n");
-		BitDump(OutputBuffer, size * 8, BITDUMP_MSB_FIRST);
-
-		printf("Expected:\n");
-		BitDump(TEST_MPPC_BELLS, size * 8, BITDUMP_MSB_FIRST);
-	}
-#endif
-
 	mppc_context_free(mppc);
 
 	return 0;
@@ -847,11 +899,6 @@ int test_MppcCompressBuffer()
 	flags = mppc_compress(mppc, pSrcData, OutputBuffer, &size);
 	printf("flags: 0x%04X size: %d\n", flags, size);
 
-	winpr_HexDump(OutputBuffer, size);
-	//winpr_HexDump(TEST_RDP5_COMPRESSED_DATA, sizeof(TEST_RDP5_COMPRESSED_DATA));
-
-	printf("sizeof(TEST_RDP5_COMPRESSED_DATA): %d\n", (int) sizeof(TEST_RDP5_COMPRESSED_DATA));
-
 	mppc_context_free(mppc);
 
 	return 0;
@@ -860,9 +907,9 @@ int test_MppcCompressBuffer()
 int TestFreeRDPCodecMppc(int argc, char* argv[])
 {
 	//test_MppcCompressBellsRdp5();
-	//test_MppcDecompressBellsRdp5();
+	test_MppcDecompressBellsRdp5();
 
-	test_MppcCompressBellsRdp4();
+	//test_MppcCompressBellsRdp4();
 	//test_MppcDecompressBellsRdp4();
 
 	return 0;

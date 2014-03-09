@@ -46,7 +46,7 @@ typedef struct _wBitStream wBitStream;
 	_bs->accumulator = 0; \
 	_bs->pointer = _bs->buffer; \
 	_bs->capacity = _capacity; \
-	_bs->length = _bs->capacity; \
+	_bs->length = _bs->capacity * 8; \
 }
 
 #define BitStream_Write_Bits(_bs, _bits, _nbits) { \

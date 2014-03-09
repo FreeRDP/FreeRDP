@@ -165,7 +165,7 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT3
 		return 0;
 	}
 
-	while (bs->position < (*pSize * 8))
+	while ((bs->length - bs->position) >= 8)
 	{
 		accumulator = bs->accumulator;
 
