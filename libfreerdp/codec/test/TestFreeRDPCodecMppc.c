@@ -726,6 +726,17 @@ int test_mppc_old()
  * 01101100 Literal 'l'
  * 01110011 Literal 's'
  * 00101100 Literal ','
+ * 11111+010000 CopyOffset 16
+ * 110+111 LengthOfMatch 15
+ * 00101110 Literal '.'
+ * 01100110 Literal 'f'
+ * 11111+101000 CopyOffset 40
+ * 0 LengthOfMatch 3
+ * 11111+100011 CopyOffset 35
+ * 0 LengthOfMatch 3
+ * 01100101 Literal 'e'
+ * 00100001 Literal '!'
+ * 0000000 Trailing Bits
  *
  * RDP4:
  * 01100110 Literal 'f'
@@ -810,6 +821,13 @@ int test_MppcCompressBellsRdp5()
 	if (memcmp(OutputBuffer, TEST_MPPC_BELLS_RDP5, size) != 0)
 	{
 		printf("MppcCompressBellsRdp5: output mismatch\n");
+
+		printf("Actual\n");
+		BitDump(OutputBuffer, size * 8, 0);
+
+		printf("Expected\n");
+		BitDump(TEST_MPPC_BELLS_RDP5, size * 8, 0);
+
 		return -1;
 	}
 
@@ -847,6 +865,13 @@ int test_MppcCompressBellsRdp4()
 	if (memcmp(OutputBuffer, TEST_MPPC_BELLS_RDP4, size) != 0)
 	{
 		printf("MppcCompressBellsRdp4: output mismatch\n");
+
+		printf("Actual\n");
+		BitDump(OutputBuffer, size * 8, 0);
+
+		printf("Expected\n");
+		BitDump(TEST_MPPC_BELLS_RDP4, size * 8, 0);
+
 		return -1;
 	}
 

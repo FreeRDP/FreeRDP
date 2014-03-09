@@ -72,66 +72,6 @@ const UINT32 MPPC_MATCH_TABLE[256] =
 
 #define DEBUG_MPPC	1
 
-void BitStream_Prefetch(wBitStream* bs)
-{
-	(bs->prefetch) = 0;
-	if ((bs->pointer - bs->buffer) < (bs->capacity + 4))
-		(bs->prefetch) |= (*(bs->pointer + 4) << 24);
-	if ((bs->pointer - bs->buffer) < (bs->capacity + 5))
-		(bs->prefetch) |= (*(bs->pointer + 5) << 16);
-	if ((bs->pointer - bs->buffer) < (bs->capacity + 6))
-		(bs->prefetch) |= (*(bs->pointer + 6) << 8);
-	if ((bs->pointer - bs->buffer) < (bs->capacity + 7))
-		(bs->prefetch) |= (*(bs->pointer + 7) << 0);
-}
-
-void BitStream_Fetch(wBitStream* bs)
-{
-	(bs->accumulator) = 0;
-	if ((bs->pointer - bs->buffer) < (bs->capacity + 0))
-		(bs->accumulator) |= (*(bs->pointer + 0) << 24);
-	if ((bs->pointer - bs->buffer) < (bs->capacity + 1))
-		(bs->accumulator) |= (*(bs->pointer + 1) << 16);
-	if ((bs->pointer - bs->buffer) < (bs->capacity + 2))
-		(bs->accumulator) |= (*(bs->pointer + 2) << 8);
-	if ((bs->pointer - bs->buffer) < (bs->capacity + 3))
-		(bs->accumulator) |= (*(bs->pointer + 3) << 0);
-
-	BitStream_Prefetch(bs);
-}
-
-void BitStream_Shift(wBitStream* bs, UINT32 nbits)
-{
-	bs->accumulator <<= nbits;
-	bs->position += nbits;
-	bs->offset += nbits;
-
-	if (bs->offset < 32)
-	{
-		bs->mask = ((1 << nbits) - 1);
-		bs->accumulator |= ((bs->prefetch >> (32 - nbits)) & bs->mask);
-		bs->prefetch <<= nbits;
-	}
-	else
-	{
-		bs->mask = ((1 << nbits) - 1);
-		bs->accumulator |= ((bs->prefetch >> (32 - nbits)) & bs->mask);
-		bs->prefetch <<= nbits;
-
-		bs->offset -= 32;
-		bs->pointer += 4;
-
-		BitStream_Prefetch(bs);
-
-		if (bs->offset)
-		{
-			bs->mask = ((1 << bs->offset) - 1);
-			bs->accumulator |= ((bs->prefetch >> (32 - bs->offset)) & bs->mask);
-			bs->prefetch <<= bs->offset;
-		}
-	}
-}
-
 UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize, UINT32 flags)
 {
 	BYTE Literal;
@@ -735,9 +675,7 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 		while (pHistoryPtr <= pEnd)
 		{
 			MatchIndex = MPPC_MATCH_INDEX(pHistoryPtr[0], pHistoryPtr[1], pHistoryPtr[2]);
-
 			pMatch = &(HistoryBuffer[mppc->MatchBuffer[MatchIndex]]);
-
 			mppc->MatchBuffer[MatchIndex] = (UINT16) HistoryPtr;
 
 			accumulator = *(pHistoryPtr);
@@ -759,7 +697,7 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 			}
 
 			HistoryPtr++;
-			pHistoryPtr++;
+			pHistoryPtr = &(HistoryBuffer[HistoryPtr]);
 		}
 	}
 
