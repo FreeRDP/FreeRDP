@@ -45,7 +45,7 @@ extern "C" {
 #endif
 
 FREERDP_API UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize);
-FREERDP_API UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize, UINT32 flags);
+FREERDP_API UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE** ppDstData, UINT32* pSize, UINT32 flags);
 
 FREERDP_API MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor);
 FREERDP_API void mppc_context_free(MPPC_CONTEXT* mppc);

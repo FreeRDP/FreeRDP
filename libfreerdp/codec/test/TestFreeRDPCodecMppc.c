@@ -807,7 +807,6 @@ int test_MppcCompressBellsRdp5()
 	pSrcData = (BYTE*) TEST_MPPC_BELLS;
 	expectedSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
 
-	printf("%s\n", pSrcData);
 	flags = mppc_compress(mppc, pSrcData, OutputBuffer, &size);
 
 	printf("flags: 0x%04X size: %d\n", flags, size);
@@ -851,7 +850,6 @@ int test_MppcCompressBellsRdp4()
 	pSrcData = (BYTE*) TEST_MPPC_BELLS;
 	expectedSize = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
 
-	printf("%s\n", pSrcData);
 	flags = mppc_compress(mppc, pSrcData, OutputBuffer, &size);
 
 	printf("flags: 0x%04X size: %d\n", flags, size);
@@ -886,16 +884,30 @@ int test_MppcDecompressBellsRdp5()
 	UINT32 flags;
 	BYTE* pSrcData;
 	MPPC_CONTEXT* mppc;
-	BYTE OutputBuffer[65536];
+	UINT32 expectedSize;
+	BYTE* pDstData = NULL;
 
 	mppc = mppc_context_new(1, FALSE);
 
 	size = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
 	pSrcData = (BYTE*) TEST_MPPC_BELLS_RDP5;
 	flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
+	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
 
-	flags = mppc_decompress(mppc, pSrcData, OutputBuffer, &size, flags);
+	flags = mppc_decompress(mppc, pSrcData, &pDstData, &size, flags);
 	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	if (size != expectedSize)
+	{
+		printf("MppcDecompressBellsRdp5: output size mismatch: Actual: %d, Expected: %d\n", size, expectedSize);
+		return -1;
+	}
+
+	if (memcmp(pDstData, TEST_MPPC_BELLS, size) != 0)
+	{
+		printf("MppcDecompressBellsRdp5: output mismatch\n");
+		return -1;
+	}
 
 	mppc_context_free(mppc);
 
@@ -908,37 +920,95 @@ int test_MppcDecompressBellsRdp4()
 	UINT32 flags;
 	BYTE* pSrcData;
 	MPPC_CONTEXT* mppc;
-	BYTE OutputBuffer[65536];
+	UINT32 expectedSize;
+	BYTE* pDstData = NULL;
 
 	mppc = mppc_context_new(0, FALSE);
 
 	size = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
 	pSrcData = (BYTE*) TEST_MPPC_BELLS_RDP4;
 	flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 0;
+	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
 
-	flags = mppc_decompress(mppc, pSrcData, OutputBuffer, &size, flags);
+	flags = mppc_decompress(mppc, pSrcData, &pDstData, &size, flags);
 	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	if (size != expectedSize)
+	{
+		printf("MppcDecompressBellsRdp4: output size mismatch: Actual: %d, Expected: %d\n", size, expectedSize);
+		return -1;
+	}
+
+	if (memcmp(pDstData, TEST_MPPC_BELLS, size) != 0)
+	{
+		printf("MppcDecompressBellsRdp4: output mismatch\n");
+		return -1;
+	}
 
 	mppc_context_free(mppc);
 
 	return 0;
 }
 
-int test_MppcCompressBuffer()
+int test_MppcCompressBufferRdp5()
 {
 	UINT32 size;
 	UINT32 flags;
 	BYTE* pSrcData;
 	MPPC_CONTEXT* mppc;
+	UINT32 expectedSize;
 	BYTE OutputBuffer[65536];
 
 	mppc = mppc_context_new(1, TRUE);
 
 	size = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
 	pSrcData = (BYTE*) TEST_RDP5_UNCOMPRESSED_DATA;
+	expectedSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
 
 	flags = mppc_compress(mppc, pSrcData, OutputBuffer, &size);
 	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	if (size != expectedSize)
+	{
+		printf("MppcCompressBufferRdp5: output size mismatch: Actual: %d, Expected: %d\n", size, expectedSize);
+		return -1;
+	}
+
+	mppc_context_free(mppc);
+
+	return 0;
+}
+
+int test_MppcDecompressBufferRdp5()
+{
+	UINT32 size;
+	UINT32 flags;
+	BYTE* pSrcData;
+	MPPC_CONTEXT* mppc;
+	UINT32 expectedSize;
+	BYTE* pDstData = NULL;
+
+	mppc = mppc_context_new(1, FALSE);
+
+	size = sizeof(TEST_RDP5_COMPRESSED_DATA);
+	pSrcData = (BYTE*) TEST_RDP5_COMPRESSED_DATA;
+	flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
+	expectedSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
+
+	flags = mppc_decompress(mppc, pSrcData, &pDstData, &size, flags);
+	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	if (size != expectedSize)
+	{
+		printf("MppcDecompressBufferRdp5: output size mismatch: Actual: %d, Expected: %d\n", size, expectedSize);
+		return -1;
+	}
+
+	if (memcmp(pDstData, TEST_RDP5_UNCOMPRESSED_DATA, size) != 0)
+	{
+		printf("MppcDecompressBufferRdp5: output mismatch\n");
+		return -1;
+	}
 
 	mppc_context_free(mppc);
 
@@ -947,11 +1017,24 @@ int test_MppcCompressBuffer()
 
 int TestFreeRDPCodecMppc(int argc, char* argv[])
 {
-	test_MppcCompressBellsRdp5();
-	//test_MppcDecompressBellsRdp5();
+	if (test_MppcCompressBellsRdp5() < 0)
+		return -1;
 
-	test_MppcCompressBellsRdp4();
-	//test_MppcDecompressBellsRdp4();
+	if (test_MppcDecompressBellsRdp5() < 0)
+		return -1;
+
+	if (test_MppcCompressBellsRdp4() < 0)
+		return -1;
+
+	if (test_MppcDecompressBellsRdp4() < 0)
+		return -1;
+
+	test_MppcCompressBufferRdp5();
+
+	if (test_MppcDecompressBufferRdp5() < 0)
+		return -1;
+
+	//test_mppc_old();
 
 	return 0;
 }

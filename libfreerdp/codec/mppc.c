@@ -70,15 +70,24 @@ const UINT32 MPPC_MATCH_TABLE[256] =
 	0x97E91668, 0x9885E5FB, 0x9922B58E, 0x99BF8521, 0x9A5C54B4, 0x9AF92447, 0x9B95F3DA, 0x9C32C36D
 };
 
-#define DEBUG_MPPC	1
+//#define DEBUG_MPPC	1
 
-UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize, UINT32 flags)
+UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE** ppDstData, UINT32* pSize, UINT32 flags)
 {
 	BYTE Literal;
+	BYTE* SrcPtr;
 	UINT32 CopyOffset;
 	UINT32 LengthOfMatch;
 	UINT32 accumulator;
+	BYTE* HistoryBuffer;
+	UINT32 HistoryPtr;
+	BYTE* pHistoryPtr;
+	UINT32 HistoryOffset;
+	BYTE* pHistoryOffset;
 	wBitStream* bs = mppc->bs;
+
+	HistoryBuffer = mppc->HistoryBuffer;
+	*ppDstData = HistoryBuffer;
 
 	BitStream_Attach(bs, pSrcData, *pSize);
 	BitStream_Fetch(bs);
@@ -86,15 +95,14 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT3
 	if (flags & PACKET_AT_FRONT)
 	{
 		mppc->HistoryPtr = 0;
-		mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
+		mppc->pHistoryPtr = &(HistoryBuffer[mppc->HistoryPtr]);
 	}
 
 	if (flags & PACKET_FLUSHED)
 	{
 		mppc->HistoryPtr = 0;
-		mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
-
-		ZeroMemory(mppc->HistoryBuffer, mppc->HistoryBufferSize);
+		mppc->pHistoryPtr = &(HistoryBuffer[mppc->HistoryPtr]);
+		ZeroMemory(HistoryBuffer, mppc->HistoryBufferSize);
 	}
 
 	if (!(flags & PACKET_COMPRESSED))
@@ -104,6 +112,11 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT3
 		mppc->pHistoryPtr += *pSize;
 		return 0;
 	}
+
+	HistoryPtr = mppc->HistoryPtr;
+	pHistoryPtr = mppc->pHistoryPtr;
+	HistoryOffset = mppc->HistoryOffset;
+	pHistoryOffset = mppc->pHistoryOffset;
 
 	while ((bs->length - bs->position) >= 8)
 	{
@@ -121,7 +134,10 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT3
 			 */
 
 			Literal = ((accumulator & 0x7F000000) >> 24);
-			printf("L1: %c\n", Literal);
+
+			*(pHistoryPtr) = Literal;
+			pHistoryPtr++;
+			HistoryPtr++;
 
 			BitStream_Shift(bs, 8);
 
@@ -135,7 +151,10 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT3
 			 */
 
 			Literal = ((accumulator & 0x3F800000) >> 23) + 0x80;
-			printf("L2: %c\n", Literal);
+
+			*(pHistoryPtr) = Literal;
+			pHistoryPtr++;
+			HistoryPtr++;
 
 			BitStream_Shift(bs, 9);
 
@@ -395,8 +414,27 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT3
 			/* Invalid LengthOfMatch Encoding */
 		}
 
+#ifdef DEBUG_MPPC
 		printf("<%d,%d>\n", (int) CopyOffset, (int) LengthOfMatch);
+#endif
+
+		SrcPtr = pHistoryPtr - CopyOffset;
+
+		while (LengthOfMatch > 0)
+		{
+			*(pHistoryPtr) = *SrcPtr;
+
+			pHistoryPtr++;
+			HistoryPtr++;
+			SrcPtr++;
+
+			LengthOfMatch--;
+		}
 	}
+
+	*pSize = (UINT32) (pHistoryPtr - mppc->pHistoryPtr);
+	mppc->pHistoryPtr = pHistoryPtr;
+	mppc->HistoryPtr = HistoryPtr;
 
 	return 0;
 }
