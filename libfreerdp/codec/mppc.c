@@ -79,40 +79,48 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE** ppDstData, UIN
 	UINT32 CopyOffset;
 	UINT32 LengthOfMatch;
 	UINT32 accumulator;
-	BYTE* HistoryBuffer;
 	BYTE* HistoryPtr;
 	UINT32 HistoryOffset;
+	BYTE* HistoryBuffer;
+	BYTE* HistoryBufferEnd;
+	UINT32 HistoryBufferSize;
 	UINT32 CompressionLevel;
 	wBitStream* bs = mppc->bs;
 
 	HistoryBuffer = mppc->HistoryBuffer;
+	HistoryBufferSize = mppc->HistoryBufferSize;
+	HistoryBufferEnd = &HistoryBuffer[HistoryBufferSize - 1];
 	CompressionLevel = mppc->CompressionLevel;
-
-	*ppDstData = HistoryBuffer;
 
 	BitStream_Attach(bs, pSrcData, *pSize);
 	BitStream_Fetch(bs);
 
 	if (flags & PACKET_AT_FRONT)
 	{
-		mppc->HistoryPtr = &(HistoryBuffer[0]);
+		mppc->HistoryOffset = 0;
+		mppc->HistoryPtr = HistoryBuffer;
 	}
 
 	if (flags & PACKET_FLUSHED)
 	{
-		mppc->HistoryPtr = &(HistoryBuffer[0]);
+		mppc->HistoryOffset = 0;
+		mppc->HistoryPtr = HistoryBuffer;
 		ZeroMemory(HistoryBuffer, mppc->HistoryBufferSize);
-	}
-
-	if (!(flags & PACKET_COMPRESSED))
-	{
-		CopyMemory(mppc->HistoryPtr, pSrcData, *pSize);
-		mppc->HistoryPtr += *pSize;
-		return 0;
 	}
 
 	HistoryPtr = mppc->HistoryPtr;
 	HistoryOffset = mppc->HistoryOffset;
+
+	if (!(flags & PACKET_COMPRESSED))
+	{
+		CopyMemory(HistoryPtr, pSrcData, *pSize);
+		HistoryPtr += *pSize;
+		HistoryOffset += *pSize;
+		mppc->HistoryPtr = HistoryPtr;
+		mppc->HistoryOffset = HistoryOffset;
+		*ppDstData = HistoryPtr;
+		return 1;
+	}
 
 	while ((bs->length - bs->position) >= 8)
 	{
@@ -414,22 +422,44 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE** ppDstData, UIN
 
 		SrcPtr = HistoryPtr - CopyOffset;
 
-		while (LengthOfMatch > 0)
+		if (SrcPtr >= HistoryBuffer)
 		{
-			*(HistoryPtr) = *SrcPtr;
+			while (LengthOfMatch > 0)
+			{
+				*(HistoryPtr) = *SrcPtr;
 
-			HistoryPtr++;
+				HistoryPtr++;
+				SrcPtr++;
+
+				LengthOfMatch--;
+			}
+		}
+		else
+		{
+			SrcPtr = HistoryBufferEnd - (CopyOffset - (HistoryPtr - HistoryBuffer));
 			SrcPtr++;
 
-			LengthOfMatch--;
+			while (LengthOfMatch && (SrcPtr <= HistoryBufferEnd))
+			{
+				*HistoryPtr++ = *SrcPtr++;
+				LengthOfMatch--;
+			}
+
+			SrcPtr = HistoryBuffer;
+
+			while (LengthOfMatch > 0)
+			{
+				*HistoryPtr++ = *SrcPtr++;
+				LengthOfMatch--;
+			}
 		}
 	}
 
 	*pSize = (UINT32) (HistoryPtr - mppc->HistoryPtr);
-
+	*ppDstData = mppc->HistoryPtr;
 	mppc->HistoryPtr = HistoryPtr;
 
-	return 0;
+	return 1;
 }
 
 UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize)
