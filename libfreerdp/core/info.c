@@ -294,8 +294,9 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	UINT16 cbPassword;
 	UINT16 cbAlternateShell;
 	UINT16 cbWorkingDir;
+	UINT32 CompressionLevel;
 
-	if (Stream_GetRemainingLength(s) < 18) // invalid packet
+	if (Stream_GetRemainingLength(s) < 18)
 		return FALSE;
 
 	Stream_Seek_UINT32(s); /* CodePage */
@@ -307,6 +308,12 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	settings->RemoteApplicationMode = ((flags & INFO_RAIL) ? TRUE : FALSE);
 	settings->RemoteConsoleAudio = ((flags & INFO_REMOTECONSOLEAUDIO) ? TRUE : FALSE);
 	settings->CompressionEnabled = ((flags & INFO_COMPRESSION) ? TRUE : FALSE);
+
+	if (flags & INFO_COMPRESSION)
+	{
+		CompressionLevel = ((flags & 0x00001E00) >> 9);
+		settings->CompressionLevel = CompressionLevel;
+	}
 
 	Stream_Read_UINT16(s, cbDomain); /* cbDomain */
 	Stream_Read_UINT16(s, cbUserName); /* cbUserName */
@@ -419,7 +426,10 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 		flags |= INFO_REMOTECONSOLEAUDIO;
 
 	if (settings->CompressionEnabled)
-		flags |= INFO_COMPRESSION | INFO_PACKET_COMPR_TYPE_RDP6;
+	{
+		flags |= INFO_COMPRESSION;
+		flags |= ((settings->CompressionLevel << 9) & 0x00001E00);
+	}
 
 	if (settings->Domain)
 	{

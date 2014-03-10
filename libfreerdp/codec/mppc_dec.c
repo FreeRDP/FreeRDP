@@ -131,7 +131,7 @@ UINT32 transposebits(UINT32 x)
 
 int decompress_rdp(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen)
 {
-	int type = ctype & 0x0f;
+	UINT32 type = ctype & 0x0F;
 
 	switch (type)
 	{
