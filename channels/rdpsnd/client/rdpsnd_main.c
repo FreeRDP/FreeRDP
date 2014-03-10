@@ -1065,7 +1065,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT
 /* rdpsnd is always built-in */
 #define VirtualChannelEntry	rdpsnd_VirtualChannelEntry
 
-int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndPlugin* rdpsnd;
 

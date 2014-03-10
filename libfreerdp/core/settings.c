@@ -726,7 +726,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		CopyMemory(_settings->ServerAutoReconnectCookie, settings->ServerAutoReconnectCookie, sizeof(ARC_SC_PRIVATE_PACKET));
 
 		_settings->ClientTimeZone = (TIME_ZONE_INFO*) malloc(sizeof(TIME_ZONE_INFO));
-		CopyMemory(_settings->ClientTimeZone, _settings->ClientTimeZone, sizeof(TIME_ZONE_INFO));
+		CopyMemory(_settings->ClientTimeZone, settings->ClientTimeZone, sizeof(TIME_ZONE_INFO));
 
 		_settings->TargetNetAddressCount = settings->TargetNetAddressCount;
 

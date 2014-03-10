@@ -212,7 +212,12 @@ static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 
 	DEBUG_CLIPRDR("Sending Capabilities");
 
-	flags = CB_USE_LONG_FORMAT_NAMES;
+	flags = CB_USE_LONG_FORMAT_NAMES
+#ifdef _WIN32
+			| CB_STREAM_FILECLIP_ENABLED
+			| CB_FILECLIP_NO_FILE_PATHS
+#endif
+		;
 
 	Stream_Write_UINT16(s, 1); /* cCapabilitiesSets */
 	Stream_Write_UINT16(s, 0); /* pad1 */
@@ -250,6 +255,67 @@ static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UI
 
 		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) event);
 	}
+}
+
+static void cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+{
+	RDP_CB_FILECONTENTS_REQUEST_EVENT* cb_event;
+
+	cb_event = (RDP_CB_FILECONTENTS_REQUEST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_FilecontentsRequest, NULL, NULL);
+
+	Stream_Read_UINT32(s, cb_event->streamId);
+	Stream_Read_UINT32(s, cb_event->lindex);
+	Stream_Read_UINT32(s, cb_event->dwFlags);
+	Stream_Read_UINT32(s, cb_event->nPositionLow);
+	Stream_Read_UINT32(s, cb_event->nPositionHigh);
+	Stream_Read_UINT32(s, cb_event->cbRequested);
+	//Stream_Read_UINT32(s, cb_event->clipDataId);
+
+	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+}
+
+static void cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+{
+	RDP_CB_FILECONTENTS_RESPONSE_EVENT* cb_event;
+
+	cb_event = (RDP_CB_FILECONTENTS_RESPONSE_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_FilecontentsResponse, NULL, NULL);
+
+	Stream_Read_UINT32(s, cb_event->streamId);
+
+	if (length > 0)
+	{
+		cb_event->size = length - 4;
+		cb_event->data = (BYTE*) malloc(cb_event->size);
+		CopyMemory(cb_event->data, Stream_Pointer(s), cb_event->size);
+	}
+
+	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+}
+
+static void cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+{
+	RDP_CB_LOCK_CLIPDATA_EVENT* cb_event;
+
+	cb_event = (RDP_CB_LOCK_CLIPDATA_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_LockClipdata, NULL, NULL);
+
+	Stream_Read_UINT32(s, cb_event->clipDataId);
+
+	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+}
+
+static void cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+{
+	RDP_CB_UNLOCK_CLIPDATA_EVENT* cb_event;
+
+	cb_event = (RDP_CB_UNLOCK_CLIPDATA_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+			CliprdrChannel_UnLockClipdata, NULL, NULL);
+
+	Stream_Read_UINT32(s, cb_event->clipDataId);
+
+	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
 }
 
 static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
@@ -296,12 +362,102 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 			cliprdr_process_format_data_response(cliprdr, s, dataLen, msgFlags);
 			break;
 
+		case CB_FILECONTENTS_REQUEST:
+			cliprdr_process_filecontents_request(cliprdr, s, dataLen, msgFlags);
+			break;
+
+		case CB_FILECONTENTS_RESPONSE:
+			cliprdr_process_filecontents_response(cliprdr, s, dataLen, msgFlags);
+			break;
+
+		case CB_LOCK_CLIPDATA:
+			cliprdr_process_lock_clipdata(cliprdr, s, dataLen, msgFlags);
+			break;
+
+		case CB_UNLOCK_CLIPDATA:
+			cliprdr_process_unlock_clipdata(cliprdr, s, dataLen, msgFlags);
+			break;
+
 		default:
 			DEBUG_WARN("unknown msgType %d", msgType);
 			break;
 	}
 
 	Stream_Free(s, TRUE);
+}
+
+static void cliprdr_process_filecontents_request_event(cliprdrPlugin* plugin, RDP_CB_FILECONTENTS_REQUEST_EVENT * event)
+{
+	wStream *s;
+	DEBUG_CLIPRDR("Sending File Contents Request.");
+
+	s = cliprdr_packet_new(CB_FILECONTENTS_REQUEST, 0, 24);
+
+	Stream_Write_UINT32(s, event->streamId);
+	Stream_Write_UINT32(s, event->lindex);
+	Stream_Write_UINT32(s, event->dwFlags);
+	Stream_Write_UINT32(s, event->nPositionLow);
+	Stream_Write_UINT32(s, event->nPositionHigh);
+	Stream_Write_UINT32(s, event->cbRequested);
+	//Stream_Write_UINT32(s, event->clipDataId);
+
+	cliprdr_packet_send(plugin, s);
+}
+
+static void cliprdr_process_filecontents_response_event(cliprdrPlugin* plugin, RDP_CB_FILECONTENTS_RESPONSE_EVENT * event)
+{
+	wStream* s;
+
+	DEBUG_CLIPRDR("Sending file contents response with size = %d", event->size);
+
+	if (event->size > 0)
+	{
+		s = cliprdr_packet_new(CB_FILECONTENTS_RESPONSE, CB_RESPONSE_OK, event->size + 4);
+		Stream_Write_UINT32(s, event->streamId);
+		Stream_Write(s, event->data, event->size);
+	}
+	else
+	{
+		s = cliprdr_packet_new(CB_FILECONTENTS_RESPONSE, CB_RESPONSE_FAIL, 0);
+	}
+
+	cliprdr_packet_send(plugin, s);
+}
+
+static void cliprdr_process_lock_clipdata_event(cliprdrPlugin* plugin, RDP_CB_LOCK_CLIPDATA_EVENT * event)
+{
+	wStream* s;
+
+	DEBUG_CLIPRDR("Sending Lock Request");
+
+	s = cliprdr_packet_new(CB_LOCK_CLIPDATA, 0, 4);
+	Stream_Write_UINT32(s, event->clipDataId);
+
+	cliprdr_packet_send(plugin, s);
+}
+
+static void cliprdr_process_unlock_clipdata_event(cliprdrPlugin* plugin, RDP_CB_UNLOCK_CLIPDATA_EVENT * event)
+{
+	wStream* s;
+
+	DEBUG_CLIPRDR("Sending UnLock Request");
+
+	s = cliprdr_packet_new(CB_UNLOCK_CLIPDATA, 0, 4);
+	Stream_Write_UINT32(s, event->clipDataId);
+
+	cliprdr_packet_send(plugin, s);
+}
+
+static void cliprdr_process_tempdir_event(cliprdrPlugin* plugin, RDP_CB_TEMPDIR_EVENT * event)
+{
+	wStream* s;
+
+	DEBUG_CLIPRDR("Sending Temporary Directory.");
+	s = cliprdr_packet_new(CB_TEMP_DIRECTORY, 0, 520);
+
+	Stream_Write(s, event->dirname, 520);
+
+	cliprdr_packet_send(plugin, s);
 }
 
 static void cliprdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
@@ -318,6 +474,26 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
 
 		case CliprdrChannel_DataResponse:
 			cliprdr_process_format_data_response_event((cliprdrPlugin*) plugin, (RDP_CB_DATA_RESPONSE_EVENT*) event);
+			break;
+
+		case CliprdrChannel_FilecontentsRequest:
+			cliprdr_process_filecontents_request_event((cliprdrPlugin*) plugin, (RDP_CB_FILECONTENTS_REQUEST_EVENT *) event);
+			break;
+
+		case CliprdrChannel_FilecontentsResponse:
+			cliprdr_process_filecontents_response_event((cliprdrPlugin*) plugin, (RDP_CB_FILECONTENTS_RESPONSE_EVENT *) event);
+			break;
+
+		case CliprdrChannel_LockClipdata:
+			cliprdr_process_lock_clipdata_event((cliprdrPlugin*) plugin, (RDP_CB_LOCK_CLIPDATA_EVENT *) event);
+			break;
+
+		case CliprdrChannel_UnLockClipdata:
+			cliprdr_process_unlock_clipdata_event((cliprdrPlugin*) plugin, (RDP_CB_UNLOCK_CLIPDATA_EVENT *) event);
+			break;
+
+		case CliprdrChannel_TemporaryDirectory:
+			cliprdr_process_tempdir_event((cliprdrPlugin*) plugin, (RDP_CB_TEMPDIR_EVENT *) event);
 			break;
 
 		default:
@@ -464,7 +640,7 @@ int cliprdr_client_format_data_response(CliprdrClientContext* context, CLIPRDR_F
 /* cliprdr is always built-in */
 #define VirtualChannelEntry	cliprdr_VirtualChannelEntry
 
-int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	cliprdrPlugin* cliprdr;
 	CliprdrClientContext* context;
