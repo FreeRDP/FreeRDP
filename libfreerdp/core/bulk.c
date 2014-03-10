@@ -42,6 +42,7 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 			status = decompress_rdp_5(bulk->mppc_dec, pSrcData, SrcSize, flags, &roff, &rlen);
 			*ppDstData = (bulk->mppc_dec->history_buf + roff);
 			*pDstSize = rlen;
+			printf("BulkDecompress: SrcSize: %d DstSize: %d Flags: 0x%04X\n", SrcSize, *pDstSize, flags);
 			break;
 
 		case PACKET_COMPR_TYPE_RDP6:
@@ -64,21 +65,28 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 
 int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
+	UINT32 size;
+	UINT32 flags;
 	int status = -1;
 
-	if (compress_rdp(bulk->mppc_enc, pSrcData, SrcSize))
-	{
-		*pFlags = (UINT32) bulk->mppc_enc->flags;
-		*pDstSize = (UINT32) bulk->mppc_enc->bytes_in_opb;
-		*ppDstData = (BYTE*) bulk->mppc_enc->outputBuffer;
-		status = 0;
-	}
+	size = SrcSize;
+	flags = mppc_compress(bulk->mppcSend, pSrcData, bulk->OutputBuffer, &size);
+
+	*pFlags = flags;
+	*pDstSize = size;
+	*ppDstData = bulk->OutputBuffer;
+	status = 0;
+
+	printf("BulkCompress: SrcSize: %d DstSize: %d Flags: 0x%04X\n", SrcSize, *pDstSize, flags);
 
 	return status;
 }
 
 void bulk_reset(rdpBulk* bulk)
 {
+	mppc_context_reset(bulk->mppcSend);
+	mppc_context_reset(bulk->mppcRecv);
+
 	mppc_dec_free(bulk->mppc_dec);
 	mppc_enc_free(bulk->mppc_enc);
 	bulk->mppc_dec = mppc_dec_new();
@@ -95,6 +103,9 @@ rdpBulk* bulk_new(rdpContext* context)
 	{
 		bulk->context = context;
 
+		bulk->mppcSend = mppc_context_new(1, TRUE);
+		bulk->mppcRecv = mppc_context_new(1, FALSE);
+
 		bulk->mppc_dec = mppc_dec_new();
 		bulk->mppc_enc = mppc_enc_new(PROTO_RDP_50);
 	}
@@ -106,8 +117,12 @@ void bulk_free(rdpBulk* bulk)
 {
 	if (bulk)
 	{
+		mppc_context_free(bulk->mppcSend);
+		mppc_context_free(bulk->mppcRecv);
+
 		mppc_dec_free(bulk->mppc_dec);
 		mppc_enc_free(bulk->mppc_enc);
+
 		free(bulk);
 	}
 }

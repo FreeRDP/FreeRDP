@@ -31,6 +31,9 @@ typedef struct rdp_bulk rdpBulk;
 struct rdp_bulk
 {
 	rdpContext* context;
+	MPPC_CONTEXT* mppcSend;
+	MPPC_CONTEXT* mppcRecv;
+	BYTE OutputBuffer[65536];
 	struct rdp_mppc_dec* mppc_dec;
 	struct rdp_mppc_enc* mppc_enc;
 };

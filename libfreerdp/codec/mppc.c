@@ -435,6 +435,7 @@ UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE** ppDstData, UIN
 UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize)
 {
 	UINT32 Flags;
+	BYTE* pSrcPtr;
 	BYTE* pSrcEnd;
 	BYTE* pDstEnd;
 	BYTE* MatchPtr;
@@ -446,6 +447,7 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 	BYTE* HistoryPtr;
 	UINT32 HistoryOffset;
 	UINT32 HistoryBufferSize;
+	BYTE Sym1, Sym2, Sym3;
 	UINT32 CompressionLevel;
 	wBitStream* bs = mppc->bs;
 
@@ -458,8 +460,6 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 
 	BitStream_Attach(bs, pDstData, *pSize);
 
-	CopyMemory(&(HistoryBuffer[HistoryOffset]), pSrcData, *pSize);
-
 	if (((HistoryOffset + *pSize) < (HistoryBufferSize - 3)) && HistoryOffset)
 	{
 		Flags = 0;
@@ -471,40 +471,45 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 	}
 
 	HistoryPtr = &(HistoryBuffer[HistoryOffset]);
-	HistoryOffset += *pSize;
 
-	pSrcEnd = &(HistoryBuffer[*pSize - 1]);
+	pSrcPtr = pSrcData;
+	pSrcEnd = &(pSrcData[*pSize - 1]);
 	pDstEnd = &(pDstData[*pSize - 1]);
 
-	while (HistoryPtr < (pSrcEnd - 2))
+	while (pSrcPtr < (pSrcEnd - 2))
 	{
-		MatchIndex = MPPC_MATCH_INDEX(HistoryPtr[0], HistoryPtr[1], HistoryPtr[2]);
+		Sym1 = pSrcPtr[0];
+		Sym2 = pSrcPtr[1];
+		Sym3 = pSrcPtr[2];
+
+		*HistoryPtr++ = *pSrcPtr++;
+
+		MatchIndex = MPPC_MATCH_INDEX(Sym1, Sym2, Sym3);
 		MatchPtr = &(HistoryBuffer[mppc->MatchBuffer[MatchIndex]]);
 
-		/* if (&MatchPtr[1] != HistoryPtr) */
+		if (MatchPtr != &HistoryPtr[-1])
 			mppc->MatchBuffer[MatchIndex] = (UINT16) (HistoryPtr - HistoryBuffer);
 
 		if (mppc->HistoryPtr < HistoryPtr)
 			mppc->HistoryPtr = HistoryPtr;
 
-		if ((HistoryPtr[0] != MatchPtr[0]) || (HistoryPtr[1] != MatchPtr[1]) ||
-				(HistoryPtr[2] != MatchPtr[2]) || (&MatchPtr[2] > mppc->HistoryPtr) ||
-				(MatchPtr == HistoryPtr) || (&MatchPtr[1] == HistoryPtr) ||
-				(MatchPtr == HistoryBuffer))
+		if ((Sym1 != MatchPtr[-1]) || (Sym2 != MatchPtr[0]) || (Sym3 != MatchPtr[1]) ||
+				(&MatchPtr[1] > mppc->HistoryPtr) || (MatchPtr == HistoryBuffer) ||
+				(MatchPtr == &HistoryPtr[-1]) || (MatchPtr == HistoryPtr))
 		{
-			accumulator = *(HistoryPtr);
-
-#ifdef DEBUG_MPPC
-			//printf("%c", accumulator);
-#endif
-
 			if (((bs->position / 8) + 2) > (*pSize - 1))
 			{
-				Flags = PACKET_FLUSHED;
+				Flags |= PACKET_FLUSHED;
 				ZeroMemory(HistoryBuffer, HistoryBufferSize);
 				ZeroMemory(mppc->MatchBuffer, sizeof(mppc->MatchBuffer));
 				return Flags;
 			}
+
+			accumulator = Sym1;
+
+#ifdef DEBUG_MPPC
+			printf("%c", accumulator);
+#endif
 
 			if (accumulator < 0x80)
 			{
@@ -517,27 +522,27 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 				accumulator = 0x100 | (accumulator & 0x7F);
 				BitStream_Write_Bits(bs, accumulator, 9);
 			}
-
-			HistoryPtr++;
 		}
 		else
 		{
-			LengthOfMatch = 3;
-			HistoryPtr += 3;
-			MatchPtr += 3;
-
 			CopyOffset = (HistoryBufferSize - 1) & (HistoryPtr - MatchPtr);
 
-			while ((*HistoryPtr == *MatchPtr) && /* (MatchPtr <= mppc->HistoryPtr) && */
-					((HistoryPtr - HistoryBuffer) < (*pSize - 1)))
+			*HistoryPtr++ = Sym2;
+			*HistoryPtr++ = Sym3;
+			pSrcPtr += 2;
+
+			LengthOfMatch = 3;
+			MatchPtr += 2;
+
+			while ((*pSrcPtr == *MatchPtr) && (pSrcPtr < pSrcEnd) && (MatchPtr <= mppc->HistoryPtr))
 			{
-				LengthOfMatch++;
-				HistoryPtr++;
 				MatchPtr++;
+				*HistoryPtr++ = *pSrcPtr++;
+				LengthOfMatch++;
 			}
 
 #ifdef DEBUG_MPPC
-			printf("<%d,%d>\n", (int) CopyOffset, (int) LengthOfMatch);
+			printf("<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
 #endif
 
 			/* Encode CopyOffset */
@@ -695,25 +700,21 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 
 	/* Encode trailing symbols as literals */
 
-	while (HistoryPtr <= pSrcEnd)
+	while (pSrcPtr <= pSrcEnd)
 	{
-		MatchIndex = MPPC_MATCH_INDEX(HistoryPtr[0], HistoryPtr[1], HistoryPtr[2]);
-		MatchPtr = &(HistoryBuffer[mppc->MatchBuffer[MatchIndex]]);
-		mppc->MatchBuffer[MatchIndex] = (UINT16) (HistoryPtr - HistoryBuffer);
-
-		accumulator = *(HistoryPtr);
-
-#ifdef DEBUG_MPPC
-		//printf("%c", accumulator);
-#endif
-
 		if (((bs->position / 8) + 2) > (*pSize - 1))
 		{
-			Flags = PACKET_FLUSHED;
+			Flags |= PACKET_FLUSHED;
 			ZeroMemory(HistoryBuffer, HistoryBufferSize);
 			ZeroMemory(mppc->MatchBuffer, sizeof(mppc->MatchBuffer));
 			return Flags;
 		}
+
+		accumulator = *pSrcPtr;
+
+#ifdef DEBUG_MPPC
+		printf("%c", accumulator);
+#endif
 
 		if (accumulator < 0x80)
 		{
@@ -727,12 +728,13 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 			BitStream_Write_Bits(bs, accumulator, 9);
 		}
 
-		HistoryPtr++;
+		*HistoryPtr++ = *pSrcPtr++;
 	}
 
 	BitStream_Flush(bs);
 
 	Flags |= PACKET_COMPRESSED;
+	Flags |= CompressionLevel;
 	*pSize = ((bs->position + 7) / 8);
 
 	mppc->HistoryPtr = HistoryPtr;
@@ -743,6 +745,15 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 #endif
 
 	return Flags;
+}
+
+void mppc_context_reset(MPPC_CONTEXT* mppc)
+{
+	ZeroMemory(&(mppc->HistoryBuffer), sizeof(mppc->HistoryBuffer));
+	ZeroMemory(&(mppc->MatchBuffer), sizeof(mppc->MatchBuffer));
+
+	mppc->HistoryOffset = 0;
+	mppc->HistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
 }
 
 MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor)
@@ -766,13 +777,13 @@ MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor)
 			mppc->HistoryBufferSize = 65536;
 		}
 
+		mppc->bs = BitStream_New();
+
 		ZeroMemory(&(mppc->HistoryBuffer), sizeof(mppc->HistoryBuffer));
 		ZeroMemory(&(mppc->MatchBuffer), sizeof(mppc->MatchBuffer));
 
-		mppc->bs = BitStream_New();
-
-		mppc->HistoryPtr = &(mppc->HistoryBuffer[0]);
 		mppc->HistoryOffset = 0;
+		mppc->HistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
 	}
 
 	return mppc;

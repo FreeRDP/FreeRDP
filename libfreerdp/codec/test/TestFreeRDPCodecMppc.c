@@ -991,6 +991,28 @@ int test_MppcCompressBufferRdp5()
 		return -1;
 	}
 
+	/* Compare against Microsoft implementation */
+
+	size = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
+	pSrcData = (BYTE*) TEST_RDP5_UNCOMPRESSED_DATA;
+	expectedSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
+
+	mppc_context_reset(mppc);
+	flags = mppc_compress(mppc, pSrcData, OutputBuffer, &size);
+	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	if (size != expectedSize)
+	{
+		printf("MppcCompressBufferRdp5: output size mismatch: Actual: %d, Expected: %d\n", size, expectedSize);
+		return -1;
+	}
+
+	if (memcmp(OutputBuffer, TEST_RDP5_COMPRESSED_DATA, size) != 0)
+	{
+		printf("MppcCompressBufferRdp5: output mismatch: compressed output does not match Microsoft implementation\n");
+		return -1;
+	}
+
 	mppc_context_free(mppc);
 	mppc_context_free(mppcRecv);
 

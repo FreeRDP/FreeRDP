@@ -857,8 +857,6 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		header_bytes = 6 + sec_bytes;
 		pdu_data_bytes = dlen;
 
-		try_comp = FALSE;
-
 		if (try_comp)
 		{
 			SrcSize = dlen;
