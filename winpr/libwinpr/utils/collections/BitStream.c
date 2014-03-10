@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include <winpr/collections.h>
+#include <winpr/bitstream.h>
 
 const char* BYTE_BIT_STRINGS_LSB[256] =
 {
@@ -159,7 +159,7 @@ const char* BYTE_BIT_STRINGS_MSB[256] =
 	"00111111", "10111111", "01111111", "11111111"
 };
 
-void BitDump(BYTE* buffer, UINT32 length, UINT32 flags)
+void BitDump(const BYTE* buffer, UINT32 length, UINT32 flags)
 {
 	DWORD i;
 	int nbits;
@@ -174,10 +174,124 @@ void BitDump(BYTE* buffer, UINT32 length, UINT32 flags)
 
 		nbits = (length - i) > 8 ? 8 : (length - i);
 
+		if ((i % 64) == 0)
+			printf("\n");
+
 		printf("%.*s ", nbits, str);
 	}
 
 	printf("\n");
+}
+
+void BitStream_Attach(wBitStream* bs, BYTE* buffer, UINT32 capacity)
+{
+	bs->position = 0;
+	bs->buffer = buffer;
+	bs->offset = 0;
+	bs->accumulator = 0;
+	bs->pointer = bs->buffer;
+	bs->capacity = capacity;
+	bs->length = bs->capacity * 8;
+}
+
+void BitStream_Flush(wBitStream* bs)
+{
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 0))
+		*(bs->pointer + 0) = (bs->accumulator >> 24);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 1))
+		*(bs->pointer + 1) = (bs->accumulator >> 16);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 2))
+		*(bs->pointer + 2) = (bs->accumulator >> 8);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 3))
+		*(bs->pointer + 3) = (bs->accumulator >> 0);
+}
+
+void BitStream_Prefetch(wBitStream* bs)
+{
+	(bs->prefetch) = 0;
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 4))
+		(bs->prefetch) |= (*(bs->pointer + 4) << 24);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 5))
+		(bs->prefetch) |= (*(bs->pointer + 5) << 16);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 6))
+		(bs->prefetch) |= (*(bs->pointer + 6) << 8);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 7))
+		(bs->prefetch) |= (*(bs->pointer + 7) << 0);
+}
+
+void BitStream_Fetch(wBitStream* bs)
+{
+	(bs->accumulator) = 0;
+
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 0))
+		(bs->accumulator) |= (*(bs->pointer + 0) << 24);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 1))
+		(bs->accumulator) |= (*(bs->pointer + 1) << 16);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 2))
+		(bs->accumulator) |= (*(bs->pointer + 2) << 8);
+	if ((bs->pointer - bs->buffer) < (bs->capacity + 3))
+		(bs->accumulator) |= (*(bs->pointer + 3) << 0);
+
+	BitStream_Prefetch(bs);
+}
+
+void BitStream_Write_Bits(wBitStream* bs, UINT32 bits, UINT32 nbits)
+{
+	bs->position += nbits;
+	bs->offset += nbits;
+
+	if (bs->offset < 32)
+	{
+		bs->accumulator |= (bits << (32 - bs->offset));
+	}
+	else
+	{
+		bs->offset -= 32;
+		bs->mask = ((1 << (nbits - bs->offset)) - 1);
+		bs->accumulator |= ((bits >> bs->offset) & bs->mask);
+
+		BitStream_Flush(bs);
+		bs->accumulator = 0;
+		bs->pointer += 4;
+
+		if (bs->offset)
+		{
+			bs->mask = ((1 << bs->offset) - 1);
+			bs->accumulator |= ((bits & bs->mask) << (32 - bs->offset));
+		}
+	}
+}
+
+void BitStream_Shift(wBitStream* bs, UINT32 nbits)
+{
+	bs->accumulator <<= nbits;
+	bs->position += nbits;
+	bs->offset += nbits;
+
+	if (bs->offset < 32)
+	{
+		bs->mask = ((1 << nbits) - 1);
+		bs->accumulator |= ((bs->prefetch >> (32 - nbits)) & bs->mask);
+		bs->prefetch <<= nbits;
+	}
+	else
+	{
+		bs->mask = ((1 << nbits) - 1);
+		bs->accumulator |= ((bs->prefetch >> (32 - nbits)) & bs->mask);
+		bs->prefetch <<= nbits;
+
+		bs->offset -= 32;
+		bs->pointer += 4;
+
+		BitStream_Prefetch(bs);
+
+		if (bs->offset)
+		{
+			bs->mask = ((1 << bs->offset) - 1);
+			bs->accumulator |= ((bs->prefetch >> (32 - bs->offset)) & bs->mask);
+			bs->prefetch <<= bs->offset;
+		}
+	}
 }
 
 wBitStream* BitStream_New()

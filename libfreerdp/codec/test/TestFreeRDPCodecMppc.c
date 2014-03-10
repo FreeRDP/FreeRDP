@@ -1,5 +1,6 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/bitstream.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/mppc.h>
@@ -684,39 +685,375 @@ int test_mppc_old()
 	return 0;
 }
 
-const char TEST_MPPC_BELL_TOLLS[] = "for.whom.the.bell.tolls,.the.bell.tolls.for.thee!";
+/**
+ *
+ * for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+ *
+ * for.whom.the.bell.tolls,<16,15>.<40,4><19,3>e! ([MS-RDPBCGR])
+ *
+ * <16,15> : ".the.bell.tolls"
+ * <40,4>  : "for."
+ * <19,3>  : "the"
+ *
+ * for.whom.the.bell.tolls,<16,15>.f<40,3><35,3>e! (Microsoft implementation)
+ *
+ * <16,15> : ".the.bell.tolls"
+ * <40,3>  : "or."
+ * <19,3>  " "the"
+ *
+ * RDP5:
+ * 01100110 Literal 'f'
+ * 01101111 Literal 'o'
+ * 01110010 Literal 'r'
+ * 00101110 Literal '.'
+ * 01110111 Literal 'w'
+ * 01101000 Literal 'h'
+ * 01101111 Literal 'o'
+ * 01101101 Literal 'm'
+ * 00101110 Literal '.'
+ * 01110100 Literal 't'
+ * 01101000 Literal 'h'
+ * 01100101 Literal 'e'
+ * 00101110 Literal '.'
+ * 01100010 Literal 'b'
+ * 01100101 Literal 'e'
+ * 01101100 Literal 'l'
+ * 01101100 Literal 'l'
+ * 00101110 Literal '.'
+ * 01110100 Literal 't'
+ * 01101111 Literal 'o'
+ * 01101100 Literal 'l'
+ * 01101100 Literal 'l'
+ * 01110011 Literal 's'
+ * 00101100 Literal ','
+ * 11111+010000 CopyOffset 16
+ * 110+111 LengthOfMatch 15
+ * 00101110 Literal '.'
+ * 01100110 Literal 'f'
+ * 11111+101000 CopyOffset 40
+ * 0 LengthOfMatch 3
+ * 11111+100011 CopyOffset 35
+ * 0 LengthOfMatch 3
+ * 01100101 Literal 'e'
+ * 00100001 Literal '!'
+ * 0000000 Trailing Bits
+ *
+ * RDP4:
+ * 01100110 Literal 'f'
+ * 01101111 Literal 'o'
+ * 01110010 Literal 'r'
+ * 00101110 Literal '.'
+ * 01110111 Literal 'w'
+ * 01101000 Literal 'h'
+ * 01101111 Literal 'o'
+ * 01101101 Literal 'm'
+ * 00101110 Literal '.'
+ * 01110100 Literal 't'
+ * 01101000 Literal 'h'
+ * 01100101 Literal 'e'
+ * 00101110 Literal '.'
+ * 01100010 Literal 'b'
+ * 01100101 Literal 'e'
+ * 01101100 Literal 'l'
+ * 01101100 Literal 'l'
+ * 00101110 Literal '.'
+ * 01110100 Literal 't'
+ * 01101111 Literal 'o'
+ * 01101100 Literal 'l'
+ * 01101100 Literal 'l'
+ * 01110011 Literal 's'
+ * 00101100 Literal ','
+ * 1111+010000 CopyOffset 16
+ * 110+111 LengthOfMatch 15
+ * 00101110 Literal '.'
+ * 01100110 Literal 'f'
+ * 1111+101000 CopyOffset 40
+ * 0 LengthOfMatch 3
+ * 1111+100011 CopyOffset 35
+ * 0 LengthOfMatch 3
+ * 01100101 Literal 'e'
+ * 00100001 Literal '!'
+ * 00 Trailing Bits
+ */
 
-int TestFreeRDPCodecMppc(int argc, char* argv[])
+const BYTE TEST_MPPC_BELLS[] = "for.whom.the.bell.tolls,.the.bell.tolls.for.thee!";
+
+/* Flags: 0x0060 Length: 33 */
+
+const BYTE TEST_MPPC_BELLS_RDP4[] =
+	"\x66\x6f\x72\x2e\x77\x68\x6f\x6d\x2e\x74\x68\x65\x2e\x62\x65\x6c"
+	"\x6c\x2e\x74\x6f\x6c\x6c\x73\x2c\xf4\x37\x2e\x66\xfa\x1f\x19\x94"
+	"\x84";
+
+/* Flags: 0x0061 Length: 34 */
+
+const BYTE TEST_MPPC_BELLS_RDP5[] =
+	"\x66\x6f\x72\x2e\x77\x68\x6f\x6d\x2e\x74\x68\x65\x2e\x62\x65\x6c"
+	"\x6c\x2e\x74\x6f\x6c\x6c\x73\x2c\xfa\x1b\x97\x33\x7e\x87\xe3\x32"
+	"\x90\x80";
+
+int test_MppcCompressBellsRdp5()
 {
 	UINT32 size;
 	UINT32 flags;
 	BYTE* pSrcData;
 	MPPC_CONTEXT* mppc;
+	UINT32 expectedSize;
 	BYTE OutputBuffer[65536];
 
 	mppc = mppc_context_new(1, TRUE);
 
-#if 0
-	size = sizeof(TEST_MPPC_BELL_TOLLS) - 1;
-	pSrcData = (BYTE*) TEST_MPPC_BELL_TOLLS;
+	size = sizeof(TEST_MPPC_BELLS) - 1;
+	pSrcData = (BYTE*) TEST_MPPC_BELLS;
+	expectedSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
 
-	printf("%s\n", pSrcData);
 	flags = mppc_compress(mppc, pSrcData, OutputBuffer, &size);
+
 	printf("flags: 0x%04X size: %d\n", flags, size);
-#endif
+
+	if (size != expectedSize)
+	{
+		printf("MppcCompressBellsRdp5: output size mismatch: Actual: %d, Expected: %d\n", size, expectedSize);
+		return -1;
+	}
+
+	if (memcmp(OutputBuffer, TEST_MPPC_BELLS_RDP5, size) != 0)
+	{
+		printf("MppcCompressBellsRdp5: output mismatch\n");
+
+		printf("Actual\n");
+		BitDump(OutputBuffer, size * 8, 0);
+
+		printf("Expected\n");
+		BitDump(TEST_MPPC_BELLS_RDP5, size * 8, 0);
+
+		return -1;
+	}
+
+	mppc_context_free(mppc);
+
+	return 0;
+}
+
+int test_MppcCompressBellsRdp4()
+{
+	UINT32 size;
+	UINT32 flags;
+	BYTE* pSrcData;
+	MPPC_CONTEXT* mppc;
+	UINT32 expectedSize;
+	BYTE OutputBuffer[65536];
+
+	mppc = mppc_context_new(0, TRUE);
+
+	size = sizeof(TEST_MPPC_BELLS) - 1;
+	pSrcData = (BYTE*) TEST_MPPC_BELLS;
+	expectedSize = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
+
+	flags = mppc_compress(mppc, pSrcData, OutputBuffer, &size);
+
+	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	if (size != expectedSize)
+	{
+		printf("MppcCompressBellsRdp4: output size mismatch: Actual: %d, Expected: %d\n", size, expectedSize);
+		return -1;
+	}
+
+	if (memcmp(OutputBuffer, TEST_MPPC_BELLS_RDP4, size) != 0)
+	{
+		printf("MppcCompressBellsRdp4: output mismatch\n");
+
+		printf("Actual\n");
+		BitDump(OutputBuffer, size * 8, 0);
+
+		printf("Expected\n");
+		BitDump(TEST_MPPC_BELLS_RDP4, size * 8, 0);
+
+		return -1;
+	}
+
+	mppc_context_free(mppc);
+
+	return 0;
+}
+
+int test_MppcDecompressBellsRdp5()
+{
+	UINT32 size;
+	UINT32 flags;
+	BYTE* pSrcData;
+	MPPC_CONTEXT* mppc;
+	UINT32 expectedSize;
+	BYTE* pDstData = NULL;
+
+	mppc = mppc_context_new(1, FALSE);
+
+	size = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
+	pSrcData = (BYTE*) TEST_MPPC_BELLS_RDP5;
+	flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
+	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
+
+	flags = mppc_decompress(mppc, pSrcData, &pDstData, &size, flags);
+	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	if (size != expectedSize)
+	{
+		printf("MppcDecompressBellsRdp5: output size mismatch: Actual: %d, Expected: %d\n", size, expectedSize);
+		return -1;
+	}
+
+	if (memcmp(pDstData, TEST_MPPC_BELLS, size) != 0)
+	{
+		printf("MppcDecompressBellsRdp5: output mismatch\n");
+		return -1;
+	}
+
+	mppc_context_free(mppc);
+
+	return 0;
+}
+
+int test_MppcDecompressBellsRdp4()
+{
+	UINT32 size;
+	UINT32 flags;
+	BYTE* pSrcData;
+	MPPC_CONTEXT* mppc;
+	UINT32 expectedSize;
+	BYTE* pDstData = NULL;
+
+	mppc = mppc_context_new(0, FALSE);
+
+	size = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
+	pSrcData = (BYTE*) TEST_MPPC_BELLS_RDP4;
+	flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 0;
+	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
+
+	flags = mppc_decompress(mppc, pSrcData, &pDstData, &size, flags);
+	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	if (size != expectedSize)
+	{
+		printf("MppcDecompressBellsRdp4: output size mismatch: Actual: %d, Expected: %d\n", size, expectedSize);
+		return -1;
+	}
+
+	if (memcmp(pDstData, TEST_MPPC_BELLS, size) != 0)
+	{
+		printf("MppcDecompressBellsRdp4: output mismatch\n");
+		return -1;
+	}
+
+	mppc_context_free(mppc);
+
+	return 0;
+}
+
+int test_MppcCompressBufferRdp5()
+{
+	UINT32 size;
+	UINT32 flags;
+	BYTE* pSrcData;
+	MPPC_CONTEXT* mppc;
+	UINT32 expectedSize;
+	BYTE OutputBuffer[65536];
+	MPPC_CONTEXT* mppcRecv;
+	BYTE* pDstData = NULL;
+
+	mppc = mppc_context_new(1, TRUE);
 
 	size = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
 	pSrcData = (BYTE*) TEST_RDP5_UNCOMPRESSED_DATA;
+	expectedSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
 
 	flags = mppc_compress(mppc, pSrcData, OutputBuffer, &size);
 	printf("flags: 0x%04X size: %d\n", flags, size);
 
-	winpr_HexDump(OutputBuffer, size);
-	//winpr_HexDump(TEST_RDP5_COMPRESSED_DATA, sizeof(TEST_RDP5_COMPRESSED_DATA));
+	mppcRecv = mppc_context_new(1, FALSE);
 
-	printf("sizeof(TEST_RDP5_COMPRESSED_DATA): %d\n", (int) sizeof(TEST_RDP5_COMPRESSED_DATA));
+	pSrcData = (BYTE*) OutputBuffer;
+	flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
+	expectedSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
+
+	flags = mppc_decompress(mppcRecv, pSrcData, &pDstData, &size, flags);
+	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	if (size != expectedSize)
+	{
+		printf("MppcCompressBufferRdp5: output size mismatch: Actual: %d, Expected: %d\n", size, expectedSize);
+		return -1;
+	}
+
+	if (memcmp(pDstData, TEST_RDP5_UNCOMPRESSED_DATA, size) != 0)
+	{
+		printf("MppcCompressBufferRdp5: output mismatch: Decompress(Compress(X)) != X\n");
+		return -1;
+	}
 
 	mppc_context_free(mppc);
+	mppc_context_free(mppcRecv);
+
+	return 0;
+}
+
+int test_MppcDecompressBufferRdp5()
+{
+	UINT32 size;
+	UINT32 flags;
+	BYTE* pSrcData;
+	MPPC_CONTEXT* mppc;
+	UINT32 expectedSize;
+	BYTE* pDstData = NULL;
+
+	mppc = mppc_context_new(1, FALSE);
+
+	size = sizeof(TEST_RDP5_COMPRESSED_DATA);
+	pSrcData = (BYTE*) TEST_RDP5_COMPRESSED_DATA;
+	flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
+	expectedSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
+
+	flags = mppc_decompress(mppc, pSrcData, &pDstData, &size, flags);
+	printf("flags: 0x%04X size: %d\n", flags, size);
+
+	if (size != expectedSize)
+	{
+		printf("MppcDecompressBufferRdp5: output size mismatch: Actual: %d, Expected: %d\n", size, expectedSize);
+		return -1;
+	}
+
+	if (memcmp(pDstData, TEST_RDP5_UNCOMPRESSED_DATA, size) != 0)
+	{
+		printf("MppcDecompressBufferRdp5: output mismatch\n");
+		return -1;
+	}
+
+	mppc_context_free(mppc);
+
+	return 0;
+}
+
+int TestFreeRDPCodecMppc(int argc, char* argv[])
+{
+	if (test_MppcCompressBellsRdp5() < 0)
+		return -1;
+
+	if (test_MppcDecompressBellsRdp5() < 0)
+		return -1;
+
+	if (test_MppcCompressBellsRdp4() < 0)
+		return -1;
+
+	if (test_MppcDecompressBellsRdp4() < 0)
+		return -1;
+
+	if (test_MppcCompressBufferRdp5() < 0)
+		return -1;
+
+	if (test_MppcDecompressBufferRdp5() < 0)
+		return -1;
+
+	//test_mppc_old();
 
 	return 0;
 }

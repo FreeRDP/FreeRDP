@@ -2,7 +2,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
-#include <winpr/collections.h>
+#include <winpr/bitstream.h>
 
 void BitStrGen()
 {

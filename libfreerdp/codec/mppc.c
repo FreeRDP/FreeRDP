@@ -24,7 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
-#include <winpr/collections.h>
+#include <winpr/bitstream.h>
 
 #include <freerdp/codec/mppc_enc.h>
 #include <freerdp/codec/mppc_dec.h>
@@ -72,271 +72,675 @@ const UINT32 MPPC_MATCH_TABLE[256] =
 
 //#define DEBUG_MPPC	1
 
-UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize)
+UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE** ppDstData, UINT32* pSize, UINT32 flags)
 {
-	BYTE* pEnd;
-	UINT32 Flags;
-	BYTE* pMatch;
-	UINT32 MatchIndex;
+	BYTE Literal;
+	BYTE* SrcPtr;
+	UINT32 CopyOffset;
+	UINT32 LengthOfMatch;
 	UINT32 accumulator;
+	BYTE* HistoryBuffer;
+	BYTE* HistoryPtr;
+	UINT32 HistoryOffset;
+	UINT32 CompressionLevel;
+	wBitStream* bs = mppc->bs;
 
-	Flags = mppc->CompressionLevel;
+	HistoryBuffer = mppc->HistoryBuffer;
+	CompressionLevel = mppc->CompressionLevel;
 
-	BitStream_Attach(mppc->bs, pDstData, *pSize);
+	*ppDstData = HistoryBuffer;
 
-	if (((mppc->HistoryOffset + *pSize) < (mppc->HistoryBufferSize - 3)) /* && mppc->HistoryOffset */)
+	BitStream_Attach(bs, pSrcData, *pSize);
+	BitStream_Fetch(bs);
+
+	if (flags & PACKET_AT_FRONT)
 	{
-		/* SrcData fits into HistoryBuffer? (YES) */
-
-		CopyMemory(&(mppc->HistoryBuffer[mppc->HistoryOffset]), pSrcData, *pSize);
-
-		mppc->HistoryPtr = 0;
-		mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
-
-		mppc->HistoryOffset += *pSize;
-		mppc->pHistoryOffset = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
-	}
-	else
-	{
-		/* SrcData fits into HistoryBuffer? (NO) */
-
-		mppc->HistoryOffset = 0;
-		mppc->pHistoryOffset = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
-
-		Flags |= PACKET_AT_FRONT;
+		mppc->HistoryPtr = &(HistoryBuffer[0]);
 	}
 
-	if (mppc->HistoryPtr < mppc->HistoryOffset)
+	if (flags & PACKET_FLUSHED)
 	{
-		/* HistoryPtr < HistoryOffset? (YES) */
+		mppc->HistoryPtr = &(HistoryBuffer[0]);
+		ZeroMemory(HistoryBuffer, mppc->HistoryBufferSize);
+	}
 
-		/*
-		 * Search for a match of at least 3 bytes from the start of the history buffer
-		 * to (HistoryPtr - 1) for the data that immediately follows HistoryPtr
+	if (!(flags & PACKET_COMPRESSED))
+	{
+		CopyMemory(mppc->HistoryPtr, pSrcData, *pSize);
+		mppc->HistoryPtr += *pSize;
+		return 0;
+	}
+
+	HistoryPtr = mppc->HistoryPtr;
+	HistoryOffset = mppc->HistoryOffset;
+
+	while ((bs->length - bs->position) >= 8)
+	{
+		accumulator = bs->accumulator;
+
+		/**
+		 * Literal Encoding
 		 */
 
-		mppc->HistoryPtr = 0;
-		mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
-
-		pEnd = &(mppc->HistoryBuffer[*pSize - 1]);
-
-		while (mppc->pHistoryPtr < (pEnd - 2))
+		if ((accumulator & 0x80000000) == 0x00000000)
 		{
-			MatchIndex = MPPC_MATCH_INDEX(mppc->pHistoryPtr[0], mppc->pHistoryPtr[1], mppc->pHistoryPtr[2]);
+			/**
+			 * Literal, less than 0x80
+			 * bit 0 followed by the lower 7 bits of the literal
+			 */
 
-			pMatch = &(mppc->HistoryBuffer[mppc->MatchBuffer[MatchIndex]]);
+			Literal = ((accumulator & 0x7F000000) >> 24);
 
-			mppc->MatchBuffer[MatchIndex] = (UINT16) mppc->HistoryPtr;
+			*(HistoryPtr) = Literal;
+			HistoryPtr++;
 
-			if ((mppc->pHistoryPtr[0] != pMatch[0]) || (mppc->pHistoryPtr[1] != pMatch[1]) ||
-					(mppc->pHistoryPtr[2] != pMatch[2]) || (mppc->pHistoryPtr == pMatch))
+			BitStream_Shift(bs, 8);
+
+			continue;
+		}
+		else if ((accumulator & 0xC0000000) == 0x80000000)
+		{
+			/**
+			 * Literal, greater than 0x7F
+			 * bits 10 followed by the lower 7 bits of the literal
+			 */
+
+			Literal = ((accumulator & 0x3F800000) >> 23) + 0x80;
+
+			*(HistoryPtr) = Literal;
+			HistoryPtr++;
+
+			BitStream_Shift(bs, 9);
+
+			continue;
+		}
+
+		/**
+		 * CopyOffset Encoding
+		 */
+
+		CopyOffset = 0;
+
+		if (CompressionLevel) /* RDP5 */
+		{
+			if ((accumulator & 0xF8000000) == 0xF8000000)
 			{
-				accumulator = *(mppc->pHistoryPtr);
+				/**
+				 * CopyOffset, range [0, 63]
+				 * bits 11111 + lower 6 bits of CopyOffset
+				 */
 
-#ifdef DEBUG_MPPC
-				printf("0x%02X", accumulator);
-#endif
+				CopyOffset = ((accumulator >> 21) & 0x3F);
+				BitStream_Shift(bs, 11);
+			}
+			else if ((accumulator & 0xF8000000) == 0xF0000000)
+			{
+				/**
+				 * CopyOffset, range [64, 319]
+				 * bits 11110 + lower 8 bits of (CopyOffset - 64)
+				 */
 
-				if (accumulator < 0x80)
-				{
-					/* 8 bits of literal are encoded as-is */
-					BitStream_Write_Bits(mppc->bs, accumulator, 8);
-				}
-				else
-				{
-					/* bits 10 followed by lower 7 bits of literal */
-					accumulator = 0x100 | (accumulator & 0x7F);
-					BitStream_Write_Bits(mppc->bs, accumulator, 9);
-				}
+				CopyOffset = ((accumulator >> 19) & 0xFF) + 64;
+				BitStream_Shift(bs, 13);
+			}
+			else if ((accumulator & 0xF0000000) == 0xE0000000)
+			{
+				/**
+				 * CopyOffset, range [320, 2367]
+				 * bits 1110 + lower 11 bits of (CopyOffset - 320)
+				 */
 
-				mppc->HistoryPtr++;
-				mppc->pHistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryPtr]);
+				CopyOffset = ((accumulator >> 17) & 0x7FF) + 320;
+				BitStream_Shift(bs, 15);
+			}
+			else if ((accumulator & 0xE0000000) == 0xC0000000)
+			{
+				/**
+				 * CopyOffset, range [2368, ]
+				 * bits 110 + lower 16 bits of (CopyOffset - 2368)
+				 */
+
+				CopyOffset = ((accumulator >> 13) & 0xFFFF) + 2368;
+				BitStream_Shift(bs, 19);
 			}
 			else
 			{
-				DWORD CopyOffset;
-				DWORD LengthOfMatch = 1;
+				/* Invalid CopyOffset Encoding */
+			}
+		}
+		else /* RDP4 */
+		{
+			if ((accumulator & 0xF0000000) == 0xF0000000)
+			{
+				/**
+				 * CopyOffset, range [0, 63]
+				 * bits 1111 + lower 6 bits of CopyOffset
+				 */
 
-				CopyOffset = (DWORD) (mppc->pHistoryPtr - pMatch);
+				CopyOffset = ((accumulator >> 22) & 0x3F);
+				BitStream_Shift(bs, 10);
+			}
+			else if ((accumulator & 0xF0000000) == 0xE0000000)
+			{
+				/**
+				 * CopyOffset, range [64, 319]
+				 * bits 1110 + lower 8 bits of (CopyOffset - 64)
+				 */
 
-				while ((mppc->pHistoryPtr[LengthOfMatch] == pMatch[LengthOfMatch]) &&
-						((mppc->HistoryPtr + LengthOfMatch) < (*pSize - 1)))
-				{
-					MatchIndex = MPPC_MATCH_INDEX(mppc->pHistoryPtr[LengthOfMatch],
-						mppc->pHistoryPtr[LengthOfMatch + 1], mppc->pHistoryPtr[LengthOfMatch + 2]);
+				CopyOffset = ((accumulator >> 20) & 0xFF) + 64;
+				BitStream_Shift(bs, 12);
+			}
+			else if ((accumulator & 0xE0000000) == 0xC0000000)
+			{
+				/**
+				 * CopyOffset, range [320, 8191]
+				 * bits 110 + lower 13 bits of (CopyOffset - 320)
+				 */
 
-					mppc->MatchBuffer[MatchIndex] = (UINT16) (mppc->HistoryPtr + LengthOfMatch);
-
-					LengthOfMatch++;
-				}
-
-#ifdef DEBUG_MPPC
-				printf("<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
-#endif
-
-				/* Encode CopyOffset */
-
-				if (CopyOffset < 64)
-				{
-					/* 11111 + lower 6 bits of CopyOffset */
-					accumulator = 0x07C0 | (CopyOffset & 0x003F);
-					BitStream_Write_Bits(mppc->bs, accumulator, 11);
-				}
-				else if ((CopyOffset >= 64) && (CopyOffset < 320))
-				{
-					/* 11110 + lower 8 bits of (CopyOffset - 64) */
-					accumulator = 0x1E00 | ((CopyOffset - 64) & 0x00FF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 13);
-				}
-				else if ((CopyOffset >= 320) && (CopyOffset < 2368))
-				{
-					/* 1110 + lower 11 bits of (CopyOffset - 320) */
-					accumulator = 0x7000 | ((CopyOffset - 320) & 0x07FF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 15);
-				}
-				else
-				{
-					/* 110 + lower 16 bits of (CopyOffset - 2368) */
-					accumulator = 0x060000 | ((CopyOffset - 2368) & 0xFFFF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 19);
-				}
-
-				/* Encode LengthOfMatch */
-
-				if (LengthOfMatch == 3)
-				{
-					/* 0 + 0 lower bits of LengthOfMatch */
-					BitStream_Write_Bits(mppc->bs, 0, 1);
-				}
-				else if ((LengthOfMatch >= 4) && (LengthOfMatch < 8))
-				{
-					/* 10 + 2 lower bits of LengthOfMatch */
-					accumulator = 0x0008 | (LengthOfMatch & 0x0003);
-					BitStream_Write_Bits(mppc->bs, accumulator, 4);
-				}
-				else if ((LengthOfMatch >= 8) && (LengthOfMatch < 16))
-				{
-					/* 110 + 3 lower bits of LengthOfMatch */
-					accumulator = 0x0030 | (LengthOfMatch & 0x0007);
-					BitStream_Write_Bits(mppc->bs, accumulator, 6);
-				}
-				else if ((LengthOfMatch >= 16) && (LengthOfMatch < 32))
-				{
-					/* 1110 + 4 lower bits of LengthOfMatch */
-					accumulator = 0x00E0 | (LengthOfMatch & 0x000F);
-					BitStream_Write_Bits(mppc->bs, accumulator, 8);
-				}
-				else if ((LengthOfMatch >= 32) && (LengthOfMatch < 64))
-				{
-					/* 11110 + 5 lower bits of LengthOfMatch */
-					accumulator = 0x03C0 | (LengthOfMatch & 0x001F);
-					BitStream_Write_Bits(mppc->bs, accumulator, 10);
-				}
-				else if ((LengthOfMatch >= 64) && (LengthOfMatch < 128))
-				{
-					/* 111110 + 6 lower bits of LengthOfMatch */
-					accumulator = 0x0F80 | (LengthOfMatch & 0x003F);
-					BitStream_Write_Bits(mppc->bs, accumulator, 12);
-				}
-				else if ((LengthOfMatch >= 128) && (LengthOfMatch < 256))
-				{
-					/* 1111110 + 7 lower bits of LengthOfMatch */
-					accumulator = 0x3F00 | (LengthOfMatch & 0x007F);
-					BitStream_Write_Bits(mppc->bs, accumulator, 14);
-				}
-				else if ((LengthOfMatch >= 256) && (LengthOfMatch < 512))
-				{
-					/* 11111110 + 8 lower bits of LengthOfMatch */
-					accumulator = 0xFE00 | (LengthOfMatch & 0x00FF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 16);
-				}
-				else if ((LengthOfMatch >= 512) && (LengthOfMatch < 1024))
-				{
-					/* 111111110 + 9 lower bits of LengthOfMatch */
-					accumulator = 0x3FC00 | (LengthOfMatch & 0x01FF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 18);
-				}
-				else if ((LengthOfMatch >= 1024) && (LengthOfMatch < 2048))
-				{
-					/* 1111111110 + 10 lower bits of LengthOfMatch */
-					accumulator = 0xFF800 | (LengthOfMatch & 0x03FF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 20);
-				}
-				else if ((LengthOfMatch >= 2048) && (LengthOfMatch < 4096))
-				{
-					/* 11111111110 + 11 lower bits of LengthOfMatch */
-					accumulator = 0x3FF000 | (LengthOfMatch & 0x07FF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 22);
-				}
-				else if ((LengthOfMatch >= 4096) && (LengthOfMatch < 8192))
-				{
-					/* 111111111110 + 12 lower bits of LengthOfMatch */
-					accumulator = 0xFFE000 | (LengthOfMatch & 0x0FFF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 24);
-				}
-				else if ((LengthOfMatch >= 8192) && (LengthOfMatch < 16384))
-				{
-					/* 1111111111110 + 13 lower bits of LengthOfMatch */
-					accumulator = 0x3FFC000 | (LengthOfMatch & 0x1FFF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 26);
-				}
-				else if ((LengthOfMatch >= 16384) && (LengthOfMatch < 32768))
-				{
-					/* 11111111111110 + 14 lower bits of LengthOfMatch */
-					accumulator = 0xFFF8000 | (LengthOfMatch & 0x3FFF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 28);
-				}
-				else if ((LengthOfMatch >= 32768) && (LengthOfMatch < 65536))
-				{
-					/* 111111111111110 + 15 lower bits of LengthOfMatch */
-					accumulator = 0x3FFF0000 | (LengthOfMatch & 0x7FFF);
-					BitStream_Write_Bits(mppc->bs, accumulator, 30);
-				}
-
-				mppc->HistoryPtr += LengthOfMatch;
-				mppc->pHistoryPtr += LengthOfMatch;
+				CopyOffset = ((accumulator >> 16) & 0x1FFF) + 320;
+				BitStream_Shift(bs, 16);
+			}
+			else
+			{
+				/* Invalid CopyOffset Encoding */
 			}
 		}
 
-		/* Encode trailing symbols as literals */
+		/**
+		 * LengthOfMatch Encoding
+		 */
 
-		while (mppc->pHistoryPtr <= pEnd)
+		LengthOfMatch = 0;
+		accumulator = bs->accumulator;
+
+		if ((accumulator & 0x80000000) == 0x00000000)
 		{
-			MatchIndex = MPPC_MATCH_INDEX(mppc->pHistoryPtr[0], mppc->pHistoryPtr[1], mppc->pHistoryPtr[2]);
+			/**
+			 * LengthOfMatch [3]
+			 * bit 0 + 0 lower bits of LengthOfMatch
+			 */
 
-			pMatch = &(mppc->HistoryBuffer[mppc->MatchBuffer[MatchIndex]]);
+			LengthOfMatch = 3;
+			BitStream_Shift(bs, 1);
+		}
+		else if ((accumulator & 0xC0000000) == 0x80000000)
+		{
+			/**
+			 * LengthOfMatch [4, 7]
+			 * bits 10 + 2 lower bits of LengthOfMatch
+			 */
 
-			mppc->MatchBuffer[MatchIndex] = (UINT16) mppc->HistoryPtr;
+			LengthOfMatch = ((accumulator >> 28) & 0x0003) + 0x0004;
+			BitStream_Shift(bs, 4);
+		}
+		else if ((accumulator & 0xE0000000) == 0xC0000000)
+		{
+			/**
+			 * LengthOfMatch [8, 15]
+			 * bits 110 + 3 lower bits of LengthOfMatch
+			 */
 
-			accumulator = *(mppc->pHistoryPtr);
+			LengthOfMatch = ((accumulator >> 26) & 0x0007) + 0x0008;
+			BitStream_Shift(bs, 6);
+		}
+		else if ((accumulator & 0xF0000000) == 0xE0000000)
+		{
+			/**
+			 * LengthOfMatch [16, 31]
+			 * bits 1110 + 4 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 24) & 0x000F) + 0x0010;
+			BitStream_Shift(bs, 8);
+		}
+		else if ((accumulator & 0xF8000000) == 0xF0000000)
+		{
+			/**
+			 * LengthOfMatch [32, 63]
+			 * bits 11110 + 5 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 22) & 0x001F) + 0x0020;
+			BitStream_Shift(bs, 10);
+		}
+		else if ((accumulator & 0xFC000000) == 0xF8000000)
+		{
+			/**
+			 * LengthOfMatch [64, 127]
+			 * bits 111110 + 6 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 20) & 0x003F) + 0x0040;
+			BitStream_Shift(bs, 12);
+		}
+		else if ((accumulator & 0xFE000000) == 0xFC000000)
+		{
+			/**
+			 * LengthOfMatch [128, 255]
+			 * bits 1111110 + 7 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 18) & 0x007F) + 0x0080;
+			BitStream_Shift(bs, 14);
+		}
+		else if ((accumulator & 0xFF000000) == 0xFE000000)
+		{
+			/**
+			 * LengthOfMatch [256, 511]
+			 * bits 11111110 + 8 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 16) & 0x00FF) + 0x0100;
+			BitStream_Shift(bs, 16);
+		}
+		else if ((accumulator & 0xFF800000) == 0xFF000000)
+		{
+			/**
+			 * LengthOfMatch [512, 1023]
+			 * bits 111111110 + 9 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 14) & 0x01FF) + 0x0200;
+			BitStream_Shift(bs, 18);
+		}
+		else if ((accumulator & 0xFFC00000) == 0xFF800000)
+		{
+			/**
+			 * LengthOfMatch [1024, 2047]
+			 * bits 1111111110 + 10 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 12) & 0x03FF) + 0x0400;
+			BitStream_Shift(bs, 20);
+		}
+		else if ((accumulator & 0xFFE00000) == 0xFFC00000)
+		{
+			/**
+			 * LengthOfMatch [2048, 4095]
+			 * bits 11111111110 + 11 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 10) & 0x07FF) + 0x0800;
+			BitStream_Shift(bs, 22);
+		}
+		else if ((accumulator & 0xFFF00000) == 0xFFE00000)
+		{
+			/**
+			 * LengthOfMatch [4096, 8191]
+			 * bits 111111111110 + 12 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 8) & 0x0FFF) + 0x1000;
+			BitStream_Shift(bs, 24);
+		}
+		else if (((accumulator & 0xFFF80000) == 0xFFF00000) && CompressionLevel) /* RDP5 */
+		{
+			/**
+			 * LengthOfMatch [8192, 16383]
+			 * bits 1111111111110 + 13 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 6) & 0x1FFF) + 0x2000;
+			BitStream_Shift(bs, 26);
+		}
+		else if (((accumulator & 0xFFFC0000) == 0xFFF80000) && CompressionLevel) /* RDP5 */
+		{
+			/**
+			 * LengthOfMatch [16384, 32767]
+			 * bits 11111111111110 + 14 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 4) & 0x3FFF) + 0x4000;
+			BitStream_Shift(bs, 28);
+		}
+		else if (((accumulator & 0xFFFE0000) == 0xFFFC0000) && CompressionLevel) /* RDP5 */
+		{
+			/**
+			 * LengthOfMatch [32768, 65535]
+			 * bits 111111111111110 + 15 lower bits of LengthOfMatch
+			 */
+
+			LengthOfMatch = ((accumulator >> 2) & 0x7FFF) + 0x8000;
+			BitStream_Shift(bs, 30);
+		}
+		else
+		{
+			/* Invalid LengthOfMatch Encoding */
+		}
 
 #ifdef DEBUG_MPPC
-			printf("%c", accumulator);
+		printf("<%d,%d>\n", (int) CopyOffset, (int) LengthOfMatch);
 #endif
+
+		SrcPtr = HistoryPtr - CopyOffset;
+
+		while (LengthOfMatch > 0)
+		{
+			*(HistoryPtr) = *SrcPtr;
+
+			HistoryPtr++;
+			SrcPtr++;
+
+			LengthOfMatch--;
+		}
+	}
+
+	*pSize = (UINT32) (HistoryPtr - mppc->HistoryPtr);
+
+	mppc->HistoryPtr = HistoryPtr;
+
+	return 0;
+}
+
+UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize)
+{
+	UINT32 Flags;
+	BYTE* pSrcEnd;
+	BYTE* pDstEnd;
+	BYTE* MatchPtr;
+	UINT32 MatchIndex;
+	UINT32 accumulator;
+	DWORD CopyOffset;
+	DWORD LengthOfMatch;
+	BYTE* HistoryBuffer;
+	BYTE* HistoryPtr;
+	UINT32 HistoryOffset;
+	UINT32 HistoryBufferSize;
+	UINT32 CompressionLevel;
+	wBitStream* bs = mppc->bs;
+
+	HistoryBuffer = mppc->HistoryBuffer;
+	HistoryBufferSize = mppc->HistoryBufferSize;
+	CompressionLevel = mppc->CompressionLevel;
+
+	HistoryPtr = mppc->HistoryPtr;
+	HistoryOffset = mppc->HistoryOffset;
+
+	BitStream_Attach(bs, pDstData, *pSize);
+
+	CopyMemory(&(HistoryBuffer[HistoryOffset]), pSrcData, *pSize);
+
+	if (((HistoryOffset + *pSize) < (HistoryBufferSize - 3)) && HistoryOffset)
+	{
+		Flags = 0;
+	}
+	else
+	{
+		HistoryOffset = 0;
+		Flags = PACKET_AT_FRONT;
+	}
+
+	HistoryPtr = &(HistoryBuffer[HistoryOffset]);
+	HistoryOffset += *pSize;
+
+	pSrcEnd = &(HistoryBuffer[*pSize - 1]);
+	pDstEnd = &(pDstData[*pSize - 1]);
+
+	while (HistoryPtr < (pSrcEnd - 2))
+	{
+		MatchIndex = MPPC_MATCH_INDEX(HistoryPtr[0], HistoryPtr[1], HistoryPtr[2]);
+		MatchPtr = &(HistoryBuffer[mppc->MatchBuffer[MatchIndex]]);
+
+		/* if (&MatchPtr[1] != HistoryPtr) */
+			mppc->MatchBuffer[MatchIndex] = (UINT16) (HistoryPtr - HistoryBuffer);
+
+		if (mppc->HistoryPtr < HistoryPtr)
+			mppc->HistoryPtr = HistoryPtr;
+
+		if ((HistoryPtr[0] != MatchPtr[0]) || (HistoryPtr[1] != MatchPtr[1]) ||
+				(HistoryPtr[2] != MatchPtr[2]) || (&MatchPtr[2] > mppc->HistoryPtr) ||
+				(MatchPtr == HistoryPtr) || (&MatchPtr[1] == HistoryPtr) ||
+				(MatchPtr == HistoryBuffer))
+		{
+			accumulator = *(HistoryPtr);
+
+#ifdef DEBUG_MPPC
+			//printf("%c", accumulator);
+#endif
+
+			if (((bs->position / 8) + 2) > (*pSize - 1))
+			{
+				Flags = PACKET_FLUSHED;
+				ZeroMemory(HistoryBuffer, HistoryBufferSize);
+				ZeroMemory(mppc->MatchBuffer, sizeof(mppc->MatchBuffer));
+				return Flags;
+			}
 
 			if (accumulator < 0x80)
 			{
 				/* 8 bits of literal are encoded as-is */
-				BitStream_Write_Bits(mppc->bs, accumulator, 8);
+				BitStream_Write_Bits(bs, accumulator, 8);
 			}
 			else
 			{
 				/* bits 10 followed by lower 7 bits of literal */
 				accumulator = 0x100 | (accumulator & 0x7F);
-				BitStream_Write_Bits(mppc->bs, accumulator, 9);
+				BitStream_Write_Bits(bs, accumulator, 9);
 			}
 
-			mppc->HistoryPtr++;
-			mppc->pHistoryPtr++;
+			HistoryPtr++;
+		}
+		else
+		{
+			LengthOfMatch = 3;
+			HistoryPtr += 3;
+			MatchPtr += 3;
+
+			CopyOffset = (HistoryBufferSize - 1) & (HistoryPtr - MatchPtr);
+
+			while ((*HistoryPtr == *MatchPtr) && /* (MatchPtr <= mppc->HistoryPtr) && */
+					((HistoryPtr - HistoryBuffer) < (*pSize - 1)))
+			{
+				LengthOfMatch++;
+				HistoryPtr++;
+				MatchPtr++;
+			}
+
+#ifdef DEBUG_MPPC
+			printf("<%d,%d>\n", (int) CopyOffset, (int) LengthOfMatch);
+#endif
+
+			/* Encode CopyOffset */
+
+			if (((bs->position / 8) + 7) > (*pSize - 1))
+			{
+				Flags = PACKET_FLUSHED;
+				ZeroMemory(HistoryBuffer, HistoryBufferSize);
+				ZeroMemory(mppc->MatchBuffer, sizeof(mppc->MatchBuffer));
+				return Flags;
+			}
+
+			if (CompressionLevel) /* RDP5 */
+			{
+				if (CopyOffset < 64)
+				{
+					/* bits 11111 + lower 6 bits of CopyOffset */
+					accumulator = 0x07C0 | (CopyOffset & 0x003F);
+					BitStream_Write_Bits(bs, accumulator, 11);
+				}
+				else if ((CopyOffset >= 64) && (CopyOffset < 320))
+				{
+					/* bits 11110 + lower 8 bits of (CopyOffset - 64) */
+					accumulator = 0x1E00 | ((CopyOffset - 64) & 0x00FF);
+					BitStream_Write_Bits(bs, accumulator, 13);
+				}
+				else if ((CopyOffset >= 320) && (CopyOffset < 2368))
+				{
+					/* bits 1110 + lower 11 bits of (CopyOffset - 320) */
+					accumulator = 0x7000 | ((CopyOffset - 320) & 0x07FF);
+					BitStream_Write_Bits(bs, accumulator, 15);
+				}
+				else
+				{
+					/* bits 110 + lower 16 bits of (CopyOffset - 2368) */
+					accumulator = 0x060000 | ((CopyOffset - 2368) & 0xFFFF);
+					BitStream_Write_Bits(bs, accumulator, 19);
+				}
+			}
+			else /* RDP4 */
+			{
+				if (CopyOffset < 64)
+				{
+					/* bits 1111 + lower 6 bits of CopyOffset */
+					accumulator = 0x03C0 | (CopyOffset & 0x003F);
+					BitStream_Write_Bits(bs, accumulator, 10);
+				}
+				else if ((CopyOffset >= 64) && (CopyOffset < 320))
+				{
+					/* bits 1110 + lower 8 bits of (CopyOffset - 64) */
+					accumulator = 0x0E00 | ((CopyOffset - 64) & 0x00FF);
+					BitStream_Write_Bits(bs, accumulator, 12);
+				}
+				else if ((CopyOffset >= 320) && (CopyOffset < 8192))
+				{
+					/* bits 110 + lower 13 bits of (CopyOffset - 320) */
+					accumulator = 0xC000 | ((CopyOffset - 320) & 0x1FFF);
+					BitStream_Write_Bits(bs, accumulator, 16);
+				}
+			}
+
+			/* Encode LengthOfMatch */
+
+			if (LengthOfMatch == 3)
+			{
+				/* 0 + 0 lower bits of LengthOfMatch */
+				BitStream_Write_Bits(bs, 0, 1);
+			}
+			else if ((LengthOfMatch >= 4) && (LengthOfMatch < 8))
+			{
+				/* 10 + 2 lower bits of LengthOfMatch */
+				accumulator = 0x0008 | (LengthOfMatch & 0x0003);
+				BitStream_Write_Bits(bs, accumulator, 4);
+			}
+			else if ((LengthOfMatch >= 8) && (LengthOfMatch < 16))
+			{
+				/* 110 + 3 lower bits of LengthOfMatch */
+				accumulator = 0x0030 | (LengthOfMatch & 0x0007);
+				BitStream_Write_Bits(bs, accumulator, 6);
+			}
+			else if ((LengthOfMatch >= 16) && (LengthOfMatch < 32))
+			{
+				/* 1110 + 4 lower bits of LengthOfMatch */
+				accumulator = 0x00E0 | (LengthOfMatch & 0x000F);
+				BitStream_Write_Bits(bs, accumulator, 8);
+			}
+			else if ((LengthOfMatch >= 32) && (LengthOfMatch < 64))
+			{
+				/* 11110 + 5 lower bits of LengthOfMatch */
+				accumulator = 0x03C0 | (LengthOfMatch & 0x001F);
+				BitStream_Write_Bits(bs, accumulator, 10);
+			}
+			else if ((LengthOfMatch >= 64) && (LengthOfMatch < 128))
+			{
+				/* 111110 + 6 lower bits of LengthOfMatch */
+				accumulator = 0x0F80 | (LengthOfMatch & 0x003F);
+				BitStream_Write_Bits(bs, accumulator, 12);
+			}
+			else if ((LengthOfMatch >= 128) && (LengthOfMatch < 256))
+			{
+				/* 1111110 + 7 lower bits of LengthOfMatch */
+				accumulator = 0x3F00 | (LengthOfMatch & 0x007F);
+				BitStream_Write_Bits(bs, accumulator, 14);
+			}
+			else if ((LengthOfMatch >= 256) && (LengthOfMatch < 512))
+			{
+				/* 11111110 + 8 lower bits of LengthOfMatch */
+				accumulator = 0xFE00 | (LengthOfMatch & 0x00FF);
+				BitStream_Write_Bits(bs, accumulator, 16);
+			}
+			else if ((LengthOfMatch >= 512) && (LengthOfMatch < 1024))
+			{
+				/* 111111110 + 9 lower bits of LengthOfMatch */
+				accumulator = 0x3FC00 | (LengthOfMatch & 0x01FF);
+				BitStream_Write_Bits(bs, accumulator, 18);
+			}
+			else if ((LengthOfMatch >= 1024) && (LengthOfMatch < 2048))
+			{
+				/* 1111111110 + 10 lower bits of LengthOfMatch */
+				accumulator = 0xFF800 | (LengthOfMatch & 0x03FF);
+				BitStream_Write_Bits(bs, accumulator, 20);
+			}
+			else if ((LengthOfMatch >= 2048) && (LengthOfMatch < 4096))
+			{
+				/* 11111111110 + 11 lower bits of LengthOfMatch */
+				accumulator = 0x3FF000 | (LengthOfMatch & 0x07FF);
+				BitStream_Write_Bits(bs, accumulator, 22);
+			}
+			else if ((LengthOfMatch >= 4096) && (LengthOfMatch < 8192))
+			{
+				/* 111111111110 + 12 lower bits of LengthOfMatch */
+				accumulator = 0xFFE000 | (LengthOfMatch & 0x0FFF);
+				BitStream_Write_Bits(bs, accumulator, 24);
+			}
+			else if (((LengthOfMatch >= 8192) && (LengthOfMatch < 16384)) && CompressionLevel) /* RDP5 */
+			{
+				/* 1111111111110 + 13 lower bits of LengthOfMatch */
+				accumulator = 0x3FFC000 | (LengthOfMatch & 0x1FFF);
+				BitStream_Write_Bits(bs, accumulator, 26);
+			}
+			else if (((LengthOfMatch >= 16384) && (LengthOfMatch < 32768)) && CompressionLevel) /* RDP5 */
+			{
+				/* 11111111111110 + 14 lower bits of LengthOfMatch */
+				accumulator = 0xFFF8000 | (LengthOfMatch & 0x3FFF);
+				BitStream_Write_Bits(bs, accumulator, 28);
+			}
+			else if (((LengthOfMatch >= 32768) && (LengthOfMatch < 65536)) && CompressionLevel) /* RDP5 */
+			{
+				/* 111111111111110 + 15 lower bits of LengthOfMatch */
+				accumulator = 0x3FFF0000 | (LengthOfMatch & 0x7FFF);
+				BitStream_Write_Bits(bs, accumulator, 30);
+			}
 		}
 	}
 
-	/* HistoryPtr < HistoryOffset? (NO) */
+	/* Encode trailing symbols as literals */
+
+	while (HistoryPtr <= pSrcEnd)
+	{
+		MatchIndex = MPPC_MATCH_INDEX(HistoryPtr[0], HistoryPtr[1], HistoryPtr[2]);
+		MatchPtr = &(HistoryBuffer[mppc->MatchBuffer[MatchIndex]]);
+		mppc->MatchBuffer[MatchIndex] = (UINT16) (HistoryPtr - HistoryBuffer);
+
+		accumulator = *(HistoryPtr);
+
+#ifdef DEBUG_MPPC
+		//printf("%c", accumulator);
+#endif
+
+		if (((bs->position / 8) + 2) > (*pSize - 1))
+		{
+			Flags = PACKET_FLUSHED;
+			ZeroMemory(HistoryBuffer, HistoryBufferSize);
+			ZeroMemory(mppc->MatchBuffer, sizeof(mppc->MatchBuffer));
+			return Flags;
+		}
+
+		if (accumulator < 0x80)
+		{
+			/* 8 bits of literal are encoded as-is */
+			BitStream_Write_Bits(bs, accumulator, 8);
+		}
+		else
+		{
+			/* bits 10 followed by lower 7 bits of literal */
+			accumulator = 0x100 | (accumulator & 0x7F);
+			BitStream_Write_Bits(bs, accumulator, 9);
+		}
+
+		HistoryPtr++;
+	}
+
+	BitStream_Flush(bs);
 
 	Flags |= PACKET_COMPRESSED;
+	*pSize = ((bs->position + 7) / 8);
 
-	BitStream_Flush(mppc->bs);
-	*pSize = (mppc->bs->position / 8);
+	mppc->HistoryPtr = HistoryPtr;
+	mppc->HistoryOffset = HistoryPtr - HistoryBuffer;
+
+#ifdef DEBUG_MPPC
+	printf("\n");
+#endif
 
 	return Flags;
 }
@@ -366,6 +770,9 @@ MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor)
 		ZeroMemory(&(mppc->MatchBuffer), sizeof(mppc->MatchBuffer));
 
 		mppc->bs = BitStream_New();
+
+		mppc->HistoryPtr = &(mppc->HistoryBuffer[0]);
+		mppc->HistoryOffset = 0;
 	}
 
 	return mppc;
