@@ -368,8 +368,8 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 		cliprdr->num_format_names = 0;
 
-		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
 		cliprdr_send_format_list_response(cliprdr);
+		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
 	}
 }
 
