@@ -25,6 +25,10 @@
 
 #include <winpr/bitstream.h>
 
+#define PACKET_COMPRESSED		0x20
+#define PACKET_AT_FRONT			0x40
+#define PACKET_FLUSHED			0x80
+
 struct _MPPC_CONTEXT
 {
 	wBitStream* bs;
@@ -45,6 +49,7 @@ extern "C" {
 FREERDP_API UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize);
 FREERDP_API UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE** ppDstData, UINT32* pSize, UINT32 flags);
 
+FREERDP_API void mppc_set_compression_level(MPPC_CONTEXT* mppc, DWORD CompressionLevel);
 FREERDP_API void mppc_context_reset(MPPC_CONTEXT* mppc);
 
 FREERDP_API MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor);

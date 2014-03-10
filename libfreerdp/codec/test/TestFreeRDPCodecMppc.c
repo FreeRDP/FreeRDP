@@ -4,8 +4,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/mppc.h>
-#include <freerdp/codec/mppc_dec.h>
-#include <freerdp/codec/mppc_enc.h>
 
 static BYTE TEST_RDP5_COMPRESSED_DATA[] =
 {
@@ -598,92 +596,6 @@ static BYTE TEST_RDP5_UNCOMPRESSED_DATA[] =
 	0x7b, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x68, 0x2d, 0x09, 0x00, 0x58, 0xf3, 0x7c,
 	0x0b, 0x00, 0x00, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x51, 0x0a, 0x40, 0xc8,
 };
-
-int test_mppc_old()
-{
-	BOOL status;
-	UINT32 roff;
-	UINT32 rlen;
-	struct rdp_mppc_enc* enc;
-	struct rdp_mppc_dec* rmppc;
-
-	/* Decompression */
-
-	rmppc = mppc_dec_new();
-
-	status = decompress_rdp_5(rmppc, TEST_RDP5_COMPRESSED_DATA,
-			sizeof(TEST_RDP5_COMPRESSED_DATA), PACKET_COMPRESSED, &roff, &rlen);
-
-	if (!status)
-	{
-		printf("RDP5 decompression failure: %d\n", status);
-		return -1;
-	}
-
-	if (memcmp(TEST_RDP5_UNCOMPRESSED_DATA, rmppc->history_buf, sizeof(TEST_RDP5_UNCOMPRESSED_DATA)) != 0)
-	{
-		printf("RDP5 decompression failure\n");
-		return -1;
-	}
-
-	mppc_dec_free(rmppc);
-	rmppc = mppc_dec_new();
-
-	/* Compression */
-
-	enc = mppc_enc_new(PROTO_RDP_50);
-
-	status = compress_rdp(enc, TEST_RDP5_UNCOMPRESSED_DATA, sizeof(TEST_RDP5_UNCOMPRESSED_DATA));
-
-	if (!status)
-	{
-		printf("RDP5 decompression failure: %d\n", status);
-		return -1;
-	}
-
-	if (enc->flags & PACKET_COMPRESSED)
-	{
-		status = decompress_rdp_5(rmppc, (BYTE*) enc->outputBuffer,
-				enc->bytes_in_opb, enc->flags, &roff, &rlen);
-
-		if (!status)
-		{
-			printf("RDP5 compression/decompression failure: %d\n", status);
-			return -1;
-		}
-
-		if (rlen != sizeof(TEST_RDP5_UNCOMPRESSED_DATA))
-		{
-			printf("RDP5 compression/decompression failure: size mismatch: Actual: %d, Expected: %d\n",
-					rlen, (int) sizeof(TEST_RDP5_UNCOMPRESSED_DATA));
-			return -1;
-		}
-
-		if (memcmp(TEST_RDP5_UNCOMPRESSED_DATA, &rmppc->history_buf[roff], rlen) != 0)
-		{
-			printf("RDP5 compression/decompression failure\n");
-			return -1;
-		}
-	}
-
-	if (enc->bytes_in_opb != sizeof(TEST_RDP5_UNCOMPRESSED_DATA))
-	{
-		printf("RDP5 decompression failure: size mismatch: Actual: %d, Expected: %d\n",
-				enc->bytes_in_opb, (int) sizeof(TEST_RDP5_UNCOMPRESSED_DATA));
-		return -1;
-	}
-
-	if (memcmp(TEST_RDP5_COMPRESSED_DATA, enc->outputBuffer, sizeof(TEST_RDP5_COMPRESSED_DATA)) != 0)
-	{
-		printf("RDP5 decompression failure\n");
-		return -1;
-	}
-
-	mppc_enc_free(enc);
-	mppc_dec_free(rmppc);
-
-	return 0;
-}
 
 /**
  *

@@ -777,6 +777,20 @@ UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32*
 	return Flags;
 }
 
+void mppc_set_compression_level(MPPC_CONTEXT* mppc, DWORD CompressionLevel)
+{
+	if (CompressionLevel < 1)
+	{
+		mppc->CompressionLevel = 0;
+		mppc->HistoryBufferSize = 8192;
+	}
+	else
+	{
+		mppc->CompressionLevel = 1;
+		mppc->HistoryBufferSize = 65536;
+	}
+}
+
 void mppc_context_reset(MPPC_CONTEXT* mppc)
 {
 	ZeroMemory(&(mppc->HistoryBuffer), sizeof(mppc->HistoryBuffer));

@@ -35,6 +35,7 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 	{
 		case PACKET_COMPR_TYPE_8K:
 			size = SrcSize;
+			mppc_set_compression_level(bulk->mppcRecv, 0);
 			mppc_decompress(bulk->mppcRecv, pSrcData, ppDstData, &size, flags);
 			*pDstSize = size;
 			status = 1;
@@ -43,6 +44,7 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 
 		case PACKET_COMPR_TYPE_64K:
 			size = SrcSize;
+			mppc_set_compression_level(bulk->mppcRecv, 1);
 			mppc_decompress(bulk->mppcRecv, pSrcData, ppDstData, &size, flags);
 			*pDstSize = size;
 			status = 1;
@@ -92,9 +94,7 @@ void bulk_reset(rdpBulk* bulk)
 	mppc_context_reset(bulk->mppcRecv);
 
 	mppc_dec_free(bulk->mppc_dec);
-	mppc_enc_free(bulk->mppc_enc);
 	bulk->mppc_dec = mppc_dec_new();
-	bulk->mppc_enc = mppc_enc_new(PROTO_RDP_50);
 }
 
 rdpBulk* bulk_new(rdpContext* context)
@@ -111,7 +111,6 @@ rdpBulk* bulk_new(rdpContext* context)
 		bulk->mppcRecv = mppc_context_new(1, FALSE);
 
 		bulk->mppc_dec = mppc_dec_new();
-		bulk->mppc_enc = mppc_enc_new(PROTO_RDP_50);
 	}
 
 	return bulk;
@@ -125,7 +124,6 @@ void bulk_free(rdpBulk* bulk)
 		mppc_context_free(bulk->mppcRecv);
 
 		mppc_dec_free(bulk->mppc_dec);
-		mppc_enc_free(bulk->mppc_enc);
 
 		free(bulk);
 	}
