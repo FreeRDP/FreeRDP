@@ -95,7 +95,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 
 	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
 
-	if (library == NULL)
+	if (!library)
 	{
 		fprintf(stderr, "LoadLibraryA: %s\n", dlerror());
 		return NULL;
@@ -115,9 +115,9 @@ HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 
 	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
 
-	if (library == NULL)
+	if (!library)
 	{
-		fprintf(stderr, "LoadLibraryA: failed to open %s: %s\n", lpLibFileName, dlerror());
+		fprintf(stderr, "LoadLibraryExA: failed to open %s: %s\n", lpLibFileName, dlerror());
 		return NULL;
 	}
 

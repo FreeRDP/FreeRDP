@@ -78,6 +78,14 @@ static BYTE ch_HowAreYou_UTF16[] = "\x60\x4F\x7D\x59\x17\x54\x00\x00";
 static int ch_HowAreYou_cchWideChar = 4;
 static int ch_HowAreYou_cbMultiByte = 10;
 
+/* Uppercasing */
+
+static BYTE ru_Administrator_lower[] =
+		"\xd0\x90\xd0\xb4\xd0\xbc\xd0\xb8\xd0\xbd\xd0\xb8\xd1\x81\xd1\x82\xd1\x80\xd0\xb0\xd1\x82\xd0\xbe\xd1\x80\x00";
+
+static BYTE ru_Administrator_upper[] =
+		"\xd0\x90\xd0\x94\xd0\x9c\xd0\x98\xd0\x9d\xd0\x98\xd0\xa1\xd0\xa2\xd0\xa0\xd0\x90\xd0\xa2\xd0\x9e\xd0\xa0\x00";
+
 void string_hexdump(BYTE* data, int length)
 {
 	BYTE* p = data;
@@ -242,6 +250,35 @@ int convert_utf16_to_utf8(BYTE* lpWideCharStr, BYTE* expected_lpMultiByteStr, in
 	return length;
 }
 
+int test_unicode_uppercasing(BYTE* lower, BYTE* upper)
+{
+	WCHAR* lowerW = NULL;
+	int lowerLength;
+	WCHAR* upperW = NULL;
+	int upperLength;
+
+	lowerLength = ConvertToUnicode(CP_UTF8, 0, (LPSTR) lower, -1, &lowerW, 0);
+	upperLength = ConvertToUnicode(CP_UTF8, 0, (LPSTR) upper, -1, &upperW, 0);
+
+	CharUpperBuffW(lowerW, lowerLength);
+
+	if (_wcscmp(lowerW, upperW) != 0)
+	{
+		printf("Lowercase String:\n");
+		string_hexdump((BYTE*) lowerW, lowerLength * 2);
+
+		printf("Uppercase String:\n");
+		string_hexdump((BYTE*) upperW, upperLength * 2);
+
+		return -1;
+	}
+
+	free(lowerW);
+	free(upperW);
+
+	return 0;
+}
+
 int TestUnicodeConversion(int argc, char* argv[])
 {
 	/* Letters */
@@ -323,6 +360,12 @@ int TestUnicodeConversion(int argc, char* argv[])
 		return -1;
 	if (convert_utf16_to_utf8(ch_HowAreYou_UTF16, ch_HowAreYou_UTF8, ch_HowAreYou_cbMultiByte) < 1)
 		return -1;
+
+	/* Uppercasing */
+
+	printf("Uppercasing\n");
+
+	test_unicode_uppercasing(ru_Administrator_lower, ru_Administrator_upper);
 
 	return 0;
 }

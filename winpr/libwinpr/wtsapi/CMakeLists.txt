@@ -19,7 +19,8 @@ set(MODULE_NAME "winpr-wtsapi")
 set(MODULE_PREFIX "WINPR_WTSAPI")
 
 set(${MODULE_PREFIX}_SRCS
-	wtsapi.c)
+	wtsapi.c
+	wtsapi.h)
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}

@@ -35,6 +35,7 @@
 #include <winpr/collections.h>
 
 #include <freerdp/addin.h>
+#include <freerdp/utils/svc_plugin.h>
 
 #include "rdpei_common.h"
 
@@ -118,6 +119,20 @@ const char* RDPEI_EVENTID_STRINGS[] =
 	"EVENTID_DISMISS_HOVERING_CONTACT"
 };
 
+BOOL rdpei_push_event(RDPEI_CHANNEL_CALLBACK* callback, wMessage* event)
+{
+	int status;
+
+	status = callback->channel_mgr->PushEvent(callback->channel_mgr, event);
+
+	if (status)
+	{
+		DEBUG_WARN("response error %d", status);
+		return FALSE;
+	}
+
+	return TRUE;
+}
 int rdpei_add_frame(RdpeiClientContext* context)
 {
 	int i;
@@ -379,11 +394,35 @@ int rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 
 int rdpei_recv_suspend_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
+	wMessage* event;
+	BOOL status;
+
+	event = freerdp_event_new(RdpeiChannel_Class, RdpeiChannel_SuspendTouch, NULL, NULL);
+
+	status = rdpei_push_event(callback, event);
+
+	if (!status)
+	{
+		return -1;
+	}
+
 	return 0;
 }
 
 int rdpei_recv_resume_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
+	wMessage* event;
+	BOOL status;
+
+	event = freerdp_event_new(RdpeiChannel_Class, RdpeiChannel_ResumeTouch, NULL, NULL);
+
+	status = rdpei_push_event(callback, event);
+
+	if (!status)
+	{
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -490,7 +529,7 @@ static int rdpei_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 		(IWTSListenerCallback*) rdpei->listener_callback, &(rdpei->listener));
 
 	rdpei->listener->pInterface = rdpei->iface.pInterface;
-	
+
 	InitializeCriticalSection(&rdpei->lock);
 	rdpei->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	rdpei->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -675,7 +714,7 @@ int rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y)
 	int i;
 	int contactId = -1;
 	RDPINPUT_CONTACT_DATA contact;
-	RDPINPUT_CONTACT_POINT* contactPoint;
+	RDPINPUT_CONTACT_POINT* contactPoint = NULL;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
 	for (i = 0; i < rdpei->maxTouchContacts; i++)
