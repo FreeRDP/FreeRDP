@@ -297,11 +297,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 {
 	int status;
 	UINT16 size;
-	UINT32 roff;
-	UINT32 rlen;
 	rdpRdp* rdp;
 	int next_pos;
-	BYTE* buffer;
 	wStream* cs;
 	UINT32 totalSize;
 	BYTE updateCode;
@@ -331,21 +328,22 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 	if (compressionFlags & PACKET_COMPRESSED)
 	{
-		if (decompress_rdp(rdp->bulk->mppc_dec, Stream_Pointer(s), size, compressionFlags, &roff, &rlen))
-		{
-			size = rlen;
-			buffer = rdp->bulk->mppc_dec->history_buf + roff;
+		UINT32 DstSize = 0;
+		BYTE* pDstData = NULL;
 
-			cs = StreamPool_Take(transport->ReceivePool, size);
+		if (bulk_decompress(rdp->bulk, Stream_Pointer(s), size, &pDstData, &DstSize, compressionFlags))
+		{
+			size = DstSize;
+			cs = StreamPool_Take(transport->ReceivePool, DstSize);
 
 			Stream_SetPosition(cs, 0);
-			Stream_Write(cs, buffer, size);
+			Stream_Write(cs, pDstData, DstSize);
 			Stream_SealLength(cs);
 			Stream_SetPosition(cs, 0);
 		}
 		else
 		{
-			fprintf(stderr, "decompress_rdp() failed\n");
+			fprintf(stderr, "bulk_decompress() failed\n");
 			Stream_Seek(s, size);
 		}
 	}
@@ -845,6 +843,12 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
+		UINT32 flags;
+		BYTE* pSrcData;
+		UINT32 SrcSize;
+		UINT32 DstSize = 0;
+		BYTE* pDstData = NULL;
+
 		Stream_GetPointer(s, holdp);
 		ls = s;
 		dlen = MIN(maxLength, totalLength);
@@ -853,17 +857,22 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		header_bytes = 6 + sec_bytes;
 		pdu_data_bytes = dlen;
 
+		try_comp = FALSE;
+
 		if (try_comp)
 		{
-			if (compress_rdp(rdp->bulk->mppc_enc, Stream_Pointer(ls) + header_bytes, dlen))
+			SrcSize = dlen;
+			pSrcData = Stream_Pointer(ls) + header_bytes;
+
+			if (bulk_compress(rdp->bulk, pSrcData, SrcSize, &pDstData, &DstSize, &flags) >= 0)
 			{
-				if (rdp->bulk->mppc_enc->flags & PACKET_COMPRESSED)
+				if (flags & PACKET_COMPRESSED)
 				{
-					cflags = rdp->bulk->mppc_enc->flags;
-					pdu_data_bytes = rdp->bulk->mppc_enc->bytes_in_opb;
+					cflags = flags;
+					pdu_data_bytes = DstSize;
 					comp_flags = FASTPATH_OUTPUT_COMPRESSION_USED;
 					header_bytes = 7 + sec_bytes;
-					bm = (BYTE*) (rdp->bulk->mppc_enc->outputBuffer - header_bytes);
+					bm = (BYTE*) (pDstData - header_bytes);
 					if (comp_update)
 						Stream_Free(comp_update, FALSE);
 					comp_update = Stream_New(bm, pdu_data_bytes + header_bytes);
@@ -872,7 +881,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			}
 			else
 			{
-				fprintf(stderr, "fastpath_send_update_pdu: mppc_encode failed\n");
+				fprintf(stderr, "fastpath_send_update_pdu: bulk_compress failed\n");
 			}
 		}
 

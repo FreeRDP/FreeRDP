@@ -35,6 +35,9 @@ struct rdp_bulk
 	struct rdp_mppc_enc* mppc_enc;
 };
 
+int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
+int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
+
 void bulk_reset(rdpBulk* bulk);
 
 rdpBulk* bulk_new(rdpContext* context);

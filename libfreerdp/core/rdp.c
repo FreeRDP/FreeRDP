@@ -134,7 +134,7 @@ void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type, UINT
 }
 
 BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* shareId,
-					BYTE *compressedType, UINT16 *compressedLen)
+					BYTE* compressedType, UINT16* compressedLength)
 {
 	if (Stream_GetRemainingLength(s) < 12)
 		return FALSE;
@@ -146,7 +146,7 @@ BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* 
 	Stream_Read_UINT16(s, *length); /* uncompressedLength (2 bytes) */
 	Stream_Read_UINT8(s, *type); /* pduType2, Data PDU Type (1 byte) */
 	Stream_Read_UINT8(s, *compressedType); /* compressedType (1 byte) */
-	Stream_Read_UINT16(s, *compressedLen); /* compressedLength (2 bytes) */
+	Stream_Read_UINT16(s, *compressedLength); /* compressedLength (2 bytes) */
 
 	return TRUE;
 }
@@ -706,45 +706,45 @@ BOOL rdp_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount, MONITOR_DEF* 
 int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 {
 	BYTE type;
-	UINT32 roff;
-	UINT32 rlen;
 	wStream* cs;
-	BYTE* buffer;
 	UINT16 length;
-	UINT32 share_id;
-	BYTE compressed_type;
-	UINT16 compressed_len;
+	UINT32 shareId;
+	BYTE compressedType;
+	UINT16 compressedLength;
 
-	if (!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type, &compressed_len))
+	if (!rdp_read_share_data_header(s, &length, &type, &shareId, &compressedType, &compressedLength))
 		return -1;
 
 	cs = s;
 
-	if (compressed_type & PACKET_COMPRESSED)
+	if (compressedType & PACKET_COMPRESSED)
 	{
-		if (Stream_GetRemainingLength(s) < (size_t) (compressed_len - 18))
+		UINT32 DstSize = 0;
+		BYTE* pDstData = NULL;
+		UINT32 SrcSize = compressedLength - 18;
+
+		if (Stream_GetRemainingLength(s) < (size_t) SrcSize)
 		{
-			fprintf(stderr, "decompress_rdp: not enough bytes for compressed_len=%d\n", compressed_len);
-			return -1;	
+			fprintf(stderr, "bulk_decompress: not enough bytes for compressedLength %d\n", compressedLength);
+			return -1;
 		}
 
-		if (decompress_rdp(rdp->bulk->mppc_dec, Stream_Pointer(s), compressed_len - 18, compressed_type, &roff, &rlen))
+		if (bulk_decompress(rdp->bulk, Stream_Pointer(s), SrcSize, &pDstData, &DstSize, compressedType))
 		{
-			buffer = rdp->bulk->mppc_dec->history_buf + roff;
-			cs = StreamPool_Take(rdp->transport->ReceivePool, rlen);
+			cs = StreamPool_Take(rdp->transport->ReceivePool, DstSize);
 
 			Stream_SetPosition(cs, 0);
-			Stream_Write(cs, buffer, rlen);
+			Stream_Write(cs, pDstData, DstSize);
 			Stream_SealLength(cs);
 			Stream_SetPosition(cs, 0);
 		}
 		else
 		{
-			fprintf(stderr, "decompress_rdp() failed\n");
+			fprintf(stderr, "bulk_decompress() failed\n");
 			return -1;
 		}
 
-		Stream_Seek(s, compressed_len - 18);
+		Stream_Seek(s, SrcSize);
 	}
 
 #ifdef WITH_DEBUG_RDP
