@@ -1017,6 +1017,7 @@ int test_MppcDecompressBufferRdp5()
 
 int TestFreeRDPCodecMppc(int argc, char* argv[])
 {
+#if 1
 	if (test_MppcCompressBellsRdp5() < 0)
 		return -1;
 
@@ -1028,11 +1029,14 @@ int TestFreeRDPCodecMppc(int argc, char* argv[])
 
 	if (test_MppcDecompressBellsRdp4() < 0)
 		return -1;
+#endif
 
+#if 0
 	test_MppcCompressBufferRdp5();
-
+#else
 	if (test_MppcDecompressBufferRdp5() < 0)
 		return -1;
+#endif
 
 	//test_mppc_old();
 

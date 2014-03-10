@@ -29,10 +29,8 @@ struct _MPPC_CONTEXT
 {
 	wBitStream* bs;
 	BOOL Compressor;
-	UINT32 HistoryPtr;
-	BYTE* pHistoryPtr;
+	BYTE* HistoryPtr;
 	UINT32 HistoryOffset;
-	BYTE* pHistoryOffset;
 	UINT32 HistoryBufferSize;
 	BYTE HistoryBuffer[65536];
 	UINT16 MatchBuffer[32768];
