@@ -19,6 +19,11 @@
 #ifndef __WF_CLIPRDR_H
 #define __WF_CLIPRDR_H
 
+#define CINTERFACE
+#define COBJMACROS
+
+#include <Ole2.h>
+#include <ShlObj.h>
 #include "wf_interface.h"
 
 #ifdef WITH_DEBUG_CLIPRDR
@@ -53,6 +58,21 @@ struct cliprdr_context {
 	HANDLE cliprdr_thread;
 	HANDLE hmem;
 	HANDLE response_data_event;
+
+	/* file clipping */
+	CLIPFORMAT ID_FILEDESCRIPTORW;
+	CLIPFORMAT ID_FILECONTENTS;
+	CLIPFORMAT ID_PREFERREDDROPEFFECT;
+
+	LPDATAOBJECT data_obj;
+	ULONG req_fsize;
+	char *req_fdata;
+	HANDLE req_fevent;
+
+	int nFiles;
+	int file_array_size;
+	wchar_t **file_names;
+	FILEDESCRIPTORW **fileDescriptor;
 };
 
 void wf_cliprdr_init(wfContext* wfc, rdpChannels* channels);
@@ -63,5 +83,12 @@ BOOL wf_cliprdr_process_selection_request(wfContext* wfc, HWND hWnd, UINT Msg, W
 BOOL wf_cliprdr_process_selection_clear(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL wf_cliprdr_process_property_notify(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 void wf_cliprdr_check_owner(wfContext* wfc);
+
+int cliprdr_send_data_request(cliprdrContext *cliprdr, UINT32 format);
+int cliprdr_send_lock(cliprdrContext *cliprdr);
+int cliprdr_send_unlock(cliprdrContext *cliprdr);
+int cliprdr_send_request_filecontents(cliprdrContext *cliprdr, void *streamid,
+										int index, int flag, DWORD positionhigh,
+										DWORD positionlow, ULONG request);
 
 #endif /* __WF_CLIPRDR_H */

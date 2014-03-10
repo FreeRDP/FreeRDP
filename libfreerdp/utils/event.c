@@ -73,9 +73,40 @@ static wMessage* freerdp_cliprdr_event_new(UINT16 event_type)
 			ZeroMemory(event.v, sizeof(RDP_CB_CLIP_CAPS));
 			event.m->id = MakeMessageId(CliprdrChannel, ClipCaps);
 			break;
+
+		case CliprdrChannel_FilecontentsRequest:
+			event.v = (wMessage*) malloc(sizeof(RDP_CB_FILECONTENTS_REQUEST_EVENT));
+			ZeroMemory(event.v, sizeof(RDP_CB_FILECONTENTS_REQUEST_EVENT));
+			event.m->id = MakeMessageId(CliprdrChannel, FilecontentsRequest);
+			break;
+
+		case CliprdrChannel_FilecontentsResponse:
+			event.v = (wMessage*) malloc(sizeof(RDP_CB_FILECONTENTS_RESPONSE_EVENT));
+			ZeroMemory(event.v, sizeof(RDP_CB_FILECONTENTS_RESPONSE_EVENT));
+			event.m->id = MakeMessageId(CliprdrChannel, FilecontentsResponse);
+			break;
+
+		case CliprdrChannel_LockClipdata:
+			event.v = (wMessage*) malloc(sizeof(RDP_CB_LOCK_CLIPDATA_EVENT));
+			ZeroMemory(event.v, sizeof(RDP_CB_LOCK_CLIPDATA_EVENT));
+			event.m->id = MakeMessageId(CliprdrChannel, LockClipdata);
+			break;
+
+		case CliprdrChannel_UnLockClipdata:
+			event.v = (wMessage*) malloc(sizeof(RDP_CB_UNLOCK_CLIPDATA_EVENT));
+			ZeroMemory(event.v, sizeof(RDP_CB_UNLOCK_CLIPDATA_EVENT));
+			event.m->id = MakeMessageId(CliprdrChannel, UnLockClipdata);
+			break;
+
+		case CliprdrChannel_TemporaryDirectory:
+			event.v = (wMessage*) malloc(sizeof(RDP_CB_TEMPDIR_EVENT));
+			ZeroMemory(event.v, sizeof(RDP_CB_TEMPDIR_EVENT));
+			event.m->id = MakeMessageId(CliprdrChannel, TemporaryDirectory);
+			break;
+
 	}
 
-	return event.v;
+	return event.m;
 }
 
 static wMessage* freerdp_tsmf_event_new(UINT16 event_type)

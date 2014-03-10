@@ -140,12 +140,14 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	else if (header->common.ptype == PTYPE_FAULT)
 	{
 		rpc_recv_fault_pdu(header);
+		Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
 		return -1;
 	}
 
 	if (header->common.ptype != PTYPE_RESPONSE)
 	{
 		fprintf(stderr, "Unexpected RPC PDU type: %d\n", header->common.ptype);
+		Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
 		return -1;
 	}
 
@@ -155,6 +157,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	if (!rpc_get_stub_data_info(rpc, buffer, &StubOffset, &StubLength))
 	{
 		fprintf(stderr, "rpc_recv_pdu_fragment: expected stub\n");
+		Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
 		return -1;
 	}
 
@@ -301,7 +304,8 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 		Queue_Enqueue(rpc->client->FragmentQueue, rpc->client->RecvFrag);
 		rpc->client->RecvFrag = NULL;
 
-		rpc_client_on_fragment_received_event(rpc);
+		if (rpc_client_on_fragment_received_event(rpc) < 0)
+			return -1;
 	}
 
 	return status;

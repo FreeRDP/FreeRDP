@@ -501,7 +501,7 @@ int rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RE
 /* rail is always built-in */
 #define VirtualChannelEntry	rail_VirtualChannelEntry
 
-int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	railPlugin* rail;
 	RailClientContext* context;
