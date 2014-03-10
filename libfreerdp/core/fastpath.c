@@ -331,10 +331,10 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 	if (compressionFlags & PACKET_COMPRESSED)
 	{
-		if (decompress_rdp(rdp->mppc_dec, Stream_Pointer(s), size, compressionFlags, &roff, &rlen))
+		if (decompress_rdp(rdp->bulk->mppc_dec, Stream_Pointer(s), size, compressionFlags, &roff, &rlen))
 		{
 			size = rlen;
-			buffer = rdp->mppc_dec->history_buf + roff;
+			buffer = rdp->bulk->mppc_dec->history_buf + roff;
 
 			cs = StreamPool_Take(transport->ReceivePool, size);
 
@@ -855,15 +855,15 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 		if (try_comp)
 		{
-			if (compress_rdp(rdp->mppc_enc, Stream_Pointer(ls) + header_bytes, dlen))
+			if (compress_rdp(rdp->bulk->mppc_enc, Stream_Pointer(ls) + header_bytes, dlen))
 			{
-				if (rdp->mppc_enc->flags & PACKET_COMPRESSED)
+				if (rdp->bulk->mppc_enc->flags & PACKET_COMPRESSED)
 				{
-					cflags = rdp->mppc_enc->flags;
-					pdu_data_bytes = rdp->mppc_enc->bytes_in_opb;
+					cflags = rdp->bulk->mppc_enc->flags;
+					pdu_data_bytes = rdp->bulk->mppc_enc->bytes_in_opb;
 					comp_flags = FASTPATH_OUTPUT_COMPRESSION_USED;
 					header_bytes = 7 + sec_bytes;
-					bm = (BYTE*) (rdp->mppc_enc->outputBuffer - header_bytes);
+					bm = (BYTE*) (rdp->bulk->mppc_enc->outputBuffer - header_bytes);
 					if (comp_update)
 						Stream_Free(comp_update, FALSE);
 					comp_update = Stream_New(bm, pdu_data_bytes + header_bytes);

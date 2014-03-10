@@ -728,9 +728,9 @@ int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			return -1;	
 		}
 
-		if (decompress_rdp(rdp->mppc_dec, Stream_Pointer(s), compressed_len - 18, compressed_type, &roff, &rlen))
+		if (decompress_rdp(rdp->bulk->mppc_dec, Stream_Pointer(s), compressed_len - 18, compressed_type, &roff, &rlen))
 		{
-			buffer = rdp->mppc_dec->history_buf + roff;
+			buffer = rdp->bulk->mppc_dec->history_buf + roff;
 			cs = StreamPool_Take(rdp->transport->ReceivePool, rlen);
 
 			Stream_SetPosition(cs, 0);
@@ -1230,8 +1230,7 @@ rdpRdp* rdp_new(rdpContext* context)
 		rdp->autodetect = autodetect_new();
 		rdp->heartbeat = heartbeat_new();
 		rdp->multitransport = multitransport_new();
-		rdp->mppc_dec = mppc_dec_new();
-		rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
+		rdp->bulk = bulk_new(context);
 	}
 
 	return rdp;
@@ -1242,6 +1241,8 @@ void rdp_reset(rdpRdp* rdp)
 	rdpSettings* settings;
 
 	settings = rdp->settings;
+
+	bulk_reset(rdp->bulk);
 
 	crypto_rc4_free(rdp->rc4_decrypt_key);
 	rdp->rc4_decrypt_key = NULL;
@@ -1254,8 +1255,6 @@ void rdp_reset(rdpRdp* rdp)
 	crypto_hmac_free(rdp->fips_hmac);
 	rdp->fips_hmac = NULL;
 
-	mppc_enc_free(rdp->mppc_enc);
-	mppc_dec_free(rdp->mppc_dec);
 	mcs_free(rdp->mcs);
 	nego_free(rdp->nego);
 	license_free(rdp->license);
@@ -1272,8 +1271,6 @@ void rdp_reset(rdpRdp* rdp)
 	rdp->license = license_new(rdp);
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);
-	rdp->mppc_dec = mppc_dec_new();
-	rdp->mppc_enc = mppc_enc_new(PROTO_RDP_50);
 	rdp->transport->layer = TRANSPORT_LAYER_TCP;
 }
 
@@ -1305,8 +1302,7 @@ void rdp_free(rdpRdp* rdp)
 		autodetect_free(rdp->autodetect);
 		heartbeat_free(rdp->heartbeat);
 		multitransport_free(rdp->multitransport);
-		mppc_dec_free(rdp->mppc_dec);
-		mppc_enc_free(rdp->mppc_enc);
+		bulk_free(rdp->bulk);
 		free(rdp);
 	}
 }

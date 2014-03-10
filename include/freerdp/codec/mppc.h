@@ -23,7 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-#include <winpr/collections.h>
+#include <winpr/bitstream.h>
 
 struct _MPPC_CONTEXT
 {
