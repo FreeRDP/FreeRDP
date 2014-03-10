@@ -92,6 +92,9 @@
 #define CB_FILECLIP_NO_FILE_PATHS	0x00000008
 #define CB_CAN_LOCK_CLIPDATA		0x00000010
 
+#define FORMAT_ID_PALETTE           9
+#define FORMAT_ID_METAFILE          3
+
 #define DEFINE_CLIPRDR_HEADER_COMMON() \
 	UINT16 msgType; \
 	UINT16 msgFlags; \
