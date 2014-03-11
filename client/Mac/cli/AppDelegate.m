@@ -59,8 +59,13 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 
 - (void) applicationWillTerminate:(NSNotification*)notification
 {
+	NSLog(@"Stopping...\n");
+	freerdp_client_stop(context);
+
 	[mrdpView releaseResources];
 	_singleDelegate = nil;
+
+	NSLog(@"Stopped.\n");
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender

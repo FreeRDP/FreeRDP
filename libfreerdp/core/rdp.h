@@ -223,4 +223,6 @@ void rdp_free(rdpRdp* rdp);
 
 BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags);
 
+BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo);
+
 #endif /* __RDP_H */

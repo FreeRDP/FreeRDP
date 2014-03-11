@@ -78,6 +78,7 @@ struct rdp_transport
 	CRITICAL_SECTION ReadLock;
 	CRITICAL_SECTION WriteLock;
 	wLog* log;
+	void* rdp;
 };
 
 wStream* transport_send_stream_init(rdpTransport* transport, int size);
