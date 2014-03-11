@@ -464,7 +464,12 @@ int tls_write(rdpTls* tls, BYTE* data, int length)
 
 	status = SSL_write(tls->ssl, data, length);
 
-	if (status <= 0)
+	if (status == 0)
+	{
+		return -1; /* peer disconnected */
+	}
+
+	if (status < 0)
 	{
 		error = SSL_get_error(tls->ssl, status);
 

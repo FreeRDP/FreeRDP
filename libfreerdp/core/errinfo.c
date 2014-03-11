@@ -385,6 +385,9 @@ int connectErrorCode;
 #define ERRINFO_DECRYPT_FAILED2_STRING \
 		"Unencrypted data was encountered in a protocol stream which is meant to be encrypted with Standard RDP Security mechanisms (section 5.3.6)."
 
+#define ERRINFO_PEER_DISCONNECTED_STRING \
+		"The peer connection was lost."
+
 /* Special codes */
 #define ERRINFO_SUCCESS_STRING "Success."
 #define ERRINFO_NONE_STRING ""
@@ -507,6 +510,7 @@ static const ERRINFO ERRINFO_CODES[] =
 		ERRINFO_DEFINE(ENCRYPT_FAILED),
 		ERRINFO_DEFINE(ENCRYPTION_PACKAGE_MISMATCH),
 		ERRINFO_DEFINE(DECRYPT_FAILED2),
+		ERRINFO_DEFINE(PEER_DISCONNECTED),
 
 		ERRINFO_DEFINE(NONE)
 };

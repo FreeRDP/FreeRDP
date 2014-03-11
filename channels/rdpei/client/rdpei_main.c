@@ -379,11 +379,21 @@ int rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 
 int rdpei_recv_suspend_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
+	RdpeiClientContext* rdpei = (RdpeiClientContext*) callback->plugin->pInterface;
+
+	if (rdpei->SuspendTouch)
+		rdpei->SuspendTouch(rdpei);
+
 	return 0;
 }
 
 int rdpei_recv_resume_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
+	RdpeiClientContext* rdpei = (RdpeiClientContext*) callback->plugin->pInterface;
+
+	if (rdpei->ResumeTouch)
+		rdpei->ResumeTouch(rdpei);
+
 	return 0;
 }
 
@@ -490,7 +500,7 @@ static int rdpei_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManage
 		(IWTSListenerCallback*) rdpei->listener_callback, &(rdpei->listener));
 
 	rdpei->listener->pInterface = rdpei->iface.pInterface;
-	
+
 	InitializeCriticalSection(&rdpei->lock);
 	rdpei->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	rdpei->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -675,7 +685,7 @@ int rdpei_touch_end(RdpeiClientContext* context, int externalId, int x, int y)
 	int i;
 	int contactId = -1;
 	RDPINPUT_CONTACT_DATA contact;
-	RDPINPUT_CONTACT_POINT* contactPoint;
+	RDPINPUT_CONTACT_POINT* contactPoint = NULL;
 	RDPEI_PLUGIN* rdpei = (RDPEI_PLUGIN*) context->handle;
 
 	for (i = 0; i < rdpei->maxTouchContacts; i++)
