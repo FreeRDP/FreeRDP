@@ -117,14 +117,51 @@ static INLINE void fastpath_read_update_header(wStream* s, BYTE* updateCode, BYT
 	*compression = (updateHeader >> 6) & 0x03;
 }
 
-static INLINE void fastpath_write_update_header(wStream* s, BYTE updateCode, BYTE fragmentation, BYTE compression)
+INLINE void fastpath_write_update_header(wStream* s, FASTPATH_UPDATE_HEADER* fpUpdateHeader)
 {
-	BYTE updateHeader = 0;
+	fpUpdateHeader->updateHeader = 0;
+	fpUpdateHeader->updateHeader |= fpUpdateHeader->updateCode & 0x0F;
+	fpUpdateHeader->updateHeader |= (fpUpdateHeader->fragmentation & 0x03) << 4;
+	fpUpdateHeader->updateHeader |= (fpUpdateHeader->compression & 0x03) << 6;
 
-	updateHeader |= updateCode & 0x0F;
-	updateHeader |= (fragmentation & 0x03) << 4;
-	updateHeader |= (compression & 0x03) << 6;
-	Stream_Write_UINT8(s, updateHeader);
+	Stream_Write_UINT8(s, fpUpdateHeader->updateHeader);
+
+	if (fpUpdateHeader->compression)
+		Stream_Write_UINT8(s, fpUpdateHeader->compressionFlags);
+
+	Stream_Write_UINT16(s, fpUpdateHeader->size);
+}
+
+INLINE UINT32 fastpath_get_update_header_size(FASTPATH_UPDATE_HEADER* fpUpdateHeader)
+{
+	return (fpUpdateHeader->compression) ? 4 : 3;
+}
+
+static INLINE void fastpath_write_update_pdu_header(wStream* s, FASTPATH_UPDATE_PDU_HEADER* fpUpdatePduHeader)
+{
+	fpUpdatePduHeader->fpOutputHeader = 0;
+	fpUpdatePduHeader->fpOutputHeader |= (fpUpdatePduHeader->action & 0x03);
+	fpUpdatePduHeader->fpOutputHeader |= (fpUpdatePduHeader->secFlags & 0x03) << 6;
+
+	Stream_Write_UINT8(s, fpUpdatePduHeader->fpOutputHeader); /* fpOutputHeader (1 byte) */
+
+	Stream_Write_UINT8(s, 0x80 | (fpUpdatePduHeader->length >> 8)); /* length1 */
+	Stream_Write_UINT8(s, fpUpdatePduHeader->length & 0xFF); /* length2 */
+}
+
+INLINE UINT32 fastpath_get_update_pdu_header_size(FASTPATH_UPDATE_PDU_HEADER* fpUpdatePduHeader)
+{
+	UINT32 size = 1;
+
+	size += 2;
+
+	if (fpUpdatePduHeader->secFlags)
+	{
+		size += 4;
+		size += 8;
+	}
+
+	return size;
 }
 
 BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16 *length)
@@ -782,76 +819,66 @@ BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s)
 wStream* fastpath_update_pdu_init(rdpFastPath* fastpath)
 {
 	wStream* s;
-
 	s = transport_send_stream_init(fastpath->rdp->transport, FASTPATH_MAX_PACKET_SIZE);
-
-	Stream_Seek(s, 3); /* fpOutputHeader, length1 and length2 */
-	Stream_Seek(s, fastpath_get_sec_bytes(fastpath->rdp));
-	Stream_Seek(s, 3); /* updateHeader, size */
-
 	return s;
 }
 
 wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath)
 {
 	wStream* s;
-
 	s = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
-
-	Stream_Seek(s, 3); /* fpOutputHeader, length1 and length2 */
-	Stream_Seek(s, fastpath_get_sec_bytes(fastpath->rdp));
-	Stream_Seek(s, 3); /* updateHeader, size */
-
 	return s;
 }
 
 BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s)
 {
 	int fragment;
-	int header_bytes;
-	int pdu_data_bytes;
-	UINT16 pduLength;
 	UINT16 maxLength;
 	UINT32 totalLength;
-	BYTE fragmentation;
-	BYTE header;
 	BOOL status = TRUE;
 	wStream* fs = NULL;
 	rdpRdp* rdp = fastpath->rdp;
+	UINT32 fpHeaderSize = 6;
+	UINT32 fpUpdatePduHeaderSize;
+	UINT32 fpUpdateHeaderSize;
+	FASTPATH_UPDATE_PDU_HEADER fpUpdatePduHeader = { 0 };
+	FASTPATH_UPDATE_HEADER fpUpdateHeader = { 0 };
 
-	header_bytes = 6;
-	maxLength = FASTPATH_MAX_PACKET_SIZE - header_bytes;
-	totalLength = Stream_GetPosition(s) - header_bytes;
+	maxLength = FASTPATH_MAX_PACKET_SIZE - 20;
+
+	totalLength = Stream_GetPosition(s);
+	Stream_SetPosition(s, 0);
 
 	fs = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
 
-	Stream_SetPosition(s, 0);
-	Stream_Seek(s, header_bytes);
-
 	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
-		pdu_data_bytes = MIN(maxLength, totalLength);
-		totalLength -= pdu_data_bytes;
+		fpUpdatePduHeader.action = 0;
+		fpUpdatePduHeader.secFlags = 0;
+
+		fpUpdateHeader.compression = 0;
+		fpUpdateHeader.updateCode = updateCode;
+		fpUpdateHeader.size = (totalLength > maxLength) ? maxLength : totalLength;
+
+		totalLength -= fpUpdateHeader.size;
 
 		if (totalLength == 0)
-			fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_SINGLE : FASTPATH_FRAGMENT_LAST;
+			fpUpdateHeader.fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_SINGLE : FASTPATH_FRAGMENT_LAST;
 		else
-			fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_FIRST : FASTPATH_FRAGMENT_NEXT;
+			fpUpdateHeader.fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_FIRST : FASTPATH_FRAGMENT_NEXT;
 
-		pduLength = pdu_data_bytes + header_bytes;
+		fpUpdateHeaderSize = fastpath_get_update_header_size(&fpUpdateHeader);
+		fpUpdatePduHeaderSize = fastpath_get_update_pdu_header_size(&fpUpdatePduHeader);
+		fpHeaderSize = fpUpdateHeaderSize + fpUpdatePduHeaderSize;
+		fpUpdatePduHeader.length = fpUpdateHeader.size + fpHeaderSize;
 
-		header = 0;
 		Stream_SetPosition(fs, 0);
-		Stream_Write_UINT8(fs, header); /* fpOutputHeader (1 byte) */
 
-		Stream_Write_UINT8(fs, 0x80 | (pduLength >> 8)); /* length1 */
-		Stream_Write_UINT8(fs, pduLength & 0xFF); /* length2 */
+		fastpath_write_update_pdu_header(fs, &fpUpdatePduHeader);
+		fastpath_write_update_header(fs, &fpUpdateHeader);
 
-		fastpath_write_update_header(fs, updateCode, fragmentation, 0);
-		Stream_Write_UINT16(fs, pdu_data_bytes); /* size */
-
-		Stream_Write(fs, Stream_Pointer(s), pdu_data_bytes);
-		Stream_Seek(s, pdu_data_bytes);
+		Stream_Write(fs, Stream_Pointer(s), fpUpdateHeader.size);
+		Stream_Seek(s, fpUpdateHeader.size);
 		Stream_SealLength(fs);
 
 		if (transport_write(rdp->transport, fs) < 0)

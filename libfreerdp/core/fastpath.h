@@ -103,6 +103,8 @@ struct _FASTPATH_UPDATE_PDU_HEADER
 	BYTE fipsInformation[4];
 	BYTE dataSignature[8];
 
+	BYTE action;
+	BYTE secFlags;
 	UINT16 length;
 };
 typedef struct _FASTPATH_UPDATE_PDU_HEADER FASTPATH_UPDATE_PDU_HEADER;
