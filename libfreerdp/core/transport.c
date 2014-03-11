@@ -46,6 +46,7 @@
 #include "tpkt.h"
 #include "fastpath.h"
 #include "transport.h"
+#include "rdp.h"
 
 #define BUFFER_SIZE 16384
 
@@ -82,7 +83,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 
 	if ((transport->layer == TRANSPORT_LAYER_TSG) || (transport->layer == TRANSPORT_LAYER_TSG_TLS))
 	{
-		tsg_disconnect(transport->tsg);
+		status &= tsg_disconnect(transport->tsg);
 	}
 	else
 	{
@@ -129,12 +130,12 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 
 	BIO_clear_retry_flags(bio);
 
-	if (status <= 0)
+	if (status == 0)
 	{
 		BIO_set_retry_write(bio);
 	}
 
-	return num;
+	return status < 0 ? 0 : num;
 }
 
 static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
@@ -147,12 +148,17 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 
 	BIO_clear_retry_flags(bio);
 
-	if (status <= 0)
+	if (status == 0)
 	{
 		BIO_set_retry_read(bio);
+		status = -1;
+	}
+	else if (status == -1)
+	{
+		status = 0;
 	}
 
-	return status > 0 ? status : -1;
+	return status >= 0 ? status : -1;
 }
 
 static int transport_bio_tsg_puts(BIO* bio, const char* str)
@@ -556,7 +562,11 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 			return status;
 
 		if (status < 0)
+		{
+			/* A read error indicates that the peer has dropped the connection */
+			transport->layer = TRANSPORT_LAYER_CLOSED;
 			return status;
+		}
 
 		read += status;
 
@@ -1045,13 +1055,21 @@ static void* transport_client_thread(void* arg)
 
 		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
 
-		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
-
-		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+		status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
+		if (transport->layer == TRANSPORT_LAYER_CLOSED)
+		{
+			rdpRdp* rdp = (rdpRdp*) transport->rdp;
+			rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
 			break;
+		}
+		else if (status != WAIT_TIMEOUT)
+		{
+			if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+				break;
 
-		if (!freerdp_check_fds(instance))
-			break;
+			if (!freerdp_check_fds(instance))
+				break;
+		}
 	}
 
 	WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");

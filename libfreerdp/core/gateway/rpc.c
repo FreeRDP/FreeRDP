@@ -447,7 +447,9 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	offset += Buffers[1].cbBuffer;
 	free(Buffers[1].pvBuffer);
 
-	rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length);
+	if (rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length) != 0)
+		length = -1;
+
 	free(request_pdu);
 
 	return length;

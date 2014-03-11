@@ -1220,6 +1220,7 @@ rdpRdp* rdp_new(rdpContext* context)
 
 		rdp->extension = extension_new(context->instance);
 		rdp->transport = transport_new(rdp->settings);
+		rdp->transport->rdp = rdp;
 		rdp->license = license_new(rdp);
 		rdp->input = input_new(rdp);
 		rdp->update = update_new(rdp);
@@ -1269,6 +1270,7 @@ void rdp_reset(rdpRdp* rdp)
 	settings->ClientAddress = NULL;
 
 	rdp->transport = transport_new(rdp->settings);
+	rdp->transport->rdp = rdp;
 	rdp->license = license_new(rdp);
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);

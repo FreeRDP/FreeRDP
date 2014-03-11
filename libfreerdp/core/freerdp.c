@@ -375,6 +375,7 @@ static wEventType FreeRDP_Events[] =
 		DEFINE_EVENT_ENTRY(ConnectionResult)
 		DEFINE_EVENT_ENTRY(ChannelConnected)
 		DEFINE_EVENT_ENTRY(ChannelDisconnected)
+		DEFINE_EVENT_ENTRY(MouseEvent)
 };
 
 /** Allocator function for a rdp context.

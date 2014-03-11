@@ -18,6 +18,13 @@
 set(MODULE_NAME "freerdp-client")
 set(MODULE_PREFIX "FREERDP_CLIENT")
 
+#  Policy CMP0022: INTERFACE_LINK_LIBRARIES defines the link
+#  interface.  Run "cmake --help-policy CMP0022" for policy details.  Use the
+#  cmake_policy command to set the policy and suppress this warning.
+if(POLICY CMP0022)
+  cmake_policy(SET CMP0022 NEW)
+endif()
+
 set(${MODULE_PREFIX}_SRCS
 	client.c
 	cmdline.c
@@ -53,10 +60,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHI
 	MODULE winpr
 	MODULES winpr-crt winpr-utils)
 
-if(NOT WIN32)
-	set_target_properties(${MODULE_NAME} PROPERTIES LINK_INTERFACE_LIBRARIES "")
-	set_target_properties(${MODULE_NAME} PROPERTIES INTERFACE_LINK_LIBRARIES "")
-endif()
+
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

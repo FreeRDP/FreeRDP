@@ -311,6 +311,10 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	PVOID Object;
 	BOOL status = TRUE;
 
+	if (hFile == INVALID_HANDLE_VALUE) {
+		return FALSE;
+	}
+
 	/*
 	 * from http://msdn.microsoft.com/en-us/library/windows/desktop/aa365467%28v=vs.85%29.aspx
 	 * lpNumberOfBytesRead can be NULL only when the lpOverlapped parameter is not NULL.
@@ -463,6 +467,10 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 	ULONG Type;
 	PVOID Object;
 	BOOL status = TRUE;
+
+	if (hFile == INVALID_HANDLE_VALUE) {
+		return FALSE;
+	}
 
 	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
 		return FALSE;
