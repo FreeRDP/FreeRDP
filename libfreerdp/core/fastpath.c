@@ -837,6 +837,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	UINT32 totalLength;
 	BOOL status = TRUE;
 	wStream* fs = NULL;
+	rdpSettings* settings;
 	rdpRdp* rdp = fastpath->rdp;
 	UINT32 fpHeaderSize = 6;
 	UINT32 fpUpdatePduHeaderSize;
@@ -844,6 +845,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	FASTPATH_UPDATE_PDU_HEADER fpUpdatePduHeader = { 0 };
 	FASTPATH_UPDATE_HEADER fpUpdateHeader = { 0 };
 
+	settings = rdp->settings;
 	maxLength = FASTPATH_MAX_PACKET_SIZE - 20;
 
 	totalLength = Stream_GetPosition(s);
@@ -853,14 +855,37 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
+		BYTE* pSrcData;
+		UINT32 SrcSize;
+		UINT32 DstSize = 0;
+		BYTE* pDstData = NULL;
+		UINT32 compressionFlags = 0;
+
 		fpUpdatePduHeader.action = 0;
 		fpUpdatePduHeader.secFlags = 0;
 
 		fpUpdateHeader.compression = 0;
+		fpUpdateHeader.compressionFlags = 0;
 		fpUpdateHeader.updateCode = updateCode;
 		fpUpdateHeader.size = (totalLength > maxLength) ? maxLength : totalLength;
 
-		totalLength -= fpUpdateHeader.size;
+		pSrcData = pDstData = Stream_Pointer(s);
+		SrcSize = DstSize = fpUpdateHeader.size;
+
+		if (settings->CompressionEnabled)
+		{
+			if (bulk_compress(rdp->bulk, pSrcData, SrcSize, &pDstData, &DstSize, &compressionFlags) >= 0)
+			{
+				if (compressionFlags & PACKET_COMPRESSED)
+				{
+					fpUpdateHeader.compressionFlags = compressionFlags;
+					fpUpdateHeader.compression = FASTPATH_OUTPUT_COMPRESSION_USED;
+				}
+			}
+		}
+
+		fpUpdateHeader.size = DstSize;
+		totalLength -= SrcSize;
 
 		if (totalLength == 0)
 			fpUpdateHeader.fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_SINGLE : FASTPATH_FRAGMENT_LAST;
@@ -877,8 +902,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		fastpath_write_update_pdu_header(fs, &fpUpdatePduHeader);
 		fastpath_write_update_header(fs, &fpUpdateHeader);
 
-		Stream_Write(fs, Stream_Pointer(s), fpUpdateHeader.size);
-		Stream_Seek(s, fpUpdateHeader.size);
+		Stream_Write(fs, pDstData, DstSize);
+		Stream_Seek(s, SrcSize);
 		Stream_SealLength(fs);
 
 		if (transport_write(rdp->transport, fs) < 0)
