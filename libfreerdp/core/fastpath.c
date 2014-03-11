@@ -807,76 +807,63 @@ wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath)
 
 BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s)
 {
-	rdpRdp* rdp;
-	BYTE* bm;
-	BYTE* holdp;
 	int fragment;
 	int header_bytes;
 	int pdu_data_bytes;
-	int dlen;
-	BOOL result;
 	UINT16 pduLength;
 	UINT16 maxLength;
 	UINT32 totalLength;
 	BYTE fragmentation;
 	BYTE header;
-	wStream* update;
-	wStream* ls;
+	BOOL status = TRUE;
+	wStream* fs = NULL;
+	rdpRdp* rdp = fastpath->rdp;
 
-	result = TRUE;
-	rdp = fastpath->rdp;
-	update = ls = NULL;
+	header_bytes = 6;
+	maxLength = FASTPATH_MAX_PACKET_SIZE - header_bytes;
+	totalLength = Stream_GetPosition(s) - header_bytes;
 
-	maxLength = FASTPATH_MAX_PACKET_SIZE - 6;
-	totalLength = Stream_GetPosition(s) - 6;
+	fs = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
+
 	Stream_SetPosition(s, 0);
+	Stream_Seek(s, header_bytes);
 
 	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
-		Stream_GetPointer(s, holdp);
-		ls = s;
-		dlen = MIN(maxLength, totalLength);
-		header_bytes = 6;
-		pdu_data_bytes = dlen;
-
-		totalLength -= dlen;
-		pduLength = pdu_data_bytes + header_bytes;
+		pdu_data_bytes = MIN(maxLength, totalLength);
+		totalLength -= pdu_data_bytes;
 
 		if (totalLength == 0)
 			fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_SINGLE : FASTPATH_FRAGMENT_LAST;
 		else
 			fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_FIRST : FASTPATH_FRAGMENT_NEXT;
 
-		Stream_GetPointer(ls, bm);
+		pduLength = pdu_data_bytes + header_bytes;
 
 		header = 0;
-		Stream_Write_UINT8(ls, header); /* fpOutputHeader (1 byte) */
-		Stream_Write_UINT8(ls, 0x80 | (pduLength >> 8)); /* length1 */
-		Stream_Write_UINT8(ls, pduLength & 0xFF); /* length2 */
+		Stream_SetPosition(fs, 0);
+		Stream_Write_UINT8(fs, header); /* fpOutputHeader (1 byte) */
 
-		fastpath_write_update_header(ls, updateCode, fragmentation, 0);
+		Stream_Write_UINT8(fs, 0x80 | (pduLength >> 8)); /* length1 */
+		Stream_Write_UINT8(fs, pduLength & 0xFF); /* length2 */
 
-		Stream_Write_UINT16(ls, pdu_data_bytes);
+		fastpath_write_update_header(fs, updateCode, fragmentation, 0);
+		Stream_Write_UINT16(fs, pdu_data_bytes); /* size */
 
-		if (update)
-			Stream_Free(update, FALSE);
-		update = Stream_New(bm, pduLength);
-		Stream_Seek(update, pduLength);
-		Stream_SealLength(s);
+		Stream_Write(fs, Stream_Pointer(s), pdu_data_bytes);
+		Stream_Seek(s, pdu_data_bytes);
+		Stream_SealLength(fs);
 
-		if (transport_write(fastpath->rdp->transport, update) < 0)
+		if (transport_write(rdp->transport, fs) < 0)
 		{
-			result = FALSE;
+			status = FALSE;
 			break;
 		}
-
-		/* Reserve 6 + sec_bytes bytes for the next fragment header, if any. */
-		Stream_SetPointer(s, holdp + dlen);
 	}
 
-	Stream_Free(update, FALSE);
+	Stream_Free(fs, TRUE);
 
-	return result;
+	return status;
 }
 
 rdpFastPath* fastpath_new(rdpRdp* rdp)
