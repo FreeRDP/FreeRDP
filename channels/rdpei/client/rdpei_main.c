@@ -35,7 +35,6 @@
 #include <winpr/collections.h>
 
 #include <freerdp/addin.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #include "rdpei_common.h"
 
@@ -119,20 +118,6 @@ const char* RDPEI_EVENTID_STRINGS[] =
 	"EVENTID_DISMISS_HOVERING_CONTACT"
 };
 
-BOOL rdpei_push_event(RDPEI_CHANNEL_CALLBACK* callback, wMessage* event)
-{
-	int status;
-
-	status = callback->channel_mgr->PushEvent(callback->channel_mgr, event);
-
-	if (status)
-	{
-		DEBUG_WARN("response error %d", status);
-		return FALSE;
-	}
-
-	return TRUE;
-}
 int rdpei_add_frame(RdpeiClientContext* context)
 {
 	int i;
@@ -394,34 +379,20 @@ int rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 
 int rdpei_recv_suspend_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	wMessage* event;
-	BOOL status;
+	RdpeiClientContext* rdpei = (RdpeiClientContext*) callback->plugin->pInterface;
 
-	event = freerdp_event_new(RdpeiChannel_Class, RdpeiChannel_SuspendTouch, NULL, NULL);
-
-	status = rdpei_push_event(callback, event);
-
-	if (!status)
-	{
-		return -1;
-	}
+	if (rdpei->SuspendTouch)
+		rdpei->SuspendTouch(rdpei);
 
 	return 0;
 }
 
 int rdpei_recv_resume_touch_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	wMessage* event;
-	BOOL status;
+	RdpeiClientContext* rdpei = (RdpeiClientContext*) callback->plugin->pInterface;
 
-	event = freerdp_event_new(RdpeiChannel_Class, RdpeiChannel_ResumeTouch, NULL, NULL);
-
-	status = rdpei_push_event(callback, event);
-
-	if (!status)
-	{
-		return -1;
-	}
+	if (rdpei->ResumeTouch)
+		rdpei->ResumeTouch(rdpei);
 
 	return 0;
 }

@@ -146,16 +146,6 @@ static wMessage* freerdp_rail_event_new(UINT16 event_type)
 	return event;
 }
 
-static wMessage* freerdp_rdpei_event_new(UINT16 event_type)
-{
-	wMessage* event;
-
-	event = (wMessage*) malloc(sizeof(wMessage));
-	ZeroMemory(event, sizeof(wMessage));
-
-	return event;
-}
-
 wMessage* freerdp_event_new(UINT16 event_class, UINT16 event_type,
 	MESSAGE_FREE_FN on_event_free_callback, void* user_data)
 {
@@ -178,10 +168,6 @@ wMessage* freerdp_event_new(UINT16 event_class, UINT16 event_type,
 
 		case RailChannel_Class:
 			event = freerdp_rail_event_new(event_type);
-			break;
-
-		case RdpeiChannel_Class:
-			event = freerdp_rdpei_event_new(event_type);
 			break;
 	}
 
@@ -235,11 +221,6 @@ static void freerdp_rail_event_free(wMessage* event)
 
 }
 
-static void freerdp_rdpei_event_free(wMessage* event)
-{
-
-}
-
 void freerdp_event_free(wMessage* event)
 {
 	if (event)
@@ -259,10 +240,6 @@ void freerdp_event_free(wMessage* event)
 
 			case RailChannel_Class:
 				freerdp_rail_event_free(event);
-				break;
-
-			case RdpeiChannel_Class:
-				freerdp_rdpei_event_free(event);
 				break;
 		}
 
