@@ -23,6 +23,8 @@
 
 #include "bulk.h"
 
+//#define WITH_BULK_DEBUG		1
+
 UINT32 bulk_compression_level(rdpBulk* bulk)
 {
 	rdpSettings* settings = bulk->context->settings;
@@ -42,6 +44,8 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 	int status = -1;
 	UINT32 roff = 0;
 	UINT32 rlen = 0;
+	UINT32 CompressedBytes;
+	UINT32 UncompressedBytes;
 	UINT32 type = flags & 0x0F;
 
 	switch (type)
@@ -71,12 +75,35 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 			break;
 	}
 
+	if (status >= 0)
+	{
+		CompressedBytes = SrcSize;
+		UncompressedBytes = *pDstSize;
+
+		bulk->TotalUncompressedBytes += UncompressedBytes;
+		bulk->TotalCompressedBytes += CompressedBytes;
+
+#ifdef WITH_BULK_DEBUG
+		{
+			double CompressionRatio;
+			double TotalCompressionRatio;
+
+			CompressionRatio = ((double) CompressedBytes) / ((double) UncompressedBytes);
+			TotalCompressionRatio = ((double) bulk->TotalCompressedBytes) / ((double) bulk->TotalUncompressedBytes);
+
+			printf("Compression Ratio: %f Total: %f\n", CompressionRatio, TotalCompressionRatio);
+		}
+#endif
+	}
+
 	return status;
 }
 
 int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
 	int status = -1;
+	UINT32 CompressedBytes;
+	UINT32 UncompressedBytes;
 
 	*ppDstData = bulk->OutputBuffer;
 	*pDstSize = sizeof(bulk->OutputBuffer);
@@ -84,6 +111,27 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 	bulk_compression_level(bulk);
 	mppc_set_compression_level(bulk->mppcSend, bulk->CompressionLevel);
 	status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, *ppDstData, pDstSize, pFlags);
+
+	if ((status >= 0) && (*pFlags & PACKET_COMPRESSED))
+	{
+		CompressedBytes = *pDstSize;
+		UncompressedBytes = SrcSize;
+
+		bulk->TotalUncompressedBytes += UncompressedBytes;
+		bulk->TotalCompressedBytes += CompressedBytes;
+
+#ifdef WITH_BULK_DEBUG
+		{
+			double CompressionRatio;
+			double TotalCompressionRatio;
+
+			CompressionRatio = ((double) CompressedBytes) / ((double) UncompressedBytes);
+			TotalCompressionRatio = ((double) bulk->TotalCompressedBytes) / ((double) bulk->TotalUncompressedBytes);
+
+			printf("Compression Ratio: %f Total: %f\n", CompressionRatio, TotalCompressionRatio);
+		}
+#endif
+	}
 
 	return status;
 }
@@ -113,6 +161,9 @@ rdpBulk* bulk_new(rdpContext* context)
 		bulk->mppc_dec = mppc_dec_new();
 
 		bulk->CompressionLevel = context->settings->CompressionLevel;
+
+		bulk->TotalCompressedBytes = 0;
+		bulk->TotalUncompressedBytes = 0;
 	}
 
 	return bulk;

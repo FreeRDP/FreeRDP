@@ -37,6 +37,9 @@ struct rdp_bulk
 	MPPC_CONTEXT* mppcRecv;
 	BYTE OutputBuffer[65536];
 	struct rdp_mppc_dec* mppc_dec;
+
+	UINT64 TotalCompressedBytes;
+	UINT64 TotalUncompressedBytes;
 };
 
 UINT32 bulk_compression_level(rdpBulk* bulk);
