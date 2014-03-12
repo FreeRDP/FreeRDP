@@ -842,12 +842,20 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	UINT32 fpHeaderSize = 6;
 	UINT32 fpUpdatePduHeaderSize;
 	UINT32 fpUpdateHeaderSize;
+	UINT32 CompressionMaxSize;
 	FASTPATH_UPDATE_PDU_HEADER fpUpdatePduHeader = { 0 };
 	FASTPATH_UPDATE_HEADER fpUpdateHeader = { 0 };
 
 	fs = fastpath->fs;
 	settings = rdp->settings;
+
 	maxLength = FASTPATH_MAX_PACKET_SIZE - 20;
+
+	if (settings->CompressionEnabled)
+	{
+		CompressionMaxSize = bulk_compression_max_size(rdp->bulk);
+		maxLength = (maxLength < CompressionMaxSize) ? maxLength : CompressionMaxSize;
+	}
 
 	totalLength = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);

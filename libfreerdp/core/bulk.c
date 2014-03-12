@@ -23,6 +23,20 @@
 
 #include "bulk.h"
 
+UINT32 bulk_compression_level(rdpBulk* bulk)
+{
+	rdpSettings* settings = bulk->context->settings;
+	bulk->CompressionLevel = (settings->CompressionLevel >= 1) ? 1 : 0;
+	return bulk->CompressionLevel;
+}
+
+UINT32 bulk_compression_max_size(rdpBulk* bulk)
+{
+	bulk_compression_level(bulk);
+	bulk->CompressionMaxSize = (bulk->CompressionLevel < 1) ? 8192 : 65536;
+	return bulk->CompressionMaxSize;
+}
+
 int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	int status = -1;
@@ -67,6 +81,8 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 	*ppDstData = bulk->OutputBuffer;
 	*pDstSize = sizeof(bulk->OutputBuffer);
 
+	bulk_compression_level(bulk);
+	mppc_set_compression_level(bulk->mppcSend, bulk->CompressionLevel);
 	status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, *ppDstData, pDstSize, pFlags);
 
 	return status;

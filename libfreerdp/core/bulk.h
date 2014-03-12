@@ -32,11 +32,15 @@ struct rdp_bulk
 {
 	rdpContext* context;
 	UINT32 CompressionLevel;
+	UINT32 CompressionMaxSize;
 	MPPC_CONTEXT* mppcSend;
 	MPPC_CONTEXT* mppcRecv;
 	BYTE OutputBuffer[65536];
 	struct rdp_mppc_dec* mppc_dec;
 };
+
+UINT32 bulk_compression_level(rdpBulk* bulk);
+UINT32 bulk_compression_max_size(rdpBulk* bulk);
 
 int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
 int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
