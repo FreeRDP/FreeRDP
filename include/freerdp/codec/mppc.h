@@ -46,8 +46,8 @@ typedef struct _MPPC_CONTEXT MPPC_CONTEXT;
 extern "C" {
 #endif
 
-FREERDP_API UINT32 mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE* pDstData, UINT32* pSize);
-FREERDP_API UINT32 mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, BYTE** ppDstData, UINT32* pSize, UINT32 flags);
+FREERDP_API int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData, UINT32* pDstSize, UINT32* pFlags);
+FREERDP_API int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
 
 FREERDP_API void mppc_set_compression_level(MPPC_CONTEXT* mppc, DWORD CompressionLevel);
 FREERDP_API void mppc_context_reset(MPPC_CONTEXT* mppc);

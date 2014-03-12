@@ -26,7 +26,6 @@
 int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	int status = -1;
-	UINT32 size;
 	UINT32 roff = 0;
 	UINT32 rlen = 0;
 	UINT32 type = flags & 0x0F;
@@ -34,19 +33,13 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 	switch (type)
 	{
 		case PACKET_COMPR_TYPE_8K:
-			size = SrcSize;
 			mppc_set_compression_level(bulk->mppcRecv, 0);
-			mppc_decompress(bulk->mppcRecv, pSrcData, ppDstData, &size, flags);
-			*pDstSize = size;
-			status = 1;
+			status = mppc_decompress(bulk->mppcRecv, pSrcData, SrcSize, ppDstData, pDstSize, flags);
 			break;
 
 		case PACKET_COMPR_TYPE_64K:
-			size = SrcSize;
 			mppc_set_compression_level(bulk->mppcRecv, 1);
-			mppc_decompress(bulk->mppcRecv, pSrcData, ppDstData, &size, flags);
-			*pDstSize = size;
-			status = 1;
+			status = mppc_decompress(bulk->mppcRecv, pSrcData, SrcSize, ppDstData, pDstSize, flags);
 			break;
 
 		case PACKET_COMPR_TYPE_RDP6:
@@ -69,17 +62,12 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 
 int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
-	UINT32 size;
-	UINT32 flags;
 	int status = -1;
 
-	size = SrcSize;
-	flags = mppc_compress(bulk->mppcSend, pSrcData, bulk->OutputBuffer, &size);
-
-	*pFlags = flags;
-	*pDstSize = size;
 	*ppDstData = bulk->OutputBuffer;
-	status = 1;
+	*pDstSize = sizeof(bulk->OutputBuffer);
+
+	status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, *ppDstData, pDstSize, pFlags);
 
 	return status;
 }
