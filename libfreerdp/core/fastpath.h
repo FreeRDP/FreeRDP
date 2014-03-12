@@ -124,6 +124,7 @@ typedef struct _FASTPATH_UPDATE_HEADER FASTPATH_UPDATE_HEADER;
 struct rdp_fastpath
 {
 	rdpRdp* rdp;
+	wStream* fs;
 	BYTE encryptionFlags;
 	BYTE numberEvents;
 	wStream* updateData;

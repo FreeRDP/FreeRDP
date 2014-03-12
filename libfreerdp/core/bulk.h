@@ -31,6 +31,7 @@ typedef struct rdp_bulk rdpBulk;
 struct rdp_bulk
 {
 	rdpContext* context;
+	UINT32 CompressionLevel;
 	MPPC_CONTEXT* mppcSend;
 	MPPC_CONTEXT* mppcRecv;
 	BYTE OutputBuffer[65536];

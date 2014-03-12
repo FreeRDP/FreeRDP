@@ -39,7 +39,6 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 			mppc_decompress(bulk->mppcRecv, pSrcData, ppDstData, &size, flags);
 			*pDstSize = size;
 			status = 1;
-			printf("BulkDecompress: SrcSize: %d DstSize: %d Flags: 0x%04X\n", SrcSize, *pDstSize, flags);
 			break;
 
 		case PACKET_COMPR_TYPE_64K:
@@ -48,7 +47,6 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 			mppc_decompress(bulk->mppcRecv, pSrcData, ppDstData, &size, flags);
 			*pDstSize = size;
 			status = 1;
-			printf("BulkDecompress: SrcSize: %d DstSize: %d Flags: 0x%04X\n", SrcSize, *pDstSize, flags);
 			break;
 
 		case PACKET_COMPR_TYPE_RDP6:
@@ -81,9 +79,7 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 	*pFlags = flags;
 	*pDstSize = size;
 	*ppDstData = bulk->OutputBuffer;
-	status = 0;
-
-	printf("BulkCompress: SrcSize: %d DstSize: %d Flags: 0x%04X\n", SrcSize, *pDstSize, flags);
+	status = 1;
 
 	return status;
 }
@@ -111,6 +107,8 @@ rdpBulk* bulk_new(rdpContext* context)
 		bulk->mppcRecv = mppc_context_new(1, FALSE);
 
 		bulk->mppc_dec = mppc_dec_new();
+
+		bulk->CompressionLevel = context->settings->CompressionLevel;
 	}
 
 	return bulk;

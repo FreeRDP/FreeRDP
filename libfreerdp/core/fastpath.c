@@ -845,13 +845,12 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	FASTPATH_UPDATE_PDU_HEADER fpUpdatePduHeader = { 0 };
 	FASTPATH_UPDATE_HEADER fpUpdateHeader = { 0 };
 
+	fs = fastpath->fs;
 	settings = rdp->settings;
 	maxLength = FASTPATH_MAX_PACKET_SIZE - 20;
 
 	totalLength = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
-
-	fs = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
 
 	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
@@ -884,6 +883,12 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			}
 		}
 
+		if (!fpUpdateHeader.compression)
+		{
+			pDstData = Stream_Pointer(s);
+			DstSize = fpUpdateHeader.size;
+		}
+
 		fpUpdateHeader.size = DstSize;
 		totalLength -= SrcSize;
 
@@ -903,7 +908,6 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		fastpath_write_update_header(fs, &fpUpdateHeader);
 
 		Stream_Write(fs, pDstData, DstSize);
-		Stream_Seek(s, SrcSize);
 		Stream_SealLength(fs);
 
 		if (transport_write(rdp->transport, fs) < 0)
@@ -911,9 +915,9 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			status = FALSE;
 			break;
 		}
-	}
 
-	Stream_Free(fs, TRUE);
+		Stream_Seek(s, SrcSize);
+	}
 
 	return status;
 }
@@ -930,6 +934,7 @@ rdpFastPath* fastpath_new(rdpRdp* rdp)
 
 		fastpath->rdp = rdp;
 		fastpath->fragmentation = -1;
+		fastpath->fs = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
 	}
 
 	return fastpath;
@@ -939,6 +944,7 @@ void fastpath_free(rdpFastPath* fastpath)
 {
 	if (fastpath)
 	{
+		Stream_Free(fastpath->fs, TRUE);
 		free(fastpath);
 	}
 }
