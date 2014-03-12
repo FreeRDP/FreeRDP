@@ -275,14 +275,14 @@ void rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	UINT16 wVersion;
 	AUDIO_FORMAT* format;
 	UINT16 wNumberOfFormats;
-	UINT32 dwVolume;
 
 	rdpsnd_free_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
 	rdpsnd->NumberOfServerFormats = 0;
 	rdpsnd->ServerFormats = NULL;
 
+	/* http://msdn.microsoft.com/en-us/library/cc240956.aspx */
 	Stream_Seek_UINT32(s); /* dwFlags */
-	Stream_Read_UINT32(s, dwVolume); /* dwVolume */
+	Stream_Seek_UINT32(s); /* dwVolume */
 	Stream_Seek_UINT32(s); /* dwPitch */
 	Stream_Seek_UINT16(s); /* wDGramPort */
 	Stream_Read_UINT16(s, wNumberOfFormats);
@@ -324,9 +324,6 @@ void rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 
 	if (wVersion >= 6)
 		rdpsnd_send_quality_mode_pdu(rdpsnd);
-	
-	if (rdpsnd->device)
-		IFCALL(rdpsnd->device->SetVolume, rdpsnd->device, dwVolume);
 }
 
 void rdpsnd_send_training_confirm_pdu(rdpsndPlugin* rdpsnd, UINT16 wTimeStamp, UINT16 wPackSize)
