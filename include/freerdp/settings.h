@@ -251,6 +251,13 @@ typedef struct _TARGET_NET_ADDRESS TARGET_NET_ADDRESS;
 #define STATUS_VM_WAKING			0x00000502
 #define STATUS_VM_BOOTING			0x00000503
 
+/* Compression Flags */
+#define PACKET_COMPR_TYPE_8K			0x00
+#define PACKET_COMPR_TYPE_64K			0x01
+#define PACKET_COMPR_TYPE_RDP6			0x02
+#define PACKET_COMPR_TYPE_RDP61			0x03
+#define PACKET_COMPR_TYPE_RDP8			0x04
+
 /* SYSTEM_TIME */
 typedef struct
 {
@@ -538,7 +545,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_DesktopPosX					390
 #define FreeRDP_DesktopPosY					391
 #define FreeRDP_MultitransportFlags				512
-#define FreeRDP_SupportMultitransport			513
+#define FreeRDP_SupportMultitransport				513
 #define FreeRDP_AlternateShell					640
 #define FreeRDP_ShellWorkingDirectory				641
 #define FreeRDP_AutoLogonEnabled				704
@@ -558,6 +565,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_UsingSavedCredentials				718
 #define FreeRDP_ForceEncryptedCsPdu				719
 #define FreeRDP_HiDefRemoteApp					720
+#define FreeRDP_CompressionLevel				721
 #define FreeRDP_IPv6Enabled					768
 #define FreeRDP_ClientAddress					769
 #define FreeRDP_ClientDir					770
@@ -890,7 +898,8 @@ struct rdp_settings
 	ALIGN64 BOOL UsingSavedCredentials; /* 718 */
 	ALIGN64 BOOL ForceEncryptedCsPdu; /* 719 */
 	ALIGN64 BOOL HiDefRemoteApp; /* 720 */
-	UINT64 padding0768[768 - 721]; /* 721 */
+	ALIGN64 UINT32 CompressionLevel; /* 721 */
+	UINT64 padding0768[768 - 722]; /* 722 */
 
 	/* Client Info (Extra) */
 	ALIGN64 BOOL IPv6Enabled; /* 768 */

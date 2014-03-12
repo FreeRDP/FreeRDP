@@ -26,6 +26,7 @@
 
 #include "mcs.h"
 #include "tpkt.h"
+#include "bulk.h"
 #include "fastpath.h"
 #include "tpdu.h"
 #include "nego.h"
@@ -54,8 +55,8 @@
 
 /* Security Header Flags */
 #define SEC_EXCHANGE_PKT					0x0001
-#define SEC_TRANSPORT_REQ				0x0002
-#define SEC_TRANSPORT_RSP				0x0004
+#define SEC_TRANSPORT_REQ					0x0002
+#define SEC_TRANSPORT_RSP					0x0004
 #define SEC_ENCRYPT						0x0008
 #define SEC_RESET_SEQNO						0x0010
 #define SEC_IGNORE_SEQNO					0x0020
@@ -131,6 +132,7 @@ struct rdp_rdp
 	rdpContext* context;
 	rdpMcs* mcs;
 	rdpNego* nego;
+	rdpBulk* bulk;
 	rdpInput* input;
 	rdpUpdate* update;
 	rdpFastPath* fastpath;
@@ -142,8 +144,6 @@ struct rdp_rdp
 	rdpAutoDetect* autodetect;
 	rdpHeartbeat* heartbeat;
 	rdpMultitransport* multitransport;
-	struct rdp_mppc_dec* mppc_dec;
-	struct rdp_mppc_enc* mppc_enc;
 	struct crypto_rc4_struct* rc4_decrypt_key;
 	int decrypt_use_count;
 	int decrypt_checksum_use_count;
