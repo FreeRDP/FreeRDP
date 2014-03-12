@@ -20,6 +20,7 @@ typedef struct mf_context mfContext;
 #include <winpr/thread.h>
 
 #include "MRDPView.h"
+#include "Keyboard.h"
 #include <AppKit/NSView.h>
 
 struct mf_context
@@ -28,7 +29,7 @@ struct mf_context
 	DEFINE_RDP_CLIENT_COMMON();
 
 	void* view;
-    BOOL view_ownership; // TRUE indicates that the window was created and should be freed by the API.
+	BOOL view_ownership;
 
 	int width;
 	int height;
@@ -43,9 +44,10 @@ struct mf_context
 	int client_width;
 	int client_height;
 
+	HANDLE stopEvent;
 	HANDLE keyboardThread;
-    HANDLE stopEvent;
-
+	enum APPLE_KEYBOARD_TYPE appleKeyboardType;
+	
 	HGDI_DC hdc;
 	UINT16 srcBpp;
 	UINT16 dstBpp;

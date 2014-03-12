@@ -24,15 +24,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-/* Compression Types */
-#define PACKET_COMPRESSED		0x20
-#define PACKET_AT_FRONT			0x40
-#define PACKET_FLUSHED			0x80
-#define PACKET_COMPR_TYPE_8K		0x00
-#define PACKET_COMPR_TYPE_64K		0x01
-#define PACKET_COMPR_TYPE_RDP6		0x02
-#define PACKET_COMPR_TYPE_RDP61		0x03
-#define CompressionTypeMask		0x0F
+#include <freerdp/codec/mppc.h>
 
 #define RDP6_HISTORY_BUF_SIZE		65536
 #define RDP6_OFFSET_CACHE_SIZE		8
@@ -45,11 +37,7 @@ struct rdp_mppc_dec
 	BYTE* history_ptr;
 };
 
-FREERDP_API int decompress_rdp(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen);
-FREERDP_API int decompress_rdp_4(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen);
-FREERDP_API int decompress_rdp_5(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen);
 FREERDP_API int decompress_rdp_6(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen);
-FREERDP_API int decompress_rdp_61(struct rdp_mppc_dec* dec, BYTE* cbuf, int len, int ctype, UINT32* roff, UINT32* rlen);
 
 FREERDP_API struct rdp_mppc_dec* mppc_dec_new(void);
 FREERDP_API void mppc_dec_free(struct rdp_mppc_dec* dec);

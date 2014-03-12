@@ -99,10 +99,11 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 	settings = instance->settings;
 
+	settings->AsyncTransport = TRUE;
+	
 	settings->AsyncUpdate = TRUE;
 	settings->AsyncInput = TRUE;
 	settings->AsyncChannels = TRUE;
-	settings->AsyncTransport = TRUE;
 
 	return 0;
 }
@@ -134,7 +135,6 @@ void freerdp_client_mouse_event(rdpContext* cfc, DWORD flags, int x, int y)
 
 	input->MouseEvent(input, flags, x, y);
 }
-
 
 void mf_scale_mouse_event(void* context, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {

@@ -1535,6 +1535,10 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 			return settings->MultitransportFlags;
 			break;
 
+		case FreeRDP_CompressionLevel:
+			return settings->CompressionLevel;
+			break;
+
 		case FreeRDP_AutoReconnectMaxRetries:
 			return settings->AutoReconnectMaxRetries;
 			break;
@@ -1837,6 +1841,10 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_MultitransportFlags:
 			settings->MultitransportFlags = param;
+			break;
+
+		case FreeRDP_CompressionLevel:
+			settings->CompressionLevel = param;
 			break;
 
 		case FreeRDP_AutoReconnectMaxRetries:

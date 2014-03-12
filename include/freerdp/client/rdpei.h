@@ -70,6 +70,9 @@ typedef int (*pcRdpeiTouchBegin)(RdpeiClientContext* context, int externalId, in
 typedef int (*pcRdpeiTouchUpdate)(RdpeiClientContext* context, int externalId, int x, int y);
 typedef int (*pcRdpeiTouchEnd)(RdpeiClientContext* context, int externalId, int x, int y);
 
+typedef int (*pcRdpeiSuspendTouch)(RdpeiClientContext* context);
+typedef int (*pcRdpeiResumeTouch)(RdpeiClientContext* context);
+
 struct _rdpei_client_context
 {
 	void* handle;
@@ -82,6 +85,9 @@ struct _rdpei_client_context
 	pcRdpeiTouchBegin TouchBegin;
 	pcRdpeiTouchUpdate TouchUpdate;
 	pcRdpeiTouchEnd TouchEnd;
+
+	pcRdpeiSuspendTouch SuspendTouch;
+	pcRdpeiResumeTouch ResumeTouch;
 };
 
 #endif /* FREERDP_CHANNEL_CLIENT_RDPEI_H */

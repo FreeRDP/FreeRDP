@@ -155,11 +155,8 @@ static void ts_add_ms(struct timespec *ts, DWORD dwMilliseconds)
 	ts->tv_sec += dwMilliseconds / 1000L;
 	ts->tv_nsec += (dwMilliseconds % 1000L) * 1000000L;
 
-	while(ts->tv_nsec >= 1000000000L)
-	{
-		ts->tv_sec ++;
-		ts->tv_nsec -= 1000000000L;
-	}
+	ts->tv_sec += ts->tv_nsec / 1000000000L;
+	ts->tv_nsec = ts->tv_nsec % 1000000000L;
 }
 
 DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)

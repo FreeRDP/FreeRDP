@@ -27,6 +27,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/stream.h>
 
@@ -599,4 +600,5 @@ WINPR_API void PubSub_Free(wPubSub* pubSub);
 #ifdef __cplusplus
 }
 #endif
+
 #endif /* WINPR_COLLECTIONS_H */

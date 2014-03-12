@@ -252,6 +252,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
 		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 
+		settings->CompressionEnabled = TRUE;
+		settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
+
 		settings->Authentication = TRUE;
 		settings->AuthenticationOnly = FALSE;
 		settings->CredentialsFromStdin = FALSE;
@@ -509,6 +512,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->DesktopPosY = settings->DesktopPosY; /* 391 */
 		_settings->NumMonitorIds = settings->NumMonitorIds; /* 394 */
 		_settings->MultitransportFlags = settings->MultitransportFlags; /* 512 */
+		_settings->CompressionLevel = settings->CompressionLevel; /* 721 */
 		_settings->AutoReconnectMaxRetries = settings->AutoReconnectMaxRetries; /* 833 */
 		_settings->PerformanceFlags = settings->PerformanceFlags; /* 960 */
 		_settings->RequestedProtocols = settings->RequestedProtocols; /* 1093 */
