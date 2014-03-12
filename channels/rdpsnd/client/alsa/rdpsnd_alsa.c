@@ -223,11 +223,6 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* for
 			case WAVE_FORMAT_PCM:
 				switch (format->wBitsPerSample)
 				{
-					case 4:
-						alsa->format = SND_PCM_FORMAT_S16_LE;
-						alsa->bytes_per_channel = 2;
-						break;
-
 					case 8:
 						alsa->format = SND_PCM_FORMAT_S8;
 						alsa->bytes_per_channel = 1;
