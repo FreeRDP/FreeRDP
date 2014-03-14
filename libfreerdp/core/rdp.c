@@ -1050,7 +1050,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			Stream_SetPosition(s, nextPosition);
 		}
 	}
-	else if (channelId == rdp->mcs->messageChannelId)
+	else if (rdp->mcs->messageChannelId && channelId == rdp->mcs->messageChannelId)
 	{
 		return rdp_recv_message_channel_pdu(rdp, s);
 	}
