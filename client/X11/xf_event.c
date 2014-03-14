@@ -395,12 +395,12 @@ static BOOL xf_event_KeyPress(xfContext* xfc, XEvent* event, BOOL app)
 
 	XLookupString((XKeyEvent*) event, str, sizeof(str), &keysym, NULL);
 
-	xf_kbd_set_keypress(xfc, event->xkey.keycode, keysym);
+	xf_keyboard_key_press(xfc, event->xkey.keycode, keysym);
 
-	if (xfc->fullscreen_toggle && xf_kbd_handle_special_keys(xfc, keysym))
+	if (xfc->fullscreen_toggle && xf_keyboard_handle_special_keys(xfc, keysym))
 		return TRUE;
 
-	xf_kbd_send_key(xfc, TRUE, event->xkey.keycode);
+	xf_keyboard_send_key(xfc, TRUE, event->xkey.keycode);
 
 	return TRUE;
 }
@@ -421,8 +421,8 @@ static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 		}
 	}
 
-	xf_kbd_unset_keypress(xfc, event->xkey.keycode);
-	xf_kbd_send_key(xfc, FALSE, event->xkey.keycode);
+	xf_keyboard_key_release(xfc, event->xkey.keycode);
+	xf_keyboard_send_key(xfc, FALSE, event->xkey.keycode);
 
 	return TRUE;
 }
@@ -451,7 +451,7 @@ static BOOL xf_event_FocusIn(xfContext* xfc, XEvent* event, BOOL app)
                        xf_rail_adjust_position(xfc, window);
 	}
 
-	xf_kbd_focus_in(xfc);
+	xf_keyboard_focus_in(xfc);
 
 	if (!app)
 		xf_cliprdr_check_owner(xfc);
@@ -469,7 +469,7 @@ static BOOL xf_event_FocusOut(xfContext* xfc, XEvent* event, BOOL app)
 	if (event->xfocus.mode == NotifyWhileGrabbed)
 		XUngrabKeyboard(xfc->display, CurrentTime);
 
-	xf_kbd_clear(xfc);
+	xf_keyboard_clear(xfc);
 
 	if (app)
 		xf_rail_send_activate(xfc, event->xany.window, FALSE);
@@ -481,10 +481,10 @@ static BOOL xf_event_MappingNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (event->xmapping.request == MappingModifier)
 	{
-		if (xfc->modifier_map)
-			XFreeModifiermap(xfc->modifier_map);
+		if (xfc->modifierMap)
+			XFreeModifiermap(xfc->modifierMap);
 
-		xfc->modifier_map = XGetModifierMapping(xfc->display);
+		xfc->modifierMap = XGetModifierMapping(xfc->display);
 	}
 
 	return TRUE;
@@ -681,7 +681,7 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, XEvent* event, BOOL app)
 	rdpUpdate* update = xfc->instance->update;
 	rdpRail* rail = ((rdpContext*) xfc)->rail;
 
-	xf_kbd_release_all_keypress(xfc);
+	xf_keyboard_release_all_keypress(xfc);
 
 	if (!app)
 	{

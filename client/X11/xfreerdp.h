@@ -125,9 +125,9 @@ struct xf_context
 	BOOL mouse_active;
 	BOOL suppress_output;
 	BOOL fullscreen_toggle;
-	UINT32 keyboard_layout_id;
-	BOOL pressed_keys[256];
-	XModifierKeymap* modifier_map;
+	UINT32 KeyboardLayout;
+	BOOL KeyboardState[256];
+	XModifierKeymap* modifierMap;
 	XSetWindowAttributes attribs;
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
