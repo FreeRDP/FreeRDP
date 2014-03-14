@@ -25,6 +25,25 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
+#define XF_ACTION_SCRIPT "~/.config/freerdp/action.sh"
+
+struct _XF_MODIFIER_KEYS
+{
+	BOOL Shift;
+	BOOL LeftShift;
+	BOOL RightShift;
+	BOOL Alt;
+	BOOL LeftAlt;
+	BOOL RightAlt;
+	BOOL Ctrl;
+	BOOL LeftCtrl;
+	BOOL RightCtrl;
+	BOOL Super;
+	BOOL LeftSuper;
+	BOOL RightSuper;
+};
+typedef struct _XF_MODIFIER_KEYS XF_MODIFIER_KEYS;
+
 void xf_keyboard_init(xfContext* xfc);
 void xf_keyboard_clear(xfContext* xfc);
 void xf_keyboard_key_press(xfContext* xfc, BYTE keycode, KeySym keysym);

@@ -60,6 +60,11 @@ void xf_keyboard_key_press(xfContext* xfc, BYTE keycode, KeySym keysym)
 		return;
 
 	xfc->KeyboardState[keycode] = keysym;
+
+	if (xf_keyboard_handle_special_keys(xfc, keysym))
+		return;
+
+	xf_keyboard_send_key(xfc, TRUE, keycode);
 }
 
 void xf_keyboard_key_release(xfContext* xfc, BYTE keycode)
@@ -68,6 +73,8 @@ void xf_keyboard_key_release(xfContext* xfc, BYTE keycode)
 		return;
 
 	xfc->KeyboardState[keycode] = NoSymbol;
+
+	xf_keyboard_send_key(xfc, FALSE, keycode);
 }
 
 void xf_keyboard_release_all_keypress(xfContext* xfc)
@@ -210,12 +217,86 @@ void xf_keyboard_focus_in(xfContext* xfc)
 	}
 }
 
+int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* mod, KeySym keysym)
+{
+	int exitCode;
+	int status = 1;
+	FILE* keyScript;
+	char buffer[1024];
+	char command[1024];
+	const char* keyStr;
+
+	keyStr = XKeysymToString(keysym);
+
+	sprintf_s(command, sizeof(command), "%s key ", XF_ACTION_SCRIPT);
+
+	if (mod->Shift)
+		strcat(command, "Shift+");
+
+	if (mod->Ctrl)
+		strcat(command, "Ctrl+");
+
+	if (mod->Alt)
+		strcat(command, "Alt+");
+
+	if (mod->Super)
+		strcat(command, "Super+");
+
+	strcat(command, keyStr);
+
+	keyScript = popen(command, "r");
+
+	if (keyScript < 0)
+		return -1;
+
+	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
+	{
+		strtok(buffer, "\n");
+
+		if (strcmp(buffer, "key-local") == 0)
+			status = 0;
+	}
+
+	exitCode = pclose(keyScript);
+
+	return status;
+}
+
+int xk_keyboard_get_modifier_keys(xfContext* xfc, XF_MODIFIER_KEYS* mod)
+{
+	mod->LeftShift = xf_keyboard_key_pressed(xfc, XK_Shift_L);
+	mod->RightShift = xf_keyboard_key_pressed(xfc, XK_Shift_R);
+	mod->Shift = mod->LeftShift || mod->RightShift;
+
+	mod->LeftAlt = xf_keyboard_key_pressed(xfc, XK_Alt_L);
+	mod->RightAlt = xf_keyboard_key_pressed(xfc, XK_Alt_R);
+	mod->Alt = mod->LeftAlt || mod->RightAlt;
+
+	mod->LeftCtrl = xf_keyboard_key_pressed(xfc, XK_Control_L);
+	mod->RightCtrl = xf_keyboard_key_pressed(xfc, XK_Control_R);
+	mod->Ctrl = mod->LeftCtrl || mod->RightCtrl;
+
+	mod->LeftSuper = xf_keyboard_key_pressed(xfc, XK_Super_L);
+	mod->RightSuper = xf_keyboard_key_pressed(xfc, XK_Super_R);
+	mod->Super = mod->LeftSuper || mod->RightSuper;
+
+	return 0;
+}
+
 BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 {
+	XF_MODIFIER_KEYS mod = { 0 };
+
+	xk_keyboard_get_modifier_keys(xfc, &mod);
+
+	if (!xf_keyboard_execute_action_script(xfc, &mod, keysym))
+	{
+		return TRUE;
+	}
+
 	if (keysym == XK_Return)
 	{
-		if ((xf_keyboard_key_pressed(xfc, XK_Alt_L) || xf_keyboard_key_pressed(xfc, XK_Alt_R))
-		    && (xf_keyboard_key_pressed(xfc, XK_Control_L) || xf_keyboard_key_pressed(xfc, XK_Control_R)))
+		if (mod.Ctrl && mod.Alt)
 		{
 			/* Ctrl-Alt-Enter: toggle full screen */
 			xf_toggle_fullscreen(xfc);
@@ -225,10 +306,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 	if (keysym == XK_period)
 	{
-		if ((xf_keyboard_key_pressed(xfc, XK_Alt_L)
-		     || xf_keyboard_key_pressed(xfc, XK_Alt_R))
-		    && (xf_keyboard_key_pressed(xfc, XK_Control_L)
-			|| xf_keyboard_key_pressed(xfc, XK_Control_R)))
+		if (mod.Ctrl && mod.Alt)
 		{
 			/* Zoom In (scale larger) */
 
@@ -261,10 +339,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	
 	if (keysym == XK_comma)
 	{
-		if ((xf_keyboard_key_pressed(xfc, XK_Alt_L)
-		     || xf_keyboard_key_pressed(xfc, XK_Alt_R))
-		    && (xf_keyboard_key_pressed(xfc, XK_Control_L)
-			|| xf_keyboard_key_pressed(xfc, XK_Control_R)))
+		if (mod.Ctrl && mod.Alt)
 		{
 			/* Zoom Out (scale smaller) */
 
@@ -298,10 +373,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	
 	if (keysym == XK_KP_4)
 	{
-		if ((xf_keyboard_key_pressed(xfc, XK_Alt_L)
-		     || xf_keyboard_key_pressed(xfc, XK_Alt_R))
-		    && (xf_keyboard_key_pressed(xfc, XK_Control_L)
-			|| xf_keyboard_key_pressed(xfc, XK_Control_R)))
+		if (mod.Ctrl && mod.Alt)
 		{
 			
 			{
@@ -319,10 +391,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	
 	if (keysym == XK_KP_6)
 	{
-		if ((xf_keyboard_key_pressed(xfc, XK_Alt_L)
-		     || xf_keyboard_key_pressed(xfc, XK_Alt_R))
-		    && (xf_keyboard_key_pressed(xfc, XK_Control_L)
-			|| xf_keyboard_key_pressed(xfc, XK_Control_R)))
+		if (mod.Ctrl && mod.Alt)
 		{
 			
 			{
@@ -339,10 +408,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	
 	if (keysym == XK_KP_8)
 	{
-		if ((xf_keyboard_key_pressed(xfc, XK_Alt_L)
-		     || xf_keyboard_key_pressed(xfc, XK_Alt_R))
-		    && (xf_keyboard_key_pressed(xfc, XK_Control_L)
-			|| xf_keyboard_key_pressed(xfc, XK_Control_R)))
+		if (mod.Ctrl && mod.Alt)
 		{
 			{
 				PanningChangeEventArgs e;
@@ -358,10 +424,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	
 	if (keysym == XK_KP_2)
 	{
-		if ((xf_keyboard_key_pressed(xfc, XK_Alt_L)
-		     || xf_keyboard_key_pressed(xfc, XK_Alt_R))
-		    && (xf_keyboard_key_pressed(xfc, XK_Control_L)
-			|| xf_keyboard_key_pressed(xfc, XK_Control_R)))
+		if (mod.Ctrl && mod.Alt)
 		{
 			{
 				PanningChangeEventArgs e;

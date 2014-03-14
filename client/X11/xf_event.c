@@ -397,32 +397,26 @@ static BOOL xf_event_KeyPress(xfContext* xfc, XEvent* event, BOOL app)
 
 	xf_keyboard_key_press(xfc, event->xkey.keycode, keysym);
 
-	if (xfc->fullscreen_toggle && xf_keyboard_handle_special_keys(xfc, keysym))
-		return TRUE;
-
-	xf_keyboard_send_key(xfc, TRUE, event->xkey.keycode);
-
 	return TRUE;
 }
 
 static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 {
-	XEvent next_event;
+	XEvent nextEvent;
 
 	if (XPending(xfc->display))
 	{
-		ZeroMemory(&next_event, sizeof(next_event));
-		XPeekEvent(xfc->display, &next_event);
+		ZeroMemory(&nextEvent, sizeof(nextEvent));
+		XPeekEvent(xfc->display, &nextEvent);
 
-		if (next_event.type == KeyPress)
+		if (nextEvent.type == KeyPress)
 		{
-			if (next_event.xkey.keycode == event->xkey.keycode)
+			if (nextEvent.xkey.keycode == event->xkey.keycode)
 				return TRUE;
 		}
 	}
 
 	xf_keyboard_key_release(xfc, event->xkey.keycode);
-	xf_keyboard_send_key(xfc, FALSE, event->xkey.keycode);
 
 	return TRUE;
 }
