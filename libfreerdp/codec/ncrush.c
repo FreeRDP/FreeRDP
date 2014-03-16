@@ -1124,9 +1124,8 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	BYTE Literal;
 	UINT32 BitLength;
 	UINT32 MaskedBits;
-	//UINT32 CopyOffset;
-	UINT32 LengthOfMatch;
-	//UINT32 accumulator;
+	UINT32 CopyOffset = 0;
+	UINT32 LengthOfMatch = 0;
 	UINT32 CopyOffsetIndex;
 	UINT32 OffsetCacheIndex;
 	BYTE* HistoryPtr;
@@ -1134,10 +1133,11 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	BYTE* HistoryBuffer;
 	BYTE* HistoryBufferEnd;
 	UINT32 HistoryBufferSize;
-	UINT32 CopyOffsetBits;
-	UINT32 CopyOffsetBase;
-	UINT32 LengthOfMatchBits;
-	UINT32 LengthOfMatchBase;
+	UINT32 CopyOffsetBits = 0;
+	UINT32 CopyOffsetBase = 0;
+	UINT32 LengthOfMatchBits = 0;
+	UINT32 LengthOfMatchBase = 0;
+	BYTE* CopyOffsetPtr = NULL;
 
 	HistoryBuffer = ncrush->HistoryBuffer;
 	HistoryBufferSize = ncrush->HistoryBufferSize;
@@ -1206,12 +1206,12 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 			Literal = (HuffTableLEC[MaskedBits] & 0xFF);
 
 			*HistoryPtr++ = Literal;
-
-			printf("%c", Literal);
 		}
 
 		if (IndexLEC <= 256)
+		{
 			break; /* EOS */
+		}
 
 		CopyOffsetIndex = IndexLEC - 257;
 
@@ -1229,17 +1229,15 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 		else
 		{
 			CopyOffsetBits = CopyOffsetBitsLUT[CopyOffsetIndex];
-			CopyOffsetBase = CopyOffsetBaseLUT[CopyOffsetIndex] - 1;
-
-			printf("\nCopyOffsetIndex: %d CopyOffsetBits: %d CopyOffsetBase: %d\n",
-					CopyOffsetIndex, CopyOffsetBits, CopyOffsetBase);
+			CopyOffsetBase = CopyOffsetBaseLUT[CopyOffsetIndex];
+			CopyOffset = CopyOffsetBase - 1;
 
 			if (CopyOffsetBits)
 			{
 				Mask = *((UINT16*) &HuffTableMask[(2 * CopyOffsetBits) + 3]);
 				MaskedBits = bits & Mask;
 
-				CopyOffsetBase += MaskedBits;
+				CopyOffset = CopyOffsetBase + MaskedBits - 1;
 
 				bits >>= CopyOffsetBits;
 				nbits -= CopyOffsetBits;
@@ -1277,22 +1275,55 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 			ncrush->OffsetCache[3] = ncrush->OffsetCache[2];
 			ncrush->OffsetCache[2] = ncrush->OffsetCache[1];
 			ncrush->OffsetCache[1] = ncrush->OffsetCache[0];
-			ncrush->OffsetCache[0] = CopyOffsetBase;
+			ncrush->OffsetCache[0] = CopyOffset;
+		}
+
+		CopyOffsetPtr = HistoryPtr - CopyOffset;
+		LengthOfMatch = LengthOfMatchBase;
+
+		if ((HistoryPtr >= &HistoryBufferEnd[-LengthOfMatch]) ||
+				(CopyOffsetPtr >= &HistoryBufferEnd[-LengthOfMatch]))
+		{
+			return -1;
+		}
+
+		if (LengthOfMatch < 2)
+		{
+			return -1;
+		}
+		else if (LengthOfMatch == 2)
+		{
+			HistoryPtr[0] = CopyOffsetPtr[0];
+			HistoryPtr[1] = CopyOffsetPtr[1];
+			HistoryPtr += 2;
+			continue;
+		}
+		else
+		{
+			while (LengthOfMatch > 0)
+			{
+				*HistoryPtr++ = *CopyOffsetPtr++;
+				LengthOfMatch--;
+			}
 		}
 	}
 
-	printf("\n");
-	printf("MaskedBits: 0x%04X Mask: 0x%04X Index: %d BitLength: %d\n", MaskedBits, Mask, IndexLEC, BitLength);
+	if (IndexLEC == 256)
+	{
+		*pDstSize = HistoryPtr - ncrush->HistoryPtr;
+		*ppDstData = ncrush->HistoryPtr;
+		ncrush->HistoryPtr = HistoryPtr;
+		return 1;
+	}
+	else
+	{
+		return -1;
+	}
 
 	return 1;
 }
 
 int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData, UINT32* pDstSize, UINT32* pFlags)
-{
-	return 1;
-}
-
-int ncrush_generate_code_table(NCRUSH_CONTEXT* ncrush, int count, int nbits, BYTE* lengthTable, UINT16* codeTable)
 {
 	return 1;
 }
