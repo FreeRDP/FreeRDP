@@ -1124,12 +1124,12 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	BYTE Literal;
 	UINT32 BitLength;
 	UINT32 MaskedBits;
-	UINT32 CopyOffset = 0;
-	UINT32 LengthOfMatch = 0;
+	UINT32 CopyOffset;
+	UINT32 OldCopyOffset;
+	UINT32 LengthOfMatch;
 	UINT32 CopyOffsetIndex;
 	UINT32 OffsetCacheIndex;
 	BYTE* HistoryPtr;
-	UINT32 HistoryOffset;
 	BYTE* HistoryBuffer;
 	BYTE* HistoryBufferEnd;
 	UINT32 HistoryBufferSize;
@@ -1149,28 +1149,23 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 			return -1;
 
 		CopyMemory(HistoryBuffer, (ncrush->HistoryPtr - 32768), 32768);
-		ncrush->HistoryOffset = 32768;
-		ncrush->HistoryPtr = &(HistoryBuffer[ncrush->HistoryOffset]);
+		ncrush->HistoryPtr = &(HistoryBuffer[32768]);
 	}
 
 	if (flags & PACKET_FLUSHED)
 	{
-		ncrush->HistoryOffset = 0;
 		ncrush->HistoryPtr = HistoryBuffer;
 		ZeroMemory(HistoryBuffer, ncrush->HistoryBufferSize);
 		ZeroMemory(&(ncrush->OffsetCache), sizeof(ncrush->OffsetCache));
 	}
 
 	HistoryPtr = ncrush->HistoryPtr;
-	HistoryOffset = ncrush->HistoryOffset;
 
 	if (!(flags & PACKET_COMPRESSED))
 	{
 		CopyMemory(HistoryPtr, pSrcData, SrcSize);
 		HistoryPtr += SrcSize;
-		HistoryOffset += SrcSize;
 		ncrush->HistoryPtr = HistoryPtr;
-		ncrush->HistoryOffset = HistoryOffset;
 		*ppDstData = HistoryPtr;
 		*pDstSize = SrcSize;
 		return 1;
@@ -1222,9 +1217,38 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 			if (OffsetCacheIndex >= 4)
 				return -1;
 
-			printf("\nOffsetCacheIndex: %d\n", OffsetCacheIndex);
+			CopyOffset = ncrush->OffsetCache[OffsetCacheIndex];
 
-			return -1; /* TODO */
+			Mask = *((UINT16*) &HuffTableMask[21]);
+			MaskedBits = bits & Mask;
+
+			LengthOfMatch = HuffTableLOM[MaskedBits] & 0xFFF;
+			BitLength = HuffTableLOM[MaskedBits] >> 12;
+
+			bits >>= BitLength;
+			nbits -= BitLength;
+
+			NCrushFetchBits();
+
+			LengthOfMatchBits = LOMBitsLUT[LengthOfMatch];
+			LengthOfMatchBase = LOMBaseLUT[LengthOfMatch];
+
+			if (LengthOfMatchBits)
+			{
+				Mask = *((UINT16*) &HuffTableMask[(2 * LengthOfMatchBits) + 3]);
+				MaskedBits = bits & Mask;
+
+				LengthOfMatchBase += MaskedBits;
+
+				bits >>= LengthOfMatchBits;
+				nbits -= LengthOfMatchBits;
+
+				NCrushFetchBits();
+			}
+
+			OldCopyOffset = ncrush->OffsetCache[OffsetCacheIndex];
+			ncrush->OffsetCache[OffsetCacheIndex] = ncrush->OffsetCache[0];
+			ncrush->OffsetCache[0] = OldCopyOffset;
 		}
 		else
 		{
