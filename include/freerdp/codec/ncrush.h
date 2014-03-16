@@ -35,6 +35,7 @@ struct _NCRUSH_CONTEXT
 	UINT32 HistoryOffset;
 	UINT32 HistoryBufferSize;
 	BYTE HistoryBuffer[65536];
+	UINT32 OffsetCache[4];
 };
 typedef struct _NCRUSH_CONTEXT NCRUSH_CONTEXT;
 
