@@ -29,7 +29,6 @@
 
 struct _NCRUSH_CONTEXT
 {
-	wBitStream* bs;
 	BOOL Compressor;
 	BYTE* HistoryPtr;
 	UINT32 HistoryOffset;
