@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/library.h>
+#include <winpr/environment.h>
 
 #include <winpr/wtsapi.h>
 
@@ -396,14 +397,28 @@ BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)
 
 void InitializeWtsApiStubs(void)
 {
+	DWORD nSize;
+	char* env = NULL;
 	INIT_WTSAPI_FN pInitWtsApi;
+
+	if (g_Initialized)
+		return;
 
 	g_Initialized = TRUE;
 
 	if (g_WtsApi)
 		return;
 
-	g_WtsApiModule = LoadLibraryA("/opt/freerds/lib64/libfreerds-fdsapi.so");
+	nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0);
+
+	if (nSize)
+	{
+		env = (LPSTR) malloc(nSize);
+		nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", env, nSize);
+	}
+
+	if (env)
+		g_WtsApiModule = LoadLibraryA(env);
 
 	if (!g_WtsApiModule)
 		return;
