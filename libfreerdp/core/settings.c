@@ -253,7 +253,11 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 
 		settings->CompressionEnabled = TRUE;
-		settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
+
+		if (settings->ServerMode)
+			settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
+		else
+			settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
 
 		settings->Authentication = TRUE;
 		settings->AuthenticationOnly = FALSE;

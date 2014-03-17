@@ -7,6 +7,7 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 set(${MODULE_PREFIX}_TESTS
 	TestFreeRDPRegion.c
 	TestFreeRDPCodecMppc.c
+	TestFreeRDPCodecNCrush.c
 	TestFreeRDPCodecPlanar.c
 	TestFreeRDPCodecRemoteFX.c)
 
