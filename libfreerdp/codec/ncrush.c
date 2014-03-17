@@ -1120,25 +1120,25 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	UINT32 nbits;
 	BYTE* SrcPtr;
 	BYTE* SrcEnd;
-	UINT32 IndexLEC;
 	UINT16 Mask;
 	BYTE Literal;
+	UINT32 IndexLEC;
 	UINT32 BitLength;
 	UINT32 MaskedBits;
 	UINT32 CopyOffset;
 	UINT32 CopyLength;
 	UINT32 OldCopyOffset;
+	BYTE* CopyOffsetPtr;
 	UINT32 LengthOfMatch;
 	UINT32 CopyOffsetIndex;
 	UINT32 OffsetCacheIndex;
 	BYTE* HistoryPtr;
 	BYTE* HistoryBuffer;
 	BYTE* HistoryBufferEnd;
-	UINT32 CopyOffsetBits = 0;
-	UINT32 CopyOffsetBase = 0;
-	UINT32 LengthOfMatchBits = 0;
-	UINT32 LengthOfMatchBase = 0;
-	BYTE* CopyOffsetPtr = NULL;
+	UINT32 CopyOffsetBits;
+	UINT32 CopyOffsetBase;
+	UINT32 LengthOfMatchBits;
+	UINT32 LengthOfMatchBase;
 
 	if (ncrush->HistoryEndOffset != 65535)
 		return -1;
@@ -1148,8 +1148,6 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 
 	if (flags & PACKET_AT_FRONT)
 	{
-		printf("PACKET_AT_FRONT\n");
-
 		if ((ncrush->HistoryPtr - 32768) <= HistoryBuffer)
 			return -1;
 
@@ -1160,8 +1158,6 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 
 	if (flags & PACKET_FLUSHED)
 	{
-		printf("PACKET_FLUSHED\n");
-
 		ncrush->HistoryPtr = HistoryBuffer;
 		ZeroMemory(HistoryBuffer, sizeof(ncrush->HistoryBuffer));
 		ZeroMemory(&(ncrush->OffsetCache), sizeof(ncrush->OffsetCache));
@@ -1171,8 +1167,6 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 
 	if (!(flags & PACKET_COMPRESSED))
 	{
-		printf("PACKET_UNCOMPRESSED\n");
-
 		CopyMemory(HistoryPtr, pSrcData, SrcSize);
 		HistoryPtr += SrcSize;
 		ncrush->HistoryPtr = HistoryPtr;
@@ -1310,14 +1304,17 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 			ncrush->OffsetCache[0] = CopyOffset;
 		}
 
-		CopyOffsetPtr = HistoryPtr - CopyOffset;
+		CopyOffsetPtr = &HistoryBuffer[(HistoryPtr - HistoryBuffer - CopyOffset) & 0xFFFF];
 		LengthOfMatch = LengthOfMatchBase;
-
-		if (HistoryPtr >= &HistoryBufferEnd[-LengthOfMatch])
-			return -1;
 
 		if (LengthOfMatch < 2)
 			return -1;
+
+		if ((CopyOffsetPtr >= (&HistoryBufferEnd[-LengthOfMatch])) ||
+				(HistoryPtr >= &HistoryBufferEnd[-LengthOfMatch]))
+			return -1;
+
+		CopyOffsetPtr = HistoryPtr - CopyOffset;
 
 		index = 0;
 		CopyLength = (LengthOfMatch > CopyOffset) ? CopyOffset : LengthOfMatch;
@@ -1369,7 +1366,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 
 	if (ncrush->HistoryBufferFence != 0xABABABAB)
 	{
-		printf("NCrushDecompress: history buffer fence was overwritten, potential buffer overflow detected\n");
+		fprintf(stderr, "NCrushDecompress: history buffer fence was overwritten, potential buffer overflow detected!\n");
 		return -1;
 	}
 

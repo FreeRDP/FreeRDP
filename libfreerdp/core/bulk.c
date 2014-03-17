@@ -23,7 +23,7 @@
 
 #include "bulk.h"
 
-#define WITH_BULK_DEBUG		1
+//#define WITH_BULK_DEBUG		1
 
 UINT32 bulk_compression_level(rdpBulk* bulk)
 {
@@ -94,9 +94,7 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 	}
 	else
 	{
-#ifdef WITH_BULK_DEBUG
-		printf("Decompression failure!\n");
-#endif
+		fprintf(stderr, "Decompression failure!\n");
 	}
 
 	return status;
