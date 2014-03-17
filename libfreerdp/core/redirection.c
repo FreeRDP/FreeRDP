@@ -103,15 +103,15 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 	}
 	else
 	{
-		if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
-		{
-			free(settings->TargetNetAddress);
-			settings->TargetNetAddress = _strdup(redirection->TargetNetAddress);
-		}
-		else if (settings->RedirectionFlags & LB_TARGET_FQDN)
+		if (settings->RedirectionFlags & LB_TARGET_FQDN)
 		{
 			free(settings->RedirectionTargetFQDN);
 			settings->RedirectionTargetFQDN = _strdup(redirection->TargetFQDN);
+		}
+		else if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+		{
+			free(settings->TargetNetAddress);
+			settings->TargetNetAddress = _strdup(redirection->TargetNetAddress);
 		}
 		else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 		{
