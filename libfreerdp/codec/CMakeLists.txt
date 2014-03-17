@@ -49,8 +49,6 @@ set(${MODULE_PREFIX}_SRCS
 	nsc_types.h
 	ncrush.c
 	mppc.c
-	mppc_dec.c
-	mppc_enc.c
 	jpeg.c)
 
 set(${MODULE_PREFIX}_SSE2_SRCS
