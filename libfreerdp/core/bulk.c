@@ -23,7 +23,7 @@
 
 #include "bulk.h"
 
-//#define WITH_BULK_DEBUG		1
+#define WITH_BULK_DEBUG		1
 
 UINT32 bulk_compression_level(rdpBulk* bulk)
 {
@@ -42,8 +42,6 @@ UINT32 bulk_compression_max_size(rdpBulk* bulk)
 int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	int status = -1;
-	UINT32 roff = 0;
-	UINT32 rlen = 0;
 	UINT32 CompressedBytes;
 	UINT32 UncompressedBytes;
 	UINT32 type = flags & 0x0F;
@@ -61,9 +59,7 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 			break;
 
 		case PACKET_COMPR_TYPE_RDP6:
-			status = decompress_rdp_6(bulk->mppc_dec, pSrcData, SrcSize, flags, &roff, &rlen);
-			*ppDstData = (bulk->mppc_dec->history_buf + roff);
-			*pDstSize = rlen;
+			status = ncrush_decompress(bulk->ncrushRecv, pSrcData, SrcSize, ppDstData, pDstSize, flags);
 			break;
 
 		case PACKET_COMPR_TYPE_RDP61:
@@ -91,8 +87,15 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 			CompressionRatio = ((double) CompressedBytes) / ((double) UncompressedBytes);
 			TotalCompressionRatio = ((double) bulk->TotalCompressedBytes) / ((double) bulk->TotalUncompressedBytes);
 
-			printf("Compression Ratio: %f Total: %f\n", CompressionRatio, TotalCompressionRatio);
+			printf("Type: %d Compression Ratio: %f Total: %f %d / %d\n",
+					type, CompressionRatio, TotalCompressionRatio, CompressedBytes, UncompressedBytes);
 		}
+#endif
+	}
+	else
+	{
+#ifdef WITH_BULK_DEBUG
+		printf("Decompression failure!\n");
 #endif
 	}
 
@@ -140,9 +143,7 @@ void bulk_reset(rdpBulk* bulk)
 {
 	mppc_context_reset(bulk->mppcSend);
 	mppc_context_reset(bulk->mppcRecv);
-
-	mppc_dec_free(bulk->mppc_dec);
-	bulk->mppc_dec = mppc_dec_new();
+	ncrush_context_reset(bulk->ncrushRecv);
 }
 
 rdpBulk* bulk_new(rdpContext* context)
@@ -158,7 +159,7 @@ rdpBulk* bulk_new(rdpContext* context)
 		bulk->mppcSend = mppc_context_new(1, TRUE);
 		bulk->mppcRecv = mppc_context_new(1, FALSE);
 
-		bulk->mppc_dec = mppc_dec_new();
+		bulk->ncrushRecv = ncrush_context_new(FALSE);
 
 		bulk->CompressionLevel = context->settings->CompressionLevel;
 
@@ -176,7 +177,7 @@ void bulk_free(rdpBulk* bulk)
 		mppc_context_free(bulk->mppcSend);
 		mppc_context_free(bulk->mppcRecv);
 
-		mppc_dec_free(bulk->mppc_dec);
+		ncrush_context_free(bulk->ncrushRecv);
 
 		free(bulk);
 	}
