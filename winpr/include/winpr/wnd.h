@@ -26,14 +26,6 @@
 
 #ifndef _WIN32
 
-#ifndef FAR
-#define FAR
-#endif
-
-#ifndef NEAR
-#define NEAR
-#endif
-
 #define WM_NULL					0x0000
 #define WM_CREATE				0x0001
 #define WM_DESTROY				0x0002
@@ -297,6 +289,7 @@ typedef UINT_PTR WPARAM;
 typedef LONG_PTR LPARAM;
 typedef LONG_PTR LRESULT;
 
+typedef FARPROC SENDASYNCPROC;
 typedef LRESULT (CALLBACK* WNDPROC)(HWND, UINT, WPARAM, LPARAM);
 
 typedef HANDLE HICON;
@@ -400,6 +393,24 @@ typedef struct tagMSG
 	POINT pt;
 } MSG, *PMSG, NEAR *NPMSG, FAR *LPMSG;
 
+typedef struct tagWTSSESSION_NOTIFICATION
+{
+	DWORD cbSize;
+	DWORD dwSessionId;
+} WTSSESSION_NOTIFICATION, *PWTSSESSION_NOTIFICATION;
+
+#define WTS_CONSOLE_CONNECT			0x1
+#define WTS_CONSOLE_DISCONNECT			0x2
+#define WTS_REMOTE_CONNECT			0x3
+#define WTS_REMOTE_DISCONNECT			0x4
+#define WTS_SESSION_LOGON			0x5
+#define WTS_SESSION_LOGOFF			0x6
+#define WTS_SESSION_LOCK			0x7
+#define WTS_SESSION_UNLOCK			0x8
+#define WTS_SESSION_REMOTE_CONTROL		0x9
+#define WTS_SESSION_CREATE			0xA
+#define WTS_SESSION_TERMINATE			0xB
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -448,6 +459,22 @@ WINPR_API HWND WINAPI CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
 WINPR_API BOOL WINAPI GetMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
 WINPR_API BOOL WINAPI GetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax);
 
+WINPR_API LRESULT WINAPI SendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+WINPR_API LRESULT WINAPI SendMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+
+WINPR_API LRESULT WINAPI SendMessageTimeoutA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam,
+		UINT fuFlags, UINT uTimeout, PDWORD_PTR lpdwResult);
+WINPR_API LRESULT WINAPI SendMessageTimeoutW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam,
+		UINT fuFlags, UINT uTimeout, PDWORD_PTR lpdwResult);
+
+WINPR_API BOOL WINAPI SendNotifyMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+WINPR_API BOOL WINAPI SendNotifyMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+
+WINPR_API BOOL WINAPI SendMessageCallbackA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam,
+		SENDASYNCPROC lpResultCallBack, ULONG_PTR dwData);
+WINPR_API BOOL WINAPI SendMessageCallbackW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam,
+		SENDASYNCPROC lpResultCallBack, ULONG_PTR dwData);
+
 WINPR_API BOOL WINAPI TranslateMessage(CONST MSG* lpMsg);
 
 WINPR_API LRESULT WINAPI DispatchMessageA(CONST MSG* lpMsg);
@@ -470,6 +497,10 @@ WINPR_API LRESULT WINAPI DefWindowProcW(HWND hWnd, UINT Msg, WPARAM wParam, LPAR
 #define CreateWindow		CreateWindowW
 #define CreateWindowEx		CreateWindowExW
 #define GetMessage		GetMessageW
+#define SendMessage		SendMessageW
+#define SendMessageTimeout	SendMessageTimeoutW
+#define SendNotifyMessage	SendNotifyMessageW
+#define SendMessageCallback	SendMessageCallbackW
 #define DispatchMessage		DispatchMessageW
 #define CallWindowProc		CallWindowProcW
 #define DefWindowProc		DefWindowProcW
@@ -484,6 +515,10 @@ WINPR_API LRESULT WINAPI DefWindowProcW(HWND hWnd, UINT Msg, WPARAM wParam, LPAR
 #define CreateWindow		CreateWindowA
 #define CreateWindowEx		CreateWindowExA
 #define GetMessage		GetMessageA
+#define SendMessage		SendMessageA
+#define SendMessageTimeout	SendMessageTimeoutA
+#define SendNotifyMessage	SendNotifyMessageA
+#define SendMessageCallback	SendMessageCallbackA
 #define DispatchMessage		DispatchMessageA
 #define CallWindowProc		CallWindowProcA
 #define DefWindowProc		DefWindowProcA

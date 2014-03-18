@@ -19,7 +19,8 @@ set(MODULE_NAME "winpr-wnd")
 set(MODULE_PREFIX "WINPR_WND")
 
 set(${MODULE_PREFIX}_SRCS
-	wnd.c)
+	wnd.c
+	wnd.h)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
