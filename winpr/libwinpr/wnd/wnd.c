@@ -30,6 +30,10 @@
 
 #include "wnd.h"
 
+/**
+ * Custom Functions
+ */
+
 static wArrayList* g_WindowClasses = NULL;
 
 void InitializeWindowClasses()
@@ -83,6 +87,10 @@ WNDCLASSEXA* FindWindowClass(LPCSTR lpClassName)
 
 	return (found) ? lpwcx : NULL;
 }
+
+/**
+ * Standard Functions
+ */
 
 WORD WINAPI GetWindowWord(HWND hWnd, int nIndex)
 {
@@ -246,12 +254,57 @@ HWND WINAPI CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
 	return NULL;
 }
 
+HWND WINAPI FindWindowA(LPCSTR lpClassName, LPCSTR lpWindowName)
+{
+	return NULL;
+}
+
+HWND WINAPI FindWindowW(LPCWSTR lpClassName, LPCWSTR lpWindowName)
+{
+	return NULL;
+}
+
+HWND WINAPI FindWindowExA(HWND hWndParent, HWND hWndChildAfter, LPCSTR lpszClass, LPCSTR lpszWindow)
+{
+	return NULL;
+}
+
+HWND WINAPI FindWindowExW(HWND hWndParent, HWND hWndChildAfter, LPCWSTR lpszClass, LPCWSTR lpszWindow)
+{
+	return NULL;
+}
+
 BOOL WINAPI GetMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax)
 {
 	return TRUE;
 }
 
 BOOL WINAPI GetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax)
+{
+	return TRUE;
+}
+
+DWORD WINAPI GetMessagePos(VOID)
+{
+	return 0;
+}
+
+LONG WINAPI GetMessageTime(VOID)
+{
+	return 0;
+}
+
+LPARAM WINAPI GetMessageExtraInfo(VOID)
+{
+	return 0;
+}
+
+LPARAM WINAPI SetMessageExtraInfo(LPARAM lParam)
+{
+	return 0;
+}
+
+BOOL WINAPI SetMessageQueue(int cMessagesMax)
 {
 	return TRUE;
 }
@@ -329,6 +382,26 @@ LRESULT WINAPI DispatchMessageA(CONST MSG* lpMsg)
 LRESULT WINAPI DispatchMessageW(CONST MSG* lpMsg)
 {
 	return 0;
+}
+
+BOOL WINAPI PeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
+{
+	return TRUE;
+}
+
+BOOL WINAPI PeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
+{
+	return TRUE;
+}
+
+BOOL WINAPI ReplyMessage(LRESULT lResult)
+{
+	return TRUE;
+}
+
+BOOL WINAPI WaitMessage(VOID)
+{
+	return TRUE;
 }
 
 LRESULT WINAPI CallWindowProcA(WNDPROC lpPrevWndFunc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)

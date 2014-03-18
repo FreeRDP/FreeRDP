@@ -1,38 +1,28 @@
 
 #include <winpr/crt.h>
 #include <winpr/wnd.h>
-#include <winpr/wtsapi.h>
 #include <winpr/library.h>
-
-const char* WM_WTS_STRINGS[] =
-{
-	"",
-	"WTS_CONSOLE_CONNECT",
-	"WTS_CONSOLE_DISCONNECT",
-	"WTS_REMOTE_CONNECT",
-	"WTS_REMOTE_DISCONNECT",
-	"WTS_SESSION_LOGON",
-	"WTS_SESSION_LOGOFF",
-	"WTS_SESSION_LOCK",
-	"WTS_SESSION_UNLOCK",
-	"WTS_SESSION_REMOTE_CONTROL",
-	"WTS_SESSION_CREATE",
-	"WTS_SESSION_TERMINATE",
-	""
-};
 
 static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	PCOPYDATASTRUCT pCopyData;
+
 	switch (uMsg)
 	{
-		case WM_WTSSESSION_CHANGE:
-			if (wParam && (wParam < 13))
+		case WM_COPYDATA:
 			{
-				PWTSSESSION_NOTIFICATION pNotification = (PWTSSESSION_NOTIFICATION) lParam;
+				pCopyData = (PCOPYDATASTRUCT) lParam;
 
-				printf("WM_WTSSESSION_CHANGE: %s SessionId: %d\n",
-						WM_WTS_STRINGS[wParam], (int) pNotification->dwSessionId);
+				if (!pCopyData)
+					break;
+
+				printf("WM_COPYDATA: cbData: %d dwData: %d\n",
+						(int) pCopyData->cbData, (int) pCopyData->dwData);
 			}
+			break;
+
+		case WM_CLOSE:
+			printf("WM_CLOSE\n");
 			break;
 
 		default:
@@ -44,13 +34,12 @@ static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 	return 0;
 }
 
-int TestWndCreateWindowEx(int argc, char* argv[])
+int TestWndWmCopyData(int argc, char* argv[])
 {
 	HWND hWnd;
 	HMODULE hModule;
 	HINSTANCE hInstance;
 	WNDCLASSEX wndClassEx;
-	WTSSESSION_NOTIFICATION wtsSessionNotification;
 
 	hModule = GetModuleHandle(NULL);
 
@@ -85,10 +74,7 @@ int TestWndCreateWindowEx(int argc, char* argv[])
 		return -1;
 	}
 
-	wtsSessionNotification.cbSize = sizeof(WTSSESSION_NOTIFICATION);
-	wtsSessionNotification.dwSessionId = 123;
-
-	SendMessage(hWnd, WM_WTSSESSION_CHANGE, WTS_SESSION_LOGON, (LPARAM) &wtsSessionNotification);
+	SendMessage(hWnd, WM_CLOSE, 0, 0);
 
 	DestroyWindow(hWnd);
 
