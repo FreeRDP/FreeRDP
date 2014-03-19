@@ -41,6 +41,15 @@ static HWND g_focus_hWnd;
 BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1, int y1, DWORD rop);
 void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 
+static BOOL g_flipping_in;
+static BOOL g_flipping_out;
+
+static BOOL alt_ctrl_down()
+{
+	return ((GetAsyncKeyState(VK_CONTROL) & 0x8000) ||
+		(GetAsyncKeyState(VK_MENU) & 0x8000));
+}
+
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	wfContext* wfc;
@@ -49,6 +58,13 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	PKBDLLHOOKSTRUCT p;
 
 	DEBUG_KBD("Low-level keyboard hook, hWnd %X nCode %X wParam %X", g_focus_hWnd, nCode, wParam);
+
+	if (g_flipping_in)
+	{
+		if (!alt_ctrl_down())
+			g_flipping_in = FALSE;
+		return CallNextHookEx(NULL, nCode, wParam, lParam);
+	}
 
 	if (g_focus_hWnd && (nCode == HC_ACTION))
 	{
@@ -121,6 +137,15 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					return 1;
 
 				break;
+		}
+	}
+
+	if (g_flipping_out)
+	{
+		if (!alt_ctrl_down())
+		{
+			g_flipping_out = FALSE;
+			g_focus_hWnd = NULL;
 		}
 	}
 
@@ -505,6 +530,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 		case WM_SETFOCUS:
 			DEBUG_KBD("getting focus %X", hWnd);
+			if (alt_ctrl_down())
+				g_flipping_in = TRUE;
 			g_focus_hWnd = hWnd;
 			break;
 
@@ -512,7 +539,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			if (g_focus_hWnd == hWnd && wfc && !wfc->fullscreen)
 			{
 				DEBUG_KBD("loosing focus %X", hWnd);
-				g_focus_hWnd = NULL;
+				if (alt_ctrl_down())
+					g_flipping_out = TRUE;
+				else
+					g_focus_hWnd = NULL;
 			}
 			break;
 
@@ -521,11 +551,16 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				int activate = (int)(short) LOWORD(wParam);
 				if (activate != WA_INACTIVE)
 				{
+					if (alt_ctrl_down())
+						g_flipping_in = TRUE;
 					g_focus_hWnd = hWnd;
 				}
 				else
 				{
-					g_focus_hWnd = NULL;
+					if (alt_ctrl_down())
+						g_flipping_out = TRUE;
+					else
+						g_focus_hWnd = NULL;
 				}
 			}
 

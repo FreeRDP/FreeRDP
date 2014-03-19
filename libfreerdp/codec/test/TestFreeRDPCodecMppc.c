@@ -688,18 +688,18 @@ static BYTE TEST_RDP5_UNCOMPRESSED_DATA[] =
  * 00 Trailing Bits
  */
 
-const BYTE TEST_MPPC_BELLS[] = "for.whom.the.bell.tolls,.the.bell.tolls.for.thee!";
+static const BYTE TEST_MPPC_BELLS[] = "for.whom.the.bell.tolls,.the.bell.tolls.for.thee!";
 
 /* Flags: 0x0060 Length: 33 */
 
-const BYTE TEST_MPPC_BELLS_RDP4[] =
+static const BYTE TEST_MPPC_BELLS_RDP4[] =
 	"\x66\x6f\x72\x2e\x77\x68\x6f\x6d\x2e\x74\x68\x65\x2e\x62\x65\x6c"
 	"\x6c\x2e\x74\x6f\x6c\x6c\x73\x2c\xf4\x37\x2e\x66\xfa\x1f\x19\x94"
 	"\x84";
 
 /* Flags: 0x0061 Length: 34 */
 
-const BYTE TEST_MPPC_BELLS_RDP5[] =
+static const BYTE TEST_MPPC_BELLS_RDP5[] =
 	"\x66\x6f\x72\x2e\x77\x68\x6f\x6d\x2e\x74\x68\x65\x2e\x62\x65\x6c"
 	"\x6c\x2e\x74\x6f\x6c\x6c\x73\x2c\xfa\x1b\x97\x33\x7e\x87\xe3\x32"
 	"\x90\x80";

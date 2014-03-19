@@ -303,15 +303,15 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	}
 	else
 	{
-		if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
-		{
-			free(settings->ServerHostname);
-			settings->ServerHostname = _strdup(settings->TargetNetAddress);
-		}
-		else if (settings->RedirectionFlags & LB_TARGET_FQDN)
+		if (settings->RedirectionFlags & LB_TARGET_FQDN)
 		{
 			free(settings->ServerHostname);
 			settings->ServerHostname = _strdup(settings->RedirectionTargetFQDN);
+		}
+		else if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+		{
+			free(settings->ServerHostname);
+			settings->ServerHostname = _strdup(settings->TargetNetAddress);
 		}
 		else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
 		{

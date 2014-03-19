@@ -26,9 +26,6 @@
 #include <winpr/stream.h>
 #include <winpr/bitstream.h>
 
-#include <freerdp/codec/mppc_enc.h>
-#include <freerdp/codec/mppc_dec.h>
-
 #include <freerdp/codec/mppc.h>
 
 #define MPPC_MATCH_INDEX(_sym1, _sym2, _sym3) \

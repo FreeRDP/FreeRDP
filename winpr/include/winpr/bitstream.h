@@ -125,6 +125,7 @@ extern "C" {
 } while(0)
 
 WINPR_API void BitDump(const BYTE* buffer, UINT32 length, UINT32 flags);
+WINPR_API UINT32 ReverseBits32(UINT32 bits, UINT32 nbits);
 
 WINPR_API void BitStream_Attach(wBitStream* bs, BYTE* buffer, UINT32 capacity);
 
