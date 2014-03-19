@@ -2274,7 +2274,8 @@ BOOL rdp_read_multifragment_update_capability_set(wStream* s, UINT16 length, rdp
 		return FALSE;
 
 	Stream_Read_UINT32(s, multifragMaxRequestSize); /* MaxRequestSize (4 bytes) */
-	if (settings->RemoteFxCodec && settings->MultifragMaxRequestSize < multifragMaxRequestSize)
+
+	if (multifragMaxRequestSize < settings->MultifragMaxRequestSize)
 		settings->MultifragMaxRequestSize = multifragMaxRequestSize;
 
 	return TRUE;
