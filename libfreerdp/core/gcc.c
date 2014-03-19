@@ -407,7 +407,7 @@ void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 
 	if (settings->NegotiationFlags & EXTENDED_CLIENT_DATA_SUPPORTED)
 	{
-		if (settings->SpanMonitors)
+		if (!settings->SpanMonitors)
 		{
 			gcc_write_client_monitor_data(s, mcs);
 		}
