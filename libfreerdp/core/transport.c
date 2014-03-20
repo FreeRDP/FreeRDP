@@ -244,6 +244,11 @@ BOOL transport_connect_tls(rdpTransport* transport)
 			if (!connectErrorCode)
 				connectErrorCode = TLSCONNECTERROR;
 
+			if (!freerdp_get_last_error(((freerdp*)(transport->settings->instance))->context))
+			{
+				freerdp_set_last_error(((freerdp*)(transport->settings->instance))->context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+			}
+
 			tls_free(transport->TsgTls);
 			transport->TsgTls = NULL;
 
@@ -272,6 +277,11 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	{
 		if (!connectErrorCode)
 			connectErrorCode = TLSCONNECTERROR;
+
+		if (!freerdp_get_last_error(((freerdp*)(transport->settings->instance))->context))
+		{
+			freerdp_set_last_error(((freerdp*)(transport->settings->instance))->context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
 
 		tls_free(transport->TlsIn);
 
@@ -317,6 +327,11 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	{
 		if (!connectErrorCode)
 			connectErrorCode = AUTHENTICATIONERROR;
+
+		if (!freerdp_get_last_error(instance->context))
+		{
+			freerdp_set_last_error(instance->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+		}
 
 		fprintf(stderr, "Authentication failure, check credentials.\n"
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");

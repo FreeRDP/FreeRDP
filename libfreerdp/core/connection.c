@@ -268,6 +268,12 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		{
 			connectErrorCode = MCSCONNECTINITIALERROR;                      
 		}
+
+		if (!freerdp_get_last_error(rdp->context))
+		{
+			freerdp_set_last_error(rdp->context, FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR);
+		}
+
 		fprintf(stderr, "Error: unable to send MCS Connect Initial\n");
 		return FALSE;
 	}
