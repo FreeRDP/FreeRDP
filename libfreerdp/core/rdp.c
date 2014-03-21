@@ -235,11 +235,10 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 
 	if (rdp->errorInfo != ERRINFO_SUCCESS)
 	{
-		rdp->context->LastError = MAKE_FREERDP_ERROR(ERRINFO, errorInfo);
-
 		ErrorInfoEventArgs e;
 		rdpContext* context = rdp->instance->context;
 
+		rdp->context->LastError = MAKE_FREERDP_ERROR(ERRINFO, errorInfo);
 		rdp_print_errinfo(rdp->errorInfo);
 
 		EventArgsInit(&e, "freerdp");
