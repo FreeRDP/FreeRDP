@@ -342,6 +342,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	BYTE fragmentation;
 	BYTE compression;
 	BYTE compressionFlags;
+	UINT32 DstSize = 0;
+	BYTE* pDstData = NULL;
 	rdpTransport* transport;
 
 	status = 0;
@@ -363,26 +365,20 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	cs = s;
 	next_pos = Stream_GetPosition(s) + size;
 
-	if (compressionFlags & PACKET_COMPRESSED)
+	if (bulk_decompress(rdp->bulk, Stream_Pointer(s), size, &pDstData, &DstSize, compressionFlags))
 	{
-		UINT32 DstSize = 0;
-		BYTE* pDstData = NULL;
+		size = DstSize;
+		cs = StreamPool_Take(transport->ReceivePool, DstSize);
 
-		if (bulk_decompress(rdp->bulk, Stream_Pointer(s), size, &pDstData, &DstSize, compressionFlags))
-		{
-			size = DstSize;
-			cs = StreamPool_Take(transport->ReceivePool, DstSize);
-
-			Stream_SetPosition(cs, 0);
-			Stream_Write(cs, pDstData, DstSize);
-			Stream_SealLength(cs);
-			Stream_SetPosition(cs, 0);
-		}
-		else
-		{
-			fprintf(stderr, "bulk_decompress() failed\n");
-			Stream_Seek(s, size);
-		}
+		Stream_SetPosition(cs, 0);
+		Stream_Write(cs, pDstData, DstSize);
+		Stream_SealLength(cs);
+		Stream_SetPosition(cs, 0);
+	}
+	else
+	{
+		fprintf(stderr, "bulk_decompress() failed\n");
+		Stream_Seek(s, size);
 	}
 
 	if (fragmentation == FASTPATH_FRAGMENT_SINGLE)
@@ -855,6 +851,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 	{
 		CompressionMaxSize = bulk_compression_max_size(rdp->bulk);
 		maxLength = (maxLength < CompressionMaxSize) ? maxLength : CompressionMaxSize;
+		maxLength -= 20;
 	}
 
 	totalLength = Stream_GetPosition(s);
