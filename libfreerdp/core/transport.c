@@ -335,7 +335,14 @@ BOOL transport_http_proxy_connect(rdpTransport* transport, const char* hostname,
 {
 	int status;
 	wStream* s;
-	char str[32];
+	char str[256], *eol;
+	rdpTcp *tcp;
+	int resultsize;
+
+	if (transport->layer == TRANSPORT_LAYER_HTTP_PROXY_IN)
+		tcp = transport->TcpIn;
+	else
+		tcp = transport->TcpOut;
 
 	_itoa_s(port, str, sizeof(str), 10);
 
@@ -353,7 +360,7 @@ BOOL transport_http_proxy_connect(rdpTransport* transport, const char* hostname,
 	// Send Host: header? (RFC2817)
 
 	//fprintf(stderr, "Sending CONNECT %.*s:%.*s\n", strlen(hostname), hostname, strlen(str), str);
-	fprintf(stderr, "Sending \"%.*s\"...\n", (int)Stream_GetPosition(s), Stream_Buffer(s));
+	//fprintf(stderr, "Sending \"%.*s\"...\n", (int)Stream_GetPosition(s), Stream_Buffer(s));
 
 	status = transport_write(transport, s);
 	if (status < 0) {
@@ -361,20 +368,38 @@ BOOL transport_http_proxy_connect(rdpTransport* transport, const char* hostname,
 		return status;
 	}
 
-	fprintf(stderr, "Sent!\n");
+	// Read result until \r\n\r\n
+	// Keep str a null-terminated string.
+	memset(str, '\0', sizeof(str));
+	resultsize = 0;
+	while ( strstr(str, "\r\n\r\n") == NULL ) {
+		status = tcp_read(tcp, (BYTE*)str + resultsize, sizeof(str)-resultsize-1);
+		if (status < 0) {
+			// Error?
+			return FALSE;
+		}
+		else if (status == 0) {
+			// Error?
+			fprintf(stderr, "tcp_read() returned zero\n");
+			return FALSE;
+		}
+		resultsize += status;
+	}
 
-	// Read result...
-	memset(str, 0, sizeof(str));
-	status = tcp_read(transport->TcpIn, (BYTE*)str, sizeof(str)-1);
-	if (status <= 0) {
-		// Error?
+	fprintf(stderr, "Reply: \"%.*s\"\n", resultsize, str);
+
+	// Extract first line
+	eol = strchr(str, '\r');
+	if (!eol) {
+		// should never happen
 		return FALSE;
 	}
 
-	fprintf(stderr, "Reply: \"%.*s\"\n", status, str);
+	*eol = '\0';
 
 	// TODO read until "\r\n\r\n"
-	if (strstr(str, "200") == NULL) {
+	if (strstr(str, " 200") == NULL) {
+		fprintf(stderr, "HTTP proxy says, \"%s\"\n", str);
 		return FALSE;
 	}
 	
