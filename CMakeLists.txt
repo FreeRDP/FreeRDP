@@ -504,6 +504,10 @@ if(ANDROID)
 	endif()
 endif()
 
+if(WITH_HTTP_PROXY)
+	add_definitions(-DWITH_HTTP_PROXY)
+endif()
+
 # Unit Tests
 
 include(CTest)

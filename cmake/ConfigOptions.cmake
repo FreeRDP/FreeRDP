@@ -68,6 +68,8 @@ option(STATIC_CHANNELS "Build channels statically" ON)
 
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
+option(WITH_HTTP_PROXY "Build HTTP proxy support" OFF)
+
 if(WITH_CLIENT AND WITH_CHANNELS)
 	option(WITH_CLIENT_CHANNELS "Build virtual channel plugins" ON)
 endif()

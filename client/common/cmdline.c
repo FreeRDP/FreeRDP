@@ -72,6 +72,9 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
+#ifdef WITH_HTTP_PROXY
+	{ "http-proxy", COMMAND_LINE_VALUE_REQUIRED, "<host>:<port>", NULL, NULL, -1, NULL, "HTTP Proxy" },
+#endif
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info string>", NULL, NULL, -1, NULL, "Load balance info" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "<executable path> or <||alias>", NULL, NULL, -1, NULL, "Remote application program" },
 	{ "app-name", COMMAND_LINE_VALUE_REQUIRED, "<app name>", NULL, NULL, -1, NULL, "Remote application name for user interface" },
@@ -1349,6 +1352,32 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			settings->GatewayUseSameCredentials = TRUE;
 			settings->GatewayEnabled = TRUE;
 		}
+#ifdef WITH_HTTP_PROXY
+		CommandLineSwitchCase(arg, "http-proxy")
+		{
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				/* TODO: parse "http://" URL? */
+				p = strchr(arg->Value, ':');
+
+				if (p)
+				{
+					length = (int) (p - arg->Value);
+					settings->HTTPProxyPort = atoi(&p[1]);
+					settings->HTTPProxyHostname = (char*) malloc(length + 1);
+					strncpy(settings->HTTPProxyHostname, arg->Value, length);
+					settings->HTTPProxyHostname[length] = '\0';
+
+					settings->HTTPProxyEnabled = TRUE;
+				}
+				else
+				{
+					/* TODO parse encironment variable here? */
+					fprintf(stderr, "Option http-proxy needs argument. Ignored.\n");
+				}
+			}
+		}
+#endif
 		CommandLineSwitchCase(arg, "gu")
 		{
 			char* user;

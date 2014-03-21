@@ -481,6 +481,9 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->GatewayUsername = _strdup(settings->GatewayUsername); /* 1987 */
 		_settings->GatewayPassword = _strdup(settings->GatewayPassword); /* 1988 */
 		_settings->GatewayDomain = _strdup(settings->GatewayDomain); /* 1989 */
+#ifdef WITH_HTTP_PROXY
+		_settings->HTTPProxyHostname = settings->HTTPProxyHostname; /* 199x */
+#endif
 		_settings->RemoteApplicationName = _strdup(settings->RemoteApplicationName); /* 2113 */
 		_settings->RemoteApplicationIcon = _strdup(settings->RemoteApplicationIcon); /* 2114 */
 		_settings->RemoteApplicationProgram = _strdup(settings->RemoteApplicationProgram); /* 2115 */
@@ -534,6 +537,9 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->GatewayUsageMethod = settings->GatewayUsageMethod; /* 1984 */
 		_settings->GatewayPort = settings->GatewayPort; /* 1985 */
 		_settings->GatewayCredentialsSource = settings->GatewayCredentialsSource; /* 1990 */
+#ifdef WITH_HTTP_PROXY
+		_settings->HTTPProxyPort = settings->HTTPProxyPort; /* 199x */
+#endif
 		_settings->RemoteApplicationExpandCmdLine = settings->RemoteApplicationExpandCmdLine; /* 2119 */
 		_settings->RemoteApplicationExpandWorkingDir = settings->RemoteApplicationExpandWorkingDir; /* 2120 */
 		_settings->RemoteAppNumIconCaches = settings->RemoteAppNumIconCaches; /* 2122 */
@@ -651,6 +657,9 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->PlayRemoteFx = settings->PlayRemoteFx; /* 1857 */
 		_settings->GatewayUseSameCredentials = settings->GatewayUseSameCredentials; /* 1991 */
 		_settings->GatewayEnabled = settings->GatewayEnabled; /* 1992 */
+#ifdef WITH_HTTP_PROXY
+		_settings->HTTPProxyEnabled = settings->HTTPProxyEnabled; /* 1995 */
+#endif
 		_settings->RemoteApplicationMode = settings->RemoteApplicationMode; /* 2112 */
 		_settings->DisableRemoteAppCapsCheck = settings->DisableRemoteAppCapsCheck; /* 2121 */
 		_settings->RemoteAppLanguageBarSupported = settings->RemoteAppLanguageBarSupported; /* 2124 */
