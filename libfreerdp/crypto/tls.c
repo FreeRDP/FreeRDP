@@ -699,7 +699,7 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int po
 
 			if (status < 0)
 			{
-				freerdp_set_last_error(instance->context, FREERDP_ERROR_CANCELLED);
+				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 			}
 		}
 		
@@ -797,7 +797,7 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int po
 
 				if (!accept_certificate)
 				{
-					freerdp_set_last_error(((freerdp*) tls->settings->instance)->context, FREERDP_ERROR_CANCELLED);
+					freerdp_set_last_error(((freerdp*) tls->settings->instance)->context, FREERDP_ERROR_CONNECT_CANCELLED);
 				}
 			}
 
@@ -824,7 +824,7 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int po
 
 				if (!accept_certificate)
 				{
-					freerdp_set_last_error(((freerdp*) tls->settings->instance)->context, FREERDP_ERROR_CANCELLED);
+					freerdp_set_last_error(((freerdp*) tls->settings->instance)->context, FREERDP_ERROR_CONNECT_CANCELLED);
 				}
 			}
 

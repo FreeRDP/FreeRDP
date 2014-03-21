@@ -200,12 +200,12 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (!freerdp_get_last_error(rdp->context))
 	{
-		freerdp_set_last_error(instance->context, FREERDP_ERROR_UNDEFINED_CONNECT_ERROR);
+		freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_UNDEFINED);
 	}
 
 	if (!freerdp_get_last_error(rdp->context))
 	{
-		freerdp_set_last_error(instance->context, FREERDP_ERROR_UNDEFINED_CONNECT_ERROR);
+		freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_UNDEFINED);
 	}
 
 	SetEvent(rdp->transport->connectedEvent);

@@ -235,6 +235,8 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 
 	if (rdp->errorInfo != ERRINFO_SUCCESS)
 	{
+		rdp->context->LastError = MAKE_FREERDP_ERROR(ERRINFO, errorInfo);
+
 		ErrorInfoEventArgs e;
 		rdpContext* context = rdp->instance->context;
 
@@ -243,6 +245,10 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 		EventArgsInit(&e, "freerdp");
 		e.code = rdp->errorInfo;
 		PubSub_OnErrorInfo(context->pubSub, context, &e);
+	}
+	else
+	{
+		rdp->context->LastError = FREERDP_ERROR_SUCCESS;
 	}
 
 	return TRUE;
