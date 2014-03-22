@@ -494,64 +494,61 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		if (!transport->settings->HTTPProxyEnabled)
 			transport_http_proxy_read_environment(settings, "HTTPS_PROXY");
 	}
+#endif
 
-	if (transport->settings->HTTPProxyEnabled)
+	if (transport->settings->GatewayEnabled)
 	{
-		status = tcp_connect(transport->TcpIn, settings->HTTPProxyHostname, settings->HTTPProxyPort);
+		transport->TcpOut = tcp_new(settings);
 
-		if (status) {
-			if (settings->GatewayEnabled) {
-				transport->layer = TRANSPORT_LAYER_HTTP_PROXY_IN;
-				status = transport_http_proxy_connect(transport, settings->GatewayHostname, settings->GatewayPort);
+#ifdef WITH_HTTP_PROXY
+		if (settings->HTTPProxyEnabled) {
+			status = tcp_connect(transport->TcpIn, settings->HTTPProxyHostname, settings->HTTPProxyPort);
 
-				if (status) {
-					/* Connect second channel */
-					transport->TcpOut = tcp_new(settings);
-					status = tcp_connect(transport->TcpOut, settings->HTTPProxyHostname, settings->HTTPProxyPort);
-				}
+			transport->layer = TRANSPORT_LAYER_HTTP_PROXY_IN;
+			status = transport_http_proxy_connect(transport, settings->GatewayHostname, settings->GatewayPort);
+		}
+		else
+#endif
+		status = tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort);
+
+		if (status)
+		{
+#ifdef WITH_HTTP_PROXY
+			/* Connect second channel */
+			if (settings->HTTPProxyEnabled)
+			{
+				transport->TcpOut = tcp_new(settings);
+				status = tcp_connect(transport->TcpOut, settings->HTTPProxyHostname, settings->HTTPProxyPort);
 
 				if (status) {
 					transport->layer = TRANSPORT_LAYER_HTTP_PROXY_OUT;
 					status = transport_http_proxy_connect(transport, settings->GatewayHostname, settings->GatewayPort);
 				}
-
-				if (status) {
-					transport->layer = TRANSPORT_LAYER_TSG;
-					transport->SplitInputOutput = TRUE;
-					status = transport_tsg_connect(transport, hostname, port);
-				}
 			}
-			else {
-				transport->layer = TRANSPORT_LAYER_TCP;
-				transport->SplitInputOutput = FALSE;
-				transport->TcpOut = transport->TcpIn;
-
-				status = tcp_connect(transport->TcpIn, settings->HTTPProxyHostname, settings->HTTPProxyPort);
-
-				if (status) {
-					status = transport_http_proxy_connect(transport, hostname, port);
-				}
-
-			}
-		}
-	}
-	else
+			else
 #endif
-	if (transport->settings->GatewayEnabled)
-	{
-		transport->layer = TRANSPORT_LAYER_TSG;
-		transport->TcpOut = tcp_new(settings);
-
-		status = tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort);
-
-		if (status)
 			status = tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort);
+		}
 
 		if (status)
 			status = transport_tsg_connect(transport, hostname, port);
+
+		transport->layer = TRANSPORT_LAYER_TSG;
 	}
 	else
 	{
+#ifdef WITH_HTTP_PROXY
+		if (settings->HTTPProxyEnabled) {
+			status = tcp_connect(transport->TcpIn, settings->HTTPProxyHostname, settings->HTTPProxyPort);
+			transport->layer = TRANSPORT_LAYER_HTTP_PROXY_IN;
+
+			if (status) {
+				status = transport_http_proxy_connect(transport, hostname, port);
+				transport->layer = TRANSPORT_LAYER_TCP;
+			}
+		}
+		else
+#endif
 		status = tcp_connect(transport->TcpIn, hostname, port);
 
 		transport->SplitInputOutput = FALSE;
