@@ -262,7 +262,11 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 
 #ifdef WITH_HTTP_PROXY
 	printf("For Gateways, the https_proxy environment variable is respected:\n");
+#ifdef _WIN32
+	printf("    set HTTPS_PROXY=http://proxy.contoso.com:3128/\n");
+#else
 	printf("    export https_proxy=http://proxy.contoso.com:3128/\n");
+#endif
 	printf("    xfreerdp /g:rdp.contoso.com ...\n");
 	printf("\n");
 #endif
@@ -1364,7 +1368,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
-				/* TODO: parse "http://" URL? */
 				p = strchr(arg->Value, ':');
 
 				if (p)
