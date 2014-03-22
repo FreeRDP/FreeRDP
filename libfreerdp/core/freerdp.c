@@ -189,23 +189,12 @@ BOOL freerdp_connect(freerdp* instance)
 	if (rdp->errorInfo == ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES)
 	{
 		connectErrorCode = INSUFFICIENTPRIVILEGESERROR;
-
 		freerdp_set_last_error(instance->context, FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
 	}
 
 	if (!connectErrorCode)
 	{
 		connectErrorCode = UNDEFINEDCONNECTERROR;
-	}
-
-	if (!freerdp_get_last_error(rdp->context))
-	{
-		freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_UNDEFINED);
-	}
-
-	if (!freerdp_get_last_error(rdp->context))
-	{
-		freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_UNDEFINED);
 	}
 
 	SetEvent(rdp->transport->connectedEvent);
@@ -489,6 +478,19 @@ UINT32 freerdp_error_info(freerdp* instance)
 	return instance->context->rdp->errorInfo;
 }
 
+UINT32 freerdp_get_last_error(rdpContext* context)
+{
+	return context->LastError;
+}
+
+void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
+{
+	if (lastError)
+		fprintf(stderr, "freerdp_set_last_error 0x%04X\n", lastError);
+
+	context->LastError = lastError;
+}
+
 /** Allocator function for the rdp_freerdp structure.
  *  @return an allocated structure filled with 0s. Need to be deallocated using freerdp_free()
  */
@@ -519,15 +521,4 @@ void freerdp_free(freerdp* instance)
 	{
 		free(instance);
 	}
-}
-
-FREERDP_API UINT32 freerdp_get_last_error(rdpContext* context)
-{
-	return context->LastError;
-}
-
-FREERDP_API void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
-{
-	fprintf(stderr, "freerdp_set_last_error 0x%x\n", lastError);
-	context->LastError = lastError;
 }
