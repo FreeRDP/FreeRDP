@@ -129,6 +129,7 @@ struct xf_context
 	BOOL KeyboardState[256];
 	XModifierKeymap* modifierMap;
 	wArrayList* keyCombinations;
+	wArrayList* xevents;
 	char* actionScript;
 
 	XSetWindowAttributes attribs;

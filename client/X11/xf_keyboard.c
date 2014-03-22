@@ -35,6 +35,8 @@
 
 #include <freerdp/locale/keyboard.h>
 
+#include "xf_event.h"
+
 #include "xf_keyboard.h"
 
 int xf_keyboard_action_script_init(xfContext* xfc)
@@ -80,11 +82,15 @@ int xf_keyboard_action_script_init(xfContext* xfc)
 
 	exitCode = pclose(keyScript);
 
+	xf_event_action_script_init(xfc);
+
 	return 1;
 }
 
 void xf_keyboard_action_script_free(xfContext* xfc)
 {
+	xf_event_action_script_free(xfc);
+
 	if (xfc->keyCombinations)
 	{
 		ArrayList_Free(xfc->keyCombinations);
@@ -348,7 +354,7 @@ int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* mod, Key
 	}
 
 	if (!match)
-		return 0;
+		return 1;
 
 	sprintf_s(command, sizeof(command), "%s key %s",
 			xfc->actionScript, combination);

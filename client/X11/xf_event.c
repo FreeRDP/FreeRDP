@@ -87,6 +87,96 @@ const char* const X11_EVENT_STRINGS[] =
 #define DEBUG_X11_LMS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
+int xf_event_action_script_init(xfContext* xfc)
+{
+	int exitCode;
+	char* xevent;
+	FILE* actionScript;
+	char buffer[1024] = { 0 };
+	char command[1024] = { 0 };
+
+	xfc->xevents = ArrayList_New(TRUE);
+	ArrayList_Object(xfc->xevents)->fnObjectFree = free;
+
+	sprintf_s(command, sizeof(command), "%s xevent", xfc->actionScript);
+
+	actionScript = popen(command, "r");
+
+	if (actionScript < 0)
+		return -1;
+
+	while (fgets(buffer, sizeof(buffer), actionScript) != NULL)
+	{
+		strtok(buffer, "\n");
+		xevent = _strdup(buffer);
+		ArrayList_Add(xfc->xevents, xevent);
+	}
+
+	exitCode = pclose(actionScript);
+
+	return 1;
+}
+
+void xf_event_action_script_free(xfContext* xfc)
+{
+	if (xfc->xevents)
+	{
+		ArrayList_Free(xfc->xevents);
+		xfc->xevents = NULL;
+	}
+}
+
+int xf_event_execute_action_script(xfContext* xfc, XEvent* event)
+{
+	int index;
+	int count;
+	char* name;
+	int exitCode;
+	FILE* actionScript;
+	BOOL match = FALSE;
+	const char* xeventName;
+	char buffer[1024] = { 0 };
+	char command[1024] = { 0 };
+
+	if (event->type > (sizeof(X11_EVENT_STRINGS) / sizeof(const char*)))
+		return 1;
+
+	xeventName = X11_EVENT_STRINGS[event->type];
+
+	count = ArrayList_Count(xfc->xevents);
+
+	for (index = 0; index < count; index++)
+	{
+		name = (char*) ArrayList_GetItem(xfc->xevents, index);
+
+		if (_stricmp(name, xeventName) == 0)
+		{
+			match = TRUE;
+			break;
+		}
+	}
+
+	if (!match)
+		return 1;
+
+	sprintf_s(command, sizeof(command), "%s xevent %s %d",
+			xfc->actionScript, xeventName, (int) xfc->window->handle);
+
+	actionScript = popen(command, "r");
+
+	if (actionScript < 0)
+		return -1;
+
+	while (fgets(buffer, sizeof(buffer), actionScript) != NULL)
+	{
+		strtok(buffer, "\n");
+	}
+
+	exitCode = pclose(actionScript);
+
+	return 1;
+}
+
 static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 {
 	int x, y;
@@ -934,6 +1024,8 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 				return TRUE;
 		}
 	}
+
+	xf_event_execute_action_script(xfc, event);
 
 	if (event->type != MotionNotify)
 		DEBUG_X11("%s Event(%d): wnd=0x%04X", X11_EVENT_STRINGS[event->type], event->type, (UINT32) event->xany.window);
