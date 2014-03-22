@@ -128,6 +128,9 @@ struct xf_context
 	UINT32 KeyboardLayout;
 	BOOL KeyboardState[256];
 	XModifierKeymap* modifierMap;
+	wArrayList* keyCombinations;
+	char* actionScript;
+
 	XSetWindowAttributes attribs;
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;

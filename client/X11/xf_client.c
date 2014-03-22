@@ -1161,11 +1161,7 @@ void xf_window_free(xfContext* xfc)
 {
 	rdpContext* context = (rdpContext*) xfc;
 
-	if (xfc->modifierMap)
-	{
-		XFreeModifiermap(xfc->modifierMap);
-		xfc->modifierMap = NULL;
-	}
+	xf_keyboard_free(xfc);
 
 	if (xfc->gc)
 	{

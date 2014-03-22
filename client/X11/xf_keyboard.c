@@ -26,6 +26,8 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/path.h>
+#include <winpr/collections.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -34,6 +36,67 @@
 #include <freerdp/locale/keyboard.h>
 
 #include "xf_keyboard.h"
+
+int xf_keyboard_action_script_init(xfContext* xfc)
+{
+	int exitCode;
+	FILE* keyScript;
+	char* keyCombination;
+	char buffer[1024] = { 0 };
+	char command[1024] = { 0 };
+
+	if (xfc->actionScript)
+	{
+		free(xfc->actionScript);
+		xfc->actionScript = NULL;
+	}
+
+	if (PathFileExistsA("/usr/share/freerdp/action.sh"))
+		xfc->actionScript = _strdup("/usr/share/freerdp/action.sh");
+
+	if (!xfc->actionScript)
+		return 0;
+
+	xfc->keyCombinations = ArrayList_New(TRUE);
+	ArrayList_Object(xfc->keyCombinations)->fnObjectFree = free;
+
+	sprintf_s(command, sizeof(command), "%s key", xfc->actionScript);
+
+	keyScript = popen(command, "r");
+
+	if (keyScript < 0)
+	{
+		free(xfc->actionScript);
+		xfc->actionScript = NULL;
+		return 0;
+	}
+
+	while (fgets(buffer, sizeof(buffer), keyScript) != NULL)
+	{
+		strtok(buffer, "\n");
+		keyCombination = _strdup(buffer);
+		ArrayList_Add(xfc->keyCombinations, keyCombination);
+	}
+
+	exitCode = pclose(keyScript);
+
+	return 1;
+}
+
+void xf_keyboard_action_script_free(xfContext* xfc)
+{
+	if (xfc->keyCombinations)
+	{
+		ArrayList_Free(xfc->keyCombinations);
+		xfc->keyCombinations = NULL;
+	}
+
+	if (xfc->actionScript)
+	{
+		free(xfc->actionScript);
+		xfc->actionScript = NULL;
+	}
+}
 
 void xf_keyboard_init(xfContext* xfc)
 {
@@ -47,6 +110,19 @@ void xf_keyboard_init(xfContext* xfc)
 		XFreeModifiermap(xfc->modifierMap);
 
 	xfc->modifierMap = XGetModifierMapping(xfc->display);
+
+	xf_keyboard_action_script_init(xfc);
+}
+
+void xf_keyboard_free(xfContext* xfc)
+{
+	if (xfc->modifierMap)
+	{
+		XFreeModifiermap(xfc->modifierMap);
+		xfc->modifierMap = NULL;
+	}
+
+	xf_keyboard_action_script_free(xfc);
 }
 
 void xf_keyboard_clear(xfContext* xfc)
@@ -219,30 +295,63 @@ void xf_keyboard_focus_in(xfContext* xfc)
 
 int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* mod, KeySym keysym)
 {
+	int index;
+	int count;
 	int exitCode;
 	int status = 1;
 	FILE* keyScript;
-	char buffer[1024];
-	char command[1024];
 	const char* keyStr;
+	BOOL match = FALSE;
+	char* keyCombination;
+	char buffer[1024] = { 0 };
+	char command[1024] = { 0 };
+	char combination[1024] = { 0 };
+
+	if (!xfc->actionScript)
+		return 1;
+
+	if ((keysym == XK_Shift_L) || (keysym == XK_Shift_R) ||
+		(keysym == XK_Alt_L) || (keysym == XK_Alt_R) ||
+		(keysym == XK_Control_L) || (keysym == XK_Control_R) ||
+		(keysym == XK_Super_L) || (keysym == XK_Super_R))
+	{
+		return 1;
+	}
 
 	keyStr = XKeysymToString(keysym);
 
-	sprintf_s(command, sizeof(command), "%s key ", XF_ACTION_SCRIPT);
-
 	if (mod->Shift)
-		strcat(command, "Shift+");
+		strcat(combination, "Shift+");
 
 	if (mod->Ctrl)
-		strcat(command, "Ctrl+");
+		strcat(combination, "Ctrl+");
 
 	if (mod->Alt)
-		strcat(command, "Alt+");
+		strcat(combination, "Alt+");
 
 	if (mod->Super)
-		strcat(command, "Super+");
+		strcat(combination, "Super+");
 
-	strcat(command, keyStr);
+	strcat(combination, keyStr);
+
+	count = ArrayList_Count(xfc->keyCombinations);
+
+	for (index = 0; index < count; index++)
+	{
+		keyCombination = (char*) ArrayList_GetItem(xfc->keyCombinations, index);
+
+		if (_stricmp(keyCombination, combination) == 0)
+		{
+			match = TRUE;
+			break;
+		}
+	}
+
+	if (!match)
+		return 0;
+
+	sprintf_s(command, sizeof(command), "%s key %s",
+			xfc->actionScript, combination);
 
 	keyScript = popen(command, "r");
 
