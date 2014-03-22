@@ -543,10 +543,10 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			status = tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort);
 		}
 
+		transport->layer = TRANSPORT_LAYER_TSG;
+
 		if (status)
 			status = transport_tsg_connect(transport, hostname, port);
-
-		transport->layer = TRANSPORT_LAYER_TSG;
 	}
 	else
 	{
