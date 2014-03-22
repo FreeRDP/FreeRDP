@@ -395,6 +395,10 @@ BOOL transport_http_proxy_connect(rdpTransport* transport, const char* hostname,
 	Stream_Write(s, "\r\n\r\n", 4);
 
 	status = transport_write(transport, s);
+
+	Stream_Free(s, TRUE);
+	s = NULL;
+
 	if (status < 0) {
 		fprintf(stderr, "Error writing: status=%d\n", status);
 		return status;
@@ -406,6 +410,11 @@ BOOL transport_http_proxy_connect(rdpTransport* transport, const char* hostname,
 	memset(str, '\0', sizeof(str));
 	resultsize = 0;
 	while ( strstr(str, "\r\n\r\n") == NULL ) {
+		if (resultsize >= sizeof(str)-1) {
+			fprintf(stderr, "HTTP Reply headers too long.\n");
+			return FALSE;
+		}
+
 		status = tcp_read(tcp, (BYTE*)str + resultsize, sizeof(str)-resultsize-1);
 		if (status < 0) {
 			/* Error? */
@@ -430,9 +439,13 @@ BOOL transport_http_proxy_connect(rdpTransport* transport, const char* hostname,
 
 	fprintf(stderr, "HTTP proxy: %s\n", str);
 
-	if (resultsize < 12 || strncmp(&str[9], "200", 3)) {
+	if (strlen(str) < 12) {
 		return FALSE;
 	}
+
+	str[7] = 'X';
+	if (strncmp(str, "HTTP/1.X 200", 12))
+		return FALSE;
 	
 	return TRUE;
 }
