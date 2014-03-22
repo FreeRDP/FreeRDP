@@ -260,6 +260,13 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
 	printf("\n");
 
+#ifdef WITH_HTTP_PROXY
+	printf("For Gateways, the https_proxy environment variable is respected:\n");
+	printf("    export https_proxy=http://proxy.contoso.com:3128/\n");
+	printf("    xfreerdp /g:rdp.contoso.com ...\n");
+	printf("\n");
+#endif
+
 	printf("More documentation is coming, in the meantime consult source files\n");
 	printf("\n");
 
