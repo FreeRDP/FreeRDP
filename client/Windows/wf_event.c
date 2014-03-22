@@ -98,6 +98,8 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					}
 				}
 
+				/* NumLock    : RDP_SCANCODE_NUMLOCK_EXTENDED
+				 * Pause/Break: RDP_SCANCODE_NUMLOCK */
 				if (rdp_scancode == RDP_SCANCODE_NUMLOCK_EXTENDED)
 				{
 					/* Windows sends NumLock as extended - rdp doesn't */
@@ -113,8 +115,8 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 						DEBUG_KBD("Pause, sent as Ctrl+NumLock");
 						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_LCONTROL);
 						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_NUMLOCK);
-						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_LCONTROL);
 						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_LCONTROL);
 					}
 					else
 					{
