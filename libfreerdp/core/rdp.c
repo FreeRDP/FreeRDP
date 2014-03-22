@@ -238,11 +238,16 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 		ErrorInfoEventArgs e;
 		rdpContext* context = rdp->instance->context;
 
+		rdp->context->LastError = MAKE_FREERDP_ERROR(ERRINFO, errorInfo);
 		rdp_print_errinfo(rdp->errorInfo);
 
 		EventArgsInit(&e, "freerdp");
 		e.code = rdp->errorInfo;
 		PubSub_OnErrorInfo(context->pubSub, context, &e);
+	}
+	else
+	{
+		rdp->context->LastError = FREERDP_ERROR_SUCCESS;
 	}
 
 	return TRUE;
@@ -1050,7 +1055,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			Stream_SetPosition(s, nextPosition);
 		}
 	}
-	else if (channelId == rdp->mcs->messageChannelId)
+	else if (rdp->mcs->messageChannelId && channelId == rdp->mcs->messageChannelId)
 	{
 		return rdp_recv_message_channel_pdu(rdp, s);
 	}

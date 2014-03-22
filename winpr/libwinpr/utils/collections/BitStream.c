@@ -183,6 +183,23 @@ void BitDump(const BYTE* buffer, UINT32 length, UINT32 flags)
 	printf("\n");
 }
 
+UINT32 ReverseBits32(UINT32 bits, UINT32 nbits)
+{
+	UINT32 rbits = 0;
+
+	do
+	{
+		rbits = (rbits | (bits & 1)) << 1;
+		bits >>= 1;
+		nbits--;
+	}
+	while (nbits > 0);
+
+	rbits >>= 1;
+
+	return rbits;
+}
+
 #if 0
 
 /**

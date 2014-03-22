@@ -115,9 +115,7 @@ static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)
 	status = snd_pcm_hw_params_set_buffer_size_near(alsa->pcm_handle, hw_params, &alsa->buffer_size);
 	SND_PCM_CHECK("snd_pcm_hw_params_set_buffer_size_near", status);
 
-	/* Get period size */
-	status = snd_pcm_hw_params_get_period_size_min(hw_params, &alsa->period_size, NULL);
-	SND_PCM_CHECK("snd_pcm_hw_params_get_period_size_min", status);
+	alsa->period_size = alsa->buffer_size / 2;
 
 	/* Set period size */
 	status = snd_pcm_hw_params_set_period_size_near(alsa->pcm_handle, hw_params, &alsa->period_size, NULL);
@@ -191,12 +189,12 @@ static int rdpsnd_alsa_set_params(rdpsndAlsaPlugin* alsa)
 	 * It is also possible for the buffer size to not be an integer multiple of the period size.
 	 */
 
+	int interrupts_per_sec_near = 20;
+	int bytes_per_sec = alsa->actual_rate * alsa->bytes_per_channel * alsa->actual_channels;
+
 	snd_pcm_drop(alsa->pcm_handle);
 
-	if (alsa->latency < 0)
-		alsa->latency = 400;
-
-	alsa->buffer_size = alsa->latency * (alsa->actual_rate / 1000);
+	alsa->buffer_size =  bytes_per_sec / (interrupts_per_sec_near / 2);
 
 	if (rdpsnd_alsa_set_hw_params(alsa) < 0)
 		return -1;
@@ -225,11 +223,6 @@ static void rdpsnd_alsa_set_format(rdpsndDevicePlugin* device, AUDIO_FORMAT* for
 			case WAVE_FORMAT_PCM:
 				switch (format->wBitsPerSample)
 				{
-					case 4:
-						alsa->format = SND_PCM_FORMAT_S16_LE;
-						alsa->bytes_per_channel = 2;
-						break;
-
 					case 8:
 						alsa->format = SND_PCM_FORMAT_S8;
 						alsa->bytes_per_channel = 1;

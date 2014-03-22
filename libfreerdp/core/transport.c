@@ -71,25 +71,8 @@ void transport_attach(rdpTransport* transport, int sockfd)
 	transport->TcpOut = transport->TcpIn;
 }
 
-BOOL transport_disconnect(rdpTransport* transport)
+void transport_stop(rdpTransport* transport)
 {
-	BOOL status = TRUE;
-
-	if (!transport)
-		return FALSE;
-
-	if (transport->layer == TRANSPORT_LAYER_TLS)
-		status &= tls_disconnect(transport->TlsIn);
-
-	if ((transport->layer == TRANSPORT_LAYER_TSG) || (transport->layer == TRANSPORT_LAYER_TSG_TLS))
-	{
-		status &= tsg_disconnect(transport->tsg);
-	}
-	else
-	{
-		status &= tcp_disconnect(transport->TcpIn);
-	}
-
 	if (transport->async)
 	{
 		if (transport->stopEvent)
@@ -103,6 +86,28 @@ BOOL transport_disconnect(rdpTransport* transport)
 			transport->thread = NULL;
 			transport->stopEvent = NULL;
 		}
+	}
+}
+
+BOOL transport_disconnect(rdpTransport* transport)
+{
+	BOOL status = TRUE;
+
+	if (!transport)
+		return FALSE;
+
+	transport_stop(transport);
+
+	if (transport->layer == TRANSPORT_LAYER_TLS)
+		status &= tls_disconnect(transport->TlsIn);
+
+	if ((transport->layer == TRANSPORT_LAYER_TSG) || (transport->layer == TRANSPORT_LAYER_TSG_TLS))
+	{
+		status &= tsg_disconnect(transport->tsg);
+	}
+	else
+	{
+		status &= tcp_disconnect(transport->TcpIn);
 	}
 
 	return status;
@@ -239,6 +244,11 @@ BOOL transport_connect_tls(rdpTransport* transport)
 			if (!connectErrorCode)
 				connectErrorCode = TLSCONNECTERROR;
 
+			if (!freerdp_get_last_error(((freerdp*)(transport->settings->instance))->context))
+			{
+				freerdp_set_last_error(((freerdp*)(transport->settings->instance))->context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+			}
+
 			tls_free(transport->TsgTls);
 			transport->TsgTls = NULL;
 
@@ -267,6 +277,11 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	{
 		if (!connectErrorCode)
 			connectErrorCode = TLSCONNECTERROR;
+
+		if (!freerdp_get_last_error(((freerdp*)(transport->settings->instance))->context))
+		{
+			freerdp_set_last_error(((freerdp*)(transport->settings->instance))->context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
 
 		tls_free(transport->TlsIn);
 
@@ -312,6 +327,11 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	{
 		if (!connectErrorCode)
 			connectErrorCode = AUTHENTICATIONERROR;
+
+		if (!freerdp_get_last_error(instance->context))
+		{
+			freerdp_set_last_error(instance->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+		}
 
 		fprintf(stderr, "Authentication failure, check credentials.\n"
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
@@ -874,7 +894,7 @@ int transport_check_fds(rdpTransport* transport)
 	{
 		status = transport_read_nonblocking(transport);
 
-		if (status <= 0)
+		if (status < 0 || Stream_GetPosition(transport->ReceiveBuffer) == 0)
 			return status;
 
 		while ((pos = Stream_GetPosition(transport->ReceiveBuffer)) > 0)
@@ -1055,7 +1075,7 @@ static void* transport_client_thread(void* arg)
 
 		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
 
-		status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 		if (transport->layer == TRANSPORT_LAYER_CLOSED)
 		{
 			rdpRdp* rdp = (rdpRdp*) transport->rdp;
@@ -1121,20 +1141,7 @@ void transport_free(rdpTransport* transport)
 {
 	if (transport)
 	{
-		if (transport->async)
-		{
-			if (transport->stopEvent)
-			{
-				SetEvent(transport->stopEvent);
-				WaitForSingleObject(transport->thread, INFINITE);
-
-				CloseHandle(transport->thread);
-				CloseHandle(transport->stopEvent);
-
-				transport->thread = NULL;
-				transport->stopEvent = NULL;
-			}
-		}
+		transport_stop(transport);
 
 		if (transport->ReceiveBuffer)
 			Stream_Release(transport->ReceiveBuffer);

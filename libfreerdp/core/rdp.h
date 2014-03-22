@@ -48,8 +48,6 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/debug.h>
-#include <freerdp/codec/mppc_dec.h>
-#include <freerdp/codec/mppc_enc.h>
 
 #include <winpr/stream.h>
 
