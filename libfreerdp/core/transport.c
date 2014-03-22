@@ -328,8 +328,45 @@ BOOL transport_connect_nla(rdpTransport* transport)
 }
 
 #ifdef WITH_HTTP_PROXY
-/* TODO move into core/tcp.c? */
 
+/* For GetEnvironmentVariableA */
+#include "winpr/environment.h"
+
+/* TODO move into core/tcp.c? */
+void transport_http_proxy_read_environment(rdpSettings *settings, char *envname)
+{
+	char env[256];
+	DWORD envlen;
+	char *hostname, *pport;
+
+	envlen = GetEnvironmentVariableA(envname, env, sizeof(env));
+	if(!envlen)
+		return;
+
+	if (strncmp(env, "http://", 7)) {
+		fprintf(stderr, "Proxy url must have scheme http. Ignoring.\n");
+		return;
+	}
+
+	settings->HTTPProxyEnabled = TRUE;
+
+	hostname = env + 7;
+	pport = strchr(hostname, ':');
+	if (pport) {
+		*pport = '\0';
+		settings->HTTPProxyPort = atoi(pport+1);
+	}
+	else {
+		/* The default is 80. Also for Proxys. */
+		settings->HTTPProxyPort = 80;
+
+		pport = strchr(hostname, '/');
+		if(pport)
+			*pport = '\0';
+	}
+
+	freerdp_set_param_string(settings, FreeRDP_HTTPProxyHostname, hostname);
+}
 
 BOOL transport_http_proxy_connect(rdpTransport* transport, const char* hostname, UINT16 port)
 {
@@ -357,49 +394,43 @@ BOOL transport_http_proxy_connect(rdpTransport* transport, const char* hostname,
 	Stream_Write(s, str, strlen(str));
 	Stream_Write(s, "\r\n\r\n", 4);
 
-	// Send Host: header? (RFC2817)
-
-	//fprintf(stderr, "Sending CONNECT %.*s:%.*s\n", strlen(hostname), hostname, strlen(str), str);
-	//fprintf(stderr, "Sending \"%.*s\"...\n", (int)Stream_GetPosition(s), Stream_Buffer(s));
-
 	status = transport_write(transport, s);
 	if (status < 0) {
 		fprintf(stderr, "Error writing: status=%d\n", status);
 		return status;
 	}
 
-	// Read result until \r\n\r\n
-	// Keep str a null-terminated string.
+	/* Read result until CR-LF-CR-LF.
+	 * Keep str a null-terminated string. */
+
 	memset(str, '\0', sizeof(str));
 	resultsize = 0;
 	while ( strstr(str, "\r\n\r\n") == NULL ) {
 		status = tcp_read(tcp, (BYTE*)str + resultsize, sizeof(str)-resultsize-1);
 		if (status < 0) {
-			// Error?
+			/* Error? */
 			return FALSE;
 		}
 		else if (status == 0) {
-			// Error?
+			/* Error? */
 			fprintf(stderr, "tcp_read() returned zero\n");
 			return FALSE;
 		}
 		resultsize += status;
 	}
 
-	fprintf(stderr, "Reply: \"%.*s\"\n", resultsize, str);
-
-	// Extract first line
+	/* Extract HTTP status line */
 	eol = strchr(str, '\r');
 	if (!eol) {
-		// should never happen
+		/* should never happen */
 		return FALSE;
 	}
 
 	*eol = '\0';
 
-	// TODO read until "\r\n\r\n"
-	if (strstr(str, " 200") == NULL) {
-		fprintf(stderr, "HTTP proxy says, \"%s\"\n", str);
+	fprintf(stderr, "HTTP proxy: %s\n", str);
+
+	if (resultsize < 12 || strncmp(&str[9], "200", 3)) {
 		return FALSE;
 	}
 	
@@ -455,17 +486,26 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	transport->async = settings->AsyncTransport;
 
 #ifdef WITH_HTTP_PROXY
+	/* For TSGateway, find the system HTTPS proxy automatically */
+	if (settings->GatewayEnabled) {
+		if (!transport->settings->HTTPProxyEnabled)
+			transport_http_proxy_read_environment(settings, "https_proxy");
+
+		if (!transport->settings->HTTPProxyEnabled)
+			transport_http_proxy_read_environment(settings, "HTTPS_PROXY");
+	}
+
 	if (transport->settings->HTTPProxyEnabled)
 	{
 		status = tcp_connect(transport->TcpIn, settings->HTTPProxyHostname, settings->HTTPProxyPort);
 
 		if (status) {
-			if (transport->settings->GatewayEnabled) {
+			if (settings->GatewayEnabled) {
 				transport->layer = TRANSPORT_LAYER_HTTP_PROXY_IN;
 				status = transport_http_proxy_connect(transport, settings->GatewayHostname, settings->GatewayPort);
 
 				if (status) {
-					// Connect second channel
+					/* Connect second channel */
 					transport->TcpOut = tcp_new(settings);
 					status = tcp_connect(transport->TcpOut, settings->HTTPProxyHostname, settings->HTTPProxyPort);
 				}
@@ -497,7 +537,6 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	}
 	else
 #endif
-
 	if (transport->settings->GatewayEnabled)
 	{
 		transport->layer = TRANSPORT_LAYER_TSG;
