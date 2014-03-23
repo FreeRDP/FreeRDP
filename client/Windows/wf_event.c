@@ -552,6 +552,22 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			if (alt_ctrl_down())
 				g_flipping_in = TRUE;
 			g_focus_hWnd = hWnd;
+
+			{
+				INPUT inmsg;
+
+				inmsg.type = INPUT_KEYBOARD;
+				inmsg.ki.wScan = 0;
+				inmsg.ki.wVk = 0xff;
+				SendInput(1, &inmsg, sizeof(INPUT));
+
+				inmsg.type = INPUT_KEYBOARD;
+				inmsg.ki.wScan = 0;
+				inmsg.ki.wVk = 0xff;
+				inmsg.ki.dwFlags = KEYEVENTF_KEYUP;
+				SendInput(1, &inmsg, sizeof(INPUT));
+
+			}
 			break;
 
 		case WM_KILLFOCUS:
