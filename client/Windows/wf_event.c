@@ -52,6 +52,7 @@ static BOOL alt_ctrl_down()
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
+	static UINT32 last_key_flag = 0xffff;
 	wfContext* wfc;
 	DWORD rdp_scancode;
 	rdpInput* input;
@@ -78,7 +79,7 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				p = (PKBDLLHOOKSTRUCT) lParam;
 
 				if (!wfc || !p)
-					return 1;
+					break;
 				
 				input = wfc->instance->input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE) p->scanCode, p->flags & LLKHF_EXTENDED);
@@ -98,6 +99,8 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					}
 				}
 
+				/* NumLock    : RDP_SCANCODE_NUMLOCK_EXTENDED
+				 * Pause/Break: RDP_SCANCODE_NUMLOCK */
 				if (rdp_scancode == RDP_SCANCODE_NUMLOCK_EXTENDED)
 				{
 					/* Windows sends NumLock as extended - rdp doesn't */
@@ -113,15 +116,15 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 						DEBUG_KBD("Pause, sent as Ctrl+NumLock");
 						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_LCONTROL);
 						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_NUMLOCK);
-						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_LCONTROL);
 						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_LCONTROL);
 					}
 					else
 					{
 						DEBUG_KBD("Pause up");
 					}
 
-					return 1;
+					break;
 				}
 				else if (rdp_scancode == RDP_SCANCODE_RSHIFT_EXTENDED)
 				{
@@ -131,10 +134,26 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				freerdp_input_send_keyboard_event_ex(input, !(p->flags & LLKHF_UP), rdp_scancode);
 
-				if (p->vkCode == VK_CAPITAL)
-					DEBUG_KBD("caps lock is processed on client side too to toggle caps lock indicator");
-				else
-					return 1;
+				if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP)
+				{
+					UINT32 key_flag = 0;
+					SHORT key_state;
+
+					key_state = GetKeyState(VK_SCROLL);
+					key_flag |= (key_state & 0x01) ? KBD_SYNC_SCROLL_LOCK : 0;
+					key_state = GetKeyState(VK_NUMLOCK);
+					key_flag |= (key_state & 0x01) ? KBD_SYNC_NUM_LOCK : 0;
+					key_state = GetKeyState(VK_CAPITAL);
+					key_flag |= (key_state & 0x01) ? KBD_SYNC_CAPS_LOCK : 0;
+					key_state = GetKeyState(VK_KANA);
+					key_flag |= (key_state & 0x01) ? KBD_SYNC_KANA_LOCK : 0;
+
+					if (last_key_flag != key_flag)
+					{
+						last_key_flag = key_flag;
+						freerdp_input_send_synchronize_event(input, key_flag);
+					}
+				}
 
 				break;
 		}
@@ -533,6 +552,22 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			if (alt_ctrl_down())
 				g_flipping_in = TRUE;
 			g_focus_hWnd = hWnd;
+
+			{
+				INPUT inmsg;
+
+				inmsg.type = INPUT_KEYBOARD;
+				inmsg.ki.wScan = 0;
+				inmsg.ki.wVk = 0xff;
+				SendInput(1, &inmsg, sizeof(INPUT));
+
+				inmsg.type = INPUT_KEYBOARD;
+				inmsg.ki.wScan = 0;
+				inmsg.ki.wVk = 0xff;
+				inmsg.ki.dwFlags = KEYEVENTF_KEYUP;
+				SendInput(1, &inmsg, sizeof(INPUT));
+
+			}
 			break;
 
 		case WM_KILLFOCUS:
