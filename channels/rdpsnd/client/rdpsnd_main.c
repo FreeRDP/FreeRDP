@@ -1091,8 +1091,6 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 		rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");
 		
-		WLog_SetLogLevel(rdpsnd->log, WLOG_TRACE);
-
 		rdpsnd->channelEntryPoints.pVirtualChannelInit(&rdpsnd->InitHandle,
 			&rdpsnd->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpsnd_virtual_channel_init_event);
 

@@ -65,6 +65,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
+	freerdp_set_last_error(instance->context, FREERDP_ERROR_SUCCESS);
 
 	rdp = instance->context->rdp;
 	settings = instance->settings;
@@ -87,6 +88,12 @@ BOOL freerdp_connect(freerdp* instance)
 		{
 			connectErrorCode = PREECONNECTERROR;
 		}
+
+		if (!freerdp_get_last_error(rdp->context))
+		{
+			freerdp_set_last_error(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
+		}
+
 		fprintf(stderr, "%s:%d: freerdp_pre_connect failed\n", __FILE__, __LINE__);
 
 		goto freerdp_connect_finally;
@@ -122,6 +129,11 @@ BOOL freerdp_connect(freerdp* instance)
 			if (!connectErrorCode)
 			{
 				connectErrorCode = POSTCONNECTERROR;
+			}
+
+			if (!freerdp_get_last_error(rdp->context))
+			{
+				freerdp_set_last_error(instance->context, FREERDP_ERROR_POST_CONNECT_FAILED);
 			}
 
 			goto freerdp_connect_finally;
@@ -177,6 +189,7 @@ BOOL freerdp_connect(freerdp* instance)
 	if (rdp->errorInfo == ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES)
 	{
 		connectErrorCode = INSUFFICIENTPRIVILEGESERROR;
+		freerdp_set_last_error(instance->context, FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
 	}
 
 	if (!connectErrorCode)
@@ -463,6 +476,19 @@ void freerdp_context_free(freerdp* instance)
 UINT32 freerdp_error_info(freerdp* instance)
 {
 	return instance->context->rdp->errorInfo;
+}
+
+UINT32 freerdp_get_last_error(rdpContext* context)
+{
+	return context->LastError;
+}
+
+void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
+{
+	if (lastError)
+		fprintf(stderr, "freerdp_set_last_error 0x%04X\n", lastError);
+
+	context->LastError = lastError;
 }
 
 /** Allocator function for the rdp_freerdp structure.
