@@ -138,6 +138,9 @@ int xf_event_execute_action_script(xfContext* xfc, XEvent* event)
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
 
+	if (!xfc->actionScript)
+		return 1;
+
 	if (event->type > (sizeof(X11_EVENT_STRINGS) / sizeof(const char*)))
 		return 1;
 
