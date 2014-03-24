@@ -394,7 +394,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 	transport->async = settings->AsyncTransport;
 
-	if (transport->settings->GatewayEnabled)
+	if (transport->GatewayEnabled)
 	{
 		transport->layer = TRANSPORT_LAYER_TSG;
 		transport->TcpOut = tcp_new(settings);
@@ -1032,6 +1032,11 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 	return status;
 }
 
+BOOL transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled)
+{
+	transport->GatewayEnabled = GatewayEnabled;
+}
+
 static void* transport_client_thread(void* arg)
 {
 	DWORD status;
@@ -1127,6 +1132,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->connectedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		transport->blocking = TRUE;
+		transport->GatewayEnabled = FALSE;
 
 		InitializeCriticalSectionAndSpinCount(&(transport->ReadLock), 4000);
 		InitializeCriticalSectionAndSpinCount(&(transport->WriteLock), 4000);

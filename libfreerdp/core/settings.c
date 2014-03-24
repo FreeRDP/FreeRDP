@@ -651,6 +651,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->PlayRemoteFx = settings->PlayRemoteFx; /* 1857 */
 		_settings->GatewayUseSameCredentials = settings->GatewayUseSameCredentials; /* 1991 */
 		_settings->GatewayEnabled = settings->GatewayEnabled; /* 1992 */
+		_settings->GatewayBypassLocal = settings->GatewayBypassLocal; /* 1993 */
 		_settings->RemoteApplicationMode = settings->RemoteApplicationMode; /* 2112 */
 		_settings->DisableRemoteAppCapsCheck = settings->DisableRemoteAppCapsCheck; /* 2121 */
 		_settings->RemoteAppLanguageBarSupported = settings->RemoteAppLanguageBarSupported; /* 2124 */

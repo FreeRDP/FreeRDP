@@ -90,7 +90,7 @@ int freerdp_tcp_connect(const char* hostname, int port)
 
 	if (status != 0)
 	{
-		fprintf(stderr, "tcp_connect: getaddrinfo (%s)\n", gai_strerror(status));
+		//fprintf(stderr, "tcp_connect: getaddrinfo (%s)\n", gai_strerror(status));
 		return -1;
 	}
 

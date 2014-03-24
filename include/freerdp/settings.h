@@ -669,6 +669,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_GatewayCredentialsSource			1990
 #define FreeRDP_GatewayUseSameCredentials			1991
 #define FreeRDP_GatewayEnabled					1992
+#define FreeRDP_GatewayBypassLocal				1993
 #define FreeRDP_RemoteApplicationMode				2112
 #define FreeRDP_RemoteApplicationName				2113
 #define FreeRDP_RemoteApplicationIcon				2114
@@ -1073,7 +1074,8 @@ struct rdp_settings
 	ALIGN64 UINT32 GatewayCredentialsSource; /* 1990 */
 	ALIGN64 BOOL GatewayUseSameCredentials; /* 1991 */
 	ALIGN64 BOOL GatewayEnabled; /* 1992 */
-	UINT64 padding2048[2048 - 1993]; /* 1993 */
+	ALIGN64 BOOL GatewayBypassLocal; /* 1993 */
+	UINT64 padding2048[2048 - 1994]; /* 1994 */
 	UINT64 padding2112[2112 - 2048]; /* 2048 */
 
 	/**
