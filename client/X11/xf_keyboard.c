@@ -318,8 +318,7 @@ int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* mod, Key
 
 	if ((keysym == XK_Shift_L) || (keysym == XK_Shift_R) ||
 		(keysym == XK_Alt_L) || (keysym == XK_Alt_R) ||
-		(keysym == XK_Control_L) || (keysym == XK_Control_R) ||
-		(keysym == XK_Super_L) || (keysym == XK_Super_R))
+		(keysym == XK_Control_L) || (keysym == XK_Control_R))
 	{
 		return 1;
 	}
@@ -334,9 +333,6 @@ int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* mod, Key
 
 	if (mod->Alt)
 		strcat(combination, "Alt+");
-
-	if (mod->Super)
-		strcat(combination, "Super+");
 
 	strcat(combination, keyStr);
 
