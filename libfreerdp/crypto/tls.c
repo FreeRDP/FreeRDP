@@ -696,11 +696,6 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int po
 		if (instance->VerifyX509Certificate)
 		{
 			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, 0);
-
-			if (status < 0)
-			{
-				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
-			}
 		}
 		
 		fprintf(stderr, "VerifyX509Certificate: (length = %d) status: %d\n%s\n",
@@ -794,11 +789,6 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int po
 			if (instance->VerifyCertificate)
 			{
 				accept_certificate = instance->VerifyCertificate(instance, subject, issuer, fingerprint);
-
-				if (!accept_certificate)
-				{
-					freerdp_set_last_error(((freerdp*) tls->settings->instance)->context, FREERDP_ERROR_CONNECT_CANCELLED);
-				}
 			}
 
 			if (!accept_certificate)
@@ -821,11 +811,6 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int po
 			if (instance->VerifyChangedCertificate)
 			{
 				accept_certificate = instance->VerifyChangedCertificate(instance, subject, issuer, fingerprint, "");
-
-				if (!accept_certificate)
-				{
-					freerdp_set_last_error(((freerdp*) tls->settings->instance)->context, FREERDP_ERROR_CONNECT_CANCELLED);
-				}
 			}
 
 			if (!accept_certificate)

@@ -224,6 +224,12 @@ BIO_METHOD* BIO_s_tsg(void)
 
 BOOL transport_connect_tls(rdpTransport* transport)
 {
+	freerdp* instance;
+	rdpContext* context;
+
+	instance = (freerdp*) transport->settings->instance;
+	context = instance->context;
+
 	if (transport->layer == TRANSPORT_LAYER_TSG)
 	{
 		transport->TsgTls = tls_new(transport->settings);
@@ -244,10 +250,8 @@ BOOL transport_connect_tls(rdpTransport* transport)
 			if (!connectErrorCode)
 				connectErrorCode = TLSCONNECTERROR;
 
-			if (!freerdp_get_last_error(((freerdp*)(transport->settings->instance))->context))
-			{
-				freerdp_set_last_error(((freerdp*)(transport->settings->instance))->context, FREERDP_ERROR_TLS_CONNECT_FAILED);
-			}
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
 
 			tls_free(transport->TsgTls);
 			transport->TsgTls = NULL;
@@ -278,10 +282,8 @@ BOOL transport_connect_tls(rdpTransport* transport)
 		if (!connectErrorCode)
 			connectErrorCode = TLSCONNECTERROR;
 
-		if (!freerdp_get_last_error(((freerdp*)(transport->settings->instance))->context))
-		{
-			freerdp_set_last_error(((freerdp*)(transport->settings->instance))->context, FREERDP_ERROR_TLS_CONNECT_FAILED);
-		}
+		if (!freerdp_get_last_error(context))
+			freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
 
 		tls_free(transport->TlsIn);
 
@@ -1032,7 +1034,7 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 	return status;
 }
 
-BOOL transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled)
+void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled)
 {
 	transport->GatewayEnabled = GatewayEnabled;
 }

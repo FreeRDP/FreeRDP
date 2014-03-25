@@ -328,14 +328,14 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
  * http://www.cs.wustl.edu/~schmidt/Timer_Queue.html
  */
 
-static void timespec_add_ms(struct timespec* tspec, UINT32 ms)
+void timespec_add_ms(struct timespec* tspec, UINT32 ms)
 {
 	UINT64 ns = tspec->tv_nsec + (ms * 1000000);
 	tspec->tv_sec += (ns / 1000000000);
 	tspec->tv_nsec = (ns % 1000000000);
 }
 
-static UINT64 timespec_to_ms(struct timespec* tspec)
+UINT64 timespec_to_ms(struct timespec* tspec)
 {
 	UINT64 ms;
 	ms = tspec->tv_sec * 1000;
