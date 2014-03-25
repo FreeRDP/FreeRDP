@@ -56,6 +56,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "pth", COMMAND_LINE_VALUE_REQUIRED, "<password hash>", NULL, NULL, -1, "pass-the-hash", "Pass the hash (restricted admin mode)" },
 	{ "client-hostname", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL, "Client Hostname to send to server" },
 	{ "multimon", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Use multiple monitors" },
+	{ "span", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Span screen over multiple monitors" },
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use available work area" },
 	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<0,1,2...>", NULL, NULL, -1, NULL, "Select monitors to use" },
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL, "List detected monitors" },
@@ -1188,13 +1189,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->Fullscreen = TRUE;
 		}
-		CommandLineSwitchCase(arg, "span")
-		{
-			settings->SpanMonitors = TRUE;
-		}
 		CommandLineSwitchCase(arg, "multimon")
 		{
 			settings->UseMultimon = TRUE;
+			settings->SpanMonitors = FALSE;
 			settings->Fullscreen = TRUE;
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
@@ -1204,6 +1202,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					settings->ForceMultimon = TRUE;
 				}
 			}
+		}
+		CommandLineSwitchCase(arg, "span")
+		{
+			settings->UseMultimon = TRUE;
+			settings->SpanMonitors = TRUE;
+			settings->Fullscreen = TRUE;
 		}
 		CommandLineSwitchCase(arg, "workarea")
 		{
