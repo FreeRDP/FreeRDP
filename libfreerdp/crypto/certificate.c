@@ -231,17 +231,23 @@ rdpCertificateData* certificate_data_new(char* hostname, char* fingerprint)
 {
 	rdpCertificateData* certdata;
 
-	certdata = (rdpCertificateData*) malloc(sizeof(rdpCertificateData));
+	certdata = (rdpCertificateData *)calloc(1, sizeof(rdpCertificateData));
+	if (!certdata)
+		return NULL;
 
-	if (certdata != NULL)
-	{
-		ZeroMemory(certdata, sizeof(rdpCertificateData));
-
-		certdata->hostname = _strdup(hostname);
-		certdata->fingerprint = _strdup(fingerprint);
-	}
-
+	certdata->hostname = _strdup(hostname);
+	if (!certdata->hostname)
+		goto out_free;
+	certdata->fingerprint = _strdup(fingerprint);
+	if (!certdata->fingerprint)
+		goto out_free_hostname;
 	return certdata;
+
+out_free_hostname:
+	free(certdata->hostname);
+out_free:
+	free(certdata);
+	return NULL;
 }
 
 void certificate_data_free(rdpCertificateData* certificate_data)

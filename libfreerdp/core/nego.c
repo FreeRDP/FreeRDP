@@ -497,9 +497,10 @@ BOOL nego_recv_response(rdpNego* nego)
 	wStream* s;
 
 	s = Stream_New(NULL, 1024);
+	if (!s)
+		return FALSE;
 
 	status = transport_read(nego->transport, s);
-
 	if (status < 0)
 	{
 		Stream_Free(s, TRUE);
@@ -869,6 +870,8 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	settings = nego->transport->settings;
 
 	s = Stream_New(NULL, 512);
+	if (!s)
+		return FALSE;
 
 	length = TPDU_CONNECTION_CONFIRM_LENGTH;
 	bm = Stream_GetPosition(s);
@@ -899,7 +902,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		 * TODO: Check for other possibilities,
 		 *       like SSL_NOT_ALLOWED_BY_SERVER.
 		 */
-		fprintf(stderr, "nego_send_negotiation_response: client supports only Standard RDP Security\n");
+		fprintf(stderr, "%s: client supports only Standard RDP Security\n", __FUNCTION__);
 		Stream_Write_UINT32(s, SSL_REQUIRED_BY_SERVER);
 		length += 8;
 		status = FALSE;
@@ -940,7 +943,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 
-			if (settings->DisableEncryption && settings->RdpServerRsaKey == NULL && settings->RdpKeyFile == NULL)
+			if (settings->DisableEncryption && !settings->RdpServerRsaKey && !settings->RdpKeyFile)
 				return FALSE;
 		}
 		else if (settings->SelectedProtocol == PROTOCOL_TLS)
@@ -990,15 +993,13 @@ void nego_init(rdpNego* nego)
 
 rdpNego* nego_new(rdpTransport* transport)
 {
-	rdpNego* nego = (rdpNego*) malloc(sizeof(rdpNego));
+	rdpNego* nego = (rdpNego*) calloc(1, sizeof(rdpNego));
+	if (!nego)
+		return NULL;
 
-	if (nego)
-	{
-		ZeroMemory(nego, sizeof(rdpNego));
 
-		nego->transport = transport;
-		nego_init(nego);
-	}
+	nego->transport = transport;
+	nego_init(nego);
 
 	return nego;
 }

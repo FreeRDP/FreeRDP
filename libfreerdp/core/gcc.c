@@ -1167,11 +1167,17 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	sigDataLen = Stream_Pointer(s) - sigData;
 
 	Stream_Write_UINT16(s, BB_RSA_SIGNATURE_BLOB); /* wSignatureBlobType */
-	Stream_Write_UINT16(s, keyLen + 8); /* wSignatureBlobLen */
+	Stream_Write_UINT16(s, sizeof(encryptedSignature) + 8); /* wSignatureBlobLen */
 
 	memcpy(signature, initial_signature, sizeof(initial_signature));
 
 	md5 = crypto_md5_init();
+	if (!md5)
+	{
+		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		return;
+	}
+
 	crypto_md5_update(md5, sigData, sigDataLen);
 	crypto_md5_final(md5, signature);
 
