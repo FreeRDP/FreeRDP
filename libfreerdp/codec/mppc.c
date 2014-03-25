@@ -110,13 +110,8 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 
 	if (!(flags & PACKET_COMPRESSED))
 	{
-		CopyMemory(HistoryPtr, pSrcData, SrcSize);
-		HistoryPtr += SrcSize;
-		HistoryOffset += SrcSize;
-		mppc->HistoryPtr = HistoryPtr;
-		mppc->HistoryOffset = HistoryOffset;
-		*ppDstData = HistoryPtr;
 		*pDstSize = SrcSize;
+		*ppDstData = pSrcData;
 		return 1;
 	}
 
@@ -532,6 +527,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE* pDst
 				*pFlags |= PACKET_FLUSHED;
 				ZeroMemory(HistoryBuffer, HistoryBufferSize);
 				ZeroMemory(mppc->MatchBuffer, sizeof(mppc->MatchBuffer));
+				*pDstSize = SrcSize;
 				return 1;
 			}
 
@@ -582,6 +578,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE* pDst
 				*pFlags = PACKET_FLUSHED;
 				ZeroMemory(HistoryBuffer, HistoryBufferSize);
 				ZeroMemory(mppc->MatchBuffer, sizeof(mppc->MatchBuffer));
+				*pDstSize = SrcSize;
 				return 1;
 			}
 
@@ -737,6 +734,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE* pDst
 			*pFlags |= PACKET_FLUSHED;
 			ZeroMemory(HistoryBuffer, HistoryBufferSize);
 			ZeroMemory(mppc->MatchBuffer, sizeof(mppc->MatchBuffer));
+			*pDstSize = SrcSize;
 			return 1;
 		}
 

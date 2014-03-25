@@ -236,7 +236,6 @@ void xf_input_save_last_event(XGenericEventCookie* cookie)
 	lastEvent.detail = event->detail;
 	lastEvent.event_x = event->event_x;
 	lastEvent.event_y = event->event_y;
-	
 }
 
 void xf_input_detect_pan(xfContext* xfc)
@@ -269,13 +268,10 @@ void xf_input_detect_pan(xfContext* xfc)
 	
 	dist_x = fabs(contacts[0].pos_x - contacts[1].pos_x);
 	dist_y = fabs(contacts[0].pos_y - contacts[1].pos_y);
-	
-	
-	//only pan in x if dist_y is greater than something
-	if(dist_y > MIN_FINGER_DIST)
+
+	if (dist_y > MIN_FINGER_DIST)
 	{
-		
-		if(px_vector > PAN_THRESHOLD)
+		if (px_vector > PAN_THRESHOLD)
 		{
 			
 			{
@@ -293,7 +289,7 @@ void xf_input_detect_pan(xfContext* xfc)
 			py_vector = 0;
 			z_vector = 0;
 		}
-		else if(px_vector < -PAN_THRESHOLD)
+		else if (px_vector < -PAN_THRESHOLD)
 		{
 			{
 				PanningChangeEventArgs e;
@@ -313,10 +309,10 @@ void xf_input_detect_pan(xfContext* xfc)
 		
 	}
 	
-	if(dist_x > MIN_FINGER_DIST)
+	if (dist_x > MIN_FINGER_DIST)
 	{
 		
-		if(py_vector > PAN_THRESHOLD)
+		if (py_vector > PAN_THRESHOLD)
 		{
 			{
 				PanningChangeEventArgs e;
@@ -333,7 +329,7 @@ void xf_input_detect_pan(xfContext* xfc)
 			py_vector = 0;
 			z_vector = 0;
 		}
-		else if(py_vector < -PAN_THRESHOLD)
+		else if (py_vector < -PAN_THRESHOLD)
 		{
 			{
 				PanningChangeEventArgs e;
@@ -351,7 +347,6 @@ void xf_input_detect_pan(xfContext* xfc)
 			z_vector = 0;
 		}
 	}
-	
 }
 
 void xf_input_detect_pinch(xfContext* xfc)
@@ -367,7 +362,6 @@ void xf_input_detect_pinch(xfContext* xfc)
 		firstDist = -1.0;
 		return;
 	}
-	
 	
 	/* first calculate the distance */
 	dist = sqrt(pow(contacts[1].pos_x - contacts[0].last_x, 2.0) +
@@ -398,7 +392,6 @@ void xf_input_detect_pinch(xfContext* xfc)
 		zoom = (dist / firstDist);
 		
 		z_vector += delta;
-		
 		
 		lastDist = dist;
 		
@@ -451,8 +444,6 @@ void xf_input_detect_pinch(xfContext* xfc)
 void xf_input_touch_begin(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
-	if(active_contacts == MAX_CONTACTS)
-		printf("Houston, we have a problem!\n\n");
 	
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
@@ -472,6 +463,7 @@ void xf_input_touch_begin(xfContext* xfc, XIDeviceEvent* event)
 void xf_input_touch_update(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
+
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (contacts[i].id == event->detail)
@@ -493,14 +485,13 @@ void xf_input_touch_update(xfContext* xfc, XIDeviceEvent* event)
 void xf_input_touch_end(xfContext* xfc, XIDeviceEvent* event)
 {
 	int i;
+
 	for (i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (contacts[i].id == event->detail)
 		{
 			contacts[i].id = 0;
 			contacts[i].count = 0;
-			//contacts[i].pos_x = (int)event->event_x;
-			//contacts[i].pos_y = (int)event->event_y;
 			
 			active_contacts--;
 			break;printf("TouchBegin\n");
@@ -733,15 +724,15 @@ void xf_process_rdpei_event(xfContext* xfc, wMessage* event)
 int xf_input_handle_event(xfContext* xfc, XEvent* event)
 {
 #ifdef WITH_XI
-	//printf("m:%d g:%d\n", (xfc->settings->MultiTouchInput), (xfc->settings->MultiTouchGestures) );
   	if (xfc->settings->MultiTouchInput)
 	{
 		return xf_input_handle_event_remote(xfc, event);
 	}
 	
 	if (xfc->settings->MultiTouchGestures)
+	{
 		return xf_input_handle_event_local(xfc, event);
-	
+	}
 #endif
 	
 	return 0;

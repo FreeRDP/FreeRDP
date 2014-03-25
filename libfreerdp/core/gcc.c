@@ -407,16 +407,17 @@ void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 
 	if (settings->NegotiationFlags & EXTENDED_CLIENT_DATA_SUPPORTED)
 	{
-		if (settings->SpanMonitors)
+		if (settings->UseMultimon && !settings->SpanMonitors)
 		{
 			gcc_write_client_monitor_data(s, mcs);
 		}
+
 		gcc_write_client_message_channel_data(s, mcs);
 		gcc_write_client_multitransport_channel_data(s, mcs);
 	}
 	else
 	{
-		if (settings->UseMultimon)
+		if (settings->UseMultimon && !settings->SpanMonitors)
 		{
 			fprintf(stderr, "WARNING: true multi monitor support was not advertised by server!\n");
 

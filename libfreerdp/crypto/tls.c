@@ -787,7 +787,9 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int po
 				tls_print_certificate_name_mismatch_error(hostname, common_name, alt_names, alt_names_count);
 
 			if (instance->VerifyCertificate)
+			{
 				accept_certificate = instance->VerifyCertificate(instance, subject, issuer, fingerprint);
+			}
 
 			if (!accept_certificate)
 			{
@@ -807,7 +809,9 @@ BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int po
 			tls_print_certificate_error(hostname, fingerprint, tls->certificate_store->file);
 			
 			if (instance->VerifyChangedCertificate)
+			{
 				accept_certificate = instance->VerifyChangedCertificate(instance, subject, issuer, fingerprint, "");
+			}
 
 			if (!accept_certificate)
 			{

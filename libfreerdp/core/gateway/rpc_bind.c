@@ -120,6 +120,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 			if (!proceed)
 			{
 				connectErrorCode = CANCELEDBYUSER;
+				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 				return 0;
 			}
 

@@ -408,7 +408,7 @@ void InitializeWtsApiStubs(void)
 	if (!g_WtsApiModule)
 		return;
 
-	pInitWtsApi = GetProcAddress(g_WtsApiModule, "InitWtsApi");
+	pInitWtsApi = (INIT_WTSAPI_FN) GetProcAddress(g_WtsApiModule, "InitWtsApi");
 
 	if (pInitWtsApi)
 	{

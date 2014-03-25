@@ -746,6 +746,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->GatewayEnabled;
 			break;
 
+		case FreeRDP_GatewayBypassLocal:
+			return settings->GatewayBypassLocal;
+			break;
+
 		case FreeRDP_RemoteApplicationMode:
 			return settings->RemoteApplicationMode;
 			break;
@@ -1216,6 +1220,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_GatewayEnabled:
 			settings->GatewayEnabled = param;
+			break;
+
+		case FreeRDP_GatewayBypassLocal:
+			settings->GatewayBypassLocal = param;
 			break;
 
 		case FreeRDP_RemoteApplicationMode:

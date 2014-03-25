@@ -153,6 +153,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 			if (!proceed)
 			{
 				connectErrorCode = CANCELEDBYUSER;
+				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 				return 0;
 			}
 

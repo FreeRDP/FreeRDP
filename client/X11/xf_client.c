@@ -868,7 +868,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
 	xfc->WM_STATE = XInternAtom(xfc->display, "WM_STATE", False);
 
-	xf_kbd_init(xfc);
+	xf_keyboard_init(xfc);
 
 	xfc->clrconv = freerdp_clrconv_new(CLRCONV_ALPHA);
 
@@ -972,10 +972,10 @@ BOOL xf_post_connect(freerdp* instance)
 
 	ZeroMemory(&gcv, sizeof(gcv));
 
-	if (xfc->modifier_map)
-		XFreeModifiermap(xfc->modifier_map);
+	if (xfc->modifierMap)
+		XFreeModifiermap(xfc->modifierMap);
 
-	xfc->modifier_map = XGetModifierMapping(xfc->display);
+	xfc->modifierMap = XGetModifierMapping(xfc->display);
 
 	xfc->gc = XCreateGC(xfc->display, xfc->drawable, GCGraphicsExposures, &gcv);
 	xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->width, xfc->height, xfc->depth);
@@ -1161,11 +1161,7 @@ void xf_window_free(xfContext* xfc)
 {
 	rdpContext* context = (rdpContext*) xfc;
 
-	if (xfc->modifier_map)
-	{
-		XFreeModifiermap(xfc->modifier_map);
-		xfc->modifier_map = NULL;
-	}
+	xf_keyboard_free(xfc);
 
 	if (xfc->gc)
 	{
@@ -1515,8 +1511,8 @@ void* xf_thread(void* param)
 		 */
 		if (freerdp_focus_required(instance))
 		{
-			xf_kbd_focus_in(xfc);
-			xf_kbd_focus_in(xfc);
+			xf_keyboard_focus_in(xfc);
+			xf_keyboard_focus_in(xfc);
 		}
 
 		if (!async_transport)

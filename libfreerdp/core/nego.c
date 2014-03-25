@@ -212,7 +212,25 @@ BOOL nego_security_connect(rdpNego* nego)
 BOOL nego_tcp_connect(rdpNego* nego)
 {
 	if (!nego->tcp_connected)
-		nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+	{
+		if (nego->GatewayEnabled && nego->GatewayBypassLocal)
+		{
+			/* Attempt a direct connection first, and then fallback to using the gateway */
+
+			transport_set_gateway_enabled(nego->transport, FALSE);
+			nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+
+			if (!nego->tcp_connected)
+			{
+				transport_set_gateway_enabled(nego->transport, TRUE);
+				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+			}
+		}
+		else
+		{
+			nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+		}
+	}
 
 	return nego->tcp_connected;
 }
@@ -1032,6 +1050,16 @@ void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdmin
 {
 	DEBUG_NEGO("Enabling restricted admin mode: %s", RestrictedAdminModeRequired ? "TRUE" : "FALSE");
 	nego->RestrictedAdminModeRequired = RestrictedAdminModeRequired;
+}
+
+void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled)
+{
+	nego->GatewayEnabled = GatewayEnabled;
+}
+
+void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypassLocal)
+{
+	nego->GatewayBypassLocal = GatewayBypassLocal;
 }
 
 /**
