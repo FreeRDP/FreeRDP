@@ -22,6 +22,8 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/ini.h>
+#include <winpr/path.h>
 #include <winpr/synch.h>
 #include <winpr/library.h>
 #include <winpr/environment.h>
@@ -395,16 +397,11 @@ BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)
 	return TRUE;
 }
 
-void InitializeWtsApiStubs(void)
+void InitializeWtsApiStubs_Env()
 {
 	DWORD nSize;
 	char* env = NULL;
 	INIT_WTSAPI_FN pInitWtsApi;
-
-	if (g_Initialized)
-		return;
-
-	g_Initialized = TRUE;
 
 	if (g_WtsApi)
 		return;
@@ -429,4 +426,70 @@ void InitializeWtsApiStubs(void)
 	{
 		g_WtsApi = pInitWtsApi();
 	}
+}
+
+void InitializeWtsApiStubs_FreeRDS()
+{
+	char* prefix;
+	char* libdir;
+	wIniFile* ini;
+	
+	if (g_WtsApi)
+		return;
+	
+	ini = IniFile_New();
+
+	if (IniFile_Parse(ini, "/var/run/freerds.instance") < 0)
+	{
+		printf("failed to parse freerds.instance\n");
+	}
+	
+	prefix = IniFile_GetKeyValueString(ini, "FreeRDS", "prefix");
+	libdir = IniFile_GetKeyValueString(ini, "FreeRDS", "libdir");
+	
+	printf("FreeRDS: %s / %s\n", prefix, libdir);
+	
+	if (prefix && libdir)
+	{
+		char* prefix_libdir;
+		char* wtsapi_library;
+		
+		prefix_libdir = GetCombinedPath(prefix, libdir);
+		wtsapi_library = GetCombinedPath(prefix_libdir, "libfreerds-fdsapi.so");
+		
+		if (wtsapi_library)
+		{
+			INIT_WTSAPI_FN pInitWtsApi;
+			
+			g_WtsApiModule = LoadLibraryA(wtsapi_library);
+			
+			if (g_WtsApiModule)
+			{
+				pInitWtsApi = (INIT_WTSAPI_FN) GetProcAddress(g_WtsApiModule, "InitWtsApi");
+
+				if (pInitWtsApi)
+				{
+					g_WtsApi = pInitWtsApi();
+				}	
+			}
+		}
+		
+		free(prefix_libdir);
+		free(wtsapi_library);
+	}
+	
+	IniFile_Free(ini);
+}
+
+void InitializeWtsApiStubs(void)
+{
+	if (g_Initialized)
+		return;
+
+	g_Initialized = TRUE;
+	
+	InitializeWtsApiStubs_Env();
+	
+	if (!g_WtsApi)
+		InitializeWtsApiStubs_FreeRDS();
 }

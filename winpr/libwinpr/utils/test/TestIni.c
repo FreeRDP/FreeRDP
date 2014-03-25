@@ -3,7 +3,7 @@
 
 #include <winpr/ini.h>
 
-const char TEST_INI_FILE[] =
+const char TEST_INI_01[] =
 	"; This is a sample .ini config file\n"
 	"\n"
 	"[first_section]\n"
@@ -14,6 +14,17 @@ const char TEST_INI_FILE[] =
 	"[second_section]\n"
 	"path = \"/usr/local/bin\"\n"
 	"URL = \"http://www.example.com/~username\"\n"
+	"\n";
+
+const char TEST_INI_02[] =
+	"[FreeRDS]\n"
+	"prefix=\"/usr/local\"\n"
+	"bindir=\"bin\"\n"
+	"sbindir=\"sbin\"\n"
+	"libdir=\"lib\"\n"
+	"datarootdir=\"share\"\n"
+	"localstatedir=\"var\"\n"
+	"sysconfdir=\"etc\"\n"
 	"\n";
 
 int TestIni(int argc, char* argv[])
@@ -27,9 +38,11 @@ int TestIni(int argc, char* argv[])
 	char** keyNames;
 	char** sectionNames;
 
+	/* First Sample */
+	
 	ini = IniFile_New();
 
-	IniFile_ParseString(ini, TEST_INI_FILE);
+	IniFile_ParseString(ini, TEST_INI_01);
 	
 	sectionNames = IniFile_GetSectionNames(ini, &nSections);
 	
@@ -91,7 +104,34 @@ int TestIni(int argc, char* argv[])
 	}
 	
 	IniFile_Free(ini);
+	
+	/* Second Sample */
 
+	ini = IniFile_New();
+
+	IniFile_ParseString(ini, TEST_INI_02);
+	
+	sectionNames = IniFile_GetSectionNames(ini, &nSections);
+	
+	for (i = 0; i < nSections; i++)
+	{
+		keyNames = IniFile_GetSectionKeyNames(ini, sectionNames[i], &nKeys);
+		
+		printf("[%s]\n", sectionNames[i]);
+		
+		for (j = 0; j < nKeys; j++)
+		{
+			sValue = IniFile_GetKeyValueString(ini, sectionNames[i], keyNames[j]);
+			printf("%s = %s\n", keyNames[j], sValue);
+		}
+		
+		free(keyNames);
+	}
+	
+	free(sectionNames);
+	
+	IniFile_Free(ini);
+	
 	return 0;
 }
 

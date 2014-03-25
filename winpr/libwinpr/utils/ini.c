@@ -241,9 +241,9 @@ int IniFile_Load(wIniFile* ini)
 		{
 			separator = strchr(line, '=');
 
-			end = separator - 1;
+			end = separator;
 
-			while ((end > line) && ((end[-1] == ' ') || (end[-1] == '\t')))
+			while ((&end[-1] > line) && ((end[-1] == ' ') || (end[-1] == '\t')))
 				end--;
 
 			*end = '\0';
