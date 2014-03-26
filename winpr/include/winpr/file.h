@@ -332,7 +332,7 @@ WINPR_API LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags);
 WINPR_API int UnixChangeFileMode(const char* filename, int flags);
 
 WINPR_API char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName);
-WINPR_API char* GetNamedPipeUnixDomainSocketBaseFilePathA();
+WINPR_API char* GetNamedPipeUnixDomainSocketBaseFilePathA(void);
 WINPR_API char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName);
 
 #ifdef __cplusplus

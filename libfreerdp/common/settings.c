@@ -166,70 +166,133 @@ RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* 
 
 RDPDR_DEVICE* freerdp_device_clone(RDPDR_DEVICE* device)
 {
-	RDPDR_DEVICE* _device = NULL;
-
 	if (device->Type == RDPDR_DTYP_FILESYSTEM)
 	{
 		RDPDR_DRIVE* drive = (RDPDR_DRIVE*) device;
 		RDPDR_DRIVE* _drive = (RDPDR_DRIVE*) malloc(sizeof(RDPDR_DRIVE));
+		if (!_drive)
+			return NULL;
 
 		_drive->Id = drive->Id;
 		_drive->Type = drive->Type;
 		_drive->Name = _strdup(drive->Name);
+		if (!_drive->Name)
+			goto out_fs_name_error;
 		_drive->Path = _strdup(drive->Path);
+		if (!_drive->Path)
+			goto out_fs_path_error;
 
-		_device = (RDPDR_DEVICE*) _drive;
+		return (RDPDR_DEVICE*) _drive;
+
+	out_fs_path_error:
+		free(_drive->Name);
+	out_fs_name_error:
+		free(_drive);
+		return NULL;
 	}
-	else if (device->Type == RDPDR_DTYP_PRINT)
+
+	if (device->Type == RDPDR_DTYP_PRINT)
 	{
 		RDPDR_PRINTER* printer = (RDPDR_PRINTER*) device;
 		RDPDR_PRINTER* _printer = (RDPDR_PRINTER*) malloc(sizeof(RDPDR_PRINTER));
+		if (!_printer)
+			return NULL;
 
 		_printer->Id = printer->Id;
 		_printer->Type = printer->Type;
 		_printer->Name = _strdup(printer->Name);
+		if (!_printer->Name)
+			goto out_print_name_error;
 		_printer->DriverName = _strdup(printer->DriverName);
+		if(!_printer->DriverName)
+			goto out_print_path_error;
 
-		_device = (RDPDR_DEVICE*) _printer;
+		return (RDPDR_DEVICE*) _printer;
+
+	out_print_path_error:
+		free(_printer->Name);
+	out_print_name_error:
+		free(_printer);
+		return NULL;
 	}
-	else if (device->Type == RDPDR_DTYP_SMARTCARD)
+
+	if (device->Type == RDPDR_DTYP_SMARTCARD)
 	{
 		RDPDR_SMARTCARD* smartcard = (RDPDR_SMARTCARD*) device;
 		RDPDR_SMARTCARD* _smartcard = (RDPDR_SMARTCARD*) malloc(sizeof(RDPDR_SMARTCARD));
+		if (!_smartcard)
+			return NULL;
 
 		_smartcard->Id = smartcard->Id;
 		_smartcard->Type = smartcard->Type;
 		_smartcard->Name = _strdup(smartcard->Name);
+		if (!_smartcard->Name)
+			goto out_smartc_name_error;
 		_smartcard->Path = _strdup(smartcard->Path);
+		if (!_smartcard->Path)
+			goto out_smartc_path_error;
 
-		_device = (RDPDR_DEVICE*) _smartcard;
+		return (RDPDR_DEVICE*) _smartcard;
+
+	out_smartc_path_error:
+		free(_smartcard->Name);
+	out_smartc_name_error:
+		free(_smartcard);
+		return NULL;
 	}
-	else if (device->Type == RDPDR_DTYP_SERIAL)
+
+	if (device->Type == RDPDR_DTYP_SERIAL)
 	{
 		RDPDR_SERIAL* serial = (RDPDR_SERIAL*) device;
 		RDPDR_SERIAL* _serial = (RDPDR_SERIAL*) malloc(sizeof(RDPDR_SERIAL));
+		if (!_serial)
+			return NULL;
 
 		_serial->Id = serial->Id;
 		_serial->Type = serial->Type;
 		_serial->Name = _strdup(serial->Name);
+		if (!_serial->Name)
+			goto out_serial_name_error;
 		_serial->Path = _strdup(serial->Path);
+		if (!_serial->Path)
+			goto out_serial_path_error;
 
-		_device = (RDPDR_DEVICE*) _serial;
+		return (RDPDR_DEVICE*) _serial;
+
+	out_serial_path_error:
+		free(_serial->Name);
+	out_serial_name_error:
+		free(_serial);
+		return NULL;
 	}
-	else if (device->Type == RDPDR_DTYP_PARALLEL)
+
+	if (device->Type == RDPDR_DTYP_PARALLEL)
 	{
 		RDPDR_PARALLEL* parallel = (RDPDR_PARALLEL*) device;
 		RDPDR_PARALLEL* _parallel = (RDPDR_PARALLEL*) malloc(sizeof(RDPDR_PARALLEL));
+		if (!_parallel)
+			return NULL;
 
 		_parallel->Id = parallel->Id;
 		_parallel->Type = parallel->Type;
 		_parallel->Name = _strdup(parallel->Name);
+		if (!_parallel->Name)
+			goto out_parallel_name_error;
 		_parallel->Path = _strdup(parallel->Path);
+		if (!_parallel->Path)
+			goto out_parallel_path_error;
 
-		_device = (RDPDR_DEVICE*) _parallel;
+		return (RDPDR_DEVICE*) _parallel;
+	out_parallel_path_error:
+		free(_parallel->Name);
+	out_parallel_name_error:
+		free(_parallel);
+		return NULL;
+
 	}
 
-	return _device;
+	fprintf(stderr, "%s: unknown device type %d\n", __FUNCTION__, device->Type);
+	return NULL;
 }
 
 void freerdp_device_collection_free(rdpSettings* settings)
@@ -308,16 +371,29 @@ ADDIN_ARGV* freerdp_static_channel_clone(ADDIN_ARGV* channel)
 	ADDIN_ARGV* _channel = NULL;
 
 	_channel = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
+	if (!_channel)
+		return NULL;
 
 	_channel->argc = channel->argc;
-	_channel->argv = (char**) malloc(sizeof(char*) * channel->argc);
+	_channel->argv = (char**) calloc(channel->argc, sizeof(char*));
+	if (!_channel->argv)
+		goto out_free;
 
 	for (index = 0; index < _channel->argc; index++)
 	{
 		_channel->argv[index] = _strdup(channel->argv[index]);
+		if (!_channel->argv[index])
+			goto out_release_args;
 	}
 
 	return _channel;
+
+out_release_args:
+	for (index = 0; _channel->argv[index]; index++)
+		free(_channel->argv[index]);
+out_free:
+	free(_channel);
+	return NULL;
 }
 
 void freerdp_static_channel_collection_free(rdpSettings* settings)
@@ -375,16 +451,29 @@ ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel)
 	ADDIN_ARGV* _channel = NULL;
 
 	_channel = (ADDIN_ARGV*) malloc(sizeof(ADDIN_ARGV));
+	if (!_channel)
+		return NULL;
 
 	_channel->argc = channel->argc;
 	_channel->argv = (char**) malloc(sizeof(char*) * channel->argc);
+	if (!_channel->argv)
+		goto out_free;
 
 	for (index = 0; index < _channel->argc; index++)
 	{
 		_channel->argv[index] = _strdup(channel->argv[index]);
+		if (!_channel->argv[index])
+			goto out_release_args;
 	}
 
 	return _channel;
+
+out_release_args:
+	for (index = 0; _channel->argv[index]; index++)
+		free(_channel->argv[index]);
+out_free:
+	free(_channel);
+	return NULL;
 }
 
 void freerdp_dynamic_channel_collection_free(rdpSettings* settings)

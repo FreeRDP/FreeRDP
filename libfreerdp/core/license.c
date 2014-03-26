@@ -392,6 +392,12 @@ void license_generate_hwid(rdpLicense* license)
 	mac_address = license->rdp->transport->TcpIn->mac_address;
 
 	md5 = crypto_md5_init();
+	if (!md5)
+	{
+		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		return;
+	}
+
 	crypto_md5_update(md5, mac_address, 6);
 	crypto_md5_final(md5, &license->HardwareId[HWID_PLATFORM_ID_LENGTH]);
 }
@@ -458,6 +464,11 @@ void license_decrypt_platform_challenge(rdpLicense* license)
 	license->PlatformChallenge->length = license->EncryptedPlatformChallenge->length;
 
 	rc4 = crypto_rc4_init(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
+	if (!rc4)
+	{
+		fprintf(stderr, "%s: unable to allocate a rc4\n", __FUNCTION__);
+		return;
+	}
 
 	crypto_rc4(rc4, license->EncryptedPlatformChallenge->length,
 			license->EncryptedPlatformChallenge->data,
@@ -1042,6 +1053,11 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 
 	buffer = (BYTE*) malloc(HWID_LENGTH);
 	rc4 = crypto_rc4_init(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
+	if (!rc4)
+	{
+		fprintf(stderr, "%s: unable to allocate a rc4\n", __FUNCTION__);
+		return;
+	}
 	crypto_rc4(rc4, HWID_LENGTH, license->HardwareId, buffer);
 	crypto_rc4_free(rc4);
 
