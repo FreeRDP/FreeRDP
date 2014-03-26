@@ -337,6 +337,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	rdpRdp* rdp;
 	int next_pos;
 	wStream* cs;
+	int bulkStatus;
 	UINT32 totalSize;
 	BYTE updateCode;
 	BYTE fragmentation;
@@ -365,8 +366,18 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	cs = s;
 	next_pos = Stream_GetPosition(s) + size;
 
-	if (bulk_decompress(rdp->bulk, Stream_Pointer(s), size, &pDstData, &DstSize, compressionFlags))
+	bulkStatus = bulk_decompress(rdp->bulk, Stream_Pointer(s), size, &pDstData, &DstSize, compressionFlags);
+
+	if (bulkStatus < 0)
 	{
+		fprintf(stderr, "bulk_decompress() failed\n");
+		return -1;
+	}
+
+	if (bulkStatus > 0)
+	{
+		/* data was compressed, copy from decompression buffer */
+
 		size = DstSize;
 		cs = StreamPool_Take(transport->ReceivePool, DstSize);
 
@@ -374,11 +385,6 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		Stream_Write(cs, pDstData, DstSize);
 		Stream_SealLength(cs);
 		Stream_SetPosition(cs, 0);
-	}
-	else
-	{
-		fprintf(stderr, "bulk_decompress() failed\n");
-		Stream_Seek(s, size);
 	}
 
 	if (fragmentation == FASTPATH_FRAGMENT_SINGLE)
