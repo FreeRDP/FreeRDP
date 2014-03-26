@@ -45,6 +45,7 @@
 #include "serial_constants.h"
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -64,6 +65,7 @@ struct _SERIAL_DEVICE
 	char* path;
 	SERIAL_TTY* tty;
 
+	wLog* log;
 	HANDLE thread;
 	wMessageQueue* IrpQueue;
 };
@@ -73,8 +75,8 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	int status;
 	UINT32 FileId;
 	UINT32 PathLength;
-	SERIAL_TTY* tty;
 	char* path = NULL;
+	SERIAL_TTY* tty;
 
 	Stream_Seek_UINT32(irp->input); /* DesiredAccess (4 bytes) */
 	Stream_Seek_UINT64(irp->input); /* AllocationSize (8 bytes) */
@@ -83,7 +85,7 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	Stream_Seek_UINT32(irp->input); /* CreateDisposition (4 bytes) */
 	Stream_Seek_UINT32(irp->input); /* CreateOptions (4 bytes) */
 
-	Stream_Read_UINT32(irp->input, PathLength);
+	Stream_Read_UINT32(irp->input, PathLength); /* PathLength (4 bytes) */
 
 	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(irp->input),
 			PathLength / 2, &path, 0, NULL, NULL);
@@ -108,8 +110,8 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 		DEBUG_SVC("%s(%d) created.", serial->path, FileId);
 	}
 
-	Stream_Write_UINT32(irp->output, FileId);
-	Stream_Write_UINT8(irp->output, 0);
+	Stream_Write_UINT32(irp->output, FileId); /* FileId (4 bytes) */
+	Stream_Write_UINT8(irp->output, 0); /* Information (1 byte) */
 
 	free(path);
 
@@ -118,9 +120,9 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 
 static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 {
-	SERIAL_TTY* tty;
+	SERIAL_TTY* tty = serial->tty;
 
-	tty = serial->tty;
+	Stream_Seek(irp->input, 32); /* Padding (32 bytes) */
 
 	if (!tty)
 	{
@@ -142,17 +144,14 @@ static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 
 static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 {
-	SERIAL_TTY* tty;
 	UINT32 Length;
 	UINT64 Offset;
 	BYTE* buffer = NULL;
+	SERIAL_TTY* tty = serial->tty;
 
-	Stream_Read_UINT32(irp->input, Length);
-	Stream_Read_UINT64(irp->input, Offset);
-
-	DEBUG_SVC("length %u offset %llu", Length, Offset);
-
-	tty = serial->tty;
+	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
+	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
+	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
 
 	if (!tty)
 	{
@@ -180,7 +179,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 		}
 	}
 
-	Stream_Write_UINT32(irp->output, Length);
+	Stream_Write_UINT32(irp->output, Length); /* Length (4 bytes) */
 
 	if (Length > 0)
 	{
@@ -195,17 +194,13 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 
 static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 {
-	SERIAL_TTY* tty;
 	UINT32 Length;
 	UINT64 Offset;
+	SERIAL_TTY* tty = serial->tty;
 
-	Stream_Read_UINT32(irp->input, Length);
-	Stream_Read_UINT64(irp->input, Offset);
-	Stream_Seek(irp->input, 20); /* Padding */
-
-	DEBUG_SVC("length %u offset %llu", Length, Offset);
-
-	tty = serial->tty;
+	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
+	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
+	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
 
 	if (!tty)
 	{
@@ -226,26 +221,24 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 		DEBUG_SVC("write %llu-%llu to %s(%d).", Offset, Offset + Length, serial->path, tty->id);
 	}
 
-	Stream_Write_UINT32(irp->output, Length);
-	Stream_Write_UINT8(irp->output, 0); /* Padding */
+	Stream_Write_UINT32(irp->output, Length); /* Length (4 bytes) */
+	Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
 
 	irp->Complete(irp);
 }
 
 static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 {
-	SERIAL_TTY* tty;
 	UINT32 IoControlCode;
 	UINT32 InputBufferLength;
 	UINT32 OutputBufferLength;
 	UINT32 abortIo = SERIAL_ABORT_IO_NONE;
+	SERIAL_TTY* tty = serial->tty;
 
-	Stream_Read_UINT32(irp->input, InputBufferLength);
-	Stream_Read_UINT32(irp->input, OutputBufferLength);
-	Stream_Read_UINT32(irp->input, IoControlCode);
-	Stream_Seek(irp->input, 20); /* Padding */
-
-	tty = serial->tty;
+	Stream_Read_UINT32(irp->input, OutputBufferLength); /* OutputBufferLength (4 bytes) */
+	Stream_Read_UINT32(irp->input, InputBufferLength); /* InputBufferLength (4 bytes) */
+	Stream_Read_UINT32(irp->input, IoControlCode); /* IoControlCode (4 bytes) */
+	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
 
 	if (!tty)
 	{
@@ -264,7 +257,8 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 static void serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 {
-	DEBUG_SVC("MajorFunction %u", irp->MajorFunction);
+	WLog_Print(serial->log, WLOG_DEBUG, "IRP MajorFunction: 0x%04X MinorFunction: 0x%04X\n",
+			irp->MajorFunction, irp->MinorFunction);
 
 	switch (irp->MajorFunction)
 	{
@@ -333,7 +327,7 @@ static void serial_free(DEVICE* device)
 {
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
 
-	DEBUG_SVC("freeing device");
+	WLog_Print(serial->log, WLOG_DEBUG, "freeing");
 
 	MessageQueue_PostQuit(serial->IrpQueue, 0);
 	WaitForSingleObject(serial->thread, INFINITE);
@@ -390,6 +384,10 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		serial->path = path;
 		serial->IrpQueue = MessageQueue_New(NULL);
+
+		WLog_Init();
+		serial->log = WLog_Get("com.freerdp.channel.serial.client");
+		WLog_Print(serial->log, WLOG_DEBUG, "initializing");
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) serial);
 
