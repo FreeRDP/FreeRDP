@@ -72,7 +72,7 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id);
 void serial_tty_free(SERIAL_TTY* tty);
 
 BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length);
-BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length);
+int serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length);
 UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input, wStream* output, UINT32* abort_io);
 
 BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result);

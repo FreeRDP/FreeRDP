@@ -194,6 +194,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 
 static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 {
+	int status;
 	UINT32 Length;
 	UINT64 Offset;
 	SERIAL_TTY* tty = serial->tty;
@@ -208,22 +209,30 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 		Length = 0;
 
 		DEBUG_WARN("tty not valid.");
+
+		Stream_Write_UINT32(irp->output, Length); /* Length (4 bytes) */
+		Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
+		irp->Complete(irp);
+		return;
 	}
-	else if (!serial_tty_write(tty, Stream_Pointer(irp->input), Length))
+
+	status = serial_tty_write(tty, Stream_Pointer(irp->input), Length);
+
+	if (status < 0)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
 
-		DEBUG_WARN("write %s(%d) failed.", serial->path, tty->id);
-	}
-	else
-	{
-		DEBUG_SVC("write %llu-%llu to %s(%d).", Offset, Offset + Length, serial->path, tty->id);
+		printf("serial_tty_write failure: status: %d, errno: %d\n", status, errno);
+
+		Stream_Write_UINT32(irp->output, Length); /* Length (4 bytes) */
+		Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
+		irp->Complete(irp);
+		return;
 	}
 
 	Stream_Write_UINT32(irp->output, Length); /* Length (4 bytes) */
 	Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
-
 	irp->Complete(irp);
 }
 

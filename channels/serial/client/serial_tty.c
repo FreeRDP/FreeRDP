@@ -91,8 +91,29 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 	UINT32 begPos, endPos;
 	UINT32 OutputBufferLength;
 	UINT32 status = STATUS_SUCCESS;
+	UINT32 IoCtlDeviceType;
+	UINT32 IoCtlFunction;
+	UINT32 IoCtlMethod;
+	UINT32 IoCtlAccess;
 
-	DEBUG_SVC("in");
+	IoCtlMethod = (IoControlCode & 0x3);
+	IoCtlFunction = ((IoControlCode >> 2) & 0xFFF);
+	IoCtlAccess = ((IoControlCode >> 14) & 0x3);
+	IoCtlDeviceType = ((IoControlCode >> 16) & 0xFFFF);
+
+	/**
+	 * FILE_DEVICE_SERIAL_PORT		0x0000001B
+	 * FILE_DEVICE_UNKNOWN			0x00000022
+	 */
+
+	printf("IoControlCode: DeviceType: 0x%04X Access: 0x%02X Function: 0x%04X Method: 0x%02X\n",
+			IoCtlDeviceType, IoCtlAccess, IoCtlFunction, IoCtlMethod);
+
+	if (IoCtlDeviceType == 0x00000022)
+	{
+		IoControlCode &= 0xFFFF;
+		IoControlCode |= (0x0000001B << 16);
+	}
 
 	Stream_Seek_UINT32(output); /* OutputBufferLength (4 bytes) */
 	begPos = (UINT32) Stream_GetPosition(output);
@@ -389,8 +410,6 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 	ssize_t status;
 	long timeout = 90;
 
-	DEBUG_SVC("in");
-
 	/* Set timeouts kind of like the windows serial timeout parameters. Multiply timeout
 	   with requested read size */
 	if (tty->read_total_timeout_multiplier | tty->read_total_timeout_constant)
@@ -451,12 +470,10 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 	return TRUE;
 }
 
-BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
+int serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
 {
-	ssize_t status;
+	ssize_t status = 0;
 	UINT32 event_txempty = Length;
-
-	DEBUG_SVC("in");
 
 	while (Length > 0)
 	{
@@ -464,7 +481,10 @@ BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
 
 		if (status < 0)
 		{
-			return FALSE;
+			if (errno == EAGAIN)
+				status = 0;
+			else
+				return status;
 		}
 
 		Length -= status;
@@ -473,7 +493,7 @@ BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
 
 	tty->event_txempty = event_txempty;
 
-	return TRUE;
+	return status;
 }
 
 /**
@@ -485,8 +505,6 @@ BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
  */
 void serial_tty_free(SERIAL_TTY* tty)
 {
-	DEBUG_SVC("in");
-
 	if (!tty)
 		return;
 
@@ -587,8 +605,6 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 {
 	int bytes;
 	BOOL status = FALSE;
-
-	DEBUG_SVC("in");
 
 	*result = 0;
 
@@ -840,8 +856,8 @@ static void tty_set_termios(SERIAL_TTY* tty)
 	speed_t speed;
 	struct termios* ptermios;
 
-	DEBUG_SVC("in");
 	ptermios = tty->ptermios;
+
 	switch (tty->baud_rate)
 	{
 #ifdef B75
@@ -1033,8 +1049,6 @@ static UINT32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len)
 {
 	ssize_t status;
 
-	DEBUG_SVC("in");
-
 	status = write(tty->fd, data, len);
 
 	if (status < 0)
@@ -1047,8 +1061,6 @@ static UINT32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len)
 
 static int tty_get_error_status()
 {
-	DEBUG_SVC("in errno %d", errno);
-
 	switch (errno)
 	{
 		case EACCES:
