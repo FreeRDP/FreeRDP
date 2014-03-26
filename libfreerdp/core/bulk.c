@@ -77,7 +77,7 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 	{
 		*ppDstData = pSrcData;
 		*pDstSize = SrcSize;
-		status = 1;
+		status = 0;
 	}
 
 	if (status >= 0)
