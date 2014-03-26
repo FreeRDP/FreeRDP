@@ -178,6 +178,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	}
 
 	rdp->settingsCopy = freerdp_settings_clone(settings);
+	if (!rdp->settingsCopy)
+		return FALSE;
 
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, settings->ServerHostname, settings->ServerPort);
@@ -421,17 +423,13 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	Stream_SealLength(s);
 
 	if (transport_write(rdp->mcs->transport, s) < 0)
-	{
 		return FALSE;
-	}
 
 	Stream_Free(s, TRUE);
 
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(rdp->settings->ClientRandom, rdp))
-	{
 		return FALSE;
-	}
 
 	rdp->do_crypt = TRUE;
 
@@ -441,15 +439,40 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
+		if (!rdp->fips_encrypt)
+		{
+			fprintf(stderr, "%s: unable to allocate des3 encrypt key\n", __FUNCTION__);
+			return FALSE;
+		}
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
+		if (!rdp->fips_decrypt)
+		{
+			fprintf(stderr, "%s: unable to allocate des3 decrypt key\n", __FUNCTION__);
+			return FALSE;
+		}
 
 		rdp->fips_hmac = crypto_hmac_new();
+		if (!rdp->fips_hmac)
+		{
+			fprintf(stderr, "%s: unable to allocate fips hmac\n", __FUNCTION__);
+			return FALSE;
+		}
 		return TRUE;
 	}
 
 	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
-	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
+	if (!rdp->rc4_decrypt_key)
+	{
+		fprintf(stderr, "%s: unable to allocate rc4 decrypt key\n", __FUNCTION__);
+		return FALSE;
+	}
 
+	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
+	if (!rdp->rc4_encrypt_key)
+	{
+		fprintf(stderr, "%s: unable to allocate rc4 encrypt key\n", __FUNCTION__);
+		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -470,7 +493,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channel_id))
 	{
-		fprintf(stderr, "rdp_server_establish_keys: invalid RDP header\n");
+		fprintf(stderr, "%s: invalid RDP header\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -479,7 +502,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)
 	{
-		fprintf(stderr, "rdp_server_establish_keys: missing SEC_EXCHANGE_PKT in security header\n");
+		fprintf(stderr, "%s: missing SEC_EXCHANGE_PKT in security header\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -488,21 +511,21 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	Stream_Read_UINT32(s, rand_len);
 
-	if (Stream_GetRemainingLength(s) < rand_len + 8)  /* include 8 bytes of padding */
+	/* rand_len already includes 8 bytes of padding */
+	if (Stream_GetRemainingLength(s) < rand_len)
 		return FALSE;
 
 	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
 
 	if (rand_len != key_len + 8)
 	{
-		fprintf(stderr, "rdp_server_establish_keys: invalid encrypted client random length\n");
+		fprintf(stderr, "%s: invalid encrypted client random length\n", __FUNCTION__);
 		return FALSE;
 	}
 
 	ZeroMemory(crypt_client_random, sizeof(crypt_client_random));
 	Stream_Read(s, crypt_client_random, rand_len);
-	/* 8 zero bytes of padding */
-	Stream_Seek(s, 8);
+
 	mod = rdp->settings->RdpServerRsaKey->Modulus;
 	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
 	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
@@ -521,14 +544,41 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
+		if (!rdp->fips_encrypt)
+		{
+			fprintf(stderr, "%s: unable to allocate des3 encrypt key\n", __FUNCTION__);
+			return FALSE;
+		}
+
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
+		if (!rdp->fips_decrypt)
+		{
+			fprintf(stderr, "%s: unable to allocate des3 decrypt key\n", __FUNCTION__);
+			return FALSE;
+		}
 
 		rdp->fips_hmac = crypto_hmac_new();
+		if (!rdp->fips_hmac)
+		{
+			fprintf(stderr, "%s: unable to allocate fips hmac\n", __FUNCTION__);
+			return FALSE;
+		}
 		return TRUE;
 	}
 
 	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
+	if (!rdp->rc4_decrypt_key)
+	{
+		fprintf(stderr, "%s: unable to allocate rc4 decrypt key\n", __FUNCTION__);
+		return FALSE;
+	}
+
 	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
+	if (!rdp->rc4_encrypt_key)
+	{
+		fprintf(stderr, "%s: unable to allocate rc4 encrypt key\n", __FUNCTION__);
+		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -872,33 +922,35 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 {
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
+	rdpNego *nego = rdp->nego;
 
 	transport_set_blocking_mode(rdp->transport, TRUE);
 
-	if (!nego_read_request(rdp->nego, s))
+	if (!nego_read_request(nego, s))
 		return FALSE;
 
-	rdp->nego->selected_protocol = 0;
+	nego->selected_protocol = 0;
 
 	fprintf(stderr, "Client Security: NLA:%d TLS:%d RDP:%d\n",
-			(rdp->nego->requested_protocols & PROTOCOL_NLA) ? 1 : 0,
-					(rdp->nego->requested_protocols & PROTOCOL_TLS)	? 1 : 0,
-							(rdp->nego->requested_protocols == PROTOCOL_RDP) ? 1: 0);
+			(nego->requested_protocols & PROTOCOL_NLA) ? 1 : 0,
+			(nego->requested_protocols & PROTOCOL_TLS) ? 1 : 0,
+			(nego->requested_protocols == PROTOCOL_RDP) ? 1 : 0
+	);
 
 	fprintf(stderr, "Server Security: NLA:%d TLS:%d RDP:%d\n",
 			settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
 
-	if ((settings->NlaSecurity) && (rdp->nego->requested_protocols & PROTOCOL_NLA))
+	if ((settings->NlaSecurity) && (nego->requested_protocols & PROTOCOL_NLA))
 	{
-		rdp->nego->selected_protocol = PROTOCOL_NLA;
+		nego->selected_protocol = PROTOCOL_NLA;
 	}
-	else if ((settings->TlsSecurity) && (rdp->nego->requested_protocols & PROTOCOL_TLS))
+	else if ((settings->TlsSecurity) && (nego->requested_protocols & PROTOCOL_TLS))
 	{
-		rdp->nego->selected_protocol = PROTOCOL_TLS;
+		nego->selected_protocol = PROTOCOL_TLS;
 	}
-	else if ((settings->RdpSecurity) && (rdp->nego->selected_protocol == PROTOCOL_RDP))
+	else if ((settings->RdpSecurity) && (nego->selected_protocol == PROTOCOL_RDP))
 	{
-		rdp->nego->selected_protocol = PROTOCOL_RDP;
+		nego->selected_protocol = PROTOCOL_RDP;
 	}
 	else
 	{
@@ -906,20 +958,21 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	}
 
 	fprintf(stderr, "Negotiated Security: NLA:%d TLS:%d RDP:%d\n",
-			(rdp->nego->selected_protocol & PROTOCOL_NLA) ? 1 : 0,
-					(rdp->nego->selected_protocol & PROTOCOL_TLS)	? 1 : 0,
-							(rdp->nego->selected_protocol == PROTOCOL_RDP) ? 1: 0);
+			(nego->selected_protocol & PROTOCOL_NLA) ? 1 : 0,
+			(nego->selected_protocol & PROTOCOL_TLS) ? 1 : 0,
+			(nego->selected_protocol == PROTOCOL_RDP) ? 1: 0
+	);
 
-	if (!nego_send_negotiation_response(rdp->nego))
+	if (!nego_send_negotiation_response(nego))
 		return FALSE;
 
 	status = FALSE;
 
-	if (rdp->nego->selected_protocol & PROTOCOL_NLA)
+	if (nego->selected_protocol & PROTOCOL_NLA)
 		status = transport_accept_nla(rdp->transport);
-	else if (rdp->nego->selected_protocol & PROTOCOL_TLS)
+	else if (nego->selected_protocol & PROTOCOL_TLS)
 		status = transport_accept_tls(rdp->transport);
-	else if (rdp->nego->selected_protocol == PROTOCOL_RDP) /* 0 */
+	else if (nego->selected_protocol == PROTOCOL_RDP) /* 0 */
 		status = transport_accept_rdp(rdp->transport);
 
 	if (!status)

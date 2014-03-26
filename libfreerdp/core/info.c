@@ -248,6 +248,11 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 		clientCookie->logonId = serverCookie->logonId;
 
 		hmac = crypto_hmac_new();
+		if (!hmac)
+		{
+			fprintf(stderr, "%s: unable to allocate hmac\n", __FUNCTION__);
+			goto out_free;
+		}
 
 		crypto_hmac_md5_init(hmac, serverCookie->arcRandomBits, 16);
 
@@ -270,11 +275,12 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 		rdp_write_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
 		/* mark as used */
 		settings->ServerAutoReconnectCookie->cbLen = 0;
+		crypto_hmac_free(hmac);
 	}
 
 	/* reserved1 (2 bytes) */
 	/* reserved2 (2 bytes) */
-
+out_free:
 	free(clientAddress);
 	free(clientDir);
 }

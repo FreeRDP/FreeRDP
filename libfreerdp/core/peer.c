@@ -36,15 +36,22 @@ extern const char* DATA_PDU_TYPE_STRINGS[80];
 
 static BOOL freerdp_peer_initialize(freerdp_peer* client)
 {
-	client->context->rdp->settings->ServerMode = TRUE;
-	client->context->rdp->settings->FrameAcknowledge = 0;
-	client->context->rdp->settings->LocalConnection = client->local;
-	client->context->rdp->state = CONNECTION_STATE_INITIAL;
+	rdpRdp *rdp = client->context->rdp;
+	rdpSettings *settings = rdp->settings;
 
-	if (client->context->rdp->settings->RdpKeyFile != NULL)
+	settings->ServerMode = TRUE;
+	settings->FrameAcknowledge = 0;
+	settings->LocalConnection = client->local;
+	rdp->state = CONNECTION_STATE_INITIAL;
+
+	if (settings->RdpKeyFile != NULL)
 	{
-		client->context->rdp->settings->RdpServerRsaKey =
-		    key_new(client->context->rdp->settings->RdpKeyFile);
+		settings->RdpServerRsaKey = key_new(settings->RdpKeyFile);
+		if (!settings->RdpServerRsaKey)
+		{
+			fprintf(stderr, "%s: inavlid RDP key file %s\n", __FUNCTION__, settings->RdpKeyFile);
+			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -304,8 +311,8 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			}
 
 			rdp_server_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE);
-			return peer_recv_callback(transport, s, extra);
-
+			if (Stream_GetRemainingLength(s) > 0)
+				return peer_recv_callback(transport, s, extra);
 			break;
 
 		case CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE:
