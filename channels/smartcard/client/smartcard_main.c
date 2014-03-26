@@ -322,8 +322,10 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	path = device->Path;
 
 	/* TODO: check if server supports sc redirect (version 5.1) */
-	smartcard = (SMARTCARD_DEVICE*) malloc(sizeof(SMARTCARD_DEVICE));
-	ZeroMemory(smartcard, sizeof(SMARTCARD_DEVICE));
+	smartcard = (SMARTCARD_DEVICE*) calloc(1, sizeof(SMARTCARD_DEVICE));
+
+	if (!smartcard)
+		return -1;
 
 	smartcard->device.type = RDPDR_DTYP_SMARTCARD;
 	smartcard->device.name = "SCARD";
@@ -337,6 +339,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	smartcard->name = NULL;
 	smartcard->path = NULL;
+
 	if (path)
 	{
 		smartcard->path = path;

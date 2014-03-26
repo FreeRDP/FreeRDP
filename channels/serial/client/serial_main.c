@@ -423,15 +423,28 @@ static void serial_free(DEVICE* device)
 
 	DEBUG_SVC("freeing device");
 
-	/* Stop thread */
-	SetEvent(serial->stopEvent);
-	if(serial->mthread)
+	if (serial->stopEvent)
 	{
-		TerminateThread(serial->mthread, 0);
-		WaitForSingleObject(serial->mthread, INFINITE);
-		CloseHandle(serial->mthread);
+		SetEvent(serial->stopEvent);
+
+		if (serial->mthread)
+		{
+			TerminateThread(serial->mthread, 0);
+			WaitForSingleObject(serial->mthread, INFINITE);
+			CloseHandle(serial->mthread);
+			serial->mthread = NULL;
+		}
+
+		if (serial->thread)
+		{
+			WaitForSingleObject(serial->thread, INFINITE);
+			CloseHandle(serial->thread);
+			serial->thread = NULL;
+		}
+
+		CloseHandle(serial->stopEvent);
+		serial->stopEvent = NULL;
 	}
-	WaitForSingleObject(serial->thread, INFINITE);
 
 	serial_tty_free(serial->tty);
 
@@ -439,9 +452,8 @@ static void serial_free(DEVICE* device)
 	Stream_Free(serial->device.data, TRUE);
 	Queue_Free(serial->queue);
 	list_free(serial->pending_irps);
-	CloseHandle(serial->stopEvent);
 	CloseHandle(serial->newEvent);
-	CloseHandle(serial->thread);
+
 	free(serial);
 }
 
@@ -454,7 +466,8 @@ static void serial_abort_single_io(SERIAL_DEVICE* serial, UINT32 file_id, UINT32
 	DEBUG_SVC("[in] pending size %d", list_size(serial->pending_irps));
 
 	tty = serial->tty;
-	if(!tty)
+
+	if (!tty)
 	{
 		DEBUG_WARN("tty = %p", tty);
 		return;
@@ -509,7 +522,8 @@ static void serial_check_for_events(SERIAL_DEVICE* serial)
 	SERIAL_TTY* tty;
 
 	tty = serial->tty;
-	if(!tty)
+
+	if (!tty)
 	{
 		DEBUG_WARN("tty = %p", tty);
 		return;
@@ -789,10 +803,18 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	name = device->Name;
 	path = device->Path;
 
+	if (!name || (name[0] == '*'))
+	{
+		/* TODO: implement auto detection of parallel ports */
+		return 0;
+	}
+
 	if ((name && name[0]) && (path && path[0]))
 	{
-		serial = (SERIAL_DEVICE*) malloc(sizeof(SERIAL_DEVICE));
-		ZeroMemory(serial, sizeof(SERIAL_DEVICE));
+		serial = (SERIAL_DEVICE*) calloc(1, sizeof(SERIAL_DEVICE));
+
+		if (!serial)
+			return -1;
 
 		serial->device.type = RDPDR_DTYP_SERIAL;
 		serial->device.name = name;
