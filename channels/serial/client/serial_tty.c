@@ -373,10 +373,8 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 {
 	ssize_t status;
 	long timeout = 90;
-	struct termios* ptermios;
 
 	DEBUG_SVC("in");
-	ptermios = tty->ptermios;
 
 	/* Set timeouts kind of like the windows serial timeout parameters. Multiply timeout
 	   with requested read size */
@@ -391,21 +389,35 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 		timeout = (tty->read_interval_timeout * (*Length) + 99) / 100;
 	}
 
-	/* If a timeout is set, do a blocking read, which times out after some time.
-	   It will make FreeRDP less responsive, but it will improve serial performance,
-	   by not reading one character at a time. */
-	if (timeout == 0)
-	{
-		ptermios->c_cc[VTIME] = 0;
-		ptermios->c_cc[VMIN] = 0;
-	}
-	else
-	{
-		ptermios->c_cc[VTIME] = timeout;
-		ptermios->c_cc[VMIN] = 1;
-	}
+        if (tty->timeout != timeout)
+        {
+		struct termios* ptermios;
 
-	tcsetattr(tty->fd, TCSANOW, ptermios);
+		ptermios = (struct termios*) calloc(1, sizeof(struct termios));
+
+		if (tcgetattr(tty->fd, ptermios) < 0)
+			return FALSE;
+
+		/**
+		 * If a timeout is set, do a blocking read, which times out after some time.
+		 * It will make FreeRDP less responsive, but it will improve serial performance,
+		 * by not reading one character at a time.
+		 */
+
+		if (timeout == 0)
+		{
+			ptermios->c_cc[VTIME] = 0;
+			ptermios->c_cc[VMIN] = 0;
+		}
+		else
+		{
+			ptermios->c_cc[VTIME] = timeout;
+			ptermios->c_cc[VMIN] = 1;
+		}
+
+		tcsetattr(tty->fd, TCSANOW, ptermios);
+		tty->timeout = timeout;
+	}
 
 	ZeroMemory(buffer, *Length);
 
@@ -480,8 +492,7 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 {
 	SERIAL_TTY* tty;
 
-	tty = (SERIAL_TTY*) malloc(sizeof(SERIAL_TTY));
-	ZeroMemory(tty, sizeof(SERIAL_TTY));
+	tty = (SERIAL_TTY*) calloc(1, sizeof(SERIAL_TTY));
 
 	tty->id = id;
 	tty->fd = open(path, O_RDWR | O_NOCTTY | O_NONBLOCK);
@@ -526,11 +537,14 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 	}
 
 	tty->ptermios->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
-	tty->ptermios->c_iflag = IGNPAR | ICRNL;
 	tty->ptermios->c_oflag &= ~OPOST;
 	tty->ptermios->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
 	tty->ptermios->c_cflag &= ~(CSIZE | PARENB);
-	tty->ptermios->c_cflag |= CLOCAL | CREAD | CS8;
+	tty->ptermios->c_cflag |= CS8;
+
+	tty->ptermios->c_iflag = IGNPAR;
+	tty->ptermios->c_cflag |= CLOCAL | CREAD;
+
 	tcsetattr(tty->fd, TCSANOW, tty->ptermios);
 
 	tty->event_txempty = 0;
@@ -801,6 +815,8 @@ static BOOL tty_get_termios(SERIAL_TTY* tty)
 	tty->chars[SERIAL_CHAR_EOF] = ptermios->c_cc[VEOF];
 	tty->chars[SERIAL_CHAR_BREAK] = ptermios->c_cc[VINTR];
 	tty->chars[SERIAL_CHAR_ERROR] = ptermios->c_cc[VKILL];
+
+	tty->timeout = ptermios->c_cc[VTIME];
 
 	return TRUE;
 }

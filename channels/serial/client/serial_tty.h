@@ -65,6 +65,7 @@ struct _SERIAL_TTY
 	int event_dsr;
 	int event_rlsd;
 	int event_pending;
+	long timeout;
 };
 
 SERIAL_TTY* serial_tty_new(const char* path, UINT32 id);
