@@ -192,11 +192,6 @@ BOOL freerdp_connect(freerdp* instance)
 		freerdp_set_last_error(instance->context, FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
 	}
 
-	if (!connectErrorCode)
-	{
-		connectErrorCode = UNDEFINEDCONNECTERROR;
-	}
-
 	SetEvent(rdp->transport->connectedEvent);
 
 	freerdp_connect_finally:
