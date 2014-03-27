@@ -913,7 +913,7 @@ int transport_check_fds(rdpTransport* transport)
 	{
 		status = transport_read_nonblocking(transport);
 
-		if (status < 0 || Stream_GetPosition(transport->ReceiveBuffer) == 0)
+		if ((status <= 0) || (Stream_GetPosition(transport->ReceiveBuffer) < 2))
 			return status;
 
 		while ((pos = Stream_GetPosition(transport->ReceiveBuffer)) > 0)
