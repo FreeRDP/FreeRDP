@@ -152,7 +152,7 @@ DWORD mac_client_update_thread(void* param)
 	}
 	
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 DWORD mac_client_input_thread(void* param)
@@ -177,7 +177,7 @@ DWORD mac_client_input_thread(void* param)
 	}
 	
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 DWORD mac_client_channels_thread(void* param)
@@ -214,7 +214,7 @@ DWORD mac_client_channels_thread(void* param)
 	}
 	
 	ExitThread(0);
-	return NULL;
+	return 0;
 }
 
 DWORD mac_client_thread(void* param)
