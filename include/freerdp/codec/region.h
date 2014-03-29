@@ -24,6 +24,7 @@
 #ifndef __REGION_H___
 #define __REGION_H___
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
 struct _REGION16_DATA;
@@ -43,7 +44,7 @@ typedef struct _REGION16 REGION16;
  * @param r2 second rectangle
  * @return if the two rectangles intersect
  */
-BOOL rectangles_intersects(const RECTANGLE_16 *r1, const RECTANGLE_16 *r2);
+FREERDP_API BOOL rectangles_intersects(const RECTANGLE_16 *r1, const RECTANGLE_16 *r2);
 
 /** computes the intersection of two rectangles
  * @param r1 first rectangle
@@ -51,15 +52,15 @@ BOOL rectangles_intersects(const RECTANGLE_16 *r1, const RECTANGLE_16 *r2);
  * @param dst resulting intersection
  * @return if the two rectangles intersect
  */
-BOOL rectangles_intersection(const RECTANGLE_16 *r1, const RECTANGLE_16 *r2, RECTANGLE_16 *dst);
+FREERDP_API BOOL rectangles_intersection(const RECTANGLE_16 *r1, const RECTANGLE_16 *r2, RECTANGLE_16 *dst);
 
 /** initialize a region16
  * @param region the region to initialise
  */
-void region16_init(REGION16 *region);
+FREERDP_API void region16_init(REGION16 *region);
 
 /** @return the number of rectangles of this region16 */
-int region16_n_rects(const REGION16 *region);
+FREERDP_API int region16_n_rects(const REGION16 *region);
 
 /** returns a pointer on rectangles and the number of rectangles in this region.
  * nbRect can be set to NULL if not interested by the numnber of rectangles.
@@ -67,33 +68,33 @@ int region16_n_rects(const REGION16 *region);
  * @param nbRects a pointer that will be filled with the number of rectangles
  * @return a pointer on the rectangles
  */
-const RECTANGLE_16 *region16_rects(const REGION16 *region, int *nbRects);
+FREERDP_API const RECTANGLE_16 *region16_rects(const REGION16 *region, int *nbRects);
 
 /** @return the extents rectangle of this region */
-const RECTANGLE_16 *region16_extents(const REGION16 *region);
+FREERDP_API const RECTANGLE_16 *region16_extents(const REGION16 *region);
 
 /** returns if the region is empty
  * @param region
  * @return if the region is empty
  */
-BOOL region16_is_empty(const REGION16 *region);
+FREERDP_API BOOL region16_is_empty(const REGION16 *region);
 
 /** clears the region, the region is resetted to a (0,0,0,0) region
  * @param region
  */
-void region16_clear(REGION16 *region);
+FREERDP_API void region16_clear(REGION16 *region);
 
 /** dumps the region on stderr
  * @param region the region to dump
  */
-void region16_print(const REGION16 *region);
+FREERDP_API void region16_print(const REGION16 *region);
 
 /** copies the region to another region
  * @param dst destination region
  * @param src source region
  * @return if the operation was successful (false meaning out-of-memory)
  */
-BOOL region16_copy(REGION16 *dst, const REGION16 *src);
+FREERDP_API BOOL region16_copy(REGION16 *dst, const REGION16 *src);
 
 /** adds a rectangle in src and stores the resulting region in dst
  * @param dst destination region
@@ -101,14 +102,14 @@ BOOL region16_copy(REGION16 *dst, const REGION16 *src);
  * @param rect the rectangle to add
  * @return if the operation was successful (false meaning out-of-memory)
  */
-BOOL region16_union_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 *rect);
+FREERDP_API BOOL region16_union_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 *rect);
 
 /** returns if a rectangle intersects the region
  * @param src the region
  * @param arg2 the rectangle
  * @return if region and rectangle intersect
  */
-BOOL region16_intersects_rect(const REGION16 *src, const RECTANGLE_16 *arg2);
+FREERDP_API BOOL region16_intersects_rect(const REGION16 *src, const RECTANGLE_16 *arg2);
 
 /** computes the intersection between a region and a rectangle
  * @param dst destination region
@@ -116,12 +117,12 @@ BOOL region16_intersects_rect(const REGION16 *src, const RECTANGLE_16 *arg2);
  * @param arg2 the rectangle that intersects
  * @return if the operation was successful (false meaning out-of-memory)
  */
-BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 *arg2);
+FREERDP_API BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE_16 *arg2);
 
 /** release internal data associated with this region
  * @param region the region to release
  */
-void region16_uninit(REGION16 *region);
+FREERDP_API void region16_uninit(REGION16 *region);
 
 
 #endif /* __REGION_H___ */

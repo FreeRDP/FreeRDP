@@ -87,11 +87,11 @@ struct _BITMAP_PLANAR_CONTEXT
 	BYTE* rlePlanesBuffer;
 };
 
-int freerdp_bitmap_planar_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size);
+FREERDP_API int freerdp_bitmap_planar_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size);
 
-int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[4]);
-BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* plane, int width, int height, BYTE* outPlane, int* dstSize);
-BYTE* freerdp_bitmap_planar_delta_encode_plane(BYTE* inPlane, int width, int height, BYTE* outPlane);
-int freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[4], int width, int height, BYTE* outPlanes[4]);
+FREERDP_API int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[4]);
+FREERDP_API BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* plane, int width, int height, BYTE* outPlane, int* dstSize);
+FREERDP_API BYTE* freerdp_bitmap_planar_delta_encode_plane(BYTE* inPlane, int width, int height, BYTE* outPlane);
+FREERDP_API int freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[4], int width, int height, BYTE* outPlanes[4]);
 
 #endif /* FREERDP_CODEC_PLANAR_PRIVATE_H */
