@@ -35,6 +35,7 @@ struct rdp_bulk
 	MPPC_CONTEXT* mppcSend;
 	MPPC_CONTEXT* mppcRecv;
 	NCRUSH_CONTEXT* ncrushRecv;
+	NCRUSH_CONTEXT* ncrushSend;
 	BYTE OutputBuffer[65536];
 
 	UINT64 TotalCompressedBytes;

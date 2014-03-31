@@ -23,12 +23,12 @@
 
 #include "bulk.h"
 
-//#define WITH_BULK_DEBUG		1
+#define WITH_BULK_DEBUG		1
 
 UINT32 bulk_compression_level(rdpBulk* bulk)
 {
 	rdpSettings* settings = bulk->context->settings;
-	bulk->CompressionLevel = (settings->CompressionLevel >= 1) ? 1 : 0;
+	bulk->CompressionLevel = (settings->CompressionLevel >= 2) ? 2 : 0;
 	return bulk->CompressionLevel;
 }
 
@@ -119,8 +119,16 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 	*pDstSize = sizeof(bulk->OutputBuffer);
 
 	bulk_compression_level(bulk);
-	mppc_set_compression_level(bulk->mppcSend, bulk->CompressionLevel);
-	status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, *ppDstData, pDstSize, pFlags);
+
+	if (bulk->CompressionLevel < 2)
+	{
+		mppc_set_compression_level(bulk->mppcSend, bulk->CompressionLevel);
+		status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, *ppDstData, pDstSize, pFlags);
+	}
+	else
+	{
+		status = ncrush_compress(bulk->ncrushSend, pSrcData, SrcSize, *ppDstData, pDstSize, pFlags);
+	}
 
 	if (status >= 0)
 	{
@@ -155,6 +163,7 @@ void bulk_reset(rdpBulk* bulk)
 	mppc_context_reset(bulk->mppcSend);
 	mppc_context_reset(bulk->mppcRecv);
 	ncrush_context_reset(bulk->ncrushRecv);
+	ncrush_context_reset(bulk->ncrushSend);
 }
 
 rdpBulk* bulk_new(rdpContext* context)
@@ -171,6 +180,7 @@ rdpBulk* bulk_new(rdpContext* context)
 		bulk->mppcRecv = mppc_context_new(1, FALSE);
 
 		bulk->ncrushRecv = ncrush_context_new(FALSE);
+		bulk->ncrushSend = ncrush_context_new(TRUE);
 
 		bulk->CompressionLevel = context->settings->CompressionLevel;
 
@@ -190,6 +200,7 @@ void bulk_free(rdpBulk* bulk)
 	mppc_context_free(bulk->mppcRecv);
 
 	ncrush_context_free(bulk->ncrushRecv);
+	ncrush_context_free(bulk->ncrushSend);
 
 	free(bulk);
 }
