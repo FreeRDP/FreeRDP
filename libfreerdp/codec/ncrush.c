@@ -1254,6 +1254,42 @@ const BYTE HuffLengthLOM[32] =
 	9 /* 31 */
 };
 
+const UINT16 HuffCodeLOM[32] =
+{
+	0x0001, /* 0 */
+	0x0000, /* 1 */
+	0x0002, /* 2 */
+	0x0009, /* 3 */
+	0x0006, /* 4 */
+	0x0005, /* 5 */
+	0x000D, /* 6 */
+	0x000B, /* 7 */
+	0x0003, /* 8 */
+	0x001B, /* 9 */
+	0x0007, /* 10 */
+	0x0017, /* 11 */
+	0x0037, /* 12 */
+	0x000F, /* 13 */
+	0x004F, /* 14 */
+	0x006F, /* 15 */
+	0x002F, /* 16 */
+	0x00EF, /* 17 */
+	0x001F, /* 18 */
+	0x005F, /* 19 */
+	0x015F, /* 20 */
+	0x009F, /* 21 */
+	0x00DF, /* 22 */
+	0x01DF, /* 23 */
+	0x003F, /* 24 */
+	0x013F, /* 25 */
+	0x00BF, /* 26 */
+	0x01BF, /* 27 */
+	0x007F, /* 28 */
+	0x017F, /* 29 */
+	0x00FF, /* 30 */
+	0x01FF /* 31 */
+};
+
 UINT32 CopyOffsetBitsLUT[32] =
 {
 	0x0, /* 0 */
@@ -1411,11 +1447,22 @@ UINT32 LOMBaseLUT[30] =
 		} \
 	} \
 
+#define NCrushWriteBits(_bits, _nbits) \
+	accumulator |= _bits << offset; \
+	offset += _nbits; \
+	if (offset >= 16) { \
+		*DstPtr++ = accumulator & 0xFF; \
+		*DstPtr++ = (accumulator >> 8) & 0xFF; \
+		accumulator >>= 16; \
+		offset -= 16; \
+	}
+
 int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	UINT32 index;
 	UINT32 bits;
 	UINT32 nbits;
+	UINT32 offset;
 	BYTE* SrcPtr;
 	BYTE* SrcEnd;
 	UINT16 Mask;
@@ -1695,9 +1742,136 @@ int ncrush_hash_table_add(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize
 	return 1;
 }
 
-int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT32 HistoryOffset, UINT32* CopyOffset)
+int ncrush_find_match_length(BYTE* Ptr1, BYTE* Ptr2, BYTE* HistoryPtr)
 {
-	return 1;
+	BYTE val1, val2;
+	BYTE* Ptr = Ptr1;
+
+	do
+	{
+		if (Ptr1 > HistoryPtr)
+			break;
+
+		val1 = *Ptr1++;
+		val2 = *Ptr2++;
+	}
+	while (val1 == val2);
+
+	return Ptr1 - (Ptr + 1);
+}
+
+int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT32 HistoryOffset, UINT32* pCopyOffset)
+{
+	int i, j;
+	int Length;
+	int MatchLength;
+	BYTE* MatchPtr;
+	UINT16 Offset;
+	UINT16 _Offset;
+	UINT16 CopyOffset;
+	BYTE* HistoryBuffer;
+
+	if (!ncrush->MatchTable[HistoryOffset])
+		return -1;
+
+	i = 4;
+	MatchLength = 2;
+	Offset = HistoryOffset;
+	HistoryBuffer = (BYTE*) ncrush->HistoryBuffer;
+
+	ncrush->MatchTable[0] = HistoryOffset;
+	CopyOffset = ncrush->MatchTable[HistoryOffset];
+
+	_Offset = ncrush->MatchTable[Offset];
+	MatchPtr = &HistoryBuffer[MatchLength];
+
+	while (--i < 0)
+	{
+		j = 0;
+
+		if (j == 0)
+		{
+			Offset = ncrush->MatchTable[_Offset];
+			if (MatchPtr[_Offset] == HistoryBuffer[HistoryOffset + MatchLength])
+			{
+				Offset = _Offset;
+				j++;
+			}
+		}
+
+		if (j == 1)
+		{
+			_Offset = ncrush->MatchTable[Offset];
+			if (MatchPtr[Offset] == HistoryBuffer[HistoryOffset + MatchLength])
+			{
+				j++;
+			}
+		}
+
+		if (j == 2)
+		{
+			Offset = ncrush->MatchTable[_Offset];
+			if (MatchPtr[_Offset] == HistoryBuffer[HistoryOffset + MatchLength])
+			{
+				Offset = _Offset;
+				j++;
+			}
+		}
+
+		if (j == 3)
+		{
+			_Offset = ncrush->MatchTable[Offset];
+			if (MatchPtr[Offset] == HistoryBuffer[HistoryOffset + MatchLength])
+			{
+				j++;
+			}
+		}
+
+		if (j == 4)
+		{
+			Offset = ncrush->MatchTable[_Offset];
+			if (MatchPtr[_Offset] == HistoryBuffer[HistoryOffset + MatchLength])
+			{
+				Offset = _Offset;
+				j++;
+			}
+		}
+
+		if (j == 5)
+		{
+			_Offset = ncrush->MatchTable[Offset];
+			if (MatchPtr[Offset] == HistoryBuffer[HistoryOffset + MatchLength])
+			{
+				j++;
+			}
+		}
+
+		if (j && (Offset != (HistoryOffset && Offset)))
+		{
+			Length = ncrush_find_match_length(&HistoryBuffer[HistoryOffset + 2],
+					&HistoryBuffer[Offset + 2], ncrush->HistoryPtr) + 2;
+				
+			if (Length < 2)
+				return -1;
+				
+			if ((Length <= MatchLength)
+				|| (MatchLength = Length, CopyOffset = Offset,
+				&HistoryBuffer[HistoryOffset + 2] < ncrush->HistoryPtr)
+				&& (Length <= 16))
+			{
+				_Offset = ncrush->MatchTable[Offset];
+				MatchPtr = &HistoryBuffer[MatchLength];
+				continue;
+			}
+
+			break;
+		}
+	}
+
+	ncrush->MatchTable[0] = 0;
+	*pCopyOffset = CopyOffset;
+	
+	return MatchLength;
 }
 
 int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
@@ -1756,13 +1930,18 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	BYTE Literal;
 	BYTE* SrcPtr;
 	BYTE* DstPtr;
+	UINT32 bits;
+	UINT32 offset;
+	UINT16 Mask;
+	UINT32 MaskedBits;
+	UINT32 accumulator;
 	BYTE* SrcEndPtr;
 	BYTE* DstEndPtr;
 	BYTE* HistoryPtr;
 	int MatchIndex;
 	UINT32 IndexLEC;
+	UINT32 IndexLOM;
 	UINT32 BitLength;
-	UINT32 accumulator;
 	UINT32 CopyOffset;
 	UINT32 OldCopyOffset;
 	UINT32* OffsetCache;
@@ -1771,6 +1950,8 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	BYTE* HistoryBuffer;
 	UINT32 HistoryBufferSize;
 	BYTE* HistoryBufferEndPtr;
+	UINT32 CopyOffsetIndex;
+	UINT32 CopyOffsetBits;
 
 	HistoryBuffer = ncrush->HistoryBuffer;
 
@@ -1796,7 +1977,10 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		*pFlags = 0;
 	}
 
+	bits = 0;
+	offset = 0;
 	accumulator = 0;
+
 	DstPtr = pDstData;
 	SrcPtr = pSrcData;
 	SrcEndPtr = &pSrcData[SrcSize];
@@ -1839,6 +2023,8 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 		if (!MatchIndex)
 		{
+			/* Literal */
+
 			Literal = *SrcPtr++;
 			HistoryPtr++;
 
@@ -1854,6 +2040,8 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 			if (BitLength > 15)
 				return -1;
+
+			NCrushWriteBits(IndexLEC, BitLength);
 		}
 		else
 		{
@@ -1917,16 +2105,158 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				OffsetCache[1] = OffsetCache[0];
 				OffsetCache[0] = CopyOffset;
 			}
+
+			if (OffsetCacheIndex > 4)
+			{
+				/* CopyOffset not in OffsetCache */
+
+				if (CopyOffset >= 256)
+					bits = (CopyOffset >> 7) | 0x100;
+				else
+					bits = CopyOffset;
+
+				CopyOffsetIndex = ncrush->HuffTableCopyOffset[bits];
+				CopyOffsetBits = CopyOffsetBitsLUT[CopyOffsetIndex];
+				BitLength = HuffLengthLEC[CopyOffsetIndex + 257];
+				IndexLEC = *((UINT16*)&HuffCodeLEC[2 * (CopyOffsetIndex + 257)]);
+				
+				if (BitLength > 15)
+					return -1;
+				
+				if (CopyOffsetBits > 18)
+					return -1;
+
+				NCrushWriteBits(IndexLEC, BitLength);
+
+				Mask = ((1 << CopyOffsetBits) - 1);
+				MaskedBits = CopyOffset & Mask;
+
+				NCrushWriteBits(MaskedBits, CopyOffsetBits);
+
+				if ((MatchIndex - 2) >= 768)
+					IndexLOM = 28;
+				else
+					IndexLOM = ncrush->HuffTableCopyOffset[MatchIndex + 1022];
+
+				BitLength = HuffLengthLOM[IndexLOM];
+				IndexLOM = LOMBitsLUT[IndexLOM];
+
+				NCrushWriteBits(HuffCodeLOM[IndexLOM], BitLength);
+
+				Mask = ((1 << IndexLOM) - 1);
+				MaskedBits = (MatchIndex - 2) & Mask;
+
+				NCrushWriteBits(MaskedBits, IndexLOM);
+
+				if ((MaskedBits + LOMBaseLUT[IndexLOM]) != MatchIndex)
+					return -1;
+			}
+			else
+			{
+				/* CopyOffset in OffsetCache */
+
+				BitLength = HuffLengthLEC[OffsetCacheIndex + 289];
+				IndexLEC = *((UINT16*)&HuffCodeLEC[2 * (OffsetCacheIndex + 289)]);
+
+				if (BitLength >= 15)
+					return -1;
+
+				NCrushWriteBits(IndexLEC, BitLength);
+
+				if ((MatchIndex - 2) >= 768)
+					IndexLOM = 28;
+				else
+					IndexLOM = ncrush->HuffTableCopyOffset[MatchIndex + 1022];
+
+				BitLength = HuffLengthLOM[IndexLOM];
+				IndexLOM = LOMBitsLUT[IndexLOM];
+
+				NCrushWriteBits(HuffCodeLOM[IndexLOM], BitLength);
+
+				Mask = ((1 << IndexLOM) - 1);
+				MaskedBits = (MatchIndex - 2) & Mask;
+
+				NCrushWriteBits(MaskedBits, IndexLOM);
+
+				if ((MaskedBits + LOMBaseLUT[IndexLOM]) != MatchIndex)
+					return -1;
+			}
 		}
 
 		if (HistoryPtr >= HistoryBufferEndPtr)
 			return -1;
 	}
 
+	while (SrcPtr < SrcEndPtr)
+	{
+		if (DstPtr + 2 > DstEndPtr)
+		{
+			ncrush_context_reset(ncrush);
+			*pFlags = PACKET_FLUSHED;
+			return 1;
+		}
+
+		Literal = *SrcPtr++;
+		HistoryPtr++;
+
+		BitLength = HuffLengthLEC[Literal];
+		IndexLEC = HuffCodeLEC[Literal];
+
+		if (BitLength > 15)
+			return -1;
+
+		NCrushWriteBits(IndexLEC, BitLength);
+	}
+
+	if ((DstPtr + 4) >= DstEndPtr)
+	{
+		ncrush_context_reset(ncrush);
+		*pFlags = PACKET_FLUSHED;
+		return 1;
+	}
+
+	*DstPtr++ = accumulator & 0xFF;
+	*DstPtr++ = (accumulator >> 8) & 0xFF;
+
 	*pDstSize = DstPtr - pDstData;
 	ncrush->HistoryOffset = HistoryPtr - HistoryBuffer;
 
+	if (ncrush->HistoryOffset >= ncrush->HistoryBufferSize)
+		return -1;
+
 	return 1;
+}
+
+void ncrush_generate_tables(NCRUSH_CONTEXT *context)
+{
+	int i, j, k;
+
+	k = 0;
+	for (i = 0; i < 28; i++)
+	{
+		for (j = 0; j < 1 << LOMBitsLUT[i]; j++)
+		{
+			context->HuffTableLOM[k++ + 2] = i;
+		}
+	}
+
+	k = 0;
+	for (i = 0; i < 16; i++)
+	{
+		for (j = 0; j < 1 << CopyOffsetBitsLUT[i]; j++)
+		{
+			context->HuffTableCopyOffset[k++] = i;
+		}
+	}
+
+	k /= 128;
+	for (i = 16; i < 32; i++)
+	{
+		for (j = 0; j < 1 << (CopyOffsetBitsLUT[i] - 7); j++)
+		{
+			context->HuffTableCopyOffset[k++ + 256] = i;
+		}
+	}
 }
 
 void ncrush_context_reset(NCRUSH_CONTEXT* ncrush)
@@ -1961,6 +2291,8 @@ NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor)
 
 		ncrush->HistoryOffset = 0;
 		ncrush->HistoryPtr = &(ncrush->HistoryBuffer[ncrush->HistoryOffset]);
+
+		ncrush_generate_tables(ncrush);
 	}
 
 	return ncrush;

@@ -96,10 +96,8 @@ int test_NCrushDecompressBells()
 
 int TestFreeRDPCodecNCrush(int argc, char* argv[])
 {
-	//test_NCrushCompressBells();
-	test_NCrushDecompressBells();
-
-	//BitDump(TEST_BELLS_NCRUSH, (sizeof(TEST_BELLS_NCRUSH) - 1) * 8, 0);
+	test_NCrushCompressBells();
+	//test_NCrushDecompressBells();
 
 	return 0;
 }

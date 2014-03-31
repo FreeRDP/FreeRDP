@@ -39,6 +39,8 @@ struct _NCRUSH_CONTEXT
 	UINT32 OffsetCache[4];
 	UINT16 HashTable[65536];
 	UINT16 MatchTable[65536];
+	BYTE HuffTableLOM[4096];
+	BYTE HuffTableCopyOffset[1024];
 };
 typedef struct _NCRUSH_CONTEXT NCRUSH_CONTEXT;
 
