@@ -920,302 +920,596 @@ const BYTE HuffLengthLEC[294] =
 	13 /* 293 */
 };
 
-const BYTE HuffCodeLEC[294] =
+const BYTE HuffCodeLEC[588] =
 {
-	0x4, /* 0 */
-	0x0, /* 1 */
+	0x04, /* 0 */
+	0x00, /* 1 */
 	0x24, /* 2 */
-	0x0, /* 3 */
+	0x00, /* 3 */
 	0x14, /* 4 */
-	0x0, /* 5 */
+	0x00, /* 5 */
 	0x11, /* 6 */
-	0x0, /* 7 */
+	0x00, /* 7 */
 	0x51, /* 8 */
-	0x0, /* 9 */
+	0x00, /* 9 */
 	0x31, /* 10 */
-	0x0, /* 11 */
+	0x00, /* 11 */
 	0x71, /* 12 */
-	0x0, /* 13 */
-	0x9, /* 14 */
-	0x0, /* 15 */
+	0x00, /* 13 */
+	0x09, /* 14 */
+	0x00, /* 15 */
 	0x49, /* 16 */
-	0x0, /* 17 */
+	0x00, /* 17 */
 	0x29, /* 18 */
-	0x0, /* 19 */
+	0x00, /* 19 */
 	0x69, /* 20 */
-	0x0, /* 21 */
+	0x00, /* 21 */
 	0x15, /* 22 */
-	0x0, /* 23 */
+	0x00, /* 23 */
 	0x95, /* 24 */
-	0x0, /* 25 */
+	0x00, /* 25 */
 	0x55, /* 26 */
-	0x0, /* 27 */
+	0x00, /* 27 */
 	0xD5, /* 28 */
-	0x0, /* 29 */
+	0x00, /* 29 */
 	0x35, /* 30 */
-	0x0, /* 31 */
+	0x00, /* 31 */
 	0xB5, /* 32 */
-	0x0, /* 33 */
+	0x00, /* 33 */
 	0x75, /* 34 */
-	0x0, /* 35 */
+	0x00, /* 35 */
 	0x1D, /* 36 */
-	0x0, /* 37 */
+	0x00, /* 37 */
 	0xF5, /* 38 */
-	0x0, /* 39 */
+	0x00, /* 39 */
 	0x1D, /* 40 */
-	0x1, /* 41 */
+	0x01, /* 41 */
 	0x9D, /* 42 */
-	0x0, /* 43 */
+	0x00, /* 43 */
 	0x9D, /* 44 */
-	0x1, /* 45 */
+	0x01, /* 45 */
 	0x5D, /* 46 */
-	0x0, /* 47 */
-	0xD, /* 48 */
-	0x0, /* 49 */
+	0x00, /* 47 */
+	0x0D, /* 48 */
+	0x00, /* 49 */
 	0x8D, /* 50 */
-	0x0, /* 51 */
+	0x00, /* 51 */
 	0x5D, /* 52 */
-	0x1, /* 53 */
+	0x01, /* 53 */
 	0xDD, /* 54 */
-	0x0, /* 55 */
+	0x00, /* 55 */
 	0xDD, /* 56 */
-	0x1, /* 57 */
+	0x01, /* 57 */
 	0x3D, /* 58 */
-	0x0, /* 59 */
+	0x00, /* 59 */
 	0x3D, /* 60 */
-	0x1, /* 61 */
+	0x01, /* 61 */
 	0xBD, /* 62 */
-	0x0, /* 63 */
+	0x00, /* 63 */
 	0x4D, /* 64 */
-	0x0, /* 65 */
+	0x00, /* 65 */
 	0xBD, /* 66 */
-	0x1, /* 67 */
+	0x01, /* 67 */
 	0x7D, /* 68 */
-	0x0, /* 69 */
+	0x00, /* 69 */
 	0x6B, /* 70 */
-	0x0, /* 71 */
+	0x00, /* 71 */
 	0x7D, /* 72 */
-	0x1, /* 73 */
+	0x01, /* 73 */
 	0xFD, /* 74 */
-	0x0, /* 75 */
+	0x00, /* 75 */
 	0xFD, /* 76 */
-	0x1, /* 77 */
-	0x3, /* 78 */
-	0x0, /* 79 */
-	0x3, /* 80 */
-	0x1, /* 81 */
+	0x01, /* 77 */
+	0x03, /* 78 */
+	0x00, /* 79 */
+	0x03, /* 80 */
+	0x01, /* 81 */
 	0x83, /* 82 */
-	0x0, /* 83 */
+	0x00, /* 83 */
 	0x83, /* 84 */
-	0x1, /* 85 */
+	0x01, /* 85 */
 	0x6B, /* 86 */
-	0x2, /* 87 */
+	0x02, /* 87 */
 	0x43, /* 88 */
-	0x0, /* 89 */
+	0x00, /* 89 */
 	0x6B, /* 90 */
-	0x1, /* 91 */
+	0x01, /* 91 */
 	0x6B, /* 92 */
-	0x3, /* 93 */
+	0x03, /* 93 */
 	0xEB, /* 94 */
-	0x0, /* 95 */
+	0x00, /* 95 */
 	0x43, /* 96 */
-	0x1, /* 97 */
+	0x01, /* 97 */
 	0xC3, /* 98 */
-	0x0, /* 99 */
+	0x00, /* 99 */
 	0xEB, /* 100 */
-	0x2, /* 101 */
+	0x02, /* 101 */
 	0xC3, /* 102 */
-	0x1, /* 103 */
+	0x01, /* 103 */
 	0xEB, /* 104 */
-	0x1, /* 105 */
+	0x01, /* 105 */
 	0x23, /* 106 */
-	0x0, /* 107 */
+	0x00, /* 107 */
 	0xEB, /* 108 */
-	0x3, /* 109 */
+	0x03, /* 109 */
 	0x23, /* 110 */
-	0x1, /* 111 */
+	0x01, /* 111 */
 	0xA3, /* 112 */
-	0x0, /* 113 */
+	0x00, /* 113 */
 	0xA3, /* 114 */
-	0x1, /* 115 */
+	0x01, /* 115 */
 	0x1B, /* 116 */
-	0x0, /* 117 */
+	0x00, /* 117 */
 	0x1B, /* 118 */
-	0x2, /* 119 */
+	0x02, /* 119 */
 	0x63, /* 120 */
-	0x0, /* 121 */
+	0x00, /* 121 */
 	0x1B, /* 122 */
-	0x1, /* 123 */
+	0x01, /* 123 */
 	0x63, /* 124 */
-	0x1, /* 125 */
+	0x01, /* 125 */
 	0xE3, /* 126 */
-	0x0, /* 127 */
+	0x00, /* 127 */
 	0xCD, /* 128 */
-	0x0, /* 129 */
+	0x00, /* 129 */
 	0xE3, /* 130 */
-	0x1, /* 131 */
+	0x01, /* 131 */
 	0x13, /* 132 */
-	0x0, /* 133 */
+	0x00, /* 133 */
 	0x13, /* 134 */
-	0x1, /* 135 */
+	0x01, /* 135 */
 	0x93, /* 136 */
-	0x0, /* 137 */
+	0x00, /* 137 */
 	0x1B, /* 138 */
-	0x3, /* 139 */
+	0x03, /* 139 */
 	0x9B, /* 140 */
-	0x0, /* 141 */
+	0x00, /* 141 */
 	0x9B, /* 142 */
-	0x2, /* 143 */
+	0x02, /* 143 */
 	0x93, /* 144 */
-	0x1, /* 145 */
+	0x01, /* 145 */
 	0x53, /* 146 */
-	0x0, /* 147 */
+	0x00, /* 147 */
 	0x9B, /* 148 */
-	0x1, /* 149 */
+	0x01, /* 149 */
 	0x9B, /* 150 */
-	0x3, /* 151 */
+	0x03, /* 151 */
 	0x5B, /* 152 */
-	0x0, /* 153 */
+	0x00, /* 153 */
 	0x5B, /* 154 */
-	0x2, /* 155 */
+	0x02, /* 155 */
 	0x5B, /* 156 */
-	0x1, /* 157 */
+	0x01, /* 157 */
 	0x5B, /* 158 */
-	0x3, /* 159 */
+	0x03, /* 159 */
 	0x53, /* 160 */
-	0x1, /* 161 */
+	0x01, /* 161 */
 	0xD3, /* 162 */
-	0x0, /* 163 */
+	0x00, /* 163 */
 	0xDB, /* 164 */
-	0x0, /* 165 */
+	0x00, /* 165 */
 	0xDB, /* 166 */
-	0x2, /* 167 */
+	0x02, /* 167 */
 	0xDB, /* 168 */
-	0x1, /* 169 */
+	0x01, /* 169 */
 	0xDB, /* 170 */
-	0x3, /* 171 */
+	0x03, /* 171 */
 	0x3B, /* 172 */
-	0x0, /* 173 */
+	0x00, /* 173 */
 	0x3B, /* 174 */
-	0x2, /* 175 */
+	0x02, /* 175 */
 	0x3B, /* 176 */
-	0x1, /* 177 */
+	0x01, /* 177 */
 	0xD3, /* 178 */
-	0x1, /* 179 */
+	0x01, /* 179 */
 	0x3B, /* 180 */
-	0x3, /* 181 */
+	0x03, /* 181 */
 	0xBB, /* 182 */
-	0x0, /* 183 */
+	0x00, /* 183 */
 	0xBB, /* 184 */
-	0x2, /* 185 */
+	0x02, /* 185 */
 	0xBB, /* 186 */
-	0x1, /* 187 */
+	0x01, /* 187 */
 	0xBB, /* 188 */
-	0x3, /* 189 */
+	0x03, /* 189 */
 	0x7B, /* 190 */
-	0x0, /* 191 */
+	0x00, /* 191 */
 	0x2D, /* 192 */
-	0x0, /* 193 */
+	0x00, /* 193 */
 	0x7B, /* 194 */
-	0x2, /* 195 */
+	0x02, /* 195 */
 	0x7B, /* 196 */
-	0x1, /* 197 */
+	0x01, /* 197 */
 	0x7B, /* 198 */
-	0x3, /* 199 */
+	0x03, /* 199 */
 	0xFB, /* 200 */
-	0x0, /* 201 */
+	0x00, /* 201 */
 	0xFB, /* 202 */
-	0x2, /* 203 */
+	0x02, /* 203 */
 	0xFB, /* 204 */
-	0x1, /* 205 */
+	0x01, /* 205 */
 	0xFB, /* 206 */
-	0x3, /* 207 */
-	0x7, /* 208 */
-	0x0, /* 209 */
-	0x7, /* 210 */
-	0x2, /* 211 */
-	0x7, /* 212 */
-	0x1, /* 213 */
-	0x7, /* 214 */
-	0x3, /* 215 */
+	0x03, /* 207 */
+	0x07, /* 208 */
+	0x00, /* 209 */
+	0x07, /* 210 */
+	0x02, /* 211 */
+	0x07, /* 212 */
+	0x01, /* 213 */
+	0x07, /* 214 */
+	0x03, /* 215 */
 	0x87, /* 216 */
-	0x0, /* 217 */
+	0x00, /* 217 */
 	0x87, /* 218 */
-	0x2, /* 219 */
+	0x02, /* 219 */
 	0x87, /* 220 */
-	0x1, /* 221 */
+	0x01, /* 221 */
 	0x87, /* 222 */
-	0x3, /* 223 */
+	0x03, /* 223 */
 	0x33, /* 224 */
-	0x0, /* 225 */
+	0x00, /* 225 */
 	0x47, /* 226 */
-	0x0, /* 227 */
+	0x00, /* 227 */
 	0x47, /* 228 */
-	0x2, /* 229 */
+	0x02, /* 229 */
 	0x47, /* 230 */
-	0x1, /* 231 */
+	0x01, /* 231 */
 	0x47, /* 232 */
-	0x3, /* 233 */
+	0x03, /* 233 */
 	0xC7, /* 234 */
-	0x0, /* 235 */
+	0x00, /* 235 */
 	0xC7, /* 236 */
-	0x2, /* 237 */
+	0x02, /* 237 */
 	0xC7, /* 238 */
-	0x1, /* 239 */
+	0x01, /* 239 */
 	0x33, /* 240 */
-	0x1, /* 241 */
+	0x01, /* 241 */
 	0xC7, /* 242 */
-	0x3, /* 243 */
+	0x03, /* 243 */
 	0x27, /* 244 */
-	0x0, /* 245 */
+	0x00, /* 245 */
 	0x27, /* 246 */
-	0x2, /* 247 */
+	0x02, /* 247 */
 	0x27, /* 248 */
-	0x1, /* 249 */
+	0x01, /* 249 */
 	0x27, /* 250 */
-	0x3, /* 251 */
+	0x03, /* 251 */
 	0xA7, /* 252 */
-	0x0, /* 253 */
+	0x00, /* 253 */
 	0xB3, /* 254 */
-	0x0, /* 255 */
+	0x00, /* 255 */
 	0x19, /* 256 */
-	0x0, /* 257 */
+	0x00, /* 257 */
 	0xB3, /* 258 */
-	0x1, /* 259 */
+	0x01, /* 259 */
 	0x73, /* 260 */
-	0x0, /* 261 */
+	0x00, /* 261 */
 	0xA7, /* 262 */
-	0x2, /* 263 */
+	0x02, /* 263 */
 	0x73, /* 264 */
-	0x1, /* 265 */
+	0x01, /* 265 */
 	0xA7, /* 266 */
-	0x1, /* 267 */
+	0x01, /* 267 */
 	0xA7, /* 268 */
-	0x3, /* 269 */
+	0x03, /* 269 */
 	0x67, /* 270 */
-	0x0, /* 271 */
+	0x00, /* 271 */
 	0xF3, /* 272 */
-	0x0, /* 273 */
+	0x00, /* 273 */
 	0x67, /* 274 */
-	0x2, /* 275 */
+	0x02, /* 275 */
 	0x67, /* 276 */
-	0x1, /* 277 */
+	0x01, /* 277 */
 	0x67, /* 278 */
-	0x3, /* 279 */
+	0x03, /* 279 */
 	0xE7, /* 280 */
-	0x0, /* 281 */
+	0x00, /* 281 */
 	0xE7, /* 282 */
-	0x2, /* 283 */
+	0x02, /* 283 */
 	0xE7, /* 284 */
-	0x1, /* 285 */
+	0x01, /* 285 */
 	0xE7, /* 286 */
-	0x3, /* 287 */
+	0x03, /* 287 */
 	0xF3, /* 288 */
-	0x1, /* 289 */
+	0x01, /* 289 */
 	0x17, /* 290 */
-	0x0, /* 291 */
+	0x00, /* 291 */
 	0x17, /* 292 */
-	0x2 /* 293 */
+	0x02, /* 293 */
+	0x17, /* 294 */
+	0x01, /* 295 */
+	0x17, /* 296 */
+	0x03, /* 297 */
+	0x97, /* 298 */
+	0x00, /* 299 */
+	0x97, /* 300 */
+	0x02, /* 301 */
+	0x97, /* 302 */
+	0x01, /* 303 */
+	0x97, /* 304 */
+	0x03, /* 305 */
+	0x57, /* 306 */
+	0x00, /* 307 */
+	0x57, /* 308 */
+	0x02, /* 309 */
+	0x57, /* 310 */
+	0x01, /* 311 */
+	0x57, /* 312 */
+	0x03, /* 313 */
+	0xD7, /* 314 */
+	0x00, /* 315 */
+	0xD7, /* 316 */
+	0x02, /* 317 */
+	0xD7, /* 318 */
+	0x01, /* 319 */
+	0xD7, /* 320 */
+	0x03, /* 321 */
+	0x37, /* 322 */
+	0x00, /* 323 */
+	0x37, /* 324 */
+	0x02, /* 325 */
+	0x37, /* 326 */
+	0x01, /* 327 */
+	0x37, /* 328 */
+	0x03, /* 329 */
+	0xB7, /* 330 */
+	0x00, /* 331 */
+	0xB7, /* 332 */
+	0x02, /* 333 */
+	0xB7, /* 334 */
+	0x01, /* 335 */
+	0xB7, /* 336 */
+	0x03, /* 337 */
+	0x77, /* 338 */
+	0x00, /* 339 */
+	0x77, /* 340 */
+	0x02, /* 341 */
+	0xFF, /* 342 */
+	0x07, /* 343 */
+	0x77, /* 344 */
+	0x01, /* 345 */
+	0x77, /* 346 */
+	0x03, /* 347 */
+	0xF7, /* 348 */
+	0x00, /* 349 */
+	0xF7, /* 350 */
+	0x02, /* 351 */
+	0xF7, /* 352 */
+	0x01, /* 353 */
+	0xF7, /* 354 */
+	0x03, /* 355 */
+	0xFF, /* 356 */
+	0x03, /* 357 */
+	0x0F, /* 358 */
+	0x00, /* 359 */
+	0x0F, /* 360 */
+	0x02, /* 361 */
+	0x0F, /* 362 */
+	0x01, /* 363 */
+	0x0F, /* 364 */
+	0x03, /* 365 */
+	0x8F, /* 366 */
+	0x00, /* 367 */
+	0x8F, /* 368 */
+	0x02, /* 369 */
+	0x8F, /* 370 */
+	0x01, /* 371 */
+	0x8F, /* 372 */
+	0x03, /* 373 */
+	0x4F, /* 374 */
+	0x00, /* 375 */
+	0x4F, /* 376 */
+	0x02, /* 377 */
+	0x4F, /* 378 */
+	0x01, /* 379 */
+	0x4F, /* 380 */
+	0x03, /* 381 */
+	0xCF, /* 382 */
+	0x00, /* 383 */
+	0x0B, /* 384 */
+	0x00, /* 385 */
+	0xCF, /* 386 */
+	0x02, /* 387 */
+	0xCF, /* 388 */
+	0x01, /* 389 */
+	0xCF, /* 390 */
+	0x03, /* 391 */
+	0x2F, /* 392 */
+	0x00, /* 393 */
+	0x2F, /* 394 */
+	0x02, /* 395 */
+	0x0B, /* 396 */
+	0x01, /* 397 */
+	0x2F, /* 398 */
+	0x01, /* 399 */
+	0x2F, /* 400 */
+	0x03, /* 401 */
+	0xAF, /* 402 */
+	0x00, /* 403 */
+	0xAF, /* 404 */
+	0x02, /* 405 */
+	0xAF, /* 406 */
+	0x01, /* 407 */
+	0x8B, /* 408 */
+	0x00, /* 409 */
+	0xAF, /* 410 */
+	0x03, /* 411 */
+	0x6F, /* 412 */
+	0x00, /* 413 */
+	0x6F, /* 414 */
+	0x02, /* 415 */
+	0x8B, /* 416 */
+	0x01, /* 417 */
+	0x6F, /* 418 */
+	0x01, /* 419 */
+	0x6F, /* 420 */
+	0x03, /* 421 */
+	0xEF, /* 422 */
+	0x00, /* 423 */
+	0xEF, /* 424 */
+	0x02, /* 425 */
+	0xEF, /* 426 */
+	0x01, /* 427 */
+	0xEF, /* 428 */
+	0x03, /* 429 */
+	0x1F, /* 430 */
+	0x00, /* 431 */
+	0x1F, /* 432 */
+	0x02, /* 433 */
+	0x1F, /* 434 */
+	0x01, /* 435 */
+	0x1F, /* 436 */
+	0x03, /* 437 */
+	0x9F, /* 438 */
+	0x00, /* 439 */
+	0x9F, /* 440 */
+	0x02, /* 441 */
+	0x9F, /* 442 */
+	0x01, /* 443 */
+	0x9F, /* 444 */
+	0x03, /* 445 */
+	0x5F, /* 446 */
+	0x00, /* 447 */
+	0x4B, /* 448 */
+	0x00, /* 449 */
+	0x5F, /* 450 */
+	0x02, /* 451 */
+	0x5F, /* 452 */
+	0x01, /* 453 */
+	0x5F, /* 454 */
+	0x03, /* 455 */
+	0xDF, /* 456 */
+	0x00, /* 457 */
+	0xDF, /* 458 */
+	0x02, /* 459 */
+	0xDF, /* 460 */
+	0x01, /* 461 */
+	0xDF, /* 462 */
+	0x03, /* 463 */
+	0x3F, /* 464 */
+	0x00, /* 465 */
+	0x3F, /* 466 */
+	0x02, /* 467 */
+	0x3F, /* 468 */
+	0x01, /* 469 */
+	0x3F, /* 470 */
+	0x03, /* 471 */
+	0xBF, /* 472 */
+	0x00, /* 473 */
+	0xBF, /* 474 */
+	0x02, /* 475 */
+	0x4B, /* 476 */
+	0x01, /* 477 */
+	0xBF, /* 478 */
+	0x01, /* 479 */
+	0xAD, /* 480 */
+	0x00, /* 481 */
+	0xCB, /* 482 */
+	0x00, /* 483 */
+	0xCB, /* 484 */
+	0x01, /* 485 */
+	0xBF, /* 486 */
+	0x03, /* 487 */
+	0x2B, /* 488 */
+	0x00, /* 489 */
+	0x7F, /* 490 */
+	0x00, /* 491 */
+	0x7F, /* 492 */
+	0x02, /* 493 */
+	0x7F, /* 494 */
+	0x01, /* 495 */
+	0x2B, /* 496 */
+	0x01, /* 497 */
+	0x7F, /* 498 */
+	0x03, /* 499 */
+	0xFF, /* 500 */
+	0x00, /* 501 */
+	0xFF, /* 502 */
+	0x02, /* 503 */
+	0xAB, /* 504 */
+	0x00, /* 505 */
+	0xAB, /* 506 */
+	0x01, /* 507 */
+	0x6D, /* 508 */
+	0x00, /* 509 */
+	0x59, /* 510 */
+	0x00, /* 511 */
+	0xFF, /* 512 */
+	0x17, /* 513 */
+	0xFF, /* 514 */
+	0x0F, /* 515 */
+	0x39, /* 516 */
+	0x00, /* 517 */
+	0x79, /* 518 */
+	0x00, /* 519 */
+	0xFF, /* 520 */
+	0x01, /* 521 */
+	0x05, /* 522 */
+	0x00, /* 523 */
+	0x45, /* 524 */
+	0x00, /* 525 */
+	0x34, /* 526 */
+	0x00, /* 527 */
+	0x0C, /* 528 */
+	0x00, /* 529 */
+	0x2C, /* 530 */
+	0x00, /* 531 */
+	0x1C, /* 532 */
+	0x00, /* 533 */
+	0x00, /* 534 */
+	0x00, /* 535 */
+	0x3C, /* 536 */
+	0x00, /* 537 */
+	0x02, /* 538 */
+	0x00, /* 539 */
+	0x22, /* 540 */
+	0x00, /* 541 */
+	0x10, /* 542 */
+	0x00, /* 543 */
+	0x12, /* 544 */
+	0x00, /* 545 */
+	0x08, /* 546 */
+	0x00, /* 547 */
+	0x32, /* 548 */
+	0x00, /* 549 */
+	0x0A, /* 550 */
+	0x00, /* 551 */
+	0x2A, /* 552 */
+	0x00, /* 553 */
+	0x1A, /* 554 */
+	0x00, /* 555 */
+	0x3A, /* 556 */
+	0x00, /* 557 */
+	0x06, /* 558 */
+	0x00, /* 559 */
+	0x26, /* 560 */
+	0x00, /* 561 */
+	0x16, /* 562 */
+	0x00, /* 563 */
+	0x36, /* 564 */
+	0x00, /* 565 */
+	0x0E, /* 566 */
+	0x00, /* 567 */
+	0x2E, /* 568 */
+	0x00, /* 569 */
+	0x1E, /* 570 */
+	0x00, /* 571 */
+	0x3E, /* 572 */
+	0x00, /* 573 */
+	0x01, /* 574 */
+	0x00, /* 575 */
+	0xED, /* 576 */
+	0x00, /* 577 */
+	0x18, /* 578 */
+	0x00, /* 579 */
+	0x21, /* 580 */
+	0x00, /* 581 */
+	0x25, /* 582 */
+	0x00, /* 583 */
+	0x65, /* 584 */
+	0x00, /* 585 */
+	0xFF, /* 586 */
+	0x1F  /* 587 */
 };
 
 const BYTE HuffLengthLOM[32] =
@@ -1447,6 +1741,11 @@ UINT32 LOMBaseLUT[30] =
 		} \
 	} \
 
+#define NCrushWriteStart() \
+	bits = 0; \
+	offset = 0; \
+	accumulator = 0
+
 #define NCrushWriteBits(_bits, _nbits) \
 	accumulator |= _bits << offset; \
 	offset += _nbits; \
@@ -1457,12 +1756,15 @@ UINT32 LOMBaseLUT[30] =
 		offset -= 16; \
 	}
 
+#define NCrushWriteFinish() \
+	*DstPtr++ = accumulator & 0xFF; \
+	*DstPtr++ = (accumulator >> 8) & 0xFF
+
 int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	UINT32 index;
 	UINT32 bits;
 	UINT32 nbits;
-	UINT32 offset;
 	BYTE* SrcPtr;
 	BYTE* SrcEnd;
 	UINT16 Mask;
@@ -1545,6 +1847,9 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 				return -1;
 
 			Literal = (HuffTableLEC[MaskedBits] & 0xFF);
+
+			printf("Literal: %c BitLength: %d IndexLEC: %d Code: 0x%04X\n",
+					Literal, BitLength, IndexLEC, MaskedBits);
 
 			*HistoryPtr++ = Literal;
 		}
@@ -1855,9 +2160,9 @@ int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT32 HistoryOffset, UINT32*
 				return -1;
 				
 			if ((Length <= MatchLength)
-				|| (MatchLength = Length, CopyOffset = Offset,
-				&HistoryBuffer[HistoryOffset + 2] < ncrush->HistoryPtr)
-				&& (Length <= 16))
+				|| ((MatchLength = Length, CopyOffset = Offset,
+				(&HistoryBuffer[HistoryOffset + 2] < ncrush->HistoryPtr))
+				&& (Length <= 16)))
 			{
 				_Offset = ncrush->MatchTable[Offset];
 				MatchPtr = &HistoryBuffer[MatchLength];
@@ -1938,9 +2243,10 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	BYTE* SrcEndPtr;
 	BYTE* DstEndPtr;
 	BYTE* HistoryPtr;
-	int MatchIndex;
+	int MatchLength;
 	UINT32 IndexLEC;
 	UINT32 IndexLOM;
+	UINT32 IndexCO;
 	UINT32 BitLength;
 	UINT32 CopyOffset;
 	UINT32 OldCopyOffset;
@@ -1952,7 +2258,9 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	BYTE* HistoryBufferEndPtr;
 	UINT32 CopyOffsetIndex;
 	UINT32 CopyOffsetBits;
+	UINT32 CompressionLevel;
 
+	CompressionLevel = 2;
 	HistoryBuffer = ncrush->HistoryBuffer;
 
 	if (SrcSize + ncrush->HistoryOffset >= 65529)
@@ -1977,9 +2285,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		*pFlags = 0;
 	}
 
-	bits = 0;
-	offset = 0;
-	accumulator = 0;
+	NCrushWriteStart();
 
 	DstPtr = pDstData;
 	SrcPtr = pSrcData;
@@ -1997,7 +2303,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 	while (SrcPtr < (SrcEndPtr - 2))
 	{
-		MatchIndex = 0;
+		MatchLength = 0;
 		HistoryOffset = HistoryPtr - HistoryBuffer;
 
 		if (ncrush->HistoryPtr && (HistoryPtr > ncrush->HistoryPtr))
@@ -2009,19 +2315,19 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		if (ncrush->MatchTable[HistoryOffset])
 		{
 			CopyOffset = 0;
-			MatchIndex = ncrush_find_best_match(ncrush, HistoryOffset, &CopyOffset);
+			MatchLength = ncrush_find_best_match(ncrush, HistoryOffset, &CopyOffset);
 
-			if (MatchIndex == -1)
+			if (MatchLength == -1)
 				return -1;
 		}
 
-		if ( MatchIndex )
+		if (MatchLength)
 			CopyOffset = (HistoryBufferSize - 1) & (HistoryPtr - &HistoryBuffer[CopyOffset]);
 		
-		if ((MatchIndex == 2) && (CopyOffset >= 64))
-			MatchIndex = 0;
+		if ((MatchLength == 2) && (CopyOffset >= 64))
+			MatchLength = 0;
 
-		if (!MatchIndex)
+		if (!MatchLength)
 		{
 			/* Literal */
 
@@ -2031,12 +2337,16 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			if ((DstPtr + 2) > DstEndPtr)
 			{
 				ncrush_context_reset(ncrush);
+				printf("PACKET_FLUSHED #1\n");
 				*pFlags = PACKET_FLUSHED;
 				return 1;
 			}
 
 			BitLength = HuffLengthLEC[Literal];
-			IndexLEC = HuffCodeLEC[Literal];
+			IndexLEC = *((UINT16*) &HuffCodeLEC[Literal * 2]);
+
+			printf("Literal: %c (%d) BitLength: %d IndexLEC: 0x%04X\n",
+					Literal, Literal, BitLength, IndexLEC);
 
 			if (BitLength > 15)
 				return -1;
@@ -2045,16 +2355,19 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		}
 		else
 		{
-			HistoryPtr += MatchIndex;
-			SrcPtr += MatchIndex;
+			HistoryPtr += MatchLength;
+			SrcPtr += MatchLength;
 
-			if (!MatchIndex)
+			printf("MatchLength: %d CopyOffset: %d\n", MatchLength, CopyOffset);
+
+			if (!MatchLength)
 				return -1;
 
 			if ((DstPtr + 8) > DstEndPtr)
 			{
 				ncrush_context_reset(ncrush);
 				*pFlags = PACKET_FLUSHED;
+				printf("PACKET_FLUSHED #2\n");
 				return 1;
 			}
 
@@ -2106,9 +2419,11 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				OffsetCache[0] = CopyOffset;
 			}
 
-			if (OffsetCacheIndex > 4)
+			if (OffsetCacheIndex >= 4)
 			{
 				/* CopyOffset not in OffsetCache */
+
+				printf("CopyOffset not in OffsetCache\n");
 
 				if (CopyOffset >= 256)
 					bits = (CopyOffset >> 7) | 0x100;
@@ -2118,8 +2433,11 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				CopyOffsetIndex = ncrush->HuffTableCopyOffset[bits];
 				CopyOffsetBits = CopyOffsetBitsLUT[CopyOffsetIndex];
 				BitLength = HuffLengthLEC[CopyOffsetIndex + 257];
-				IndexLEC = *((UINT16*)&HuffCodeLEC[2 * (CopyOffsetIndex + 257)]);
+				IndexLEC = *((UINT16*) &HuffCodeLEC[2 * (CopyOffsetIndex + 257)]);
 				
+				printf("CopyOffsetIndex: %d CopyOffsetBits: %d BitLength: %d IndexLEC: 0x%04X\n",
+						CopyOffsetIndex, CopyOffsetBits, BitLength, IndexLEC);
+
 				if (BitLength > 15)
 					return -1;
 				
@@ -2133,52 +2451,57 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 				NCrushWriteBits(MaskedBits, CopyOffsetBits);
 
-				if ((MatchIndex - 2) >= 768)
-					IndexLOM = 28;
+				if ((MatchLength - 2) >= 768)
+					IndexCO = 28;
 				else
-					IndexLOM = ncrush->HuffTableCopyOffset[MatchIndex + 1022];
+					IndexCO = ncrush->HuffTableCopyOffset[MatchLength + 1022];
 
-				BitLength = HuffLengthLOM[IndexLOM];
-				IndexLOM = LOMBitsLUT[IndexLOM];
+				BitLength = HuffLengthLOM[IndexCO];
+				IndexLOM = LOMBitsLUT[IndexCO];
 
-				NCrushWriteBits(HuffCodeLOM[IndexLOM], BitLength);
+				NCrushWriteBits(HuffCodeLOM[IndexCO], BitLength);
 
 				Mask = ((1 << IndexLOM) - 1);
-				MaskedBits = (MatchIndex - 2) & Mask;
+				MaskedBits = (MatchLength - 2) & Mask;
 
 				NCrushWriteBits(MaskedBits, IndexLOM);
 
-				if ((MaskedBits + LOMBaseLUT[IndexLOM]) != MatchIndex)
+				if ((MaskedBits + LOMBaseLUT[IndexCO]) != MatchLength)
 					return -1;
 			}
 			else
 			{
 				/* CopyOffset in OffsetCache */
 
+				printf("CopyOffset in OffsetCache\n");
+
 				BitLength = HuffLengthLEC[OffsetCacheIndex + 289];
-				IndexLEC = *((UINT16*)&HuffCodeLEC[2 * (OffsetCacheIndex + 289)]);
+				IndexLEC = *((UINT16*) &HuffCodeLEC[OffsetCacheIndex + 289]);
+
+				printf("CopyOffsetIndex: %d CopyOffsetBits: %d BitLength: %d IndexLEC: 0x%04X OffsetCacheIndex: %d\n",
+						CopyOffsetIndex, CopyOffsetBits, BitLength, IndexLEC, OffsetCacheIndex);
 
 				if (BitLength >= 15)
 					return -1;
 
 				NCrushWriteBits(IndexLEC, BitLength);
 
-				if ((MatchIndex - 2) >= 768)
-					IndexLOM = 28;
+				if ((MatchLength - 2) >= 768)
+					IndexCO = 28;
 				else
-					IndexLOM = ncrush->HuffTableCopyOffset[MatchIndex + 1022];
+					IndexCO = ncrush->HuffTableCopyOffset[MatchLength + 1022];
 
-				BitLength = HuffLengthLOM[IndexLOM];
-				IndexLOM = LOMBitsLUT[IndexLOM];
+				BitLength = HuffLengthLOM[IndexCO];
+				IndexLOM = LOMBitsLUT[IndexCO];
 
-				NCrushWriteBits(HuffCodeLOM[IndexLOM], BitLength);
+				NCrushWriteBits(HuffCodeLOM[IndexCO], BitLength);
 
 				Mask = ((1 << IndexLOM) - 1);
-				MaskedBits = (MatchIndex - 2) & Mask;
+				MaskedBits = (MatchLength - 2) & Mask;
 
 				NCrushWriteBits(MaskedBits, IndexLOM);
 
-				if ((MaskedBits + LOMBaseLUT[IndexLOM]) != MatchIndex)
+				if ((MaskedBits + LOMBaseLUT[IndexCO]) != MatchLength)
 					return -1;
 			}
 		}
@@ -2189,10 +2512,13 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 	while (SrcPtr < SrcEndPtr)
 	{
-		if (DstPtr + 2 > DstEndPtr)
+		printf("Last Round...\n");
+
+		if ((DstPtr + 2) > DstEndPtr)
 		{
 			ncrush_context_reset(ncrush);
 			*pFlags = PACKET_FLUSHED;
+			printf("PACKET_FLUSHED #3\n");
 			return 1;
 		}
 
@@ -2200,7 +2526,10 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		HistoryPtr++;
 
 		BitLength = HuffLengthLEC[Literal];
-		IndexLEC = HuffCodeLEC[Literal];
+		IndexLEC = *((UINT16*) &HuffCodeLEC[Literal * 2]);
+
+		printf("Literal: %c (%d) BitLength: %d IndexLEC: 0x%04X\n",
+				Literal, Literal, BitLength, IndexLEC);
 
 		if (BitLength > 15)
 			return -1;
@@ -2212,13 +2541,21 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	{
 		ncrush_context_reset(ncrush);
 		*pFlags = PACKET_FLUSHED;
+		printf("PACKET_FLUSHED #4\n");
 		return 1;
 	}
 
-	*DstPtr++ = accumulator & 0xFF;
-	*DstPtr++ = (accumulator >> 8) & 0xFF;
+	BitLength = HuffLengthLEC[256];
+	bits = *((UINT16*) &HuffCodeLEC[256 * 2]);
 
+	NCrushWriteBits(bits, BitLength);
+
+	NCrushWriteFinish();
+
+	*pFlags |= PACKET_COMPRESSED;
+	*pFlags |= CompressionLevel;
 	*pDstSize = DstPtr - pDstData;
+
 	ncrush->HistoryOffset = HistoryPtr - HistoryBuffer;
 
 	if (ncrush->HistoryOffset >= ncrush->HistoryBufferSize)
@@ -2269,6 +2606,9 @@ void ncrush_context_reset(NCRUSH_CONTEXT* ncrush)
 
 	ncrush->HistoryOffset = 0;
 	ncrush->HistoryPtr = &(ncrush->HistoryBuffer[ncrush->HistoryOffset]);
+
+	if (ncrush->Compressor)
+		ncrush->HistoryOffset = ncrush->HistoryBufferSize + 1;
 }
 
 NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor)
@@ -2293,6 +2633,8 @@ NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor)
 		ncrush->HistoryPtr = &(ncrush->HistoryBuffer[ncrush->HistoryOffset]);
 
 		ncrush_generate_tables(ncrush);
+
+		ncrush_context_reset(ncrush);
 	}
 
 	return ncrush;

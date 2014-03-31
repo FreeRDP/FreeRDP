@@ -30,7 +30,7 @@ int test_NCrushCompressBells()
 
 	status = ncrush_compress(ncrush, pSrcData, SrcSize, OutputBuffer, &DstSize, &Flags);
 
-	printf("Flags: 0x%04X DstSize: %d\n", Flags, DstSize);
+	printf("status: %d Flags: 0x%04X DstSize: %d\n", status, Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
@@ -96,8 +96,13 @@ int test_NCrushDecompressBells()
 
 int TestFreeRDPCodecNCrush(int argc, char* argv[])
 {
-	test_NCrushCompressBells();
-	//test_NCrushDecompressBells();
+#if 1
+	if (test_NCrushCompressBells() < 0)
+		return -1;
+#else
+	if (test_NCrushDecompressBells() < 0)
+		return -1;
+#endif
 
 	return 0;
 }
