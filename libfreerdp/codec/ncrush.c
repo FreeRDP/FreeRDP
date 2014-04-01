@@ -1848,11 +1848,13 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 
 			Literal = (HuffTableLEC[MaskedBits] & 0xFF);
 
-			printf("Literal: %c BitLength: %d IndexLEC: %d Code: 0x%04X\n",
+			printf("Literal: %c BitLength: %d IndexLEC: %d CodeLEC: 0x%04X\n",
 					Literal, BitLength, IndexLEC, MaskedBits);
 
 			*HistoryPtr++ = Literal;
 		}
+
+		printf("IndexLEC: %d\n", IndexLEC);
 
 		if (IndexLEC == 256)
 			break; /* EOS */
@@ -2247,6 +2249,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	UINT32 IndexLEC;
 	UINT32 IndexLOM;
 	UINT32 IndexCO;
+	UINT32 CodeLEC;
 	UINT32 BitLength;
 	UINT32 CopyOffset;
 	UINT32 OldCopyOffset;
@@ -2342,23 +2345,25 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				return 1;
 			}
 
-			BitLength = HuffLengthLEC[Literal];
-			IndexLEC = *((UINT16*) &HuffCodeLEC[Literal * 2]);
+			IndexLEC = Literal;
+			BitLength = HuffLengthLEC[IndexLEC];
+			CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 
-			printf("Literal: %c (%d) BitLength: %d IndexLEC: 0x%04X\n",
-					Literal, Literal, BitLength, IndexLEC);
+			printf("Literal: %c (%d) BitLength: %d IndexLEC: %d CodeLEC: 0x%04X Offset: %d\n",
+					Literal, Literal, BitLength, IndexLEC, CodeLEC, (int) (DstPtr - pDstData));
 
 			if (BitLength > 15)
 				return -1;
 
-			NCrushWriteBits(IndexLEC, BitLength);
+			NCrushWriteBits(CodeLEC, BitLength);
 		}
 		else
 		{
 			HistoryPtr += MatchLength;
 			SrcPtr += MatchLength;
 
-			printf("MatchLength: %d CopyOffset: %d\n", MatchLength, CopyOffset);
+			printf("MatchLength: %d CopyOffset: %d Offset: %d\n", MatchLength, CopyOffset,
+				(int) (DstPtr - pDstData));
 
 			if (!MatchLength)
 				return -1;
@@ -2423,20 +2428,22 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			{
 				/* CopyOffset not in OffsetCache */
 
-				printf("CopyOffset not in OffsetCache\n");
+				printf("CopyOffset not in OffsetCache: %d\n", OffsetCacheIndex);
 
 				if (CopyOffset >= 256)
-					bits = (CopyOffset >> 7) | 0x100;
+					bits = (CopyOffset >> 7) + 256;
 				else
 					bits = CopyOffset;
 
-				CopyOffsetIndex = ncrush->HuffTableCopyOffset[bits];
+				CopyOffsetIndex = ncrush->HuffTableCopyOffset[bits + 2];
 				CopyOffsetBits = CopyOffsetBitsLUT[CopyOffsetIndex];
-				BitLength = HuffLengthLEC[CopyOffsetIndex + 257];
-				IndexLEC = *((UINT16*) &HuffCodeLEC[2 * (CopyOffsetIndex + 257)]);
+
+				IndexLEC = 257 + CopyOffsetIndex;
+				BitLength = HuffLengthLEC[IndexLEC];
+				CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 				
-				printf("CopyOffsetIndex: %d CopyOffsetBits: %d BitLength: %d IndexLEC: 0x%04X\n",
-						CopyOffsetIndex, CopyOffsetBits, BitLength, IndexLEC);
+				printf("CopyOffsetIndex: %d CopyOffsetBits: %d BitLength: %d IndexLEC: %d CodeLEC: 0x%04X Offset: %d\n",
+						CopyOffsetIndex, CopyOffsetBits, BitLength, IndexLEC, CodeLEC, DstPtr - pDstData);
 
 				if (BitLength > 15)
 					return -1;
@@ -2444,7 +2451,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				if (CopyOffsetBits > 18)
 					return -1;
 
-				NCrushWriteBits(IndexLEC, BitLength);
+				NCrushWriteBits(CodeLEC, BitLength);
 
 				Mask = ((1 << CopyOffsetBits) - 1);
 				MaskedBits = CopyOffset & Mask;
@@ -2454,7 +2461,9 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				if ((MatchLength - 2) >= 768)
 					IndexCO = 28;
 				else
-					IndexCO = ncrush->HuffTableCopyOffset[MatchLength + 1022];
+					IndexCO = ncrush->HuffTableLOM[MatchLength];
+
+				printf("IndexCO: %d MatchLength: %d\n", IndexCO, MatchLength);
 
 				BitLength = HuffLengthLOM[IndexCO];
 				IndexLOM = LOMBitsLUT[IndexCO];
@@ -2467,29 +2476,35 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				NCrushWriteBits(MaskedBits, IndexLOM);
 
 				if ((MaskedBits + LOMBaseLUT[IndexCO]) != MatchLength)
+				{
+					printf("((MaskedBits + LOMBaseLUT[IndexCO]) != MatchLength)\n"
+						"MaskedBits: %d MatchLength: %d LOMBaseLUT[IndexCO]: %d IndexCO: %d\n",
+						MaskedBits, MatchLength, LOMBaseLUT[IndexCO], IndexCO);
 					return -1;
+				}
 			}
 			else
 			{
 				/* CopyOffset in OffsetCache */
 
-				printf("CopyOffset in OffsetCache\n");
+				printf("CopyOffset in OffsetCache: %d\n", OffsetCacheIndex);
 
-				BitLength = HuffLengthLEC[OffsetCacheIndex + 289];
-				IndexLEC = *((UINT16*) &HuffCodeLEC[OffsetCacheIndex + 289]);
+				IndexLEC = 289 + OffsetCacheIndex;
+				BitLength = HuffLengthLEC[IndexLEC];
+				CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 
-				printf("CopyOffsetIndex: %d CopyOffsetBits: %d BitLength: %d IndexLEC: 0x%04X OffsetCacheIndex: %d\n",
-						CopyOffsetIndex, CopyOffsetBits, BitLength, IndexLEC, OffsetCacheIndex);
+				printf("CopyOffsetIndex: %d CopyOffsetBits: %d BitLength: %d IndexLEC: %d CodeLEC: 0x%04X OffsetCacheIndex: %d Offset: %d\n",
+					CopyOffsetIndex, CopyOffsetBits, BitLength, IndexLEC, CodeLEC, OffsetCacheIndex, DstPtr - pDstData);
 
 				if (BitLength >= 15)
 					return -1;
 
-				NCrushWriteBits(IndexLEC, BitLength);
+				NCrushWriteBits(CodeLEC, BitLength);
 
 				if ((MatchLength - 2) >= 768)
 					IndexCO = 28;
 				else
-					IndexCO = ncrush->HuffTableCopyOffset[MatchLength + 1022];
+					IndexCO = ncrush->HuffTableLOM[MatchLength];
 
 				BitLength = HuffLengthLOM[IndexCO];
 				IndexLOM = LOMBitsLUT[IndexCO];
@@ -2516,6 +2531,8 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 		if ((DstPtr + 2) > DstEndPtr)
 		{
+			break;
+
 			ncrush_context_reset(ncrush);
 			*pFlags = PACKET_FLUSHED;
 			printf("PACKET_FLUSHED #3\n");
@@ -2525,18 +2542,20 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		Literal = *SrcPtr++;
 		HistoryPtr++;
 
-		BitLength = HuffLengthLEC[Literal];
-		IndexLEC = *((UINT16*) &HuffCodeLEC[Literal * 2]);
+		IndexLEC = Literal;
+		BitLength = HuffLengthLEC[IndexLEC];
+		CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 
-		printf("Literal: %c (%d) BitLength: %d IndexLEC: 0x%04X\n",
-				Literal, Literal, BitLength, IndexLEC);
+		printf("Literal: %c (%d) BitLength: %d IndexLEC: %d CodeLEC: %d\n",
+				Literal, Literal, BitLength, IndexLEC, CodeLEC);
 
 		if (BitLength > 15)
 			return -1;
 
-		NCrushWriteBits(IndexLEC, BitLength);
+		NCrushWriteBits(CodeLEC, BitLength);
 	}
 
+#if 0
 	if ((DstPtr + 4) >= DstEndPtr)
 	{
 		ncrush_context_reset(ncrush);
@@ -2544,9 +2563,11 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		printf("PACKET_FLUSHED #4\n");
 		return 1;
 	}
+#endif
 
-	BitLength = HuffLengthLEC[256];
-	bits = *((UINT16*) &HuffCodeLEC[256 * 2]);
+	IndexLEC = 256;
+	BitLength = HuffLengthLEC[IndexLEC];
+	bits = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 
 	NCrushWriteBits(bits, BitLength);
 
@@ -2564,17 +2585,29 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	return 1;
 }
 
-void ncrush_generate_tables(NCRUSH_CONTEXT *context)
+int ncrush_generate_tables(NCRUSH_CONTEXT *context)
 {
-	int i, j, k;
+	int i, j, k, l;
 
 	k = 0;
 	for (i = 0; i < 28; i++)
 	{
 		for (j = 0; j < 1 << LOMBitsLUT[i]; j++)
 		{
-			context->HuffTableLOM[k++ + 2] = i;
+			l = k++ + 2;
+			context->HuffTableLOM[l] = i;
 		}
+	}
+
+	for (k = 2; k < 4096; k++)
+	{
+		if ((k - 2) >= 768)
+			i = 28;
+		else
+			i = context->HuffTableLOM[k];
+
+		if (((((1 << LOMBitsLUT[i]) - 1) & (k - 2)) + LOMBaseLUT[i]) != k)
+			return -1;
 	}
 
 	k = 0;
@@ -2582,7 +2615,8 @@ void ncrush_generate_tables(NCRUSH_CONTEXT *context)
 	{
 		for (j = 0; j < 1 << CopyOffsetBitsLUT[i]; j++)
 		{
-			context->HuffTableCopyOffset[k++] = i;
+			l = k++ + 2;
+			context->HuffTableCopyOffset[l] = i;
 		}
 	}
 
@@ -2591,9 +2625,15 @@ void ncrush_generate_tables(NCRUSH_CONTEXT *context)
 	{
 		for (j = 0; j < 1 << (CopyOffsetBitsLUT[i] - 7); j++)
 		{
-			context->HuffTableCopyOffset[k++ + 256] = i;
+			l = k++ + 2 + 256;
+			context->HuffTableCopyOffset[l] = i;
 		}
 	}
+
+	if ((k + 256) > 1024)
+		return -1;
+
+	return 1;
 }
 
 void ncrush_context_reset(NCRUSH_CONTEXT* ncrush)
@@ -2632,7 +2672,8 @@ NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor)
 		ncrush->HistoryOffset = 0;
 		ncrush->HistoryPtr = &(ncrush->HistoryBuffer[ncrush->HistoryOffset]);
 
-		ncrush_generate_tables(ncrush);
+		if (ncrush_generate_tables(ncrush) < 0)
+			printf("ncrush_context_new: failed to initialize tables\n");
 
 		ncrush_context_reset(ncrush);
 	}

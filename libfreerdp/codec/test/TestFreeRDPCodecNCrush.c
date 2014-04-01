@@ -27,6 +27,7 @@ int test_NCrushCompressBells()
 	pSrcData = (BYTE*) TEST_BELLS_DATA;
 	DstSize = sizeof(OutputBuffer);
 	expectedSize = sizeof(TEST_BELLS_NCRUSH) - 1;
+	ZeroMemory(OutputBuffer, sizeof(OutputBuffer));
 
 	status = ncrush_compress(ncrush, pSrcData, SrcSize, OutputBuffer, &DstSize, &Flags);
 
@@ -35,6 +36,13 @@ int test_NCrushCompressBells()
 	if (DstSize != expectedSize)
 	{
 		printf("NCrushCompressBells: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
+
+		printf("Actual\n");
+		BitDump(OutputBuffer, DstSize * 8, 0);
+
+		printf("Expected\n");
+		BitDump(TEST_BELLS_NCRUSH, expectedSize * 8, 0);
+
 		return -1;
 	}
 
@@ -46,7 +54,7 @@ int test_NCrushCompressBells()
 		BitDump(OutputBuffer, DstSize * 8, 0);
 
 		printf("Expected\n");
-		BitDump(TEST_BELLS_NCRUSH, DstSize * 8, 0);
+		BitDump(TEST_BELLS_NCRUSH, expectedSize * 8, 0);
 
 		return -1;
 	}
