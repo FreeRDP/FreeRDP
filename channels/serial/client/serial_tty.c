@@ -106,9 +106,6 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 	 * FILE_DEVICE_UNKNOWN			0x00000022
 	 */
 
-	printf("IoControlCode: DeviceType: 0x%04X Access: 0x%02X Function: 0x%04X Method: 0x%02X\n",
-			IoCtlDeviceType, IoCtlAccess, IoCtlFunction, IoCtlMethod);
-
 	if (IoCtlDeviceType == 0x00000022)
 	{
 		IoControlCode &= 0xFFFF;
