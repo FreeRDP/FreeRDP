@@ -224,6 +224,7 @@ BIO_METHOD* BIO_s_tsg(void)
 
 BOOL transport_connect_tls(rdpTransport* transport)
 {
+	int tls_status;
 	freerdp* instance;
 	rdpContext* context;
 
@@ -245,13 +246,23 @@ BOOL transport_connect_tls(rdpTransport* transport)
 		if (transport->TsgTls->port == 0)
 			transport->TsgTls->port = 3389;
 
-		if (!tls_connect(transport->TsgTls))
-		{
-			if (!connectErrorCode)
-				connectErrorCode = TLSCONNECTERROR;
+		tls_status = tls_connect(transport->TsgTls);
 
-			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		if (tls_status < 1)
+		{
+			if (tls_status < 0)
+			{
+				if (!connectErrorCode)
+					connectErrorCode = TLSCONNECTERROR;
+
+				if (!freerdp_get_last_error(context))
+					freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+			}
+			else
+			{
+				if (!freerdp_get_last_error(context))
+					freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+			}
 
 			tls_free(transport->TsgTls);
 			transport->TsgTls = NULL;
@@ -277,13 +288,23 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	if (transport->TlsIn->port == 0)
 		transport->TlsIn->port = 3389;
 
-	if (!tls_connect(transport->TlsIn))
-	{
-		if (!connectErrorCode)
-			connectErrorCode = TLSCONNECTERROR;
+	tls_status = tls_connect(transport->TlsIn);
 
-		if (!freerdp_get_last_error(context))
-			freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+	if (tls_status < 1)
+	{
+		if (tls_status < 0)
+		{
+			if (!connectErrorCode)
+				connectErrorCode = TLSCONNECTERROR;
+
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
+		else
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
 
 		tls_free(transport->TlsIn);
 
@@ -355,6 +376,13 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16 port)
 {
+	int tls_status;
+	freerdp* instance;
+	rdpContext* context;
+
+	instance = (freerdp*) transport->settings->instance;
+	context = instance->context;
+
 	rdpTsg* tsg = tsg_new(transport);
 
 	tsg->transport = transport;
@@ -381,11 +409,41 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	if (transport->TlsOut->port == 0)
 		transport->TlsOut->port = 443;
 
-	if (!tls_connect(transport->TlsIn))
-		return FALSE;
+	tls_status = tls_connect(transport->TlsIn);
 
-	if (!tls_connect(transport->TlsOut))
+	if (tls_status < 1)
+	{
+		if (tls_status < 0)
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
+		else
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
+
 		return FALSE;
+	}
+
+	tls_status = tls_connect(transport->TlsOut);
+
+	if (tls_status < 1)
+	{
+		if (tls_status < 0)
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
+		else
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
+
+		return FALSE;
+	}
 
 	if (!tsg_connect(tsg, hostname, port))
 		return FALSE;
