@@ -2067,117 +2067,112 @@ int ncrush_find_match_length(BYTE* Ptr1, BYTE* Ptr2, BYTE* HistoryPtr)
 	return Ptr1 - (Ptr + 1);
 }
 
-int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT32 HistoryOffset, UINT32* pCopyOffset)
+int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset, UINT32* pMatchOffset)
 {
 	int i, j;
 	int Length;
 	int MatchLength;
 	BYTE* MatchPtr;
 	UINT16 Offset;
-	UINT16 _Offset;
-	UINT16 CopyOffset;
+	UINT16 NextOffset;
+	UINT16 MatchOffset;
 	BYTE* HistoryBuffer;
 
 	if (!ncrush->MatchTable[HistoryOffset])
 		return -1;
 
-	i = 4;
 	MatchLength = 2;
 	Offset = HistoryOffset;
 	HistoryBuffer = (BYTE*) ncrush->HistoryBuffer;
 
 	ncrush->MatchTable[0] = HistoryOffset;
-	CopyOffset = ncrush->MatchTable[HistoryOffset];
+	MatchOffset = ncrush->MatchTable[HistoryOffset];
 
-	_Offset = ncrush->MatchTable[Offset];
+	NextOffset = ncrush->MatchTable[Offset];
 	MatchPtr = &HistoryBuffer[MatchLength];
 
-	while (--i < 0)
+	for (i = 0; i < 4; i++)
 	{
-		j = 0;
+		j = -1;
 
-		if (j == 0)
+		if (j < 0)
 		{
-			Offset = ncrush->MatchTable[_Offset];
-			if (MatchPtr[_Offset] == HistoryBuffer[HistoryOffset + MatchLength])
-			{
-				Offset = _Offset;
-				j++;
-			}
+			Offset = ncrush->MatchTable[NextOffset];
+			if (MatchPtr[NextOffset] == HistoryBuffer[HistoryOffset + MatchLength])
+				j = 0;
 		}
 
-		if (j == 1)
+		if (j < 0)
 		{
-			_Offset = ncrush->MatchTable[Offset];
+			NextOffset = ncrush->MatchTable[Offset];
 			if (MatchPtr[Offset] == HistoryBuffer[HistoryOffset + MatchLength])
-			{
-				j++;
-			}
+				j = 1;
 		}
-
-		if (j == 2)
+		
+		if (j < 0)
 		{
-			Offset = ncrush->MatchTable[_Offset];
-			if (MatchPtr[_Offset] == HistoryBuffer[HistoryOffset + MatchLength])
-			{
-				Offset = _Offset;
-				j++;
-			}
+			Offset = ncrush->MatchTable[NextOffset];
+			if (MatchPtr[NextOffset] == HistoryBuffer[HistoryOffset + MatchLength])
+				j = 2;
 		}
-
-		if (j == 3)
+		
+		if (j < 0)
 		{
-			_Offset = ncrush->MatchTable[Offset];
+			NextOffset = ncrush->MatchTable[Offset];
 			if (MatchPtr[Offset] == HistoryBuffer[HistoryOffset + MatchLength])
-			{
-				j++;
-			}
+				j = 3;
+		}
+		
+		if (j < 0)
+		{
+			Offset = ncrush->MatchTable[NextOffset];
+			if (MatchPtr[NextOffset] == HistoryBuffer[HistoryOffset + MatchLength])
+				j = 4;
 		}
 
-		if (j == 4)
+		if (j < 0)
 		{
-			Offset = ncrush->MatchTable[_Offset];
-			if (MatchPtr[_Offset] == HistoryBuffer[HistoryOffset + MatchLength])
-			{
-				Offset = _Offset;
-				j++;
-			}
-		}
-
-		if (j == 5)
-		{
-			_Offset = ncrush->MatchTable[Offset];
+			NextOffset = ncrush->MatchTable[Offset];
 			if (MatchPtr[Offset] == HistoryBuffer[HistoryOffset + MatchLength])
-			{
-				j++;
-			}
+				j = 5;
 		}
 
-		if (j && (Offset != (HistoryOffset && Offset)))
+		if (j >= 0)
 		{
-			Length = ncrush_find_match_length(&HistoryBuffer[HistoryOffset + 2],
+			if ((j % 2) == 0)
+				Offset = NextOffset;
+
+			if ((Offset != HistoryOffset) && Offset)
+			{
+				Length = ncrush_find_match_length(&HistoryBuffer[HistoryOffset + 2],
 					&HistoryBuffer[Offset + 2], ncrush->HistoryPtr) + 2;
 				
-			if (Length < 2)
-				return -1;
-				
-			if ((Length <= MatchLength)
-				|| ((MatchLength = Length, CopyOffset = Offset,
-				(&HistoryBuffer[HistoryOffset + 2] < ncrush->HistoryPtr))
-				&& (Length <= 16)))
-			{
-				_Offset = ncrush->MatchTable[Offset];
-				MatchPtr = &HistoryBuffer[MatchLength];
-				continue;
-			}
+				if (Length < 2)
+					return -1;
 
+				if (Length > 16)
+					break;
+				
+				if (Length > MatchLength)
+				{
+					MatchLength = Length;
+					MatchOffset = Offset;
+				}
+
+				if ((Length <= MatchLength) || (&HistoryBuffer[HistoryOffset + 2] < ncrush->HistoryPtr))
+				{
+					NextOffset = ncrush->MatchTable[Offset];
+					MatchPtr = &HistoryBuffer[MatchLength];
+					continue;
+				}
+			}
 			break;
 		}
 	}
 
 	ncrush->MatchTable[0] = 0;
-	*pCopyOffset = CopyOffset;
-	
+	*pMatchOffset = MatchOffset;
+
 	return MatchLength;
 }
 
@@ -2252,6 +2247,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	UINT32 CodeLEC;
 	UINT32 BitLength;
 	UINT32 CopyOffset;
+	UINT32 MatchOffset;
 	UINT32 OldCopyOffset;
 	UINT32* OffsetCache;
 	UINT32 OffsetCacheIndex;
@@ -2300,9 +2296,10 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	HistoryBufferSize = ncrush->HistoryBufferSize;
 
 	CopyOffset = 0;
+	MatchOffset = 0;
 	ncrush_hash_table_add(ncrush, pSrcData, SrcSize, HistoryPtr - HistoryBuffer);
 	CopyMemory(HistoryPtr, pSrcData, SrcSize);
-	ncrush->HistoryPtr = HistoryPtr + SrcSize;
+	ncrush->HistoryPtr = &HistoryPtr[SrcSize];
 
 	while (SrcPtr < (SrcEndPtr - 2))
 	{
@@ -2317,15 +2314,17 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 		if (ncrush->MatchTable[HistoryOffset])
 		{
-			CopyOffset = 0;
-			MatchLength = ncrush_find_best_match(ncrush, HistoryOffset, &CopyOffset);
+			MatchOffset = 0;
+			MatchLength = ncrush_find_best_match(ncrush, HistoryOffset, &MatchOffset);
 
 			if (MatchLength == -1)
 				return -1;
 		}
 
 		if (MatchLength)
-			CopyOffset = (HistoryBufferSize - 1) & (HistoryPtr - &HistoryBuffer[CopyOffset]);
+			CopyOffset = (HistoryBufferSize - 1) & (HistoryPtr - &HistoryBuffer[MatchOffset]);
+
+		printf("MatchLength: %d MatchOffset: %d CopyOffset: %d\n", MatchLength, MatchOffset, CopyOffset);
 		
 		if ((MatchLength == 2) && (CopyOffset >= 64))
 			MatchLength = 0;
@@ -2362,8 +2361,8 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			HistoryPtr += MatchLength;
 			SrcPtr += MatchLength;
 
-			printf("MatchLength: %d CopyOffset: %d Offset: %d\n", MatchLength, CopyOffset,
-				(int) (DstPtr - pDstData));
+			printf("MatchLength: %d CopyOffset: %d Offset: %d\n",
+				MatchLength, CopyOffset, (int) (DstPtr - pDstData));
 
 			if (!MatchLength)
 				return -1;
@@ -2442,8 +2441,8 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				BitLength = HuffLengthLEC[IndexLEC];
 				CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 				
-				printf("CopyOffsetIndex: %d CopyOffsetBits: %d BitLength: %d IndexLEC: %d CodeLEC: 0x%04X Offset: %d\n",
-						CopyOffsetIndex, CopyOffsetBits, BitLength, IndexLEC, CodeLEC, DstPtr - pDstData);
+				printf("CopyOffset: %d bits+2: %d CopyOffsetIndex: %d CopyOffsetBits: %d BitLength: %d IndexLEC: %d CodeLEC: 0x%04X Offset: %d\n",
+						CopyOffset, bits+2, CopyOffsetIndex, CopyOffsetBits, BitLength, IndexLEC, CodeLEC, DstPtr - pDstData);
 
 				if (BitLength > 15)
 					return -1;
