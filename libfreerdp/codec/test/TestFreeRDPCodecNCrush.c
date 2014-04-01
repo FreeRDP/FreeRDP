@@ -104,13 +104,11 @@ int test_NCrushDecompressBells()
 
 int TestFreeRDPCodecNCrush(int argc, char* argv[])
 {
-#if 1
 	if (test_NCrushCompressBells() < 0)
 		return -1;
-#else
+
 	if (test_NCrushDecompressBells() < 0)
 		return -1;
-#endif
 
 	return 0;
 }

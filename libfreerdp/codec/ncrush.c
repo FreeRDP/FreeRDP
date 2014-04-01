@@ -1848,13 +1848,8 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 
 			Literal = (HuffTableLEC[MaskedBits] & 0xFF);
 
-			printf("Literal: %c BitLength: %d IndexLEC: %d CodeLEC: 0x%04X\n",
-					Literal, BitLength, IndexLEC, MaskedBits);
-
 			*HistoryPtr++ = Literal;
 		}
-
-		printf("IndexLEC: %d\n", IndexLEC);
 
 		if (IndexLEC == 256)
 			break; /* EOS */
@@ -2323,8 +2318,6 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 		if (MatchLength)
 			CopyOffset = (HistoryBufferSize - 1) & (HistoryPtr - &HistoryBuffer[MatchOffset]);
-
-		printf("MatchLength: %d MatchOffset: %d CopyOffset: %d\n", MatchLength, MatchOffset, CopyOffset);
 		
 		if ((MatchLength == 2) && (CopyOffset >= 64))
 			MatchLength = 0;
@@ -2339,7 +2332,6 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			if ((DstPtr + 2) > DstEndPtr)
 			{
 				ncrush_context_reset(ncrush);
-				printf("PACKET_FLUSHED #1\n");
 				*pFlags = PACKET_FLUSHED;
 				return 1;
 			}
@@ -2347,9 +2339,6 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			IndexLEC = Literal;
 			BitLength = HuffLengthLEC[IndexLEC];
 			CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
-
-			printf("Literal: %c (%d) BitLength: %d IndexLEC: %d CodeLEC: 0x%04X Offset: %d\n",
-					Literal, Literal, BitLength, IndexLEC, CodeLEC, (int) (DstPtr - pDstData));
 
 			if (BitLength > 15)
 				return -1;
@@ -2361,9 +2350,6 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			HistoryPtr += MatchLength;
 			SrcPtr += MatchLength;
 
-			printf("MatchLength: %d CopyOffset: %d Offset: %d\n",
-				MatchLength, CopyOffset, (int) (DstPtr - pDstData));
-
 			if (!MatchLength)
 				return -1;
 
@@ -2371,7 +2357,6 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			{
 				ncrush_context_reset(ncrush);
 				*pFlags = PACKET_FLUSHED;
-				printf("PACKET_FLUSHED #2\n");
 				return 1;
 			}
 
@@ -2427,8 +2412,6 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			{
 				/* CopyOffset not in OffsetCache */
 
-				printf("CopyOffset not in OffsetCache: %d\n", OffsetCacheIndex);
-
 				if (CopyOffset >= 256)
 					bits = (CopyOffset >> 7) + 256;
 				else
@@ -2440,9 +2423,6 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				IndexLEC = 257 + CopyOffsetIndex;
 				BitLength = HuffLengthLEC[IndexLEC];
 				CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
-				
-				printf("CopyOffset: %d bits+2: %d CopyOffsetIndex: %d CopyOffsetBits: %d BitLength: %d IndexLEC: %d CodeLEC: 0x%04X Offset: %d\n",
-						CopyOffset, bits+2, CopyOffsetIndex, CopyOffsetBits, BitLength, IndexLEC, CodeLEC, DstPtr - pDstData);
 
 				if (BitLength > 15)
 					return -1;
@@ -2462,8 +2442,6 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				else
 					IndexCO = ncrush->HuffTableLOM[MatchLength];
 
-				printf("IndexCO: %d MatchLength: %d\n", IndexCO, MatchLength);
-
 				BitLength = HuffLengthLOM[IndexCO];
 				IndexLOM = LOMBitsLUT[IndexCO];
 
@@ -2475,25 +2453,15 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				NCrushWriteBits(MaskedBits, IndexLOM);
 
 				if ((MaskedBits + LOMBaseLUT[IndexCO]) != MatchLength)
-				{
-					printf("((MaskedBits + LOMBaseLUT[IndexCO]) != MatchLength)\n"
-						"MaskedBits: %d MatchLength: %d LOMBaseLUT[IndexCO]: %d IndexCO: %d\n",
-						MaskedBits, MatchLength, LOMBaseLUT[IndexCO], IndexCO);
 					return -1;
-				}
 			}
 			else
 			{
 				/* CopyOffset in OffsetCache */
 
-				printf("CopyOffset in OffsetCache: %d\n", OffsetCacheIndex);
-
 				IndexLEC = 289 + OffsetCacheIndex;
 				BitLength = HuffLengthLEC[IndexLEC];
 				CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
-
-				printf("CopyOffsetIndex: %d CopyOffsetBits: %d BitLength: %d IndexLEC: %d CodeLEC: 0x%04X OffsetCacheIndex: %d Offset: %d\n",
-					CopyOffsetIndex, CopyOffsetBits, BitLength, IndexLEC, CodeLEC, OffsetCacheIndex, DstPtr - pDstData);
 
 				if (BitLength >= 15)
 					return -1;
@@ -2526,15 +2494,10 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 	while (SrcPtr < SrcEndPtr)
 	{
-		printf("Last Round...\n");
-
 		if ((DstPtr + 2) > DstEndPtr)
 		{
-			break;
-
 			ncrush_context_reset(ncrush);
 			*pFlags = PACKET_FLUSHED;
-			printf("PACKET_FLUSHED #3\n");
 			return 1;
 		}
 
@@ -2545,24 +2508,18 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		BitLength = HuffLengthLEC[IndexLEC];
 		CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 
-		printf("Literal: %c (%d) BitLength: %d IndexLEC: %d CodeLEC: %d\n",
-				Literal, Literal, BitLength, IndexLEC, CodeLEC);
-
 		if (BitLength > 15)
 			return -1;
 
 		NCrushWriteBits(CodeLEC, BitLength);
 	}
 
-#if 0
 	if ((DstPtr + 4) >= DstEndPtr)
 	{
 		ncrush_context_reset(ncrush);
 		*pFlags = PACKET_FLUSHED;
-		printf("PACKET_FLUSHED #4\n");
 		return 1;
 	}
-#endif
 
 	IndexLEC = 256;
 	BitLength = HuffLengthLEC[IndexLEC];
