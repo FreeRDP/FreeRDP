@@ -110,6 +110,7 @@ WINPR_API BOOL GetNamedPipeClientComputerNameW(HANDLE Pipe, LPCWSTR ClientComput
  * Extended API
  */
 
+WINPR_API BOOL IsNamedPipeFileNameA(LPCSTR lpName);
 WINPR_API char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName);
 WINPR_API char* GetNamedPipeUnixDomainSocketBaseFilePathA();
 WINPR_API char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName);

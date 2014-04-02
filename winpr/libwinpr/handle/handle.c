@@ -28,6 +28,7 @@
 #include "../synch/synch.h"
 #include "../thread/thread.h"
 #include "../pipe/pipe.h"
+#include "../comm/comm.h"
 #include "../security/security.h"
 
 #ifdef HAVE_UNISTD_H
@@ -193,6 +194,14 @@ BOOL CloseHandle(HANDLE hObject)
 			free(token->Domain);
 
 		free(token);
+	}
+	else if (Type == HANDLE_TYPE_COMM)
+	{
+		WINPR_COMM* comm;
+
+		comm = (WINPR_COMM*) Object;
+
+		free(comm);
 	}
 
 	return FALSE;

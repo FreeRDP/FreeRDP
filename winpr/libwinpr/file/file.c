@@ -183,6 +183,7 @@
 #include "../handle/handle.h"
 
 #include "../pipe/pipe.h"
+#include "../comm/comm.h"
 
 #ifdef HAVE_AIO_H
 
@@ -226,6 +227,19 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 
 	if (!lpFileName)
 		return INVALID_HANDLE_VALUE;
+
+	if (!IsNamedPipeFileNameA(lpFileName))
+	{
+		HANDLE hComm;
+		WINPR_COMM* pComm;
+
+		pComm = (WINPR_COMM*) calloc(1, sizeof(WINPR_COMM));
+		hComm = (HANDLE) pComm;
+
+		WINPR_HANDLE_SET_TYPE(pComm, HANDLE_TYPE_COMM);
+
+		return hComm;
+	}
 
 	name = GetNamedPipeNameWithoutPrefixA(lpFileName);
 
@@ -809,6 +823,14 @@ BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttrib
 
 #define NAMED_PIPE_PREFIX_PATH		"\\\\.\\pipe\\"
 
+BOOL IsNamedPipeFileNameA(LPCSTR lpName)
+{
+	if (strncmp(lpName, NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH) - 1) != 0)
+		return FALSE;
+
+	return TRUE;
+}
+
 char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
 {
 	char* lpFileName;
@@ -816,7 +838,7 @@ char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
 	if (!lpName)
 		return NULL;
 
-	if (strncmp(lpName, NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH) - 1) != 0)
+	if (!IsNamedPipeFileNameA(lpName))
 		return NULL;
 
 	lpFileName = _strdup(&lpName[strlen(NAMED_PIPE_PREFIX_PATH)]);
