@@ -376,6 +376,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16 port)
 {
+	rdpTsg* tsg;
 	int tls_status;
 	freerdp* instance;
 	rdpContext* context;
@@ -383,7 +384,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	instance = (freerdp*) transport->settings->instance;
 	context = instance->context;
 
-	rdpTsg* tsg = tsg_new(transport);
+	tsg = tsg_new(transport);
 
 	tsg->transport = transport;
 	transport->tsg = tsg;
