@@ -89,7 +89,7 @@ void ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 	{
 		GetComputerNameExA(ComputerNameDnsHostname, NULL, &nSize);
 		name = malloc(nSize);
-		GetComputerNameExA(ComputerNameDnsHostname, TargetName, &nSize);
+		GetComputerNameExA(ComputerNameDnsHostname, name, &nSize);
 		CharUpperA(TargetName);
 	}
 

@@ -615,6 +615,13 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	packet->packetId = *((UINT32*) &buffer[offset]); /* PacketId */
 	SwitchValue = *((UINT32*) &buffer[offset + 4]); /* SwitchValue */
 
+	if (packet->packetId == E_PROXY_NAP_ACCESSDENIED)
+	{
+		fprintf(stderr, "status: E_PROXY_NAP_ACCESSDENIED (0x%08X)\n", E_PROXY_NAP_ACCESSDENIED);
+		fprintf(stderr, "Ensure that the Gateway Connection Authorization Policy is correct\n");
+		return FALSE;
+	}
+
 	if ((packet->packetId != TSG_PACKET_TYPE_RESPONSE) || (SwitchValue != TSG_PACKET_TYPE_RESPONSE))
 	{
 		fprintf(stderr, "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_RESPONSE\n",
@@ -1366,6 +1373,10 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 		return FALSE;
 
 	pdu = rpc_recv_dequeue_pdu(rpc);
+	if (!pdu) {
+		fprintf(stderr, "TsProxyCreateChannel: error reading response\n");
+		return FALSE;
+	}
 
 	call = rpc_client_call_find_by_id(rpc, pdu->CallId);
 
@@ -1408,6 +1419,9 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 #if 0
 	pdu = rpc_recv_dequeue_pdu(rpc);
+
+	if (!pdu)
+		return FALSE;
 
 	if (!TsProxySetupReceivePipeReadResponse(tsg, pdu))
 	{
@@ -1480,6 +1494,12 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 	rpc = tsg->rpc;
 
+	if (rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
+	{
+		fprintf(stderr, "tsg_read error: connection lost\n");
+		return -1;
+	}
+
 	if (tsg->PendingPdu)
 	{
 		CopyLength = (length < tsg->BytesAvailable) ? length : tsg->BytesAvailable;
@@ -1532,6 +1552,12 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
+	if (tsg->rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
+	{
+		fprintf(stderr, "tsg_write error: connection lost\n");
+		return -1;
+	}
+
 	return TsProxySendToServer((handle_t) tsg, data, 1, &length);
 }
 

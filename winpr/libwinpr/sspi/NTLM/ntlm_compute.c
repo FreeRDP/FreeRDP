@@ -282,9 +282,43 @@ void ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 	SamClose(sam);
 }
 
+void ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
+{
+	int i, hn, ln;
+	char* PasswordHash = NULL;
+	UINT32 PasswordHashLength = 0;
+
+	/* Password contains a password hash of length (PasswordLength / SSPI_CREDENTIALS_HASH_LENGTH_FACTOR) */
+
+	PasswordHashLength = context->identity.PasswordLength / SSPI_CREDENTIALS_HASH_LENGTH_FACTOR;
+	ConvertFromUnicode(CP_UTF8, 0, context->identity.Password, PasswordHashLength, &PasswordHash, 0, NULL, NULL);
+	CharUpperBuffA(PasswordHash, PasswordHashLength);
+
+	for (i = 0; i < 32; i += 2)
+	{
+		hn = PasswordHash[i] > '9' ? PasswordHash[i] - 'A' + 10 : PasswordHash[i] - '0';
+		ln = PasswordHash[i + 1] > '9' ? PasswordHash[i + 1] - 'A' + 10 : PasswordHash[i + 1] - '0';
+		hash[i / 2] = (hn << 4) | ln;
+	}
+
+	free(PasswordHash);
+}
+
 void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash)
 {
-	if (context->identity.PasswordLength > 0)
+	if (context->identity.PasswordLength > 256)
+	{
+		BYTE PasswordHash[16];
+
+		/* Special case for WinPR: password hash */
+		ntlm_convert_password_hash(context, PasswordHash);
+
+		NTOWFv2FromHashW(PasswordHash,
+				(LPWSTR) context->identity.User, context->identity.UserLength * 2,
+				(LPWSTR) context->identity.Domain, context->identity.DomainLength * 2,
+				(BYTE*) hash);
+	}
+	else if (context->identity.PasswordLength > 0)
 	{
 		NTOWFv2W((LPWSTR) context->identity.Password, context->identity.PasswordLength * 2,
 				(LPWSTR) context->identity.User, context->identity.UserLength * 2,

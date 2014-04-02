@@ -3,7 +3,7 @@
  * Synchronization Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2013 Norbert Federa <norbert.federa@thinstuff.com>
+ * Copyright 2013 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -235,7 +235,7 @@ VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 
 #endif
 
-#if ((_WIN32) && (_WIN32_WINNT < 0x0600))
+#if ((_WIN32) && (_WIN32_WINNT < 0x0403))
 
 typedef BOOL (WINAPI * PINITIALIZE_CRITICAL_SECTION_EX_FN)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
 

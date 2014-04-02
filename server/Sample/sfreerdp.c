@@ -30,6 +30,9 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/channels/channels.h>
+
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/tcp.h>
@@ -63,7 +66,7 @@ void test_peer_context_new(freerdp_peer* client, testPeerContext* context)
 	context->icon_x = -1;
 	context->icon_y = -1;
 
-	context->vcm = WTSCreateVirtualChannelManager(client);
+	context->vcm = WTSOpenServerA((LPSTR) client->context);
 }
 
 void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
@@ -93,7 +96,7 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 		if (context->rdpsnd)
 			rdpsnd_server_context_free(context->rdpsnd);
 
-		WTSDestroyVirtualChannelManager(context->vcm);
+		WTSCloseServer((HANDLE) context->vcm);
 	}
 }
 
@@ -450,7 +453,6 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 BOOL tf_peer_post_connect(freerdp_peer* client)
 {
-	int i;
 	testPeerContext* context = (testPeerContext*) client->context;
 
 	/**
@@ -490,31 +492,24 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	/* A real server should tag the peer as activated here and start sending updates in main loop. */
 	test_peer_load_icon(client);
 
-	/* Iterate all channel names requested by the client and activate those supported by the server */
-
-	for (i = 0; i < client->settings->ChannelCount; i++)
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpdbg"))
 	{
-		if (client->settings->ChannelDefArray[i].joined)
+		context->debug_channel = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "rdpdbg");
+
+		if (context->debug_channel != NULL)
 		{
-			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpdbg", 6) == 0)
-			{
-				context->debug_channel = WTSVirtualChannelManagerOpenEx(context->vcm, "rdpdbg", 0);
+			printf("Open channel rdpdbg.\n");
 
-				if (context->debug_channel != NULL)
-				{
-					printf("Open channel rdpdbg.\n");
+			context->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-					context->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-					context->debug_channel_thread = CreateThread(NULL, 0,
-							(LPTHREAD_START_ROUTINE) tf_debug_channel_thread_func, (void*) context, 0, NULL);
-				}
-			}
-			else if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
-			{
-				sf_peer_rdpsnd_init(context); /* Audio Output */
-			}
+			context->debug_channel_thread = CreateThread(NULL, 0,
+					(LPTHREAD_START_ROUTINE) tf_debug_channel_thread_func, (void*) context, 0, NULL);
 		}
+	}
+
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpsnd"))
+	{
+		sf_peer_rdpsnd_init(context); /* Audio Output */
 	}
 
 	/* Dynamic Virtual Channels */
@@ -832,6 +827,7 @@ int main(int argc, char* argv[])
 {
 	freerdp_listener* instance;
 
+	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 	instance = freerdp_listener_new();
 
 	instance->PeerAccepted = test_peer_accepted;

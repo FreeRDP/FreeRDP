@@ -19,6 +19,12 @@ set(MODULE_NAME "wfreerdp-client")
 set(MODULE_PREFIX "FREERDP_CLIENT_WINDOWS_CONTROL")
 
 set(${MODULE_PREFIX}_SRCS
+	wf_cliprdr_DataObject.c
+	wf_cliprdr_DataObject.h
+	wf_cliprdr_EnumFORMATETC.c
+	wf_cliprdr_EnumFORMATETC.h
+	wf_cliprdr_Stream.c
+	wf_cliprdr_Stream.h
 	wf_gdi.c
 	wf_gdi.h
 	wf_event.c
@@ -33,6 +39,8 @@ set(${MODULE_PREFIX}_SRCS
 	wf_rail.h
 	wf_interface.c
 	wf_interface.h
+	wf_floatbar.c
+	wf_floatbar.h
 	wfreerdp.rc
 	resource.h)
 
@@ -63,7 +71,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_CLIENT_INTERFACE)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT WinPRTargets)
+	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
 	add_subdirectory(cli)
 else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)

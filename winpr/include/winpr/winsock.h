@@ -34,9 +34,91 @@ PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize);
 
 #else /* _WIN32 */
 
+#include <netdb.h>
+#include <unistd.h>
+#include <sys/un.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <net/if.h>
 
+#include <winpr/error.h>
+#include <winpr/platform.h>
+
+typedef UINT_PTR SOCKET;
 typedef struct sockaddr_storage SOCKADDR_STORAGE;
+
+#define WSADESCRIPTION_LEN	256
+#define WSASYS_STATUS_LEN	128
+
+typedef struct WSAData
+{
+	WORD wVersion;
+	WORD wHighVersion;
+#ifdef _M_AMD64
+	unsigned short iMaxSockets;
+	unsigned short iMaxUdpDg;
+	char* lpVendorInfo;
+	char szDescription[WSADESCRIPTION_LEN+1];
+	char szSystemStatus[WSASYS_STATUS_LEN+1];
+#else
+	char szDescription[WSADESCRIPTION_LEN+1];
+	char szSystemStatus[WSASYS_STATUS_LEN+1];
+	unsigned short iMaxSockets;
+	unsigned short iMaxUdpDg;
+	char* lpVendorInfo;
+#endif
+} WSADATA, *LPWSADATA;
+
+#ifndef MAKEWORD
+#define MAKEWORD(a,b) ((WORD)(((BYTE)((DWORD_PTR)(a) & 0xFF)) | (((WORD)((BYTE)((DWORD_PTR)(b) & 0xFF))) << 8)))
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API int WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData);
+WINPR_API int WSACleanup(void);
+
+WINPR_API void WSASetLastError(int iError);
+WINPR_API int WSAGetLastError(void);
+
+WINPR_API SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen);
+WINPR_API int _bind(SOCKET s, const struct sockaddr* addr, int namelen);
+WINPR_API int closesocket(SOCKET s);
+WINPR_API int _connect(SOCKET s, const struct sockaddr* name, int namelen);
+WINPR_API int _ioctlsocket(SOCKET s, long cmd, u_long* argp);
+WINPR_API int _getpeername(SOCKET s, struct sockaddr* name, int* namelen);
+WINPR_API int _getsockname(SOCKET s, struct sockaddr* name, int* namelen);
+WINPR_API int _getsockopt(SOCKET s, int level, int optname, char* optval, int* optlen);
+WINPR_API u_long _htonl(u_long hostlong);
+WINPR_API u_short _htons(u_short hostshort);
+WINPR_API unsigned long _inet_addr(const char* cp);
+WINPR_API char* _inet_ntoa(struct in_addr in);
+WINPR_API int _listen(SOCKET s, int backlog);
+WINPR_API u_long _ntohl(u_long netlong);
+WINPR_API u_short _ntohs(u_short netshort);
+WINPR_API int _recv(SOCKET s, char* buf, int len, int flags);
+WINPR_API int _recvfrom(SOCKET s, char* buf, int len, int flags, struct sockaddr* from, int* fromlen);
+WINPR_API int _select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, const struct timeval* timeout);
+WINPR_API int _send(SOCKET s, const char* buf, int len, int flags);
+WINPR_API int _sendto(SOCKET s, const char* buf, int len, int flags, const struct sockaddr* to, int tolen);
+WINPR_API int _setsockopt(SOCKET s, int level, int optname, const char* optval, int optlen);
+WINPR_API int _shutdown(SOCKET s, int how);
+WINPR_API SOCKET _socket(int af, int type, int protocol);
+WINPR_API struct hostent* _gethostbyaddr(const char* addr, int len, int type);
+WINPR_API struct hostent* _gethostbyname(const char* name);
+WINPR_API int _gethostname(char* name, int namelen);
+WINPR_API struct servent* _getservbyport(int port, const char* proto);
+WINPR_API struct servent* _getservbyname(const char* name, const char* proto);
+WINPR_API struct protoent* _getprotobynumber(int number);
+WINPR_API struct protoent* _getprotobyname(const char* name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _WIN32 */
 

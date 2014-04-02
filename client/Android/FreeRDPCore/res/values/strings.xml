@@ -185,7 +185,6 @@
     <string name="dlg_msg_connecting">Connecting &#8230;</string>
     <string name="dlg_msg_logging_in">Logging in &#8230;</string>
     <string name="dlg_title_about">About aFreeRDP</string>
-    <string name="dlg_msg_about">Version: %1$s\n\u00A9 2012 Thinstuff Technologies GmbH</string>
     <string name="dlg_title_create_bookmark_after_qc">Save Connection Settings?</string>
     <string name="dlg_msg_create_bookmark_after_qc">Your connection settings have not been saved! Do you want to save them?</string>
     <string name="dlg_title_save_bookmark">Save Connection?</string>

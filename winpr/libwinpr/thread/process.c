@@ -66,7 +66,6 @@
 #include <grp.h>
 
 #include <errno.h>
-#include <spawn.h>
 #include <string.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -140,7 +139,7 @@ char* FindApplicationPath(char* application)
 		return NULL;
 
 	if (application[0] == '/')
-		return application;
+		return _strdup(application);
 
 	nSize = GetEnvironmentVariableA("PATH", NULL, 0);
 
@@ -181,13 +180,14 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	pid_t pid;
 	int flags;
 	int numArgs;
-	LPSTR* pArgs;
-	char** envp;
-	char* filename;
+	LPSTR* pArgs = NULL;
+	char** envp = NULL;
+	char* filename = NULL;
 	WINPR_THREAD* thread;
 	WINPR_PROCESS* process;
 	WINPR_ACCESS_TOKEN* token;
 	LPTCH lpszEnvironmentBlock;
+	BOOL ret = FALSE;
 
 	pid = 0;
 	envp = NULL;
@@ -211,6 +211,8 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	}
 
 	filename = FindApplicationPath(pArgs[0]);
+	if (NULL == filename)
+		goto finish;
 
 	/* fork and exec */
 
@@ -219,7 +221,7 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	if (pid < 0)
 	{
 		/* fork failure */
-		return FALSE;
+		goto finish;
 	}
 
 	if (pid == 0)
@@ -249,11 +251,16 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 
 			if (token->UserId)
 				setuid((uid_t) token->UserId);
+
+			/* TODO: add better cwd handling and error checking */
+			if (lpCurrentDirectory && strlen(lpCurrentDirectory) > 0)
+				chdir(lpCurrentDirectory);
 		}
 
 		if (execve(filename, pArgs, envp) < 0)
 		{
-			return FALSE;
+			/* execve failed - end the process */
+			_exit(1);
 		}
 	}
 	else
@@ -264,7 +271,9 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	process = (WINPR_PROCESS*) malloc(sizeof(WINPR_PROCESS));
 
 	if (!process)
-		return FALSE;
+	{
+		goto finish;
+	}
 
 	ZeroMemory(process, sizeof(WINPR_PROCESS));
 
@@ -279,7 +288,9 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	ZeroMemory(thread, sizeof(WINPR_THREAD));
 
 	if (!thread)
-		return FALSE;
+	{
+		goto finish;
+	}
 
 	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
 
@@ -290,7 +301,13 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	lpProcessInformation->dwProcessId = (DWORD) pid;
 	lpProcessInformation->dwThreadId = (DWORD) pid;
 
-	free(filename);
+	ret = TRUE;
+
+finish:
+	if (filename)
+	{
+		free(filename);
+	}
 
 	if (pArgs)
 	{
@@ -313,7 +330,7 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		free(envp);
 	}
 
-	return TRUE;
+	return ret;
 }
 
 BOOL CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,

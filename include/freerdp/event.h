@@ -65,10 +65,6 @@ DEFINE_EVENT_BEGIN(ErrorInfo)
 	UINT32 code;
 DEFINE_EVENT_END(ErrorInfo)
 
-DEFINE_EVENT_BEGIN(ParamChange)
-	int id;
-DEFINE_EVENT_END(ParamChange)
-
 DEFINE_EVENT_BEGIN(Terminate)
 	int code;
 DEFINE_EVENT_END(Terminate)
@@ -86,6 +82,12 @@ DEFINE_EVENT_BEGIN(ChannelDisconnected)
 	const char* name;
 	void* pInterface;
 DEFINE_EVENT_END(ChannelDisconnected)
+
+DEFINE_EVENT_BEGIN(MouseEvent)
+	UINT16 flags;
+	UINT16 x;
+	UINT16 y;
+DEFINE_EVENT_END(MouseEvent)
 
 #ifdef	__cplusplus
 }

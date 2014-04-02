@@ -29,6 +29,7 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/stream.h>
+#include <winpr/winsock.h>
 
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
@@ -41,14 +42,14 @@ struct rdp_tcp
 	int sockfd;
 	char ip_address[32];
 	BYTE mac_address[6];
-	struct rdp_settings* settings;
+	rdpSettings* settings;
 #ifdef _WIN32
 	WSAEVENT wsa_event;
 #endif
 	HANDLE event;
 };
 
-BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port);
+BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port);
 BOOL tcp_disconnect(rdpTcp* tcp);
 int tcp_read(rdpTcp* tcp, BYTE* data, int length);
 int tcp_write(rdpTcp* tcp, BYTE* data, int length);

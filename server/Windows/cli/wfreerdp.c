@@ -36,14 +36,9 @@ int IDcount = 0;
 
 BOOL CALLBACK moncb(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
-	
 	printf("%d\t(%d, %d), (%d, %d)\n",
-		IDcount,
-		lprcMonitor->left,
-		lprcMonitor->top,
-		lprcMonitor->right,
-		lprcMonitor->bottom);
-
+		IDcount, lprcMonitor->left, lprcMonitor->top,
+		lprcMonitor->right, lprcMonitor->bottom);
 
 	IDcount++;
 
@@ -121,7 +116,6 @@ int main(int argc, char* argv[])
 			index++;
 		}
 
-
 		if (index == argc - 1)
 		{
 			server->port = (DWORD) atoi(argv[index]);
@@ -159,7 +153,6 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-
 
 	printf("Starting server\n");
 

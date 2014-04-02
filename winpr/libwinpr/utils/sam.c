@@ -151,11 +151,11 @@ WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 	p[5] = strchr(p[4], ':') + 1;
 	p[6] = p[0] + strlen(p[0]);
 
-	entry->UserLength = p[1] - p[0] - 1;
-	entry->DomainLength = p[2] - p[1] - 1;
+	entry->UserLength = (UINT32) (p[1] - p[0] - 1);
+	entry->DomainLength = (UINT32) (p[2] - p[1] - 1);
 
-	LmHashLength = p[3] - p[2] - 1;
-	NtHashLength = p[4] - p[3] - 1;
+	LmHashLength = (int) (p[3] - p[2] - 1);
+	NtHashLength = (int) (p[4] - p[3] - 1);
 
 	entry->User = (LPSTR) malloc(entry->UserLength + 1);
 	memcpy(entry->User, p[0], entry->UserLength);
@@ -211,7 +211,7 @@ WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, L
 
 	while (sam->line != NULL)
 	{
-		length = strlen(sam->line);
+		length = (int) strlen(sam->line);
 
 		if (length > 1)
 		{
@@ -259,7 +259,7 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 
 	while (sam->line != NULL)
 	{
-		length = strlen(sam->line);
+		length = (int) strlen(sam->line);
 
 		if (length > 1)
 		{
@@ -274,7 +274,7 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 				{
 					if (entry->DomainLength > 0)
 					{
-						EntryDomainLength = strlen(entry->Domain) * 2;
+						EntryDomainLength = (UINT32) strlen(entry->Domain) * 2;
 						EntryDomain = (LPWSTR) malloc(EntryDomainLength + 2);
 						MultiByteToWideChar(CP_ACP, 0, entry->Domain, EntryDomainLength / 2,
 								(LPWSTR) EntryDomain, EntryDomainLength / 2);
@@ -300,7 +300,7 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 
 				if (DomainMatch)
 				{
-					EntryUserLength = strlen(entry->User) * 2;
+					EntryUserLength = (UINT32) strlen(entry->User) * 2;
 					EntryUser = (LPWSTR) malloc(EntryUserLength + 2);
 					MultiByteToWideChar(CP_ACP, 0, entry->User, EntryUserLength / 2,
 							(LPWSTR) EntryUser, EntryUserLength / 2);

@@ -43,6 +43,8 @@ struct _RDPSND_WAVE
 
 	UINT32 wLocalTimeA;
 	UINT32 wLocalTimeB;
+
+	BOOL AutoConfirm;
 };
 typedef struct _RDPSND_WAVE RDPSND_WAVE;
 
@@ -81,6 +83,8 @@ struct rdpsnd_device_plugin
 	pcWaveDecode WaveDecode;
 	pcWavePlay WavePlay;
 	pcWaveConfirm WaveConfirm;
+
+	BOOL DisableConfirmThread;
 };
 
 #define RDPSND_DEVICE_EXPORT_FUNC_NAME "freerdp_rdpsnd_client_subsystem_entry"

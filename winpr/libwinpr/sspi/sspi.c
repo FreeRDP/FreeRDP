@@ -192,11 +192,10 @@ CREDENTIALS* sspi_CredentialsNew()
 	CREDENTIALS* credentials;
 
 	credentials = (CREDENTIALS*) malloc(sizeof(CREDENTIALS));
-	ZeroMemory(credentials, sizeof(CREDENTIALS));
 
-	if (credentials != NULL)
+	if (credentials)
 	{
-
+		ZeroMemory(credentials, sizeof(CREDENTIALS));
 	}
 
 	return credentials;
@@ -210,11 +209,13 @@ void sspi_CredentialsFree(CREDENTIALS* credentials)
 	free(credentials);
 }
 
-void sspi_SecBufferAlloc(PSecBuffer SecBuffer, size_t size)
+void sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size)
 {
 	SecBuffer->cbBuffer = size;
 	SecBuffer->pvBuffer = malloc(size);
-	ZeroMemory(SecBuffer->pvBuffer, SecBuffer->cbBuffer);
+
+	if (SecBuffer->pvBuffer)
+		ZeroMemory(SecBuffer->pvBuffer, SecBuffer->cbBuffer);
 }
 
 void sspi_SecBufferFree(PSecBuffer SecBuffer)
@@ -319,7 +320,7 @@ void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* d
 		identity->DomainLength = 0;
 	}
 
-	if (password != NULL)
+	if (password)
 	{
 		identity->PasswordLength = ConvertToUnicode(CP_UTF8, 0, password, -1, &identity->Password, 0) - 1;
 	}
@@ -366,17 +367,22 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 
 	identity->PasswordLength = srcIdentity->PasswordLength;
 
+	if (identity->PasswordLength > 256)
+		identity->PasswordLength /= SSPI_CREDENTIALS_HASH_LENGTH_FACTOR;
+
 	if (identity->PasswordLength > 0)
 	{
 		identity->Password = (UINT16*) malloc((identity->PasswordLength + 1) * sizeof(WCHAR));
 		CopyMemory(identity->Password, srcIdentity->Password, identity->PasswordLength * sizeof(WCHAR));
 		identity->Password[identity->PasswordLength] = 0;
 	}
+
+	identity->PasswordLength = srcIdentity->PasswordLength;
 }
 
 PSecBuffer sspi_FindSecBuffer(PSecBufferDesc pMessage, ULONG BufferType)
 {
-	int index;
+	ULONG index;
 	PSecBuffer pSecBuffer = NULL;
 
 	for (index = 0; index < pMessage->cBuffers; index++)

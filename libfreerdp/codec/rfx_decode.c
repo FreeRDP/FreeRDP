@@ -3,7 +3,7 @@
  * RemoteFX Codec Library - Decode
  *
  * Copyright 2011 Vic Lee
- * Copyright 2011 Norbert Federa <nfedera@thinstuff.com>
+ * Copyright 2011 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

@@ -38,7 +38,7 @@ BOOL window_list_has_next(rdpWindowList* list)
 {
 	if (list->iterator != NULL)
 	{
-		if (list->iterator != NULL)
+		if (list->iterator->next != NULL)
 			return TRUE;
 	}
 

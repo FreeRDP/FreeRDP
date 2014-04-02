@@ -278,10 +278,7 @@ void wf_resize_window(wfContext* wfc)
 		}
 	}
 	else if (!wfc->instance->settings->Decorations)
-	{
-		RECT rc_wnd;
-		RECT rc_client;
-		
+	{		
 		SetWindowLongPtr(wfc->hwnd, GWL_STYLE, WS_CHILD);
 
 		/* Now resize to get full canvas size and room for caption and borders */
@@ -292,9 +289,6 @@ void wf_resize_window(wfContext* wfc)
 	}
 	else
 	{
-		RECT rc_wnd;
-		RECT rc_client;
-
 		SetWindowLongPtr(wfc->hwnd, GWL_STYLE, WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_SIZEBOX | WS_MAXIMIZEBOX);
 
 		if (!wfc->client_height)
@@ -327,6 +321,11 @@ void wf_toggle_fullscreen(wfContext* wfc)
 	{
 		wfc->disablewindowtracking = TRUE;
 	}
+
+	if (wfc->fullscreen)
+		floatbar_show(wfc->floatbar);
+	else
+		floatbar_hide(wfc->floatbar);
 
 	SetParent(wfc->hwnd, wfc->fullscreen ? NULL : wfc->hWndParent);
 	wf_resize_window(wfc);
@@ -466,7 +465,6 @@ void wf_gdi_multi_opaque_rect(wfContext* wfc, MULTI_OPAQUE_RECT_ORDER* multi_opa
 		rect.bottom = rectangle->top + rectangle->height;
 		brush = CreateSolidBrush(brush_color);
 
-		brush = CreateSolidBrush(brush_color);
 		FillRect(wfc->drawing->hdc, &rect, brush);
 
 		if (wfc->drawing == wfc->primary)
@@ -522,12 +520,18 @@ void wf_gdi_polyline(wfContext* wfc, POLYLINE_ORDER* polyline)
 
 	if (polyline->numPoints > 0)
 	{
+		POINT temp;
+
+		temp.x = polyline->xStart;
+		temp.y = polyline->yStart;
 		pts = (POINT*) malloc(sizeof(POINT) * polyline->numPoints);
 
 		for (i = 0; i < (int) polyline->numPoints; i++)
 		{
-			pts[i].x = polyline->points[i].x;
-			pts[i].y = polyline->points[i].y;
+			temp.x += polyline->points[i].x;
+			temp.y += polyline->points[i].y;
+			pts[i].x = temp.x;
+			pts[i].y = temp.y;
 
 			if (wfc->drawing == wfc->primary)
 				wf_invalidate_region(wfc, pts[i].x, pts[i].y, pts[i].x + 1, pts[i].y + 1);

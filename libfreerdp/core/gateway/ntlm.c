@@ -151,7 +151,7 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 	status = DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, ntlm->ServicePrincipalName);
 
 	if (status != ERROR_SUCCESS)
-		return -1;
+		return FALSE;
 
 	return TRUE;
 }
@@ -227,6 +227,12 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 		}
 	}
 
+	if ((!ntlm) || (!ntlm->table))
+	{
+		fprintf(stderr, "ntlm_authenticate: invalid ntlm context\n");
+		return FALSE;
+	}
+
 	status = ntlm->table->InitializeSecurityContext(&ntlm->credentials,
 			(ntlm->haveContext) ? &ntlm->context : NULL,
 			(ntlm->ServicePrincipalName) ? ntlm->ServicePrincipalName : NULL,
@@ -270,9 +276,12 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 	free(ntlm->identity.Password);
 	free(ntlm->ServicePrincipalName);
 
-	ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
-	ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
-	ntlm->table->DeleteSecurityContext(&ntlm->context);
+	if (ntlm->table)
+	{
+		ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
+		ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
+		ntlm->table->DeleteSecurityContext(&ntlm->context);
+	}
 }
 
 rdpNtlm* ntlm_new()

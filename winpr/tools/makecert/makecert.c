@@ -31,10 +31,6 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-#ifdef _WIN32
-#include <openssl/applink.c>
-#endif
-
 #include "makecert.h"
 
 struct _MAKECERT_CONTEXT

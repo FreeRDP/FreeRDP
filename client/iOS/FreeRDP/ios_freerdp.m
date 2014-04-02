@@ -1,7 +1,7 @@
 /*
  RDP run-loop
  
- Copyright 2013 Thinstuff Technologies GmbH, Authors: Martin Fleisz, Dorian Johnson
+ Copyright 2013 Thincast Technologies GmbH, Authors: Martin Fleisz, Dorian Johnson
  
  This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -90,11 +90,6 @@ static BOOL ios_post_connect(freerdp* instance)
 
 	[mfi->session performSelectorOnMainThread:@selector(sessionDidConnect) withObject:nil waitUntilDone:YES];
 	return TRUE;
-}
-
-static int ios_receive_channel_data(freerdp* instance, int channelId, UINT8* data, int size, int flags, int total_size)
-{
-    return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
 
 void ios_process_channel_event(rdpChannels* channels, freerdp* instance)
@@ -283,7 +278,6 @@ freerdp* ios_freerdp_new()
 	inst->Authenticate = ios_ui_authenticate;
 	inst->VerifyCertificate = ios_ui_check_certificate;
     inst->VerifyChangedCertificate = ios_ui_check_changed_certificate;
-    inst->ReceiveChannelData = ios_receive_channel_data;
     
 	inst->ContextSize = sizeof(mfContext);
 	inst->ContextNew = ios_context_new;

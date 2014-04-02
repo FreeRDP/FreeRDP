@@ -168,6 +168,12 @@
 #include <aio.h>
 #endif
 
+#ifndef _WIN32
+#include <errno.h>
+#include <sys/time.h>
+#include <signal.h>
+#endif
+
 #ifdef ANDROID
 #include <sys/vfs.h>
 #else
@@ -177,6 +183,37 @@
 #include "../handle/handle.h"
 
 #include "../pipe/pipe.h"
+
+#ifdef HAVE_AIO_H
+
+static BOOL g_AioSignalHandlerInstalled = FALSE;
+
+void AioSignalHandler(int signum, siginfo_t* siginfo, void* arg)
+{
+	printf("AioSignalHandler\n");
+}
+
+int InstallAioSignalHandler()
+{
+	if (!g_AioSignalHandlerInstalled)
+	{
+		struct sigaction action;
+
+		sigemptyset(&action.sa_mask);
+		sigaddset(&action.sa_mask, SIGIO);
+
+		action.sa_flags = SA_SIGINFO;
+		action.sa_sigaction = (void*) &AioSignalHandler;
+
+		sigaction(SIGIO, &action, NULL);
+
+		g_AioSignalHandlerInstalled = TRUE;
+	}
+
+	return 0;
+}
+
+#endif
 
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
@@ -227,11 +264,21 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	if (status != 0)
 	{
 		close(pNamedPipe->clientfd);
-		free((char *)pNamedPipe->name);
-		free((char *)pNamedPipe->lpFileName);
-		free((char *)pNamedPipe->lpFilePath);
+		free((char*) pNamedPipe->name);
+		free((char*) pNamedPipe->lpFileName);
+		free((char*) pNamedPipe->lpFilePath);
 		free(pNamedPipe);
 		return INVALID_HANDLE_VALUE;
+	}
+
+	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
+	{
+#if 0
+		int flags = fcntl(pNamedPipe->clientfd, F_GETFL);
+
+		if (flags != -1)
+			fcntl(pNamedPipe->clientfd, F_SETFL, flags | O_NONBLOCK);
+#endif
 	}
 
 	return hNamedPipe;
@@ -262,57 +309,88 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 {
 	ULONG Type;
 	PVOID Object;
+	BOOL status = TRUE;
+
+	if (hFile == INVALID_HANDLE_VALUE) {
+		return FALSE;
+	}
+
+	/*
+	 * from http://msdn.microsoft.com/en-us/library/windows/desktop/aa365467%28v=vs.85%29.aspx
+	 * lpNumberOfBytesRead can be NULL only when the lpOverlapped parameter is not NULL.
+	 */
+
+	if (!lpNumberOfBytesRead && !lpOverlapped)
+		return FALSE;
 
 	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
 		return FALSE;
 
 	if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
 	{
-		int status;
+		int io_status;
 		WINPR_PIPE* pipe;
 
 		pipe = (WINPR_PIPE*) Object;
 
-		status = read(pipe->fd, lpBuffer, nNumberOfBytesToRead);
+		io_status = read(pipe->fd, lpBuffer, nNumberOfBytesToRead);
 
-		*lpNumberOfBytesRead = status;
+		if (io_status < 0)
+		{
+			status = FALSE;
 
-		return TRUE;
+			switch (errno)
+			{
+				case EWOULDBLOCK:
+					SetLastError(ERROR_NO_DATA);
+					break;
+			}
+		}
+
+		if (lpNumberOfBytesRead)
+			*lpNumberOfBytesRead = io_status;
+
+		return status;
 	}
 	else if (Type == HANDLE_TYPE_NAMED_PIPE)
 	{
-		int status;
+		int io_status;
 		WINPR_NAMED_PIPE* pipe;
 
 		pipe = (WINPR_NAMED_PIPE*) Object;
 
 		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 		{
-			status = nNumberOfBytesToRead;
+			io_status = nNumberOfBytesToRead;
 
 			if (pipe->clientfd == -1)
 				return FALSE;
 
-			status = read(pipe->clientfd, lpBuffer, nNumberOfBytesToRead);
+			io_status = read(pipe->clientfd, lpBuffer, nNumberOfBytesToRead);
 
-			if (status == 0)
+			if (io_status == 0)
 			{
 				switch (errno)
 				{
 					case ECONNRESET:
 						SetLastError(ERROR_BROKEN_PIPE);
-						status = -1;
+						io_status = 0;
+						break;
+				}
+			}
+			else if (io_status < 0)
+			{
+				status = FALSE;
+
+				switch (errno)
+				{
+					case EWOULDBLOCK:
+						SetLastError(ERROR_NO_DATA);
 						break;
 				}
 			}
 
-			if (status < 0)
-			{
-				*lpNumberOfBytesRead = 0;
-				return FALSE;
-			}
-
-			*lpNumberOfBytesRead = status;
+			*lpNumberOfBytesRead = io_status;
 		}
 		else
 		{
@@ -328,22 +406,29 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 #ifdef HAVE_AIO_H
 			{
+				int aio_status;
 				struct aiocb cb;
 
 				ZeroMemory(&cb, sizeof(struct aiocb));
-				cb.aio_nbytes = nNumberOfBytesToRead;
 				cb.aio_fildes = pipe->clientfd;
-				cb.aio_offset = lpOverlapped->Offset;
 				cb.aio_buf = lpBuffer;
+				cb.aio_nbytes = nNumberOfBytesToRead;
+				cb.aio_offset = lpOverlapped->Offset;
 
-				status = aio_read(&cb);
+				cb.aio_sigevent.sigev_notify = SIGEV_SIGNAL;
+				cb.aio_sigevent.sigev_signo = SIGIO;
+				cb.aio_sigevent.sigev_value.sival_ptr = (void*) lpOverlapped;
 
-				printf("aio_read status: %d\n", status);
+				InstallAioSignalHandler();
 
-				if (status < 0)
-				{
-					return FALSE;
-				}
+				aio_status = aio_read(&cb);
+
+				printf("aio_read status: %d\n", aio_status);
+
+				if (aio_status < 0)
+					status = FALSE;
+
+				return status;
 			}
 #else
 
@@ -358,7 +443,7 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 #endif
 		}
 
-		return TRUE;
+		return status;
 	}
 
 	return FALSE;
@@ -381,46 +466,64 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 {
 	ULONG Type;
 	PVOID Object;
+	BOOL status = TRUE;
+
+	if (hFile == INVALID_HANDLE_VALUE) {
+		return FALSE;
+	}
 
 	if (!winpr_Handle_GetInfo(hFile, &Type, &Object))
 		return FALSE;
 
 	if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
 	{
-		int status;
+		int io_status;
 		WINPR_PIPE* pipe;
 
 		pipe = (WINPR_PIPE*) Object;
 
-		status = write(pipe->fd, lpBuffer, nNumberOfBytesToWrite);
+		io_status = write(pipe->fd, lpBuffer, nNumberOfBytesToWrite);
 
-		*lpNumberOfBytesWritten = status;
+		if ((io_status < 0) && (errno == EWOULDBLOCK))
+			io_status = 0;
+
+		*lpNumberOfBytesWritten = io_status;
 
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_NAMED_PIPE)
 	{
-		int status;
+		int io_status;
 		WINPR_NAMED_PIPE* pipe;
 
 		pipe = (WINPR_NAMED_PIPE*) Object;
 
 		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 		{
-			status = nNumberOfBytesToWrite;
+			io_status = nNumberOfBytesToWrite;
 
 			if (pipe->clientfd == -1)
 				return FALSE;
 
-			status = write(pipe->clientfd, lpBuffer, nNumberOfBytesToWrite);
+			io_status = write(pipe->clientfd, lpBuffer, nNumberOfBytesToWrite);
 
-			if (status < 0)
+			if (io_status < 0)
 			{
 				*lpNumberOfBytesWritten = 0;
-				return FALSE;
+
+				switch(errno)
+				{
+					case EWOULDBLOCK:
+						io_status = 0;
+						status = TRUE;
+						break;
+					default:
+						status = FALSE;
+				}
 			}
 
-			*lpNumberOfBytesWritten = status;
+			*lpNumberOfBytesWritten = io_status;
+			return status;
 		}
 		else
 		{
@@ -439,19 +542,25 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 				struct aiocb cb;
 
 				ZeroMemory(&cb, sizeof(struct aiocb));
-				cb.aio_nbytes = nNumberOfBytesToWrite;
 				cb.aio_fildes = pipe->clientfd;
+				cb.aio_buf = (void*) lpBuffer;
+				cb.aio_nbytes = nNumberOfBytesToWrite;
 				cb.aio_offset = lpOverlapped->Offset;
-				cb.aio_buf = lpBuffer;
 
-				status = aio_write(&cb);
+				cb.aio_sigevent.sigev_notify = SIGEV_SIGNAL;
+				cb.aio_sigevent.sigev_signo = SIGIO;
+				cb.aio_sigevent.sigev_value.sival_ptr = (void*) lpOverlapped;
 
-				printf("aio_write status: %d\n", status);
+				InstallAioSignalHandler();
 
-				if (status < 0)
-				{
-					return FALSE;
-				}
+				io_status = aio_write(&cb);
+
+				printf("aio_write status: %d\n", io_status);
+
+				if (io_status < 0)
+					status = FALSE;
+
+				return status;
 			}
 #else
 

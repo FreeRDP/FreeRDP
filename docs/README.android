@@ -29,14 +29,15 @@ FreeRDP requires openssl libraries for building but they are not part of the
 Android NDK and therefore they need to be prebuild manually.
 Multiple source versions and builds of static openssl libraries are floating around.
 At the time of writing we have tested and used:
-https://github.com/bmiklautz/Android-external-openssl-ndk-static.
+https://github.com/bmiklautz/Android-external-openssl-ndk-static
+https://github.com/akallabeth/openssl-android
 However, any other static build should work as well.
 
 To build openssl:
 
-git clone git@github.com:bmiklautz/android-external-openssl-ndk-static.git
-cd android-external-openssl-ndk-static
-ndk-build # found in the Android NDK
+Set up ANDROID_NDK and ANDROID_SDK to the absolute paths on your machine.
+From the project root folder run './scripts/android_setup_build_env.sh'
+This will set up openssl and gprof helper libraries as required for FreeRDP.
 
 
 Building
@@ -52,7 +53,8 @@ to the absolut paths on your machine:
 cmake -DCMAKE_TOOLCHAIN_FILE=cmake/AndroidToolchain.cmake \
 -DANDROID_NDK="_your_ndk_path_here_" \
 -DFREERDP_ANDROID_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
--DANDROID_SDK="_your_sdk_path_here_"
+-DANDROID_SDK="_your_sdk_path_here_" \
+-DCMAKE_BUILD_TYPE=Debug
 make
 
 After that you should have a client/Android/bin/aFreeRDP-debug.apk.
@@ -66,12 +68,13 @@ to the absolut paths on your machine:
 cmake -DCMAKE_TOOLCHAIN_FILE=cmake/AndroidToolchain.cmake \
 -DANDROID_NDK="_your_ndk_path_here_" \
 -DFREERDP_ANDROID_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
--DANDROID_SDK="_your_sdk_path_here_" -DANDROID_BUILD_JAVA=OFF
+-DANDROID_SDK="_your_sdk_path_here_" -DANDROID_BUILD_JAVA=OFF \
+-DCMAKE_BUILD_TYPE=Debug
 make
 
 Now you can run your favourite ant command in client/Android like this:
 
-cd client/Android
+cd client/Android/aFreeRDP
 ant debug install
 
 Using an IDE
@@ -83,7 +86,7 @@ the eclipse marketplace).
 cmake -DCMAKE_TOOLCHAIN_FILE=cmake/AndroidToolchain.cmake \
 -DANDROID_NDK="_your_ndk_path_here_" \
 -DFREERDP_ANDROID_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
--DANDROID_BUILD_JAVA=OFF
+-DCMAKE_BUILD_TYPE=Debug -DANDROID_BUILD_JAVA=OFF
 make
 
 Open Eclipse and choose:
@@ -97,6 +100,14 @@ Side note: If you add -G "Eclipse CDT4 - Unix Makefiles" when running cmake
 you can also import FreeRDP into Eclipse too. Then you have one Java project and one c/c++
 project you can work on. This requires CDT to be installed in Eclipse.
 
+Debugging native code
+---------------------
+
+All CMake builds created with -DCMAKE_BUILD_TYPE=Debug will be ready to
+debug with ndk-gdb.
+
+Eclipse projects are already configured to allow debugging in either Java
+or native code, no extra steps required.
 
 cmake variables
 ===============
@@ -132,6 +143,35 @@ ANDROID_BUILD_JAVA (used by client/Android/CMakeLists.txt)
 
 ANDROID_SDK (used by client/Android/CMakeLists.txt)
 * absolute path to the Android SDK to use
+
+ANDROID_NDK
+* absolute path to the Android NDK to use.
+
+WITH_DEBUG_ANDROID_JNI
+* enable logcat debug messages for JNI calls.
+
+WITH_ANDROID_DEBUG_MENU
+* activate a debug menu in aFreeRDP to enable / disable runtime settings
+* not available in release.
+
+WITH_OPENSLES
+* Enables / disables sound and microphone support for android using OpenSLES
+
+ANDROID_BUILD_JAVA_DEBUG
+* Enable / disable debugging code in the java parts of the application.
+
+ANDROID_APP_VERSION
+* The version the aFreeRDP-release.apk / aFreeRDP-debug.apk will have.
+
+ANDROID_APP_TARGET_SDK
+* The target SDK version of the project.
+
+ANDROID_APP_MIN_SDK
+* The lowest supported SDK version
+
+ANDROID_NATIVE_API_LEVEL
+* The native API level to compile the native code against.
+* Should be equal to SDK level.
 
 This is used to generate local.properties needed by ant. Needs to be set
 if you build manually with ant or do integrated builds.

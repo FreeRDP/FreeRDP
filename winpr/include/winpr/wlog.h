@@ -48,6 +48,7 @@ typedef struct _wLogAppender wLogAppender;
 #define WLOG_ERROR		4
 #define WLOG_FATAL		5
 #define WLOG_OFF		6
+#define WLOG_LEVEL_INHERIT 0xFFFF
 
 /**
  * Log Message
@@ -198,7 +199,7 @@ struct _wLog
 WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 
 #define WLog_Print(_log, _log_level, _fmt, ...) \
-	if (_log_level >= _log->Level) { \
+	if (_log_level >= WLog_GetLogLevel(_log)) { \
 		wLogMessage _log_message; \
 		_log_message.Type = WLOG_MESSAGE_TEXT; \
 		_log_message.Level = _log_level; \
@@ -210,7 +211,7 @@ WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 	}
 
 #define WLog_Data(_log, _log_level, ...) \
-	if (_log_level >= _log->Level) { \
+	if (_log_level >= WLog_GetLogLevel(_log)) { \
 		wLogMessage _log_message; \
 		_log_message.Type = WLOG_MESSAGE_DATA; \
 		_log_message.Level = _log_level; \
@@ -222,7 +223,7 @@ WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 	}
 
 #define WLog_Image(_log, _log_level, ...) \
-	if (_log_level >= _log->Level) { \
+	if (_log_level >= WLog_GetLogLevel(_log)) { \
 		wLogMessage _log_message; \
 		_log_message.Type = WLOG_MESSAGE_IMAGE; \
 		_log_message.Level = _log_level; \
@@ -234,7 +235,7 @@ WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 	}
 
 #define WLog_Packet(_log, _log_level, ...) \
-	if (_log_level >= _log->Level) { \
+	if (_log_level >= WLog_GetLogLevel(_log)) { \
 		wLogMessage _log_message; \
 		_log_message.Type = WLOG_MESSAGE_PACKET; \
 		_log_message.Level = _log_level; \

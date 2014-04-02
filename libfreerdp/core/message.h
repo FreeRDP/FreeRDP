@@ -123,6 +123,8 @@ struct rdp_update_proxy
 };
 
 int update_message_queue_process_message(rdpUpdate* update, wMessage* message);
+int update_message_queue_free_message(wMessage* message);
+
 int update_message_queue_process_pending_messages(rdpUpdate* update);
 
 rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update);
@@ -148,6 +150,7 @@ struct rdp_input_proxy
 };
 
 int input_message_queue_process_message(rdpInput* input, wMessage* message);
+int input_message_queue_free_message(wMessage* message);
 int input_message_queue_process_pending_messages(rdpInput* input);
 
 rdpInputProxy* input_message_proxy_new(rdpInput* input);

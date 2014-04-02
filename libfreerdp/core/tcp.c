@@ -41,6 +41,9 @@
 #include <net/if.h>
 
 #ifdef __APPLE__
+#ifndef SOL_TCP
+#define SOL_TCP	IPPROTO_TCP
+#endif
 #ifndef TCP_KEEPIDLE
 #define TCP_KEEPIDLE TCP_KEEPALIVE
 #endif
@@ -57,13 +60,14 @@
 
 #include "tcp.h"
 
-void tcp_get_ip_address(rdpTcp * tcp)
+void tcp_get_ip_address(rdpTcp* tcp)
 {
 	BYTE* ip;
 	socklen_t length;
 	struct sockaddr_in sockaddr;
 
 	length = sizeof(sockaddr);
+	ZeroMemory(&sockaddr, length);
 
 	if (getsockname(tcp->sockfd, (struct sockaddr*) &sockaddr, &length) == 0)
 	{
@@ -73,23 +77,16 @@ void tcp_get_ip_address(rdpTcp * tcp)
 	}
 	else
 	{
-		strncpy(tcp->ip_address, "127.0.0.1", sizeof(tcp->ip_address));
+		strcpy(tcp->ip_address, "127.0.0.1");
 	}
-
-	tcp->ip_address[sizeof(tcp->ip_address) - 1] = 0;
 
 	tcp->settings->IPv6Enabled = 0;
 
-	if (tcp->settings->ClientAddress)
-	{
-		free(tcp->settings->ClientAddress);
-		tcp->settings->ClientAddress = NULL;
-	}
-
+	free(tcp->settings->ClientAddress);
 	tcp->settings->ClientAddress = _strdup(tcp->ip_address);
 }
 
-void tcp_get_mac_address(rdpTcp * tcp)
+void tcp_get_mac_address(rdpTcp* tcp)
 {
 #ifdef LINUX
 	BYTE* mac;
@@ -122,7 +119,7 @@ void tcp_get_mac_address(rdpTcp * tcp)
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
-BOOL tcp_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
+BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 {
 	UINT32 option_value;
 	socklen_t option_len;
@@ -251,7 +248,29 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
 	{
-		perror("setsockopt() IPPROTO_TCP, SO_KEEPIDLE:");
+		perror("setsockopt() IPPROTO_TCP, TCP_KEEPIDLE:");
+		return FALSE;
+	}
+#endif
+
+#ifdef TCP_KEEPCNT
+	option_value = 3;
+	option_len = sizeof(option_value);
+
+	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPCNT, (void *) &option_value, option_len) < 0)
+	{
+		perror("setsockopt() SOL_TCP, TCP_KEEPCNT:");
+		return FALSE;
+	}
+#endif
+
+#ifdef TCP_KEEPINTVL
+	option_value = 2;
+	option_len = sizeof(option_value);
+
+	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPINTVL, (void *) &option_value, option_len) < 0)
+	{
+		perror("setsockopt() SOL_TCP, TCP_KEEPINTVL:");
 		return FALSE;
 	}
 #endif

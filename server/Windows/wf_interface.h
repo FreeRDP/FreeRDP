@@ -99,7 +99,7 @@ struct wf_peer_context
 	HANDLE socketThread;
 	HANDLE socketSemaphore;
 
-	WTSVirtualChannelManager* vcm;
+	HANDLE vcm;
 	RdpsndServerContext* rdpsnd;
 };
 

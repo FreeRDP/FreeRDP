@@ -830,6 +830,44 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 }
 
 /**
+ * PathGetSeparator
+ */
+
+char PathGetSeparatorA(unsigned long dwFlags)
+{
+	char separator = PATH_SEPARATOR_CHR;
+
+	if (!dwFlags)
+		dwFlags = PATH_STYLE_NATIVE;
+
+	if (dwFlags == PATH_STYLE_WINDOWS)
+		separator = PATH_SEPARATOR_CHR;
+	else if (dwFlags == PATH_STYLE_UNIX)
+		separator = PATH_SEPARATOR_CHR;
+	else if (dwFlags == PATH_STYLE_NATIVE)
+		separator = PATH_SEPARATOR_CHR;
+
+	return separator;
+}
+
+WCHAR PathGetSeparatorW(unsigned long dwFlags)
+{
+	WCHAR separator = PATH_SEPARATOR_CHR;
+
+	if (!dwFlags)
+		dwFlags = PATH_STYLE_NATIVE;
+
+	if (dwFlags == PATH_STYLE_WINDOWS)
+		separator = PATH_SEPARATOR_CHR;
+	else if (dwFlags == PATH_STYLE_UNIX)
+		separator = PATH_SEPARATOR_CHR;
+	else if (dwFlags == PATH_STYLE_NATIVE)
+		separator = PATH_SEPARATOR_CHR;
+
+	return separator;
+}
+
+/**
  * PathGetSharedLibraryExtension
  */
 

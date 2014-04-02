@@ -27,6 +27,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/stream.h>
 
@@ -257,12 +258,15 @@ WINPR_API void LinkedList_Free(wLinkedList* list);
 
 /* System.Collections.Generic.KeyValuePair<TKey,TValue> */
 
+typedef struct _wKeyValuePair wKeyValuePair;
+
 struct _wKeyValuePair
 {
 	void* key;
 	void* value;
+
+	wKeyValuePair* next;
 };
-typedef struct _wKeyValuePair wKeyValuePair;
 
 /* Reference Table */
 
@@ -314,6 +318,40 @@ WINPR_API void CountdownEvent_Reset(wCountdownEvent* countdown, DWORD count);
 
 WINPR_API wCountdownEvent* CountdownEvent_New(DWORD initialCount);
 WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
+
+/* Hash Table */
+
+struct _wHashTable
+{
+	BOOL synchronized;
+	CRITICAL_SECTION lock;
+
+	long numOfBuckets;
+	long numOfElements;
+	float idealRatio;
+	float lowerRehashThreshold;
+	float upperRehashThreshold;
+	wKeyValuePair** bucketArray;
+	int (*keycmp)(void* key1, void* key2);
+	int (*valuecmp)(void* value1, void* value2);
+	unsigned long (*hashFunction)(void* key);
+	void (*keyDeallocator)(void* key);
+	void (*valueDeallocator)(void* value);
+};
+typedef struct _wHashTable wHashTable;
+
+WINPR_API int HashTable_Count(wHashTable* table);
+WINPR_API int HashTable_Add(wHashTable* table, void* key, void* value);
+WINPR_API BOOL HashTable_Remove(wHashTable* table, void* key);
+WINPR_API void HashTable_Clear(wHashTable* table);
+WINPR_API BOOL HashTable_Contains(wHashTable* table, void* key);
+WINPR_API BOOL HashTable_ContainsKey(wHashTable* table, void* key);
+WINPR_API BOOL HashTable_ContainsValue(wHashTable* table, void* value);
+WINPR_API void* HashTable_GetItemValue(wHashTable* table, void* key);
+WINPR_API BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value);
+
+WINPR_API wHashTable* HashTable_New(BOOL synchronized);
+WINPR_API void HashTable_Free(wHashTable* table);
 
 /* BufferPool */
 
@@ -402,6 +440,8 @@ struct _wMessageQueue
 	wMessage* array;
 	CRITICAL_SECTION lock;
 	HANDLE event;
+
+	wObject object;
 };
 typedef struct _wMessageQueue wMessageQueue;
 
@@ -418,7 +458,43 @@ WINPR_API void MessageQueue_PostQuit(wMessageQueue* queue, int nExitCode);
 WINPR_API int MessageQueue_Get(wMessageQueue* queue, wMessage* message);
 WINPR_API int MessageQueue_Peek(wMessageQueue* queue, wMessage* message, BOOL remove);
 
-WINPR_API wMessageQueue* MessageQueue_New(void);
+/*! \brief Clears all elements in a message queue.
+ *
+ *  \note If dynamically allocated data is part of the messages,
+ *        a custom cleanup handler must be passed in the 'callback'
+ *        argument for MessageQueue_New.
+ *
+ *  \param queue The queue to clear.
+ *
+ *  \return 0 in case of success or a error code otherwise.
+ */
+WINPR_API int MessageQueue_Clear(wMessageQueue *queue);
+
+/*! \brief Creates a new message queue.
+ * 				 If 'callback' is null, no custom cleanup will be done
+ * 				 on message queue deallocation.
+ * 				 If the 'callback' argument contains valid uninit or
+ * 				 free functions those will be called by
+ * 				 'MessageQueue_Clear'.
+ *
+ * \param callback a pointer to custom initialization / cleanup functions.
+ * 								 Can be NULL if not used.
+ *
+ * \return A pointer to a newly allocated MessageQueue or NULL.
+ */
+WINPR_API wMessageQueue* MessageQueue_New(const wObject *callback);
+
+/*! \brief Frees resources allocated by a message queue.
+ * 				 This function will only free resources allocated
+ *				 internally.
+ *
+ * \note Empty the queue before calling this function with
+ * 			 'MessageQueue_Clear', 'MessageQueue_Get' or
+ * 			 'MessageQueue_Peek' to free all resources allocated
+ * 			 by the message contained.
+ *
+ * \param queue A pointer to the queue to be freed.
+ */
 WINPR_API void MessageQueue_Free(wMessageQueue* queue);
 
 /* Message Pipe */
@@ -524,4 +600,5 @@ WINPR_API void PubSub_Free(wPubSub* pubSub);
 #ifdef __cplusplus
 }
 #endif
+
 #endif /* WINPR_COLLECTIONS_H */

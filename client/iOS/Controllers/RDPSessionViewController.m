@@ -1,7 +1,7 @@
 /*
  RDP Session View Controller
  
- Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+ Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
  
  This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
  If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -414,17 +414,6 @@
     }
 }
 
-- (void)showGoProScreen:(RDPSession*)session
-{
-    BlockAlertView* alertView = [BlockAlertView alertWithTitle:NSLocalizedString(@"Unlicensed Client", @"Pro version dialog title") message:NSLocalizedString(@"You are connected to Thinstuff Remote Desktop Host (RDH). Do you want to purchase an access license for this client which allows you to connect to any computer running Thinstuff RDH?", @"Pro version dialog message")];
-    
-    [alertView setCancelButtonWithTitle:NSLocalizedString(@"No", @"No Button title") block:nil];
-    [alertView addButtonWithTitle:NSLocalizedString(@"Yes", @"Yes button title") block:^ {
-    }];
-    
-    [alertView show];
-}
-
 #pragma mark - Keyboard Toolbar Handlers
 
 -(void)showAdvancedKeyboardAnimated
@@ -555,26 +544,6 @@
 -(IBAction)cancelButtonPressed:(id)sender
 {
     [_session disconnect];        
-}
-
-#pragma mark In-App purchase transaction notification handlers
-
-- (void)onTransactionSuccess:(NSNotification*)notification
-{
-    BlockAlertView* alertView = [BlockAlertView alertWithTitle:NSLocalizedString(@"Transaction Succeeded", @"Pro version bought dialog title")
-                                                       message:NSLocalizedString(@"Thanks for buying Thinstuff RDC Pro. In order for the purchase to take effect please reconnect your current session.", @"Pro version bought dialog message")];
-    [alertView setCancelButtonWithTitle:NSLocalizedString(@"OK", @"OK Button title") block:nil];
-    
-    [alertView show];        
-}
-
-- (void)onTransactionFailed:(NSNotification*)notification
-{
-    BlockAlertView* alertView = [BlockAlertView alertWithTitle:NSLocalizedString(@"Transaction Failed", @"Pro version buy failed dialog title")
-                                                       message:NSLocalizedString(@"The transaction did not complete successfully!", @"Pro version buy failed dialog message")];
-    [alertView setCancelButtonWithTitle:NSLocalizedString(@"OK", @"OK Button title") block:nil];
-
-    [alertView show];
 }
 
 #pragma mark -

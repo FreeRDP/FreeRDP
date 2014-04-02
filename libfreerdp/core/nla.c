@@ -33,6 +33,7 @@
 #include <winpr/sspi.h>
 #include <winpr/print.h>
 #include <winpr/tchar.h>
+#include <winpr/dsparse.h>
 #include <winpr/library.h>
 #include <winpr/registry.h>
 
@@ -113,26 +114,80 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 {
 	char* spn;
 	int length;
+	BOOL PromptPassword;
 	rdpTls* tls = NULL;
 	freerdp* instance;
 	rdpSettings* settings;
 
+	PromptPassword = FALSE;
 	settings = credssp->settings;
 	instance = (freerdp*) settings->instance;
 
-	if ((settings->Password == NULL ) || (settings->Username == NULL)
+	if (settings->RestrictedAdminModeRequired)
+		settings->DisableCredentialsDelegation = TRUE;
+
+	if ((!settings->Password) || (!settings->Username)
 			|| (!strlen(settings->Password)) || (!strlen(settings->Username)))
+	{
+		PromptPassword = TRUE;
+	}
+
+#ifndef _WIN32
+	if (PromptPassword)
+	{
+		if (settings->RestrictedAdminModeRequired)
+		{
+			if ((settings->PasswordHash) && (strlen(settings->PasswordHash) > 0))
+				PromptPassword = FALSE;
+		}
+	}
+#endif
+
+	if (PromptPassword)
 	{
 		if (instance->Authenticate)
 		{
 			BOOL proceed = instance->Authenticate(instance,
 					&settings->Username, &settings->Password, &settings->Domain);
+
 			if (!proceed)
+			{
+				connectErrorCode = CANCELEDBYUSER;
+				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 				return 0;
+			}
+
 		}
 	}
 
 	sspi_SetAuthIdentity(&(credssp->identity), settings->Username, settings->Domain, settings->Password);
+
+#ifndef _WIN32
+	{
+		SEC_WINNT_AUTH_IDENTITY* identity = &(credssp->identity);
+
+		if (settings->RestrictedAdminModeRequired)
+		{
+			if (settings->PasswordHash)
+			{
+				if (strlen(settings->PasswordHash) == 32)
+				{
+					if (identity->Password)
+						free(identity->Password);
+
+					identity->PasswordLength = ConvertToUnicode(CP_UTF8, 0,
+							settings->PasswordHash, -1, &identity->Password, 0) - 1;
+
+					/**
+					 * Multiply password hash length by 64 to obtain a length exceeding
+					 * the maximum (256) and use it this for hash identification in WinPR.
+					 */
+					identity->PasswordLength = 32 * 64; /* 2048 */
+				}
+			}
+		}
+	}
+#endif
 
 #ifdef WITH_DEBUG_NLA
 	_tprintf(_T("User: %s Domain: %s Password: %s\n"),
@@ -577,7 +632,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 		if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED))
 		{
 			fprintf(stderr, "AcceptSecurityContext status: 0x%08X\n", status);
-			return -1;
+			return -1; /* Access Denied */
 		}
 
 		/* send authentication token */
@@ -939,12 +994,33 @@ void credssp_encode_ts_credentials(rdpCredssp* credssp)
 {
 	wStream* s;
 	int length;
+	int DomainLength;
+	int UserLength;
+	int PasswordLength;
+
+	DomainLength = credssp->identity.DomainLength;
+	UserLength = credssp->identity.UserLength;
+	PasswordLength = credssp->identity.PasswordLength;
+
+	if (credssp->settings->DisableCredentialsDelegation)
+	{
+		credssp->identity.DomainLength = 0;
+		credssp->identity.UserLength = 0;
+		credssp->identity.PasswordLength = 0;
+	}
 
 	length = ber_sizeof_sequence(credssp_sizeof_ts_credentials(credssp));
 	sspi_SecBufferAlloc(&credssp->ts_credentials, length);
 
-	s = Stream_New(credssp->ts_credentials.pvBuffer, length);
+	s = Stream_New((BYTE*) credssp->ts_credentials.pvBuffer, length);
 	credssp_write_ts_credentials(credssp, s);
+
+	if (credssp->settings->DisableCredentialsDelegation)
+	{
+		credssp->identity.DomainLength = DomainLength;
+		credssp->identity.UserLength = UserLength;
+		credssp->identity.PasswordLength = PasswordLength;
+	}
 
 	Stream_Free(s, FALSE);
 }
@@ -1173,7 +1249,7 @@ int credssp_recv(rdpCredssp* credssp)
 			!ber_read_sequence_tag(s, &length) || /* NegoDataItem */
 			!ber_read_contextual_tag(s, 0, &length, TRUE) || /* [0] negoToken */
 			!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
-			Stream_GetRemainingLength(s) < length)
+			((int) Stream_GetRemainingLength(s)) < length)
 		{
 			Stream_Free(s, TRUE);
 			return -1;
@@ -1186,8 +1262,8 @@ int credssp_recv(rdpCredssp* credssp)
 	/* [2] authInfo (OCTET STRING) */
 	if (ber_read_contextual_tag(s, 2, &length, TRUE) != FALSE)
 	{
-		if(!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
-			Stream_GetRemainingLength(s) < length)
+		if (!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
+			((int) Stream_GetRemainingLength(s)) < length)
 		{
 			Stream_Free(s, TRUE);
 			return -1;
@@ -1200,8 +1276,8 @@ int credssp_recv(rdpCredssp* credssp)
 	/* [3] pubKeyAuth (OCTET STRING) */
 	if (ber_read_contextual_tag(s, 3, &length, TRUE) != FALSE)
 	{
-		if(!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
-			Stream_GetRemainingLength(s) < length)
+		if (!ber_read_octet_string_tag(s, &length) || /* OCTET STRING */
+			((int) Stream_GetRemainingLength(s)) < length)
 		{
 			Stream_Free(s, TRUE);
 			return -1;
@@ -1244,6 +1320,59 @@ void credssp_buffer_free(rdpCredssp* credssp)
 	sspi_SecBufferFree(&credssp->authInfo);
 }
 
+LPTSTR credssp_make_spn(const char* ServiceClass, const char* hostname)
+{
+	DWORD status;
+	DWORD SpnLength;
+	LPTSTR hostnameX = NULL;
+	LPTSTR ServiceClassX = NULL;
+	LPTSTR ServicePrincipalName = NULL;
+
+#ifdef UNICODE
+	ConvertToUnicode(CP_UTF8, 0, hostname, -1, &hostnameX, 0);
+	ConvertToUnicode(CP_UTF8, 0, ServiceClass, -1, &ServiceClassX, 0);
+#else
+	hostnameX = _strdup(hostname);
+	ServiceClassX = _strdup(ServiceClass);
+#endif
+
+	if (!ServiceClass)
+	{
+		ServicePrincipalName = (LPTSTR) _tcsdup(hostnameX);
+		free(ServiceClassX);
+		free(hostnameX);
+
+		return ServicePrincipalName;
+	}
+
+	SpnLength = 0;
+	status = DsMakeSpn(ServiceClassX, hostnameX, NULL, 0, NULL, &SpnLength, NULL);
+
+	if (status != ERROR_BUFFER_OVERFLOW)
+	{
+		free(ServiceClassX);
+		free(hostnameX);
+		return NULL;
+	}
+
+	ServicePrincipalName = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
+
+	status = DsMakeSpn(ServiceClassX, hostnameX, NULL, 0, NULL, &SpnLength, ServicePrincipalName);
+
+	if (status != ERROR_SUCCESS)
+	{
+		free(ServicePrincipalName);
+		free(ServiceClassX);
+		free(hostnameX);
+		return NULL;
+	}
+
+	free(ServiceClassX);
+	free(hostnameX);
+
+	return ServicePrincipalName;
+}
+
 /**
  * Create new CredSSP state machine.
  * @param transport
@@ -1255,14 +1384,15 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings*
 	rdpCredssp* credssp;
 
 	credssp = (rdpCredssp*) malloc(sizeof(rdpCredssp));
-	ZeroMemory(credssp, sizeof(rdpCredssp));
 
-	if (credssp != NULL)
+	if (credssp)
 	{
 		HKEY hKey;
 		LONG status;
 		DWORD dwType;
 		DWORD dwSize;
+
+		ZeroMemory(credssp, sizeof(rdpCredssp));
 
 		credssp->instance = instance;
 		credssp->settings = settings;
@@ -1311,7 +1441,7 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings*
 
 void credssp_free(rdpCredssp* credssp)
 {
-	if (credssp != NULL)
+	if (credssp)
 	{
 		if (credssp->table)
 			credssp->table->DeleteSecurityContext(&credssp->context);

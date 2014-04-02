@@ -55,7 +55,7 @@ include(CMakePackageConfigHelpers)
 
 # Soname versioning
 set(FREERDP_VERSION_MAJOR "1")
-set(FREERDP_VERSION_MINOR "1")
+set(FREERDP_VERSION_MINOR "2")
 set(FREERDP_VERSION_REVISION "0")
 set(FREERDP_VERSION_SUFFIX "beta1")
 set(FREERDP_API_VERSION "${FREERDP_VERSION_MAJOR}.${FREERDP_VERSION_MINOR}")
@@ -68,11 +68,11 @@ endif()
 
 # Allow to search the host machine for git
 if(ANDROID OR IOS)
-	SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER, BOTH)
+	SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
 endif(ANDROID OR IOS)
 include(GetGitRevisionDescription)
 if(ANDROID OR IOS)
-	SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER, ONLY)
+	SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
 endif(ANDROID OR IOS)
 
 git_describe(GIT_REVISION --match "[0-9]*" --abbrev=4 --tags --always)
@@ -133,6 +133,16 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+
+	# Hack to strip absolute paths out of the __FILE__ macro
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__FILE__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILE__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
+	CHECK_C_COMPILER_FLAG (-Wno-builtin-macro-redefined Wno-builtin-macro-redefined)
+	if(Wno-builtin-macro-redefined)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-builtin-macro-redefined")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-builtin-macro-redefined")
+	endif()
+
 	CHECK_C_COMPILER_FLAG (-Wno-unused-result Wno-unused-result)
 	if(Wno-unused-result)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-result")
@@ -144,6 +154,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	CHECK_C_COMPILER_FLAG(-Wno-deprecated-declarations Wno-deprecated-declarations)
 	if(Wno-deprecated-declarations)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 	endif()
 	if(NOT EXPORT_ALL_SYMBOLS)
 		message(STATUS "GCC default symbol visibility: hidden")
@@ -160,6 +171,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
 	else()
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 	endif()
 	if(WITH_SSE2)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
@@ -176,22 +188,22 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 	CHECK_C_COMPILER_FLAG(-Wno-deprecated-declarations Wno-deprecated-declarations)
 	if(Wno-deprecated-declarations)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 	endif()
 endif()
 
 if(MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gd")
-	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MD")
-	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O2")
-	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Ob2")
-	#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W2")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W3")
+
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_AMD64_")
 	else()
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_X86_")
 	endif()
-	SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
-	SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
+
+	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
+	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 
         if(CMAKE_BUILD_TYPE STREQUAL "Release")
         else()
@@ -214,28 +226,29 @@ endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_EXPORTS")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFREERDP_EXPORTS")
+
 # Include files
 if(NOT IOS)
-check_include_files(fcntl.h HAVE_FCNTL_H)
-check_include_files(unistd.h HAVE_UNISTD_H)
-check_include_files(stdint.h HAVE_STDINT_H)
-check_include_files(inttypes.h HAVE_INTTYPES_H)
-check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
-check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
-check_include_files(sys/strtio.h HAVE_SYS_STRTIO_H)
-check_include_files(sys/select.h HAVE_SYS_SELECT_H)
+	check_include_files(fcntl.h HAVE_FCNTL_H)
+	check_include_files(unistd.h HAVE_UNISTD_H)
+	check_include_files(stdint.h HAVE_STDINT_H)
+	check_include_files(inttypes.h HAVE_INTTYPES_H)
+	check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
+	check_include_files(sys/filio.h HAVE_SYS_FILIO_H)
+	check_include_files(sys/strtio.h HAVE_SYS_STRTIO_H)
+	check_include_files(sys/select.h HAVE_SYS_SELECT_H)
 else()
-set(HAVE_FCNTL_H 1)
-set(HAVE_UNISTD_H 1)
-set(HAVE_STDINT_H 1)
-set(HAVE_INTTYPES_H 1)
-set(HAVE_SYS_FILIO_H 1)
+	set(HAVE_FCNTL_H 1)
+	set(HAVE_UNISTD_H 1)
+	set(HAVE_STDINT_H 1)
+	set(HAVE_INTTYPES_H 1)
+	set(HAVE_SYS_FILIO_H 1)
 endif()
 
 if(NOT IOS)
-check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
+	check_struct_has_member("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 else()
-set(HAVE_TM_GMTOFF 1)
+	set(HAVE_TM_GMTOFF 1)
 endif()
 
 # Mac OS X
@@ -273,7 +286,11 @@ endif(APPLE)
 if(ANDROID)
 	if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 		add_definitions(-DNDK_DEBUG=1)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
+
+		# NOTE: Manually add -gdwarf-3, as newer toolchains default to -gdwarf-4,
+		#       which is not supported by the gdbserver binary shipped with
+		#       the android NDK (tested with r9b)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG} -gdwarf-3")
 	endif()
 	set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -llog")
 	if (NOT FREERDP_ANDROID_EXTERNAL_SSL_PATH)
@@ -294,15 +311,25 @@ if(ANDROID)
 	endif()
 endif()
 	set(CMAKE_FIND_ROOT_PATH ${CMAKE_FIND_ROOT_PATH} ${FREERDP_ANDROID_EXTERNAL_SSL_PATH})
-	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/client/Android/FreeRDPCore/libs/${ANDROID_ABI})
-	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/scripts/regenerate_jni_headers.sh.cmake
-		${CMAKE_CURRENT_SOURCE_DIR}/scripts/regenerate_jni_headers.sh @ONLY)
+	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/client/Android/FreeRDPCore/jni/${ANDROID_ABI})
+	CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/regenerate_jni_headers.sh.cmake
+		${CMAKE_BINARY_DIR}/scripts/regenerate_jni_headers.sh @ONLY)
+	if (WITH_GPROF)
+		CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/gprof_generate.sh.cmake ${CMAKE_BINARY_DIR}/scripts/gprof_generate.sh @ONLY)
+	endif(WITH_GPROF)
+
 endif()
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 
 if(NOT IOS AND NOT ANDROID)
 	find_package(Threads REQUIRED)
+endif()
+
+if(NOT WIN32)
+	list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+	check_library_exists(pthread pthread_tryjoin_np "" HAVE_PTHREAD_GNU_EXT)
+	list(REMOVE_ITEM CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
 endif()
 
 if(UNIX OR CYGWIN)
@@ -361,13 +388,13 @@ set(IPP_FEATURE_TYPE "OPTIONAL")
 set(IPP_FEATURE_PURPOSE "performance")
 set(IPP_FEATURE_DESCRIPTION "Intel Integrated Performance Primitives library")
 
-set(NPP_FEATURE_TYPE "OPTIONAL")
-set(NPP_FEATURE_PURPOSE "performance")
-set(NPP_FEATURE_DESCRIPTION "NVIDIA Performance Primitives library")
-
 set(JPEG_FEATURE_TYPE "OPTIONAL")
 set(JPEG_FEATURE_PURPOSE "codec")
 set(JPEG_FEATURE_DESCRIPTION "use JPEG library")
+
+set(GSM_FEATURE_TYPE "OPTIONAL")
+set(GSM_FEATURE_PURPOSE "codec")
+set(GSM_FEATURE_DESCRIPTION "GSM audio codec library")
 
 if(WIN32)
 	set(X11_FEATURE_TYPE "DISABLED")
@@ -414,9 +441,7 @@ endif()
 find_feature(X11 ${X11_FEATURE_TYPE} ${X11_FEATURE_PURPOSE} ${X11_FEATURE_DESCRIPTION})
 find_feature(DirectFB ${DIRECTFB_FEATURE_TYPE} ${DIRECTFB_FEATURE_PURPOSE} ${DIRECTFB_FEATURE_DESCRIPTION})
 if (${WITH_DIRECTFB})
-	message(WARNING "
-DIRECTFB is orphaned and not maintained see docs/README.directfb for details
-")
+	message(WARNING "DIRECTFB is orphaned and not maintained see docs/README.directfb for details")
 endif()
 
 find_feature(ZLIB ${ZLIB_FEATURE_TYPE} ${ZLIB_FEATURE_PURPOSE} ${ZLIB_FEATURE_DESCRIPTION})
@@ -433,19 +458,13 @@ find_feature(FFmpeg ${FFMPEG_FEATURE_TYPE} ${FFMPEG_FEATURE_PURPOSE} ${FFMPEG_FE
 find_feature(Gstreamer ${GSTREAMER_FEATURE_TYPE} ${GSTREAMER_FEATURE_PURPOSE} ${GSTREAMER_FEATURE_DESCRIPTION})
 
 find_feature(JPEG ${JPEG_FEATURE_TYPE} ${JPEG_FEATURE_PURPOSE} ${JPEG_FEATURE_DESCRIPTION})
+find_feature(GSM ${GSM_FEATURE_TYPE} ${GSM_FEATURE_PURPOSE} ${GSM_FEATURE_DESCRIPTION})
 
 if(TARGET_ARCH MATCHES "x86|x64")
 	if (NOT APPLE)
 		# Intel Performance Primitives
 		find_feature(IPP ${IPP_FEATURE_TYPE} ${IPP_FEATURE_PURPOSE} ${IPP_FEATURE_DESCRIPTION})
 	endif()
-	find_feature(NPP ${NPP_FEATURE_TYPE} ${NPP_FEATURE_PURPOSE} ${NPP_FEATURE_DESCRIPTION})
-endif()
-
-# Installation Paths
-if(WIN32)
-	set(CMAKE_INSTALL_BINDIR ".")
-	set(CMAKE_INSTALL_LIBDIR ".")
 endif()
 
 # Path to put FreeRDP data
@@ -463,6 +482,7 @@ set(FREERDP_EXTENSION_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/freerdp/extensions")
 
 # Include directories
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Configure files
@@ -506,12 +526,6 @@ include_directories("${CMAKE_SOURCE_DIR}/winpr/include")
 include_directories("${CMAKE_BINARY_DIR}/winpr/include")
 
 add_subdirectory(winpr)
-
-# Generate pkg-config
-if(NOT MSVC)
-	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-endif()
 
 if(WITH_CUNIT)
 	message(FATAL_ERROR "cunit (WITH_CUNIT) is deprecated please use BUILD_TESTING to build ctest tests.

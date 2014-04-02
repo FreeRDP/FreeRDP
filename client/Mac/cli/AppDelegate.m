@@ -16,7 +16,6 @@ static AppDelegate* _singleDelegate = nil;
 void AppDelegate_EmbedWindowEventHandler(void* context, EmbedWindowEventArgs* e);
 void AppDelegate_ConnectionResultEventHandler(void* context, ConnectionResultEventArgs* e);
 void AppDelegate_ErrorInfoEventHandler(void* ctx, ErrorInfoEventArgs* e);
-int mac_client_start(rdpContext* context);
 void mac_set_view_size(rdpContext* context, MRDPView* view);
 
 @implementation AppDelegate
@@ -60,8 +59,13 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 
 - (void) applicationWillTerminate:(NSNotification*)notification
 {
+	NSLog(@"Stopping...\n");
+	freerdp_client_stop(context);
+
 	[mrdpView releaseResources];
-    _singleDelegate = nil;    
+	_singleDelegate = nil;
+
+	NSLog(@"Stopped.\n");
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender
@@ -72,28 +76,37 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 - (int) ParseCommandLineArguments
 {
 	int i;
-	int len;
+	int length;
 	int status;
 	char* cptr;
-	int argc;
-	char** argv = nil;
 
 	NSArray* args = [[NSProcessInfo processInfo] arguments];
 
-	argc = (int) [args count];
-	argv = malloc(sizeof(char*) * argc);
+	context->argc = (int) [args count];
+	context->argv = malloc(sizeof(char*) * context->argc);
 	
 	i = 0;
 	
 	for (NSString* str in args)
 	{
-		len = (int) ([str length] + 1);
-		cptr = (char*) malloc(len);
+		/* filter out some arguments added by XCode */
+		
+		if ([str isEqualToString:@"YES"])
+			continue;
+		
+		if ([str isEqualToString:@"-NSDocumentRevisionsDebugMode"])
+			continue;
+		
+		length = (int) ([str length] + 1);
+		cptr = (char*) malloc(length);
 		strcpy(cptr, [str UTF8String]);
-		argv[i++] = cptr;
+		context->argv[i++] = cptr;
 	}
 	
-	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv);
+	context->argc = i;
+	
+	status = freerdp_client_settings_parse_command_line(context->settings, context->argc, context->argv);
+	
 	status = freerdp_client_settings_command_line_status_print(context->settings, status, context->argc, context->argv);
 
 	return status;
@@ -108,8 +121,6 @@ void mac_set_view_size(rdpContext* context, MRDPView* view);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
 
 	RdpClientEntry(&clientEntryPoints);
-	
-	clientEntryPoints.ClientStart = mac_client_start;
 
 	context = freerdp_client_context_new(&clientEntryPoints);
 }
@@ -164,19 +175,18 @@ void AppDelegate_EmbedWindowEventHandler(void* ctx, EmbedWindowEventArgs* e)
 {
 	rdpContext* context = (rdpContext*) ctx;
 	
-    if (_singleDelegate)
-    {
-        mfContext* mfc = (mfContext*) context;
-        _singleDelegate->mrdpView = mfc->view;
-        
-        if (_singleDelegate->window)
-        {
-            [[_singleDelegate->window contentView] addSubview:mfc->view];
-        }
-		
+	if (_singleDelegate)
+	{
+		mfContext* mfc = (mfContext*) context;
+		_singleDelegate->mrdpView = mfc->view;
+
+		if (_singleDelegate->window)
+		{
+			[[_singleDelegate->window contentView] addSubview:mfc->view];
+		}
 		
 		mac_set_view_size(context, mfc->view);
-    }
+	}
 }
 
 /** *********************************************************************
@@ -193,13 +203,12 @@ void AppDelegate_ConnectionResultEventHandler(void* ctx, ConnectionResultEventAr
 			NSString* message = nil;
 			if (connectErrorCode == AUTHENTICATIONERROR)
 			{
-				message = [NSString stringWithFormat:@"%@:\n%@", message, @"Authentication failure, check credentials."];
+				message = [NSString stringWithFormat:@"%@", @"Authentication failure, check credentials."];
 			}
 			
 			
 			// Making sure this should be invoked on the main UI thread.
 			[_singleDelegate performSelectorOnMainThread:@selector(rdpConnectError:) withObject:message waitUntilDone:FALSE];
-			[message release];
 		}
 	}
 }
@@ -223,7 +232,6 @@ void AppDelegate_ErrorInfoEventHandler(void* ctx, ErrorInfoEventArgs* e)
 	}
 }
 
-
 void mac_set_view_size(rdpContext* context, MRDPView* view)
 {
 	// set client area to specified dimensions
@@ -244,22 +252,6 @@ void mac_set_view_size(rdpContext* context, MRDPView* view)
 	// set window to given area
 	[[view window] setFrame:outerRect display:YES];
 	
-	
-	if(context->settings->Fullscreen)
+	if (context->settings->Fullscreen)
 		[[view window] toggleFullScreen:nil];
-}
-
-int mac_client_start(rdpContext* context)
-{
-	mfContext* mfc;
-	MRDPView* view;
-	
-	mfc = (mfContext*) context;
-	view = [[MRDPView alloc] initWithFrame : NSMakeRect(0, 0, context->settings->DesktopWidth, context->settings->DesktopHeight)];
-	mfc->view = view;
-	
-	[view rdpStart:context];
-	mac_set_view_size(context, view);
-	
-	return 0;
 }

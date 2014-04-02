@@ -18,10 +18,17 @@
 set(MODULE_NAME "winpr-hash")
 set(MODULE_PREFIX "WINPR_TOOLS_HASH")
 
+include_directories(${ZLIB_INCLUDE_DIRS})
+include_directories(${OPENSSL_INCLUDE_DIR})
+
 set(${MODULE_PREFIX}_SRCS
 	hash.c)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+
+set(${MODULE_PREFIX}_LIBS
+	${ZLIB_LIBRARIES}
+	${OPENSSL_LIBRARIES})
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}

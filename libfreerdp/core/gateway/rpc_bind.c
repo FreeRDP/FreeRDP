@@ -97,10 +97,41 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	p_cont_elem_t* p_cont_elem;
 	rpcconn_bind_hdr_t* bind_pdu;
 	rdpSettings* settings = rpc->settings;
+	BOOL promptPassword = FALSE;
+	freerdp* instance = (freerdp*) settings->instance;
 
 	DEBUG_RPC("Sending bind PDU");
 
 	rpc->ntlm = ntlm_new();
+
+	if ((!settings->GatewayPassword) || (!settings->GatewayUsername)
+			|| (!strlen(settings->GatewayPassword)) || (!strlen(settings->GatewayUsername)))
+	{
+		promptPassword = TRUE;
+	}
+
+	if (promptPassword)
+	{
+		if (instance->GatewayAuthenticate)
+		{
+			BOOL proceed = instance->GatewayAuthenticate(instance,
+					&settings->GatewayUsername, &settings->GatewayPassword, &settings->GatewayDomain);
+
+			if (!proceed)
+			{
+				connectErrorCode = CANCELEDBYUSER;
+				freerdp_set_last_error(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
+				return 0;
+			}
+
+			if (settings->GatewayUseSameCredentials)
+			{
+				settings->Username = _strdup(settings->GatewayUsername);
+				settings->Domain = _strdup(settings->GatewayDomain);
+				settings->Password = _strdup(settings->GatewayPassword);
+			}
+		}
+	}
 
 	ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain, settings->GatewayPassword, NULL);
 	ntlm_client_make_spn(rpc->ntlm, NULL, settings->GatewayHostname);
@@ -112,7 +143,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) bind_pdu);
 
-	bind_pdu->auth_length = rpc->ntlm->outputBuffer[0].cbBuffer;
+	bind_pdu->auth_length = (UINT16) rpc->ntlm->outputBuffer[0].cbBuffer;
 	bind_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer[0].pvBuffer;
 
 	bind_pdu->ptype = PTYPE_BIND;
@@ -185,7 +216,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	clientCall = rpc_client_call_new(bind_pdu->call_id, 0);
 	ArrayList_Add(rpc->client->ClientCallList, clientCall);
 
-	rpc_send_enqueue_pdu(rpc, buffer, length);
+	if (rpc_send_enqueue_pdu(rpc, buffer, length) != 0)
+		length = -1;
 
 	free(bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes);
 	free(bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes);
@@ -261,7 +293,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) auth_3_pdu);
 
-	auth_3_pdu->auth_length = rpc->ntlm->outputBuffer[0].cbBuffer;
+	auth_3_pdu->auth_length = (UINT16) rpc->ntlm->outputBuffer[0].cbBuffer;
 	auth_3_pdu->auth_verifier.auth_value = rpc->ntlm->outputBuffer[0].pvBuffer;
 
 	auth_3_pdu->ptype = PTYPE_RPC_AUTH_3;
@@ -300,7 +332,8 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	clientCall = rpc_client_call_new(auth_3_pdu->call_id, 0);
 	ArrayList_Add(rpc->client->ClientCallList, clientCall);
 
-	rpc_send_enqueue_pdu(rpc, buffer, length);
+	if (rpc_send_enqueue_pdu(rpc, buffer, length) != 0)
+		length = -1;
 
 	free(auth_3_pdu);
 

@@ -5,7 +5,7 @@ CMakeCache.txt
 config.h
 install_manifest*.txt
 CTestTestfile.cmake
-freerdp.pc
+*.pc
 Makefile
 Testing
 cmake_install.cmake
@@ -19,6 +19,7 @@ LICENSE.txt
 !external/README
 *Config.cmake
 *ConfigVersion.cmake
+include/freerdp/version.h
 
 *.a.objlist.cmake
 *.a.objlist

@@ -21,6 +21,9 @@
 #ifndef FREERDP_CHANNELS_H
 #define FREERDP_CHANNELS_H
 
+#include <winpr/crt.h>
+#include <winpr/wtsapi.h>
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
@@ -39,8 +42,6 @@ FREERDP_API int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings*
 	const char* name, void* data);
 FREERDP_API int freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance);
 FREERDP_API int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance);
-FREERDP_API int freerdp_channels_data(freerdp* instance, int channel_id, void* data, int data_size,
-	int flags, int total_size);
 FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, wMessage* event);
 FREERDP_API BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
 	int* read_count, void** write_fds, int* write_count);
@@ -52,6 +53,11 @@ FREERDP_API void* freerdp_channels_get_static_channel_interface(rdpChannels* cha
 
 FREERDP_API HANDLE freerdp_channels_get_event_handle(freerdp* instance);
 FREERDP_API int freerdp_channels_process_pending_messages(freerdp* instance);
+
+FREERDP_API int freerdp_channels_data(freerdp* instance,
+		UINT16 channelId, BYTE* data, int dataSize, int flags, int totalSize);
+
+FREERDP_API PWtsApiFunctionTable FreeRDP_InitWtsApi(void);
 
 #ifdef __cplusplus
 }

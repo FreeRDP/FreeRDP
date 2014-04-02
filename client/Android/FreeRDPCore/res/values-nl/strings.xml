@@ -188,7 +188,6 @@
     <string name="dlg_msg_connecting">Verbinden ...</string>
     <string name="dlg_msg_logging_in">Aanmelden ...</string>
     <string name="dlg_title_about">Over aFreeRDP</string>
-    <string name="dlg_msg_about">Versie: %1$s\n\u00A9 2012 Thinstuff Technologies GmbH</string>
     <string name="dlg_title_create_bookmark_after_qc">Connectie instellingen opslaan?</string>
     <string name="dlg_msg_create_bookmark_after_qc">Uw connectie instellingen zijn niet opgeslagen! Wilt u deze opslaan?</string>
     <string name="dlg_title_save_bookmark">Verbinding opslaan?</string>

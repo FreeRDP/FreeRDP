@@ -749,7 +749,7 @@ static void update_send_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_
 		s = rdp_data_pdu_init(rdp);
 		update_write_refresh_rect(s, count, areas);
 
-		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->user_id);
+		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_REFRESH_RECT, rdp->mcs->userId);
 		Stream_Release(s);
 	}
 }
@@ -778,7 +778,7 @@ static void update_send_suppress_output(rdpContext* context, BYTE allow, RECTANG
 		s = rdp_data_pdu_init(rdp);
 		update_write_suppress_output(s, allow, area);
 
-		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->user_id);
+		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SUPPRESS_OUTPUT, rdp->mcs->userId);
 		Stream_Release(s);
 	}
 }
@@ -838,7 +838,7 @@ static void update_send_frame_acknowledge(rdpContext* context, UINT32 frameId)
 	{
 		s = rdp_data_pdu_init(rdp);
 		Stream_Write_UINT32(s, frameId);
-		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->user_id);
+		rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_FRAME_ACKNOWLEDGE, rdp->mcs->userId);
 		Stream_Release(s);
 	}
 }
@@ -1460,7 +1460,7 @@ BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s)
 	Stream_Read_UINT8(s, numberOfAreas);
 	Stream_Seek(s, 3); /* pad3Octects */
 
-	if (Stream_GetRemainingLength(s) < numberOfAreas * 4 * 2)
+	if (Stream_GetRemainingLength(s) < ((size_t) numberOfAreas * 4 * 2))
 		return FALSE;
 
 	areas = (RECTANGLE_16*) malloc(sizeof(RECTANGLE_16) * numberOfAreas);
@@ -1544,8 +1544,16 @@ int update_process_messages(rdpUpdate* update)
 	return update_message_queue_process_pending_messages(update);
 }
 
+static void update_free_queued_message(void *obj)
+{
+	wMessage *msg = (wMessage*)obj;
+
+	update_message_queue_free_message(msg);
+}
+
 rdpUpdate* update_new(rdpRdp* rdp)
 {
+	const wObject cb = { NULL, NULL, NULL,  update_free_queued_message, NULL };
 	rdpUpdate* update;
 
 	update = (rdpUpdate*) malloc(sizeof(rdpUpdate));
@@ -1587,7 +1595,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 		update->initialState = TRUE;
 
-		update->queue = MessageQueue_New();
+		update->queue = MessageQueue_New(&cb);
 	}
 
 	return update;

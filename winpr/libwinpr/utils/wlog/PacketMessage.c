@@ -370,7 +370,7 @@ int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
 	ipv4.Version = 4;
 	ipv4.InternetHeaderLength = 5;
 	ipv4.TypeOfService = 0;
-	ipv4.TotalLength = length + 20 + 20;
+	ipv4.TotalLength = (UINT16) (length + 20 + 20);
 	ipv4.Identification = 0;
 	ipv4.InternetProtocolFlags = 0x02;
 	ipv4.FragmentOffset = 0;

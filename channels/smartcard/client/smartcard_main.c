@@ -40,8 +40,6 @@ static void smartcard_free(DEVICE* device)
 {
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 
-	printf("smartcard_free\n");
-
 	MessageQueue_PostQuit(smartcard->IrpQueue, 0);
 	WaitForSingleObject(smartcard->thread, INFINITE);
 
@@ -119,8 +117,10 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	path = device->Path;
 
 	/* TODO: check if server supports sc redirect (version 5.1) */
-	smartcard = (SMARTCARD_DEVICE*) malloc(sizeof(SMARTCARD_DEVICE));
-	ZeroMemory(smartcard, sizeof(SMARTCARD_DEVICE));
+	smartcard = (SMARTCARD_DEVICE*) calloc(1, sizeof(SMARTCARD_DEVICE));
+
+	if (!smartcard)
+		return -1;
 
 	smartcard->device.type = RDPDR_DTYP_SMARTCARD;
 	smartcard->device.name = "SCARD";

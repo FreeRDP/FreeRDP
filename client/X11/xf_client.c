@@ -760,6 +760,35 @@ BOOL xf_pre_connect(freerdp* instance)
 	settings = instance->settings;
 	channels = instance->context->channels;
 
+	settings->OsMajorType = OSMAJORTYPE_UNIX;
+	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
+
+	ZeroMemory(settings->OrderSupport, 32);
+	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
+	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
+	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
+	settings->OrderSupport[NEG_MEMBLT_INDEX] = settings->BitmapCacheEnabled;
+	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->SoftwareGdi) ? TRUE : FALSE;
+	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
+	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
+	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
+	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
+	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
+	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
+	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
+	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
+	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
+
 	xfc->UseXThreads = TRUE;
 
 	if (xfc->UseXThreads)
@@ -839,7 +868,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
 	xfc->WM_STATE = XInternAtom(xfc->display, "WM_STATE", False);
 
-	xf_kbd_init(xfc);
+	xf_keyboard_init(xfc);
 
 	xfc->clrconv = freerdp_clrconv_new(CLRCONV_ALPHA);
 
@@ -943,10 +972,10 @@ BOOL xf_post_connect(freerdp* instance)
 
 	ZeroMemory(&gcv, sizeof(gcv));
 
-	if (xfc->modifier_map)
-		XFreeModifiermap(xfc->modifier_map);
+	if (xfc->modifierMap)
+		XFreeModifiermap(xfc->modifierMap);
 
-	xfc->modifier_map = XGetModifierMapping(xfc->display);
+	xfc->modifierMap = XGetModifierMapping(xfc->display);
 
 	xfc->gc = XCreateGC(xfc->display, xfc->drawable, GCGraphicsExposures, &gcv);
 	xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->width, xfc->height, xfc->depth);
@@ -1091,11 +1120,6 @@ int xf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	return 1;
 }
 
-int xf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
-{
-	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
-}
-
 void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
 	xfContext* xfc;
@@ -1137,11 +1161,7 @@ void xf_window_free(xfContext* xfc)
 {
 	rdpContext* context = (rdpContext*) xfc;
 
-	if (xfc->modifier_map)
-	{
-		XFreeModifiermap(xfc->modifier_map);
-		xfc->modifier_map = NULL;
-	}
+	xf_keyboard_free(xfc);
 
 	if (xfc->gc)
 	{
@@ -1336,6 +1356,52 @@ void* xf_channels_thread(void* arg)
 	return NULL;
 }
 
+BOOL xf_auto_reconnect(freerdp* instance)
+{
+	xfContext* xfc = (xfContext*) instance->context;
+
+	UINT32 num_retries = 0;
+	UINT32 max_retries = instance->settings->AutoReconnectMaxRetries;
+
+	/* Only auto reconnect on network disconnects. */
+	if (freerdp_error_info(instance) != 0)
+		return FALSE;
+
+	/* A network disconnect was detected */
+	fprintf(stderr, "Network disconnect!\n");
+
+	if (!instance->settings->AutoReconnectionEnabled)
+	{
+		/* No auto-reconnect - just quit */
+		return FALSE;
+	}
+
+	/* Perform an auto-reconnect. */
+	for (;;)
+	{
+		/* Quit retrying if max retries has been exceeded */
+		if (num_retries++ >= max_retries)
+		{
+			return FALSE;
+		}
+
+		/* Attempt the next reconnect */
+		fprintf(stderr, "Attempting reconnect (%u of %u)\n", num_retries, max_retries);
+
+		if (freerdp_reconnect(instance))
+		{
+			xfc->disconnect = FALSE;
+			return TRUE;
+		}
+
+		sleep(5);
+	}
+
+	fprintf(stderr, "Maximum reconnect retries exceeded\n");
+
+	return FALSE;
+}
+
 /** Main loop for the rdp connection.
  *  It will be run from the thread's entry point (thread_func()).
  *  It initiates the connection, and will continue to run until the session ends,
@@ -1445,8 +1511,8 @@ void* xf_thread(void* param)
 		 */
 		if (freerdp_focus_required(instance))
 		{
-			xf_kbd_focus_in(xfc);
-			xf_kbd_focus_in(xfc);
+			xf_keyboard_focus_in(xfc);
+			xf_keyboard_focus_in(xfc);
 		}
 
 		if (!async_transport)
@@ -1526,6 +1592,9 @@ void* xf_thread(void* param)
 		{
 			if (freerdp_check_fds(instance) != TRUE)
 			{
+				if (xf_auto_reconnect(instance))
+					continue;
+
 				fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
 				break;
 			}
@@ -1673,37 +1742,6 @@ void xf_TerminateEventHandler(rdpContext* context, TerminateEventArgs* e)
 	}
 }
 
-void xf_ParamChangeEventHandler(rdpContext* context, ParamChangeEventArgs* e)
-{
-
-	xfContext* xfc = (xfContext*) context;
-
-	switch (e->id)
-	{
-	case FreeRDP_ScalingFactor:
-
-		xfc->currentWidth = xfc->originalWidth * xfc->settings->ScalingFactor;
-		xfc->currentHeight = xfc->originalHeight * xfc->settings->ScalingFactor;
-
-		xf_transform_window(xfc);
-
-		{
-			ResizeWindowEventArgs e;
-
-			EventArgsInit(&e, "xfreerdp");
-			e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
-			e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
-			PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
-		}
-		xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
-
-		break;
-
-	default:
-		break;
-	}
-}
-
 static void xf_ScalingFactorChangeEventHandler(rdpContext* context, ScalingFactorChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
@@ -1808,43 +1846,13 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->Authenticate = xf_authenticate;
 	instance->VerifyCertificate = xf_verify_certificate;
 	instance->LogonErrorInfo = xf_logon_error_info;
-	instance->ReceiveChannelData = xf_receive_channel_data;
 
 	context->channels = freerdp_channels_new();
 
 	settings = instance->settings;
 	xfc->settings = instance->context->settings;
 
-	settings->OsMajorType = OSMAJORTYPE_UNIX;
-	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
-
-	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
-	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
-	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MEMBLT_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->SoftwareGdi) ? TRUE : FALSE;
-	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
-	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
-	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
-	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
-	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
-	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
-	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
-	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
-	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
-
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
-	PubSub_SubscribeParamChange(context->pubSub, (pParamChangeEventHandler) xf_ParamChangeEventHandler);
 	PubSub_SubscribeScalingFactorChange(context->pubSub, (pScalingFactorChangeEventHandler) xf_ScalingFactorChangeEventHandler);
 
 	return 0;

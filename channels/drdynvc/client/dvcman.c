@@ -413,12 +413,12 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 
 		IFCALL(context->OnChannelDisconnected, context, channel->channel_name, channel->pInterface);
 
+		free(channel->channel_name);
+
 		DEBUG_DVC("dvcman_close_channel: channel %d closed", ChannelId);
 		ichannel = (IWTSVirtualChannel*) channel;
 		ichannel->Close(ichannel);
 	}
-
-	free(channel->channel_name);
 
 	return 0;
 }
@@ -469,7 +469,7 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 
 		Stream_Write(channel->dvc_data, data, data_size);
 
-		if (Stream_GetPosition(channel->dvc_data) >= Stream_Capacity(channel->dvc_data))
+		if (((size_t) Stream_GetPosition(channel->dvc_data)) >= Stream_Capacity(channel->dvc_data))
 		{
 			error = channel->channel_callback->OnDataReceived(channel->channel_callback,
 				Stream_Capacity(channel->dvc_data), Stream_Buffer(channel->dvc_data));

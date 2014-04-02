@@ -248,6 +248,11 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 		clientCookie->logonId = serverCookie->logonId;
 
 		hmac = crypto_hmac_new();
+		if (!hmac)
+		{
+			fprintf(stderr, "%s: unable to allocate hmac\n", __FUNCTION__);
+			goto out_free;
+		}
 
 		crypto_hmac_md5_init(hmac, serverCookie->arcRandomBits, 16);
 
@@ -270,11 +275,12 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 		rdp_write_client_auto_reconnect_cookie(s, settings); /* autoReconnectCookie */
 		/* mark as used */
 		settings->ServerAutoReconnectCookie->cbLen = 0;
+		crypto_hmac_free(hmac);
 	}
 
 	/* reserved1 (2 bytes) */
 	/* reserved2 (2 bytes) */
-
+out_free:
 	free(clientAddress);
 	free(clientDir);
 }
@@ -294,8 +300,9 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	UINT16 cbPassword;
 	UINT16 cbAlternateShell;
 	UINT16 cbWorkingDir;
+	UINT32 CompressionLevel;
 
-	if (Stream_GetRemainingLength(s) < 18) // invalid packet
+	if (Stream_GetRemainingLength(s) < 18)
 		return FALSE;
 
 	Stream_Seek_UINT32(s); /* CodePage */
@@ -308,13 +315,19 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	settings->RemoteConsoleAudio = ((flags & INFO_REMOTECONSOLEAUDIO) ? TRUE : FALSE);
 	settings->CompressionEnabled = ((flags & INFO_COMPRESSION) ? TRUE : FALSE);
 
+	if (flags & INFO_COMPRESSION)
+	{
+		CompressionLevel = ((flags & 0x00001E00) >> 9);
+		settings->CompressionLevel = CompressionLevel;
+	}
+
 	Stream_Read_UINT16(s, cbDomain); /* cbDomain */
 	Stream_Read_UINT16(s, cbUserName); /* cbUserName */
 	Stream_Read_UINT16(s, cbPassword); /* cbPassword */
 	Stream_Read_UINT16(s, cbAlternateShell); /* cbAlternateShell */
 	Stream_Read_UINT16(s, cbWorkingDir); /* cbWorkingDir */
 
-	if (Stream_GetRemainingLength(s) < cbDomain + 2)
+	if (Stream_GetRemainingLength(s) < (size_t) (cbDomain + 2))
 		return FALSE;
 
 	if (cbDomain > 0)
@@ -324,7 +337,7 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	}
 	Stream_Seek(s, 2);
 
-	if (Stream_GetRemainingLength(s) < cbUserName + 2)
+	if (Stream_GetRemainingLength(s) < (size_t) (cbUserName + 2))
 		return FALSE;
 
 	if (cbUserName > 0)
@@ -334,7 +347,7 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	}
 	Stream_Seek(s, 2);
 
-	if (Stream_GetRemainingLength(s) < cbPassword + 2)
+	if (Stream_GetRemainingLength(s) < (size_t) (cbPassword + 2))
 		return FALSE;
 
 	if (cbPassword > 0)
@@ -344,7 +357,7 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	}
 	Stream_Seek(s, 2);
 
-	if (Stream_GetRemainingLength(s) < cbAlternateShell + 2)
+	if (Stream_GetRemainingLength(s) < (size_t) (cbAlternateShell + 2))
 		return FALSE;
 
 	if (cbAlternateShell > 0)
@@ -354,7 +367,7 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 	}
 	Stream_Seek(s, 2);
 
-	if (Stream_GetRemainingLength(s) < cbWorkingDir + 2)
+	if (Stream_GetRemainingLength(s) < (size_t) (cbWorkingDir + 2))
 		return FALSE;
 
 	if (cbWorkingDir > 0)
@@ -419,7 +432,10 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 		flags |= INFO_REMOTECONSOLEAUDIO;
 
 	if (settings->CompressionEnabled)
-		flags |= INFO_COMPRESSION | INFO_PACKET_COMPR_TYPE_RDP6;
+	{
+		flags |= INFO_COMPRESSION;
+		flags |= ((settings->CompressionLevel << 9) & 0x00001E00);
+	}
 
 	if (settings->Domain)
 	{

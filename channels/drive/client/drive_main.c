@@ -56,9 +56,7 @@ struct _DRIVE_DEVICE
 	wListDictionary* files;
 
 	HANDLE thread;
-	HANDLE irpEvent;
-	HANDLE stopEvent;
-	PSLIST_HEADER pIrpList;
+	wMessageQueue* IrpQueue;
 
 	DEVMAN* devman;
 };
@@ -576,46 +574,27 @@ static void drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
 	}
 }
 
-static void drive_process_irp_list(DRIVE_DEVICE* drive)
-{
-	IRP* irp;
-
-	while (1)
-	{
-		if (WaitForSingleObject(drive->stopEvent, 0) == WAIT_OBJECT_0)
-			break;
-
-		irp = (IRP*) InterlockedPopEntrySList(drive->pIrpList);
-
-		if (irp == NULL)
-			break;
-
-		drive_process_irp(drive, irp);
-	}
-}
-
 static void* drive_thread_func(void* arg)
 {
-	DWORD status;
-	DWORD nCount;
-	HANDLE handles[8];
+	IRP* irp;
+	wMessage message;
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) arg;
-
-	nCount = 0;
-	handles[nCount++] = drive->stopEvent;
-	handles[nCount++] = drive->irpEvent;
 
 	while (1)
 	{
-		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
-
-		if (WaitForSingleObject(drive->stopEvent, 0) == WAIT_OBJECT_0)
-		{
+		if (!MessageQueue_Wait(drive->IrpQueue))
 			break;
-		}
 
-		ResetEvent(drive->irpEvent);
-		drive_process_irp_list(drive);
+		if (!MessageQueue_Peek(drive->IrpQueue, &message, TRUE))
+			break;
+
+		if (message.id == WMQ_QUIT)
+			break;
+
+		irp = (IRP*) message.wParam;
+
+		if (irp)
+			drive_process_irp(drive, irp);
 	}
 
 	ExitThread(0);
@@ -625,28 +604,17 @@ static void* drive_thread_func(void* arg)
 static void drive_irp_request(DEVICE* device, IRP* irp)
 {
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) device;
-
-	InterlockedPushEntrySList(drive->pIrpList, &(irp->ItemEntry));
-
-	SetEvent(drive->irpEvent);
+	MessageQueue_Post(drive->IrpQueue, NULL, 0, (void*) irp, NULL);
 }
 
 static void drive_free(DEVICE* device)
 {
-	IRP* irp;
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*) device;
 
-	SetEvent(drive->stopEvent);
+	MessageQueue_PostQuit(drive->IrpQueue, 0);
 	WaitForSingleObject(drive->thread, INFINITE);
 
 	CloseHandle(drive->thread);
-	CloseHandle(drive->irpEvent);
-	CloseHandle(drive->stopEvent);
-
-	while ((irp = (IRP*) InterlockedPopEntrySList(drive->pIrpList)) != NULL)
-		irp->Discard(irp);
-
-	_aligned_free(drive->pIrpList);
 
 	ListDictionary_Free(drive->files);
 
@@ -682,7 +650,7 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 		drive->device.IRPRequest = drive_irp_request;
 		drive->device.Free = drive_free;
 
-		length = strlen(name);
+		length = (int) strlen(name);
 		drive->device.data = Stream_New(NULL, length + 1);
 
 		for (i = 0; i <= length; i++)
@@ -693,11 +661,7 @@ void drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, char* 
 		drive->files = ListDictionary_New(TRUE);
 		ListDictionary_Object(drive->files)->fnObjectFree = (OBJECT_FREE_FN) drive_file_free;
 
-		drive->pIrpList = (PSLIST_HEADER) _aligned_malloc(sizeof(SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
-		InitializeSListHead(drive->pIrpList);
-
-		drive->irpEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-		drive->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		drive->IrpQueue = MessageQueue_New(NULL);
 		drive->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) drive_thread_func, drive, CREATE_SUSPENDED, NULL);
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) drive);
@@ -748,13 +712,13 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			drive->Path = _strdup("/");
 	}
 
-        drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
+	drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
 
 #else
 	sys_code_page = GetACP();
-        /* Special case: path[0] == '*' -> export all drives */
+	/* Special case: path[0] == '*' -> export all drives */
 	/* Special case: path[0] == '%' -> user home dir */
-        if (strcmp(drive->Path, "%") == 0)
+	if (strcmp(drive->Path, "%") == 0)
 	{
 		_snprintf(buf, sizeof(buf), "%s\\", getenv("USERPROFILE"));
 		drive_register_drive_path(pEntryPoints, drive->Name, _strdup(buf));
@@ -769,10 +733,9 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		for (dev = devlist, i = 0; *dev; dev += 4, i++)
 		{
 			if (*dev > 'B')
-                        {
+			{
 				/* Suppress disk drives A and B to avoid pesty messages */
-				_snprintf(buf, sizeof(buf) - 4, "%s", drive->Name);
-				len = strlen(buf);
+				len = _snprintf(buf, sizeof(buf) - 4, "%s", drive->Name);
 				buf[len] = '_';
 				buf[len + 1] = dev[0];
 				buf[len + 2] = 0;
@@ -781,11 +744,11 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			}
 		}
 	}
-        else
-        {
+	else
+	{
 		drive_register_drive_path(pEntryPoints, drive->Name, drive->Path);
 	}
 #endif
-	
-        return 0;
- }
+
+	return 0;
+}

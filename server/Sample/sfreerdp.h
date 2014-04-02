@@ -48,7 +48,7 @@ struct test_peer_context
 	BOOL activated;
 	HANDLE event;
 	HANDLE stopEvent;
-	WTSVirtualChannelManager* vcm;
+	HANDLE vcm;
 	void* debug_channel;
 	HANDLE debug_channel_thread;
 	audin_server_context* audin;

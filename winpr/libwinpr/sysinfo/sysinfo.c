@@ -3,7 +3,7 @@
  * System Information
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2013 Bernhard Miklautz <bmiklautz@thinstuff.at>
+ * Copyright 2013 Bernhard Miklautz <bernhard.miklautz@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@
 #include <winpr/crt.h>
 #include <winpr/platform.h>
 
-#if defined(__MACOSX__) || \
+#if defined(__MACOSX__) || defined(__IOS__) || \
 defined(__FreeBSD__) || defined(__NetBSD__) || \
 defined(__OpenBSD__) || defined(__DragonFly__)
 #include <sys/sysctl.h>

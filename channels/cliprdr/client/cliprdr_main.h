@@ -41,6 +41,8 @@ typedef struct cliprdr_plugin cliprdrPlugin;
 wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen);
 void cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* data_out);
 
+CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
+
 #ifdef WITH_DEBUG_CLIPRDR
 #define DEBUG_CLIPRDR(fmt, ...) DEBUG_CLASS(CLIPRDR, fmt, ## __VA_ARGS__)
 #else

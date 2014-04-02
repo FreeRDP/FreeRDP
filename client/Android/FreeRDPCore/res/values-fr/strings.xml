@@ -187,7 +187,6 @@
     <string name="dlg_msg_connecting">"Connexion..."</string>
     <string name="dlg_msg_logging_in">"Connexion..."</string>
     <string name="dlg_title_about">"À propos de aFreeRDP"</string>
-    <string name="dlg_msg_about">"Version: %1$s \ n \ u00A9 2012 Technologies GmbH Thinstuff"</string>
     <string name="dlg_title_create_bookmark_after_qc">"Enregistrer les paramètres de connexion?"</string>
     <string name="dlg_msg_create_bookmark_after_qc">"Vos paramètres de connexion n'ont pas été sauvegardés! Voulez-vous les enregistrer?"</string>
     <string name="dlg_title_save_bookmark">"Enregistrer la connexion?"</string>

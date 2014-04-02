@@ -360,6 +360,12 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	ntlm = rpc->ntlm;
 
+	if ((!ntlm) || (!ntlm->table))
+	{
+		fprintf(stderr, "rpc_write: invalid ntlm context\n");
+		return -1;
+	}
+
 	if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 	{
 		fprintf(stderr, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
@@ -373,7 +379,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	request_pdu->ptype = PTYPE_REQUEST;
 	request_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG;
-	request_pdu->auth_length = ntlm->ContextSizes.cbMaxSignature;
+	request_pdu->auth_length = (UINT16) ntlm->ContextSizes.cbMaxSignature;
 	request_pdu->call_id = rpc->CallId++;
 	request_pdu->alloc_hint = length;
 	request_pdu->p_cont_id = 0x0000;
@@ -441,7 +447,9 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	offset += Buffers[1].cbBuffer;
 	free(Buffers[1].pvBuffer);
 
-	rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length);
+	if (rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length) != 0)
+		length = -1;
+
 	free(request_pdu);
 
 	return length;

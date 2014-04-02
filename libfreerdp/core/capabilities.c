@@ -2274,7 +2274,8 @@ BOOL rdp_read_multifragment_update_capability_set(wStream* s, UINT16 length, rdp
 		return FALSE;
 
 	Stream_Read_UINT32(s, multifragMaxRequestSize); /* MaxRequestSize (4 bytes) */
-	if (settings->RemoteFxCodec && settings->MultifragMaxRequestSize < multifragMaxRequestSize)
+
+	if (multifragMaxRequestSize < settings->MultifragMaxRequestSize)
 		settings->MultifragMaxRequestSize = multifragMaxRequestSize;
 
 	return TRUE;
@@ -2387,13 +2388,15 @@ BOOL rdp_print_large_pointer_capability_set(wStream* s, UINT16 length)
 
 BOOL rdp_read_surface_commands_capability_set(wStream* s, UINT16 length, rdpSettings* settings)
 {
+	UINT32 cmdFlags;
 	if (length < 12)
 		return FALSE;
 
-	Stream_Seek_UINT32(s); /* cmdFlags (4 bytes) */
+	Stream_Read_UINT32(s, cmdFlags); /* cmdFlags (4 bytes) */
 	Stream_Seek_UINT32(s); /* reserved (4 bytes) */
 
 	settings->SurfaceCommandsEnabled = TRUE;
+	settings->SurfaceFrameMarkerEnabled = (cmdFlags & SURFCMDS_FRAME_MARKER) ? TRUE : FALSE;
 
 	return TRUE;
 }
@@ -2414,9 +2417,10 @@ void rdp_write_surface_commands_capability_set(wStream* s, rdpSettings* settings
 
 	header = rdp_capability_set_start(s);
 
-	cmdFlags = SURFCMDS_FRAME_MARKER |
-			SURFCMDS_SET_SURFACE_BITS |
+	cmdFlags = SURFCMDS_SET_SURFACE_BITS |
 			SURFCMDS_STREAM_SURFACE_BITS;
+	if (settings->SurfaceFrameMarkerEnabled)
+		cmdFlags |= SURFCMDS_FRAME_MARKER;
 
 	Stream_Write_UINT32(s, cmdFlags); /* cmdFlags (4 bytes) */
 	Stream_Write_UINT32(s, 0); /* reserved (4 bytes) */
@@ -2974,7 +2978,7 @@ BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOOL recei
 
 		em = bm + length;
 
-		if (Stream_GetRemainingLength(s) < length - 4)
+		if (Stream_GetRemainingLength(s) < (size_t) (length - 4))
 		{
 			fprintf(stderr, "error processing stream\n");
 			return FALSE;
@@ -3156,16 +3160,24 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 	Stream_GetPointer(s, mark);
 	count = numberCapabilities;
 
-	while (numberCapabilities > 0)
+	while (numberCapabilities > 0 && Stream_GetRemainingLength(s) >= 4)
 	{
 		Stream_GetPointer(s, bm);
 
 		rdp_read_capability_set_header(s, &length, &type);
 
-		settings->ReceivedCapabilities[type] = TRUE;
+		if (type < 32)
+		{
+			settings->ReceivedCapabilities[type] = TRUE;
+		}
+		else
+		{
+			fprintf(stderr, "%s: not handling capability type %d yet\n", __FUNCTION__, type);
+		}
+
 		em = bm + length;
 
-		if (Stream_GetRemainingLength(s) < length - 4)
+		if (Stream_GetRemainingLength(s) < ((size_t) length - 4))
 		{
 			fprintf(stderr, "error processing stream\n");
 			return FALSE;
@@ -3333,6 +3345,12 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 		numberCapabilities--;
 	}
 
+	if (numberCapabilities)
+	{
+		fprintf(stderr, "%s: strange we haven't read the number of announced capacity sets, read=%d expected=%d\n",
+				__FUNCTION__, count-numberCapabilities, count);
+	}
+
 #ifdef WITH_DEBUG_CAPABILITIES
 	Stream_GetPointer(s, em);
 	Stream_SetPointer(s, mark);
@@ -3372,8 +3390,13 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 
 	if (*pChannelId != MCS_GLOBAL_CHANNEL_ID)
 	{
-		fprintf(stderr, "expected MCS_GLOBAL_CHANNEL_ID %04x, got %04x\n", MCS_GLOBAL_CHANNEL_ID, *pChannelId);
-		return FALSE;
+		UINT16 mcsMessageChannelId = rdp->mcs->messageChannelId;
+
+		if ((mcsMessageChannelId == 0) || (*pChannelId != mcsMessageChannelId))
+		{
+			fprintf(stderr, "unexpected MCS channel id %04x received\n", *pChannelId);
+			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -3504,11 +3527,11 @@ BOOL rdp_send_demand_active(rdpRdp* rdp)
 	s = Stream_New(NULL, 4096);
 	rdp_init_stream_pdu(rdp, s);
 
-	rdp->settings->ShareId = 0x10000 + rdp->mcs->user_id;
+	rdp->settings->ShareId = 0x10000 + rdp->mcs->userId;
 
 	rdp_write_demand_active(s, rdp->settings);
 
-	status = rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->user_id);
+	status = rdp_send_pdu(rdp, s, PDU_TYPE_DEMAND_ACTIVE, rdp->mcs->userId);
 
 	Stream_Free(s, TRUE);
 
@@ -3533,7 +3556,7 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 	Stream_Read_UINT16(s, lengthCombinedCapabilities); /* lengthCombinedCapabilities (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < lengthSourceDescriptor + 4)
+	if (((int) Stream_GetRemainingLength(s)) < lengthSourceDescriptor + 4)
 		return FALSE;
 
 	Stream_Seek(s, lengthSourceDescriptor); /* sourceDescriptor */
@@ -3545,6 +3568,8 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_SURFACE_COMMANDS])
 	{
 		/* client does not support surface commands */
+		settings->SurfaceCommandsEnabled = FALSE;
+		settings->SurfaceFrameMarkerEnabled = FALSE;
 	}
 
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_FRAME_ACKNOWLEDGE])
@@ -3719,7 +3744,7 @@ BOOL rdp_send_confirm_active(rdpRdp* rdp)
 
 	rdp_write_confirm_active(s, rdp->settings);
 
-	status = rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->user_id);
+	status = rdp_send_pdu(rdp, s, PDU_TYPE_CONFIRM_ACTIVE, rdp->mcs->userId);
 
 	Stream_Free(s, TRUE);
 

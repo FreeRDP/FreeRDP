@@ -199,7 +199,12 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 			{
 				return -1;
 			}
-			freerdp_client_old_parse_hostname((char*) argv[index], &settings->ServerHostname, &settings->ServerPort);
+
+			if (settings)
+			{
+				freerdp_client_old_parse_hostname((char*) argv[index],
+						&settings->ServerHostname, &settings->ServerPort);
+			}
 		}
 		else
 		{
@@ -258,8 +263,8 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 					if (p != NULL)
 					{
 						p = strchr(p, ':');
-						length = p - a;
-						args->argv[j + 1] = malloc(length + 1);
+						length = (int) (p - a);
+						args->argv[j + 1] = (char*) malloc(length + 1);
 						CopyMemory(args->argv[j + 1], a, length);
 						args->argv[j + 1][length] = '\0';
 						p++;
@@ -280,14 +285,19 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 				index++;
 				i++;
 			}
-		} else {
+		}
+		else
+		{
+			if (settings)
+			{
 				if (settings->instance)
 				{
 					freerdp_client_old_process_plugin(settings, args);
 				}
+			}
 		}
 
-		for (i=0; i<args->argc; i++)
+		for (i = 0; i < args->argc; i++)
 			free(args->argv[i]);
 		free(args->argv);
 		free(args);
@@ -490,6 +500,7 @@ int freerdp_client_parse_old_command_line_arguments(int argc, char** argv, rdpSe
 		CommandLineSwitchCase(arg, "n")
 		{
 			settings->ClientHostname = _strdup(arg->Value);
+			fprintf(stderr, "-n -> /client-hostname:%s\n", arg->Value);
 		}
 		CommandLineSwitchCase(arg, "o")
 		{

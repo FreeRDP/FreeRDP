@@ -86,10 +86,20 @@ int clock_gettime(int clk_id, struct timespec *t)
  */
 #if !defined(HAVE_PTHREAD_GNU_EXT)
 #include <pthread.h>
+
+static long long ts_difftime(const struct timespec *o,
+		const struct timespec *n)
+{
+	long long oldValue = o->tv_sec * 1000000000LL + o->tv_nsec;
+	long long newValue = n->tv_sec * 1000000000LL + n->tv_nsec;
+
+	return newValue - oldValue;
+}
+
 static int pthread_timedjoin_np(pthread_t td, void **res,
 		struct timespec *timeout)
 {
-	struct timeval timenow;
+	struct timespec timenow;
 	struct timespec sleepytime;
 	/* This is just to avoid a completely busy wait */
 	sleepytime.tv_sec = 0;
@@ -101,11 +111,10 @@ static int pthread_timedjoin_np(pthread_t td, void **res,
 			return pthread_join(td, res);
 
 		nanosleep(&sleepytime, NULL);
-  
-		gettimeofday(&timenow, NULL);
+ 
+		clock_gettime(CLOCK_MONOTONIC, &timenow);
 
-		if (timenow.tv_sec >= timeout->tv_sec &&
-				(timenow.tv_usec * 1000) >= timeout->tv_nsec)
+		if (ts_difftime(timeout, &timenow) >= 0)
 		{
 			return ETIMEDOUT;
 		}
@@ -117,7 +126,7 @@ static int pthread_timedjoin_np(pthread_t td, void **res,
 
 static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
 {
-	struct timeval timenow;
+	struct timespec timenow;
 	struct timespec sleepytime;
 	int retcode;
 
@@ -127,10 +136,9 @@ static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec
 
 	while ((retcode = pthread_mutex_trylock (mutex)) == EBUSY)
 	{
-		gettimeofday (&timenow, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &timenow);
 
-		if (timenow.tv_sec >= timeout->tv_sec &&
-				(timenow.tv_usec * 1000) >= timeout->tv_nsec)
+		if (ts_difftime(timeout, &timenow) >= 0)
 		{
 			return ETIMEDOUT;
 		}
@@ -147,11 +155,8 @@ static void ts_add_ms(struct timespec *ts, DWORD dwMilliseconds)
 	ts->tv_sec += dwMilliseconds / 1000L;
 	ts->tv_nsec += (dwMilliseconds % 1000L) * 1000000L;
 
-	while(ts->tv_nsec >= 1000000000L)
-	{
-		ts->tv_sec ++;
-		ts->tv_nsec -= 1000000000L;
-	}
+	ts->tv_sec += ts->tv_nsec / 1000000000L;
+	ts->tv_nsec = ts->tv_nsec % 1000000000L;
 }
 
 DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
@@ -160,7 +165,10 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	PVOID Object;
 
 	if (!winpr_Handle_GetInfo(hHandle, &Type, &Object))
+	{
+		fprintf(stderr, "WaitForSingleObject failed: invalid hHandle.\n");
 		return WAIT_FAILED;
+	}
 
 	if (Type == HANDLE_TYPE_THREAD)
 	{
@@ -172,7 +180,6 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		if (thread->started)
 		{
-#ifdef __linux__
 			if (dwMilliseconds != INFINITE)
 			{
 				struct timespec timeout;
@@ -182,7 +189,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 				if (dwMilliseconds == 0)
 					dwMilliseconds ++;
 
-				clock_gettime(CLOCK_REALTIME, &timeout);
+				clock_gettime(CLOCK_MONOTONIC, &timeout);
 				ts_add_ms(&timeout, dwMilliseconds);
 
 				status = pthread_timedjoin_np(thread->thread, &thread_status, &timeout);
@@ -191,7 +198,6 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 					return WAIT_TIMEOUT;
 			}
 			else
-#endif
 				status = pthread_join(thread->thread, &thread_status);
 
 			if (status != 0)
@@ -212,6 +218,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		if (waitpid(process->pid, &(process->status), 0) != -1)
 		{
+			fprintf(stderr, "WaitForSingleObject: waitpid failure [%d] %s\n", errno, strerror(errno));
 			return WAIT_FAILED;
 		}
 
@@ -223,13 +230,12 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		mutex = (WINPR_MUTEX*) Object;
 
-#ifdef __linux__
 		if (dwMilliseconds != INFINITE)
 		{
 			int status;
 			struct timespec timeout;
 
-			clock_gettime(CLOCK_REALTIME, &timeout);
+			clock_gettime(CLOCK_MONOTONIC, &timeout);
 			ts_add_ms(&timeout, dwMilliseconds);	
 
 			status = pthread_mutex_timedlock(&mutex->mutex, &timeout);
@@ -238,8 +244,9 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 				return WAIT_TIMEOUT;
 		}
 		else
-#endif
+		{
 			pthread_mutex_lock(&mutex->mutex);
+		}
 	}
 	else if (Type == HANDLE_TYPE_EVENT)
 	{
@@ -256,14 +263,22 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
 		{
-			timeout.tv_usec = dwMilliseconds * 1000;
+			timeout.tv_sec = dwMilliseconds / 1000;
+			timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 		}
 
-		status = select(event->pipe_fd[0] + 1, &rfds, NULL, NULL,
-				(dwMilliseconds == INFINITE) ? NULL : &timeout);
+		do
+		{
+			status = select(event->pipe_fd[0] + 1, &rfds, NULL, NULL,
+					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+		}
+		while (status < 0 && (errno == EINTR));
 
 		if (status < 0)
+		{
+			fprintf(stderr, "WaitForSingleObject: event select() failure [%d] %s\n", errno, strerror(errno));
 			return WAIT_FAILED;
+		}
 
 		if (status != 1)
 			return WAIT_TIMEOUT;
@@ -288,14 +303,22 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 			if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
 			{
-				timeout.tv_usec = dwMilliseconds * 1000;
+				timeout.tv_sec = dwMilliseconds / 1000;
+				timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 			}
 
-			status = select(semaphore->pipe_fd[0] + 1, &rfds, 0, 0,
-					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+			do
+			{
+				status = select(semaphore->pipe_fd[0] + 1, &rfds, 0, 0,
+						(dwMilliseconds == INFINITE) ? NULL : &timeout);
+			}
+			while (status < 0 && (errno == EINTR));
 
 			if (status < 0)
+			{
+				fprintf(stderr, "WaitForSingleObject: semaphore select() failure [%d] %s\n", errno, strerror(errno));
 				return WAIT_FAILED;
+			}
 
 			if (status != 1)
 				return WAIT_TIMEOUT;
@@ -303,7 +326,10 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			length = read(semaphore->pipe_fd[0], &length, 1);
 
 			if (length != 1)
+			{
+				fprintf(stderr, "WaitForSingleObject: semaphore read failure [%d] %s\n", errno, strerror(errno));
 				return WAIT_FAILED;
+			}
 		}
 #else
 
@@ -335,14 +361,22 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 			if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
 			{
-				timeout.tv_usec = dwMilliseconds * 1000;
+				timeout.tv_sec = dwMilliseconds / 1000;
+				timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 			}
 
-			status = select(timer->fd + 1, &rfds, 0, 0,
-					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+			do
+			{
+				status = select(timer->fd + 1, &rfds, 0, 0,
+						(dwMilliseconds == INFINITE) ? NULL : &timeout);
+			}
+			while (status < 0 && (errno == EINTR));
 
 			if (status < 0)
+			{
+				fprintf(stderr, "WaitForSingleObject: timer select() failure [%d] %s\n", errno, strerror(errno));
 				return WAIT_FAILED;
+			}
 
 			if (status != 1)
 				return WAIT_TIMEOUT;
@@ -350,13 +384,30 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			status = read(timer->fd, (void*) &expirations, sizeof(UINT64));
 
 			if (status != 8)
-				return WAIT_TIMEOUT;
+			{
+				if (status == -1)
+				{
+					if (errno == ETIMEDOUT)
+						return WAIT_TIMEOUT;
+
+					fprintf(stderr, "WaitForSingleObject: timer read() failure [%d] %s\n", errno, strerror(errno));
+				}
+				else
+				{
+					fprintf(stderr, "WaitForSingleObject: timer read() failure - incorrect number of bytes read");
+				}
+
+				return WAIT_FAILED;
+			}
 		}
 		else
 		{
+			fprintf(stderr, "WaitForSingleObject: invalid timer file descriptor\n");
 			return WAIT_FAILED;
 		}
+
 #else
+		fprintf(stderr, "WaitForSingleObject: file descriptors not supported\n");
 		return WAIT_FAILED;
 #endif
 	}
@@ -371,7 +422,10 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
 
 		if (fd == -1)
+		{
+			fprintf(stderr, "WaitForSingleObject: invalid pipe file descriptor\n");
 			return WAIT_FAILED;
+		}
 
 		FD_ZERO(&rfds);
 		FD_SET(fd, &rfds);
@@ -379,17 +433,27 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
 		{
-			timeout.tv_usec = dwMilliseconds * 1000;
+			timeout.tv_sec = dwMilliseconds / 1000;
+			timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 		}
 
-		status = select(fd + 1, &rfds, NULL, NULL,
-				(dwMilliseconds == INFINITE) ? NULL : &timeout);
+		do
+		{
+			status = select(fd + 1, &rfds, NULL, NULL,
+					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+		}
+		while (status < 0 && (errno == EINTR));
 
 		if (status < 0)
+		{
+			fprintf(stderr, "WaitForSingleObject: named pipe select() failure [%d] %s\n", errno, strerror(errno));
 			return WAIT_FAILED;
+		}
 
 		if (status != 1)
+		{
 			return WAIT_TIMEOUT;
+		}
 	}
 	else
 	{
@@ -418,7 +482,10 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	struct timeval timeout;
 
 	if (!nCount)
+	{
+		fprintf(stderr, "WaitForMultipleObjects: invalid handles count\n");
 		return WAIT_FAILED;
+	}
 
 	maxfd = 0;
 	FD_ZERO(&fds);
@@ -433,17 +500,28 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	for (index = 0; index < nCount; index++)
 	{
 		if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
+		{
+			fprintf(stderr, "WaitForMultipleObjects: invalid handle\n");
+
 			return WAIT_FAILED;
+		}
 
 		if (Type == HANDLE_TYPE_EVENT)
 		{
 			fd = ((WINPR_EVENT*) Object)->pipe_fd[0];
+
+			if (fd == -1)
+			{
+				fprintf(stderr, "WaitForMultipleObjects: invalid event file descriptor\n");
+				return WAIT_FAILED;
+			}
 		}
 		else if (Type == HANDLE_TYPE_SEMAPHORE)
 		{
 #ifdef WINPR_PIPE_SEMAPHORE
 			fd = ((WINPR_SEMAPHORE*) Object)->pipe_fd[0];
 #else
+			fprintf(stderr, "WaitForMultipleObjects: semaphore not supported\n");
 			return WAIT_FAILED;
 #endif
 		}
@@ -451,6 +529,12 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		{
 			WINPR_TIMER* timer = (WINPR_TIMER*) Object;
 			fd = timer->fd;
+
+			if (fd == -1)
+			{
+				fprintf(stderr, "WaitForMultipleObjects: invalid timer file descriptor\n");
+				return WAIT_FAILED;
+			}
 		}
 		else if (Type == HANDLE_TYPE_NAMED_PIPE)
 		{
@@ -458,15 +542,22 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 			fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
 
 			if (fd == -1)
+			{
+				fprintf(stderr, "WaitForMultipleObjects: invalid timer file descriptor\n");
 				return WAIT_FAILED;
+			}
 		}
 		else
 		{
+			fprintf(stderr, "WaitForMultipleObjects: unknown handle type %lu\n", Type);
 			return WAIT_FAILED;
 		}
 
 		if (fd == -1)
+		{
+			fprintf(stderr, "WaitForMultipleObjects: invalid file descriptor\n");
 			return WAIT_FAILED;
+		}
 
 		FD_SET(fd, &fds);
 
@@ -476,14 +567,22 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 	if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
 	{
-		timeout.tv_usec = dwMilliseconds * 1000;
+		timeout.tv_sec = dwMilliseconds / 1000;
+		timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 	}
 
-	status = select(maxfd + 1, &fds, 0, 0,
-			(dwMilliseconds == INFINITE) ? NULL : &timeout);
+	do
+	{
+		status = select(maxfd + 1, &fds, 0, 0,
+				(dwMilliseconds == INFINITE) ? NULL : &timeout);
+	}
+	while (status < 0 && errno == EINTR);
 
 	if (status < 0)
+	{
+		fprintf(stderr, "WaitForMultipleObjects: select() failure [%d] %s\n", errno, strerror(errno));
 		return WAIT_FAILED;
+	}
 
 	if (status == 0)
 		return WAIT_TIMEOUT;
@@ -520,7 +619,10 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 				length = read(fd, &length, 1);
 
 				if (length != 1)
+				{
+					fprintf(stderr, "WaitForMultipleObjects: semaphore read() failure [%d] %s\n", errno, strerror(errno));
 					return WAIT_FAILED;
+				}
 			}
 			else if (Type == HANDLE_TYPE_TIMER)
 			{
@@ -530,13 +632,28 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 				length = read(fd, (void*) &expirations, sizeof(UINT64));
 
 				if (length != 8)
+				{
+					if (length == -1)
+					{
+						if (errno == ETIMEDOUT)
+							return WAIT_TIMEOUT;
+
+						fprintf(stderr, "WaitForMultipleObjects: timer read() failure [%d] %s\n", errno, strerror(errno));
+					}
+					else
+					{
+						fprintf(stderr, "WaitForMultipleObjects: timer read() failure - incorrect number of bytes read");
+					}
+
 					return WAIT_FAILED;
+				}
 			}
 
 			return (WAIT_OBJECT_0 + index);
 		}
 	}
 
+	fprintf(stderr, "WaitForMultipleObjects: failed (unknown error)\n");
 	return WAIT_FAILED;
 }
 

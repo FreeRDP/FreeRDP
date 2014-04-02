@@ -21,8 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <winpr/collections.h>
-#include <winpr/memory.h>
 
 /**
  * C equivalent of the C# ListDictionary Class:
@@ -206,7 +207,7 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 		{
 			nextItem = item->next;
 			if (listDictionary->object.fnObjectFree)
-				listDictionary->object.fnObjectFree(item);
+				listDictionary->object.fnObjectFree(item->value);
 			free(item);
 			item = nextItem;
 		}

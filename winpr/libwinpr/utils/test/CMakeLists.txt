@@ -8,11 +8,13 @@ set(${MODULE_PREFIX}_TESTS
 	TestQueue.c
 	TestPrint.c
 	TestPubSub.c
+	TestBitStream.c
 	TestArrayList.c
 	TestLinkedList.c
 	TestListDictionary.c
 	TestCmdLine.c
 	TestWLog.c
+	TestHashTable.c
 	TestBufferPool.c
 	TestStreamPool.c
 	TestMessageQueue.c

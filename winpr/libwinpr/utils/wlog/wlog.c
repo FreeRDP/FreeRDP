@@ -216,14 +216,20 @@ void WLog_PrintMessage(wLog* log, wLogMessage* message, ...)
 
 DWORD WLog_GetLogLevel(wLog* log)
 {
-	return log->Level;
+	if (log->Level == WLOG_LEVEL_INHERIT) {
+		return WLog_GetLogLevel(log->Parent);
+	} else {
+		return log->Level;
+	}
 }
 
 void WLog_SetLogLevel(wLog* log, DWORD logLevel)
 {
-	if (logLevel > WLOG_OFF)
-		logLevel = WLOG_OFF;
 
+	if ((logLevel > WLOG_OFF) && (logLevel != WLOG_LEVEL_INHERIT))
+	{
+		logLevel = WLOG_OFF;
+	}
 	log->Level = logLevel;
 }
 
@@ -261,7 +267,7 @@ int WLog_ParseName(wLog* log, LPCSTR name)
 	return 0;
 }
 
-wLog* WLog_New(LPCSTR name)
+wLog* WLog_New(LPCSTR name , wLog* rootLogger)
 {
 	wLog* log;
 	char* env;
@@ -276,7 +282,7 @@ wLog* WLog_New(LPCSTR name)
 		log->Name = _strdup(name);
 		WLog_ParseName(log, name);
 
-		log->Parent = NULL;
+		log->Parent = rootLogger;
 		log->ChildrenCount = 0;
 
 		log->ChildrenSize = 16;
@@ -284,37 +290,41 @@ wLog* WLog_New(LPCSTR name)
 
 		log->Appender = NULL;
 
-		log->Level = WLOG_WARN;
+		if (rootLogger) {
+			log->Level = WLOG_LEVEL_INHERIT;
+		} else {
+			log->Level = WLOG_WARN;
 
-		nSize = GetEnvironmentVariableA("WLOG_LEVEL", NULL, 0);
+			nSize = GetEnvironmentVariableA("WLOG_LEVEL", NULL, 0);
 
-		if (nSize)
-		{
-			env = (LPSTR) malloc(nSize);
-			nSize = GetEnvironmentVariableA("WLOG_LEVEL", env, nSize);
-
-			if (env)
+			if (nSize)
 			{
-				if (_stricmp(env, "TRACE") == 0)
-					log->Level = WLOG_TRACE;
-				else if (_stricmp(env, "DEBUG") == 0)
-					log->Level = WLOG_DEBUG;
-				else if (_stricmp(env, "INFO") == 0)
-					log->Level = WLOG_INFO;
-				else if (_stricmp(env, "WARN") == 0)
-					log->Level = WLOG_WARN;
-				else if (_stricmp(env, "ERROR") == 0)
-					log->Level = WLOG_ERROR;
-				else if (_stricmp(env, "FATAL") == 0)
-					log->Level = WLOG_FATAL;
-				else if (_stricmp(env, "OFF") == 0)
-					log->Level = WLOG_OFF;
-				else if (_strnicmp(env, "0x", 2) == 0)
-				{
-					/* TODO: read custom hex value */
-				}
+				env = (LPSTR) malloc(nSize);
+				nSize = GetEnvironmentVariableA("WLOG_LEVEL", env, nSize);
 
-				free(env);
+				if (env)
+				{
+					if (_stricmp(env, "TRACE") == 0)
+						log->Level = WLOG_TRACE;
+					else if (_stricmp(env, "DEBUG") == 0)
+						log->Level = WLOG_DEBUG;
+					else if (_stricmp(env, "INFO") == 0)
+						log->Level = WLOG_INFO;
+					else if (_stricmp(env, "WARN") == 0)
+						log->Level = WLOG_WARN;
+					else if (_stricmp(env, "ERROR") == 0)
+						log->Level = WLOG_ERROR;
+					else if (_stricmp(env, "FATAL") == 0)
+						log->Level = WLOG_FATAL;
+					else if (_stricmp(env, "OFF") == 0)
+						log->Level = WLOG_OFF;
+					else if (_strnicmp(env, "0x", 2) == 0)
+					{
+						/* TODO: read custom hex value */
+					}
+
+					free(env);
+				}
 			}
 		}
 	}
@@ -351,7 +361,7 @@ wLog* WLog_GetRoot()
 
 	if (!g_RootLog)
 	{
-		g_RootLog = WLog_New("");
+		g_RootLog = WLog_New("",NULL);
 		g_RootLog->IsRoot = TRUE;
 
 		logAppenderType = WLOG_APPENDER_CONSOLE;
@@ -398,7 +408,7 @@ int WLog_AddChild(wLog* parent, wLog* child)
 
 wLog* WLog_FindChild(LPCSTR name)
 {
-	int index;
+	DWORD index;
 	wLog* root;
 	wLog* child = NULL;
 	BOOL found = FALSE;
@@ -430,7 +440,7 @@ wLog* WLog_Get(LPCSTR name)
 
 	if (!log)
 	{
-		log = WLog_New(name);
+		log = WLog_New(name,root);
 		WLog_AddChild(root, log);
 	}
 

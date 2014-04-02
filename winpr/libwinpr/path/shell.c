@@ -271,7 +271,7 @@ char* GetKnownSubPath(int id, char* path)
 	return subPath;
 }
 
-char* GetCombinedPath(char* basePath, char* subPath)
+char* GetCombinedPath(const char* basePath, const char* subPath)
 {
 	int length;
 	HRESULT status;

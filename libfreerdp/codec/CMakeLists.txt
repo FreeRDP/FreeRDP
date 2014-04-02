@@ -22,6 +22,8 @@ set(${MODULE_PREFIX}_SRCS
 	dsp.c
 	color.c
 	audio.c
+	planar.c
+	planar.h
 	bitmap_decode.c
 	bitmap_encode.c
 	rfx_bitstream.h
@@ -40,12 +42,13 @@ set(${MODULE_PREFIX}_SRCS
 	rfx_rlgr.h
 	rfx_types.h
 	rfx.c
+	region.c	
 	nsc.c
 	nsc_encode.c
 	nsc_encode.h
 	nsc_types.h
-	mppc_dec.c
-	mppc_enc.c
+	ncrush.c
+	mppc.c
 	jpeg.c)
 
 set(${MODULE_PREFIX}_SSE2_SRCS
@@ -106,3 +109,8 @@ else()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
+

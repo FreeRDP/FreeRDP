@@ -26,9 +26,14 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/cmdline.h>
 
 #include <pulse/pulseaudio.h>
+
+#ifdef WITH_GSM
+#include <gsm/gsm.h>
+#endif
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
@@ -52,6 +57,11 @@ struct rdpsnd_pulse_plugin
 	int latency;
 
 	FREERDP_DSP_CONTEXT* dsp_context;
+
+#ifdef WITH_GSM
+	gsm gsm_context;
+	wStream* gsmBuffer;
+#endif
 };
 
 static void rdpsnd_pulse_context_state_callback(pa_context* context, void* userdata)
@@ -241,6 +251,7 @@ static void rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, AUDIO_FORMAT*
 			break;
 
 		case WAVE_FORMAT_GSM610:
+			sample_spec.format = PA_SAMPLE_S16LE;
 			break;
 	}
 
@@ -331,6 +342,14 @@ static void rdpsnd_pulse_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
 	if (state == PA_STREAM_READY)
 	{
 		freerdp_dsp_context_reset_adpcm(pulse->dsp_context);
+
+#ifdef WITH_GSM
+		if (pulse->gsm_context)
+			gsm_destroy(pulse->gsm_context);
+
+		pulse->gsm_context = gsm_create();
+#endif
+
 		DEBUG_SVC("connected");
 	}
 	else
@@ -410,7 +429,18 @@ static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, AUDIO_FORM
 				return TRUE;
 			}
 			break;
+
+#ifdef WITH_GSM
+		case WAVE_FORMAT_GSM610:
+			if ((format->nSamplesPerSec <= PA_RATE_MAX) &&
+				(format->nBlockAlign == 65) && (format->nChannels == 1))
+			{
+				return TRUE;
+			}
+			break;
+#endif
 	}
+
 	return FALSE;
 }
 
@@ -459,63 +489,108 @@ static void rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 }
 
+static BYTE* rdpsnd_pulse_convert_audio(rdpsndDevicePlugin* device, BYTE* data, int* size)
+{
+	BYTE* pcmData = NULL;
+	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
+
+	if (pulse->format == WAVE_FORMAT_ADPCM)
+	{
+		pulse->dsp_context->decode_ms_adpcm(pulse->dsp_context,
+			data, *size, pulse->sample_spec.channels, pulse->block_size);
+
+		*size = pulse->dsp_context->adpcm_size;
+		pcmData = pulse->dsp_context->adpcm_buffer;
+	}
+	else if (pulse->format == WAVE_FORMAT_DVI_ADPCM)
+	{
+		pulse->dsp_context->decode_ima_adpcm(pulse->dsp_context,
+			data, *size, pulse->sample_spec.channels, pulse->block_size);
+
+		*size = pulse->dsp_context->adpcm_size;
+		pcmData = pulse->dsp_context->adpcm_buffer;
+	}
+#ifdef WITH_GSM
+	else if (pulse->format == WAVE_FORMAT_GSM610)
+	{
+		int inPos = 0;
+		int inSize = *size;
+		UINT16 gsmBlockBuffer[160];
+
+		Stream_SetPosition(pulse->gsmBuffer, 0);
+
+		while (inSize)
+		{
+			ZeroMemory(gsmBlockBuffer, sizeof(gsmBlockBuffer));
+			gsm_decode(pulse->gsm_context, (gsm_byte*) &data[inPos], (gsm_signal*) gsmBlockBuffer);
+
+			if ((inPos % 65) == 0)
+			{
+				inPos += 33;
+				inSize -= 33;
+			}
+			else
+			{
+				inPos += 32;
+				inSize -= 32;
+			}
+
+			Stream_EnsureRemainingCapacity(pulse->gsmBuffer, 160 * 2);
+			Stream_Write(pulse->gsmBuffer, (void*) gsmBlockBuffer, 160 * 2);
+		}
+
+		Stream_SealLength(pulse->gsmBuffer);
+
+		pcmData = Stream_Buffer(pulse->gsmBuffer);
+		*size = Stream_Length(pulse->gsmBuffer);
+	}
+#endif
+	else
+	{
+		pcmData = data;
+	}
+
+	return pcmData;
+}
+
 static void rdpsnd_pulse_play(rdpsndDevicePlugin* device, BYTE* data, int size)
 {
-	int len;
-	int ret;
-	BYTE* src;
+	int length;
+	int status;
+	BYTE* pcmData;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*) device;
 
 	if (!pulse->stream)
 		return;
 
-	if (pulse->format == WAVE_FORMAT_ADPCM)
-	{
-		pulse->dsp_context->decode_ms_adpcm(pulse->dsp_context,
-			data, size, pulse->sample_spec.channels, pulse->block_size);
-
-		size = pulse->dsp_context->adpcm_size;
-		src = pulse->dsp_context->adpcm_buffer;
-	}
-	else if (pulse->format == WAVE_FORMAT_DVI_ADPCM)
-	{
-		pulse->dsp_context->decode_ima_adpcm(pulse->dsp_context,
-			data, size, pulse->sample_spec.channels, pulse->block_size);
-
-		size = pulse->dsp_context->adpcm_size;
-		src = pulse->dsp_context->adpcm_buffer;
-	}
-	else
-	{
-		src = data;
-	}
+	pcmData = rdpsnd_pulse_convert_audio(device, data, &size);
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
 
 	while (size > 0)
 	{
-		while ((len = pa_stream_writable_size(pulse->stream)) == 0)
+		while ((length = pa_stream_writable_size(pulse->stream)) == 0)
 		{
 			pa_threaded_mainloop_wait(pulse->mainloop);
 		}
 
-		if (len < 0)
+		if (length < 0)
 			break;
 
-		if (len > size)
-			len = size;
+		if (length > size)
+			length = size;
 
-		ret = pa_stream_write(pulse->stream, src, len, NULL, 0LL, PA_SEEK_RELATIVE);
+		status = pa_stream_write(pulse->stream, pcmData, length, NULL, 0LL, PA_SEEK_RELATIVE);
 
-		if (ret < 0)
+		if (status < 0)
 		{
 			DEBUG_WARN("pa_stream_write failed (%d)",
 				pa_context_errno(pulse->context));
 			break;
 		}
 
-		src += len;
-		size -= len;
+		pcmData += length;
+		size -= length;
 	}
 
 	pa_threaded_mainloop_unlock(pulse->mainloop);
@@ -594,6 +669,10 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	rdpsnd_pulse_parse_addin_args((rdpsndDevicePlugin*) pulse, args);
 
 	pulse->dsp_context = freerdp_dsp_context_new();
+
+#ifdef WITH_GSM
+	pulse->gsmBuffer = Stream_New(NULL, 4096);
+#endif
 
 	pulse->mainloop = pa_threaded_mainloop_new();
 

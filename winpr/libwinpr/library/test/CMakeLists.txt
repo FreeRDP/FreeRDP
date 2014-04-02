@@ -10,7 +10,8 @@ set(${MODULE_PREFIX}_TESTS
 	TestLibrarySetDefaultDllDirectories.c
 	TestLibraryLoadLibrary.c
 	TestLibraryFreeLibrary.c
-	TestLibraryGetProcAddress.c)
+	TestLibraryGetProcAddress.c
+	TestLibraryGetModuleFileName.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}

@@ -212,7 +212,25 @@ BOOL nego_security_connect(rdpNego* nego)
 BOOL nego_tcp_connect(rdpNego* nego)
 {
 	if (!nego->tcp_connected)
-		nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+	{
+		if (nego->GatewayEnabled && nego->GatewayBypassLocal)
+		{
+			/* Attempt a direct connection first, and then fallback to using the gateway */
+
+			transport_set_gateway_enabled(nego->transport, FALSE);
+			nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+
+			if (!nego->tcp_connected)
+			{
+				transport_set_gateway_enabled(nego->transport, TRUE);
+				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+			}
+		}
+		else
+		{
+			nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+		}
+	}
 
 	return nego->tcp_connected;
 }
@@ -479,9 +497,10 @@ BOOL nego_recv_response(rdpNego* nego)
 	wStream* s;
 
 	s = Stream_New(NULL, 1024);
+	if (!s)
+		return FALSE;
 
 	status = transport_read(nego->transport, s);
-
 	if (status < 0)
 	{
 		Stream_Free(s, TRUE);
@@ -491,6 +510,7 @@ BOOL nego_recv_response(rdpNego* nego)
 	status = nego_recv(nego->transport, s, nego);
 
 	Stream_Free(s, TRUE);
+
 	if (status < 0)
 		return FALSE;
 
@@ -669,6 +689,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	wStream* s;
 	int length;
 	int bm, em;
+	BYTE flags = 0;
 	int cookie_length;
 
 	s = Stream_New(NULL, 512);
@@ -703,8 +724,12 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	if ((nego->requested_protocols > PROTOCOL_RDP) || (nego->sendNegoData))
 	{
 		/* RDP_NEG_DATA must be present for TLS and NLA */
+
+		if (nego->RestrictedAdminModeRequired)
+			flags |= RESTRICTED_ADMIN_MODE_REQUIRED;
+
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_REQ);
-		Stream_Write_UINT8(s, 0); /* flags, must be set to zero */
+		Stream_Write_UINT8(s, flags);
 		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
 		Stream_Write_UINT32(s, nego->requested_protocols); /* requestedProtocols */
 		length += 8;
@@ -845,6 +870,8 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	settings = nego->transport->settings;
 
 	s = Stream_New(NULL, 512);
+	if (!s)
+		return FALSE;
 
 	length = TPDU_CONNECTION_CONFIRM_LENGTH;
 	bm = Stream_GetPosition(s);
@@ -875,7 +902,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		 * TODO: Check for other possibilities,
 		 *       like SSL_NOT_ALLOWED_BY_SERVER.
 		 */
-		fprintf(stderr, "nego_send_negotiation_response: client supports only Standard RDP Security\n");
+		fprintf(stderr, "%s: client supports only Standard RDP Security\n", __FUNCTION__);
 		Stream_Write_UINT32(s, SSL_REQUIRED_BY_SERVER);
 		length += 8;
 		status = FALSE;
@@ -916,7 +943,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 
-			if (settings->DisableEncryption && settings->RdpServerRsaKey == NULL && settings->RdpKeyFile == NULL)
+			if (settings->DisableEncryption && !settings->RdpServerRsaKey && !settings->RdpKeyFile)
 				return FALSE;
 		}
 		else if (settings->SelectedProtocol == PROTOCOL_TLS)
@@ -966,15 +993,13 @@ void nego_init(rdpNego* nego)
 
 rdpNego* nego_new(rdpTransport* transport)
 {
-	rdpNego* nego = (rdpNego*) malloc(sizeof(rdpNego));
+	rdpNego* nego = (rdpNego*) calloc(1, sizeof(rdpNego));
+	if (!nego)
+		return NULL;
 
-	if (nego)
-	{
-		ZeroMemory(nego, sizeof(rdpNego));
 
-		nego->transport = transport;
-		nego_init(nego);
-	}
+	nego->transport = transport;
+	nego_init(nego);
 
 	return nego;
 }
@@ -1017,6 +1042,28 @@ void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer)
 }
 
 /**
+ * Enable restricted admin mode.
+ * @param nego pointer to the negotiation structure
+ * @param enable_restricted whether to enable security layer negotiation (TRUE for enabled, FALSE for disabled)
+ */
+
+void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdminModeRequired)
+{
+	DEBUG_NEGO("Enabling restricted admin mode: %s", RestrictedAdminModeRequired ? "TRUE" : "FALSE");
+	nego->RestrictedAdminModeRequired = RestrictedAdminModeRequired;
+}
+
+void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled)
+{
+	nego->GatewayEnabled = GatewayEnabled;
+}
+
+void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypassLocal)
+{
+	nego->GatewayBypassLocal = GatewayBypassLocal;
+}
+
+/**
  * Enable RDP security protocol.
  * @param nego pointer to the negotiation structure
  * @param enable_rdp whether to enable normal RDP protocol (TRUE for enabled, FALSE for disabled)
@@ -1033,12 +1080,12 @@ void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp)
  * @param nego pointer to the negotiation structure
  * @param enable_tls whether to enable TLS + RDP protocol (TRUE for enabled, FALSE for disabled)
  */
+
 void nego_enable_tls(rdpNego* nego, BOOL enable_tls)
 {
 	DEBUG_NEGO("Enabling TLS security: %s", enable_tls ? "TRUE" : "FALSE");
 	nego->enabled_protocols[PROTOCOL_TLS] = enable_tls;
 }
-
 
 /**
  * Enable NLA security protocol.

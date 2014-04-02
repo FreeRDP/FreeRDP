@@ -95,9 +95,36 @@ enum FASTPATH_INPUT_KBDFLAGS
 	FASTPATH_INPUT_KBDFLAGS_EXTENDED = 0x02
 };
 
+struct _FASTPATH_UPDATE_PDU_HEADER
+{
+	BYTE fpOutputHeader;
+	BYTE length1;
+	BYTE length2;
+	BYTE fipsInformation[4];
+	BYTE dataSignature[8];
+
+	BYTE action;
+	BYTE secFlags;
+	UINT16 length;
+};
+typedef struct _FASTPATH_UPDATE_PDU_HEADER FASTPATH_UPDATE_PDU_HEADER;
+
+struct _FASTPATH_UPDATE_HEADER
+{
+	BYTE updateHeader;
+	BYTE compressionFlags;
+	UINT16 size;
+
+	BYTE updateCode;
+	BYTE fragmentation;
+	BYTE compression;
+};
+typedef struct _FASTPATH_UPDATE_HEADER FASTPATH_UPDATE_HEADER;
+
 struct rdp_fastpath
 {
 	rdpRdp* rdp;
+	wStream* fs;
 	BYTE encryptionFlags;
 	BYTE numberEvents;
 	wStream* updateData;

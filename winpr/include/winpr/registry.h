@@ -102,8 +102,6 @@ extern "C" {
 #define REG_QWORD			11
 #define REG_QWORD_LITTLE_ENDIAN		11
 
-#define WINAPI WINPR_API
-
 typedef HANDLE HKEY;
 typedef HANDLE* PHKEY;
 

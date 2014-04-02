@@ -35,8 +35,36 @@ UINT32 rdpsnd_compute_audio_time_length(AUDIO_FORMAT* format, int size)
 	 * http://msdn.microsoft.com/en-us/library/ms713497.aspx
 	 */
 
-	wSamples = (size * 8) / format->wBitsPerSample;
-	mstime = (((wSamples * 1000) / format->nSamplesPerSec) / format->nChannels);
+	if (format->wBitsPerSample)
+	{
+		wSamples = (size * 8) / format->wBitsPerSample;
+		mstime = (((wSamples * 1000) / format->nSamplesPerSec) / format->nChannels);
+	}
+	else
+	{
+		mstime = 0;
+
+		if (format->wFormatTag == WAVE_FORMAT_GSM610)
+		{
+			UINT16 nSamplesPerBlock;
+
+			if ((format->cbSize == 2) && (format->data))
+			{
+				nSamplesPerBlock = *((UINT16*) format->data);
+
+				wSamples = (size / format->nBlockAlign) * nSamplesPerBlock;
+				mstime = (((wSamples * 1000) / format->nSamplesPerSec) / format->nChannels);
+			}
+			else
+			{
+				fprintf(stderr, "rdpsnd_compute_audio_time_length: invalid WAVE_FORMAT_GSM610 format\n");
+			}
+		}
+		else
+		{
+			fprintf(stderr, "rdpsnd_compute_audio_time_length: unknown format %d\n", format->wFormatTag);
+		}
+	}
 
 	return mstime;
 }

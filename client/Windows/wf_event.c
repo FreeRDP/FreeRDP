@@ -31,14 +31,24 @@
 
 #include "wf_gdi.h"
 #include "wf_event.h"
+#include "freerdp/event.h"
 
 static HWND g_focus_hWnd;
 
-#define X_POS(lParam) (lParam & 0xFFFF)
-#define Y_POS(lParam) ((lParam >> 16) & 0xFFFF)
+#define X_POS(lParam) ((UINT16) (lParam & 0xFFFF))
+#define Y_POS(lParam) ((UINT16) ((lParam >> 16) & 0xFFFF))
 
 BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSrc, int x1, int y1, DWORD rop);
 void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+
+static BOOL g_flipping_in;
+static BOOL g_flipping_out;
+
+static BOOL alt_ctrl_down()
+{
+	return ((GetAsyncKeyState(VK_CONTROL) & 0x8000) ||
+		(GetAsyncKeyState(VK_MENU) & 0x8000));
+}
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -48,6 +58,13 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	PKBDLLHOOKSTRUCT p;
 
 	DEBUG_KBD("Low-level keyboard hook, hWnd %X nCode %X wParam %X", g_focus_hWnd, nCode, wParam);
+
+	if (g_flipping_in)
+	{
+		if (!alt_ctrl_down())
+			g_flipping_in = FALSE;
+		return CallNextHookEx(NULL, nCode, wParam, lParam);
+	}
 
 	if (g_focus_hWnd && (nCode == HC_ACTION))
 	{
@@ -123,6 +140,15 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 		}
 	}
 
+	if (g_flipping_out)
+	{
+		if (!alt_ctrl_down())
+		{
+			g_flipping_out = FALSE;
+			g_focus_hWnd = NULL;
+		}
+	}
+
 	return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
@@ -189,14 +215,13 @@ void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
-	LONG ptr;
+	LONG_PTR ptr;
 	wfContext* wfc;
 	int x, y, w, h;
 	PAINTSTRUCT ps;
 	rdpInput* input;
 	BOOL processed;
 	RECT windowRect;
-	RECT clientRect;
 	MINMAXINFO* minmax;
 	SCROLLINFO si;
 
@@ -286,7 +311,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			case WM_LBUTTONDOWN:
-				wf_scale_mouse_event(wfc, input,PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
+				wf_scale_mouse_event(wfc, input, PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1, X_POS(lParam) - wfc->offset_x, Y_POS(lParam) - wfc->offset_y);
 				break;
 
 			case WM_LBUTTONUP:
@@ -505,6 +530,8 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 
 		case WM_SETFOCUS:
 			DEBUG_KBD("getting focus %X", hWnd);
+			if (alt_ctrl_down())
+				g_flipping_in = TRUE;
 			g_focus_hWnd = hWnd;
 			break;
 
@@ -512,7 +539,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			if (g_focus_hWnd == hWnd && wfc && !wfc->fullscreen)
 			{
 				DEBUG_KBD("loosing focus %X", hWnd);
-				g_focus_hWnd = NULL;
+				if (alt_ctrl_down())
+					g_flipping_out = TRUE;
+				else
+					g_focus_hWnd = NULL;
 			}
 			break;
 
@@ -521,11 +551,16 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				int activate = (int)(short) LOWORD(wParam);
 				if (activate != WA_INACTIVE)
 				{
+					if (alt_ctrl_down())
+						g_flipping_in = TRUE;
 					g_focus_hWnd = hWnd;
 				}
 				else
 				{
-					g_focus_hWnd = NULL;
+					if (alt_ctrl_down())
+						g_flipping_out = TRUE;
+					else
+						g_focus_hWnd = NULL;
 				}
 			}
 
@@ -576,6 +611,8 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	int ww, wh, dw, dh;
+	rdpContext* context;
+	MouseEventEventArgs eventArgs;
 
 	if (!wfc->client_width)
 		wfc->client_width = wfc->width;
@@ -592,4 +629,10 @@ void wf_scale_mouse_event(wfContext* wfc, rdpInput* input, UINT16 flags, UINT16 
 		input->MouseEvent(input, flags, x + wfc->xCurrentScroll, y + wfc->yCurrentScroll);
 	else
 		input->MouseEvent(input, flags, x * dw / ww + wfc->xCurrentScroll, y * dh / wh + wfc->yCurrentScroll);
+
+	eventArgs.flags = flags;
+	eventArgs.x = x;
+	eventArgs.y = y;
+	context = (rdpContext*) wfc;
+	PubSub_OnMouseEvent(context->pubSub, context, &eventArgs);
 }

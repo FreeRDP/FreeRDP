@@ -33,6 +33,7 @@
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
+#include <freerdp/svc.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/event.h>
 
@@ -40,7 +41,7 @@ typedef struct rdp_svc_plugin rdpSvcPlugin;
 
 struct rdp_svc_plugin
 {
-	CHANNEL_ENTRY_POINTS_EX channel_entry_points;
+	CHANNEL_ENTRY_POINTS_FREERDP channel_entry_points;
 	CHANNEL_DEF channel_def;
 
 	void (*connect_callback)(rdpSvcPlugin* plugin);
@@ -50,8 +51,8 @@ struct rdp_svc_plugin
 
 	HANDLE thread;
 	wStream* data_in;
-	void* init_handle;
-	UINT32 open_handle;
+	void* InitHandle;
+	DWORD OpenHandle;
 	wMessagePipe* MsgPipe;
 };
 

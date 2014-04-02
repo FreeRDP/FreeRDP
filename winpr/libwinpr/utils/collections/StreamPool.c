@@ -45,7 +45,11 @@ void StreamPool_ShiftUsed(wStreamPool* pool, int index, int count)
 	else if (count < 0)
 	{
 		if (pool->uSize - index + count > 0)
-			MoveMemory(&pool->uArray[index], &pool->uArray[index - count], (pool->uSize - index + count) * sizeof(wStream*));
+		{
+			MoveMemory(&pool->uArray[index], &pool->uArray[index - count],
+					(pool->uSize - index + count) * sizeof(wStream*));
+		}
+
 		pool->uSize += count;
 	}
 }
@@ -103,7 +107,11 @@ void StreamPool_ShiftAvailable(wStreamPool* pool, int index, int count)
 	else if (count < 0)
 	{
 		if (pool->aSize - index + count > 0)
-			MoveMemory(&pool->aArray[index], &pool->aArray[index - count], (pool->aSize - index + count) * sizeof(wStream*));
+		{
+			MoveMemory(&pool->aArray[index], &pool->aArray[index - count],
+					(pool->aSize - index + count) * sizeof(wStream*));
+		}
+
 		pool->aSize += count;
 	}
 }
@@ -117,13 +125,14 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	int index;
 	int foundIndex;
 	wStream* s = NULL;
-	BOOL found = FALSE;
 
 	if (pool->synchronized)
 		EnterCriticalSection(&pool->lock);
 
 	if (size == 0)
 		size = pool->defaultSize;
+
+	foundIndex = -1;
 
 	for (index = 0; index < pool->aSize; index++)
 	{
@@ -132,12 +141,11 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 		if (Stream_Capacity(s) >= size)
 		{
 			foundIndex = index;
-			found = TRUE;
 			break;
 		}
 	}
 
-	if (!found)
+	if (foundIndex < 0)
 	{
 		s = Stream_New(NULL, size);
 	}
@@ -145,8 +153,8 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	{
 		StreamPool_ShiftAvailable(pool, foundIndex, -1);
 
+		Stream_SetPosition(s, 0);
 		Stream_EnsureCapacity(s, size);
-		Stream_Pointer(s) = Stream_Buffer(s);
 	}
 
 	s->pool = pool;
@@ -330,10 +338,12 @@ wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize)
 		pool->aSize = 0;
 		pool->aCapacity = 32;
 		pool->aArray = (wStream**) malloc(sizeof(wStream*) * pool->aCapacity);
+		ZeroMemory(pool->aArray, sizeof(wStream*) * pool->aCapacity);
 
 		pool->uSize = 0;
 		pool->uCapacity = 32;
 		pool->uArray = (wStream**) malloc(sizeof(wStream*) * pool->uCapacity);
+		ZeroMemory(pool->uArray, sizeof(wStream*) * pool->uCapacity);
 	}
 
 	return pool;

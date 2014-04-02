@@ -34,6 +34,8 @@
 #include "xf_event.h"
 #include "xf_input.h"
 
+#define CLAMP_COORDINATES(x, y) if (x < 0) x = 0; if (y < 0) y = 0
+
 const char* const X11_EVENT_STRINGS[] =
 {
 	"", "",
@@ -84,6 +86,99 @@ const char* const X11_EVENT_STRINGS[] =
 #else
 #define DEBUG_X11_LMS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
+
+int xf_event_action_script_init(xfContext* xfc)
+{
+	int exitCode;
+	char* xevent;
+	FILE* actionScript;
+	char buffer[1024] = { 0 };
+	char command[1024] = { 0 };
+
+	xfc->xevents = ArrayList_New(TRUE);
+	ArrayList_Object(xfc->xevents)->fnObjectFree = free;
+
+	sprintf_s(command, sizeof(command), "%s xevent", xfc->actionScript);
+
+	actionScript = popen(command, "r");
+
+	if (actionScript < 0)
+		return -1;
+
+	while (fgets(buffer, sizeof(buffer), actionScript) != NULL)
+	{
+		strtok(buffer, "\n");
+		xevent = _strdup(buffer);
+		ArrayList_Add(xfc->xevents, xevent);
+	}
+
+	exitCode = pclose(actionScript);
+
+	return 1;
+}
+
+void xf_event_action_script_free(xfContext* xfc)
+{
+	if (xfc->xevents)
+	{
+		ArrayList_Free(xfc->xevents);
+		xfc->xevents = NULL;
+	}
+}
+
+int xf_event_execute_action_script(xfContext* xfc, XEvent* event)
+{
+	int index;
+	int count;
+	char* name;
+	int exitCode;
+	FILE* actionScript;
+	BOOL match = FALSE;
+	const char* xeventName;
+	char buffer[1024] = { 0 };
+	char command[1024] = { 0 };
+
+	if (!xfc->actionScript)
+		return 1;
+
+	if (event->type > (sizeof(X11_EVENT_STRINGS) / sizeof(const char*)))
+		return 1;
+
+	xeventName = X11_EVENT_STRINGS[event->type];
+
+	count = ArrayList_Count(xfc->xevents);
+
+	for (index = 0; index < count; index++)
+	{
+		name = (char*) ArrayList_GetItem(xfc->xevents, index);
+
+		if (_stricmp(name, xeventName) == 0)
+		{
+			match = TRUE;
+			break;
+		}
+	}
+
+	if (!match)
+		return 1;
+
+	sprintf_s(command, sizeof(command), "%s xevent %s %d",
+			xfc->actionScript, xeventName, (int) xfc->window->handle);
+
+	actionScript = popen(command, "r");
+
+	if (actionScript < 0)
+		return -1;
+
+	while (fgets(buffer, sizeof(buffer), actionScript) != NULL)
+	{
+		strtok(buffer, "\n");
+	}
+
+	exitCode = pclose(actionScript);
+
+	return 1;
+}
 
 static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 {
@@ -167,6 +262,7 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 		x = (int)((x - xfc->offset_x) * (1.0 / xfc->settings->ScalingFactor) );
 		y = (int)((y - xfc->offset_y) * (1.0 / xfc->settings->ScalingFactor) );
 	}
+	CLAMP_COORDINATES(x,y);
 
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 
@@ -276,6 +372,7 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 					   * (1.0 / xfc->settings->ScalingFactor));
 			}
 
+			CLAMP_COORDINATES(x,y);
 			if (extended)
 				input->ExtendedMouseEvent(input, flags, x, y);
 			else
@@ -364,6 +461,8 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 			y = (int) ((y - xfc->offset_y) * (1.0 / xfc->settings->ScalingFactor));
 		}
 
+		CLAMP_COORDINATES(x,y);
+
 		if (extended)
 			input->ExtendedMouseEvent(input, flags, x, y);
 		else
@@ -389,34 +488,28 @@ static BOOL xf_event_KeyPress(xfContext* xfc, XEvent* event, BOOL app)
 
 	XLookupString((XKeyEvent*) event, str, sizeof(str), &keysym, NULL);
 
-	xf_kbd_set_keypress(xfc, event->xkey.keycode, keysym);
-
-	if (xfc->fullscreen_toggle && xf_kbd_handle_special_keys(xfc, keysym))
-		return TRUE;
-
-	xf_kbd_send_key(xfc, TRUE, event->xkey.keycode);
+	xf_keyboard_key_press(xfc, event->xkey.keycode, keysym);
 
 	return TRUE;
 }
 
 static BOOL xf_event_KeyRelease(xfContext* xfc, XEvent* event, BOOL app)
 {
-	XEvent next_event;
+	XEvent nextEvent;
 
 	if (XPending(xfc->display))
 	{
-		ZeroMemory(&next_event, sizeof(next_event));
-		XPeekEvent(xfc->display, &next_event);
+		ZeroMemory(&nextEvent, sizeof(nextEvent));
+		XPeekEvent(xfc->display, &nextEvent);
 
-		if (next_event.type == KeyPress)
+		if (nextEvent.type == KeyPress)
 		{
-			if (next_event.xkey.keycode == event->xkey.keycode)
+			if (nextEvent.xkey.keycode == event->xkey.keycode)
 				return TRUE;
 		}
 	}
 
-	xf_kbd_unset_keypress(xfc, event->xkey.keycode);
-	xf_kbd_send_key(xfc, FALSE, event->xkey.keycode);
+	xf_keyboard_key_release(xfc, event->xkey.keycode);
 
 	return TRUE;
 }
@@ -445,7 +538,7 @@ static BOOL xf_event_FocusIn(xfContext* xfc, XEvent* event, BOOL app)
                        xf_rail_adjust_position(xfc, window);
 	}
 
-	xf_kbd_focus_in(xfc);
+	xf_keyboard_focus_in(xfc);
 
 	if (!app)
 		xf_cliprdr_check_owner(xfc);
@@ -463,7 +556,7 @@ static BOOL xf_event_FocusOut(xfContext* xfc, XEvent* event, BOOL app)
 	if (event->xfocus.mode == NotifyWhileGrabbed)
 		XUngrabKeyboard(xfc->display, CurrentTime);
 
-	xf_kbd_clear(xfc);
+	xf_keyboard_clear(xfc);
 
 	if (app)
 		xf_rail_send_activate(xfc, event->xany.window, FALSE);
@@ -475,10 +568,10 @@ static BOOL xf_event_MappingNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	if (event->xmapping.request == MappingModifier)
 	{
-		if (xfc->modifier_map)
-			XFreeModifiermap(xfc->modifier_map);
+		if (xfc->modifierMap)
+			XFreeModifiermap(xfc->modifierMap);
 
-		xfc->modifier_map = XGetModifierMapping(xfc->display);
+		xfc->modifierMap = XGetModifierMapping(xfc->display);
 	}
 
 	return TRUE;
@@ -675,7 +768,7 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, XEvent* event, BOOL app)
 	rdpUpdate* update = xfc->instance->update;
 	rdpRail* rail = ((rdpContext*) xfc)->rail;
 
-	xf_kbd_release_all_keypress(xfc);
+	xf_keyboard_release_all_keypress(xfc);
 
 	if (!app)
 	{
@@ -934,6 +1027,8 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 				return TRUE;
 		}
 	}
+
+	xf_event_execute_action_script(xfc, event);
 
 	if (event->type != MotionNotify)
 		DEBUG_X11("%s Event(%d): wnd=0x%04X", X11_EVENT_STRINGS[event->type], event->type, (UINT32) event->xany.window);

@@ -96,36 +96,37 @@ void gdi_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 
 void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		BYTE* data, int width, int height, int bpp, int length,
-		BOOL compressed, int codec_id)
+		BOOL compressed, int codecId)
 {
+	BOOL status;
 	UINT16 size;
-	RFX_MESSAGE* msg;
 	BYTE* src;
 	BYTE* dst;
 	int yindex;
 	int xindex;
 	rdpGdi* gdi;
-	BOOL status;
+	RFX_MESSAGE* msg;
 
 	size = width * height * ((bpp + 7) / 8);
 
-	if (bitmap->data == NULL)
+	if (!bitmap->data)
 		bitmap->data = (BYTE*) malloc(size);
 	else
 		bitmap->data = (BYTE*) realloc(bitmap->data, size);
 
-	switch (codec_id)
+	switch (codecId)
 	{
 		case RDP_CODEC_ID_NSCODEC:
 			gdi = context->gdi;
 			nsc_process_message(gdi->nsc_context, bpp, width, height, data, length);
-			freerdp_image_flip(((NSC_CONTEXT*)gdi->nsc_context)->BitmapData, bitmap->data, width, height, bpp);
+			freerdp_image_flip(((NSC_CONTEXT*) gdi->nsc_context)->BitmapData, bitmap->data, width, height, bpp);
 			break;
+
 		case RDP_CODEC_ID_REMOTEFX:
 			gdi = context->gdi;
 			rfx_context_set_pixel_format(gdi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 			msg = rfx_process_message(gdi->rfx_context, data, length);
-			if (msg == NULL)
+			if (!msg)
 			{
 				fprintf(stderr, "gdi_Bitmap_Decompress: rfx Decompression Failed\n");
 			}
@@ -159,7 +160,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			{
 				status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
-				if (status == FALSE)
+				if (!status)
 				{
 					fprintf(stderr, "gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
 				}
@@ -268,8 +269,11 @@ void gdi_register_graphics(rdpGraphics* graphics)
 	rdpBitmap* bitmap;
 	rdpGlyph* glyph;
 
-	bitmap = (rdpBitmap*) malloc(sizeof(rdpBitmap));
-	ZeroMemory(bitmap, sizeof(rdpBitmap));
+	bitmap = (rdpBitmap*) calloc(1, sizeof(rdpBitmap));
+
+	if (!bitmap)
+		return;
+
 	bitmap->size = sizeof(gdiBitmap);
 
 	bitmap->New = gdi_Bitmap_New;
@@ -281,8 +285,11 @@ void gdi_register_graphics(rdpGraphics* graphics)
 	graphics_register_bitmap(graphics, bitmap);
 	free(bitmap);
 
-	glyph = (rdpGlyph*) malloc(sizeof(rdpGlyph));
-	ZeroMemory(glyph, sizeof(rdpGlyph));
+	glyph = (rdpGlyph*) calloc(1, sizeof(rdpGlyph));
+
+	if (!glyph)
+		return;
+
 	glyph->size = sizeof(gdiGlyph);
 
 	glyph->New = gdi_Glyph_New;

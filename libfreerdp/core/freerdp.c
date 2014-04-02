@@ -34,11 +34,14 @@
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
+#include <winpr/wtsapi.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/error.h>
 #include <freerdp/event.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/channels/channels.h>
+#include <freerdp/version.h>
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
 
@@ -62,6 +65,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 	/* We always set the return code to 0 before we start the connect sequence*/
 	connectErrorCode = 0;
+	freerdp_set_last_error(instance->context, FREERDP_ERROR_SUCCESS);
 
 	rdp = instance->context->rdp;
 	settings = instance->settings;
@@ -84,6 +88,12 @@ BOOL freerdp_connect(freerdp* instance)
 		{
 			connectErrorCode = PREECONNECTERROR;
 		}
+
+		if (!freerdp_get_last_error(rdp->context))
+		{
+			freerdp_set_last_error(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
+		}
+
 		fprintf(stderr, "%s:%d: freerdp_pre_connect failed\n", __FILE__, __LINE__);
 
 		goto freerdp_connect_finally;
@@ -119,6 +129,11 @@ BOOL freerdp_connect(freerdp* instance)
 			if (!connectErrorCode)
 			{
 				connectErrorCode = POSTCONNECTERROR;
+			}
+
+			if (!freerdp_get_last_error(rdp->context))
+			{
+				freerdp_set_last_error(instance->context, FREERDP_ERROR_POST_CONNECT_FAILED);
 			}
 
 			goto freerdp_connect_finally;
@@ -174,11 +189,7 @@ BOOL freerdp_connect(freerdp* instance)
 	if (rdp->errorInfo == ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES)
 	{
 		connectErrorCode = INSUFFICIENTPRIVILEGESERROR;
-	}
-
-	if (!connectErrorCode)
-	{
-		connectErrorCode = UNDEFINEDCONNECTERROR;
+		freerdp_set_last_error(instance->context, FREERDP_ERROR_INSUFFICIENT_PRIVILEGES);
 	}
 
 	SetEvent(rdp->transport->connectedEvent);
@@ -206,6 +217,10 @@ BOOL freerdp_check_fds(freerdp* instance)
 {
 	int status;
 	rdpRdp* rdp;
+
+	assert(instance);
+	assert(instance->context);
+	assert(instance->context->rdp);
 
 	rdp = instance->context->rdp;
 
@@ -293,9 +308,9 @@ int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id)
 	return status;
 }
 
-static int freerdp_send_channel_data(freerdp* instance, int channel_id, BYTE* data, int size)
+static int freerdp_send_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int size)
 {
-	return rdp_send_channel_data(instance->context->rdp, channel_id, data, size);
+	return rdp_send_channel_data(instance->context->rdp, channelId, data, size);
 }
 
 BOOL freerdp_disconnect(freerdp* instance)
@@ -315,6 +330,11 @@ BOOL freerdp_disconnect(freerdp* instance)
 	}
 
 	return TRUE;
+}
+
+BOOL freerdp_reconnect(freerdp* instance)
+{
+	return rdp_client_reconnect(instance->context->rdp);
 }
 
 BOOL freerdp_shall_disconnect(freerdp* instance)
@@ -359,11 +379,11 @@ static wEventType FreeRDP_Events[] =
 		DEFINE_EVENT_ENTRY(PanningChange)
 		DEFINE_EVENT_ENTRY(ScalingFactorChange)
 		DEFINE_EVENT_ENTRY(ErrorInfo)
-		DEFINE_EVENT_ENTRY(ParamChange)
 		DEFINE_EVENT_ENTRY(Terminate)
 		DEFINE_EVENT_ENTRY(ConnectionResult)
 		DEFINE_EVENT_ENTRY(ChannelConnected)
 		DEFINE_EVENT_ENTRY(ChannelDisconnected)
+		DEFINE_EVENT_ENTRY(MouseEvent)
 };
 
 /** Allocator function for a rdp context.
@@ -453,6 +473,19 @@ UINT32 freerdp_error_info(freerdp* instance)
 	return instance->context->rdp->errorInfo;
 }
 
+UINT32 freerdp_get_last_error(rdpContext* context)
+{
+	return context->LastError;
+}
+
+void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
+{
+	if (lastError)
+		fprintf(stderr, "freerdp_set_last_error 0x%04X\n", lastError);
+
+	context->LastError = lastError;
+}
+
 /** Allocator function for the rdp_freerdp structure.
  *  @return an allocated structure filled with 0s. Need to be deallocated using freerdp_free()
  */
@@ -467,6 +500,7 @@ freerdp* freerdp_new()
 		ZeroMemory(instance, sizeof(freerdp));
 		instance->ContextSize = sizeof(rdpContext);
 		instance->SendChannelData = freerdp_send_channel_data;
+		instance->ReceiveChannelData = freerdp_channels_data;
 	}
 
 	return instance;

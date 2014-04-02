@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Android JNI Callback Helpers
  *
- * Copyright 2011-2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+ * Copyright 2011-2013 Thincast Technologies GmbH, Author: Martin Fleisz
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,6 @@
 #endif
 
 #include <stdio.h>
-#include <android/log.h>
 
 #include "android_jni_callback.h"
 #include "android_debug.h"
@@ -36,24 +35,30 @@ void jni_load_class(JNIEnv *env, const char *path, jobject *objptr)
 
 	if (!class)
 	{
-		DEBUG_ANDROID("jni_load_class: failed to find class %s", path);
+		DEBUG_WARN("jni_load_class: failed to find class %s", path);
+		goto finish;
 	}
 
 	method = (*env)->GetMethodID(env, class, "<init>", "()V");
 
 	if (!method)
 	{
-		DEBUG_ANDROID("jni_load_class: failed to find class constructor of %s", path);
+		DEBUG_WARN("jni_load_class: failed to find class constructor of %s", path);
+		goto finish;
 	}
 
 	object = (*env)->NewObject(env, class, method);
 
 	if (!object)
 	{
-		DEBUG_ANDROID("jni_load_class: failed create new object of %s", path);
+		DEBUG_WARN("jni_load_class: failed create new object of %s", path);
+		goto finish;
 	}
 
 	(*objptr) = (*env)->NewGlobalRef(env, object);
+
+finish:
+	while(0);
 }
 
 jint init_callback_environment(JavaVM* vm)
@@ -61,7 +66,7 @@ jint init_callback_environment(JavaVM* vm)
 	JNIEnv* env;
 	if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_4) != JNI_OK)
 	{
-		DEBUG_ANDROID("JNI_OnLoad: failed to obtain current JNI environment");
+		DEBUG_WARN("JNI_OnLoad: failed to obtain current JNI environment");
 		return -1;
 	}
 
@@ -83,7 +88,7 @@ jboolean jni_attach_thread(JNIEnv** env)
 
 		if ((*jVM)->GetEnv(jVM, (void**) env, JNI_VERSION_1_4) != JNI_OK)
 		{
-			DEBUG_ANDROID("android_java_callback: failed to obtain current JNI environment");
+			DEBUG_WARN("android_java_callback: failed to obtain current JNI environment");
 		}
 
 		return JNI_TRUE;
@@ -113,17 +118,20 @@ void java_callback_void(jobject obj, const char * callback, const char* signatur
 	jObjClass = (*env)->GetObjectClass(env, obj);
 
 	if (!jObjClass) {
-		DEBUG_ANDROID("android_java_callback: failed to get class reference");
+		DEBUG_WARN("android_java_callback: failed to get class reference");
+		goto finish;
 	}
 
 	jCallback = (*env)->GetStaticMethodID(env, jObjClass, callback, signature);
 
 	if (!jCallback) {
-		DEBUG_ANDROID("android_java_callback: failed to get method id");
+		DEBUG_WARN("android_java_callback: failed to get method id");
+		goto finish;
 	}
 
 	(*env)->CallStaticVoidMethodV(env, jObjClass, jCallback, args);
 
+finish:
 	if(attached == JNI_TRUE)
 		jni_detach_thread();
 }
@@ -134,6 +142,7 @@ jboolean java_callback_bool(jobject obj, const char * callback, const char* sign
 	jclass jObjClass;
 	jmethodID jCallback;
 	jboolean attached;
+	jboolean res = JNI_FALSE;
 	JNIEnv *env;
 
 	DEBUG_ANDROID("java_callback: %s (%s)", callback, signature);
@@ -143,17 +152,20 @@ jboolean java_callback_bool(jobject obj, const char * callback, const char* sign
 	jObjClass = (*env)->GetObjectClass(env, obj);
 
 	if (!jObjClass) {
-		DEBUG_ANDROID("android_java_callback: failed to get class reference");
+		DEBUG_WARN("android_java_callback: failed to get class reference");
+		goto finish;
 	}
 
 	jCallback = (*env)->GetStaticMethodID(env, jObjClass, callback, signature);
 
 	if (!jCallback) {
-		DEBUG_ANDROID("android_java_callback: failed to get method id");
+		DEBUG_WARN("android_java_callback: failed to get method id");
+		goto finish;
 	}
 
-	jboolean res = (*env)->CallStaticBooleanMethodV(env, jObjClass, jCallback, args);
+	res = (*env)->CallStaticBooleanMethodV(env, jObjClass, jCallback, args);
 
+finish:
 	if(attached == JNI_TRUE)
 		jni_detach_thread();
 

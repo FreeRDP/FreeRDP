@@ -1,7 +1,7 @@
 /*
    Android Session Activity
 
-   Copyright 2013 Thinstuff Technologies GmbH, Author: Martin Fleisz
+   Copyright 2013 Thincast Technologies GmbH, Author: Martin Fleisz
 
    This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. 
    If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -9,6 +9,7 @@
 
 package com.freerdp.freerdpcore.presentation;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -530,7 +531,15 @@ public class SessionActivity extends Activity
 	protected void onDestroy() {
 		super.onDestroy();
 		Log.v(TAG, "Session.onDestroy");
-		
+
+		// Cancel running disconnect timers.
+		GlobalApp.cancelDisconnectTimer();
+
+		// Disconnect all remaining sessions.
+		Collection<SessionState> sessions = GlobalApp.getSessions();
+		for (SessionState session : sessions)
+			LibFreeRDP.disconnect(session.getInstance());
+
 		// unregister freerdp events broadcast receiver
 		unregisterReceiver(libFreeRDPBroadcastReceiver);
 

@@ -182,7 +182,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			{
 				status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
 
-				if (status == FALSE)
+				if (!status)
 				{
 					fprintf(stderr, "xf_Bitmap_Decompress: Bitmap Decompression Failed\n");
 				}

@@ -186,15 +186,12 @@ int mf_peer_context_new(freerdp_peer* client, mfPeerContext* context)
 	
 	context->s = Stream_New(NULL, 0xFFFF);
 	
-	//#ifdef WITH_SERVER_CHANNELS
-	context->vcm = WTSCreateVirtualChannelManager(client);
-	//#endif
+	context->vcm = WTSOpenServerA((LPSTR) client->context);
 	
 	mf_info_peer_register(context->info, context);
 
 	return 0;
 }
-
 
 /* Called after a peer disconnects */
 void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
@@ -221,9 +218,7 @@ void mf_peer_context_free(freerdp_peer* client, mfPeerContext* context)
 			rdpsnd_server_context_free(context->rdpsnd);
 		//#endif
 		
-		//#ifdef WITH_SERVER_CHANNELS
-		WTSDestroyVirtualChannelManager(context->vcm);
-		//#endif
+		WTSCloseServer(context->vcm);
 	}
 }
 
@@ -252,7 +247,6 @@ void mf_peer_init(freerdp_peer* client)
 		dispatch_resume(info_timer);
 	}
 }
-
 
 BOOL mf_peer_post_connect(freerdp_peer* client)
 {
@@ -294,25 +288,12 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	mfi->mouse_down_right = FALSE;
 	mfi->mouse_down_other = FALSE;
 
-	
-	//#ifdef WITH_SERVER_CHANNELS
-	/* Iterate all channel names requested by the client and activate those supported by the server */
-	int i;
-	for (i = 0; i < client->settings->ChannelCount; i++)
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpsnd"))
 	{
-		if (client->settings->ChannelDefArray[i].joined)
-		{
-			//#ifdef CHANNEL_RDPSND_SERVER
-			if (strncmp(client->settings->ChannelDefArray[i].Name, "rdpsnd", 6) == 0)
-			{
-				mf_peer_rdpsnd_init(context); /* Audio Output */
-			}
-			//#endif
-		}
+		mf_peer_rdpsnd_init(context); /* Audio Output */
 	}
 	
 	/* Dynamic Virtual Channels */
-	//#endif
 	
 #ifdef CHANNEL_AUDIN_SERVER
 	mf_peer_audin_init(context); /* Audio Input */
@@ -320,7 +301,6 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	
 	return TRUE;
 }
-
 
 BOOL mf_peer_activate(freerdp_peer* client)
 {
@@ -331,21 +311,6 @@ BOOL mf_peer_activate(freerdp_peer* client)
 	
 	return TRUE;
 }
-
-/*BOOL wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic)
- {
- fprintf(stderr, "PeerLogon\n");
- 
- if (automatic)
- {
- _tprintf(_T("Logon: User:%s Domain:%s Password:%s\n"),
- identity->User, identity->Domain, identity->Password);
- }
- 
- 
- wfreerdp_server_peer_callback_event(((rdpContext*) client->context)->peer->pId, WF_SRV_CALLBACK_EVENT_AUTH);
- return TRUE;
- }*/
 
 void mf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
@@ -421,70 +386,6 @@ void mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 	pthread_detach(th);
 }
 
-/*DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
- {
- int i, fds;
- int rcount;
- int max_fds;
- void* rfds[32];
- fd_set rfds_set;
- wfPeerContext* context;
- freerdp_peer* client = (freerdp_peer*) lpParam;
- 
- ZeroMemory(rfds, sizeof(rfds));
- context = (wfPeerContext*) client->context;
- 
- fprintf(stderr, "PeerSocketListener\n");
- 
- while (1)
- {
- rcount = 0;
- 
- if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
- {
- fprintf(stderr, "Failed to get peer file descriptor\n");
- break;
- }
- 
- max_fds = 0;
- FD_ZERO(&rfds_set);
- 
- for (i = 0; i < rcount; i++)
- {
- fds = (int)(long)(rfds[i]);
- 
- if (fds > max_fds)
- max_fds = fds;
- 
- FD_SET(fds, &rfds_set);
- }
- 
- if (max_fds == 0)
- break;
- 
- select(max_fds + 1, &rfds_set, NULL, NULL, NULL);
- 
- SetEvent(context->socketEvent);
- WaitForSingleObject(context->socketSemaphore, INFINITE);
- 
- if (context->socketClose)
- break;
- }
- 
- fprintf(stderr, "Exiting Peer Socket Listener Thread\n");
- 
- return 0;
- }
- 
- void wf_peer_read_settings(freerdp_peer* client)
- {
- if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("CertificateFile"), &(client->settings->CertificateFile)))
- client->settings->CertificateFile = _strdup("server.crt");
- 
- if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, _T("Software\\FreeRDP\\Server"), _T("PrivateKeyFile"), &(client->settings->PrivateKeyFile)))
- client->settings->PrivateKeyFile = _strdup("server.key");
- }*/
-
 void* mf_peer_main_loop(void* arg)
 {
 	int i;
@@ -541,9 +442,7 @@ void* mf_peer_main_loop(void* arg)
 			break;
 		}
 		
-		//#ifdef WITH_SERVER_CHANNELS
 		WTSVirtualChannelManagerGetFileDescriptor(context->vcm, rfds, &rcount);
-		//#endif
 		
 		max_fds = 0;
 		FD_ZERO(&rfds_set);
@@ -579,18 +478,17 @@ void* mf_peer_main_loop(void* arg)
 			fprintf(stderr, "Failed to check freerdp file descriptor\n");
 			break;
 		}
+		
 		if ((mf_peer_check_fds(client)) != TRUE)
 		{
 			fprintf(stderr, "Failed to check mfreerdp file descriptor\n");
 			break;
 		}
 		
-		
-		//#ifdef WITH_SERVER_CHANNELS
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
+		{
 			break;
-		//#endif
-		
+		}
 	}
 	
 	fprintf(stderr, "Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
