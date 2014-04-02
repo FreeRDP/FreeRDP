@@ -163,7 +163,7 @@ void input_send_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, U
 	input_send_keyboard_event(input, KBD_FLAGS_RELEASE, 0x0f);
 
 	/* finish with a mouse pointer position like mstsc.exe */
-	input_send_extended_mouse_event(input, PTR_FLAGS_MOVE, x, y);
+	input_send_mouse_event(input, PTR_FLAGS_MOVE, x, y);
 }
 
 void input_send_fastpath_synchronize_event(rdpInput* input, UINT32 flags)

@@ -156,7 +156,7 @@ BOOL nego_connect(rdpNego* nego)
 	if (nego->selected_protocol == PROTOCOL_RDP)
 	{
 		nego->transport->settings->DisableEncryption = TRUE;
-		nego->transport->settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+		nego->transport->settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 		nego->transport->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	}
 
@@ -939,7 +939,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			if (!settings->LocalConnection)
 			{
 				settings->DisableEncryption = TRUE;
-				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 
