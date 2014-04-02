@@ -224,6 +224,7 @@ BIO_METHOD* BIO_s_tsg(void)
 
 BOOL transport_connect_tls(rdpTransport* transport)
 {
+	int tls_status;
 	freerdp* instance;
 	rdpContext* context;
 
@@ -245,13 +246,23 @@ BOOL transport_connect_tls(rdpTransport* transport)
 		if (transport->TsgTls->port == 0)
 			transport->TsgTls->port = 3389;
 
-		if (!tls_connect(transport->TsgTls))
-		{
-			if (!connectErrorCode)
-				connectErrorCode = TLSCONNECTERROR;
+		tls_status = tls_connect(transport->TsgTls);
 
-			if (!freerdp_get_last_error(context))
-				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		if (tls_status < 1)
+		{
+			if (tls_status < 0)
+			{
+				if (!connectErrorCode)
+					connectErrorCode = TLSCONNECTERROR;
+
+				if (!freerdp_get_last_error(context))
+					freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+			}
+			else
+			{
+				if (!freerdp_get_last_error(context))
+					freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+			}
 
 			tls_free(transport->TsgTls);
 			transport->TsgTls = NULL;
@@ -277,13 +288,23 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	if (transport->TlsIn->port == 0)
 		transport->TlsIn->port = 3389;
 
-	if (!tls_connect(transport->TlsIn))
-	{
-		if (!connectErrorCode)
-			connectErrorCode = TLSCONNECTERROR;
+	tls_status = tls_connect(transport->TlsIn);
 
-		if (!freerdp_get_last_error(context))
-			freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+	if (tls_status < 1)
+	{
+		if (tls_status < 0)
+		{
+			if (!connectErrorCode)
+				connectErrorCode = TLSCONNECTERROR;
+
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
+		else
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
 
 		tls_free(transport->TlsIn);
 
@@ -317,6 +338,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	if (!transport->credssp)
 	{
 		transport->credssp = credssp_new(instance, transport, settings);
+		transport_set_nla_mode(transport, TRUE);
 
 		if (settings->AuthenticationServiceClass)
 		{
@@ -338,11 +360,14 @@ BOOL transport_connect_nla(rdpTransport* transport)
 		fprintf(stderr, "Authentication failure, check credentials.\n"
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 
+		transport_set_nla_mode(transport, FALSE);
 		credssp_free(transport->credssp);
 		transport->credssp = NULL;
+
 		return FALSE;
 	}
 
+	transport_set_nla_mode(transport, FALSE);
 	credssp_free(transport->credssp);
 	transport->credssp = NULL;
 
@@ -351,7 +376,15 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16 port)
 {
-	rdpTsg* tsg = tsg_new(transport);
+	rdpTsg* tsg;
+	int tls_status;
+	freerdp* instance;
+	rdpContext* context;
+
+	instance = (freerdp*) transport->settings->instance;
+	context = instance->context;
+
+	tsg = tsg_new(transport);
 
 	tsg->transport = transport;
 	transport->tsg = tsg;
@@ -377,11 +410,41 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	if (transport->TlsOut->port == 0)
 		transport->TlsOut->port = 443;
 
-	if (!tls_connect(transport->TlsIn))
-		return FALSE;
+	tls_status = tls_connect(transport->TlsIn);
 
-	if (!tls_connect(transport->TlsOut))
+	if (tls_status < 1)
+	{
+		if (tls_status < 0)
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
+		else
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
+
 		return FALSE;
+	}
+
+	tls_status = tls_connect(transport->TlsOut);
+
+	if (tls_status < 1)
+	{
+		if (tls_status < 0)
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
+		else
+		{
+			if (!freerdp_get_last_error(context))
+				freerdp_set_last_error(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
+
+		return FALSE;
+	}
 
 	if (!tsg_connect(tsg, hostname, port))
 		return FALSE;
@@ -481,11 +544,16 @@ BOOL transport_accept_nla(rdpTransport* transport)
 		return TRUE;
 
 	if (!transport->credssp)
+	{
 		transport->credssp = credssp_new(instance, transport, settings);
+		transport_set_nla_mode(transport, TRUE);
+	}
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
 		fprintf(stderr, "client authentication failure\n");
+
+		transport_set_nla_mode(transport, FALSE);
 		credssp_free(transport->credssp);
 		transport->credssp = NULL;
 
@@ -495,6 +563,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	}
 
 	/* don't free credssp module yet, we need to copy the credentials from it first */
+	transport_set_nla_mode(transport, FALSE);
 
 	return TRUE;
 }
@@ -643,49 +712,56 @@ int transport_read(rdpTransport* transport, wStream* s)
 
 	CopyMemory(header, Stream_Buffer(s), 4); /* peek at first 4 bytes */
 
-	/* if header is present, read in exactly one PDU */
-	if (header[0] == 0x03)
-	{
-		/* TPKT header */
+	/* if header is present, read exactly one PDU */
 
-		pduLength = (header[2] << 8) | header[3];
-	}
-	else if (header[0] == 0x30)
+	if (transport->NlaMode)
 	{
-		/* TSRequest (NLA) */
-
-		if (header[1] & 0x80)
+		if (header[0] == 0x30)
 		{
-			if ((header[1] & ~(0x80)) == 1)
+			/* TSRequest (NLA) */
+
+			if (header[1] & 0x80)
 			{
-				pduLength = header[2];
-				pduLength += 3;
-			}
-			else if ((header[1] & ~(0x80)) == 2)
-			{
-				pduLength = (header[2] << 8) | header[3];
-				pduLength += 4;
+				if ((header[1] & ~(0x80)) == 1)
+				{
+					pduLength = header[2];
+					pduLength += 3;
+				}
+				else if ((header[1] & ~(0x80)) == 2)
+				{
+					pduLength = (header[2] << 8) | header[3];
+					pduLength += 4;
+				}
+				else
+				{
+					fprintf(stderr, "Error reading TSRequest!\n");
+					return -1;
+				}
 			}
 			else
 			{
-				fprintf(stderr, "Error reading TSRequest!\n");
-				return -1;
+				pduLength = header[1];
+				pduLength += 2;
 			}
-		}
-		else
-		{
-			pduLength = header[1];
-			pduLength += 2;
 		}
 	}
 	else
 	{
-		/* Fast-Path Header */
+		if (header[0] == 0x03)
+		{
+			/* TPKT header */
 
-		if (header[1] & 0x80)
-			pduLength = ((header[1] & 0x7F) << 8) | header[2];
+			pduLength = (header[2] << 8) | header[3];
+		}
 		else
-			pduLength = header[1];
+		{
+			/* Fast-Path Header */
+
+			if (header[1] & 0x80)
+				pduLength = ((header[1] & 0x7F) << 8) | header[2];
+			else
+				pduLength = header[1];
+		}
 	}
 
 	status = transport_read_layer(transport, Stream_Buffer(s) + position, pduLength - position);
@@ -889,72 +965,78 @@ int transport_check_fds(rdpTransport* transport)
 	 * Loop through and read all available PDUs.  Since multiple
 	 * PDUs can exist, it's important to deliver them all before
 	 * returning.  Otherwise we run the risk of having a thread
-	 * wait for a socket to get signalled that data is available
+	 * wait for a socket to get signaled that data is available
 	 * (which may never happen).
 	 */
 	for (;;)
 	{
 		status = transport_read_nonblocking(transport);
 
-		if (status < 0 || Stream_GetPosition(transport->ReceiveBuffer) == 0)
+		if ((status <= 0) || (Stream_GetPosition(transport->ReceiveBuffer) < 2))
 			return status;
 
 		while ((pos = Stream_GetPosition(transport->ReceiveBuffer)) > 0)
 		{
 			Stream_SetPosition(transport->ReceiveBuffer, 0);
 
-			if (tpkt_verify_header(transport->ReceiveBuffer)) /* TPKT */
+			if (transport->NlaMode)
 			{
-				/* Ensure the TPKT header is available. */
-				if (pos <= 4)
+				if (nla_verify_header(transport->ReceiveBuffer))
 				{
-					Stream_SetPosition(transport->ReceiveBuffer, pos);
-					return 0;
-				}
+					/* TSRequest */
 
-				length = tpkt_read_header(transport->ReceiveBuffer);
+					/* Ensure the TSRequest header is available. */
+					if (pos <= 4)
+					{
+						Stream_SetPosition(transport->ReceiveBuffer, pos);
+						return 0;
+					}
+
+					/* TSRequest header can be 2, 3 or 4 bytes long */
+					length = nla_header_length(transport->ReceiveBuffer);
+
+					if (pos < length)
+					{
+						Stream_SetPosition(transport->ReceiveBuffer, pos);
+						return 0;
+					}
+
+					length = nla_read_header(transport->ReceiveBuffer);
+				}
 			}
-			else if (nla_verify_header(transport->ReceiveBuffer))
+			else
 			{
-				/* TSRequest */
-
-				/* Ensure the TSRequest header is available. */
-				if (pos <= 4)
+				if (tpkt_verify_header(transport->ReceiveBuffer)) /* TPKT */
 				{
-					Stream_SetPosition(transport->ReceiveBuffer, pos);
-					return 0;
+					/* Ensure the TPKT header is available. */
+					if (pos <= 4)
+					{
+						Stream_SetPosition(transport->ReceiveBuffer, pos);
+						return 0;
+					}
+
+					length = tpkt_read_header(transport->ReceiveBuffer);
 				}
-
-				/* TSRequest header can be 2, 3 or 4 bytes long */
-				length = nla_header_length(transport->ReceiveBuffer);
-
-				if (pos < length)
+				else /* Fast Path */
 				{
-					Stream_SetPosition(transport->ReceiveBuffer, pos);
-					return 0;
+					/* Ensure the Fast Path header is available. */
+					if (pos <= 2)
+					{
+						Stream_SetPosition(transport->ReceiveBuffer, pos);
+						return 0;
+					}
+
+					/* Fastpath header can be two or three bytes long. */
+					length = fastpath_header_length(transport->ReceiveBuffer);
+
+					if (pos < length)
+					{
+						Stream_SetPosition(transport->ReceiveBuffer, pos);
+						return 0;
+					}
+
+					length = fastpath_read_header(NULL, transport->ReceiveBuffer);
 				}
-
-				length = nla_read_header(transport->ReceiveBuffer);
-			}
-			else /* Fast Path */
-			{
-				/* Ensure the Fast Path header is available. */
-				if (pos <= 2)
-				{
-					Stream_SetPosition(transport->ReceiveBuffer, pos);
-					return 0;
-				}
-
-				/* Fastpath header can be two or three bytes long. */
-				length = fastpath_header_length(transport->ReceiveBuffer);
-
-				if (pos < length)
-				{
-					Stream_SetPosition(transport->ReceiveBuffer, pos);
-					return 0;
-				}
-
-				length = fastpath_read_header(NULL, transport->ReceiveBuffer);
 			}
 
 			if (length == 0)
@@ -1037,6 +1119,11 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled)
 {
 	transport->GatewayEnabled = GatewayEnabled;
+}
+
+void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode)
+{
+	transport->NlaMode = NlaMode;
 }
 
 static void* transport_client_thread(void* arg)
