@@ -183,5 +183,12 @@ WINPR_API VOID _IoDeleteDeviceEx(PDEVICE_OBJECT_EX DeviceObject);
 
 #endif
 
+/**
+ * Extended API
+ */
+
+#define ACCESS_FROM_CTL_CODE(ctrlCode)		((DWORD)((ctrlCode >> 14) & 0x3))
+#define FUNCTION_FROM_CTL_CODE(ctrlCode)	((DWORD)((ctrlCode >> 2) & 0xFFF))
+
 #endif /* WINPR_IO_H */
 

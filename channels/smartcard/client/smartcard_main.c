@@ -30,9 +30,6 @@
 #include <winpr/crt.h>
 #include <winpr/smartcard.h>
 
-#include <freerdp/utils/list.h>
-#include <freerdp/utils/debug.h>
-
 #include <freerdp/channels/rdpdr.h>
 
 #include "smartcard_main.h"
@@ -61,7 +58,6 @@ static void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 		default:
 			fprintf(stderr, "MajorFunction 0x%X unexpected for smartcards.", irp->MajorFunction);
-			DEBUG_WARN("Smartcard MajorFunction 0x%X not supported.", irp->MajorFunction);
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			irp->Complete(irp);
 			break;
@@ -114,10 +110,10 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	SMARTCARD_DEVICE* smartcard;
 
 	device = (RDPDR_SMARTCARD*) pEntryPoints->device;
+
 	name = device->Name;
 	path = device->Path;
 
-	/* TODO: check if server supports sc redirect (version 5.1) */
 	smartcard = (SMARTCARD_DEVICE*) calloc(1, sizeof(SMARTCARD_DEVICE));
 
 	if (!smartcard)
@@ -148,6 +144,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		else
 			smartcard->name = name;
 	}
+
+	smartcard->log = WLog_Get("com.freerdp.channel.smartcard.client");
 
 	smartcard->IrpQueue = MessageQueue_New(NULL);
 	smartcard->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) smartcard_thread_func,

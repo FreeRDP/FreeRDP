@@ -38,143 +38,11 @@
 
 #include "smartcard_main.h"
 
-/* [MS-RDPESC] 3.1.4 */
-#define SCARD_IOCTL_ESTABLISH_CONTEXT		0x00090014	/* EstablishContext */
-#define SCARD_IOCTL_RELEASE_CONTEXT		0x00090018	/* ReleaseContext */
-#define SCARD_IOCTL_IS_VALID_CONTEXT		0x0009001C	/* IsValidContext */
-#define SCARD_IOCTL_LIST_READER_GROUPS		0x00090020	/* ListReaderGroups */
-#define SCARD_IOCTL_LIST_READERS		0x00090028	/* ListReadersA */
-#define SCARD_IOCTL_INTRODUCE_READER_GROUP	0x00090050	/* IntroduceReaderGroup */
-#define SCARD_IOCTL_FORGET_READER_GROUP		0x00090058	/* ForgetReader */
-#define SCARD_IOCTL_INTRODUCE_READER		0x00090060	/* IntroduceReader */
-#define SCARD_IOCTL_FORGET_READER		0x00090068	/* IntroduceReader */
-#define SCARD_IOCTL_ADD_READER_TO_GROUP		0x00090070	/* AddReaderToGroup */
-#define SCARD_IOCTL_REMOVE_READER_FROM_GROUP	0x00090078	/* RemoveReaderFromGroup */
-#define SCARD_IOCTL_GET_STATUS_CHANGE		0x000900A0	/* GetStatusChangeA */
-#define SCARD_IOCTL_CANCEL			0x000900A8	/* Cancel */
-#define SCARD_IOCTL_CONNECT			0x000900AC	/* ConnectA */
-#define SCARD_IOCTL_RECONNECT			0x000900B4	/* Reconnect */
-#define SCARD_IOCTL_DISCONNECT			0x000900B8	/* Disconnect */
-#define SCARD_IOCTL_BEGIN_TRANSACTION		0x000900BC	/* BeginTransaction */
-#define SCARD_IOCTL_END_TRANSACTION		0x000900C0	/* EndTransaction */
-#define SCARD_IOCTL_STATE			0x000900C4	/* State */
-#define SCARD_IOCTL_STATUS			0x000900C8	/* StatusA */
-#define SCARD_IOCTL_TRANSMIT			0x000900D0	/* Transmit */
-#define SCARD_IOCTL_CONTROL			0x000900D4	/* Control */
-#define SCARD_IOCTL_GETATTRIB			0x000900D8	/* GetAttrib */
-#define SCARD_IOCTL_SETATTRIB			0x000900DC	/* SetAttrib */
-#define SCARD_IOCTL_ACCESS_STARTED_EVENT	0x000900E0	/* SCardAccessStartedEvent */
-#define SCARD_IOCTL_LOCATE_CARDS_BY_ATR		0x000900E8	/* LocateCardsByATR */
-
-/* Decode Win CTL_CODE values */
-#define WIN_CTL_FUNCTION(ctl_code)		((ctl_code & 0x3FFC) >> 2)
-#define WIN_CTL_DEVICE_TYPE(ctl_code)		(ctl_code >> 16)
-
-#define WIN_FILE_DEVICE_SMARTCARD		0x00000031
-
-#if defined(WITH_DEBUG_SCARD)
-static char *ioctl_to_string(DWORD code)
-{
-	static char res[100];
-	char *rc;
-
-	switch(code)
-	{
-		case SCARD_IOCTL_ESTABLISH_CONTEXT:
-			rc = "SCARD_IOCTL_ESTABLISH_CONTEXT";
-			break;
-		case SCARD_IOCTL_IS_VALID_CONTEXT:
-			rc = "SCARD_IOCTL_IS_VALID_CONTEXT";
-			break;
-		case SCARD_IOCTL_RELEASE_CONTEXT:
-			rc = "SCARD_IOCTL_RELEASE_CONTEXT";
-			break;
-		case SCARD_IOCTL_LIST_READERS:
-			rc = "SCARD_IOCTL_LIST_READERS";
-			break;
-		case SCARD_IOCTL_LIST_READERS + 4:
-			rc = "SCARD_IOCTL_LIST_READERS + 4";
-			break;
-		case SCARD_IOCTL_LIST_READER_GROUPS:
-			rc = "SCARD_IOCTL_LIST_READER_GROUPS";
-			break;
-		case SCARD_IOCTL_LIST_READER_GROUPS + 4:
-			rc = "SCARD_IOCTL_LIST_READER_GROUPS + 4";
-			break;
-		case SCARD_IOCTL_GET_STATUS_CHANGE:
-			rc = "SCARD_IOCTL_GET_STATUS_CHANGE";
-			break;
-		case SCARD_IOCTL_GET_STATUS_CHANGE + 4:
-			rc = "SCARD_IOCTL_GET_STATUS_CHANGE + 4";
-			break;
-		case SCARD_IOCTL_CANCEL:
-			rc = "SCARD_IOCTL_CANCEL";
-			break;
-		case SCARD_IOCTL_CONNECT:
-			rc = "SCARD_IOCTL_CONNECT";
-			break;
-		case SCARD_IOCTL_CONNECT + 4:
-			rc = "SCARD_IOCTL_CONNECT + 4";
-			break;
-		case SCARD_IOCTL_RECONNECT:
-			rc = "SCARD_IOCTL_RECONNECT";
-			break;
-		case SCARD_IOCTL_DISCONNECT:
-			rc = "SCARD_IOCTL_DISCONNECT";
-			break;
-		case SCARD_IOCTL_BEGIN_TRANSACTION:
-			rc = "SCARD_IOCTL_BEGIN_TRANSACTION";
-			break;
-		case SCARD_IOCTL_END_TRANSACTION:
-			rc = "SCARD_IOCTL_END_TRANSACTION";
-			break;
-		case SCARD_IOCTL_STATE:
-			rc = "SCARD_IOCTL_STATE";
-			break;
-		case SCARD_IOCTL_STATUS:
-			rc = "SCARD_IOCTL_STATUS";
-			break;
-		case SCARD_IOCTL_STATUS + 4:
-			rc = "SCARD_IOCTL_STATUS + 4";
-			break;
-		case SCARD_IOCTL_TRANSMIT:
-			rc = "SCARD_IOCTL_TRANSMIT";
-			break;
-		case SCARD_IOCTL_CONTROL:
-			rc = "SCARD_IOCTL_CONTROL";
-			break;
-		case SCARD_IOCTL_GETATTRIB:
-			rc = "SCARD_IOCTL_GETATTRIB";
-			break;
-		case SCARD_IOCTL_ACCESS_STARTED_EVENT:
-			rc = "SCARD_IOCTL_ACCESS_STARTED_EVENT";
-			break;
-		case SCARD_IOCTL_LOCATE_CARDS_BY_ATR:
-			rc = "SCARD_IOCTL_LOCATE_CARDS_BY_ATR";
-			break;
-		case SCARD_IOCTL_LOCATE_CARDS_BY_ATR + 4:
-			rc = "SCARD_IOCTL_LOCATE_CARDS_BY_ATR + 4";
-			break;
-		default:
-			rc = "UNKNOWN";
-			break;
-	}
-
-	ZeroMemory(res, sizeof(res));
-	strncpy(res, rc, strlen(rc));
-	return res;
-}
-#endif
-
-static UINT32 handle_CommonTypeHeader(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_CommonTypeHeader(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT8 version;
 	UINT8 endianess;
 	UINT16 header_length;
-
-	assert(scard);
-	assert(irp);
-	assert(irp->input);
 
 	if (Stream_GetRemainingLength(irp->input) < 8)
 	{
@@ -208,13 +76,9 @@ static UINT32 handle_CommonTypeHeader(SMARTCARD_DEVICE* scard, IRP* irp)
 	return 0;
 }
 
-static UINT32 handle_PrivateTypeHeader(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_PrivateTypeHeader(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT32 len;
-
-	assert(scard);
-	assert(irp);
-	assert(irp->input);
 
 	if (Stream_GetRemainingLength(irp->input) < 8)
 	{
@@ -238,13 +102,9 @@ static UINT32 handle_PrivateTypeHeader(SMARTCARD_DEVICE* scard, IRP* irp)
 	return 0;
 }
 
-static UINT32 handle_Context(SMARTCARD_DEVICE* scard, IRP* irp, int *redirect)
+static UINT32 handle_Context(SMARTCARD_DEVICE* smartcard, IRP* irp, int *redirect)
 {
 	UINT32 len;
-
-	assert(scard);
-	assert(irp);
-	assert(irp->input);
 
 	if (Stream_GetRemainingLength(irp->input) < 4)
 	{
@@ -278,17 +138,12 @@ static UINT32 handle_Context(SMARTCARD_DEVICE* scard, IRP* irp, int *redirect)
 	return 0;
 }
 
-static UINT32 handle_CardHandle(SMARTCARD_DEVICE* scard, IRP* irp, int *redirect)
+static UINT32 handle_CardHandle(SMARTCARD_DEVICE* smartcard, IRP* irp, int* redirect)
 {
 	UINT32 status;
 	UINT32 len;
 
-	assert(scard);
-	assert(irp);
-	assert(irp->input);
-	assert(redirect);
-
-	status = handle_Context(scard, irp, redirect);
+	status = handle_Context(smartcard, irp, redirect);
 
 	if (status)
 		return status;
@@ -318,21 +173,16 @@ static UINT32 handle_CardHandle(SMARTCARD_DEVICE* scard, IRP* irp, int *redirect
 	return 0;
 }
 
-static UINT32 handle_RedirContextRef(SMARTCARD_DEVICE* scard, IRP* irp,
+static UINT32 handle_RedirContextRef(SMARTCARD_DEVICE* smartcard, IRP* irp,
 		int redirect, SCARDCONTEXT* hContext)
 {
 	UINT32 len;
-
-	assert(scard);
-	assert(irp);
-	assert(irp->input);
-	assert(hContext);
 
 	/* No context provided, use stored. */
 	if (redirect & 0x01)
 	{
 		DEBUG_WARN("No context provided, using stored context.");
-		*hContext = scard->hContext;
+		*hContext = smartcard->hContext;
 		return 0;
 	}
 
@@ -355,17 +205,15 @@ static UINT32 handle_RedirContextRef(SMARTCARD_DEVICE* scard, IRP* irp,
 	ZeroMemory(hContext, sizeof(SCARDCONTEXT));
 	Stream_Read(irp->input, hContext, len);
 
-	DEBUG_SCARD("hContext=%p", *hContext);
-
 	return 0;
 }
 
-static UINT32 handle_RedirHandleRef(SMARTCARD_DEVICE* scard, IRP* irp,
-		int redirect, SCARDCONTEXT* hContext, SCARDHANDLE *hHandle)
+static UINT32 handle_RedirHandleRef(SMARTCARD_DEVICE* smartcard, IRP* irp,
+		int redirect, SCARDCONTEXT* hContext, SCARDHANDLE* hHandle)
 {
 	UINT32 len, status;
 
-	status = handle_RedirContextRef(scard, irp, redirect, hContext);
+	status = handle_RedirContextRef(smartcard, irp, redirect, hContext);
 
 	if (status)
 		return status;
@@ -374,7 +222,7 @@ static UINT32 handle_RedirHandleRef(SMARTCARD_DEVICE* scard, IRP* irp,
 	if (redirect & 0x02)
 	{
 		DEBUG_WARN("No card handle provided, using stored handle.");
-		*hHandle = scard->hCard;
+		*hHandle = smartcard->hCard;
 		return 0;
 	}
 
@@ -401,20 +249,16 @@ static UINT32 handle_RedirHandleRef(SMARTCARD_DEVICE* scard, IRP* irp,
 
 	ZeroMemory(hHandle, sizeof(SCARDHANDLE));
 	Stream_Read_UINT32(irp->input, *hHandle);
-	DEBUG_SCARD("hCard=%p", *hHandle);
 
 	return 0;
 }
 
-static BOOL check_reader_is_forwarded(SMARTCARD_DEVICE *scard, const char *readerName)
+static BOOL check_reader_is_forwarded(SMARTCARD_DEVICE* smartcard, const char* readerName)
 {
 	BOOL rc = TRUE;
 	char *name = _strdup(readerName);
 	char *str, *strpos=NULL, *strstatus=NULL;
 	long pos, cpos, ret;
-
-	assert(scard);
-	assert(readerName);
 
 	/* Extract the name, position and status from the data provided. */
 	str = strtok(name, " ");
@@ -430,22 +274,24 @@ static BOOL check_reader_is_forwarded(SMARTCARD_DEVICE *scard, const char *reade
 
 	pos = strtol(strpos, NULL, 10);
 	
-	if ( strpos && strstatus )
+	if (strpos && strstatus)
 	{
 		/* Check, if the name of the reader matches. */
-		if (scard->name &&  strncmp(scard->name, readerName, strlen(scard->name)))
+		if (smartcard->name &&  strncmp(smartcard->name, readerName, strlen(smartcard->name)))
 			rc = FALSE;
 
 		/* Check, if the position matches. */
-		if (scard->path)
+		if (smartcard->path)
 		{
-			ret = sscanf(scard->path, "%ld", &cpos);
+			ret = sscanf(smartcard->path, "%ld", &cpos);
 			if ((1 == ret) && (cpos != pos))
 				rc = FALSE;
 		}
 	}
 	else
+	{
 		DEBUG_WARN("unknown reader format '%s'", readerName);
+	}
 
 finally:
 	free(name);
@@ -456,8 +302,7 @@ finally:
 	return rc;
 }
 
-static BOOL check_handle_is_forwarded(SMARTCARD_DEVICE *scard,
-		SCARDHANDLE hCard, SCARDCONTEXT hContext)
+static BOOL check_handle_is_forwarded(SMARTCARD_DEVICE* smartcard, SCARDHANDLE hCard, SCARDCONTEXT hContext)
 {
 	BOOL rc = FALSE;
 	LONG status;
@@ -467,30 +312,18 @@ static BOOL check_handle_is_forwarded(SMARTCARD_DEVICE *scard,
 	char* readerName = NULL;
 	BYTE pbAtr[SCARD_ATR_LENGTH];
 
-	assert(scard);
-	assert(hCard);
-
-#ifdef SCARD_AUTOALLOCATE
 	readerLen = SCARD_AUTOALLOCATE;
-#else
-	readerLen = 256;
-	readerName = malloc(readerLen);
-#endif
 
 	status = SCardStatus(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
 
 	if (status == SCARD_S_SUCCESS)
 	{
-		rc = check_reader_is_forwarded(scard, readerName);
+		rc = check_reader_is_forwarded(smartcard, readerName);
 		if (!rc)
 			DEBUG_WARN("Reader '%s' not forwarded!", readerName);
 	}
 
-#ifdef SCARD_AUTOALLOCATE
 	SCardFreeMemory(hContext, readerName);
-#else
-	free(readerName);
-#endif
 
 	return rc;
 }
@@ -651,46 +484,23 @@ static UINT32 smartcard_input_reader_name(IRP* irp, char** dest, BOOL wide)
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
-	DEBUG_SCARD("datalength %d", dataLength);
 	smartcard_input_repos(irp, smartcard_input_string(irp, dest, dataLength, wide));
 
 	return 0;
 }
 
-static UINT32 smartcard_map_state(UINT32 state)
-{
-	/* is this mapping still needed? */
-
-	if (state & SCARD_SPECIFIC)
-		state = 0x00000006;
-	else if (state & SCARD_NEGOTIABLE)
-		state = 0x00000006;
-	else if (state & SCARD_POWERED)
-		state = 0x00000004;
-	else if (state & SCARD_SWALLOWED)
-		state = 0x00000003;
-	else if (state & SCARD_PRESENT)
-		state = 0x00000002;
-	else if (state & SCARD_ABSENT)
-		state = 0x00000001;
-	else
-		state = 0x00000000;
-
-	return state;
-}
-
-static UINT32 handle_EstablishContext(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT32 status;
 	UINT32 scope;
 	SCARDCONTEXT hContext = -1;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
@@ -715,90 +525,81 @@ static UINT32 handle_EstablishContext(SMARTCARD_DEVICE* scard, IRP* irp)
 	Stream_Write_UINT32(irp->output, hContext);
 
 	/* store hContext in allowed context list */
-	scard->hContext = hContext;
+	smartcard->hContext = hContext;
 
 	smartcard_output_alignment(irp, 8);
+
 	return status;
 }
 
-static UINT32 handle_ReleaseContext(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_ReleaseContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	int redirect = 0;
 	UINT32 status;
 	SCARDCONTEXT hContext = -1;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_Context(scard, irp, &redirect);
+	status = handle_Context(smartcard, irp, &redirect);
 
 	if (status)
 		return status;
 
-	status = handle_RedirContextRef(scard, irp, redirect, &hContext);
+	status = handle_RedirContextRef(smartcard, irp, redirect, &hContext);
 
 	if (status)
 		return status;
 
 	status = SCardReleaseContext(hContext);
-	ZeroMemory(&scard->hContext, sizeof(scard->hContext));
-
-	if (status)
-		DEBUG_SCARD("%s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
-	else
-		DEBUG_SCARD("success 0x%08lx", hContext);
+	ZeroMemory(&smartcard->hContext, sizeof(smartcard->hContext));
 
 	smartcard_output_alignment(irp, 8);
 
 	return status;
 }
 
-static UINT32 handle_IsValidContext(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_IsValidContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	int redirect = 0;
 	UINT32 status;
 	SCARDCONTEXT hContext;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_Context(scard, irp, &redirect);
+	status = handle_Context(smartcard, irp, &redirect);
 
 	if (status)
 		return status;
 
-	status = handle_RedirContextRef(scard, irp, redirect, &hContext);
+	status = handle_RedirContextRef(smartcard, irp, redirect, &hContext);
 
 	if (status)
 		return status;
 
 	status = SCardIsValidContext(hContext);
 
-	if (status)
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
-	else
-		DEBUG_SCARD("Success context: 0x%08x", (unsigned) hContext);
-
 	smartcard_output_alignment(irp, 8);
 
 	return status;
 }
 
-static UINT32 handle_ListReaders(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
+static UINT32 handle_ListReaders(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL wide)
 {
 	int redirect = 0;
 	UINT32 status;
@@ -812,17 +613,17 @@ static UINT32 handle_ListReaders(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 	int elemLength, dataLength;
 	int pos, poslen1, poslen2, allowed_pos;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_Context(scard, irp, &redirect);
+	status = handle_Context(smartcard, irp, &redirect);
 
 	if (status)
 		goto finish;
@@ -871,28 +672,19 @@ static UINT32 handle_ListReaders(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 	Stream_Seek(irp->input, 4);
 
 	/* Read RedirScardcontextRef */
-	status = handle_RedirContextRef(scard, irp, redirect, &hContext);
+	status = handle_RedirContextRef(smartcard, irp, redirect, &hContext);
 	if (status)
 		goto finish;
 
 	/* ignore rest of [MS-RDPESC] 2.2.2.4 ListReaders_Call */
 
-#ifdef SCARD_AUTOALLOCATE
 	dwReaders = SCARD_AUTOALLOCATE;
 	status = SCardListReaders(hContext, mszGroups, (LPSTR) &readerList, &dwReaders);
-#else
-	status = SCardListReaders(hContext, mszGroups, NULL, &dwReaders);
 
-	readerList = malloc(dwReaders);
-	status = SCardListReaders(hContext, mszGroups, readerList, &dwReaders);
-#endif
 	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 		goto finish;
 	}
-
-/*	DEBUG_SCARD("Success 0x%08x %d %d", (unsigned) hContext, (unsigned) cchReaders, (int) strlen(readerList));*/
 
 	poslen1 = Stream_GetPosition(irp->output);
 	Stream_Seek_UINT32(irp->output);
@@ -907,9 +699,11 @@ static UINT32 handle_ListReaders(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 
 	/* Smartcards can be forwarded by position and name. */
 	allowed_pos = -1;
-	if (scard->path)
-		if (1 != sscanf(scard->path, "%d", &allowed_pos))
+	if (smartcard->path)
+	{
+		if (1 != sscanf(smartcard->path, "%d", &allowed_pos))
 			allowed_pos = -1;
+	}
 
 	pos = 0;
 	while (1)
@@ -921,7 +715,7 @@ static UINT32 handle_ListReaders(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 		/* Ignore readers not forwarded. */
 		if ((allowed_pos < 0) || (pos == allowed_pos))
 		{
-			if (!scard->name || strstr(walker, scard->name))
+			if (!smartcard->name || strstr(walker, smartcard->name))
 				dataLength += smartcard_output_string(irp, walker, wide);
 		}
 		walker += elemLength + 1;
@@ -945,11 +739,7 @@ static UINT32 handle_ListReaders(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 finish:
 	if (readerList)
 	{
-#ifdef SCARD_AUTOALLOCATE
 		SCardFreeMemory(hContext, readerList);
-#else
-		free(readerList);
-#endif
 	}
 
 	if (mszGroups)
@@ -958,27 +748,27 @@ finish:
 	return status;
 }
 
-static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
+static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL wide)
 {
-	int redirect = 0;
 	int i;
 	LONG status;
+	int redirect = 0;
 	SCARDCONTEXT hContext;
 	DWORD dwTimeout = 0;
 	DWORD readerCount = 0;
 	SCARD_READERSTATE *readerStates = NULL, *cur;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_Context(scard, irp, &redirect);
+	status = handle_Context(smartcard, irp, &redirect);
 
 	if (status)
 		goto finish;
@@ -999,7 +789,7 @@ static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wid
 	Stream_Seek(irp->input, 4);
 
 	/* Get context */
-	status = handle_RedirContextRef(scard, irp, redirect, &hContext);
+	status = handle_RedirContextRef(smartcard, irp, redirect, &hContext);
 
 	if (status)
 		goto finish;
@@ -1013,9 +803,6 @@ static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wid
 		goto finish;
 	}
 	Stream_Seek(irp->input, 4);
-
-	DEBUG_SCARD("context: 0x%08x, timeout: 0x%08x, count: %d",
-		     (unsigned) hContext, (unsigned) dwTimeout, (int) readerCount);
 
 	if (readerCount > 0)
 	{
@@ -1079,11 +866,6 @@ static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wid
 			smartcard_input_repos(irp, smartcard_input_string(irp,
 						(char **) &cur->szReader, dataLength, wide));
 
-			DEBUG_SCARD("   \"%s\"", cur->szReader ? cur->szReader : "NULL");
-			DEBUG_SCARD("       user: 0x%08x, state: 0x%08x, event: 0x%08x",
-				(unsigned) cur->pvUserData, (unsigned) cur->dwCurrentState,
-				(unsigned) cur->dwEventState);
-
 			if (!cur->szReader)
 			{
 				DEBUG_WARN("cur->szReader=%p", cur->szReader);
@@ -1100,11 +882,6 @@ static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wid
 
 	status = SCardGetStatusChange(hContext, (DWORD) dwTimeout, readerStates, (DWORD) readerCount);
 
-	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
-	else
-		DEBUG_SCARD("Success");
-
 	Stream_Write_UINT32(irp->output, readerCount);
 	Stream_Write_UINT32(irp->output, 0x00084dd8);
 	Stream_Write_UINT32(irp->output, readerCount);
@@ -1112,11 +889,6 @@ static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wid
 	for (i = 0; i < readerCount; i++)
 	{
 		cur = &readerStates[i];
-
-		DEBUG_SCARD("   \"%s\"", cur->szReader ? cur->szReader : "NULL");
-		DEBUG_SCARD("       user: 0x%08x, state: 0x%08x, event: 0x%08x",
-			(unsigned) cur->pvUserData, (unsigned) cur->dwCurrentState,
-			(unsigned) cur->dwEventState);
 
 		/* TODO: do byte conversions if necessary */
 		Stream_Write_UINT32(irp->output, cur->dwCurrentState);
@@ -1146,45 +918,40 @@ finish:
 	return status;
 }
 
-static UINT32 handle_Cancel(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_Cancel(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	int redirect = 0;
 	LONG status;
 	SCARDCONTEXT hContext;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_Context(scard, irp, &redirect);
+	status = handle_Context(smartcard, irp, &redirect);
 
 	if (status)
 		return status;
 
-	status = handle_RedirContextRef(scard, irp, redirect, &hContext);
+	status = handle_RedirContextRef(smartcard, irp, redirect, &hContext);
 
 	if (status)
 		return status;
 
 	status = SCardCancel(hContext);
 
-	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
-	else
-		DEBUG_SCARD("Success context: 0x%08x %s", (unsigned) hContext, SCardGetErrorString(status));
-
 	smartcard_output_alignment(irp, 8);
 
 	return status;
 }
 
-static UINT32 handle_Connect(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
+static UINT32 handle_Connect(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL wide)
 {
 	int redirect = 0;
 	LONG status;
@@ -1195,12 +962,12 @@ static UINT32 handle_Connect(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 	DWORD dwActiveProtocol = 0;
 	SCARDHANDLE hCard;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
@@ -1208,7 +975,7 @@ static UINT32 handle_Connect(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 	/* Skip ptrReader */
 	if (Stream_GetRemainingLength(irp->input) < 4)
 	{
-		DEBUG_WARN("Length violadion %d [%d]", 4,
+		DEBUG_WARN("Length violation %d [%d]", 4,
 				Stream_GetRemainingLength(irp->input));
 		status = SCARD_F_INTERNAL_ERROR;
 		goto finish;
@@ -1216,7 +983,7 @@ static UINT32 handle_Connect(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 	Stream_Seek(irp->input, 4);
 
 	/* Read common data */
-	status = handle_Context(scard, irp, &redirect);
+	status = handle_Context(smartcard, irp, &redirect);
 
 	if (status)
 		goto finish;
@@ -1237,16 +1004,12 @@ static UINT32 handle_Connect(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 	if (status)
 		goto finish;
 	
-	status = handle_RedirContextRef(scard, irp, redirect, &hContext);
+	status = handle_RedirContextRef(smartcard, irp, redirect, &hContext);
 
 	if (status)
 		goto finish;
 
-	DEBUG_SCARD("(context: 0x%08x, share: 0x%08x, proto: 0x%08x, reader: \"%s\")",
-		(unsigned) hContext, (unsigned) dwShareMode,
-		(unsigned) dwPreferredProtocol, readerName ? readerName : "NULL");
-
-	if (!check_reader_is_forwarded(scard, readerName))
+	if (!check_reader_is_forwarded(smartcard, readerName))
 	{
 		DEBUG_WARN("Reader '%s' not forwarded!", readerName);
 		status = SCARD_E_INVALID_TARGET;
@@ -1256,12 +1019,7 @@ static UINT32 handle_Connect(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 	status = SCardConnect(hContext, readerName, (DWORD) dwShareMode,
 		(DWORD) dwPreferredProtocol, &hCard, (DWORD *) &dwActiveProtocol);
 
-	if (status != SCARD_S_SUCCESS)
-		DEBUG_WARN("Failure: %s 0x%08x", SCardGetErrorString(status), (unsigned) status);
-	else
-		DEBUG_SCARD("Success 0x%08x", (unsigned) hCard);
-
-	scard->hCard = hCard;
+	smartcard->hCard = hCard;
 
 	Stream_Write_UINT32(irp->output, 0x00000000);
 	Stream_Write_UINT32(irp->output, 0x00000000);
@@ -1280,7 +1038,7 @@ finish:
 	return status;
 }
 
-static UINT32 handle_Reconnect(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_Reconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	int redirect = 0;
 	LONG status;
@@ -1291,17 +1049,17 @@ static UINT32 handle_Reconnect(SMARTCARD_DEVICE* scard, IRP* irp)
 	DWORD dwInitialization = 0;
 	DWORD dwActiveProtocol = 0;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_CardHandle(scard, irp, &redirect);
+	status = handle_CardHandle(smartcard, irp, &redirect);
 
 	if (status)
 		return status;
@@ -1317,27 +1075,19 @@ static UINT32 handle_Reconnect(SMARTCARD_DEVICE* scard, IRP* irp)
 	Stream_Read_UINT32(irp->input, dwPreferredProtocol);
 	Stream_Read_UINT32(irp->input, dwInitialization);
 
-	status = handle_RedirHandleRef(scard, irp, redirect, &hContext, &hCard);
+	status = handle_RedirHandleRef(smartcard, irp, redirect, &hContext, &hCard);
+
 	if (status)
 		return status;
 
-	DEBUG_SCARD("(context: 0x%08x, hcard: 0x%08x, share: 0x%08x, proto: 0x%08x, init: 0x%08x)",
-		(unsigned) hContext, (unsigned) hCard,
-		(unsigned) dwShareMode, (unsigned) dwPreferredProtocol, (unsigned) dwInitialization);
-
-	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
 	{
 		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
 		return SCARD_E_INVALID_TARGET;
 	}
 
 	status = SCardReconnect(hCard, (DWORD) dwShareMode, (DWORD) dwPreferredProtocol,
-	    (DWORD) dwInitialization, (LPDWORD) &dwActiveProtocol);
-
-	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
-	else
-		DEBUG_SCARD("Success (proto: 0x%08x)", (unsigned) dwActiveProtocol);
+			(DWORD) dwInitialization, (LPDWORD) &dwActiveProtocol);
 
 	Stream_Write_UINT32(irp->output, dwActiveProtocol);
 	smartcard_output_alignment(irp, 8);
@@ -1345,7 +1095,7 @@ static UINT32 handle_Reconnect(SMARTCARD_DEVICE* scard, IRP* irp)
 	return status;
 }
 
-static UINT32 handle_Disconnect(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_Disconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	int redirect = 0;
 	LONG status;
@@ -1353,17 +1103,17 @@ static UINT32 handle_Disconnect(SMARTCARD_DEVICE* scard, IRP* irp)
 	SCARDHANDLE hCard;
 	DWORD dwDisposition = 0;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_CardHandle(scard, irp, &redirect);
+	status = handle_CardHandle(smartcard, irp, &redirect);
 
 	if (status)
 		return status;
@@ -1377,15 +1127,12 @@ static UINT32 handle_Disconnect(SMARTCARD_DEVICE* scard, IRP* irp)
 
 	Stream_Read_UINT32(irp->input, dwDisposition);
 	
-	status = handle_RedirHandleRef(scard, irp, redirect, &hContext, &hCard);
+	status = handle_RedirHandleRef(smartcard, irp, redirect, &hContext, &hCard);
 
 	if (status)
 		return status;
 
-	DEBUG_SCARD("(context: 0x%08x, hcard: 0x%08x, disposition: 0x%08x)",
-		(unsigned) hContext, (unsigned) hCard, (unsigned) dwDisposition);
-
-	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
 	{
 		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
 		return SCARD_E_INVALID_TARGET;
@@ -1393,36 +1140,31 @@ static UINT32 handle_Disconnect(SMARTCARD_DEVICE* scard, IRP* irp)
 
 	status = SCardDisconnect(hCard, (DWORD) dwDisposition);
 
-	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
-	else
-		DEBUG_SCARD("Success");
-
-	ZeroMemory(&scard->hCard, sizeof(scard->hCard));
+	ZeroMemory(&smartcard->hCard, sizeof(smartcard->hCard));
 
 	smartcard_output_alignment(irp, 8);
 
 	return status;
 }
 
-static UINT32 handle_BeginTransaction(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_BeginTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	int redirect = 0;
 	LONG status;
 	SCARDHANDLE hCard;
 	SCARDCONTEXT hContext;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_CardHandle(scard, irp, &redirect);
+	status = handle_CardHandle(smartcard, irp, &redirect);
 
 	if (status)
 		return status;
@@ -1435,12 +1177,12 @@ static UINT32 handle_BeginTransaction(SMARTCARD_DEVICE* scard, IRP* irp)
 	}
 	Stream_Seek(irp->input, 4);
 
-	status = handle_RedirHandleRef(scard, irp, redirect, &hContext, &hCard);
+	status = handle_RedirHandleRef(smartcard, irp, redirect, &hContext, &hCard);
 
 	if (status)
 		return status;
 
-	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
 	{
 		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
 		return SCARD_E_INVALID_TARGET;
@@ -1448,17 +1190,12 @@ static UINT32 handle_BeginTransaction(SMARTCARD_DEVICE* scard, IRP* irp)
 
 	status = SCardBeginTransaction(hCard);
 
-	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
-	else
-		DEBUG_SCARD("Success hcard: 0x%08x", (unsigned) hCard);
-
 	smartcard_output_alignment(irp, 8);
 
 	return status;
 }
 
-static UINT32 handle_EndTransaction(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_EndTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	int redirect = 0;
 	LONG status;
@@ -1466,17 +1203,17 @@ static UINT32 handle_EndTransaction(SMARTCARD_DEVICE* scard, IRP* irp)
 	SCARDCONTEXT hContext;
 	DWORD dwDisposition = 0;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_CardHandle(scard, irp, &redirect);
+	status = handle_CardHandle(smartcard, irp, &redirect);
 
 	if (status)
 		return status;
@@ -1489,12 +1226,12 @@ static UINT32 handle_EndTransaction(SMARTCARD_DEVICE* scard, IRP* irp)
 	}
 	Stream_Read_UINT32(irp->input, dwDisposition);
 
-	status = handle_RedirHandleRef(scard, irp, redirect, &hContext, &hCard);
+	status = handle_RedirHandleRef(smartcard, irp, redirect, &hContext, &hCard);
 
 	if (status)
 		return status;
 
-	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
 	{
 		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
 		return SCARD_E_INVALID_TARGET;
@@ -1502,17 +1239,12 @@ static UINT32 handle_EndTransaction(SMARTCARD_DEVICE* scard, IRP* irp)
 
 	status = SCardEndTransaction(hCard, dwDisposition);
 
-	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
-	else
-		DEBUG_SCARD("Success hcard: 0x%08x", (unsigned) hCard);
-
 	smartcard_output_alignment(irp, 8);
 
 	return status;
 }
 
-static UINT32 handle_State(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_State(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	int redirect = 0;
 	LONG status;
@@ -1524,21 +1256,17 @@ static UINT32 handle_State(SMARTCARD_DEVICE* scard, IRP* irp)
 	char* readerName = NULL;
 	BYTE pbAtr[SCARD_ATR_LENGTH];
 
-#ifdef WITH_DEBUG_SCARD
-	int i;
-#endif
-
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_CardHandle(scard, irp, &redirect);
+	status = handle_CardHandle(smartcard, irp, &redirect);
 
 	if (status)
 		goto finish;
@@ -1554,47 +1282,26 @@ static UINT32 handle_State(SMARTCARD_DEVICE* scard, IRP* irp)
 	Stream_Seek(irp->input, 4);
 	Stream_Seek_UINT32(irp->input);	/* atrLen */
 
-	status = handle_RedirHandleRef(scard, irp, redirect, &hContext, &hCard);
+	status = handle_RedirHandleRef(smartcard, irp, redirect, &hContext, &hCard);
 
 	if (status)
 		goto finish;
 
-	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
 	{
 		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
 		status = SCARD_E_INVALID_TARGET;
 		goto finish;
 	}
 
-#ifdef SCARD_AUTOALLOCATE
 	readerLen = SCARD_AUTOALLOCATE;
-
 	status = SCardStatus(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
-#else
-	readerLen = 256;
-	readerName = malloc(readerLen);
-
-	status = SCardStatus(hCard, (LPSTR) readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
-#endif
 
 	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 		status = smartcard_output_return(irp, status);
 		goto finish;
 	}
-
-	DEBUG_SCARD("Success (hcard: 0x%08x len: %d state: 0x%08x, proto: 0x%08x)",
-		(unsigned) hCard, (int) atrLen, (unsigned) state, (unsigned) protocol);
-
-#ifdef WITH_DEBUG_SCARD
-	fprintf(stderr, "       ATR: ");
-	for (i = 0; i < atrLen; i++)
-		fprintf(stderr, "%02x%c", pbAtr[i], (i == atrLen - 1) ? ' ' : ':');
-	fprintf(stderr, "\n");
-#endif
-
-	state = smartcard_map_state(state);
 
 	Stream_Write_UINT32(irp->output, state);
 	Stream_Write_UINT32(irp->output, protocol);
@@ -1609,17 +1316,13 @@ static UINT32 handle_State(SMARTCARD_DEVICE* scard, IRP* irp)
 finish:
 	if (readerName)
 	{
-#ifdef SCARD_AUTOALLOCATE
 		SCardFreeMemory(hContext, readerName);
-#else
-		free(readerName);
-#endif
 	}
 
 	return status;
 }
 
-static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, BOOL wide)
+static DWORD handle_Status(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL wide)
 {
 	int redirect = 0;
 	LONG status;
@@ -1633,21 +1336,17 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, BOOL wide)
 	UINT32 dataLength = 0;
 	int pos, poslen1, poslen2;
 
-#ifdef WITH_DEBUG_SCARD
-	int i;
-#endif
-
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_CardHandle(scard, irp, &redirect);
+	status = handle_CardHandle(smartcard, irp, &redirect);
 
 	if (status)
 		goto finish;
@@ -1664,12 +1363,12 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, BOOL wide)
 	Stream_Read_UINT32(irp->input, readerLen);
 	Stream_Read_UINT32(irp->input, atrLen);
 	
-	status = handle_RedirHandleRef(scard, irp, redirect, &hContext, &hCard);
+	status = handle_RedirHandleRef(smartcard, irp, redirect, &hContext, &hCard);
 
 	if (status)
 		goto finish;
 
-	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
 	{
 		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
 		status = SCARD_E_INVALID_TARGET;
@@ -1677,35 +1376,15 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, BOOL wide)
 	}
 
 	pbAtr = malloc(sizeof(BYTE) * atrLen);
-#ifdef SCARD_AUTOALLOCATE
+
 	readerLen = SCARD_AUTOALLOCATE;
-
 	status = SCardStatus(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
-#else
-	readerLen = 256;
-	readerName = malloc(readerLen);
-
-	status = SCardStatus(hCard, (LPSTR) readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
-#endif
 
 	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 		status = smartcard_output_return(irp, status);
 		goto finish;
 	}
-
-	DEBUG_SCARD("Success (state: 0x%08x, proto: 0x%08x)", (unsigned) state, (unsigned) protocol);
-	DEBUG_SCARD("       Reader: \"%s\"", readerName ? readerName : "NULL");
-
-#ifdef WITH_DEBUG_SCARD
-	fprintf(stderr, "       ATR: ");
-	for (i = 0; i < atrLen; i++)
-		fprintf(stderr, "%02x%c", pbAtr[i], (i == atrLen - 1) ? ' ' : ':');
-	fprintf(stderr, "\n");
-#endif
-
-	state = smartcard_map_state(state);
 
 	poslen1 = Stream_GetPosition(irp->output);
 	Stream_Write_UINT32(irp->output, readerLen);
@@ -1738,11 +1417,7 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, BOOL wide)
 finish:
 	if (readerName)
 	{
-#ifdef SCARD_AUTOALLOCATE
-		SCardFreeMemory(hContext, readerName); 
-#else
-		free(readerName);
-#endif
+		SCardFreeMemory(hContext, readerName);
 	}
 
 	if (pbAtr)
@@ -1751,7 +1426,7 @@ finish:
 	return status;
 }
 
-static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_Transmit(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	int redirect = 0;
 	LONG status;
@@ -1777,17 +1452,17 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp)
 	ioSendPci.v = NULL;
 	ioRecvPci.v = NULL;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_CardHandle(scard, irp, &redirect);
+	status = handle_CardHandle(smartcard, irp, &redirect);
 
 	if (status)
 		goto finish;
@@ -1813,7 +1488,7 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp)
 	Stream_Read_UINT32(irp->input, recvBufferIsNULL);
 	Stream_Read_UINT32(irp->input, cbRecvLength);
 
-	status = handle_RedirHandleRef(scard, irp, redirect, &hContext, &hCard);
+	status = handle_RedirHandleRef(smartcard, irp, redirect, &hContext, &hCard);
 	if (status)
 		goto finish;
 	
@@ -1956,12 +1631,11 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp)
 		pPioRecvPci = ioRecvPci.rq;
 	}
 	else
+	{
 		pPioRecvPci = NULL;
+	}
 
-	DEBUG_SCARD("SCardTransmit(hcard: 0x%08lx, send: %d bytes, recv: %d bytes)",
-		(long unsigned) hCard, (int) cbSendLength, (int) cbRecvLength);
-
-	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
 	{
 		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
 		status = SCARD_E_INVALID_TARGET;
@@ -1973,12 +1647,10 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp)
 
 	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
+
 	}
 	else
 	{
-		DEBUG_SCARD("Success (%d bytes)", (int) cbRecvLength);
-
 		Stream_Write_UINT32(irp->output, 0); 	/* pioRecvPci 0x00; */
 
 		if (recvBuf)
@@ -2003,7 +1675,7 @@ finish:
 	return status;
 }
 
-static UINT32 handle_Control(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_Control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	int redirect = 0;
 	LONG status;
@@ -2018,17 +1690,17 @@ static UINT32 handle_Control(SMARTCARD_DEVICE* scard, IRP* irp)
 	DWORD nBytesReturned;
 	DWORD outBufferSize;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		goto finish;
 
-	status = handle_CardHandle(scard, irp, &redirect);
+	status = handle_CardHandle(smartcard, irp, &redirect);
 
 	if (status)
 		goto finish;
@@ -2047,19 +1719,17 @@ static UINT32 handle_Control(SMARTCARD_DEVICE* scard, IRP* irp)
 	Stream_Read_UINT32(irp->input, fpvOutBufferIsNULL);
 	Stream_Read_UINT32(irp->input, outBufferSize);
 
-	status = handle_RedirHandleRef(scard, irp, redirect, &hContext, &hCard);
+	status = handle_RedirHandleRef(smartcard, irp, redirect, &hContext, &hCard);
 
 	if (status)
 		goto finish;
 
 	/* Translate Windows SCARD_CTL_CODE's to corresponding local code */
-	if (WIN_CTL_DEVICE_TYPE(controlCode) == WIN_FILE_DEVICE_SMARTCARD)
+	if (DEVICE_TYPE_FROM_CTL_CODE(controlCode) == FILE_DEVICE_SMARTCARD)
 	{
-		controlFunction = WIN_CTL_FUNCTION(controlCode);
+		controlFunction = FUNCTION_FROM_CTL_CODE(controlCode);
 		controlCode = SCARD_CTL_CODE(controlFunction);
 	}
-
-	DEBUG_SCARD("controlCode: 0x%08x", (unsigned) controlCode);
 
 	if (pvInBuffer)
 	{
@@ -2089,7 +1759,7 @@ static UINT32 handle_Control(SMARTCARD_DEVICE* scard, IRP* irp)
 	nBytesReturned = outBufferSize;
 	sendBuffer = malloc(outBufferSize);
 
-	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
 	{
 		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
 		status = SCARD_E_INVALID_TARGET;
@@ -2098,11 +1768,6 @@ static UINT32 handle_Control(SMARTCARD_DEVICE* scard, IRP* irp)
 
 	status = SCardControl(hCard, (DWORD) controlCode, recvBuffer, (DWORD) recvLength,
 		sendBuffer, (DWORD) outBufferSize, &nBytesReturned);
-
-	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
-	else
-		DEBUG_SCARD("Success (out: %u bytes)", (unsigned) nBytesReturned);
 
 	Stream_Write_UINT32(irp->output, (UINT32) nBytesReturned);
 	Stream_Write_UINT32(irp->output, 0x00000004);
@@ -2125,7 +1790,7 @@ finish:
 	return status;
 }
 
-static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	int redirect = 0;
 	LONG status;
@@ -2136,17 +1801,17 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* scard, IRP* irp)
 	DWORD attrLen = 0;
 	BYTE* pbAttr = NULL;
 
-	status = handle_CommonTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_PrivateTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_CardHandle(scard, irp, &redirect);
+	status = handle_CardHandle(smartcard, irp, &redirect);
 
 	if (status)
 		return status;
@@ -2162,41 +1827,23 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* scard, IRP* irp)
 	Stream_Seek(irp->input, 0x4);
 	Stream_Read_UINT32(irp->input, dwAttrLen);
 	
-	status = handle_RedirHandleRef(scard, irp, redirect, &hContext, &hCard);
+	status = handle_RedirHandleRef(smartcard, irp, redirect, &hContext, &hCard);
 
 	if (status)
 		return status;
 
-	DEBUG_SCARD("hcard: 0x%08x, attrib: 0x%08x (%d bytes)",
-		(unsigned) hCard, (unsigned) dwAttrId, (int) dwAttrLen);
-
-	if (!check_handle_is_forwarded(scard, hCard, hContext))
+	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
 	{
 		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
 		return SCARD_E_INVALID_TARGET;
 	}
 
-#ifdef SCARD_AUTOALLOCATE
-	if (dwAttrLen == 0)
-	{
-		attrLen = 0;
-	}
-	else
-	{
-		attrLen = SCARD_AUTOALLOCATE;
-	}
-#endif
-
+	attrLen = (dwAttrLen == 0) ? 0 : SCARD_AUTOALLOCATE;
 	status = SCardGetAttrib(hCard, dwAttrId, attrLen == 0 ? NULL : (BYTE*) &pbAttr, &attrLen);
 
 	if (status != SCARD_S_SUCCESS)
 	{
-#ifdef SCARD_AUTOALLOCATE
-		if (dwAttrLen == 0)
-			attrLen = 0;
-		else
-			attrLen = SCARD_AUTOALLOCATE;
-#endif
+		attrLen = (dwAttrLen == 0) ? 0 : SCARD_AUTOALLOCATE;
 	}
 
 	if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_A && status == SCARD_E_UNSUPPORTED_FEATURE)
@@ -2206,14 +1853,10 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* scard, IRP* irp)
 
 		if (status != SCARD_S_SUCCESS)
 		{
-#ifdef SCARD_AUTOALLOCATE
-			if (dwAttrLen == 0)
-				attrLen = 0;
-			else
-				attrLen = SCARD_AUTOALLOCATE;
-#endif
+			attrLen = (dwAttrLen == 0) ? 0 : SCARD_AUTOALLOCATE;
 		}
 	}
+
 	if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W && status == SCARD_E_UNSUPPORTED_FEATURE)
 	{
 		status = SCardGetAttrib(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A,
@@ -2221,12 +1864,7 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* scard, IRP* irp)
 
 		if (status != SCARD_S_SUCCESS)
 		{
-#ifdef SCARD_AUTOALLOCATE
-			if (dwAttrLen == 0)
-				attrLen = 0;
-			else
-				attrLen = SCARD_AUTOALLOCATE;
-#endif
+			attrLen = (dwAttrLen == 0) ? 0 : SCARD_AUTOALLOCATE;
 		}
 	}
 	if (attrLen > dwAttrLen && pbAttr != NULL)
@@ -2237,14 +1875,11 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* scard, IRP* irp)
 
 	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned int) status);
 		status = smartcard_output_return(irp, status);
 		goto finish;
 	}
 	else
 	{
-		DEBUG_SCARD("Success (%d bytes)", (int) dwAttrLen);
-
 		Stream_Write_UINT32(irp->output, dwAttrLen);
 		Stream_Write_UINT32(irp->output, 0x00000200);
 		Stream_Write_UINT32(irp->output, dwAttrLen);
@@ -2264,16 +1899,12 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* scard, IRP* irp)
 	smartcard_output_alignment(irp, 8);
 
 finish:
-#ifdef SCARD_AUTOALLOCATE
 	SCardFreeMemory(hContext, pbAttr);
-#else
-	free(pbAttr);
-#endif
 
 	return status;
 }
 
-static UINT32 handle_AccessStartedEvent(SMARTCARD_DEVICE* scard, IRP* irp)
+static UINT32 handle_AccessStartedEvent(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	if (Stream_GetRemainingLength(irp->input) < 4)
 	{
@@ -2288,7 +1919,7 @@ static UINT32 handle_AccessStartedEvent(SMARTCARD_DEVICE* scard, IRP* irp)
 	return SCARD_S_SUCCESS;
 }
 
-void scard_error(SMARTCARD_DEVICE* scard, IRP* irp, UINT32 ntstatus)
+void scard_error(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32 ntstatus)
 {
 	/* [MS-RDPESC] 3.1.4.4 */
 	DEBUG_WARN("scard processing error %x", ntstatus);
@@ -2298,16 +1929,7 @@ void scard_error(SMARTCARD_DEVICE* scard, IRP* irp, UINT32 ntstatus)
 	irp->Complete(irp);
 }
 
-/* http://msdn.microsoft.com/en-gb/library/ms938473.aspx */
-typedef struct _SERVER_SCARD_ATRMASK
-{
-	UINT32 cbAtr;
-	BYTE rgbAtr[36];
-	BYTE rgbMask[36];
-}
-SERVER_SCARD_ATRMASK;
-
-static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
+static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL wide)
 {
 	int redirect = 0;
 	LONG status;
@@ -2318,20 +1940,20 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wi
 	SCARD_READERSTATE* cur = NULL;
 	SCARD_READERSTATE* rsCur = NULL;
 	SCARD_READERSTATE* readerStates = NULL;
-	SERVER_SCARD_ATRMASK* curAtr = NULL;
-	SERVER_SCARD_ATRMASK* pAtrMasks = NULL;
+	SCARD_ATRMASK* curAtr = NULL;
+	SCARD_ATRMASK* pAtrMasks = NULL;
 
-	status = handle_CommonTypeHeader(scard, irp);
-
-	if (status)
-		return status;
-
-	status = handle_PrivateTypeHeader(scard, irp);
+	status = handle_CommonTypeHeader(smartcard, irp);
 
 	if (status)
 		return status;
 
-	status = handle_Context(scard, irp, &redirect);
+	status = handle_PrivateTypeHeader(smartcard, irp);
+
+	if (status)
+		return status;
+
+	status = handle_Context(smartcard, irp, &redirect);
 
 	if (status)
 		return status;
@@ -2344,7 +1966,7 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wi
 	}
 
 	Stream_Seek(irp->input, 4);
-	status = handle_RedirContextRef(scard, irp, redirect, &hContext);
+	status = handle_RedirContextRef(smartcard, irp, redirect, &hContext);
 
 	if (status)
 		return status;
@@ -2353,7 +1975,7 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wi
 	Stream_Read_UINT32(irp->input, hContext);
 	Stream_Read_UINT32(irp->input, atrMaskCount);
 
-	pAtrMasks = malloc(atrMaskCount * sizeof(SERVER_SCARD_ATRMASK));
+	pAtrMasks = malloc(atrMaskCount * sizeof(SCARD_ATRMASK));
 
 	if (!pAtrMasks)
 		return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
@@ -2403,11 +2025,6 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wi
 		Stream_Read_UINT32(irp->input, dataLength);
 		smartcard_input_repos(irp, smartcard_input_string(irp, (char **) &cur->szReader, dataLength, wide));
 
-		DEBUG_SCARD("   \"%s\"", cur->szReader ? cur->szReader : "NULL");
-		DEBUG_SCARD("       user: 0x%08x, state: 0x%08x, event: 0x%08x",
-				(unsigned) cur->pvUserData, (unsigned) cur->dwCurrentState,
-				(unsigned) cur->dwEventState);
-
 		if (!cur->szReader)
 		{
 			DEBUG_WARN("cur->szReader=%p", cur->szReader);
@@ -2418,15 +2035,13 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wi
 	}
 
 	status = SCardGetStatusChange(hContext, 0x00000001, readerStates, readerCount);
+
 	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)",
-			SCardGetErrorString(status), (unsigned) status);
 		status = smartcard_output_return(irp, status);
 		goto finish;
 	}
 
-	DEBUG_SCARD("Success");
 	for (i = 0, curAtr = pAtrMasks; i < atrMaskCount; i++, curAtr++)
 	{
 		for (j = 0, rsCur = readerStates; j < readerCount; j++, rsCur++)
@@ -2521,7 +2136,7 @@ BOOL smartcard_async_op(IRP* irp)
 	return TRUE;
 }
 
-void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
+void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT32 pos;
 	UINT32 result;
@@ -2586,28 +2201,26 @@ void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 	/* body. input_len contains the length of the remaining data
 	 * that can be read from the current position of irp->input,
 	 * so pass it on ;) */
-	DEBUG_SCARD("ioctl '%s' [%08X], length=%d [%d]",
-			ioctl_to_string(ioctl_code), ioctl_code, input_len,
-			Stream_GetRemainingLength(irp->input));
+
 	switch (ioctl_code)
 	{
 		case SCARD_IOCTL_ESTABLISH_CONTEXT:
-			result = handle_EstablishContext(scard, irp);
+			result = handle_EstablishContext(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_IS_VALID_CONTEXT:
-			result = handle_IsValidContext(scard, irp);
+			result = handle_IsValidContext(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_RELEASE_CONTEXT:
-			result = handle_ReleaseContext(scard, irp);
+			result = handle_ReleaseContext(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_LIST_READERS:
-			result = handle_ListReaders(scard, irp, 0);
+			result = handle_ListReaders(smartcard, irp, 0);
 			break;
 		case SCARD_IOCTL_LIST_READERS + 4:
-			result = handle_ListReaders(scard, irp, 1);
+			result = handle_ListReaders(smartcard, irp, 1);
 			break;
 
 		case SCARD_IOCTL_LIST_READER_GROUPS:
@@ -2617,71 +2230,71 @@ void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 			break;
 
 		case SCARD_IOCTL_GET_STATUS_CHANGE:
-			result = handle_GetStatusChange(scard, irp, 0);
+			result = handle_GetStatusChange(smartcard, irp, 0);
 			break;
 		case SCARD_IOCTL_GET_STATUS_CHANGE + 4:
-			result = handle_GetStatusChange(scard, irp, 1);
+			result = handle_GetStatusChange(smartcard, irp, 1);
 			break;
 
 		case SCARD_IOCTL_CANCEL:
-			result = handle_Cancel(scard, irp);
+			result = handle_Cancel(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_CONNECT:
-			result = handle_Connect(scard, irp, 0);
+			result = handle_Connect(smartcard, irp, 0);
 			break;
 		case SCARD_IOCTL_CONNECT + 4:
-			result = handle_Connect(scard, irp, 1);
+			result = handle_Connect(smartcard, irp, 1);
 			break;
 
 		case SCARD_IOCTL_RECONNECT:
-			result = handle_Reconnect(scard, irp);
+			result = handle_Reconnect(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_DISCONNECT:
-			result = handle_Disconnect(scard, irp);
+			result = handle_Disconnect(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_BEGIN_TRANSACTION:
-			result = handle_BeginTransaction(scard, irp);
+			result = handle_BeginTransaction(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_END_TRANSACTION:
-			result = handle_EndTransaction(scard, irp);
+			result = handle_EndTransaction(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_STATE:
-			result = handle_State(scard, irp);
+			result = handle_State(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_STATUS:
-			result = handle_Status(scard, irp, 0);
+			result = handle_Status(smartcard, irp, 0);
 			break;
 		case SCARD_IOCTL_STATUS + 4:
-			result = handle_Status(scard, irp, 1);
+			result = handle_Status(smartcard, irp, 1);
 			break;
 
 		case SCARD_IOCTL_TRANSMIT:
-			result = handle_Transmit(scard, irp);
+			result = handle_Transmit(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_CONTROL:
-			result = handle_Control(scard, irp);
+			result = handle_Control(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_GETATTRIB:
-			result = handle_GetAttrib(scard, irp);
+			result = handle_GetAttrib(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_ACCESS_STARTED_EVENT:
-			result = handle_AccessStartedEvent(scard, irp);
+			result = handle_AccessStartedEvent(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_LOCATE_CARDS_BY_ATR:
-			result = handle_LocateCardsByATR(scard, irp, 0);
+			result = handle_LocateCardsByATR(smartcard, irp, 0);
 			break;
 		case SCARD_IOCTL_LOCATE_CARDS_BY_ATR + 4:
-			result = handle_LocateCardsByATR(scard, irp, 1);
+			result = handle_LocateCardsByATR(smartcard, irp, 1);
 			break;
 
 		default:
@@ -2693,7 +2306,7 @@ void smartcard_device_control(SMARTCARD_DEVICE* scard, IRP* irp)
 
 	/* look for NTSTATUS errors */
 	if ((result & 0xc0000000) == 0xc0000000)
-		return scard_error(scard, irp, result);
+		return scard_error(smartcard, irp, result);
 
 	/* per Ludovic Rousseau, map different usage of this particular
   	 * error code between pcsc-lite & windows */
