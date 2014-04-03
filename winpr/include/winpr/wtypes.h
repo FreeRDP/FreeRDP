@@ -64,7 +64,7 @@ typedef int BOOL;
 
 typedef BOOL *PBOOL, *LPBOOL;
 
-typedef unsigned char BYTE, *PBYTE, *LPBYTE;
+typedef unsigned char BYTE, *PBYTE, *LPBYTE, *LPCBYTE;
 typedef BYTE BOOLEAN, *PBOOLEAN;
 typedef unsigned short WCHAR, *PWCHAR;
 typedef WCHAR* BSTR;
@@ -94,6 +94,8 @@ typedef HANDLE HINSTANCE;
 typedef HANDLE HMODULE;
 typedef HANDLE HWND;
 typedef HANDLE HBITMAP;
+typedef HANDLE HICON;
+typedef HANDLE HCURSOR;
 
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
@@ -161,7 +163,7 @@ typedef struct _GUID
 	UINT16 Data2;
 	UINT16 Data3;
 	BYTE Data4[8];
-} GUID, UUID, *PGUID;
+} GUID, UUID, *PGUID, *LPGUID, *LPCGUID;
 
 typedef struct _LUID
 {
