@@ -396,7 +396,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	wStream* s;
 	UINT32 length;
 	UINT32 key_len;
-	BYTE *crypt_client_random;
+	BYTE *crypt_client_random = NULL;
 	BOOL ret = FALSE;
 	int status = 0;
 
@@ -493,14 +493,15 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 	ret = TRUE;
 end:
-	free(crypt_client_random);
+	if (crypt_client_random)
+		free(crypt_client_random);
 	return ret;
 }
 
 BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 {
-	BYTE* client_random;
-	BYTE* crypt_client_random;
+	BYTE* client_random = NULL;
+	BYTE* crypt_client_random = NULL;
 	UINT32 rand_len, key_len;
 	UINT16 channel_id, length, sec_flags;
 	BYTE* mod;
@@ -545,7 +546,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (rand_len != key_len + 8)
 	{
 		fprintf(stderr, "%s: invalid encrypted client random length\n", __FUNCTION__);
-		goto end;
+		goto end2;
 	}
 
 	crypt_client_random = calloc(1, rand_len);
@@ -609,9 +610,11 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 	ret = TRUE;
 end:
-	free(crypt_client_random);
+	if (crypt_client_random)
+		free(crypt_client_random);
 end2:
-	free(client_random);
+	if (client_random)
+		free(client_random);
 
 	return ret;
 }
