@@ -82,10 +82,6 @@ WINPR_API BOOL CancelSynchronousIo(HANDLE hThread);
 }
 #endif
 
-/*
- * WinPR I/O Manager Custom API
- */
-
 #define DEVICE_TYPE ULONG
 
 #define FILE_DEVICE_BEEP			0x00000001
@@ -155,6 +151,27 @@ WINPR_API BOOL CancelSynchronousIo(HANDLE hThread);
 #define FILE_DEVICE_MT_TRANSPORT		0x00000043
 #define FILE_DEVICE_BIOMETRIC			0x00000044
 #define FILE_DEVICE_PMI				0x00000045
+
+#define CTL_CODE(DeviceType, Function, Method, Access) \
+	(((DeviceType) << 16) | ((Access) << 14) | ((Function) << 2) | (Method))
+
+#define DEVICE_TYPE_FROM_CTL_CODE(ctrlCode)	(((DWORD)(ctrlCode & 0xFFFF0000)) >> 16)
+
+#define METHOD_FROM_CTL_CODE(ctrlCode)		((DWORD)(ctrlCode & 3))
+
+#define METHOD_BUFFERED				0
+#define METHOD_IN_DIRECT			1
+#define METHOD_OUT_DIRECT			2
+#define METHOD_NEITHER				3
+
+#define FILE_ANY_ACCESS				0
+#define FILE_SPECIAL_ACCESS			(FILE_ANY_ACCESS)
+#define FILE_READ_ACCESS			(0x0001)
+#define FILE_WRITE_ACCESS			(0x0002)
+
+/*
+ * WinPR I/O Manager Custom API
+ */
 
 typedef HANDLE PDRIVER_OBJECT_EX;
 typedef HANDLE PDEVICE_OBJECT_EX;

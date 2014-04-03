@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/smartcard.h>
 
 #include <freerdp/utils/list.h>
 #include <freerdp/utils/debug.h>
@@ -148,7 +149,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			smartcard->name = name;
 	}
 
-	smartcard->IrpQueue = MessageQueue_New();
+	smartcard->IrpQueue = MessageQueue_New(NULL);
 	smartcard->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) smartcard_thread_func,
 			smartcard, CREATE_SUSPENDED, NULL);
 

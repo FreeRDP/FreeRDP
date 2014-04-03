@@ -23,6 +23,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#include <winpr/io.h>
 #include <winpr/error.h>
 
 #ifdef _WIN32
@@ -87,6 +88,7 @@
 #define SCARD_E_PIN_CACHE_EXPIRED		((DWORD)0x80100032L)
 #define SCARD_E_NO_PIN_CACHE			((DWORD)0x80100033L)
 #define SCARD_E_READ_ONLY_CARD			((DWORD)0x80100034L)
+
 #define SCARD_W_UNSUPPORTED_CARD		((DWORD)0x80100065L)
 #define SCARD_W_UNRESPONSIVE_CARD		((DWORD)0x80100066L)
 #define SCARD_W_UNPOWERED_CARD			((DWORD)0x80100067L)
@@ -334,6 +336,14 @@ typedef void (WINAPI *LPOCNDSCPROC)(SCARDCONTEXT hSCardContext, SCARDHANDLE hCar
 
 #define SCARD_AUDIT_CHV_FAILURE		0x0
 #define SCARD_AUDIT_CHV_SUCCESS		0x1
+
+#define SCardListCardTypes SCardListCards
+
+#define PCSCardIntroduceCardType(hContext, szCardName, pbAtr, pbAtrMask, cbAtrLen, pguidPrimaryProvider, rgguidInterfaces, dwInterfaceCount) \
+	SCardIntroduceCardType(hContext, szCardName, pguidPrimaryProvider, rgguidInterfaces, dwInterfaceCount, pbAtr, pbAtrMask, cbAtrLen)
+
+#define SCardGetReaderCapabilities SCardGetAttrib
+#define SCardSetReaderCapabilities SCardSetAttrib
 
 typedef struct
 {
@@ -673,6 +683,8 @@ WINSCARDAPI LONG WINAPI SCardGetStatusChangeA(SCARDCONTEXT hContext,
 WINSCARDAPI LONG WINAPI SCardGetStatusChangeW(SCARDCONTEXT hContext,
 		DWORD dwTimeout, LPSCARD_READERSTATEW rgReaderStates, DWORD cReaders);
 
+WINSCARDAPI LONG WINAPI SCardCancel(SCARDCONTEXT hContext);
+
 WINSCARDAPI LONG WINAPI SCardConnectA(SCARDCONTEXT hContext,
 		LPCSTR szReader, DWORD dwShareMode, DWORD dwPreferredProtocols,
 		LPSCARDHANDLE phCard, LPDWORD pdwActiveProtocol);
@@ -817,6 +829,20 @@ WINSCARDAPI LONG WINAPI SCardAudit(SCARDCONTEXT hContext, DWORD dwEvent);
 }
 #endif
 
+#endif
+
+/**
+ * Extended API
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINSCARDAPI const char* WINAPI SCardGetErrorString(LONG errorCode);
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* WINPR_SMARTCARD_H */

@@ -28,36 +28,10 @@
 #include <string.h>
 #include <assert.h>
 
-#ifdef _WIN32
-#include <winscard.h>
-#else
-#include <strings.h>
-#define BOOL PCSC_BOOL
-#include <PCSC/pcsclite.h>
-#include <PCSC/winscard.h>
-#if !defined(__APPLE__)
-#include <PCSC/reader.h>
-#else
-/* On OS X reader.h isn't available so define it here */
-#endif
-#define SCARD_ATTR_VALUE(Class, Tag) ((((ULONG)(Class)) << 16) | ((ULONG)(Tag)))
-#define SCARD_CLASS_SYSTEM     0x7fff   /**< System-specific definitions */
-#define SCARD_ATTR_DEVICE_FRIENDLY_NAME_A SCARD_ATTR_VALUE(SCARD_CLASS_SYSTEM, 0x0003)
-#define SCARD_ATTR_DEVICE_FRIENDLY_NAME_W SCARD_ATTR_VALUE(SCARD_CLASS_SYSTEM, 0x0005)
-#ifdef UNICODE
-#define SCARD_ATTR_DEVICE_FRIENDLY_NAME SCARD_ATTR_DEVICE_FRIENDLY_NAME_W /**< Reader's display name. */
-#define SCARD_ATTR_DEVICE_SYSTEM_NAME SCARD_ATTR_DEVICE_SYSTEM_NAME_W /**< Reader's system name. */
-#else
-#define SCARD_ATTR_DEVICE_FRIENDLY_NAME SCARD_ATTR_DEVICE_FRIENDLY_NAME_A /**< Reader's display name. */
-#define SCARD_ATTR_DEVICE_SYSTEM_NAME SCARD_ATTR_DEVICE_SYSTEM_NAME_A /**< Reader's system name. */
-#define SCARD_CTL_CODE(code) (0x42000000 + (code))
-#endif
-#undef BOOL
-#endif
-
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
+#include <winpr/smartcard.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
@@ -489,9 +463,9 @@ static BOOL check_handle_is_forwarded(SMARTCARD_DEVICE *scard,
 	LONG status;
 	DWORD state = 0, protocol = 0;
 	DWORD readerLen;
-	DWORD atrLen = MAX_ATR_SIZE;
+	DWORD atrLen = SCARD_ATR_LENGTH;
 	char* readerName = NULL;
-	BYTE pbAtr[MAX_ATR_SIZE];
+	BYTE pbAtr[SCARD_ATR_LENGTH];
 
 	assert(scard);
 	assert(hCard);
@@ -777,7 +751,7 @@ static UINT32 handle_ReleaseContext(SMARTCARD_DEVICE* scard, IRP* irp)
 	ZeroMemory(&scard->hContext, sizeof(scard->hContext));
 
 	if (status)
-		DEBUG_SCARD("%s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("%s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 	else
 		DEBUG_SCARD("success 0x%08lx", hContext);
 
@@ -815,7 +789,7 @@ static UINT32 handle_IsValidContext(SMARTCARD_DEVICE* scard, IRP* irp)
 	status = SCardIsValidContext(hContext);
 
 	if (status)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success context: 0x%08x", (unsigned) hContext);
 
@@ -914,7 +888,7 @@ static UINT32 handle_ListReaders(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 #endif
 	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 		goto finish;
 	}
 
@@ -1014,7 +988,7 @@ static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wid
 	{
 		DEBUG_WARN("length violation %d [%d]", 12,
 				Stream_GetRemainingLength(irp->input));
-		status =SCARD_F_INTERNAL_ERROR;
+		status = SCARD_F_INTERNAL_ERROR;
 		goto finish;
 	}
 
@@ -1127,7 +1101,7 @@ static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wid
 	status = SCardGetStatusChange(hContext, (DWORD) dwTimeout, readerStates, (DWORD) readerCount);
 
 	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success");
 
@@ -1163,7 +1137,7 @@ finish:
 			cur = &readerStates[i];
 
 			if (cur->szReader)
-				free(cur->szReader);
+				free((void*) cur->szReader);
 			cur->szReader = NULL;
 		}
 		free(readerStates);
@@ -1172,7 +1146,7 @@ finish:
 	return status;
 }
 
-static UINT32 handle_Cancel(SMARTCARD_DEVICE *scard, IRP* irp)
+static UINT32 handle_Cancel(SMARTCARD_DEVICE* scard, IRP* irp)
 {
 	int redirect = 0;
 	LONG status;
@@ -1201,9 +1175,9 @@ static UINT32 handle_Cancel(SMARTCARD_DEVICE *scard, IRP* irp)
 	status = SCardCancel(hContext);
 
 	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 	else
-		DEBUG_SCARD("Success context: 0x%08x %s", (unsigned) hContext, pcsc_stringify_error(status));
+		DEBUG_SCARD("Success context: 0x%08x %s", (unsigned) hContext, SCardGetErrorString(status));
 
 	smartcard_output_alignment(irp, 8);
 
@@ -1283,7 +1257,7 @@ static UINT32 handle_Connect(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wide)
 		(DWORD) dwPreferredProtocol, &hCard, (DWORD *) &dwActiveProtocol);
 
 	if (status != SCARD_S_SUCCESS)
-		DEBUG_WARN("Failure: %s 0x%08x", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_WARN("Failure: %s 0x%08x", SCardGetErrorString(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success 0x%08x", (unsigned) hCard);
 
@@ -1361,7 +1335,7 @@ static UINT32 handle_Reconnect(SMARTCARD_DEVICE* scard, IRP* irp)
 	    (DWORD) dwInitialization, (LPDWORD) &dwActiveProtocol);
 
 	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success (proto: 0x%08x)", (unsigned) dwActiveProtocol);
 
@@ -1420,7 +1394,7 @@ static UINT32 handle_Disconnect(SMARTCARD_DEVICE* scard, IRP* irp)
 	status = SCardDisconnect(hCard, (DWORD) dwDisposition);
 
 	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success");
 
@@ -1475,7 +1449,7 @@ static UINT32 handle_BeginTransaction(SMARTCARD_DEVICE* scard, IRP* irp)
 	status = SCardBeginTransaction(hCard);
 
 	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success hcard: 0x%08x", (unsigned) hCard);
 
@@ -1529,7 +1503,7 @@ static UINT32 handle_EndTransaction(SMARTCARD_DEVICE* scard, IRP* irp)
 	status = SCardEndTransaction(hCard, dwDisposition);
 
 	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success hcard: 0x%08x", (unsigned) hCard);
 
@@ -1546,9 +1520,9 @@ static UINT32 handle_State(SMARTCARD_DEVICE* scard, IRP* irp)
 	SCARDCONTEXT hContext;
 	DWORD state = 0, protocol = 0;
 	DWORD readerLen;
-	DWORD atrLen = MAX_ATR_SIZE;
+	DWORD atrLen = SCARD_ATR_LENGTH;
 	char* readerName = NULL;
-	BYTE pbAtr[MAX_ATR_SIZE];
+	BYTE pbAtr[SCARD_ATR_LENGTH];
 
 #ifdef WITH_DEBUG_SCARD
 	int i;
@@ -1605,7 +1579,7 @@ static UINT32 handle_State(SMARTCARD_DEVICE* scard, IRP* irp)
 
 	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 		status = smartcard_output_return(irp, status);
 		goto finish;
 	}
@@ -1653,7 +1627,7 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, BOOL wide)
 	SCARDCONTEXT hContext;
 	DWORD state, protocol;
 	DWORD readerLen = 0;
-	DWORD atrLen = MAX_ATR_SIZE;
+	DWORD atrLen = SCARD_ATR_LENGTH;
 	char* readerName = NULL;
 	BYTE *pbAtr = NULL;
 	UINT32 dataLength = 0;
@@ -1716,7 +1690,7 @@ static DWORD handle_Status(SMARTCARD_DEVICE *scard, IRP* irp, BOOL wide)
 
 	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 		status = smartcard_output_return(irp, status);
 		goto finish;
 	}
@@ -1999,7 +1973,7 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* scard, IRP* irp)
 
 	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 	}
 	else
 	{
@@ -2126,7 +2100,7 @@ static UINT32 handle_Control(SMARTCARD_DEVICE* scard, IRP* irp)
 		sendBuffer, (DWORD) outBufferSize, &nBytesReturned);
 
 	if (status != SCARD_S_SUCCESS)
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned) status);
 	else
 		DEBUG_SCARD("Success (out: %u bytes)", (unsigned) nBytesReturned);
 
@@ -2263,7 +2237,7 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* scard, IRP* irp)
 
 	if (status != SCARD_S_SUCCESS)
 	{
-		DEBUG_SCARD("Failure: %s (0x%08x)", pcsc_stringify_error(status), (unsigned int) status);
+		DEBUG_SCARD("Failure: %s (0x%08x)", SCardGetErrorString(status), (unsigned int) status);
 		status = smartcard_output_return(irp, status);
 		goto finish;
 	}
@@ -2447,7 +2421,7 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* scard, IRP* irp, BOOL wi
 	if (status != SCARD_S_SUCCESS)
 	{
 		DEBUG_SCARD("Failure: %s (0x%08x)",
-			pcsc_stringify_error(status), (unsigned) status);
+			SCardGetErrorString(status), (unsigned) status);
 		status = smartcard_output_return(irp, status);
 		goto finish;
 	}
