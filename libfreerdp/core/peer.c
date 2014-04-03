@@ -52,6 +52,13 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 			fprintf(stderr, "%s: inavlid RDP key file %s\n", __FUNCTION__, settings->RdpKeyFile);
 			return FALSE;
 		}
+		if (settings->RdpServerRsaKey->ModulusLength > 256)
+		{
+			fprintf(stderr, "%s: Key sizes > 2048 are currently not supported for RDP security.\n", __FUNCTION__);
+			fprintf(stderr, "%s: Set a different key file than %s\n", __FUNCTION__, settings->RdpKeyFile);
+			exit(1);
+		}
+
 	}
 
 	return TRUE;
