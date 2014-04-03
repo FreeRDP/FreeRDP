@@ -50,6 +50,7 @@ struct rdp_svc_plugin
 	void (*terminate_callback)(rdpSvcPlugin* plugin);
 
 	HANDLE thread;
+	HANDLE started;
 	wStream* data_in;
 	void* InitHandle;
 	DWORD OpenHandle;

@@ -177,6 +177,7 @@ static void* svc_plugin_thread_func(void* arg)
 
 	IFCALL(plugin->connect_callback, plugin);
 
+	SetEvent(plugin->started);
 	while (1)
 	{
 		if (!MessageQueue_Wait(plugin->MsgPipe->In))
@@ -225,6 +226,7 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, LPVOID pData, UIN
 	plugin->MsgPipe = MessagePipe_New();
 
 	plugin->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) svc_plugin_thread_func, (void*) plugin, 0, NULL);
+	WaitForSingleObject(plugin->started,INFINITE);
 }
 
 static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
@@ -234,6 +236,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 
 	MessagePipe_Free(plugin->MsgPipe);
 	CloseHandle(plugin->thread);
+	CloseHandle(plugin->started);
 
 	plugin->channel_entry_points.pVirtualChannelClose(plugin->OpenHandle);
 
@@ -292,6 +295,7 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 
 	plugin->channel_entry_points.pInterface = *(plugin->channel_entry_points.ppInterface);
 	plugin->channel_entry_points.ppInterface = &(plugin->channel_entry_points.pInterface);
+	plugin->started = CreateEvent(NULL,TRUE,FALSE,NULL);
 
 	svc_plugin_add_init_handle_data(plugin->InitHandle, plugin);
 }
