@@ -2108,23 +2108,19 @@ BOOL smartcard_async_op(IRP* irp)
 	switch (ioctl_code)
 	{
 		/* non-blocking events */
-		case SCARD_IOCTL_ACCESS_STARTED_EVENT:
-
-		case SCARD_IOCTL_ESTABLISH_CONTEXT:
-		case SCARD_IOCTL_RELEASE_CONTEXT:
-		case SCARD_IOCTL_IS_VALID_CONTEXT:
-
+		case SCARD_IOCTL_ACCESSSTARTEDEVENT:
+		case SCARD_IOCTL_ESTABLISHCONTEXT:
+		case SCARD_IOCTL_RELEASECONTEXT:
+		case SCARD_IOCTL_ISVALIDCONTEXT:
 			return FALSE;
 			break;
 
 		/* async events */
-		case SCARD_IOCTL_GET_STATUS_CHANGE:
-		case SCARD_IOCTL_GET_STATUS_CHANGE + 4:
-
+		case SCARD_IOCTL_GETSTATUSCHANGEA:
+		case SCARD_IOCTL_GETSTATUSCHANGEW:
 		case SCARD_IOCTL_TRANSMIT:
-
-		case SCARD_IOCTL_STATUS:
-		case SCARD_IOCTL_STATUS + 4:
+		case SCARD_IOCTL_STATUSA:
+		case SCARD_IOCTL_STATUSW:
 			return TRUE;
 			break;
 
@@ -2143,7 +2139,7 @@ void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	UINT32 result_pos;
 	UINT32 output_len;
 	UINT32 input_len;
-	UINT32 ioctl_code;
+	UINT32 ioControlCode;
 	UINT32 stream_len;
 	UINT32 irp_result_pos;
 	UINT32 output_len_pos;
@@ -2159,7 +2155,7 @@ void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	Stream_Read_UINT32(irp->input, output_len);
 	Stream_Read_UINT32(irp->input, input_len);
-	Stream_Read_UINT32(irp->input, ioctl_code);
+	Stream_Read_UINT32(irp->input, ioControlCode);
 
 	Stream_Seek(irp->input, 20);	/* padding */
 
@@ -2202,37 +2198,37 @@ void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	 * that can be read from the current position of irp->input,
 	 * so pass it on ;) */
 
-	switch (ioctl_code)
+	switch (ioControlCode)
 	{
-		case SCARD_IOCTL_ESTABLISH_CONTEXT:
+		case SCARD_IOCTL_ESTABLISHCONTEXT:
 			result = handle_EstablishContext(smartcard, irp);
 			break;
 
-		case SCARD_IOCTL_IS_VALID_CONTEXT:
+		case SCARD_IOCTL_ISVALIDCONTEXT:
 			result = handle_IsValidContext(smartcard, irp);
 			break;
 
-		case SCARD_IOCTL_RELEASE_CONTEXT:
+		case SCARD_IOCTL_RELEASECONTEXT:
 			result = handle_ReleaseContext(smartcard, irp);
 			break;
 
-		case SCARD_IOCTL_LIST_READERS:
+		case SCARD_IOCTL_LISTREADERSA:
 			result = handle_ListReaders(smartcard, irp, 0);
 			break;
-		case SCARD_IOCTL_LIST_READERS + 4:
+		case SCARD_IOCTL_LISTREADERSW:
 			result = handle_ListReaders(smartcard, irp, 1);
 			break;
 
-		case SCARD_IOCTL_LIST_READER_GROUPS:
-		case SCARD_IOCTL_LIST_READER_GROUPS + 4:
+		case SCARD_IOCTL_LISTREADERGROUPSA:
+		case SCARD_IOCTL_LISTREADERGROUPSW:
 			/* typically not used unless list_readers fail */
 			result = SCARD_F_INTERNAL_ERROR;
 			break;
 
-		case SCARD_IOCTL_GET_STATUS_CHANGE:
+		case SCARD_IOCTL_GETSTATUSCHANGEA:
 			result = handle_GetStatusChange(smartcard, irp, 0);
 			break;
-		case SCARD_IOCTL_GET_STATUS_CHANGE + 4:
+		case SCARD_IOCTL_GETSTATUSCHANGEW:
 			result = handle_GetStatusChange(smartcard, irp, 1);
 			break;
 
@@ -2240,10 +2236,10 @@ void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			result = handle_Cancel(smartcard, irp);
 			break;
 
-		case SCARD_IOCTL_CONNECT:
+		case SCARD_IOCTL_CONNECTA:
 			result = handle_Connect(smartcard, irp, 0);
 			break;
-		case SCARD_IOCTL_CONNECT + 4:
+		case SCARD_IOCTL_CONNECTW:
 			result = handle_Connect(smartcard, irp, 1);
 			break;
 
@@ -2255,11 +2251,11 @@ void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			result = handle_Disconnect(smartcard, irp);
 			break;
 
-		case SCARD_IOCTL_BEGIN_TRANSACTION:
+		case SCARD_IOCTL_BEGINTRANSACTION:
 			result = handle_BeginTransaction(smartcard, irp);
 			break;
 
-		case SCARD_IOCTL_END_TRANSACTION:
+		case SCARD_IOCTL_ENDTRANSACTION:
 			result = handle_EndTransaction(smartcard, irp);
 			break;
 
@@ -2267,10 +2263,10 @@ void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			result = handle_State(smartcard, irp);
 			break;
 
-		case SCARD_IOCTL_STATUS:
+		case SCARD_IOCTL_STATUSA:
 			result = handle_Status(smartcard, irp, 0);
 			break;
-		case SCARD_IOCTL_STATUS + 4:
+		case SCARD_IOCTL_STATUSW:
 			result = handle_Status(smartcard, irp, 1);
 			break;
 
@@ -2286,21 +2282,21 @@ void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			result = handle_GetAttrib(smartcard, irp);
 			break;
 
-		case SCARD_IOCTL_ACCESS_STARTED_EVENT:
+		case SCARD_IOCTL_ACCESSSTARTEDEVENT:
 			result = handle_AccessStartedEvent(smartcard, irp);
 			break;
 
-		case SCARD_IOCTL_LOCATE_CARDS_BY_ATR:
+		case SCARD_IOCTL_LOCATECARDSBYATRA:
 			result = handle_LocateCardsByATR(smartcard, irp, 0);
 			break;
-		case SCARD_IOCTL_LOCATE_CARDS_BY_ATR + 4:
+		case SCARD_IOCTL_LOCATECARDSBYATRW:
 			result = handle_LocateCardsByATR(smartcard, irp, 1);
 			break;
 
 		default:
 			result = 0xc0000001;
 			DEBUG_WARN("scard unknown ioctl 0x%x [%d]\n",
-					ioctl_code, input_len);
+					ioControlCode, input_len);
 			break;
 	}
 
@@ -2333,5 +2329,4 @@ void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	irp->IoStatus = 0;
 
 	irp->Complete(irp);
-
 }
