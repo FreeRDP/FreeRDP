@@ -396,7 +396,9 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	wStream* s;
 	UINT32 length;
 	UINT32 key_len;
-	BYTE crypt_client_random[256 + 8];
+	BYTE *crypt_client_random;
+	BOOL ret = FALSE;
+	int status = 0;
 
 	if (!rdp->settings->DisableEncryption)
 	{
@@ -414,12 +416,14 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (!rdp->settings->ClientRandom)
 		return FALSE;
 
-	ZeroMemory(crypt_client_random, sizeof(crypt_client_random));
 
 	crypto_nonce(rdp->settings->ClientRandom, CLIENT_RANDOM_LENGTH);
 	key_len = rdp->settings->RdpServerCertificate->cert_info.ModulusLength;
 	mod = rdp->settings->RdpServerCertificate->cert_info.Modulus;
 	exp = rdp->settings->RdpServerCertificate->cert_info.exponent;
+	crypt_client_random = calloc(1,key_len);
+	if (!crypt_client_random)
+		return FALSE;
 	crypto_rsa_public_encrypt(rdp->settings->ClientRandom, CLIENT_RANDOM_LENGTH, key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
@@ -434,14 +438,15 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	Stream_Write(s, crypt_client_random, length);
 	Stream_SealLength(s);
 
-	if (transport_write(rdp->mcs->transport, s) < 0)
-		return FALSE;
-
+	status = transport_write(rdp->mcs->transport, s);
 	Stream_Free(s, TRUE);
+
+	if (status < 0)
+		goto end;
 
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(rdp->settings->ClientRandom, rdp))
-		return FALSE;
+		goto end;
 
 	rdp->do_crypt = TRUE;
 
@@ -454,48 +459,53 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		if (!rdp->fips_encrypt)
 		{
 			fprintf(stderr, "%s: unable to allocate des3 encrypt key\n", __FUNCTION__);
-			return FALSE;
+			goto end;
 		}
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
 		if (!rdp->fips_decrypt)
 		{
 			fprintf(stderr, "%s: unable to allocate des3 decrypt key\n", __FUNCTION__);
-			return FALSE;
+			goto end;
 		}
 
 		rdp->fips_hmac = crypto_hmac_new();
 		if (!rdp->fips_hmac)
 		{
 			fprintf(stderr, "%s: unable to allocate fips hmac\n", __FUNCTION__);
-			return FALSE;
+			goto end;
 		}
-		return TRUE;
+		ret = TRUE;
+		goto end;
 	}
 
 	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
 	if (!rdp->rc4_decrypt_key)
 	{
 		fprintf(stderr, "%s: unable to allocate rc4 decrypt key\n", __FUNCTION__);
-		return FALSE;
+		goto end;
 	}
 
 	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
 	if (!rdp->rc4_encrypt_key)
 	{
 		fprintf(stderr, "%s: unable to allocate rc4 encrypt key\n", __FUNCTION__);
-		return FALSE;
+		goto end;
 	}
-	return TRUE;
+	ret = TRUE;
+end:
+	free(crypt_client_random);
+	return ret;
 }
 
 BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 {
-	BYTE client_random[64]; /* Should be only 32 after successful decryption, but on failure might take up to 64 bytes. */
-	BYTE crypt_client_random[256 + 8];
+	BYTE* client_random;
+	BYTE* crypt_client_random;
 	UINT32 rand_len, key_len;
 	UINT16 channel_id, length, sec_flags;
 	BYTE* mod;
 	BYTE* priv_exp;
+	BOOL ret = FALSE;
 
 	if (!rdp->settings->DisableEncryption)
 	{
@@ -528,14 +538,19 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
+	client_random = malloc(key_len);
+	if (!client_random)
+		return FALSE;
 
 	if (rand_len != key_len + 8)
 	{
 		fprintf(stderr, "%s: invalid encrypted client random length\n", __FUNCTION__);
-		return FALSE;
+		goto end;
 	}
 
-	ZeroMemory(crypt_client_random, sizeof(crypt_client_random));
+	crypt_client_random = calloc(1, rand_len);
+	if (!crypt_client_random)
+		goto end2;
 	Stream_Read(s, crypt_client_random, rand_len);
 
 	mod = rdp->settings->RdpServerRsaKey->Modulus;
@@ -545,7 +560,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(client_random, rdp))
 	{
-		return FALSE;
+		goto end;
 	}
 
 	rdp->do_crypt = TRUE;
@@ -559,40 +574,46 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		if (!rdp->fips_encrypt)
 		{
 			fprintf(stderr, "%s: unable to allocate des3 encrypt key\n", __FUNCTION__);
-			return FALSE;
+			goto end;
 		}
 
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
 		if (!rdp->fips_decrypt)
 		{
 			fprintf(stderr, "%s: unable to allocate des3 decrypt key\n", __FUNCTION__);
-			return FALSE;
+			goto end;
 		}
 
 		rdp->fips_hmac = crypto_hmac_new();
 		if (!rdp->fips_hmac)
 		{
 			fprintf(stderr, "%s: unable to allocate fips hmac\n", __FUNCTION__);
-			return FALSE;
+			goto end;
 		}
-		return TRUE;
+		ret = TRUE;
+		goto end;
 	}
 
 	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
 	if (!rdp->rc4_decrypt_key)
 	{
 		fprintf(stderr, "%s: unable to allocate rc4 decrypt key\n", __FUNCTION__);
-		return FALSE;
+		goto end;
 	}
 
 	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
 	if (!rdp->rc4_encrypt_key)
 	{
 		fprintf(stderr, "%s: unable to allocate rc4 encrypt key\n", __FUNCTION__);
-		return FALSE;
+		goto end;
 	}
+	ret = TRUE;
+end:
+	free(crypt_client_random);
+end2:
+	free(client_random);
 
-	return TRUE;
+	return ret;
 }
 
 BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, wStream* s)
