@@ -26,11 +26,9 @@
 #include <winpr/io.h>
 #include <winpr/error.h>
 
-#ifdef _WIN32
-
-#include <winscard.h>
-
-#else
+#ifndef _WINSCARD_H_
+#define _WINSCARD_H_	/* do not include winscard.h */
+#endif
 
 #ifndef SCARD_S_SUCCESS
 #define SCARD_S_SUCCESS	NO_ERROR
@@ -827,8 +825,6 @@ WINSCARDAPI LONG WINAPI SCardAudit(SCARDCONTEXT hContext, DWORD dwEvent);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 
 /**

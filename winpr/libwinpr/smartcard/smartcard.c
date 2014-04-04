@@ -644,8 +644,15 @@ void InitializeSCardApiStubs(void)
 {
 	g_Initialized = TRUE;
 
+#ifndef _WIN32
 	if (PCSC_InitializeSCardApi() >= 0)
 	{
 		g_SCardApi = PCSC_GetSCardApiFunctionTable();
 	}
+#else
+	if (WinSCard_InitializeSCardApi() >= 0)
+	{
+		g_SCardApi = WinSCard_GetSCardApiFunctionTable();
+	}
+#endif
 }

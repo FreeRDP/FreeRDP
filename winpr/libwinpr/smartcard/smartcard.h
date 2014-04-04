@@ -46,5 +46,6 @@
 void InitializeSCardApiStubs(void);
 
 #include "smartcard_pcsc.h"
+#include "smartcard_winscard.h"
 
 #endif /* WINPR_SMARTCARD_PRIVATE_H */

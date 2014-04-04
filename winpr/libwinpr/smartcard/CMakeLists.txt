@@ -22,7 +22,9 @@ set(${MODULE_PREFIX}_SRCS
 	smartcard.c
 	smartcard.h
 	smartcard_pcsc.c
-	smartcard_pcsc.h)
+	smartcard_pcsc.h
+	smartcard_winscard.c
+	smartcard_winscard.h)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
