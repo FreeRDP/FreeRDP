@@ -380,7 +380,6 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	int tls_status;
 	freerdp* instance;
 	rdpContext* context;
-	rdpTsg* tsg;
 
 	instance = (freerdp*) transport->settings->instance;
 	context = instance->context;
