@@ -21,7 +21,10 @@
 #define FREERDP_CHANNEL_SMARTCARD_CLIENT_PACK_H
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/smartcard.h>
+
+#include "smartcard_main.h"
 
 /* interface type_scard_pack */
 /* [unique][version][uuid] */
@@ -61,27 +64,27 @@ typedef struct _Context_Call
 typedef struct _ContextAndStringA_Call
 {
 	REDIR_SCARDCONTEXT Context;
-	/* [string] */ const unsigned char *sz;
+	/* [string] */ unsigned char *sz;
 } ContextAndStringA_Call;
 
 typedef struct _ContextAndStringW_Call
 {
 	REDIR_SCARDCONTEXT Context;
-	/* [string] */ const WCHAR *sz;
+	/* [string] */ WCHAR *sz;
 } ContextAndStringW_Call;
 
 typedef struct _ContextAndTwoStringA_Call
 {
 	REDIR_SCARDCONTEXT Context;
-	/* [string] */ const unsigned char *sz1;
-	/* [string] */ const unsigned char *sz2;
+	/* [string] */ unsigned char *sz1;
+	/* [string] */ unsigned char *sz2;
 } ContextAndTwoStringA_Call;
 
 typedef struct _ContextAndTwoStringW_Call
 {
 	REDIR_SCARDCONTEXT Context;
-	/* [string] */ const WCHAR *sz1;
-	/* [string] */ const WCHAR *sz2;
+	/* [string] */ WCHAR *sz1;
+	/* [string] */ WCHAR *sz2;
 } ContextAndTwoStringW_Call;
 
 typedef struct _EstablishContext_Call
@@ -106,7 +109,7 @@ typedef struct _ListReaders_Call
 {
 	REDIR_SCARDCONTEXT Context;
 	/* [range] */ unsigned long cBytes;
-	/* [size_is][unique] */ const BYTE *mszGroups;
+	/* [size_is][unique] */ BYTE *mszGroups;
 	long fmszReadersIsNULL;
 	unsigned long cchReaders;
 } ListReaders_Call;
@@ -121,13 +124,13 @@ typedef struct _ReaderState_Common_Call
 
 typedef struct _ReaderStateA
 {
-	/* [string] */ const unsigned char *szReader;
+	/* [string] */ unsigned char *szReader;
 	ReaderState_Common_Call Common;
 } ReaderStateA;
 
 typedef struct _ReaderStateW
 {
-	/* [string] */ const WCHAR *szReader;
+	/* [string] */ WCHAR *szReader;
 	ReaderState_Common_Call Common;
 } ReaderStateW;
 
@@ -143,7 +146,7 @@ typedef struct _GetStatusChangeA_Call
 {
 	REDIR_SCARDCONTEXT Context;
 	/* [range] */ unsigned long cBytes;
-	/* [size_is] */ const BYTE *mszCards;
+	/* [size_is] */ BYTE *mszCards;
 	/* [range] */ unsigned long cReaders;
 	/* [size_is] */ ReaderStateA *rgReaderStates;
 } GetStatusChangeA_Call;
@@ -152,7 +155,7 @@ typedef struct _LocateCardsA_Call
 {
 	REDIR_SCARDCONTEXT Context;
 	/* [range] */ unsigned long cBytes;
-	/* [size_is] */ const BYTE *mszCards;
+	/* [size_is] */ BYTE *mszCards;
 	/* [range] */ unsigned long cReaders;
 	/* [size_is] */ ReaderStateA *rgReaderStates;
 } LocateCardsA_Call;
@@ -161,7 +164,7 @@ typedef struct _LocateCardsW_Call
 {
 	REDIR_SCARDCONTEXT Context;
 	/* [range] */ unsigned long cBytes;
-	/* [size_is] */ const BYTE *mszCards;
+	/* [size_is] */ BYTE *mszCards;
 	/* [range] */ unsigned long cReaders;
 	/* [size_is] */ ReaderStateW *rgReaderStates;
 } LocateCardsW_Call;
@@ -217,13 +220,13 @@ typedef struct _Connect_Common
 
 typedef struct _ConnectA_Call
 {
-	/* [string] */ const unsigned char *szReader;
+	/* [string] */ unsigned char *szReader;
 	Connect_Common Common;
 } ConnectA_Call;
 
 typedef struct _ConnectW_Call
 {
-	/* [string] */ const WCHAR *szReader;
+	/* [string] */ WCHAR *szReader;
 	Connect_Common Common;
 } ConnectW_Call;
 
@@ -301,7 +304,7 @@ typedef struct _Transmit_Call
 	REDIR_SCARDHANDLE hCard;
 	SCardIO_Request ioSendPci;
 	/* [range] */ unsigned long cbSendLength;
-	/* [size_is] */ const BYTE *pbSendBuffer;
+	/* [size_is] */ BYTE *pbSendBuffer;
 	/* [unique] */ SCardIO_Request *pioRecvPci;
 	long fpbRecvBufferIsNULL;
 	unsigned long cbRecvLength;
@@ -331,7 +334,7 @@ typedef struct _Control_Call
 	REDIR_SCARDHANDLE hCard;
 	unsigned long dwControlCode;
 	/* [range] */ unsigned long cbInBufferSize;
-	/* [size_is][unique] */ const BYTE *pvInBuffer;
+	/* [size_is][unique] */ BYTE *pvInBuffer;
 	long fpvOutBufferIsNULL;
 	unsigned long cbOutBufferSize;
 } Control_Call;
@@ -363,7 +366,7 @@ typedef struct _SetAttrib_Call
 	REDIR_SCARDHANDLE hCard;
 	unsigned long dwAttrId;
 	/* [range] */ unsigned long cbAttrLen;
-	/* [size_is] */ const BYTE *pbAttr;
+	/* [size_is] */ BYTE *pbAttr;
 } SetAttrib_Call;
 
 typedef struct _ReadCache_Common
@@ -414,5 +417,8 @@ typedef struct _WriteCacheW_Call
 	/* [string] */ WCHAR *szLookupName;
 	WriteCache_Common Common;
 } WriteCacheW_Call;
+
+UINT32 smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, EstablishContext_Call* call);
+UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaders_Call* call);
 
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_PACK_H */

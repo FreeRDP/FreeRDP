@@ -98,7 +98,6 @@ struct _SMARTCARD_DEVICE
 };
 typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
 
-BOOL smartcard_async_op(IRP* irp);
 void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp);
 
 #include "smartcard_pack.h"

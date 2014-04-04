@@ -196,6 +196,16 @@ WINSCARDAPI LONG WINAPI SCardListReaderGroupsW(SCARDCONTEXT hContext,
 {
 	InitializeSCardStubs();
 
+	if (g_PCSCLite && g_PCSCLite->pfnSCardListReaderGroups)
+	{
+		mszGroups = NULL;
+		pcchGroups = 0;
+
+		/* FIXME: unicode conversion */
+
+		return g_PCSCLite->pfnSCardListReaderGroups(hContext, (LPSTR) mszGroups, pcchGroups);
+	}
+
 	return 0;
 }
 
@@ -216,6 +226,18 @@ WINSCARDAPI LONG WINAPI SCardListReadersW(SCARDCONTEXT hContext,
 		LPCWSTR mszGroups, LPWSTR mszReaders, LPDWORD pcchReaders)
 {
 	InitializeSCardStubs();
+
+	if (g_PCSCLite && g_PCSCLite->pfnSCardListReaders)
+	{
+		mszGroups = NULL;
+
+		mszReaders = NULL;
+		pcchReaders = 0;
+
+		/* FIXME: unicode conversion */
+
+		return g_PCSCLite->pfnSCardListReaders(hContext, (LPSTR) mszGroups, (LPSTR) mszReaders, pcchReaders);
+	}
 
 	return 0;
 }
@@ -421,6 +443,17 @@ WINSCARDAPI LONG WINAPI SCardGetStatusChangeW(SCARDCONTEXT hContext,
 {
 	InitializeSCardStubs();
 
+	if (g_PCSCLite && g_PCSCLite->pfnSCardGetStatusChange)
+	{
+		SCARD_READERSTATEA rgReaderStatesA;
+
+		cReaders = 0;
+		ZeroMemory(&rgReaderStatesA, sizeof(SCARD_READERSTATEA));
+
+		/* FIXME: unicode conversion */
+		return g_PCSCLite->pfnSCardGetStatusChange(hContext, dwTimeout, &rgReaderStatesA, cReaders);
+	}
+
 	return 0;
 }
 
@@ -456,6 +489,22 @@ WINSCARDAPI LONG WINAPI SCardConnectW(SCARDCONTEXT hContext,
 		LPSCARDHANDLE phCard, LPDWORD pdwActiveProtocol)
 {
 	InitializeSCardStubs();
+
+	if (g_PCSCLite && g_PCSCLite->pfnSCardConnect)
+	{
+		LONG status;
+		LPSTR szReaderA = NULL;
+
+		if (szReader)
+			ConvertFromUnicode(CP_UTF8, 0, szReader, -1, &szReaderA, 0, NULL, NULL);
+
+		status = g_PCSCLite->pfnSCardConnect(hContext, szReaderA,
+				dwShareMode, dwPreferredProtocols, phCard, pdwActiveProtocol);
+
+		free(szReaderA);
+
+		return status;
+	}
 
 	return 0;
 }
@@ -543,6 +592,17 @@ WINSCARDAPI LONG WINAPI SCardStatusW(SCARDHANDLE hCard,
 		LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen)
 {
 	InitializeSCardStubs();
+
+	if (g_PCSCLite && g_PCSCLite->pfnSCardStatus)
+	{
+		mszReaderNames = NULL;
+		pcchReaderLen = 0;
+
+		/* FIXME: unicode conversion */
+
+		return g_PCSCLite->pfnSCardStatus(hCard, (LPSTR) mszReaderNames, pcchReaderLen,
+				pdwState, pdwProtocol, pbAtr, pcbAtrLen);
+	}
 
 	return 0;
 }
