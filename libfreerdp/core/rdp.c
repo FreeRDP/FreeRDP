@@ -291,10 +291,18 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	{
 		int reason = 0;
 		TerminateEventArgs e;
-		rdpContext* context = rdp->instance->context;
+		rdpContext* context;
 
 		if (!mcs_recv_disconnect_provider_ultimatum(rdp->mcs, s, &reason))
 			return FALSE;
+
+		if (rdp->instance == NULL)
+		{
+			rdp->disconnect = TRUE;
+			return FALSE;
+		}
+
+		context = rdp->instance->context;
 
 		if (rdp->errorInfo == ERRINFO_SUCCESS)
 		{
@@ -467,20 +475,13 @@ static UINT32 rdp_get_sec_bytes(rdpRdp* rdp)
 
 BOOL rdp_send(rdpRdp* rdp, wStream* s, UINT16 channel_id)
 {
-	int secm;
 	UINT16 length;
-	UINT32 sec_bytes;
 
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 
 	rdp_write_header(rdp, s, length, channel_id);
 
-	sec_bytes = rdp_get_sec_bytes(rdp);
-	secm = Stream_GetPosition(s);
-	Stream_Seek(s, sec_bytes);
-
-	Stream_SetPosition(s, secm);
 	length += rdp_security_stream_out(rdp, s, length, 0);
 
 	Stream_SetPosition(s, length);
@@ -932,8 +933,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags)
 			return FALSE; /* TODO */
 		}
 
-		/* is this what needs adjusting? */
-		Stream_Capacity(s) -= pad;
+		Stream_Length(s) -= pad;
 		return TRUE;
 	}
 

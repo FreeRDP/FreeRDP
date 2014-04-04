@@ -48,7 +48,6 @@ typedef struct rdp_license rdpLicense;
 #define LICENSE_PKT_MASK			(LICENSE_PKT_CS_MASK | LICENSE_PKT_SC_MASK)
 
 #define LICENSE_PREAMBLE_LENGTH			4
-#define LICENSE_PACKET_HEADER_MAX_LENGTH	(RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + LICENSE_PREAMBLE_LENGTH)
 
 /* Cryptographic Lengths */
 
@@ -198,6 +197,7 @@ struct rdp_license
 	LICENSE_BLOB* EncryptedPlatformChallenge;
 	LICENSE_BLOB* EncryptedHardwareId;
 	SCOPE_LIST* ScopeList;
+	UINT32 PacketHeaderLength;
 };
 
 int license_recv(rdpLicense* license, wStream* s);

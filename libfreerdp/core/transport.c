@@ -376,6 +376,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16 port)
 {
+	rdpTsg* tsg;
 	int tls_status;
 	freerdp* instance;
 	rdpContext* context;
@@ -970,122 +971,128 @@ int transport_check_fds(rdpTransport* transport)
 	 */
 	for (;;)
 	{
-		status = transport_read_nonblocking(transport);
+		/**
+		 * Note: transport_read_nonblocking() reads max 1 additional PDU from
+		 * the layer. Also note that transport_read_nonblocking() is also called
+		 * outside of this function in transport_write()! This means that when
+		 * entering transport_check_fds it is possible that the stream position
+		 * of transport->ReceiveBuffer position is > 0. We must process this data
+		 * even if transport_read_nonblocking() returns 0.
+		 * Note that transport->ReceiveBuffer is replaced after each iteration
+		 * of this loop with a fresh stream instance from a pool.
+		 */
 
-		if ((status <= 0) || (Stream_GetPosition(transport->ReceiveBuffer) < 2))
+		if ((status = transport_read_nonblocking(transport)) < 0)
 			return status;
 
-		while ((pos = Stream_GetPosition(transport->ReceiveBuffer)) > 0)
+		if ((pos = Stream_GetPosition(transport->ReceiveBuffer)) < 2)
+			return status;
+
+		Stream_SetPosition(transport->ReceiveBuffer, 0);
+
+		if (transport->NlaMode)
 		{
-			Stream_SetPosition(transport->ReceiveBuffer, 0);
-
-			if (transport->NlaMode)
+			if (nla_verify_header(transport->ReceiveBuffer))
 			{
-				if (nla_verify_header(transport->ReceiveBuffer))
+				/* TSRequest */
+
+				/* Ensure the TSRequest header is available. */
+				if (pos <= 4)
 				{
-					/* TSRequest */
-
-					/* Ensure the TSRequest header is available. */
-					if (pos <= 4)
-					{
-						Stream_SetPosition(transport->ReceiveBuffer, pos);
-						return 0;
-					}
-
-					/* TSRequest header can be 2, 3 or 4 bytes long */
-					length = nla_header_length(transport->ReceiveBuffer);
-
-					if (pos < length)
-					{
-						Stream_SetPosition(transport->ReceiveBuffer, pos);
-						return 0;
-					}
-
-					length = nla_read_header(transport->ReceiveBuffer);
+					Stream_SetPosition(transport->ReceiveBuffer, pos);
+					return 0;
 				}
-			}
-			else
-			{
-				if (tpkt_verify_header(transport->ReceiveBuffer)) /* TPKT */
+
+				/* TSRequest header can be 2, 3 or 4 bytes long */
+				length = nla_header_length(transport->ReceiveBuffer);
+
+				if (pos < length)
 				{
-					/* Ensure the TPKT header is available. */
-					if (pos <= 4)
-					{
-						Stream_SetPosition(transport->ReceiveBuffer, pos);
-						return 0;
-					}
-
-					length = tpkt_read_header(transport->ReceiveBuffer);
+					Stream_SetPosition(transport->ReceiveBuffer, pos);
+					return 0;
 				}
-				else /* Fast Path */
-				{
-					/* Ensure the Fast Path header is available. */
-					if (pos <= 2)
-					{
-						Stream_SetPosition(transport->ReceiveBuffer, pos);
-						return 0;
-					}
 
-					/* Fastpath header can be two or three bytes long. */
-					length = fastpath_header_length(transport->ReceiveBuffer);
-
-					if (pos < length)
-					{
-						Stream_SetPosition(transport->ReceiveBuffer, pos);
-						return 0;
-					}
-
-					length = fastpath_read_header(NULL, transport->ReceiveBuffer);
-				}
+				length = nla_read_header(transport->ReceiveBuffer);
 			}
-
-			if (length == 0)
-			{
-				fprintf(stderr, "transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
-				winpr_HexDump(Stream_Buffer(transport->ReceiveBuffer), pos);
-				return -1;
-			}
-
-			if (pos < length)
-			{
-				Stream_SetPosition(transport->ReceiveBuffer, pos);
-				return 0; /* Packet is not yet completely received. */
-			}
-
-			received = transport->ReceiveBuffer;
-			transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
-
-			Stream_SetPosition(received, length);
-			Stream_SealLength(received);
-			Stream_SetPosition(received, 0);
-
-			/**
-			 * status:
-			 * 	-1: error
-			 * 	 0: success
-			 * 	 1: redirection
-			 */
-
-			recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
-
-			if (recv_status == 1)
-			{
-				/**
-				 * Last call to ReceiveCallback resulted in a session redirection,
-				 * which means the current rdpTransport* transport pointer has been freed.
-				 * Return 0 for success, the rest of this function is meant for non-redirected cases.
-				 */
-				return 0;
-			}
-
-			Stream_Release(received);
-
-			if (recv_status < 0)
-				status = -1;
-
-			if (status < 0)
-				return status;
 		}
+		else
+		{
+			if (tpkt_verify_header(transport->ReceiveBuffer)) /* TPKT */
+			{
+				/* Ensure the TPKT header is available. */
+				if (pos <= 4)
+				{
+					Stream_SetPosition(transport->ReceiveBuffer, pos);
+					return 0;
+				}
+
+				length = tpkt_read_header(transport->ReceiveBuffer);
+			}
+			else /* Fast Path */
+			{
+				/* Ensure the Fast Path header is available. */
+				if (pos <= 2)
+				{
+					Stream_SetPosition(transport->ReceiveBuffer, pos);
+					return 0;
+				}
+
+				/* Fastpath header can be two or three bytes long. */
+				length = fastpath_header_length(transport->ReceiveBuffer);
+
+				if (pos < length)
+				{
+					Stream_SetPosition(transport->ReceiveBuffer, pos);
+					return 0;
+				}
+
+				length = fastpath_read_header(NULL, transport->ReceiveBuffer);
+			}
+		}
+
+		if (length == 0)
+		{
+			fprintf(stderr, "transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
+			winpr_HexDump(Stream_Buffer(transport->ReceiveBuffer), pos);
+			return -1;
+		}
+
+		if (pos < length)
+		{
+			Stream_SetPosition(transport->ReceiveBuffer, pos);
+			return 0; /* Packet is not yet completely received. */
+		}
+
+		received = transport->ReceiveBuffer;
+		transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
+
+		Stream_SetPosition(received, length);
+		Stream_SealLength(received);
+		Stream_SetPosition(received, 0);
+
+		/**
+		 * status:
+		 * 	-1: error
+		 * 	 0: success
+		 * 	 1: redirection
+		 */
+
+		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
+
+		if (recv_status == 1)
+		{
+			/**
+			 * Last call to ReceiveCallback resulted in a session redirection,
+			 * which means the current rdpTransport* transport pointer has been freed.
+			 * Return 0 for success, the rest of this function is meant for non-redirected cases.
+			 */
+			return 0;
+		}
+
+		Stream_Release(received);
+
+		if (recv_status < 0)
+			return -1;
 	}
 
 	return 0;
