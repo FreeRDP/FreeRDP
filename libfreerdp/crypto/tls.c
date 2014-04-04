@@ -219,13 +219,11 @@ int tls_connect(rdpTls* tls)
 	{
 		fprintf(stderr, "tls_connect: certificate not trusted, aborting.\n");
 		tls_disconnect(tls);
-		tls_free_certificate(cert);
-		return verify_status;
 	}
 
 	tls_free_certificate(cert);
 
-	return (verify_status == 0) ? 0 : 1;
+	return verify_status;
 }
 
 BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
