@@ -23,7 +23,11 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#include <winioctl.h>
+
+#else
 
 #include <winpr/nt.h>
 

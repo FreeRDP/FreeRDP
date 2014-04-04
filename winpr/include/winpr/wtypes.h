@@ -64,7 +64,7 @@ typedef int BOOL;
 
 typedef BOOL *PBOOL, *LPBOOL;
 
-typedef unsigned char BYTE, *PBYTE, *LPBYTE, *LPCBYTE;
+typedef unsigned char BYTE, *PBYTE, *LPBYTE;
 typedef BYTE BOOLEAN, *PBOOLEAN;
 typedef unsigned short WCHAR, *PWCHAR;
 typedef WCHAR* BSTR;
@@ -146,7 +146,6 @@ typedef unsigned short USHORT;
 #define VOID void
 typedef void *PVOID, *LPVOID;
 typedef void *PVOID64, *LPVOID64;
-typedef const void *LPCVOID;
 typedef unsigned short WORD, *PWORD, *LPWORD;
 
 #if __x86_64__
@@ -314,6 +313,16 @@ typedef unsigned long error_status_t;
 #ifndef _NTDEF_
 typedef LONG NTSTATUS;
 typedef NTSTATUS *PNTSTATUS;
+#endif
+
+#ifndef _LPCBYTE_DEFINED
+#define _LPCBYTE_DEFINED
+typedef const BYTE *LPCBYTE;
+#endif
+
+#ifndef _LPCVOID_DEFINED
+#define _LPCVOID_DEFINED
+typedef const VOID *LPCVOID;
 #endif
 
 #ifndef _WIN32

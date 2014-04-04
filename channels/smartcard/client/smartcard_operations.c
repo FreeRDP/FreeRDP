@@ -477,7 +477,7 @@ static UINT32 smartcard_output_string(IRP* irp, char* src, BOOL wide)
 
 	if (wide)
 	{
-		int i;
+		UINT32 i;
 
 		for (i = 0; i < len; i++ )
 		{
@@ -526,7 +526,7 @@ static UINT32 smartcard_output_return(IRP* irp, UINT32 status)
 
 static void smartcard_output_buffer_limit(IRP* irp, char* buffer, unsigned int length, unsigned int highLimit)
 {
-	int header = (length < 0) ? (0) : ((length > highLimit) ? (highLimit) : (length));
+	UINT32 header = (length < 0) ? (0) : ((length > highLimit) ? (highLimit) : (length));
 
 	Stream_Write_UINT32(irp->output, header);
 
@@ -574,7 +574,8 @@ static UINT32 smartcard_input_string(IRP* irp, char** dest, UINT32 dataLength, B
 
 	if (wide)
 	{
-		int i;
+		UINT32 i;
+
 		for (i = 0; i < dataLength; i++)
 		{
 			if ((buffer[2 * i] < 0) || (buffer[2 * i + 1] != 0))
@@ -840,13 +841,13 @@ finish:
 
 static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL wide)
 {
-	int i;
+	UINT32 i;
 	LONG status;
 	int redirect = 0;
 	SCARDCONTEXT hContext;
 	DWORD dwTimeout = 0;
 	DWORD readerCount = 0;
-	SCARD_READERSTATE *readerStates = NULL, *cur;
+	SCARD_READERSTATEA *readerStates = NULL, *cur;
 
 	status = handle_CommonTypeHeader(smartcard, irp);
 
@@ -932,8 +933,9 @@ static UINT32 handle_GetStatusChange(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL
 
 		for (i = 0; i < readerCount; i++)
 		{
-			cur = &readerStates[i];
 			UINT32 dataLength;
+
+			cur = &readerStates[i];
 
 			if (Stream_GetRemainingLength(irp->input) < 12 )
 			{
@@ -1385,7 +1387,7 @@ static UINT32 handle_State(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	}
 
 	readerLen = SCARD_AUTOALLOCATE;
-	status = SCardStatus(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
+	status = SCardStatusA(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
 
 	if (status != SCARD_S_SUCCESS)
 	{
@@ -2023,13 +2025,13 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* smartcard, IRP* irp, BOO
 {
 	int redirect = 0;
 	LONG status;
-	int i, j, k;
+	UINT32 i, j, k;
 	SCARDCONTEXT hContext;
 	UINT32 atrMaskCount = 0;
 	UINT32 readerCount = 0;
-	SCARD_READERSTATE* cur = NULL;
-	SCARD_READERSTATE* rsCur = NULL;
-	SCARD_READERSTATE* readerStates = NULL;
+	SCARD_READERSTATEA* cur = NULL;
+	SCARD_READERSTATEA* rsCur = NULL;
+	SCARD_READERSTATEA* readerStates = NULL;
 	SCARD_ATRMASK* curAtr = NULL;
 	SCARD_ATRMASK* pAtrMasks = NULL;
 
@@ -2108,8 +2110,9 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* smartcard, IRP* irp, BOO
 
 	for (i = 0; i < readerCount; i++)
 	{
-		cur = &readerStates[i];
 		UINT32 dataLength;
+
+		cur = &readerStates[i];
 
 		Stream_Seek(irp->input, 8);
 		Stream_Read_UINT32(irp->input, dataLength);
@@ -2120,6 +2123,7 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* smartcard, IRP* irp, BOO
 			DEBUG_WARN("cur->szReader=%p", cur->szReader);
 			continue;
 		}
+
 		if (strcmp(cur->szReader, "\\\\?PnP?\\Notification") == 0)
 			cur->dwCurrentState |= SCARD_STATE_IGNORE;
 	}
@@ -2357,7 +2361,7 @@ void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	/* look for NTSTATUS errors */
 	if ((result & 0xC0000000) == 0xC0000000)
-		return scard_error(smartcard, irp, result);
+		scard_error(smartcard, irp, result);
 
 	/* per Ludovic Rousseau, map different usage of this particular
   	 * error code between pcsc-lite & windows */

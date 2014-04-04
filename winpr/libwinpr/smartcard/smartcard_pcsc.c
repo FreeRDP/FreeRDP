@@ -720,24 +720,24 @@ int PCSC_InitializeSCardApi(void)
 	if (!g_PCSCModule)
 		return -1;
 
-	g_PCSC.pfnSCardEstablishContext = GetProcAddress(g_PCSCModule, "SCardEstablishContext");
-	g_PCSC.pfnSCardReleaseContext = GetProcAddress(g_PCSCModule, "SCardReleaseContext");
-	g_PCSC.pfnSCardIsValidContext = GetProcAddress(g_PCSCModule, "SCardIsValidContext");
-	g_PCSC.pfnSCardConnect = GetProcAddress(g_PCSCModule, "SCardConnect");
-	g_PCSC.pfnSCardReconnect = GetProcAddress(g_PCSCModule, "SCardReconnect");
-	g_PCSC.pfnSCardDisconnect = GetProcAddress(g_PCSCModule, "SCardDisconnect");
-	g_PCSC.pfnSCardBeginTransaction = GetProcAddress(g_PCSCModule, "SCardBeginTransaction");
-	g_PCSC.pfnSCardEndTransaction = GetProcAddress(g_PCSCModule, "SCardEndTransaction");
-	g_PCSC.pfnSCardStatus = GetProcAddress(g_PCSCModule, "SCardStatus");
-	g_PCSC.pfnSCardGetStatusChange = GetProcAddress(g_PCSCModule, "SCardGetStatusChange");
-	g_PCSC.pfnSCardControl = GetProcAddress(g_PCSCModule, "SCardControl");
-	g_PCSC.pfnSCardTransmit = GetProcAddress(g_PCSCModule, "SCardTransmit");
-	g_PCSC.pfnSCardListReaderGroups = GetProcAddress(g_PCSCModule, "SCardListReaderGroups");
-	g_PCSC.pfnSCardListReaders = GetProcAddress(g_PCSCModule, "SCardListReaders");
-	g_PCSC.pfnSCardFreeMemory = GetProcAddress(g_PCSCModule, "SCardFreeMemory");
-	g_PCSC.pfnSCardCancel = GetProcAddress(g_PCSCModule, "SCardCancel");
-	g_PCSC.pfnSCardGetAttrib = GetProcAddress(g_PCSCModule, "SCardGetAttrib");
-	g_PCSC.pfnSCardSetAttrib = GetProcAddress(g_PCSCModule, "SCardSetAttrib");
+	g_PCSC.pfnSCardEstablishContext = (void*) GetProcAddress(g_PCSCModule, "SCardEstablishContext");
+	g_PCSC.pfnSCardReleaseContext = (void*) GetProcAddress(g_PCSCModule, "SCardReleaseContext");
+	g_PCSC.pfnSCardIsValidContext = (void*) GetProcAddress(g_PCSCModule, "SCardIsValidContext");
+	g_PCSC.pfnSCardConnect = (void*) GetProcAddress(g_PCSCModule, "SCardConnect");
+	g_PCSC.pfnSCardReconnect = (void*) GetProcAddress(g_PCSCModule, "SCardReconnect");
+	g_PCSC.pfnSCardDisconnect = (void*) GetProcAddress(g_PCSCModule, "SCardDisconnect");
+	g_PCSC.pfnSCardBeginTransaction = (void*) GetProcAddress(g_PCSCModule, "SCardBeginTransaction");
+	g_PCSC.pfnSCardEndTransaction = (void*) GetProcAddress(g_PCSCModule, "SCardEndTransaction");
+	g_PCSC.pfnSCardStatus = (void*) GetProcAddress(g_PCSCModule, "SCardStatus");
+	g_PCSC.pfnSCardGetStatusChange = (void*) GetProcAddress(g_PCSCModule, "SCardGetStatusChange");
+	g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl");
+	g_PCSC.pfnSCardTransmit = (void*) GetProcAddress(g_PCSCModule, "SCardTransmit");
+	g_PCSC.pfnSCardListReaderGroups = (void*) GetProcAddress(g_PCSCModule, "SCardListReaderGroups");
+	g_PCSC.pfnSCardListReaders = (void*) GetProcAddress(g_PCSCModule, "SCardListReaders");
+	g_PCSC.pfnSCardFreeMemory = (void*) GetProcAddress(g_PCSCModule, "SCardFreeMemory");
+	g_PCSC.pfnSCardCancel = (void*) GetProcAddress(g_PCSCModule, "SCardCancel");
+	g_PCSC.pfnSCardGetAttrib = (void*) GetProcAddress(g_PCSCModule, "SCardGetAttrib");
+	g_PCSC.pfnSCardSetAttrib = (void*) GetProcAddress(g_PCSCModule, "SCardSetAttrib");
 
 	return 1;
 }

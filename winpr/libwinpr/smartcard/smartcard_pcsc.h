@@ -40,7 +40,7 @@ struct _PCSCFunctionTable
 			LPSTR mszReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState,
 			LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen);
 	LONG (* pfnSCardGetStatusChange)(SCARDCONTEXT hContext,
-			DWORD dwTimeout, LPSCARD_READERSTATE rgReaderStates, DWORD cReaders);
+			DWORD dwTimeout, LPSCARD_READERSTATEA rgReaderStates, DWORD cReaders);
 	LONG (* pfnSCardControl)(SCARDHANDLE hCard,
 			DWORD dwControlCode, LPCVOID pbSendBuffer, DWORD cbSendLength,
 			LPVOID pbRecvBuffer, DWORD cbRecvLength, LPDWORD lpBytesReturned);
