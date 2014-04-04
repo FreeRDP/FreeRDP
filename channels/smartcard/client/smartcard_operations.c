@@ -763,7 +763,6 @@ static UINT32 handle_ListReaders(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL wid
 	if (status)
 		goto finish;
 
-	/* Read RedirScardcontextRef */
 	status = handle_RedirContextRef(smartcard, irp, redirect, &hContext);
 
 	if (status)
