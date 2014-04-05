@@ -342,6 +342,7 @@ struct _IRP
 	UINT32 IoStatus;
 	wStream* output;
 
+	BOOL cancelled;
 	pcIRPResponse Complete;
 	pcIRPResponse Discard;
 };

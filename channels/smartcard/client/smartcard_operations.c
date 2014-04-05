@@ -1871,7 +1871,7 @@ finish:
 	return status;
 }
 
-void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
+void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT32 result;
 	UINT32 status;

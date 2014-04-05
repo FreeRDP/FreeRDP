@@ -53,30 +53,32 @@ static void smartcard_free(DEVICE* device)
 
 /**
  * Initialization occurs when the protocol server sends a device announce message.
- * At that time, dwDeviceId MUST receive the unique device ID announced.
- * The OutstandingIrps list MUST be set to the empty list.
+ * At that time, we need to cancel all outstanding IRPs.
  */
 
 static void smartcard_init(DEVICE* device)
 {
+	IRP* irp;
+	int index;
+	int keyCount;
+	ULONG_PTR* pKeys;
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 
 	if (ListDictionary_Count(smartcard->OutstandingIrps) > 0)
 	{
-		fprintf(stderr, "Warning: smartcard device initialized with outstanding IRPs\n");
+		pKeys = NULL;
+		keyCount = ListDictionary_GetKeys(smartcard->OutstandingIrps, &pKeys);
+
+		for (index = 0; index < keyCount; index++)
+		{
+			irp = (IRP*) ListDictionary_GetItemValue(smartcard->OutstandingIrps, (void*) pKeys[index]);
+
+			if (irp)
+				irp->cancelled = TRUE;
+		}
+
+		free(pKeys);
 	}
-
-	fprintf(stderr, "SmartCard Init\n");
-}
-
-IRP* smartcard_get_outstanding_irp_by_id(SMARTCARD_DEVICE* smartcard, UINT32 completionId)
-{
-	IRP* irp = NULL;
-	void* key = (void*) (size_t) completionId;
-
-	irp = (IRP*) ListDictionary_GetItemValue(smartcard->OutstandingIrps, key);
-
-	return irp;
 }
 
 void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
@@ -86,7 +88,10 @@ void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	key = (void*) (size_t) irp->CompletionId;
 	ListDictionary_Remove(smartcard->OutstandingIrps, key);
 
-	irp->Complete(irp);
+	if (!irp->cancelled)
+		irp->Complete(irp);
+	else
+		irp->Discard(irp);
 }
 
 static void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
@@ -99,7 +104,7 @@ static void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	switch (irp->MajorFunction)
 	{
 		case IRP_MJ_DEVICE_CONTROL:
-			smartcard_device_control(smartcard, irp);
+			smartcard_irp_device_control(smartcard, irp);
 			break;
 
 		default:

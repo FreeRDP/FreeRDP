@@ -696,6 +696,8 @@ static void rdpdr_process_init(rdpdrPlugin* rdpdr)
 
 		IFCALL(device->Init, device);
 	}
+
+	free(pKeys);
 }
 
 static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)

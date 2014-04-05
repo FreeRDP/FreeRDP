@@ -93,6 +93,24 @@ BOOL ListDictionary_IsSynchronized(wListDictionary* listDictionary)
 }
 
 /**
+ * Lock access to the ListDictionary
+ */
+
+void ListDictionary_Lock(wListDictionary* listDictionary)
+{
+	EnterCriticalSection(&listDictionary->lock);
+}
+
+/**
+ * Unlock access to the ListDictionary
+ */
+
+void ListDictionary_Unlock(wListDictionary* listDictionary)
+{
+	LeaveCriticalSection(&listDictionary->lock);
+}
+
+/**
  * Methods
  */
 
