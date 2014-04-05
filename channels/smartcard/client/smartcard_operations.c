@@ -282,82 +282,6 @@ static UINT32 handle_RedirHandleRef(SMARTCARD_DEVICE* smartcard, IRP* irp, SCARD
 	return 0;
 }
 
-static BOOL check_reader_is_forwarded(SMARTCARD_DEVICE* smartcard, const char* readerName)
-{
-	BOOL rc = TRUE;
-	char *name = _strdup(readerName);
-	char *str, *strpos=NULL, *strstatus=NULL;
-	long pos, cpos, ret;
-
-	/* Extract the name, position and status from the data provided. */
-	str = strtok(name, " ");
-	while(str)	
-	{
-		strpos = strstatus;
-		strstatus = str;
-		str = strtok(NULL, " ");
-	} 
-
-	if (!strpos)
-		goto finally;
-
-	pos = strtol(strpos, NULL, 10);
-	
-	if (strpos && strstatus)
-	{
-		/* Check, if the name of the reader matches. */
-		if (smartcard->name &&  strncmp(smartcard->name, readerName, strlen(smartcard->name)))
-			rc = FALSE;
-
-		/* Check, if the position matches. */
-		if (smartcard->path)
-		{
-			ret = sscanf(smartcard->path, "%ld", &cpos);
-			if ((1 == ret) && (cpos != pos))
-				rc = FALSE;
-		}
-	}
-	else
-	{
-		DEBUG_WARN("unknown reader format '%s'", readerName);
-	}
-
-finally:
-	free(name);
-
-	if (!rc)
-		DEBUG_WARN("reader '%s' not forwarded", readerName);
-	
-	return rc;
-}
-
-static BOOL check_handle_is_forwarded(SMARTCARD_DEVICE* smartcard, SCARDHANDLE hCard, SCARDCONTEXT hContext)
-{
-	BOOL rc = FALSE;
-	LONG status;
-	DWORD state = 0, protocol = 0;
-	DWORD readerLen;
-	DWORD atrLen = SCARD_ATR_LENGTH;
-	char* readerName = NULL;
-	BYTE pbAtr[SCARD_ATR_LENGTH];
-
-	readerLen = SCARD_AUTOALLOCATE;
-
-	status = SCardStatusA(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
-
-	if (status == SCARD_S_SUCCESS)
-	{
-		rc = check_reader_is_forwarded(smartcard, readerName);
-
-		if (!rc)
-			DEBUG_WARN("Reader '%s' not forwarded!", readerName);
-	}
-
-	SCardFreeMemory(hContext, readerName);
-
-	return rc;
-}
-
 static UINT32 smartcard_output_string(IRP* irp, char* src, BOOL wide)
 {
 	BYTE* p;
@@ -859,13 +783,6 @@ UINT32 handle_ConnectA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		goto finish;
 
-	if (!check_reader_is_forwarded(smartcard, (char*) call.szReader))
-	{
-		DEBUG_WARN("Reader '%s' not forwarded!", call.szReader);
-		status = SCARD_E_INVALID_TARGET;
-		goto finish;
-	}
-
 	status = SCardConnectA(hContext, (char*) call.szReader, (DWORD) call.Common.dwShareMode,
 		(DWORD) call.Common.dwPreferredProtocols, &hCard, (DWORD*) &ret.dwActiveProtocol);
 
@@ -955,12 +872,6 @@ static UINT32 handle_Reconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
-	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
-	{
-		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
-		return SCARD_E_INVALID_TARGET;
-	}
-
 	status = SCardReconnect(hCard, (DWORD) call.dwShareMode, (DWORD) call.dwPreferredProtocols,
 			(DWORD) call.dwInitialization, (LPDWORD) &ret.dwActiveProtocol);
 
@@ -995,12 +906,6 @@ static UINT32 handle_Disconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (status)
 		return status;
-
-	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
-	{
-		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
-		return SCARD_E_INVALID_TARGET;
-	}
 
 	status = SCardDisconnect(hCard, (DWORD) call.dwDisposition);
 
@@ -1037,12 +942,6 @@ static UINT32 handle_BeginTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
-	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
-	{
-		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
-		return SCARD_E_INVALID_TARGET;
-	}
-
 	status = SCardBeginTransaction(hCard);
 
 	smartcard_output_alignment(irp, 8);
@@ -1075,12 +974,6 @@ static UINT32 handle_EndTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (status)
 		return status;
-
-	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
-	{
-		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
-		return SCARD_E_INVALID_TARGET;
-	}
 
 	status = SCardEndTransaction(hCard, call.dwDisposition);
 
@@ -1120,13 +1013,6 @@ static UINT32 handle_State(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (status)
 		goto finish;
-
-	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
-	{
-		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
-		status = SCARD_E_INVALID_TARGET;
-		goto finish;
-	}
 
 	readerLen = SCARD_AUTOALLOCATE;
 
@@ -1196,16 +1082,9 @@ static DWORD handle_Status(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL wide)
 	if (status)
 		goto finish;
 
-	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
-	{
-		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
-		status = SCARD_E_INVALID_TARGET;
-		goto finish;
-	}
-
-	pbAtr = malloc(sizeof(BYTE) * atrLen);
-
+	pbAtr = (BYTE*) malloc(atrLen);
 	readerLen = SCARD_AUTOALLOCATE;
+
 	status = SCardStatusA(hCard, (LPSTR) &readerName, &readerLen, &state, &protocol, pbAtr, &atrLen);
 
 	if (status != SCARD_S_SUCCESS)
@@ -1453,13 +1332,6 @@ static UINT32 handle_Transmit(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		pPioRecvPci = NULL;
 	}
 
-	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
-	{
-		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
-		status = SCARD_E_INVALID_TARGET;
-		goto finish;
-	}
-
 	status = SCardTransmit(hCard, ioSendPci.rq, sendBuf, cbSendLength,
 			   pPioRecvPci, recvBuf, &cbRecvLength);
 
@@ -1558,21 +1430,14 @@ static UINT32 handle_Control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			goto finish;
 		}
 
-		call.pvInBuffer = malloc(length);
+		call.pvInBuffer = (BYTE*) malloc(length);
 		call.cbInBufferSize = length;
 
 		Stream_Read(irp->input, call.pvInBuffer, length);
 	}
 
 	ret.cbOutBufferSize = call.cbOutBufferSize;
-	ret.pvOutBuffer = malloc(call.cbOutBufferSize);
-
-	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
-	{
-		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
-		status = SCARD_E_INVALID_TARGET;
-		goto finish;
-	}
+	ret.pvOutBuffer = (BYTE*) malloc(call.cbOutBufferSize);
 
 	status = SCardControl(hCard, (DWORD) call.dwControlCode,
 			call.pvInBuffer, (DWORD) call.cbInBufferSize,
@@ -1629,14 +1494,7 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
-	if (!check_handle_is_forwarded(smartcard, hCard, hContext))
-	{
-		DEBUG_WARN("invalid handle %p [%p]", hCard, hContext);
-		return SCARD_E_INVALID_TARGET;
-	}
-
 	ret.pbAttr = NULL;
-
 	cbAttrLen = (call.cbAttrLen == 0) ? 0 : SCARD_AUTOALLOCATE;
 
 	status = SCardGetAttrib(hCard, call.dwAttrId, (cbAttrLen == 0) ? NULL : (BYTE*) &ret.pbAttr, &cbAttrLen);
@@ -1754,7 +1612,7 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* smartcard, IRP* irp, BOO
 	Stream_Read_UINT32(irp->input, hContext);
 	Stream_Read_UINT32(irp->input, atrMaskCount);
 
-	pAtrMasks = calloc(atrMaskCount, sizeof(SCARD_ATRMASK));
+	pAtrMasks = (SCARD_ATRMASK*) calloc(atrMaskCount, sizeof(SCARD_ATRMASK));
 
 	if (!pAtrMasks)
 		return smartcard_output_return(irp, SCARD_E_NO_MEMORY);
@@ -1768,7 +1626,7 @@ static UINT32 handle_LocateCardsByATR(SMARTCARD_DEVICE* smartcard, IRP* irp, BOO
 
 	Stream_Read_UINT32(irp->input, readerCount);
 
-	readerStates = calloc(readerCount, sizeof(SCARD_READERSTATE));
+	readerStates = (SCARD_READERSTATEA*) calloc(readerCount, sizeof(SCARD_READERSTATEA));
 
 	for (i = 0; i < readerCount; i++)
 	{
@@ -1919,8 +1777,18 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		return;
 	}
 
-	WLog_Print(smartcard->log, WLOG_WARN, "ioControlCode: %s (0x%08X) FileId: %d CompletionId: %d",
+	WLog_Print(smartcard->log, WLOG_DEBUG, "IoControlCode: %s (0x%08X) FileId: %d CompletionId: %d",
 			smartcard_get_ioctl_string(ioControlCode), ioControlCode, irp->FileId, irp->CompletionId);
+
+#if 1
+	if ((ioControlCode != SCARD_IOCTL_TRANSMIT) &&
+		(ioControlCode != SCARD_IOCTL_GETSTATUSCHANGEA) &&
+		(ioControlCode != SCARD_IOCTL_GETSTATUSCHANGEW))
+	{
+		printf("IoControlCode: %s (0x%08X) FileId: %d CompletionId: %d\n",
+			smartcard_get_ioctl_string(ioControlCode), ioControlCode, irp->FileId, irp->CompletionId);
+	}
+#endif
 
 	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
 			(ioControlCode != SCARD_IOCTL_RELEASESTARTEDEVENT))
