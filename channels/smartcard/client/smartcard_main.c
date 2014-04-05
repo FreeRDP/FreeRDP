@@ -34,6 +34,8 @@
 
 #include "smartcard_main.h"
 
+#define SMARTCARD_ASYNC_IRP	1
+
 static void smartcard_free(DEVICE* device)
 {
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
@@ -94,31 +96,71 @@ void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		irp->Discard(irp);
 }
 
-static void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
+void* smartcard_process_irp_worker_proc(IRP* irp)
 {
-	void* key;
+	SMARTCARD_DEVICE* smartcard;
 
-	key = (void*) (size_t) irp->CompletionId;
-	ListDictionary_Add(smartcard->OutstandingIrps, key, irp);
+	smartcard = (SMARTCARD_DEVICE*) irp->device;
 
-	switch (irp->MajorFunction)
-	{
-		case IRP_MJ_DEVICE_CONTROL:
-			smartcard_irp_device_control(smartcard, irp);
-			break;
+	smartcard_irp_device_control(smartcard, irp);
 
-		default:
-			fprintf(stderr, "MajorFunction 0x%X unexpected for smartcards.", irp->MajorFunction);
-			irp->IoStatus = STATUS_NOT_SUPPORTED;
-			smartcard_complete_irp(smartcard, irp);
-			break;
-	}
+	ExitThread(0);
+	return NULL;
 }
 
 /**
  * Multiple threads and SCardGetStatusChange:
  * http://musclecard.996296.n3.nabble.com/Multiple-threads-and-SCardGetStatusChange-td4430.html
  */
+
+void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
+{
+	void* key;
+	BOOL asyncIrp = FALSE;
+	UINT32 ioControlCode = 0;
+
+	key = (void*) (size_t) irp->CompletionId;
+	ListDictionary_Add(smartcard->OutstandingIrps, key, irp);
+
+	if (irp->MajorFunction == IRP_MJ_DEVICE_CONTROL)
+	{
+		smartcard_irp_device_control_peek_io_control_code(smartcard, irp, &ioControlCode);
+
+#ifdef SMARTCARD_ASYNC_IRP
+		if (!ioControlCode)
+			return;
+
+		switch (ioControlCode)
+		{
+			case SCARD_IOCTL_TRANSMIT:
+			case SCARD_IOCTL_STATUSA:
+			case SCARD_IOCTL_STATUSW:
+			case SCARD_IOCTL_GETSTATUSCHANGEA:
+			case SCARD_IOCTL_GETSTATUSCHANGEW:
+				asyncIrp = TRUE;
+				break;
+		}
+#endif
+
+		if (!asyncIrp)
+		{
+			smartcard_irp_device_control(smartcard, irp);
+		}
+		else
+		{
+			irp->thread = CreateThread(NULL, 0,
+					(LPTHREAD_START_ROUTINE) smartcard_process_irp_worker_proc,
+					irp, 0, NULL);
+		}
+	}
+	else
+	{
+		fprintf(stderr, "Unexpected SmartCard IRP: MajorFunction 0x%08X MinorFunction: 0x%08X",
+				irp->MajorFunction, irp->MinorFunction);
+		irp->IoStatus = STATUS_NOT_SUPPORTED;
+		smartcard_complete_irp(smartcard, irp);
+	}
+}
 
 static void* smartcard_thread_func(void* arg)
 {

@@ -90,9 +90,11 @@ IRP* irp_new(DEVMAN* devman, wStream* s)
 	Stream_Write_UINT32(irp->output, irp->CompletionId); /* CompletionId (4 bytes) */
 	Stream_Write_UINT32(irp->output, 0); /* IoStatus (4 bytes) */
 
-	irp->cancelled = FALSE;
 	irp->Complete = irp_complete;
 	irp->Discard = irp_free;
+
+	irp->thread = NULL;
+	irp->cancelled = FALSE;
 
 	return irp;
 }

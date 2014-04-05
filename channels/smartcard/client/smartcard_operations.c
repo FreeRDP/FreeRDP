@@ -1871,6 +1871,23 @@ finish:
 	return status;
 }
 
+void smartcard_irp_device_control_peek_io_control_code(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32* ioControlCode)
+{
+	*ioControlCode = 0;
+
+	if (Stream_GetRemainingLength(irp->input) < 32)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "Device Control Request is too short: %d",
+				(int) Stream_GetRemainingLength(irp->input));
+		return;
+	}
+
+	Stream_Seek_UINT32(irp->input); /* OutputBufferLength (4 bytes) */
+	Stream_Seek_UINT32(irp->input); /* InputBufferLength (4 bytes) */
+	Stream_Read_UINT32(irp->input, *ioControlCode); /* IoControlCode (4 bytes) */
+	Stream_Rewind(irp->input, (4 + 4 + 4));
+}
+
 void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT32 result;

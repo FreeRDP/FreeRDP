@@ -342,9 +342,11 @@ struct _IRP
 	UINT32 IoStatus;
 	wStream* output;
 
-	BOOL cancelled;
 	pcIRPResponse Complete;
 	pcIRPResponse Discard;
+
+	HANDLE thread;
+	BOOL cancelled;
 };
 
 struct _DEVMAN

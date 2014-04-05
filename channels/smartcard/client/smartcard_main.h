@@ -100,8 +100,10 @@ struct _SMARTCARD_DEVICE
 typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
 
 void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
+void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 
 void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp);
+void smartcard_irp_device_control_peek_io_control_code(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32* ioControlCode);
 
 #include "smartcard_pack.h"
 
