@@ -309,6 +309,7 @@ typedef struct _IRP IRP;
 typedef struct _DEVMAN DEVMAN;
 
 typedef void (*pcIRPRequest)(DEVICE* device, IRP* irp);
+typedef void (*pcInitDevice)(DEVICE* device);
 typedef void (*pcFreeDevice)(DEVICE* device);
 
 struct _DEVICE
@@ -320,6 +321,7 @@ struct _DEVICE
 	wStream* data;
 
 	pcIRPRequest IRPRequest;
+	pcInitDevice Init;
 	pcFreeDevice Free;
 };
 

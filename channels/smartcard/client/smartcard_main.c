@@ -45,11 +45,57 @@ static void smartcard_free(DEVICE* device)
 
 	Stream_Free(smartcard->device.data, TRUE);
 
+	MessageQueue_Free(smartcard->IrpQueue);
+	ListDictionary_Free(smartcard->OutstandingIrps);
+
 	free(device);
+}
+
+/**
+ * Initialization occurs when the protocol server sends a device announce message.
+ * At that time, dwDeviceId MUST receive the unique device ID announced.
+ * The OutstandingIrps list MUST be set to the empty list.
+ */
+
+static void smartcard_init(DEVICE* device)
+{
+	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
+
+	if (ListDictionary_Count(smartcard->OutstandingIrps) > 0)
+	{
+		fprintf(stderr, "Warning: smartcard device initialized with outstanding IRPs\n");
+	}
+
+	fprintf(stderr, "SmartCard Init\n");
+}
+
+IRP* smartcard_get_outstanding_irp_by_id(SMARTCARD_DEVICE* smartcard, UINT32 completionId)
+{
+	IRP* irp = NULL;
+	void* key = (void*) (size_t) completionId;
+
+	irp = (IRP*) ListDictionary_GetItemValue(smartcard->OutstandingIrps, key);
+
+	return irp;
+}
+
+void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
+{
+	void* key;
+
+	key = (void*) (size_t) irp->CompletionId;
+	ListDictionary_Remove(smartcard->OutstandingIrps, key);
+
+	irp->Complete(irp);
 }
 
 static void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
+	void* key;
+
+	key = (void*) (size_t) irp->CompletionId;
+	ListDictionary_Add(smartcard->OutstandingIrps, key, irp);
+
 	switch (irp->MajorFunction)
 	{
 		case IRP_MJ_DEVICE_CONTROL:
@@ -59,7 +105,7 @@ static void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		default:
 			fprintf(stderr, "MajorFunction 0x%X unexpected for smartcards.", irp->MajorFunction);
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
-			irp->Complete(irp);
+			smartcard_complete_irp(smartcard, irp);
 			break;
 	}
 }
@@ -127,6 +173,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	smartcard->device.type = RDPDR_DTYP_SMARTCARD;
 	smartcard->device.name = "SCARD";
 	smartcard->device.IRPRequest = smartcard_irp_request;
+	smartcard->device.Init = smartcard_init;
 	smartcard->device.Free = smartcard_free;
 
 	length = strlen(smartcard->device.name);
@@ -153,6 +200,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	smartcard->log = WLog_Get("com.freerdp.channel.smartcard.client");
 
 	smartcard->IrpQueue = MessageQueue_New(NULL);
+	smartcard->OutstandingIrps = ListDictionary_New(TRUE);
+
 	smartcard->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) smartcard_thread_func,
 			smartcard, CREATE_SUSPENDED, NULL);
 

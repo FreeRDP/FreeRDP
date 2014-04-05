@@ -1902,8 +1902,8 @@ void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		return;
 	}
 
-	WLog_Print(smartcard->log, WLOG_WARN, "ioControlCode: %s (0x%08X)",
-			smartcard_get_ioctl_string(ioControlCode), ioControlCode);
+	WLog_Print(smartcard->log, WLOG_WARN, "ioControlCode: %s (0x%08X) FileId: %d CompletionId: %d",
+			smartcard_get_ioctl_string(ioControlCode), ioControlCode, irp->FileId, irp->CompletionId);
 
 	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
 			(ioControlCode != SCARD_IOCTL_RELEASESTARTEDEVENT))
@@ -2159,5 +2159,5 @@ void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	Stream_SetPosition(irp->output, Stream_Length(irp->output));
 
 	irp->IoStatus = 0;
-	irp->Complete(irp);
+	smartcard_complete_irp(smartcard, irp);
 }

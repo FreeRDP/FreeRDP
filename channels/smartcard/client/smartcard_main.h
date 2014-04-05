@@ -92,11 +92,14 @@ struct _SMARTCARD_DEVICE
 
 	HANDLE thread;
 	wMessageQueue* IrpQueue;
+	wListDictionary* OutstandingIrps;
 
 	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
 };
 typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
+
+void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 
 void smartcard_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp);
 

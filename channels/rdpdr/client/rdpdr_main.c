@@ -680,6 +680,24 @@ static BOOL rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 	return TRUE;
 }
 
+static void rdpdr_process_init(rdpdrPlugin* rdpdr)
+{
+	int index;
+	int keyCount;
+	DEVICE* device;
+	ULONG_PTR* pKeys;
+
+	pKeys = NULL;
+	keyCount = ListDictionary_GetKeys(rdpdr->devman->devices, &pKeys);
+
+	for (index = 0; index < keyCount; index++)
+	{
+		device = (DEVICE*) ListDictionary_GetItemValue(rdpdr->devman->devices, (void*) pKeys[index]);
+
+		IFCALL(device->Init, device);
+	}
+}
+
 static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 component;
@@ -698,6 +716,7 @@ static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 				rdpdr_process_server_announce_request(rdpdr, s);
 				rdpdr_send_client_announce_reply(rdpdr);
 				rdpdr_send_client_name_request(rdpdr);
+				rdpdr_process_init(rdpdr);
 				break;
 
 			case PAKID_CORE_SERVER_CAPABILITY:
