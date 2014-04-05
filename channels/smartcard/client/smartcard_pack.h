@@ -31,14 +31,14 @@
 
 typedef struct _REDIR_SCARDCONTEXT
 {
-	/* [range] */ unsigned long cbContext;
+	/* [range] */ DWORD cbContext;
 	/* [size_is][unique] */ BYTE *pbContext;
 } REDIR_SCARDCONTEXT;
 
 typedef struct _REDIR_SCARDHANDLE
 {
 	REDIR_SCARDCONTEXT Context;
-	/* [range] */ unsigned long cbHandle;
+	/* [range] */ DWORD cbHandle;
 	/* [size_is] */ BYTE *pbHandle;
 } REDIR_SCARDHANDLE;
 
@@ -50,7 +50,7 @@ typedef struct _long_Return
 typedef struct _longAndMultiString_Return
 {
 	long ReturnCode;
-	/* [range] */ unsigned long cBytes;
+	/* [range] */ DWORD cBytes;
 	/* [size_is][unique] */ BYTE *msz;
 } ListReaderGroups_Return;
 
@@ -89,7 +89,7 @@ typedef struct _ContextAndTwoStringW_Call
 
 typedef struct _EstablishContext_Call
 {
-	unsigned long dwScope;
+	DWORD dwScope;
 } EstablishContext_Call;
 
 typedef struct _EstablishContext_Return
@@ -102,23 +102,23 @@ typedef struct _ListReaderGroups_Call
 {
 	REDIR_SCARDCONTEXT Context;
 	long fmszGroupsIsNULL;
-	unsigned long cchGroups;
+	DWORD cchGroups;
 } ListReaderGroups_Call;
 
 typedef struct _ListReaders_Call
 {
 	REDIR_SCARDCONTEXT Context;
-	/* [range] */ unsigned long cBytes;
+	/* [range] */ DWORD cBytes;
 	/* [size_is][unique] */ BYTE *mszGroups;
 	long fmszReadersIsNULL;
-	unsigned long cchReaders;
+	DWORD cchReaders;
 } ListReaders_Call;
 
 typedef struct _ReaderState_Common_Call
 {
-	unsigned long dwCurrentState;
-	unsigned long dwEventState;
-	/* [range] */ unsigned long cbAtr;
+	DWORD dwCurrentState;
+	DWORD dwEventState;
+	/* [range] */ DWORD cbAtr;
 	BYTE rgbAtr[ 36 ];
 } ReaderState_Common_Call;
 
@@ -136,42 +136,41 @@ typedef struct _ReaderStateW
 
 typedef struct _ReaderState_Return
 {
-	unsigned long dwCurrentState;
-	unsigned long dwEventState;
-	/* [range] */ unsigned long cbAtr;
+	DWORD dwCurrentState;
+	DWORD dwEventState;
+	/* [range] */ DWORD cbAtr;
 	BYTE rgbAtr[ 36 ];
 } ReaderState_Return;
 
 typedef struct _GetStatusChangeA_Call
 {
 	REDIR_SCARDCONTEXT Context;
-	/* [range] */ unsigned long cBytes;
-	/* [size_is] */ BYTE *mszCards;
-	/* [range] */ unsigned long cReaders;
+	DWORD dwTimeOut;
+	/* [range] */ DWORD cReaders;
 	/* [size_is] */ ReaderStateA *rgReaderStates;
 } GetStatusChangeA_Call;
 
 typedef struct _LocateCardsA_Call
 {
 	REDIR_SCARDCONTEXT Context;
-	/* [range] */ unsigned long cBytes;
+	/* [range] */ DWORD cBytes;
 	/* [size_is] */ BYTE *mszCards;
-	/* [range] */ unsigned long cReaders;
+	/* [range] */ DWORD cReaders;
 	/* [size_is] */ ReaderStateA *rgReaderStates;
 } LocateCardsA_Call;
 
 typedef struct _LocateCardsW_Call
 {
 	REDIR_SCARDCONTEXT Context;
-	/* [range] */ unsigned long cBytes;
+	/* [range] */ DWORD cBytes;
 	/* [size_is] */ BYTE *mszCards;
-	/* [range] */ unsigned long cReaders;
+	/* [range] */ DWORD cReaders;
 	/* [size_is] */ ReaderStateW *rgReaderStates;
 } LocateCardsW_Call;
 
 typedef struct _LocateCards_ATRMask
 {
-	/* [range] */ unsigned long cbAtr;
+	/* [range] */ DWORD cbAtr;
 	BYTE rgbAtr[ 36 ];
 	BYTE rgbMask[ 36 ];
 } LocateCards_ATRMask;
@@ -179,25 +178,25 @@ typedef struct _LocateCards_ATRMask
 typedef struct _LocateCardsByATRA_Call
 {
 	REDIR_SCARDCONTEXT Context;
-	/* [range] */ unsigned long cAtrs;
+	/* [range] */ DWORD cAtrs;
 	/* [size_is] */ LocateCards_ATRMask *rgAtrMasks;
-	/* [range] */ unsigned long cReaders;
+	/* [range] */ DWORD cReaders;
 	/* [size_is] */ ReaderStateA *rgReaderStates;
 } LocateCardsByATRA_Call;
 
 typedef struct _LocateCardsByATRW_Call
 {
 	REDIR_SCARDCONTEXT Context;
-	/* [range] */ unsigned long cAtrs;
+	/* [range] */ DWORD cAtrs;
 	/* [size_is] */ LocateCards_ATRMask *rgAtrMasks;
-	/* [range] */ unsigned long cReaders;
+	/* [range] */ DWORD cReaders;
 	/* [size_is] */ ReaderStateW *rgReaderStates;
 } LocateCardsByATRW_Call;
 
 typedef struct _GetStatusChange_Return
 {
 	long ReturnCode;
-	/* [range] */ unsigned long cReaders;
+	/* [range] */ DWORD cReaders;
 	/* [size_is] */ ReaderState_Return *rgReaderStates;
 } LocateCards_Return;
 
@@ -206,16 +205,16 @@ typedef struct _GetStatusChange_Return GetStatusChange_Return;
 typedef struct _GetStatusChangeW_Call
 {
 	REDIR_SCARDCONTEXT Context;
-	unsigned long dwTimeOut;
-	/* [range] */ unsigned long cReaders;
+	DWORD dwTimeOut;
+	/* [range] */ DWORD cReaders;
 	/* [size_is] */ ReaderStateW *rgReaderStates;
 } GetStatusChangeW_Call;
 
 typedef struct _Connect_Common
 {
 	REDIR_SCARDCONTEXT Context;
-	unsigned long dwShareMode;
-	unsigned long dwPreferredProtocols;
+	DWORD dwShareMode;
+	DWORD dwPreferredProtocols;
 } Connect_Common;
 
 typedef struct _ConnectA_Call
@@ -234,42 +233,42 @@ typedef struct _Connect_Return
 {
 	long ReturnCode;
 	REDIR_SCARDHANDLE hCard;
-	unsigned long dwActiveProtocol;
+	DWORD dwActiveProtocol;
 } Connect_Return;
 
 typedef struct _Reconnect_Call
 {
 	REDIR_SCARDHANDLE hCard;
-	unsigned long dwShareMode;
-	unsigned long dwPreferredProtocols;
-	unsigned long dwInitialization;
+	DWORD dwShareMode;
+	DWORD dwPreferredProtocols;
+	DWORD dwInitialization;
 } Reconnect_Call;
 
 typedef struct Reconnect_Return
 {
 	long ReturnCode;
-	unsigned long dwActiveProtocol;
+	DWORD dwActiveProtocol;
 } Reconnect_Return;
 
 typedef struct _HCardAndDisposition_Call
 {
 	REDIR_SCARDHANDLE hCard;
-	unsigned long dwDisposition;
+	DWORD dwDisposition;
 } HCardAndDisposition_Call;
 
 typedef struct _State_Call
 {
 	REDIR_SCARDHANDLE hCard;
 	long fpbAtrIsNULL;
-	unsigned long cbAtrLen;
+	DWORD cbAtrLen;
 } State_Call;
 
 typedef struct _State_Return
 {
 	long ReturnCode;
-	unsigned long dwState;
-	unsigned long dwProtocol;
-	/* [range] */ unsigned long cbAtrLen;
+	DWORD dwState;
+	DWORD dwProtocol;
+	/* [range] */ DWORD cbAtrLen;
 	/* [size_is][unique] */ BYTE *rgAtr;
 } State_Return;
 
@@ -277,25 +276,25 @@ typedef struct _Status_Call
 {
 	REDIR_SCARDHANDLE hCard;
 	long fmszReaderNamesIsNULL;
-	unsigned long cchReaderLen;
-	unsigned long cbAtrLen;
+	DWORD cchReaderLen;
+	DWORD cbAtrLen;
 } Status_Call;
 
 typedef struct _Status_Return
 {
 	long ReturnCode;
-	/* [range] */ unsigned long cBytes;
+	/* [range] */ DWORD cBytes;
 	/* [size_is][unique] */ BYTE *mszReaderNames;
-	unsigned long dwState;
-	unsigned long dwProtocol;
+	DWORD dwState;
+	DWORD dwProtocol;
 	BYTE pbAtr[ 32 ];
-	/* [range] */ unsigned long cbAtrLen;
+	/* [range] */ DWORD cbAtrLen;
 } Status_Return;
 
 typedef struct _SCardIO_Request
 {
-	unsigned long dwProtocol;
-	/* [range] */ unsigned long cbExtraBytes;
+	DWORD dwProtocol;
+	/* [range] */ DWORD cbExtraBytes;
 	/* [size_is][unique] */ BYTE *pbExtraBytes;
 } SCardIO_Request;
 
@@ -303,18 +302,18 @@ typedef struct _Transmit_Call
 {
 	REDIR_SCARDHANDLE hCard;
 	SCardIO_Request ioSendPci;
-	/* [range] */ unsigned long cbSendLength;
+	/* [range] */ DWORD cbSendLength;
 	/* [size_is] */ BYTE *pbSendBuffer;
 	/* [unique] */ SCardIO_Request *pioRecvPci;
 	long fpbRecvBufferIsNULL;
-	unsigned long cbRecvLength;
+	DWORD cbRecvLength;
 } Transmit_Call;
 
 typedef struct _Transmit_Return
 {
 	long ReturnCode;
 	/* [unique] */ SCardIO_Request *pioRecvPci;
-	/* [range] */ unsigned long cbRecvLength;
+	/* [range] */ DWORD cbRecvLength;
 	/* [size_is][unique] */ BYTE *pbRecvBuffer;
 } Transmit_Return;
 
@@ -326,46 +325,46 @@ typedef struct _GetTransmitCount_Call
 typedef struct _GetTransmitCount_Return
 {
 	long ReturnCode;
-	unsigned long cTransmitCount;
+	DWORD cTransmitCount;
 } GetTransmitCount_Return;
 
 typedef struct _Control_Call
 {
 	REDIR_SCARDHANDLE hCard;
-	unsigned long dwControlCode;
-	/* [range] */ unsigned long cbInBufferSize;
+	DWORD dwControlCode;
+	/* [range] */ DWORD cbInBufferSize;
 	/* [size_is][unique] */ BYTE *pvInBuffer;
 	long fpvOutBufferIsNULL;
-	unsigned long cbOutBufferSize;
+	DWORD cbOutBufferSize;
 } Control_Call;
 
 typedef struct _Control_Return
 {
 	long ReturnCode;
-	/* [range] */ unsigned long cbOutBufferSize;
+	/* [range] */ DWORD cbOutBufferSize;
 	/* [size_is][unique] */ BYTE *pvOutBuffer;
 } Control_Return;
 
 typedef struct _GetAttrib_Call
 {
 	REDIR_SCARDHANDLE hCard;
-	unsigned long dwAttrId;
+	DWORD dwAttrId;
 	long fpbAttrIsNULL;
-	unsigned long cbAttrLen;
+	DWORD cbAttrLen;
 } GetAttrib_Call;
 
 typedef struct _GetAttrib_Return
 {
 	long ReturnCode;
-	/* [range] */ unsigned long cbAttrLen;
+	/* [range] */ DWORD cbAttrLen;
 	/* [size_is][unique] */ BYTE *pbAttr;
 } GetAttrib_Return;
 
 typedef struct _SetAttrib_Call
 {
 	REDIR_SCARDHANDLE hCard;
-	unsigned long dwAttrId;
-	/* [range] */ unsigned long cbAttrLen;
+	DWORD dwAttrId;
+	/* [range] */ DWORD cbAttrLen;
 	/* [size_is] */ BYTE *pbAttr;
 } SetAttrib_Call;
 
@@ -373,9 +372,9 @@ typedef struct _ReadCache_Common
 {
 	REDIR_SCARDCONTEXT Context;
 	UUID *CardIdentifier;
-	unsigned long FreshnessCounter;
+	DWORD FreshnessCounter;
 	long fPbDataIsNULL;
-	unsigned long cbDataLen;
+	DWORD cbDataLen;
 } ReadCache_Common;
 
 typedef struct _ReadCacheA_Call
@@ -393,7 +392,7 @@ typedef struct _ReadCacheW_Call
 typedef struct _ReadCache_Return
 {
 	long ReturnCode;
-	/* [range] */ unsigned long cbDataLen;
+	/* [range] */ DWORD cbDataLen;
 	/* [size_is][unique] */ BYTE *pbData;
 } ReadCache_Return;
 
@@ -401,8 +400,8 @@ typedef struct _WriteCache_Common
 {
 	REDIR_SCARDCONTEXT Context;
 	UUID *CardIdentifier;
-	unsigned long FreshnessCounter;
-	/* [range] */ unsigned long cbDataLen;
+	DWORD FreshnessCounter;
+	/* [range] */ DWORD cbDataLen;
 	/* [size_is][unique] */ BYTE *pbData;
 } WriteCache_Common;
 
