@@ -21,6 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/print.h>
+
 #include "smartcard_pack.h"
 
 UINT32 smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, EstablishContext_Call* call)
@@ -55,16 +58,8 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
-	if (call->cBytes)
-	{
-		call->mszGroups = malloc(call->cBytes);
-		Stream_Read(s, call->mszGroups, call->cBytes); /* mszGroups */
-	}
-	else
-	{
-		call->mszGroups = NULL;
-		Stream_Seek(s, 4); /* mszGroups */
-	}
+	call->mszGroups = NULL;
+	Stream_Seek(s, 4); /* mszGroupsPtr (4 bytes) */
 
 	Stream_Read_UINT32(s, call->fmszReadersIsNULL); /* fmszReadersIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cchReaders); /* cchReaders (4 bytes) */
@@ -75,6 +70,8 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 				(int) Stream_GetRemainingLength(s));
 		return SCARD_F_INTERNAL_ERROR;
 	}
+
+	/* FIXME: complete parsing */
 
 	return SCARD_S_SUCCESS;
 }
