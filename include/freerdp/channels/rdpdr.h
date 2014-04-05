@@ -34,6 +34,9 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/list.h>
 
+#define RDPDR_DEVICE_IO_REQUEST_LENGTH		24
+#define RDPDR_DEVICE_IO_RESPONSE_LENGTH		16
+
 /* RDPDR_HEADER.Component */
 enum RDPDR_CTYP
 {

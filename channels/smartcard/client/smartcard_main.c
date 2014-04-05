@@ -64,6 +64,11 @@ static void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	}
 }
 
+/**
+ * Multiple threads and SCardGetStatusChange:
+ * http://musclecard.996296.n3.nabble.com/Multiple-threads-and-SCardGetStatusChange-td4430.html
+ */
+
 static void* smartcard_thread_func(void* arg)
 {
 	IRP* irp;

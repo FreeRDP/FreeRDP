@@ -417,7 +417,20 @@ typedef struct _WriteCacheW_Call
 	WriteCache_Common Common;
 } WriteCacheW_Call;
 
+#define SMARTCARD_COMMON_TYPE_HEADER_LENGTH	8
+#define SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH	8
+
+UINT32 smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);
+UINT32 smartcard_pack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);
+
+UINT32 smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);
+UINT32 smartcard_pack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 objectBufferLength);
+
 UINT32 smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, EstablishContext_Call* call);
+
 UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaders_Call* call);
+
+UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, ConnectA_Call* call);
+UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, ConnectW_Call* call);
 
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_PACK_H */
