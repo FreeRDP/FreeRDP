@@ -165,7 +165,7 @@ static UINT32 handle_Context(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
-	Stream_Seek(irp->input, length);
+	Stream_Seek_UINT32(irp->input); /* NdrPtr (4 bytes) */
 
 	if (length > Stream_GetRemainingLength(irp->input))
 	{
@@ -203,7 +203,7 @@ static UINT32 handle_CardHandle(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
-	Stream_Seek_UINT32(irp->input); /* pbContextNdrPtr (4 bytes) */
+	Stream_Seek_UINT32(irp->input); /* NdrPtr (4 bytes) */
 
 	return 0;
 }
@@ -417,8 +417,9 @@ static void smartcard_input_repos(IRP* irp, UINT32 read)
 static UINT32 handle_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT32 status;
-	EstablishContext_Call call;
 	SCARDCONTEXT hContext = -1;
+	EstablishContext_Call call;
+	EstablishContext_Return ret;
 
 	status = smartcard_unpack_establish_context_call(smartcard, irp->input, &call);
 
@@ -427,13 +428,18 @@ static UINT32 handle_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = SCardEstablishContext(call.dwScope, NULL, NULL, &hContext);
 
-	Stream_Write_UINT32(irp->output, 4); /* cbContext (4 bytes) */
-	Stream_Write_UINT32(irp->output, -1); /* ReferentID (4 bytes) */
+	ret.Context.cbContext = sizeof(SCARDCONTEXT);
 
-	Stream_Write_UINT32(irp->output, 4);
-	Stream_Write_UINT32(irp->output, hContext);
+	Stream_Write_UINT32(irp->output, ret.Context.cbContext); /* cbContext (4 bytes) */
+	Stream_Write_UINT32(irp->output, 0x00020000); /* pbContextNdrPtr (4 bytes) */
 
-	/* store hContext in allowed context list */
+	Stream_Write_UINT32(irp->output, ret.Context.cbContext);
+
+	if (ret.Context.cbContext > 4)
+		Stream_Write_UINT64(irp->output, hContext);
+	else
+		Stream_Write_UINT32(irp->output, hContext);
+
 	smartcard->hContext = hContext;
 
 	smartcard_output_alignment(irp, 8);
@@ -1507,7 +1513,7 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		return status;
 
 	ret.pbAttr = NULL;
-	cbAttrLen = (call.cbAttrLen == 0) ? 0 : SCARD_AUTOALLOCATE;
+	cbAttrLen = (!call.cbAttrLen || call.fpbAttrIsNULL) ? 0 : SCARD_AUTOALLOCATE;
 
 	status = SCardGetAttrib(hCard, call.dwAttrId, (cbAttrLen == 0) ? NULL : (BYTE*) &ret.pbAttr, &cbAttrLen);
 
@@ -1554,7 +1560,7 @@ static UINT32 handle_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		ret.cbAttrLen = call.cbAttrLen;
 
 		Stream_Write_UINT32(irp->output, ret.cbAttrLen); /* cbAttrLen (4 bytes) */
-		Stream_Write_UINT32(irp->output, 0x00000200); /* pbAttrPointer (4 bytes) */
+		Stream_Write_UINT32(irp->output, 0x00020000); /* pbAttrPointer (4 bytes) */
 		Stream_Write_UINT32(irp->output, ret.cbAttrLen); /* pbAttrLength (4 bytes) */
 
 		if (!ret.pbAttr)

@@ -156,7 +156,7 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	}
 
 	call->mszGroups = NULL;
-	Stream_Seek(s, 4); /* mszGroupsPtr (4 bytes) */
+	Stream_Seek_UINT32(s); /* mszGroupsNdrPtr (4 bytes) */
 
 	Stream_Read_UINT32(s, call->fmszReadersIsNULL); /* fmszReadersIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cchReaders); /* cchReaders (4 bytes) */
