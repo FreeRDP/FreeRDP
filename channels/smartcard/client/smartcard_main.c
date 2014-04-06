@@ -126,12 +126,22 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	{
 		smartcard_irp_device_control_peek_io_control_code(smartcard, irp, &ioControlCode);
 
-#ifdef SMARTCARD_ASYNC_IRP
 		if (!ioControlCode)
 			return;
 
+#ifdef SMARTCARD_ASYNC_IRP
+		asyncIrp = TRUE;
+
 		switch (ioControlCode)
 		{
+			case SCARD_IOCTL_ESTABLISHCONTEXT:
+			case SCARD_IOCTL_RELEASECONTEXT:
+			case SCARD_IOCTL_ISVALIDCONTEXT:
+			case SCARD_IOCTL_ACCESSSTARTEDEVENT:
+			case SCARD_IOCTL_RELEASESTARTEDEVENT:
+				asyncIrp = FALSE;
+				break;
+
 			case SCARD_IOCTL_TRANSMIT:
 			case SCARD_IOCTL_STATUSA:
 			case SCARD_IOCTL_STATUSW:

@@ -206,7 +206,6 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDCONTEXT* context)
 {
 	UINT32 length;
-	ULONG_PTR contextVal;
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -231,13 +230,82 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 	}
 
 	if (length > 4)
-		Stream_Read_UINT64(s, contextVal);
+		Stream_Read_UINT64(s, context->pbContext);
 	else
-		Stream_Read_UINT32(s, contextVal);
-
-	*((ULONG_PTR*) context->pbContext) = contextVal;
+		Stream_Read_UINT32(s, context->pbContext);
 
 	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
+{
+	UINT32 status;
+	UINT32 length;
+
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(handle->Context));
+
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "SCARDHANDLE is too short: %d",
+				(int) Stream_GetRemainingLength(s));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
+
+	if ((Stream_GetRemainingLength(s) < length) || (!length))
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "SCARDHANDLE is too short: Actual: %d, Expected: %d",
+				(int) Stream_GetRemainingLength(s), length);
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Seek_UINT32(s); /* NdrPtr (4 bytes) */
+
+	return 0;
+}
+
+UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
+{
+	UINT32 length;
+	UINT32 status;
+
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(handle->Context));
+
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d\n",
+				(int) Stream_GetRemainingLength(s), 4);
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
+
+	if ((length != 4) && (length != 8))
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE length is not 4 or 8: %d\n", length);
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	if ((Stream_GetRemainingLength(s) < length) || (!length))
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d\n",
+				(int) Stream_GetRemainingLength(s), length);
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	if (length > 4)
+		Stream_Read_UINT64(s, handle->pbHandle);
+	else
+		Stream_Read_UINT32(s, handle->pbHandle);
+
+	return 0;
 }
 
 UINT32 smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream* s, Connect_Common* common)
@@ -348,6 +416,280 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	call->szReader[count] = '\0';
 
 	smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.Context));
+
+	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Reconnect_Call* call)
+{
+	UINT32 status;
+
+	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard));
+
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(s) < 12)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "Reconnect_Call is too short: %d",
+				(int) Stream_GetRemainingLength(s));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Read_UINT32(s, call->dwShareMode); /* dwShareMode (4 bytes) */
+	Stream_Read_UINT32(s, call->dwPreferredProtocols); /* dwPreferredProtocols (4 bytes) */
+	Stream_Read_UINT32(s, call->dwInitialization); /* dwInitialization (4 bytes) */
+
+	status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard));
+
+	if (status)
+		return status;
+
+	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, wStream* s, HCardAndDisposition_Call* call)
+{
+	UINT32 status;
+
+	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard));
+
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "HCardAndDisposition_Call is too short: %d",
+				(int) Stream_GetRemainingLength(s));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Read_UINT32(s, call->dwDisposition); /* dwDisposition (4 bytes) */
+
+	status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard));
+
+	if (status)
+		return status;
+
+	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChangeA_Call* call)
+{
+	int index;
+	UINT32 count;
+	UINT32 status;
+	ReaderStateA* readerState;
+
+	call->rgReaderStates = NULL;
+
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->Context));
+
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(s) < 12)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+				(int) Stream_GetRemainingLength(s));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Read_UINT32(s, call->dwTimeOut); /* dwTimeOut (4 bytes) */
+	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
+	Stream_Seek_UINT32(s); /* rgReaderStatesNdrPtr (4 bytes) */
+
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Context));
+
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+				(int) Stream_GetRemainingLength(s));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Seek_UINT32(s); /* NdrConformant (4 bytes) */
+
+	if (call->cReaders > 0)
+	{
+		call->rgReaderStates = (ReaderStateA*) calloc(call->cReaders, sizeof(ReaderStateA));
+
+		for (index = 0; index < call->cReaders; index++)
+		{
+			readerState = &call->rgReaderStates[index];
+
+			if (Stream_GetRemainingLength(s) < 52)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+						(int) Stream_GetRemainingLength(s));
+				return SCARD_F_INTERNAL_ERROR;
+			}
+
+			Stream_Seek_UINT32(s); /* (4 bytes) */
+			Stream_Read_UINT32(s, readerState->Common.dwCurrentState); /* dwCurrentState (4 bytes) */
+			Stream_Read_UINT32(s, readerState->Common.dwEventState); /* dwEventState (4 bytes) */
+			Stream_Read_UINT32(s, readerState->Common.cbAtr); /* cbAtr (4 bytes) */
+			Stream_Read(s, readerState->Common.rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
+			Stream_Seek_UINT32(s); /* rgbAtr [32..36] (4 bytes) */
+
+			/* reset high bytes? */
+			readerState->Common.dwCurrentState &= 0x0000FFFF;
+			readerState->Common.dwEventState = 0;
+		}
+
+		for (index = 0; index < call->cReaders; index++)
+		{
+			readerState = &call->rgReaderStates[index];
+
+			if (Stream_GetRemainingLength(s) < 12)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+						(int) Stream_GetRemainingLength(s));
+				return SCARD_F_INTERNAL_ERROR;
+			}
+
+			Stream_Seek_UINT32(s); /* NdrMaxCount (4 bytes) */
+			Stream_Seek_UINT32(s); /* NdrOffset (4 bytes) */
+			Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
+
+			if (Stream_GetRemainingLength(s) < count)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+						(int) Stream_GetRemainingLength(s));
+				return SCARD_F_INTERNAL_ERROR;
+			}
+
+			readerState->szReader = malloc(count + 1);
+			Stream_Read(s, readerState->szReader, count);
+			smartcard_unpack_read_offset_align(smartcard, s, 4);
+			readerState->szReader[count] = '\0';
+
+			if (!readerState->szReader)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call null reader name");
+				return SCARD_F_INTERNAL_ERROR;
+			}
+
+			if (strcmp((char*) readerState->szReader, "\\\\?PnP?\\Notification") == 0)
+			{
+				readerState->Common.dwCurrentState |= SCARD_STATE_IGNORE;
+			}
+		}
+	}
+
+	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChangeW_Call* call)
+{
+	int index;
+	UINT32 count;
+	UINT32 status;
+	ReaderStateW* readerState;
+
+	call->rgReaderStates = NULL;
+
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->Context));
+
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(s) < 12)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
+				(int) Stream_GetRemainingLength(s));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Read_UINT32(s, call->dwTimeOut); /* dwTimeOut (4 bytes) */
+	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
+	Stream_Seek_UINT32(s); /* rgReaderStatesNdrPtr (4 bytes) */
+
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Context));
+
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
+				(int) Stream_GetRemainingLength(s));
+		return SCARD_F_INTERNAL_ERROR;
+	}
+
+	Stream_Seek_UINT32(s); /* NdrConformant (4 bytes) */
+
+	if (call->cReaders > 0)
+	{
+		call->rgReaderStates = (ReaderStateW*) calloc(call->cReaders, sizeof(ReaderStateW));
+
+		for (index = 0; index < call->cReaders; index++)
+		{
+			readerState = &call->rgReaderStates[index];
+
+			if (Stream_GetRemainingLength(s) < 52)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
+						(int) Stream_GetRemainingLength(s));
+				return SCARD_F_INTERNAL_ERROR;
+			}
+
+			Stream_Seek_UINT32(s); /* (4 bytes) */
+			Stream_Read_UINT32(s, readerState->Common.dwCurrentState); /* dwCurrentState (4 bytes) */
+			Stream_Read_UINT32(s, readerState->Common.dwEventState); /* dwEventState (4 bytes) */
+			Stream_Read_UINT32(s, readerState->Common.cbAtr); /* cbAtr (4 bytes) */
+			Stream_Read(s, readerState->Common.rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
+			Stream_Seek_UINT32(s); /* rgbAtr [32..36] (4 bytes) */
+
+			/* reset high bytes? */
+			readerState->Common.dwCurrentState &= 0x0000FFFF;
+			readerState->Common.dwEventState = 0;
+		}
+
+		for (index = 0; index < call->cReaders; index++)
+		{
+			readerState = &call->rgReaderStates[index];
+
+			if (Stream_GetRemainingLength(s) < 12)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
+						(int) Stream_GetRemainingLength(s));
+				return SCARD_F_INTERNAL_ERROR;
+			}
+
+			Stream_Seek_UINT32(s); /* NdrMaxCount (4 bytes) */
+			Stream_Seek_UINT32(s); /* NdrOffset (4 bytes) */
+			Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
+
+			if (Stream_GetRemainingLength(s) < (count * 2))
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
+						(int) Stream_GetRemainingLength(s));
+				return SCARD_F_INTERNAL_ERROR;
+			}
+
+			readerState->szReader = malloc((count + 1) * 2);
+			Stream_Read(s, readerState->szReader, (count * 2));
+			smartcard_unpack_read_offset_align(smartcard, s, 4);
+			readerState->szReader[count] = '\0';
+
+			if (!readerState->szReader)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call null reader name");
+				return SCARD_F_INTERNAL_ERROR;
+			}
+
+#if 0
+			if (strcmp((char*) readerState->szReader, "\\\\?PnP?\\Notification") == 0)
+			{
+				readerState->Common.dwCurrentState |= SCARD_STATE_IGNORE;
+			}
+#endif
+		}
+	}
 
 	return SCARD_S_SUCCESS;
 }

@@ -32,14 +32,14 @@
 typedef struct _REDIR_SCARDCONTEXT
 {
 	/* [range] */ DWORD cbContext;
-	/* [size_is][unique] */ BYTE *pbContext;
+	/* [size_is][unique] */ UINT64 pbContext;
 } REDIR_SCARDCONTEXT;
 
 typedef struct _REDIR_SCARDHANDLE
 {
 	REDIR_SCARDCONTEXT Context;
 	/* [range] */ DWORD cbHandle;
-	/* [size_is] */ BYTE *pbHandle;
+	/* [size_is] */ UINT64 pbHandle;
 } REDIR_SCARDHANDLE;
 
 typedef struct _long_Return
@@ -432,5 +432,12 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 
 UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, ConnectA_Call* call);
 UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, ConnectW_Call* call);
+
+UINT32 smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Reconnect_Call* call);
+
+UINT32 smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, wStream* s, HCardAndDisposition_Call* call);
+
+UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChangeA_Call* call);
+UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChangeW_Call* call);
 
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_PACK_H */

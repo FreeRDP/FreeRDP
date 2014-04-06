@@ -377,14 +377,33 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 
 	if (g_PCSC.pfnSCardGetStatusChange)
 	{
-		SCARD_READERSTATEA rgReaderStatesA;
+		DWORD index;
+		LPSCARD_READERSTATEA rgReaderStatesA;
 
-		cReaders = 0;
-		ZeroMemory(&rgReaderStatesA, sizeof(SCARD_READERSTATEA));
+		rgReaderStatesA = (LPSCARD_READERSTATEA) calloc(cReaders, sizeof(SCARD_READERSTATEA));
 
-		/* FIXME: unicode conversion */
-		status = g_PCSC.pfnSCardGetStatusChange(hContext, dwTimeout, &rgReaderStatesA, cReaders);
+		for (index = 0; index < cReaders; index++)
+		{
+			rgReaderStatesA[index].szReader = NULL;
+
+			ConvertFromUnicode(CP_UTF8, 0, rgReaderStates[index].szReader, -1,
+					(char**) &rgReaderStatesA[index].szReader, 0, NULL, NULL);
+
+			rgReaderStatesA[index].pvUserData = rgReaderStates[index].pvUserData;
+			rgReaderStatesA[index].dwCurrentState = rgReaderStates[index].dwCurrentState;
+			rgReaderStatesA[index].dwEventState = rgReaderStates[index].dwEventState;
+			rgReaderStatesA[index].cbAtr = rgReaderStates[index].cbAtr;
+
+			CopyMemory(&(rgReaderStatesA[index].rgbAtr), &(rgReaderStates[index].rgbAtr), 36);
+		}
+
+		status = g_PCSC.pfnSCardGetStatusChange(hContext, dwTimeout, rgReaderStatesA, cReaders);
 		status = PCSC_MapErrorCodeToWinSCard(status);
+
+		for (index = 0; index < cReaders; index++)
+			free((void*) rgReaderStatesA[index].szReader);
+
+		free(rgReaderStatesA);
 	}
 
 	return status;
