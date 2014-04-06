@@ -195,9 +195,8 @@ static void smartcard_irp_request(DEVICE* device, IRP* irp)
 	MessageQueue_Post(smartcard->IrpQueue, NULL, 0, (void*) irp, NULL);
 }
 
-#ifdef STATIC_CHANNELS
+/* smartcard is always built-in */
 #define DeviceServiceEntry	smartcard_DeviceServiceEntry
-#endif
 
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {

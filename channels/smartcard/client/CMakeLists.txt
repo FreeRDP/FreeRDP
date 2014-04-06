@@ -24,7 +24,7 @@ set(${MODULE_PREFIX}_SRCS
 	smartcard_pack.h
 	smartcard_operations.c)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DeviceServiceEntry")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
@@ -36,7 +36,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-crt winpr-synch winpr-thread winpr-interlocked winpr-utils)
+	MODULES winpr-crt winpr-smartcard winpr-synch winpr-thread winpr-interlocked winpr-utils)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
