@@ -203,7 +203,7 @@ static UINT32 handle_CardHandle(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
-	Stream_Seek(irp->input, length); /* Length (4 bytes) */
+	Stream_Seek_UINT32(irp->input); /* pbContextNdrPtr (4 bytes) */
 
 	return 0;
 }
@@ -788,13 +788,19 @@ UINT32 handle_ConnectA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	smartcard->hCard = hCard;
 
-	Stream_Write_UINT32(irp->output, 0x00000000);
-	Stream_Write_UINT32(irp->output, 0x00000000);
-	Stream_Write_UINT32(irp->output, 0x00000004);
-	Stream_Write_UINT32(irp->output, 0x016Cff34);
+	ret.hCard.cbHandle = sizeof(SCARDHANDLE);
+
+	Stream_Write_UINT32(irp->output, 0x00000000); /* (4 bytes) */
+	Stream_Write_UINT32(irp->output, 0x00000000); /* (4 bytes) */
+	Stream_Write_UINT32(irp->output, ret.hCard.cbHandle); /* cbHandle (4 bytes) */
+	Stream_Write_UINT32(irp->output, 0x00020000); /* pbHandleNdrPtr (4 bytes) */
 	Stream_Write_UINT32(irp->output, ret.dwActiveProtocol); /* dwActiveProtocol (4 bytes) */
-	Stream_Write_UINT32(irp->output, 0x00000004);
-	Stream_Write_UINT32(irp->output, hCard);
+	Stream_Write_UINT32(irp->output, ret.hCard.cbHandle);
+
+	if (ret.hCard.cbHandle > 4)
+		Stream_Write_UINT64(irp->output, hCard);
+	else
+		Stream_Write_UINT32(irp->output, hCard);
 
 	smartcard_output_alignment(irp, 8);
 
@@ -826,13 +832,19 @@ UINT32 handle_ConnectW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	smartcard->hCard = hCard;
 
-	Stream_Write_UINT32(irp->output, 0x00000000);
-	Stream_Write_UINT32(irp->output, 0x00000000);
-	Stream_Write_UINT32(irp->output, 0x00000004);
-	Stream_Write_UINT32(irp->output, 0x016Cff34);
+	ret.hCard.cbHandle = sizeof(SCARDHANDLE);
+
+	Stream_Write_UINT32(irp->output, 0x00000000); /* (4 bytes) */
+	Stream_Write_UINT32(irp->output, 0x00000000); /* (4 bytes) */
+	Stream_Write_UINT32(irp->output, ret.hCard.cbHandle); /* cbHandle (4 bytes) */
+	Stream_Write_UINT32(irp->output, 0x00020000); /* pbHandleNdrPtr (4 bytes) */
 	Stream_Write_UINT32(irp->output, ret.dwActiveProtocol); /* dwActiveProtocol (4 bytes) */
-	Stream_Write_UINT32(irp->output, 0x00000004);
-	Stream_Write_UINT32(irp->output, hCard);
+	Stream_Write_UINT32(irp->output, ret.hCard.cbHandle);
+
+	if (ret.hCard.cbHandle > 4)
+		Stream_Write_UINT64(irp->output, hCard);
+	else
+		Stream_Write_UINT32(irp->output, hCard);
 
 	smartcard_output_alignment(irp, 8);
 
@@ -895,8 +907,8 @@ static UINT32 handle_Disconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (Stream_GetRemainingLength(irp->input) < 4)
 	{
-		DEBUG_WARN("length violation %d [%d]", 4,
-			Stream_GetRemainingLength(irp->input));
+		WLog_Print(smartcard->log, WLOG_WARN, "HCardAndDisposition_Call is too short: Actual: %d, Expected: %d\n",
+				(int) Stream_GetRemainingLength(irp->input), 4);
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
