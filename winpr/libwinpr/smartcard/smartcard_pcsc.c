@@ -515,7 +515,14 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 		status = PCSC_MapErrorCodeToWinSCard(status);
 
 		for (index = 0; index < cReaders; index++)
+		{
 			free((void*) rgReaderStatesA[index].szReader);
+			rgReaderStates[index].pvUserData = rgReaderStatesA[index].pvUserData;
+			rgReaderStates[index].dwCurrentState = rgReaderStatesA[index].dwCurrentState;
+			rgReaderStates[index].dwEventState = rgReaderStatesA[index].dwEventState;
+			rgReaderStates[index].cbAtr = rgReaderStatesA[index].cbAtr;
+			CopyMemory(&(rgReaderStates[index].rgbAtr), &(rgReaderStatesA[index].rgbAtr), 36);
+		}
 
 		free(rgReaderStatesA);
 	}

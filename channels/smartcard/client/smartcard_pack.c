@@ -640,6 +640,10 @@ UINT32 smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, 
 	return SCARD_S_SUCCESS;
 }
 
+static char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
+static WCHAR SMARTCARD_PNP_NOTIFICATION_W[] = { '\\','\\','?','P','n','P','?',
+		'\\','N','o','t','i','f','i','c','a','t','i','o','n','\0' };
+
 UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChangeA_Call* call)
 {
 	int index;
@@ -739,7 +743,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 				return STATUS_INVALID_PARAMETER;
 			}
 
-			if (strcmp((char*) readerState->szReader, "\\\\?PnP?\\Notification") == 0)
+			if (strcmp((char*) readerState->szReader, SMARTCARD_PNP_NOTIFICATION_A) == 0)
 			{
 				readerState->Common.dwCurrentState |= SCARD_STATE_IGNORE;
 			}
@@ -848,12 +852,10 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 				return STATUS_INVALID_PARAMETER;
 			}
 
-#if 0
-			if (strcmp((char*) readerState->szReader, "\\\\?PnP?\\Notification") == 0)
+			if (_wcscmp((WCHAR*) readerState->szReader, SMARTCARD_PNP_NOTIFICATION_W) == 0)
 			{
 				readerState->Common.dwCurrentState |= SCARD_STATE_IGNORE;
 			}
-#endif
 		}
 	}
 

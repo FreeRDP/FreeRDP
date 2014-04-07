@@ -422,7 +422,7 @@ static UINT32 smartcard_GetStatusChangeW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		CopyMemory(&(rgReaderState->rgbAtr), &(call.rgReaderStates[index].Common.rgbAtr), 36);
 	}
 
-	status = ret.ReturnCode = SCardGetStatusChangeW(hContext, (DWORD) call.dwTimeOut, rgReaderStates, (DWORD) call.cReaders);
+	status = ret.ReturnCode = SCardGetStatusChangeW(hContext, call.dwTimeOut, rgReaderStates, call.cReaders);
 
 	if (status)
 		return status;
@@ -1050,9 +1050,9 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 
 #if 1
-	if (/*(ioControlCode != SCARD_IOCTL_TRANSMIT) &&*/
-		(ioControlCode != SCARD_IOCTL_GETSTATUSCHANGEA) &&
-		(ioControlCode != SCARD_IOCTL_GETSTATUSCHANGEW))
+	//if (/*(ioControlCode != SCARD_IOCTL_TRANSMIT) &&*/
+	//	(ioControlCode != SCARD_IOCTL_GETSTATUSCHANGEA) &&
+	//	(ioControlCode != SCARD_IOCTL_GETSTATUSCHANGEW))
 	{
 		printf("%s (0x%08X) FileId: %d CompletionId: %d\n",
 			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
