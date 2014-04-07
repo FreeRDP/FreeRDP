@@ -145,15 +145,20 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 
 	if (g_PCSC.pfnSCardListReaders)
 	{
-		mszGroups = NULL;
+		LPSTR mszGroupsA = NULL;
 
-		mszReaders = NULL;
-		pcchReaders = 0;
+		if (mszGroups)
+			ConvertFromUnicode(CP_UTF8, 0, mszGroups, -1, (char**) &mszGroupsA, 0, NULL, NULL);
 
-		/* FIXME: unicode conversion */
+		if (!mszReaders)
+			pcchReaders = 0;
 
-		status = g_PCSC.pfnSCardListReaders(hContext, (LPSTR) mszGroups, (LPSTR) mszReaders, pcchReaders);
+		status = g_PCSC.pfnSCardListReaders(hContext, (LPSTR) mszGroupsA, (LPSTR) mszReaders, pcchReaders);
 		status = PCSC_MapErrorCodeToWinSCard(status);
+
+		/* TODO: unicode conversion */
+
+		free(mszGroupsA);
 	}
 
 	return status;
