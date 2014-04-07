@@ -202,6 +202,32 @@ static UINT32 smartcard_output_return(IRP* irp, UINT32 status)
 	return status;
 }
 
+size_t smartcard_multi_string_length_a(const char* msz)
+{
+	char* p = (char*) msz;
+
+	if (!p)
+		return 0;
+
+	while (p[0] || p[1])
+		p++;
+
+	return (p - msz);
+}
+
+size_t smartcard_multi_string_length_w(const WCHAR* msz)
+{
+	WCHAR* p = (WCHAR*) msz;
+
+	if (!p)
+		return 0;
+
+	while (p[0] || p[1])
+		p++;
+
+	return (p - msz);
+}
+
 static UINT32 smartcard_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT32 status;
@@ -270,17 +296,14 @@ static UINT32 smartcard_IsValidContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	return status;
 }
 
-static UINT32 smartcard_ListReaders(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL wide)
+static UINT32 smartcard_ListReadersA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT32 status;
-	DWORD dwReaders;
 	SCARDCONTEXT hContext;
 	ListReaders_Call call;
-	char *readerList = NULL;
-	char* walker;
-	char* walkerEnd;
-	int elemLength, dataLength;
-	int pos, poslen1, poslen2;
+	ListReaders_Return ret;
+	LPSTR mszReaders = NULL;
+	DWORD cchReaders = 0;
 
 	status = smartcard_unpack_list_readers_call(smartcard, irp->input, &call);
 
@@ -289,59 +312,64 @@ static UINT32 smartcard_ListReaders(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL 
 
 	hContext = (ULONG_PTR) call.Context.pbContext;
 
-	dwReaders = SCARD_AUTOALLOCATE;
-	status = SCardListReadersA(hContext, (LPCSTR) call.mszGroups, (LPSTR) &readerList, &dwReaders);
+	cchReaders = SCARD_AUTOALLOCATE;
+	status = SCardListReadersA(hContext, (LPCSTR) call.mszGroups, (LPSTR) &mszReaders, &cchReaders);
 
 	if (status != SCARD_S_SUCCESS)
 		goto finish;
 
-	poslen1 = Stream_GetPosition(irp->output);
-	Stream_Seek_UINT32(irp->output);
+	ret.msz = (BYTE*) mszReaders;
+	ret.cBytes = smartcard_multi_string_length_a((char*) ret.msz) + 2;
 
-	Stream_Write_UINT32(irp->output, 0x01760650);
+	smartcard_pack_list_readers_return(smartcard, irp->output, &ret);
 
-	poslen2 = Stream_GetPosition(irp->output);
-	Stream_Seek_UINT32(irp->output);
-
-	walker = readerList;
-	walkerEnd = readerList + dwReaders;
-	dataLength = 0;
-
-	while (1)
-	{
-		elemLength = strlen(walker);
-
-		if (!elemLength)
-			break;
-
-		dataLength += smartcard_output_string(irp, walker, wide);
-		walker += elemLength + 1;
-
-		if (walker > walkerEnd)
-		{
-			status = SCARD_F_INTERNAL_ERROR;
-			goto finish;
-		}
-	}
-
-	dataLength += smartcard_output_string(irp, "\0", wide);
-
-	pos = Stream_GetPosition(irp->output);
-
-	Stream_SetPosition(irp->output, poslen1);
-	Stream_Write_UINT32(irp->output, dataLength);
-	Stream_SetPosition(irp->output, poslen2);
-	Stream_Write_UINT32(irp->output, dataLength);
-
-	Stream_SetPosition(irp->output, pos);
-
-	smartcard_output_repos(irp, dataLength);
 	smartcard_output_alignment(irp, 8);
 
 finish:
-	if (readerList)
+	if (mszReaders)
 	{
-		SCardFreeMemory(hContext, readerList);
+		SCardFreeMemory(hContext, mszReaders);
+	}
+
+	if (call.mszGroups)
+		free(call.mszGroups);
+
+	return status;
+}
+
+static UINT32 smartcard_ListReadersW(SMARTCARD_DEVICE* smartcard, IRP* irp)
+{
+	UINT32 status;
+	SCARDCONTEXT hContext;
+	ListReaders_Call call;
+	ListReaders_Return ret;
+	LPWSTR mszReaders = NULL;
+	DWORD cchReaders = 0;
+
+	status = smartcard_unpack_list_readers_call(smartcard, irp->input, &call);
+
+	if (status)
+		goto finish;
+
+	hContext = (ULONG_PTR) call.Context.pbContext;
+
+	cchReaders = SCARD_AUTOALLOCATE;
+	status = SCardListReadersW(hContext, (LPCWSTR) call.mszGroups, (LPWSTR) &mszReaders, &cchReaders);
+
+	if (status != SCARD_S_SUCCESS)
+		goto finish;
+
+	ret.msz = (BYTE*) mszReaders;
+	ret.cBytes = (smartcard_multi_string_length_w((WCHAR*) ret.msz) + 2) * 2;
+
+	smartcard_pack_list_readers_return(smartcard, irp->output, &ret);
+
+	smartcard_output_alignment(irp, 8);
+
+finish:
+	if (mszReaders)
+	{
+		SCardFreeMemory(hContext, mszReaders);
 	}
 
 	if (call.mszGroups)
@@ -1125,11 +1153,11 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			break;
 
 		case SCARD_IOCTL_LISTREADERSA:
-			result = smartcard_ListReaders(smartcard, irp, 0);
+			result = smartcard_ListReadersA(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_LISTREADERSW:
-			result = smartcard_ListReaders(smartcard, irp, 1);
+			result = smartcard_ListReadersW(smartcard, irp);
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERGROUPA:

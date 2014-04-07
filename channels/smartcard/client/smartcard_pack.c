@@ -451,6 +451,17 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	return SCARD_S_SUCCESS;
 }
 
+UINT32 smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaders_Return* ret)
+{
+	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020008); /* mszNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, ret->cBytes); /* mszNdrLen (4 bytes) */
+	Stream_Write(s, ret->msz, ret->cBytes);
+	smartcard_pack_write_offset_align(smartcard, s, 4);
+
+	return SCARD_S_SUCCESS;
+}
+
 UINT32 smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream* s, Connect_Common* common)
 {
 	UINT32 status;

@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/library.h>
 #include <winpr/smartcard.h>
+#include <winpr/collections.h>
 
 #include "smartcard_pcsc.h"
 
@@ -45,6 +46,64 @@ LONG PCSC_MapErrorCodeToWinSCard(LONG errorCode)
 		errorCode = SCARD_E_UNSUPPORTED_FEATURE;
 
 	return errorCode;
+}
+
+size_t PCSC_MultiStringLengthA(const char* msz)
+{
+	char* p = (char*) msz;
+
+	if (!p)
+		return 0;
+
+	while (p[0] || p[1])
+		p++;
+
+	return (p - msz);
+}
+
+size_t PCSC_MultiStringLengthW(const WCHAR* msz)
+{
+	WCHAR* p = (WCHAR*) msz;
+
+	if (!p)
+		return 0;
+
+	while (p[0] || p[1])
+		p++;
+
+	return (p - msz);
+}
+
+static wListDictionary* g_MemoryBlocks = NULL;
+
+void PCSC_AddMemoryBlock(SCARDCONTEXT hContext, void* pvMem)
+{
+	if (!g_MemoryBlocks)
+		g_MemoryBlocks = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_MemoryBlocks, pvMem, (void*) hContext);
+}
+
+void* PCSC_RemoveMemoryBlock(SCARDCONTEXT hContext, void* pvMem)
+{
+	if (!g_MemoryBlocks)
+		return NULL;
+
+	return ListDictionary_Remove(g_MemoryBlocks, pvMem);
+}
+
+void* PCSC_SCardAllocMemory(SCARDCONTEXT hContext, size_t size)
+{
+	void* pvMem;
+
+	pvMem = malloc(size);
+
+	if (!pvMem)
+		return NULL;
+
+	PCSC_AddMemoryBlock(hContext, pvMem);
+
+	return pvMem;
 }
 
 /**
@@ -145,7 +204,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 
 	if (g_PCSC.pfnSCardListReaders)
 	{
+		UINT32 length;
 		LPSTR mszGroupsA = NULL;
+		LPSTR mszReadersA = NULL;
 
 		if (mszGroups)
 			ConvertFromUnicode(CP_UTF8, 0, mszGroups, -1, (char**) &mszGroupsA, 0, NULL, NULL);
@@ -153,10 +214,20 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 		if (!mszReaders)
 			pcchReaders = 0;
 
-		status = g_PCSC.pfnSCardListReaders(hContext, (LPSTR) mszGroupsA, (LPSTR) mszReaders, pcchReaders);
+		status = g_PCSC.pfnSCardListReaders(hContext, (LPSTR) mszGroupsA, (LPSTR) &mszReadersA, pcchReaders);
 		status = PCSC_MapErrorCodeToWinSCard(status);
 
-		/* TODO: unicode conversion */
+		if (mszReadersA)
+		{
+			length = (UINT32) PCSC_MultiStringLengthA(mszReadersA);
+			ConvertToUnicode(CP_UTF8, 0, mszReadersA, length + 2, (WCHAR**) mszReaders, 0);
+			PCSC_AddMemoryBlock(hContext, mszReaders);
+
+			if (g_PCSC.pfnSCardFreeMemory)
+			{
+				g_PCSC.pfnSCardFreeMemory(hContext, mszReadersA);
+			}
+		}
 
 		free(mszGroupsA);
 	}
@@ -320,8 +391,16 @@ WINSCARDAPI LONG WINAPI PCSC_SCardFreeMemory(SCARDCONTEXT hContext, LPCVOID pvMe
 
 	if (g_PCSC.pfnSCardFreeMemory)
 	{
-		status = g_PCSC.pfnSCardFreeMemory(hContext, pvMem);
-		status = PCSC_MapErrorCodeToWinSCard(status);
+		if (PCSC_RemoveMemoryBlock(hContext, (void*) pvMem))
+		{
+			free((void*) pvMem);
+			status = SCARD_S_SUCCESS;
+		}
+		else
+		{
+			status = g_PCSC.pfnSCardFreeMemory(hContext, pvMem);
+			status = PCSC_MapErrorCodeToWinSCard(status);
+		}
 	}
 
 	return status;
