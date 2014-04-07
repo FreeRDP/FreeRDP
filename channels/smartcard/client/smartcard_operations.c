@@ -836,6 +836,9 @@ static UINT32 smartcard_Transmit(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (call.cbRecvLength && !call.fpbRecvBufferIsNULL)
 	{
+		if (call.cbRecvLength >= 65535)
+			call.cbRecvLength = 2048;
+
 		ret.cbRecvLength = call.cbRecvLength;
 		ret.pbRecvBuffer = (BYTE*) malloc(ret.cbRecvLength);
 	}

@@ -1121,6 +1121,9 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	Stream_Read_UINT32(s, call->fpbRecvBufferIsNULL); /* fpbRecvBufferIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbRecvLength); /* cbRecvLength (4 bytes) */
 
+	printf("Transmit_Call: ioSendPci.dwProtocol: %d ioSendPci.cbExtraBytes: %d pbExtraBytesPtr: %d cbSendLength: %d pbSendBufferNdrPtr: %d pioRecvPciNdrPtr: %d fpbRecvBufferIsNULL: %d cbRecvLength: %d\n",
+			ioSendPci.dwProtocol, ioSendPci.cbExtraBytes, pbExtraBytesNdrPtr, call->cbSendLength, pbSendBufferNdrPtr, pioRecvPciNdrPtr, call->fpbRecvBufferIsNULL, call->cbRecvLength);
+
 	status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard));
 
 	if (status)
@@ -1164,7 +1167,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	}
 	else
 	{
-		call->pioSendPci = (LPSCARD_IO_REQUEST) malloc(sizeof(SCARD_IO_REQUEST));
+		call->pioSendPci = (LPSCARD_IO_REQUEST) calloc(1, sizeof(SCARD_IO_REQUEST));
 
 		if (!call->pioSendPci)
 		{
@@ -1216,7 +1219,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 	if (pioRecvPciNdrPtr)
 	{
-		if (Stream_GetRemainingLength(s) < 16)
+		if (Stream_GetRemainingLength(s) < 8)
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: Actual: %d, Expected: %d",
 					(int) Stream_GetRemainingLength(s), 16);
@@ -1227,9 +1230,8 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
-		Stream_Read_UINT32(s, ioRecvPci.dwProtocol); /* dwProtocol (4 bytes) */
-		Stream_Read_UINT32(s, ioRecvPci.cbExtraBytes); /* cbExtraBytes (4 bytes) */
-		Stream_Read_UINT32(s, pbExtraBytesNdrPtr); /* pbExtraBytesNdrPtr (4 bytes) */
+		Stream_Read_UINT16(s, ioRecvPci.dwProtocol); /* dwProtocol (2 bytes) */
+		Stream_Read_UINT16(s, ioRecvPci.cbExtraBytes); /* cbExtraBytes (2 bytes) */
 
 		if (length < ioRecvPci.cbExtraBytes)
 		{
@@ -1278,6 +1280,9 @@ UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	}
 
 	Stream_Write_UINT32(s, 0); /* pioRecvPciNdrPtr (4 bytes) */
+
+	printf("Transmit_Return: pioRecvPci: %p pbRecvBuffer: %p cbRecvLength: %d\n",
+			ret->pioRecvPci, ret->pbRecvBuffer, ret->cbRecvLength);
 
 	if (ret->pbRecvBuffer)
 	{
