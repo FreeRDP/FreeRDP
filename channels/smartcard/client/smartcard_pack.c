@@ -134,7 +134,8 @@ UINT32 smartcard_unpack_read_offset_align(SMARTCARD_DEVICE* smartcard, wStream* 
 	offset = (offset + alignment - 1) & ~(alignment - 1);
 	pad = offset - pad;
 
-	Stream_Seek(s, pad);
+	if (pad)
+		Stream_Seek(s, pad);
 
 	return pad;
 }
@@ -150,7 +151,8 @@ UINT32 smartcard_pack_write_offset_align(SMARTCARD_DEVICE* smartcard, wStream* s
 	offset = (offset + alignment - 1) & ~(alignment - 1);
 	pad = offset - pad;
 
-	Stream_Zero(s, pad);
+	if (pad)
+		Stream_Zero(s, pad);
 
 	return pad;
 }
@@ -853,6 +855,28 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 			}
 #endif
 		}
+	}
+
+	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_pack_get_status_change_return(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChange_Return* ret)
+{
+	int index;
+	ReaderState_Return* rgReaderState;
+
+	Stream_Write_UINT32(s, ret->cReaders); /* cReaders (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020100); /* rgReaderStatesNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, ret->cReaders); /* rgReaderStatesNdrCount (4 bytes) */
+
+	for (index = 0; index < ret->cReaders; index++)
+	{
+		rgReaderState = &(ret->rgReaderStates[index]);
+		Stream_Write_UINT32(s, rgReaderState->dwCurrentState); /* dwCurrentState (4 bytes) */
+		Stream_Write_UINT32(s, rgReaderState->dwEventState); /* dwEventState (4 bytes) */
+		Stream_Write_UINT32(s, rgReaderState->cbAtr); /* cbAtr (4 bytes) */
+		Stream_Write(s, rgReaderState->rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
+		Stream_Zero(s, 4); /* rgbAtr [32..36] (4 bytes) */
 	}
 
 	return SCARD_S_SUCCESS;

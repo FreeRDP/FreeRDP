@@ -145,20 +145,6 @@ const char* smartcard_get_ioctl_string(UINT32 ioControlCode, BOOL funcName)
 	return funcName ? "SCardUnknown" : "SCARD_IOCTL_UNKNOWN";
 }
 
-static void smartcard_output_alignment(IRP* irp, UINT32 seed)
-{
-	const UINT32 field_lengths = 20;/* Remove the lengths of the fields
-					 * RDPDR_HEADER, DeviceID,
-					 * CompletionID, and IoStatus
-					 * of Section 2.2.1.5.5 of MS-RDPEFS.
-					 */
-	UINT32 size = Stream_GetPosition(irp->output) - field_lengths;
-	UINT32 add = (seed - (size % seed)) % seed;
-
-	if (add > 0)
-		Stream_Zero(irp->output, add);
-}
-
 size_t smartcard_multi_string_length_a(const char* msz)
 {
 	char* p = (char*) msz;
@@ -197,7 +183,7 @@ static UINT32 smartcard_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
-	status = SCardEstablishContext(call.dwScope, NULL, NULL, &hContext);
+	status = ret.ReturnCode = SCardEstablishContext(call.dwScope, NULL, NULL, &hContext);
 
 	smartcard->hContext = hContext;
 
@@ -206,8 +192,6 @@ static UINT32 smartcard_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	smartcard_pack_establish_context_return(smartcard, irp->output, &ret);
 
-	smartcard_output_alignment(irp, 8);
-
 	return status;
 }
 
@@ -215,6 +199,7 @@ static UINT32 smartcard_ReleaseContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT32 status;
 	Context_Call call;
+	Long_Return ret;
 	SCARDCONTEXT hContext;
 
 	status = smartcard_unpack_context_call(smartcard, irp->input, &call);
@@ -224,11 +209,9 @@ static UINT32 smartcard_ReleaseContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	hContext = (ULONG_PTR) call.Context.pbContext;
 
-	status = SCardReleaseContext(hContext);
+	status = ret.ReturnCode = SCardReleaseContext(hContext);
 
 	smartcard->hContext = 0;
-
-	smartcard_output_alignment(irp, 8);
 
 	return status;
 }
@@ -237,6 +220,7 @@ static UINT32 smartcard_IsValidContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT32 status;
 	Context_Call call;
+	Long_Return ret;
 	SCARDCONTEXT hContext;
 
 	status = smartcard_unpack_context_call(smartcard, irp->input, &call);
@@ -246,9 +230,7 @@ static UINT32 smartcard_IsValidContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	hContext = (ULONG_PTR) call.Context.pbContext;
 
-	status = SCardIsValidContext(hContext);
-
-	smartcard_output_alignment(irp, 8);
+	status = ret.ReturnCode = SCardIsValidContext(hContext);
 
 	return status;
 }
@@ -270,7 +252,8 @@ static UINT32 smartcard_ListReadersA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hContext = (ULONG_PTR) call.Context.pbContext;
 
 	cchReaders = SCARD_AUTOALLOCATE;
-	status = SCardListReadersA(hContext, (LPCSTR) call.mszGroups, (LPSTR) &mszReaders, &cchReaders);
+
+	status = ret.ReturnCode = SCardListReadersA(hContext, (LPCSTR) call.mszGroups, (LPSTR) &mszReaders, &cchReaders);
 
 	if (status != SCARD_S_SUCCESS)
 		goto finish;
@@ -279,8 +262,6 @@ static UINT32 smartcard_ListReadersA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	ret.cBytes = smartcard_multi_string_length_a((char*) ret.msz) + 2;
 
 	smartcard_pack_list_readers_return(smartcard, irp->output, &ret);
-
-	smartcard_output_alignment(irp, 8);
 
 finish:
 	if (mszReaders)
@@ -311,7 +292,8 @@ static UINT32 smartcard_ListReadersW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hContext = (ULONG_PTR) call.Context.pbContext;
 
 	cchReaders = SCARD_AUTOALLOCATE;
-	status = SCardListReadersW(hContext, (LPCWSTR) call.mszGroups, (LPWSTR) &mszReaders, &cchReaders);
+
+	status = ret.ReturnCode = SCardListReadersW(hContext, (LPCWSTR) call.mszGroups, (LPWSTR) &mszReaders, &cchReaders);
 
 	if (status != SCARD_S_SUCCESS)
 		goto finish;
@@ -320,8 +302,6 @@ static UINT32 smartcard_ListReadersW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	ret.cBytes = (smartcard_multi_string_length_w((WCHAR*) ret.msz) + 2) * 2;
 
 	smartcard_pack_list_readers_return(smartcard, irp->output, &ret);
-
-	smartcard_output_alignment(irp, 8);
 
 finish:
 	if (mszReaders)
@@ -341,7 +321,9 @@ static UINT32 smartcard_GetStatusChangeA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	UINT32 index;
 	SCARDCONTEXT hContext;
 	GetStatusChangeA_Call call;
+	GetStatusChange_Return ret;
 	ReaderStateA* readerState = NULL;
+	ReaderState_Return* readerStateRet = NULL;
 	LPSCARD_READERSTATEA rgReaderState = NULL;
 	LPSCARD_READERSTATEA rgReaderStates = NULL;
 
@@ -364,23 +346,22 @@ static UINT32 smartcard_GetStatusChangeA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		CopyMemory(&(rgReaderState->rgbAtr), &(call.rgReaderStates[index].Common.rgbAtr), 36);
 	}
 
-	status = SCardGetStatusChangeA(hContext, (DWORD) call.dwTimeOut, rgReaderStates, (DWORD) call.cReaders);
+	status = ret.ReturnCode = SCardGetStatusChangeA(hContext, call.dwTimeOut, rgReaderStates, call.cReaders);
 
-	Stream_Write_UINT32(irp->output, call.cReaders); /* (4 bytes) */
-	Stream_Write_UINT32(irp->output, 0x00084dd8); /* (4 bytes) */
-	Stream_Write_UINT32(irp->output, call.cReaders); /* (4 bytes) */
+	ret.cReaders = call.cReaders;
+	ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
 
-	for (index = 0; index < call.cReaders; index++)
+	for (index = 0; index < ret.cReaders; index++)
 	{
 		rgReaderState = &rgReaderStates[index];
-		Stream_Write_UINT32(irp->output, rgReaderState->dwCurrentState);
-		Stream_Write_UINT32(irp->output, rgReaderState->dwEventState);
-		Stream_Write_UINT32(irp->output, rgReaderState->cbAtr);
-		Stream_Write(irp->output, rgReaderState->rgbAtr, 32);
-		Stream_Zero(irp->output, 4);
+		readerStateRet = &ret.rgReaderStates[index];
+		readerStateRet->dwCurrentState = rgReaderState->dwCurrentState;
+		readerStateRet->dwEventState = rgReaderState->dwEventState;
+		readerStateRet->cbAtr = rgReaderState->cbAtr;
+		CopyMemory(readerStateRet->rgbAtr, rgReaderState->rgbAtr, 36);
 	}
 
-	smartcard_output_alignment(irp, 8);
+	status = smartcard_pack_get_status_change_return(smartcard, irp->output, &ret);
 
 	if (call.rgReaderStates)
 	{
@@ -396,6 +377,8 @@ static UINT32 smartcard_GetStatusChangeA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		free(rgReaderStates);
 	}
 
+	free(ret.rgReaderStates);
+
 	return status;
 }
 
@@ -405,7 +388,9 @@ static UINT32 smartcard_GetStatusChangeW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	UINT32 index;
 	SCARDCONTEXT hContext;
 	GetStatusChangeW_Call call;
+	GetStatusChange_Return ret;
 	ReaderStateW* readerState = NULL;
+	ReaderState_Return* readerStateRet = NULL;
 	LPSCARD_READERSTATEW rgReaderState = NULL;
 	LPSCARD_READERSTATEW rgReaderStates = NULL;
 
@@ -428,23 +413,22 @@ static UINT32 smartcard_GetStatusChangeW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		CopyMemory(&(rgReaderState->rgbAtr), &(call.rgReaderStates[index].Common.rgbAtr), 36);
 	}
 
-	status = SCardGetStatusChangeW(hContext, (DWORD) call.dwTimeOut, rgReaderStates, (DWORD) call.cReaders);
+	status = ret.ReturnCode = SCardGetStatusChangeW(hContext, (DWORD) call.dwTimeOut, rgReaderStates, (DWORD) call.cReaders);
 
-	Stream_Write_UINT32(irp->output, call.cReaders); /* (4 bytes) */
-	Stream_Write_UINT32(irp->output, 0x00084dd8); /* (4 bytes) */
-	Stream_Write_UINT32(irp->output, call.cReaders); /* (4 bytes) */
+	ret.cReaders = call.cReaders;
+	ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
 
-	for (index = 0; index < call.cReaders; index++)
+	for (index = 0; index < ret.cReaders; index++)
 	{
 		rgReaderState = &rgReaderStates[index];
-		Stream_Write_UINT32(irp->output, rgReaderState->dwCurrentState);
-		Stream_Write_UINT32(irp->output, rgReaderState->dwEventState);
-		Stream_Write_UINT32(irp->output, rgReaderState->cbAtr);
-		Stream_Write(irp->output, rgReaderState->rgbAtr, 32);
-		Stream_Zero(irp->output, 4);
+		readerStateRet = &ret.rgReaderStates[index];
+		readerStateRet->dwCurrentState = rgReaderState->dwCurrentState;
+		readerStateRet->dwEventState = rgReaderState->dwEventState;
+		readerStateRet->cbAtr = rgReaderState->cbAtr;
+		CopyMemory(readerStateRet->rgbAtr, rgReaderState->rgbAtr, 36);
 	}
 
-	smartcard_output_alignment(irp, 8);
+	status = smartcard_pack_get_status_change_return(smartcard, irp->output, &ret);
 
 	if (call.rgReaderStates)
 	{
@@ -460,14 +444,17 @@ static UINT32 smartcard_GetStatusChangeW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		free(rgReaderStates);
 	}
 
+	free(ret.rgReaderStates);
+
 	return status;
 }
 
 static UINT32 smartcard_Cancel(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	LONG status;
-	Context_Call call;
 	SCARDCONTEXT hContext;
+	Context_Call call;
+	Long_Return ret;
 
 	status = smartcard_unpack_context_call(smartcard, irp->input, &call);
 
@@ -476,9 +463,7 @@ static UINT32 smartcard_Cancel(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	hContext = (ULONG_PTR) call.Context.pbContext;
 
-	status = SCardCancel(hContext);
-
-	smartcard_output_alignment(irp, 8);
+	status = ret.ReturnCode = SCardCancel(hContext);
 
 	return status;
 }
@@ -506,8 +491,8 @@ UINT32 smartcard_ConnectA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		call.Common.dwPreferredProtocols = SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1;
 	}
 
-	status = SCardConnectA(hContext, (char*) call.szReader, (DWORD) call.Common.dwShareMode,
-		(DWORD) call.Common.dwPreferredProtocols, &hCard, (DWORD*) &ret.dwActiveProtocol);
+	status = ret.ReturnCode = SCardConnectA(hContext, (char*) call.szReader, call.Common.dwShareMode,
+			call.Common.dwPreferredProtocols, &hCard, &ret.dwActiveProtocol);
 
 	smartcard->hCard = hCard;
 
@@ -518,8 +503,6 @@ UINT32 smartcard_ConnectA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	ret.hCard.pbHandle = (UINT64) hCard;
 
 	smartcard_pack_connect_return(smartcard, irp->output, &ret);
-
-	smartcard_output_alignment(irp, 8);
 
 finish:
 	if (call.szReader)
@@ -551,8 +534,8 @@ UINT32 smartcard_ConnectW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		call.Common.dwPreferredProtocols = SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1;
 	}
 
-	status = SCardConnectW(hContext, (WCHAR*) call.szReader, (DWORD) call.Common.dwShareMode,
-		(DWORD) call.Common.dwPreferredProtocols, &hCard, (DWORD*) &ret.dwActiveProtocol);
+	status = ret.ReturnCode = SCardConnectW(hContext, (WCHAR*) call.szReader, call.Common.dwShareMode,
+			call.Common.dwPreferredProtocols, &hCard, &ret.dwActiveProtocol);
 
 	smartcard->hCard = hCard;
 
@@ -563,11 +546,6 @@ UINT32 smartcard_ConnectW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	ret.hCard.pbHandle = (UINT64) hCard;
 
 	status = smartcard_pack_connect_return(smartcard, irp->output, &ret);
-
-	if (status)
-		goto finish;
-
-	smartcard_output_alignment(irp, 8);
 
 finish:
 	if (call.szReader)
@@ -592,12 +570,10 @@ static UINT32 smartcard_Reconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hCard = (ULONG_PTR) call.hCard.pbHandle;
 	hContext = (ULONG_PTR) call.hCard.Context.pbContext;
 
-	status = SCardReconnect(hCard, (DWORD) call.dwShareMode, (DWORD) call.dwPreferredProtocols,
-			(DWORD) call.dwInitialization, (LPDWORD) &ret.dwActiveProtocol);
+	status = ret.ReturnCode = SCardReconnect(hCard, call.dwShareMode,
+			call.dwPreferredProtocols, call.dwInitialization, &ret.dwActiveProtocol);
 
 	smartcard_pack_reconnect_return(smartcard, irp->output, &ret);
-
-	smartcard_output_alignment(irp, 8);
 
 	return status;
 }
@@ -608,6 +584,7 @@ static UINT32 smartcard_Disconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	SCARDHANDLE hCard;
 	SCARDCONTEXT hContext;
 	HCardAndDisposition_Call call;
+	Long_Return ret;
 
 	status = smartcard_unpack_hcard_and_disposition_call(smartcard, irp->input, &call);
 
@@ -617,11 +594,9 @@ static UINT32 smartcard_Disconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hCard = (ULONG_PTR) call.hCard.pbHandle;
 	hContext = (ULONG_PTR) call.hCard.Context.pbContext;
 
-	status = SCardDisconnect(hCard, (DWORD) call.dwDisposition);
+	status = ret.ReturnCode = SCardDisconnect(hCard, (DWORD) call.dwDisposition);
 
 	smartcard->hCard = 0;
-
-	smartcard_output_alignment(irp, 8);
 
 	return status;
 }
@@ -632,6 +607,7 @@ static UINT32 smartcard_BeginTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	SCARDHANDLE hCard;
 	SCARDCONTEXT hContext;
 	HCardAndDisposition_Call call;
+	Long_Return ret;
 
 	status = smartcard_unpack_hcard_and_disposition_call(smartcard, irp->input, &call);
 
@@ -641,9 +617,7 @@ static UINT32 smartcard_BeginTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hCard = (ULONG_PTR) call.hCard.pbHandle;
 	hContext = (ULONG_PTR) call.hCard.Context.pbContext;
 
-	status = SCardBeginTransaction(hCard);
-
-	smartcard_output_alignment(irp, 8);
+	status = ret.ReturnCode = SCardBeginTransaction(hCard);
 
 	return status;
 }
@@ -654,6 +628,7 @@ static UINT32 smartcard_EndTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	SCARDHANDLE hCard;
 	SCARDCONTEXT hContext;
 	HCardAndDisposition_Call call;
+	Long_Return ret;
 
 	status = smartcard_unpack_hcard_and_disposition_call(smartcard, irp->input, &call);
 
@@ -663,9 +638,7 @@ static UINT32 smartcard_EndTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hCard = (ULONG_PTR) call.hCard.pbHandle;
 	hContext = (ULONG_PTR) call.hCard.Context.pbContext;
 
-	status = SCardEndTransaction(hCard, call.dwDisposition);
-
-	smartcard_output_alignment(irp, 8);
+	status = ret.ReturnCode = SCardEndTransaction(hCard, call.dwDisposition);
 
 	return status;
 }
@@ -688,7 +661,7 @@ static UINT32 smartcard_State(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	ret.cbAtrLen = SCARD_ATR_LENGTH;
 
-	status = SCardState(hCard, &ret.dwState, &ret.dwProtocol, (BYTE*) &ret.rgAtr, &ret.cbAtrLen);
+	status = ret.ReturnCode = SCardState(hCard, &ret.dwState, &ret.dwProtocol, (BYTE*) &ret.rgAtr, &ret.cbAtrLen);
 
 	if (status != SCARD_S_SUCCESS)
 	{
@@ -697,8 +670,6 @@ static UINT32 smartcard_State(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	}
 
 	smartcard_pack_state_return(smartcard, irp->output, &ret);
-
-	smartcard_output_alignment(irp, 8);
 
 	return status;
 }
@@ -729,7 +700,7 @@ static DWORD smartcard_StatusA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	cchReaderLen = SCARD_AUTOALLOCATE;
 
-	status = SCardStatusA(hCard, (LPSTR) &mszReaderNames, &cchReaderLen,
+	status = ret.ReturnCode = SCardStatusA(hCard, (LPSTR) &mszReaderNames, &cchReaderLen,
 			&ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &ret.cbAtrLen);
 
 	if (status != SCARD_S_SUCCESS)
@@ -742,8 +713,6 @@ static DWORD smartcard_StatusA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	ret.cBytes = smartcard_multi_string_length_a((char*) ret.mszReaderNames) + 2;
 
 	smartcard_pack_status_return(smartcard, irp->output, &ret);
-
-	smartcard_output_alignment(irp, 8);
 
 finish:
 	if (mszReaderNames)
@@ -780,7 +749,7 @@ static DWORD smartcard_StatusW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	cchReaderLen = SCARD_AUTOALLOCATE;
 
-	status = SCardStatusW(hCard, (LPWSTR) &mszReaderNames, &cchReaderLen,
+	status = ret.ReturnCode = SCardStatusW(hCard, (LPWSTR) &mszReaderNames, &cchReaderLen,
 			&ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &ret.cbAtrLen);
 
 	if (status != SCARD_S_SUCCESS)
@@ -793,8 +762,6 @@ static DWORD smartcard_StatusW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	ret.cBytes = (smartcard_multi_string_length_w((WCHAR*) ret.mszReaderNames) + 2) * 2;
 
 	smartcard_pack_status_return(smartcard, irp->output, &ret);
-
-	smartcard_output_alignment(irp, 8);
 
 finish:
 	if (mszReaderNames)
@@ -832,12 +799,10 @@ static UINT32 smartcard_Transmit(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	ret.pioRecvPci = call.pioRecvPci;
 
-	status = SCardTransmit(hCard, call.pioSendPci, call.pbSendBuffer, call.cbSendLength,
-			ret.pioRecvPci, ret.pbRecvBuffer, &(ret.cbRecvLength));
+	status = ret.ReturnCode = SCardTransmit(hCard, call.pioSendPci, call.pbSendBuffer,
+			call.cbSendLength, ret.pioRecvPci, ret.pbRecvBuffer, &(ret.cbRecvLength));
 
 	status = smartcard_pack_transmit_return(smartcard, irp->output, &ret);
-
-	smartcard_output_alignment(irp, 8);
 
 finish:
 	if (call.pbSendBuffer)
@@ -878,13 +843,11 @@ static UINT32 smartcard_Control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	ret.cbOutBufferSize = call.cbOutBufferSize;
 	ret.pvOutBuffer = (BYTE*) malloc(call.cbOutBufferSize);
 
-	status = SCardControl(hCard, (DWORD) call.dwControlCode,
-			call.pvInBuffer, (DWORD) call.cbInBufferSize,
-			ret.pvOutBuffer, (DWORD) call.cbOutBufferSize, &ret.cbOutBufferSize);
+	status = ret.ReturnCode = SCardControl(hCard,
+			call.dwControlCode, call.pvInBuffer, call.cbInBufferSize,
+			ret.pvOutBuffer, call.cbOutBufferSize, &ret.cbOutBufferSize);
 
 	smartcard_pack_control_return(smartcard, irp->output, &ret);
-
-	smartcard_output_alignment(irp, 8);
 
 finish:
 	if (call.pvInBuffer)
@@ -915,7 +878,8 @@ static UINT32 smartcard_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	ret.pbAttr = NULL;
 	cbAttrLen = (!call.cbAttrLen || call.fpbAttrIsNULL) ? 0 : SCARD_AUTOALLOCATE;
 
-	status = SCardGetAttrib(hCard, call.dwAttrId, (cbAttrLen == 0) ? NULL : (BYTE*) &ret.pbAttr, &cbAttrLen);
+	status = ret.ReturnCode = SCardGetAttrib(hCard, call.dwAttrId,
+			(cbAttrLen == 0) ? NULL : (BYTE*) &ret.pbAttr, &cbAttrLen);
 
 	if (status != SCARD_S_SUCCESS)
 	{
@@ -960,8 +924,6 @@ static UINT32 smartcard_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	smartcard_pack_get_attrib_return(smartcard, irp->output, &ret);
 
-	smartcard_output_alignment(irp, 8);
-
 finish:
 	SCardFreeMemory(hContext, ret.pbAttr);
 
@@ -970,6 +932,9 @@ finish:
 
 static UINT32 smartcard_AccessStartedEvent(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
+	UINT32 status;
+	Long_Return ret;
+
 	if (Stream_GetRemainingLength(irp->input) < 4)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "AccessStartedEvent is too short: %d",
@@ -978,10 +943,10 @@ static UINT32 smartcard_AccessStartedEvent(SMARTCARD_DEVICE* smartcard, IRP* irp
 	}
 
 	Stream_Seek(irp->input, 4); /* Unused (4 bytes) */
-
-	smartcard_output_alignment(irp, 8);
 	
-	return SCARD_S_SUCCESS;
+	status = ret.ReturnCode = SCARD_S_SUCCESS;
+
+	return status;
 }
 
 void smartcard_irp_device_control_peek_io_control_code(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32* ioControlCode)
@@ -1274,6 +1239,14 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			result = STATUS_UNSUCCESSFUL;
 			break;
 	}
+
+	/**
+	 * [MS-RPCE] 2.2.6.3 Primitive Type Serialization
+	 * The type MUST be aligned on an 8-byte boundary. If the size of the
+	 * primitive type is not a multiple of 8 bytes, the data MUST be padded.
+	 */
+
+	smartcard_pack_write_offset_align(smartcard, irp->output, 8);
 
 	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT))
 	{
