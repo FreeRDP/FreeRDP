@@ -37,7 +37,7 @@ UINT32 smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream*
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "CommonTypeHeader is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	/* Process CommonTypeHeader */
@@ -50,25 +50,25 @@ UINT32 smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream*
 	if (version != 1)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "Unsupported CommonTypeHeader Version %d", version);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (endianness != 0x10)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "Unsupported CommonTypeHeader Endianness %d", endianness);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (commonHeaderLength != 8)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "Unsupported CommonTypeHeader CommonHeaderLength %d", commonHeaderLength);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (filler != 0xCCCCCCCC)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "Unexpected CommonTypeHeader Filler 0x%08X", filler);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 	return 0;
@@ -93,7 +93,7 @@ UINT32 smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "PrivateTypeHeader is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, objectBufferLength); /* ObjectBufferLength (4 bytes) */
@@ -102,14 +102,14 @@ UINT32 smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream
 	if (filler != 0x00000000)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "Unexpected PrivateTypeHeader Filler 0x%08X", filler);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (objectBufferLength != Stream_GetRemainingLength(s))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "PrivateTypeHeader ObjectBufferLength mismatch: Actual: %d, Expected: %d",
 				(int) objectBufferLength, Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 	return 0;
@@ -163,7 +163,7 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, context->cbContext); /* cbContext (4 bytes) */
@@ -172,7 +172,7 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), context->cbContext);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Seek_UINT32(s); /* pbContextNdrPtr (4 bytes) */
@@ -181,7 +181,7 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too long: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), context->cbContext);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 	return SCARD_S_SUCCESS;
@@ -207,7 +207,7 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d\n",
 				(int) Stream_GetRemainingLength(s), 4);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
@@ -215,14 +215,14 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 	if ((length != 4) && (length != 8))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length is not 4 or 8: %d\n", length);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((Stream_GetRemainingLength(s) < length) || (!length))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d\n",
 				(int) Stream_GetRemainingLength(s), length);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	if (length > 4)
@@ -262,7 +262,7 @@ UINT32 smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream*
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "SCARDHANDLE is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
@@ -271,7 +271,7 @@ UINT32 smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream*
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "SCARDHANDLE is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), length);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Seek_UINT32(s); /* NdrPtr (4 bytes) */
@@ -311,7 +311,7 @@ UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStr
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d\n",
 				(int) Stream_GetRemainingLength(s), 4);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
@@ -319,14 +319,14 @@ UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStr
 	if ((length != 4) && (length != 8))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE length is not 4 or 8: %d\n", length);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((Stream_GetRemainingLength(s) < length) || (!length))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d\n",
 				(int) Stream_GetRemainingLength(s), length);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	if (length > 4)
@@ -365,7 +365,7 @@ UINT32 smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStr
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "EstablishContext_Call is too short: Actual: %d, Expected: %d\n",
 				(int) Stream_GetRemainingLength(s), 4);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->dwScope); /* dwScope (4 bytes) */
@@ -420,7 +420,7 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->cBytes); /* cBytes (4 bytes) */
@@ -429,7 +429,7 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), call->cBytes);
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	call->mszGroups = NULL;
@@ -442,7 +442,7 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Context));
@@ -472,7 +472,7 @@ UINT32 smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "Connect_Common is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(common->Context));
@@ -497,7 +497,7 @@ UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "ConnectA_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Seek_UINT32(s); /* szReaderNdrPtr (4 bytes) */
@@ -534,7 +534,7 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "ConnectA_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Seek_UINT32(s); /* szReaderNdrPtr (4 bytes) */
@@ -592,7 +592,7 @@ UINT32 smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "Reconnect_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->dwShareMode); /* dwShareMode (4 bytes) */
@@ -627,7 +627,7 @@ UINT32 smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, 
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "HCardAndDisposition_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->dwDisposition); /* dwDisposition (4 bytes) */
@@ -658,7 +658,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->dwTimeOut); /* dwTimeOut (4 bytes) */
@@ -674,7 +674,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Seek_UINT32(s); /* NdrConformant (4 bytes) */
@@ -691,7 +691,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 			{
 				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
-				return SCARD_F_INTERNAL_ERROR;
+				return STATUS_BUFFER_TOO_SMALL;
 			}
 
 			Stream_Seek_UINT32(s); /* (4 bytes) */
@@ -714,7 +714,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 			{
 				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
-				return SCARD_F_INTERNAL_ERROR;
+				return STATUS_BUFFER_TOO_SMALL;
 			}
 
 			Stream_Seek_UINT32(s); /* NdrMaxCount (4 bytes) */
@@ -725,7 +725,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 			{
 				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
-				return SCARD_F_INTERNAL_ERROR;
+				return STATUS_BUFFER_TOO_SMALL;
 			}
 
 			readerState->szReader = malloc(count + 1);
@@ -736,7 +736,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 			if (!readerState->szReader)
 			{
 				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call null reader name");
-				return SCARD_F_INTERNAL_ERROR;
+				return STATUS_INVALID_PARAMETER;
 			}
 
 			if (strcmp((char*) readerState->szReader, "\\\\?PnP?\\Notification") == 0)
@@ -767,7 +767,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->dwTimeOut); /* dwTimeOut (4 bytes) */
@@ -783,7 +783,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Seek_UINT32(s); /* NdrConformant (4 bytes) */
@@ -800,7 +800,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 			{
 				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
-				return SCARD_F_INTERNAL_ERROR;
+				return STATUS_BUFFER_TOO_SMALL;
 			}
 
 			Stream_Seek_UINT32(s); /* (4 bytes) */
@@ -823,7 +823,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 			{
 				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
-				return SCARD_F_INTERNAL_ERROR;
+				return STATUS_BUFFER_TOO_SMALL;
 			}
 
 			Stream_Seek_UINT32(s); /* NdrMaxCount (4 bytes) */
@@ -834,7 +834,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 			{
 				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
-				return SCARD_F_INTERNAL_ERROR;
+				return STATUS_BUFFER_TOO_SMALL;
 			}
 
 			readerState->szReader = malloc((count + 1) * 2);
@@ -845,7 +845,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 			if (!readerState->szReader)
 			{
 				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call null reader name");
-				return SCARD_F_INTERNAL_ERROR;
+				return STATUS_INVALID_PARAMETER;
 			}
 
 #if 0
@@ -895,7 +895,7 @@ UINT32 smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, Stat
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "State_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->fpbAtrIsNULL); /* fpbAtrIsNULL (4 bytes) */
@@ -935,7 +935,7 @@ UINT32 smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Sta
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "Status_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->fmszReaderNamesIsNULL); /* fmszReaderNamesIsNULL (4 bytes) */
@@ -979,7 +979,7 @@ UINT32 smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "GetAttrib_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->dwAttrId); /* dwAttrId (4 bytes) */
@@ -1026,7 +1026,7 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "Control_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, call->dwControlCode); /* dwControlCode (4 bytes) */
@@ -1046,7 +1046,7 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Control_Call is too short: %d",
 					(int) Stream_GetRemainingLength(s));
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_BUFFER_TOO_SMALL;
 		}
 
 		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
@@ -1055,7 +1055,7 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Control_Call is too short: %d",
 					(int) Stream_GetRemainingLength(s));
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_BUFFER_TOO_SMALL;
 		}
 
 		call->pvInBuffer = (BYTE*) malloc(length);
@@ -1106,7 +1106,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
-		return SCARD_F_INTERNAL_ERROR;
+		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	Stream_Read_UINT32(s, ioSendPci.dwProtocol); /* dwProtocol (4 bytes) */
@@ -1129,7 +1129,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
 					(int) Stream_GetRemainingLength(s));
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_BUFFER_TOO_SMALL;
 		}
 
 		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
@@ -1138,7 +1138,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
 					(int) Stream_GetRemainingLength(s));
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_BUFFER_TOO_SMALL;
 		}
 
 		ioSendPci.pbExtraBytes = (BYTE*) Stream_Pointer(s);
@@ -1148,7 +1148,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		if (!call->pioSendPci)
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call out of memory error (pioSendPci)");
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_NO_MEMORY;
 		}
 
 		call->pioSendPci->dwProtocol = ioSendPci.dwProtocol;
@@ -1165,7 +1165,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		if (!call->pioSendPci)
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call out of memory error (pioSendPci)");
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_NO_MEMORY;
 		}
 
 		call->pioSendPci->dwProtocol = SCARD_PROTOCOL_T1;
@@ -1178,7 +1178,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
 					(int) Stream_GetRemainingLength(s));
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_BUFFER_TOO_SMALL;
 		}
 
 		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
@@ -1187,14 +1187,14 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call unexpected length: Actual: %d, Expected: %d",
 					(int) length, (int) call->cbSendLength);
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_INVALID_PARAMETER;
 		}
 
 		if (Stream_GetRemainingLength(s) < call->cbSendLength)
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
 					(int) Stream_GetRemainingLength(s));
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_BUFFER_TOO_SMALL;
 		}
 
 		call->pbSendBuffer = (BYTE*) malloc(call->cbSendLength);
@@ -1202,7 +1202,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		if (!call->pbSendBuffer)
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call out of memory error (pbSendBuffer)");
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_NO_MEMORY;
 		}
 
 		Stream_Read(s, call->pbSendBuffer, call->cbSendLength);
@@ -1214,7 +1214,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
 					(int) Stream_GetRemainingLength(s));
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_BUFFER_TOO_SMALL;
 		}
 
 		winpr_HexDump(Stream_Pointer(s), Stream_GetRemainingLength(s));
@@ -1229,14 +1229,14 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call unexpected length: Actual: %d, Expected: %d",
 					(int) length, (int) ioRecvPci.cbExtraBytes);
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_INVALID_PARAMETER;
 		}
 
 		if (Stream_GetRemainingLength(s) < ioRecvPci.cbExtraBytes)
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
 					(int) Stream_GetRemainingLength(s));
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_BUFFER_TOO_SMALL;
 		}
 
 		ioRecvPci.pbExtraBytes = (BYTE*) Stream_Pointer(s);
@@ -1246,7 +1246,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		if (!call->pbSendBuffer)
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call out of memory error (pioRecvPci)");
-			return SCARD_F_INTERNAL_ERROR;
+			return STATUS_NO_MEMORY;
 		}
 
 		call->pioRecvPci->dwProtocol = ioRecvPci.dwProtocol;
