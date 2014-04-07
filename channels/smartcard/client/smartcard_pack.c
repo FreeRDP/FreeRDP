@@ -26,6 +26,11 @@
 
 #include "smartcard_pack.h"
 
+static char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
+
+static WCHAR SMARTCARD_PNP_NOTIFICATION_W[] = { '\\','\\','?','P','n','P','?',
+		'\\','N','o','t','i','f','i','c','a','t','i','o','n','\0' };
+
 UINT32 smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s)
 {
 	UINT8 version;
@@ -640,10 +645,6 @@ UINT32 smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, 
 	return SCARD_S_SUCCESS;
 }
 
-static char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
-static WCHAR SMARTCARD_PNP_NOTIFICATION_W[] = { '\\','\\','?','P','n','P','?',
-		'\\','N','o','t','i','f','i','c','a','t','i','o','n','\0' };
-
 UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChangeA_Call* call)
 {
 	int index;
@@ -1106,8 +1107,8 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 	if (Stream_GetRemainingLength(s) < 32)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
-				(int) Stream_GetRemainingLength(s));
+		WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: Actual: %d, Expected: %d",
+				(int) Stream_GetRemainingLength(s), 32);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
@@ -1138,8 +1139,9 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		if (Stream_GetRemainingLength(s) < ioSendPci.cbExtraBytes)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
-					(int) Stream_GetRemainingLength(s));
+			WLog_Print(smartcard->log, WLOG_WARN,
+					"Transmit_Call is too short: Actual: %d, Expected: %d (ioSendPci.cbExtraBytes)",
+					(int) Stream_GetRemainingLength(s), (int) ioSendPci.cbExtraBytes);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
@@ -1187,15 +1189,17 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		if (length < call->cbSendLength)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call unexpected length: Actual: %d, Expected: %d",
+			WLog_Print(smartcard->log, WLOG_WARN,
+					"Transmit_Call unexpected length: Actual: %d, Expected: %d (cbSendLength)",
 					(int) length, (int) call->cbSendLength);
 			return STATUS_INVALID_PARAMETER;
 		}
 
 		if (Stream_GetRemainingLength(s) < call->cbSendLength)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
-					(int) Stream_GetRemainingLength(s));
+			WLog_Print(smartcard->log, WLOG_WARN,
+					"Transmit_Call is too short: Actual: %d, Expected: %d (cbSendLength)",
+					(int) Stream_GetRemainingLength(s), (int) call->cbSendLength);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
@@ -1214,8 +1218,8 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	{
 		if (Stream_GetRemainingLength(s) < 16)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
-					(int) Stream_GetRemainingLength(s));
+			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: Actual: %d, Expected: %d",
+					(int) Stream_GetRemainingLength(s), 16);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
@@ -1229,15 +1233,17 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		if (length < ioRecvPci.cbExtraBytes)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call unexpected length: Actual: %d, Expected: %d",
+			WLog_Print(smartcard->log, WLOG_WARN,
+					"Transmit_Call unexpected length: Actual: %d, Expected: %d (ioRecvPci.cbExtraBytes)",
 					(int) length, (int) ioRecvPci.cbExtraBytes);
 			return STATUS_INVALID_PARAMETER;
 		}
 
 		if (Stream_GetRemainingLength(s) < ioRecvPci.cbExtraBytes)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
-					(int) Stream_GetRemainingLength(s));
+			WLog_Print(smartcard->log, WLOG_WARN,
+					"Transmit_Call is too short: Actual: %d, Expected: %d (ioRecvPci.cbExtraBytes)",
+					(int) Stream_GetRemainingLength(s), (int) ioRecvPci.cbExtraBytes);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
@@ -1265,6 +1271,11 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Transmit_Return* ret)
 {
 	Stream_EnsureRemainingCapacity(s, 32);
+
+	if (ret->pioRecvPci)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Return unimplemented pioRecvPci encoding");
+	}
 
 	Stream_Write_UINT32(s, 0); /* pioRecvPciNdrPtr (4 bytes) */
 
