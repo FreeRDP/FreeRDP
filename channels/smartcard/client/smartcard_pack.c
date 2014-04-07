@@ -415,6 +415,9 @@ UINT32 smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaders_Call* call)
 {
 	UINT32 status;
+	UINT32 mszGroupsNdrPtr;
+
+	call->mszGroups = NULL;
 
 	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->Context));
 
@@ -437,8 +440,7 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	call->mszGroups = NULL;
-	Stream_Seek_UINT32(s); /* mszGroupsNdrPtr (4 bytes) */
+	Stream_Read_UINT32(s, mszGroupsNdrPtr); /* mszGroupsNdrPtr (4 bytes) */
 
 	Stream_Read_UINT32(s, call->fmszReadersIsNULL); /* fmszReadersIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cchReaders); /* cchReaders (4 bytes) */
@@ -448,6 +450,11 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 		WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
+	}
+
+	if (mszGroupsNdrPtr)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call unimplemented mszGroups parsing");
 	}
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Context));
@@ -650,7 +657,9 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 	int index;
 	UINT32 count;
 	UINT32 status;
+	UINT32 szReaderNdrPtr;
 	ReaderStateA* readerState;
+	UINT32 rgReaderStatesNdrPtr;
 
 	call->rgReaderStates = NULL;
 
@@ -668,7 +677,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 	Stream_Read_UINT32(s, call->dwTimeOut); /* dwTimeOut (4 bytes) */
 	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
-	Stream_Seek_UINT32(s); /* rgReaderStatesNdrPtr (4 bytes) */
+	Stream_Read_UINT32(s, rgReaderStatesNdrPtr); /* rgReaderStatesNdrPtr (4 bytes) */
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Context));
 
@@ -682,7 +691,15 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Seek_UINT32(s); /* NdrConformant (4 bytes) */
+	Stream_Read_UINT32(s, count); /* NdrCount (4 bytes) */
+
+	if (count != call->cReaders)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN,
+				"GetStatusChangeA_Call unexpected reader count: Actual: %d, Expected: %d",
+				(int) count, call->cReaders);
+		return STATUS_INVALID_PARAMETER;
+	}
 
 	if (call->cReaders > 0)
 	{
@@ -699,16 +716,12 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
-			Stream_Seek_UINT32(s); /* (4 bytes) */
+			Stream_Read_UINT32(s, szReaderNdrPtr); /* szReaderNdrPtr (4 bytes) */
 			Stream_Read_UINT32(s, readerState->Common.dwCurrentState); /* dwCurrentState (4 bytes) */
 			Stream_Read_UINT32(s, readerState->Common.dwEventState); /* dwEventState (4 bytes) */
 			Stream_Read_UINT32(s, readerState->Common.cbAtr); /* cbAtr (4 bytes) */
 			Stream_Read(s, readerState->Common.rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
 			Stream_Seek_UINT32(s); /* rgbAtr [32..36] (4 bytes) */
-
-			/* reset high bytes? */
-			readerState->Common.dwCurrentState &= 0x0000FFFF;
-			readerState->Common.dwEventState = 0;
 		}
 
 		for (index = 0; index < call->cReaders; index++)
@@ -760,6 +773,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 	UINT32 count;
 	UINT32 status;
 	ReaderStateW* readerState;
+	UINT32 rgReaderStatesNdrPtr;
 
 	call->rgReaderStates = NULL;
 
@@ -777,7 +791,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 	Stream_Read_UINT32(s, call->dwTimeOut); /* dwTimeOut (4 bytes) */
 	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
-	Stream_Seek_UINT32(s); /* rgReaderStatesNdrPtr (4 bytes) */
+	Stream_Read_UINT32(s, rgReaderStatesNdrPtr); /* rgReaderStatesNdrPtr (4 bytes) */
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Context));
 
@@ -814,10 +828,6 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 			Stream_Read_UINT32(s, readerState->Common.cbAtr); /* cbAtr (4 bytes) */
 			Stream_Read(s, readerState->Common.rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
 			Stream_Seek_UINT32(s); /* rgbAtr [32..36] (4 bytes) */
-
-			/* reset high bytes? */
-			readerState->Common.dwCurrentState &= 0x0000FFFF;
-			readerState->Common.dwEventState = 0;
 		}
 
 		for (index = 0; index < call->cReaders; index++)
@@ -1000,8 +1010,8 @@ UINT32 smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 UINT32 smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s, GetAttrib_Return* ret)
 {
 	Stream_Write_UINT32(s, ret->cbAttrLen); /* cbAttrLen (4 bytes) */
-	Stream_Write_UINT32(s, 0x00020080); /* pbAttrPointer (4 bytes) */
-	Stream_Write_UINT32(s, ret->cbAttrLen); /* pbAttrLength (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020080); /* pbAttrNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, ret->cbAttrLen); /* pbAttrNdrCount (4 bytes) */
 
 	if (!ret->pbAttr)
 		Stream_Zero(s, ret->cbAttrLen); /* pbAttr */
@@ -1121,13 +1131,31 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	Stream_Read_UINT32(s, call->fpbRecvBufferIsNULL); /* fpbRecvBufferIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbRecvLength); /* cbRecvLength (4 bytes) */
 
-	printf("Transmit_Call: ioSendPci.dwProtocol: %d ioSendPci.cbExtraBytes: %d pbExtraBytesPtr: %d cbSendLength: %d pbSendBufferNdrPtr: %d pioRecvPciNdrPtr: %d fpbRecvBufferIsNULL: %d cbRecvLength: %d\n",
-			ioSendPci.dwProtocol, ioSendPci.cbExtraBytes, pbExtraBytesNdrPtr, call->cbSendLength, pbSendBufferNdrPtr, pioRecvPciNdrPtr, call->fpbRecvBufferIsNULL, call->cbRecvLength);
+	if (ioSendPci.cbExtraBytes > 1024)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call ioSendPci.cbExtraBytes is out of bounds: %d (max: %d)",
+				(int) ioSendPci.cbExtraBytes, 1024);
+		return STATUS_INVALID_PARAMETER;
+	}
+
+	if (call->cbSendLength > 66560)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call cbSendLength is out of bounds: %d (max: %d)",
+				(int) ioSendPci.cbExtraBytes, 66560);
+		return STATUS_INVALID_PARAMETER;
+	}
 
 	status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard));
 
 	if (status)
 		return status;
+
+	if (ioSendPci.cbExtraBytes && !pbExtraBytesNdrPtr)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN,
+				"Transmit_Call cbExtraBytes is non-zero but pbExtraBytesNdrPtr is null");
+		return STATUS_INVALID_PARAMETER;
+	}
 
 	if (pbExtraBytesNdrPtr)
 	{
@@ -1175,7 +1203,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 			return STATUS_NO_MEMORY;
 		}
 
-		call->pioSendPci->dwProtocol = SCARD_PROTOCOL_T1;
+		call->pioSendPci->dwProtocol = ioSendPci.dwProtocol;
 		call->pioSendPci->cbPciLength = sizeof(SCARD_IO_REQUEST);
 	}
 
@@ -1233,6 +1261,13 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		Stream_Read_UINT16(s, ioRecvPci.dwProtocol); /* dwProtocol (2 bytes) */
 		Stream_Read_UINT16(s, ioRecvPci.cbExtraBytes); /* cbExtraBytes (2 bytes) */
 
+		if (ioRecvPci.cbExtraBytes > 1024)
+		{
+			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call ioRecvPci.cbExtraBytes is out of bounds: %d (max: %d)",
+					(int) ioSendPci.cbExtraBytes, 1024);
+			return STATUS_INVALID_PARAMETER;
+		}
+
 		if (length < ioRecvPci.cbExtraBytes)
 		{
 			WLog_Print(smartcard->log, WLOG_WARN,
@@ -1253,7 +1288,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		call->pioRecvPci = (LPSCARD_IO_REQUEST) malloc(sizeof(SCARD_IO_REQUEST) + ioRecvPci.cbExtraBytes);
 
-		if (!call->pbSendBuffer)
+		if (!call->pioRecvPci)
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call out of memory error (pioRecvPci)");
 			return STATUS_NO_MEMORY;
@@ -1280,9 +1315,6 @@ UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	}
 
 	Stream_Write_UINT32(s, 0); /* pioRecvPciNdrPtr (4 bytes) */
-
-	printf("Transmit_Return: pioRecvPci: %p pbRecvBuffer: %p cbRecvLength: %d\n",
-			ret->pioRecvPci, ret->pbRecvBuffer, ret->cbRecvLength);
 
 	if (ret->pbRecvBuffer)
 	{

@@ -514,8 +514,8 @@ UINT32 smartcard_ConnectA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	smartcard->hCard = hCard;
 
-	ret.hCard.Context.cbContext = 0;
-	ret.hCard.Context.pbContext = 0;
+	ret.hCard.Context.cbContext = sizeof(ULONG_PTR);
+	ret.hCard.Context.pbContext = (UINT64) hContext;
 
 	ret.hCard.cbHandle = sizeof(ULONG_PTR);
 	ret.hCard.pbHandle = (UINT64) hCard;
@@ -562,8 +562,8 @@ UINT32 smartcard_ConnectW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	smartcard->hCard = hCard;
 
-	ret.hCard.Context.cbContext = 0;
-	ret.hCard.Context.pbContext = 0;
+	ret.hCard.Context.cbContext = sizeof(ULONG_PTR);
+	ret.hCard.Context.pbContext = (UINT64) hContext;
 
 	ret.hCard.cbHandle = sizeof(ULONG_PTR);
 	ret.hCard.pbHandle = (UINT64) hCard;
@@ -836,8 +836,8 @@ static UINT32 smartcard_Transmit(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (call.cbRecvLength && !call.fpbRecvBufferIsNULL)
 	{
-		if (call.cbRecvLength >= 65535)
-			call.cbRecvLength = 2048;
+		if (call.cbRecvLength >= 66560)
+			call.cbRecvLength = 66560;
 
 		ret.cbRecvLength = call.cbRecvLength;
 		ret.pbRecvBuffer = (BYTE*) malloc(ret.cbRecvLength);

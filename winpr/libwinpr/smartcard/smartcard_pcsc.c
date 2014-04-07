@@ -241,9 +241,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 		if (mszGroups)
 			ConvertFromUnicode(CP_UTF8, 0, mszGroups, -1, (char**) &mszGroupsA, 0, NULL, NULL);
 
-		if (!mszReaders)
-			pcchReaders = 0;
-
 		status = g_PCSC.pfnSCardListReaders(hContext, (LPSTR) mszGroupsA, (LPSTR) &mszReadersA, pcchReaders);
 		status = PCSC_MapErrorCodeToWinSCard(status);
 
