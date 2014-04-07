@@ -287,7 +287,7 @@ typedef struct _Status_Return
 	/* [size_is][unique] */ BYTE *mszReaderNames;
 	DWORD dwState;
 	DWORD dwProtocol;
-	BYTE pbAtr[ 32 ];
+	BYTE pbAtr[32];
 	/* [range] */ DWORD cbAtrLen;
 } Status_Return;
 
@@ -465,6 +465,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 UINT32 smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, State_Call* call);
 
 UINT32 smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Status_Call* call);
+UINT32 smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Status_Return* ret);
 
 UINT32 smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetAttrib_Call* call);
 

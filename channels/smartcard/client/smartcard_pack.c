@@ -913,6 +913,22 @@ UINT32 smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Sta
 	return SCARD_S_SUCCESS;
 }
 
+UINT32 smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Status_Return* ret)
+{
+	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020010); /* mszReaderNamesNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, ret->dwState); /* dwState (4 bytes) */
+	Stream_Write_UINT32(s, ret->dwProtocol); /* dwProtocol (4 bytes) */
+	Stream_Write(s, ret->pbAtr, 32); /* pbAtr (32 bytes) */
+	Stream_Write_UINT32(s, ret->cbAtrLen); /* cbAtrLen (4 bytes) */
+
+	Stream_Write_UINT32(s, ret->cBytes); /* mszReaderNamesNdrLen (4 bytes) */
+	Stream_Write(s, ret->mszReaderNames, ret->cBytes);
+	smartcard_pack_write_offset_align(smartcard, s, 4);
+
+	return SCARD_S_SUCCESS;
+}
+
 UINT32 smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetAttrib_Call* call)
 {
 	UINT32 status;
