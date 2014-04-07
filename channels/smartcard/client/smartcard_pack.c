@@ -885,6 +885,19 @@ UINT32 smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, Stat
 	return SCARD_S_SUCCESS;
 }
 
+UINT32 smartcard_pack_state_return(SMARTCARD_DEVICE* smartcard, wStream* s, State_Return* ret)
+{
+	Stream_Write_UINT32(s, ret->dwState); /* dwState (4 bytes) */
+	Stream_Write_UINT32(s, ret->dwProtocol); /* dwProtocol (4 bytes) */
+	Stream_Write_UINT32(s, ret->cbAtrLen); /* cbAtrLen (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020020); /* rgAtrNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, ret->cbAtrLen); /* rgAtrLength (4 bytes) */
+	Stream_Write(s, ret->rgAtr, ret->cbAtrLen); /* rgAtr */
+	smartcard_pack_write_offset_align(smartcard, s, 4);
+
+	return SCARD_S_SUCCESS;
+}
+
 UINT32 smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Status_Call* call)
 {
 	UINT32 status;
@@ -957,6 +970,22 @@ UINT32 smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 	return SCARD_S_SUCCESS;
 }
 
+UINT32 smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s, GetAttrib_Return* ret)
+{
+	Stream_Write_UINT32(s, ret->cbAttrLen); /* cbAttrLen (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020080); /* pbAttrPointer (4 bytes) */
+	Stream_Write_UINT32(s, ret->cbAttrLen); /* pbAttrLength (4 bytes) */
+
+	if (!ret->pbAttr)
+		Stream_Zero(s, ret->cbAttrLen); /* pbAttr */
+	else
+		Stream_Write(s, ret->pbAttr, ret->cbAttrLen); /* pbAttr */
+
+	smartcard_pack_write_offset_align(smartcard, s, 4);
+
+	return SCARD_S_SUCCESS;
+}
+
 UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Control_Call* call)
 {
 	UINT32 status;
@@ -1009,6 +1038,21 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 		call->cbInBufferSize = length;
 
 		Stream_Read(s, call->pvInBuffer, length);
+	}
+
+	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_pack_control_return(SMARTCARD_DEVICE* smartcard, wStream* s, Control_Return* ret)
+{
+	Stream_Write_UINT32(s, ret->cbOutBufferSize); /* cbOutBufferSize (4 bytes) */
+	Stream_Write_UINT32(s, 0x00020040); /* pvOutBufferPointer (4 bytes) */
+	Stream_Write_UINT32(s, ret->cbOutBufferSize); /* pvOutBufferLength (4 bytes) */
+
+	if (ret->cbOutBufferSize > 0)
+	{
+		Stream_Write(s, ret->pvOutBuffer, ret->cbOutBufferSize); /* pvOutBuffer */
+		smartcard_pack_write_offset_align(smartcard, s, 4);
 	}
 
 	return SCARD_S_SUCCESS;

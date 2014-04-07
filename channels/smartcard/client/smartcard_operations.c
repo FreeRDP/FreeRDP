@@ -159,14 +159,6 @@ static void smartcard_output_alignment(IRP* irp, UINT32 seed)
 		Stream_Zero(irp->output, add);
 }
 
-static void smartcard_output_repos(IRP* irp, UINT32 written)
-{
-	UINT32 add = (4 - (written % 4)) % 4;
-
-	if (add > 0)
-		Stream_Zero(irp->output, add);
-}
-
 size_t smartcard_multi_string_length_a(const char* msz)
 {
 	char* p = (char*) msz;
@@ -685,48 +677,28 @@ static UINT32 smartcard_State(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	SCARDCONTEXT hContext;
 	State_Call call;
 	State_Return ret;
-	DWORD readerLen;
-	char* readerName = NULL;
-	BYTE atr[SCARD_ATR_LENGTH];
 
 	status = smartcard_unpack_state_call(smartcard, irp->input, &call);
 
 	if (status)
-		goto finish;
+		return status;
 
 	hCard = (ULONG_PTR) call.hCard.pbHandle;
 	hContext = (ULONG_PTR) call.hCard.Context.pbContext;
 
-	readerLen = SCARD_AUTOALLOCATE;
-
-	ret.rgAtr = atr;
 	ret.cbAtrLen = SCARD_ATR_LENGTH;
 
-	status = SCardStatusA(hCard, (LPSTR) &readerName, &readerLen,
-			&ret.dwState, &ret.dwProtocol, ret.rgAtr, &ret.cbAtrLen);
+	status = SCardState(hCard, &ret.dwState, &ret.dwProtocol, (BYTE*) &ret.rgAtr, &ret.cbAtrLen);
 
 	if (status != SCARD_S_SUCCESS)
 	{
 		Stream_Zero(irp->output, 256);
-		goto finish;
+		return status;
 	}
 
-	Stream_Write_UINT32(irp->output, ret.dwState); /* dwState (4 bytes) */
-	Stream_Write_UINT32(irp->output, ret.dwProtocol); /* dwProtocol (4 bytes) */
-	Stream_Write_UINT32(irp->output, ret.cbAtrLen); /* cbAtrLen (4 bytes) */
-	Stream_Write_UINT32(irp->output, 0x00000001); /* rgAtrPointer (4 bytes) */
-	Stream_Write_UINT32(irp->output, ret.cbAtrLen); /* rgAtrLength (4 bytes) */
-	Stream_Write(irp->output, ret.rgAtr, ret.cbAtrLen); /* rgAtr */
-
-	smartcard_output_repos(irp, ret.cbAtrLen);
+	smartcard_pack_state_return(smartcard, irp->output, &ret);
 
 	smartcard_output_alignment(irp, 8);
-
-finish:
-	if (readerName)
-	{
-		SCardFreeMemory(hContext, readerName);
-	}
 
 	return status;
 }
@@ -910,15 +882,7 @@ static UINT32 smartcard_Control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			call.pvInBuffer, (DWORD) call.cbInBufferSize,
 			ret.pvOutBuffer, (DWORD) call.cbOutBufferSize, &ret.cbOutBufferSize);
 
-	Stream_Write_UINT32(irp->output, (UINT32) ret.cbOutBufferSize); /* cbOutBufferSize (4 bytes) */
-	Stream_Write_UINT32(irp->output, 0x00000004); /* pvOutBufferPointer (4 bytes) */
-	Stream_Write_UINT32(irp->output, ret.cbOutBufferSize); /* pvOutBufferLength (4 bytes) */
-
-	if (ret.cbOutBufferSize > 0)
-	{
-		Stream_Write(irp->output, ret.pvOutBuffer, ret.cbOutBufferSize); /* pvOutBuffer */
-		smartcard_output_repos(irp, ret.cbOutBufferSize);
-	}
+	smartcard_pack_control_return(smartcard, irp->output, &ret);
 
 	smartcard_output_alignment(irp, 8);
 
@@ -984,30 +948,17 @@ static UINT32 smartcard_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	{
 		status = SCARD_E_INSUFFICIENT_BUFFER;
 	}
+
 	call.cbAttrLen = cbAttrLen;
+	ret.cbAttrLen = call.cbAttrLen;
 
 	if (status != SCARD_S_SUCCESS)
 	{
 		Stream_Zero(irp->output, 256);
 		goto finish;
 	}
-	else
-	{
-		ret.cbAttrLen = call.cbAttrLen;
 
-		Stream_Write_UINT32(irp->output, ret.cbAttrLen); /* cbAttrLen (4 bytes) */
-		Stream_Write_UINT32(irp->output, 0x00020000); /* pbAttrPointer (4 bytes) */
-		Stream_Write_UINT32(irp->output, ret.cbAttrLen); /* pbAttrLength (4 bytes) */
-
-		if (!ret.pbAttr)
-			Stream_Zero(irp->output, ret.cbAttrLen); /* pbAttr */
-		else
-			Stream_Write(irp->output, ret.pbAttr, ret.cbAttrLen); /* pbAttr */
-
-		smartcard_output_repos(irp, ret.cbAttrLen);
-		/* align to multiple of 4 */
-		Stream_Write_UINT32(irp->output, 0);
-	}
+	smartcard_pack_get_attrib_return(smartcard, irp->output, &ret);
 
 	smartcard_output_alignment(irp, 8);
 

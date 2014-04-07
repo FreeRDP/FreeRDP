@@ -649,7 +649,30 @@ WINSCARDAPI LONG WINAPI PCSC_SCardCancelTransaction(SCARDHANDLE hCard)
 WINSCARDAPI LONG WINAPI PCSC_SCardState(SCARDHANDLE hCard,
 		LPDWORD pdwState, LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen)
 {
-	return 0;
+	LONG status = SCARD_S_SUCCESS;
+
+	if (g_PCSC.pfnSCardStatus)
+	{
+		SCARDCONTEXT hContext = 0;
+		LPSTR mszReaderNames = NULL;
+		DWORD cchReaderLen = SCARD_AUTOALLOCATE;
+
+		status = g_PCSC.pfnSCardStatus(hCard, (LPSTR) &mszReaderNames, &cchReaderLen,
+				pdwState, pdwProtocol, pbAtr, pcbAtrLen);
+		status = PCSC_MapErrorCodeToWinSCard(status);
+
+		if (mszReaderNames)
+		{
+			if (g_PCSC.pfnSCardFreeMemory)
+			{
+				hContext = PCSC_GetSmartCardContextFromHandle(hCard);
+
+				g_PCSC.pfnSCardFreeMemory(hContext, mszReaderNames);
+			}
+		}
+	}
+
+	return status;
 }
 
 WINSCARDAPI LONG WINAPI PCSC_SCardStatusA(SCARDHANDLE hCard,
