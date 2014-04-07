@@ -123,6 +123,38 @@ UINT32 smartcard_pack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream* 
 	return 0;
 }
 
+UINT32 smartcard_unpack_read_offset_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 alignment)
+{
+	UINT32 pad;
+	UINT32 offset;
+
+	offset = Stream_GetPosition(s);
+
+	pad = offset;
+	offset = (offset + alignment - 1) & ~(alignment - 1);
+	pad = offset - pad;
+
+	Stream_Seek(s, pad);
+
+	return pad;
+}
+
+UINT32 smartcard_pack_write_offset_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 alignment)
+{
+	UINT32 pad;
+	UINT32 offset;
+
+	offset = Stream_GetPosition(s);
+
+	pad = offset;
+	offset = (offset + alignment - 1) & ~(alignment - 1);
+	pad = offset - pad;
+
+	Stream_Zero(s, pad);
+
+	return pad;
+}
+
 UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDCONTEXT* context)
 {
 	if (Stream_GetRemainingLength(s) < 4)
@@ -149,6 +181,18 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 				(int) Stream_GetRemainingLength(s), context->cbContext);
 		return SCARD_F_INTERNAL_ERROR;
 	}
+
+	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_pack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDCONTEXT* context)
+{
+	UINT32 pbContextNdrPtr;
+
+	pbContextNdrPtr = (context->cbContext) ? 0x00020001 : 0;
+
+	Stream_Write_UINT32(s, context->cbContext); /* cbContext (4 bytes) */
+	Stream_Write_UINT32(s, pbContextNdrPtr); /* pbContextNdrPtr (4 bytes) */
 
 	return SCARD_S_SUCCESS;
 }
@@ -187,6 +231,21 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 	return SCARD_S_SUCCESS;
 }
 
+UINT32 smartcard_pack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDCONTEXT* context)
+{
+	if (context->cbContext)
+	{
+		Stream_Write_UINT32(s, context->cbContext); /* Length (4 bytes) */
+
+		if (context->cbContext > 4)
+			Stream_Write_UINT64(s, context->pbContext);
+		else if (context->cbContext > 0)
+			Stream_Write_UINT32(s, context->pbContext);
+	}
+
+	return SCARD_S_SUCCESS;
+}
+
 UINT32 smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
 {
 	UINT32 status;
@@ -216,6 +275,24 @@ UINT32 smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream*
 	Stream_Seek_UINT32(s); /* NdrPtr (4 bytes) */
 
 	return 0;
+}
+
+UINT32 smartcard_pack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
+{
+	UINT32 status;
+	UINT32 pbHandleNdrPtr;
+
+	status = smartcard_pack_redir_scard_context(smartcard, s, &(handle->Context));
+
+	if (status)
+		return status;
+
+	pbHandleNdrPtr = (handle->cbHandle) ? 0x00020002 : 0;
+
+	Stream_Write_UINT32(s, handle->cbHandle); /* cbHandle (4 bytes) */
+	Stream_Write_UINT32(s, pbHandleNdrPtr); /* pbHandleNdrPtr (4 bytes) */
+
+	return SCARD_S_SUCCESS;
 }
 
 UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
@@ -258,6 +335,28 @@ UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStr
 	return 0;
 }
 
+UINT32 smartcard_pack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
+{
+	UINT32 status;
+
+	status = smartcard_pack_redir_scard_context_ref(smartcard, s, &(handle->Context));
+
+	if (status)
+		return status;
+
+	if (handle->cbHandle)
+	{
+		Stream_Write_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
+
+		if (handle->cbHandle > 4)
+			Stream_Write_UINT64(s, handle->pbHandle);
+		else
+			Stream_Write_UINT32(s, handle->pbHandle);
+	}
+
+	return 0;
+}
+
 UINT32 smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, EstablishContext_Call* call)
 {
 	if (Stream_GetRemainingLength(s) < 4)
@@ -268,6 +367,23 @@ UINT32 smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStr
 	}
 
 	Stream_Read_UINT32(s, call->dwScope); /* dwScope (4 bytes) */
+
+	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_pack_establish_context_return(SMARTCARD_DEVICE* smartcard, wStream* s, EstablishContext_Return* ret)
+{
+	UINT32 status;
+
+	status = smartcard_pack_redir_scard_context(smartcard, s, &(ret->Context));
+
+	if (status)
+		return status;
+
+	status = smartcard_pack_redir_scard_context_ref(smartcard, s, &(ret->Context));
+
+	if (status)
+		return status;
 
 	return SCARD_S_SUCCESS;
 }
@@ -357,22 +473,6 @@ UINT32 smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	return SCARD_S_SUCCESS;
 }
 
-UINT32 smartcard_unpack_read_offset_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 alignment)
-{
-	UINT32 pad;
-	UINT32 offset;
-
-	offset = Stream_GetPosition(s);
-
-	pad = offset;
-	offset = (offset + alignment - 1) & ~(alignment - 1);
-	pad = offset - pad;
-
-	Stream_Seek(s, pad);
-
-	return pad;
-}
-
 UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, ConnectA_Call* call)
 {
 	UINT32 status;
@@ -387,7 +487,7 @@ UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
-	Stream_Seek_UINT32(s); /* szReaderPointer (4 bytes) */
+	Stream_Seek_UINT32(s); /* szReaderNdrPtr (4 bytes) */
 
 	status = smartcard_unpack_connect_common(smartcard, s, &(call->Common));
 
@@ -424,7 +524,7 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
-	Stream_Seek_UINT32(s); /* szReaderPointer (4 bytes) */
+	Stream_Seek_UINT32(s); /* szReaderNdrPtr (4 bytes) */
 
 	status = smartcard_unpack_connect_common(smartcard, s, &(call->Common));
 
@@ -443,6 +543,25 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	call->szReader[count] = '\0';
 
 	smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.Context));
+
+	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Connect_Return* ret)
+{
+	UINT32 status;
+
+	status = smartcard_pack_redir_scard_handle(smartcard, s, &(ret->hCard));
+
+	if (status)
+		return status;
+
+	Stream_Write_UINT32(s, ret->dwActiveProtocol); /* dwActiveProtocol (4 bytes) */
+
+	status = smartcard_pack_redir_scard_handle_ref(smartcard, s, &(ret->hCard));
+
+	if (status)
+		return status;
 
 	return SCARD_S_SUCCESS;
 }
@@ -471,6 +590,13 @@ UINT32 smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 
 	if (status)
 		return status;
+
+	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_pack_reconnect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Reconnect_Return* ret)
+{
+	Stream_Write_UINT32(s, ret->dwActiveProtocol); /* dwActiveProtocol (4 bytes) */
 
 	return SCARD_S_SUCCESS;
 }
@@ -1034,6 +1160,26 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		pbExtraBytes = &((BYTE*) call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
 		CopyMemory(pbExtraBytes, ioRecvPci.pbExtraBytes, ioRecvPci.cbExtraBytes);
 		Stream_Seek(s, ioRecvPci.cbExtraBytes);
+	}
+
+	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Transmit_Return* ret)
+{
+	Stream_EnsureRemainingCapacity(s, 32);
+
+	Stream_Write_UINT32(s, 0); /* pioRecvPciNdrPtr (4 bytes) */
+
+	if (ret->pbRecvBuffer)
+	{
+		Stream_Write_UINT32(s, ret->cbRecvLength); /* cbRecvLength (4 bytes) */
+		Stream_Write_UINT32(s, 0x00020004); /* pbRecvBufferNdrPtr (4 bytes) */
+		Stream_Write_UINT32(s, ret->cbRecvLength); /* pbRecvBufferNdrLen (4 bytes) */
+
+		Stream_EnsureRemainingCapacity(s, ret->cbRecvLength);
+		Stream_Write(s, ret->pbRecvBuffer, ret->cbRecvLength);
+		smartcard_pack_write_offset_align(smartcard, s, 4);
 	}
 
 	return SCARD_S_SUCCESS;
