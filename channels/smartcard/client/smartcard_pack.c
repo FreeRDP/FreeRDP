@@ -443,6 +443,7 @@ UINT32 smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaders_Call* call)
 {
 	UINT32 status;
+	UINT32 count;
 	UINT32 mszGroupsNdrPtr;
 
 	call->mszGroups = NULL;
@@ -460,35 +461,54 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	}
 
 	Stream_Read_UINT32(s, call->cBytes); /* cBytes (4 bytes) */
-
-	if (Stream_GetRemainingLength(s) < call->cBytes)
-	{
-		WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call is too short: Actual: %d, Expected: %d",
-				(int) Stream_GetRemainingLength(s), call->cBytes);
-		return STATUS_BUFFER_TOO_SMALL;
-	}
-
 	Stream_Read_UINT32(s, mszGroupsNdrPtr); /* mszGroupsNdrPtr (4 bytes) */
-
 	Stream_Read_UINT32(s, call->fmszReadersIsNULL); /* fmszReadersIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cchReaders); /* cchReaders (4 bytes) */
-
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call is too short: %d",
-				(int) Stream_GetRemainingLength(s));
-		return STATUS_BUFFER_TOO_SMALL;
-	}
-
-	if (mszGroupsNdrPtr)
-	{
-		WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call unimplemented mszGroups parsing");
-	}
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Context));
 
 	if (status)
 		return status;
+	
+	if ((mszGroupsNdrPtr && !call->cBytes) || (!mszGroupsNdrPtr && call->cBytes))
+	{
+		WLog_Print(smartcard->log, WLOG_WARN,
+			   "ListReaders_Call mszGroupsNdrPtr (0x%08X) and cBytes (0x%08X) inconsistency",
+			   (int) mszGroupsNdrPtr, (int) call->cBytes);
+		return STATUS_INVALID_PARAMETER;
+	}
+	
+	if (mszGroupsNdrPtr)
+	{
+		Stream_Read_UINT32(s, count); /* NdrCount (4 bytes) */
+		
+		if (count != call->cBytes)
+		{
+			WLog_Print(smartcard->log, WLOG_WARN,
+				   "ListReaders_Call NdrCount (0x%08X) and cBytes (0x%08X) inconsistency",
+				   (int) count, (int) call->cBytes);
+			return STATUS_INVALID_PARAMETER;
+		}
+		
+		if (Stream_GetRemainingLength(s) < call->cBytes)
+		{
+			WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call is too short: Actual: %d, Expected: %d",
+				   (int) Stream_GetRemainingLength(s), call->cBytes);
+			return STATUS_BUFFER_TOO_SMALL;
+		}
+		
+		call->mszGroups = (BYTE*) calloc(1, call->cBytes + 4);
+		
+		if (!call->mszGroups)
+		{
+			WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call out of memory error (mszGroups)");
+			return STATUS_NO_MEMORY;
+		}
+		
+		Stream_Read(s, call->mszGroups, call->cBytes);
+		
+		smartcard_unpack_read_size_align(smartcard, s, call->cBytes, 4);
+	}
 
 	return SCARD_S_SUCCESS;
 }

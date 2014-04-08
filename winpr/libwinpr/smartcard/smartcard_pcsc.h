@@ -20,6 +20,7 @@
 #ifndef WINPR_SMARTCARD_PCSC_PRIVATE_H
 #define WINPR_SMARTCARD_PCSC_PRIVATE_H
 
+#include <winpr/platform.h>
 #include <winpr/smartcard.h>
 
 struct _PCSCFunctionTable

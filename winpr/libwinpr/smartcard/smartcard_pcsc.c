@@ -28,6 +28,8 @@
 
 #include "smartcard_pcsc.h"
 
+static BOOL g_SCardAutoAllocate = FALSE;
+
 static HMODULE g_PCSCModule = NULL;
 static PCSCFunctionTable g_PCSC = { 0 };
 
@@ -989,7 +991,8 @@ extern PCSCFunctionTable g_PCSC_Link;
 extern int PCSC_InitializeSCardApi_Link(void);
 
 int PCSC_InitializeSCardApi(void)
-{	
+{
+#if 0
 	if (PCSC_InitializeSCardApi_Link() >= 0)
 	{
 		g_PCSC.pfnSCardEstablishContext = g_PCSC_Link.pfnSCardEstablishContext;
@@ -1013,8 +1016,13 @@ int PCSC_InitializeSCardApi(void)
 		
 		return 1;
 	}
+#endif
 	
+#ifdef __MACOSX__
+	g_PCSCModule = LoadLibraryA("/System/Library/Frameworks/PCSC.framework/PCSC");
+#else
 	g_PCSCModule = LoadLibraryA("libpcsclite.so");
+#endif
 	
 	if (!g_PCSCModule)
 		return -1;
@@ -1033,10 +1041,18 @@ int PCSC_InitializeSCardApi(void)
 	g_PCSC.pfnSCardTransmit = (void*) GetProcAddress(g_PCSCModule, "SCardTransmit");
 	g_PCSC.pfnSCardListReaderGroups = (void*) GetProcAddress(g_PCSCModule, "SCardListReaderGroups");
 	g_PCSC.pfnSCardListReaders = (void*) GetProcAddress(g_PCSCModule, "SCardListReaders");
-	g_PCSC.pfnSCardFreeMemory = (void*) GetProcAddress(g_PCSCModule, "SCardFreeMemory");
 	g_PCSC.pfnSCardCancel = (void*) GetProcAddress(g_PCSCModule, "SCardCancel");
 	g_PCSC.pfnSCardGetAttrib = (void*) GetProcAddress(g_PCSCModule, "SCardGetAttrib");
 	g_PCSC.pfnSCardSetAttrib = (void*) GetProcAddress(g_PCSCModule, "SCardSetAttrib");
+	
+	g_PCSC.pfnSCardFreeMemory = NULL;
+	
+#ifndef __MACOSX__
+	g_PCSC.pfnSCardFreeMemory = (void*) GetProcAddress(g_PCSCModule, "SCardFreeMemory");
+#endif
+	
+	if (g_PCSC.pfnSCardFreeMemory)
+		g_SCardAutoAllocate = TRUE;
 
 	return 1;
 }
