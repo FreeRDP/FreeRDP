@@ -351,7 +351,7 @@ static UINT32 smartcard_GetStatusChangeA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = ret.ReturnCode = SCardGetStatusChangeA(hContext, call.dwTimeOut, rgReaderStates, call.cReaders);
 
-	if (status)
+	if (status && (status != SCARD_E_TIMEOUT))
 		return status;
 
 	ret.cReaders = call.cReaders;
@@ -424,7 +424,7 @@ static UINT32 smartcard_GetStatusChangeW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = ret.ReturnCode = SCardGetStatusChangeW(hContext, call.dwTimeOut, rgReaderStates, call.cReaders);
 
-	if (status)
+	if (status && (status != SCARD_E_TIMEOUT))
 		return status;
 
 	ret.cReaders = call.cReaders;
@@ -1292,7 +1292,7 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			break;
 	}
 
-	if ((result != SCARD_S_SUCCESS) /* && (result != SCARD_E_TIMEOUT) */)
+	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN,
 			"IRP failure: %s (0x%08X), status: %s (0x%08X)",
