@@ -119,7 +119,7 @@ typedef struct _ReaderState_Common_Call
 	DWORD dwCurrentState;
 	DWORD dwEventState;
 	/* [range] */ DWORD cbAtr;
-	BYTE rgbAtr[ 36 ];
+	BYTE rgbAtr[36];
 } ReaderState_Common_Call;
 
 typedef struct _ReaderStateA
@@ -422,6 +422,9 @@ typedef struct _WriteCacheW_Call
 
 UINT32 smartcard_unpack_read_offset_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 alignment);
 UINT32 smartcard_pack_write_offset_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 alignment);
+
+UINT32 smartcard_pack_write_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size, UINT32 alignment);
+UINT32 smartcard_unpack_read_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size, UINT32 alignment);
 
 UINT32 smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);
 UINT32 smartcard_pack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);

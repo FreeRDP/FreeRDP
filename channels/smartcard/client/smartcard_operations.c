@@ -1292,14 +1292,6 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			break;
 	}
 
-	/**
-	 * [MS-RPCE] 2.2.6.3 Primitive Type Serialization
-	 * The type MUST be aligned on an 8-byte boundary. If the size of the
-	 * primitive type is not a multiple of 8 bytes, the data MUST be padded.
-	 */
-
-	smartcard_pack_write_offset_align(smartcard, irp->output, 8);
-
 	if ((result != SCARD_S_SUCCESS) /* && (result != SCARD_E_TIMEOUT) */)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN,
@@ -1322,7 +1314,17 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, result);
 	}
 
+	/**
+	 * [MS-RPCE] 2.2.6.3 Primitive Type Serialization
+	 * The type MUST be aligned on an 8-byte boundary. If the size of the
+	 * primitive type is not a multiple of 8 bytes, the data MUST be padded.
+	 */
+
+	smartcard_pack_write_size_align(smartcard, irp->output,
+			Stream_GetPosition(irp->output) - (RDPDR_DEVICE_IO_RESPONSE_LENGTH + 4), 8);
+
 	Stream_SealLength(irp->output);
+
 	outputBufferLength = Stream_Length(irp->output) - RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4;
 	objectBufferLength = outputBufferLength - RDPDR_DEVICE_IO_RESPONSE_LENGTH;
 	Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH);
