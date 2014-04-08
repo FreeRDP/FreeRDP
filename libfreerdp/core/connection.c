@@ -421,7 +421,11 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	key_len = rdp->settings->RdpServerCertificate->cert_info.ModulusLength;
 	mod = rdp->settings->RdpServerCertificate->cert_info.Modulus;
 	exp = rdp->settings->RdpServerCertificate->cert_info.exponent;
-	crypt_client_random = calloc(1,key_len);
+	/*
+	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
+	 * for details
+	 */
+	crypt_client_random = calloc(1,key_len+8);
 	if (!crypt_client_random)
 		return FALSE;
 	crypto_rsa_public_encrypt(rdp->settings->ClientRandom, CLIENT_RANDOM_LENGTH, key_len, mod, exp, crypt_client_random);
