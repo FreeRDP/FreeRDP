@@ -590,12 +590,6 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 	UINT32 dwVersion;
 	BOOL ret;
 
-	if (length < 1)
-	{
-		DEBUG_CERTIFICATE("null server certificate\n");
-		return FALSE;
-	}
-
 	if (length < 4)
 		return FALSE;
 
