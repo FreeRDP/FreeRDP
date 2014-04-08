@@ -498,7 +498,12 @@ UINT32 smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* 
 	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
 	Stream_Write_UINT32(s, 0x00020008); /* mszNdrPtr (4 bytes) */
 	Stream_Write_UINT32(s, ret->cBytes); /* mszNdrLen (4 bytes) */
-	Stream_Write(s, ret->msz, ret->cBytes);
+	
+	if (ret->msz)
+		Stream_Write(s, ret->msz, ret->cBytes);
+	else
+		Stream_Zero(s, ret->cBytes);
+	
 	smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4);
 
 	return SCARD_S_SUCCESS;
@@ -1009,7 +1014,12 @@ UINT32 smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Sta
 	Stream_Write_UINT32(s, ret->cbAtrLen); /* cbAtrLen (4 bytes) */
 
 	Stream_Write_UINT32(s, ret->cBytes); /* mszReaderNamesNdrLen (4 bytes) */
-	Stream_Write(s, ret->mszReaderNames, ret->cBytes);
+	
+	if (ret->mszReaderNames)
+		Stream_Write(s, ret->mszReaderNames, ret->cBytes);
+	else
+		Stream_Zero(s, ret->cBytes);
+	
 	smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4);
 
 	return SCARD_S_SUCCESS;

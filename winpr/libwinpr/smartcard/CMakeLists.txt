@@ -18,9 +18,14 @@
 set(MODULE_NAME "winpr-smartcard")
 set(MODULE_PREFIX "WINPR_SMARTCARD")
 
+if(PCSC_WINPR_FOUND)
+	add_definitions(-DWITH_WINPR_PCSC)
+endif()
+
 set(${MODULE_PREFIX}_SRCS
 	smartcard.c
 	smartcard.h
+	smartcard_link.c
 	smartcard_pcsc.c
 	smartcard_pcsc.h
 	smartcard_winscard.c
@@ -40,6 +45,10 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE winpr
 	MODULES winpr-crt winpr-library)
+
+if(PCSC_WINPR_FOUND)
+	list(APPEND ${MODULE_PREFIX}_LIBS ${PCSC_WINPR_LIBRARY})
+endif()
 
 if(MONOLITHIC_BUILD)
 	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

@@ -985,10 +985,37 @@ PSCardApiFunctionTable PCSC_GetSCardApiFunctionTable(void)
 	return &PCSC_SCardApiFunctionTable;
 }
 
-int PCSC_InitializeSCardApi(void)
-{
-	g_PCSCModule = LoadLibraryA("libpcsclite.so");
+extern PCSCFunctionTable g_PCSC_Link;
+extern int PCSC_InitializeSCardApi_Link(void);
 
+int PCSC_InitializeSCardApi(void)
+{	
+	if (PCSC_InitializeSCardApi_Link() >= 0)
+	{
+		g_PCSC.pfnSCardEstablishContext = g_PCSC_Link.pfnSCardEstablishContext;
+		g_PCSC.pfnSCardReleaseContext = g_PCSC_Link.pfnSCardReleaseContext;
+		g_PCSC.pfnSCardIsValidContext = g_PCSC_Link.pfnSCardIsValidContext;
+		g_PCSC.pfnSCardConnect = g_PCSC_Link.pfnSCardConnect;
+		g_PCSC.pfnSCardReconnect = g_PCSC_Link.pfnSCardReconnect;
+		g_PCSC.pfnSCardDisconnect = g_PCSC_Link.pfnSCardDisconnect;
+		g_PCSC.pfnSCardBeginTransaction = g_PCSC_Link.pfnSCardBeginTransaction;
+		g_PCSC.pfnSCardEndTransaction = g_PCSC_Link.pfnSCardEndTransaction;
+		g_PCSC.pfnSCardStatus = g_PCSC_Link.pfnSCardStatus;
+		g_PCSC.pfnSCardGetStatusChange = g_PCSC_Link.pfnSCardGetStatusChange;
+		g_PCSC.pfnSCardControl = g_PCSC_Link.pfnSCardControl;
+		g_PCSC.pfnSCardTransmit = g_PCSC_Link.pfnSCardTransmit;
+		g_PCSC.pfnSCardListReaderGroups = g_PCSC_Link.pfnSCardListReaderGroups;
+		g_PCSC.pfnSCardListReaders = g_PCSC_Link.pfnSCardListReaders;
+		g_PCSC.pfnSCardFreeMemory = g_PCSC_Link.pfnSCardFreeMemory;
+		g_PCSC.pfnSCardCancel = g_PCSC_Link.pfnSCardCancel;
+		g_PCSC.pfnSCardGetAttrib = g_PCSC_Link.pfnSCardGetAttrib;
+		g_PCSC.pfnSCardSetAttrib = g_PCSC_Link.pfnSCardSetAttrib;
+		
+		return 1;
+	}
+	
+	g_PCSCModule = LoadLibraryA("libpcsclite.so");
+	
 	if (!g_PCSCModule)
 		return -1;
 

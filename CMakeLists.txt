@@ -341,6 +341,8 @@ else()
 	set(X11_FEATURE_TYPE "DISABLED")
 endif()
 
+find_package(PCSCWinPR)
+
 set(X11_FEATURE_PURPOSE "X11")
 set(X11_FEATURE_DESCRIPTION "X11 client and server")
 
