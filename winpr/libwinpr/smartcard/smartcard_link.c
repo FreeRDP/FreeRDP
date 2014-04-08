@@ -26,19 +26,41 @@
 #include <string.h>
 
 /**
- * libpcsc-winpr.a:
+ * PCSC-WinPR (only required for Mac OS X):
  *
- * Add the WinPR_PCSC_* definitions
- * to pcsc-lite/src/PCSC/winscard.h
+ * PCSC-WinPR is a static build of libpcsclite with
+ * minor modifications meant to avoid an ABI conflict.
  *
- * Configure project as static in a local prefix:
- * ./configure --enable-static --prefix=/usr/local
+ * Add the WinPR_PCSC_* definitions that follow "#define WinPR_PCSC"
+ * in this file to pcsc-lite/src/PCSC/winscard.h
  *
- * Install, and then rename
- * libpcsclite.a to libpcsc-winpr.a
+ * Configure pcsc-lite with the following options (Mac OS X):
  * 
- * This static library will contain a non-conflicting ABI
- * so we can safely link to it with and import its functions.
+ * ./configure --enable-static --prefix=/usr --program-suffix=winpr
+ *	--enable-usbdropdir=/usr/libexec/SmartCardServices/drivers
+ *	--enable-confdir=/etc --enable-ipcdir=/var/run
+ *
+ * Build pcsc-lite, and then copy libpcsclite.a to libpcsc-winpr.a:
+ * 
+ * make
+ * cp ./src/.libs/libpcsclite.a libpcsc-winpr.a
+ *
+ * Validate that libpcsc-winpr.a has a modified ABI:
+ *
+ * nm libpcsc-winpr.a | grep " T " | grep WinPR
+ *
+ * If the ABI has been successfully modified, you should
+ * see pcsc-lite functions prefixed with "WinPR_PCSC_".
+ *
+ * You can keep this custom pcsc-lite build for later.
+ * To install the library, copy it to /usr/lib or /usr/local/lib.
+ *
+ * The FreeRDP build system will then automatically pick it up
+ * as long as it is present on the system. To ensure PCSC-WinPR
+ * is properly detected at cmake generation time, look for the
+ * following debug output:
+ *
+ * -- Found PCSC-WinPR: /usr/lib/libpcsc-winpr.a
  */
 
 #if 0
@@ -61,7 +83,7 @@
 #define SCardCancel WinPR_PCSC_SCardCancel
 #define SCardGetAttrib WinPR_PCSC_SCardGetAttrib
 #define SCardSetAttrib WinPR_PCSC_SCardSetAttrib
-#define list_size WinPR_PCSC_list_size /* src/simclist.h */
+#define list_size WinPR_PCSC_list_size /* put this line in src/simclist.h */
 #endif
 
 #ifdef WITH_WINPR_PCSC
