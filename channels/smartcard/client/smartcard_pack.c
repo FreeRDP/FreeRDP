@@ -515,16 +515,24 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 
 UINT32 smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaders_Return* ret)
 {
-	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
-	Stream_Write_UINT32(s, 0x00020008); /* mszNdrPtr (4 bytes) */
-	Stream_Write_UINT32(s, ret->cBytes); /* mszNdrLen (4 bytes) */
-	
-	if (ret->msz)
-		Stream_Write(s, ret->msz, ret->cBytes);
-	else
-		Stream_Zero(s, ret->cBytes);
+	UINT32 mszNdrPtr;
 
-	smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4);
+	mszNdrPtr = (ret->cBytes) ? 0x00020008 : 0;
+
+	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
+	Stream_Write_UINT32(s, mszNdrPtr); /* mszNdrPtr (4 bytes) */
+	
+	if (mszNdrPtr)
+	{
+		Stream_Write_UINT32(s, ret->cBytes); /* mszNdrLen (4 bytes) */
+
+		if (ret->msz)
+			Stream_Write(s, ret->msz, ret->cBytes);
+		else
+			Stream_Zero(s, ret->cBytes);
+
+		smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4);
+	}
 
 	return SCARD_S_SUCCESS;
 }
@@ -775,9 +783,6 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 			Stream_Read_UINT32(s, readerState->Common.cbAtr); /* cbAtr (4 bytes) */
 			Stream_Read(s, readerState->Common.rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
 			Stream_Seek_UINT32(s); /* rgbAtr [32..36] (4 bytes) */
-
-			readerState->Common.dwCurrentState &= 0xFFFF;
-			readerState->Common.dwEventState = 0;
 		}
 
 		for (index = 0; index < call->cReaders; index++)
@@ -884,10 +889,6 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 			Stream_Read_UINT32(s, readerState->Common.cbAtr); /* cbAtr (4 bytes) */
 			Stream_Read(s, readerState->Common.rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
 			Stream_Seek_UINT32(s); /* rgbAtr [32..36] (4 bytes) */
-
-			/* what is this used for? */
-			readerState->Common.dwCurrentState &= 0x0000FFFF;
-			readerState->Common.dwEventState = 0;
 		}
 
 		for (index = 0; index < call->cReaders; index++)
@@ -1255,8 +1256,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		call->pioSendPci->cbPciLength = ioSendPci.cbExtraBytes + sizeof(SCARD_IO_REQUEST);
 
 		pbExtraBytes = &((BYTE*) call->pioSendPci)[sizeof(SCARD_IO_REQUEST)];
-		CopyMemory(pbExtraBytes, ioSendPci.pbExtraBytes, ioSendPci.cbExtraBytes);
-		Stream_Seek(s, ioSendPci.cbExtraBytes);
+		Stream_Read(s, pbExtraBytes, ioSendPci.cbExtraBytes);
 	}
 	else
 	{
@@ -1363,8 +1363,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		call->pioRecvPci->cbPciLength = ioRecvPci.cbExtraBytes + sizeof(SCARD_IO_REQUEST);
 
 		pbExtraBytes = &((BYTE*) call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
-		CopyMemory(pbExtraBytes, ioRecvPci.pbExtraBytes, ioRecvPci.cbExtraBytes);
-		Stream_Seek(s, ioRecvPci.cbExtraBytes);
+		Stream_Read(s, pbExtraBytes, ioRecvPci.cbExtraBytes);
 	}
 
 	return SCARD_S_SUCCESS;
@@ -1410,3 +1409,4 @@ UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 	return SCARD_S_SUCCESS;
 }
+
