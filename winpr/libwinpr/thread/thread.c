@@ -100,8 +100,9 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	HANDLE handle;
 	WINPR_THREAD* thread;
 
-	thread = (WINPR_THREAD*) malloc(sizeof(WINPR_THREAD));
-	ZeroMemory(thread, sizeof(WINPR_THREAD));
+	thread = (WINPR_THREAD*) calloc(1, sizeof(WINPR_THREAD));
+	if (!thread)
+		return NULL;
 
 	thread->started = FALSE;
 	thread->dwStackSize = dwStackSize;

@@ -286,14 +286,7 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 
 rdpNtlm* ntlm_new()
 {
-	rdpNtlm* ntlm = (rdpNtlm*) malloc(sizeof(rdpNtlm));
-
-	if (ntlm != NULL)
-	{
-		ZeroMemory(ntlm, sizeof(rdpNtlm));
-	}
-
-	return ntlm;
+	return (rdpNtlm *)calloc(1, sizeof(rdpNtlm));
 }
 
 void ntlm_free(rdpNtlm* ntlm)
