@@ -947,6 +947,10 @@ static UINT32 smartcard_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (ret.ReturnCode)
 	{
+		WLog_Print(smartcard->log, WLOG_WARN,
+				"SCardGetAttrib: %s (0x%08X) cbAttrLen: %d\n",
+				SCardGetAttributeString(call.dwAttrId), call.dwAttrId, call.cbAttrLen);
+
 		Stream_Zero(irp->output, 256);
 		return ret.ReturnCode;
 	}

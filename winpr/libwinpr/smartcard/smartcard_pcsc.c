@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
 #include <winpr/library.h>
 #include <winpr/smartcard.h>
 #include <winpr/collections.h>
@@ -30,12 +31,21 @@
 
 //#define DISABLE_PCSC_SCARD_AUTOALLOCATE
 
+struct _PCSC_SCARDCONTEXT
+{
+	SCARDCONTEXT hContext;
+	SCARDHANDLE hCard;
+	CRITICAL_SECTION lock;
+};
+typedef struct _PCSC_SCARDCONTEXT PCSC_SCARDCONTEXT;
+
 static HMODULE g_PCSCModule = NULL;
 static PCSCFunctionTable g_PCSC = { 0 };
 
 static BOOL g_SCardAutoAllocate = FALSE;
 
-static wListDictionary* g_SmartCards = NULL;
+static wListDictionary* g_CardHandles = NULL;
+static wListDictionary* g_CardContexts = NULL;
 static wListDictionary* g_MemoryBlocks = NULL;
 
 WINSCARDAPI LONG WINAPI PCSC_SCardFreeMemory(SCARDCONTEXT hContext, LPCVOID pvMem);
@@ -83,30 +93,115 @@ size_t PCSC_MultiStringLengthW(const WCHAR* msz)
 	return (p - msz) + 1;
 }
 
-void PCSC_AddSmartCardHandle(SCARDCONTEXT hContext, SCARDHANDLE hCard)
+PCSC_SCARDCONTEXT* PCSC_GetCardContextData(SCARDCONTEXT hContext)
 {
-	if (!g_SmartCards)
-		g_SmartCards = ListDictionary_New(TRUE);
+	PCSC_SCARDCONTEXT* pContext;
 
-	ListDictionary_Add(g_SmartCards, (void*) hCard, (void*) hContext);
+	if (!g_CardContexts)
+		return 0;
+
+	pContext = (PCSC_SCARDCONTEXT*) ListDictionary_GetItemValue(g_CardContexts, (void*) hContext);
+
+	if (!pContext)
+		return 0;
+
+	return pContext;
 }
 
-void* PCSC_RemoveSmartCardHandle(SCARDHANDLE hCard)
+PCSC_SCARDCONTEXT* PCSC_EstablishCardContext(SCARDCONTEXT hContext)
 {
-	if (!g_SmartCards)
+	PCSC_SCARDCONTEXT* pContext;
+
+	pContext = (PCSC_SCARDCONTEXT*) calloc(1, sizeof(PCSC_SCARDCONTEXT));
+
+	if (!pContext)
 		return NULL;
 
-	return ListDictionary_Remove(g_SmartCards, (void*) hCard);
+	pContext->hContext = hContext;
+
+	InitializeCriticalSectionAndSpinCount(&(pContext->lock), 4000);
+
+	if (!g_CardContexts)
+		g_CardContexts = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_CardContexts, (void*) hContext, (void*) pContext);
+
+	return pContext;
 }
 
-SCARDCONTEXT PCSC_GetSmartCardContextFromHandle(SCARDHANDLE hCard)
+void PCSC_ReleaseCardContext(SCARDCONTEXT hContext)
+{
+	PCSC_SCARDCONTEXT* pContext;
+
+	pContext = PCSC_GetCardContextData(hContext);
+
+	if (!pContext)
+		return;
+
+	DeleteCriticalSection(&(pContext->lock));
+
+	free(pContext);
+
+	if (!g_CardContexts)
+		return;
+
+	ListDictionary_Remove(g_CardContexts, (void*) hContext);
+}
+
+void PCSC_LockCardContext(SCARDCONTEXT hContext)
+{
+	PCSC_SCARDCONTEXT* pContext;
+
+	pContext = PCSC_GetCardContextData(hContext);
+
+	if (!pContext)
+	{
+		fprintf(stderr, "PCSC_LockCardContext: invalid context (%p)\n", (void*) hContext);
+		return;
+	}
+
+	EnterCriticalSection(&(pContext->lock));
+}
+
+void PCSC_UnlockCardContext(SCARDCONTEXT hContext)
+{
+	PCSC_SCARDCONTEXT* pContext;
+
+	pContext = PCSC_GetCardContextData(hContext);
+
+	if (!pContext)
+	{
+		fprintf(stderr, "PCSC_UnlockCardContext: invalid context (%p)\n", (void*) hContext);
+		return;
+	}
+
+	LeaveCriticalSection(&(pContext->lock));
+}
+
+void PCSC_AddCardHandle(SCARDCONTEXT hContext, SCARDHANDLE hCard)
+{
+	if (!g_CardHandles)
+		g_CardHandles = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_CardHandles, (void*) hCard, (void*) hContext);
+}
+
+void* PCSC_RemoveCardHandle(SCARDHANDLE hCard)
+{
+	if (!g_CardHandles)
+		return NULL;
+
+	return ListDictionary_Remove(g_CardHandles, (void*) hCard);
+}
+
+SCARDCONTEXT PCSC_GetCardContextFromHandle(SCARDHANDLE hCard)
 {
 	SCARDCONTEXT hContext;
 
-	if (!g_SmartCards)
+	if (!g_CardHandles)
 		return 0;
 
-	hContext = (SCARDCONTEXT) ListDictionary_GetItemValue(g_SmartCards, (void*) hCard);
+	hContext = (SCARDCONTEXT) ListDictionary_GetItemValue(g_CardHandles, (void*) hCard);
 
 	return hContext;
 }
@@ -156,6 +251,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardEstablishContext(DWORD dwScope,
 
 		status = g_PCSC.pfnSCardEstablishContext(dwScope, pvReserved1, pvReserved2, phContext);
 		status = PCSC_MapErrorCodeToWinSCard(status);
+
+		if (!status)
+			PCSC_EstablishCardContext(*phContext);
 	}
 
 	return status;
@@ -169,6 +267,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardReleaseContext(SCARDCONTEXT hContext)
 	{
 		status = g_PCSC.pfnSCardReleaseContext(hContext);
 		status = PCSC_MapErrorCodeToWinSCard(status);
+
+		if (!status)
+			PCSC_ReleaseCardContext(hContext);
 	}
 
 	return status;
@@ -192,11 +293,15 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroupsA(SCARDCONTEXT hContext,
 {
 	LONG status = SCARD_S_SUCCESS;
 
+	PCSC_LockCardContext(hContext);
+
 	if (g_PCSC.pfnSCardListReaderGroups)
 	{
 		status = g_PCSC.pfnSCardListReaderGroups(hContext, mszGroups, pcchGroups);
 		status = PCSC_MapErrorCodeToWinSCard(status);
 	}
+
+	PCSC_UnlockCardContext(hContext);
 
 	return status;
 }
@@ -205,6 +310,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext,
 		LPWSTR mszGroups, LPDWORD pcchGroups)
 {
 	LONG status = SCARD_S_SUCCESS;
+
+	PCSC_LockCardContext(hContext);
 
 	if (g_PCSC.pfnSCardListReaderGroups)
 	{
@@ -217,6 +324,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext,
 		status = PCSC_MapErrorCodeToWinSCard(status);
 	}
 
+	PCSC_UnlockCardContext(hContext);
+
 	return status;
 }
 
@@ -224,6 +333,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersA(SCARDCONTEXT hContext,
 		LPCSTR mszGroups, LPSTR mszReaders, LPDWORD pcchReaders)
 {
 	LONG status = SCARD_S_SUCCESS;
+
+	PCSC_LockCardContext(hContext);
 
 	if (g_PCSC.pfnSCardListReaders)
 	{
@@ -264,6 +375,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersA(SCARDCONTEXT hContext,
 		status = PCSC_MapErrorCodeToWinSCard(status);
 	}
 
+	PCSC_UnlockCardContext(hContext);
+
 	return status;
 }
 
@@ -271,6 +384,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 		LPCWSTR mszGroups, LPWSTR mszReaders, LPDWORD pcchReaders)
 {
 	LONG status = SCARD_S_SUCCESS;
+
+	PCSC_LockCardContext(hContext);
 
 	if (g_PCSC.pfnSCardListReaders)
 	{
@@ -328,6 +443,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 
 		free(mszGroupsA);
 	}
+
+	PCSC_UnlockCardContext(hContext);
 
 	return status;
 }
@@ -486,6 +603,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardFreeMemory(SCARDCONTEXT hContext, LPCVOID pvMe
 {
 	LONG status = SCARD_S_SUCCESS;
 
+	PCSC_LockCardContext(hContext);
+
 	if (PCSC_RemoveMemoryBlock(hContext, (void*) pvMem))
 	{
 		free((void*) pvMem);
@@ -499,6 +618,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardFreeMemory(SCARDCONTEXT hContext, LPCVOID pvMe
 			status = PCSC_MapErrorCodeToWinSCard(status);
 		}
 	}
+
+	PCSC_UnlockCardContext(hContext);
 
 	return status;
 }
@@ -542,6 +663,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeA(SCARDCONTEXT hContext,
 {
 	LONG status = SCARD_S_SUCCESS;
 
+	PCSC_LockCardContext(hContext);
+
 	if (g_PCSC.pfnSCardGetStatusChange)
 	{
 		DWORD index;
@@ -570,6 +693,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeA(SCARDCONTEXT hContext,
 		}
 	}
 
+	PCSC_UnlockCardContext(hContext);
+
 	return status;
 }
 
@@ -577,6 +702,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 		DWORD dwTimeout, LPSCARD_READERSTATEW rgReaderStates, DWORD cReaders)
 {
 	LONG status = SCARD_S_SUCCESS;
+
+	PCSC_LockCardContext(hContext);
 
 	if (g_PCSC.pfnSCardGetStatusChange)
 	{
@@ -624,6 +751,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 		free(rgReaderStatesA);
 	}
 
+	PCSC_UnlockCardContext(hContext);
+
 	return status;
 }
 
@@ -646,6 +775,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectA(SCARDCONTEXT hContext,
 {
 	LONG status = SCARD_S_SUCCESS;
 
+	PCSC_LockCardContext(hContext);
+
 	if (g_PCSC.pfnSCardConnect)
 	{
 		status = g_PCSC.pfnSCardConnect(hContext, szReader,
@@ -653,8 +784,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectA(SCARDCONTEXT hContext,
 		status = PCSC_MapErrorCodeToWinSCard(status);
 
 		if (status == SCARD_S_SUCCESS)
-			PCSC_AddSmartCardHandle(hContext, *phCard);
+			PCSC_AddCardHandle(hContext, *phCard);
 	}
+
+	PCSC_UnlockCardContext(hContext);
 
 	return status;
 }
@@ -664,6 +797,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext,
 		LPSCARDHANDLE phCard, LPDWORD pdwActiveProtocol)
 {
 	LONG status = SCARD_S_SUCCESS;
+
+	PCSC_LockCardContext(hContext);
 
 	if (g_PCSC.pfnSCardConnect)
 	{
@@ -678,12 +813,14 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext,
 		status = PCSC_MapErrorCodeToWinSCard(status);
 
 		if (status == SCARD_S_SUCCESS)
-			PCSC_AddSmartCardHandle(hContext, *phCard);
+			PCSC_AddCardHandle(hContext, *phCard);
 
 		free(szReaderA);
 
 		return status;
 	}
+
+	PCSC_UnlockCardContext(hContext);
 
 	return status;
 }
@@ -713,7 +850,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardDisconnect(SCARDHANDLE hCard, DWORD dwDisposit
 		status = PCSC_MapErrorCodeToWinSCard(status);
 
 		if (status == SCARD_S_SUCCESS)
-			PCSC_RemoveSmartCardHandle(hCard);
+			PCSC_RemoveCardHandle(hCard);
 	}
 
 	return status;
@@ -767,7 +904,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardState(SCARDHANDLE hCard,
 
 		if (mszReaderNames)
 		{
-			hContext = PCSC_GetSmartCardContextFromHandle(hCard);
+			hContext = PCSC_GetCardContextFromHandle(hCard);
 			PCSC_SCardFreeMemory(hContext, mszReaderNames);
 		}
 	}
@@ -839,7 +976,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatusA(SCARDHANDLE hCard,
 				}
 				else
 				{
-					hContext = PCSC_GetSmartCardContextFromHandle(hCard);
+					hContext = PCSC_GetCardContextFromHandle(hCard);
 
 					if (pcbAtrLenWrapAlloc)
 						PCSC_AddMemoryBlock(hContext, *pPbAtr);
@@ -927,7 +1064,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatusW(SCARDHANDLE hCard,
 				}
 				else
 				{
-					hContext = PCSC_GetSmartCardContextFromHandle(hCard);
+					hContext = PCSC_GetCardContextFromHandle(hCard);
 
 					if (pcbAtrLenWrapAlloc)
 						PCSC_AddMemoryBlock(hContext, *pPbAtr);
@@ -950,7 +1087,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatusW(SCARDHANDLE hCard,
 			length = (UINT32) PCSC_MultiStringLengthA(mszReaderNamesA);
 			ConvertToUnicode(CP_UTF8, 0, mszReaderNamesA, length + 2, (WCHAR**) mszReaderNames, 0);
 
-			hContext = PCSC_GetSmartCardContextFromHandle(hCard);
+			hContext = PCSC_GetCardContextFromHandle(hCard);
 
 			PCSC_AddMemoryBlock(hContext, mszReaderNames);
 
@@ -1033,7 +1170,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dw
 				}
 				else
 				{
-					hContext = PCSC_GetSmartCardContextFromHandle(hCard);
+					hContext = PCSC_GetCardContextFromHandle(hCard);
 					PCSC_AddMemoryBlock(hContext, *pPbAttr);
 				}
 			}
@@ -1067,7 +1204,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 		if (*pcbAttrLen == SCARD_AUTOALLOCATE)
 			attrAutoAlloc = TRUE;
 
-		hContext = PCSC_GetSmartCardContextFromHandle(hCard);
+		hContext = PCSC_GetCardContextFromHandle(hCard);
 
 		if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_A)
 		{
