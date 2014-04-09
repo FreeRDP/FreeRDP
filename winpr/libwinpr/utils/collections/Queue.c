@@ -221,35 +221,37 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 {
 	wQueue* queue = NULL;
 
-	queue = (wQueue*) malloc(sizeof(wQueue));
+	queue = (wQueue *)calloc(1, sizeof(wQueue));
+	if (!queue)
+		return NULL;
 
-	if (queue)
-	{
-		queue->head = 0;
-		queue->tail = 0;
-		queue->size = 0;
+	queue->capacity = 32;
+	queue->growthFactor = 2;
 
-		queue->capacity = 32;
-		queue->growthFactor = 2;
+	queue->synchronized = synchronized;
 
-		queue->synchronized = synchronized;
+	if (capacity > 0)
+		queue->capacity = capacity;
 
-		if (capacity > 0)
-			queue->capacity = capacity;
+	if (growthFactor > 0)
+		queue->growthFactor = growthFactor;
 
-		if (growthFactor > 0)
-			queue->growthFactor = growthFactor;
+	queue->array = (void **)calloc(queue->capacity, sizeof(void *));
+	if (!queue->array)
+		goto out_free;
 
-		queue->array = (void**) malloc(sizeof(void*) * queue->capacity);
-		ZeroMemory(queue->array, sizeof(void*) * queue->capacity);
-
-		InitializeCriticalSectionAndSpinCount(&queue->lock, 4000);
-		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-		ZeroMemory(&queue->object, sizeof(wObject));
-	}
+	InitializeCriticalSectionAndSpinCount(&queue->lock, 4000);
+	queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!queue->event)
+		goto out_free_array;
 
 	return queue;
+
+out_free_array:
+	free(queue->array);
+out_free:
+	free(queue);
+	return NULL;
 }
 
 void Queue_Free(wQueue* queue)
