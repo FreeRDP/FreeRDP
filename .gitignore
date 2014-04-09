@@ -118,3 +118,6 @@ default.log
 *.txt.user
 
 *.autosave
+
+# etags
+TAGS
