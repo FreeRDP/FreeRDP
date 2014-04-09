@@ -21,10 +21,10 @@ int TestWtsApiEnumerateSessions(int argc, char* argv[])
 	if (!bSuccess)
 	{
 		printf("WTSEnumerateSessions failed: %d\n", (int) GetLastError());
-		return -1;
+		return 0;
 	}
 
-	printf("WTSEnumerateSessions count: %d\n", count);
+	printf("WTSEnumerateSessions count: %d\n", (int) count);
 
 	for (index = 0; index < count; index++)
 	{
