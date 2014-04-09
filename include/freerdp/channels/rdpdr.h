@@ -206,6 +206,7 @@ enum RDPDR_PRINTER_ANNOUNCE_FLAG
 #endif
 
 /* [MS-FSCC] FSCTL Structures */
+#ifdef _WIn32
 enum FSCTL_STRUCTURE
 {
 	FSCTL_CREATE_OR_GET_OBJECT_ID = 0x900c0,
@@ -234,6 +235,7 @@ enum FSCTL_STRUCTURE
 	FSCTL_SIS_COPYFILE = 0x90100,
 	FSCTL_WRITE_USN_CLOSE_RECORD = 0x900ef
 };
+#endif
 
 /* [MS-FSCC] FileFsAttributeInformation.FileSystemAttributes */
 
