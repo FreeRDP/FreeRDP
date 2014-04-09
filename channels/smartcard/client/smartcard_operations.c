@@ -1022,6 +1022,7 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	UINT32 result;
 	UINT32 status;
+	UINT32 offset;
 	UINT32 ioControlCode;
 	UINT32 outputBufferLength;
 	UINT32 inputBufferLength;
@@ -1052,14 +1053,9 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	WLog_Print(smartcard->log, WLOG_DEBUG, "%s (0x%08X) FileId: %d CompletionId: %d",
 			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 
-#if 1
-	//if (/*(ioControlCode != SCARD_IOCTL_TRANSMIT) &&*/
-	//	(ioControlCode != SCARD_IOCTL_GETSTATUSCHANGEA) &&
-	//	(ioControlCode != SCARD_IOCTL_GETSTATUSCHANGEW))
-	{
-		printf("%s (0x%08X) FileId: %d CompletionId: %d\n",
-			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
-	}
+#if 0
+	printf("%s (0x%08X) FileId: %d CompletionId: %d\n",
+		smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 #endif
 
 	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
@@ -1292,6 +1288,15 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			break;
 	}
 
+	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
+			(ioControlCode != SCARD_IOCTL_RELEASESTARTEDEVENT))
+	{
+		offset = (RDPDR_DEVICE_IO_REQUEST_LENGTH + RDPDR_DEVICE_IO_CONTROL_REQ_HDR_LENGTH);
+
+		smartcard_unpack_read_size_align(smartcard, irp->input,
+				Stream_GetPosition(irp->input) - offset, 8);
+	}
+
 	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN,
@@ -1314,14 +1319,42 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, result);
 	}
 
+	if (Stream_GetPosition(irp->input) < Stream_Length(irp->input))
+	{
+		UINT32 difference;
+
+		difference = (int) (Stream_Length(irp->input) - Stream_GetPosition(irp->input));
+
+		WLog_Print(smartcard->log, WLOG_WARN,
+			"IRP was not fully parsed %s (0x%08X): Actual: %d, Expected: %d, Difference: %d",
+			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
+			(int) Stream_GetPosition(irp->input), (int) Stream_Length(irp->input), difference);
+
+		winpr_HexDump(Stream_Pointer(irp->input), difference);
+	}
+
+	if (Stream_GetPosition(irp->input) > Stream_Length(irp->input))
+	{
+		UINT32 difference;
+
+		difference = (int) (Stream_GetPosition(irp->input) - Stream_Length(irp->input));
+
+		WLog_Print(smartcard->log, WLOG_WARN,
+			"IRP was parsed beyond its end %s (0x%08X): Actual: %d, Expected: %d, Difference: %d",
+			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
+			(int) Stream_GetPosition(irp->input), (int) Stream_Length(irp->input), difference);
+	}
+
 	/**
 	 * [MS-RPCE] 2.2.6.3 Primitive Type Serialization
 	 * The type MUST be aligned on an 8-byte boundary. If the size of the
 	 * primitive type is not a multiple of 8 bytes, the data MUST be padded.
 	 */
 
+	offset = (RDPDR_DEVICE_IO_RESPONSE_LENGTH + RDPDR_DEVICE_IO_CONTROL_RSP_HDR_LENGTH);
+
 	smartcard_pack_write_size_align(smartcard, irp->output,
-			Stream_GetPosition(irp->output) - (RDPDR_DEVICE_IO_RESPONSE_LENGTH + 4), 8);
+			Stream_GetPosition(irp->output) - offset, 8);
 
 	Stream_SealLength(irp->output);
 
