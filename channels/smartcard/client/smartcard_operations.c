@@ -1276,7 +1276,8 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 				Stream_GetPosition(irp->input) - offset, 8);
 	}
 
-	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT))
+	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT) &&
+			(result != SCARD_E_NO_READERS_AVAILABLE) && (result != SCARD_E_NO_SERVICE))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN,
 			"IRP failure: %s (0x%08X), status: %s (0x%08X)",
