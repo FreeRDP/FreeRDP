@@ -775,7 +775,7 @@ BOOL license_read_license_request_packet(rdpLicense* license, wStream* s)
 
 	/* Parse Server Certificate */
 	if (!certificate_read_server_certificate(license->certificate,
-			license->ServerCertificate->data, license->ServerCertificate->length) < 0)
+			license->ServerCertificate->data, license->ServerCertificate->length))
 		return FALSE;
 
 	license_generate_keys(license);
