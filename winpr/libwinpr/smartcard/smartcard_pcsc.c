@@ -67,7 +67,7 @@ size_t PCSC_MultiStringLengthA(const char* msz)
 	while ((p[0] != 0) && (p[1] != 0))
 		p++;
 
-	return (p - msz);
+	return (p - msz) + 1;
 }
 
 size_t PCSC_MultiStringLengthW(const WCHAR* msz)
@@ -80,7 +80,7 @@ size_t PCSC_MultiStringLengthW(const WCHAR* msz)
 	while ((p[0] != 0) && (p[1] != 0))
 		p++;
 
-	return (p - msz);
+	return (p - msz) + 1;
 }
 
 void PCSC_AddSmartCardHandle(SCARDCONTEXT hContext, SCARDHANDLE hCard)
@@ -152,6 +152,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardEstablishContext(DWORD dwScope,
 
 	if (g_PCSC.pfnSCardEstablishContext)
 	{
+		dwScope = SCARD_SCOPE_SYSTEM; /* this is the only scope supported by pcsc-lite */
+
 		status = g_PCSC.pfnSCardEstablishContext(dwScope, pvReserved1, pvReserved2, phContext);
 		status = PCSC_MapErrorCodeToWinSCard(status);
 	}
@@ -228,6 +230,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersA(SCARDCONTEXT hContext,
 		BOOL pcchReadersWrapAlloc = FALSE;
 		LPSTR* pMszReaders = (LPSTR*) mszReaders;
 
+		mszGroups = NULL; /* mszGroups is not supported by pcsc-lite */
+
 		if ((*pcchReaders == SCARD_AUTOALLOCATE) && !g_SCardAutoAllocate)
 			pcchReadersWrapAlloc = TRUE;
 
@@ -270,11 +274,12 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 
 	if (g_PCSC.pfnSCardListReaders)
 	{
-		UINT32 length;
 		LPSTR mszGroupsA = NULL;
 		LPSTR mszReadersA = NULL;
 		BOOL pcchReadersWrapAlloc = FALSE;
 		LPSTR* pMszReadersA = &mszReadersA;
+
+		mszGroups = NULL; /* mszGroups is not supported by pcsc-lite */
 
 		if ((*pcchReaders == SCARD_AUTOALLOCATE) && !g_SCardAutoAllocate)
 			pcchReadersWrapAlloc = TRUE;
@@ -299,8 +304,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 
 				if (status && *pMszReadersA)
 				{
-					length = (UINT32) PCSC_MultiStringLengthA(*pMszReadersA);
-					ConvertToUnicode(CP_UTF8, 0, *pMszReadersA, length + 2, (WCHAR**) mszReaders, 0);
+					*pcchReaders = ConvertToUnicode(CP_UTF8, 0, *pMszReadersA, *pcchReaders, (WCHAR**) mszReaders, 0);
 					PCSC_AddMemoryBlock(hContext, mszReaders);
 				}
 
@@ -313,8 +317,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 
 			if (mszReadersA)
 			{
-				length = (UINT32) PCSC_MultiStringLengthA(mszReadersA);
-				ConvertToUnicode(CP_UTF8, 0, mszReadersA, length + 2, (WCHAR**) mszReaders, 0);
+				*pcchReaders = ConvertToUnicode(CP_UTF8, 0, mszReadersA, *pcchReaders, (WCHAR**) mszReaders, 0) * 2;
 				PCSC_AddMemoryBlock(hContext, mszReaders);
 
 				PCSC_SCardFreeMemory(hContext, mszReadersA);
@@ -541,8 +544,30 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeA(SCARDCONTEXT hContext,
 
 	if (g_PCSC.pfnSCardGetStatusChange)
 	{
+		DWORD index;
+
+		/**
+		 * pcsc-lite interprets value 0 as INFINITE, while it really shouldn't.
+		 * Work around this issue by using the smallest non-zero timeout value.
+		 */
+
+		if (!dwTimeout)
+			dwTimeout++;
+
+		for (index = 0; index < cReaders; index++)
+		{
+			rgReaderStates[index].dwCurrentState &= 0xFFFF;
+			rgReaderStates[index].dwEventState = 0;
+		}
+
 		status = g_PCSC.pfnSCardGetStatusChange(hContext, dwTimeout, rgReaderStates, cReaders);
 		status = PCSC_MapErrorCodeToWinSCard(status);
+
+		for (index = 0; index < cReaders; index++)
+		{
+			/* pcsc-lite puts an event count in the higher bits of dwEventState */
+			rgReaderStates[index].dwEventState &= 0xFFFF;
+		}
 	}
 
 	return status;
@@ -558,6 +583,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 		DWORD index;
 		LPSCARD_READERSTATEA rgReaderStatesA;
 
+		if (!dwTimeout)
+			dwTimeout++;
+
 		rgReaderStatesA = (LPSCARD_READERSTATEA) calloc(cReaders, sizeof(SCARD_READERSTATEA));
 
 		for (index = 0; index < cReaders; index++)
@@ -566,6 +594,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 
 			ConvertFromUnicode(CP_UTF8, 0, rgReaderStates[index].szReader, -1,
 					(char**) &rgReaderStatesA[index].szReader, 0, NULL, NULL);
+
+			rgReaderStates[index].dwCurrentState &= 0xFFFF;
+			rgReaderStates[index].dwEventState = 0;
 
 			rgReaderStatesA[index].pvUserData = rgReaderStates[index].pvUserData;
 			rgReaderStatesA[index].dwCurrentState = rgReaderStates[index].dwCurrentState;
@@ -586,6 +617,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 			rgReaderStates[index].dwEventState = rgReaderStatesA[index].dwEventState;
 			rgReaderStates[index].cbAtr = rgReaderStatesA[index].cbAtr;
 			CopyMemory(&(rgReaderStates[index].rgbAtr), &(rgReaderStatesA[index].rgbAtr), 36);
+
+			rgReaderStates[index].dwEventState &= 0xFFFF;
 		}
 
 		free(rgReaderStatesA);

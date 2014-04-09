@@ -523,7 +523,7 @@ UINT32 smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* 
 		Stream_Write(s, ret->msz, ret->cBytes);
 	else
 		Stream_Zero(s, ret->cBytes);
-	
+
 	smartcard_pack_write_size_align(smartcard, s, ret->cBytes, 4);
 
 	return SCARD_S_SUCCESS;
@@ -776,8 +776,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 			Stream_Read(s, readerState->Common.rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
 			Stream_Seek_UINT32(s); /* rgbAtr [32..36] (4 bytes) */
 
-			/* what is this used for? */
-			readerState->Common.dwCurrentState &= 0x0000FFFF;
+			readerState->Common.dwCurrentState &= 0xFFFF;
 			readerState->Common.dwEventState = 0;
 		}
 

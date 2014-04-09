@@ -155,7 +155,7 @@ size_t smartcard_multi_string_length_a(const char* msz)
 	while ((p[0] != 0) && (p[1] != 0))
 		p++;
 
-	return (p - msz);
+	return (p - msz) + 1;
 }
 
 size_t smartcard_multi_string_length_w(const WCHAR* msz)
@@ -168,7 +168,7 @@ size_t smartcard_multi_string_length_w(const WCHAR* msz)
 	while ((p[0] != 0) && (p[1] != 0))
 		p++;
 
-	return (p - msz);
+	return (p - msz) + 1;
 }
 
 static UINT32 smartcard_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
@@ -262,7 +262,7 @@ static UINT32 smartcard_ListReadersA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		return status;
 
 	ret.msz = (BYTE*) mszReaders;
-	ret.cBytes = smartcard_multi_string_length_a((char*) ret.msz) + 2;
+	ret.cBytes = cchReaders;
 
 	status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret);
 
@@ -302,7 +302,7 @@ static UINT32 smartcard_ListReadersW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		return status;
 
 	ret.msz = (BYTE*) mszReaders;
-	ret.cBytes = (smartcard_multi_string_length_w((WCHAR*) ret.msz) + 2) * 2;
+	ret.cBytes = cchReaders;
 
 	status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret);
 
@@ -1032,7 +1032,7 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	WLog_Print(smartcard->log, WLOG_DEBUG, "%s (0x%08X) FileId: %d CompletionId: %d",
 			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 
-#if 0
+#if 1
 	printf("%s (0x%08X) FileId: %d CompletionId: %d\n",
 		smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 #endif
