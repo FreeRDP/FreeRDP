@@ -152,7 +152,7 @@ size_t smartcard_multi_string_length_a(const char* msz)
 	if (!p)
 		return 0;
 
-	while (p[0] || p[1])
+	while ((p[0] != 0) && (p[1] != 0))
 		p++;
 
 	return (p - msz);
@@ -165,7 +165,7 @@ size_t smartcard_multi_string_length_w(const WCHAR* msz)
 	if (!p)
 		return 0;
 
-	while (p[0] || p[1])
+	while ((p[0] != 0) && (p[1] != 0))
 		p++;
 
 	return (p - msz);

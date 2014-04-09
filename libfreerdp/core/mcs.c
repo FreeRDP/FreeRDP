@@ -1087,6 +1087,7 @@ void mcs_free(rdpMcs* mcs)
 {
 	if (mcs)
 	{
+		free(mcs->channels);
 		free(mcs);
 	}
 }

@@ -64,7 +64,7 @@ size_t PCSC_MultiStringLengthA(const char* msz)
 	if (!p)
 		return 0;
 
-	while (p[0] || p[1])
+	while ((p[0] != 0) && (p[1] != 0))
 		p++;
 
 	return (p - msz);
@@ -77,7 +77,7 @@ size_t PCSC_MultiStringLengthW(const WCHAR* msz)
 	if (!p)
 		return 0;
 
-	while (p[0] || p[1])
+	while ((p[0] != 0) && (p[1] != 0))
 		p++;
 
 	return (p - msz);
