@@ -378,24 +378,24 @@ wArrayList* ArrayList_New(BOOL synchronized)
 {
 	wArrayList* arrayList = NULL;
 
-	arrayList = (wArrayList*) malloc(sizeof(wArrayList));
+	arrayList = (wArrayList *)calloc(1, sizeof(wArrayList));
+	if (!arrayList)
+		return NULL;
 
-	if (arrayList)
-	{
-		arrayList->synchronized = synchronized;
+	arrayList->synchronized = synchronized;
+	arrayList->capacity = 32;
+	arrayList->growthFactor = 2;
 
-		arrayList->size = 0;
-		arrayList->capacity = 32;
-		arrayList->growthFactor = 2;
+	arrayList->array = (void **)malloc(arrayList->capacity * sizeof(void *));
+	if (!arrayList->array)
+		goto out_free;
 
-		arrayList->array = (void**) malloc(sizeof(void*) * arrayList->capacity);
-
-		InitializeCriticalSectionAndSpinCount(&arrayList->lock, 4000);
-
-		ZeroMemory(&arrayList->object, sizeof(wObject));
-	}
-
+	InitializeCriticalSectionAndSpinCount(&arrayList->lock, 4000);
 	return arrayList;
+
+out_free:
+	free(arrayList);
+	return NULL;
 }
 
 void ArrayList_Free(wArrayList* arrayList)
