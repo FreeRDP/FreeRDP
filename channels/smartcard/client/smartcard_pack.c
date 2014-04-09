@@ -1373,22 +1373,38 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Transmit_Return* ret)
 {
-	Stream_EnsureRemainingCapacity(s, 32);
+	UINT32 cbExtraBytes;
+	BYTE* pbExtraBytes;
+	UINT32 pioRecvPciNdrPtr;
+	UINT32 pbRecvBufferNdrPtr;
 
-	if (ret->pioRecvPci)
+	if (!ret->pbRecvBuffer)
+		ret->cbRecvLength = 0;
+
+	pioRecvPciNdrPtr = (ret->pioRecvPci) ? 0x00020200 : 0;
+	pbRecvBufferNdrPtr = (ret->pbRecvBuffer) ? 0x00020400 : 0;
+
+	Stream_Write_UINT32(s, pioRecvPciNdrPtr); /* pioRecvPciNdrPtr (4 bytes) */
+	Stream_Write_UINT32(s, ret->cbRecvLength); /* cbRecvLength (4 bytes) */
+	Stream_Write_UINT32(s, pbRecvBufferNdrPtr); /* pbRecvBufferNdrPtr (4 bytes) */
+
+	if (pioRecvPciNdrPtr)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Return unimplemented pioRecvPci encoding");
+		cbExtraBytes = ret->pioRecvPci->cbPciLength - sizeof(SCARD_IO_REQUEST);
+		pbExtraBytes = &((BYTE*) ret->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
+
+		Stream_EnsureRemainingCapacity(s, cbExtraBytes + 16);
+		Stream_Write_UINT32(s, cbExtraBytes); /* Length (4 bytes) */
+		Stream_Write_UINT16(s, ret->pioRecvPci->dwProtocol); /* dwProtocol (2 bytes) */
+		Stream_Write_UINT16(s, cbExtraBytes); /* cbExtraBytes (2 bytes) */
+		Stream_Write(s, pbExtraBytes, cbExtraBytes);
+		smartcard_pack_write_size_align(smartcard, s, cbExtraBytes, 4);
 	}
 
-	Stream_Write_UINT32(s, 0); /* pioRecvPciNdrPtr (4 bytes) */
-
-	if (ret->pbRecvBuffer)
+	if (pbRecvBufferNdrPtr)
 	{
-		Stream_Write_UINT32(s, ret->cbRecvLength); /* cbRecvLength (4 bytes) */
-		Stream_Write_UINT32(s, 0x00020004); /* pbRecvBufferNdrPtr (4 bytes) */
+		Stream_EnsureRemainingCapacity(s, ret->cbRecvLength + 16);
 		Stream_Write_UINT32(s, ret->cbRecvLength); /* pbRecvBufferNdrLen (4 bytes) */
-
-		Stream_EnsureRemainingCapacity(s, ret->cbRecvLength);
 		Stream_Write(s, ret->pbRecvBuffer, ret->cbRecvLength);
 		smartcard_pack_write_size_align(smartcard, s, ret->cbRecvLength, 4);
 	}
