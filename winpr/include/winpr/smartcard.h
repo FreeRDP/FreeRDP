@@ -1104,6 +1104,7 @@ extern "C" {
 #endif
 
 WINSCARDAPI const char* WINAPI SCardGetErrorString(LONG errorCode);
+WINSCARDAPI const char* WINAPI SCardGetAttributeString(DWORD dwAttrId);
 
 #ifdef __cplusplus
 }

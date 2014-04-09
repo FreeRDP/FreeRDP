@@ -640,6 +640,147 @@ WINSCARDAPI const char* WINAPI SCardGetErrorString(LONG errorCode)
 	return "SCARD_E_UNKNOWN";
 }
 
+WINSCARDAPI const char* WINAPI SCardGetAttributeString(DWORD dwAttrId)
+{
+	switch (dwAttrId)
+	{
+		case SCARD_ATTR_VENDOR_NAME:
+			return "SCARD_ATTR_VENDOR_NAME";
+			break;
+		case SCARD_ATTR_VENDOR_IFD_TYPE:
+			return "SCARD_ATTR_VENDOR_IFD_TYPE";
+			break;
+		case SCARD_ATTR_VENDOR_IFD_VERSION:
+			return "SCARD_ATTR_VENDOR_IFD_VERSION";
+			break;
+		case SCARD_ATTR_VENDOR_IFD_SERIAL_NO:
+			return "SCARD_ATTR_VENDOR_IFD_SERIAL_NO";
+			break;
+		case SCARD_ATTR_CHANNEL_ID:
+			return "SCARD_ATTR_CHANNEL_ID";
+			break;
+		case SCARD_ATTR_PROTOCOL_TYPES:
+			return "SCARD_ATTR_PROTOCOL_TYPES";
+			break;
+		case SCARD_ATTR_DEFAULT_CLK:
+			return "SCARD_ATTR_DEFAULT_CLK";
+			break;
+		case SCARD_ATTR_MAX_CLK:
+			return "SCARD_ATTR_MAX_CLK";
+			break;
+		case SCARD_ATTR_DEFAULT_DATA_RATE:
+			return "SCARD_ATTR_DEFAULT_DATA_RATE";
+			break;
+		case SCARD_ATTR_MAX_DATA_RATE:
+			return "SCARD_ATTR_MAX_DATA_RATE";
+			break;
+		case SCARD_ATTR_MAX_IFSD:
+			return "SCARD_ATTR_MAX_IFSD";
+			break;
+		case SCARD_ATTR_POWER_MGMT_SUPPORT:
+			return "SCARD_ATTR_POWER_MGMT_SUPPORT";
+			break;
+		case SCARD_ATTR_USER_TO_CARD_AUTH_DEVICE:
+			return "SCARD_ATTR_USER_TO_CARD_AUTH_DEVICE";
+			break;
+		case SCARD_ATTR_USER_AUTH_INPUT_DEVICE:
+			return "SCARD_ATTR_USER_AUTH_INPUT_DEVICE";
+			break;
+		case SCARD_ATTR_CHARACTERISTICS:
+			return "SCARD_ATTR_CHARACTERISTICS";
+			break;
+		case SCARD_ATTR_CURRENT_PROTOCOL_TYPE:
+			return "SCARD_ATTR_CURRENT_PROTOCOL_TYPE";
+			break;
+		case SCARD_ATTR_CURRENT_CLK:
+			return "SCARD_ATTR_CURRENT_CLK";
+			break;
+		case SCARD_ATTR_CURRENT_F:
+			return "SCARD_ATTR_CURRENT_F";
+			break;
+		case SCARD_ATTR_CURRENT_D:
+			return "SCARD_ATTR_CURRENT_D";
+			break;
+		case SCARD_ATTR_CURRENT_N:
+			return "SCARD_ATTR_CURRENT_N";
+			break;
+		case SCARD_ATTR_CURRENT_W:
+			return "SCARD_ATTR_CURRENT_W";
+			break;
+		case SCARD_ATTR_CURRENT_IFSC:
+			return "SCARD_ATTR_CURRENT_IFSC";
+			break;
+		case SCARD_ATTR_CURRENT_IFSD:
+			return "SCARD_ATTR_CURRENT_IFSD";
+			break;
+		case SCARD_ATTR_CURRENT_BWT:
+			return "SCARD_ATTR_CURRENT_BWT";
+			break;
+		case SCARD_ATTR_CURRENT_CWT:
+			return "SCARD_ATTR_CURRENT_CWT";
+			break;
+		case SCARD_ATTR_CURRENT_EBC_ENCODING:
+			return "SCARD_ATTR_CURRENT_EBC_ENCODING";
+			break;
+		case SCARD_ATTR_EXTENDED_BWT:
+			return "SCARD_ATTR_EXTENDED_BWT";
+			break;
+		case SCARD_ATTR_ICC_PRESENCE:
+			return "SCARD_ATTR_ICC_PRESENCE";
+			break;
+		case SCARD_ATTR_ICC_INTERFACE_STATUS:
+			return "SCARD_ATTR_ICC_INTERFACE_STATUS";
+			break;
+		case SCARD_ATTR_CURRENT_IO_STATE:
+			return "SCARD_ATTR_CURRENT_IO_STATE";
+			break;
+		case SCARD_ATTR_ATR_STRING:
+			return "SCARD_ATTR_ATR_STRING";
+			break;
+		case SCARD_ATTR_ICC_TYPE_PER_ATR:
+			return "SCARD_ATTR_ICC_TYPE_PER_ATR";
+			break;
+		case SCARD_ATTR_ESC_RESET:
+			return "SCARD_ATTR_ESC_RESET";
+			break;
+		case SCARD_ATTR_ESC_CANCEL:
+			return "SCARD_ATTR_ESC_CANCEL";
+			break;
+		case SCARD_ATTR_ESC_AUTHREQUEST:
+			return "SCARD_ATTR_ESC_AUTHREQUEST";
+			break;
+		case SCARD_ATTR_MAXINPUT:
+			return "SCARD_ATTR_MAXINPUT";
+			break;
+		case SCARD_ATTR_DEVICE_UNIT:
+			return "SCARD_ATTR_DEVICE_UNIT";
+			break;
+		case SCARD_ATTR_DEVICE_IN_USE:
+			return "SCARD_ATTR_DEVICE_IN_USE";
+			break;
+		case SCARD_ATTR_DEVICE_FRIENDLY_NAME_A:
+			return "SCARD_ATTR_DEVICE_FRIENDLY_NAME_A";
+			break;
+		case SCARD_ATTR_DEVICE_SYSTEM_NAME_A:
+			return "SCARD_ATTR_DEVICE_SYSTEM_NAME_A";
+			break;
+		case SCARD_ATTR_DEVICE_FRIENDLY_NAME_W:
+			return "SCARD_ATTR_DEVICE_FRIENDLY_NAME_W";
+			break;
+		case SCARD_ATTR_DEVICE_SYSTEM_NAME_W:
+			return "SCARD_ATTR_DEVICE_SYSTEM_NAME_W";
+			break;
+		case SCARD_ATTR_SUPRESS_T1_IFS_REQUEST:
+			return "SCARD_ATTR_SUPRESS_T1_IFS_REQUEST";
+			break;
+		default:
+			return "SCARD_ATTR_UNKNOWN";
+			break;
+	}
+
+	return "SCARD_ATTR_UNKNOWN";
+}
+
 void InitializeSCardApiStubs(void)
 {
 	g_Initialized = TRUE;

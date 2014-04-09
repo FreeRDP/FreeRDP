@@ -932,39 +932,18 @@ static UINT32 smartcard_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hContext = (ULONG_PTR) call.hCard.Context.pbContext;
 
 	ret.pbAttr = NULL;
-	cbAttrLen = (!call.cbAttrLen || call.fpbAttrIsNULL) ? 0 : SCARD_AUTOALLOCATE;
 
-	status = ret.ReturnCode = SCardGetAttrib(hCard, call.dwAttrId,
-			(cbAttrLen == 0) ? NULL : (BYTE*) &ret.pbAttr, &cbAttrLen);
+	if (call.fpbAttrIsNULL)
+		call.cbAttrLen = 0;
 
-	if (status)
-		cbAttrLen = (call.cbAttrLen == 0) ? 0 : SCARD_AUTOALLOCATE;
+	if (call.cbAttrLen)
+		ret.pbAttr = malloc(call.cbAttrLen);
 
-	if ((call.dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_A) && (status == SCARD_E_UNSUPPORTED_FEATURE))
-	{
-		status = SCardGetAttrib(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_W,
-				(cbAttrLen == 0) ? NULL : (BYTE*) &ret.pbAttr, &cbAttrLen);
+	cbAttrLen = call.cbAttrLen;
 
-		if (status)
-			cbAttrLen = (call.cbAttrLen == 0) ? 0 : SCARD_AUTOALLOCATE;
-	}
+	status = ret.ReturnCode = SCardGetAttrib(hCard, call.dwAttrId, ret.pbAttr, &cbAttrLen);
 
-	if ((call.dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W) && (status == SCARD_E_UNSUPPORTED_FEATURE))
-	{
-		status = SCardGetAttrib(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A,
-				(cbAttrLen == 0) ? NULL : (BYTE*) &ret.pbAttr, &cbAttrLen);
-
-		if (status)
-			cbAttrLen = (call.cbAttrLen == 0) ? 0 : SCARD_AUTOALLOCATE;
-	}
-
-	if ((cbAttrLen > call.cbAttrLen) && (ret.pbAttr))
-		status = SCARD_E_INSUFFICIENT_BUFFER;
-
-	ret.ReturnCode = status;
-
-	call.cbAttrLen = cbAttrLen;
-	ret.cbAttrLen = call.cbAttrLen;
+	ret.cbAttrLen = cbAttrLen;
 
 	if (ret.ReturnCode)
 	{
@@ -977,7 +956,7 @@ static UINT32 smartcard_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
-	SCardFreeMemory(hContext, ret.pbAttr);
+	free(ret.pbAttr);
 
 	return ret.ReturnCode;
 }
