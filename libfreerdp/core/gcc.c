@@ -916,6 +916,8 @@ BOOL gcc_read_client_security_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		Stream_Read_UINT32(s, settings->EncryptionMethods); /* encryptionMethods */
 		if (settings->EncryptionMethods == 0)
 			Stream_Read_UINT32(s, settings->EncryptionMethods); /* extEncryptionMethods */
+		else
+			Stream_Seek(s, 4);
 	}
 	else
 	{
@@ -1081,6 +1083,10 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_128BIT) != 0)
 	{
 		settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
+	}
+	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_56BIT) != 0)
+	{
+		settings->EncryptionMethods = ENCRYPTION_METHOD_56BIT;
 	}
 	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_40BIT) != 0)
 	{
