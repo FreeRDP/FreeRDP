@@ -2590,19 +2590,14 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 	BYTE bitmapCodecCount;
 	UINT16 codecPropertiesLength;
 	UINT16 remainingLength;
+	BOOL receivedRemoteFxCodec = FALSE;
+	BOOL receivedNSCodec = FALSE;
 
 	if (length < 5)
 		return FALSE;
 
 	Stream_Read_UINT8(s, bitmapCodecCount); /* bitmapCodecCount (1 byte) */
 	remainingLength = length - 5;
-
-	if (settings->ServerMode)
-	{
-		settings->RemoteFxCodec = FALSE;
-		settings->NSCodec = FALSE;
-		settings->JpegCodec = FALSE;
-	}
 
 	while (bitmapCodecCount > 0)
 	{
@@ -2616,12 +2611,12 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 			if (UuidEqual(&codecGuid, &CODEC_GUID_REMOTEFX, &rpc_status))
 			{
 				Stream_Read_UINT8(s, settings->RemoteFxCodecId);
-				settings->RemoteFxCodec = TRUE;
+				receivedRemoteFxCodec = TRUE;
 			}
 			else if (UuidEqual(&codecGuid, &CODEC_GUID_NSCODEC, &rpc_status))
 			{
 				Stream_Read_UINT8(s, settings->NSCodecId);
-				settings->NSCodec = TRUE;
+				receivedNSCodec = TRUE;
 			}
 			else
 			{
@@ -2658,6 +2653,14 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 		remainingLength -= codecPropertiesLength;
 
 		bitmapCodecCount--;
+	}
+
+	if (settings->ServerMode)
+	{
+		/* only enable a codec if we've announced/enabled it before */
+		settings->RemoteFxCodec = settings->RemoteFxCodec && receivedRemoteFxCodec;
+		settings->NSCodec = settings->NSCodec && receivedNSCodec;
+		settings->JpegCodec = FALSE;
 	}
 
 	return TRUE;
