@@ -2275,8 +2275,44 @@ BOOL rdp_read_multifragment_update_capability_set(wStream* s, UINT16 length, rdp
 
 	Stream_Read_UINT32(s, multifragMaxRequestSize); /* MaxRequestSize (4 bytes) */
 
-	if (multifragMaxRequestSize < settings->MultifragMaxRequestSize)
-		settings->MultifragMaxRequestSize = multifragMaxRequestSize;
+	if (settings->ServerMode)
+	{
+		if (settings->RemoteFxCodec)
+		{
+			/**
+			 * If we are using RemoteFX the client MUST use a value greater
+			 * than or equal to the value we've previously sent in the server to
+			 * client multi-fragment update capability set (MS-RDPRFX 1.5)
+			 */
+			if (multifragMaxRequestSize < settings->MultifragMaxRequestSize)
+			{
+				/**
+				 * If it happens to be smaller we honor the client's value but
+				 * have to disable RemoteFX
+				 */
+				settings->RemoteFxCodec = FALSE;
+				settings->MultifragMaxRequestSize = multifragMaxRequestSize;
+			}
+			else
+			{
+				/* no need to increase server's max request size setting here */
+			}
+		}
+		else
+		{
+			settings->MultifragMaxRequestSize = multifragMaxRequestSize;
+		}
+	}
+	else
+	{
+		/**
+		 * In client mode we keep up with the server's capabilites.
+		 * In RemoteFX mode we MUST do this but it might also be useful to
+		 * receive larger related bitmap updates.
+		 */
+		if (multifragMaxRequestSize > settings->MultifragMaxRequestSize)
+			settings->MultifragMaxRequestSize = multifragMaxRequestSize;
+	}
 
 	return TRUE;
 }
@@ -2293,6 +2329,29 @@ void rdp_write_multifragment_update_capability_set(wStream* s, rdpSettings* sett
 	int header;
 
 	Stream_EnsureRemainingCapacity(s, 32);
+
+	if (settings->ServerMode)
+	{
+		/**
+		 * In server mode we prefer to use the highest useful request size that
+		 * will allow us to pack a complete screen update into a single fast
+		 * path PDU using any of the supported codecs.
+		 * However, the client is completely free to accept our proposed
+		 * max request size or send a different value in the client-to-server
+		 * multi-fragment update capability set and we have to accept that,
+		 * unless we are using RemoteFX where the client MUST announce a value
+		 * greater than or equal to the value we're sending here.
+		 * See [MS-RDPRFX 1.5 capability #2]
+		 */
+
+		UINT32 tileNumX = (settings->DesktopWidth+63)/64;
+		UINT32 tileNumY = (settings->DesktopHeight+63)/64;
+
+		settings->MultifragMaxRequestSize = tileNumX * tileNumY * 16384;
+
+		/* and add room for headers, regions, frame markers, etc. */
+		settings->MultifragMaxRequestSize += 16384;
+	}
 
 	header = rdp_capability_set_start(s);
 
