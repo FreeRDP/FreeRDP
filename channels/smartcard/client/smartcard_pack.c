@@ -807,7 +807,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
-			readerState->szReader = malloc(count + 1);
+			readerState->szReader = (unsigned char*) malloc(count + 1);
 			Stream_Read(s, readerState->szReader, count);
 			smartcard_unpack_read_size_align(smartcard, s, count, 4);
 			readerState->szReader[count] = '\0';
@@ -913,7 +913,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 				return STATUS_BUFFER_TOO_SMALL;
 			}
 
-			readerState->szReader = malloc((count + 1) * 2);
+			readerState->szReader = (WCHAR*) malloc((count + 1) * 2);
 			Stream_Read(s, readerState->szReader, (count * 2));
 			smartcard_unpack_read_size_align(smartcard, s, (count * 2), 4);
 			readerState->szReader[count] = '\0';

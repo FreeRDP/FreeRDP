@@ -453,7 +453,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 
 				if (status && *pMszReadersA)
 				{
-					*pcchReaders = ConvertToUnicode(CP_UTF8, 0, *pMszReadersA, *pcchReaders, (WCHAR**) mszReaders, 0) * 2;
+					*pcchReaders = ConvertToUnicode(CP_UTF8, 0, *pMszReadersA, *pcchReaders, (WCHAR**) mszReaders, 0);
 					PCSC_AddMemoryBlock(hContext, mszReaders);
 				}
 
@@ -466,7 +466,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 
 			if (mszReadersA)
 			{
-				*pcchReaders = ConvertToUnicode(CP_UTF8, 0, mszReadersA, *pcchReaders, (WCHAR**) mszReaders, 0) * 2;
+				*pcchReaders = ConvertToUnicode(CP_UTF8, 0, mszReadersA, *pcchReaders, (WCHAR**) mszReaders, 0);
 				PCSC_AddMemoryBlock(hContext, mszReaders);
 
 				PCSC_SCardFreeMemory(hContext, mszReadersA);
@@ -1120,7 +1120,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatusW(SCARDHANDLE hCard,
 
 		if (mszReaderNamesA)
 		{
-			*pcchReaderLen = ConvertToUnicode(CP_UTF8, 0, mszReaderNamesA, *pcchReaderLen, (WCHAR**) mszReaderNames, 0) * 2;
+			*pcchReaderLen = ConvertToUnicode(CP_UTF8, 0, mszReaderNamesA, *pcchReaderLen, (WCHAR**) mszReaderNames, 0);
 			PCSC_AddMemoryBlock(hContext, mszReaderNames);
 
 			PCSC_SCardFreeMemory(hContext, mszReaderNamesA);
@@ -1295,7 +1295,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 				int length;
 				WCHAR* pbAttrW = NULL;
 
-				length = ConvertToUnicode(CP_UTF8, 0, (char*) pbAttr, *pcbAttrLen, &pbAttrW, 0) * 2;
+				length = ConvertToUnicode(CP_UTF8, 0, (char*) pbAttr, *pcbAttrLen, &pbAttrW, 0);
 
 				PCSC_SCardFreeMemory(hContext, pbAttrA);
 

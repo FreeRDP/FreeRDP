@@ -258,11 +258,11 @@ static UINT32 smartcard_ListReadersA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = ret.ReturnCode = SCardListReadersA(hContext, (LPCSTR) call.mszGroups, (LPSTR) &mszReaders, &cchReaders);
 
-	if (status)
-		return status;
-
 	ret.msz = (BYTE*) mszReaders;
 	ret.cBytes = cchReaders;
+
+	if (status)
+		return status;
 
 	status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret);
 
@@ -298,11 +298,11 @@ static UINT32 smartcard_ListReadersW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = ret.ReturnCode = SCardListReadersW(hContext, (LPCWSTR) call.mszGroups, (LPWSTR) &mszReaders, &cchReaders);
 
+	ret.msz = (BYTE*) mszReaders;
+	ret.cBytes = cchReaders * 2;
+
 	if (status)
 		return status;
-
-	ret.msz = (BYTE*) mszReaders;
-	ret.cBytes = cchReaders;
 
 	status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret);
 
@@ -753,7 +753,7 @@ static DWORD smartcard_StatusA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	}
 
 	ret.mszReaderNames = (BYTE*) mszReaderNames;
-	ret.cBytes = smartcard_multi_string_length_a((char*) ret.mszReaderNames) + 2;
+	ret.cBytes = cchReaderLen * 2;
 
 	status = smartcard_pack_status_return(smartcard, irp->output, &ret);
 
@@ -802,7 +802,7 @@ static DWORD smartcard_StatusW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	}
 
 	ret.mszReaderNames = (BYTE*) mszReaderNames;
-	ret.cBytes = (smartcard_multi_string_length_w((WCHAR*) ret.mszReaderNames) + 2) * 2;
+	ret.cBytes = cchReaderLen * 2;
 
 	status = smartcard_pack_status_return(smartcard, irp->output, &ret);
 
@@ -937,7 +937,7 @@ static UINT32 smartcard_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		call.cbAttrLen = 0;
 
 	if (call.cbAttrLen)
-		ret.pbAttr = malloc(call.cbAttrLen);
+		ret.pbAttr = (BYTE*) malloc(call.cbAttrLen);
 
 	cbAttrLen = call.cbAttrLen;
 
@@ -1303,7 +1303,7 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, result);
 	}
 
-	if (Stream_GetPosition(irp->input) < Stream_Length(irp->input))
+	if (((size_t) Stream_GetPosition(irp->input)) < Stream_Length(irp->input))
 	{
 		UINT32 difference;
 
@@ -1317,7 +1317,7 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		winpr_HexDump(Stream_Pointer(irp->input), difference);
 	}
 
-	if (Stream_GetPosition(irp->input) > Stream_Length(irp->input))
+	if (((size_t) Stream_GetPosition(irp->input)) > Stream_Length(irp->input))
 	{
 		UINT32 difference;
 
