@@ -734,7 +734,7 @@ static DWORD smartcard_StatusA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			&ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &ret.cbAtrLen);
 
 	ret.mszReaderNames = (BYTE*) mszReaderNames;
-	ret.cBytes = cchReaderLen * 2;
+	ret.cBytes = cchReaderLen;
 
 	smartcard_trace_status_return(smartcard, &ret, FALSE);
 

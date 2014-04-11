@@ -216,6 +216,8 @@ void smartcard_scard_handle_native_to_redir(SMARTCARD_DEVICE* smartcard, REDIR_S
 
 UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDCONTEXT* context)
 {
+	UINT32 pbContextNdrPtr;
+
 	context->cbContext = 0;
 	context->pbContext.QuadPart = 0;
 
@@ -235,7 +237,7 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Seek_UINT32(s); /* pbContextNdrPtr (4 bytes) */
+	Stream_Read_UINT32(s, pbContextNdrPtr); /* pbContextNdrPtr (4 bytes) */
 
 	if (context->cbContext > Stream_GetRemainingLength(s))
 	{
@@ -261,6 +263,8 @@ UINT32 smartcard_pack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* 
 
 UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDCONTEXT* context)
 {
+	UINT32 length;
+
 	if (Stream_GetRemainingLength(s) < 4)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d\n",
@@ -268,7 +272,14 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, context->cbContext); /* Length (4 bytes) */
+	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
+
+	if (length != context->cbContext)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length (%d) cbContext (%d) mismatch\n",
+			length, context->cbContext);
+		return STATUS_INVALID_PARAMETER;
+	}
 
 	if ((context->cbContext != 4) && (context->cbContext != 8))
 	{
@@ -327,12 +338,12 @@ UINT32 smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream*
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
+	Stream_Read_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
 
-	if ((Stream_GetRemainingLength(s) < length) || (!length))
+	if ((Stream_GetRemainingLength(s) < handle->cbHandle) || (!handle->cbHandle))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "SCARDHANDLE is too short: Actual: %d, Expected: %d",
-				(int) Stream_GetRemainingLength(s), length);
+				(int) Stream_GetRemainingLength(s), handle->cbHandle);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
@@ -362,6 +373,7 @@ UINT32 smartcard_pack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s
 UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
 {
 	UINT32 status;
+	UINT32 length;
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(handle->Context));
 
@@ -375,7 +387,14 @@ UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStr
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	Stream_Read_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
+	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
+
+	if (length != handle->cbHandle)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE length (%d) cbHandle (%d) mismatch\n",
+			length, handle->cbHandle);
+		return STATUS_INVALID_PARAMETER;
+	}
 
 	if ((handle->cbHandle != 4) && (handle->cbHandle != 8))
 	{
