@@ -406,6 +406,18 @@ UINT32 smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStr
 	return SCARD_S_SUCCESS;
 }
 
+void smartcard_trace_establish_context_call(SMARTCARD_DEVICE* smartcard, EstablishContext_Call* call)
+{
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "EstablishContext_Call {");
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "dwScope: 0x%08X", call->dwScope);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+}
+
 UINT32 smartcard_pack_establish_context_return(SMARTCARD_DEVICE* smartcard, wStream* s, EstablishContext_Return* ret)
 {
 	UINT32 status;
@@ -421,6 +433,21 @@ UINT32 smartcard_pack_establish_context_return(SMARTCARD_DEVICE* smartcard, wStr
 		return status;
 
 	return SCARD_S_SUCCESS;
+}
+
+void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard, EstablishContext_Return* ret)
+{
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "EstablishContext_Call {");
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: 0x%08X", ret->ReturnCode);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
+		ret->Context.pbContext, ret->Context.cbContext);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }
 
 UINT32 smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Context_Call* call)
@@ -513,6 +540,34 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	return SCARD_S_SUCCESS;
 }
 
+void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard, ListReaders_Call* call)
+{
+	BOOL unicode;
+	char* mszGroupsA = NULL;
+
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	unicode = ((call->cBytes > 2) && !call->mszGroups[1]) ? TRUE : FALSE;
+
+	if (unicode)
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) call->mszGroups, call->cBytes / 2, &mszGroupsA, 0, NULL, NULL);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ListReaders_Call {");
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
+		call->Context.pbContext, call->Context.cbContext);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG,
+		"cBytes: %d mszGroups: %s fmszReadersIsNULL: %d cchReaders: 0x%08X",
+		call->cBytes, mszGroupsA, call->fmszReadersIsNULL, call->cchReaders);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+
+	if (unicode)
+		free(mszGroupsA);
+}
+
 UINT32 smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaders_Return* ret)
 {
 	UINT32 mszNdrPtr;
@@ -535,6 +590,47 @@ UINT32 smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* 
 	}
 
 	return SCARD_S_SUCCESS;
+}
+
+void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReaders_Return* ret)
+{
+	int index;
+	int length;
+	BOOL unicode;
+	char* mszA = NULL;
+
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	unicode = ((ret->cBytes > 2) && !ret->msz[1]) ? TRUE : FALSE;
+
+	if (unicode)
+	{
+		length = ret->cBytes / 2;
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->msz, length, &mszA, 0, NULL, NULL);
+	}
+	else
+	{
+		length = ret->cBytes;
+		mszA = (char*) malloc(length);
+		CopyMemory(mszA, ret->msz, ret->cBytes);
+	}
+
+	for (index = 0; index < length - 2; index++)
+	{
+		if (mszA[index] == '\0')
+			mszA[index] = ',';
+	}
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ListReaders_Return {");
+
+	WLog_Print(smartcard->log, WLOG_DEBUG,
+		"ReturnCode: 0x%08X cBytes: %d msz: %s",
+		ret->ReturnCode, ret->cBytes, mszA);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+
+	free(mszA);
 }
 
 UINT32 smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream* s, Connect_Common* common)
@@ -586,7 +682,7 @@ UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	Stream_Seek_UINT32(s); /* NdrOffset (4 bytes) */
 	Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
 
-	call->szReader = malloc(count + 1);
+	call->szReader = (unsigned char*) malloc(count + 1);
 	Stream_Read(s, call->szReader, count);
 	smartcard_unpack_read_size_align(smartcard, s, count, 4);
 	call->szReader[count] = '\0';
@@ -594,6 +690,22 @@ UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.Context));
 
 	return SCARD_S_SUCCESS;
+}
+
+void smartcard_trace_connect_a_call(SMARTCARD_DEVICE* smartcard, ConnectA_Call* call)
+{
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectA_Call {");
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
+		call->Common.Context.pbContext, call->Common.Context.cbContext);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: 0x%08X dwPreferredProtocols: 0x%08X",
+		call->szReader, call->Common.dwShareMode, call->Common.dwPreferredProtocols);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }
 
 UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, ConnectW_Call* call)
@@ -623,7 +735,7 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	Stream_Seek_UINT32(s); /* NdrOffset (4 bytes) */
 	Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
 
-	call->szReader = malloc((count + 1) * 2);
+	call->szReader = (WCHAR*) malloc((count + 1) * 2);
 	Stream_Read(s, call->szReader, (count * 2));
 	smartcard_unpack_read_size_align(smartcard, s, (count * 2), 4);
 	call->szReader[count] = '\0';
@@ -631,6 +743,28 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.Context));
 
 	return SCARD_S_SUCCESS;
+}
+
+void smartcard_trace_connect_w_call(SMARTCARD_DEVICE* smartcard, ConnectW_Call* call)
+{
+	char* szReaderA = NULL;
+
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	ConvertFromUnicode(CP_UTF8, 0, call->szReader, -1, &szReaderA, 0, NULL, NULL);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectA_Call {");
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
+		call->Common.Context.pbContext, call->Common.Context.cbContext);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: 0x%08X dwPreferredProtocols: %d",
+		szReaderA, call->Common.dwShareMode, call->Common.dwPreferredProtocols);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+
+	free(szReaderA);
 }
 
 UINT32 smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Connect_Return* ret)
@@ -650,6 +784,22 @@ UINT32 smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 		return status;
 
 	return SCARD_S_SUCCESS;
+}
+
+void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, Connect_Return* ret)
+{
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "Connect_Return {");
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d) hCard: 0x%08X (%d)",
+		ret->hCard.Context.pbContext, ret->hCard.Context.cbContext, ret->hCard.pbHandle, ret->hCard.cbHandle);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "dwActiveProtocol: 0x%08X",
+		ret->dwActiveProtocol);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }
 
 UINT32 smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Reconnect_Call* call)
@@ -830,6 +980,35 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 	return SCARD_S_SUCCESS;
 }
 
+void smartcard_trace_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, GetStatusChangeA_Call* call)
+{
+	UINT32 index;
+	LPSCARD_READERSTATEA readerState;
+
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChangeA_Call {");
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
+		call->Context.pbContext, call->Context.cbContext);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "dwTimeOut: 0x%08X cReaders: %d",
+		call->dwTimeOut, call->cReaders);
+
+	for (index = 0; index < call->cReaders; index++)
+	{
+		readerState = &call->rgReaderStates[index];
+
+		WLog_Print(smartcard->log, WLOG_DEBUG,
+			"\t[%d]: szReader: %s dwCurrentState: 0x%08X dwEventState: 0x%08X cbAtr: %d",
+			index, readerState->szReader, readerState->dwCurrentState,
+			readerState->dwEventState, readerState->cbAtr);
+	}
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+}
+
 UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChangeW_Call* call)
 {
 	UINT32 index;
@@ -939,6 +1118,41 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 	return SCARD_S_SUCCESS;
 }
 
+void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, GetStatusChangeW_Call* call)
+{
+	UINT32 index;
+	LPSCARD_READERSTATEW readerState;
+
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChangeW_Call {");
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
+		call->Context.pbContext, call->Context.cbContext);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "dwTimeOut: 0x%08X cReaders: %d",
+		call->dwTimeOut, call->cReaders);
+
+	for (index = 0; index < call->cReaders; index++)
+	{
+		char* szReaderA = NULL;
+
+		readerState = &call->rgReaderStates[index];
+
+		ConvertFromUnicode(CP_UTF8, 0, readerState->szReader, -1, &szReaderA, 0, NULL, NULL);
+
+		WLog_Print(smartcard->log, WLOG_DEBUG,
+			"\t[%d]: szReader: %s dwCurrentState: 0x%08X dwEventState: 0x%08X cbAtr: %d",
+			index, szReaderA, readerState->dwCurrentState,
+			readerState->dwEventState, readerState->cbAtr);
+
+		free(szReaderA);
+	}
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+}
+
 UINT32 smartcard_pack_get_status_change_return(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChange_Return* ret)
 {
 	UINT32 index;
@@ -959,6 +1173,31 @@ UINT32 smartcard_pack_get_status_change_return(SMARTCARD_DEVICE* smartcard, wStr
 	}
 
 	return SCARD_S_SUCCESS;
+}
+
+void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetStatusChange_Return* ret)
+{
+	UINT32 index;
+	ReaderState_Return* rgReaderState;
+
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChange_Return {");
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: 0x%08X cReaders: %d",
+		ret->ReturnCode, ret->cReaders);
+
+	for (index = 0; index < ret->cReaders; index++)
+	{
+		rgReaderState = &(ret->rgReaderStates[index]);
+
+		WLog_Print(smartcard->log, WLOG_DEBUG,
+			"\t[%d]: dwCurrentState: 0x%08X dwEventState: 0x%08X cbAtr: %d",
+			index, rgReaderState->dwCurrentState, rgReaderState->dwEventState, rgReaderState->cbAtr);
+	}
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }
 
 UINT32 smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, State_Call* call)
