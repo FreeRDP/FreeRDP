@@ -1,25 +1,12 @@
 
-set(MODULE_NAME "TestWinPRUtils")
-set(MODULE_PREFIX "TEST_WINPR_UTILS")
+set(MODULE_NAME "TestWnd")
+set(MODULE_PREFIX "TEST_WND")
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestIni.c
-	TestQueue.c
-	TestPrint.c
-	TestPubSub.c
-	TestBitStream.c
-	TestArrayList.c
-	TestLinkedList.c
-	TestListDictionary.c
-	TestCmdLine.c
-	TestWLog.c
-	TestHashTable.c
-	TestBufferPool.c
-	TestStreamPool.c
-	TestMessageQueue.c
-	TestMessagePipe.c)
+	TestWndCreateWindowEx.c
+	TestWndWmCopyData.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
@@ -30,7 +17,7 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-crt winpr-path winpr-thread winpr-utils)
+	MODULES winpr-crt winpr-wnd winpr-library)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

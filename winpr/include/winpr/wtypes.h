@@ -41,6 +41,14 @@
 #define WINAPI
 #define CDECL
 
+#ifndef FAR
+#define FAR
+#endif
+
+#ifndef NEAR
+#define NEAR
+#endif
+
 #define __int8	char
 #define __int16 short
 #define __int32 int
@@ -135,7 +143,7 @@ typedef unsigned long ULONG, *PULONG;
 typedef ULONG HRESULT;
 typedef ULONG SCODE;
 
-typedef ULONG_PTR DWORD_PTR;
+typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef ULONG_PTR SIZE_T;
 typedef unsigned int ULONG32;
 typedef unsigned __int64 ULONG64;

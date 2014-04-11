@@ -75,6 +75,7 @@ set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/ConsoleAppender.h)
 
 set(${MODULE_PREFIX}_SRCS
+	ini.c
 	sam.c
 	ntlm.c
 	print.c

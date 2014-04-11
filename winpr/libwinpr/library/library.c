@@ -156,6 +156,16 @@ BOOL FreeLibrary(HMODULE hLibModule)
 	return TRUE;
 }
 
+HMODULE GetModuleHandleA(LPCSTR lpModuleName)
+{
+	return NULL;
+}
+
+HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
+{
+	return NULL;
+}
+
 /**
  * GetModuleFileName:
  * http://msdn.microsoft.com/en-us/library/windows/desktop/ms683197/
