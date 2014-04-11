@@ -57,31 +57,31 @@ typedef struct _longAndMultiString_Return ListReaders_Return;
 
 typedef struct _Context_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 } Context_Call;
 
 typedef struct _ContextAndStringA_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	/* [string] */ unsigned char *sz;
 } ContextAndStringA_Call;
 
 typedef struct _ContextAndStringW_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	/* [string] */ WCHAR *sz;
 } ContextAndStringW_Call;
 
 typedef struct _ContextAndTwoStringA_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	/* [string] */ unsigned char *sz1;
 	/* [string] */ unsigned char *sz2;
 } ContextAndTwoStringA_Call;
 
 typedef struct _ContextAndTwoStringW_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	/* [string] */ WCHAR *sz1;
 	/* [string] */ WCHAR *sz2;
 } ContextAndTwoStringW_Call;
@@ -94,19 +94,19 @@ typedef struct _EstablishContext_Call
 typedef struct _EstablishContext_Return
 {
 	LONG ReturnCode;
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 } EstablishContext_Return;
 
 typedef struct _ListReaderGroups_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	LONG fmszGroupsIsNULL;
 	DWORD cchGroups;
 } ListReaderGroups_Call;
 
 typedef struct _ListReaders_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	/* [range] */ DWORD cBytes;
 	/* [size_is][unique] */ BYTE *mszGroups;
 	LONG fmszReadersIsNULL;
@@ -143,7 +143,7 @@ typedef struct _ReaderState_Return
 
 typedef struct _GetStatusChangeA_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	DWORD dwTimeOut;
 	/* [range] */ DWORD cReaders;
 	/* [size_is] */ LPSCARD_READERSTATEA rgReaderStates;
@@ -151,7 +151,7 @@ typedef struct _GetStatusChangeA_Call
 
 typedef struct _LocateCardsA_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	/* [range] */ DWORD cBytes;
 	/* [size_is] */ BYTE *mszCards;
 	/* [range] */ DWORD cReaders;
@@ -160,7 +160,7 @@ typedef struct _LocateCardsA_Call
 
 typedef struct _LocateCardsW_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	/* [range] */ DWORD cBytes;
 	/* [size_is] */ BYTE *mszCards;
 	/* [range] */ DWORD cReaders;
@@ -176,7 +176,7 @@ typedef struct _LocateCards_ATRMask
 
 typedef struct _LocateCardsByATRA_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	/* [range] */ DWORD cAtrs;
 	/* [size_is] */ LocateCards_ATRMask *rgAtrMasks;
 	/* [range] */ DWORD cReaders;
@@ -185,7 +185,7 @@ typedef struct _LocateCardsByATRA_Call
 
 typedef struct _LocateCardsByATRW_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	/* [range] */ DWORD cAtrs;
 	/* [size_is] */ LocateCards_ATRMask *rgAtrMasks;
 	/* [range] */ DWORD cReaders;
@@ -203,7 +203,7 @@ typedef struct _GetStatusChange_Return GetStatusChange_Return;
 
 typedef struct _GetStatusChangeW_Call
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	DWORD dwTimeOut;
 	/* [range] */ DWORD cReaders;
 	/* [size_is] */ LPSCARD_READERSTATEW rgReaderStates;
@@ -211,7 +211,7 @@ typedef struct _GetStatusChangeW_Call
 
 typedef struct _Connect_Common
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	DWORD dwShareMode;
 	DWORD dwPreferredProtocols;
 } Connect_Common;
@@ -379,7 +379,7 @@ typedef struct _SetAttrib_Call
 
 typedef struct _ReadCache_Common
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	UUID *CardIdentifier;
 	DWORD FreshnessCounter;
 	LONG fPbDataIsNULL;
@@ -407,7 +407,7 @@ typedef struct _ReadCache_Return
 
 typedef struct _WriteCache_Common
 {
-	REDIR_SCARDCONTEXT Context;
+	REDIR_SCARDCONTEXT hContext;
 	UUID *CardIdentifier;
 	DWORD FreshnessCounter;
 	/* [range] */ DWORD cbDataLen;

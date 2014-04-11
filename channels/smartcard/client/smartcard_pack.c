@@ -228,6 +228,12 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
+	if ((context->cbContext != 4) && (context->cbContext != 8))
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length is not 4 or 8: %d\n", context->cbContext);
+		return STATUS_INVALID_PARAMETER;
+	}
+
 	Stream_Read_UINT32(s, pbContextNdrPtr); /* pbContextNdrPtr (4 bytes) */
 
 	if (context->cbContext > Stream_GetRemainingLength(s))
@@ -285,8 +291,8 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	if (context->cbContext > 4)
-		Stream_Read(s, &context->pbContext, context->cbContext);
+	if (context->cbContext)
+		Stream_Read(s, &(context->pbContext), context->cbContext);
 
 	return SCARD_S_SUCCESS;
 }
@@ -297,7 +303,7 @@ UINT32 smartcard_pack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStre
 
 	if (context->cbContext)
 	{
-		Stream_Write(s, &context->pbContext, context->cbContext);
+		Stream_Write(s, &(context->pbContext), context->cbContext);
 	}
 
 	return SCARD_S_SUCCESS;
@@ -421,12 +427,12 @@ UINT32 smartcard_pack_establish_context_return(SMARTCARD_DEVICE* smartcard, wStr
 {
 	UINT32 status;
 
-	status = smartcard_pack_redir_scard_context(smartcard, s, &(ret->Context));
+	status = smartcard_pack_redir_scard_context(smartcard, s, &(ret->hContext));
 
 	if (status)
 		return status;
 
-	status = smartcard_pack_redir_scard_context_ref(smartcard, s, &(ret->Context));
+	status = smartcard_pack_redir_scard_context_ref(smartcard, s, &(ret->hContext));
 
 	if (status)
 		return status;
@@ -445,17 +451,17 @@ void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard, Estab
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: 0x%08X", ret->ReturnCode);
 
-	pb = (BYTE*) &(ret->Context.pbContext);
+	pb = (BYTE*) &(ret->hContext.pbContext);
 
-	if (ret->Context.cbContext > 4)
+	if (ret->hContext.cbContext > 4)
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], ret->Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], ret->hContext.cbContext);
 	}
 	else
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], ret->Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], ret->hContext.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
@@ -465,12 +471,12 @@ UINT32 smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 {
 	UINT32 status;
 
-	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->Context));
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
 
 	if (status)
 		return status;
 
-	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Context));
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
 
 	if (status)
 		return status;
@@ -484,17 +490,17 @@ void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, Context_Call* cal
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "%s_Call {", name);
 
-	pb = (BYTE*) &(call->Context.pbContext);
+	pb = (BYTE*) &(call->hContext.pbContext);
 
-	if (call->Context.cbContext > 4)
+	if (call->hContext.cbContext > 4)
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], call->Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
@@ -508,7 +514,7 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 
 	call->mszGroups = NULL;
 
-	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->Context));
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
 
 	if (status)
 		return status;
@@ -525,7 +531,7 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	Stream_Read_UINT32(s, call->fmszReadersIsNULL); /* fmszReadersIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cchReaders); /* cchReaders (4 bytes) */
 
-	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Context));
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
 
 	if (status)
 		return status;
@@ -586,17 +592,17 @@ void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard, ListReaders_
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "ListReaders%S_Call {", unicode ? "W" : "A");
 
-	pb = (BYTE*) &(call->Context.pbContext);
+	pb = (BYTE*) &(call->hContext.pbContext);
 
-	if (call->Context.cbContext > 4)
+	if (call->hContext.cbContext > 4)
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], call->Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG,
@@ -682,7 +688,7 @@ UINT32 smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream* s, 
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	status = smartcard_unpack_redir_scard_context(smartcard, s, &(common->Context));
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(common->hContext));
 
 	if (status)
 		return status;
@@ -725,7 +731,7 @@ UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	smartcard_unpack_read_size_align(smartcard, s, count, 4);
 	call->szReader[count] = '\0';
 
-	smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.Context));
+	smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.hContext));
 
 	return SCARD_S_SUCCESS;
 }
@@ -739,17 +745,17 @@ void smartcard_trace_connect_a_call(SMARTCARD_DEVICE* smartcard, ConnectA_Call* 
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectA_Call {");
 
-	pb = (BYTE*) &(call->Common.Context);
+	pb = (BYTE*) &(call->Common.hContext.pbContext);
 
-	if (call->Common.Context.cbContext > 4)
+	if (call->Common.hContext.cbContext > 4)
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Common.Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Common.hContext.cbContext);
 	}
 	else
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], call->Common.Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], call->Common.hContext.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: 0x%08X dwPreferredProtocols: 0x%08X",
@@ -790,7 +796,7 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	smartcard_unpack_read_size_align(smartcard, s, (count * 2), 4);
 	call->szReader[count] = '\0';
 
-	smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.Context));
+	smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Common.hContext));
 
 	return SCARD_S_SUCCESS;
 }
@@ -807,17 +813,17 @@ void smartcard_trace_connect_w_call(SMARTCARD_DEVICE* smartcard, ConnectW_Call* 
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectA_Call {");
 
-	pb = (BYTE*) &(call->Common.Context);
+	pb = (BYTE*) &(call->Common.hContext.pbContext);
 
-	if (call->Common.Context.cbContext > 4)
+	if (call->Common.hContext.cbContext > 4)
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Common.Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Common.hContext.cbContext);
 	}
 	else
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], call->Common.Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], call->Common.hContext.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: 0x%08X dwPreferredProtocols: %d",
@@ -1029,7 +1035,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 	call->rgReaderStates = NULL;
 
-	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->Context));
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
 
 	if (status)
 		return status;
@@ -1045,7 +1051,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
 	Stream_Read_UINT32(s, rgReaderStatesNdrPtr); /* rgReaderStatesNdrPtr (4 bytes) */
 
-	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Context));
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
 
 	if (status)
 		return status;
@@ -1144,17 +1150,17 @@ void smartcard_trace_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, GetSt
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChangeA_Call {");
 
-	pb = (BYTE*) &(call->Context.pbContext);
+	pb = (BYTE*) &(call->hContext.pbContext);
 
-	if (call->Context.cbContext > 4)
+	if (call->hContext.cbContext > 4)
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], call->Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "dwTimeOut: 0x%08X cReaders: %d",
@@ -1186,7 +1192,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 	call->rgReaderStates = NULL;
 
-	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->Context));
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
 
 	if (status)
 		return status;
@@ -1202,7 +1208,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
 	Stream_Read_UINT32(s, rgReaderStatesNdrPtr); /* rgReaderStatesNdrPtr (4 bytes) */
 
-	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->Context));
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
 
 	if (status)
 		return status;
@@ -1293,17 +1299,17 @@ void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, GetSt
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChangeW_Call {");
 
-	pb = (BYTE*) &(call->Context.pbContext);
+	pb = (BYTE*) &(call->hContext.pbContext);
 
-	if (call->Context.cbContext > 4)
+	if (call->hContext.cbContext > 4)
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
-			pb[0], pb[1], pb[2], pb[3], call->Context.cbContext);
+			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "dwTimeOut: 0x%08X cReaders: %d",
