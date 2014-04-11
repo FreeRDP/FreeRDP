@@ -1223,24 +1223,38 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dw
 
 WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr, LPDWORD pcbAttrLen)
 {
+	DWORD cbAttrLen;
+	SCARDCONTEXT hContext;
+	BOOL attrAutoAlloc = FALSE;
 	LONG status = SCARD_S_SUCCESS;
+	LPBYTE* pPbAttr = (LPBYTE*) pbAttr;
+
+	cbAttrLen = *pcbAttrLen;
+
+	if (*pcbAttrLen == SCARD_AUTOALLOCATE)
+		attrAutoAlloc = TRUE;
+
+	hContext = PCSC_GetCardContextFromHandle(hCard);
 
 	status = PCSC_SCardGetAttrib_Internal(hCard, dwAttrId, pbAttr, pcbAttrLen);
 
-	if (status == SCARD_E_UNSUPPORTED_FEATURE)
+	if (status == SCARD_S_SUCCESS)
 	{
-		DWORD cbAttrLen;
-		SCARDCONTEXT hContext;
-		BOOL attrAutoAlloc = FALSE;
-		LPBYTE* pPbAttr = (LPBYTE*) pbAttr;
+		if (dwAttrId == SCARD_ATTR_VENDOR_NAME)
+		{
+			/**
+			 * pcsc-lite adds a null terminator to the vendor name,
+			 * while WinSCard doesn't. Strip the null terminator.
+			 */
 
-		cbAttrLen = *pcbAttrLen;
-
-		if (*pcbAttrLen == SCARD_AUTOALLOCATE)
-			attrAutoAlloc = TRUE;
-
-		hContext = PCSC_GetCardContextFromHandle(hCard);
-
+			if (attrAutoAlloc)
+				*pcbAttrLen = strlen((char*) *pPbAttr);
+			else
+				*pcbAttrLen = strlen((char*) pbAttr);
+		}
+	}
+	else if (status == SCARD_E_UNSUPPORTED_FEATURE)
+	{
 		if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_A)
 		{
 			WCHAR* pbAttrW = NULL;

@@ -32,14 +32,13 @@
 typedef struct _REDIR_SCARDCONTEXT
 {
 	/* [range] */ DWORD cbContext;
-	/* [size_is][unique] */ ULARGE_INTEGER pbContext;
+	/* [size_is][unique] */ BYTE pbContext[8];
 } REDIR_SCARDCONTEXT;
 
 typedef struct _REDIR_SCARDHANDLE
 {
-	REDIR_SCARDCONTEXT Context;
 	/* [range] */ DWORD cbHandle;
-	/* [size_is] */ ULARGE_INTEGER pbHandle;
+	/* [size_is] */ BYTE pbHandle[8];
 } REDIR_SCARDHANDLE;
 
 typedef struct _Long_Return
@@ -232,12 +231,14 @@ typedef struct _ConnectW_Call
 typedef struct _Connect_Return
 {
 	LONG ReturnCode;
+	REDIR_SCARDCONTEXT hContext;
 	REDIR_SCARDHANDLE hCard;
 	DWORD dwActiveProtocol;
 } Connect_Return;
 
 typedef struct _Reconnect_Call
 {
+	REDIR_SCARDCONTEXT hContext;
 	REDIR_SCARDHANDLE hCard;
 	DWORD dwShareMode;
 	DWORD dwPreferredProtocols;
@@ -252,12 +253,14 @@ typedef struct Reconnect_Return
 
 typedef struct _HCardAndDisposition_Call
 {
+	REDIR_SCARDCONTEXT hContext;
 	REDIR_SCARDHANDLE hCard;
 	DWORD dwDisposition;
 } HCardAndDisposition_Call;
 
 typedef struct _State_Call
 {
+	REDIR_SCARDCONTEXT hContext;
 	REDIR_SCARDHANDLE hCard;
 	LONG fpbAtrIsNULL;
 	DWORD cbAtrLen;
@@ -274,6 +277,7 @@ typedef struct _State_Return
 
 typedef struct _Status_Call
 {
+	REDIR_SCARDCONTEXT hContext;
 	REDIR_SCARDHANDLE hCard;
 	LONG fmszReaderNamesIsNULL;
 	DWORD cchReaderLen;
@@ -300,6 +304,7 @@ typedef struct _SCardIO_Request
 
 typedef struct _Transmit_Call
 {
+	REDIR_SCARDCONTEXT hContext;
 	REDIR_SCARDHANDLE hCard;
 	LPSCARD_IO_REQUEST pioSendPci;
 	/* [range] */ DWORD cbSendLength;
@@ -319,6 +324,7 @@ typedef struct _Transmit_Return
 
 typedef struct _GetTransmitCount_Call
 {
+	REDIR_SCARDCONTEXT hContext;
 	REDIR_SCARDHANDLE hCard;
 } GetTransmitCount_Call;
 
@@ -330,6 +336,7 @@ typedef struct _GetTransmitCount_Return
 
 typedef struct _Control_Call
 {
+	REDIR_SCARDCONTEXT hContext;
 	REDIR_SCARDHANDLE hCard;
 	DWORD dwControlCode;
 	/* [range] */ DWORD cbInBufferSize;
@@ -347,6 +354,7 @@ typedef struct _Control_Return
 
 typedef struct _GetAttrib_Call
 {
+	REDIR_SCARDCONTEXT hContext;
 	REDIR_SCARDHANDLE hCard;
 	DWORD dwAttrId;
 	LONG fpbAttrIsNULL;
@@ -362,6 +370,7 @@ typedef struct _GetAttrib_Return
 
 typedef struct _SetAttrib_Call
 {
+	REDIR_SCARDCONTEXT hContext;
 	REDIR_SCARDHANDLE hCard;
 	DWORD dwAttrId;
 	/* [range] */ DWORD cbAttrLen;
@@ -427,7 +436,7 @@ SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartca
 void smartcard_scard_context_native_to_redir(SMARTCARD_DEVICE* smartcard, REDIR_SCARDCONTEXT* context, SCARDCONTEXT hContext);
 
 SCARDHANDLE smartcard_scard_handle_native_from_redir(SMARTCARD_DEVICE* smartcard, REDIR_SCARDHANDLE* handle);
-void smartcard_scard_handle_native_to_redir(SMARTCARD_DEVICE* smartcard, REDIR_SCARDHANDLE* context, SCARDHANDLE hCard);
+void smartcard_scard_handle_native_to_redir(SMARTCARD_DEVICE* smartcard, REDIR_SCARDHANDLE* handle, SCARDHANDLE hCard);
 
 UINT32 smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);
 UINT32 smartcard_pack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s);

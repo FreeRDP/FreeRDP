@@ -165,24 +165,20 @@ SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartca
 		WLog_Print(smartcard->log, WLOG_WARN,
 			"REDIR_SCARDCONTEXT does not match native size: Actual: %d, Expected: %d",
 			context->cbContext, sizeof(ULONG_PTR));
+		return 0;
 	}
 
-	if (context->cbContext > 4)
-		hContext = (ULONG_PTR) context->pbContext.QuadPart;
-	else
-		hContext = (ULONG_PTR) context->pbContext.LowPart;
+	if (context->cbContext)
+		CopyMemory(&hContext, &(context->pbContext), context->cbContext);
 
 	return hContext;
 }
 
 void smartcard_scard_context_native_to_redir(SMARTCARD_DEVICE* smartcard, REDIR_SCARDCONTEXT* context, SCARDCONTEXT hContext)
 {
+	ZeroMemory(context, sizeof(REDIR_SCARDCONTEXT));
 	context->cbContext = sizeof(ULONG_PTR);
-
-	if (context->cbContext > 4)
-		context->pbContext.QuadPart = (UINT64) hContext;
-	else
-		context->pbContext.LowPart = (UINT32) hContext;
+	CopyMemory(&(context->pbContext), &hContext, context->cbContext);
 }
 
 SCARDHANDLE smartcard_scard_handle_native_from_redir(SMARTCARD_DEVICE* smartcard, REDIR_SCARDHANDLE* handle)
@@ -194,32 +190,27 @@ SCARDHANDLE smartcard_scard_handle_native_from_redir(SMARTCARD_DEVICE* smartcard
 		WLog_Print(smartcard->log, WLOG_WARN,
 			"REDIR_SCARDHANDLE does not match native size: Actual: %d, Expected: %d",
 			handle->cbHandle, sizeof(ULONG_PTR));
+		return 0;
 	}
 
-	if (handle->cbHandle > 4)
-		hCard = (ULONG_PTR) handle->pbHandle.QuadPart;
-	else
-		hCard = (ULONG_PTR) handle->pbHandle.LowPart;
+	if (handle->cbHandle)
+		CopyMemory(&hCard, &(handle->pbHandle), handle->cbHandle);
 
 	return hCard;
 }
 
-void smartcard_scard_handle_native_to_redir(SMARTCARD_DEVICE* smartcard, REDIR_SCARDHANDLE* context, SCARDHANDLE hCard)
+void smartcard_scard_handle_native_to_redir(SMARTCARD_DEVICE* smartcard, REDIR_SCARDHANDLE* handle, SCARDHANDLE hCard)
 {
-	context->cbHandle = sizeof(ULONG_PTR);
-
-	if (context->cbHandle > 4)
-		context->pbHandle.QuadPart = (UINT64) hCard;
-	else
-		context->pbHandle.LowPart = (UINT32) hCard;
+	ZeroMemory(handle, sizeof(REDIR_SCARDHANDLE));
+	handle->cbHandle = sizeof(ULONG_PTR);
+	CopyMemory(&(handle->pbHandle), &hCard, handle->cbHandle);
 }
 
 UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDCONTEXT* context)
 {
 	UINT32 pbContextNdrPtr;
 
-	context->cbContext = 0;
-	context->pbContext.QuadPart = 0;
+	ZeroMemory(context, sizeof(REDIR_SCARDCONTEXT));
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -295,23 +286,18 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 	}
 
 	if (context->cbContext > 4)
-		Stream_Read_UINT64(s, context->pbContext.QuadPart);
-	else
-		Stream_Read_UINT32(s, context->pbContext.LowPart);
+		Stream_Read(s, &context->pbContext, context->cbContext);
 
 	return SCARD_S_SUCCESS;
 }
 
 UINT32 smartcard_pack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDCONTEXT* context)
 {
+	Stream_Write_UINT32(s, context->cbContext); /* Length (4 bytes) */
+
 	if (context->cbContext)
 	{
-		Stream_Write_UINT32(s, context->cbContext); /* Length (4 bytes) */
-
-		if (context->cbContext > 4)
-			Stream_Write_UINT64(s, context->pbContext.QuadPart);
-		else if (context->cbContext > 0)
-			Stream_Write_UINT32(s, context->pbContext.LowPart);
+		Stream_Write(s, &context->pbContext, context->cbContext);
 	}
 
 	return SCARD_S_SUCCESS;
@@ -319,17 +305,9 @@ UINT32 smartcard_pack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wStre
 
 UINT32 smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
 {
-	UINT32 status;
-	UINT32 length;
 	UINT32 pbHandleNdrPtr;
 
-	handle->cbHandle = 0;
-	handle->pbHandle.QuadPart = 0;
-
-	status = smartcard_unpack_redir_scard_context(smartcard, s, &(handle->Context));
-
-	if (status)
-		return status;
+	ZeroMemory(handle, sizeof(REDIR_SCARDHANDLE));
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -349,18 +327,12 @@ UINT32 smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream*
 
 	Stream_Read_UINT32(s, pbHandleNdrPtr); /* NdrPtr (4 bytes) */
 
-	return 0;
+	return SCARD_S_SUCCESS;
 }
 
 UINT32 smartcard_pack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
 {
-	UINT32 status;
 	UINT32 pbHandleNdrPtr;
-
-	status = smartcard_pack_redir_scard_context(smartcard, s, &(handle->Context));
-
-	if (status)
-		return status;
 
 	pbHandleNdrPtr = (handle->cbHandle) ? 0x00020002 : 0;
 
@@ -372,13 +344,7 @@ UINT32 smartcard_pack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream* s
 
 UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
 {
-	UINT32 status;
 	UINT32 length;
-
-	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(handle->Context));
-
-	if (status)
-		return status;
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
@@ -409,34 +375,20 @@ UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStr
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	if (handle->cbHandle > 4)
-		Stream_Read_UINT64(s, handle->pbHandle.QuadPart);
-	else
-		Stream_Read_UINT32(s, handle->pbHandle.LowPart);
+	if (handle->cbHandle)
+		Stream_Read(s, &(handle->pbHandle), handle->cbHandle);
 
-	return 0;
+	return SCARD_S_SUCCESS;
 }
 
 UINT32 smartcard_pack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStream* s, REDIR_SCARDHANDLE* handle)
 {
-	UINT32 status;
-
-	status = smartcard_pack_redir_scard_context_ref(smartcard, s, &(handle->Context));
-
-	if (status)
-		return status;
+	Stream_Write_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
 
 	if (handle->cbHandle)
-	{
-		Stream_Write_UINT32(s, handle->cbHandle); /* Length (4 bytes) */
+		Stream_Write(s, &(handle->pbHandle), handle->cbHandle);
 
-		if (handle->cbHandle > 4)
-			Stream_Write_UINT64(s, handle->pbHandle.HighPart);
-		else
-			Stream_Write_UINT32(s, handle->pbHandle.LowPart);
-	}
-
-	return 0;
+	return SCARD_S_SUCCESS;
 }
 
 UINT32 smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, EstablishContext_Call* call)
@@ -484,6 +436,8 @@ UINT32 smartcard_pack_establish_context_return(SMARTCARD_DEVICE* smartcard, wStr
 
 void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard, EstablishContext_Return* ret)
 {
+	BYTE* pb;
+
 	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
 		return;
 
@@ -491,15 +445,17 @@ void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard, Estab
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: 0x%08X", ret->ReturnCode);
 
+	pb = (BYTE*) &(ret->Context.pbContext);
+
 	if (ret->Context.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X%08X (%d)",
-			ret->Context.pbContext.HighPart, ret->Context.pbContext.LowPart, ret->Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], ret->Context.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
-			ret->Context.pbContext.LowPart, ret->Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], ret->Context.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
@@ -524,17 +480,21 @@ UINT32 smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, Context_Call* call, const char* name)
 {
+	BYTE* pb;
+
 	WLog_Print(smartcard->log, WLOG_DEBUG, "%s_Call {", name);
+
+	pb = (BYTE*) &(call->Context.pbContext);
 
 	if (call->Context.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X%08X (%d)",
-			call->Context.pbContext.HighPart, call->Context.pbContext.LowPart, call->Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Context.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
-			call->Context.pbContext.LowPart, call->Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->Context.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
@@ -615,6 +575,7 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 
 void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard, ListReaders_Call* call, BOOL unicode)
 {
+	BYTE* pb;
 	char* mszGroupsA = NULL;
 
 	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
@@ -623,17 +584,19 @@ void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard, ListReaders_
 	if (unicode)
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) call->mszGroups, call->cBytes / 2, &mszGroupsA, 0, NULL, NULL);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ListReaders_Call {");
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ListReaders%S_Call {", unicode ? "W" : "A");
+
+	pb = (BYTE*) &(call->Context.pbContext);
 
 	if (call->Context.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X%08X (%d)",
-			call->Context.pbContext.HighPart, call->Context.pbContext.LowPart, call->Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Context.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
-			call->Context.pbContext.LowPart, call->Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->Context.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG,
@@ -697,7 +660,7 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReader
 			mszA[index] = ',';
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ListReaders_Return {");
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ListReaders%s_Return {", unicode ? "W" : "A");
 
 	WLog_Print(smartcard->log, WLOG_DEBUG,
 		"ReturnCode: 0x%08X cBytes: %d msz: %s",
@@ -769,21 +732,24 @@ UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 
 void smartcard_trace_connect_a_call(SMARTCARD_DEVICE* smartcard, ConnectA_Call* call)
 {
+	BYTE* pb;
+
 	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
 		return;
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectA_Call {");
 
+	pb = (BYTE*) &(call->Common.Context);
+
 	if (call->Common.Context.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X%08X (%d)",
-			call->Common.Context.pbContext.HighPart, call->Common.Context.pbContext.LowPart,
-			call->Common.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Common.Context.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
-			call->Common.Context.pbContext.LowPart, call->Common.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->Common.Context.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: 0x%08X dwPreferredProtocols: 0x%08X",
@@ -831,6 +797,7 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 
 void smartcard_trace_connect_w_call(SMARTCARD_DEVICE* smartcard, ConnectW_Call* call)
 {
+	BYTE* pb;
 	char* szReaderA = NULL;
 
 	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
@@ -840,16 +807,17 @@ void smartcard_trace_connect_w_call(SMARTCARD_DEVICE* smartcard, ConnectW_Call* 
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectA_Call {");
 
+	pb = (BYTE*) &(call->Common.Context);
+
 	if (call->Common.Context.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X%08X (%d)",
-			call->Common.Context.pbContext.HighPart, call->Common.Context.pbContext.LowPart,
-			call->Common.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Common.Context.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
-			call->Common.Context.pbContext.LowPart, call->Common.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->Common.Context.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: 0x%08X dwPreferredProtocols: %d",
@@ -864,12 +832,22 @@ UINT32 smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 {
 	UINT32 status;
 
+	status = smartcard_pack_redir_scard_context(smartcard, s, &(ret->hContext));
+
+	if (status)
+		return status;
+
 	status = smartcard_pack_redir_scard_handle(smartcard, s, &(ret->hCard));
 
 	if (status)
 		return status;
 
 	Stream_Write_UINT32(s, ret->dwActiveProtocol); /* dwActiveProtocol (4 bytes) */
+
+	status = smartcard_pack_redir_scard_context_ref(smartcard, s, &(ret->hContext));
+
+	if (status)
+		return status;
 
 	status = smartcard_pack_redir_scard_handle_ref(smartcard, s, &(ret->hCard));
 
@@ -881,32 +859,37 @@ UINT32 smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, Connect_Return* ret)
 {
+	BYTE* pb;
+
 	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
 		return;
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "Connect_Return {");
 
-	if (ret->hCard.Context.cbContext > 4)
+	pb = (BYTE*) &(ret->hContext.pbContext);
+
+	if (ret->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X%08X (%d)",
-			ret->hCard.Context.pbContext.HighPart, ret->hCard.Context.pbContext.LowPart,
-			ret->hCard.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], ret->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
-			ret->hCard.Context.pbContext.LowPart, ret->hCard.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], ret->hContext.cbContext);
 	}
+
+	pb = (BYTE*) &(ret->hCard.pbHandle);
 
 	if (ret->hCard.cbHandle > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%08X%08X (%d)",
-			ret->hCard.pbHandle.HighPart, ret->hCard.pbHandle.LowPart, ret->hCard.cbHandle);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], ret->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%08X (%d)",
-			ret->hCard.pbHandle.LowPart, ret->hCard.cbHandle);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], ret->hCard.cbHandle);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "dwActiveProtocol: 0x%08X",
@@ -918,6 +901,11 @@ void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, Connect_Return*
 UINT32 smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Reconnect_Call* call)
 {
 	UINT32 status;
+
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
 
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard));
 
@@ -934,6 +922,11 @@ UINT32 smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	Stream_Read_UINT32(s, call->dwShareMode); /* dwShareMode (4 bytes) */
 	Stream_Read_UINT32(s, call->dwPreferredProtocols); /* dwPreferredProtocols (4 bytes) */
 	Stream_Read_UINT32(s, call->dwInitialization); /* dwInitialization (4 bytes) */
+
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
 
 	status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard));
 
@@ -954,6 +947,11 @@ UINT32 smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, 
 {
 	UINT32 status;
 
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard));
 
 	if (status)
@@ -968,6 +966,11 @@ UINT32 smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, 
 
 	Stream_Read_UINT32(s, call->dwDisposition); /* dwDisposition (4 bytes) */
 
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
 	status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard));
 
 	if (status)
@@ -978,29 +981,34 @@ UINT32 smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, 
 
 void smartcard_trace_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, HCardAndDisposition_Call* call, const char* name)
 {
+	BYTE* pb;
+
 	WLog_Print(smartcard->log, WLOG_DEBUG, "%s_Call {", name);
 
-	if (call->hCard.Context.cbContext > 4)
+	pb = (BYTE*) &(call->hContext.pbContext);
+
+	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X%08X (%d)",
-			call->hCard.Context.pbContext.HighPart, call->hCard.Context.pbContext.LowPart,
-			call->hCard.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
-			call->hCard.Context.pbContext.LowPart, call->hCard.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
+
+	pb = (BYTE*) &(call->hCard.pbHandle);
 
 	if (call->hCard.cbHandle > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%08X%08X (%d)",
-			call->hCard.pbHandle.HighPart, call->hCard.pbHandle.LowPart, call->hCard.pbHandle);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%08X (%d)",
-			call->hCard.pbHandle.LowPart, call->hCard.pbHandle);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "dwDisposition: 0x%08X", call->dwDisposition);
@@ -1127,6 +1135,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 void smartcard_trace_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, GetStatusChangeA_Call* call)
 {
+	BYTE* pb;
 	UINT32 index;
 	LPSCARD_READERSTATEA readerState;
 
@@ -1135,15 +1144,17 @@ void smartcard_trace_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, GetSt
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChangeA_Call {");
 
+	pb = (BYTE*) &(call->Context.pbContext);
+
 	if (call->Context.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X%08X (%d)",
-			call->Context.pbContext.HighPart, call->Context.pbContext.LowPart, call->Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Context.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
-			call->Context.pbContext.LowPart, call->Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->Context.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "dwTimeOut: 0x%08X cReaders: %d",
@@ -1273,6 +1284,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, GetStatusChangeW_Call* call)
 {
+	BYTE* pb;
 	UINT32 index;
 	LPSCARD_READERSTATEW readerState;
 
@@ -1281,15 +1293,17 @@ void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, GetSt
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChangeW_Call {");
 
+	pb = (BYTE*) &(call->Context.pbContext);
+
 	if (call->Context.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X%08X (%d)",
-			call->Context.pbContext.HighPart, call->Context.pbContext.LowPart, call->Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Context.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
-			call->Context.pbContext.LowPart, call->Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->Context.cbContext);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "dwTimeOut: 0x%08X cReaders: %d",
@@ -1365,6 +1379,11 @@ UINT32 smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, Stat
 {
 	UINT32 status;
 
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard));
 
 	if (status)
@@ -1379,6 +1398,11 @@ UINT32 smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, Stat
 
 	Stream_Read_UINT32(s, call->fpbAtrIsNULL); /* fpbAtrIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbAtrLen); /* cbAtrLen (4 bytes) */
+
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
 
 	status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard));
 
@@ -1406,6 +1430,11 @@ UINT32 smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Sta
 {
 	UINT32 status;
 
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard));
 
 	if (status)
@@ -1422,6 +1451,11 @@ UINT32 smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Sta
 	Stream_Read_UINT32(s, call->cchReaderLen); /* cchReaderLen (4 bytes) */
 	Stream_Read_UINT32(s, call->cbAtrLen); /* cbAtrLen (4 bytes) */
 
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
 	status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard));
 
 	if (status)
@@ -1432,32 +1466,37 @@ UINT32 smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Sta
 
 void smartcard_trace_status_call(SMARTCARD_DEVICE* smartcard, Status_Call* call, BOOL unicode)
 {
+	BYTE* pb;
+
 	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
 		return;
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "Status%s_Call {", unicode ? "W" : "A");
 
-	if (call->hCard.Context.cbContext > 4)
+	pb = (BYTE*) &(call->hContext.pbContext);
+
+	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X%08X (%d)",
-			call->hCard.Context.pbContext.HighPart, call->hCard.Context.pbContext.LowPart,
-			call->hCard.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
-			call->hCard.Context.pbContext.LowPart, call->hCard.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
+
+	pb = (BYTE*) &(call->hCard.pbHandle);
 
 	if (call->hCard.cbHandle > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%08X%08X (%d)",
-			call->hCard.pbHandle.HighPart, call->hCard.pbHandle.LowPart, call->hCard.pbHandle);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%08X (%d)",
-			call->hCard.pbHandle.LowPart, call->hCard.pbHandle);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "fmszReaderNamesIsNULL: %d cchReaderLen: %d cbAtrLen: %d",
@@ -1532,6 +1571,11 @@ UINT32 smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 {
 	UINT32 status;
 
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard));
 
 	if (status)
@@ -1548,6 +1592,11 @@ UINT32 smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 	Stream_Read_UINT32(s, call->fpbAttrIsNULL); /* fpbAttrIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbAttrLen); /* cbAttrLen (4 bytes) */
 
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
 	status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard));
 
 	if (status)
@@ -1558,32 +1607,37 @@ UINT32 smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 
 void smartcard_trace_get_attrib_call(SMARTCARD_DEVICE* smartcard, GetAttrib_Call* call)
 {
+	BYTE* pb;
+
 	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
 		return;
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "GetAttrib_Call {");
 
-	if (call->hCard.Context.cbContext > 4)
+	pb = (BYTE*) &(call->hContext.pbContext);
+
+	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X%08X (%d)",
-			call->hCard.Context.pbContext.HighPart, call->hCard.Context.pbContext.LowPart,
-			call->hCard.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%08X (%d)",
-			call->hCard.Context.pbContext.LowPart, call->hCard.Context.cbContext);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
+
+	pb = (BYTE*) &(call->hCard.pbHandle);
 
 	if (call->hCard.cbHandle > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%08X%08X (%d)",
-			call->hCard.pbHandle.HighPart, call->hCard.pbHandle.LowPart, call->hCard.pbHandle);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%08X (%d)",
-			call->hCard.pbHandle.LowPart, call->hCard.pbHandle);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "dwAttrId: %s (0x%08X) fpbAttrIsNULL: %d cbAttrLen: 0x%08X",
@@ -1635,6 +1689,11 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 	call->pvInBuffer = NULL;
 
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard));
 
 	if (status)
@@ -1652,6 +1711,11 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	Stream_Seek_UINT32(s); /* pvInBufferNdrPtr (4 bytes) */
 	Stream_Read_UINT32(s, call->fpvOutBufferIsNULL); /* fpvOutBufferIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbOutBufferSize); /* cbOutBufferSize (4 bytes) */
+
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
 
 	status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard));
 
@@ -1715,6 +1779,11 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	call->pioRecvPci = NULL;
 	call->pbSendBuffer = NULL;
 
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
 	status = smartcard_unpack_redir_scard_handle(smartcard, s, &(call->hCard));
 
 	if (status)
@@ -1749,6 +1818,11 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 				(int) ioSendPci.cbExtraBytes, 66560);
 		return STATUS_INVALID_PARAMETER;
 	}
+
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
 
 	status = smartcard_unpack_redir_scard_handle_ref(smartcard, s, &(call->hCard));
 

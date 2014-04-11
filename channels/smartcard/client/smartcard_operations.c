@@ -497,7 +497,7 @@ UINT32 smartcard_ConnectA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
-	smartcard_scard_context_native_to_redir(smartcard, &ret.hCard.Context, hContext);
+	smartcard_scard_context_native_to_redir(smartcard, &ret.hContext, hContext);
 	smartcard_scard_handle_native_to_redir(smartcard, &ret.hCard, hCard);
 
 	smartcard_trace_connect_return(smartcard, &ret);
@@ -544,7 +544,7 @@ UINT32 smartcard_ConnectW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
-	smartcard_scard_context_native_to_redir(smartcard, &ret.hCard.Context, hContext);
+	smartcard_scard_context_native_to_redir(smartcard, &ret.hContext, hContext);
 	smartcard_scard_handle_native_to_redir(smartcard, &ret.hCard, hCard);
 
 	smartcard_trace_connect_return(smartcard, &ret);
@@ -573,8 +573,8 @@ static UINT32 smartcard_Reconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
+	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hContext);
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &call.hCard);
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hCard.Context);
 
 	status = ret.ReturnCode = SCardReconnect(hCard, call.dwShareMode,
 			call.dwPreferredProtocols, call.dwInitialization, &ret.dwActiveProtocol);
@@ -605,8 +605,8 @@ static UINT32 smartcard_Disconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
+	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hContext);
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &call.hCard);
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hCard.Context);
 
 	status = ret.ReturnCode = SCardDisconnect(hCard, (DWORD) call.dwDisposition);
 
@@ -631,8 +631,8 @@ static UINT32 smartcard_BeginTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
+	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hContext);
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &call.hCard);
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hCard.Context);
 
 	status = ret.ReturnCode = SCardBeginTransaction(hCard);
 
@@ -657,8 +657,8 @@ static UINT32 smartcard_EndTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
+	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hContext);
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &call.hCard);
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hCard.Context);
 
 	status = ret.ReturnCode = SCardEndTransaction(hCard, call.dwDisposition);
 
@@ -681,8 +681,8 @@ static UINT32 smartcard_State(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
+	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hContext);
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &call.hCard);
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hCard.Context);
 
 	ret.cbAtrLen = SCARD_ATR_LENGTH;
 
@@ -719,8 +719,8 @@ static DWORD smartcard_StatusA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
+	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hContext);
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &call.hCard);
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hCard.Context);
 
 	if (call.cbAtrLen > 32)
 		call.cbAtrLen = 32;
@@ -766,8 +766,8 @@ static DWORD smartcard_StatusW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
+	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hContext);
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &call.hCard);
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hCard.Context);
 
 	if (call.cbAtrLen > 32)
 		call.cbAtrLen = 32;
@@ -809,8 +809,8 @@ static UINT32 smartcard_Transmit(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
+	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hContext);
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &call.hCard);
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hCard.Context);
 
 	ret.cbRecvLength = 0;
 	ret.pbRecvBuffer = NULL;
@@ -863,8 +863,8 @@ static UINT32 smartcard_Control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
+	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hContext);
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &call.hCard);
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hCard.Context);
 
 	if (DEVICE_TYPE_FROM_CTL_CODE(call.dwControlCode) == FILE_DEVICE_SMARTCARD)
 	{
@@ -911,8 +911,8 @@ static UINT32 smartcard_GetAttrib(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
+	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hContext);
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &call.hCard);
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &call.hCard.Context);
 
 	ret.pbAttr = NULL;
 
