@@ -147,7 +147,7 @@ typedef struct _GetStatusChangeA_Call
 	REDIR_SCARDCONTEXT Context;
 	DWORD dwTimeOut;
 	/* [range] */ DWORD cReaders;
-	/* [size_is] */ ReaderStateA *rgReaderStates;
+	/* [size_is] */ LPSCARD_READERSTATEA rgReaderStates;
 } GetStatusChangeA_Call;
 
 typedef struct _LocateCardsA_Call
@@ -207,7 +207,7 @@ typedef struct _GetStatusChangeW_Call
 	REDIR_SCARDCONTEXT Context;
 	DWORD dwTimeOut;
 	/* [range] */ DWORD cReaders;
-	/* [size_is] */ ReaderStateW *rgReaderStates;
+	/* [size_is] */ LPSCARD_READERSTATEW rgReaderStates;
 } GetStatusChangeW_Call;
 
 typedef struct _Connect_Common

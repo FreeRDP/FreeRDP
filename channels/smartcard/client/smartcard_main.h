@@ -93,9 +93,6 @@ struct _SMARTCARD_DEVICE
 	HANDLE thread;
 	wMessageQueue* IrpQueue;
 	wListDictionary* OutstandingIrps;
-
-	SCARDCONTEXT hContext;
-	SCARDHANDLE hCard;
 };
 typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
 

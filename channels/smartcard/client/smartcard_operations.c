@@ -185,8 +185,6 @@ static UINT32 smartcard_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = ret.ReturnCode = SCardEstablishContext(call.dwScope, NULL, NULL, &hContext);
 
-	smartcard->hContext = hContext;
-
 	ret.Context.cbContext = sizeof(ULONG_PTR);
 	ret.Context.pbContext = (UINT64) hContext;
 
@@ -213,8 +211,6 @@ static UINT32 smartcard_ReleaseContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hContext = (ULONG_PTR) call.Context.pbContext;
 
 	status = ret.ReturnCode = SCardReleaseContext(hContext);
-
-	smartcard->hContext = 0;
 
 	return ret.ReturnCode;
 }
@@ -325,10 +321,7 @@ static UINT32 smartcard_GetStatusChangeA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	SCARDCONTEXT hContext;
 	GetStatusChangeA_Call call;
 	GetStatusChange_Return ret;
-	ReaderStateA* readerState = NULL;
-	ReaderState_Return* readerStateRet = NULL;
 	LPSCARD_READERSTATEA rgReaderState = NULL;
-	LPSCARD_READERSTATEA rgReaderStates = NULL;
 
 	status = smartcard_unpack_get_status_change_a_call(smartcard, irp->input, &call);
 
@@ -337,19 +330,7 @@ static UINT32 smartcard_GetStatusChangeA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	hContext = (ULONG_PTR) call.Context.pbContext;
 
-	rgReaderStates = (SCARD_READERSTATEA*) calloc(call.cReaders, sizeof(SCARD_READERSTATEA));
-
-	for (index = 0; index < call.cReaders; index++)
-	{
-		rgReaderState = &rgReaderStates[index];
-		rgReaderState->szReader = (LPCSTR) call.rgReaderStates[index].szReader;
-		rgReaderState->dwCurrentState = call.rgReaderStates[index].Common.dwCurrentState;
-		rgReaderState->dwEventState = call.rgReaderStates[index].Common.dwEventState;
-		rgReaderState->cbAtr = call.rgReaderStates[index].Common.cbAtr;
-		CopyMemory(&(rgReaderState->rgbAtr), &(call.rgReaderStates[index].Common.rgbAtr), 36);
-	}
-
-	status = ret.ReturnCode = SCardGetStatusChangeA(hContext, call.dwTimeOut, rgReaderStates, call.cReaders);
+	status = ret.ReturnCode = SCardGetStatusChangeA(hContext, call.dwTimeOut, call.rgReaderStates, call.cReaders);
 
 	if (status && (status != SCARD_E_TIMEOUT))
 		return status;
@@ -359,12 +340,10 @@ static UINT32 smartcard_GetStatusChangeA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	for (index = 0; index < ret.cReaders; index++)
 	{
-		rgReaderState = &rgReaderStates[index];
-		readerStateRet = &ret.rgReaderStates[index];
-		readerStateRet->dwCurrentState = rgReaderState->dwCurrentState;
-		readerStateRet->dwEventState = rgReaderState->dwEventState;
-		readerStateRet->cbAtr = rgReaderState->cbAtr;
-		CopyMemory(readerStateRet->rgbAtr, rgReaderState->rgbAtr, 36);
+		ret.rgReaderStates[index].dwCurrentState = call.rgReaderStates[index].dwCurrentState;
+		ret.rgReaderStates[index].dwEventState = call.rgReaderStates[index].dwEventState;
+		ret.rgReaderStates[index].cbAtr = call.rgReaderStates[index].cbAtr;
+		CopyMemory(&ret.rgReaderStates[index].rgbAtr, &call.rgReaderStates[index].rgbAtr, 32);
 	}
 
 	status = smartcard_pack_get_status_change_return(smartcard, irp->output, &ret);
@@ -376,14 +355,12 @@ static UINT32 smartcard_GetStatusChangeA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	{
 		for (index = 0; index < call.cReaders; index++)
 		{
-			readerState = &call.rgReaderStates[index];
+			rgReaderState = &call.rgReaderStates[index];
 
-			if (readerState->szReader)
-				free((void*) readerState->szReader);
-			readerState->szReader = NULL;
+			if (rgReaderState->szReader)
+				free((void*) rgReaderState->szReader);
 		}
 		free(call.rgReaderStates);
-		free(rgReaderStates);
 	}
 
 	free(ret.rgReaderStates);
@@ -398,10 +375,7 @@ static UINT32 smartcard_GetStatusChangeW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	SCARDCONTEXT hContext;
 	GetStatusChangeW_Call call;
 	GetStatusChange_Return ret;
-	ReaderStateW* readerState = NULL;
-	ReaderState_Return* readerStateRet = NULL;
 	LPSCARD_READERSTATEW rgReaderState = NULL;
-	LPSCARD_READERSTATEW rgReaderStates = NULL;
 
 	status = smartcard_unpack_get_status_change_w_call(smartcard, irp->input, &call);
 
@@ -410,19 +384,7 @@ static UINT32 smartcard_GetStatusChangeW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	hContext = (ULONG_PTR) call.Context.pbContext;
 
-	rgReaderStates = (SCARD_READERSTATEW*) calloc(call.cReaders, sizeof(SCARD_READERSTATEW));
-
-	for (index = 0; index < call.cReaders; index++)
-	{
-		rgReaderState = &rgReaderStates[index];
-		rgReaderState->szReader = (LPCWSTR) call.rgReaderStates[index].szReader;
-		rgReaderState->dwCurrentState = call.rgReaderStates[index].Common.dwCurrentState;
-		rgReaderState->dwEventState = call.rgReaderStates[index].Common.dwEventState;
-		rgReaderState->cbAtr = call.rgReaderStates[index].Common.cbAtr;
-		CopyMemory(&(rgReaderState->rgbAtr), &(call.rgReaderStates[index].Common.rgbAtr), 36);
-	}
-
-	status = ret.ReturnCode = SCardGetStatusChangeW(hContext, call.dwTimeOut, rgReaderStates, call.cReaders);
+	status = ret.ReturnCode = SCardGetStatusChangeW(hContext, call.dwTimeOut, call.rgReaderStates, call.cReaders);
 
 	if (status && (status != SCARD_E_TIMEOUT))
 		return status;
@@ -432,12 +394,10 @@ static UINT32 smartcard_GetStatusChangeW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	for (index = 0; index < ret.cReaders; index++)
 	{
-		rgReaderState = &rgReaderStates[index];
-		readerStateRet = &ret.rgReaderStates[index];
-		readerStateRet->dwCurrentState = rgReaderState->dwCurrentState;
-		readerStateRet->dwEventState = rgReaderState->dwEventState;
-		readerStateRet->cbAtr = rgReaderState->cbAtr;
-		CopyMemory(readerStateRet->rgbAtr, rgReaderState->rgbAtr, 36);
+		ret.rgReaderStates[index].dwCurrentState = call.rgReaderStates[index].dwCurrentState;
+		ret.rgReaderStates[index].dwEventState = call.rgReaderStates[index].dwEventState;
+		ret.rgReaderStates[index].cbAtr = call.rgReaderStates[index].cbAtr;
+		CopyMemory(&ret.rgReaderStates[index].rgbAtr, &call.rgReaderStates[index].rgbAtr, 32);
 	}
 
 	status = smartcard_pack_get_status_change_return(smartcard, irp->output, &ret);
@@ -449,14 +409,12 @@ static UINT32 smartcard_GetStatusChangeW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	{
 		for (index = 0; index < call.cReaders; index++)
 		{
-			readerState = &call.rgReaderStates[index];
+			rgReaderState = &call.rgReaderStates[index];
 
-			if (readerState->szReader)
-				free((void*) readerState->szReader);
-			readerState->szReader = NULL;
+			if (rgReaderState->szReader)
+				free((void*) rgReaderState->szReader);
 		}
 		free(call.rgReaderStates);
-		free(rgReaderStates);
 	}
 
 	free(ret.rgReaderStates);
@@ -512,8 +470,6 @@ UINT32 smartcard_ConnectA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (status)
 		return status;
 
-	smartcard->hCard = hCard;
-
 	ret.hCard.Context.cbContext = sizeof(ULONG_PTR);
 	ret.hCard.Context.pbContext = (UINT64) hContext;
 
@@ -559,8 +515,6 @@ UINT32 smartcard_ConnectW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (status)
 		return status;
-
-	smartcard->hCard = hCard;
 
 	ret.hCard.Context.cbContext = sizeof(ULONG_PTR);
 	ret.hCard.Context.pbContext = (UINT64) hContext;
@@ -629,8 +583,6 @@ static UINT32 smartcard_Disconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (status)
 		return status;
-
-	smartcard->hCard = 0;
 
 	return ret.ReturnCode;
 }
