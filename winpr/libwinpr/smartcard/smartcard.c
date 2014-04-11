@@ -781,6 +781,120 @@ WINSCARDAPI const char* WINAPI SCardGetAttributeString(DWORD dwAttrId)
 	return "SCARD_ATTR_UNKNOWN";
 }
 
+WINSCARDAPI const char* WINAPI SCardGetProtocolString(DWORD dwProtocols)
+{
+	if (dwProtocols == SCARD_PROTOCOL_UNDEFINED)
+		return "SCARD_PROTOCOL_UNDEFINED";
+
+	if (dwProtocols == SCARD_PROTOCOL_T0)
+		return "SCARD_PROTOCOL_T0";
+
+	if (dwProtocols == SCARD_PROTOCOL_T1)
+		return "SCARD_PROTOCOL_T1";
+
+	if (dwProtocols == SCARD_PROTOCOL_Tx)
+		return "SCARD_PROTOCOL_Tx";
+
+	if (dwProtocols == SCARD_PROTOCOL_RAW)
+		return "SCARD_PROTOCOL_RAW";
+
+	if (dwProtocols == SCARD_PROTOCOL_DEFAULT)
+		return "SCARD_PROTOCOL_DEFAULT";
+
+	if (dwProtocols == (SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_RAW))
+		return "SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_RAW";
+
+	if (dwProtocols == (SCARD_PROTOCOL_T1 | SCARD_PROTOCOL_RAW))
+		return "SCARD_PROTOCOL_T1 | SCARD_PROTOCOL_RAW";
+
+	if (dwProtocols == (SCARD_PROTOCOL_Tx | SCARD_PROTOCOL_RAW))
+		return "SCARD_PROTOCOL_Tx | SCARD_PROTOCOL_RAW";
+
+	return "SCARD_PROTOCOL_UNKNOWN";
+}
+
+WINSCARDAPI char* WINAPI SCardGetStateString(DWORD dwEventState)
+{
+	char* szEventState = malloc(512);
+
+	if (!szEventState)
+		return NULL;
+
+	szEventState[0] = '\0';
+
+	if (dwEventState & SCARD_STATE_IGNORE)
+	{
+		if (szEventState[0])
+			strcat(szEventState, " | ");
+		strcat(szEventState, "SCARD_STATE_IGNORE");
+	}
+	if (dwEventState & SCARD_STATE_CHANGED)
+	{
+		if (szEventState[0])
+			strcat(szEventState, " | ");
+		strcat(szEventState, "SCARD_STATE_CHANGED");
+	}
+	if (dwEventState & SCARD_STATE_UNKNOWN)
+	{
+		if (szEventState[0])
+			strcat(szEventState, " | ");
+		strcat(szEventState, "SCARD_STATE_UNKNOWN");
+	}
+	if (dwEventState & SCARD_STATE_UNAVAILABLE)
+	{
+		if (szEventState[0])
+			strcat(szEventState, " | ");
+		strcat(szEventState, "SCARD_STATE_UNAVAILABLE");
+	}
+	if (dwEventState & SCARD_STATE_EMPTY)
+	{
+		if (szEventState[0])
+			strcat(szEventState, " | ");
+		strcat(szEventState, "SCARD_STATE_EMPTY");
+	}
+	if (dwEventState & SCARD_STATE_PRESENT)
+	{
+		if (szEventState[0])
+			strcat(szEventState, " | ");
+		strcat(szEventState, "SCARD_STATE_PRESENT");
+	}
+	if (dwEventState & SCARD_STATE_ATRMATCH)
+	{
+		if (szEventState[0])
+			strcat(szEventState, " | ");
+		strcat(szEventState, "SCARD_STATE_ATRMATCH");
+	}
+	if (dwEventState & SCARD_STATE_EXCLUSIVE)
+	{
+		if (szEventState[0])
+			strcat(szEventState, " | ");
+		strcat(szEventState, "SCARD_STATE_EXCLUSIVE");
+	}
+	if (dwEventState & SCARD_STATE_INUSE)
+	{
+		if (szEventState[0])
+			strcat(szEventState, " | ");
+		strcat(szEventState, "SCARD_STATE_INUSE");
+	}
+	if (dwEventState & SCARD_STATE_MUTE)
+	{
+		if (szEventState[0])
+			strcat(szEventState, " | ");
+		strcat(szEventState, "SCARD_STATE_MUTE");
+	}
+	if (dwEventState & SCARD_STATE_UNPOWERED)
+	{
+		if (szEventState[0])
+			strcat(szEventState, " | ");
+		strcat(szEventState, "SCARD_STATE_UNPOWERED");
+	}
+
+	if (!szEventState[0])
+		strcat(szEventState, "SCARD_STATE_UNAWARE");
+
+	return szEventState;
+}
+
 void InitializeSCardApiStubs(void)
 {
 	g_Initialized = TRUE;

@@ -1105,6 +1105,8 @@ extern "C" {
 
 WINSCARDAPI const char* WINAPI SCardGetErrorString(LONG errorCode);
 WINSCARDAPI const char* WINAPI SCardGetAttributeString(DWORD dwAttrId);
+WINSCARDAPI const char* WINAPI SCardGetProtocolString(DWORD dwProtocols);
+WINSCARDAPI char* WINAPI SCardGetStateString(DWORD dwEventState);
 
 #ifdef __cplusplus
 }
