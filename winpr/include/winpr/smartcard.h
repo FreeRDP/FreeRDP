@@ -1108,7 +1108,9 @@ WINSCARDAPI const char* WINAPI SCardGetAttributeString(DWORD dwAttrId);
 WINSCARDAPI const char* WINAPI SCardGetProtocolString(DWORD dwProtocols);
 WINSCARDAPI const char* WINAPI SCardGetShareModeString(DWORD dwShareMode);
 WINSCARDAPI const char* WINAPI SCardGetDispositionString(DWORD dwDisposition);
-WINSCARDAPI char* WINAPI SCardGetStateString(DWORD dwEventState);
+WINSCARDAPI const char* WINAPI SCardGetScopeString(DWORD dwScope);
+WINSCARDAPI const char* WINAPI SCardGetCardStateString(DWORD dwCardState);
+WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState);
 
 #ifdef __cplusplus
 }
