@@ -23,6 +23,14 @@
 #include <winpr/platform.h>
 #include <winpr/smartcard.h>
 
+#define PCSC_SCARD_UNKNOWN		0x0001
+#define PCSC_SCARD_ABSENT		0x0002
+#define PCSC_SCARD_PRESENT		0x0004
+#define PCSC_SCARD_SWALLOWED		0x0008
+#define PCSC_SCARD_POWERED		0x0010
+#define PCSC_SCARD_NEGOTIABLE		0x0020
+#define PCSC_SCARD_SPECIFIC		0x0040
+
 struct _PCSCFunctionTable
 {
 	LONG (* pfnSCardEstablishContext)(DWORD dwScope, LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);

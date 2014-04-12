@@ -67,7 +67,7 @@ LONG PCSC_MapErrorCodeToWinSCard(LONG errorCode)
 	return errorCode;
 }
 
-DWORD PCSC_ConvertCardStateToWinSCard(DWORD dwCardState)
+DWORD PCSC_ConvertCardStateToWinSCard(DWORD dwCardState, LONG status)
 {
 	/**
 	 * pcsc-lite's SCardStatus returns a bit-field, not an enumerated value.
@@ -81,22 +81,31 @@ DWORD PCSC_ConvertCardStateToWinSCard(DWORD dwCardState)
 	 *      SCARD_POWERED           4                0x0010
 	 *      SCARD_NEGOTIABLE        5                0x0020
 	 *      SCARD_SPECIFIC          6                0x0040
+	 *
+	 * pcsc-lite also never sets SCARD_SPECIFIC,
+	 * which is expected by some windows applications.
 	 */
 
-	if (dwCardState & 0x0001)
-		return SCARD_UNKNOWN;
-	if (dwCardState & 0x0002)
-		return SCARD_ABSENT;
-	if (dwCardState & 0x0004)
-		return SCARD_PRESENT;
-	if (dwCardState & 0x0008)
-		return SCARD_SWALLOWED;
-	if (dwCardState & 0x0010)
+	if (status == SCARD_S_SUCCESS)
+	{
+		if ((dwCardState & PCSC_SCARD_NEGOTIABLE) || (dwCardState & PCSC_SCARD_SPECIFIC))
+			return SCARD_SPECIFIC;
+	}
+
+	if (dwCardState & PCSC_SCARD_POWERED)
 		return SCARD_POWERED;
-	if (dwCardState & 0x0020)
+	if (dwCardState & PCSC_SCARD_NEGOTIABLE)
 		return SCARD_NEGOTIABLE;
-	if (dwCardState & 0x0040)
+	if (dwCardState & PCSC_SCARD_SPECIFIC)
 		return SCARD_SPECIFIC;
+	if (dwCardState & PCSC_SCARD_ABSENT)
+		return SCARD_ABSENT;
+	if (dwCardState & PCSC_SCARD_PRESENT)
+		return SCARD_PRESENT;
+	if (dwCardState & PCSC_SCARD_SWALLOWED)
+		return SCARD_SWALLOWED;
+	if (dwCardState & PCSC_SCARD_UNKNOWN)
+		return SCARD_UNKNOWN;
 
 	return SCARD_UNKNOWN;
 }
@@ -720,12 +729,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeA(SCARDCONTEXT hContext,
 		if (!dwTimeout)
 			dwTimeout++;
 
-		for (index = 0; index < cReaders; index++)
-		{
-			rgReaderStates[index].dwCurrentState &= 0xFFFF;
-			rgReaderStates[index].dwEventState = 0;
-		}
-
 		status = g_PCSC.pfnSCardGetStatusChange(hContext, dwTimeout, rgReaderStates, cReaders);
 		status = PCSC_MapErrorCodeToWinSCard(status);
 
@@ -733,6 +736,15 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeA(SCARDCONTEXT hContext,
 		{
 			/* pcsc-lite puts an event count in the higher bits of dwEventState */
 			rgReaderStates[index].dwEventState &= 0xFFFF;
+
+			if (rgReaderStates[index].dwEventState & SCARD_STATE_PRESENT)
+			{
+				rgReaderStates[index].dwEventState |= SCARD_STATE_INUSE;
+				rgReaderStates[index].dwEventState |= 0x00010000;
+			}
+
+			if (rgReaderStates[index].dwCurrentState & SCARD_STATE_IGNORE)
+				rgReaderStates[index].dwEventState = SCARD_STATE_IGNORE;
 		}
 	}
 
@@ -765,14 +777,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 			ConvertFromUnicode(CP_UTF8, 0, rgReaderStates[index].szReader, -1,
 					(char**) &rgReaderStatesA[index].szReader, 0, NULL, NULL);
 
-			rgReaderStates[index].dwCurrentState &= 0xFFFF;
-			rgReaderStates[index].dwEventState = 0;
-
 			rgReaderStatesA[index].pvUserData = rgReaderStates[index].pvUserData;
 			rgReaderStatesA[index].dwCurrentState = rgReaderStates[index].dwCurrentState;
 			rgReaderStatesA[index].dwEventState = rgReaderStates[index].dwEventState;
 			rgReaderStatesA[index].cbAtr = rgReaderStates[index].cbAtr;
-
 			CopyMemory(&(rgReaderStatesA[index].rgbAtr), &(rgReaderStates[index].rgbAtr), 36);
 		}
 
@@ -789,6 +797,15 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 			CopyMemory(&(rgReaderStates[index].rgbAtr), &(rgReaderStatesA[index].rgbAtr), 36);
 
 			rgReaderStates[index].dwEventState &= 0xFFFF;
+
+			if (rgReaderStates[index].dwEventState & SCARD_STATE_PRESENT)
+			{
+				rgReaderStates[index].dwEventState |= SCARD_STATE_INUSE;
+				rgReaderStates[index].dwEventState |= 0x00010000;
+			}
+
+			if (rgReaderStates[index].dwCurrentState & SCARD_STATE_IGNORE)
+				rgReaderStates[index].dwEventState = SCARD_STATE_IGNORE;
 		}
 
 		free(rgReaderStatesA);
@@ -1033,10 +1050,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatusA(SCARDHANDLE hCard,
 					pdwState, pdwProtocol, pbAtr, pcbAtrLen);
 		}
 
-		*pdwState &= 0xFFFF;
-		*pdwState = PCSC_ConvertCardStateToWinSCard(*pdwState);
-
 		status = PCSC_MapErrorCodeToWinSCard(status);
+
+		*pdwState &= 0xFFFF;
+		*pdwState = PCSC_ConvertCardStateToWinSCard(*pdwState, status);
 	}
 
 	return status;
@@ -1134,7 +1151,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatusW(SCARDHANDLE hCard,
 		}
 
 		*pdwState &= 0xFFFF;
-		*pdwState = PCSC_ConvertCardStateToWinSCard(*pdwState);
+		*pdwState = PCSC_ConvertCardStateToWinSCard(*pdwState, status);
 	}
 
 	return status;
