@@ -859,8 +859,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext,
 			PCSC_AddCardHandle(hContext, *phCard);
 
 		free(szReaderA);
-
-		return status;
 	}
 
 	PCSC_UnlockCardContext(hContext);
