@@ -110,6 +110,48 @@ DWORD PCSC_ConvertCardStateToWinSCard(DWORD dwCardState, LONG status)
 	return SCARD_UNKNOWN;
 }
 
+DWORD PCSC_ConvertProtocolsToWinSCard(DWORD dwProtocols)
+{
+	/**
+	 * pcsc-lite uses a different value for SCARD_PROTOCOL_RAW,
+	 * and also has SCARD_PROTOCOL_T15 which is not in WinSCard.
+	 */
+
+	if (dwProtocols & PCSC_SCARD_PROTOCOL_RAW)
+	{
+		dwProtocols &= ~PCSC_SCARD_PROTOCOL_RAW;
+		dwProtocols |= SCARD_PROTOCOL_RAW;
+	}
+
+	if (dwProtocols & PCSC_SCARD_PROTOCOL_T15)
+	{
+		dwProtocols &= ~PCSC_SCARD_PROTOCOL_T15;
+	}
+
+	return dwProtocols;
+}
+
+DWORD PCSC_ConvertProtocolsFromWinSCard(DWORD dwProtocols)
+{
+	/**
+	 * pcsc-lite uses a different value for SCARD_PROTOCOL_RAW,
+	 * and it does not define WinSCard's SCARD_PROTOCOL_DEFAULT.
+	 */
+
+	if (dwProtocols & SCARD_PROTOCOL_RAW)
+	{
+		dwProtocols &= ~SCARD_PROTOCOL_RAW;
+		dwProtocols |= PCSC_SCARD_PROTOCOL_RAW;
+	}
+
+	if (dwProtocols & SCARD_PROTOCOL_DEFAULT)
+	{
+		dwProtocols &= ~SCARD_PROTOCOL_DEFAULT;
+	}
+
+	return dwProtocols;
+}
+
 size_t PCSC_MultiStringLengthA(const char* msz)
 {
 	char* p = (char*) msz;
@@ -839,12 +881,17 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectA(SCARDCONTEXT hContext,
 
 	if (g_PCSC.pfnSCardConnect)
 	{
+		dwPreferredProtocols = PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
+
 		status = g_PCSC.pfnSCardConnect(hContext, szReader,
 				dwShareMode, dwPreferredProtocols, phCard, pdwActiveProtocol);
 		status = PCSC_MapErrorCodeToWinSCard(status);
 
 		if (status == SCARD_S_SUCCESS)
+		{
 			PCSC_AddCardHandle(hContext, *phCard);
+			*pdwActiveProtocol = PCSC_ConvertProtocolsToWinSCard(*pdwActiveProtocol);
+		}
 	}
 
 	PCSC_UnlockCardContext(hContext);
@@ -868,12 +915,17 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext,
 		if (szReader)
 			ConvertFromUnicode(CP_UTF8, 0, szReader, -1, &szReaderA, 0, NULL, NULL);
 
+		dwPreferredProtocols = PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
+
 		status = g_PCSC.pfnSCardConnect(hContext, szReaderA,
 				dwShareMode, dwPreferredProtocols, phCard, pdwActiveProtocol);
 		status = PCSC_MapErrorCodeToWinSCard(status);
 
 		if (status == SCARD_S_SUCCESS)
+		{
 			PCSC_AddCardHandle(hContext, *phCard);
+			*pdwActiveProtocol = PCSC_ConvertProtocolsToWinSCard(*pdwActiveProtocol);
+		}
 
 		free(szReaderA);
 	}
@@ -890,9 +942,13 @@ WINSCARDAPI LONG WINAPI PCSC_SCardReconnect(SCARDHANDLE hCard,
 
 	if (g_PCSC.pfnSCardReconnect)
 	{
+		dwPreferredProtocols = PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
+
 		status = g_PCSC.pfnSCardReconnect(hCard, dwShareMode,
 				dwPreferredProtocols, dwInitialization, pdwActiveProtocol);
 		status = PCSC_MapErrorCodeToWinSCard(status);
+
+		*pdwActiveProtocol = PCSC_ConvertProtocolsToWinSCard(*pdwActiveProtocol);
 	}
 
 	return status;
@@ -965,6 +1021,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardState(SCARDHANDLE hCard,
 			hContext = PCSC_GetCardContextFromHandle(hCard);
 			PCSC_SCardFreeMemory_Internal(hContext, mszReaderNames);
 		}
+
+		*pdwProtocol = PCSC_ConvertProtocolsToWinSCard(*pdwProtocol);
 	}
 
 	return status;
@@ -1054,6 +1112,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatusA(SCARDHANDLE hCard,
 
 		*pdwState &= 0xFFFF;
 		*pdwState = PCSC_ConvertCardStateToWinSCard(*pdwState, status);
+
+		*pdwProtocol = PCSC_ConvertProtocolsToWinSCard(*pdwProtocol);
 	}
 
 	return status;
@@ -1152,6 +1212,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatusW(SCARDHANDLE hCard,
 
 		*pdwState &= 0xFFFF;
 		*pdwState = PCSC_ConvertCardStateToWinSCard(*pdwState, status);
+
+		*pdwProtocol = PCSC_ConvertProtocolsToWinSCard(*pdwProtocol);
 	}
 
 	return status;

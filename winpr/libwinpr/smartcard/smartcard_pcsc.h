@@ -31,6 +31,9 @@
 #define PCSC_SCARD_NEGOTIABLE		0x0020
 #define PCSC_SCARD_SPECIFIC		0x0040
 
+#define PCSC_SCARD_PROTOCOL_RAW		0x00000004
+#define PCSC_SCARD_PROTOCOL_T15		0x00000008
+
 struct _PCSCFunctionTable
 {
 	LONG (* pfnSCardEstablishContext)(DWORD dwScope, LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
