@@ -1135,6 +1135,11 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (strcmp((char*) readerState->szReader, SMARTCARD_PNP_NOTIFICATION_A) == 0)
 			{
+				readerState->pvUserData = NULL;
+				readerState->dwCurrentState = 0;
+				readerState->dwEventState = 0;
+				readerState->cbAtr = 0;
+				ZeroMemory(&(readerState->rgbAtr), 36);
 				readerState->dwCurrentState |= SCARD_STATE_IGNORE;
 			}
 		}
@@ -1299,6 +1304,11 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (_wcscmp((WCHAR*) readerState->szReader, SMARTCARD_PNP_NOTIFICATION_W) == 0)
 			{
+				readerState->pvUserData = NULL;
+				readerState->dwCurrentState = 0;
+				readerState->dwEventState = 0;
+				readerState->cbAtr = 0;
+				ZeroMemory(&(readerState->rgbAtr), 36);
 				readerState->dwCurrentState |= SCARD_STATE_IGNORE;
 			}
 		}
@@ -2010,8 +2020,6 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 					(int) Stream_GetRemainingLength(s), 16);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
-
-		winpr_HexDump(Stream_Pointer(s), Stream_GetRemainingLength(s));
 
 		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 

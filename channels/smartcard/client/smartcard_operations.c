@@ -491,7 +491,7 @@ UINT32 smartcard_ConnectA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if ((call.Common.dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED) &&
 			(call.Common.dwShareMode != SCARD_SHARE_DIRECT))
 	{
-		call.Common.dwPreferredProtocols = SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1;
+		call.Common.dwPreferredProtocols = SCARD_PROTOCOL_Tx;
 	}
 
 	status = ret.ReturnCode = SCardConnectA(hContext, (char*) call.szReader, call.Common.dwShareMode,
@@ -538,7 +538,7 @@ UINT32 smartcard_ConnectW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if ((call.Common.dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED) &&
 			(call.Common.dwShareMode != SCARD_SHARE_DIRECT))
 	{
-		call.Common.dwPreferredProtocols = SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1;
+		call.Common.dwPreferredProtocols = SCARD_PROTOCOL_Tx;
 	}
 
 	status = ret.ReturnCode = SCardConnectW(hContext, (WCHAR*) call.szReader, call.Common.dwShareMode,
