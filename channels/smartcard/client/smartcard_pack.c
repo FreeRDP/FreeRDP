@@ -758,8 +758,9 @@ void smartcard_trace_connect_a_call(SMARTCARD_DEVICE* smartcard, ConnectA_Call* 
 			pb[0], pb[1], pb[2], pb[3], call->Common.hContext.cbContext);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: 0x%08X dwPreferredProtocols: 0x%08X",
-		call->szReader, call->Common.dwShareMode, call->Common.dwPreferredProtocols);
+	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: %s (0x%08X) dwPreferredProtocols: %s (0x%08X)",
+		call->szReader, SCardGetShareModeString(call->Common.dwShareMode), call->Common.dwShareMode,
+		SCardGetProtocolString(call->Common.dwPreferredProtocols), call->Common.dwPreferredProtocols);
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }
@@ -826,8 +827,9 @@ void smartcard_trace_connect_w_call(SMARTCARD_DEVICE* smartcard, ConnectW_Call* 
 			pb[0], pb[1], pb[2], pb[3], call->Common.hContext.cbContext);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: 0x%08X dwPreferredProtocols: %d",
-		szReaderA, call->Common.dwShareMode, call->Common.dwPreferredProtocols);
+	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: %s (0x%08X) dwPreferredProtocols: %s (0x%08X)",
+		szReaderA, SCardGetShareModeString(call->Common.dwShareMode), call->Common.dwShareMode,
+		SCardGetProtocolString(call->Common.dwPreferredProtocols), call->Common.dwPreferredProtocols);
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 
@@ -898,8 +900,8 @@ void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, Connect_Return*
 			pb[0], pb[1], pb[2], pb[3], ret->hCard.cbHandle);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "dwActiveProtocol: 0x%08X",
-		ret->dwActiveProtocol);
+	WLog_Print(smartcard->log, WLOG_DEBUG, "dwActiveProtocol: %s (0x%08X)",
+		SCardGetProtocolString(ret->dwActiveProtocol), ret->dwActiveProtocol);
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }
@@ -1017,7 +1019,8 @@ void smartcard_trace_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, HCa
 			pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "dwDisposition: 0x%08X", call->dwDisposition);
+	WLog_Print(smartcard->log, WLOG_DEBUG, "dwDisposition: %s (0x%08X)",
+		SCardGetDispositionString(call->dwDisposition), call->dwDisposition);
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }
@@ -1356,7 +1359,7 @@ UINT32 smartcard_pack_get_status_change_return(SMARTCARD_DEVICE* smartcard, wStr
 	return SCARD_S_SUCCESS;
 }
 
-void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetStatusChange_Return* ret)
+void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetStatusChange_Return* ret, BOOL unicode)
 {
 	BYTE* pb;
 	UINT32 index;
@@ -1367,7 +1370,7 @@ void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetSt
 	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChange_Return {");
+	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChange%s_Return {", unicode ? "W" : "A");
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: 0x%08X cReaders: %d",
 		ret->ReturnCode, ret->cReaders);

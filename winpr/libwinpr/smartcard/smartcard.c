@@ -813,6 +813,48 @@ WINSCARDAPI const char* WINAPI SCardGetProtocolString(DWORD dwProtocols)
 	return "SCARD_PROTOCOL_UNKNOWN";
 }
 
+WINSCARDAPI const char* WINAPI SCardGetShareModeString(DWORD dwShareMode)
+{
+	switch (dwShareMode)
+	{
+		case SCARD_SHARE_EXCLUSIVE:
+			return "SCARD_SHARE_EXCLUSIVE";
+			break;
+		case SCARD_SHARE_SHARED:
+			return "SCARD_SHARE_SHARED";
+			break;
+		case SCARD_SHARE_DIRECT:
+			return "SCARD_SHARE_DIRECT";
+			break;
+		default:
+			return "SCARD_SHARE_UNKNOWN";
+			break;
+	}
+
+	return "SCARD_SHARE_UNKNOWN";
+}
+
+WINSCARDAPI const char* WINAPI SCardGetDispositionString(DWORD dwDisposition)
+{
+	switch (dwDisposition)
+	{
+		case SCARD_LEAVE_CARD:
+			return "SCARD_LEAVE_CARD";
+			break;
+		case SCARD_RESET_CARD:
+			return "SCARD_RESET_CARD";
+			break;
+		case SCARD_UNPOWER_CARD:
+			return "SCARD_UNPOWER_CARD";
+			break;
+		default:
+			return "SCARD_UNKNOWN_CARD";
+			break;
+	}
+
+	return "SCARD_UNKNOWN_CARD";
+}
+
 WINSCARDAPI char* WINAPI SCardGetStateString(DWORD dwEventState)
 {
 	char* szEventState = malloc(512);
