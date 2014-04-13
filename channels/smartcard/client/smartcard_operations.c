@@ -809,6 +809,8 @@ static UINT32 smartcard_Transmit(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = smartcard_unpack_transmit_call(smartcard, irp->input, &call);
 
+	smartcard_trace_transmit_call(smartcard, &call);
+
 	if (status)
 		return status;
 
@@ -834,6 +836,8 @@ static UINT32 smartcard_Transmit(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (status)
 		return status;
+
+	smartcard_trace_transmit_return(smartcard, &ret);
 
 	status = smartcard_pack_transmit_return(smartcard, irp->output, &ret);
 
@@ -1323,10 +1327,14 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	 * primitive type is not a multiple of 8 bytes, the data MUST be padded.
 	 */
 
-	offset = (RDPDR_DEVICE_IO_RESPONSE_LENGTH + RDPDR_DEVICE_IO_CONTROL_RSP_HDR_LENGTH);
+	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
+			(ioControlCode != SCARD_IOCTL_RELEASESTARTEDEVENT))
+	{
+		offset = (RDPDR_DEVICE_IO_RESPONSE_LENGTH + RDPDR_DEVICE_IO_CONTROL_RSP_HDR_LENGTH);
 
-	smartcard_pack_write_size_align(smartcard, irp->output,
-			Stream_GetPosition(irp->output) - offset, 8);
+		smartcard_pack_write_size_align(smartcard, irp->output,
+				Stream_GetPosition(irp->output) - offset, 8);
+	}
 
 	Stream_SealLength(irp->output);
 

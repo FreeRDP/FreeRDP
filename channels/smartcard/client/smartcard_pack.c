@@ -622,6 +622,8 @@ UINT32 smartcard_pack_list_readers_return(SMARTCARD_DEVICE* smartcard, wStream* 
 
 	mszNdrPtr = (ret->cBytes) ? 0x00020008 : 0;
 
+	Stream_EnsureRemainingCapacity(s, ret->cBytes + 32);
+
 	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
 	Stream_Write_UINT32(s, mszNdrPtr); /* mszNdrPtr (4 bytes) */
 	
@@ -1402,8 +1404,8 @@ UINT32 smartcard_pack_get_status_change_return(SMARTCARD_DEVICE* smartcard, wStr
 
 void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetStatusChange_Return* ret, BOOL unicode)
 {
-	BYTE* pb;
 	UINT32 index;
+	char* rgbAtr;
 	char* szEventState;
 	char* szCurrentState;
 	ReaderState_Return* rgReaderState;
@@ -1419,10 +1421,10 @@ void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetSt
 	for (index = 0; index < ret->cReaders; index++)
 	{
 		rgReaderState = &(ret->rgReaderStates[index]);
-		pb = (BYTE*) &rgReaderState->rgbAtr;
 
 		szCurrentState = SCardGetReaderStateString(rgReaderState->dwCurrentState);
 		szEventState = SCardGetReaderStateString(rgReaderState->dwEventState);
+		rgbAtr = winpr_BinToHexString(rgReaderState->rgbAtr, rgReaderState->cbAtr, FALSE);
 
 		WLog_Print(smartcard->log, WLOG_DEBUG,
 			"\t[%d]: dwCurrentState: %s (0x%08X)",
@@ -1433,17 +1435,12 @@ void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetSt
 			index, szEventState, rgReaderState->dwEventState);
 
 		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: cbAtr: %d rgbAtr: "
-			"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
-			"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-			index, rgReaderState->cbAtr,
-			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7],
-			pb[8], pb[9], pb[10], pb[11], pb[12], pb[13], pb[14], pb[15],
-			pb[16], pb[17], pb[18], pb[19], pb[20], pb[21], pb[22], pb[23],
-			pb[24], pb[25], pb[26], pb[27], pb[28], pb[29], pb[30], pb[31]);
+			"\t[%d]: cbAtr: %d rgbAtr: %s",
+			index, rgReaderState->cbAtr, rgbAtr);
 
 		free(szCurrentState);
 		free(szEventState);
+		free(rgbAtr);
 	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
@@ -1581,6 +1578,8 @@ void smartcard_trace_status_call(SMARTCARD_DEVICE* smartcard, Status_Call* call,
 
 UINT32 smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Status_Return* ret)
 {
+	Stream_EnsureRemainingCapacity(s, ret->cBytes + 64);
+
 	Stream_Write_UINT32(s, ret->cBytes); /* cBytes (4 bytes) */
 	Stream_Write_UINT32(s, 0x00020010); /* mszReaderNamesNdrPtr (4 bytes) */
 	Stream_Write_UINT32(s, ret->dwState); /* dwState (4 bytes) */
@@ -1602,9 +1601,9 @@ UINT32 smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Sta
 
 void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* ret, BOOL unicode)
 {
-	BYTE* pb;
 	UINT32 index;
 	UINT32 length;
+	char* pbAtr = NULL;
 	char* mszReaderNamesA = NULL;
 
 	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
@@ -1628,7 +1627,7 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 			mszReaderNamesA[index] = ',';
 	}
 
-	pb = (BYTE*) &ret->pbAtr;
+	pbAtr = winpr_BinToHexString(ret->pbAtr, ret->cbAtrLen, FALSE);
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "Status%s_Return {", unicode ? "W" : "A");
 
@@ -1642,18 +1641,12 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 			ret->cBytes, mszReaderNamesA);
 
 	WLog_Print(smartcard->log, WLOG_DEBUG,
-		"cbAtrLen: %d pbAtr: "
-		"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
-		"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-		ret->cbAtrLen,
-		pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7],
-		pb[8], pb[9], pb[10], pb[11], pb[12], pb[13], pb[14], pb[15],
-		pb[16], pb[17], pb[18], pb[19], pb[20], pb[21], pb[22], pb[23],
-		pb[24], pb[25], pb[26], pb[27], pb[28], pb[29], pb[30], pb[31]);
+		"cbAtrLen: %d pbAtr: %s", ret->cbAtrLen, pbAtr);
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 
 	free(mszReaderNamesA);
+	free(pbAtr);
 }
 
 UINT32 smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetAttrib_Call* call)
@@ -1737,6 +1730,8 @@ void smartcard_trace_get_attrib_call(SMARTCARD_DEVICE* smartcard, GetAttrib_Call
 
 UINT32 smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s, GetAttrib_Return* ret)
 {
+	Stream_EnsureRemainingCapacity(s, ret->cbAttrLen + 32);
+
 	Stream_Write_UINT32(s, ret->cbAttrLen); /* cbAttrLen (4 bytes) */
 	Stream_Write_UINT32(s, 0x00020080); /* pbAttrNdrPtr (4 bytes) */
 	Stream_Write_UINT32(s, ret->cbAttrLen); /* pbAttrNdrCount (4 bytes) */
@@ -1840,6 +1835,8 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 UINT32 smartcard_pack_control_return(SMARTCARD_DEVICE* smartcard, wStream* s, Control_Return* ret)
 {
+	Stream_EnsureRemainingCapacity(s, ret->cbOutBufferSize + 32);
+
 	Stream_Write_UINT32(s, ret->cbOutBufferSize); /* cbOutBufferSize (4 bytes) */
 	Stream_Write_UINT32(s, 0x00020040); /* pvOutBufferPointer (4 bytes) */
 	Stream_Write_UINT32(s, ret->cbOutBufferSize); /* pvOutBufferLength (4 bytes) */
@@ -1985,7 +1982,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
-		if (length < call->cbSendLength)
+		if (length != call->cbSendLength)
 		{
 			WLog_Print(smartcard->log, WLOG_WARN,
 					"Transmit_Call unexpected length: Actual: %d, Expected: %d (cbSendLength)",
@@ -2069,6 +2066,102 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	return SCARD_S_SUCCESS;
 }
 
+void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, Transmit_Call* call)
+{
+	BYTE* pb;
+	UINT32 cbExtraBytes;
+	BYTE* pbExtraBytes;
+
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "Transmit_Call {");
+
+	pb = (BYTE*) &(call->hContext.pbContext);
+
+	if (call->hContext.cbContext > 4)
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
+	}
+	else
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
+	}
+
+	pb = (BYTE*) &(call->hCard.pbHandle);
+
+	if (call->hCard.cbHandle > 4)
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
+	}
+	else
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
+	}
+
+	if (call->pioSendPci)
+	{
+		cbExtraBytes = call->pioSendPci->cbPciLength - sizeof(SCARD_IO_REQUEST);
+		pbExtraBytes = &((BYTE*) call->pioSendPci)[sizeof(SCARD_IO_REQUEST)];
+
+		WLog_Print(smartcard->log, WLOG_DEBUG, "pioSendPci: dwProtocol: %d cbExtraBytes: %d",
+				call->pioSendPci->dwProtocol, cbExtraBytes);
+
+		if (cbExtraBytes)
+		{
+			char* szExtraBytes = winpr_BinToHexString(pbExtraBytes, cbExtraBytes, TRUE);
+			WLog_Print(smartcard->log, WLOG_DEBUG, "pbExtraBytes: %s", szExtraBytes);
+			free(szExtraBytes);
+		}
+	}
+	else
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "pioSendPci: null");
+	}
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "cbSendLength: %d", call->cbSendLength);
+
+	if (call->pbSendBuffer)
+	{
+		char* szSendBuffer = winpr_BinToHexString(call->pbSendBuffer, call->cbSendLength, TRUE);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "pbSendBuffer: %s", szSendBuffer);
+		free(szSendBuffer);
+	}
+	else
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "pbSendBuffer: null");
+	}
+
+	if (call->pioRecvPci)
+	{
+		cbExtraBytes = call->pioRecvPci->cbPciLength - sizeof(SCARD_IO_REQUEST);
+		pbExtraBytes = &((BYTE*) call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
+
+		WLog_Print(smartcard->log, WLOG_DEBUG, "pioRecvPci: dwProtocol: %d cbExtraBytes: %d",
+				call->pioRecvPci->dwProtocol, cbExtraBytes);
+
+		if (cbExtraBytes)
+		{
+			char* szExtraBytes = winpr_BinToHexString(pbExtraBytes, cbExtraBytes, TRUE);
+			WLog_Print(smartcard->log, WLOG_DEBUG, "pbExtraBytes: %s", szExtraBytes);
+			free(szExtraBytes);
+		}
+	}
+	else
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "pioRecvPci: null");
+	}
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "fpbRecvBufferIsNULL: %d cbRecvLength: 0x%08X",
+			call->fpbRecvBufferIsNULL, call->cbRecvLength);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+}
+
 UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Transmit_Return* ret)
 {
 	UINT32 cbExtraBytes;
@@ -2110,3 +2203,50 @@ UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	return SCARD_S_SUCCESS;
 }
 
+void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, Transmit_Return* ret)
+{
+	UINT32 cbExtraBytes;
+	BYTE* pbExtraBytes;
+
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "Transmit_Return {");
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: 0x%08X", ret->ReturnCode);
+
+	if (ret->pioRecvPci)
+	{
+		cbExtraBytes = ret->pioRecvPci->cbPciLength - sizeof(SCARD_IO_REQUEST);
+		pbExtraBytes = &((BYTE*) ret->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
+
+		WLog_Print(smartcard->log, WLOG_DEBUG, "pioRecvPci: dwProtocol: %d cbExtraBytes: %d",
+				ret->pioRecvPci->dwProtocol, cbExtraBytes);
+
+		if (cbExtraBytes)
+		{
+			char* szExtraBytes = winpr_BinToHexString(pbExtraBytes, cbExtraBytes, TRUE);
+			WLog_Print(smartcard->log, WLOG_DEBUG, "pbExtraBytes: %s", szExtraBytes);
+			free(szExtraBytes);
+		}
+	}
+	else
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "pioRecvPci: null");
+	}
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "cbRecvLength: %d", ret->cbRecvLength);
+
+	if (ret->pbRecvBuffer)
+	{
+		char* szRecvBuffer = winpr_BinToHexString(ret->pbRecvBuffer, ret->cbRecvLength, TRUE);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "pbRecvBuffer: %s", szRecvBuffer);
+		free(szRecvBuffer);
+	}
+	else
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "pbRecvBuffer: null");
+	}
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+}

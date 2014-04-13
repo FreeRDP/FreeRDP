@@ -514,6 +514,9 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 UINT32 smartcard_pack_control_return(SMARTCARD_DEVICE* smartcard, wStream* s, Control_Return* ret);
 
 UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Transmit_Call* call);
+void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, Transmit_Call* call);
+
 UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Transmit_Return* ret);
+void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, Transmit_Return* ret);
 
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_PACK_H */

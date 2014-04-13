@@ -1105,9 +1105,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 			}
 
 			if (rgReaderStates[index].dwEventState & SCARD_STATE_PRESENT)
-			{
 				rgReaderStates[index].dwEventState |= SCARD_STATE_INUSE;
-			}
 
 			if (rgReaderStates[index].dwCurrentState & SCARD_STATE_IGNORE)
 				rgReaderStates[index].dwEventState = SCARD_STATE_IGNORE;
