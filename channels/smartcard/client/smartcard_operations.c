@@ -573,6 +573,8 @@ static UINT32 smartcard_Reconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = smartcard_unpack_reconnect_call(smartcard, irp->input, &call);
 
+	smartcard_trace_reconnect_call(smartcard, &call);
+
 	if (status)
 		return status;
 
@@ -584,6 +586,8 @@ static UINT32 smartcard_Reconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (status)
 		return status;
+
+	smartcard_trace_reconnect_return(smartcard, &ret);
 
 	status = smartcard_pack_reconnect_return(smartcard, irp->output, &ret);
 
@@ -867,6 +871,8 @@ static UINT32 smartcard_Control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = smartcard_unpack_control_call(smartcard, irp->input, &call);
 
+	smartcard_trace_control_call(smartcard, &call);
+
 	if (status)
 		return status;
 
@@ -888,6 +894,8 @@ static UINT32 smartcard_Control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (status)
 		return status;
+
+	smartcard_trace_control_return(smartcard, &ret);
 
 	status = smartcard_pack_control_return(smartcard, irp->output, &ret);
 

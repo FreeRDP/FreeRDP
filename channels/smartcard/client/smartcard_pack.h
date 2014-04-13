@@ -481,7 +481,10 @@ UINT32 smartcard_pack_connect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, Connect_Return* ret);
 
 UINT32 smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Reconnect_Call* call);
+void smartcard_trace_reconnect_call(SMARTCARD_DEVICE* smartcard, Reconnect_Call* call);
+
 UINT32 smartcard_pack_reconnect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Reconnect_Return* ret);
+void smartcard_trace_reconnect_return(SMARTCARD_DEVICE* smartcard, Reconnect_Return* ret);
 
 UINT32 smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, wStream* s, HCardAndDisposition_Call* call);
 void smartcard_trace_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, HCardAndDisposition_Call* call, const char* name);
@@ -511,7 +514,10 @@ UINT32 smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 void smartcard_trace_get_attrib_return(SMARTCARD_DEVICE* smartcard, GetAttrib_Return* ret, DWORD dwAttrId);
 
 UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Control_Call* call);
+void smartcard_trace_control_call(SMARTCARD_DEVICE* smartcard, Control_Call* call);
+
 UINT32 smartcard_pack_control_return(SMARTCARD_DEVICE* smartcard, wStream* s, Control_Return* ret);
+void smartcard_trace_control_return(SMARTCARD_DEVICE* smartcard, Control_Return* ret);
 
 UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Transmit_Call* call);
 void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, Transmit_Call* call);
