@@ -1052,15 +1052,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 	if (g_PCSC.pfnSCardGetStatusChange)
 	{
 		DWORD index;
+		DWORD dwEventState;
+		BOOL stateChanged = FALSE;
 		LPSCARD_READERSTATEA states;
-
-		/**
-		 * pcsc-lite interprets value 0 as INFINITE, while it really shouldn't.
-		 * Work around this issue by using the smallest non-zero timeout value.
-		 */
-
-		if (!dwTimeout)
-			dwTimeout++;
 
 		states = (LPSCARD_READERSTATEA) calloc(cReaders, sizeof(SCARD_READERSTATEA));
 
@@ -1081,29 +1075,48 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 			CopyMemory(&(states[index].rgbAtr), &(rgReaderStates[index].rgbAtr), 36);
 		}
 
-		status = g_PCSC.pfnSCardGetStatusChange(hContext, dwTimeout, states, cReaders);
+		/**
+		 * pcsc-lite interprets dwTimeout value 0 as INFINITE, use value 1 as a workaround
+		 */
+
+		status = g_PCSC.pfnSCardGetStatusChange(hContext, dwTimeout ? dwTimeout : 1, states, cReaders);
 		status = PCSC_MapErrorCodeToWinSCard(status);
 
 		for (index = 0; index < cReaders; index++)
 		{
 			rgReaderStates[index].pvUserData = states[index].pvUserData;
 			rgReaderStates[index].dwCurrentState = states[index].dwCurrentState;
-			rgReaderStates[index].dwEventState = states[index].dwEventState;
 			rgReaderStates[index].cbAtr = states[index].cbAtr;
 			CopyMemory(&(rgReaderStates[index].rgbAtr), &(states[index].rgbAtr), 36);
 
 			/* pcsc-lite puts an event count in the higher bits of dwEventState */
-			rgReaderStates[index].dwEventState &= 0xFFFF;
+			states[index].dwEventState &= 0xFFFF;
+
+			dwEventState = states[index].dwEventState & ~SCARD_STATE_CHANGED;
+
+			if (dwEventState != rgReaderStates[index].dwCurrentState)
+			{
+				rgReaderStates[index].dwEventState = states[index].dwEventState;
+				stateChanged = TRUE;
+			}
+			else
+			{
+				rgReaderStates[index].dwEventState = dwEventState;
+			}
 
 			if (rgReaderStates[index].dwEventState & SCARD_STATE_PRESENT)
 			{
 				rgReaderStates[index].dwEventState |= SCARD_STATE_INUSE;
-				rgReaderStates[index].dwEventState |= 0x00010000; /* unknown value observed with WinSCard */
 			}
 
 			if (rgReaderStates[index].dwCurrentState & SCARD_STATE_IGNORE)
 				rgReaderStates[index].dwEventState = SCARD_STATE_IGNORE;
 		}
+
+		if ((status == SCARD_S_SUCCESS) && !stateChanged)
+			status = SCARD_E_TIMEOUT;
+		else if ((status == SCARD_E_TIMEOUT) && stateChanged)
+			return SCARD_S_SUCCESS;
 
 		free(states);
 	}
@@ -1521,6 +1534,31 @@ WINSCARDAPI LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard,
 
 	if (g_PCSC.pfnSCardTransmit)
 	{
+		if (!pioSendPci)
+		{
+			DWORD dwState = 0;
+			DWORD cbAtrLen = 0;
+			DWORD dwProtocol = 0;
+			DWORD cchReaderLen = 0;
+
+			/**
+			 * pcsc-lite cannot have a null pioSendPci parameter, unlike WinSCard.
+			 * Query the current protocol and use default SCARD_IO_REQUEST for it.
+			 */
+
+			status = SCardStatusA(hCard, NULL, &cchReaderLen, &dwState, &dwProtocol, NULL, &cbAtrLen);
+
+			if (status == SCARD_S_SUCCESS)
+			{
+				if (dwProtocol == SCARD_PROTOCOL_T0)
+					pioSendPci = SCARD_PCI_T0;
+				else if (dwProtocol == SCARD_PROTOCOL_T1)
+					pioSendPci = SCARD_PCI_T1;
+				else if (dwProtocol == SCARD_PROTOCOL_RAW)
+					pioSendPci = SCARD_PCI_RAW;
+			}
+		}
+
 		status = g_PCSC.pfnSCardTransmit(hCard, pioSendPci, pbSendBuffer,
 				cbSendLength, pioRecvPci, pbRecvBuffer, pcbRecvLength);
 		status = PCSC_MapErrorCodeToWinSCard(status);

@@ -34,6 +34,10 @@ static PSCardApiFunctionTable g_SCardApi = NULL;
  * Standard Windows Smart Card API
  */
 
+const SCARD_IO_REQUEST g_rgSCardT0Pci = { SCARD_PROTOCOL_T0, 8 };
+const SCARD_IO_REQUEST g_rgSCardT1Pci = { SCARD_PROTOCOL_T1, 8 };
+const SCARD_IO_REQUEST g_rgSCardRawPci = { SCARD_PROTOCOL_RAW, 8 };
+
 WINSCARDAPI LONG WINAPI SCardEstablishContext(DWORD dwScope,
 		LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext)
 {

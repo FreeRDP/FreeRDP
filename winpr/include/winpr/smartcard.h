@@ -585,6 +585,14 @@ typedef struct
 extern "C" {
 #endif
 
+extern const SCARD_IO_REQUEST g_rgSCardT0Pci;
+extern const SCARD_IO_REQUEST g_rgSCardT1Pci;
+extern const SCARD_IO_REQUEST g_rgSCardRawPci;
+
+#define SCARD_PCI_T0	(&g_rgSCardT0Pci)
+#define SCARD_PCI_T1	(&g_rgSCardT1Pci)
+#define SCARD_PCI_RAW	(&g_rgSCardRawPci)
+
 WINSCARDAPI LONG WINAPI SCardEstablishContext(DWORD dwScope,
 		LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
 
