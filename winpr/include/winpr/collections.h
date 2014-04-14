@@ -200,6 +200,9 @@ typedef struct _wListDictionary wListDictionary;
 
 WINPR_API int ListDictionary_Count(wListDictionary* listDictionary);
 
+WINPR_API void ListDictionary_Lock(wListDictionary* listDictionary);
+WINPR_API void ListDictionary_Unlock(wListDictionary* listDictionary);
+
 WINPR_API void ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value);
 WINPR_API void* ListDictionary_Remove(wListDictionary* listDictionary, void* key);
 WINPR_API void* ListDictionary_Remove_Head(wListDictionary* listDictionary);
