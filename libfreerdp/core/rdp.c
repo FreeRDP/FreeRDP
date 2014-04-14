@@ -1223,16 +1223,14 @@ rdpRdp* rdp_new(rdpContext* context)
 
 	rdp->settings = context->settings;
 	rdp->settings->instance = context->instance;
+	
 	if (context->instance)
 		context->instance->settings = rdp->settings;
 
-	rdp->extension = extension_new(context->instance);
-	if (!rdp->extension)
-		goto out_free_settings;
-
 	rdp->transport = transport_new(rdp->settings);
 	if (!rdp->transport)
-		goto out_free_extension;
+		goto out_free_settings;
+	
 	rdp->transport->rdp = rdp;
 
 	rdp->license = license_new(rdp);
@@ -1303,8 +1301,6 @@ out_free_license:
 	license_free(rdp->license);
 out_free_transport:
 	transport_free(rdp->transport);
-out_free_extension:
-	extension_free(rdp->extension);
 out_free_settings:
 	if (newSettings)
 		freerdp_settings_free(rdp->settings);
@@ -1368,7 +1364,6 @@ void rdp_free(rdpRdp* rdp)
 		crypto_hmac_free(rdp->fips_hmac);
 		freerdp_settings_free(rdp->settings);
 		freerdp_settings_free(rdp->settingsCopy);
-		extension_free(rdp->extension);
 		transport_free(rdp->transport);
 		license_free(rdp->license);
 		input_free(rdp->input);
