@@ -456,6 +456,15 @@ void WLog_Uninit()
 {
 	wLog* root = WLog_GetRoot();
 
+	DWORD index;
+	wLog* child = NULL;
+
+	for (index = 0; index < root->ChildrenCount; index++)
+	{
+		child = root->Children[index];
+		WLog_Free(child);
+	}
+
 	WLog_Free(root);
 	g_RootLog = NULL;
 }
