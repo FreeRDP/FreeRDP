@@ -88,6 +88,7 @@ BOOL nego_connect(rdpNego* nego)
 		{
 			DEBUG_NEGO("No security protocol is enabled");
 			nego->state = NEGO_STATE_FAIL;
+			return FALSE;
 		}
 
 		if (!nego->NegotiateSecurityLayer)
@@ -1118,12 +1119,15 @@ void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
  * @param RoutingTokenLength
  */
 
-void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength)
+BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength)
 {
 	free(nego->RoutingToken);
 	nego->RoutingTokenLength = RoutingTokenLength;
 	nego->RoutingToken = (BYTE*) malloc(nego->RoutingTokenLength);
+	if (!nego->RoutingToken)
+		return FALSE;
 	CopyMemory(nego->RoutingToken, RoutingToken, nego->RoutingTokenLength);
+	return TRUE;
 }
 
 /**
@@ -1132,12 +1136,15 @@ void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingToke
  * @param cookie
  */
 
-void nego_set_cookie(rdpNego* nego, char* cookie)
+BOOL nego_set_cookie(rdpNego* nego, char* cookie)
 {
 	if (nego->cookie)
 		free(nego->cookie);
 
 	nego->cookie = _strdup(cookie);
+	if (!nego->cookie)
+		return FALSE;
+	return TRUE;
 }
 
 /**

@@ -169,6 +169,7 @@
 
 BOOL rdp_client_connect(rdpRdp* rdp)
 {
+	BOOL ret;
 	rdpSettings* settings = rdp->settings;
 
 	if (rdp->settingsCopy)
@@ -208,6 +209,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 		cookie_length = domain_length + 1 + user_length;
 		cookie = (char*) malloc(cookie_length + 1);
+		if (!cookie)
+			return FALSE;
 
 		CopyMemory(cookie, domain, domain_length);
 		CharUpperBuffA(cookie, domain_length);
@@ -218,13 +221,16 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 		cookie[cookie_length] = '\0';
 
-		nego_set_cookie(rdp->nego, cookie);
+		ret = nego_set_cookie(rdp->nego, cookie);
 		free(cookie);
 	}
 	else
 	{
-		nego_set_cookie(rdp->nego, settings->Username);
+		ret = nego_set_cookie(rdp->nego, settings->Username);
 	}
+
+	if (!ret)
+		return FALSE;
 
 	nego_set_send_preconnection_pdu(rdp->nego, settings->SendPreconnectionPdu);
 	nego_set_preconnection_id(rdp->nego, settings->PreconnectionId);
@@ -247,7 +253,10 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_set_cookie_max_length(rdp->nego, settings->CookieMaxLength);
 
 	if (settings->LoadBalanceInfo)
-		nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
+	{
+		if (!nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength))
+			return FALSE;
+	}
 
 	if (!nego_connect(rdp->nego))
 	{
@@ -525,7 +534,10 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 
 	if (!rdp_read_security_header(s, &sec_flags))
+	{
+		fprintf(stderr, "%s: invalid security header\n", __FUNCTION__);
 		return FALSE;
+	}
 
 	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)
 	{
