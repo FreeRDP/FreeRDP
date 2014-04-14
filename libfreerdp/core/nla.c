@@ -1356,6 +1356,8 @@ LPTSTR credssp_make_spn(const char* ServiceClass, const char* hostname)
 	}
 
 	ServicePrincipalName = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
+	if (!ServicePrincipalName)
+		return NULL;
 
 	status = DsMakeSpn(ServiceClassX, hostnameX, NULL, 0, NULL, &SpnLength, ServicePrincipalName);
 

@@ -407,7 +407,7 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count > 1)
 			parallel->Name = _strdup(params[1]);
 
-		if (count > 1)
+		if (count > 2)
 			parallel->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) parallel);

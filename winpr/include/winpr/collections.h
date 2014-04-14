@@ -154,10 +154,10 @@ WINPR_API void ArrayList_Clear(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_Contains(wArrayList* arrayList, void* obj);
 
 WINPR_API int ArrayList_Add(wArrayList* arrayList, void* obj);
-WINPR_API void ArrayList_Insert(wArrayList* arrayList, int index, void* obj);
+WINPR_API BOOL ArrayList_Insert(wArrayList* arrayList, int index, void* obj);
 
-WINPR_API void ArrayList_Remove(wArrayList* arrayList, void* obj);
-WINPR_API void ArrayList_RemoveAt(wArrayList* arrayList, int index);
+WINPR_API BOOL ArrayList_Remove(wArrayList* arrayList, void* obj);
+WINPR_API BOOL ArrayList_RemoveAt(wArrayList* arrayList, int index);
 
 WINPR_API int ArrayList_IndexOf(wArrayList* arrayList, void* obj, int startIndex, int count);
 WINPR_API int ArrayList_LastIndexOf(wArrayList* arrayList, void* obj, int startIndex, int count);
@@ -199,6 +199,9 @@ typedef struct _wListDictionary wListDictionary;
 #define ListDictionary_Object(_dictionary)	(&_dictionary->object)
 
 WINPR_API int ListDictionary_Count(wListDictionary* listDictionary);
+
+WINPR_API void ListDictionary_Lock(wListDictionary* listDictionary);
+WINPR_API void ListDictionary_Unlock(wListDictionary* listDictionary);
 
 WINPR_API void ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value);
 WINPR_API void* ListDictionary_Remove(wListDictionary* listDictionary, void* key);
@@ -387,7 +390,7 @@ WINPR_API int BufferPool_GetPoolSize(wBufferPool* pool);
 WINPR_API int BufferPool_GetBufferSize(wBufferPool* pool, void* buffer);
 
 WINPR_API void* BufferPool_Take(wBufferPool* pool, int bufferSize);
-WINPR_API void BufferPool_Return(wBufferPool* pool, void* buffer);
+WINPR_API BOOL BufferPool_Return(wBufferPool* pool, void* buffer);
 WINPR_API void BufferPool_Clear(wBufferPool* pool);
 
 WINPR_API wBufferPool* BufferPool_New(BOOL synchronized, int fixedSize, DWORD alignment);

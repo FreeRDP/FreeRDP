@@ -235,11 +235,7 @@ BOOL SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 
 	if (lpValue)
 	{
-		length = strlen(lpName) + strlen(lpValue) + 1;
-		envstr = (char*) malloc(length + 1);
-		sprintf_s(envstr, length + 1, "%s=%s", lpName, lpValue);
-		envstr[length] = '\0';
-		putenv(envstr);
+		setenv(lpName,lpValue,1);
 	}
 	else
 	{

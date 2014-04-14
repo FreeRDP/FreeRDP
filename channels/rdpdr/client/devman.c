@@ -38,7 +38,7 @@
 
 #include "devman.h"
 
-static void devman_device_free(DEVICE* device)
+void devman_device_free(DEVICE* device)
 {
 	IFCALL(device->Free, device);
 }
@@ -71,7 +71,8 @@ void devman_unregister_device(DEVMAN* devman, void* key)
 {
 	DEVICE* device;
 
-	device = (DEVICE *)ListDictionary_Remove(devman->devices, key);
+	device = (DEVICE*) ListDictionary_Remove(devman->devices, key);
+
 	if (device)
 		devman_device_free(device);
 }

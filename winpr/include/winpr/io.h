@@ -23,7 +23,11 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+
+#include <winioctl.h>
+
+#else
 
 #include <winpr/nt.h>
 
@@ -81,10 +85,6 @@ WINPR_API BOOL CancelSynchronousIo(HANDLE hThread);
 #ifdef __cplusplus
 }
 #endif
-
-/*
- * WinPR I/O Manager Custom API
- */
 
 #define DEVICE_TYPE ULONG
 
@@ -156,6 +156,27 @@ WINPR_API BOOL CancelSynchronousIo(HANDLE hThread);
 #define FILE_DEVICE_BIOMETRIC			0x00000044
 #define FILE_DEVICE_PMI				0x00000045
 
+#define CTL_CODE(DeviceType, Function, Method, Access) \
+	(((DeviceType) << 16) | ((Access) << 14) | ((Function) << 2) | (Method))
+
+#define DEVICE_TYPE_FROM_CTL_CODE(ctrlCode)	(((DWORD)(ctrlCode & 0xFFFF0000)) >> 16)
+
+#define METHOD_FROM_CTL_CODE(ctrlCode)		((DWORD)(ctrlCode & 3))
+
+#define METHOD_BUFFERED				0
+#define METHOD_IN_DIRECT			1
+#define METHOD_OUT_DIRECT			2
+#define METHOD_NEITHER				3
+
+#define FILE_ANY_ACCESS				0
+#define FILE_SPECIAL_ACCESS			(FILE_ANY_ACCESS)
+#define FILE_READ_ACCESS			(0x0001)
+#define FILE_WRITE_ACCESS			(0x0002)
+
+/*
+ * WinPR I/O Manager Custom API
+ */
+
 typedef HANDLE PDRIVER_OBJECT_EX;
 typedef HANDLE PDEVICE_OBJECT_EX;
 
@@ -165,6 +186,13 @@ WINPR_API NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG Devic
 WINPR_API VOID _IoDeleteDeviceEx(PDEVICE_OBJECT_EX DeviceObject);
 
 #endif
+
+/**
+ * Extended API
+ */
+
+#define ACCESS_FROM_CTL_CODE(ctrlCode)		((DWORD)((ctrlCode >> 14) & 0x3))
+#define FUNCTION_FROM_CTL_CODE(ctrlCode)	((DWORD)((ctrlCode >> 2) & 0xFFF))
 
 #endif /* WINPR_IO_H */
 
