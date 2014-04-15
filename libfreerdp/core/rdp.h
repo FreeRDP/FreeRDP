@@ -34,7 +34,6 @@
 #include "update.h"
 #include "license.h"
 #include "errinfo.h"
-#include "extension.h"
 #include "autodetect.h"
 #include "heartbeat.h"
 #include "multitransport.h"
@@ -138,7 +137,6 @@ struct rdp_rdp
 	rdpRedirection* redirection;
 	rdpSettings* settings;
 	rdpTransport* transport;
-	rdpExtension* extension;
 	rdpAutoDetect* autodetect;
 	rdpHeartbeat* heartbeat;
 	rdpMultitransport* multitransport;

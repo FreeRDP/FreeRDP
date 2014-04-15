@@ -27,7 +27,6 @@
 #include "surface.h"
 #include "transport.h"
 #include "connection.h"
-#include "extension.h"
 #include "message.h"
 
 #include <assert.h>
@@ -79,9 +78,6 @@ BOOL freerdp_connect(freerdp* instance)
 		settings->KeyboardFunctionKey = 12;
 	}
 
-	extension_load_and_init_plugins(rdp->extension);
-	extension_pre_connect(rdp->extension);
-
 	if (!status)
 	{
 		if (!connectErrorCode)
@@ -116,8 +112,6 @@ BOOL freerdp_connect(freerdp* instance)
 			if (instance->update->pcap_rfx)
 				instance->update->dump_rfx = TRUE;
 		}
-
-		extension_post_connect(rdp->extension);
 
 		IFCALLRET(instance->PostConnect, status, instance);
 		update_post_connect(instance->update);
