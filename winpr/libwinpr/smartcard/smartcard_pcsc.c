@@ -26,6 +26,7 @@
 #include <ctype.h>
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
 #include <winpr/synch.h>
 #include <winpr/library.h>
 #include <winpr/smartcard.h>
@@ -311,27 +312,58 @@ BOOL PCSC_AddReaderNameAlias(char* namePCSC, char* nameWinSCard)
 	return TRUE;
 }
 
+static int PCSC_AtoiWithLength(const char* str, int length)
+{
+	int index;
+	int value = 0;
+
+	for (index = 0; index < length; ++index)
+	{
+		if (!isdigit(str[index]))
+			return -1;
+
+		value = value * 10 + (str[index] - '0');
+	}
+
+	return value;
+}
+
 char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 {
 	int slot;
 	int index;
 	int size;
 	int length;
+	int ctoken;
+	int ntokens;
+	char *p, *q;
+	char* tokens[64][2];
 	char* nameWinSCard;
-	char *na1, *na2 = NULL;
-	char *if1, *if2 = NULL;
-	char *se1, *se2 = NULL;
-	char *in1, *in2 = NULL;
-	char *sl1, *sl2 = NULL;
 
 	/**
 	 * pcsc-lite reader name format:
-	 *
 	 * name [interface] (serial) index slot
+	 *
 	 * Athena IDProtect Key v2 [Main Interface] 00 00
 	 *
 	 * name:      Athena IDProtect Key v2
 	 * interface: Main Interface
+	 * serial:    N/A
+	 * index:     00
+	 * slot:      00
+	 *
+	 * Athena ASE IIIe 0
+	 *
+	 * name:      Athena ASE IIIe
+	 * interface: N/A
+	 * serial:    N/A
+	 * index:     0
+	 * slot:      0
+	 *
+	 * Athena ASE IIIe [CCID Bulk Interface] 00 00
+	 *
+	 * name:      Athena ASE IIIe
+	 * interface: CCID Bulk Interface
 	 * serial:    N/A
 	 * index:     00
 	 * slot:      00
@@ -346,44 +378,75 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	if (length < 10)
 		return NULL;
 
-	na1 = (char*) name;
-	na2 = (char*) &name[length - 7];
+	ntokens = 0;
+	p = q = (char*) name;
 
-	if1 = strchr(name, '[');
+	while (*p)
+	{
+		if (*p == ' ')
+		{
+			tokens[ntokens][0] = q;
+			tokens[ntokens][1] = p;
+			q = p + 1;
+			ntokens++;
+		}
 
-	if (if1)
-		if2 = strchr(if1 + 1, ']');
+		p++;
+	}
 
-	se1 = strchr(name, '(');
+	tokens[ntokens][0] = q;
+	tokens[ntokens][1] = p;
+	ntokens++;
 
-	if (se1)
-		se2 = strchr(se1 + 1, ')');
-
-	in1 = (char*) &name[length - 5];
-	in2 = (char*) &name[length - 4];
-
-	sl1 = (char*) &name[length - 2];
-	sl2 = (char*) &name[length - 1];
-
-	if (!(if1 && if2))
+	if (ntokens < 2)
 		return NULL;
 
-	if (!(isdigit(*in1) && isdigit(*in2)))
+	slot = index = -1;
+	ctoken = ntokens - 1;
+
+	slot = PCSC_AtoiWithLength(tokens[ctoken][0], (int) (tokens[ctoken][1] - tokens[ctoken][0]));
+	ctoken--;
+
+	index = PCSC_AtoiWithLength(tokens[ctoken][0], (int) (tokens[ctoken][1] - tokens[ctoken][0]));
+	ctoken--;
+
+	if (index < 0)
+	{
+		slot = -1;
+		index = slot;
+		ctoken++;
+	}
+
+	if ((index < 0) || (slot < 0))
 		return NULL;
 
-	if (!(isdigit(*sl1) && isdigit(*sl2)))
+	if (*(tokens[ctoken][1] - 1) == ')')
+	{
+		while ((*(tokens[ctoken][0]) != '(') && (ctoken > 0))
+			ctoken--;
+	}
+
+	if (ctoken < 1)
 		return NULL;
 
-	na2 = if1 - 1;
+	if (*(tokens[ctoken][1] - 1) == ']')
+	{
+		while ((*(tokens[ctoken][0]) != '[') && (ctoken > 0))
+			ctoken--;
+	}
 
-	while ((*na2 == ' ') && (na2 > na1))
-		na2--;
-	na2++;
+	if (ctoken < 1)
+		return NULL;
 
-	index = ((*in1 - 0x30) * 10) + (*in2 - 0x30);
-	slot = ((*sl1 - 0x30) * 10) + (*sl2 - 0x30);
+	ctoken--;
 
-	length = (na2 - na1);
+	if (ctoken < 1)
+		return NULL;
+
+	p = tokens[0][0];
+	q = tokens[ctoken][1];
+
+	length = (q - p);
 	size = length + 16;
 
 	nameWinSCard = (char*) malloc(size);
@@ -391,12 +454,22 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	if (!nameWinSCard)
 		return NULL;
 
-	sprintf_s(nameWinSCard, size, "%.*s %d", length, na1, index);
+	/**
+	 * pcsc-lite appears to use an index number based on all readers,
+	 * while WinSCard uses an index number based on readers of the same name.
+	 * Force an index number of 0 for now, fix later.
+	 */
+
+	index = 0;
+
+	sprintf_s(nameWinSCard, size, "%.*s %d", length, p, index);
+
+	printf("Smart Card Reader Name Alias: %s -> %s\n", p, nameWinSCard);
 
 	return nameWinSCard;
 }
 
-char* PCSC_ConvertReaderNamesToWinSCard(const char* names)
+char* PCSC_ConvertReaderNamesToWinSCard(const char* names, LPDWORD pcchReaders)
 {
 	char *p, *q;
 	int plen, qlen;
@@ -445,22 +518,23 @@ char* PCSC_ConvertReaderNamesToWinSCard(const char* names)
 			CopyMemory(q, p, qlen);
 		}
 
-		p += plen + 1;
-
 		q += qlen;
 		*q = '\0';
 		q++;
 
+		p += plen + 1;
 		plen = strlen(p);
 	}
 
 	*q = '\0';
 	q++;
 
+	*pcchReaders = (DWORD) (q - namesWinSCard);
+
 	return namesWinSCard;
 }
 
-char* PCSC_ConvertReaderNamesFromWinSCard(const char* names)
+char* PCSC_ConvertReaderNamesToPCSC(const char* names, LPDWORD pcchReaders)
 {
 	char *p, *q;
 	int plen, qlen;
@@ -513,33 +587,9 @@ char* PCSC_ConvertReaderNamesFromWinSCard(const char* names)
 	*q = '\0';
 	q++;
 
+	*pcchReaders = (DWORD) (q - namesPCSC);
+
 	return namesPCSC;
-}
-
-size_t PCSC_MultiStringLengthA(const char* msz)
-{
-	char* p = (char*) msz;
-
-	if (!p)
-		return 0;
-
-	while ((p[0] != 0) && (p[1] != 0))
-		p++;
-
-	return (p - msz) + 1;
-}
-
-size_t PCSC_MultiStringLengthW(const WCHAR* msz)
-{
-	WCHAR* p = (WCHAR*) msz;
-
-	if (!p)
-		return 0;
-
-	while ((p[0] != 0) && (p[1] != 0))
-		p++;
-
-	return (p - msz) + 1;
 }
 
 void PCSC_AddCardHandle(SCARDCONTEXT hContext, SCARDHANDLE hCard)
@@ -700,6 +750,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaders_Internal(SCARDCONTEXT hContext,
 
 	if (g_PCSC.pfnSCardListReaders)
 	{
+		char* mszReadersWinSCard = NULL;
 		BOOL pcchReadersWrapAlloc = FALSE;
 		LPSTR* pMszReaders = (LPSTR*) mszReaders;
 
@@ -735,6 +786,19 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaders_Internal(SCARDCONTEXT hContext,
 		}
 
 		status = PCSC_MapErrorCodeToWinSCard(status);
+
+		if (status == SCARD_S_SUCCESS)
+		{
+			mszReadersWinSCard = PCSC_ConvertReaderNamesToWinSCard(*pMszReaders, pcchReaders);
+
+			if (mszReadersWinSCard)
+			{
+				PCSC_SCardFreeMemory_Internal(hContext, *pMszReaders);
+
+				*pMszReaders = mszReadersWinSCard;
+				PCSC_AddMemoryBlock(hContext, *pMszReaders);
+			}
+		}
 	}
 
 	return status;
@@ -749,26 +813,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersA(SCARDCONTEXT hContext,
 
 	if (g_PCSC.pfnSCardListReaders)
 	{
-		char* mszReadersWinSCard = NULL;
-		LPSTR* pMszReaders = (LPSTR*) mszReaders;
-
 		status = PCSC_SCardListReaders_Internal(hContext, mszGroups, mszReaders, pcchReaders);
-
-		if (!status)
-		{
-			mszReadersWinSCard = PCSC_ConvertReaderNamesToWinSCard(*pMszReaders);
-
-			if (mszReadersWinSCard)
-			{
-				PCSC_SCardFreeMemory_Internal(hContext, *pMszReaders);
-
-				*pMszReaders = mszReadersWinSCard;
-				*pcchReaders = PCSC_MultiStringLengthA(*pMszReaders) + 2;
-				PCSC_AddMemoryBlock(hContext, *pMszReaders);
-			}
-		}
-
-		status = PCSC_MapErrorCodeToWinSCard(status);
 	}
 
 	PCSC_UnlockCardContext(hContext);
@@ -787,7 +832,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 	{
 		LPSTR mszGroupsA = NULL;
 		LPSTR mszReadersA = NULL;
-		char* mszReadersWinSCard = NULL;
 		LPSTR* pMszReadersA = &mszReadersA;
 
 		mszGroups = NULL; /* mszGroups is not supported by pcsc-lite */
@@ -797,26 +841,13 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 
 		status = PCSC_SCardListReaders_Internal(hContext, mszGroupsA, (LPTSTR) &mszReadersA, pcchReaders);
 
-		if (!status)
+		if (status == SCARD_S_SUCCESS)
 		{
-			mszReadersWinSCard = PCSC_ConvertReaderNamesToWinSCard(mszReadersA);
-
-			if (mszReadersWinSCard)
-			{
-				PCSC_SCardFreeMemory_Internal(hContext, *pMszReadersA);
-
-				*pMszReadersA = mszReadersWinSCard;
-				*pcchReaders = PCSC_MultiStringLengthA(*pMszReadersA) + 2;
-				PCSC_AddMemoryBlock(hContext, *pMszReadersA);
-			}
-
 			*pcchReaders = ConvertToUnicode(CP_UTF8, 0, *pMszReadersA, *pcchReaders, (WCHAR**) mszReaders, 0);
 			PCSC_AddMemoryBlock(hContext, mszReaders);
 
 			PCSC_SCardFreeMemory_Internal(hContext, *pMszReadersA);
 		}
-
-		status = PCSC_MapErrorCodeToWinSCard(status);
 
 		free(mszGroupsA);
 	}
@@ -1467,14 +1498,13 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 
 		status = PCSC_MapErrorCodeToWinSCard(status);
 
-		mszReaderNamesPCSC = PCSC_ConvertReaderNamesToWinSCard(*pMszReaderNames);
+		mszReaderNamesPCSC = PCSC_ConvertReaderNamesToPCSC(*pMszReaderNames, pcchReaderLen);
 
 		if (mszReaderNamesPCSC)
 		{
 			PCSC_SCardFreeMemory_Internal(hContext, *pMszReaderNames);
 
 			*pMszReaderNames = mszReaderNamesPCSC;
-			*pcchReaderLen = PCSC_MultiStringLengthA(*pMszReaderNames) + 2;
 			PCSC_AddMemoryBlock(hContext, *pMszReaderNames);
 		}
 
