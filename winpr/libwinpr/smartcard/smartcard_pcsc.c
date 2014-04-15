@@ -1556,7 +1556,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard,
 			 * Query the current protocol and use default SCARD_IO_REQUEST for it.
 			 */
 
-			status = SCardStatusA(hCard, NULL, &cchReaderLen, &dwState, &dwProtocol, NULL, &cbAtrLen);
+			status = g_PCSC.pfnSCardStatus(hCard, NULL, &cchReaderLen, &dwState, &dwProtocol, NULL, &cbAtrLen);
 
 			if (status == SCARD_S_SUCCESS)
 			{
@@ -1760,6 +1760,25 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 						*pcbAttrLen = length;
 					}
 				}
+			}
+		}
+		else if (dwAttrId == SCARD_ATTR_CURRENT_PROTOCOL_TYPE)
+		{
+			DWORD dwState = 0;
+			DWORD cbAtrLen = 0;
+			DWORD dwProtocol = 0;
+			DWORD cchReaderLen = 0;
+
+			status = g_PCSC.pfnSCardStatus(hCard, NULL, &cchReaderLen, &dwState, &dwProtocol, NULL, &cbAtrLen);
+
+			if (status == SCARD_S_SUCCESS)
+			{
+				LPDWORD pdwProtocol = (LPDWORD) pbAttr;
+
+				if (cbAttrLen < 4)
+					return SCARD_E_INSUFFICIENT_BUFFER;
+
+				*pdwProtocol = dwProtocol;
 			}
 		}
 	}
