@@ -34,6 +34,9 @@
 #define PCSC_SCARD_PROTOCOL_RAW		0x00000004
 #define PCSC_SCARD_PROTOCOL_T15		0x00000008
 
+#define PCSC_MAX_BUFFER_SIZE		264
+#define PCSC_MAX_BUFFER_SIZE_EXTENDED	(4 + 3 + (1 << 16) + 3 + 2)
+
 struct _PCSCFunctionTable
 {
 	LONG (* pfnSCardEstablishContext)(DWORD dwScope, LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);

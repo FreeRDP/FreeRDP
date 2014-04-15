@@ -162,6 +162,11 @@ DWORD PCSC_ConvertProtocolsFromWinSCard(DWORD dwProtocols)
 		dwProtocols &= ~SCARD_PROTOCOL_DEFAULT;
 	}
 
+	if (dwProtocols == SCARD_PROTOCOL_UNDEFINED)
+	{
+		dwProtocols = SCARD_PROTOCOL_Tx;
+	}
+
 	return dwProtocols;
 }
 
@@ -471,10 +476,8 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 
 char* PCSC_ConvertReaderNamesToWinSCard(const char* names, LPDWORD pcchReaders)
 {
+	int length;
 	char *p, *q;
-	int plen, qlen;
-	int count = 0;
-	int total = 0;
 	DWORD cchReaders;
 	char* nameWinSCard;
 	char* namesWinSCard;
@@ -498,17 +501,17 @@ char* PCSC_ConvertReaderNamesToWinSCard(const char* names, LPDWORD pcchReaders)
 		{
 			PCSC_AddReaderNameAlias(p, nameWinSCard);
 
-			qlen = strlen(nameWinSCard);
-			CopyMemory(q, nameWinSCard, qlen);
+			length = strlen(nameWinSCard);
+			CopyMemory(q, nameWinSCard, length);
 			free(nameWinSCard);
 		}
 		else
 		{
-			qlen = strlen(p);
-			CopyMemory(q, p, qlen);
+			length = strlen(p);
+			CopyMemory(q, p, length);
 		}
 
-		q += qlen;
+		q += length;
 		*q = '\0';
 		q++;
 
@@ -525,10 +528,8 @@ char* PCSC_ConvertReaderNamesToWinSCard(const char* names, LPDWORD pcchReaders)
 
 char* PCSC_ConvertReaderNamesToPCSC(const char* names, LPDWORD pcchReaders)
 {
+	int length;
 	char *p, *q;
-	int plen, qlen;
-	int count = 0;
-	int total = 0;
 	char* namePCSC;
 	char* namesPCSC;
 	DWORD cchReaders;
@@ -551,10 +552,10 @@ char* PCSC_ConvertReaderNamesToPCSC(const char* names, LPDWORD pcchReaders)
 		if (!namePCSC)
 			namePCSC = p;
 
-		qlen = strlen(namePCSC);
-		CopyMemory(q, namePCSC, qlen);
+		length = strlen(namePCSC);
+		CopyMemory(q, namePCSC, length);
 
-		q += qlen;
+		q += length;
 		*q = '\0';
 		q++;
 
@@ -1263,7 +1264,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectA(SCARDCONTEXT hContext,
 	{
 		status = PCSC_SCardConnect_Internal(hContext, szReader, dwShareMode,
 				dwPreferredProtocols, phCard, pdwActiveProtocol);
-		status = PCSC_MapErrorCodeToWinSCard(status);
 	}
 
 	PCSC_UnlockCardContext(hContext);
@@ -1289,7 +1289,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext,
 
 		status = PCSC_SCardConnect_Internal(hContext, szReaderA, dwShareMode,
 				dwPreferredProtocols, phCard, pdwActiveProtocol);
-		status = PCSC_MapErrorCodeToWinSCard(status);
 
 		free(szReaderA);
 	}
@@ -1660,6 +1659,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 	if (*pcbAttrLen == SCARD_AUTOALLOCATE)
 		attrAutoAlloc = TRUE;
 
+	if (*pcbAttrLen > PCSC_MAX_BUFFER_SIZE)
+		*pcbAttrLen = PCSC_MAX_BUFFER_SIZE;
+
 	hContext = PCSC_GetCardContextFromHandle(hCard);
 
 	status = PCSC_SCardGetAttrib_Internal(hCard, dwAttrId, pbAttr, pcbAttrLen);
@@ -1679,7 +1681,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 				*pcbAttrLen = strlen((char*) pbAttr);
 		}
 	}
-	else if (status == SCARD_E_UNSUPPORTED_FEATURE)
+	else
 	{
 		if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_A)
 		{
@@ -1690,7 +1692,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 			status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_W,
 					(LPBYTE) &pbAttrW, pcbAttrLen);
 
-			if (status)
+			if (status == SCARD_S_SUCCESS)
 			{
 				int length;
 				char* pbAttrA = NULL;
@@ -1730,7 +1732,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 			status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A,
 					(LPBYTE) &pbAttrA, pcbAttrLen);
 
-			if (status)
+			if (status == SCARD_S_SUCCESS)
 			{
 				int length;
 				WCHAR* pbAttrW = NULL;
