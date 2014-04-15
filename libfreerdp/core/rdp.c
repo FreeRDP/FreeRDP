@@ -1226,10 +1226,12 @@ rdpRdp* rdp_new(rdpContext* context)
 	if (context->instance)
 		context->instance->settings = rdp->settings;
 
-	rdp->extension = extension_new(context->instance);
-	if (!rdp->extension)
-		goto out_free_settings;
-
+	if (context->instance)
+	{
+		rdp->extension = extension_new(context->instance);
+		if (!rdp->extension)
+			goto out_free_settings;
+	}
 	rdp->transport = transport_new(rdp->settings);
 	if (!rdp->transport)
 		goto out_free_extension;
