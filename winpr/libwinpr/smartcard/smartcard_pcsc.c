@@ -1446,17 +1446,23 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 				}
 
 				status = g_PCSC.pfnSCardStatus(hCard,
-						mszReaderNames, pcchReaderLen,
+						*pMszReaderNames, pcchReaderLen,
 						pdwState, pdwProtocol,
 						pbAtr, pcbAtrLen);
 
 				if (status != SCARD_S_SUCCESS)
 				{
 					if (pcchReaderLenWrapAlloc)
+					{
 						free(*pMszReaderNames);
+						*pMszReaderNames = NULL;
+					}
 
 					if (pcbAtrLenWrapAlloc)
+					{
 						free(*pPbAtr);
+						*pPbAtr = NULL;
+					}
 				}
 				else
 				{
@@ -1659,6 +1665,11 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 	if (*pcbAttrLen == SCARD_AUTOALLOCATE)
 		attrAutoAlloc = TRUE;
 
+	/**
+	 * pcsc-lite returns SCARD_E_INSUFFICIENT_BUFFER if the given
+	 * buffer size is larger than PCSC_MAX_BUFFER_SIZE (264)
+	 */
+
 	if (*pcbAttrLen > PCSC_MAX_BUFFER_SIZE)
 		*pcbAttrLen = PCSC_MAX_BUFFER_SIZE;
 
@@ -1780,6 +1791,90 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 
 				*pdwProtocol = dwProtocol;
 			}
+		}
+		else if (dwAttrId == SCARD_ATTR_VENDOR_IFD_TYPE)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_CHANNEL_ID)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_DEFAULT_CLK)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_DEFAULT_DATA_RATE)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_MAX_CLK)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_MAX_DATA_RATE)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_MAX_IFSD)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_CHARACTERISTICS)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_DEVICE_SYSTEM_NAME_A)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_DEVICE_UNIT)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_POWER_MGMT_SUPPORT)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_CURRENT_CLK)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_CURRENT_F)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_CURRENT_D)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_CURRENT_N)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_CURRENT_CWT)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_CURRENT_BWT)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_CURRENT_IFSC)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_CURRENT_EBC_ENCODING)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_CURRENT_IFSD)
+		{
+
+		}
+		else if (dwAttrId == SCARD_ATTR_ICC_TYPE_PER_ATR)
+		{
+
 		}
 	}
 
