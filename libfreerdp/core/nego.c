@@ -1139,7 +1139,13 @@ BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingToke
 BOOL nego_set_cookie(rdpNego* nego, char* cookie)
 {
 	if (nego->cookie)
+	{
 		free(nego->cookie);
+		nego->cookie = 0;
+	}
+
+	if (!cookie)
+		return TRUE;
 
 	nego->cookie = _strdup(cookie);
 	if (!nego->cookie)
