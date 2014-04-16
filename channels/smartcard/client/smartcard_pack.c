@@ -2173,8 +2173,8 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
-		Stream_Read_UINT16(s, ioRecvPci.dwProtocol); /* dwProtocol (2 bytes) */
-		Stream_Read_UINT16(s, ioRecvPci.cbExtraBytes); /* cbExtraBytes (2 bytes) */
+		Stream_Read_UINT32(s, ioRecvPci.dwProtocol); /* dwProtocol (4 bytes) */
+		Stream_Read_UINT32(s, ioRecvPci.cbExtraBytes); /* cbExtraBytes (4 bytes) */
 
 		if (ioRecvPci.cbExtraBytes > 1024)
 		{
@@ -2339,8 +2339,8 @@ UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		Stream_EnsureRemainingCapacity(s, cbExtraBytes + 16);
 		Stream_Write_UINT32(s, cbExtraBytes); /* Length (4 bytes) */
-		Stream_Write_UINT16(s, ret->pioRecvPci->dwProtocol); /* dwProtocol (2 bytes) */
-		Stream_Write_UINT16(s, cbExtraBytes); /* cbExtraBytes (2 bytes) */
+		Stream_Write_UINT32(s, ret->pioRecvPci->dwProtocol); /* dwProtocol (4 bytes) */
+		Stream_Write_UINT32(s, cbExtraBytes); /* cbExtraBytes (4 bytes) */
 		Stream_Write(s, pbExtraBytes, cbExtraBytes);
 		smartcard_pack_write_size_align(smartcard, s, cbExtraBytes, 4);
 	}
