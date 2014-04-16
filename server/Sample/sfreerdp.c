@@ -443,7 +443,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 		Stream_SetPosition(s, BytesReturned);
 
-		printf("got %d bytes\n", BytesReturned);
+		printf("got %lu bytes\n", BytesReturned);
 	}
 
 	Stream_Free(s, TRUE);
