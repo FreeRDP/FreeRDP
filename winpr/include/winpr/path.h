@@ -280,7 +280,7 @@ extern "C" {
 #endif
 
 WINPR_API char* GetKnownPath(int id);
-WINPR_API char* GetKnownSubPath(int id, char* path);
+WINPR_API char* GetKnownSubPath(int id, const char* path);
 WINPR_API char* GetCombinedPath(const char* basePath, const char* subPath);
 
 //#ifndef _WIN32
