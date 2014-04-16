@@ -1496,7 +1496,7 @@ void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetSt
 
 		szCurrentState = SCardGetReaderStateString(rgReaderState->dwCurrentState);
 		szEventState = SCardGetReaderStateString(rgReaderState->dwEventState);
-		rgbAtr = winpr_BinToHexString(rgReaderState->rgbAtr, rgReaderState->cbAtr, FALSE);
+		rgbAtr = winpr_BinToHexString((BYTE*) &(rgReaderState->rgbAtr), rgReaderState->cbAtr, FALSE);
 
 		WLog_Print(smartcard->log, WLOG_DEBUG,
 			"\t[%d]: dwCurrentState: %s (0x%08X)",

@@ -337,7 +337,7 @@ static UINT32 smartcard_GetStatusChangeA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		ret.rgReaderStates[index].dwCurrentState = call.rgReaderStates[index].dwCurrentState;
 		ret.rgReaderStates[index].dwEventState = call.rgReaderStates[index].dwEventState;
 		ret.rgReaderStates[index].cbAtr = call.rgReaderStates[index].cbAtr;
-		CopyMemory(&ret.rgReaderStates[index].rgbAtr, &call.rgReaderStates[index].rgbAtr, 32);
+		CopyMemory(&(ret.rgReaderStates[index].rgbAtr), &(call.rgReaderStates[index].rgbAtr), 32);
 	}
 
 	smartcard_trace_get_status_change_return(smartcard, &ret, FALSE);
@@ -395,7 +395,7 @@ static UINT32 smartcard_GetStatusChangeW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		ret.rgReaderStates[index].dwCurrentState = call.rgReaderStates[index].dwCurrentState;
 		ret.rgReaderStates[index].dwEventState = call.rgReaderStates[index].dwEventState;
 		ret.rgReaderStates[index].cbAtr = call.rgReaderStates[index].cbAtr;
-		CopyMemory(&ret.rgReaderStates[index].rgbAtr, &call.rgReaderStates[index].rgbAtr, 32);
+		CopyMemory(&(ret.rgReaderStates[index].rgbAtr), &(call.rgReaderStates[index].rgbAtr), 32);
 	}
 
 	smartcard_trace_get_status_change_return(smartcard, &ret, TRUE);
