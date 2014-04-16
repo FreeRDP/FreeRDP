@@ -206,7 +206,7 @@ char* http_encode_authorization_line(char* AuthScheme, char* AuthParam)
 	char* line;
 	int length;
 
-	length = strlen("Authorization") + strlen(AuthScheme) + strlen(AuthParam) + 3;
+	length = strlen("Authorization: ") + strlen(AuthScheme) + 1 + strlen(AuthParam);
 	line = (char*) malloc(length + 1);
 	if (!line)
 		return NULL;
@@ -369,23 +369,19 @@ BOOL http_response_parse_header_field(HttpResponse* http_response, char* name, c
 	{
 		char* separator;
 
-		separator = strstr(value, "=\"");
-
-		if (separator != NULL)
-		{
-			/* WWW-Authenticate: parameter with spaces="value" */
-			return FALSE;
-		}
-
 		separator = strchr(value, ' ');
 
 		if (separator != NULL)
 		{
-			/* WWW-Authenticate: NTLM base64token */
-
+			/*
+			 * WWW-Authenticate: Basic realm="<realm>"
+			 * WWW-Authenticate: NTLM <base64token>
+			 */
 			*separator = '\0';
 			http_response->AuthScheme = _strdup(value);
 			http_response->AuthParam = _strdup(separator + 1);
+			if (!http_response->AuthScheme || !http_response->AuthParam)
+				return FALSE;
 			*separator = ' ';
 
 			return TRUE;

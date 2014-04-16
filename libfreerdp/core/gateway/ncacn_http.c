@@ -99,7 +99,8 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
 
 	http_response = http_response_recv(rpc->TlsIn);
 
-	if (http_response->AuthParam)
+	if (http_response->AuthScheme && (_stricmp(http_response->AuthScheme, "ntlm") == 0) &&
+			http_response->AuthParam)
 	{
 		ntlm_token_data = NULL;
 		crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
@@ -231,7 +232,9 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 	http_response = http_response_recv(rpc->TlsOut);
 
 	ntlm_token_data = NULL;
-	if (http_response && http_response->AuthParam)
+	if (http_response &&
+			http_response->AuthScheme && (_stricmp(http_response->AuthScheme, "ntlm") == 0) &&
+			http_response->AuthParam)
 	{
 		crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
 				&ntlm_token_data, &ntlm_token_length);
