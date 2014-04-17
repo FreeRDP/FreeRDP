@@ -988,6 +988,7 @@ int transport_check_fds(rdpTransport* transport)
 			return status;
 
 		Stream_SetPosition(transport->ReceiveBuffer, 0);
+		length = 0;
 
 		if (transport->NlaMode)
 		{
