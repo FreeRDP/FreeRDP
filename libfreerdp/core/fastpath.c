@@ -910,7 +910,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		BYTE* pDstData = NULL;
 		UINT32 compressionFlags = 0;
 		BYTE pad = 0;
-		BYTE* pSignature;
+		BYTE* pSignature = NULL;
 
 		fpUpdatePduHeader.action = 0;
 		fpUpdatePduHeader.secFlags = 0;

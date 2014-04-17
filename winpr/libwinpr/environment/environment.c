@@ -24,6 +24,7 @@
 #endif
 
 #include <winpr/environment.h>
+#include <winpr/error.h>
 
 #ifndef _WIN32
 
@@ -151,7 +152,10 @@ DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 	env = getenv(lpName);
 
 	if (!env)
+	{
+		SetLastError(ERROR_ENVVAR_NOT_FOUND);
 		return 0;
+	}
 
 	length = strlen(env);
 
@@ -227,19 +231,18 @@ DWORD GetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
 
 BOOL SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 {
-	int length;
-	char* envstr;
-
 	if (!lpName)
 		return FALSE;
 
 	if (lpValue)
 	{
-		setenv(lpName,lpValue,1);
+		if (0 != setenv(lpName,lpValue,1))
+			return FALSE;
 	}
 	else
 	{
-		unsetenv(lpName);
+		if (0 != unsetenv(lpName))
+			return FALSE;
 	}
 
 	return TRUE;

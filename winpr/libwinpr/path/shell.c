@@ -258,7 +258,7 @@ char* GetKnownPath(int id)
 	return path;
 }
 
-char* GetKnownSubPath(int id, char* path)
+char* GetKnownSubPath(int id, const char* path)
 {
 	char* subPath;
 	char* knownPath;
