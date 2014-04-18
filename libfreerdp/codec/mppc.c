@@ -512,17 +512,17 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE* pDst
 		MatchIndex = MPPC_MATCH_INDEX(Sym1, Sym2, Sym3);
 		MatchPtr = &(HistoryBuffer[mppc->MatchBuffer[MatchIndex]]);
 
-		if (MatchPtr != &HistoryPtr[-1])
+		if (MatchPtr != (HistoryPtr - 1))
 			mppc->MatchBuffer[MatchIndex] = (UINT16) (HistoryPtr - HistoryBuffer);
 
 		if (mppc->HistoryPtr < HistoryPtr)
 			mppc->HistoryPtr = HistoryPtr;
 
-		if ((Sym1 != MatchPtr[-1]) || (Sym2 != MatchPtr[0]) || (Sym3 != MatchPtr[1]) ||
+		if ((Sym1 != *(MatchPtr - 1)) || (Sym2 != MatchPtr[0]) || (Sym3 != MatchPtr[1]) ||
 				(&MatchPtr[1] > mppc->HistoryPtr) || (MatchPtr == HistoryBuffer) ||
-				(MatchPtr == &HistoryPtr[-1]) || (MatchPtr == HistoryPtr))
+				(MatchPtr == (HistoryPtr - 1)) || (MatchPtr == HistoryPtr))
 		{
-			if (((bs->position / 8) + 2) > (SrcSize - 1))
+			if ((((bs->position + 7) / 8) + 2) > (*pDstSize - 1))
 			{
 				*pFlags |= PACKET_FLUSHED;
 				ZeroMemory(HistoryBuffer, HistoryBufferSize);
@@ -573,7 +573,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE* pDst
 
 			/* Encode CopyOffset */
 
-			if (((bs->position / 8) + 7) > (SrcSize - 1))
+			if ((((bs->position + 7) / 8) + 7) > (*pDstSize - 1))
 			{
 				*pFlags = PACKET_FLUSHED;
 				ZeroMemory(HistoryBuffer, HistoryBufferSize);
@@ -729,7 +729,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE* pDst
 
 	while (pSrcPtr <= pSrcEnd)
 	{
-		if (((bs->position / 8) + 2) > (SrcSize - 1))
+		if ((((bs->position + 7) / 8) + 2) > (*pDstSize - 1))
 		{
 			*pFlags |= PACKET_FLUSHED;
 			ZeroMemory(HistoryBuffer, HistoryBufferSize);
