@@ -5,6 +5,7 @@ set(MODULE_PREFIX "TEST_COMM")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
+	TestCommDevice.c
 	TestCommConfig.c
 	TestCommMonitor.c)
 
@@ -17,7 +18,7 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-comm winpr-crt)
+	MODULES winpr-comm winpr-crt winpr-file)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

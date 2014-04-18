@@ -3,6 +3,7 @@
  * Serial Communication API
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,6 +199,7 @@
 #define RTS_CONTROL_HANDSHAKE	0x02
 #define RTS_CONTROL_TOGGLE	0x03
 
+// http://msdn.microsoft.com/en-us/library/windows/desktop/aa363214%28v=vs.85%29.aspx
 typedef struct _DCB
 {
 	DWORD DCBlength;
@@ -334,11 +336,42 @@ WINPR_API BOOL TransmitCommChar(HANDLE hFile, char cChar);
 
 WINPR_API BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOverlapped);
 
+#ifdef UNICODE
+#define BuildCommDCB		BuildCommDCBW
+#define BuildCommDCBAndTimeouts	BuildCommDCBAndTimeoutsW
+#define CommConfigDialog	CommConfigDialogW
+#define GetDefaultCommConfig	GetDefaultCommConfigW
+#define SetDefaultCommConfig	SetDefaultCommConfigW
+#else
+#define BuildCommDCB		BuildCommDCBA
+#define BuildCommDCBAndTimeouts BuildCommDCBAndTimeoutsA
+#define CommConfigDialog	CommConfigDialogA
+#define GetDefaultCommConfig	GetDefaultCommConfigA
+#define SetDefaultCommConfig	SetDefaultCommConfigA
+#endif
+
+/* Extended API */
+
+/*
+ * About DefineCommDevice() / QueryDosDevice()
+ *
+ * Did something close to QueryDosDevice() and DefineDosDevice() but with
+ * folowing constraints:
+ *   - mappings are stored in a static wHashTable (thread safe)
+ *   - QueryCommDevice returns only the mappings that have been defined through DefineCommDevice()
+ */
+WINPR_API BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTargetPath);
+WINPR_API DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
+WINPR_API BOOL IsCommDevice(LPCTSTR lpDeviceName);
+
+WINPR_API HANDLE _CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+				  DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* _WIN32 */
 
 #endif /* WINPR_COMM_H */
 
