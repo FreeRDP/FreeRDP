@@ -58,7 +58,7 @@
  * the last instance is closed, the named pipe handle is removed from the list.
  */
 
-static wArrayList* g_BaseNamedPipeList;
+static wArrayList* g_BaseNamedPipeList = NULL;
 
 static BOOL g_Initialized = FALSE;
 
