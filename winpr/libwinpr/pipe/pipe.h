@@ -23,6 +23,7 @@
 #ifndef _WIN32
 
 #include <winpr/pipe.h>
+#include <winpr/collections.h>
 
 #include "../handle/handle.h"
 
@@ -34,11 +35,13 @@ struct winpr_pipe
 };
 typedef struct winpr_pipe WINPR_PIPE;
 
+typedef struct winpr_named_pipe WINPR_NAMED_PIPE;
+
 struct winpr_named_pipe
 {
 	WINPR_HANDLE_DEF();
 
-	struct winpr_named_pipe* pBaseNamedPipe;
+	WINPR_NAMED_PIPE* pBaseNamedPipe;
 
 	DWORD dwRefCount;
 
@@ -59,7 +62,16 @@ struct winpr_named_pipe
 	DWORD dwFlagsAndAttributes;
 	LPOVERLAPPED lpOverlapped;
 };
-typedef struct winpr_named_pipe WINPR_NAMED_PIPE;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+wArrayList* WinPR_GetBaseNamedPipeList();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

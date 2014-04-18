@@ -25,7 +25,6 @@
 #include <winpr/path.h>
 #include <winpr/synch.h>
 #include <winpr/handle.h>
-#include <winpr/collections.h>
 
 #include <winpr/pipe.h>
 
@@ -59,17 +58,22 @@
  * the last instance is closed, the named pipe handle is removed from the list.
  */
 
-wArrayList* WinPR_NamedPipeBaseInstances;
+static wArrayList* g_BaseNamedPipeList;
+
+static BOOL g_Initialized = FALSE;
 
 static void InitWinPRPipeModule()
 {
-	static BOOL bInitialized = FALSE;
+	if (g_Initialized) return;
 
-	if (bInitialized) return;
+	g_BaseNamedPipeList = ArrayList_New(TRUE);
 
-	WinPR_NamedPipeBaseInstances = ArrayList_New(TRUE);
+	g_Initialized = TRUE;
+}
 
-	bInitialized = TRUE;
+wArrayList* WinPR_GetBaseNamedPipeList()
+{
+	return g_BaseNamedPipeList;
 }
 
 
@@ -141,17 +145,17 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	/* Find the base named pipe instance (i.e., the first instance). */
 	pBaseNamedPipe = NULL;
 
-	ArrayList_Lock(WinPR_NamedPipeBaseInstances);
-	for (index = 0; index < ArrayList_Count(WinPR_NamedPipeBaseInstances); index++)
+	ArrayList_Lock(g_BaseNamedPipeList);
+	for (index = 0; index < ArrayList_Count(g_BaseNamedPipeList); index++)
 	{
-		WINPR_NAMED_PIPE* p = (WINPR_NAMED_PIPE*) ArrayList_GetItem(WinPR_NamedPipeBaseInstances, index);
+		WINPR_NAMED_PIPE* p = (WINPR_NAMED_PIPE*) ArrayList_GetItem(g_BaseNamedPipeList, index);
 		if (strcmp(p->name, lpName) == 0)
 		{
 			pBaseNamedPipe = p;
 			break;
 		}
 	}
-	ArrayList_Unlock(WinPR_NamedPipeBaseInstances);
+	ArrayList_Unlock(g_BaseNamedPipeList);
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) malloc(sizeof(WINPR_NAMED_PIPE));
 	hNamedPipe = (HANDLE) pNamedPipe;
@@ -226,9 +230,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 		UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
 
 		/* Add the named pipe to the list of base named pipe instances. */
-		ArrayList_Lock(WinPR_NamedPipeBaseInstances);
-		ArrayList_Add(WinPR_NamedPipeBaseInstances, pNamedPipe);
-		ArrayList_Unlock(WinPR_NamedPipeBaseInstances);
+		ArrayList_Add(g_BaseNamedPipeList, pNamedPipe);
 	}
 	else
 	{
