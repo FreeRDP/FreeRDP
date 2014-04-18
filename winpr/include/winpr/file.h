@@ -311,9 +311,22 @@ WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecu
 #define CreateDirectory		CreateDirectoryA
 #endif
 
-#endif
 
 /* Extra Functions */
+
+typedef BOOL (*pcIsHandled)(LPCSTR lpFileName);
+typedef HANDLE (*pcCreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+				DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+
+typedef struct _HANDLE_CREATOR
+{
+	pcIsHandled IsHandled;
+	pcCreateFileA CreateFileA;
+} HANDLE_CREATOR, *PHANDLE_CREATOR, *LPHANDLE_CREATOR;
+
+BOOL RegisterHandleCreator(PHANDLE_CREATOR pHandleCreator);
+
+#endif /* _WIN32 */
 
 #define WILDCARD_STAR		0x00000001
 #define WILDCARD_QM		0x00000002

@@ -364,8 +364,13 @@ WINPR_API BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTST
 WINPR_API DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
 WINPR_API BOOL IsCommDevice(LPCTSTR lpDeviceName);
 
-WINPR_API HANDLE _CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-				  DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+/**
+ * A handle can only be created on defined devices with DefineCommDevice(). This
+ * also ensures that CommCreateFileA() has been registered through
+ * RegisterHandleCreator().
+ */
+WINPR_API HANDLE CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+				 DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 
 #ifdef __cplusplus
 }

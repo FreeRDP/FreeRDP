@@ -28,6 +28,7 @@
 #include <winpr/error.h>
 #include <winpr/handle.h>
 #include <winpr/platform.h>
+#include <winpr/collections.h>
 
 #include <winpr/file.h>
 
@@ -185,6 +186,50 @@
 
 #include "../pipe/pipe.h"
 
+/* TODO: FIXME: use of a wArrayList and split winpr-utils with
+ * winpr-collections to avoid circular dependencies 
+ * _HandleCreators = ArrayList_New(TRUE);
+ */
+static HANDLE_CREATOR **_HandleCreators = NULL;
+
+#define HANDLE_CREATOR_MAX 128
+
+static void _HandleCreatorsInit()
+{
+	/* 
+	 * TMP: FIXME: What kind of mutex should be used here? use of
+	 * a module_init()?
+	 */ 
+
+	if (_HandleCreators == NULL)
+	{
+		_HandleCreators = (HANDLE_CREATOR**)calloc(HANDLE_CREATOR_MAX+1, sizeof(HANDLE_CREATOR));
+	}
+}
+
+/**
+ * Returns TRUE on success, FALSE otherwise.
+ *
+ * ERRORS:
+ *   ERROR_INSUFFICIENT_BUFFER _HandleCreators full
+ */
+BOOL RegisterHandleCreator(PHANDLE_CREATOR pHandleCreator)
+{
+	int i;
+	for (i=0; i<HANDLE_CREATOR_MAX; i++)
+	{
+		if (_HandleCreators[i] == NULL)
+		{
+			_HandleCreators[i] = pHandleCreator;
+			return TRUE;
+		}
+	}
+
+	SetLastError(ERROR_INSUFFICIENT_BUFFER);
+	return FALSE;
+}
+
+
 #ifdef HAVE_AIO_H
 
 static BOOL g_AioSignalHandlerInstalled = FALSE;
@@ -214,7 +259,7 @@ int InstallAioSignalHandler()
 	return 0;
 }
 
-#endif
+#endif /* HAVE_AIO_H */
 
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
@@ -228,14 +273,25 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	if (!lpFileName)
 		return INVALID_HANDLE_VALUE;
 
-	/* TMP: TODO: */
-	/* if (IsCommDevice(lpFileName)) */
-	/* { */
-	/* 	return _CommCreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,  */
-	/* 				dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile); */
-	/* } */
+	_HandleCreatorsInit();
+	if (_HandleCreators != NULL)
+	{
+		int i;
+		for (i=0; _HandleCreators[i] != NULL; i++)
+		{
+			HANDLE_CREATOR *creator = (HANDLE_CREATOR*)_HandleCreators[i];
+			if (creator && creator->IsHandled(lpFileName))
+			{
+				return creator->CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
+							    dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+			}
+		}
+	}
 
-	/* FIXME: at this point lpFileName is not necessary a named pipe */
+	/* * */
+
+	if (!IsNamedPipeFileNameA(lpFileName))
+		return INVALID_HANDLE_VALUE;
 
 	name = GetNamedPipeNameWithoutPrefixA(lpFileName);
 

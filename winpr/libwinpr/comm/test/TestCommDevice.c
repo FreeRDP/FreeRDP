@@ -67,7 +67,7 @@ static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 			return FALSE;
 		}
 
-		if (lpTargetPath[_tcslen(lpTargetPath) + 1] != NULL)
+		if (lpTargetPath[_tcslen(lpTargetPath) + 1] != 0)
 		{
 			_tprintf(_T("QueryCommDevice failure: device name: %s, the second NULL character is missing at the end of the buffer\n"), lpDeviceName);
 			return FALSE;
@@ -91,25 +91,25 @@ static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 int TestCommDevice(int argc, char* argv[])
 {
 	if (!test_CommDevice(_T("COM0"), FALSE))
-		return 1;
+		return EXIT_FAILURE;
 
 	if (!test_CommDevice(_T("COM1"), TRUE))
-		return 1;
+		return EXIT_FAILURE;
 
 	if (!test_CommDevice(_T("COM1"), TRUE))
-		return 1;
+		return EXIT_FAILURE;
 
 	if (!test_CommDevice(_T("COM10"), FALSE))
-		return 1;
+		return EXIT_FAILURE;
 
 	if (!test_CommDevice(_T("\\\\.\\COM5"), TRUE))
-		return 1;
+		return EXIT_FAILURE;
 
 	if (!test_CommDevice(_T("\\\\.\\COM10"), TRUE))
-		return 1;
+		return EXIT_FAILURE;
 
 	if (!test_CommDevice(_T("\\\\.COM10"), FALSE))
-		return 1;
+		return EXIT_FAILURE;
 
 	return 0;
 }

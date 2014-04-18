@@ -276,6 +276,8 @@ BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOverlapped)
  */
 static wHashTable *_CommDevices = NULL;
 
+static HANDLE_CREATOR *_CommHandleCreator = NULL;
+
 static int deviceNameCmp(void* pointer1, void* pointer2)
 {
 	return _tcscmp(pointer1, pointer2);
@@ -318,6 +320,12 @@ static void _CommDevicesInit()
 		_CommDevices->hashFunction = HashTable_StringHashFunctionA; /* TMP: FIXME: need of a HashTable_StringHashFunctionW */
 		_CommDevices->keyDeallocator = free;
 		_CommDevices->valueDeallocator = free;
+
+		_CommHandleCreator = (HANDLE_CREATOR*)malloc(sizeof(HANDLE_CREATOR));
+		_CommHandleCreator->IsHandled = IsCommDevice;
+		_CommHandleCreator->CreateFileA = CommCreateFileA;
+
+		RegisterHandleCreator(_CommHandleCreator);
 	}
 }
 
@@ -490,8 +498,8 @@ BOOL IsCommDevice(LPCTSTR lpDeviceName)
 }
 
 
-HANDLE _CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-			DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+HANDLE CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+		       DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	HANDLE hComm;
 	WINPR_COMM* pComm;
