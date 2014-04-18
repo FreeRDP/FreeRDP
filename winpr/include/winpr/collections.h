@@ -197,6 +197,7 @@ struct _wListDictionary
 };
 typedef struct _wListDictionary wListDictionary;
 
+#define ListDictionary_KeyObject(_dictionary)	(&_dictionary->objectKey)
 #define ListDictionary_ValueObject(_dictionary)	(&_dictionary->objectValue)
 
 WINPR_API int ListDictionary_Count(wListDictionary* listDictionary);
