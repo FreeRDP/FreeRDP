@@ -192,18 +192,19 @@ struct _wListDictionary
 	CRITICAL_SECTION lock;
 
 	wListDictionaryItem* head;
-	wObject object;
+	wObject objectKey;
+	wObject objectValue;
 };
 typedef struct _wListDictionary wListDictionary;
 
-#define ListDictionary_Object(_dictionary)	(&_dictionary->object)
+#define ListDictionary_ValueObject(_dictionary)	(&_dictionary->objectValue)
 
 WINPR_API int ListDictionary_Count(wListDictionary* listDictionary);
 
 WINPR_API void ListDictionary_Lock(wListDictionary* listDictionary);
 WINPR_API void ListDictionary_Unlock(wListDictionary* listDictionary);
 
-WINPR_API void ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value);
+WINPR_API BOOL ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value);
 WINPR_API void* ListDictionary_Remove(wListDictionary* listDictionary, void* key);
 WINPR_API void* ListDictionary_Remove_Head(wListDictionary* listDictionary);
 WINPR_API void ListDictionary_Clear(wListDictionary* listDictionary);
