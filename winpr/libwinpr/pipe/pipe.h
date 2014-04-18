@@ -38,6 +38,10 @@ struct winpr_named_pipe
 {
 	WINPR_HANDLE_DEF();
 
+	struct winpr_named_pipe* pBaseNamedPipe;
+
+	DWORD dwRefCount;
+
 	int clientfd;
 	int serverfd;
 

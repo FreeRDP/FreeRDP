@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/handle.h>
+#include <winpr/collections.h>
 
 #ifndef _WIN32
 
@@ -35,6 +36,8 @@
 #endif
 
 #include "../handle/handle.h"
+
+extern wArrayList* WinPR_NamedPipeBaseInstances;
 
 BOOL CloseHandle(HANDLE hObject)
 {
@@ -167,16 +170,28 @@ BOOL CloseHandle(HANDLE hObject)
 
 		pipe = (WINPR_NAMED_PIPE*) Object;
 
-		if (pipe->clientfd != -1)
-			close(pipe->clientfd);
+		if (--pipe->dwRefCount == 0)
+		{
+			ArrayList_Lock(WinPR_NamedPipeBaseInstances);
+			ArrayList_Remove(WinPR_NamedPipeBaseInstances, pipe);
+			ArrayList_Unlock(WinPR_NamedPipeBaseInstances);
 
-		if (pipe->serverfd != -1)
-			close(pipe->serverfd);
+			if (pipe->pBaseNamedPipe)
+			{
+				CloseHandle((HANDLE) pipe->pBaseNamedPipe);
+			}
 
-		free((char *)pipe->lpFileName);
-		free((char *)pipe->lpFilePath);
-		free((char *)pipe->name);
-		free(pipe);
+			if (pipe->clientfd != -1)
+				close(pipe->clientfd);
+
+			if (pipe->serverfd != -1)
+				close(pipe->serverfd);
+
+			free((char *)pipe->lpFileName);
+			free((char *)pipe->lpFilePath);
+			free((char *)pipe->name);
+			free(pipe);
+		}
 
 		return TRUE;
 	}
