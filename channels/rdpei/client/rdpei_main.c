@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -160,8 +159,11 @@ static void* rdpei_schedule_thread(void* arg)
 	RdpeiClientContext* context = (RdpeiClientContext*) rdpei->iface.pInterface;
 	HANDLE hdl[] = {rdpei->event, rdpei->stopEvent};
 
-	assert(NULL != rdpei);
-	assert(NULL != context);
+	if (!rdpei)
+		return NULL;
+
+	if (!context)
+		return NULL;
 
 	while (1)
 	{
@@ -516,7 +518,8 @@ static int rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 
 	DEBUG_DVC("");
 
-	assert(NULL != pPlugin);
+	if (!pPlugin)
+		return -1;
 
 	SetEvent(rdpei->stopEvent);
 	EnterCriticalSection(&rdpei->lock);

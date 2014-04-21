@@ -841,7 +841,7 @@ BOOL xf_pre_connect(freerdp* instance)
 			fprintf(stderr, "--authonly, but no -p password. Please provide one.\n");
 			return FALSE;
 		}
-		fprintf(stderr, "%s:%d: Authentication only. Don't connect to X.\n", __FILE__, __LINE__);
+		fprintf(stderr, "Authentication only. Don't connect to X.\n");
 		/* Avoid XWindows initialization and configuration below. */
 		return TRUE;
 	}
@@ -1457,7 +1457,7 @@ void* xf_thread(void* param)
 	if (instance->settings->AuthenticationOnly)
 	{
 		freerdp_disconnect(instance);
-		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
+		fprintf(stderr, "Authentication only, exit status %d\n", !status);
 		ExitThread(exit_code);
 	}
 
