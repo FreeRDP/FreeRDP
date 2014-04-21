@@ -55,7 +55,7 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 
 	devman->devices = ListDictionary_New(TRUE);
 
-	ListDictionary_Object(devman->devices)->fnObjectFree =
+	ListDictionary_ValueObject(devman->devices)->fnObjectFree =
 			(OBJECT_FREE_FN) devman_device_free;
 
 	return devman;
