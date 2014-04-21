@@ -55,9 +55,6 @@ void http_context_free(HttpContext* http_context);
 
 struct _http_request
 {
-	int count;
-	char** lines;
-
 	char* Method;
 	char* URI;
 	char* AuthScheme;

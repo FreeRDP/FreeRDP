@@ -1037,7 +1037,7 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs)
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_DisconnectProviderUltimatum, length, 1);
 
-	per_write_enumerated(s, 0, 0); /* reason */
+	per_write_enumerated(s, 0x80, 0);
 
 	status = transport_write(mcs->transport, s);
 
@@ -1087,6 +1087,7 @@ void mcs_free(rdpMcs* mcs)
 {
 	if (mcs)
 	{
+		free(mcs->channels);
 		free(mcs);
 	}
 }

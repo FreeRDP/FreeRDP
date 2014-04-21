@@ -246,6 +246,9 @@ WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 		WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
 	}
 
+#define WLog_IsLevelActive(_log, _log_level) \
+	(_log_level >= WLog_GetLogLevel(_log))
+
 WINPR_API DWORD WLog_GetLogLevel(wLog* log);
 WINPR_API void WLog_SetLogLevel(wLog* log, DWORD logLevel);
 

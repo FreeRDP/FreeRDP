@@ -52,8 +52,6 @@ set(${MODULE_PREFIX}_SRCS
 	bulk.h
 	activation.c
 	activation.h
-	extension.c
-	extension.h
 	gcc.c
 	gcc.h
 	mcs.c

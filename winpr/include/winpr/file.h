@@ -335,6 +335,8 @@ WINPR_API char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName);
 WINPR_API char* GetNamedPipeUnixDomainSocketBaseFilePathA(void);
 WINPR_API char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName);
 
+WINPR_API int GetNamePipeFileDescriptor(HANDLE hNamedPipe);
+
 #ifdef __cplusplus
 }
 #endif

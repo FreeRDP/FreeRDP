@@ -93,6 +93,24 @@ BOOL ListDictionary_IsSynchronized(wListDictionary* listDictionary)
 }
 
 /**
+ * Lock access to the ListDictionary
+ */
+
+void ListDictionary_Lock(wListDictionary* listDictionary)
+{
+	EnterCriticalSection(&listDictionary->lock);
+}
+
+/**
+ * Unlock access to the ListDictionary
+ */
+
+void ListDictionary_Unlock(wListDictionary* listDictionary)
+{
+	LeaveCriticalSection(&listDictionary->lock);
+}
+
+/**
  * Methods
  */
 
@@ -416,9 +434,10 @@ wListDictionary* ListDictionary_New(BOOL synchronized)
 		listDictionary->head = NULL;
 
 		InitializeCriticalSectionAndSpinCount(&listDictionary->lock, 4000);
+
+		ZeroMemory(&(listDictionary->object), sizeof(wObject));
 	}
 
-	ZeroMemory(&listDictionary->object, sizeof(wObject));
 	return listDictionary;
 }
 

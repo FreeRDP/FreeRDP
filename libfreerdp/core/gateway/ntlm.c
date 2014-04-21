@@ -137,6 +137,8 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 	if (!ServiceClass)
 	{
 		ntlm->ServicePrincipalName = (LPTSTR) _tcsdup(hostnameX);
+		if (!ntlm->ServicePrincipalName)
+			return FALSE;
 		return TRUE;
 	}
 
@@ -147,6 +149,8 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 		return FALSE;
 
 	ntlm->ServicePrincipalName = (LPTSTR) malloc(SpnLength * sizeof(TCHAR));
+	if (!ntlm->ServicePrincipalName)
+		return FALSE;
 
 	status = DsMakeSpn(ServiceClass, hostnameX, NULL, 0, NULL, &SpnLength, ntlm->ServicePrincipalName);
 
@@ -210,6 +214,8 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 	ntlm->outputBuffer[0].BufferType = SECBUFFER_TOKEN;
 	ntlm->outputBuffer[0].cbBuffer = ntlm->cbMaxToken;
 	ntlm->outputBuffer[0].pvBuffer = malloc(ntlm->outputBuffer[0].cbBuffer);
+	if (!ntlm->outputBuffer[0].pvBuffer)
+		return FALSE;
 
 	if (ntlm->haveInputBuffer)
 	{
@@ -286,14 +292,7 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 
 rdpNtlm* ntlm_new()
 {
-	rdpNtlm* ntlm = (rdpNtlm*) malloc(sizeof(rdpNtlm));
-
-	if (ntlm != NULL)
-	{
-		ZeroMemory(ntlm, sizeof(rdpNtlm));
-	}
-
-	return ntlm;
+	return (rdpNtlm *)calloc(1, sizeof(rdpNtlm));
 }
 
 void ntlm_free(rdpNtlm* ntlm)

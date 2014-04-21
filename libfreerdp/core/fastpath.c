@@ -3,6 +3,7 @@
  * Fast Path
  *
  * Copyright 2011 Vic Lee
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +138,7 @@ UINT32 fastpath_get_update_header_size(FASTPATH_UPDATE_HEADER* fpUpdateHeader)
 	return (fpUpdateHeader->compression) ? 4 : 3;
 }
 
-void fastpath_write_update_pdu_header(wStream* s, FASTPATH_UPDATE_PDU_HEADER* fpUpdatePduHeader)
+void fastpath_write_update_pdu_header(wStream* s, FASTPATH_UPDATE_PDU_HEADER* fpUpdatePduHeader, rdpRdp* rdp)
 {
 	fpUpdatePduHeader->fpOutputHeader = 0;
 	fpUpdatePduHeader->fpOutputHeader |= (fpUpdatePduHeader->action & 0x03);
@@ -147,18 +148,25 @@ void fastpath_write_update_pdu_header(wStream* s, FASTPATH_UPDATE_PDU_HEADER* fp
 
 	Stream_Write_UINT8(s, 0x80 | (fpUpdatePduHeader->length >> 8)); /* length1 */
 	Stream_Write_UINT8(s, fpUpdatePduHeader->length & 0xFF); /* length2 */
-}
-
-UINT32 fastpath_get_update_pdu_header_size(FASTPATH_UPDATE_PDU_HEADER* fpUpdatePduHeader)
-{
-	UINT32 size = 1;
-
-	size += 2;
 
 	if (fpUpdatePduHeader->secFlags)
 	{
-		size += 4;
-		size += 8;
+		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			Stream_Write(s, fpUpdatePduHeader->fipsInformation, 4);
+		Stream_Write(s, fpUpdatePduHeader->dataSignature, 8);
+	}
+}
+
+UINT32 fastpath_get_update_pdu_header_size(FASTPATH_UPDATE_PDU_HEADER* fpUpdatePduHeader, rdpRdp* rdp)
+{
+	UINT32 size = 3; /* fpUpdatePduHeader + length1 + length2 */
+
+	if (fpUpdatePduHeader->secFlags)
+	{
+		size += 8; /* dataSignature */
+
+		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			size += 4; /* fipsInformation */
 	}
 
 	return size;
@@ -746,7 +754,6 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 	rdpRdp* rdp;
 	UINT16 length;
 	BYTE eventHeader;
-	int sec_bytes;
 
 	/*
 	 *  A maximum of 15 events are allowed per request
@@ -776,7 +783,48 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 
 	Stream_SetPosition(s, 0);
 	Stream_Write_UINT8(s, eventHeader);
-	sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
+
+	/* Write length later, RDP encryption might add a padding */
+	Stream_Seek(s, 2);
+
+	if (rdp->sec_flags & SEC_ENCRYPT)
+	{
+		int sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
+		BYTE* fpInputEvents = Stream_Pointer(s) + sec_bytes;
+		UINT16 fpInputEvents_length = length - 3 - sec_bytes;
+
+		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+		{
+			BYTE pad;
+
+			if ((pad = 8 - (fpInputEvents_length % 8)) == 8)
+				pad = 0;
+
+			Stream_Write_UINT16(s, 0x10); /* length */
+			Stream_Write_UINT8(s, 0x1); /* TSFIPS_VERSION 1*/
+			Stream_Write_UINT8(s, pad); /* padding */
+
+			security_hmac_signature(fpInputEvents, fpInputEvents_length, Stream_Pointer(s), rdp);
+
+			if (pad)
+				memset(fpInputEvents + fpInputEvents_length, 0, pad);
+
+			security_fips_encrypt(fpInputEvents, fpInputEvents_length + pad, rdp);
+
+			length += pad;
+		}
+		else
+		{
+			if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
+				security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE, Stream_Pointer(s));
+			else
+				security_mac_signature(rdp, fpInputEvents, fpInputEvents_length, Stream_Pointer(s));
+
+			security_encrypt(fpInputEvents, fpInputEvents_length, rdp);
+		}
+	}
+
+	rdp->sec_flags = 0;
 
 	/*
 	 * We always encode length in two bytes, even though we could use
@@ -784,25 +832,8 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 	 * because we can leave room for fixed-length header, store all
 	 * the data first and then store the header.
 	 */
+	Stream_SetPosition(s, 1);
 	Stream_Write_UINT16_BE(s, 0x8000 | length);
-
-	if (sec_bytes > 0)
-	{
-		BYTE* fpInputEvents;
-		UINT16 fpInputEvents_length;
-
-		fpInputEvents = Stream_Pointer(s) + sec_bytes;
-		fpInputEvents_length = length - 3 - sec_bytes;
-
-		if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
-			security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE, Stream_Pointer(s));
-		else
-			security_mac_signature(rdp, fpInputEvents, fpInputEvents_length, Stream_Pointer(s));
-
-		security_encrypt(fpInputEvents, fpInputEvents_length, rdp);
-	}
-
-	rdp->sec_flags = 0;
 
 	Stream_SetPosition(s, length);
 	Stream_SealLength(s);
@@ -860,6 +891,14 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		maxLength -= 20;
 	}
 
+	if (rdp->do_crypt)
+	{
+		rdp->sec_flags |= SEC_ENCRYPT;
+
+		if (rdp->do_secure_checksum)
+			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
+	}
+
 	totalLength = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 
@@ -870,6 +909,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		UINT32 DstSize = 0;
 		BYTE* pDstData = NULL;
 		UINT32 compressionFlags = 0;
+		BYTE pad = 0;
+		BYTE* pSignature = NULL;
 
 		fpUpdatePduHeader.action = 0;
 		fpUpdatePduHeader.secFlags = 0;
@@ -882,11 +923,16 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		pSrcData = pDstData = Stream_Pointer(s);
 		SrcSize = DstSize = fpUpdateHeader.size;
 
+		if (rdp->sec_flags & SEC_ENCRYPT)
+			fpUpdatePduHeader.secFlags |= FASTPATH_OUTPUT_ENCRYPTED;
+		if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
+			fpUpdatePduHeader.secFlags |= FASTPATH_OUTPUT_SECURE_CHECKSUM;
+
 		if (settings->CompressionEnabled)
 		{
 			if (bulk_compress(rdp->bulk, pSrcData, SrcSize, &pDstData, &DstSize, &compressionFlags) >= 0)
 			{
-				if (compressionFlags & PACKET_COMPRESSED)
+				if (compressionFlags)
 				{
 					fpUpdateHeader.compressionFlags = compressionFlags;
 					fpUpdateHeader.compression = FASTPATH_OUTPUT_COMPRESSION_USED;
@@ -909,16 +955,58 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			fpUpdateHeader.fragmentation = (fragment == 0) ? FASTPATH_FRAGMENT_FIRST : FASTPATH_FRAGMENT_NEXT;
 
 		fpUpdateHeaderSize = fastpath_get_update_header_size(&fpUpdateHeader);
-		fpUpdatePduHeaderSize = fastpath_get_update_pdu_header_size(&fpUpdatePduHeader);
+		fpUpdatePduHeaderSize = fastpath_get_update_pdu_header_size(&fpUpdatePduHeader, rdp);
 		fpHeaderSize = fpUpdateHeaderSize + fpUpdatePduHeaderSize;
-		fpUpdatePduHeader.length = fpUpdateHeader.size + fpHeaderSize;
+
+		if (rdp->sec_flags & SEC_ENCRYPT)
+		{
+			pSignature = Stream_Buffer(fs) + 3;
+
+			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			{
+				pSignature += 4;
+
+				if ((pad = 8 - ((DstSize + fpUpdateHeaderSize) % 8)) == 8)
+					pad = 0;
+
+				fpUpdatePduHeader.fipsInformation[0] = 0x10;
+				fpUpdatePduHeader.fipsInformation[1] = 0x00;
+				fpUpdatePduHeader.fipsInformation[2] = 0x01;
+				fpUpdatePduHeader.fipsInformation[3] = pad;
+			}
+		}
+
+		fpUpdatePduHeader.length = fpUpdateHeader.size + fpHeaderSize + pad;
 
 		Stream_SetPosition(fs, 0);
-
-		fastpath_write_update_pdu_header(fs, &fpUpdatePduHeader);
+		fastpath_write_update_pdu_header(fs, &fpUpdatePduHeader, rdp);
 		fastpath_write_update_header(fs, &fpUpdateHeader);
-
 		Stream_Write(fs, pDstData, DstSize);
+
+		if (pad)
+			Stream_Zero(fs, pad);
+
+		if (rdp->sec_flags & SEC_ENCRYPT)
+		{
+			UINT32 dataSize = fpUpdateHeaderSize + DstSize + pad;
+			BYTE *data = Stream_Pointer(fs) - dataSize;
+
+			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			{
+				security_hmac_signature(data, dataSize - pad, pSignature, rdp);
+				security_fips_encrypt(data, dataSize, rdp);
+			}
+			else
+			{
+				if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
+					security_salted_mac_signature(rdp, data, dataSize, TRUE, pSignature);
+				else
+					security_mac_signature(rdp, data, dataSize, pSignature);
+
+				security_encrypt(data, dataSize, rdp);
+			}
+		}
+
 		Stream_SealLength(fs);
 
 		if (transport_write(rdp->transport, fs) < 0)
@@ -929,6 +1017,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 		Stream_Seek(s, SrcSize);
 	}
+
+	rdp->sec_flags = 0;
 
 	return status;
 }

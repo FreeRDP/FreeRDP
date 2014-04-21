@@ -341,6 +341,8 @@ else()
 	set(X11_FEATURE_TYPE "DISABLED")
 endif()
 
+find_package(PCSCWinPR)
+
 set(X11_FEATURE_PURPOSE "X11")
 set(X11_FEATURE_DESCRIPTION "X11 client and server")
 
@@ -490,6 +492,10 @@ add_definitions("-DHAVE_CONFIG_H")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # RPATH configuration
+if(CMAKE_SKIP_RPATH)
+       set(CMAKE_SKIP_RPATH FALSE)
+       set(CMAKE_SKIP_INSTALL_RPATH TRUE)
+endif()
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)

@@ -1,12 +1,7 @@
 
 set(OPTION_DEFAULT OFF)
-set(OPTION_CLIENT_DEFAULT OFF)
+set(OPTION_CLIENT_DEFAULT ON)
 set(OPTION_SERVER_DEFAULT OFF)
-
-if(WITH_PCSC)
-	set(OPTION_CLIENT_DEFAULT ON)
-	set(OPTION_SERVER_DEFAULT OFF)
-endif()
 
 define_channel_options(NAME "smartcard" TYPE "device"
 	DESCRIPTION "Smart Card Virtual Channel Extension"

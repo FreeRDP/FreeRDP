@@ -94,7 +94,7 @@ void tf_end_paint(rdpContext* context)
 		return;
 }
 
-int tf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
+int tf_receive_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }

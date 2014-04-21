@@ -94,6 +94,8 @@ typedef HANDLE HINSTANCE;
 typedef HANDLE HMODULE;
 typedef HANDLE HWND;
 typedef HANDLE HBITMAP;
+typedef HANDLE HICON;
+typedef HANDLE HCURSOR;
 
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
@@ -144,7 +146,6 @@ typedef unsigned short USHORT;
 #define VOID void
 typedef void *PVOID, *LPVOID;
 typedef void *PVOID64, *LPVOID64;
-typedef const void *LPCVOID;
 typedef unsigned short WORD, *PWORD, *LPWORD;
 
 #if __x86_64__
@@ -161,7 +162,7 @@ typedef struct _GUID
 	UINT16 Data2;
 	UINT16 Data3;
 	BYTE Data4[8];
-} GUID, UUID, *PGUID;
+} GUID, UUID, *PGUID, *LPGUID, *LPCGUID;
 
 typedef struct _LUID
 {
@@ -312,6 +313,16 @@ typedef unsigned long error_status_t;
 #ifndef _NTDEF_
 typedef LONG NTSTATUS;
 typedef NTSTATUS *PNTSTATUS;
+#endif
+
+#ifndef _LPCBYTE_DEFINED
+#define _LPCBYTE_DEFINED
+typedef const BYTE *LPCBYTE;
+#endif
+
+#ifndef _LPCVOID_DEFINED
+#define _LPCVOID_DEFINED
+typedef const VOID *LPCVOID;
 #endif
 
 #ifndef _WIN32

@@ -25,6 +25,13 @@
 #include <freerdp/utils/debug.h>
 #include <freerdp/utils/msusb.h>
 
+#ifdef WITH_DEBUG_MSUSB
+#define DEBUG_MSUSB(fmt, ...) DEBUG_CLASS(MSUSB, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_MSUSB(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#endif
+
+
 static MSUSB_PIPE_DESCRIPTOR* msusb_mspipe_new()
 {
 	MSUSB_PIPE_DESCRIPTOR* MsPipe = (MSUSB_PIPE_DESCRIPTOR*) malloc(sizeof(MSUSB_PIPE_DESCRIPTOR));
@@ -285,7 +292,7 @@ MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(BYTE* data, UINT32 data_size, UINT3
 
 	if (lenConfiguration != 0x9 || typeConfiguration != 0x2)
 	{
-		DEBUG_MSG("%s: len and type must be 0x9 and 0x2 , but it is 0x%x and 0x%x", 
+		DEBUG_MSUSB("%s: len and type must be 0x9 and 0x2 , but it is 0x%x and 0x%x",
 			lenConfiguration, typeConfiguration);
 	}
 
