@@ -214,12 +214,14 @@ BOOL nego_tcp_connect(rdpNego* nego)
 {
 	if (!nego->tcp_connected)
 	{
-		if (nego->GatewayEnabled && nego->GatewayBypassLocal)
+		if (nego->GatewayEnabled)
 		{
-			/* Attempt a direct connection first, and then fallback to using the gateway */
-
-			transport_set_gateway_enabled(nego->transport, FALSE);
-			nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+			if (nego->GatewayBypassLocal)
+			{
+				/* Attempt a direct connection first, and then fallback to using the gateway */
+				transport_set_gateway_enabled(nego->transport, FALSE);
+				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+			}
 
 			if (!nego->tcp_connected)
 			{
