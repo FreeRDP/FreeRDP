@@ -481,8 +481,8 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 			Stream_Read(s, formatDataResponse.requestedFormatData, dataLen);
 		}
 		
-		if (context->ClientFormatDataResponse)
-			context->ClientFormatDataResponse(context, &formatDataResponse);
+		if (context->ServerFormatDataResponse)
+			context->ServerFormatDataResponse(context, &formatDataResponse);
 		
 		free(formatDataResponse.requestedFormatData);
 	}
