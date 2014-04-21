@@ -405,7 +405,7 @@ static BOOL audin_server_open(audin_server_context* context)
 		audin->SessionId = WTS_CURRENT_SESSION;
 
 		if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION,
-				WTSSessionId, (LPSTR*) pSessionId, &BytesReturned))
+				WTSSessionId, (LPSTR*) &pSessionId, &BytesReturned))
 		{
 			audin->SessionId = (DWORD) *pSessionId;
 			WTSFreeMemory(pSessionId);
