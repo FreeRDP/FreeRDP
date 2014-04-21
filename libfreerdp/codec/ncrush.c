@@ -1788,7 +1788,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	UINT32 LengthOfMatchBase;
 
 	if (ncrush->HistoryEndOffset != 65535)
-		return -1;
+		return -1001;
 
 	HistoryBuffer = ncrush->HistoryBuffer;
 	HistoryBufferEnd = &HistoryBuffer[ncrush->HistoryEndOffset];
@@ -1796,7 +1796,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	if (flags & PACKET_AT_FRONT)
 	{
 		if ((ncrush->HistoryPtr - 32768) <= HistoryBuffer)
-			return -1;
+			return -1002;
 
 		MoveMemory(HistoryBuffer, (ncrush->HistoryPtr - 32768), 32768);
 		ncrush->HistoryPtr = &(HistoryBuffer[32768]);
@@ -1844,7 +1844,11 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 				break;
 
 			if (HistoryPtr >= HistoryBufferEnd)
-				return -1;
+			{
+				fprintf(stderr, "ncrush_decompress error: HistoryPtr (%p) >= HistoryBufferEnd (%p)\n",
+						HistoryPtr, HistoryBufferEnd);
+				return -1003;
+			}
 
 			Literal = (HuffTableLEC[MaskedBits] & 0xFF);
 
@@ -1861,7 +1865,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 			OffsetCacheIndex = IndexLEC - 289;
 
 			if (OffsetCacheIndex >= 4)
-				return -1;
+				return -1004;
 
 			CopyOffset = ncrush->OffsetCache[OffsetCacheIndex];
 
@@ -1952,11 +1956,11 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 		LengthOfMatch = LengthOfMatchBase;
 
 		if (LengthOfMatch < 2)
-			return -1;
+			return -1005;
 
-		if ((CopyOffsetPtr >= (&HistoryBufferEnd[-LengthOfMatch])) ||
-				(HistoryPtr >= &HistoryBufferEnd[-LengthOfMatch]))
-			return -1;
+		if ((CopyOffsetPtr >= (HistoryBufferEnd - LengthOfMatch)) ||
+				(HistoryPtr >= (HistoryBufferEnd - LengthOfMatch)))
+			return -1006;
 
 		CopyOffsetPtr = HistoryPtr - CopyOffset;
 
@@ -2011,7 +2015,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	if (ncrush->HistoryBufferFence != 0xABABABAB)
 	{
 		fprintf(stderr, "NCrushDecompress: history buffer fence was overwritten, potential buffer overflow detected!\n");
-		return -1;
+		return -1007;
 	}
 
 	*pDstSize = HistoryPtr - ncrush->HistoryPtr;
@@ -2184,7 +2188,7 @@ int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 	if (HistoryPtr > &ncrush->HistoryBuffer[65536])
 		return -1;
 	
-	CopyMemory(ncrush->HistoryBuffer, HistoryPtr - 32768, 32768);
+	MoveMemory(ncrush->HistoryBuffer, HistoryPtr - 32768, 32768);
 	HistoryOffset = HistoryPtr - 32768 - ncrush->HistoryBuffer;
 
 	for (i = 0; i < 65536; i += 4)
@@ -2222,7 +2226,7 @@ int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 	return 1;
 }
 
-int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData, UINT32* pDstSize, UINT32* pFlags)
+int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
 	BYTE Literal;
 	BYTE* SrcPtr;
@@ -2235,6 +2239,10 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	BYTE* SrcEndPtr;
 	BYTE* DstEndPtr;
 	BYTE* HistoryPtr;
+	BYTE* pDstData;
+	UINT32 DstSize;
+	BOOL PacketAtFront;
+	BOOL PacketFlushed;
 	int MatchLength;
 	UINT32 IndexLEC;
 	UINT32 IndexLOM;
@@ -2257,21 +2265,27 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	CompressionLevel = 2;
 	HistoryBuffer = ncrush->HistoryBuffer;
 
-	if (SrcSize + ncrush->HistoryOffset >= 65529)
+	*pFlags = 0;
+	PacketFlushed = FALSE;
+	PacketAtFront = FALSE;
+
+	if ((SrcSize + ncrush->HistoryOffset) >= 65529)
 	{
 		if (ncrush->HistoryOffset == (ncrush->HistoryBufferSize + 1))
 		{
 			ncrush->HistoryOffset = 0;
 			ncrush->HistoryPtr = HistoryBuffer;
-			*pFlags = 0;
+			PacketFlushed = TRUE;
 		}
 		else
 		{
-			ncrush_move_encoder_windows(ncrush, &HistoryBuffer[ncrush->HistoryOffset]);
+			if (ncrush_move_encoder_windows(ncrush, &(HistoryBuffer[ncrush->HistoryOffset])) < 0)
+				return -1001;
+
 			HistoryPtr = &HistoryBuffer[32768];
 			ncrush->HistoryPtr = &HistoryBuffer[32768];
 			ncrush->HistoryOffset = 32768;
-			*pFlags = PACKET_AT_FRONT;
+			PacketAtFront = TRUE;
 		}
 	}
 	else
@@ -2279,12 +2293,24 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		*pFlags = 0;
 	}
 
+	pDstData = *ppDstData;
+
+	if (!pDstData)
+		return -1002;
+
+	DstSize = *pDstSize;
+
+	if (DstSize < SrcSize)
+		return -1003;
+
+	DstSize = SrcSize;
+
 	NCrushWriteStart();
 
 	DstPtr = pDstData;
 	SrcPtr = pSrcData;
 	SrcEndPtr = &pSrcData[SrcSize];
-	DstEndPtr = &pDstData[SrcSize - 1];
+	DstEndPtr = &pDstData[DstSize - 1];
 	OffsetCache = ncrush->OffsetCache;
 	HistoryPtr = &HistoryBuffer[ncrush->HistoryOffset];
 	HistoryBufferEndPtr = &HistoryBuffer[65536];
@@ -2305,7 +2331,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			return -1;
 
 		if (HistoryOffset >= 65536)
-			return -1;
+			return -1004;
 
 		if (ncrush->MatchTable[HistoryOffset])
 		{
@@ -2313,7 +2339,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			MatchLength = ncrush_find_best_match(ncrush, HistoryOffset, &MatchOffset);
 
 			if (MatchLength == -1)
-				return -1;
+				return -1005;
 		}
 
 		if (MatchLength)
@@ -2329,10 +2355,14 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			Literal = *SrcPtr++;
 			HistoryPtr++;
 
-			if ((DstPtr + 2) > DstEndPtr)
+			if ((DstPtr + 2) > DstEndPtr) /* PACKET_FLUSH #1 */
 			{
 				ncrush_context_reset(ncrush);
+				ncrush->HistoryOffset = ncrush->HistoryBufferSize + 1;
 				*pFlags = PACKET_FLUSHED;
+				*pFlags |= CompressionLevel;
+				*ppDstData = pSrcData;
+				*pDstSize = SrcSize;
 				return 1;
 			}
 
@@ -2341,7 +2371,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 
 			if (BitLength > 15)
-				return -1;
+				return -1006;
 
 			NCrushWriteBits(CodeLEC, BitLength);
 		}
@@ -2351,12 +2381,16 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 			SrcPtr += MatchLength;
 
 			if (!MatchLength)
-				return -1;
+				return -1007;
 
-			if ((DstPtr + 8) > DstEndPtr)
+			if ((DstPtr + 8) > DstEndPtr) /* PACKET_FLUSH #2 */
 			{
 				ncrush_context_reset(ncrush);
+				ncrush->HistoryOffset = ncrush->HistoryBufferSize + 1;
 				*pFlags = PACKET_FLUSHED;
+				*pFlags |= CompressionLevel;
+				*ppDstData = pSrcData;
+				*pDstSize = SrcSize;
 				return 1;
 			}
 
@@ -2425,10 +2459,10 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 
 				if (BitLength > 15)
-					return -1;
+					return -1008;
 				
 				if (CopyOffsetBits > 18)
-					return -1;
+					return -1009;
 
 				NCrushWriteBits(CodeLEC, BitLength);
 
@@ -2453,7 +2487,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				NCrushWriteBits(MaskedBits, IndexLOM);
 
 				if ((MaskedBits + LOMBaseLUT[IndexCO]) != MatchLength)
-					return -1;
+					return -1010;
 			}
 			else
 			{
@@ -2464,7 +2498,7 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 
 				if (BitLength >= 15)
-					return -1;
+					return -1011;
 
 				NCrushWriteBits(CodeLEC, BitLength);
 
@@ -2484,20 +2518,24 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 				NCrushWriteBits(MaskedBits, IndexLOM);
 
 				if ((MaskedBits + LOMBaseLUT[IndexCO]) != MatchLength)
-					return -1;
+					return -1012;
 			}
 		}
 
 		if (HistoryPtr >= HistoryBufferEndPtr)
-			return -1;
+			return -1013;
 	}
 
 	while (SrcPtr < SrcEndPtr)
 	{
-		if ((DstPtr + 2) > DstEndPtr)
+		if ((DstPtr + 2) > DstEndPtr) /* PACKET_FLUSH #3 */
 		{
 			ncrush_context_reset(ncrush);
+			ncrush->HistoryOffset = ncrush->HistoryBufferSize + 1;
 			*pFlags = PACKET_FLUSHED;
+			*pFlags |= CompressionLevel;
+			*ppDstData = pSrcData;
+			*pDstSize = SrcSize;
 			return 1;
 		}
 
@@ -2509,29 +2547,47 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		CodeLEC = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 
 		if (BitLength > 15)
-			return -1;
+			return -1014;
 
 		NCrushWriteBits(CodeLEC, BitLength);
 	}
 
-	if ((DstPtr + 4) >= DstEndPtr)
+	if ((DstPtr + 4) >= DstEndPtr) /* PACKET_FLUSH #4 */
 	{
 		ncrush_context_reset(ncrush);
+		ncrush->HistoryOffset = ncrush->HistoryBufferSize + 1;
 		*pFlags = PACKET_FLUSHED;
+		*pFlags |= CompressionLevel;
+		*ppDstData = pSrcData;
+		*pDstSize = SrcSize;
 		return 1;
 	}
 
 	IndexLEC = 256;
 	BitLength = HuffLengthLEC[IndexLEC];
+
+	if (BitLength > 15)
+		return -1015;
+
 	bits = *((UINT16*) &HuffCodeLEC[IndexLEC * 2]);
 
 	NCrushWriteBits(bits, BitLength);
 
 	NCrushWriteFinish();
 
+	*pDstSize = DstPtr - pDstData;
+
+	if (*pDstSize > SrcSize)
+		return -1016;
+
 	*pFlags |= PACKET_COMPRESSED;
 	*pFlags |= CompressionLevel;
-	*pDstSize = DstPtr - pDstData;
+
+	if (PacketAtFront)
+		*pFlags |= PACKET_AT_FRONT;
+
+	if (PacketFlushed)
+		*pFlags |= PACKET_FLUSHED;
 
 	ncrush->HistoryOffset = HistoryPtr - HistoryBuffer;
 
@@ -2602,9 +2658,6 @@ void ncrush_context_reset(NCRUSH_CONTEXT* ncrush)
 
 	ncrush->HistoryOffset = 0;
 	ncrush->HistoryPtr = &(ncrush->HistoryBuffer[ncrush->HistoryOffset]);
-
-	if (ncrush->Compressor)
-		ncrush->HistoryOffset = ncrush->HistoryBufferSize + 1;
 }
 
 NCRUSH_CONTEXT* ncrush_context_new(BOOL Compressor)

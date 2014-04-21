@@ -17,6 +17,7 @@ int test_NCrushCompressBells()
 	UINT32 SrcSize;
 	BYTE* pSrcData;
 	UINT32 DstSize;
+	BYTE* pDstData;
 	UINT32 expectedSize;
 	BYTE OutputBuffer[65536];
 	NCRUSH_CONTEXT* ncrush;
@@ -25,11 +26,13 @@ int test_NCrushCompressBells()
 
 	SrcSize = sizeof(TEST_BELLS_DATA) - 1;
 	pSrcData = (BYTE*) TEST_BELLS_DATA;
-	DstSize = sizeof(OutputBuffer);
 	expectedSize = sizeof(TEST_BELLS_NCRUSH) - 1;
+
+	pDstData = OutputBuffer;
+	DstSize = sizeof(OutputBuffer);
 	ZeroMemory(OutputBuffer, sizeof(OutputBuffer));
 
-	status = ncrush_compress(ncrush, pSrcData, SrcSize, OutputBuffer, &DstSize, &Flags);
+	status = ncrush_compress(ncrush, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
 
 	printf("status: %d Flags: 0x%04X DstSize: %d\n", status, Flags, DstSize);
 
@@ -38,7 +41,7 @@ int test_NCrushCompressBells()
 		printf("NCrushCompressBells: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
 
 		printf("Actual\n");
-		BitDump(OutputBuffer, DstSize * 8, 0);
+		BitDump(pDstData, DstSize * 8, 0);
 
 		printf("Expected\n");
 		BitDump(TEST_BELLS_NCRUSH, expectedSize * 8, 0);
@@ -46,12 +49,12 @@ int test_NCrushCompressBells()
 		return -1;
 	}
 
-	if (memcmp(OutputBuffer, TEST_BELLS_NCRUSH, DstSize) != 0)
+	if (memcmp(pDstData, TEST_BELLS_NCRUSH, DstSize) != 0)
 	{
 		printf("NCrushCompressBells: output mismatch\n");
 
 		printf("Actual\n");
-		BitDump(OutputBuffer, DstSize * 8, 0);
+		BitDump(pDstData, DstSize * 8, 0);
 
 		printf("Expected\n");
 		BitDump(TEST_BELLS_NCRUSH, expectedSize * 8, 0);

@@ -532,7 +532,8 @@ BOOL tf_peer_activate(freerdp_peer* client)
 	context->activated = TRUE;
 
 	//client->settings->CompressionLevel = PACKET_COMPR_TYPE_8K;
-	client->settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
+	//client->settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
+	client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
 
 	if (test_pcap_file != NULL)
 	{

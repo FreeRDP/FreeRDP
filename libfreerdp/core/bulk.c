@@ -94,11 +94,13 @@ int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE**
 	{
 		printf("compression/decompression input/output mismatch! flags: 0x%04X\n", _Flags);
 
+#if 1
 		printf("Actual:\n");
 		winpr_HexDump(_pDstData, SrcSize);
 
 		printf("Expected:\n");
 		winpr_HexDump(pSrcData, SrcSize);
+#endif
 
 		return -1;
 	}
@@ -166,7 +168,7 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 			CompressionRatio = ((double) CompressedBytes) / ((double) UncompressedBytes);
 			TotalCompressionRatio = ((double) bulk->TotalCompressedBytes) / ((double) bulk->TotalUncompressedBytes);
 
-			printf("Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%d / %d)\n",
+			printf("Decompress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%d / %d)\n",
 					type, bulk_get_compression_flags_string(flags), flags,
 					CompressionRatio, CompressedBytes, UncompressedBytes,
 					TotalCompressionRatio, bulk->TotalCompressedBytes, bulk->TotalUncompressedBytes);
@@ -207,7 +209,7 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 	}
 	else
 	{
-		status = ncrush_compress(bulk->ncrushSend, pSrcData, SrcSize, *ppDstData, pDstSize, pFlags);
+		status = ncrush_compress(bulk->ncrushSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
 	}
 	
 	if (status >= 0)
@@ -229,7 +231,7 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 			CompressionRatio = ((double) CompressedBytes) / ((double) UncompressedBytes);
 			TotalCompressionRatio = ((double) bulk->TotalCompressedBytes) / ((double) bulk->TotalUncompressedBytes);
 
-			printf("Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%d / %d)\n",
+			printf("Compress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%d / %d)\n",
 					type, bulk_get_compression_flags_string(*pFlags), *pFlags,
 					CompressionRatio, CompressedBytes, UncompressedBytes,
 					TotalCompressionRatio, bulk->TotalCompressedBytes, bulk->TotalUncompressedBytes);
