@@ -31,6 +31,37 @@ macro(set_complex_link_libraries)
 	
 endmacro(set_complex_link_libraries)
 
+# - add a new library to a module for export
+#  MODULE - module the library belongs to
+#  LIBNAME - name of the library
+#   - if MODULE isn't set the NAME should must be in the form MODULE-NAME
+function(export_complex_library)
+	set(PREFIX "EXPORT_COMPLEX_LIBRARY")
+	cmake_parse_arguments(${PREFIX}
+			""
+			"LIBNAME;MODULE"
+			""
+			${ARGN})
+
+	if (NOT ${PREFIX}_LIBNAME)
+		message(FATAL_ERROR "export_complex_library requires a name to be set")
+	endif()
+	if (NOT ${PREFIX}_MODULE)
+		string(REPLACE "-" ";" LIBNAME_LIST "${${PREFIX}_LIBNAME}")
+		list(GET LIBNAME_LIST 0 MODULE)
+		list(GET LIBNAME_LIST 1 LIBNAME)
+	else()
+		set(MODULE ${${PREFIX}_MODULE})
+		set(LIBNAME ${${PREFIX}_LIBNAME})
+	endif()
+	if (NOT MODULE)
+		message(FATAL_ERROR "export_complex_library couldn't identify MODULE")
+	endif()
+	get_property(MEXPORTS GLOBAL PROPERTY ${MODULE}_EXPORTS)
+	list(APPEND MEXPORTS ${LIBNAME})
+	set_property(GLOBAL PROPERTY ${MODULE}_EXPORTS "${MEXPORTS}")
+endfunction(export_complex_library)
+
 macro(add_complex_library)
 
 	set(PREFIX "COMPLEX_LIBRARY")
