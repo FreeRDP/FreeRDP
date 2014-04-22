@@ -201,6 +201,9 @@ BOOL CloseHandle(HANDLE hObject)
 
 		comm = (WINPR_COMM*) Object;
 
+		if (comm->fd > 0)
+			close(comm->fd);
+
 		free(comm);
 	}
 

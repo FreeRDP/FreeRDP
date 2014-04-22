@@ -321,7 +321,7 @@ typedef HANDLE (*pcCreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD 
 typedef struct _HANDLE_CREATOR
 {
 	pcIsHandled IsHandled;
-	pcCreateFileA CreateFileA;
+	pcCreateFileA CreateFileA; /* TMP: FIXME: CreateFileA or CreateFile ? */
 } HANDLE_CREATOR, *PHANDLE_CREATOR, *LPHANDLE_CREATOR;
 
 BOOL RegisterHandleCreator(PHANDLE_CREATOR pHandleCreator);

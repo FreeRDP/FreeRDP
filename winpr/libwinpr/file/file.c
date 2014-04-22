@@ -187,7 +187,7 @@
 #include "../pipe/pipe.h"
 
 /* TODO: FIXME: use of a wArrayList and split winpr-utils with
- * winpr-collections to avoid circular dependencies 
+ * winpr-collections to avoid a circular dependency
  * _HandleCreators = ArrayList_New(TRUE);
  */
 static HANDLE_CREATOR **_HandleCreators = NULL;
@@ -203,7 +203,7 @@ static void _HandleCreatorsInit()
 
 	if (_HandleCreators == NULL)
 	{
-		_HandleCreators = (HANDLE_CREATOR**)calloc(HANDLE_CREATOR_MAX+1, sizeof(HANDLE_CREATOR));
+		_HandleCreators = (HANDLE_CREATOR**)calloc(HANDLE_CREATOR_MAX+1, sizeof(HANDLE_CREATOR*));
 	}
 }
 
@@ -216,6 +216,9 @@ static void _HandleCreatorsInit()
 BOOL RegisterHandleCreator(PHANDLE_CREATOR pHandleCreator)
 {
 	int i;
+
+	_HandleCreatorsInit();
+
 	for (i=0; i<HANDLE_CREATOR_MAX; i++)
 	{
 		if (_HandleCreators[i] == NULL)
@@ -262,8 +265,9 @@ int InstallAioSignalHandler()
 #endif /* HAVE_AIO_H */
 
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+		   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
+	int i;
 	char* name;
 	int status;
 	HANDLE hNamedPipe;
@@ -274,17 +278,16 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 		return INVALID_HANDLE_VALUE;
 
 	_HandleCreatorsInit();
-	if (_HandleCreators != NULL)
+	if (_HandleCreators == NULL)
+		return INVALID_HANDLE_VALUE;
+
+	for (i=0; _HandleCreators[i] != NULL; i++)
 	{
-		int i;
-		for (i=0; _HandleCreators[i] != NULL; i++)
+		HANDLE_CREATOR *creator = (HANDLE_CREATOR*)_HandleCreators[i];
+		if (creator && creator->IsHandled(lpFileName))
 		{
-			HANDLE_CREATOR *creator = (HANDLE_CREATOR*)_HandleCreators[i];
-			if (creator && creator->IsHandled(lpFileName))
-			{
-				return creator->CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
-							    dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-			}
+			return creator->CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
+						    dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 		}
 	}
 
