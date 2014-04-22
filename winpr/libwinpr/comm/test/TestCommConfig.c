@@ -32,8 +32,8 @@ int TestCommConfig(int argc, char* argv[])
 	LPCSTR lpFileName = "\\\\.\\COM1";
 
 	hComm = CreateFileA(lpFileName,
-			GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+			    GENERIC_READ | GENERIC_WRITE,
+			    0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (hComm && (hComm != INVALID_HANDLE_VALUE))
 	{
@@ -41,7 +41,7 @@ int TestCommConfig(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	fSuccess = DefineCommDevice(lpFileName, "/dev/test");
+	fSuccess = DefineCommDevice(lpFileName, "/dev/null");
 	if(!fSuccess)
 	{
 		printf("DefineCommDevice failure: %s\n", lpFileName);
@@ -49,14 +49,31 @@ int TestCommConfig(int argc, char* argv[])
 	}
 
 	hComm = CreateFileA(lpFileName,
-			GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, 0, NULL);
+			    GENERIC_READ | GENERIC_WRITE,
+			    FILE_SHARE_WRITE, /* invalid parmaeter */
+			    NULL, 
+			    CREATE_NEW, /* invalid parameter */
+			    0, 
+			    (HANDLE)1234); /* invalid parmaeter */
+	if (hComm != INVALID_HANDLE_VALUE)
+	{
+		printf("CreateFileA failure: could create a handle with some invalid parameters %s\n", lpFileName);
+		return EXIT_FAILURE;
+	}
+
+
+	hComm = CreateFileA(lpFileName,
+			    GENERIC_READ | GENERIC_WRITE,
+			    0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (!hComm || (hComm == INVALID_HANDLE_VALUE))
 	{
 		printf("CreateFileA failure: %s\n", lpFileName);
 		return EXIT_FAILURE;
 	}
+
+	/* TODO: a second call to CreateFileA should failed and
+	 * GetLastError should return ERROR_SHARING_VIOLATION */
 
 	ZeroMemory(&dcb, sizeof(DCB));
 
@@ -68,7 +85,7 @@ int TestCommConfig(int argc, char* argv[])
 	}
 
 	printf("BaudRate: %d ByteSize: %d Parity: %d StopBits: %d\n",
-			(int) dcb.BaudRate, (int) dcb.ByteSize, (int) dcb.Parity, (int) dcb.StopBits);
+	       (int) dcb.BaudRate, (int) dcb.ByteSize, (int) dcb.Parity, (int) dcb.StopBits);
 
 	dcb.BaudRate = CBR_57600;
 	dcb.ByteSize = 8;
@@ -92,7 +109,7 @@ int TestCommConfig(int argc, char* argv[])
 	}
 
 	printf("BaudRate: %d ByteSize: %d Parity: %d StopBits: %d\n",
-			(int) dcb.BaudRate, (int) dcb.ByteSize, (int) dcb.Parity, (int) dcb.StopBits);
+	       (int) dcb.BaudRate, (int) dcb.ByteSize, (int) dcb.Parity, (int) dcb.StopBits);
 
 	CloseHandle(hComm);
 

@@ -2,6 +2,8 @@
  * WinPR: Windows Portable Runtime
  * Serial Communication API
  *
+ * Copyright 2011 O.S. Systems Software Ltda.
+ * Copyright 2011 Eduardo Fiss Beloni <beloni@ossystems.com.br>
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2014 Hewlett-Packard Development Company, L.P.
  *
@@ -22,6 +24,17 @@
 #include "config.h"
 #endif
 
+#ifndef _WIN32
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
+#include <errno.h>
+
+#include <freerdp/utils/debug.h>
+
 #include <winpr/crt.h>
 #include <winpr/comm.h>
 #include <winpr/collections.h>
@@ -31,8 +44,6 @@
  * Communication Resources:
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363196/
  */
-
-#ifndef _WIN32
 
 #include "comm.h"
 
@@ -126,22 +137,338 @@ BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
 	return TRUE;
 }
 
-BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
+
+/*
+ * Linux, Windows speeds
+ * 
+ */
+static const speed_t _SPEED_TABLE[][2] = {
+#ifdef B0
+	{B0, 0},	/* hang up */
+#endif
+#ifdef B50
+	{B50, 50},
+#endif
+#ifdef B75
+	{B75, 75},
+#endif
+#ifdef B110
+	{B110, CBR_110},
+#endif
+#ifdef  B134
+	{B134, 134},
+#endif
+#ifdef  B150
+	{B150, 150},
+#endif
+#ifdef B200
+	{B200, 200},
+#endif
+#ifdef B300
+	{B300, CBR_300},
+#endif
+#ifdef B600
+	{B600, CBR_600},
+#endif
+#ifdef B1200
+	{B1200, CBR_1200},
+#endif
+#ifdef B1800
+	{B1800, 1800},
+#endif
+#ifdef B2400
+	{B2400, CBR_2400},
+#endif
+#ifdef B4800
+	{B4800, CBR_4800},
+#endif
+#ifdef B9600
+	{B9600, CBR_9600},
+#endif
+	/* {, CBR_14400},	/\* unsupported on Linux *\/ */
+#ifdef B19200
+	{B19200, CBR_19200},
+#endif
+#ifdef B38400
+	{B38400, CBR_38400},
+#endif
+	/* {, CBR_56000},	/\* unsupported on Linux *\/ */
+#ifdef  B57600
+	{B57600, CBR_57600},
+#endif
+#ifdef B115200
+	{B115200, CBR_115200},
+#endif
+	/* {, CBR_128000},	/\* unsupported on Linux *\/ */
+	/* {, CBR_256000},	/\* unsupported on Linux *\/ */
+#ifdef B230400
+	{B230400, 230400},
+#endif
+#ifdef B460800
+	{B460800, 460800},
+#endif
+#ifdef B500000
+	{B500000, 500000},
+#endif
+#ifdef  B576000
+	{B576000, 576000},
+#endif
+#ifdef B921600
+	{B921600, 921600},
+#endif
+#ifdef B1000000
+	{B1000000, 1000000},
+#endif
+#ifdef B1152000
+	{B1152000, 1152000},
+#endif
+#ifdef B1500000
+	{B1500000, 1500000},
+#endif
+#ifdef B2000000
+	{B2000000, 2000000},
+#endif
+#ifdef B2500000
+	{B2500000, 2500000},
+#endif
+#ifdef B3000000
+	{B3000000, 3000000},
+#endif
+#ifdef B3500000
+	{B3500000, 3500000},
+#endif
+#ifdef B4000000
+	{B4000000, 4000000},	/* __MAX_BAUD */
+#endif
+};
+
+
+/* Set lpDcb->BaudRate with the current baud rate.
+ */
+static BOOL _GetBaudRate(LPDCB lpDcb, struct termios *lpCurrentState)
 {
-	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
+	int i;
+	speed_t currentSpeed;
 
-	if (!pComm)
-		return FALSE;
+	currentSpeed = cfgetispeed(lpCurrentState);
 
-	return TRUE;
+	for (i=0; _SPEED_TABLE[i][0]<=__MAX_BAUD; i++)
+	{
+		if (_SPEED_TABLE[i][0] == currentSpeed)
+		{
+			lpDcb->BaudRate = _SPEED_TABLE[i][1];
+			return TRUE;
+		}
+	}
+
+	DEBUG_WARN("could not find a matching baud rate for the speed 0x%x", currentSpeed);
+	return FALSE;
 }
 
-BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
+
+/* Set lpFutureState's speed to lpDcb->BaudRate.
+ */
+static BOOL _SetBaudRate(struct termios *lpFutureState, LPDCB lpDcb)
 {
+	int i;
+	speed_t newSpeed;
+
+	for (i=0; _SPEED_TABLE[i][0]<=__MAX_BAUD; i++)
+	{
+		if (_SPEED_TABLE[i][1] == lpDcb->BaudRate)
+		{
+			newSpeed = _SPEED_TABLE[i][0];
+			if (cfsetspeed(lpFutureState, newSpeed) < 0)
+			{
+				DEBUG_WARN("failed to set speed 0x%x (%d)", newSpeed, lpDcb->BaudRate);
+				return FALSE;
+			}
+
+			return TRUE;
+		}
+	}
+
+	DEBUG_WARN("could not find a matching speed for the baud rate %d", lpDcb->BaudRate);
+	return FALSE;
+}
+
+/**
+ * 
+ *
+ * ERRORS:
+ *   ERROR_INVALID_HANDLE
+ *   ERROR_INVALID_DATA
+ *   ERROR_IO_DEVICE
+ *   ERROR_OUTOFMEMORY
+ */
+BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
+{
+	DCB *lpLocalDcb;
+	struct termios currentState;
 	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
 
-	if (!pComm)
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
+	}
+
+	if (!lpDCB)
+	{
+		SetLastError(ERROR_INVALID_DATA);
+		return FALSE;
+	}
+
+	if (lpDCB->DCBlength < sizeof(DCB))
+	{
+		SetLastError(ERROR_INVALID_DATA);
+		return FALSE;
+	}
+
+	if (tcgetattr(pComm->fd, &currentState) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	lpLocalDcb = (DCB*)calloc(1, lpDCB->DCBlength);
+	if (lpLocalDcb == NULL)
+	{
+		SetLastError(ERROR_OUTOFMEMORY);
+		return FALSE;
+	}
+
+	/* error_handle */
+	
+	lpLocalDcb->DCBlength = lpDCB->DCBlength;
+
+	if (!_GetBaudRate(lpLocalDcb, &currentState))
+	{
+		SetLastError(ERROR_NOT_SUPPORTED);
+		goto error_handle;
+	}
+
+	lpLocalDcb->fBinary = TRUE; /* TMP: should the raw mode be tested? */
+
+	lpLocalDcb->fParity =  (currentState.c_iflag & INPCK) != 0;
+
+
+	memcpy(lpDCB, lpLocalDcb, lpDCB->DCBlength);
+	return TRUE;
+
+
+  error_handle:
+	if (lpLocalDcb)
+		free(lpLocalDcb);
+
+	return FALSE;
+}
+
+
+/**
+ * ERRORS:
+ *   ERROR_INVALID_HANDLE
+ *   ERROR_IO_DEVICE
+ */
+BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
+{
+	struct termios futureState;
+	struct termios currentState;
+	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
+
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	if (!lpDCB)
+	{
+		SetLastError(ERROR_INVALID_DATA);
+		return FALSE;
+	}
+
+	ZeroMemory(&futureState, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &futureState) < 0) /* NB: preserves current settings not directly handled by the Communication Functions */
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	if (!_SetBaudRate(&futureState, lpDCB))
+	{
+		SetLastError(ERROR_NOT_SUPPORTED);
+		return FALSE;
+	}
+
+	if (!lpDCB->fBinary)
+	{
+		DEBUG_WARN("unexpected nonbinary mode transfers");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		return FALSE;
+	}
+	// TMP: set the raw mode here?
+	
+	if (lpDCB->fParity)
+	{
+		futureState.c_iflag |= INPCK;
+	}
+	else
+	{
+		futureState.c_iflag &= ~INPCK;
+	}
+
+	// TMP: FIXME: validate changes according GetCommProperties
+
+
+	/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363423%28v=vs.85%29.aspx
+	 *
+	 * The SetCommState function reconfigures the communications
+	 * resource, but it does not affect the internal output and
+	 * input buffers of the specified driver. The buffers are not
+	 * flushed, and pending read and write operations are not
+	 * terminated prematurely.
+	 *
+	 * TCSANOW matches the best this definition
+	 */
+	
+	if (tcsetattr(pComm->fd, TCSANOW, &futureState) < 0)
+	{
+		DEBUG_WARN("could not apply parameters, errno: %d", errno);
+		return FALSE;
+	}
+	
+	/* NB: tcsetattr() can succeed even if not all changes have been applied. */
+	ZeroMemory(&currentState, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &currentState) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	if (memcmp(&currentState, &futureState, sizeof(struct termios)) != 0)
+	{
+		DEBUG_WARN("all parameters were not set, doing a second attempt...");
+		if (tcsetattr(pComm->fd, TCSAFLUSH, &futureState) < 0)
+		{
+			DEBUG_WARN("could not apply parameters, errno: %d", errno);
+			return FALSE;
+		}
+
+		ZeroMemory(&currentState, sizeof(struct termios));
+		if (tcgetattr(pComm->fd, &currentState) < 0)
+		{
+			SetLastError(ERROR_IO_DEVICE);
+			return FALSE;
+		}
+
+		if (memcmp(&currentState, &futureState, sizeof(struct termios)) != 0)
+		{
+			DEBUG_WARN("Failure: all parameters were not set on a second attempt.");
+			SetLastError(ERROR_IO_DEVICE);
+			return FALSE; /* TMP: double-check whether some parameters can differ anyway */
+		}
+	}
 
 	return TRUE;
 }
@@ -232,6 +559,15 @@ BOOL SetupComm(HANDLE hFile, DWORD dwInQueue, DWORD dwOutQueue)
 
 	if (!pComm)
 		return FALSE;
+
+/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363423%28v=vs.85%29.aspx */
+/* A process reinitializes a communications resource by using the SetupComm function, which performs the following tasks: */
+
+/*     Terminates pending read and write operations, even if they have not been completed. */
+/*     Discards unread characters and frees the internal output and input buffers of the driver associated with the specified resource. */
+/*     Reallocates the internal output and input buffers. */
+
+/* A process is not required to call SetupComm. If it does not, the resource's driver initializes the device with the default settings the first time that the communications resource handle is used. */
 
 	return TRUE;
 }
@@ -498,21 +834,126 @@ BOOL IsCommDevice(LPCTSTR lpDeviceName)
 }
 
 
-HANDLE CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+/**
+ * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363198%28v=vs.85%29.aspx
+ *
+ * @param lpDeviceName e.g. COM1, \\.\COM1, ...
+ *
+ * @param dwDesiredAccess expects GENERIC_READ | GENERIC_WRITE, a
+ * warning message is printed otherwise. TODO: better support.
+ *
+ * @param dwShareMode must be zero, INVALID_HANDLE_VALUE is returned
+ * otherwise and GetLastError() should return ERROR_SHARING_VIOLATION.
+ * 
+ * @param lpSecurityAttributes NULL expected, a warning message is printed
+ * otherwise. TODO: better support.
+ * 
+ * @param dwCreationDisposition must be OPEN_EXISTING. If the
+ * communication device doesn't exist INVALID_HANDLE_VALUE is returned
+ * and GetLastError() returns ERROR_FILE_NOT_FOUND.
+ *
+ * @param dwFlagsAndAttributes zero expected, a warning message is
+ * printed otherwise.
+ *
+ * @param hTemplateFile must be NULL.
+ *
+ * @return INVALID_HANDLE_VALUE on error. 
+ */
+HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 		       DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	HANDLE hComm;
-	WINPR_COMM* pComm;
+	CHAR devicePath[MAX_PATH];
+	struct stat deviceStat;
+	WINPR_COMM* pComm = NULL;
 
-	//SetLastError(ERROR_BAD_PATHNAME);
+	
+	if (dwDesiredAccess != (GENERIC_READ | GENERIC_WRITE))
+	{
+		DEBUG_WARN("unexpected access to the device: 0x%x", dwDesiredAccess);
+	}
+
+	if (dwShareMode != 0)
+	{
+		SetLastError(ERROR_SHARING_VIOLATION);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	/* TODO: Prevents other processes from opening a file or
+         * device if they request delete, read, or write access. */
+
+	if (lpSecurityAttributes != NULL)
+	{
+		DEBUG_WARN("unexpected security attributes: 0x%x", lpSecurityAttributes);
+	}
+
+	if (dwCreationDisposition != OPEN_EXISTING)
+	{
+		SetLastError(ERROR_FILE_NOT_FOUND); /* FIXME: ERROR_NOT_SUPPORTED better? */
+		return INVALID_HANDLE_VALUE;
+	}
+	
+	if (QueryCommDevice(lpDeviceName, devicePath, MAX_PATH) <= 0)
+	{
+		/* SetLastError(GetLastError()); */
+		return INVALID_HANDLE_VALUE;
+	}
+
+	if (stat(devicePath, &deviceStat) < 0)
+	{
+		DEBUG_WARN("device not found %s", devicePath);
+		SetLastError(ERROR_FILE_NOT_FOUND);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	if (!S_ISCHR(deviceStat.st_mode))
+	{
+		DEBUG_WARN("bad device %d", devicePath);
+		SetLastError(ERROR_BAD_DEVICE);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	if (dwFlagsAndAttributes != 0)
+	{
+		DEBUG_WARN("unexpected flags and attributes: 0x%x", dwFlagsAndAttributes);
+	}
+
+	if (hTemplateFile != NULL)
+	{
+		SetLastError(ERROR_NOT_SUPPORTED); /* FIXME: other proper error? */
+		return INVALID_HANDLE_VALUE;
+	}
 
 	pComm = (WINPR_COMM*) calloc(1, sizeof(WINPR_COMM));
-	hComm = (HANDLE) pComm;
+	if (pComm == NULL)
+	{
+		SetLastError(ERROR_OUTOFMEMORY);
+		return INVALID_HANDLE_VALUE;
+	}
 
 	WINPR_HANDLE_SET_TYPE(pComm, HANDLE_TYPE_COMM);
 
-	//return INVALID_HANDLE_VALUE;
-	return hComm;
+	/* error_handle */
+
+	pComm->fd = open(devicePath, O_RDWR | O_NOCTTY | O_NONBLOCK);
+	if (pComm->fd < 0)
+	{
+		DEBUG_WARN("failed to open device %s", devicePath);
+		SetLastError(ERROR_BAD_DEVICE);
+		goto error_handle;
+	}
+
+
+	return (HANDLE)pComm;
+
+
+  error_handle:
+	if (pComm != NULL)
+	{
+		CloseHandle(pComm);
+	}
+
+
+	return INVALID_HANDLE_VALUE;
 }
 
 #endif /* _WIN32 */
