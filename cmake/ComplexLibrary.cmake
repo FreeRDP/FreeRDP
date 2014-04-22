@@ -78,7 +78,6 @@ macro(add_complex_library)
 		add_library(${${PREFIX}_MODULE} ${${PREFIX}_SOURCES})
 	endif()
 	if (${PREFIX}_EXPORT)
-		message("exporting ${${PREFIX}_MODULE}")
 		export_complex_library(LIBNAME ${${PREFIX}_MODULE})
 	endif()
 
