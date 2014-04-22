@@ -67,7 +67,7 @@ macro(add_complex_library)
 	set(PREFIX "COMPLEX_LIBRARY")
 	
 	cmake_parse_arguments(${PREFIX}
-		""
+		"EXPORT"
 		"MODULE;TYPE;MONOLITHIC"
 		"SOURCES"
 		${ARGN})
@@ -76,6 +76,10 @@ macro(add_complex_library)
 		add_library(${${PREFIX}_MODULE} ${${PREFIX}_TYPE} ${${PREFIX}_SOURCES})
 	else()
 		add_library(${${PREFIX}_MODULE} ${${PREFIX}_SOURCES})
+	endif()
+	if (${PREFIX}_EXPORT)
+		message("exporting ${${PREFIX}_MODULE}")
+		export_complex_library(LIBNAME ${${PREFIX}_MODULE})
 	endif()
 
 endmacro(add_complex_library)
