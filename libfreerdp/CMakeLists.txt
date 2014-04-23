@@ -68,6 +68,7 @@ if(MONOLITHIC_BUILD)
 	set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 endif()
 
+message("FREERDP_LIBS: ${FREERDP_LIBS}")
 set(FREERDP_PC_LIBS "-lfreerdp -lwinpr")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
