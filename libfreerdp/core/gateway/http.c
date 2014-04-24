@@ -345,51 +345,38 @@ BOOL http_response_parse_header_field(HttpResponse* http_response, char* name, c
 	{
 		http_response->ContentLength = atoi(value);
 	}
-	else if (_stricmp(name, "Authorization") == 0)
-	{
-		char* separator;
-
-		http_response->Authorization = _strdup(value);
-		if (!http_response->Authorization)
-			return FALSE;
-
-		separator = strchr(value, ' ');
-
-		if (separator != NULL)
-		{
-			*separator = '\0';
-			http_response->AuthScheme = _strdup(value);
-			http_response->AuthParam = _strdup(separator + 1);
-			if (!http_response->AuthScheme || !http_response->AuthParam)
-				return FALSE;
-			*separator = ' ';
-		}
-	}
 	else if (_stricmp(name, "WWW-Authenticate") == 0)
 	{
 		char* separator;
-
-		separator = strstr(value, "=\"");
-
-		if (separator != NULL)
-		{
-			/* WWW-Authenticate: parameter with spaces="value" */
-			return FALSE;
-		}
+		char *authScheme, *authValue;
 
 		separator = strchr(value, ' ');
 
 		if (separator != NULL)
 		{
-			/* WWW-Authenticate: NTLM base64token */
-
+			/* WWW-Authenticate: Basic realm=""
+			 * WWW-Authenticate: NTLM base64token
+			 * WWW-Authenticate: Digest realm="testrealm@host.com", qop="auth, auth-int",
+			 * 					nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
+			 * 					opaque="5ccc069c403ebaf9f0171e9517f40e41"
+			 */
 			*separator = '\0';
-			http_response->AuthScheme = _strdup(value);
-			http_response->AuthParam = _strdup(separator + 1);
-			*separator = ' ';
 
-			return TRUE;
+			authScheme = _strdup(value);
+			authValue = _strdup(separator + 1);
+			if (!authScheme || !authValue)
+				return FALSE;
+			*separator = ' ';
 		}
+		else
+		{
+			authScheme = _strdup(value);
+			if (!authScheme)
+				return FALSE;
+			authValue = NULL;
+		}
+
+		return ListDictionary_Add(http_response->Authenticates, authScheme, authValue);
 	}
 	return TRUE;
 }
@@ -594,31 +581,53 @@ out_free:
 	return NULL;
 }
 
+static BOOL strings_equals_nocase(void *obj1, void *obj2)
+{
+	if (!obj1 || !obj2)
+		return FALSE;
+
+	return _stricmp(obj1, obj2) == 0;
+}
+
+static void string_free(void *obj1)
+{
+	if (!obj1)
+		return;
+	free(obj1);
+}
+
 HttpResponse* http_response_new()
 {
-	return (HttpResponse *)calloc(1, sizeof(HttpResponse));
+	HttpResponse *ret = (HttpResponse *)calloc(1, sizeof(HttpResponse));
+	if (!ret)
+		return NULL;
+
+	ret->Authenticates = ListDictionary_New(FALSE);
+	ListDictionary_KeyObject(ret->Authenticates)->fnObjectEquals = strings_equals_nocase;
+	ListDictionary_KeyObject(ret->Authenticates)->fnObjectFree = string_free;
+	ListDictionary_ValueObject(ret->Authenticates)->fnObjectEquals = strings_equals_nocase;
+	ListDictionary_ValueObject(ret->Authenticates)->fnObjectFree = string_free;
+	return ret;
 }
 
 void http_response_free(HttpResponse* http_response)
 {
 	int i;
 
-	if (http_response != NULL)
-	{
-		for (i = 0; i < http_response->count; i++)
-			free(http_response->lines[i]);
+	if (!http_response)
+		return;
 
-		free(http_response->lines);
+	for (i = 0; i < http_response->count; i++)
+		free(http_response->lines[i]);
 
-		free(http_response->ReasonPhrase);
+	free(http_response->lines);
 
-		free(http_response->AuthParam);
-		free(http_response->AuthScheme);
-		free(http_response->Authorization);
+	free(http_response->ReasonPhrase);
 
-		if (http_response->ContentLength > 0)
-			free(http_response->Content);
+	ListDictionary_Free(http_response->Authenticates);
 
-		free(http_response);
-	}
+	if (http_response->ContentLength > 0)
+		free(http_response->Content);
+
+	free(http_response);
 }

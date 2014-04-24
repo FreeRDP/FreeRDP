@@ -22,7 +22,6 @@
 #endif
 
 #include <stdio.h>
-#include <assert.h>
 #include <winpr/crt.h>
 
 #include <freerdp/update.h>
@@ -91,8 +90,11 @@ void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 {
 	void* entry;
 
-	assert(brushCache);
-	assert(bpp);
+	if (!brushCache)
+		return NULL;
+
+	if (!bpp)
+		return NULL;
 
 	if (*bpp == 1)
 	{

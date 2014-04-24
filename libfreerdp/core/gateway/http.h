@@ -82,9 +82,7 @@ struct _http_response
 	int StatusCode;
 	char* ReasonPhrase;
 
-	char* AuthScheme;
-	char* AuthParam;
-	char* Authorization;
+	wListDictionary *Authenticates;
 	int ContentLength;
 	char* Content;
 };

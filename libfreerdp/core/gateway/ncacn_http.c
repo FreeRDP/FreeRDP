@@ -92,23 +92,27 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 
 int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
 {
-	int ntlm_token_length;
-	BYTE* ntlm_token_data;
+	int ntlm_token_length = 0;
+	BYTE* ntlm_token_data = NULL;
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
 
 	http_response = http_response_recv(rpc->TlsIn);
 
-	if (http_response->AuthParam)
+	if (ListDictionary_Contains(http_response->Authenticates, "NTLM"))
 	{
-		ntlm_token_data = NULL;
-		crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
-				&ntlm_token_data, &ntlm_token_length);
+		char *token64 = ListDictionary_GetItemValue(http_response->Authenticates, "NTLM");
+		if (!token64)
+			goto out;
 
-		ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
-		ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
+		ntlm_token_data = NULL;
+		crypto_base64_decode((BYTE*) token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
 	}
 
+	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
+	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
+
+out:
 	http_response_free(http_response);
 
 	return 0;
@@ -231,10 +235,10 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 	http_response = http_response_recv(rpc->TlsOut);
 
 	ntlm_token_data = NULL;
-	if (http_response && http_response->AuthParam)
+	if (http_response && ListDictionary_Contains(http_response->Authenticates, "NTLM"))
 	{
-		crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
-				&ntlm_token_data, &ntlm_token_length);
+		char *token64 = ListDictionary_GetItemValue(http_response->Authenticates, "NTLM");
+		crypto_base64_decode((BYTE*) token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
 	}
 
 	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
