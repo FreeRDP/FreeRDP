@@ -20,7 +20,15 @@ set(MODULE_PREFIX "WINPR_COMM")
 
 set(${MODULE_PREFIX}_SRCS
 	comm.c
-	comm.h)
+	comm.h
+	comm_ioctl.c
+	comm_ioctl.h
+	comm_serial_sys.c
+	comm_serial_sys.h
+	comm_sercx_sys.c
+	comm_sercx_sys.h
+	comm_sercx2_sys.c
+	comm_sercx2_sys.h)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)

@@ -101,6 +101,24 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 	IoCtlAccess = ((IoControlCode >> 14) & 0x3);
 	IoCtlDeviceType = ((IoControlCode >> 16) & 0xFFFF);
 
+	/* NB: MS-RDPESP's recommendation:
+	 *
+	 * <2> Section 3.2.5.1.6: Windows Implementations use IOCTL
+	 * constants for IoControlCode values.  The content and values
+	 * of the IOCTLs are opaque to the protocol. On the server
+	 * side, the data contained in an IOCTL is simply packaged and
+	 * sent to the client side. For maximum compatibility between
+	 * the different versions of the Windows operating system, the
+	 * client implementation only singles out critical IOCTLs and
+	 * invokes the applicable Win32 port API. The other IOCTLS are
+	 * passed directly to the client-side driver, and the
+	 * processing of this value depends on the drivers installed
+	 * on the client side. The values and parameters for these
+	 * IOCTLS can be found in [MSFT-W2KDDK] Volume 2, Part
+	 * 2—Serial and Parallel Drivers, and in [MSDN-PORTS].
+	 */
+
+
 	/**
 	 * FILE_DEVICE_SERIAL_PORT		0x0000001B
 	 * FILE_DEVICE_UNKNOWN			0x00000022

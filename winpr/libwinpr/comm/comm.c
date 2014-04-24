@@ -26,11 +26,12 @@
 
 #ifndef _WIN32
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <termios.h>
+#include <unistd.h>
+
 #include <errno.h>
 
 #include <freerdp/utils/debug.h>
@@ -348,9 +349,10 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 		goto error_handle;
 	}
 
-	lpLocalDcb->fBinary = TRUE; /* TMP: should the raw mode be tested? */
+	lpLocalDcb->fBinary = TRUE; /* TMP: TODO: seems equivalent to the raw mode */
 
 	lpLocalDcb->fParity =  (currentState.c_iflag & INPCK) != 0;
+
 
 
 	memcpy(lpDCB, lpLocalDcb, lpDCB->DCBlength);
@@ -942,6 +944,12 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
+
+	/* TMP: TODO: FIXME: this information is at least need for
+	 * get/set baud. Is possible to pull this information? to be
+	 * forced with a comand line argument.
+	 */
+	 pComm->remoteSerialDriverId = RemoteSerialDriverUnknown;
 
 	return (HANDLE)pComm;
 

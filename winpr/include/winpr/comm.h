@@ -372,6 +372,14 @@ WINPR_API BOOL IsCommDevice(LPCTSTR lpDeviceName);
 WINPR_API HANDLE CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 				 DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 
+
+/**
+ * FIXME: to be moved in comm_ioctl.h
+ */
+BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
+			 LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
+
+
 #ifdef __cplusplus
 }
 #endif

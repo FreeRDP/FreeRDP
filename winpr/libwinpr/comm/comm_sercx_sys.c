@@ -2,6 +2,8 @@
  * WinPR: Windows Portable Runtime
  * Serial Communication API
  *
+ * Copyright 2011 O.S. Systems Software Ltda.
+ * Copyright 2011 Eduardo Fiss Beloni <beloni@ossystems.com.br>
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2014 Hewlett-Packard Development Company, L.P.
  *
@@ -18,37 +20,25 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_COMM_PRIVATE_H
-#define WINPR_COMM_PRIVATE_H
 
-#ifndef _WIN32
+#include "comm_serial_sys.h"
 
-#include <winpr/comm.h>
-
-#include "../handle/handle.h"
-
-/**
- * IOCTLs table according the remote serial driver:
- * http://msdn.microsoft.com/en-us/library/windows/hardware/dn265347%28v=vs.85%29.aspx
- */
-typedef enum _REMOTE_SERIAL_DRIVER_ID
+/* specific functions only */
+static REMOTE_SERIAL_DRIVER _SerCxSys = 
 {
-	RemoteSerialDriverUnknown = 0,
-	RemoteSerialDriverSerialSys,
-	RemoteSerialDriverSerCxSys,
-	RemoteSerialDriverSerCx2Sys /* default fallback */
-} REMOTE_SERIAL_DRIVER_ID;
-
-struct winpr_comm
-{
-	WINPR_HANDLE_DEF();
-
-	int fd;
-	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
+	.id		= RemoteSerialDriverSerCxSys,
+	.name		= _T("SerCx.sys"),
+	.set_baud_rate	= NULL,
 };
-typedef struct winpr_comm WINPR_COMM;
 
 
-#endif /* _WIN32 */
 
-#endif /* WINPR_COMM_PRIVATE_H */
+PREMOTE_SERIAL_DRIVER SerCxSys()
+{
+	/* _SerCxSys completed with default SerialSys functions */
+	PREMOTE_SERIAL_DRIVER serialSys = SerialSys();
+
+	_SerCxSys.set_baud_rate = serialSys->set_baud_rate;
+
+	return &_SerCxSys;
+}

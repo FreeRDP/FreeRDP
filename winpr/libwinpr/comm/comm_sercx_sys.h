@@ -2,7 +2,6 @@
  * WinPR: Windows Portable Runtime
  * Serial Communication API
  *
- * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2014 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,37 +17,25 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_COMM_PRIVATE_H
-#define WINPR_COMM_PRIVATE_H
+#ifndef COMM_SERCX_SYS_H
+#define COMM_SERCX_SYS_H
 
 #ifndef _WIN32
 
-#include <winpr/comm.h>
+#include "comm_ioctl.h"
 
-#include "../handle/handle.h"
+#ifdef __cplusplus 
+extern "C" { 
+#endif
 
-/**
- * IOCTLs table according the remote serial driver:
- * http://msdn.microsoft.com/en-us/library/windows/hardware/dn265347%28v=vs.85%29.aspx
- */
-typedef enum _REMOTE_SERIAL_DRIVER_ID
-{
-	RemoteSerialDriverUnknown = 0,
-	RemoteSerialDriverSerialSys,
-	RemoteSerialDriverSerCxSys,
-	RemoteSerialDriverSerCx2Sys /* default fallback */
-} REMOTE_SERIAL_DRIVER_ID;
+WINPR_API PREMOTE_SERIAL_DRIVER SerCxSys();
 
-struct winpr_comm
-{
-	WINPR_HANDLE_DEF();
-
-	int fd;
-	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
-};
-typedef struct winpr_comm WINPR_COMM;
+#ifdef __cplusplus 
+}
+#endif
 
 
 #endif /* _WIN32 */
 
-#endif /* WINPR_COMM_PRIVATE_H */
+
+#endif /* COMM_SERCX_SYS_H */
