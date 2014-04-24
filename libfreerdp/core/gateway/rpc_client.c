@@ -599,9 +599,12 @@ int rpc_client_start(rdpRpc* rpc)
 
 int rpc_client_stop(rdpRpc* rpc)
 {
-	SetEvent(rpc->client->StopEvent);
+	if (rpc->client->SynchronousReceive == FALSE)
+	{
+		SetEvent(rpc->client->StopEvent);
 
-	WaitForSingleObject(rpc->client->Thread, INFINITE);
+		WaitForSingleObject(rpc->client->Thread, INFINITE);
+	}
 
 	rpc_client_free(rpc);
 
