@@ -144,8 +144,8 @@ int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
 		}
 	}
 
-	pKeys = (ULONG_PTR*) malloc(sizeof(ULONG_PTR*) * count);
-	ZeroMemory(pKeys, sizeof(ULONG_PTR*) * count);
+	pKeys = (ULONG_PTR*) malloc(sizeof(ULONG_PTR) * count);
+	ZeroMemory(pKeys, sizeof(ULONG_PTR) * count);
 
 	index = 0;
 
