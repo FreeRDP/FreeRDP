@@ -387,6 +387,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->MultifragMaxRequestSize = 0xFFFF;
 
 		settings->GatewayUseSameCredentials = FALSE;
+		settings->GatewayBypassLocal = TRUE;
 
 		settings->FastPathInput = TRUE;
 		settings->FastPathOutput = TRUE;

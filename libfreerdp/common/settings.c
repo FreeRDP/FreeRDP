@@ -582,6 +582,42 @@ void freerdp_performance_flags_split(rdpSettings* settings)
 	settings->DisableThemes = (settings->PerformanceFlags & PERF_DISABLE_THEMING) ? TRUE : FALSE;
 }
 
+void freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsageMethod)
+{
+	freerdp_set_param_uint32(settings, FreeRDP_GatewayUsageMethod, GatewayUsageMethod);
+
+	if (GatewayUsageMethod == TSC_PROXY_MODE_NONE_DIRECT)
+	{
+		freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE);
+		freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE);
+	}
+	else if (GatewayUsageMethod == TSC_PROXY_MODE_DIRECT)
+	{
+		freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
+		freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE);
+	}
+	else if (GatewayUsageMethod == TSC_PROXY_MODE_DETECT)
+	{
+		freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
+		freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, TRUE);
+	}
+	else if (GatewayUsageMethod == TSC_PROXY_MODE_DEFAULT)
+	{
+		/**
+		 * This corresponds to "Automatically detect RD Gateway server settings",
+		 * which means the client attempts to use gateway group policy settings
+		 * http://technet.microsoft.com/en-us/library/cc770601.aspx
+		 */
+		freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE);
+		freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE);
+	}
+	else if (GatewayUsageMethod == TSC_PROXY_MODE_NONE_DETECT)
+	{
+		freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE);
+		freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE);
+	}
+}
+
 /**
  * Partially Generated Code
  */
