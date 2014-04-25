@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#ifndef _WIN32
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -162,3 +164,5 @@ int PCSC_InitializeSCardApi_Link(void)
 	
 	return status;
 }
+
+#endif

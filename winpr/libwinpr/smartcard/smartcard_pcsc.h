@@ -20,6 +20,8 @@
 #ifndef WINPR_SMARTCARD_PCSC_PRIVATE_H
 #define WINPR_SMARTCARD_PCSC_PRIVATE_H
 
+#ifndef _WIN32
+
 #include <winpr/platform.h>
 #include <winpr/smartcard.h>
 
@@ -74,5 +76,7 @@ typedef struct _PCSCFunctionTable PCSCFunctionTable;
 
 int PCSC_InitializeSCardApi(void);
 PSCardApiFunctionTable PCSC_GetSCardApiFunctionTable(void);
+
+#endif
 
 #endif /* WINPR_SMARTCARD_PCSC_PRIVATE_H */

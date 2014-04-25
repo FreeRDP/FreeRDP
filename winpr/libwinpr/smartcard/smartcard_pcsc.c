@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#ifndef _WIN32
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -2186,3 +2188,5 @@ int PCSC_InitializeSCardApi(void)
 
 	return 1;
 }
+
+#endif
