@@ -1081,73 +1081,105 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 
 	if (g_PCSC.pfnSCardGetStatusChange)
 	{
-		DWORD index;
-		char** szReaders;
+		DWORD i, j;
 		DWORD dwEventState;
 		BOOL stateChanged = FALSE;
-		LPSCARD_READERSTATEA states;
+		PCSC_SCARD_READERSTATE* states;
+		
+		/**
+		 * FIXME: proper pcsc-lite support for "\\\\?PnP?\\Notification"
+		 *
+		 * Apple's SmartCard Services (not vanilla pcsc-lite) appears to have trouble with the
+		 * "\\\\?PnP?\\Notification" reader name. I am always getting EXC_BAD_ACCESS with it.
+		 *
+		 * The SmartCard Services tarballs can be found here:
+		 * http://opensource.apple.com/tarballs/SmartCardServices/
+		 *
+		 * The "\\\\?PnP?\\Notification" string cannot be found anywhere in the sources,
+		 * while this string is present in the vanilla pcsc-lite sources.
+		 *
+		 * For now, the current smartcard code sets dwCurrentState to SCARD_STATE_IGNORE
+		 * when the reader name is "\\\\?PnP?\\Notification". We check for this flag and
+		 * and ignore the reader completely when present.
+		 */
 
-		states = (LPSCARD_READERSTATEA) calloc(cReaders, sizeof(SCARD_READERSTATEA));
-		szReaders = (char**) calloc(cReaders, sizeof(char*));
+		states = (PCSC_SCARD_READERSTATE*) calloc(cReaders, sizeof(PCSC_SCARD_READERSTATE));
 
 		if (!states)
 			return SCARD_E_NO_MEMORY;
-
-		for (index = 0; index < cReaders; index++)
+		
+		for (i = j = 0; i < cReaders; i++)
 		{
-			szReaders[index] = (char*) states[index].szReader;
-			states[index].szReader = PCSC_GetReaderNameFromAlias((char*) rgReaderStates[index].szReader);
+			if (rgReaderStates[i].dwCurrentState == SCARD_STATE_IGNORE)
+				continue;
+			
+			states[j].szReader = PCSC_GetReaderNameFromAlias((char*) rgReaderStates[i].szReader);
 
-			if (!states[index].szReader)
-				states[index].szReader = rgReaderStates[index].szReader;
+			if (!states[j].szReader)
+				states[j].szReader = rgReaderStates[i].szReader;
 
-			states[index].pvUserData = rgReaderStates[index].pvUserData;
-			states[index].dwCurrentState = rgReaderStates[index].dwCurrentState;
-			states[index].dwEventState = rgReaderStates[index].dwEventState;
-			states[index].cbAtr = rgReaderStates[index].cbAtr;
-			CopyMemory(&(states[index].rgbAtr), &(rgReaderStates[index].rgbAtr), 36);
+			states[j].dwCurrentState = rgReaderStates[i].dwCurrentState;
+			states[j].dwEventState = rgReaderStates[i].dwEventState;
+			states[j].cbAtr = rgReaderStates[i].cbAtr;
+			CopyMemory(&(states[j].rgbAtr), &(rgReaderStates[i].rgbAtr), PCSC_MAX_ATR_SIZE);
+			
+			j++;
 		}
+		
+		cReaders = j;
 
 		/**
 		 * pcsc-lite interprets dwTimeout value 0 as INFINITE, use value 1 as a workaround
 		 */
 
-		status = g_PCSC.pfnSCardGetStatusChange(hContext, dwTimeout ? dwTimeout : 10, states, cReaders);
-		status = PCSC_MapErrorCodeToWinSCard(status);
-
-		for (index = 0; index < cReaders; index++)
+		if (cReaders > 0)
 		{
-			rgReaderStates[index].szReader = szReaders[index];
+			status = g_PCSC.pfnSCardGetStatusChange(hContext, dwTimeout ? dwTimeout : 10, states, cReaders);
+			status = PCSC_MapErrorCodeToWinSCard(status);
+		}
+		else
+		{
+			status = SCARD_E_TIMEOUT;
+		}
+
+		for (i = j = 0; i < cReaders; i++)
+		{
+			if (rgReaderStates[i].dwCurrentState == SCARD_STATE_IGNORE)
+			{
+				rgReaderStates[i].dwEventState = SCARD_STATE_IGNORE;
+				continue;
+			}
 			
-			rgReaderStates[index].pvUserData = states[index].pvUserData;
-			rgReaderStates[index].dwCurrentState = states[index].dwCurrentState;
-			rgReaderStates[index].cbAtr = states[index].cbAtr;
-			CopyMemory(&(rgReaderStates[index].rgbAtr), &(states[index].rgbAtr), 36);
+			rgReaderStates[i].dwCurrentState = states[j].dwCurrentState;
+			rgReaderStates[i].cbAtr = states[j].cbAtr;
+			CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
 
 			/* pcsc-lite puts an event count in the higher bits of dwEventState */
-			states[index].dwEventState &= 0xFFFF;
+			states[j].dwEventState &= 0xFFFF;
 
-			dwEventState = states[index].dwEventState & ~SCARD_STATE_CHANGED;
+			dwEventState = states[j].dwEventState & ~SCARD_STATE_CHANGED;
 
-			if (dwEventState != rgReaderStates[index].dwCurrentState)
+			if (dwEventState != rgReaderStates[i].dwCurrentState)
 			{
-				rgReaderStates[index].dwEventState = states[index].dwEventState;
+				rgReaderStates[i].dwEventState = states[j].dwEventState;
 
 				if (dwEventState & SCARD_STATE_PRESENT)
 				{
 					if (!(dwEventState & SCARD_STATE_EXCLUSIVE))
-						rgReaderStates[index].dwEventState |= SCARD_STATE_INUSE;
+						rgReaderStates[i].dwEventState |= SCARD_STATE_INUSE;
 				}
 
 				stateChanged = TRUE;
 			}
 			else
 			{
-				rgReaderStates[index].dwEventState = dwEventState;
+				rgReaderStates[i].dwEventState = dwEventState;
 			}
 
-			if (rgReaderStates[index].dwCurrentState & SCARD_STATE_IGNORE)
-				rgReaderStates[index].dwEventState = SCARD_STATE_IGNORE;
+			if (rgReaderStates[i].dwCurrentState & SCARD_STATE_IGNORE)
+				rgReaderStates[i].dwEventState = SCARD_STATE_IGNORE;
+			
+			j++;
 		}
 
 		if ((status == SCARD_S_SUCCESS) && !stateChanged)
@@ -1155,7 +1187,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		else if ((status == SCARD_E_TIMEOUT) && stateChanged)
 			return SCARD_S_SUCCESS;
 
-		free(szReaders);
 		free(states);
 	}
 
