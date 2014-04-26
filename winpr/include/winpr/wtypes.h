@@ -64,12 +64,22 @@ typedef int BOOL;
 
 typedef BOOL *PBOOL, *LPBOOL;
 
+#ifdef __APPLE__
+typedef int LONG;
+typedef unsigned int DWORD;
+typedef unsigned int ULONG;
+#else
+typedef long LONG;
+typedef unsigned long DWORD;
+typedef unsigned long ULONG;
+#endif
+
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
 typedef BYTE BOOLEAN, *PBOOLEAN;
 typedef unsigned short WCHAR, *PWCHAR;
 typedef WCHAR* BSTR;
 typedef char CHAR, *PCHAR;
-typedef unsigned long DWORD, *PDWORD, *LPDWORD;
+typedef DWORD *PDWORD, *LPDWORD;
 typedef unsigned int DWORD32;
 typedef unsigned __int64 DWORD64;
 typedef unsigned __int64 ULONGLONG;
@@ -107,7 +117,7 @@ typedef signed __int64 INT64;
 #endif
 typedef const WCHAR* LMCSTR;
 typedef WCHAR* LMSTR;
-typedef long LONG, *PLONG, *LPLONG;
+typedef LONG *PLONG, *LPLONG;
 typedef signed __int64 LONGLONG;
 
 typedef __int3264 LONG_PTR, *PLONG_PTR;
@@ -132,7 +142,7 @@ typedef unsigned char UINT8;
 typedef unsigned short UINT16;
 typedef unsigned int UINT32;
 typedef unsigned __int64 UINT64;
-typedef unsigned long ULONG, *PULONG;
+typedef ULONG *PULONG;
 
 typedef ULONG HRESULT;
 typedef ULONG SCODE;
