@@ -49,7 +49,6 @@ typedef struct _audin_server
 
 	BOOL opened;
 
-	HANDLE event;
 	HANDLE stopEvent;
 
 	HANDLE thread;
@@ -284,26 +283,35 @@ static void* audin_server_thread_func(void* arg)
 	void* fd;
 	wStream* s;
 	void* buffer;
+	DWORD nCount;
 	BYTE MessageId;
+	HANDLE events[8];
 	BOOL ready = FALSE;
+	HANDLE ChannelEvent;
 	DWORD BytesReturned = 0;
 	audin_server* audin = (audin_server*) arg;
 
-	if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualFileHandle, &buffer, &BytesReturned) == TRUE)
-	{
-		fd = *((void**) buffer);
-		WTSFreeMemory(buffer);
+	buffer = NULL;
+	BytesReturned = 0;
+	ChannelEvent = NULL;
 
-		audin->event = CreateWaitObjectEvent(NULL, TRUE, FALSE, fd);
+	if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
+	{
+		if (BytesReturned == sizeof(HANDLE))
+			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+
+		WTSFreeMemory(buffer);
 	}
+
+	nCount = 0;
+	events[nCount++] = audin->stopEvent;
+	events[nCount++] = ChannelEvent;
 
 	/* Wait for the client to confirm that the Audio Input dynamic channel is ready */
 
 	while (1)
 	{
-		WaitForSingleObject(audin->event, INFINITE);
-
-		if (WaitForSingleObject(audin->stopEvent, 0) == WAIT_OBJECT_0)
+		if (WaitForMultipleObjects(nCount, events, FALSE, 100) == WAIT_OBJECT_0)
 			break;
 
 		if (WTSVirtualChannelQuery(audin->audin_channel, WTSVirtualChannelReady, &buffer, &BytesReturned) == FALSE)
@@ -326,9 +334,7 @@ static void* audin_server_thread_func(void* arg)
 
 	while (ready)
 	{
-		WaitForSingleObject(audin->event, INFINITE);
-
-		if (WaitForSingleObject(audin->stopEvent, 0) == WAIT_OBJECT_0)
+		if (WaitForMultipleObjects(nCount, events, FALSE, INFINITE) == WAIT_OBJECT_0)
 			break;
 
 		Stream_SetPosition(s, 0);

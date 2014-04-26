@@ -737,8 +737,10 @@ BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE
 		free(dst->data);
 
 	dst->data = realloc(newItems, newItems->size);
-	if (!dst->data)
+	if (!dst->data) {
+		free(newItems);
 		return FALSE;
+	}
 
 	dst->extents = newExtents;
 	return region16_simplify_bands(dst);

@@ -329,6 +329,7 @@ rdpNtlmHttp* ntlm_http_new()
 out_free_ntlm:
 	ntlm_free(ntlm_http->ntlm);
 out_free:
+	free(ntlm_http);
 	return NULL;
 }
 
