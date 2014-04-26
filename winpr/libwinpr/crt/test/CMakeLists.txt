@@ -5,6 +5,7 @@ set(MODULE_PREFIX "TEST_CRT")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
+	TestTypes.c
 	TestAlignment.c
 	TestString.c
 	TestUnicodeConversion.c)

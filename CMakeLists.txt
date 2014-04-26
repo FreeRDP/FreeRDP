@@ -20,7 +20,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(FreeRDP C)
+project(FreeRDP C CXX)
 
 if(NOT DEFINED VENDOR)
 	set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")
@@ -116,6 +116,15 @@ if(MSVC)
 	endif()
 endif()
 
+CHECK_C_COMPILER_FLAG (-Wno-builtin-macro-redefined Wno-builtin-macro-redefined)
+if(Wno-builtin-macro-redefined)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-builtin-macro-redefined")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-builtin-macro-redefined")
+
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
+endif()
+
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "i686")
@@ -133,15 +142,6 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-
-	# Hack to strip absolute paths out of the __FILE__ macro
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__FILE__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILE__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-	CHECK_C_COMPILER_FLAG (-Wno-builtin-macro-redefined Wno-builtin-macro-redefined)
-	if(Wno-builtin-macro-redefined)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-builtin-macro-redefined")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-builtin-macro-redefined")
-	endif()
 
 	CHECK_C_COMPILER_FLAG (-Wno-unused-result Wno-unused-result)
 	if(Wno-unused-result)

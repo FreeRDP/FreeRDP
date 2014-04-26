@@ -28,9 +28,8 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
-
 #include <winpr/stream.h>
-#include <freerdp/utils/list.h>
+
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
 

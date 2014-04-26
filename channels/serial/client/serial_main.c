@@ -52,7 +52,6 @@
 #include <winpr/collections.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/list.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/utils/svc_plugin.h>
 

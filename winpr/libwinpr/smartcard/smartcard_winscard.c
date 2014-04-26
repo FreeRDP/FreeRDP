@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#ifdef _WIN32
+
 #include <winpr/crt.h>
 #include <winpr/library.h>
 #include <winpr/smartcard.h>
@@ -203,3 +205,5 @@ int WinSCard_InitializeSCardApi(void)
 
 	return 1;
 }
+
+#endif

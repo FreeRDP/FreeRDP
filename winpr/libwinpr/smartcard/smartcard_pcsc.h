@@ -20,6 +20,8 @@
 #ifndef WINPR_SMARTCARD_PCSC_PRIVATE_H
 #define WINPR_SMARTCARD_PCSC_PRIVATE_H
 
+#ifndef _WIN32
+
 #include <winpr/platform.h>
 #include <winpr/smartcard.h>
 
@@ -33,6 +35,22 @@
 
 #define PCSC_SCARD_PROTOCOL_RAW		0x00000004
 #define PCSC_SCARD_PROTOCOL_T15		0x00000008
+
+#define PCSC_MAX_BUFFER_SIZE		264
+#define PCSC_MAX_BUFFER_SIZE_EXTENDED	(4 + 3 + (1 << 16) + 3 + 2)
+
+#define PCSC_MAX_ATR_SIZE		33
+
+typedef struct
+{
+	LPCSTR szReader;
+	LPVOID pvUserData;
+	DWORD dwCurrentState;
+	DWORD dwEventState;
+	DWORD cbAtr;
+	BYTE rgbAtr[PCSC_MAX_ATR_SIZE]; /* WinSCard: 36, PCSC: 33 */
+}
+PCSC_SCARD_READERSTATE;
 
 struct _PCSCFunctionTable
 {
@@ -52,7 +70,7 @@ struct _PCSCFunctionTable
 			LPSTR mszReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState,
 			LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen);
 	LONG (* pfnSCardGetStatusChange)(SCARDCONTEXT hContext,
-			DWORD dwTimeout, LPSCARD_READERSTATEA rgReaderStates, DWORD cReaders);
+			DWORD dwTimeout, PCSC_SCARD_READERSTATE* rgReaderStates, DWORD cReaders);
 	LONG (* pfnSCardControl)(SCARDHANDLE hCard,
 			DWORD dwControlCode, LPCVOID pbSendBuffer, DWORD cbSendLength,
 			LPVOID pbRecvBuffer, DWORD cbRecvLength, LPDWORD lpBytesReturned);
@@ -71,5 +89,7 @@ typedef struct _PCSCFunctionTable PCSCFunctionTable;
 
 int PCSC_InitializeSCardApi(void);
 PSCardApiFunctionTable PCSC_GetSCardApiFunctionTable(void);
+
+#endif
 
 #endif /* WINPR_SMARTCARD_PCSC_PRIVATE_H */

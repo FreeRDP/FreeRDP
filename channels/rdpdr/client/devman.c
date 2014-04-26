@@ -31,7 +31,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/list.h>
 #include <freerdp/client/channels.h>
 
 #include "rdpdr_main.h"

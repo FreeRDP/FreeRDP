@@ -711,6 +711,7 @@ int test_MppcCompressBellsRdp5()
 	UINT32 SrcSize;
 	BYTE* pSrcData;
 	UINT32 DstSize;
+	BYTE* pDstData;
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
 	BYTE OutputBuffer[65536];
@@ -719,10 +720,12 @@ int test_MppcCompressBellsRdp5()
 
 	SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
 	pSrcData = (BYTE*) TEST_MPPC_BELLS;
-	DstSize = sizeof(OutputBuffer);
 	expectedSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
 
-	status = mppc_compress(mppc, pSrcData, SrcSize, OutputBuffer, &DstSize, &Flags);
+	DstSize = sizeof(OutputBuffer);
+	pDstData = OutputBuffer;
+
+	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
 
 	printf("Flags: 0x%04X DstSize: %d\n", Flags, DstSize);
 
@@ -732,12 +735,12 @@ int test_MppcCompressBellsRdp5()
 		return -1;
 	}
 
-	if (memcmp(OutputBuffer, TEST_MPPC_BELLS_RDP5, DstSize) != 0)
+	if (memcmp(pDstData, TEST_MPPC_BELLS_RDP5, DstSize) != 0)
 	{
 		printf("MppcCompressBellsRdp5: output mismatch\n");
 
 		printf("Actual\n");
-		BitDump(OutputBuffer, DstSize * 8, 0);
+		BitDump(pDstData, DstSize * 8, 0);
 
 		printf("Expected\n");
 		BitDump(TEST_MPPC_BELLS_RDP5, DstSize * 8, 0);
@@ -757,6 +760,7 @@ int test_MppcCompressBellsRdp4()
 	BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
+	BYTE* pDstData;
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
 	BYTE OutputBuffer[65536];
@@ -766,9 +770,11 @@ int test_MppcCompressBellsRdp4()
 	SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
 	pSrcData = (BYTE*) TEST_MPPC_BELLS;
 	expectedSize = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
-	DstSize = sizeof(OutputBuffer);
 
-	status = mppc_compress(mppc, pSrcData, SrcSize, OutputBuffer, &DstSize, &Flags);
+	DstSize = sizeof(OutputBuffer);
+	pDstData = OutputBuffer;
+
+	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
 
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
@@ -778,12 +784,12 @@ int test_MppcCompressBellsRdp4()
 		return -1;
 	}
 
-	if (memcmp(OutputBuffer, TEST_MPPC_BELLS_RDP4, DstSize) != 0)
+	if (memcmp(pDstData, TEST_MPPC_BELLS_RDP4, DstSize) != 0)
 	{
 		printf("MppcCompressBellsRdp4: output mismatch\n");
 
 		printf("Actual\n");
-		BitDump(OutputBuffer, DstSize * 8, 0);
+		BitDump(pDstData, DstSize * 8, 0);
 
 		printf("Expected\n");
 		BitDump(TEST_MPPC_BELLS_RDP4, DstSize * 8, 0);
@@ -879,20 +885,22 @@ int test_MppcCompressBufferRdp5()
 	BYTE* pSrcData;
 	UINT32 SrcSize;
 	UINT32 DstSize;
+	BYTE* pDstData;
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
 	BYTE OutputBuffer[65536];
-	BYTE* pDstData = NULL;
 
 	mppc = mppc_context_new(1, TRUE);
 
 	SrcSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
 	pSrcData = (BYTE*) TEST_RDP5_UNCOMPRESSED_DATA;
 	expectedSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
+
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
 
-	status = mppc_compress(mppc, pSrcData, SrcSize, pDstData, &DstSize, &Flags);
+	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
+
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
@@ -901,7 +909,7 @@ int test_MppcCompressBufferRdp5()
 		return -1;
 	}
 
-	if (memcmp(OutputBuffer, TEST_RDP5_COMPRESSED_DATA, DstSize) != 0)
+	if (memcmp(pDstData, TEST_RDP5_COMPRESSED_DATA, DstSize) != 0)
 	{
 		printf("MppcCompressBufferRdp5: output mismatch: compressed output does not match Microsoft implementation\n");
 		return -1;
