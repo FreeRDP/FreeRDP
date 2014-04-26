@@ -30,7 +30,6 @@
 #include <winpr/stream.h>
 
 #include <freerdp/addin.h>
-#include <freerdp/utils/list.h>
 
 #include "drdynvc_types.h"
 #include "dvcman.h"
