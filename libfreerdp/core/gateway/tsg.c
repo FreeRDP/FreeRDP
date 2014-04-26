@@ -373,6 +373,10 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 			default:
 				fprintf(stderr, "Unexpected Message Type: 0x%X\n", (int) MessageSwitchValue);
+				free(tsgCaps);
+				free(versionCaps);
+				free(packetCapsResponse);
+				free(packet);
 				return FALSE;
 
 		}
@@ -619,6 +623,7 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	{
 		fprintf(stderr, "status: E_PROXY_NAP_ACCESSDENIED (0x%08X)\n", E_PROXY_NAP_ACCESSDENIED);
 		fprintf(stderr, "Ensure that the Gateway Connection Authorization Policy is correct\n");
+		free(packet);
 		return FALSE;
 	}
 
