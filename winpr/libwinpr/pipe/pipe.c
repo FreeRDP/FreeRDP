@@ -308,7 +308,7 @@ BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout)
 {
 	int fd;
-	unsigned long flags;
+	int flags;
 	WINPR_NAMED_PIPE* pNamedPipe;
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;

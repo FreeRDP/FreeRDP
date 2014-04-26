@@ -90,7 +90,7 @@ BOOL freerdp_connect(freerdp* instance)
 			freerdp_set_last_error(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
 		}
 
-		fprintf(stderr, "%s:%d: freerdp_pre_connect failed\n", __FILE__, __LINE__);
+		fprintf(stderr, "freerdp_pre_connect failed\n");
 
 		goto freerdp_connect_finally;
 	}
@@ -100,7 +100,7 @@ BOOL freerdp_connect(freerdp* instance)
 	/* --authonly tests the connection without a UI */
 	if (instance->settings->AuthenticationOnly)
 	{
-		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
+		fprintf(stderr, "Authentication only, exit status %d\n", !status);
 		goto freerdp_connect_finally;
 	}
 
