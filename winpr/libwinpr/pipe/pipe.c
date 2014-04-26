@@ -145,7 +145,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	if (pNamedPipe->serverfd == -1)
 	{
 		fprintf(stderr, "CreateNamedPipeA: socket error, %s\n", strerror(errno));
-		return INVALID_HANDLE_VALUE;
+		goto err_out;
 	}
 
 	ZeroMemory(&s, sizeof(struct sockaddr_un));
@@ -157,7 +157,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	if (status != 0)
 	{
 		fprintf(stderr, "CreateNamedPipeA: bind error, %s\n", strerror(errno));
-		return INVALID_HANDLE_VALUE;
+		goto err_out;
 	}
 
 	status = listen(pNamedPipe->serverfd, 2);
@@ -165,7 +165,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	if (status != 0)
 	{
 		fprintf(stderr, "CreateNamedPipeA: listen error, %s\n", strerror(errno));
-		return INVALID_HANDLE_VALUE;
+		goto err_out;
 	}
 
 	UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
@@ -181,6 +181,13 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	}
 
 	return hNamedPipe;
+err_out:
+	if (pNamedPipe) {
+		if (pNamedPipe->serverfd != -1)
+			close(pNamedPipe->serverfd);
+		free(pNamedPipe);
+	}
+	return INVALID_HANDLE_VALUE;
 }
 
 HANDLE CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,

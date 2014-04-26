@@ -1057,6 +1057,7 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 	if (!rc4)
 	{
 		fprintf(stderr, "%s: unable to allocate a rc4\n", __FUNCTION__);
+		free(buffer);
 		return;
 	}
 	crypto_rc4(rc4, HWID_LENGTH, license->HardwareId, buffer);
