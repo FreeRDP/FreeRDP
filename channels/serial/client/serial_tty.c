@@ -450,6 +450,7 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 
 		tcsetattr(tty->fd, TCSANOW, ptermios);
 		tty->timeout = timeout;
+		free(ptermios);
 	}
 
 	ZeroMemory(buffer, *Length);
