@@ -360,6 +360,10 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 				if (MsgBytes > TSG_MESSAGING_MAX_MESSAGE_LENGTH)
 				{
 					fprintf(stderr, "Out of Spec Message Length %d", MsgBytes);
+					free(tsgCaps);
+					free(versionCaps);
+					free(packetCapsResponse);
+					free(packet);
 					return FALSE;
 				}
 				offset += MsgBytes;
