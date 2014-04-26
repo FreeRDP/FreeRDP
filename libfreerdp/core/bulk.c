@@ -52,7 +52,7 @@ const char* bulk_get_compression_flags_string(UINT32 flags)
 UINT32 bulk_compression_level(rdpBulk* bulk)
 {
 	rdpSettings* settings = bulk->context->settings;
-	bulk->CompressionLevel = (settings->CompressionLevel >= 2) ? 2 : 0;
+	bulk->CompressionLevel = (settings->CompressionLevel >= 2) ? 2 : settings->CompressionLevel;
 	return bulk->CompressionLevel;
 }
 
