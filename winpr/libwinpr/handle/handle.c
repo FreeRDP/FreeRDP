@@ -194,6 +194,8 @@ BOOL CloseHandle(HANDLE hObject)
 			free(token->Domain);
 
 		free(token);
+
+		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_COMM)
 	{
@@ -205,6 +207,8 @@ BOOL CloseHandle(HANDLE hObject)
 			close(comm->fd);
 
 		free(comm);
+
+		return TRUE;
 	}
 
 	return FALSE;

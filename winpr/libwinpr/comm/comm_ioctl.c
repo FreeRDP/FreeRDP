@@ -37,12 +37,30 @@
 #include "comm_sercx2_sys.h"
 
 
+/* NB: MS-RDPESP's recommendation:
+ *
+ * <2> Section 3.2.5.1.6: Windows Implementations use IOCTL constants
+ * for IoControlCode values.  The content and values of the IOCTLs are
+ * opaque to the protocol. On the server side, the data contained in
+ * an IOCTL is simply packaged and sent to the client side. For
+ * maximum compatibility between the different versions of the Windows
+ * operating system, the client implementation only singles out
+ * critical IOCTLs and invokes the applicable Win32 port API. The
+ * other IOCTLS are passed directly to the client-side driver, and the
+ * processing of this value depends on the drivers installed on the
+ * client side. The values and parameters for these IOCTLS can be
+ * found in [MSFT-W2KDDK] Volume 2, Part 2—Serial and Parallel
+ * Drivers, and in [MSDN-PORTS].
+ */
+
+
 /**
  * FIXME: to be used through winpr-io's DeviceIoControl
  *
  * ERRORS:
  *   ERROR_INVALID_HANDLE
  *   ERROR_NOT_SUPPORTED lpOverlapped is not supported
+ *   ERROR_INSUFFICIENT_BUFFER
  */
 BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
 			 LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)

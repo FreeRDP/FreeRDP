@@ -45,6 +45,8 @@ struct winpr_comm
 
 	int fd;
 	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
+
+	/* NB: CloseHandle() has to free resources */
 };
 typedef struct winpr_comm WINPR_COMM;
 

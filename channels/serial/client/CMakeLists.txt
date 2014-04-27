@@ -32,6 +32,11 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE freerdp
 	MODULES freerdp-utils)
 
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+        MONOLITHIC ${MONOLITHIC_BUILD}
+        MODULE winpr
+        MODULES winpr-comm)
+
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)

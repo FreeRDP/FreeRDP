@@ -44,12 +44,13 @@
 #include "serial_tty.h"
 #include "serial_constants.h"
 
+#include <winpr/collections.h>
+#include <winpr/comm.h>
 #include <winpr/crt.h>
-#include <winpr/wlog.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/collections.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/list.h>
@@ -61,9 +62,12 @@ typedef struct _SERIAL_DEVICE SERIAL_DEVICE;
 struct _SERIAL_DEVICE
 {
 	DEVICE device;
+	HANDLE* hComm;
 
+	// TMP: TBR
 	char* path;
 	SERIAL_TTY* tty;
+	//
 
 	wLog* log;
 	HANDLE thread;
@@ -72,71 +76,75 @@ struct _SERIAL_DEVICE
 
 static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
-	int status;
 	UINT32 FileId;
+	
+	DWORD DesiredAccess;
+	DWORD SharedAccess;
+	DWORD CreateDisposition;
 	UINT32 PathLength;
-	char* path = NULL;
-	SERIAL_TTY* tty;
+	
+	Stream_Read_UINT32(irp->input, DesiredAccess);		/* DesiredAccess (4 bytes) */
+	Stream_Seek_UINT64(irp->input);				/* AllocationSize (8 bytes) */
+	Stream_Seek_UINT32(irp->input);				/* FileAttributes (4 bytes) */
+	Stream_Read_UINT32(irp->input, SharedAccess);		/* SharedAccess (4 bytes) */
+	Stream_Read_UINT32(irp->input, CreateDisposition);	/* CreateDisposition (4 bytes) */
+	Stream_Seek_UINT32(irp->input); 			/* CreateOptions (4 bytes) */
+	Stream_Read_UINT32(irp->input, PathLength);		/* PathLength (4 bytes) */
+	Stream_Seek(irp->input, PathLength);			/* Path (variable) */
 
-	Stream_Seek_UINT32(irp->input); /* DesiredAccess (4 bytes) */
-	Stream_Seek_UINT64(irp->input); /* AllocationSize (8 bytes) */
-	Stream_Seek_UINT32(irp->input); /* FileAttributes (4 bytes) */
-	Stream_Seek_UINT32(irp->input); /* SharedAccess (4 bytes) */
-	Stream_Seek_UINT32(irp->input); /* CreateDisposition (4 bytes) */
-	Stream_Seek_UINT32(irp->input); /* CreateOptions (4 bytes) */
+	assert(PathLength == 0); /* MS-RDPESP 2.2.2.2 */
 
-	Stream_Read_UINT32(irp->input, PathLength); /* PathLength (4 bytes) */
+	/* CommCreateFileA current implementation expects nothing else than that */
+	assert(DesiredAccess == (GENERIC_READ | GENERIC_WRITE));
+	assert(SharedAccess == 0);
+	assert(CreateDisposition == OPEN_EXISTING);
 
-	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(irp->input),
-			PathLength / 2, &path, 0, NULL, NULL);
+	serial->hComm = CreateFile(serial->device.name,
+				   DesiredAccess,	/* GENERIC_READ | GENERIC_WRITE */
+				   SharedAccess,	/* 0 */
+				   NULL,		/* SecurityAttributes */
+				   CreateDisposition,	/* OPEN_EXISTING */
+				   0,			/* FlagsAndAttributes */
+				   NULL);		/* TemplateFile */
 
-	if (status < 1)
-		path = (char*) calloc(1, 1);
-
-	FileId = irp->devman->id_sequence++;
-
-	tty = serial_tty_new(serial->path, FileId);
-
-	if (!tty)
+	if (!serial->hComm || (serial->hComm == INVALID_HANDLE_VALUE))
 	{
+		DEBUG_WARN("CreateFile failure: %s last-error: Ox%x\n", serial->device.name, GetLastError());
+
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		FileId = 0;
-
-		DEBUG_WARN("failed to create %s", path);
-	}
-	else
-	{
-		serial->tty = tty;
-		DEBUG_SVC("%s(%d) created.", serial->path, FileId);
+		goto error_handle;
 	}
 
-	Stream_Write_UINT32(irp->output, FileId); /* FileId (4 bytes) */
-	Stream_Write_UINT8(irp->output, 0); /* Information (1 byte) */
+	FileId = irp->devman->id_sequence++; // TMP: !?
+	irp->IoStatus = STATUS_SUCCESS;
 
-	free(path);
+	DEBUG_SVC("%s %s (%d) created.", serial->device.name, serial->path, FileId);
+
+  error_handle:
+	Stream_Write_UINT32(irp->output, FileId);	/* FileId (4 bytes) */
+	Stream_Write_UINT8(irp->output, 0);		/* Information (1 byte) */
 
 	irp->Complete(irp);
 }
 
 static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 {
-	SERIAL_TTY* tty = serial->tty;
-
 	Stream_Seek(irp->input, 32); /* Padding (32 bytes) */
 
-	if (!tty)
+	if (!CloseHandle(serial->hComm))
 	{
+		DEBUG_WARN("CloseHandle failure: %s %s (%d) closed.", serial->device.name, serial->path, irp->device->id);
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
-		DEBUG_WARN("tty not valid.");
-	}
-	else
-	{
-		DEBUG_SVC("%s(%d) closed.", serial->path, tty->id);
-
-		serial_tty_free(tty);
-		serial->tty = NULL;
+		goto error_handle;
 	}
 
+	DEBUG_SVC("%s %s (%d) closed.", serial->device.name, serial->path, irp->device->id);
+
+	serial->hComm = NULL;
+	irp->IoStatus = STATUS_SUCCESS;
+
+  error_handle:
 	Stream_Zero(irp->output, 5); /* Padding (5 bytes) */
 
 	irp->Complete(irp);
@@ -240,8 +248,10 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 {
 	UINT32 IoControlCode;
 	UINT32 InputBufferLength;
+	BYTE*  InputBuffer = NULL;
 	UINT32 OutputBufferLength;
-	UINT32 abortIo = SERIAL_ABORT_IO_NONE;
+	BYTE*  OutputBuffer = NULL;
+	DWORD  BytesReturned = 0;
 	SERIAL_TTY* tty = serial->tty;
 
 	Stream_Read_UINT32(irp->input, OutputBufferLength); /* OutputBufferLength (4 bytes) */
@@ -251,16 +261,64 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 	if (!tty)
 	{
-		irp->IoStatus = STATUS_UNSUCCESSFUL;
-		OutputBufferLength = 0;
-
 		DEBUG_WARN("tty not valid.");
+		irp->IoStatus = STATUS_UNSUCCESSFUL;
+		goto error_handle;
+	}
+
+	OutputBuffer = (BYTE*)calloc(OutputBufferLength, sizeof(BYTE));
+	if (OutputBuffer == NULL)
+	{
+		irp->IoStatus = STATUS_NO_MEMORY;
+		goto error_handle;
+	}
+
+	InputBuffer = (BYTE*)calloc(InputBufferLength, sizeof(BYTE));
+	if (InputBuffer == NULL)
+	{
+		irp->IoStatus = STATUS_NO_MEMORY;
+		goto error_handle;
+	}
+		
+	/* FIXME: to be replaced by DeviceIoControl() */
+	if (CommDeviceIoControl(serial->hComm, IoControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, &BytesReturned, NULL))
+	{
+		Stream_Write(irp->output, OutputBuffer, BytesReturned);
+		irp->IoStatus = STATUS_SUCCESS;
 	}
 	else
 	{
-		irp->IoStatus = serial_tty_control(tty, IoControlCode, irp->input, irp->output, &abortIo);
+		DEBUG_SVC("CommDeviceIoControl failure: IoControlCode 0x%x last-error: 0x%x", IoControlCode, GetLastError());
+
+		switch(GetLastError())
+		{
+			case ERROR_INVALID_HANDLE:
+				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
+				break;
+
+			case ERROR_NOT_SUPPORTED:
+				irp->IoStatus = STATUS_INVALID_PARAMETER;
+				break;
+
+			case ERROR_INSUFFICIENT_BUFFER:
+				irp->IoStatus = STATUS_BUFFER_TOO_SMALL; /* TMP: better have STATUS_BUFFER_SIZE_TOO_SMALL? http://msdn.microsoft.com/en-us/library/windows/hardware/ff547466%28v=vs.85%29.aspx#generic_status_values_for_serial_device_control_requests */
+				break;
+
+			default:
+				DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
+				irp->IoStatus = STATUS_UNSUCCESSFUL;
+				break;
+		}
 	}
 
+  error_handle:
+	if (InputBuffer != NULL)
+		free(InputBuffer);
+
+	if (OutputBuffer != NULL)
+		free(OutputBuffer);
+
+	// TMP: double check the completion, Information field
 	irp->Complete(irp);
 }
 
@@ -375,8 +433,13 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	if ((name && name[0]) && (path && path[0]))
 	{
-		serial = (SERIAL_DEVICE*) calloc(1, sizeof(SERIAL_DEVICE));
+		if (!DefineCommDevice(name /* eg: COM1 */, path /* eg: /dev/ttyS0 */))
+		{
+			DEBUG_SVC("Could not registered: %s as %s", path, name);
+			return -1;
+		}
 
+		serial = (SERIAL_DEVICE*) calloc(1, sizeof(SERIAL_DEVICE));
 		if (!serial)
 			return -1;
 
