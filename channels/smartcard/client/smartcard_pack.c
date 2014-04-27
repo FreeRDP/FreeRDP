@@ -734,6 +734,13 @@ UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
 
 	call->szReader = (unsigned char*) malloc(count + 1);
+
+	if (!call->szReader)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "ConnectA_Call out of memory error (call->szReader)");
+		return STATUS_NO_MEMORY;
+	}
+
 	Stream_Read(s, call->szReader, count);
 	smartcard_unpack_read_size_align(smartcard, s, count, 4);
 	call->szReader[count] = '\0';
@@ -781,7 +788,7 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "ConnectA_Call is too short: %d",
+		WLog_Print(smartcard->log, WLOG_WARN, "ConnectW_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -800,6 +807,13 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 	Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
 
 	call->szReader = (WCHAR*) malloc((count + 1) * 2);
+
+	if (!call->szReader)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "ConnectW_Call out of memory error (call->szReader)");
+		return STATUS_NO_MEMORY;
+	}
+
 	Stream_Read(s, call->szReader, (count * 2));
 	smartcard_unpack_read_size_align(smartcard, s, (count * 2), 4);
 	call->szReader[count] = '\0';
@@ -1153,6 +1167,12 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 	{
 		call->rgReaderStates = (LPSCARD_READERSTATEA) calloc(call->cReaders, sizeof(SCARD_READERSTATEA));
 
+		if (!call->rgReaderStates)
+		{
+			WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call out of memory error (call->rgReaderStates)");
+			return STATUS_NO_MEMORY;
+		}
+
 		for (index = 0; index < call->cReaders; index++)
 		{
 			readerState = &call->rgReaderStates[index];
@@ -1195,6 +1215,14 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 			}
 
 			readerState->szReader = (LPCSTR) malloc(count + 1);
+
+			if (!readerState->szReader)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN,
+					"GetStatusChangeA_Call out of memory error (readerState->szReader)");
+				return STATUS_NO_MEMORY;
+			}
+
 			Stream_Read(s, (void*) readerState->szReader, count);
 			smartcard_unpack_read_size_align(smartcard, s, count, 4);
 			((char*) readerState->szReader)[count] = '\0';
@@ -1203,16 +1231,6 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 			{
 				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call null reader name");
 				return STATUS_INVALID_PARAMETER;
-			}
-
-			if (strcmp((char*) readerState->szReader, SMARTCARD_PNP_NOTIFICATION_A) == 0)
-			{
-				readerState->pvUserData = NULL;
-				readerState->dwCurrentState = 0;
-				readerState->dwEventState = 0;
-				readerState->cbAtr = 0;
-				ZeroMemory(&(readerState->rgbAtr), 36);
-				readerState->dwCurrentState |= SCARD_STATE_IGNORE;
 			}
 		}
 	}
@@ -1322,6 +1340,12 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 	{
 		call->rgReaderStates = (LPSCARD_READERSTATEW) calloc(call->cReaders, sizeof(SCARD_READERSTATEW));
 
+		if (!call->rgReaderStates)
+		{
+			WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call out of memory error (call->rgReaderStates)");
+			return STATUS_NO_MEMORY;
+		}
+
 		for (index = 0; index < call->cReaders; index++)
 		{
 			readerState = &call->rgReaderStates[index];
@@ -1364,6 +1388,14 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 			}
 
 			readerState->szReader = (WCHAR*) malloc((count + 1) * 2);
+
+			if (!readerState->szReader)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN,
+					"GetStatusChangeW_Call out of memory error (readerState->szReader)");
+				return STATUS_NO_MEMORY;
+			}
+
 			Stream_Read(s, (void*) readerState->szReader, (count * 2));
 			smartcard_unpack_read_size_align(smartcard, s, (count * 2), 4);
 			((WCHAR*) readerState->szReader)[count] = '\0';
@@ -1372,16 +1404,6 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 			{
 				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call null reader name");
 				return STATUS_INVALID_PARAMETER;
-			}
-
-			if (_wcscmp((WCHAR*) readerState->szReader, SMARTCARD_PNP_NOTIFICATION_W) == 0)
-			{
-				readerState->pvUserData = NULL;
-				readerState->dwCurrentState = 0;
-				readerState->dwEventState = 0;
-				readerState->cbAtr = 0;
-				ZeroMemory(&(readerState->rgbAtr), 36);
-				readerState->dwCurrentState |= SCARD_STATE_IGNORE;
 			}
 		}
 	}
@@ -1899,6 +1921,13 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 		}
 
 		call->pvInBuffer = (BYTE*) malloc(length);
+
+		if (!call->pvInBuffer)
+		{
+			WLog_Print(smartcard->log, WLOG_WARN, "Control_Call out of memory error (call->pvInBuffer)");
+			return STATUS_NO_MEMORY;
+		}
+
 		call->cbInBufferSize = length;
 
 		Stream_Read(s, call->pvInBuffer, length);
