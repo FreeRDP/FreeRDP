@@ -55,9 +55,6 @@ void http_context_free(HttpContext* http_context);
 
 struct _http_request
 {
-	int count;
-	char** lines;
-
 	char* Method;
 	char* URI;
 	char* AuthScheme;
@@ -85,9 +82,7 @@ struct _http_response
 	int StatusCode;
 	char* ReasonPhrase;
 
-	char* AuthScheme;
-	char* AuthParam;
-	char* Authorization;
+	wListDictionary *Authenticates;
 	int ContentLength;
 	char* Content;
 };

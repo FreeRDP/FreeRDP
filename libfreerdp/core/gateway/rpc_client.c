@@ -554,14 +554,10 @@ int rpc_client_new(rdpRpc* rpc)
 {
 	RpcClient* client = NULL;
 
-	client = (RpcClient*) malloc(sizeof(RpcClient));
+	client = (RpcClient*) calloc(1, sizeof(RpcClient));
 
 	if (client)
 	{
-		client->Thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) rpc_client_thread,
-				rpc, CREATE_SUSPENDED, NULL);
-
 		client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 		client->PduSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -592,16 +588,21 @@ int rpc_client_new(rdpRpc* rpc)
 
 int rpc_client_start(rdpRpc* rpc)
 {
-	ResumeThread(rpc->client->Thread);
+	rpc->client->Thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) rpc_client_thread,
+			rpc, 0, NULL);
 
 	return 0;
 }
 
 int rpc_client_stop(rdpRpc* rpc)
 {
-	SetEvent(rpc->client->StopEvent);
-
-	WaitForSingleObject(rpc->client->Thread, INFINITE);
+	if (rpc->client->Thread)
+	{
+		SetEvent(rpc->client->StopEvent);
+		WaitForSingleObject(rpc->client->Thread, INFINITE);
+		rpc->client->Thread = NULL;
+	}
 
 	rpc_client_free(rpc);
 

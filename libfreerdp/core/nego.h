@@ -110,6 +110,8 @@ struct rdp_nego
 	BOOL NegotiateSecurityLayer;
 	BYTE enabled_protocols[16];
 	BOOL RestrictedAdminModeRequired;
+	BOOL GatewayEnabled;
+	BOOL GatewayBypassLocal;
 
 	rdpTransport* transport;
 };
@@ -142,12 +144,14 @@ void nego_init(rdpNego* nego);
 void nego_set_target(rdpNego* nego, char* hostname, int port);
 void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer_enabled);
 void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdminModeRequired);
+void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled);
+void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypassLocal);
 void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp);
 void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
 void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
 void nego_enable_ext(rdpNego* nego, BOOL enable_ext);
-void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength);
-void nego_set_cookie(rdpNego* nego, char* cookie);
+BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength);
+BOOL nego_set_cookie(rdpNego* nego, char* cookie);
 void nego_set_cookie_max_length(rdpNego* nego, UINT32 cookie_max_length);
 void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL send_pcpdu);
 void nego_set_preconnection_id(rdpNego* nego, UINT32 id);

@@ -56,6 +56,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "pth", COMMAND_LINE_VALUE_REQUIRED, "<password hash>", NULL, NULL, -1, "pass-the-hash", "Pass the hash (restricted admin mode)" },
 	{ "client-hostname", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL, "Client Hostname to send to server" },
 	{ "multimon", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Use multiple monitors" },
+	{ "span", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Span screen over multiple monitors" },
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use available work area" },
 	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<0,1,2...>", NULL, NULL, -1, NULL, "Select monitors to use" },
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL, "List detected monitors" },
@@ -92,8 +93,8 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "drives", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect all drives" },
 	{ "home-drive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect home drive" },
 	{ "clipboard", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Redirect clipboard" },
-	{ "serial", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "tty", "Redirect serial device" },
-	{ "parallel", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect parallel device" },
+	{ "serial", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, "tty", "Redirect serial device" },
+	{ "parallel", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect parallel device" },
 	{ "smartcard", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect smartcard device" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "Redirect printer device" },
 	{ "usb", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Redirect USB device" },
@@ -296,12 +297,18 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count < 3)
 			return -1;
 
-		drive = (RDPDR_DRIVE*) malloc(sizeof(RDPDR_DRIVE));
-		ZeroMemory(drive, sizeof(RDPDR_DRIVE));
+		drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
+
+		if (!drive)
+			return -1;
 
 		drive->Type = RDPDR_DTYP_FILESYSTEM;
-		drive->Name = _strdup(params[1]);
-		drive->Path = _strdup(params[2]);
+
+		if (count > 1)
+			drive->Name = _strdup(params[1]);
+
+		if (count > 2)
+			drive->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) drive);
 		settings->DeviceRedirection = TRUE;
@@ -315,8 +322,10 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count < 1)
 			return -1;
 
-		printer = (RDPDR_PRINTER*) malloc(sizeof(RDPDR_PRINTER));
-		ZeroMemory(printer, sizeof(RDPDR_PRINTER));
+		printer = (RDPDR_PRINTER*) calloc(1, sizeof(RDPDR_PRINTER));
+
+		if (!printer)
+			return -1;
 
 		printer->Type = RDPDR_DTYP_PRINT;
 
@@ -338,12 +347,16 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count < 1)
 			return -1;
 
-		smartcard = (RDPDR_SMARTCARD*) malloc(sizeof(RDPDR_SMARTCARD));
-		ZeroMemory(smartcard, sizeof(RDPDR_SMARTCARD));
+		smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
+
+		if (!smartcard)
+			return -1;
 
 		smartcard->Type = RDPDR_DTYP_SMARTCARD;
+
 		if (count > 1)
 			smartcard->Name = _strdup(params[1]);
+
 		if (count > 2)
 			smartcard->Path = _strdup(params[2]);
 
@@ -359,12 +372,16 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count < 1)
 			return -1;
 
-		serial = (RDPDR_SERIAL*) malloc(sizeof(RDPDR_SERIAL));
-		ZeroMemory(serial, sizeof(RDPDR_SERIAL));
+		serial = (RDPDR_SERIAL*) calloc(1, sizeof(RDPDR_SERIAL));
+
+		if (!serial)
+			return -1;
 
 		serial->Type = RDPDR_DTYP_SERIAL;
+
 		if (count > 1)
 			serial->Name = _strdup(params[1]);
+
 		if (count > 2)
 			serial->Path = _strdup(params[2]);
 
@@ -380,13 +397,17 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count < 1)
 			return -1;
 
-		parallel = (RDPDR_PARALLEL*) malloc(sizeof(RDPDR_PARALLEL));
-		ZeroMemory(parallel, sizeof(RDPDR_PARALLEL));
+		parallel = (RDPDR_PARALLEL*) calloc(1, sizeof(RDPDR_PARALLEL));
+
+		if (!parallel)
+			return -1;
 
 		parallel->Type = RDPDR_DTYP_PARALLEL;
+
 		if (count > 1)
 			parallel->Name = _strdup(params[1]);
-		if (count > 1)
+
+		if (count > 2)
 			parallel->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) parallel);
@@ -1188,13 +1209,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->Fullscreen = TRUE;
 		}
-		CommandLineSwitchCase(arg, "span")
-		{
-			settings->SpanMonitors = TRUE;
-		}
 		CommandLineSwitchCase(arg, "multimon")
 		{
 			settings->UseMultimon = TRUE;
+			settings->SpanMonitors = FALSE;
 			settings->Fullscreen = TRUE;
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
@@ -1204,6 +1222,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					settings->ForceMultimon = TRUE;
 				}
 			}
+		}
+		CommandLineSwitchCase(arg, "span")
+		{
+			settings->UseMultimon = TRUE;
+			settings->SpanMonitors = TRUE;
+			settings->Fullscreen = TRUE;
 		}
 		CommandLineSwitchCase(arg, "workarea")
 		{
@@ -1345,9 +1369,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				settings->GatewayHostname = _strdup(settings->ServerHostname);
 			}
 
-			settings->GatewayUsageMethod = TSC_PROXY_MODE_DIRECT;
 			settings->GatewayUseSameCredentials = TRUE;
+
+			settings->GatewayUsageMethod = TSC_PROXY_MODE_DETECT;
 			settings->GatewayEnabled = TRUE;
+			settings->GatewayBypassLocal = TRUE;
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
@@ -1575,7 +1601,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				settings->NlaSecurity = FALSE;
 				settings->ExtSecurity = FALSE;
 				settings->DisableEncryption = TRUE;
-				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT| ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 			else if (strcmp("tls", arg->Value) == 0) /* TLS */

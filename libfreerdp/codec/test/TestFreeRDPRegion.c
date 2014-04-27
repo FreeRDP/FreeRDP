@@ -690,7 +690,7 @@ struct UnitaryTest tests[] = {
 
 int TestFreeRDPRegion(int argc, char* argv[])
 {
-	int i, testNb;
+	int i, testNb = 0;
 	int retCode = -1;
 
 	for (i = 0; tests[i].func; i++)

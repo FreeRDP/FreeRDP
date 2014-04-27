@@ -88,6 +88,7 @@ BOOL nego_connect(rdpNego* nego)
 		{
 			DEBUG_NEGO("No security protocol is enabled");
 			nego->state = NEGO_STATE_FAIL;
+			return FALSE;
 		}
 
 		if (!nego->NegotiateSecurityLayer)
@@ -156,7 +157,7 @@ BOOL nego_connect(rdpNego* nego)
 	if (nego->selected_protocol == PROTOCOL_RDP)
 	{
 		nego->transport->settings->DisableEncryption = TRUE;
-		nego->transport->settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+		nego->transport->settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 		nego->transport->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	}
 
@@ -212,7 +213,27 @@ BOOL nego_security_connect(rdpNego* nego)
 BOOL nego_tcp_connect(rdpNego* nego)
 {
 	if (!nego->tcp_connected)
-		nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+	{
+		if (nego->GatewayEnabled)
+		{
+			if (nego->GatewayBypassLocal)
+			{
+				/* Attempt a direct connection first, and then fallback to using the gateway */
+				transport_set_gateway_enabled(nego->transport, FALSE);
+				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+			}
+
+			if (!nego->tcp_connected)
+			{
+				transport_set_gateway_enabled(nego->transport, TRUE);
+				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+			}
+		}
+		else
+		{
+			nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+		}
+	}
 
 	return nego->tcp_connected;
 }
@@ -479,9 +500,10 @@ BOOL nego_recv_response(rdpNego* nego)
 	wStream* s;
 
 	s = Stream_New(NULL, 1024);
+	if (!s)
+		return FALSE;
 
 	status = transport_read(nego->transport, s);
-
 	if (status < 0)
 	{
 		Stream_Free(s, TRUE);
@@ -851,6 +873,8 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	settings = nego->transport->settings;
 
 	s = Stream_New(NULL, 512);
+	if (!s)
+		return FALSE;
 
 	length = TPDU_CONNECTION_CONFIRM_LENGTH;
 	bm = Stream_GetPosition(s);
@@ -881,7 +905,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		 * TODO: Check for other possibilities,
 		 *       like SSL_NOT_ALLOWED_BY_SERVER.
 		 */
-		fprintf(stderr, "nego_send_negotiation_response: client supports only Standard RDP Security\n");
+		fprintf(stderr, "%s: client supports only Standard RDP Security\n", __FUNCTION__);
 		Stream_Write_UINT32(s, SSL_REQUIRED_BY_SERVER);
 		length += 8;
 		status = FALSE;
@@ -918,11 +942,11 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			if (!settings->LocalConnection)
 			{
 				settings->DisableEncryption = TRUE;
-				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 
-			if (settings->DisableEncryption && settings->RdpServerRsaKey == NULL && settings->RdpKeyFile == NULL)
+			if (settings->DisableEncryption && !settings->RdpServerRsaKey && !settings->RdpKeyFile)
 				return FALSE;
 		}
 		else if (settings->SelectedProtocol == PROTOCOL_TLS)
@@ -972,15 +996,13 @@ void nego_init(rdpNego* nego)
 
 rdpNego* nego_new(rdpTransport* transport)
 {
-	rdpNego* nego = (rdpNego*) malloc(sizeof(rdpNego));
+	rdpNego* nego = (rdpNego*) calloc(1, sizeof(rdpNego));
+	if (!nego)
+		return NULL;
 
-	if (nego)
-	{
-		ZeroMemory(nego, sizeof(rdpNego));
 
-		nego->transport = transport;
-		nego_init(nego);
-	}
+	nego->transport = transport;
+	nego_init(nego);
 
 	return nego;
 }
@@ -1032,6 +1054,16 @@ void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdmin
 {
 	DEBUG_NEGO("Enabling restricted admin mode: %s", RestrictedAdminModeRequired ? "TRUE" : "FALSE");
 	nego->RestrictedAdminModeRequired = RestrictedAdminModeRequired;
+}
+
+void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled)
+{
+	nego->GatewayEnabled = GatewayEnabled;
+}
+
+void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypassLocal)
+{
+	nego->GatewayBypassLocal = GatewayBypassLocal;
 }
 
 /**
@@ -1089,12 +1121,15 @@ void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
  * @param RoutingTokenLength
  */
 
-void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength)
+BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength)
 {
 	free(nego->RoutingToken);
 	nego->RoutingTokenLength = RoutingTokenLength;
 	nego->RoutingToken = (BYTE*) malloc(nego->RoutingTokenLength);
+	if (!nego->RoutingToken)
+		return FALSE;
 	CopyMemory(nego->RoutingToken, RoutingToken, nego->RoutingTokenLength);
+	return TRUE;
 }
 
 /**
@@ -1103,12 +1138,21 @@ void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingToke
  * @param cookie
  */
 
-void nego_set_cookie(rdpNego* nego, char* cookie)
+BOOL nego_set_cookie(rdpNego* nego, char* cookie)
 {
 	if (nego->cookie)
+	{
 		free(nego->cookie);
+		nego->cookie = 0;
+	}
+
+	if (!cookie)
+		return TRUE;
 
 	nego->cookie = _strdup(cookie);
+	if (!nego->cookie)
+		return FALSE;
+	return TRUE;
 }
 
 /**

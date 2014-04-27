@@ -133,14 +133,20 @@ void ArrayList_SetItem(wArrayList* arrayList, int index, void* obj)
  * Shift a section of the list.
  */
 
-void ArrayList_Shift(wArrayList* arrayList, int index, int count)
+BOOL ArrayList_Shift(wArrayList* arrayList, int index, int count)
 {
 	if (count > 0)
 	{
 		if (arrayList->size + count > arrayList->capacity)
 		{
-			arrayList->capacity *= arrayList->growthFactor;
-			arrayList->array = (void**) realloc(arrayList->array, sizeof(void*) * arrayList->capacity);
+			void **newArray;
+			int newCapacity = arrayList->capacity * arrayList->growthFactor;
+
+			newArray = (void **)realloc(arrayList->array, sizeof(void*) * newCapacity);
+			if (!newArray)
+				return FALSE;
+			arrayList->array = newArray;
+			arrayList->capacity = newCapacity;
 		}
 
 		MoveMemory(&arrayList->array[index + count], &arrayList->array[index], (arrayList->size - index) * sizeof(void*));
@@ -153,6 +159,7 @@ void ArrayList_Shift(wArrayList* arrayList, int index, int count)
 			MoveMemory(&arrayList->array[index], &arrayList->array[index - count], chunk * sizeof(void*));
 		arrayList->size += count;
 	}
+	return TRUE;
 }
 
 /**
@@ -201,20 +208,27 @@ BOOL ArrayList_Contains(wArrayList* arrayList, void* obj)
 
 int ArrayList_Add(wArrayList* arrayList, void* obj)
 {
-	int index;
+	int index = -1;
 
 	if (arrayList->synchronized)
 		EnterCriticalSection(&arrayList->lock);
 
 	if (arrayList->size + 1 > arrayList->capacity)
 	{
-		arrayList->capacity *= arrayList->growthFactor;
-		arrayList->array = (void**) realloc(arrayList->array, sizeof(void*) * arrayList->capacity);
+		void **newArray;
+		int newCapacity = arrayList->capacity * arrayList->growthFactor;
+		newArray = (void **)realloc(arrayList->array, sizeof(void*) * newCapacity);
+		if (!newArray)
+			goto out;
+
+		arrayList->array = newArray;
+		arrayList->capacity = newCapacity;
 	}
 
 	arrayList->array[arrayList->size++] = obj;
 	index = arrayList->size;
 
+out:
 	if (arrayList->synchronized)
 		LeaveCriticalSection(&arrayList->lock);
 
@@ -225,29 +239,38 @@ int ArrayList_Add(wArrayList* arrayList, void* obj)
  * Inserts an element into the ArrayList at the specified index.
  */
 
-void ArrayList_Insert(wArrayList* arrayList, int index, void* obj)
+BOOL ArrayList_Insert(wArrayList* arrayList, int index, void* obj)
 {
+	BOOL ret = TRUE;
 	if (arrayList->synchronized)
 		EnterCriticalSection(&arrayList->lock);
 
 	if ((index >= 0) && (index < arrayList->size))
 	{
-		ArrayList_Shift(arrayList, index, 1);
-		arrayList->array[index] = obj;
+		if (!ArrayList_Shift(arrayList, index, 1))
+		{
+			ret = FALSE;
+		}
+		else
+		{
+			arrayList->array[index] = obj;
+		}
 	}
 
 	if (arrayList->synchronized)
 		LeaveCriticalSection(&arrayList->lock);
+	return ret;
 }
 
 /**
  * Removes the first occurrence of a specific object from the ArrayList.
  */
 
-void ArrayList_Remove(wArrayList* arrayList, void* obj)
+BOOL ArrayList_Remove(wArrayList* arrayList, void* obj)
 {
 	int index;
 	BOOL found = FALSE;
+	BOOL ret = TRUE;
 
 	if (arrayList->synchronized)
 		EnterCriticalSection(&arrayList->lock);
@@ -262,28 +285,32 @@ void ArrayList_Remove(wArrayList* arrayList, void* obj)
 	}
 
 	if (found)
-		ArrayList_Shift(arrayList, index, -1);
+		ret = ArrayList_Shift(arrayList, index, -1);
 
 	if (arrayList->synchronized)
 		LeaveCriticalSection(&arrayList->lock);
+	return ret;
 }
 
 /**
  * Removes the element at the specified index of the ArrayList.
  */
 
-void ArrayList_RemoveAt(wArrayList* arrayList, int index)
+BOOL ArrayList_RemoveAt(wArrayList* arrayList, int index)
 {
+	BOOL ret = TRUE;
+
 	if (arrayList->synchronized)
 		EnterCriticalSection(&arrayList->lock);
 
 	if ((index >= 0) && (index < arrayList->size))
 	{
-		ArrayList_Shift(arrayList, index, -1);
+		ret = ArrayList_Shift(arrayList, index, -1);
 	}
 
 	if (arrayList->synchronized)
 		LeaveCriticalSection(&arrayList->lock);
+	return ret;
 }
 
 /**
@@ -378,24 +405,24 @@ wArrayList* ArrayList_New(BOOL synchronized)
 {
 	wArrayList* arrayList = NULL;
 
-	arrayList = (wArrayList*) malloc(sizeof(wArrayList));
+	arrayList = (wArrayList *)calloc(1, sizeof(wArrayList));
+	if (!arrayList)
+		return NULL;
 
-	if (arrayList)
-	{
-		arrayList->synchronized = synchronized;
+	arrayList->synchronized = synchronized;
+	arrayList->capacity = 32;
+	arrayList->growthFactor = 2;
 
-		arrayList->size = 0;
-		arrayList->capacity = 32;
-		arrayList->growthFactor = 2;
+	arrayList->array = (void **)malloc(arrayList->capacity * sizeof(void *));
+	if (!arrayList->array)
+		goto out_free;
 
-		arrayList->array = (void**) malloc(sizeof(void*) * arrayList->capacity);
-
-		InitializeCriticalSectionAndSpinCount(&arrayList->lock, 4000);
-
-		ZeroMemory(&arrayList->object, sizeof(wObject));
-	}
-
+	InitializeCriticalSectionAndSpinCount(&arrayList->lock, 4000);
 	return arrayList;
+
+out_free:
+	free(arrayList);
+	return NULL;
 }
 
 void ArrayList_Free(wArrayList* arrayList)

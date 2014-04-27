@@ -674,6 +674,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 	if (freerdp_client_write_rdp_file_buffer(file, buffer, length + 1) != length)
 	{
 		fprintf(stderr, "freerdp_client_write_rdp_file: error writing to output buffer\n");
+		free(buffer);
 		return FALSE;
 	}
 
@@ -863,18 +864,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		freerdp_set_param_string(settings, FreeRDP_GatewayHostname, file->GatewayHostname);
 
 	if (~file->GatewayUsageMethod)
-	{
-		freerdp_set_param_uint32(settings, FreeRDP_GatewayUsageMethod, file->GatewayUsageMethod);
-
-		if (file->GatewayUsageMethod == TSC_PROXY_MODE_DIRECT)
-			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
-		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_DETECT)
-			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
-		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_DEFAULT)
-			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
-		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_NONE_DETECT)
-			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE);
-	}
+		freerdp_set_gateway_usage_method(settings, settings->GatewayUsageMethod);
 
 	if (~file->PromptCredentialOnce)
 		freerdp_set_param_bool(settings, FreeRDP_GatewayUseSameCredentials, file->PromptCredentialOnce);

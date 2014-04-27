@@ -3,6 +3,7 @@
  * RDP Security
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,6 +130,11 @@ static void security_salted_hash(const BYTE* salt, const BYTE* input, int length
 
 	/* SHA1_Digest = SHA1(Input + Salt + Salt1 + Salt2) */
 	sha1 = crypto_sha1_init();
+	if (!sha1)
+	{
+		fprintf(stderr, "%s: unable to allocate a sha1\n", __FUNCTION__);
+		return;
+	}
 	crypto_sha1_update(sha1, input, length); /* Input */
 	crypto_sha1_update(sha1, salt, 48); /* Salt (48 bytes) */
 	crypto_sha1_update(sha1, salt1, 32); /* Salt1 (32 bytes) */
@@ -137,6 +143,11 @@ static void security_salted_hash(const BYTE* salt, const BYTE* input, int length
 
 	/* SaltedHash(Salt, Input, Salt1, Salt2) = MD5(S + SHA1_Digest) */
 	md5 = crypto_md5_init();
+	if (!md5)
+	{
+		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		return;
+	}
 	crypto_md5_update(md5, salt, 48); /* Salt (48 bytes) */
 	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
 	crypto_md5_final(md5, output);
@@ -185,6 +196,11 @@ void security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BY
 	CryptoMd5 md5;
 
 	md5 = crypto_md5_init();
+	if (!md5)
+	{
+		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		return;
+	}
 	crypto_md5_update(md5, in0, 16);
 	crypto_md5_update(md5, in1, 32);
 	crypto_md5_update(md5, in2, 32);
@@ -220,6 +236,11 @@ void security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 
 	/* SHA1_Digest = SHA1(MacSaltKey + pad1 + length + data) */
 	sha1 = crypto_sha1_init();
+	if (!sha1)
+	{
+		fprintf(stderr, "%s: unable to allocate a sha1\n", __FUNCTION__);
+		return;
+	}
 	crypto_sha1_update(sha1, mac_salt_key, 16); /* MacSaltKey */
 	crypto_sha1_update(sha1, pad1, sizeof(pad1)); /* pad1 */
 	crypto_sha1_update(sha1, length_le, sizeof(length_le)); /* length */
@@ -228,6 +249,11 @@ void security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 
 	/* MacData = MD5(MacSaltKey + pad2 + SHA1_Digest) */
 	md5 = crypto_md5_init();
+	if (!md5)
+	{
+		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		return;
+	}
 	crypto_md5_update(md5, mac_salt_key, 16); /* MacSaltKey */
 	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
 	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
@@ -246,6 +272,11 @@ void security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
 	sha1 = crypto_sha1_init();
+	if (!sha1)
+	{
+		fprintf(stderr, "%s: unable to allocate a sha1\n", __FUNCTION__);
+		return;
+	}
 	crypto_sha1_update(sha1, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
 	crypto_sha1_update(sha1, pad1, sizeof(pad1)); /* pad1 */
 	crypto_sha1_update(sha1, length_le, sizeof(length_le)); /* length */
@@ -254,6 +285,11 @@ void security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 
 	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
 	md5 = crypto_md5_init();
+	if (!md5)
+	{
+		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		return;
+	}
 	crypto_md5_update(md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
 	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
 	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
@@ -289,6 +325,11 @@ void security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
 	sha1 = crypto_sha1_init();
+	if (!sha1)
+	{
+		fprintf(stderr, "%s: unable to allocate a sha1\n", __FUNCTION__);
+		return;
+	}
 	crypto_sha1_update(sha1, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
 	crypto_sha1_update(sha1, pad1, sizeof(pad1)); /* pad1 */
 	crypto_sha1_update(sha1, length_le, sizeof(length_le)); /* length */
@@ -298,6 +339,11 @@ void security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 
 	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
 	md5 = crypto_md5_init();
+	if (!md5)
+	{
+		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		return;
+	}
 	crypto_md5_update(md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
 	crypto_md5_update(md5, pad2, sizeof(pad2)); /* pad2 */
 	crypto_md5_update(md5, sha1_digest, sizeof(sha1_digest)); /* SHA1_Digest */
@@ -361,7 +407,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 	BYTE master_secret[48];
 	BYTE session_key_blob[48];
 	BYTE* server_random;
-	BYTE salt40[] = { 0xD1, 0x26, 0x9E };
+	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 	rdpSettings* settings;
 
 	settings = rdp->settings;
@@ -375,29 +421,48 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 
 		fprintf(stderr, "FIPS Compliant encryption level.\n");
 
-		/* disable fastpath input; it doesnt handle FIPS encryption yet */
-		rdp->settings->FastPathInput = FALSE;
-
 		sha1 = crypto_sha1_init();
+		if (!sha1)
+		{
+			fprintf(stderr, "%s: unable to allocate a sha1\n", __FUNCTION__);
+			return FALSE;
+		}
 		crypto_sha1_update(sha1, client_random + 16, 16);
 		crypto_sha1_update(sha1, server_random + 16, 16);
 		crypto_sha1_final(sha1, client_encrypt_key_t);
-
 		client_encrypt_key_t[20] = client_encrypt_key_t[0];
-		fips_expand_key_bits(client_encrypt_key_t, rdp->fips_encrypt_key);
 
 		sha1 = crypto_sha1_init();
+		if (!sha1)
+		{
+			fprintf(stderr, "%s: unable to allocate a sha1\n", __FUNCTION__);
+			return FALSE;
+		}
 		crypto_sha1_update(sha1, client_random, 16);
 		crypto_sha1_update(sha1, server_random, 16);
 		crypto_sha1_final(sha1, client_decrypt_key_t);
-
 		client_decrypt_key_t[20] = client_decrypt_key_t[0];
-		fips_expand_key_bits(client_decrypt_key_t, rdp->fips_decrypt_key);
 
 		sha1 = crypto_sha1_init();
+		if (!sha1)
+		{
+			fprintf(stderr, "%s: unable to allocate a sha1\n", __FUNCTION__);
+			return FALSE;
+		}
 		crypto_sha1_update(sha1, client_decrypt_key_t, 20);
 		crypto_sha1_update(sha1, client_encrypt_key_t, 20);
 		crypto_sha1_final(sha1, rdp->fips_sign_key);
+
+		if (rdp->settings->ServerMode)
+		{
+			fips_expand_key_bits(client_encrypt_key_t, rdp->fips_decrypt_key);
+			fips_expand_key_bits(client_decrypt_key_t, rdp->fips_encrypt_key);
+		}
+		else
+		{
+			fips_expand_key_bits(client_encrypt_key_t, rdp->fips_encrypt_key);
+			fips_expand_key_bits(client_decrypt_key_t, rdp->fips_decrypt_key);
+		}
 	}
 
 	memcpy(pre_master_secret, client_random, 24);
@@ -423,14 +488,21 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 		    server_random, rdp->encrypt_key);
 	}
 
-	if (settings->EncryptionMethods == 1) /* 40 and 56 bit */
+	if (settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
 	{
-		memcpy(rdp->sign_key, salt40, 3); /* TODO 56 bit */
-		memcpy(rdp->decrypt_key, salt40, 3); /* TODO 56 bit */
-		memcpy(rdp->encrypt_key, salt40, 3); /* TODO 56 bit */
+		memcpy(rdp->sign_key, salt, 3);
+		memcpy(rdp->decrypt_key, salt, 3);
+		memcpy(rdp->encrypt_key, salt, 3);
 		rdp->rc4_key_len = 8;
 	}
-	else if (settings->EncryptionMethods == 2) /* 128 bit */
+	else if (settings->EncryptionMethods == ENCRYPTION_METHOD_56BIT)
+	{
+		memcpy(rdp->sign_key, salt, 1);
+		memcpy(rdp->decrypt_key, salt, 1);
+		memcpy(rdp->encrypt_key, salt, 1);
+		rdp->rc4_key_len = 8;
+	}
+	else if (settings->EncryptionMethods == ENCRYPTION_METHOD_128BIT)
 	{
 		rdp->rc4_key_len = 16;
 	}
@@ -445,32 +517,49 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 	return TRUE;
 }
 
-BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len)
+BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 {
 	BYTE sha1h[CRYPTO_SHA1_DIGEST_LENGTH];
 	CryptoMd5 md5;
 	CryptoSha1 sha1;
 	CryptoRc4 rc4;
-	BYTE salt40[] = { 0xD1, 0x26, 0x9E };
+	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
 
 	sha1 = crypto_sha1_init();
+	if (!sha1)
+	{
+		fprintf(stderr, "%s: unable to allocate a sha1\n", __FUNCTION__);
+		return FALSE;
+	}
 	crypto_sha1_update(sha1, update_key, key_len);
 	crypto_sha1_update(sha1, pad1, sizeof(pad1));
 	crypto_sha1_update(sha1, key, key_len);
 	crypto_sha1_final(sha1, sha1h);
 
 	md5 = crypto_md5_init();
+	if (!md5)
+	{
+		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		return FALSE;
+	}
 	crypto_md5_update(md5, update_key, key_len);
 	crypto_md5_update(md5, pad2, sizeof(pad2));
 	crypto_md5_update(md5, sha1h, sizeof(sha1h));
 	crypto_md5_final(md5, key);
 
 	rc4 = crypto_rc4_init(key, key_len);
+	if (!rc4)
+	{
+		fprintf(stderr, "%s: unable to allocate a rc4\n", __FUNCTION__);
+		return FALSE;
+	}
 	crypto_rc4(rc4, key_len, key, key);
 	crypto_rc4_free(rc4);
 
-	if (key_len == 8)
-		memcpy(key, salt40, 3); /* TODO 56 bit */
+	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
+		memcpy(key, salt, 3);
+	else if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_56BIT)
+		memcpy(key, salt, 1);
 
 	return TRUE;
 }
@@ -479,9 +568,14 @@ BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp)
 {
 	if (rdp->encrypt_use_count >= 4096)
 	{
-		security_key_update(rdp->encrypt_key, rdp->encrypt_update_key, rdp->rc4_key_len);
+		security_key_update(rdp->encrypt_key, rdp->encrypt_update_key, rdp->rc4_key_len, rdp);
 		crypto_rc4_free(rdp->rc4_encrypt_key);
 		rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
+		if (!rdp->rc4_encrypt_key)
+		{
+			fprintf(stderr, "%s: unable to allocate rc4 encrypt key\n", __FUNCTION__);
+			return FALSE;
+		}
 		rdp->encrypt_use_count = 0;
 	}
 	crypto_rc4(rdp->rc4_encrypt_key, length, data, data);
@@ -496,9 +590,15 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 		return FALSE;
 	if (rdp->decrypt_use_count >= 4096)
 	{
-		security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len);
+		security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len, rdp);
 		crypto_rc4_free(rdp->rc4_decrypt_key);
 		rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
+		if (!rdp->rc4_decrypt_key)
+		{
+			fprintf(stderr, "%s: unable to allocate rc4 decrypt key\n", __FUNCTION__);
+			return FALSE;
+		}
+
 		rdp->decrypt_use_count = 0;
 	}
 	crypto_rc4(rdp->rc4_decrypt_key, length, data, data);

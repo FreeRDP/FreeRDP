@@ -241,7 +241,6 @@ CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING
 	MIDL_STUB_MESSAGE stubMsg;
 	INTERPRETER_FLAGS flags;
 	INTERPRETER_OPT_FLAGS optFlags;
-	INTERPRETER_OPT_FLAGS2 extFlags;
 	NDR_PROC_HEADER* procHeader;
 	NDR_OI2_PROC_HEADER* oi2ProcHeader;
 	CLIENT_CALL_RETURN client_call_return;
@@ -297,6 +296,7 @@ CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING
 
 	if (optFlags.HasExtensions)
 	{
+		INTERPRETER_OPT_FLAGS2 extFlags;
 		NDR_PROC_HEADER_EXTS* extensions = (NDR_PROC_HEADER_EXTS*) pFormat;
 
 		pFormat += extensions->Size;
@@ -324,13 +324,12 @@ CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING
 			}
 		}
 #endif
+		fprintf(stderr, "ExtFlags: ");
+		NdrPrintExtFlags(extFlags);
+		fprintf(stderr, "\n");
 	}
 
 	stubMsg.StackTop = (unsigned char*) stackTop;
-
-	fprintf(stderr, "ExtFlags: ");
-	NdrPrintExtFlags(extFlags);
-	fprintf(stderr, "\n");
 
 	NdrProcessParams(&stubMsg, pFormat, NDR_PHASE_SIZE, fpuStack, numberParams);
 

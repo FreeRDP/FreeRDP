@@ -28,9 +28,8 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
-
 #include <winpr/stream.h>
-#include <freerdp/utils/list.h>
+
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
 
@@ -73,24 +72,47 @@
 #define TIOCOUTQ FIONWRITE
 #endif
 
+/**
+ * Refer to ReactOS's ntddser.h (public domain) for constant definitions
+ */
+
 static UINT32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len);
 static void tty_set_termios(SERIAL_TTY* tty);
 static BOOL tty_get_termios(SERIAL_TTY* tty);
 static int tty_get_error_status();
 
-UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input, wStream* output, UINT32* abort_io)
+UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input, wStream* output, UINT32* abortIo)
 {
-	int purge_mask;
 	UINT32 result;
-	UINT32 modemstate;
 	BYTE immediate;
-	UINT32 ret = STATUS_SUCCESS;
-	UINT32 length = 0;
-	UINT32 pos;
+	int purge_mask;
+	UINT32 modemstate;
+	UINT32 begPos, endPos;
+	UINT32 OutputBufferLength;
+	UINT32 status = STATUS_SUCCESS;
+	UINT32 IoCtlDeviceType;
+	UINT32 IoCtlFunction;
+	UINT32 IoCtlMethod;
+	UINT32 IoCtlAccess;
 
-	DEBUG_SVC("in");
+	IoCtlMethod = (IoControlCode & 0x3);
+	IoCtlFunction = ((IoControlCode >> 2) & 0xFFF);
+	IoCtlAccess = ((IoControlCode >> 14) & 0x3);
+	IoCtlDeviceType = ((IoControlCode >> 16) & 0xFFFF);
 
-	Stream_Seek(output, sizeof(UINT32));
+	/**
+	 * FILE_DEVICE_SERIAL_PORT		0x0000001B
+	 * FILE_DEVICE_UNKNOWN			0x00000022
+	 */
+
+	if (IoCtlDeviceType == 0x00000022)
+	{
+		IoControlCode &= 0xFFFF;
+		IoControlCode |= (0x0000001B << 16);
+	}
+
+	Stream_Seek_UINT32(output); /* OutputBufferLength (4 bytes) */
+	begPos = (UINT32) Stream_GetPosition(output);
 
 	switch (IoControlCode)
 	{
@@ -101,7 +123,7 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			break;
 
 		case IOCTL_SERIAL_GET_BAUD_RATE:
-			length = 4;
+			OutputBufferLength = 4;
 			Stream_Write_UINT32(output, tty->baud_rate);
 			DEBUG_SVC("SERIAL_GET_BAUD_RATE %d", tty->baud_rate);
 			break;
@@ -123,7 +145,7 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 
 		case IOCTL_SERIAL_GET_LINE_CONTROL:
 			DEBUG_SVC("SERIAL_GET_LINE_CONTROL");
-			length = 3;
+			OutputBufferLength = 3;
 			Stream_Write_UINT8(output, tty->stop_bits);
 			Stream_Write_UINT8(output, tty->parity);
 			Stream_Write_UINT8(output, tty->word_length);
@@ -137,13 +159,13 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 
 		case IOCTL_SERIAL_CONFIG_SIZE:
 			DEBUG_SVC("SERIAL_CONFIG_SIZE");
-			length = 4;
+			OutputBufferLength = 4;
 			Stream_Write_UINT32(output, 0);
 			break;
 
 		case IOCTL_SERIAL_GET_CHARS:
 			DEBUG_SVC("SERIAL_GET_CHARS");
-			length = 6;
+			OutputBufferLength = 6;
 			Stream_Write(output, tty->chars, 6);
 			break;
 
@@ -154,7 +176,7 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			break;
 
 		case IOCTL_SERIAL_GET_HANDFLOW:
-			length = 16;
+			OutputBufferLength = 16;
 			tty_get_termios(tty);
 			Stream_Write_UINT32(output, tty->control);
 			Stream_Write_UINT32(output, tty->xonoff);
@@ -200,7 +222,7 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 				tty->read_interval_timeout,
 				tty->read_total_timeout_multiplier,
 				tty->read_total_timeout_constant);
-			length = 20;
+			OutputBufferLength = 20;
 			Stream_Write_UINT32(output, tty->read_interval_timeout);
 			Stream_Write_UINT32(output, tty->read_total_timeout_multiplier);
 			Stream_Write_UINT32(output, tty->read_total_timeout_constant);
@@ -210,7 +232,7 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 
 		case IOCTL_SERIAL_GET_WAIT_MASK:
 			DEBUG_SVC("SERIAL_GET_WAIT_MASK %X", tty->wait_mask);
-			length = 4;
+			OutputBufferLength = 4;
 			Stream_Write_UINT32(output, tty->wait_mask);
 			break;
 
@@ -269,12 +291,12 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 				modemstate |= SERIAL_MS_RTS;
 #endif
 			DEBUG_SVC("SERIAL_GET_MODEMSTATUS %X", modemstate);
-			length = 4;
+			OutputBufferLength = 4;
 			Stream_Write_UINT32(output, modemstate);
 			break;
 
 		case IOCTL_SERIAL_GET_COMMSTATUS:
-			length = 18;
+			OutputBufferLength = 18;
 			Stream_Write_UINT32(output, 0);	/* Errors */
 			Stream_Write_UINT32(output, 0);	/* Hold reasons */
 
@@ -316,21 +338,21 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 #endif
 
 			if (purge_mask & SERIAL_PURGE_TXABORT)
-				*abort_io |= SERIAL_ABORT_IO_WRITE;
+				*abortIo |= SERIAL_ABORT_IO_WRITE;
 			if (purge_mask & SERIAL_PURGE_RXABORT)
-				*abort_io |= SERIAL_ABORT_IO_READ;
+				*abortIo |= SERIAL_ABORT_IO_READ;
 			break;
 		case IOCTL_SERIAL_WAIT_ON_MASK:
 			DEBUG_SVC("SERIAL_WAIT_ON_MASK %X", tty->wait_mask);
 			tty->event_pending = 1;
-			length = 4;
+			OutputBufferLength = 4;
 			if (serial_tty_get_event(tty, &result))
 			{
 				DEBUG_SVC("WAIT end  event = %X", result);
 				Stream_Write_UINT32(output, result);
 				break;
 			}
-			ret = STATUS_PENDING;
+			status = STATUS_PENDING;
 			break;
 
 		case IOCTL_SERIAL_SET_BREAK_ON:
@@ -356,27 +378,33 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			break;
 
 		default:
-			DEBUG_SVC("NOT FOUND IoControlCode SERIAL IOCTL %d", IoControlCode);
+			DEBUG_SVC("NOT FOUND IoControlCode SERIAL IOCTL 0x%08X", IoControlCode);
 			return STATUS_INVALID_PARAMETER;
 	}
 
-	/* Write OutputBufferLength */
-	pos = Stream_GetPosition(output);
-	Stream_SetPosition(output, 16);
-	Stream_Write_UINT32(output, length);
-	Stream_SetPosition(output, pos);
+	endPos = (UINT32) Stream_GetPosition(output);
+	OutputBufferLength = endPos - begPos;
 
-	return ret;
+	if (OutputBufferLength < 1)
+	{
+		Stream_Write_UINT8(output, 0); /* Padding (1 byte) */
+		endPos = (UINT32) Stream_GetPosition(output);
+		OutputBufferLength = endPos - begPos;
+	}
+
+	Stream_SealLength(output);
+
+	Stream_SetPosition(output, 16);
+	Stream_Write_UINT32(output, OutputBufferLength); /* OutputBufferLength (4 bytes) */
+	Stream_SetPosition(output, endPos);
+
+	return status;
 }
 
 BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 {
 	ssize_t status;
 	long timeout = 90;
-	struct termios* ptermios;
-
-	DEBUG_SVC("in");
-	ptermios = tty->ptermios;
 
 	/* Set timeouts kind of like the windows serial timeout parameters. Multiply timeout
 	   with requested read size */
@@ -391,21 +419,38 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 		timeout = (tty->read_interval_timeout * (*Length) + 99) / 100;
 	}
 
-	/* If a timeout is set, do a blocking read, which times out after some time.
-	   It will make FreeRDP less responsive, but it will improve serial performance,
-	   by not reading one character at a time. */
-	if (timeout == 0)
-	{
-		ptermios->c_cc[VTIME] = 0;
-		ptermios->c_cc[VMIN] = 0;
-	}
-	else
-	{
-		ptermios->c_cc[VTIME] = timeout;
-		ptermios->c_cc[VMIN] = 1;
-	}
+        if (tty->timeout != timeout)
+        {
+		struct termios* ptermios;
 
-	tcsetattr(tty->fd, TCSANOW, ptermios);
+		ptermios = (struct termios*) calloc(1, sizeof(struct termios));
+
+		if (tcgetattr(tty->fd, ptermios) < 0) {
+			free(ptermios);
+			return FALSE;
+		}
+
+		/**
+		 * If a timeout is set, do a blocking read, which times out after some time.
+		 * It will make FreeRDP less responsive, but it will improve serial performance,
+		 * by not reading one character at a time.
+		 */
+
+		if (timeout == 0)
+		{
+			ptermios->c_cc[VTIME] = 0;
+			ptermios->c_cc[VMIN] = 0;
+		}
+		else
+		{
+			ptermios->c_cc[VTIME] = timeout;
+			ptermios->c_cc[VMIN] = 1;
+		}
+
+		tcsetattr(tty->fd, TCSANOW, ptermios);
+		tty->timeout = timeout;
+		free(ptermios);
+	}
 
 	ZeroMemory(buffer, *Length);
 
@@ -424,12 +469,10 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 	return TRUE;
 }
 
-BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
+int serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
 {
-	ssize_t status;
+	ssize_t status = 0;
 	UINT32 event_txempty = Length;
-
-	DEBUG_SVC("in");
 
 	while (Length > 0)
 	{
@@ -437,7 +480,10 @@ BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
 
 		if (status < 0)
 		{
-			return FALSE;
+			if (errno == EAGAIN)
+				status = 0;
+			else
+				return status;
 		}
 
 		Length -= status;
@@ -446,7 +492,7 @@ BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
 
 	tty->event_txempty = event_txempty;
 
-	return TRUE;
+	return status;
 }
 
 /**
@@ -458,9 +504,7 @@ BOOL serial_tty_write(SERIAL_TTY* tty, BYTE* buffer, UINT32 Length)
  */
 void serial_tty_free(SERIAL_TTY* tty)
 {
-	DEBUG_SVC("in");
-
-	if(!tty)
+	if (!tty)
 		return;
 
 	if (tty->fd >= 0)
@@ -480,8 +524,10 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 {
 	SERIAL_TTY* tty;
 
-	tty = (SERIAL_TTY*) malloc(sizeof(SERIAL_TTY));
-	ZeroMemory(tty, sizeof(SERIAL_TTY));
+	tty = (SERIAL_TTY*) calloc(1, sizeof(SERIAL_TTY));
+
+	if (!tty)
+		return NULL;
 
 	tty->id = id;
 	tty->fd = open(path, O_RDWR | O_NOCTTY | O_NONBLOCK);
@@ -498,19 +544,17 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 		DEBUG_SVC("tty fd %d successfully opened", tty->fd);
 	}
 
-	tty->ptermios = (struct termios*) malloc(sizeof(struct termios));
-	ZeroMemory(tty->ptermios, sizeof(struct termios));
+	tty->ptermios = (struct termios*) calloc(1, sizeof(struct termios));
 
-	if (tty->ptermios == NULL)
+	if (!tty->ptermios)
 	{
 		serial_tty_free(tty);
-		return NULL ;
+		return NULL;
 	}
 
-	tty->pold_termios = (struct termios*) malloc(sizeof(struct termios));
-	ZeroMemory(tty->pold_termios, sizeof(struct termios));
+	tty->pold_termios = (struct termios*) calloc(1, sizeof(struct termios));
 
-	if (tty->pold_termios == NULL)
+	if (!tty->pold_termios)
 	{
 		serial_tty_free(tty);
 		return NULL;
@@ -526,11 +570,14 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 	}
 
 	tty->ptermios->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON);
-	tty->ptermios->c_iflag = IGNPAR | ICRNL;
 	tty->ptermios->c_oflag &= ~OPOST;
 	tty->ptermios->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
 	tty->ptermios->c_cflag &= ~(CSIZE | PARENB);
-	tty->ptermios->c_cflag |= CLOCAL | CREAD | CS8;
+	tty->ptermios->c_cflag |= CS8;
+
+	tty->ptermios->c_iflag = IGNPAR;
+	tty->ptermios->c_cflag |= CLOCAL | CREAD;
+
 	tcsetattr(tty->fd, TCSANOW, tty->ptermios);
 
 	tty->event_txempty = 0;
@@ -557,8 +604,6 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 {
 	int bytes;
 	BOOL status = FALSE;
-
-	DEBUG_SVC("in");
 
 	*result = 0;
 
@@ -587,7 +632,6 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 				*result |= SERIAL_EV_RLSD;
 				status = TRUE;
 			}
-
 		}
 
 		if ((bytes > 1) && (tty->wait_mask & SERIAL_EV_RXFLAG))
@@ -603,7 +647,6 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 			*result |= SERIAL_EV_RXCHAR;
 			status = TRUE;
 		}
-
 	}
 	else
 	{
@@ -802,16 +845,18 @@ static BOOL tty_get_termios(SERIAL_TTY* tty)
 	tty->chars[SERIAL_CHAR_BREAK] = ptermios->c_cc[VINTR];
 	tty->chars[SERIAL_CHAR_ERROR] = ptermios->c_cc[VKILL];
 
+	tty->timeout = ptermios->c_cc[VTIME];
+
 	return TRUE;
 }
 
 static void tty_set_termios(SERIAL_TTY* tty)
 {
 	speed_t speed;
-	struct termios *ptermios;
+	struct termios* ptermios;
 
-	DEBUG_SVC("in");
 	ptermios = tty->ptermios;
+
 	switch (tty->baud_rate)
 	{
 #ifdef B75
@@ -1003,8 +1048,6 @@ static UINT32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len)
 {
 	ssize_t status;
 
-	DEBUG_SVC("in");
-
 	status = write(tty->fd, data, len);
 
 	if (status < 0)
@@ -1017,8 +1060,6 @@ static UINT32 tty_write_data(SERIAL_TTY* tty, BYTE* data, int len)
 
 static int tty_get_error_status()
 {
-	DEBUG_SVC("in errno %d", errno);
-
 	switch (errno)
 	{
 		case EACCES:

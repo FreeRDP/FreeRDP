@@ -328,14 +328,14 @@ BOOL CancelWaitableTimer(HANDLE hTimer)
  * http://www.cs.wustl.edu/~schmidt/Timer_Queue.html
  */
 
-static void timespec_add_ms(struct timespec* tspec, UINT32 ms)
+void timespec_add_ms(struct timespec* tspec, UINT32 ms)
 {
 	UINT64 ns = tspec->tv_nsec + (ms * 1000000);
 	tspec->tv_sec += (ns / 1000000000);
 	tspec->tv_nsec = (ns % 1000000000);
 }
 
-static UINT64 timespec_to_ms(struct timespec* tspec)
+UINT64 timespec_to_ms(struct timespec* tspec)
 {
 	UINT64 ms;
 	ms = tspec->tv_sec * 1000;
@@ -648,12 +648,15 @@ BOOL CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue,
 	WINPR_TIMER_QUEUE* timerQueue;
 	WINPR_TIMER_QUEUE_TIMER* timer;
 
+	if (!TimerQueue)
+		return FALSE;
+
 	timespec_gettimeofday(&CurrentTime);
 
 	timerQueue = (WINPR_TIMER_QUEUE*) TimerQueue;
 	timer = (WINPR_TIMER_QUEUE_TIMER*) malloc(sizeof(WINPR_TIMER_QUEUE_TIMER));
 
-	if (!timer || !TimerQueue)
+	if (!timer)
 		return FALSE;
 
 	WINPR_HANDLE_SET_TYPE(timer, HANDLE_TYPE_TIMER_QUEUE_TIMER);

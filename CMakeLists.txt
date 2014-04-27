@@ -20,7 +20,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(FreeRDP C)
+project(FreeRDP C CXX)
 
 if(NOT DEFINED VENDOR)
 	set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")
@@ -116,6 +116,15 @@ if(MSVC)
 	endif()
 endif()
 
+CHECK_C_COMPILER_FLAG (-Wno-builtin-macro-redefined Wno-builtin-macro-redefined)
+if(Wno-builtin-macro-redefined)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-builtin-macro-redefined")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-builtin-macro-redefined")
+
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
+endif()
+
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "i686")
@@ -133,15 +142,6 @@ if(CMAKE_COMPILER_IS_GNUCC)
 	endif()
 
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-
-	# Hack to strip absolute paths out of the __FILE__ macro
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__FILE__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILE__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
-	CHECK_C_COMPILER_FLAG (-Wno-builtin-macro-redefined Wno-builtin-macro-redefined)
-	if(Wno-builtin-macro-redefined)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-builtin-macro-redefined")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-builtin-macro-redefined")
-	endif()
 
 	CHECK_C_COMPILER_FLAG (-Wno-unused-result Wno-unused-result)
 	if(Wno-unused-result)
@@ -171,6 +171,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
 	else()
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 	endif()
 	if(WITH_SSE2)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
@@ -340,6 +341,8 @@ else()
 	set(X11_FEATURE_TYPE "DISABLED")
 endif()
 
+find_package(PCSCWinPR)
+
 set(X11_FEATURE_PURPOSE "X11")
 set(X11_FEATURE_DESCRIPTION "X11 client and server")
 
@@ -489,6 +492,10 @@ add_definitions("-DHAVE_CONFIG_H")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 # RPATH configuration
+if(CMAKE_SKIP_RPATH)
+       set(CMAKE_SKIP_RPATH FALSE)
+       set(CMAKE_SKIP_INSTALL_RPATH TRUE)
+endif()
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -605,3 +612,30 @@ endif()
 #message("VENDOR: ${VENDOR} CLIENT_VENDOR_PATH: ${CLIENT_VENDOR_PATH} CMAKE_CPACK_INCLUDE_FILE: ${CMAKE_CPACK_INCLUDE_FILE}")
 
 include(${CMAKE_CPACK_INCLUDE_FILE})
+
+if(MONOLITHIC_BUILD)
+	set(FREERDP_PC_LIBS "-lfreerdp -lfreerdp-client")
+	set(WINPR_PC_LIBS "-lwinpr")
+	if (WITH_SERVER)
+		set(FREERDP_PC_LIBS "${FREERDP_PC_LIBS} -lfreerdp-server")
+	endif()
+else(MONOLITHIC_BUILD)
+	# freerdp exports
+	get_property(MEXPORTS GLOBAL PROPERTY "freerdp_EXPORTS")
+	foreach(EXPORT_MODULE ${MEXPORTS})
+			list(APPEND FREERDP_PC_LIBS "-lfreerdp-${EXPORT_MODULE}")
+	endforeach()
+	string(REPLACE ";" " " FREERDP_PC_LIBS "${FREERDP_PC_LIBS}")
+
+	# winpr exports
+	get_property(MEXPORTS GLOBAL PROPERTY "winpr_EXPORTS")
+	foreach(EXPORT_MODULE ${MEXPORTS})
+			list(APPEND WINPR_PC_LIBS "-lwinpr-${EXPORT_MODULE}")
+	endforeach()
+	string(REPLACE ";" " " WINPR_PC_LIBS "${WINPR_PC_LIBS}")
+endif(MONOLITHIC_BUILD)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)

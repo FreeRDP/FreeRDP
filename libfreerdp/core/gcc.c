@@ -407,16 +407,17 @@ void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 
 	if (settings->NegotiationFlags & EXTENDED_CLIENT_DATA_SUPPORTED)
 	{
-		if (settings->SpanMonitors)
+		if (settings->UseMultimon && !settings->SpanMonitors)
 		{
 			gcc_write_client_monitor_data(s, mcs);
 		}
+
 		gcc_write_client_message_channel_data(s, mcs);
 		gcc_write_client_multitransport_channel_data(s, mcs);
 	}
 	else
 	{
-		if (settings->UseMultimon)
+		if (settings->UseMultimon && !settings->SpanMonitors)
 		{
 			fprintf(stderr, "WARNING: true multi monitor support was not advertised by server!\n");
 
@@ -915,6 +916,8 @@ BOOL gcc_read_client_security_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		Stream_Read_UINT32(s, settings->EncryptionMethods); /* encryptionMethods */
 		if (settings->EncryptionMethods == 0)
 			Stream_Read_UINT32(s, settings->EncryptionMethods); /* extEncryptionMethods */
+		else
+			Stream_Seek(s, 4);
 	}
 	else
 	{
@@ -1081,6 +1084,10 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	{
 		settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
 	}
+	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_56BIT) != 0)
+	{
+		settings->EncryptionMethods = ENCRYPTION_METHOD_56BIT;
+	}
 	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_40BIT) != 0)
 	{
 		settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT;
@@ -1166,11 +1173,17 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	sigDataLen = Stream_Pointer(s) - sigData;
 
 	Stream_Write_UINT16(s, BB_RSA_SIGNATURE_BLOB); /* wSignatureBlobType */
-	Stream_Write_UINT16(s, keyLen + 8); /* wSignatureBlobLen */
+	Stream_Write_UINT16(s, sizeof(encryptedSignature) + 8); /* wSignatureBlobLen */
 
 	memcpy(signature, initial_signature, sizeof(initial_signature));
 
 	md5 = crypto_md5_init();
+	if (!md5)
+	{
+		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		return;
+	}
+
 	crypto_md5_update(md5, sigData, sigDataLen);
 	crypto_md5_final(md5, signature);
 

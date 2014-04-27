@@ -31,11 +31,10 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <winpr/stream.h>
-#include <freerdp/utils/list.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #include "sample_main.h"

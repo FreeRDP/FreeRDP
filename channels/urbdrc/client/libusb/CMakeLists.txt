@@ -27,8 +27,6 @@ set(${MODULE_PREFIX}_SRCS
 
 include_directories(..)
 
-find_package(libusb-1.0 REQUIRED)
-
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
 set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
@@ -37,10 +35,9 @@ set(${MODULE_PREFIX}_LIBS
 	${CMAKE_THREAD_LIBS_INIT})
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
-    ${DBUS_GLIB_LIBRARIES}
-    ${UUID_LIBRARIES}
-    ${LIBUSB_1_LIBRARIES}
-    )
+	${DBUS_GLIB_LIBRARIES}
+	${UUID_LIBRARIES}
+	${LIBUSB_1_LIBRARIES})
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
@@ -49,6 +46,5 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-if(NOT STATIC_CHANNELS)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH})
-endif()
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)
+

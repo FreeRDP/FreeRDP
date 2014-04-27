@@ -72,12 +72,22 @@ typedef int BOOL;
 
 typedef BOOL *PBOOL, *LPBOOL;
 
+#ifdef __APPLE__
+typedef int LONG;
+typedef unsigned int DWORD;
+typedef unsigned int ULONG;
+#else
+typedef long LONG;
+typedef unsigned long DWORD;
+typedef unsigned long ULONG;
+#endif
+
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
 typedef BYTE BOOLEAN, *PBOOLEAN;
 typedef unsigned short WCHAR, *PWCHAR;
 typedef WCHAR* BSTR;
 typedef char CHAR, *PCHAR;
-typedef unsigned long DWORD, *PDWORD, *LPDWORD;
+typedef DWORD *PDWORD, *LPDWORD;
 typedef unsigned int DWORD32;
 typedef unsigned __int64 DWORD64;
 typedef unsigned __int64 ULONGLONG;
@@ -102,6 +112,8 @@ typedef HANDLE HINSTANCE;
 typedef HANDLE HMODULE;
 typedef HANDLE HWND;
 typedef HANDLE HBITMAP;
+typedef HANDLE HICON;
+typedef HANDLE HCURSOR;
 
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
@@ -113,7 +125,7 @@ typedef signed __int64 INT64;
 #endif
 typedef const WCHAR* LMCSTR;
 typedef WCHAR* LMSTR;
-typedef long LONG, *PLONG, *LPLONG;
+typedef LONG *PLONG, *LPLONG;
 typedef signed __int64 LONGLONG;
 
 typedef __int3264 LONG_PTR, *PLONG_PTR;
@@ -138,7 +150,7 @@ typedef unsigned char UINT8;
 typedef unsigned short UINT16;
 typedef unsigned int UINT32;
 typedef unsigned __int64 UINT64;
-typedef unsigned long ULONG, *PULONG;
+typedef ULONG *PULONG;
 
 typedef ULONG HRESULT;
 typedef ULONG SCODE;
@@ -152,7 +164,6 @@ typedef unsigned short USHORT;
 #define VOID void
 typedef void *PVOID, *LPVOID;
 typedef void *PVOID64, *LPVOID64;
-typedef const void *LPCVOID;
 typedef unsigned short WORD, *PWORD, *LPWORD;
 
 #if __x86_64__
@@ -169,7 +180,7 @@ typedef struct _GUID
 	UINT16 Data2;
 	UINT16 Data3;
 	BYTE Data4[8];
-} GUID, UUID, *PGUID;
+} GUID, UUID, *PGUID, *LPGUID, *LPCGUID;
 
 typedef struct _LUID
 {
@@ -320,6 +331,16 @@ typedef unsigned long error_status_t;
 #ifndef _NTDEF_
 typedef LONG NTSTATUS;
 typedef NTSTATUS *PNTSTATUS;
+#endif
+
+#ifndef _LPCBYTE_DEFINED
+#define _LPCBYTE_DEFINED
+typedef const BYTE *LPCBYTE;
+#endif
+
+#ifndef _LPCVOID_DEFINED
+#define _LPCVOID_DEFINED
+typedef const VOID *LPCVOID;
 #endif
 
 #ifndef _WIN32
