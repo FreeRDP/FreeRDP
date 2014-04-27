@@ -2157,7 +2157,7 @@ extern int PCSC_InitializeSCardApi_Link(void);
 
 int PCSC_InitializeSCardApi(void)
 {
-#if 0
+#ifndef DISABLE_PCSC_LINK
 	if (PCSC_InitializeSCardApi_Link() >= 0)
 	{
 		g_PCSC.pfnSCardEstablishContext = g_PCSC_Link.pfnSCardEstablishContext;
