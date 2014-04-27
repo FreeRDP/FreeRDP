@@ -57,11 +57,17 @@ static HMODULE g_PCSCModule = NULL;
 static PCSCFunctionTable g_PCSC = { 0 };
 
 static BOOL g_SCardAutoAllocate = FALSE;
+static BOOL g_PnP_Notification = TRUE;
 
 static wArrayList* g_Readers = NULL;
 static wListDictionary* g_CardHandles = NULL;
 static wListDictionary* g_CardContexts = NULL;
 static wListDictionary* g_MemoryBlocks = NULL;
+
+char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
+
+WCHAR SMARTCARD_PNP_NOTIFICATION_W[] = { '\\','\\','?','P','n','P','?',
+	'\\','N','o','t','i','f','i','c','a','t','i','o','n','\0' };
 
 WINSCARDAPI LONG WINAPI PCSC_SCardFreeMemory_Internal(SCARDCONTEXT hContext, LPCVOID pvMem);
 
@@ -1076,8 +1082,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardLocateCardsByATRW(SCARDCONTEXT hContext,
 WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext,
 		DWORD dwTimeout, LPSCARD_READERSTATEA rgReaderStates, DWORD cReaders)
 {
-	DWORD i, j;
+	int i, j;
+	int* map;
 	DWORD dwEventState;
+	DWORD cMappedReaders;
 	BOOL stateChanged = FALSE;
 	PCSC_SCARD_READERSTATE* states;
 	LONG status = SCARD_S_SUCCESS;
@@ -1086,8 +1094,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		return SCARD_E_NO_SERVICE;
 	
 	/**
-	 * FIXME: proper pcsc-lite support for "\\\\?PnP?\\Notification"
-	 *
 	 * Apple's SmartCard Services (not vanilla pcsc-lite) appears to have trouble with the
 	 * "\\\\?PnP?\\Notification" reader name. I am always getting EXC_BAD_ACCESS with it.
 	 *
@@ -1097,11 +1103,15 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 	 * The "\\\\?PnP?\\Notification" string cannot be found anywhere in the sources,
 	 * while this string is present in the vanilla pcsc-lite sources.
 	 *
-	 * For now, the current smartcard code sets dwCurrentState to SCARD_STATE_IGNORE
-	 * when the reader name is "\\\\?PnP?\\Notification". We check for this flag and
-	 * and ignore the reader completely when present.
+	 * To work around this apparently lack of "\\\\?PnP?\\Notification" support,
+	 * we have to filter rgReaderStates to exclude the special PnP reader name.
 	 */
 
+	map = (int*) calloc(cReaders, sizeof(int));
+	
+	if (!map)
+		return SCARD_E_NO_MEMORY;
+	
 	states = (PCSC_SCARD_READERSTATE*) calloc(cReaders, sizeof(PCSC_SCARD_READERSTATE));
 
 	if (!states)
@@ -1109,10 +1119,16 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 	
 	for (i = j = 0; i < cReaders; i++)
 	{
-#ifdef __APPLE__
-		if (rgReaderStates[i].dwCurrentState == SCARD_STATE_IGNORE)
-			continue;
-#endif
+		if (!g_PnP_Notification)
+		{
+			if (strcmp(rgReaderStates[i].szReader, SMARTCARD_PNP_NOTIFICATION_A) == 0)
+			{
+				map[i] = -1; /* unmapped */
+				continue;
+			}
+		}
+		
+		map[i] = j;
 		
 		states[j].szReader = PCSC_GetReaderNameFromAlias((char*) rgReaderStates[i].szReader);
 
@@ -1127,31 +1143,28 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		j++;
 	}
 	
-	cReaders = j;
+	cMappedReaders = j;
 
 	/**
 	 * pcsc-lite interprets dwTimeout value 0 as INFINITE, use value 1 as a workaround
 	 */
 
-	if (cReaders > 0)
+	if (cMappedReaders > 0)
 	{
-		status = g_PCSC.pfnSCardGetStatusChange(hContext, dwTimeout ? dwTimeout : 10, states, cReaders);
+		status = g_PCSC.pfnSCardGetStatusChange(hContext, dwTimeout ? dwTimeout : 1, states, cMappedReaders);
 		status = PCSC_MapErrorCodeToWinSCard(status);
 	}
 	else
 	{
-		status = SCARD_E_TIMEOUT;
+		status = SCARD_S_SUCCESS;
 	}
 
-	for (i = j = 0; i < cReaders; i++)
+	for (i = 0; i < cReaders; i++)
 	{
-#ifdef __APPLE__
-		if (rgReaderStates[i].dwCurrentState == SCARD_STATE_IGNORE)
-		{
-			rgReaderStates[i].dwEventState = SCARD_STATE_IGNORE;
-			continue;
-		}
-#endif
+		if (map[i] < 0)
+			continue; /* unmapped */
+		
+		j = map[i];
 		
 		rgReaderStates[i].dwCurrentState = states[j].dwCurrentState;
 		rgReaderStates[i].cbAtr = states[j].cbAtr;
@@ -1181,8 +1194,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 
 		if (rgReaderStates[i].dwCurrentState & SCARD_STATE_IGNORE)
 			rgReaderStates[i].dwEventState = SCARD_STATE_IGNORE;
-		
-		j++;
 	}
 
 	if ((status == SCARD_S_SUCCESS) && !stateChanged)
@@ -1191,6 +1202,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		return SCARD_S_SUCCESS;
 
 	free(states);
+	free(map);
 
 	return status;
 }
@@ -2203,7 +2215,7 @@ int PCSC_InitializeSCardApi(void)
 	
 	g_PCSC.pfnSCardFreeMemory = NULL;
 	
-#ifndef __MACOSX__
+#ifndef __APPLE__
 	g_PCSC.pfnSCardFreeMemory = (void*) GetProcAddress(g_PCSCModule, "SCardFreeMemory");
 #endif
 	
@@ -2213,6 +2225,10 @@ int PCSC_InitializeSCardApi(void)
 #ifdef DISABLE_PCSC_SCARD_AUTOALLOCATE
 	g_PCSC.pfnSCardFreeMemory = NULL;
 	g_SCardAutoAllocate = FALSE;
+#endif
+	
+#ifdef __APPLE__
+	g_PnP_Notification = FALSE;
 #endif
 
 	return 1;

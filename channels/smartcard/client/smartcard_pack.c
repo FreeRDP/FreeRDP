@@ -26,11 +26,6 @@
 
 #include "smartcard_pack.h"
 
-static char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
-
-static WCHAR SMARTCARD_PNP_NOTIFICATION_W[] = { '\\','\\','?','P','n','P','?',
-		'\\','N','o','t','i','f','i','c','a','t','i','o','n','\0' };
-
 UINT32 smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream* s)
 {
 	UINT8 version;
