@@ -114,6 +114,8 @@ typedef HANDLE HWND;
 typedef HANDLE HBITMAP;
 typedef HANDLE HICON;
 typedef HANDLE HCURSOR;
+typedef HANDLE HBRUSH;
+typedef HANDLE HMENU;
 
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
