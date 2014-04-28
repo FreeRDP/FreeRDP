@@ -449,13 +449,13 @@ void InitializeWtsApiStubs_FreeRDS()
 
 	if (IniFile_Parse(ini, "/var/run/freerds.instance") < 0)
 	{
-		printf("failed to parse freerds.instance\n");
+		fprintf(stderr, "failed to parse freerds.instance\n");
 	}
 	
 	prefix = IniFile_GetKeyValueString(ini, "FreeRDS", "prefix");
 	libdir = IniFile_GetKeyValueString(ini, "FreeRDS", "libdir");
 	
-	printf("FreeRDS: %s / %s\n", prefix, libdir);
+	fprintf(stderr, "FreeRDS (prefix / libdir): %s / %s\n", prefix, libdir);
 	
 	if (prefix && libdir)
 	{
