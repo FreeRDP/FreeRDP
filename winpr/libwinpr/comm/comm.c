@@ -41,6 +41,9 @@
 #include <winpr/collections.h>
 #include <winpr/tchar.h>
 
+#include "comm_ioctl.h"
+
+
 /**
  * Communication Resources:
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363196/
@@ -139,159 +142,6 @@ BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
 }
 
 
-/*
- * Linux, Windows speeds
- * 
- */
-static const speed_t _SPEED_TABLE[][2] = {
-#ifdef B0
-	{B0, 0},	/* hang up */
-#endif
-#ifdef B50
-	{B50, 50},
-#endif
-#ifdef B75
-	{B75, 75},
-#endif
-#ifdef B110
-	{B110, CBR_110},
-#endif
-#ifdef  B134
-	{B134, 134},
-#endif
-#ifdef  B150
-	{B150, 150},
-#endif
-#ifdef B200
-	{B200, 200},
-#endif
-#ifdef B300
-	{B300, CBR_300},
-#endif
-#ifdef B600
-	{B600, CBR_600},
-#endif
-#ifdef B1200
-	{B1200, CBR_1200},
-#endif
-#ifdef B1800
-	{B1800, 1800},
-#endif
-#ifdef B2400
-	{B2400, CBR_2400},
-#endif
-#ifdef B4800
-	{B4800, CBR_4800},
-#endif
-#ifdef B9600
-	{B9600, CBR_9600},
-#endif
-	/* {, CBR_14400},	/\* unsupported on Linux *\/ */
-#ifdef B19200
-	{B19200, CBR_19200},
-#endif
-#ifdef B38400
-	{B38400, CBR_38400},
-#endif
-	/* {, CBR_56000},	/\* unsupported on Linux *\/ */
-#ifdef  B57600
-	{B57600, CBR_57600},
-#endif
-#ifdef B115200
-	{B115200, CBR_115200},
-#endif
-	/* {, CBR_128000},	/\* unsupported on Linux *\/ */
-	/* {, CBR_256000},	/\* unsupported on Linux *\/ */
-#ifdef B230400
-	{B230400, 230400},
-#endif
-#ifdef B460800
-	{B460800, 460800},
-#endif
-#ifdef B500000
-	{B500000, 500000},
-#endif
-#ifdef  B576000
-	{B576000, 576000},
-#endif
-#ifdef B921600
-	{B921600, 921600},
-#endif
-#ifdef B1000000
-	{B1000000, 1000000},
-#endif
-#ifdef B1152000
-	{B1152000, 1152000},
-#endif
-#ifdef B1500000
-	{B1500000, 1500000},
-#endif
-#ifdef B2000000
-	{B2000000, 2000000},
-#endif
-#ifdef B2500000
-	{B2500000, 2500000},
-#endif
-#ifdef B3000000
-	{B3000000, 3000000},
-#endif
-#ifdef B3500000
-	{B3500000, 3500000},
-#endif
-#ifdef B4000000
-	{B4000000, 4000000},	/* __MAX_BAUD */
-#endif
-};
-
-
-/* Set lpDcb->BaudRate with the current baud rate.
- */
-static BOOL _GetBaudRate(LPDCB lpDcb, struct termios *lpCurrentState)
-{
-	int i;
-	speed_t currentSpeed;
-
-	currentSpeed = cfgetispeed(lpCurrentState);
-
-	for (i=0; _SPEED_TABLE[i][0]<=__MAX_BAUD; i++)
-	{
-		if (_SPEED_TABLE[i][0] == currentSpeed)
-		{
-			lpDcb->BaudRate = _SPEED_TABLE[i][1];
-			return TRUE;
-		}
-	}
-
-	DEBUG_WARN("could not find a matching baud rate for the speed 0x%x", currentSpeed);
-	return FALSE;
-}
-
-
-/* Set lpFutureState's speed to lpDcb->BaudRate.
- */
-static BOOL _SetBaudRate(struct termios *lpFutureState, LPDCB lpDcb)
-{
-	int i;
-	speed_t newSpeed;
-
-	for (i=0; _SPEED_TABLE[i][0]<=__MAX_BAUD; i++)
-	{
-		if (_SPEED_TABLE[i][1] == lpDcb->BaudRate)
-		{
-			newSpeed = _SPEED_TABLE[i][0];
-			if (cfsetspeed(lpFutureState, newSpeed) < 0)
-			{
-				DEBUG_WARN("failed to set speed 0x%x (%d)", newSpeed, lpDcb->BaudRate);
-				return FALSE;
-			}
-
-			return TRUE;
-		}
-	}
-
-	DEBUG_WARN("could not find a matching speed for the baud rate %d", lpDcb->BaudRate);
-	return FALSE;
-}
 
 /**
  * 
@@ -307,6 +157,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	DCB *lpLocalDcb;
 	struct termios currentState;
 	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
+	DWORD bytesReturned;
 
 	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
 	{
@@ -343,12 +194,14 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	
 	lpLocalDcb->DCBlength = lpDCB->DCBlength;
 
-	if (!_GetBaudRate(lpLocalDcb, &currentState))
+	SERIAL_BAUD_RATE baudRate;
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_BAUD_RATE, NULL, 0, &baudRate, sizeof(SERIAL_BAUD_RATE), &bytesReturned, NULL))
 	{
-		SetLastError(ERROR_NOT_SUPPORTED);
+		DEBUG_WARN("GetCommState failure: could not get the baud rate.");
 		goto error_handle;
 	}
-
+	lpLocalDcb->BaudRate = baudRate.BaudRate;
+		    
 	lpLocalDcb->fBinary = TRUE; /* TMP: TODO: seems equivalent to the raw mode */
 
 	lpLocalDcb->fParity =  (currentState.c_iflag & INPCK) != 0;
@@ -368,15 +221,23 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 
 
 /**
+ * @return TRUE on success, FALSE otherwise.
+ * 
+ * As of today, SetCommState() can fail half-way with some settings
+ * applied and some others not. SetCommState() returns on the first
+ * failure met. FIXME: or is it correct?
+ *
  * ERRORS:
  *   ERROR_INVALID_HANDLE
  *   ERROR_IO_DEVICE
  */
 BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 {
-	struct termios futureState;
-	struct termios currentState;
+	struct termios upcomingTermios;
 	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
+	DWORD bytesReturned;
+
+	// TMP: FIXME: validate changes according GetCommProperties
 
 	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
 	{
@@ -390,16 +251,28 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 		return FALSE;
 	}
 
-	ZeroMemory(&futureState, sizeof(struct termios));
-	if (tcgetattr(pComm->fd, &futureState) < 0) /* NB: preserves current settings not directly handled by the Communication Functions */
+	/* NB: did the choice to call ioctls first when available and
+	   then to setup upcomingTermios. Don't mix both stages. */
+
+	/** ioctl calls stage **/
+
+	SERIAL_BAUD_RATE baudRate;
+	baudRate.BaudRate = lpDCB->BaudRate;
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_BAUD_RATE, &baudRate, sizeof(SERIAL_BAUD_RATE), NULL, 0, &bytesReturned, NULL))
 	{
-		SetLastError(ERROR_IO_DEVICE);
+		DEBUG_WARN("SetCommState failure: could not set the baud rate.");
 		return FALSE;
 	}
 
-	if (!_SetBaudRate(&futureState, lpDCB))
+
+
+	/** upcomingTermios stage **/
+
+
+	ZeroMemory(&upcomingTermios, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &upcomingTermios) < 0) /* NB: preserves current settings not directly handled by the Communication Functions */
 	{
-		SetLastError(ERROR_NOT_SUPPORTED);
+		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
 
@@ -413,15 +286,12 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	
 	if (lpDCB->fParity)
 	{
-		futureState.c_iflag |= INPCK;
+		upcomingTermios.c_iflag |= INPCK;
 	}
 	else
 	{
-		futureState.c_iflag &= ~INPCK;
+		upcomingTermios.c_iflag &= ~INPCK;
 	}
-
-	// TMP: FIXME: validate changes according GetCommProperties
-
 
 	/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363423%28v=vs.85%29.aspx
 	 *
@@ -434,43 +304,12 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	 * TCSANOW matches the best this definition
 	 */
 	
-	if (tcsetattr(pComm->fd, TCSANOW, &futureState) < 0)
-	{
-		DEBUG_WARN("could not apply parameters, errno: %d", errno);
-		return FALSE;
-	}
-	
-	/* NB: tcsetattr() can succeed even if not all changes have been applied. */
-	ZeroMemory(&currentState, sizeof(struct termios));
-	if (tcgetattr(pComm->fd, &currentState) < 0)
+	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
-
-	if (memcmp(&currentState, &futureState, sizeof(struct termios)) != 0)
-	{
-		DEBUG_WARN("all parameters were not set, doing a second attempt...");
-		if (tcsetattr(pComm->fd, TCSAFLUSH, &futureState) < 0)
-		{
-			DEBUG_WARN("could not apply parameters, errno: %d", errno);
-			return FALSE;
-		}
-
-		ZeroMemory(&currentState, sizeof(struct termios));
-		if (tcgetattr(pComm->fd, &currentState) < 0)
-		{
-			SetLastError(ERROR_IO_DEVICE);
-			return FALSE;
-		}
-
-		if (memcmp(&currentState, &futureState, sizeof(struct termios)) != 0)
-		{
-			DEBUG_WARN("Failure: all parameters were not set on a second attempt.");
-			SetLastError(ERROR_IO_DEVICE);
-			return FALSE; /* TMP: double-check whether some parameters can differ anyway */
-		}
-	}
+	
 
 	return TRUE;
 }

@@ -28,7 +28,7 @@ int TestCommConfig(int argc, char* argv[])
 {
 	DCB dcb;
 	HANDLE hComm;
-	BOOL fSuccess;
+	BOOL success;
 	LPCSTR lpFileName = "\\\\.\\COM1";
 
 	hComm = CreateFileA(lpFileName,
@@ -41,8 +41,9 @@ int TestCommConfig(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	fSuccess = DefineCommDevice(lpFileName, "/dev/null");
-	if(!fSuccess)
+	// TMP: FIXME: check if we can proceed with tests on the actual device, skip and warn otherwise but don't fail
+	success = DefineCommDevice(lpFileName, "/dev/ttyS0");
+	if(!success)
 	{
 		printf("DefineCommDevice failure: %s\n", lpFileName);
 		return EXIT_FAILURE;
@@ -68,7 +69,7 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (!hComm || (hComm == INVALID_HANDLE_VALUE))
 	{
-		printf("CreateFileA failure: %s\n", lpFileName);
+		printf("CreateFileA failure: %s GetLastError() = 0x%0.8x\n", lpFileName, GetLastError());
 		return EXIT_FAILURE;
 	}
 
@@ -76,11 +77,11 @@ int TestCommConfig(int argc, char* argv[])
 	 * GetLastError should return ERROR_SHARING_VIOLATION */
 
 	ZeroMemory(&dcb, sizeof(DCB));
-
-	fSuccess = GetCommState(hComm, &dcb);
-	if (!fSuccess)
+	dcb.DCBlength = sizeof(DCB);
+	success = GetCommState(hComm, &dcb);
+	if (!success)
 	{
-		printf("GetCommState failure: GetLastError() = %d\n", (int) GetLastError());
+		printf("GetCommState failure: GetLastError() = Ox%x\n", (int) GetLastError());
 		return EXIT_FAILURE;
 	}
 
@@ -92,19 +93,19 @@ int TestCommConfig(int argc, char* argv[])
 	dcb.Parity = NOPARITY;
 	dcb.StopBits = ONESTOPBIT;
 
-	fSuccess = SetCommState(hComm, &dcb);
+	success = SetCommState(hComm, &dcb);
 
-	if (!fSuccess)
+	if (!success)
 	{
-		printf("SetCommState failure: GetLastError() = %d\n", (int) GetLastError());
+		printf("SetCommState failure: GetLastError() = 0x%x\n", (int) GetLastError());
 		return 0;
 	}
 
-	fSuccess = GetCommState(hComm, &dcb);
+	success = GetCommState(hComm, &dcb);
 
-	if (!fSuccess)
+	if (!success)
 	{
-		printf("GetCommState failure: GetLastError() = %d\n", (int) GetLastError());
+		printf("GetCommState failure: GetLastError() = 0x%x\n", (int) GetLastError());
 		return 0;
 	}
 

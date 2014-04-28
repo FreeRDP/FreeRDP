@@ -119,7 +119,6 @@ int TestSetCommState(int argc, char* argv[])
 	HANDLE hComm;
 
 	// TMP: FIXME: check if we can proceed with tests on the actual device, skip and warn otherwise but don't fail
-
 	result = DefineCommDevice("COM1", "/dev/ttyS0");
 	if (!result)
 	{
@@ -149,7 +148,7 @@ int TestSetCommState(int argc, char* argv[])
 	result = SetCommState(hComm, &dcb);
 	if (!result)
 	{
-		printf("SetCommState failure: 0x%x\n", GetLastError());
+		printf("SetCommState failure: 0x%0.8x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 

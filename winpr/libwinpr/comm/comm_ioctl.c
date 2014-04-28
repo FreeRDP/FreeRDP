@@ -26,7 +26,9 @@
 
 #ifndef _WIN32
 
+
 #include <assert.h>
+#include <errno.h>
 
 #include <freerdp/utils/debug.h>
 
@@ -67,7 +69,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 {
 
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
-	PREMOTE_SERIAL_DRIVER pRemoteSerialDriver = NULL;
+	REMOTE_SERIAL_DRIVER* pRemoteSerialDriver = NULL;
 
 	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
 	{
@@ -87,27 +89,30 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 		return FALSE;
 	}
 
-	*lpBytesReturned = 0; /* will be ajusted otherwise */
+	*lpBytesReturned = 0; /* will be ajusted if required ... */
 
-	/* remoteSerialDriver to be use ... */
+	/* remoteSerialDriver to be use ... 
+	 *
+	 * FIXME: might prefer to use an automatic rather than static structure
+	 */
 	switch (pComm->remoteSerialDriverId)
 	{
 		case RemoteSerialDriverSerialSys:
-			pRemoteSerialDriver = SerialSys();
+			pRemoteSerialDriver = SerialSys_s();
 			break;
 
 		case RemoteSerialDriverSerCxSys:
-			pRemoteSerialDriver = SerCxSys();
+			pRemoteSerialDriver = SerCxSys_s();
 			break;
 
 		case RemoteSerialDriverSerCx2Sys:
-			pRemoteSerialDriver = SerCx2Sys();
+			pRemoteSerialDriver = SerCx2Sys_s();
 			break;
 
 		case RemoteSerialDriverUnknown:
 		default:
 			DEBUG_WARN("Unknown remote serial driver (%d), using SerCx2.sys", pComm->remoteSerialDriverId);
-			pRemoteSerialDriver = SerCx2Sys();
+			pRemoteSerialDriver = SerCx2Sys_s();
 			break;
 	}
 
@@ -117,84 +122,112 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	{
 		case IOCTL_SERIAL_SET_BAUD_RATE:
 		{
-			PSERIAL_BAUD_RATE pBaudRate = (PSERIAL_BAUD_RATE)lpInBuffer;
-
-			assert(nInBufferSize == sizeof(SERIAL_BAUD_RATE));
-			if (nInBufferSize < sizeof(SERIAL_BAUD_RATE))
-			{
-				SetLastError(ERROR_INVALID_DATA);
-				return FALSE;
-			}
-		       
 			if (pRemoteSerialDriver->set_baud_rate)
 			{
-				return pRemoteSerialDriver->set_baud_rate(pBaudRate);
-			}
-			else
-			{
-				DEBUG_WARN(_T("unsupported IoControlCode: Ox%x (remote serial driver: %s)"), dwIoControlCode, pRemoteSerialDriver->name);
-				return FALSE;
+				SERIAL_BAUD_RATE *pBaudRate = (SERIAL_BAUD_RATE*)lpInBuffer;
+
+				assert(nInBufferSize >= sizeof(SERIAL_BAUD_RATE));
+				if (nInBufferSize < sizeof(SERIAL_BAUD_RATE))
+				{
+					SetLastError(ERROR_INVALID_DATA);
+					return FALSE;
+				}
+
+				return pRemoteSerialDriver->set_baud_rate(pComm, pBaudRate);
 			}
 		}
-		default:
-			DEBUG_WARN("unsupported IoControlCode: Ox%x", dwIoControlCode);
-			return FALSE;
+		case IOCTL_SERIAL_GET_BAUD_RATE:
+		{
+			if (pRemoteSerialDriver->get_baud_rate)
+			{
+				SERIAL_BAUD_RATE *pBaudRate = (SERIAL_BAUD_RATE*)lpOutBuffer;
+
+				assert(nOutBufferSize >= sizeof(SERIAL_BAUD_RATE));
+				if (nOutBufferSize < sizeof(SERIAL_BAUD_RATE))
+				{
+					SetLastError(ERROR_INSUFFICIENT_BUFFER);
+					return FALSE;
+				}
+
+				if (!pRemoteSerialDriver->get_baud_rate(pComm, pBaudRate))
+					return FALSE;
+
+				*lpBytesReturned = sizeof(SERIAL_BAUD_RATE);
+				return TRUE;
+			}
+		}
+		case IOCTL_SERIAL_GET_PROPERTIES:
+		{
+			if (pRemoteSerialDriver->get_properties)
+			{
+				COMMPROP *pProperties = (COMMPROP*)lpOutBuffer;
+				
+				assert(nOutBufferSize >= sizeof(COMMPROP));
+				if (nOutBufferSize < sizeof(COMMPROP))
+				{
+					SetLastError(ERROR_INSUFFICIENT_BUFFER);
+					return FALSE;					
+				}
+
+				if (!pRemoteSerialDriver->get_properties(pComm, pProperties))
+					return FALSE;
+
+				*lpBytesReturned = sizeof(COMMPROP);
+				return TRUE;
+			}
+		}
 	}
 	
+	DEBUG_WARN(_T("unsupported IoControlCode: Ox%x (remote serial driver: %s)"), dwIoControlCode, pRemoteSerialDriver->name);
+	return FALSE;
+	
+}
 
 
-/* IOCTL_SERIAL_GET_BAUD_RATE 0x001B0050 */
-/* IOCTL_SERIAL_SET_LINE_CONTROL 0x001B000C */
-/* IOCTL_SERIAL_GET_LINE_CONTROL 0x001B0054 */
-/* IOCTL_SERIAL_SET_TIMEOUTS 0x001B001C */
-/* IOCTL_SERIAL_GET_TIMEOUTS 0x001B0020 */
-/* IOCTL_SERIAL_SET_CHARS 0x001B0058 */
-/* IOCTL_SERIAL_GET_CHARS 0x001B005C */
-/* IOCTL_SERIAL_SET_DTR 0x001B0024 */
-/* IOCTL_SERIAL_CLR_DTR 0x001B0028 */
-/* IOCTL_SERIAL_RESET_DEVICE 0x001B002C */
-/* IOCTL_SERIAL_SET_RTS 0x001B0030 */
-/* IOCTL_SERIAL_CLR_RTS 0x001B0034 */
-/* IOCTL_SERIAL_SET_XOFF 0x001B0038 */
-/* IOCTL_SERIAL_SET_XON 0x001B003C */
-/* IOCTL_SERIAL_SET_BREAK_ON 0x001B0010 */
-/* IOCTL_SERIAL_SET_BREAK_OFF 0x001B0014 */
-/* IOCTL_SERIAL_SET_QUEUE_SIZE 0x001B0008 */
-/* IOCTL_SERIAL_GET_WAIT_MASK 0x001B0040 */
-/* IOCTL_SERIAL_SET_WAIT_MASK 0x001B0044 */
-/* IOCTL_SERIAL_WAIT_ON_MASK 0x001B0048 */
-/* IOCTL_SERIAL_IMMEDIATE_CHAR 0x001B0018 */
-/* IOCTL_SERIAL_PURGE 0x001B004C */
-/* IOCTL_SERIAL_GET_HANDFLOW 0x001B0060 */
-/* IOCTL_SERIAL_SET_HANDFLOW 0x001B0064 */
-/* IOCTL_SERIAL_GET_MODEMSTATUS 0x001B0068 */
-/* IOCTL_SERIAL_GET_DTRRTS 0x001B0078 */
-/* IOCTL_SERIAL_GET_COMMSTATUS 0x001B0084 */
-/* IOCTL_SERIAL_GET_PROPERTIES 0x001B0074 */
-/* IOCTL_SERIAL_XOFF_COUNTER 0x001B0070 */
-/* IOCTL_SERIAL_LSRMST_INSERT 0x001B007C */
-/* IOCTL_SERIAL_CONFIG_SIZE 0x001B0080 */
-/* IOCTL_SERIAL_GET_STATS 0x001B008C */
-/* IOCTL_SERIAL_CLEAR_STATS 0x001B0090 */
-/* IOCTL_SERIAL_GET_MODEM_CONTROL 0x001B0094 */
-/* IOCTL_SERIAL_SET_MODEM_CONTROL 0x001B0098 */
-/* IOCTL_SERIAL_SET_FIFO_CONTROL 0x001B009C */
+int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *termios_p)
+{
+	int result;
+	struct termios currentState;
 
-/* IOCTL_PAR_QUERY_INFORMATION 0x00160004 */
-/* IOCTL_PAR_SET_INFORMATION 0x00160008 */
-/* IOCTL_PAR_QUERY_DEVICE_ID 0x0016000C */
-/* IOCTL_PAR_QUERY_DEVICE_ID_SIZE 0x00160010 */
-/* IOCTL_IEEE1284_GET_MODE 0x00160014 */
-/* IOCTL_IEEE1284_NEGOTIATE 0x00160018 */
-/* IOCTL_PAR_SET_WRITE_ADDRESS 0x0016001C */
-/* IOCTL_PAR_SET_READ_ADDRESS 0x00160020 */
-/* IOCTL_PAR_GET_DEVICE_CAPS 0x00160024 */
-/* IOCTL_PAR_GET_DEFAULT_MODES 0x00160028 */
-/* IOCTL_PAR_QUERY_RAW_DEVICE_ID 0x00160030 */
-/* IOCTL_PAR_IS_PORT_FREE 0x00160054 */
-
-
-		return TRUE;
+	if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)
+	{
+		DEBUG_WARN("tcsetattr failure, errno: %d", errno);
+		return result;
 	}
+
+	/* NB: tcsetattr() can succeed even if not all changes have been applied. */
+	ZeroMemory(&currentState, sizeof(struct termios));
+	if ((result = tcgetattr(fd, &currentState)) < 0)
+	{
+		DEBUG_WARN("tcgetattr failure, errno: %d", errno);
+		return result;
+	}
+
+	if (memcmp(&currentState, &termios_p, sizeof(struct termios)) != 0)
+	{
+		DEBUG_WARN("all termios parameters were not set, doing a second attempt...");
+		if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)
+		{
+			DEBUG_WARN("2nd tcsetattr failure, errno: %d", errno);
+			return result;
+		}
+
+		ZeroMemory(&currentState, sizeof(struct termios));
+		if ((result = tcgetattr(fd, &currentState)) < 0)
+		{
+			DEBUG_WARN("tcgetattr failure, errno: %d", errno);
+			return result;
+		}
+
+		if (memcmp(&currentState, termios_p, sizeof(struct termios)) != 0)
+		{
+			DEBUG_WARN("Failure: all parameters were not set on a second attempt.");
+			return -1; /* TMP: double-check whether some parameters can differ anyway */
+		}
+	}
+
+	return 0;
+}
+
 
 #endif /* _WIN32 */

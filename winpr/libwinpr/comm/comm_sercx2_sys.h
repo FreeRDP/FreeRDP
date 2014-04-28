@@ -28,7 +28,7 @@
 extern "C" { 
 #endif
 
-WINPR_API PREMOTE_SERIAL_DRIVER SerCx2Sys();
+REMOTE_SERIAL_DRIVER* SerCx2Sys_s();
 
 #ifdef __cplusplus 
 }

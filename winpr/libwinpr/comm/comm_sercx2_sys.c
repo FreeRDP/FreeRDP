@@ -20,26 +20,35 @@
  * limitations under the License.
  */
 
+#ifndef _WIN32
+
+#include "comm_sercx_sys.h"
 
 #include "comm_sercx2_sys.h"
-#include "comm_serial_sys.h"
 
 
 /* specific functions only */
 static REMOTE_SERIAL_DRIVER _SerCx2Sys = 
-{
+{	
 	.id		= RemoteSerialDriverSerCx2Sys,
 	.name		= _T("SerCx2.sys"),
 	.set_baud_rate	= NULL,
+	.get_baud_rate  = NULL,
+	.get_properties = NULL,
 };
 
 
-PREMOTE_SERIAL_DRIVER SerCx2Sys()
+REMOTE_SERIAL_DRIVER* SerCx2Sys_s()
 {
-	/* _SerCxSys completed with default SerialSys functions */
-	PREMOTE_SERIAL_DRIVER serialSys = SerialSys();
+	/* _SerCx2Sys completed with SerialSys or SerCxSys default functions */
+	//REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	REMOTE_SERIAL_DRIVER* pSerCxSys = SerCxSys_s();
 
-	_SerCx2Sys.set_baud_rate = serialSys->set_baud_rate;
+	_SerCx2Sys.set_baud_rate = pSerCxSys->set_baud_rate;
+	_SerCx2Sys.get_baud_rate = pSerCxSys->get_baud_rate;
+	_SerCx2Sys.get_properties = pSerCxSys->get_properties;
 
 	return &_SerCx2Sys;
 }
+
+#endif /* _WIN32 */
