@@ -157,7 +157,7 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 	/* pProperties->SettableParams; */
 
 	pProperties->dwSettableBaud = 0;
-	for (i=0; _SERCX_SYS_BAUD_TABLE[i][1]<=__MAX_BAUD; i++)
+	for (i=0; _SERCX_SYS_BAUD_TABLE[i][0]<=__MAX_BAUD; i++)
 	{
 		pProperties->dwSettableBaud |= _SERCX_SYS_BAUD_TABLE[i][2];
 	}

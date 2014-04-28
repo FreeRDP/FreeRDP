@@ -30,6 +30,7 @@ int TestCommConfig(int argc, char* argv[])
 	HANDLE hComm;
 	BOOL success;
 	LPCSTR lpFileName = "\\\\.\\COM1";
+	COMMPROP commProp;
 
 	hComm = CreateFileA(lpFileName,
 			    GENERIC_READ | GENERIC_WRITE,
@@ -37,7 +38,7 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (hComm && (hComm != INVALID_HANDLE_VALUE))
 	{
-		printf("CreateFileA failure: could create a handle on a not yet defined device: %s\n", lpFileName);
+		fprintf(stderr, "CreateFileA failure: could create a handle on a not yet defined device: %s\n", lpFileName);
 		return EXIT_FAILURE;
 	}
 
@@ -45,7 +46,7 @@ int TestCommConfig(int argc, char* argv[])
 	success = DefineCommDevice(lpFileName, "/dev/ttyS0");
 	if(!success)
 	{
-		printf("DefineCommDevice failure: %s\n", lpFileName);
+		fprintf(stderr, "DefineCommDevice failure: %s\n", lpFileName);
 		return EXIT_FAILURE;
 	}
 
@@ -58,7 +59,7 @@ int TestCommConfig(int argc, char* argv[])
 			    (HANDLE)1234); /* invalid parmaeter */
 	if (hComm != INVALID_HANDLE_VALUE)
 	{
-		printf("CreateFileA failure: could create a handle with some invalid parameters %s\n", lpFileName);
+		fprintf(stderr, "CreateFileA failure: could create a handle with some invalid parameters %s\n", lpFileName);
 		return EXIT_FAILURE;
 	}
 
@@ -69,7 +70,7 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (!hComm || (hComm == INVALID_HANDLE_VALUE))
 	{
-		printf("CreateFileA failure: %s GetLastError() = 0x%0.8x\n", lpFileName, GetLastError());
+		fprintf(stderr, "CreateFileA failure: %s GetLastError() = 0x%0.8x\n", lpFileName, GetLastError());
 		return EXIT_FAILURE;
 	}
 
@@ -81,12 +82,33 @@ int TestCommConfig(int argc, char* argv[])
 	success = GetCommState(hComm, &dcb);
 	if (!success)
 	{
-		printf("GetCommState failure: GetLastError() = Ox%x\n", (int) GetLastError());
+		fprintf(stderr, "GetCommState failure: GetLastError() = Ox%x\n", (int) GetLastError());
 		return EXIT_FAILURE;
 	}
 
-	printf("BaudRate: %d ByteSize: %d Parity: %d StopBits: %d\n",
-	       (int) dcb.BaudRate, (int) dcb.ByteSize, (int) dcb.Parity, (int) dcb.StopBits);
+	fprintf(stderr, "BaudRate: %d ByteSize: %d Parity: %d StopBits: %d\n",
+		(int) dcb.BaudRate, (int) dcb.ByteSize, (int) dcb.Parity, (int) dcb.StopBits);
+
+	ZeroMemory(&commProp, sizeof(COMMPROP));
+	if (!GetCommProperties(hComm, &commProp))
+	{
+		fprintf(stderr, "GetCommProperties failure: GetLastError(): 0x0.8x\n", GetLastError());
+		return EXIT_FAILURE;
+	}
+
+	if ((commProp.dwSettableBaud & BAUD_57600) <= 0)
+	{
+		fprintf(stderr, "BAUD_57600 unsupported!\n");
+		return EXIT_FAILURE;
+	}
+
+	if ((commProp.dwSettableBaud & BAUD_14400) > 0)
+	{
+		fprintf(stderr, "BAUD_14400 supported!\n");
+		return EXIT_FAILURE;
+	}
+
+	/* TODO: */
 
 	dcb.BaudRate = CBR_57600;
 	dcb.ByteSize = 8;
@@ -97,7 +119,7 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (!success)
 	{
-		printf("SetCommState failure: GetLastError() = 0x%x\n", (int) GetLastError());
+		fprintf(stderr, "SetCommState failure: GetLastError() = 0x%x\n", (int) GetLastError());
 		return 0;
 	}
 
@@ -105,12 +127,12 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (!success)
 	{
-		printf("GetCommState failure: GetLastError() = 0x%x\n", (int) GetLastError());
+		fprintf(stderr, "GetCommState failure: GetLastError() = 0x%x\n", (int) GetLastError());
 		return 0;
 	}
 
-	printf("BaudRate: %d ByteSize: %d Parity: %d StopBits: %d\n",
-	       (int) dcb.BaudRate, (int) dcb.ByteSize, (int) dcb.Parity, (int) dcb.StopBits);
+	fprintf(stderr, "BaudRate: %d ByteSize: %d Parity: %d StopBits: %d\n",
+		(int) dcb.BaudRate, (int) dcb.ByteSize, (int) dcb.Parity, (int) dcb.StopBits);
 
 	CloseHandle(hComm);
 

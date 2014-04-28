@@ -131,12 +131,26 @@ BOOL GetCommModemStatus(HANDLE hFile, PDWORD lpModemStat)
 	return TRUE;
 }
 
+/**
+ * ERRORS:
+ *   ERROR_INVALID_HANDLE
+ */
 BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
+	DWORD bytesReturned;
 
-	if (!pComm)
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
+	}
+
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_PROPERTIES, NULL, 0, lpCommProp, sizeof(COMMPROP), &bytesReturned, NULL))
+	{
+		DEBUG_WARN("GetCommProperties failure.");
+		return FALSE;
+	}
 
 	return TRUE;
 }
