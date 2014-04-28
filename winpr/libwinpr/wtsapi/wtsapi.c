@@ -397,35 +397,43 @@ BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)
 	return TRUE;
 }
 
+static BOOL LoadAndInitialize(char *library)
+{
+	INIT_WTSAPI_FN pInitWtsApi;
+	g_WtsApiModule = LoadLibraryA(library);
+
+	if (!g_WtsApiModule)
+		return FALSE;
+
+	pInitWtsApi = (INIT_WTSAPI_FN) GetProcAddress(g_WtsApiModule, "InitWtsApi");
+
+	if (!pInitWtsApi)
+	{
+		return FALSE;
+	}
+	g_WtsApi = pInitWtsApi();
+	return TRUE;
+}
+
 void InitializeWtsApiStubs_Env()
 {
 	DWORD nSize;
 	char* env = NULL;
-	INIT_WTSAPI_FN pInitWtsApi;
 
 	if (g_WtsApi)
 		return;
 
 	nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0);
 
-	if (nSize)
+	if (!nSize)
 	{
-		env = (LPSTR) malloc(nSize);
-		nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", env, nSize);
-	}
-
-	if (env)
-		g_WtsApiModule = LoadLibraryA(env);
-
-	if (!g_WtsApiModule)
 		return;
-
-	pInitWtsApi = (INIT_WTSAPI_FN) GetProcAddress(g_WtsApiModule, "InitWtsApi");
-
-	if (pInitWtsApi)
-	{
-		g_WtsApi = pInitWtsApi();
 	}
+
+	env = (LPSTR) malloc(nSize);
+	nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", env, nSize);
+	if (env)
+		LoadAndInitialize(env);
 }
 
 void InitializeWtsApiStubs_FreeRDS()
@@ -459,19 +467,7 @@ void InitializeWtsApiStubs_FreeRDS()
 		
 		if (wtsapi_library)
 		{
-			INIT_WTSAPI_FN pInitWtsApi;
-			
-			g_WtsApiModule = LoadLibraryA(wtsapi_library);
-			
-			if (g_WtsApiModule)
-			{
-				pInitWtsApi = (INIT_WTSAPI_FN) GetProcAddress(g_WtsApiModule, "InitWtsApi");
-
-				if (pInitWtsApi)
-				{
-					g_WtsApi = pInitWtsApi();
-				}	
-			}
+			LoadAndInitialize(wtsapi_library);
 		}
 		
 		free(prefix_libdir);
@@ -492,4 +488,6 @@ void InitializeWtsApiStubs(void)
 	
 	if (!g_WtsApi)
 		InitializeWtsApiStubs_FreeRDS();
+
+	return;
 }
