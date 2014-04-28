@@ -32,7 +32,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SO
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE winpr
-	MODULES winpr-nt winpr-io winpr-synch winpr-file winpr-error winpr-library winpr-environment)
+	MODULES winpr-nt winpr-io winpr-synch winpr-file winpr-error winpr-library winpr-environment winpr-utils)
 
 if(MONOLITHIC_BUILD)
 	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
