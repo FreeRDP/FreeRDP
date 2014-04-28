@@ -371,20 +371,12 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 BOOL rdp_client_reconnect(rdpRdp* rdp)
 {
-	UINT32 i;
-
 	transport_disconnect(rdp->transport);
 
 	mcs_free(rdp->mcs);
 	nego_free(rdp->nego);
 	license_free(rdp->license);
 	transport_free(rdp->transport);
-
-	/* Reset virtual channel status */
-	for (i = 0; i < rdp->mcs->channelCount; i++)
-	{
-		rdp->mcs->channels[i].joined = FALSE;
-	}
 
 	rdp->transport = transport_new(rdp->settings);
 	rdp->license = license_new(rdp);
