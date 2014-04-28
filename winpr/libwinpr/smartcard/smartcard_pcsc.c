@@ -486,7 +486,7 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 
 	sprintf_s(nameWinSCard, size, "%.*s %d", length, p, index);
 
-	printf("Smart Card Reader Name Alias: %s -> %s\n", p, nameWinSCard);
+	//printf("Smart Card Reader Name Alias: %s -> %s\n", p, nameWinSCard);
 
 	return nameWinSCard;
 }

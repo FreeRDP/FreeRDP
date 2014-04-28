@@ -1010,7 +1010,7 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	WLog_Print(smartcard->log, WLOG_DEBUG, "%s (0x%08X) FileId: %d CompletionId: %d",
 			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 
-#if 1
+#if 0
 	printf("%s (0x%08X) FileId: %d CompletionId: %d\n",
 		smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 #endif
