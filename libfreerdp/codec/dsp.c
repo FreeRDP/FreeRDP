@@ -652,8 +652,9 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(void)
 {
 	FREERDP_DSP_CONTEXT* context;
 
-	context = (FREERDP_DSP_CONTEXT*) malloc(sizeof(FREERDP_DSP_CONTEXT));
-	ZeroMemory(context, sizeof(FREERDP_DSP_CONTEXT));
+	context = (FREERDP_DSP_CONTEXT*) calloc(1, sizeof(FREERDP_DSP_CONTEXT));
+	if (!context)
+		return NULL;
 
 	context->resample = freerdp_dsp_resample;
 	context->decode_ima_adpcm = freerdp_dsp_decode_ima_adpcm;
