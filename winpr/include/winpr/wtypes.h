@@ -41,6 +41,14 @@
 #define WINAPI
 #define CDECL
 
+#ifndef FAR
+#define FAR
+#endif
+
+#ifndef NEAR
+#define NEAR
+#endif
+
 #define __int8	char
 #define __int16 short
 #define __int32 int
@@ -64,7 +72,7 @@ typedef int BOOL;
 
 typedef BOOL *PBOOL, *LPBOOL;
 
-#ifdef __APPLE__
+#if defined(__LP64__) || defined(__APPLE__)
 typedef int LONG;
 typedef unsigned int DWORD;
 typedef unsigned int ULONG;
@@ -106,6 +114,8 @@ typedef HANDLE HWND;
 typedef HANDLE HBITMAP;
 typedef HANDLE HICON;
 typedef HANDLE HCURSOR;
+typedef HANDLE HBRUSH;
+typedef HANDLE HMENU;
 
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
@@ -147,7 +157,7 @@ typedef ULONG *PULONG;
 typedef ULONG HRESULT;
 typedef ULONG SCODE;
 
-typedef ULONG_PTR DWORD_PTR;
+typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef ULONG_PTR SIZE_T;
 typedef unsigned int ULONG32;
 typedef unsigned __int64 ULONG64;

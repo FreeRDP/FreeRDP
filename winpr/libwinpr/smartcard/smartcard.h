@@ -26,7 +26,7 @@
 	if (!g_Initialized) \
 		InitializeSCardApiStubs(); \
 	if (!g_SCardApi || !g_SCardApi->pfn ## _name) \
-		return 0; \
+		return SCARD_E_NO_SERVICE; \
 	return g_SCardApi->pfn ## _name ( __VA_ARGS__ )
 
 #define SCARDAPI_STUB_CALL_HANDLE(_name, ...) \
