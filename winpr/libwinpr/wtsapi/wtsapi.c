@@ -436,6 +436,7 @@ void InitializeWtsApiStubs_Env()
 		LoadAndInitialize(env);
 }
 
+#define FREERDS_LIBRARY_NAME "libfreerds-fdsapi.so"
 void InitializeWtsApiStubs_FreeRDS()
 {
 	char* prefix;
@@ -449,7 +450,10 @@ void InitializeWtsApiStubs_FreeRDS()
 
 	if (IniFile_Parse(ini, "/var/run/freerds.instance") < 0)
 	{
+		IniFile_Free(ini);
 		fprintf(stderr, "failed to parse freerds.instance\n");
+		LoadAndInitialize(FREERDS_LIBRARY_NAME);
+		return;
 	}
 	
 	prefix = IniFile_GetKeyValueString(ini, "FreeRDS", "prefix");
@@ -463,7 +467,7 @@ void InitializeWtsApiStubs_FreeRDS()
 		char* wtsapi_library;
 		
 		prefix_libdir = GetCombinedPath(prefix, libdir);
-		wtsapi_library = GetCombinedPath(prefix_libdir, "libfreerds-fdsapi.so");
+		wtsapi_library = GetCombinedPath(prefix_libdir, FREERDS_LIBRARY_NAME);
 		
 		if (wtsapi_library)
 		{
