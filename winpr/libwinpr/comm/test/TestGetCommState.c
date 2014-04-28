@@ -22,14 +22,60 @@
 #include <winpr/comm.h>
 #include <winpr/crt.h>
 
-int TestGetCommState(int argc, char* argv[])
+#include "../comm.h"
+
+static BOOL test_generic(HANDLE hComm)
 {
 	DCB dcb, *pDcb;
+	BOOL result;
+
+	ZeroMemory(&dcb, sizeof(dcb));
+	result = GetCommState(hComm, &dcb);
+	if (result)
+	{
+		printf("GetCommState failure, should have returned false because dcb.DCBlength has been let uninitialized\n");
+		return FALSE;
+	}
+
+
+	ZeroMemory(&dcb, sizeof(dcb));
+	dcb.DCBlength = sizeof(DCB) / 2; /* improper value */
+	result = GetCommState(hComm, &dcb);
+	if (result)
+	{
+		printf("GetCommState failure, should have return false because dcb.DCBlength was not correctly initialized\n");
+		return FALSE;
+	}
+
+	ZeroMemory(&dcb, sizeof(dcb));
+	dcb.DCBlength = sizeof(DCB);
+	result = GetCommState(hComm, &dcb);
+	if (!result)
+	{
+		printf("GetCommState failure: Ox%x, with adjusted DCBlength\n", GetLastError());
+		return FALSE;
+	}
+	
+	pDcb = (DCB*)calloc(1, sizeof(DCB) * 2);
+	pDcb->DCBlength = sizeof(DCB) * 2;
+	result = GetCommState(hComm, pDcb);
+	result = result && (pDcb->DCBlength == sizeof(DCB) * 2);
+	free(pDcb);
+	if (!result)
+	{
+		printf("GetCommState failure: 0x%x, with bigger DCBlength\n", GetLastError());
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+int TestGetCommState(int argc, char* argv[])
+{
 	BOOL result;
 	HANDLE hComm;
 
 	// TMP: FIXME: check if we can proceed with tests on the actual device, skip and warn otherwise but don't fail
-
 	result = DefineCommDevice("COM1", "/dev/ttyS0");
 	if (!result)
 	{
@@ -46,41 +92,30 @@ int TestGetCommState(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	result = GetCommState(hComm, &dcb);
-	if (result)
+	if (!test_generic(hComm))
 	{
-		printf("GetCommState failure, should have returned false because dcb.DCBlength has been let uninitialized\n");
+		printf("test_generic failure (RemoteSerialDriverUnknown)\n");
 		return EXIT_FAILURE;
 	}
 
-
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(DCB) / 2; /* improper value */
-	result = GetCommState(hComm, &dcb);
-	if (result)
+	_comm_setRemoteSerialDriver(hComm, RemoteSerialDriverSerialSys);
+	if (!test_generic(hComm))
 	{
-		printf("GetCommState failure, should have return false because dcb.DCBlength was not correctly initialized\n");
+		printf("test_generic failure (RemoteSerialDriverSerialSys)\n");
 		return EXIT_FAILURE;
 	}
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(DCB);
-	result = GetCommState(hComm, &dcb);
-	if (!result)
+	_comm_setRemoteSerialDriver(hComm, RemoteSerialDriverSerCxSys);
+	if (!test_generic(hComm))
 	{
-		printf("GetCommState failure: Ox%x, with adjusted DCBlength\n", GetLastError());
+		printf("test_generic failure (RemoteSerialDriverSerCxSys)\n");
 		return EXIT_FAILURE;
 	}
-	
-	pDcb = (DCB*)calloc(1, sizeof(DCB) * 2);
-	pDcb->DCBlength = sizeof(DCB) * 2;
-	result = GetCommState(hComm, pDcb);
-	result = result && (pDcb->DCBlength == sizeof(DCB) * 2);
-	free(pDcb);
-	if (!result)
+
+	_comm_setRemoteSerialDriver(hComm, RemoteSerialDriverSerCx2Sys);
+	if (!test_generic(hComm))
 	{
-		printf("GetCommState failure: 0x%x, with bigger DCBlength\n", GetLastError());
+		printf("test_generic failure (RemoteSerialDriverSerCx2Sys)\n");
 		return EXIT_FAILURE;
 	}
 

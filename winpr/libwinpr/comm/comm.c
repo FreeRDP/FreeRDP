@@ -676,6 +676,26 @@ BOOL IsCommDevice(LPCTSTR lpDeviceName)
 
 
 /**
+ * Sets 
+ */
+void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID driverId)
+{
+	ULONG Type;
+	PVOID Object;
+	WINPR_COMM* pComm;
+
+	if (!winpr_Handle_GetInfo(hComm, &Type, &Object))
+	{
+		DEBUG_WARN("_comm_setRemoteSerialDriver failure");
+		return;
+	}
+
+	pComm = (WINPR_COMM*)Object;
+	pComm->remoteSerialDriverId = driverId;
+}
+
+
+/**
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363198%28v=vs.85%29.aspx
  *
  * @param lpDeviceName e.g. COM1, \\.\COM1, ...

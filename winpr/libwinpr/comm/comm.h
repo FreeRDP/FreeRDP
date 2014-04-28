@@ -36,7 +36,7 @@ typedef enum _REMOTE_SERIAL_DRIVER_ID
 	RemoteSerialDriverUnknown = 0,
 	RemoteSerialDriverSerialSys,
 	RemoteSerialDriverSerCxSys,
-	RemoteSerialDriverSerCx2Sys /* default fallback */
+	RemoteSerialDriverSerCx2Sys /* default fallback, see also CommDeviceIoControl() */
 } REMOTE_SERIAL_DRIVER_ID;
 
 struct winpr_comm
@@ -48,7 +48,10 @@ struct winpr_comm
 
 	/* NB: CloseHandle() has to free resources */
 };
+
 typedef struct winpr_comm WINPR_COMM;
+
+void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID);
 
 
 #endif /* _WIN32 */
