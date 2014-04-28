@@ -807,13 +807,13 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersA(SCARDCONTEXT hContext,
 {
 	LONG status = SCARD_S_SUCCESS;
 
+	if (!g_PCSC.pfnSCardListReaders)
+		return SCARD_E_NO_SERVICE;
+
 	if (!PCSC_LockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
 
-	if (g_PCSC.pfnSCardListReaders)
-	{
-		status = PCSC_SCardListReaders_Internal(hContext, mszGroups, mszReaders, pcchReaders);
-	}
+	status = PCSC_SCardListReaders_Internal(hContext, mszGroups, mszReaders, pcchReaders);
 
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
@@ -824,34 +824,33 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersA(SCARDCONTEXT hContext,
 WINSCARDAPI LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext,
 		LPCWSTR mszGroups, LPWSTR mszReaders, LPDWORD pcchReaders)
 {
+	LPSTR mszGroupsA = NULL;
+	LPSTR mszReadersA = NULL;
+	LPSTR* pMszReadersA = &mszReadersA;
 	LONG status = SCARD_S_SUCCESS;
+
+	if (!g_PCSC.pfnSCardListReaders)
+		return SCARD_E_NO_SERVICE;
 
 	if (!PCSC_LockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
 
-	if (g_PCSC.pfnSCardListReaders)
+	mszGroups = NULL; /* mszGroups is not supported by pcsc-lite */
+
+	if (mszGroups)
+		ConvertFromUnicode(CP_UTF8, 0, mszGroups, -1, (char**) &mszGroupsA, 0, NULL, NULL);
+
+	status = PCSC_SCardListReaders_Internal(hContext, mszGroupsA, (LPTSTR) &mszReadersA, pcchReaders);
+
+	if (status == SCARD_S_SUCCESS)
 	{
-		LPSTR mszGroupsA = NULL;
-		LPSTR mszReadersA = NULL;
-		LPSTR* pMszReadersA = &mszReadersA;
+		*pcchReaders = ConvertToUnicode(CP_UTF8, 0, *pMszReadersA, *pcchReaders, (WCHAR**) mszReaders, 0);
+		PCSC_AddMemoryBlock(hContext, mszReaders);
 
-		mszGroups = NULL; /* mszGroups is not supported by pcsc-lite */
-
-		if (mszGroups)
-			ConvertFromUnicode(CP_UTF8, 0, mszGroups, -1, (char**) &mszGroupsA, 0, NULL, NULL);
-
-		status = PCSC_SCardListReaders_Internal(hContext, mszGroupsA, (LPTSTR) &mszReadersA, pcchReaders);
-
-		if (status == SCARD_S_SUCCESS)
-		{
-			*pcchReaders = ConvertToUnicode(CP_UTF8, 0, *pMszReadersA, *pcchReaders, (WCHAR**) mszReaders, 0);
-			PCSC_AddMemoryBlock(hContext, mszReaders);
-
-			PCSC_SCardFreeMemory_Internal(hContext, *pMszReadersA);
-		}
-
-		free(mszGroupsA);
+		PCSC_SCardFreeMemory_Internal(hContext, *pMszReadersA);
 	}
+
+	free(mszGroupsA);
 
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
@@ -2191,7 +2190,7 @@ int PCSC_InitializeSCardApi(void)
 	if (!g_PCSCModule)
 		g_PCSCModule = LoadLibraryA("libpcsclite.so");
 #endif
-	
+
 	if (!g_PCSCModule)
 		return -1;
 
