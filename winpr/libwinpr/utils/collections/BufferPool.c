@@ -277,6 +277,9 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 	return buffer;
 
 out_error:
+	if (buffer)
+		free(buffer);
+
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
 	return NULL;

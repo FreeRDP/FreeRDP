@@ -38,10 +38,9 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
 
-#include <winpr/stream.h>
-#include <freerdp/utils/list.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
 
@@ -90,7 +89,7 @@ struct _TSMF_PRESENTATION
 	HANDLE mutex;
 	HANDLE thread;
 
-	LIST* stream_list;
+	wArrayList* stream_list;
 };
 
 struct _TSMF_STREAM
@@ -142,7 +141,7 @@ struct _TSMF_SAMPLE
 	UINT64 ack_time;
 };
 
-static LIST* presentation_list = NULL;
+static wArrayList* presentation_list = NULL;
 static UINT64 last_played_audio_time = 0;
 static HANDLE tsmf_mutex = NULL;
 static int TERMINATING = 0;
@@ -157,8 +156,9 @@ static UINT64 get_current_time(void)
 
 static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 {
+	UINT32 index;
+	UINT32 count;
 	TSMF_STREAM* s;
-	LIST_ITEM* item;
 	TSMF_SAMPLE* sample;
 	BOOL pending = FALSE;
 	TSMF_PRESENTATION* presentation = stream->presentation;
@@ -177,11 +177,13 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 					/* Check if some other stream has earlier sample that needs to be played first */
 					if (stream->last_end_time > AUDIO_TOLERANCE)
 					{
-						WaitForSingleObject(presentation->mutex, INFINITE);
+						ArrayList_Lock(presentation->stream_list);
 
-						for (item = presentation->stream_list->head; item; item = item->next)
+						count = ArrayList_Count(presentation->stream_list);
+
+						for (index = 0; index < count; index++)
 						{
-							s = (TSMF_STREAM*) item->data;
+							s = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
 
 							if (s != stream && !s->eos && s->last_end_time &&
 								s->last_end_time < stream->last_end_time - AUDIO_TOLERANCE)
@@ -191,7 +193,7 @@ static TSMF_SAMPLE* tsmf_stream_pop_sample(TSMF_STREAM* stream, int sync)
 							}
 						}
 
-						ReleaseMutex(presentation->mutex);
+						ArrayList_Unlock(presentation->stream_list);
 					}
 				}
 				else
@@ -279,35 +281,48 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCal
 		return NULL;
 	}
 
-	presentation = (TSMF_PRESENTATION*) malloc(sizeof(TSMF_PRESENTATION));
-	ZeroMemory(presentation, sizeof(TSMF_PRESENTATION));
+	presentation = (TSMF_PRESENTATION*) calloc(1, sizeof(TSMF_PRESENTATION));
 
-	memcpy(presentation->presentation_id, guid, GUID_SIZE);
+	CopyMemory(presentation->presentation_id, guid, GUID_SIZE);
 	presentation->channel_callback = pChannelCallback;
 
 	presentation->volume = 5000; /* 50% */
 	presentation->muted = 0;
 
 	presentation->mutex = CreateMutex(NULL, FALSE, NULL);
-	presentation->stream_list = list_new();
+	presentation->stream_list = ArrayList_New(TRUE);
+	ArrayList_Object(presentation->stream_list)->fnObjectFree = (OBJECT_FREE_FN) tsmf_stream_free;
 
-	list_enqueue(presentation_list, presentation);
+	ArrayList_Add(presentation_list, presentation);
 
 	return presentation;
 }
 
 TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE* guid)
 {
-	LIST_ITEM* item;
+	UINT32 index;
+	UINT32 count;
+	BOOL found = FALSE;
 	TSMF_PRESENTATION* presentation;
 
-	for (item = presentation_list->head; item; item = item->next)
+	ArrayList_Lock(presentation_list);
+
+	count = ArrayList_Count(presentation_list);
+
+	for (index = 0; index < count; index++)
 	{
-		presentation = (TSMF_PRESENTATION*) item->data;
+		presentation = (TSMF_PRESENTATION*) ArrayList_GetItem(presentation_list, index);
+
 		if (memcmp(presentation->presentation_id, guid, GUID_SIZE) == 0)
-			return presentation;
+		{
+			found = TRUE;
+			break;
+		}
 	}
-	return NULL;
+
+	ArrayList_Unlock(presentation_list);
+
+	return (found) ? presentation : NULL;
 }
 
 static void tsmf_presentation_restore_last_video_frame(TSMF_PRESENTATION* presentation)
@@ -789,68 +804,102 @@ static void tsmf_stream_change_volume(TSMF_STREAM* stream, UINT32 newVolume, UIN
 
 void tsmf_presentation_volume_changed(TSMF_PRESENTATION* presentation, UINT32 newVolume, UINT32 muted)
 {
-	LIST_ITEM* item;
+	UINT32 index;
+	UINT32 count;
 	TSMF_STREAM* stream;
 
 	presentation->volume = newVolume;
 	presentation->muted = muted;
 
-	for (item = presentation->stream_list->head; item; item = item->next)
+	ArrayList_Lock(presentation->stream_list);
+
+	count = ArrayList_Count(presentation->stream_list);
+
+	for (index = 0; index < count; index++)
 	{
-		stream = (TSMF_STREAM*) item->data;
+		stream = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
 		tsmf_stream_change_volume(stream, newVolume, muted);
 	}
 
+	ArrayList_Unlock(presentation->stream_list);
 }
 
 void tsmf_presentation_paused(TSMF_PRESENTATION* presentation)
 {
-	LIST_ITEM* item;
+	UINT32 index;
+	UINT32 count;
 	TSMF_STREAM* stream;
 
-	for (item = presentation->stream_list->head; item; item = item->next)
+	ArrayList_Lock(presentation->stream_list);
+
+	count = ArrayList_Count(presentation->stream_list);
+
+	for (index = 0; index < count; index++)
 	{
-		stream = (TSMF_STREAM*) item->data;
+		stream = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
 		tsmf_stream_pause(stream);
 	}
+
+	ArrayList_Unlock(presentation->stream_list);
 }
 
 void tsmf_presentation_restarted(TSMF_PRESENTATION* presentation)
 {
-	LIST_ITEM* item;
+	UINT32 index;
+	UINT32 count;
 	TSMF_STREAM* stream;
 
-	for (item = presentation->stream_list->head; item; item = item->next)
+	ArrayList_Lock(presentation->stream_list);
+
+	count = ArrayList_Count(presentation->stream_list);
+
+	for (index = 0; index < count; index++)
 	{
-		stream = (TSMF_STREAM*) item->data;
+		stream = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
 		tsmf_stream_restart(stream);
 	}
+
+	ArrayList_Unlock(presentation->stream_list);
 }
 
 void tsmf_presentation_start(TSMF_PRESENTATION* presentation)
 {
-	LIST_ITEM* item;
+	UINT32 index;
+	UINT32 count;
 	TSMF_STREAM* stream;
 
-	for (item = presentation->stream_list->head; item; item = item->next)
+	ArrayList_Lock(presentation->stream_list);
+
+	count = ArrayList_Count(presentation->stream_list);
+
+	for (index = 0; index < count; index++)
 	{
-		stream = (TSMF_STREAM*) item->data;
+		stream = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
 		tsmf_stream_start(stream);
 	}
+
+	ArrayList_Unlock(presentation->stream_list);
 }
 
 void tsmf_presentation_stop(TSMF_PRESENTATION* presentation)
 {
-	LIST_ITEM* item;
+	UINT32 index;
+	UINT32 count;
 	TSMF_STREAM* stream;
 
 	tsmf_presentation_flush(presentation);
 
-	for (item = presentation->stream_list->head; item; item = item->next)
+	ArrayList_Lock(presentation->stream_list);
+
+	count = ArrayList_Count(presentation->stream_list);
+
+	for (index = 0; index < count; index++)
 	{
-		stream = (TSMF_STREAM*) item->data;
+		stream = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
 		tsmf_stream_stop(stream);
 	}
+
+	ArrayList_Unlock(presentation->stream_list);
 
 	tsmf_presentation_restore_last_video_frame(presentation);
 
@@ -914,14 +963,21 @@ static void tsmf_stream_flush(TSMF_STREAM* stream)
 
 void tsmf_presentation_flush(TSMF_PRESENTATION* presentation)
 {
-	LIST_ITEM* item;
+	UINT32 index;
+	UINT32 count;
 	TSMF_STREAM * stream;
 
-	for (item = presentation->stream_list->head; item; item = item->next)
+	ArrayList_Lock(presentation->stream_list);
+
+	count = ArrayList_Count(presentation->stream_list);
+
+	for (index = 0; index < count; index++)
 	{
-		stream = (TSMF_STREAM*) item->data;
+		stream = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
 		tsmf_stream_flush(stream);
 	}
+
+	ArrayList_Unlock(presentation->stream_list);
 
 	presentation->eos = 0;
 	presentation->audio_start_time = 0;
@@ -930,19 +986,10 @@ void tsmf_presentation_flush(TSMF_PRESENTATION* presentation)
 
 void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 {
-	TSMF_STREAM* stream;
-
 	tsmf_presentation_stop(presentation);
-	WaitForSingleObject(presentation->mutex, INFINITE);
-	list_remove(presentation_list, presentation);
-	ReleaseMutex(presentation->mutex);
 
-	while (list_size(presentation->stream_list) > 0)
-	{
-		stream = (TSMF_STREAM*) list_dequeue(presentation->stream_list);
-		tsmf_stream_free(stream);
-	}
-	list_free(presentation->stream_list);
+	ArrayList_Remove(presentation_list, presentation);
+	ArrayList_Free(presentation->stream_list);
 
 	CloseHandle(presentation->mutex);
 
@@ -978,27 +1025,36 @@ TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 	stream->sample_ack_list = Queue_New(TRUE, -1, -1);
 	stream->sample_ack_list->object.fnObjectFree = free;
 
-	WaitForSingleObject(presentation->mutex, INFINITE);
-	list_enqueue(presentation->stream_list, stream);
-	ReleaseMutex(presentation->mutex);
+	ArrayList_Add(presentation->stream_list, stream);
 
 	return stream;
 }
 
 TSMF_STREAM* tsmf_stream_find_by_id(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 {
-	LIST_ITEM* item;
+	UINT32 index;
+	UINT32 count;
+	BOOL found = FALSE;
 	TSMF_STREAM* stream;
 
-	for (item = presentation->stream_list->head; item; item = item->next)
+	ArrayList_Lock(presentation->stream_list);
+
+	count = ArrayList_Count(presentation->stream_list);
+
+	for (index = 0; index < count; index++)
 	{
-		stream = (TSMF_STREAM*) item->data;
+		stream = (TSMF_STREAM*) ArrayList_GetItem(presentation->stream_list, index);
 
 		if (stream->stream_id == stream_id)
-			return stream;
+		{
+			found = TRUE;
+			break;
+		}
 	}
 
-	return NULL;
+	ArrayList_Unlock(presentation->stream_list);
+
+	return (found) ? stream : NULL;
 }
 
 void tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, wStream* s)
@@ -1054,9 +1110,7 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 	tsmf_stream_stop(stream);
 	tsmf_stream_flush(stream);
 
-	WaitForSingleObject(presentation->mutex, INFINITE);
-	list_remove(presentation->stream_list, stream);
-	ReleaseMutex(presentation->mutex);
+	ArrayList_Remove(presentation->stream_list, stream);
 
 	Queue_Free(stream->sample_list);
 	Queue_Free(stream->sample_ack_list);
@@ -1089,8 +1143,7 @@ void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 	
 	ReleaseMutex(tsmf_mutex);
 
-	sample = (TSMF_SAMPLE*) malloc(sizeof(TSMF_SAMPLE));
-	ZeroMemory(sample, sizeof(TSMF_SAMPLE));
+	sample = (TSMF_SAMPLE*) calloc(1, sizeof(TSMF_SAMPLE));
 
 	sample->sample_id = sample_id;
 	sample->start_time = start_time;
@@ -1111,28 +1164,11 @@ void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pC
 
 static void tsmf_signal_handler(int s)
 {
-	LIST_ITEM* p_item;
-	TSMF_PRESENTATION* presentation;
-	LIST_ITEM* s_item;
-	TSMF_STREAM* _stream;
-
 	WaitForSingleObject(tsmf_mutex, INFINITE);
 	TERMINATING = 1;
 	ReleaseMutex(tsmf_mutex);
 
-	if (presentation_list)
-	{
-		for (p_item = presentation_list->head; p_item; p_item = p_item->next)
-		{
-			presentation = (TSMF_PRESENTATION*) p_item->data;
-			for (s_item = presentation->stream_list->head; s_item; s_item = s_item->next)
-			{
-				_stream = (TSMF_STREAM*) s_item->data;
-				tsmf_stream_free(_stream);
-			}
-			tsmf_presentation_free(presentation);
-		}
-	}
+	ArrayList_Free(presentation_list);
 
 	unlink("/tmp/tsmf.tid");
 
@@ -1162,7 +1198,9 @@ void tsmf_media_init(void)
 
 	tsmf_mutex = CreateMutex(NULL, FALSE, NULL);
 
-	if (presentation_list == NULL)
-		presentation_list = list_new();
+	if (!presentation_list)
+	{
+		presentation_list = ArrayList_New(TRUE);
+		ArrayList_Object(presentation_list)->fnObjectFree = (OBJECT_FREE_FN) tsmf_presentation_free;
+	}
 }
-

@@ -42,3 +42,4 @@ target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Common")
+export_complex_library(LIBNAME ${MODULE_NAME})

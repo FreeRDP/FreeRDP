@@ -17,6 +17,20 @@
 
 define_channel("urbdrc")
 
+if(NOT WIN32)
+	find_package(UDev)
+	find_package(UUID)
+	find_package(DbusGlib)
+	find_package(libusb-1.0)
+endif()
+
+if(UDEV_FOUND AND UUID_FOUND AND DBUS_GLIB_FOUND AND LIBUSB_1_FOUND)
+	set(URBDRC_DEPENDENCIES_FOUND TRUE)
+	message(STATUS "Found all URBDRC dependencies")
+endif()
+
 if(WITH_CLIENT_CHANNELS)
-	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
+	if(URBDRC_DEPENDENCIES_FOUND)
+		add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
+	endif()
 endif()

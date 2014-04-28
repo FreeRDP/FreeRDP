@@ -21,7 +21,6 @@ set(MODULE_PREFIX "FREERDP_UTILS")
 set(${MODULE_PREFIX}_SRCS
 	event.c
 	bitmap.c
-	list.c
 	passphrase.c
 	pcap.c
 	profiler.c
@@ -39,7 +38,8 @@ endif()
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS})
+	SOURCES ${${MODULE_PREFIX}_SRCS}
+	EXPORT)
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
 

@@ -674,6 +674,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 	if (freerdp_client_write_rdp_file_buffer(file, buffer, length + 1) != length)
 	{
 		fprintf(stderr, "freerdp_client_write_rdp_file: error writing to output buffer\n");
+		free(buffer);
 		return FALSE;
 	}
 

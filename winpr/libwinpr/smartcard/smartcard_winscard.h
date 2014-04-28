@@ -20,6 +20,8 @@
 #ifndef WINPR_SMARTCARD_WINSCARD_PRIVATE_H
 #define WINPR_SMARTCARD_WINSCARD_PRIVATE_H
 
+#ifdef _WIN32
+
 #include <winpr/smartcard.h>
 
 #define WINSCARD_LOAD_PROC(_name, ...) \
@@ -27,5 +29,7 @@
 
 int WinSCard_InitializeSCardApi(void);
 PSCardApiFunctionTable WinSCard_GetSCardApiFunctionTable(void);
+
+#endif
 
 #endif /* WINPR_SMARTCARD_WINSCARD_PRIVATE_H */

@@ -21,18 +21,46 @@
 #include "config.h"
 #endif
 
+#ifndef _WIN32
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#define DISABLE_PCSC_WINPR
+
 /**
- * PCSC-WinPR (only required for Mac OS X):
+ * PCSC-WinPR (optional for Mac OS X):
  *
  * PCSC-WinPR is a static build of libpcsclite with
  * minor modifications meant to avoid an ABI conflict.
  *
+ * At this point, it is only a work in progress, as I was not
+ * yet able to make it work properly. However, if we could make it
+ * work, we might be able to build against a version of pcsc-lite
+ * that doesn't have issues present in Apple's SmartCard Services.
+ *
+ * Patch pcsc-lite/src/PCSC/wintypes.h:
+ * Change "unsigned long" to "unsigned int" for
+ *
+ * typedef unsigned int ULONG;
+ * typedef unsigned int DWORD;
+ *
+ * This is important as ULONG and DWORD are supposed to be 32-bit,
+ * but unsigned long on 64-bit OS X is 64-bit, not 32-bit.
+ * More importantly, Apple's SmartCard Services uses unsigned int,
+ * while vanilla pcsc-lite still uses unsigned long.
+ *
+ * Patch pcsc-lite/src/PCSC/pcsclite.h.in:
+ *
  * Add the WinPR_PCSC_* definitions that follow "#define WinPR_PCSC"
- * in this file to pcsc-lite/src/PCSC/winscard.h
+ * in this source file at the beginning of the pcsclite.h.in.
+ *
+ * Change "unsigned long" to "unsigned int" in the definition
+ * of the SCARD_IO_REQUEST structure:
+ *
+ * unsigned int dwProtocol;
+ * unsigned int cbPciLength;
  *
  * Configure pcsc-lite with the following options (Mac OS X):
  * 
@@ -65,6 +93,7 @@
 
 #if 0
 #define WinPR_PCSC
+
 #define SCardEstablishContext WinPR_PCSC_SCardEstablishContext
 #define SCardReleaseContext WinPR_PCSC_SCardReleaseContext
 #define SCardIsValidContext WinPR_PCSC_SCardIsValidContext
@@ -83,7 +112,10 @@
 #define SCardCancel WinPR_PCSC_SCardCancel
 #define SCardGetAttrib WinPR_PCSC_SCardGetAttrib
 #define SCardSetAttrib WinPR_PCSC_SCardSetAttrib
-#define list_size WinPR_PCSC_list_size /* put this line in src/simclist.h */
+
+#define g_rgSCardT0Pci WinPR_PCSC_g_rgSCardT0Pci
+#define g_rgSCardT1Pci WinPR_PCSC_g_rgSCardT1Pci
+#define g_rgSCardRawPci WinPR_PCSC_g_rgSCardRawPci
 #endif
 
 #ifdef WITH_WINPR_PCSC
@@ -136,6 +168,10 @@ int PCSC_InitializeSCardApi_Link(void)
 {
 	int status = -1;
 	
+#ifdef DISABLE_PCSC_WINPR
+	return -1;
+#endif
+	
 #ifdef WITH_WINPR_PCSC
 	g_PCSC_Link.pfnSCardEstablishContext = (void*) WinPR_PCSC_SCardEstablishContext;
 	g_PCSC_Link.pfnSCardReleaseContext = (void*) WinPR_PCSC_SCardReleaseContext;
@@ -162,3 +198,5 @@ int PCSC_InitializeSCardApi_Link(void)
 	
 	return status;
 }
+
+#endif

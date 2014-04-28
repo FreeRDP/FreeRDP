@@ -121,8 +121,8 @@ if(Wno-builtin-macro-redefined)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-builtin-macro-redefined")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-builtin-macro-redefined")
 
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -D__FILE__='\"$(subst ${CMAKE_BINARY_DIR}/,,$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<)))\"'")
 endif()
 
 # Compiler-specific flags
@@ -341,7 +341,9 @@ else()
 	set(X11_FEATURE_TYPE "DISABLED")
 endif()
 
-find_package(PCSCWinPR)
+if(WITH_PCSC_WINPR)
+	find_package(PCSCWinPR)
+endif()
 
 set(X11_FEATURE_PURPOSE "X11")
 set(X11_FEATURE_DESCRIPTION "X11 client and server")
@@ -612,3 +614,30 @@ endif()
 #message("VENDOR: ${VENDOR} CLIENT_VENDOR_PATH: ${CLIENT_VENDOR_PATH} CMAKE_CPACK_INCLUDE_FILE: ${CMAKE_CPACK_INCLUDE_FILE}")
 
 include(${CMAKE_CPACK_INCLUDE_FILE})
+
+if(MONOLITHIC_BUILD)
+	set(FREERDP_PC_LIBS "-lfreerdp -lfreerdp-client")
+	set(WINPR_PC_LIBS "-lwinpr")
+	if (WITH_SERVER)
+		set(FREERDP_PC_LIBS "${FREERDP_PC_LIBS} -lfreerdp-server")
+	endif()
+else(MONOLITHIC_BUILD)
+	# freerdp exports
+	get_property(MEXPORTS GLOBAL PROPERTY "freerdp_EXPORTS")
+	foreach(EXPORT_MODULE ${MEXPORTS})
+			list(APPEND FREERDP_PC_LIBS "-lfreerdp-${EXPORT_MODULE}")
+	endforeach()
+	string(REPLACE ";" " " FREERDP_PC_LIBS "${FREERDP_PC_LIBS}")
+
+	# winpr exports
+	get_property(MEXPORTS GLOBAL PROPERTY "winpr_EXPORTS")
+	foreach(EXPORT_MODULE ${MEXPORTS})
+			list(APPEND WINPR_PC_LIBS "-lwinpr-${EXPORT_MODULE}")
+	endforeach()
+	string(REPLACE ";" " " WINPR_PC_LIBS "${WINPR_PC_LIBS}")
+endif(MONOLITHIC_BUILD)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)

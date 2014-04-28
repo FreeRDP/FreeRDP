@@ -227,6 +227,12 @@
 #define SCARD_NEGOTIABLE		5
 #define SCARD_SPECIFIC			6
 
+#if defined(__APPLE__) | defined(sun)
+#pragma pack(1)
+#else
+#pragma pack(push, 1)
+#endif
+
 typedef struct _SCARD_IO_REQUEST
 {
 	DWORD dwProtocol;
@@ -550,6 +556,12 @@ typedef struct
 	LPOCNDSCPROC lpfnDisconnect;
 	SCARDHANDLE hCardHandle;
 } OPENCARDNAMEW, *POPENCARDNAMEW, *LPOPENCARDNAMEW;
+
+#if defined(__APPLE__) | defined(sun)
+#pragma pack()
+#else
+#pragma pack(pop)
+#endif
 
 #ifdef UNICODE
 #define LPOCNCONNPROC			LPOCNCONNPROCW

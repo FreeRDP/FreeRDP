@@ -41,6 +41,14 @@
 #define WINAPI
 #define CDECL
 
+#ifndef FAR
+#define FAR
+#endif
+
+#ifndef NEAR
+#define NEAR
+#endif
+
 #define __int8	char
 #define __int16 short
 #define __int32 int
@@ -64,12 +72,22 @@ typedef int BOOL;
 
 typedef BOOL *PBOOL, *LPBOOL;
 
+#if defined(__LP64__) || defined(__APPLE__)
+typedef int LONG;
+typedef unsigned int DWORD;
+typedef unsigned int ULONG;
+#else
+typedef long LONG;
+typedef unsigned long DWORD;
+typedef unsigned long ULONG;
+#endif
+
 typedef unsigned char BYTE, *PBYTE, *LPBYTE;
 typedef BYTE BOOLEAN, *PBOOLEAN;
 typedef unsigned short WCHAR, *PWCHAR;
 typedef WCHAR* BSTR;
 typedef char CHAR, *PCHAR;
-typedef unsigned long DWORD, *PDWORD, *LPDWORD;
+typedef DWORD *PDWORD, *LPDWORD;
 typedef unsigned int DWORD32;
 typedef unsigned __int64 DWORD64;
 typedef unsigned __int64 ULONGLONG;
@@ -96,6 +114,8 @@ typedef HANDLE HWND;
 typedef HANDLE HBITMAP;
 typedef HANDLE HICON;
 typedef HANDLE HCURSOR;
+typedef HANDLE HBRUSH;
+typedef HANDLE HMENU;
 
 typedef DWORD HCALL;
 typedef int INT, *LPINT;
@@ -107,7 +127,7 @@ typedef signed __int64 INT64;
 #endif
 typedef const WCHAR* LMCSTR;
 typedef WCHAR* LMSTR;
-typedef long LONG, *PLONG, *LPLONG;
+typedef LONG *PLONG, *LPLONG;
 typedef signed __int64 LONGLONG;
 
 typedef __int3264 LONG_PTR, *PLONG_PTR;
@@ -132,12 +152,12 @@ typedef unsigned char UINT8;
 typedef unsigned short UINT16;
 typedef unsigned int UINT32;
 typedef unsigned __int64 UINT64;
-typedef unsigned long ULONG, *PULONG;
+typedef ULONG *PULONG;
 
 typedef ULONG HRESULT;
 typedef ULONG SCODE;
 
-typedef ULONG_PTR DWORD_PTR;
+typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 typedef ULONG_PTR SIZE_T;
 typedef unsigned int ULONG32;
 typedef unsigned __int64 ULONG64;

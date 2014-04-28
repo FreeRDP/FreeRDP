@@ -35,4 +35,8 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(dbus-glib  DEFAULT_MSG
                                   DBUS_GLIB_LIBRARY DBUS_GLIB_INCLUDE_DIR)
 
-mark_as_advanced(DBUS_GLIB_INCLUDE_DIR DBUS_GLIB_LIBRARY )
+if(DBUS_GLIB_LIBRARIES AND DBUS_GLIB_INCLUDE_DIRS)
+          set(DBUS_GLIB_FOUND TRUE)
+endif()
+                                  
+mark_as_advanced(DBUS_GLIB_INCLUDE_DIR DBUS_GLIB_LIBRARY)
