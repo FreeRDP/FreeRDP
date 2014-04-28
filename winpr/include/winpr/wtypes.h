@@ -72,7 +72,7 @@ typedef int BOOL;
 
 typedef BOOL *PBOOL, *LPBOOL;
 
-#ifdef __APPLE__
+#if defined(__LP64__) || defined(__APPLE__)
 typedef int LONG;
 typedef unsigned int DWORD;
 typedef unsigned int ULONG;
