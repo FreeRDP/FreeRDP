@@ -16,3 +16,4 @@
 # limitations under the License.
 
 winpr_module_add(credentials.c)
+
