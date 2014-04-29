@@ -810,6 +810,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 				(file->ScreenModeId == 1) ? TRUE : FALSE);
 	}
 
+	if (~((size_t) file->SmartSizing))
+	{
+		freerdp_set_param_bool(settings, FreeRDP_SmartSizing,
+				(file->SmartSizing == 1) ? TRUE : FALSE);
+	}
+
 	if (~((size_t) file->LoadBalanceInfo))
 	{
 		settings->LoadBalanceInfo = (BYTE*) _strdup(file->LoadBalanceInfo);
