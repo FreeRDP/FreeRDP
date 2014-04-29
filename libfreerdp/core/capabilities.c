@@ -3486,13 +3486,15 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
-	rdp->settings->PduSource = pduSource;
-
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 	{
-		fprintf(stderr, "expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x\n", PDU_TYPE_DEMAND_ACTIVE, pduType);
+		if (pduType != PDU_TYPE_SERVER_REDIRECTION)
+			fprintf(stderr, "expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x\n", PDU_TYPE_DEMAND_ACTIVE, pduType);
+
 		return FALSE;
 	}
+
+	rdp->settings->PduSource = pduSource;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;

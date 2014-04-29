@@ -314,7 +314,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_NOREDIRECT)
 		return 0;
 
-	return rdp_client_redirect(rdp);
+	return 1;
 }
 
 int rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s)
@@ -346,12 +346,10 @@ rdpRedirection* redirection_new()
 {
 	rdpRedirection* redirection;
 
-	redirection = (rdpRedirection*) malloc(sizeof(rdpRedirection));
+	redirection = (rdpRedirection*) calloc(1, sizeof(rdpRedirection));
 
 	if (redirection)
 	{
-		ZeroMemory(redirection, sizeof(rdpRedirection));
-
 		WLog_Init();
 		redirection->log = WLog_Get("com.freerdp.core.redirection");
 
