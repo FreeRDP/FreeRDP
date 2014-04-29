@@ -43,4 +43,4 @@ install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
 add_subdirectory(cli)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
-
+export_complex_library(LIBNAME ${MODULE_NAME})

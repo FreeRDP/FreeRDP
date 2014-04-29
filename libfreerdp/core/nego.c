@@ -88,6 +88,7 @@ BOOL nego_connect(rdpNego* nego)
 		{
 			DEBUG_NEGO("No security protocol is enabled");
 			nego->state = NEGO_STATE_FAIL;
+			return FALSE;
 		}
 
 		if (!nego->NegotiateSecurityLayer)
@@ -213,12 +214,14 @@ BOOL nego_tcp_connect(rdpNego* nego)
 {
 	if (!nego->tcp_connected)
 	{
-		if (nego->GatewayEnabled && nego->GatewayBypassLocal)
+		if (nego->GatewayEnabled)
 		{
-			/* Attempt a direct connection first, and then fallback to using the gateway */
-
-			transport_set_gateway_enabled(nego->transport, FALSE);
-			nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+			if (nego->GatewayBypassLocal)
+			{
+				/* Attempt a direct connection first, and then fallback to using the gateway */
+				transport_set_gateway_enabled(nego->transport, FALSE);
+				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+			}
 
 			if (!nego->tcp_connected)
 			{
@@ -1118,12 +1121,15 @@ void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
  * @param RoutingTokenLength
  */
 
-void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength)
+BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength)
 {
 	free(nego->RoutingToken);
 	nego->RoutingTokenLength = RoutingTokenLength;
 	nego->RoutingToken = (BYTE*) malloc(nego->RoutingTokenLength);
+	if (!nego->RoutingToken)
+		return FALSE;
 	CopyMemory(nego->RoutingToken, RoutingToken, nego->RoutingTokenLength);
+	return TRUE;
 }
 
 /**
@@ -1132,12 +1138,21 @@ void nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingToke
  * @param cookie
  */
 
-void nego_set_cookie(rdpNego* nego, char* cookie)
+BOOL nego_set_cookie(rdpNego* nego, char* cookie)
 {
 	if (nego->cookie)
+	{
 		free(nego->cookie);
+		nego->cookie = 0;
+	}
+
+	if (!cookie)
+		return TRUE;
 
 	nego->cookie = _strdup(cookie);
+	if (!nego->cookie)
+		return FALSE;
+	return TRUE;
 }
 
 /**

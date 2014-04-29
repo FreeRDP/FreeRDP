@@ -578,6 +578,47 @@ BOOL wf_check_fds(freerdp* instance)
 	return TRUE;
 }
 
+static BOOL wf_auto_reconnect(freerdp* instance)
+{
+	wfContext* wfc = (wfContext *)instance->context;
+
+	UINT32 num_retries = 0;
+	UINT32 max_retries = instance->settings->AutoReconnectMaxRetries;
+
+	/* Only auto reconnect on network disconnects. */
+	if (freerdp_error_info(instance) != 0)
+		return FALSE;
+
+	/* A network disconnect was detected */
+	fprintf(stderr, "Network disconnect!\n");
+	if (!instance->settings->AutoReconnectionEnabled)
+	{
+		/* No auto-reconnect - just quit */
+		return FALSE;
+	}
+
+	/* Perform an auto-reconnect. */
+	for (;;)
+	{
+		/* Quit retrying if max retries has been exceeded */
+		if (num_retries++ >= max_retries)
+			return FALSE;
+
+		/* Attempt the next reconnect */
+		fprintf(stderr, "Attempting reconnect (%u of %u)\n", num_retries, max_retries);
+		if (freerdp_reconnect(instance))
+		{
+			return TRUE;
+		}
+
+		Sleep(5000);
+	}
+
+	fprintf(stderr, "Maximum reconnect retries exceeded\n");
+
+	return FALSE;
+}
+
 DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
 	MSG msg;
@@ -658,6 +699,9 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 
 		if (freerdp_check_fds(instance) != TRUE)
 		{
+			if (wf_auto_reconnect(instance))
+				continue;
+
 			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
 			break;
 		}

@@ -71,4 +71,4 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Common")
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
-
+export_complex_library(LIBNAME ${MODULE_NAME})

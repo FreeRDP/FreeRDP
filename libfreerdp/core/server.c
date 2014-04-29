@@ -300,7 +300,7 @@ static int wts_write_variable_uint(wStream* stream, UINT32 val)
 	}
 	else
 	{
-		cb = 3;
+		cb = 2;
 		Stream_Write_UINT32(stream, val);
 	}
 
@@ -866,7 +866,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 	WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
 	Stream_Free(s, TRUE);
 
-	return NULL;
+	return channel;
 }
 
 BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)

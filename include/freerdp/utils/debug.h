@@ -20,10 +20,6 @@
 #ifndef FREERDP_UTILS_DEBUG_H
 #define FREERDP_UTILS_DEBUG_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #define DEBUG_NULL(fmt, ...) do { } while (0)
 
 /* When building for android redirect all debug messages
@@ -59,12 +55,6 @@
 
 #define DEBUG_CLASS(_dbg_class, fmt, ...) DEBUG_PRINT("DBG_" #_dbg_class " %s (%s:%d): ", fmt, ## __VA_ARGS__)
 #define DEBUG_WARN(fmt, ...) DEBUG_PRINT("Warning %s (%s:%d): ", fmt, ## __VA_ARGS__)
-#endif
-
-#ifdef WITH_DEBUG
-#define DEBUG_MSG(fmt, ...)	DEBUG_PRINT("DBG %s (%s:%d): ", fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_MSG(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
 #endif /* FREERDP_UTILS_DEBUG_H */

@@ -473,7 +473,7 @@ static INLINE BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
 		byte = (value & 0xFF);
 		Stream_Write_UINT8(s, byte);
 	}
-	else if (value <= 0x3FFFFF)
+	else if (value <= 0x3FFFFFFF)
 	{
 		byte = (value >> 24) & 0x3F;
 		Stream_Write_UINT8(s, byte | 0xC0);

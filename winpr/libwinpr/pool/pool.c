@@ -103,6 +103,11 @@ static void* thread_pool_work_func(void* arg)
 	return NULL;
 }
 
+static void threads_close(void *thread)
+{
+	CloseHandle(thread);
+}
+
 void InitializeThreadpool(PTP_POOL pool)
 {
 	int index;
@@ -114,6 +119,7 @@ void InitializeThreadpool(PTP_POOL pool)
 		pool->Maximum = 500;
 
 		pool->Threads = ArrayList_New(TRUE);
+		pool->Threads->object.fnObjectFree = threads_close;
 
 		pool->PendingQueue = Queue_New(TRUE, -1, -1);
 		pool->WorkComplete = CountdownEvent_New(0);

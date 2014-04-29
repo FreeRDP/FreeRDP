@@ -35,11 +35,14 @@ struct rdp_bulk
 	MPPC_CONTEXT* mppcSend;
 	MPPC_CONTEXT* mppcRecv;
 	NCRUSH_CONTEXT* ncrushRecv;
+	NCRUSH_CONTEXT* ncrushSend;
 	BYTE OutputBuffer[65536];
-
 	UINT64 TotalCompressedBytes;
 	UINT64 TotalUncompressedBytes;
 };
+
+#define BULK_COMPRESSION_FLAGS_MASK	0xE0
+#define BULK_COMPRESSION_TYPE_MASK	0x0F
 
 UINT32 bulk_compression_level(rdpBulk* bulk);
 UINT32 bulk_compression_max_size(rdpBulk* bulk);

@@ -28,9 +28,8 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
-
 #include <winpr/stream.h>
-#include <freerdp/utils/list.h>
+
 #include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
 
@@ -426,8 +425,10 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 
 		ptermios = (struct termios*) calloc(1, sizeof(struct termios));
 
-		if (tcgetattr(tty->fd, ptermios) < 0)
+		if (tcgetattr(tty->fd, ptermios) < 0) {
+			free(ptermios);
 			return FALSE;
+		}
 
 		/**
 		 * If a timeout is set, do a blocking read, which times out after some time.
@@ -448,6 +449,7 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 
 		tcsetattr(tty->fd, TCSANOW, ptermios);
 		tty->timeout = timeout;
+		free(ptermios);
 	}
 
 	ZeroMemory(buffer, *Length);
