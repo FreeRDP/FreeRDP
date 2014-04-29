@@ -280,7 +280,6 @@ static BOOL audin_server_recv_data(audin_server* audin, wStream* s, UINT32 lengt
 
 static void* audin_server_thread_func(void* arg)
 {
-	void* fd;
 	wStream* s;
 	void* buffer;
 	DWORD nCount;
