@@ -1079,20 +1079,15 @@ int transport_check_fds(rdpTransport* transport)
 
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 
-		if (recv_status == 1)
-		{
-			/**
-			 * Last call to ReceiveCallback resulted in a session redirection,
-			 * which means the current rdpTransport* transport pointer has been freed.
-			 * Return 0 for success, the rest of this function is meant for non-redirected cases.
-			 */
-			return 0;
-		}
-
 		Stream_Release(received);
 
 		if (recv_status < 0)
 			return -1;
+
+		if (recv_status == 1)
+		{
+			return 1; /* session redirection */
+		}
 	}
 
 	return 0;

@@ -179,6 +179,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	}
 
 	rdp->settingsCopy = freerdp_settings_clone(settings);
+
 	if (!rdp->settingsCopy)
 		return FALSE;
 
