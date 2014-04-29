@@ -27,14 +27,40 @@
 #include "comm_sercx2_sys.h"
 
 
+/* http://msdn.microsoft.com/en-us/library/dn265347%28v=vs.85%29.aspx
+ *
+ * SerCx2 does not support special characters. SerCx2 always completes
+ * an IOCTL_SERIAL_SET_CHARS request with a STATUS_SUCCESS status
+ * code, but does not set any special characters or perform any other
+ * operation in response to this request. For an
+ * IOCTL_SERIAL_GET_CHARS request, SerCx2 sets all the character
+ * values in the SERIAL_CHARS structure to null, and completes the
+ * request with a STATUS_SUCCESS status code.
+ */
+
+static BOOL _set_serial_chars(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChars)
+{
+	return TRUE;
+}
+
+
+static BOOL _get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
+{
+	ZeroMemory(pSerialChars, sizeof(SERIAL_CHARS));
+	return TRUE;
+}
+
+
 /* specific functions only */
 static REMOTE_SERIAL_DRIVER _SerCx2Sys = 
 {	
-	.id		= RemoteSerialDriverSerCx2Sys,
-	.name		= _T("SerCx2.sys"),
-	.set_baud_rate	= NULL,
-	.get_baud_rate  = NULL,
-	.get_properties = NULL,
+	.id		  = RemoteSerialDriverSerCx2Sys,
+	.name		  = _T("SerCx2.sys"),
+	.set_baud_rate	  = NULL,
+	.get_baud_rate    = NULL,
+	.get_properties   = NULL,
+	.set_serial_chars = _set_serial_chars,
+	.get_serial_chars = _get_serial_chars,
 };
 
 
@@ -44,9 +70,9 @@ REMOTE_SERIAL_DRIVER* SerCx2Sys_s()
 	//REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
 	REMOTE_SERIAL_DRIVER* pSerCxSys = SerCxSys_s();
 
-	_SerCx2Sys.set_baud_rate = pSerCxSys->set_baud_rate;
-	_SerCx2Sys.get_baud_rate = pSerCxSys->get_baud_rate;
-	_SerCx2Sys.get_properties = pSerCxSys->get_properties;
+	_SerCx2Sys.set_baud_rate    = pSerCxSys->set_baud_rate;
+	_SerCx2Sys.get_baud_rate    = pSerCxSys->get_baud_rate;
+	_SerCx2Sys.get_properties   = pSerCxSys->get_properties;
 
 	return &_SerCx2Sys;
 }

@@ -29,7 +29,7 @@ static BOOL test_generic(HANDLE hComm)
 	DCB dcb, *pDcb;
 	BOOL result;
 
-	ZeroMemory(&dcb, sizeof(dcb));
+	ZeroMemory(&dcb, sizeof(DCB));
 	result = GetCommState(hComm, &dcb);
 	if (result)
 	{
@@ -38,7 +38,7 @@ static BOOL test_generic(HANDLE hComm)
 	}
 
 
-	ZeroMemory(&dcb, sizeof(dcb));
+	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB) / 2; /* improper value */
 	result = GetCommState(hComm, &dcb);
 	if (result)
@@ -47,7 +47,7 @@ static BOOL test_generic(HANDLE hComm)
 		return FALSE;
 	}
 
-	ZeroMemory(&dcb, sizeof(dcb));
+	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
@@ -116,6 +116,12 @@ int TestGetCommState(int argc, char* argv[])
 	if (!test_generic(hComm))
 	{
 		printf("test_generic failure (RemoteSerialDriverSerCx2Sys)\n");
+		return EXIT_FAILURE;
+	}
+
+	if (!CloseHandle(hComm))
+	{
+		fprintf(stderr, "CloseHandle failure, GetLastError()=%0.8x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 

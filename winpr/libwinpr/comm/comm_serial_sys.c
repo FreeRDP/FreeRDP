@@ -175,14 +175,14 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 	return TRUE;
 }
 
-static BOOL _set_baud_rate(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate)
+static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 {
 	int i;
 	speed_t newSpeed;
-	struct termios futureState;
+	struct termios upcomingTermios;
 
-	ZeroMemory(&futureState, sizeof(struct termios));
-	if (tcgetattr(pComm->fd, &futureState) < 0) /* NB: preserves current settings not directly handled by the Communication Functions */
+	ZeroMemory(&upcomingTermios, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &upcomingTermios) < 0)
 	{
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
@@ -193,13 +193,13 @@ static BOOL _set_baud_rate(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate)
 		if (_SERIAL_SYS_BAUD_TABLE[i][1] == pBaudRate->BaudRate)
 		{
 			newSpeed = _SERIAL_SYS_BAUD_TABLE[i][0];
-			if (cfsetspeed(&futureState, newSpeed) < 0)
+			if (cfsetspeed(&upcomingTermios, newSpeed) < 0)
 			{
 				DEBUG_WARN("failed to set speed %d (%d)", newSpeed, pBaudRate->BaudRate);
 				return FALSE;
 			}
 
-			if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &futureState) < 0)
+			if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 			{
 				DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x0.8x", GetLastError());
 				return FALSE;
@@ -244,14 +244,152 @@ static BOOL _get_baud_rate(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate)
 	return FALSE;
 }
 
+/**
+ * NOTE: Only XonChar and XoffChar are plenty supported with Linux
+ * N_TTY line discipline.
+ *
+ * ERRORS:
+ *   ERROR_IO_DEVICE
+ *   ERROR_INVALID_PARAMETER when Xon and Xoff chars are the same;
+ */
+static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChars)
+{
+	struct termios upcomingTermios;
+
+	ZeroMemory(&upcomingTermios, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &upcomingTermios) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	if (pSerialChars->XonChar == pSerialChars->XoffChar)
+	{
+		/* http://msdn.microsoft.com/en-us/library/windows/hardware/ff546688%28v=vs.85%29.aspx */
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	/* termios(3): (..) above symbolic subscript values are all
+         * different, except that VTIME, VMIN may have the same value
+         * as VEOL, VEOF, respectively. In noncanonical mode the
+         * special character meaning is replaced by the timeout
+         * meaning.
+	 *
+	 * It doesn't seem the case of the Linux's implementation but
+	 * in our context, the cannonical mode (fBinary=FALSE) should
+	 * never be enabled.
+	 */
+	
+	if (upcomingTermios.c_lflag & ICANON)
+	{
+		upcomingTermios.c_cc[VEOF] = pSerialChars->EofChar; 
+		DEBUG_WARN("c_cc[VEOF] is not supposed to be modified!");
+	}
+	/* else let c_cc[VEOF] unchanged */
+
+
+	/* According the Linux's n_tty discipline, charaters with a
+	 * parity error can only be let unchanged, replaced by \0 or
+	 * get the prefix the prefix \377 \0 
+	 */
+
+	if (pSerialChars->ErrorChar == '\0')
+	{
+		/* Also suppose PARENB !IGNPAR !PARMRK to be effective */
+		upcomingTermios.c_iflag |= INPCK; 
+	}
+	else
+	{
+		/* FIXME: develop a line discipline dedicated to the
+		 * RDP redirection. Erroneous characters might also be
+		 * caught during read/write operations?
+		 */
+		DEBUG_WARN("ErrorChar='%c' cannot be set, characters with a parity error will be let unchanged.\n", pSerialChars->ErrorChar);
+	}
+
+	if (pSerialChars->BreakChar == '\0')
+	{
+		upcomingTermios.c_iflag &= ~(IGNBRK | BRKINT | PARMRK);
+	} 
+	else
+	{
+		/* FIXME: develop a line discipline dedicated to the
+		 * RDP redirection. Break characters might also be
+		 * caught during read/write operations?
+		 */
+		DEBUG_WARN("BreakChar='%c' cannot be set.\n", pSerialChars->ErrorChar);
+	}
+
+	/* FIXME: Didn't find anything similar inside N_TTY. Develop a
+	 * line discipline dedicated to the RDP redirection.
+	 */
+	DEBUG_WARN("EventChar='%c' cannot be set\n", pSerialChars->EventChar);
+
+	upcomingTermios.c_cc[VSTART] = pSerialChars->XonChar;
+
+	upcomingTermios.c_cc[VSTOP] = pSerialChars->XoffChar;
+
+
+	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
+	{
+		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x0.8x", GetLastError());
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+static BOOL _get_serial_chars(WINPR_COMM *pComm, SERIAL_CHARS *pSerialChars)
+{
+	struct termios currentTermios;
+
+	ZeroMemory(&currentTermios, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &currentTermios) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	ZeroMemory(pSerialChars, sizeof(SERIAL_CHARS));
+	
+	if (currentTermios.c_lflag & ICANON)
+	{
+		pSerialChars->EofChar = currentTermios.c_cc[VEOF];
+	}
+
+	/* FIXME: see also: _set_serial_chars() */
+	if (currentTermios.c_iflag & INPCK)
+		pSerialChars->ErrorChar = '\0';
+	/* else '\0' is currently used anyway */
+	
+	/* FIXME: see also: _set_serial_chars() */
+	if (currentTermios.c_iflag & ~IGNBRK & BRKINT)
+		pSerialChars->BreakChar = '\0';
+	/* else '\0' is currently used anyway */
+	
+	/* FIXME: see also: _set_serial_chars() */
+	pSerialChars->EventChar = '\0';
+
+	pSerialChars->XonChar = currentTermios.c_cc[VSTART];
+
+	pSerialChars->XoffChar = currentTermios.c_cc[VSTOP];
+
+	return TRUE;
+}
+
+
 
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
-	.id		= RemoteSerialDriverSerialSys,
-	.name		= _T("Serial.sys"),
-	.set_baud_rate	= _set_baud_rate,
-	.get_baud_rate	= _get_baud_rate,
-	.get_properties = _get_properties,
+	.id		  = RemoteSerialDriverSerialSys,
+	.name		  = _T("Serial.sys"),
+	.set_baud_rate	  = _set_baud_rate,
+	.get_baud_rate	  = _get_baud_rate,
+	.get_properties   = _get_properties,
+	.set_serial_chars = _set_serial_chars,
+	.get_serial_chars = _get_serial_chars,
 };
 
 

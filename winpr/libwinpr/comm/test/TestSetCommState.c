@@ -24,13 +24,20 @@
 
 #include "../comm.h"
 
+static void init_empty_dcb(DCB *pDcb)
+{
+	ZeroMemory(pDcb, sizeof(DCB));
+	pDcb->DCBlength = sizeof(DCB);
+	pDcb->XonChar = 1;
+	pDcb->XoffChar = 2;
+}
+
 static BOOL test_fParity(HANDLE hComm)
 {
 	DCB dcb;
 	BOOL result;
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(dcb);
+	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
@@ -47,8 +54,7 @@ static BOOL test_fParity(HANDLE hComm)
 		return FALSE;
 	}
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(dcb);
+	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
@@ -71,8 +77,7 @@ static BOOL test_fParity(HANDLE hComm)
 		return FALSE;
 	}
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(dcb);
+	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
@@ -95,8 +100,7 @@ static BOOL test_fParity(HANDLE hComm)
 		return FALSE;
 	}
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(dcb);
+	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
@@ -119,8 +123,7 @@ static BOOL test_SerialSys(HANDLE hComm)
 	DCB dcb;
 	BOOL result;
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(dcb);
+	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
@@ -137,8 +140,7 @@ static BOOL test_SerialSys(HANDLE hComm)
 		return FALSE;
 	}
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(dcb);
+	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
@@ -161,8 +163,7 @@ static BOOL test_SerialSys(HANDLE hComm)
 		return FALSE;
 	}
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(dcb);
+	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
@@ -192,8 +193,7 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	DCB dcb;
 	BOOL result;
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(dcb);
+	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
@@ -210,8 +210,7 @@ static BOOL test_SerCxSys(HANDLE hComm)
 		return FALSE;
 	}
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(dcb);
+	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
@@ -234,8 +233,7 @@ static BOOL test_SerCxSys(HANDLE hComm)
 		return FALSE;
 	}
 
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(dcb);
+	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
@@ -272,8 +270,7 @@ static BOOL test_generic(HANDLE hComm)
 	DCB dcb, dcb2;
 	BOOL result;
 	
-	ZeroMemory(&dcb, sizeof(dcb));
-	dcb.DCBlength = sizeof(dcb);
+	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
 	{
@@ -379,6 +376,12 @@ int TestSetCommState(int argc, char* argv[])
 	if (!test_SerCx2Sys(hComm))
 	{
 		fprintf(stderr, "test_SerCx2Sys failure\n");
+		return EXIT_FAILURE;
+	}
+
+	if (!CloseHandle(hComm))
+	{
+		fprintf(stderr, "CloseHandle failure, GetLastError()=%0.8x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 

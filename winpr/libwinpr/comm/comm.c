@@ -218,8 +218,29 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 		    
 	lpLocalDcb->fBinary = TRUE; /* TMP: TODO: seems equivalent to the raw mode */
 
-	lpLocalDcb->fParity =  (currentState.c_iflag & INPCK) != 0;
+	lpLocalDcb->fParity =  (currentState.c_cflag & PARENB) != 0; 
 
+	/* TMP: TODO: */
+	/* (...) */
+
+	
+
+	SERIAL_CHARS serialChars;
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_CHARS, NULL, 0, &serialChars, sizeof(SERIAL_CHARS), &bytesReturned, NULL))
+	{
+		DEBUG_WARN("GetCommState failure: could not get the serial chars.");
+		goto error_handle;
+	}
+
+	lpLocalDcb->XonChar = serialChars.XonChar;
+
+	lpLocalDcb->XoffChar = serialChars.XoffChar;
+
+	lpLocalDcb->ErrorChar = serialChars.ErrorChar;
+
+	lpLocalDcb->EofChar = serialChars.EofChar;
+	
+	lpLocalDcb->EvtChar = serialChars.EventChar;
 
 
 	memcpy(lpDCB, lpLocalDcb, lpDCB->DCBlength);
@@ -278,6 +299,22 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 		return FALSE;
 	}
 
+	SERIAL_CHARS serialChars;
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_CHARS, NULL, 0, &serialChars, sizeof(SERIAL_CHARS), &bytesReturned, NULL))
+	{
+		DEBUG_WARN("SetCommState failure: could not get the initial serial chars.");
+		return FALSE;
+	}
+	serialChars.XonChar = lpDCB->XonChar;
+	serialChars.XoffChar = lpDCB->XoffChar;
+	serialChars.ErrorChar = lpDCB->ErrorChar;
+	serialChars.EofChar = lpDCB->EofChar;
+	serialChars.EventChar = lpDCB->EvtChar;
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_CHARS, &serialChars, sizeof(SERIAL_CHARS), NULL, 0, &bytesReturned, NULL))
+	{
+		DEBUG_WARN("SetCommState failure: could not set the serial chars.");
+		return FALSE;
+	}
 
 
 	/** upcomingTermios stage **/
@@ -300,12 +337,15 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	
 	if (lpDCB->fParity)
 	{
-		upcomingTermios.c_iflag |= INPCK;
+		upcomingTermios.c_cflag |= PARENB;
 	}
 	else
 	{
-		upcomingTermios.c_iflag &= ~INPCK;
+		upcomingTermios.c_cflag &= ~PARENB;
 	}
+
+	// TMP: TODO:
+	// (...)
 
 	/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363423%28v=vs.85%29.aspx
 	 *

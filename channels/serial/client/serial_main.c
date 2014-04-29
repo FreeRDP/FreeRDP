@@ -305,6 +305,10 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 				irp->IoStatus = STATUS_BUFFER_TOO_SMALL; /* TMP: better have STATUS_BUFFER_SIZE_TOO_SMALL? http://msdn.microsoft.com/en-us/library/windows/hardware/ff547466%28v=vs.85%29.aspx#generic_status_values_for_serial_device_control_requests */
 				break;
 
+			case ERROR_INVALID_PARAMETER:
+				irp->IoStatus = STATUS_INVALID_PARAMETER;
+				break;
+
 			default:
 				DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
 				irp->IoStatus = STATUS_UNSUCCESSFUL;

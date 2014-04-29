@@ -174,7 +174,7 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 }
 
 
-static BOOL _set_baud_rate(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate)
+static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 {
 	int i;
 	speed_t newSpeed;
@@ -249,19 +249,24 @@ static BOOL _get_baud_rate(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate)
 /* specific functions only */
 static REMOTE_SERIAL_DRIVER _SerCxSys = 
 {
-	.id		= RemoteSerialDriverSerCxSys,
-	.name		= _T("SerCx.sys"),
-	.set_baud_rate	= _set_baud_rate,
-	.get_baud_rate  = _get_baud_rate,
-	.get_properties = _get_properties,
+	.id		  = RemoteSerialDriverSerCxSys,
+	.name		  = _T("SerCx.sys"),
+	.set_baud_rate    = _set_baud_rate,
+	.get_baud_rate    = _get_baud_rate,
+	.get_properties   = _get_properties,
+	.set_serial_chars = NULL,
+	.get_serial_chars = NULL,
 };
 
 
 
 REMOTE_SERIAL_DRIVER* SerCxSys_s()
 {
-	/* _SerCxSys completed with default SerialSys functions */
-	//REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys();
+	/* _SerCxSys completed with default SerialSys_s functions */
+	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+
+	_SerCxSys.set_serial_chars = pSerialSys->set_serial_chars;
+	_SerCxSys.get_serial_chars = pSerialSys->get_serial_chars;
 
 	return &_SerCxSys;
 }

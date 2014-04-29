@@ -48,8 +48,11 @@ extern "C" {
 /* IOCTL_SERIAL_GET_LINE_CONTROL 0x001B0054 */
 /* IOCTL_SERIAL_SET_TIMEOUTS 0x001B001C */
 /* IOCTL_SERIAL_GET_TIMEOUTS 0x001B0020 */
-/* IOCTL_SERIAL_SET_CHARS 0x001B0058 */
-/* IOCTL_SERIAL_GET_CHARS 0x001B005C */
+
+/* GET_CHARS and SET_CHARS are swapped in the RDP docs [MS-RDPESP] */
+#define IOCTL_SERIAL_GET_CHARS		0x001B0058
+#define IOCTL_SERIAL_SET_CHARS		0x001B005C
+
 /* IOCTL_SERIAL_SET_DTR 0x001B0024 */
 /* IOCTL_SERIAL_CLR_DTR 0x001B0028 */
 /* IOCTL_SERIAL_RESET_DEVICE 0x001B002C */
@@ -101,6 +104,17 @@ typedef struct _SERIAL_BAUD_RATE
 } SERIAL_BAUD_RATE, *PSERIAL_BAUD_RATE;
 
 
+typedef struct _SERIAL_CHARS
+{
+	UCHAR EofChar;
+	UCHAR ErrorChar;
+	UCHAR BreakChar;
+	UCHAR EventChar;
+	UCHAR XonChar;
+	UCHAR XoffChar;
+} SERIAL_CHARS, *PSERIAL_CHARS;
+
+
 /**
  * A function might be NULL if not supported by the underlying remote driver.
  *
@@ -110,9 +124,11 @@ typedef struct _REMOTE_SERIAL_DRIVER
 {
 	REMOTE_SERIAL_DRIVER_ID id;
 	TCHAR *name;
-	BOOL (*set_baud_rate)(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate /* in */);
-	BOOL (*get_baud_rate)(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate /* out */);
-	BOOL (*get_properties)(WINPR_COMM *pComm, COMMPROP *pProperties /* out */);
+	BOOL (*set_baud_rate)(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate);
+	BOOL (*get_baud_rate)(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate);
+	BOOL (*get_properties)(WINPR_COMM *pComm, COMMPROP *pProperties);
+	BOOL (*set_serial_chars)(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChars);
+	BOOL (*get_serial_chars)(WINPR_COMM *pComm, SERIAL_CHARS *pSerialChars);
 
 } REMOTE_SERIAL_DRIVER;
 
