@@ -166,7 +166,11 @@ static INLINE void freerdp_color_split_bgr(UINT32* color, int bpp, BYTE* red, BY
 			break;
 
 		case 16:
-			GetBGR16(*red, *green, *blue, *color);
+			/* [MS-RDPEGDI] 2.2.2.2.1.1.1.8 Generic Color (TS_COLOR)
+			 * does not tell all the truth.
+			 * In 16-bit mode, the color format is RGB565, rathen than
+			 * BGR565 or BGR888. */
+			GetRGB16(*red, *green, *blue, *color);
 			break;
 
 		case 15:
