@@ -437,14 +437,26 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 				}
 				else
 				{
-					tls_print_error("SSL_read", tls->ssl, status);
-					status = -1;
+					if (tls_print_error("SSL_read", tls->ssl, status))
+					{
+						status = -1;
+					}
+					else
+					{
+						status = 0;
+					}
 				}
 				break;
 
 			default:
-				tls_print_error("SSL_read", tls->ssl, status);
-				status = -1;
+				if (tls_print_error("SSL_read", tls->ssl, status))
+				{
+					status = -1;
+				}
+				else
+				{
+					status = 0;
+				}
 				break;
 		}
 	}
