@@ -431,7 +431,11 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 				break;
 
 			case SSL_ERROR_SYSCALL:
+#ifdef _WIN32
+				if (WSAGetLastError() == WSAEWOULDBLOCK)
+#else
 				if ((errno == EAGAIN) || (errno == 0))
+#endif
 				{
 					status = 0;
 				}
@@ -580,7 +584,11 @@ BOOL tls_print_error(char* func, SSL* connection, int value)
 			return FALSE;
 
 		case SSL_ERROR_SYSCALL:
+#ifdef _WIN32
+			fprintf(stderr, "%s: I/O error: %d\n", func, WSAGetLastError());
+#else
 			fprintf(stderr, "%s: I/O error: %s (%d)\n", func, strerror(errno), errno);
+#endif
 			tls_errors(func);
 			return TRUE;
 
