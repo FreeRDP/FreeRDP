@@ -119,9 +119,15 @@ void* ArrayList_GetItem(wArrayList* arrayList, int index)
 
 void ArrayList_SetItem(wArrayList* arrayList, int index, void* obj)
 {
+	void *cpy;
+
 	if ((index >= 0) && (index < arrayList->size))
 	{
-		arrayList->array[index] = obj;
+		if (arrayList->object.fnObjectNew)
+			cpy = arrayList->object.fnObjectNew(obj);
+		else
+			cpy = obj;
+		arrayList->array[index] = cpy;
 	}
 }
 
@@ -133,7 +139,7 @@ void ArrayList_SetItem(wArrayList* arrayList, int index, void* obj)
  * Shift a section of the list.
  */
 
-BOOL ArrayList_Shift(wArrayList* arrayList, int index, int count)
+static BOOL ArrayList_Shift(wArrayList* arrayList, int index, int count)
 {
 	if (count > 0)
 	{
@@ -193,13 +199,20 @@ void ArrayList_Clear(wArrayList* arrayList)
 
 BOOL ArrayList_Contains(wArrayList* arrayList, void* obj)
 {
+	BOOL rc = FALSE;
+
 	if (arrayList->synchronized)
 		EnterCriticalSection(&arrayList->lock);
+
+	if (arrayList->object.fnObjectEquals)
+		rc = arrayList->object.fnObjectEquals(arrayList->array[index], obj);
+	else
+		rc = (arrayList->array[index]) == obj ? TRUE : FALSE;
 
 	if (arrayList->synchronized)
 		LeaveCriticalSection(&arrayList->lock);
 
-	return FALSE;
+	return rc;
 }
 
 /**
@@ -208,6 +221,7 @@ BOOL ArrayList_Contains(wArrayList* arrayList, void* obj)
 
 int ArrayList_Add(wArrayList* arrayList, void* obj)
 {
+	void *cpy;
 	int index = -1;
 
 	if (arrayList->synchronized)
@@ -225,7 +239,12 @@ int ArrayList_Add(wArrayList* arrayList, void* obj)
 		arrayList->capacity = newCapacity;
 	}
 
-	arrayList->array[arrayList->size++] = obj;
+	if (arrayList->object.fnObjectNew)
+		cpy = arrayList->object.fnObjectNew(obj);
+	else
+		cpy = obj;
+
+	arrayList->array[arrayList->size++] = cpy;
 	index = arrayList->size;
 
 out:
@@ -241,7 +260,9 @@ out:
 
 BOOL ArrayList_Insert(wArrayList* arrayList, int index, void* obj)
 {
+	void *cpy;
 	BOOL ret = TRUE;
+
 	if (arrayList->synchronized)
 		EnterCriticalSection(&arrayList->lock);
 
@@ -253,6 +274,12 @@ BOOL ArrayList_Insert(wArrayList* arrayList, int index, void* obj)
 		}
 		else
 		{
+      if (arrayList->object.fnObjectNew)
+        cpy = arrayList->object.fnObjectNew(obj);
+      else
+        cpy = obj;
+      arrayList->array[index] = cpy;
+
 			arrayList->array[index] = obj;
 		}
 	}
@@ -285,7 +312,11 @@ BOOL ArrayList_Remove(wArrayList* arrayList, void* obj)
 	}
 
 	if (found)
+	{
+		if (arrayList->object.fnObjectFree)
+			arrayList->object.fnObjectFree(arrayList->array[index]);
 		ret = ArrayList_Shift(arrayList, index, -1);
+	}
 
 	if (arrayList->synchronized)
 		LeaveCriticalSection(&arrayList->lock);
@@ -305,6 +336,8 @@ BOOL ArrayList_RemoveAt(wArrayList* arrayList, int index)
 
 	if ((index >= 0) && (index < arrayList->size))
 	{
+		if (arrayList->object.fnObjectFree)
+			arrayList->object.fnObjectFree(arrayList->array[index]);
 		ret = ArrayList_Shift(arrayList, index, -1);
 	}
 
