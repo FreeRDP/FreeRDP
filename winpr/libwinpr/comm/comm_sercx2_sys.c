@@ -61,18 +61,23 @@ static REMOTE_SERIAL_DRIVER _SerCx2Sys =
 	.get_properties   = NULL,
 	.set_serial_chars = _set_serial_chars,
 	.get_serial_chars = _get_serial_chars,
+	.set_line_control = NULL,
+	.get_line_control = NULL,
 };
 
 
 REMOTE_SERIAL_DRIVER* SerCx2Sys_s()
 {
-	/* _SerCx2Sys completed with SerialSys or SerCxSys default functions */
+	/* _SerCx2Sys completed with inherited functions from SerialSys or SerCxSys */
 	//REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
 	REMOTE_SERIAL_DRIVER* pSerCxSys = SerCxSys_s();
 
 	_SerCx2Sys.set_baud_rate    = pSerCxSys->set_baud_rate;
 	_SerCx2Sys.get_baud_rate    = pSerCxSys->get_baud_rate;
 	_SerCx2Sys.get_properties   = pSerCxSys->get_properties;
+
+	_SerCx2Sys.set_line_control = pSerCxSys->set_line_control;
+	_SerCx2Sys.get_line_control = pSerCxSys->get_line_control;
 
 	return &_SerCx2Sys;
 }

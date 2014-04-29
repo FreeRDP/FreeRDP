@@ -142,6 +142,10 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 {
 	int i;
 
+	/* FIXME: properties should be better probe. The current
+	 * implementation just relies on the Linux' implementation.
+	 */
+
 	// TMP: TODO:
 
 	// TMP: required?
@@ -164,8 +168,10 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 		pProperties->dwSettableBaud |= _SERIAL_SYS_BAUD_TABLE[i][1];
 	}
 
-	/* pProperties->SettableData; */
-	/* pProperties->SettableStopParity; */
+	pProperties->wSettableData = DATABITS_5 | DATABITS_6 | DATABITS_7 | DATABITS_8 /*| DATABITS_16 | DATABITS_16X*/;
+
+	pProperties->wSettableStopParity = STOPBITS_10 | /*STOPBITS_15 |*/ STOPBITS_20 | PARITY_NONE | PARITY_ODD | PARITY_EVEN | PARITY_MARK | PARITY_SPACE;
+
 	/* pProperties->CurrentTxQueue; */
 	/* pProperties->CurrentRxQueue; */
 	/* pProperties->ProvSpec1; */
@@ -380,6 +386,168 @@ static BOOL _get_serial_chars(WINPR_COMM *pComm, SERIAL_CHARS *pSerialChars)
 }
 
 
+static BOOL _set_line_control(WINPR_COMM *pComm, const SERIAL_LINE_CONTROL *pLineControl)
+{
+	BOOL result = TRUE;
+	struct termios upcomingTermios;
+
+
+	/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363214%28v=vs.85%29.aspx
+	 *
+	 * The use of 5 data bits with 2 stop bits is an invalid
+	 * combination, as is 6, 7, or 8 data bits with 1.5 stop bits.
+	 *
+	 * FIXME: prefered to let the underlying driver to deal with
+	 * this issue. At least produce a warning message?
+	 */
+
+
+	ZeroMemory(&upcomingTermios, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &upcomingTermios) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	/* FIXME: use of a COMMPROP to validate new settings? */
+
+	switch (pLineControl->StopBits)
+	{
+		case STOP_BIT_1:
+			upcomingTermios.c_cflag &= ~CSTOPB;
+			break;
+
+		case STOP_BITS_1_5:
+			DEBUG_WARN("Unsupported one and a half stop bits.");
+			break;
+			
+		case STOP_BITS_2:
+			upcomingTermios.c_cflag |= CSTOPB;
+			break;
+
+		default:
+			DEBUG_WARN("unexpected number of stop bits: %d\n", pLineControl->StopBits);
+			result = FALSE; /* but keep on */
+			break;
+	} 
+
+
+	switch (pLineControl->Parity)
+	{
+		case NO_PARITY:
+			upcomingTermios.c_cflag &= ~(PARENB | PARODD | CMSPAR);
+			break;
+
+		case ODD_PARITY:
+			upcomingTermios.c_cflag &= ~CMSPAR;
+			upcomingTermios.c_cflag |= PARENB | PARODD;
+			break;
+
+		case EVEN_PARITY:
+			upcomingTermios.c_cflag &= ~(PARODD | CMSPAR);
+			upcomingTermios.c_cflag |= PARENB;
+			break;
+
+		case MARK_PARITY:
+			upcomingTermios.c_cflag |= PARENB | PARODD | CMSPAR;
+			break;
+
+		case SPACE_PARITY:
+			upcomingTermios.c_cflag &= ~PARODD;
+			upcomingTermios.c_cflag |= PARENB | CMSPAR;
+			break;
+
+		default:
+			DEBUG_WARN("unexpected type of parity: %d\n", pLineControl->Parity);
+			result = FALSE; /* but keep on */
+			break;
+	}
+
+	switch (pLineControl->WordLength)
+	{
+		case 5:
+			upcomingTermios.c_cflag &= ~CSIZE;
+			upcomingTermios.c_cflag |= CS5;
+			break;
+
+		case 6:
+			upcomingTermios.c_cflag &= ~CSIZE;
+			upcomingTermios.c_cflag |= CS6;
+			break;
+
+		case 7:
+			upcomingTermios.c_cflag &= ~CSIZE;
+			upcomingTermios.c_cflag |= CS7;
+			break;
+
+		case 8:
+			upcomingTermios.c_cflag &= ~CSIZE;
+			upcomingTermios.c_cflag |= CS8;
+			break;
+
+		default:
+			DEBUG_WARN("unexpected number od data bits per character: %d\n", pLineControl->WordLength);
+			result = FALSE; /* but keep on */
+			break;
+	}
+
+	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
+	{
+		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x0.8x", GetLastError());
+		return FALSE;
+	}
+
+	return result;
+}
+
+
+static BOOL _get_line_control(WINPR_COMM *pComm, SERIAL_LINE_CONTROL *pLineControl)
+{
+	struct termios currentTermios;
+
+	ZeroMemory(&currentTermios, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &currentTermios) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	pLineControl->StopBits = (currentTermios.c_cflag & CSTOPB) ? STOP_BITS_2 : STOP_BIT_1;
+
+	if (!(currentTermios.c_cflag & PARENB))
+	{
+		pLineControl->Parity = NO_PARITY;
+	}
+	else if (currentTermios.c_cflag & CMSPAR)
+	{
+		pLineControl->Parity = (currentTermios.c_cflag & PARODD) ? MARK_PARITY : SPACE_PARITY;
+	}
+	else
+	{
+		/* PARENB is set */
+		pLineControl->Parity = (currentTermios.c_cflag & PARODD) ?  ODD_PARITY : EVEN_PARITY;
+	}
+
+	switch (currentTermios.c_cflag & CSIZE)
+	{
+		case CS5:
+			pLineControl->WordLength = 5;
+			break;
+		case CS6:
+			pLineControl->WordLength = 6;
+			break;
+		case CS7:
+			pLineControl->WordLength = 7;
+			break;
+		default:
+			pLineControl->WordLength = 8;
+			break;
+	}
+
+	return TRUE;
+}
+
+
 
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
@@ -390,6 +558,8 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.get_properties   = _get_properties,
 	.set_serial_chars = _set_serial_chars,
 	.get_serial_chars = _get_serial_chars,
+	.set_line_control = _set_line_control,
+	.get_line_control = _get_line_control
 };
 
 

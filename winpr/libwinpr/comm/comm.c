@@ -223,7 +223,19 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	/* TMP: TODO: */
 	/* (...) */
 
-	
+	SERIAL_LINE_CONTROL lineControl;
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_LINE_CONTROL, NULL, 0, &lineControl, sizeof(SERIAL_LINE_CONTROL), &bytesReturned, NULL))
+	{
+		DEBUG_WARN("GetCommState failure: could not get the control settings.");
+		goto error_handle;
+	}
+
+	lpLocalDcb->ByteSize = lineControl.WordLength;
+
+	lpLocalDcb->Parity = lineControl.Parity;
+
+	lpLocalDcb->StopBits = lineControl.StopBits;
+
 
 	SERIAL_CHARS serialChars;
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_CHARS, NULL, 0, &serialChars, sizeof(SERIAL_CHARS), &bytesReturned, NULL))
@@ -313,6 +325,16 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_CHARS, &serialChars, sizeof(SERIAL_CHARS), NULL, 0, &bytesReturned, NULL))
 	{
 		DEBUG_WARN("SetCommState failure: could not set the serial chars.");
+		return FALSE;
+	}
+
+	SERIAL_LINE_CONTROL lineControl;
+	lineControl.StopBits = lpDCB->StopBits;
+	lineControl.Parity = lpDCB->Parity;
+	lineControl.WordLength = lpDCB->ByteSize;
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_LINE_CONTROL, &lineControl, sizeof(SERIAL_LINE_CONTROL), NULL, 0, &bytesReturned, NULL))
+	{
+		DEBUG_WARN("SetCommState failure: could not set the control settings.");
 		return FALSE;
 	}
 

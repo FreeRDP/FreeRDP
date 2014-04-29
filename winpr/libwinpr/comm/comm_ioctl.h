@@ -43,9 +43,8 @@ extern "C" {
 
 #define IOCTL_SERIAL_SET_BAUD_RATE	0x001B0004
 #define IOCTL_SERIAL_GET_BAUD_RATE	0x001B0050
-
-/* #define IOCTL_SERIAL_SET_LINE_CONTROL	0x001B000C */
-/* IOCTL_SERIAL_GET_LINE_CONTROL 0x001B0054 */
+#define IOCTL_SERIAL_SET_LINE_CONTROL	0x001B000C
+#define IOCTL_SERIAL_GET_LINE_CONTROL	0x001B0054
 /* IOCTL_SERIAL_SET_TIMEOUTS 0x001B001C */
 /* IOCTL_SERIAL_GET_TIMEOUTS 0x001B0020 */
 
@@ -97,6 +96,16 @@ extern "C" {
 /* IOCTL_PAR_IS_PORT_FREE 0x00160054 */
 
 
+#define STOP_BIT_1	0 
+#define STOP_BITS_1_5	1 
+#define STOP_BITS_2	2 
+ 
+#define NO_PARITY	0 
+#define ODD_PARITY	1 
+#define EVEN_PARITY	2 
+#define MARK_PARITY	3 
+#define SPACE_PARITY	4 
+
 
 typedef struct _SERIAL_BAUD_RATE
 {
@@ -115,6 +124,14 @@ typedef struct _SERIAL_CHARS
 } SERIAL_CHARS, *PSERIAL_CHARS;
 
 
+typedef struct _SERIAL_LINE_CONTROL
+{
+	UCHAR StopBits;
+	UCHAR Parity;
+	UCHAR WordLength;
+} SERIAL_LINE_CONTROL, *PSERIAL_LINE_CONTROL;
+
+
 /**
  * A function might be NULL if not supported by the underlying remote driver.
  *
@@ -129,6 +146,8 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*get_properties)(WINPR_COMM *pComm, COMMPROP *pProperties);
 	BOOL (*set_serial_chars)(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChars);
 	BOOL (*get_serial_chars)(WINPR_COMM *pComm, SERIAL_CHARS *pSerialChars);
+	BOOL (*set_line_control)(WINPR_COMM *pComm, const SERIAL_LINE_CONTROL *pLineControl);
+	BOOL (*get_line_control)(WINPR_COMM *pComm, SERIAL_LINE_CONTROL *pLineControl);
 
 } REMOTE_SERIAL_DRIVER;
 

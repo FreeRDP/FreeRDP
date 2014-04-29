@@ -139,36 +139,22 @@ static const speed_t _SERCX_SYS_BAUD_TABLE[][3] = {
 static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 {
 	int i;
+	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
-	// TMP: TODO:
+	if (!pSerialSys->get_properties(pComm, pProperties))
+	{
+		return FALSE;
+	}
 
-	// TMP: required?
-	// ZeroMemory(pProperties, sizeof(COMMPROP);
+	/* override some of the inherited properties from SerialSys ... */
 
-	/* pProperties->PacketLength; */
-	/* pProperties->PacketVersion; */
-	/* pProperties->ServiceMask; */
-	/* pProperties->Reserved1; */
-	/* pProperties->MaxTxQueue; */
-	/* pProperties->MaxRxQueue; */
 	pProperties->dwMaxBaud = BAUD_USER;
-	/* pProperties->ProvSubType; */
-	/* pProperties->ProvCapabilities; */
-	/* pProperties->SettableParams; */
 
 	pProperties->dwSettableBaud = 0;
 	for (i=0; _SERCX_SYS_BAUD_TABLE[i][0]<=__MAX_BAUD; i++)
 	{
 		pProperties->dwSettableBaud |= _SERCX_SYS_BAUD_TABLE[i][2];
 	}
-
-	/* pProperties->SettableData; */
-	/* pProperties->SettableStopParity; */
-	/* pProperties->CurrentTxQueue; */
-	/* pProperties->CurrentRxQueue; */
-	/* pProperties->ProvSpec1; */
-	/* pProperties->ProvSpec2; */
-	/* pProperties->ProvChar[1]; */
 
 	return TRUE;
 }
@@ -256,17 +242,21 @@ static REMOTE_SERIAL_DRIVER _SerCxSys =
 	.get_properties   = _get_properties,
 	.set_serial_chars = NULL,
 	.get_serial_chars = NULL,
+	.set_line_control = NULL,
+	.get_line_control = NULL,
 };
 
 
 
 REMOTE_SERIAL_DRIVER* SerCxSys_s()
 {
-	/* _SerCxSys completed with default SerialSys_s functions */
+	/* _SerCxSys completed with inherited functions from SerialSys */
 	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	_SerCxSys.set_serial_chars = pSerialSys->set_serial_chars;
 	_SerCxSys.get_serial_chars = pSerialSys->get_serial_chars;
+	_SerCxSys.set_line_control = pSerialSys->set_line_control;
+	_SerCxSys.get_line_control = pSerialSys->get_line_control;
 
 	return &_SerCxSys;
 }

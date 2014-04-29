@@ -10,6 +10,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestGetCommState.c
 	TestSetCommState.c
 	TestSerialChars.c
+	TestControlSettings.c
 	TestCommMonitor.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

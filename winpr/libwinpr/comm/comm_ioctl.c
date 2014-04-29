@@ -212,6 +212,43 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 				return TRUE;
 			}
 		}
+		case IOCTL_SERIAL_SET_LINE_CONTROL:
+		{
+			if (pRemoteSerialDriver->set_line_control)
+			{
+				SERIAL_LINE_CONTROL *pLineControl = (SERIAL_LINE_CONTROL*)lpInBuffer;
+
+				assert(nInBufferSize >= sizeof(SERIAL_LINE_CONTROL));
+				if (nInBufferSize < sizeof(SERIAL_LINE_CONTROL))
+				{
+					SetLastError(ERROR_INVALID_DATA);
+					return FALSE;
+				}
+
+				return pRemoteSerialDriver->set_line_control(pComm, pLineControl);
+			}
+		}
+		case IOCTL_SERIAL_GET_LINE_CONTROL:
+		{
+			if (pRemoteSerialDriver->get_line_control)
+			{
+				SERIAL_LINE_CONTROL *pLineControl = (SERIAL_LINE_CONTROL*)lpOutBuffer;
+				
+				assert(nOutBufferSize >= sizeof(SERIAL_LINE_CONTROL));
+				if (nOutBufferSize < sizeof(SERIAL_LINE_CONTROL))
+				{
+					SetLastError(ERROR_INSUFFICIENT_BUFFER);
+					return FALSE;					
+				}
+
+				if (!pRemoteSerialDriver->get_line_control(pComm, pLineControl))
+					return FALSE;
+
+				*lpBytesReturned = sizeof(SERIAL_LINE_CONTROL);
+				return TRUE;
+			}
+		}
+
 	}
 	
 	DEBUG_WARN(_T("unsupported IoControlCode: Ox%x (remote serial driver: %s)"), dwIoControlCode, pRemoteSerialDriver->name);
