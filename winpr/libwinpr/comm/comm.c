@@ -216,9 +216,13 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 	lpLocalDcb->BaudRate = baudRate.BaudRate;
 		    
-	lpLocalDcb->fBinary = TRUE; /* TMP: TODO: seems equivalent to the raw mode */
+	lpLocalDcb->fBinary = (currentState.c_cflag & ICANON) == 0;
+	if (!lpLocalDcb->fBinary)
+	{
+		DEBUG_WARN("Unexpected nonbinary mode, consider to unset the ICANON flag.");
+	}
 
-	lpLocalDcb->fParity =  (currentState.c_cflag & PARENB) != 0; 
+	lpLocalDcb->fParity =  (currentState.c_iflag & INPCK) != 0; 
 
 	/* TMP: TODO: */
 	/* (...) */
@@ -349,21 +353,24 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 		return FALSE;
 	}
 
-	if (!lpDCB->fBinary)
+	if (lpDCB->fBinary)
 	{
-		DEBUG_WARN("unexpected nonbinary mode transfers");
-		SetLastError(ERROR_NOT_SUPPORTED);
-		return FALSE;
-	}
-	// TMP: set the raw mode here?
-	
-	if (lpDCB->fParity)
-	{
-		upcomingTermios.c_cflag |= PARENB;
+		upcomingTermios.c_lflag &= ~ICANON;
+		// TMP: complete the raw mode here?
 	}
 	else
 	{
-		upcomingTermios.c_cflag &= ~PARENB;
+		upcomingTermios.c_lflag |= ICANON;
+		DEBUG_WARN("Unexpected nonbinary mode, consider to unset the ICANON flag.");
+	}
+
+	if (lpDCB->fParity)
+	{
+		upcomingTermios.c_iflag |= INPCK;
+	}
+	else
+	{
+		upcomingTermios.c_iflag &= ~INPCK;
 	}
 
 	// TMP: TODO:
