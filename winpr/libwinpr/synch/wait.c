@@ -124,7 +124,11 @@ static int pthread_timedjoin_np(pthread_t td, void **res,
 	return ETIMEDOUT;
 }
 
-static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
+#if defined(__FreeBSD__)
+	static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
+#else
+	static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
+#endif
 {
 	struct timespec timenow;
 	struct timespec sleepytime;
