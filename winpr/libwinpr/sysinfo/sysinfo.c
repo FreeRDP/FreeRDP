@@ -132,7 +132,7 @@ static DWORD GetNumberOfProcessors()
 		#if defined(__FreeBSD__)
 			mib[1] = HW_NCPU;
 		#else
-			mid[1] = HW_AVAILCPU;
+			mib[1] = HW_AVAILCPU;
 		#endif
 
 		sysctl(mib, 2, &numCPUs, &length, NULL, 0);
