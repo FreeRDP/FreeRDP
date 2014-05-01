@@ -125,6 +125,7 @@ static int pthread_timedjoin_np(pthread_t td, void **res,
 }
 
 #if defined(__FreeBSD__)
+	/*the only way to get it work is to remove the static*/
 	int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
 #else
 	static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
