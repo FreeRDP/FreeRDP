@@ -199,13 +199,13 @@ static void* rdpsnd_server_thread(void* arg)
 
 	buffer = NULL;
 	BytesReturned = 0;
-	ChannelEvent = NULL;
+	ChannelEvent = context->priv->ChannelHandle;
 
 	s = Stream_New(NULL, 4096);
 	if (!s)
 		return NULL;
 
-	if (WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned))
+	if (WTSVirtualChannelQuery(ChannelEvent, WTSVirtualEventHandle, &buffer, &BytesReturned))
 	{
 		if (BytesReturned == sizeof(HANDLE))
 			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
@@ -230,16 +230,16 @@ static void* rdpsnd_server_thread(void* arg)
 
 		Stream_SetPosition(s, 0);
 
-		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
-				(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
+		if (!WTSVirtualChannelRead(ChannelEvent, 0, (PCHAR)Stream_Buffer(s),
+									Stream_Capacity(s), &BytesReturned))
 		{
 			if (!BytesReturned)
 				break;
 
 			Stream_EnsureRemainingCapacity(s, BytesReturned);
 
-			if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,	(PCHAR) Stream_Buffer(s),
-					Stream_Capacity(s), &BytesReturned))
+			if (!WTSVirtualChannelRead(ChannelEvent, 0, (PCHAR)Stream_Buffer(s),
+										Stream_Capacity(s), &BytesReturned))
 				break;
 		}
 
@@ -284,7 +284,7 @@ out:
 
 static BOOL rdpsnd_server_initialize(RdpsndServerContext* context)
 {
-	return context->Start(context);
+	return context->Start(context) >= 0;
 }
 
 static BOOL rdpsnd_server_select_format(RdpsndServerContext* context, int client_format_index)
