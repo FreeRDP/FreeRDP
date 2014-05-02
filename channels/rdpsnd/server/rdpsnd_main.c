@@ -138,7 +138,7 @@ static BOOL rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	}
 
 	context->client_formats = (AUDIO_FORMAT *)calloc(context->num_client_formats, sizeof(AUDIO_FORMAT));
-	if (context->client_formats)
+	if (!context->client_formats)
 		return FALSE;
 
 	for (i = 0; i < context->num_client_formats; i++)
