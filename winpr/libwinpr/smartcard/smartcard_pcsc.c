@@ -836,7 +836,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReadersA(SCARDCONTEXT hContext,
 {
 	BOOL nullCardContext = FALSE;
 	LONG status = SCARD_S_SUCCESS;
-	LPSTR* pMszReaders = (LPSTR*) mszReaders;
 
 	if (!g_PCSC.pfnSCardListReaders)
 		return SCARD_E_NO_SERVICE;
@@ -1814,8 +1813,13 @@ WINSCARDAPI LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard,
 		DWORD dwControlCode, LPCVOID lpInBuffer, DWORD cbInBufferSize,
 		LPVOID lpOutBuffer, DWORD cbOutBufferSize, LPDWORD lpBytesReturned)
 {
+	DWORD IoCtlMethod = 0;
+	DWORD IoCtlFunction = 0;
+	DWORD IoCtlAccess = 0;
+	DWORD IoCtlDeviceType = 0;
+	BOOL getFeatureRequest = FALSE;
 	LONG status = SCARD_S_SUCCESS;
-	PCSC_DWORD pcsc_dwControlCode = (PCSC_DWORD) dwControlCode;
+	PCSC_DWORD pcsc_dwControlCode = 0;
 	PCSC_DWORD pcsc_cbInBufferSize = (PCSC_DWORD) cbInBufferSize;
 	PCSC_DWORD pcsc_cbOutBufferSize = (PCSC_DWORD) cbOutBufferSize;
 	PCSC_DWORD pcsc_BytesReturned = 0;
@@ -1823,12 +1827,46 @@ WINSCARDAPI LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard,
 	if (!g_PCSC.pfnSCardControl)
 		return SCARD_E_NO_SERVICE;
 
+	IoCtlMethod = METHOD_FROM_CTL_CODE(dwControlCode);
+	IoCtlFunction = FUNCTION_FROM_CTL_CODE(dwControlCode);
+	IoCtlAccess = ACCESS_FROM_CTL_CODE(dwControlCode);
+	IoCtlDeviceType = DEVICE_TYPE_FROM_CTL_CODE(dwControlCode);
+
+	if (dwControlCode == PCSC_CM_IOCTL_GET_FEATURE_REQUEST)
+		getFeatureRequest = TRUE;
+
+	if (IoCtlDeviceType == FILE_DEVICE_SMARTCARD)
+		dwControlCode = PCSC_SCARD_CTL_CODE(IoCtlFunction);
+
+	pcsc_dwControlCode = (PCSC_DWORD) dwControlCode;
+
 	status = (LONG) g_PCSC.pfnSCardControl(hCard,
 			pcsc_dwControlCode, lpInBuffer, pcsc_cbInBufferSize,
 			lpOutBuffer, pcsc_cbOutBufferSize, &pcsc_BytesReturned);
 	status = PCSC_MapErrorCodeToWinSCard(status);
 
 	*lpBytesReturned = (DWORD) pcsc_BytesReturned;
+
+	if (getFeatureRequest)
+	{
+		UINT32 ioCtlValue;
+		PCSC_TLV_STRUCTURE* tlv = (PCSC_TLV_STRUCTURE*) lpOutBuffer;
+		void* lpOutBufferEnd = (void*) &((BYTE*) lpOutBuffer)[*lpBytesReturned];
+
+		for ( ; ((void*) tlv) < lpOutBufferEnd; tlv++)
+		{
+			ioCtlValue = _byteswap_ulong(tlv->value);
+			ioCtlValue -= 0x42000000; /* inverse of PCSC_SCARD_CTL_CODE() */
+
+			IoCtlMethod = METHOD_FROM_CTL_CODE(ioCtlValue);
+			IoCtlFunction = FUNCTION_FROM_CTL_CODE(ioCtlValue);
+			IoCtlAccess = ACCESS_FROM_CTL_CODE(ioCtlValue);
+			IoCtlDeviceType = DEVICE_TYPE_FROM_CTL_CODE(ioCtlValue);
+			ioCtlValue = SCARD_CTL_CODE(IoCtlFunction);
+
+			tlv->value = _byteswap_ulong(ioCtlValue);
+		}
+	}
 
 	return status;
 }

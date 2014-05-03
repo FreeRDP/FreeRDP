@@ -841,7 +841,6 @@ static UINT32 smartcard_Control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	SCARDCONTEXT hContext;
 	Control_Call call;
 	Control_Return ret;
-	UINT32 controlFunction;
 
 	status = smartcard_unpack_control_call(smartcard, irp->input, &call);
 
@@ -852,12 +851,6 @@ static UINT32 smartcard_Control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
-
-	if (DEVICE_TYPE_FROM_CTL_CODE(call.dwControlCode) == FILE_DEVICE_SMARTCARD)
-	{
-		controlFunction = FUNCTION_FROM_CTL_CODE(call.dwControlCode);
-		call.dwControlCode = SCARD_CTL_CODE(controlFunction);
-	}
 
 	ret.cbOutBufferSize = call.cbOutBufferSize;
 	ret.pvOutBuffer = (BYTE*) malloc(call.cbOutBufferSize);
