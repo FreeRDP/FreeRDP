@@ -29,12 +29,39 @@
 
 #include <winpr/crt.h>
 #include <winpr/smartcard.h>
+#include <winpr/environment.h>
 
 #include <freerdp/channels/rdpdr.h>
 
 #include "smartcard_main.h"
 
-#define SMARTCARD_ASYNC_IRP	1
+static BOOL g_SmartCardAsync = TRUE;
+
+int smartcard_environment_init()
+{
+	DWORD nSize;
+	char* envSmartCardAsync;
+
+	nSize = GetEnvironmentVariableA("FREERDP_SMARTCARD_ASYNC", NULL, 0);
+
+	if (nSize)
+	{
+		envSmartCardAsync = (LPSTR) malloc(nSize);
+		nSize = GetEnvironmentVariableA("FREERDP_SMARTCARD_ASYNC", envSmartCardAsync, nSize);
+
+		if (envSmartCardAsync)
+		{
+			if (_stricmp(envSmartCardAsync, "0") == 0)
+				g_SmartCardAsync = FALSE;
+			else
+				g_SmartCardAsync = TRUE;
+
+			free(envSmartCardAsync);
+		}
+	}
+
+	return 0;
+}
 
 static void smartcard_free(DEVICE* device)
 {
@@ -129,28 +156,29 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		if (!ioControlCode)
 			return;
 
-#ifdef SMARTCARD_ASYNC_IRP
-		asyncIrp = TRUE;
-
-		switch (ioControlCode)
+		if (g_SmartCardAsync)
 		{
-			case SCARD_IOCTL_ESTABLISHCONTEXT:
-			case SCARD_IOCTL_RELEASECONTEXT:
-			case SCARD_IOCTL_ISVALIDCONTEXT:
-			case SCARD_IOCTL_ACCESSSTARTEDEVENT:
-			case SCARD_IOCTL_RELEASESTARTEDEVENT:
-				asyncIrp = FALSE;
-				break;
+			asyncIrp = TRUE;
 
-			case SCARD_IOCTL_TRANSMIT:
-			case SCARD_IOCTL_STATUSA:
-			case SCARD_IOCTL_STATUSW:
-			case SCARD_IOCTL_GETSTATUSCHANGEA:
-			case SCARD_IOCTL_GETSTATUSCHANGEW:
-				asyncIrp = TRUE;
-				break;
+			switch (ioControlCode)
+			{
+				case SCARD_IOCTL_ESTABLISHCONTEXT:
+				case SCARD_IOCTL_RELEASECONTEXT:
+				case SCARD_IOCTL_ISVALIDCONTEXT:
+				case SCARD_IOCTL_ACCESSSTARTEDEVENT:
+				case SCARD_IOCTL_RELEASESTARTEDEVENT:
+					asyncIrp = FALSE;
+					break;
+
+				case SCARD_IOCTL_TRANSMIT:
+				case SCARD_IOCTL_STATUSA:
+				case SCARD_IOCTL_STATUSW:
+				case SCARD_IOCTL_GETSTATUSCHANGEA:
+				case SCARD_IOCTL_GETSTATUSCHANGEW:
+					asyncIrp = TRUE;
+					break;
+			}
 		}
-#endif
 
 		if (!asyncIrp)
 		{
@@ -221,6 +249,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	name = device->Name;
 	path = device->Path;
 
+	smartcard_environment_init();
+
 	smartcard = (SMARTCARD_DEVICE*) calloc(1, sizeof(SMARTCARD_DEVICE));
 
 	if (!smartcard)
@@ -255,7 +285,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	smartcard->log = WLog_Get("com.freerdp.channel.smartcard.client");
 
-	//WLog_SetLogLevel(smartcard->log, WLOG_DEBUG);
+	WLog_SetLogLevel(smartcard->log, WLOG_DEBUG);
 
 	smartcard->IrpQueue = MessageQueue_New(NULL);
 	smartcard->OutstandingIrps = ListDictionary_New(TRUE);

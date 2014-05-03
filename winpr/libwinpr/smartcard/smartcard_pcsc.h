@@ -25,6 +25,34 @@
 #include <winpr/platform.h>
 #include <winpr/smartcard.h>
 
+/**
+ * On Windows, DWORD and ULONG are defined to unsigned long.
+ * However, 64-bit Windows uses the LLP64 model which defines
+ * unsigned long as a 4-byte type, while most non-Windows
+ * systems use the LP64 model where unsigned long is 8 bytes.
+ *
+ * WinPR correctly defines DWORD and ULONG to be 4-byte types
+ * regardless of LLP64/LP64, but this has the side effect of
+ * breaking compatibility with the broken pcsc-lite types.
+ *
+ * To make matters worse, pcsc-lite correctly defines
+ * the data types on OS X, but not on other platforms.
+ */
+
+#ifdef __APPLE__
+typedef unsigned int PCSC_DWORD;
+typedef PCSC_DWORD *PCSC_PDWORD, *PCSC_LPDWORD;
+typedef unsigned int PCSC_ULONG;
+typedef PCSC_ULONG *PCSC_PULONG;
+typedef int PCSC_LONG;
+#else
+typedef unsigned long PCSC_DWORD;
+typedef PCSC_DWORD *PCSC_PDWORD, *PCSC_LPDWORD;
+typedef unsigned long PCSC_ULONG;
+typedef PCSC_ULONG *PCSC_PULONG;
+typedef long PCSC_LONG;
+#endif
+
 #define PCSC_SCARD_UNKNOWN		0x0001
 #define PCSC_SCARD_ABSENT		0x0002
 #define PCSC_SCARD_PRESENT		0x0004
@@ -41,49 +69,59 @@
 
 #define PCSC_MAX_ATR_SIZE		33
 
+#define PCSC_SCARD_AUTOALLOCATE		(PCSC_DWORD)(-1)
+
 typedef struct
 {
 	LPCSTR szReader;
 	LPVOID pvUserData;
-	DWORD dwCurrentState;
-	DWORD dwEventState;
-	DWORD cbAtr;
+	PCSC_DWORD dwCurrentState;
+	PCSC_DWORD dwEventState;
+	PCSC_DWORD cbAtr;
 	BYTE rgbAtr[PCSC_MAX_ATR_SIZE]; /* WinSCard: 36, PCSC: 33 */
 }
 PCSC_SCARD_READERSTATE;
 
+typedef struct _PCSC_SCARD_IO_REQUEST
+{
+	PCSC_DWORD dwProtocol;
+	PCSC_DWORD cbPciLength;
+} PCSC_SCARD_IO_REQUEST, *PCSC_PSCARD_IO_REQUEST, *PCSC_LPSCARD_IO_REQUEST;
+typedef const PCSC_SCARD_IO_REQUEST *PCSC_LPCSCARD_IO_REQUEST;
+
 struct _PCSCFunctionTable
 {
-	LONG (* pfnSCardEstablishContext)(DWORD dwScope, LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
-	LONG (* pfnSCardReleaseContext)(SCARDCONTEXT hContext);
-	LONG (* pfnSCardIsValidContext)(SCARDCONTEXT hContext);
-	LONG (* pfnSCardConnect)(SCARDCONTEXT hContext,
-			LPCSTR szReader, DWORD dwShareMode, DWORD dwPreferredProtocols,
-			LPSCARDHANDLE phCard, LPDWORD pdwActiveProtocol);
-	LONG (* pfnSCardReconnect)(SCARDHANDLE hCard,
-			DWORD dwShareMode, DWORD dwPreferredProtocols,
-			DWORD dwInitialization, LPDWORD pdwActiveProtocol);
-	LONG (* pfnSCardDisconnect)(SCARDHANDLE hCard, DWORD dwDisposition);
-	LONG (* pfnSCardBeginTransaction)(SCARDHANDLE hCard);
-	LONG (* pfnSCardEndTransaction)(SCARDHANDLE hCard, DWORD dwDisposition);
-	LONG (* pfnSCardStatus)(SCARDHANDLE hCard,
-			LPSTR mszReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState,
-			LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen);
-	LONG (* pfnSCardGetStatusChange)(SCARDCONTEXT hContext,
-			DWORD dwTimeout, PCSC_SCARD_READERSTATE* rgReaderStates, DWORD cReaders);
-	LONG (* pfnSCardControl)(SCARDHANDLE hCard,
-			DWORD dwControlCode, LPCVOID pbSendBuffer, DWORD cbSendLength,
-			LPVOID pbRecvBuffer, DWORD cbRecvLength, LPDWORD lpBytesReturned);
-	LONG (* pfnSCardTransmit)(SCARDHANDLE hCard,
-			const SCARD_IO_REQUEST* pioSendPci, LPCBYTE pbSendBuffer, DWORD cbSendLength,
-			SCARD_IO_REQUEST* pioRecvPci, LPBYTE pbRecvBuffer, LPDWORD pcbRecvLength);
-	LONG (* pfnSCardListReaderGroups)(SCARDCONTEXT hContext, LPSTR mszGroups, LPDWORD pcchGroups);
-	LONG (* pfnSCardListReaders)(SCARDCONTEXT hContext,
-			LPCSTR mszGroups, LPSTR mszReaders, LPDWORD pcchReaders);
-	LONG (* pfnSCardFreeMemory)(SCARDCONTEXT hContext, LPCVOID pvMem);
-	LONG (* pfnSCardCancel)(SCARDCONTEXT hContext);
-	LONG (* pfnSCardGetAttrib)(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr, LPDWORD pcbAttrLen);
-	LONG (* pfnSCardSetAttrib)(SCARDHANDLE hCard, DWORD dwAttrId, LPCBYTE pbAttr, DWORD cbAttrLen);
+	PCSC_LONG (* pfnSCardEstablishContext)(PCSC_DWORD dwScope,
+			LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
+	PCSC_LONG (* pfnSCardReleaseContext)(SCARDCONTEXT hContext);
+	PCSC_LONG (* pfnSCardIsValidContext)(SCARDCONTEXT hContext);
+	PCSC_LONG (* pfnSCardConnect)(SCARDCONTEXT hContext,
+			LPCSTR szReader, PCSC_DWORD dwShareMode, PCSC_DWORD dwPreferredProtocols,
+			LPSCARDHANDLE phCard, PCSC_LPDWORD pdwActiveProtocol);
+	PCSC_LONG (* pfnSCardReconnect)(SCARDHANDLE hCard,
+			PCSC_DWORD dwShareMode, PCSC_DWORD dwPreferredProtocols,
+			PCSC_DWORD dwInitialization, PCSC_LPDWORD pdwActiveProtocol);
+	PCSC_LONG (* pfnSCardDisconnect)(SCARDHANDLE hCard, PCSC_DWORD dwDisposition);
+	PCSC_LONG (* pfnSCardBeginTransaction)(SCARDHANDLE hCard);
+	PCSC_LONG (* pfnSCardEndTransaction)(SCARDHANDLE hCard, PCSC_DWORD dwDisposition);
+	PCSC_LONG (* pfnSCardStatus)(SCARDHANDLE hCard,
+			LPSTR mszReaderName, PCSC_LPDWORD pcchReaderLen, PCSC_LPDWORD pdwState,
+			PCSC_LPDWORD pdwProtocol, LPBYTE pbAtr, PCSC_LPDWORD pcbAtrLen);
+	PCSC_LONG (* pfnSCardGetStatusChange)(SCARDCONTEXT hContext,
+			PCSC_DWORD dwTimeout, PCSC_SCARD_READERSTATE* rgReaderStates, PCSC_DWORD cReaders);
+	PCSC_LONG (* pfnSCardControl)(SCARDHANDLE hCard,
+			PCSC_DWORD dwControlCode, LPCVOID pbSendBuffer, PCSC_DWORD cbSendLength,
+			LPVOID pbRecvBuffer, PCSC_DWORD cbRecvLength, PCSC_LPDWORD lpBytesReturned);
+	PCSC_LONG (* pfnSCardTransmit)(SCARDHANDLE hCard,
+			const SCARD_IO_REQUEST* pioSendPci, LPCBYTE pbSendBuffer, PCSC_DWORD cbSendLength,
+			SCARD_IO_REQUEST* pioRecvPci, LPBYTE pbRecvBuffer, PCSC_LPDWORD pcbRecvLength);
+	PCSC_LONG (* pfnSCardListReaderGroups)(SCARDCONTEXT hContext, LPSTR mszGroups, PCSC_LPDWORD pcchGroups);
+	PCSC_LONG (* pfnSCardListReaders)(SCARDCONTEXT hContext,
+			LPCSTR mszGroups, LPSTR mszReaders, PCSC_LPDWORD pcchReaders);
+	PCSC_LONG (* pfnSCardFreeMemory)(SCARDCONTEXT hContext, LPCVOID pvMem);
+	PCSC_LONG (* pfnSCardCancel)(SCARDCONTEXT hContext);
+	PCSC_LONG (* pfnSCardGetAttrib)(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPBYTE pbAttr, PCSC_LPDWORD pcbAttrLen);
+	PCSC_LONG (* pfnSCardSetAttrib)(SCARDHANDLE hCard, PCSC_DWORD dwAttrId, LPCBYTE pbAttr, PCSC_DWORD cbAttrLen);
 };
 typedef struct _PCSCFunctionTable PCSCFunctionTable;
 

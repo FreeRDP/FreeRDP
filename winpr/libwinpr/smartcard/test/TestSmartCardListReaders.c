@@ -5,9 +5,9 @@
 int TestSmartCardListReaders(int argc, char* argv[])
 {
 	LONG lStatus;
-	LPTSTR pReader;
+	LPSTR pReader;
 	SCARDCONTEXT hSC;
-	LPSTR pmszReaders = NULL;
+	LPSTR mszReaders = NULL;
 	DWORD cchReaders = SCARD_AUTOALLOCATE;
 
 	lStatus = SCardEstablishContext(SCARD_SCOPE_USER, NULL, NULL, &hSC);
@@ -19,8 +19,7 @@ int TestSmartCardListReaders(int argc, char* argv[])
 		return 0;
 	}
 
-#if 0
-	lStatus = SCardListReadersA(hSC, NULL, (LPSTR) &pmszReaders, &cchReaders);
+	lStatus = SCardListReadersA(hSC, NULL, (LPSTR) &mszReaders, &cchReaders);
 
 	if (lStatus != SCARD_S_SUCCESS)
 	{
@@ -31,7 +30,7 @@ int TestSmartCardListReaders(int argc, char* argv[])
 	}
 	else
 	{
-		pReader = pmszReaders;
+		pReader = mszReaders;
 
 		while (*pReader)
 		{
@@ -39,12 +38,11 @@ int TestSmartCardListReaders(int argc, char* argv[])
 			pReader = pReader + strlen((CHAR*) pReader) + 1;
 		}
 
-		lStatus = SCardFreeMemory(hSC, pmszReaders);
+		lStatus = SCardFreeMemory(hSC, mszReaders);
 
 		if (lStatus != SCARD_S_SUCCESS)
 			printf("Failed SCardFreeMemory\n");
 	}
-#endif
 
 	SCardReleaseContext(hSC);
 
