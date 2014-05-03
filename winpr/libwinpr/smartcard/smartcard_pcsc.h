@@ -71,6 +71,10 @@ typedef long PCSC_LONG;
 
 #define PCSC_SCARD_AUTOALLOCATE		(PCSC_DWORD)(-1)
 
+#define PCSC_SCARD_PCI_T0	(&g_PCSC_rgSCardT0Pci)
+#define PCSC_SCARD_PCI_T1	(&g_PCSC_rgSCardT1Pci)
+#define PCSC_SCARD_PCI_RAW	(&g_PCSC_rgSCardRawPci)
+
 typedef struct
 {
 	LPCSTR szReader;
@@ -82,12 +86,11 @@ typedef struct
 }
 PCSC_SCARD_READERSTATE;
 
-typedef struct _PCSC_SCARD_IO_REQUEST
+typedef struct
 {
 	PCSC_DWORD dwProtocol;
 	PCSC_DWORD cbPciLength;
-} PCSC_SCARD_IO_REQUEST, *PCSC_PSCARD_IO_REQUEST, *PCSC_LPSCARD_IO_REQUEST;
-typedef const PCSC_SCARD_IO_REQUEST *PCSC_LPCSCARD_IO_REQUEST;
+} PCSC_SCARD_IO_REQUEST;
 
 struct _PCSCFunctionTable
 {
@@ -113,8 +116,8 @@ struct _PCSCFunctionTable
 			PCSC_DWORD dwControlCode, LPCVOID pbSendBuffer, PCSC_DWORD cbSendLength,
 			LPVOID pbRecvBuffer, PCSC_DWORD cbRecvLength, PCSC_LPDWORD lpBytesReturned);
 	PCSC_LONG (* pfnSCardTransmit)(SCARDHANDLE hCard,
-			const SCARD_IO_REQUEST* pioSendPci, LPCBYTE pbSendBuffer, PCSC_DWORD cbSendLength,
-			SCARD_IO_REQUEST* pioRecvPci, LPBYTE pbRecvBuffer, PCSC_LPDWORD pcbRecvLength);
+			const PCSC_SCARD_IO_REQUEST* pioSendPci, LPCBYTE pbSendBuffer, PCSC_DWORD cbSendLength,
+			PCSC_SCARD_IO_REQUEST* pioRecvPci, LPBYTE pbRecvBuffer, PCSC_LPDWORD pcbRecvLength);
 	PCSC_LONG (* pfnSCardListReaderGroups)(SCARDCONTEXT hContext, LPSTR mszGroups, PCSC_LPDWORD pcchGroups);
 	PCSC_LONG (* pfnSCardListReaders)(SCARDCONTEXT hContext,
 			LPCSTR mszGroups, LPSTR mszReaders, PCSC_LPDWORD pcchReaders);

@@ -69,6 +69,10 @@ char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
 WCHAR SMARTCARD_PNP_NOTIFICATION_W[] = { '\\','\\','?','P','n','P','?',
 	'\\','N','o','t','i','f','i','c','a','t','i','o','n','\0' };
 
+const PCSC_SCARD_IO_REQUEST g_PCSC_rgSCardT0Pci = { SCARD_PROTOCOL_T0, sizeof(PCSC_SCARD_IO_REQUEST) };
+const PCSC_SCARD_IO_REQUEST g_PCSC_rgSCardT1Pci = { SCARD_PROTOCOL_T1, sizeof(PCSC_SCARD_IO_REQUEST) };
+const PCSC_SCARD_IO_REQUEST g_PCSC_rgSCardRawPci = { PCSC_SCARD_PROTOCOL_RAW, sizeof(PCSC_SCARD_IO_REQUEST) };
+
 WINSCARDAPI LONG WINAPI PCSC_SCardFreeMemory_Internal(SCARDCONTEXT hContext, LPCVOID pvMem);
 
 LONG PCSC_MapErrorCodeToWinSCard(LONG errorCode)
@@ -1660,11 +1664,24 @@ WINSCARDAPI LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard,
 		LPSCARD_IO_REQUEST pioRecvPci, LPBYTE pbRecvBuffer, LPDWORD pcbRecvLength)
 {
 	LONG status = SCARD_S_SUCCESS;
+	PCSC_DWORD cbExtraBytes = 0;
+	BYTE* pbExtraBytes = NULL;
+	BYTE* pcsc_pbExtraBytes = NULL;
+	PCSC_SCARD_IO_REQUEST* pcsc_pioSendPci = NULL;
+	PCSC_SCARD_IO_REQUEST* pcsc_pioRecvPci = NULL;
 	PCSC_DWORD pcsc_cbSendLength = (PCSC_DWORD) cbSendLength;
-	PCSC_DWORD pcsc_cbRecvLength = (PCSC_DWORD) *pcbRecvLength;
+	PCSC_DWORD pcsc_cbRecvLength = 0;
 
 	if (!g_PCSC.pfnSCardTransmit)
 		return SCARD_E_NO_SERVICE;
+
+	if (!pcbRecvLength)
+		return SCARD_E_INVALID_PARAMETER;
+
+	if (*pcbRecvLength == SCARD_AUTOALLOCATE)
+		return SCARD_E_INVALID_PARAMETER;
+
+	pcsc_cbRecvLength = (PCSC_DWORD) *pcbRecvLength;
 
 	if (!pioSendPci)
 	{
@@ -1683,19 +1700,58 @@ WINSCARDAPI LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard,
 		if (status == SCARD_S_SUCCESS)
 		{
 			if (dwProtocol == SCARD_PROTOCOL_T0)
-				pioSendPci = SCARD_PCI_T0;
+				pcsc_pioSendPci = (PCSC_SCARD_IO_REQUEST*) PCSC_SCARD_PCI_T0;
 			else if (dwProtocol == SCARD_PROTOCOL_T1)
-				pioSendPci = SCARD_PCI_T1;
-			else if (dwProtocol == SCARD_PROTOCOL_RAW)
-				pioSendPci = SCARD_PCI_RAW;
+				pcsc_pioSendPci = (PCSC_SCARD_IO_REQUEST*) PCSC_SCARD_PCI_T1;
+			else if (dwProtocol == PCSC_SCARD_PROTOCOL_RAW)
+				pcsc_pioSendPci = (PCSC_SCARD_IO_REQUEST*) PCSC_SCARD_PCI_RAW;
 		}
 	}
+	else
+	{
+		cbExtraBytes = pioSendPci->cbPciLength - sizeof(SCARD_IO_REQUEST);
+		pcsc_pioSendPci = (PCSC_SCARD_IO_REQUEST*) malloc(sizeof(PCSC_SCARD_IO_REQUEST) + cbExtraBytes);
 
-	status = (LONG) g_PCSC.pfnSCardTransmit(hCard, pioSendPci, pbSendBuffer,
-			pcsc_cbSendLength, pioRecvPci, pbRecvBuffer, &pcsc_cbRecvLength);
+		if (!pcsc_pioSendPci)
+			return SCARD_E_NO_MEMORY;
+
+		pcsc_pioSendPci->dwProtocol = (PCSC_DWORD) pioSendPci->dwProtocol;
+		pcsc_pioSendPci->cbPciLength = sizeof(PCSC_SCARD_IO_REQUEST) + cbExtraBytes;
+
+		pbExtraBytes = &((BYTE*) pioSendPci)[sizeof(SCARD_IO_REQUEST)];
+		pcsc_pbExtraBytes = &((BYTE*) pcsc_pioSendPci)[sizeof(PCSC_SCARD_IO_REQUEST)];
+
+		CopyMemory(pcsc_pbExtraBytes, pbExtraBytes, cbExtraBytes);
+	}
+
+	if (pioRecvPci)
+	{
+		cbExtraBytes = pioRecvPci->cbPciLength - sizeof(SCARD_IO_REQUEST);
+		pcsc_pioRecvPci = (PCSC_SCARD_IO_REQUEST*) malloc(sizeof(PCSC_SCARD_IO_REQUEST) + cbExtraBytes);
+
+		if (!pcsc_pioRecvPci)
+			return SCARD_E_NO_MEMORY;
+
+		pcsc_pioRecvPci->dwProtocol = (PCSC_DWORD) pioRecvPci->dwProtocol;
+		pcsc_pioRecvPci->cbPciLength = sizeof(PCSC_SCARD_IO_REQUEST) + cbExtraBytes;
+
+		pbExtraBytes = &((BYTE*) pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
+		pcsc_pbExtraBytes = &((BYTE*) pcsc_pioRecvPci)[sizeof(PCSC_SCARD_IO_REQUEST)];
+
+		CopyMemory(pcsc_pbExtraBytes, pbExtraBytes, cbExtraBytes);
+	}
+
+	status = (LONG) g_PCSC.pfnSCardTransmit(hCard, pcsc_pioSendPci, pbSendBuffer,
+			pcsc_cbSendLength, pcsc_pioRecvPci, pbRecvBuffer, &pcsc_cbRecvLength);
 	status = PCSC_MapErrorCodeToWinSCard(status);
 
 	*pcbRecvLength = (DWORD) pcsc_cbRecvLength;
+
+	if (pioSendPci)
+		free(pcsc_pioSendPci); /* pcsc_pioSendPci is dynamically allocated only when pioSendPci is non null */
+
+	if (pioRecvPci)
+		free(pcsc_pioRecvPci); /* pcsc_pioRecvPci is dynamically allocated only when pioRecvPci is non null */
 
 	return status;
 }
