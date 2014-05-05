@@ -46,6 +46,11 @@ typedef struct _RDP61_COMPRESSED_DATA RDP61_COMPRESSED_DATA;
 struct _XCRUSH_CONTEXT
 {
 	BOOL Compressor;
+	MPPC_CONTEXT* mppc;
+	BYTE* HistoryPtr;
+	UINT32 HistoryOffset;
+	UINT32 HistoryBufferSize;
+	BYTE HistoryBuffer[2000000];
 };
 typedef struct _XCRUSH_CONTEXT XCRUSH_CONTEXT;
 
