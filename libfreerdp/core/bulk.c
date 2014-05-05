@@ -23,7 +23,7 @@
 
 #include "bulk.h"
 
-#define WITH_BULK_DEBUG		1
+//#define WITH_BULK_DEBUG		1
 
 const char* bulk_get_compression_flags_string(UINT32 flags)
 {

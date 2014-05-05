@@ -27,28 +27,46 @@
 
 #include <freerdp/codec/xcrush.h>
 
+int xcrush_copy_bytes(BYTE* dst, BYTE* src, int num)
+{
+	int index;
+
+	for (index = 0; index < num; index++)
+	{
+		dst[index] = src[index];
+	}
+
+	return num;
+}
+
 int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	BYTE* pSrcEnd = NULL;
 	BYTE* Literals = NULL;
 	UINT16 MatchCount = 0;
 	UINT16 MatchIndex = 0;
-	UINT16 MatchLength = 0;
+	BYTE* OutputPtr = NULL;
+	int OutputLength = 0;
 	UINT32 OutputOffset = 0;
 	BYTE* HistoryPtr = NULL;
 	BYTE* HistoryBuffer = NULL;
 	BYTE* HistoryBufferEnd = NULL;
+	UINT32 HistoryBufferSize = 0;
+	UINT16 MatchLength = 0;
+	UINT16 MatchOutputOffset = 0;
+	UINT32 MatchHistoryOffset = 0;
 	RDP61_MATCH_DETAILS* MatchDetails = NULL;
 
 	if (SrcSize < 1)
-		return -1;
+		return -1001;
 
 	if (flags & L1_PACKET_AT_FRONT)
 		xcrush->HistoryOffset = 0;
 
 	pSrcEnd = &pSrcData[SrcSize];
 	HistoryBuffer = xcrush->HistoryBuffer;
-	HistoryBufferEnd = &(HistoryBuffer[xcrush->HistoryBufferSize]);
+	HistoryBufferSize = xcrush->HistoryBufferSize;
+	HistoryBufferEnd = &(HistoryBuffer[HistoryBufferSize]);
 	xcrush->HistoryPtr = HistoryPtr = &(HistoryBuffer[xcrush->HistoryOffset]);
 
 	if (flags & L1_NO_COMPRESSION)
@@ -58,37 +76,81 @@ int xcrush_decompress_l1(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize,
 	else
 	{
 		if (!(flags & L1_COMPRESSED))
-		{
-			return -1;
-		}
+			return -1002;
 
 		if ((pSrcData + 2) > pSrcEnd)
-		{
-			return -1;
-		}
+			return -1003;
 
 		MatchCount = *((UINT16*) pSrcData);
+
 		MatchDetails = (RDP61_MATCH_DETAILS*) &pSrcData[2];
 		Literals = (BYTE*) &MatchDetails[MatchCount];
 		OutputOffset = 0;
 
+		if (Literals > pSrcEnd)
+			return -1004;
+
 		for (MatchIndex = 0; MatchIndex < MatchCount; MatchIndex++)
 		{
-			MatchLength = MatchDetails->MatchLength;
+			MatchLength = MatchDetails[MatchIndex].MatchLength;
+			MatchOutputOffset = MatchDetails[MatchIndex].MatchOutputOffset;
+			MatchHistoryOffset = MatchDetails[MatchIndex].MatchHistoryOffset;
 
-			printf("Match[%d]: Length: %d OutputOffset: %d HistoryOffset: %d\n",
-					(int) MatchIndex, (int) MatchDetails->MatchLength,
-					(int) MatchDetails->MatchOutputOffset, (int) MatchDetails->MatchHistoryOffset);
+			if (MatchOutputOffset < OutputOffset)
+				return -1005;
+
+			if (MatchLength > HistoryBufferSize)
+				return -1006;
+
+			if (MatchHistoryOffset > HistoryBufferSize)
+				return -1007;
+
+			OutputLength = MatchOutputOffset - OutputOffset;
+
+			if ((MatchOutputOffset - OutputOffset) > HistoryBufferSize)
+				return -1008;
+
+			if (OutputLength > 0)
+			{
+				if ((&HistoryPtr[OutputLength] >= HistoryBufferEnd) || (Literals >= pSrcEnd) || (&Literals[OutputLength] > pSrcEnd))
+					return -1009;
+
+				xcrush_copy_bytes(HistoryPtr, Literals, OutputLength);
+
+				HistoryPtr += OutputLength;
+				Literals += OutputLength;
+				OutputOffset += OutputLength;
+
+				if (Literals > pSrcEnd)
+					return -1010;
+			}
+
+			OutputPtr = &xcrush->HistoryBuffer[MatchHistoryOffset];
+
+			if ((&HistoryPtr[MatchLength] >= HistoryBufferEnd) || (&OutputPtr[MatchLength] >= HistoryBufferEnd))
+				return -1011;
+
+			xcrush_copy_bytes(HistoryPtr, OutputPtr, MatchLength);
+
+			OutputOffset += MatchLength;
+			HistoryPtr += MatchLength;
 		}
 	}
 
-	if (Literals >= pSrcEnd)
+	if (Literals < pSrcEnd)
 	{
-		xcrush->HistoryOffset = HistoryPtr - HistoryBuffer;
-		*pDstSize = HistoryPtr - xcrush->HistoryPtr;
-		*ppDstData = xcrush->HistoryPtr;
-		return 1;
+		OutputLength = pSrcEnd - Literals;
+
+		if ((&HistoryPtr[OutputLength] >= HistoryBufferEnd) || (&Literals[OutputLength] > pSrcEnd))
+			return -1012;
+
+		xcrush_copy_bytes(HistoryPtr, Literals, OutputLength);
+		HistoryPtr += OutputLength;
 	}
+
+	xcrush->HistoryOffset = HistoryPtr - HistoryBuffer;
+	*pDstSize = HistoryPtr - xcrush->HistoryPtr;
+	*ppDstData = xcrush->HistoryPtr;
 
 	return 1;
 }
@@ -110,12 +172,8 @@ int xcrush_decompress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	pSrcData += 2;
 	SrcSize -= 2;
 
-	printf("Compression Flags: L1: 0x%04X L2: 0x%04X\n", Level1ComprFlags, Level2ComprFlags);
-
 	if (Level2ComprFlags & PACKET_COMPRESSED)
 	{
-		printf("Level-2 PACKET_COMPRESSED\n");
-
 		status = mppc_decompress(xcrush->mppc, pSrcData, SrcSize, &pDstData, &DstSize, Level2ComprFlags);
 
 		if (status < 0)
@@ -123,13 +181,9 @@ int xcrush_decompress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	}
 	else
 	{
-		printf("Level-2 PACKET_UNCOMPRESSED\n");
-
 		pDstData = pSrcData;
 		DstSize = SrcSize;
 	}
-
-	/* Level-1 Decompression */
 
 	status = xcrush_decompress_l1(xcrush, pDstData, DstSize, ppDstData, pDstSize, Level1ComprFlags);
 
