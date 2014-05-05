@@ -1934,6 +1934,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 	int length = 0;
 	char* namePCSC;
 	char* nameWinSCard;
+	DWORD cbAttrLen = 0;
 	char* pbAttrA = NULL;
 	WCHAR* pbAttrW = NULL;
 	SCARDCONTEXT hContext;
@@ -1947,6 +1948,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 	if (!hContext)
 		return SCARD_E_INVALID_HANDLE;
 
+	cbAttrLen = *pcbAttrLen;
 	*pcbAttrLen = SCARD_AUTOALLOCATE;
 
 	status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A,
@@ -2004,7 +2006,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 		if (!friendlyNameW)
 			return SCARD_E_NO_MEMORY;
 
-		if (*pcbAttrLen == SCARD_AUTOALLOCATE)
+		if (cbAttrLen == SCARD_AUTOALLOCATE)
 		{
 			*pPbAttr = (BYTE*) friendlyNameW;
 			*pcbAttrLen = length * 2;
@@ -2012,7 +2014,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 		}
 		else
 		{
-			if (((length + 1) * 2) > *pcbAttrLen)
+			if (((length + 1) * 2) > cbAttrLen)
 			{
 				free(friendlyNameW);
 				return SCARD_E_INSUFFICIENT_BUFFER;
@@ -2027,7 +2029,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 	}
 	else
 	{
-		if (*pcbAttrLen == SCARD_AUTOALLOCATE)
+		if (cbAttrLen == SCARD_AUTOALLOCATE)
 		{
 			*pPbAttr = (BYTE*) friendlyNameA;
 			*pcbAttrLen = length;
@@ -2035,7 +2037,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 		}
 		else
 		{
-			if ((length + 1) > *pcbAttrLen)
+			if ((length + 1) > cbAttrLen)
 			{
 				free(friendlyNameA);
 				return SCARD_E_INSUFFICIENT_BUFFER;
@@ -2080,7 +2082,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 
 	if ((dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_A) || (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W))
 	{
-		return PCSC_SCardGetAttrib_FriendlyName(hCard, dwAttrId, pbAttr, pcbAttrLen);
+		status = PCSC_SCardGetAttrib_FriendlyName(hCard, dwAttrId, pbAttr, pcbAttrLen);
+		return status;
 	}
 
 	status = PCSC_SCardGetAttrib_Internal(hCard, dwAttrId, pbAttr, pcbAttrLen);
