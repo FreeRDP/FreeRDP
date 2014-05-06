@@ -22,6 +22,7 @@
 
 #ifndef _WIN32
 
+#include "comm_serial_sys.h"
 #include "comm_sercx_sys.h"
 
 #include "comm_sercx2_sys.h"

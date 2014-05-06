@@ -142,23 +142,33 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 {
 	int i;
 
+	/* http://msdn.microsoft.com/en-us/library/windows/hardware/jj680684%28v=vs.85%29.aspx
+	 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363189%28v=vs.85%29.aspx
+	 */
+
 	/* FIXME: properties should be better probe. The current
 	 * implementation just relies on the Linux' implementation.
 	 */
 
 	// TMP: TODO:
 
-	// TMP: COMMPROP_INITIALIZED ?
 
-	// TMP: required?
-	// ZeroMemory(pProperties, sizeof(COMMPROP);
+	if (pProperties->dwProvSpec1 != COMMPROP_INITIALIZED)
+	{
+		ZeroMemory(pProperties, sizeof(COMMPROP));
+		pProperties->wPacketLength = sizeof(COMMPROP);
+	}
 
-	/* pProperties->PacketLength; */
-	/* pProperties->PacketVersion; */
-	/* pProperties->ServiceMask; */
-	/* pProperties->Reserved1; */
+	pProperties->wPacketVersion = 2;
+
+	pProperties->dwServiceMask = SERIAL_SP_SERIALCOMM;
+
+	/* pProperties->Reserved1; not used */
+
+	// TMP: FIXME: related to the UART's FIFO ? 
 	/* pProperties->MaxTxQueue; */
 	/* pProperties->MaxRxQueue; */
+
 	pProperties->dwMaxBaud = SERIAL_BAUD_115200; /* _SERIAL_MAX_BAUD */
 
 	/* FIXME: what about PST_RS232? */
@@ -182,11 +192,13 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 
 	pProperties->wSettableStopParity = STOPBITS_10 | /*STOPBITS_15 |*/ STOPBITS_20 | PARITY_NONE | PARITY_ODD | PARITY_EVEN | PARITY_MARK | PARITY_SPACE;
 
+	// TMP: FIXME: related to the UART's FIFO ? 
 	/* pProperties->CurrentTxQueue; */
 	/* pProperties->CurrentRxQueue; */
-	/* pProperties->ProvSpec1; */
-	/* pProperties->ProvSpec2; */
-	/* pProperties->ProvChar[1]; */
+
+	/* pProperties->ProvSpec1; see above */
+	/* pProperties->ProvSpec2; ignored */
+	/* pProperties->ProvChar[1]; ignored */
 
 	return TRUE;
 }
