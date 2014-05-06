@@ -37,32 +37,6 @@
 
 static BOOL g_SmartCardAsync = TRUE;
 
-int smartcard_environment_init()
-{
-	DWORD nSize;
-	char* envSmartCardAsync;
-
-	nSize = GetEnvironmentVariableA("FREERDP_SMARTCARD_ASYNC", NULL, 0);
-
-	if (nSize)
-	{
-		envSmartCardAsync = (LPSTR) malloc(nSize);
-		nSize = GetEnvironmentVariableA("FREERDP_SMARTCARD_ASYNC", envSmartCardAsync, nSize);
-
-		if (envSmartCardAsync)
-		{
-			if (_stricmp(envSmartCardAsync, "0") == 0)
-				g_SmartCardAsync = FALSE;
-			else
-				g_SmartCardAsync = TRUE;
-
-			free(envSmartCardAsync);
-		}
-	}
-
-	return 0;
-}
-
 static void smartcard_free(DEVICE* device)
 {
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
@@ -75,7 +49,8 @@ static void smartcard_free(DEVICE* device)
 	Stream_Free(smartcard->device.data, TRUE);
 
 	MessageQueue_Free(smartcard->IrpQueue);
-	ListDictionary_Free(smartcard->OutstandingIrps);
+	ListDictionary_Free(smartcard->rgSCardContextList);
+	ListDictionary_Free(smartcard->rgOutstandingMessages);
 
 	free(device);
 }
@@ -91,19 +66,43 @@ static void smartcard_init(DEVICE* device)
 	int index;
 	int keyCount;
 	ULONG_PTR* pKeys;
+	SCARDCONTEXT hContext;
+
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 
-	if (ListDictionary_Count(smartcard->OutstandingIrps) > 0)
+	if (ListDictionary_Count(smartcard->rgOutstandingMessages) > 0)
 	{
 		pKeys = NULL;
-		keyCount = ListDictionary_GetKeys(smartcard->OutstandingIrps, &pKeys);
+		keyCount = ListDictionary_GetKeys(smartcard->rgOutstandingMessages, &pKeys);
 
 		for (index = 0; index < keyCount; index++)
 		{
-			irp = (IRP*) ListDictionary_GetItemValue(smartcard->OutstandingIrps, (void*) pKeys[index]);
+			irp = (IRP*) ListDictionary_GetItemValue(smartcard->rgOutstandingMessages, (void*) pKeys[index]);
 
 			if (irp)
 				irp->cancelled = TRUE;
+		}
+
+		free(pKeys);
+	}
+
+	/**
+	 * On protocol termination, the following actions are performed:
+	 * For each context in rgSCardContextList, SCardCancel is called causing all outstanding messages to be processed.
+	 * After there are no more outstanding messages, SCardReleaseContext is called on each context and the context MUST
+	 * be removed from rgSCardContextList.
+	 */
+
+	if (ListDictionary_Count(smartcard->rgSCardContextList) > 0)
+	{
+		pKeys = NULL;
+		keyCount = ListDictionary_GetKeys(smartcard->rgSCardContextList, &pKeys);
+
+		for (index = 0; index < keyCount; index++)
+		{
+			hContext = (SCARDCONTEXT) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
+
+			SCardCancel(hContext);
 		}
 
 		free(pKeys);
@@ -115,7 +114,7 @@ void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	void* key;
 
 	key = (void*) (size_t) irp->CompletionId;
-	ListDictionary_Remove(smartcard->OutstandingIrps, key);
+	ListDictionary_Remove(smartcard->rgOutstandingMessages, key);
 
 	if (!irp->cancelled)
 		irp->Complete(irp);
@@ -147,7 +146,7 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	UINT32 ioControlCode = 0;
 
 	key = (void*) (size_t) irp->CompletionId;
-	ListDictionary_Add(smartcard->OutstandingIrps, key, irp);
+	ListDictionary_Add(smartcard->rgOutstandingMessages, key, irp);
 
 	if (irp->MajorFunction == IRP_MJ_DEVICE_CONTROL)
 	{
@@ -249,8 +248,6 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	name = device->Name;
 	path = device->Path;
 
-	smartcard_environment_init();
-
 	smartcard = (SMARTCARD_DEVICE*) calloc(1, sizeof(SMARTCARD_DEVICE));
 
 	if (!smartcard)
@@ -288,7 +285,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	WLog_SetLogLevel(smartcard->log, WLOG_DEBUG);
 
 	smartcard->IrpQueue = MessageQueue_New(NULL);
-	smartcard->OutstandingIrps = ListDictionary_New(TRUE);
+	smartcard->rgSCardContextList = ListDictionary_New(TRUE);
+	smartcard->rgOutstandingMessages = ListDictionary_New(TRUE);
 
 	smartcard->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) smartcard_thread_func,
 			smartcard, CREATE_SUSPENDED, NULL);

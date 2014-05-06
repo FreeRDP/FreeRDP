@@ -150,7 +150,7 @@ static UINT32 smartcard_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	UINT32 status;
 	SCARDCONTEXT hContext = -1;
 	EstablishContext_Call call;
-	EstablishContext_Return ret;
+	EstablishContext_Return ret = { 0 };
 
 	status = smartcard_unpack_establish_context_call(smartcard, irp->input, &call);
 
@@ -161,8 +161,11 @@ static UINT32 smartcard_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = ret.ReturnCode = SCardEstablishContext(call.dwScope, NULL, NULL, &hContext);
 
-	if (status)
-		return status;
+	if (ret.ReturnCode == SCARD_S_SUCCESS)
+	{
+		void* key = (void*) (size_t) hContext;
+		ListDictionary_Add(smartcard->rgSCardContextList, key, NULL);
+	}
 
 	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), hContext);
 
@@ -193,6 +196,12 @@ static UINT32 smartcard_ReleaseContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
 
 	status = ret.ReturnCode = SCardReleaseContext(hContext);
+
+	if (ret.ReturnCode == SCARD_S_SUCCESS)
+	{
+		void* key = (void*) (size_t) hContext;
+		ListDictionary_Remove(smartcard->rgSCardContextList, key);
+	}
 
 	smartcard_trace_long_return(smartcard, &ret, "ReleaseContext");
 
