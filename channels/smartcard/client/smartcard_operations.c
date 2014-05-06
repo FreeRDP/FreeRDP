@@ -194,6 +194,8 @@ static UINT32 smartcard_ReleaseContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = ret.ReturnCode = SCardReleaseContext(hContext);
 
+	smartcard_trace_long_return(smartcard, &ret, "ReleaseContext");
+
 	return ret.ReturnCode;
 }
 
@@ -214,6 +216,8 @@ static UINT32 smartcard_IsValidContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
 
 	status = ret.ReturnCode = SCardIsValidContext(hContext);
+
+	smartcard_trace_long_return(smartcard, &ret, "IsValidContext");
 
 	return ret.ReturnCode;
 }
@@ -326,7 +330,7 @@ static UINT32 smartcard_GetStatusChangeA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = ret.ReturnCode = SCardGetStatusChangeA(hContext, call.dwTimeOut, call.rgReaderStates, call.cReaders);
 
-	if (status && (status != SCARD_E_TIMEOUT))
+	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED))
 		return status;
 
 	ret.cReaders = call.cReaders;
@@ -384,7 +388,7 @@ static UINT32 smartcard_GetStatusChangeW(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = ret.ReturnCode = SCardGetStatusChangeW(hContext, call.dwTimeOut, call.rgReaderStates, call.cReaders);
 
-	if (status && (status != SCARD_E_TIMEOUT))
+	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED))
 		return status;
 
 	ret.cReaders = call.cReaders;
@@ -439,6 +443,8 @@ static UINT32 smartcard_Cancel(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
 
 	status = ret.ReturnCode = SCardCancel(hContext);
+
+	smartcard_trace_long_return(smartcard, &ret, "Cancel");
 
 	return ret.ReturnCode;
 }
@@ -591,6 +597,8 @@ static UINT32 smartcard_Disconnect(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = ret.ReturnCode = SCardDisconnect(hCard, call.dwDisposition);
 
+	smartcard_trace_long_return(smartcard, &ret, "Disconnect");
+
 	if (status)
 		return status;
 
@@ -617,6 +625,8 @@ static UINT32 smartcard_BeginTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	status = ret.ReturnCode = SCardBeginTransaction(hCard);
 
+	smartcard_trace_long_return(smartcard, &ret, "BeginTransaction");
+
 	if (status)
 		return status;
 
@@ -642,6 +652,8 @@ static UINT32 smartcard_EndTransaction(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call.hCard));
 
 	status = ret.ReturnCode = SCardEndTransaction(hCard, call.dwDisposition);
+
+	smartcard_trace_long_return(smartcard, &ret, "EndTransaction");
 
 	if (status)
 		return status;

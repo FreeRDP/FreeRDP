@@ -459,7 +459,8 @@ void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard, Estab
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "EstablishContext_Return {");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: 0x%08X", ret->ReturnCode);
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
 	pb = (BYTE*) &(ret->hContext.pbContext);
 
@@ -515,6 +516,19 @@ void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, Context_Call* cal
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+}
+
+void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, Long_Return* ret, const char* name)
+{
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "%s_Return {", name);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }

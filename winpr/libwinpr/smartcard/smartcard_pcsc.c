@@ -2118,10 +2118,11 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 			{
 				LPDWORD pdwProtocol = (LPDWORD) pbAttr;
 
-				if (cbAttrLen < 4)
+				if (cbAttrLen < sizeof(DWORD))
 					return SCARD_E_INSUFFICIENT_BUFFER;
 
 				*pdwProtocol = PCSC_ConvertProtocolsToWinSCard(dwProtocol);
+				*pcbAttrLen = sizeof(DWORD);
 			}
 		}
 		else if (dwAttrId == SCARD_ATTR_VENDOR_IFD_TYPE)
