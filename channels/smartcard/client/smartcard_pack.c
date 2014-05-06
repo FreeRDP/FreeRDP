@@ -1718,8 +1718,8 @@ UINT32 smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Sta
 
 void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* ret, BOOL unicode)
 {
-	UINT32 index;
-	UINT32 length;
+	int index;
+	int length;
 	char* pbAtr = NULL;
 	char* mszReaderNamesA = NULL;
 
@@ -1728,20 +1728,26 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 
 	if (unicode)
 	{
-		length = ret->cBytes / 2;
+		length = (int) ret->cBytes / 2;
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->mszReaderNames, length, &mszReaderNamesA, 0, NULL, NULL);
 	}
 	else
 	{
-		length = ret->cBytes;
+		length = (int) ret->cBytes;
 		mszReaderNamesA = (char*) malloc(length);
 		CopyMemory(mszReaderNamesA, ret->mszReaderNames, ret->cBytes);
 	}
 
-	for (index = 0; index < length - 2; index++)
+	if (!mszReaderNamesA)
+		length = 0;
+
+	if (length > 2)
 	{
-		if (mszReaderNamesA[index] == '\0')
-			mszReaderNamesA[index] = ',';
+		for (index = 0; index < length - 2; index++)
+		{
+			if (mszReaderNamesA[index] == '\0')
+				mszReaderNamesA[index] = ',';
+		}
 	}
 
 	pbAtr = winpr_BinToHexString(ret->pbAtr, ret->cbAtrLen, FALSE);
@@ -1755,8 +1761,11 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 		SCardGetCardStateString(ret->dwState), ret->dwState,
 		SCardGetProtocolString(ret->dwProtocol), ret->dwProtocol);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "cBytes: %d mszReaderNames: %s",
+	if (mszReaderNamesA)
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "cBytes: %d mszReaderNames: %s",
 			ret->cBytes, mszReaderNamesA);
+	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG,
 		"cbAtrLen: %d pbAtr: %s", ret->cbAtrLen, pbAtr);

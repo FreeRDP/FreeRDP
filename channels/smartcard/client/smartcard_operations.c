@@ -701,7 +701,7 @@ static DWORD smartcard_StatusA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	SCARDHANDLE hCard;
 	SCARDCONTEXT hContext;
 	Status_Call call;
-	Status_Return ret;
+	Status_Return ret = { 0 };
 	DWORD cchReaderLen = 0;
 	LPSTR mszReaderNames = NULL;
 
@@ -726,8 +726,11 @@ static DWORD smartcard_StatusA(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	status = ret.ReturnCode = SCardStatusA(hCard, (LPSTR) &mszReaderNames, &cchReaderLen,
 			&ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &ret.cbAtrLen);
 
-	ret.mszReaderNames = (BYTE*) mszReaderNames;
-	ret.cBytes = cchReaderLen;
+	if (status == SCARD_S_SUCCESS)
+	{
+		ret.mszReaderNames = (BYTE*) mszReaderNames;
+		ret.cBytes = cchReaderLen;
+	}
 
 	smartcard_trace_status_return(smartcard, &ret, FALSE);
 
