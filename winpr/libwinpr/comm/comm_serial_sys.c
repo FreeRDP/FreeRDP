@@ -148,6 +148,8 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 
 	// TMP: TODO:
 
+	// TMP: COMMPROP_INITIALIZED ?
+
 	// TMP: required?
 	// ZeroMemory(pProperties, sizeof(COMMPROP);
 
@@ -158,9 +160,17 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 	/* pProperties->MaxTxQueue; */
 	/* pProperties->MaxRxQueue; */
 	pProperties->dwMaxBaud = SERIAL_BAUD_115200; /* _SERIAL_MAX_BAUD */
-	/* pProperties->ProvSubType; */
-	/* pProperties->ProvCapabilities; */
-	/* pProperties->SettableParams; */
+
+	/* FIXME: what about PST_RS232? */
+	pProperties->dwProvSubType = PST_UNSPECIFIED;
+
+	/* TMP: TODO: to be finalized */
+	pProperties->dwProvCapabilities = 
+		/*PCF_16BITMODE | PCF_DTRDSR | PCF_INTTIMEOUTS |*/ PCF_PARITY_CHECK | /*PCF_RLSD | */
+		PCF_RTSCTS | PCF_SETXCHAR | /*PCF_SPECIALCHARS | PCF_TOTALTIMEOUTS |*/ PCF_XONXOFF;
+
+	/* TMP: TODO: double check SP_RLSD */
+	pProperties->dwSettableParams = SP_BAUD | SP_DATABITS | SP_HANDSHAKING | SP_PARITY | SP_PARITY_CHECK | /*SP_RLSD |*/ SP_STOPBITS;
 
 	pProperties->dwSettableBaud = 0;
 	for (i=0; _SERIAL_SYS_BAUD_TABLE[i][0]<=_SERIAL_MAX_BAUD; i++)
@@ -251,15 +261,17 @@ static BOOL _get_baud_rate(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate)
 }
 
 /**
- * NOTE: Only XonChar and XoffChar are plenty supported with Linux
- * N_TTY line discipline.
+ * NOTE: Only XonChar and XoffChar are plenty supported with the Linux
+ *       N_TTY line discipline.
  *
  * ERRORS:
  *   ERROR_IO_DEVICE
  *   ERROR_INVALID_PARAMETER when Xon and Xoff chars are the same;
+ *   ERROR_NOT_SUPPORTED
  */
 static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChars)
 {
+	BOOL result = TRUE;
 	struct termios upcomingTermios;
 
 	ZeroMemory(&upcomingTermios, sizeof(struct termios));
@@ -282,55 +294,46 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
          * special character meaning is replaced by the timeout
          * meaning.
 	 *
-	 * It doesn't seem the case of the Linux's implementation but
-	 * in our context, the cannonical mode (fBinary=FALSE) should
-	 * never be enabled.
+	 * EofChar and c_cc[VEOF] are not quite the same, prefer to
+	 * don't use c_cc[VEOF] at all.
+	 *
+	 * FIXME: might be implemented during read/write I/O
 	 */
-	
-	if (upcomingTermios.c_lflag & ICANON)
+	if (pSerialChars->EofChar != '\0')
 	{
-		upcomingTermios.c_cc[VEOF] = pSerialChars->EofChar; 
-		DEBUG_WARN("c_cc[VEOF] is not supposed to be modified!");
+		DEBUG_WARN("EofChar='%c' cannot be set\n", pSerialChars->EofChar);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
 	}
-	/* else let c_cc[VEOF] unchanged */
-
 
 	/* According the Linux's n_tty discipline, charaters with a
 	 * parity error can only be let unchanged, replaced by \0 or
 	 * get the prefix the prefix \377 \0 
 	 */
 
-	if (pSerialChars->ErrorChar == '\0')
+	/* FIXME: see also: _set_handflow() */
+	if (pSerialChars->ErrorChar != '\0')
 	{
-		/* Also suppose PARENB !IGNPAR !PARMRK to be effective */
-		upcomingTermios.c_iflag |= INPCK; 
-	}
-	else
-	{
-		/* FIXME: develop a line discipline dedicated to the
-		 * RDP redirection. Erroneous characters might also be
-		 * caught during read/write operations?
-		 */
-		DEBUG_WARN("ErrorChar='%c' cannot be set, characters with a parity error will be let unchanged.\n", pSerialChars->ErrorChar);
+		DEBUG_WARN("ErrorChar='%c' (0x%x) cannot be set (unsupported).\n", pSerialChars->ErrorChar, pSerialChars->ErrorChar);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
 	}
 
-	if (pSerialChars->BreakChar == '\0')
+	/* FIXME: see also: _set_handflow() */
+	if (pSerialChars->BreakChar != '\0')
 	{
-		upcomingTermios.c_iflag &= ~(IGNBRK | BRKINT | PARMRK);
-	} 
-	else
-	{
-		/* FIXME: develop a line discipline dedicated to the
-		 * RDP redirection. Break characters might also be
-		 * caught during read/write operations?
-		 */
-		DEBUG_WARN("BreakChar='%c' cannot be set.\n", pSerialChars->ErrorChar);
+		DEBUG_WARN("BreakChar='%c' (0x%x) cannot be set (unsupported).\n", pSerialChars->BreakChar, pSerialChars->BreakChar);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
 	}
 
-	/* FIXME: Didn't find anything similar inside N_TTY. Develop a
-	 * line discipline dedicated to the RDP redirection.
-	 */
-	DEBUG_WARN("EventChar='%c' cannot be set\n", pSerialChars->EventChar);
+	/* TMP: FIXME: Didn't find anything similar yet on Linux */
+	if (pSerialChars->EventChar != '\0')
+	{
+		DEBUG_WARN("EventChar='%c' (0x%x) cannot be set\n", pSerialChars->EventChar, pSerialChars->EventChar);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
+	}
 
 	upcomingTermios.c_cc[VSTART] = pSerialChars->XonChar;
 
@@ -343,7 +346,7 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 		return FALSE;
 	}
 
-	return TRUE;
+	return result;
 }
 
 
@@ -360,23 +363,14 @@ static BOOL _get_serial_chars(WINPR_COMM *pComm, SERIAL_CHARS *pSerialChars)
 
 	ZeroMemory(pSerialChars, sizeof(SERIAL_CHARS));
 	
-	if (currentTermios.c_lflag & ICANON)
-	{
-		pSerialChars->EofChar = currentTermios.c_cc[VEOF];
-	}
+	/* EofChar unsupported */
 
-	/* FIXME: see also: _set_serial_chars() */
-	if (currentTermios.c_iflag & INPCK)
-		pSerialChars->ErrorChar = '\0';
-	/* else '\0' is currently used anyway */
+	/* ErrorChar unsupported */
+
+	/* BreakChar unsupported */
 	
-	/* FIXME: see also: _set_serial_chars() */
-	if (currentTermios.c_iflag & ~IGNBRK & BRKINT)
-		pSerialChars->BreakChar = '\0';
-	/* else '\0' is currently used anyway */
-	
-	/* FIXME: see also: _set_serial_chars() */
-	pSerialChars->EventChar = '\0';
+	/* TMP: FIXME: see also: _set_serial_chars() */
+	/* EventChar */
 
 	pSerialChars->XonChar = currentTermios.c_cc[VSTART];
 
@@ -548,6 +542,279 @@ static BOOL _get_line_control(WINPR_COMM *pComm, SERIAL_LINE_CONTROL *pLineContr
 }
 
 
+/* hard-coded in N_TTY */
+#define TTY_THRESHOLD_THROTTLE		128 /* now based on remaining room */
+#define TTY_THRESHOLD_UNTHROTTLE 	128
+
+static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
+{
+	BOOL result = TRUE;
+	struct termios upcomingTermios;
+
+	/* logical XOR */
+	if ((!(pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && (pHandflow->FlowReplace & SERIAL_RTS_CONTROL)) ||
+	    ((pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && !(pHandflow->FlowReplace & SERIAL_RTS_CONTROL)))
+	{
+		DEBUG_WARN("SERIAL_DTR_CONTROL cannot be different SERIAL_RTS_CONTROL, HUPCL will be set according SERIAL_RTS_CONTROL.");
+		result = FALSE; /* but keep on */
+	}
+
+
+	ZeroMemory(&upcomingTermios, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &upcomingTermios) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	/* ControlHandShake */
+
+	if (pHandflow->ControlHandShake & SERIAL_DTR_CONTROL)
+	{
+		upcomingTermios.c_cflag |= HUPCL;
+	}
+	else
+	{
+		upcomingTermios.c_cflag &= ~HUPCL;
+
+		/* FIXME: is the DTR line also needs to be forced to a disable state? */
+	}
+
+	if (pHandflow->ControlHandShake & SERIAL_DTR_HANDSHAKE)
+	{
+		/* DTR/DSR flow control not supported on Linux */
+		DEBUG_WARN("Attempt to use the unsupported SERIAL_DTR_HANDSHAKE feature.");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
+	}
+
+
+	if (pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE)
+	{
+		upcomingTermios.c_cflag |= CRTSCTS;
+	}
+	else
+	{
+		upcomingTermios.c_cflag &= ~CRTSCTS;
+	}
+
+	if (pHandflow->ControlHandShake & SERIAL_DSR_HANDSHAKE)
+	{
+		/* DTR/DSR flow control not supported on Linux */
+		DEBUG_WARN("Attempt to use the unsupported SERIAL_DSR_HANDSHAKE feature.");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
+	}
+
+	if (pHandflow->ControlHandShake & SERIAL_DCD_HANDSHAKE)
+	{
+		/* DCD flow control not supported on Linux */
+		DEBUG_WARN("Attempt to use the unsupported SERIAL_DCD_HANDSHAKE feature.");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
+	}
+
+	// TMP: FIXME: could be implemented during read/write I/O
+	if (pHandflow->ControlHandShake & SERIAL_DSR_SENSITIVITY)
+	{
+		/* DSR line control not supported on Linux */
+		DEBUG_WARN("Attempt to use the unsupported SERIAL_DSR_SENSITIVITY feature.");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
+	}
+
+	// TMP: FIXME: could be implemented during read/write I/O
+	if (pHandflow->ControlHandShake & SERIAL_ERROR_ABORT)
+	{
+		/* Aborting operations on error not supported on Linux */
+		DEBUG_WARN("Attempt to use the unsupported SERIAL_ERROR_ABORT feature.");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
+	}
+
+	/* FlowReplace */
+
+	if (pHandflow->FlowReplace & SERIAL_AUTO_TRANSMIT)
+	{
+		upcomingTermios.c_iflag |= IXON;
+	}
+	else
+	{
+		upcomingTermios.c_iflag &= ~IXON;
+	}
+
+	if (pHandflow->FlowReplace & SERIAL_AUTO_RECEIVE)
+	{
+		upcomingTermios.c_iflag |= IXOFF;
+	}
+	else
+	{
+		upcomingTermios.c_iflag &= ~IXOFF;
+	}
+
+	// TMP: FIXME: could be implemented during read/write I/O
+	if (pHandflow->FlowReplace & SERIAL_ERROR_CHAR)
+	{
+		DEBUG_WARN("Attempt to use the unsupported SERIAL_ERROR_CHAR feature. A character with a parity error or framing error will be read as \0");
+
+		/* errors will be replaced by the character '\0' */
+		upcomingTermios.c_iflag &= ~IGNPAR;
+	}
+	else
+	{
+		upcomingTermios.c_iflag |= IGNPAR;
+	}
+
+	if (pHandflow->FlowReplace & SERIAL_NULL_STRIPPING)
+	{
+		upcomingTermios.c_iflag |= IGNBRK;
+	}
+	else
+	{
+		upcomingTermios.c_iflag &= ~IGNBRK;
+	}
+
+	// TMP: FIXME: could be implemented during read/write I/O
+	if (pHandflow->FlowReplace & SERIAL_BREAK_CHAR)
+	{
+		DEBUG_WARN("Attempt to use the unsupported SERIAL_BREAK_CHAR feature.");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
+	}
+
+	if (pHandflow->FlowReplace & SERIAL_RTS_CONTROL)
+	{
+		upcomingTermios.c_cflag |= HUPCL;
+	}
+	else
+	{
+		upcomingTermios.c_cflag &= ~HUPCL;
+
+		/* FIXME: is the RTS line also needs to be forced to a disable state? */
+	}
+
+	if (pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE)
+	{
+		upcomingTermios.c_cflag |= CRTSCTS;
+	}
+	else
+	{
+		upcomingTermios.c_cflag &= ~CRTSCTS;
+	}
+
+
+	// FIXME: could be implemented during read/write I/O
+	if (pHandflow->FlowReplace & SERIAL_XOFF_CONTINUE)
+	{
+		/* not supported on Linux */
+		DEBUG_WARN("Attempt to use the unsupported SERIAL_XOFF_CONTINUE feature.");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
+	}
+
+	/* XonLimit */
+	
+	// FIXME: could be implemented during read/write I/O
+	if (pHandflow->XonLimit != TTY_THRESHOLD_UNTHROTTLE)
+	{
+		DEBUG_WARN("Attempt to set XonLimit with an unsupported value: %d", pHandflow->XonLimit);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */		
+	}
+
+	/* XoffChar */
+
+	// FIXME: could be implemented during read/write I/O
+	if (pHandflow->XoffLimit != TTY_THRESHOLD_THROTTLE)
+	{
+		DEBUG_WARN("Attempt to set XoffLimit with an unsupported value: %d", pHandflow->XoffLimit);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */		
+	}
+
+
+	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
+	{
+		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x0.8x", GetLastError());
+		return FALSE;
+	}
+
+	return result;
+}
+
+
+static BOOL _get_handflow(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow)
+{
+	struct termios currentTermios;
+
+	ZeroMemory(&currentTermios, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &currentTermios) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+
+	/* ControlHandShake */
+
+	pHandflow->ControlHandShake = 0;
+
+	if (currentTermios.c_cflag & HUPCL)
+		pHandflow->ControlHandShake |= SERIAL_DTR_CONTROL;
+
+	/* SERIAL_DTR_HANDSHAKE unsupported */
+			
+	if (currentTermios.c_cflag & CRTSCTS)
+		pHandflow->ControlHandShake |= SERIAL_CTS_HANDSHAKE;
+
+	/* SERIAL_DSR_HANDSHAKE unsupported */
+
+	/* SERIAL_DCD_HANDSHAKE unsupported */
+
+	/* SERIAL_DSR_SENSITIVITY unsupported */ 
+
+	/* SERIAL_ERROR_ABORT unsupported */
+
+
+	/* FlowReplace */
+
+	pHandflow->FlowReplace = 0;
+
+	if (currentTermios.c_iflag & IXON)
+		pHandflow->FlowReplace |= SERIAL_AUTO_TRANSMIT;
+
+	if (currentTermios.c_iflag & IXOFF)
+		pHandflow->FlowReplace |= SERIAL_AUTO_RECEIVE;
+
+	if (!(currentTermios.c_iflag & IGNPAR))
+		pHandflow->FlowReplace |= SERIAL_ERROR_CHAR;
+
+	if (currentTermios.c_iflag & IGNBRK)
+		pHandflow->FlowReplace |= SERIAL_NULL_STRIPPING;
+
+	/* SERIAL_BREAK_CHAR unsupported */
+
+	if (currentTermios.c_cflag & HUPCL)
+		pHandflow->FlowReplace |= SERIAL_RTS_CONTROL;
+
+	if (currentTermios.c_cflag & CRTSCTS)
+		pHandflow->FlowReplace |= SERIAL_RTS_HANDSHAKE;
+
+	/* SERIAL_XOFF_CONTINUE unsupported */
+
+
+	/* XonLimit */
+
+	pHandflow->XonLimit = TTY_THRESHOLD_UNTHROTTLE;
+
+
+	/* XoffLimit */
+
+	pHandflow->XoffLimit = TTY_THRESHOLD_THROTTLE;
+
+	return TRUE;
+}
+
 
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
@@ -559,7 +826,9 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.set_serial_chars = _set_serial_chars,
 	.get_serial_chars = _get_serial_chars,
 	.set_line_control = _set_line_control,
-	.get_line_control = _get_line_control
+	.get_line_control = _get_line_control,
+	.set_handflow     = _set_handflow,
+	.get_handflow     = _get_handflow,
 };
 
 

@@ -298,7 +298,7 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 				break;
 
 			case ERROR_NOT_SUPPORTED:
-				irp->IoStatus = STATUS_INVALID_PARAMETER;
+				irp->IoStatus = STATUS_NOT_SUPPORTED;
 				break;
 
 			case ERROR_INSUFFICIENT_BUFFER:
@@ -307,6 +307,10 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 			case ERROR_INVALID_PARAMETER:
 				irp->IoStatus = STATUS_INVALID_PARAMETER;
+				break;
+
+			case ERROR_CALL_NOT_IMPLEMENTED:
+				irp->IoStatus = STATUS_NOT_IMPLEMENTED;
 				break;
 
 			default:

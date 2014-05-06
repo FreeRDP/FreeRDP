@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <termios.h>
 
 #include <winpr/comm.h>
 #include <winpr/crt.h>
@@ -28,6 +29,16 @@ static BOOL test_SerCxSys(HANDLE hComm)
 {
 	DCB dcb;
 	UCHAR XonChar, XoffChar;
+
+	struct termios currentTermios;
+
+	ZeroMemory(&currentTermios, sizeof(struct termios));
+	if (tcgetattr(((WINPR_COMM*)hComm)->fd, &currentTermios) < 0)
+	{
+		fprintf(stderr, "tcgetattr failure.\n");
+		return FALSE;
+	}
+
 
 	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB);
@@ -40,6 +51,14 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	if ((dcb.XonChar == '\0') || (dcb.XoffChar == '\0'))
 	{
 		fprintf(stderr, "test_SerCxSys failure, expected XonChar and XoffChar to be set\n");
+		return FALSE;
+	}
+
+
+	/* retrieve Xon/Xoff chars */
+	if ((dcb.XonChar != currentTermios.c_cc[VSTART]) || (dcb.XoffChar != currentTermios.c_cc[VSTOP]))
+	{
+		fprintf(stderr, "test_SerCxSys failure, could not retrieve XonChar and XoffChar\n");
 		return FALSE;
 	}
 
@@ -98,9 +117,9 @@ static BOOL test_SerCx2Sys(HANDLE hComm)
 		return FALSE;
 	}	
 
-	if ((dcb.XonChar != '\0') || (dcb.XoffChar != '\0') || (dcb.ErrorChar != '\0') || (dcb.EofChar != '\0') || (dcb.EvtChar != '\0'))
+	if ((dcb.ErrorChar != '\0') || (dcb.EofChar != '\0') || (dcb.EvtChar != '\0') || (dcb.XonChar != '\0') || (dcb.XoffChar != '\0'))
 	{
-		fprintf(stderr, "test_SerCx2Sys failure, expected all characters to '\0'\n");
+		fprintf(stderr, "test_SerCx2Sys failure, expected all characters to be: '\\0'\n");
 		return FALSE;
 	}
 

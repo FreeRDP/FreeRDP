@@ -63,21 +63,30 @@ static REMOTE_SERIAL_DRIVER _SerCx2Sys =
 	.get_serial_chars = _get_serial_chars,
 	.set_line_control = NULL,
 	.get_line_control = NULL,
+	.set_handflow     = NULL,
+	.get_handflow     = NULL,
 };
 
 
 REMOTE_SERIAL_DRIVER* SerCx2Sys_s()
 {
 	/* _SerCx2Sys completed with inherited functions from SerialSys or SerCxSys */
-	//REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
 	REMOTE_SERIAL_DRIVER* pSerCxSys = SerCxSys_s();
 
 	_SerCx2Sys.set_baud_rate    = pSerCxSys->set_baud_rate;
 	_SerCx2Sys.get_baud_rate    = pSerCxSys->get_baud_rate;
+
 	_SerCx2Sys.get_properties   = pSerCxSys->get_properties;
 
 	_SerCx2Sys.set_line_control = pSerCxSys->set_line_control;
 	_SerCx2Sys.get_line_control = pSerCxSys->get_line_control;
+
+	/* Only SERIAL_CTS_HANDSHAKE, SERIAL_RTS_CONTROL and SERIAL_RTS_HANDSHAKE flags are really required by SerCx2.sys
+	 * http://msdn.microsoft.com/en-us/library/jj680685%28v=vs.85%29.aspx
+	 */
+	_SerCx2Sys.set_handflow = pSerialSys->set_handflow;
+	_SerCx2Sys.get_handflow = pSerialSys->get_handflow;
 
 	return &_SerCx2Sys;
 }

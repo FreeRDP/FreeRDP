@@ -135,6 +135,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 				return pRemoteSerialDriver->set_baud_rate(pComm, pBaudRate);
 			}
+			break;
 		}
 		case IOCTL_SERIAL_GET_BAUD_RATE:
 		{
@@ -155,6 +156,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 				*lpBytesReturned = sizeof(SERIAL_BAUD_RATE);
 				return TRUE;
 			}
+			break;
 		}
 		case IOCTL_SERIAL_GET_PROPERTIES:
 		{
@@ -175,6 +177,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 				*lpBytesReturned = sizeof(COMMPROP);
 				return TRUE;
 			}
+			break;
 		}
 		case IOCTL_SERIAL_SET_CHARS:
 		{
@@ -191,6 +194,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 				return pRemoteSerialDriver->set_serial_chars(pComm, pSerialChars);
 			}
+			break;
 		}
 		case IOCTL_SERIAL_GET_CHARS:
 		{
@@ -211,6 +215,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 				*lpBytesReturned = sizeof(SERIAL_CHARS);
 				return TRUE;
 			}
+			break;
 		}
 		case IOCTL_SERIAL_SET_LINE_CONTROL:
 		{
@@ -227,6 +232,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 				return pRemoteSerialDriver->set_line_control(pComm, pLineControl);
 			}
+			break;
 		}
 		case IOCTL_SERIAL_GET_LINE_CONTROL:
 		{
@@ -247,11 +253,50 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 				*lpBytesReturned = sizeof(SERIAL_LINE_CONTROL);
 				return TRUE;
 			}
+			break;
+		}
+		case IOCTL_SERIAL_SET_HANDFLOW:
+		{
+			if (pRemoteSerialDriver->set_handflow)
+			{
+				SERIAL_HANDFLOW *pHandflow = (SERIAL_HANDFLOW*)lpInBuffer;
+
+				assert(nInBufferSize >= sizeof(SERIAL_HANDFLOW));
+				if (nInBufferSize < sizeof(SERIAL_HANDFLOW))
+				{
+					SetLastError(ERROR_INVALID_DATA);
+					return FALSE;
+				}
+
+				return pRemoteSerialDriver->set_handflow(pComm, pHandflow);
+			}
+			break;
+		}
+		case IOCTL_SERIAL_GET_HANDFLOW:
+		{
+			if (pRemoteSerialDriver->get_handflow)
+			{
+				SERIAL_HANDFLOW *pHandflow = (SERIAL_HANDFLOW*)lpOutBuffer;
+				
+				assert(nOutBufferSize >= sizeof(SERIAL_HANDFLOW));
+				if (nOutBufferSize < sizeof(SERIAL_HANDFLOW))
+				{
+					SetLastError(ERROR_INSUFFICIENT_BUFFER);
+					return FALSE;					
+				}
+
+				if (!pRemoteSerialDriver->get_handflow(pComm, pHandflow))
+					return FALSE;
+
+				*lpBytesReturned = sizeof(SERIAL_HANDFLOW);
+				return TRUE;
+			}
+			break;
 		}
 
 	}
 	
-	DEBUG_WARN(_T("unsupported IoControlCode: Ox%x (remote serial driver: %s)"), dwIoControlCode, pRemoteSerialDriver->name);
+	DEBUG_WARN(_T("unsupported IoControlCode: Ox%0.8x (remote serial driver: %s)"), dwIoControlCode, pRemoteSerialDriver->name);
 	return FALSE;
 	
 }

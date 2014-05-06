@@ -224,8 +224,67 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 
 	lpLocalDcb->fParity =  (currentState.c_iflag & INPCK) != 0; 
 
-	/* TMP: TODO: */
-	/* (...) */
+	SERIAL_HANDFLOW handflow;
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_HANDFLOW, NULL, 0, &handflow, sizeof(SERIAL_HANDFLOW), &bytesReturned, NULL))
+	{
+		DEBUG_WARN("GetCommState failure: could not get the handflow settings.");
+		goto error_handle;
+	}
+
+	lpLocalDcb->fOutxCtsFlow = (handflow.ControlHandShake & SERIAL_CTS_HANDSHAKE) != 0;
+
+	lpLocalDcb->fOutxDsrFlow = (handflow.ControlHandShake & SERIAL_DSR_HANDSHAKE) != 0;
+
+	if (handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE)
+	{
+		lpLocalDcb->fDtrControl = DTR_CONTROL_HANDSHAKE;
+	}
+	else if (handflow.ControlHandShake & SERIAL_DTR_CONTROL)
+	{
+		lpLocalDcb->fDtrControl = DTR_CONTROL_ENABLE;
+	}
+	else
+	{
+		lpLocalDcb->fDtrControl = DTR_CONTROL_DISABLE;
+	}
+
+	lpLocalDcb->fDsrSensitivity = (handflow.ControlHandShake & SERIAL_DSR_SENSITIVITY) != 0;
+
+	lpLocalDcb->fTXContinueOnXoff = (handflow.FlowReplace & SERIAL_XOFF_CONTINUE) != 0; 
+
+	lpLocalDcb->fOutX = (handflow.FlowReplace & SERIAL_AUTO_TRANSMIT) != 0;
+
+	lpLocalDcb->fInX = (handflow.FlowReplace & SERIAL_AUTO_RECEIVE) != 0;
+
+	lpLocalDcb->fErrorChar = (handflow.FlowReplace & SERIAL_ERROR_CHAR) != 0;
+
+	lpLocalDcb->fNull = (handflow.FlowReplace & SERIAL_NULL_STRIPPING) != 0;
+
+	if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE)
+	{
+		lpLocalDcb->fRtsControl = RTS_CONTROL_HANDSHAKE;
+	}
+	else if (handflow.FlowReplace & SERIAL_RTS_CONTROL)
+	{
+		lpLocalDcb->fRtsControl = RTS_CONTROL_ENABLE;
+	}
+	else
+	{
+		lpLocalDcb->fRtsControl = RTS_CONTROL_DISABLE;
+	}
+
+	// FIXME: how to get the RTS_CONTROL_TOGGLE state? Does it match the UART 16750's Autoflow Control Enabled bit in its Modem Control Register (MCR)
+
+
+	lpLocalDcb->fAbortOnError = (handflow.ControlHandShake & SERIAL_ERROR_ABORT) != 0;
+
+	/* lpLocalDcb->fDummy2 not used */
+
+	lpLocalDcb->wReserved = 0; /* must be zero */
+
+	lpLocalDcb->XonLim = handflow.XonLimit;
+
+	lpLocalDcb->XoffLim = handflow.XoffLimit;
 
 	SERIAL_LINE_CONTROL lineControl;
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_LINE_CONTROL, NULL, 0, &lineControl, sizeof(SERIAL_LINE_CONTROL), &bytesReturned, NULL))
@@ -316,7 +375,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	SERIAL_CHARS serialChars;
-	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_CHARS, NULL, 0, &serialChars, sizeof(SERIAL_CHARS), &bytesReturned, NULL))
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_CHARS, NULL, 0, &serialChars, sizeof(SERIAL_CHARS), &bytesReturned, NULL)) /* as of today, required for BreakChar */
 	{
 		DEBUG_WARN("SetCommState failure: could not get the initial serial chars.");
 		return FALSE;
@@ -325,7 +384,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	serialChars.XoffChar = lpDCB->XoffChar;
 	serialChars.ErrorChar = lpDCB->ErrorChar;
 	serialChars.EofChar = lpDCB->EofChar;
-	serialChars.EventChar = lpDCB->EvtChar;
+	serialChars.EventChar = lpDCB->EvtChar;	
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_CHARS, &serialChars, sizeof(SERIAL_CHARS), NULL, 0, &bytesReturned, NULL))
 	{
 		DEBUG_WARN("SetCommState failure: could not set the serial chars.");
@@ -339,6 +398,113 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_LINE_CONTROL, &lineControl, sizeof(SERIAL_LINE_CONTROL), NULL, 0, &bytesReturned, NULL))
 	{
 		DEBUG_WARN("SetCommState failure: could not set the control settings.");
+		return FALSE;
+	}
+
+
+	SERIAL_HANDFLOW handflow;
+	ZeroMemory(&handflow, sizeof(SERIAL_HANDFLOW));
+
+	if (lpDCB->fOutxCtsFlow)
+	{
+		handflow.ControlHandShake |= SERIAL_CTS_HANDSHAKE;
+	}
+	
+
+	if (lpDCB->fOutxDsrFlow)
+	{
+		handflow.ControlHandShake |= SERIAL_DSR_HANDSHAKE;
+	}
+
+	switch (lpDCB->fDtrControl)
+	{
+		case SERIAL_DTR_HANDSHAKE:
+			handflow.ControlHandShake |= DTR_CONTROL_HANDSHAKE;
+			break;
+
+		case SERIAL_DTR_CONTROL:
+			handflow.ControlHandShake |= DTR_CONTROL_ENABLE;
+			break;
+
+		case DTR_CONTROL_DISABLE:
+			/* do nothing since handflow is init-zeroed */
+			break;
+
+		default:
+			DEBUG_WARN("Unexpected fDtrControl value: %d\n", lpDCB->fDtrControl);
+			return FALSE;
+	}
+
+	if (lpDCB->fDsrSensitivity)
+	{
+		handflow.ControlHandShake |= SERIAL_DSR_SENSITIVITY;
+	}
+
+	if (lpDCB->fTXContinueOnXoff)
+	{
+		handflow.FlowReplace |= SERIAL_XOFF_CONTINUE;
+	}
+	
+	if (lpDCB->fOutX)
+	{
+		handflow.FlowReplace |= SERIAL_AUTO_TRANSMIT;
+	}
+
+	if (lpDCB->fInX)
+	{
+		handflow.FlowReplace |= SERIAL_AUTO_RECEIVE;
+	}
+
+	if (lpDCB->fErrorChar)
+	{
+		handflow.FlowReplace |= SERIAL_ERROR_CHAR;
+	}
+
+	if (lpDCB->fNull)
+	{
+		handflow.FlowReplace |= SERIAL_NULL_STRIPPING;
+	}
+
+	switch (lpDCB->fRtsControl)
+	{
+		case RTS_CONTROL_TOGGLE:
+			DEBUG_WARN("Unsupported RTS_CONTROL_TOGGLE feature");
+			// FIXME: see also GetCommState()
+			return FALSE;
+
+		case RTS_CONTROL_HANDSHAKE:
+			handflow.FlowReplace |= SERIAL_RTS_HANDSHAKE;
+			break;
+
+		case RTS_CONTROL_ENABLE:
+			handflow.FlowReplace |= SERIAL_RTS_CONTROL;
+			break;
+
+		case RTS_CONTROL_DISABLE:
+			/* do nothing since handflow is init-zeroed */
+			break;
+
+		default:
+			DEBUG_WARN("Unexpected fRtsControl value: %d\n", lpDCB->fRtsControl);
+			return FALSE;
+	}
+
+	if (lpDCB->fAbortOnError)
+	{
+		handflow.ControlHandShake |= SERIAL_ERROR_ABORT;
+	}
+
+	/* lpDCB->fDummy2 not used */
+
+	/* lpLocalDcb->wReserved  ignored */
+
+	handflow.XonLimit = lpDCB->XonLim;
+
+	handflow.XoffLimit = lpDCB->XoffLim;
+
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_HANDFLOW, &handflow, sizeof(SERIAL_HANDFLOW), NULL, 0, &bytesReturned, NULL))
+	{
+		DEBUG_WARN("SetCommState failure: could not set the handflow settings.");
 		return FALSE;
 	}
 

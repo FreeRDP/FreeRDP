@@ -314,6 +314,7 @@ static BOOL test_generic(HANDLE hComm)
 	return TRUE;
 }
 
+
 int TestSetCommState(int argc, char* argv[])
 {
 	BOOL result;

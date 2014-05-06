@@ -67,8 +67,8 @@ extern "C" {
 /* IOCTL_SERIAL_WAIT_ON_MASK 0x001B0048 */
 /* IOCTL_SERIAL_IMMEDIATE_CHAR 0x001B0018 */
 /* IOCTL_SERIAL_PURGE 0x001B004C */
-/* IOCTL_SERIAL_GET_HANDFLOW 0x001B0060 */
-/* IOCTL_SERIAL_SET_HANDFLOW 0x001B0064 */
+#define IOCTL_SERIAL_GET_HANDFLOW	0x001B0060
+#define IOCTL_SERIAL_SET_HANDFLOW	0x001B0064
 /* IOCTL_SERIAL_GET_MODEMSTATUS 0x001B0068 */
 /* IOCTL_SERIAL_GET_DTRRTS 0x001B0078 */
 /* IOCTL_SERIAL_GET_COMMSTATUS 0x001B0084 */
@@ -132,6 +132,38 @@ typedef struct _SERIAL_LINE_CONTROL
 } SERIAL_LINE_CONTROL, *PSERIAL_LINE_CONTROL;
 
 
+typedef struct _SERIAL_HANDFLOW
+{
+	ULONG ControlHandShake;
+	ULONG FlowReplace;
+	LONG  XonLimit;
+	LONG  XoffLimit;
+} SERIAL_HANDFLOW, *PSERIAL_HANDFLOW;
+
+
+#define SERIAL_DTR_MASK           ((ULONG)0x03)
+#define SERIAL_DTR_CONTROL        ((ULONG)0x01) 
+#define SERIAL_DTR_HANDSHAKE      ((ULONG)0x02) 
+#define SERIAL_CTS_HANDSHAKE      ((ULONG)0x08) 
+#define SERIAL_DSR_HANDSHAKE      ((ULONG)0x10) 
+#define SERIAL_DCD_HANDSHAKE      ((ULONG)0x20) 
+#define SERIAL_OUT_HANDSHAKEMASK  ((ULONG)0x38) 
+#define SERIAL_DSR_SENSITIVITY    ((ULONG)0x40) 
+#define SERIAL_ERROR_ABORT        ((ULONG)0x80000000) 
+#define SERIAL_CONTROL_INVALID    ((ULONG)0x7fffff84) 
+#define SERIAL_AUTO_TRANSMIT      ((ULONG)0x01) 
+#define SERIAL_AUTO_RECEIVE       ((ULONG)0x02) 
+#define SERIAL_ERROR_CHAR         ((ULONG)0x04) 
+#define SERIAL_NULL_STRIPPING     ((ULONG)0x08) 
+#define SERIAL_BREAK_CHAR         ((ULONG)0x10) 
+#define SERIAL_RTS_MASK           ((ULONG)0xc0) 
+#define SERIAL_RTS_CONTROL        ((ULONG)0x40) 
+#define SERIAL_RTS_HANDSHAKE      ((ULONG)0x80) 
+#define SERIAL_TRANSMIT_TOGGLE    ((ULONG)0xc0) 
+#define SERIAL_XOFF_CONTINUE      ((ULONG)0x80000000) 
+#define SERIAL_FLOW_INVALID       ((ULONG)0x7fffff20) 
+
+
 /**
  * A function might be NULL if not supported by the underlying remote driver.
  *
@@ -148,6 +180,8 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*get_serial_chars)(WINPR_COMM *pComm, SERIAL_CHARS *pSerialChars);
 	BOOL (*set_line_control)(WINPR_COMM *pComm, const SERIAL_LINE_CONTROL *pLineControl);
 	BOOL (*get_line_control)(WINPR_COMM *pComm, SERIAL_LINE_CONTROL *pLineControl);
+	BOOL (*set_handflow)(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow);
+	BOOL (*get_handflow)(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow);
 
 } REMOTE_SERIAL_DRIVER;
 

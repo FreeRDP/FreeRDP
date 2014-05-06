@@ -11,6 +11,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestSetCommState.c
 	TestSerialChars.c
 	TestControlSettings.c
+	TestHandflow.c
 	TestCommMonitor.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

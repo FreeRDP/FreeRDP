@@ -231,6 +231,267 @@ static BOOL _get_baud_rate(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate)
 	return FALSE;
 }
 
+/* hard-coded in N_TTY */
+#define TTY_THRESHOLD_THROTTLE		128 /* now based on remaining room */
+#define TTY_THRESHOLD_UNTHROTTLE 	128
+
+/* FIXME: mostly copied/pasted from comm_serial_sys.c, better share this code */
+static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
+{
+	BOOL result = TRUE;
+	struct termios upcomingTermios;
+
+	/* logical XOR */
+	if ((!(pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && (pHandflow->FlowReplace & SERIAL_RTS_CONTROL)) ||
+	    ((pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && !(pHandflow->FlowReplace & SERIAL_RTS_CONTROL)))
+	{
+		DEBUG_WARN("SERIAL_DTR_CONTROL cannot be different SERIAL_RTS_CONTROL, HUPCL will be set according SERIAL_RTS_CONTROL.");
+		result = FALSE; /* but keep on */
+	}
+
+	ZeroMemory(&upcomingTermios, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &upcomingTermios) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	/* ControlHandShake */
+
+	if (pHandflow->ControlHandShake & SERIAL_DTR_CONTROL)
+	{
+		upcomingTermios.c_cflag |= HUPCL;
+	}
+	else
+	{
+		upcomingTermios.c_cflag &= ~HUPCL;
+
+		/* FIXME: is the DTR line also needs to be forced to a disable state? */
+	}
+
+	if (pHandflow->ControlHandShake & SERIAL_DTR_HANDSHAKE)
+	{
+		/* DTR/DSR flow control not supported on Linux */
+		DEBUG_WARN("Attempt to use the unsupported SERIAL_DTR_HANDSHAKE feature.");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
+	}
+
+	if (pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE)
+	{
+		upcomingTermios.c_cflag |= CRTSCTS;
+	}
+	else
+	{
+		upcomingTermios.c_cflag &= ~CRTSCTS;
+	}
+
+	if (pHandflow->ControlHandShake & SERIAL_DSR_HANDSHAKE)
+	{
+		/* DTR/DSR flow control not supported on Linux */
+		DEBUG_WARN("Attempt to use the unsupported SERIAL_DSR_HANDSHAKE feature.");
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */
+	}
+
+	/* SERIAL_DCD_HANDSHAKE unsupported by SerCx */
+	if (pHandflow->ControlHandShake & SERIAL_DCD_HANDSHAKE)
+	{
+		DEBUG_WARN("Attempt to set SERIAL_DCD_HANDSHAKE (not implemented)");
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		result = FALSE; /* but keep on */
+	}
+
+	/* SERIAL_DSR_SENSITIVITY unsupported by SerCx */
+	if (pHandflow->ControlHandShake & SERIAL_DSR_SENSITIVITY)
+	{
+		DEBUG_WARN("Attempt to set SERIAL_DSR_SENSITIVITY (not implemented)");
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		result = FALSE; /* but keep on */
+	}
+
+	/* SERIAL_ERROR_ABORT unsupported by SerCx */
+	if (pHandflow->ControlHandShake & SERIAL_ERROR_ABORT)
+	{
+		DEBUG_WARN("Attempt to set SERIAL_ERROR_ABORT (not implemented)");
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		result = FALSE; /* but keep on */
+	}
+
+
+	/* FlowReplace */
+
+	/* SERIAL_AUTO_TRANSMIT unsupported by SerCx */
+	if (pHandflow->FlowReplace & SERIAL_AUTO_TRANSMIT)
+	{
+		DEBUG_WARN("Attempt to set SERIAL_AUTO_TRANSMIT (not implemented)");
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		result = FALSE; /* but keep on */
+	}
+
+
+	/* SERIAL_AUTO_RECEIVE unsupported by SerCx */
+	if (pHandflow->FlowReplace & SERIAL_AUTO_RECEIVE)
+	{
+		DEBUG_WARN("Attempt to set SERIAL_AUTO_RECEIVE (not implemented)");
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		result = FALSE; /* but keep on */
+	}
+
+	/* SERIAL_ERROR_CHAR unsupported by SerCx */
+	if (pHandflow->FlowReplace & SERIAL_ERROR_CHAR)
+	{
+		DEBUG_WARN("Attempt to set SERIAL_ERROR_CHAR (not implemented)");
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		result = FALSE; /* but keep on */
+	}
+
+	/* SERIAL_NULL_STRIPPING unsupported by SerCx */
+	if (pHandflow->FlowReplace & SERIAL_NULL_STRIPPING)
+	{
+		DEBUG_WARN("Attempt to set SERIAL_NULL_STRIPPING (not implemented)");
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		result = FALSE; /* but keep on */
+	}
+
+	/* SERIAL_BREAK_CHAR unsupported by SerCx */
+	if (pHandflow->FlowReplace & SERIAL_BREAK_CHAR)
+	{
+		DEBUG_WARN("Attempt to set SERIAL_BREAK_CHAR (not implemented)");
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		result = FALSE; /* but keep on */
+	}
+
+	if (pHandflow->FlowReplace & SERIAL_RTS_CONTROL)
+	{
+		upcomingTermios.c_cflag |= HUPCL;
+	}
+	else
+	{
+		upcomingTermios.c_cflag &= ~HUPCL;
+
+		/* FIXME: is the RTS line also needs to be forced to a disable state? */
+	}
+
+	if (pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE)
+	{
+		upcomingTermios.c_cflag |= CRTSCTS;
+	}
+	else
+	{
+		upcomingTermios.c_cflag &= ~CRTSCTS;
+	}
+
+	/* SERIAL_XOFF_CONTINUE unsupported by SerCx */
+	if (pHandflow->FlowReplace & SERIAL_XOFF_CONTINUE)
+	{
+		DEBUG_WARN("Attempt to set SERIAL_XOFF_CONTINUE (not implemented)");
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+		result = FALSE; /* but keep on */
+	}
+
+
+	/* XonLimit */
+	
+	// FIXME: could be implemented during read/write I/O
+	if (pHandflow->XonLimit != TTY_THRESHOLD_UNTHROTTLE)
+	{
+		DEBUG_WARN("Attempt to set XonLimit with an unsupported value: %d", pHandflow->XonLimit);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */		
+	}
+
+	/* XoffChar */
+
+	// FIXME: could be implemented during read/write I/O
+	if (pHandflow->XoffLimit != TTY_THRESHOLD_THROTTLE)
+	{
+		DEBUG_WARN("Attempt to set XoffLimit with an unsupported value: %d", pHandflow->XoffLimit);
+		SetLastError(ERROR_NOT_SUPPORTED);
+		result = FALSE; /* but keep on */		
+	}
+	
+
+	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
+	{
+		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x0.8x", GetLastError());
+		return FALSE;
+	}
+
+	return result;
+}
+
+
+/* FIXME: mostly copied/pasted from comm_serial_sys.c, better share this code */
+static BOOL _get_handflow(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow)
+{
+	struct termios currentTermios;
+
+	ZeroMemory(&currentTermios, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &currentTermios) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+
+	/* ControlHandShake */
+
+	pHandflow->ControlHandShake = 0;
+
+	if (currentTermios.c_cflag & HUPCL)
+		pHandflow->ControlHandShake |= SERIAL_DTR_CONTROL;
+
+	/* SERIAL_DTR_HANDSHAKE unsupported */
+			
+	if (currentTermios.c_cflag & CRTSCTS)
+		pHandflow->ControlHandShake |= SERIAL_CTS_HANDSHAKE;
+
+	/* SERIAL_DSR_HANDSHAKE unsupported */
+
+	/* SERIAL_DCD_HANDSHAKE unsupported by SerCx */
+
+	/* SERIAL_DSR_SENSITIVITY unsupported by SerCx */ 
+
+	/* SERIAL_ERROR_ABORT unsupported by SerCx */
+
+
+	/* FlowReplace */
+
+	pHandflow->FlowReplace = 0;
+
+	/* SERIAL_AUTO_TRANSMIT unsupported by SerCx */
+
+	/* SERIAL_AUTO_RECEIVE unsupported by SerCx */
+
+	/* SERIAL_ERROR_CHAR unsupported by SerCx */
+
+	/* SERIAL_NULL_STRIPPING unsupported by SerCx */
+
+	/* SERIAL_BREAK_CHAR unsupported by SerCx */
+
+	if (currentTermios.c_cflag & HUPCL)
+		pHandflow->FlowReplace |= SERIAL_RTS_CONTROL;
+
+	if (currentTermios.c_cflag & CRTSCTS)
+		pHandflow->FlowReplace |= SERIAL_RTS_HANDSHAKE;
+
+	/* SERIAL_XOFF_CONTINUE unsupported by SerCx */
+
+
+	/* XonLimit */
+
+	pHandflow->XonLimit = TTY_THRESHOLD_UNTHROTTLE;
+
+
+	/* XoffLimit */
+
+	pHandflow->XoffLimit = TTY_THRESHOLD_THROTTLE;
+
+	return TRUE;
+}
+
+
 
 /* specific functions only */
 static REMOTE_SERIAL_DRIVER _SerCxSys = 
@@ -244,6 +505,8 @@ static REMOTE_SERIAL_DRIVER _SerCxSys =
 	.get_serial_chars = NULL,
 	.set_line_control = NULL,
 	.get_line_control = NULL,
+	.set_handflow     = _set_handflow,
+	.get_handflow     = _get_handflow,
 };
 
 
