@@ -51,6 +51,7 @@ struct _XCRUSH_CONTEXT
 	UINT32 HistoryOffset;
 	UINT32 HistoryBufferSize;
 	BYTE HistoryBuffer[2000000];
+	BYTE BlockBuffer[16384];
 };
 typedef struct _XCRUSH_CONTEXT XCRUSH_CONTEXT;
 

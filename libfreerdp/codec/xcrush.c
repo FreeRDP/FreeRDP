@@ -190,8 +190,130 @@ int xcrush_decompress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BY
 	return status;
 }
 
+int xcrush_compress_l1(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
+{
+	UINT32 Flags = 0;
+	UINT32 HistoryOffset = 0;
+	BYTE* HistoryPtr = NULL;
+	BYTE* HistoryBuffer = NULL;
+
+	HistoryOffset = xcrush->HistoryOffset;
+	HistoryBuffer = xcrush->HistoryBuffer;
+	HistoryPtr = &HistoryBuffer[HistoryOffset];
+
+	CopyMemory(HistoryPtr, pSrcData, SrcSize);
+	xcrush->HistoryOffset += SrcSize;
+
+	if (SrcSize <= 50)
+	{
+		Flags |= L1_NO_COMPRESSION;
+	}
+	else
+	{
+
+	}
+
+	*pFlags = Flags;
+
+	return 1;
+}
+
 int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
+	int status = 0;
+	UINT32 DstSize = 0;
+	BYTE* pDstData = NULL;
+	BYTE* CompressedData = NULL;
+	UINT32 CompressedDataSize = 0;
+	BYTE* OriginalData = NULL;
+	UINT32 OriginalDataSize = 0;
+	UINT32 Level1ComprFlags = 0;
+	UINT32 Level2ComprFlags = 0;
+	UINT32 CompressionLevel = 3;
+
+	if (SrcSize > 16384)
+		return -1;
+
+	if ((SrcSize + 2) > *pDstSize)
+		return -1;
+
+	OriginalData = pDstData;
+	OriginalDataSize = *pDstSize;
+
+	pDstData = xcrush->BlockBuffer;
+	DstSize = sizeof(xcrush->BlockBuffer);
+
+	status = xcrush_compress_l1(xcrush, pSrcData, SrcSize, &pDstData, &DstSize, &Level1ComprFlags);
+
+	if (status < 0)
+		return status;
+
+	if (Level1ComprFlags & L1_COMPRESSED)
+	{
+		CompressedData = pDstData;
+		CompressedDataSize = DstSize;
+
+		if (CompressedDataSize > SrcSize)
+			return -1;
+	}
+	else
+	{
+		CompressedData = pSrcData;
+		CompressedDataSize = DstSize;
+
+		if (CompressedDataSize != SrcSize)
+			return -1;
+	}
+
+	status = 1;
+
+	pDstData = OriginalData + 2;
+	DstSize = OriginalDataSize - 2;
+
+	if (DstSize > 50)
+	{
+		status = mppc_compress(xcrush->mppc, CompressedData, CompressedDataSize, &pDstData, &DstSize, &Level2ComprFlags);
+	}
+
+	if (status < 0)
+		return status;
+
+	if (!(Level2ComprFlags & PACKET_COMPRESSED) || (Level2ComprFlags & PACKET_FLUSHED))
+	{
+		if (CompressedDataSize > DstSize)
+			return -1;
+
+		DstSize = CompressedDataSize;
+		CopyMemory(pDstData, CompressedData, CompressedDataSize);
+	}
+
+	if (Level2ComprFlags & PACKET_COMPRESSED)
+	{
+
+	}
+	else
+	{
+		if (Level2ComprFlags & PACKET_FLUSHED)
+		{
+
+		}
+		else
+		{
+
+		}
+	}
+
+	Level1ComprFlags |= L1_INNER_COMPRESSION;
+
+	OriginalData[0] = (BYTE) Level1ComprFlags;
+	OriginalData[1] = (BYTE) Level2ComprFlags;
+
+	if (*pDstSize < (DstSize + 2))
+		return -1;
+
+	*pDstSize = DstSize + 2;
+	*pFlags = PACKET_COMPRESSED | CompressionLevel;
+
 	return 1;
 }
 
