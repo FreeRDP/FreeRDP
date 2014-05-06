@@ -62,29 +62,12 @@ static void smartcard_free(DEVICE* device)
 
 static void smartcard_init(DEVICE* device)
 {
-	IRP* irp;
 	int index;
 	int keyCount;
 	ULONG_PTR* pKeys;
 	SCARDCONTEXT hContext;
 
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
-
-	if (ListDictionary_Count(smartcard->rgOutstandingMessages) > 0)
-	{
-		pKeys = NULL;
-		keyCount = ListDictionary_GetKeys(smartcard->rgOutstandingMessages, &pKeys);
-
-		for (index = 0; index < keyCount; index++)
-		{
-			irp = (IRP*) ListDictionary_GetItemValue(smartcard->rgOutstandingMessages, (void*) pKeys[index]);
-
-			if (irp)
-				irp->cancelled = TRUE;
-		}
-
-		free(pKeys);
-	}
 
 	/**
 	 * On protocol termination, the following actions are performed:
@@ -116,10 +99,7 @@ void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	key = (void*) (size_t) irp->CompletionId;
 	ListDictionary_Remove(smartcard->rgOutstandingMessages, key);
 
-	if (!irp->cancelled)
-		irp->Complete(irp);
-	else
-		irp->Discard(irp);
+	irp->Complete(irp);
 }
 
 void* smartcard_process_irp_worker_proc(IRP* irp)

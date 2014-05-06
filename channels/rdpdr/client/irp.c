@@ -47,14 +47,20 @@ static void irp_free(IRP* irp)
 static void irp_complete(IRP* irp)
 {
 	int pos;
+	rdpdrPlugin* rdpdr;
 
-	pos = (int) Stream_GetPosition(irp->output);
-	Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4);
-	Stream_Write_UINT32(irp->output, irp->IoStatus); /* IoStatus (4 bytes) */
-	Stream_SetPosition(irp->output, pos);
+	rdpdr = (rdpdrPlugin*) irp->devman->plugin;
 
-	rdpdr_send((rdpdrPlugin*) irp->devman->plugin, irp->output);
-	irp->output = NULL;
+	if (irp->sequenceId == rdpdr->sequenceId)
+	{
+		pos = (int) Stream_GetPosition(irp->output);
+		Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4);
+		Stream_Write_UINT32(irp->output, irp->IoStatus); /* IoStatus (4 bytes) */
+		Stream_SetPosition(irp->output, pos);
+
+		rdpdr_send((rdpdrPlugin*) irp->devman->plugin, irp->output);
+		irp->output = NULL;
+	}
 
 	irp_free(irp);
 }
@@ -64,12 +70,15 @@ IRP* irp_new(DEVMAN* devman, wStream* s)
 	IRP* irp;
 	DEVICE* device;
 	UINT32 DeviceId;
+	rdpdrPlugin* rdpdr;
 
 	Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
 	device = devman_get_device_by_id(devman, DeviceId);
 
 	if (!device)
 		return NULL;
+
+	rdpdr = (rdpdrPlugin*) devman->plugin;
 
 	irp = (IRP*) _aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
 	ZeroMemory(irp, sizeof(IRP));
@@ -95,6 +104,8 @@ IRP* irp_new(DEVMAN* devman, wStream* s)
 
 	irp->thread = NULL;
 	irp->cancelled = FALSE;
+
+	irp->sequenceId = rdpdr->sequenceId;
 
 	return irp;
 }

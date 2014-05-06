@@ -53,6 +53,8 @@ struct rdpdr_plugin
 	UINT16 clientID;
 	char computerName[256];
 
+	UINT32 sequenceId;
+
 	/* hotplug support */
 	HANDLE hotplugThread;
 #ifdef _WIN32

@@ -349,6 +349,7 @@ struct _IRP
 
 	HANDLE thread;
 	BOOL cancelled;
+	UINT32 sequenceId;
 };
 
 struct _DEVMAN
