@@ -473,7 +473,7 @@ static rdpMcsChannel* wts_get_joined_channel_by_name(rdpMcs *mcs, const char *ch
 	{
 		if (mcs->channels[index].joined)
 		{
-			if (strncasecmp(mcs->channels[index].Name, channel_name, strlen(channel_name)) == 0)
+			if (_strnicmp(mcs->channels[index].Name, channel_name, strlen(channel_name)) == 0)
 				return &mcs->channels[index];
     }
   }
