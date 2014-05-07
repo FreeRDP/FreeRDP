@@ -86,6 +86,9 @@ struct _TSMF_PRESENTATION
 	UINT32 volume;
 	UINT32 muted;
 
+	BOOL videoStreamPresent;
+	BOOL audioStreamPresent;
+
 	HANDLE mutex;
 	HANDLE thread;
 
@@ -285,6 +288,9 @@ TSMF_PRESENTATION* tsmf_presentation_new(const BYTE* guid, IWTSVirtualChannelCal
 
 	CopyMemory(presentation->presentation_id, guid, GUID_SIZE);
 	presentation->channel_callback = pChannelCallback;
+
+	presentation->audioStreamPresent = FALSE;
+	presentation->videoStreamPresent = FALSE;
 
 	presentation->volume = 5000; /* 50% */
 	presentation->muted = 0;
@@ -996,6 +1002,18 @@ void tsmf_presentation_free(TSMF_PRESENTATION* presentation)
 	free(presentation);
 }
 
+void tsmf_presentation_set_sync(TSMF_PRESENTATION* presentation)
+{
+	TSMF_STREAM* stream;
+	LIST_ITEM* item;
+
+	for (item = presentation->stream_list->head; item; item = item->next)
+	{
+		stream = (TSMF_STREAM*) item->data;
+		tsmf_stream_set_sync(stream);  
+	} 
+}
+
 TSMF_STREAM* tsmf_stream_new(TSMF_PRESENTATION* presentation, UINT32 stream_id)
 {
 	TSMF_STREAM* stream;
@@ -1094,6 +1112,15 @@ void tsmf_stream_set_format(TSMF_STREAM* stream, const char* name, wStream* s)
 	stream->width = mediatype.Width;
 	stream->height = mediatype.Height;
 	stream->decoder = tsmf_load_decoder(name, &mediatype);
+
+	// Make sure the presentation object knows that a video stream is present - needed once presentation setup is complete for sync
+	if (mediatype.MajorType == TSMF_MAJOR_TYPE_VIDEO)
+		stream->presentation->videoStreamPresent = TRUE;
+
+	// Make sure the presentation object knows that a audio stream is present - needed once presentation setup is complete for sync
+	if (mediatype.MajorType == TSMF_MAJOR_TYPE_AUDIO)
+		stream->presentation->audioStreamPresent = TRUE;
+
 	tsmf_stream_change_volume(stream, stream->presentation->volume, stream->presentation->muted);
 }
 
@@ -1125,6 +1152,23 @@ void tsmf_stream_free(TSMF_STREAM* stream)
 
 	free(stream);
 	stream = 0;
+}
+
+void tsmf_stream_set_sync(TSMF_STREAM* stream)
+{
+	if (!stream->decoder)
+		return;
+       
+	if (stream->decoder->SetStreamSync)
+	{
+		if ((stream->presentation->videoStreamPresent) &&
+		    (stream->presentation->audioStreamPresent))
+		{
+			stream->decoder->SetStreamSync(stream->decoder, TRUE);
+		}
+		else
+			stream->decoder->SetStreamSync(stream->decoder, FALSE);
+	}
 }
 
 void tsmf_stream_push_sample(TSMF_STREAM* stream, IWTSVirtualChannelCallback* pChannelCallback,

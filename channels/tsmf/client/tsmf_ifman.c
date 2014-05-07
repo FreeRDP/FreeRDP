@@ -188,14 +188,26 @@ int tsmf_ifman_add_stream(TSMF_IFMAN* ifman)
 
 int tsmf_ifman_set_topology_request(TSMF_IFMAN* ifman)
 {
+	TSMF_PRESENTATION* presentation;
+	int error = 0;
+
 	DEBUG_DVC("");
+
+	presentation = tsmf_presentation_find_by_id(Stream_Pointer(ifman->input));
+
+	// At this point we know the presentation streams have been added, so we can ensure
+	// the individual presentation streams know they are being synced.
+	if (presentation == NULL)
+		error = 1;
+	else
+		tsmf_presentation_set_sync(presentation);
 
 	Stream_EnsureRemainingCapacity(ifman->output, 8);
 	Stream_Write_UINT32(ifman->output, 1); /* TopologyReady */
 	Stream_Write_UINT32(ifman->output, 0); /* Result */
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
 
-	return 0;
+	return error;
 }
 
 int tsmf_ifman_remove_stream(TSMF_IFMAN* ifman)
