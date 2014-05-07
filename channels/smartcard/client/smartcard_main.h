@@ -92,6 +92,7 @@ struct _SMARTCARD_DEVICE
 
 	HANDLE thread;
 	wMessageQueue* IrpQueue;
+	wQueue* CompletedIrpQueue;
 	wListDictionary* rgSCardContextList;
 	wListDictionary* rgOutstandingMessages;
 };

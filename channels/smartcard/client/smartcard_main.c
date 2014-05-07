@@ -35,6 +35,8 @@
 
 #include "smartcard_main.h"
 
+#define DEBUG_SMARTCARD_INIT	1
+
 static BOOL g_SmartCardAsync = TRUE;
 
 static void smartcard_free(DEVICE* device)
@@ -51,6 +53,7 @@ static void smartcard_free(DEVICE* device)
 	MessageQueue_Free(smartcard->IrpQueue);
 	ListDictionary_Free(smartcard->rgSCardContextList);
 	ListDictionary_Free(smartcard->rgOutstandingMessages);
+	Queue_Free(smartcard->CompletedIrpQueue);
 
 	free(device);
 }
@@ -62,6 +65,7 @@ static void smartcard_free(DEVICE* device)
 
 static void smartcard_init(DEVICE* device)
 {
+	IRP* irp;
 	int index;
 	int keyCount;
 	ULONG_PTR* pKeys;
@@ -76,6 +80,16 @@ static void smartcard_init(DEVICE* device)
 	 * be removed from rgSCardContextList.
 	 */
 
+	/**
+	 * Step 1: Call SCardCancel on existing contexts, unblocking all outstanding IRPs.
+	 */
+
+#ifdef DEBUG_SMARTCARD_INIT
+	printf("[1] rgSCardContextList: %d rgOutstandingMessages: %d\n",
+			ListDictionary_Count(smartcard->rgSCardContextList),
+			ListDictionary_Count(smartcard->rgOutstandingMessages));
+#endif
+
 	if (ListDictionary_Count(smartcard->rgSCardContextList) > 0)
 	{
 		pKeys = NULL;
@@ -85,11 +99,73 @@ static void smartcard_init(DEVICE* device)
 		{
 			hContext = (SCARDCONTEXT) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
 
-			SCardCancel(hContext);
+			if (SCardIsValidContext(hContext))
+			{
+				SCardCancel(hContext);
+			}
 		}
 
 		free(pKeys);
 	}
+
+	/**
+	 * Step 2: Wait for all outstanding IRPs to complete.
+	 */
+
+#ifdef DEBUG_SMARTCARD_INIT
+	printf("[2] rgSCardContextList: %d rgOutstandingMessages: %d\n",
+			ListDictionary_Count(smartcard->rgSCardContextList),
+			ListDictionary_Count(smartcard->rgOutstandingMessages));
+#endif
+
+	if (ListDictionary_Count(smartcard->rgOutstandingMessages) > 0)
+	{
+		pKeys = NULL;
+		keyCount = ListDictionary_GetKeys(smartcard->rgOutstandingMessages, &pKeys);
+
+		for (index = 0; index < keyCount; index++)
+		{
+			irp = (IRP*) ListDictionary_GetItemValue(smartcard->rgOutstandingMessages, (void*) pKeys[index]);
+			ListDictionary_Remove(smartcard->rgOutstandingMessages, (void*) pKeys[index]);
+		}
+
+		free(pKeys);
+	}
+
+	/**
+	 * Step 3: Call SCardReleaseContext on remaining contexts and remove them from rgSCardContextList.
+	 */
+
+#ifdef DEBUG_SMARTCARD_INIT
+	printf("[3] rgSCardContextList: %d rgOutstandingMessages: %d\n",
+			ListDictionary_Count(smartcard->rgSCardContextList),
+			ListDictionary_Count(smartcard->rgOutstandingMessages));
+#endif
+
+	if (ListDictionary_Count(smartcard->rgSCardContextList) > 0)
+	{
+		pKeys = NULL;
+		keyCount = ListDictionary_GetKeys(smartcard->rgSCardContextList, &pKeys);
+
+		for (index = 0; index < keyCount; index++)
+		{
+			hContext = (SCARDCONTEXT) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
+			ListDictionary_Remove(smartcard->rgSCardContextList, (void*) pKeys[index]);
+
+			if (SCardIsValidContext(hContext))
+			{
+				SCardReleaseContext(hContext);
+			}
+		}
+
+		free(pKeys);
+	}
+
+#ifdef DEBUG_SMARTCARD_INIT
+	printf("[4] rgSCardContextList: %d rgOutstandingMessages: %d\n",
+			ListDictionary_Count(smartcard->rgSCardContextList),
+			ListDictionary_Count(smartcard->rgOutstandingMessages));
+#endif
 }
 
 void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
@@ -109,6 +185,8 @@ void* smartcard_process_irp_worker_proc(IRP* irp)
 	smartcard = (SMARTCARD_DEVICE*) irp->device;
 
 	smartcard_irp_device_control(smartcard, irp);
+
+	Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
 
 	ExitThread(0);
 	return NULL;
@@ -162,6 +240,8 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		if (!asyncIrp)
 		{
 			smartcard_irp_device_control(smartcard, irp);
+
+			Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
 		}
 		else
 		{
@@ -174,32 +254,61 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	{
 		fprintf(stderr, "Unexpected SmartCard IRP: MajorFunction 0x%08X MinorFunction: 0x%08X",
 				irp->MajorFunction, irp->MinorFunction);
+
 		irp->IoStatus = STATUS_NOT_SUPPORTED;
-		smartcard_complete_irp(smartcard, irp);
+
+		Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
 	}
 }
 
 static void* smartcard_thread_func(void* arg)
 {
 	IRP* irp;
+	DWORD nCount;
+	DWORD status;
+	HANDLE hEvents[2];
 	wMessage message;
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) arg;
 
+	nCount = 0;
+	hEvents[nCount++] = MessageQueue_Event(smartcard->IrpQueue);
+	hEvents[nCount++] = Queue_Event(smartcard->CompletedIrpQueue);
+
 	while (1)
 	{
-		if (!MessageQueue_Wait(smartcard->IrpQueue))
-			break;
+		status = WaitForMultipleObjects(nCount, hEvents, FALSE, INFINITE);
 
-		if (!MessageQueue_Peek(smartcard->IrpQueue, &message, TRUE))
-			break;
+		if (WaitForSingleObject(MessageQueue_Event(smartcard->IrpQueue), 0) == WAIT_OBJECT_0)
+		{
+			if (!MessageQueue_Peek(smartcard->IrpQueue, &message, TRUE))
+				break;
 
-		if (message.id == WMQ_QUIT)
-			break;
+			if (message.id == WMQ_QUIT)
+				break;
 
-		irp = (IRP*) message.wParam;
+			irp = (IRP*) message.wParam;
 
-		if (irp)
-			smartcard_process_irp(smartcard, irp);
+			if (irp)
+			{
+				smartcard_process_irp(smartcard, irp);
+			}
+		}
+
+		if (WaitForSingleObject(Queue_Event(smartcard->CompletedIrpQueue), 0) == WAIT_OBJECT_0)
+		{
+			irp = (IRP*) Queue_Dequeue(smartcard->CompletedIrpQueue);
+
+			if (irp)
+			{
+				if (irp->thread)
+				{
+					WaitForSingleObject(irp->thread, INFINITE);
+					CloseHandle(irp->thread);
+				}
+
+				smartcard_complete_irp(smartcard, irp);
+			}
+		}
 	}
 
 	ExitThread(0);
@@ -267,6 +376,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	smartcard->IrpQueue = MessageQueue_New(NULL);
 	smartcard->rgSCardContextList = ListDictionary_New(TRUE);
 	smartcard->rgOutstandingMessages = ListDictionary_New(TRUE);
+	smartcard->CompletedIrpQueue = Queue_New(TRUE, -1, -1);
 
 	smartcard->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) smartcard_thread_func,
 			smartcard, CREATE_SUSPENDED, NULL);

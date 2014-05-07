@@ -1350,6 +1350,4 @@ void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	Stream_Write_UINT32(irp->output, result); /* Result (4 bytes) */
 
 	Stream_SetPosition(irp->output, Stream_Length(irp->output));
-
-	smartcard_complete_irp(smartcard, irp);
 }
