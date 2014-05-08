@@ -856,7 +856,7 @@ void smartcard_trace_connect_w_call(SMARTCARD_DEVICE* smartcard, ConnectW_Call* 
 
 	ConvertFromUnicode(CP_UTF8, 0, call->szReader, -1, &szReaderA, 0, NULL, NULL);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectA_Call {");
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectW_Call {");
 
 	pb = (BYTE*) &(call->Common.hContext.pbContext);
 
