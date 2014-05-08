@@ -372,19 +372,9 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 BOOL rdp_client_reconnect(rdpRdp* rdp)
 {
-	transport_disconnect(rdp->transport);
+	rdp_client_disconnect(rdp);
 
-	mcs_free(rdp->mcs);
-	nego_free(rdp->nego);
-	license_free(rdp->license);
-	transport_free(rdp->transport);
-
-	rdp->transport = transport_new(rdp->settings);
-	rdp->license = license_new(rdp);
-	rdp->nego = nego_new(rdp->transport);
-	rdp->mcs = mcs_new(rdp->transport);
-
-	rdp->transport->layer = TRANSPORT_LAYER_TCP;
+	rdp_reset(rdp);
 
 	return rdp_client_connect(rdp);
 }
