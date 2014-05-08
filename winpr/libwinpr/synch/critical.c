@@ -135,7 +135,7 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 		if (InterlockedCompareExchange(&lpCriticalSection->LockCount, 0, -1) == -1)
 		{
 			lpCriticalSection->RecursionCount = 1;
-			lpCriticalSection->OwningThread = (HANDLE)GetCurrentThreadId();
+			lpCriticalSection->OwningThread = (HANDLE) (ULONG_PTR) GetCurrentThreadId();
 			return;
 		}
 		/* Failed to get the lock. Let the scheduler know that we're spinning. */
@@ -156,7 +156,7 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 	if (InterlockedIncrement(&lpCriticalSection->LockCount))
 	{
 		/* Section is already locked. Check if it is owned by the current thread. */
-		if (lpCriticalSection->OwningThread == (HANDLE)GetCurrentThreadId())
+		if (lpCriticalSection->OwningThread == (HANDLE) (ULONG_PTR) GetCurrentThreadId())
 		{
 			/* Recursion. No need to wait. */
 			lpCriticalSection->RecursionCount++;
@@ -168,12 +168,12 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 	}
 	/* We got the lock. Own it ... */
 	lpCriticalSection->RecursionCount = 1;
-	lpCriticalSection->OwningThread = (HANDLE)GetCurrentThreadId();
+	lpCriticalSection->OwningThread = (HANDLE) (ULONG_PTR) GetCurrentThreadId();
 }
 
 BOOL TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-	HANDLE current_thread = (HANDLE)GetCurrentThreadId();
+	HANDLE current_thread = (HANDLE) (ULONG_PTR) GetCurrentThreadId();
 
 	/* Atomically acquire the the lock if the section is free. */
 	if (InterlockedCompareExchange(&lpCriticalSection->LockCount, 0, -1 ) == -1)

@@ -275,19 +275,19 @@ int TestClientRdpFile(int argc, char* argv[])
 
 	if (file->UseMultiMon != 0)
 	{
-		printf("UseMultiMon mismatch: Actual: %ld, Expected: %d\n", file->UseMultiMon, 0);
+		printf("UseMultiMon mismatch: Actual: %d, Expected: %d\n", file->UseMultiMon, 0);
 		return -1;
 	}
 
 	if (file->ScreenModeId != 2)
 	{
-		printf("ScreenModeId mismatch: Actual: %ld, Expected: %d\n", file->ScreenModeId, 2);
+		printf("ScreenModeId mismatch: Actual: %d, Expected: %d\n", file->ScreenModeId, 2);
 		return -1;
 	}
 
 	if (file->GatewayProfileUsageMethod != 1)
 	{
-		printf("GatewayProfileUsageMethod mismatch: Actual: %ld, Expected: %d\n", file->GatewayProfileUsageMethod, 1);
+		printf("GatewayProfileUsageMethod mismatch: Actual: %d, Expected: %d\n", file->GatewayProfileUsageMethod, 1);
 		return -1;
 	}
 
@@ -307,19 +307,19 @@ int TestClientRdpFile(int argc, char* argv[])
 
 	if (file->UseMultiMon != 0)
 	{
-		printf("UseMultiMon mismatch: Actual: %ld, Expected: %d\n", file->UseMultiMon, 0);
+		printf("UseMultiMon mismatch: Actual: %d, Expected: %d\n", file->UseMultiMon, 0);
 		return -1;
 	}
 
 	if (file->ScreenModeId != 2)
 	{
-		printf("ScreenModeId mismatch: Actual: %ld, Expected: %d\n", file->ScreenModeId, 2);
+		printf("ScreenModeId mismatch: Actual: %d, Expected: %d\n", file->ScreenModeId, 2);
 		return -1;
 	}
 
 	if (file->GatewayProfileUsageMethod != 1)
 	{
-		printf("GatewayProfileUsageMethod mismatch: Actual: %ld, Expected: %d\n", file->GatewayProfileUsageMethod, 1);
+		printf("GatewayProfileUsageMethod mismatch: Actual: %d, Expected: %d\n", file->GatewayProfileUsageMethod, 1);
 		return -1;
 	}
 

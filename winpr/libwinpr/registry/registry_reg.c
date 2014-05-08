@@ -425,7 +425,7 @@ void reg_print_value(Reg* reg, RegVal* value)
 
 	if (value->type == REG_DWORD)
 	{
-		fprintf(stderr, "dword:%08lX\n", value->data.dword);
+		fprintf(stderr, "dword:%08X\n", value->data.dword);
 	}
 	else if (value->type == REG_SZ)
 	{

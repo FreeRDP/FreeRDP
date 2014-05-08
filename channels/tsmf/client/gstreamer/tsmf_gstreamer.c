@@ -1204,7 +1204,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 
 			if (fout)
 			{
-				fprintf(fout, "%"PRIu64"\n", start_time);
+				fprintf(fout, "%"PRIu64"\n", (long unsigned int) start_time);
 				fclose(fout);
 			}
 
@@ -1230,7 +1230,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 			if (fin)
 			{
 				UINT64 AStartTime = 0;
-				fscanf(fin, "%"PRIu64, &AStartTime);
+				fscanf(fin, "%"PRIu64, (long unsigned int*) &AStartTime);
 				fclose(fin);
 				if (start_time > AStartTime)
 				{
@@ -1264,7 +1264,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder * decoder, const BYTE * data, U
 			if (fin)
 			{
 				UINT64 VStartTime = 0;
-				fscanf(fin, "%"PRIu64, &VStartTime);
+				fscanf(fin, "%"PRIu64, (long unsigned int*) &VStartTime);
 				fclose(fin);
 				if (start_time > VStartTime)
 				{
