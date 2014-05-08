@@ -280,7 +280,6 @@ static BOOL audin_server_recv_data(audin_server* audin, wStream* s, UINT32 lengt
 
 static void* audin_server_thread_func(void* arg)
 {
-	void* fd;
 	wStream* s;
 	void* buffer;
 	DWORD nCount;
@@ -326,6 +325,8 @@ static void* audin_server_thread_func(void* arg)
 	}
 
 	s = Stream_New(NULL, 4096);
+	if (!s)
+		goto out;
 
 	if (ready)
 	{
@@ -393,6 +394,8 @@ static void* audin_server_thread_func(void* arg)
 	}
 
 	Stream_Free(s, TRUE);
+
+out:
 	WTSVirtualChannelClose(audin->audin_channel);
 	audin->audin_channel = NULL;
 
@@ -463,7 +466,7 @@ audin_server_context* audin_server_context_new(HANDLE vcm)
 {
 	audin_server* audin;
 
-	audin = (audin_server*) calloc(1, sizeof(audin_server));
+	audin = (audin_server *)calloc(1, sizeof(audin_server));
 
 	audin->context.vcm = vcm;
 	audin->context.selected_client_format = -1;

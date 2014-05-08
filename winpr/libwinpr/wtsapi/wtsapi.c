@@ -397,37 +397,46 @@ BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)
 	return TRUE;
 }
 
+static BOOL LoadAndInitialize(char *library)
+{
+	INIT_WTSAPI_FN pInitWtsApi;
+	g_WtsApiModule = LoadLibraryA(library);
+
+	if (!g_WtsApiModule)
+		return FALSE;
+
+	pInitWtsApi = (INIT_WTSAPI_FN) GetProcAddress(g_WtsApiModule, "InitWtsApi");
+
+	if (!pInitWtsApi)
+	{
+		return FALSE;
+	}
+	g_WtsApi = pInitWtsApi();
+	return TRUE;
+}
+
 void InitializeWtsApiStubs_Env()
 {
 	DWORD nSize;
 	char* env = NULL;
-	INIT_WTSAPI_FN pInitWtsApi;
 
 	if (g_WtsApi)
 		return;
 
 	nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", NULL, 0);
 
-	if (nSize)
+	if (!nSize)
 	{
-		env = (LPSTR) malloc(nSize);
-		nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", env, nSize);
-	}
-
-	if (env)
-		g_WtsApiModule = LoadLibraryA(env);
-
-	if (!g_WtsApiModule)
 		return;
-
-	pInitWtsApi = (INIT_WTSAPI_FN) GetProcAddress(g_WtsApiModule, "InitWtsApi");
-
-	if (pInitWtsApi)
-	{
-		g_WtsApi = pInitWtsApi();
 	}
+
+	env = (LPSTR) malloc(nSize);
+	nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", env, nSize);
+	if (env)
+		LoadAndInitialize(env);
 }
 
+#define FREERDS_LIBRARY_NAME "libfreerds-fdsapi.so"
 void InitializeWtsApiStubs_FreeRDS()
 {
 	char* prefix;
@@ -441,13 +450,16 @@ void InitializeWtsApiStubs_FreeRDS()
 
 	if (IniFile_Parse(ini, "/var/run/freerds.instance") < 0)
 	{
-		printf("failed to parse freerds.instance\n");
+		IniFile_Free(ini);
+		fprintf(stderr, "failed to parse freerds.instance\n");
+		LoadAndInitialize(FREERDS_LIBRARY_NAME);
+		return;
 	}
 	
 	prefix = IniFile_GetKeyValueString(ini, "FreeRDS", "prefix");
 	libdir = IniFile_GetKeyValueString(ini, "FreeRDS", "libdir");
 	
-	printf("FreeRDS: %s / %s\n", prefix, libdir);
+	fprintf(stderr, "FreeRDS (prefix / libdir): %s / %s\n", prefix, libdir);
 	
 	if (prefix && libdir)
 	{
@@ -455,23 +467,11 @@ void InitializeWtsApiStubs_FreeRDS()
 		char* wtsapi_library;
 		
 		prefix_libdir = GetCombinedPath(prefix, libdir);
-		wtsapi_library = GetCombinedPath(prefix_libdir, "libfreerds-fdsapi.so");
+		wtsapi_library = GetCombinedPath(prefix_libdir, FREERDS_LIBRARY_NAME);
 		
 		if (wtsapi_library)
 		{
-			INIT_WTSAPI_FN pInitWtsApi;
-			
-			g_WtsApiModule = LoadLibraryA(wtsapi_library);
-			
-			if (g_WtsApiModule)
-			{
-				pInitWtsApi = (INIT_WTSAPI_FN) GetProcAddress(g_WtsApiModule, "InitWtsApi");
-
-				if (pInitWtsApi)
-				{
-					g_WtsApi = pInitWtsApi();
-				}	
-			}
+			LoadAndInitialize(wtsapi_library);
 		}
 		
 		free(prefix_libdir);
@@ -492,4 +492,6 @@ void InitializeWtsApiStubs(void)
 	
 	if (!g_WtsApi)
 		InitializeWtsApiStubs_FreeRDS();
+
+	return;
 }
