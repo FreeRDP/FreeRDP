@@ -25,9 +25,7 @@
 
 #include <winpr/bitstream.h>
 
-#define PACKET_COMPRESSED		0x20
-#define PACKET_AT_FRONT			0x40
-#define PACKET_FLUSHED			0x80
+#include <freerdp/codec/bulk.h>
 
 struct _MPPC_CONTEXT
 {

@@ -137,7 +137,7 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 				break;
 
 			case PACKET_COMPR_TYPE_RDP61:
-				status = -1;
+				status = xcrush_decompress(bulk->xcrushRecv, pSrcData, SrcSize, ppDstData, pDstSize, flags);
 				break;
 
 			case PACKET_COMPR_TYPE_RDP8:
@@ -251,8 +251,12 @@ void bulk_reset(rdpBulk* bulk)
 {
 	mppc_context_reset(bulk->mppcSend);
 	mppc_context_reset(bulk->mppcRecv);
+
 	ncrush_context_reset(bulk->ncrushRecv);
 	ncrush_context_reset(bulk->ncrushSend);
+
+	xcrush_context_reset(bulk->xcrushRecv);
+	xcrush_context_reset(bulk->xcrushSend);
 }
 
 rdpBulk* bulk_new(rdpContext* context)
@@ -270,6 +274,9 @@ rdpBulk* bulk_new(rdpContext* context)
 
 		bulk->ncrushRecv = ncrush_context_new(FALSE);
 		bulk->ncrushSend = ncrush_context_new(TRUE);
+
+		bulk->xcrushRecv = xcrush_context_new(FALSE);
+		bulk->xcrushSend = xcrush_context_new(TRUE);
 
 		bulk->CompressionLevel = context->settings->CompressionLevel;
 
@@ -290,6 +297,9 @@ void bulk_free(rdpBulk* bulk)
 
 	ncrush_context_free(bulk->ncrushRecv);
 	ncrush_context_free(bulk->ncrushSend);
+
+	xcrush_context_free(bulk->xcrushRecv);
+	xcrush_context_free(bulk->xcrushSend);
 
 	free(bulk);
 }

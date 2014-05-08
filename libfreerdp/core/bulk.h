@@ -26,6 +26,7 @@ typedef struct rdp_bulk rdpBulk;
 
 #include <freerdp/codec/mppc.h>
 #include <freerdp/codec/ncrush.h>
+#include <freerdp/codec/xcrush.h>
 
 struct rdp_bulk
 {
@@ -36,6 +37,8 @@ struct rdp_bulk
 	MPPC_CONTEXT* mppcRecv;
 	NCRUSH_CONTEXT* ncrushRecv;
 	NCRUSH_CONTEXT* ncrushSend;
+	XCRUSH_CONTEXT* xcrushRecv;
+	XCRUSH_CONTEXT* xcrushSend;
 	BYTE OutputBuffer[65536];
 	UINT64 TotalCompressedBytes;
 	UINT64 TotalUncompressedBytes;

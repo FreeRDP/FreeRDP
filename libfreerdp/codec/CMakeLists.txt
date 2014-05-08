@@ -48,6 +48,7 @@ set(${MODULE_PREFIX}_SRCS
 	nsc_encode.h
 	nsc_types.h
 	ncrush.c
+	xcrush.c
 	mppc.c
 	jpeg.c)
 
