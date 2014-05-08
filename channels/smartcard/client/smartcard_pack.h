@@ -465,6 +465,8 @@ void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard, Estab
 UINT32 smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Context_Call* call);
 void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, Context_Call* call, const char* name);
 
+void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, Long_Return* ret, const char* name);
+
 UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaders_Call* call);
 void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard, ListReaders_Call* call, BOOL unicode);
 

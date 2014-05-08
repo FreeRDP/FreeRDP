@@ -24,7 +24,7 @@ int TestPathCchAppend(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathCchAppend status: 0x%08lX\n"), status);
+		_tprintf(_T("PathCchAppend status: 0x%08X\n"), status);
 		return -1;
 	}
 
@@ -42,7 +42,7 @@ int TestPathCchAppend(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathCchAppend status: 0x%08lX\n"), status);
+		_tprintf(_T("PathCchAppend status: 0x%08X\n"), status);
 		return -1;
 	}
 
@@ -60,7 +60,7 @@ int TestPathCchAppend(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathCchAppend status: 0x%08lX\n"), status);
+		_tprintf(_T("PathCchAppend status: 0x%08X\n"), status);
 		return -1;
 	}
 
@@ -78,7 +78,7 @@ int TestPathCchAppend(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathCchAppend status: 0x%08lX\n"), status);
+		_tprintf(_T("PathCchAppend status: 0x%08X\n"), status);
 		return -1;
 	}
 

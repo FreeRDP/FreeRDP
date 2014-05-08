@@ -517,6 +517,8 @@ static void rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s
 	Stream_Read_UINT16(s, rdpdr->versionMajor);
 	Stream_Read_UINT16(s, rdpdr->versionMinor);
 	Stream_Read_UINT32(s, rdpdr->clientID);
+
+	rdpdr->sequenceId++;
 }
 
 static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
@@ -1033,6 +1035,8 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 			CHANNEL_OPTION_COMPRESS_RDP;
 
 	strcpy(rdpdr->channelDef.name, "rdpdr");
+
+	rdpdr->sequenceId = 0;
 
 	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 

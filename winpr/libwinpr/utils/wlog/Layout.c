@@ -119,7 +119,7 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 				}
 				else if ((*p == 'l') && (*(p + 1) == 'n')) /* line number */
 				{
-					args[argc++] = (void*) message->LineNumber;
+					args[argc++] = (void*) (size_t) message->LineNumber;
 					format[index++] = '%';
 					format[index++] = 'd';
 					p++;

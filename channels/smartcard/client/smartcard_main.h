@@ -92,7 +92,9 @@ struct _SMARTCARD_DEVICE
 
 	HANDLE thread;
 	wMessageQueue* IrpQueue;
-	wListDictionary* OutstandingIrps;
+	wQueue* CompletedIrpQueue;
+	wListDictionary* rgSCardContextList;
+	wListDictionary* rgOutstandingMessages;
 };
 typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
 

@@ -22,7 +22,7 @@ int TestCredUIParseUserName(int argc, char* argv[])
 	status = CredUIParseUserName(testUserName1, User, sizeof(User) / sizeof(TCHAR),
 		Domain, sizeof(Domain) / sizeof(TCHAR));
 
-	printf("CredUIParseUserName status: 0x%08lX\n", status);
+	printf("CredUIParseUserName status: 0x%08X\n", status);
 
 	_tprintf(_T("UserName: %s -> Domain: %s User: %s\n"), testUserName1, Domain, User);
 
@@ -34,7 +34,7 @@ int TestCredUIParseUserName(int argc, char* argv[])
 	status = CredUIParseUserName(testUserName2, User, sizeof(User) / sizeof(TCHAR),
 		Domain, sizeof(Domain) / sizeof(TCHAR));
 
-	printf("CredUIParseUserName status: 0x%08lX\n", status);
+	printf("CredUIParseUserName status: 0x%08X\n", status);
 
 	_tprintf(_T("UserName: %s -> Domain: %s User: %s\n"), testUserName2, Domain, User);
 

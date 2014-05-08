@@ -1186,7 +1186,14 @@ void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking)
 int rdp_check_fds(rdpRdp* rdp)
 {
 	int status;
+
 	status = transport_check_fds(rdp->transport);
+
+	if (status == 1)
+	{
+		status = rdp_client_redirect(rdp); /* session redirection */
+	}
+
 	return status;
 }
 

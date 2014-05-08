@@ -155,7 +155,7 @@ SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartca
 {
 	SCARDCONTEXT hContext = 0;
 
-	if (context->cbContext != sizeof(ULONG_PTR))
+	if ((context->cbContext != sizeof(ULONG_PTR)) && (context->cbContext != 0))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN,
 			"REDIR_SCARDCONTEXT does not match native size: Actual: %d, Expected: %d",
@@ -165,6 +165,8 @@ SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartca
 
 	if (context->cbContext)
 		CopyMemory(&hContext, &(context->pbContext), context->cbContext);
+	else
+		ZeroMemory(&hContext, sizeof(ULONG_PTR));
 
 	return hContext;
 }
@@ -216,20 +218,27 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 
 	Stream_Read_UINT32(s, context->cbContext); /* cbContext (4 bytes) */
 
-	if ((Stream_GetRemainingLength(s) < context->cbContext) || (!context->cbContext))
+	if (Stream_GetRemainingLength(s) < context->cbContext)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), context->cbContext);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
-	if ((context->cbContext != 4) && (context->cbContext != 8))
+	if ((context->cbContext != 0) && (context->cbContext != 4) && (context->cbContext != 8))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length is not 4 or 8: %d\n", context->cbContext);
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length is not 0, 4 or 8: %d\n", context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	Stream_Read_UINT32(s, pbContextNdrPtr); /* pbContextNdrPtr (4 bytes) */
+
+	if (((context->cbContext == 0) && pbContextNdrPtr) || ((context->cbContext != 0) && !pbContextNdrPtr))
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT cbContext (%d) pbContextNdrPtr (%d) inconsistency",
+				(int) context->cbContext, (int) pbContextNdrPtr);
+		return STATUS_INVALID_PARAMETER;
+	}
 
 	if (context->cbContext > Stream_GetRemainingLength(s))
 	{
@@ -257,6 +266,9 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 {
 	UINT32 length;
 
+	if (context->cbContext == 0)
+		return SCARD_S_SUCCESS;
+
 	if (Stream_GetRemainingLength(s) < 4)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d\n",
@@ -273,13 +285,13 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 		return STATUS_INVALID_PARAMETER;
 	}
 
-	if ((context->cbContext != 4) && (context->cbContext != 8))
+	if ((context->cbContext != 0) && (context->cbContext != 4) && (context->cbContext != 8))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length is not 4 or 8: %d\n", context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
 
-	if ((Stream_GetRemainingLength(s) < context->cbContext) || (!context->cbContext))
+	if (Stream_GetRemainingLength(s) < context->cbContext)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d\n",
 				(int) Stream_GetRemainingLength(s), context->cbContext);
@@ -288,6 +300,8 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 
 	if (context->cbContext)
 		Stream_Read(s, &(context->pbContext), context->cbContext);
+	else
+		ZeroMemory(&(context->pbContext), sizeof(context->pbContext));
 
 	return SCARD_S_SUCCESS;
 }
@@ -445,7 +459,8 @@ void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard, Estab
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "EstablishContext_Return {");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: 0x%08X", ret->ReturnCode);
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
 	pb = (BYTE*) &(ret->hContext.pbContext);
 
@@ -501,6 +516,19 @@ void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, Context_Call* cal
 		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+}
+
+void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, Long_Return* ret, const char* name)
+{
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "%s_Return {", name);
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }
@@ -828,7 +856,7 @@ void smartcard_trace_connect_w_call(SMARTCARD_DEVICE* smartcard, ConnectW_Call* 
 
 	ConvertFromUnicode(CP_UTF8, 0, call->szReader, -1, &szReaderA, 0, NULL, NULL);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectA_Call {");
+	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectW_Call {");
 
 	pb = (BYTE*) &(call->Common.hContext.pbContext);
 
@@ -1690,8 +1718,8 @@ UINT32 smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Sta
 
 void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* ret, BOOL unicode)
 {
-	UINT32 index;
-	UINT32 length;
+	int index;
+	int length;
 	char* pbAtr = NULL;
 	char* mszReaderNamesA = NULL;
 
@@ -1700,20 +1728,26 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 
 	if (unicode)
 	{
-		length = ret->cBytes / 2;
+		length = (int) ret->cBytes / 2;
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) ret->mszReaderNames, length, &mszReaderNamesA, 0, NULL, NULL);
 	}
 	else
 	{
-		length = ret->cBytes;
+		length = (int) ret->cBytes;
 		mszReaderNamesA = (char*) malloc(length);
 		CopyMemory(mszReaderNamesA, ret->mszReaderNames, ret->cBytes);
 	}
 
-	for (index = 0; index < length - 2; index++)
+	if (!mszReaderNamesA)
+		length = 0;
+
+	if (length > 2)
 	{
-		if (mszReaderNamesA[index] == '\0')
-			mszReaderNamesA[index] = ',';
+		for (index = 0; index < length - 2; index++)
+		{
+			if (mszReaderNamesA[index] == '\0')
+				mszReaderNamesA[index] = ',';
+		}
 	}
 
 	pbAtr = winpr_BinToHexString(ret->pbAtr, ret->cbAtrLen, FALSE);
@@ -1727,8 +1761,11 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 		SCardGetCardStateString(ret->dwState), ret->dwState,
 		SCardGetProtocolString(ret->dwProtocol), ret->dwProtocol);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "cBytes: %d mszReaderNames: %s",
+	if (mszReaderNamesA)
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "cBytes: %d mszReaderNames: %s",
 			ret->cBytes, mszReaderNamesA);
+	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG,
 		"cbAtrLen: %d pbAtr: %s", ret->cbAtrLen, pbAtr);

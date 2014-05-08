@@ -324,26 +324,28 @@ wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize)
 {
 	wStreamPool* pool = NULL;
 
-	pool = (wStreamPool*) malloc(sizeof(wStreamPool));
+	pool = (wStreamPool*) calloc(1, sizeof(wStreamPool));
 
 	if (pool)
 	{
-		ZeroMemory(pool, sizeof(wStreamPool));
-
 		pool->synchronized = synchronized;
 		pool->defaultSize = defaultSize;
 
-		InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
-
 		pool->aSize = 0;
 		pool->aCapacity = 32;
-		pool->aArray = (wStream**) malloc(sizeof(wStream*) * pool->aCapacity);
-		ZeroMemory(pool->aArray, sizeof(wStream*) * pool->aCapacity);
+		pool->aArray = (wStream**) calloc(pool->aCapacity, sizeof(wStream*));
+
+		if (!pool->aArray)
+			return NULL;
 
 		pool->uSize = 0;
 		pool->uCapacity = 32;
-		pool->uArray = (wStream**) malloc(sizeof(wStream*) * pool->uCapacity);
-		ZeroMemory(pool->uArray, sizeof(wStream*) * pool->uCapacity);
+		pool->uArray = (wStream**) calloc(pool->uCapacity, sizeof(wStream*));
+
+		if (!pool->uArray)
+			return NULL;
+
+		InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 	}
 
 	return pool;

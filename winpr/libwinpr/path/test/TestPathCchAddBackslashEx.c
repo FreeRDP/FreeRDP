@@ -23,7 +23,7 @@ int TestPathCchAddBackslashEx(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathCchAddBackslash status: 0x%08lX\n"), status);
+		_tprintf(_T("PathCchAddBackslash status: 0x%08X\n"), status);
 		return -1;
 	}
 
@@ -41,7 +41,7 @@ int TestPathCchAddBackslashEx(int argc, char* argv[])
 
 	if (status != S_FALSE)
 	{
-		_tprintf(_T("PathCchAddBackslash status: 0x%08lX\n"), status);
+		_tprintf(_T("PathCchAddBackslash status: 0x%08X\n"), status);
 		return -1;
 	}
 
