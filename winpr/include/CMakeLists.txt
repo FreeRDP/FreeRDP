@@ -17,3 +17,4 @@
 
 file(GLOB WINPR_HEADERS "winpr/*.h")
 install(FILES ${WINPR_HEADERS} DESTINATION include/winpr COMPONENT headers)
+install(DIRECTORY winpr/tools DESTINATION include/winpr COMPONENT headers FILES_MATCHING PATTERN "*.h")

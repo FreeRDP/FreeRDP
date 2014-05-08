@@ -25,7 +25,7 @@
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 
-#include "makecert.h"
+#include <winpr/tools/makecert.h>
 
 int main(int argc, char* argv[])
 {
