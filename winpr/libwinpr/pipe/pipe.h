@@ -37,6 +37,8 @@ typedef struct winpr_pipe WINPR_PIPE;
 
 typedef struct winpr_named_pipe WINPR_NAMED_PIPE;
 
+typedef void ( * fnRemoveBaseNamedPipeFromList)(WINPR_NAMED_PIPE* pNamedPipe);
+
 struct winpr_named_pipe
 {
 	WINPR_HANDLE_DEF();
@@ -61,17 +63,9 @@ struct winpr_named_pipe
 	DWORD nDefaultTimeOut;
 	DWORD dwFlagsAndAttributes;
 	LPOVERLAPPED lpOverlapped;
+
+	fnRemoveBaseNamedPipeFromList pfnRemoveBaseNamedPipeFromList;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-wArrayList* WinPR_GetBaseNamedPipeList();
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
 

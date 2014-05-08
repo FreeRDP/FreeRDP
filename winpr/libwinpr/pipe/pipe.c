@@ -45,7 +45,7 @@
 #include "pipe.h"
 
 /*
- * Since the WINPR implementation of named pipes makes use of UNIX domain
+ * Since the WinPR implementation of named pipes makes use of UNIX domain
  * sockets, it is not possible to bind the same name more than once (i.e.,
  * SO_REUSEADDR does not work with UNIX domain sockets).  As a result, the
  * first call to CreateNamedPipe must create the UNIX domain socket and
@@ -64,18 +64,18 @@ static BOOL g_Initialized = FALSE;
 
 static void InitWinPRPipeModule()
 {
-	if (g_Initialized) return;
+	if (g_Initialized)
+		return;
 
 	g_BaseNamedPipeList = ArrayList_New(TRUE);
 
 	g_Initialized = TRUE;
 }
 
-wArrayList* WinPR_GetBaseNamedPipeList()
+void WinPR_RemoveBaseNamedPipeFromList(WINPR_NAMED_PIPE* pNamedPipe)
 {
-	return g_BaseNamedPipeList;
+	ArrayList_Remove(g_BaseNamedPipeList, pNamedPipe);
 }
-
 
 /*
  * Unnamed pipe
@@ -146,21 +146,26 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	pBaseNamedPipe = NULL;
 
 	ArrayList_Lock(g_BaseNamedPipeList);
+
 	for (index = 0; index < ArrayList_Count(g_BaseNamedPipeList); index++)
 	{
 		WINPR_NAMED_PIPE* p = (WINPR_NAMED_PIPE*) ArrayList_GetItem(g_BaseNamedPipeList, index);
+
 		if (strcmp(p->name, lpName) == 0)
 		{
 			pBaseNamedPipe = p;
 			break;
 		}
 	}
+
 	ArrayList_Unlock(g_BaseNamedPipeList);
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) malloc(sizeof(WINPR_NAMED_PIPE));
 	hNamedPipe = (HANDLE) pNamedPipe;
 
 	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
+
+	pNamedPipe->pfnRemoveBaseNamedPipeFromList = WinPR_RemoveBaseNamedPipeFromList;
 
 	pNamedPipe->name = _strdup(lpName);
 	pNamedPipe->dwOpenMode = dwOpenMode;

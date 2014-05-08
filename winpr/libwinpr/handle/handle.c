@@ -169,7 +169,7 @@ BOOL CloseHandle(HANDLE hObject)
 
 		if (--pipe->dwRefCount == 0)
 		{
-			ArrayList_Remove(WinPR_GetBaseNamedPipeList(), pipe);
+			pipe->pfnRemoveBaseNamedPipeFromList(pipe);
 
 			if (pipe->pBaseNamedPipe)
 			{
