@@ -261,7 +261,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	return TRUE;
 }
 
-#ifdef WITH_DEBUG_RTS
+#if defined WITH_DEBUG_RTS && 0
 
 static const char* const RTS_CMD_STRINGS[] =
 {
