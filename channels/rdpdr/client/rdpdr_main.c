@@ -307,6 +307,7 @@ static char* get_word(char* str, unsigned int* offset)
 {
 	char* p;
 	char* tmp;
+	char* word;
 	int wlen;
 
 	if (*offset >= strlen(str))
@@ -325,7 +326,15 @@ static char* get_word(char* str, unsigned int* offset)
 	while (*(str + *offset) == ' ')
 		(*offset)++;
 
-	return strndup(p, wlen);
+	word = malloc(wlen + 1);
+	
+	if (word != NULL)
+	{
+		CopyMemory(word, p, wlen);
+		word[wlen] = '\0';
+	}
+	
+	return word;
 }
 
 static void handle_hotplug(rdpdrPlugin* rdpdr)
