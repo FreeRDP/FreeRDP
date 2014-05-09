@@ -717,13 +717,7 @@ void key_free(rdpRsaKey* key)
 
 rdpCertificate* certificate_new()
 {
-	rdpCertificate* certificate;
-
-	certificate = (rdpCertificate*) calloc(1, sizeof(rdpCertificate));
-	if (!certificate)
-		return NULL;
-
-	return certificate;
+	return (rdpCertificate*) calloc(1, sizeof(rdpCertificate));
 }
 
 /**
