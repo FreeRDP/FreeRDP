@@ -27,9 +27,13 @@ set(${MODULE_PREFIX}_SRCS
 	smartcard.h
 	smartcard_link.c
 	smartcard_pcsc.c
-	smartcard_pcsc.h
-	smartcard_winscard.c
-	smartcard_winscard.h)
+	smartcard_pcsc.h)
+
+if(WIN32)
+        list(${MODULE_PREFIX}_SRCS APPEND
+                smartcard_winscard.c
+                smartcard_winscard.h)
+endif()
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)

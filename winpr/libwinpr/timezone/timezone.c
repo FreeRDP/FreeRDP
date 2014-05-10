@@ -41,6 +41,9 @@
 
 #ifndef _WIN32
 
-
+BOOL WINAPI FileTimeToSystemTime(const FILETIME *lpFileTime, LPSYSTEMTIME lpSystemTime)
+{
+	return FALSE; /* unimplemented */
+}
 
 #endif
