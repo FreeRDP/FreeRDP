@@ -25,6 +25,9 @@
 
 #ifndef _WIN32
 
+#include <stdio.h>
+#include <stdarg.h>
+
 #define LANG_NEUTRAL					0x00
 #define LANG_INVARIANT					0x7f
 
