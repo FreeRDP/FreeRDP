@@ -65,8 +65,8 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 
 static void rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 count, UINT32 ids[])
 {
+	UINT32 i;
 	wStream* s;
-	int i;
 
 	s = Stream_New(NULL, 256);
 

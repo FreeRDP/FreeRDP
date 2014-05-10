@@ -482,8 +482,8 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			/* http://msdn.microsoft.com/en-us/library/cc232067.aspx */
 		case FileAllocationInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232076.aspx */
-#ifndef _WIN32
 			Stream_Read_UINT64(input, size);
+#ifndef _WIN32
 			if (ftruncate(file->fd, size) != 0)
 				return FALSE;
 #endif

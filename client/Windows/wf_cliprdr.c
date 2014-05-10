@@ -165,7 +165,7 @@ static void cliprdr_send_format_list(cliprdrContext *cliprdr)
 	format_count = CountClipboardFormats();
 	data_size = format_count * (4 + MAX_PATH * 2);
 
-	format_data = (BYTE *)calloc(1, data_size);
+	format_data = (BYTE*) calloc(1, data_size);
 	assert(format_data != NULL);
 
 	while (format = EnumClipboardFormats(format))
@@ -191,7 +191,7 @@ static void cliprdr_send_format_list(cliprdrContext *cliprdr)
 		{
 			if (format >= CF_MAX)
 			{
-				static wchar_t wName[MAX_PATH] = {0};
+				static WCHAR wName[MAX_PATH] = {0};
 				int wLen;
 
 				ZeroMemory(wName, MAX_PATH*2);
@@ -216,15 +216,16 @@ static void cliprdr_send_format_list(cliprdrContext *cliprdr)
 
 	if (stream_file_transferring)
 	{
-		cliprdr_event->raw_format_data = (BYTE *)calloc(1, (4 + 42));
+		cliprdr_event->raw_format_data_size = 4 + 42;
+		cliprdr_event->raw_format_data = (BYTE*) calloc(1, cliprdr_event->raw_format_data_size);
 		format = RegisterClipboardFormatW(L"FileGroupDescriptorW");
 		Write_UINT32(cliprdr_event->raw_format_data, format);
-		wcscpy((wchar_t *)(cliprdr_event->raw_format_data + 4), L"FileGroupDescriptorW");
-		cliprdr_event->raw_format_data_size = 4 + 42;
+		wcscpy_s((WCHAR*)(cliprdr_event->raw_format_data + 4),
+			(cliprdr_event->raw_format_data_size - 4) / 2, L"FileGroupDescriptorW");
 	}
 	else
 	{
-		cliprdr_event->raw_format_data = (BYTE *)calloc(1, len);
+		cliprdr_event->raw_format_data = (BYTE*) calloc(1, len);
 		assert(cliprdr_event->raw_format_data != NULL);
 
 		CopyMemory(cliprdr_event->raw_format_data, format_data, len);
@@ -232,7 +233,7 @@ static void cliprdr_send_format_list(cliprdrContext *cliprdr)
 	}
 	free(format_data);
 
-	freerdp_channels_send_event(cliprdr->channels, (wMessage *) cliprdr_event);
+	freerdp_channels_send_event(cliprdr->channels, (wMessage*) cliprdr_event);
 }
 
 int cliprdr_send_data_request(cliprdrContext *cliprdr, UINT32 format)
@@ -681,18 +682,21 @@ static BOOL wf_cliprdr_get_file_contents(wchar_t *file_name, BYTE *buffer, int p
 }
 
 /* path_name has a '\' at the end. e.g. c:\newfolder\, file_name is c:\newfolder\new.txt */
-static FILEDESCRIPTORW *wf_cliprdr_get_file_descriptor(wchar_t *file_name, int pathLen)
+static FILEDESCRIPTORW *wf_cliprdr_get_file_descriptor(WCHAR* file_name, int pathLen)
 {
 	FILEDESCRIPTORW *fd;
 	HANDLE hFile;
 
-	fd = (FILEDESCRIPTORW *)malloc(sizeof(FILEDESCRIPTORW));
+	fd = (FILEDESCRIPTORW*) malloc(sizeof(FILEDESCRIPTORW));
+
 	if (!fd)
 		return NULL;
 
 	ZeroMemory(fd, sizeof(FILEDESCRIPTORW));
 
-	hFile = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, NULL);
+	hFile = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ,
+		NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, NULL);
+
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		free(fd);
@@ -702,13 +706,15 @@ static FILEDESCRIPTORW *wf_cliprdr_get_file_descriptor(wchar_t *file_name, int p
 	fd->dwFlags = FD_ATTRIBUTES | FD_FILESIZE | FD_WRITESTIME | FD_PROGRESSUI;
 
 	fd->dwFileAttributes = GetFileAttributes(file_name);
+
 	if (!GetFileTime(hFile, NULL, NULL, &fd->ftLastWriteTime))
 	{
 		fd->dwFlags &= ~FD_WRITESTIME;
 	}
+
 	fd->nFileSizeLow = GetFileSize(hFile, &fd->nFileSizeHigh);
 
-	wcscpy(fd->cFileName, file_name + pathLen);
+	wcscpy_s(fd->cFileName, sizeof(fd->cFileName) / 2, file_name + pathLen);
 	CloseHandle(hFile);
 
 	return fd;
@@ -727,8 +733,8 @@ static void wf_cliprdr_array_ensure_capacity(cliprdrContext *cliprdr)
 static void wf_cliprdr_add_to_file_arrays(cliprdrContext *cliprdr, WCHAR *full_file_name, int pathLen)
 {
 	/* add to name array */
-	cliprdr->file_names[cliprdr->nFiles] = (LPWSTR)malloc(MAX_PATH);
-	wcscpy(cliprdr->file_names[cliprdr->nFiles], full_file_name);
+	cliprdr->file_names[cliprdr->nFiles] = (LPWSTR) malloc(MAX_PATH);
+	wcscpy_s(cliprdr->file_names[cliprdr->nFiles], MAX_PATH, full_file_name);
 
 	/* add to descriptor array */
 	cliprdr->fileDescriptor[cliprdr->nFiles] = wf_cliprdr_get_file_descriptor(full_file_name, pathLen);
@@ -843,14 +849,15 @@ static void wf_cliprdr_process_cb_data_request_event(wfContext* wfc, RDP_CB_DATA
 		format_etc.ptd = 0;
 
 		result = IDataObject_GetData(dataObj, &format_etc, &stg_medium);
+
 		if (SUCCEEDED(result))
 		{
 			DEBUG_CLIPRDR("Got FileGroupDescriptorW.");
 			globlemem = (char *)GlobalLock(stg_medium.hGlobal);
 			uSize = GlobalSize(stg_medium.hGlobal);
 			size = uSize;
-			buff = malloc(uSize);
-			memcpy(buff, globlemem, uSize);
+			buff = (char*) malloc(uSize);
+			CopyMemory(buff, globlemem, uSize);
 			GlobalUnlock(stg_medium.hGlobal);
 
 			ReleaseStgMedium(&stg_medium);
