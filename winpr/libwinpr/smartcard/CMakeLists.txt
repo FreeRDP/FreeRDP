@@ -30,7 +30,7 @@ set(${MODULE_PREFIX}_SRCS
 	smartcard_pcsc.h)
 
 if(WIN32)
-        list(${MODULE_PREFIX}_SRCS APPEND
+        list(APPEND ${MODULE_PREFIX}_SRCS
                 smartcard_winscard.c
                 smartcard_winscard.h)
 endif()
