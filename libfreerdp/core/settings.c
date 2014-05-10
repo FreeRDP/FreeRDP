@@ -263,6 +263,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->Authentication = TRUE;
 		settings->AuthenticationOnly = FALSE;
 		settings->CredentialsFromStdin = FALSE;
+		settings->DisableCredentialsDelegation = FALSE;
+		settings->AuthenticationLevel = 2;
 
 		settings->ChannelCount = 0;
 		settings->ChannelDefArraySize = 32;
@@ -629,6 +631,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->NegotiateSecurityLayer = settings->NegotiateSecurityLayer; /* 1096 */
 		_settings->RestrictedAdminModeRequired = settings->RestrictedAdminModeRequired; /* 1097 */
 		_settings->DisableCredentialsDelegation = settings->DisableCredentialsDelegation; /* 1099 */
+		_settings->AuthenticationLevel = settings->AuthenticationLevel; /* 1100 */
 		_settings->MstscCookieMode = settings->MstscCookieMode; /* 1152 */
 		_settings->SendPreconnectionPdu = settings->SendPreconnectionPdu; /* 1156 */
 		_settings->IgnoreCertificate = settings->IgnoreCertificate; /* 1408 */
