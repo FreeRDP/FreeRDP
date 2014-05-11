@@ -878,6 +878,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->AsyncChannels;
 			break;
 
+		case FreeRDP_AsyncTransport:
+			return settings->AsyncTransport;
+			break;
+
 		case FreeRDP_ToggleFullscreen:
 			return settings->ToggleFullscreen;
 			break;
@@ -1357,6 +1361,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_AsyncChannels:
 			settings->AsyncChannels = param;
+			break;
+
+		case FreeRDP_AsyncTransport:
+			settings->AsyncTransport = param;
 			break;
 
 		case FreeRDP_ToggleFullscreen:
