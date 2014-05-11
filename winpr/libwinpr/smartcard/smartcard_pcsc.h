@@ -71,9 +71,9 @@ typedef long PCSC_LONG;
 
 #define PCSC_SCARD_AUTOALLOCATE		(PCSC_DWORD)(-1)
 
-#define PCSC_SCARD_PCI_T0	(&g_PCSC_rgSCardT0Pci)
-#define PCSC_SCARD_PCI_T1	(&g_PCSC_rgSCardT1Pci)
-#define PCSC_SCARD_PCI_RAW	(&g_PCSC_rgSCardRawPci)
+#define PCSC_SCARD_PCI_T0		(&g_PCSC_rgSCardT0Pci)
+#define PCSC_SCARD_PCI_T1		(&g_PCSC_rgSCardT1Pci)
+#define PCSC_SCARD_PCI_RAW		(&g_PCSC_rgSCardRawPci)
 
 #define PCSC_SCARD_CTL_CODE(code)		(0x42000000 + (code))
 #define PCSC_CM_IOCTL_GET_FEATURE_REQUEST	SCARD_CTL_CODE(3400)

@@ -224,7 +224,10 @@ static UINT32 smartcard_IsValidContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
 
-	status = ret.ReturnCode = SCardIsValidContext(hContext);
+	if (!ListDictionary_Contains(smartcard->rgSCardContextList, (void*) hContext))
+		status = ret.ReturnCode = SCARD_E_INVALID_HANDLE;
+	else
+		status = ret.ReturnCode = SCardIsValidContext(hContext);
 
 	smartcard_trace_long_return(smartcard, &ret, "IsValidContext");
 
@@ -969,6 +972,8 @@ static UINT32 smartcard_AccessStartedEvent(SMARTCARD_DEVICE* smartcard, IRP* irp
 	}
 
 	Stream_Seek(irp->input, 4); /* Unused (4 bytes) */
+
+	status = ret.ReturnCode = SCARD_S_SUCCESS;
 
 	if (!smartcard->StartedEvent)
 		smartcard->StartedEvent = SCardAccessStartedEvent();

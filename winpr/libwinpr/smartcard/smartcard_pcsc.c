@@ -811,7 +811,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaders_Internal(SCARDCONTEXT hContext,
 	}
 	else
 	{
-		status = (LONG) g_PCSC.pfnSCardListReaders(hContext, NULL, mszReaders, &pcsc_cchReaders);
+		status = (LONG) g_PCSC.pfnSCardListReaders(hContext, mszGroups, mszReaders, &pcsc_cchReaders);
 	}
 
 	status = PCSC_MapErrorCodeToWinSCard(status);
@@ -1194,6 +1194,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 	if (!g_PCSC.pfnSCardGetStatusChange)
 		return SCARD_E_NO_SERVICE;
 	
+	if (!cReaders)
+		return SCARD_S_SUCCESS;
+
 	/**
 	 * Apple's SmartCard Services (not vanilla pcsc-lite) appears to have trouble with the
 	 * "\\\\?PnP?\\Notification" reader name. I am always getting EXC_BAD_ACCESS with it.
@@ -1204,7 +1207,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 	 * The "\\\\?PnP?\\Notification" string cannot be found anywhere in the sources,
 	 * while this string is present in the vanilla pcsc-lite sources.
 	 *
-	 * To work around this apparently lack of "\\\\?PnP?\\Notification" support,
+	 * To work around this apparent lack of "\\\\?PnP?\\Notification" support,
 	 * we have to filter rgReaderStates to exclude the special PnP reader name.
 	 */
 
