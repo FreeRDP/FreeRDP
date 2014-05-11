@@ -51,6 +51,12 @@ static void smartcard_free(DEVICE* device)
 	ListDictionary_Free(smartcard->rgOutstandingMessages);
 	Queue_Free(smartcard->CompletedIrpQueue);
 
+	if (smartcard->StartedEvent)
+	{
+		SCardReleaseStartedEvent();
+		smartcard->StartedEvent = NULL;
+	}
+
 	free(device);
 }
 

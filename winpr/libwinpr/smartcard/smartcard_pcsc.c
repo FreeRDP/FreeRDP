@@ -56,6 +56,9 @@ typedef struct _PCSC_READER PCSC_READER;
 static HMODULE g_PCSCModule = NULL;
 static PCSCFunctionTable g_PCSC = { 0 };
 
+static HANDLE g_StartedEvent = NULL;
+static int g_StartedEventRefCount = 0;
+
 static BOOL g_SCardAutoAllocate = FALSE;
 static BOOL g_PnP_Notification = TRUE;
 
@@ -1113,12 +1116,42 @@ WINSCARDAPI LONG WINAPI PCSC_SCardFreeMemory(SCARDCONTEXT hContext, LPCVOID pvMe
 
 WINSCARDAPI HANDLE WINAPI PCSC_SCardAccessStartedEvent(void)
 {
-	return 0;
+	LONG status = 0;
+	SCARDCONTEXT hContext = 0;
+
+	status = PCSC_SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, &hContext);
+
+	if (status != SCARD_S_SUCCESS)
+		return NULL;
+
+	status = PCSC_SCardReleaseContext(hContext);
+
+	if (status != SCARD_S_SUCCESS)
+		return NULL;
+
+	if (!g_StartedEvent)
+	{
+		g_StartedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		SetEvent(g_StartedEvent);
+	}
+
+	g_StartedEventRefCount++;
+
+	return g_StartedEvent;
 }
 
 WINSCARDAPI void WINAPI PCSC_SCardReleaseStartedEvent(void)
 {
+	g_StartedEventRefCount--;
 
+	if (g_StartedEventRefCount == 0)
+	{
+		if (g_StartedEvent)
+		{
+			CloseHandle(g_StartedEvent);
+			g_StartedEvent = NULL;
+		}
+	}
 }
 
 WINSCARDAPI LONG WINAPI PCSC_SCardLocateCardsA(SCARDCONTEXT hContext,

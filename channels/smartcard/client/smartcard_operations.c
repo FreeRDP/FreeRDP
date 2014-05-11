@@ -969,8 +969,12 @@ static UINT32 smartcard_AccessStartedEvent(SMARTCARD_DEVICE* smartcard, IRP* irp
 	}
 
 	Stream_Seek(irp->input, 4); /* Unused (4 bytes) */
-	
-	status = ret.ReturnCode = SCARD_S_SUCCESS;
+
+	if (!smartcard->StartedEvent)
+		smartcard->StartedEvent = SCardAccessStartedEvent();
+
+	if (!smartcard->StartedEvent)
+		status = ret.ReturnCode = SCARD_E_NO_SERVICE;
 
 	return status;
 }

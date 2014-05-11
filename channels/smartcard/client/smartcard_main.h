@@ -91,6 +91,7 @@ struct _SMARTCARD_DEVICE
 	char* path;
 
 	HANDLE thread;
+	HANDLE StartedEvent;
 	wMessageQueue* IrpQueue;
 	wQueue* CompletedIrpQueue;
 	wListDictionary* rgSCardContextList;
