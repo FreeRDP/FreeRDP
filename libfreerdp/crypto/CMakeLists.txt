@@ -71,3 +71,7 @@ else()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
