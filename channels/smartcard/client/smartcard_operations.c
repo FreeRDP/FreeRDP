@@ -164,7 +164,7 @@ static UINT32 smartcard_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	if (ret.ReturnCode == SCARD_S_SUCCESS)
 	{
 		void* key = (void*) (size_t) hContext;
-		ListDictionary_Add(smartcard->rgSCardContextList, key, NULL);
+		ListDictionary_Add(smartcard->rgSCardContextList, key, key);
 	}
 
 	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), hContext);
@@ -224,10 +224,7 @@ static UINT32 smartcard_IsValidContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call.hContext));
 
-	if (!ListDictionary_Contains(smartcard->rgSCardContextList, (void*) hContext))
-		status = ret.ReturnCode = SCARD_E_INVALID_HANDLE;
-	else
-		status = ret.ReturnCode = SCardIsValidContext(hContext);
+	status = ret.ReturnCode = SCardIsValidContext(hContext);
 
 	smartcard_trace_long_return(smartcard, &ret, "IsValidContext");
 

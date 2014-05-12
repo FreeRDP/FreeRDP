@@ -38,6 +38,16 @@
 #include "smartcard_pcsc.h"
 
 /**
+ * PC/SC transactions:
+ * http://developersblog.wwpass.com/?p=180
+ */
+
+/**
+ * Smart Card Logon on Windows Vista:
+ * http://blogs.msdn.com/b/shivaram/archive/2007/02/26/smart-card-logon-on-windows-vista.aspx
+ */
+
+/**
  * The Smart Card Cryptographic Service Provider Cookbook:
  * http://msdn.microsoft.com/en-us/library/ms953432.aspx
  *
@@ -103,7 +113,6 @@ struct _PCSC_SCARDHANDLE
 {
 	SCARDCONTEXT hContext;
 	CRITICAL_SECTION lock;
-	BOOL transactionInProgress;
 };
 typedef struct _PCSC_SCARDHANDLE PCSC_SCARDHANDLE;
 
@@ -455,7 +464,7 @@ BOOL PCSC_LockCardTransaction(SCARDHANDLE hCard)
 {
 	PCSC_SCARDHANDLE* pCard;
 
-	//return TRUE; /* disable for now because it deadlocks */
+	return TRUE; /* disable for now because it deadlocks */
 
 	pCard = PCSC_GetCardHandleData(hCard);
 
@@ -467,11 +476,6 @@ BOOL PCSC_LockCardTransaction(SCARDHANDLE hCard)
 
 	EnterCriticalSection(&(pCard->lock));
 
-	//while (pCard->transactionInProgress)
-	//	USleep(100);
-
-	pCard->transactionInProgress = TRUE;
-
 	return TRUE;
 }
 
@@ -479,7 +483,7 @@ BOOL PCSC_UnlockCardTransaction(SCARDHANDLE hCard)
 {
 	PCSC_SCARDHANDLE* pCard;
 
-	//return TRUE; /* disable for now because it deadlocks */
+	return TRUE; /* disable for now because it deadlocks */
 
 	pCard = PCSC_GetCardHandleData(hCard);
 
@@ -490,8 +494,6 @@ BOOL PCSC_UnlockCardTransaction(SCARDHANDLE hCard)
 	}
 
 	LeaveCriticalSection(&(pCard->lock));
-
-	pCard->transactionInProgress = FALSE;
 
 	return TRUE;
 }
@@ -871,6 +873,14 @@ WINSCARDAPI LONG WINAPI PCSC_SCardReleaseContext(SCARDCONTEXT hContext)
 
 	if (!g_PCSC.pfnSCardReleaseContext)
 		return SCARD_E_NO_SERVICE;
+
+	if (!hContext)
+	{
+		fprintf(stderr, "SCardReleaseContext: null hContext\n");
+		return status;
+	}
+
+	PCSC_LockCardContext(hContext);
 
 	status = (LONG) g_PCSC.pfnSCardReleaseContext(hContext);
 	status = PCSC_MapErrorCodeToWinSCard(status);
@@ -1516,11 +1526,11 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext,
 	LPSCARD_READERSTATEA states;
 	LONG status = SCARD_S_SUCCESS;
 
-	if (!PCSC_LockCardContext(hContext))
-		return SCARD_E_INVALID_HANDLE;
-
 	if (!g_PCSC.pfnSCardGetStatusChange)
 		return SCARD_E_NO_SERVICE;
+
+	if (!PCSC_LockCardContext(hContext))
+		return SCARD_E_INVALID_HANDLE;
 
 	states = (LPSCARD_READERSTATEA) calloc(cReaders, sizeof(SCARD_READERSTATEA));
 
@@ -1654,6 +1664,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext,
 WINSCARDAPI LONG WINAPI PCSC_SCardReconnect(SCARDHANDLE hCard,
 		DWORD dwShareMode, DWORD dwPreferredProtocols, DWORD dwInitialization, LPDWORD pdwActiveProtocol)
 {
+	SCARDCONTEXT hContext = 0;
 	LONG status = SCARD_S_SUCCESS;
 	PCSC_DWORD pcsc_dwShareMode = (PCSC_DWORD) dwShareMode;
 	PCSC_DWORD pcsc_dwPreferredProtocols = 0;
@@ -1663,6 +1674,11 @@ WINSCARDAPI LONG WINAPI PCSC_SCardReconnect(SCARDHANDLE hCard,
 	if (!g_PCSC.pfnSCardReconnect)
 		return SCARD_E_NO_SERVICE;
 
+	hContext = PCSC_GetCardContextFromHandle(hCard);
+
+	if (!PCSC_LockCardContext(hContext))
+		return SCARD_E_INVALID_HANDLE;
+
 	pcsc_dwPreferredProtocols = (PCSC_DWORD) PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
 
 	status = (LONG) g_PCSC.pfnSCardReconnect(hCard, pcsc_dwShareMode,
@@ -1671,16 +1687,25 @@ WINSCARDAPI LONG WINAPI PCSC_SCardReconnect(SCARDHANDLE hCard,
 
 	*pdwActiveProtocol = PCSC_ConvertProtocolsToWinSCard((DWORD) pcsc_dwActiveProtocol);
 
+	if (!PCSC_UnlockCardContext(hContext))
+		return SCARD_E_INVALID_HANDLE;
+
 	return status;
 }
 
 WINSCARDAPI LONG WINAPI PCSC_SCardDisconnect(SCARDHANDLE hCard, DWORD dwDisposition)
 {
+	SCARDCONTEXT hContext = 0;
 	LONG status = SCARD_S_SUCCESS;
 	PCSC_DWORD pcsc_dwDisposition = (PCSC_DWORD) dwDisposition;
 
 	if (!g_PCSC.pfnSCardDisconnect)
 		return SCARD_E_NO_SERVICE;
+
+	hContext = PCSC_GetCardContextFromHandle(hCard);
+
+	if (!PCSC_LockCardContext(hContext))
+		return SCARD_E_INVALID_HANDLE;
 
 	status = (LONG) g_PCSC.pfnSCardDisconnect(hCard, pcsc_dwDisposition);
 	status = PCSC_MapErrorCodeToWinSCard(status);
@@ -1689,6 +1714,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardDisconnect(SCARDHANDLE hCard, DWORD dwDisposit
 	{
 		PCSC_DisconnectCardHandle(hCard);
 	}
+
+	if (!PCSC_UnlockCardContext(hContext))
+		return SCARD_E_INVALID_HANDLE;
 
 	return status;
 }
@@ -2644,7 +2672,7 @@ extern int PCSC_InitializeSCardApi_Link(void);
 int PCSC_InitializeSCardApi(void)
 {
 	/* Disable pcsc-lite's (poor) blocking so we can handle it ourselves */
-	SetEnvironmentVariableA("PCSCLITE_NO_BLOCKING", "1");
+	//SetEnvironmentVariableA("PCSCLITE_NO_BLOCKING", "1");
 
 #ifndef DISABLE_PCSC_LINK
 	if (PCSC_InitializeSCardApi_Link() >= 0)

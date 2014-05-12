@@ -115,6 +115,7 @@ static void smartcard_init(DEVICE* device)
 		for (index = 0; index < keyCount; index++)
 		{
 			hContext = (SCARDCONTEXT) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
+
 			ListDictionary_Remove(smartcard->rgSCardContextList, (void*) pKeys[index]);
 
 			if (SCardIsValidContext(hContext))
