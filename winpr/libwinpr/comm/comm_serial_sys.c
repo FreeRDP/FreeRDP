@@ -22,6 +22,7 @@
 
 #ifndef _WIN32
 
+#include <sys/ioctl.h>
 #include <termios.h>
 
 #include <freerdp/utils/debug.h>
@@ -860,6 +861,35 @@ static BOOL _get_timeouts(WINPR_COMM *pComm, SERIAL_TIMEOUTS *pTimeouts)
 }
 
 
+static BOOL _set_line(WINPR_COMM *pComm, UINT32 line)
+{
+	ioctl(pComm->fd, TIOCMBIS, line);
+	return TRUE;
+}
+
+
+static BOOL _clear_line(WINPR_COMM *pComm, UINT32 line)
+{
+	ioctl(pComm->fd, TIOCMBIC, line);
+	return TRUE;
+}
+
+
+static BOOL _set_dtr(WINPR_COMM *pComm)
+{
+	/* FIXME: SERIAL_DTR_HANDSHAKE should be checked but is not supported as of today */
+
+	return _set_line(pComm, TIOCM_DTR);
+}
+
+static BOOL _clear_dtr(WINPR_COMM *pComm)
+{
+	/* FIXME: SERIAL_DTR_HANDSHAKE should be checked but is not supported as of today */
+
+	return _clear_line(pComm, TIOCM_DTR);
+}
+
+
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
 	.id		  = RemoteSerialDriverSerialSys,
@@ -875,6 +905,8 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.get_handflow     = _get_handflow,
 	.set_timeouts     = _set_timeouts,
 	.get_timeouts     = _get_timeouts,
+	.set_dtr          = _set_dtr,
+	.clear_dtr        = _clear_dtr,
 };
 
 

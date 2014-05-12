@@ -68,6 +68,8 @@ static REMOTE_SERIAL_DRIVER _SerCx2Sys =
 	.get_handflow     = NULL,
 	.set_timeouts     = NULL,
 	.get_timeouts     = NULL,
+	.set_dtr          = NULL,
+	.clear_dtr        = NULL,
 };
 
 
@@ -93,6 +95,9 @@ REMOTE_SERIAL_DRIVER* SerCx2Sys_s()
 
 	_SerCx2Sys.set_timeouts = pSerialSys->set_timeouts;
 	_SerCx2Sys.get_timeouts = pSerialSys->get_timeouts;
+
+	_SerCx2Sys.set_dtr   = pSerialSys->set_dtr;
+	_SerCx2Sys.clear_dtr = pSerialSys->clear_dtr;
 
 	return &_SerCx2Sys;
 }

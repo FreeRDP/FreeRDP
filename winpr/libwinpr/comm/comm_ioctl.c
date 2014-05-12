@@ -341,7 +341,22 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 			}
 			break;
 		}
-
+		case IOCTL_SERIAL_SET_DTR:
+		{
+			if (pRemoteSerialDriver->set_dtr)
+			{
+				return pRemoteSerialDriver->set_dtr(pComm);
+			}
+			break;
+		}
+		case IOCTL_SERIAL_CLR_DTR:
+		{
+			if (pRemoteSerialDriver->clear_dtr)
+			{
+				return pRemoteSerialDriver->clear_dtr(pComm);
+			}
+			break;
+		}
 	}
 	
 	DEBUG_WARN(_T("unsupported IoControlCode: Ox%0.8x (remote serial driver: %s)"), dwIoControlCode, pRemoteSerialDriver->name);

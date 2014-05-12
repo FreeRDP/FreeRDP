@@ -32,7 +32,8 @@
 
 #include "comm.h"
 
-/* Ntddser.h http://msdn.microsoft.com/en-us/cc308432.aspx
+/* Serial I/O Request Interface: http://msdn.microsoft.com/en-us/library/dn265347%28v=vs.85%29.aspx
+ * Ntddser.h http://msdn.microsoft.com/en-us/cc308432.aspx
  * Ntddpar.h http://msdn.microsoft.com/en-us/cc308431.aspx
  */
 
@@ -51,8 +52,8 @@ extern "C" {
 #define IOCTL_SERIAL_GET_CHARS		0x001B0058
 #define IOCTL_SERIAL_SET_CHARS		0x001B005C
 
-/* IOCTL_SERIAL_SET_DTR 0x001B0024 */
-/* IOCTL_SERIAL_CLR_DTR 0x001B0028 */
+#define IOCTL_SERIAL_SET_DTR		0x001B0024
+#define IOCTL_SERIAL_CLR_DTR		0x001B0028
 /* IOCTL_SERIAL_RESET_DEVICE 0x001B002C */
 /* IOCTL_SERIAL_SET_RTS 0x001B0030 */
 /* IOCTL_SERIAL_CLR_RTS 0x001B0034 */
@@ -209,6 +210,8 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*get_handflow)(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow);
 	BOOL (*set_timeouts)(WINPR_COMM *pComm, const SERIAL_TIMEOUTS *pTimeouts);
 	BOOL (*get_timeouts)(WINPR_COMM *pComm, SERIAL_TIMEOUTS *pTimeouts);
+	BOOL (*set_dtr)(WINPR_COMM *pComm);
+	BOOL (*clear_dtr)(WINPR_COMM *pComm);
 
 } REMOTE_SERIAL_DRIVER;
 
