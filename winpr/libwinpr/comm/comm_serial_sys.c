@@ -22,6 +22,7 @@
 
 #ifndef _WIN32
 
+#include <assert.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 
@@ -877,16 +878,68 @@ static BOOL _clear_line(WINPR_COMM *pComm, UINT32 line)
 
 static BOOL _set_dtr(WINPR_COMM *pComm)
 {
-	/* FIXME: SERIAL_DTR_HANDSHAKE should be checked but is not supported as of today */
+	SERIAL_HANDFLOW handflow;
+	if (!_get_handflow(pComm, &handflow))
+		return FALSE;
+
+	/* SERIAL_DTR_HANDSHAKE not supported as of today */
+	assert((handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE) == 0);
+
+	if (handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 
 	return _set_line(pComm, TIOCM_DTR);
 }
 
 static BOOL _clear_dtr(WINPR_COMM *pComm)
 {
-	/* FIXME: SERIAL_DTR_HANDSHAKE should be checked but is not supported as of today */
+	SERIAL_HANDFLOW handflow;
+	if (!_get_handflow(pComm, &handflow))
+		return FALSE;
+
+	/* SERIAL_DTR_HANDSHAKE not supported as of today */
+	assert((handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE) == 0);
+
+	if (handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 
 	return _clear_line(pComm, TIOCM_DTR);
+}
+
+static BOOL _set_rts(WINPR_COMM *pComm)
+{
+	SERIAL_HANDFLOW handflow;
+	if (!_get_handflow(pComm, &handflow))
+		return FALSE;
+
+	if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	return _set_line(pComm, TIOCM_RTS);
+}
+
+static BOOL _clear_rts(WINPR_COMM *pComm)
+{
+	SERIAL_HANDFLOW handflow;
+	if (!_get_handflow(pComm, &handflow))
+		return FALSE;
+
+	if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	return _clear_line(pComm, TIOCM_RTS);
 }
 
 
@@ -907,6 +960,8 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.get_timeouts     = _get_timeouts,
 	.set_dtr          = _set_dtr,
 	.clear_dtr        = _clear_dtr,
+	.set_rts          = _set_rts,
+	.clear_rts        = _clear_rts,
 };
 
 

@@ -511,6 +511,8 @@ static REMOTE_SERIAL_DRIVER _SerCxSys =
 	.get_timeouts     = NULL,
 	.set_dtr          = NULL,
 	.clear_dtr        = NULL,
+	.set_rts          = NULL,
+	.clear_rts        = NULL,
 };
 
 
@@ -530,6 +532,9 @@ REMOTE_SERIAL_DRIVER* SerCxSys_s()
 
 	_SerCxSys.set_dtr = pSerialSys->set_dtr;
 	_SerCxSys.clear_dtr = pSerialSys->clear_dtr;
+
+	_SerCxSys.set_rts = pSerialSys->set_rts;
+	_SerCxSys.clear_rts = pSerialSys->clear_rts;
 
 	return &_SerCxSys;
 }
