@@ -203,6 +203,8 @@ static UINT32 smartcard_ReleaseContext_Decode(SMARTCARD_DEVICE* smartcard, SMART
 
 	smartcard_trace_context_call(smartcard, call, "ReleaseContext");
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+
 	return status;
 }
 
@@ -210,16 +212,13 @@ static UINT32 smartcard_ReleaseContext_Call(SMARTCARD_DEVICE* smartcard, SMARTCA
 {
 	UINT32 status;
 	Long_Return ret;
-	SCARDCONTEXT hContext;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-
-	status = ret.ReturnCode = SCardReleaseContext(hContext);
+	status = ret.ReturnCode = SCardReleaseContext(operation->hContext);
 
 	if (ret.ReturnCode == SCARD_S_SUCCESS)
 	{
 		SMARTCARD_CONTEXT* pContext;
-		void* key = (void*) (size_t) hContext;
+		void* key = (void*) (size_t) operation->hContext;
 
 		pContext = (SMARTCARD_CONTEXT*) ListDictionary_Remove(smartcard->rgSCardContextList, key);
 
@@ -243,6 +242,8 @@ static UINT32 smartcard_IsValidContext_Decode(SMARTCARD_DEVICE* smartcard, SMART
 
 	smartcard_trace_context_call(smartcard, call, "IsValidContext");
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+
 	return status;
 }
 
@@ -250,11 +251,8 @@ static UINT32 smartcard_IsValidContext_Call(SMARTCARD_DEVICE* smartcard, SMARTCA
 {
 	UINT32 status;
 	Long_Return ret;
-	SCARDCONTEXT hContext;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-
-	status = ret.ReturnCode = SCardIsValidContext(hContext);
+	status = ret.ReturnCode = SCardIsValidContext(operation->hContext);
 
 	smartcard_trace_long_return(smartcard, &ret, "IsValidContext");
 
@@ -273,23 +271,22 @@ static UINT32 smartcard_ListReadersA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCA
 
 	smartcard_trace_list_readers_call(smartcard, call, FALSE);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+
 	return status;
 }
 
 static UINT32 smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, ListReaders_Call* call)
 {
 	UINT32 status;
-	SCARDCONTEXT hContext;
 	ListReaders_Return ret;
 	LPSTR mszReaders = NULL;
 	DWORD cchReaders = 0;
 	IRP* irp = operation->irp;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-
 	cchReaders = SCARD_AUTOALLOCATE;
 
-	status = ret.ReturnCode = SCardListReadersA(hContext, (LPCSTR) call->mszGroups, (LPSTR) &mszReaders, &cchReaders);
+	status = ret.ReturnCode = SCardListReadersA(operation->hContext, (LPCSTR) call->mszGroups, (LPSTR) &mszReaders, &cchReaders);
 
 	ret.msz = (BYTE*) mszReaders;
 	ret.cBytes = cchReaders;
@@ -305,7 +302,7 @@ static UINT32 smartcard_ListReadersA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD
 		return status;
 
 	if (mszReaders)
-		SCardFreeMemory(hContext, mszReaders);
+		SCardFreeMemory(operation->hContext, mszReaders);
 
 	if (call->mszGroups)
 		free(call->mszGroups);
@@ -325,23 +322,22 @@ static UINT32 smartcard_ListReadersW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCA
 
 	smartcard_trace_list_readers_call(smartcard, call, TRUE);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+
 	return status;
 }
 
 static UINT32 smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, ListReaders_Call* call)
 {
 	UINT32 status;
-	SCARDCONTEXT hContext;
 	ListReaders_Return ret;
 	LPWSTR mszReaders = NULL;
 	DWORD cchReaders = 0;
 	IRP* irp = operation->irp;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-
 	cchReaders = SCARD_AUTOALLOCATE;
 
-	status = ret.ReturnCode = SCardListReadersW(hContext, (LPCWSTR) call->mszGroups, (LPWSTR) &mszReaders, &cchReaders);
+	status = ret.ReturnCode = SCardListReadersW(operation->hContext, (LPCWSTR) call->mszGroups, (LPWSTR) &mszReaders, &cchReaders);
 
 	ret.msz = (BYTE*) mszReaders;
 	ret.cBytes = cchReaders * 2;
@@ -353,11 +349,11 @@ static UINT32 smartcard_ListReadersW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD
 
 	status = smartcard_pack_list_readers_return(smartcard, irp->output, &ret);
 
-	if (status)
+	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (mszReaders)
-		SCardFreeMemory(hContext, mszReaders);
+		SCardFreeMemory(operation->hContext, mszReaders);
 
 	if (call->mszGroups)
 		free(call->mszGroups);
@@ -377,6 +373,8 @@ static UINT32 smartcard_GetStatusChangeA_Decode(SMARTCARD_DEVICE* smartcard, SMA
 
 	smartcard_trace_get_status_change_a_call(smartcard, call);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+
 	return status;
 }
 
@@ -384,14 +382,11 @@ static UINT32 smartcard_GetStatusChangeA_Call(SMARTCARD_DEVICE* smartcard, SMART
 {
 	LONG status;
 	UINT32 index;
-	SCARDCONTEXT hContext;
 	GetStatusChange_Return ret;
 	LPSCARD_READERSTATEA rgReaderState = NULL;
 	IRP* irp = operation->irp;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-
-	status = ret.ReturnCode = SCardGetStatusChangeA(hContext, call->dwTimeOut, call->rgReaderStates, call->cReaders);
+	status = ret.ReturnCode = SCardGetStatusChangeA(operation->hContext, call->dwTimeOut, call->rgReaderStates, call->cReaders);
 
 	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED))
 		return status;
@@ -443,6 +438,8 @@ static UINT32 smartcard_GetStatusChangeW_Decode(SMARTCARD_DEVICE* smartcard, SMA
 
 	smartcard_trace_get_status_change_w_call(smartcard, call);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+
 	return status;
 }
 
@@ -450,14 +447,11 @@ static UINT32 smartcard_GetStatusChangeW_Call(SMARTCARD_DEVICE* smartcard, SMART
 {
 	LONG status;
 	UINT32 index;
-	SCARDCONTEXT hContext;
 	GetStatusChange_Return ret;
 	LPSCARD_READERSTATEW rgReaderState = NULL;
 	IRP* irp = operation->irp;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-
-	status = ret.ReturnCode = SCardGetStatusChangeW(hContext, call->dwTimeOut, call->rgReaderStates, call->cReaders);
+	status = ret.ReturnCode = SCardGetStatusChangeW(operation->hContext, call->dwTimeOut, call->rgReaderStates, call->cReaders);
 
 	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED))
 		return status;
@@ -509,18 +503,17 @@ static UINT32 smartcard_Cancel_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 
 	smartcard_trace_context_call(smartcard, call, "Cancel");
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+
 	return status;
 }
 
 static UINT32 smartcard_Cancel_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, Context_Call* call)
 {
 	LONG status;
-	SCARDCONTEXT hContext;
 	Long_Return ret;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-
-	status = ret.ReturnCode = SCardCancel(hContext);
+	status = ret.ReturnCode = SCardCancel(operation->hContext);
 
 	smartcard_trace_long_return(smartcard, &ret, "Cancel");
 
@@ -539,6 +532,8 @@ static UINT32 smartcard_ConnectA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 
 	smartcard_trace_connect_a_call(smartcard, call);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->Common.hContext));
+
 	return status;
 }
 
@@ -546,11 +541,8 @@ static UINT32 smartcard_ConnectA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 {
 	LONG status;
 	SCARDHANDLE hCard;
-	SCARDCONTEXT hContext;
 	Connect_Return ret;
 	IRP* irp = operation->irp;
-
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->Common.hContext));
 
 	if ((call->Common.dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED) &&
 			(call->Common.dwShareMode != SCARD_SHARE_DIRECT))
@@ -558,13 +550,13 @@ static UINT32 smartcard_ConnectA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 		call->Common.dwPreferredProtocols = SCARD_PROTOCOL_Tx;
 	}
 
-	status = ret.ReturnCode = SCardConnectA(hContext, (char*) call->szReader, call->Common.dwShareMode,
+	status = ret.ReturnCode = SCardConnectA(operation->hContext, (char*) call->szReader, call->Common.dwShareMode,
 			call->Common.dwPreferredProtocols, &hCard, &ret.dwActiveProtocol);
 
 	if (status)
 		return status;
 
-	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), hContext);
+	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), operation->hContext);
 	smartcard_scard_handle_native_to_redir(smartcard, &(ret.hCard), hCard);
 
 	smartcard_trace_connect_return(smartcard, &ret);
@@ -592,18 +584,17 @@ static UINT32 smartcard_ConnectW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 
 	smartcard_trace_connect_w_call(smartcard, call);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->Common.hContext));
+
 	return status;
 }
 
 static UINT32 smartcard_ConnectW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, ConnectW_Call* call)
 {
 	LONG status;
-	SCARDCONTEXT hContext;
 	SCARDHANDLE hCard;
 	Connect_Return ret;
 	IRP* irp = operation->irp;
-
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->Common.hContext));
 
 	if ((call->Common.dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED) &&
 			(call->Common.dwShareMode != SCARD_SHARE_DIRECT))
@@ -611,13 +602,13 @@ static UINT32 smartcard_ConnectW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 		call->Common.dwPreferredProtocols = SCARD_PROTOCOL_Tx;
 	}
 
-	status = ret.ReturnCode = SCardConnectW(hContext, (WCHAR*) call->szReader, call->Common.dwShareMode,
+	status = ret.ReturnCode = SCardConnectW(operation->hContext, (WCHAR*) call->szReader, call->Common.dwShareMode,
 			call->Common.dwPreferredProtocols, &hCard, &ret.dwActiveProtocol);
 
 	if (status)
 		return status;
 
-	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), hContext);
+	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), operation->hContext);
 	smartcard_scard_handle_native_to_redir(smartcard, &(ret.hCard), hCard);
 
 	smartcard_trace_connect_return(smartcard, &ret);
@@ -645,21 +636,19 @@ static UINT32 smartcard_Reconnect_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_
 
 	smartcard_trace_reconnect_call(smartcard, call);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
+
 	return status;
 }
 
 static UINT32 smartcard_Reconnect_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, Reconnect_Call* call)
 {
 	LONG status;
-	SCARDHANDLE hCard;
-	SCARDCONTEXT hContext;
 	Reconnect_Return ret;
 	IRP* irp = operation->irp;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
-
-	status = ret.ReturnCode = SCardReconnect(hCard, call->dwShareMode,
+	status = ret.ReturnCode = SCardReconnect(operation->hCard, call->dwShareMode,
 			call->dwPreferredProtocols, call->dwInitialization, &ret.dwActiveProtocol);
 
 	smartcard_trace_reconnect_return(smartcard, &ret);
@@ -684,20 +673,18 @@ static UINT32 smartcard_Disconnect_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD
 
 	smartcard_trace_hcard_and_disposition_call(smartcard, call, "Disconnect");
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
+
 	return status;
 }
 
 static UINT32 smartcard_Disconnect_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, HCardAndDisposition_Call* call)
 {
 	LONG status;
-	SCARDHANDLE hCard;
-	SCARDCONTEXT hContext;
 	Long_Return ret;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
-
-	status = ret.ReturnCode = SCardDisconnect(hCard, call->dwDisposition);
+	status = ret.ReturnCode = SCardDisconnect(operation->hCard, call->dwDisposition);
 
 	smartcard_trace_long_return(smartcard, &ret, "Disconnect");
 
@@ -719,20 +706,18 @@ static UINT32 smartcard_BeginTransaction_Decode(SMARTCARD_DEVICE* smartcard, SMA
 
 	smartcard_trace_hcard_and_disposition_call(smartcard, call, "BeginTransaction");
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
+
 	return status;
 }
 
 static UINT32 smartcard_BeginTransaction_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, HCardAndDisposition_Call* call)
 {
 	LONG status;
-	SCARDHANDLE hCard;
-	SCARDCONTEXT hContext;
 	Long_Return ret;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
-
-	status = ret.ReturnCode = SCardBeginTransaction(hCard);
+	status = ret.ReturnCode = SCardBeginTransaction(operation->hCard);
 
 	smartcard_trace_long_return(smartcard, &ret, "BeginTransaction");
 
@@ -751,20 +736,18 @@ static UINT32 smartcard_EndTransaction_Decode(SMARTCARD_DEVICE* smartcard, SMART
 
 	smartcard_trace_hcard_and_disposition_call(smartcard, call, "EndTransaction");
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
+
 	return status;
 }
 
 static UINT32 smartcard_EndTransaction_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, HCardAndDisposition_Call* call)
 {
 	LONG status;
-	SCARDHANDLE hCard;
-	SCARDCONTEXT hContext;
 	Long_Return ret;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
-
-	status = ret.ReturnCode = SCardEndTransaction(hCard, call->dwDisposition);
+	status = ret.ReturnCode = SCardEndTransaction(operation->hCard, call->dwDisposition);
 
 	smartcard_trace_long_return(smartcard, &ret, "EndTransaction");
 
@@ -781,23 +764,21 @@ static UINT32 smartcard_State_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 
 	status = smartcard_unpack_state_call(smartcard, irp->input, call);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
+
 	return status;
 }
 
 static UINT32 smartcard_State_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, State_Call* call)
 {
 	LONG status;
-	SCARDHANDLE hCard;
-	SCARDCONTEXT hContext;
 	State_Return ret;
 	IRP* irp = operation->irp;
 
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
-
 	ret.cbAtrLen = SCARD_ATR_LENGTH;
 
-	status = ret.ReturnCode = SCardState(hCard, &ret.dwState, &ret.dwProtocol, (BYTE*) &ret.rgAtr, &ret.cbAtrLen);
+	status = ret.ReturnCode = SCardState(operation->hCard, &ret.dwState, &ret.dwProtocol, (BYTE*) &ret.rgAtr, &ret.cbAtrLen);
 
 	status = smartcard_pack_state_return(smartcard, irp->output, &ret);
 
@@ -819,21 +800,19 @@ static DWORD smartcard_StatusA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 
 	smartcard_trace_status_call(smartcard, call, FALSE);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
+
 	return status;
 }
 
 static DWORD smartcard_StatusA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, Status_Call* call)
 {
 	LONG status;
-	SCARDHANDLE hCard;
-	SCARDCONTEXT hContext;
 	Status_Return ret = { 0 };
 	DWORD cchReaderLen = 0;
 	LPSTR mszReaderNames = NULL;
 	IRP* irp = operation->irp;
-
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
 
 	if (call->cbAtrLen > 32)
 		call->cbAtrLen = 32;
@@ -843,7 +822,7 @@ static DWORD smartcard_StatusA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 
 	cchReaderLen = SCARD_AUTOALLOCATE;
 
-	status = ret.ReturnCode = SCardStatusA(hCard, (LPSTR) &mszReaderNames, &cchReaderLen,
+	status = ret.ReturnCode = SCardStatusA(operation->hCard, (LPSTR) &mszReaderNames, &cchReaderLen,
 			&ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &ret.cbAtrLen);
 
 	if (status == SCARD_S_SUCCESS)
@@ -860,7 +839,7 @@ static DWORD smartcard_StatusA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 		return status;
 
 	if (mszReaderNames)
-		SCardFreeMemory(hContext, mszReaderNames);
+		SCardFreeMemory(operation->hContext, mszReaderNames);
 
 	return ret.ReturnCode;
 }
@@ -877,21 +856,19 @@ static DWORD smartcard_StatusW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 
 	smartcard_trace_status_call(smartcard, call, TRUE);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
+
 	return status;
 }
 
 static DWORD smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, Status_Call* call)
 {
 	LONG status;
-	SCARDHANDLE hCard;
-	SCARDCONTEXT hContext;
 	Status_Return ret;
 	DWORD cchReaderLen = 0;
 	LPWSTR mszReaderNames = NULL;
 	IRP* irp = operation->irp;
-
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
 
 	if (call->cbAtrLen > 32)
 		call->cbAtrLen = 32;
@@ -901,7 +878,7 @@ static DWORD smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 
 	cchReaderLen = SCARD_AUTOALLOCATE;
 
-	status = ret.ReturnCode = SCardStatusW(hCard, (LPWSTR) &mszReaderNames, &cchReaderLen,
+	status = ret.ReturnCode = SCardStatusW(operation->hCard, (LPWSTR) &mszReaderNames, &cchReaderLen,
 			&ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &ret.cbAtrLen);
 
 	ret.mszReaderNames = (BYTE*) mszReaderNames;
@@ -915,7 +892,7 @@ static DWORD smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 		return status;
 
 	if (mszReaderNames)
-		SCardFreeMemory(hContext, mszReaderNames);
+		SCardFreeMemory(operation->hContext, mszReaderNames);
 
 	return ret.ReturnCode;
 }
@@ -932,19 +909,17 @@ static UINT32 smartcard_Transmit_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 
 	smartcard_trace_transmit_call(smartcard, call);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
+
 	return status;
 }
 
 static UINT32 smartcard_Transmit_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, Transmit_Call* call)
 {
 	LONG status;
-	SCARDHANDLE hCard;
-	SCARDCONTEXT hContext;
 	Transmit_Return ret;
 	IRP* irp = operation->irp;
-
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
 
 	ret.cbRecvLength = 0;
 	ret.pbRecvBuffer = NULL;
@@ -960,7 +935,7 @@ static UINT32 smartcard_Transmit_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 
 	ret.pioRecvPci = call->pioRecvPci;
 
-	status = ret.ReturnCode = SCardTransmit(hCard, call->pioSendPci, call->pbSendBuffer,
+	status = ret.ReturnCode = SCardTransmit(operation->hCard, call->pioSendPci, call->pbSendBuffer,
 			call->cbSendLength, ret.pioRecvPci, ret.pbRecvBuffer, &(ret.cbRecvLength));
 
 	smartcard_trace_transmit_return(smartcard, &ret);
@@ -994,24 +969,25 @@ static UINT32 smartcard_Control_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 
 	smartcard_trace_control_call(smartcard, call);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
+
 	return status;
 }
 
 static UINT32 smartcard_Control_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, Control_Call* call)
 {
 	LONG status;
-	SCARDHANDLE hCard;
-	SCARDCONTEXT hContext;
 	Control_Return ret;
 	IRP* irp = operation->irp;
-
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
 
 	ret.cbOutBufferSize = call->cbOutBufferSize;
 	ret.pvOutBuffer = (BYTE*) malloc(call->cbOutBufferSize);
 
-	status = ret.ReturnCode = SCardControl(hCard,
+	if (!ret.pvOutBuffer)
+		return SCARD_E_NO_MEMORY;
+
+	status = ret.ReturnCode = SCardControl(operation->hCard,
 			call->dwControlCode, call->pvInBuffer, call->cbInBufferSize,
 			ret.pvOutBuffer, call->cbOutBufferSize, &ret.cbOutBufferSize);
 
@@ -1042,6 +1018,9 @@ static UINT32 smartcard_GetAttrib_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_
 
 	smartcard_trace_get_attrib_call(smartcard, call);
 
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	operation->hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
+
 	return status;
 }
 
@@ -1049,13 +1028,8 @@ static UINT32 smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 {
 	LONG status;
 	DWORD cbAttrLen;
-	SCARDHANDLE hCard;
-	SCARDCONTEXT hContext;
 	GetAttrib_Return ret;
 	IRP* irp = operation->irp;
-
-	hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
-	hCard = smartcard_scard_handle_native_from_redir(smartcard, &(call->hCard));
 
 	ret.pbAttr = NULL;
 
@@ -1067,7 +1041,7 @@ static UINT32 smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 
 	cbAttrLen = call->cbAttrLen;
 
-	status = ret.ReturnCode = SCardGetAttrib(hCard, call->dwAttrId, ret.pbAttr, &cbAttrLen);
+	status = ret.ReturnCode = SCardGetAttrib(operation->hCard, call->dwAttrId, ret.pbAttr, &cbAttrLen);
 
 	ret.cbAttrLen = cbAttrLen;
 

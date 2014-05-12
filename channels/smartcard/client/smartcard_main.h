@@ -88,6 +88,8 @@ struct _SMARTCARD_OPERATION
 	IRP* irp;
 	void* call;
 	UINT32 ioControlCode;
+	SCARDCONTEXT hContext;
+	SCARDHANDLE hCard;
 };
 typedef struct _SMARTCARD_OPERATION SMARTCARD_OPERATION;
 
