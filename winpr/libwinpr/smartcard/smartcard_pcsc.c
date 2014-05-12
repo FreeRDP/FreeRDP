@@ -489,7 +489,7 @@ BOOL PCSC_UnlockCardTransaction(SCARDHANDLE hCard)
 
 	if (!pCard)
 	{
-		fprintf(stderr, "PCSC_UnlockCardHandle: invalid handle (%p)\n", (void*) hCard);
+		fprintf(stderr, "PCSC_UnlockCardTransaction: invalid handle (%p)\n", (void*) hCard);
 		return FALSE;
 	}
 
@@ -879,8 +879,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardReleaseContext(SCARDCONTEXT hContext)
 		fprintf(stderr, "SCardReleaseContext: null hContext\n");
 		return status;
 	}
-
-	PCSC_LockCardContext(hContext);
 
 	status = (LONG) g_PCSC.pfnSCardReleaseContext(hContext);
 	status = PCSC_MapErrorCodeToWinSCard(status);
@@ -1664,7 +1662,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext,
 WINSCARDAPI LONG WINAPI PCSC_SCardReconnect(SCARDHANDLE hCard,
 		DWORD dwShareMode, DWORD dwPreferredProtocols, DWORD dwInitialization, LPDWORD pdwActiveProtocol)
 {
-	SCARDCONTEXT hContext = 0;
 	LONG status = SCARD_S_SUCCESS;
 	PCSC_DWORD pcsc_dwShareMode = (PCSC_DWORD) dwShareMode;
 	PCSC_DWORD pcsc_dwPreferredProtocols = 0;
@@ -1674,11 +1671,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardReconnect(SCARDHANDLE hCard,
 	if (!g_PCSC.pfnSCardReconnect)
 		return SCARD_E_NO_SERVICE;
 
-	hContext = PCSC_GetCardContextFromHandle(hCard);
-
-	if (!PCSC_LockCardContext(hContext))
-		return SCARD_E_INVALID_HANDLE;
-
 	pcsc_dwPreferredProtocols = (PCSC_DWORD) PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
 
 	status = (LONG) g_PCSC.pfnSCardReconnect(hCard, pcsc_dwShareMode,
@@ -1687,25 +1679,16 @@ WINSCARDAPI LONG WINAPI PCSC_SCardReconnect(SCARDHANDLE hCard,
 
 	*pdwActiveProtocol = PCSC_ConvertProtocolsToWinSCard((DWORD) pcsc_dwActiveProtocol);
 
-	if (!PCSC_UnlockCardContext(hContext))
-		return SCARD_E_INVALID_HANDLE;
-
 	return status;
 }
 
 WINSCARDAPI LONG WINAPI PCSC_SCardDisconnect(SCARDHANDLE hCard, DWORD dwDisposition)
 {
-	SCARDCONTEXT hContext = 0;
 	LONG status = SCARD_S_SUCCESS;
 	PCSC_DWORD pcsc_dwDisposition = (PCSC_DWORD) dwDisposition;
 
 	if (!g_PCSC.pfnSCardDisconnect)
 		return SCARD_E_NO_SERVICE;
-
-	hContext = PCSC_GetCardContextFromHandle(hCard);
-
-	if (!PCSC_LockCardContext(hContext))
-		return SCARD_E_INVALID_HANDLE;
 
 	status = (LONG) g_PCSC.pfnSCardDisconnect(hCard, pcsc_dwDisposition);
 	status = PCSC_MapErrorCodeToWinSCard(status);
@@ -1714,9 +1697,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardDisconnect(SCARDHANDLE hCard, DWORD dwDisposit
 	{
 		PCSC_DisconnectCardHandle(hCard);
 	}
-
-	if (!PCSC_UnlockCardContext(hContext))
-		return SCARD_E_INVALID_HANDLE;
 
 	return status;
 }
@@ -1727,8 +1707,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardBeginTransaction(SCARDHANDLE hCard)
 
 	if (!g_PCSC.pfnSCardBeginTransaction)
 		return SCARD_E_NO_SERVICE;
-
-	PCSC_LockCardTransaction(hCard);
 
 	status = (LONG) g_PCSC.pfnSCardBeginTransaction(hCard);
 	status = PCSC_MapErrorCodeToWinSCard(status);
@@ -1746,8 +1724,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardEndTransaction(SCARDHANDLE hCard, DWORD dwDisp
 
 	status = (LONG) g_PCSC.pfnSCardEndTransaction(hCard, pcsc_dwDisposition);
 	status = PCSC_MapErrorCodeToWinSCard(status);
-
-	PCSC_UnlockCardTransaction(hCard);
 
 	return status;
 }
