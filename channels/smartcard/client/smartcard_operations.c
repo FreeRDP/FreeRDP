@@ -1716,18 +1716,3 @@ UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, IRP* irp, 
 	return SCARD_S_SUCCESS;
 }
 
-UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
-{
-	UINT32 status;
-	UINT32 ioControlCode;
-	ULONG_PTR* call = NULL;
-
-	status = smartcard_irp_device_control_decode(smartcard, irp, &ioControlCode, &call);
-
-	if (status != SCARD_S_SUCCESS)
-		return status;
-
-	status = smartcard_irp_device_control_call(smartcard, irp, ioControlCode, call);
-
-	return status;
-}

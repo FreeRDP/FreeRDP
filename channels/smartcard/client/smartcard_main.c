@@ -35,6 +35,14 @@
 
 #include "smartcard_main.h"
 
+struct _SMARTCARD_IRP_WORK
+{
+	IRP* irp;
+	ULONG_PTR* call;
+	UINT32 ioControlCode;
+};
+typedef struct _SMARTCARD_IRP_WORK SMARTCARD_IRP_WORK;
+
 void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 {
 	IRP* irp;
@@ -221,15 +229,25 @@ void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	irp->Complete(irp);
 }
 
-void* smartcard_process_irp_worker_proc(IRP* irp)
+void* smartcard_process_irp_worker_proc(SMARTCARD_IRP_WORK* irpWork)
 {
+	IRP* irp;
+	UINT32 status;
+	ULONG_PTR* call;
+	UINT32 ioControlCode;
 	SMARTCARD_DEVICE* smartcard;
+
+	irp = irpWork->irp;
+	call = irpWork->call;
+	ioControlCode = irpWork->ioControlCode;
 
 	smartcard = (SMARTCARD_DEVICE*) irp->device;
 
-	smartcard_irp_device_control(smartcard, irp);
+	status = smartcard_irp_device_control_call(smartcard, irp, ioControlCode, call);
 
 	Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
+
+	free(irpWork);
 
 	ExitThread(0);
 	return NULL;
@@ -243,7 +261,9 @@ void* smartcard_process_irp_worker_proc(IRP* irp)
 void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	void* key;
+	UINT32 status;
 	BOOL asyncIrp = FALSE;
+	ULONG_PTR* call = NULL;
 	UINT32 ioControlCode = 0;
 
 	key = (void*) (size_t) irp->CompletionId;
@@ -327,17 +347,32 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 				break;
 		}
 
+		status = smartcard_irp_device_control_decode(smartcard, irp, &ioControlCode, &call);
+
+		if (status != SCARD_S_SUCCESS)
+		{
+			/* TODO: properly handle decoding failure response */
+			fprintf(stderr, "fixme: properly handle decoding failure response\n");
+		}
+
 		if (!asyncIrp)
 		{
-			smartcard_irp_device_control(smartcard, irp);
-
+			status = smartcard_irp_device_control_call(smartcard, irp, ioControlCode, call);
 			Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
 		}
 		else
 		{
+			SMARTCARD_IRP_WORK* irpWork;
+
+			irpWork = (SMARTCARD_IRP_WORK*) calloc(1, sizeof(SMARTCARD_IRP_WORK));
+
+			irpWork->irp = irp;
+			irpWork->call = call;
+			irpWork->ioControlCode = ioControlCode;
+
 			irp->thread = CreateThread(NULL, 0,
 					(LPTHREAD_START_ROUTINE) smartcard_process_irp_worker_proc,
-					irp, 0, NULL);
+					irpWork, 0, NULL);
 		}
 	}
 	else
