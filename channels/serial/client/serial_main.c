@@ -93,7 +93,7 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	 *     SharedAccess      = 0x00000007: FILE_SHARE_DELETE | FILE_SHARE_WRITE | FILE_SHARE_READ
 	 *     CreateDisposition = 0x00000001: CREATE_NEW
 	 *
-	 * then sends : 
+	 * then Windows 2012 sends : 
 	 *     DesiredAccess     = 0x00120089: SYNCHRONIZE | READ_CONTROL | FILE_READ_ATTRIBUTES | FILE_READ_EA | FILE_READ_DATA
 	 *     SharedAccess      = 0x00000007: FILE_SHARE_DELETE | FILE_SHARE_WRITE | FILE_SHARE_READ
 	 *     CreateDisposition = 0x00000001: CREATE_NEW
@@ -410,10 +410,14 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 		Stream_EnsureRemainingCapacity(irp->output, BytesReturned);
 		Stream_Write(irp->output, OutputBuffer, BytesReturned); /* OutputBuffer */
 	}
-	else
-	{
-		Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
-	}
+	/* TMP: FIXME: Why at least Windows 2008R2 gets lost with this
+	 * extra byte and likely on a IOCTL_SERIAL_SET_BAUD_RATE? The
+	 * extra byte is well required according MS-RDPEFS
+	 * 2.2.1.5.5 */
+	/* else */
+	/* { */
+	/* 	Stream_Write_UINT8(irp->output, 0); /\* Padding (1 byte) *\/ */
+	/* } */
 
 	if (InputBuffer != NULL)
 		free(InputBuffer);
