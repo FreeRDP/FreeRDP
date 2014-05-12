@@ -163,8 +163,12 @@ static UINT32 smartcard_EstablishContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (ret.ReturnCode == SCARD_S_SUCCESS)
 	{
+		SMARTCARD_CONTEXT* pContext;
 		void* key = (void*) (size_t) hContext;
-		ListDictionary_Add(smartcard->rgSCardContextList, key, key);
+
+		pContext = smartcard_context_new(smartcard, hContext);
+
+		ListDictionary_Add(smartcard->rgSCardContextList, key, (void*) pContext);
 	}
 
 	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), hContext);
@@ -199,8 +203,12 @@ static UINT32 smartcard_ReleaseContext(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	if (ret.ReturnCode == SCARD_S_SUCCESS)
 	{
+		SMARTCARD_CONTEXT* pContext;
 		void* key = (void*) (size_t) hContext;
-		ListDictionary_Remove(smartcard->rgSCardContextList, key);
+
+		pContext = (SMARTCARD_CONTEXT*) ListDictionary_Remove(smartcard->rgSCardContextList, key);
+
+		smartcard_context_free(pContext);
 	}
 
 	smartcard_trace_long_return(smartcard, &ret, "ReleaseContext");

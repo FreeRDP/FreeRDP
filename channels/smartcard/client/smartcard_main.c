@@ -35,6 +35,79 @@
 
 #include "smartcard_main.h"
 
+void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
+{
+	IRP* irp;
+	DWORD nCount;
+	DWORD status;
+	HANDLE hEvents[2];
+	wMessage message;
+	SMARTCARD_DEVICE* smartcard;
+
+	smartcard = pContext->smartcard;
+
+	nCount = 0;
+	hEvents[nCount++] = MessageQueue_Event(pContext->IrpQueue);
+
+	while (1)
+	{
+		status = WaitForMultipleObjects(nCount, hEvents, FALSE, INFINITE);
+
+		if (WaitForSingleObject(MessageQueue_Event(pContext->IrpQueue), 0) == WAIT_OBJECT_0)
+		{
+			if (!MessageQueue_Peek(pContext->IrpQueue, &message, TRUE))
+				break;
+
+			if (message.id == WMQ_QUIT)
+				break;
+
+			irp = (IRP*) message.wParam;
+
+			if (irp)
+			{
+				smartcard_process_irp(smartcard, irp);
+			}
+		}
+	}
+
+	ExitThread(0);
+	return NULL;
+}
+
+SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTEXT hContext)
+{
+	SMARTCARD_CONTEXT* pContext;
+
+	pContext = (SMARTCARD_CONTEXT*) calloc(1, sizeof(SMARTCARD_CONTEXT));
+
+	if (!pContext)
+		return pContext;
+
+	pContext->hContext = hContext;
+
+	pContext->IrpQueue = MessageQueue_New(NULL);
+
+	pContext->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) smartcard_context_thread,
+			pContext, 0, NULL);
+
+	return pContext;
+}
+
+void smartcard_context_free(SMARTCARD_CONTEXT* pContext)
+{
+	if (!pContext)
+		return;
+
+	MessageQueue_PostQuit(pContext->IrpQueue, 0);
+	WaitForSingleObject(pContext->thread, INFINITE);
+	CloseHandle(pContext->thread);
+
+	MessageQueue_Free(pContext->IrpQueue);
+
+	free(pContext);
+}
+
 static void smartcard_free(DEVICE* device)
 {
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
@@ -71,7 +144,7 @@ static void smartcard_init(DEVICE* device)
 	int keyCount;
 	ULONG_PTR* pKeys;
 	SCARDCONTEXT hContext;
-
+	SMARTCARD_CONTEXT* pContext;
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 
 	/**
@@ -92,10 +165,16 @@ static void smartcard_init(DEVICE* device)
 
 		for (index = 0; index < keyCount; index++)
 		{
-			hContext = (SCARDCONTEXT) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
+			pContext = (SMARTCARD_CONTEXT*) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
+
+			if (!pContext)
+				continue;
+
+			hContext = pContext->hContext;
 
 			if (SCardIsValidContext(hContext))
 			{
+				printf("SCardCancel: 0x%08X\n", hContext);
 				SCardCancel(hContext);
 			}
 		}
@@ -114,12 +193,16 @@ static void smartcard_init(DEVICE* device)
 
 		for (index = 0; index < keyCount; index++)
 		{
-			hContext = (SCARDCONTEXT) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
+			pContext = (SMARTCARD_CONTEXT*) ListDictionary_Remove(smartcard->rgSCardContextList, (void*) pKeys[index]);
 
-			ListDictionary_Remove(smartcard->rgSCardContextList, (void*) pKeys[index]);
+			if (!pContext)
+				continue;
+
+			hContext = pContext->hContext;
 
 			if (SCardIsValidContext(hContext))
 			{
+				printf("SCardReleaseContext: 0x%08X\n", hContext);
 				SCardReleaseContext(hContext);
 			}
 		}
