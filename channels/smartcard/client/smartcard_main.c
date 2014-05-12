@@ -37,12 +37,12 @@
 
 void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 {
-	IRP* irp;
 	DWORD nCount;
 	DWORD status;
 	HANDLE hEvents[2];
 	wMessage message;
 	SMARTCARD_DEVICE* smartcard;
+	SMARTCARD_OPERATION* operation;
 
 	smartcard = pContext->smartcard;
 
@@ -61,11 +61,15 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 			if (message.id == WMQ_QUIT)
 				break;
 
-			irp = (IRP*) message.wParam;
+			operation = (SMARTCARD_OPERATION*) message.wParam;
 
-			if (irp)
+			if (operation)
 			{
-				smartcard_process_irp(smartcard, irp);
+				status = smartcard_irp_device_control_call(smartcard, operation);
+
+				Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) operation->irp);
+
+				free(operation);
 			}
 		}
 	}
@@ -82,6 +86,8 @@ SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTE
 
 	if (!pContext)
 		return pContext;
+
+	pContext->smartcard = smartcard;
 
 	pContext->hContext = hContext;
 
@@ -157,8 +163,6 @@ static void smartcard_init(DEVICE* device)
 	/**
 	 * Call SCardCancel on existing contexts, unblocking all outstanding IRPs.
 	 */
-
-	printf("rgSCardContextList: %d\n", ListDictionary_Count(smartcard->rgSCardContextList));
 
 	if (ListDictionary_Count(smartcard->rgSCardContextList) > 0)
 	{
@@ -250,6 +254,7 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	void* key;
 	UINT32 status;
 	BOOL asyncIrp = FALSE;
+	SMARTCARD_CONTEXT* pContext = NULL;
 	SMARTCARD_OPERATION* operation = NULL;
 
 	key = (void*) (size_t) irp->CompletionId;
@@ -346,6 +351,11 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 				break;
 		}
 
+		pContext = ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) operation->hContext);
+
+		if (!pContext)
+			asyncIrp = FALSE;
+
 		if (!asyncIrp)
 		{
 			status = smartcard_irp_device_control_call(smartcard, operation);
@@ -354,9 +364,10 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		}
 		else
 		{
-			irp->thread = CreateThread(NULL, 0,
-					(LPTHREAD_START_ROUTINE) smartcard_process_irp_worker_proc,
-					operation, 0, NULL);
+			if (pContext)
+			{
+				MessageQueue_Post(pContext->IrpQueue, NULL, 0, (void*) operation, NULL);
+			}
 		}
 	}
 	else
