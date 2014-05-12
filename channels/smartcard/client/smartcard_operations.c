@@ -1092,31 +1092,17 @@ static UINT32 smartcard_AccessStartedEvent_Call(SMARTCARD_DEVICE* smartcard, IRP
 	return status;
 }
 
-void smartcard_irp_device_control_peek_io_control_code(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32* ioControlCode)
+UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
-	*ioControlCode = 0;
-
-	if (Stream_GetRemainingLength(irp->input) < 32)
-	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Device Control Request is too short: %d",
-				(int) Stream_GetRemainingLength(irp->input));
-		return;
-	}
-
-	Stream_Seek_UINT32(irp->input); /* OutputBufferLength (4 bytes) */
-	Stream_Seek_UINT32(irp->input); /* InputBufferLength (4 bytes) */
-	Stream_Read_UINT32(irp->input, *ioControlCode); /* IoControlCode (4 bytes) */
-	Stream_Rewind(irp->input, (4 + 4 + 4));
-}
-
-UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32* pIoControlCode, ULONG_PTR** ppCall)
-{
+	IRP* irp;
 	UINT32 status;
 	UINT32 offset;
 	void* call = NULL;
 	UINT32 ioControlCode;
 	UINT32 outputBufferLength;
 	UINT32 inputBufferLength;
+
+	irp = operation->irp;
 
 	/* Device Control Request */
 
@@ -1132,7 +1118,7 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, IRP* irp
 	Stream_Read_UINT32(irp->input, ioControlCode); /* IoControlCode (4 bytes) */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
 
-	*pIoControlCode = ioControlCode;
+	operation->ioControlCode = ioControlCode;
 
 	if (Stream_Length(irp->input) != (Stream_GetPosition(irp->input) + inputBufferLength))
 	{
@@ -1427,17 +1413,24 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, IRP* irp
 		call = NULL;
 	}
 
-	*((ULONG_PTR**) ppCall) = (ULONG_PTR*) call;
+	operation->call = call;
 
 	return status;
 }
 
-UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32 ioControlCode, ULONG_PTR* call)
+UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
+	IRP* irp;
 	UINT32 result;
 	UINT32 offset;
+	ULONG_PTR* call;
+	UINT32 ioControlCode;
 	UINT32 outputBufferLength;
 	UINT32 objectBufferLength;
+
+	irp = operation->irp;
+	call = operation->call;
+	ioControlCode = operation->ioControlCode;
 
 	/**
 	 * [MS-RDPESC] 3.2.5.1: Sending Outgoing Messages:

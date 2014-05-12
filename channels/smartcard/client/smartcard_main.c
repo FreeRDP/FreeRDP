@@ -35,14 +35,6 @@
 
 #include "smartcard_main.h"
 
-struct _SMARTCARD_IRP_WORK
-{
-	IRP* irp;
-	ULONG_PTR* call;
-	UINT32 ioControlCode;
-};
-typedef struct _SMARTCARD_IRP_WORK SMARTCARD_IRP_WORK;
-
 void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 {
 	IRP* irp;
@@ -229,25 +221,20 @@ void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	irp->Complete(irp);
 }
 
-void* smartcard_process_irp_worker_proc(SMARTCARD_IRP_WORK* irpWork)
+void* smartcard_process_irp_worker_proc(SMARTCARD_OPERATION* operation)
 {
 	IRP* irp;
 	UINT32 status;
-	ULONG_PTR* call;
-	UINT32 ioControlCode;
 	SMARTCARD_DEVICE* smartcard;
 
-	irp = irpWork->irp;
-	call = irpWork->call;
-	ioControlCode = irpWork->ioControlCode;
-
+	irp = operation->irp;
 	smartcard = (SMARTCARD_DEVICE*) irp->device;
 
-	status = smartcard_irp_device_control_call(smartcard, irp, ioControlCode, call);
+	status = smartcard_irp_device_control_call(smartcard, operation);
 
 	Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
 
-	free(irpWork);
+	free(operation);
 
 	ExitThread(0);
 	return NULL;
@@ -263,18 +250,30 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	void* key;
 	UINT32 status;
 	BOOL asyncIrp = FALSE;
-	ULONG_PTR* call = NULL;
-	UINT32 ioControlCode = 0;
+	SMARTCARD_OPERATION* operation = NULL;
 
 	key = (void*) (size_t) irp->CompletionId;
 	ListDictionary_Add(smartcard->rgOutstandingMessages, key, irp);
 
 	if (irp->MajorFunction == IRP_MJ_DEVICE_CONTROL)
 	{
-		smartcard_irp_device_control_peek_io_control_code(smartcard, irp, &ioControlCode);
+		operation = (SMARTCARD_OPERATION*) calloc(1, sizeof(SMARTCARD_OPERATION));
 
-		if (!ioControlCode)
+		if (!operation)
 			return;
+
+		operation->irp = irp;
+
+		status = smartcard_irp_device_control_decode(smartcard, operation);
+
+		if (status != SCARD_S_SUCCESS)
+		{
+			irp->IoStatus = STATUS_UNSUCCESSFUL;
+
+			Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
+
+			return;
+		}
 
 		asyncIrp = TRUE;
 
@@ -284,7 +283,7 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		 * those expected to return fast synchronously.
 		 */
 
-		switch (ioControlCode)
+		switch (operation->ioControlCode)
 		{
 			case SCARD_IOCTL_ESTABLISHCONTEXT:
 			case SCARD_IOCTL_RELEASECONTEXT:
@@ -347,32 +346,17 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 				break;
 		}
 
-		status = smartcard_irp_device_control_decode(smartcard, irp, &ioControlCode, &call);
-
-		if (status != SCARD_S_SUCCESS)
-		{
-			/* TODO: properly handle decoding failure response */
-			fprintf(stderr, "fixme: properly handle decoding failure response\n");
-		}
-
 		if (!asyncIrp)
 		{
-			status = smartcard_irp_device_control_call(smartcard, irp, ioControlCode, call);
+			status = smartcard_irp_device_control_call(smartcard, operation);
 			Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
+			free(operation);
 		}
 		else
 		{
-			SMARTCARD_IRP_WORK* irpWork;
-
-			irpWork = (SMARTCARD_IRP_WORK*) calloc(1, sizeof(SMARTCARD_IRP_WORK));
-
-			irpWork->irp = irp;
-			irpWork->call = call;
-			irpWork->ioControlCode = ioControlCode;
-
 			irp->thread = CreateThread(NULL, 0,
 					(LPTHREAD_START_ROUTINE) smartcard_process_irp_worker_proc,
-					irpWork, 0, NULL);
+					operation, 0, NULL);
 		}
 	}
 	else

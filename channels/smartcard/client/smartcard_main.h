@@ -83,6 +83,14 @@
 
 typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
 
+struct _SMARTCARD_OPERATION
+{
+	IRP* irp;
+	void* call;
+	UINT32 ioControlCode;
+};
+typedef struct _SMARTCARD_OPERATION SMARTCARD_OPERATION;
+
 struct _SMARTCARD_CONTEXT
 {
 	HANDLE thread;
@@ -115,9 +123,8 @@ void smartcard_context_free(SMARTCARD_CONTEXT* pContext);
 void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 
-UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32* pIoControlCode, ULONG_PTR** ppCall);
-UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32 ioControlCode, ULONG_PTR* call);
-void smartcard_irp_device_control_peek_io_control_code(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32* ioControlCode);
+UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation);
+UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation);
 
 #include "smartcard_pack.h"
 
