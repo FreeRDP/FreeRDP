@@ -24,8 +24,6 @@
 #include <winpr/stream.h>
 #include <winpr/smartcard.h>
 
-#include "smartcard_main.h"
-
 /* interface type_scard_pack */
 /* [unique][version][uuid] */
 
@@ -428,6 +426,8 @@ typedef struct _WriteCacheW_Call
 
 #define SMARTCARD_COMMON_TYPE_HEADER_LENGTH	8
 #define SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH	8
+
+#include "smartcard_main.h"
 
 UINT32 smartcard_pack_write_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size, UINT32 alignment);
 UINT32 smartcard_unpack_read_size_align(SMARTCARD_DEVICE* smartcard, wStream* s, UINT32 size, UINT32 alignment);

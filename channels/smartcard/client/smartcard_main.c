@@ -158,6 +158,8 @@ static void smartcard_init(DEVICE* device)
 	 * Call SCardCancel on existing contexts, unblocking all outstanding IRPs.
 	 */
 
+	printf("rgSCardContextList: %d\n", ListDictionary_Count(smartcard->rgSCardContextList));
+
 	if (ListDictionary_Count(smartcard->rgSCardContextList) > 0)
 	{
 		pKeys = NULL;
@@ -174,7 +176,6 @@ static void smartcard_init(DEVICE* device)
 
 			if (SCardIsValidContext(hContext))
 			{
-				printf("SCardCancel: 0x%08X\n", hContext);
 				SCardCancel(hContext);
 			}
 		}
@@ -202,7 +203,6 @@ static void smartcard_init(DEVICE* device)
 
 			if (SCardIsValidContext(hContext))
 			{
-				printf("SCardReleaseContext: 0x%08X\n", hContext);
 				SCardReleaseContext(hContext);
 			}
 		}
