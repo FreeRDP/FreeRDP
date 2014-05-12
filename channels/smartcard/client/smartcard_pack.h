@@ -39,10 +39,15 @@ typedef struct _REDIR_SCARDHANDLE
 	/* [size_is] */ BYTE pbHandle[8];
 } REDIR_SCARDHANDLE;
 
+typedef struct _Long_Call
+{
+	LONG LongValue;
+} Long_Call;
+
 typedef struct _Long_Return
 {
 	LONG ReturnCode;
-} 	Long_Return;
+} Long_Return;
 
 typedef struct _longAndMultiString_Return
 {

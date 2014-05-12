@@ -115,7 +115,7 @@ void smartcard_context_free(SMARTCARD_CONTEXT* pContext);
 void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 
-void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp);
+UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp);
 void smartcard_irp_device_control_peek_io_control_code(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32* ioControlCode);
 
 #include "smartcard_pack.h"
