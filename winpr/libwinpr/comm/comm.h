@@ -45,6 +45,7 @@ struct winpr_comm
 
 	int fd;
 	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
+	COMMTIMEOUTS timeouts;
 
 	/* NB: CloseHandle() has to free resources */
 };

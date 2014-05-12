@@ -375,6 +375,11 @@ WINPR_API BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOver
 
 /* Extended API */
 
+/* FIXME: MAXULONG should be defined arround winpr/limits.h */
+#ifndef MAXULONG
+#define MAXULONG (4294967295UL)
+#endif
+
 /*
  * About DefineCommDevice() / QueryDosDevice()
  *
@@ -402,6 +407,17 @@ WINPR_API HANDLE CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD
 BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
 			 LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
 
+/**
+ * FIXME: to be moved in comm_io.h
+ */
+BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+		  LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+
+/**
+ * FIXME: to be moved in comm_io.h
+ */
+BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
+		   LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 
 #ifdef __cplusplus
 }

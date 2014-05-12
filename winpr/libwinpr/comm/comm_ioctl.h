@@ -45,9 +45,8 @@ extern "C" {
 #define IOCTL_SERIAL_GET_BAUD_RATE	0x001B0050
 #define IOCTL_SERIAL_SET_LINE_CONTROL	0x001B000C
 #define IOCTL_SERIAL_GET_LINE_CONTROL	0x001B0054
-/* IOCTL_SERIAL_SET_TIMEOUTS 0x001B001C */
-/* IOCTL_SERIAL_GET_TIMEOUTS 0x001B0020 */
-
+#define IOCTL_SERIAL_SET_TIMEOUTS	0x001B001C
+#define IOCTL_SERIAL_GET_TIMEOUTS	0x001B0020
 /* GET_CHARS and SET_CHARS are swapped in the RDP docs [MS-RDPESP] */
 #define IOCTL_SERIAL_GET_CHARS		0x001B0058
 #define IOCTL_SERIAL_SET_CHARS		0x001B005C
@@ -179,6 +178,17 @@ typedef struct _SERIAL_HANDFLOW
 #define SERIAL_SP_TELNET            ((ULONG)0x00000102) 
 #define SERIAL_SP_X25               ((ULONG)0x00000103) 
 
+
+typedef struct _SERIAL_TIMEOUTS
+{
+	ULONG ReadIntervalTimeout; 
+	ULONG ReadTotalTimeoutMultiplier; 
+	ULONG ReadTotalTimeoutConstant; 
+	ULONG WriteTotalTimeoutMultiplier; 
+	ULONG WriteTotalTimeoutConstant; 
+} SERIAL_TIMEOUTS,*PSERIAL_TIMEOUTS;
+
+
 /**
  * A function might be NULL if not supported by the underlying remote driver.
  *
@@ -197,6 +207,8 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*get_line_control)(WINPR_COMM *pComm, SERIAL_LINE_CONTROL *pLineControl);
 	BOOL (*set_handflow)(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow);
 	BOOL (*get_handflow)(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow);
+	BOOL (*set_timeouts)(WINPR_COMM *pComm, const SERIAL_TIMEOUTS *pTimeouts);
+	BOOL (*get_timeouts)(WINPR_COMM *pComm, SERIAL_TIMEOUTS *pTimeouts);
 
 } REMOTE_SERIAL_DRIVER;
 

@@ -21,6 +21,7 @@ set(MODULE_PREFIX "WINPR_COMM")
 set(${MODULE_PREFIX}_SRCS
 	comm.c
 	comm.h
+	comm_io.c
 	comm_ioctl.c
 	comm_ioctl.h
 	comm_serial_sys.c

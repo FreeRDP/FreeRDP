@@ -42,9 +42,6 @@
 #include <unistd.h>
 #endif
 
-#include "serial_tty.h"
-#include "serial_constants.h"
-
 #include <winpr/collections.h>
 #include <winpr/comm.h>
 #include <winpr/crt.h>
@@ -65,11 +62,7 @@ struct _SERIAL_DEVICE
 	DEVICE device;
 	HANDLE* hComm;
 
-	// TMP: TBR
-	char* path;
-	SERIAL_TTY* tty;
-	//
-
+	// TMP: use of log
 	wLog* log;
 	HANDLE thread;
 	wMessageQueue* IrpQueue;
@@ -77,13 +70,11 @@ struct _SERIAL_DEVICE
 
 static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
-	UINT32 FileId;
-	
 	DWORD DesiredAccess;
 	DWORD SharedAccess;
 	DWORD CreateDisposition;
 	UINT32 PathLength;
-	
+
 	Stream_Read_UINT32(irp->input, DesiredAccess);		/* DesiredAccess (4 bytes) */
 	Stream_Seek_UINT64(irp->input);				/* AllocationSize (8 bytes) */
 	Stream_Seek_UINT32(irp->input);				/* FileAttributes (4 bytes) */
@@ -95,16 +86,37 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 
 	assert(PathLength == 0); /* MS-RDPESP 2.2.2.2 */
 
-	/* CommCreateFileA current implementation expects nothing else than that */
-	assert(DesiredAccess == (GENERIC_READ | GENERIC_WRITE));
-	assert(SharedAccess == 0);
-	assert(CreateDisposition == OPEN_EXISTING);
+
+#ifndef _WIN32
+	/* Windows 2012 server sends on a first call : 
+	 *     DesiredAccess     = 0x00100080: SYNCHRONIZE | FILE_READ_ATTRIBUTES
+	 *     SharedAccess      = 0x00000007: FILE_SHARE_DELETE | FILE_SHARE_WRITE | FILE_SHARE_READ
+	 *     CreateDisposition = 0x00000001: CREATE_NEW
+	 *
+	 * then sends : 
+	 *     DesiredAccess     = 0x00120089: SYNCHRONIZE | READ_CONTROL | FILE_READ_ATTRIBUTES | FILE_READ_EA | FILE_READ_DATA
+	 *     SharedAccess      = 0x00000007: FILE_SHARE_DELETE | FILE_SHARE_WRITE | FILE_SHARE_READ
+	 *     CreateDisposition = 0x00000001: CREATE_NEW
+	 *
+	 * assert(DesiredAccess == (GENERIC_READ | GENERIC_WRITE));
+	 * assert(SharedAccess == 0);
+	 * assert(CreateDisposition == OPEN_EXISTING);
+	 *
+	 */
+
+	DEBUG_SVC("DesiredAccess: 0x%0.8x, SharedAccess: 0x%0.8x, CreateDisposition: 0x%0.8x", DesiredAccess, SharedAccess, CreateDisposition);
+
+	/* FIXME: As of today only the flags below are supported by CommCreateFileA: */
+	DesiredAccess     = GENERIC_READ | GENERIC_WRITE;
+	SharedAccess      = 0;
+	CreateDisposition = OPEN_EXISTING;
+#endif
 
 	serial->hComm = CreateFile(serial->device.name,
-				   DesiredAccess,	/* GENERIC_READ | GENERIC_WRITE */
-				   SharedAccess,	/* 0 */
+				   DesiredAccess,	
+				   SharedAccess,	
 				   NULL,		/* SecurityAttributes */
-				   CreateDisposition,	/* OPEN_EXISTING */
+				   CreateDisposition,	
 				   0,			/* FlagsAndAttributes */
 				   NULL);		/* TemplateFile */
 
@@ -113,17 +125,36 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 		DEBUG_WARN("CreateFile failure: %s last-error: Ox%x\n", serial->device.name, GetLastError());
 
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
-		FileId = 0;
 		goto error_handle;
 	}
 
-	FileId = irp->devman->id_sequence++; // TMP: !?
+	/* NOTE: binary mode/raw mode required for the redirection. On
+	 * Linux, CommCreateFileA forces this setting.
+	 */
+	/* ZeroMemory(&dcb, sizeof(DCB)); */
+	/* dcb.DCBlength = sizeof(DCB); */
+	/* GetCommState(serial->hComm, &dcb); */
+	/* dcb.fBinary = TRUE; */
+	/* SetCommState(serial->hComm, &dcb); */
+
+	// TMP:
+	COMMTIMEOUTS timeouts;
+	timeouts.ReadIntervalTimeout = MAXULONG; /* ensures a non blocking state */
+	timeouts.ReadTotalTimeoutMultiplier = 0;
+	timeouts.ReadTotalTimeoutConstant = 0;
+	timeouts.WriteTotalTimeoutMultiplier = 0;
+	timeouts.WriteTotalTimeoutConstant = 0;
+	SetCommTimeouts(serial->hComm, &timeouts);
+
+	assert(irp->FileId == 0);
+	irp->FileId = irp->devman->id_sequence++; /* FIXME: why not ((WINPR_COMM*)hComm)->fd? */
+
 	irp->IoStatus = STATUS_SUCCESS;
 
-	DEBUG_SVC("%s %s (%d) created.", serial->device.name, serial->path, FileId);
+	DEBUG_SVC("%s (DeviceId: %d, FileId: %d) created.", serial->device.name, irp->device->id, irp->FileId);
 
   error_handle:
-	Stream_Write_UINT32(irp->output, FileId);	/* FileId (4 bytes) */
+	Stream_Write_UINT32(irp->output, irp->FileId);	/* FileId (4 bytes) */
 	Stream_Write_UINT8(irp->output, 0);		/* Information (1 byte) */
 
 	irp->Complete(irp);
@@ -135,12 +166,12 @@ static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 
 	if (!CloseHandle(serial->hComm))
 	{
-		DEBUG_WARN("CloseHandle failure: %s %s (%d) closed.", serial->device.name, serial->path, irp->device->id);
+		DEBUG_WARN("CloseHandle failure: %s (%d) closed.", serial->device.name, irp->device->id);
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		goto error_handle;
 	}
 
-	DEBUG_SVC("%s %s (%d) closed.", serial->device.name, serial->path, irp->device->id);
+	DEBUG_SVC("%s (DeviceId: %d, FileId: %d) closed.", serial->device.name, irp->device->id, irp->FileId);
 
 	serial->hComm = NULL;
 	irp->IoStatus = STATUS_SUCCESS;
@@ -156,91 +187,146 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	UINT32 Length;
 	UINT64 Offset;
 	BYTE* buffer = NULL;
-	SERIAL_TTY* tty = serial->tty;
+	DWORD nbRead = 0;
 
 	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
 	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
 
-	if (!tty)
-	{
-		irp->IoStatus = STATUS_UNSUCCESSFUL;
-		Length = 0;
 
-		DEBUG_WARN("tty not valid.");
+	buffer = (BYTE*)calloc(Length, sizeof(BYTE));
+	if (buffer == NULL)
+	{
+		irp->IoStatus = STATUS_NO_MEMORY;
+		goto error_handle;
+	}
+
+	
+	/* MSRDPESP 3.2.5.1.4: If the Offset field is not set to 0, the value MUST be ignored
+	 * assert(Offset == 0);
+	 */
+	
+
+	DEBUG_SVC("reading %lu bytes from %s", Length, serial->device.name);
+
+	/* FIXME: CommReadFile to be replaced by ReadFile */
+	if (CommReadFile(serial->hComm, buffer, Length, &nbRead, NULL))
+	{
+		irp->IoStatus = STATUS_SUCCESS;
 	}
 	else
 	{
-		buffer = (BYTE*) malloc(Length);
+		DEBUG_SVC("read failure to %s, nbRead=%d, last-error: 0x%0.8x", serial->device.name, nbRead, GetLastError());
 
-		if (!serial_tty_read(tty, buffer, &Length))
+		switch(GetLastError())
 		{
-			irp->IoStatus = STATUS_UNSUCCESSFUL;
-			free(buffer);
-			buffer = NULL;
-			Length = 0;
+			case ERROR_INVALID_HANDLE:
+				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
+				break;
 
-			DEBUG_WARN("read %s(%d) failed.", serial->path, tty->id);
-		}
-		else
-		{
-			DEBUG_SVC("read %llu-%llu from %d", Offset, Offset + Length, tty->id);
+			case ERROR_NOT_SUPPORTED:
+				irp->IoStatus = STATUS_NOT_SUPPORTED;
+				break;
+				
+			case ERROR_INVALID_PARAMETER:
+				irp->IoStatus = STATUS_INVALID_PARAMETER;
+				break;
+
+			case ERROR_IO_DEVICE:
+				irp->IoStatus = STATUS_IO_DEVICE_ERROR;
+				break;
+
+			case ERROR_TIMEOUT:
+				irp->IoStatus = STATUS_TIMEOUT;
+				break;
+
+			case ERROR_BAD_DEVICE:
+				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
+				break;
+
+			default:
+				DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
+				irp->IoStatus = STATUS_UNSUCCESSFUL;
+				break;
 		}
 	}
 
-	Stream_Write_UINT32(irp->output, Length); /* Length (4 bytes) */
+	
+  error_handle:
 
-	if (Length > 0)
+	Stream_Write_UINT32(irp->output, nbRead); /* Length (4 bytes) */
+
+	if (nbRead > 0)
 	{
-		Stream_EnsureRemainingCapacity(irp->output, Length);
-		Stream_Write(irp->output, buffer, Length);
+		Stream_EnsureRemainingCapacity(irp->output, nbRead);
+		Stream_Write(irp->output, buffer, nbRead); /* ReadData */
 	}
 
-	free(buffer);
+
+	if (buffer)
+		free(buffer);
 
 	irp->Complete(irp);
 }
 
 static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 {
-	int status;
 	UINT32 Length;
 	UINT64 Offset;
-	SERIAL_TTY* tty = serial->tty;
+	DWORD nbWritten = 0;
 
 	Stream_Read_UINT32(irp->input, Length); /* Length (4 bytes) */
 	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
 
-	if (!tty)
+	assert(Offset == 0); /* not implemented otherwise */
+
+	DEBUG_SVC("writing %lu bytes to %s", Length, serial->device.name);
+
+	/* FIXME: CommWriteFile to be replaced by WriteFile */
+	if (CommWriteFile(serial->hComm, Stream_Pointer(irp->input), Length, &nbWritten, NULL))
 	{
-		irp->IoStatus = STATUS_UNSUCCESSFUL;
-		Length = 0;
+		irp->IoStatus = STATUS_SUCCESS;
+	}
+	else
+	{
+		DEBUG_SVC("write failure to %s, nbWritten=%d, last-error: 0x%0.8x", serial->device.name, nbWritten, GetLastError());
 
-		DEBUG_WARN("tty not valid.");
+		switch(GetLastError())
+		{
+			case ERROR_INVALID_HANDLE:
+				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
+				break;
 
-		Stream_Write_UINT32(irp->output, Length); /* Length (4 bytes) */
-		Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
-		irp->Complete(irp);
-		return;
+			case ERROR_NOT_SUPPORTED:
+				irp->IoStatus = STATUS_NOT_SUPPORTED;
+				break;
+				
+			case ERROR_INVALID_PARAMETER:
+				irp->IoStatus = STATUS_INVALID_PARAMETER;
+				break;
+
+			case ERROR_IO_DEVICE:
+				irp->IoStatus = STATUS_IO_DEVICE_ERROR;
+				break;
+
+			case ERROR_TIMEOUT:
+				irp->IoStatus = STATUS_TIMEOUT;
+				break;
+
+			case ERROR_BAD_DEVICE:
+				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
+				break;
+
+			default:
+				DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
+				irp->IoStatus = STATUS_UNSUCCESSFUL;
+				break;
+		}
 	}
 
-	status = serial_tty_write(tty, Stream_Pointer(irp->input), Length);
 
-	if (status < 0)
-	{
-		irp->IoStatus = STATUS_UNSUCCESSFUL;
-		Length = 0;
-
-		printf("serial_tty_write failure: status: %d, errno: %d\n", status, errno);
-
-		Stream_Write_UINT32(irp->output, Length); /* Length (4 bytes) */
-		Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
-		irp->Complete(irp);
-		return;
-	}
-
-	Stream_Write_UINT32(irp->output, Length); /* Length (4 bytes) */
+	Stream_Write_UINT32(irp->output, nbWritten); /* Length (4 bytes) */
 	Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
 	irp->Complete(irp);
 }
@@ -253,19 +339,11 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	UINT32 OutputBufferLength;
 	BYTE*  OutputBuffer = NULL;
 	DWORD  BytesReturned = 0;
-	SERIAL_TTY* tty = serial->tty;
 
 	Stream_Read_UINT32(irp->input, OutputBufferLength); /* OutputBufferLength (4 bytes) */
 	Stream_Read_UINT32(irp->input, InputBufferLength); /* InputBufferLength (4 bytes) */
 	Stream_Read_UINT32(irp->input, IoControlCode); /* IoControlCode (4 bytes) */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
-
-	if (!tty)
-	{
-		DEBUG_WARN("tty not valid.");
-		irp->IoStatus = STATUS_UNSUCCESSFUL;
-		goto error_handle;
-	}
 
 	OutputBuffer = (BYTE*)calloc(OutputBufferLength, sizeof(BYTE));
 	if (OutputBuffer == NULL)
@@ -280,16 +358,19 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 		irp->IoStatus = STATUS_NO_MEMORY;
 		goto error_handle;
 	}
+
+	Stream_Read(irp->input, InputBuffer, InputBufferLength);
+
+	DEBUG_SVC("CommDeviceIoControl: IoControlCode 0x%x", IoControlCode);
 		
-	/* FIXME: to be replaced by DeviceIoControl() */
+	/* FIXME: CommDeviceIoControl to be replaced by DeviceIoControl() */
 	if (CommDeviceIoControl(serial->hComm, IoControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, &BytesReturned, NULL))
 	{
-		Stream_Write(irp->output, OutputBuffer, BytesReturned);
 		irp->IoStatus = STATUS_SUCCESS;
 	}
 	else
 	{
-		DEBUG_SVC("CommDeviceIoControl failure: IoControlCode 0x%x last-error: 0x%x", IoControlCode, GetLastError());
+		DEBUG_SVC("CommDeviceIoControl failure: IoControlCode 0x%0.8x last-error: 0x%x", IoControlCode, GetLastError());
 
 		switch(GetLastError())
 		{
@@ -321,13 +402,25 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	}
 
   error_handle:
+
+	Stream_Write_UINT32(irp->output, BytesReturned); /* OutputBufferLength (4 bytes) */
+
+	if (BytesReturned > 0)
+	{
+		Stream_EnsureRemainingCapacity(irp->output, BytesReturned);
+		Stream_Write(irp->output, OutputBuffer, BytesReturned); /* OutputBuffer */
+	}
+	else
+	{
+		Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
+	}
+
 	if (InputBuffer != NULL)
 		free(InputBuffer);
 
 	if (OutputBuffer != NULL)
 		free(OutputBuffer);
 
-	// TMP: double check the completion, Information field
 	irp->Complete(irp);
 }
 
@@ -402,14 +495,15 @@ static void serial_irp_request(DEVICE* device, IRP* irp)
 static void serial_free(DEVICE* device)
 {
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
-
+	
 	WLog_Print(serial->log, WLOG_DEBUG, "freeing");
 
 	MessageQueue_PostQuit(serial->IrpQueue, 0);
 	WaitForSingleObject(serial->thread, INFINITE);
 	CloseHandle(serial->thread);
 
-	serial_tty_free(serial->tty);
+	if (serial->hComm)
+		CloseHandle(serial->hComm);
 
 	/* Clean up resources */
 	Stream_Free(serial->device.data, TRUE);
@@ -442,9 +536,11 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	if ((name && name[0]) && (path && path[0]))
 	{
+		DEBUG_SVC("Defining %s as %s", name, path);
+			
 		if (!DefineCommDevice(name /* eg: COM1 */, path /* eg: /dev/ttyS0 */))
 		{
-			DEBUG_SVC("Could not registered: %s as %s", path, name);
+			DEBUG_SVC("Could not define %s as %s", name, path);
 			return -1;
 		}
 
@@ -463,7 +559,6 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		for (i = 0; i <= len; i++)
 			Stream_Write_UINT8(serial->device.data, name[i] < 0 ? '_' : name[i]);
 
-		serial->path = path;
 		serial->IrpQueue = MessageQueue_New(NULL);
 
 		WLog_Init();

@@ -188,7 +188,7 @@ static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 
 			if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &futureState) < 0)
 			{
-				DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x0.8x", GetLastError());
+				DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x%0.8x", GetLastError());
 				return FALSE;
 			}
 
@@ -507,6 +507,8 @@ static REMOTE_SERIAL_DRIVER _SerCxSys =
 	.get_line_control = NULL,
 	.set_handflow     = _set_handflow,
 	.get_handflow     = _get_handflow,
+	.set_timeouts     = NULL,
+	.get_timeouts     = NULL,
 };
 
 
@@ -520,6 +522,9 @@ REMOTE_SERIAL_DRIVER* SerCxSys_s()
 	_SerCxSys.get_serial_chars = pSerialSys->get_serial_chars;
 	_SerCxSys.set_line_control = pSerialSys->set_line_control;
 	_SerCxSys.get_line_control = pSerialSys->get_line_control;
+
+	_SerCxSys.set_timeouts = pSerialSys->set_timeouts;
+	_SerCxSys.get_timeouts = pSerialSys->get_timeouts;
 
 	return &_SerCxSys;
 }

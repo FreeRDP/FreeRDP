@@ -522,7 +522,6 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	if (lpDCB->fBinary)
 	{
 		upcomingTermios.c_lflag &= ~ICANON;
-		// TMP: complete the raw mode here?
 	}
 	else
 	{
@@ -563,22 +562,55 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	return TRUE;
 }
 
+/**
+ * ERRORS:
+ *   ERROR_INVALID_HANDLE
+ */
 BOOL GetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
+	DWORD bytesReturned;
 
-	if (!pComm)
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
+	}
+
+	/* as of today, SERIAL_TIMEOUTS and COMMTIMEOUTS structures are identical */
+
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_TIMEOUTS, NULL, 0, lpCommTimeouts, sizeof(COMMTIMEOUTS), &bytesReturned, NULL))
+	{
+		DEBUG_WARN("GetCommTimeouts failure.");
+		return FALSE;
+	}
 
 	return TRUE;
 }
 
+
+/**
+ * ERRORS:
+ *   ERROR_INVALID_HANDLE
+ */
 BOOL SetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
+	DWORD bytesReturned;
 
-	if (!pComm)
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
+	}
+
+	/* as of today, SERIAL_TIMEOUTS and COMMTIMEOUTS structures are identical */
+
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_TIMEOUTS, lpCommTimeouts, sizeof(COMMTIMEOUTS), NULL, 0, &bytesReturned, NULL))
+	{
+		DEBUG_WARN("SetCommTimeouts failure.");
+		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -975,7 +1007,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	CHAR devicePath[MAX_PATH];
 	struct stat deviceStat;
 	WINPR_COMM* pComm = NULL;
-
+	struct termios upcomingTermios;
 	
 	if (dwDesiredAccess != (GENERIC_READ | GENERIC_WRITE))
 	{
@@ -1052,12 +1084,53 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
+	/* Restore the blocking mode for upcoming read/write operations */
+	if (fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) & ~O_NONBLOCK) < 0)
+	{
+		DEBUG_WARN("failed to open device %s, could not restore the O_NONBLOCK flag", devicePath);
+		SetLastError(ERROR_BAD_DEVICE);
+		goto error_handle;
+	}
 
-	/* TMP: TODO: FIXME: this information is at least need for
-	 * get/set baud. Is possible to pull this information? to be
-	 * forced with a comand line argument.
+
+	/* TMP: TODO: FIXME: this information is at least needed for
+	 * get/set baud functions. Is it possible to pull this
+	 * information? Could be a command line argument.
 	 */
-	 pComm->remoteSerialDriverId = RemoteSerialDriverUnknown;
+	pComm->remoteSerialDriverId = RemoteSerialDriverUnknown;
+
+
+	/* The binary/raw mode is required for the redirection but
+	 * only flags that are not handle somewhere-else, except
+	 * ICANON, are forced here. */
+
+	ZeroMemory(&upcomingTermios, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &upcomingTermios) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		goto error_handle;
+	}
+
+	upcomingTermios.c_iflag &= ~(/*IGNBRK |*/ BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL /*| IXON*/);
+	upcomingTermios.c_oflag = 0; /* <=> &= ~OPOST */
+	upcomingTermios.c_lflag = 0; /* <=> &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN); */
+	/* upcomingTermios.c_cflag &= ~(CSIZE | PARENB); */
+	/* upcomingTermios.c_cflag |= CS8; */
+
+	/* About missing missing flags recommended by termios(3)
+	 *
+	 *   IGNBRK and IXON, see: IOCTL_SERIAL_SET_HANDFLOW
+	 *   CSIZE, PARENB and CS8, see: IOCTL_SERIAL_SET_LINE_CONTROL
+	 */
+		
+	/* a few more settings required for the redirection */
+	upcomingTermios.c_cflag |= CLOCAL | CREAD;
+
+	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
+	{
+		SetLastError(ERROR_IO_DEVICE);
+		goto error_handle;
+	}
 
 	return (HANDLE)pComm;
 

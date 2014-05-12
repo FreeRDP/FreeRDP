@@ -61,8 +61,10 @@
  *
  * ERRORS:
  *   ERROR_INVALID_HANDLE
+ *   ERROR_INVALID_PARAMETER
  *   ERROR_NOT_SUPPORTED lpOverlapped is not supported
  *   ERROR_INSUFFICIENT_BUFFER
+ *   ERROR_CALL_NOT_IMPLEMENTED unimplemented ioctl
  */
 BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
 			 LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
@@ -70,6 +72,12 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
 	REMOTE_SERIAL_DRIVER* pRemoteSerialDriver = NULL;
+
+	if (hDevice == INVALID_HANDLE_VALUE)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+                return FALSE;
+        }
 
 	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
 	{
@@ -85,11 +93,13 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 	if (lpBytesReturned == NULL)
 	{
-		SetLastError(ERROR_INVALID_DATA); /* since we doesn't suppport lpOverlapped != NULL */
+		SetLastError(ERROR_INVALID_PARAMETER); /* since we doesn't suppport lpOverlapped != NULL */
 		return FALSE;
 	}
 
 	*lpBytesReturned = 0; /* will be ajusted if required ... */
+
+	DEBUG_MSG("CommDeviceIoControl: IoControlCode: 0x%0.8x", dwIoControlCode);
 
 	/* remoteSerialDriver to be use ... 
 	 *
@@ -111,7 +121,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 		case RemoteSerialDriverUnknown:
 		default:
-			DEBUG_WARN("Unknown remote serial driver (%d), using SerCx2.sys", pComm->remoteSerialDriverId);
+			DEBUG_MSG("Unknown remote serial driver (%d), using SerCx2.sys", pComm->remoteSerialDriverId);
 			pRemoteSerialDriver = SerCx2Sys_s();
 			break;
 	}
@@ -129,7 +139,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 				assert(nInBufferSize >= sizeof(SERIAL_BAUD_RATE));
 				if (nInBufferSize < sizeof(SERIAL_BAUD_RATE))
 				{
-					SetLastError(ERROR_INVALID_DATA);
+					SetLastError(ERROR_INVALID_PARAMETER);
 					return FALSE;
 				}
 
@@ -188,7 +198,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 				assert(nInBufferSize >= sizeof(SERIAL_CHARS));
 				if (nInBufferSize < sizeof(SERIAL_CHARS))
 				{
-					SetLastError(ERROR_INVALID_DATA);
+					SetLastError(ERROR_INVALID_PARAMETER);
 					return FALSE;
 				}
 
@@ -226,7 +236,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 				assert(nInBufferSize >= sizeof(SERIAL_LINE_CONTROL));
 				if (nInBufferSize < sizeof(SERIAL_LINE_CONTROL))
 				{
-					SetLastError(ERROR_INVALID_DATA);
+					SetLastError(ERROR_INVALID_PARAMETER);
 					return FALSE;
 				}
 
@@ -264,7 +274,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 				assert(nInBufferSize >= sizeof(SERIAL_HANDFLOW));
 				if (nInBufferSize < sizeof(SERIAL_HANDFLOW))
 				{
-					SetLastError(ERROR_INVALID_DATA);
+					SetLastError(ERROR_INVALID_PARAMETER);
 					return FALSE;
 				}
 
@@ -293,10 +303,49 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 			}
 			break;
 		}
+		case IOCTL_SERIAL_SET_TIMEOUTS:
+		{
+			if (pRemoteSerialDriver->set_timeouts)
+			{
+				SERIAL_TIMEOUTS *pHandflow = (SERIAL_TIMEOUTS*)lpInBuffer;
+
+				assert(nInBufferSize >= sizeof(SERIAL_TIMEOUTS));
+				if (nInBufferSize < sizeof(SERIAL_TIMEOUTS))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+
+				return pRemoteSerialDriver->set_timeouts(pComm, pHandflow);
+			}
+			break;
+		}
+		case IOCTL_SERIAL_GET_TIMEOUTS:
+		{
+			if (pRemoteSerialDriver->get_timeouts)
+			{
+				SERIAL_TIMEOUTS *pHandflow = (SERIAL_TIMEOUTS*)lpOutBuffer;
+				
+				assert(nOutBufferSize >= sizeof(SERIAL_TIMEOUTS));
+				if (nOutBufferSize < sizeof(SERIAL_TIMEOUTS))
+				{
+					SetLastError(ERROR_INSUFFICIENT_BUFFER);
+					return FALSE;					
+				}
+
+				if (!pRemoteSerialDriver->get_timeouts(pComm, pHandflow))
+					return FALSE;
+
+				*lpBytesReturned = sizeof(SERIAL_TIMEOUTS);
+				return TRUE;
+			}
+			break;
+		}
 
 	}
 	
 	DEBUG_WARN(_T("unsupported IoControlCode: Ox%0.8x (remote serial driver: %s)"), dwIoControlCode, pRemoteSerialDriver->name);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 	
 }
@@ -323,7 +372,7 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *te
 
 	if (memcmp(&currentState, &termios_p, sizeof(struct termios)) != 0)
 	{
-		DEBUG_WARN("all termios parameters were not set, doing a second attempt...");
+		DEBUG_MSG("all termios parameters are not set yet, doing a second attempt...");
 		if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)
 		{
 			DEBUG_WARN("2nd tcsetattr failure, errno: %d", errno);
@@ -339,7 +388,7 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *te
 
 		if (memcmp(&currentState, termios_p, sizeof(struct termios)) != 0)
 		{
-			DEBUG_WARN("Failure: all parameters were not set on a second attempt.");
+			DEBUG_WARN("Failure: all termios parameters are still not set on a second attempt");
 			return -1; /* TMP: double-check whether some parameters can differ anyway */
 		}
 	}

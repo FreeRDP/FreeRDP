@@ -12,6 +12,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestSerialChars.c
 	TestControlSettings.c
 	TestHandflow.c
+	TestTimeouts.c
 	TestCommMonitor.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

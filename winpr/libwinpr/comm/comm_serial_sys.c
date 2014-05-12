@@ -827,6 +827,38 @@ static BOOL _get_handflow(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow)
 	return TRUE;
 }
 
+static BOOL _set_timeouts(WINPR_COMM *pComm, const SERIAL_TIMEOUTS *pTimeouts)
+{
+	/* NB: timeouts are applied on system during read/write I/O */
+
+	/* http://msdn.microsoft.com/en-us/library/windows/hardware/hh439614%28v=vs.85%29.aspx */
+	if ((pTimeouts->ReadIntervalTimeout == MAXULONG) && (pTimeouts->ReadTotalTimeoutConstant == MAXULONG))
+	{
+		DEBUG_WARN("ReadIntervalTimeout and ReadTotalTimeoutConstant cannot be both set to MAXULONG");
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	pComm->timeouts.ReadIntervalTimeout         = pTimeouts->ReadIntervalTimeout;
+	pComm->timeouts.ReadTotalTimeoutMultiplier  = pTimeouts->ReadTotalTimeoutMultiplier;
+	pComm->timeouts.ReadTotalTimeoutConstant    = pTimeouts->ReadTotalTimeoutConstant;
+	pComm->timeouts.WriteTotalTimeoutMultiplier = pTimeouts->WriteTotalTimeoutMultiplier;
+	pComm->timeouts.WriteTotalTimeoutConstant   = pTimeouts->WriteTotalTimeoutConstant;
+
+	return TRUE;
+}
+
+static BOOL _get_timeouts(WINPR_COMM *pComm, SERIAL_TIMEOUTS *pTimeouts)
+{
+	pTimeouts->ReadIntervalTimeout         = pComm->timeouts.ReadIntervalTimeout;
+	pTimeouts->ReadTotalTimeoutMultiplier  = pComm->timeouts.ReadTotalTimeoutMultiplier;
+	pTimeouts->ReadTotalTimeoutConstant    = pComm->timeouts.ReadTotalTimeoutConstant;
+	pTimeouts->WriteTotalTimeoutMultiplier = pComm->timeouts.WriteTotalTimeoutMultiplier;
+	pTimeouts->WriteTotalTimeoutConstant   = pComm->timeouts.WriteTotalTimeoutConstant;
+
+	return TRUE;
+}
+
 
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
@@ -841,6 +873,8 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.get_line_control = _get_line_control,
 	.set_handflow     = _set_handflow,
 	.get_handflow     = _get_handflow,
+	.set_timeouts     = _set_timeouts,
+	.get_timeouts     = _get_timeouts,
 };
 
 
