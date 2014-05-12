@@ -1109,16 +1109,14 @@ void smartcard_irp_device_control_peek_io_control_code(SMARTCARD_DEVICE* smartca
 	Stream_Rewind(irp->input, (4 + 4 + 4));
 }
 
-UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
+UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32* pIoControlCode, ULONG_PTR** ppCall)
 {
-	UINT32 result;
 	UINT32 status;
 	UINT32 offset;
 	void* call = NULL;
 	UINT32 ioControlCode;
 	UINT32 outputBufferLength;
 	UINT32 inputBufferLength;
-	UINT32 objectBufferLength;
 
 	/* Device Control Request */
 
@@ -1133,6 +1131,8 @@ UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	Stream_Read_UINT32(irp->input, inputBufferLength); /* InputBufferLength (4 bytes) */
 	Stream_Read_UINT32(irp->input, ioControlCode); /* IoControlCode (4 bytes) */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
+
+	*pIoControlCode = ioControlCode;
 
 	if (Stream_Length(irp->input) != (Stream_GetPosition(irp->input) + inputBufferLength))
 	{
@@ -1164,23 +1164,6 @@ UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			return SCARD_F_INTERNAL_ERROR;
 	}
 
-	/**
-	 * [MS-RDPESC] 3.2.5.1: Sending Outgoing Messages:
-	 * the output buffer length SHOULD be set to 2048
-	 *
-	 * Since it's a SHOULD and not a MUST, we don't care
-	 * about it, but we still reserve at least 2048 bytes.
-	 */
-	Stream_EnsureRemainingCapacity(irp->output, 2048);
-
-	/* Device Control Response */
-	Stream_Seek_UINT32(irp->output); /* OutputBufferLength (4 bytes) */
-
-	Stream_Seek(irp->output, SMARTCARD_COMMON_TYPE_HEADER_LENGTH); /* CommonTypeHeader (8 bytes) */
-	Stream_Seek(irp->output, SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH); /* PrivateTypeHeader (8 bytes) */
-
-	Stream_Seek_UINT32(irp->output); /* Result (4 bytes) */
-
 	/* Decode */
 
 	switch (ioControlCode)
@@ -1201,11 +1184,11 @@ UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			break;
 
 		case SCARD_IOCTL_LISTREADERGROUPSA:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_LISTREADERGROUPSW:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_LISTREADERSA:
@@ -1219,59 +1202,59 @@ UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERGROUPA:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERGROUPW:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_FORGETREADERGROUPA:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_FORGETREADERGROUPW:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERA:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_INTRODUCEREADERW:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_FORGETREADERA:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_FORGETREADERW:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_ADDREADERTOGROUPA:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_ADDREADERTOGROUPW:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_REMOVEREADERFROMGROUPA:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_REMOVEREADERFROMGROUPW:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSA:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSW:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_GETSTATUSCHANGEA:
@@ -1350,7 +1333,7 @@ UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			break;
 
 		case SCARD_IOCTL_SETATTRIB:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_ACCESSSTARTEDEVENT:
@@ -1359,52 +1342,119 @@ UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSBYATRA:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSBYATRW:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_READCACHEA:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_READCACHEW:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_WRITECACHEA:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_WRITECACHEW:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_GETTRANSMITCOUNT:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_RELEASESTARTEDEVENT:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_GETREADERICON:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		case SCARD_IOCTL_GETDEVICETYPEID:
-			result = SCARD_F_INTERNAL_ERROR;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 
 		default:
-			result = STATUS_UNSUCCESSFUL;
+			status = SCARD_F_INTERNAL_ERROR;
 			break;
 	}
 
+	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
+			(ioControlCode != SCARD_IOCTL_RELEASESTARTEDEVENT))
+	{
+		offset = (RDPDR_DEVICE_IO_REQUEST_LENGTH + RDPDR_DEVICE_IO_CONTROL_REQ_HDR_LENGTH);
+
+		smartcard_unpack_read_size_align(smartcard, irp->input,
+				Stream_GetPosition(irp->input) - offset, 8);
+	}
+
+	if (((size_t) Stream_GetPosition(irp->input)) < Stream_Length(irp->input))
+	{
+		UINT32 difference;
+
+		difference = (int) (Stream_Length(irp->input) - Stream_GetPosition(irp->input));
+
+		WLog_Print(smartcard->log, WLOG_WARN,
+			"IRP was not fully parsed %s (0x%08X): Actual: %d, Expected: %d, Difference: %d",
+			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
+			(int) Stream_GetPosition(irp->input), (int) Stream_Length(irp->input), difference);
+
+		winpr_HexDump(Stream_Pointer(irp->input), difference);
+	}
+
+	if (((size_t) Stream_GetPosition(irp->input)) > Stream_Length(irp->input))
+	{
+		UINT32 difference;
+
+		difference = (int) (Stream_GetPosition(irp->input) - Stream_Length(irp->input));
+
+		WLog_Print(smartcard->log, WLOG_WARN,
+			"IRP was parsed beyond its end %s (0x%08X): Actual: %d, Expected: %d, Difference: %d",
+			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
+			(int) Stream_GetPosition(irp->input), (int) Stream_Length(irp->input), difference);
+	}
+
 	if (status != SCARD_S_SUCCESS)
-		return status;
+	{
+		free(call);
+		call = NULL;
+	}
+
+	*((ULONG_PTR**) ppCall) = (ULONG_PTR*) call;
+
+	return status;
+}
+
+UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32 ioControlCode, ULONG_PTR* call)
+{
+	UINT32 result;
+	UINT32 offset;
+	UINT32 outputBufferLength;
+	UINT32 objectBufferLength;
+
+	/**
+	 * [MS-RDPESC] 3.2.5.1: Sending Outgoing Messages:
+	 * the output buffer length SHOULD be set to 2048
+	 *
+	 * Since it's a SHOULD and not a MUST, we don't care
+	 * about it, but we still reserve at least 2048 bytes.
+	 */
+	Stream_EnsureRemainingCapacity(irp->output, 2048);
+
+	/* Device Control Response */
+	Stream_Seek_UINT32(irp->output); /* OutputBufferLength (4 bytes) */
+
+	Stream_Seek(irp->output, SMARTCARD_COMMON_TYPE_HEADER_LENGTH); /* CommonTypeHeader (8 bytes) */
+	Stream_Seek(irp->output, SMARTCARD_PRIVATE_TYPE_HEADER_LENGTH); /* PrivateTypeHeader (8 bytes) */
+
+	Stream_Seek_UINT32(irp->output); /* Result (4 bytes) */
 
 	/* Call */
 
@@ -1609,13 +1659,19 @@ UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 
 	free(call);
 
+	/**
+	 * [MS-RPCE] 2.2.6.3 Primitive Type Serialization
+	 * The type MUST be aligned on an 8-byte boundary. If the size of the
+	 * primitive type is not a multiple of 8 bytes, the data MUST be padded.
+	 */
+
 	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
 			(ioControlCode != SCARD_IOCTL_RELEASESTARTEDEVENT))
 	{
-		offset = (RDPDR_DEVICE_IO_REQUEST_LENGTH + RDPDR_DEVICE_IO_CONTROL_REQ_HDR_LENGTH);
+		offset = (RDPDR_DEVICE_IO_RESPONSE_LENGTH + RDPDR_DEVICE_IO_CONTROL_RSP_HDR_LENGTH);
 
-		smartcard_unpack_read_size_align(smartcard, irp->input,
-				Stream_GetPosition(irp->input) - offset, 8);
+		smartcard_pack_write_size_align(smartcard, irp->output,
+				Stream_GetPosition(irp->output) - offset, 8);
 	}
 
 	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT) &&
@@ -1641,47 +1697,6 @@ UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, result);
 	}
 
-	if (((size_t) Stream_GetPosition(irp->input)) < Stream_Length(irp->input))
-	{
-		UINT32 difference;
-
-		difference = (int) (Stream_Length(irp->input) - Stream_GetPosition(irp->input));
-
-		WLog_Print(smartcard->log, WLOG_WARN,
-			"IRP was not fully parsed %s (0x%08X): Actual: %d, Expected: %d, Difference: %d",
-			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
-			(int) Stream_GetPosition(irp->input), (int) Stream_Length(irp->input), difference);
-
-		winpr_HexDump(Stream_Pointer(irp->input), difference);
-	}
-
-	if (((size_t) Stream_GetPosition(irp->input)) > Stream_Length(irp->input))
-	{
-		UINT32 difference;
-
-		difference = (int) (Stream_GetPosition(irp->input) - Stream_Length(irp->input));
-
-		WLog_Print(smartcard->log, WLOG_WARN,
-			"IRP was parsed beyond its end %s (0x%08X): Actual: %d, Expected: %d, Difference: %d",
-			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
-			(int) Stream_GetPosition(irp->input), (int) Stream_Length(irp->input), difference);
-	}
-
-	/**
-	 * [MS-RPCE] 2.2.6.3 Primitive Type Serialization
-	 * The type MUST be aligned on an 8-byte boundary. If the size of the
-	 * primitive type is not a multiple of 8 bytes, the data MUST be padded.
-	 */
-
-	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
-			(ioControlCode != SCARD_IOCTL_RELEASESTARTEDEVENT))
-	{
-		offset = (RDPDR_DEVICE_IO_RESPONSE_LENGTH + RDPDR_DEVICE_IO_CONTROL_RSP_HDR_LENGTH);
-
-		smartcard_pack_write_size_align(smartcard, irp->output,
-				Stream_GetPosition(irp->output) - offset, 8);
-	}
-
 	Stream_SealLength(irp->output);
 
 	outputBufferLength = Stream_Length(irp->output) - RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4;
@@ -1699,4 +1714,20 @@ UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	Stream_SetPosition(irp->output, Stream_Length(irp->output));
 
 	return SCARD_S_SUCCESS;
+}
+
+UINT32 smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp)
+{
+	UINT32 status;
+	UINT32 ioControlCode;
+	ULONG_PTR* call = NULL;
+
+	status = smartcard_irp_device_control_decode(smartcard, irp, &ioControlCode, &call);
+
+	if (status != SCARD_S_SUCCESS)
+		return status;
+
+	status = smartcard_irp_device_control_call(smartcard, irp, ioControlCode, call);
+
+	return status;
 }
