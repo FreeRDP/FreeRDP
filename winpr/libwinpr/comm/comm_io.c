@@ -196,9 +196,6 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		}
 	}
 
-	// TMP:
-	DEBUG_MSG("Reading N=%u, VMIN=%u, VTIME=%u", nNumberOfBytesToRead, vmin, vtime);
-
 	nbRead = read(pComm->fd, lpBuffer, nNumberOfBytesToRead);
 
 	if (nbRead < 0)
@@ -225,6 +222,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	}
 
+	// TODO:
 	// SetLastError(ERROR_TIMEOUT)
 
 	*lpNumberOfBytesRead = nbRead;
@@ -283,9 +281,9 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	{
 		ssize_t nbWritten;
 
-		nbWritten += write(pComm->fd, 
-				   lpBuffer + (*lpNumberOfBytesWritten), 
-				   nNumberOfBytesToWrite - (*lpNumberOfBytesWritten));
+		nbWritten = write(pComm->fd, 
+				  lpBuffer + (*lpNumberOfBytesWritten), 
+				  nNumberOfBytesToWrite - (*lpNumberOfBytesWritten));
 
 		if (nbWritten < 0)
 		{
@@ -307,7 +305,6 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 		*lpNumberOfBytesWritten += nbWritten;
 	}
-	
 	
 	return TRUE;
 }
