@@ -555,11 +555,11 @@ static void serial_free(DEVICE* device)
 	WLog_Print(serial->log, WLOG_DEBUG, "freeing");
 
 	MessageQueue_PostQuit(serial->ReadIrpQueue, 0);
-	WaitForSingleObject(serial->ReadThread, 100 /* ms */); /* INFINITE might block on a read, FIXME: is a better signal possible? */ 
+	WaitForSingleObject(serial->ReadThread, 100 /* ms */); /* INFINITE can block the process on a Read, FIXME: is a better signal possible? */ 
 	CloseHandle(serial->ReadThread);
 
 	MessageQueue_PostQuit(serial->MainIrpQueue, 0);
-	WaitForSingleObject(serial->MainThread, INFINITE);
+	WaitForSingleObject(serial->MainThread, INFINITE); /* FIXME: might likely block on a pending Write or ioctl */
 	CloseHandle(serial->MainThread);
 
 	if (serial->hComm)

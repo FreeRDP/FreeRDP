@@ -373,6 +373,27 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 			}
 			break;
 		}
+		case IOCTL_SERIAL_GET_MODEMSTATUS:
+		{
+			if (pRemoteSerialDriver->get_modemstatus)
+			{
+				ULONG *pRegister = (ULONG*)lpOutBuffer;
+				
+				assert(nOutBufferSize >= sizeof(ULONG));
+				if (nOutBufferSize < sizeof(ULONG))
+				{
+					SetLastError(ERROR_INSUFFICIENT_BUFFER);
+					return FALSE;					
+				}
+
+				if (!pRemoteSerialDriver->get_modemstatus(pComm, pRegister))
+					return FALSE;
+
+				*lpBytesReturned = sizeof(ULONG);
+				return TRUE;
+			}
+			break;
+		}
 	}
 	
 	DEBUG_WARN(_T("unsupported IoControlCode: Ox%0.8x (remote serial driver: %s)"), dwIoControlCode, pRemoteSerialDriver->name);

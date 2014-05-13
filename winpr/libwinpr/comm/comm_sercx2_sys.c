@@ -72,6 +72,7 @@ static REMOTE_SERIAL_DRIVER _SerCx2Sys =
 	.clear_dtr        = NULL,
 	.set_rts          = NULL,
 	.clear_rts        = NULL,
+	.get_modemstatus  = NULL,
 };
 
 
@@ -103,6 +104,8 @@ REMOTE_SERIAL_DRIVER* SerCx2Sys_s()
 
 	_SerCx2Sys.set_rts   = pSerialSys->set_rts;
 	_SerCx2Sys.clear_rts = pSerialSys->clear_rts;
+
+	_SerCx2Sys.get_modemstatus = pSerialSys->get_modemstatus;
 
 	return &_SerCx2Sys;
 }

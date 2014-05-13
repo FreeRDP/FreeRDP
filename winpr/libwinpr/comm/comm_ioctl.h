@@ -69,7 +69,7 @@ extern "C" {
 /* IOCTL_SERIAL_PURGE 0x001B004C */
 #define IOCTL_SERIAL_GET_HANDFLOW	0x001B0060
 #define IOCTL_SERIAL_SET_HANDFLOW	0x001B0064
-/* IOCTL_SERIAL_GET_MODEMSTATUS 0x001B0068 */
+#define IOCTL_SERIAL_GET_MODEMSTATUS	0x001B0068
 /* IOCTL_SERIAL_GET_DTRRTS 0x001B0078 */
 /* IOCTL_SERIAL_GET_COMMSTATUS 0x001B0084 */
 #define IOCTL_SERIAL_GET_PROPERTIES	0x001B0074
@@ -190,6 +190,16 @@ typedef struct _SERIAL_TIMEOUTS
 } SERIAL_TIMEOUTS,*PSERIAL_TIMEOUTS;
 
 
+#define SERIAL_MSR_DCTS     0x01
+#define SERIAL_MSR_DDSR     0x02
+#define SERIAL_MSR_TERI     0x04
+#define SERIAL_MSR_DDCD     0x08
+#define SERIAL_MSR_CTS      0x10
+#define SERIAL_MSR_DSR      0x20
+#define SERIAL_MSR_RI       0x40
+#define SERIAL_MSR_DCD      0x80
+
+
 /**
  * A function might be NULL if not supported by the underlying remote driver.
  *
@@ -214,6 +224,7 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*clear_dtr)(WINPR_COMM *pComm);
 	BOOL (*set_rts)(WINPR_COMM *pComm);
 	BOOL (*clear_rts)(WINPR_COMM *pComm);
+	BOOL (*get_modemstatus)(WINPR_COMM *pComm, ULONG *pRegister);
 
 } REMOTE_SERIAL_DRIVER;
 

@@ -943,6 +943,36 @@ static BOOL _clear_rts(WINPR_COMM *pComm)
 }
 
 
+
+static BOOL _get_modemstatus(WINPR_COMM *pComm, ULONG *pRegister)
+{
+	UINT32 lines=0;
+	ioctl(pComm->fd, TIOCMGET, &lines);
+	
+	ZeroMemory(pRegister, sizeof(ULONG));
+
+	/* TODO: FIXME: how to get a direct access from the user space
+	 * to the MSR register in order to complete the 4 first bits?
+	 */
+
+	/* #define SERIAL_MSR_DCTS     0x01 */
+	/* #define SERIAL_MSR_DDSR     0x02 */
+	/* #define SERIAL_MSR_TERI     0x04 */
+	/* #define SERIAL_MSR_DDCD     0x08 */
+
+	if (lines & TIOCM_CTS)
+		*pRegister |= SERIAL_MSR_CTS;
+	if (lines & TIOCM_DSR)
+		*pRegister |= SERIAL_MSR_DSR;
+	if (lines & TIOCM_RI)
+		*pRegister |= SERIAL_MSR_RI;
+	if (lines & TIOCM_CD)
+		*pRegister |= SERIAL_MSR_DCD;
+
+	return TRUE;
+}
+
+
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
 	.id		  = RemoteSerialDriverSerialSys,
@@ -962,6 +992,7 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.clear_dtr        = _clear_dtr,
 	.set_rts          = _set_rts,
 	.clear_rts        = _clear_rts,
+	.get_modemstatus  = _get_modemstatus,
 };
 
 
