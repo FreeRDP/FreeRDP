@@ -69,9 +69,6 @@ struct _SERIAL_DEVICE
 
 	HANDLE ReadThread;
 	wMessageQueue* ReadIrpQueue;
-
-	HANDLE WriteThread;
-	wMessageQueue* WriteIrpQueue;
 };
 
 static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
@@ -499,37 +496,6 @@ static void* serial_read_thread_func(void* arg)
 	return NULL;
 }
 
-static void* serial_write_thread_func(void* arg)
-{
-	IRP* irp;
-	wMessage message;
-	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) arg;
-
-	while (1)
-	{
-		if (!MessageQueue_Wait(serial->WriteIrpQueue))
-			break;
-
-		if (!MessageQueue_Peek(serial->WriteIrpQueue, &message, TRUE))
-			break;
-
-		if (message.id == WMQ_QUIT)
-			break;
-
-		irp = (IRP*) message.wParam;
-
-		if (irp)
-		{
-			assert(irp->MajorFunction == IRP_MJ_WRITE);
-			serial_process_irp(serial, irp);
-		}
-	}
-
-	ExitThread(0);
-	return NULL;
-}
-
-
 static void* serial_thread_func(void* arg)
 {
 	IRP* irp;
@@ -577,10 +543,6 @@ static void serial_irp_request(DEVICE* device, IRP* irp)
 			MessageQueue_Post(serial->ReadIrpQueue, NULL, 0, (void*) irp, NULL);
 			break;
 
-		case IRP_MJ_WRITE:
-			MessageQueue_Post(serial->WriteIrpQueue, NULL, 0, (void*) irp, NULL);
-			break;
-
 		default:
 			MessageQueue_Post(serial->MainIrpQueue, NULL, 0, (void*) irp, NULL);
 	}
@@ -592,15 +554,9 @@ static void serial_free(DEVICE* device)
 	
 	WLog_Print(serial->log, WLOG_DEBUG, "freeing");
 
-	/* TMP: FIXME: also send a signal to interrupt I/O */
-
 	MessageQueue_PostQuit(serial->ReadIrpQueue, 0);
-	WaitForSingleObject(serial->ReadThread, INFINITE);
+	WaitForSingleObject(serial->ReadThread, 100 /* ms */); /* INFINITE might block on a read, FIXME: is a better signal possible? */ 
 	CloseHandle(serial->ReadThread);
-
-	MessageQueue_PostQuit(serial->WriteIrpQueue, 0);
-	WaitForSingleObject(serial->WriteThread, INFINITE);
-	CloseHandle(serial->WriteThread);
 
 	MessageQueue_PostQuit(serial->MainIrpQueue, 0);
 	WaitForSingleObject(serial->MainThread, INFINITE);
@@ -612,7 +568,6 @@ static void serial_free(DEVICE* device)
 	/* Clean up resources */
 	Stream_Free(serial->device.data, TRUE);
 	MessageQueue_Free(serial->ReadIrpQueue);
-	MessageQueue_Free(serial->WriteIrpQueue);
 	MessageQueue_Free(serial->MainIrpQueue);
 
 	free(serial);
@@ -666,7 +621,6 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			Stream_Write_UINT8(serial->device.data, name[i] < 0 ? '_' : name[i]);
 
 		serial->ReadIrpQueue = MessageQueue_New(NULL);
-		serial->WriteIrpQueue = MessageQueue_New(NULL);
 		serial->MainIrpQueue = MessageQueue_New(NULL);
 
 		WLog_Init();
@@ -681,13 +635,6 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 						  (void*) serial, 
 						  0, 
 						  NULL);
-
-		serial->WriteThread = CreateThread(NULL, 
-						   0, 
-						   (LPTHREAD_START_ROUTINE) serial_write_thread_func, 
-						   (void*) serial, 
-						   0, 
-						   NULL);
 
 		serial->MainThread = CreateThread(NULL, 
 						  0, 
