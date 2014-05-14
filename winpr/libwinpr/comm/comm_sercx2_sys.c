@@ -117,6 +117,7 @@ static REMOTE_SERIAL_DRIVER _SerCx2Sys =
 	.set_wait_mask    = _set_wait_mask,
 	.get_wait_mask    = NULL,
 	.wait_on_mask     = NULL,
+	.set_queue_size   = NULL,
 };
 
 
@@ -154,6 +155,8 @@ REMOTE_SERIAL_DRIVER* SerCx2Sys_s()
 	_SerCx2Sys.set_wait_mask = pSerialSys->set_wait_mask;
 	_SerCx2Sys.get_wait_mask = pSerialSys->get_wait_mask;
 	_SerCx2Sys.wait_on_mask  = pSerialSys->wait_on_mask;
+
+	_SerCx2Sys.set_queue_size = pSerialSys->set_queue_size;
 
 	return &_SerCx2Sys;
 }

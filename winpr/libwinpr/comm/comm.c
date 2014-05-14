@@ -679,18 +679,23 @@ BOOL PurgeComm(HANDLE hFile, DWORD dwFlags)
 BOOL SetupComm(HANDLE hFile, DWORD dwInQueue, DWORD dwOutQueue)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
+	SERIAL_QUEUE_SIZE queueSize;
+	DWORD bytesReturned = 0;
 
-	if (!pComm)
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
+	}
 
-/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363423%28v=vs.85%29.aspx */
-/* A process reinitializes a communications resource by using the SetupComm function, which performs the following tasks: */
+	queueSize.InSize = dwInQueue;
+	queueSize.OutSize = dwOutQueue;
 
-/*     Terminates pending read and write operations, even if they have not been completed. */
-/*     Discards unread characters and frees the internal output and input buffers of the driver associated with the specified resource. */
-/*     Reallocates the internal output and input buffers. */
-
-/* A process is not required to call SetupComm. If it does not, the resource's driver initializes the device with the default settings the first time that the communications resource handle is used. */
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_QUEUE_SIZE, &queueSize, sizeof(SERIAL_QUEUE_SIZE), NULL, 0, &bytesReturned, NULL))
+	{
+		DEBUG_WARN("SetCommTimeouts failure.");
+		return FALSE;
+	}
 
 	return TRUE;
 }

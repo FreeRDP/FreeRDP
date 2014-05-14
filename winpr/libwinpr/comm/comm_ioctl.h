@@ -161,6 +161,14 @@ typedef struct _SERIAL_TIMEOUTS
 #define SERIAL_EV_EVENT1           0x0800  
 #define SERIAL_EV_EVENT2           0x1000  
 
+
+typedef struct _SERIAL_QUEUE_SIZE
+{
+	ULONG InSize;
+	ULONG OutSize;
+} SERIAL_QUEUE_SIZE, *PSERIAL_QUEUE_SIZE;
+
+
 /**
  * A function might be NULL if not supported by the underlying remote driver.
  *
@@ -189,6 +197,7 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*set_wait_mask)(WINPR_COMM *pComm, const ULONG *pWaitMask);
 	BOOL (*get_wait_mask)(WINPR_COMM *pComm, ULONG *pWaitMask);
 	BOOL (*wait_on_mask)(WINPR_COMM *pComm, ULONG *pOutputMask);
+	BOOL (*set_queue_size)(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSize);
 
 } REMOTE_SERIAL_DRIVER;
 

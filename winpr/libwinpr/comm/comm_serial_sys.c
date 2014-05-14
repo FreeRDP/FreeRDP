@@ -33,6 +33,13 @@
 
 #include <winpr/crt.h>
 
+/* hard-coded in N_TTY */
+#define TTY_THRESHOLD_THROTTLE		128 /* now based on remaining room */
+#define TTY_THRESHOLD_UNTHROTTLE 	128
+#define N_TTY_BUF_SIZE			4096
+
+
+
 /*
  * Linux, Windows speeds
  * 
@@ -150,7 +157,7 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 	 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363189%28v=vs.85%29.aspx
 	 */
 
-	/* FIXME: properties should be better probe. The current
+	/* FIXME: properties should be better probed. The current
 	 * implementation just relies on the Linux' implementation.
 	 */
 
@@ -169,9 +176,9 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 
 	/* pProperties->Reserved1; not used */
 
-	// TMP: FIXME: related to the UART's FIFO ? 
-	/* pProperties->MaxTxQueue; */
-	/* pProperties->MaxRxQueue; */
+	/* FIXME: could be implemented on top of N_TTY */
+	pProperties->dwMaxTxQueue = N_TTY_BUF_SIZE;
+	pProperties->dwMaxRxQueue = N_TTY_BUF_SIZE;
 
 	pProperties->dwMaxBaud = SERIAL_BAUD_115200; /* _SERIAL_MAX_BAUD */
 
@@ -180,7 +187,7 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 
 	/* TMP: TODO: to be finalized */
 	pProperties->dwProvCapabilities = 
-		/*PCF_16BITMODE | PCF_DTRDSR | PCF_INTTIMEOUTS |*/ PCF_PARITY_CHECK | /*PCF_RLSD | */
+		/*PCF_16BITMODE | PCF_DTRDSR |*/ PCF_INTTIMEOUTS | PCF_PARITY_CHECK | /*PCF_RLSD | */
 		PCF_RTSCTS | PCF_SETXCHAR | /*PCF_SPECIALCHARS | PCF_TOTALTIMEOUTS |*/ PCF_XONXOFF;
 
 	/* TMP: TODO: double check SP_RLSD */
@@ -196,9 +203,9 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 
 	pProperties->wSettableStopParity = STOPBITS_10 | /*STOPBITS_15 |*/ STOPBITS_20 | PARITY_NONE | PARITY_ODD | PARITY_EVEN | PARITY_MARK | PARITY_SPACE;
 
-	// TMP: FIXME: related to the UART's FIFO ? 
-	/* pProperties->CurrentTxQueue; */
-	/* pProperties->CurrentRxQueue; */
+	/* FIXME: could be implemented on top of N_TTY */
+	pProperties->dwCurrentTxQueue = N_TTY_BUF_SIZE;
+	pProperties->dwCurrentRxQueue = N_TTY_BUF_SIZE;
 
 	/* pProperties->ProvSpec1; see above */
 	/* pProperties->ProvSpec2; ignored */
@@ -557,11 +564,6 @@ static BOOL _get_line_control(WINPR_COMM *pComm, SERIAL_LINE_CONTROL *pLineContr
 	return TRUE;
 }
 
-
-/* hard-coded in N_TTY */
-#define TTY_THRESHOLD_THROTTLE		128 /* now based on remaining room */
-#define TTY_THRESHOLD_UNTHROTTLE 	128
-#define N_TTY_BUF_SIZE			4096
 
 static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 {
@@ -1246,6 +1248,36 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 }
 
 
+static BOOL _set_queue_size(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSize)
+{
+
+/* TMP: FIXME: do at least a purge/reset ? */
+/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363423%28v=vs.85%29.aspx */
+/* A process reinitializes a communications resource by using the SetupComm function, which performs the following tasks: */
+
+/*     Terminates pending read and write operations, even if they have not been completed. */
+/*     Discards unread characters and frees the internal output and input buffers of the driver associated with the specified resource. */
+/*     Reallocates the internal output and input buffers. */
+
+/* A process is not required to call SetupComm. If it does not, the resource's driver initializes the device with the default settings the first time that the communications resource handle is used. */
+
+
+	if ((pQueueSize->InSize <= N_TTY_BUF_SIZE) && (pQueueSize->OutSize <= N_TTY_BUF_SIZE))
+		return TRUE; /* nothing to do */
+
+	/* FIXME: could be implemented on top of N_TTY */
+
+	if (pQueueSize->InSize > N_TTY_BUF_SIZE)
+		DEBUG_WARN("Requested an incompatible input buffer size: %d", pQueueSize->InSize);
+
+	if (pQueueSize->OutSize > N_TTY_BUF_SIZE)
+		DEBUG_WARN("Requested an incompatible output buffer size: %d", pQueueSize->OutSize);
+
+	SetLastError(ERROR_CANCELLED);
+	return FALSE;
+}
+
+
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
 	.id		  = RemoteSerialDriverSerialSys,
@@ -1269,6 +1301,7 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.set_wait_mask    = _set_wait_mask,
 	.get_wait_mask    = _get_wait_mask,
 	.wait_on_mask     = _wait_on_mask,
+	.set_queue_size   = _set_queue_size,
 };
 
 

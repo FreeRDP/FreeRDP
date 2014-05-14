@@ -474,6 +474,24 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 			}
 			break;
 		}
+		case IOCTL_SERIAL_SET_QUEUE_SIZE:
+		{
+			if (pRemoteSerialDriver->set_queue_size)
+			{
+				SERIAL_QUEUE_SIZE *pQueueSize = (SERIAL_QUEUE_SIZE*)lpInBuffer;
+
+				assert(nInBufferSize >= sizeof(SERIAL_QUEUE_SIZE));
+				if (nInBufferSize < sizeof(SERIAL_QUEUE_SIZE))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+
+				return pRemoteSerialDriver->set_queue_size(pComm, pQueueSize);
+			}
+			break;
+		}
+
 	}
 	
 	DEBUG_WARN(_T("unsupported IoControlCode=[Ox%0.8x] %s (remote serial driver: %s)"), 
