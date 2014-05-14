@@ -555,6 +555,7 @@ static REMOTE_SERIAL_DRIVER _SerCxSys =
 	.get_wait_mask    = NULL,
 	.wait_on_mask     = NULL,
 	.set_queue_size   = NULL,
+	.purge            = NULL,
 };
 
 
@@ -585,6 +586,8 @@ REMOTE_SERIAL_DRIVER* SerCxSys_s()
 	_SerCxSys.wait_on_mask  = pSerialSys->wait_on_mask;
 
 	_SerCxSys.set_queue_size = pSerialSys->set_queue_size;
+
+	_SerCxSys.purge = pSerialSys->purge;
 
 	return &_SerCxSys;
 }

@@ -666,15 +666,27 @@ BOOL ClearCommError(HANDLE hFile, PDWORD lpErrors, LPCOMSTAT lpStat)
 	return TRUE;
 }
 
+
 BOOL PurgeComm(HANDLE hFile, DWORD dwFlags)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
+	DWORD bytesReturned = 0;
 
-	if (!pComm)
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
+	}
+
+	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_PURGE, &dwFlags, sizeof(DWORD), NULL, 0, &bytesReturned, NULL))
+	{
+		DEBUG_WARN("PurgeComm failure.");
+		return FALSE;
+	}
 
 	return TRUE;
 }
+
 
 BOOL SetupComm(HANDLE hFile, DWORD dwInQueue, DWORD dwOutQueue)
 {
@@ -1160,6 +1172,13 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 
 	return INVALID_HANDLE_VALUE;
+}
+
+
+/* FIXME: to be removed */
+void _comm_set_ReadIrpQueue(HANDLE hComm, wMessageQueue* ReadIrpQueue)
+{
+	((WINPR_COMM*)hComm)->ReadIrpQueue = ReadIrpQueue;
 }
 
 #endif /* _WIN32 */

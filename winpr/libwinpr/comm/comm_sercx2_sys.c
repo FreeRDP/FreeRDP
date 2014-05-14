@@ -93,6 +93,32 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 }
 
 
+static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
+{
+	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+  
+	/* http://msdn.microsoft.com/en-us/library/windows/hardware/ff546655%28v=vs.85%29.aspx */
+
+	if ((*pPurgeMask & SERIAL_PURGE_RXCLEAR) && !(*pPurgeMask & SERIAL_PURGE_RXABORT))
+	{
+		DEBUG_WARN("Expecting SERIAL_PURGE_RXABORT since SERIAL_PURGE_RXCLEAR is set");
+		SetLastError(ERROR_INVALID_DEVICE_OBJECT_PARAMETER);
+		return FALSE;
+	}
+
+
+	if ((*pPurgeMask & SERIAL_PURGE_TXCLEAR) && !(*pPurgeMask & SERIAL_PURGE_TXABORT))
+	{
+		DEBUG_WARN("Expecting SERIAL_PURGE_TXABORT since SERIAL_PURGE_TXCLEAR is set");
+		SetLastError(ERROR_INVALID_DEVICE_OBJECT_PARAMETER);
+		return FALSE;
+	}
+
+
+	return pSerialSys->purge(pComm, pPurgeMask);
+}
+
+
 /* specific functions only */
 static REMOTE_SERIAL_DRIVER _SerCx2Sys = 
 {	
@@ -118,6 +144,7 @@ static REMOTE_SERIAL_DRIVER _SerCx2Sys =
 	.get_wait_mask    = NULL,
 	.wait_on_mask     = NULL,
 	.set_queue_size   = NULL,
+	.purge            = _purge,
 };
 
 
@@ -157,6 +184,7 @@ REMOTE_SERIAL_DRIVER* SerCx2Sys_s()
 	_SerCx2Sys.wait_on_mask  = pSerialSys->wait_on_mask;
 
 	_SerCx2Sys.set_queue_size = pSerialSys->set_queue_size;
+
 
 	return &_SerCx2Sys;
 }

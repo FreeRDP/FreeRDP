@@ -131,6 +131,9 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 		goto error_handle;
 	}
 
+	/* FIXME: this stinks, see also IOCTL_SERIAL_PURGE */
+	_comm_set_ReadIrpQueue(serial->hComm, serial->ReadIrpQueue);
+
 	/* NOTE: binary mode/raw mode required for the redirection. On
 	 * Linux, CommCreateFileA forces this setting.
 	 */
@@ -246,7 +249,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 			case ERROR_BAD_DEVICE:
 				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
 				break;
-
+				
 			default:
 				DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
 				irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -404,10 +407,17 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 				irp->IoStatus = STATUS_PENDING;
 				break;
 
+			case ERROR_INVALID_DEVICE_OBJECT_PARAMETER: /* eg: SerCx2.sys' _purge() */
+				irp->IoStatus = STATUS_INVALID_DEVICE_STATE;
+				break;
+
+			case ERROR_CANCELLED:
+				irp->IoStatus = STATUS_CANCELLED;
+				break;
+
 			default:
 				DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
-				//irp->IoStatus = STATUS_UNSUCCESSFUL;
-				irp->IoStatus = STATUS_CANCELLED;
+				irp->IoStatus = STATUS_UNSUCCESSFUL;
 				break;
 		}
 	}

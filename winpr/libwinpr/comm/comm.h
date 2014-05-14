@@ -47,6 +47,11 @@ struct winpr_comm
 
 	int fd;
 	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
+
+	wMessageQueue* ReadIrpQueue; /* considered as optional since it is
+				      * defined outside of CommCreateFile 
+				      * FIXME: how to remove this shortcut? */
+
 	COMMTIMEOUTS timeouts;
 	
 	struct serial_icounter_struct counters;

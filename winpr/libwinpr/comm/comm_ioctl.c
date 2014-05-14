@@ -491,6 +491,23 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 			}
 			break;
 		}
+		case IOCTL_SERIAL_PURGE:
+		{
+			if (pRemoteSerialDriver->purge)
+			{
+				ULONG *pPurgeMask = (ULONG*)lpInBuffer;
+
+				assert(nInBufferSize >= sizeof(ULONG));
+				if (nInBufferSize < sizeof(ULONG))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+
+				return pRemoteSerialDriver->purge(pComm, pPurgeMask);
+			}
+			break;
+		}
 
 	}
 	

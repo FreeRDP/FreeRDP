@@ -41,7 +41,8 @@
 extern "C" { 
 #endif
 
-
+/* TODO: defines and types below are very similar to those in comm.h, keep only
+ * those that differ more than the names */
 
 #define STOP_BIT_1	0 
 #define STOP_BITS_1_5	1 
@@ -169,6 +170,11 @@ typedef struct _SERIAL_QUEUE_SIZE
 } SERIAL_QUEUE_SIZE, *PSERIAL_QUEUE_SIZE;
 
 
+#define SERIAL_PURGE_TXABORT 0x00000001 
+#define SERIAL_PURGE_RXABORT 0x00000002 
+#define SERIAL_PURGE_TXCLEAR 0x00000004 
+#define SERIAL_PURGE_RXCLEAR 0x00000008 
+
 /**
  * A function might be NULL if not supported by the underlying remote driver.
  *
@@ -198,6 +204,7 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*get_wait_mask)(WINPR_COMM *pComm, ULONG *pWaitMask);
 	BOOL (*wait_on_mask)(WINPR_COMM *pComm, ULONG *pOutputMask);
 	BOOL (*set_queue_size)(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSize);
+	BOOL (*purge)(WINPR_COMM *pComm, const ULONG *pPurgeMask);
 
 } REMOTE_SERIAL_DRIVER;
 

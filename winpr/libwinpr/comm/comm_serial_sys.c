@@ -24,7 +24,9 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 #include <termios.h>
 
 #include <freerdp/utils/debug.h>
@@ -1065,8 +1067,8 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 {
 	assert(*pOutputMask == 0);
 
-
-	/* TMP: TODO: while (TRUE)  */
+	// TMP: TODO:
+	/* while (TRUE) */
 	{
 		int nbBytesToBeRead = 0;
 		int nbBytesToBeWritten = 0;
@@ -1240,6 +1242,11 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 			/* at least an event occurred */
 			return TRUE;
 		}
+
+		/* // TMP: */
+		/* DEBUG_WARN("waiting on events:0X%0.4X", pComm->waitMask); */
+		/* sleep(1); */
+		
 	}
 
 	DEBUG_WARN("_wait_on_mask pending on events:0X%0.4X", pComm->waitMask);
@@ -1278,6 +1285,73 @@ static BOOL _set_queue_size(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSi
 }
 
 
+static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
+{
+	if ((*pPurgeMask & ~(SERIAL_PURGE_TXABORT | SERIAL_PURGE_RXABORT | SERIAL_PURGE_TXCLEAR | SERIAL_PURGE_RXCLEAR)) > 0)
+	{
+		DEBUG_WARN("Invalid purge mask: 0x%X\n", *pPurgeMask);
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
+
+	/* FIXME: don't rely so much on how the IRP queues are implemented, should be more generic */
+
+	/* nothing to do until IRP_MJ_WRITE-s and IRP_MJ_DEVICE_CONTROL-s are executed in the same thread */
+	/* if (*pPurgeMask & SERIAL_PURGE_TXABORT) */
+	/* { */
+	/* 	/\* Purges all write (IRP_MJ_WRITE) requests. *\/ */
+
+	/* } */
+
+	if (*pPurgeMask & SERIAL_PURGE_RXABORT)
+	{
+		/* Purges all read (IRP_MJ_READ) requests. */
+
+		if (pComm->ReadIrpQueue != NULL)
+		{
+			MessageQueue_Clear(pComm->ReadIrpQueue);
+		}
+
+		/* TMP: TODO: double check if this gives well a change to abort a pending CommReadFile */
+		fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) | O_NONBLOCK);
+		sleep(1);
+		fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) & ~O_NONBLOCK);
+
+		/* TMP: FIXME: synchronization of the incoming
+		 * IRP_MJ_READ-s. Could be possible to make them to
+		 * transit first by the MainIrpQueue before to
+		 * dispatch them */
+	}
+
+	if (*pPurgeMask & SERIAL_PURGE_TXCLEAR)
+	{
+		/* Purges the transmit buffer, if one exists. */
+		
+		if (tcflush(pComm->fd, TCOFLUSH) < 0)
+		{
+			DEBUG_WARN("tcflush(TCOFLUSH) failure, errno=[%d] %s", errno, strerror(errno));
+			SetLastError(ERROR_CANCELLED);
+			return FALSE;
+		}
+	}
+
+
+	if (*pPurgeMask & SERIAL_PURGE_RXCLEAR)
+	{
+		/* Purges the receive buffer, if one exists. */
+
+		if (tcflush(pComm->fd, TCIFLUSH) < 0)
+		{
+			DEBUG_WARN("tcflush(TCIFLUSH) failure, errno=[%d] %s", errno, strerror(errno));
+			SetLastError(ERROR_CANCELLED);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
 	.id		  = RemoteSerialDriverSerialSys,
@@ -1302,6 +1376,7 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.get_wait_mask    = _get_wait_mask,
 	.wait_on_mask     = _wait_on_mask,
 	.set_queue_size   = _set_queue_size,
+	.purge            = _purge,
 };
 
 
