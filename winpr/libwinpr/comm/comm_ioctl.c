@@ -56,8 +56,26 @@
  */
 
 
+const char* _comm_serial_ioctl_name(ULONG number)
+{
+	int i;
+
+	for (i=0; _SERIAL_IOCTL_NAMES[i].number != 0; i++)
+	{
+		if (_SERIAL_IOCTL_NAMES[i].number == number)
+		{
+			return _SERIAL_IOCTL_NAMES[i].name;
+		}
+	}
+
+	return "(unknown ioctl name)";
+}
+
+
 /**
  * FIXME: to be used through winpr-io's DeviceIoControl
+ *
+ * Any previous error as returned by GetLastError is cleared.
  *
  * ERRORS:
  *   ERROR_INVALID_HANDLE
@@ -72,6 +90,9 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
 	REMOTE_SERIAL_DRIVER* pRemoteSerialDriver = NULL;
+
+	/* clear any previous last error */
+	SetLastError(ERROR_SUCCESS);
 
 	if (hDevice == INVALID_HANDLE_VALUE)
 	{
@@ -394,9 +415,69 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 			}
 			break;
 		}
+		case IOCTL_SERIAL_SET_WAIT_MASK:
+		{
+			if (pRemoteSerialDriver->set_wait_mask)
+			{
+				ULONG *pWaitMask = (ULONG*)lpInBuffer;
+
+				assert(nInBufferSize >= sizeof(ULONG));
+				if (nInBufferSize < sizeof(ULONG))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+
+				return pRemoteSerialDriver->set_wait_mask(pComm, pWaitMask);
+			}
+			break;
+		}
+		case IOCTL_SERIAL_GET_WAIT_MASK:
+		{
+			if (pRemoteSerialDriver->get_wait_mask)
+			{
+				ULONG *pWaitMask = (ULONG*)lpOutBuffer;
+				
+				assert(nOutBufferSize >= sizeof(ULONG));
+				if (nOutBufferSize < sizeof(ULONG))
+				{
+					SetLastError(ERROR_INSUFFICIENT_BUFFER);
+					return FALSE;					
+				}
+
+				if (!pRemoteSerialDriver->get_wait_mask(pComm, pWaitMask))
+					return FALSE;
+
+				*lpBytesReturned = sizeof(ULONG);
+				return TRUE;
+			}
+			break;
+		}
+		case IOCTL_SERIAL_WAIT_ON_MASK:
+		{
+			if (pRemoteSerialDriver->wait_on_mask)
+			{
+				ULONG *pOutputMask = (ULONG*)lpOutBuffer;
+				
+				assert(nOutBufferSize >= sizeof(ULONG));
+				if (nOutBufferSize < sizeof(ULONG))
+				{
+					SetLastError(ERROR_INSUFFICIENT_BUFFER);
+					return FALSE;					
+				}
+
+				if (!pRemoteSerialDriver->wait_on_mask(pComm, pOutputMask))
+					return FALSE;
+
+				*lpBytesReturned = sizeof(ULONG);
+				return TRUE;
+			}
+			break;
+		}
 	}
 	
-	DEBUG_WARN(_T("unsupported IoControlCode: Ox%0.8x (remote serial driver: %s)"), dwIoControlCode, pRemoteSerialDriver->name);
+	DEBUG_WARN(_T("unsupported IoControlCode=[Ox%0.8x] %s (remote serial driver: %s)"), 
+		   dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), pRemoteSerialDriver->name);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 	

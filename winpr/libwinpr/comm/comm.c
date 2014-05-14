@@ -27,6 +27,7 @@
 #ifndef _WIN32
 
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <termios.h>
@@ -1098,6 +1099,17 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	 * information? Could be a command line argument.
 	 */
 	pComm->remoteSerialDriverId = RemoteSerialDriverUnknown;
+
+	if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
+	{
+		DEBUG_WARN("TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		goto error_handle;
+	}
+
+
+
+
 
 
 	/* The binary/raw mode is required for the redirection but

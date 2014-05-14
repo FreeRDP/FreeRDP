@@ -23,6 +23,8 @@
 
 #ifndef _WIN32
 
+#include <linux/serial.h>
+
 #include <winpr/comm.h>
 
 #include "../handle/handle.h"
@@ -46,6 +48,10 @@ struct winpr_comm
 	int fd;
 	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
 	COMMTIMEOUTS timeouts;
+	
+	struct serial_icounter_struct counters;
+	ULONG waitMask;
+	ULONG pendingEvents;
 
 	/* NB: CloseHandle() has to free resources */
 };

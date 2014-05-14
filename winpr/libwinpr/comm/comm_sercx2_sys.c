@@ -22,6 +22,8 @@
 
 #ifndef _WIN32
 
+#include <freerdp/utils/debug.h>
+
 #include "comm_serial_sys.h"
 #include "comm_sercx_sys.h"
 
@@ -52,6 +54,45 @@ static BOOL _get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
 }
 
 
+/* http://msdn.microsoft.com/en-us/library/windows/hardware/hh439605%28v=vs.85%29.aspx */
+/* FIXME: only using the Serial.sys' events, complete the support of the remaining events */
+static const ULONG _SERCX2_SYS_SUPPORTED_EV_MASK = 
+	SERIAL_EV_RXCHAR   |
+	SERIAL_EV_RXFLAG   |
+	SERIAL_EV_TXEMPTY  |
+	SERIAL_EV_CTS      |
+	SERIAL_EV_DSR      |  
+	SERIAL_EV_RLSD     |
+	SERIAL_EV_BREAK    |
+	SERIAL_EV_ERR      |
+	SERIAL_EV_RING     |
+	/* SERIAL_EV_PERR     | */
+	SERIAL_EV_RX80FULL /*|
+	SERIAL_EV_EVENT1   |
+	SERIAL_EV_EVENT2*/;
+
+/* use Serial.sys for basis (not SerCx.sys) */
+static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
+{
+	ULONG possibleMask;
+	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+
+	possibleMask = *pWaitMask & _SERCX2_SYS_SUPPORTED_EV_MASK;
+
+	if (possibleMask != *pWaitMask)
+	{
+		DEBUG_WARN("Not all wait events supported (SerCx2.sys), requested events= 0X%0.4X, possible events= 0X%0.4X", *pWaitMask, possibleMask);
+
+		/* FIXME: shall we really set the possibleMask and return FALSE? */
+		pComm->waitMask = possibleMask;
+		return FALSE;
+	}
+
+	/* NB: All events that are supported by SerCx.sys are supported by Serial.sys*/
+	return pSerialSys->set_wait_mask(pComm, pWaitMask);
+}
+
+
 /* specific functions only */
 static REMOTE_SERIAL_DRIVER _SerCx2Sys = 
 {	
@@ -73,6 +114,9 @@ static REMOTE_SERIAL_DRIVER _SerCx2Sys =
 	.set_rts          = NULL,
 	.clear_rts        = NULL,
 	.get_modemstatus  = NULL,
+	.set_wait_mask    = _set_wait_mask,
+	.get_wait_mask    = NULL,
+	.wait_on_mask     = NULL,
 };
 
 
@@ -106,6 +150,10 @@ REMOTE_SERIAL_DRIVER* SerCx2Sys_s()
 	_SerCx2Sys.clear_rts = pSerialSys->clear_rts;
 
 	_SerCx2Sys.get_modemstatus = pSerialSys->get_modemstatus;
+
+	_SerCx2Sys.set_wait_mask = pSerialSys->set_wait_mask;
+	_SerCx2Sys.get_wait_mask = pSerialSys->get_wait_mask;
+	_SerCx2Sys.wait_on_mask  = pSerialSys->wait_on_mask;
 
 	return &_SerCx2Sys;
 }

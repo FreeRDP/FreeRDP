@@ -23,6 +23,7 @@
 #ifndef _WIN32
 
 #include <assert.h>
+#include <errno.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 
@@ -139,6 +140,7 @@ static const speed_t _SERIAL_SYS_BAUD_TABLE[][2] = {
 };
 
 #define _SERIAL_MAX_BAUD  B115200
+
 
 static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 {
@@ -559,6 +561,7 @@ static BOOL _get_line_control(WINPR_COMM *pComm, SERIAL_LINE_CONTROL *pLineContr
 /* hard-coded in N_TTY */
 #define TTY_THRESHOLD_THROTTLE		128 /* now based on remaining room */
 #define TTY_THRESHOLD_UNTHROTTLE 	128
+#define N_TTY_BUF_SIZE			4096
 
 static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 {
@@ -862,16 +865,28 @@ static BOOL _get_timeouts(WINPR_COMM *pComm, SERIAL_TIMEOUTS *pTimeouts)
 }
 
 
-static BOOL _set_line(WINPR_COMM *pComm, UINT32 line)
+static BOOL _set_lines(WINPR_COMM *pComm, UINT32 lines)
 {
-	ioctl(pComm->fd, TIOCMBIS, line);
+	if (ioctl(pComm->fd, TIOCMBIS, &lines) < 0)
+	{
+		DEBUG_WARN("TIOCMBIS ioctl failed, lines=0x%0.4X, errno=[%d] %s", lines, errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
 
-static BOOL _clear_line(WINPR_COMM *pComm, UINT32 line)
+static BOOL _clear_lines(WINPR_COMM *pComm, UINT32 lines)
 {
-	ioctl(pComm->fd, TIOCMBIC, line);
+	if (ioctl(pComm->fd, TIOCMBIC, &lines) < 0)
+	{
+		DEBUG_WARN("TIOCMBIC ioctl failed, lines=0x%0.4X, errno=[%d] %s", lines, errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -891,7 +906,7 @@ static BOOL _set_dtr(WINPR_COMM *pComm)
 		return FALSE;
 	}
 
-	return _set_line(pComm, TIOCM_DTR);
+	return _set_lines(pComm, TIOCM_DTR);
 }
 
 static BOOL _clear_dtr(WINPR_COMM *pComm)
@@ -909,37 +924,39 @@ static BOOL _clear_dtr(WINPR_COMM *pComm)
 		return FALSE;
 	}
 
-	return _clear_line(pComm, TIOCM_DTR);
+	return _clear_lines(pComm, TIOCM_DTR);
 }
 
 static BOOL _set_rts(WINPR_COMM *pComm)
 {
-	SERIAL_HANDFLOW handflow;
-	if (!_get_handflow(pComm, &handflow))
-		return FALSE;
+	// TMP: really required?
+	/* SERIAL_HANDFLOW handflow; */
+	/* if (!_get_handflow(pComm, &handflow)) */
+	/* 	return FALSE; */
 
-	if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
+	/* if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE) */
+	/* { */
+	/* 	SetLastError(ERROR_INVALID_PARAMETER); */
+	/* 	return FALSE; */
+	/* } */
 
-	return _set_line(pComm, TIOCM_RTS);
+	return _set_lines(pComm, TIOCM_RTS);
 }
 
 static BOOL _clear_rts(WINPR_COMM *pComm)
 {
-	SERIAL_HANDFLOW handflow;
-	if (!_get_handflow(pComm, &handflow))
-		return FALSE;
+	// TMP: really required?
+	/* SERIAL_HANDFLOW handflow; */
+	/* if (!_get_handflow(pComm, &handflow)) */
+	/* 	return FALSE; */
 
-	if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE)
-	{
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
-	}
+	/* if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE) */
+	/* { */
+	/* 	SetLastError(ERROR_INVALID_PARAMETER); */
+	/* 	return FALSE; */
+	/* } */
 
-	return _clear_line(pComm, TIOCM_RTS);
+	return _clear_lines(pComm, TIOCM_RTS);
 }
 
 
@@ -947,8 +964,13 @@ static BOOL _clear_rts(WINPR_COMM *pComm)
 static BOOL _get_modemstatus(WINPR_COMM *pComm, ULONG *pRegister)
 {
 	UINT32 lines=0;
-	ioctl(pComm->fd, TIOCMGET, &lines);
-	
+	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
+	{
+		DEBUG_WARN("TIOCMGET ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
 	ZeroMemory(pRegister, sizeof(ULONG));
 
 	/* TODO: FIXME: how to get a direct access from the user space
@@ -972,6 +994,257 @@ static BOOL _get_modemstatus(WINPR_COMM *pComm, ULONG *pRegister)
 	return TRUE;
 }
 
+/* http://msdn.microsoft.com/en-us/library/windows/hardware/hh439605%28v=vs.85%29.aspx */
+static const ULONG _SERIAL_SYS_SUPPORTED_EV_MASK = 
+	SERIAL_EV_RXCHAR   |
+	SERIAL_EV_RXFLAG   |
+	SERIAL_EV_TXEMPTY  |
+	SERIAL_EV_CTS      |
+	SERIAL_EV_DSR      |  
+	SERIAL_EV_RLSD     |
+	SERIAL_EV_BREAK    |
+	SERIAL_EV_ERR      |
+	SERIAL_EV_RING     |
+	/* SERIAL_EV_PERR     | */
+	SERIAL_EV_RX80FULL /*|
+	SERIAL_EV_EVENT1   |
+	SERIAL_EV_EVENT2*/;
+
+
+static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
+{
+	ULONG possibleMask;
+
+	if (*pWaitMask == 0)
+	{
+		/* clearing pending events */
+
+		// TMP: TODO:
+
+		if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
+		{
+			DEBUG_WARN("TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
+			SetLastError(ERROR_IO_DEVICE);
+			return FALSE;
+		}
+
+		pComm->pendingEvents = 0;
+	}
+	
+	// TMP: TODO:
+	// pending wait_on_mask must be stopped with STATUS_SUCCESS
+	// http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
+
+
+	possibleMask = *pWaitMask & _SERIAL_SYS_SUPPORTED_EV_MASK;
+
+	if (possibleMask != *pWaitMask)
+	{
+		DEBUG_WARN("Not all wait events supported (Serial.sys), requested events= 0X%0.4X, possible events= 0X%0.4X", *pWaitMask, possibleMask);
+
+		/* FIXME: shall we really set the possibleMask and return FALSE? */
+		pComm->waitMask = possibleMask;
+		return FALSE;
+	}
+
+	pComm->waitMask = possibleMask;
+	return TRUE;
+}
+
+
+static BOOL _get_wait_mask(WINPR_COMM *pComm, ULONG *pWaitMask)
+{
+	*pWaitMask = pComm->waitMask;
+	return TRUE;
+}
+
+
+static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
+{
+	assert(*pOutputMask == 0);
+
+
+	/* TMP: TODO: while (TRUE)  */
+	{
+		int nbBytesToBeRead = 0;
+		int nbBytesToBeWritten = 0;
+		struct serial_icounter_struct currentCounters; 
+		ULONG tiocmiwaitMask = 0; /* TIOCMIWAIT can wait for the 4 lines: TIOCM_RNG/DSR/CD/CTS */
+
+		if (ioctl(pComm->fd, TIOCINQ, &nbBytesToBeRead) < 0)
+		{
+			DEBUG_WARN("TIOCINQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
+			SetLastError(ERROR_IO_DEVICE);
+			return FALSE;
+		}
+
+		if (ioctl(pComm->fd, TIOCOUTQ, &nbBytesToBeWritten) < 0)
+		{
+			DEBUG_WARN("TIOCOUTQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
+			SetLastError(ERROR_IO_DEVICE);
+			return FALSE;
+		}
+
+		ZeroMemory(&currentCounters, sizeof(struct serial_icounter_struct));
+		if (ioctl(pComm->fd, TIOCGICOUNT, &currentCounters) < 0)
+		{
+			DEBUG_WARN("TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
+			SetLastError(ERROR_IO_DEVICE);
+			return FALSE;
+		}
+
+		/* NB: preferred below "currentCounters.* != pComm->counters.*" over "currentCounters.* > pComm->counters.*" thinking the counters can loop */
+
+
+		/* events */
+
+		if (pComm->waitMask & SERIAL_EV_RXCHAR)
+		{
+			if (nbBytesToBeRead > 0)
+			{
+				/* at least one character is pending to be read */
+				*pOutputMask |= SERIAL_EV_RXCHAR;
+			}
+		}
+		
+		if (pComm->waitMask & SERIAL_EV_RXFLAG)
+		{
+			if (pComm->pendingEvents & SERIAL_EV_RXFLAG) // TMP: to be done in the ReadThread
+			{
+				/* the event character was received FIXME: is the character supposed to be still in the input buffer? */
+				
+				/* event consumption */
+				pComm->pendingEvents &= ~SERIAL_EV_RXFLAG;
+				*pOutputMask |= SERIAL_EV_RXFLAG;
+			}
+		}
+
+		if (pComm->waitMask & SERIAL_EV_TXEMPTY)
+		{
+			if (nbBytesToBeWritten == 0)
+			{
+				/* NB: as of today CommWriteFile still blocks and uses the same thread than CommDeviceIoControl, 
+				 *  it should be enough to just check nbBytesToBeWritten 
+				 */
+
+				/* the output buffer is empty */
+				*pOutputMask |= SERIAL_EV_TXEMPTY; 
+			}
+		}
+
+		if (pComm->waitMask & SERIAL_EV_CTS)
+		{
+			tiocmiwaitMask |= TIOCM_CTS;
+		}
+
+		if (pComm->waitMask & SERIAL_EV_DSR)
+		{
+			tiocmiwaitMask |= TIOCM_DSR;
+		}
+
+		if (pComm->waitMask & SERIAL_EV_RLSD)
+		{
+			tiocmiwaitMask |= TIOCM_CD;
+		}
+
+		if (pComm->waitMask & SERIAL_EV_BREAK)
+		{
+			if (currentCounters.brk != pComm->counters.brk)
+			{
+				*pOutputMask |= SERIAL_EV_BREAK;
+
+				/* event consumption */
+				pComm->counters.brk = currentCounters.brk;
+			}
+		}
+			 
+		if (pComm->waitMask & SERIAL_EV_ERR)
+		{
+			if ((currentCounters.frame != pComm->counters.frame) ||
+			    (currentCounters.overrun != pComm->counters.overrun) ||
+			    (currentCounters.parity != pComm->counters.parity))
+			{
+				*pOutputMask |= SERIAL_EV_ERR;
+
+				/* event consumption */
+				pComm->counters.frame = currentCounters.frame;
+				pComm->counters.overrun = currentCounters.overrun;
+				pComm->counters.parity = currentCounters.parity;
+			}
+		}
+
+		if (pComm->waitMask & SERIAL_EV_RING)
+		{
+			tiocmiwaitMask |= TIOCM_RNG;
+		}
+
+		if (pComm->waitMask & SERIAL_EV_RX80FULL)
+		{
+			if (nbBytesToBeRead > (0.8 * N_TTY_BUF_SIZE))
+				*pOutputMask |= SERIAL_EV_RX80FULL;
+		}
+
+		if ((*pOutputMask == 0) && /* don't need to wait more if at least an event already occured */
+		    (tiocmiwaitMask > 0))
+		{
+			if ((pComm->waitMask & SERIAL_EV_CTS) && currentCounters.cts != pComm->counters.cts)
+			{
+				*pOutputMask |= SERIAL_EV_CTS;
+
+				/* event consumption */
+				pComm->counters.cts = currentCounters.cts;
+			}
+
+			if ((pComm->waitMask & SERIAL_EV_DSR) && currentCounters.dsr != pComm->counters.dsr)
+			{
+				*pOutputMask |= SERIAL_EV_DSR;
+
+				/* event consumption */
+				pComm->counters.dsr = currentCounters.dsr;
+			}
+
+			if ((pComm->waitMask & SERIAL_EV_RLSD) && currentCounters.dcd != pComm->counters.dcd)
+			{
+				*pOutputMask |= SERIAL_EV_RLSD;
+
+				/* event consumption */
+				pComm->counters.dcd = currentCounters.dcd;
+			}
+
+			if ((pComm->waitMask & SERIAL_EV_RING) && currentCounters.rng != pComm->counters.rng)
+			{
+				*pOutputMask |= SERIAL_EV_RING;
+
+				/* event consumption */
+				pComm->counters.rng = currentCounters.rng;
+			}
+
+
+			/* FIXME: TIOCMIWAIT could be possible if _wait_on_mask gets its own thread */
+			/* if (*pOutputMask == 0) */
+			/* { */
+			/* 	if (ioctl(pComm->fd, TIOCMIWAIT, &tiocmiwaitMask) < 0) */
+			/* 	{ */
+			/* 		DEBUG_WARN("TIOCMIWAIT ioctl failed, errno=[%d] %s", errno, strerror(errno)); */
+			/* 		SetLastError(ERROR_IO_DEVICE); */
+			/* 		return FALSE; */
+			/* 	} */
+			/* 	/\* TODO: check counters again after TIOCMIWAIT *\/ */
+			/* } */
+		}
+
+		if (*pOutputMask != 0)
+		{
+			/* at least an event occurred */
+			return TRUE;
+		}
+	}
+
+	DEBUG_WARN("_wait_on_mask pending on events:0X%0.4X", pComm->waitMask);
+	SetLastError(ERROR_IO_PENDING); /* see: WaitCommEvent's help */
+	return FALSE;
+}
+
 
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
@@ -993,6 +1266,9 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.set_rts          = _set_rts,
 	.clear_rts        = _clear_rts,
 	.get_modemstatus  = _get_modemstatus,
+	.set_wait_mask    = _set_wait_mask,
+	.get_wait_mask    = _get_wait_mask,
+	.wait_on_mask     = _wait_on_mask,
 };
 
 

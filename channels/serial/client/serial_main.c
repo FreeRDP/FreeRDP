@@ -364,7 +364,7 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 	Stream_Read(irp->input, InputBuffer, InputBufferLength);
 
-	DEBUG_SVC("CommDeviceIoControl: IoControlCode 0x%x", IoControlCode);
+	DEBUG_SVC("CommDeviceIoControl: IoControlCode=[0x%x] %s", IoControlCode, _comm_serial_ioctl_name(IoControlCode));
 		
 	/* FIXME: CommDeviceIoControl to be replaced by DeviceIoControl() */
 	if (CommDeviceIoControl(serial->hComm, IoControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, &BytesReturned, NULL))
@@ -373,7 +373,10 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	}
 	else
 	{
-		DEBUG_SVC("CommDeviceIoControl failure: IoControlCode 0x%0.8x last-error: 0x%x", IoControlCode, GetLastError());
+		DEBUG_SVC("CommDeviceIoControl failure: IoControlCode=[0x%0.8x] %s, last-error: 0x%x", 
+			  IoControlCode, _comm_serial_ioctl_name(IoControlCode), GetLastError());
+
+		// TMP: TODO: Status code to be reviewed according: http://msdn.microsoft.com/en-us/library/ff547466%28v=vs.85%29.aspx#generic_status_values_for_serial_device_control_requests
 
 		switch(GetLastError())
 		{
@@ -397,9 +400,14 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 				irp->IoStatus = STATUS_NOT_IMPLEMENTED;
 				break;
 
+			case ERROR_IO_PENDING:
+				irp->IoStatus = STATUS_PENDING;
+				break;
+
 			default:
 				DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
-				irp->IoStatus = STATUS_UNSUCCESSFUL;
+				//irp->IoStatus = STATUS_UNSUCCESSFUL;
+				irp->IoStatus = STATUS_CANCELLED;
 				break;
 		}
 	}
