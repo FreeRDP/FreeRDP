@@ -705,7 +705,7 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	{
 		Stream_Write(s, nego->RoutingToken, nego->RoutingTokenLength);
 		/* Ensure Routing Token is correctly terminated - may already be present in string */
-		if (nego->RoutingToken[nego->RoutingTokenLength-2]==0x0D && nego->RoutingToken[nego->RoutingTokenLength-1]==0x0A)
+		if (nego->RoutingTokenLength>2 && (nego->RoutingToken[nego->RoutingTokenLength-2]==0x0D && nego->RoutingToken[nego->RoutingTokenLength-1]==0x0A))
 		{
 			DEBUG_NEGO("Routing token looks correctly terminated - use verbatim");
 			length +=nego->RoutingTokenLength;
