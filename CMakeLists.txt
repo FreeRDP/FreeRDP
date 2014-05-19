@@ -345,6 +345,12 @@ if(NOT WIN32)
 	list(REMOVE_ITEM CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
 endif()
 
+if(WITH_VALGRIND_MEMCHECK)
+    check_include_files(valgrind/memcheck.h HAVE_VALGRIND_MEMCHECK_H)
+else()
+    unset(HAVE_VALGRIND_MEMCHECK_H CACHE)
+endif()
+
 if(UNIX OR CYGWIN)
 	check_include_files(sys/eventfd.h HAVE_AIO_H)
 	check_include_files(sys/eventfd.h HAVE_EVENTFD_H)

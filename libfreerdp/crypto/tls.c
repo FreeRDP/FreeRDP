@@ -31,6 +31,10 @@
 
 #include <freerdp/crypto/tls.h>
 
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
+
 static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 {
 	CryptoCert cert;
@@ -464,6 +468,10 @@ int tls_read(rdpTls* tls, BYTE* data, int length)
 				break;
 		}
 	}
+
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+	VALGRIND_MAKE_MEM_DEFINED(data, status);
+#endif
 
 	return status;
 }

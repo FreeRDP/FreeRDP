@@ -44,6 +44,10 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	set(CMAKE_COMPILER_IS_CLANG 1)
 endif()
 
+if(NOT WIN32)
+    option(WITH_VALGRIND_MEMCHECK "Compile with valgrind helpers." OFF)
+endif()
+
 if(MSVC)
 	option(WITH_NATIVE_SSPI "Use native SSPI modules" ON)
 	option(WITH_WINMM "Use Windows Multimedia" ON)
