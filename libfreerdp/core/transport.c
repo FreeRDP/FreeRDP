@@ -149,7 +149,7 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 	rdpTsg* tsg;
 
 	tsg = (rdpTsg*) bio->ptr;
-	status = tsg_read(bio->ptr, (BYTE*) buf, size);
+	status = tsg_read(tsg, (BYTE*) buf, size);
 
 	BIO_clear_retry_flags(bio);
 
