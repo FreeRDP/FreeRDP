@@ -524,6 +524,13 @@ static const _SERIAL_IOCTL_NAME _SERIAL_IOCTL_NAMES[] =
  */
 const char* _comm_serial_ioctl_name(ULONG number);
 
+/**
+ * FIXME: got a proper function name and place
+ *
+ * permissive mode is disabled by default.
+ */
+BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive);
+
 void _comm_set_ReadIrpQueue(HANDLE hComm, wMessageQueue* ReadIrpQueue);
 
 

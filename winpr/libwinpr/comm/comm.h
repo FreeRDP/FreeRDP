@@ -46,6 +46,17 @@ struct winpr_comm
 	WINPR_HANDLE_DEF();
 
 	int fd;
+
+	/* permissive mode on errors if TRUE (default is FALSE). 
+	 *
+	 * Since not all features are supported, some devices and applications
+	 * can still be functional on such errors.
+	 *
+	 * TODO: command line switch or getting rid of it.
+	 */
+	BOOL permissive;
+
+
 	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
 
 	wMessageQueue* ReadIrpQueue; /* considered as optional since it is
@@ -55,7 +66,7 @@ struct winpr_comm
 	COMMTIMEOUTS timeouts;
 	
 	struct serial_icounter_struct counters;
-	ULONG waitMask;
+	ULONG waitMask; /* TMP: to be renamed EventMask */
 	ULONG pendingEvents;
 
 	/* NB: CloseHandle() has to free resources */

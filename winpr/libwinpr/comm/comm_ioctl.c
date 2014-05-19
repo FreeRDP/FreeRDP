@@ -72,22 +72,9 @@ const char* _comm_serial_ioctl_name(ULONG number)
 }
 
 
-/**
- * FIXME: to be used through winpr-io's DeviceIoControl
- *
- * Any previous error as returned by GetLastError is cleared.
- *
- * ERRORS:
- *   ERROR_INVALID_HANDLE
- *   ERROR_INVALID_PARAMETER
- *   ERROR_NOT_SUPPORTED lpOverlapped is not supported
- *   ERROR_INSUFFICIENT_BUFFER
- *   ERROR_CALL_NOT_IMPLEMENTED unimplemented ioctl
- */
-BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
-			 LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
+static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
+				 LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
-
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
 	REMOTE_SERIAL_DRIVER* pRemoteSerialDriver = NULL;
 
@@ -151,6 +138,17 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 	switch (dwIoControlCode)
 	{
+		case 0x220034:
+		case 0X1B006C:
+			DEBUG_WARN("Undocumented IoControlCode: 0X%X", dwIoControlCode);
+			*lpBytesReturned = nOutBufferSize; /* an empty OutputBuffer will be returned */
+			SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+			if (pComm->permissive)
+				return FALSE;
+			else
+				return TRUE;
+
+			break;
 		case IOCTL_SERIAL_SET_BAUD_RATE:
 		{
 			if (pRemoteSerialDriver->set_baud_rate)
@@ -467,7 +465,10 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 				}
 
 				if (!pRemoteSerialDriver->wait_on_mask(pComm, pOutputMask))
+				{
+					*lpBytesReturned = sizeof(ULONG); /* TMP: TODO: all lpBytesReturned values to be reviewed on error */
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(ULONG);
 				return TRUE;
@@ -511,13 +512,60 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 	}
 	
-	DEBUG_WARN(_T("unsupported IoControlCode=[Ox%0.8x] %s (remote serial driver: %s)"), 
+	DEBUG_WARN(_T("unsupported IoControlCode=[0x%lX] %s (remote serial driver: %s)"), 
 		   dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), pRemoteSerialDriver->name);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 	
 }
 
+
+/**
+ * FIXME: to be used through winpr-io's DeviceIoControl
+ *
+ * Any previous error as returned by GetLastError is cleared.
+ *
+ * ERRORS:
+ *   ERROR_INVALID_HANDLE
+ *   ERROR_INVALID_PARAMETER
+ *   ERROR_NOT_SUPPORTED lpOverlapped is not supported
+ *   ERROR_INSUFFICIENT_BUFFER
+ *   ERROR_CALL_NOT_IMPLEMENTED unimplemented ioctl
+ */
+BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
+			 LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
+{
+	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
+	BOOL result;
+
+	if (hDevice == INVALID_HANDLE_VALUE)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+                return FALSE;
+        }
+
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	result = _CommDeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize,
+				      lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
+
+	if (pComm->permissive)
+	{
+		if (!result)
+		{
+			DEBUG_WARN("[permissive]: whereas it failed, made to succeed IoControlCode=[0x%lX] %s, last-error: 0x%lX",
+				   dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), GetLastError());
+		}
+
+		return TRUE; /* always! */
+	}
+
+	return result;
+}
 
 int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *termios_p)
 {

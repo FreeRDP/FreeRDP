@@ -1029,7 +1029,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	
 	if (dwDesiredAccess != (GENERIC_READ | GENERIC_WRITE))
 	{
-		DEBUG_WARN("unexpected access to the device: 0x%x", dwDesiredAccess);
+		DEBUG_WARN("unexpected access to the device: 0x%lX", dwDesiredAccess);
 	}
 
 	if (dwShareMode != 0)
@@ -1043,7 +1043,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 	if (lpSecurityAttributes != NULL)
 	{
-		DEBUG_WARN("unexpected security attributes: 0x%x", lpSecurityAttributes);
+		DEBUG_WARN("unexpected security attributes, nLength=%lu", lpSecurityAttributes->nLength);
 	}
 
 	if (dwCreationDisposition != OPEN_EXISTING)
@@ -1067,14 +1067,14 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 	if (!S_ISCHR(deviceStat.st_mode))
 	{
-		DEBUG_WARN("bad device %d", devicePath);
+		DEBUG_WARN("bad device %s", devicePath);
 		SetLastError(ERROR_BAD_DEVICE);
 		return INVALID_HANDLE_VALUE;
 	}
 
 	if (dwFlagsAndAttributes != 0)
 	{
-		DEBUG_WARN("unexpected flags and attributes: 0x%x", dwFlagsAndAttributes);
+		DEBUG_WARN("unexpected flags and attributes: 0x%lX", dwFlagsAndAttributes);
 	}
 
 	if (hTemplateFile != NULL)
@@ -1146,7 +1146,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	/* upcomingTermios.c_cflag &= ~(CSIZE | PARENB); */
 	/* upcomingTermios.c_cflag |= CS8; */
 
-	/* About missing missing flags recommended by termios(3)
+	/* About missing flags recommended by termios(3):
 	 *
 	 *   IGNBRK and IXON, see: IOCTL_SERIAL_SET_HANDFLOW
 	 *   CSIZE, PARENB and CS8, see: IOCTL_SERIAL_SET_LINE_CONTROL

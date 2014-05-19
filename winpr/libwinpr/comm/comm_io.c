@@ -34,6 +34,27 @@
 
 #include "comm.h"
 
+BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive)
+{
+	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
+
+	if (hDevice == INVALID_HANDLE_VALUE)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+                return FALSE;
+        }
+
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	pComm->permissive = permissive;
+	return TRUE;
+}
+
+
 /* Computes Tmax in deciseconds (m and Tcare in milliseconds) */
 static UCHAR _tmax(DWORD N, ULONG m, ULONG Tc)
 {
@@ -200,10 +221,10 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	if (nbRead < 0)
 	{
-		DEBUG_WARN("CommReadFile failed, ReadIntervalTimeout=%d, ReadTotalTimeoutMultiplier=%d, ReadTotalTimeoutConstant=%d VMIN=%d, VTIME=%d",
+		DEBUG_WARN("CommReadFile failed, ReadIntervalTimeout=%lu, ReadTotalTimeoutMultiplier=%lu, ReadTotalTimeoutConstant=%lu VMIN=%u, VTIME=%u",
 			   pTimeouts->ReadIntervalTimeout, pTimeouts->ReadTotalTimeoutMultiplier, pTimeouts->ReadTotalTimeoutConstant, 
 			   currentTermios.c_cc[VMIN], currentTermios.c_cc[VTIME]);
-		DEBUG_WARN("CommReadFile failed, nNumberOfBytesToRead=%d, errno=[%d] %s", nNumberOfBytesToRead, errno, strerror(errno));
+		DEBUG_WARN("CommReadFile failed, nNumberOfBytesToRead=%lu, errno=[%d] %s", nNumberOfBytesToRead, errno, strerror(errno));
 
 		switch (errno)
 		{
@@ -287,7 +308,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 		if (nbWritten < 0)
 		{
-			DEBUG_WARN("CommWriteFile failed after %d bytes written, errno=[%d] %s\n", *lpNumberOfBytesWritten, errno, strerror(errno));
+			DEBUG_WARN("CommWriteFile failed after %lu bytes written, errno=[%d] %s\n", *lpNumberOfBytesWritten, errno, strerror(errno));
 
 			switch (errno)
 			{

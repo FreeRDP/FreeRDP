@@ -236,13 +236,13 @@ static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 			newSpeed = _SERIAL_SYS_BAUD_TABLE[i][0];
 			if (cfsetspeed(&upcomingTermios, newSpeed) < 0)
 			{
-				DEBUG_WARN("failed to set speed %d (%d)", newSpeed, pBaudRate->BaudRate);
+				DEBUG_WARN("failed to set speed %u (%lu)", newSpeed, pBaudRate->BaudRate);
 				return FALSE;
 			}
 
 			if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 			{
-				DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x0.8x", GetLastError());
+				DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
 				return FALSE;
 			}
 
@@ -250,7 +250,7 @@ static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 		}
 	}
 
-	DEBUG_WARN("could not find a matching speed for the baud rate %d", pBaudRate->BaudRate);
+	DEBUG_WARN("could not find a matching speed for the baud rate %lu", pBaudRate->BaudRate);
 	SetLastError(ERROR_INVALID_DATA);
 	return FALSE;
 }
@@ -352,7 +352,7 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 		result = FALSE; /* but keep on */
 	}
 
-	/* TMP: FIXME: Didn't find anything similar yet on Linux */
+	/* TMP: FIXME: Didn't find anything similar yet on Linux. What about ISIG? */
 	if (pSerialChars->EventChar != '\0')
 	{
 		DEBUG_WARN("EventChar='%c' (0x%x) cannot be set\n", pSerialChars->EventChar, pSerialChars->EventChar);
@@ -367,7 +367,7 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 
 	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
-		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x0.8x", GetLastError());
+		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
 		return FALSE;
 	}
 
@@ -512,7 +512,7 @@ static BOOL _set_line_control(WINPR_COMM *pComm, const SERIAL_LINE_CONTROL *pLin
 
 	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
-		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x0.8x", GetLastError());
+		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
 		return FALSE;
 	}
 
@@ -572,15 +572,6 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	BOOL result = TRUE;
 	struct termios upcomingTermios;
 
-	/* logical XOR */
-	if ((!(pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && (pHandflow->FlowReplace & SERIAL_RTS_CONTROL)) ||
-	    ((pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && !(pHandflow->FlowReplace & SERIAL_RTS_CONTROL)))
-	{
-		DEBUG_WARN("SERIAL_DTR_CONTROL cannot be different SERIAL_RTS_CONTROL, HUPCL will be set according SERIAL_RTS_CONTROL.");
-		result = FALSE; /* but keep on */
-	}
-
-
 	ZeroMemory(&upcomingTermios, sizeof(struct termios));
 	if (tcgetattr(pComm->fd, &upcomingTermios) < 0)
 	{
@@ -588,9 +579,18 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 		return FALSE;
 	}
 
-	/* ControlHandShake */
+	/* HUPCL */
 
-	if (pHandflow->ControlHandShake & SERIAL_DTR_CONTROL)
+	/* logical XOR */
+	if ((!(pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && (pHandflow->FlowReplace & SERIAL_RTS_CONTROL)) ||
+	    ((pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && !(pHandflow->FlowReplace & SERIAL_RTS_CONTROL)))
+	{
+		DEBUG_WARN("SERIAL_DTR_CONTROL:%s and SERIAL_RTS_CONTROL:%s cannot be different, HUPCL will be set since it is claimed for one of the both lines.",
+			   (pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) ? "ON" : "OFF",
+			   (pHandflow->FlowReplace & SERIAL_RTS_CONTROL) ? "ON" : "OFF");
+	}
+
+	if ((pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) || (pHandflow->FlowReplace & SERIAL_RTS_CONTROL))
 	{
 		upcomingTermios.c_cflag |= HUPCL;
 	}
@@ -598,8 +598,33 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	{
 		upcomingTermios.c_cflag &= ~HUPCL;
 
-		/* FIXME: is the DTR line also needs to be forced to a disable state? */
+		/* FIXME: is the DTR line also needs to be forced to a disable state according SERIAL_DTR_CONTROL? */
+		/* FIXME: is the RTS line also needs to be forced to a disable state according SERIAL_RTS_CONTROL? */
 	}
+
+
+	/* CRTSCTS */
+
+	/* logical XOR */
+	if ((!(pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) && (pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE)) ||
+	    ((pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) && !(pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE)))
+	{
+		DEBUG_WARN("SERIAL_CTS_HANDSHAKE:%s and SERIAL_RTS_HANDSHAKE:%s cannot be different, CRTSCTS will be set since it is claimed for one of the both lines.",
+			   (pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) ? "ON" : "OFF",
+			   (pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE) ? "ON" : "OFF");
+	}
+
+	if ((pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) || (pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE))
+	{
+		upcomingTermios.c_cflag |= CRTSCTS;
+	}
+	else
+	{
+		upcomingTermios.c_cflag &= ~CRTSCTS;
+	}
+
+
+	/* ControlHandShake */
 
 	if (pHandflow->ControlHandShake & SERIAL_DTR_HANDSHAKE)
 	{
@@ -609,15 +634,6 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 		result = FALSE; /* but keep on */
 	}
 
-
-	if (pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE)
-	{
-		upcomingTermios.c_cflag |= CRTSCTS;
-	}
-	else
-	{
-		upcomingTermios.c_cflag &= ~CRTSCTS;
-	}
 
 	if (pHandflow->ControlHandShake & SERIAL_DSR_HANDSHAKE)
 	{
@@ -673,12 +689,10 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 		upcomingTermios.c_iflag &= ~IXOFF;
 	}
 
-	// TMP: FIXME: could be implemented during read/write I/O
+	// TMP: FIXME: could be implemented during read/write I/O, as of today ErrorChar is necessary '\0'
 	if (pHandflow->FlowReplace & SERIAL_ERROR_CHAR)
 	{
-		DEBUG_WARN("Attempt to use the unsupported SERIAL_ERROR_CHAR feature. A character with a parity error or framing error will be read as \0");
-
-		/* errors will be replaced by the character '\0' */
+		/* errors will be replaced by the character '\0'. */
 		upcomingTermios.c_iflag &= ~IGNPAR;
 	}
 	else
@@ -703,27 +717,6 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 		result = FALSE; /* but keep on */
 	}
 
-	if (pHandflow->FlowReplace & SERIAL_RTS_CONTROL)
-	{
-		upcomingTermios.c_cflag |= HUPCL;
-	}
-	else
-	{
-		upcomingTermios.c_cflag &= ~HUPCL;
-
-		/* FIXME: is the RTS line also needs to be forced to a disable state? */
-	}
-
-	if (pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE)
-	{
-		upcomingTermios.c_cflag |= CRTSCTS;
-	}
-	else
-	{
-		upcomingTermios.c_cflag &= ~CRTSCTS;
-	}
-
-
 	// FIXME: could be implemented during read/write I/O
 	if (pHandflow->FlowReplace & SERIAL_XOFF_CONTINUE)
 	{
@@ -738,7 +731,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	// FIXME: could be implemented during read/write I/O
 	if (pHandflow->XonLimit != TTY_THRESHOLD_UNTHROTTLE)
 	{
-		DEBUG_WARN("Attempt to set XonLimit with an unsupported value: %d", pHandflow->XonLimit);
+		DEBUG_WARN("Attempt to set XonLimit with an unsupported value: %lu", pHandflow->XonLimit);
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */		
 	}
@@ -748,7 +741,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	// FIXME: could be implemented during read/write I/O
 	if (pHandflow->XoffLimit != TTY_THRESHOLD_THROTTLE)
 	{
-		DEBUG_WARN("Attempt to set XoffLimit with an unsupported value: %d", pHandflow->XoffLimit);
+		DEBUG_WARN("Attempt to set XoffLimit with an unsupported value: %lu", pHandflow->XoffLimit);
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */		
 	}
@@ -756,7 +749,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 
 	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
-		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x0.8x", GetLastError());
+		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
 		return FALSE;
 	}
 
@@ -873,7 +866,7 @@ static BOOL _set_lines(WINPR_COMM *pComm, UINT32 lines)
 {
 	if (ioctl(pComm->fd, TIOCMBIS, &lines) < 0)
 	{
-		DEBUG_WARN("TIOCMBIS ioctl failed, lines=0x%0.4X, errno=[%d] %s", lines, errno, strerror(errno));
+		DEBUG_WARN("TIOCMBIS ioctl failed, lines=0x%X, errno=[%d] %s", lines, errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -886,7 +879,7 @@ static BOOL _clear_lines(WINPR_COMM *pComm, UINT32 lines)
 {
 	if (ioctl(pComm->fd, TIOCMBIC, &lines) < 0)
 	{
-		DEBUG_WARN("TIOCMBIC ioctl failed, lines=0x%0.4X, errno=[%d] %s", lines, errno, strerror(errno));
+		DEBUG_WARN("TIOCMBIC ioctl failed, lines=0x%X, errno=[%d] %s", lines, errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -933,32 +926,30 @@ static BOOL _clear_dtr(WINPR_COMM *pComm)
 
 static BOOL _set_rts(WINPR_COMM *pComm)
 {
-	// TMP: really required?
-	/* SERIAL_HANDFLOW handflow; */
-	/* if (!_get_handflow(pComm, &handflow)) */
-	/* 	return FALSE; */
+	SERIAL_HANDFLOW handflow;
+	if (!_get_handflow(pComm, &handflow))
+		return FALSE;
 
-	/* if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE) */
-	/* { */
-	/* 	SetLastError(ERROR_INVALID_PARAMETER); */
-	/* 	return FALSE; */
-	/* } */
+	if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 
 	return _set_lines(pComm, TIOCM_RTS);
 }
 
 static BOOL _clear_rts(WINPR_COMM *pComm)
 {
-	// TMP: really required?
-	/* SERIAL_HANDFLOW handflow; */
-	/* if (!_get_handflow(pComm, &handflow)) */
-	/* 	return FALSE; */
+	SERIAL_HANDFLOW handflow;
+	if (!_get_handflow(pComm, &handflow))
+		return FALSE;
 
-	/* if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE) */
-	/* { */
-	/* 	SetLastError(ERROR_INVALID_PARAMETER); */
-	/* 	return FALSE; */
-	/* } */
+	if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return FALSE;
+	}
 
 	return _clear_lines(pComm, TIOCM_RTS);
 }
@@ -977,8 +968,9 @@ static BOOL _get_modemstatus(WINPR_COMM *pComm, ULONG *pRegister)
 
 	ZeroMemory(pRegister, sizeof(ULONG));
 
-	/* TODO: FIXME: how to get a direct access from the user space
-	 * to the MSR register in order to complete the 4 first bits?
+	/* FIXME: Is the last read of the MSR register available or
+	 * cached somewhere? Not quite sure we need to return the 4
+	 * LSBits anyway.
 	 */
 
 	/* #define SERIAL_MSR_DCTS     0x01 */
@@ -1038,13 +1030,13 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 	// TMP: TODO:
 	// pending wait_on_mask must be stopped with STATUS_SUCCESS
 	// http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
-
+	// and pOutputMask = 0;
 
 	possibleMask = *pWaitMask & _SERIAL_SYS_SUPPORTED_EV_MASK;
 
 	if (possibleMask != *pWaitMask)
 	{
-		DEBUG_WARN("Not all wait events supported (Serial.sys), requested events= 0X%0.4X, possible events= 0X%0.4X", *pWaitMask, possibleMask);
+		DEBUG_WARN("Not all wait events supported (Serial.sys), requested events= 0X%lX, possible events= 0X%lX", *pWaitMask, possibleMask);
 
 		/* FIXME: shall we really set the possibleMask and return FALSE? */
 		pComm->waitMask = possibleMask;
@@ -1067,7 +1059,7 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 {
 	assert(*pOutputMask == 0);
 
-	// TMP: TODO:
+	// TMP: TODO: be sure to get a dedicated thread
 	/* while (TRUE) */
 	{
 		int nbBytesToBeRead = 0;
@@ -1097,7 +1089,7 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 			return FALSE;
 		}
 
-		/* NB: preferred below "currentCounters.* != pComm->counters.*" over "currentCounters.* > pComm->counters.*" thinking the counters can loop */
+		/* NB: preferred below (currentCounters.* != pComm->counters.*) over (currentCounters.* > pComm->counters.*) thinking the counters can loop */
 
 
 		/* events */
@@ -1224,8 +1216,9 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 			}
 
 
-			/* FIXME: TIOCMIWAIT could be possible if _wait_on_mask gets its own thread */
-			/* if (*pOutputMask == 0) */
+			// TMP: TIOCMIWAIT could be possible if _wait_on_mask gets its own thread 
+			/* if ((*pOutputMask == 0) && /\* don't bother at least one of the events event already occured *\/ */
+			/*     ((pComm->waitMask & ~(SERIAL_EV_CTS | SERIAL_EV_DSR | SERIAL_EV_RLSD | SERIAL_EV_RING)) == 0)) /\* only events handled by TIOCMIWAIT, otherwise go through the regular loop *\/ */
 			/* { */
 			/* 	if (ioctl(pComm->fd, TIOCMIWAIT, &tiocmiwaitMask) < 0) */
 			/* 	{ */
@@ -1233,7 +1226,9 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 			/* 		SetLastError(ERROR_IO_DEVICE); */
 			/* 		return FALSE; */
 			/* 	} */
-			/* 	/\* TODO: check counters again after TIOCMIWAIT *\/ */
+				
+			/* 	/\* check counters again after TIOCMIWAIT *\/ */
+			/* 	continue; */
 			/* } */
 		}
 
@@ -1243,13 +1238,14 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 			return TRUE;
 		}
 
-		/* // TMP: */
-		/* DEBUG_WARN("waiting on events:0X%0.4X", pComm->waitMask); */
+		/* /\* // TMP: *\/ */
+		/* DEBUG_WARN("waiting on events:0X%lX", pComm->waitMask); */
+
 		/* sleep(1); */
 		
 	}
 
-	DEBUG_WARN("_wait_on_mask pending on events:0X%0.4X", pComm->waitMask);
+	DEBUG_WARN("_wait_on_mask pending on events:0X%lX", pComm->waitMask);
 	SetLastError(ERROR_IO_PENDING); /* see: WaitCommEvent's help */
 	return FALSE;
 }
@@ -1275,10 +1271,10 @@ static BOOL _set_queue_size(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSi
 	/* FIXME: could be implemented on top of N_TTY */
 
 	if (pQueueSize->InSize > N_TTY_BUF_SIZE)
-		DEBUG_WARN("Requested an incompatible input buffer size: %d", pQueueSize->InSize);
+		DEBUG_WARN("Requested an incompatible input buffer size: %lu", pQueueSize->InSize);
 
 	if (pQueueSize->OutSize > N_TTY_BUF_SIZE)
-		DEBUG_WARN("Requested an incompatible output buffer size: %d", pQueueSize->OutSize);
+		DEBUG_WARN("Requested an incompatible output buffer size: %lu", pQueueSize->OutSize);
 
 	SetLastError(ERROR_CANCELLED);
 	return FALSE;
@@ -1289,7 +1285,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 {
 	if ((*pPurgeMask & ~(SERIAL_PURGE_TXABORT | SERIAL_PURGE_RXABORT | SERIAL_PURGE_TXCLEAR | SERIAL_PURGE_RXCLEAR)) > 0)
 	{
-		DEBUG_WARN("Invalid purge mask: 0x%X\n", *pPurgeMask);
+		DEBUG_WARN("Invalid purge mask: 0x%lX\n", *pPurgeMask);
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
@@ -1313,9 +1309,10 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 		}
 
 		/* TMP: TODO: double check if this gives well a change to abort a pending CommReadFile */
-		fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) | O_NONBLOCK);
-		sleep(1);
-		fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) & ~O_NONBLOCK);
+		//assert(0);
+		/* fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) | O_NONBLOCK); */
+		/* sleep(1); */
+		/* fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) & ~O_NONBLOCK); */
 
 		/* TMP: FIXME: synchronization of the incoming
 		 * IRP_MJ_READ-s. Could be possible to make them to

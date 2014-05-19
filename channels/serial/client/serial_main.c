@@ -125,11 +125,17 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 
 	if (!serial->hComm || (serial->hComm == INVALID_HANDLE_VALUE))
 	{
-		DEBUG_WARN("CreateFile failure: %s last-error: Ox%x\n", serial->device.name, GetLastError());
+		DEBUG_WARN("CreateFile failure: %s last-error: Ox%lX\n", serial->device.name, GetLastError());
 
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		goto error_handle;
 	}
+
+	/* FIXME: Appeared to be useful to setup some devices. Guess
+	 * the device driver asked to setup some unsupported feature
+	 * that were not eventually used. TODO: collecting more
+	 * details, a command line argument? */
+	/* _comm_set_permissive(serial->hComm, TRUE); */
 
 	/* FIXME: this stinks, see also IOCTL_SERIAL_PURGE */
 	_comm_set_ReadIrpQueue(serial->hComm, serial->ReadIrpQueue);
@@ -208,7 +214,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	}
 
 	
-	/* MSRDPESP 3.2.5.1.4: If the Offset field is not set to 0, the value MUST be ignored
+	/* MS-RDPESP 3.2.5.1.4: If the Offset field is not set to 0, the value MUST be ignored
 	 * assert(Offset == 0);
 	 */
 	
@@ -257,6 +263,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 		}
 	}
 
+	DEBUG_SVC("%lu bytes read from %s", nbRead, serial->device.name);
 	
   error_handle:
 
@@ -284,7 +291,12 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	Stream_Read_UINT64(irp->input, Offset); /* Offset (8 bytes) */
 	Stream_Seek(irp->input, 20); /* Padding (20 bytes) */
 
-	assert(Offset == 0); /* not implemented otherwise */
+	/* MS-RDPESP 3.2.5.1.5: The Offset field is ignored
+	 * assert(Offset == 0);
+	 *
+	 * Using a serial printer, noticed though this field could be
+	 * set.
+	 */
 
 	DEBUG_SVC("writing %lu bytes to %s", Length, serial->device.name);
 
@@ -296,7 +308,6 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	else
 	{
 		DEBUG_SVC("write failure to %s, nbWritten=%d, last-error: 0x%0.8x", serial->device.name, nbWritten, GetLastError());
-
 		switch(GetLastError())
 		{
 			case ERROR_INVALID_HANDLE:
@@ -337,6 +348,7 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	irp->Complete(irp);
 }
 
+
 static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 {
 	UINT32 IoControlCode;
@@ -367,7 +379,7 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 	Stream_Read(irp->input, InputBuffer, InputBufferLength);
 
-	DEBUG_SVC("CommDeviceIoControl: IoControlCode=[0x%x] %s", IoControlCode, _comm_serial_ioctl_name(IoControlCode));
+	DEBUG_SVC("CommDeviceIoControl: CompletionId=%d, IoControlCode=[0x%x] %s", irp->CompletionId, IoControlCode, _comm_serial_ioctl_name(IoControlCode));
 		
 	/* FIXME: CommDeviceIoControl to be replaced by DeviceIoControl() */
 	if (CommDeviceIoControl(serial->hComm, IoControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, &BytesReturned, NULL))
@@ -423,6 +435,8 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	}
 
   error_handle:
+
+	assert(OutputBufferLength == BytesReturned);
 
 	Stream_Write_UINT32(irp->output, BytesReturned); /* OutputBufferLength (4 bytes) */
 
@@ -540,6 +554,7 @@ static void* serial_thread_func(void* arg)
 	ExitThread(0);
 	return NULL;
 }
+
 
 static void serial_irp_request(DEVICE* device, IRP* irp)
 {
