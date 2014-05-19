@@ -552,11 +552,14 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			if (!http_response_parse_header(http_response))
 				goto out_error;
 
-			if (http_response->ContentLength > 0)
+			http_response->bodyLen = nbytes - (content - (char *)buffer);
+			if (http_response->bodyLen > 0)
 			{
-				http_response->Content = _strdup(content);
-				if (!http_response->Content)
+				http_response->BodyContent = malloc(http_response->bodyLen);
+				if (!http_response->BodyContent)
 					goto out_error;
+
+				CopyMemory(http_response->BodyContent, content, http_response->bodyLen);
 			}
 
 			break;
@@ -571,7 +574,6 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	}
 
 	free(buffer);
-
 	return http_response;
 
 out_error:
@@ -627,7 +629,7 @@ void http_response_free(HttpResponse* http_response)
 	ListDictionary_Free(http_response->Authenticates);
 
 	if (http_response->ContentLength > 0)
-		free(http_response->Content);
+		free(http_response->BodyContent);
 
 	free(http_response);
 }
