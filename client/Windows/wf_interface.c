@@ -65,6 +65,8 @@ int wf_create_console(void)
 		return 1;
 
 	freopen("CONOUT$", "w", stdout);
+	freopen("CONOUT$", "w", stderr);
+
 	fprintf(stderr, "Debug console created.\n");
 
 	return 0;
