@@ -144,6 +144,6 @@ FREERDP_API void crypto_reverse(BYTE* data, int length);
 FREERDP_API void crypto_nonce(BYTE* nonce, int size);
 
 FREERDP_API char* crypto_base64_encode(const BYTE* data, int length);
-FREERDP_API void crypto_base64_decode(const BYTE* enc_data, int length, BYTE** dec_data, int* res_length);
+FREERDP_API void crypto_base64_decode(const char* enc_data, int length, BYTE** dec_data, int* res_length);
 
 #endif /* FREERDP_CRYPTO_H */
