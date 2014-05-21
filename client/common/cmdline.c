@@ -297,7 +297,6 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count < 3)
 			return -1;
 
-		settings->RedirectDrives = TRUE;
 		settings->DeviceRedirection = TRUE;
 
 		drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
