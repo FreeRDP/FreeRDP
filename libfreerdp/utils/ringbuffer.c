@@ -135,6 +135,9 @@ static BOOL ringbuffer_realloc(RingBuffer *rb, size_t targetSize)
  */
 BOOL ringbuffer_write(RingBuffer *rb, const void *ptr, size_t sz)
 {
+	size_t toWrite;
+	size_t remaining;
+
 	if ((rb->freeSize <= sz) && !ringbuffer_realloc(rb, rb->size + sz))
 		return FALSE;
 
@@ -144,8 +147,8 @@ BOOL ringbuffer_write(RingBuffer *rb, const void *ptr, size_t sz)
 	 *      v               v
 	 * [    ################        ]
 	 */
-	size_t toWrite = sz;
-	size_t remaining = sz;
+	toWrite = sz;
+	remaining = sz;
 	if (rb->size - rb->writePtr < sz)
 		toWrite = rb->size - rb->writePtr;
 
