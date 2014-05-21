@@ -290,7 +290,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	transport->frontBio = targetTls->bio;
 	if (!transport->frontBio)
 	{
-		fprintf(stderr, "%s: unable to prepend a filtering TLS bio");
+		fprintf(stderr, "%s: unable to prepend a filtering TLS bio", __FUNCTION__);
 		return FALSE;
 	}
 
