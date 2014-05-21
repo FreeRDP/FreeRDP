@@ -1663,7 +1663,12 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 	local_time = localtime(&t);
 
 #ifdef HAVE_TM_GMTOFF
-    clientTimeZone->bias = timezone / 60;
+	#if defined(__FreeBSD__)
+		/*not the best solution, but could not get the right tyepcast*/
+		clientTimeZone->bias = 0;
+	#else
+		clientTimeZone->bias = timezone / 60;
+	#endif
 	DEBUG_TIMEZONE("tzname[std]: %s, tzname[dst]: %s, timezone: %ld, Daylight: %d", tzname[0], tzname[1], timezone, daylight);
 #elif defined(sun)
 	if (local_time->tm_isdst > 0)
