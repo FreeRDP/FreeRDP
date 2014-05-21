@@ -69,6 +69,7 @@ static BOOL ringbuffer_realloc(RingBuffer *rb, size_t targetSize)
 		if (!newData)
 			return FALSE;
 		rb->readPtr = rb->writePtr = 0;
+		rb->buffer = newData;
 	}
 	else if ((rb->writePtr >= rb->readPtr) && (rb->writePtr < targetSize))
 	{
@@ -118,6 +119,7 @@ static BOOL ringbuffer_realloc(RingBuffer *rb, size_t targetSize)
 		}
 		rb->writePtr = rb->size - rb->freeSize;
 		rb->readPtr = 0;
+		free(rb->buffer);
 		rb->buffer = newData;
 	}
 

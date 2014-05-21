@@ -75,6 +75,7 @@ BOOL test_overlaps(void)
 	if (ringbuffer_capacity(&rb) != 5)
 		goto error;
 
+	ringbuffer_destroy(&rb);
 	return TRUE;
 error:
 	ringbuffer_destroy(&rb);
@@ -220,6 +221,9 @@ int TestRingBuffer(int argc, char* argv[])
 		return -1;
 	}
 	fprintf(stderr, "ok\n");
+
+	ringbuffer_destroy(&ringBuffer);
+	free(tmpBuf);
 	return 0;
 }
 
