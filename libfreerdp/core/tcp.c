@@ -85,7 +85,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	/* we directly append extra bytes in the xmit buffer, this could be prevented
 	 * but for now it makes the code more simple.
 	 */
-	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, buf, num))
+	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE *)buf, num))
 	{
 		fprintf(stderr, "%s: an error occured when writing(toWrite=%d)\n", __FUNCTION__, num);
 		return -1;
