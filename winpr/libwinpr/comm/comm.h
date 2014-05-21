@@ -57,6 +57,7 @@ struct winpr_comm
 	BOOL permissive;
 
 
+	// TMP: to be renamed serverSerialDriverId
 	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
 
 	wMessageQueue* ReadIrpQueue; /* considered as optional since it is
