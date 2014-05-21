@@ -772,8 +772,8 @@ UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad);
 
 int rpc_out_read(rdpRpc* rpc, BYTE* data, int length);
 
-int rpc_out_write(rdpRpc* rpc, BYTE* data, int length);
-int rpc_in_write(rdpRpc* rpc, BYTE* data, int length);
+int rpc_out_write(rdpRpc* rpc, const BYTE* data, int length);
+int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length);
 
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length);
 

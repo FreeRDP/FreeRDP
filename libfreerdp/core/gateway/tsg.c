@@ -33,8 +33,8 @@
 #include <winpr/stream.h>
 
 #include "rpc_client.h"
-
 #include "tsg.h"
+
 
 /**
  * RPC Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa378623/
@@ -96,7 +96,9 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	}
 
 	length = 28 + totalDataBytes;
-	buffer = (BYTE*) malloc(length);
+	buffer = (BYTE*) calloc(1, length);
+	if (!buffer)
+		return -1;
 
 	s = Stream_New(buffer, length);
 
@@ -228,8 +230,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
 		buffer = &buffer[24];
 
-	packet = (PTSG_PACKET) malloc(sizeof(TSG_PACKET));
-	ZeroMemory(packet, sizeof(TSG_PACKET));
+	packet = (PTSG_PACKET) calloc(1, sizeof(TSG_PACKET));
+	if (!packet)
+		return FALSE;
 
 	offset = 4; // Skip Packet Pointer
 	packet->packetId = *((UINT32*) &buffer[offset]); /* PacketId */
@@ -237,8 +240,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if ((packet->packetId == TSG_PACKET_TYPE_CAPS_RESPONSE) && (SwitchValue == TSG_PACKET_TYPE_CAPS_RESPONSE))
 	{
-		packetCapsResponse = (PTSG_PACKET_CAPS_RESPONSE) malloc(sizeof(TSG_PACKET_CAPS_RESPONSE));
-		ZeroMemory(packetCapsResponse, sizeof(TSG_PACKET_CAPS_RESPONSE));
+		packetCapsResponse = (PTSG_PACKET_CAPS_RESPONSE) calloc(1, sizeof(TSG_PACKET_CAPS_RESPONSE));
+		if (!packetCapsResponse) // TODO: correct cleanup
+			return FALSE;
 		packet->tsgPacket.packetCapsResponse = packetCapsResponse;
 
 		/* PacketQuarResponsePtr (4 bytes) */
@@ -258,8 +262,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			IsMessagePresent = *((UINT32*) &buffer[offset]);
 			offset += 4;
 			MessageSwitchValue = *((UINT32*) &buffer[offset]);
-			DEBUG_TSG("IsMessagePresent %d MessageSwitchValue %d",
-					IsMessagePresent, MessageSwitchValue);
+			DEBUG_TSG("IsMessagePresent %d MessageSwitchValue %d", IsMessagePresent, MessageSwitchValue);
 			offset += 4;
 		}
 
@@ -289,8 +292,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			offset += 4;
 		}
 
-		versionCaps = (PTSG_PACKET_VERSIONCAPS) malloc(sizeof(TSG_PACKET_VERSIONCAPS));
-		ZeroMemory(versionCaps, sizeof(TSG_PACKET_VERSIONCAPS));
+		versionCaps = (PTSG_PACKET_VERSIONCAPS) calloc(1, sizeof(TSG_PACKET_VERSIONCAPS));
+		if (!versionCaps) // TODO: correct cleanup
+			return FALSE;
 		packetCapsResponse->pktQuarEncResponse.versionCaps = versionCaps;
 
 		versionCaps->tsgHeader.ComponentId = *((UINT16*) &buffer[offset]); /* ComponentId */
@@ -317,8 +321,10 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		/* 4-byte alignment */
 		rpc_offset_align(&offset, 4);
 
-		tsgCaps = (PTSG_PACKET_CAPABILITIES) malloc(sizeof(TSG_PACKET_CAPABILITIES));
-		ZeroMemory(tsgCaps, sizeof(TSG_PACKET_CAPABILITIES));
+		tsgCaps = (PTSG_PACKET_CAPABILITIES) calloc(1, sizeof(TSG_PACKET_CAPABILITIES));
+		if (!tsgCaps)
+			return FALSE;
+
 		versionCaps->tsgCaps = tsgCaps;
 
 		offset += 4; /* MaxCount (4 bytes) */
@@ -406,8 +412,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	}
 	else if ((packet->packetId == TSG_PACKET_TYPE_QUARENC_RESPONSE) && (SwitchValue == TSG_PACKET_TYPE_QUARENC_RESPONSE))
 	{
-		packetQuarEncResponse = (PTSG_PACKET_QUARENC_RESPONSE) malloc(sizeof(TSG_PACKET_QUARENC_RESPONSE));
-		ZeroMemory(packetQuarEncResponse, sizeof(TSG_PACKET_QUARENC_RESPONSE));
+		packetQuarEncResponse = (PTSG_PACKET_QUARENC_RESPONSE) calloc(1, sizeof(TSG_PACKET_QUARENC_RESPONSE));
+		if (!packetQuarEncResponse) // TODO: handle cleanup
+			return FALSE;
 		packet->tsgPacket.packetQuarEncResponse = packetQuarEncResponse;
 
 		/* PacketQuarResponsePtr (4 bytes) */
@@ -443,8 +450,9 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			offset += 4;
 		}
 
-		versionCaps = (PTSG_PACKET_VERSIONCAPS) malloc(sizeof(TSG_PACKET_VERSIONCAPS));
-		ZeroMemory(versionCaps, sizeof(TSG_PACKET_VERSIONCAPS));
+		versionCaps = (PTSG_PACKET_VERSIONCAPS) calloc(1, sizeof(TSG_PACKET_VERSIONCAPS));
+		if (!versionCaps) // TODO: handle cleanup
+			return FALSE;
 		packetQuarEncResponse->versionCaps = versionCaps;
 
 		versionCaps->tsgHeader.ComponentId = *((UINT16*) &buffer[offset]); /* ComponentId */
@@ -779,8 +787,9 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	if (!(pdu->Flags & RPC_PDU_FLAG_STUB))
 		buffer = &buffer[24];
 
-	packet = (PTSG_PACKET) malloc(sizeof(TSG_PACKET));
-	ZeroMemory(packet, sizeof(TSG_PACKET));
+	packet = (PTSG_PACKET) calloc(1, sizeof(TSG_PACKET));
+	if (!packet)
+		return FALSE;
 
 	offset = 4;
 	packet->packetId = *((UINT32*) &buffer[offset]); /* PacketId */
@@ -923,6 +932,8 @@ BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERI
 	length = 60 + (count * 2);
 
 	buffer = (BYTE*) malloc(length);
+	if (!buffer)
+		return FALSE;
 
 	/* TunnelContext */
 	handle = (CONTEXT_HANDLE*) tunnelContext;
@@ -1526,48 +1537,53 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 		return CopyLength;
 	}
-	else
+
+
+	tsg->pdu = rpc_recv_peek_pdu(rpc);
+	if (!tsg->pdu)
 	{
-		tsg->pdu = rpc_recv_peek_pdu(rpc);
+		if (!tsg->rpc->client->SynchronousReceive)
+			return 0;
 
-		if (!tsg->pdu)
-		{
-			if (tsg->rpc->client->SynchronousReceive)
-				return tsg_read(tsg, data, length);
-			else
-				return 0;
-		}
-
-		tsg->PendingPdu = TRUE;
-		tsg->BytesAvailable = Stream_Length(tsg->pdu->s);
-		tsg->BytesRead = 0;
-
-		CopyLength = (length < tsg->BytesAvailable) ? length : tsg->BytesAvailable;
-
-		CopyMemory(data, &tsg->pdu->s->buffer[tsg->BytesRead], CopyLength);
-		tsg->BytesAvailable -= CopyLength;
-		tsg->BytesRead += CopyLength;
-
-		if (tsg->BytesAvailable < 1)
-		{
-			tsg->PendingPdu = FALSE;
-			rpc_recv_dequeue_pdu(rpc);
-			rpc_client_receive_pool_return(rpc, tsg->pdu);
-		}
-
-		return CopyLength;
+		// weird !!!!
+		return tsg_read(tsg, data, length);
 	}
+
+	tsg->PendingPdu = TRUE;
+	tsg->BytesAvailable = Stream_Length(tsg->pdu->s);
+	tsg->BytesRead = 0;
+
+	CopyLength = (length < tsg->BytesAvailable) ? length : tsg->BytesAvailable;
+
+	CopyMemory(data, &tsg->pdu->s->buffer[tsg->BytesRead], CopyLength);
+	tsg->BytesAvailable -= CopyLength;
+	tsg->BytesRead += CopyLength;
+
+	if (tsg->BytesAvailable < 1)
+	{
+		tsg->PendingPdu = FALSE;
+		rpc_recv_dequeue_pdu(rpc);
+		rpc_client_receive_pool_return(rpc, tsg->pdu);
+	}
+
+	return CopyLength;
+
 }
 
 int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
+	int status;
+
 	if (tsg->rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
 	{
-		fprintf(stderr, "tsg_write error: connection lost\n");
+		fprintf(stderr, "%s: error, connection lost\n", __FUNCTION__);
 		return -1;
 	}
 
-	return TsProxySendToServer((handle_t) tsg, data, 1, &length);
+	status = TsProxySendToServer((handle_t) tsg, data, 1, &length);
+	if (status < 0)
+		return -1;
+	return length;
 }
 
 BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking)
@@ -1584,18 +1600,21 @@ rdpTsg* tsg_new(rdpTransport* transport)
 {
 	rdpTsg* tsg;
 
-	tsg = (rdpTsg*) malloc(sizeof(rdpTsg));
-	ZeroMemory(tsg, sizeof(rdpTsg));
+	tsg = (rdpTsg*) calloc(1, sizeof(rdpTsg));
+	if (!tsg)
+		return NULL;
 
-	if (tsg != NULL)
-	{
-		tsg->transport = transport;
-		tsg->settings = transport->settings;
-		tsg->rpc = rpc_new(tsg->transport);
-		tsg->PendingPdu = FALSE;
-	}
-
+	tsg->transport = transport;
+	tsg->settings = transport->settings;
+	tsg->rpc = rpc_new(tsg->transport);
+	if (!tsg->rpc)
+		goto out_free;
+	tsg->PendingPdu = FALSE;
 	return tsg;
+
+out_free:
+	free(tsg);
+	return NULL;
 }
 
 void tsg_free(rdpTsg* tsg)
