@@ -297,7 +297,6 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count < 3)
 			return -1;
 
-		settings->RedirectDrives = TRUE;
 		settings->DeviceRedirection = TRUE;
 
 		drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
@@ -1772,8 +1771,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			BYTE *base64;
 			int length;
-			crypto_base64_decode((BYTE *) (arg->Value),
-				(int) strlen(arg->Value), &base64, &length);
+			crypto_base64_decode((const char *) (arg->Value), (int) strlen(arg->Value),
+								&base64, &length);
 			if ((base64 != NULL) && (length == sizeof(ARC_SC_PRIVATE_PACKET)))
 			{
 				memcpy(settings->ServerAutoReconnectCookie, base64, length);

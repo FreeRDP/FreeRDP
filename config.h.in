@@ -25,6 +25,7 @@
 #cmakedefine HAVE_TM_GMTOFF
 #cmakedefine HAVE_AIO_H
 #cmakedefine HAVE_PTHREAD_GNU_EXT
+#cmakedefine HAVE_VALGRIND_MEMCHECK_H
 
 
 /* Options */

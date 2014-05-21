@@ -106,7 +106,7 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
 			goto out;
 
 		ntlm_token_data = NULL;
-		crypto_base64_decode((BYTE*) token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
+		crypto_base64_decode(token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
 	}
 
 	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
@@ -238,7 +238,7 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 	if (http_response && ListDictionary_Contains(http_response->Authenticates, "NTLM"))
 	{
 		char *token64 = ListDictionary_GetItemValue(http_response->Authenticates, "NTLM");
-		crypto_base64_decode((BYTE*) token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
+		crypto_base64_decode(token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
 	}
 
 	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;

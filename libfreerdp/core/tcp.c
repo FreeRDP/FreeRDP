@@ -40,6 +40,12 @@
 #include <netinet/tcp.h>
 #include <net/if.h>
 
+#ifdef __FreeBSD__
+#ifndef SOL_TCP
+#define SOL_TCP	IPPROTO_TCP
+#endif
+#endif
+
 #ifdef __APPLE__
 #ifndef SOL_TCP
 #define SOL_TCP	IPPROTO_TCP
