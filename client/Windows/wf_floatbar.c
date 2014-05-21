@@ -192,9 +192,6 @@ static int floatbar_paint(FloatBar* floatbar, HDC hdc)
 {
 	int i;
 
-	if (!floatbar->wfc->fullscreen)
-		return -1;
-
 	/* paint background */
 	SelectObject(floatbar->hdcmem, floatbar->background);
 	StretchBlt(hdc, 0, 0, BACKGROUND_W, BACKGROUND_H, floatbar->hdcmem, 0, 0, BACKGROUND_W, BACKGROUND_H, SRCCOPY);
@@ -421,12 +418,14 @@ static FloatBar* floatbar_create(wfContext* wfc)
 
 int floatbar_hide(FloatBar* floatbar)
 {
+	KillTimer(floatbar->hwnd, TIMER_HIDE);
 	MoveWindow(floatbar->hwnd, floatbar->rect.left, -floatbar->height, floatbar->width, floatbar->height, TRUE);
 	return 0;
 }
 
 int floatbar_show(FloatBar* floatbar)
 {
+	SetTimer(floatbar->hwnd, TIMER_HIDE, 3000, NULL);
 	MoveWindow(floatbar->hwnd, floatbar->rect.left, floatbar->rect.top, floatbar->width, floatbar->height, TRUE);
 	return 0;
 }
