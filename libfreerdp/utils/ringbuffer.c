@@ -131,7 +131,7 @@ static BOOL ringbuffer_realloc(RingBuffer *rb, size_t targetSize)
  * @param sz
  * @return
  */
-BOOL ringbuffer_write(RingBuffer *rb, const void *ptr, size_t sz)
+BOOL ringbuffer_write(RingBuffer *rb, const BYTE *ptr, size_t sz)
 {
 	size_t toWrite;
 	size_t remaining;

@@ -76,7 +76,7 @@ size_t ringbuffer_capacity(const RingBuffer *ringbuffer);
  * @param sz the size of the data to add
  * @return if the operation was successful, it could fail in case of OOM during realloc()
  */
-BOOL ringbuffer_write(RingBuffer *rb, const void *ptr, size_t sz);
+BOOL ringbuffer_write(RingBuffer *rb, const BYTE *ptr, size_t sz);
 
 
 /** ensures that we have sz bytes available at the write head, and return a pointer
