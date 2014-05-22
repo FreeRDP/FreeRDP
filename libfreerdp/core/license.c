@@ -241,7 +241,7 @@ int license_recv(rdpLicense* license, wStream* s)
 
 	if (!rdp_read_header(license->rdp, s, &length, &channelId))
 	{
-		fprintf(stderr, "Incorrect RDP header.\n");
+		fprintf(stderr, "%s: Incorrect RDP header.\n", __FUNCTION__);
 		return -1;
 	}
 
@@ -252,7 +252,7 @@ int license_recv(rdpLicense* license, wStream* s)
 	{
 		if (!rdp_decrypt(license->rdp, s, length - 4, securityFlags))
 		{
-			fprintf(stderr, "rdp_decrypt failed\n");
+			fprintf(stderr, "%s: rdp_decrypt failed\n", __FUNCTION__);
 			return -1;
 		}
 	}
@@ -268,7 +268,7 @@ int license_recv(rdpLicense* license, wStream* s)
 
 		if (status < 0)
 		{
-			fprintf(stderr, "Unexpected license packet.\n");
+			fprintf(stderr, "%s: unexpected license packet.\n", __FUNCTION__);
 			return status;
 		}
 
@@ -308,7 +308,7 @@ int license_recv(rdpLicense* license, wStream* s)
 			break;
 
 		default:
-			fprintf(stderr, "invalid bMsgType:%d\n", bMsgType);
+			fprintf(stderr, "%s: invalid bMsgType:%d\n", __FUNCTION__, bMsgType);
 			return FALSE;
 	}
 
