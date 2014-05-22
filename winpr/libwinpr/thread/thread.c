@@ -70,7 +70,7 @@
 #include <winpr/crt.h>
 #include <winpr/platform.h>
 
-#ifdef __linux__
+#if defined(__linux__) && !defined(__ANDROID__)
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -164,7 +164,7 @@ HANDLE _GetCurrentThread(VOID)
 
 DWORD GetCurrentThreadId(VOID)
 {
-#ifdef __linux__
+#if defined(__linux__) && !defined(__ANDROID__)
 	pid_t tid;
 	tid = syscall(SYS_gettid);
 	return (DWORD) tid;
