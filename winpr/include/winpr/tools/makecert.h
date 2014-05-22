@@ -22,6 +22,9 @@
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct _MAKECERT_CONTEXT MAKECERT_CONTEXT;
 
@@ -33,5 +36,9 @@ WINPR_API int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context
 
 WINPR_API MAKECERT_CONTEXT* makecert_context_new();
 WINPR_API void makecert_context_free(MAKECERT_CONTEXT* context);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MAKECERT_TOOL_H */
