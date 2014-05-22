@@ -220,6 +220,176 @@ XCRUSH_CHUNK* xcrush_insert_chunk(XCRUSH_CONTEXT* xcrush, XCRUSH_SIGNATURE* sign
 	return prev;
 }
 
+UINT32 xcrush_find_match_length(UINT32 MatchOffset, UINT32 ChunkOffset, BYTE* HistoryBuffer, UINT32 HistoryOffset, UINT32 SrcSize, UINT32 MaxMatchLength, XCRUSH_MATCH_INFO* MatchInfo)
+{
+	UINT32 MatchSymbol;
+	UINT32 ChunkSymbol;
+	BYTE* ChunkBuffer;
+	BYTE* MatchBuffer;
+	BYTE* MatchStartPtr;
+	BYTE* ForwardChunkPtr;
+	BYTE* ReverseChunkPtr;
+	BYTE* ForwardMatchPtr;
+	BYTE* ReverseMatchPtr;
+	BYTE* HistoryBufferEnd;
+	UINT32 ReverseMatchLength;
+	UINT32 ForwardMatchLength;
+	UINT32 TotalMatchLength;
+
+	ForwardMatchLength = 0;
+	ReverseMatchLength = 0;
+	MatchBuffer = &HistoryBuffer[MatchOffset];
+	ChunkBuffer = &HistoryBuffer[ChunkOffset];
+	HistoryBufferEnd = &HistoryBuffer[HistoryOffset] + SrcSize;
+
+	if (MatchOffset == ChunkOffset)
+		return 0; /* error */
+	
+	if (MatchBuffer < HistoryBuffer)
+		return 0; /* error */
+
+	if (ChunkBuffer < HistoryBuffer)
+		return 0; /* error */
+
+	ForwardMatchPtr = &HistoryBuffer[MatchOffset];
+	ForwardChunkPtr = &HistoryBuffer[ChunkOffset];
+
+	if ((&MatchBuffer[MaxMatchLength + 1] < HistoryBufferEnd)
+		&& (MatchBuffer[MaxMatchLength + 1] != ChunkBuffer[MaxMatchLength + 1]))
+	{
+		return 0;
+	}
+
+	while (1)
+	{
+		MatchSymbol = *ForwardMatchPtr++;
+		ChunkSymbol = *ForwardChunkPtr++;
+
+		if (MatchSymbol != ChunkSymbol)
+			break;
+
+		if (ForwardMatchPtr > HistoryBufferEnd)
+			break;
+			
+		ForwardMatchLength++;
+	}
+
+	ReverseMatchPtr = MatchBuffer - 1;
+	ReverseChunkPtr = ChunkBuffer - 1;
+
+	while((ReverseMatchPtr > &HistoryBuffer[HistoryOffset])
+		&& (ReverseChunkPtr > HistoryBuffer)
+		&& (*ReverseMatchPtr == *ReverseChunkPtr))
+	{
+		ReverseMatchLength++;
+		ReverseMatchPtr--;
+		ReverseChunkPtr--;
+	}
+
+	MatchStartPtr = MatchBuffer - ReverseMatchLength;
+	TotalMatchLength = ReverseMatchLength + ForwardMatchLength;
+
+	if (TotalMatchLength < 11)
+		return 0;
+
+	if (MatchStartPtr < HistoryBuffer)
+		return 0; /* error */
+
+	MatchInfo->MatchOffset = MatchStartPtr - HistoryBuffer;
+	MatchInfo->ChunkOffset = ChunkBuffer - ReverseMatchLength - HistoryBuffer;
+	MatchInfo->MatchLength = TotalMatchLength;
+
+	return TotalMatchLength;
+}
+
+UINT32 xcrush_find_all_matches(XCRUSH_CONTEXT* xcrush, UINT32 SignatureIndex, XCRUSH_SIGNATURE* Signatures, UINT32 HistoryOffset, UINT32 SrcOffset, UINT32 SrcSize)
+{
+	UINT32 i = 0;
+	UINT32 j = 0;
+	UINT32 offset = 0;
+	UINT32 ChunkIndex = 0;
+	UINT32 ChunkCount = 0;
+	XCRUSH_CHUNK* chunk = NULL;
+	UINT32 MatchLength = 0;
+	UINT32 MaxMatchLength = 0;
+	UINT32 PrevMatchEnd = 0;
+	XCRUSH_MATCH_INFO MatchInfo = { 0 };
+	XCRUSH_MATCH_INFO MaxMatchInfo = { 0 };
+
+	for (i = 0; i < SignatureIndex; i++)
+	{
+		offset = SrcOffset + HistoryOffset;
+		
+		if (!Signatures[i].size)
+			return 0; /* error */
+
+		chunk = xcrush_insert_chunk(xcrush, &Signatures[i], offset);
+
+		if (chunk && (SrcOffset + HistoryOffset + Signatures[i].size >= PrevMatchEnd))
+		{
+			ChunkCount = 0;
+			MaxMatchLength = 0;
+			ZeroMemory(&MaxMatchInfo, sizeof(XCRUSH_MATCH_INFO));
+
+			while (chunk)
+			{				
+				if ((chunk->offset < HistoryOffset) || (chunk->offset < offset)
+					|| (chunk->offset > SrcSize + HistoryOffset))
+				{
+					MatchLength = xcrush_find_match_length(
+						offset, chunk->offset, xcrush->HistoryBuffer,
+						HistoryOffset, SrcSize, MaxMatchLength, &MatchInfo);
+					
+					if (MatchLength > MaxMatchLength)
+					{
+						MaxMatchLength = MatchLength;
+						MaxMatchInfo.MatchOffset = MatchInfo.MatchOffset;
+						MaxMatchInfo.ChunkOffset = MatchInfo.ChunkOffset;
+						MaxMatchInfo.MatchLength = MatchInfo.MatchLength;
+						
+						if (MatchLength > 256)
+							break;
+					}
+				}
+				
+				ChunkIndex = ChunkCount++;
+
+				if (ChunkIndex > 4)
+					break;
+				
+				chunk = xcrush_find_next_matching_chunk(xcrush, chunk);
+			}
+
+			if (MaxMatchLength)
+			{
+				xcrush->OriginalMatches[j].MatchOffset = MaxMatchInfo.MatchOffset;
+				xcrush->OriginalMatches[j].ChunkOffset = MaxMatchInfo.ChunkOffset;
+				xcrush->OriginalMatches[j].MatchLength = MaxMatchInfo.MatchLength;
+				
+				if (xcrush->OriginalMatches[j].MatchOffset < HistoryOffset)
+					return 0; /* error */
+
+				PrevMatchEnd = xcrush->OriginalMatches[j].MatchLength + xcrush->OriginalMatches[j].MatchOffset;
+				
+				j++;
+				
+				if (j >= 1000)
+					return 0; /* error */
+			}
+		}
+		
+		SrcOffset += Signatures[i].size;
+
+		if (SrcOffset > SrcSize)
+			return 0; /* error */
+	}
+
+	if (SrcOffset > SrcSize)
+		return 0; /* error */
+
+	return j;
+}
+
 int xcrush_copy_bytes(BYTE* dst, BYTE* src, int num)
 {
 	int index;
@@ -389,6 +559,7 @@ int xcrush_compress_l1(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, B
 	UINT32 HistoryOffset = 0;
 	BYTE* HistoryPtr = NULL;
 	BYTE* HistoryBuffer = NULL;
+	UINT32 SignatureIndex = 0;
 
 	HistoryOffset = xcrush->HistoryOffset;
 	HistoryBuffer = xcrush->HistoryBuffer;
@@ -403,7 +574,12 @@ int xcrush_compress_l1(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, B
 	}
 	else
 	{
+		SignatureIndex = xcrush_compute_signatures(xcrush, pSrcData, *pDstSize);
 
+		if (SignatureIndex)
+		{
+			xcrush_find_all_matches(xcrush, SignatureIndex, xcrush->Signatures, HistoryOffset, 0, SrcSize);
+		}
 	}
 
 	*pFlags = Flags;
@@ -519,6 +695,9 @@ void xcrush_context_reset(XCRUSH_CONTEXT* xcrush)
 	xcrush->ChunkHead = xcrush->ChunkTail = 1;
 	ZeroMemory(&(xcrush->Chunks), sizeof(xcrush->Chunks));
 	ZeroMemory(&(xcrush->NextChunks), sizeof(xcrush->NextChunks));
+
+	ZeroMemory(&(xcrush->OriginalMatches), sizeof(xcrush->OriginalMatches));
+	ZeroMemory(&(xcrush->OptimizedMatches), sizeof(xcrush->OptimizedMatches));
 }
 
 XCRUSH_CONTEXT* xcrush_context_new(BOOL Compressor)
