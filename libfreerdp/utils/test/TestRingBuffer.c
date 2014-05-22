@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
  *
- * Copyright © 2014 Thincast Technologies GmbH
- * Copyright © 2014 Hardening <contact@hardening-consulting.com>
+ * Copyright 2014 Thincast Technologies GmbH
+ * Copyright 2014 Hardening <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
