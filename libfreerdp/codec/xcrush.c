@@ -27,12 +27,6 @@
 
 #include <freerdp/codec/xcrush.h>
 
-#ifndef _rotl
-INLINE UINT32 _rotl(UINT32 x, UINT32 r) {
-	return (x << r) | (x >> (32 - r));
-}
-#endif
-
 UINT32 xcrush_update_hash(BYTE* data, UINT32 size)
 {
 	BYTE* end;
