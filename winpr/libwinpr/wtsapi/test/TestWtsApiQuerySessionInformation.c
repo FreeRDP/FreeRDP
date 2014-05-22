@@ -31,8 +31,6 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 	for (index = 0; index < count; index++)
 	{
-		pBuffer = NULL;
-		bytesReturned = 0;
 		char* Username;
 		char* Domain;
 		char* ClientName;
@@ -44,6 +42,9 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 		PWTS_CLIENT_ADDRESS ClientAddress;
 		WTS_CONNECTSTATE_CLASS ConnectState;
 
+		pBuffer = NULL;
+		bytesReturned = 0;
+
 		sessionId = pSessionInfo[index].SessionId;
 
 		printf("[%d] SessionId: %d State: %d\n", (int) index,
@@ -52,7 +53,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		/* WTSUserName */
 
-		bSuccess = WTSQuerySessionInformation(hServer, sessionId, WTSUserName, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSUserName, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -65,7 +66,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		/* WTSDomainName */
 
-		bSuccess = WTSQuerySessionInformation(hServer, sessionId, WTSDomainName, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSDomainName, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -78,7 +79,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		/* WTSConnectState */
 
-		bSuccess = WTSQuerySessionInformation(hServer, sessionId, WTSConnectState, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSConnectState, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -91,7 +92,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		/* WTSClientBuildNumber */
 
-		bSuccess = WTSQuerySessionInformation(hServer, sessionId, WTSClientBuildNumber, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientBuildNumber, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -104,7 +105,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		/* WTSClientName */
 
-		bSuccess = WTSQuerySessionInformation(hServer, sessionId, WTSClientName, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientName, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -117,7 +118,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		/* WTSClientProductId */
 
-		bSuccess = WTSQuerySessionInformation(hServer, sessionId, WTSClientProductId, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientProductId, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -130,7 +131,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		/* WTSClientHardwareId */
 
-		bSuccess = WTSQuerySessionInformation(hServer, sessionId, WTSClientHardwareId, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientHardwareId, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -143,7 +144,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		/* WTSClientAddress */
 
-		bSuccess = WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientAddress, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -157,7 +158,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		/* WTSClientDisplay */
 
-		bSuccess = WTSQuerySessionInformation(hServer, sessionId, WTSClientDisplay, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientDisplay, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
 		{
@@ -172,7 +173,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 		/* WTSClientProtocolType */
 
-		bSuccess = WTSQuerySessionInformation(hServer, sessionId, WTSClientProtocolType, &pBuffer, &bytesReturned);
+		bSuccess = WTSQuerySessionInformationA(hServer, sessionId, WTSClientProtocolType, &pBuffer, &bytesReturned);
 
 		if (!bSuccess)
 		{
