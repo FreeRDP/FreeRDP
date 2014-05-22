@@ -25,6 +25,9 @@
 
 #ifndef _WIN32
 
+#include <stdio.h>
+#include <stdarg.h>
+
 #define LANG_NEUTRAL					0x00
 #define LANG_INVARIANT					0x7f
 
@@ -483,7 +486,17 @@
 extern "C" {
 #endif
 
+DWORD WINAPI FormatMessageA(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId, DWORD dwLanguageId,
+			   LPSTR lpBuffer, DWORD nSize, va_list* Arguments);
 
+DWORD WINAPI FormatMessageW(DWORD dwFlags, LPCVOID lpSource, DWORD dwMessageId, DWORD dwLanguageId,
+			   LPWSTR lpBuffer, DWORD nSize, va_list* Arguments);
+
+#ifdef UNICODE
+#define FormatMessage	FormatMessageW
+#else
+#define FormatMessage	FormatMessageA
+#endif
 
 #ifdef __cplusplus
 }

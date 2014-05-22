@@ -27,9 +27,13 @@ set(${MODULE_PREFIX}_SRCS
 	smartcard.h
 	smartcard_link.c
 	smartcard_pcsc.c
-	smartcard_pcsc.h
-	smartcard_winscard.c
-	smartcard_winscard.h)
+	smartcard_pcsc.h)
+
+if(WIN32)
+        list(APPEND ${MODULE_PREFIX}_SRCS
+                smartcard_winscard.c
+                smartcard_winscard.h)
+endif()
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
@@ -45,7 +49,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SO
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE winpr
-	MODULES winpr-crt winpr-library winpr-utils)
+	MODULES winpr-crt winpr-library winpr-environment winpr-utils)
 
 if(PCSC_WINPR_FOUND)
 	list(APPEND ${MODULE_PREFIX}_LIBS ${PCSC_WINPR_LIBRARY})

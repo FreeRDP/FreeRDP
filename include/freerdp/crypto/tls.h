@@ -70,7 +70,6 @@ struct rdp_tls
 	SSL* ssl;
 	BIO* bio;
 	void* tsg;
-	int sockfd;
 	SSL_CTX* ctx;
 	BYTE* PublicKey;
 	BIO_METHOD* methods;
@@ -84,17 +83,11 @@ struct rdp_tls
 	int alertDescription;
 };
 
-FREERDP_API int tls_connect(rdpTls* tls);
-FREERDP_API BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file);
+FREERDP_API int tls_connect(rdpTls* tls, BIO *underlying);
+FREERDP_API BOOL tls_accept(rdpTls* tls, BIO *underlying, const char* cert_file, const char* privatekey_file);
 FREERDP_API BOOL tls_disconnect(rdpTls* tls);
 
-FREERDP_API int tls_read(rdpTls* tls, BYTE* data, int length);
-FREERDP_API int tls_write(rdpTls* tls, BYTE* data, int length);
-
-FREERDP_API int tls_write_all(rdpTls* tls, BYTE* data, int length);
-
-FREERDP_API int tls_wait_read(rdpTls* tls);
-FREERDP_API int tls_wait_write(rdpTls* tls);
+FREERDP_API int tls_write_all(rdpTls* tls, const BYTE* data, int length);
 
 FREERDP_API int tls_set_alert_code(rdpTls* tls, int level, int description);
 

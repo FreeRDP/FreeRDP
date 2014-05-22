@@ -81,6 +81,27 @@
 #define SCARD_IOCTL_GETREADERICON		RDP_SCARD_CTL_CODE(67)	/* SCardGetReaderIconA */
 #define SCARD_IOCTL_GETDEVICETYPEID		RDP_SCARD_CTL_CODE(68)	/* SCardGetDeviceTypeIdA */
 
+typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
+
+struct _SMARTCARD_OPERATION
+{
+	IRP* irp;
+	void* call;
+	UINT32 ioControlCode;
+	SCARDCONTEXT hContext;
+	SCARDHANDLE hCard;
+};
+typedef struct _SMARTCARD_OPERATION SMARTCARD_OPERATION;
+
+struct _SMARTCARD_CONTEXT
+{
+	HANDLE thread;
+	SCARDCONTEXT hContext;
+	wMessageQueue* IrpQueue;
+	SMARTCARD_DEVICE* smartcard;
+};
+typedef struct _SMARTCARD_CONTEXT SMARTCARD_CONTEXT;
+
 struct _SMARTCARD_DEVICE
 {
 	DEVICE device;
@@ -91,18 +112,21 @@ struct _SMARTCARD_DEVICE
 	char* path;
 
 	HANDLE thread;
+	HANDLE StartedEvent;
 	wMessageQueue* IrpQueue;
 	wQueue* CompletedIrpQueue;
 	wListDictionary* rgSCardContextList;
 	wListDictionary* rgOutstandingMessages;
 };
-typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
+
+SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTEXT hContext);
+void smartcard_context_free(SMARTCARD_CONTEXT* pContext);
 
 void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 
-void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp);
-void smartcard_irp_device_control_peek_io_control_code(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32* ioControlCode);
+UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation);
+UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation);
 
 #include "smartcard_pack.h"
 

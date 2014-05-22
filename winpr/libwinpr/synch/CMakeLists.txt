@@ -35,7 +35,6 @@ set(${MODULE_PREFIX}_SRCS
 	semaphore.c
 	sleep.c
 	srw.c
-	synch.c
 	synch.h
 	timer.c
 	wait.c)

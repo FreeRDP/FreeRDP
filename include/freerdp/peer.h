@@ -34,7 +34,10 @@ typedef void (*psPeerContextFree)(freerdp_peer* client, rdpContext* context);
 typedef BOOL (*psPeerInitialize)(freerdp_peer* client);
 typedef BOOL (*psPeerGetFileDescriptor)(freerdp_peer* client, void** rfds, int* rcount);
 typedef HANDLE (*psPeerGetEventHandle)(freerdp_peer* client);
+typedef HANDLE (*psPeerGetReceiveEventHandle)(freerdp_peer* client);
 typedef BOOL (*psPeerCheckFileDescriptor)(freerdp_peer* client);
+typedef BOOL (*psPeerIsWriteBlocked)(freerdp_peer* client);
+typedef int (*psPeerDrainOutputBuffer)(freerdp_peer* client);
 typedef BOOL (*psPeerClose)(freerdp_peer* client);
 typedef void (*psPeerDisconnect)(freerdp_peer* client);
 typedef BOOL (*psPeerCapabilities)(freerdp_peer* client);
@@ -62,6 +65,7 @@ struct rdp_freerdp_peer
 	psPeerInitialize Initialize;
 	psPeerGetFileDescriptor GetFileDescriptor;
 	psPeerGetEventHandle GetEventHandle;
+	psPeerGetReceiveEventHandle GetReceiveEventHandle;
 	psPeerCheckFileDescriptor CheckFileDescriptor;
 	psPeerClose Close;
 	psPeerDisconnect Disconnect;
@@ -81,6 +85,9 @@ struct rdp_freerdp_peer
 	BOOL activated;
 	BOOL authenticated;
 	SEC_WINNT_AUTH_IDENTITY identity;
+
+	psPeerIsWriteBlocked IsWriteBlocked;
+	psPeerDrainOutputBuffer DrainOutputBuffer;
 };
 
 #ifdef __cplusplus

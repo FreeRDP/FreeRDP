@@ -94,7 +94,7 @@ HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Skip(IEnumFORMATETC *This, ULONG 
 {
 	CliprdrEnumFORMATETC *instance = (CliprdrEnumFORMATETC *)This;
 
-	if (instance->m_nIndex + celt > instance->m_nNumFormats)
+	if (instance->m_nIndex + (LONG) celt > instance->m_nNumFormats)
 		return S_FALSE;
 
 	instance->m_nIndex += celt;

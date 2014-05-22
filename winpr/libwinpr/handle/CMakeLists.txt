@@ -20,8 +20,7 @@ set(MODULE_PREFIX "WINPR_HANDLE")
 
 set(${MODULE_PREFIX}_SRCS
 	handle.c
-	handle.h
-	table.c)
+	handle.h)
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)

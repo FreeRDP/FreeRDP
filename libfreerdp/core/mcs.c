@@ -186,7 +186,7 @@ static const char* const mcs_result_enumerated[] =
 
 int mcs_initialize_client_channels(rdpMcs* mcs, rdpSettings* settings)
 {
-	int index;
+	UINT32 index;
 	mcs->channelCount = settings->ChannelCount;
 
 	if (mcs->channelCount > mcs->channelMaxCount)
@@ -1056,26 +1056,29 @@ rdpMcs* mcs_new(rdpTransport* transport)
 {
 	rdpMcs* mcs;
 
-	mcs = (rdpMcs*) malloc(sizeof(rdpMcs));
+	mcs = (rdpMcs *)calloc(1, sizeof(rdpMcs));
+	if (!mcs)
+		return NULL;
 
-	if (mcs)
-	{
-		ZeroMemory(mcs, sizeof(rdpMcs));
+	mcs->transport = transport;
+	mcs->settings = transport->settings;
 
-		mcs->transport = transport;
-		mcs->settings = transport->settings;
+	mcs_init_domain_parameters(&mcs->targetParameters, 34, 2, 0, 0xFFFF);
+	mcs_init_domain_parameters(&mcs->minimumParameters, 1, 1, 1, 0x420);
+	mcs_init_domain_parameters(&mcs->maximumParameters, 0xFFFF, 0xFC17, 0xFFFF, 0xFFFF);
+	mcs_init_domain_parameters(&mcs->domainParameters, 0, 0, 0, 0xFFFF);
 
-		mcs_init_domain_parameters(&mcs->targetParameters, 34, 2, 0, 0xFFFF);
-		mcs_init_domain_parameters(&mcs->minimumParameters, 1, 1, 1, 0x420);
-		mcs_init_domain_parameters(&mcs->maximumParameters, 0xFFFF, 0xFC17, 0xFFFF, 0xFFFF);
-		mcs_init_domain_parameters(&mcs->domainParameters, 0, 0, 0, 0xFFFF);
-
-		mcs->channelCount = 0;
-		mcs->channelMaxCount = CHANNEL_MAX_COUNT;
-		mcs->channels = (rdpMcsChannel*) calloc(mcs->channelMaxCount, sizeof(rdpMcsChannel));
-	}
+	mcs->channelCount = 0;
+	mcs->channelMaxCount = CHANNEL_MAX_COUNT;
+	mcs->channels = (rdpMcsChannel *)calloc(mcs->channelMaxCount, sizeof(rdpMcsChannel));
+	if (!mcs->channels)
+		goto out_free;
 
 	return mcs;
+
+out_free:
+	free(mcs);
+	return NULL;
 }
 
 /**
