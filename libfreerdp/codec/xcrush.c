@@ -27,6 +27,126 @@
 
 #include <freerdp/codec/xcrush.h>
 
+#ifndef _rotl
+INLINE UINT32 _rotl(UINT32 x, UINT32 r) {
+	return (x << r) | (x >> (32 - r));
+}
+#endif
+
+UINT32 xcrush_update_hash(BYTE* data, UINT32 size)
+{
+	BYTE* end;
+	UINT32 seed = 5381; /* same value as in djb2 */
+
+	if (size > 32)
+	{
+		size = 32;
+		seed = 5413;
+	}
+
+	end = &data[size - 4];
+
+	while (data < end)
+	{
+		seed += (data[3] ^ data[0]) + (data[1] << 8);
+		data += 4;
+	}
+
+	return seed;
+}
+
+int xcrush_append_chunk(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32* beg, UINT32 end)
+{
+	UINT16 seed;
+	UINT32 size;
+
+	if (xcrush->SignatureIndex >= xcrush->SignatureCount)
+		return 0;
+
+	size = end - *beg;
+
+	if (size > 0xFFFF)
+		return 0;
+
+	if (size >= 15)
+	{
+		seed = xcrush_update_hash(&data[*beg], size);
+		xcrush->Signatures[xcrush->SignatureIndex].size = size;
+		xcrush->Signatures[xcrush->SignatureIndex].seed = seed;
+		xcrush->SignatureIndex++;
+		*beg = end;
+	}
+
+	return 1;
+}
+
+char xcrush_compute_chunks(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32 size, XCRUSH_SIGNATURE* Signatures, UINT32 SignatureCount, UINT32* pIndex)
+{
+	UINT32 i = 0;
+	UINT32 offset = 0;
+	UINT32 accumulator = 0;
+
+	*pIndex = 0;
+	xcrush->SignatureIndex = 0;
+
+	xcrush->Signatures = Signatures;
+	xcrush->SignatureCount = SignatureCount;
+
+	if (size < 128)
+		return 0;
+
+	for (i = 0; i < 32; i++)
+	{
+		accumulator = data[i] ^ _rotl(accumulator, 1);
+	}
+
+	for (i = 0; i < size - 64; i++)
+	{
+		accumulator = data[i + 32] ^ data[i] ^ _rotl(accumulator, 1);
+
+		if (!(accumulator & 0x7F))
+		{
+			if (!xcrush_append_chunk(xcrush, data, &offset, i + 32))
+				return 0;
+		}
+		i++;
+
+		accumulator = data[i + 32] ^ data[i] ^ _rotl(accumulator, 1);
+
+		if (!(accumulator & 0x7F))
+		{
+			if (!xcrush_append_chunk(xcrush, data, &offset, i + 32))
+				return 0;
+		}
+		i++;
+
+		accumulator = data[i + 32] ^ data[i] ^ _rotl(accumulator, 1);
+
+		if (!(accumulator & 0x7F))
+		{
+			if (!xcrush_append_chunk(xcrush, data, &offset, i + 32))
+				return 0;
+		}
+		i++;
+
+		accumulator = data[i + 32] ^ data[i] ^ _rotl(accumulator, 1);
+
+		if (!(accumulator & 0x7F))
+		{
+			if (!xcrush_append_chunk(xcrush, data, &offset, i + 32))
+				return 0;
+		}
+	}
+
+	if ((size == offset) || xcrush_append_chunk(xcrush, data, &offset, size))
+	{
+		*pIndex = xcrush->SignatureIndex;
+		return 1;
+	}
+
+	return 0;
+}
+
 int xcrush_copy_bytes(BYTE* dst, BYTE* src, int num)
 {
 	int index;
@@ -319,7 +439,8 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 void xcrush_context_reset(XCRUSH_CONTEXT* xcrush)
 {
-
+	xcrush->SignatureIndex = 0;
+	xcrush->Signatures = NULL;
 }
 
 XCRUSH_CONTEXT* xcrush_context_new(BOOL Compressor)

@@ -25,6 +25,13 @@
 
 #include <freerdp/codec/mppc.h>
 
+struct _XCRUSH_SIGNATURE
+{
+	UINT16 seed;
+	UINT16 size;
+};
+typedef struct _XCRUSH_SIGNATURE XCRUSH_SIGNATURE;
+
 struct _RDP61_MATCH_DETAILS
 {
 	UINT16 MatchLength;
@@ -52,6 +59,10 @@ struct _XCRUSH_CONTEXT
 	UINT32 HistoryBufferSize;
 	BYTE HistoryBuffer[2000000];
 	BYTE BlockBuffer[16384];
+
+	UINT32 SignatureIndex;
+	UINT32 SignatureCount;
+	XCRUSH_SIGNATURE* Signatures;
 };
 typedef struct _XCRUSH_CONTEXT XCRUSH_CONTEXT;
 
