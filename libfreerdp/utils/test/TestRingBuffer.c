@@ -48,7 +48,7 @@ BOOL test_overlaps(void)
 
 	for (i = 0, j = 2; i < nchunks; i++)
 	{
-		for (k = 0; k < chunks[i].size; k++, j++)
+		for (k = 0; k < (int) chunks[i].size; k++, j++)
 		{
 			if (chunks[i].data[k] != (BYTE)j)
 				goto error;
@@ -123,7 +123,7 @@ int TestRingBuffer(int argc, char* argv[])
 	ringbuffer_commit_read_bytes(&ringBuffer, chunks[0].size);
 
 	/* check retrieved bytes */
-	for (i = 0; i < chunks[0].size; i++)
+	for (i = 0; i < (int) chunks[0].size; i++)
 	{
 		if (chunks[0].data[i] != i % 5)
 		{
