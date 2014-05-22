@@ -544,7 +544,7 @@ static void update_end_paint(rdpContext* context)
 
 	if (update->numberOrders > 0)
 	{
-		printf("Sending %d orders\n", update->numberOrders);
+		fprintf(stderr, "%s: sending %d orders\n", __FUNCTION__, update->numberOrders);
 		fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
 	}
 

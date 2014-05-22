@@ -28,34 +28,35 @@
 
 #include <winpr/stream.h>
 #include <freerdp/utils/tcp.h>
+#include <freerdp/utils/ringbuffer.h>
 
 #include <freerdp/crypto/tls.h>
-
-#ifdef HAVE_VALGRIND_MEMCHECK_H
-#include <valgrind/memcheck.h>
-#endif
+#include "../core/tcp.h"
 
 static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 {
 	CryptoCert cert;
-	X509* server_cert;
+	X509* remote_cert;
 
 	if (peer)
-		server_cert = SSL_get_peer_certificate(tls->ssl);
+		remote_cert = SSL_get_peer_certificate(tls->ssl);
 	else
-		server_cert = SSL_get_certificate(tls->ssl);
+		remote_cert = SSL_get_certificate(tls->ssl);
 
-	if (!server_cert)
+	if (!remote_cert)
 	{
-		fprintf(stderr, "tls_get_certificate: failed to get the server TLS certificate\n");
-		cert = NULL;
-	}
-	else
-	{
-		cert = malloc(sizeof(*cert));
-		cert->px509 = server_cert;
+		fprintf(stderr, "%s: failed to get the server TLS certificate\n", __FUNCTION__);
+		return NULL;
 	}
 
+	cert = malloc(sizeof(*cert));
+	if (!cert)
+	{
+		X509_free(remote_cert);
+		return NULL;
+	}
+
+	cert->px509 = remote_cert;
 	return cert;
 }
 
@@ -83,12 +84,14 @@ SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	PrefixLength = strlen(TLS_SERVER_END_POINT);
 	ChannelBindingTokenLength = PrefixLength + CertificateHashLength;
 
-	ContextBindings = (SecPkgContext_Bindings*) malloc(sizeof(SecPkgContext_Bindings));
-	ZeroMemory(ContextBindings, sizeof(SecPkgContext_Bindings));
+	ContextBindings = (SecPkgContext_Bindings*) calloc(1, sizeof(SecPkgContext_Bindings));
+	if (!ContextBindings)
+		return NULL;
 
 	ContextBindings->BindingsLength = sizeof(SEC_CHANNEL_BINDINGS) + ChannelBindingTokenLength;
-	ChannelBindings = (SEC_CHANNEL_BINDINGS*) malloc(ContextBindings->BindingsLength);
-	ZeroMemory(ChannelBindings, ContextBindings->BindingsLength);
+	ChannelBindings = (SEC_CHANNEL_BINDINGS*) calloc(1, ContextBindings->BindingsLength);
+	if (!ChannelBindings)
+		goto out_free;
 	ContextBindings->Bindings = ChannelBindings;
 
 	ChannelBindings->cbApplicationDataLength = ChannelBindingTokenLength;
@@ -99,32 +102,121 @@ SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	CopyMemory(&ChannelBindingToken[PrefixLength], CertificateHash, CertificateHashLength);
 
 	return ContextBindings;
+
+out_free:
+	free(ContextBindings);
+	return NULL;
 }
 
-static void tls_ssl_info_callback(const SSL* ssl, int type, int val)
+
+BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int options, BOOL clientMode)
 {
-	if (type & SSL_CB_HANDSHAKE_START)
-	{
-
-	}
-}
-
-int tls_connect(rdpTls* tls)
-{
-	CryptoCert cert;
-	long options = 0;
-	int verify_status;
-	int connection_status;
-
-	tls->ctx = SSL_CTX_new(TLSv1_client_method());
-
+	tls->ctx = SSL_CTX_new(method);
 	if (!tls->ctx)
 	{
-		fprintf(stderr, "SSL_CTX_new failed\n");
+		fprintf(stderr, "%s: SSL_CTX_new failed\n", __FUNCTION__);
+		return FALSE;
+	}
+
+	SSL_CTX_set_mode(tls->ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_ENABLE_PARTIAL_WRITE);
+
+	SSL_CTX_set_options(tls->ctx, options);
+	SSL_CTX_set_read_ahead(tls->ctx, 1);
+
+	tls->bio = BIO_new_ssl(tls->ctx, clientMode);
+	if (BIO_get_ssl(tls->bio, &tls->ssl) < 0)
+	{
+		fprintf(stderr, "%s: unable to retrieve the SSL of the connection\n", __FUNCTION__);
+		return FALSE;
+	}
+
+	BIO_push(tls->bio, underlying);
+	return TRUE;
+}
+
+int tls_do_handshake(rdpTls* tls, BOOL clientMode)
+{
+	CryptoCert cert;
+	int verify_status, status;
+
+	do
+	{
+		struct timeval tv;
+		fd_set rset;
+		int fd;
+
+		status = BIO_do_handshake(tls->bio);
+		if (status == 1)
+			break;
+		if (!BIO_should_retry(tls->bio))
+			return -1;
+
+		/* we select() only for read even if we should test both read and write
+		 * depending of what have blocked */
+		FD_ZERO(&rset);
+
+		fd = BIO_get_fd(tls->bio, NULL);
+		if (fd < 0)
+		{
+			fprintf(stderr, "%s: unable to retrieve BIO fd\n", __FUNCTION__);
+			return -1;
+		}
+
+		FD_SET(fd, &rset);
+		tv.tv_sec = 0;
+		tv.tv_usec = 10 * 1000; /* 10ms */
+
+		status = select(fd + 1, &rset, NULL, NULL, &tv);
+		if (status < 0)
+		{
+			fprintf(stderr, "%s: error during select()\n", __FUNCTION__);
+			return -1;
+		}
+	}
+	while (TRUE);
+
+	if (!clientMode)
+		return 1;
+
+	cert = tls_get_certificate(tls, clientMode);
+	if (!cert)
+	{
+		fprintf(stderr, "%s: tls_get_certificate failed to return the server certificate.\n", __FUNCTION__);
 		return -1;
 	}
 
-	//SSL_CTX_set_mode(tls->ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_ENABLE_PARTIAL_WRITE);
+	tls->Bindings = tls_get_channel_bindings(cert->px509);
+	if (!tls->Bindings)
+	{
+		fprintf(stderr, "%s: unable to retrieve bindings\n", __FUNCTION__);
+		return -1;
+	}
+
+	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
+	{
+		fprintf(stderr, "%s: crypto_cert_get_public_key failed to return the server public key.\n", __FUNCTION__);
+		tls_free_certificate(cert);
+		return -1;
+	}
+
+	verify_status = tls_verify_certificate(tls, cert, tls->hostname, tls->port);
+
+	if (verify_status < 1)
+	{
+		fprintf(stderr, "%s: certificate not trusted, aborting.\n", __FUNCTION__);
+		tls_disconnect(tls);
+		tls_free_certificate(cert);
+		return 0;
+	}
+
+	tls_free_certificate(cert);
+
+	return verify_status;
+}
+
+int tls_connect(rdpTls* tls, BIO *underlying)
+{
+	int options = 0;
 
 	/**
 	 * SSL_OP_NO_COMPRESSION:
@@ -138,7 +230,7 @@ int tls_connect(rdpTls* tls)
 #ifdef SSL_OP_NO_COMPRESSION
 	options |= SSL_OP_NO_COMPRESSION;
 #endif
-	 
+
 	/**
 	 * SSL_OP_TLS_BLOCK_PADDING_BUG:
 	 *
@@ -155,96 +247,19 @@ int tls_connect(rdpTls* tls)
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
 
-	SSL_CTX_set_options(tls->ctx, options);
+	if (!tls_prepare(tls, underlying, TLSv1_client_method(), options, TRUE))
+		return FALSE;
 
-	tls->ssl = SSL_new(tls->ctx);
-
-	if (!tls->ssl)
-	{
-		fprintf(stderr, "SSL_new failed\n");
-		return -1;
-	}
-
-	if (tls->tsg)
-	{
-		tls->bio = BIO_new(tls->methods);
-
-		if (!tls->bio)
-		{
-			fprintf(stderr, "BIO_new failed\n");
-			return -1;
-		}
-
-		tls->bio->ptr = tls->tsg;
-
-		SSL_set_bio(tls->ssl, tls->bio, tls->bio);
-
-		SSL_CTX_set_info_callback(tls->ctx, tls_ssl_info_callback);
-	}
-	else
-	{
-		if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
-		{
-			fprintf(stderr, "SSL_set_fd failed\n");
-			return -1;
-		}
-	}
-
-	connection_status = SSL_connect(tls->ssl);
-
-	if (connection_status <= 0)
-	{
-		if (tls_print_error("SSL_connect", tls->ssl, connection_status))
-		{
-			return -1;
-		}
-	}
-
-	cert = tls_get_certificate(tls, TRUE);
-
-	if (!cert)
-	{
-		fprintf(stderr, "tls_connect: tls_get_certificate failed to return the server certificate.\n");
-		return -1;
-	}
-
-	tls->Bindings = tls_get_channel_bindings(cert->px509);
-
-	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
-	{
-		fprintf(stderr, "tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
-		tls_free_certificate(cert);
-		return -1;
-	}
-
-	verify_status = tls_verify_certificate(tls, cert, tls->hostname, tls->port);
-
-	if (verify_status < 1)
-	{
-		fprintf(stderr, "tls_connect: certificate not trusted, aborting.\n");
-		tls_disconnect(tls);
-	}
-
-	tls_free_certificate(cert);
-
-	return verify_status;
+	return tls_do_handshake(tls, TRUE);
 }
 
-BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
+
+
+BOOL tls_accept(rdpTls* tls, BIO *underlying, const char* cert_file, const char* privatekey_file)
 {
-	CryptoCert cert;
 	long options = 0;
-	int connection_status;
 
-	tls->ctx = SSL_CTX_new(SSLv23_server_method());
-
-	if (tls->ctx == NULL)
-	{
-		fprintf(stderr, "SSL_CTX_new failed\n");
-		return FALSE;
-	}
-
-	/*
+	/**
 	 * SSL_OP_NO_SSLv2:
 	 *
 	 * We only want SSLv3 and TLSv1, so disable SSLv2.
@@ -281,80 +296,23 @@ BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file)
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
 
-	SSL_CTX_set_options(tls->ctx, options);
-
-	if (SSL_CTX_use_RSAPrivateKey_file(tls->ctx, privatekey_file, SSL_FILETYPE_PEM) <= 0)
-	{
-		fprintf(stderr, "SSL_CTX_use_RSAPrivateKey_file failed\n");
-		fprintf(stderr, "PrivateKeyFile: %s\n", privatekey_file);
+	if (!tls_prepare(tls, underlying, SSLv23_server_method(), options, FALSE))
 		return FALSE;
-	}
 
-	tls->ssl = SSL_new(tls->ctx);
-
-	if (!tls->ssl)
+	if (SSL_use_RSAPrivateKey_file(tls->ssl, privatekey_file, SSL_FILETYPE_PEM) <= 0)
 	{
-		fprintf(stderr, "SSL_new failed\n");
+		fprintf(stderr, "%s: SSL_CTX_use_RSAPrivateKey_file failed\n", __FUNCTION__);
+		fprintf(stderr, "PrivateKeyFile: %s\n", privatekey_file);
 		return FALSE;
 	}
 
 	if (SSL_use_certificate_file(tls->ssl, cert_file, SSL_FILETYPE_PEM) <= 0)
 	{
-		fprintf(stderr, "SSL_use_certificate_file failed\n");
+		fprintf(stderr, "%s: SSL_use_certificate_file failed\n", __FUNCTION__);
 		return FALSE;
 	}
 
-	if (SSL_set_fd(tls->ssl, tls->sockfd) < 1)
-	{
-		fprintf(stderr, "SSL_set_fd failed\n");
-		return FALSE;
-	}
-
-	while (1)
-	{
-		connection_status = SSL_accept(tls->ssl);
-
-		if (connection_status <= 0)
-		{
-			switch (SSL_get_error(tls->ssl, connection_status))
-			{
-				case SSL_ERROR_WANT_READ:
-				case SSL_ERROR_WANT_WRITE:
-					break;
-
-				default:
-					if (tls_print_error("SSL_accept", tls->ssl, connection_status))
-						return FALSE;
-					break;
-
-			}
-		}
-		else
-		{
-			break;
-		}
-	}
-
-	cert = tls_get_certificate(tls, FALSE);
-
-	if (!cert)
-	{
-		fprintf(stderr, "tls_connect: tls_get_certificate failed to return the server certificate.\n");
-		return FALSE;
-	}
-
-	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
-	{
-		fprintf(stderr, "tls_connect: crypto_cert_get_public_key failed to return the server public key.\n");
-		tls_free_certificate(cert);
-		return FALSE;
-	}
-
-	free(cert);
-
-	fprintf(stderr, "TLS connection accepted\n");
-
-	return TRUE;
+	return tls_do_handshake(tls, FALSE) > 0;
 }
 
 BOOL tls_disconnect(rdpTls* tls)
@@ -362,255 +320,160 @@ BOOL tls_disconnect(rdpTls* tls)
 	if (!tls)
 		return FALSE;
 
-	if (tls->ssl)
+	if (!tls->ssl)
+		return TRUE;
+
+	if (tls->alertDescription != TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY)
 	{
-		if (tls->alertDescription != TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY)
-		{
-			/**
-			 * OpenSSL doesn't really expose an API for sending a TLS alert manually.
-			 *
-			 * The following code disables the sending of the default "close notify"
-			 * and then proceeds to force sending a custom TLS alert before shutting down.
-			 *
-			 * Manually sending a TLS alert is necessary in certain cases,
-			 * like when server-side NLA results in an authentication failure.
-			 */
+		/**
+		 * OpenSSL doesn't really expose an API for sending a TLS alert manually.
+		 *
+		 * The following code disables the sending of the default "close notify"
+		 * and then proceeds to force sending a custom TLS alert before shutting down.
+		 *
+		 * Manually sending a TLS alert is necessary in certain cases,
+		 * like when server-side NLA results in an authentication failure.
+		 */
 
-			SSL_set_quiet_shutdown(tls->ssl, 1);
+		SSL_set_quiet_shutdown(tls->ssl, 1);
 
-			if ((tls->alertLevel == TLS_ALERT_LEVEL_FATAL) && (tls->ssl->session))
-				SSL_CTX_remove_session(tls->ssl->ctx, tls->ssl->session);
+		if ((tls->alertLevel == TLS_ALERT_LEVEL_FATAL) && (tls->ssl->session))
+			SSL_CTX_remove_session(tls->ssl->ctx, tls->ssl->session);
 
-			tls->ssl->s3->alert_dispatch = 1;
-			tls->ssl->s3->send_alert[0] = tls->alertLevel;
-			tls->ssl->s3->send_alert[1] = tls->alertDescription;
+		tls->ssl->s3->alert_dispatch = 1;
+		tls->ssl->s3->send_alert[0] = tls->alertLevel;
+		tls->ssl->s3->send_alert[1] = tls->alertDescription;
 
-			if (tls->ssl->s3->wbuf.left == 0)
-				tls->ssl->method->ssl_dispatch_alert(tls->ssl);
+		if (tls->ssl->s3->wbuf.left == 0)
+			tls->ssl->method->ssl_dispatch_alert(tls->ssl);
 
-			SSL_shutdown(tls->ssl);
-		}
-		else
-		{
-			SSL_shutdown(tls->ssl);
-		}
+		SSL_shutdown(tls->ssl);
+	}
+	else
+	{
+		SSL_shutdown(tls->ssl);
 	}
 
 	return TRUE;
 }
 
-int tls_read(rdpTls* tls, BYTE* data, int length)
+
+BIO *findBufferedBio(BIO *front)
 {
-	int error;
-	int status;
+	BIO *ret = front;
 
-	if (!tls)
-		return -1;
-
-	if (!tls->ssl)
-		return -1;
-
-	status = SSL_read(tls->ssl, data, length);
-
-	if (status == 0)
+	while (ret)
 	{
-		return -1; /* peer disconnected */
+		if (BIO_method_type(ret) == BIO_TYPE_BUFFERED)
+			return ret;
+		ret = ret->next_bio;
 	}
 
-	if (status <= 0)
-	{
-		error = SSL_get_error(tls->ssl, status);
-
-		//fprintf(stderr, "tls_read: length: %d status: %d error: 0x%08X\n",
-		//		length, status, error);
-
-		switch (error)
-		{
-			case SSL_ERROR_NONE:
-				break;
-
-			case SSL_ERROR_WANT_READ:
-			case SSL_ERROR_WANT_WRITE:
-				status = 0;
-				break;
-
-			case SSL_ERROR_SYSCALL:
-#ifdef _WIN32
-				if (WSAGetLastError() == WSAEWOULDBLOCK)
-#else
-				if ((errno == EAGAIN) || (errno == 0))
-#endif
-				{
-					status = 0;
-				}
-				else
-				{
-					if (tls_print_error("SSL_read", tls->ssl, status))
-					{
-						status = -1;
-					}
-					else
-					{
-						status = 0;
-					}
-				}
-				break;
-
-			default:
-				if (tls_print_error("SSL_read", tls->ssl, status))
-				{
-					status = -1;
-				}
-				else
-				{
-					status = 0;
-				}
-				break;
-		}
-	}
-
-#ifdef HAVE_VALGRIND_MEMCHECK_H
-	VALGRIND_MAKE_MEM_DEFINED(data, status);
-#endif
-
-	return status;
+	return ret;
 }
 
-int tls_write(rdpTls* tls, BYTE* data, int length)
+int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 {
-	int error;
-	int status;
+	int status, nchunks, commitedBytes;
+	rdpTcp *tcp;
+	fd_set rset, wset;
+	fd_set *rsetPtr, *wsetPtr;
+	struct timeval tv;
+	BIO *bio = tls->bio;
+	DataChunk chunks[2];
 
-	if (!tls)
-		return -1;
-
-	if (!tls->ssl)
-		return -1;
-
-	status = SSL_write(tls->ssl, data, length);
-
-	if (status == 0)
+	BIO *bufferedBio = findBufferedBio(bio);
+	if (!bufferedBio)
 	{
-		return -1; /* peer disconnected */
+		fprintf(stderr, "%s: error unable to retrieve the bufferedBio in the BIO chain\n", __FUNCTION__);
+		return -1;
 	}
 
-	if (status < 0)
-	{
-		error = SSL_get_error(tls->ssl, status);
-
-		//fprintf(stderr, "tls_write: length: %d status: %d error: 0x%08X\n", length, status, error);
-
-		switch (error)
-		{
-			case SSL_ERROR_NONE:
-				break;
-
-			case SSL_ERROR_WANT_READ:
-			case SSL_ERROR_WANT_WRITE:
-				status = 0;
-				break;
-
-			case SSL_ERROR_SYSCALL:
-				if (errno == EAGAIN)
-				{
-					status = 0;
-				}
-				else
-				{
-					tls_print_error("SSL_write", tls->ssl, status);
-					status = -1;
-				}
-				break;
-
-			default:
-				tls_print_error("SSL_write", tls->ssl, status);
-				status = -1;
-				break;
-		}
-	}
-
-	return status;
-}
-
-int tls_write_all(rdpTls* tls, BYTE* data, int length)
-{
-	int status;
-	int sent = 0;
+	tcp = (rdpTcp *)bufferedBio->ptr;
 
 	do
 	{
-		status = tls_write(tls, &data[sent], length - sent);
-
+		status = BIO_write(bio, data, length);
+		/*fprintf(stderr, "%s: BIO_write(len=%d) = %d (retry=%d)\n", __FUNCTION__, length, status, BIO_should_retry(bio));*/
 		if (status > 0)
-			sent += status;
-		else if (status == 0)
-			tls_wait_write(tls);
-
-		if (sent >= length)
 			break;
+
+		if (!BIO_should_retry(bio))
+			return -1;
+
+		/* we try to handle SSL want_read and want_write nicely */
+		rsetPtr = wsetPtr = 0;
+		if (tcp->writeBlocked)
+		{
+			wsetPtr = &wset;
+			FD_ZERO(&wset);
+			FD_SET(tcp->sockfd, &wset);
+		}
+		else if (tcp->readBlocked)
+		{
+			rsetPtr = &rset;
+			FD_ZERO(&rset);
+			FD_SET(tcp->sockfd, &rset);
+		}
+		else
+		{
+			fprintf(stderr, "%s: weird we're blocked but the underlying is not read or write blocked !\n", __FUNCTION__);
+			USleep(10);
+			continue;
+		}
+
+		tv.tv_sec = 0;
+		tv.tv_usec = 100 * 1000;
+
+		status = select(tcp->sockfd + 1, rsetPtr, wsetPtr, NULL, &tv);
+		if (status < 0)
+			return -1;
 	}
-	while (status >= 0);
+	while (TRUE);
 
-	if (status > 0)
-		return length;
-	else
-		return status;
-}
-
-int tls_wait_read(rdpTls* tls)
-{
-	return freerdp_tcp_wait_read(tls->sockfd);
-}
-
-int tls_wait_write(rdpTls* tls)
-{
-	return freerdp_tcp_wait_write(tls->sockfd);
-}
-
-static void tls_errors(const char *prefix)
-{
-	unsigned long error;
-
-	while ((error = ERR_get_error()) != 0)
-		fprintf(stderr, "%s: %s\n", prefix, ERR_error_string(error, NULL));
-}
-
-BOOL tls_print_error(char* func, SSL* connection, int value)
-{
-	switch (SSL_get_error(connection, value))
+	/* make sure the output buffer is empty */
+	commitedBytes = 0;
+	while ((nchunks = ringbuffer_peek(&tcp->xmitBuffer, chunks, ringbuffer_used(&tcp->xmitBuffer))))
 	{
-		case SSL_ERROR_ZERO_RETURN:
-			fprintf(stderr, "%s: Server closed TLS connection\n", func);
-			return TRUE;
+		int i;
 
-		case SSL_ERROR_WANT_READ:
-			fprintf(stderr, "%s: SSL_ERROR_WANT_READ\n", func);
-			return FALSE;
+		for (i = 0; i < nchunks; i++)
+		{
+			while (chunks[i].size)
+			{
+				status = BIO_write(tcp->socketBio, chunks[i].data, chunks[i].size);
+				if (status > 0)
+				{
+					chunks[i].size -= status;
+					chunks[i].data += status;
+					commitedBytes += status;
+					continue;
+				}
 
-		case SSL_ERROR_WANT_WRITE:
-			fprintf(stderr, "%s: SSL_ERROR_WANT_WRITE\n", func);
-			return FALSE;
+				if (!BIO_should_retry(tcp->socketBio))
+					goto out_fail;
+				FD_ZERO(&rset);
+				FD_SET(tcp->sockfd, &rset);
+				tv.tv_sec = 0;
+				tv.tv_usec = 100 * 1000;
 
-		case SSL_ERROR_SYSCALL:
-#ifdef _WIN32
-			fprintf(stderr, "%s: I/O error: %d\n", func, WSAGetLastError());
-#else
-			fprintf(stderr, "%s: I/O error: %s (%d)\n", func, strerror(errno), errno);
-#endif
-			tls_errors(func);
-			return TRUE;
+				status = select(tcp->sockfd + 1, &rset, NULL, NULL, &tv);
+				if (status < 0)
+					goto out_fail;
+			}
 
-		case SSL_ERROR_SSL:
-			fprintf(stderr, "%s: Failure in SSL library (protocol error?)\n", func);
-			tls_errors(func);
-			return TRUE;
-
-		default:
-			fprintf(stderr, "%s: Unknown error\n", func);
-			tls_errors(func);
-			return TRUE;
+		}
 	}
+
+	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, commitedBytes);
+	return length;
+
+out_fail:
+	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, commitedBytes);
+	return -1;
 }
+
+
 
 int tls_set_alert_code(rdpTls* tls, int level, int description)
 {
@@ -672,7 +535,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		
 		if (!bio)
 		{
-			fprintf(stderr, "tls_verify_certificate: BIO_new() failure\n");
+			fprintf(stderr, "%s: BIO_new() failure\n", __FUNCTION__);
 			return -1;
 		}
 
@@ -680,7 +543,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 
 		if (status < 0)
 		{
-			fprintf(stderr, "tls_verify_certificate: PEM_write_bio_X509 failure: %d\n", status);
+			fprintf(stderr, "%s: PEM_write_bio_X509 failure: %d\n", __FUNCTION__, status);
 			return -1;
 		}
 		
@@ -692,7 +555,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		
 		if (status < 0)
 		{
-			fprintf(stderr, "tls_verify_certificate: failed to read certificate\n");
+			fprintf(stderr, "%s: failed to read certificate\n", __FUNCTION__);
 			return -1;
 		}
 		
@@ -713,7 +576,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 
 		if (status < 0)
 		{
-			fprintf(stderr, "tls_verify_certificate: failed to read certificate\n");
+			fprintf(stderr, "%s: failed to read certificate\n", __FUNCTION__);
 			return -1;
 		}
 		
@@ -727,8 +590,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, 0);
 		}
 		
-		fprintf(stderr, "VerifyX509Certificate: (length = %d) status: %d\n%s\n",
-			length, status, pemCert);
+		fprintf(stderr, "%s: (length = %d) status: %d\n%s\n", __FUNCTION__,	length, status, pemCert);
 
 		free(pemCert);
 		BIO_free(bio);
@@ -932,57 +794,53 @@ rdpTls* tls_new(rdpSettings* settings)
 {
 	rdpTls* tls;
 
-	tls = (rdpTls*) malloc(sizeof(rdpTls));
+	tls = (rdpTls *)calloc(1, sizeof(rdpTls));
+	if (!tls)
+		return NULL;
 
-	if (tls)
-	{
-		ZeroMemory(tls, sizeof(rdpTls));
+	SSL_load_error_strings();
+	SSL_library_init();
 
-		SSL_load_error_strings();
-		SSL_library_init();
+	tls->settings = settings;
+	tls->certificate_store = certificate_store_new(settings);
+	if (!tls->certificate_store)
+		goto out_free;
 
-		tls->settings = settings;
-		tls->certificate_store = certificate_store_new(settings);
-
-		tls->alertLevel = TLS_ALERT_LEVEL_WARNING;
-		tls->alertDescription = TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY;
-	}
-
+	tls->alertLevel = TLS_ALERT_LEVEL_WARNING;
+	tls->alertDescription = TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY;
 	return tls;
+
+out_free:
+	free(tls);
+	return NULL;
 }
 
 void tls_free(rdpTls* tls)
 {
-	if (tls)
+	if (!tls)
+		return;
+
+	if (tls->ctx)
 	{
-		if (tls->ssl)
-		{
-			SSL_free(tls->ssl);
-			tls->ssl = NULL;
-		}
-
-		if (tls->ctx)
-		{
-			SSL_CTX_free(tls->ctx);
-			tls->ctx = NULL;
-		}
-
-		if (tls->PublicKey)
-		{
-			free(tls->PublicKey);
-			tls->PublicKey = NULL;
-		}
-
-		if (tls->Bindings)
-		{
-			free(tls->Bindings->Bindings);
-			free(tls->Bindings);
-			tls->Bindings = NULL;
-		}
-
-		certificate_store_free(tls->certificate_store);
-		tls->certificate_store = NULL;
-
-		free(tls);
+		SSL_CTX_free(tls->ctx);
+		tls->ctx = NULL;
 	}
+
+	if (tls->PublicKey)
+	{
+		free(tls->PublicKey);
+		tls->PublicKey = NULL;
+	}
+
+	if (tls->Bindings)
+	{
+		free(tls->Bindings->Bindings);
+		free(tls->Bindings);
+		tls->Bindings = NULL;
+	}
+
+	certificate_store_free(tls->certificate_store);
+	tls->certificate_store = NULL;
+
+	free(tls);
 }
