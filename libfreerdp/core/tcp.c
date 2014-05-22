@@ -520,8 +520,10 @@ rdpTcp* tcp_new(rdpSettings* settings)
 #endif
 
 	return tcp;
+#ifndef _WIN32
 out_ringbuffer:
 	ringbuffer_destroy(&tcp->xmitBuffer);
+#endif
 out_free:
 	free(tcp);
 	return NULL;
