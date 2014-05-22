@@ -513,9 +513,11 @@ rdpTcp* tcp_new(rdpSettings* settings)
 	tcp->sockfd = -1;
 	tcp->settings = settings;
 
+#ifndef _WIN32
 	tcp->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, tcp->sockfd);
 	if (!tcp->event || tcp->event == INVALID_HANDLE_VALUE)
 		goto out_ringbuffer;
+#endif
 
 	return tcp;
 out_ringbuffer:
