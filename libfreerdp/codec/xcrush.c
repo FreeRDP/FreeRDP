@@ -80,7 +80,7 @@ int xcrush_append_chunk(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32* beg, UINT32 
 	return 1;
 }
 
-char xcrush_compute_chunks(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32 size, XCRUSH_SIGNATURE* Signatures, UINT32 SignatureCount, UINT32* pIndex)
+int xcrush_compute_chunks(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32 size, UINT32* pIndex)
 {
 	UINT32 i = 0;
 	UINT32 offset = 0;
@@ -88,9 +88,6 @@ char xcrush_compute_chunks(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32 size, XCRU
 
 	*pIndex = 0;
 	xcrush->SignatureIndex = 0;
-
-	xcrush->Signatures = Signatures;
-	xcrush->SignatureCount = SignatureCount;
 
 	if (size < 128)
 		return 0;
@@ -145,6 +142,88 @@ char xcrush_compute_chunks(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32 size, XCRU
 	}
 
 	return 0;
+}
+
+UINT32 xcrush_compute_signatures(XCRUSH_CONTEXT* xcrush, BYTE* data, UINT32 size)
+{
+	UINT32 index = 0;
+
+	if (xcrush_compute_chunks(xcrush, data, size, &index))
+		return index;
+
+	return 0;
+}
+
+void xcrush_clear_hash_table_range(XCRUSH_CONTEXT* xcrush, UINT32 beg, UINT32 end)
+{
+	UINT32 index;
+
+	for (index = 0; index < 65536; index++)
+	{
+		if (xcrush->NextChunks[index] >= beg)
+		{
+			if (xcrush->NextChunks[index] <= end)
+				xcrush->NextChunks[index] = 0;
+		}
+	}
+
+	for (index = 0; index < 65534; index++)
+	{
+		if (xcrush->Chunks[index].next >= beg )
+		{
+			if (xcrush->Chunks[index].next <= end)
+			{
+				xcrush->Chunks[index].next = 0;
+			}
+		}
+	}
+}
+
+XCRUSH_CHUNK* xcrush_find_next_matching_chunk(XCRUSH_CONTEXT* xcrush, XCRUSH_CHUNK* chunk)
+{
+	UINT32 index;
+	XCRUSH_CHUNK* next = NULL;
+
+	if (chunk->next)
+	{
+		index = (chunk - xcrush->Chunks) / sizeof(XCRUSH_CHUNK);
+
+		if ((index < xcrush->ChunkHead) || (chunk->next >= xcrush->ChunkHead))
+			next = &xcrush->Chunks[chunk->next];
+	}
+
+	return next;
+}
+
+XCRUSH_CHUNK* xcrush_insert_chunk(XCRUSH_CONTEXT* xcrush, XCRUSH_SIGNATURE* signature, UINT32 offset)
+{
+	UINT32 seed;
+	UINT32 index;
+	XCRUSH_CHUNK* prev = NULL;
+
+	if (xcrush->ChunkHead >= 65530)
+	{
+		xcrush->ChunkHead = xcrush->ChunkTail = 1;
+	}
+
+	if (xcrush->ChunkHead >= xcrush->ChunkTail)
+	{
+		xcrush_clear_hash_table_range(xcrush, xcrush->ChunkTail, xcrush->ChunkTail + 10000);
+		xcrush->ChunkTail += 10000;
+	}
+
+	seed = signature->seed;
+	index = xcrush->ChunkHead++;
+
+	xcrush->Chunks[index].offset = offset;
+
+	if (xcrush->NextChunks[seed])
+		prev = &xcrush->Chunks[xcrush->NextChunks[seed]];
+
+	xcrush->Chunks[index].next = xcrush->NextChunks[seed];
+	xcrush->NextChunks[seed] = index;
+
+	return prev;
 }
 
 int xcrush_copy_bytes(BYTE* dst, BYTE* src, int num)
@@ -440,7 +519,12 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 void xcrush_context_reset(XCRUSH_CONTEXT* xcrush)
 {
 	xcrush->SignatureIndex = 0;
-	xcrush->Signatures = NULL;
+	xcrush->SignatureCount = 1000;
+	ZeroMemory(&(xcrush->Signatures), sizeof(XCRUSH_SIGNATURE) * xcrush->SignatureCount);
+
+	xcrush->ChunkHead = xcrush->ChunkTail = 1;
+	ZeroMemory(&(xcrush->Chunks), sizeof(xcrush->Chunks));
+	ZeroMemory(&(xcrush->NextChunks), sizeof(xcrush->NextChunks));
 }
 
 XCRUSH_CONTEXT* xcrush_context_new(BOOL Compressor)

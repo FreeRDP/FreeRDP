@@ -25,6 +25,13 @@
 
 #include <freerdp/codec/mppc.h>
 
+struct _XCRUSH_CHUNK
+{
+	UINT16 offset;
+	UINT16 next;
+};
+typedef struct _XCRUSH_CHUNK XCRUSH_CHUNK;
+
 struct _XCRUSH_SIGNATURE
 {
 	UINT16 seed;
@@ -62,7 +69,12 @@ struct _XCRUSH_CONTEXT
 
 	UINT32 SignatureIndex;
 	UINT32 SignatureCount;
-	XCRUSH_SIGNATURE* Signatures;
+	XCRUSH_SIGNATURE Signatures[1000];
+
+	UINT32 ChunkHead;
+	UINT32 ChunkTail;
+	XCRUSH_CHUNK Chunks[65534];
+	UINT16 NextChunks[65536];
 };
 typedef struct _XCRUSH_CONTEXT XCRUSH_CONTEXT;
 
