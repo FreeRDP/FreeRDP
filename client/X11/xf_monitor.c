@@ -86,7 +86,7 @@ BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 	int i, j;
 	int nmonitors;
 	int primaryMonitor;
-	int vWidth, vHeight;
+	int vX, vY, vWidth, vHeight;
 	int maxWidth, maxHeight;
 	VIRTUAL_SCREEN* vscreen;
 
@@ -119,6 +119,8 @@ BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 					vscreen->monitors[i].area.right = screen_info[i].x_org + screen_info[i].width - 1;
 					vscreen->monitors[i].area.bottom = screen_info[i].y_org + screen_info[i].height - 1;
 
+					/* XRandR/Xinerama primary is always the screen with index 0, 
+					   but it seems windows need the screen with 0/0 as primary */
 					if ((screen_info[i].x_org == 0) && (screen_info[i].y_org == 0))
 						vscreen->monitors[i].primary = TRUE;
 				}
@@ -128,6 +130,9 @@ BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 		}
 	}
 #endif
+
+	xfc->fullscreenMonitors.top = xfc->fullscreenMonitors.bottom =
+	xfc->fullscreenMonitors.left = xfc->fullscreenMonitors.right = 0;
 
 	if (!xf_GetWorkArea(xfc))
 	{
@@ -213,6 +218,7 @@ BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 		settings->MonitorDefArray[nmonitors].width = MIN(vscreen->monitors[i].area.right - vscreen->monitors[i].area.left + 1, settings->DesktopWidth);
 		settings->MonitorDefArray[nmonitors].height = MIN(vscreen->monitors[i].area.bottom - vscreen->monitors[i].area.top + 1, settings->DesktopHeight);
 		settings->MonitorDefArray[nmonitors].is_primary = vscreen->monitors[i].primary;
+		settings->MonitorDefArray[nmonitors].orig_screen = i;
 
 		primaryMonitor |= vscreen->monitors[i].primary;
 		nmonitors++;
@@ -220,18 +226,38 @@ BOOL xf_detect_monitors(xfContext* xfc, rdpSettings* settings)
 
 	settings->MonitorCount = nmonitors;
 
-	vWidth = vHeight = 0;
-	settings->DesktopPosX = maxWidth - 1;
-	settings->DesktopPosY = maxHeight - 1;
+	vWidth = settings->MonitorDefArray[0].width;
+	vHeight = settings->MonitorDefArray[0].height;
+	vX = settings->MonitorDefArray[0].x;
+	vY = settings->MonitorDefArray[0].y;
+	xfc->fullscreenMonitors.top = xfc->fullscreenMonitors.bottom =
+	xfc->fullscreenMonitors.left = xfc->fullscreenMonitors.right = settings->MonitorDefArray[0].orig_screen;
 
-	for (i = 0; i < settings->MonitorCount; i++)
+	for (i = 1; i < settings->MonitorCount; i++)
 	{
-		settings->DesktopPosX = MIN(settings->DesktopPosX, settings->MonitorDefArray[i].x);
-		settings->DesktopPosY = MIN(settings->DesktopPosY, settings->MonitorDefArray[i].y);
+		/* does the same as gdk_rectangle_union */
+		int destX = MIN(vX, settings->MonitorDefArray[i].x);	
+		int destY = MIN(vY, settings->MonitorDefArray[i].y);
+		int destWidth = MAX(vX + vWidth, settings->MonitorDefArray[i].x + settings->MonitorDefArray[i].width) - destX;
+		int destHeight = MAX(vY + vHeight, settings->MonitorDefArray[i].y + settings->MonitorDefArray[i].height) - destY;
 
-		vWidth += settings->MonitorDefArray[i].width;
-		vHeight = MAX(vHeight, settings->MonitorDefArray[i].height);
+		if (vX != destX)
+			xfc->fullscreenMonitors.left = settings->MonitorDefArray[i].orig_screen;
+		if (vY != destY)
+			xfc->fullscreenMonitors.top = settings->MonitorDefArray[i].orig_screen;
+		if (vWidth != destWidth)
+			xfc->fullscreenMonitors.right = settings->MonitorDefArray[i].orig_screen;
+		if (vHeight != destHeight)
+			xfc->fullscreenMonitors.bottom = settings->MonitorDefArray[i].orig_screen;
+
+		vX = destX;
+		vY = destY;
+		vWidth = destWidth;
+		vHeight = destHeight;
 	}
+
+	settings->DesktopPosX = vX;
+	settings->DesktopPosY = vY;
 
 	vscreen->area.left = 0;
 	vscreen->area.right = vWidth - 1;

@@ -394,6 +394,7 @@ struct rdp_monitor
 	INT32 width;
 	INT32 height;
 	UINT32 is_primary;
+	INT32 orig_screen;
 };
 typedef struct rdp_monitor rdpMonitor;
 

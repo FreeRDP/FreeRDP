@@ -518,7 +518,7 @@ void xf_create_window(xfContext* xfc)
 		xfc->attribs.background_pixel = BlackPixelOfScreen(xfc->screen);
 		xfc->attribs.border_pixel = WhitePixelOfScreen(xfc->screen);
 		xfc->attribs.backing_store = xfc->primary ? NotUseful : Always;
-		xfc->attribs.override_redirect = xfc->grab_keyboard ? xfc->fullscreen : False;
+		xfc->attribs.override_redirect = False;
 		xfc->attribs.colormap = xfc->colormap;
 		xfc->attribs.bit_gravity = NorthWestGravity;
 		xfc->attribs.win_gravity = NorthWestGravity;
@@ -557,22 +557,10 @@ void xf_create_window(xfContext* xfc)
 
 void xf_toggle_fullscreen(xfContext* xfc)
 {
-	Pixmap contents = 0;
 	WindowStateChangeEventArgs e;
 
-	xf_lock_x11(xfc, TRUE);
-
-	contents = XCreatePixmap(xfc->display, xfc->window->handle, xfc->width, xfc->height, xfc->depth);
-	XCopyArea(xfc->display, xfc->primary, contents, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
-
-	XDestroyWindow(xfc->display, xfc->window->handle);
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
-	xf_create_window(xfc);
-
-	XCopyArea(xfc->display, contents, xfc->primary, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
-	XFreePixmap(xfc->display, contents);
-
-	xf_unlock_x11(xfc, TRUE);
+	xf_SetWindowFullscreen(xfc, xfc->window, xfc->fullscreen);
 
 	EventArgsInit(&e, "xfreerdp");
 	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
@@ -863,6 +851,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	xfc->_NET_WM_STATE_SKIP_PAGER = XInternAtom(xfc->display, "_NET_WM_STATE_SKIP_PAGER", False);
 	xfc->_NET_WM_MOVERESIZE = XInternAtom(xfc->display, "_NET_WM_MOVERESIZE", False);
 	xfc->_NET_MOVERESIZE_WINDOW = XInternAtom(xfc->display, "_NET_MOVERESIZE_WINDOW", False);
+	xfc->_NET_WM_FULLSCREEN_MONITORS = XInternAtom(xfc->display, "_NET_WM_FULLSCREEN_MONITORS", False);
 
 	xfc->WM_PROTOCOLS = XInternAtom(xfc->display, "WM_PROTOCOLS", False);
 	xfc->WM_DELETE_WINDOW = XInternAtom(xfc->display, "WM_DELETE_WINDOW", False);
