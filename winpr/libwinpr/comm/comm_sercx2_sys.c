@@ -145,6 +145,9 @@ static REMOTE_SERIAL_DRIVER _SerCx2Sys =
 	.wait_on_mask     = NULL,
 	.set_queue_size   = NULL,
 	.purge            = _purge,
+	.get_commstatus   = NULL,
+	.set_break_on     = NULL,
+	.set_break_off    = NULL,
 };
 
 
@@ -185,6 +188,10 @@ REMOTE_SERIAL_DRIVER* SerCx2Sys_s()
 
 	_SerCx2Sys.set_queue_size = pSerialSys->set_queue_size;
 
+	_SerCx2Sys.get_commstatus = pSerialSys->get_commstatus;
+
+	_SerCx2Sys.set_break_on  = pSerialSys->set_break_on;
+	_SerCx2Sys.set_break_off = pSerialSys->set_break_off;
 
 	return &_SerCx2Sys;
 }

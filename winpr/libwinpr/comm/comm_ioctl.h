@@ -175,6 +175,30 @@ typedef struct _SERIAL_QUEUE_SIZE
 #define SERIAL_PURGE_TXCLEAR 0x00000004 
 #define SERIAL_PURGE_RXCLEAR 0x00000008 
 
+typedef struct _SERIAL_STATUS
+{ 
+	ULONG Errors; 
+	ULONG HoldReasons; 
+	ULONG AmountInInQueue; 
+	ULONG AmountInOutQueue; 
+	BOOLEAN EofReceived;
+	BOOLEAN WaitForImmediate; 
+} SERIAL_STATUS, *PSERIAL_STATUS; 
+
+#define SERIAL_TX_WAITING_FOR_CTS      ((ULONG)0x00000001) 
+#define SERIAL_TX_WAITING_FOR_DSR      ((ULONG)0x00000002) 
+#define SERIAL_TX_WAITING_FOR_DCD      ((ULONG)0x00000004) 
+#define SERIAL_TX_WAITING_FOR_XON      ((ULONG)0x00000008) 
+#define SERIAL_TX_WAITING_XOFF_SENT    ((ULONG)0x00000010) 
+#define SERIAL_TX_WAITING_ON_BREAK     ((ULONG)0x00000020) 
+#define SERIAL_RX_WAITING_FOR_DSR      ((ULONG)0x00000040) 
+ 
+#define SERIAL_ERROR_BREAK             ((ULONG)0x00000001) 
+#define SERIAL_ERROR_FRAMING           ((ULONG)0x00000002) 
+#define SERIAL_ERROR_OVERRUN           ((ULONG)0x00000004) 
+#define SERIAL_ERROR_QUEUEOVERRUN      ((ULONG)0x00000008) 
+#define SERIAL_ERROR_PARITY            ((ULONG)0x00000010) 
+
 /**
  * A function might be NULL if not supported by the underlying remote driver.
  *
@@ -205,6 +229,9 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*wait_on_mask)(WINPR_COMM *pComm, ULONG *pOutputMask);
 	BOOL (*set_queue_size)(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSize);
 	BOOL (*purge)(WINPR_COMM *pComm, const ULONG *pPurgeMask);
+	BOOL (*get_commstatus)(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus);
+	BOOL (*set_break_on)(WINPR_COMM *pComm);
+	BOOL (*set_break_off)(WINPR_COMM *pComm);
 
 } REMOTE_SERIAL_DRIVER;
 

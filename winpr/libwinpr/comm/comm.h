@@ -56,7 +56,6 @@ struct winpr_comm
 	 */
 	BOOL permissive;
 
-
 	// TMP: to be renamed serverSerialDriverId
 	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
 
@@ -66,9 +65,14 @@ struct winpr_comm
 
 	COMMTIMEOUTS timeouts;
 	
+	/* NB: no synchronization required on counters until _get_commstatus()
+	 * is the only function [except CreateFile() and CloseHandle()] to
+	 * modify counters */
 	struct serial_icounter_struct counters;
+
+	/* TMP: TODO: sync */
 	ULONG waitMask; /* TMP: to be renamed EventMask */
-	ULONG pendingEvents;
+	ULONG PendingEvents;
 
 	/* NB: CloseHandle() has to free resources */
 };

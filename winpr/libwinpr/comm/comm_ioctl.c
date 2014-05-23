@@ -139,7 +139,6 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 	switch (dwIoControlCode)
 	{
 		case 0x220034:
-		case 0X1B006C:
 			DEBUG_WARN("Undocumented IoControlCode: 0X%X", dwIoControlCode);
 			*lpBytesReturned = nOutBufferSize; /* an empty OutputBuffer will be returned */
 			SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -509,7 +508,43 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			}
 			break;
 		}
+		case IOCTL_SERIAL_GET_COMMSTATUS:
+		{
+			if (pRemoteSerialDriver->get_commstatus)
+			{
+				SERIAL_STATUS *pCommstatus = (SERIAL_STATUS*)lpOutBuffer;
+				
+				assert(nOutBufferSize >= sizeof(SERIAL_STATUS));
+				if (nOutBufferSize < sizeof(SERIAL_STATUS))
+				{
+					SetLastError(ERROR_INSUFFICIENT_BUFFER);
+					return FALSE;					
+				}
 
+				if (!pRemoteSerialDriver->get_commstatus(pComm, pCommstatus))
+					return FALSE;
+
+				*lpBytesReturned = sizeof(SERIAL_STATUS);
+				return TRUE;
+			}
+			break;
+		}
+		case IOCTL_SERIAL_SET_BREAK_ON:
+		{
+			if (pRemoteSerialDriver->set_break_on)
+			{
+				return pRemoteSerialDriver->set_break_on(pComm);
+			}
+			break;
+		}
+		case IOCTL_SERIAL_SET_BREAK_OFF:
+		{
+			if (pRemoteSerialDriver->set_break_off)
+			{
+				return pRemoteSerialDriver->set_break_off(pComm);
+			}
+			break;
+		}
 	}
 	
 	DEBUG_WARN(_T("unsupported IoControlCode=[0x%lX] %s (remote serial driver: %s)"), 

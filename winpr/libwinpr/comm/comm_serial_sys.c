@@ -967,10 +967,12 @@ static BOOL _get_modemstatus(WINPR_COMM *pComm, ULONG *pRegister)
 	}
 
 	ZeroMemory(pRegister, sizeof(ULONG));
-
+	
 	/* FIXME: Is the last read of the MSR register available or
 	 * cached somewhere? Not quite sure we need to return the 4
-	 * LSBits anyway.
+	 * LSBits anyway. A direct access to the register -- which
+	 * would reset the register -- is likely not expected from
+	 * this function.
 	 */
 
 	/* #define SERIAL_MSR_DCTS     0x01 */
@@ -1024,7 +1026,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 			return FALSE;
 		}
 
-		pComm->pendingEvents = 0;
+		pComm->PendingEvents = 0;
 	}
 	
 	// TMP: TODO:
@@ -1054,201 +1056,6 @@ static BOOL _get_wait_mask(WINPR_COMM *pComm, ULONG *pWaitMask)
 	return TRUE;
 }
 
-
-static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
-{
-	assert(*pOutputMask == 0);
-
-	// TMP: TODO: be sure to get a dedicated thread
-	/* while (TRUE) */
-	{
-		int nbBytesToBeRead = 0;
-		int nbBytesToBeWritten = 0;
-		struct serial_icounter_struct currentCounters; 
-		ULONG tiocmiwaitMask = 0; /* TIOCMIWAIT can wait for the 4 lines: TIOCM_RNG/DSR/CD/CTS */
-
-		if (ioctl(pComm->fd, TIOCINQ, &nbBytesToBeRead) < 0)
-		{
-			DEBUG_WARN("TIOCINQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
-			SetLastError(ERROR_IO_DEVICE);
-			return FALSE;
-		}
-
-		if (ioctl(pComm->fd, TIOCOUTQ, &nbBytesToBeWritten) < 0)
-		{
-			DEBUG_WARN("TIOCOUTQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
-			SetLastError(ERROR_IO_DEVICE);
-			return FALSE;
-		}
-
-		ZeroMemory(&currentCounters, sizeof(struct serial_icounter_struct));
-		if (ioctl(pComm->fd, TIOCGICOUNT, &currentCounters) < 0)
-		{
-			DEBUG_WARN("TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
-			SetLastError(ERROR_IO_DEVICE);
-			return FALSE;
-		}
-
-		/* NB: preferred below (currentCounters.* != pComm->counters.*) over (currentCounters.* > pComm->counters.*) thinking the counters can loop */
-
-
-		/* events */
-
-		if (pComm->waitMask & SERIAL_EV_RXCHAR)
-		{
-			if (nbBytesToBeRead > 0)
-			{
-				/* at least one character is pending to be read */
-				*pOutputMask |= SERIAL_EV_RXCHAR;
-			}
-		}
-		
-		if (pComm->waitMask & SERIAL_EV_RXFLAG)
-		{
-			if (pComm->pendingEvents & SERIAL_EV_RXFLAG) // TMP: to be done in the ReadThread
-			{
-				/* the event character was received FIXME: is the character supposed to be still in the input buffer? */
-				
-				/* event consumption */
-				pComm->pendingEvents &= ~SERIAL_EV_RXFLAG;
-				*pOutputMask |= SERIAL_EV_RXFLAG;
-			}
-		}
-
-		if (pComm->waitMask & SERIAL_EV_TXEMPTY)
-		{
-			if (nbBytesToBeWritten == 0)
-			{
-				/* NB: as of today CommWriteFile still blocks and uses the same thread than CommDeviceIoControl, 
-				 *  it should be enough to just check nbBytesToBeWritten 
-				 */
-
-				/* the output buffer is empty */
-				*pOutputMask |= SERIAL_EV_TXEMPTY; 
-			}
-		}
-
-		if (pComm->waitMask & SERIAL_EV_CTS)
-		{
-			tiocmiwaitMask |= TIOCM_CTS;
-		}
-
-		if (pComm->waitMask & SERIAL_EV_DSR)
-		{
-			tiocmiwaitMask |= TIOCM_DSR;
-		}
-
-		if (pComm->waitMask & SERIAL_EV_RLSD)
-		{
-			tiocmiwaitMask |= TIOCM_CD;
-		}
-
-		if (pComm->waitMask & SERIAL_EV_BREAK)
-		{
-			if (currentCounters.brk != pComm->counters.brk)
-			{
-				*pOutputMask |= SERIAL_EV_BREAK;
-
-				/* event consumption */
-				pComm->counters.brk = currentCounters.brk;
-			}
-		}
-			 
-		if (pComm->waitMask & SERIAL_EV_ERR)
-		{
-			if ((currentCounters.frame != pComm->counters.frame) ||
-			    (currentCounters.overrun != pComm->counters.overrun) ||
-			    (currentCounters.parity != pComm->counters.parity))
-			{
-				*pOutputMask |= SERIAL_EV_ERR;
-
-				/* event consumption */
-				pComm->counters.frame = currentCounters.frame;
-				pComm->counters.overrun = currentCounters.overrun;
-				pComm->counters.parity = currentCounters.parity;
-			}
-		}
-
-		if (pComm->waitMask & SERIAL_EV_RING)
-		{
-			tiocmiwaitMask |= TIOCM_RNG;
-		}
-
-		if (pComm->waitMask & SERIAL_EV_RX80FULL)
-		{
-			if (nbBytesToBeRead > (0.8 * N_TTY_BUF_SIZE))
-				*pOutputMask |= SERIAL_EV_RX80FULL;
-		}
-
-		if ((*pOutputMask == 0) && /* don't need to wait more if at least an event already occured */
-		    (tiocmiwaitMask > 0))
-		{
-			if ((pComm->waitMask & SERIAL_EV_CTS) && currentCounters.cts != pComm->counters.cts)
-			{
-				*pOutputMask |= SERIAL_EV_CTS;
-
-				/* event consumption */
-				pComm->counters.cts = currentCounters.cts;
-			}
-
-			if ((pComm->waitMask & SERIAL_EV_DSR) && currentCounters.dsr != pComm->counters.dsr)
-			{
-				*pOutputMask |= SERIAL_EV_DSR;
-
-				/* event consumption */
-				pComm->counters.dsr = currentCounters.dsr;
-			}
-
-			if ((pComm->waitMask & SERIAL_EV_RLSD) && currentCounters.dcd != pComm->counters.dcd)
-			{
-				*pOutputMask |= SERIAL_EV_RLSD;
-
-				/* event consumption */
-				pComm->counters.dcd = currentCounters.dcd;
-			}
-
-			if ((pComm->waitMask & SERIAL_EV_RING) && currentCounters.rng != pComm->counters.rng)
-			{
-				*pOutputMask |= SERIAL_EV_RING;
-
-				/* event consumption */
-				pComm->counters.rng = currentCounters.rng;
-			}
-
-
-			// TMP: TIOCMIWAIT could be possible if _wait_on_mask gets its own thread 
-			/* if ((*pOutputMask == 0) && /\* don't bother at least one of the events event already occured *\/ */
-			/*     ((pComm->waitMask & ~(SERIAL_EV_CTS | SERIAL_EV_DSR | SERIAL_EV_RLSD | SERIAL_EV_RING)) == 0)) /\* only events handled by TIOCMIWAIT, otherwise go through the regular loop *\/ */
-			/* { */
-			/* 	if (ioctl(pComm->fd, TIOCMIWAIT, &tiocmiwaitMask) < 0) */
-			/* 	{ */
-			/* 		DEBUG_WARN("TIOCMIWAIT ioctl failed, errno=[%d] %s", errno, strerror(errno)); */
-			/* 		SetLastError(ERROR_IO_DEVICE); */
-			/* 		return FALSE; */
-			/* 	} */
-				
-			/* 	/\* check counters again after TIOCMIWAIT *\/ */
-			/* 	continue; */
-			/* } */
-		}
-
-		if (*pOutputMask != 0)
-		{
-			/* at least an event occurred */
-			return TRUE;
-		}
-
-		/* /\* // TMP: *\/ */
-		/* DEBUG_WARN("waiting on events:0X%lX", pComm->waitMask); */
-
-		/* sleep(1); */
-		
-	}
-
-	DEBUG_WARN("_wait_on_mask pending on events:0X%lX", pComm->waitMask);
-	SetLastError(ERROR_IO_PENDING); /* see: WaitCommEvent's help */
-	return FALSE;
-}
 
 
 static BOOL _set_queue_size(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSize)
@@ -1289,7 +1096,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
-
+	
 	/* FIXME: don't rely so much on how the IRP queues are implemented, should be more generic */
 
 	/* nothing to do until IRP_MJ_WRITE-s and IRP_MJ_DEVICE_CONTROL-s are executed in the same thread */
@@ -1303,15 +1110,16 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 	{
 		/* Purges all read (IRP_MJ_READ) requests. */
 
+		// TMP:
 		if (pComm->ReadIrpQueue != NULL)
 		{
+			assert(0);
 			MessageQueue_Clear(pComm->ReadIrpQueue);
 		}
 
 		/* TMP: TODO: double check if this gives well a change to abort a pending CommReadFile */
-		//assert(0);
+		/* assert(0); */
 		/* fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) | O_NONBLOCK); */
-		/* sleep(1); */
 		/* fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) & ~O_NONBLOCK); */
 
 		/* TMP: FIXME: synchronization of the incoming
@@ -1348,6 +1156,222 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 	return TRUE;
 }
 
+/* NB: _get_commstatus also produces most of the events consumed by _wait_on_mask(). Exceptions:
+ *  - SERIAL_EV_RXFLAG: FIXME: once EventChar supported
+ *
+ */
+static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
+{
+	/* http://msdn.microsoft.com/en-us/library/jj673022%28v=vs.85%29.aspx */
+
+	struct serial_icounter_struct currentCounters; 
+
+	ZeroMemory(pCommstatus, sizeof(SERIAL_STATUS));
+
+	ZeroMemory(&currentCounters, sizeof(struct serial_icounter_struct));
+	if (ioctl(pComm->fd, TIOCGICOUNT, &currentCounters) < 0)
+	{
+		DEBUG_WARN("TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	/* NB: preferred below (currentCounters.* != pComm->counters.*) over (currentCounters.* > pComm->counters.*) thinking the counters can loop */
+
+	/* Errors */
+
+	if (currentCounters.buf_overrun != pComm->counters.buf_overrun)
+	{
+		pCommstatus->Errors |= SERIAL_ERROR_QUEUEOVERRUN;
+	}
+
+	if (currentCounters.overrun != pComm->counters.overrun)
+	{
+		pCommstatus->Errors |= SERIAL_ERROR_OVERRUN;
+		pComm->PendingEvents |= SERIAL_EV_ERR;
+	}
+
+	if (currentCounters.brk != pComm->counters.brk)
+	{
+		pCommstatus->Errors |= SERIAL_ERROR_BREAK;
+		pComm->PendingEvents |= SERIAL_EV_BREAK;
+	}
+
+	if (currentCounters.parity != pComm->counters.parity)
+	{
+		pCommstatus->Errors |= SERIAL_ERROR_PARITY;
+		pComm->PendingEvents |= SERIAL_EV_ERR;
+	}
+
+	if (currentCounters.frame != pComm->counters.frame)
+	{
+		pCommstatus->Errors |= SERIAL_ERROR_FRAMING;
+		pComm->PendingEvents |= SERIAL_EV_ERR;
+	}
+
+
+	/* HoldReasons TMP: TODO: see also _set_lines(), _clear_lines() the LCR register. */
+
+	/* AmountInInQueue */
+
+	if (ioctl(pComm->fd, TIOCINQ, &(pCommstatus->AmountInInQueue)) < 0)
+	{
+		DEBUG_WARN("TIOCINQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+
+	/*  AmountInOutQueue */
+
+	if (ioctl(pComm->fd, TIOCOUTQ, &(pCommstatus->AmountInOutQueue)) < 0)
+	{
+		DEBUG_WARN("TIOCOUTQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	/*  BOOLEAN EofReceived; FIXME: once EofChar supported */
+
+
+	/*  BOOLEAN WaitForImmediate; TMP: TODO: once IOCTL_SERIAL_IMMEDIATE_CHAR supported */
+		
+
+	/* other events based on counters */
+
+	if (currentCounters.rx != pComm->counters.rx)
+	{
+		pComm->PendingEvents |= SERIAL_EV_RXCHAR;
+	}
+
+	if ((currentCounters.tx != pComm->counters.tx) && /* at least a transmission occurred AND ...*/
+	    (pCommstatus->AmountInOutQueue == 0)) /* output bufer is now empty */
+	{
+		pComm->PendingEvents |= SERIAL_EV_TXEMPTY;
+	}
+	else
+	{
+		/* FIXME: "now empty" is ambiguous, need to track previous completed transmission? */
+		pComm->PendingEvents &= ~SERIAL_EV_TXEMPTY;
+	}
+
+	if (currentCounters.cts != pComm->counters.cts)
+	{
+		pComm->PendingEvents |= SERIAL_EV_CTS;
+	}
+
+	if (currentCounters.dsr != pComm->counters.dsr)
+	{
+		pComm->PendingEvents |= SERIAL_EV_DSR;
+	}
+
+	if (currentCounters.dcd != pComm->counters.dcd)
+	{
+		pComm->PendingEvents |= SERIAL_EV_RLSD;
+	}
+
+	if (currentCounters.rng != pComm->counters.rng)
+	{
+		pComm->PendingEvents |= SERIAL_EV_RING;
+	}
+
+	if (pCommstatus->AmountInInQueue > (0.8 * N_TTY_BUF_SIZE))
+	{
+		pComm->PendingEvents |= SERIAL_EV_RX80FULL;
+	}
+	else
+	{
+		/* FIXME: "is 80 percent full" is ambiguous, need to track when it previously occured? */
+		pComm->PendingEvents &= ~SERIAL_EV_RX80FULL;
+	}
+
+
+	pComm->counters = currentCounters;
+
+
+	return TRUE;
+}
+
+static void _consume_event(WINPR_COMM *pComm, ULONG *pOutputMask, ULONG event)
+{
+	if ((pComm->waitMask & event) && (pComm->PendingEvents & event))
+	{
+		pComm->PendingEvents &= ~event; /* consumed */
+		*pOutputMask |= event;
+	}
+}
+
+static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
+{
+	assert(*pOutputMask == 0);
+
+
+	while (TRUE)
+	{
+		SERIAL_STATUS serialStatus;
+
+		/* NB: also ensures PendingEvents to be up to date */
+		ZeroMemory(&serialStatus, sizeof(SERIAL_STATUS));
+		if (!_get_commstatus(pComm, &serialStatus))
+		{
+			return FALSE;
+		}
+
+		/* events */
+
+		_consume_event(pComm, pOutputMask, SERIAL_EV_RXCHAR);
+		_consume_event(pComm, pOutputMask, SERIAL_EV_RXFLAG);
+		_consume_event(pComm, pOutputMask, SERIAL_EV_TXEMPTY);
+		_consume_event(pComm, pOutputMask, SERIAL_EV_CTS);
+		_consume_event(pComm, pOutputMask, SERIAL_EV_DSR);
+		_consume_event(pComm, pOutputMask, SERIAL_EV_RLSD);
+		_consume_event(pComm, pOutputMask, SERIAL_EV_BREAK);
+		_consume_event(pComm, pOutputMask, SERIAL_EV_ERR);
+		_consume_event(pComm, pOutputMask, SERIAL_EV_RING );
+		_consume_event(pComm, pOutputMask, SERIAL_EV_RX80FULL);
+
+		if (*pOutputMask != 0)
+		{
+			/* at least an event occurred */
+			return TRUE;
+		}
+
+		/* // TMP: */
+		DEBUG_WARN("waiting on events:0X%lX", pComm->waitMask);
+
+		sleep(1); // TMP: TODO: wait also on a PendingEvents modification, and a new identical IRP
+	}
+
+	DEBUG_WARN("_wait_on_mask pending on events:0X%lX", pComm->waitMask);
+	SetLastError(ERROR_IO_PENDING); /* see: WaitCommEvent's help */
+	return FALSE;
+}
+
+static BOOL _set_break_on(WINPR_COMM *pComm)
+{
+	if (ioctl(pComm->fd, TIOCSBRK, NULL) < 0)
+	{
+		DEBUG_WARN("TIOCSBRK ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+	
+
+static BOOL _set_break_off(WINPR_COMM *pComm)
+{
+	if (ioctl(pComm->fd, TIOCCBRK, NULL) < 0)
+	{
+		DEBUG_WARN("TIOCSBRK ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
@@ -1374,6 +1398,9 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.wait_on_mask     = _wait_on_mask,
 	.set_queue_size   = _set_queue_size,
 	.purge            = _purge,
+	.get_commstatus   = _get_commstatus,
+	.set_break_on     = _set_break_on,
+	.set_break_off    = _set_break_off,
 };
 
 

@@ -326,7 +326,19 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 		*lpNumberOfBytesWritten += nbWritten;
 	}
-	
+
+
+	/* FIXME: this call to tcdrain() doesn't look correct and
+	 * might hide a bug but was required while testing a serial
+	 * printer. Its driver was expecting the modem line status
+	 * SERIAL_MSR_DSR true after the sending which was never
+	 * happenning otherwise. A purge was also done before each
+	 * Write operation. The serial port was oppened with:
+	 * DesiredAccess=0x0012019F. The printer worked fine with
+	 * mstsc. */
+	tcdrain(pComm->fd);
+
+
 	return TRUE;
 }
 
