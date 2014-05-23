@@ -74,6 +74,7 @@ struct _XCRUSH_CONTEXT
 	UINT32 HistoryBufferSize;
 	BYTE HistoryBuffer[2000000];
 	BYTE BlockBuffer[16384];
+	UINT32 CompressionFlags;
 
 	UINT32 SignatureIndex;
 	UINT32 SignatureCount;
