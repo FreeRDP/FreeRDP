@@ -223,9 +223,9 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 	}
 	else
 	{
-		return -1;
+		status = -1;
 	}
-	
+
 	if (status >= 0)
 	{
 		CompressedBytes = *pDstSize;

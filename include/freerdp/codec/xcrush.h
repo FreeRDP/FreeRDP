@@ -85,6 +85,8 @@ struct _XCRUSH_CONTEXT
 	XCRUSH_CHUNK Chunks[65534];
 	UINT16 NextChunks[65536];
 
+	UINT32 OriginalMatchCount;
+	UINT32 OptimizedMatchCount;
 	XCRUSH_MATCH_INFO OriginalMatches[1000];
 	XCRUSH_MATCH_INFO OptimizedMatches[1000];
 };
