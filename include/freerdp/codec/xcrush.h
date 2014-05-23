@@ -25,10 +25,18 @@
 
 #include <freerdp/codec/mppc.h>
 
+struct _XCRUSH_MATCH_INFO
+{
+	UINT32 MatchOffset;
+	UINT32 ChunkOffset;
+	UINT32 MatchLength;
+};
+typedef struct _XCRUSH_MATCH_INFO XCRUSH_MATCH_INFO;
+
 struct _XCRUSH_CHUNK
 {
-	UINT16 offset;
-	UINT16 next;
+	UINT32 offset;
+	UINT32 next;
 };
 typedef struct _XCRUSH_CHUNK XCRUSH_CHUNK;
 
@@ -66,6 +74,7 @@ struct _XCRUSH_CONTEXT
 	UINT32 HistoryBufferSize;
 	BYTE HistoryBuffer[2000000];
 	BYTE BlockBuffer[16384];
+	UINT32 CompressionFlags;
 
 	UINT32 SignatureIndex;
 	UINT32 SignatureCount;
@@ -75,6 +84,9 @@ struct _XCRUSH_CONTEXT
 	UINT32 ChunkTail;
 	XCRUSH_CHUNK Chunks[65534];
 	UINT16 NextChunks[65536];
+
+	XCRUSH_MATCH_INFO OriginalMatches[1000];
+	XCRUSH_MATCH_INFO OptimizedMatches[1000];
 };
 typedef struct _XCRUSH_CONTEXT XCRUSH_CONTEXT;
 
