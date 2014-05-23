@@ -39,7 +39,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/comm.h>
-#include <winpr/collections.h>
 #include <winpr/tchar.h>
 
 #include "comm_ioctl.h"
@@ -745,39 +744,18 @@ BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOverlapped)
 
 /* Extended API */
 
-/* FIXME: DefineCommDevice / QueryCommDevice look over complicated for
- * just a couple of strings, should be simplified.
- * 
- * TODO: what about libwinpr-io.so?
- */
-static wHashTable *_CommDevices = NULL;
+typedef struct _COMM_DEVICE 
+{
+	LPTSTR name;
+	LPTSTR path;
+} COMM_DEVICE;
+
+/* FIXME: get a clever data structure */
+static COMM_DEVICE **_CommDevices = NULL;
+
+#define COMM_DEVICE_MAX	128
 
 static HANDLE_CREATOR *_CommHandleCreator = NULL;
-
-static int deviceNameCmp(void* pointer1, void* pointer2)
-{
-	return _tcscmp(pointer1, pointer2);
-}
-
-
-static int devicePathCmp(void* pointer1, void* pointer2)
-{
-	return _tcscmp(pointer1, pointer2);
-}
-
-/* copied from HashTable.c */
-static unsigned long HashTable_StringHashFunctionA(void* key)
-{
-	int c;
-	unsigned long hash = 5381;
-	unsigned char* str = (unsigned char*) key;
-
-	/* djb2 algorithm */
-	while ((c = *str++) != '\0')
-		hash = (hash * 33) + c;
-
-	return hash;
-}
 
 
 static void _CommDevicesInit()
@@ -790,12 +768,7 @@ static void _CommDevicesInit()
 
 	if (_CommDevices == NULL)
 	{
-		_CommDevices = HashTable_New(TRUE);
-		_CommDevices->keycmp = deviceNameCmp;
-		_CommDevices->valuecmp = devicePathCmp;
-		_CommDevices->hashFunction = HashTable_StringHashFunctionA; /* TMP: FIXME: need of a HashTable_StringHashFunctionW */
-		_CommDevices->keyDeallocator = free;
-		_CommDevices->valueDeallocator = free;
+		_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX+1, sizeof(COMM_DEVICE*));
 
 		_CommHandleCreator = (HANDLE_CREATOR*)malloc(sizeof(HANDLE_CREATOR));
 		_CommHandleCreator->IsHandled = IsCommDevice;
@@ -852,6 +825,7 @@ static BOOL _IsReservedCommDeviceName(LPCTSTR lpName)
  */
 BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTargetPath)
 {
+	int i = 0;
 	LPTSTR storedDeviceName = NULL;
 	LPTSTR storedTargetPath = NULL;
 
@@ -885,9 +859,40 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 		goto error_handle;
 	}
 
-	if (HashTable_Add(_CommDevices, storedDeviceName, storedTargetPath) < 0)
+	for (i=0; i<COMM_DEVICE_MAX; i++)
 	{
-		SetLastError(ERROR_INVALID_DATA);
+		if (_CommDevices[i] != NULL)
+		{
+			if (_tcscmp(_CommDevices[i]->name, storedDeviceName) == 0)
+			{
+				/* take over the emplacement */
+				free(_CommDevices[i]->name);
+				free(_CommDevices[i]->path);
+				_CommDevices[i]->name = storedDeviceName;
+				_CommDevices[i]->path = storedTargetPath;
+
+				break;
+			}
+		}
+		else
+		{
+			/* new emplacement */
+			_CommDevices[i] = (COMM_DEVICE*)calloc(1, sizeof(COMM_DEVICE));
+			if (_CommDevices[i] == NULL)
+			{
+				SetLastError(ERROR_OUTOFMEMORY);
+				goto error_handle;
+			}
+
+			_CommDevices[i]->name = storedDeviceName;
+			_CommDevices[i]->path = storedTargetPath;
+			break;
+		}
+	}
+
+	if (i == COMM_DEVICE_MAX)
+	{
+		SetLastError(ERROR_OUTOFMEMORY);
 		goto error_handle;
 	}
 
@@ -922,6 +927,7 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
  */
 DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 {
+	int i;
 	LPTSTR storedTargetPath;
 
 	SetLastError(ERROR_SUCCESS);
@@ -939,7 +945,23 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 		return 0;
 	}
 
-	storedTargetPath = HashTable_GetItemValue(_CommDevices, (void*)lpDeviceName);
+	storedTargetPath = NULL;
+	for (i=0; i<COMM_DEVICE_MAX; i++)
+	{
+		if (_CommDevices[i] != NULL)
+		{
+			if (_tcscmp(_CommDevices[i]->name, lpDeviceName) == 0)
+			{
+				storedTargetPath = _CommDevices[i]->path;
+				break;
+			}
+
+			continue;
+		}
+
+		break;
+	}
+	
 	if (storedTargetPath == NULL)
 	{
 		SetLastError(ERROR_INVALID_DATA);
