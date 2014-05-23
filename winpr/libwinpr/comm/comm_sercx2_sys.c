@@ -84,7 +84,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 		DEBUG_WARN("Not all wait events supported (SerCx2.sys), requested events= 0X%lX, possible events= 0X%lX", *pWaitMask, possibleMask);
 
 		/* FIXME: shall we really set the possibleMask and return FALSE? */
-		pComm->waitMask = possibleMask;
+		pComm->WaitEventMask = possibleMask;
 		return FALSE;
 	}
 

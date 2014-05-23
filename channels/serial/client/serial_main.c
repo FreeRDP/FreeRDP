@@ -150,10 +150,6 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	 * details, a command line argument? */
 	/* _comm_set_permissive(serial->hComm, TRUE); */
 
-	/* FIXME: this stinks, see also IOCTL_SERIAL_PURGE */
-	// TMP: to be removed
-	//_comm_set_ReadIrpQueue(serial->hComm, serial->ReadIrpQueue);
-
 	/* NOTE: binary mode/raw mode required for the redirection. On
 	 * Linux, CommCreateFileA forces this setting.
 	 */

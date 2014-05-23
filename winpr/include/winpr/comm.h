@@ -536,8 +536,6 @@ const char* _comm_serial_ioctl_name(ULONG number);
  */
 BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive);
 
-void _comm_set_ReadIrpQueue(HANDLE hComm, wMessageQueue* ReadIrpQueue);
-
 
 /**
  * FIXME: to be moved in comm_ioctl.h

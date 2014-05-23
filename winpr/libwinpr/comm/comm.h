@@ -59,10 +59,6 @@ struct winpr_comm
 	// TMP: to be renamed serverSerialDriverId
 	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
 
-	wMessageQueue* ReadIrpQueue; /* considered as optional since it is
-				      * defined outside of CommCreateFile 
-				      * FIXME: how to remove this shortcut? */
-
 	COMMTIMEOUTS timeouts;
 	
 	/* NB: no synchronization required on counters until _get_commstatus()
@@ -71,7 +67,7 @@ struct winpr_comm
 	struct serial_icounter_struct counters;
 
 	/* TMP: TODO: sync */
-	ULONG waitMask; /* TMP: to be renamed EventMask */
+	ULONG WaitEventMask;
 	ULONG PendingEvents;
 
 	/* NB: CloseHandle() has to free resources */

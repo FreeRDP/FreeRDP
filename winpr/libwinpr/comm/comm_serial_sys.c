@@ -1041,18 +1041,18 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 		DEBUG_WARN("Not all wait events supported (Serial.sys), requested events= 0X%lX, possible events= 0X%lX", *pWaitMask, possibleMask);
 
 		/* FIXME: shall we really set the possibleMask and return FALSE? */
-		pComm->waitMask = possibleMask;
+		pComm->WaitEventMask = possibleMask;
 		return FALSE;
 	}
 
-	pComm->waitMask = possibleMask;
+	pComm->WaitEventMask = possibleMask;
 	return TRUE;
 }
 
 
 static BOOL _get_wait_mask(WINPR_COMM *pComm, ULONG *pWaitMask)
 {
-	*pWaitMask = pComm->waitMask;
+	*pWaitMask = pComm->WaitEventMask;
 	return TRUE;
 }
 
@@ -1097,35 +1097,23 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 		return FALSE;
 	}
 	
-	/* FIXME: don't rely so much on how the IRP queues are implemented, should be more generic */
 
-	/* nothing to do until IRP_MJ_WRITE-s and IRP_MJ_DEVICE_CONTROL-s are executed in the same thread */
-	/* if (*pPurgeMask & SERIAL_PURGE_TXABORT) */
-	/* { */
-	/* 	/\* Purges all write (IRP_MJ_WRITE) requests. *\/ */
+	if (*pPurgeMask & SERIAL_PURGE_TXABORT)
+	{
+		/* Purges all write (IRP_MJ_WRITE) requests. */
 
-	/* } */
+
+		// TMP: TODO: intercept this call before CommDeviceIoControl() ?
+	}
 
 	if (*pPurgeMask & SERIAL_PURGE_RXABORT)
 	{
 		/* Purges all read (IRP_MJ_READ) requests. */
 
-		// TMP:
-		if (pComm->ReadIrpQueue != NULL)
-		{
-			assert(0);
-			MessageQueue_Clear(pComm->ReadIrpQueue);
-		}
-
 		/* TMP: TODO: double check if this gives well a change to abort a pending CommReadFile */
 		/* assert(0); */
 		/* fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) | O_NONBLOCK); */
 		/* fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) & ~O_NONBLOCK); */
-
-		/* TMP: FIXME: synchronization of the incoming
-		 * IRP_MJ_READ-s. Could be possible to make them to
-		 * transit first by the MainIrpQueue before to
-		 * dispatch them */
 	}
 
 	if (*pPurgeMask & SERIAL_PURGE_TXCLEAR)
@@ -1294,7 +1282,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 
 static void _consume_event(WINPR_COMM *pComm, ULONG *pOutputMask, ULONG event)
 {
-	if ((pComm->waitMask & event) && (pComm->PendingEvents & event))
+	if ((pComm->WaitEventMask & event) && (pComm->PendingEvents & event))
 	{
 		pComm->PendingEvents &= ~event; /* consumed */
 		*pOutputMask |= event;
@@ -1338,7 +1326,7 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 		}
 	}
 
-	DEBUG_WARN("_wait_on_mask pending on events:0X%lX", pComm->waitMask);
+	DEBUG_WARN("_wait_on_mask pending on events:0X%lX", pComm->WaitEventMask);
 	SetLastError(ERROR_IO_PENDING); /* see: WaitCommEvent's help */
 	return FALSE;
 }

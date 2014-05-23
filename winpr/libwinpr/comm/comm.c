@@ -1175,10 +1175,4 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 }
 
 
-/* FIXME: to be removed */
-void _comm_set_ReadIrpQueue(HANDLE hComm, wMessageQueue* ReadIrpQueue)
-{
-	((WINPR_COMM*)hComm)->ReadIrpQueue = ReadIrpQueue;
-}
-
 #endif /* _WIN32 */
