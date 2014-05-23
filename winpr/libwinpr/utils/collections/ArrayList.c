@@ -285,7 +285,11 @@ BOOL ArrayList_Remove(wArrayList* arrayList, void* obj)
 	}
 
 	if (found)
+  {
+		if (arrayList->object.fnObjectFree)
+			arrayList->object.fnObjectFree(arrayList->array[index]);
 		ret = ArrayList_Shift(arrayList, index, -1);
+  }
 
 	if (arrayList->synchronized)
 		LeaveCriticalSection(&arrayList->lock);
@@ -305,6 +309,8 @@ BOOL ArrayList_RemoveAt(wArrayList* arrayList, int index)
 
 	if ((index >= 0) && (index < arrayList->size))
 	{
+		if (arrayList->object.fnObjectFree)
+			arrayList->object.fnObjectFree(arrayList->array[index]);
 		ret = ArrayList_Shift(arrayList, index, -1);
 	}
 
