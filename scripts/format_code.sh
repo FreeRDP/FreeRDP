@@ -15,9 +15,9 @@ if [ $# -le 0 ]; then
   exit 2
 fi
 
-$ASTYLE --lineend=linux --mode=c --indent=force-tab=4 --brackets=linux \
+$ASTYLE --lineend=linux --mode=c --indent=force-tab=4 --brackets=linux --style=bsd --pad-header \
 				--indent-switches --indent-cases --indent-preprocessor \
 				--indent-col1-comments --delete-empty-lines --break-closing-brackets \
 				--break-elseifs --align-pointer=name --indent-labels --brackets=break \
-				--unpad-paren $@
+				--unpad-paren --break-blocks $@
 exit $?
