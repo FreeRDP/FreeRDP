@@ -1305,8 +1305,9 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 {
 	assert(*pOutputMask == 0);
 
-
-	while (TRUE)
+	// TMP: TODO:
+	// TMP: TODO: wait also on a PendingEvents modification, and a new identical IRP
+	/* while (TRUE) */
 	{
 		SERIAL_STATUS serialStatus;
 
@@ -1335,11 +1336,6 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 			/* at least an event occurred */
 			return TRUE;
 		}
-
-		/* // TMP: */
-		DEBUG_WARN("waiting on events:0X%lX", pComm->waitMask);
-
-		sleep(1); // TMP: TODO: wait also on a PendingEvents modification, and a new identical IRP
 	}
 
 	DEBUG_WARN("_wait_on_mask pending on events:0X%lX", pComm->waitMask);
