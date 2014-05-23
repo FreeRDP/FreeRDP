@@ -66,17 +66,126 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
-	freerdp_client_start(context);
+	/* Check, if we want to read missing arguments from command line. */
+	if (settings->CredentialsFromStdin)
+	{
+		if (!xf_authenticate_(settings, &settings->Username,
+				&settings->Password, &settings->Domain))
+		{
+			DEBUG_WARN("[context->Authenticate] failed.");
+			status = -1;
+		}
 
-	thread = freerdp_client_get_thread(context);
+		if (settings->GatewayUseSameCredentials)
+		{
+			if (!settings->GatewayUsername)
+				settings->GatewayUsername = _strdup(settings->Username);
+			if (!settings->GatewayDomain)
+				settings->GatewayDomain = _strdup(settings->Domain);
+			if (!settings->GatewayPassword)
+				settings->GatewayPassword = _strdup(settings->Password);
+		}
+		else if (settings->GatewayEnabled)
+		{
+			printf("Gateway settings\n");
+			if (!xf_authenticate_(settings, &settings->GatewayUsername,
+					&settings->GatewayPassword, &settings->GatewayDomain))
+			{
+				DEBUG_WARN("[context->Authenticate] failed.");
+				status = -1;
+			}
+		}
 
-	WaitForSingleObject(thread, INFINITE);
+		/* Read the host, if requested. */
+		if (!settings->ServerHostname)
+		{
+			size_t len = 0;
+			char *p = NULL;
+			char *in = NULL;
 
-	GetExitCodeThread(thread, &dwExitCode);
+			printf("Hostname: ");
+			getline(&in, &len, stdin);
 
-	freerdp_client_stop(context);
+			if (in)
+			{
+				p = strchr(in, '\r');
+				if (p)
+					*p = '\0';
+				p = strchr(in, '\n');
+				if (p)
+					*p = '\0';
+
+				p = strchr(in, ':');
+				if (p)
+				{
+					size_t length = p - in;
+					settings->ServerPort = atoi(&p[1]);
+					settings->ServerHostname = (char*) malloc(length + 1);
+					strncpy(settings->ServerHostname, in, length);
+					settings->ServerHostname[length] = '\0';
+				}
+				else
+				{
+					settings->ServerHostname = _strdup(in);
+				}
+
+				free(in);
+			}
+		}
+
+		/* Read the gateway hostname, if requested. */
+		if (!settings->GatewayHostname && settings->GatewayEnabled)
+		{
+			size_t len = 0;
+			char *p = NULL;
+			char *in = NULL;
+
+			printf("Gateway: ");
+			getline(&in, &len, stdin);
+			if (in)
+			{
+				p = strchr(in, '\r');
+				if (p)
+					*p = '\0';
+				p = strchr(in, '\n');
+				if (p)
+					*p = '\0';
+
+				p = strchr(in, ':');
+				if (p)
+				{
+					size_t length = p - in;
+					settings->GatewayPort = atoi(&p[1]);
+					settings->GatewayHostname = (char*) malloc(length + 1);
+					strncpy(settings->GatewayHostname, in, length);
+					settings->GatewayHostname[length] = '\0';
+				}
+				else
+				{
+					settings->GatewayHostname = _strdup(in);
+				}
+
+				free(in);
+			}
+		}
+	}
+
+	if (!status)
+	{
+		freerdp_client_start(context);
+
+		thread = freerdp_client_get_thread(context);
+
+		WaitForSingleObject(thread, INFINITE);
+
+		GetExitCodeThread(thread, &dwExitCode);
+
+		freerdp_client_stop(context);
+
+		status = xf_exit_code_from_disconnect_reason(dwExitCode);
+	}
 
 	freerdp_client_context_free(context);
 
-	return xf_exit_code_from_disconnect_reason(dwExitCode);
+	return status;
 }

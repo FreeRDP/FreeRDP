@@ -68,11 +68,12 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
 	{ "u", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Username" },
 	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
+	{ "from-stdin", COMMAND_LINE_VALUE_FLAG, "<password>", NULL, NULL, -1, NULL, "Password" },
 	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Domain" },
 	{ "g", COMMAND_LINE_VALUE_OPTIONAL, "<gateway>[:port]", NULL, NULL, -1, NULL, "Gateway Hostname" },
-	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
-	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
-	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
+	{ "gu", COMMAND_LINE_VALUE_OPTIONAL, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
+	{ "gp", COMMAND_LINE_VALUE_OPTIONAL, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
+	{ "gd", COMMAND_LINE_VALUE_OPTIONAL, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info string>", NULL, NULL, -1, NULL, "Load balance info" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "<executable path> or <||alias>", NULL, NULL, -1, NULL, "Remote application program" },
 	{ "app-name", COMMAND_LINE_VALUE_REQUIRED, "<app name>", NULL, NULL, -1, NULL, "Remote application name for user interface" },
@@ -1344,8 +1345,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "u")
 		{
-			char* user;
-			char* domain;
+			char* user = NULL;
+			char* domain = NULL;
 
 			freerdp_parse_username(arg->Value, &user, &domain);
 
@@ -1355,6 +1356,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "d")
 		{
 			settings->Domain = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "from-stdin")
+		{
+			settings->CredentialsFromStdin = TRUE;
 		}
 		CommandLineSwitchCase(arg, "p")
 		{
@@ -1392,24 +1397,29 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
-			char* user;
-			char* domain;
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				char* user;
+				char* domain;
 
-			freerdp_parse_username(arg->Value, &user, &domain);
+				freerdp_parse_username(arg->Value, &user, &domain);
 
-			settings->GatewayUsername = user;
-			settings->GatewayDomain = domain;
+				settings->GatewayUsername = user;
+				settings->GatewayDomain = domain;
+			}
 
 			settings->GatewayUseSameCredentials = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gd")
 		{
-			settings->GatewayDomain = _strdup(arg->Value);
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+				settings->GatewayDomain = _strdup(arg->Value);
 			settings->GatewayUseSameCredentials = FALSE;
 		}
 		CommandLineSwitchCase(arg, "gp")
 		{
-			settings->GatewayPassword = _strdup(arg->Value);
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+				settings->GatewayPassword = _strdup(arg->Value);
 			settings->GatewayUseSameCredentials = FALSE;
 		}
 		CommandLineSwitchCase(arg, "app")
@@ -1824,7 +1834,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 	{
-		FillMemory(arg->Value, strlen(arg->Value), '*');
+		if (arg->Value)
+			FillMemory(arg->Value, strlen(arg->Value), '*');
 	}
 
 	arg = CommandLineFindArgumentA(args, "gp");

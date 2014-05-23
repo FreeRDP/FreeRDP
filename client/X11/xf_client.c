@@ -1037,6 +1037,23 @@ BOOL xf_post_connect(freerdp* instance)
 	return TRUE;
 }
 
+static void replace_characters(char *in, char *what, char rep)
+{
+	char *p;
+
+	while (what && *what != '\0')
+	{
+		char cur = *what++;
+
+		do
+		{
+			p = strchr(in, cur);
+			if (p)
+				*p = rep;
+		} while(p);
+	}
+}
+
 /** Callback set in the rdp_freerdp structure, and used to get the user's password,
  *  if required to establish the connection.
  *  This function is actually called in credssp_ntlmssp_client_init()
@@ -1051,14 +1068,80 @@ BOOL xf_post_connect(freerdp* instance)
  */
 BOOL xf_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
-	// FIXME: seems this callback may be called when 'username' is not known.
-	// But it doesn't do anything to fix it...
-	*password = malloc(password_size * sizeof(char));
+	return xf_authenticate_(instance->settings, username, password, domain);
+}
 
-	if (freerdp_passphrase_read("Password: ", *password, password_size, instance->settings->CredentialsFromStdin) == NULL)
+BOOL xf_authenticate_(rdpSettings *settings, char** username, char** password, char** domain)
+{
+	BOOL rc = TRUE;
+
+	assert(settings);
+	assert(username);
+	assert(password);
+	assert(domain);
+
+	if (!settings->CredentialsFromStdin)
 		return FALSE;
 
-	return TRUE;
+	if (*username == NULL)
+	{
+		size_t s=0, r;
+		char *in = NULL;
+
+		printf("Username: ");
+		r = getline(&in, &s, stdin);
+		if (r)
+		{
+			replace_characters(in, "\r\n", '\0');
+			freerdp_parse_username(in, username, domain);
+		}
+		else
+			rc = FALSE;
+
+		if (in)
+			free(in);
+	}
+	
+	if (*password == NULL)
+	{
+		*password = freerdp_passphrase_read("Password: ", *password, 0,
+					settings->CredentialsFromStdin);
+
+		if (!*password)
+			rc = FALSE;
+	}
+
+	if (*domain == NULL)
+	{
+		size_t s=0, r;
+		char *in = NULL;
+
+		printf("Domain: ");
+		r = getline(&in, &s, stdin);
+		if (r)
+		{
+			replace_characters(in, "\r\n", '\0');
+			if (in)
+				*domain = _strdup(in);
+		}
+		else
+			rc = FALSE;
+
+		if (in)
+			free(in);
+	}
+
+	if (!rc)
+	{
+		if (*username)
+			free(*username);
+		if (*password)
+			free(*password);
+		if (*domain)
+			free(*domain);
+	}
+
+	return rc;
 }
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
