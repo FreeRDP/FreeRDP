@@ -32,19 +32,19 @@
 
 #ifndef _WIN32
 
-INLINE UINT32 _rotl(UINT32 value, int shift) {
+static INLINE UINT32 _rotl(UINT32 value, int shift) {
 	return (value << shift) | (value >> (32 - shift));
 }
 
-INLINE UINT64 _rotl64(UINT64 value, int shift) {
+static INLINE UINT64 _rotl64(UINT64 value, int shift) {
 	return (value << shift) | (value >> (64 - shift));
 }
 
-INLINE UINT32 _rotr(UINT32 value, int shift) {
+static INLINE UINT32 _rotr(UINT32 value, int shift) {
 	return (value >> shift) | (value << (32 - shift));
 }
 
-INLINE UINT64 _rotr64(UINT64 value, int shift) {
+static INLINE UINT64 _rotr64(UINT64 value, int shift) {
 	return (value >> shift) | (value << (64 - shift));
 }
 
