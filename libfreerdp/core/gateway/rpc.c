@@ -33,6 +33,11 @@
 #include <winpr/dsparse.h>
 
 #include <openssl/rand.h>
+#include <openssl/bio.h>
+
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
 
 #include "http.h"
 #include "ntlm.h"
@@ -235,80 +240,77 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 {
 	UINT32 alloc_hint = 0;
 	rpcconn_hdr_t* header;
+	UINT32 frag_length;
+	UINT32 auth_length;
+	UINT32 auth_pad_length;
+	UINT32 sec_trailer_offset;
+	rpc_sec_trailer* sec_trailer;
 
 	*offset = RPC_COMMON_FIELDS_LENGTH;
 	header = ((rpcconn_hdr_t*) buffer);
 
-	if (header->common.ptype == PTYPE_RESPONSE)
+	switch (header->common.ptype)
 	{
-		*offset += 8;
-		rpc_offset_align(offset, 8);
-		alloc_hint = header->response.alloc_hint;
-	}
-	else if (header->common.ptype == PTYPE_REQUEST)
-	{
-		*offset += 4;
-		rpc_offset_align(offset, 8);
-		alloc_hint = header->request.alloc_hint;
-	}
-	else if (header->common.ptype == PTYPE_RTS)
-	{
-		*offset += 4;
-	}
-	else
-	{
-		return FALSE;
+		case PTYPE_RESPONSE:
+			*offset += 8;
+			rpc_offset_align(offset, 8);
+			alloc_hint = header->response.alloc_hint;
+			break;
+		case PTYPE_REQUEST:
+			*offset += 4;
+			rpc_offset_align(offset, 8);
+			alloc_hint = header->request.alloc_hint;
+			break;
+		case PTYPE_RTS:
+			*offset += 4;
+			break;
+		default:
+			fprintf(stderr, "%s: unknown ptype=0x%x\n", __FUNCTION__, header->common.ptype);
+			return FALSE;
 	}
 
-	if (length)
+	if (!length)
+		return TRUE;
+
+	if (header->common.ptype == PTYPE_REQUEST)
 	{
-		if (header->common.ptype == PTYPE_REQUEST)
-		{
-			UINT32 sec_trailer_offset;
+		UINT32 sec_trailer_offset;
 
-			sec_trailer_offset = header->common.frag_length - header->common.auth_length - 8;
-			*length = sec_trailer_offset - *offset;
-		}
-		else
-		{
-			UINT32 frag_length;
-			UINT32 auth_length;
-			UINT32 auth_pad_length;
-			UINT32 sec_trailer_offset;
-			rpc_sec_trailer* sec_trailer;
+		sec_trailer_offset = header->common.frag_length - header->common.auth_length - 8;
+		*length = sec_trailer_offset - *offset;
+		return TRUE;
+	}
 
-			frag_length = header->common.frag_length;
-			auth_length = header->common.auth_length;
 
-			sec_trailer_offset = frag_length - auth_length - 8;
-			sec_trailer = (rpc_sec_trailer*) &buffer[sec_trailer_offset];
-			auth_pad_length = sec_trailer->auth_pad_length;
+	frag_length = header->common.frag_length;
+	auth_length = header->common.auth_length;
+
+	sec_trailer_offset = frag_length - auth_length - 8;
+	sec_trailer = (rpc_sec_trailer*) &buffer[sec_trailer_offset];
+	auth_pad_length = sec_trailer->auth_pad_length;
 
 #if 0
-			fprintf(stderr, "sec_trailer: type: %d level: %d pad_length: %d reserved: %d context_id: %d\n",
-					sec_trailer->auth_type,
-					sec_trailer->auth_level,
-					sec_trailer->auth_pad_length,
-					sec_trailer->auth_reserved,
-					sec_trailer->auth_context_id);
+	fprintf(stderr, "sec_trailer: type: %d level: %d pad_length: %d reserved: %d context_id: %d\n",
+			sec_trailer->auth_type,
+			sec_trailer->auth_level,
+			sec_trailer->auth_pad_length,
+			sec_trailer->auth_reserved,
+			sec_trailer->auth_context_id);
 #endif
 
-			/**
-			 * According to [MS-RPCE], auth_pad_length is the number of padding
-			 * octets used to 4-byte align the security trailer, but in practice
-			 * we get values up to 15, which indicates 16-byte alignment.
-			 */
+	/**
+	 * According to [MS-RPCE], auth_pad_length is the number of padding
+	 * octets used to 4-byte align the security trailer, but in practice
+	 * we get values up to 15, which indicates 16-byte alignment.
+	 */
 
-			if ((frag_length - (sec_trailer_offset + 8)) != auth_length)
-			{
-				fprintf(stderr, "invalid auth_length: actual: %d, expected: %d\n", auth_length,
-						(frag_length - (sec_trailer_offset + 8)));
-			}
-
-			*length = frag_length - auth_length - 24 - 8 - auth_pad_length;
-		}
+	if ((frag_length - (sec_trailer_offset + 8)) != auth_length)
+	{
+		fprintf(stderr, "invalid auth_length: actual: %d, expected: %d\n", auth_length,
+				(frag_length - (sec_trailer_offset + 8)));
 	}
 
+	*length = frag_length - auth_length - 24 - 8 - auth_pad_length;
 	return TRUE;
 }
 
@@ -316,12 +318,23 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
 
-	status = tls_read(rpc->TlsOut, data, length);
+	status = BIO_read(rpc->TlsOut->bio, data, length);
+	/* fprintf(stderr, "%s: length=%d => status=%d shouldRetry=%d\n", __FUNCTION__, length,
+	 * 					status, BIO_should_retry(rpc->TlsOut->bio)); */
+	if (status > 0) {
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+		VALGRIND_MAKE_MEM_DEFINED(data, status);
+#endif
+		return status;
+	}
 
-	return status;
+	if (BIO_should_retry(rpc->TlsOut->bio))
+		return 0;
+
+	return -1;
 }
 
-int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
+int rpc_out_write(rdpRpc* rpc, const BYTE* data, int length)
 {
 	int status;
 
@@ -330,7 +343,7 @@ int rpc_out_write(rdpRpc* rpc, BYTE* data, int length)
 	return status;
 }
 
-int rpc_in_write(rdpRpc* rpc, BYTE* data, int length)
+int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length)
 {
 	int status;
 
@@ -360,20 +373,21 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	ntlm = rpc->ntlm;
 
-	if ((!ntlm) || (!ntlm->table))
+	if (!ntlm || !ntlm->table)
 	{
-		fprintf(stderr, "rpc_write: invalid ntlm context\n");
+		fprintf(stderr, "%s: invalid ntlm context\n", __FUNCTION__);
 		return -1;
 	}
 
 	if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 	{
-		fprintf(stderr, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+		fprintf(stderr, "%s: QueryContextAttributes SECPKG_ATTR_SIZES failure\n", __FUNCTION__);
 		return -1;
 	}
 
-	request_pdu = (rpcconn_request_hdr_t*) malloc(sizeof(rpcconn_request_hdr_t));
-	ZeroMemory(request_pdu, sizeof(rpcconn_request_hdr_t));
+	request_pdu = (rpcconn_request_hdr_t*) calloc(1, sizeof(rpcconn_request_hdr_t));
+	if (!request_pdu)
+		return -1;
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) request_pdu);
 
@@ -386,7 +400,11 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	request_pdu->opnum = opnum;
 
 	clientCall = rpc_client_call_new(request_pdu->call_id, request_pdu->opnum);
-	ArrayList_Add(rpc->client->ClientCallList, clientCall);
+	if (!clientCall)
+		goto out_free_pdu;
+
+	if (ArrayList_Add(rpc->client->ClientCallList, clientCall) < 0)
+		goto out_free_clientCall;
 
 	if (request_pdu->opnum == TsProxySetupReceivePipeOpnum)
 		rpc->PipeCallId = request_pdu->call_id;
@@ -407,8 +425,9 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	request_pdu->frag_length = offset;
 
-	buffer = (BYTE*) malloc(request_pdu->frag_length);
-
+	buffer = (BYTE*) calloc(1, request_pdu->frag_length);
+	if (!buffer)
+		goto out_free_pdu;
 	CopyMemory(buffer, request_pdu, 24);
 
 	offset = 24;
@@ -427,15 +446,15 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	Buffers[0].cbBuffer = offset;
 
 	Buffers[1].cbBuffer = ntlm->ContextSizes.cbMaxSignature;
-	Buffers[1].pvBuffer = malloc(Buffers[1].cbBuffer);
-	ZeroMemory(Buffers[1].pvBuffer, Buffers[1].cbBuffer);
+	Buffers[1].pvBuffer = calloc(1, Buffers[1].cbBuffer);
+	if (!Buffers[1].pvBuffer)
+		return -1;
 
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
 	Message.pBuffers = (PSecBuffer) &Buffers;
 
 	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, rpc->SendSeqNum++);
-
 	if (encrypt_status != SEC_E_OK)
 	{
 		fprintf(stderr, "EncryptMessage status: 0x%08X\n", encrypt_status);
@@ -447,12 +466,18 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	offset += Buffers[1].cbBuffer;
 	free(Buffers[1].pvBuffer);
 
-	if (rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length) != 0)
+	if (rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length) < 0)
 		length = -1;
 
 	free(request_pdu);
 
 	return length;
+
+out_free_clientCall:
+	rpc_client_call_free(clientCall);
+out_free_pdu:
+	free(request_pdu);
+	return -1;
 }
 
 BOOL rpc_connect(rdpRpc* rpc)
@@ -592,13 +617,17 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 	rpc->CallId = 2;
 
-	rpc_client_new(rpc);
+	if (rpc_client_new(rpc) < 0)
+		goto out_free_virtualConnectionCookieTable;
 
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
 
 	return rpc;
 
+out_free_virtualConnectionCookieTable:
+	rpc_client_free(rpc);
+	ArrayList_Free(rpc->VirtualConnectionCookieTable);
 out_free_virtual_connection:
 	rpc_client_virtual_connection_free(rpc->VirtualConnection);
 out_free_ntlm_http_out:

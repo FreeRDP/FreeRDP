@@ -26,6 +26,10 @@
 #include <winpr/stream.h>
 #include <winpr/string.h>
 
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
+
 #include "http.h"
 
 HttpContext* http_context_new()
@@ -472,7 +476,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	nbytes = 0;
 	length = 10000;
 	content = NULL;
-	buffer = malloc(length);
+	buffer = calloc(length, 1);
 	if (!buffer)
 		return NULL;
 
@@ -487,14 +491,20 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	{
 		while (nbytes < 5)
 		{
-			status = tls_read(tls, p, length - nbytes);
+			status = BIO_read(tls->bio, p, length - nbytes);
             
-			if (status < 0)
-				goto out_error;
+			if (status <= 0)
+			{
+				if (!BIO_should_retry(tls->bio))
+					goto out_error;
 
-			if (!status)
+				USleep(100);
 				continue;
+			}
 
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+			VALGRIND_MAKE_MEM_DEFINED(p, status);
+#endif
 			nbytes += status;
 			p = (BYTE*) &buffer[nbytes];
 		}
@@ -503,7 +513,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
         
 		if (!header_end)
 		{
-			fprintf(stderr, "http_response_recv: invalid response:\n");
+			fprintf(stderr, "%s: invalid response:\n", __FUNCTION__);
 			winpr_HexDump(buffer, status);
 			goto out_error;
 		}
@@ -517,7 +527,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 			header_end[0] = '\0';
 			header_end[1] = '\0';
-			content = &header_end[2];
+			content = header_end + 2;
 
 			count = 0;
 			line = (char*) buffer;
@@ -552,11 +562,14 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			if (!http_response_parse_header(http_response))
 				goto out_error;
 
-			if (http_response->ContentLength > 0)
+			http_response->bodyLen = nbytes - (content - (char *)buffer);
+			if (http_response->bodyLen > 0)
 			{
-				http_response->Content = _strdup(content);
-				if (!http_response->Content)
+				http_response->BodyContent = (BYTE *)malloc(http_response->bodyLen);
+				if (!http_response->BodyContent)
 					goto out_error;
+
+				CopyMemory(http_response->BodyContent, content, http_response->bodyLen);
 			}
 
 			break;
@@ -627,7 +640,7 @@ void http_response_free(HttpResponse* http_response)
 	ListDictionary_Free(http_response->Authenticates);
 
 	if (http_response->ContentLength > 0)
-		free(http_response->Content);
+		free(http_response->BodyContent);
 
 	free(http_response);
 }

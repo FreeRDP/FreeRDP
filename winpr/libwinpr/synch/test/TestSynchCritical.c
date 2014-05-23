@@ -152,7 +152,7 @@ static PVOID TestSynchCritical_Main(PVOID arg)
 
 	InitializeCriticalSection(&critical);
 
-	for (i=0; i<1000; i++)
+	for (i = 0; i < 1000; i++)
 	{
 		if (critical.RecursionCount != i)
 		{
@@ -200,9 +200,9 @@ static PVOID TestSynchCritical_Main(PVOID arg)
 
 	dwThreadCount = sysinfo.dwNumberOfProcessors > 1 ? sysinfo.dwNumberOfProcessors : 2;
 
-	hThreads = (HANDLE*)calloc(dwThreadCount, sizeof(HANDLE));
+	hThreads = (HANDLE*) calloc(dwThreadCount, sizeof(HANDLE));
 
-	for (j=0; j < TEST_SYNC_CRITICAL_TEST1_RUNS; j++)
+	for (j = 0; j < TEST_SYNC_CRITICAL_TEST1_RUNS; j++)
 	{
 		dwSpinCount = j * 1000;
 		InitializeCriticalSectionAndSpinCount(&critical, dwSpinCount);
@@ -212,14 +212,15 @@ static PVOID TestSynchCritical_Main(PVOID arg)
 
 		/* the TestSynchCritical_Test1 threads shall run until bTest1Running is FALSE */
 		bTest1Running = TRUE;
-		for (i=0; i<dwThreadCount; i++)	{
-			hThreads[i] = CreateThread(NULL, 0,  (LPTHREAD_START_ROUTINE) TestSynchCritical_Test1, &bTest1Running, 0, NULL);
+		for (i = 0; i < (int) dwThreadCount; i++) {
+			hThreads[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) TestSynchCritical_Test1, &bTest1Running, 0, NULL);
 		}
+
 		/* let it run for TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS ... */
 		Sleep(TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS);
 		bTest1Running = FALSE;
 
-		for (i=0; i<dwThreadCount; i++)
+		for (i = 0; i < (int) dwThreadCount; i++)
 		{
 			if (WaitForSingleObject(hThreads[i], INFINITE) != WAIT_OBJECT_0)
 			{
@@ -288,13 +289,13 @@ int TestSynchCritical(int argc, char* argv[])
 	HANDLE hThread;
 	DWORD dwThreadExitCode;
 	DWORD dwDeadLockDetectionTimeMs;
-	int i;
+	DWORD i;
 
 	dwDeadLockDetectionTimeMs = 2 * TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS * TEST_SYNC_CRITICAL_TEST1_RUNS;
 
 	printf("Deadlock will be assumed after %u ms.\n", dwDeadLockDetectionTimeMs);
 
-	hThread = CreateThread(NULL, 0,  (LPTHREAD_START_ROUTINE) TestSynchCritical_Main, &bThreadTerminated, 0, NULL);
+	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) TestSynchCritical_Main, &bThreadTerminated, 0, NULL);
 
 	/**
 	 * We have to be able to detect dead locks in this test.
@@ -303,10 +304,11 @@ int TestSynchCritical(int argc, char* argv[])
 	 * Workaround checking the value of bThreadTerminated which is passed in the thread arg
 	 */
 
-	for (i=0; i<dwDeadLockDetectionTimeMs; i+=100)
+	for (i = 0; i < dwDeadLockDetectionTimeMs; i += 100)
 	{
 		if (bThreadTerminated)
 			break;
+
 		Sleep(100);
 	}
 
@@ -319,7 +321,7 @@ int TestSynchCritical(int argc, char* argv[])
 	GetExitCodeThread(hThread, &dwThreadExitCode);
 	CloseHandle(hThread);
 
-	if(dwThreadExitCode != 0)
+	if (dwThreadExitCode != 0)
 	{
 		return -1;
 	}

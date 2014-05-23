@@ -1,6 +1,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/wnd.h>
+#include <winpr/tchar.h>
 #include <winpr/library.h>
 
 static LRESULT CALLBACK TestWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
