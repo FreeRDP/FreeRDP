@@ -1373,6 +1373,32 @@ static BOOL _set_break_off(WINPR_COMM *pComm)
 }
 
 
+static BOOL _set_xoff(WINPR_COMM *pComm)
+{
+	if (tcflow(pComm->fd, TCIOFF) < 0)
+	{
+		DEBUG_WARN("TCIOFF failure, errno=[%d] %s", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+static BOOL _set_xon(WINPR_COMM *pComm)
+{
+	if (tcflow(pComm->fd, TCION) < 0)
+	{
+		DEBUG_WARN("TCION failure, errno=[%d] %s", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
 	.id		  = RemoteSerialDriverSerialSys,
@@ -1401,6 +1427,8 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.get_commstatus   = _get_commstatus,
 	.set_break_on     = _set_break_on,
 	.set_break_off    = _set_break_off,
+	.set_xoff         = _set_xoff,
+	.set_xon          = _set_xon,
 };
 
 

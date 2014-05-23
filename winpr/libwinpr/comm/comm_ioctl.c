@@ -545,6 +545,22 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			}
 			break;
 		}
+		case IOCTL_SERIAL_SET_XOFF:
+		{
+			if (pRemoteSerialDriver->set_xoff)
+			{
+				return pRemoteSerialDriver->set_xoff(pComm);
+			}
+			break;
+		}
+		case IOCTL_SERIAL_SET_XON:
+		{
+			if (pRemoteSerialDriver->set_xon)
+			{
+				return pRemoteSerialDriver->set_xon(pComm);
+			}
+			break;
+		}
 	}
 	
 	DEBUG_WARN(_T("unsupported IoControlCode=[0x%lX] %s (remote serial driver: %s)"), 

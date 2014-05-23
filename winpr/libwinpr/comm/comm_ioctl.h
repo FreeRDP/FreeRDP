@@ -232,6 +232,8 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*get_commstatus)(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus);
 	BOOL (*set_break_on)(WINPR_COMM *pComm);
 	BOOL (*set_break_off)(WINPR_COMM *pComm);
+	BOOL (*set_xoff)(WINPR_COMM *pComm);
+	BOOL (*set_xon)(WINPR_COMM *pComm);
 
 } REMOTE_SERIAL_DRIVER;
 
