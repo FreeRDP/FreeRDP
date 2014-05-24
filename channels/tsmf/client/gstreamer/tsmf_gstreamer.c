@@ -43,13 +43,6 @@
 #include <inttypes.h>
 #endif
 
-static const char *NAME_GST_STATE_PLAYING = "GST_STATE_PLAYING";
-static const char *NAME_GST_STATE_PAUSED = "GST_STATE_PAUSED";
-static const char *NAME_GST_STATE_READY = "GST_STATE_READY";
-static const char *NAME_GST_STATE_NULL = "GST_STATE_NULL";
-static const char *NAME_GST_STATE_VOID_PENDING = "GST_STATE_VOID_PENDING";
-static const char *NAME_GST_STATE_OTHER = "GST_STATE_?";
-
 static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder);
 static void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder *mdecoder);
 static void tsmf_gstreamer_clean_up_pad(TSMFGstreamerDecoder *mdecoder);
@@ -108,40 +101,6 @@ static inline const GstClockTime tsmf_gstreamer_timestamp_ms_to_gst(UINT64 ms_ti
 	return (GstClockTime)(ms_timestamp * 100);
 }
 
-static const char *tsmf_gstreamer_state_name(GstState state)
-{
-	const char *name;
-
-	switch (state)
-	{
-		case GST_STATE_PLAYING:
-			name = NAME_GST_STATE_PLAYING;
-			break;
-
-		case GST_STATE_PAUSED:
-			name = NAME_GST_STATE_PAUSED;
-			break;
-
-		case GST_STATE_READY:
-			name = NAME_GST_STATE_READY;
-			break;
-
-		case GST_STATE_NULL:
-			name = NAME_GST_STATE_NULL;
-			break;
-
-		case GST_STATE_VOID_PENDING:
-			name = NAME_GST_STATE_VOID_PENDING;
-			break;
-
-		default:
-			name = NAME_GST_STATE_OTHER;
-			break;
-	}
-
-	return name;
-}
-
 int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder *mdecoder, GstState desired_state)
 {
 	GstStateChangeReturn state_change;
@@ -156,7 +115,7 @@ int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder *mdecoder, GstState d
 	if (desired_state == mdecoder->state)
 		return 0;  /* Redundant request - Nothing to do */
 
-	name = tsmf_gstreamer_state_name(desired_state); /* For debug */
+	name = gst_element_state_name(desired_state); /* For debug */
 	DEBUG_TSMF("%s to %s", get_type(mdecoder), name);
 	state_change = gst_element_set_state(mdecoder->pipe, desired_state);
 
@@ -779,7 +738,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder *decoder, const BYTE *data, UIN
 
 	if (GST_STATE(mdecoder->pipe) != GST_STATE_PLAYING)
 	{
-		DEBUG_TSMF("state=%s", tsmf_gstreamer_state_name(GST_STATE(mdecoder->pipe)));
+		DEBUG_TSMF("state=%s", gst_element_state_name(GST_STATE(mdecoder->pipe)));
 
 		if (!mdecoder->paused && !mdecoder->shutdown && mdecoder->ready)
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
