@@ -80,12 +80,12 @@ static gboolean tsmf_gstreamer_seek_data(GstAppSrc *src, guint64 offset, gpointe
 	DEBUG_TSMF("%s offset=%llu", get_type(mdecoder), offset);
 
 	if (!mdecoder->paused)
-		gst_element_set_state(mdecoder->pipe, GST_STATE_PAUSED);
+		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PAUSED);
 
 	gst_app_src_end_of_stream((GstAppSrc *)mdecoder->src);
 
 	if (!mdecoder->paused)
-		gst_element_set_state(mdecoder->pipe, GST_STATE_PLAYING);
+		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 
 	if (mdecoder->sync_cb)
 		mdecoder->sync_cb(mdecoder->stream);
@@ -419,7 +419,7 @@ void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder *mdecoder)
 
 	if (mdecoder->pipe && GST_OBJECT_REFCOUNT_VALUE(mdecoder->pipe) > 0)
 	{
-		gst_element_set_state(mdecoder->pipe, GST_STATE_NULL);
+		tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_NULL);
 		gst_object_unref(mdecoder->pipe);
 	}
 
@@ -770,7 +770,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder *decoder, const BYTE *data, UIN
 
 	if (GST_STATE(mdecoder->pipe) != GST_STATE_PLAYING)
 	{
-		DEBUG_TSMF("state=%s", gst_element_state_get_name(GST_STATE(mdecoder->pipe)));
+		DEBUG_TSMF("%s: state=%s", get_type(mdecoder), gst_element_state_get_name(GST_STATE(mdecoder->pipe)));
 
 		if (!mdecoder->paused && !mdecoder->shutdown && mdecoder->ready)
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
