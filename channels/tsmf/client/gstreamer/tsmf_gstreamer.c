@@ -924,8 +924,8 @@ static UINT64 tsmf_gstreamer_get_running_time(ITSMFDecoder *decoder)
 	gint64 pos = 0;
 #if GST_VERSION_MAJOR > 0
 	gst_element_query_position(mdecoder->outsink, fmt, &pos);
-	gst_element_query_position(mdecoder->outsink, &fmt, &pos);
 #else
+	gst_element_query_position(mdecoder->outsink, &fmt, &pos);
 #endif
 	return pos/100;
 }
