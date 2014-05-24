@@ -505,6 +505,7 @@ static void *tsmf_stream_ack_func(void *arg)
 
 static void *tsmf_stream_playback_func(void *arg)
 {
+	HANDLE hdl[2];
 	TSMF_SAMPLE *sample;
 	TSMF_STREAM *stream = (TSMF_STREAM *) arg;
 	TSMF_PRESENTATION *presentation = stream->presentation;
@@ -527,7 +528,10 @@ static void *tsmf_stream_playback_func(void *arg)
 			}
 		}
 	}
-	while(!(WaitForSingleObject(stream->stopEvent, 0) == WAIT_OBJECT_0))
+
+	hdl[0] = stream->stopEvent;
+	hdl[1] = Queue_Event(stream->sample_list);
+	while(!(WaitForMultipleObjects(2, hdl, FALSE, INFINITE) == WAIT_OBJECT_0))
 	{
 		sample = tsmf_stream_pop_sample(stream, 0);
 		if(sample)
