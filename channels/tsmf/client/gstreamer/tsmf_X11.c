@@ -159,6 +159,8 @@ int tsmf_window_create(TSMFGstreamerDecoder *decoder)
 	{
 #if GST_VERSION_MAJOR > 0
 		GstVideoOverlay *overlay = GST_VIDEO_OVERLAY(decoder->outsink);
+#else
+		GstXOverlay *overlay = GST_X_OVERLAY(decoder->outsink);
 #endif
 		struct X11Handle *hdl = (struct X11Handle *)decoder->platform;
 		assert(decoder);
@@ -174,13 +176,12 @@ int tsmf_window_create(TSMFGstreamerDecoder *decoder)
 				DEBUG_WARN("Could not create subwindow!");
 			}
 
-			XSetWindowBackgroundPixmap(hdl->disp, hdl->subwin, None);
 			XMapWindow(hdl->disp, hdl->subwin);
 			XSync(hdl->disp, FALSE);
 #if GST_VERSION_MAJOR > 0
 			gst_video_overlay_set_window_handle(overlay, hdl->subwin);
 #else
-			gst_x_overlay_set_window_handle(GST_X_OVERLAY(decoder->outsink), *hdl->xfwin);
+			gst_x_overlay_set_window_handle(overlay, hdl->subwin);
 #endif
 			decoder->ready = TRUE;
 #if defined(WITH_XEXT)
@@ -190,6 +191,8 @@ int tsmf_window_create(TSMFGstreamerDecoder *decoder)
 
 #if GST_VERSION_MAJOR > 0
 		gst_video_overlay_handle_events(overlay, TRUE);
+#else
+		gst_x_overlay_handle_events(overlay, TRUE);
 #endif
 		return 0;
 	}
@@ -204,6 +207,8 @@ int tsmf_window_resize(TSMFGstreamerDecoder *decoder, int x, int y, int width,
 	{
 #if GST_VERSION_MAJOR > 0
 		GstVideoOverlay *overlay = GST_VIDEO_OVERLAY(decoder->outsink);
+#else
+		GstXOverlay *overlay = GST_X_OVERLAY(decoder->outsink);
 #endif
 		struct X11Handle *hdl = (struct X11Handle *)decoder->platform;
 		DEBUG_TSMF("resize: x=%d, y=%d, w=%d, h=%d", x, y, width, height);
@@ -218,7 +223,12 @@ int tsmf_window_resize(TSMFGstreamerDecoder *decoder, int x, int y, int width,
 
 		gst_video_overlay_expose(overlay);
 #else
-		gst_x_overlay_expose(GST_X_OVERLAY(decoder->outsink));
+		if (!gst_x_overlay_set_render_rectangle(overlay, 0, 0, width, height))
+		{
+			DEBUG_WARN("Could not resize overlay!");
+		}
+
+		gst_x_overlay_expose(overlay);
 #endif
 
 		if (hdl->subwin)
