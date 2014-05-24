@@ -60,7 +60,7 @@ ITSMFDecoder *tsmf_load_decoder(const char *name, TS_AM_MEDIA_TYPE *media_type)
 	{
 		decoder = tsmf_load_decoder_by_name(name, media_type);
 	}
-#if defined(WITH_GSTREAMER)
+#if defined(WITH_GSTREAMER_1_0) || defined(WITH_GSTREAMER_0_10)
 	if(!decoder)
 		decoder = tsmf_load_decoder_by_name("gstreamer", media_type);
 #endif
