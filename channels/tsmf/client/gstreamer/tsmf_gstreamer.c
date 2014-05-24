@@ -115,7 +115,7 @@ int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder *mdecoder, GstState d
 	if (desired_state == mdecoder->state)
 		return 0;  /* Redundant request - Nothing to do */
 
-	name = gst_element_state_name(desired_state); /* For debug */
+	name = gst_element_state_get_name(desired_state); /* For debug */
 	DEBUG_TSMF("%s to %s", get_type(mdecoder), name);
 	state_change = gst_element_set_state(mdecoder->pipe, desired_state);
 
@@ -134,21 +134,36 @@ int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder *mdecoder, GstState d
 
 static GstBuffer *tsmf_get_buffer_from_data(const void *raw_data, gsize size)
 {
+	GstBuffer *buffer;
 	gpointer data;
-	GstMemory *mem;
-	GstBuffer *buffer = gst_buffer_new();
-	assert(buffer);
+	assert(raw_data);
 	assert(size > 0);
 	data = g_malloc(size);
-	memcpy(data, raw_data, size);
-	mem = gst_memory_new_wrapped(0, data, size, 0, size, data, g_free);
-	gst_buffer_insert_memory(buffer, -1, mem);
-	return buffer;
-}
 
-static GstBuffer *tsmf_get_buffer_from_payload(TS_AM_MEDIA_TYPE *media_type)
-{
-	return tsmf_get_buffer_from_data(media_type->ExtraData, media_type->ExtraDataSize);
+	if (!data)
+	{
+		DEBUG_WARN("Could not allocate %d bytes of data.", size);
+		return NULL;
+	}
+
+	memcpy(data, raw_data, size);
+#if GST_VERSION_MAJOR > 0
+	buffer = gst_buffer_new_wrapped(data, size);
+#else
+	buffer = gst_buffer_new();
+
+	if (!buffer)
+	{
+		DEBUG_WARN("Could not create GstBuffer");
+		free(data);
+		return NULL;
+	}
+
+	GST_BUFFER_MALLOCDATA(buffer) = data;
+	GST_BUFFER_SIZE(buffer) = size;
+	GST_BUFFER_DATA(buffer) = GST_BUFFER_MALLOCDATA(buffer);
+#endif
+	return buffer;
 }
 
 static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *media_type)
@@ -361,12 +376,17 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 
 	if (media_type->ExtraDataSize > 0)
 	{
-		GValue val = G_VALUE_INIT;
-		GstBuffer *buffer = tsmf_get_buffer_from_payload(media_type);
+		GstBuffer *buffer;
 		DEBUG_TSMF("Extra data available (%d)", media_type->ExtraDataSize);
-		g_value_init(&val, GST_TYPE_BUFFER);
-		g_value_set_boxed(&val, buffer);
-		gst_caps_set_value(mdecoder->gst_caps, "codec_data", &val);
+		buffer = tsmf_get_buffer_from_data(media_type->ExtraData, media_type->ExtraDataSize);
+
+		if (!buffer)
+		{
+			DEBUG_WARN("could not allocate GstBuffer!");
+			return FALSE;
+		}
+
+		gst_caps_set_simple(mdecoder->gst_caps, "codec_data", GST_TYPE_BUFFER, buffer, NULL);
 	}
 
 	DEBUG_TSMF("%p format '%s'", mdecoder, gst_caps_to_string(mdecoder->gst_caps));
@@ -385,6 +405,7 @@ void tsmf_gstreamer_clean_up_pad(TSMFGstreamerDecoder *mdecoder)
 		return;
 
 	mdecoder->outconv = NULL;
+	mdecoder->outrate = NULL;
 	mdecoder->outresample = NULL;
 	mdecoder->outsink = NULL;
 	mdecoder->volume = NULL;
@@ -480,7 +501,12 @@ BOOL tsmf_gstreamer_add_pad(TSMFGstreamerDecoder *mdecoder)
 	{
 		case TSMF_MAJOR_TYPE_VIDEO:
 			{
+#if GST_VERSION_MAJOR > 0
 				mdecoder->outconv = gst_element_factory_make("videoconvert", "videoconvert");
+#else
+				mdecoder->outconv = gst_element_factory_make("ffmpegcolorspace", "videoconvert");
+#endif
+				mdecoder->outrate = gst_element_factory_make("videorate", "videorate");
 				mdecoder->outsink = gst_element_factory_make(tsmf_platform_get_video_sink(), "videosink");
 				mdecoder->outresample = gst_element_factory_make("videoscale", "videoscale");
 				mdecoder->volume = NULL;
@@ -491,6 +517,7 @@ BOOL tsmf_gstreamer_add_pad(TSMFGstreamerDecoder *mdecoder)
 		case TSMF_MAJOR_TYPE_AUDIO:
 			{
 				mdecoder->outconv = gst_element_factory_make("audioconvert", "audioconvert");
+				mdecoder->outrate = gst_element_factory_make("audiorate", "audiorate");
 				mdecoder->outresample = gst_element_factory_make("audioresample", "audioresample");
 				mdecoder->volume = gst_element_factory_make("volume", "audiovolume");
 				mdecoder->outsink = gst_element_factory_make(tsmf_platform_get_audio_sink(), "audiosink");
@@ -504,24 +531,27 @@ BOOL tsmf_gstreamer_add_pad(TSMFGstreamerDecoder *mdecoder)
 			return FALSE;
 	}
 
-	/* Add audio / video specific elements to outbin */
+	/* Add audio / video specific elements to pipe */
 	if (mdecoder->outconv)
-		gst_bin_add(GST_BIN(mdecoder->outbin), mdecoder->outconv);
+		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->outconv);
+
+	if (mdecoder->outrate)
+		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->outrate);
 
 	if (mdecoder->outresample)
-		gst_bin_add(GST_BIN(mdecoder->outbin), mdecoder->outresample);
+		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->outresample);
 
 	if (mdecoder->volume)
-		gst_bin_add(GST_BIN(mdecoder->outbin), mdecoder->volume);
+		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->volume);
 
 	if (mdecoder->outsink)
-		gst_bin_add(GST_BIN(mdecoder->outbin), mdecoder->outsink);
+		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->outsink);
 
-	if (!mdecoder->outconv || ! mdecoder->outsink || !mdecoder->outresample)
+	if (!mdecoder->outconv || !mdecoder->outrate || ! mdecoder->outsink || !mdecoder->outresample)
 	{
 		DEBUG_WARN("Failed to load (some) output pipe elements");
-		DEBUG_WARN("converter=%p, sink=%p, resample=%p",
-				   mdecoder->outconv, mdecoder->outsink, mdecoder->outresample);
+		DEBUG_WARN("converter=%p, rate=%p, sink=%p, resample=%p",
+				   mdecoder->outconv, mdecoder->outrate, mdecoder->outsink, mdecoder->outresample);
 		tsmf_gstreamer_clean_up_pad(mdecoder);
 		return FALSE;
 	}
@@ -627,13 +657,11 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 	gst_app_src_set_caps((GstAppSrc *) mdecoder->src, mdecoder->gst_caps);
 	/* Queue2 settings */
 	g_object_set(mdecoder->queue, "use-buffering", FALSE, NULL);
-	//    g_object_set(mdecoder->queue, "use-rate-estimate", TRUE, NULL);
 	g_object_set(mdecoder->queue, "max-size-buffers", 2, NULL);
 	/* DecodeBin settings */
 	g_signal_connect(mdecoder->decbin, "pad-added", G_CALLBACK(cb_newpad), mdecoder);
 	g_signal_connect(mdecoder->decbin, "pad-removed", G_CALLBACK(cb_freepad), mdecoder);
 	/* Sink settings */
-	//    g_object_set(mdecoder->outsink, "async-handling", TRUE, NULL);
 	linkResult = gst_element_link_many(mdecoder->src, mdecoder->queue,
 									   mdecoder->decbin, NULL);
 
@@ -727,7 +755,11 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder *decoder, const BYTE *data, UIN
 		mdecoder->pipeline_start_time_valid = 1;
 	}
 
+#if GST_VERSION_MAJOR > 0
 	GST_BUFFER_PTS(gst_buf) = sample_time;
+#else
+	GST_BUFFER_TIMESTAMP(gst_buf) = sample_time;
+#endif
 	GST_BUFFER_DURATION(gst_buf) = sample_duration;
 	gst_app_src_push_buffer(GST_APP_SRC(mdecoder->src), gst_buf);
 
@@ -738,7 +770,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder *decoder, const BYTE *data, UIN
 
 	if (GST_STATE(mdecoder->pipe) != GST_STATE_PLAYING)
 	{
-		DEBUG_TSMF("state=%s", gst_element_state_name(GST_STATE(mdecoder->pipe)));
+		DEBUG_TSMF("state=%s", gst_element_state_get_name(GST_STATE(mdecoder->pipe)));
 
 		if (!mdecoder->paused && !mdecoder->shutdown && mdecoder->ready)
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
@@ -890,7 +922,11 @@ static UINT64 tsmf_gstreamer_get_running_time(ITSMFDecoder *decoder)
 
 	GstFormat fmt = GST_FORMAT_TIME;
 	gint64 pos = 0;
+#if GST_VERSION_MAJOR > 0
 	gst_element_query_position(mdecoder->outsink, fmt, &pos);
+	gst_element_query_position(mdecoder->outsink, &fmt, &pos);
+#else
+#endif
 	return pos/100;
 }
 

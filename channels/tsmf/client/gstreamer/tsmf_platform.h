@@ -21,6 +21,7 @@ typedef struct _TSMFGstreamerDecoder
 	GstElement *decbin;
 	GstElement *outbin;
 	GstElement *outconv;
+	GstElement *outrate;
 	GstElement *outresample;
 	GstElement *outsink;
 	GstElement *volume;
