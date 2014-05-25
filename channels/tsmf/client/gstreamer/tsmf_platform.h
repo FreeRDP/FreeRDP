@@ -17,15 +17,8 @@ typedef struct _TSMFGstreamerDecoder
 
 	GstElement *pipe;
 	GstElement *src;
-	GstElement *queue;
-	GstElement *decbin;
-	GstElement *outbin;
-	GstElement *outconv;
-	GstElement *outrate;
-	GstElement *outresample;
 	GstElement *outsink;
 	GstElement *volume;
-	GstPad *ghost_pad;
 
 	BOOL ready;
 	BOOL paused;

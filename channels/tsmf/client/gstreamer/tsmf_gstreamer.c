@@ -45,7 +45,6 @@
 
 static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder);
 static void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder *mdecoder);
-static void tsmf_gstreamer_clean_up_pad(TSMFGstreamerDecoder *mdecoder);
 static int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder *mdecoder,
 		GstState desired_state);
 
@@ -105,6 +104,7 @@ int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder *mdecoder, GstState d
 {
 	GstStateChangeReturn state_change;
 	const char *name;
+	const char *sname = get_type(mdecoder);
 
 	if (!mdecoder)
 		return 0;
@@ -116,14 +116,14 @@ int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder *mdecoder, GstState d
 		return 0;  /* Redundant request - Nothing to do */
 
 	name = gst_element_state_get_name(desired_state); /* For debug */
-	DEBUG_TSMF("%s to %s", get_type(mdecoder), name);
+	DEBUG_TSMF("%s to %s", sname, name);
 	state_change = gst_element_set_state(mdecoder->pipe, desired_state);
 
 	if (state_change == GST_STATE_CHANGE_FAILURE)
-		DEBUG_WARN("(%s) GST_STATE_CHANGE_FAILURE.", name);
+		DEBUG_WARN("%s: (%s) GST_STATE_CHANGE_FAILURE.", sname, name);
 	else if (state_change == GST_STATE_CHANGE_ASYNC)
 	{
-		DEBUG_WARN("(%s) GST_STATE_CHANGE_ASYNC.", name);
+		DEBUG_WARN("%s: (%s) GST_STATE_CHANGE_ASYNC.", sname, name);
 		mdecoder->state = desired_state;
 	}
 	else
@@ -399,18 +399,6 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 	return TRUE;
 }
 
-void tsmf_gstreamer_clean_up_pad(TSMFGstreamerDecoder *mdecoder)
-{
-	if (!mdecoder || !mdecoder->pipe)
-		return;
-
-	mdecoder->outconv = NULL;
-	mdecoder->outrate = NULL;
-	mdecoder->outresample = NULL;
-	mdecoder->outsink = NULL;
-	mdecoder->volume = NULL;
-}
-
 void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder *mdecoder)
 {
 	//Cleaning up elements
@@ -423,186 +411,28 @@ void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder *mdecoder)
 		gst_object_unref(mdecoder->pipe);
 	}
 
-	tsmf_gstreamer_clean_up_pad(mdecoder);
 	tsmf_window_destroy(mdecoder);
 	mdecoder->ready = FALSE;
 	mdecoder->pipe = NULL;
 	mdecoder->src = NULL;
-	mdecoder->queue = NULL;
-	mdecoder->decbin = NULL;
-	mdecoder->outbin = NULL;
-}
-
-static void
-cb_newpad(GstElement *decodebin,
-		  GstPad     *pad,
-		  gpointer    data)
-{
-	GstPad *outpad;
-	TSMFGstreamerDecoder *mdecoder = data;
-	/* only link once */
-	outpad = gst_element_get_static_pad(mdecoder->outbin, "sink");
-
-	if (GST_PAD_IS_LINKED(outpad))
-	{
-		DEBUG_WARN("sink already linded!");
-		gst_object_unref(outpad);
-		return;
-	}
-
-	/* link'n'play */
-	gst_pad_link(pad, outpad);
-	gst_object_unref(outpad);
-}
-
-static void
-cb_freepad(GstElement *decodebin,
-		   GstPad     *pad,
-		   gpointer    data)
-{
-	GstPad *outpad;
-	TSMFGstreamerDecoder *mdecoder = data;
-	outpad = gst_element_get_static_pad(mdecoder->outbin, "sink");
-
-	if (!outpad)
-	{
-		DEBUG_WARN("sink pad does not exist!");
-		return;
-	}
-
-	if (!GST_PAD_IS_LINKED(outpad))
-	{
-		DEBUG_WARN("sink not linded!");
-		gst_object_unref(outpad);
-		return;
-	}
-
-	/* link'n'play */
-	gst_pad_unlink(pad, outpad);
-	gst_object_unref(outpad);
-}
-
-void tsmf_gstreamer_remove_pad(TSMFGstreamerDecoder *mdecoder)
-{
-	if (mdecoder->outbin)
-	{
-		gst_element_remove_pad(mdecoder->outbin, mdecoder->ghost_pad);
-		gst_object_unref(mdecoder->ghost_pad);
-		mdecoder->ghost_pad = NULL;
-	}
-}
-
-BOOL tsmf_gstreamer_add_pad(TSMFGstreamerDecoder *mdecoder)
-{
-	GstPad *out_pad;
-	gboolean linkResult = FALSE;
-
-	switch (mdecoder->media_type)
-	{
-		case TSMF_MAJOR_TYPE_VIDEO:
-			{
-#if GST_VERSION_MAJOR > 0
-				mdecoder->outconv = gst_element_factory_make("videoconvert", "videoconvert");
-#else
-				mdecoder->outconv = gst_element_factory_make("ffmpegcolorspace", "videoconvert");
-#endif
-				mdecoder->outrate = gst_element_factory_make("videorate", "videorate");
-				mdecoder->outsink = gst_element_factory_make(tsmf_platform_get_video_sink(), "videosink");
-				mdecoder->outresample = gst_element_factory_make("videoscale", "videoscale");
-				mdecoder->volume = NULL;
-				DEBUG_TSMF("building Video Pipe");
-				break;
-			}
-
-		case TSMF_MAJOR_TYPE_AUDIO:
-			{
-				mdecoder->outconv = gst_element_factory_make("audioconvert", "audioconvert");
-				mdecoder->outrate = gst_element_factory_make("audiorate", "audiorate");
-				mdecoder->outresample = gst_element_factory_make("audioresample", "audioresample");
-				mdecoder->volume = gst_element_factory_make("volume", "audiovolume");
-				mdecoder->outsink = gst_element_factory_make(tsmf_platform_get_audio_sink(), "audiosink");
-				DEBUG_TSMF("building Audio Pipe");
-				break;
-			}
-
-		default:
-			DEBUG_WARN("Invalid media type %08X", mdecoder->media_type);
-			tsmf_gstreamer_clean_up_pad(mdecoder);
-			return FALSE;
-	}
-
-	/* Add audio / video specific elements to pipe */
-	if (mdecoder->outconv)
-		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->outconv);
-
-	if (mdecoder->outrate)
-		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->outrate);
-
-	if (mdecoder->outresample)
-		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->outresample);
-
-	if (mdecoder->volume)
-		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->volume);
-
-	if (mdecoder->outsink)
-		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->outsink);
-
-	if (!mdecoder->outconv || !mdecoder->outrate || ! mdecoder->outsink || !mdecoder->outresample)
-	{
-		DEBUG_WARN("Failed to load (some) output pipe elements");
-		DEBUG_WARN("converter=%p, rate=%p, sink=%p, resample=%p",
-				   mdecoder->outconv, mdecoder->outrate, mdecoder->outsink, mdecoder->outresample);
-		tsmf_gstreamer_clean_up_pad(mdecoder);
-		return FALSE;
-	}
-
-	if (mdecoder->media_type == TSMF_MAJOR_TYPE_AUDIO)
-	{
-		if (!mdecoder->volume)
-		{
-			DEBUG_WARN("Failed to load (some) audio output pipe elements");
-			DEBUG_WARN("volume=%p", mdecoder->volume);
-			tsmf_gstreamer_clean_up_pad(mdecoder);
-			return FALSE;
-		}
-	}
-
-	out_pad = gst_element_get_static_pad(mdecoder->outconv, "sink");
-
-	if (mdecoder->media_type == TSMF_MAJOR_TYPE_AUDIO)
-	{
-		g_object_set(mdecoder->volume, "mute", mdecoder->gstMuted, NULL);
-		g_object_set(mdecoder->volume, "volume", mdecoder->gstVolume, NULL);
-		linkResult = gst_element_link_many(mdecoder->outconv, mdecoder->outresample,
-										   mdecoder->volume, mdecoder->outsink, NULL);
-	}
-	else
-	{
-		linkResult = gst_element_link_many(mdecoder->outconv,
-										   mdecoder->outresample, mdecoder->outsink, NULL);
-	}
-
-	if (!linkResult)
-	{
-		DEBUG_WARN("Failed to link these elements: converter->sink");
-		tsmf_gstreamer_clean_up_pad(mdecoder);
-		return FALSE;
-	}
-
-	mdecoder->ghost_pad = gst_ghost_pad_new("sink", out_pad);
-	gst_element_add_pad(mdecoder->outbin, mdecoder->ghost_pad);
-	gst_object_unref(out_pad);
-	return TRUE;
 }
 
 BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 {
-	gboolean linkResult;
+	const char *appsrc = "appsrc name=source ! decodebin name=decoder !";
+	const char *video = "autovideoconvert ! videorate ! videoscale !";
+	const char *audio = "audioconvert ! audiorate ! audioresample ! volume name=audiovolume !";
+	char pipeline[1024];
 
 	if (!mdecoder)
 		return FALSE;
 
-	mdecoder->pipe = gst_pipeline_new("pipeline");
+	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
+		snprintf(pipeline, sizeof(pipeline), "%s %s %s name=outsink", appsrc, video, tsmf_platform_get_video_sink());
+	else
+		snprintf(pipeline, sizeof(pipeline), "%s %s %s name=outsink", appsrc, audio, tsmf_platform_get_audio_sink());
+	DEBUG_WARN("pipeline=%s", pipeline);
+	mdecoder->pipe = gst_parse_launch(pipeline, NULL);
 
 	if (!mdecoder->pipe)
 	{
@@ -610,36 +440,31 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 		return FALSE;
 	}
 
-	tsmf_platform_register_handler(mdecoder);
-	mdecoder->src = gst_element_factory_make("appsrc", "source");
-	mdecoder->queue = gst_element_factory_make("queue2", "queue");
-	mdecoder->decbin = gst_element_factory_make("decodebin", "decoder");
-	mdecoder->outbin = gst_bin_new("outbin");
-
-	/* Add all elements to the bin allowing proper resource cleanup,
-	 * if any step failed. */
-	if (mdecoder->src)
-		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->src);
-
-	if (mdecoder->queue)
-		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->queue);
-
-	if (mdecoder->decbin)
-		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->decbin);
-
-	if (mdecoder->outbin)
-		gst_bin_add(GST_BIN(mdecoder->pipe), mdecoder->outbin);
-
-	/* Check, if everything was loaded correctly. */
-	if (!mdecoder->src || !mdecoder->queue || !mdecoder->decbin ||
-			!mdecoder->outbin)
+	mdecoder->src = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "source");
+	if (!mdecoder->src)
 	{
-		DEBUG_WARN("Failed to load (some) pipeline stage");
-		DEBUG_WARN("src=%p, queue=%p, decoder=%p, output=%p",
-				   mdecoder->src, mdecoder->queue, mdecoder->decbin, mdecoder->outbin);
-		tsmf_gstreamer_clean_up(mdecoder);
+		DEBUG_WARN("Failed to get appsrc");
 		return FALSE;
 	}
+
+	mdecoder->outsink = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "outsink");
+	if (!mdecoder->outsink)
+	{
+		DEBUG_WARN("Failed to get sink");
+		return FALSE;
+	}
+
+	if (mdecoder->media_type != TSMF_MAJOR_TYPE_VIDEO)
+	{
+		mdecoder->volume = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "audiovolume");
+		if (!mdecoder->volume)
+		{
+			DEBUG_WARN("Failed to get volume");
+			return FALSE;
+		}
+	}
+
+	tsmf_platform_register_handler(mdecoder);
 
 	gst_pipeline_set_delay((GstPipeline *)mdecoder->pipe, 5000);
 	/* AppSrc settings */
@@ -655,25 +480,9 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 	gst_app_src_set_callbacks((GstAppSrc *)mdecoder->src, &callbacks, mdecoder, NULL);
 	gst_app_src_set_stream_type((GstAppSrc *) mdecoder->src, GST_APP_STREAM_TYPE_SEEKABLE);
 	gst_app_src_set_caps((GstAppSrc *) mdecoder->src, mdecoder->gst_caps);
-	/* Queue2 settings */
-	g_object_set(mdecoder->queue, "use-buffering", FALSE, NULL);
-	g_object_set(mdecoder->queue, "max-size-buffers", 2, NULL);
-	/* DecodeBin settings */
-	g_signal_connect(mdecoder->decbin, "pad-added", G_CALLBACK(cb_newpad), mdecoder);
-	g_signal_connect(mdecoder->decbin, "pad-removed", G_CALLBACK(cb_freepad), mdecoder);
-	/* Sink settings */
-	linkResult = gst_element_link_many(mdecoder->src, mdecoder->queue,
-									   mdecoder->decbin, NULL);
 
-	if (!linkResult)
-	{
-		DEBUG_WARN("Failed to link elements.");
-		tsmf_gstreamer_clean_up(mdecoder);
-		return FALSE;
-	}
-
-	tsmf_gstreamer_add_pad(mdecoder);
 	tsmf_window_create(mdecoder);
+
 	tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_READY);
 	tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 	mdecoder->pipeline_start_time_valid = 0;
@@ -776,6 +585,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder *decoder, const BYTE *data, UIN
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 	}
 
+
 	return TRUE;
 }
 
@@ -876,13 +686,8 @@ static BOOL tsmf_gstreamer_buffer_filled(ITSMFDecoder *decoder)
 	if (!mdecoder)
 		return FALSE;
 
-	if (!G_IS_OBJECT(mdecoder->queue))
-		return FALSE;
-
 	guint buff_max = 0;
-	g_object_get(mdecoder->queue, "max-size-buffers", &buff_max, NULL);
 	guint clbuff = 0;
-	g_object_get(mdecoder->queue, "current-level-buffers", &clbuff, NULL);
 	DEBUG_TSMF("%s buffer fill %u/%u", get_type(mdecoder), clbuff, buff_max);
 	return clbuff >= buff_max ? TRUE : FALSE;
 }
