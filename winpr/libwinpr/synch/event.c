@@ -271,8 +271,11 @@ int GetEventFileDescriptor(HANDLE hEvent)
 	if (Type == HANDLE_TYPE_NAMED_PIPE)
 	{
 		WINPR_NAMED_PIPE *named = (WINPR_NAMED_PIPE *)hEvent;
-		if (named->ServerMode)
+		if (named->ServerMode) {
 			return named->serverfd;
+		} else {
+			return named->clientfd;
+		}
 	}
 
 	return event->pipe_fd[0];
