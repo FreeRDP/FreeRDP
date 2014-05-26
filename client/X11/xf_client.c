@@ -1293,33 +1293,43 @@ void* xf_input_thread(void* arg)
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
 	event[0] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
 	event[1] = MessageQueue_Event(queue);
-	while(WaitForMultipleObjects(2, event, FALSE, INFINITE) == WAIT_OBJECT_0)
+	while(TRUE)
 	{
-		do
+		DWORD ev = WaitForMultipleObjects(2, event, FALSE, INFINITE);
+
+		if (ev == WAIT_OBJECT_0)
 		{
-			xf_lock_x11(xfc, FALSE);
-
-			pending_status = XPending(xfc->display);
-
-			xf_unlock_x11(xfc, FALSE);
-
-			if (pending_status)
+			do
 			{
 				xf_lock_x11(xfc, FALSE);
 
-				ZeroMemory(&xevent, sizeof(xevent));
-				XNextEvent(xfc->display, &xevent);
-				process_status = xf_event_process(instance, &xevent);
+				pending_status = XPending(xfc->display);
 
 				xf_unlock_x11(xfc, FALSE);
 
-				if (!process_status)
-					break;
+				if (pending_status)
+				{
+					xf_lock_x11(xfc, FALSE);
+
+					ZeroMemory(&xevent, sizeof(xevent));
+					XNextEvent(xfc->display, &xevent);
+					process_status = xf_event_process(instance, &xevent);
+
+					xf_unlock_x11(xfc, FALSE);
+
+					if (!process_status)
+						break;
+				}
 			}
+			while(pending_status && WaitForSingleObject(event[1], 0) != WAIT_OBJECT_0);
+			if(!process_status)
+				break;
 		}
-		while(pending_status && WaitForSingleObject(event[1], 0) != WAIT_OBJECT_0);
-		if(!process_status)
-			break;
+		else if (ev == WAIT_OBJECT_0 + 1)
+		{
+			if (!freerdp_message_queue_process_pending_messages(instance, FREERDP_INPUT_MESSAGE_QUEUE))
+				break;
+		}
 	}
 
 	MessageQueue_PostQuit(queue, 0);
