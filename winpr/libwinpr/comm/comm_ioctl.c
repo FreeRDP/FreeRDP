@@ -138,16 +138,13 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 
 	switch (dwIoControlCode)
 	{
-		case 0x220034:
-			DEBUG_WARN("Undocumented IoControlCode: 0X%X", dwIoControlCode);
+		case IOCTL_USBPRINT_GET_1284_ID:
+		{
+			/* FIXME: http://msdn.microsoft.com/en-us/library/windows/hardware/ff551803(v=vs.85).aspx */
 			*lpBytesReturned = nOutBufferSize; /* an empty OutputBuffer will be returned */
 			SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-			if (pComm->permissive)
-				return FALSE;
-			else
-				return TRUE;
-
-			break;
+			return FALSE;
+		}
 		case IOCTL_SERIAL_SET_BAUD_RATE:
 		{
 			if (pRemoteSerialDriver->set_baud_rate)

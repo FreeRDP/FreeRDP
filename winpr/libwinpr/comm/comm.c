@@ -5,7 +5,7 @@
  * Copyright 2011 O.S. Systems Software Ltda.
  * Copyright 2011 Eduardo Fiss Beloni <beloni@ossystems.com.br>
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2014 Hewlett-Packard Development Company, L.P.
+ * Copyright 2014 Hewlett-Packard Development Company, L.P. 
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
