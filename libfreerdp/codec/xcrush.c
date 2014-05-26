@@ -961,12 +961,14 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 	if (!status || (Level2ComprFlags & PACKET_FLUSHED))
 	{
-		CompressedDataSize = DstSize;
-
 		if (CompressedDataSize > DstSize)
 		{
-			/* we should handle packet flushing here */
-			return -1005;
+			xcrush_context_reset(xcrush);
+			xcrush->HistoryOffset = xcrush->HistoryBufferSize + 1;
+			*ppDstData = pSrcData;
+			*pDstSize = SrcSize;
+			*pFlags = 0;
+			return 1;
 		}
 
 		DstSize = CompressedDataSize;
@@ -1011,6 +1013,8 @@ void xcrush_context_reset(XCRUSH_CONTEXT* xcrush)
 
 	ZeroMemory(&(xcrush->OriginalMatches), sizeof(xcrush->OriginalMatches));
 	ZeroMemory(&(xcrush->OptimizedMatches), sizeof(xcrush->OptimizedMatches));
+
+	mppc_context_reset(xcrush->mppc);
 }
 
 XCRUSH_CONTEXT* xcrush_context_new(BOOL Compressor)
