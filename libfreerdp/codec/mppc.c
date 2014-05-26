@@ -510,7 +510,10 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 	if (!pDstData)
 		return -1;
 
-	DstSize = SrcSize;
+	if (*pDstSize > SrcSize)
+		DstSize = SrcSize;
+	else
+		DstSize = *pDstSize;
 
 	BitStream_Attach(bs, pDstData, DstSize);
 
@@ -541,9 +544,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 		{
 			if (((bs->position / 8) + 2) > (DstSize - 1))
 			{
-				ZeroMemory(HistoryBuffer, HistoryBufferSize);
-				ZeroMemory(mppc->MatchBuffer, sizeof(mppc->MatchBuffer));
-				mppc->HistoryOffset = HistoryBufferSize + 1;
+				mppc_context_flush(mppc);
 				*pFlags |= PACKET_FLUSHED;
 				*pFlags |= CompressionLevel;
 				*ppDstData = pSrcData;
@@ -595,9 +596,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 
 			if (((bs->position / 8) + 7) > (DstSize - 1))
 			{
-				ZeroMemory(HistoryBuffer, HistoryBufferSize);
-				ZeroMemory(mppc->MatchBuffer, sizeof(mppc->MatchBuffer));
-				mppc->HistoryOffset = HistoryBufferSize + 1;
+				mppc_context_flush(mppc);
 				*pFlags |= PACKET_FLUSHED;
 				*pFlags |= CompressionLevel;
 				*ppDstData = pSrcData;
@@ -754,9 +753,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 	{
 		if (((bs->position / 8) + 2) > (DstSize - 1))
 		{
-			ZeroMemory(HistoryBuffer, HistoryBufferSize);
-			ZeroMemory(mppc->MatchBuffer, sizeof(mppc->MatchBuffer));
-			mppc->HistoryOffset = HistoryBufferSize + 1;
+			mppc_context_flush(mppc);
 			*pFlags |= PACKET_FLUSHED;
 			*pFlags |= CompressionLevel;
 			*ppDstData = pSrcData;
@@ -829,6 +826,12 @@ void mppc_context_reset(MPPC_CONTEXT* mppc)
 
 	mppc->HistoryOffset = 0;
 	mppc->HistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
+}
+
+void mppc_context_flush(MPPC_CONTEXT* mppc)
+{
+	mppc_context_reset(mppc);
+	mppc->HistoryOffset = mppc->HistoryBufferSize + 1;
 }
 
 MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor)

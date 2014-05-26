@@ -647,7 +647,7 @@ int xcrush_generate_output(XCRUSH_CONTEXT* xcrush, BYTE* OutputBuffer, UINT32 Ou
 			if (Literals + MatchOffset - CurrentOffset >= OutputEnd)
 				return -6004; /* error */
 
-			MoveMemory(Literals, &xcrush->HistoryBuffer[CurrentOffset], MatchOffsetDiff);
+			CopyMemory(Literals, &xcrush->HistoryBuffer[CurrentOffset], MatchOffsetDiff);
 
 			if (Literals >= OutputEnd)
 				return -6005; /* error */
@@ -662,7 +662,7 @@ int xcrush_generate_output(XCRUSH_CONTEXT* xcrush, BYTE* OutputBuffer, UINT32 Ou
 	if (Literals + HistoryOffsetDiff >= OutputEnd)
 		return -6006; /* error */
 
-	MoveMemory(Literals, &xcrush->HistoryBuffer[CurrentOffset], HistoryOffsetDiff);
+	CopyMemory(Literals, &xcrush->HistoryBuffer[CurrentOffset], HistoryOffsetDiff);
 	*pDstSize = Literals + HistoryOffsetDiff - OutputBuffer;
 
 	return 1;
@@ -963,8 +963,7 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	{
 		if (CompressedDataSize > DstSize)
 		{
-			xcrush_context_reset(xcrush);
-			xcrush->HistoryOffset = xcrush->HistoryBufferSize + 1;
+			xcrush_context_flush(xcrush);
 			*ppDstData = pSrcData;
 			*pDstSize = SrcSize;
 			*pFlags = 0;
@@ -972,7 +971,7 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		}
 
 		DstSize = CompressedDataSize;
-		MoveMemory(&OriginalData[2], CompressedData, CompressedDataSize);
+		CopyMemory(&OriginalData[2], CompressedData, CompressedDataSize);
 	}
 
 	if (Level2ComprFlags & PACKET_COMPRESSED)
@@ -989,6 +988,12 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 
 	OriginalData[0] = (BYTE) Level1ComprFlags;
 	OriginalData[1] = (BYTE) Level2ComprFlags;
+
+#if 0
+	printf("XCrushCompress: Level1ComprFlags: %s Level2ComprFlags: %s\n",
+			xcrush_get_level_1_compression_flags_string(Level1ComprFlags),
+			xcrush_get_level_2_compression_flags_string(Level2ComprFlags));
+#endif
 
 	if (*pDstSize < (DstSize + 2))
 		return -1006;
@@ -1015,6 +1020,14 @@ void xcrush_context_reset(XCRUSH_CONTEXT* xcrush)
 	ZeroMemory(&(xcrush->OptimizedMatches), sizeof(xcrush->OptimizedMatches));
 
 	mppc_context_reset(xcrush->mppc);
+}
+
+void xcrush_context_flush(XCRUSH_CONTEXT* xcrush)
+{
+	xcrush_context_reset(xcrush);
+	xcrush->HistoryOffset = xcrush->HistoryBufferSize + 1;
+
+	mppc_context_flush(xcrush->mppc);
 }
 
 XCRUSH_CONTEXT* xcrush_context_new(BOOL Compressor)
