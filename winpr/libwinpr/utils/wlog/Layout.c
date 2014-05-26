@@ -237,21 +237,23 @@ wLogLayout* WLog_GetLogLayout(wLog* log)
 void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
 {
 	if (layout->FormatString)
+	{
 		free(layout->FormatString);
+		layout->FormatString = NULL;
+	}
 
-	layout->FormatString = _strdup(format);
+	if (format)
+		layout->FormatString = _strdup(format);
 }
 
 wLogLayout* WLog_Layout_New(wLog* log)
 {
 	wLogLayout* layout;
 
-	layout = (wLogLayout*) malloc(sizeof(wLogLayout));
+	layout = (wLogLayout*) calloc(1, sizeof(wLogLayout));
 
 	if (layout)
 	{
-		ZeroMemory(layout, sizeof(wLogLayout));
-
 		layout->FormatString = _strdup("[%lv][%mn] - ");
 	}
 
@@ -263,7 +265,10 @@ void WLog_Layout_Free(wLog* log, wLogLayout* layout)
 	if (layout)
 	{
 		if (layout->FormatString)
+		{
 			free(layout->FormatString);
+			layout->FormatString = NULL;
+		}
 
 		free(layout);
 	}
