@@ -532,7 +532,7 @@ int xcrush_optimize_matches(XCRUSH_CONTEXT* xcrush)
 	TotalMatchLength = 0;
 
 	OriginalMatches = xcrush->OriginalMatches;
-	OriginalMatchCount = xcrush->OptimizedMatchCount;
+	OriginalMatchCount = xcrush->OriginalMatchCount;
 
 	OptimizedMatches = xcrush->OptimizedMatches;
 	OptimizedMatchCount = xcrush->OptimizedMatchCount;

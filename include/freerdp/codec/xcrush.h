@@ -25,6 +25,8 @@
 
 #include <freerdp/codec/mppc.h>
 
+#pragma pack(push,1)
+
 struct _XCRUSH_MATCH_INFO
 {
 	UINT32 MatchOffset;
@@ -64,6 +66,8 @@ struct _RDP61_COMPRESSED_DATA
 	BYTE* Literals;
 };
 typedef struct _RDP61_COMPRESSED_DATA RDP61_COMPRESSED_DATA;
+
+#pragma pack(pop)
 
 struct _XCRUSH_CONTEXT
 {
