@@ -23,7 +23,7 @@
 
 #include "bulk.h"
 
-//#define WITH_BULK_DEBUG		1
+#define WITH_BULK_DEBUG		1
 
 const char* bulk_get_compression_flags_string(UINT32 flags)
 {
@@ -52,14 +52,19 @@ const char* bulk_get_compression_flags_string(UINT32 flags)
 UINT32 bulk_compression_level(rdpBulk* bulk)
 {
 	rdpSettings* settings = bulk->context->settings;
-	bulk->CompressionLevel = (settings->CompressionLevel >= 2) ? 2 : settings->CompressionLevel;
+
+	bulk->CompressionLevel = (settings->CompressionLevel >= PACKET_COMPR_TYPE_RDP61) ?
+			PACKET_COMPR_TYPE_RDP61 : settings->CompressionLevel;
+
 	return bulk->CompressionLevel;
 }
 
 UINT32 bulk_compression_max_size(rdpBulk* bulk)
 {
 	bulk_compression_level(bulk);
-	bulk->CompressionMaxSize = (bulk->CompressionLevel < 1) ? 8192 : 65536;
+
+	bulk->CompressionMaxSize = (bulk->CompressionLevel < PACKET_COMPR_TYPE_64K) ? 8192 : 65536;
+
 	return bulk->CompressionMaxSize;
 }
 
@@ -202,16 +207,25 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 	bulk_compression_level(bulk);
 	bulk_compression_max_size(bulk);
 	
-	if (bulk->CompressionLevel < PACKET_COMPR_TYPE_RDP6)
+	if ((bulk->CompressionLevel == PACKET_COMPR_TYPE_8K) ||
+			(bulk->CompressionLevel == PACKET_COMPR_TYPE_64K))
 	{
 		mppc_set_compression_level(bulk->mppcSend, bulk->CompressionLevel);
 		status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
 	}
-	else
+	else if (bulk->CompressionLevel == PACKET_COMPR_TYPE_RDP6)
 	{
 		status = ncrush_compress(bulk->ncrushSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
 	}
-	
+	else if (bulk->CompressionLevel == PACKET_COMPR_TYPE_RDP61)
+	{
+		status = xcrush_compress(bulk->xcrushSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
+	}
+	else
+	{
+		status = -1;
+	}
+
 	if (status >= 0)
 	{
 		CompressedBytes = *pDstSize;
