@@ -73,11 +73,18 @@ macro(add_complex_library)
 		"MODULE;TYPE;MONOLITHIC"
 		"SOURCES"
 		${ARGN})
-		
+
+	string(TOUPPER "${${PREFIX}_MODULE}_TYPE" ${PREFIX}_TYPE_OPTION)
+	string(REGEX REPLACE "-" "_" ${PREFIX}_TYPE_OPTION ${${PREFIX}_TYPE_OPTION})
+
 	if(${${PREFIX}_MONOLITHIC})
 		add_library(${${PREFIX}_MODULE} ${${PREFIX}_TYPE} ${${PREFIX}_SOURCES})
 	else()
-		add_library(${${PREFIX}_MODULE} ${${PREFIX}_SOURCES})
+		if (NOT DEFINED ${${PREFIX}_TYPE_OPTION})
+			add_library(${${PREFIX}_MODULE} ${${PREFIX}_SOURCES})
+		else()
+			add_library(${${PREFIX}_MODULE} ${${${PREFIX}_TYPE_OPTION}} ${${PREFIX}_SOURCES})
+		endif()
 	endif()
 	if (${PREFIX}_EXPORT)
 		export_complex_library(LIBNAME ${${PREFIX}_MODULE})
