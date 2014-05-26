@@ -180,11 +180,9 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 		case TSMF_MAJOR_TYPE_VIDEO:
 			mdecoder->media_type = TSMF_MAJOR_TYPE_VIDEO;
 			break;
-
 		case TSMF_MAJOR_TYPE_AUDIO:
 			mdecoder->media_type = TSMF_MAJOR_TYPE_AUDIO;
 			break;
-
 		default:
 			return FALSE;
 	}
@@ -197,11 +195,8 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 3,
-								 "format", G_TYPE_STRING, "WVC1",
-								 //"framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								 NULL);
 			break;
-
 		case TSMF_SUB_TYPE_MP4S:
 			mdecoder->gst_caps =  gst_caps_new_simple("video/x-divx",
 								  "divxversion", G_TYPE_INT, 5,
@@ -210,7 +205,6 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 								  "height", G_TYPE_INT, media_type->Height,
 								  NULL);
 			break;
-
 		case TSMF_SUB_TYPE_MP42:
 			mdecoder->gst_caps =  gst_caps_new_simple("video/x-msmpeg",
 								  "msmpegversion", G_TYPE_INT, 42,
@@ -219,16 +213,13 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 								  "height", G_TYPE_INT, media_type->Height,
 								  NULL);
 			break;
-
 		case TSMF_SUB_TYPE_MP43:
 			mdecoder->gst_caps =  gst_caps_new_simple("video/x-msmpeg",
 								  "bitrate", G_TYPE_UINT, media_type->BitRate,
 								  "width", G_TYPE_INT, media_type->Width,
 								  "height", G_TYPE_INT, media_type->Height,
-								  "format", G_TYPE_STRING, "MP43",
 								  NULL);
 			break;
-
 		case TSMF_SUB_TYPE_WMA9:
 			mdecoder->gst_caps =  gst_caps_new_simple("audio/x-wma",
 								  "wmaversion", G_TYPE_INT, 3,
@@ -240,7 +231,6 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 								  "block_align", G_TYPE_INT, media_type->BlockAlign,
 								  NULL);
 			break;
-
 		case TSMF_SUB_TYPE_WMA2:
 			mdecoder->gst_caps =  gst_caps_new_simple("audio/x-wma",
 								  "wmaversion", G_TYPE_INT, 2,
@@ -252,7 +242,6 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 								  "block_align", G_TYPE_INT, media_type->BlockAlign,
 								  NULL);
 			break;
-
 		case TSMF_SUB_TYPE_MP3:
 			mdecoder->gst_caps =  gst_caps_new_simple("audio/mpeg",
 								  "mpegversion", G_TYPE_INT, 1,
@@ -261,53 +250,42 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 								  "channels", G_TYPE_INT, media_type->Channels,
 								  NULL);
 			break;
-
 		case TSMF_SUB_TYPE_WMV1:
 			mdecoder->gst_caps = gst_caps_new_simple("video/x-wmv",
 								 "bitrate", G_TYPE_UINT, media_type->BitRate,
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 1,
-								 "format", G_TYPE_STRING, "WMV1",
 								 NULL);
 			break;
-
 		case TSMF_SUB_TYPE_WMV2:
 			mdecoder->gst_caps = gst_caps_new_simple("video/x-wmv",
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 2,
-								 "format", G_TYPE_STRING, "WMV2",
 								 NULL);
 			break;
-
 		case TSMF_SUB_TYPE_WMV3:
 			mdecoder->gst_caps = gst_caps_new_simple("video/x-wmv",
 								 "bitrate", G_TYPE_UINT, media_type->BitRate,
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 3,
-								 "format", G_TYPE_STRING, "WMV3",
-								 //"framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								 NULL);
 			break;
-
 		case TSMF_SUB_TYPE_AVC1:
 		case TSMF_SUB_TYPE_H264:
 			mdecoder->gst_caps = gst_caps_new_simple("video/x-h264",
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
-								 //"framerate", GST_TYPE_FRACTION, media_type->SamplesPerSecond.Numerator, media_type->SamplesPerSecond.Denominator,
 								 NULL);
 			break;
-
 		case TSMF_SUB_TYPE_AC3:
 			mdecoder->gst_caps =  gst_caps_new_simple("audio/x-ac3",
 								  "rate", G_TYPE_INT, media_type->SamplesPerSecond.Numerator,
 								  "channels", G_TYPE_INT, media_type->Channels,
 								  NULL);
 			break;
-
 		case TSMF_SUB_TYPE_AAC:
 
 			/* For AAC the pFormat is a HEAACWAVEINFO struct, and the codec data
@@ -325,14 +303,12 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 								 "mpegversion", G_TYPE_INT, 4,
 								 NULL);
 			break;
-
 		case TSMF_SUB_TYPE_MP1A:
 			mdecoder->gst_caps =  gst_caps_new_simple("audio/mpeg",
 								  "mpegversion", G_TYPE_INT, 1,
 								  "channels", G_TYPE_INT, media_type->Channels,
 								  NULL);
 			break;
-
 		case TSMF_SUB_TYPE_MP1V:
 			mdecoder->gst_caps = gst_caps_new_simple("video/mpeg",
 								 "mpegversion", G_TYPE_INT, 1,
@@ -341,26 +317,27 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 								 "systemstream", G_TYPE_BOOLEAN, FALSE,
 								 NULL);
 			break;
-
 		case TSMF_SUB_TYPE_YUY2:
-			mdecoder->gst_caps = gst_caps_new_simple("video/x-raw-yuv",
+#if GST_VERSION_MAJOR > 0
+			mdecoder->gst_caps = gst_caps_new_simple("video/x-raw",
 								 "format", G_TYPE_STRING, "YUY2",
-								 //"bitrate", G_TYPE_UINT, media_type->BitRate,
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 NULL);
+#else
+			mdecoder->gst_caps = gst_caps_new_simple("video/x-raw-yuv",
+								 "format", G_TYPE_STRING, "YUY2",
+								 "width", G_TYPE_INT, media_type->Width,
+								 "height", G_TYPE_INT, media_type->Height,
+								 NULL);
+#endif
 			break;
-
 		case TSMF_SUB_TYPE_MP2V:
 			mdecoder->gst_caps = gst_caps_new_simple("video/mpeg",
-								 //"bitrate", G_TYPE_UINT, media_type->BitRate,
-								 //"width", G_TYPE_INT, media_type->Width,
-								 //"height", G_TYPE_INT, media_type->Height,
 								 "mpegversion", G_TYPE_INT, 2,
 								 "systemstream", G_TYPE_BOOLEAN, FALSE,
 								 NULL);
 			break;
-
 		case TSMF_SUB_TYPE_MP2A:
 			mdecoder->gst_caps =  gst_caps_new_simple("audio/mpeg",
 								  "mpegversion", G_TYPE_INT, 2,
@@ -368,7 +345,6 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 								  "channels", G_TYPE_INT, media_type->Channels,
 								  NULL);
 			break;
-
 		default:
 			DEBUG_WARN("unknown format:(%d).", media_type->SubType);
 			return FALSE;
@@ -427,11 +403,15 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 	if (!mdecoder)
 		return FALSE;
 
+	/* TODO: Construction of the pipeline from a string allows easy overwrite with arguments.
+	 *       The only fixed elements necessary are appsrc and the volume element for audio streams.
+	 *       The rest could easily be provided in gstreamer pipeline notation from command line. */
 	if (mdecoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
 		snprintf(pipeline, sizeof(pipeline), "%s %s %s name=outsink", appsrc, video, tsmf_platform_get_video_sink());
 	else
 		snprintf(pipeline, sizeof(pipeline), "%s %s %s name=outsink", appsrc, audio, tsmf_platform_get_audio_sink());
-	DEBUG_WARN("pipeline=%s", pipeline);
+
+	DEBUG_TSMF("pipeline=%s", pipeline);
 	mdecoder->pipe = gst_parse_launch(pipeline, NULL);
 
 	if (!mdecoder->pipe)
@@ -441,6 +421,7 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 	}
 
 	mdecoder->src = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "source");
+
 	if (!mdecoder->src)
 	{
 		DEBUG_WARN("Failed to get appsrc");
@@ -448,6 +429,7 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 	}
 
 	mdecoder->outsink = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "outsink");
+
 	if (!mdecoder->outsink)
 	{
 		DEBUG_WARN("Failed to get sink");
@@ -457,6 +439,7 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 	if (mdecoder->media_type != TSMF_MAJOR_TYPE_VIDEO)
 	{
 		mdecoder->volume = gst_bin_get_by_name(GST_BIN(mdecoder->pipe), "audiovolume");
+
 		if (!mdecoder->volume)
 		{
 			DEBUG_WARN("Failed to get volume");
@@ -465,8 +448,6 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 	}
 
 	tsmf_platform_register_handler(mdecoder);
-
-	gst_pipeline_set_delay((GstPipeline *)mdecoder->pipe, 5000);
 	/* AppSrc settings */
 	GstAppSrcCallbacks callbacks =
 	{
@@ -477,12 +458,10 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 	g_object_set(mdecoder->src, "format", GST_FORMAT_TIME, NULL);
 	g_object_set(mdecoder->src, "is-live", TRUE, NULL);
 	g_object_set(mdecoder->src, "block", TRUE, NULL);
+	gst_app_src_set_caps((GstAppSrc *) mdecoder->src, mdecoder->gst_caps);
 	gst_app_src_set_callbacks((GstAppSrc *)mdecoder->src, &callbacks, mdecoder, NULL);
 	gst_app_src_set_stream_type((GstAppSrc *) mdecoder->src, GST_APP_STREAM_TYPE_SEEKABLE);
-	gst_app_src_set_caps((GstAppSrc *) mdecoder->src, mdecoder->gst_caps);
-
 	tsmf_window_create(mdecoder);
-
 	tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_READY);
 	tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 	mdecoder->pipeline_start_time_valid = 0;
@@ -585,7 +564,6 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder *decoder, const BYTE *data, UIN
 			tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 	}
 
-
 	return TRUE;
 }
 
@@ -657,7 +635,7 @@ static void tsmf_gstreamer_control(ITSMFDecoder *decoder, ITSMFControlMsg contro
 	}
 	else if (control_msg == Control_Stop)
 	{
-		DEBUG_WARN("Control_Stop %s", get_type(mdecoder));
+		DEBUG_TSMF("Control_Stop %s", get_type(mdecoder));
 
 		if (mdecoder->shutdown)
 		{
@@ -695,7 +673,7 @@ static BOOL tsmf_gstreamer_buffer_filled(ITSMFDecoder *decoder)
 static void tsmf_gstreamer_free(ITSMFDecoder *decoder)
 {
 	TSMFGstreamerDecoder *mdecoder = (TSMFGstreamerDecoder *) decoder;
-	DEBUG_WARN("%s", get_type(mdecoder));
+	DEBUG_TSMF("%s", get_type(mdecoder));
 
 	if (mdecoder)
 	{
