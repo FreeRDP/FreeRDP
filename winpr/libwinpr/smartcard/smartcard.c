@@ -27,6 +27,8 @@
 
 #include "smartcard.h"
 
+#include "smartcard_inspect.h"
+
 static BOOL g_Initialized = FALSE;
 static PSCardApiFunctionTable g_SCardApi = NULL;
 
@@ -1009,5 +1011,9 @@ void InitializeSCardApiStubs(void)
 	{
 		g_SCardApi = WinSCard_GetSCardApiFunctionTable();
 	}
+#endif
+
+#ifdef WITH_SMARTCARD_INSPECT
+	g_SCardApi = Inspect_RegisterSCardApi(g_SCardApi);
 #endif
 }
