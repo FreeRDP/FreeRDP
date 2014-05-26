@@ -396,7 +396,7 @@ void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder *mdecoder)
 BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 {
 	const char *appsrc = "appsrc name=source ! decodebin name=decoder !";
-	const char *video = "autovideoconvert ! videorate ! videoscale !";
+	const char *video = "autovideoconvert ! videoscale !";
 	const char *audio = "audioconvert ! audiorate ! audioresample ! volume name=audiovolume !";
 	char pipeline[1024];
 
@@ -466,6 +466,9 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 	tsmf_gstreamer_pipeline_set_state(mdecoder, GST_STATE_PLAYING);
 	mdecoder->pipeline_start_time_valid = 0;
 	mdecoder->shutdown = 0;
+
+  GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(mdecoder->pipe), GST_DEBUG_GRAPH_SHOW_ALL, get_type(mdecoder));
+
 	return TRUE;
 }
 
