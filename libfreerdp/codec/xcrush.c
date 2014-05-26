@@ -27,6 +27,70 @@
 
 #include <freerdp/codec/xcrush.h>
 
+const char* xcrush_get_level_2_compression_flags_string(UINT32 flags)
+{
+	flags &= 0xE0;
+
+	if (flags == 0)
+		return "PACKET_UNCOMPRESSED";
+	else if (flags == PACKET_COMPRESSED)
+		return "PACKET_COMPRESSED";
+	else if (flags == PACKET_AT_FRONT)
+		return "PACKET_AT_FRONT";
+	else if (flags == PACKET_FLUSHED)
+		return "PACKET_FLUSHED";
+	else if (flags == (PACKET_COMPRESSED | PACKET_AT_FRONT))
+		return "PACKET_COMPRESSED | PACKET_AT_FRONT";
+	else if (flags == (PACKET_COMPRESSED | PACKET_FLUSHED))
+		return "PACKET_COMPRESSED | PACKET_FLUSHED";
+	else if (flags == (PACKET_AT_FRONT | PACKET_FLUSHED))
+		return "PACKET_AT_FRONT | PACKET_FLUSHED";
+	else if (flags == (PACKET_COMPRESSED | PACKET_AT_FRONT | PACKET_FLUSHED))
+		return "PACKET_COMPRESSED | PACKET_AT_FRONT | PACKET_FLUSHED";
+
+	return "PACKET_UNKNOWN";
+}
+
+const char* xcrush_get_level_1_compression_flags_string(UINT32 flags)
+{
+	flags &= 0x17;
+
+	if (flags == 0)
+		return "L1_UNKNOWN";
+	else if (flags == L1_PACKET_AT_FRONT)
+		return "L1_PACKET_AT_FRONT";
+	else if (flags == L1_NO_COMPRESSION)
+		return "L1_NO_COMPRESSION";
+	else if (flags == L1_COMPRESSED)
+		return "L1_COMPRESSED";
+	else if (flags == L1_INNER_COMPRESSION)
+		return "L1_INNER_COMPRESSION";
+	else if (flags == (L1_PACKET_AT_FRONT | L1_NO_COMPRESSION))
+		return "L1_PACKET_AT_FRONT | L1_NO_COMPRESSION";
+	else if (flags == (L1_PACKET_AT_FRONT | L1_COMPRESSED))
+		return "L1_PACKET_AT_FRONT | L1_COMPRESSED";
+	else if (flags == (L1_PACKET_AT_FRONT | L1_INNER_COMPRESSION))
+		return "L1_PACKET_AT_FRONT | L1_INNER_COMPRESSION";
+	else if (flags == (L1_NO_COMPRESSION | L1_COMPRESSED))
+		return "L1_NO_COMPRESSION | L1_COMPRESSED";
+	else if (flags == (L1_NO_COMPRESSION | L1_INNER_COMPRESSION))
+		return "L1_NO_COMPRESSION | L1_INNER_COMPRESSION";
+	else if (flags == (L1_COMPRESSED | L1_INNER_COMPRESSION))
+		return "L1_COMPRESSED | L1_INNER_COMPRESSION";
+	else if (flags == (L1_NO_COMPRESSION | L1_COMPRESSED | L1_INNER_COMPRESSION))
+		return "L1_NO_COMPRESSION | L1_COMPRESSED | L1_INNER_COMPRESSION";
+	else if (flags == (L1_PACKET_AT_FRONT | L1_COMPRESSED | L1_INNER_COMPRESSION))
+		return "L1_PACKET_AT_FRONT | L1_COMPRESSED | L1_INNER_COMPRESSION";
+	else if (flags == (L1_PACKET_AT_FRONT | L1_NO_COMPRESSION | L1_INNER_COMPRESSION))
+		return "L1_PACKET_AT_FRONT | L1_NO_COMPRESSION | L1_INNER_COMPRESSION";
+	else if (flags == (L1_PACKET_AT_FRONT | L1_NO_COMPRESSION | L1_COMPRESSED))
+		return "L1_PACKET_AT_FRONT | L1_NO_COMPRESSION | L1_COMPRESSED";
+	else if (flags == (L1_PACKET_AT_FRONT | L1_NO_COMPRESSION | L1_COMPRESSED | L1_INNER_COMPRESSION))
+		return "L1_PACKET_AT_FRONT | L1_NO_COMPRESSION | L1_COMPRESSED | L1_INNER_COMPRESSION";
+
+	return "L1_UNKNOWN";
+}
+
 UINT32 xcrush_update_hash(BYTE* data, UINT32 size)
 {
 	BYTE* end;
@@ -583,7 +647,7 @@ int xcrush_generate_output(XCRUSH_CONTEXT* xcrush, BYTE* OutputBuffer, UINT32 Ou
 			if (Literals + MatchOffset - CurrentOffset >= OutputEnd)
 				return -6004; /* error */
 
-			CopyMemory(Literals, &xcrush->HistoryBuffer[CurrentOffset], MatchOffsetDiff);
+			MoveMemory(Literals, &xcrush->HistoryBuffer[CurrentOffset], MatchOffsetDiff);
 
 			if (Literals >= OutputEnd)
 				return -6005; /* error */
@@ -598,7 +662,7 @@ int xcrush_generate_output(XCRUSH_CONTEXT* xcrush, BYTE* OutputBuffer, UINT32 Ou
 	if (Literals + HistoryOffsetDiff >= OutputEnd)
 		return -6006; /* error */
 
-	CopyMemory(Literals, &xcrush->HistoryBuffer[CurrentOffset], HistoryOffsetDiff);
+	MoveMemory(Literals, &xcrush->HistoryBuffer[CurrentOffset], HistoryOffsetDiff);
 	*pDstSize = Literals + HistoryOffsetDiff - OutputBuffer;
 
 	return 1;
@@ -786,7 +850,7 @@ int xcrush_compress_l1(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, B
 	HistoryBuffer = xcrush->HistoryBuffer;
 	HistoryPtr = &HistoryBuffer[HistoryOffset];
 
-	CopyMemory(HistoryPtr, pSrcData, SrcSize);
+	MoveMemory(HistoryPtr, pSrcData, SrcSize);
 	xcrush->HistoryOffset += SrcSize;
 
 	if (SrcSize > 50)
@@ -857,12 +921,12 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 		return -1002;
 
 	OriginalData = *ppDstData;
-	OriginalDataSize = *pDstSize;
+	OriginalDataSize = SrcSize;
 
 	pDstData = xcrush->BlockBuffer;
-	DstSize = sizeof(xcrush->BlockBuffer);
+	CompressedDataSize = SrcSize;
 
-	status = xcrush_compress_l1(xcrush, pSrcData, SrcSize, &pDstData, &DstSize, &Level1ComprFlags);
+	status = xcrush_compress_l1(xcrush, pSrcData, SrcSize, &pDstData, &CompressedDataSize, &Level1ComprFlags);
 
 	if (status < 0)
 		return status;
@@ -870,7 +934,6 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	if (Level1ComprFlags & L1_COMPRESSED)
 	{
 		CompressedData = pDstData;
-		CompressedDataSize = DstSize;
 
 		if (CompressedDataSize > SrcSize)
 			return -1003;
@@ -878,18 +941,17 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	else
 	{
 		CompressedData = pSrcData;
-		CompressedDataSize = DstSize;
 
 		if (CompressedDataSize != SrcSize)
 			return -1004;
 	}
 
-	status = 1;
+	status = 0;
 
-	pDstData = OriginalData + 2;
+	pDstData = &OriginalData[2];
 	DstSize = OriginalDataSize - 2;
 
-	if (DstSize > 50)
+	if (CompressedDataSize > 50)
 	{
 		status = mppc_compress(xcrush->mppc, CompressedData, CompressedDataSize, &pDstData, &DstSize, &Level2ComprFlags);
 	}
@@ -897,16 +959,18 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	if (status < 0)
 		return status;
 
-	if (!(Level2ComprFlags & PACKET_COMPRESSED) || (Level2ComprFlags & PACKET_FLUSHED))
+	if (!status || (Level2ComprFlags & PACKET_FLUSHED))
 	{
-		CompressedData = pDstData;
 		CompressedDataSize = DstSize;
 
 		if (CompressedDataSize > DstSize)
+		{
+			/* we should handle packet flushing here */
 			return -1005;
+		}
 
 		DstSize = CompressedDataSize;
-		CopyMemory(pDstData, CompressedData, CompressedDataSize);
+		MoveMemory(&OriginalData[2], CompressedData, CompressedDataSize);
 	}
 
 	if (Level2ComprFlags & PACKET_COMPRESSED)

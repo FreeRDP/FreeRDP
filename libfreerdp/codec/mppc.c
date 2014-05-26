@@ -207,7 +207,7 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 			else
 			{
 				/* Invalid CopyOffset Encoding */
-				return -1;
+				return -1001;
 			}
 		}
 		else /* RDP4 */
@@ -245,7 +245,7 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 			else
 			{
 				/* Invalid CopyOffset Encoding */
-				return -1;
+				return -1002;
 			}
 		}
 
@@ -409,7 +409,7 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		else
 		{
 			/* Invalid LengthOfMatch Encoding */
-			return -1;
+			return -1003;
 		}
 
 #ifdef DEBUG_MPPC
@@ -508,11 +508,6 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 	pDstData = *ppDstData;
 
 	if (!pDstData)
-		return -1;
-
-	DstSize = *pDstSize;
-
-	if (DstSize < SrcSize)
 		return -1;
 
 	DstSize = SrcSize;
@@ -859,11 +854,7 @@ MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor)
 
 		mppc->bs = BitStream_New();
 
-		ZeroMemory(&(mppc->HistoryBuffer), sizeof(mppc->HistoryBuffer));
-		ZeroMemory(&(mppc->MatchBuffer), sizeof(mppc->MatchBuffer));
-
-		mppc->HistoryOffset = 0;
-		mppc->HistoryPtr = &(mppc->HistoryBuffer[mppc->HistoryOffset]);
+		mppc_context_reset(mppc);
 	}
 
 	return mppc;
