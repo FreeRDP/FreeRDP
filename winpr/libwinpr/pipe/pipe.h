@@ -43,10 +43,6 @@ struct winpr_named_pipe
 {
 	WINPR_HANDLE_DEF();
 
-	WINPR_NAMED_PIPE* pBaseNamedPipe;
-
-	DWORD dwRefCount;
-
 	int clientfd;
 	int serverfd;
 
@@ -65,6 +61,10 @@ struct winpr_named_pipe
 	LPOVERLAPPED lpOverlapped;
 
 	fnRemoveBaseNamedPipeFromList pfnRemoveBaseNamedPipeFromList;
+
+	WINPR_NAMED_PIPE* pBaseNamedPipe;
+	DWORD dwRefCount;
+
 };
 
 #endif
