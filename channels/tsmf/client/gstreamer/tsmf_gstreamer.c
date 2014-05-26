@@ -142,7 +142,7 @@ static GstBuffer *tsmf_get_buffer_from_data(const void *raw_data, gsize size)
 
 	if (!data)
 	{
-		DEBUG_WARN("Could not allocate %d bytes of data.", size);
+		DEBUG_WARN("Could not allocate %"G_GSIZE_FORMAT" bytes of data.", size);
 		return NULL;
 	}
 
