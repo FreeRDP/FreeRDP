@@ -49,8 +49,7 @@ FREERDP_API int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSi
 
 FREERDP_API void mppc_set_compression_level(MPPC_CONTEXT* mppc, DWORD CompressionLevel);
 
-FREERDP_API void mppc_context_reset(MPPC_CONTEXT* mppc);
-FREERDP_API void mppc_context_flush(MPPC_CONTEXT* mppc);
+FREERDP_API void mppc_context_reset(MPPC_CONTEXT* mppc, BOOL flush);
 
 FREERDP_API MPPC_CONTEXT* mppc_context_new(DWORD CompressionLevel, BOOL Compressor);
 FREERDP_API void mppc_context_free(MPPC_CONTEXT* mppc);
