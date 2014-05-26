@@ -80,7 +80,6 @@ set(${MODULE_PREFIX}_SRCS
 	server.c
 	server.h
 	metrics.c
-	metrics.h
 	capabilities.c
 	capabilities.h
 	certificate.c

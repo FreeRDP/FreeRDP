@@ -963,7 +963,7 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	{
 		if (CompressedDataSize > DstSize)
 		{
-			xcrush_context_flush(xcrush);
+			xcrush_context_reset(xcrush, TRUE);
 			*ppDstData = pSrcData;
 			*pDstSize = SrcSize;
 			*pFlags = 0;
@@ -1004,7 +1004,7 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	return 1;
 }
 
-void xcrush_context_reset(XCRUSH_CONTEXT* xcrush)
+void xcrush_context_reset(XCRUSH_CONTEXT* xcrush, BOOL flush)
 {
 	xcrush->SignatureIndex = 0;
 	xcrush->SignatureCount = 1000;
@@ -1019,15 +1019,12 @@ void xcrush_context_reset(XCRUSH_CONTEXT* xcrush)
 	ZeroMemory(&(xcrush->OriginalMatches), sizeof(xcrush->OriginalMatches));
 	ZeroMemory(&(xcrush->OptimizedMatches), sizeof(xcrush->OptimizedMatches));
 
-	mppc_context_reset(xcrush->mppc);
-}
+	if (flush)
+		xcrush->HistoryOffset = xcrush->HistoryBufferSize + 1;
+	else
+		xcrush->HistoryOffset = 0;
 
-void xcrush_context_flush(XCRUSH_CONTEXT* xcrush)
-{
-	xcrush_context_reset(xcrush);
-	xcrush->HistoryOffset = xcrush->HistoryBufferSize + 1;
-
-	mppc_context_flush(xcrush->mppc);
+	mppc_context_reset(xcrush->mppc, flush);
 }
 
 XCRUSH_CONTEXT* xcrush_context_new(BOOL Compressor)
@@ -1044,7 +1041,7 @@ XCRUSH_CONTEXT* xcrush_context_new(BOOL Compressor)
 		xcrush->HistoryOffset = 0;
 		xcrush->HistoryBufferSize = 2000000;
 
-		xcrush_context_reset(xcrush);
+		xcrush_context_reset(xcrush, FALSE);
 	}
 
 	return xcrush;

@@ -256,14 +256,14 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 
 void bulk_reset(rdpBulk* bulk)
 {
-	mppc_context_reset(bulk->mppcSend);
-	mppc_context_reset(bulk->mppcRecv);
+	mppc_context_reset(bulk->mppcSend, FALSE);
+	mppc_context_reset(bulk->mppcRecv, FALSE);
 
-	ncrush_context_reset(bulk->ncrushRecv);
-	ncrush_context_reset(bulk->ncrushSend);
+	ncrush_context_reset(bulk->ncrushRecv, FALSE);
+	ncrush_context_reset(bulk->ncrushSend, FALSE);
 
-	xcrush_context_reset(bulk->xcrushRecv);
-	xcrush_context_reset(bulk->xcrushSend);
+	xcrush_context_reset(bulk->xcrushRecv, FALSE);
+	xcrush_context_reset(bulk->xcrushSend, FALSE);
 }
 
 rdpBulk* bulk_new(rdpContext* context)
