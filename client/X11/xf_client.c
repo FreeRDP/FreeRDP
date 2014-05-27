@@ -1327,7 +1327,10 @@ void* xf_input_thread(void* arg)
 		}
 		else if (ev == WAIT_OBJECT_0 + 1)
 		{
-			if (!freerdp_message_queue_process_pending_messages(instance, FREERDP_INPUT_MESSAGE_QUEUE))
+			wMessage msg;
+			MessageQueue_Peek(queue, &msg, FALSE);
+
+			if (msg.id == WMQ_QUIT)
 				break;
 		}
 	}
