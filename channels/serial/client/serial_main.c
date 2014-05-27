@@ -50,6 +50,8 @@
 #include <winpr/thread.h>
 #include <winpr/wlog.h>
 
+#include <winpr/wlog.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/list.h>
 #include <freerdp/channels/rdpdr.h>
@@ -696,6 +698,35 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 }
 
 
+static void terminate_pending_irp_threads(SERIAL_DEVICE *serial)
+{
+	ULONG_PTR *ids;
+	int i, nbIds;
+
+	nbIds = ListDictionary_GetKeys(serial->IrpThreads, &ids);
+
+	DEBUG_SVC("Terminating %d IRP thread(s)", nbIds);
+
+	for (i=0; i<nbIds; i++)
+	{
+		HANDLE irpThread;
+		ULONG_PTR id = ids[i];
+
+		irpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)id);		
+
+		TerminateThread(irpThread, 0);
+
+		WaitForSingleObject(irpThread, INFINITE);
+
+		CloseHandle(irpThread);
+
+		DEBUG_SVC("IRP thread terminated, CompletionId %d", id);
+	}
+
+	ListDictionary_Clear(serial->IrpThreads);
+}
+
+
 static void* serial_thread_func(void* arg)
 {
 	IRP* irp;
@@ -711,7 +742,10 @@ static void* serial_thread_func(void* arg)
 			break;
 
 		if (message.id == WMQ_QUIT)
+		{
+			terminate_pending_irp_threads(serial);
 			break;
+		}
 
 		irp = (IRP*) message.wParam;
 
@@ -748,7 +782,7 @@ static void serial_free(DEVICE* device)
 	WLog_Print(serial->log, WLOG_DEBUG, "freeing");
 
 	MessageQueue_PostQuit(serial->MainIrpQueue, 0);
-	WaitForSingleObject(serial->MainThread, INFINITE); /* FIXME: might likely block on a pending Write or ioctl */
+	WaitForSingleObject(serial->MainThread, INFINITE);
 	CloseHandle(serial->MainThread);
 
 	if (serial->hComm)

@@ -203,18 +203,18 @@ BOOL CloseHandle(HANDLE hObject)
 
 		comm = (WINPR_COMM*) Object;
 
-		if (comm->fd > 0)
-			close(comm->fd);
-
 		/* NOTE: This is up to the caller of CloseHandle() to
 		 * ensure there is no pending request. Sending
 		 * SERIAL_EV_FREERDP_STOP anyway. Remove this code if
 		 * you think otherwise. */
 		EnterCriticalSection(&comm->EventsLock);
-		comm->PendingEvents |= SERIAL_EV_FREERDP_STOP;
+		comm->PendingEvents |= SERIAL_EV_FREERDP_CLOSING;
 		LeaveCriticalSection(&comm->EventsLock);
-		
+
 		DeleteCriticalSection(&comm->EventsLock);
+
+		if (comm->fd > 0)
+			close(comm->fd);
 
 		free(comm);
 

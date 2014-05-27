@@ -1016,6 +1016,11 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 	/* NB: ensure to leave the critical section before to return */
 	EnterCriticalSection(&pComm->EventsLock);
 
+	if (pComm->PendingEvents |= SERIAL_EV_FREERDP_CLOSING)
+	{
+		return TRUE; /* returns without complaining */
+	}
+
 	if (*pWaitMask == 0)
 	{
 		/* clearing pending events */
@@ -1164,6 +1169,11 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 
 	/* NB: ensure to leave the critical section before to return */
 	EnterCriticalSection(&pComm->EventsLock);
+
+	if (pComm->PendingEvents & SERIAL_EV_FREERDP_CLOSING)
+	{
+		return TRUE; /* returns without complaining */
+	}
 
 	ZeroMemory(pCommstatus, sizeof(SERIAL_STATUS));
 
@@ -1341,6 +1351,11 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 
 		/* NB: ensure to leave the critical section before to return */
 		EnterCriticalSection(&pComm->EventsLock);
+		
+		if (pComm->PendingEvents & SERIAL_EV_FREERDP_CLOSING)
+		{
+			return TRUE; /* returns without complaining */
+		}
 
 		if (pComm->PendingEvents & SERIAL_EV_FREERDP_STOP)
 		{
