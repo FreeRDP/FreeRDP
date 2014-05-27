@@ -146,11 +146,14 @@ static int pthread_timedjoin_np(pthread_t td, void **res,
 {
 	struct timespec timenow;
 	struct timespec sleepytime;
+  unsigned long long diff;
 	int retcode;
 
 	/* This is just to avoid a completely busy wait */
-	sleepytime.tv_sec = 0;
-	sleepytime.tv_nsec = 10000000; /* 10ms */
+	clock_gettime(CLOCK_MONOTONIC, &timenow);
+  diff = ts_difftime(&timenow, timeout);
+	sleepytime.tv_sec = diff / 1000000000LL;
+	sleepytime.tv_nsec = diff % 1000000000LL;
 
 	while ((retcode = pthread_mutex_trylock (mutex)) == EBUSY)
 	{
