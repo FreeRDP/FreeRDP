@@ -35,6 +35,7 @@ struct winpr_thread
 	WINPR_HANDLE_DEF();
 
 	BOOL started;
+  int pipe_fd[2];
 	BOOL mainProcess;
 	DWORD dwExitCode;
 	pthread_t thread;
@@ -55,6 +56,8 @@ struct winpr_process
 	DWORD dwExitCode;
 };
 typedef struct winpr_process WINPR_PROCESS;
+
+void CloseThread(WINPR_THREAD *thread);
 
 #endif
 
