@@ -206,6 +206,17 @@ BOOL CloseHandle(HANDLE hObject)
 		if (comm->fd > 0)
 			close(comm->fd);
 
+		/* NOTE: avoided to add a dependency by using a
+		 * function such as _stop_wait_on_mask() */
+		EnterCriticalSection(&comm->PendingEventsLock);
+		comm->PendingEvents |= SERIAL_EV_FREERDP_STOP;
+		sem_post(&comm->PendingEventsSem);
+		LeaveCriticalSection(&comm->PendingEventsLock);
+
+		sem_destroy(&comm->PendingEventsSem); /* FIXME: might be too early? */
+
+		DeleteCriticalSection(&comm->PendingEventsLock);
+
 		free(comm);
 
 		return TRUE;

@@ -24,6 +24,7 @@
 #ifndef _WIN32
 
 #include <linux/serial.h>
+#include <semaphore.h>
 
 #include <winpr/comm.h>
 
@@ -66,9 +67,10 @@ struct winpr_comm
 	 * modify counters */
 	struct serial_icounter_struct counters;
 
-	/* TMP: TODO: sync */
 	ULONG WaitEventMask;
 	ULONG PendingEvents;
+	sem_t PendingEventsSem;
+	CRITICAL_SECTION PendingEventsLock;
 
 	/* NB: CloseHandle() has to free resources */
 };
@@ -76,6 +78,9 @@ struct winpr_comm
 typedef struct winpr_comm WINPR_COMM;
 
 void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID);
+
+/* TMP: TODO: move all specific defines and types here? at least SERIAL_EV_* */
+#define SERIAL_EV_FREERDP_STOP     0x8000 /* bit unused by SERIAL_EV_* */
 
 
 #endif /* _WIN32 */

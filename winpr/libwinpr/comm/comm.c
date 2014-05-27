@@ -750,7 +750,7 @@ typedef struct _COMM_DEVICE
 	LPTSTR path;
 } COMM_DEVICE;
 
-/* FIXME: get a clever data structure */
+/* FIXME: get a clever data structure, see also io.h functions */
 static COMM_DEVICE **_CommDevices = NULL;
 
 #define COMM_DEVICE_MAX	128
@@ -809,7 +809,7 @@ static BOOL _IsReservedCommDeviceName(LPCTSTR lpName)
 			return TRUE;
 	}
 
-	/* TMP: TODO: PRN ? */
+	/* FIXME: what about PRN ? */
 
 	return FALSE;
 }
@@ -1147,9 +1147,14 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 
+	if (sem_init(&pComm->PendingEventsSem, 0, 0) < 0)
+	{
+		DEBUG_WARN("sem_init failed, errno=[%d] %s", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		goto error_handle;
+	}
 
-
-
+	InitializeCriticalSection(&pComm->PendingEventsLock);
 
 	/* The binary/raw mode is required for the redirection but
 	 * only flags that are not handle somewhere-else, except

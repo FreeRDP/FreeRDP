@@ -64,14 +64,16 @@ struct _SERIAL_DEVICE
 	DEVICE device;
 	HANDLE* hComm;
 
-	// TMP: use of log
+	/* TODO: use of log (prefered the old fashion DEBUG_SVC and
+	 * DEBUG_WARN macros for backward compatibility resaons)
+	 */
 	wLog* log;
 	HANDLE MainThread;
 	wMessageQueue* MainIrpQueue;
 
 	/* one thread per pending IRP and indexed according their CompletionId */
 	wListDictionary *IrpThreads;
-	UINT32 IrpThreadToTerminateCount;
+	UINT32 IrpThreadToBeTerminatedCount;
 	CRITICAL_SECTION TerminatingIrpThreadsLock;
 };
 
@@ -509,7 +511,7 @@ static void* irp_thread_func(void* arg)
 	serial_process_irp(data->serial, data->irp);
 
 	EnterCriticalSection(&data->serial->TerminatingIrpThreadsLock);
-	data->serial->IrpThreadToTerminateCount++;
+	data->serial->IrpThreadToBeTerminatedCount++;
 
 	data->irp->Complete(data->irp);
 
@@ -532,17 +534,21 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 	HANDLE irpThread = INVALID_HANDLE_VALUE;
 	HANDLE previousIrpThread;
 
-	/* uncomment the code below to get a single thread per IRP for
-	 * a test/debug purpose. NB: two IRPs could not occur at the
-	 * same time, typically two concurent Read/Write
-	 * operations. */
+	/* for a test/debug purpose, uncomment the code below to get a
+	 * single thread for all IRPs. NB: two IRPs could not be
+	 * processed at the same time, typically two concurent
+	 * Read/Write operations could block each other. */
 	/* serial_process_irp(serial, irp); */
 	/* irp->Complete(irp); */
 	/* return; */
 
 
+	/* NOTE: for good or bad, this implementation relies on the
+	 * server to avoid a flooding of requests. see also _purge().
+	 */
+
 	EnterCriticalSection(&serial->TerminatingIrpThreadsLock);
-	while (serial->IrpThreadToTerminateCount > 0)
+	while (serial->IrpThreadToBeTerminatedCount > 0)
 	{
 		/* Cleaning up termitating and pending irp
 		 * threads. See also: irp_thread_func() */
@@ -572,7 +578,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 				CloseHandle(irpThread);
 				ListDictionary_Remove(serial->IrpThreads, (void*)id);
 
-				serial->IrpThreadToTerminateCount--;
+				serial->IrpThreadToBeTerminatedCount--;
 			}
 			else if (waitResult != WAIT_TIMEOUT)
  			{
@@ -585,11 +591,9 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 		}
 		
 
-		assert(serial->IrpThreadToTerminateCount == 0); /* TMP: */
-
-		if (serial->IrpThreadToTerminateCount > 0)
+		if (serial->IrpThreadToBeTerminatedCount > 0)
 		{
-			DEBUG_SVC("%d IRP thread(s) not yet terminated", serial->IrpThreadToTerminateCount);
+			DEBUG_SVC("%d IRP thread(s) not yet terminated", serial->IrpThreadToBeTerminatedCount);
 			Sleep(1); /* 1 ms */
 		}
 	}
@@ -599,8 +603,11 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 	 * sure that the incoming IRP uses well a recycled
 	 * CompletionId or the server sent again an IRP already posted
 	 * which didn't get yet a response (this later server behavior
-	 * at least observed with IOCTL_SERIAL_WAIT_ON_MASK FIXME:
-	 * behavior documented somewhere?).
+	 * at least observed with IOCTL_SERIAL_WAIT_ON_MASK and
+	 * mstsc.exe.
+	 *
+	 * FIXME: behavior documented somewhere? behavior not yet
+	 * observed with FreeRDP).
 	 */
 
 	previousIrpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)irp->CompletionId);
@@ -610,13 +617,24 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 
 		DEBUG_SVC("IRP recall: IRP with the CompletionId=%d not yet completed!", irp->CompletionId);
 
-		/* TMP: TODO: taking over the pending IRP or sending a kind of wake up signal to accelerate the pending request */
-		assert(FALSE);
-			
-		/* FIXME: asserts that the previous thread's IRP is
-		 * well the same request by checking more
-		 * details. Need an access to the IRP object used by
-		 * previousIrpThread */
+		assert(FALSE); /* unimplemented */
+
+		/* TODO: asserts that previousIrpThread handles well
+		 * the same request by checking more details. Need an
+		 * access to the IRP object used by previousIrpThread
+		 */
+
+		/* TODO: taking over the pending IRP or sending a kind
+		 * of wake up signal to accelerate the pending
+		 * request
+		 *
+		 * To be considered:
+		 *   if (IoControlCode == IOCTL_SERIAL_WAIT_ON_MASK) {
+		 *       pComm->PendingEvents |= SERIAL_EV_FREERDP_*;
+		 *       sem_post(&comm->PendingEventsSem);
+		 *   }
+		 */
+
 		irp->Discard(irp);
 		return;
 	}
@@ -624,10 +642,15 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 
 	if (ListDictionary_Count(serial->IrpThreads) >= MAX_IRP_THREADS)
 	{
-		DEBUG_WARN("Maximal number of IRP threads reached: %d", ListDictionary_Count(serial->IrpThreads));
+		DEBUG_WARN("Number of IRP threads threshold reached: %d, keep on anyway", ListDictionary_Count(serial->IrpThreads));
 		
-		assert(FALSE);
-		/* TODO: FIXME: WaitForMultipleObjects() not yet implemented for threads */
+		assert(FALSE); /* unimplemented */
+
+		/* TODO: MAX_IRP_THREADS has been thought to avoid a
+		 * flooding of pending requests. Use
+		 * WaitForMultipleObjects() when available in winpr
+		 * for threads.
+		 */
 	}
 
 
@@ -642,6 +665,8 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 
 	data->serial = serial;
 	data->irp = irp;
+
+	/* data freed by irp_thread_func */
 
 	irpThread = CreateThread(NULL, 
 				 0, 
@@ -660,7 +685,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 
 	ListDictionary_Add(serial->IrpThreads, (void*)irp->CompletionId, irpThread);
 
-	return; /* data freed by irp_thread_func */
+	return;
 
   error_handle:
 
@@ -757,7 +782,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	if (!name || (name[0] == '*'))
 	{
-		/* TODO: implement auto detection of parallel ports */
+		/* TODO: implement auto detection of serial ports */
 		return 0;
 	}
 
@@ -788,9 +813,9 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		serial->MainIrpQueue = MessageQueue_New(NULL);
 
-		serial->IrpThreads = ListDictionary_New(FALSE); /* only handled in create_irp_thread() */
-
-		serial->IrpThreadToTerminateCount = 0;
+		/* IrpThreads content only modified by create_irp_thread() */
+		serial->IrpThreads = ListDictionary_New(FALSE); 
+		serial->IrpThreadToBeTerminatedCount = 0;
 		InitializeCriticalSection(&serial->TerminatingIrpThreadsLock);
 
 		WLog_Init();

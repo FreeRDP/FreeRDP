@@ -162,7 +162,6 @@ typedef struct _SERIAL_TIMEOUTS
 #define SERIAL_EV_EVENT1           0x0800  
 #define SERIAL_EV_EVENT2           0x1000  
 
-
 typedef struct _SERIAL_QUEUE_SIZE
 {
 	ULONG InSize;

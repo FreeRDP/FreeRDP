@@ -388,7 +388,7 @@ WINPR_API BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOver
  *
  * Did something close to QueryDosDevice() and DefineDosDevice() but with
  * folowing constraints:
- *   - mappings are stored in a static wHashTable (thread safe)
+ *   - mappings are stored in a static array.
  *   - QueryCommDevice returns only the mappings that have been defined through DefineCommDevice()
  */
 WINPR_API BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTargetPath);

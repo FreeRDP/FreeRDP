@@ -26,8 +26,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <unistd.h>
 #include <termios.h>
+#include <time.h>
+#include <unistd.h>
 
 #include <freerdp/utils/debug.h>
 
@@ -1028,11 +1029,16 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 		pComm->PendingEvents = 0;
 	}
+
+	/* Stops pending IOCTL_SERIAL_WAIT_ON_MASK
+	 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
+	 */
+	EnterCriticalSection(&pComm->PendingEventsLock);
+	pComm->PendingEvents |= SERIAL_EV_FREERDP_STOP;
+	sem_post(&pComm->PendingEventsSem);
+	LeaveCriticalSection(&pComm->PendingEventsLock);
+
 	
-	// TMP: TODO:
-	// pending wait_on_mask must be stopped with STATUS_SUCCESS
-	// http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
-	// and pOutputMask = 0;
 
 	possibleMask = *pWaitMask & _SERIAL_SYS_SUPPORTED_EV_MASK;
 
@@ -1104,6 +1110,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 
 
 		// TMP: TODO: intercept this call before CommDeviceIoControl() ?
+		// getting a fd_write, fd_read and fs_iotcl?
 	}
 
 	if (*pPurgeMask & SERIAL_PURGE_RXABORT)
@@ -1153,6 +1160,8 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	/* http://msdn.microsoft.com/en-us/library/jj673022%28v=vs.85%29.aspx */
 
 	struct serial_icounter_struct currentCounters; 
+
+	EnterCriticalSection(&pComm->PendingEventsLock);
 
 	ZeroMemory(pCommstatus, sizeof(SERIAL_STATUS));
 
@@ -1239,7 +1248,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	}
 	else
 	{
-		/* FIXME: "now empty" is ambiguous, need to track previous completed transmission? */
+		/* FIXME: "now empty" from the specs is ambiguous, need to track previous completed transmission? */
 		pComm->PendingEvents &= ~SERIAL_EV_TXEMPTY;
 	}
 
@@ -1269,16 +1278,32 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	}
 	else
 	{
-		/* FIXME: "is 80 percent full" is ambiguous, need to track when it previously occured? */
+		/* FIXME: "is 80 percent full" from the specs is ambiguous, need to track when it previously occured? */
 		pComm->PendingEvents &= ~SERIAL_EV_RX80FULL;
 	}
 
 
 	pComm->counters = currentCounters;
 
+	LeaveCriticalSection(&pComm->PendingEventsLock);
 
 	return TRUE;
 }
+
+static BOOL _refresh_PendingEvents(WINPR_COMM *pComm)
+{
+	SERIAL_STATUS serialStatus;
+
+	/* NB: also ensures PendingEvents to be up to date */
+	ZeroMemory(&serialStatus, sizeof(SERIAL_STATUS));
+	if (!_get_commstatus(pComm, &serialStatus))
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 
 static void _consume_event(WINPR_COMM *pComm, ULONG *pOutputMask, ULONG event)
 {
@@ -1289,24 +1314,30 @@ static void _consume_event(WINPR_COMM *pComm, ULONG *pOutputMask, ULONG event)
 	}
 }
 
+/*
+ * NB: see also: _set_wait_mask()
+ */
 static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 {
+	
 	assert(*pOutputMask == 0);
 
-	// TMP: TODO:
-	// TMP: TODO: wait also on a PendingEvents modification, and a new identical IRP
-	/* while (TRUE) */
-	{
-		SERIAL_STATUS serialStatus;
+	/* UGLY: removes the STOP bit set by an initial _set_wait_mask() */
+	pComm->PendingEvents &= ~SERIAL_EV_FREERDP_STOP;
 
-		/* NB: also ensures PendingEvents to be up to date */
-		ZeroMemory(&serialStatus, sizeof(SERIAL_STATUS));
-		if (!_get_commstatus(pComm, &serialStatus))
+	while (TRUE)
+	{
+		struct timespec ts;
+
+		if (!_refresh_PendingEvents(pComm))
 		{
 			return FALSE;
 		}
 
+
 		/* events */
+
+		EnterCriticalSection(&pComm->PendingEventsLock);
 
 		_consume_event(pComm, pOutputMask, SERIAL_EV_RXCHAR);
 		_consume_event(pComm, pOutputMask, SERIAL_EV_RXFLAG);
@@ -1319,15 +1350,60 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 		_consume_event(pComm, pOutputMask, SERIAL_EV_RING );
 		_consume_event(pComm, pOutputMask, SERIAL_EV_RX80FULL);
 
+		LeaveCriticalSection(&pComm->PendingEventsLock);
+
+		/* NOTE: PendingEvents can be modified from now on but
+		 * not pOutputMask */
+
 		if (*pOutputMask != 0)
 		{
 			/* at least an event occurred */
 			return TRUE;
 		}
+
+
+		/* wait for 1 ms or a modification of PendingEvents */
+
+		if (clock_gettime(CLOCK_REALTIME, &ts) < 0)
+		{
+			DEBUG_WARN("clock_realtime failed, errno=[%d] %s", errno, strerror(errno));
+			SetLastError(ERROR_IO_DEVICE);
+			return FALSE;
+		}
+
+		ts.tv_nsec += 100000000; /* 100 ms */
+		if (ts.tv_nsec > 999999999)
+		{
+			ts.tv_sec++;              /* += 1s */
+			ts.tv_nsec -= 1000000000; /* -= 1s */
+		}
+		if (sem_timedwait(&pComm->PendingEventsSem, &ts) < 0)
+		{
+			assert(errno == ETIMEDOUT);
+
+			if (errno != ETIMEDOUT)
+			{
+				DEBUG_WARN("sem_timedwait failed, errno=[%d] %s", errno, strerror(errno));
+				SetLastError(ERROR_IO_DEVICE);
+				return FALSE;
+			}
+		}
+		
+		if (pComm->PendingEvents & SERIAL_EV_FREERDP_STOP)
+		{
+			EnterCriticalSection(&pComm->PendingEventsLock);
+			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_STOP;
+			LeaveCriticalSection(&pComm->PendingEventsLock);
+
+			/* pOutputMask must remain empty
+			 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
+			 */
+			return TRUE;
+		}
 	}
 
-	DEBUG_WARN("_wait_on_mask pending on events:0X%lX", pComm->WaitEventMask);
-	SetLastError(ERROR_IO_PENDING); /* see: WaitCommEvent's help */
+	DEBUG_WARN("_wait_on_mask, unexpected return, WaitEventMask=0X%lX", pComm->WaitEventMask);
+	assert(FALSE);
 	return FALSE;
 }
 
