@@ -169,19 +169,22 @@ BOOL CloseHandle(HANDLE hObject)
 
 		pipe = (WINPR_NAMED_PIPE*) Object;
 
-		if (pipe->ServerMode)
-		{
-			assert(pipe->dwRefCount);
+		assert(pipe->dwRefCount);
 
-			if (--pipe->dwRefCount == 0)
+		if (--pipe->dwRefCount == 0)
+		{
+			if (pipe->pfnRemoveBaseNamedPipeFromList)
 			{
 				pipe->pfnRemoveBaseNamedPipeFromList(pipe);
-
-				if (pipe->pBaseNamedPipe)
-				{
-					CloseHandle((HANDLE) pipe->pBaseNamedPipe);
-				}
 			}
+			if (pipe->pBaseNamedPipe)
+			{
+				CloseHandle((HANDLE) pipe->pBaseNamedPipe);
+			}
+		}
+		else
+		{
+			return TRUE;
 		}
 
 		if (pipe->clientfd != -1)
