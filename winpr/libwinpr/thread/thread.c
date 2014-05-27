@@ -281,7 +281,7 @@ VOID ExitThread(DWORD dwExitCode)
 	else
 	{
 		WINPR_THREAD *thread = ListDictionary_GetItemValue(thread_list, &tid);
-		reset_event(thread);
+		set_event(thread);
 		thread->dwExitCode = dwExitCode;
 	}
 
