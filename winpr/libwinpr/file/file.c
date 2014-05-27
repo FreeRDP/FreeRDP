@@ -254,6 +254,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	pNamedPipe->clientfd = socket(PF_LOCAL, SOCK_STREAM, 0);
 	pNamedPipe->serverfd = -1;
 	pNamedPipe->ServerMode = FALSE;
+	pNamedPipe->dwRefCount = 1;
 
 	ZeroMemory(&s, sizeof(struct sockaddr_un));
 	s.sun_family = AF_UNIX;
