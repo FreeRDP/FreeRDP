@@ -195,14 +195,32 @@ BOOL freerdp_connect(freerdp* instance)
 	return status;
 }
 
-BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
+HANDLE *freerdp_get_event_handles(freerdp *instance, HANDLE *handles, DWORD *count)
 {
 	rdpRdp* rdp;
+	if (!instance || !count || !instance->context || !instance->context->rdp)
+	{
+		DEBUG_WARN("instance || !count || !instance->context || !instance->context->rdp=%p",
+				   instance, count, instance ? instance->context : NULL,
+			   instance ? instance->context ? instance->context->rdp : NULL : NULL);
+		return NULL;
+	}
+
+	if (!instance->context || !instance->context->rdp)
+	{
+		DEBUG_WARN("instance->context=%p instance->context->rdp=%p", instance->context, instance->context ? instance->context->rdp : NULL);
+		return NULL;
+	}
 
 	rdp = instance->context->rdp;
-	transport_get_fds(rdp->transport, rfds, rcount);
 
-	return TRUE;
+	if (!rdp)
+	{
+		DEBUG_WARN("rdp=%p", rdp);
+		return NULL;
+	}
+
+	return transport_get_event_handles(rdp->transport, handles, count);
 }
 
 BOOL freerdp_check_fds(freerdp* instance)
