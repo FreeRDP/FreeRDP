@@ -40,6 +40,7 @@
 rdpUpdate* update_new(rdpRdp* rdp);
 void update_free(rdpUpdate* update);
 
+HANDLE *update_get_event_handles(rdpUpdate *update, HANDLE *handles, DWORD *count);
 void update_free_bitmap(BITMAP_UPDATE* bitmap_update);
 
 void update_reset_state(rdpUpdate* update);

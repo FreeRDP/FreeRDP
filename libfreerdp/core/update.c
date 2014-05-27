@@ -290,14 +290,12 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, 
 {
 	BYTE *newMask;
 	int scanlineSize;
-
 	if (Stream_GetRemainingLength(s) < 14)
 		return FALSE;
 
 	Stream_Read_UINT16(s, pointer_color->cacheIndex); /* cacheIndex (2 bytes) */
 	Stream_Read_UINT16(s, pointer_color->xPos); /* xPos (2 bytes) */
 	Stream_Read_UINT16(s, pointer_color->yPos); /* yPos (2 bytes) */
-
 	/**
 	 *  As stated in 2.2.9.1.1.4.4 Color Pointer Update:
 	 *  The maximum allowed pointer width/height is 96 pixels if the client indicated support
@@ -311,7 +309,6 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, 
 	Stream_Read_UINT16(s, pointer_color->height); /* height (2 bytes) */
 	if ((pointer_color->width > 96) || (pointer_color->height > 96))
 		return FALSE;
-
 	Stream_Read_UINT16(s, pointer_color->lengthAndMask); /* lengthAndMask (2 bytes) */
 	Stream_Read_UINT16(s, pointer_color->lengthXorMask); /* lengthXorMask (2 bytes) */
 
@@ -1659,6 +1656,22 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	}
 
 	return update;
+}
+
+HANDLE *update_get_event_handles(rdpUpdate *update, HANDLE *handles, DWORD *count)
+{
+	HANDLE *hdl = handles;
+
+	if (!update || !count)
+	{
+		DEBUG_WARN("update=%p, count=%p", update, count);
+		return NULL;
+	}
+
+	if (update->asynchronous)
+		hdl = update_message_proxy_get_event_handles(update->proxy, handles, count);
+
+	return hdl;
 }
 
 void update_free(rdpUpdate* update)
