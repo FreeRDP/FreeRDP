@@ -208,7 +208,7 @@ BOOL CloseHandle(HANDLE hObject)
 		 * SERIAL_EV_FREERDP_STOP anyway. Remove this code if
 		 * you think otherwise. */
 		EnterCriticalSection(&comm->EventsLock);
-		comm->PendingEvents |= SERIAL_EV_FREERDP_CLOSING;
+		comm->PendingEvents |= SERIAL_EV_FREERDP_STOP;
 		LeaveCriticalSection(&comm->EventsLock);
 
 		DeleteCriticalSection(&comm->EventsLock);

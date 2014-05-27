@@ -74,8 +74,8 @@ typedef struct winpr_comm WINPR_COMM;
 void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID);
 
 /* TMP: TODO: move all specific defines and types here? at least SERIAL_EV_* */
-#define SERIAL_EV_FREERDP_STOP     0x4000 /* bit unused by SERIAL_EV_* */
-#define SERIAL_EV_FREERDP_CLOSING  0x8000 /* bit unused by SERIAL_EV_* */
+#define SERIAL_EV_FREERDP_WAITING	0x4000 /* bit unused by SERIAL_EV_* */
+#define SERIAL_EV_FREERDP_STOP     	0x8000 /* bit unused by SERIAL_EV_* */
 
 
 #endif /* _WIN32 */

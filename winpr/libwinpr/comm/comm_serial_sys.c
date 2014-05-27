@@ -1013,13 +1013,26 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 {
 	ULONG possibleMask;
 
+
+	/* Stops pending IOCTL_SERIAL_WAIT_ON_MASK
+	 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
+	 */
+
+	if (pComm->PendingEvents & SERIAL_EV_FREERDP_WAITING)
+	{
+		/* FIXME: any doubt on reading PendingEvents out of a critical section? */
+
+		EnterCriticalSection(&pComm->EventsLock);
+		pComm->PendingEvents |= SERIAL_EV_FREERDP_STOP;
+		LeaveCriticalSection(&pComm->EventsLock);
+
+		/* waiting the end of the pending _wait_on_mask() */
+		while (pComm->PendingEvents & SERIAL_EV_FREERDP_WAITING)
+			Sleep(10); /* 10ms */
+	}
+
 	/* NB: ensure to leave the critical section before to return */
 	EnterCriticalSection(&pComm->EventsLock);
-
-	if (pComm->PendingEvents & SERIAL_EV_FREERDP_CLOSING)
-	{
-		return TRUE; /* returns without complaining */
-	}
 
 	if (*pWaitMask == 0)
 	{
@@ -1036,11 +1049,6 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 		pComm->PendingEvents = 0;
 	}
-
-	/* Stops pending IOCTL_SERIAL_WAIT_ON_MASK
-	 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
-	 */
-	pComm->PendingEvents |= SERIAL_EV_FREERDP_STOP;
 
 	possibleMask = *pWaitMask & _SERIAL_SYS_SUPPORTED_EV_MASK;
 
@@ -1169,11 +1177,6 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 
 	/* NB: ensure to leave the critical section before to return */
 	EnterCriticalSection(&pComm->EventsLock);
-
-	if (pComm->PendingEvents & SERIAL_EV_FREERDP_CLOSING)
-	{
-		return TRUE; /* returns without complaining */
-	}
 
 	ZeroMemory(pCommstatus, sizeof(SERIAL_STATUS));
 
@@ -1338,25 +1341,25 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 {
 	assert(*pOutputMask == 0);
 
-	/* UGLY: removes the STOP bit set by an initial _set_wait_mask() */
-	pComm->PendingEvents &= ~SERIAL_EV_FREERDP_STOP;
+	EnterCriticalSection(&pComm->EventsLock);
+	pComm->PendingEvents |= SERIAL_EV_FREERDP_WAITING;
+	LeaveCriticalSection(&pComm->EventsLock);
+
 
 	while (TRUE)
 	{
 		/* NB: EventsLock also used by _refresh_PendingEvents() */
 		if (!_refresh_PendingEvents(pComm))
 		{
+			EnterCriticalSection(&pComm->EventsLock);
+			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_WAITING;
+			LeaveCriticalSection(&pComm->EventsLock);
 			return FALSE;
 		}
 
 		/* NB: ensure to leave the critical section before to return */
 		EnterCriticalSection(&pComm->EventsLock);
 		
-		if (pComm->PendingEvents & SERIAL_EV_FREERDP_CLOSING)
-		{
-			return TRUE; /* returns without complaining */
-		}
-
 		if (pComm->PendingEvents & SERIAL_EV_FREERDP_STOP)
 		{
 			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_STOP;
@@ -1368,6 +1371,7 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 			 */
 			assert(*pOutputMask == 0);
 
+			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_WAITING;
 			LeaveCriticalSection(&pComm->EventsLock);
 			return TRUE;
 		}
@@ -1391,6 +1395,10 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 		if (*pOutputMask != 0)
 		{
 			/* at least an event occurred */
+
+			EnterCriticalSection(&pComm->EventsLock);
+			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_WAITING;
+			LeaveCriticalSection(&pComm->EventsLock);
 			return TRUE;
 		}
 
@@ -1407,6 +1415,9 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 	}
 
 	DEBUG_WARN("_wait_on_mask, unexpected return, WaitEventMask=0X%lX", pComm->WaitEventMask);
+	EnterCriticalSection(&pComm->EventsLock);
+	pComm->PendingEvents &= ~SERIAL_EV_FREERDP_WAITING;
+	LeaveCriticalSection(&pComm->EventsLock);
 	assert(FALSE);
 	return FALSE;
 }
