@@ -24,7 +24,6 @@
 #ifndef _WIN32
 
 #include <linux/serial.h>
-#include <semaphore.h>
 
 #include <winpr/comm.h>
 
@@ -62,15 +61,10 @@ struct winpr_comm
 
 	COMMTIMEOUTS timeouts;
 	
-	/* NB: no synchronization required on counters until _get_commstatus()
-	 * is the only function [except CreateFile() and CloseHandle()] to
-	 * modify counters */
+	CRITICAL_SECTION EventsLock; /* protects counters, WaitEventMask and PendingEvents */
 	struct serial_icounter_struct counters;
-
 	ULONG WaitEventMask;
 	ULONG PendingEvents;
-	sem_t PendingEventsSem;
-	CRITICAL_SECTION PendingEventsLock;
 
 	/* NB: CloseHandle() has to free resources */
 };

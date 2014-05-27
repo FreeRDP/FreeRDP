@@ -631,7 +631,6 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 		 * To be considered:
 		 *   if (IoControlCode == IOCTL_SERIAL_WAIT_ON_MASK) {
 		 *       pComm->PendingEvents |= SERIAL_EV_FREERDP_*;
-		 *       sem_post(&comm->PendingEventsSem);
 		 *   }
 		 */
 

@@ -27,7 +27,6 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <termios.h>
-#include <time.h>
 #include <unistd.h>
 
 #include <freerdp/utils/debug.h>
@@ -1014,16 +1013,19 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 {
 	ULONG possibleMask;
 
+	/* NB: ensure to leave the critical section before to return */
+	EnterCriticalSection(&pComm->EventsLock);
+
 	if (*pWaitMask == 0)
 	{
 		/* clearing pending events */
-
-		// TMP: TODO:
 
 		if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
 		{
 			DEBUG_WARN("TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
 			SetLastError(ERROR_IO_DEVICE);
+
+			LeaveCriticalSection(&pComm->EventsLock);
 			return FALSE;
 		}
 
@@ -1033,12 +1035,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 	/* Stops pending IOCTL_SERIAL_WAIT_ON_MASK
 	 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
 	 */
-	EnterCriticalSection(&pComm->PendingEventsLock);
 	pComm->PendingEvents |= SERIAL_EV_FREERDP_STOP;
-	sem_post(&pComm->PendingEventsSem);
-	LeaveCriticalSection(&pComm->PendingEventsLock);
-
-	
 
 	possibleMask = *pWaitMask & _SERIAL_SYS_SUPPORTED_EV_MASK;
 
@@ -1048,10 +1045,14 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 		/* FIXME: shall we really set the possibleMask and return FALSE? */
 		pComm->WaitEventMask = possibleMask;
+
+		LeaveCriticalSection(&pComm->EventsLock);
 		return FALSE;
 	}
 
 	pComm->WaitEventMask = possibleMask;
+
+	LeaveCriticalSection(&pComm->EventsLock);
 	return TRUE;
 }
 
@@ -1161,7 +1162,8 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 
 	struct serial_icounter_struct currentCounters; 
 
-	EnterCriticalSection(&pComm->PendingEventsLock);
+	/* NB: ensure to leave the critical section before to return */
+	EnterCriticalSection(&pComm->EventsLock);
 
 	ZeroMemory(pCommstatus, sizeof(SERIAL_STATUS));
 
@@ -1170,6 +1172,8 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	{
 		DEBUG_WARN("TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
+
+		LeaveCriticalSection(&pComm->EventsLock);
 		return FALSE;
 	}
 
@@ -1215,6 +1219,8 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	{
 		DEBUG_WARN("TIOCINQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
+
+		LeaveCriticalSection(&pComm->EventsLock);
 		return FALSE;
 	}
 
@@ -1225,6 +1231,8 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	{
 		DEBUG_WARN("TIOCOUTQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
+
+		LeaveCriticalSection(&pComm->EventsLock);
 		return FALSE;
 	}
 
@@ -1285,8 +1293,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 
 	pComm->counters = currentCounters;
 
-	LeaveCriticalSection(&pComm->PendingEventsLock);
-
+	LeaveCriticalSection(&pComm->EventsLock);
 	return TRUE;
 }
 
@@ -1319,7 +1326,6 @@ static void _consume_event(WINPR_COMM *pComm, ULONG *pOutputMask, ULONG event)
  */
 static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 {
-	
 	assert(*pOutputMask == 0);
 
 	/* UGLY: removes the STOP bit set by an initial _set_wait_mask() */
@@ -1327,17 +1333,29 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 
 	while (TRUE)
 	{
-		struct timespec ts;
-
+		/* NB: EventsLock also used by _refresh_PendingEvents() */
 		if (!_refresh_PendingEvents(pComm))
 		{
 			return FALSE;
 		}
 
+		/* NB: ensure to leave the critical section before to return */
+		EnterCriticalSection(&pComm->EventsLock);
 
-		/* events */
+		if (pComm->PendingEvents & SERIAL_EV_FREERDP_STOP)
+		{
+			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_STOP;
 
-		EnterCriticalSection(&pComm->PendingEventsLock);
+			/* pOutputMask must remain empty but should
+			 * not have been modified.
+			 *
+			 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
+			 */
+			assert(*pOutputMask == 0);
+
+			LeaveCriticalSection(&pComm->EventsLock);
+			return TRUE;
+		}
 
 		_consume_event(pComm, pOutputMask, SERIAL_EV_RXCHAR);
 		_consume_event(pComm, pOutputMask, SERIAL_EV_RXFLAG);
@@ -1350,7 +1368,7 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 		_consume_event(pComm, pOutputMask, SERIAL_EV_RING );
 		_consume_event(pComm, pOutputMask, SERIAL_EV_RX80FULL);
 
-		LeaveCriticalSection(&pComm->PendingEventsLock);
+		LeaveCriticalSection(&pComm->EventsLock);
 
 		/* NOTE: PendingEvents can be modified from now on but
 		 * not pOutputMask */
@@ -1362,44 +1380,15 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 		}
 
 
-		/* wait for 1 ms or a modification of PendingEvents */
+		/* waiting for a modification of PendingEvents.
+		 *
+		 * NOTE: previously used a semaphore but used
+		 * sem_timedwait() anyway. Finally preferred a simpler
+		 * solution with Sleep() whithout the burden of the
+		 * semaphore initialization and destroying.
+		 */
 
-		if (clock_gettime(CLOCK_REALTIME, &ts) < 0)
-		{
-			DEBUG_WARN("clock_realtime failed, errno=[%d] %s", errno, strerror(errno));
-			SetLastError(ERROR_IO_DEVICE);
-			return FALSE;
-		}
-
-		ts.tv_nsec += 100000000; /* 100 ms */
-		if (ts.tv_nsec > 999999999)
-		{
-			ts.tv_sec++;              /* += 1s */
-			ts.tv_nsec -= 1000000000; /* -= 1s */
-		}
-		if (sem_timedwait(&pComm->PendingEventsSem, &ts) < 0)
-		{
-			assert(errno == ETIMEDOUT);
-
-			if (errno != ETIMEDOUT)
-			{
-				DEBUG_WARN("sem_timedwait failed, errno=[%d] %s", errno, strerror(errno));
-				SetLastError(ERROR_IO_DEVICE);
-				return FALSE;
-			}
-		}
-		
-		if (pComm->PendingEvents & SERIAL_EV_FREERDP_STOP)
-		{
-			EnterCriticalSection(&pComm->PendingEventsLock);
-			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_STOP;
-			LeaveCriticalSection(&pComm->PendingEventsLock);
-
-			/* pOutputMask must remain empty
-			 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
-			 */
-			return TRUE;
-		}
+		Sleep(100); /* 100 ms */
 	}
 
 	DEBUG_WARN("_wait_on_mask, unexpected return, WaitEventMask=0X%lX", pComm->WaitEventMask);

@@ -1139,6 +1139,8 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	 */
 	pComm->remoteSerialDriverId = RemoteSerialDriverUnknown;
 
+	InitializeCriticalSection(&pComm->EventsLock);
+
 	if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
 	{
 		DEBUG_WARN("TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
@@ -1146,15 +1148,6 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
-
-	if (sem_init(&pComm->PendingEventsSem, 0, 0) < 0)
-	{
-		DEBUG_WARN("sem_init failed, errno=[%d] %s", errno, strerror(errno));
-		SetLastError(ERROR_IO_DEVICE);
-		goto error_handle;
-	}
-
-	InitializeCriticalSection(&pComm->PendingEventsLock);
 
 	/* The binary/raw mode is required for the redirection but
 	 * only flags that are not handle somewhere-else, except
