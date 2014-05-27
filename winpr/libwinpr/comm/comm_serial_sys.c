@@ -1016,7 +1016,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 	/* NB: ensure to leave the critical section before to return */
 	EnterCriticalSection(&pComm->EventsLock);
 
-	if (pComm->PendingEvents |= SERIAL_EV_FREERDP_CLOSING)
+	if (pComm->PendingEvents & SERIAL_EV_FREERDP_CLOSING)
 	{
 		return TRUE; /* returns without complaining */
 	}
