@@ -286,7 +286,7 @@ BOOL update_read_pointer_system(wStream* s, POINTER_SYSTEM_UPDATE* pointer_syste
 	return TRUE;
 }
 
-BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, int bpp)
+BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, int xorBpp)
 {
 	BYTE *newMask;
 	int scanlineSize;
@@ -342,9 +342,9 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, 
 		if (Stream_GetRemainingLength(s) < pointer_color->lengthXorMask)
 			return FALSE;
 
-		scanlineSize = (7 + bpp * pointer_color->width) / 8;
+		scanlineSize = (7 + xorBpp * pointer_color->width) / 8;
 		scanlineSize = ((scanlineSize + 1) / 2) * 2;
-		if (scanlineSize * pointer_color->height > pointer_color->lengthXorMask)
+		if (scanlineSize * pointer_color->height != pointer_color->lengthXorMask)
 		{
 			fprintf(stderr, "%s: invalid lengthXorMask: width=%d height=%d, %d instead of %d\n", __FUNCTION__,
 					pointer_color->width, pointer_color->height,
@@ -375,7 +375,7 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, 
 
 		scanlineSize = ((7 + pointer_color->width) / 8);
 		scanlineSize = ((1 + scanlineSize) / 2) * 2;
-		if (scanlineSize * pointer_color->height > pointer_color->lengthAndMask)
+		if (scanlineSize * pointer_color->height != pointer_color->lengthAndMask)
 		{
 			fprintf(stderr, "%s: invalid lengthAndMask: %d instead of %d\n", __FUNCTION__,
 					pointer_color->lengthAndMask, scanlineSize * pointer_color->height);
@@ -403,6 +403,11 @@ BOOL update_read_pointer_new(wStream* s, POINTER_NEW_UPDATE* pointer_new)
 		return FALSE;
 
 	Stream_Read_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
+	if ((pointer_new->xorBpp < 0) || (pointer_new->xorBpp > 32))
+	{
+		fprintf(stderr, "%s: invalid xorBpp %d\n", __FUNCTION__, pointer_new->xorBpp);
+		return FALSE;
+	}
 	return update_read_pointer_color(s, &pointer_new->colorPtrAttr, pointer_new->xorBpp); /* colorPtrAttr */
 }
 
