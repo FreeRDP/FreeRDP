@@ -21,11 +21,6 @@
 #include "config.h"
 #endif
 
-#include <errno.h>
-#ifdef HAVE_EVENTFD_H
-#include <sys/eventfd.h>
-#endif
-
 #include <winpr/handle.h>
 
 #include <winpr/thread.h>
@@ -82,6 +77,8 @@
 #ifdef HAVE_EVENTFD_H
 #include <sys/eventfd.h>
 #endif
+
+#include <errno.h>
 
 #include <winpr/collections.h>
 
