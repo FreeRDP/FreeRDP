@@ -296,6 +296,11 @@ BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 	return 1;
 }
 
+void GetSystemTime(LPSYSTEMTIME lpSystemTime)
+{
+
+}
+
 VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 {
 	ULARGE_INTEGER time64;
@@ -309,6 +314,21 @@ VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 
 	lpSystemTimeAsFileTime->dwLowDateTime = time64.LowPart;
 	lpSystemTimeAsFileTime->dwHighDateTime = time64.HighPart;
+}
+
+BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime)
+{
+	return FALSE;
+}
+
+VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
+{
+
+}
+
+BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime)
+{
+	return FALSE;
 }
 
 #ifndef CLOCK_MONOTONIC_RAW
@@ -606,6 +626,7 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 #endif
 	return ret;
 }
+
 #endif //_WIN32
 
 BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
