@@ -259,10 +259,8 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	if (FD_ISSET(pComm->fd_read_event, &read_set))
 	{
 		eventfd_t event = 0;
-		int nbRead;
 
-		nbRead = eventfd_read(pComm->fd_read_event, &event);
-		if (nbRead < 0)
+		if (eventfd_read(pComm->fd_read_event, &event) < 0)
 		{
 			if (errno == EAGAIN)
 			{
@@ -277,8 +275,6 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 			assert(errno == EAGAIN);
 		}
-
-		assert(nbRead == sizeof(eventfd_t));
 
 		if (event == FREERDP_PURGE_RXABORT)
 		{
@@ -437,10 +433,8 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		if (FD_ISSET(pComm->fd_write_event, &event_set))
 		{
 			eventfd_t event = 0;
-			int nbRead;
 
-			nbRead = eventfd_read(pComm->fd_write_event, &event);
-			if (nbRead < 0)
+			if (eventfd_read(pComm->fd_write_event, &event) < 0)
 			{
 				if (errno == EAGAIN)
 				{
@@ -455,8 +449,6 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 				assert(errno == EAGAIN);
 			}
-
-			assert(nbRead == sizeof(eventfd_t));
 
 			if (event == FREERDP_PURGE_TXABORT)
 			{

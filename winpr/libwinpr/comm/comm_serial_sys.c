@@ -1123,9 +1123,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 	{
 		/* Purges all write (IRP_MJ_WRITE) requests. */
 
-		int nbWritten;
-
-		if ((nbWritten = eventfd_write(pComm->fd_write_event, FREERDP_PURGE_TXABORT)) < 0)
+		if (eventfd_write(pComm->fd_write_event, FREERDP_PURGE_TXABORT) < 0)
 		{
 			if (errno != EAGAIN)
 			{
@@ -1134,17 +1132,13 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 
 			assert(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_WRITE */
 		}
-
-		assert(nbWritten == sizeof(eventfd_t));
 	}
 
 	if (*pPurgeMask & SERIAL_PURGE_RXABORT)
 	{
 		/* Purges all read (IRP_MJ_READ) requests. */
 
-		int nbWritten;
-
-		if ((nbWritten = eventfd_write(pComm->fd_read_event, FREERDP_PURGE_RXABORT)) < 0)
+		if (eventfd_write(pComm->fd_read_event, FREERDP_PURGE_RXABORT) < 0)
 		{
 			if (errno != EAGAIN)
 			{
@@ -1153,8 +1147,6 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 
 			assert(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_READ */
 		}
-
-		assert(nbWritten == sizeof(eventfd_t));
 	}
 
 	if (*pPurgeMask & SERIAL_PURGE_TXCLEAR)
