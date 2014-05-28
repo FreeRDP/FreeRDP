@@ -163,9 +163,6 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 	 * implementation just relies on the Linux' implementation.
 	 */
 
-	// TMP: TODO:
-
-
 	if (pProperties->dwProvSpec1 != COMMPROP_INITIALIZED)
 	{
 		ZeroMemory(pProperties, sizeof(COMMPROP));
@@ -184,7 +181,7 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 
 	pProperties->dwMaxBaud = SERIAL_BAUD_115200; /* _SERIAL_MAX_BAUD */
 
-	/* FIXME: what about PST_RS232? */
+	/* FIXME: what about PST_RS232? see also: serial_struct */
 	pProperties->dwProvSubType = PST_UNSPECIFIED;
 
 	/* TMP: TODO: to be finalized */
@@ -205,7 +202,7 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 
 	pProperties->wSettableStopParity = STOPBITS_10 | /*STOPBITS_15 |*/ STOPBITS_20 | PARITY_NONE | PARITY_ODD | PARITY_EVEN | PARITY_MARK | PARITY_SPACE;
 
-	/* FIXME: could be implemented on top of N_TTY */
+	/* FIXME: additional input and output buffers could be implemented on top of N_TTY */
 	pProperties->dwCurrentTxQueue = N_TTY_BUF_SIZE;
 	pProperties->dwCurrentRxQueue = N_TTY_BUF_SIZE;
 
@@ -1489,6 +1486,27 @@ static BOOL _set_xon(WINPR_COMM *pComm)
 }
 
 
+BOOL _get_dtrrts(WINPR_COMM *pComm, ULONG *pMask)
+{
+	UINT32 lines=0;
+	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
+	{
+		DEBUG_WARN("TIOCMGET ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+
+	*pMask = 0;
+	
+	if (!(lines & TIOCM_DTR))
+		*pMask |= SERIAL_DTR_STATE;
+	if (!(lines & TIOCM_RTS))
+		*pMask |= SERIAL_RTS_STATE;
+	
+	return TRUE;
+}
+
+
 static REMOTE_SERIAL_DRIVER _SerialSys = 
 {
 	.id		  = RemoteSerialDriverSerialSys,
@@ -1519,6 +1537,7 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.set_break_off    = _set_break_off,
 	.set_xoff         = _set_xoff,
 	.set_xon          = _set_xon,
+	.get_dtrrts       = _get_dtrrts,
 };
 
 

@@ -399,6 +399,7 @@ static REMOTE_SERIAL_DRIVER _SerCxSys =
 	.set_break_off    = NULL,
 	.set_xoff         = NULL,
 	.set_xon          = NULL,
+	.get_dtrrts       = NULL,
 };
 
 
@@ -440,6 +441,8 @@ REMOTE_SERIAL_DRIVER* SerCxSys_s()
 
 	_SerCxSys.set_xoff = pSerialSys->set_xoff;
 	_SerCxSys.set_xon  = pSerialSys->set_xon;
+
+	_SerCxSys.get_dtrrts  = pSerialSys->get_dtrrts;
 
 	return &_SerCxSys;
 }

@@ -198,6 +198,13 @@ typedef struct _SERIAL_STATUS
 #define SERIAL_ERROR_QUEUEOVERRUN      ((ULONG)0x00000008) 
 #define SERIAL_ERROR_PARITY            ((ULONG)0x00000010) 
 
+#define SERIAL_DTR_STATE         ((ULONG)0x00000001) 
+#define SERIAL_RTS_STATE         ((ULONG)0x00000002) 
+#define SERIAL_CTS_STATE         ((ULONG)0x00000010) 
+#define SERIAL_DSR_STATE         ((ULONG)0x00000020) 
+#define SERIAL_RI_STATE          ((ULONG)0x00000040) 
+#define SERIAL_DCD_STATE         ((ULONG)0x00000080) 
+
 /**
  * A function might be NULL if not supported by the underlying remote driver.
  *
@@ -233,6 +240,7 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*set_break_off)(WINPR_COMM *pComm);
 	BOOL (*set_xoff)(WINPR_COMM *pComm);
 	BOOL (*set_xon)(WINPR_COMM *pComm);
+	BOOL (*get_dtrrts)(WINPR_COMM *pComm, ULONG *pMask);
 
 } REMOTE_SERIAL_DRIVER;
 
