@@ -1124,6 +1124,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
+	/* TMP: won't be required once fd_read, fd_read_event implemented */
 	/* Restore the blocking mode for upcoming read/write operations */
 	if (fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) & ~O_NONBLOCK) < 0)
 	{
@@ -1132,6 +1133,22 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
+
+	pComm->fd_write = open(devicePath, O_WRONLY | O_NOCTTY | O_NONBLOCK);
+	if (pComm->fd_write < 0)
+	{
+		DEBUG_WARN("failed to open fd_write, device: %s", devicePath);
+		SetLastError(ERROR_BAD_DEVICE);
+		goto error_handle;
+	}
+
+	pComm->fd_write_event = eventfd(0, EFD_NONBLOCK); /* EFD_NONBLOCK required because a read() is not always expected */
+	if (pComm->fd_write_event < 0)
+	{
+		DEBUG_WARN("failed to open fd_write_event, device: %s", devicePath);
+		SetLastError(ERROR_BAD_DEVICE);
+		goto error_handle;
+	}
 
 	/* TMP: TODO: FIXME: this information is at least needed for
 	 * get/set baud functions. Is it possible to pull this

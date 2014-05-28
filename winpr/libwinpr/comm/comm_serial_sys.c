@@ -1114,24 +1114,47 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 		return FALSE;
 	}
 	
+	/* FIXME: currently relying too much on the fact the server
+	 * sends a single IRP_MJ_WRITE or IRP_MJ_READ at a time
+	 * (taking care though that one IRP_MJ_WRITE and one
+	 * IRP_MJ_READ can be sent simultaneously) */
 
 	if (*pPurgeMask & SERIAL_PURGE_TXABORT)
 	{
 		/* Purges all write (IRP_MJ_WRITE) requests. */
 
+		int nbWritten;
 
-		// TMP: TODO: intercept this call before CommDeviceIoControl() ?
-		// getting a fd_write, fd_read and fs_iotcl?
+		if ((nbWritten = eventfd_write(pComm->fd_write_event, FREERDP_PURGE_TXABORT)) < 0)
+		{
+			if (errno != EAGAIN)
+			{
+				DEBUG_WARN("eventfd_write failed, errno=[%d] %s", errno, strerror(errno));
+			}
+
+			assert(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_WRITE */
+		}
+
+		assert(nbWritten == sizeof(eventfd_t));
 	}
 
 	if (*pPurgeMask & SERIAL_PURGE_RXABORT)
 	{
 		/* Purges all read (IRP_MJ_READ) requests. */
 
-		/* TMP: TODO: double check if this gives well a change to abort a pending CommReadFile */
-		/* assert(0); */
-		/* fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) | O_NONBLOCK); */
-		/* fcntl(pComm->fd, F_SETFL, fcntl(pComm->fd, F_GETFL) & ~O_NONBLOCK); */
+		/* int nbWritten; */
+
+		/* if ((nbWritten = eventfd_write(pComm->fd_read_event, FREERDP_PURGE_RXABORT)) < 0) */
+		/* { */
+		/* 	if (errno != EAGAIN) */
+		/* 	{ */
+		/* 		DEBUG_WARN("eventfd_write failed, errno=[%d] %s", errno, strerror(errno)); */
+		/* 	} */
+
+		/* 	assert(errno == EAGAIN); /\* no reader <=> no pending IRP_MJ_READ *\/ */
+		/* } */
+
+		/* assert(nbWritten == 8); */
 	}
 
 	if (*pPurgeMask & SERIAL_PURGE_TXCLEAR)

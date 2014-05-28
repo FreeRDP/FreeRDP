@@ -23,6 +23,7 @@
 
 #ifndef _WIN32
 
+#include <assert.h>
 #include <errno.h>
 #include <termios.h>
 #include <unistd.h>
@@ -262,7 +263,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		   LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
-	COMMTIMEOUTS *pTimeouts;
+	struct timeval timeout, *pTimeout;
 
 	if (hDevice == INVALID_HANDLE_VALUE)
 	{
@@ -295,37 +296,114 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		return TRUE; /* FIXME: or FALSE? */
 	}
 
-	// TMP: TODO: Timeouts
-	pTimeouts = &(pComm->timeouts);
+	/* ms */
+	ULONGLONG Tmax = nNumberOfBytesToWrite * pComm->timeouts.WriteTotalTimeoutMultiplier + pComm->timeouts.WriteTotalTimeoutConstant;
 
+	/* NB: select() may update the timeout argument to indicate
+	 * how much time was left. Keep the timeout variable out of
+	 * the while() */
+
+	pTimeout = NULL; /* no timeout if Tmax == 0 */
+	if (Tmax > 0)
+	{
+		ZeroMemory(&timeout, sizeof(struct timeval));
+
+		timeout.tv_sec = Tmax / 1000; /* s */
+		timeout.tv_usec = (Tmax % 1000) * 1000; /* us */
+
+		pTimeout = &timeout;
+	}
+		
 	while (*lpNumberOfBytesWritten < nNumberOfBytesToWrite)
 	{
-		ssize_t nbWritten;
+		int biggestFd = -1;
+		fd_set event_set, write_set;
 
-		nbWritten = write(pComm->fd, 
-				  lpBuffer + (*lpNumberOfBytesWritten), 
-				  nNumberOfBytesToWrite - (*lpNumberOfBytesWritten));
+		biggestFd = pComm->fd_write;
+		if (pComm->fd_write_event > biggestFd)
+			biggestFd = pComm->fd_write_event;
 
-		if (nbWritten < 0)
+		FD_ZERO(&event_set);
+		FD_ZERO(&write_set);
+
+		assert(pComm->fd_write_event < FD_SETSIZE);
+		assert(pComm->fd_write < FD_SETSIZE);
+
+		FD_SET(pComm->fd_write_event, &event_set);
+		FD_SET(pComm->fd_write, &write_set);
+
+		if (select(biggestFd+1, &event_set, &write_set, NULL, pTimeout) < 0)
 		{
-			DEBUG_WARN("CommWriteFile failed after %lu bytes written, errno=[%d] %s\n", *lpNumberOfBytesWritten, errno, strerror(errno));
-
-			switch (errno)
-			{
-				case EAGAIN:
-					/* EWOULDBLOCK */
-					// TMP: FIXME: fcntl(tty->fd, F_SETFL, O_NONBLOCK) and manage the timeout here?
-					break;
-				case EBADF:
-					SetLastError(ERROR_BAD_DEVICE); /* STATUS_INVALID_DEVICE_REQUEST */
-					return FALSE;
-			}
-
+			DEBUG_WARN("select() failure, errno=[%d] %s\n", errno, strerror(errno));
+			SetLastError(ERROR_IO_DEVICE);
 			return FALSE;
 		}
 
-		*lpNumberOfBytesWritten += nbWritten;
-	}
+
+		/* event_set */
+
+		if (FD_ISSET(pComm->fd_write_event, &event_set))
+		{
+			eventfd_t event = 0;
+			int nbRead;
+
+			nbRead = eventfd_read(pComm->fd_write_event, &event);
+			if (nbRead < 0)
+			{
+				if (errno == EAGAIN)
+				{
+					assert(FALSE); /* not quite sure this should ever happen */
+				}
+				else
+				{
+					DEBUG_WARN("unexpected error on reading fd_write_event, errno=[%d] %s\n", errno, strerror(errno));
+					/* FIXME: return FALSE ? */
+				}
+
+				assert(errno == EAGAIN);
+			}
+
+			assert(nbRead == sizeof(eventfd_t));
+
+			if (event == FREERDP_PURGE_TXABORT)
+			{
+				SetLastError(ERROR_CANCELLED);
+				return FALSE;
+			}
+
+			assert(event == FREERDP_PURGE_TXABORT); /* no other event known so far */
+		}
+
+
+		/* write_set */
+		
+		if (FD_ISSET(pComm->fd_write, &write_set))
+		{
+			ssize_t nbWritten;
+
+			nbWritten = write(pComm->fd_write, 
+					  lpBuffer + (*lpNumberOfBytesWritten), 
+					  nNumberOfBytesToWrite - (*lpNumberOfBytesWritten));
+			
+			if (nbWritten < 0)
+			{
+				DEBUG_WARN("CommWriteFile failed after %lu bytes written, errno=[%d] %s\n", *lpNumberOfBytesWritten, errno, strerror(errno));
+
+				if (errno == EAGAIN)
+				{
+
+				}
+				else if (errno == EBADF)
+				{
+					SetLastError(ERROR_BAD_DEVICE); /* STATUS_INVALID_DEVICE_REQUEST */
+					return FALSE;
+				}
+			}
+			
+			*lpNumberOfBytesWritten += nbWritten;
+		}
+
+	} /* while */
 
 
 	/* FIXME: this call to tcdrain() doesn't look correct and

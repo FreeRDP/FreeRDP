@@ -24,6 +24,7 @@
 #ifndef _WIN32
 
 #include <linux/serial.h>
+#include <sys/eventfd.h>
 
 #include <winpr/comm.h>
 
@@ -46,6 +47,9 @@ struct winpr_comm
 	WINPR_HANDLE_DEF();
 
 	int fd;
+	
+	int fd_write;
+	int fd_write_event; /* as of today, only used by _purge() */
 
 	/* permissive mode on errors if TRUE (default is FALSE). 
 	 *
@@ -77,6 +81,8 @@ void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID);
 #define SERIAL_EV_FREERDP_WAITING	0x4000 /* bit unused by SERIAL_EV_* */
 #define SERIAL_EV_FREERDP_STOP     	0x8000 /* bit unused by SERIAL_EV_* */
 
+#define FREERDP_PURGE_TXABORT		0x00000001 /* abort pending transmission */
+#define FREERDP_PURGE_RXABORT		0x00000002 /* abort pending reception */
 
 #endif /* _WIN32 */
 

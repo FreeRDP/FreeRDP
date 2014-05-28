@@ -216,6 +216,12 @@ BOOL CloseHandle(HANDLE hObject)
 		if (comm->fd > 0)
 			close(comm->fd);
 
+		if (comm->fd_write > 0)
+			close(comm->fd_write);
+
+		if (comm->fd_write_event > 0)
+			close(comm->fd_write_event);
+
 		free(comm);
 
 		return TRUE;
