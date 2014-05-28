@@ -313,7 +313,7 @@ static void *jni_channels_thread(void *arg)
 
 static int android_freerdp_run(freerdp *instance)
 {
-  int exit_code = 0;
+	int exit_code = 0;
 	HANDLE *events = NULL;
 	DWORD count = 0;
 	DWORD event;
@@ -357,7 +357,6 @@ static int android_freerdp_run(freerdp *instance)
 	else
 		events[count++] = freerdp_channels_get_event_handle(instance);
 
-	if (!async_transport)
 	{
 		HANDLE *hdl = freerdp_get_event_handles(instance, events, &count);
 
@@ -370,7 +369,6 @@ static int android_freerdp_run(freerdp *instance)
 
 		events = hdl;
 	}
-
 	ctx->is_connected = TRUE;
 
 	while (ctx->is_connected && !freerdp_shall_disconnect(instance))
@@ -440,6 +438,7 @@ disconnect:
 	DEBUG_ANDROID("Disconnecting...");
 	freerdp_disconnect(instance);
 	freerdp_callback("OnDisconnected", "(I)V", instance);
+
 	if (!exit_code)
 		exit_code = freerdp_error_info(instance);
 
