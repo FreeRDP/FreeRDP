@@ -23,8 +23,6 @@
 
 #ifndef _WIN32
 #include <unistd.h>
-#include <pthread.h>
-#include <sys/select.h>
 #else
 #include <winsock2.h>
 #include <Windows.h>
@@ -60,9 +58,6 @@ struct tf_context
 	tfInfo* tfi;
 };
 typedef struct tf_context tfContext;
-
-HANDLE g_sem;
-static int g_thread_count = 0;
 
 struct thread_data
 {
@@ -195,68 +190,50 @@ BOOL tf_post_connect(freerdp* instance)
 
 int tfreerdp_run(freerdp* instance)
 {
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	int wcount;
-	void* rfds[32];
-	void* wfds[32];
-	fd_set rfds_set;
-	fd_set wfds_set;
+	int exit_code = 0;
+	DWORD count = 0;
+	DWORD event;
+	HANDLE *events;
 	rdpChannels* channels;
 
 	channels = instance->context->channels;
+	events = malloc(5 * sizeof(HANDLE));
 
-	freerdp_connect(instance);
-
-	while (1)
+	if (!events)
 	{
-		rcount = 0;
-		wcount = 0;
+		fprintf(stderr, "malloc failed %s (%d)", strerror(errno), errno);
+		exit_code = -1;
+		goto cleanup;
+	}
 
-		ZeroMemory(rfds, sizeof(rfds));
-		ZeroMemory(wfds, sizeof(wfds));
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+	if (!freerdp_connect(instance))
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
-			break;
+		fprintf(stderr, "freerdp_connect failed!");
+		exit_code = -1;
+		goto cleanup;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+	events[count++] = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+	events[count++] = freerdp_channels_get_event_handle(instance);
 		{
-			printf("Failed to get channel manager file descriptor\n");
-			break;
-		}
+		HANDLE *hdl = freerdp_get_event_handles(instance, events, &count);
 
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-		FD_ZERO(&wfds_set);
-
-		for (i = 0; i < rcount; i++)
+		if (!hdl)
 		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
+			fprintf(stderr, "Failed to get freerdp event handles\n");
+			exit_code = -1;
+			goto disconnect;
 		}
 
-		if (max_fds == 0)
-			break;
+		events = hdl;
+		}
 
-		if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
+	while (!freerdp_shall_disconnect(instance))
 		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR))) /* signal occurred */
-			{
-				printf("tfreerdp_run: select failed\n");
+		event = WaitForMultipleObjects(count, events, FALSE, INFINITE);
+		if (WAIT_FAILED == event)
 				break;
-			}
-		}
+		if (WAIT_TIMEOUT == event)
+			continue;
 
 		if (freerdp_check_fds(instance) != TRUE)
 		{
@@ -271,11 +248,18 @@ int tfreerdp_run(freerdp* instance)
 		tf_process_channel_event(channels, instance);
 	}
 
+disconnect:
 	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(channels);
+	if (!exit_code)
+		exit_code = freerdp_error_info(instance);
 	freerdp_free(instance);
 
-	return 0;
+cleanup:
+	if (events)
+		free(events);
+
+	return exit_code;
 }
 
 void* thread_func(void* param)
@@ -285,14 +269,7 @@ void* thread_func(void* param)
 
 	tfreerdp_run(data->instance);
 
-	free(data);
-
-	pthread_detach(pthread_self());
-
-	g_thread_count--;
-
-        if (g_thread_count < 1)
-        	ReleaseSemaphore(g_sem, 1, NULL);
+  ExitThread(0);
 
 	return NULL;
 }
@@ -300,12 +277,12 @@ void* thread_func(void* param)
 int main(int argc, char* argv[])
 {
 	int status;
-	pthread_t thread;
+	HANDLE thread;
 	freerdp* instance;
 	rdpChannels* channels;
 	struct thread_data* data;
 
-	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
+	freerdp_channels_global_init();
 
 	instance = freerdp_new();
 	instance->PreConnect = tf_pre_connect;
@@ -331,13 +308,13 @@ int main(int argc, char* argv[])
 
 	data->instance = instance;
 
-	g_thread_count++;
-	pthread_create(&thread, 0, thread_func, data);
+  thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)thread_func, data, 0, NULL);
 
-	while (g_thread_count > 0)
-	{
-		WaitForSingleObject(g_sem, INFINITE);
-	}
+  WaitForSingleObject(thread, INFINITE);
+
+  free(data);
+
+	freerdp_channels_global_uninit();
 
 	return 0;
 }
