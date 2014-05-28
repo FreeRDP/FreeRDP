@@ -125,60 +125,42 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
  * Named pipe
  */
 
-BOOL winpr_destroy_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
+static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
 {
+	int index;
+	NamedPipeServerSocketEntry *baseSocket;
+
 	if (!pNamedPipe)
-		return FALSE;
+		return;
 
 	assert(pNamedPipe->name);
+	assert(g_NamedPipeServerSockets);
 
 	//fprintf(stderr, "%s: %p (%s)\n", __FUNCTION__, pNamedPipe, pNamedPipe->name);
 
-	if (pNamedPipe->clientfd != -1) {
-		//fprintf(stderr, "%s: closing clientfd %d\n", __FUNCTION__, pNamedPipe->clientfd);
-		close(pNamedPipe->clientfd);
-	}
-
-	if (pNamedPipe->serverfd != -1) {
-		//fprintf(stderr, "%s: closing serverfd %d\n", __FUNCTION__, pNamedPipe->serverfd);
-		close(pNamedPipe->serverfd);
-	}
-
-	if (pNamedPipe->bDuplicatedServerDescriptor)
+	ArrayList_Lock(g_NamedPipeServerSockets);
+	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
 	{
-		int index;
-		NamedPipeServerSocketEntry *baseSocket;
-		ArrayList_Lock(g_NamedPipeServerSockets);
-		for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
+		baseSocket = (NamedPipeServerSocketEntry*) ArrayList_GetItem(
+				g_NamedPipeServerSockets, index);
+		assert(baseSocket->name);
+		if (!strcmp(baseSocket->name, pNamedPipe->name))
 		{
-			baseSocket = (NamedPipeServerSocketEntry*) ArrayList_GetItem(
-					g_NamedPipeServerSockets, index);
-			assert(baseSocket->name);
-			if (!strcmp(baseSocket->name, pNamedPipe->name))
+			assert(baseSocket->references > 0);
+			assert(baseSocket->serverfd != -1);
+			if (--baseSocket->references == 0)
 			{
-				assert(baseSocket->references > 0);
-				assert(baseSocket->serverfd != -1);
-				if (--baseSocket->references == 0)
-				{
-					//fprintf(stderr, "%s: removing shared server socked resource\n", __FUNCTION__);
-					//fprintf(stderr, "%s: closing shared serverfd %d\n", __FUNCTION__, baseSocket->serverfd);
-					ArrayList_Remove(g_NamedPipeServerSockets, baseSocket);
-					close(baseSocket->serverfd);
-					free(baseSocket->name);
-					free(baseSocket);
-				}
-				break;
+				//fprintf(stderr, "%s: removing shared server socked resource\n", __FUNCTION__);
+				//fprintf(stderr, "%s: closing shared serverfd %d\n", __FUNCTION__, baseSocket->serverfd);
+				ArrayList_Remove(g_NamedPipeServerSockets, baseSocket);
+				close(baseSocket->serverfd);
+				free(baseSocket->name);
+				free(baseSocket);
 			}
+			break;
 		}
-		ArrayList_Unlock(g_NamedPipeServerSockets);
 	}
-
-	free((void*)pNamedPipe->lpFileName);
-	free((void*)pNamedPipe->lpFilePath);
-	free((void*)pNamedPipe->name);
-	free(pNamedPipe);
-
-	return TRUE;
+	ArrayList_Unlock(g_NamedPipeServerSockets);
 }
 
 HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,
@@ -292,8 +274,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	pNamedPipe->serverfd = dup(baseSocket->serverfd);
 	//fprintf(stderr, "using serverfd %d (duplicated from %d)\n", pNamedPipe->serverfd, baseSocket->serverfd);
-
-	pNamedPipe->bDuplicatedServerDescriptor = TRUE;
+	pNamedPipe->pfnUnrefNamedPipe = winpr_unref_named_pipe;
 	baseSocket->references++;
 
 	if (dwOpenMode & FILE_FLAG_OVERLAPPED)

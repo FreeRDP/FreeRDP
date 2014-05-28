@@ -165,7 +165,26 @@ BOOL CloseHandle(HANDLE hObject)
 	}
 	else if (Type == HANDLE_TYPE_NAMED_PIPE)
 	{
-		return winpr_destroy_named_pipe((WINPR_NAMED_PIPE*) Object);
+		WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*) Object;
+
+		if (pNamedPipe->clientfd != -1) {
+			//fprintf(stderr, "%s: closing clientfd %d\n", __FUNCTION__, pNamedPipe->clientfd);
+			close(pNamedPipe->clientfd);
+		}
+		if (pNamedPipe->serverfd != -1) {
+			//fprintf(stderr, "%s: closing serverfd %d\n", __FUNCTION__, pNamedPipe->serverfd);
+			close(pNamedPipe->serverfd);
+		}
+
+		if (pNamedPipe->pfnUnrefNamedPipe)
+			pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);
+
+		free((void*)pNamedPipe->lpFileName);
+		free((void*)pNamedPipe->lpFilePath);
+		free((void*)pNamedPipe->name);
+		free(pNamedPipe);
+
+		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_ACCESS_TOKEN)
 	{
