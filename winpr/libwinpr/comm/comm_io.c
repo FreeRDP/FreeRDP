@@ -92,7 +92,6 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	int biggestFd = -1;
 	fd_set read_set;
 	int nbFds;
-	ssize_t nbRead = 0;
 	COMMTIMEOUTS *pTimeouts;
 	UCHAR vmin = 0;
 	UCHAR vtime = 0;
@@ -211,7 +210,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		currentTermios.c_cc[VTIME] = vtime;
 
 		// TMP:
-		fprintf(stderr, "Applying timeout VMIN=%u, VTIME=%u", vmin, vtime);
+		fprintf(stderr, "MANU: Applying timeout VMIN=%u, VTIME=%u\n", vmin, vtime);
 
 		if (tcsetattr(pComm->fd, TCSANOW, &currentTermios) < 0)
 		{
@@ -221,9 +220,10 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		}
 	}
 
-
-
-
+	/* FIXME: had expected eventfd_write() to return EAGAIN when
+	 * there is no eventfd_read() but this not the case. */
+	/* discard a possible and no more relevant event */
+	eventfd_read(pComm->fd_read_event, NULL);
 
 	biggestFd = pComm->fd_read;
 	if (pComm->fd_read_event > biggestFd)
@@ -269,7 +269,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			}
 			else
 			{
-				DEBUG_WARN("unexpected error on reading fd_write_event, errno=[%d] %s\n", errno, strerror(errno));
+				DEBUG_WARN("unexpected error on reading fd_read_event, errno=[%d] %s\n", errno, strerror(errno));
 				/* FIXME: return FALSE ? */
 			}
 
@@ -287,6 +287,8 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	if (FD_ISSET(pComm->fd_read, &read_set))
 	{
+		ssize_t nbRead = 0;
+
 		nbRead = read(pComm->fd_read, lpBuffer, nNumberOfBytesToRead);
 		if (nbRead < 0)
 		{
@@ -373,6 +375,12 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	{
 		return TRUE; /* FIXME: or FALSE? */
 	}
+
+	/* FIXME: had expected eventfd_write() to return EAGAIN when
+	 * there is no eventfd_read() but this not the case. */
+	/* discard a possible and no more relevant event */
+	eventfd_read(pComm->fd_write_event, NULL);
+
 
 	/* ms */
 	ULONGLONG Tmax = nNumberOfBytesToWrite * pComm->timeouts.WriteTotalTimeoutMultiplier + pComm->timeouts.WriteTotalTimeoutConstant;

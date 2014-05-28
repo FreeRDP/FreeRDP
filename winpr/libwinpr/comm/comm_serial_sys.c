@@ -1095,10 +1095,10 @@ static BOOL _set_queue_size(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSi
 	/* FIXME: could be implemented on top of N_TTY */
 
 	if (pQueueSize->InSize > N_TTY_BUF_SIZE)
-		DEBUG_WARN("Requested an incompatible input buffer size: %lu", pQueueSize->InSize);
+		DEBUG_WARN("Requested an incompatible input buffer size: %lu, keeping on with a %lu bytes buffer.", pQueueSize->InSize, N_TTY_BUF_SIZE);
 
 	if (pQueueSize->OutSize > N_TTY_BUF_SIZE)
-		DEBUG_WARN("Requested an incompatible output buffer size: %lu", pQueueSize->OutSize);
+		DEBUG_WARN("Requested an incompatible output buffer size: %lu, keeping on with a %lu bytes buffer.", pQueueSize->OutSize, N_TTY_BUF_SIZE);
 
 	SetLastError(ERROR_CANCELLED);
 	return FALSE;
@@ -1144,7 +1144,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 			{
 				DEBUG_WARN("eventfd_write failed, errno=[%d] %s", errno, strerror(errno));
 			}
-
+			
 			assert(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_READ */
 		}
 	}
