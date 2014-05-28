@@ -46,31 +46,25 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	int index;
 	int status;
 	HANDLE thread;
-	wfContext* wfc;
+	wfContext *wfc;
 	DWORD dwExitCode;
-	rdpContext* context;
-	rdpSettings* settings;
+	rdpContext *context;
+	rdpSettings *settings;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-
 	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
-
 	RdpClientEntry(&clientEntryPoints);
-
 	context = freerdp_client_context_new(&clientEntryPoints);
-
 	settings = context->settings;
-	wfc = (wfContext*) context;
-
+	wfc = (wfContext *) context;
 	context->argc = __argc;
-	context->argv = (char**) malloc(sizeof(char*) * __argc);
+	context->argv = (char **) malloc(sizeof(char *) * __argc);
 
 	for (index = 0; index < context->argc; index++)
 		context->argv[index] = _strdup(__argv[index]);
 
 	status = freerdp_client_settings_parse_command_line(settings, context->argc, context->argv);
-
 	status = freerdp_client_settings_command_line_status_print(settings, status, context->argc, context->argv);
 
 	if (status)
@@ -80,16 +74,11 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	freerdp_client_start(context);
-
 	thread = freerdp_client_get_thread(context);
-
 	WaitForSingleObject(thread, INFINITE);
-
 	GetExitCodeThread(thread, &dwExitCode);
-
+	CloseHandle(thread);
 	freerdp_client_stop(context);
-
 	freerdp_client_context_free(context);
-
 	return 0;
 }
