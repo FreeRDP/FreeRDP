@@ -1224,7 +1224,22 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	}
 
 
-	/* HoldReasons TMP: TODO: see also _set_lines(), _clear_lines() the LCR register. */
+	/* HoldReasons */
+
+	
+	/* TODO: SERIAL_TX_WAITING_FOR_CTS */
+
+	/* TODO: SERIAL_TX_WAITING_FOR_DSR */
+
+	/* TODO: SERIAL_TX_WAITING_FOR_DCD */
+
+	/* TODO: SERIAL_TX_WAITING_FOR_XON */
+
+	/* TODO: SERIAL_TX_WAITING_ON_BREAK, see LCR's bit 6 */
+
+	/* TODO: SERIAL_TX_WAITING_XOFF_SENT */
+
+
 
 	/* AmountInInQueue */
 
