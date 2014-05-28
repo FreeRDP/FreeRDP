@@ -75,10 +75,12 @@
 #include <winpr/crt.h>
 #include <winpr/platform.h>
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
+#endif
+
+#ifdef HAVE_EVENTFD_H
+#include <sys/eventfd.h>
 #endif
 
 #include <winpr/collections.h>
@@ -123,6 +125,7 @@ static BOOL set_event(WINPR_THREAD *thread)
 	}
 
 #endif
+	thread->started = FALSE;
 	return status;
 }
 
@@ -149,6 +152,7 @@ static BOOL reset_event(WINPR_THREAD *thread)
 		status = TRUE;
 
 #endif
+	thread->started = TRUE;
 	return status;
 }
 
@@ -168,7 +172,6 @@ void winpr_StartThread(WINPR_THREAD *thread)
 	if (thread->dwStackSize > 0)
 		pthread_attr_setstacksize(&attr, (size_t) thread->dwStackSize);
 
-	thread->started = TRUE;
 	pthread_create(&thread->thread, &attr, (pthread_start_routine) thread->lpStartAddress, thread->lpParameter);
 	pthread_attr_destroy(&attr);
 	reset_event(thread);
@@ -185,7 +188,6 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	if (!thread)
 		return NULL;
 
-	thread->started = FALSE;
 	thread->dwStackSize = dwStackSize;
 	thread->lpParameter = lpParameter;
 	thread->lpStartAddress = lpStartAddress;
@@ -263,6 +265,7 @@ void CloseThread(WINPR_THREAD *thread)
 HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 						  LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
+	fprintf(stderr, "[%s]: not implemented", __func__);
 	return NULL;
 }
 
@@ -304,7 +307,23 @@ BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 
 HANDLE _GetCurrentThread(VOID)
 {
-	return NULL;
+	HANDLE hdl = NULL;
+	pthread_t tid = pthread_self();
+
+	if (NULL == thread_list)
+	{
+		fprintf(stderr, "[%s]: function called without existing thread list!", __func__);
+	}
+	else if (!ListDictionary_Contains(thread_list, &tid))
+	{
+		fprintf(stderr, "[%s]: function called, but no matching entry in thread list!", __func__);
+	}
+	else
+	{
+		hdl = ListDictionary_GetItemValue(thread_list, &tid);
+	}
+
+	return hdl;
 }
 
 DWORD GetCurrentThreadId(VOID)
@@ -334,6 +353,8 @@ DWORD ResumeThread(HANDLE hThread)
 
 	if (!thread->started)
 		winpr_StartThread(thread);
+	else
+		fprintf(stderr, "[%s]: Thread already started!", __func__);
 
 	pthread_mutex_unlock(&thread->mutex);
 	return 0;
@@ -341,6 +362,7 @@ DWORD ResumeThread(HANDLE hThread)
 
 DWORD SuspendThread(HANDLE hThread)
 {
+	fprintf(stderr, "[%s]: Function not implemented!", __func__);
 	return 0;
 }
 
@@ -362,6 +384,8 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 	pthread_mutex_lock(&thread->mutex);
 #ifndef ANDROID
 	pthread_cancel(thread->thread);
+#else
+	fprintf(stderr, "[%s]: Function not supported on this platform!", __func__);
 #endif
 	pthread_mutex_unlock(&thread->mutex);
 	return TRUE;
