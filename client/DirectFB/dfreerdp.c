@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <errno.h>
 #include <locale.h>
 
@@ -437,7 +441,7 @@ int main(int argc, char* argv[])
 	status = freerdp_client_settings_parse_command_line(instance->settings, argc, argv);
 
 	if (status < 0)
-		exit(0);
+    goto cleanup;
 
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
@@ -452,6 +456,11 @@ int main(int argc, char* argv[])
 	free(data);
 
 	freerdp_channels_global_uninit();
+
+cleanup:
+#if defined(WITH_DEBUG_THREADS)
+  DumpThreadHandles();
+#endif
 
 	return 0;
 }

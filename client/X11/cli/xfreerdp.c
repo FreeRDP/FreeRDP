@@ -34,6 +34,7 @@
 
 int main(int argc, char *argv[])
 {
+  int exit = 0;
 	int status;
 	HANDLE thread;
 	xfContext *xfc;
@@ -57,7 +58,7 @@ int main(int argc, char *argv[])
 			xf_list_monitors(xfc);
 
 		freerdp_client_context_free(context);
-		return 0;
+		goto cleanup;
 	}
 
 	freerdp_client_start(context);
@@ -67,5 +68,12 @@ int main(int argc, char *argv[])
 	CloseHandle(thread);
 	freerdp_client_stop(context);
 	freerdp_client_context_free(context);
-	return xf_exit_code_from_disconnect_reason(dwExitCode);
+	exit = xf_exit_code_from_disconnect_reason(dwExitCode);
+
+cleanup:
+#if defined(WITH_DEBUG_THREADS)
+  DumpThreadHandles();
+#endif
+
+  return exit;
 }
