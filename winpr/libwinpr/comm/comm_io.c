@@ -45,7 +45,7 @@ BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive)
                 return FALSE;
         }
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -89,6 +89,9 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		  LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
+	int biggestFd = -1;
+	fd_set read_set;
+	int nbFds;
 	ssize_t nbRead = 0;
 	COMMTIMEOUTS *pTimeouts;
 	UCHAR vmin = 0;
@@ -101,7 +104,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                 return FALSE;
         }
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -143,7 +146,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	 * http://msdn.microsoft.com/en-us/library/windows/hardware/hh439614%28v=vs.85%29.aspx
 	 *
 	 * ReadIntervalTimeout  | ReadTotalTimeoutMultiplier | ReadTotalTimeoutConstant | VMIN | VTIME |  TMAX   |
-	 *         0            |            0               |           0              |   N  |   0   |    0    | Blocks for N bytes available. FIXME: reduce N to 1?
+	 *         0            |            0               |           0              |   N  |   0   |    0    | Blocks for N bytes available.
          *   0< Ti <MAXULONG    |            0               |           0              |   N  |   Ti  |    0    | Block on first byte, then use Ti between bytes.
 	 *       MAXULONG       |            0               |           0              |   0  |   0   |    0    | Returns immediately with bytes available (don't block)
 	 *       MAXULONG       |         MAXULONG           |      0< Tc <MAXULONG     |   0  |   Tc  |    0    | Blocks on first byte during Tc or returns immediately whith bytes available 
@@ -208,7 +211,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		currentTermios.c_cc[VTIME] = vtime;
 
 		// TMP:
-		DEBUG_MSG("Applying timeout VMIN=%u, VTIME=%u", vmin, vtime);
+		fprintf(stderr, "Applying timeout VMIN=%u, VTIME=%u", vmin, vtime);
 
 		if (tcsetattr(pComm->fd, TCSANOW, &currentTermios) < 0)
 		{
@@ -218,37 +221,116 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		}
 	}
 
-	nbRead = read(pComm->fd, lpBuffer, nNumberOfBytesToRead);
 
-	if (nbRead < 0)
+
+
+
+	biggestFd = pComm->fd_read;
+	if (pComm->fd_read_event > biggestFd)
+		biggestFd = pComm->fd_read_event;
+
+	FD_ZERO(&read_set);
+
+	assert(pComm->fd_read_event < FD_SETSIZE);
+	assert(pComm->fd_read < FD_SETSIZE);
+
+	FD_SET(pComm->fd_read_event, &read_set);
+	FD_SET(pComm->fd_read, &read_set);
+
+	nbFds = select(biggestFd+1, &read_set, NULL, NULL, NULL /* TMP: TODO:*/);
+	if (nbFds < 0)
 	{
-		DEBUG_WARN("CommReadFile failed, ReadIntervalTimeout=%lu, ReadTotalTimeoutMultiplier=%lu, ReadTotalTimeoutConstant=%lu VMIN=%u, VTIME=%u",
-			   pTimeouts->ReadIntervalTimeout, pTimeouts->ReadTotalTimeoutMultiplier, pTimeouts->ReadTotalTimeoutConstant, 
-			   currentTermios.c_cc[VMIN], currentTermios.c_cc[VTIME]);
-		DEBUG_WARN("CommReadFile failed, nNumberOfBytesToRead=%lu, errno=[%d] %s", nNumberOfBytesToRead, errno, strerror(errno));
+		DEBUG_WARN("select() failure, errno=[%d] %s\n", errno, strerror(errno));
+		SetLastError(ERROR_IO_DEVICE);
+		return FALSE;
+	}
+	
+	if (nbFds == 0)
+	{
+		/* timeout */
 
-		switch (errno)
-		{
-			// TMP: TODO:
-			case EAGAIN: /* EWOULDBLOCK */
-				nbRead = 0;
-				break;
-
-			case EBADF:
-				SetLastError(ERROR_BAD_DEVICE); /* STATUS_INVALID_DEVICE_REQUEST */
-				return FALSE;
-
-			default:
-				return FALSE;
-		}
-
+		SetLastError(ERROR_TIMEOUT);
+		return FALSE;
 	}
 
-	// TODO:
-	// SetLastError(ERROR_TIMEOUT)
 
-	*lpNumberOfBytesRead = nbRead;
-	return TRUE;
+	/* read_set */
+
+	if (FD_ISSET(pComm->fd_read_event, &read_set))
+	{
+		eventfd_t event = 0;
+		int nbRead;
+
+		nbRead = eventfd_read(pComm->fd_read_event, &event);
+		if (nbRead < 0)
+		{
+			if (errno == EAGAIN)
+			{
+				assert(FALSE); /* not quite sure this should ever happen */
+				/* keep on */
+			}
+			else
+			{
+				DEBUG_WARN("unexpected error on reading fd_write_event, errno=[%d] %s\n", errno, strerror(errno));
+				/* FIXME: return FALSE ? */
+			}
+
+			assert(errno == EAGAIN);
+		}
+
+		assert(nbRead == sizeof(eventfd_t));
+
+		if (event == FREERDP_PURGE_RXABORT)
+		{
+			SetLastError(ERROR_CANCELLED);
+			return FALSE;
+		}
+
+		assert(event == FREERDP_PURGE_RXABORT); /* no other expected event so far */
+	}
+
+	if (FD_ISSET(pComm->fd_read, &read_set))
+	{
+		nbRead = read(pComm->fd_read, lpBuffer, nNumberOfBytesToRead);
+		if (nbRead < 0)
+		{
+			DEBUG_WARN("CommReadFile failed, ReadIntervalTimeout=%lu, ReadTotalTimeoutMultiplier=%lu, ReadTotalTimeoutConstant=%lu VMIN=%u, VTIME=%u",
+				   pTimeouts->ReadIntervalTimeout, pTimeouts->ReadTotalTimeoutMultiplier, pTimeouts->ReadTotalTimeoutConstant, 
+				   currentTermios.c_cc[VMIN], currentTermios.c_cc[VTIME]);
+			DEBUG_WARN("CommReadFile failed, nNumberOfBytesToRead=%lu, errno=[%d] %s", nNumberOfBytesToRead, errno, strerror(errno));
+
+			if (errno == EAGAIN)
+			{
+				/* keep on */
+				return TRUE; /* expect a read-loop to be implemented on the server side */
+			}
+			else if (errno == EBADF)
+			{
+				SetLastError(ERROR_BAD_DEVICE); /* STATUS_INVALID_DEVICE_REQUEST */
+				return FALSE;
+			}
+			else
+			{
+				assert(FALSE);
+				SetLastError(ERROR_IO_DEVICE);
+				return FALSE;
+			}
+		}
+
+		if (nbRead == 0)
+		{
+			/* termios timeout */
+			SetLastError(ERROR_TIMEOUT);
+			return FALSE;
+		}
+
+		*lpNumberOfBytesRead = nbRead;
+		return TRUE;
+	}
+
+	assert(FALSE);
+	*lpNumberOfBytesRead = 0;
+	return FALSE;
 }
 
 
@@ -271,7 +353,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
                 return FALSE;
         }
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -363,6 +445,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 				if (errno == EAGAIN)
 				{
 					assert(FALSE); /* not quite sure this should ever happen */
+					/* keep on */
 				}
 				else
 				{
@@ -381,7 +464,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 				return FALSE;
 			}
 
-			assert(event == FREERDP_PURGE_TXABORT); /* no other event known so far */
+			assert(event == FREERDP_PURGE_TXABORT); /* no other expected event so far */
 		}
 
 
@@ -409,6 +492,12 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 					SetLastError(ERROR_BAD_DEVICE); /* STATUS_INVALID_DEVICE_REQUEST */
 					return FALSE;
 				}
+				else
+				{
+					assert(FALSE);
+					SetLastError(ERROR_IO_DEVICE);
+					return FALSE;
+				}
 			}
 			
 			*lpNumberOfBytesWritten += nbWritten;
@@ -425,7 +514,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	 * Write operation. The serial port was oppened with:
 	 * DesiredAccess=0x0012019F. The printer worked fine with
 	 * mstsc. */
-	tcdrain(pComm->fd);
+	tcdrain(pComm->fd_write);
 
 
 	return TRUE;

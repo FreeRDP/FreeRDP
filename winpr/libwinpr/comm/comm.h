@@ -47,6 +47,9 @@ struct winpr_comm
 	WINPR_HANDLE_DEF();
 
 	int fd;
+
+	int fd_read;
+	int fd_read_event; /* as of today, only used by _purge() */
 	
 	int fd_write;
 	int fd_write_event; /* as of today, only used by _purge() */

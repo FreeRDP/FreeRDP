@@ -1142,19 +1142,19 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 	{
 		/* Purges all read (IRP_MJ_READ) requests. */
 
-		/* int nbWritten; */
+		int nbWritten;
 
-		/* if ((nbWritten = eventfd_write(pComm->fd_read_event, FREERDP_PURGE_RXABORT)) < 0) */
-		/* { */
-		/* 	if (errno != EAGAIN) */
-		/* 	{ */
-		/* 		DEBUG_WARN("eventfd_write failed, errno=[%d] %s", errno, strerror(errno)); */
-		/* 	} */
+		if ((nbWritten = eventfd_write(pComm->fd_read_event, FREERDP_PURGE_RXABORT)) < 0)
+		{
+			if (errno != EAGAIN)
+			{
+				DEBUG_WARN("eventfd_write failed, errno=[%d] %s", errno, strerror(errno));
+			}
 
-		/* 	assert(errno == EAGAIN); /\* no reader <=> no pending IRP_MJ_READ *\/ */
-		/* } */
+			assert(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_READ */
+		}
 
-		/* assert(nbWritten == 8); */
+		assert(nbWritten == sizeof(eventfd_t));
 	}
 
 	if (*pPurgeMask & SERIAL_PURGE_TXCLEAR)
