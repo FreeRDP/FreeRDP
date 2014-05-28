@@ -112,7 +112,7 @@ static BOOL set_event(WINPR_THREAD *thread)
 	status = (length == 0) ? TRUE : FALSE;
 #else
 
-	if (WaitForSingleObject(hEvent, 0) != WAIT_OBJECT_0)
+	if (WaitForSingleObject(thread, 0) != WAIT_OBJECT_0)
 	{
 		length = write(thread->pipe_fd[1], "-", 1);
 
@@ -133,25 +133,30 @@ static BOOL reset_event(WINPR_THREAD *thread)
 {
 	int length;
 	BOOL status = FALSE;
-#ifdef HAVE_EVENTFD_H
-	eventfd_t value;
 
-	do
+	while (WaitForSingleObject(thread, 0) == WAIT_OBJECT_0)
 	{
-		length = eventfd_read(thread->pipe_fd[0], &value);
-	}
-	while ((length < 0) && (errno == EINTR));
+#ifdef HAVE_EVENTFD_H
+		eventfd_t value;
 
-	if ((length > 0) && (!status))
-		status = TRUE;
+		do
+		{
+			length = eventfd_read(thread->pipe_fd[0], &value);
+		}
+		while ((length < 0) && (errno == EINTR));
+
+		if ((length > 0) && (!status))
+			status = TRUE;
 
 #else
-	length = read(thread->pipe_fd[0], &length, 1);
+		length = read(thread->pipe_fd[0], &length, 1);
 
-	if ((length == 1) && (!status))
-		status = TRUE;
+		if ((length == 1) && (!status))
+			status = TRUE;
 
 #endif
+	}
+
 	thread->started = TRUE;
 	return status;
 }
