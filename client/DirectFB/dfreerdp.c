@@ -18,7 +18,6 @@
  */
 
 #include <errno.h>
-#include <pthread.h>
 #include <locale.h>
 
 #include <freerdp/freerdp.h>
@@ -36,9 +35,6 @@
 #include "df_graphics.h"
 
 #include "dfreerdp.h"
-
-static HANDLE g_sem;
-static int g_thread_count = 0;
 
 struct thread_data
 {
@@ -88,25 +84,22 @@ void df_end_paint(rdpContext* context)
 	dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
 }
 
-BOOL df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
+HANDLE df_get_handle(freerdp* instance)
 {
 	dfInfo* dfi;
 
 	dfi = ((dfContext*) instance->context)->dfi;
 
-	rfds[*rcount] = (void*)(long)(dfi->read_fds);
-	(*rcount)++;
-
-	return TRUE;
+	return CreateFileDescriptorEvent(NULL, FALSE, FALSE, dfi->read_fds);
 }
 
-BOOL df_check_fds(freerdp* instance, fd_set* set)
+BOOL df_check_handle(freerdp* instance, HANDLE handle)
 {
 	dfInfo* dfi;
 
 	dfi = ((dfContext*) instance->context)->dfi;
 
-	if (!FD_ISSET(dfi->read_fds, set))
+	if (WaitForSingleObject(handle, 0) != WAIT_OBJECT_0)
 		return TRUE;
 
 	if (read(dfi->read_fds, &(dfi->event), sizeof(dfi->event)) > 0)
@@ -259,7 +252,7 @@ BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 	return FALSE;
 }
 
-static int df_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
+static int df_receive_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
@@ -308,87 +301,67 @@ static void df_free(dfInfo* dfi)
 
 int dfreerdp_run(freerdp* instance)
 {
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	int wcount;
-	void* rfds[32];
-	void* wfds[32];
-	fd_set rfds_set;
-	fd_set wfds_set;
+	int exit_code = 0;
+	DWORD count = 0;
+	DWORD event;
+	HANDLE *events, dfhandle;
 	dfInfo* dfi;
 	dfContext* context;
 	rdpChannels* channels;
 
-	ZeroMemory(rfds, sizeof(rfds));
-	ZeroMemory(wfds, sizeof(wfds));
+	channels = instance->context->channels;
+	events = malloc(5 * sizeof(HANDLE));
+
+	if (!events)
+	{
+		fprintf(stderr, "malloc failed %s (%d)", strerror(errno), errno);
+		exit_code = -1;
+		goto cleanup;
+	}
 
 	if (!freerdp_connect(instance))
-		return 0;
+	{
+		fprintf(stderr, "freerdp_connect failed!");
+		exit_code = -1;
+		goto cleanup;
+	}
 
 	context = (dfContext*) instance->context;
-
-	dfi = context->dfi;
 	channels = instance->context->channels;
 
-	while (1)
+	dfi = context->dfi;
+
+	events[count++] = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+	events[count++] = freerdp_channels_get_event_handle(instance);
+	dfhandle = df_get_handle(instance);
+	events[count++] = dfhandle;
 	{
-		rcount = 0;
-		wcount = 0;
+		HANDLE *hdl = freerdp_get_event_handles(instance, events, &count);
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+		if (!hdl)
 		{
-			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
+			fprintf(stderr, "Failed to get freerdp event handles\n");
+			exit_code = -1;
+			goto disconnect;
+		}
+
+		events = hdl;
+	}
+
+	while (!freerdp_shall_disconnect(instance))
+	{
+		event = WaitForMultipleObjects(count, events, FALSE, INFINITE);
+		if (WAIT_FAILED == event)
 			break;
-		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
-		{
-			fprintf(stderr, "Failed to get channel manager file descriptor\n");
-			break;
-		}
-		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
-		{
-			fprintf(stderr, "Failed to get dfreerdp file descriptor\n");
-			break;
-		}
-
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-		FD_ZERO(&wfds_set);
-
-		for (i = 0; i < rcount; i++)
-		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
-			break;
-
-		if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
-		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR))) /* signal occurred */
-			{
-				fprintf(stderr, "dfreerdp_run: select failed\n");
-				break;
-			}
-		}
+		if (WAIT_TIMEOUT == event)
+			continue;
 
 		if (freerdp_check_fds(instance) != TRUE)
 		{
 			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
 			break;
 		}
-		if (df_check_fds(instance, &rfds_set) != TRUE)
+		if (df_check_handle(instance, dfhandle) != TRUE)
 		{
 			fprintf(stderr, "Failed to check dfreerdp file descriptor\n");
 			break;
@@ -401,14 +374,21 @@ int dfreerdp_run(freerdp* instance)
 		df_process_channel_event(channels, instance);
 	}
 
+disconnect:
 	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(channels);
 	df_free(dfi);
 	gdi_free(instance);
 	freerdp_disconnect(instance);
+	if (!exit_code)
+		exit_code = freerdp_error_info(instance);
 	freerdp_free(instance);
 
-	return 0;
+cleanup:
+	if (events)
+		free(events);
+
+	return exit_code;
 }
 
 void* thread_func(void* param)
@@ -418,22 +398,14 @@ void* thread_func(void* param)
 
 	dfreerdp_run(data->instance);
 
-	free(data);
-
-	pthread_detach(pthread_self());
-
-	g_thread_count--;
-
-        if (g_thread_count < 1)
-        	ReleaseSemaphore(g_sem, 1, NULL);
-
+	ExitThread(0);
 	return NULL;
 }
 
 int main(int argc, char* argv[])
 {
 	int status;
-	pthread_t thread;
+	HANDLE thread;
 	freerdp* instance;
 	dfContext* context;
 	rdpChannels* channels;
@@ -441,7 +413,7 @@ int main(int argc, char* argv[])
 
 	setlocale(LC_ALL, "");
 
-	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
+	freerdp_channels_global_init();
 
 	instance = freerdp_new();
 	instance->PreConnect = df_pre_connect;
@@ -469,18 +441,17 @@ int main(int argc, char* argv[])
 
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
-	data = (struct thread_data*) malloc(sizeof(struct thread_data));
-	ZeroMemory(data, sizeof(sizeof(struct thread_data)));
+	data = (struct thread_data*) calloc(1, sizeof(struct thread_data));
 
 	data->instance = instance;
 
-	g_thread_count++;
-	pthread_create(&thread, 0, thread_func, data);
+	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)thread_func, data, 0, NULL);
 
-	while (g_thread_count > 0)
-	{
-		WaitForSingleObject(g_sem, INFINITE);
-	}
+	WaitForSingleObject(thread, INFINITE);
+
+	free(data);
+
+	freerdp_channels_global_uninit();
 
 	return 0;
 }
