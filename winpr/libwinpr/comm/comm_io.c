@@ -56,23 +56,19 @@ BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive)
 }
 
 
-/* Computes Tmax in deciseconds (m and Tcare in milliseconds) */
-static UCHAR _tmax(DWORD N, ULONG m, ULONG Tc)
+/* Computes VMIN in deciseconds from Ti in milliseconds */
+static UCHAR _vtime(ULONG Ti)
 {
-	/* Tmax = N * m  + Tc */
-	
-	ULONGLONG Tmax = N * m + Tc;
-
 	/* FIXME: look for an equivalent math function otherwise let
 	 * do the compiler do the optimization */
-	if (Tmax == 0)
+	if (Ti == 0)
 		return 0;
-	else if (Tmax < 100)
+	else if (Ti < 100)
 		return 1;
-	else if (Tmax > 25500)
+	else if (Ti > 25500)
 		return 255; /* 0xFF */
 	else
-		return Tmax/100;
+		return Ti/100;
 }
 
 
@@ -95,6 +91,8 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	COMMTIMEOUTS *pTimeouts;
 	UCHAR vmin = 0;
 	UCHAR vtime = 0;
+	ULONGLONG Tmax = 0;
+	struct timeval tmaxTimeout, *pTmaxTimeout;
 	struct termios currentTermios;
 
 	if (hDevice == INVALID_HANDLE_VALUE)
@@ -144,24 +142,19 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	/* http://msdn.microsoft.com/en-us/library/hh439614%28v=vs.85%29.aspx
 	 * http://msdn.microsoft.com/en-us/library/windows/hardware/hh439614%28v=vs.85%29.aspx
 	 *
-	 * ReadIntervalTimeout  | ReadTotalTimeoutMultiplier | ReadTotalTimeoutConstant | VMIN | VTIME |  TMAX   |
-	 *         0            |            0               |           0              |   N  |   0   |    0    | Blocks for N bytes available.
-         *   0< Ti <MAXULONG    |            0               |           0              |   N  |   Ti  |    0    | Block on first byte, then use Ti between bytes.
-	 *       MAXULONG       |            0               |           0              |   0  |   0   |    0    | Returns immediately with bytes available (don't block)
-	 *       MAXULONG       |         MAXULONG           |      0< Tc <MAXULONG     |   0  |   Tc  |    0    | Blocks on first byte during Tc or returns immediately whith bytes available 
-	 *       MAXULONG       |            m               |        MAXULONG          |                        | Invalid
-	 *         0            |            m               |      0< Tc <MAXULONG     |   0  |  Tmax |    0    | Block on first byte during Tmax or returns immediately whith bytes available 
-	 *   0< Ti <MAXULONG    |            m               |      0< Tc <MAXULONG     |   N  |   Ti  | Tmax(1) | Block on first byte, then use Ti between bytes. Tmax is use for the whole system call.
+	 * ReadIntervalTimeout  | ReadTotalTimeoutMultiplier | ReadTotalTimeoutConstant | VMIN | VTIME | TMAX  |
+	 *         0            |            0               |           0              |   N  |   0   |   0   | Blocks for N bytes available.
+         *   0< Ti <MAXULONG    |            0               |           0              |   N  |   Ti  |   0   | Block on first byte, then use Ti between bytes.
+	 *       MAXULONG       |            0               |           0              |   0  |   0   |   0   | Returns immediately with bytes available (don't block)
+	 *       MAXULONG       |         MAXULONG           |      0< Tc <MAXULONG     |   N  |   0   |   Tc  | Blocks on first byte during Tc or returns immediately whith bytes available 
+	 *       MAXULONG       |            m               |        MAXULONG          |                      | Invalid
+	 *         0            |            m               |      0< Tc <MAXULONG     |   N  |   0   |  Tmax | Block on first byte during Tmax or returns immediately whith bytes available 
+	 *   0< Ti <MAXULONG    |            m               |      0< Tc <MAXULONG     |   N  |   Ti  |  Tmax | Block on first byte, then use Ti between bytes. Tmax is use for the whole system call.
 	 */
 
-	/* Tmax = N * m  + Tc */
+	/* NB: timeouts are in milliseconds, VTIME are in deciseconds and is an unsigned char */
 
-	/* NB: 0<N; 0 < m < MAXULONG  */
-	/* NB: timeout are milliseconds, VTIME are deciseconds and is an unsigned char */
-
-	/* FIXME: Use a dedicted timer for Tmax(1). VMIN=0 and VTIME=Tmax is rather used instead of VMIN=N and WTIME=Ti.
-	 * TMP: check whether open(pComm->fd, O_NONBLOCK) doesn't conflict with above use cases 
-	 */
+	/* FIXME: double check whether open(pComm->fd_read_event, O_NONBLOCK) doesn't conflict with above use cases */
 
 	pTimeouts = &(pComm->timeouts);
 
@@ -174,43 +167,48 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	/* VMIN */
 
-	if ((pTimeouts->ReadIntervalTimeout < MAXULONG) && (pTimeouts->ReadTotalTimeoutMultiplier == 0) && (pTimeouts->ReadTotalTimeoutConstant == 0))
+	if ((pTimeouts->ReadIntervalTimeout == MAXULONG) && (pTimeouts->ReadTotalTimeoutMultiplier == 0) && (pTimeouts->ReadTotalTimeoutConstant == 0))
 	{
-		/* should only match the two first cases above */
-		vmin = nNumberOfBytesToRead < 256 ? nNumberOfBytesToRead : 255; /* 0xFF */
+		vmin = 0;
+	}
+	else
+	{
+		/* N */
+		/* vmin = nNumberOfBytesToRead < 256 ? nNumberOfBytesToRead : 255;*/ /* 0xFF */
+		
+		/* NB: we might wait endlessly with vmin=N, prefer to
+		 * force vmin=1 and return with bytes
+		 * available. FIXME: is a feature disarded here? */		
+		vmin = 1;
 	}
 	
 
 	/* VTIME */
 
-	if ((pTimeouts->ReadIntervalTimeout > 0) && (pTimeouts->ReadTotalTimeoutMultiplier == 0) && (pTimeouts->ReadTotalTimeoutConstant == 0))
+	if ((pTimeouts->ReadIntervalTimeout > 0) && (pTimeouts->ReadIntervalTimeout < MAXULONG))
 	{
 		/* Ti */
-		
-		vtime = _tmax(0, 0, pTimeouts->ReadIntervalTimeout);
-		
+		vtime = _vtime(pTimeouts->ReadIntervalTimeout);
 	}
-	else if ((pTimeouts->ReadIntervalTimeout == MAXULONG) && (pTimeouts->ReadTotalTimeoutMultiplier == MAXULONG) && (pTimeouts->ReadTotalTimeoutConstant < MAXULONG))
+
+
+	/* TMAX */
+	
+	if ((pTimeouts->ReadIntervalTimeout == MAXULONG) && (pTimeouts->ReadTotalTimeoutMultiplier == MAXULONG))
 	{
 		/* Tc */
-
-		vtime = _tmax(0, 0, pTimeouts->ReadTotalTimeoutConstant);
+		Tmax = pTimeouts->ReadTotalTimeoutConstant;
 	}
-	else if ((pTimeouts->ReadTotalTimeoutMultiplier > 0) || (pTimeouts->ReadTotalTimeoutConstant > 0)) /* <=> Tmax > 0 */
+	else
 	{
-		/* Tmax and Tmax(1) */
-
-		vtime = _tmax(nNumberOfBytesToRead, pTimeouts->ReadTotalTimeoutMultiplier, pTimeouts->ReadTotalTimeoutConstant);
+		/* Tmax */
+		Tmax = nNumberOfBytesToRead * pTimeouts->ReadTotalTimeoutMultiplier + pTimeouts->ReadTotalTimeoutConstant;
 	}
-
 	
 	if ((currentTermios.c_cc[VMIN] != vmin) || (currentTermios.c_cc[VTIME] != vtime))
 	{
 		currentTermios.c_cc[VMIN]  = vmin;
 		currentTermios.c_cc[VTIME] = vtime;
-
-		// TMP:
-		fprintf(stderr, "MANU: Applying timeout VMIN=%u, VTIME=%u\n", vmin, vtime);
 
 		if (tcsetattr(pComm->fd, TCSANOW, &currentTermios) < 0)
 		{
@@ -219,6 +217,18 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			return FALSE;
 		}
 	}
+
+	pTmaxTimeout = NULL; /* no timeout if Tmax == 0 */
+	if (Tmax > 0)
+	{
+		ZeroMemory(&tmaxTimeout, sizeof(struct timeval));
+
+		tmaxTimeout.tv_sec = Tmax / 1000; /* s */
+		tmaxTimeout.tv_usec = (Tmax % 1000) * 1000; /* us */
+
+		pTmaxTimeout = &tmaxTimeout;
+	}
+
 
 	/* FIXME: had expected eventfd_write() to return EAGAIN when
 	 * there is no eventfd_read() but this not the case. */
@@ -237,7 +247,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	FD_SET(pComm->fd_read_event, &read_set);
 	FD_SET(pComm->fd_read, &read_set);
 
-	nbFds = select(biggestFd+1, &read_set, NULL, NULL, NULL /* TMP: TODO:*/);
+	nbFds = select(biggestFd+1, &read_set, NULL, NULL, pTmaxTimeout);
 	if (nbFds < 0)
 	{
 		DEBUG_WARN("select() failure, errno=[%d] %s\n", errno, strerror(errno));
@@ -321,7 +331,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			SetLastError(ERROR_TIMEOUT);
 			return FALSE;
 		}
-
+		
 		*lpNumberOfBytesRead = nbRead;
 		return TRUE;
 	}
@@ -343,7 +353,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		   LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
-	struct timeval timeout, *pTimeout;
+	struct timeval tmaxTimeout, *pTmaxTimeout;
 
 	if (hDevice == INVALID_HANDLE_VALUE)
 	{
@@ -389,15 +399,15 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	 * how much time was left. Keep the timeout variable out of
 	 * the while() */
 
-	pTimeout = NULL; /* no timeout if Tmax == 0 */
+	pTmaxTimeout = NULL; /* no timeout if Tmax == 0 */
 	if (Tmax > 0)
 	{
-		ZeroMemory(&timeout, sizeof(struct timeval));
+		ZeroMemory(&tmaxTimeout, sizeof(struct timeval));
 
-		timeout.tv_sec = Tmax / 1000; /* s */
-		timeout.tv_usec = (Tmax % 1000) * 1000; /* us */
+		tmaxTimeout.tv_sec = Tmax / 1000; /* s */
+		tmaxTimeout.tv_usec = (Tmax % 1000) * 1000; /* us */
 
-		pTimeout = &timeout;
+		pTmaxTimeout = &tmaxTimeout;
 	}
 		
 	while (*lpNumberOfBytesWritten < nNumberOfBytesToWrite)
@@ -419,7 +429,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		FD_SET(pComm->fd_write_event, &event_set);
 		FD_SET(pComm->fd_write, &write_set);
 
-		nbFds = select(biggestFd+1, &event_set, &write_set, NULL, pTimeout);
+		nbFds = select(biggestFd+1, &event_set, &write_set, NULL, pTmaxTimeout);
 		if (nbFds < 0)
 		{
 			DEBUG_WARN("select() failure, errno=[%d] %s\n", errno, strerror(errno));

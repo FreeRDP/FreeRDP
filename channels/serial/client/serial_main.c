@@ -163,15 +163,6 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	/* dcb.fBinary = TRUE; */
 	/* SetCommState(serial->hComm, &dcb); */
 
-	// TMP:
-	COMMTIMEOUTS timeouts;
-	timeouts.ReadIntervalTimeout = MAXULONG; /* ensures a non blocking state */
-	timeouts.ReadTotalTimeoutMultiplier = 0;
-	timeouts.ReadTotalTimeoutConstant = 0;
-	timeouts.WriteTotalTimeoutMultiplier = 0;
-	timeouts.WriteTotalTimeoutConstant = 0;
-	SetCommTimeouts(serial->hComm, &timeouts);
-
 	assert(irp->FileId == 0);
 	irp->FileId = irp->devman->id_sequence++; /* FIXME: why not ((WINPR_COMM*)hComm)->fd? */
 
@@ -238,7 +229,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	}
 	else
 	{
-		DEBUG_SVC("read failure to %s, nbRead=%d, last-error: 0x%0.8x", serial->device.name, nbRead, GetLastError());
+		DEBUG_SVC("read failure to %s, nbRead=%d, last-error: 0x%0.8X", serial->device.name, nbRead, GetLastError());
 
 		switch(GetLastError())
 		{
@@ -319,7 +310,7 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	}
 	else
 	{
-		DEBUG_SVC("write failure to %s, nbWritten=%d, last-error: 0x%0.8x", serial->device.name, nbWritten, GetLastError());
+		DEBUG_SVC("write failure to %s, nbWritten=%d, last-error: 0x%0.8X", serial->device.name, nbWritten, GetLastError());
 		switch(GetLastError())
 		{
 			case ERROR_INVALID_HANDLE:
@@ -351,7 +342,7 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 				break;
 
 			default:
-				DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
+				DEBUG_SVC("unexpected last-error: 0x%X", GetLastError());
 				irp->IoStatus = STATUS_UNSUCCESSFUL;
 				break;
 		}
@@ -405,7 +396,7 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	}
 	else
 	{
-		DEBUG_SVC("CommDeviceIoControl failure: IoControlCode=[0x%0.8x] %s, last-error: 0x%x", 
+		DEBUG_SVC("CommDeviceIoControl failure: IoControlCode=[0x%0.8x] %s, last-error: 0x%X", 
 			  IoControlCode, _comm_serial_ioctl_name(IoControlCode), GetLastError());
 
 		// TMP: TODO: Status codes to be reviewed according: http://msdn.microsoft.com/en-us/library/ff547466%28v=vs.85%29.aspx#generic_status_values_for_serial_device_control_requests
@@ -445,7 +436,7 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 				break;
 
 			default:
-				DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
+				DEBUG_SVC("unexpected last-error: 0x%X", GetLastError());
 				irp->IoStatus = STATUS_UNSUCCESSFUL;
 				break;
 		}
