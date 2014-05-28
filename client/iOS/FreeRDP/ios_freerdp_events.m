@@ -77,9 +77,9 @@ static BOOL ios_events_handle_event(mfInfo* mfi, NSDictionary * event_descriptio
 	return should_continue;
 }
 
-BOOL ios_events_check_fds(mfInfo* mfi, fd_set* rfds)
+BOOL ios_events_check_fds(mfInfo* mfi)
 {	
-	if ( (mfi->event_pipe_consumer == -1) || !FD_ISSET(mfi->event_pipe_consumer, rfds))
+	if (mfi->event_pipe_consumer == -1)
 		return TRUE;
 	
 	uint32_t archived_data_length = 0;
@@ -112,12 +112,6 @@ BOOL ios_events_check_fds(mfInfo* mfi, fd_set* rfds)
 	return ios_events_handle_event(mfi, unarchived_object_data);
 }
 
-BOOL ios_events_get_fds(mfInfo* mfi, void ** read_fds, int * read_count, void ** write_fds, int * write_count)
-{
-	read_fds[*read_count] = (void *)(long)(mfi->event_pipe_consumer);
-	(*read_count)++;
-	return TRUE;
-}
 
 // Sets up the event pipe
 BOOL ios_events_create_pipe(mfInfo* mfi)

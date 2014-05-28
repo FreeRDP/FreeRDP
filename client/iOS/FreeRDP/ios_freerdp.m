@@ -124,109 +124,66 @@ ios_run_freerdp(freerdp * instance)
 			
 	// Connection main loop
 	NSAutoreleasePool* pool;
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	int wcount;
-	void* rfds[32];
-	void* wfds[32];
-	fd_set rfds_set;
-	fd_set wfds_set;
-    struct timeval timeout;
-    int select_status;
-	
-	memset(rfds, 0, sizeof(rfds));
-	memset(wfds, 0, sizeof(wfds));
+    DWORD count = 0;
+    DWORD event;
+    HANDLE *events = NULL;
+
+    events = malloc(5 * sizeof(HANDLE));
+    if (!events)
+    {
+        NSLog(@"malloc failed %s (%d)", strerror(errno), errno);
+        goto disconnect;
+    }
+
+    events[count++] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, mfi->event_pipe_consumer);
+    events[count++] = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
+    events[count++] = freerdp_channels_get_event_handle(instance);
+    {
+        HANDLE *hdl = freerdp_get_event_handles(instance, events, &count);
+
+        if (!hdl)
+        {
+            NSLog(@"Failed to get freerdp event handles\n");
+            goto disconnect;
+        }
+
+        events = hdl;
+    }
 
 	while (!freerdp_shall_disconnect(instance))
 	{
-		rcount = wcount = 0;
-		
 		pool = [[NSAutoreleasePool alloc] init];
 
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
-		{
-			NSLog(@"%s: inst->rdp_get_fds failed", __func__);
-			break;
-		}
-
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
-		{
-			NSLog(@"%s: freerdp_chanman_get_fds failed", __func__);
-			break;
-		}
-
-		if (ios_events_get_fds(mfi, rfds, &rcount, wfds, &wcount) != TRUE)
-		{
-			NSLog(@"%s: ios_events_get_fds", __func__);
-			break;
-		}
-		
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-		FD_ZERO(&wfds_set);
-		
-		for (i = 0; i < rcount; i++)
-		{
-			fds = (int)(long)(rfds[i]);
-			
-			if (fds > max_fds)
-				max_fds = fds;
-			
-			FD_SET(fds, &rfds_set);
-		}
-        
-		if (max_fds == 0)
-			break;
-	
-        timeout.tv_sec = 1;
-        timeout.tv_usec = 0;
-
-        select_status = select(max_fds + 1, &rfds_set, NULL, NULL, &timeout);
-        
-        // timeout?
-        if (select_status == 0)
+        event = WaitForMultipleObjects(count, events, FALSE, INFINITE);
+        if (WAIT_FAILED == event)
+            break;
+        if (WAIT_TIMEOUT == event)
             continue;
-        else if (select_status == -1)
-		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-				  (errno == EWOULDBLOCK) ||
-				  (errno == EINPROGRESS) ||
-				  (errno == EINTR))) /* signal occurred */
-			{
-				NSLog(@"%s: select failed!", __func__);
-				break;
-			}
-		}
-		
-		// Check the libfreerdp fds
-		if (freerdp_check_fds(instance) != true)
-		{
-			NSLog(@"%s: inst->rdp_check_fds failed.", __func__);
-			break;
-		}
-		
+
+        if (freerdp_check_fds(instance) != TRUE)
+        {
+            printf("Failed to check FreeRDP file descriptor\n");
+            break;
+        }
 		// Check input event fds
-		if (ios_events_check_fds(mfi, &rfds_set) != TRUE)
+		if (event == WAIT_OBJECT_0 && ios_events_check_fds(mfi) != TRUE)
 		{
 			// This event will fail when the app asks for a disconnect.
 			//NSLog(@"%s: ios_events_check_fds failed: terminating connection.", __func__);
 			break;
 		}
+        if (freerdp_channels_check_fds(channels, instance) != TRUE)
+        {
+            printf("Failed to check channel manager file descriptor\n");
+            break;
+        }
 		
-		// Check channel fds
-		if (freerdp_channels_check_fds(channels, instance) != TRUE)
-		{
-			NSLog(@"%s: freerdp_chanman_check_fds failed", __func__);
-			break;
-		}
         ios_process_channel_event(channels, instance);
 
 		[pool release]; pool = nil;
 	}	
 
+disconnect:
 	CGContextRelease(mfi->bitmap_context);
 	mfi->bitmap_context = NULL;	
 	mfi->connection_state = TSXConnectionDisconnected;
@@ -236,6 +193,7 @@ ios_run_freerdp(freerdp * instance)
 	freerdp_disconnect(instance);
 	gdi_free(instance);
     cache_free(instance->context->cache);
+    free(events);
 	
 	[pool release]; pool = nil;
 	return MF_EXIT_SUCCESS;
