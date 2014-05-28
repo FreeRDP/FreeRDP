@@ -318,6 +318,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	{
 		int biggestFd = -1;
 		fd_set event_set, write_set;
+		int nbFds;
 
 		biggestFd = pComm->fd_write;
 		if (pComm->fd_write_event > biggestFd)
@@ -332,13 +333,22 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		FD_SET(pComm->fd_write_event, &event_set);
 		FD_SET(pComm->fd_write, &write_set);
 
-		if (select(biggestFd+1, &event_set, &write_set, NULL, pTimeout) < 0)
+		nbFds = select(biggestFd+1, &event_set, &write_set, NULL, pTimeout);
+		if (nbFds < 0)
 		{
 			DEBUG_WARN("select() failure, errno=[%d] %s\n", errno, strerror(errno));
 			SetLastError(ERROR_IO_DEVICE);
 			return FALSE;
 		}
 
+		if (nbFds == 0)
+		{
+			/* timeout */
+
+			SetLastError(ERROR_TIMEOUT);
+			return FALSE;
+		}
+		
 
 		/* event_set */
 
@@ -391,7 +401,8 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 				if (errno == EAGAIN)
 				{
-
+					/* keep on */
+					continue;
 				}
 				else if (errno == EBADF)
 				{

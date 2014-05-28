@@ -265,7 +265,11 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 			case ERROR_BAD_DEVICE:
 				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
 				break;
-				
+
+			case ERROR_CANCELLED:
+				irp->IoStatus = STATUS_CANCELLED;
+				break;
+
 			default:
 				DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
 				irp->IoStatus = STATUS_UNSUCCESSFUL;
@@ -340,6 +344,10 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 
 			case ERROR_BAD_DEVICE:
 				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
+				break;
+
+			case ERROR_CANCELLED:
+				irp->IoStatus = STATUS_CANCELLED;
 				break;
 
 			default:
