@@ -37,8 +37,6 @@ typedef struct winpr_pipe WINPR_PIPE;
 
 typedef struct winpr_named_pipe WINPR_NAMED_PIPE;
 
-typedef void ( * fnRemoveBaseNamedPipeFromList)(WINPR_NAMED_PIPE* pNamedPipe);
-
 struct winpr_named_pipe
 {
 	WINPR_HANDLE_DEF();
@@ -60,12 +58,10 @@ struct winpr_named_pipe
 	DWORD dwFlagsAndAttributes;
 	LPOVERLAPPED lpOverlapped;
 
-	fnRemoveBaseNamedPipeFromList pfnRemoveBaseNamedPipeFromList;
-
-	WINPR_NAMED_PIPE* pBaseNamedPipe;
-	DWORD dwRefCount;
-
+	BOOL bDuplicatedServerDescriptor;
 };
+
+BOOL winpr_destroy_named_pipe(WINPR_NAMED_PIPE* pNamedPipe);
 
 #endif
 
