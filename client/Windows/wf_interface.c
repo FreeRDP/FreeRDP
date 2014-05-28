@@ -619,13 +619,13 @@ void *wf_channels_thread(void *arg)
 DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
 	MSG msg;
-	int index;
 	int width;
 	int height;
 	BOOL msg_ret;
 	int quit_msg;
 	HANDLE *events;
 	DWORD event, count = 0;
+	DWORD exit_code = 0;
 	wfContext *wfc;
 	freerdp *instance;
 	rdpChannels *channels;
@@ -671,7 +671,7 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	if (async_channels)
 	{
 		channels_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) wf_channels_thread, instance, 0, NULL);
-		events[count++] = chanles_thread;
+		events[count++] = channels_thread;
 	}
 	else
 		events[count++] = freerdp_channels_get_event_handle(instance);
@@ -682,7 +682,7 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		if (!hdl)
 		{
 			fprintf(stderr, "Failed to get freerdp event handles\n");
-			exit_code = XF_EXIT_CONN_FAILED;
+			exit_code = -1;
 			goto disconnect;
 		}
 
