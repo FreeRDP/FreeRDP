@@ -1467,7 +1467,6 @@ void* xf_thread(void* param)
 	else
 		events[count++] = freerdp_channels_get_event_handle(instance);
 
-	if (!async_transport)
 	{
 		HANDLE *hdl = freerdp_get_event_handles(instance, events, &count);
 
