@@ -914,7 +914,7 @@ static void xf_cliprdr_process_unicodetext(clipboardContext* cb, BYTE* data, int
 	crlf2lf(cb->data, &cb->data_length);
 }
 
-static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
+static BOOL xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 {
 	wStream* s;
 	UINT16 bpp;
@@ -926,12 +926,18 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 	if (size < 40)
 	{
 		DEBUG_X11_CLIPRDR("dib size %d too short", size);
-		return;
+		return FALSE;
 	}
 
 	s = Stream_New(data, size);
 	Stream_Seek(s, 14);
 	Stream_Read_UINT16(s, bpp);
+	if ((bpp < 1) || (bpp > 32))
+	{
+		fprintf(stderr, "%s: invalid bpp value %d", __FUNCTION__, bpp);
+		return FALSE;
+	}
+
 	Stream_Read_UINT32(s, ncolors);
 	offset = 14 + 40 + (bpp <= 8 ? (ncolors == 0 ? (1 << bpp) : ncolors) * 4 : 0);
 	Stream_Free(s, FALSE);
@@ -949,6 +955,7 @@ static void xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 	cb->data = Stream_Buffer(s);
 	cb->data_length = Stream_GetPosition(s);
 	Stream_Free(s, FALSE);
+	return TRUE;
 }
 
 static void xf_cliprdr_process_html(clipboardContext* cb, BYTE* data, int size)
