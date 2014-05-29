@@ -109,7 +109,11 @@ out_free:
 }
 
 
+#if defined(__APPLE__)
+BOOL tls_prepare(rdpTls* tls, BIO *underlying, SSL_METHOD *method, int options, BOOL clientMode)
+#else
 BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int options, BOOL clientMode)
+#endif
 {
 	tls->ctx = SSL_CTX_new(method);
 	if (!tls->ctx)
