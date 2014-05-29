@@ -177,6 +177,18 @@ struct _wLogBinaryAppender
 typedef struct _wLogBinaryAppender wLogBinaryAppender;
 
 /**
+ * Filter
+ */
+
+struct _wLogFilter
+{
+	DWORD Level;
+	LPSTR* Names;
+	DWORD NameCount;
+};
+typedef struct _wLogFilter wLogFilter;
+
+/**
  * Logger
  */
 

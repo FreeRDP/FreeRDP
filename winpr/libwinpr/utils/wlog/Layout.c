@@ -27,6 +27,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/sysinfo.h>
 
 #include <winpr/wlog.h>
 
