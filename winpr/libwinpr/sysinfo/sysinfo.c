@@ -276,7 +276,28 @@ BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 
 void GetSystemTime(LPSYSTEMTIME lpSystemTime)
 {
+	time_t ct = 0;
+	struct tm* stm = NULL;
+	WORD wMilliseconds = 0;
 
+	ct = time(NULL);
+	wMilliseconds = (WORD) (GetTickCount() % 1000);
+
+	stm = gmtime(&ct);
+
+	ZeroMemory(lpSystemTime, sizeof(SYSTEMTIME));
+
+	if (stm)
+	{
+		lpSystemTime->wYear = (WORD) (stm->tm_year + 1900);
+		lpSystemTime->wMonth = (WORD) (stm->tm_mon + 1);
+		lpSystemTime->wDayOfWeek = (WORD) stm->tm_wday;
+		lpSystemTime->wDay = (WORD) stm->tm_mday;
+		lpSystemTime->wHour = (WORD) stm->tm_hour;
+		lpSystemTime->wMinute = (WORD) stm->tm_min;
+		lpSystemTime->wSecond = (WORD) stm->tm_sec;
+		lpSystemTime->wMilliseconds = wMilliseconds;
+	}
 }
 
 BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime)
@@ -286,7 +307,28 @@ BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime)
 
 VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
 {
+	time_t ct = 0;
+	struct tm* ltm = NULL;
+	WORD wMilliseconds = 0;
 
+	ct = time(NULL);
+	wMilliseconds = (WORD) (GetTickCount() % 1000);
+
+	ltm = localtime(&ct);
+
+	ZeroMemory(lpSystemTime, sizeof(SYSTEMTIME));
+
+	if (ltm)
+	{
+		lpSystemTime->wYear = (WORD) (ltm->tm_year + 1900);
+		lpSystemTime->wMonth = (WORD) (ltm->tm_mon + 1);
+		lpSystemTime->wDayOfWeek = (WORD) ltm->tm_wday;
+		lpSystemTime->wDay = (WORD) ltm->tm_mday;
+		lpSystemTime->wHour = (WORD) ltm->tm_hour;
+		lpSystemTime->wMinute = (WORD) ltm->tm_min;
+		lpSystemTime->wSecond = (WORD) ltm->tm_sec;
+		lpSystemTime->wMilliseconds = wMilliseconds;
+	}
 }
 
 BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime)
