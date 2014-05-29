@@ -403,7 +403,7 @@ BOOL update_read_pointer_new(wStream* s, POINTER_NEW_UPDATE* pointer_new)
 		return FALSE;
 
 	Stream_Read_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
-	if ((pointer_new->xorBpp < 0) || (pointer_new->xorBpp > 32))
+	if ((pointer_new->xorBpp < 1) || (pointer_new->xorBpp > 32))
 	{
 		fprintf(stderr, "%s: invalid xorBpp %d\n", __FUNCTION__, pointer_new->xorBpp);
 		return FALSE;
