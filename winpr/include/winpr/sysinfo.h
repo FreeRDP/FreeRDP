@@ -220,6 +220,7 @@ WINPR_API VOID GetLocalTime(LPSYSTEMTIME lpSystemTime);
 WINPR_API BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime);
 
 WINPR_API VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
+WINPR_API BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement, PBOOL lpTimeAdjustmentDisabled);
 
 WINPR_API DWORD GetTickCount(void);
 

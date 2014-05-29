@@ -35,41 +35,19 @@
  * api-ms-win-core-sysinfo-l1-1-1.dll:
  *
  * EnumSystemFirmwareTables
- * GetComputerNameExA
- * GetComputerNameExW
- * GetDynamicTimeZoneInformation
- * GetLocalTime
+ * GetSystemFirmwareTable
  * GetLogicalProcessorInformation
  * GetLogicalProcessorInformationEx
- * GetSystemInfo
- * GetNativeSystemInfo
  * GetProductInfo
  * GetSystemDirectoryA
  * GetSystemDirectoryW
- * GetSystemFirmwareTable
- * GetSystemTime
  * GetSystemTimeAdjustment
- * GetSystemTimeAsFileTime
  * GetSystemWindowsDirectoryA
  * GetSystemWindowsDirectoryW
- * GetTickCount
- * GetTickCount64
- * GetTimeZoneInformation
- * GetTimeZoneInformationForYear
- * GetVersion
- * GetVersionExA
- * GetVersionExW
  * GetWindowsDirectoryA
  * GetWindowsDirectoryW
  * GlobalMemoryStatusEx
  * SetComputerNameExW
- * SetDynamicTimeZoneInformation
- * SetLocalTime
- * SetSystemTime
- * SetTimeZoneInformation
- * SystemTimeToFileTime
- * SystemTimeToTzSpecificLocalTime
- * TzSpecificLocalTimeToSystemTime
  * VerSetConditionMask
  */
 
@@ -301,6 +279,21 @@ void GetSystemTime(LPSYSTEMTIME lpSystemTime)
 
 }
 
+BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime)
+{
+	return FALSE;
+}
+
+VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
+{
+
+}
+
+BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime)
+{
+	return FALSE;
+}
+
 VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 {
 	ULARGE_INTEGER time64;
@@ -316,17 +309,7 @@ VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 	lpSystemTimeAsFileTime->dwHighDateTime = time64.HighPart;
 }
 
-BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime)
-{
-	return FALSE;
-}
-
-VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
-{
-
-}
-
-BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime)
+BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement, PBOOL lpTimeAdjustmentDisabled)
 {
 	return FALSE;
 }
