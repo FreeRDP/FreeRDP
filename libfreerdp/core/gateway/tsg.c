@@ -1601,14 +1601,22 @@ rdpTsg* tsg_new(rdpTransport* transport)
 	rdpTsg* tsg;
 
 	tsg = (rdpTsg*) calloc(1, sizeof(rdpTsg));
+
 	if (!tsg)
 		return NULL;
 
 	tsg->transport = transport;
 	tsg->settings = transport->settings;
 	tsg->rpc = rpc_new(tsg->transport);
+
 	if (!tsg->rpc)
 		goto out_free;
+
+	if (!InitializeCriticalSectionAndSpinCount(&(tsg->DuplexLock), 4000))
+		goto out_free;
+
+	tsg->FullDuplex = FALSE;
+
 	tsg->PendingPdu = FALSE;
 	return tsg;
 
@@ -1619,8 +1627,11 @@ out_free:
 
 void tsg_free(rdpTsg* tsg)
 {
-	if (tsg != NULL)
+	if (tsg)
 	{
+		if (!tsg->FullDuplex)
+			DeleteCriticalSection(&(tsg->DuplexLock));
+
 		free(tsg->MachineName);
 		rpc_free(tsg->rpc);
 		free(tsg);

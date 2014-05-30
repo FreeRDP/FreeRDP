@@ -74,25 +74,33 @@ long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int a
 static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 {
 	int status, ret;
-	rdpTcp *tcp = (rdpTcp *)bio->ptr;
+	rdpTcp* tcp = (rdpTcp*) bio->ptr;
 	int nchunks, committedBytes, i;
 	DataChunk chunks[2];
 
+	if (!tcp->fullDuplex)
+		EnterCriticalSection(&(tcp->duplexLock));
+
 	ret = num;
-	BIO_clear_retry_flags(bio);
 	tcp->writeBlocked = FALSE;
+	BIO_clear_retry_flags(bio);
 
 	/* we directly append extra bytes in the xmit buffer, this could be prevented
 	 * but for now it makes the code more simple.
 	 */
-	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE *)buf, num))
+	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE*) buf, num))
 	{
 		fprintf(stderr, "%s: an error occured when writing(toWrite=%d)\n", __FUNCTION__, num);
+
+		if (!tcp->fullDuplex)
+			LeaveCriticalSection(&(tcp->duplexLock));
+
 		return -1;
 	}
 
 	committedBytes = 0;
 	nchunks = ringbuffer_peek(&tcp->xmitBuffer, chunks, ringbuffer_used(&tcp->xmitBuffer));
+
 	for (i = 0; i < nchunks; i++)
 	{
 		while (chunks[i].size)
@@ -123,13 +131,20 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 
 out:
 	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
+
+	if (!tcp->fullDuplex)
+		LeaveCriticalSection(&(tcp->duplexLock));
+
 	return ret;
 }
 
 static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 {
 	int status;
-	rdpTcp *tcp = (rdpTcp *)bio->ptr;
+	rdpTcp* tcp = (rdpTcp*) bio->ptr;
+
+	if (!tcp->fullDuplex)
+		EnterCriticalSection(&(tcp->duplexLock));
 
 	tcp->readBlocked = FALSE;
 	BIO_clear_retry_flags(bio);
@@ -142,6 +157,9 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 		BIO_set_retry_read(bio);
 		tcp->readBlocked = TRUE;
 	}
+
+	if (!tcp->fullDuplex)
+		LeaveCriticalSection(&(tcp->duplexLock));
 
 	return status;
 }
@@ -284,8 +302,9 @@ void tcp_get_mac_address(rdpTcp* tcp)
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
-BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
+BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 {
+	int status;
 	UINT32 option_value;
 	socklen_t option_len;
 
@@ -295,26 +314,55 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 	if (hostname[0] == '/')
 	{
 		tcp->sockfd = freerdp_uds_connect(hostname);
+
 		if (tcp->sockfd < 0)
 			return FALSE;
 
 		tcp->socketBio = BIO_new_fd(tcp->sockfd, 1);
+
 		if (!tcp->socketBio)
 			return FALSE;
 	}
 	else
 	{
+		fd_set cfds;
+		struct timeval tv;
+
 		tcp->socketBio = BIO_new(BIO_s_connect());
+
 		if (!tcp->socketBio)
 			return FALSE;
 
-		if (BIO_set_conn_hostname(tcp->socketBio, hostname) < 0 ||	BIO_set_conn_int_port(tcp->socketBio, &port) < 0)
+		if (BIO_set_conn_hostname(tcp->socketBio, hostname) < 0 || BIO_set_conn_int_port(tcp->socketBio, &port) < 0)
 			return FALSE;
 
-		if (BIO_do_connect(tcp->socketBio) <= 0)
+		BIO_set_nbio(tcp->socketBio, 1);
+
+		status = BIO_do_connect(tcp->socketBio);
+
+		if ((status <= 0) && !BIO_should_retry(tcp->socketBio))
 			return FALSE;
 
 		tcp->sockfd = BIO_get_fd(tcp->socketBio, NULL);
+
+		if (tcp->sockfd < 0)
+			return FALSE;
+
+		if (status <= 0)
+		{
+			FD_ZERO(&cfds);
+			FD_SET(tcp->sockfd, &cfds);
+
+			tv.tv_sec = timeout;
+			tv.tv_usec = 0;
+
+			status = select(tcp->sockfd + 1, NULL, &cfds, NULL, &tv);
+
+			if (status == 0)
+			{
+				return FALSE; /* timeout */
+			}
+		}
 	}
 
 	SetEventFileDescriptor(tcp->event, tcp->sockfd);
@@ -324,6 +372,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 
 	option_value = 1;
 	option_len = sizeof(option_value);
+
 	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
 		fprintf(stderr, "%s: unable to set TCP_NODELAY\n", __FUNCTION__);
 
@@ -334,6 +383,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 		{
 			option_value = 1024 * 32;
 			option_len = sizeof(option_value);
+
 			if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len) < 0)
 			{
 				fprintf(stderr, "%s: unable to set receive buffer len\n", __FUNCTION__);
@@ -346,14 +396,16 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 		return FALSE;
 
 	tcp->bufferedBio = BIO_new(BIO_s_buffered_socket());
+
 	if (!tcp->bufferedBio)
 		return FALSE;
+
 	tcp->bufferedBio->ptr = tcp;
 
 	tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
+
 	return TRUE;
 }
-
 
 BOOL tcp_disconnect(rdpTcp* tcp)
 {
@@ -503,7 +555,8 @@ rdpTcp* tcp_new(rdpSettings* settings)
 {
 	rdpTcp* tcp;
 
-	tcp = (rdpTcp *)calloc(1, sizeof(rdpTcp));
+	tcp = (rdpTcp*) calloc(1, sizeof(rdpTcp));
+
 	if (!tcp)
 		return NULL;
 
@@ -513,17 +566,21 @@ rdpTcp* tcp_new(rdpSettings* settings)
 	tcp->sockfd = -1;
 	tcp->settings = settings;
 
+	if (!InitializeCriticalSectionAndSpinCount(&(tcp->duplexLock), 4000))
+		goto out_ringbuffer;
+
+	tcp->fullDuplex = FALSE;
+
 #ifndef _WIN32
 	tcp->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, tcp->sockfd);
+
 	if (!tcp->event || tcp->event == INVALID_HANDLE_VALUE)
 		goto out_ringbuffer;
 #endif
 
 	return tcp;
-#ifndef _WIN32
 out_ringbuffer:
 	ringbuffer_destroy(&tcp->xmitBuffer);
-#endif
 out_free:
 	free(tcp);
 	return NULL;
@@ -533,6 +590,9 @@ void tcp_free(rdpTcp* tcp)
 {
 	if (!tcp)
 		return;
+
+	if (!tcp->fullDuplex)
+		DeleteCriticalSection(&(tcp->duplexLock));
 
 	ringbuffer_destroy(&tcp->xmitBuffer);
 	CloseHandle(tcp->event);

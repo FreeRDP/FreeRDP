@@ -133,13 +133,21 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 
 	tsg = (rdpTsg*) bio->ptr;
 
+	if (!tsg->FullDuplex)
+		EnterCriticalSection(&(tsg->DuplexLock));
+
 	BIO_clear_retry_flags(bio);
+
 	status = tsg_write(tsg, (BYTE*) buf, num);
-	if (status > 0)
-		return status;
 
 	if (status == 0)
 		BIO_set_retry_write(bio);
+
+	if (!tsg->FullDuplex)
+		LeaveCriticalSection(&(tsg->DuplexLock));
+
+	if (status > 0)
+		return status;
 
 	return -1;
 }
@@ -150,6 +158,10 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 	rdpTsg* tsg;
 
 	tsg = (rdpTsg*) bio->ptr;
+
+	if (!tsg->FullDuplex)
+		EnterCriticalSection(&(tsg->DuplexLock));
+
 	status = tsg_read(bio->ptr, (BYTE*) buf, size);
 
 	BIO_clear_retry_flags(bio);
@@ -163,6 +175,9 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 	{
 		status = 0;
 	}
+
+	if (!tsg->FullDuplex)
+		LeaveCriticalSection(&(tsg->DuplexLock));
 
 	return status >= 0 ? status : -1;
 }
@@ -265,6 +280,8 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 	if (targetTls->port == 0)
 		targetTls->port = 3389;
+
+	targetTls->isGatewayTransport = FALSE;
 
 	tls_status = tls_connect(targetTls, targetBio);
 
@@ -371,6 +388,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	context = instance->context;
 
 	tsg = tsg_new(transport);
+
 	if (!tsg)
 		return FALSE;
 
@@ -381,12 +399,15 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	if (!transport->TlsIn)
 	{
 		transport->TlsIn = tls_new(settings);
+
 		if (!transport->TlsIn)
 			return FALSE;
 	}
+
 	if (!transport->TlsOut)
 	{
 		transport->TlsOut = tls_new(settings);
+
 		if (!transport->TlsOut)
 			return FALSE;
 	}
@@ -398,8 +419,10 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	transport->TlsIn->hostname = transport->TlsOut->hostname = settings->GatewayHostname;
 	transport->TlsIn->port = transport->TlsOut->port = settings->GatewayPort;
 
+	transport->TlsIn->isGatewayTransport = TRUE;
 
 	tls_status = tls_connect(transport->TlsIn, transport->TcpIn->bufferedBio);
+
 	if (tls_status < 1)
 	{
 		if (tls_status < 0)
@@ -416,7 +439,10 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 		return FALSE;
 	}
 
+	transport->TlsOut->isGatewayTransport = TRUE;
+
 	tls_status = tls_connect(transport->TlsOut, transport->TcpOut->bufferedBio);
+
 	if (tls_status < 1)
 	{
 		if (tls_status < 0)
@@ -438,10 +464,11 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 	transport->frontBio = BIO_new(BIO_s_tsg());
 	transport->frontBio->ptr = tsg;
+
 	return TRUE;
 }
 
-BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port)
+BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, int timeout)
 {
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
@@ -454,21 +481,22 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		transport->SplitInputOutput = TRUE;
 		transport->TcpOut = tcp_new(settings);
 
-		if (!tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort) ||
+		if (!tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort, timeout) ||
 				!tcp_set_blocking_mode(transport->TcpIn, FALSE))
 			return FALSE;
 
-		if (!tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort) ||
+		if (!tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort, timeout) ||
 				!tcp_set_blocking_mode(transport->TcpOut, FALSE))
 			return FALSE;
 
 		if (!transport_tsg_connect(transport, hostname, port))
 			return FALSE;
+
 		status = TRUE;
 	}
 	else
 	{
-		status = tcp_connect(transport->TcpIn, hostname, port);
+		status = tcp_connect(transport->TcpIn, hostname, port, timeout);
 
 		transport->SplitInputOutput = FALSE;
 		transport->TcpOut = transport->TcpIn;
@@ -633,6 +661,7 @@ static int transport_wait_for_read(rdpTransport* transport)
 	rdpTcp *tcpIn;
 
 	tcpIn = transport->TcpIn;
+
 	if (tcpIn->readBlocked)
 	{
 		rsetPtr = &rset;
@@ -657,7 +686,6 @@ static int transport_wait_for_read(rdpTransport* transport)
 
 	return select(tcpIn->sockfd + 1, rsetPtr, wsetPtr, NULL, &tv);
 }
-
 
 static int transport_wait_for_write(rdpTransport* transport)
 {
@@ -703,6 +731,7 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 		transport->layer = TRANSPORT_LAYER_CLOSED;
 		return -1;
 	}
+
 	while (read < bytes)
 	{
 		status = BIO_read(transport->frontBio, data + read, bytes - read);

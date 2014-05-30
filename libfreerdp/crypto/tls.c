@@ -109,7 +109,11 @@ out_free:
 }
 
 
+#if defined(__APPLE__)
+BOOL tls_prepare(rdpTls* tls, BIO *underlying, SSL_METHOD *method, int options, BOOL clientMode)
+#else
 BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int options, BOOL clientMode)
+#endif
 {
 	tls->ctx = SSL_CTX_new(method);
 	if (!tls->ctx)
@@ -382,14 +386,15 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 	BIO *bio = tls->bio;
 	DataChunk chunks[2];
 
-	BIO *bufferedBio = findBufferedBio(bio);
+	BIO* bufferedBio = findBufferedBio(bio);
+
 	if (!bufferedBio)
 	{
 		fprintf(stderr, "%s: error unable to retrieve the bufferedBio in the BIO chain\n", __FUNCTION__);
 		return -1;
 	}
 
-	tcp = (rdpTcp *)bufferedBio->ptr;
+	tcp = (rdpTcp*) bufferedBio->ptr;
 
 	do
 	{
@@ -587,7 +592,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		
 		if (instance->VerifyX509Certificate)
 		{
-			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, 0);
+			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, tls->isGatewayTransport);
 		}
 		
 		fprintf(stderr, "%s: (length = %d) status: %d\n%s\n", __FUNCTION__,	length, status, pemCert);
@@ -794,7 +799,8 @@ rdpTls* tls_new(rdpSettings* settings)
 {
 	rdpTls* tls;
 
-	tls = (rdpTls *)calloc(1, sizeof(rdpTls));
+	tls = (rdpTls*) calloc(1, sizeof(rdpTls));
+
 	if (!tls)
 		return NULL;
 
@@ -803,11 +809,13 @@ rdpTls* tls_new(rdpSettings* settings)
 
 	tls->settings = settings;
 	tls->certificate_store = certificate_store_new(settings);
+
 	if (!tls->certificate_store)
 		goto out_free;
 
 	tls->alertLevel = TLS_ALERT_LEVEL_WARNING;
 	tls->alertDescription = TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY;
+
 	return tls;
 
 out_free:
