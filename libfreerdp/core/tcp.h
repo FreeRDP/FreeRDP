@@ -51,11 +51,14 @@ struct rdp_tcp
 #ifdef _WIN32
 	WSAEVENT wsa_event;
 #endif
-	BIO *socketBio;
-	BIO *bufferedBio;
+	BIO* socketBio;
+	BIO* bufferedBio;
 	RingBuffer xmitBuffer;
 	BOOL writeBlocked;
 	BOOL readBlocked;
+
+	BOOL fullDuplex;
+	CRITICAL_SECTION duplexLock;
 
 	HANDLE event;
 };

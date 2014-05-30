@@ -31,6 +31,7 @@ typedef struct rdp_tsg rdpTsg;
 #include <winpr/rpc.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/synch.h>
 #include <winpr/error.h>
 
 #include <time.h>
@@ -69,6 +70,8 @@ struct rdp_tsg
 	rdpTransport* transport;
 	CONTEXT_HANDLE TunnelContext;
 	CONTEXT_HANDLE ChannelContext;
+	CRITICAL_SECTION DuplexLock;
+	BOOL FullDuplex;
 };
 
 typedef WCHAR* RESOURCENAME;
