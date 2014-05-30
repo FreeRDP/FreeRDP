@@ -268,6 +268,8 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	if (targetTls->port == 0)
 		targetTls->port = 3389;
 
+	targetTls->isGatewayTransport = FALSE;
+
 	tls_status = tls_connect(targetTls, targetBio);
 
 	if (tls_status < 1)
@@ -404,6 +406,8 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	transport->TlsIn->hostname = transport->TlsOut->hostname = settings->GatewayHostname;
 	transport->TlsIn->port = transport->TlsOut->port = settings->GatewayPort;
 
+	transport->TlsIn->isGatewayTransport = TRUE;
+
 	tls_status = tls_connect(transport->TlsIn, transport->TcpIn->bufferedBio);
 
 	if (tls_status < 1)
@@ -421,6 +425,8 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 		return FALSE;
 	}
+
+	transport->TlsOut->isGatewayTransport = TRUE;
 
 	tls_status = tls_connect(transport->TlsOut, transport->TcpOut->bufferedBio);
 

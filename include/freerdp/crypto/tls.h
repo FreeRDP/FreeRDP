@@ -81,6 +81,7 @@ struct rdp_tls
 	int port;
 	int alertLevel;
 	int alertDescription;
+	BOOL isGatewayTransport;
 };
 
 FREERDP_API int tls_connect(rdpTls* tls, BIO *underlying);
