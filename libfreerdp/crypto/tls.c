@@ -386,14 +386,15 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 	BIO *bio = tls->bio;
 	DataChunk chunks[2];
 
-	BIO *bufferedBio = findBufferedBio(bio);
+	BIO* bufferedBio = findBufferedBio(bio);
+
 	if (!bufferedBio)
 	{
 		fprintf(stderr, "%s: error unable to retrieve the bufferedBio in the BIO chain\n", __FUNCTION__);
 		return -1;
 	}
 
-	tcp = (rdpTcp *)bufferedBio->ptr;
+	tcp = (rdpTcp*) bufferedBio->ptr;
 
 	do
 	{

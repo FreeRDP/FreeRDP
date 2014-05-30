@@ -74,25 +74,33 @@ long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int a
 static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 {
 	int status, ret;
-	rdpTcp *tcp = (rdpTcp *)bio->ptr;
+	rdpTcp* tcp = (rdpTcp*) bio->ptr;
 	int nchunks, committedBytes, i;
 	DataChunk chunks[2];
 
+	if (!tcp->fullDuplex)
+		EnterCriticalSection(&(tcp->duplexLock));
+
 	ret = num;
-	BIO_clear_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_IO_SPECIAL));
 	tcp->writeBlocked = FALSE;
+	BIO_clear_retry_flags(bio);
 
 	/* we directly append extra bytes in the xmit buffer, this could be prevented
 	 * but for now it makes the code more simple.
 	 */
-	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE *)buf, num))
+	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE*) buf, num))
 	{
 		fprintf(stderr, "%s: an error occured when writing(toWrite=%d)\n", __FUNCTION__, num);
+
+		if (!tcp->fullDuplex)
+			LeaveCriticalSection(&(tcp->duplexLock));
+
 		return -1;
 	}
 
 	committedBytes = 0;
 	nchunks = ringbuffer_peek(&tcp->xmitBuffer, chunks, ringbuffer_used(&tcp->xmitBuffer));
+
 	for (i = 0; i < nchunks; i++)
 	{
 		while (chunks[i].size)
@@ -123,16 +131,23 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 
 out:
 	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
+
+	if (!tcp->fullDuplex)
+		LeaveCriticalSection(&(tcp->duplexLock));
+
 	return ret;
 }
 
 static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 {
 	int status;
-	rdpTcp *tcp = (rdpTcp *)bio->ptr;
+	rdpTcp* tcp = (rdpTcp*) bio->ptr;
+
+	if (!tcp->fullDuplex)
+		EnterCriticalSection(&(tcp->duplexLock));
 
 	tcp->readBlocked = FALSE;
-	BIO_clear_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_IO_SPECIAL));
+	BIO_clear_retry_flags(bio);
 
 	status = BIO_read(bio->next_bio, buf, size);
 	/*fprintf(stderr, "%s: size=%d status=%d shouldRetry=%d\n", __FUNCTION__, size, status, BIO_should_retry(bio->next_bio)); */
@@ -142,6 +157,9 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 		BIO_set_retry_read(bio);
 		tcp->readBlocked = TRUE;
 	}
+
+	if (!tcp->fullDuplex)
+		LeaveCriticalSection(&(tcp->duplexLock));
 
 	return status;
 }
@@ -548,6 +566,11 @@ rdpTcp* tcp_new(rdpSettings* settings)
 	tcp->sockfd = -1;
 	tcp->settings = settings;
 
+	if (!InitializeCriticalSectionAndSpinCount(&(tcp->duplexLock), 4000))
+		goto out_ringbuffer;
+
+	tcp->fullDuplex = FALSE;
+
 #ifndef _WIN32
 	tcp->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, tcp->sockfd);
 
@@ -569,6 +592,9 @@ void tcp_free(rdpTcp* tcp)
 {
 	if (!tcp)
 		return;
+
+	if (!tcp->fullDuplex)
+		DeleteCriticalSection(&(tcp->duplexLock));
 
 	ringbuffer_destroy(&tcp->xmitBuffer);
 	CloseHandle(tcp->event);
