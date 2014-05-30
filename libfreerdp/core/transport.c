@@ -268,6 +268,8 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	if (targetTls->port == 0)
 		targetTls->port = 3389;
 
+	targetTls->isGatewayTransport = FALSE;
+
 	tls_status = tls_connect(targetTls, targetBio);
 
 	if (tls_status < 1)
@@ -373,6 +375,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	context = instance->context;
 
 	tsg = tsg_new(transport);
+
 	if (!tsg)
 		return FALSE;
 
@@ -383,12 +386,15 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	if (!transport->TlsIn)
 	{
 		transport->TlsIn = tls_new(settings);
+
 		if (!transport->TlsIn)
 			return FALSE;
 	}
+
 	if (!transport->TlsOut)
 	{
 		transport->TlsOut = tls_new(settings);
+
 		if (!transport->TlsOut)
 			return FALSE;
 	}
@@ -400,8 +406,10 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	transport->TlsIn->hostname = transport->TlsOut->hostname = settings->GatewayHostname;
 	transport->TlsIn->port = transport->TlsOut->port = settings->GatewayPort;
 
+	transport->TlsIn->isGatewayTransport = TRUE;
 
 	tls_status = tls_connect(transport->TlsIn, transport->TcpIn->bufferedBio);
+
 	if (tls_status < 1)
 	{
 		if (tls_status < 0)
@@ -418,7 +426,10 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 		return FALSE;
 	}
 
+	transport->TlsOut->isGatewayTransport = TRUE;
+
 	tls_status = tls_connect(transport->TlsOut, transport->TcpOut->bufferedBio);
+
 	if (tls_status < 1)
 	{
 		if (tls_status < 0)
@@ -440,10 +451,11 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 	transport->frontBio = BIO_new(BIO_s_tsg());
 	transport->frontBio->ptr = tsg;
+
 	return TRUE;
 }
 
-BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port)
+BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, int timeout)
 {
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
@@ -456,21 +468,22 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		transport->SplitInputOutput = TRUE;
 		transport->TcpOut = tcp_new(settings);
 
-		if (!tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort) ||
+		if (!tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort, timeout) ||
 				!tcp_set_blocking_mode(transport->TcpIn, FALSE))
 			return FALSE;
 
-		if (!tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort) ||
+		if (!tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort, timeout) ||
 				!tcp_set_blocking_mode(transport->TcpOut, FALSE))
 			return FALSE;
 
 		if (!transport_tsg_connect(transport, hostname, port))
 			return FALSE;
+
 		status = TRUE;
 	}
 	else
 	{
-		status = tcp_connect(transport->TcpIn, hostname, port);
+		status = tcp_connect(transport->TcpIn, hostname, port, timeout);
 
 		transport->SplitInputOutput = FALSE;
 		transport->TcpOut = transport->TcpIn;
@@ -635,6 +648,7 @@ static int transport_wait_for_read(rdpTransport* transport)
 	rdpTcp *tcpIn;
 
 	tcpIn = transport->TcpIn;
+
 	if (tcpIn->readBlocked)
 	{
 		rsetPtr = &rset;
@@ -659,7 +673,6 @@ static int transport_wait_for_read(rdpTransport* transport)
 
 	return select(tcpIn->sockfd + 1, rsetPtr, wsetPtr, NULL, &tv);
 }
-
 
 static int transport_wait_for_write(rdpTransport* transport)
 {

@@ -591,7 +591,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		
 		if (instance->VerifyX509Certificate)
 		{
-			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, 0);
+			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, tls->isGatewayTransport);
 		}
 		
 		fprintf(stderr, "%s: (length = %d) status: %d\n%s\n", __FUNCTION__,	length, status, pemCert);
@@ -798,7 +798,8 @@ rdpTls* tls_new(rdpSettings* settings)
 {
 	rdpTls* tls;
 
-	tls = (rdpTls *)calloc(1, sizeof(rdpTls));
+	tls = (rdpTls*) calloc(1, sizeof(rdpTls));
+
 	if (!tls)
 		return NULL;
 
@@ -807,11 +808,13 @@ rdpTls* tls_new(rdpSettings* settings)
 
 	tls->settings = settings;
 	tls->certificate_store = certificate_store_new(settings);
+
 	if (!tls->certificate_store)
 		goto out_free;
 
 	tls->alertLevel = TLS_ALERT_LEVEL_WARNING;
 	tls->alertDescription = TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY;
+
 	return tls;
 
 out_free:
