@@ -60,7 +60,7 @@ struct rdp_tcp
 	HANDLE event;
 };
 
-BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port);
+BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout);
 BOOL tcp_disconnect(rdpTcp* tcp);
 int tcp_read(rdpTcp* tcp, BYTE* data, int length);
 int tcp_write(rdpTcp* tcp, BYTE* data, int length);

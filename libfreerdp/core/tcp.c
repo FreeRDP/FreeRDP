@@ -284,8 +284,9 @@ void tcp_get_mac_address(rdpTcp* tcp)
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
-BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
+BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 {
+	int status;
 	UINT32 option_value;
 	socklen_t option_len;
 
@@ -295,26 +296,55 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 	if (hostname[0] == '/')
 	{
 		tcp->sockfd = freerdp_uds_connect(hostname);
+
 		if (tcp->sockfd < 0)
 			return FALSE;
 
 		tcp->socketBio = BIO_new_fd(tcp->sockfd, 1);
+
 		if (!tcp->socketBio)
 			return FALSE;
 	}
 	else
 	{
+		fd_set cfds;
+		struct timeval tv;
+
 		tcp->socketBio = BIO_new(BIO_s_connect());
+
 		if (!tcp->socketBio)
 			return FALSE;
 
-		if (BIO_set_conn_hostname(tcp->socketBio, hostname) < 0 ||	BIO_set_conn_int_port(tcp->socketBio, &port) < 0)
+		if (BIO_set_conn_hostname(tcp->socketBio, hostname) < 0 || BIO_set_conn_int_port(tcp->socketBio, &port) < 0)
 			return FALSE;
 
-		if (BIO_do_connect(tcp->socketBio) <= 0)
+		BIO_set_nbio(tcp->socketBio, 1);
+
+		status = BIO_do_connect(tcp->socketBio);
+
+		if ((status <= 0) && !BIO_should_retry(tcp->socketBio))
 			return FALSE;
 
 		tcp->sockfd = BIO_get_fd(tcp->socketBio, NULL);
+
+		if (tcp->sockfd < 0)
+			return FALSE;
+
+		if (status <= 0)
+		{
+			FD_ZERO(&cfds);
+			FD_SET(tcp->sockfd, &cfds);
+
+			tv.tv_sec = timeout;
+			tv.tv_usec = 0;
+
+			status = select(tcp->sockfd + 1, NULL, &cfds, NULL, &tv);
+
+			if (status == 0)
+			{
+				return FALSE; /* timeout */
+			}
+		}
 	}
 
 	SetEventFileDescriptor(tcp->event, tcp->sockfd);
@@ -324,6 +354,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 
 	option_value = 1;
 	option_len = sizeof(option_value);
+
 	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
 		fprintf(stderr, "%s: unable to set TCP_NODELAY\n", __FUNCTION__);
 
@@ -334,6 +365,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 		{
 			option_value = 1024 * 32;
 			option_len = sizeof(option_value);
+
 			if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len) < 0)
 			{
 				fprintf(stderr, "%s: unable to set receive buffer len\n", __FUNCTION__);
@@ -346,14 +378,16 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 		return FALSE;
 
 	tcp->bufferedBio = BIO_new(BIO_s_buffered_socket());
+
 	if (!tcp->bufferedBio)
 		return FALSE;
+
 	tcp->bufferedBio->ptr = tcp;
 
 	tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
+
 	return TRUE;
 }
-
 
 BOOL tcp_disconnect(rdpTcp* tcp)
 {
@@ -503,7 +537,8 @@ rdpTcp* tcp_new(rdpSettings* settings)
 {
 	rdpTcp* tcp;
 
-	tcp = (rdpTcp *)calloc(1, sizeof(rdpTcp));
+	tcp = (rdpTcp*) calloc(1, sizeof(rdpTcp));
+
 	if (!tcp)
 		return NULL;
 
@@ -515,6 +550,7 @@ rdpTcp* tcp_new(rdpSettings* settings)
 
 #ifndef _WIN32
 	tcp->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, tcp->sockfd);
+
 	if (!tcp->event || tcp->event == INVALID_HANDLE_VALUE)
 		goto out_ringbuffer;
 #endif
