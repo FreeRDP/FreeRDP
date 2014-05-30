@@ -711,7 +711,7 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 
 		if (status < 0)
 		{
-			if (!BIO_should_retry(transport->frontBio))
+			if (!transport->frontBio || !BIO_should_retry(transport->frontBio))
 			{
 				/* something unexpected happened, let's close */
 				transport->layer = TRANSPORT_LAYER_CLOSED;
