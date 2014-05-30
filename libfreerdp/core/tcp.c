@@ -79,7 +79,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	DataChunk chunks[2];
 
 	ret = num;
-	BIO_clear_retry_flags(bio);
+	BIO_clear_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_IO_SPECIAL));
 	tcp->writeBlocked = FALSE;
 
 	/* we directly append extra bytes in the xmit buffer, this could be prevented
@@ -132,7 +132,7 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 	rdpTcp *tcp = (rdpTcp *)bio->ptr;
 
 	tcp->readBlocked = FALSE;
-	BIO_clear_retry_flags(bio);
+	BIO_clear_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_IO_SPECIAL));
 
 	status = BIO_read(bio->next_bio, buf, size);
 	/*fprintf(stderr, "%s: size=%d status=%d shouldRetry=%d\n", __FUNCTION__, size, status, BIO_should_retry(bio->next_bio)); */

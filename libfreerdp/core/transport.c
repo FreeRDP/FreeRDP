@@ -133,8 +133,10 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 
 	tsg = (rdpTsg*) bio->ptr;
 
-	BIO_clear_retry_flags(bio);
+	BIO_clear_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_IO_SPECIAL));
+
 	status = tsg_write(tsg, (BYTE*) buf, num);
+
 	if (status > 0)
 		return status;
 
@@ -152,7 +154,7 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 	tsg = (rdpTsg*) bio->ptr;
 	status = tsg_read(bio->ptr, (BYTE*) buf, size);
 
-	BIO_clear_retry_flags(bio);
+	BIO_clear_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_IO_SPECIAL));
 
 	if (status == 0)
 	{
