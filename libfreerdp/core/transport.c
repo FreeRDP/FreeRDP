@@ -698,7 +698,11 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 	int read = 0;
 	int status = -1;
 
-
+	if (!transport->frontBio)
+	{
+		transport->layer = TRANSPORT_LAYER_CLOSED;
+		return -1;
+	}
 	while (read < bytes)
 	{
 		status = BIO_read(transport->frontBio, data + read, bytes - read);
