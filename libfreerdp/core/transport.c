@@ -133,18 +133,12 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 
 	tsg = (rdpTsg*) bio->ptr;
 
-	if (!tsg->FullDuplex)
-		EnterCriticalSection(&(tsg->DuplexLock));
-
 	BIO_clear_retry_flags(bio);
 
 	status = tsg_write(tsg, (BYTE*) buf, num);
 
 	if (status == 0)
 		BIO_set_retry_write(bio);
-
-	if (!tsg->FullDuplex)
-		LeaveCriticalSection(&(tsg->DuplexLock));
 
 	if (status > 0)
 		return status;
@@ -159,9 +153,6 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 
 	tsg = (rdpTsg*) bio->ptr;
 
-	if (!tsg->FullDuplex)
-		EnterCriticalSection(&(tsg->DuplexLock));
-
 	status = tsg_read(bio->ptr, (BYTE*) buf, size);
 
 	BIO_clear_retry_flags(bio);
@@ -175,9 +166,6 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 	{
 		status = 0;
 	}
-
-	if (!tsg->FullDuplex)
-		LeaveCriticalSection(&(tsg->DuplexLock));
 
 	return status >= 0 ? status : -1;
 }

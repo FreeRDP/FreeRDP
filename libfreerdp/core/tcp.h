@@ -56,10 +56,6 @@ struct rdp_tcp
 	RingBuffer xmitBuffer;
 	BOOL writeBlocked;
 	BOOL readBlocked;
-
-	BOOL fullDuplex;
-	CRITICAL_SECTION duplexLock;
-
 	HANDLE event;
 };
 

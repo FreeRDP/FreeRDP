@@ -78,9 +78,6 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	int nchunks, committedBytes, i;
 	DataChunk chunks[2];
 
-	if (!tcp->fullDuplex)
-		EnterCriticalSection(&(tcp->duplexLock));
-
 	ret = num;
 	tcp->writeBlocked = FALSE;
 	BIO_clear_retry_flags(bio);
@@ -91,10 +88,6 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE*) buf, num))
 	{
 		fprintf(stderr, "%s: an error occured when writing(toWrite=%d)\n", __FUNCTION__, num);
-
-		if (!tcp->fullDuplex)
-			LeaveCriticalSection(&(tcp->duplexLock));
-
 		return -1;
 	}
 
@@ -131,10 +124,6 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 
 out:
 	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
-
-	if (!tcp->fullDuplex)
-		LeaveCriticalSection(&(tcp->duplexLock));
-
 	return ret;
 }
 
@@ -142,9 +131,6 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 {
 	int status;
 	rdpTcp* tcp = (rdpTcp*) bio->ptr;
-
-	if (!tcp->fullDuplex)
-		EnterCriticalSection(&(tcp->duplexLock));
 
 	tcp->readBlocked = FALSE;
 	BIO_clear_retry_flags(bio);
@@ -157,9 +143,6 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 		BIO_set_retry_read(bio);
 		tcp->readBlocked = TRUE;
 	}
-
-	if (!tcp->fullDuplex)
-		LeaveCriticalSection(&(tcp->duplexLock));
 
 	return status;
 }
@@ -529,8 +512,10 @@ int tcp_attach(rdpTcp* tcp, int sockfd)
 	if (!tcp->bufferedBio)
 	{
 		tcp->bufferedBio = BIO_new(BIO_s_buffered_socket());
+
 		if (!tcp->bufferedBio)
 			return FALSE;
+
 		tcp->bufferedBio->ptr = tcp;
 
 		tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
@@ -566,10 +551,8 @@ rdpTcp* tcp_new(rdpSettings* settings)
 	tcp->sockfd = -1;
 	tcp->settings = settings;
 
-	if (!InitializeCriticalSectionAndSpinCount(&(tcp->duplexLock), 4000))
-		goto out_ringbuffer;
-
-	tcp->fullDuplex = FALSE;
+	if (0)
+		goto out_ringbuffer; /* avoid unreferenced label warning on Windows */
 
 #ifndef _WIN32
 	tcp->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, tcp->sockfd);
@@ -590,9 +573,6 @@ void tcp_free(rdpTcp* tcp)
 {
 	if (!tcp)
 		return;
-
-	if (!tcp->fullDuplex)
-		DeleteCriticalSection(&(tcp->duplexLock));
 
 	ringbuffer_destroy(&tcp->xmitBuffer);
 	CloseHandle(tcp->event);
