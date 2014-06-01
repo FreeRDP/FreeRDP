@@ -1320,6 +1320,7 @@ static void* transport_client_thread(void* arg)
 		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
 
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+
 		if (transport->layer == TRANSPORT_LAYER_CLOSED)
 		{
 			rdpRdp* rdp = (rdpRdp*) transport->rdp;
@@ -1332,7 +1333,9 @@ static void* transport_client_thread(void* arg)
 				break;
 
 			if (!freerdp_check_fds(instance))
-				break;
+			{
+
+			}
 		}
 	}
 
