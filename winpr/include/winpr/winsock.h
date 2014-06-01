@@ -52,6 +52,12 @@ typedef struct sockaddr_storage SOCKADDR_STORAGE;
 #define WSADESCRIPTION_LEN	256
 #define WSASYS_STATUS_LEN	128
 
+#define SD_RECEIVE		0
+#define SD_SEND			1
+#define SD_BOTH			2
+
+#define SOCKET_ERROR		(-1)
+
 typedef struct WSAData
 {
 	WORD wVersion;
