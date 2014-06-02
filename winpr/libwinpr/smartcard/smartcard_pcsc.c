@@ -386,9 +386,22 @@ SCARDCONTEXT PCSC_GetCardContextFromHandle(SCARDHANDLE hCard)
 	return pCard->hContext;
 }
 
+BOOL PCSC_IsCardHandleConnected(SCARDCONTEXT hContext)
+{
+	PCSC_SCARDCONTEXT* pContext;
+
+	pContext = PCSC_GetCardContextData(hContext);
+
+	if (!pContext)
+		return FALSE;
+
+	return pContext->hCard ? TRUE : FALSE;
+}
+
 PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hContext, SCARDHANDLE hCard)
 {
 	PCSC_SCARDHANDLE* pCard;
+	PCSC_SCARDCONTEXT* pContext;
 
 	pCard = (PCSC_SCARDHANDLE*) calloc(1, sizeof(PCSC_SCARDHANDLE));
 
@@ -398,6 +411,10 @@ PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hContext, SCARDHANDLE hCar
 	pCard->hContext = hContext;
 
 	InitializeCriticalSectionAndSpinCount(&(pCard->lock), 4000);
+
+	pContext = PCSC_GetCardContextData(hContext);
+
+	pContext->hCard = hCard;
 
 	if (!g_CardHandles)
 		g_CardHandles = ListDictionary_New(TRUE);
@@ -410,6 +427,7 @@ PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hContext, SCARDHANDLE hCar
 void PCSC_DisconnectCardHandle(SCARDHANDLE hCard)
 {
 	PCSC_SCARDHANDLE* pCard;
+	PCSC_SCARDCONTEXT* pContext;
 
 	pCard = PCSC_GetCardHandleData(hCard);
 
@@ -417,6 +435,10 @@ void PCSC_DisconnectCardHandle(SCARDHANDLE hCard)
 		return;
 
 	DeleteCriticalSection(&(pCard->lock));
+
+	pContext = PCSC_GetCardContextData(pCard->hContext);
+
+	pContext->hCard = 0;
 
 	free(pCard);
 
@@ -1596,6 +1618,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnect_Internal(SCARDCONTEXT hContext,
 
 	if (!g_PCSC.pfnSCardConnect)
 		return SCARD_E_NO_SERVICE;
+
+	if (PCSC_IsCardHandleConnected(hContext))
+		return SCARD_E_SHARING_VIOLATION;
 
 	szReaderPCSC = PCSC_GetReaderNameFromAlias((char*) szReader);
 
