@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+
 #include <winpr/winsock.h>
 
 /**
@@ -244,14 +246,32 @@ PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize)
 
 #else /* _WIN32 */
 
+#include <netdb.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <net/if.h>
+
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
+
 int WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData)
 {
-	return 0;
+	ZeroMemory(lpWSAData, sizeof(WSADATA));
+
+	lpWSAData->wVersion = wVersionRequired;
+	lpWSAData->wHighVersion = MAKEWORD(2, 2);
+
+	return 0; /* success */
 }
 
 int WSACleanup(void)
 {
-	return 0;
+	return 0; /* success */
 }
 
 void WSASetLastError(int iError)
@@ -261,27 +281,228 @@ void WSASetLastError(int iError)
 
 int WSAGetLastError(void)
 {
-	return 0;
+	int iError = 0;
+
+	switch (errno)
+	{
+		/* Base error codes */
+
+		case EINTR:
+			iError = WSAEINTR;
+			break;
+
+		case EBADF:
+			iError = WSAEBADF;
+			break;
+
+		case EACCES:
+			iError = WSAEACCES;
+			break;
+
+		case EFAULT:
+			iError = WSAEFAULT;
+			break;
+
+		case EINVAL:
+			iError = WSAEINVAL;
+			break;
+
+		case EMFILE:
+			iError = WSAEMFILE;
+			break;
+
+		/* BSD sockets error codes */
+
+		case EWOULDBLOCK:
+			iError = WSAEWOULDBLOCK;
+			break;
+		case EINPROGRESS:
+			iError = WSAEINPROGRESS;
+			break;
+		case EALREADY:
+			iError = WSAEALREADY;
+			break;
+		case ENOTSOCK:
+			iError = WSAENOTSOCK;
+			break;
+		case EDESTADDRREQ:
+			iError = WSAEDESTADDRREQ;
+			break;
+		case EMSGSIZE:
+			iError = WSAEMSGSIZE;
+			break;
+		case EPROTOTYPE:
+			iError = WSAEPROTOTYPE;
+			break;
+		case ENOPROTOOPT:
+			iError = WSAENOPROTOOPT;
+			break;
+		case EPROTONOSUPPORT:
+			iError = WSAEPROTONOSUPPORT;
+			break;
+		case ESOCKTNOSUPPORT:
+			iError = WSAESOCKTNOSUPPORT;
+			break;
+		case EOPNOTSUPP:
+			iError = WSAEOPNOTSUPP;
+			break;
+		case EPFNOSUPPORT:
+			iError = WSAEPFNOSUPPORT;
+			break;
+		case EAFNOSUPPORT:
+			iError = WSAEAFNOSUPPORT;
+			break;
+		case EADDRINUSE:
+			iError = WSAEADDRINUSE;
+			break;
+		case EADDRNOTAVAIL:
+			iError = WSAEADDRNOTAVAIL;
+			break;
+		case ENETDOWN:
+			iError = WSAENETDOWN;
+			break;
+		case ENETUNREACH:
+			iError = WSAENETUNREACH;
+			break;
+		case ENETRESET:
+			iError = WSAENETRESET;
+			break;
+		case ECONNABORTED:
+			iError = WSAECONNABORTED;
+			break;
+		case ECONNRESET:
+			iError = WSAECONNRESET;
+			break;
+		case ENOBUFS:
+			iError = WSAENOBUFS;
+			break;
+		case EISCONN:
+			iError = WSAEISCONN;
+			break;
+		case ENOTCONN:
+			iError = WSAENOTCONN;
+			break;
+		case ESHUTDOWN:
+			iError = WSAESHUTDOWN;
+			break;
+		case ETOOMANYREFS:
+			iError = WSAETOOMANYREFS;
+			break;
+		case ETIMEDOUT:
+			iError = WSAETIMEDOUT;
+			break;
+		case ECONNREFUSED:
+			iError = WSAECONNREFUSED;
+			break;
+		case ELOOP:
+			iError = WSAELOOP;
+			break;
+		case ENAMETOOLONG:
+			iError = WSAENAMETOOLONG;
+			break;
+		case EHOSTDOWN:
+			iError = WSAEHOSTDOWN;
+			break;
+		case EHOSTUNREACH:
+			iError = WSAEHOSTUNREACH;
+			break;
+		case ENOTEMPTY:
+			iError = WSAENOTEMPTY;
+			break;
+#ifdef EPROCLIM
+		case EPROCLIM:
+			iError = WSAEPROCLIM;
+			break;
+#endif
+		case EUSERS:
+			iError = WSAEUSERS;
+			break;
+		case EDQUOT:
+			iError = WSAEDQUOT;
+			break;
+		case ESTALE:
+			iError = WSAESTALE;
+			break;
+		case EREMOTE:
+			iError = WSAEREMOTE;
+			break;
+
+		/* Special cases */
+
+#if (EAGAIN != EWOULDBLOCK)
+		case EAGAIN:
+			iError = WSAEWOULDBLOCK;
+			break;
+#endif
+
+		case EPROTO:
+			iError = WSAECONNRESET;
+			break;
+	}
+
+	/**
+	 * Windows Sockets Extended Error Codes:
+	 *
+	 * WSASYSNOTREADY
+	 * WSAVERNOTSUPPORTED
+	 * WSANOTINITIALISED
+	 * WSAEDISCON
+	 * WSAENOMORE
+	 * WSAECANCELLED
+	 * WSAEINVALIDPROCTABLE
+	 * WSAEINVALIDPROVIDER
+	 * WSAEPROVIDERFAILEDINIT
+	 * WSASYSCALLFAILURE
+	 * WSASERVICE_NOT_FOUND
+	 * WSATYPE_NOT_FOUND
+	 * WSA_E_NO_MORE
+	 * WSA_E_CANCELLED
+	 * WSAEREFUSED
+	 */
+
+	return iError;
 }
 
 SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+	socklen_t s_addrlen = (socklen_t) *addrlen;
+
+	status = accept(fd, addr, &s_addrlen);
+	*addrlen = (socklen_t) s_addrlen;
+
+	return status;
 }
 
 int _bind(SOCKET s, const struct sockaddr* addr, int namelen)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+
+	status = bind(fd, addr, (socklen_t) namelen);
+
+	return status;
 }
 
 int closesocket(SOCKET s)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+
+	status = close(fd);
+
+	return status;
 }
 
 int _connect(SOCKET s, const struct sockaddr* name, int namelen)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+
+	status = connect(fd, name, (socklen_t) namelen);
+
+	return status;
 }
 
 int _ioctlsocket(SOCKET s, long cmd, u_long* argp)
@@ -291,127 +512,242 @@ int _ioctlsocket(SOCKET s, long cmd, u_long* argp)
 
 int _getpeername(SOCKET s, struct sockaddr* name, int* namelen)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+	socklen_t s_namelen = (socklen_t) *namelen;
+
+	status = getpeername(fd, name, &s_namelen);
+	*namelen = (int) s_namelen;
+
+	return status;
 }
 
 int _getsockname(SOCKET s, struct sockaddr* name, int* namelen)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+	socklen_t s_namelen = (socklen_t) *namelen;
+
+	status = getsockname(fd, name, &s_namelen);
+	*namelen = (int) s_namelen;
+
+	return status;
 }
 
 int _getsockopt(SOCKET s, int level, int optname, char* optval, int* optlen)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+	socklen_t s_optlen = (socklen_t) *optlen;
+
+	status = getsockopt(fd, level, optname, (void*) optval, &s_optlen);
+	*optlen = (socklen_t) s_optlen;
+
+	return status;
 }
 
 u_long _htonl(u_long hostlong)
 {
-	return 0;
+	return htonl(hostlong);
 }
 
 u_short _htons(u_short hostshort)
 {
-	return 0;
+	return htons(hostshort);
 }
 
 unsigned long _inet_addr(const char* cp)
 {
-	return 0;
+	return (long) inet_addr(cp);
 }
 
 char* _inet_ntoa(struct in_addr in)
 {
-	return 0;
+	return inet_ntoa(in);
 }
 
 int _listen(SOCKET s, int backlog)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+
+	status = listen(fd, backlog);
+
+	return status;
 }
 
 u_long _ntohl(u_long netlong)
 {
-	return 0;
+	return ntohl(netlong);
 }
 
 u_short _ntohs(u_short netshort)
 {
-	return 0;
+	return ntohs(netshort);
 }
 
 int _recv(SOCKET s, char* buf, int len, int flags)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+
+	status = (int) recv(fd, (void*) buf, (size_t) len, flags);
+
+	return status;
 }
 
 int _recvfrom(SOCKET s, char* buf, int len, int flags, struct sockaddr* from, int* fromlen)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+	socklen_t s_fromlen = (socklen_t) *fromlen;
+
+	status = (int) recvfrom(fd, (void*) buf, (size_t) len, flags, from, &s_fromlen);
+	*fromlen = (int) s_fromlen;
+
+	return status;
 }
 
 int _select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, const struct timeval* timeout)
 {
-	return 0;
+	int status;
+
+	status = select(nfds, readfds, writefds, exceptfds, (struct timeval*) timeout);
+
+	return status;
 }
 
 int _send(SOCKET s, const char* buf, int len, int flags)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+
+	flags |= MSG_NOSIGNAL;
+
+	status = (int) send(fd, (void*) buf, (size_t) len, flags);
+
+	return status;
 }
 
 int _sendto(SOCKET s, const char* buf, int len, int flags, const struct sockaddr* to, int tolen)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+
+	status = (int) sendto(fd, (void*) buf, (size_t) len, flags, to, (socklen_t) tolen);
+
+	return status;
 }
 
 int _setsockopt(SOCKET s, int level, int optname, const char* optval, int optlen)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+
+	status = setsockopt(fd, level, optname, (void*) optval, (socklen_t) optlen);
+
+	return status;
 }
 
 int _shutdown(SOCKET s, int how)
 {
-	return 0;
+	int status;
+	int fd = (int) s;
+	int s_how = -1;
+
+	switch (how)
+	{
+		case SD_RECEIVE:
+			s_how = SHUT_RD;
+			break;
+
+		case SD_SEND:
+			s_how = SHUT_WR;
+			break;
+
+		case SD_BOTH:
+			s_how = SHUT_RDWR;
+			break;
+	}
+
+	if (s_how < 0)
+		return SOCKET_ERROR;
+
+	status = shutdown(fd, s_how);
+
+	return status;
 }
 
 SOCKET _socket(int af, int type, int protocol)
 {
-	return 0;
+	SOCKET s;
+
+	s = (SOCKET) socket(af, type, protocol);
+
+	return s;
 }
 
 struct hostent* _gethostbyaddr(const char* addr, int len, int type)
 {
-	return 0;
+	struct hostent* host;
+
+	host = gethostbyaddr((void*) addr, (socklen_t) len, type);
+
+	return host;
 }
 
 struct hostent* _gethostbyname(const char* name)
 {
-	return 0;
+	struct hostent* host;
+
+	host = gethostbyname(name);
+
+	return host;
 }
 
 int _gethostname(char* name, int namelen)
 {
-	return 0;
+	int status;
+
+	status = gethostname(name, (size_t) namelen);
+
+	return status;
 }
 
 struct servent* _getservbyport(int port, const char* proto)
 {
-	return 0;
+	struct servent* serv;
+
+	serv = getservbyport(port, proto);
+
+	return serv;
 }
 
 struct servent* _getservbyname(const char* name, const char* proto)
 {
-	return 0;
+	struct servent* serv;
+
+	serv = getservbyname(name, proto);
+
+	return serv;
 }
 
 struct protoent* _getprotobynumber(int number)
 {
-	return 0;
+	struct protoent* proto;
+
+	proto = getprotobynumber(number);
+
+	return proto;
 }
 
 struct protoent* _getprotobyname(const char* name)
 {
-	return 0;
+	struct protoent* proto;
+
+	proto = getprotobyname(name);
+
+	return proto;
 }
 
 #endif  /* _WIN32 */

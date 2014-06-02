@@ -1612,11 +1612,6 @@ rdpTsg* tsg_new(rdpTransport* transport)
 	if (!tsg->rpc)
 		goto out_free;
 
-	if (!InitializeCriticalSectionAndSpinCount(&(tsg->DuplexLock), 4000))
-		goto out_free;
-
-	tsg->FullDuplex = FALSE;
-
 	tsg->PendingPdu = FALSE;
 	return tsg;
 
@@ -1629,9 +1624,6 @@ void tsg_free(rdpTsg* tsg)
 {
 	if (tsg)
 	{
-		if (!tsg->FullDuplex)
-			DeleteCriticalSection(&(tsg->DuplexLock));
-
 		free(tsg->MachineName);
 		rpc_free(tsg->rpc);
 		free(tsg);

@@ -68,10 +68,24 @@ int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, 
 	FILE* fp;
 	char prefix[WLOG_MAX_PREFIX_SIZE];
 
-	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;
-
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
+
+#ifdef _WIN32
+	if (appender->outputStream == WLOG_CONSOLE_DEBUG)
+	{
+		char MessageString[4096];
+
+		sprintf_s(MessageString, sizeof(MessageString), "%s%s\n",
+			  message->PrefixString, message->TextString);
+
+		OutputDebugStringA(MessageString);
+
+		return 1;
+	}
+#endif
+
+	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;
 
 	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
 
@@ -160,6 +174,11 @@ wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
 				(WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN) WLog_ConsoleAppender_WritePacketMessage;
 
 		ConsoleAppender->outputStream = WLOG_CONSOLE_STDOUT;
+
+#ifdef _WIN32
+		if (IsDebuggerPresent())
+			ConsoleAppender->outputStream = WLOG_CONSOLE_DEBUG;
+#endif
 	}
 
 	return ConsoleAppender;

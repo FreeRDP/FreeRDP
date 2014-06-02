@@ -70,8 +70,6 @@ struct rdp_tsg
 	rdpTransport* transport;
 	CONTEXT_HANDLE TunnelContext;
 	CONTEXT_HANDLE ChannelContext;
-	CRITICAL_SECTION DuplexLock;
-	BOOL FullDuplex;
 };
 
 typedef WCHAR* RESOURCENAME;
