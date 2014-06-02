@@ -26,6 +26,36 @@
 
 #ifdef _WIN32
 
+#define _accept			accept
+#define _bind			bind
+#define _connect		connect
+#define _ioctlsocket		ioctlsocket
+#define _getpeername		getpeername
+#define _getsockname		getsockname
+#define _getsockopt		getsockopt
+#define _htonl			htonl
+#define _htons			htons
+#define _inet_addr		inet_addr
+#define _inet_ntoa		inet_ntoa
+#define _listen			listen
+#define _ntohl			ntohl
+#define _ntohs			ntohs
+#define _recv			recv
+#define _recvfrom		recvfrom
+#define _select			select
+#define _send			send
+#define _sendto			sendto
+#define _setsockopt		setsockopt
+#define _shutdown		shutdown
+#define _socket			socket
+#define _gethostbyaddr		gethostbyaddr
+#define _gethostbyname		gethostbyname
+#define _gethostname		gethostname
+#define _getservbyport		getservbyport
+#define _getservbyname		getservbyname
+#define _getprotobynumber	getprotobynumber
+#define _getprotobyname		getprotobyname
+
 #if (_WIN32_WINNT < 0x0600)
 
 PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize);
