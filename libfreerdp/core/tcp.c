@@ -30,6 +30,7 @@
 #include <fcntl.h>
 
 #include <winpr/crt.h>
+#include <winpr/winsock.h>
 
 #ifndef _WIN32
 #include <netdb.h>
@@ -55,9 +56,6 @@
 #endif
 #endif
 
-#else
-#define SHUT_RDWR SD_BOTH
-#define close(_fd) closesocket(_fd)
 #endif
 
 #include <freerdp/utils/tcp.h>
@@ -65,6 +63,185 @@
 #include <winpr/stream.h>
 
 #include "tcp.h"
+
+/* Simple Socket BIO */
+
+static int transport_bio_simple_new(BIO* bio);
+static int transport_bio_simple_free(BIO* bio);
+
+long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
+{
+	return 1;
+}
+
+static int transport_bio_simple_write(BIO* bio, const char* buf, int size)
+{
+	int error;
+	int status = 0;
+
+	if (!buf)
+		return 0;
+
+	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+
+	status = _send((SOCKET) bio->num, buf, size, 0);
+
+	if (status <= 0)
+	{
+		error = WSAGetLastError();
+
+		if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
+			(error == WSAEINPROGRESS) || (error == WSAEALREADY))
+		{
+			BIO_set_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY));
+		}
+		else
+		{
+			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		}
+	}
+
+	return status;
+}
+
+static int transport_bio_simple_read(BIO* bio, char* buf, int size)
+{
+	int error;
+	int status = 0;
+
+	if (!buf)
+		return 0;
+
+	BIO_clear_flags(bio, BIO_FLAGS_READ);
+
+	status = _recv((SOCKET) bio->num, buf, size, 0);
+
+	if (status <= 0)
+	{
+		error = WSAGetLastError();
+
+		if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
+			(error == WSAEINPROGRESS) || (error == WSAEALREADY))
+		{
+			BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
+		}
+		else
+		{
+			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		}
+	}
+
+	return status;
+}
+
+static int transport_bio_simple_puts(BIO* bio, const char* str)
+{
+	return 1;
+}
+
+static int transport_bio_simple_gets(BIO* bio, char* str, int size)
+{
+	return 1;
+}
+
+static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
+{
+	int status = -1;
+
+	switch (cmd)
+	{
+		case BIO_C_SET_FD:
+			if (arg2)
+			{
+				transport_bio_simple_free(bio);
+				bio->flags = BIO_FLAGS_SHOULD_RETRY;
+				bio->num = *((int*) arg2);
+				bio->shutdown = (int) arg1;
+				bio->init = 1;
+				status = 1;
+			}
+			break;
+
+		case BIO_C_GET_FD:
+			if (bio->init)
+			{
+				if (arg2)
+					*((int*) arg2) = bio->num;
+				status = bio->num;
+			}
+			break;
+
+		case BIO_CTRL_GET_CLOSE:
+			status = bio->shutdown;
+			break;
+
+		case BIO_CTRL_SET_CLOSE:
+			bio->shutdown = (int) arg1;
+			status = 1;
+			break;
+
+		case BIO_CTRL_DUP:
+			status = 1;
+			break;
+
+		case BIO_CTRL_FLUSH:
+			status = 1;
+			break;
+
+		default:
+			status = 0;
+			break;
+	}
+
+	return status;
+}
+
+static int transport_bio_simple_new(BIO* bio)
+{
+	bio->init = 0;
+	bio->num = 0;
+	bio->ptr = NULL;
+	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+	return 1;
+}
+
+static int transport_bio_simple_free(BIO* bio)
+{
+	if (!bio)
+		return 0;
+
+	if (bio->shutdown)
+	{
+		if (bio->init)
+			closesocket((SOCKET) bio->num);
+
+		bio->init = 0;
+		bio->flags = 0;
+	}
+
+	return 1;
+}
+
+static BIO_METHOD transport_bio_simple_socket_methods =
+{
+	BIO_TYPE_SIMPLE,
+	"SimpleSocket",
+	transport_bio_simple_write,
+	transport_bio_simple_read,
+	transport_bio_simple_puts,
+	transport_bio_simple_gets,
+	transport_bio_simple_ctrl,
+	transport_bio_simple_new,
+	transport_bio_simple_free,
+	NULL,
+};
+
+BIO_METHOD* BIO_s_simple_socket(void)
+{
+	return &transport_bio_simple_socket_methods;
+}
+
+/* Buffered Socket BIO */
 
 long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
 {
@@ -78,12 +255,9 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	int nchunks, committedBytes, i;
 	DataChunk chunks[2];
 
-	if (!tcp->fullDuplex)
-		EnterCriticalSection(&(tcp->duplexLock));
-
 	ret = num;
 	tcp->writeBlocked = FALSE;
-	BIO_clear_retry_flags(bio);
+	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
 	/* we directly append extra bytes in the xmit buffer, this could be prevented
 	 * but for now it makes the code more simple.
@@ -91,10 +265,6 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE*) buf, num))
 	{
 		fprintf(stderr, "%s: an error occured when writing(toWrite=%d)\n", __FUNCTION__, num);
-
-		if (!tcp->fullDuplex)
-			LeaveCriticalSection(&(tcp->duplexLock));
-
 		return -1;
 	}
 
@@ -106,21 +276,22 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 		while (chunks[i].size)
 		{
 			status = BIO_write(bio->next_bio, chunks[i].data, chunks[i].size);
-			/*fprintf(stderr, "%s: i=%d/%d size=%d/%d status=%d retry=%d\n", __FUNCTION__, i, nchunks,
-					chunks[i].size, ringbuffer_used(&tcp->xmitBuffer), status,
-					BIO_should_retry(bio->next_bio)
-			);*/
+
 			if (status <= 0)
 			{
-				if (BIO_should_retry(bio->next_bio))
+				if (!BIO_should_retry(bio->next_bio))
 				{
+					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+					ret = -1; /* fatal error */
+					goto out;
+				}
+
+				if (BIO_should_write(bio->next_bio))
+				{
+					BIO_set_flags(bio, BIO_FLAGS_WRITE);
 					tcp->writeBlocked = TRUE;
 					goto out; /* EWOULDBLOCK */
 				}
-
-				/* any other is an error, but we still have to commit written bytes */
-				ret = -1;
-				goto out;
 			}
 
 			committedBytes += status;
@@ -131,10 +302,6 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 
 out:
 	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
-
-	if (!tcp->fullDuplex)
-		LeaveCriticalSection(&(tcp->duplexLock));
-
 	return ret;
 }
 
@@ -143,24 +310,31 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 	int status;
 	rdpTcp* tcp = (rdpTcp*) bio->ptr;
 
-	if (!tcp->fullDuplex)
-		EnterCriticalSection(&(tcp->duplexLock));
-
 	tcp->readBlocked = FALSE;
-	BIO_clear_retry_flags(bio);
+	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
 	status = BIO_read(bio->next_bio, buf, size);
-	/*fprintf(stderr, "%s: size=%d status=%d shouldRetry=%d\n", __FUNCTION__, size, status, BIO_should_retry(bio->next_bio)); */
 
-	if (status <= 0 && BIO_should_retry(bio->next_bio))
+	if (status <= 0)
 	{
-		BIO_set_retry_read(bio);
-		tcp->readBlocked = TRUE;
+		if (!BIO_should_retry(bio->next_bio))
+		{
+			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+			status = -1;
+			goto out;
+		}
+
+		BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+
+		if (BIO_should_read(bio->next_bio))
+		{
+			BIO_set_flags(bio, BIO_FLAGS_READ);
+			tcp->readBlocked = TRUE;
+			goto out;
+		}
 	}
 
-	if (!tcp->fullDuplex)
-		LeaveCriticalSection(&(tcp->duplexLock));
-
+out:
 	return status;
 }
 
@@ -176,19 +350,21 @@ static int transport_bio_buffered_gets(BIO* bio, char* str, int size)
 
 static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
-	rdpTcp *tcp = (rdpTcp *)bio->ptr;
+	rdpTcp* tcp = (rdpTcp*) bio->ptr;
 
 	switch (cmd)
 	{
-	case BIO_CTRL_FLUSH:
-		return 1;
-	case BIO_CTRL_WPENDING:
-		return ringbuffer_used(&tcp->xmitBuffer);
-	case BIO_CTRL_PENDING:
-		return 0;
-	default:
-		/*fprintf(stderr, "%s: passing to next BIO, bio=%p cmd=%d arg1=%d arg2=%p\n", __FUNCTION__, bio, cmd, arg1, arg2); */
-		return BIO_ctrl(bio->next_bio, cmd, arg1, arg2);
+		case BIO_CTRL_FLUSH:
+			return 1;
+
+		case BIO_CTRL_WPENDING:
+			return ringbuffer_used(&tcp->xmitBuffer);
+
+		case BIO_CTRL_PENDING:
+			return 0;
+
+		default:
+			return BIO_ctrl(bio->next_bio, cmd, arg1, arg2);
 	}
 
 	return 0;
@@ -199,8 +375,7 @@ static int transport_bio_buffered_new(BIO* bio)
 	bio->init = 1;
 	bio->num = 0;
 	bio->ptr = NULL;
-	bio->flags = 0;
-
+	bio->flags = BIO_FLAGS_SHOULD_RETRY;
 	return 1;
 }
 
@@ -208,7 +383,6 @@ static int transport_bio_buffered_free(BIO* bio)
 {
 	return 1;
 }
-
 
 static BIO_METHOD transport_bio_buffered_socket_methods =
 {
@@ -231,17 +405,16 @@ BIO_METHOD* BIO_s_buffered_socket(void)
 
 BOOL transport_bio_buffered_drain(BIO *bio)
 {
-	rdpTcp *tcp = (rdpTcp *)bio->ptr;
 	int status;
+	rdpTcp* tcp = (rdpTcp*) bio->ptr;
 
 	if (!ringbuffer_used(&tcp->xmitBuffer))
 		return 1;
 
 	status = transport_bio_buffered_write(bio, NULL, 0);
+
 	return status >= 0;
 }
-
-
 
 void tcp_get_ip_address(rdpTcp* tcp)
 {
@@ -363,6 +536,16 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 				return FALSE; /* timeout */
 			}
 		}
+
+		BIO_set_close(tcp->socketBio, BIO_NOCLOSE);
+		BIO_free(tcp->socketBio);
+
+		tcp->socketBio = BIO_new(BIO_s_simple_socket());
+
+		if (!tcp->socketBio)
+			return -1;
+
+		BIO_set_fd(tcp->socketBio, tcp->sockfd, BIO_CLOSE);
 	}
 
 	SetEventFileDescriptor(tcp->event, tcp->sockfd);
@@ -521,16 +704,21 @@ int tcp_attach(rdpTcp* tcp, int sockfd)
 	}
 	else
 	{
-		tcp->socketBio = BIO_new_socket(sockfd, 1);
+		tcp->socketBio = BIO_new(BIO_s_simple_socket());
+
 		if (!tcp->socketBio)
 			return -1;
+
+		BIO_set_fd(tcp->socketBio, sockfd, BIO_CLOSE);
 	}
 
 	if (!tcp->bufferedBio)
 	{
 		tcp->bufferedBio = BIO_new(BIO_s_buffered_socket());
+
 		if (!tcp->bufferedBio)
 			return FALSE;
+
 		tcp->bufferedBio->ptr = tcp;
 
 		tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
@@ -566,10 +754,8 @@ rdpTcp* tcp_new(rdpSettings* settings)
 	tcp->sockfd = -1;
 	tcp->settings = settings;
 
-	if (!InitializeCriticalSectionAndSpinCount(&(tcp->duplexLock), 4000))
-		goto out_ringbuffer;
-
-	tcp->fullDuplex = FALSE;
+	if (0)
+		goto out_ringbuffer; /* avoid unreferenced label warning on Windows */
 
 #ifndef _WIN32
 	tcp->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, tcp->sockfd);
@@ -590,9 +776,6 @@ void tcp_free(rdpTcp* tcp)
 {
 	if (!tcp)
 		return;
-
-	if (!tcp->fullDuplex)
-		DeleteCriticalSection(&(tcp->duplexLock));
 
 	ringbuffer_destroy(&tcp->xmitBuffer);
 	CloseHandle(tcp->event);

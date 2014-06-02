@@ -133,23 +133,20 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 
 	tsg = (rdpTsg*) bio->ptr;
 
-	if (!tsg->FullDuplex)
-		EnterCriticalSection(&(tsg->DuplexLock));
-
-	BIO_clear_retry_flags(bio);
+	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
 	status = tsg_write(tsg, (BYTE*) buf, num);
 
-	if (status == 0)
-		BIO_set_retry_write(bio);
+	if (status < 0)
+	{
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	}
+	else
+	{
+		BIO_set_flags(bio, BIO_FLAGS_WRITE);
+	}
 
-	if (!tsg->FullDuplex)
-		LeaveCriticalSection(&(tsg->DuplexLock));
-
-	if (status > 0)
-		return status;
-
-	return -1;
+	return status >= 0 ? status : -1;
 }
 
 static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
@@ -159,25 +156,18 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 
 	tsg = (rdpTsg*) bio->ptr;
 
-	if (!tsg->FullDuplex)
-		EnterCriticalSection(&(tsg->DuplexLock));
+	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
 	status = tsg_read(bio->ptr, (BYTE*) buf, size);
 
-	BIO_clear_retry_flags(bio);
-
-	if (status == 0)
+	if (status < 0)
 	{
-		BIO_set_retry_read(bio);
-		status = -1;
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	}
-	else if (status == -1)
+	else
 	{
-		status = 0;
+		BIO_set_flags(bio, BIO_FLAGS_READ);
 	}
-
-	if (!tsg->FullDuplex)
-		LeaveCriticalSection(&(tsg->DuplexLock));
 
 	return status >= 0 ? status : -1;
 }
@@ -207,8 +197,7 @@ static int transport_bio_tsg_new(BIO* bio)
 	bio->init = 1;
 	bio->num = 0;
 	bio->ptr = NULL;
-	bio->flags = 0;
-
+	bio->flags = BIO_FLAGS_SHOULD_RETRY;
 	return 1;
 }
 
@@ -237,8 +226,6 @@ BIO_METHOD* BIO_s_tsg(void)
 {
 	return &transport_bio_tsg_methods;
 }
-
-
 
 BOOL transport_connect_tls(rdpTransport* transport)
 {
@@ -720,7 +707,6 @@ static int transport_wait_for_write(rdpTransport* transport)
 	return select(tcpOut->sockfd + 1, rsetPtr, wsetPtr, NULL, &tv);
 }
 
-
 int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 {
 	int read = 0;
@@ -736,13 +722,7 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 	{
 		status = BIO_read(transport->frontBio, data + read, bytes - read);
 
-		if (!status)
-		{
-			transport->layer = TRANSPORT_LAYER_CLOSED;
-			return -1;
-		}
-
-		if (status < 0)
+		if (status <= 0)
 		{
 			if (!transport->frontBio || !BIO_should_retry(transport->frontBio))
 			{
@@ -774,8 +754,6 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 
 	return read;
 }
-
-
 
 int transport_read(rdpTransport* transport, wStream* s)
 {
@@ -1320,6 +1298,7 @@ static void* transport_client_thread(void* arg)
 		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
 
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+
 		if (transport->layer == TRANSPORT_LAYER_CLOSED)
 		{
 			rdpRdp* rdp = (rdpRdp*) transport->rdp;
@@ -1332,7 +1311,9 @@ static void* transport_client_thread(void* arg)
 				break;
 
 			if (!freerdp_check_fds(instance))
-				break;
+			{
+
+			}
 		}
 	}
 

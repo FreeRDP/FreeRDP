@@ -319,8 +319,7 @@ int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 	int status;
 
 	status = BIO_read(rpc->TlsOut->bio, data, length);
-	/* fprintf(stderr, "%s: length=%d => status=%d shouldRetry=%d\n", __FUNCTION__, length,
-	 * 					status, BIO_should_retry(rpc->TlsOut->bio)); */
+
 	if (status > 0) {
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 		VALGRIND_MAKE_MEM_DEFINED(data, status);
