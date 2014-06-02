@@ -255,6 +255,10 @@ PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize)
 #include <netinet/tcp.h>
 #include <net/if.h>
 
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0
+#endif
+
 int WSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData)
 {
 	ZeroMemory(lpWSAData, sizeof(WSADATA));
@@ -423,6 +427,17 @@ int WSAGetLastError(void)
 			iError = WSAEREMOTE;
 			break;
 
+		/* Special cases */
+
+#if (EAGAIN != EWOULDBLOCK)
+		case EAGAIN:
+			iError = WSAEWOULDBLOCK;
+			break;
+#endif
+
+		case EPROTO:
+			iError = WSAECONNRESET;
+			break;
 	}
 
 	/**
@@ -445,7 +460,7 @@ int WSAGetLastError(void)
 	 * WSAEREFUSED
 	 */
 
-	return 0;
+	return iError;
 }
 
 SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen)
@@ -606,6 +621,8 @@ int _send(SOCKET s, const char* buf, int len, int flags)
 {
 	int status;
 	int fd = (int) s;
+
+	flags |= MSG_NOSIGNAL;
 
 	status = (int) send(fd, (void*) buf, (size_t) len, flags);
 

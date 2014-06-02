@@ -38,7 +38,8 @@
 #define MSG_NOSIGNAL 0
 #endif
 
-#define BIO_TYPE_BUFFERED	66
+#define BIO_TYPE_SIMPLE		66
+#define BIO_TYPE_BUFFERED	67
 
 typedef struct rdp_tcp rdpTcp;
 
