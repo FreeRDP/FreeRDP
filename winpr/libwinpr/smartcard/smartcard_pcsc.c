@@ -106,6 +106,7 @@ struct _PCSC_SCARDCONTEXT
 	CRITICAL_SECTION lock;
 	SCARDCONTEXT hContext;
 	DWORD dwCardHandleCount;
+	BOOL isTransactionLocked;
 };
 typedef struct _PCSC_SCARDCONTEXT PCSC_SCARDCONTEXT;
 
@@ -132,6 +133,32 @@ static int g_StartedEventRefCount = 0;
 
 static BOOL g_SCardAutoAllocate = FALSE;
 static BOOL g_PnP_Notification = TRUE;
+
+/**
+ * g_LockTransactions: enable pcsc-lite SCardBeginTransaction/SCardEndTransaction.
+ *
+ * After wasting months trying to fix and work around an appalling number of serious issues
+ * in both the pcsc-lite client library and the pcscd daemon, I decided to just give up on
+ * the transaction system. Using them inevitably leads to multiple SCardConnect calls deadlocking.
+ *
+ * It is not very clear how WinSCard transactions should lock: some logs on Windows show that is
+ * possible to call SCardBeginTransaction twice on the same SCARDHANDLE without the second call
+ * being blocked. Worse, in this specific case one corresponding SCardEndTransaction is missing.
+ *
+ * pcsc-lite apparently implements these "nested" transactions as well, because it allows the same
+ * SCARDHANDLE to be locked more than once with a counter. However, there must be a bug even in the
+ * latest pcsc-lite daemon as we still get deadlocked on SCardConnect calls when using those.
+ *
+ * Trying to disable nested transactions by letting pcsc-lite know about only one transaction level
+ * gives the same deadlocks on SCardConnect. In other words, there are serious deadlock issues in
+ * pcsc-lite even when disabling nested transactions.
+ *
+ * Transactions are simply too much of a pain to support properly without deadlocking the entire
+ * smartcard subsystem. In practice, there is not much of a difference if locking occurs or not.
+ * We could revisit transactions later on based on the demand, but for now we just want things to work.
+ */
+
+static BOOL g_LockTransactions = FALSE;
 
 static wArrayList* g_Readers = NULL;
 static wListDictionary* g_CardHandles = NULL;
@@ -324,8 +351,6 @@ void PCSC_ReleaseCardContext(SCARDCONTEXT hContext)
 
 	DeleteCriticalSection(&(pContext->lock));
 
-	printf("PCSC_ReleaseCardContext: %d\n", pContext->dwCardHandleCount);
-
 	free(pContext);
 
 	if (!g_CardContexts)
@@ -420,8 +445,6 @@ PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDCONTE
 
 	pContext->dwCardHandleCount++;
 
-	printf("PCSC_ConnectCardHandle: %d\n", pContext->dwCardHandleCount);
-
 	if (!g_CardHandles)
 		g_CardHandles = ListDictionary_New(TRUE);
 
@@ -460,8 +483,6 @@ void PCSC_DisconnectCardHandle(SCARDHANDLE hCard)
 	}
 
 	pContext->dwCardHandleCount--;
-
-	printf("PCSC_DisconnectCardHandle: %d\n", pContext->dwCardHandleCount);
 }
 
 BOOL PCSC_LockCardHandle(SCARDHANDLE hCard)
@@ -1771,12 +1792,32 @@ WINSCARDAPI LONG WINAPI PCSC_SCardDisconnect(SCARDHANDLE hCard, DWORD dwDisposit
 WINSCARDAPI LONG WINAPI PCSC_SCardBeginTransaction(SCARDHANDLE hCard)
 {
 	LONG status = SCARD_S_SUCCESS;
+	PCSC_SCARDHANDLE* pCard = NULL;
+	PCSC_SCARDCONTEXT* pContext = NULL;
 
 	if (!g_PCSC.pfnSCardBeginTransaction)
 		return SCARD_E_NO_SERVICE;
 
-	status = (LONG) g_PCSC.pfnSCardBeginTransaction(hCard);
-	status = PCSC_MapErrorCodeToWinSCard(status);
+	pCard = PCSC_GetCardHandleData(hCard);
+
+	if (!pCard)
+		return SCARD_E_INVALID_HANDLE;
+
+	pContext = PCSC_GetCardContextData(pCard->hSharedContext);
+
+	if (!pContext)
+		return SCARD_E_INVALID_HANDLE;
+
+	if (pContext->isTransactionLocked)
+		return SCARD_S_SUCCESS; /* disable nested transactions */
+
+	if (g_LockTransactions)
+	{
+		status = (LONG) g_PCSC.pfnSCardBeginTransaction(hCard);
+		status = PCSC_MapErrorCodeToWinSCard(status);
+	}
+
+	pContext->isTransactionLocked = TRUE;
 
 	return status;
 }
@@ -1784,13 +1825,33 @@ WINSCARDAPI LONG WINAPI PCSC_SCardBeginTransaction(SCARDHANDLE hCard)
 WINSCARDAPI LONG WINAPI PCSC_SCardEndTransaction(SCARDHANDLE hCard, DWORD dwDisposition)
 {
 	LONG status = SCARD_S_SUCCESS;
+	PCSC_SCARDHANDLE* pCard = NULL;
+	PCSC_SCARDCONTEXT* pContext = NULL;
 	PCSC_DWORD pcsc_dwDisposition = (PCSC_DWORD) dwDisposition;
 
 	if (!g_PCSC.pfnSCardEndTransaction)
 		return SCARD_E_NO_SERVICE;
 
-	status = (LONG) g_PCSC.pfnSCardEndTransaction(hCard, pcsc_dwDisposition);
-	status = PCSC_MapErrorCodeToWinSCard(status);
+	pCard = PCSC_GetCardHandleData(hCard);
+
+	if (!pCard)
+		return SCARD_E_INVALID_HANDLE;
+
+	pContext = PCSC_GetCardContextData(pCard->hSharedContext);
+
+	if (!pContext)
+		return SCARD_E_INVALID_HANDLE;
+
+	if (!pContext->isTransactionLocked)
+		return SCARD_S_SUCCESS; /* disable nested transactions */
+
+	if (g_LockTransactions)
+	{
+		status = (LONG) g_PCSC.pfnSCardEndTransaction(hCard, pcsc_dwDisposition);
+		status = PCSC_MapErrorCodeToWinSCard(status);
+	}
+
+	pContext->isTransactionLocked = FALSE;
 
 	return status;
 }
