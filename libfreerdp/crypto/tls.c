@@ -624,9 +624,6 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 	}
 	while (TRUE);
 
-	if (!clientMode)
-		return 1;
-
 	cert = tls_get_certificate(tls, clientMode);
 	if (!cert)
 	{
@@ -646,6 +643,12 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		fprintf(stderr, "%s: crypto_cert_get_public_key failed to return the server public key.\n", __FUNCTION__);
 		tls_free_certificate(cert);
 		return -1;
+	}
+
+	if (!clientMode)
+	{
+		/* NLA needs public keys so let's just copy the keys from the server and return now */
+		return 1;
 	}
 
 	verify_status = tls_verify_certificate(tls, cert, tls->hostname, tls->port);
