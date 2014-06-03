@@ -420,11 +420,6 @@ SCARDCONTEXT PCSC_GetCardContextFromHandle(SCARDHANDLE hCard)
 	return pCard->hPrivateContext;
 }
 
-<<<<<<< HEAD
-PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hContext, SCARDHANDLE hCard)
-{
-	PCSC_SCARDHANDLE* pCard;
-=======
 PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDCONTEXT hPrivateContext, SCARDHANDLE hCard)
 {
 	PCSC_SCARDHANDLE* pCard;
@@ -437,7 +432,6 @@ PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDCONTE
 		printf("PCSC_ConnectCardHandle: null pContext!\n");
 		return NULL;
 	}
->>>>>>> 659f80e172885924c9fb899155c7b76cc8974475
 
 	pCard = (PCSC_SCARDHANDLE*) calloc(1, sizeof(PCSC_SCARDHANDLE));
 
@@ -449,11 +443,8 @@ PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDCONTE
 
 	InitializeCriticalSectionAndSpinCount(&(pCard->lock), 4000);
 
-<<<<<<< HEAD
-=======
 	pContext->dwCardHandleCount++;
 
->>>>>>> 659f80e172885924c9fb899155c7b76cc8974475
 	if (!g_CardHandles)
 		g_CardHandles = ListDictionary_New(TRUE);
 
@@ -465,6 +456,7 @@ PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDCONTE
 void PCSC_DisconnectCardHandle(SCARDHANDLE hCard)
 {
 	PCSC_SCARDHANDLE* pCard;
+	PCSC_SCARDCONTEXT* pContext;
 
 	pCard = PCSC_GetCardHandleData(hCard);
 
@@ -473,13 +465,10 @@ void PCSC_DisconnectCardHandle(SCARDHANDLE hCard)
 
 	DeleteCriticalSection(&(pCard->lock));
 
-<<<<<<< HEAD
-=======
 	pContext = PCSC_GetCardContextData(pCard->hSharedContext);
 
 	PCSC_SCardReleaseContext_Internal(pCard->hPrivateContext);
 
->>>>>>> 659f80e172885924c9fb899155c7b76cc8974475
 	free(pCard);
 
 	if (!g_CardHandles)
@@ -1687,14 +1676,11 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnect_Internal(SCARDCONTEXT hContext,
 	if (!g_PCSC.pfnSCardConnect)
 		return SCARD_E_NO_SERVICE;
 
-<<<<<<< HEAD
-=======
 	status = PCSC_SCardEstablishContext_Internal(SCARD_SCOPE_SYSTEM, NULL, NULL, &hPrivateContext);
 
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
->>>>>>> 659f80e172885924c9fb899155c7b76cc8974475
 	szReaderPCSC = PCSC_GetReaderNameFromAlias((char*) szReader);
 
 	if (!szReaderPCSC)
