@@ -145,6 +145,7 @@ struct _wLogAppender
 
 #define WLOG_CONSOLE_STDOUT	1
 #define WLOG_CONSOLE_STDERR	2
+#define WLOG_CONSOLE_DEBUG	3
 
 struct _wLogConsoleAppender
 {

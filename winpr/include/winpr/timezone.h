@@ -23,6 +23,8 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#include <winpr/windows.h>
+
 #ifndef _WIN32
 
 typedef struct _TIME_ZONE_INFORMATION
@@ -36,19 +38,6 @@ typedef struct _TIME_ZONE_INFORMATION
 	LONG DaylightBias;
 } TIME_ZONE_INFORMATION, *PTIME_ZONE_INFORMATION, *LPTIME_ZONE_INFORMATION;
 
-WINPR_API DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation);
-WINPR_API BOOL SetTimeZoneInformation(const TIME_ZONE_INFORMATION* lpTimeZoneInformation);
-WINPR_API BOOL SystemTimeToFileTime(const SYSTEMTIME* lpSystemTime, LPFILETIME lpFileTime);
-WINPR_API BOOL FileTimeToSystemTime(const FILETIME *lpFileTime, LPSYSTEMTIME lpSystemTime);
-WINPR_API BOOL SystemTimeToTzSpecificLocalTime(LPTIME_ZONE_INFORMATION lpTimeZone,
-		LPSYSTEMTIME lpUniversalTime, LPSYSTEMTIME lpLocalTime);
-WINPR_API BOOL TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
-		LPSYSTEMTIME lpLocalTime, LPSYSTEMTIME lpUniversalTime);
-
-#endif
-
-#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600)) /* Windows Vista */
-
 typedef struct _TIME_DYNAMIC_ZONE_INFORMATION
 {
 	LONG Bias;
@@ -61,6 +50,19 @@ typedef struct _TIME_DYNAMIC_ZONE_INFORMATION
 	WCHAR TimeZoneKeyName[128];
 	BOOLEAN DynamicDaylightTimeDisabled;
 } DYNAMIC_TIME_ZONE_INFORMATION, *PDYNAMIC_TIME_ZONE_INFORMATION, *LPDYNAMIC_TIME_ZONE_INFORMATION;
+
+WINPR_API DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation);
+WINPR_API BOOL SetTimeZoneInformation(const TIME_ZONE_INFORMATION* lpTimeZoneInformation);
+WINPR_API BOOL SystemTimeToFileTime(const SYSTEMTIME* lpSystemTime, LPFILETIME lpFileTime);
+WINPR_API BOOL FileTimeToSystemTime(const FILETIME *lpFileTime, LPSYSTEMTIME lpSystemTime);
+WINPR_API BOOL SystemTimeToTzSpecificLocalTime(LPTIME_ZONE_INFORMATION lpTimeZone,
+		LPSYSTEMTIME lpUniversalTime, LPSYSTEMTIME lpLocalTime);
+WINPR_API BOOL TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
+		LPSYSTEMTIME lpLocalTime, LPSYSTEMTIME lpUniversalTime);
+
+#endif
+
+#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600)) /* Windows Vista */
 
 WINPR_API DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInformation);
 WINPR_API BOOL SetDynamicTimeZoneInformation(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation);

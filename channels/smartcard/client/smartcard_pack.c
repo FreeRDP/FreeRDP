@@ -1890,6 +1890,12 @@ void smartcard_trace_get_attrib_return(SMARTCARD_DEVICE* smartcard, GetAttrib_Re
 	{
 		WLog_Print(smartcard->log, WLOG_DEBUG, "pbAttr: %.*s", ret->cbAttrLen, (char*) ret->pbAttr);
 	}
+	else if (dwAttrId == SCARD_ATTR_CURRENT_PROTOCOL_TYPE)
+	{
+		UINT32 dwProtocolType = *((UINT32*) ret->pbAttr);
+		WLog_Print(smartcard->log, WLOG_DEBUG, "dwProtocolType: %s (0x%04X)",
+				SCardGetProtocolString(dwProtocolType), dwProtocolType);
+	}
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }

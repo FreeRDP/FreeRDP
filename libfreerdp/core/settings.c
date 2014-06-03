@@ -236,7 +236,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->SaltedChecksum = TRUE;
 		settings->ServerPort = 3389;
 		settings->GatewayPort = 443;
-		settings->GatewayBypassLocal = TRUE;
 		settings->DesktopResize = TRUE;
 		settings->ToggleFullscreen = TRUE;
 		settings->DesktopPosX = 0;
