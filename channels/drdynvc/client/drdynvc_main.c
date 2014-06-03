@@ -153,12 +153,32 @@ int drdynvc_push_event(drdynvcPlugin* drdynvc, wMessage* event)
 	return 0;
 }
 
+static int drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
+{
+	int status;
+	wStream* data_out;
+
+	data_out = Stream_New(NULL, 4);
+	Stream_Write_UINT16(data_out, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
+	Stream_Write_UINT16(data_out, drdynvc->version);
+
+	status = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
+
+	if (status != CHANNEL_RC_OK)
+	{
+		DEBUG_WARN("VirtualChannelWrite failed %d", status);
+		return 1;
+	}
+
+	return status;
+}
+
 static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
-	wStream* data_out;
-	int error;
+	int status;
 
 	DEBUG_DVC("Sp=%d cbChId=%d", Sp, cbChId);
+
 	Stream_Seek(s, 1); /* pad */
 	Stream_Read_UINT16(s, drdynvc->version);
 
@@ -173,18 +193,11 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 		Stream_Read_UINT16(s, drdynvc->PriorityCharge3);
 	}
 
-	data_out = Stream_New(NULL, 4);
-	Stream_Write_UINT16(data_out, 0x0050); /* Cmd+Sp+cbChId+Pad. Note: MSTSC sends 0x005c */
-	Stream_Write_UINT16(data_out, drdynvc->version);
-	error = svc_plugin_send((rdpSvcPlugin*) drdynvc, data_out);
+	status = drdynvc_send_capability_response(drdynvc);
 
-	if (error != CHANNEL_RC_OK)
-	{
-		DEBUG_WARN("VirtualChannelWrite failed %d", error);
-		return 1;
-	}
+	drdynvc->channel_error = status;
 
-	drdynvc->channel_error = error;
+	drdynvc->state = DRDYNVC_STATE_READY;
 
 	return 0;
 }
@@ -218,6 +231,19 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	UINT32 ChannelId;
 	wStream* data_out;
 	int channel_status;
+
+	if (drdynvc->state == DRDYNVC_STATE_CAPABILITIES)
+	{
+		/**
+		 * For some reason the server does not always send the
+		 * capabilities pdu as it should. When this happens,
+		 * send a capabilities response.
+		 */
+
+		drdynvc->version = 3;
+		drdynvc_send_capability_response(drdynvc);
+		drdynvc->state = DRDYNVC_STATE_READY;
+	}
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	pos = Stream_GetPosition(s);
@@ -381,6 +407,8 @@ static void drdynvc_process_connect(rdpSvcPlugin* plugin)
 	}
 
 	dvcman_init(drdynvc->channel_mgr);
+
+	drdynvc->state = DRDYNVC_STATE_CAPABILITIES;
 }
 
 static void drdynvc_process_event(rdpSvcPlugin* plugin, wMessage* event)
@@ -419,8 +447,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	DrdynvcClientContext* context;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 
-	_p = (drdynvcPlugin*) malloc(sizeof(drdynvcPlugin));
-	ZeroMemory(_p, sizeof(drdynvcPlugin));
+	_p = (drdynvcPlugin*) calloc(1, sizeof(drdynvcPlugin));
 
 	_p->plugin.channel_def.options =
 		CHANNEL_OPTION_INITIALIZED |
@@ -428,6 +455,8 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		CHANNEL_OPTION_COMPRESS_RDP;
 
 	strcpy(_p->plugin.channel_def.name, "drdynvc");
+
+	_p->state = DRDYNVC_STATE_INITIAL;
 
 	_p->plugin.connect_callback = drdynvc_process_connect;
 	_p->plugin.receive_callback = drdynvc_process_receive;
