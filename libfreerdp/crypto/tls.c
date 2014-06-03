@@ -480,7 +480,7 @@ static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 	if (peer)
 		remote_cert = SSL_get_peer_certificate(tls->ssl);
 	else
-		remote_cert = SSL_get_certificate(tls->ssl);
+		remote_cert = X509_dup( SSL_get_certificate(tls->ssl) );
 
 	if (!remote_cert)
 	{
@@ -645,20 +645,20 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		return -1;
 	}
 
-	if (!clientMode)
+	/* Note: server-side NLA needs public keys (keys from us, the server) but no
+	 * 		certificate verify
+	 */
+	verify_status = 1;
+	if (clientMode)
 	{
-		/* NLA needs public keys so let's just copy the keys from the server and return now */
-		return 1;
-	}
+		verify_status = tls_verify_certificate(tls, cert, tls->hostname, tls->port);
 
-	verify_status = tls_verify_certificate(tls, cert, tls->hostname, tls->port);
-
-	if (verify_status < 1)
-	{
-		fprintf(stderr, "%s: certificate not trusted, aborting.\n", __FUNCTION__);
-		tls_disconnect(tls);
-		tls_free_certificate(cert);
-		return 0;
+		if (verify_status < 1)
+		{
+			fprintf(stderr, "%s: certificate not trusted, aborting.\n", __FUNCTION__);
+			tls_disconnect(tls);
+			verify_status = 0;
+		}
 	}
 
 	tls_free_certificate(cert);
