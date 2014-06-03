@@ -87,6 +87,7 @@ int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args);
 void dvcman_free(IWTSVirtualChannelManager* pChannelMgr);
 int dvcman_init(IWTSVirtualChannelManager* pChannelMgr);
 int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, const char* ChannelName);
+int dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId);
 int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId);
 int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, UINT32 length);
 int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, BYTE* data, UINT32 data_size);

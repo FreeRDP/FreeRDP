@@ -385,6 +385,28 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 	return 1;
 }
 
+int dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
+{
+	DVCMAN_CHANNEL* channel;
+	IWTSVirtualChannelCallback* pCallback;
+
+	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+
+	if (!channel)
+	{
+		DEBUG_WARN("ChannelId %d not found!", ChannelId);
+		return 1;
+	}
+
+	if (channel->status == 0)
+	{
+		pCallback = channel->channel_callback;
+		pCallback->OnOpen(pCallback);
+	}
+
+	return 0;
+}
+
 int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
 {
 	DVCMAN_CHANNEL* channel;

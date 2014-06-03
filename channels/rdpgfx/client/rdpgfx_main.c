@@ -91,14 +91,14 @@ int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 	capset8.version = RDPGFX_CAPVERSION_8;
 	capset8.capsDataLength = 4;
 	capset8.flags = 0;
-	//capset8.flags |= RDPGFX_CAPS_FLAG_THINCLIENT;
+	capset8.flags |= RDPGFX_CAPS_FLAG_THINCLIENT;
 	//capset8.flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
 	capset81.version = RDPGFX_CAPVERSION_81;
 	//capset81.version = 0x00080103;
 	capset81.capsDataLength = 4;
 	capset81.flags = 0;
-	//capset81.flags |= RDPGFX_CAPS_FLAG_THINCLIENT;
+	capset81.flags |= RDPGFX_CAPS_FLAG_THINCLIENT;
 	//capset81.flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 	//capset81.flags |= RDPGFX_CAPS_FLAG_H264ENABLED;
 
@@ -164,6 +164,17 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	return status;
 }
 
+static int rdpgfx_on_open(IWTSVirtualChannelCallback* pChannelCallback)
+{
+	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
+
+	fprintf(stderr, "RdpGfxOnOpen\n");
+
+	rdpgfx_send_caps_advertise_pdu(callback);
+
+	return 0;
+}
+
 static int rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
@@ -185,6 +196,7 @@ static int rdpgfx_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 	callback = (RDPGFX_CHANNEL_CALLBACK*) calloc(1, sizeof(RDPGFX_CHANNEL_CALLBACK));
 
 	callback->iface.OnDataReceived = rdpgfx_on_data_received;
+	callback->iface.OnOpen = rdpgfx_on_open;
 	callback->iface.OnClose = rdpgfx_on_close;
 	callback->plugin = listener_callback->plugin;
 	callback->channel_mgr = listener_callback->channel_mgr;
@@ -194,8 +206,6 @@ static int rdpgfx_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 	*ppCallback = (IWTSVirtualChannelCallback*) callback;
 
 	fprintf(stderr, "RdpGfxOnNewChannelConnection\n");
-
-	rdpgfx_send_caps_advertise_pdu(callback);
 
 	return 0;
 }

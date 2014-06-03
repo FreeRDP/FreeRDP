@@ -217,19 +217,20 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	int status;
 	UINT32 ChannelId;
 	wStream* data_out;
+	int channel_status;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	pos = Stream_GetPosition(s);
 	DEBUG_DVC("ChannelId=%d ChannelName=%s", ChannelId, Stream_Pointer(s));
 
-	status = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*) Stream_Pointer(s));
+	channel_status = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*) Stream_Pointer(s));
 
 	data_out = Stream_New(NULL, pos + 4);
 	Stream_Write_UINT8(data_out, 0x10 | cbChId);
 	Stream_SetPosition(s, 1);
 	Stream_Copy(data_out, s, pos - 1);
 	
-	if (status == 0)
+	if (channel_status == 0)
 	{
 		DEBUG_DVC("channel created");
 		Stream_Write_UINT32(data_out, 0);
@@ -246,6 +247,11 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	{
 		DEBUG_WARN("VirtualChannelWrite failed %d", status);
 		return 1;
+	}
+
+	if (channel_status == 0)
+	{
+		dvcman_open_channel(drdynvc->channel_mgr, ChannelId);
 	}
 
 	return 0;
