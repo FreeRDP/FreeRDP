@@ -72,7 +72,6 @@ struct rdp_tls
 	void* tsg;
 	SSL_CTX* ctx;
 	BYTE* PublicKey;
-	BIO_METHOD* methods;
 	DWORD PublicKeyLength;
 	rdpSettings* settings;
 	SecPkgContext_Bindings* Bindings;
