@@ -74,6 +74,40 @@ struct _RDPGFX_PLUGIN
 };
 typedef struct _RDPGFX_PLUGIN RDPGFX_PLUGIN;
 
+const char* RDPGFX_CMDID_STRINGS[] =
+{
+	"RDPGFX_CMDID_UNUSED_0000",
+	"RDPGFX_CMDID_WIRETOSURFACE_1",
+	"RDPGFX_CMDID_WIRETOSURFACE_2",
+	"RDPGFX_CMDID_DELETEENCODINGCONTEXT",
+	"RDPGFX_CMDID_SOLIDFILL",
+	"RDPGFX_CMDID_SURFACETOSURFACE",
+	"RDPGFX_CMDID_SURFACETOCACHE",
+	"RDPGFX_CMDID_CACHETOSURFACE",
+	"RDPGFX_CMDID_EVICTCACHEENTRY",
+	"RDPGFX_CMDID_CREATESURFACE",
+	"RDPGFX_CMDID_DELETESURFACE",
+	"RDPGFX_CMDID_STARTFRAME",
+	"RDPGFX_CMDID_ENDFRAME",
+	"RDPGFX_CMDID_FRAMEACKNOWLEDGE",
+	"RDPGFX_CMDID_RESETGRAPHICS",
+	"RDPGFX_CMDID_MAPSURFACETOOUTPUT",
+	"RDPGFX_CMDID_CACHEIMPORTOFFER",
+	"RDPGFX_CMDID_CACHEIMPORTREPLY",
+	"RDPGFX_CMDID_CAPSADVERTISE",
+	"RDPGFX_CMDID_CAPSCONFIRM",
+	"RDPGFX_CMDID_UNUSED_0014",
+	"RDPGFX_CMDID_MAPSURFACETOWINDOW"
+};
+
+const char* rdpgfx_get_cmdid_string(UINT16 cmdId)
+{
+	if (cmdId <= RDPGFX_CMDID_MAPSURFACETOWINDOW)
+		return RDPGFX_CMDID_STRINGS[cmdId];
+	else
+		return "RDPGFX_CMDID_UNKNOWN";
+}
+
 int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 {
 	int status;
@@ -146,8 +180,96 @@ int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 	return status;
 }
 
+int rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+{
+	RDPGFX_CAPSET capsSet;
+	RDPGFX_CAPS_CONFIRM_PDU pdu;
+
+	pdu.capsSet = &capsSet;
+
+	Stream_Read_UINT32(s, capsSet.version); /* version (4 bytes) */
+	Stream_Read_UINT32(s, capsSet.capsDataLength); /* capsDataLength (4 bytes) */
+	Stream_Read_UINT32(s, capsSet.capsData); /* capsData (4 bytes) */
+
+	fprintf(stderr, "RdpGfxRecvCapsConfirmPdu: version: 0x%04X capsDataLength: %d capsData: 0x%04X\n",
+			capsSet.version, capsSet.capsDataLength, capsSet.capsData);
+
+	return 1;
+}
+
+int rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+{
+	UINT32 index;
+	MONITOR_DEF* monitor;
+	RDPGFX_RESET_GRAPHICS_PDU pdu;
+
+	Stream_Read_UINT32(s, pdu.width); /* width (4 bytes) */
+	Stream_Read_UINT32(s, pdu.height); /* height (4 bytes) */
+	Stream_Read_UINT32(s, pdu.monitorCount); /* monitorCount (4 bytes) */
+
+	pdu.monitorDefArray = (MONITOR_DEF*) calloc(pdu.monitorCount, sizeof(MONITOR_DEF));
+
+	if (!pdu.monitorDefArray)
+		return -1;
+
+	for (index = 0; index < pdu.monitorCount; index++)
+	{
+		monitor = &(pdu.monitorDefArray[index]);
+		Stream_Read_UINT32(s, monitor->left); /* left (4 bytes) */
+		Stream_Read_UINT32(s, monitor->top); /* top (4 bytes) */
+		Stream_Read_UINT32(s, monitor->right); /* right (4 bytes) */
+		Stream_Read_UINT32(s, monitor->bottom); /* bottom (4 bytes) */
+		Stream_Read_UINT32(s, monitor->flags); /* flags (4 bytes) */
+	}
+
+	fprintf(stderr, "RdpGfxRecvResetGraphicsPdu: width: %d height: %d count: %d\n",
+			pdu.width, pdu.height, pdu.monitorCount);
+
+	return 1;
+}
+
+int rdpgfx_recv_create_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+{
+	RDPGFX_CREATE_SURFACE_PDU pdu;
+
+	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
+	Stream_Read_UINT16(s, pdu.width); /* width (2 bytes) */
+	Stream_Read_UINT16(s, pdu.height); /* height (2 bytes) */
+	Stream_Read_UINT8(s, pdu.pixelFormat); /* RDPGFX_PIXELFORMAT (1 byte) */
+
+	fprintf(stderr, "RdpGfxRecvCreateSurfacePdu: surfaceId: %d width: %d height: %d pixelFormat: %d\n",
+			pdu.surfaceId, pdu.width, pdu.height, pdu.pixelFormat);
+
+	return 1;
+}
+
+int rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+{
+	RDPGFX_START_FRAME_PDU pdu;
+
+	Stream_Read_UINT32(s, pdu.timestamp); /* timestamp (4 bytes) */
+	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
+
+	fprintf(stderr, "RdpGfxRecvStartFramePdu: frameId: %d timestamp: 0x%04X\n",
+			pdu.frameId, pdu.timestamp);
+
+	return 1;
+}
+
+int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
+{
+	RDPGFX_END_FRAME_PDU pdu;
+
+	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
+
+	fprintf(stderr, "RdpGfxRecvEndFramePdu: frameId: %d\n", pdu.frameId);
+
+	return 1;
+}
+
 int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
+	int status;
 	RDPGFX_HEADER header;
 
 	/* RDPGFX_HEADER */
@@ -156,8 +278,75 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT16(s, header.flags); /* flags (2 bytes) */
 	Stream_Read_UINT32(s, header.pduLength); /* pduLength (4 bytes) */
 
-	printf("cmdId: 0x%04X flags: 0x%04X pduLength: %d\n",
-			header.cmdId, header.flags, header.pduLength);
+#if 0
+	printf("cmdId: %s (0x%04X) flags: 0x%04X pduLength: %d\n",
+			rdpgfx_get_cmdid_string(header.cmdId), header.cmdId, header.flags, header.pduLength);
+#endif
+
+	switch (header.cmdId)
+	{
+		case RDPGFX_CMDID_WIRETOSURFACE_1:
+			break;
+
+		case RDPGFX_CMDID_WIRETOSURFACE_2:
+			break;
+
+		case RDPGFX_CMDID_DELETEENCODINGCONTEXT:
+			break;
+
+		case RDPGFX_CMDID_SOLIDFILL:
+			break;
+
+		case RDPGFX_CMDID_SURFACETOSURFACE:
+			break;
+
+		case RDPGFX_CMDID_SURFACETOCACHE:
+			break;
+
+		case RDPGFX_CMDID_CACHETOSURFACE:
+			break;
+
+		case RDPGFX_CMDID_EVICTCACHEENTRY:
+			break;
+
+		case RDPGFX_CMDID_CREATESURFACE:
+			break;
+
+		case RDPGFX_CMDID_DELETESURFACE:
+			break;
+
+		case RDPGFX_CMDID_STARTFRAME:
+			status = rdpgfx_recv_start_frame_pdu(callback, s);
+			break;
+
+		case RDPGFX_CMDID_ENDFRAME:
+			status = rdpgfx_recv_end_frame_pdu(callback, s);
+			break;
+
+		case RDPGFX_CMDID_RESETGRAPHICS:
+			status = rdpgfx_recv_reset_graphics_pdu(callback, s);
+			break;
+
+		case RDPGFX_CMDID_MAPSURFACETOOUTPUT:
+			break;
+
+		case RDPGFX_CMDID_CACHEIMPORTOFFER:
+			break;
+
+		case RDPGFX_CMDID_CACHEIMPORTREPLY:
+			break;
+
+		case RDPGFX_CMDID_CAPSCONFIRM:
+			status = rdpgfx_recv_caps_confirm_pdu(callback, s);
+			break;
+
+		case RDPGFX_CMDID_MAPSURFACETOWINDOW:
+			break;
+
+		default:
+			fprintf(stderr, "Unknown GFX cmdId: 0x%04X\n", header.cmdId);
+			break;
+	}
 
 	return 0;
 }
@@ -172,8 +361,6 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
 
 	gfx = (RDPGFX_PLUGIN*) callback->plugin;
-
-	fprintf(stderr, "RdpGfxOnDataReceived: cbSize: %d\n", cbSize);
 
 	status = zgfx_decompress(gfx->zgfx, pBuffer, cbSize, &pDstData, &DstSize, 0);
 
