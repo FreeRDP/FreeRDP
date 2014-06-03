@@ -25,15 +25,43 @@
 
 #include <freerdp/codec/bulk.h>
 
+#define ZGFX_SEGMENTED_SINGLE			0xE0
+#define ZGFX_SEGMENTED_MULTIPART		0xE1
+
 #pragma pack(push,1)
 
+typedef struct
+{
+	BYTE descriptor;
+	UINT16 segmentCount;
+	UINT32 uncompressedSize;
+	// RDP_DATA_SEGMENT first;
+} RDP_SEGMENTED_DATA;
 
+typedef struct
+{
+	UINT32 size;
+	// BYTE data[size];
+} RDP_DATA_SEGMENT;
 
 #pragma pack(pop)
 
 struct _ZGFX_CONTEXT
 {
 	BOOL Compressor;
+
+	BYTE* pbInputCurrent;
+	BYTE* pbInputEnd;
+
+	UINT32 cBitsRemaining;
+	UINT32 BitsCurrent;
+	UINT32 cBitsCurrent;
+
+	BYTE OutputBuffer[65536];
+	UINT32 OutputCount;
+
+	BYTE HistoryBuffer[2500000];
+	UINT32 HistoryIndex;
 };
 typedef struct _ZGFX_CONTEXT ZGFX_CONTEXT;
 

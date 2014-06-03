@@ -37,6 +37,7 @@
 #include <winpr/collections.h>
 
 #include <freerdp/addin.h>
+#include <freerdp/codec/zgfx.h>
 
 #include "rdpgfx_common.h"
 
@@ -68,6 +69,8 @@ struct _RDPGFX_PLUGIN
 
 	IWTSListener* listener;
 	RDPGFX_LISTENER_CALLBACK* listener_callback;
+
+	ZGFX_CONTEXT* zgfx;
 };
 typedef struct _RDPGFX_PLUGIN RDPGFX_PLUGIN;
 
@@ -149,12 +152,6 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	/* RDPGFX_HEADER */
 
-	/* data needs to be decompressed first */
-
-	//winpr_HexDump(Stream_Buffer(s), 32);
-
-	return 0;
-
 	Stream_Read_UINT16(s, header.cmdId); /* cmdId (2 bytes) */
 	Stream_Read_UINT16(s, header.flags); /* flags (2 bytes) */
 	Stream_Read_UINT32(s, header.pduLength); /* pduLength (4 bytes) */
@@ -169,15 +166,28 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 {
 	wStream* s;
 	int status = 0;
+	UINT32 DstSize = 0;
+	BYTE* pDstData = NULL;
+	RDPGFX_PLUGIN* gfx = NULL;
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
+
+	gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
 	fprintf(stderr, "RdpGfxOnDataReceived: cbSize: %d\n", cbSize);
 
-	s = Stream_New(pBuffer, cbSize);
+	status = zgfx_decompress(gfx->zgfx, pBuffer, cbSize, &pDstData, &DstSize, 0);
+
+	if (status < 0)
+	{
+		printf("zgfx_decompress failure! status: %d\n", status);
+		return 0;
+	}
+
+	s = Stream_New(pDstData, DstSize);
 
 	status = rdpgfx_recv_pdu(callback, s);
 
-	Stream_Free(s, FALSE);
+	Stream_Free(s, TRUE);
 
 	return status;
 }
@@ -259,6 +269,8 @@ static int rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 	if (rdpgfx->listener_callback)
 		free(rdpgfx->listener_callback);
 
+	zgfx_context_free(rdpgfx->zgfx);
+
 	free(rdpgfx);
 
 	return 0;
@@ -307,6 +319,8 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context->GetVersion = rdpgfx_get_version;
 
 		rdpgfx->iface.pInterface = (void*) context;
+
+		rdpgfx->zgfx = zgfx_context_new(FALSE);
 
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpgfx", (IWTSPlugin*) rdpgfx);
 	}
