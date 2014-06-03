@@ -635,14 +635,15 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 	if (!tls->Bindings)
 	{
 		fprintf(stderr, "%s: unable to retrieve bindings\n", __FUNCTION__);
-		return -1;
+		verify_status = -1;
+		goto out;
 	}
 
 	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 	{
 		fprintf(stderr, "%s: crypto_cert_get_public_key failed to return the server public key.\n", __FUNCTION__);
-		tls_free_certificate(cert);
-		return -1;
+		verify_status = -1;
+		goto out;
 	}
 
 	/* Note: server-side NLA needs public keys (keys from us, the server) but no
@@ -661,6 +662,7 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		}
 	}
 
+out:
 	tls_free_certificate(cert);
 
 	return verify_status;
