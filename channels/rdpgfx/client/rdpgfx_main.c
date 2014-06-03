@@ -28,6 +28,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
+#include <winpr/print.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
@@ -144,6 +145,23 @@ int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 
 int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
+	RDPGFX_HEADER header;
+
+	/* RDPGFX_HEADER */
+
+	/* data needs to be decompressed first */
+
+	//winpr_HexDump(Stream_Buffer(s), 32);
+
+	return 0;
+
+	Stream_Read_UINT16(s, header.cmdId); /* cmdId (2 bytes) */
+	Stream_Read_UINT16(s, header.flags); /* flags (2 bytes) */
+	Stream_Read_UINT32(s, header.pduLength); /* pduLength (4 bytes) */
+
+	printf("cmdId: 0x%04X flags: 0x%04X pduLength: %d\n",
+			header.cmdId, header.flags, header.pduLength);
+
 	return 0;
 }
 
@@ -153,7 +171,7 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	int status = 0;
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
 
-	fprintf(stderr, "RdpGfxOnDataReceived\n");
+	fprintf(stderr, "RdpGfxOnDataReceived: cbSize: %d\n", cbSize);
 
 	s = Stream_New(pBuffer, cbSize);
 

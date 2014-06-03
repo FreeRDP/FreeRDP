@@ -9,6 +9,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestFreeRDPCodecMppc.c
 	TestFreeRDPCodecNCrush.c
 	TestFreeRDPCodecXCrush.c
+	TestFreeRDPCodecZGfx.c
 	TestFreeRDPCodecPlanar.c
 	TestFreeRDPCodecRemoteFX.c)
 
