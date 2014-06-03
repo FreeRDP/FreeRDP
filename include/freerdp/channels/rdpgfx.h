@@ -100,7 +100,7 @@ struct _RDPGFX_CAPSET
 {
 	UINT32 version;
 	UINT32 capsDataLength;
-	/* capsData (variable) */
+	UINT32 capsData;
 };
 typedef struct _RDPGFX_CAPSET RDPGFX_CAPSET;
 
@@ -292,7 +292,7 @@ typedef struct _RDPGFX_CACHE_IMPORT_REPLY_PDU RDPGFX_CACHE_IMPORT_REPLY_PDU;
 struct _RDPGFX_CAPS_ADVERTISE_PDU
 {
 	UINT16 capsSetCount;
-	/* capsSets */
+	RDPGFX_CAPSET** capsSets;
 };
 typedef struct _RDPGFX_CAPS_ADVERTISE_PDU RDPGFX_CAPS_ADVERTISE_PDU;
 

@@ -70,6 +70,78 @@ struct _RDPGFX_PLUGIN
 };
 typedef struct _RDPGFX_PLUGIN RDPGFX_PLUGIN;
 
+int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
+{
+	int status;
+	wStream* s;
+	UINT16 index;
+	RDPGFX_PLUGIN* gfx;
+	RDPGFX_HEADER header;
+	RDPGFX_CAPSET* capsSet;
+	RDPGFX_CAPSET* capsSets[2];
+	RDPGFX_CAPS_ADVERTISE_PDU pdu;
+	RDPGFX_CAPSET_VERSION8 capset8;
+	RDPGFX_CAPSET_VERSION81 capset81;
+
+	gfx = (RDPGFX_PLUGIN*) callback->plugin;
+
+	header.cmdId = RDPGFX_CMDID_CAPSADVERTISE;
+	header.flags = 0;
+
+	capset8.version = RDPGFX_CAPVERSION_8;
+	capset8.capsDataLength = 4;
+	capset8.flags = 0;
+	//capset8.flags |= RDPGFX_CAPS_FLAG_THINCLIENT;
+	//capset8.flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
+
+	capset81.version = RDPGFX_CAPVERSION_81;
+	//capset81.version = 0x00080103;
+	capset81.capsDataLength = 4;
+	capset81.flags = 0;
+	//capset81.flags |= RDPGFX_CAPS_FLAG_THINCLIENT;
+	//capset81.flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
+	//capset81.flags |= RDPGFX_CAPS_FLAG_H264ENABLED;
+
+	pdu.capsSetCount = 0;
+	pdu.capsSets = (RDPGFX_CAPSET**) capsSets;
+
+	capsSets[pdu.capsSetCount++] = (RDPGFX_CAPSET*) &capset81;
+	capsSets[pdu.capsSetCount++] = (RDPGFX_CAPSET*) &capset8;
+
+	header.pduLength = 8 + 2 + (pdu.capsSetCount * 12);
+
+	fprintf(stderr, "RdpGfxSendCapsAdvertisePdu: %d\n", header.pduLength);
+
+	s = Stream_New(NULL, header.pduLength);
+
+	/* RDPGFX_HEADER */
+
+	Stream_Write_UINT16(s, header.cmdId); /* cmdId (2 bytes) */
+	Stream_Write_UINT16(s, header.flags); /* flags (2 bytes) */
+	Stream_Write_UINT32(s, header.pduLength); /* pduLength (4 bytes) */
+
+	/* RDPGFX_CAPS_ADVERTISE_PDU */
+
+	Stream_Write_UINT16(s, pdu.capsSetCount); /* capsSetCount (2 bytes) */
+
+	for (index = 0; index < pdu.capsSetCount; index++)
+	{
+		capsSet = pdu.capsSets[index];
+
+		Stream_Write_UINT32(s, capsSet->version); /* version (4 bytes) */
+		Stream_Write_UINT32(s, capsSet->capsDataLength); /* capsDataLength (4 bytes) */
+		Stream_Write_UINT32(s, capsSet->capsData); /* capsData (4 bytes) */
+	}
+
+	Stream_SealLength(s);
+
+	status = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s), Stream_Buffer(s), NULL);
+
+	Stream_Free(s, TRUE);
+
+	return status;
+}
+
 int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	return 0;
@@ -96,6 +168,8 @@ static int rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
 
+	fprintf(stderr, "RdpGfxOnClose\n");
+
 	free(callback);
 
 	return 0;
@@ -108,8 +182,7 @@ static int rdpgfx_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 	RDPGFX_CHANNEL_CALLBACK* callback;
 	RDPGFX_LISTENER_CALLBACK* listener_callback = (RDPGFX_LISTENER_CALLBACK*) pListenerCallback;
 
-	callback = (RDPGFX_CHANNEL_CALLBACK*) malloc(sizeof(RDPGFX_CHANNEL_CALLBACK));
-	ZeroMemory(callback, sizeof(RDPGFX_CHANNEL_CALLBACK));
+	callback = (RDPGFX_CHANNEL_CALLBACK*) calloc(1, sizeof(RDPGFX_CHANNEL_CALLBACK));
 
 	callback->iface.OnDataReceived = rdpgfx_on_data_received;
 	callback->iface.OnClose = rdpgfx_on_close;
@@ -122,6 +195,8 @@ static int rdpgfx_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 
 	fprintf(stderr, "RdpGfxOnNewChannelConnection\n");
 
+	rdpgfx_send_caps_advertise_pdu(callback);
+
 	return 0;
 }
 
@@ -130,8 +205,10 @@ static int rdpgfx_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 	int status;
 	RDPGFX_PLUGIN* rdpgfx = (RDPGFX_PLUGIN*) pPlugin;
 
-	rdpgfx->listener_callback = (RDPGFX_LISTENER_CALLBACK*) malloc(sizeof(RDPGFX_LISTENER_CALLBACK));
-	ZeroMemory(rdpgfx->listener_callback, sizeof(RDPGFX_LISTENER_CALLBACK));
+	rdpgfx->listener_callback = (RDPGFX_LISTENER_CALLBACK*) calloc(1, sizeof(RDPGFX_LISTENER_CALLBACK));
+
+	if (!rdpgfx->listener_callback)
+		return -1;
 
 	rdpgfx->listener_callback->iface.OnNewChannelConnection = rdpgfx_on_new_channel_connection;
 	rdpgfx->listener_callback->plugin = pPlugin;
@@ -142,7 +219,7 @@ static int rdpgfx_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 
 	rdpgfx->listener->pInterface = rdpgfx->iface.pInterface;
 
-	fprintf(stderr, "RdpGfxInitialize\n");
+	fprintf(stderr, "RdpGfxInitialize: %d\n", status);
 
 	return status;
 }
@@ -183,22 +260,25 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	if (!rdpgfx)
 	{
-		rdpgfx = (RDPGFX_PLUGIN*) malloc(sizeof(RDPGFX_PLUGIN));
-		ZeroMemory(rdpgfx, sizeof(RDPGFX_PLUGIN));
+		rdpgfx = (RDPGFX_PLUGIN*) calloc(1, sizeof(RDPGFX_PLUGIN));
+
+		if (!rdpgfx)
+			return -1;
 
 		rdpgfx->iface.Initialize = rdpgfx_plugin_initialize;
 		rdpgfx->iface.Connected = NULL;
 		rdpgfx->iface.Disconnected = NULL;
 		rdpgfx->iface.Terminated = rdpgfx_plugin_terminated;
 
-		context = (RdpgfxClientContext*) malloc(sizeof(RdpgfxClientContext));
+		context = (RdpgfxClientContext*) calloc(1, sizeof(RdpgfxClientContext));
+
+		if (!context)
+			return -1;
 
 		context->handle = (void*) rdpgfx;
 		context->GetVersion = rdpgfx_get_version;
 
 		rdpgfx->iface.pInterface = (void*) context;
-
-		fprintf(stderr, "RdpGfxDVCPluginEntry\n");
 
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpgfx", (IWTSPlugin*) rdpgfx);
 	}
