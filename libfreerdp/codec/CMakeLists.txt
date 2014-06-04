@@ -51,6 +51,7 @@ set(${MODULE_PREFIX}_SRCS
 	xcrush.c
 	mppc.c
 	zgfx.c
+	clear.c
 	jpeg.c)
 
 set(${MODULE_PREFIX}_SSE2_SRCS

@@ -20,6 +20,8 @@ define_channel_client("rdpgfx")
 set(${MODULE_PREFIX}_SRCS
 	rdpgfx_main.c
 	rdpgfx_main.h
+	rdpgfx_codec.c
+	rdpgfx_codec.h
 	rdpgfx_common.c
 	rdpgfx_common.h)
 

@@ -11,6 +11,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestFreeRDPCodecXCrush.c
 	TestFreeRDPCodecZGfx.c
 	TestFreeRDPCodecPlanar.c
+	TestFreeRDPCodecClear.c
 	TestFreeRDPCodecRemoteFX.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

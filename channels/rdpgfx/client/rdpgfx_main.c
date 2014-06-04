@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Graphics Pipeline Extension
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,156 +37,11 @@
 #include <winpr/collections.h>
 
 #include <freerdp/addin.h>
-#include <freerdp/codec/zgfx.h>
 
 #include "rdpgfx_common.h"
+#include "rdpgfx_codec.h"
 
 #include "rdpgfx_main.h"
-
-struct _RDPGFX_CHANNEL_CALLBACK
-{
-	IWTSVirtualChannelCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
-};
-typedef struct _RDPGFX_CHANNEL_CALLBACK RDPGFX_CHANNEL_CALLBACK;
-
-struct _RDPGFX_LISTENER_CALLBACK
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	RDPGFX_CHANNEL_CALLBACK* channel_callback;
-};
-typedef struct _RDPGFX_LISTENER_CALLBACK RDPGFX_LISTENER_CALLBACK;
-
-struct _RDPGFX_PLUGIN
-{
-	IWTSPlugin iface;
-
-	IWTSListener* listener;
-	RDPGFX_LISTENER_CALLBACK* listener_callback;
-
-	BOOL ThinClient;
-	BOOL SmallCache;
-	BOOL H264;
-
-	ZGFX_CONTEXT* zgfx;
-	UINT32 UnacknowledgedFrames;
-	UINT32 TotalDecodedFrames;
-};
-typedef struct _RDPGFX_PLUGIN RDPGFX_PLUGIN;
-
-const char* RDPGFX_CMDID_STRINGS[] =
-{
-	"RDPGFX_CMDID_UNUSED_0000",
-	"RDPGFX_CMDID_WIRETOSURFACE_1",
-	"RDPGFX_CMDID_WIRETOSURFACE_2",
-	"RDPGFX_CMDID_DELETEENCODINGCONTEXT",
-	"RDPGFX_CMDID_SOLIDFILL",
-	"RDPGFX_CMDID_SURFACETOSURFACE",
-	"RDPGFX_CMDID_SURFACETOCACHE",
-	"RDPGFX_CMDID_CACHETOSURFACE",
-	"RDPGFX_CMDID_EVICTCACHEENTRY",
-	"RDPGFX_CMDID_CREATESURFACE",
-	"RDPGFX_CMDID_DELETESURFACE",
-	"RDPGFX_CMDID_STARTFRAME",
-	"RDPGFX_CMDID_ENDFRAME",
-	"RDPGFX_CMDID_FRAMEACKNOWLEDGE",
-	"RDPGFX_CMDID_RESETGRAPHICS",
-	"RDPGFX_CMDID_MAPSURFACETOOUTPUT",
-	"RDPGFX_CMDID_CACHEIMPORTOFFER",
-	"RDPGFX_CMDID_CACHEIMPORTREPLY",
-	"RDPGFX_CMDID_CAPSADVERTISE",
-	"RDPGFX_CMDID_CAPSCONFIRM",
-	"RDPGFX_CMDID_UNUSED_0014",
-	"RDPGFX_CMDID_MAPSURFACETOWINDOW"
-};
-
-const char* rdpgfx_get_cmdid_string(UINT16 cmdId)
-{
-	if (cmdId <= RDPGFX_CMDID_MAPSURFACETOWINDOW)
-		return RDPGFX_CMDID_STRINGS[cmdId];
-	else
-		return "RDPGFX_CMDID_UNKNOWN";
-}
-
-int rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
-{
-	Stream_Read_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
-	Stream_Read_UINT16(s, header->flags); /* flags (2 bytes) */
-	Stream_Read_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
-
-	return 1;
-}
-
-int rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header)
-{
-	Stream_Write_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
-	Stream_Write_UINT16(s, header->flags); /* flags (2 bytes) */
-	Stream_Write_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
-
-	return 1;
-}
-
-int rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16)
-{
-	Stream_Read_UINT16(s, pt16->x); /* x (2 bytes) */
-	Stream_Read_UINT16(s, pt16->y); /* y (2 bytes) */
-
-	return 1;
-}
-
-int rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16)
-{
-	Stream_Write_UINT16(s, point16->x); /* x (2 bytes) */
-	Stream_Write_UINT16(s, point16->y); /* y (2 bytes) */
-
-	return 1;
-}
-
-int rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16)
-{
-	Stream_Read_UINT16(s, rect16->left); /* left (2 bytes) */
-	Stream_Read_UINT16(s, rect16->top); /* top (2 bytes) */
-	Stream_Read_UINT16(s, rect16->right); /* right (2 bytes) */
-	Stream_Read_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
-
-	return 1;
-}
-
-int rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16)
-{
-	Stream_Write_UINT16(s, rect16->left); /* left (2 bytes) */
-	Stream_Write_UINT16(s, rect16->top); /* top (2 bytes) */
-	Stream_Write_UINT16(s, rect16->right); /* right (2 bytes) */
-	Stream_Write_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
-
-	return 1;
-}
-
-int rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
-{
-	Stream_Read_UINT8(s, color32->B); /* B (1 byte) */
-	Stream_Read_UINT8(s, color32->G); /* G (1 byte) */
-	Stream_Read_UINT8(s, color32->R); /* R (1 byte) */
-	Stream_Read_UINT8(s, color32->XA); /* XA (1 byte) */
-
-	return 1;
-}
-
-int rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32)
-{
-	Stream_Write_UINT8(s, color32->B); /* B (1 byte) */
-	Stream_Write_UINT8(s, color32->G); /* G (1 byte) */
-	Stream_Write_UINT8(s, color32->R); /* R (1 byte) */
-	Stream_Write_UINT8(s, color32->XA); /* XA (1 byte) */
-
-	return 1;
-}
 
 int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 {
@@ -201,9 +56,9 @@ int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 
 	gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
-	gfx->ThinClient = FALSE;
-	gfx->SmallCache = TRUE;
-	gfx->H264 = TRUE;
+	gfx->ThinClient = TRUE;
+	gfx->SmallCache = FALSE;
+	gfx->H264 = FALSE;
 
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_CAPSADVERTISE;
@@ -451,38 +306,50 @@ int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 int rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
+	RDPGFX_SURFACE_COMMAND cmd;
 	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 	Stream_Read_UINT16(s, pdu.codecId); /* codecId (2 bytes) */
 	Stream_Read_UINT8(s, pdu.pixelFormat); /* pixelFormat (1 byte) */
 
-	Stream_Read_UINT16(s, pdu.destRect.left); /* left (2 bytes) */
-	Stream_Read_UINT16(s, pdu.destRect.top); /* top (2 bytes) */
-	Stream_Read_UINT16(s, pdu.destRect.right); /* right (2 bytes) */
-	Stream_Read_UINT16(s, pdu.destRect.bottom); /* bottom (2 bytes) */
+	rdpgfx_read_rect16(s, &(pdu.destRect)); /* destRect (8 bytes) */
 
 	Stream_Read_UINT32(s, pdu.bitmapDataLength); /* bitmapDataLength (4 bytes) */
 
 	pdu.bitmapData = Stream_Pointer(s);
 
-	fprintf(stderr, "RdpGfxRecvWireToSurface1Pdu: surfaceId: %d codecId: 0x%04X pixelFormat: 0x%04X "
+	fprintf(stderr, "RdpGfxRecvWireToSurface1Pdu: surfaceId: %d codecId: %s (0x%04X) pixelFormat: 0x%04X "
 			"destRect: left: %d top: %d right: %d bottom: %d bitmapDataLength: %d\n",
-			pdu.surfaceId, pdu.codecId, pdu.pixelFormat,
+			pdu.surfaceId, rdpgfx_get_codec_id_string(pdu.codecId), pdu.codecId, pdu.pixelFormat,
 			pdu.destRect.left, pdu.destRect.top, pdu.destRect.right, pdu.destRect.bottom,
 			pdu.bitmapDataLength);
+
+	cmd.surfaceId = pdu.surfaceId;
+	cmd.codecId = pdu.codecId;
+	cmd.codecContextId = 0;
+	cmd.pixelFormat = pdu.pixelFormat;
+	rdpgfx_copy_rect16(&(cmd.destRect), &(pdu.destRect));
+	cmd.bitmapDataLength = pdu.bitmapDataLength;
+	cmd.bitmapData = pdu.bitmapData;
+
+	rdpgfx_decode(gfx, &cmd);
 
 	return 1;
 }
 
 int rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
+	RDPGFX_SURFACE_COMMAND cmd;
 	RDPGFX_WIRE_TO_SURFACE_PDU_2 pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 	Stream_Read_UINT16(s, pdu.codecId); /* codecId (2 bytes) */
 	Stream_Read_UINT32(s, pdu.codecContextId); /* codecContextId (4 bytes) */
 	Stream_Read_UINT8(s, pdu.pixelFormat); /* pixelFormat (1 byte) */
+
 	Stream_Read_UINT32(s, pdu.bitmapDataLength); /* bitmapDataLength (4 bytes) */
 
 	pdu.bitmapData = Stream_Pointer(s);
@@ -490,6 +357,16 @@ int rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	fprintf(stderr, "RdpGfxRecvWireToSurface2Pdu: surfaceId: %d codecId: 0x%04X "
 			"codecContextId: %d pixelFormat: 0x%04X bitmapDataLength: %d\n",
 			pdu.surfaceId, pdu.codecId, pdu.codecContextId, pdu.pixelFormat, pdu.bitmapDataLength);
+
+	cmd.surfaceId = pdu.surfaceId;
+	cmd.codecId = pdu.codecId;
+	cmd.codecContextId = pdu.codecContextId;
+	cmd.pixelFormat = pdu.pixelFormat;
+	ZeroMemory(&(cmd.destRect), sizeof(RDPGFX_RECT16));
+	cmd.bitmapDataLength = pdu.bitmapDataLength;
+	cmd.bitmapData = pdu.bitmapData;
+
+	rdpgfx_decode(gfx, &cmd);
 
 	return 1;
 }
@@ -653,7 +530,7 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 #if 1
 	printf("cmdId: %s (0x%04X) flags: 0x%04X pduLength: %d\n",
-			rdpgfx_get_cmdid_string(header.cmdId), header.cmdId, header.flags, header.pduLength);
+			rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId, header.flags, header.pduLength);
 #endif
 
 	switch (header.cmdId)
