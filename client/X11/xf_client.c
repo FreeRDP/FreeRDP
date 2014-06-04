@@ -902,8 +902,6 @@ BOOL xf_post_connect(freerdp* instance)
 	rdpChannels* channels;
 	rdpSettings* settings;
 	ResizeWindowEventArgs e;
-	RFX_CONTEXT* rfx_context = NULL;
-	NSC_CONTEXT* nsc_context = NULL;
 	xfContext* xfc = (xfContext*) instance->context;
 
 	cache = instance->context->cache;
@@ -931,7 +929,7 @@ BOOL xf_post_connect(freerdp* instance)
 		gdi = instance->context->gdi;
 		xfc->primary_buffer = gdi->primary_buffer;
 
-		rfx_context = gdi->rfx_context;
+		xfc->rfx = gdi->rfx_context;
 	}
 	else
 	{
@@ -942,14 +940,12 @@ BOOL xf_post_connect(freerdp* instance)
 
 		if (instance->settings->RemoteFxCodec)
 		{
-			rfx_context = (void*) rfx_context_new(FALSE);
-			xfc->rfx_context = rfx_context;
+			xfc->rfx = rfx_context_new(FALSE);
 		}
 
 		if (instance->settings->NSCodec)
 		{
-			nsc_context = (void*) nsc_context_new();
-			xfc->nsc_context = nsc_context;
+			xfc->nsc = nsc_context_new();
 		}
 	}
 
@@ -1212,16 +1208,16 @@ void xf_window_free(xfContext* xfc)
 		context->rail = NULL;
 	}
 
-	if (xfc->rfx_context)
+	if (xfc->rfx)
 	{
-		rfx_context_free(xfc->rfx_context);
-		xfc->rfx_context = NULL;
+		rfx_context_free(xfc->rfx);
+		xfc->rfx = NULL;
 	}
 
-	if (xfc->nsc_context)
+	if (xfc->nsc)
 	{
-		nsc_context_free(xfc->nsc_context);
-		xfc->nsc_context = NULL;
+		nsc_context_free(xfc->nsc);
+		xfc->nsc = NULL;
 	}
 
 	if (xfc->clrconv)

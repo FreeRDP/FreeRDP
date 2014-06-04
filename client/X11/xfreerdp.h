@@ -28,6 +28,13 @@ typedef struct xf_context xfContext;
 #include "xf_monitor.h"
 #include "xf_channels.h"
 
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/codec/nsc.h>
+#include <freerdp/constants.h>
+#include <freerdp/codec/color.h>
+#include <freerdp/codec/bitmap.h>
+
 struct xf_WorkArea
 {
 	UINT32 x;
@@ -137,8 +144,8 @@ struct xf_context
 	VIRTUAL_SCREEN vscreen;
 	BYTE* bmp_codec_none;
 	BYTE* bmp_codec_nsc;
-	void* rfx_context;
-	void* nsc_context;
+	RFX_CONTEXT* rfx;
+	NSC_CONTEXT* nsc;
 	void* xv_context;
 	void* clipboard_context;
 
@@ -168,6 +175,7 @@ struct xf_context
 
 	/* Channels */
 	RdpeiClientContext* rdpei;
+	RdpgfxClientContext* gfx;
 };
 
 void xf_create_window(xfContext* xfc);

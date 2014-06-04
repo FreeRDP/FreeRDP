@@ -23,6 +23,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/rdpei.h>
+#include <freerdp/client/rdpgfx.h>
 
 int xf_on_channel_connected(freerdp* instance, const char* name, void* pInterface);
 int xf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface);

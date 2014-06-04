@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Client Channels
+ * X11 Graphics Pipeline
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,32 +17,12 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "xf_channels.h"
+#ifndef __XF_GRAPHICS_PIPELINE_H
+#define __XF_GRAPHICS_PIPELINE_H
 
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-#include "xf_gfx.h"
+void xf_register_graphics_pipeline(xfContext* xfc, RdpgfxClientContext* gfx);
 
-void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
-{
-	xfContext* xfc = (xfContext*) context;
-
-	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
-	{
-		xfc->rdpei = (RdpeiClientContext*) e->pInterface;
-	}
-	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
-	{
-		xf_register_graphics_pipeline(xfc, (RdpgfxClientContext*) e->pInterface);
-	}
-}
-
-void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
-{
-
-}
+#endif /* __XF_GRAPHICS_PIPELINE_H */
