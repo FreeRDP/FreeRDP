@@ -197,7 +197,8 @@ void mf_peer_rdpsnd_input_callback (void                                *inUserD
 		return ;
 	}
 	
-	rState->snd_context->SendSamples(rState->snd_context, inBuffer->mAudioData, inBuffer->mAudioDataByteSize/4);
+	rState->snd_context->SendSamples(rState->snd_context, inBuffer->mAudioData,
+									inBuffer->mAudioDataByteSize/4, (UINT16)(GetTickCount() & 0xffff));
 	
 	status = AudioQueueEnqueueBuffer(
 					 rState->queue,

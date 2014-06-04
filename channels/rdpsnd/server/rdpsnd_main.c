@@ -356,7 +356,7 @@ static BOOL rdpsnd_server_select_format(RdpsndServerContext* context, int client
 	return TRUE;
 }
 
-static BOOL rdpsnd_server_send_audio_pdu(RdpsndServerContext* context)
+static BOOL rdpsnd_server_send_audio_pdu(RdpsndServerContext* context, UINT16 wTimestamp)
 {
 	int size;
 	BYTE* src;
@@ -421,7 +421,7 @@ static BOOL rdpsnd_server_send_audio_pdu(RdpsndServerContext* context)
 	Stream_Write_UINT8(s, 0); /* bPad */
 	Stream_Write_UINT16(s, size + fill_size + 8); /* BodySize */
 
-	Stream_Write_UINT16(s, 0); /* wTimeStamp */
+	Stream_Write_UINT16(s, wTimestamp); /* wTimeStamp */
 	Stream_Write_UINT16(s, context->selected_client_format); /* wFormatNo */
 	Stream_Write_UINT8(s, context->block_no); /* cBlockNo */
 	Stream_Seek(s, 3); /* bPad */
@@ -448,7 +448,7 @@ out:
 	return status;
 }
 
-static BOOL rdpsnd_server_send_samples(RdpsndServerContext* context, const void* buf, int nframes)
+static BOOL rdpsnd_server_send_samples(RdpsndServerContext* context, const void* buf, int nframes, UINT16 wTimestamp)
 {
 	int cframes;
 	int cframesize;
@@ -469,7 +469,7 @@ static BOOL rdpsnd_server_send_samples(RdpsndServerContext* context, const void*
 
 		if (context->priv->out_pending_frames >= context->priv->out_frames)
 		{
-			if (!rdpsnd_server_send_audio_pdu(context))
+			if (!rdpsnd_server_send_audio_pdu(context, wTimestamp))
 				return FALSE;
 		}
 	}
@@ -513,7 +513,7 @@ static BOOL rdpsnd_server_close(RdpsndServerContext* context)
 
 	if (context->priv->out_pending_frames > 0)
 	{
-		if (!rdpsnd_server_send_audio_pdu(context))
+		if (!rdpsnd_server_send_audio_pdu(context, 0))
 			return FALSE;
 	}
 
