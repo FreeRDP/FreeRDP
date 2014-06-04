@@ -361,8 +361,6 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 		{
-			io_status = nNumberOfBytesToRead;
-
 			if (pipe->clientfd == -1)
 				return FALSE;
 
@@ -374,9 +372,9 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 				{
 					case ECONNRESET:
 						SetLastError(ERROR_BROKEN_PIPE);
-						io_status = 0;
 						break;
 				}
+				status = FALSE;
 			}
 			else if (io_status < 0)
 			{

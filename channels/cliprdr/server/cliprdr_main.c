@@ -68,6 +68,7 @@ static int cliprdr_server_send_capabilities(CliprdrServerContext* context)
 	BOOL status;
 	UINT32 generalFlags;
 	CLIPRDR_HEADER header;
+	ULONG written;
 
 	printf("CliprdrServerSendCapabilities\n");
 
@@ -96,7 +97,7 @@ static int cliprdr_server_send_capabilities(CliprdrServerContext* context)
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
 
@@ -108,6 +109,7 @@ static int cliprdr_server_send_monitor_ready(CliprdrServerContext* context)
 	wStream* s;
 	BOOL status;
 	CLIPRDR_HEADER header;
+	ULONG written;
 
 	printf("CliprdrServerSendMonitorReady\n");
 
@@ -123,7 +125,7 @@ static int cliprdr_server_send_monitor_ready(CliprdrServerContext* context)
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
 
@@ -135,6 +137,7 @@ static int cliprdr_server_send_format_list_response(CliprdrServerContext* contex
 	wStream* s;
 	BOOL status;
 	CLIPRDR_HEADER header;
+	ULONG written;
 
 	printf("CliprdrServerSendFormatListResponse\n");
 
@@ -150,7 +153,7 @@ static int cliprdr_server_send_format_list_response(CliprdrServerContext* contex
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
 

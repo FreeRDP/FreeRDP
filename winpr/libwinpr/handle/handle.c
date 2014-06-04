@@ -165,35 +165,24 @@ BOOL CloseHandle(HANDLE hObject)
 	}
 	else if (Type == HANDLE_TYPE_NAMED_PIPE)
 	{
-		WINPR_NAMED_PIPE* pipe;
+		WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*) Object;
 
-		pipe = (WINPR_NAMED_PIPE*) Object;
-
-		if (pipe->ServerMode)
-		{
-			assert(pipe->dwRefCount);
-
-			if (--pipe->dwRefCount == 0)
-			{
-				pipe->pfnRemoveBaseNamedPipeFromList(pipe);
-
-				if (pipe->pBaseNamedPipe)
-				{
-					CloseHandle((HANDLE) pipe->pBaseNamedPipe);
-				}
-			}
+		if (pNamedPipe->clientfd != -1) {
+			//fprintf(stderr, "%s: closing clientfd %d\n", __FUNCTION__, pNamedPipe->clientfd);
+			close(pNamedPipe->clientfd);
+		}
+		if (pNamedPipe->serverfd != -1) {
+			//fprintf(stderr, "%s: closing serverfd %d\n", __FUNCTION__, pNamedPipe->serverfd);
+			close(pNamedPipe->serverfd);
 		}
 
-		if (pipe->clientfd != -1)
-			close(pipe->clientfd);
+		if (pNamedPipe->pfnUnrefNamedPipe)
+			pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);
 
-		if (pipe->serverfd != -1)
-			close(pipe->serverfd);
-
-		free((char *)pipe->lpFileName);
-		free((char *)pipe->lpFilePath);
-		free((char *)pipe->name);
-		free(pipe);
+		free((void*)pNamedPipe->lpFileName);
+		free((void*)pNamedPipe->lpFilePath);
+		free((void*)pNamedPipe->name);
+		free(pNamedPipe);
 
 		return TRUE;
 	}

@@ -34,6 +34,7 @@ static int rdpdr_server_send_announce_request(RdpdrServerContext* context)
 	wStream* s;
 	BOOL status;
 	RDPDR_HEADER header;
+	ULONG written;
 
 	printf("RdpdrServerSendAnnounceRequest\n");
 
@@ -51,7 +52,7 @@ static int rdpdr_server_send_announce_request(RdpdrServerContext* context)
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
 
@@ -295,6 +296,7 @@ static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context
 	BOOL status;
 	RDPDR_HEADER header;
 	UINT16 numCapabilities;
+	ULONG written;
 
 	printf("RdpdrServerSendCoreCapabilityRequest\n");
 
@@ -319,7 +321,7 @@ static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
 
@@ -376,6 +378,7 @@ static int rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 	wStream* s;
 	BOOL status;
 	RDPDR_HEADER header;
+	ULONG written;
 
 	printf("RdpdrServerSendClientIdConfirm\n");
 
@@ -393,7 +396,7 @@ static int rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
 
@@ -457,6 +460,7 @@ static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 	wStream* s;
 	BOOL status;
 	RDPDR_HEADER header;
+	ULONG written;
 
 	printf("%s\n", __FUNCTION__);
 
@@ -470,7 +474,7 @@ static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 
 	Stream_SealLength(s);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 
 	Stream_Free(s, TRUE);
 
