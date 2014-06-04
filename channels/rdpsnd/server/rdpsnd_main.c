@@ -83,8 +83,8 @@ static BOOL rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 
 static BOOL rdpsnd_server_recv_waveconfirm(RdpsndServerContext* context, wStream* s)
 {
-	UINT16 timestamp = 0;
-	BYTE confirmBlockNum = 0;
+	UINT16 timestamp;
+	BYTE confirmBlockNum;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
@@ -92,6 +92,9 @@ static BOOL rdpsnd_server_recv_waveconfirm(RdpsndServerContext* context, wStream
 	Stream_Read_UINT16(s, timestamp);
 	Stream_Read_UINT8(s, confirmBlockNum);
 	Stream_Seek_UINT8(s);
+
+	IFCALL(context->ConfirmBlock, context, confirmBlockNum, timestamp);
+
 	return TRUE;
 }
 
