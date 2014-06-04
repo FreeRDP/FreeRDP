@@ -175,6 +175,8 @@ int rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s
 	UINT32 index;
 	MONITOR_DEF* monitor;
 	RDPGFX_RESET_GRAPHICS_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT32(s, pdu.width); /* width (4 bytes) */
 	Stream_Read_UINT32(s, pdu.height); /* height (4 bytes) */
@@ -200,16 +202,28 @@ int rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s
 	fprintf(stderr, "RdpGfxRecvResetGraphicsPdu: width: %d height: %d count: %d\n",
 			pdu.width, pdu.height, pdu.monitorCount);
 
+	if (context && context->ResetGraphics)
+	{
+		context->ResetGraphics(context, &pdu);
+	}
+
 	return 1;
 }
 
 int rdpgfx_recv_evict_cache_entry_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_EVICT_CACHE_ENTRY_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.cacheSlot); /* cacheSlot (2 bytes) */
 
 	fprintf(stderr, "RdpGfxRecvEvictCacheEntryPdu: cacheSlot: %d\n", pdu.cacheSlot);
+
+	if (context && context->EvictCacheEntry)
+	{
+		context->EvictCacheEntry(context, &pdu);
+	}
 
 	return 1;
 }
@@ -218,6 +232,8 @@ int rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 {
 	UINT16 index;
 	RDPGFX_CACHE_IMPORT_REPLY_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.importedEntriesCount); /* cacheSlot (2 bytes) */
 
@@ -234,12 +250,19 @@ int rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 	fprintf(stderr, "RdpGfxRecvCacheImportReplyPdu: importedEntriesCount: %d\n",
 			pdu.importedEntriesCount);
 
+	if (context && context->CacheImportReply)
+	{
+		context->CacheImportReply(context, &pdu);
+	}
+
 	return 1;
 }
 
 int rdpgfx_recv_create_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_CREATE_SURFACE_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 	Stream_Read_UINT16(s, pdu.width); /* width (2 bytes) */
@@ -249,16 +272,28 @@ int rdpgfx_recv_create_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s
 	fprintf(stderr, "RdpGfxRecvCreateSurfacePdu: surfaceId: %d width: %d height: %d pixelFormat: %d\n",
 			pdu.surfaceId, pdu.width, pdu.height, pdu.pixelFormat);
 
+	if (context && context->CreateSurface)
+	{
+		context->CreateSurface(context, &pdu);
+	}
+
 	return 1;
 }
 
 int rdpgfx_recv_delete_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_DELETE_SURFACE_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 
 	fprintf(stderr, "RdpGfxRecvDeleteSurfacePdu: surfaceId: %d\n", pdu.surfaceId);
+
+	if (context && context->DeleteSurface)
+	{
+		context->DeleteSurface(context, &pdu);
+	}
 
 	return 1;
 }
@@ -267,12 +302,18 @@ int rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_START_FRAME_PDU pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT32(s, pdu.timestamp); /* timestamp (4 bytes) */
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
 
 	fprintf(stderr, "RdpGfxRecvStartFramePdu: frameId: %d timestamp: 0x%04X\n",
 			pdu.frameId, pdu.timestamp);
+
+	if (context && context->StartFrame)
+	{
+		context->StartFrame(context, &pdu);
+	}
 
 	gfx->UnacknowledgedFrames++;
 
@@ -284,10 +325,16 @@ int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	RDPGFX_END_FRAME_PDU pdu;
 	RDPGFX_FRAME_ACKNOWLEDGE_PDU ack;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
 
 	fprintf(stderr, "RdpGfxRecvEndFramePdu: frameId: %d\n", pdu.frameId);
+
+	if (context && context->EndFrame)
+	{
+		context->EndFrame(context, &pdu);
+	}
 
 	gfx->UnacknowledgedFrames--;
 	gfx->TotalDecodedFrames++;
@@ -309,6 +356,7 @@ int rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	RDPGFX_SURFACE_COMMAND cmd;
 	RDPGFX_WIRE_TO_SURFACE_PDU_1 pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 	Stream_Read_UINT16(s, pdu.codecId); /* codecId (2 bytes) */
@@ -322,7 +370,7 @@ int rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 
 	fprintf(stderr, "RdpGfxRecvWireToSurface1Pdu: surfaceId: %d codecId: %s (0x%04X) pixelFormat: 0x%04X "
 			"destRect: left: %d top: %d right: %d bottom: %d bitmapDataLength: %d\n",
-			pdu.surfaceId, rdpgfx_get_codec_id_string(pdu.codecId), pdu.codecId, pdu.pixelFormat,
+			(int) pdu.surfaceId, rdpgfx_get_codec_id_string(pdu.codecId), pdu.codecId, pdu.pixelFormat,
 			pdu.destRect.left, pdu.destRect.top, pdu.destRect.right, pdu.destRect.bottom,
 			pdu.bitmapDataLength);
 
@@ -334,6 +382,11 @@ int rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	cmd.bitmapDataLength = pdu.bitmapDataLength;
 	cmd.bitmapData = pdu.bitmapData;
 
+	if (context && context->SurfaceCommand)
+	{
+		context->SurfaceCommand(context, &cmd);
+	}
+
 	rdpgfx_decode(gfx, &cmd);
 
 	return 1;
@@ -344,6 +397,7 @@ int rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	RDPGFX_SURFACE_COMMAND cmd;
 	RDPGFX_WIRE_TO_SURFACE_PDU_2 pdu;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 	Stream_Read_UINT16(s, pdu.codecId); /* codecId (2 bytes) */
@@ -356,7 +410,7 @@ int rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 
 	fprintf(stderr, "RdpGfxRecvWireToSurface2Pdu: surfaceId: %d codecId: 0x%04X "
 			"codecContextId: %d pixelFormat: 0x%04X bitmapDataLength: %d\n",
-			pdu.surfaceId, pdu.codecId, pdu.codecContextId, pdu.pixelFormat, pdu.bitmapDataLength);
+			(int) pdu.surfaceId, pdu.codecId, pdu.codecContextId, pdu.pixelFormat, pdu.bitmapDataLength);
 
 	cmd.surfaceId = pdu.surfaceId;
 	cmd.codecId = pdu.codecId;
@@ -366,6 +420,11 @@ int rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	cmd.bitmapDataLength = pdu.bitmapDataLength;
 	cmd.bitmapData = pdu.bitmapData;
 
+	if (context && context->SurfaceCommand)
+	{
+		context->SurfaceCommand(context, &cmd);
+	}
+
 	rdpgfx_decode(gfx, &cmd);
 
 	return 1;
@@ -374,12 +433,19 @@ int rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 int rdpgfx_recv_delete_encoding_context_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_DELETE_ENCODING_CONTEXT_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 	Stream_Read_UINT32(s, pdu.codecContextId); /* codecContextId (4 bytes) */
 
 	fprintf(stderr, "RdpGfxRecvDeleteEncodingContextPdu: surfaceId: %d codecContextId: %d\n",
 			pdu.surfaceId, pdu.codecContextId);
+
+	if (context && context->DeleteEncodingContext)
+	{
+		context->DeleteEncodingContext(context, &pdu);
+	}
 
 	return 1;
 }
@@ -389,6 +455,8 @@ int rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	UINT16 index;
 	RDPGFX_RECT16* fillRect;
 	RDPGFX_SOLID_FILL_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 
@@ -410,6 +478,11 @@ int rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	fprintf(stderr, "RdpGfxRecvSolidFillPdu: surfaceId: %d fillRectCount: %d\n",
 			pdu.surfaceId, pdu.fillRectCount);
 
+	if (context && context->SolidFill)
+	{
+		context->SolidFill(context, &pdu);
+	}
+
 	return 1;
 }
 
@@ -418,6 +491,8 @@ int rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 	UINT16 index;
 	RDPGFX_POINT16* destPt;
 	RDPGFX_SURFACE_TO_SURFACE_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.surfaceIdSrc); /* surfaceIdSrc (2 bytes) */
 	Stream_Read_UINT16(s, pdu.surfaceIdDest); /* surfaceIdDest (2 bytes) */
@@ -443,12 +518,19 @@ int rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 			pdu.rectSrc.left, pdu.rectSrc.top, pdu.rectSrc.right, pdu.rectSrc.bottom,
 			pdu.destPtsCount);
 
+	if (context && context->SurfaceToSurface)
+	{
+		context->SurfaceToSurface(context, &pdu);
+	}
+
 	return 1;
 }
 
 int rdpgfx_recv_surface_to_cache_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_SURFACE_TO_CACHE_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 	Stream_Read_UINT64(s, pdu.cacheKey); /* cacheKey (8 bytes) */
@@ -457,9 +539,14 @@ int rdpgfx_recv_surface_to_cache_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream*
 
 	fprintf(stderr, "RdpGfxRecvSurfaceToCachePdu: surfaceId: %d cacheKey: 0x%08X cacheSlot: %d "
 			"left: %d top: %d right: %d bottom: %d\n",
-			pdu.surfaceId, pdu.cacheKey, pdu.cacheSlot,
+			pdu.surfaceId, (int) pdu.cacheKey, pdu.cacheSlot,
 			pdu.rectSrc.left, pdu.rectSrc.top,
 			pdu.rectSrc.right, pdu.rectSrc.bottom);
+
+	if (context && context->SurfaceToCache)
+	{
+		context->SurfaceToCache(context, &pdu);
+	}
 
 	return 1;
 }
@@ -469,6 +556,8 @@ int rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream*
 	UINT16 index;
 	RDPGFX_POINT16* destPt;
 	RDPGFX_CACHE_TO_SURFACE_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.cacheSlot); /* cacheSlot (2 bytes) */
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
@@ -486,7 +575,12 @@ int rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream*
 	}
 
 	fprintf(stderr, "RdpGfxRecvCacheToSurfacePdu: cacheSlot: %d surfaceId: %d destPtsCount: %d\n",
-			pdu.cacheSlot, pdu.surfaceId, pdu.destPtsCount);
+			pdu.cacheSlot, (int) pdu.surfaceId, pdu.destPtsCount);
+
+	if (context && context->CacheToSurface)
+	{
+		context->CacheToSurface(context, &pdu);
+	}
 
 	return 1;
 }
@@ -494,6 +588,8 @@ int rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream*
 int rdpgfx_recv_map_surface_to_output_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 	Stream_Read_UINT16(s, pdu.reserved); /* reserved (2 bytes) */
@@ -501,7 +597,12 @@ int rdpgfx_recv_map_surface_to_output_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wSt
 	Stream_Read_UINT32(s, pdu.outputOriginY); /* outputOriginY (4 bytes) */
 
 	fprintf(stderr, "RdpGfxRecvMapSurfaceToOutputPdu: surfaceId: %d outputOriginX: %d outputOriginY: %d\n",
-			pdu.surfaceId, pdu.outputOriginX, pdu.outputOriginY);
+			(int) pdu.surfaceId, pdu.outputOriginX, pdu.outputOriginY);
+
+	if (context && context->MapSurfaceToOutput)
+	{
+		context->MapSurfaceToOutput(context, &pdu);
+	}
 
 	return 1;
 }
@@ -509,6 +610,8 @@ int rdpgfx_recv_map_surface_to_output_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wSt
 int rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	RDPGFX_MAP_SURFACE_TO_WINDOW_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 	Stream_Read_UINT64(s, pdu.windowId); /* windowId (8 bytes) */
@@ -516,7 +619,12 @@ int rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wSt
 	Stream_Read_UINT32(s, pdu.mappedHeight); /* mappedHeight (4 bytes) */
 
 	fprintf(stderr, "RdpGfxRecvMapSurfaceToWindowPdu: surfaceId: %d windowId: 0x%04X mappedWidth: %d mappedHeight: %d\n",
-			pdu.surfaceId, pdu.windowId, pdu.mappedWidth, pdu.mappedHeight);
+			pdu.surfaceId, (int) pdu.windowId, pdu.mappedWidth, pdu.mappedHeight);
+
+	if (context && context->MapSurfaceToWindow)
+	{
+		context->MapSurfaceToWindow(context, &pdu);
+	}
 
 	return 1;
 }
@@ -763,7 +871,6 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			return -1;
 
 		context->handle = (void*) rdpgfx;
-		context->GetVersion = rdpgfx_get_version;
 
 		rdpgfx->iface.pInterface = (void*) context;
 

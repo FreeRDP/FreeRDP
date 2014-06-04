@@ -990,14 +990,12 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 	XImage* image;
 	RFX_MESSAGE* message;
 	xfContext* xfc = (xfContext*) context;
-	RFX_CONTEXT* rfx_context = (RFX_CONTEXT*) xfc->rfx_context;
-	NSC_CONTEXT* nsc_context = (NSC_CONTEXT*) xfc->nsc_context;
 
 	xf_lock_x11(xfc, FALSE);
 
 	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
-		message = rfx_process_message(rfx_context,
+		message = rfx_process_message(xfc->rfx,
 				surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
@@ -1034,11 +1032,11 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		}
 
 		XSetClipMask(xfc->display, xfc->gc, None);
-		rfx_message_free(rfx_context, message);
+		rfx_message_free(xfc->rfx, message);
 	}
 	else if (surface_bits_command->codecID == RDP_CODEC_ID_NSCODEC)
 	{
-		nsc_process_message(nsc_context, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
+		nsc_process_message(xfc->nsc, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
 			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
@@ -1047,7 +1045,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		xfc->bmp_codec_nsc = (BYTE*) realloc(xfc->bmp_codec_nsc,
 				surface_bits_command->width * surface_bits_command->height * 4);
 
-		freerdp_image_flip(nsc_context->BitmapData, xfc->bmp_codec_nsc,
+		freerdp_image_flip(xfc->nsc->BitmapData, xfc->bmp_codec_nsc,
 				surface_bits_command->width, surface_bits_command->height, 32);
 
 		image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
@@ -1060,13 +1058,14 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		free(xfc->bmp_codec_nsc);
 		xfc->bmp_codec_nsc = NULL;
 
-		if (xfc->remote_app != TRUE)
+		if (!xfc->remote_app)
 		{
 			XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, 
 					surface_bits_command->destLeft, surface_bits_command->destTop,
 					surface_bits_command->width, surface_bits_command->height,
 					surface_bits_command->destLeft, surface_bits_command->destTop);
 		}
+
 		xf_gdi_surface_update_frame(xfc,
 			surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height);
