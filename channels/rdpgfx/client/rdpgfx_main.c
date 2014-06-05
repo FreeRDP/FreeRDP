@@ -93,7 +93,7 @@ int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 
 	header.pduLength = RDPGFX_HEADER_SIZE + 2 + (pdu.capsSetCount * RDPGFX_CAPSET_SIZE);
 
-	fprintf(stderr, "RdpGfxSendCapsAdvertisePdu: %d\n", header.pduLength);
+	WLog_Print(gfx->log, WLOG_DEBUG, "SendCapsAdvertisePdu");
 
 	s = Stream_New(NULL, header.pduLength);
 
@@ -125,6 +125,7 @@ int rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	RDPGFX_CAPSET capsSet;
 	UINT32 capsDataLength;
 	RDPGFX_CAPS_CONFIRM_PDU pdu;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
 	pdu.capsSet = &capsSet;
 
@@ -132,7 +133,7 @@ int rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, capsDataLength); /* capsDataLength (4 bytes) */
 	Stream_Read_UINT32(s, capsSet.flags); /* capsData (4 bytes) */
 
-	fprintf(stderr, "RdpGfxRecvCapsConfirmPdu: version: 0x%04X flags: 0x%04X\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvCapsConfirmPdu: version: 0x%04X flags: 0x%04X",
 			capsSet.version, capsSet.flags);
 
 	return 1;
@@ -142,16 +143,14 @@ int rdpgfx_send_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback, RDPGFX_
 {
 	int status;
 	wStream* s;
-	RDPGFX_PLUGIN* gfx;
 	RDPGFX_HEADER header;
-
-	gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_FRAMEACKNOWLEDGE;
 	header.pduLength = RDPGFX_HEADER_SIZE + 12;
 
-	fprintf(stderr, "RdpGfxSendFrameAcknowledgePdu: %d\n", pdu->frameId);
+	WLog_Print(gfx->log, WLOG_DEBUG, "SendFrameAcknowledgePdu: %d", pdu->frameId);
 
 	s = Stream_New(NULL, header.pduLength);
 
@@ -201,7 +200,7 @@ int rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s
 	pad = 340 - (RDPGFX_HEADER_SIZE + 12 + (pdu.monitorCount * 20));
 	Stream_Seek(s, pad); /* pad (total size is 340 bytes) */
 
-	fprintf(stderr, "RdpGfxRecvResetGraphicsPdu: width: %d height: %d count: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvResetGraphicsPdu: width: %d height: %d count: %d",
 			pdu.width, pdu.height, pdu.monitorCount);
 
 	if (context && context->ResetGraphics)
@@ -220,7 +219,7 @@ int rdpgfx_recv_evict_cache_entry_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 
 	Stream_Read_UINT16(s, pdu.cacheSlot); /* cacheSlot (2 bytes) */
 
-	fprintf(stderr, "RdpGfxRecvEvictCacheEntryPdu: cacheSlot: %d\n", pdu.cacheSlot);
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvEvictCacheEntryPdu: cacheSlot: %d", pdu.cacheSlot);
 
 	if (context && context->EvictCacheEntry)
 	{
@@ -249,7 +248,7 @@ int rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 		Stream_Read_UINT16(s, pdu.cacheSlots[index]); /* cacheSlot (2 bytes) */
 	}
 
-	fprintf(stderr, "RdpGfxRecvCacheImportReplyPdu: importedEntriesCount: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvCacheImportReplyPdu: importedEntriesCount: %d",
 			pdu.importedEntriesCount);
 
 	if (context && context->CacheImportReply)
@@ -271,7 +270,7 @@ int rdpgfx_recv_create_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s
 	Stream_Read_UINT16(s, pdu.height); /* height (2 bytes) */
 	Stream_Read_UINT8(s, pdu.pixelFormat); /* RDPGFX_PIXELFORMAT (1 byte) */
 
-	fprintf(stderr, "RdpGfxRecvCreateSurfacePdu: surfaceId: %d width: %d height: %d pixelFormat: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvCreateSurfacePdu: surfaceId: %d width: %d height: %d pixelFormat: 0x%02X",
 			pdu.surfaceId, pdu.width, pdu.height, pdu.pixelFormat);
 
 	if (context && context->CreateSurface)
@@ -290,7 +289,7 @@ int rdpgfx_recv_delete_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s
 
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 
-	fprintf(stderr, "RdpGfxRecvDeleteSurfacePdu: surfaceId: %d\n", pdu.surfaceId);
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvDeleteSurfacePdu: surfaceId: %d", pdu.surfaceId);
 
 	if (context && context->DeleteSurface)
 	{
@@ -309,7 +308,7 @@ int rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, pdu.timestamp); /* timestamp (4 bytes) */
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
 
-	fprintf(stderr, "RdpGfxRecvStartFramePdu: frameId: %d timestamp: 0x%04X\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvStartFramePdu: frameId: %d timestamp: 0x%04X\n",
 			pdu.frameId, pdu.timestamp);
 
 	if (context && context->StartFrame)
@@ -331,7 +330,7 @@ int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
 
-	fprintf(stderr, "RdpGfxRecvEndFramePdu: frameId: %d\n", pdu.frameId);
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvEndFramePdu: frameId: %d\n", pdu.frameId);
 
 	if (context && context->EndFrame)
 	{
@@ -371,8 +370,8 @@ int rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	pdu.bitmapData = Stream_Pointer(s);
 	Stream_Seek(s, pdu.bitmapDataLength);
 
-	fprintf(stderr, "RdpGfxRecvWireToSurface1Pdu: surfaceId: %d codecId: %s (0x%04X) pixelFormat: 0x%04X "
-			"destRect: left: %d top: %d right: %d bottom: %d bitmapDataLength: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvWireToSurface1Pdu: surfaceId: %d codecId: %s (0x%04X) pixelFormat: 0x%04X "
+			"destRect: left: %d top: %d right: %d bottom: %d bitmapDataLength: %d",
 			(int) pdu.surfaceId, rdpgfx_get_codec_id_string(pdu.codecId), pdu.codecId, pdu.pixelFormat,
 			pdu.destRect.left, pdu.destRect.top, pdu.destRect.right, pdu.destRect.bottom,
 			pdu.bitmapDataLength);
@@ -415,8 +414,8 @@ int rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	pdu.bitmapData = Stream_Pointer(s);
 	Stream_Seek(s, pdu.bitmapDataLength);
 
-	fprintf(stderr, "RdpGfxRecvWireToSurface2Pdu: surfaceId: %d codecId: 0x%04X "
-			"codecContextId: %d pixelFormat: 0x%04X bitmapDataLength: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvWireToSurface2Pdu: surfaceId: %d codecId: 0x%04X "
+			"codecContextId: %d pixelFormat: 0x%04X bitmapDataLength: %d",
 			(int) pdu.surfaceId, pdu.codecId, pdu.codecContextId, pdu.pixelFormat, pdu.bitmapDataLength);
 
 	cmd.surfaceId = pdu.surfaceId;
@@ -449,7 +448,7 @@ int rdpgfx_recv_delete_encoding_context_pdu(RDPGFX_CHANNEL_CALLBACK* callback, w
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 	Stream_Read_UINT32(s, pdu.codecContextId); /* codecContextId (4 bytes) */
 
-	fprintf(stderr, "RdpGfxRecvDeleteEncodingContextPdu: surfaceId: %d codecContextId: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvDeleteEncodingContextPdu: surfaceId: %d codecContextId: %d",
 			pdu.surfaceId, pdu.codecContextId);
 
 	if (context && context->DeleteEncodingContext)
@@ -485,7 +484,7 @@ int rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 		rdpgfx_read_rect16(s, fillRect);
 	}
 
-	fprintf(stderr, "RdpGfxRecvSolidFillPdu: surfaceId: %d fillRectCount: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvSolidFillPdu: surfaceId: %d fillRectCount: %d",
 			pdu.surfaceId, pdu.fillRectCount);
 
 	if (context && context->SolidFill)
@@ -522,8 +521,8 @@ int rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 		rdpgfx_read_point16(s, destPt);
 	}
 
-	fprintf(stderr, "RdpGfxRecvSurfaceToSurfacePdu: surfaceIdSrc: %d surfaceIdDest: %d "
-			"left: %d top: %d right: %d bottom: %d destPtsCount: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvSurfaceToSurfacePdu: surfaceIdSrc: %d surfaceIdDest: %d "
+			"left: %d top: %d right: %d bottom: %d destPtsCount: %d",
 			pdu.surfaceIdSrc, pdu.surfaceIdDest,
 			pdu.rectSrc.left, pdu.rectSrc.top, pdu.rectSrc.right, pdu.rectSrc.bottom,
 			pdu.destPtsCount);
@@ -547,8 +546,8 @@ int rdpgfx_recv_surface_to_cache_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream*
 	Stream_Read_UINT16(s, pdu.cacheSlot); /* cacheSlot (2 bytes) */
 	rdpgfx_read_rect16(s, &(pdu.rectSrc)); /* rectSrc (8 bytes ) */
 
-	fprintf(stderr, "RdpGfxRecvSurfaceToCachePdu: surfaceId: %d cacheKey: 0x%08X cacheSlot: %d "
-			"left: %d top: %d right: %d bottom: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvSurfaceToCachePdu: surfaceId: %d cacheKey: 0x%08X cacheSlot: %d "
+			"left: %d top: %d right: %d bottom: %d",
 			pdu.surfaceId, (int) pdu.cacheKey, pdu.cacheSlot,
 			pdu.rectSrc.left, pdu.rectSrc.top,
 			pdu.rectSrc.right, pdu.rectSrc.bottom);
@@ -584,7 +583,7 @@ int rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream*
 		rdpgfx_read_point16(s, destPt);
 	}
 
-	fprintf(stderr, "RdpGfxRecvCacheToSurfacePdu: cacheSlot: %d surfaceId: %d destPtsCount: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RdpGfxRecvCacheToSurfacePdu: cacheSlot: %d surfaceId: %d destPtsCount: %d",
 			pdu.cacheSlot, (int) pdu.surfaceId, pdu.destPtsCount);
 
 	if (context && context->CacheToSurface)
@@ -606,7 +605,7 @@ int rdpgfx_recv_map_surface_to_output_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wSt
 	Stream_Read_UINT32(s, pdu.outputOriginX); /* outputOriginX (4 bytes) */
 	Stream_Read_UINT32(s, pdu.outputOriginY); /* outputOriginY (4 bytes) */
 
-	fprintf(stderr, "RdpGfxRecvMapSurfaceToOutputPdu: surfaceId: %d outputOriginX: %d outputOriginY: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvMapSurfaceToOutputPdu: surfaceId: %d outputOriginX: %d outputOriginY: %d",
 			(int) pdu.surfaceId, pdu.outputOriginX, pdu.outputOriginY);
 
 	if (context && context->MapSurfaceToOutput)
@@ -628,7 +627,7 @@ int rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wSt
 	Stream_Read_UINT32(s, pdu.mappedWidth); /* mappedWidth (4 bytes) */
 	Stream_Read_UINT32(s, pdu.mappedHeight); /* mappedHeight (4 bytes) */
 
-	fprintf(stderr, "RdpGfxRecvMapSurfaceToWindowPdu: surfaceId: %d windowId: 0x%04X mappedWidth: %d mappedHeight: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvMapSurfaceToWindowPdu: surfaceId: %d windowId: 0x%04X mappedWidth: %d mappedHeight: %d",
 			pdu.surfaceId, (int) pdu.windowId, pdu.mappedWidth, pdu.mappedHeight);
 
 	if (context && context->MapSurfaceToWindow)
@@ -644,13 +643,14 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	int status;
 	int beg, end;
 	RDPGFX_HEADER header;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
 	beg = Stream_GetPosition(s);
 
 	rdpgfx_read_header(s, &header);
 
 #if 1
-	printf("cmdId: %s (0x%04X) flags: 0x%04X pduLength: %d\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "cmdId: %s (0x%04X) flags: 0x%04X pduLength: %d",
 			rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId, header.flags, header.pduLength);
 #endif
 
@@ -733,10 +733,8 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	if (end != (beg + header.pduLength))
 	{
-		fprintf(stderr, "Unexpected pdu end: Actual: %d, Expected: %d\n",
+		fprintf(stderr, "Unexpected gfx pdu end: Actual: %d, Expected: %d\n",
 				end, (beg + header.pduLength));
-
-		exit(0);
 
 		Stream_SetPosition(s, (beg + header.pduLength));
 	}
@@ -750,10 +748,8 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	int status = 0;
 	UINT32 DstSize = 0;
 	BYTE* pDstData = NULL;
-	RDPGFX_PLUGIN* gfx = NULL;
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
-
-	gfx = (RDPGFX_PLUGIN*) callback->plugin;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
 	status = zgfx_decompress(gfx->zgfx, pBuffer, cbSize, &pDstData, &DstSize, 0);
 
@@ -778,8 +774,9 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 static int rdpgfx_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
-	fprintf(stderr, "RdpGfxOnOpen\n");
+	WLog_Print(gfx->log, WLOG_DEBUG, "OnOpen");
 
 	rdpgfx_send_caps_advertise_pdu(callback);
 
@@ -789,8 +786,9 @@ static int rdpgfx_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 static int rdpgfx_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
-	fprintf(stderr, "RdpGfxOnClose\n");
+	WLog_Print(gfx->log, WLOG_DEBUG, "OnClose");
 
 	free(callback);
 
@@ -806,6 +804,9 @@ static int rdpgfx_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 
 	callback = (RDPGFX_CHANNEL_CALLBACK*) calloc(1, sizeof(RDPGFX_CHANNEL_CALLBACK));
 
+	if (!callback)
+		return -1;
+
 	callback->iface.OnDataReceived = rdpgfx_on_data_received;
 	callback->iface.OnOpen = rdpgfx_on_open;
 	callback->iface.OnClose = rdpgfx_on_close;
@@ -816,56 +817,46 @@ static int rdpgfx_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 
 	*ppCallback = (IWTSVirtualChannelCallback*) callback;
 
-	fprintf(stderr, "RdpGfxOnNewChannelConnection\n");
-
 	return 0;
 }
 
 static int rdpgfx_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
 	int status;
-	RDPGFX_PLUGIN* rdpgfx = (RDPGFX_PLUGIN*) pPlugin;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) pPlugin;
 
-	rdpgfx->listener_callback = (RDPGFX_LISTENER_CALLBACK*) calloc(1, sizeof(RDPGFX_LISTENER_CALLBACK));
+	gfx->listener_callback = (RDPGFX_LISTENER_CALLBACK*) calloc(1, sizeof(RDPGFX_LISTENER_CALLBACK));
 
-	if (!rdpgfx->listener_callback)
+	if (!gfx->listener_callback)
 		return -1;
 
-	rdpgfx->listener_callback->iface.OnNewChannelConnection = rdpgfx_on_new_channel_connection;
-	rdpgfx->listener_callback->plugin = pPlugin;
-	rdpgfx->listener_callback->channel_mgr = pChannelMgr;
+	gfx->listener_callback->iface.OnNewChannelConnection = rdpgfx_on_new_channel_connection;
+	gfx->listener_callback->plugin = pPlugin;
+	gfx->listener_callback->channel_mgr = pChannelMgr;
 
 	status = pChannelMgr->CreateListener(pChannelMgr, RDPGFX_DVC_CHANNEL_NAME, 0,
-		(IWTSListenerCallback*) rdpgfx->listener_callback, &(rdpgfx->listener));
+		(IWTSListenerCallback*) gfx->listener_callback, &(gfx->listener));
 
-	rdpgfx->listener->pInterface = rdpgfx->iface.pInterface;
+	gfx->listener->pInterface = gfx->iface.pInterface;
 
-	fprintf(stderr, "RdpGfxInitialize: %d\n", status);
+	WLog_Print(gfx->log, WLOG_DEBUG, "Initialize");
 
 	return status;
 }
 
 static int rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 {
-	RDPGFX_PLUGIN* rdpgfx = (RDPGFX_PLUGIN*) pPlugin;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) pPlugin;
 
-	if (rdpgfx->listener_callback)
-		free(rdpgfx->listener_callback);
+	WLog_Print(gfx->log, WLOG_DEBUG, "Terminated");
 
-	zgfx_context_free(rdpgfx->zgfx);
+	if (gfx->listener_callback)
+		free(gfx->listener_callback);
 
-	free(rdpgfx);
+	zgfx_context_free(gfx->zgfx);
 
-	return 0;
-}
+	free(gfx);
 
-/**
- * Channel Client Interface
- */
-
-UINT32 rdpgfx_get_version(RdpgfxClientContext* context)
-{
-	//RDPGFX_PLUGIN* rdpgfx = (RDPGFX_PLUGIN*) context->handle;
 	return 0;
 }
 
@@ -875,37 +866,39 @@ UINT32 rdpgfx_get_version(RdpgfxClientContext* context)
 
 int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	int error = 0;
-	RDPGFX_PLUGIN* rdpgfx;
+	int status = 0;
+	RDPGFX_PLUGIN* gfx;
 	RdpgfxClientContext* context;
 
-	rdpgfx = (RDPGFX_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "rdpgfx");
+	gfx = (RDPGFX_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "rdpgfx");
 
-	if (!rdpgfx)
+	if (!gfx)
 	{
-		rdpgfx = (RDPGFX_PLUGIN*) calloc(1, sizeof(RDPGFX_PLUGIN));
+		gfx = (RDPGFX_PLUGIN*) calloc(1, sizeof(RDPGFX_PLUGIN));
 
-		if (!rdpgfx)
+		if (!gfx)
 			return -1;
 
-		rdpgfx->iface.Initialize = rdpgfx_plugin_initialize;
-		rdpgfx->iface.Connected = NULL;
-		rdpgfx->iface.Disconnected = NULL;
-		rdpgfx->iface.Terminated = rdpgfx_plugin_terminated;
+		gfx->log = WLog_Get("com.freerdp.gfx.client");
+
+		gfx->iface.Initialize = rdpgfx_plugin_initialize;
+		gfx->iface.Connected = NULL;
+		gfx->iface.Disconnected = NULL;
+		gfx->iface.Terminated = rdpgfx_plugin_terminated;
 
 		context = (RdpgfxClientContext*) calloc(1, sizeof(RdpgfxClientContext));
 
 		if (!context)
 			return -1;
 
-		context->handle = (void*) rdpgfx;
+		context->handle = (void*) gfx;
 
-		rdpgfx->iface.pInterface = (void*) context;
+		gfx->iface.pInterface = (void*) context;
 
-		rdpgfx->zgfx = zgfx_context_new(FALSE);
+		gfx->zgfx = zgfx_context_new(FALSE);
 
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpgfx", (IWTSPlugin*) rdpgfx);
+		status = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpgfx", (IWTSPlugin*) gfx);
 	}
 
-	return error;
+	return status;
 }

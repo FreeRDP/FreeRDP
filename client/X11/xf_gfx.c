@@ -238,8 +238,6 @@ int xf_MapSurfaceToWindow(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_WI
 
 void xf_register_graphics_pipeline(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	printf("RegisterGraphicsPipeline\n");
-
 	xfc->gfx = gfx;
 	gfx->custom = (void*) xfc;
 

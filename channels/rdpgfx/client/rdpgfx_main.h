@@ -24,6 +24,8 @@
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
 
+#include <winpr/wlog.h>
+
 #include <freerdp/client/rdpgfx.h>
 
 #include <freerdp/codec/zgfx.h>
@@ -54,6 +56,8 @@ struct _RDPGFX_PLUGIN
 
 	IWTSListener* listener;
 	RDPGFX_LISTENER_CALLBACK* listener_callback;
+
+	wLog* log;
 
 	BOOL ThinClient;
 	BOOL SmallCache;
