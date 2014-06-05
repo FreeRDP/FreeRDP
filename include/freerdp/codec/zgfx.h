@@ -35,6 +35,7 @@ struct _ZGFX_CONTEXT
 	BYTE* pbInputCurrent;
 	BYTE* pbInputEnd;
 
+	UINT32 bits;
 	UINT32 cBitsRemaining;
 	UINT32 BitsCurrent;
 	UINT32 cBitsCurrent;

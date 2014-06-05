@@ -83,29 +83,17 @@ static const ZGFX_TOKEN ZGFX_TOKEN_TABLE[] =
 	{ 0 }
 };
 
-UINT32 zgfx_GetBits(ZGFX_CONTEXT* zgfx, UINT32 bitCount)
-{
-	UINT32 result;
-
-	while (zgfx->cBitsCurrent < bitCount)
-	{
-		zgfx->BitsCurrent <<= 8;
-
-		if (zgfx->pbInputCurrent < zgfx->pbInputEnd)
-			zgfx->BitsCurrent += *(zgfx->pbInputCurrent)++;
-
-		zgfx->cBitsCurrent += 8;
-	}
-
-	zgfx->cBitsRemaining -= bitCount;
-	zgfx->cBitsCurrent -= bitCount;
-
-	result = zgfx->BitsCurrent >> zgfx->cBitsCurrent;
-
-	zgfx->BitsCurrent &= ((1 << zgfx->cBitsCurrent) - 1);
-
-	return result;
-}
+#define zgfx_GetBits(_zgfx, _nbits) \
+	while (_zgfx->cBitsCurrent < _nbits) { \
+		_zgfx->BitsCurrent <<= 8; \
+		if (_zgfx->pbInputCurrent < _zgfx->pbInputEnd) \
+			_zgfx->BitsCurrent += *(_zgfx->pbInputCurrent)++; \
+		_zgfx->cBitsCurrent += 8; \
+	} \
+	_zgfx->cBitsRemaining -= _nbits; \
+	_zgfx->cBitsCurrent -= _nbits; \
+	_zgfx->bits = _zgfx->BitsCurrent >> _zgfx->cBitsCurrent; \
+	_zgfx->BitsCurrent &= ((1 << _zgfx->cBitsCurrent) - 1);
 
 int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegment)
 {
@@ -116,7 +104,6 @@ int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegmen
 	int haveBits;
 	int inPrefix;
 	UINT32 raw;
-	UINT32 bits;
 	UINT32 count;
 	UINT32 distance;
 	UINT32 prevIndex;
@@ -151,6 +138,7 @@ int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegmen
 	zgfx->pbInputCurrent = pbSegment;
 	zgfx->pbInputEnd = &pbSegment[cbSegment - 1];
 
+	/* NumberOfBitsToDecode = ((NumberOfBytesToDecode - 1) * 8) - ValueOfLastByte */
 	zgfx->cBitsRemaining = 8 * (cbSegment - 1) - *zgfx->pbInputEnd;
 	zgfx->cBitsCurrent = 0;
 	zgfx->BitsCurrent = 0;
@@ -164,8 +152,8 @@ int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegmen
 		{
 			while (haveBits < ZGFX_TOKEN_TABLE[opIndex].prefixLength)
 			{
-				bits = zgfx_GetBits(zgfx, 1);
-				inPrefix = (inPrefix << 1) + bits;
+				zgfx_GetBits(zgfx, 1);
+				inPrefix = (inPrefix << 1) + zgfx->bits;
 				haveBits++;
 			}
 
@@ -173,8 +161,8 @@ int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegmen
 			{
 				if (ZGFX_TOKEN_TABLE[opIndex].tokenType == 0)
 				{
-					bits = zgfx_GetBits(zgfx, ZGFX_TOKEN_TABLE[opIndex].valueBits);
-					c = (BYTE) (ZGFX_TOKEN_TABLE[opIndex].valueBase + bits);
+					zgfx_GetBits(zgfx, ZGFX_TOKEN_TABLE[opIndex].valueBits);
+					c = (BYTE) (ZGFX_TOKEN_TABLE[opIndex].valueBase + zgfx->bits);
 
 					zgfx->HistoryBuffer[zgfx->HistoryIndex] = c;
 
@@ -185,14 +173,14 @@ int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegmen
 				}
 				else
 				{
-					bits = zgfx_GetBits(zgfx, ZGFX_TOKEN_TABLE[opIndex].valueBits);
-					distance = ZGFX_TOKEN_TABLE[opIndex].valueBase + bits;
+					zgfx_GetBits(zgfx, ZGFX_TOKEN_TABLE[opIndex].valueBits);
+					distance = ZGFX_TOKEN_TABLE[opIndex].valueBase + zgfx->bits;
 
 					if (distance != 0)
 					{
-						bits = zgfx_GetBits(zgfx, 1);
+						zgfx_GetBits(zgfx, 1);
 
-						if (bits == 0)
+						if (zgfx->bits == 0)
 						{
 							count = 3;
 						}
@@ -201,18 +189,18 @@ int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegmen
 							count = 4;
 							extra = 2;
 
-							bits = zgfx_GetBits(zgfx, 1);
+							zgfx_GetBits(zgfx, 1);
 
-							while (bits == 1)
+							while (zgfx->bits == 1)
 							{
 								count *= 2;
 								extra++;
 
-								bits = zgfx_GetBits(zgfx, 1);
+								zgfx_GetBits(zgfx, 1);
 							}
 
-							bits = zgfx_GetBits(zgfx, extra);
-							count += bits;
+							zgfx_GetBits(zgfx, extra);
+							count += zgfx->bits;
 						}
 
 						prevIndex = zgfx->HistoryIndex + zgfx->HistoryBufferSize - distance;
@@ -236,8 +224,8 @@ int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegmen
 					}
 					else
 					{
-						bits = zgfx_GetBits(zgfx, 15);
-						count = bits;
+						zgfx_GetBits(zgfx, 15);
+						count = zgfx->bits;
 
 						zgfx->cBitsRemaining -= zgfx->cBitsCurrent;
 						zgfx->cBitsCurrent = 0;
