@@ -63,7 +63,7 @@ int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_CAPSADVERTISE;
 
-	pdu.capsSetCount = 2;
+	pdu.capsSetCount = 1;
 	pdu.capsSets = (RDPGFX_CAPSET*) capsSets;
 
 	capsSet = &capsSets[0];
@@ -172,6 +172,7 @@ int rdpgfx_send_frame_acknowledge_pdu(RDPGFX_CHANNEL_CALLBACK* callback, RDPGFX_
 
 int rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
+	int pad;
 	UINT32 index;
 	MONITOR_DEF* monitor;
 	RDPGFX_RESET_GRAPHICS_PDU pdu;
@@ -197,7 +198,8 @@ int rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s
 		Stream_Read_UINT32(s, monitor->flags); /* flags (4 bytes) */
 	}
 
-	/* pad (total size is 340 bytes) */
+	pad = 340 - (RDPGFX_HEADER_SIZE + 12 + (pdu.monitorCount * 20));
+	Stream_Seek(s, pad); /* pad (total size is 340 bytes) */
 
 	fprintf(stderr, "RdpGfxRecvResetGraphicsPdu: width: %d height: %d count: %d\n",
 			pdu.width, pdu.height, pdu.monitorCount);
@@ -367,6 +369,7 @@ int rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	Stream_Read_UINT32(s, pdu.bitmapDataLength); /* bitmapDataLength (4 bytes) */
 
 	pdu.bitmapData = Stream_Pointer(s);
+	Stream_Seek(s, pdu.bitmapDataLength);
 
 	fprintf(stderr, "RdpGfxRecvWireToSurface1Pdu: surfaceId: %d codecId: %s (0x%04X) pixelFormat: 0x%04X "
 			"destRect: left: %d top: %d right: %d bottom: %d bitmapDataLength: %d\n",
@@ -376,18 +379,21 @@ int rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 
 	cmd.surfaceId = pdu.surfaceId;
 	cmd.codecId = pdu.codecId;
-	cmd.codecContextId = 0;
-	cmd.pixelFormat = pdu.pixelFormat;
-	rdpgfx_copy_rect16(&(cmd.destRect), &(pdu.destRect));
-	cmd.bitmapDataLength = pdu.bitmapDataLength;
-	cmd.bitmapData = pdu.bitmapData;
+	cmd.contextId = 0;
+	cmd.format = pdu.pixelFormat;
+	cmd.left = pdu.destRect.left;
+	cmd.top = pdu.destRect.top;
+	cmd.right = pdu.destRect.right;
+	cmd.bottom = pdu.destRect.bottom;
+	cmd.width = cmd.right - cmd.left + 1;
+	cmd.height = cmd.bottom - cmd.top + 1;
+	cmd.length = pdu.bitmapDataLength;
+	cmd.data = pdu.bitmapData;
 
 	if (context && context->SurfaceCommand)
 	{
 		context->SurfaceCommand(context, &cmd);
 	}
-
-	rdpgfx_decode(gfx, &cmd);
 
 	return 1;
 }
@@ -407,6 +413,7 @@ int rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	Stream_Read_UINT32(s, pdu.bitmapDataLength); /* bitmapDataLength (4 bytes) */
 
 	pdu.bitmapData = Stream_Pointer(s);
+	Stream_Seek(s, pdu.bitmapDataLength);
 
 	fprintf(stderr, "RdpGfxRecvWireToSurface2Pdu: surfaceId: %d codecId: 0x%04X "
 			"codecContextId: %d pixelFormat: 0x%04X bitmapDataLength: %d\n",
@@ -414,18 +421,21 @@ int rdpgfx_recv_wire_to_surface_2_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 
 	cmd.surfaceId = pdu.surfaceId;
 	cmd.codecId = pdu.codecId;
-	cmd.codecContextId = pdu.codecContextId;
-	cmd.pixelFormat = pdu.pixelFormat;
-	ZeroMemory(&(cmd.destRect), sizeof(RDPGFX_RECT16));
-	cmd.bitmapDataLength = pdu.bitmapDataLength;
-	cmd.bitmapData = pdu.bitmapData;
+	cmd.contextId = pdu.codecContextId;
+	cmd.format = pdu.pixelFormat;
+	cmd.left = 0;
+	cmd.top = 0;
+	cmd.right = 0;
+	cmd.bottom = 0;
+	cmd.width = 0;
+	cmd.height = 0;
+	cmd.length = pdu.bitmapDataLength;
+	cmd.data = pdu.bitmapData;
 
 	if (context && context->SurfaceCommand)
 	{
 		context->SurfaceCommand(context, &cmd);
 	}
-
-	rdpgfx_decode(gfx, &cmd);
 
 	return 1;
 }
@@ -632,7 +642,10 @@ int rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wSt
 int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	int status;
+	int beg, end;
 	RDPGFX_HEADER header;
+
+	beg = Stream_GetPosition(s);
 
 	rdpgfx_read_header(s, &header);
 
@@ -716,7 +729,19 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 			break;
 	}
 
-	return 0;
+	end = Stream_GetPosition(s);
+
+	if (end != (beg + header.pduLength))
+	{
+		fprintf(stderr, "Unexpected pdu end: Actual: %d, Expected: %d\n",
+				end, (beg + header.pduLength));
+
+		exit(0);
+
+		Stream_SetPosition(s, (beg + header.pduLength));
+	}
+
+	return status;
 }
 
 static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* pBuffer)
@@ -740,7 +765,10 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 
 	s = Stream_New(pDstData, DstSize);
 
-	status = rdpgfx_recv_pdu(callback, s);
+	while (Stream_GetPosition(s) < Stream_Length(s))
+	{
+		status = rdpgfx_recv_pdu(callback, s);
+	}
 
 	Stream_Free(s, TRUE);
 

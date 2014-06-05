@@ -67,45 +67,31 @@ int xf_EndFrame(RdpgfxClientContext* context, RDPGFX_END_FRAME_PDU* endFrame)
 int xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	BYTE* data;
-	UINT32 width;
-	UINT32 height;
 	XImage* image;
-	RDPGFX_RECT16* destRect;
-
-	destRect = &(cmd->destRect);
-
-	width = destRect->right - destRect->left + 1;
-	height = destRect->bottom - destRect->top + 1;
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 
-	/* Validate that the data received is large enough */
-	if ((width * height * 4) <= cmd->bitmapDataLength)
+	data = (BYTE*) malloc(cmd->width * cmd->height * 4);
+
+	freerdp_image_flip(cmd->data, data, cmd->width, cmd->height, 32);
+
+	image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0, (char*) data, cmd->width, cmd->height, 32, 0);
+
+	XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
+			cmd->left, cmd->top, cmd->width, cmd->height);
+
+	XFree(image);
+
+	free(data);
+
+	if (!xfc->remote_app)
 	{
-		data = (BYTE*) malloc(width * height * 4);
-
-		freerdp_image_flip(cmd->bitmapData, data, width, height, 32);
-
-		image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0, (char*) data, width, height, 32, 0);
-
-		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
-				destRect->left, destRect->top, width, height);
-
-		XFree(image);
-
-		free(data);
-
-		if (!xfc->remote_app)
-		{
-			XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc,
-					destRect->left, destRect->top, width, height, destRect->left, destRect->top);
-		}
-
-		//xf_gdi_surface_update_frame(xfc, destRect->left, destRect->top, width, height);
-
-		XSetClipMask(xfc->display, xfc->gc, None);
+		XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc,
+				cmd->left, cmd->top, cmd->width, cmd->height, cmd->left, cmd->top);
 	}
+
+	XSetClipMask(xfc->display, xfc->gc, None);
 
 	return 1;
 }
@@ -115,11 +101,8 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 	int i, tx, ty;
 	XImage* image;
 	RFX_MESSAGE* message;
-	RDPGFX_RECT16* destRect;
 
-	destRect = &(cmd->destRect);
-
-	message = rfx_process_message(xfc->rfx, cmd->bitmapData, cmd->bitmapDataLength);
+	message = rfx_process_message(xfc->rfx, cmd->data, cmd->length);
 
 	if (!message)
 		return -1;
@@ -127,18 +110,16 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 
-	XSetClipRectangles(xfc->display, xfc->gc,
-			destRect->left, destRect->top,
+	XSetClipRectangles(xfc->display, xfc->gc, cmd->left, cmd->top,
 			(XRectangle*) message->rects, message->numRects, YXBanded);
 
-	/* Draw the tiles to primary surface, each is 64x64. */
 	for (i = 0; i < message->numTiles; i++)
 	{
 		image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
 			(char*) message->tiles[i]->data, 64, 64, 32, 0);
 
-		tx = message->tiles[i]->x + destRect->left;
-		ty = message->tiles[i]->y + destRect->top;
+		tx = message->tiles[i]->x + cmd->left;
+		ty = message->tiles[i]->y + cmd->top;
 
 		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0, tx, ty, 64, 64);
 		XFree(image);
@@ -147,12 +128,13 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 	/* Copy the updated region from backstore to the window. */
 	for (i = 0; i < message->numRects; i++)
 	{
-		tx = message->rects[i].x + destRect->left;
-		ty = message->rects[i].y + destRect->top;
+		tx = message->rects[i].x + cmd->left;
+		ty = message->rects[i].y + cmd->top;
 
 		if (!xfc->remote_app)
 		{
-			XCopyArea(xfc->display, xfc->primary, xfc->drawable, xfc->gc, tx, ty, message->rects[i].width, message->rects[i].height, tx, ty);
+			XCopyArea(xfc->display, xfc->primary, xfc->drawable, xfc->gc, tx, ty,
+					message->rects[i].width, message->rects[i].height, tx, ty);
 		}
 	}
 
@@ -166,8 +148,6 @@ int xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status = 1;
 	xfContext* xfc = (xfContext*) context->custom;
-
-	printf("xf_SurfaceCommand: context: %p xfc: %p cmd: %p\n", context, xfc, cmd);
 
 	switch (cmd->codecId)
 	{

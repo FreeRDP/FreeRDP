@@ -139,11 +139,6 @@ int rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16)
 	return 1;
 }
 
-void rdpgfx_copy_rect16(RDPGFX_RECT16* dst, RDPGFX_RECT16* src)
-{
-	CopyMemory(dst, src, sizeof(RDPGFX_RECT16));
-}
-
 int rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
 {
 	Stream_Read_UINT8(s, color32->B); /* B (1 byte) */

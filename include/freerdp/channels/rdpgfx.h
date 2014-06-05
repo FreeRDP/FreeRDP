@@ -165,17 +165,20 @@ struct _RDPGFX_WIRE_TO_SURFACE_PDU_2
 };
 typedef struct _RDPGFX_WIRE_TO_SURFACE_PDU_2 RDPGFX_WIRE_TO_SURFACE_PDU_2;
 
-/* RDPGFX_SURFACE_COMMAND encapsulates both RDPGFX_WIRE_TO_SURFACE_PDU 1/2 */
-
 struct _RDPGFX_SURFACE_COMMAND
 {
-	UINT16 surfaceId;
-	UINT16 codecId;
-	UINT32 codecContextId;
-	RDPGFX_PIXELFORMAT pixelFormat;
-	RDPGFX_RECT16 destRect;
-	UINT32 bitmapDataLength;
-	BYTE* bitmapData;
+	UINT32 surfaceId;
+	UINT32 codecId;
+	UINT32 contextId;
+	UINT32 format;
+	UINT32 left;
+	UINT32 top;
+	UINT32 right;
+	UINT32 bottom;
+	UINT32 width;
+	UINT32 height;
+	UINT32 length;
+	BYTE* data;
 };
 typedef struct _RDPGFX_SURFACE_COMMAND RDPGFX_SURFACE_COMMAND;
 

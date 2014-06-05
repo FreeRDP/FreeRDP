@@ -36,7 +36,6 @@ int rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16);
 
 int rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16);
 int rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16);
-void rdpgfx_copy_rect16(RDPGFX_RECT16* dst, RDPGFX_RECT16* src);
 
 int rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32);
 int rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32);
