@@ -87,9 +87,6 @@ int xf_SurfaceUpdate(xfContext* xfc)
 
 		printf("xf_SurfaceUpdate: x: %d y: %d width: %d height: %d\n",
 				extents->left, extents->top, width, height);
-
-		XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc,
-				extents->left, extents->top, width, height, extents->left, extents->top);
 	}
 	else
 	{
@@ -97,6 +94,8 @@ int xf_SurfaceUpdate(xfContext* xfc)
 	}
 
 	region16_clear(&(xfc->invalidRegion));
+
+	XSync(xfc->display, True);
 
 	return 1;
 }
@@ -142,7 +141,7 @@ int xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context,
 
 	image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0, (char*) data, cmd->width, cmd->height, 32, 0);
 
-	XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0, cmd->left, cmd->top, cmd->width, cmd->height);
+	XPutImage(xfc->display, xfc->drawing, xfc->gc, image, 0, 0, cmd->left, cmd->top, cmd->width, cmd->height);
 
 	XFree(image);
 
@@ -220,7 +219,7 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 		image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
 			(char*) tile->data, 64, 64, 32, 0);
 
-		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
+		XPutImage(xfc->display, xfc->drawable, xfc->gc, image, 0, 0,
 				cmd->left + tile->x, cmd->top + tile->y, 64, 64);
 
 		XFree(image);
