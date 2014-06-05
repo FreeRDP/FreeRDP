@@ -259,6 +259,9 @@ int static_mutex_lock(volatile HANDLE* static_mutex)
 
 /* Not available in XP */
 
+// This can be an intrinsic on win32, so we must ifndef here or we'll get:
+// "error C2169: intrinsic function, cannot be defined"
+#ifndef InterlockedCompareExchange64
 LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
 {
 	LONGLONG previousValue = 0;
@@ -274,6 +277,7 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG E
 
 	return previousValue;
 }
+#endif
 
 #elif ANDROID || (defined(__GNUC__) && !defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8))
 

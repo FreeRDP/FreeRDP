@@ -119,7 +119,7 @@ static void sample_process_terminate(rdpSvcPlugin* plugin)
 
 #define VirtualChannelEntry	sample_VirtualChannelEntry
 
-int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
+int VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	samplePlugin* _p;
 

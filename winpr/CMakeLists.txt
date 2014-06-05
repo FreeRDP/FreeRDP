@@ -67,9 +67,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_EXPORTS")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h.in 
-	${CMAKE_CURRENT_BINARY_DIR}/include/winpr/config.h)
-
 add_subdirectory(include)
 
 add_subdirectory(libwinpr)

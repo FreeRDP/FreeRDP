@@ -156,7 +156,11 @@ WINPR_API LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Excha
 
 #endif /* _WIN32 */
 
+// This can be an intrinsic on win32, so we must ifndef here or we'll get:
+// "error C2169: intrinsic function, cannot be defined"
+#ifndef InterlockedCompareExchange64
 WINPR_API LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand);
+#endif
 
 /* Doubly-Linked List */
 
