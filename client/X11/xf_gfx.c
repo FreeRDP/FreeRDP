@@ -306,11 +306,16 @@ int xf_DeleteEncodingContext(RdpgfxClientContext* context, RDPGFX_DELETE_ENCODIN
 
 int xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
+	printf("xf_CreateSurface: surfaceId: %d width: %d height: %d format: 0x%02X\n",
+			createSurface->surfaceId, createSurface->width, createSurface->height, createSurface->pixelFormat);
+
 	return 1;
 }
 
 int xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
+	printf("xf_DeleteSurface: surfaceId: %d\n", deleteSurface->surfaceId);
+
 	return 1;
 }
 
