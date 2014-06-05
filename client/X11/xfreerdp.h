@@ -34,6 +34,7 @@ typedef struct xf_context xfContext;
 #include <freerdp/constants.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/region.h>
 
 struct xf_WorkArea
 {
@@ -110,6 +111,7 @@ struct xf_context
 
 	HGDI_DC hdc;
 	BYTE* primary_buffer;
+	REGION16 invalidRegion;
 
 	BOOL frame_begin;
 	UINT16 frame_x1;

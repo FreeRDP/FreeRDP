@@ -51,6 +51,8 @@ int xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* re
 	xfc->nsc->height = resetGraphics->height;
 	nsc_context_set_pixel_format(xfc->nsc, RDP_PIXEL_FORMAT_B8G8R8A8);
 
+	region16_init(&(xfc->invalidRegion));
+
 	return 1;
 }
 
@@ -61,6 +63,23 @@ int xf_StartFrame(RdpgfxClientContext* context, RDPGFX_START_FRAME_PDU* startFra
 
 int xf_EndFrame(RdpgfxClientContext* context, RDPGFX_END_FRAME_PDU* endFrame)
 {
+	UINT16 width, height;
+	const RECTANGLE_16* extents;
+	xfContext* xfc = (xfContext*) context->custom;
+
+	if (!region16_is_empty(&(xfc->invalidRegion)))
+	{
+		extents = region16_extents(&(xfc->invalidRegion));
+
+		width = extents->right - extents->left;
+		height = extents->bottom - extents->top;
+
+		XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc,
+				extents->left, extents->top, width, height, extents->left, extents->top);
+
+		region16_clear(&(xfc->invalidRegion));
+	}
+
 	return 1;
 }
 
@@ -68,6 +87,7 @@ int xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context,
 {
 	BYTE* data;
 	XImage* image;
+	RECTANGLE_16 invalidRect;
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
@@ -78,18 +98,18 @@ int xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context,
 
 	image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0, (char*) data, cmd->width, cmd->height, 32, 0);
 
-	XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
-			cmd->left, cmd->top, cmd->width, cmd->height);
+	XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0, cmd->left, cmd->top, cmd->width, cmd->height);
 
 	XFree(image);
 
 	free(data);
 
-	if (!xfc->remote_app)
-	{
-		XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc,
-				cmd->left, cmd->top, cmd->width, cmd->height, cmd->left, cmd->top);
-	}
+	invalidRect.left = cmd->left;
+	invalidRect.top = cmd->top;
+	invalidRect.right = cmd->right;
+	invalidRect.bottom = cmd->bottom;
+
+	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
 
 	XSetClipMask(xfc->display, xfc->gc, None);
 
@@ -101,6 +121,7 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 	int i, tx, ty;
 	XImage* image;
 	RFX_MESSAGE* message;
+	RECTANGLE_16 invalidRect;
 
 	message = rfx_process_message(xfc->rfx, cmd->data, cmd->length);
 
@@ -125,22 +146,33 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 		XFree(image);
 	}
 
-	/* Copy the updated region from backstore to the window. */
 	for (i = 0; i < message->numRects; i++)
 	{
 		tx = message->rects[i].x + cmd->left;
 		ty = message->rects[i].y + cmd->top;
 
-		if (!xfc->remote_app)
-		{
-			XCopyArea(xfc->display, xfc->primary, xfc->drawable, xfc->gc, tx, ty,
-					message->rects[i].width, message->rects[i].height, tx, ty);
-		}
+		invalidRect.left = tx;
+		invalidRect.top = ty;
+		invalidRect.right = tx + message->rects[i].width - 1;
+		invalidRect.bottom = ty + message->rects[i].height - 1;
+
+		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
 	}
 
-	XSetClipMask(xfc->display, xfc->gc, None);
 	rfx_message_free(xfc->rfx, message);
 
+	XSetClipMask(xfc->display, xfc->gc, None);
+
+	return 1;
+}
+
+int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+{
+	return 1;
+}
+
+int xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+{
 	return 1;
 }
 
@@ -160,9 +192,11 @@ int xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 			break;
 
 		case RDPGFX_CODECID_CLEARCODEC:
+			status = xf_SurfaceCommand_ClearCodec(xfc, context, cmd);
 			break;
 
 		case RDPGFX_CODECID_PLANAR:
+			status = xf_SurfaceCommand_Planar(xfc, context, cmd);
 			break;
 
 		case RDPGFX_CODECID_H264:
@@ -198,6 +232,51 @@ int xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* de
 
 int xf_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill)
 {
+	UINT16 index;
+	UINT32 color;
+	BYTE a, r, g, b;
+	XRectangle* xrects;
+	RDPGFX_RECT16* rect;
+	RECTANGLE_16 invalidRect;
+	xfContext* xfc = (xfContext*) context->custom;
+
+	b = solidFill->fillPixel.B;
+	g = solidFill->fillPixel.G;
+	r = solidFill->fillPixel.R;
+	a = solidFill->fillPixel.XA;
+
+	color = ARGB32(a, r, g, b);
+
+	xrects = (XRectangle*) malloc(solidFill->fillRectCount * sizeof(XRectangle));
+
+	if (!xrects)
+		return -1;
+
+	for (index = 0; index < solidFill->fillRectCount; index++)
+	{
+		rect = &(solidFill->fillRects[index]);
+
+		xrects->x = rect->left;
+		xrects->y = rect->top;
+		xrects->width = rect->right - rect->left + 1;
+		xrects->height = rect->bottom - rect->top + 1;
+
+		invalidRect.left = rect->left;
+		invalidRect.top = rect->top;
+		invalidRect.right = rect->right;
+		invalidRect.bottom = rect->bottom;
+
+		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+	}
+
+	XSetFunction(xfc->display, xfc->gc, GXcopy);
+	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
+	XSetForeground(xfc->display, xfc->gc, color);
+
+	XFillRectangles(xfc->display, xfc->drawing, xfc->gc, xrects, solidFill->fillRectCount);
+
+	free(xrects);
+
 	return 1;
 }
 
