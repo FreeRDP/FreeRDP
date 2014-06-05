@@ -343,9 +343,8 @@ int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	ack.frameId = pdu.frameId;
 	ack.totalFramesDecoded = gfx->TotalDecodedFrames;
 
-	ack.queueDepth = SUSPEND_FRAME_ACKNOWLEDGEMENT;
-	//ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
-	//ack.queueDepth = gfx->UnacknowledgedFrames;
+	//ack.queueDepth = SUSPEND_FRAME_ACKNOWLEDGEMENT;
+	ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
 
 	rdpgfx_send_frame_acknowledge_pdu(callback, &ack);
 

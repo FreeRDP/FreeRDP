@@ -189,7 +189,7 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 	y = event->xexpose.y;
 	w = event->xexpose.width;
 	h = event->xexpose.height;
-	
+
 	if (!app)
 	{
 		if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
@@ -199,9 +199,7 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 		}
 		else
 		{
-			XCopyArea(xfc->display, xfc->primary,
-				  xfc->window->handle, xfc->gc, x, y, w,
-				  h, x, y);
+			XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
 		}
 	}
 	else
