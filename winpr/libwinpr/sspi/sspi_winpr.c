@@ -507,6 +507,10 @@ void sspi_ContextBufferFree(void* contextBuffer)
 	}
 }
 
+/**
+ * Standard SSPI API
+ */
+
 /* Package Management */
 
 SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesW(ULONG* pcPackages, PSecPkgInfoW* ppPackageInfo)
@@ -992,7 +996,12 @@ SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityContextToken(PCtxtHandle phContext,
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributes(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
+SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
+{
+	return SEC_E_OK;
+}
+
+SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
 {
 	return SEC_E_OK;
 }
@@ -1129,7 +1138,7 @@ SecurityFunctionTableA winpr_SecurityFunctionTableA =
 	winpr_QuerySecurityContextToken, /* QuerySecurityContextToken */
 	winpr_EncryptMessage, /* EncryptMessage */
 	winpr_DecryptMessage, /* DecryptMessage */
-	winpr_SetContextAttributes, /* SetContextAttributes */
+	winpr_SetContextAttributesA, /* SetContextAttributes */
 };
 
 SecurityFunctionTableW winpr_SecurityFunctionTableW =
@@ -1161,5 +1170,5 @@ SecurityFunctionTableW winpr_SecurityFunctionTableW =
 	winpr_QuerySecurityContextToken, /* QuerySecurityContextToken */
 	winpr_EncryptMessage, /* EncryptMessage */
 	winpr_DecryptMessage, /* DecryptMessage */
-	winpr_SetContextAttributes, /* SetContextAttributes */
+	winpr_SetContextAttributesW, /* SetContextAttributes */
 };

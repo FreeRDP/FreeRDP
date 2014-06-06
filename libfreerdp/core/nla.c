@@ -85,11 +85,7 @@
 #define WITH_DEBUG_CREDSSP
 #endif
 
-#ifdef WITH_NATIVE_SSPI
 #define NLA_PKG_NAME	NTLMSP_NAME
-#else
-#define NLA_PKG_NAME	NTLMSP_NAME
-#endif
 
 #define TERMSRV_SPN_PREFIX	"TERMSRV/"
 
@@ -267,24 +263,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	if (credssp_ntlm_client_init(credssp) == 0)
 		return 0;
 
-#ifdef WITH_NATIVE_SSPI
-	{
-		HMODULE hSSPI;
-		INIT_SECURITY_INTERFACE InitSecurityInterface;
-		PSecurityFunctionTable pSecurityInterface = NULL;
-
-		hSSPI = LoadLibrary(_T("secur32.dll"));
-
-#ifdef UNICODE
-		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
-#else
-		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
-#endif
-		credssp->table = (*InitSecurityInterface)();
-	}
-#else
 	credssp->table = InitSecurityInterface();
-#endif
 
 	status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &pPackageInfo);
 
@@ -469,11 +448,6 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	if (credssp_ntlm_server_init(credssp) == 0)
 		return 0;
 
-#ifdef WITH_NATIVE_SSPI
-	if (!credssp->SspiModule)
-		credssp->SspiModule = _tcsdup(_T("secur32.dll"));
-#endif
-
 	if (credssp->SspiModule)
 	{
 		HMODULE hSSPI;
@@ -495,12 +469,10 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		credssp->table = (*pInitSecurityInterface)();
 	}
-#ifndef WITH_NATIVE_SSPI
 	else
 	{
 		credssp->table = InitSecurityInterface();
 	}
-#endif
 
 	status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &pPackageInfo);
 
