@@ -29,7 +29,22 @@
 
 #include <wincrypt.h>
 
-#else
+#endif
+
+#ifndef ALG_TYPE_RESERVED7
+#define ALG_TYPE_RESERVED7		(7 << 9)
+#endif
+
+#if (NTDDI_VERSION <= 0x05010200)
+#define ALG_SID_SHA_256			12
+#define ALG_SID_SHA_384			13
+#define ALG_SID_SHA_512			14
+#define CALG_SHA_256			(ALG_CLASS_HASH | ALG_TYPE_ANY | ALG_SID_SHA_256)
+#define CALG_SHA_384			(ALG_CLASS_HASH | ALG_TYPE_ANY | ALG_SID_SHA_384)
+#define CALG_SHA_512			(ALG_CLASS_HASH | ALG_TYPE_ANY | ALG_SID_SHA_512)
+#endif
+
+#ifndef _WIN32
 
 /* ncrypt.h */
 
@@ -60,7 +75,6 @@ typedef ULONG_PTR NCRYPT_SECRET_HANDLE;
 #define ALG_TYPE_STREAM			(4 << 9)
 #define ALG_TYPE_DH			(5 << 9)
 #define ALG_TYPE_SECURECHANNEL		(6 << 9)
-#define ALG_TYPE_RESERVED7		(7 << 9)
 
 #define ALG_SID_ANY			(0)
 

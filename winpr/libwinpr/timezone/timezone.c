@@ -59,7 +59,7 @@ BOOL TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZoneInformati
 
 #endif
 
-#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600)) /* Windows Vista */
+#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0501)) /* Windows Vista */
 
 DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInformation)
 {

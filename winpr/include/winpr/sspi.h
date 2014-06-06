@@ -2,7 +2,7 @@
  * WinPR: Windows Portable Runtime
  * Security Support Provider Interface (SSPI)
  *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,6 @@
 #ifndef WINPR_SSPI_H
 #define WINPR_SSPI_H
 
-#include <winpr/config.h>
-
-#include <wchar.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/windows.h>
@@ -35,18 +32,9 @@
 #include <tchar.h>
 #include <winerror.h>
 
-#ifdef WITH_NATIVE_SSPI
 #define SECURITY_WIN32
 #include <sspi.h>
 #include <security.h>
-#else
-#define WINPR_SSPI
-#define SEC_ENTRY __stdcall
-#endif
-
-#else
-
-#define WINPR_SSPI
 
 #endif
 

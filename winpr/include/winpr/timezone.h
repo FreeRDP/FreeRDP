@@ -62,7 +62,7 @@ WINPR_API BOOL TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZon
 
 #endif
 
-#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600)) /* Windows Vista */
+#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0501)) /* Windows Vista */
 
 WINPR_API DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInformation);
 WINPR_API BOOL SetDynamicTimeZoneInformation(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation);
