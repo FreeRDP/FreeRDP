@@ -122,7 +122,7 @@ typedef struct _CONTEXT_BUFFER_ALLOC_TABLE CONTEXT_BUFFER_ALLOC_TABLE;
 
 CONTEXT_BUFFER_ALLOC_TABLE ContextBufferAllocTable;
 
-void sspi_ContextBufferAllocTableNew()
+int sspi_ContextBufferAllocTableNew()
 {
 	size_t size;
 
@@ -132,22 +132,39 @@ void sspi_ContextBufferAllocTableNew()
 
 	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
 
-	ContextBufferAllocTable.entries = malloc(size);
-	ZeroMemory(ContextBufferAllocTable.entries, size);
+	ContextBufferAllocTable.entries = (CONTEXT_BUFFER_ALLOC_ENTRY*) calloc(1, size);
+
+	if (!ContextBufferAllocTable.entries)
+		return -1;
+
+	return 1;
 }
 
-void sspi_ContextBufferAllocTableGrow()
+int sspi_ContextBufferAllocTableGrow()
 {
 	size_t size;
+	CONTEXT_BUFFER_ALLOC_ENTRY* entries;
 	ContextBufferAllocTable.cEntries = 0;
 	ContextBufferAllocTable.cMaxEntries *= 2;
 
 	size = sizeof(CONTEXT_BUFFER_ALLOC_ENTRY) * ContextBufferAllocTable.cMaxEntries;
-	if (!size)
-		return;
 
-	ContextBufferAllocTable.entries = realloc(ContextBufferAllocTable.entries, size);
+	if (!size)
+		return -1;
+
+	entries = (CONTEXT_BUFFER_ALLOC_ENTRY*) realloc(ContextBufferAllocTable.entries, size);
+
+	if (!entries)
+	{
+		free(ContextBufferAllocTable.entries);
+		return -1;
+	}
+
+	ContextBufferAllocTable.entries = entries;
+
 	ZeroMemory((void*) &ContextBufferAllocTable.entries[ContextBufferAllocTable.cMaxEntries / 2], size / 2);
+
+	return 1;
 }
 
 void sspi_ContextBufferAllocTableFree()
@@ -163,10 +180,13 @@ void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
 
 	for (index = 0; index < (int) ContextBufferAllocTable.cMaxEntries; index++)
 	{
-		if (ContextBufferAllocTable.entries[index].contextBuffer == NULL)
+		if (!ContextBufferAllocTable.entries[index].contextBuffer)
 		{
-			contextBuffer = malloc(size);
-			ZeroMemory(contextBuffer, size);
+			contextBuffer = calloc(1, size);
+			
+			if (!contextBuffer)
+				return NULL;
+
 			ContextBufferAllocTable.cEntries++;
 
 			ContextBufferAllocTable.entries[index].contextBuffer = contextBuffer;
@@ -178,7 +198,8 @@ void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
 
 	/* no available entry was found, the table needs to be grown */
 
-	sspi_ContextBufferAllocTableGrow();
+	if (sspi_ContextBufferAllocTableGrow() < 0)
+		return NULL;
 
 	/* the next call to sspi_ContextBufferAlloc() should now succeed */
 
@@ -189,12 +210,7 @@ CREDENTIALS* sspi_CredentialsNew()
 {
 	CREDENTIALS* credentials;
 
-	credentials = (CREDENTIALS*) malloc(sizeof(CREDENTIALS));
-
-	if (credentials)
-	{
-		ZeroMemory(credentials, sizeof(CREDENTIALS));
-	}
+	credentials = (CREDENTIALS*) calloc(1, sizeof(CREDENTIALS));
 
 	return credentials;
 }
@@ -210,10 +226,7 @@ void sspi_CredentialsFree(CREDENTIALS* credentials)
 void sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size)
 {
 	SecBuffer->cbBuffer = size;
-	SecBuffer->pvBuffer = malloc(size);
-
-	if (SecBuffer->pvBuffer)
-		ZeroMemory(SecBuffer->pvBuffer, SecBuffer->cbBuffer);
+	SecBuffer->pvBuffer = calloc(1, size);
 }
 
 void sspi_SecBufferFree(PSecBuffer SecBuffer)
@@ -225,8 +238,13 @@ void sspi_SecBufferFree(PSecBuffer SecBuffer)
 
 SecHandle* sspi_SecureHandleAlloc()
 {
-	SecHandle* handle = (SecHandle*) malloc(sizeof(SecHandle));
+	SecHandle* handle = (SecHandle*) calloc(1, sizeof(SecHandle));
+
+	if (!handle)
+		return NULL;
+
 	sspi_SecureHandleInit(handle);
+
 	return handle;
 }
 
@@ -235,7 +253,7 @@ void sspi_SecureHandleInit(SecHandle* handle)
 	if (!handle)
 		return;
 
-	memset(handle, 0xFF, sizeof(SecHandle));
+	FillMemory(handle, sizeof(SecHandle), 0xFF);
 }
 
 void sspi_SecureHandleInvalidate(SecHandle* handle)
@@ -294,51 +312,78 @@ void sspi_SecureHandleFree(SecHandle* handle)
 	free(handle);
 }
 
-void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* domain, char* password)
+int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* domain, char* password)
 {
+	int status;
+
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+
+	if (identity->User)
+		free(identity->User);
+
+	identity->User = (UINT16*) NULL;
+	identity->UserLength = 0;
 
 	if (user)
 	{
-		identity->UserLength = ConvertToUnicode(CP_UTF8, 0, user, -1, &identity->User, 0) - 1;
+		status = ConvertToUnicode(CP_UTF8, 0, user, -1, (LPWSTR*) &(identity->User), 0);
+
+		if (status <= 0)
+			return -1;
+
+		identity->UserLength = (ULONG) (status - 1);
 	}
-	else
-	{
-		identity->User = (UINT16*) NULL;
-		identity->UserLength = 0;
-	}
+
+	if (identity->Domain)
+		free(identity->Domain);
+
+	identity->Domain = (UINT16*) NULL;
+	identity->DomainLength = 0;
 
 	if (domain)
 	{
-		identity->DomainLength = ConvertToUnicode(CP_UTF8, 0, domain, -1, &identity->Domain, 0) - 1;
+		status = ConvertToUnicode(CP_UTF8, 0, domain, -1, (LPWSTR*) &(identity->Domain), 0);
+
+		if (status <= 0)
+			return -1;
+
+		identity->DomainLength = (ULONG) (status - 1);
 	}
-	else
-	{
-		identity->Domain = (UINT16*) NULL;
-		identity->DomainLength = 0;
-	}
+
+	if (identity->Password)
+		free(identity->Password);
+
+	identity->Password = NULL;
+	identity->PasswordLength = 0;
 
 	if (password)
 	{
-		identity->PasswordLength = ConvertToUnicode(CP_UTF8, 0, password, -1, &identity->Password, 0) - 1;
+		status = ConvertToUnicode(CP_UTF8, 0, password, -1, (LPWSTR*) &(identity->Password), 0);
+
+		if (status <= 0)
+			return -1;
+
+		identity->PasswordLength = (ULONG) (status - 1);
 	}
-	else
-	{
-		identity->Password = NULL;
-		identity->PasswordLength = 0;
-	}
+
+	return 1;
 }
 
-void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDENTITY* srcIdentity)
+int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDENTITY* srcIdentity)
 {
+	int status;
+
 	if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
 	{
-		sspi_SetAuthIdentity(identity, (char*) srcIdentity->User,
+		status = sspi_SetAuthIdentity(identity, (char*) srcIdentity->User,
 				(char*) srcIdentity->Domain, (char*) srcIdentity->Password);
+
+		if (status <= 0)
+			return -1;
 
 		identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
 
-		return;
+		return 1;
 	}
 
 	identity->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
@@ -350,6 +395,10 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 	if (identity->UserLength > 0)
 	{
 		identity->User = (UINT16*) malloc((identity->UserLength + 1) * sizeof(WCHAR));
+
+		if (!identity->User)
+			return -1;
+
 		CopyMemory(identity->User, srcIdentity->User, identity->UserLength * sizeof(WCHAR));
 		identity->User[identity->UserLength] = 0;
 	}
@@ -359,6 +408,10 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 	if (identity->DomainLength > 0)
 	{
 		identity->Domain = (UINT16*) malloc((identity->DomainLength + 1) * sizeof(WCHAR));
+
+		if (!identity->Domain)
+			return -1;
+
 		CopyMemory(identity->Domain, srcIdentity->Domain, identity->DomainLength * sizeof(WCHAR));
 		identity->Domain[identity->DomainLength] = 0;
 	}
@@ -371,11 +424,17 @@ void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDE
 	if (identity->PasswordLength > 0)
 	{
 		identity->Password = (UINT16*) malloc((identity->PasswordLength + 1) * sizeof(WCHAR));
+
+		if (!identity->Password)
+			return -1;
+
 		CopyMemory(identity->Password, srcIdentity->Password, identity->PasswordLength * sizeof(WCHAR));
 		identity->Password[identity->PasswordLength] = 0;
 	}
 
 	identity->PasswordLength = srcIdentity->PasswordLength;
+
+	return 1;
 }
 
 PSecBuffer sspi_FindSecBuffer(PSecBufferDesc pMessage, ULONG BufferType)
@@ -462,10 +521,14 @@ SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const SEC_WCHAR* N
 
 SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameA(const SEC_CHAR* Name)
 {
+	int status;
 	SEC_WCHAR* NameW = NULL;
 	SecurityFunctionTableW* table;
 
-	ConvertToUnicode(CP_UTF8, 0, Name, -1, &NameW, 0);
+	status = ConvertToUnicode(CP_UTF8, 0, Name, -1, &NameW, 0);
+
+	if (status <= 0)
+		return NULL;
 
 	table = sspi_GetSecurityFunctionTableWByNameW(NameW);
 	free(NameW);
@@ -525,6 +588,9 @@ SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesW(ULONG* pcPackages, PS
 
 	pPackageInfo = (SecPkgInfoW*) sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
 
+	if (!pPackageInfo)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
 	for (index = 0; index < (int) cPackages; index++)
 	{
 		pPackageInfo[index].fCapabilities = SecPkgInfoW_LIST[index]->fCapabilities;
@@ -552,6 +618,9 @@ SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesA(ULONG* pcPackages, PS
 	size = sizeof(SecPkgInfoA) * cPackages;
 
 	pPackageInfo = (SecPkgInfoA*) sspi_ContextBufferAlloc(EnumerateSecurityPackagesIndex, size);
+
+	if (!pPackageInfo)
+		return SEC_E_INSUFFICIENT_MEMORY;
 
 	for (index = 0; index < (int) cPackages; index++)
 	{
@@ -615,6 +684,9 @@ SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageN
 			size = sizeof(SecPkgInfoW);
 			pPackageInfo = (SecPkgInfoW*) sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
 
+			if (!pPackageInfo)
+				return SEC_E_INSUFFICIENT_MEMORY;
+
 			pPackageInfo->fCapabilities = SecPkgInfoW_LIST[index]->fCapabilities;
 			pPackageInfo->wVersion = SecPkgInfoW_LIST[index]->wVersion;
 			pPackageInfo->wRPCID = SecPkgInfoW_LIST[index]->wRPCID;
@@ -648,6 +720,9 @@ SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityPackageInfoA(SEC_CHAR* pszPackageNa
 		{
 			size = sizeof(SecPkgInfoA);
 			pPackageInfo = (SecPkgInfoA*) sspi_ContextBufferAlloc(QuerySecurityPackageInfoIndex, size);
+
+			if (!pPackageInfo)
+				return SEC_E_INSUFFICIENT_MEMORY;
 
 			pPackageInfo->fCapabilities = SecPkgInfoA_LIST[index]->fCapabilities;
 			pPackageInfo->wVersion = SecPkgInfoA_LIST[index]->wVersion;
@@ -692,7 +767,7 @@ SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipa
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->AcquireCredentialsHandleW == NULL)
+	if (!table->AcquireCredentialsHandleW)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->AcquireCredentialsHandleW(pszPrincipal, pszPackage, fCredentialUse,
@@ -711,7 +786,7 @@ SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->AcquireCredentialsHandleA == NULL)
+	if (!table->AcquireCredentialsHandleA)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->AcquireCredentialsHandleA(pszPrincipal, pszPackage, fCredentialUse,
@@ -722,7 +797,7 @@ SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal
 
 SECURITY_STATUS SEC_ENTRY winpr_ExportSecurityContext(PCtxtHandle phContext, ULONG fFlags, PSecBuffer pPackedContext, HANDLE* pToken)
 {
-	return SEC_E_OK;
+	return SEC_E_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_FreeCredentialsHandle(PCredHandle phCredential)
@@ -741,7 +816,7 @@ SECURITY_STATUS SEC_ENTRY winpr_FreeCredentialsHandle(PCredHandle phCredential)
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->FreeCredentialsHandle == NULL)
+	if (!table->FreeCredentialsHandle)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->FreeCredentialsHandle(phCredential);
@@ -751,12 +826,12 @@ SECURITY_STATUS SEC_ENTRY winpr_FreeCredentialsHandle(PCredHandle phCredential)
 
 SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
 {
-	return SEC_E_OK;
+	return SEC_E_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
 {
-	return SEC_E_OK;
+	return SEC_E_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
@@ -775,7 +850,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesW(PCredHandle phCreden
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->QueryCredentialsAttributesW == NULL)
+	if (!table->QueryCredentialsAttributesW)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->QueryCredentialsAttributesW(phCredential, ulAttribute, pBuffer);
@@ -799,7 +874,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesA(PCredHandle phCreden
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->QueryCredentialsAttributesA == NULL)
+	if (!table->QueryCredentialsAttributesA)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->QueryCredentialsAttributesA(phCredential, ulAttribute, pBuffer);
@@ -827,7 +902,7 @@ SECURITY_STATUS SEC_ENTRY winpr_AcceptSecurityContext(PCredHandle phCredential, 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->AcceptSecurityContext == NULL)
+	if (!table->AcceptSecurityContext)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->AcceptSecurityContext(phCredential, phContext, pInput, fContextReq,
@@ -838,12 +913,12 @@ SECURITY_STATUS SEC_ENTRY winpr_AcceptSecurityContext(PCredHandle phCredential, 
 
 SECURITY_STATUS SEC_ENTRY winpr_ApplyControlToken(PCtxtHandle phContext, PSecBufferDesc pInput)
 {
-	return SEC_E_OK;
+	return SEC_E_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken)
 {
-	return SEC_E_OK;
+	return SEC_E_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_DeleteSecurityContext(PCtxtHandle phContext)
@@ -862,7 +937,7 @@ SECURITY_STATUS SEC_ENTRY winpr_DeleteSecurityContext(PCtxtHandle phContext)
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->DeleteSecurityContext == NULL)
+	if (!table->DeleteSecurityContext)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->DeleteSecurityContext(phContext);
@@ -882,7 +957,7 @@ SECURITY_STATUS SEC_ENTRY winpr_FreeContextBuffer(void* pvContextBuffer)
 
 SECURITY_STATUS SEC_ENTRY winpr_ImpersonateSecurityContext(PCtxtHandle phContext)
 {
-	return SEC_E_OK;
+	return SEC_E_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
@@ -904,7 +979,7 @@ SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextW(PCredHandle phCredent
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->InitializeSecurityContextW == NULL)
+	if (!table->InitializeSecurityContextW)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->InitializeSecurityContextW(phCredential, phContext,
@@ -933,7 +1008,7 @@ SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextA(PCredHandle phCredent
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->InitializeSecurityContextA == NULL)
+	if (!table->InitializeSecurityContextA)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->InitializeSecurityContextA(phCredential, phContext,
@@ -959,7 +1034,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesW(PCtxtHandle phContext, U
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->QueryContextAttributesW == NULL)
+	if (!table->QueryContextAttributesW)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->QueryContextAttributesW(phContext, ulAttribute, pBuffer);
@@ -983,7 +1058,7 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesA(PCtxtHandle phContext, U
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->QueryContextAttributesA == NULL)
+	if (!table->QueryContextAttributesA)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->QueryContextAttributesA(phContext, ulAttribute, pBuffer);
@@ -993,22 +1068,22 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesA(PCtxtHandle phContext, U
 
 SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityContextToken(PCtxtHandle phContext, HANDLE* phToken)
 {
-	return SEC_E_OK;
+	return SEC_E_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
 {
-	return SEC_E_OK;
+	return SEC_E_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
 {
-	return SEC_E_OK;
+	return SEC_E_NOT_SUPPORTED;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_RevertSecurityContext(PCtxtHandle phContext)
 {
-	return SEC_E_OK;
+	return SEC_E_NOT_SUPPORTED;
 }
 
 /* Message Support */
@@ -1029,7 +1104,7 @@ SECURITY_STATUS SEC_ENTRY winpr_DecryptMessage(PCtxtHandle phContext, PSecBuffer
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->DecryptMessage == NULL)
+	if (!table->DecryptMessage)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->DecryptMessage(phContext, pMessage, MessageSeqNo, pfQOP);
@@ -1053,7 +1128,7 @@ SECURITY_STATUS SEC_ENTRY winpr_EncryptMessage(PCtxtHandle phContext, ULONG fQOP
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->EncryptMessage == NULL)
+	if (!table->EncryptMessage)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->EncryptMessage(phContext, fQOP, pMessage, MessageSeqNo);
@@ -1077,7 +1152,7 @@ SECURITY_STATUS SEC_ENTRY winpr_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->MakeSignature == NULL)
+	if (!table->MakeSignature)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->MakeSignature(phContext, fQOP, pMessage, MessageSeqNo);
@@ -1101,7 +1176,7 @@ SECURITY_STATUS SEC_ENTRY winpr_VerifySignature(PCtxtHandle phContext, PSecBuffe
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (table->VerifySignature == NULL)
+	if (!table->VerifySignature)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->VerifySignature(phContext, pMessage, MessageSeqNo, pfQOP);

@@ -1357,7 +1357,7 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings*
 {
 	rdpCredssp* credssp;
 
-	credssp = (rdpCredssp*) malloc(sizeof(rdpCredssp));
+	credssp = (rdpCredssp*) calloc(1, sizeof(rdpCredssp));
 
 	if (credssp)
 	{
@@ -1365,8 +1365,6 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings*
 		LONG status;
 		DWORD dwType;
 		DWORD dwSize;
-
-		ZeroMemory(credssp, sizeof(rdpCredssp));
 
 		credssp->instance = instance;
 		credssp->settings = settings;

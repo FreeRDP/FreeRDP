@@ -35,7 +35,7 @@ SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextW(PCredHandle phCrede
 		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
@@ -46,11 +46,14 @@ SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(PCredHandle phCrede
 	CREDSSP_CONTEXT* context;
 	CREDENTIALS* credentials;
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
+	context = (CREDSSP_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
 	{
 		context = credssp_ContextNew();
+
+		if (!context)
+			return SEC_E_INSUFFICIENT_MEMORY;
 
 		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
@@ -59,7 +62,6 @@ SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(PCredHandle phCrede
 	}
 
 	return SEC_E_OK;
-
 }
 
 CREDSSP_CONTEXT* credssp_ContextNew()
@@ -68,10 +70,8 @@ CREDSSP_CONTEXT* credssp_ContextNew()
 
 	context = (CREDSSP_CONTEXT*) calloc(1, sizeof(CREDSSP_CONTEXT));
 
-	if (context != NULL)
-	{
-
-	}
+	if (!context)
+		return NULL;
 
 	return context;
 }
@@ -99,7 +99,7 @@ SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleW(SEC_WCHAR* pszPrinci
 		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
@@ -112,6 +112,10 @@ SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleA(SEC_CHAR* pszPrincip
 	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
 	{
 		credentials = sspi_CredentialsNew();
+
+		if (!credentials)
+			return SEC_E_INSUFFICIENT_MEMORY;
+
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
 
 		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
@@ -122,12 +126,12 @@ SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleA(SEC_CHAR* pszPrincip
 		return SEC_E_OK;
 	}
 
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_QueryCredentialsAttributesA(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
@@ -163,22 +167,22 @@ SECURITY_STATUS SEC_ENTRY credssp_FreeCredentialsHandle(PCredHandle phCredential
 
 SECURITY_STATUS SEC_ENTRY credssp_EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 const SecurityFunctionTableA CREDSSP_SecurityFunctionTableA =

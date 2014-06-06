@@ -22,9 +22,12 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/library.h>
 
 #include "sspi.h"
+
+static wLog* g_Log = NULL;
 
 static BOOL g_Initialized = FALSE;
 static HMODULE g_SspiModule = NULL;
@@ -40,6 +43,8 @@ BOOL InitializeSspiModule_Native(void)
 #ifdef _WIN32
 	INIT_SECURITY_INTERFACE_W pInitSecurityInterfaceW;
 	INIT_SECURITY_INTERFACE_A pInitSecurityInterfaceA;
+
+	return FALSE;
 
 	g_SspiModule = LoadLibraryA("secur32.dll");
 
@@ -71,17 +76,190 @@ void InitializeSspiModule(void)
 
 	g_Initialized = TRUE;
 
+	g_Log = WLog_Get("com.winpr.sspi");
+
 	if (!InitializeSspiModule_Native())
 	{
-		printf("WINPR SSPI!\n");
-
 		g_SspiW = winpr_InitSecurityInterfaceW();
 		g_SspiA = winpr_InitSecurityInterfaceA();
 	}
-	else
+}
+
+const char* GetSecurityStatusString(SECURITY_STATUS status)
+{
+	switch (status)
 	{
-		printf("NATIVE SSPI!\n");
+		case SEC_E_OK:
+			return "SEC_E_OK";
+		case SEC_E_INSUFFICIENT_MEMORY:
+			return "SEC_E_INSUFFICIENT_MEMORY";
+		case SEC_E_INVALID_HANDLE:
+			return "SEC_E_INVALID_HANDLE";
+		case SEC_E_UNSUPPORTED_FUNCTION:
+			return "SEC_E_UNSUPPORTED_FUNCTION";
+		case SEC_E_TARGET_UNKNOWN:
+			return "SEC_E_TARGET_UNKNOWN";
+		case SEC_E_INTERNAL_ERROR:
+			return "SEC_E_INTERNAL_ERROR";
+		case SEC_E_SECPKG_NOT_FOUND:
+			return "SEC_E_SECPKG_NOT_FOUND";
+		case SEC_E_NOT_OWNER:
+			return "SEC_E_NOT_OWNER";
+		case SEC_E_CANNOT_INSTALL:
+			return "SEC_E_CANNOT_INSTALL";
+		case SEC_E_INVALID_TOKEN:
+			return "SEC_E_INVALID_TOKEN";
+		case SEC_E_CANNOT_PACK:
+			return "SEC_E_CANNOT_PACK";
+		case SEC_E_QOP_NOT_SUPPORTED:
+			return "SEC_E_QOP_NOT_SUPPORTED";
+		case SEC_E_NO_IMPERSONATION:
+			return "SEC_E_NO_IMPERSONATION";
+		case SEC_E_LOGON_DENIED:
+			return "SEC_E_LOGON_DENIED";
+		case SEC_E_UNKNOWN_CREDENTIALS:
+			return "SEC_E_UNKNOWN_CREDENTIALS";
+		case SEC_E_NO_CREDENTIALS:
+			return "SEC_E_NO_CREDENTIALS";
+		case SEC_E_MESSAGE_ALTERED:
+			return "SEC_E_MESSAGE_ALTERED";
+		case SEC_E_OUT_OF_SEQUENCE:
+			return "SEC_E_OUT_OF_SEQUENCE";
+		case SEC_E_NO_AUTHENTICATING_AUTHORITY:
+			return "SEC_E_NO_AUTHENTICATING_AUTHORITY";
+		case SEC_E_BAD_PKGID:
+			return "SEC_E_BAD_PKGID";
+		case SEC_E_CONTEXT_EXPIRED:
+			return "SEC_E_CONTEXT_EXPIRED";
+		case SEC_E_INCOMPLETE_MESSAGE:
+			return "SEC_E_INCOMPLETE_MESSAGE";
+		case SEC_E_INCOMPLETE_CREDENTIALS:
+			return "SEC_E_INCOMPLETE_CREDENTIALS";
+		case SEC_E_BUFFER_TOO_SMALL:
+			return "SEC_E_BUFFER_TOO_SMALL";
+		case SEC_E_WRONG_PRINCIPAL:
+			return "SEC_E_WRONG_PRINCIPAL";
+		case SEC_E_TIME_SKEW:
+			return "SEC_E_TIME_SKEW";
+		case SEC_E_UNTRUSTED_ROOT:
+			return "SEC_E_UNTRUSTED_ROOT";
+		case SEC_E_ILLEGAL_MESSAGE:
+			return "SEC_E_ILLEGAL_MESSAGE";
+		case SEC_E_CERT_UNKNOWN:
+			return "SEC_E_CERT_UNKNOWN";
+		case SEC_E_CERT_EXPIRED:
+			return "SEC_E_CERT_EXPIRED";
+		case SEC_E_ENCRYPT_FAILURE:
+			return "SEC_E_ENCRYPT_FAILURE";
+		case SEC_E_DECRYPT_FAILURE:
+			return "SEC_E_DECRYPT_FAILURE";
+		case SEC_E_ALGORITHM_MISMATCH:
+			return "SEC_E_ALGORITHM_MISMATCH";
+		case SEC_E_SECURITY_QOS_FAILED:
+			return "SEC_E_SECURITY_QOS_FAILED";
+		case SEC_E_UNFINISHED_CONTEXT_DELETED:
+			return "SEC_E_UNFINISHED_CONTEXT_DELETED";
+		case SEC_E_NO_TGT_REPLY:
+			return "SEC_E_NO_TGT_REPLY";
+		case SEC_E_NO_IP_ADDRESSES:
+			return "SEC_E_NO_IP_ADDRESSES";
+		case SEC_E_WRONG_CREDENTIAL_HANDLE:
+			return "SEC_E_WRONG_CREDENTIAL_HANDLE";
+		case SEC_E_CRYPTO_SYSTEM_INVALID:
+			return "SEC_E_CRYPTO_SYSTEM_INVALID";
+		case SEC_E_MAX_REFERRALS_EXCEEDED:
+			return "SEC_E_MAX_REFERRALS_EXCEEDED";
+		case SEC_E_MUST_BE_KDC:
+			return "SEC_E_MUST_BE_KDC";
+		case SEC_E_STRONG_CRYPTO_NOT_SUPPORTED:
+			return "SEC_E_STRONG_CRYPTO_NOT_SUPPORTED";
+		case SEC_E_TOO_MANY_PRINCIPALS:
+			return "SEC_E_TOO_MANY_PRINCIPALS";
+		case SEC_E_NO_PA_DATA:
+			return "SEC_E_NO_PA_DATA";
+		case SEC_E_PKINIT_NAME_MISMATCH:
+			return "SEC_E_PKINIT_NAME_MISMATCH";
+		case SEC_E_SMARTCARD_LOGON_REQUIRED:
+			return "SEC_E_SMARTCARD_LOGON_REQUIRED";
+		case SEC_E_SHUTDOWN_IN_PROGRESS:
+			return "SEC_E_SHUTDOWN_IN_PROGRESS";
+		case SEC_E_KDC_INVALID_REQUEST:
+			return "SEC_E_KDC_INVALID_REQUEST";
+		case SEC_E_KDC_UNABLE_TO_REFER:
+			return "SEC_E_KDC_UNABLE_TO_REFER";
+		case SEC_E_KDC_UNKNOWN_ETYPE:
+			return "SEC_E_KDC_UNKNOWN_ETYPE";
+		case SEC_E_UNSUPPORTED_PREAUTH:
+			return "SEC_E_UNSUPPORTED_PREAUTH";
+		case SEC_E_DELEGATION_REQUIRED:
+			return "SEC_E_DELEGATION_REQUIRED";
+		case SEC_E_BAD_BINDINGS:
+			return "SEC_E_BAD_BINDINGS";
+		case SEC_E_MULTIPLE_ACCOUNTS:
+			return "SEC_E_MULTIPLE_ACCOUNTS";
+		case SEC_E_NO_KERB_KEY:
+			return "SEC_E_NO_KERB_KEY";
+		case SEC_E_CERT_WRONG_USAGE:
+			return "SEC_E_CERT_WRONG_USAGE";
+		case SEC_E_DOWNGRADE_DETECTED:
+			return "SEC_E_DOWNGRADE_DETECTED";
+		case SEC_E_SMARTCARD_CERT_REVOKED:
+			return "SEC_E_SMARTCARD_CERT_REVOKED";
+		case SEC_E_ISSUING_CA_UNTRUSTED:
+			return "SEC_E_ISSUING_CA_UNTRUSTED";
+		case SEC_E_REVOCATION_OFFLINE_C:
+			return "SEC_E_REVOCATION_OFFLINE_C";
+		case SEC_E_PKINIT_CLIENT_FAILURE:
+			return "SEC_E_PKINIT_CLIENT_FAILURE";
+		case SEC_E_SMARTCARD_CERT_EXPIRED:
+			return "SEC_E_SMARTCARD_CERT_EXPIRED";
+		case SEC_E_NO_S4U_PROT_SUPPORT:
+			return "SEC_E_NO_S4U_PROT_SUPPORT";
+		case SEC_E_CROSSREALM_DELEGATION_FAILURE:
+			return "SEC_E_CROSSREALM_DELEGATION_FAILURE";
+		case SEC_E_REVOCATION_OFFLINE_KDC:
+			return "SEC_E_REVOCATION_OFFLINE_KDC";
+		case SEC_E_ISSUING_CA_UNTRUSTED_KDC:
+			return "SEC_E_ISSUING_CA_UNTRUSTED_KDC";
+		case SEC_E_KDC_CERT_EXPIRED:
+			return "SEC_E_KDC_CERT_EXPIRED";
+		case SEC_E_KDC_CERT_REVOKED:
+			return "SEC_E_KDC_CERT_REVOKED";
+		case SEC_E_INVALID_PARAMETER:
+			return "SEC_E_INVALID_PARAMETER";
+		case SEC_E_DELEGATION_POLICY:
+			return "SEC_E_DELEGATION_POLICY";
+		case SEC_E_POLICY_NLTM_ONLY:
+			return "SEC_E_POLICY_NLTM_ONLY";
+		case SEC_E_NO_CONTEXT:
+			return "SEC_E_NO_CONTEXT";
+		case SEC_E_PKU2U_CERT_FAILURE:
+			return "SEC_E_PKU2U_CERT_FAILURE";
+		case SEC_E_MUTUAL_AUTH_FAILED:
+			return "SEC_E_MUTUAL_AUTH_FAILED";
+		case SEC_I_CONTINUE_NEEDED:
+			return "SEC_I_CONTINUE_NEEDED";
+		case SEC_I_COMPLETE_NEEDED:
+			return "SEC_I_COMPLETE_NEEDED";
+		case SEC_I_COMPLETE_AND_CONTINUE:
+			return "SEC_I_COMPLETE_AND_CONTINUE";
+		case SEC_I_LOCAL_LOGON:
+			return "SEC_I_LOCAL_LOGON";
+		case SEC_I_CONTEXT_EXPIRED:
+			return "SEC_I_CONTEXT_EXPIRED";
+		case SEC_I_INCOMPLETE_CREDENTIALS:
+			return "SEC_I_INCOMPLETE_CREDENTIALS";
+		case SEC_I_RENEGOTIATE:
+			return "SEC_I_RENEGOTIATE";
+		case SEC_I_NO_LSA_CONTEXT:
+			return "SEC_I_NO_LSA_CONTEXT";
+		case SEC_I_SIGNATURE_NEEDED:
+			return "SEC_I_SIGNATURE_NEEDED";
+		case SEC_I_NO_RENEGOTIATION:
+			return "SEC_I_NO_RENEGOTIATION";
 	}
+
+	return "SEC_E_UNKNOWN";
 }
 
 /**
@@ -102,6 +280,8 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(ULONG* pcPackages, PSecPkgI
 
 	status = g_SspiW->EnumerateSecurityPackagesW(pcPackages, ppPackageInfo);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "EnumerateSecurityPackagesW: 0x%04X", status);
+
 	return status;
 }
 
@@ -117,6 +297,8 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(ULONG* pcPackages, PSecPkgI
 
 	status = g_SspiA->EnumerateSecurityPackagesA(pcPackages, ppPackageInfo);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "EnumerateSecurityPackagesA: 0x%04X", status);
+
 	return status;
 }
 
@@ -125,6 +307,8 @@ SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceW(void)
 	if (!g_Initialized)
 		InitializeSspiModule();
 
+	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceW");
+
 	return &sspi_SecurityFunctionTableW;
 }
 
@@ -132,6 +316,8 @@ SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceA(void)
 {
 	if (!g_Initialized)
 		InitializeSspiModule();
+
+	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceA");
 
 	return &sspi_SecurityFunctionTableA;
 }
@@ -148,6 +334,8 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, P
 
 	status = g_SspiW->QuerySecurityPackageInfoW(pszPackageName, ppPackageInfo);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityPackageInfoW: 0x%04X", status);
+
 	return status;
 }
 
@@ -162,6 +350,8 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PS
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiA->QuerySecurityPackageInfoA(pszPackageName, ppPackageInfo);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityPackageInfoA: 0x%04X", status);
 
 	return status;
 }
@@ -183,6 +373,8 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC
 	status = g_SspiW->AcquireCredentialsHandleW(pszPrincipal, pszPackage, fCredentialUse,
 		pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "AcquireCredentialsHandleW: 0x%04X", status);
+
 	return status;
 }
 
@@ -201,6 +393,8 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_
 	status = g_SspiA->AcquireCredentialsHandleA(pszPrincipal, pszPackage, fCredentialUse,
 		pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "AcquireCredentialsHandleA: 0x%04X", status);
+
 	return status;
 }
 
@@ -215,6 +409,8 @@ SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, ULONG fFl
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->ExportSecurityContext(phContext, fFlags, pPackedContext, pToken);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "ExportSecurityContext: 0x%04X", status);
 
 	return status;
 }
@@ -231,6 +427,8 @@ SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle phCredential)
 
 	status = g_SspiW->FreeCredentialsHandle(phCredential);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "FreeCredentialsHandle: 0x%04X", status);
+
 	return status;
 }
 
@@ -245,6 +443,8 @@ SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuff
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->ImportSecurityContextW(pszPackage, pPackedContext, pToken, phContext);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "ImportSecurityContextW: 0x%04X", status);
 
 	return status;
 }
@@ -261,6 +461,8 @@ SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffe
 
 	status = g_SspiA->ImportSecurityContextA(pszPackage, pPackedContext, pToken, phContext);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "ImportSecurityContextA: 0x%04X", status);
+
 	return status;
 }
 
@@ -276,6 +478,8 @@ SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(PCredHandle phCredential, 
 
 	status = g_SspiW->QueryCredentialsAttributesW(phCredential, ulAttribute, pBuffer);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "QueryCredentialsAttributesW: 0x%04X", status);
+
 	return status;
 }
 
@@ -290,6 +494,8 @@ SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(PCredHandle phCredential, 
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiA->QueryCredentialsAttributesA(phCredential, ulAttribute, pBuffer);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "QueryCredentialsAttributesA: 0x%04X", status);
 
 	return status;
 }
@@ -311,6 +517,8 @@ SECURITY_STATUS SEC_ENTRY AcceptSecurityContext(PCredHandle phCredential, PCtxtH
 	status = g_SspiW->AcceptSecurityContext(phCredential, phContext, pInput, fContextReq,
 		TargetDataRep, phNewContext, pOutput, pfContextAttr, ptsTimeStamp);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "AcceptSecurityContext: 0x%04X", status);
+
 	return status;
 }
 
@@ -325,6 +533,8 @@ SECURITY_STATUS SEC_ENTRY ApplyControlToken(PCtxtHandle phContext, PSecBufferDes
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->ApplyControlToken(phContext, pInput);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "ApplyControlToken: 0x%04X", status);
 
 	return status;
 }
@@ -341,6 +551,8 @@ SECURITY_STATUS SEC_ENTRY CompleteAuthToken(PCtxtHandle phContext, PSecBufferDes
 
 	status = g_SspiW->CompleteAuthToken(phContext, pToken);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "CompleteAuthToken: 0x%04X", status);
+
 	return status;
 }
 
@@ -355,6 +567,8 @@ SECURITY_STATUS SEC_ENTRY DeleteSecurityContext(PCtxtHandle phContext)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->DeleteSecurityContext(phContext);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "DeleteSecurityContext: 0x%04X", status);
 
 	return status;
 }
@@ -371,6 +585,8 @@ SECURITY_STATUS SEC_ENTRY FreeContextBuffer(void* pvContextBuffer)
 
 	status = g_SspiW->FreeContextBuffer(pvContextBuffer);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "FreeContextBuffer: 0x%04X", status);
+
 	return status;
 }
 
@@ -385,6 +601,8 @@ SECURITY_STATUS SEC_ENTRY ImpersonateSecurityContext(PCtxtHandle phContext)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->ImpersonateSecurityContext(phContext);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "ImpersonateSecurityContext: 0x%04X", status);
 
 	return status;
 }
@@ -406,6 +624,8 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(PCredHandle phCredential, P
 		pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
 		Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "InitializeSecurityContextW: 0x%04X", status);
+
 	return status;
 }
 
@@ -426,6 +646,8 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(PCredHandle phCredential, P
 		pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
 		Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "InitializeSecurityContextA: 0x%04X", status);
+
 	return status;
 }
 
@@ -440,6 +662,8 @@ SECURITY_STATUS SEC_ENTRY QueryContextAttributesW(PCtxtHandle phContext, ULONG u
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->QueryContextAttributesW(phContext, ulAttribute, pBuffer);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "QueryContextAttributesW: 0x%04X", status);
 
 	return status;
 }
@@ -456,6 +680,8 @@ SECURITY_STATUS SEC_ENTRY QueryContextAttributesA(PCtxtHandle phContext, ULONG u
 
 	status = g_SspiA->QueryContextAttributesA(phContext, ulAttribute, pBuffer);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "QueryContextAttributesA: 0x%04X", status);
+
 	return status;
 }
 
@@ -470,6 +696,8 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext, HANDL
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->QuerySecurityContextToken(phContext, phToken);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityContextToken: 0x%04X", status);
 
 	return status;
 }
@@ -486,6 +714,8 @@ SECURITY_STATUS SEC_ENTRY SetContextAttributesW(PCtxtHandle phContext, ULONG ulA
 
 	status = g_SspiW->SetContextAttributesW(phContext, ulAttribute, pBuffer, cbBuffer);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "SetContextAttributesW: 0x%04X", status);
+
 	return status;
 }
 
@@ -501,6 +731,8 @@ SECURITY_STATUS SEC_ENTRY SetContextAttributesA(PCtxtHandle phContext, ULONG ulA
 
 	status = g_SspiA->SetContextAttributesA(phContext, ulAttribute, pBuffer, cbBuffer);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "SetContextAttributesA: 0x%04X", status);
+
 	return status;
 }
 
@@ -515,6 +747,8 @@ SECURITY_STATUS SEC_ENTRY RevertSecurityContext(PCtxtHandle phContext)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->RevertSecurityContext(phContext);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "RevertSecurityContext: 0x%04X", status);
 
 	return status;
 }
@@ -533,6 +767,8 @@ SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext, PSecBufferDesc p
 
 	status = g_SspiW->DecryptMessage(phContext, pMessage, MessageSeqNo, pfQOP);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "DecryptMessage: 0x%04X", status);
+
 	return status;
 }
 
@@ -547,6 +783,8 @@ SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSec
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->EncryptMessage(phContext, fQOP, pMessage, MessageSeqNo);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "EncryptMessage: 0x%04X", status);
 
 	return status;
 }
@@ -563,6 +801,8 @@ SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecB
 
 	status = g_SspiW->MakeSignature(phContext, fQOP, pMessage, MessageSeqNo);
 
+	WLog_Print(g_Log, WLOG_DEBUG, "MakeSignature: 0x%04X", status);
+
 	return status;
 }
 
@@ -577,6 +817,8 @@ SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecBufferDesc 
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = g_SspiW->VerifySignature(phContext, pMessage, MessageSeqNo, pfQOP);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "VerifySignature: 0x%04X", status);
 
 	return status;
 }
