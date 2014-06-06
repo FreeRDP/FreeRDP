@@ -43,6 +43,8 @@ set(${MODULE_PREFIX}_CREDSSP_SRCS
 
 set(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_CREDSSP_SRCS}
+	sspi_winpr.c
+	sspi_winpr.h
 	sspi.c
 	sspi.h)
 
