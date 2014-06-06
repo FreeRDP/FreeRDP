@@ -1830,6 +1830,11 @@ BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap
 	Stream_Read_UINT8(s, cache_bitmap->bitmapWidth); /* bitmapWidth (1 byte) */
 	Stream_Read_UINT8(s, cache_bitmap->bitmapHeight); /* bitmapHeight (1 byte) */
 	Stream_Read_UINT8(s, cache_bitmap->bitmapBpp); /* bitmapBpp (1 byte) */
+	if ((cache_bitmap->bitmapBpp < 1) || (cache_bitmap->bitmapBpp > 32))
+	{
+		fprintf(stderr, "%s: invalid bitmap bpp %d\n", __FUNCTION__, cache_bitmap->bitmapBpp);
+		return FALSE;
+	}
 	Stream_Read_UINT16(s, cache_bitmap->bitmapLength); /* bitmapLength (2 bytes) */
 	Stream_Read_UINT16(s, cache_bitmap->cacheIndex); /* cacheIndex (2 bytes) */
 
@@ -2068,6 +2073,11 @@ BOOL update_read_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache_
 	bitmapData = &cache_bitmap_v3->bitmapData;
 
 	Stream_Read_UINT8(s, bitmapData->bpp);
+	if ((bitmapData->bpp < 1) || (bitmapData->bpp > 32))
+	{
+		fprintf(stderr, "%s: invalid bpp value %d", __FUNCTION__, bitmapData->bpp);
+		return FALSE;
+	}
 	Stream_Seek_UINT8(s); /* reserved1 (1 byte) */
 	Stream_Seek_UINT8(s); /* reserved2 (1 byte) */
 	Stream_Read_UINT8(s, bitmapData->codecID); /* codecID (1 byte) */
@@ -2672,6 +2682,11 @@ BOOL update_read_create_nine_grid_bitmap_order(wStream* s, CREATE_NINE_GRID_BITM
 		return FALSE;
 
 	Stream_Read_UINT8(s, create_nine_grid_bitmap->bitmapBpp); /* bitmapBpp (1 byte) */
+	if ((create_nine_grid_bitmap->bitmapBpp < 1) || (create_nine_grid_bitmap->bitmapBpp > 32))
+	{
+		fprintf(stderr, "%s: invalid bpp value %d", __FUNCTION__, create_nine_grid_bitmap->bitmapBpp);
+		return FALSE;
+	}
 	Stream_Read_UINT16(s, create_nine_grid_bitmap->bitmapId); /* bitmapId (2 bytes) */
 
 	nineGridInfo = &(create_nine_grid_bitmap->nineGridInfo);
@@ -2707,6 +2722,12 @@ BOOL update_read_stream_bitmap_first_order(wStream* s, STREAM_BITMAP_FIRST_ORDER
 
 	Stream_Read_UINT8(s, stream_bitmap_first->bitmapFlags); /* bitmapFlags (1 byte) */
 	Stream_Read_UINT8(s, stream_bitmap_first->bitmapBpp); /* bitmapBpp (1 byte) */
+	if ((stream_bitmap_first->bitmapBpp < 1) || (stream_bitmap_first->bitmapBpp > 32))
+	{
+		fprintf(stderr, "%s: invalid bpp value %d", __FUNCTION__, stream_bitmap_first->bitmapBpp);
+		return FALSE;
+	}
+
 	Stream_Read_UINT16(s, stream_bitmap_first->bitmapType); /* bitmapType (2 bytes) */
 	Stream_Read_UINT16(s, stream_bitmap_first->bitmapWidth); /* bitmapWidth (2 bytes) */
 	Stream_Read_UINT16(s, stream_bitmap_first->bitmapHeight); /* bitmapHeigth (2 bytes) */

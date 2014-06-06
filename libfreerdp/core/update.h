@@ -53,7 +53,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s);
 
 BOOL update_read_pointer_position(wStream* s, POINTER_POSITION_UPDATE* pointer_position);
 BOOL update_read_pointer_system(wStream* s, POINTER_SYSTEM_UPDATE* pointer_system);
-BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color);
+BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, int xorBpp);
 BOOL update_read_pointer_new(wStream* s, POINTER_NEW_UPDATE* pointer_new);
 BOOL update_read_pointer_cached(wStream* s, POINTER_CACHED_UPDATE* pointer_cached);
 
