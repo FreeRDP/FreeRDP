@@ -812,7 +812,7 @@ SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal
 
 SECURITY_STATUS SEC_ENTRY winpr_ExportSecurityContext(PCtxtHandle phContext, ULONG fFlags, PSecBuffer pPackedContext, HANDLE* pToken)
 {
-	return SEC_E_NOT_SUPPORTED;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_FreeCredentialsHandle(PCredHandle phCredential)
@@ -841,7 +841,7 @@ SECURITY_STATUS SEC_ENTRY winpr_FreeCredentialsHandle(PCredHandle phCredential)
 
 SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
 {
-	return SEC_E_NOT_SUPPORTED;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
@@ -1159,22 +1159,22 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesA(PCtxtHandle phContext, U
 
 SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityContextToken(PCtxtHandle phContext, HANDLE* phToken)
 {
-	return SEC_E_NOT_SUPPORTED;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
 {
-	return SEC_E_NOT_SUPPORTED;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
 {
-	return SEC_E_NOT_SUPPORTED;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_RevertSecurityContext(PCtxtHandle phContext)
 {
-	return SEC_E_NOT_SUPPORTED;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 /* Message Support */

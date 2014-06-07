@@ -21,11 +21,11 @@
 #include "config.h"
 #endif
 
-#define SEC_ENTRY __stdcall
-
 #ifdef _WIN32
+#define SEC_ENTRY __stdcall
 #define SSPI_EXPORT	__declspec(dllexport)
 #else
+#define SEC_ENTRY
 #define SSPI_EXPORT
 #endif
 

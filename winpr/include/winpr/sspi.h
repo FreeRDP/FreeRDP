@@ -36,7 +36,7 @@
 
 #endif
 
-#ifdef WINPR_SSPI
+#ifndef _WIN32
 
 #ifndef SEC_ENTRY
 #define SEC_ENTRY
@@ -252,7 +252,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define SECPKG_ATTR_NEGO_STATUS				32
 #define SECPKG_ATTR_CONTEXT_DELETED			33
 
-#ifdef WINPR_SSPI
+#ifndef _WIN32
 
 struct _SecPkgContext_AccessToken
 {
@@ -579,7 +579,7 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 #define SEC_WINNT_AUTH_IDENTITY_ANSI		0x1
 #define SEC_WINNT_AUTH_IDENTITY_UNICODE		0x2
 
-#ifdef WINPR_SSPI
+#ifndef _WIN32
 
 typedef struct _SEC_WINNT_AUTH_IDENTITY_W
 {
@@ -665,7 +665,7 @@ typedef CtxtHandle* PCtxtHandle;
 #define SECBUFFER_READONLY_WITH_CHECKSUM	0x10000000
 #define SECBUFFER_RESERVED			0x60000000
 
-#ifdef WINPR_SSPI
+#ifndef _WIN32
 
 struct _SecBuffer
 {

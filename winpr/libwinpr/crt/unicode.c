@@ -25,6 +25,7 @@
 #include <wctype.h>
 
 #include <winpr/crt.h>
+#include <winpr/error.h>
 #include <winpr/print.h>
 
 #ifndef _WIN32
@@ -308,7 +309,7 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 
 		if (!(*lpWideCharStr))
 		{
-			SetLastError(ERROR_INSUFFICIENT_BUFFER);
+			//SetLastError(ERROR_INSUFFICIENT_BUFFER);
 			return 0;
 		}
 	}
@@ -354,7 +355,7 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 
 		if (!(*lpMultiByteStr))
 		{
-			SetLastError(ERROR_INSUFFICIENT_BUFFER);
+			//SetLastError(ERROR_INSUFFICIENT_BUFFER);
 			return 0;
 		}
 	}
