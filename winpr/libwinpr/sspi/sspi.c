@@ -344,7 +344,7 @@ SECURITY_STATUS SEC_ENTRY sspi_EnumerateSecurityPackagesW(ULONG* pcPackages, PSe
 
 	status = g_SspiW->EnumerateSecurityPackagesW(pcPackages, ppPackageInfo);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "EnumerateSecurityPackagesW: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "EnumerateSecurityPackagesW: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -361,7 +361,7 @@ SECURITY_STATUS SEC_ENTRY sspi_EnumerateSecurityPackagesA(ULONG* pcPackages, PSe
 
 	status = g_SspiA->EnumerateSecurityPackagesA(pcPackages, ppPackageInfo);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "EnumerateSecurityPackagesA: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "EnumerateSecurityPackagesA: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -398,7 +398,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageNa
 
 	status = g_SspiW->QuerySecurityPackageInfoW(pszPackageName, ppPackageInfo);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityPackageInfoW: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityPackageInfoW: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -415,7 +415,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoA(SEC_CHAR* pszPackageNam
 
 	status = g_SspiA->QuerySecurityPackageInfoA(pszPackageName, ppPackageInfo);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityPackageInfoA: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityPackageInfoA: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -437,7 +437,7 @@ SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal
 	status = g_SspiW->AcquireCredentialsHandleW(pszPrincipal, pszPackage, fCredentialUse,
 		pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "AcquireCredentialsHandleW: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "AcquireCredentialsHandleW: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -457,7 +457,7 @@ SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal,
 	status = g_SspiA->AcquireCredentialsHandleA(pszPrincipal, pszPackage, fCredentialUse,
 		pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "AcquireCredentialsHandleA: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "AcquireCredentialsHandleA: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -474,7 +474,7 @@ SECURITY_STATUS SEC_ENTRY sspi_ExportSecurityContext(PCtxtHandle phContext, ULON
 
 	status = g_SspiW->ExportSecurityContext(phContext, fFlags, pPackedContext, pToken);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "ExportSecurityContext: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "ExportSecurityContext: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -491,7 +491,7 @@ SECURITY_STATUS SEC_ENTRY sspi_FreeCredentialsHandle(PCredHandle phCredential)
 
 	status = g_SspiW->FreeCredentialsHandle(phCredential);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "FreeCredentialsHandle: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "FreeCredentialsHandle: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -508,7 +508,7 @@ SECURITY_STATUS SEC_ENTRY sspi_ImportSecurityContextW(SEC_WCHAR* pszPackage, PSe
 
 	status = g_SspiW->ImportSecurityContextW(pszPackage, pPackedContext, pToken, phContext);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "ImportSecurityContextW: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "ImportSecurityContextW: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -525,7 +525,7 @@ SECURITY_STATUS SEC_ENTRY sspi_ImportSecurityContextA(SEC_CHAR* pszPackage, PSec
 
 	status = g_SspiA->ImportSecurityContextA(pszPackage, pPackedContext, pToken, phContext);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "ImportSecurityContextA: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "ImportSecurityContextA: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -542,7 +542,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryCredentialsAttributesW(PCredHandle phCredent
 
 	status = g_SspiW->QueryCredentialsAttributesW(phCredential, ulAttribute, pBuffer);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "QueryCredentialsAttributesW: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "QueryCredentialsAttributesW: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -559,7 +559,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryCredentialsAttributesA(PCredHandle phCredent
 
 	status = g_SspiA->QueryCredentialsAttributesA(phCredential, ulAttribute, pBuffer);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "QueryCredentialsAttributesA: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "QueryCredentialsAttributesA: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -581,7 +581,7 @@ SECURITY_STATUS SEC_ENTRY sspi_AcceptSecurityContext(PCredHandle phCredential, P
 	status = g_SspiW->AcceptSecurityContext(phCredential, phContext, pInput, fContextReq,
 		TargetDataRep, phNewContext, pOutput, pfContextAttr, ptsTimeStamp);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "AcceptSecurityContext: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "AcceptSecurityContext: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -598,7 +598,7 @@ SECURITY_STATUS SEC_ENTRY sspi_ApplyControlToken(PCtxtHandle phContext, PSecBuff
 
 	status = g_SspiW->ApplyControlToken(phContext, pInput);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "ApplyControlToken: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "ApplyControlToken: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -615,7 +615,7 @@ SECURITY_STATUS SEC_ENTRY sspi_CompleteAuthToken(PCtxtHandle phContext, PSecBuff
 
 	status = g_SspiW->CompleteAuthToken(phContext, pToken);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "CompleteAuthToken: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "CompleteAuthToken: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -632,7 +632,7 @@ SECURITY_STATUS SEC_ENTRY sspi_DeleteSecurityContext(PCtxtHandle phContext)
 
 	status = g_SspiW->DeleteSecurityContext(phContext);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "DeleteSecurityContext: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "DeleteSecurityContext: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -649,7 +649,7 @@ SECURITY_STATUS SEC_ENTRY sspi_FreeContextBuffer(void* pvContextBuffer)
 
 	status = g_SspiW->FreeContextBuffer(pvContextBuffer);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "FreeContextBuffer: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "FreeContextBuffer: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -666,7 +666,7 @@ SECURITY_STATUS SEC_ENTRY sspi_ImpersonateSecurityContext(PCtxtHandle phContext)
 
 	status = g_SspiW->ImpersonateSecurityContext(phContext);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "ImpersonateSecurityContext: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "ImpersonateSecurityContext: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -688,7 +688,7 @@ SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextW(PCredHandle phCredenti
 		pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
 		Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "InitializeSecurityContextW: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "InitializeSecurityContextW: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -710,7 +710,7 @@ SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextA(PCredHandle phCredenti
 		pszTargetName, fContextReq, Reserved1, TargetDataRep, pInput,
 		Reserved2, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "InitializeSecurityContextA: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "InitializeSecurityContextA: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -727,7 +727,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryContextAttributesW(PCtxtHandle phContext, UL
 
 	status = g_SspiW->QueryContextAttributesW(phContext, ulAttribute, pBuffer);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "QueryContextAttributesW: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "QueryContextAttributesW: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -744,7 +744,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryContextAttributesA(PCtxtHandle phContext, UL
 
 	status = g_SspiA->QueryContextAttributesA(phContext, ulAttribute, pBuffer);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "QueryContextAttributesA: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "QueryContextAttributesA: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -761,7 +761,7 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityContextToken(PCtxtHandle phContext, 
 
 	status = g_SspiW->QuerySecurityContextToken(phContext, phToken);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityContextToken: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "QuerySecurityContextToken: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -778,7 +778,7 @@ SECURITY_STATUS SEC_ENTRY sspi_SetContextAttributesW(PCtxtHandle phContext, ULON
 
 	status = g_SspiW->SetContextAttributesW(phContext, ulAttribute, pBuffer, cbBuffer);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "SetContextAttributesW: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "SetContextAttributesW: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -795,7 +795,7 @@ SECURITY_STATUS SEC_ENTRY sspi_SetContextAttributesA(PCtxtHandle phContext, ULON
 
 	status = g_SspiA->SetContextAttributesA(phContext, ulAttribute, pBuffer, cbBuffer);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "SetContextAttributesA: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "SetContextAttributesA: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -812,7 +812,7 @@ SECURITY_STATUS SEC_ENTRY sspi_RevertSecurityContext(PCtxtHandle phContext)
 
 	status = g_SspiW->RevertSecurityContext(phContext);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "RevertSecurityContext: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "RevertSecurityContext: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -831,7 +831,7 @@ SECURITY_STATUS SEC_ENTRY sspi_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 
 	status = g_SspiW->DecryptMessage(phContext, pMessage, MessageSeqNo, pfQOP);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "DecryptMessage: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "DecryptMessage: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -848,7 +848,7 @@ SECURITY_STATUS SEC_ENTRY sspi_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 
 	status = g_SspiW->EncryptMessage(phContext, fQOP, pMessage, MessageSeqNo);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "EncryptMessage: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "EncryptMessage: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -865,7 +865,7 @@ SECURITY_STATUS SEC_ENTRY sspi_MakeSignature(PCtxtHandle phContext, ULONG fQOP, 
 
 	status = g_SspiW->MakeSignature(phContext, fQOP, pMessage, MessageSeqNo);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "MakeSignature: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "MakeSignature: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }
@@ -882,7 +882,7 @@ SECURITY_STATUS SEC_ENTRY sspi_VerifySignature(PCtxtHandle phContext, PSecBuffer
 
 	status = g_SspiW->VerifySignature(phContext, pMessage, MessageSeqNo, pfQOP);
 
-	WLog_Print(g_Log, WLOG_DEBUG, "VerifySignature: 0x%04X", status);
+	WLog_Print(g_Log, WLOG_DEBUG, "VerifySignature: %s (0x%04X)", GetSecurityStatusString(status), status);
 
 	return status;
 }

@@ -85,7 +85,7 @@
 #define WITH_DEBUG_CREDSSP
 #endif
 
-#define NLA_PKG_NAME	NTLMSP_NAME
+#define NLA_PKG_NAME	NEGOSSP_NAME
 
 #define TERMSRV_SPN_PREFIX	"TERMSRV/"
 
@@ -316,7 +316,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 				SECURITY_NATIVE_DREP, (have_input_buffer) ? &input_buffer_desc : NULL,
 				0, &credssp->context, &output_buffer_desc, &pfContextAttr, &expiration);
 
-		if (have_input_buffer && (input_buffer.pvBuffer != NULL))
+		if (have_input_buffer && (input_buffer.pvBuffer))
 		{
 			free(input_buffer.pvBuffer);
 			input_buffer.pvBuffer = NULL;
@@ -324,7 +324,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
 		{
-			if (credssp->table->CompleteAuthToken != NULL)
+			if (credssp->table->CompleteAuthToken)
 				credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
 
 			have_pub_key_auth = TRUE;
@@ -569,7 +569,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
 		{
-			if (credssp->table->CompleteAuthToken != NULL)
+			if (credssp->table->CompleteAuthToken)
 				credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
 
 			if (status == SEC_I_COMPLETE_NEEDED)

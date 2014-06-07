@@ -636,6 +636,11 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 	return status;
 }
 
+SECURITY_STATUS SEC_ENTRY ntlm_CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken)
+{
+	return SEC_E_OK;
+}
+
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa375354 */
 
 SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
@@ -888,7 +893,7 @@ const SecurityFunctionTableA NTLM_SecurityFunctionTableA =
 	NULL, /* Reserved2 */
 	ntlm_InitializeSecurityContextA, /* InitializeSecurityContext */
 	ntlm_AcceptSecurityContext, /* AcceptSecurityContext */
-	NULL, /* CompleteAuthToken */
+	ntlm_CompleteAuthToken, /* CompleteAuthToken */
 	ntlm_DeleteSecurityContext, /* DeleteSecurityContext */
 	NULL, /* ApplyControlToken */
 	ntlm_QueryContextAttributesA, /* QueryContextAttributes */
@@ -920,7 +925,7 @@ const SecurityFunctionTableW NTLM_SecurityFunctionTableW =
 	NULL, /* Reserved2 */
 	ntlm_InitializeSecurityContextW, /* InitializeSecurityContext */
 	ntlm_AcceptSecurityContext, /* AcceptSecurityContext */
-	NULL, /* CompleteAuthToken */
+	ntlm_CompleteAuthToken, /* CompleteAuthToken */
 	ntlm_DeleteSecurityContext, /* DeleteSecurityContext */
 	NULL, /* ApplyControlToken */
 	ntlm_QueryContextAttributesW, /* QueryContextAttributes */

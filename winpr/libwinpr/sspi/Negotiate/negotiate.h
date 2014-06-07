@@ -42,6 +42,11 @@ struct _NEGOTIATE_CONTEXT
 	PCtxtHandle auth_ctx;
 	SEC_WINNT_AUTH_IDENTITY identity;
 	SecBuffer NegoInitMessage;
+
+	CtxtHandle Context;
+
+	SecurityFunctionTableA* sspiA;
+	SecurityFunctionTableW* sspiW;
 };
 typedef struct _NEGOTIATE_CONTEXT NEGOTIATE_CONTEXT;
 
