@@ -986,8 +986,7 @@ WINPR_API SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecB
 }
 #endif
 
-#endif // WINPR_SSPI
-
+#endif
 
 #ifdef __cplusplus
 extern "C" {

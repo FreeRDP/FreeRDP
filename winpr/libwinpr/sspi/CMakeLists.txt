@@ -45,6 +45,7 @@ set(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_CREDSSP_SRCS}
 	sspi_winpr.c
 	sspi_winpr.h
+	sspi_export.c
 	sspi.c
 	sspi.h)
 
@@ -56,7 +57,7 @@ set(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_SRCS})
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+	#set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"

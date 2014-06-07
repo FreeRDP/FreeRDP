@@ -332,7 +332,7 @@ SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceExA(DWORD flags)
 
 /* Package Management */
 
-SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(ULONG* pcPackages, PSecPkgInfoW* ppPackageInfo)
+SECURITY_STATUS SEC_ENTRY sspi_EnumerateSecurityPackagesW(ULONG* pcPackages, PSecPkgInfoW* ppPackageInfo)
 {
 	SECURITY_STATUS status;
 
@@ -349,7 +349,7 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(ULONG* pcPackages, PSecPkgI
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(ULONG* pcPackages, PSecPkgInfoA* ppPackageInfo)
+SECURITY_STATUS SEC_ENTRY sspi_EnumerateSecurityPackagesA(ULONG* pcPackages, PSecPkgInfoA* ppPackageInfo)
 {
 	SECURITY_STATUS status;
 
@@ -366,7 +366,7 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(ULONG* pcPackages, PSecPkgI
 	return status;
 }
 
-SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceW(void)
+SecurityFunctionTableW* SEC_ENTRY sspi_InitSecurityInterfaceW(void)
 {
 	if (!g_Initialized)
 		InitializeSspiModule(0);
@@ -376,7 +376,7 @@ SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceW(void)
 	return &sspi_SecurityFunctionTableW;
 }
 
-SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceA(void)
+SecurityFunctionTableA* SEC_ENTRY sspi_InitSecurityInterfaceA(void)
 {
 	if (!g_Initialized)
 		InitializeSspiModule(0);
@@ -386,7 +386,7 @@ SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceA(void)
 	return &sspi_SecurityFunctionTableA;
 }
 
-SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, PSecPkgInfoW* ppPackageInfo)
+SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, PSecPkgInfoW* ppPackageInfo)
 {
 	SECURITY_STATUS status;
 
@@ -403,7 +403,7 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, P
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PSecPkgInfoA* ppPackageInfo)
+SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PSecPkgInfoA* ppPackageInfo)
 {
 	SECURITY_STATUS status;
 
@@ -422,7 +422,7 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PS
 
 /* Credential Management */
 
-SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
+SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC_WCHAR* pszPackage,
 		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
@@ -442,7 +442,7 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
+SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
 		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
@@ -462,7 +462,7 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, ULONG fFlags, PSecBuffer pPackedContext, HANDLE* pToken)
+SECURITY_STATUS SEC_ENTRY sspi_ExportSecurityContext(PCtxtHandle phContext, ULONG fFlags, PSecBuffer pPackedContext, HANDLE* pToken)
 {
 	SECURITY_STATUS status;
 
@@ -479,7 +479,7 @@ SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, ULONG fFl
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle phCredential)
+SECURITY_STATUS SEC_ENTRY sspi_FreeCredentialsHandle(PCredHandle phCredential)
 {
 	SECURITY_STATUS status;
 
@@ -496,7 +496,7 @@ SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle phCredential)
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
+SECURITY_STATUS SEC_ENTRY sspi_ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
 {
 	SECURITY_STATUS status;
 
@@ -513,7 +513,7 @@ SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuff
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
+SECURITY_STATUS SEC_ENTRY sspi_ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
 {
 	SECURITY_STATUS status;
 
@@ -530,7 +530,7 @@ SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffe
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY sspi_QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
 {
 	SECURITY_STATUS status;
 
@@ -547,7 +547,7 @@ SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(PCredHandle phCredential, 
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY sspi_QueryCredentialsAttributesA(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
 {
 	SECURITY_STATUS status;
 
@@ -566,7 +566,7 @@ SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(PCredHandle phCredential, 
 
 /* Context Management */
 
-SECURITY_STATUS SEC_ENTRY AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
+SECURITY_STATUS SEC_ENTRY sspi_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
 		PSecBufferDesc pInput, ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsTimeStamp)
 {
@@ -586,7 +586,7 @@ SECURITY_STATUS SEC_ENTRY AcceptSecurityContext(PCredHandle phCredential, PCtxtH
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY ApplyControlToken(PCtxtHandle phContext, PSecBufferDesc pInput)
+SECURITY_STATUS SEC_ENTRY sspi_ApplyControlToken(PCtxtHandle phContext, PSecBufferDesc pInput)
 {
 	SECURITY_STATUS status;
 
@@ -603,7 +603,7 @@ SECURITY_STATUS SEC_ENTRY ApplyControlToken(PCtxtHandle phContext, PSecBufferDes
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken)
+SECURITY_STATUS SEC_ENTRY sspi_CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken)
 {
 	SECURITY_STATUS status;
 
@@ -620,7 +620,7 @@ SECURITY_STATUS SEC_ENTRY CompleteAuthToken(PCtxtHandle phContext, PSecBufferDes
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY DeleteSecurityContext(PCtxtHandle phContext)
+SECURITY_STATUS SEC_ENTRY sspi_DeleteSecurityContext(PCtxtHandle phContext)
 {
 	SECURITY_STATUS status;
 
@@ -637,7 +637,7 @@ SECURITY_STATUS SEC_ENTRY DeleteSecurityContext(PCtxtHandle phContext)
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY FreeContextBuffer(void* pvContextBuffer)
+SECURITY_STATUS SEC_ENTRY sspi_FreeContextBuffer(void* pvContextBuffer)
 {
 	SECURITY_STATUS status;
 
@@ -654,7 +654,7 @@ SECURITY_STATUS SEC_ENTRY FreeContextBuffer(void* pvContextBuffer)
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY ImpersonateSecurityContext(PCtxtHandle phContext)
+SECURITY_STATUS SEC_ENTRY sspi_ImpersonateSecurityContext(PCtxtHandle phContext)
 {
 	SECURITY_STATUS status;
 
@@ -671,7 +671,7 @@ SECURITY_STATUS SEC_ENTRY ImpersonateSecurityContext(PCtxtHandle phContext)
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
+SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextW(PCredHandle phCredential, PCtxtHandle phContext,
 		SEC_WCHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
 		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
@@ -693,7 +693,7 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(PCredHandle phCredential, P
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
+SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
 		SEC_CHAR* pszTargetName, ULONG fContextReq, ULONG Reserved1, ULONG TargetDataRep,
 		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
@@ -715,7 +715,7 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(PCredHandle phCredential, P
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY QueryContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY sspi_QueryContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
 {
 	SECURITY_STATUS status;
 
@@ -732,7 +732,7 @@ SECURITY_STATUS SEC_ENTRY QueryContextAttributesW(PCtxtHandle phContext, ULONG u
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY QueryContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
+SECURITY_STATUS SEC_ENTRY sspi_QueryContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
 {
 	SECURITY_STATUS status;
 
@@ -749,7 +749,7 @@ SECURITY_STATUS SEC_ENTRY QueryContextAttributesA(PCtxtHandle phContext, ULONG u
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext, HANDLE* phToken)
+SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityContextToken(PCtxtHandle phContext, HANDLE* phToken)
 {
 	SECURITY_STATUS status;
 
@@ -766,7 +766,7 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext, HANDL
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY SetContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
+SECURITY_STATUS SEC_ENTRY sspi_SetContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
 {
 	SECURITY_STATUS status;
 
@@ -783,7 +783,7 @@ SECURITY_STATUS SEC_ENTRY SetContextAttributesW(PCtxtHandle phContext, ULONG ulA
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY SetContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
+SECURITY_STATUS SEC_ENTRY sspi_SetContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
 {
 	SECURITY_STATUS status;
 
@@ -800,7 +800,7 @@ SECURITY_STATUS SEC_ENTRY SetContextAttributesA(PCtxtHandle phContext, ULONG ulA
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY RevertSecurityContext(PCtxtHandle phContext)
+SECURITY_STATUS SEC_ENTRY sspi_RevertSecurityContext(PCtxtHandle phContext)
 {
 	SECURITY_STATUS status;
 
@@ -819,7 +819,7 @@ SECURITY_STATUS SEC_ENTRY RevertSecurityContext(PCtxtHandle phContext)
 
 /* Message Support */
 
-SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
+SECURITY_STATUS SEC_ENTRY sspi_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
 	SECURITY_STATUS status;
 
@@ -836,7 +836,7 @@ SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext, PSecBufferDesc p
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY sspi_EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	SECURITY_STATUS status;
 
@@ -853,7 +853,7 @@ SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSec
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
+SECURITY_STATUS SEC_ENTRY sspi_MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 	SECURITY_STATUS status;
 
@@ -870,7 +870,7 @@ SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecB
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
+SECURITY_STATUS SEC_ENTRY sspi_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
 	SECURITY_STATUS status;
 
@@ -890,63 +890,63 @@ SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecBufferDesc 
 SecurityFunctionTableA sspi_SecurityFunctionTableA =
 {
 	1, /* dwVersion */
-	EnumerateSecurityPackagesA, /* EnumerateSecurityPackages */
-	QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
-	AcquireCredentialsHandleA, /* AcquireCredentialsHandle */
-	FreeCredentialsHandle, /* FreeCredentialsHandle */
+	sspi_EnumerateSecurityPackagesA, /* EnumerateSecurityPackages */
+	sspi_QueryCredentialsAttributesA, /* QueryCredentialsAttributes */
+	sspi_AcquireCredentialsHandleA, /* AcquireCredentialsHandle */
+	sspi_FreeCredentialsHandle, /* FreeCredentialsHandle */
 	NULL, /* Reserved2 */
-	InitializeSecurityContextA, /* InitializeSecurityContext */
-	AcceptSecurityContext, /* AcceptSecurityContext */
-	CompleteAuthToken, /* CompleteAuthToken */
-	DeleteSecurityContext, /* DeleteSecurityContext */
-	ApplyControlToken, /* ApplyControlToken */
-	QueryContextAttributesA, /* QueryContextAttributes */
-	ImpersonateSecurityContext, /* ImpersonateSecurityContext */
-	RevertSecurityContext, /* RevertSecurityContext */
-	MakeSignature, /* MakeSignature */
-	VerifySignature, /* VerifySignature */
-	FreeContextBuffer, /* FreeContextBuffer */
-	QuerySecurityPackageInfoA, /* QuerySecurityPackageInfo */
+	sspi_InitializeSecurityContextA, /* InitializeSecurityContext */
+	sspi_AcceptSecurityContext, /* AcceptSecurityContext */
+	sspi_CompleteAuthToken, /* CompleteAuthToken */
+	sspi_DeleteSecurityContext, /* DeleteSecurityContext */
+	sspi_ApplyControlToken, /* ApplyControlToken */
+	sspi_QueryContextAttributesA, /* QueryContextAttributes */
+	sspi_ImpersonateSecurityContext, /* ImpersonateSecurityContext */
+	sspi_RevertSecurityContext, /* RevertSecurityContext */
+	sspi_MakeSignature, /* MakeSignature */
+	sspi_VerifySignature, /* VerifySignature */
+	sspi_FreeContextBuffer, /* FreeContextBuffer */
+	sspi_QuerySecurityPackageInfoA, /* QuerySecurityPackageInfo */
 	NULL, /* Reserved3 */
 	NULL, /* Reserved4 */
-	ExportSecurityContext, /* ExportSecurityContext */
-	ImportSecurityContextA, /* ImportSecurityContext */
+	sspi_ExportSecurityContext, /* ExportSecurityContext */
+	sspi_ImportSecurityContextA, /* ImportSecurityContext */
 	NULL, /* AddCredentials */
 	NULL, /* Reserved8 */
-	QuerySecurityContextToken, /* QuerySecurityContextToken */
-	EncryptMessage, /* EncryptMessage */
-	DecryptMessage, /* DecryptMessage */
-	SetContextAttributesA, /* SetContextAttributes */
+	sspi_QuerySecurityContextToken, /* QuerySecurityContextToken */
+	sspi_EncryptMessage, /* EncryptMessage */
+	sspi_DecryptMessage, /* DecryptMessage */
+	sspi_SetContextAttributesA, /* SetContextAttributes */
 };
 
 SecurityFunctionTableW sspi_SecurityFunctionTableW =
 {
 	1, /* dwVersion */
-	EnumerateSecurityPackagesW, /* EnumerateSecurityPackages */
-	QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
-	AcquireCredentialsHandleW, /* AcquireCredentialsHandle */
-	FreeCredentialsHandle, /* FreeCredentialsHandle */
+	sspi_EnumerateSecurityPackagesW, /* EnumerateSecurityPackages */
+	sspi_QueryCredentialsAttributesW, /* QueryCredentialsAttributes */
+	sspi_AcquireCredentialsHandleW, /* AcquireCredentialsHandle */
+	sspi_FreeCredentialsHandle, /* FreeCredentialsHandle */
 	NULL, /* Reserved2 */
-	InitializeSecurityContextW, /* InitializeSecurityContext */
-	AcceptSecurityContext, /* AcceptSecurityContext */
-	CompleteAuthToken, /* CompleteAuthToken */
-	DeleteSecurityContext, /* DeleteSecurityContext */
-	ApplyControlToken, /* ApplyControlToken */
-	QueryContextAttributesW, /* QueryContextAttributes */
-	ImpersonateSecurityContext, /* ImpersonateSecurityContext */
-	RevertSecurityContext, /* RevertSecurityContext */
-	MakeSignature, /* MakeSignature */
-	VerifySignature, /* VerifySignature */
-	FreeContextBuffer, /* FreeContextBuffer */
-	QuerySecurityPackageInfoW, /* QuerySecurityPackageInfo */
+	sspi_InitializeSecurityContextW, /* InitializeSecurityContext */
+	sspi_AcceptSecurityContext, /* AcceptSecurityContext */
+	sspi_CompleteAuthToken, /* CompleteAuthToken */
+	sspi_DeleteSecurityContext, /* DeleteSecurityContext */
+	sspi_ApplyControlToken, /* ApplyControlToken */
+	sspi_QueryContextAttributesW, /* QueryContextAttributes */
+	sspi_ImpersonateSecurityContext, /* ImpersonateSecurityContext */
+	sspi_RevertSecurityContext, /* RevertSecurityContext */
+	sspi_MakeSignature, /* MakeSignature */
+	sspi_VerifySignature, /* VerifySignature */
+	sspi_FreeContextBuffer, /* FreeContextBuffer */
+	sspi_QuerySecurityPackageInfoW, /* QuerySecurityPackageInfo */
 	NULL, /* Reserved3 */
 	NULL, /* Reserved4 */
-	ExportSecurityContext, /* ExportSecurityContext */
-	ImportSecurityContextW, /* ImportSecurityContext */
+	sspi_ExportSecurityContext, /* ExportSecurityContext */
+	sspi_ImportSecurityContextW, /* ImportSecurityContext */
 	NULL, /* AddCredentials */
 	NULL, /* Reserved8 */
-	QuerySecurityContextToken, /* QuerySecurityContextToken */
-	EncryptMessage, /* EncryptMessage */
-	DecryptMessage, /* DecryptMessage */
-	SetContextAttributesW, /* SetContextAttributes */
+	sspi_QuerySecurityContextToken, /* QuerySecurityContextToken */
+	sspi_EncryptMessage, /* EncryptMessage */
+	sspi_DecryptMessage, /* DecryptMessage */
+	sspi_SetContextAttributesW, /* SetContextAttributes */
 };
