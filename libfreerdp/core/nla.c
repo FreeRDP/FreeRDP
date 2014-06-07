@@ -263,7 +263,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	if (credssp_ntlm_client_init(credssp) == 0)
 		return 0;
 
-	credssp->table = InitSecurityInterface();
+	credssp->table = InitSecurityInterfaceEx(0);
 
 	status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &pPackageInfo);
 
@@ -467,11 +467,11 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 		pInitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
 #endif
 
-		credssp->table = (*pInitSecurityInterface)();
+		credssp->table = pInitSecurityInterface();
 	}
 	else
 	{
-		credssp->table = InitSecurityInterface();
+		credssp->table = InitSecurityInterfaceEx(0);
 	}
 
 	status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &pPackageInfo);

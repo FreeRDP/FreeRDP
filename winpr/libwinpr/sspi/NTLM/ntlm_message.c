@@ -95,8 +95,11 @@ int ntlm_read_message_header(wStream* s, NTLM_MESSAGE_HEADER* header)
 	if (Stream_GetRemainingLength(s) < 12)
 		return -1;
 
-	Stream_Read(s, header->Signature, sizeof(NTLM_SIGNATURE));
+	Stream_Read(s, header->Signature, 8);
 	Stream_Read_UINT32(s, header->MessageType);
+
+	if (strncmp((char*) header->Signature, NTLM_SIGNATURE, 8) != 0)
+		return -1;
 
 	return 1;
 }
@@ -111,23 +114,6 @@ void ntlm_populate_message_header(NTLM_MESSAGE_HEADER* header, UINT32 MessageTyp
 {
 	CopyMemory(header->Signature, NTLM_SIGNATURE, sizeof(NTLM_SIGNATURE));
 	header->MessageType = MessageType;
-}
-
-BOOL ntlm_validate_message_header(wStream* s, NTLM_MESSAGE_HEADER* header, UINT32 MessageType)
-{
-	if (memcmp(header->Signature, NTLM_SIGNATURE, sizeof(NTLM_SIGNATURE)) != 0)
-	{
-		fprintf(stderr, "Unexpected NTLM signature: %s, expected:%s\n", header->Signature, NTLM_SIGNATURE);
-		return FALSE;
-	}
-
-	if (header->MessageType != MessageType)
-	{
-		fprintf(stderr, "Unexpected NTLM message type: %d, expected: %d\n", header->MessageType, MessageType);
-		return FALSE;
-	}
-
-	return TRUE;
 }
 
 int ntlm_read_message_fields(wStream* s, NTLM_MESSAGE_FIELDS* fields)
@@ -156,6 +142,9 @@ int ntlm_read_message_fields_buffer(wStream* s, NTLM_MESSAGE_FIELDS* fields)
 {
 	if (fields->Len > 0)
 	{
+		if ((fields->BufferOffset + fields->Len) > Stream_Length(s))
+			return -1;
+
 		fields->Buffer = (PBYTE) malloc(fields->Len);
 
 		if (!fields->Buffer)
@@ -221,11 +210,8 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (ntlm_read_message_header(s, (NTLM_MESSAGE_HEADER*) message) < 0)
 		return SEC_E_INVALID_TOKEN;
 
-	if (!ntlm_validate_message_header(s, (NTLM_MESSAGE_HEADER*) message, MESSAGE_TYPE_NEGOTIATE))
-	{
-		Stream_Free(s, FALSE);
+	if (message->MessageType != MESSAGE_TYPE_NEGOTIATE)
 		return SEC_E_INVALID_TOKEN;
-	}
 
 	Stream_Read_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
@@ -394,11 +380,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (ntlm_read_message_header(s, (NTLM_MESSAGE_HEADER*) message) < 0)
 		return SEC_E_INVALID_TOKEN;
 
-	if (!ntlm_validate_message_header(s, (NTLM_MESSAGE_HEADER*) message, MESSAGE_TYPE_CHALLENGE))
-	{
-		Stream_Free(s, FALSE);
+	if (message->MessageType != MESSAGE_TYPE_CHALLENGE)
 		return SEC_E_INVALID_TOKEN;
-	}
 
 	if (ntlm_read_message_fields(s, &(message->TargetName)) < 0) /* TargetNameFields (8 bytes) */
 		return SEC_E_INVALID_TOKEN;
@@ -710,11 +693,8 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (ntlm_read_message_header(s, (NTLM_MESSAGE_HEADER*) message) < 0)
 		return SEC_E_INVALID_TOKEN;
 
-	if (!ntlm_validate_message_header(s, (NTLM_MESSAGE_HEADER*) message, MESSAGE_TYPE_AUTHENTICATE))
-	{
-		Stream_Free(s, FALSE);
+	if (message->MessageType != MESSAGE_TYPE_AUTHENTICATE)
 		return SEC_E_INVALID_TOKEN;
-	}
 
 	if (ntlm_read_message_fields(s, &(message->LmChallengeResponse)) < 0) /* LmChallengeResponseFields (8 bytes) */
 		return SEC_E_INVALID_TOKEN;
@@ -770,7 +750,8 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		if (!snt)
 			return SEC_E_INTERNAL_ERROR;
 
-		ntlm_read_ntlm_v2_response(snt, &response);
+		if (ntlm_read_ntlm_v2_response(snt, &response) < 0)
+			return SEC_E_INVALID_TOKEN;
 
 		Stream_Free(snt, FALSE);
 
@@ -806,6 +787,10 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
 		MicOffset = Stream_GetPosition(s);
+
+		if (Stream_GetRemainingLength(s) < 16)
+			return SEC_E_INVALID_TOKEN;
+
 		Stream_Read(s, message->MessageIntegrityCheck, 16);
 		PayloadBufferOffset += 16;
 	}

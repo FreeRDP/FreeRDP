@@ -21,9 +21,14 @@
 #include "config.h"
 #endif
 
+#define _NO_KSECDD_IMPORT_	1
+
+#include <winpr/sspi.h>
+
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
 #include <winpr/library.h>
+#include <winpr/environment.h>
 
 #include "sspi.h"
 
@@ -38,13 +43,35 @@ static SecurityFunctionTableA* g_SspiA = NULL;
 SecurityFunctionTableA sspi_SecurityFunctionTableA;
 SecurityFunctionTableW sspi_SecurityFunctionTableW;
 
+BOOL ShouldUseNativeSspi()
+{
+	BOOL status = FALSE;
+#ifdef _WIN32
+	DWORD nSize;
+	char* env = NULL;
+
+	nSize = GetEnvironmentVariableA("WINPR_NATIVE_SSPI", NULL, 0);
+
+	if (!nSize)
+		return TRUE;
+
+	env = (LPSTR) malloc(nSize);
+	nSize = GetEnvironmentVariableA("WINPR_NATIVE_SSPI", env, nSize);
+
+	if (strcmp(env, "0") == 0)
+		status = FALSE;
+	else
+		status = TRUE;
+
+	free(env);
+#endif
+	return status;
+}
+
 BOOL InitializeSspiModule_Native(void)
 {
-#ifdef _WIN32
 	INIT_SECURITY_INTERFACE_W pInitSecurityInterfaceW;
 	INIT_SECURITY_INTERFACE_A pInitSecurityInterfaceA;
-
-	return FALSE;
 
 	g_SspiModule = LoadLibraryA("secur32.dll");
 
@@ -64,21 +91,38 @@ BOOL InitializeSspiModule_Native(void)
 		g_SspiA = pInitSecurityInterfaceA();
 
 	return TRUE;
-#else
-	return FALSE;
-#endif
 }
 
-void InitializeSspiModule(void)
+void InitializeSspiModule(DWORD flags)
 {
+	BOOL status = FALSE;
+
 	if (g_Initialized)
 		return;
 
 	g_Initialized = TRUE;
 
+	sspi_GlobalInit();
+
 	g_Log = WLog_Get("com.winpr.sspi");
 
-	if (!InitializeSspiModule_Native())
+	if (flags && (flags & SSPI_INTERFACE_NATIVE))
+	{
+		status = InitializeSspiModule_Native();
+	}
+	else if (flags && (flags & SSPI_INTERFACE_WINPR))
+	{
+		g_SspiW = winpr_InitSecurityInterfaceW();
+		g_SspiA = winpr_InitSecurityInterfaceA();
+		status = TRUE;
+	}
+
+	if (!status && ShouldUseNativeSspi())
+	{
+		status = InitializeSspiModule_Native();
+	}
+
+	if (!status)
 	{
 		g_SspiW = winpr_InitSecurityInterfaceW();
 		g_SspiA = winpr_InitSecurityInterfaceA();
@@ -262,6 +306,26 @@ const char* GetSecurityStatusString(SECURITY_STATUS status)
 	return "SEC_E_UNKNOWN";
 }
 
+SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceExW(DWORD flags)
+{
+	if (!g_Initialized)
+		InitializeSspiModule(flags);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceExW");
+
+	return &sspi_SecurityFunctionTableW;
+}
+
+SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceExA(DWORD flags)
+{
+	if (!g_Initialized)
+		InitializeSspiModule(flags);
+
+	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceExA");
+
+	return &sspi_SecurityFunctionTableA;
+}
+
 /**
  * Standard SSPI API
  */
@@ -273,7 +337,7 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(ULONG* pcPackages, PSecPkgI
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->EnumerateSecurityPackagesW))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -290,7 +354,7 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(ULONG* pcPackages, PSecPkgI
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiA && g_SspiA->EnumerateSecurityPackagesA))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -305,7 +369,7 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(ULONG* pcPackages, PSecPkgI
 SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceW(void)
 {
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceW");
 
@@ -315,7 +379,7 @@ SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceW(void)
 SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceA(void)
 {
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	WLog_Print(g_Log, WLOG_DEBUG, "InitSecurityInterfaceA");
 
@@ -327,7 +391,7 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName, P
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->QuerySecurityPackageInfoW))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -344,7 +408,7 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName, PS
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiA && g_SspiA->QuerySecurityPackageInfoA))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -365,7 +429,7 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal, SEC
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->AcquireCredentialsHandleW))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -385,7 +449,7 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiA && g_SspiA->AcquireCredentialsHandleA))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -403,7 +467,7 @@ SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext, ULONG fFl
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->ExportSecurityContext))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -420,7 +484,7 @@ SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(PCredHandle phCredential)
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->FreeCredentialsHandle))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -437,7 +501,7 @@ SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuff
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->ImportSecurityContextW))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -454,7 +518,7 @@ SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffe
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiA && g_SspiA->ImportSecurityContextA))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -471,7 +535,7 @@ SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(PCredHandle phCredential, 
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->QueryCredentialsAttributesW))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -488,7 +552,7 @@ SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(PCredHandle phCredential, 
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiA && g_SspiA->QueryCredentialsAttributesA))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -509,7 +573,7 @@ SECURITY_STATUS SEC_ENTRY AcceptSecurityContext(PCredHandle phCredential, PCtxtH
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->AcceptSecurityContext))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -527,7 +591,7 @@ SECURITY_STATUS SEC_ENTRY ApplyControlToken(PCtxtHandle phContext, PSecBufferDes
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->ApplyControlToken))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -544,7 +608,7 @@ SECURITY_STATUS SEC_ENTRY CompleteAuthToken(PCtxtHandle phContext, PSecBufferDes
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->CompleteAuthToken))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -561,7 +625,7 @@ SECURITY_STATUS SEC_ENTRY DeleteSecurityContext(PCtxtHandle phContext)
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->DeleteSecurityContext))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -578,7 +642,7 @@ SECURITY_STATUS SEC_ENTRY FreeContextBuffer(void* pvContextBuffer)
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->FreeContextBuffer))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -595,7 +659,7 @@ SECURITY_STATUS SEC_ENTRY ImpersonateSecurityContext(PCtxtHandle phContext)
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->ImpersonateSecurityContext))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -615,7 +679,7 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(PCredHandle phCredential, P
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->InitializeSecurityContextW))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -637,7 +701,7 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(PCredHandle phCredential, P
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiA && g_SspiA->InitializeSecurityContextA))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -656,7 +720,7 @@ SECURITY_STATUS SEC_ENTRY QueryContextAttributesW(PCtxtHandle phContext, ULONG u
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->QueryContextAttributesW))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -673,7 +737,7 @@ SECURITY_STATUS SEC_ENTRY QueryContextAttributesA(PCtxtHandle phContext, ULONG u
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiA && g_SspiA->QueryContextAttributesA))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -690,7 +754,7 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext, HANDL
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->QuerySecurityContextToken))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -707,7 +771,7 @@ SECURITY_STATUS SEC_ENTRY SetContextAttributesW(PCtxtHandle phContext, ULONG ulA
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->SetContextAttributesW))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -724,7 +788,7 @@ SECURITY_STATUS SEC_ENTRY SetContextAttributesA(PCtxtHandle phContext, ULONG ulA
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiA && g_SspiA->SetContextAttributesA))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -741,7 +805,7 @@ SECURITY_STATUS SEC_ENTRY RevertSecurityContext(PCtxtHandle phContext)
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->RevertSecurityContext))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -760,7 +824,7 @@ SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext, PSecBufferDesc p
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->DecryptMessage))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -777,7 +841,7 @@ SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSec
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->EncryptMessage))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -794,7 +858,7 @@ SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecB
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->MakeSignature))
 		return SEC_E_UNSUPPORTED_FUNCTION;
@@ -811,7 +875,7 @@ SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecBufferDesc 
 	SECURITY_STATUS status;
 
 	if (!g_Initialized)
-		InitializeSspiModule();
+		InitializeSspiModule(0);
 
 	if (!(g_SspiW && g_SspiW->VerifySignature))
 		return SEC_E_UNSUPPORTED_FUNCTION;

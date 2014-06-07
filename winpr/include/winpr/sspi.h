@@ -25,8 +25,6 @@
 #include <winpr/windows.h>
 #include <winpr/security.h>
 
-#define _NO_KSECDD_IMPORT_	1
-
 #ifdef _WIN32
 
 #include <tchar.h>
@@ -997,16 +995,33 @@ extern "C" {
 
 /* Custom API */
 
+#define SSPI_INTERFACE_WINPR	0x00000001
+#define SSPI_INTERFACE_NATIVE	0x00000002
+
+typedef PSecurityFunctionTableA (SEC_ENTRY * INIT_SECURITY_INTERFACE_EX_A)(DWORD flags);
+typedef PSecurityFunctionTableW (SEC_ENTRY * INIT_SECURITY_INTERFACE_EX_W)(DWORD flags);
+
 WINPR_API void sspi_GlobalInit(void);
 WINPR_API void sspi_GlobalFinish(void);
 
 WINPR_API void* sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size);
 WINPR_API void sspi_SecBufferFree(PSecBuffer SecBuffer);
 
-WINPR_API int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* domain, char* password);
+WINPR_API int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, const char* domain, const char* password);
 WINPR_API int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDENTITY* srcIdentity);
 
 WINPR_API const char* GetSecurityStatusString(SECURITY_STATUS status);
+
+WINPR_API SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceExW(DWORD flags);
+WINPR_API SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceExA(DWORD flags);
+
+#ifdef UNICODE
+#define InitSecurityInterfaceEx InitSecurityInterfaceExW
+#define INIT_SECURITY_INTERFACE_EX INIT_SECURITY_INTERFACE_EX_W
+#else
+#define InitSecurityInterfaceEx InitSecurityInterfaceExA
+#define INIT_SECURITY_INTERFACE_EX INIT_SECURITY_INTERFACE_EX_A
+#endif
 
 #ifdef __cplusplus
 }

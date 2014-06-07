@@ -317,7 +317,7 @@ void sspi_SecureHandleFree(SecHandle* handle)
 	free(handle);
 }
 
-int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* domain, char* password)
+int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, const char* domain, const char* password)
 {
 	int status;
 

@@ -615,7 +615,7 @@ int dump_test_certificate_files()
 int TestSchannel(int argc, char* argv[])
 {
 	int count;
-	int index;
+	DWORD index;
 	ALG_ID algId;
 	HANDLE thread;
 	BYTE* lpTokenIn;
