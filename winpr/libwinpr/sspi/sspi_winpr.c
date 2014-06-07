@@ -223,10 +223,15 @@ void sspi_CredentialsFree(CREDENTIALS* credentials)
 	free(credentials);
 }
 
-void sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size)
+void* sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size)
 {
+	if (!SecBuffer)
+		return NULL;
+
 	SecBuffer->cbBuffer = size;
 	SecBuffer->pvBuffer = calloc(1, size);
+
+	return SecBuffer->pvBuffer;
 }
 
 void sspi_SecBufferFree(PSecBuffer SecBuffer)
