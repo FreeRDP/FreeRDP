@@ -41,7 +41,6 @@ void sspi_CredentialsFree(CREDENTIALS* credentials);
 PSecBuffer sspi_FindSecBuffer(PSecBufferDesc pMessage, ULONG BufferType);
 
 SecHandle* sspi_SecureHandleAlloc(void);
-void sspi_SecureHandleInit(SecHandle* handle);
 void sspi_SecureHandleInvalidate(SecHandle* handle);
 void* sspi_SecureHandleGetLowerPointer(SecHandle* handle);
 void sspi_SecureHandleSetLowerPointer(SecHandle* handle, void* pointer);

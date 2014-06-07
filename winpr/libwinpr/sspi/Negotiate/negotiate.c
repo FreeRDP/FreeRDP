@@ -45,7 +45,7 @@ NEGOTIATE_CONTEXT* negotiate_ContextNew()
 	context->NegotiateFlags = 0;
 	context->state = NEGOTIATE_STATE_INITIAL;
 
-	sspi_SecureHandleInit(&(context->Context));
+	SecInvalidateHandle(&(context->Context));
 
 	context->sspiA = (SecurityFunctionTableA*) &NTLM_SecurityFunctionTableA;
 	context->sspiW = (SecurityFunctionTableW*) &NTLM_SecurityFunctionTableW;

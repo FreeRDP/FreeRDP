@@ -258,32 +258,16 @@ SecHandle* sspi_SecureHandleAlloc()
 	if (!handle)
 		return NULL;
 
-	sspi_SecureHandleInit(handle);
+	SecInvalidateHandle(handle);
 
 	return handle;
-}
-
-void sspi_SecureHandleInit(SecHandle* handle)
-{
-	if (!handle)
-		return;
-
-	FillMemory(handle, sizeof(SecHandle), 0xFF);
-}
-
-void sspi_SecureHandleInvalidate(SecHandle* handle)
-{
-	if (!handle)
-		return;
-
-	sspi_SecureHandleInit(handle);
 }
 
 void* sspi_SecureHandleGetLowerPointer(SecHandle* handle)
 {
 	void* pointer;
 
-	if (!handle || !SecIsValidHandle(handle))
+	if (!handle || !SecIsValidHandle(handle) || !handle->dwLower)
 		return NULL;
 
 	pointer = (void*) ~((size_t) handle->dwLower);
@@ -303,7 +287,7 @@ void* sspi_SecureHandleGetUpperPointer(SecHandle* handle)
 {
 	void* pointer;
 
-	if (!handle || !SecIsValidHandle(handle))
+	if (!handle || !SecIsValidHandle(handle) || !handle->dwUpper)
 		return NULL;
 
 	pointer = (void*) ~((size_t) handle->dwUpper);
