@@ -209,6 +209,38 @@ SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesW(PCtxtHandle phContex
 	return status;
 }
 
+SECURITY_STATUS SEC_ENTRY negotiate_ImpersonateSecurityContext(PCtxtHandle phContext)
+{
+	NEGOTIATE_CONTEXT* context;
+	SECURITY_STATUS status = SEC_E_OK;
+
+	context = (NEGOTIATE_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (context->sspiW->ImpersonateSecurityContext)
+		status = context->sspiW->ImpersonateSecurityContext(&(context->Context));
+
+	return status;
+}
+
+SECURITY_STATUS SEC_ENTRY negotiate_RevertSecurityContext(PCtxtHandle phContext)
+{
+	NEGOTIATE_CONTEXT* context;
+	SECURITY_STATUS status = SEC_E_OK;
+
+	context = (NEGOTIATE_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (context->sspiW->RevertSecurityContext)
+		status = context->sspiW->RevertSecurityContext(&(context->Context));
+
+	return status;
+}
+
 SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
 {
 	NEGOTIATE_CONTEXT* context;
@@ -240,11 +272,29 @@ SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(SEC_WCHAR* pszPrin
 		credentials = sspi_CredentialsNew();
 
 		if (!credentials)
-			return SEC_E_INSUFFICIENT_MEMORY;
+			return SEC_E_INTERNAL_ERROR;
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
 
-		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+		if (identity)
+			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+
+		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
+		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOTIATE_PACKAGE_NAME);
+
+		return SEC_E_OK;
+	}
+	else if (fCredentialUse == SECPKG_CRED_INBOUND)
+	{
+		credentials = sspi_CredentialsNew();
+
+		if (!credentials)
+			return SEC_E_INTERNAL_ERROR;
+
+		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+
+		if (identity)
+			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOTIATE_PACKAGE_NAME);
@@ -267,11 +317,29 @@ SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(SEC_CHAR* pszPrinc
 		credentials = sspi_CredentialsNew();
 
 		if (!credentials)
-			return SEC_E_INSUFFICIENT_MEMORY;
+			return SEC_E_INTERNAL_ERROR;
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
 
-		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+		if (identity)
+			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+
+		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
+		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOTIATE_PACKAGE_NAME);
+
+		return SEC_E_OK;
+	}
+	else if (fCredentialUse == SECPKG_CRED_INBOUND)
+	{
+		credentials = sspi_CredentialsNew();
+
+		if (!credentials)
+			return SEC_E_INTERNAL_ERROR;
+
+		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+
+		if (identity)
+			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
 
 		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
 		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOTIATE_PACKAGE_NAME);
@@ -375,8 +443,8 @@ const SecurityFunctionTableA NEGOTIATE_SecurityFunctionTableA =
 	negotiate_DeleteSecurityContext, /* DeleteSecurityContext */
 	NULL, /* ApplyControlToken */
 	negotiate_QueryContextAttributesA, /* QueryContextAttributes */
-	NULL, /* ImpersonateSecurityContext */
-	NULL, /* RevertSecurityContext */
+	negotiate_ImpersonateSecurityContext, /* ImpersonateSecurityContext */
+	negotiate_RevertSecurityContext, /* RevertSecurityContext */
 	negotiate_MakeSignature, /* MakeSignature */
 	negotiate_VerifySignature, /* VerifySignature */
 	NULL, /* FreeContextBuffer */
@@ -407,8 +475,8 @@ const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW =
 	negotiate_DeleteSecurityContext, /* DeleteSecurityContext */
 	NULL, /* ApplyControlToken */
 	negotiate_QueryContextAttributesW, /* QueryContextAttributes */
-	NULL, /* ImpersonateSecurityContext */
-	NULL, /* RevertSecurityContext */
+	negotiate_ImpersonateSecurityContext, /* ImpersonateSecurityContext */
+	negotiate_RevertSecurityContext, /* RevertSecurityContext */
 	negotiate_MakeSignature, /* MakeSignature */
 	negotiate_VerifySignature, /* VerifySignature */
 	NULL, /* FreeContextBuffer */

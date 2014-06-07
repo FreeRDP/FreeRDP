@@ -812,7 +812,26 @@ SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal
 
 SECURITY_STATUS SEC_ENTRY winpr_ExportSecurityContext(PCtxtHandle phContext, ULONG fFlags, PSecBuffer pPackedContext, HANDLE* pToken)
 {
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	SEC_CHAR* Name;
+	SECURITY_STATUS status;
+	SecurityFunctionTableW* table;
+
+	Name = (SEC_CHAR*) sspi_SecureHandleGetUpperPointer(phContext);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableWByNameA(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (!table->ExportSecurityContext)
+		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	status = table->ExportSecurityContext(phContext, fFlags, pPackedContext, pToken);
+
+	return status;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_FreeCredentialsHandle(PCredHandle phCredential)
@@ -841,7 +860,26 @@ SECURITY_STATUS SEC_ENTRY winpr_FreeCredentialsHandle(PCredHandle phCredential)
 
 SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextW(SEC_WCHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
 {
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	SEC_CHAR* Name;
+	SECURITY_STATUS status;
+	SecurityFunctionTableW* table;
+
+	Name = (SEC_CHAR*) sspi_SecureHandleGetUpperPointer(phContext);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableWByNameA(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (!table->ImportSecurityContextW)
+		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	status = table->ImportSecurityContextW(pszPackage, pPackedContext, pToken, phContext);
+
+	return status;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextA(SEC_CHAR* pszPackage, PSecBuffer pPackedContext, HANDLE pToken, PCtxtHandle phContext)
@@ -1043,7 +1081,7 @@ SECURITY_STATUS SEC_ENTRY winpr_ImpersonateSecurityContext(PCtxtHandle phContext
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	if (!table->ImportSecurityContextW)
+	if (!table->ImpersonateSecurityContext)
 		return SEC_E_UNSUPPORTED_FUNCTION;
 
 	status = table->ImpersonateSecurityContext(phContext);
