@@ -3,6 +3,17 @@
 #include <winpr/sspi.h>
 #include <winpr/print.h>
 
+#define TEST_SSPI_INTERFACE SSPI_INTERFACE_WINPR
+
+static const char* TEST_NTLM_USER = "Username";
+static const char* TEST_NTLM_DOMAIN = "Domain";
+static const char* TEST_NTLM_PASSWORD = "P4ss123!";
+
+static const char* TEST_NTLM_HASH_STRING = "d5922a65c4d5c082ca444af1be0001db";
+
+static const BYTE TEST_NTLM_HASH[16] =
+	{ 0xd5, 0x92, 0x2a, 0x65, 0xc4, 0xd5, 0xc0, 0x82, 0xca, 0x44, 0x4a, 0xf1, 0xbe, 0x00, 0x01, 0xdb };
+
 struct _TEST_NTLM_CLIENT
 {
 	CtxtHandle context;
@@ -33,7 +44,7 @@ int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* 
 
 	SecInvalidateHandle(&(ntlm->context));
 
-	ntlm->table = InitSecurityInterfaceEx(SSPI_INTERFACE_WINPR);
+	ntlm->table = InitSecurityInterfaceEx(TEST_SSPI_INTERFACE);
 
 	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
 
@@ -177,7 +188,7 @@ int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 			0, &ntlm->context, &ntlm->outputBufferDesc,
 			&ntlm->pfContextAttr, &ntlm->expiration);
 
-	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
+	if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
 	{
 		if (ntlm->table->CompleteAuthToken)
 			ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
@@ -252,15 +263,97 @@ struct _TEST_NTLM_SERVER
 };
 typedef struct _TEST_NTLM_SERVER TEST_NTLM_SERVER;
 
-int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm, const char* user, const char* domain, const char* password)
+void SEC_ENTRY test_ntlm_server_get_key(void* pArg, void* pPrincipal, ULONG KeyVer, void** ppKey, SECURITY_STATUS* pStatus)
+{
+	char* User = NULL;
+	char* Domain = NULL;
+	TEST_NTLM_SERVER* ntlm;
+	SEC_WINNT_AUTH_IDENTITY* identity;
+	SECURITY_STATUS status = SEC_E_NO_CREDENTIALS;
+
+	if (!pPrincipal || !ppKey)
+	{
+		*pStatus = SEC_E_INVALID_PARAMETER;
+		return;
+	}
+
+	ntlm = (TEST_NTLM_SERVER*) pArg;
+	identity = (SEC_WINNT_AUTH_IDENTITY*) *ppKey;
+
+	if (!ntlm || !identity)
+	{
+		*pStatus = SEC_E_INVALID_PARAMETER;
+		return;
+	}
+
+	if (strcmp((char*) pPrincipal, "NTLM") != 0)
+	{
+		*pStatus = SEC_E_UNSUPPORTED_FUNCTION;
+		return;
+	}
+
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) identity->User, identity->UserLength, &User, 0, NULL, NULL);
+
+	if (identity->Domain)
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) identity->Domain, identity->DomainLength, &Domain, 0, NULL, NULL);
+
+	if (KeyVer == 0) /* plaintext password */
+	{
+#if 0
+		char* password;
+
+		if (strcmp(User, TEST_NTLM_USER) == 0)
+		{
+			password = _strdup(TEST_NTLM_PASSWORD);
+			*ppKey = (void*) password;
+			status = SEC_E_OK;
+		}
+#endif
+	}
+	else if (KeyVer == 1) /* NTLMv1 Hash */
+	{
+		BYTE* hash;
+
+		status = SEC_E_NO_CREDENTIALS;
+
+		hash = (BYTE*) calloc(1, 16);
+
+		if (!hash)
+		{
+			*pStatus = SEC_E_INTERNAL_ERROR;
+			return;
+		}
+
+		if (strcmp(User, TEST_NTLM_USER) == 0)
+		{
+			CopyMemory(hash, TEST_NTLM_HASH, 16);
+			*ppKey = (void*) hash;
+			status = SEC_E_OK;
+		}
+	}
+	else if (KeyVer == 2) /* NTLMv2 Hash */
+	{
+		status = SEC_E_NO_CREDENTIALS;
+	}
+	else
+	{
+		/* unknown */
+		status = SEC_E_UNSUPPORTED_FUNCTION;
+	}
+
+	fprintf(stderr, "SecGetKey %s\\%s status: %s (0x%04X)\n",
+				Domain, User, GetSecurityStatusString(status), status);
+
+	*pStatus = status;
+}
+
+int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 {
 	SECURITY_STATUS status;
 
 	SecInvalidateHandle(&(ntlm->context));
 
-	ntlm->table = InitSecurityInterfaceEx(SSPI_INTERFACE_WINPR);
-
-	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
+	ntlm->table = InitSecurityInterfaceEx(TEST_SSPI_INTERFACE);
 
 	status = ntlm->table->QuerySecurityPackageInfo(NTLMSP_NAME, &ntlm->pPackageInfo);
 
@@ -274,7 +367,9 @@ int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm, const char* user, const char* 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
 
 	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,
-			SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL, &ntlm->credentials, &ntlm->expiration);
+			SECPKG_CRED_INBOUND, NULL, NULL,
+			test_ntlm_server_get_key, (void*) ntlm,
+			&ntlm->credentials, &ntlm->expiration);
 
 	if (status != SEC_E_OK)
 	{
@@ -387,10 +482,6 @@ void test_ntlm_server_free(TEST_NTLM_SERVER* ntlm)
 	free(ntlm);
 }
 
-static const char* TEST_NTLM_USERNAME = "Username";
-static const char* TEST_NTLM_DOMAIN = "Domain";
-static const char* TEST_NTLM_PASSWORD = "P4ss123!";
-
 int TestNTLM(int argc, char* argv[])
 {
 	int status;
@@ -404,7 +495,7 @@ int TestNTLM(int argc, char* argv[])
 
 	client = test_ntlm_client_new();
 
-	status = test_ntlm_client_init(client, TEST_NTLM_USERNAME, TEST_NTLM_DOMAIN, TEST_NTLM_PASSWORD);
+	status = test_ntlm_client_init(client, TEST_NTLM_USER, TEST_NTLM_DOMAIN, TEST_NTLM_PASSWORD);
 
 	if (status < 0)
 	{
@@ -418,7 +509,7 @@ int TestNTLM(int argc, char* argv[])
 
 	server = test_ntlm_server_new();
 
-	status = test_ntlm_server_init(server, TEST_NTLM_USERNAME, TEST_NTLM_DOMAIN, TEST_NTLM_PASSWORD);
+	status = test_ntlm_server_init(server);
 
 	if (status < 0)
 	{

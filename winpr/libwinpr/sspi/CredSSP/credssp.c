@@ -44,7 +44,7 @@ SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(PCredHandle phCrede
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	CREDSSP_CONTEXT* context;
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 
 	context = (CREDSSP_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -55,7 +55,7 @@ SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(PCredHandle phCrede
 		if (!context)
 			return SEC_E_INSUFFICIENT_MEMORY;
 
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) CREDSSP_PACKAGE_NAME);
@@ -106,7 +106,7 @@ SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleA(SEC_CHAR* pszPrincip
 		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;
 
 	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
@@ -138,9 +138,9 @@ SECURITY_STATUS SEC_ENTRY credssp_QueryCredentialsAttributesA(PCredHandle phCred
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
-		CREDENTIALS* credentials;
+		SSPI_CREDENTIALS* credentials;
 
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
 		return SEC_E_OK;
 	}
@@ -150,12 +150,12 @@ SECURITY_STATUS SEC_ENTRY credssp_QueryCredentialsAttributesA(PCredHandle phCred
 
 SECURITY_STATUS SEC_ENTRY credssp_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 
 	if (!phCredential)
 		return SEC_E_INVALID_HANDLE;
 
-	credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+	credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
 	if (!credentials)
 		return SEC_E_INVALID_HANDLE;

@@ -228,6 +228,8 @@ struct _NTLM_CONTEXT
 	NTLM_STATE state;
 	int SendSeqNum;
 	int RecvSeqNum;
+	BYTE NtlmHash[16];
+	BYTE NtlmV2Hash[16];
 	BYTE MachineID[32];
 	BOOL SendVersionInfo;
 	BOOL confidentiality;
@@ -243,7 +245,7 @@ struct _NTLM_CONTEXT
 	BOOL SendWorkstationName;
 	UNICODE_STRING Workstation;
 	UNICODE_STRING ServicePrincipalName;
-	SEC_WINNT_AUTH_IDENTITY identity;
+	SSPI_CREDENTIALS* credentials;
 	BYTE* ChannelBindingToken;
 	BYTE ChannelBindingsHash[16];
 	SecPkgContext_Bindings Bindings;

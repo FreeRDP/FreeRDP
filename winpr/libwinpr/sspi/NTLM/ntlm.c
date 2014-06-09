@@ -246,10 +246,6 @@ void ntlm_ContextFree(NTLM_CONTEXT* context)
 	sspi_SecBufferFree(&context->LmChallengeResponse);
 
 	free(context->ServicePrincipalName.Buffer);
-
-	free(context->identity.User);
-	free(context->identity.Password);
-	free(context->identity.Domain);
 	free(context->Workstation.Buffer);
 	free(context);
 }
@@ -258,43 +254,32 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(SEC_WCHAR* pszPrincipal
 		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;
 
-	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
+	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) &&
+		(fCredentialUse != SECPKG_CRED_INBOUND) &&
+		(fCredentialUse != SECPKG_CRED_BOTH))
 	{
-		credentials = sspi_CredentialsNew();
-
-		if (!credentials)
-			return SEC_E_INSUFFICIENT_MEMORY;
-
-		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-
-		if (identity)
-			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
-
-		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
-		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
-
-		return SEC_E_OK;
+		return SEC_E_INVALID_PARAMETER;
 	}
-	else if (fCredentialUse == SECPKG_CRED_INBOUND)
-	{
-		credentials = sspi_CredentialsNew();
 
-		if (!credentials)
-			return SEC_E_INSUFFICIENT_MEMORY;
+	credentials = sspi_CredentialsNew();
 
-		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+	if (!credentials)
+		return SEC_E_INTERNAL_ERROR;
 
-		if (identity)
-			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+	credentials->fCredentialUse = fCredentialUse;
+	credentials->pGetKeyFn = pGetKeyFn;
+	credentials->pvGetKeyArgument = pvGetKeyArgument;
 
-		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
-		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
+	identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
 
-		return SEC_E_OK;
-	}
+	if (identity)
+		sspi_CopyAuthIdentity(&(credentials->identity), identity);
+
+	sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
+	sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
 
 	return SEC_E_OK;
 }
@@ -303,55 +288,44 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal,
 		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;
 
-	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
+	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) &&
+		(fCredentialUse != SECPKG_CRED_INBOUND) &&
+		(fCredentialUse != SECPKG_CRED_BOTH))
 	{
-		credentials = sspi_CredentialsNew();
-
-		if (!credentials)
-			return SEC_E_INSUFFICIENT_MEMORY;
-
-		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-
-		if (identity)
-			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
-
-		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
-		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
-
-		return SEC_E_OK;
+		return SEC_E_INVALID_PARAMETER;
 	}
-	else if (fCredentialUse == SECPKG_CRED_INBOUND)
-	{
-		credentials = sspi_CredentialsNew();
 
-		if (!credentials)
-			return SEC_E_INSUFFICIENT_MEMORY;
+	credentials = sspi_CredentialsNew();
 
-		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+	if (!credentials)
+		return SEC_E_INTERNAL_ERROR;
 
-		if (identity)
-			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
+	credentials->fCredentialUse = fCredentialUse;
+	credentials->pGetKeyFn = pGetKeyFn;
+	credentials->pvGetKeyArgument = pvGetKeyArgument;
 
-		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
-		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
+	identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
 
-		return SEC_E_OK;
-	}
+	if (identity)
+		sspi_CopyAuthIdentity(&(credentials->identity), identity);
+
+	sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
+	sspi_SecureHandleSetUpperPointer(phCredential, (void*) NTLM_PACKAGE_NAME);
 
 	return SEC_E_OK;
 }
 
 SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 
 	if (!phCredential)
 		return SEC_E_INVALID_HANDLE;
 
-	credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+	credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
 	if (!credentials)
 		return SEC_E_INVALID_HANDLE;
@@ -385,7 +359,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 {
 	NTLM_CONTEXT* context;
 	SECURITY_STATUS status;
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 	PSecBuffer input_buffer;
 	PSecBuffer output_buffer;
 
@@ -403,10 +377,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 		if (fContextReq & ASC_REQ_CONFIDENTIALITY)
 			context->confidentiality = TRUE;
 
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
-
-		if (sspi_CopyAuthIdentity(&context->identity, &credentials->identity) < 0)
-			return SEC_E_INSUFFICIENT_MEMORY;
+		credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		context->credentials = credentials;
 
 		ntlm_SetContextTargetName(context, NULL);
 
@@ -502,7 +474,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 {
 	NTLM_CONTEXT* context;
 	SECURITY_STATUS status;
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
 	PSecBuffer channel_bindings = NULL;
@@ -519,19 +491,17 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 		if (fContextReq & ISC_REQ_CONFIDENTIALITY)
 			context->confidentiality = TRUE;
 
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		context->credentials = credentials;
 
 		if (context->Workstation.Length < 1)
 		{
 			if (ntlm_SetContextWorkstation(context, NULL) < 0)
-				return SEC_E_INSUFFICIENT_MEMORY;
+				return SEC_E_INTERNAL_ERROR;
 		}
 
 		if (ntlm_SetContextServicePrincipalNameW(context, pszTargetName) < 0)
-			return SEC_E_INSUFFICIENT_MEMORY;
-
-		if (sspi_CopyAuthIdentity(&context->identity, &credentials->identity) < 0)
-			return SEC_E_INSUFFICIENT_MEMORY;
+			return SEC_E_INTERNAL_ERROR;
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) NTLM_PACKAGE_NAME);
@@ -624,7 +594,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 	if (pszTargetName)
 	{
 		if (ConvertToUnicode(CP_UTF8, 0, pszTargetName, -1, &pszTargetNameW, 0) <= 0)
-			return SEC_E_INSUFFICIENT_MEMORY;
+			return SEC_E_INTERNAL_ERROR;
 	}
 
 	status = ntlm_InitializeSecurityContextW(phCredential, phContext, pszTargetNameW, fContextReq,

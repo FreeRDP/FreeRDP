@@ -676,6 +676,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	NTLMv2_RESPONSE response;
 	UINT32 PayloadBufferOffset;
 	NTLM_AUTHENTICATE_MESSAGE* message;
+	SSPI_CREDENTIALS* credentials = context->credentials;
 
 	flags = 0;
 	MicOffset = 0;
@@ -821,24 +822,94 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (message->UserName.Len > 0)
 	{
-		context->identity.User = (UINT16*) malloc(message->UserName.Len);
+		credentials->identity.User = (UINT16*) malloc(message->UserName.Len);
 
-		if (!context->identity.User)
+		if (!credentials->identity.User)
 			return SEC_E_INTERNAL_ERROR;
 
-		CopyMemory(context->identity.User, message->UserName.Buffer, message->UserName.Len);
-		context->identity.UserLength = message->UserName.Len / 2;
+		CopyMemory(credentials->identity.User, message->UserName.Buffer, message->UserName.Len);
+		credentials->identity.UserLength = message->UserName.Len / 2;
 	}
 
 	if (message->DomainName.Len > 0)
 	{
-		context->identity.Domain = (UINT16*) malloc(message->DomainName.Len);
+		credentials->identity.Domain = (UINT16*) malloc(message->DomainName.Len);
 
-		if (!context->identity.Domain)
+		if (!credentials->identity.Domain)
 			return SEC_E_INTERNAL_ERROR;
 
-		CopyMemory(context->identity.Domain, message->DomainName.Buffer, message->DomainName.Len);
-		context->identity.DomainLength = message->DomainName.Len / 2;
+		CopyMemory(credentials->identity.Domain, message->DomainName.Buffer, message->DomainName.Len);
+		credentials->identity.DomainLength = message->DomainName.Len / 2;
+	}
+
+	/* Computations beyond this point require the NTLM hash of the password */
+
+	if (credentials->pGetKeyFn)
+	{
+		BYTE* value;
+		void* pKey = NULL;
+		SECURITY_STATUS GetKeyStatus = SEC_E_UNSUPPORTED_FUNCTION;
+		
+		if (GetKeyStatus != SEC_E_OK)
+		{
+			pKey = &(credentials->identity);
+			GetKeyStatus = SEC_E_UNSUPPORTED_FUNCTION;
+
+			/* plaintext password */
+			credentials->pGetKeyFn(credentials->pvGetKeyArgument, "NTLM", 0, &pKey, &GetKeyStatus);
+
+			if (GetKeyStatus == SEC_E_OK)
+			{
+				int status;
+
+				value = (BYTE*) pKey;
+				credentials->identity.Password = NULL;
+
+				status = ConvertToUnicode(CP_UTF8, 0, (char*) value, -1,
+					(LPWSTR*) &credentials->identity.Password, 0);
+
+				if (status <= 0)
+					return SEC_E_INTERNAL_ERROR;
+
+				credentials->identity.PasswordLength = (ULONG) (status - 1);
+			}
+		}
+
+		if (GetKeyStatus != SEC_E_OK)
+		{
+			pKey = &(credentials->identity);
+			GetKeyStatus = SEC_E_UNSUPPORTED_FUNCTION;
+
+			/* NTLMv1 Hash */
+			credentials->pGetKeyFn(credentials->pvGetKeyArgument, "NTLM", 1, &pKey, &GetKeyStatus);
+
+			if (GetKeyStatus == SEC_E_OK)
+			{
+				value = (BYTE*) pKey;
+				CopyMemory(context->NtlmHash, value, 16);
+			}
+		}
+
+		if (GetKeyStatus != SEC_E_OK)
+		{
+			pKey = &(credentials->identity);
+			GetKeyStatus = SEC_E_UNSUPPORTED_FUNCTION;
+
+			/* NTLMv2 Hash */
+			credentials->pGetKeyFn(credentials->pvGetKeyArgument, "NTLM", 2, &pKey, &GetKeyStatus);
+
+			if (GetKeyStatus == SEC_E_OK)
+			{
+				value = (BYTE*) pKey;
+				CopyMemory(context->NtlmHash, value, 16);
+			}
+		}
+
+		if (GetKeyStatus != SEC_E_OK)
+		{
+			/* no credentials on the server */
+			return SEC_E_LOGON_DENIED;
+		}
 	}
 
 	if (ntlm_compute_lm_v2_response(context) < 0) /* LmChallengeResponse */
@@ -961,6 +1032,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	UINT32 MicOffset = 0;
 	UINT32 PayloadBufferOffset;
 	NTLM_AUTHENTICATE_MESSAGE* message;
+	SSPI_CREDENTIALS* credentials = context->credentials;
 
 	message = &context->AUTHENTICATE_MESSAGE;
 	ZeroMemory(message, sizeof(NTLM_AUTHENTICATE_MESSAGE));
@@ -1007,15 +1079,15 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 		message->Workstation.Buffer = (BYTE*) context->Workstation.Buffer;
 	}
 
-	if (context->identity.DomainLength > 0)
+	if (credentials->identity.DomainLength > 0)
 	{
 		message->NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-		message->DomainName.Len = (UINT16) context->identity.DomainLength * 2;
-		message->DomainName.Buffer = (BYTE*) context->identity.Domain;
+		message->DomainName.Len = (UINT16) credentials->identity.DomainLength * 2;
+		message->DomainName.Buffer = (BYTE*) credentials->identity.Domain;
 	}
 
-	message->UserName.Len = (UINT16) context->identity.UserLength * 2;
-	message->UserName.Buffer = (BYTE*) context->identity.User;
+	message->UserName.Len = (UINT16) credentials->identity.UserLength * 2;
+	message->UserName.Buffer = (BYTE*) credentials->identity.User;
 
 	message->LmChallengeResponse.Len = (UINT16) context->LmChallengeResponse.cbBuffer;
 	message->LmChallengeResponse.Buffer = (BYTE*) context->LmChallengeResponse.pvBuffer;

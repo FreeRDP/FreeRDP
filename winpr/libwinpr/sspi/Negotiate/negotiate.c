@@ -68,7 +68,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(PCredHandle phCre
 {
 	SECURITY_STATUS status;
 	NEGOTIATE_CONTEXT* context;
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 
 	context = (NEGOTIATE_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -79,7 +79,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(PCredHandle phCre
 		if (!context)
 			return SEC_E_INTERNAL_ERROR;
 
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
@@ -100,7 +100,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(PCredHandle phCre
 {
 	SECURITY_STATUS status;
 	NEGOTIATE_CONTEXT* context;
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 
 	context = (NEGOTIATE_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -111,7 +111,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(PCredHandle phCre
 		if (!context)
 			return SEC_E_INTERNAL_ERROR;
 
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
@@ -131,7 +131,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(PCredHandle phCredenti
 {
 	SECURITY_STATUS status;
 	NEGOTIATE_CONTEXT* context;
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 
 	context = (NEGOTIATE_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -142,7 +142,7 @@ SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(PCredHandle phCredenti
 		if (!context)
 			return SEC_E_INTERNAL_ERROR;
 
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 		sspi_CopyAuthIdentity(&context->identity, &credentials->identity);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
@@ -264,90 +264,68 @@ SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(SEC_WCHAR* pszPrin
 		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;
 
-	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
+	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) &&
+		(fCredentialUse != SECPKG_CRED_INBOUND) &&
+		(fCredentialUse != SECPKG_CRED_BOTH))
 	{
-		credentials = sspi_CredentialsNew();
-
-		if (!credentials)
-			return SEC_E_INTERNAL_ERROR;
-
-		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-
-		if (identity)
-			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
-
-		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
-		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOTIATE_PACKAGE_NAME);
-
-		return SEC_E_OK;
-	}
-	else if (fCredentialUse == SECPKG_CRED_INBOUND)
-	{
-		credentials = sspi_CredentialsNew();
-
-		if (!credentials)
-			return SEC_E_INTERNAL_ERROR;
-
-		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-
-		if (identity)
-			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
-
-		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
-		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOTIATE_PACKAGE_NAME);
-
-		return SEC_E_OK;
+		return SEC_E_INVALID_PARAMETER;
 	}
 
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	credentials = sspi_CredentialsNew();
+
+	if (!credentials)
+		return SEC_E_INTERNAL_ERROR;
+
+	credentials->fCredentialUse = fCredentialUse;
+	credentials->pGetKeyFn = pGetKeyFn;
+	credentials->pvGetKeyArgument = pvGetKeyArgument;
+
+	identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+
+	if (identity)
+		sspi_CopyAuthIdentity(&(credentials->identity), identity);
+
+	sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
+	sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOTIATE_PACKAGE_NAME);
+
+	return SEC_E_OK;
 }
 
 SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
 		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;
 
-	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
+	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) &&
+		(fCredentialUse != SECPKG_CRED_INBOUND) &&
+		(fCredentialUse != SECPKG_CRED_BOTH))
 	{
-		credentials = sspi_CredentialsNew();
-
-		if (!credentials)
-			return SEC_E_INTERNAL_ERROR;
-
-		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-
-		if (identity)
-			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
-
-		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
-		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOTIATE_PACKAGE_NAME);
-
-		return SEC_E_OK;
-	}
-	else if (fCredentialUse == SECPKG_CRED_INBOUND)
-	{
-		credentials = sspi_CredentialsNew();
-
-		if (!credentials)
-			return SEC_E_INTERNAL_ERROR;
-
-		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
-
-		if (identity)
-			CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
-
-		sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
-		sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOTIATE_PACKAGE_NAME);
-
-		return SEC_E_OK;
+		return SEC_E_INVALID_PARAMETER;
 	}
 
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	credentials = sspi_CredentialsNew();
+
+	if (!credentials)
+		return SEC_E_INTERNAL_ERROR;
+
+	credentials->fCredentialUse = fCredentialUse;
+	credentials->pGetKeyFn = pGetKeyFn;
+	credentials->pvGetKeyArgument = pvGetKeyArgument;
+
+	identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
+
+	if (identity)
+		sspi_CopyAuthIdentity(&(credentials->identity), identity);
+
+	sspi_SecureHandleSetLowerPointer(phCredential, (void*) credentials);
+	sspi_SecureHandleSetUpperPointer(phCredential, (void*) NEGOTIATE_PACKAGE_NAME);
+
+	return SEC_E_OK;
 }
 
 SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
@@ -362,12 +340,12 @@ SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesA(PCredHandle phCr
 
 SECURITY_STATUS SEC_ENTRY negotiate_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 
 	if (!phCredential)
 		return SEC_E_INVALID_HANDLE;
 
-	credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+	credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
 	if (!credentials)
 		return SEC_E_INVALID_HANDLE;

@@ -216,16 +216,16 @@ void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
 	return sspi_ContextBufferAlloc(allocatorIndex, size);
 }
 
-CREDENTIALS* sspi_CredentialsNew()
+SSPI_CREDENTIALS* sspi_CredentialsNew()
 {
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 
-	credentials = (CREDENTIALS*) calloc(1, sizeof(CREDENTIALS));
+	credentials = (SSPI_CREDENTIALS*) calloc(1, sizeof(SSPI_CREDENTIALS));
 
 	return credentials;
 }
 
-void sspi_CredentialsFree(CREDENTIALS* credentials)
+void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 {
 	if (!credentials)
 		return;

@@ -28,15 +28,18 @@
 
 #define SSPI_CREDENTIALS_HASH_LENGTH_FACTOR	64
 
-struct _CREDENTIALS
+struct _SSPI_CREDENTIALS
 {
 	DWORD flags;
+	ULONG fCredentialUse;
+	SEC_GET_KEY_FN pGetKeyFn;
+	void* pvGetKeyArgument;
 	SEC_WINNT_AUTH_IDENTITY identity;
 };
-typedef struct _CREDENTIALS CREDENTIALS;
+typedef struct _SSPI_CREDENTIALS SSPI_CREDENTIALS;
 
-CREDENTIALS* sspi_CredentialsNew(void);
-void sspi_CredentialsFree(CREDENTIALS* credentials);
+SSPI_CREDENTIALS* sspi_CredentialsNew(void);
+void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials);
 
 PSecBuffer sspi_FindSecBuffer(PSecBufferDesc pMessage, ULONG BufferType);
 
