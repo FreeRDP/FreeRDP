@@ -37,7 +37,6 @@ struct _TEST_NTLM_CLIENT
 	SecPkgInfo* pPackageInfo;
 	SecurityFunctionTable* table;
 	SEC_WINNT_AUTH_IDENTITY identity;
-	SecPkgContext_Sizes ContextSizes;
 };
 typedef struct _TEST_NTLM_CLIENT TEST_NTLM_CLIENT;
 
@@ -76,7 +75,6 @@ int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* 
 	ntlm->haveInputBuffer = FALSE;
 	ZeroMemory(&ntlm->inputBuffer, sizeof(SecBuffer));
 	ZeroMemory(&ntlm->outputBuffer, sizeof(SecBuffer));
-	ZeroMemory(&ntlm->ContextSizes, sizeof(SecPkgContext_Sizes));
 
 	ntlm->fContextReq = 0;
 
@@ -202,13 +200,6 @@ int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 		if (ntlm->table->CompleteAuthToken)
 			ntlm->table->CompleteAuthToken(&ntlm->context, &ntlm->outputBufferDesc);
 
-		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
-		{
-			fprintf(stderr, "QueryContextAttributes SECPKG_ATTR_SIZES failure status: %s (0x%04X)\n",
-				GetSecurityStatusString(status), status);
-			return -1;
-		}
-
 		if (status == SEC_I_COMPLETE_NEEDED)
 			status = SEC_E_OK;
 		else if (status == SEC_I_COMPLETE_AND_CONTINUE)
@@ -268,7 +259,6 @@ struct _TEST_NTLM_SERVER
 	SecPkgInfo* pPackageInfo;
 	SecurityFunctionTable* table;
 	SEC_WINNT_AUTH_IDENTITY identity;
-	SecPkgContext_Sizes ContextSizes;
 };
 typedef struct _TEST_NTLM_SERVER TEST_NTLM_SERVER;
 
@@ -394,7 +384,6 @@ int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 	ntlm->haveInputBuffer = FALSE;
 	ZeroMemory(&ntlm->inputBuffer, sizeof(SecBuffer));
 	ZeroMemory(&ntlm->outputBuffer, sizeof(SecBuffer));
-	ZeroMemory(&ntlm->ContextSizes, sizeof(SecPkgContext_Sizes));
 
 	ntlm->fContextReq = 0;
 

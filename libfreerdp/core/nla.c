@@ -322,11 +322,19 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			input_buffer.pvBuffer = NULL;
 		}
 
-		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
+		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
 		{
 			if (credssp->table->CompleteAuthToken)
 				credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
 
+			if (status == SEC_I_COMPLETE_NEEDED)
+				status = SEC_E_OK;
+			else if (status == SEC_I_COMPLETE_AND_CONTINUE)
+				status = SEC_I_CONTINUE_NEEDED;
+		}
+
+		if (status == SEC_E_OK)
+		{
 			have_pub_key_auth = TRUE;
 
 			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
@@ -336,11 +344,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			}
 
 			credssp_encrypt_public_key_echo(credssp);
-
-			if (status == SEC_I_COMPLETE_NEEDED)
-				status = SEC_E_OK;
-			else if (status == SEC_I_COMPLETE_AND_CONTINUE)
-				status = SEC_I_CONTINUE_NEEDED;
 		}
 
 		/* send authentication token to server */

@@ -1185,22 +1185,98 @@ SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesA(PCtxtHandle phContext, U
 
 SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityContextToken(PCtxtHandle phContext, HANDLE* phToken)
 {
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	SEC_CHAR* Name;
+	SECURITY_STATUS status;
+	SecurityFunctionTableW* table;
+
+	Name = (SEC_CHAR*) sspi_SecureHandleGetUpperPointer(phContext);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableWByNameA(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (!table->QuerySecurityContextToken)
+		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	status = table->QuerySecurityContextToken(phContext, phToken);
+
+	return status;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
 {
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	SEC_CHAR* Name;
+	SECURITY_STATUS status;
+	SecurityFunctionTableW* table;
+
+	Name = (SEC_CHAR*) sspi_SecureHandleGetUpperPointer(phContext);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableWByNameA(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (!table->SetContextAttributesW)
+		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	status = table->SetContextAttributesW(phContext, ulAttribute, pBuffer, cbBuffer);
+
+	return status;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
 {
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	char* Name;
+	SECURITY_STATUS status;
+	SecurityFunctionTableA* table;
+
+	Name = (char*) sspi_SecureHandleGetUpperPointer(phContext);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableAByNameA(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (!table->SetContextAttributesA)
+		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	status = table->SetContextAttributesA(phContext, ulAttribute, pBuffer, cbBuffer);
+
+	return status;
 }
 
 SECURITY_STATUS SEC_ENTRY winpr_RevertSecurityContext(PCtxtHandle phContext)
 {
-	return SEC_E_UNSUPPORTED_FUNCTION;
+	SEC_CHAR* Name;
+	SECURITY_STATUS status;
+	SecurityFunctionTableW* table;
+
+	Name = (SEC_CHAR*) sspi_SecureHandleGetUpperPointer(phContext);
+
+	if (!Name)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	table = sspi_GetSecurityFunctionTableWByNameA(Name);
+
+	if (!table)
+		return SEC_E_SECPKG_NOT_FOUND;
+
+	if (!table->RevertSecurityContext)
+		return SEC_E_UNSUPPORTED_FUNCTION;
+
+	status = table->RevertSecurityContext(phContext);
+
+	return status;
 }
 
 /* Message Support */
