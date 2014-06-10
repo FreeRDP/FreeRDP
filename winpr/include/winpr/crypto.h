@@ -88,8 +88,6 @@ typedef ULONG_PTR NCRYPT_SECRET_HANDLE;
 #define ALG_SID_DSS_PKCS		1
 #define ALG_SID_DSS_DMS			2
 
-#define ALG_SID_ECDSA			3
-
 #define ALG_SID_DES			1
 #define ALG_SID_3DES			3
 #define ALG_SID_DESX			4
@@ -206,7 +204,6 @@ typedef ULONG_PTR NCRYPT_SECRET_HANDLE;
 
 #define CALG_ECDH			(ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_DH | ALG_SID_ECDH)
 #define CALG_ECMQV			(ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_ANY | ALG_SID_ECMQV)
-#define CALG_ECDSA			(ALG_CLASS_SIGNATURE | ALG_TYPE_DSS | ALG_SID_ECDSA)
 
 typedef struct _CRYPTOAPI_BLOB
 {
@@ -606,6 +603,11 @@ BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, L
 #define CryptBinaryToString	CryptBinaryToStringA
 #endif
 
+#endif
+
+#ifndef ALG_SID_ECSDA
+#define ALG_SID_ECDSA                   3
+#define CALG_ECDSA			(ALG_CLASS_SIGNATURE | ALG_TYPE_DSS | ALG_SID_ECDSA)
 #endif
 
 #endif /* WINPR_CRYPTO_H */
