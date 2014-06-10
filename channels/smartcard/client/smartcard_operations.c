@@ -390,7 +390,6 @@ static UINT32 smartcard_GetStatusChangeA_Call(SMARTCARD_DEVICE* smartcard, SMART
 
 	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED)){
 		call->cReaders=0;
-		call->rgreaderStates=NULL;
 	}
 
 	ret.cReaders = call->cReaders;
