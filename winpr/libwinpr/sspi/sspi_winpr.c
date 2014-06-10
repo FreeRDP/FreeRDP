@@ -230,6 +230,10 @@ void sspi_CredentialsFree(SSPI_CREDENTIALS* credentials)
 	if (!credentials)
 		return;
 
+	free(credentials->identity.User);
+	free(credentials->identity.Domain);
+	free(credentials->identity.Password);
+
 	free(credentials);
 }
 

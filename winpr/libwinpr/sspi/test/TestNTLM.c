@@ -95,6 +95,12 @@ void test_ntlm_client_uninit(TEST_NTLM_CLIENT* ntlm)
 	if (!ntlm)
 		return;
 
+	if (ntlm->outputBuffer[0].pvBuffer)
+	{
+		free(ntlm->outputBuffer[0].pvBuffer);
+		ntlm->outputBuffer[0].pvBuffer = NULL;
+	}
+
 	free(ntlm->identity.User);
 	free(ntlm->identity.Domain);
 	free(ntlm->identity.Password);
@@ -344,6 +350,9 @@ void SEC_ENTRY test_ntlm_server_get_key(void* pArg, void* pPrincipal, ULONG KeyV
 	fprintf(stderr, "SecGetKey %s\\%s status: %s (0x%04X)\n",
 				Domain, User, GetSecurityStatusString(status), status);
 
+	free(User);
+	free(Domain);
+
 	*pStatus = status;
 }
 
@@ -402,6 +411,12 @@ void test_ntlm_server_uninit(TEST_NTLM_SERVER* ntlm)
 {
 	if (!ntlm)
 		return;
+
+	if (ntlm->outputBuffer[0].pvBuffer)
+	{
+		free(ntlm->outputBuffer[0].pvBuffer);
+		ntlm->outputBuffer[0].pvBuffer = NULL;
+	}
 
 	free(ntlm->identity.User);
 	free(ntlm->identity.Domain);

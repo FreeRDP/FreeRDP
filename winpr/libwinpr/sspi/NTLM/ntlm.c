@@ -62,6 +62,7 @@ int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 
 	context->Workstation.Buffer = NULL;
 	status = ConvertToUnicode(CP_UTF8, 0, ws, -1, &context->Workstation.Buffer, 0);
+	free(ws);
 
 	if (status <= 0)
 		return -1;
