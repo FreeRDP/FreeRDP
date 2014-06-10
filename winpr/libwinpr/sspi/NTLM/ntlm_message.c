@@ -703,15 +703,11 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (ntlm_read_message_fields(s, &(message->NtChallengeResponse)) < 0) /* NtChallengeResponseFields (8 bytes) */
 		return SEC_E_INVALID_TOKEN;
 
-	/* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
-
 	if (ntlm_read_message_fields(s, &(message->DomainName)) < 0) /* DomainNameFields (8 bytes) */
 		return SEC_E_INVALID_TOKEN;
 
 	if (ntlm_read_message_fields(s, &(message->UserName)) < 0) /* UserNameFields (8 bytes) */
 		return SEC_E_INVALID_TOKEN;
-
-	/* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
 
 	if (ntlm_read_message_fields(s, &(message->Workstation)) < 0) /* WorkstationFields (8 bytes) */
 		return SEC_E_INVALID_TOKEN;
@@ -720,6 +716,18 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		return SEC_E_INVALID_TOKEN;
 
 	Stream_Read_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
+
+	if (!(message->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) &&
+			(message->DomainName.Len || message->DomainName.MaxLen))
+			return SEC_E_INVALID_TOKEN; /* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
+
+	if (!(message->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) &&
+			(message->Workstation.Len || message->Workstation.MaxLen))
+			return SEC_E_INVALID_TOKEN; /* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
+
+	if (!(message->NegotiateFlags & NTLMSSP_NEGOTIATE_KEY_EXCH) &&
+			(message->EncryptedRandomSessionKey.Len || message->EncryptedRandomSessionKey.MaxLen))
+			return SEC_E_INVALID_TOKEN; /* only set if NTLMSSP_NEGOTIATE_KEY_EXCH is set */
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 	{
@@ -759,6 +767,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		context->NtChallengeResponse.pvBuffer = message->NtChallengeResponse.Buffer;
 		context->NtChallengeResponse.cbBuffer = message->NtChallengeResponse.Len;
 
+		sspi_SecBufferFree(&(context->ChallengeTargetInfo));
 		context->ChallengeTargetInfo.pvBuffer = (void*) response.Challenge.AvPairs;
 		context->ChallengeTargetInfo.cbBuffer = message->NtChallengeResponse.Len - (28 + 16);
 

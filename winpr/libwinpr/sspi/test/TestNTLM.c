@@ -9,10 +9,13 @@ static const char* TEST_NTLM_USER = "Username";
 static const char* TEST_NTLM_DOMAIN = "Domain";
 static const char* TEST_NTLM_PASSWORD = "P4ss123!";
 
-static const char* TEST_NTLM_HASH_STRING = "d5922a65c4d5c082ca444af1be0001db";
+//static const char* TEST_NTLM_HASH_STRING = "d5922a65c4d5c082ca444af1be0001db";
 
 static const BYTE TEST_NTLM_HASH[16] =
 	{ 0xd5, 0x92, 0x2a, 0x65, 0xc4, 0xd5, 0xc0, 0x82, 0xca, 0x44, 0x4a, 0xf1, 0xbe, 0x00, 0x01, 0xdb };
+
+//#define NTLM_PACKAGE_NAME	NEGOSSP_NAME
+#define NTLM_PACKAGE_NAME	NTLMSP_NAME
 
 struct _TEST_NTLM_CLIENT
 {
@@ -48,7 +51,7 @@ int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* 
 
 	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
 
-	status = ntlm->table->QuerySecurityPackageInfo(NTLMSP_NAME, &ntlm->pPackageInfo);
+	status = ntlm->table->QuerySecurityPackageInfo(NTLM_PACKAGE_NAME, &ntlm->pPackageInfo);
 
 	if (status != SEC_E_OK)
 	{
@@ -59,7 +62,7 @@ int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* 
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
 
-	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,
+	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
 			SECPKG_CRED_OUTBOUND, NULL, &ntlm->identity, NULL, NULL, &ntlm->credentials, &ntlm->expiration);
 
 	if (status != SEC_E_OK)
@@ -364,7 +367,7 @@ int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 
 	ntlm->table = InitSecurityInterfaceEx(TEST_SSPI_INTERFACE);
 
-	status = ntlm->table->QuerySecurityPackageInfo(NTLMSP_NAME, &ntlm->pPackageInfo);
+	status = ntlm->table->QuerySecurityPackageInfo(NTLM_PACKAGE_NAME, &ntlm->pPackageInfo);
 
 	if (status != SEC_E_OK)
 	{
@@ -375,7 +378,7 @@ int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 
 	ntlm->cbMaxToken = ntlm->pPackageInfo->cbMaxToken;
 
-	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLMSP_NAME,
+	status = ntlm->table->AcquireCredentialsHandle(NULL, NTLM_PACKAGE_NAME,
 			SECPKG_CRED_INBOUND, NULL, NULL,
 			test_ntlm_server_get_key, (void*) ntlm,
 			&ntlm->credentials, &ntlm->expiration);

@@ -345,7 +345,9 @@ int ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 			DnsDomainName.Length + DnsComputerName.Length + 8;
 
 	length = ntlm_av_pair_list_size(AvPairsCount, AvPairsLength);
-	sspi_SecBufferAlloc(&context->ChallengeTargetInfo, length);
+
+	if (!sspi_SecBufferAlloc(&context->ChallengeTargetInfo, length))
+		return -1;
 
 	pAvPairList = (NTLM_AV_PAIR*) context->ChallengeTargetInfo.pvBuffer;
 	AvPairListSize = (ULONG) context->ChallengeTargetInfo.cbBuffer;

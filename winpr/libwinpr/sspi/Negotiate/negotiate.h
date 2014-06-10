@@ -40,10 +40,9 @@ struct _NEGOTIATE_CONTEXT
 	NEGOTIATE_STATE state;
 	UINT32 NegotiateFlags;
 	PCtxtHandle auth_ctx;
-	SEC_WINNT_AUTH_IDENTITY identity;
 	SecBuffer NegoInitMessage;
 
-	CtxtHandle Context;
+	CtxtHandle SubContext;
 
 	SecurityFunctionTableA* sspiA;
 	SecurityFunctionTableW* sspiW;
