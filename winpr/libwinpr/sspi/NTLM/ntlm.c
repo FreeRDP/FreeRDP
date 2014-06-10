@@ -609,7 +609,20 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(PCredHandle phCredenti
 
 SECURITY_STATUS SEC_ENTRY ntlm_CompleteAuthToken(PCtxtHandle phContext, PSecBufferDesc pToken)
 {
-	return SEC_E_OK;
+	NTLM_CONTEXT* context;
+	SECURITY_STATUS status = SEC_E_OK;
+
+	context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!context)
+		return SEC_E_INVALID_HANDLE;
+
+	if (context->server)
+	{
+		status = ntlm_server_AuthenticateComplete(context);
+	}
+
+	return status;
 }
 
 /* http://msdn.microsoft.com/en-us/library/windows/desktop/aa375354 */
@@ -632,11 +645,15 @@ SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
 
 SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
 {
+	NTLM_CONTEXT* context;
+
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
 
 	if (!pBuffer)
 		return SEC_E_INSUFFICIENT_MEMORY;
+
+	context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (ulAttribute == SECPKG_ATTR_SIZES)
 	{
@@ -649,6 +666,35 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, UL
 
 		return SEC_E_OK;
 	}
+	else if (ulAttribute == SECPKG_ATTR_AUTH_IDENTITY)
+	{
+		int status;
+		char* UserA = NULL;
+		char* DomainA = NULL;
+		SSPI_CREDENTIALS* credentials;
+		SecPkgContext_AuthIdentity* AuthIdentity = (SecPkgContext_AuthIdentity*) pBuffer;
+
+		credentials = context->credentials;
+		ZeroMemory(AuthIdentity, sizeof(SecPkgContext_AuthIdentity));
+
+		UserA = AuthIdentity->User;
+		status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) credentials->identity.User,
+				credentials->identity.UserLength,
+				&UserA, 256, NULL, NULL);
+
+		if (status <= 0)
+			return SEC_E_INTERNAL_ERROR;
+
+		DomainA = AuthIdentity->Domain;
+		status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) credentials->identity.Domain,
+				credentials->identity.DomainLength,
+				&DomainA, 256, NULL, NULL);
+
+		if (status <= 0)
+			return SEC_E_INTERNAL_ERROR;
+
+		return SEC_E_OK;
+	}
 
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
@@ -656,6 +702,38 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, UL
 SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
 {
 	return ntlm_QueryContextAttributesW(phContext, ulAttribute, pBuffer);
+}
+
+SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
+{
+	NTLM_CONTEXT* context;
+
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (!pBuffer)
+		return SEC_E_INVALID_PARAMETER;
+
+	context = (NTLM_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_HASH)
+	{
+		SecPkgContext_AuthNtlmHash* AuthNtlmHash = (SecPkgContext_AuthNtlmHash*) pBuffer;
+
+		if (cbBuffer < sizeof(SecPkgContext_AuthNtlmHash))
+			return SEC_E_INVALID_PARAMETER;
+
+		CopyMemory(context->NtlmHash, AuthNtlmHash->NtlmHash, 16);
+
+		return SEC_E_OK;
+	}
+
+	return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
+{
+	return ntlm_SetContextAttributesW(phContext, ulAttribute, pBuffer, cbBuffer);
 }
 
 SECURITY_STATUS SEC_ENTRY ntlm_RevertSecurityContext(PCtxtHandle phContext)
@@ -883,7 +961,7 @@ const SecurityFunctionTableA NTLM_SecurityFunctionTableA =
 	NULL, /* QuerySecurityContextToken */
 	ntlm_EncryptMessage, /* EncryptMessage */
 	ntlm_DecryptMessage, /* DecryptMessage */
-	NULL, /* SetContextAttributes */
+	ntlm_SetContextAttributesA, /* SetContextAttributes */
 };
 
 const SecurityFunctionTableW NTLM_SecurityFunctionTableW =
@@ -915,7 +993,7 @@ const SecurityFunctionTableW NTLM_SecurityFunctionTableW =
 	NULL, /* QuerySecurityContextToken */
 	ntlm_EncryptMessage, /* EncryptMessage */
 	ntlm_DecryptMessage, /* DecryptMessage */
-	NULL, /* SetContextAttributes */
+	ntlm_SetContextAttributesA, /* SetContextAttributes */
 };
 
 const SecPkgInfoA NTLM_SecPkgInfoA =

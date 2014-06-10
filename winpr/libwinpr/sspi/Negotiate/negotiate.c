@@ -178,25 +178,6 @@ SECURITY_STATUS SEC_ENTRY negotiate_DeleteSecurityContext(PCtxtHandle phContext)
 	return status;
 }
 
-SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
-{
-	NEGOTIATE_CONTEXT* context;
-	SECURITY_STATUS status = SEC_E_OK;
-
-	context = (NEGOTIATE_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
-
-	if (!phContext)
-		return SEC_E_INVALID_HANDLE;
-
-	if (!pBuffer)
-		return SEC_E_INSUFFICIENT_MEMORY;
-
-	if (context->sspiW->QueryContextAttributesW)
-		status = context->sspiW->QueryContextAttributesW(&(context->SubContext), ulAttribute, pBuffer);
-
-	return status;
-}
-
 SECURITY_STATUS SEC_ENTRY negotiate_ImpersonateSecurityContext(PCtxtHandle phContext)
 {
 	NEGOTIATE_CONTEXT* context;
@@ -229,6 +210,25 @@ SECURITY_STATUS SEC_ENTRY negotiate_RevertSecurityContext(PCtxtHandle phContext)
 	return status;
 }
 
+SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
+{
+	NEGOTIATE_CONTEXT* context;
+	SECURITY_STATUS status = SEC_E_OK;
+
+	context = (NEGOTIATE_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (!pBuffer)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	if (context->sspiW->QueryContextAttributesW)
+		status = context->sspiW->QueryContextAttributesW(&(context->SubContext), ulAttribute, pBuffer);
+
+	return status;
+}
+
 SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer)
 {
 	NEGOTIATE_CONTEXT* context;
@@ -244,6 +244,44 @@ SECURITY_STATUS SEC_ENTRY negotiate_QueryContextAttributesA(PCtxtHandle phContex
 
 	if (context->sspiA->QueryContextAttributesA)
 		status = context->sspiA->QueryContextAttributesA(&(context->SubContext), ulAttribute, pBuffer);
+
+	return status;
+}
+
+SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesW(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
+{
+	NEGOTIATE_CONTEXT* context;
+	SECURITY_STATUS status = SEC_E_OK;
+
+	context = (NEGOTIATE_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (!pBuffer)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	if (context->sspiW->SetContextAttributesW)
+		status = context->sspiW->SetContextAttributesW(&(context->SubContext), ulAttribute, pBuffer, cbBuffer);
+
+	return status;
+}
+
+SECURITY_STATUS SEC_ENTRY negotiate_SetContextAttributesA(PCtxtHandle phContext, ULONG ulAttribute, void* pBuffer, ULONG cbBuffer)
+{
+	NEGOTIATE_CONTEXT* context;
+	SECURITY_STATUS status = SEC_E_OK;
+
+	context = (NEGOTIATE_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
+
+	if (!phContext)
+		return SEC_E_INVALID_HANDLE;
+
+	if (!pBuffer)
+		return SEC_E_INSUFFICIENT_MEMORY;
+
+	if (context->sspiA->SetContextAttributesA)
+		status = context->sspiA->SetContextAttributesA(&(context->SubContext), ulAttribute, pBuffer, cbBuffer);
 
 	return status;
 }
@@ -424,7 +462,7 @@ const SecurityFunctionTableA NEGOTIATE_SecurityFunctionTableA =
 	NULL, /* QuerySecurityContextToken */
 	negotiate_EncryptMessage, /* EncryptMessage */
 	negotiate_DecryptMessage, /* DecryptMessage */
-	NULL, /* SetContextAttributes */
+	negotiate_SetContextAttributesA, /* SetContextAttributes */
 };
 
 const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW =
@@ -456,7 +494,7 @@ const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW =
 	NULL, /* QuerySecurityContextToken */
 	negotiate_EncryptMessage, /* EncryptMessage */
 	negotiate_DecryptMessage, /* DecryptMessage */
-	NULL, /* SetContextAttributes */
+	negotiate_SetContextAttributesW, /* SetContextAttributes */
 };
 
 const SecPkgInfoA NEGOTIATE_SecPkgInfoA =

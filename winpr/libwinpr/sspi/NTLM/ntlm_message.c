@@ -671,20 +671,16 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	wStream* s;
 	int length;
 	UINT32 flags;
-	UINT32 MicOffset;
 	NTLM_AV_PAIR* AvFlags;
-	NTLMv2_RESPONSE response;
 	UINT32 PayloadBufferOffset;
 	NTLM_AUTHENTICATE_MESSAGE* message;
 	SSPI_CREDENTIALS* credentials = context->credentials;
 
 	flags = 0;
-	MicOffset = 0;
 	AvFlags = NULL;
 
 	message = &context->AUTHENTICATE_MESSAGE;
 	ZeroMemory(message, sizeof(NTLM_AUTHENTICATE_MESSAGE));
-	ZeroMemory(&response, sizeof(NTLMv2_RESPONSE));
 
 	s = Stream_New((BYTE*) buffer->pvBuffer, buffer->cbBuffer);
 
@@ -759,7 +755,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		if (!snt)
 			return SEC_E_INTERNAL_ERROR;
 
-		if (ntlm_read_ntlm_v2_response(snt, &response) < 0)
+		if (ntlm_read_ntlm_v2_response(snt, &(context->NTLMv2Response)) < 0)
 			return SEC_E_INVALID_TOKEN;
 
 		Stream_Free(snt, FALSE);
@@ -768,12 +764,12 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		context->NtChallengeResponse.cbBuffer = message->NtChallengeResponse.Len;
 
 		sspi_SecBufferFree(&(context->ChallengeTargetInfo));
-		context->ChallengeTargetInfo.pvBuffer = (void*) response.Challenge.AvPairs;
+		context->ChallengeTargetInfo.pvBuffer = (void*) context->NTLMv2Response.Challenge.AvPairs;
 		context->ChallengeTargetInfo.cbBuffer = message->NtChallengeResponse.Len - (28 + 16);
 
-		CopyMemory(context->ClientChallenge, response.Challenge.ClientChallenge, 8);
+		CopyMemory(context->ClientChallenge, context->NTLMv2Response.Challenge.ClientChallenge, 8);
 
-		AvFlags = ntlm_av_pair_get(response.Challenge.AvPairs, MsvAvFlags);
+		AvFlags = ntlm_av_pair_get(context->NTLMv2Response.Challenge.AvPairs, MsvAvFlags);
 
 		if (AvFlags)
 			flags = *((UINT32*) ntlm_av_pair_get_value_pointer(AvFlags));
@@ -796,7 +792,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
-		MicOffset = Stream_GetPosition(s);
+		context->MessageIntegrityCheckOffset = (UINT32) Stream_GetPosition(s);
 
 		if (Stream_GetRemainingLength(s) < 16)
 			return SEC_E_INVALID_TOKEN;
@@ -851,178 +847,11 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 		credentials->identity.DomainLength = message->DomainName.Len / 2;
 	}
 
-	/* Computations beyond this point require the NTLM hash of the password */
-
-	if (credentials->pGetKeyFn)
-	{
-		BYTE* value;
-		void* pKey = NULL;
-		SECURITY_STATUS GetKeyStatus = SEC_E_UNSUPPORTED_FUNCTION;
-		
-		if (GetKeyStatus != SEC_E_OK)
-		{
-			pKey = &(credentials->identity);
-			GetKeyStatus = SEC_E_UNSUPPORTED_FUNCTION;
-
-			/* plaintext password */
-			credentials->pGetKeyFn(credentials->pvGetKeyArgument, "NTLM", 0, &pKey, &GetKeyStatus);
-
-			if (GetKeyStatus == SEC_E_OK)
-			{
-				int status;
-
-				value = (BYTE*) pKey;
-				credentials->identity.Password = NULL;
-
-				status = ConvertToUnicode(CP_UTF8, 0, (char*) value, -1,
-					(LPWSTR*) &credentials->identity.Password, 0);
-
-				if (status <= 0)
-					return SEC_E_INTERNAL_ERROR;
-
-				credentials->identity.PasswordLength = (ULONG) (status - 1);
-			}
-		}
-
-		if (GetKeyStatus != SEC_E_OK)
-		{
-			pKey = &(credentials->identity);
-			GetKeyStatus = SEC_E_UNSUPPORTED_FUNCTION;
-
-			/* NTLMv1 Hash */
-			credentials->pGetKeyFn(credentials->pvGetKeyArgument, "NTLM", 1, &pKey, &GetKeyStatus);
-
-			if (GetKeyStatus == SEC_E_OK)
-			{
-				value = (BYTE*) pKey;
-				CopyMemory(context->NtlmHash, value, 16);
-			}
-		}
-
-		if (GetKeyStatus != SEC_E_OK)
-		{
-			pKey = &(credentials->identity);
-			GetKeyStatus = SEC_E_UNSUPPORTED_FUNCTION;
-
-			/* NTLMv2 Hash */
-			credentials->pGetKeyFn(credentials->pvGetKeyArgument, "NTLM", 2, &pKey, &GetKeyStatus);
-
-			if (GetKeyStatus == SEC_E_OK)
-			{
-				value = (BYTE*) pKey;
-				CopyMemory(context->NtlmHash, value, 16);
-			}
-		}
-
-		if (GetKeyStatus != SEC_E_OK)
-		{
-			/* no credentials on the server */
-			return SEC_E_LOGON_DENIED;
-		}
-	}
-
-	if (ntlm_compute_lm_v2_response(context) < 0) /* LmChallengeResponse */
-		return SEC_E_INTERNAL_ERROR;
-
-	if (ntlm_compute_ntlm_v2_response(context) < 0) /* NtChallengeResponse */
-		return SEC_E_INTERNAL_ERROR;
-
-	/* KeyExchangeKey */
-	ntlm_generate_key_exchange_key(context);
-
-	/* EncryptedRandomSessionKey */
-	ntlm_decrypt_random_session_key(context);
-
-	/* ExportedSessionKey */
-	ntlm_generate_exported_session_key(context);
-
-	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
-	{
-		ZeroMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[MicOffset], 16);
-		ntlm_compute_message_integrity_check(context);
-		CopyMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[MicOffset], message->MessageIntegrityCheck, 16);
-
-		if (memcmp(context->MessageIntegrityCheck, message->MessageIntegrityCheck, 16) != 0)
-		{
-			fprintf(stderr, "Message Integrity Check (MIC) verification failed!\n");
-
-			fprintf(stderr, "Expected MIC:\n");
-			winpr_HexDump(context->MessageIntegrityCheck, 16);
-			fprintf(stderr, "Actual MIC:\n");
-			winpr_HexDump(message->MessageIntegrityCheck, 16);
-			Stream_Free(s, FALSE);
-
-			return SEC_E_MESSAGE_ALTERED;
-		}
-	}
-
-	/* Generate signing keys */
-	ntlm_generate_client_signing_key(context);
-	ntlm_generate_server_signing_key(context);
-
-	/* Generate sealing keys */
-	ntlm_generate_client_sealing_key(context);
-	ntlm_generate_server_sealing_key(context);
-
-	/* Initialize RC4 seal state */
-	ntlm_init_rc4_seal_states(context);
-
-#ifdef WITH_DEBUG_NTLM
-	fprintf(stderr, "ClientChallenge\n");
-	winpr_HexDump(context->ClientChallenge, 8);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "ServerChallenge\n");
-	winpr_HexDump(context->ServerChallenge, 8);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "SessionBaseKey\n");
-	winpr_HexDump(context->SessionBaseKey, 16);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "KeyExchangeKey\n");
-	winpr_HexDump(context->KeyExchangeKey, 16);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "ExportedSessionKey\n");
-	winpr_HexDump(context->ExportedSessionKey, 16);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "RandomSessionKey\n");
-	winpr_HexDump(context->RandomSessionKey, 16);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "ClientSigningKey\n");
-	winpr_HexDump(context->ClientSigningKey, 16);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "ClientSealingKey\n");
-	winpr_HexDump(context->ClientSealingKey, 16);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "ServerSigningKey\n");
-	winpr_HexDump(context->ServerSigningKey, 16);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "ServerSealingKey\n");
-	winpr_HexDump(context->ServerSealingKey, 16);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "Timestamp\n");
-	winpr_HexDump(context->Timestamp, 8);
-	fprintf(stderr, "\n");
-#endif
-
-	context->state = NTLM_STATE_FINAL;
-
 	Stream_Free(s, FALSE);
 
-	ntlm_free_message_fields_buffer(&(message->DomainName));
-	ntlm_free_message_fields_buffer(&(message->UserName));
-	ntlm_free_message_fields_buffer(&(message->Workstation));
-	ntlm_free_message_fields_buffer(&(message->LmChallengeResponse));
-	ntlm_free_message_fields_buffer(&(message->NtChallengeResponse));
-	ntlm_free_message_fields_buffer(&(message->EncryptedRandomSessionKey));
+	/* Computations beyond this point require the NTLM hash of the password */
+
+	context->state = NTLM_STATE_COMPLETION;
 
 	return SEC_I_COMPLETE_NEEDED;
 }
@@ -1038,7 +867,6 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 {
 	wStream* s;
 	int length;
-	UINT32 MicOffset = 0;
 	UINT32 PayloadBufferOffset;
 	NTLM_AUTHENTICATE_MESSAGE* message;
 	SSPI_CREDENTIALS* credentials = context->credentials;
@@ -1148,7 +976,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	if (context->UseMIC)
 	{
-		MicOffset = Stream_GetPosition(s);
+		context->MessageIntegrityCheckOffset = (UINT32) Stream_GetPosition(s);
 		Stream_Zero(s, 16); /* Message Integrity Check (16 bytes) */
 	}
 
@@ -1180,7 +1008,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 		/* Message Integrity Check */
 		ntlm_compute_message_integrity_check(context);
 
-		Stream_SetPosition(s, MicOffset);
+		Stream_SetPosition(s, context->MessageIntegrityCheckOffset);
 		Stream_Write(s, context->MessageIntegrityCheck, 16);
 		Stream_SetPosition(s, length);
 	}
@@ -1221,4 +1049,126 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	Stream_Free(s, FALSE);
 
 	return SEC_I_COMPLETE_NEEDED;
+}
+
+SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
+{
+	UINT32 flags = 0;
+	NTLM_AV_PAIR* AvFlags = NULL;
+	NTLM_AUTHENTICATE_MESSAGE* message;
+
+	if (context->state != NTLM_STATE_COMPLETION)
+		return SEC_E_OUT_OF_SEQUENCE;
+
+	message = &context->AUTHENTICATE_MESSAGE;
+
+	AvFlags = ntlm_av_pair_get(context->NTLMv2Response.Challenge.AvPairs, MsvAvFlags);
+
+	if (AvFlags)
+		flags = *((UINT32*) ntlm_av_pair_get_value_pointer(AvFlags));
+
+	if (ntlm_compute_lm_v2_response(context) < 0) /* LmChallengeResponse */
+		return SEC_E_INTERNAL_ERROR;
+
+	if (ntlm_compute_ntlm_v2_response(context) < 0) /* NtChallengeResponse */
+		return SEC_E_INTERNAL_ERROR;
+
+	/* KeyExchangeKey */
+	ntlm_generate_key_exchange_key(context);
+
+	/* EncryptedRandomSessionKey */
+	ntlm_decrypt_random_session_key(context);
+
+	/* ExportedSessionKey */
+	ntlm_generate_exported_session_key(context);
+
+	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
+	{
+		ZeroMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset], 16);
+
+		ntlm_compute_message_integrity_check(context);
+
+		CopyMemory(&((PBYTE) context->AuthenticateMessage.pvBuffer)[context->MessageIntegrityCheckOffset],
+				message->MessageIntegrityCheck, 16);
+
+		if (memcmp(context->MessageIntegrityCheck, message->MessageIntegrityCheck, 16) != 0)
+		{
+			fprintf(stderr, "Message Integrity Check (MIC) verification failed!\n");
+
+			fprintf(stderr, "Expected MIC:\n");
+			winpr_HexDump(context->MessageIntegrityCheck, 16);
+			fprintf(stderr, "Actual MIC:\n");
+			winpr_HexDump(message->MessageIntegrityCheck, 16);
+
+			return SEC_E_MESSAGE_ALTERED;
+		}
+	}
+
+	/* Generate signing keys */
+	ntlm_generate_client_signing_key(context);
+	ntlm_generate_server_signing_key(context);
+
+	/* Generate sealing keys */
+	ntlm_generate_client_sealing_key(context);
+	ntlm_generate_server_sealing_key(context);
+
+	/* Initialize RC4 seal state */
+	ntlm_init_rc4_seal_states(context);
+
+#ifdef WITH_DEBUG_NTLM
+	fprintf(stderr, "ClientChallenge\n");
+	winpr_HexDump(context->ClientChallenge, 8);
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "ServerChallenge\n");
+	winpr_HexDump(context->ServerChallenge, 8);
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "SessionBaseKey\n");
+	winpr_HexDump(context->SessionBaseKey, 16);
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "KeyExchangeKey\n");
+	winpr_HexDump(context->KeyExchangeKey, 16);
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "ExportedSessionKey\n");
+	winpr_HexDump(context->ExportedSessionKey, 16);
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "RandomSessionKey\n");
+	winpr_HexDump(context->RandomSessionKey, 16);
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "ClientSigningKey\n");
+	winpr_HexDump(context->ClientSigningKey, 16);
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "ClientSealingKey\n");
+	winpr_HexDump(context->ClientSealingKey, 16);
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "ServerSigningKey\n");
+	winpr_HexDump(context->ServerSigningKey, 16);
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "ServerSealingKey\n");
+	winpr_HexDump(context->ServerSealingKey, 16);
+	fprintf(stderr, "\n");
+
+	fprintf(stderr, "Timestamp\n");
+	winpr_HexDump(context->Timestamp, 8);
+	fprintf(stderr, "\n");
+#endif
+
+	context->state = NTLM_STATE_FINAL;
+
+	ntlm_free_message_fields_buffer(&(message->DomainName));
+	ntlm_free_message_fields_buffer(&(message->UserName));
+	ntlm_free_message_fields_buffer(&(message->Workstation));
+	ntlm_free_message_fields_buffer(&(message->LmChallengeResponse));
+	ntlm_free_message_fields_buffer(&(message->NtChallengeResponse));
+	ntlm_free_message_fields_buffer(&(message->EncryptedRandomSessionKey));
+
+	return SEC_E_OK;
 }

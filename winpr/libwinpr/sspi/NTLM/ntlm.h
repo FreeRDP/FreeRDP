@@ -80,6 +80,7 @@ enum _NTLM_STATE
 	NTLM_STATE_NEGOTIATE,
 	NTLM_STATE_CHALLENGE,
 	NTLM_STATE_AUTHENTICATE,
+	NTLM_STATE_COMPLETION,
 	NTLM_STATE_FINAL
 };
 typedef enum _NTLM_STATE NTLM_STATE;
@@ -262,6 +263,7 @@ struct _NTLM_CONTEXT
 	SecBuffer TargetName;
 	SecBuffer NtChallengeResponse;
 	SecBuffer LmChallengeResponse;
+	NTLMv2_RESPONSE NTLMv2Response;
 	BYTE Timestamp[8];
 	BYTE ChallengeTimestamp[8];
 	BYTE ServerChallenge[8];
@@ -276,6 +278,7 @@ struct _NTLM_CONTEXT
 	BYTE ServerSigningKey[16];
 	BYTE ServerSealingKey[16];
 	BYTE MessageIntegrityCheck[16];
+	UINT32 MessageIntegrityCheckOffset;
 };
 typedef struct _NTLM_CONTEXT NTLM_CONTEXT;
 

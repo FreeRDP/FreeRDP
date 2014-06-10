@@ -363,8 +363,10 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 	status = WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar,
 			*lpMultiByteStr, cbMultiByte, lpDefaultChar, lpUsedDefaultChar);
 
-	if (status != cbMultiByte)
+	if ((status != cbMultiByte) && allocate)
+	{
 		status = 0;
+	}
 
 	if ((status <= 0) && allocate)
 	{

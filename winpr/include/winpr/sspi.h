@@ -994,6 +994,29 @@ extern "C" {
 
 /* Custom API */
 
+#define SECPKG_ATTR_AUTH_IDENTITY			1001
+#define SECPKG_ATTR_AUTH_PASSWORD			1002
+#define SECPKG_ATTR_AUTH_NTLM_HASH			1003
+
+struct _SecPkgContext_AuthIdentity
+{
+	char User[256 + 1];
+	char Domain[256 + 1];
+};
+typedef struct _SecPkgContext_AuthIdentity SecPkgContext_AuthIdentity;
+
+struct _SecPkgContext_AuthPassword
+{
+	char Password[256 + 1];
+};
+typedef struct _SecPkgContext_AuthPassword SecPkgContext_AuthPassword;
+
+struct _SecPkgContext_AuthNtlmHash
+{
+	BYTE NtlmHash[16];
+};
+typedef struct _SecPkgContext_AuthNtlmHash SecPkgContext_AuthNtlmHash;
+
 #define SSPI_INTERFACE_WINPR	0x00000001
 #define SSPI_INTERFACE_NATIVE	0x00000002
 
