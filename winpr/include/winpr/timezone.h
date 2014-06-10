@@ -62,8 +62,10 @@ WINPR_API BOOL TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZon
 
 #endif
 
-// GetDynamicTimeZoneInformation is provided by the SDK if _WIN32_WINNT >= 0x0600 in SDKs above 7.1A
-// and incorrectly if _WIN32_WINNT >= 0x0501 in older SDKs
+/*
+ * GetDynamicTimeZoneInformation is provided by the SDK if _WIN32_WINNT >= 0x0600 in SDKs above 7.1A
+ * and incorrectly if _WIN32_WINNT >= 0x0501 in older SDKs
+ */
 #if !defined(_WIN32) || (defined(_WIN32) && (defined(NTDDI_WIN8) && _WIN32_WINNT < 0x0600 || !defined(NTDDI_WIN8) && _WIN32_WINNT < 0x0501)) /* Windows Vista */
 
 WINPR_API DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInformation);

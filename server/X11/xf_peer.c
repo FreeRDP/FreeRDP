@@ -541,6 +541,10 @@ static void* xf_peer_main_loop(void* arg)
 	settings->RemoteFxCodec = TRUE;
 	settings->ColorDepth = 32;
 
+	settings->NlaSecurity = FALSE;
+	settings->TlsSecurity = TRUE;
+	settings->RdpSecurity = FALSE;
+
 	client->Capabilities = xf_peer_capabilities;
 	client->PostConnect = xf_peer_post_connect;
 	client->Activate = xf_peer_activate;

@@ -193,7 +193,6 @@ static void* named_pipe_single_thread(void* arg)
 {
 	HANDLE servers[TESTNUMPIPESST];
 	HANDLE clients[TESTNUMPIPESST];
-	WINPR_NAMED_PIPE* p;
 	char sndbuf[PIPE_BUFFER_SIZE];
 	char rcvbuf[PIPE_BUFFER_SIZE];
 	DWORD dwRead;
@@ -201,6 +200,9 @@ static void* named_pipe_single_thread(void* arg)
 	int i;
 	int numPipes;
 	BOOL bSuccess = FALSE;
+#ifndef _WIN32
+	WINPR_NAMED_PIPE* p;
+#endif
 
 	numPipes = TESTNUMPIPESST;
 
@@ -220,6 +222,7 @@ static void* named_pipe_single_thread(void* arg)
 		}
 	}
 
+#ifndef _WIN32
 	for (i = 0; i < numPipes; i++)
 	{
 		p = (WINPR_NAMED_PIPE*)servers[i];
@@ -252,6 +255,7 @@ static void* named_pipe_single_thread(void* arg)
 			goto out;
 		}
 	}
+#endif
 
 	for (i = 0; i < numPipes; i++)
 	{
@@ -269,9 +273,11 @@ static void* named_pipe_single_thread(void* arg)
 		}
 	}
 
+#ifndef _WIN32
 	for (i = 0; i < numPipes; i++)
 	{
 		p = servers[i];
+
 		if (p->clientfd < 1)
 		{
 			printf("%s: Unexpected client fd value for pipe #%d (%d is not > 0)\n",
@@ -279,7 +285,7 @@ static void* named_pipe_single_thread(void* arg)
 			goto out;
 		}
 
-		if (p->ServerMode == TRUE)
+		if (p->ServerMode)
 		{
 			printf("%s: Unexpected ServerMode value for pipe #%d (1 instead of 0)\n",
 					__FUNCTION__, i);
@@ -291,11 +297,12 @@ static void* named_pipe_single_thread(void* arg)
 	{
 		/* Test writing from clients to servers */
 
-		memset(sndbuf, 0, sizeof(sndbuf));
-		memset(rcvbuf, 0, sizeof(rcvbuf));
-		snprintf(sndbuf, sizeof(sndbuf), "CLIENT->SERVER ON PIPE #%05d", i);
+		ZeroMemory(sndbuf, sizeof(sndbuf));
+		ZeroMemory(rcvbuf, sizeof(rcvbuf));
+		sprintf_s(sndbuf, sizeof(sndbuf), "CLIENT->SERVER ON PIPE #%05d", i);
 
 		p = servers[i];
+
 		if (!WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
 			dwWritten != sizeof(sndbuf))
 		{
@@ -319,9 +326,9 @@ static void* named_pipe_single_thread(void* arg)
 
 		/* Test writing from servers to clients */
 
-		memset(sndbuf, 0, sizeof(sndbuf));
-		memset(rcvbuf, 0, sizeof(rcvbuf));
-		snprintf(sndbuf, sizeof(sndbuf), "SERVER->CLIENT ON PIPE #%05d", i);
+		ZeroMemory(sndbuf, sizeof(sndbuf));
+		ZeroMemory(rcvbuf, sizeof(rcvbuf));
+		sprintf_s(sndbuf, sizeof(sndbuf), "SERVER->CLIENT ON PIPE #%05d", i);
 
 		p = servers[i];
 		if (!WriteFile(servers[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
@@ -345,6 +352,7 @@ static void* named_pipe_single_thread(void* arg)
 			goto out;
 		}
 	}
+#endif
 
 	/**
 	 * After DisconnectNamedPipe on server end

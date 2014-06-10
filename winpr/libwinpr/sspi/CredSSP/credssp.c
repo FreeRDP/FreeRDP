@@ -2,7 +2,7 @@
  * WinPR: Windows Portable Runtime
  * Credential Security Support Provider (CredSSP)
  *
- * Copyright 2010-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2010-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextW(PCredHandle phCrede
 		PSecBufferDesc pInput, ULONG Reserved2, PCtxtHandle phNewContext,
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(PCredHandle phCredential, PCtxtHandle phContext,
@@ -44,22 +44,24 @@ SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(PCredHandle phCrede
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	CREDSSP_CONTEXT* context;
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
+	context = (CREDSSP_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
 	{
 		context = credssp_ContextNew();
 
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		if (!context)
+			return SEC_E_INSUFFICIENT_MEMORY;
+
+		credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) CREDSSP_PACKAGE_NAME);
 	}
 
 	return SEC_E_OK;
-
 }
 
 CREDSSP_CONTEXT* credssp_ContextNew()
@@ -68,10 +70,8 @@ CREDSSP_CONTEXT* credssp_ContextNew()
 
 	context = (CREDSSP_CONTEXT*) calloc(1, sizeof(CREDSSP_CONTEXT));
 
-	if (context != NULL)
-	{
-
-	}
+	if (!context)
+		return NULL;
 
 	return context;
 }
@@ -99,19 +99,23 @@ SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleW(SEC_WCHAR* pszPrinci
 		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleA(SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage,
 		ULONG fCredentialUse, void* pvLogonID, void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
 		void* pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 	SEC_WINNT_AUTH_IDENTITY* identity;
 
 	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
 	{
 		credentials = sspi_CredentialsNew();
+
+		if (!credentials)
+			return SEC_E_INSUFFICIENT_MEMORY;
+
 		identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
 
 		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
@@ -122,21 +126,21 @@ SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleA(SEC_CHAR* pszPrincip
 		return SEC_E_OK;
 	}
 
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_QueryCredentialsAttributesW(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_QueryCredentialsAttributesA(PCredHandle phCredential, ULONG ulAttribute, void* pBuffer)
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
-		CREDENTIALS* credentials;
+		SSPI_CREDENTIALS* credentials;
 
-		credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
 		return SEC_E_OK;
 	}
@@ -146,12 +150,12 @@ SECURITY_STATUS SEC_ENTRY credssp_QueryCredentialsAttributesA(PCredHandle phCred
 
 SECURITY_STATUS SEC_ENTRY credssp_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials;
 
 	if (!phCredential)
 		return SEC_E_INVALID_HANDLE;
 
-	credentials = (CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+	credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
 
 	if (!credentials)
 		return SEC_E_INVALID_HANDLE;
@@ -163,22 +167,22 @@ SECURITY_STATUS SEC_ENTRY credssp_FreeCredentialsHandle(PCredHandle phCredential
 
 SECURITY_STATUS SEC_ENTRY credssp_EncryptMessage(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_MakeSignature(PCtxtHandle phContext, ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 SECURITY_STATUS SEC_ENTRY credssp_VerifySignature(PCtxtHandle phContext, PSecBufferDesc pMessage, ULONG MessageSeqNo, ULONG* pfQOP)
 {
-	return SEC_E_OK;
+	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 const SecurityFunctionTableA CREDSSP_SecurityFunctionTableA =
