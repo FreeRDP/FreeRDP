@@ -102,10 +102,11 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
-		if (plugin->data_in != NULL)
+		if (plugin->data_in)
 			Stream_Release(plugin->data_in);
 
 		plugin->data_in = StreamPool_Take(plugin->pool, totalLength);
+		Stream_AddRef(plugin->data_in);
 	}
 
 	s = plugin->data_in;
@@ -122,7 +123,6 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 		plugin->data_in = NULL;
 		Stream_SealLength(s);
 		Stream_SetPosition(s, 0);
-		Stream_AddRef(s);
 
 		MessageQueue_Post(plugin->MsgPipe->In, NULL, 0, (void*) s, NULL);
 	}

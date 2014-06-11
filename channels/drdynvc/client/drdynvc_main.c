@@ -421,7 +421,8 @@ static void drdynvc_process_terminate(rdpSvcPlugin* plugin)
 	if (drdynvc->channel_mgr)
 		dvcman_free(drdynvc->channel_mgr);
 
-  svc_plugin_terminate(plugin);
+	svc_plugin_terminate(plugin);
+
 	free(drdynvc);
 }
 
