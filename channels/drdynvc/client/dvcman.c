@@ -203,7 +203,7 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	dvcman->iface.GetChannelId = dvcman_get_channel_id;
 	dvcman->drdynvc = plugin;
 	dvcman->channels = ArrayList_New(TRUE);
-	dvcman->pool = StreamPool_New(FALSE, 10);
+	dvcman->pool = StreamPool_New(TRUE, 10);
 
 	return (IWTSVirtualChannelManager*) dvcman;
 }
