@@ -195,8 +195,7 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 {
 	DVCMAN* dvcman;
 
-	dvcman = (DVCMAN*) malloc(sizeof(DVCMAN));
-	ZeroMemory(dvcman, sizeof(DVCMAN));
+	dvcman = (DVCMAN*) calloc(1, sizeof(DVCMAN));
 
 	dvcman->iface.CreateListener = dvcman_create_listener;
 	dvcman->iface.PushEvent = dvcman_push_event;
@@ -204,6 +203,7 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	dvcman->iface.GetChannelId = dvcman_get_channel_id;
 	dvcman->drdynvc = plugin;
 	dvcman->channels = ArrayList_New(TRUE);
+	dvcman->pool = StreamPool_New(TRUE, 10);
 
 	return (IWTSVirtualChannelManager*) dvcman;
 }
@@ -278,6 +278,7 @@ void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
 			pPlugin->Terminated(pPlugin);
 	}
 
+	StreamPool_Free(dvcman->pool);
 	free(dvcman);
 }
 
@@ -424,7 +425,7 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 
 	if (channel->dvc_data)
 	{
-		Stream_Free(channel->dvc_data, TRUE);
+		Stream_Release(channel->dvc_data);
 		channel->dvc_data = NULL;
 	}
 
@@ -457,17 +458,19 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UI
 	}
 
 	if (channel->dvc_data)
-		Stream_Free(channel->dvc_data, TRUE);
+		Stream_Release(channel->dvc_data);
 
-	channel->dvc_data = Stream_New(NULL, length);
+	channel->dvc_data = StreamPool_Take(channel->dvcman->pool, length);
+	Stream_AddRef(channel->dvc_data);
 
 	return 0;
 }
 
-int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, BYTE* data, UINT32 data_size)
+int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, wStream *data)
 {
 	int error = 0;
 	DVCMAN_CHANNEL* channel;
+  UINT32 data_size = Stream_GetRemainingLength(data);
 
 	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
@@ -483,24 +486,23 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 		if (Stream_GetPosition(channel->dvc_data) + data_size > (UINT32) Stream_Capacity(channel->dvc_data))
 		{
 			DEBUG_WARN("data exceeding declared length!");
-			Stream_Free(channel->dvc_data, TRUE);
+			Stream_Release(channel->dvc_data);
 			channel->dvc_data = NULL;
 			return 1;
 		}
 
-		Stream_Write(channel->dvc_data, data, data_size);
+		Stream_Write(channel->dvc_data, Stream_Pointer(data), data_size);
 
 		if (((size_t) Stream_GetPosition(channel->dvc_data)) >= Stream_Capacity(channel->dvc_data))
 		{
-			error = channel->channel_callback->OnDataReceived(channel->channel_callback,
-				Stream_Capacity(channel->dvc_data), Stream_Buffer(channel->dvc_data));
-			Stream_Free(channel->dvc_data, TRUE);
+			error = channel->channel_callback->OnDataReceived(channel->channel_callback, channel->dvc_data);
+			Stream_Release(channel->dvc_data);
 			channel->dvc_data = NULL;
 		}
 	}
 	else
 	{
-		error = channel->channel_callback->OnDataReceived(channel->channel_callback, data_size, data);
+		error = channel->channel_callback->OnDataReceived(channel->channel_callback, data);
 	}
 
 	return error;

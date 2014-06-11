@@ -382,8 +382,6 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 			DEBUG_WARN("unknown msgType %d", msgType);
 			break;
 	}
-
-	Stream_Free(s, TRUE);
 }
 
 static void cliprdr_process_filecontents_request_event(cliprdrPlugin* plugin, RDP_CB_FILECONTENTS_REQUEST_EVENT * event)
@@ -506,6 +504,7 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
 
 static void cliprdr_process_terminate(rdpSvcPlugin* plugin)
 {
+	svc_plugin_terminate(plugin);
 	free(plugin);
 }
 

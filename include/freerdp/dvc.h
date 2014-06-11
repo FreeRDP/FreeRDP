@@ -137,9 +137,7 @@ struct _IWTSListenerCallback
 struct _IWTSVirtualChannelCallback
 {
 	/* Notifies the user about data that is being received. */
-	int (*OnDataReceived) (IWTSVirtualChannelCallback* pChannelCallback,
-		UINT32 cbSize,
-		BYTE* pBuffer);
+	int (*OnDataReceived) (IWTSVirtualChannelCallback* pChannelCallback, wStream* data);
 	/* Notifies the user that the channel has been opened. */
 	int (*OnOpen) (IWTSVirtualChannelCallback* pChannelCallback);
 	/* Notifies the user that the channel has been closed. */

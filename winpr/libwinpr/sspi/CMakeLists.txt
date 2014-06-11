@@ -43,20 +43,21 @@ set(${MODULE_PREFIX}_CREDSSP_SRCS
 
 set(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_CREDSSP_SRCS}
+	sspi_winpr.c
+	sspi_winpr.h
+	sspi_export.c
 	sspi.c
 	sspi.h)
 
-if(NOT WITH_NATIVE_SSPI)
-	set(${MODULE_PREFIX}_SRCS
-		${${MODULE_PREFIX}_NTLM_SRCS}
-		${${MODULE_PREFIX}_KERBEROS_SRCS}
-		${${MODULE_PREFIX}_NEGOTIATE_SRCS}
-		${${MODULE_PREFIX}_SCHANNEL_SRCS}
-		${${MODULE_PREFIX}_SRCS})
-endif()
+set(${MODULE_PREFIX}_SRCS
+	${${MODULE_PREFIX}_NTLM_SRCS}
+	${${MODULE_PREFIX}_KERBEROS_SRCS}
+	${${MODULE_PREFIX}_NEGOTIATE_SRCS}
+	${${MODULE_PREFIX}_SCHANNEL_SRCS}
+	${${MODULE_PREFIX}_SRCS})
 
 if(MSVC AND (NOT MONOLITHIC_BUILD))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+	#set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
@@ -80,7 +81,7 @@ endif()
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE winpr
-	MODULES winpr-crt winpr-sysinfo winpr-registry winpr-crypto winpr-utils)
+	MODULES winpr-crt winpr-sysinfo winpr-registry winpr-crypto winpr-library winpr-utils)
 
 if(MONOLITHIC_BUILD)
 	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

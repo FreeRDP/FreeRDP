@@ -117,8 +117,7 @@ BOOL tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback, wMessage* eve
 }
 
 static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
-	UINT32 cbSize,
-	BYTE* pBuffer)
+	wStream *data)
 {
 	int length;
 	wStream* input;
@@ -129,6 +128,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	UINT32 FunctionId;
 	UINT32 InterfaceId;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
+  UINT32 cbSize = Stream_GetRemainingLength(data);
 
 	/* 2.2.1 Shared Message Header (SHARED_MSG_HEADER) */
 	if (cbSize < 12)
@@ -137,7 +137,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 		return 1;
 	}
 
-	input = Stream_New((BYTE*) pBuffer, cbSize);
+	input = data;
 	output = Stream_New(NULL, 256);
 	Stream_Seek(output, 8);
 
@@ -286,7 +286,6 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			break;
 	}
 
-	Stream_Free(input, FALSE);
 	input = NULL;
 	ifman.input = NULL;
 
