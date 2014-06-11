@@ -306,15 +306,51 @@ int xf_DeleteEncodingContext(RdpgfxClientContext* context, RDPGFX_DELETE_ENCODIN
 
 int xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
+	xfGfxSurface* surface;
+	xfContext* xfc = (xfContext*) context->custom;
+
 	printf("xf_CreateSurface: surfaceId: %d width: %d height: %d format: 0x%02X\n",
 			createSurface->surfaceId, createSurface->width, createSurface->height, createSurface->pixelFormat);
+
+	surface = (xfGfxSurface*) calloc(1, sizeof(xfGfxSurface));
+
+	if (!surface)
+		return -1;
+
+	surface->surfaceId = createSurface->surfaceId;
+	surface->width = (UINT32) createSurface->width;
+	surface->height = (UINT32) createSurface->height;
+	surface->alpha = (createSurface->pixelFormat == PIXEL_FORMAT_ARGB_8888) ? TRUE : FALSE;
+
+	surface->data = (BYTE*) calloc(1, surface->width * surface->height * 4);
+
+	if (!surface->data)
+		return -1;
+
+	surface->image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
+			(char*) surface->data, surface->width, surface->height, 32, 0);
+
+	context->SetSurfaceData(context, surface->surfaceId, (void*) surface);
 
 	return 1;
 }
 
 int xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
+	xfGfxSurface* surface = NULL;
+
+	surface = (xfGfxSurface*) context->GetSurfaceData(context, deleteSurface->surfaceId);
+
 	printf("xf_DeleteSurface: surfaceId: %d\n", deleteSurface->surfaceId);
+
+	if (surface)
+	{
+		XFree(surface->image);
+		free(surface->data);
+		free(surface);
+	}
+
+	context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
 
 	return 1;
 }

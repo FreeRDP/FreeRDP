@@ -45,6 +45,9 @@ typedef int (*pcRdpgfxEvictCacheEntry)(RdpgfxClientContext* context, RDPGFX_EVIC
 typedef int (*pcRdpgfxMapSurfaceToOutput)(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU* surfaceToOutput);
 typedef int (*pcRdpgfxMapSurfaceToWindow)(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow);
 
+typedef int (*pcRdpgfxSetSurfaceData)(RdpgfxClientContext* context, UINT16 surfaceId, void* pData);
+typedef void* (*pcRdpgfxGetSurfaceData)(RdpgfxClientContext* context, UINT16 surfaceId);
+
 struct _rdpgfx_client_context
 {
 	void* handle;
@@ -66,6 +69,9 @@ struct _rdpgfx_client_context
 	pcRdpgfxEvictCacheEntry EvictCacheEntry;
 	pcRdpgfxMapSurfaceToOutput MapSurfaceToOutput;
 	pcRdpgfxMapSurfaceToWindow MapSurfaceToWindow;
+
+	pcRdpgfxSetSurfaceData SetSurfaceData;
+	pcRdpgfxGetSurfaceData GetSurfaceData;
 };
 
 #endif /* FREERDP_CHANNEL_CLIENT_RDPGFX_H */
