@@ -43,9 +43,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/svc_plugin.h>
 
-//#include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>

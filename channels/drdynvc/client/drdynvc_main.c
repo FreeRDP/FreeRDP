@@ -29,7 +29,6 @@
 #include <winpr/stream.h>
 
 #include <freerdp/constants.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #include "dvcman.h"
 #include "drdynvc_types.h"

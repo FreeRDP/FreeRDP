@@ -55,7 +55,7 @@ struct rdp_svc_plugin
 	void* InitHandle;
 	DWORD OpenHandle;
 	wMessagePipe* MsgPipe;
-  wStreamPool *pool;
+	wStreamPool *pool;
 };
 
 #ifdef __cplusplus
