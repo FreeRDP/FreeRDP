@@ -298,15 +298,15 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 	plugin->channel_entry_points.pInterface = *(plugin->channel_entry_points.ppInterface);
 	plugin->channel_entry_points.ppInterface = &(plugin->channel_entry_points.pInterface);
 	plugin->started = CreateEvent(NULL,TRUE,FALSE,NULL);
-  plugin->pool = StreamPool_New(TRUE, 10);
+	plugin->pool = StreamPool_New(TRUE, 10);
 
 	svc_plugin_add_init_handle_data(plugin->InitHandle, plugin);
 }
 
 void svc_plugin_terminate(rdpSvcPlugin* plugin)
 {
-  StreamPool_Free(plugin->pool);
-  CloseHandle(plugin->started);
+	StreamPool_Free(plugin->pool);
+	CloseHandle(plugin->started);
 }
 
 int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)

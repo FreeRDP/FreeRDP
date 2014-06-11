@@ -203,8 +203,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 	result = init_callback_environment(vm);
 
 	setlocale(LC_ALL, "");
-
-	freerdp_channels_global_init();
 	
     return result;
 }

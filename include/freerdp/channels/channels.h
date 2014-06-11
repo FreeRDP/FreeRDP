@@ -32,8 +32,6 @@
 extern "C" {
 #endif
 
-FREERDP_API int freerdp_channels_global_init(void);
-FREERDP_API int freerdp_channels_global_uninit(void);
 FREERDP_API rdpChannels* freerdp_channels_new(void);
 FREERDP_API void freerdp_channels_free(rdpChannels* channels);
 FREERDP_API int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,

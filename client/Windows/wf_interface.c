@@ -1169,8 +1169,6 @@ void wfreerdp_client_global_init(void)
 	wf_create_console();
 #endif
 
-	freerdp_channels_global_init();
-
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 }
 
