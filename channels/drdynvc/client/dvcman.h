@@ -43,6 +43,7 @@ struct _DVCMAN
 	int num_listeners;
 
 	wArrayList* channels;
+	wStreamPool* pool;
 };
 typedef struct _DVCMAN DVCMAN;
 
@@ -89,7 +90,7 @@ int dvcman_init(IWTSVirtualChannelManager* pChannelMgr);
 int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, const char* ChannelName);
 int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId);
 int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, UINT32 length);
-int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, BYTE* data, UINT32 data_size);
+int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, wStream *data);
 
 void* dvcman_get_channel_interface_by_name(IWTSVirtualChannelManager* pChannelMgr, const char* ChannelName);
 

@@ -78,8 +78,6 @@ static void sample_process_receive(rdpSvcPlugin* plugin, wStream* data_in)
 
 		svc_plugin_send(plugin, data_out);
 	}
-
-	Stream_Free(data_in, TRUE);
 }
 
 static void sample_process_connect(rdpSvcPlugin* plugin)
@@ -113,7 +111,7 @@ static void sample_process_terminate(rdpSvcPlugin* plugin)
 		return;
 
 	/* put your cleanup here */
-
+  svc_plugin_terminate(plugin);
 	free(plugin);
 }
 
@@ -123,8 +121,7 @@ int VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	samplePlugin* _p;
 
-	_p = (samplePlugin*) malloc(sizeof(samplePlugin));
-	ZeroMemory(_p, sizeof(samplePlugin));
+	_p = (samplePlugin*) calloc(1, sizeof(samplePlugin));
 
 	_p->plugin.channel_def.options =
 			CHANNEL_OPTION_INITIALIZED |

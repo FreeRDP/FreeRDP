@@ -75,19 +75,14 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	return 0;
 }
 
-static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* pBuffer)
+static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
-	wStream* s;
 	int status = 0;
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
 
 	fprintf(stderr, "RdpGfxOnDataReceived\n");
 
-	s = Stream_New(pBuffer, cbSize);
-
-	status = rdpgfx_recv_pdu(callback, s);
-
-	Stream_Free(s, FALSE);
+	status = rdpgfx_recv_pdu(callback, data);
 
 	return status;
 }
