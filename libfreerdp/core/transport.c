@@ -133,15 +133,20 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 
 	tsg = (rdpTsg*) bio->ptr;
 
-	BIO_clear_retry_flags(bio);
+	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+
 	status = tsg_write(tsg, (BYTE*) buf, num);
-	if (status > 0)
-		return status;
 
-	if (status == 0)
-		BIO_set_retry_write(bio);
+	if (status < 0)
+	{
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	}
+	else
+	{
+		BIO_set_flags(bio, BIO_FLAGS_WRITE);
+	}
 
-	return -1;
+	return status >= 0 ? status : -1;
 }
 
 static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
@@ -150,18 +155,18 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 	rdpTsg* tsg;
 
 	tsg = (rdpTsg*) bio->ptr;
+
+	BIO_clear_flags(bio, BIO_FLAGS_READ);
+
 	status = tsg_read(bio->ptr, (BYTE*) buf, size);
 
-	BIO_clear_retry_flags(bio);
-
-	if (status == 0)
+	if (status < 0)
 	{
-		BIO_set_retry_read(bio);
-		status = -1;
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	}
-	else if (status == -1)
+	else
 	{
-		status = 0;
+		BIO_set_flags(bio, BIO_FLAGS_READ);
 	}
 
 	return status >= 0 ? status : -1;
@@ -192,8 +197,7 @@ static int transport_bio_tsg_new(BIO* bio)
 	bio->init = 1;
 	bio->num = 0;
 	bio->ptr = NULL;
-	bio->flags = 0;
-
+	bio->flags = BIO_FLAGS_SHOULD_RETRY;
 	return 1;
 }
 
@@ -222,8 +226,6 @@ BIO_METHOD* BIO_s_tsg(void)
 {
 	return &transport_bio_tsg_methods;
 }
-
-
 
 BOOL transport_connect_tls(rdpTransport* transport)
 {
@@ -265,6 +267,8 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 	if (targetTls->port == 0)
 		targetTls->port = 3389;
+
+	targetTls->isGatewayTransport = FALSE;
 
 	tls_status = tls_connect(targetTls, targetBio);
 
@@ -371,6 +375,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	context = instance->context;
 
 	tsg = tsg_new(transport);
+
 	if (!tsg)
 		return FALSE;
 
@@ -381,12 +386,15 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	if (!transport->TlsIn)
 	{
 		transport->TlsIn = tls_new(settings);
+
 		if (!transport->TlsIn)
 			return FALSE;
 	}
+
 	if (!transport->TlsOut)
 	{
 		transport->TlsOut = tls_new(settings);
+
 		if (!transport->TlsOut)
 			return FALSE;
 	}
@@ -398,8 +406,10 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	transport->TlsIn->hostname = transport->TlsOut->hostname = settings->GatewayHostname;
 	transport->TlsIn->port = transport->TlsOut->port = settings->GatewayPort;
 
+	transport->TlsIn->isGatewayTransport = TRUE;
 
 	tls_status = tls_connect(transport->TlsIn, transport->TcpIn->bufferedBio);
+
 	if (tls_status < 1)
 	{
 		if (tls_status < 0)
@@ -416,7 +426,10 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 		return FALSE;
 	}
 
+	transport->TlsOut->isGatewayTransport = TRUE;
+
 	tls_status = tls_connect(transport->TlsOut, transport->TcpOut->bufferedBio);
+
 	if (tls_status < 1)
 	{
 		if (tls_status < 0)
@@ -438,10 +451,11 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 	transport->frontBio = BIO_new(BIO_s_tsg());
 	transport->frontBio->ptr = tsg;
+
 	return TRUE;
 }
 
-BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port)
+BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, int timeout)
 {
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
@@ -454,21 +468,22 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		transport->SplitInputOutput = TRUE;
 		transport->TcpOut = tcp_new(settings);
 
-		if (!tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort) ||
+		if (!tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort, timeout) ||
 				!tcp_set_blocking_mode(transport->TcpIn, FALSE))
 			return FALSE;
 
-		if (!tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort) ||
+		if (!tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort, timeout) ||
 				!tcp_set_blocking_mode(transport->TcpOut, FALSE))
 			return FALSE;
 
 		if (!transport_tsg_connect(transport, hostname, port))
 			return FALSE;
+
 		status = TRUE;
 	}
 	else
 	{
-		status = tcp_connect(transport->TcpIn, hostname, port);
+		status = tcp_connect(transport->TcpIn, hostname, port, timeout);
 
 		transport->SplitInputOutput = FALSE;
 		transport->TcpOut = transport->TcpIn;
@@ -633,6 +648,7 @@ static int transport_wait_for_read(rdpTransport* transport)
 	rdpTcp *tcpIn;
 
 	tcpIn = transport->TcpIn;
+
 	if (tcpIn->readBlocked)
 	{
 		rsetPtr = &rset;
@@ -657,7 +673,6 @@ static int transport_wait_for_read(rdpTransport* transport)
 
 	return select(tcpIn->sockfd + 1, rsetPtr, wsetPtr, NULL, &tv);
 }
-
 
 static int transport_wait_for_write(rdpTransport* transport)
 {
@@ -692,26 +707,24 @@ static int transport_wait_for_write(rdpTransport* transport)
 	return select(tcpOut->sockfd + 1, rsetPtr, wsetPtr, NULL, &tv);
 }
 
-
 int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 {
 	int read = 0;
 	int status = -1;
 
+	if (!transport->frontBio)
+	{
+		transport->layer = TRANSPORT_LAYER_CLOSED;
+		return -1;
+	}
 
 	while (read < bytes)
 	{
 		status = BIO_read(transport->frontBio, data + read, bytes - read);
 
-		if (!status)
+		if (status <= 0)
 		{
-			transport->layer = TRANSPORT_LAYER_CLOSED;
-			return -1;
-		}
-
-		if (status < 0)
-		{
-			if (!BIO_should_retry(transport->frontBio))
+			if (!transport->frontBio || !BIO_should_retry(transport->frontBio))
 			{
 				/* something unexpected happened, let's close */
 				transport->layer = TRANSPORT_LAYER_CLOSED;
@@ -741,8 +754,6 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 
 	return read;
 }
-
-
 
 int transport_read(rdpTransport* transport, wStream* s)
 {
@@ -1101,7 +1112,7 @@ int transport_check_fds(rdpTransport* transport)
 			return status;
 
 		if ((pos = Stream_GetPosition(transport->ReceiveBuffer)) < 2)
-			return status;
+			return 0;
 
 		Stream_SetPosition(transport->ReceiveBuffer, 0);
 		length = 0;
@@ -1287,6 +1298,7 @@ static void* transport_client_thread(void* arg)
 		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
 
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+
 		if (transport->layer == TRANSPORT_LAYER_CLOSED)
 		{
 			rdpRdp* rdp = (rdpRdp*) transport->rdp;
@@ -1299,7 +1311,9 @@ static void* transport_client_thread(void* arg)
 				break;
 
 			if (!freerdp_check_fds(instance))
-				break;
+			{
+
+			}
 		}
 	}
 

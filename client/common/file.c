@@ -802,12 +802,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 *
 		 * Values:
 		 *
-		 * 0: The remote session will appear in a window.
-		 * 1: The remote session will appear full screen.
+		 * 1: The remote session will appear in a window.
+		 * 2: The remote session will appear full screen.
 		 */
 
 		freerdp_set_param_bool(settings, FreeRDP_Fullscreen,
-				(file->ScreenModeId == 1) ? TRUE : FALSE);
+				(file->ScreenModeId == 2) ? TRUE : FALSE);
 	}
 
 	if (~((size_t) file->SmartSizing))

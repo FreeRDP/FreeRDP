@@ -26,6 +26,7 @@ typedef struct rdp_rail rdpRail;
 typedef struct rdp_cache rdpCache;
 typedef struct rdp_channels rdpChannels;
 typedef struct rdp_graphics rdpGraphics;
+typedef struct rdp_metrics rdpMetrics;
 
 typedef struct rdp_freerdp freerdp;
 typedef struct rdp_context rdpContext;
@@ -39,6 +40,7 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <freerdp/types.h>
 #include <freerdp/error.h>
 #include <freerdp/event.h>
+#include <freerdp/metrics.h>
 #include <freerdp/settings.h>
 #include <freerdp/extension.h>
 
@@ -117,7 +119,8 @@ struct rdp_context
 	ALIGN64 rdpInput* input; /* 38 */
 	ALIGN64 rdpUpdate* update; /* 39 */
 	ALIGN64 rdpSettings* settings; /* 40 */
-	UINT64 paddingC[64 - 41]; /* 41 */
+	ALIGN64 rdpMetrics* metrics; /* 41 */
+	UINT64 paddingC[64 - 42]; /* 42 */
 
 	UINT64 paddingD[96 - 64]; /* 64 */
 	UINT64 paddingE[128 - 96]; /* 96 */

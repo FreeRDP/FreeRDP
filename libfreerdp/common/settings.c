@@ -618,6 +618,20 @@ void freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsage
 	}
 }
 
+void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEnabled, UINT32 GatewayBypassLocal)
+{
+	UINT32 GatewayUsageMethod = 0;
+
+	if (!GatewayEnabled && !GatewayBypassLocal)
+		GatewayUsageMethod = TSC_PROXY_MODE_NONE_DIRECT;
+	else if (GatewayEnabled && !GatewayBypassLocal)
+		GatewayUsageMethod = TSC_PROXY_MODE_DIRECT;
+	else if (GatewayEnabled && GatewayBypassLocal)
+		GatewayUsageMethod = TSC_PROXY_MODE_DETECT;
+
+	freerdp_set_gateway_usage_method(settings, GatewayUsageMethod);
+}
+
 /**
  * Partially Generated Code
  */

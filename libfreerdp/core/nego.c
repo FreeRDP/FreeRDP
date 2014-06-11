@@ -220,18 +220,18 @@ BOOL nego_tcp_connect(rdpNego* nego)
 			{
 				/* Attempt a direct connection first, and then fallback to using the gateway */
 				transport_set_gateway_enabled(nego->transport, FALSE);
-				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port, 1);
 			}
 
 			if (!nego->tcp_connected)
 			{
 				transport_set_gateway_enabled(nego->transport, TRUE);
-				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port, 15);
 			}
 		}
 		else
 		{
-			nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+			nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port, 15);
 		}
 	}
 

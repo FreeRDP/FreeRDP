@@ -22,12 +22,18 @@ if(PCSC_WINPR_FOUND)
 	add_definitions(-DWITH_WINPR_PCSC)
 endif()
 
+if(WITH_SMARTCARD_INSPECT)
+	add_definitions(-DWITH_SMARTCARD_INSPECT)
+endif()
+
 set(${MODULE_PREFIX}_SRCS
 	smartcard.c
 	smartcard.h
 	smartcard_link.c
 	smartcard_pcsc.c
-	smartcard_pcsc.h)
+	smartcard_pcsc.h
+	smartcard_inspect.c
+	smartcard_inspect.h)
 
 if(WIN32)
         list(APPEND ${MODULE_PREFIX}_SRCS

@@ -54,6 +54,9 @@ const char* WLOG_LEVELS[7] =
 	"OFF"
 };
 
+static DWORD g_FilterCount = 0;
+static wLogFilter* g_Filters = NULL;
+
 int WLog_Write(wLog* log, wLogMessage* message)
 {
 	int status;
@@ -216,21 +219,204 @@ void WLog_PrintMessage(wLog* log, wLogMessage* message, ...)
 
 DWORD WLog_GetLogLevel(wLog* log)
 {
-	if (log->Level == WLOG_LEVEL_INHERIT) {
+	if (log->Level == WLOG_LEVEL_INHERIT)
+	{
 		return WLog_GetLogLevel(log->Parent);
-	} else {
+	}
+	else
+	{
 		return log->Level;
 	}
 }
 
 void WLog_SetLogLevel(wLog* log, DWORD logLevel)
 {
-
 	if ((logLevel > WLOG_OFF) && (logLevel != WLOG_LEVEL_INHERIT))
 	{
 		logLevel = WLOG_OFF;
 	}
+
 	log->Level = logLevel;
+}
+
+int WLog_ParseLogLevel(const char* level)
+{
+	int iLevel = -1;
+
+	if (!level)
+		return -1;
+
+	if (_stricmp(level, "TRACE") == 0)
+		iLevel = WLOG_TRACE;
+	else if (_stricmp(level, "DEBUG") == 0)
+		iLevel = WLOG_DEBUG;
+	else if (_stricmp(level, "INFO") == 0)
+		iLevel = WLOG_INFO;
+	else if (_stricmp(level, "WARN") == 0)
+		iLevel = WLOG_WARN;
+	else if (_stricmp(level, "ERROR") == 0)
+		iLevel = WLOG_ERROR;
+	else if (_stricmp(level, "FATAL") == 0)
+		iLevel = WLOG_FATAL;
+	else if (_stricmp(level, "OFF") == 0)
+		iLevel = WLOG_OFF;
+
+	return iLevel;
+}
+
+int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
+{
+	char* p;
+	char* q;
+	int count;
+	LPSTR names;
+	int iLevel;
+
+	count = 1;
+	p = (char*) name;
+
+	while ((p = strchr(p, '.')) != NULL)
+	{
+		count++;
+		p++;
+	}
+
+	names = _strdup(name);
+	filter->NameCount = count;
+	filter->Names = (LPSTR*) malloc(sizeof(LPSTR) * (count + 1));
+	filter->Names[count] = NULL;
+
+	count = 0;
+	p = (char*) names;
+	filter->Names[count++] = p;
+
+	q = strrchr(p, ':');
+
+	if (!q)
+		return -1;
+
+	*q = '\0';
+	q++;
+
+	iLevel = WLog_ParseLogLevel(q);
+
+	if (iLevel < 0)
+		return -1;
+
+	filter->Level = (DWORD) iLevel;
+
+	while ((p = strchr(p, '.')) != NULL)
+	{
+		filter->Names[count++] = p + 1;
+		*p = '\0';
+		p++;
+	}
+
+	return 0;
+}
+
+int WLog_ParseFilters()
+{
+	char* p;
+	char* env;
+	DWORD count;
+	DWORD nSize;
+	int status;
+	char** strs;
+
+	nSize = GetEnvironmentVariableA("WLOG_FILTER", NULL, 0);
+
+	if (nSize < 1)
+		return 0;
+
+	env = (LPSTR) malloc(nSize);
+
+	if (!env)
+		return -1;
+
+	nSize = GetEnvironmentVariableA("WLOG_FILTER", env, nSize);
+
+	count = 1;
+	p = env;
+
+	while ((p = strchr(p, ',')) != NULL)
+	{
+		count++;
+		p++;
+	}
+
+	g_FilterCount = count;
+
+	p = env;
+	count = 0;
+	strs = (char**) calloc(g_FilterCount, sizeof(char*));
+
+	strs[count++] = p;
+
+	while ((p = strchr(p, ',')) != NULL)
+	{
+		strs[count++] = p + 1;
+		*p = '\0';
+		p++;
+	}
+
+	g_Filters = calloc(g_FilterCount, sizeof(wLogFilter));
+
+	if (!g_Filters)
+		return -1;
+
+	for (count = 0; count < g_FilterCount; count++)
+	{
+		status = WLog_ParseFilter(&g_Filters[count], strs[count]);
+
+		if (status < 0)
+			return -1;
+	}
+
+	free(strs);
+
+	return 0;
+}
+
+int WLog_GetFilterLogLevel(wLog* log)
+{
+	DWORD i, j;
+	int iLevel = -1;
+	BOOL match = FALSE;
+
+	for (i = 0; i < g_FilterCount; i++)
+	{
+		for (j = 0; j < g_Filters[i].NameCount; j++)
+		{
+			if (j >= log->NameCount)
+				break;
+
+			if (_stricmp(g_Filters[i].Names[j], "*") == 0)
+			{
+				match = TRUE;
+				break;
+			}
+
+			if (_stricmp(g_Filters[i].Names[j], log->Names[j]) != 0)
+				break;
+
+			if (j == (log->NameCount - 1))
+			{
+				match = TRUE;
+				break;
+			}
+		}
+
+		if (match)
+			break;
+	}
+
+	if (match)
+	{
+		iLevel = (int) g_Filters[i].Level;
+	}
+
+	return iLevel;
 }
 
 int WLog_ParseName(wLog* log, LPCSTR name)
@@ -267,32 +453,41 @@ int WLog_ParseName(wLog* log, LPCSTR name)
 	return 0;
 }
 
-wLog* WLog_New(LPCSTR name , wLog* rootLogger)
+wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 {
 	wLog* log;
 	char* env;
 	DWORD nSize;
+	int iLevel;
 
-	log = (wLog*) malloc(sizeof(wLog));
+	log = (wLog*) calloc(1, sizeof(wLog));
 
 	if (log)
 	{
-		ZeroMemory(log, sizeof(wLog));
-
 		log->Name = _strdup(name);
+
+		if (!log->Name)
+			return NULL;
+
 		WLog_ParseName(log, name);
 
 		log->Parent = rootLogger;
 		log->ChildrenCount = 0;
 
 		log->ChildrenSize = 16;
-		log->Children = (wLog**) malloc(sizeof(wLog*) * log->ChildrenSize);
+		log->Children = (wLog**) calloc(log->ChildrenSize, sizeof(wLog*));
+
+		if (!log->Children)
+			return NULL;
 
 		log->Appender = NULL;
 
-		if (rootLogger) {
+		if (rootLogger)
+		{
 			log->Level = WLOG_LEVEL_INHERIT;
-		} else {
+		}
+		else
+		{
 			log->Level = WLOG_WARN;
 
 			nSize = GetEnvironmentVariableA("WLOG_LEVEL", NULL, 0);
@@ -302,31 +497,19 @@ wLog* WLog_New(LPCSTR name , wLog* rootLogger)
 				env = (LPSTR) malloc(nSize);
 				nSize = GetEnvironmentVariableA("WLOG_LEVEL", env, nSize);
 
-				if (env)
-				{
-					if (_stricmp(env, "TRACE") == 0)
-						log->Level = WLOG_TRACE;
-					else if (_stricmp(env, "DEBUG") == 0)
-						log->Level = WLOG_DEBUG;
-					else if (_stricmp(env, "INFO") == 0)
-						log->Level = WLOG_INFO;
-					else if (_stricmp(env, "WARN") == 0)
-						log->Level = WLOG_WARN;
-					else if (_stricmp(env, "ERROR") == 0)
-						log->Level = WLOG_ERROR;
-					else if (_stricmp(env, "FATAL") == 0)
-						log->Level = WLOG_FATAL;
-					else if (_stricmp(env, "OFF") == 0)
-						log->Level = WLOG_OFF;
-					else if (_strnicmp(env, "0x", 2) == 0)
-					{
-						/* TODO: read custom hex value */
-					}
+				iLevel = WLog_ParseLogLevel(env);
 
-					free(env);
-				}
+				if (iLevel >= 0)
+					log->Level = (DWORD) iLevel;
+
+				free(env);
 			}
 		}
+
+		iLevel = WLog_GetFilterLogLevel(log);
+
+		if (iLevel >= 0)
+			log->Level = (DWORD) iLevel;
 	}
 
 	return log;
@@ -361,8 +544,10 @@ wLog* WLog_GetRoot()
 
 	if (!g_RootLog)
 	{
-		g_RootLog = WLog_New("",NULL);
+		g_RootLog = WLog_New("", NULL);
 		g_RootLog->IsRoot = TRUE;
+
+		WLog_ParseFilters();
 
 		logAppenderType = WLOG_APPENDER_CONSOLE;
 

@@ -41,6 +41,7 @@
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <assert.h>
 
 #include "pipe.h"
 
@@ -48,34 +49,32 @@
  * Since the WinPR implementation of named pipes makes use of UNIX domain
  * sockets, it is not possible to bind the same name more than once (i.e.,
  * SO_REUSEADDR does not work with UNIX domain sockets).  As a result, the
- * first call to CreateNamedPipe must create the UNIX domain socket and
- * subsequent calls to CreateNamedPipe will reference the first named pipe
- * handle and duplicate the socket descriptor.
+ * first call to CreateNamedPipe with name n creates a "shared" UNIX domain
+ * socket descriptor that gets duplicated via dup() for the first and all
+ * subsequent calls to CreateNamedPipe with name n.
  *
- * The following array keeps track of the named pipe handles for the first
- * instance.  If multiple instances are created, subsequent instances store
- * a pointer to the first instance and a reference count is maintained.  When
- * the last instance is closed, the named pipe handle is removed from the list.
+ * The following array keeps track of the references to the shared socked
+ * descriptors. If an entry's reference count is zero the base socket
+ * descriptor gets closed and the entry is removed from the list.
  */
 
-static wArrayList* g_BaseNamedPipeList = NULL;
+static wArrayList* g_NamedPipeServerSockets = NULL;
 
-static BOOL g_Initialized = FALSE;
+typedef struct _NamedPipeServerSocketEntry
+{
+	char* name;
+	int serverfd;
+	int references;
+} NamedPipeServerSocketEntry;
 
 static void InitWinPRPipeModule()
 {
-	if (g_Initialized)
+	if (g_NamedPipeServerSockets)
 		return;
 
-	g_BaseNamedPipeList = ArrayList_New(TRUE);
-
-	g_Initialized = TRUE;
+	g_NamedPipeServerSockets = ArrayList_New(FALSE);
 }
 
-void WinPR_RemoveBaseNamedPipeFromList(WINPR_NAMED_PIPE* pNamedPipe)
-{
-	ArrayList_Remove(g_BaseNamedPipeList, pNamedPipe);
-}
 
 /*
  * Unnamed pipe
@@ -126,48 +125,70 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
  * Named pipe
  */
 
+static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
+{
+	int index;
+	NamedPipeServerSocketEntry *baseSocket;
+
+	if (!pNamedPipe)
+		return;
+
+	assert(pNamedPipe->name);
+	assert(g_NamedPipeServerSockets);
+
+	//fprintf(stderr, "%s: %p (%s)\n", __FUNCTION__, pNamedPipe, pNamedPipe->name);
+
+	ArrayList_Lock(g_NamedPipeServerSockets);
+	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
+	{
+		baseSocket = (NamedPipeServerSocketEntry*) ArrayList_GetItem(
+				g_NamedPipeServerSockets, index);
+		assert(baseSocket->name);
+		if (!strcmp(baseSocket->name, pNamedPipe->name))
+		{
+			assert(baseSocket->references > 0);
+			assert(baseSocket->serverfd != -1);
+			if (--baseSocket->references == 0)
+			{
+				//fprintf(stderr, "%s: removing shared server socked resource\n", __FUNCTION__);
+				//fprintf(stderr, "%s: closing shared serverfd %d\n", __FUNCTION__, baseSocket->serverfd);
+				ArrayList_Remove(g_NamedPipeServerSockets, baseSocket);
+				close(baseSocket->serverfd);
+				free(baseSocket->name);
+				free(baseSocket);
+			}
+			break;
+		}
+	}
+	ArrayList_Unlock(g_NamedPipeServerSockets);
+}
+
 HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,
 		DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
 	int index;
-	int status;
-	HANDLE hNamedPipe;
+	HANDLE hNamedPipe = INVALID_HANDLE_VALUE;
 	char* lpPipePath;
 	struct sockaddr_un s;
-	WINPR_NAMED_PIPE* pNamedPipe;
-	WINPR_NAMED_PIPE* pBaseNamedPipe;
+	WINPR_NAMED_PIPE* pNamedPipe = NULL;
+	int serverfd = -1;
+	NamedPipeServerSocketEntry *baseSocket = NULL;
 
 	if (!lpName)
 		return INVALID_HANDLE_VALUE;
 
 	InitWinPRPipeModule();
 
-	/* Find the base named pipe instance (i.e., the first instance). */
-	pBaseNamedPipe = NULL;
-
-	ArrayList_Lock(g_BaseNamedPipeList);
-
-	for (index = 0; index < ArrayList_Count(g_BaseNamedPipeList); index++)
-	{
-		WINPR_NAMED_PIPE* p = (WINPR_NAMED_PIPE*) ArrayList_GetItem(g_BaseNamedPipeList, index);
-
-		if (strcmp(p->name, lpName) == 0)
-		{
-			pBaseNamedPipe = p;
-			break;
-		}
-	}
-
-	ArrayList_Unlock(g_BaseNamedPipeList);
-
-	pNamedPipe = (WINPR_NAMED_PIPE*) malloc(sizeof(WINPR_NAMED_PIPE));
-	hNamedPipe = (HANDLE) pNamedPipe;
+	pNamedPipe = (WINPR_NAMED_PIPE*) calloc(1, sizeof(WINPR_NAMED_PIPE));
 
 	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
 
-	pNamedPipe->pfnRemoveBaseNamedPipeFromList = WinPR_RemoveBaseNamedPipeFromList;
-
-	pNamedPipe->name = _strdup(lpName);
+	if (!(pNamedPipe->name = _strdup(lpName)))
+		goto out;
+	if (!(pNamedPipe->lpFileName = GetNamedPipeNameWithoutPrefixA(lpName)))
+		goto out;
+	if (!(pNamedPipe->lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpName)))
+		goto out;
 	pNamedPipe->dwOpenMode = dwOpenMode;
 	pNamedPipe->dwPipeMode = dwPipeMode;
 	pNamedPipe->nMaxInstances = nMaxInstances;
@@ -176,20 +197,29 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	pNamedPipe->nDefaultTimeOut = nDefaultTimeOut;
 	pNamedPipe->dwFlagsAndAttributes = dwOpenMode;
 
-	pNamedPipe->lpFileName = GetNamedPipeNameWithoutPrefixA(lpName);
-	pNamedPipe->lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpName);
-
 	pNamedPipe->clientfd = -1;
 	pNamedPipe->ServerMode = TRUE;
 
-	pNamedPipe->pBaseNamedPipe = pBaseNamedPipe;
-	pNamedPipe->dwRefCount = 1;
+	ArrayList_Lock(g_NamedPipeServerSockets);
+
+	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
+	{
+		baseSocket = (NamedPipeServerSocketEntry*) ArrayList_GetItem(
+			g_NamedPipeServerSockets, index);
+		if (!strcmp(baseSocket->name, lpName))
+		{
+			serverfd = baseSocket->serverfd;
+			//fprintf(stderr, "using shared socked resource for pipe %p (%s)\n", pNamedPipe, lpName);
+			break;
+		}
+	}
 
 	/* If this is the first instance of the named pipe... */
-	if (pBaseNamedPipe == NULL)
+	if (serverfd == -1)
 	{
 		/* Create the UNIX domain socket and start listening. */
-		lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
+		if (!(lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA()))
+			goto out;
 
 		if (!PathFileExistsA(lpPipePath))
 		{
@@ -204,47 +234,48 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 			DeleteFileA(pNamedPipe->lpFilePath);
 		}
 
-		pNamedPipe->serverfd = socket(AF_UNIX, SOCK_STREAM, 0);
-
-		if (pNamedPipe->serverfd == -1)
+		if ((serverfd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
 			fprintf(stderr, "CreateNamedPipeA: socket error, %s\n", strerror(errno));
-			goto err_out;
+			goto out;
 		}
 
 		ZeroMemory(&s, sizeof(struct sockaddr_un));
 		s.sun_family = AF_UNIX;
 		strcpy(s.sun_path, pNamedPipe->lpFilePath);
 
-		status = bind(pNamedPipe->serverfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
-
-		if (status != 0)
+		if (bind(serverfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un)) == -1)
 		{
 			fprintf(stderr, "CreateNamedPipeA: bind error, %s\n", strerror(errno));
-			goto err_out;
+			goto out;
 		}
 
-		status = listen(pNamedPipe->serverfd, 2);
-
-		if (status != 0)
+		if (listen(serverfd, 2) == -1)
 		{
 			fprintf(stderr, "CreateNamedPipeA: listen error, %s\n", strerror(errno));
-			goto err_out;
+			goto out;
 		}
 
 		UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
 
-		/* Add the named pipe to the list of base named pipe instances. */
-		ArrayList_Add(g_BaseNamedPipeList, pNamedPipe);
-	}
-	else
-	{
-		/* Duplicate the file handle for the UNIX domain socket in the first instance. */
-		pNamedPipe->serverfd = dup(pBaseNamedPipe->serverfd);
+		if (!(baseSocket = (NamedPipeServerSocketEntry *) malloc(sizeof(NamedPipeServerSocketEntry))))
+			goto out;
+		if (!(baseSocket->name = _strdup(lpName)))
+		{
+			free(baseSocket);
+			goto out;
+		}
+		baseSocket->serverfd = serverfd;
+		baseSocket->references = 0;
+		ArrayList_Add(g_NamedPipeServerSockets, baseSocket);
+		//fprintf(stderr, "created shared socked resource for pipe %p (%s). base serverfd = %d\n", pNamedPipe, lpName, serverfd);
 
-		/* Update the reference count in the base named pipe instance. */
-		pBaseNamedPipe->dwRefCount++;
 	}
+
+	pNamedPipe->serverfd = dup(baseSocket->serverfd);
+	//fprintf(stderr, "using serverfd %d (duplicated from %d)\n", pNamedPipe->serverfd, baseSocket->serverfd);
+	pNamedPipe->pfnUnrefNamedPipe = winpr_unref_named_pipe;
+	baseSocket->references++;
 
 	if (dwOpenMode & FILE_FLAG_OVERLAPPED)
 	{
@@ -256,15 +287,23 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 #endif
 	}
 
-	return hNamedPipe;
+	hNamedPipe = (HANDLE) pNamedPipe;
 
-err_out:
-	if (pNamedPipe) {
-		if (pNamedPipe->serverfd != -1)
-			close(pNamedPipe->serverfd);
-		free(pNamedPipe);
+out:
+	if (hNamedPipe == INVALID_HANDLE_VALUE)
+	{
+		if (pNamedPipe)
+		{
+			free((void*)pNamedPipe->name);
+			free((void*)pNamedPipe->lpFileName);
+			free((void*)pNamedPipe->lpFilePath);
+			free(pNamedPipe);
+		}
+		if (serverfd != -1)
+			close(serverfd);
 	}
-	return INVALID_HANDLE_VALUE;
+	ArrayList_Unlock(g_NamedPipeServerSockets);
+	return hNamedPipe;
 }
 
 HANDLE CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,

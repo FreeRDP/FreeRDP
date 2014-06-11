@@ -1,8 +1,8 @@
 /**
  * WinPR: Windows Portable Runtime
- * config.h definitions for installable headers
+ * Security Support Provider Interface (SSPI)
  *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_CONFIG_H
-#define WINPR_CONFIG_H
+#ifndef WINPR_SSPI_WINPR_H
+#define WINPR_SSPI_WINPR_H
 
-/*
- * This generated config.h header is meant for installation, which is why
- * all definitions MUST be prefixed to avoid conflicting with third-party
- * libraries. Only add configurable definitions which really must be used
- * from installable headers, such as the base type definition types.
- */
+#include <winpr/sspi.h>
 
-#cmakedefine WITH_NATIVE_SSPI
+SecurityFunctionTableW* SEC_ENTRY winpr_InitSecurityInterfaceW(void);
+SecurityFunctionTableA* SEC_ENTRY winpr_InitSecurityInterfaceA(void);
 
-#endif /* WINPR_CONFIG_H */
+#endif /* WINPR_SSPI_WINPR_H */

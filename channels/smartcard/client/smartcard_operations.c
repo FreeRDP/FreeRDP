@@ -553,13 +553,13 @@ static UINT32 smartcard_ConnectA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 	status = ret.ReturnCode = SCardConnectA(operation->hContext, (char*) call->szReader, call->Common.dwShareMode,
 			call->Common.dwPreferredProtocols, &hCard, &ret.dwActiveProtocol);
 
-	if (status)
-		return status;
-
 	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), operation->hContext);
 	smartcard_scard_handle_native_to_redir(smartcard, &(ret.hCard), hCard);
 
 	smartcard_trace_connect_return(smartcard, &ret);
+
+	if (status)
+		return status;
 
 	status = smartcard_pack_connect_return(smartcard, irp->output, &ret);
 
@@ -605,13 +605,13 @@ static UINT32 smartcard_ConnectW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPE
 	status = ret.ReturnCode = SCardConnectW(operation->hContext, (WCHAR*) call->szReader, call->Common.dwShareMode,
 			call->Common.dwPreferredProtocols, &hCard, &ret.dwActiveProtocol);
 
-	if (status)
-		return status;
-
 	smartcard_scard_context_native_to_redir(smartcard, &(ret.hContext), operation->hContext);
 	smartcard_scard_handle_native_to_redir(smartcard, &(ret.hCard), hCard);
 
 	smartcard_trace_connect_return(smartcard, &ret);
+
+	if (status)
+		return status;
 
 	status = smartcard_pack_connect_return(smartcard, irp->output, &ret);
 

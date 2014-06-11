@@ -145,6 +145,7 @@ struct _wLogAppender
 
 #define WLOG_CONSOLE_STDOUT	1
 #define WLOG_CONSOLE_STDERR	2
+#define WLOG_CONSOLE_DEBUG	3
 
 struct _wLogConsoleAppender
 {
@@ -175,6 +176,18 @@ struct _wLogBinaryAppender
 	FILE* FileDescriptor;
 };
 typedef struct _wLogBinaryAppender wLogBinaryAppender;
+
+/**
+ * Filter
+ */
+
+struct _wLogFilter
+{
+	DWORD Level;
+	LPSTR* Names;
+	DWORD NameCount;
+};
+typedef struct _wLogFilter wLogFilter;
 
 /**
  * Logger

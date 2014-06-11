@@ -21,6 +21,7 @@
 #define WINPR_HANDLE_PRIVATE_H
 
 #include <winpr/handle.h>
+#include <winpr/file.h>
 
 #define HANDLE_TYPE_NONE			0
 #define HANDLE_TYPE_PROCESS			1
@@ -52,7 +53,7 @@ static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObj
 {
 	WINPR_HANDLE* wHandle;
 
-	if (handle == NULL)
+	if (handle == NULL || handle == INVALID_HANDLE_VALUE)
 		return FALSE;
 
 	wHandle = (WINPR_HANDLE*) handle;

@@ -234,7 +234,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 
 	free(name);
 
-	pNamedPipe = (WINPR_NAMED_PIPE*) malloc(sizeof(WINPR_NAMED_PIPE));
+	pNamedPipe = (WINPR_NAMED_PIPE*) calloc(1, sizeof(WINPR_NAMED_PIPE));
 	hNamedPipe = (HANDLE) pNamedPipe;
 
 	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
@@ -361,8 +361,6 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 		{
-			io_status = nNumberOfBytesToRead;
-
 			if (pipe->clientfd == -1)
 				return FALSE;
 
@@ -374,9 +372,9 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 				{
 					case ECONNRESET:
 						SetLastError(ERROR_BROKEN_PIPE);
-						io_status = 0;
 						break;
 				}
+				status = FALSE;
 			}
 			else if (io_status < 0)
 			{

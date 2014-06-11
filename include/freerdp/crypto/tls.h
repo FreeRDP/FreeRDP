@@ -72,7 +72,6 @@ struct rdp_tls
 	void* tsg;
 	SSL_CTX* ctx;
 	BYTE* PublicKey;
-	BIO_METHOD* methods;
 	DWORD PublicKeyLength;
 	rdpSettings* settings;
 	SecPkgContext_Bindings* Bindings;
@@ -81,6 +80,7 @@ struct rdp_tls
 	int port;
 	int alertLevel;
 	int alertDescription;
+	BOOL isGatewayTransport;
 };
 
 FREERDP_API int tls_connect(rdpTls* tls, BIO *underlying);

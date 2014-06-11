@@ -236,7 +236,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->SaltedChecksum = TRUE;
 		settings->ServerPort = 3389;
 		settings->GatewayPort = 443;
-		settings->GatewayBypassLocal = TRUE;
 		settings->DesktopResize = TRUE;
 		settings->ToggleFullscreen = TRUE;
 		settings->DesktopPosX = 0;
@@ -257,9 +256,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->CompressionEnabled = TRUE;
 
 		if (settings->ServerMode)
-			settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
+			settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;
 		else
-			settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
+			settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;
 
 		settings->Authentication = TRUE;
 		settings->AuthenticationOnly = FALSE;
