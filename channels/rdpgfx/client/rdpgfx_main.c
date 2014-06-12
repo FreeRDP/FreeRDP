@@ -343,9 +343,8 @@ int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	ack.frameId = pdu.frameId;
 	ack.totalFramesDecoded = gfx->TotalDecodedFrames;
 
-	ack.queueDepth = SUSPEND_FRAME_ACKNOWLEDGEMENT;
-	//ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
-	//ack.queueDepth = gfx->UnacknowledgedFrames;
+	//ack.queueDepth = SUSPEND_FRAME_ACKNOWLEDGEMENT;
+	ack.queueDepth = QUEUE_DEPTH_UNAVAILABLE;
 
 	rdpgfx_send_frame_acknowledge_pdu(callback, &ack);
 
@@ -742,7 +741,7 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	return status;
 }
 
-static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* pBuffer)
+static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	wStream* s;
 	int status = 0;
@@ -751,7 +750,7 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	RDPGFX_CHANNEL_CALLBACK* callback = (RDPGFX_CHANNEL_CALLBACK*) pChannelCallback;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
-	status = zgfx_decompress(gfx->zgfx, pBuffer, cbSize, &pDstData, &DstSize, 0);
+	status = zgfx_decompress(gfx->zgfx, Stream_Pointer(data), Stream_GetRemainingLength(data), &pDstData, &DstSize, 0);
 
 	if (status < 0)
 	{
@@ -855,9 +854,39 @@ static int rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 
 	zgfx_context_free(gfx->zgfx);
 
+	HashTable_Free(gfx->SurfaceTable);
+
 	free(gfx);
 
 	return 0;
+}
+
+int rdpgfx_set_surface_data(RdpgfxClientContext* context, UINT16 surfaceId, void* pData)
+{
+	ULONG_PTR key;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) context->handle;
+
+	key = ((ULONG_PTR) surfaceId) + 1;
+
+	if (pData)
+		HashTable_Add(gfx->SurfaceTable, (void*) key, pData);
+	else
+		HashTable_Remove(gfx->SurfaceTable, (void*) key);
+
+	return 1;
+}
+
+void* rdpgfx_get_surface_data(RdpgfxClientContext* context, UINT16 surfaceId)
+{
+	ULONG_PTR key;
+	void* pData = NULL;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) context->handle;
+
+	key = ((ULONG_PTR) surfaceId) + 1;
+
+	pData = HashTable_GetItemValue(gfx->SurfaceTable, (void*) key);
+
+	return pData;
 }
 
 #ifdef STATIC_CHANNELS
@@ -886,12 +915,20 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		gfx->iface.Disconnected = NULL;
 		gfx->iface.Terminated = rdpgfx_plugin_terminated;
 
+		gfx->SurfaceTable = HashTable_New(TRUE);
+
+		if (!gfx->SurfaceTable)
+			return -1;
+
 		context = (RdpgfxClientContext*) calloc(1, sizeof(RdpgfxClientContext));
 
 		if (!context)
 			return -1;
 
 		context->handle = (void*) gfx;
+
+		context->SetSurfaceData = rdpgfx_set_surface_data;
+		context->GetSurfaceData = rdpgfx_get_surface_data;
 
 		gfx->iface.pInterface = (void*) context;
 

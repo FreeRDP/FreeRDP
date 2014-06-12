@@ -1477,12 +1477,11 @@ static void xfreerdp_client_global_init()
 {
 	setlocale(LC_ALL, "");
 	freerdp_handle_signals();
-	freerdp_channels_global_init();
 }
 
 static void xfreerdp_client_global_uninit()
 {
-	freerdp_channels_global_uninit();
+
 }
 
 static int xfreerdp_client_start(rdpContext *context)

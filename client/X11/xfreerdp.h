@@ -112,6 +112,7 @@ struct xf_context
 	HGDI_DC hdc;
 	BYTE* primary_buffer;
 	REGION16 invalidRegion;
+	BOOL inGfxFrame;
 
 	BOOL frame_begin;
 	UINT16 frame_x1;

@@ -25,6 +25,7 @@
 #include <freerdp/addin.h>
 
 #include <winpr/wlog.h>
+#include <winpr/collections.h>
 
 #include <freerdp/client/rdpgfx.h>
 
@@ -66,6 +67,8 @@ struct _RDPGFX_PLUGIN
 	ZGFX_CONTEXT* zgfx;
 	UINT32 UnacknowledgedFrames;
 	UINT32 TotalDecodedFrames;
+
+	wHashTable* SurfaceTable;
 };
 typedef struct _RDPGFX_PLUGIN RDPGFX_PLUGIN;
 

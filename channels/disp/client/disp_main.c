@@ -191,17 +191,12 @@ int disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 	return 0;
 }
 
-static int disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* pBuffer)
+static int disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
-	wStream* s;
 	int status = 0;
 	DISP_CHANNEL_CALLBACK* callback = (DISP_CHANNEL_CALLBACK*) pChannelCallback;
 
-	s = Stream_New(pBuffer, cbSize);
-
-	status = disp_recv_pdu(callback, s);
-
-	Stream_Free(s, FALSE);
+	status = disp_recv_pdu(callback, data);
 
 	return status;
 }

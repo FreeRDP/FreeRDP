@@ -305,8 +305,6 @@ int main(int argc, char* argv[])
 	rdpChannels* channels;
 	struct thread_data* data;
 
-	freerdp_channels_global_init();
-
 	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
 
 	instance = freerdp_new();
@@ -340,8 +338,6 @@ int main(int argc, char* argv[])
 	{
 		WaitForSingleObject(g_sem, INFINITE);
 	}
-
-	freerdp_channels_global_uninit();
 
 	return 0;
 }

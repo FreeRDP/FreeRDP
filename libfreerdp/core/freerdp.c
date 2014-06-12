@@ -169,8 +169,6 @@ BOOL freerdp_connect(freerdp* instance)
 				update_recv_surfcmds(update, Stream_Length(s) , s);
 				update->EndPaint(update->context);
 				Stream_Release(s);
-			
-				StreamPool_Return(rdp->transport->ReceivePool, s);
 			}
 
 			pcap_close(update->pcap_rfx);

@@ -27,6 +27,16 @@
 
 #include <freerdp/codec/zgfx.h>
 
+/**
+ * RDP8 Compressor Limits:
+ *
+ * Maximum number of uncompressed bytes in a single segment: 65535
+ * Maximum match distance / minimum history size: 2500000 bytes.
+ * Maximum number of segments: 65535
+ * Maximum expansion of a segment (when compressed size exceeds uncompressed): 1000 bytes
+ * Minimum match length: 3 bytes
+ */
+
 struct _ZGFX_TOKEN
 {
 	int prefixLength;
@@ -83,71 +93,136 @@ static const ZGFX_TOKEN ZGFX_TOKEN_TABLE[] =
 	{ 0 }
 };
 
-UINT32 zgfx_GetBits(ZGFX_CONTEXT* zgfx, UINT32 bitCount)
+#define zgfx_GetBits(_zgfx, _nbits) \
+	while (_zgfx->cBitsCurrent < _nbits) { \
+		_zgfx->BitsCurrent <<= 8; \
+		if (_zgfx->pbInputCurrent < _zgfx->pbInputEnd) \
+			_zgfx->BitsCurrent += *(_zgfx->pbInputCurrent)++; \
+		_zgfx->cBitsCurrent += 8; \
+	} \
+	_zgfx->cBitsRemaining -= _nbits; \
+	_zgfx->cBitsCurrent -= _nbits; \
+	_zgfx->bits = _zgfx->BitsCurrent >> _zgfx->cBitsCurrent; \
+	_zgfx->BitsCurrent &= ((1 << _zgfx->cBitsCurrent) - 1);
+
+void zgfx_history_buffer_ring_write(ZGFX_CONTEXT* zgfx, BYTE* src, UINT32 count)
 {
-	UINT32 result;
+	UINT32 front;
+	UINT32 residue;
 
-	while (zgfx->cBitsCurrent < bitCount)
+	if (count <= 0)
+		return;
+
+	if (count > zgfx->HistoryBufferSize)
 	{
-		zgfx->BitsCurrent <<= 8;
+		residue = count - zgfx->HistoryBufferSize;
+		count = zgfx->HistoryBufferSize;
+		src += residue;
 
-		if (zgfx->pbInputCurrent < zgfx->pbInputEnd)
-		{
-			zgfx->BitsCurrent += *(zgfx->pbInputCurrent)++;
-		}
-
-		zgfx->cBitsCurrent += 8;
+		zgfx->HistoryIndex = (zgfx->HistoryIndex + residue) % zgfx->HistoryBufferSize;
 	}
 
-	zgfx->cBitsRemaining -= bitCount;
-	zgfx->cBitsCurrent -= bitCount;
-
-	result = zgfx->BitsCurrent >> zgfx->cBitsCurrent;
-
-	zgfx->BitsCurrent &= ((1 << zgfx->cBitsCurrent) - 1);
-
-	return result;
-}
-
-int zgfx_OutputFromNotCompressed(ZGFX_CONTEXT* zgfx, BYTE* pbRaw, int cbRaw)
-{
-	BYTE c;
-	int iRaw;
-
-	zgfx->OutputCount = 0;
-
-	for (iRaw = 0; iRaw < cbRaw; iRaw++)
+	if (zgfx->HistoryIndex + count <= zgfx->HistoryBufferSize)
 	{
-		c = pbRaw[iRaw];
+		CopyMemory(&(zgfx->HistoryBuffer[zgfx->HistoryIndex]), src, count);
 
-		zgfx->HistoryBuffer[zgfx->HistoryIndex++] = c;
-
-		if (zgfx->HistoryIndex == sizeof(zgfx->HistoryBuffer))
+		if ((zgfx->HistoryIndex += count) == zgfx->HistoryBufferSize)
 			zgfx->HistoryIndex = 0;
-
-		zgfx->OutputBuffer[zgfx->OutputCount++] = c;
 	}
-
-	return 1;
+	else
+	{
+		front = zgfx->HistoryBufferSize - zgfx->HistoryIndex;
+		CopyMemory(&(zgfx->HistoryBuffer[zgfx->HistoryIndex]), src, front);
+		CopyMemory(zgfx->HistoryBuffer, &src[front], count - front);
+		zgfx->HistoryIndex = count - front;
+	}
 }
 
-int zgfx_OutputFromCompressed(ZGFX_CONTEXT* zgfx, BYTE* pbEncoded, int cbEncoded)
+void zgfx_history_buffer_ring_read(ZGFX_CONTEXT* zgfx, int offset, BYTE* dst, UINT32 count)
+{
+	UINT32 front;
+	UINT32 index;
+	UINT32 bytes;
+	UINT32 valid;
+	UINT32 bytesLeft;
+	BYTE* dptr = dst;
+	BYTE* origDst = dst;
+
+	if (count <= 0)
+		return;
+
+	bytesLeft = count;
+
+	index = (zgfx->HistoryIndex + zgfx->HistoryBufferSize - offset) % zgfx->HistoryBufferSize;
+
+	bytes = MIN(bytesLeft, offset);
+
+	if ((index + bytes) <= zgfx->HistoryBufferSize)
+	{
+		CopyMemory(dptr, &(zgfx->HistoryBuffer[index]), bytes);
+	}
+	else
+	{
+		front = zgfx->HistoryBufferSize - index;
+		CopyMemory(dptr, &(zgfx->HistoryBuffer[index]), front);
+		CopyMemory(&dptr[front], zgfx->HistoryBuffer, bytes - front);
+	}
+
+	if ((bytesLeft -= bytes) == 0)
+		return;
+
+	dptr += bytes;
+	valid = bytes;
+
+	do
+	{
+		bytes = valid;
+
+		if (bytes > bytesLeft)
+			bytes = bytesLeft;
+
+		CopyMemory(dptr, origDst, bytes);
+		dptr += bytes;
+		valid <<= 1;
+	}
+	while ((bytesLeft -= bytes) > 0);
+}
+
+int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegment)
 {
 	BYTE c;
+	BYTE flags;
 	int extra;
 	int opIndex;
 	int haveBits;
 	int inPrefix;
 	UINT32 count;
 	UINT32 distance;
-	UINT32 prevIndex;
+
+	if (cbSegment < 1)
+		return -1;
+
+	flags = pbSegment[0]; /* header (1 byte) */
+
+	pbSegment++;
+	cbSegment--;
 
 	zgfx->OutputCount = 0;
 
-	zgfx->pbInputCurrent = pbEncoded;
-	zgfx->pbInputEnd = pbEncoded + cbEncoded - 1;
+	if (!(flags & PACKET_COMPRESSED))
+	{
+		zgfx_history_buffer_ring_write(zgfx, pbSegment, cbSegment);
+		CopyMemory(zgfx->OutputBuffer, pbSegment, cbSegment);
+		zgfx->OutputCount = cbSegment;
 
-	zgfx->cBitsRemaining = 8 * (cbEncoded - 1) - *zgfx->pbInputEnd;
+		return 1;
+	}
+
+	zgfx->pbInputCurrent = pbSegment;
+	zgfx->pbInputEnd = &pbSegment[cbSegment - 1];
+
+	/* NumberOfBitsToDecode = ((NumberOfBytesToDecode - 1) * 8) - ValueOfLastByte */
+	zgfx->cBitsRemaining = 8 * (cbSegment - 1) - *zgfx->pbInputEnd;
 	zgfx->cBitsCurrent = 0;
 	zgfx->BitsCurrent = 0;
 
@@ -160,7 +235,8 @@ int zgfx_OutputFromCompressed(ZGFX_CONTEXT* zgfx, BYTE* pbEncoded, int cbEncoded
 		{
 			while (haveBits < ZGFX_TOKEN_TABLE[opIndex].prefixLength)
 			{
-				inPrefix = (inPrefix << 1) + zgfx_GetBits(zgfx, 1);
+				zgfx_GetBits(zgfx, 1);
+				inPrefix = (inPrefix << 1) + zgfx->bits;
 				haveBits++;
 			}
 
@@ -168,19 +244,30 @@ int zgfx_OutputFromCompressed(ZGFX_CONTEXT* zgfx, BYTE* pbEncoded, int cbEncoded
 			{
 				if (ZGFX_TOKEN_TABLE[opIndex].tokenType == 0)
 				{
-					c = (BYTE)(ZGFX_TOKEN_TABLE[opIndex].valueBase +
-							zgfx_GetBits(zgfx, ZGFX_TOKEN_TABLE[opIndex].valueBits));
+					/* Literal */
 
-					goto output_literal;
+					zgfx_GetBits(zgfx, ZGFX_TOKEN_TABLE[opIndex].valueBits);
+					c = (BYTE) (ZGFX_TOKEN_TABLE[opIndex].valueBase + zgfx->bits);
+
+					zgfx->HistoryBuffer[zgfx->HistoryIndex] = c;
+
+					if (++zgfx->HistoryIndex == zgfx->HistoryBufferSize)
+						zgfx->HistoryIndex = 0;
+
+					zgfx->OutputBuffer[zgfx->OutputCount++] = c;
 				}
 				else
 				{
-					distance = ZGFX_TOKEN_TABLE[opIndex].valueBase +
-							zgfx_GetBits(zgfx, ZGFX_TOKEN_TABLE[opIndex].valueBits);
+					zgfx_GetBits(zgfx, ZGFX_TOKEN_TABLE[opIndex].valueBits);
+					distance = ZGFX_TOKEN_TABLE[opIndex].valueBase + zgfx->bits;
 
 					if (distance != 0)
 					{
-						if (zgfx_GetBits(zgfx, 1) == 0)
+						/* Match */
+
+						zgfx_GetBits(zgfx, 1);
+
+						if (zgfx->bits == 0)
 						{
 							count = 3;
 						}
@@ -189,128 +276,46 @@ int zgfx_OutputFromCompressed(ZGFX_CONTEXT* zgfx, BYTE* pbEncoded, int cbEncoded
 							count = 4;
 							extra = 2;
 
-							while (zgfx_GetBits(zgfx, 1) == 1)
+							zgfx_GetBits(zgfx, 1);
+
+							while (zgfx->bits == 1)
 							{
 								count *= 2;
 								extra++;
+
+								zgfx_GetBits(zgfx, 1);
 							}
 
-							count += zgfx_GetBits(zgfx, extra);
+							zgfx_GetBits(zgfx, extra);
+							count += zgfx->bits;
 						}
 
-						goto output_match;
+						zgfx_history_buffer_ring_read(zgfx, distance, &(zgfx->OutputBuffer[zgfx->OutputCount]), count);
+						zgfx_history_buffer_ring_write(zgfx, &(zgfx->OutputBuffer[zgfx->OutputCount]), count);
+						zgfx->OutputCount += count;
 					}
 					else
 					{
-						count = zgfx_GetBits(zgfx, 15);
+						/* Unencoded */
+
+						zgfx_GetBits(zgfx, 15);
+						count = zgfx->bits;
 
 						zgfx->cBitsRemaining -= zgfx->cBitsCurrent;
 						zgfx->cBitsCurrent = 0;
 						zgfx->BitsCurrent = 0;
 
-						goto output_unencoded;
+						CopyMemory(&(zgfx->OutputBuffer[zgfx->OutputCount]), zgfx->pbInputCurrent, count);
+						zgfx_history_buffer_ring_write(zgfx, zgfx->pbInputCurrent, count);
+
+						zgfx->pbInputCurrent += count;
+						zgfx->cBitsRemaining -= (8 * count);
+						zgfx->OutputCount += count;
 					}
 				}
+
+				break;
 			}
-		}
-		break;
-
-output_literal:
-
-		zgfx->HistoryBuffer[zgfx->HistoryIndex] = c;
-
-		if (++zgfx->HistoryIndex == sizeof(zgfx->HistoryBuffer))
-			zgfx->HistoryIndex = 0;
-
-		zgfx->OutputBuffer[zgfx->OutputCount++] = c;
-		continue;
-
-output_match:
-
-		prevIndex = zgfx->HistoryIndex + sizeof(zgfx->HistoryBuffer) - distance;
-		prevIndex = prevIndex % sizeof(zgfx->HistoryBuffer);
-
-		while (count--)
-		{
-			c = zgfx->HistoryBuffer[prevIndex];
-
-			if (++prevIndex == sizeof(zgfx->HistoryBuffer))
-				prevIndex = 0;
-
-			zgfx->HistoryBuffer[zgfx->HistoryIndex] = c;
-
-			if (++zgfx->HistoryIndex == sizeof(zgfx->HistoryBuffer))
-				zgfx->HistoryIndex = 0;
-
-			zgfx->OutputBuffer[zgfx->OutputCount] = c;
-			++zgfx->OutputCount;
-		}
-		continue;
-
-output_unencoded:
-		while (count--)
-		{
-			c = *zgfx->pbInputCurrent++;
-			zgfx->cBitsRemaining -= 8;
-
-			zgfx->HistoryBuffer[zgfx->HistoryIndex] = c;
-
-			if (++zgfx->HistoryIndex == sizeof(zgfx->HistoryBuffer))
-				zgfx->HistoryIndex = 0;
-
-			zgfx->OutputBuffer[zgfx->OutputCount] = c;
-			++zgfx->OutputCount;
-		}
-		continue;
-	}
-
-	return 1;
-}
-
-int zgfx_OutputFromSegment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, int cbSegment)
-{
-	int status;
-
-	if (pbSegment[0] & PACKET_COMPRESSED)
-		status = zgfx_OutputFromCompressed(zgfx, pbSegment + 1, cbSegment - 1);
-	else
-		status = zgfx_OutputFromNotCompressed(zgfx, pbSegment + 1, cbSegment - 1);
-
-	return status;
-}
-
-int zgfx_Decompress_Internal(ZGFX_CONTEXT* zgfx, BYTE* pbInput, int cbInput, BYTE** ppbOutput, int* pcbOutput)
-{
-	int status;
-
-	RDP_SEGMENTED_DATA* pSegmentedData = (RDP_SEGMENTED_DATA*) pbInput;
-
-	if (pSegmentedData->descriptor == ZGFX_SEGMENTED_SINGLE)
-	{
-		status = zgfx_OutputFromSegment(zgfx, pbInput + 1, cbInput - 1);
-
-		*ppbOutput = (BYTE*) malloc(zgfx->OutputCount);
-		*pcbOutput = zgfx->OutputCount;
-		CopyMemory(*ppbOutput, zgfx->OutputBuffer, zgfx->OutputCount);
-	}
-	else if (pSegmentedData->descriptor == ZGFX_SEGMENTED_MULTIPART)
-	{
-		UINT16 segmentNumber;
-		UINT32 segmentOffset = sizeof(RDP_SEGMENTED_DATA);
-		BYTE* pConcatenated = (BYTE*) malloc(pSegmentedData->uncompressedSize);
-
-		*ppbOutput = pConcatenated;
-		*pcbOutput = pSegmentedData->uncompressedSize;
-
-		for (segmentNumber = 0; segmentNumber < pSegmentedData->segmentCount; segmentNumber++)
-		{
-			RDP_DATA_SEGMENT* pSegment = (RDP_DATA_SEGMENT*) (pbInput + segmentOffset);
-
-			status = zgfx_OutputFromSegment(zgfx, pbInput + segmentOffset + sizeof(RDP_DATA_SEGMENT), pSegment->size);
-
-			segmentOffset += sizeof(RDP_DATA_SEGMENT) + pSegment->size;
-			CopyMemory(pConcatenated, zgfx->OutputBuffer, zgfx->OutputCount);
-			pConcatenated += zgfx->OutputCount;
 		}
 	}
 
@@ -319,19 +324,59 @@ int zgfx_Decompress_Internal(ZGFX_CONTEXT* zgfx, BYTE* pbInput, int cbInput, BYT
 
 int zgfx_decompress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
-	int status = 0;
-	int cbOutput = 0;
-	BYTE* pbOutput = NULL;
+	int status;
+	BYTE descriptor;
 
-	status = zgfx_Decompress_Internal(zgfx, pSrcData, SrcSize, &pbOutput, &cbOutput);
+	if (SrcSize < 1)
+		return -1;
 
-	if (status >= 0)
+	descriptor = pSrcData[0]; /* descriptor (1 byte) */
+
+	if (descriptor == ZGFX_SEGMENTED_SINGLE)
 	{
-		*ppDstData = pbOutput;
-		*pDstSize = (UINT32) cbOutput;
+		status = zgfx_decompress_segment(zgfx, &pSrcData[1], SrcSize - 1);
+
+		*ppDstData = (BYTE*) malloc(zgfx->OutputCount);
+		*pDstSize = zgfx->OutputCount;
+
+		CopyMemory(*ppDstData, zgfx->OutputBuffer, zgfx->OutputCount);
+	}
+	else if (descriptor == ZGFX_SEGMENTED_MULTIPART)
+	{
+		UINT32 segmentSize;
+		UINT16 segmentNumber;
+		UINT16 segmentCount;
+		UINT32 segmentOffset;
+		UINT32 uncompressedSize;
+		BYTE* pConcatenated;
+
+		segmentOffset = 7;
+		segmentCount = *((UINT16*) &pSrcData[1]); /* segmentCount (2 bytes) */
+		uncompressedSize = *((UINT32*) &pSrcData[3]); /* uncompressedSize (4 bytes) */
+
+		pConcatenated = (BYTE*) malloc(uncompressedSize);
+
+		*ppDstData = pConcatenated;
+		*pDstSize = uncompressedSize;
+
+		for (segmentNumber = 0; segmentNumber < segmentCount; segmentNumber++)
+		{
+			segmentSize = *((UINT32*) &pSrcData[segmentOffset]); /* segmentSize (4 bytes) */
+			segmentOffset += 4;
+
+			status = zgfx_decompress_segment(zgfx, &pSrcData[segmentOffset], segmentSize);
+			segmentOffset += segmentSize;
+
+			CopyMemory(pConcatenated, zgfx->OutputBuffer, zgfx->OutputCount);
+			pConcatenated += zgfx->OutputCount;
+		}
+	}
+	else
+	{
+		return -1;
 	}
 
-	return status;
+	return 1;
 }
 
 int zgfx_compress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
@@ -353,6 +398,8 @@ ZGFX_CONTEXT* zgfx_context_new(BOOL Compressor)
 	if (zgfx)
 	{
 		zgfx->Compressor = Compressor;
+
+		zgfx->HistoryBufferSize = sizeof(zgfx->HistoryBuffer);
 
 		zgfx_context_reset(zgfx, FALSE);
 	}

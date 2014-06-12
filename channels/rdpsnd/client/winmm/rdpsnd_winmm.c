@@ -34,7 +34,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #include "rdpsnd_main.h"
 
@@ -333,8 +332,10 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 	ADDIN_ARGV* args;
 	rdpsndWinmmPlugin* winmm;
 
-	winmm = (rdpsndWinmmPlugin*) malloc(sizeof(rdpsndWinmmPlugin));
-	ZeroMemory(winmm, sizeof(rdpsndWinmmPlugin));
+	winmm = (rdpsndWinmmPlugin*) calloc(1, sizeof(rdpsndWinmmPlugin));
+
+	if (!winmm)
+		return -1;
 
 	winmm->device.DisableConfirmThread = TRUE;
 

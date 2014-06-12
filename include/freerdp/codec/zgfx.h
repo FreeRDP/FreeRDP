@@ -28,24 +28,6 @@
 #define ZGFX_SEGMENTED_SINGLE			0xE0
 #define ZGFX_SEGMENTED_MULTIPART		0xE1
 
-#pragma pack(push,1)
-
-typedef struct
-{
-	BYTE descriptor;
-	UINT16 segmentCount;
-	UINT32 uncompressedSize;
-	// RDP_DATA_SEGMENT first;
-} RDP_SEGMENTED_DATA;
-
-typedef struct
-{
-	UINT32 size;
-	// BYTE data[size];
-} RDP_DATA_SEGMENT;
-
-#pragma pack(pop)
-
 struct _ZGFX_CONTEXT
 {
 	BOOL Compressor;
@@ -53,6 +35,7 @@ struct _ZGFX_CONTEXT
 	BYTE* pbInputCurrent;
 	BYTE* pbInputEnd;
 
+	UINT32 bits;
 	UINT32 cBitsRemaining;
 	UINT32 BitsCurrent;
 	UINT32 cBitsCurrent;
@@ -62,6 +45,7 @@ struct _ZGFX_CONTEXT
 
 	BYTE HistoryBuffer[2500000];
 	UINT32 HistoryIndex;
+	UINT32 HistoryBufferSize;
 };
 typedef struct _ZGFX_CONTEXT ZGFX_CONTEXT;
 

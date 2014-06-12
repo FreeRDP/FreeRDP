@@ -23,6 +23,17 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
+struct xf_gfx_surface
+{
+	UINT16 surfaceId;
+	UINT32 width;
+	UINT32 height;
+	BOOL alpha;
+	BYTE* data;
+	XImage* image;
+};
+typedef struct xf_gfx_surface xfGfxSurface;
+
 void xf_register_graphics_pipeline(xfContext* xfc, RdpgfxClientContext* gfx);
 
 #endif /* __XF_GRAPHICS_PIPELINE_H */
