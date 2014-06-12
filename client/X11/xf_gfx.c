@@ -154,8 +154,6 @@ int xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context,
 	xfGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 
-	printf("xf_SurfaceCommand_Uncompressed\n");
-
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
 	if (!surface)
@@ -171,6 +169,8 @@ int xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context,
 	invalidRect.right = cmd->right;
 	invalidRect.bottom = cmd->bottom;
 
+	printf("xf_SurfaceCommand_Uncompressed: x: %d y: %d w: %d h: %d\n", cmd->left, cmd->top, cmd->width, cmd->height);
+
 	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
 
 	if (!xfc->inGfxFrame)
@@ -181,62 +181,73 @@ int xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context,
 
 int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
-	UINT16 index;
+	int j;
+	UINT16 i;
 	RFX_RECT* rect;
 	RFX_TILE* tile;
 	int nXDst, nYDst;
 	int nWidth, nHeight;
+	int nbUpdateRects;
 	RFX_MESSAGE* message;
 	xfGfxSurface* surface;
-	RECTANGLE_16 invalidRect;
-	RECTANGLE_16 surfaceRect;
+	REGION16 updateRegion;
+	RECTANGLE_16 updateRect;
+	RECTANGLE_16* updateRects;
+	REGION16 clippingRects;
+	RECTANGLE_16 clippingRect;
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
 	if (!surface)
 		return -1;
 
-	surfaceRect.left = 0;
-	surfaceRect.top = 0;
-	surfaceRect.right = xfc->width - 1;
-	surfaceRect.bottom = xfc->height - 1;
-
 	message = rfx_process_message(xfc->rfx, cmd->data, cmd->length);
 
 	if (!message)
 		return -1;
 
-	for (index = 0; index < message->numRects; index++)
+	region16_init(&clippingRects);
+
+	for (i = 0; i < message->numRects; i++)
 	{
-		rect = &(message->rects[index]);
+		rect = &(message->rects[i]);
 
-		invalidRect.left = cmd->left + rect->x;
-		invalidRect.top = cmd->top + rect->y;
-		invalidRect.right = invalidRect.left + rect->width - 1;
-		invalidRect.bottom = invalidRect.top + rect->height - 1;
+		clippingRect.left = cmd->left + rect->x;
+		clippingRect.top = cmd->top + rect->y;
+		clippingRect.right = clippingRect.left + rect->width - 1;
+		clippingRect.bottom = clippingRect.top + rect->height - 1;
 
-		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+		region16_union_rect(&clippingRects, &clippingRects, &clippingRect);
 	}
 
-	for (index = 0; index < message->numTiles; index++)
+	for (i = 0; i < message->numTiles; i++)
 	{
-		tile = message->tiles[index];
+		tile = message->tiles[i];
 
-		nWidth = nHeight = 64;
-		nXDst = cmd->left + tile->x;
-		nYDst = cmd->top + tile->y;
+		updateRect.left = cmd->left + tile->x;
+		updateRect.top = cmd->top + tile->y;
+		updateRect.right = updateRect.left + 64 - 1;
+		updateRect.bottom = updateRect.top + 64 - 1;
 
-		if ((nXDst + nWidth) > surface->width)
-			nWidth = surface->width - nXDst;
+		region16_init(&updateRegion);
+		region16_intersect_rect(&updateRegion, &clippingRects, &updateRect);
+		updateRects = (RECTANGLE_16*) region16_rects(&updateRegion, &nbUpdateRects);
 
-		if (nYDst + nHeight > surface->height)
-			nHeight = surface->height - nYDst;
+		for (j = 0; j < nbUpdateRects; j++)
+		{
+			nXDst = updateRects[j].left;
+			nYDst = updateRects[j].top;
+			nWidth = updateRects[j].right - updateRects[j].left + 1;
+			nHeight = updateRects[j].bottom - updateRects[j].top + 1;
 
-		/* TODO: properly handle RemoteFX tile clipping */
+			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
+					nXDst, nYDst, nWidth, nHeight,
+					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, 0, 0);
 
-		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
-				nXDst, nYDst, nWidth, nHeight,
-				tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, 0, 0);
+			region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &updateRects[j]);
+		}
+
+		region16_uninit(&updateRegion);
 	}
 
 	rfx_message_free(xfc->rfx, message);
