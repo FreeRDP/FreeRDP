@@ -29,7 +29,6 @@
 #include <winpr/stream.h>
 
 #include <freerdp/constants.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #include "dvcman.h"
 #include "drdynvc_types.h"
@@ -298,8 +297,7 @@ static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId
 	if (status)
 		return status;
 
-	return dvcman_receive_channel_data(drdynvc->channel_mgr, ChannelId,
-		Stream_Pointer(s), Stream_GetRemainingLength(s));
+	return dvcman_receive_channel_data(drdynvc->channel_mgr, ChannelId, s);
 }
 
 static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
@@ -309,8 +307,7 @@ static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStr
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	DEBUG_DVC("ChannelId=%d", ChannelId);
 
-	return dvcman_receive_channel_data(drdynvc->channel_mgr, ChannelId,
-		Stream_Pointer(s), Stream_GetRemainingLength(s));
+	return dvcman_receive_channel_data(drdynvc->channel_mgr, ChannelId, s);
 }
 
 static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
@@ -382,8 +379,6 @@ static void drdynvc_process_receive(rdpSvcPlugin* plugin, wStream* s)
 			DEBUG_WARN("unknown drdynvc cmd 0x%x", Cmd);
 			break;
 	}
-
-	Stream_Free(s, TRUE);
 }
 
 static void drdynvc_process_connect(rdpSvcPlugin* plugin)
@@ -424,6 +419,8 @@ static void drdynvc_process_terminate(rdpSvcPlugin* plugin)
 
 	if (drdynvc->channel_mgr)
 		dvcman_free(drdynvc->channel_mgr);
+
+	svc_plugin_terminate(plugin);
 
 	free(drdynvc);
 }
@@ -482,3 +479,4 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	return 1;
 }
+

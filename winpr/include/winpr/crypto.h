@@ -29,7 +29,22 @@
 
 #include <wincrypt.h>
 
-#else
+#endif
+
+#ifndef ALG_TYPE_RESERVED7
+#define ALG_TYPE_RESERVED7		(7 << 9)
+#endif
+
+#if (NTDDI_VERSION <= 0x05010200)
+#define ALG_SID_SHA_256			12
+#define ALG_SID_SHA_384			13
+#define ALG_SID_SHA_512			14
+#define CALG_SHA_256			(ALG_CLASS_HASH | ALG_TYPE_ANY | ALG_SID_SHA_256)
+#define CALG_SHA_384			(ALG_CLASS_HASH | ALG_TYPE_ANY | ALG_SID_SHA_384)
+#define CALG_SHA_512			(ALG_CLASS_HASH | ALG_TYPE_ANY | ALG_SID_SHA_512)
+#endif
+
+#ifndef _WIN32
 
 /* ncrypt.h */
 
@@ -60,7 +75,6 @@ typedef ULONG_PTR NCRYPT_SECRET_HANDLE;
 #define ALG_TYPE_STREAM			(4 << 9)
 #define ALG_TYPE_DH			(5 << 9)
 #define ALG_TYPE_SECURECHANNEL		(6 << 9)
-#define ALG_TYPE_RESERVED7		(7 << 9)
 
 #define ALG_SID_ANY			(0)
 
@@ -73,8 +87,6 @@ typedef ULONG_PTR NCRYPT_SECRET_HANDLE;
 #define ALG_SID_DSS_ANY			0
 #define ALG_SID_DSS_PKCS		1
 #define ALG_SID_DSS_DMS			2
-
-#define ALG_SID_ECDSA			3
 
 #define ALG_SID_DES			1
 #define ALG_SID_3DES			3
@@ -192,7 +204,6 @@ typedef ULONG_PTR NCRYPT_SECRET_HANDLE;
 
 #define CALG_ECDH			(ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_DH | ALG_SID_ECDH)
 #define CALG_ECMQV			(ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_ANY | ALG_SID_ECMQV)
-#define CALG_ECDSA			(ALG_CLASS_SIGNATURE | ALG_TYPE_DSS | ALG_SID_ECDSA)
 
 typedef struct _CRYPTOAPI_BLOB
 {
@@ -592,6 +603,11 @@ BOOL CryptBinaryToStringA(CONST BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, L
 #define CryptBinaryToString	CryptBinaryToStringA
 #endif
 
+#endif
+
+#ifndef ALG_SID_ECSDA
+#define ALG_SID_ECDSA                   3
+#define CALG_ECDSA			(ALG_CLASS_SIGNATURE | ALG_TYPE_DSS | ALG_SID_ECDSA)
 #endif
 
 #endif /* WINPR_CRYPTO_H */

@@ -319,7 +319,7 @@ int WLog_ParseFilters()
 {
 	char* p;
 	char* env;
-	int count;
+	DWORD count;
 	DWORD nSize;
 	int status;
 	char** strs;

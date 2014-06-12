@@ -39,6 +39,9 @@
 #cmakedefine WITH_WIN8
 #cmakedefine WITH_RDPSND_DSOUND
 
+#cmakedefine WITH_FFMPEG
+#cmakedefine WITH_GSTREAMER_1_0
+#cmakedefine WITH_GSTREAMER_0_10
 #cmakedefine WITH_WINMM
 #cmakedefine WITH_MACAUDIO
 #cmakedefine WITH_ALSA
@@ -58,6 +61,7 @@
 #cmakedefine WITH_DEBUG_CHANNELS
 #cmakedefine WITH_DEBUG_CLIPRDR
 #cmakedefine WITH_DEBUG_DVC
+#cmakedefine WITH_DEBUG_TSMF
 #cmakedefine WITH_DEBUG_GDI
 #cmakedefine WITH_DEBUG_KBD
 #cmakedefine WITH_DEBUG_LICENSE
