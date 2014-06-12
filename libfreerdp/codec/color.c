@@ -1181,12 +1181,19 @@ int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDs
 	int srcBytesPerPixel;
 	int dstBitsPerPixel;
 	int dstBytesPerPixel;
+	BOOL overlap = FALSE;
 
 	srcBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(dwSrcFormat);
 	srcBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(dwSrcFormat) / 8);
 
 	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(dwDstFormat);
 	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(dwDstFormat) / 8);
+
+	if (pDstData == pSrcData)
+	{
+		overlap = (((nXDst + nWidth) > nXSrc) && (nXDst < (nXSrc + nWidth)) &&
+			((nYDst + nHeight) > nYSrc) && (nYDst < (nYSrc + nHeight))) ? TRUE : FALSE;
+	}
 
 	if (srcBytesPerPixel == 4)
 	{
@@ -1195,7 +1202,7 @@ int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDs
 
 		if (srcBitsPerPixel == 24)
 		{
-			if (dstBytesPerPixel == 4)
+			if (dstBytesPerPixel == 4) /* srcBytesPerPixel == dstBytesPerPixel */
 			{
 				if (dstBitsPerPixel == 32)
 				{
@@ -1223,7 +1230,7 @@ int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDs
 						pDstPixel = (UINT32*) &((BYTE*) pDstPixel)[(nDstStep - (nWidth * dstBytesPerPixel))];
 					}
 				}
-				else if (dstBitsPerPixel == 24)
+				else if (dstBitsPerPixel == 24) /* srcBitsPerPixel == dstBitsPerPixel */
 				{
 					UINT32* pSrcPixel;
 					UINT32* pDstPixel;

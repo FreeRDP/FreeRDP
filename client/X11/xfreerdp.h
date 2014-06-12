@@ -113,6 +113,8 @@ struct xf_context
 	BYTE* primary_buffer;
 	REGION16 invalidRegion;
 	BOOL inGfxFrame;
+	BOOL graphicsReset;
+	UINT16 outputSurfaceId;
 
 	BOOL frame_begin;
 	UINT16 frame_x1;

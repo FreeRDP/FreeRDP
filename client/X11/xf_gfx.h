@@ -31,8 +31,11 @@ struct xf_gfx_surface
 	BOOL alpha;
 	BYTE* data;
 	XImage* image;
+	int scanline;
 };
 typedef struct xf_gfx_surface xfGfxSurface;
+
+int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height);
 
 void xf_register_graphics_pipeline(xfContext* xfc, RdpgfxClientContext* gfx);
 
