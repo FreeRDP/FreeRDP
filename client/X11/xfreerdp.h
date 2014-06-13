@@ -31,7 +31,7 @@ typedef struct xf_context xfContext;
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
-#include <freerdp/constants.h>
+#include <freerdp/codec/clear.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/region.h>
@@ -151,6 +151,7 @@ struct xf_context
 	BYTE* bmp_codec_nsc;
 	RFX_CONTEXT* rfx;
 	NSC_CONTEXT* nsc;
+	CLEAR_CONTEXT* clear;
 	void* xv_context;
 	void* clipboard_context;
 

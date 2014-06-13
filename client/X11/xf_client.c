@@ -985,45 +985,54 @@ void xf_process_channel_event(rdpChannels *channels, freerdp *instance)
 
 void xf_window_free(xfContext *xfc)
 {
-	rdpContext *context = (rdpContext *) xfc;
+	rdpContext* context = (rdpContext*) xfc;
+
 	xf_keyboard_free(xfc);
-	if(xfc->gc)
+
+	if (xfc->gc)
 	{
 		XFreeGC(xfc->display, xfc->gc);
 		xfc->gc = 0;
 	}
-	if(xfc->gc_mono)
+
+	if (xfc->gc_mono)
 	{
 		XFreeGC(xfc->display, xfc->gc_mono);
 		xfc->gc_mono = 0;
 	}
-	if(xfc->window)
+
+	if (xfc->window)
 	{
 		xf_DestroyWindow(xfc, xfc->window);
 		xfc->window = NULL;
 	}
-	if(xfc->primary)
+
+	if (xfc->primary)
 	{
 		XFreePixmap(xfc->display, xfc->primary);
 		xfc->primary = 0;
 	}
-	if(xfc->bitmap_mono)
+
+	if (xfc->bitmap_mono)
 	{
 		XFreePixmap(xfc->display, xfc->bitmap_mono);
 		xfc->bitmap_mono = 0;
 	}
-	if(xfc->image)
+
+	if (xfc->image)
 	{
 		xfc->image->data = NULL;
 		XDestroyImage(xfc->image);
 		xfc->image = NULL;
 	}
-	if(context->cache)
+
+	if (context->cache)
 	{
 		cache_free(context->cache);
 		context->cache = NULL;
 	}
-	if(context->rail)
+
+	if (context->rail)
 	{
 		rail_free(context->rail);
 		context->rail = NULL;
@@ -1040,26 +1049,38 @@ void xf_window_free(xfContext *xfc)
 		nsc_context_free(xfc->nsc);
 		xfc->nsc = NULL;
 	}
-	if(xfc->clrconv)
+
+	if (xfc->clear)
+	{
+		clear_context_free(xfc->clear);
+		xfc->clear = NULL;
+	}
+
+	if (xfc->clrconv)
 	{
 		freerdp_clrconv_free(xfc->clrconv);
 		xfc->clrconv = NULL;
 	}
-	if(xfc->hdc)
+
+	if (xfc->hdc)
+	{
 		gdi_DeleteDC(xfc->hdc);
-	if(xfc->xv_context)
+	}
+
+	if (xfc->xv_context)
 	{
 		xf_tsmf_uninit(xfc);
 		xfc->xv_context = NULL;
 	}
-	if(xfc->clipboard_context)
+
+	if (xfc->clipboard_context)
 	{
 		xf_cliprdr_uninit(xfc);
 		xfc->clipboard_context = NULL;
 	}
 }
 
-void *xf_update_thread(void *arg)
+void* xf_update_thread(void *arg)
 {
 	int status;
 	wMessage message;

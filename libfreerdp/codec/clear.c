@@ -29,6 +29,7 @@
 
 int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize)
 {
+	int index;
 	BYTE glyphFlags;
 	BYTE seqNumber;
 	UINT16 glyphIndex;
@@ -38,7 +39,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 	UINT32 subcodecByteCount;
 
 	if (SrcSize < 2)
-		return -1;
+		return -1001;
 
 	glyphFlags = pSrcData[0];
 	seqNumber = pSrcData[1];
@@ -49,7 +50,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 	if (glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX)
 	{
 		if (SrcSize < 4)
-			return -1;
+			return -1002;
 
 		glyphIndex = *((UINT16*) &pSrcData[2]);
 		offset += 2;
@@ -68,7 +69,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 	/* Read composition payload header parameters */
 
 	if ((SrcSize - offset) < 12)
-		return -1;
+		return -1003;
 
 	residualByteCount = *((UINT32*) &pSrcData[offset]);
 	bandsByteCount = *((UINT32*) &pSrcData[offset + 4]);
@@ -91,7 +92,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 		UINT32 runLengthFactor = 0;
 
 		if ((SrcSize - offset) < residualByteCount)
-			return -1;
+			return -1004;
 
 		suboffset = 0;
 		residualData = &pSrcData[offset];
@@ -99,7 +100,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 		while (suboffset < residualByteCount)
 		{
 			if ((residualByteCount - suboffset) < 4)
-				return -1;
+				return -1005;
 
 			blueValue = residualData[suboffset];
 			greenValue = residualData[suboffset + 1];
@@ -113,7 +114,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 			if (runLengthFactor1 >= 0xFF)
 			{
 				if ((residualByteCount - suboffset) < 2)
-					return -1;
+					return -1006;
 
 				runLengthFactor2 = *((UINT16*) &residualData[suboffset]);
 				runLengthFactor = runLengthFactor2;
@@ -122,7 +123,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 				if (runLengthFactor2 >= 0xFFFF)
 				{
 					if ((residualByteCount - suboffset) < 4)
-						return -1;
+						return -1007;
 
 					runLengthFactor3 = *((UINT32*) &residualData[suboffset]);
 					runLengthFactor = runLengthFactor3;
@@ -141,7 +142,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 		UINT32 suboffset;
 
 		if ((SrcSize - offset) < bandsByteCount)
-			return -1;
+			return -1008;
 
 		suboffset = 0;
 		bandsData = &pSrcData[offset];
@@ -157,9 +158,14 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 			BYTE redBkg;
 			BYTE* vBars;
 			UINT16 vBarHeader;
+			UINT16 vBarIndex;
+			UINT16 vBarYOn;
+			UINT16 vBarYOff;
+			int vBarCount;
+			int vBarPixelCount;
 
 			if ((bandsByteCount - suboffset) < 11)
-				return -1;
+				return -1009;
 
 			xStart = *((UINT16*) &bandsData[suboffset]);
 			xEnd = *((UINT16*) &bandsData[suboffset + 2]);
@@ -170,31 +176,66 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 			redBkg = bandsData[suboffset + 10];
 			suboffset += 11;
 
-			vBars = &bandsData[suboffset];
+			vBarCount = (xEnd - xStart) + 1;
 
-			vBarHeader = *((UINT16*) &vBars[0]);
+			printf("CLEARCODEC_BAND: xStart: %d xEnd: %d yStart: %d yEnd: %d vBarCount: %d blueBkg: 0x%02X greenBkg: 0x%02X redBkg: 0x%02X\n",
+					xStart, xEnd, yStart, yEnd, vBarCount, blueBkg, greenBkg, redBkg);
 
-			if ((vBarHeader & 0xC000) == 0x8000) /* VBAR_CACHE_HIT */
+			for (index = 0; index < vBarCount; index++)
 			{
-				printf("VBAR_CACHE_HIT\n");
+				vBars = &bandsData[suboffset];
+
+				if ((bandsByteCount - suboffset) < 2)
+					return -1010;
+
+				vBarHeader = *((UINT16*) &vBars[0]);
 				suboffset += 2;
-			}
-			else if ((vBarHeader & 0xC000) == 0xC000) /* SHORT_VBAR_CACHE_HIT */
-			{
-				printf("SHORT_VBAR_CACHE_HIT\n");
-				suboffset += 3;
-			}
-			else if ((vBarHeader & 0xC000) == 0) /* SHORT_VBAR_CACHE_MISS */
-			{
-				printf("SHORT_VBAR_CACHE_MISS\n");
-				suboffset += 2;
-			}
-			else
-			{
-				return -1; /* invalid vBarHeader */
-			}
 
-			/* shortVBarPixels: variable */
+				if ((vBarHeader & 0xC000) == 0x8000) /* VBAR_CACHE_HIT */
+				{
+					vBarIndex = (vBarHeader & 0x7FFF);
+
+					printf("VBAR_CACHE_HIT: vBarIndex: %d\n",
+							vBarIndex);
+				}
+				else if ((vBarHeader & 0xC000) == 0xC000) /* SHORT_VBAR_CACHE_HIT */
+				{
+					vBarIndex = (vBarHeader & 0x3FFF);
+
+					if ((bandsByteCount - suboffset) < 1)
+						return -1011;
+
+					vBarYOn = vBars[2];
+					suboffset += 1;
+
+					printf("SHORT_VBAR_CACHE_HIT: vBarIndex: %d vBarYOn: %d\n",
+							vBarIndex, vBarYOn);
+				}
+				else if ((vBarHeader & 0xC000) == 0x0000) /* SHORT_VBAR_CACHE_MISS */
+				{
+					vBarYOn = (vBarHeader & 0xFF);
+					vBarYOff = ((vBarHeader >> 8) & 0x3F);
+
+					if (vBarYOff < vBarYOn)
+						return -1012;
+
+					/* shortVBarPixels: variable */
+
+					vBarPixelCount = (3 * (vBarYOff - vBarYOn));
+
+					printf("SHORT_VBAR_CACHE_MISS: vBarYOn: %d vBarYOff: %d bytes: %d\n",
+							vBarYOn, vBarYOff, vBarPixelCount);
+
+					if ((bandsByteCount - suboffset) < vBarPixelCount)
+						return -1013;
+
+					suboffset += vBarPixelCount;
+				}
+				else
+				{
+					return -1014; /* invalid vBarHeader */
+				}
+			}
 		}
 
 		/* Decompress bands layer and write to output bitmap */
@@ -214,7 +255,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 		UINT32 suboffset;
 
 		if ((SrcSize - offset) < subcodecByteCount)
-			return -1;
+			return -1015;
 
 		suboffset = 0;
 		subcodecs = &pSrcData[offset];
@@ -222,7 +263,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 		while (suboffset < subcodecByteCount)
 		{
 			if ((subcodecByteCount - suboffset) < 13)
-				return -1;
+				return -1016;
 
 			xStart = *((UINT16*) &subcodecs[suboffset]);
 			yStart = *((UINT16*) &subcodecs[suboffset + 2]);
@@ -232,11 +273,11 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 			subcodecId = subcodecs[suboffset + 12];
 			suboffset += 13;
 
-			printf("bitmapDataByteCount: %d subcodecByteCount: %d suboffset: %d\n",
-					bitmapDataByteCount, subcodecByteCount, suboffset);
+			printf("bitmapDataByteCount: %d subcodecByteCount: %d suboffset: %d subCodecId: %d\n",
+					bitmapDataByteCount, subcodecByteCount, suboffset, subcodecId);
 
 			if ((subcodecByteCount - suboffset) < bitmapDataByteCount)
-				return -1;
+				return -1017;
 
 			bitmapData = &subcodecs[suboffset];
 

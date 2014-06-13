@@ -135,9 +135,9 @@ int TestFreeRDPCodecClear(int argc, char* argv[])
 
 	//test_ClearDecompressExample2();
 
-	test_ClearDecompressExample3();
+	//test_ClearDecompressExample3();
 
-	//test_ClearDecompressExample4();
+	test_ClearDecompressExample4();
 
 	return 0;
 }

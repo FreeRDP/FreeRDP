@@ -30,6 +30,10 @@
 struct _CLEAR_CONTEXT
 {
 	BOOL Compressor;
+	UINT32 VBarStorageCursor;
+	void* VBarStorage[32768];
+	UINT32 ShortVBarStorageCursor;
+	void* ShortVBarStorage[16384];
 };
 typedef struct _CLEAR_CONTEXT CLEAR_CONTEXT;
 
