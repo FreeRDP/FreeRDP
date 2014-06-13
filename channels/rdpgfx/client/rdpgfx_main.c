@@ -366,6 +366,9 @@ int rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 
 	Stream_Read_UINT32(s, pdu.bitmapDataLength); /* bitmapDataLength (4 bytes) */
 
+	if (pdu.bitmapDataLength > Stream_GetRemainingLength(s))
+		return -1;
+
 	pdu.bitmapData = Stream_Pointer(s);
 	Stream_Seek(s, pdu.bitmapDataLength);
 
@@ -383,8 +386,8 @@ int rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	cmd.top = pdu.destRect.top;
 	cmd.right = pdu.destRect.right;
 	cmd.bottom = pdu.destRect.bottom;
-	cmd.width = cmd.right - cmd.left + 1;
-	cmd.height = cmd.bottom - cmd.top + 1;
+	cmd.width = cmd.right - cmd.left;
+	cmd.height = cmd.bottom - cmd.top;
 	cmd.length = pdu.bitmapDataLength;
 	cmd.data = pdu.bitmapData;
 

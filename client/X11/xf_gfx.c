@@ -91,8 +91,8 @@ int xf_OutputUpdate(xfContext* xfc)
 	{
 		extents = region16_extents(&(xfc->invalidRegion));
 
-		width = extents->right - extents->left;
-		height = extents->bottom - extents->top;
+		width = extents->right - extents->left + 1;
+		height = extents->bottom - extents->top + 1;
 
 		if (width > xfc->width)
 			width = xfc->width;
@@ -159,17 +159,16 @@ int xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context,
 	if (!surface)
 		return -1;
 
-	/* TODO: bitmap flipping in freerdp_image_copy */
-
 	freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top,
-			cmd->width, cmd->height, cmd->data, PIXEL_FORMAT_XRGB32_VF, cmd->width * 4, 0, 0);
+			cmd->width, cmd->height, cmd->data, PIXEL_FORMAT_XRGB32, cmd->width * 4, 0, 0);
 
 	invalidRect.left = cmd->left;
 	invalidRect.top = cmd->top;
 	invalidRect.right = cmd->right;
 	invalidRect.bottom = cmd->bottom;
 
-	printf("xf_SurfaceCommand_Uncompressed: x: %d y: %d w: %d h: %d\n", cmd->left, cmd->top, cmd->width, cmd->height);
+	printf("xf_SurfaceCommand_Uncompressed: x: %d y: %d w: %d h: %d r: %d b: %d\n",
+			cmd->left, cmd->top, cmd->width, cmd->height, cmd->right, cmd->bottom);
 
 	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
 
@@ -470,15 +469,14 @@ int xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_
 	{
 		destPt = &surfaceToSurface->destPts[index];
 
-		/* TODO: copy overlap handling in freerdp_image_copy */
-
-		freerdp_image_copy(surfaceDst->data, PIXEL_FORMAT_XRGB32, surfaceDst->scanline, destPt->x, destPt->y,
-				nWidth, nHeight, surfaceDst->data, PIXEL_FORMAT_XRGB32, surfaceSrc->scanline, 0, 0);
+		freerdp_image_copy(surfaceDst->data, PIXEL_FORMAT_XRGB32, surfaceDst->scanline,
+				destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data, PIXEL_FORMAT_XRGB32,
+				surfaceSrc->scanline, rectSrc->left, rectSrc->top);
 
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;
-		invalidRect.right = destPt->x + nWidth - 1;
-		invalidRect.bottom = destPt->y + nHeight - 1;
+		invalidRect.right = destPt->x + rectSrc->right;
+		invalidRect.bottom = destPt->y + rectSrc->bottom;
 
 		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
 	}
