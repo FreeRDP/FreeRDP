@@ -1175,7 +1175,7 @@ void freerdp_clrconv_free(HCLRCONV clrconv)
 int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, BYTE* pSrcData, DWORD dwSrcFormat, int nSrcStep, int nXSrc, int nYSrc)
 {
-	int y, x;
+	int x, y;
 	BYTE a, r, g, b;
 	int beg, end, inc;
 	int srcBitsPerPixel;
@@ -1350,3 +1350,56 @@ int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDs
 
 	return 0;
 }
+
+void* freerdp_image_memset32(UINT32* ptr, UINT32 fill, size_t length)
+{
+	while (length--)
+	{
+		*ptr++ = fill;
+	}
+
+	return (void*) ptr;
+}
+
+int freerdp_image_fill(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, UINT32 color)
+{
+	int y;
+	int dstBitsPerPixel;
+	int dstBytesPerPixel;
+
+	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(dwDstFormat);
+	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(dwDstFormat) / 8);
+
+	if (dstBytesPerPixel == 4)
+	{
+		UINT32* pDstPixel;
+
+		if (nDstStep < 0)
+			nDstStep = dstBytesPerPixel * nWidth;
+
+		for (y = 0; y < nHeight; y++)
+		{
+			pDstPixel = (UINT32*) &pDstData[((nYDst + y) * nDstStep) + (nXDst * dstBytesPerPixel)];
+			freerdp_image_memset32(pDstPixel, color, nWidth);
+		}
+	}
+	else if (dstBytesPerPixel == 3)
+	{
+
+	}
+	else if (dstBytesPerPixel == 2)
+	{
+		if (dstBitsPerPixel == 16)
+		{
+
+		}
+		else if (dstBitsPerPixel == 15)
+		{
+
+		}
+	}
+
+	return 0;
+}
+

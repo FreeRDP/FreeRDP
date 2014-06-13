@@ -35,6 +35,18 @@ struct xf_gfx_surface
 };
 typedef struct xf_gfx_surface xfGfxSurface;
 
+struct xf_gfx_cache_entry
+{
+	UINT64 cacheKey;
+	UINT32 width;
+	UINT32 height;
+	BOOL alpha;
+	BYTE* data;
+	XImage* image;
+	int scanline;
+};
+typedef struct xf_gfx_cache_entry xfGfxCacheEntry;
+
 int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height);
 
 void xf_register_graphics_pipeline(xfContext* xfc, RdpgfxClientContext* gfx);

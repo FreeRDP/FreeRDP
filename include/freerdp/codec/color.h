@@ -398,6 +398,8 @@ FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);
 
 FREERDP_API int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, BYTE* pSrcData, DWORD dwSrcFormat, int nSrcStep, int nXSrc, int nYSrc);
+FREERDP_API int freerdp_image_fill(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, UINT32 color);
 
 #ifdef __cplusplus
 }

@@ -69,6 +69,9 @@ struct _RDPGFX_PLUGIN
 	UINT32 TotalDecodedFrames;
 
 	wHashTable* SurfaceTable;
+
+	UINT16 MaxCacheSlot;
+	void* CacheSlots[25600];
 };
 typedef struct _RDPGFX_PLUGIN RDPGFX_PLUGIN;
 

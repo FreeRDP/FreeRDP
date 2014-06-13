@@ -60,6 +60,8 @@ int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 	gfx->SmallCache = FALSE;
 	gfx->H264 = FALSE;
 
+	gfx->MaxCacheSlot = (gfx->ThinClient) ? 4096 : 25600;
+
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_CAPSADVERTISE;
 
@@ -892,6 +894,31 @@ void* rdpgfx_get_surface_data(RdpgfxClientContext* context, UINT16 surfaceId)
 	return pData;
 }
 
+int rdpgfx_set_cache_slot_data(RdpgfxClientContext* context, UINT16 cacheSlot, void* pData)
+{
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) context->handle;
+
+	if (cacheSlot >= gfx->MaxCacheSlot)
+		return -1;
+
+	gfx->CacheSlots[cacheSlot] = pData;
+
+	return 1;
+}
+
+void* rdpgfx_get_cache_slot_data(RdpgfxClientContext* context, UINT16 cacheSlot)
+{
+	void* pData = NULL;
+	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) context->handle;
+
+	if (cacheSlot >= gfx->MaxCacheSlot)
+		return NULL;
+
+	pData = gfx->CacheSlots[cacheSlot];
+
+	return pData;
+}
+
 #ifdef STATIC_CHANNELS
 #define DVCPluginEntry		rdpgfx_DVCPluginEntry
 #endif
@@ -923,6 +950,9 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		if (!gfx->SurfaceTable)
 			return -1;
 
+		gfx->ThinClient = TRUE;
+		gfx->MaxCacheSlot = (gfx->ThinClient) ? 4096 : 25600;
+
 		context = (RdpgfxClientContext*) calloc(1, sizeof(RdpgfxClientContext));
 
 		if (!context)
@@ -932,6 +962,8 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 		context->SetSurfaceData = rdpgfx_set_surface_data;
 		context->GetSurfaceData = rdpgfx_get_surface_data;
+		context->SetCacheSlotData = rdpgfx_set_cache_slot_data;
+		context->GetCacheSlotData = rdpgfx_get_cache_slot_data;
 
 		gfx->iface.pInterface = (void*) context;
 
