@@ -767,10 +767,23 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			free(domain);
 	}
 
+	if (~((size_t) file->FullAddress))
+	{
+		int port = -1;
+		char* host = NULL;
+
+		freerdp_parse_hostname(file->FullAddress, &host, &port);
+
+		freerdp_set_param_string(settings, FreeRDP_ServerHostname, host);
+
+		if (port > 0)
+			freerdp_set_param_uint32(settings, FreeRDP_ServerPort, (UINT32) port);
+
+		free(host);
+	}
+
 	if (~file->ServerPort)
 		freerdp_set_param_uint32(settings, FreeRDP_ServerPort, file->ServerPort);
-	if (~((size_t) file->FullAddress))
-		freerdp_set_param_string(settings, FreeRDP_ServerHostname, file->FullAddress);
 
 	if (~file->DesktopWidth)
 		freerdp_set_param_uint32(settings, FreeRDP_DesktopWidth, file->DesktopWidth);
@@ -802,12 +815,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 *
 		 * Values:
 		 *
-		 * 0: The remote session will appear in a window.
-		 * 1: The remote session will appear full screen.
+		 * 1: The remote session will appear in a window.
+		 * 2: The remote session will appear full screen.
 		 */
 
 		freerdp_set_param_bool(settings, FreeRDP_Fullscreen,
-				(file->ScreenModeId == 1) ? TRUE : FALSE);
+				(file->ScreenModeId == 2) ? TRUE : FALSE);
 	}
 
 	if (~((size_t) file->SmartSizing))
@@ -867,7 +880,19 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		freerdp_set_param_bool(settings, FreeRDP_CompressionEnabled, file->Compression);
 
 	if (~((size_t) file->GatewayHostname))
-		freerdp_set_param_string(settings, FreeRDP_GatewayHostname, file->GatewayHostname);
+	{
+		int port = -1;
+		char* host = NULL;
+
+		freerdp_parse_hostname(file->GatewayHostname, &host, &port);
+
+		freerdp_set_param_string(settings, FreeRDP_GatewayHostname, host);
+
+		if (port > 0)
+			freerdp_set_param_uint32(settings, FreeRDP_GatewayPort, (UINT32) port);
+
+		free(host);
+	}
 
 	if (~file->GatewayUsageMethod)
 		freerdp_set_gateway_usage_method(settings, file->GatewayUsageMethod);

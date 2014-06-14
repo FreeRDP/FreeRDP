@@ -36,6 +36,7 @@ static BOOL rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 	int pos;
 	UINT16 i;
 	BOOL status;
+	ULONG written;
 
 	Stream_Write_UINT8(s, SNDC_FORMATS);
 	Stream_Write_UINT8(s, 0);
@@ -74,7 +75,7 @@ static BOOL rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 	Stream_SetPosition(s, 2);
 	Stream_Write_UINT16(s, pos - 4);
 	Stream_SetPosition(s, pos);
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written);
 	Stream_SetPosition(s, 0);
 
 	return status;
@@ -361,6 +362,7 @@ static BOOL rdpsnd_server_send_audio_pdu(RdpsndServerContext* context)
 	BOOL status;
 	AUDIO_FORMAT* format;
 	int tbytes_per_frame;
+	ULONG written;
 	wStream* s = context->priv->rdpsnd_pdu;
 
 	format = &context->client_formats[context->selected_client_format];
@@ -422,7 +424,7 @@ static BOOL rdpsnd_server_send_audio_pdu(RdpsndServerContext* context)
 	Stream_Seek(s, 3); /* bPad */
 	Stream_Write(s, src, 4);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written);
 	if (!status)
 		goto out;
 	Stream_SetPosition(s, 0);
@@ -435,7 +437,7 @@ static BOOL rdpsnd_server_send_audio_pdu(RdpsndServerContext* context)
 	if (fill_size > 0)
 		Stream_Zero(s, fill_size);
 
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written);
 
 out:
 	Stream_SetPosition(s, 0);
@@ -476,6 +478,7 @@ static BOOL rdpsnd_server_set_volume(RdpsndServerContext* context, int left, int
 {
 	int pos;
 	BOOL status;
+	ULONG written;
 	wStream* s = context->priv->rdpsnd_pdu;
 
 	Stream_Write_UINT8(s, SNDC_SETVOLUME);
@@ -489,7 +492,7 @@ static BOOL rdpsnd_server_set_volume(RdpsndServerContext* context, int left, int
 	Stream_SetPosition(s, 2);
 	Stream_Write_UINT16(s, pos - 4);
 	Stream_SetPosition(s, pos);
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written);
 	Stream_SetPosition(s, 0);
 
 	return status;
@@ -499,6 +502,7 @@ static BOOL rdpsnd_server_close(RdpsndServerContext* context)
 {
 	int pos;
 	BOOL status;
+	ULONG written;
 	wStream* s = context->priv->rdpsnd_pdu;
 
 	if (context->selected_client_format < 0)
@@ -520,7 +524,7 @@ static BOOL rdpsnd_server_close(RdpsndServerContext* context)
 	Stream_SetPosition(s, 2);
 	Stream_Write_UINT16(s, pos - 4);
 	Stream_SetPosition(s, pos);
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
+	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written);
 	Stream_SetPosition(s, 0);
 
 	return status;

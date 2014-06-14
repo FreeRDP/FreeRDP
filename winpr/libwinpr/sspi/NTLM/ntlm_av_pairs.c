@@ -2,7 +2,7 @@
  * WinPR: Windows Portable Runtime
  * NTLM Security Package (AV_PAIRs)
  *
- * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,34 +173,45 @@ NTLM_AV_PAIR* ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, NTLM_AV_PAIR* pAv
 	return pAvPairCopy;
 }
 
-void ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
+int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
 {
 	char* name;
-	int length;
+	int status;
 	DWORD nSize = 0;
 
 	GetComputerNameExA(type, NULL, &nSize);
-	name = malloc(nSize);
-	GetComputerNameExA(type, name, &nSize);
+
+	name = (char*) malloc(nSize);
+	
+	if (!name)
+		return -1;
+	
+	if (!GetComputerNameExA(type, name, &nSize))
+		return -1;
 
 	if (type == ComputerNameNetBIOS)
 		CharUpperA(name);
 
-	length = ConvertToUnicode(CP_UTF8, 0, name, -1, &pName->Buffer, 0);
+	status = ConvertToUnicode(CP_UTF8, 0, name, -1, &pName->Buffer, 0);
 
-	pName->Length = (length - 1) * 2;
+	if (status <= 0)
+		return status;
+
+	pName->Length = (USHORT) ((status - 1) * 2);
 	pName->MaximumLength = pName->Length;
 
 	free(name);
+
+	return 1;
 }
 
 void ntlm_free_unicode_string(PUNICODE_STRING string)
 {
-	if (string != NULL)
+	if (string)
 	{
 		if (string->Length > 0)
 		{
-			if (string->Buffer != NULL)
+			if (string->Buffer)
 				free(string->Buffer);
 
 			string->Buffer = NULL;
@@ -297,7 +308,7 @@ void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
 	FillMemory(context->SingleHostData.MachineID, 32, 0xAA);
 }
 
-void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
+int ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 {
 	int length;
 	ULONG AvPairsCount;
@@ -310,23 +321,33 @@ void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	UNICODE_STRING DnsComputerName;
 
 	NbDomainName.Buffer = NULL;
-	ntlm_get_target_computer_name(&NbDomainName, ComputerNameNetBIOS);
+
+	if (ntlm_get_target_computer_name(&NbDomainName, ComputerNameNetBIOS) < 0)
+		return -1;
 
 	NbComputerName.Buffer = NULL;
-	ntlm_get_target_computer_name(&NbComputerName, ComputerNameNetBIOS);
+
+	if (ntlm_get_target_computer_name(&NbComputerName, ComputerNameNetBIOS) < 0)
+		return -1;
 
 	DnsDomainName.Buffer = NULL;
-	ntlm_get_target_computer_name(&DnsDomainName, ComputerNameDnsDomain);
+
+	if (ntlm_get_target_computer_name(&DnsDomainName, ComputerNameDnsDomain) < 0)
+		return -1;
 
 	DnsComputerName.Buffer = NULL;
-	ntlm_get_target_computer_name(&DnsComputerName, ComputerNameDnsHostname);
+
+	if (ntlm_get_target_computer_name(&DnsComputerName, ComputerNameDnsHostname) < 0)
+		return -1;
 
 	AvPairsCount = 5;
 	AvPairsLength = NbDomainName.Length + NbComputerName.Length +
 			DnsDomainName.Length + DnsComputerName.Length + 8;
 
 	length = ntlm_av_pair_list_size(AvPairsCount, AvPairsLength);
-	sspi_SecBufferAlloc(&context->ChallengeTargetInfo, length);
+
+	if (!sspi_SecBufferAlloc(&context->ChallengeTargetInfo, length))
+		return -1;
 
 	pAvPairList = (NTLM_AV_PAIR*) context->ChallengeTargetInfo.pvBuffer;
 	AvPairListSize = (ULONG) context->ChallengeTargetInfo.cbBuffer;
@@ -342,9 +363,11 @@ void ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	ntlm_free_unicode_string(&NbComputerName);
 	ntlm_free_unicode_string(&DnsDomainName);
 	ntlm_free_unicode_string(&DnsComputerName);
+
+	return 1;
 }
 
-void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
+int ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 {
 	ULONG size;
 	ULONG AvPairsCount;
@@ -369,31 +392,31 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	AvDnsTreeName = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvDnsTreeName);
 	AvTimestamp = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvTimestamp);
 
-	if (AvNbDomainName != NULL)
+	if (AvNbDomainName)
 	{
 		AvPairsCount++; /* MsvAvNbDomainName */
 		AvPairsValueLength += AvNbDomainName->AvLen;
 	}
 
-	if (AvNbComputerName != NULL)
+	if (AvNbComputerName)
 	{
 		AvPairsCount++; /* MsvAvNbComputerName */
 		AvPairsValueLength += AvNbComputerName->AvLen;
 	}
 
-	if (AvDnsDomainName != NULL)
+	if (AvDnsDomainName)
 	{
 		AvPairsCount++; /* MsvAvDnsDomainName */
 		AvPairsValueLength += AvDnsDomainName->AvLen;
 	}
 
-	if (AvDnsComputerName != NULL)
+	if (AvDnsComputerName)
 	{
 		AvPairsCount++; /* MsvAvDnsComputerName */
 		AvPairsValueLength += AvDnsComputerName->AvLen;
 	}
 
-	if (AvDnsTreeName != NULL)
+	if (AvDnsTreeName)
 	{
 		AvPairsCount++; /* MsvAvDnsTreeName */
 		AvPairsValueLength += AvDnsTreeName->AvLen;
@@ -448,22 +471,22 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 
 	ntlm_av_pair_list_init(AuthenticateTargetInfo);
 
-	if (AvNbDomainName != NULL)
+	if (AvNbDomainName)
 		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvNbDomainName);
 
-	if (AvNbComputerName != NULL)
+	if (AvNbComputerName)
 		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvNbComputerName);
 
-	if (AvDnsDomainName != NULL)
+	if (AvDnsDomainName)
 		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvDnsDomainName);
 
-	if (AvDnsComputerName != NULL)
+	if (AvDnsComputerName)
 		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvDnsComputerName);
 
-	if (AvDnsTreeName != NULL)
+	if (AvDnsTreeName)
 		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvDnsTreeName);
 
-	if (AvTimestamp != NULL)
+	if (AvTimestamp)
 		ntlm_av_pair_add_copy(AuthenticateTargetInfo, AvTimestamp);
 
 	if (context->UseMIC)
@@ -497,4 +520,6 @@ void ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		AvEOL = ntlm_av_pair_get(ChallengeTargetInfo, MsvAvEOL);
 		ZeroMemory((void*) AvEOL, 4);
 	}
+
+	return 1;
 }

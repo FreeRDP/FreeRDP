@@ -814,6 +814,38 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 	return 0;
 }
 
+int freerdp_parse_hostname(char* hostname, char** host, int* port)
+{
+	char* p;
+	int length;
+
+	p = strrchr(hostname, ':');
+
+	if (p)
+	{
+		length = (p - hostname);
+		*host = (char*) malloc(length + 1);
+
+		if (!(*host))
+			return -1;
+
+		CopyMemory(*host, hostname, length);
+		(*host)[length] = '\0';
+		*port = atoi(p + 1);
+	}
+	else
+	{
+		*host = _strdup(hostname);
+
+		if (!(*host))
+			return -1;
+
+		*port = -1;
+	}
+
+	return 0;
+}
+
 int freerdp_set_connection_type(rdpSettings* settings, int type)
 {
 	settings->ConnectionType = type;

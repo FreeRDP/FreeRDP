@@ -405,6 +405,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 	wStream* s;
 	void* buffer;
 	DWORD BytesReturned = 0;
+	ULONG written;
 	testPeerContext* context = (testPeerContext*) arg;
 
 	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &BytesReturned) == TRUE)
@@ -417,7 +418,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 	s = Stream_New(NULL, 4096);
 
-	WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test1", 5, NULL);
+	WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test1", 5, &written);
 
 	while (1)
 	{
@@ -583,7 +584,8 @@ void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	{
 		if (context->debug_channel)
 		{
-			WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test2", 5, NULL);
+			ULONG written;
+			WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test2", 5, &written);
 		}
 	}
 	else if ((flags & 0x4000) && code == 0x2D) /* 'x' key */
