@@ -427,9 +427,11 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer)
 
 		if (channel)
 		{
+			ULONG written;
+
 			vcm->drdynvc_channel = channel;
 			dynvc_caps = 0x00010050; /* DYNVC_CAPS_VERSION1 (4 bytes) */
-			WTSVirtualChannelWrite(channel, (PCHAR) &dynvc_caps, sizeof(dynvc_caps), NULL);
+			WTSVirtualChannelWrite(channel, (PCHAR) &dynvc_caps, sizeof(dynvc_caps), &written);
 		}
 	}
 
@@ -916,6 +918,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 	BOOL joined = FALSE;
 	freerdp_peer* client;
 	rdpPeerChannel* channel;
+	ULONG written;
 	WTSVirtualChannelManager* vcm;
 
 	if (SessionId == WTS_CURRENT_SESSION)
@@ -968,7 +971,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 
 	s = Stream_New(NULL, 64);
 	wts_write_drdynvc_create_request(s, channel->channelId, pVirtualName);
-	WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
+	WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written);
 	Stream_Free(s, TRUE);
 
 	return channel;
@@ -997,9 +1000,11 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 
 			if (channel->dvc_open_state == DVC_OPEN_STATE_SUCCEEDED)
 			{
+				ULONG written;
+
 				s = Stream_New(NULL, 8);
 				wts_write_drdynvc_header(s, CLOSE_REQUEST_PDU, channel->channelId);
-				WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
+				WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), &written);
 				Stream_Free(s, TRUE);
 			}
 		}
