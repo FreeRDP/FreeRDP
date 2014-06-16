@@ -24,13 +24,13 @@
 
 #include "comm_ioctl.h"
 
-#ifdef __cplusplus 
-extern "C" { 
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 REMOTE_SERIAL_DRIVER* SerialSys_s();
 
-#ifdef __cplusplus 
+#ifdef __cplusplus
 }
 #endif
 

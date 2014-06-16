@@ -177,7 +177,7 @@ static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 	{
 		if (_SERCX_SYS_BAUD_TABLE[i][1] == pBaudRate->BaudRate)
 		{
-			newSpeed = _SERCX_SYS_BAUD_TABLE[i][0];	
+			newSpeed = _SERCX_SYS_BAUD_TABLE[i][0];
 			if (cfsetspeed(&futureState, newSpeed) < 0)
 			{
 				DEBUG_WARN("failed to set speed 0x%x (%lu)", newSpeed, pBaudRate->BaudRate);
@@ -239,7 +239,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 
 	memcpy(&SerCxHandflow, pHandflow, sizeof(SERIAL_HANDFLOW));
 
-	/* filter out unsupported bits by SerCx.sys 
+	/* filter out unsupported bits by SerCx.sys
 	 *
 	 * http://msdn.microsoft.com/en-us/library/windows/hardware/jj680685%28v=vs.85%29.aspx
 	 */
@@ -303,7 +303,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 		result = FALSE;
 	}
-	
+
 	if (!pSerialSys->set_handflow(pComm, &SerCxHandflow))
 		return FALSE;
 
@@ -318,7 +318,7 @@ static BOOL _get_handflow(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow)
 
 	result = pSerialSys->get_handflow(pComm, pHandflow);
 
-	/* filter out unsupported bits by SerCx.sys 
+	/* filter out unsupported bits by SerCx.sys
 	 *
 	 * http://msdn.microsoft.com/en-us/library/windows/hardware/jj680685%28v=vs.85%29.aspx
 	 */
@@ -331,12 +331,12 @@ static BOOL _get_handflow(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow)
 
 
 /* http://msdn.microsoft.com/en-us/library/windows/hardware/hh439605%28v=vs.85%29.aspx */
-static const ULONG _SERCX_SYS_SUPPORTED_EV_MASK = 
+static const ULONG _SERCX_SYS_SUPPORTED_EV_MASK =
 	SERIAL_EV_RXCHAR   |
 	/* SERIAL_EV_RXFLAG   | */
 	SERIAL_EV_TXEMPTY  |
 	SERIAL_EV_CTS      |
-	SERIAL_EV_DSR      |  
+	SERIAL_EV_DSR      |
 	SERIAL_EV_RLSD     |
 	SERIAL_EV_BREAK    |
 	SERIAL_EV_ERR      |
@@ -369,7 +369,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 
 /* specific functions only */
-static REMOTE_SERIAL_DRIVER _SerCxSys = 
+static REMOTE_SERIAL_DRIVER _SerCxSys =
 {
 	.id		  = RemoteSerialDriverSerCxSys,
 	.name		  = _T("SerCx.sys"),

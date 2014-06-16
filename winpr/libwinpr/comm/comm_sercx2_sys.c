@@ -56,12 +56,12 @@ static BOOL _get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
 
 /* http://msdn.microsoft.com/en-us/library/windows/hardware/hh439605%28v=vs.85%29.aspx */
 /* FIXME: only using the Serial.sys' events, complete the support of the remaining events */
-static const ULONG _SERCX2_SYS_SUPPORTED_EV_MASK = 
+static const ULONG _SERCX2_SYS_SUPPORTED_EV_MASK =
 	SERIAL_EV_RXCHAR   |
 	SERIAL_EV_RXFLAG   |
 	SERIAL_EV_TXEMPTY  |
 	SERIAL_EV_CTS      |
-	SERIAL_EV_DSR      |  
+	SERIAL_EV_DSR      |
 	SERIAL_EV_RLSD     |
 	SERIAL_EV_BREAK    |
 	SERIAL_EV_ERR      |
@@ -96,7 +96,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 {
 	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
-  
+
 	/* http://msdn.microsoft.com/en-us/library/windows/hardware/ff546655%28v=vs.85%29.aspx */
 
 	if ((*pPurgeMask & SERIAL_PURGE_RXCLEAR) && !(*pPurgeMask & SERIAL_PURGE_RXABORT))
@@ -120,8 +120,8 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 
 
 /* specific functions only */
-static REMOTE_SERIAL_DRIVER _SerCx2Sys = 
-{	
+static REMOTE_SERIAL_DRIVER _SerCx2Sys =
+{
 	.id		  = RemoteSerialDriverSerCx2Sys,
 	.name		  = _T("SerCx2.sys"),
 	.set_baud_rate	  = NULL,

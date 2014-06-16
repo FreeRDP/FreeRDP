@@ -353,4 +353,3 @@ WINPR_API char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName);
 #endif
 
 #endif /* WINPR_FILE_H */
-

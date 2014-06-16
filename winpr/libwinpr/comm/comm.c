@@ -5,7 +5,7 @@
  * Copyright 2011 O.S. Systems Software Ltda.
  * Copyright 2011 Eduardo Fiss Beloni <beloni@ossystems.com.br>
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2014 Hewlett-Packard Development Company, L.P. 
+ * Copyright 2014 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
 
 
 /**
- * 
+ *
  *
  * ERRORS:
  *   ERROR_INVALID_HANDLE
@@ -205,7 +205,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	/* error_handle */
-	
+
 	lpLocalDcb->DCBlength = lpDCB->DCBlength;
 
 	SERIAL_BAUD_RATE baudRate;
@@ -215,14 +215,14 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 		goto error_handle;
 	}
 	lpLocalDcb->BaudRate = baudRate.BaudRate;
-		    
+
 	lpLocalDcb->fBinary = (currentState.c_cflag & ICANON) == 0;
 	if (!lpLocalDcb->fBinary)
 	{
 		DEBUG_WARN("Unexpected nonbinary mode, consider to unset the ICANON flag.");
 	}
 
-	lpLocalDcb->fParity =  (currentState.c_iflag & INPCK) != 0; 
+	lpLocalDcb->fParity =  (currentState.c_iflag & INPCK) != 0;
 
 	SERIAL_HANDFLOW handflow;
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_HANDFLOW, NULL, 0, &handflow, sizeof(SERIAL_HANDFLOW), &bytesReturned, NULL))
@@ -250,7 +250,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 
 	lpLocalDcb->fDsrSensitivity = (handflow.ControlHandShake & SERIAL_DSR_SENSITIVITY) != 0;
 
-	lpLocalDcb->fTXContinueOnXoff = (handflow.FlowReplace & SERIAL_XOFF_CONTINUE) != 0; 
+	lpLocalDcb->fTXContinueOnXoff = (handflow.FlowReplace & SERIAL_XOFF_CONTINUE) != 0;
 
 	lpLocalDcb->fOutX = (handflow.FlowReplace & SERIAL_AUTO_TRANSMIT) != 0;
 
@@ -314,7 +314,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	lpLocalDcb->ErrorChar = serialChars.ErrorChar;
 
 	lpLocalDcb->EofChar = serialChars.EofChar;
-	
+
 	lpLocalDcb->EvtChar = serialChars.EventChar;
 
 
@@ -332,7 +332,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 
 /**
  * @return TRUE on success, FALSE otherwise.
- * 
+ *
  * As of today, SetCommState() can fail half-way with some settings
  * applied and some others not. SetCommState() returns on the first
  * failure met. FIXME: or is it correct?
@@ -384,7 +384,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	serialChars.XoffChar = lpDCB->XoffChar;
 	serialChars.ErrorChar = lpDCB->ErrorChar;
 	serialChars.EofChar = lpDCB->EofChar;
-	serialChars.EventChar = lpDCB->EvtChar;	
+	serialChars.EventChar = lpDCB->EvtChar;
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_CHARS, &serialChars, sizeof(SERIAL_CHARS), NULL, 0, &bytesReturned, NULL))
 	{
 		DEBUG_WARN("SetCommState failure: could not set the serial chars.");
@@ -409,7 +409,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	{
 		handflow.ControlHandShake |= SERIAL_CTS_HANDSHAKE;
 	}
-	
+
 
 	if (lpDCB->fOutxDsrFlow)
 	{
@@ -444,7 +444,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	{
 		handflow.FlowReplace |= SERIAL_XOFF_CONTINUE;
 	}
-	
+
 	if (lpDCB->fOutX)
 	{
 		handflow.FlowReplace |= SERIAL_AUTO_TRANSMIT;
@@ -551,13 +551,13 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	 *
 	 * TCSANOW matches the best this definition
 	 */
-	
+
 	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
-	
+
 
 	return TRUE;
 }
@@ -744,7 +744,7 @@ BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOverlapped)
 
 /* Extended API */
 
-typedef struct _COMM_DEVICE 
+typedef struct _COMM_DEVICE
 {
 	LPTSTR name;
 	LPTSTR path;
@@ -760,11 +760,11 @@ static HANDLE_CREATOR *_CommHandleCreator = NULL;
 
 static void _CommDevicesInit()
 {
-	/* 
+	/*
 	 * TMP: FIXME: What kind of mutex should be used here?
 	 * better have to let DefineCommDevice() and QueryCommDevice() thread unsafe ?
 	 * use of a module_init() ?
-	 */ 
+	 */
 
 	if (_CommDevices == NULL)
 	{
@@ -818,7 +818,7 @@ static BOOL _IsReservedCommDeviceName(LPCTSTR lpName)
 /**
  * Returns TRUE on success, FALSE otherwise. To get extended error
  * information, call GetLastError.
- * 
+ *
  * ERRORS:
  *   ERROR_OUTOFMEMORY was not possible to get mappings.
  *   ERROR_INVALID_DATA was not possible to add the device.
@@ -912,12 +912,12 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 
 /**
  * Returns the number of target paths in the buffer pointed to by
- * lpTargetPath. 
+ * lpTargetPath.
  *
  * The current implementation returns in any case 0 and 1 target
  * path. A NULL lpDeviceName is not supported yet to get all the
  * paths.
- *  
+ *
  * ERRORS:
  *   ERROR_SUCCESS
  *   ERROR_OUTOFMEMORY was not possible to get mappings.
@@ -961,7 +961,7 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 
 		break;
 	}
-	
+
 	if (storedTargetPath == NULL)
 	{
 		SetLastError(ERROR_INVALID_DATA);
@@ -981,7 +981,7 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 }
 
 /**
- * Checks whether lpDeviceName is a valid and registered Communication device. 
+ * Checks whether lpDeviceName is a valid and registered Communication device.
  */
 BOOL IsCommDevice(LPCTSTR lpDeviceName)
 {
@@ -997,7 +997,7 @@ BOOL IsCommDevice(LPCTSTR lpDeviceName)
 
 
 /**
- * Sets 
+ * Sets
  */
 void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID driverId)
 {
@@ -1026,10 +1026,10 @@ void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID driverId)
  *
  * @param dwShareMode must be zero, INVALID_HANDLE_VALUE is returned
  * otherwise and GetLastError() should return ERROR_SHARING_VIOLATION.
- * 
+ *
  * @param lpSecurityAttributes NULL expected, a warning message is printed
  * otherwise. TODO: better support.
- * 
+ *
  * @param dwCreationDisposition must be OPEN_EXISTING. If the
  * communication device doesn't exist INVALID_HANDLE_VALUE is returned
  * and GetLastError() returns ERROR_FILE_NOT_FOUND.
@@ -1039,16 +1039,16 @@ void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID driverId)
  *
  * @param hTemplateFile must be NULL.
  *
- * @return INVALID_HANDLE_VALUE on error. 
+ * @return INVALID_HANDLE_VALUE on error.
  */
 HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-		       DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	CHAR devicePath[MAX_PATH];
 	struct stat deviceStat;
 	WINPR_COMM* pComm = NULL;
 	struct termios upcomingTermios;
-	
+
 	if (dwDesiredAccess != (GENERIC_READ | GENERIC_WRITE))
 	{
 		DEBUG_WARN("unexpected access to the device: 0x%lX", dwDesiredAccess);
@@ -1073,7 +1073,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		SetLastError(ERROR_FILE_NOT_FOUND); /* FIXME: ERROR_NOT_SUPPORTED better? */
 		return INVALID_HANDLE_VALUE;
 	}
-	
+
 	if (QueryCommDevice(lpDeviceName, devicePath, MAX_PATH) <= 0)
 	{
 		/* SetLastError(GetLastError()); */
@@ -1194,7 +1194,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	 *   IGNBRK and IXON, see: IOCTL_SERIAL_SET_HANDFLOW
 	 *   CSIZE, PARENB and CS8, see: IOCTL_SERIAL_SET_LINE_CONTROL
 	 */
-		
+
 	/* a few more settings required for the redirection */
 	upcomingTermios.c_cflag |= CLOCAL | CREAD;
 

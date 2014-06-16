@@ -33,8 +33,8 @@ int TestCommConfig(int argc, char* argv[])
 	COMMPROP commProp;
 
 	hComm = CreateFileA(lpFileName,
-			    GENERIC_READ | GENERIC_WRITE,
-			    0, NULL, OPEN_EXISTING, 0, NULL);
+			GENERIC_READ | GENERIC_WRITE,
+			0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (hComm && (hComm != INVALID_HANDLE_VALUE))
 	{
@@ -51,12 +51,12 @@ int TestCommConfig(int argc, char* argv[])
 	}
 
 	hComm = CreateFileA(lpFileName,
-			    GENERIC_READ | GENERIC_WRITE,
-			    FILE_SHARE_WRITE, /* invalid parmaeter */
-			    NULL, 
-			    CREATE_NEW, /* invalid parameter */
-			    0, 
-			    (HANDLE)1234); /* invalid parmaeter */
+			GENERIC_READ | GENERIC_WRITE,
+			FILE_SHARE_WRITE, /* invalid parmaeter */
+			NULL,
+			CREATE_NEW, /* invalid parameter */
+			0,
+			(HANDLE)1234); /* invalid parmaeter */
 	if (hComm != INVALID_HANDLE_VALUE)
 	{
 		fprintf(stderr, "CreateFileA failure: could create a handle with some invalid parameters %s\n", lpFileName);
@@ -65,8 +65,8 @@ int TestCommConfig(int argc, char* argv[])
 
 
 	hComm = CreateFileA(lpFileName,
-			    GENERIC_READ | GENERIC_WRITE,
-			    0, NULL, OPEN_EXISTING, 0, NULL);
+			GENERIC_READ | GENERIC_WRITE,
+			0, NULL, OPEN_EXISTING, 0, NULL);
 
 	if (!hComm || (hComm == INVALID_HANDLE_VALUE))
 	{
@@ -139,4 +139,3 @@ int TestCommConfig(int argc, char* argv[])
 
 	return 0;
 }
-

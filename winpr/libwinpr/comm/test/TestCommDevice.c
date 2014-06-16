@@ -32,9 +32,9 @@ static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 	if ((!expectedResult && result) || (expectedResult && !result)) /* logical XOR */
 	{
 		_tprintf(_T("DefineCommDevice failure: device name: %s, expected result: %s, result: %s\n"),
-			 lpDeviceName, 
-			 (expectedResult ? "TRUE" : "FALSE"),
-			 (result ? "TRUE" : "FALSE"));
+			lpDeviceName,
+			(expectedResult ? "TRUE" : "FALSE"),
+			(result ? "TRUE" : "FALSE"));
 
 		return FALSE;
 	}
@@ -43,9 +43,9 @@ static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 	if ((!expectedResult && result) || (expectedResult && !result)) /* logical XOR */
 	{
 		_tprintf(_T("IsCommDevice failure: device name: %s, expected result: %s, result: %s\n"),
-			 lpDeviceName, 
-			 (expectedResult ? "TRUE" : "FALSE"),
-			 (result ? "TRUE" : "FALSE"));
+			lpDeviceName,
+			(expectedResult ? "TRUE" : "FALSE"),
+			(result ? "TRUE" : "FALSE"));
 
 		return FALSE;
 	}
@@ -61,8 +61,8 @@ static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 
 		if (_tcscmp(_T("/dev/test"), lpTargetPath) != 0)
 		{
-			_tprintf(_T("QueryCommDevice failure: device name: %s, expected result: %s, result: %s\n"), 
-				 lpDeviceName, _T("/dev/test"), lpTargetPath);
+			_tprintf(_T("QueryCommDevice failure: device name: %s, expected result: %s, result: %s\n"),
+				lpDeviceName, _T("/dev/test"), lpTargetPath);
 
 			return FALSE;
 		}
@@ -77,8 +77,8 @@ static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 	{
 		if (tcslen > 0)
 		{
-			_tprintf(_T("QueryCommDevice failure: device name: %s, expected result: <none>, result: %d %s\n"), 
-				 lpDeviceName, tcslen, lpTargetPath);
+			_tprintf(_T("QueryCommDevice failure: device name: %s, expected result: <none>, result: %d %s\n"),
+				lpDeviceName, tcslen, lpTargetPath);
 
 			return FALSE;
 		}

@@ -44,7 +44,7 @@
 
 /*
  * Linux, Windows speeds
- * 
+ *
  */
 static const speed_t _SERIAL_SYS_BAUD_TABLE[][2] = {
 #ifdef B0
@@ -105,47 +105,8 @@ static const speed_t _SERIAL_SYS_BAUD_TABLE[][2] = {
 #ifdef B115200
 	{B115200, SERIAL_BAUD_115200},	/* _SERIAL_MAX_BAUD */
 #endif
-/* undefined by serial.sys:
-#ifdef B230400
-	{B230400, },
-#endif
-#ifdef B460800
-	{B460800, },
-#endif
-#ifdef B500000
-	{B500000, },
-#endif
-#ifdef  B576000
-	{B576000, },
-#endif
-#ifdef B921600
-	{B921600, },
-#endif
-#ifdef B1000000
-	{B1000000, },
-#endif
-#ifdef B1152000
-	{B1152000, },
-#endif
-#ifdef B1500000
-	{B1500000, },
-#endif
-#ifdef B2000000
-	{B2000000, },
-#endif
-#ifdef B2500000
-	{B2500000, },
-#endif
-#ifdef B3000000
-	{B3000000, },
-#endif
-#ifdef B3500000
-	{B3500000, },
-#endif
-#ifdef B4000000
-	{B4000000, },	 __MAX_BAUD
-#endif
-*/
+
+	/* no greater speed defined by serial.sys */
 };
 
 #define _SERIAL_MAX_BAUD  B115200
@@ -185,7 +146,7 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 	pProperties->dwProvSubType = PST_UNSPECIFIED;
 
 	/* TMP: TODO: to be finalized */
-	pProperties->dwProvCapabilities = 
+	pProperties->dwProvCapabilities =
 		/*PCF_16BITMODE | PCF_DTRDSR |*/ PCF_INTTIMEOUTS | PCF_PARITY_CHECK | /*PCF_RLSD | */
 		PCF_RTSCTS | PCF_SETXCHAR | /*PCF_SPECIALCHARS | PCF_TOTALTIMEOUTS |*/ PCF_XONXOFF;
 
@@ -330,7 +291,7 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 
 	/* According the Linux's n_tty discipline, charaters with a
 	 * parity error can only be let unchanged, replaced by \0 or
-	 * get the prefix the prefix \377 \0 
+	 * get the prefix the prefix \377 \0
 	 */
 
 	/* FIXME: see also: _set_handflow() */
@@ -384,13 +345,13 @@ static BOOL _get_serial_chars(WINPR_COMM *pComm, SERIAL_CHARS *pSerialChars)
 	}
 
 	ZeroMemory(pSerialChars, sizeof(SERIAL_CHARS));
-	
+
 	/* EofChar unsupported */
 
 	/* ErrorChar unsupported */
 
 	/* BreakChar unsupported */
-	
+
 	/* TMP: FIXME: see also: _set_serial_chars() */
 	/* EventChar */
 
@@ -436,7 +397,7 @@ static BOOL _set_line_control(WINPR_COMM *pComm, const SERIAL_LINE_CONTROL *pLin
 		case STOP_BITS_1_5:
 			DEBUG_WARN("Unsupported one and a half stop bits.");
 			break;
-			
+
 		case STOP_BITS_2:
 			upcomingTermios.c_cflag |= CSTOPB;
 			break;
@@ -445,7 +406,7 @@ static BOOL _set_line_control(WINPR_COMM *pComm, const SERIAL_LINE_CONTROL *pLin
 			DEBUG_WARN("unexpected number of stop bits: %d\n", pLineControl->StopBits);
 			result = FALSE; /* but keep on */
 			break;
-	} 
+	}
 
 
 	switch (pLineControl->Parity)
@@ -580,11 +541,11 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 
 	/* logical XOR */
 	if ((!(pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && (pHandflow->FlowReplace & SERIAL_RTS_CONTROL)) ||
-	    ((pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && !(pHandflow->FlowReplace & SERIAL_RTS_CONTROL)))
+		((pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && !(pHandflow->FlowReplace & SERIAL_RTS_CONTROL)))
 	{
 		DEBUG_WARN("SERIAL_DTR_CONTROL:%s and SERIAL_RTS_CONTROL:%s cannot be different, HUPCL will be set since it is claimed for one of the both lines.",
-			   (pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) ? "ON" : "OFF",
-			   (pHandflow->FlowReplace & SERIAL_RTS_CONTROL) ? "ON" : "OFF");
+			(pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) ? "ON" : "OFF",
+			(pHandflow->FlowReplace & SERIAL_RTS_CONTROL) ? "ON" : "OFF");
 	}
 
 	if ((pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) || (pHandflow->FlowReplace & SERIAL_RTS_CONTROL))
@@ -604,11 +565,11 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 
 	/* logical XOR */
 	if ((!(pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) && (pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE)) ||
-	    ((pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) && !(pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE)))
+		((pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) && !(pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE)))
 	{
 		DEBUG_WARN("SERIAL_CTS_HANDSHAKE:%s and SERIAL_RTS_HANDSHAKE:%s cannot be different, CRTSCTS will be set since it is claimed for one of the both lines.",
-			   (pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) ? "ON" : "OFF",
-			   (pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE) ? "ON" : "OFF");
+			(pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) ? "ON" : "OFF",
+			(pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE) ? "ON" : "OFF");
 	}
 
 	if ((pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) || (pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE))
@@ -724,13 +685,13 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	}
 
 	/* XonLimit */
-	
+
 	// FIXME: could be implemented during read/write I/O
 	if (pHandflow->XonLimit != TTY_THRESHOLD_UNTHROTTLE)
 	{
 		DEBUG_WARN("Attempt to set XonLimit with an unsupported value: %lu", pHandflow->XonLimit);
 		SetLastError(ERROR_NOT_SUPPORTED);
-		result = FALSE; /* but keep on */		
+		result = FALSE; /* but keep on */
 	}
 
 	/* XoffChar */
@@ -740,7 +701,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	{
 		DEBUG_WARN("Attempt to set XoffLimit with an unsupported value: %lu", pHandflow->XoffLimit);
 		SetLastError(ERROR_NOT_SUPPORTED);
-		result = FALSE; /* but keep on */		
+		result = FALSE; /* but keep on */
 	}
 
 
@@ -774,7 +735,7 @@ static BOOL _get_handflow(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow)
 		pHandflow->ControlHandShake |= SERIAL_DTR_CONTROL;
 
 	/* SERIAL_DTR_HANDSHAKE unsupported */
-			
+
 	if (currentTermios.c_cflag & CRTSCTS)
 		pHandflow->ControlHandShake |= SERIAL_CTS_HANDSHAKE;
 
@@ -782,7 +743,7 @@ static BOOL _get_handflow(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow)
 
 	/* SERIAL_DCD_HANDSHAKE unsupported */
 
-	/* SERIAL_DSR_SENSITIVITY unsupported */ 
+	/* SERIAL_DSR_SENSITIVITY unsupported */
 
 	/* SERIAL_ERROR_ABORT unsupported */
 
@@ -964,7 +925,7 @@ static BOOL _get_modemstatus(WINPR_COMM *pComm, ULONG *pRegister)
 	}
 
 	ZeroMemory(pRegister, sizeof(ULONG));
-	
+
 	/* FIXME: Is the last read of the MSR register available or
 	 * cached somewhere? Not quite sure we need to return the 4
 	 * LSBits anyway. A direct access to the register -- which
@@ -990,12 +951,12 @@ static BOOL _get_modemstatus(WINPR_COMM *pComm, ULONG *pRegister)
 }
 
 /* http://msdn.microsoft.com/en-us/library/windows/hardware/hh439605%28v=vs.85%29.aspx */
-static const ULONG _SERIAL_SYS_SUPPORTED_EV_MASK = 
+static const ULONG _SERIAL_SYS_SUPPORTED_EV_MASK =
 	SERIAL_EV_RXCHAR   |
 	SERIAL_EV_RXFLAG   |
 	SERIAL_EV_TXEMPTY  |
 	SERIAL_EV_CTS      |
-	SERIAL_EV_DSR      |  
+	SERIAL_EV_DSR      |
 	SERIAL_EV_RLSD     |
 	SERIAL_EV_BREAK    |
 	SERIAL_EV_ERR      |
@@ -1113,7 +1074,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
-	
+
 	/* FIXME: currently relying too much on the fact the server
 	 * sends a single IRP_MJ_WRITE or IRP_MJ_READ at a time
 	 * (taking care though that one IRP_MJ_WRITE and one
@@ -1144,7 +1105,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 			{
 				DEBUG_WARN("eventfd_write failed, errno=[%d] %s", errno, strerror(errno));
 			}
-			
+
 			assert(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_READ */
 		}
 	}
@@ -1152,7 +1113,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 	if (*pPurgeMask & SERIAL_PURGE_TXCLEAR)
 	{
 		/* Purges the transmit buffer, if one exists. */
-		
+
 		if (tcflush(pComm->fd, TCOFLUSH) < 0)
 		{
 			DEBUG_WARN("tcflush(TCOFLUSH) failure, errno=[%d] %s", errno, strerror(errno));
@@ -1185,7 +1146,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 {
 	/* http://msdn.microsoft.com/en-us/library/jj673022%28v=vs.85%29.aspx */
 
-	struct serial_icounter_struct currentCounters; 
+	struct serial_icounter_struct currentCounters;
 
 	/* NB: ensure to leave the critical section before to return */
 	EnterCriticalSection(&pComm->EventsLock);
@@ -1238,7 +1199,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 
 	/* HoldReasons */
 
-	
+
 	/* TODO: SERIAL_TX_WAITING_FOR_CTS */
 
 	/* TODO: SERIAL_TX_WAITING_FOR_DSR */
@@ -1280,7 +1241,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 
 
 	/*  BOOLEAN WaitForImmediate; TMP: TODO: once IOCTL_SERIAL_IMMEDIATE_CHAR supported */
-		
+
 
 	/* other events based on counters */
 
@@ -1290,7 +1251,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	}
 
 	if ((currentCounters.tx != pComm->counters.tx) && /* at least a transmission occurred AND ...*/
-	    (pCommstatus->AmountInOutQueue == 0)) /* output bufer is now empty */
+		(pCommstatus->AmountInOutQueue == 0)) /* output bufer is now empty */
 	{
 		pComm->PendingEvents |= SERIAL_EV_TXEMPTY;
 	}
@@ -1386,7 +1347,7 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 
 		/* NB: ensure to leave the critical section before to return */
 		EnterCriticalSection(&pComm->EventsLock);
-		
+
 		if (pComm->PendingEvents & SERIAL_EV_FREERDP_STOP)
 		{
 			pComm->PendingEvents &= ~SERIAL_EV_FREERDP_STOP;
@@ -1460,7 +1421,7 @@ static BOOL _set_break_on(WINPR_COMM *pComm)
 
 	return TRUE;
 }
-	
+
 
 static BOOL _set_break_off(WINPR_COMM *pComm)
 {
@@ -1512,17 +1473,17 @@ BOOL _get_dtrrts(WINPR_COMM *pComm, ULONG *pMask)
 	}
 
 	*pMask = 0;
-	
+
 	if (!(lines & TIOCM_DTR))
 		*pMask |= SERIAL_DTR_STATE;
 	if (!(lines & TIOCM_RTS))
 		*pMask |= SERIAL_RTS_STATE;
-	
+
 	return TRUE;
 }
 
 
-static REMOTE_SERIAL_DRIVER _SerialSys = 
+static REMOTE_SERIAL_DRIVER _SerialSys =
 {
 	.id		  = RemoteSerialDriverSerialSys,
 	.name		  = _T("Serial.sys"),

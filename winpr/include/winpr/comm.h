@@ -401,7 +401,7 @@ WINPR_API BOOL IsCommDevice(LPCTSTR lpDeviceName);
  * RegisterHandleCreator().
  */
 WINPR_API HANDLE CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-				 DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+				DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 
 
 
@@ -546,19 +546,19 @@ BOOL _comm_set_permissive(HANDLE hDevice, BOOL permissive);
  * FIXME: to be moved in comm_ioctl.h
  */
 BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
-			 LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
+			LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
 
 /**
  * FIXME: to be moved in comm_io.h
  */
 BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-		  LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
+		LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
 
 /**
  * FIXME: to be moved in comm_io.h
  */
 BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
-		   LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
+		LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 
 #ifdef __cplusplus
 }

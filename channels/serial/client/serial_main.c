@@ -108,12 +108,12 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 
 
 #ifndef _WIN32
-	/* Windows 2012 server sends on a first call : 
+	/* Windows 2012 server sends on a first call :
 	 *     DesiredAccess     = 0x00100080: SYNCHRONIZE | FILE_READ_ATTRIBUTES
 	 *     SharedAccess      = 0x00000007: FILE_SHARE_DELETE | FILE_SHARE_WRITE | FILE_SHARE_READ
 	 *     CreateDisposition = 0x00000001: CREATE_NEW
 	 *
-	 * then Windows 2012 sends : 
+	 * then Windows 2012 sends :
 	 *     DesiredAccess     = 0x00120089: SYNCHRONIZE | READ_CONTROL | FILE_READ_ATTRIBUTES | FILE_READ_EA | FILE_READ_DATA
 	 *     SharedAccess      = 0x00000007: FILE_SHARE_DELETE | FILE_SHARE_WRITE | FILE_SHARE_READ
 	 *     CreateDisposition = 0x00000001: CREATE_NEW
@@ -133,12 +133,12 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 #endif
 
 	serial->hComm = CreateFile(serial->device.name,
-				   DesiredAccess,	
-				   SharedAccess,	
-				   NULL,		/* SecurityAttributes */
-				   CreateDisposition,	
-				   0,			/* FlagsAndAttributes */
-				   NULL);		/* TemplateFile */
+				DesiredAccess,
+				SharedAccess,
+				NULL,			/* SecurityAttributes */
+				CreateDisposition,
+				0,			/* FlagsAndAttributes */
+				NULL);			/* TemplateFile */
 
 	if (!serial->hComm || (serial->hComm == INVALID_HANDLE_VALUE))
 	{
@@ -214,11 +214,11 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 		goto error_handle;
 	}
 
-	
+
 	/* MS-RDPESP 3.2.5.1.4: If the Offset field is not set to 0, the value MUST be ignored
 	 * assert(Offset == 0);
 	 */
-	
+
 
 	DEBUG_SVC("reading %lu bytes from %s", Length, serial->device.name);
 
@@ -240,7 +240,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 			case ERROR_NOT_SUPPORTED:
 				irp->IoStatus = STATUS_NOT_SUPPORTED;
 				break;
-				
+
 			case ERROR_INVALID_PARAMETER:
 				irp->IoStatus = STATUS_INVALID_PARAMETER;
 				break;
@@ -269,7 +269,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	}
 
 	DEBUG_SVC("%lu bytes read from %s", nbRead, serial->device.name);
-	
+
   error_handle:
 
 	Stream_Write_UINT32(irp->output, nbRead); /* Length (4 bytes) */
@@ -320,7 +320,7 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 			case ERROR_NOT_SUPPORTED:
 				irp->IoStatus = STATUS_NOT_SUPPORTED;
 				break;
-				
+
 			case ERROR_INVALID_PARAMETER:
 				irp->IoStatus = STATUS_INVALID_PARAMETER;
 				break;
@@ -386,7 +386,7 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	Stream_Read(irp->input, InputBuffer, InputBufferLength);
 
 	DEBUG_SVC("CommDeviceIoControl: CompletionId=%d, IoControlCode=[0x%X] %s", irp->CompletionId, IoControlCode, _comm_serial_ioctl_name(IoControlCode));
-		
+
 	/* FIXME: CommDeviceIoControl to be replaced by DeviceIoControl() */
 	if (CommDeviceIoControl(serial->hComm, IoControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, &BytesReturned, NULL))
 	{
@@ -396,8 +396,8 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	}
 	else
 	{
-		DEBUG_SVC("CommDeviceIoControl failure: IoControlCode=[0x%0.8x] %s, last-error: 0x%X", 
-			  IoControlCode, _comm_serial_ioctl_name(IoControlCode), GetLastError());
+		DEBUG_SVC("CommDeviceIoControl failure: IoControlCode=[0x%0.8x] %s, last-error: 0x%X",
+			IoControlCode, _comm_serial_ioctl_name(IoControlCode), GetLastError());
 
 		// TMP: TODO: Status codes to be reviewed according: http://msdn.microsoft.com/en-us/library/ff547466%28v=vs.85%29.aspx#generic_status_values_for_serial_device_control_requests
 
@@ -472,7 +472,7 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 static void serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 {
 	WLog_Print(serial->log, WLOG_DEBUG, "IRP MajorFunction: 0x%04X MinorFunction: 0x%04X\n",
-			irp->MajorFunction, irp->MinorFunction);
+		irp->MajorFunction, irp->MinorFunction);
 
 	switch (irp->MajorFunction)
 	{
@@ -590,7 +590,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 			}
 			/* pending thread (but not yet terminating thread) if waitResult == WAIT_TIMEOUT */
 		}
-		
+
 
 		if (serial->IrpThreadToBeTerminatedCount > 0)
 		{
@@ -612,7 +612,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 	 */
 
 	previousIrpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)irp->CompletionId);
-	if (previousIrpThread) 
+	if (previousIrpThread)
 	{
 		/* Thread still alived <=> Request still pending */
 
@@ -643,7 +643,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 	if (ListDictionary_Count(serial->IrpThreads) >= MAX_IRP_THREADS)
 	{
 		DEBUG_WARN("Number of IRP threads threshold reached: %d, keep on anyway", ListDictionary_Count(serial->IrpThreads));
-		
+
 		assert(FALSE); /* unimplemented */
 
 		/* TODO: MAX_IRP_THREADS has been thought to avoid a
@@ -668,12 +668,12 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 
 	/* data freed by irp_thread_func */
 
-	irpThread = CreateThread(NULL, 
-				 0, 
-				 (LPTHREAD_START_ROUTINE)irp_thread_func, 
-				 (void*)data, 
-				 0, 
-				 NULL);
+	irpThread = CreateThread(NULL,
+				0,
+				(LPTHREAD_START_ROUTINE)irp_thread_func,
+				(void*)data,
+				0,
+				NULL);
 
 	if (irpThread == INVALID_HANDLE_VALUE)
 	{
@@ -711,7 +711,7 @@ static void terminate_pending_irp_threads(SERIAL_DEVICE *serial)
 		HANDLE irpThread;
 		ULONG_PTR id = ids[i];
 
-		irpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)id);		
+		irpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)id);
 
 		TerminateThread(irpThread, 0);
 
@@ -777,7 +777,7 @@ static void serial_irp_request(DEVICE* device, IRP* irp)
 static void serial_free(DEVICE* device)
 {
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
-	
+
 	WLog_Print(serial->log, WLOG_DEBUG, "freeing");
 
 	MessageQueue_PostQuit(serial->MainIrpQueue, 0);
@@ -821,7 +821,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	if ((name && name[0]) && (path && path[0]))
 	{
 		DEBUG_SVC("Defining %s as %s", name, path);
-			
+
 		if (!DefineCommDevice(name /* eg: COM1 */, path /* eg: /dev/ttyS0 */))
 		{
 			DEBUG_SVC("Could not define %s as %s", name, path);
@@ -846,7 +846,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		serial->MainIrpQueue = MessageQueue_New(NULL);
 
 		/* IrpThreads content only modified by create_irp_thread() */
-		serial->IrpThreads = ListDictionary_New(FALSE); 
+		serial->IrpThreads = ListDictionary_New(FALSE);
 		serial->IrpThreadToBeTerminatedCount = 0;
 		InitializeCriticalSection(&serial->TerminatingIrpThreadsLock);
 
@@ -856,12 +856,12 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) serial);
 
-		serial->MainThread = CreateThread(NULL, 
-						  0, 
-						  (LPTHREAD_START_ROUTINE) serial_thread_func, 
-						  (void*) serial, 
-						  0, 
-						  NULL);
+		serial->MainThread = CreateThread(NULL,
+						0,
+						(LPTHREAD_START_ROUTINE) serial_thread_func,
+						(void*) serial,
+						0,
+						NULL);
 	}
 
 	return 0;

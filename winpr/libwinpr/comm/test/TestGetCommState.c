@@ -55,7 +55,7 @@ static BOOL test_generic(HANDLE hComm)
 		printf("GetCommState failure: Ox%x, with adjusted DCBlength\n", GetLastError());
 		return FALSE;
 	}
-	
+
 	pDcb = (DCB*)calloc(1, sizeof(DCB) * 2);
 	pDcb->DCBlength = sizeof(DCB) * 2;
 	result = GetCommState(hComm, pDcb);
@@ -84,8 +84,8 @@ int TestGetCommState(int argc, char* argv[])
 	}
 
 	hComm = CreateFile("COM1",
-			   GENERIC_READ | GENERIC_WRITE,
-			   0, NULL, OPEN_EXISTING, 0, NULL);
+			GENERIC_READ | GENERIC_WRITE,
+			0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hComm == INVALID_HANDLE_VALUE)
 	{
 		printf("CreateFileA failure: 0x%x\n", GetLastError());

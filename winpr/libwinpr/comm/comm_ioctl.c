@@ -73,7 +73,7 @@ const char* _comm_serial_ioctl_name(ULONG number)
 
 
 static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
-				 LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
+				LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
 	REMOTE_SERIAL_DRIVER* pRemoteSerialDriver = NULL;
@@ -109,7 +109,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 
 	DEBUG_MSG("CommDeviceIoControl: IoControlCode: 0x%0.8x", dwIoControlCode);
 
-	/* remoteSerialDriver to be use ... 
+	/* remoteSerialDriver to be use ...
 	 *
 	 * FIXME: might prefer to use an automatic rather than static structure
 	 */
@@ -188,12 +188,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			if (pRemoteSerialDriver->get_properties)
 			{
 				COMMPROP *pProperties = (COMMPROP*)lpOutBuffer;
-				
+
 				assert(nOutBufferSize >= sizeof(COMMPROP));
 				if (nOutBufferSize < sizeof(COMMPROP))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
-					return FALSE;					
+					return FALSE;
 				}
 
 				if (!pRemoteSerialDriver->get_properties(pComm, pProperties))
@@ -226,12 +226,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			if (pRemoteSerialDriver->get_serial_chars)
 			{
 				SERIAL_CHARS *pSerialChars = (SERIAL_CHARS*)lpOutBuffer;
-				
+
 				assert(nOutBufferSize >= sizeof(SERIAL_CHARS));
 				if (nOutBufferSize < sizeof(SERIAL_CHARS))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
-					return FALSE;					
+					return FALSE;
 				}
 
 				if (!pRemoteSerialDriver->get_serial_chars(pComm, pSerialChars))
@@ -264,12 +264,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			if (pRemoteSerialDriver->get_line_control)
 			{
 				SERIAL_LINE_CONTROL *pLineControl = (SERIAL_LINE_CONTROL*)lpOutBuffer;
-				
+
 				assert(nOutBufferSize >= sizeof(SERIAL_LINE_CONTROL));
 				if (nOutBufferSize < sizeof(SERIAL_LINE_CONTROL))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
-					return FALSE;					
+					return FALSE;
 				}
 
 				if (!pRemoteSerialDriver->get_line_control(pComm, pLineControl))
@@ -302,12 +302,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			if (pRemoteSerialDriver->get_handflow)
 			{
 				SERIAL_HANDFLOW *pHandflow = (SERIAL_HANDFLOW*)lpOutBuffer;
-				
+
 				assert(nOutBufferSize >= sizeof(SERIAL_HANDFLOW));
 				if (nOutBufferSize < sizeof(SERIAL_HANDFLOW))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
-					return FALSE;					
+					return FALSE;
 				}
 
 				if (!pRemoteSerialDriver->get_handflow(pComm, pHandflow))
@@ -340,12 +340,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			if (pRemoteSerialDriver->get_timeouts)
 			{
 				SERIAL_TIMEOUTS *pHandflow = (SERIAL_TIMEOUTS*)lpOutBuffer;
-				
+
 				assert(nOutBufferSize >= sizeof(SERIAL_TIMEOUTS));
 				if (nOutBufferSize < sizeof(SERIAL_TIMEOUTS))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
-					return FALSE;					
+					return FALSE;
 				}
 
 				if (!pRemoteSerialDriver->get_timeouts(pComm, pHandflow))
@@ -393,12 +393,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			if (pRemoteSerialDriver->get_modemstatus)
 			{
 				ULONG *pRegister = (ULONG*)lpOutBuffer;
-				
+
 				assert(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
-					return FALSE;					
+					return FALSE;
 				}
 
 				if (!pRemoteSerialDriver->get_modemstatus(pComm, pRegister))
@@ -431,12 +431,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			if (pRemoteSerialDriver->get_wait_mask)
 			{
 				ULONG *pWaitMask = (ULONG*)lpOutBuffer;
-				
+
 				assert(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
-					return FALSE;					
+					return FALSE;
 				}
 
 				if (!pRemoteSerialDriver->get_wait_mask(pComm, pWaitMask))
@@ -452,12 +452,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			if (pRemoteSerialDriver->wait_on_mask)
 			{
 				ULONG *pOutputMask = (ULONG*)lpOutBuffer;
-				
+
 				assert(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
-					return FALSE;					
+					return FALSE;
 				}
 
 				if (!pRemoteSerialDriver->wait_on_mask(pComm, pOutputMask))
@@ -510,12 +510,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			if (pRemoteSerialDriver->get_commstatus)
 			{
 				SERIAL_STATUS *pCommstatus = (SERIAL_STATUS*)lpOutBuffer;
-				
+
 				assert(nOutBufferSize >= sizeof(SERIAL_STATUS));
 				if (nOutBufferSize < sizeof(SERIAL_STATUS))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
-					return FALSE;					
+					return FALSE;
 				}
 
 				if (!pRemoteSerialDriver->get_commstatus(pComm, pCommstatus))
@@ -563,12 +563,12 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			if (pRemoteSerialDriver->get_dtrrts)
 			{
 				ULONG *pMask = (ULONG*)lpOutBuffer;
-				
+
 				assert(nOutBufferSize >= sizeof(ULONG));
 				if (nOutBufferSize < sizeof(ULONG))
 				{
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
-					return FALSE;					
+					return FALSE;
 				}
 
 				if (!pRemoteSerialDriver->get_dtrrts(pComm, pMask))
@@ -578,15 +578,15 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 				return TRUE;
 			}
 			break;
-			
+
 		}
 	}
-	
-	DEBUG_WARN(_T("unsupported IoControlCode=[0x%lX] %s (remote serial driver: %s)"), 
-		   dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), pRemoteSerialDriver->name);
+
+	DEBUG_WARN(_T("unsupported IoControlCode=[0x%lX] %s (remote serial driver: %s)"),
+		dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), pRemoteSerialDriver->name);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
-	
+
 }
 
 
@@ -603,7 +603,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
  *   ERROR_CALL_NOT_IMPLEMENTED unimplemented ioctl
  */
 BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
-			 LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
+			LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
 	BOOL result;
@@ -621,14 +621,14 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	}
 
 	result = _CommDeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize,
-				      lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
+				lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
 
 	if (pComm->permissive)
 	{
 		if (!result)
 		{
 			DEBUG_WARN("[permissive]: whereas it failed, made to succeed IoControlCode=[0x%lX] %s, last-error: 0x%lX",
-				   dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), GetLastError());
+				dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), GetLastError());
 		}
 
 		return TRUE; /* always! */

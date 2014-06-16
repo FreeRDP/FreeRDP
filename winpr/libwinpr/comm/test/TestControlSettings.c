@@ -39,15 +39,15 @@ int TestControlSettings(int argc, char* argv[])
 	}
 
 	hComm = CreateFile("COM1",
-			   GENERIC_READ | GENERIC_WRITE,
-			   0, NULL, OPEN_EXISTING, 0, NULL);
+			GENERIC_READ | GENERIC_WRITE,
+			0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hComm == INVALID_HANDLE_VALUE)
 	{
 		fprintf(stderr, "CreateFileA failure: 0x%x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 
-	
+
 
 	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB);
@@ -55,7 +55,7 @@ int TestControlSettings(int argc, char* argv[])
 	{
 		fprintf(stderr, "GetCommState failure; GetLastError(): %0.8x\n", GetLastError());
 		return FALSE;
-	}	
+	}
 
 	/* Test 1 */
 
@@ -67,7 +67,7 @@ int TestControlSettings(int argc, char* argv[])
 	{
 		fprintf(stderr, "SetCommState failure; GetLastError(): %0.8x\n", GetLastError());
 		return FALSE;
-	}	
+	}
 
 	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB);
@@ -75,13 +75,13 @@ int TestControlSettings(int argc, char* argv[])
 	{
 		fprintf(stderr, "GetCommState failure; GetLastError(): %0.8x\n", GetLastError());
 		return FALSE;
-	}	
+	}
 
 	if ((dcb.ByteSize != 5) || (dcb.StopBits != ONESTOPBIT) || (dcb.Parity != MARKPARITY))
 	{
 		fprintf(stderr, "test1 failed.\n");
 		return FALSE;
-	}	
+	}
 
 
 	/* Test 2 */
@@ -94,7 +94,7 @@ int TestControlSettings(int argc, char* argv[])
 	{
 		fprintf(stderr, "SetCommState failure; GetLastError(): %0.8x\n", GetLastError());
 		return FALSE;
-	}	
+	}
 
 	ZeroMemory(&dcb, sizeof(DCB));
 	dcb.DCBlength = sizeof(DCB);
@@ -102,13 +102,13 @@ int TestControlSettings(int argc, char* argv[])
 	{
 		fprintf(stderr, "GetCommState failure; GetLastError(): %0.8x\n", GetLastError());
 		return FALSE;
-	}	
+	}
 
 	if ((dcb.ByteSize != 8) || (dcb.StopBits != ONESTOPBIT) || (dcb.Parity != NOPARITY))
 	{
 		fprintf(stderr, "test2 failed.\n");
 		return FALSE;
-	}	
+	}
 
 
 	if (!CloseHandle(hComm))

@@ -3,7 +3,7 @@
  * Serial Communication API
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2014 Hewlett-Packard Development Company, L.P. 
+ * Copyright 2014 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,11 +50,11 @@ struct winpr_comm
 
 	int fd_read;
 	int fd_read_event; /* as of today, only used by _purge() */
-	
+
 	int fd_write;
 	int fd_write_event; /* as of today, only used by _purge() */
 
-	/* permissive mode on errors if TRUE (default is FALSE). 
+	/* permissive mode on errors if TRUE (default is FALSE).
 	 *
 	 * Since not all features are supported, some devices and applications
 	 * can still be functional on such errors.
@@ -67,7 +67,7 @@ struct winpr_comm
 	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
 
 	COMMTIMEOUTS timeouts;
-	
+
 	CRITICAL_SECTION EventsLock; /* protects counters, WaitEventMask and PendingEvents */
 	struct serial_icounter_struct counters;
 	ULONG WaitEventMask;
@@ -82,7 +82,7 @@ void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID);
 
 /* TMP: TODO: move all specific defines and types here? at least SERIAL_EV_* */
 #define SERIAL_EV_FREERDP_WAITING	0x4000 /* bit unused by SERIAL_EV_* */
-#define SERIAL_EV_FREERDP_STOP     	0x8000 /* bit unused by SERIAL_EV_* */
+#define SERIAL_EV_FREERDP_STOP	   	0x8000 /* bit unused by SERIAL_EV_* */
 
 #define FREERDP_PURGE_TXABORT		0x00000001 /* abort pending transmission */
 #define FREERDP_PURGE_RXABORT		0x00000002 /* abort pending reception */

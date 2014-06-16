@@ -46,7 +46,7 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	{
 		fprintf(stderr, "GetCommState failure, GetLastError(): 0x%0.8x\n", GetLastError());
 		return FALSE;
-	}	
+	}
 
 	if ((dcb.XonChar == '\0') || (dcb.XoffChar == '\0'))
 	{
@@ -115,7 +115,7 @@ static BOOL test_SerCx2Sys(HANDLE hComm)
 	{
 		fprintf(stderr, "GetCommState failure; GetLastError(): %0.8x\n", GetLastError());
 		return FALSE;
-	}	
+	}
 
 	if ((dcb.ErrorChar != '\0') || (dcb.EofChar != '\0') || (dcb.EvtChar != '\0') || (dcb.XonChar != '\0') || (dcb.XoffChar != '\0'))
 	{
@@ -140,8 +140,8 @@ int TestSerialChars(int argc, char* argv[])
 	}
 
 	hComm = CreateFile("COM1",
-			   GENERIC_READ | GENERIC_WRITE,
-			   0, NULL, OPEN_EXISTING, 0, NULL);
+			GENERIC_READ | GENERIC_WRITE,
+			0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hComm == INVALID_HANDLE_VALUE)
 	{
 		fprintf(stderr, "CreateFileA failure: 0x%x\n", GetLastError());

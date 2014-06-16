@@ -269,7 +269,7 @@ static BOOL test_generic(HANDLE hComm)
 {
 	DCB dcb, dcb2;
 	BOOL result;
-	
+
 	init_empty_dcb(&dcb);
 	result = GetCommState(hComm, &dcb);
 	if (!result)
@@ -329,8 +329,8 @@ int TestSetCommState(int argc, char* argv[])
 	}
 
 	hComm = CreateFile("COM1",
-			   GENERIC_READ | GENERIC_WRITE,
-			   0, NULL, OPEN_EXISTING, 0, NULL);
+			GENERIC_READ | GENERIC_WRITE,
+			0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hComm == INVALID_HANDLE_VALUE)
 	{
 		fprintf(stderr, "CreateFileA failure: 0x%x\n", GetLastError());
