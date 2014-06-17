@@ -400,6 +400,7 @@ static REMOTE_SERIAL_DRIVER _SerCxSys =
 	.set_xoff         = NULL,
 	.set_xon          = NULL,
 	.get_dtrrts       = NULL,
+	.config_size      = NULL, /* not supported by SerCx.sys */
 };
 
 

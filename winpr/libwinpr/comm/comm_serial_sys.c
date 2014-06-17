@@ -1483,6 +1483,14 @@ BOOL _get_dtrrts(WINPR_COMM *pComm, ULONG *pMask)
 }
 
 
+BOOL _config_size(WINPR_COMM *pComm, ULONG *pSize)
+{
+	/* http://msdn.microsoft.com/en-us/library/ff546548%28v=vs.85%29.aspx */
+	pSize = 0;
+	return TRUE;
+}
+
+
 static REMOTE_SERIAL_DRIVER _SerialSys =
 {
 	.id		  = RemoteSerialDriverSerialSys,
@@ -1514,6 +1522,7 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.set_xoff         = _set_xoff,
 	.set_xon          = _set_xon,
 	.get_dtrrts       = _get_dtrrts,
+	.config_size      = _config_size,
 };
 
 
