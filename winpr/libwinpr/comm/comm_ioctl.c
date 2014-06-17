@@ -619,11 +619,19 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			}
 			break;
 		}
+		case IOCTL_SERIAL_RESET_DEVICE:
+		{
+			if (pRemoteSerialDriver->reset_device)
+			{
+				return pRemoteSerialDriver->reset_device(pComm);
+			}
+			break;
+		}
 	}
 
 	DEBUG_WARN(_T("unsupported IoControlCode=[0x%lX] %s (remote serial driver: %s)"),
 		dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), pRemoteSerialDriver->name);
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED); /* => STATUS_NOT_IMPLEMENTED */
 	return FALSE;
 
 }

@@ -153,6 +153,7 @@ static REMOTE_SERIAL_DRIVER _SerCx2Sys =
 	.get_dtrrts       = NULL,
 	.config_size      = NULL, /* not supported by SerCx2.sys */
 	.immediate_char   = NULL, /* not supported by SerCx2.sys */
+	.reset_device     = NULL, /* not supported by SerCx2.sys */
 };
 
 

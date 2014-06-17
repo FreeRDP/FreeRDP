@@ -243,6 +243,7 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*get_dtrrts)(WINPR_COMM *pComm, ULONG *pMask);
 	BOOL (*config_size)(WINPR_COMM *pComm, ULONG *pSize);
 	BOOL (*immediate_char)(WINPR_COMM *pComm, const UCHAR *pChar);
+	BOOL (*reset_device)(WINPR_COMM *pComm);
 
 } REMOTE_SERIAL_DRIVER;
 

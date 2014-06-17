@@ -1506,6 +1506,12 @@ BOOL _immediate_char(WINPR_COMM *pComm, const UCHAR *pChar)
 }
 
 
+BOOL _reset_device(WINPR_COMM *pComm)
+{
+	/* http://msdn.microsoft.com/en-us/library/dn265347%28v=vs.85%29.aspx */
+	return TRUE;
+}
+
 static REMOTE_SERIAL_DRIVER _SerialSys =
 {
 	.id		  = RemoteSerialDriverSerialSys,
@@ -1539,6 +1545,7 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.get_dtrrts       = _get_dtrrts,
 	.config_size      = _config_size,
 	.immediate_char   = _immediate_char,
+	.reset_device     = _reset_device,
 };
 
 
