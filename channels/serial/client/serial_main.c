@@ -774,6 +774,7 @@ static void serial_irp_request(DEVICE* device, IRP* irp)
 	MessageQueue_Post(serial->MainIrpQueue, NULL, 0, (void*) irp, NULL);
 }
 
+
 static void serial_free(DEVICE* device)
 {
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;

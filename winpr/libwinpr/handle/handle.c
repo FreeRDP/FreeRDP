@@ -211,6 +211,8 @@ BOOL CloseHandle(HANDLE hObject)
 		comm->PendingEvents |= SERIAL_EV_FREERDP_STOP;
 		LeaveCriticalSection(&comm->EventsLock);
 
+		DeleteCriticalSection(&comm->ReadLock);
+		DeleteCriticalSection(&comm->WriteLock);
 		DeleteCriticalSection(&comm->EventsLock);
 
 		if (comm->fd > 0)

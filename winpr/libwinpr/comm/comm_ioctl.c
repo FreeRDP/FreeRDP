@@ -602,6 +602,23 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 			break;
 
 		}
+		case IOCTL_SERIAL_IMMEDIATE_CHAR:
+		{
+			if (pRemoteSerialDriver->immediate_char)
+			{
+				UCHAR *pChar = (UCHAR*)lpInBuffer;
+
+				assert(nInBufferSize >= sizeof(UCHAR));
+				if (nInBufferSize < sizeof(UCHAR))
+				{
+					SetLastError(ERROR_INVALID_PARAMETER);
+					return FALSE;
+				}
+
+				return pRemoteSerialDriver->immediate_char(pComm, pChar);
+			}
+			break;
+		}
 	}
 
 	DEBUG_WARN(_T("unsupported IoControlCode=[0x%lX] %s (remote serial driver: %s)"),

@@ -50,9 +50,11 @@ struct winpr_comm
 
 	int fd_read;
 	int fd_read_event; /* as of today, only used by _purge() */
+	CRITICAL_SECTION ReadLock;
 
 	int fd_write;
 	int fd_write_event; /* as of today, only used by _purge() */
+	CRITICAL_SECTION WriteLock;
 
 	/* permissive mode on errors if TRUE (default is FALSE).
 	 *

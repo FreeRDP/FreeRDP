@@ -95,48 +95,50 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	struct timeval tmaxTimeout, *pTmaxTimeout;
 	struct termios currentTermios;
 
+	EnterCriticalSection(&pComm->ReadLock); /* KISSer by the function's beginning */
+
 	if (hDevice == INVALID_HANDLE_VALUE)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
-                return FALSE;
+                goto return_false;
         }
 
 	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
+		goto return_false;
 	}
 
 	if (lpOverlapped != NULL)
 	{
 		SetLastError(ERROR_NOT_SUPPORTED);
-		return FALSE;
+		goto return_false;
 	}
 
 	if (lpNumberOfBytesRead == NULL)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER); /* since we doesn't suppport lpOverlapped != NULL */
-		return FALSE;
+		goto return_false;
 	}
 
 	*lpNumberOfBytesRead = 0; /* will be ajusted if required ... */
 
 	if (nNumberOfBytesToRead <= 0) /* N */
 	{
-		return TRUE; /* FIXME: or FALSE? */
+		goto return_true; /* FIXME: or FALSE? */
 	}
 
 	if (tcgetattr(pComm->fd, &currentTermios) < 0)
 	{
 		SetLastError(ERROR_IO_DEVICE);
-		return FALSE;
+		goto return_false;
 	}
 
 	if (currentTermios.c_lflag & ICANON)
 	{
 		DEBUG_WARN("Canonical mode not supported"); /* the timeout could not be set */
 		SetLastError(ERROR_NOT_SUPPORTED);
-		return FALSE;
+		goto return_false;
 	}
 
 	/* http://msdn.microsoft.com/en-us/library/hh439614%28v=vs.85%29.aspx
@@ -162,7 +164,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	{
 		DEBUG_WARN("ReadIntervalTimeout and ReadTotalTimeoutConstant cannot be both set to MAXULONG");
 		SetLastError(ERROR_INVALID_PARAMETER);
-		return FALSE;
+		goto return_false;
 	}
 
 	/* VMIN */
@@ -214,7 +216,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		{
 			DEBUG_WARN("CommReadFile failure, could not apply new timeout values: VMIN=%u, VTIME=%u", vmin, vtime);
 			SetLastError(ERROR_IO_DEVICE);
-			return FALSE;
+			goto return_false;
 		}
 	}
 
@@ -252,7 +254,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	{
 		DEBUG_WARN("select() failure, errno=[%d] %s\n", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
-		return FALSE;
+		goto return_false;
 	}
 
 	if (nbFds == 0)
@@ -260,7 +262,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		/* timeout */
 
 		SetLastError(ERROR_TIMEOUT);
-		return FALSE;
+		goto return_false;
 	}
 
 
@@ -280,7 +282,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			else
 			{
 				DEBUG_WARN("unexpected error on reading fd_read_event, errno=[%d] %s\n", errno, strerror(errno));
-				/* FIXME: return FALSE ? */
+				/* FIXME: goto return_false ? */
 			}
 
 			assert(errno == EAGAIN);
@@ -289,7 +291,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		if (event == FREERDP_PURGE_RXABORT)
 		{
 			SetLastError(ERROR_CANCELLED);
-			return FALSE;
+			goto return_false;
 		}
 
 		assert(event == FREERDP_PURGE_RXABORT); /* no other expected event so far */
@@ -310,18 +312,18 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			if (errno == EAGAIN)
 			{
 				/* keep on */
-				return TRUE; /* expect a read-loop to be implemented on the server side */
+				goto return_true; /* expect a read-loop to be implemented on the server side */
 			}
 			else if (errno == EBADF)
 			{
 				SetLastError(ERROR_BAD_DEVICE); /* STATUS_INVALID_DEVICE_REQUEST */
-				return FALSE;
+				goto return_false;
 			}
 			else
 			{
 				assert(FALSE);
 				SetLastError(ERROR_IO_DEVICE);
-				return FALSE;
+				goto return_false;
 			}
 		}
 
@@ -329,16 +331,23 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		{
 			/* termios timeout */
 			SetLastError(ERROR_TIMEOUT);
-			return FALSE;
+			goto return_false;
 		}
 
 		*lpNumberOfBytesRead = nbRead;
-		return TRUE;
+		goto return_true;
 	}
 
 	assert(FALSE);
 	*lpNumberOfBytesRead = 0;
+
+  return_false:
+	LeaveCriticalSection(&pComm->ReadLock);
 	return FALSE;
+
+  return_true:
+	LeaveCriticalSection(&pComm->ReadLock);
+	return TRUE;
 }
 
 
@@ -355,35 +364,37 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	WINPR_COMM* pComm = (WINPR_COMM*) hDevice;
 	struct timeval tmaxTimeout, *pTmaxTimeout;
 
+	EnterCriticalSection(&pComm->WriteLock); /* KISSer by the function's beginning */
+
 	if (hDevice == INVALID_HANDLE_VALUE)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
-                return FALSE;
+                goto return_false;
         }
 
 	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
-		return FALSE;
+		goto return_false;
 	}
 
 	if (lpOverlapped != NULL)
 	{
 		SetLastError(ERROR_NOT_SUPPORTED);
-		return FALSE;
+		goto return_false;
 	}
 
 	if (lpNumberOfBytesWritten == NULL)
 	{
 		SetLastError(ERROR_INVALID_PARAMETER); /* since we doesn't suppport lpOverlapped != NULL */
-		return FALSE;
+		goto return_false;
 	}
 
 	*lpNumberOfBytesWritten = 0; /* will be ajusted if required ... */
 
 	if (nNumberOfBytesToWrite <= 0)
 	{
-		return TRUE; /* FIXME: or FALSE? */
+		goto return_true; /* FIXME: or FALSE? */
 	}
 
 	/* FIXME: had expected eventfd_write() to return EAGAIN when
@@ -434,7 +445,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		{
 			DEBUG_WARN("select() failure, errno=[%d] %s\n", errno, strerror(errno));
 			SetLastError(ERROR_IO_DEVICE);
-			return FALSE;
+			goto return_false;
 		}
 
 		if (nbFds == 0)
@@ -442,7 +453,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 			/* timeout */
 
 			SetLastError(ERROR_TIMEOUT);
-			return FALSE;
+			goto return_false;
 		}
 
 
@@ -462,7 +473,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 				else
 				{
 					DEBUG_WARN("unexpected error on reading fd_write_event, errno=[%d] %s\n", errno, strerror(errno));
-					/* FIXME: return FALSE ? */
+					/* FIXME: goto return_false ? */
 				}
 
 				assert(errno == EAGAIN);
@@ -471,7 +482,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 			if (event == FREERDP_PURGE_TXABORT)
 			{
 				SetLastError(ERROR_CANCELLED);
-				return FALSE;
+				goto return_false;
 			}
 
 			assert(event == FREERDP_PURGE_TXABORT); /* no other expected event so far */
@@ -500,13 +511,13 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 				else if (errno == EBADF)
 				{
 					SetLastError(ERROR_BAD_DEVICE); /* STATUS_INVALID_DEVICE_REQUEST */
-					return FALSE;
+					goto return_false;
 				}
 				else
 				{
 					assert(FALSE);
 					SetLastError(ERROR_IO_DEVICE);
-					return FALSE;
+					goto return_false;
 				}
 			}
 
@@ -527,7 +538,13 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	tcdrain(pComm->fd_write);
 
 
+  return_true:
+	LeaveCriticalSection(&pComm->WriteLock);
 	return TRUE;
+
+  return_false:
+	LeaveCriticalSection(&pComm->WriteLock);
+	return FALSE;
 }
 
 

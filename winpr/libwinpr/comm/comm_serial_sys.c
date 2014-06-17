@@ -1491,6 +1491,21 @@ BOOL _config_size(WINPR_COMM *pComm, ULONG *pSize)
 }
 
 
+BOOL _immediate_char(WINPR_COMM *pComm, const UCHAR *pChar)
+{
+	BOOL result;
+	DWORD nbBytesWritten = -1;
+
+	/* FIXME: CommWriteFile uses a critical section, shall it be interrupted? */
+
+	result = CommWriteFile(pComm, pChar, 1, &nbBytesWritten, NULL);
+
+	assert(nbBytesWritten == 1);
+
+	return result;
+}
+
+
 static REMOTE_SERIAL_DRIVER _SerialSys =
 {
 	.id		  = RemoteSerialDriverSerialSys,
@@ -1523,6 +1538,7 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 	.set_xon          = _set_xon,
 	.get_dtrrts       = _get_dtrrts,
 	.config_size      = _config_size,
+	.immediate_char   = _immediate_char,
 };
 
 

@@ -401,6 +401,7 @@ static REMOTE_SERIAL_DRIVER _SerCxSys =
 	.set_xon          = NULL,
 	.get_dtrrts       = NULL,
 	.config_size      = NULL, /* not supported by SerCx.sys */
+	.immediate_char   = NULL,
 };
 
 
@@ -444,6 +445,8 @@ REMOTE_SERIAL_DRIVER* SerCxSys_s()
 	_SerCxSys.set_xon  = pSerialSys->set_xon;
 
 	_SerCxSys.get_dtrrts  = pSerialSys->get_dtrrts;
+
+	_SerCxSys.immediate_char = pSerialSys->immediate_char;
 
 	return &_SerCxSys;
 }

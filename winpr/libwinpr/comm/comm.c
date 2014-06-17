@@ -1140,6 +1140,8 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
+	InitializeCriticalSection(&pComm->ReadLock);
+
 	pComm->fd_write = open(devicePath, O_WRONLY | O_NOCTTY | O_NONBLOCK);
 	if (pComm->fd_write < 0)
 	{
@@ -1155,6 +1157,9 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		SetLastError(ERROR_BAD_DEVICE);
 		goto error_handle;
 	}
+
+	InitializeCriticalSection(&pComm->WriteLock);
+
 
 	/* TMP: TODO: FIXME: this information is at least needed for
 	 * get/set baud functions. Is it possible to pull this
