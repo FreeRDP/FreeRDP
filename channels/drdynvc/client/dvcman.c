@@ -237,6 +237,8 @@ static void dvcman_channel_free(DVCMAN_CHANNEL* channel)
 	if (channel->channel_callback)
 		channel->channel_callback->OnClose(channel->channel_callback);
 
+	DeleteCriticalSection(&(channel->lock));
+
 	free(channel);
 }
 
@@ -304,9 +306,11 @@ static int dvcman_write_channel(IWTSVirtualChannel* pChannel, UINT32 cbSize, BYT
 	int status;
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
 
-	WaitForSingleObject(channel->dvc_chan_mutex, INFINITE);
+	EnterCriticalSection(&(channel->lock));
+
 	status = drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize);
-	ReleaseMutex(channel->dvc_chan_mutex);
+
+	LeaveCriticalSection(&(channel->lock));
 
 	return status;
 }
@@ -335,8 +339,10 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 	IWTSVirtualChannelCallback* pCallback;
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
 
-	channel = (DVCMAN_CHANNEL*) malloc(sizeof(DVCMAN_CHANNEL));
-	ZeroMemory(channel, sizeof(DVCMAN_CHANNEL));
+	channel = (DVCMAN_CHANNEL*) calloc(1, sizeof(DVCMAN_CHANNEL));
+
+	if (!channel)
+		return -1;
 
 	channel->dvcman = dvcman;
 	channel->channel_id = ChannelId;
@@ -350,7 +356,8 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 		{
 			channel->iface.Write = dvcman_write_channel;
 			channel->iface.Close = dvcman_close_channel_iface;
-			channel->dvc_chan_mutex = CreateMutex(NULL, FALSE, NULL);
+
+			InitializeCriticalSection(&(channel->lock));
 
 			bAccept = 1;
 			pCallback = NULL;

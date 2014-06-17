@@ -23,6 +23,7 @@
 #include <freerdp/dvc.h>
 #include <freerdp/addin.h>
 
+#include <winpr/synch.h>
 #include <winpr/collections.h>
 
 #include "drdynvc_main.h"
@@ -79,7 +80,7 @@ struct _DVCMAN_CHANNEL
 	IWTSVirtualChannelCallback* channel_callback;
 
 	wStream* dvc_data;
-	HANDLE dvc_chan_mutex;
+	CRITICAL_SECTION lock;
 };
 typedef struct _DVCMAN_CHANNEL DVCMAN_CHANNEL;
 
