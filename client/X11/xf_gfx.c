@@ -294,7 +294,6 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 int xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status;
-	UINT32 DstSize = 0;
 	BYTE* DstData = NULL;
 	xfGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
@@ -304,13 +303,8 @@ int xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGF
 	if (!surface)
 		return -1;
 
-	DstSize = cmd->width * cmd->height * 4;
-	DstData = (BYTE*) malloc(DstSize);
-
-	if (!DstData)
-		return -1;
-
-	status = freerdp_bitmap_planar_decompress(cmd->data, DstData, cmd->width, cmd->height, cmd->length);
+	status = planar_decompress(NULL, cmd->data, cmd->length, &DstData,
+			PIXEL_FORMAT_XRGB32, cmd->width * 4, 0, 0, cmd->width, cmd->height);
 
 	freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top,
 			cmd->width, cmd->height, DstData, PIXEL_FORMAT_XRGB32_VF, cmd->width * 4, 0, 0);

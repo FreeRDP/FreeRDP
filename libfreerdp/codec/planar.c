@@ -273,6 +273,118 @@ int freerdp_bitmap_planar_decompress(BYTE* srcData, BYTE* dstData, int width, in
 	return (size == (srcp - srcData)) ? 0 : -1;
 }
 
+int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcSize,
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
+{
+	int status;
+	BYTE* srcp;
+	BYTE FormatHeader;
+	BYTE* pDstData = NULL;
+	UINT32 UncompressedSize;
+
+	if ((nWidth * nHeight) <= 0)
+		return -1;
+
+	srcp = pSrcData;
+	UncompressedSize = nWidth * nHeight * 4;
+
+	pDstData = *ppDstData;
+
+	if (!pDstData)
+	{
+		pDstData = (BYTE*) malloc(UncompressedSize);
+
+		if (!pDstData)
+			return -1;
+
+		*ppDstData = pDstData;
+	}
+
+	FormatHeader = *srcp;
+	srcp++;
+
+	/* AlphaPlane */
+
+	if (!(FormatHeader & PLANAR_FORMAT_HEADER_NA))
+	{
+		if (FormatHeader & PLANAR_FORMAT_HEADER_RLE)
+		{
+			status = freerdp_bitmap_planar_decompress_plane_rle(srcp, nWidth, nHeight,
+					pDstData + 3, UncompressedSize - (srcp - pSrcData));
+
+			if (status < 0)
+				return -1;
+
+			srcp += status;
+		}
+		else
+		{
+			status = freerdp_bitmap_planar_decompress_plane_raw(srcp, nWidth, nHeight,
+					pDstData + 3, UncompressedSize - (srcp - pSrcData));
+
+			srcp += status;
+		}
+	}
+
+	if (FormatHeader & PLANAR_FORMAT_HEADER_RLE)
+	{
+		/* LumaOrRedPlane */
+
+		status = freerdp_bitmap_planar_decompress_plane_rle(srcp, nWidth, nHeight,
+				pDstData + 2, UncompressedSize - (srcp - pSrcData));
+
+		if (status < 0)
+			return -1;
+
+		srcp += status;
+
+		/* OrangeChromaOrGreenPlane */
+
+		status = freerdp_bitmap_planar_decompress_plane_rle(srcp, nWidth, nHeight,
+				pDstData + 1, UncompressedSize - (srcp - pSrcData));
+
+		if (status < 0)
+			return -1;
+
+		srcp += status;
+
+		/* GreenChromeOrBluePlane */
+
+		status = freerdp_bitmap_planar_decompress_plane_rle(srcp, nWidth, nHeight,
+				pDstData + 0, UncompressedSize - (srcp - pSrcData));
+
+		if (status < 0)
+			return -1;
+
+		srcp += status;
+	}
+	else
+	{
+		/* LumaOrRedPlane */
+
+		status = freerdp_bitmap_planar_decompress_plane_raw(srcp, nWidth, nHeight,
+				pDstData + 2, UncompressedSize - (srcp - pSrcData));
+		srcp += status;
+
+		/* OrangeChromaOrGreenPlane */
+
+		status = freerdp_bitmap_planar_decompress_plane_raw(srcp, nWidth, nHeight,
+				pDstData + 1, UncompressedSize - (srcp - pSrcData));
+		srcp += status;
+
+		/* GreenChromeOrBluePlane */
+
+		status = freerdp_bitmap_planar_decompress_plane_raw(srcp, nWidth, nHeight,
+				pDstData + 0, UncompressedSize - (srcp - pSrcData));
+		srcp += status;
+		srcp++;
+	}
+
+	status = (UncompressedSize == (srcp - pSrcData)) ? 1 : -1;
+
+	return status;
+}
+
 int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[4])
 {
 	int bpp;
