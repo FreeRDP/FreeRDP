@@ -87,6 +87,51 @@ struct _IRP_THREAD_DATA
 	IRP *irp;
 };
 
+static UINT32 _GetLastErrorToIoStatus()
+{
+	/* http://msdn.microsoft.com/en-us/library/ff547466%28v=vs.85%29.aspx#generic_status_values_for_serial_device_control_requests */
+
+	switch(GetLastError())
+	{
+		case ERROR_BAD_DEVICE:
+			return STATUS_INVALID_DEVICE_REQUEST;
+
+		case ERROR_CALL_NOT_IMPLEMENTED:
+			return STATUS_NOT_IMPLEMENTED;
+
+		case ERROR_CANCELLED:
+			return STATUS_CANCELLED;
+
+		case ERROR_INSUFFICIENT_BUFFER:
+			return STATUS_BUFFER_TOO_SMALL; /* NB: STATUS_BUFFER_SIZE_TOO_SMALL not defined  */
+
+		case ERROR_INVALID_DEVICE_OBJECT_PARAMETER: /* eg: SerCx2.sys' _purge() */
+			return STATUS_INVALID_DEVICE_STATE;
+
+		case ERROR_INVALID_HANDLE:
+			return STATUS_INVALID_DEVICE_REQUEST;
+
+		case ERROR_INVALID_PARAMETER:
+			return STATUS_INVALID_PARAMETER;
+
+		case ERROR_IO_DEVICE:
+			return STATUS_IO_DEVICE_ERROR;
+
+		case ERROR_IO_PENDING:
+			return STATUS_PENDING;
+
+		case ERROR_NOT_SUPPORTED:
+			return STATUS_NOT_SUPPORTED;
+
+		case ERROR_TIMEOUT:
+			return STATUS_TIMEOUT;
+
+		/* no default */
+	}
+
+	DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
+	return STATUS_UNSUCCESSFUL;
+}
 
 static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
@@ -231,41 +276,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	{
 		DEBUG_SVC("read failure to %s, nbRead=%d, last-error: 0x%0.8X", serial->device.name, nbRead, GetLastError());
 
-		switch(GetLastError())
-		{
-			case ERROR_INVALID_HANDLE:
-				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
-				break;
-
-			case ERROR_NOT_SUPPORTED:
-				irp->IoStatus = STATUS_NOT_SUPPORTED;
-				break;
-
-			case ERROR_INVALID_PARAMETER:
-				irp->IoStatus = STATUS_INVALID_PARAMETER;
-				break;
-
-			case ERROR_IO_DEVICE:
-				irp->IoStatus = STATUS_IO_DEVICE_ERROR;
-				break;
-
-			case ERROR_TIMEOUT:
-				irp->IoStatus = STATUS_TIMEOUT;
-				break;
-
-			case ERROR_BAD_DEVICE:
-				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
-				break;
-
-			case ERROR_CANCELLED:
-				irp->IoStatus = STATUS_CANCELLED;
-				break;
-
-			default:
-				DEBUG_SVC("unexpected last-error: 0x%x", GetLastError());
-				irp->IoStatus = STATUS_UNSUCCESSFUL;
-				break;
-		}
+		irp->IoStatus = _GetLastErrorToIoStatus();
 	}
 
 	DEBUG_SVC("%lu bytes read from %s", nbRead, serial->device.name);
@@ -311,41 +322,8 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	else
 	{
 		DEBUG_SVC("write failure to %s, nbWritten=%d, last-error: 0x%0.8X", serial->device.name, nbWritten, GetLastError());
-		switch(GetLastError())
-		{
-			case ERROR_INVALID_HANDLE:
-				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
-				break;
 
-			case ERROR_NOT_SUPPORTED:
-				irp->IoStatus = STATUS_NOT_SUPPORTED;
-				break;
-
-			case ERROR_INVALID_PARAMETER:
-				irp->IoStatus = STATUS_INVALID_PARAMETER;
-				break;
-
-			case ERROR_IO_DEVICE:
-				irp->IoStatus = STATUS_IO_DEVICE_ERROR;
-				break;
-
-			case ERROR_TIMEOUT:
-				irp->IoStatus = STATUS_TIMEOUT;
-				break;
-
-			case ERROR_BAD_DEVICE:
-				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
-				break;
-
-			case ERROR_CANCELLED:
-				irp->IoStatus = STATUS_CANCELLED;
-				break;
-
-			default:
-				DEBUG_SVC("unexpected last-error: 0x%X", GetLastError());
-				irp->IoStatus = STATUS_UNSUCCESSFUL;
-				break;
-		}
+		irp->IoStatus = _GetLastErrorToIoStatus();
 	}
 
 	DEBUG_SVC("%lu bytes written to %s", nbWritten, serial->device.name);
@@ -399,47 +377,7 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 		DEBUG_SVC("CommDeviceIoControl failure: IoControlCode=[0x%0.8x] %s, last-error: 0x%X",
 			IoControlCode, _comm_serial_ioctl_name(IoControlCode), GetLastError());
 
-		// TMP: TODO: Status codes to be reviewed according: http://msdn.microsoft.com/en-us/library/ff547466%28v=vs.85%29.aspx#generic_status_values_for_serial_device_control_requests
-
-		switch(GetLastError())
-		{
-			case ERROR_INVALID_HANDLE:
-				irp->IoStatus = STATUS_INVALID_DEVICE_REQUEST;
-				break;
-
-			case ERROR_NOT_SUPPORTED:
-				irp->IoStatus = STATUS_NOT_SUPPORTED;
-				break;
-
-			case ERROR_INSUFFICIENT_BUFFER:
-				irp->IoStatus = STATUS_BUFFER_TOO_SMALL; /* TMP: better have STATUS_BUFFER_SIZE_TOO_SMALL? http://msdn.microsoft.com/en-us/library/windows/hardware/ff547466%28v=vs.85%29.aspx#generic_status_values_for_serial_device_control_requests */
-				break;
-
-			case ERROR_INVALID_PARAMETER:
-				irp->IoStatus = STATUS_INVALID_PARAMETER;
-				break;
-
-			case ERROR_CALL_NOT_IMPLEMENTED:
-				irp->IoStatus = STATUS_NOT_IMPLEMENTED;
-				break;
-
-			case ERROR_IO_PENDING:
-				irp->IoStatus = STATUS_PENDING;
-				break;
-
-			case ERROR_INVALID_DEVICE_OBJECT_PARAMETER: /* eg: SerCx2.sys' _purge() */
-				irp->IoStatus = STATUS_INVALID_DEVICE_STATE;
-				break;
-
-			case ERROR_CANCELLED:
-				irp->IoStatus = STATUS_CANCELLED;
-				break;
-
-			default:
-				DEBUG_SVC("unexpected last-error: 0x%X", GetLastError());
-				irp->IoStatus = STATUS_UNSUCCESSFUL;
-				break;
-		}
+		irp->IoStatus = _GetLastErrorToIoStatus();
 	}
 
   error_handle:
@@ -605,7 +543,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 	 * CompletionId or the server sent again an IRP already posted
 	 * which didn't get yet a response (this later server behavior
 	 * at least observed with IOCTL_SERIAL_WAIT_ON_MASK and
-	 * mstsc.exe.
+	 * mstsc.exe).
 	 *
 	 * FIXME: behavior documented somewhere? behavior not yet
 	 * observed with FreeRDP).
