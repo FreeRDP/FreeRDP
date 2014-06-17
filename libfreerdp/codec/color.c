@@ -1176,6 +1176,8 @@ int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDs
 		int nWidth, int nHeight, BYTE* pSrcData, DWORD dwSrcFormat, int nSrcStep, int nXSrc, int nYSrc)
 {
 	int x, y;
+	int srcFlip;
+	int dstFlip;
 	BYTE a, r, g, b;
 	int beg, end, inc;
 	int srcBitsPerPixel;
@@ -1183,12 +1185,18 @@ int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDs
 	int dstBitsPerPixel;
 	int dstBytesPerPixel;
 	BOOL overlap = FALSE;
+	BOOL vFlip = FALSE;
 
 	srcBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(dwSrcFormat);
 	srcBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(dwSrcFormat) / 8);
+	srcFlip = FREERDP_PIXEL_FORMAT_FLIP(dwSrcFormat);
 
 	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(dwDstFormat);
 	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(dwDstFormat) / 8);
+	dstFlip = FREERDP_PIXEL_FORMAT_FLIP(dwDstFormat);
+
+	if (srcFlip != dstFlip)
+		vFlip = TRUE;
 
 	if (pDstData == pSrcData)
 	{
@@ -1252,11 +1260,23 @@ int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDs
 						end = nHeight;
 					}
 
-					for (y = beg; y != end; y += inc)
+					if (!vFlip)
 					{
-						pSrcPixel = (UINT32*) &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * srcBytesPerPixel)];
-						pDstPixel = (UINT32*) &pDstData[((nYDst + y) * nDstStep) + (nXDst * dstBytesPerPixel)];
-						MoveMemory(pDstPixel, pSrcPixel, nWidth * 4);
+						for (y = beg; y != end; y += inc)
+						{
+							pSrcPixel = (UINT32*) &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * srcBytesPerPixel)];
+							pDstPixel = (UINT32*) &pDstData[((nYDst + y) * nDstStep) + (nXDst * dstBytesPerPixel)];
+							MoveMemory(pDstPixel, pSrcPixel, nWidth * 4);
+						}
+					}
+					else
+					{
+						for (y = beg; y != end; y += inc)
+						{
+							pSrcPixel = (UINT32*) &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * srcBytesPerPixel)];
+							pDstPixel = (UINT32*) &pDstData[((nYDst + (nHeight - y - 1)) * nDstStep) + (nXDst * dstBytesPerPixel)];
+							MoveMemory(pDstPixel, pSrcPixel, nWidth * 4);
+						}
 					}
 				}
 			}

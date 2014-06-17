@@ -293,6 +293,37 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 
 int xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
+	int status;
+	UINT32 DstSize = 0;
+	BYTE* DstData = NULL;
+	xfGfxSurface* surface;
+	RECTANGLE_16 invalidRect;
+
+	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
+
+	if (!surface)
+		return -1;
+
+	DstSize = cmd->width * cmd->height * 4;
+	DstData = (BYTE*) malloc(DstSize);
+
+	if (!DstData)
+		return -1;
+
+	status = freerdp_bitmap_planar_decompress(cmd->data, DstData, cmd->width, cmd->height, cmd->length);
+
+	freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top,
+			cmd->width, cmd->height, DstData, PIXEL_FORMAT_XRGB32_VF, cmd->width * 4, 0, 0);
+
+	free(DstData);
+
+	invalidRect.left = cmd->left;
+	invalidRect.top = cmd->top;
+	invalidRect.right = cmd->right;
+	invalidRect.bottom = cmd->bottom;
+
+	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+
 	if (!xfc->inGfxFrame)
 		xf_OutputUpdate(xfc);
 
@@ -319,7 +350,6 @@ int xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 			break;
 
 		case RDPGFX_CODECID_PLANAR:
-			printf("xf_SurfaceCommand_Planar\n");
 			status = xf_SurfaceCommand_Planar(xfc, context, cmd);
 			break;
 

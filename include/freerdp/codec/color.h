@@ -36,7 +36,7 @@
 #define FREERDP_PIXEL_FORMAT(_flip, _bpp, _type, _a, _r, _g, _b) \
 	((_flip << 30) | (_bpp << 24) | (_type << 16) | (_a << 12) | (_r << 8) | (_g << 4) | (_b))
 
-#define FREERDP_PIXEL_FORMAT_FLIP(_format)	(((_format) >> 30) & 0x02)
+#define FREERDP_PIXEL_FORMAT_FLIP(_format)	(((_format) >> 30) & 0x03)
 #define FREERDP_PIXEL_FORMAT_BPP(_format)	(((_format) >> 24) & 0x3F)
 #define FREERDP_PIXEL_FORMAT_TYPE(_format)	(((_format) >> 16) & 0xFF)
 #define FREERDP_PIXEL_FORMAT_A(_format)		(((_format) >> 12) & 0x0F)

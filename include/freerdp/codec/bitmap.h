@@ -40,6 +40,8 @@ FREERDP_API int freerdp_bitmap_compress(char* in_data, int width, int height,
 
 typedef struct _BITMAP_PLANAR_CONTEXT BITMAP_PLANAR_CONTEXT;
 
+FREERDP_API int freerdp_bitmap_planar_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size);
+
 FREERDP_API BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data, UINT32 format,
 		int width, int height, int scanline, BYTE* dstData, int* dstSize);
 
