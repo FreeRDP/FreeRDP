@@ -299,6 +299,9 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 {
 	SSPI_CREDENTIALS* credentials = context->credentials;
 
+	if (memcmp(context->NtlmV2Hash, NTLM_NULL_BUFFER, 16) != 0)
+		return 1;
+
 	if (memcmp(context->NtlmHash, NTLM_NULL_BUFFER, 16) != 0)
 	{
 		NTOWFv2FromHashW(context->NtlmHash,
@@ -324,7 +327,7 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
 				(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2, (BYTE*) hash);
 	}
-	else
+	else if (context->UseSamFileDatabase)
 	{
 		ntlm_fetch_ntlm_v2_hash(context, hash);
 	}

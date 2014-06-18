@@ -168,6 +168,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 	context->SendSingleHostData = FALSE;
 	context->SendWorkstationName = TRUE;
 	context->NegotiateKeyExchange = TRUE;
+	context->UseSamFileDatabase = TRUE;
 
 	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\WinPR\\NTLM"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -675,6 +676,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, UL
 		SSPI_CREDENTIALS* credentials;
 		SecPkgContext_AuthIdentity* AuthIdentity = (SecPkgContext_AuthIdentity*) pBuffer;
 
+		context->UseSamFileDatabase = FALSE;
+
 		credentials = context->credentials;
 		ZeroMemory(AuthIdentity, sizeof(SecPkgContext_AuthIdentity));
 
@@ -724,7 +727,10 @@ SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContext, ULON
 		if (cbBuffer < sizeof(SecPkgContext_AuthNtlmHash))
 			return SEC_E_INVALID_PARAMETER;
 
-		CopyMemory(context->NtlmHash, AuthNtlmHash->NtlmHash, 16);
+		if (AuthNtlmHash->Version == 1)
+			CopyMemory(context->NtlmHash, AuthNtlmHash->NtlmHash, 16);
+		else if (AuthNtlmHash->Version == 2)
+			CopyMemory(context->NtlmV2Hash, AuthNtlmHash->NtlmHash, 16);
 
 		return SEC_E_OK;
 	}

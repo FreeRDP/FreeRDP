@@ -1017,6 +1017,7 @@ typedef struct _SecPkgContext_AuthPassword SecPkgContext_AuthPassword;
 
 struct _SecPkgContext_AuthNtlmHash
 {
+	int Version;
 	BYTE NtlmHash[16];
 };
 typedef struct _SecPkgContext_AuthNtlmHash SecPkgContext_AuthNtlmHash;
