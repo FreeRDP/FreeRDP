@@ -713,17 +713,11 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 	Stream_Read_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
 
-	if (!(message->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) &&
-			(message->DomainName.Len || message->DomainName.MaxLen))
-			return SEC_E_INVALID_TOKEN; /* only set if NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED is set */
+	context->NegotiateKeyExchange = (message->NegotiateFlags & NTLMSSP_NEGOTIATE_KEY_EXCH) ? TRUE : FALSE;
 
-	if (!(message->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) &&
-			(message->Workstation.Len || message->Workstation.MaxLen))
-			return SEC_E_INVALID_TOKEN; /* only set if NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED is set */
-
-	if (!(message->NegotiateFlags & NTLMSSP_NEGOTIATE_KEY_EXCH) &&
-			(message->EncryptedRandomSessionKey.Len || message->EncryptedRandomSessionKey.MaxLen))
-			return SEC_E_INVALID_TOKEN; /* only set if NTLMSSP_NEGOTIATE_KEY_EXCH is set */
+	if ((context->NegotiateKeyExchange && !message->EncryptedRandomSessionKey.Len) ||
+		(!context->NegotiateKeyExchange && message->EncryptedRandomSessionKey.Len))
+		return SEC_E_INVALID_TOKEN;
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 	{
@@ -778,7 +772,13 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (ntlm_read_message_fields_buffer(s, &(message->EncryptedRandomSessionKey)) < 0) /* EncryptedRandomSessionKey */
 		return SEC_E_INTERNAL_ERROR;
 
-	CopyMemory(context->EncryptedRandomSessionKey, message->EncryptedRandomSessionKey.Buffer, 16);
+	if (message->EncryptedRandomSessionKey.Len > 0)
+	{
+		if (message->EncryptedRandomSessionKey.Len != 16)
+			return SEC_E_INVALID_TOKEN;
+
+		CopyMemory(context->EncryptedRandomSessionKey, message->EncryptedRandomSessionKey.Buffer, 16);
+	}
 
 	length = Stream_GetPosition(s);
 
@@ -816,7 +816,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	ntlm_print_message_fields(&(message->NtChallengeResponse), "NtChallengeResponse");
 	ntlm_print_message_fields(&(message->EncryptedRandomSessionKey), "EncryptedRandomSessionKey");
 
-	ntlm_print_av_pair_list(response.Challenge.AvPairs);
+	ntlm_print_av_pair_list(context->NTLMv2Response.Challenge.AvPairs);
 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{

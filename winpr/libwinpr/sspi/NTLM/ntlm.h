@@ -251,6 +251,7 @@ struct _NTLM_CONTEXT
 	BYTE ChannelBindingsHash[16];
 	SecPkgContext_Bindings Bindings;
 	BOOL SendSingleHostData;
+	BOOL NegotiateKeyExchange;
 	NTLM_SINGLE_HOST_DATA SingleHostData;
 	NTLM_NEGOTIATE_MESSAGE NEGOTIATE_MESSAGE;
 	NTLM_CHALLENGE_MESSAGE CHALLENGE_MESSAGE;
