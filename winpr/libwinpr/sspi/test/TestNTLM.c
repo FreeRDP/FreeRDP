@@ -3,6 +3,58 @@
 #include <winpr/sspi.h>
 #include <winpr/print.h>
 
+static BYTE TEST_NTLM_TIMESTAMP[8] = { 0x33, 0x57, 0xbd, 0xb1, 0x07, 0x8b, 0xcf, 0x01 };
+
+static BYTE TEST_NTLM_CLIENT_CHALLENGE[8] = { 0x20, 0xc0, 0x2b, 0x3d, 0xc0, 0x61, 0xa7, 0x73 };
+
+static BYTE TEST_NTLM_SERVER_CHALLENGE[8] = { 0xa4, 0xf1, 0xba, 0xa6, 0x7c, 0xdc, 0x1a, 0x12 };
+
+static BYTE TEST_NTLM_NEGOTIATE[] =
+	"\x4e\x54\x4c\x4d\x53\x53\x50\x00\x01\x00\x00\x00\x07\x82\x08\xa2"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x06\x03\x80\x25\x00\x00\x00\x0f";
+
+static BYTE TEST_NTLM_CHALLENGE[] =
+	"\x4e\x54\x4c\x4d\x53\x53\x50\x00\x02\x00\x00\x00\x00\x00\x00\x00"
+	"\x38\x00\x00\x00\x07\x82\x88\xa2\xa4\xf1\xba\xa6\x7c\xdc\x1a\x12"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x66\x00\x66\x00\x38\x00\x00\x00"
+	"\x06\x03\x80\x25\x00\x00\x00\x0f\x02\x00\x0e\x00\x4e\x00\x45\x00"
+	"\x57\x00\x59\x00\x45\x00\x41\x00\x52\x00\x01\x00\x0e\x00\x4e\x00"
+	"\x45\x00\x57\x00\x59\x00\x45\x00\x41\x00\x52\x00\x04\x00\x1c\x00"
+	"\x6c\x00\x61\x00\x62\x00\x2e\x00\x77\x00\x61\x00\x79\x00\x6b\x00"
+	"\x2e\x00\x6c\x00\x6f\x00\x63\x00\x61\x00\x6c\x00\x03\x00\x0e\x00"
+	"\x6e\x00\x65\x00\x77\x00\x79\x00\x65\x00\x61\x00\x72\x00\x07\x00"
+	"\x08\x00\x33\x57\xbd\xb1\x07\x8b\xcf\x01\x00\x00\x00\x00";
+
+static BYTE TEST_NTLM_AUTHENTICATE[] =
+	"\x4e\x54\x4c\x4d\x53\x53\x50\x00\x03\x00\x00\x00\x18\x00\x18\x00"
+	"\x82\x00\x00\x00\x08\x01\x08\x01\x9a\x00\x00\x00\x0c\x00\x0c\x00"
+	"\x58\x00\x00\x00\x10\x00\x10\x00\x64\x00\x00\x00\x0e\x00\x0e\x00"
+	"\x74\x00\x00\x00\x00\x00\x00\x00\xa2\x01\x00\x00\x05\x82\x88\xa2"
+	"\x06\x03\x80\x25\x00\x00\x00\x0f\x12\xe5\x5a\xf5\x80\xee\x3f\x29"
+	"\xe1\xde\x90\x4d\x73\x77\x06\x25\x44\x00\x6f\x00\x6d\x00\x61\x00"
+	"\x69\x00\x6e\x00\x55\x00\x73\x00\x65\x00\x72\x00\x6e\x00\x61\x00"
+	"\x6d\x00\x65\x00\x4e\x00\x45\x00\x57\x00\x59\x00\x45\x00\x41\x00"
+	"\x52\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x62\x14\x68\xc8\x98\x12"
+	"\xe7\x39\xd8\x76\x1b\xe9\xf7\x54\xb5\xe3\x01\x01\x00\x00\x00\x00"
+	"\x00\x00\x33\x57\xbd\xb1\x07\x8b\xcf\x01\x20\xc0\x2b\x3d\xc0\x61"
+	"\xa7\x73\x00\x00\x00\x00\x02\x00\x0e\x00\x4e\x00\x45\x00\x57\x00"
+	"\x59\x00\x45\x00\x41\x00\x52\x00\x01\x00\x0e\x00\x4e\x00\x45\x00"
+	"\x57\x00\x59\x00\x45\x00\x41\x00\x52\x00\x04\x00\x1c\x00\x6c\x00"
+	"\x61\x00\x62\x00\x2e\x00\x77\x00\x61\x00\x79\x00\x6b\x00\x2e\x00"
+	"\x6c\x00\x6f\x00\x63\x00\x61\x00\x6c\x00\x03\x00\x0e\x00\x6e\x00"
+	"\x65\x00\x77\x00\x79\x00\x65\x00\x61\x00\x72\x00\x07\x00\x08\x00"
+	"\x33\x57\xbd\xb1\x07\x8b\xcf\x01\x06\x00\x04\x00\x02\x00\x00\x00"
+	"\x08\x00\x30\x00\x30\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00"
+	"\x00\x20\x00\x00\x1e\x10\xf5\x2c\x54\x2f\x2e\x77\x1c\x13\xbf\xc3"
+	"\x3f\xe1\x7b\x28\x7e\x0b\x93\x5a\x39\xd2\xce\x12\xd7\xbd\x8c\x4e"
+	"\x2b\xb5\x0b\xf5\x0a\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00\x00\x00\x00\x00\x00\x00\x09\x00\x1a\x00\x48\x00\x54\x00"
+	"\x54\x00\x50\x00\x2f\x00\x72\x00\x77\x00\x2e\x00\x6c\x00\x6f\x00"
+	"\x63\x00\x61\x00\x6c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	"\x00\x00";
+
 #define TEST_SSPI_INTERFACE SSPI_INTERFACE_WINPR
 
 static const char* TEST_NTLM_USER = "Username";
@@ -426,6 +478,7 @@ int TestNTLM(int argc, char* argv[])
 	PSecBuffer pSecBuffer;
 	TEST_NTLM_CLIENT* client;
 	TEST_NTLM_SERVER* server;
+	BOOL DynamicTest = TRUE;
 
 	/**
 	 * Client Initialization
@@ -467,7 +520,39 @@ int TestNTLM(int argc, char* argv[])
 		return -1;
 	}
 
+	if (!DynamicTest)
+	{
+		SecPkgContext_AuthNtlmTimestamp AuthNtlmTimestamp;
+		SecPkgContext_AuthNtlmClientChallenge AuthNtlmClientChallenge;
+		SecPkgContext_AuthNtlmServerChallenge AuthNtlmServerChallenge;
+
+		CopyMemory(AuthNtlmTimestamp.Timestamp, TEST_NTLM_TIMESTAMP, 8);
+
+		AuthNtlmTimestamp.ChallengeOrResponse = TRUE;
+		client->table->SetContextAttributes(&client->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
+				&AuthNtlmTimestamp, sizeof(SecPkgContext_AuthNtlmTimestamp));
+
+		AuthNtlmTimestamp.ChallengeOrResponse = FALSE;
+		client->table->SetContextAttributes(&client->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
+				&AuthNtlmTimestamp, sizeof(SecPkgContext_AuthNtlmTimestamp));
+
+		CopyMemory(AuthNtlmClientChallenge.ClientChallenge, TEST_NTLM_CLIENT_CHALLENGE, 8);
+		CopyMemory(AuthNtlmServerChallenge.ServerChallenge, TEST_NTLM_SERVER_CHALLENGE, 8);
+
+		client->table->SetContextAttributes(&client->context, SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE,
+				&AuthNtlmClientChallenge, sizeof(SecPkgContext_AuthNtlmClientChallenge));
+		client->table->SetContextAttributes(&client->context, SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE,
+				&AuthNtlmServerChallenge, sizeof(SecPkgContext_AuthNtlmServerChallenge));
+	}
+
 	pSecBuffer = &(client->outputBuffer[0]);
+
+	if (!DynamicTest)
+	{
+		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_NEGOTIATE) -1;
+		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
+		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_NEGOTIATE, pSecBuffer->cbBuffer);
+	}
 
 	fprintf(stderr, "NTLM_NEGOTIATE (length = %d):\n", pSecBuffer->cbBuffer);
 	winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
@@ -490,7 +575,48 @@ int TestNTLM(int argc, char* argv[])
 		return -1;
 	}
 
+	if (!DynamicTest)
+	{
+		SecPkgContext_AuthNtlmTimestamp AuthNtlmTimestamp;
+		SecPkgContext_AuthNtlmClientChallenge AuthNtlmClientChallenge;
+		SecPkgContext_AuthNtlmServerChallenge AuthNtlmServerChallenge;
+
+		CopyMemory(AuthNtlmTimestamp.Timestamp, TEST_NTLM_TIMESTAMP, 8);
+
+		AuthNtlmTimestamp.ChallengeOrResponse = TRUE;
+		client->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
+				&AuthNtlmTimestamp, sizeof(SecPkgContext_AuthNtlmTimestamp));
+
+		AuthNtlmTimestamp.ChallengeOrResponse = FALSE;
+		client->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_TIMESTAMP,
+				&AuthNtlmTimestamp, sizeof(SecPkgContext_AuthNtlmTimestamp));
+
+		CopyMemory(AuthNtlmClientChallenge.ClientChallenge, TEST_NTLM_CLIENT_CHALLENGE, 8);
+		CopyMemory(AuthNtlmServerChallenge.ServerChallenge, TEST_NTLM_SERVER_CHALLENGE, 8);
+
+		server->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE,
+				&AuthNtlmClientChallenge, sizeof(SecPkgContext_AuthNtlmClientChallenge));
+		server->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE,
+				&AuthNtlmServerChallenge, sizeof(SecPkgContext_AuthNtlmServerChallenge));
+	}
+
 	pSecBuffer = &(server->outputBuffer[0]);
+
+	if (!DynamicTest)
+	{
+		SecPkgContext_AuthNtlmMessage AuthNtlmMessage;
+
+		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_CHALLENGE) -1;
+		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
+		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_CHALLENGE, pSecBuffer->cbBuffer);
+
+		AuthNtlmMessage.type = 2;
+		AuthNtlmMessage.length = pSecBuffer->cbBuffer;
+		AuthNtlmMessage.buffer = (BYTE*) pSecBuffer->pvBuffer;
+
+		server->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_MESSAGE,
+				&AuthNtlmMessage, sizeof(SecPkgContext_AuthNtlmMessage));
+	}
 
 	fprintf(stderr, "NTLM_CHALLENGE (length = %d):\n", pSecBuffer->cbBuffer);
 	winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
@@ -514,6 +640,12 @@ int TestNTLM(int argc, char* argv[])
 	}
 
 	pSecBuffer = &(client->outputBuffer[0]);
+	if (!DynamicTest)
+	{
+		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_AUTHENTICATE) -1;
+		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
+		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_AUTHENTICATE, pSecBuffer->cbBuffer);
+	}
 
 	fprintf(stderr, "NTLM_AUTHENTICATE (length = %d):\n", pSecBuffer->cbBuffer);
 	winpr_HexDump((BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
