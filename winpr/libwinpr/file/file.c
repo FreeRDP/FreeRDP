@@ -368,12 +368,7 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 			if (io_status == 0)
 			{
-				switch (errno)
-				{
-					case ECONNRESET:
-						SetLastError(ERROR_BROKEN_PIPE);
-						break;
-				}
+				SetLastError(ERROR_BROKEN_PIPE);
 				status = FALSE;
 			}
 			else if (io_status < 0)
@@ -384,6 +379,9 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 				{
 					case EWOULDBLOCK:
 						SetLastError(ERROR_NO_DATA);
+						break;
+					default:
+						SetLastError(ERROR_BROKEN_PIPE);
 						break;
 				}
 			}
