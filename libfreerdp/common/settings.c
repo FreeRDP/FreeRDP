@@ -287,8 +287,17 @@ out_smartc_name_error:
 				goto out_serial_path_error;
 		}
 
+		if (serial->Driver)
+		{
+			_serial->Driver = _strdup(serial->Driver);
+			if (!_serial->Driver)
+				goto out_serial_driver_error;
+		}
+
 		return (RDPDR_DEVICE*) _serial;
 
+out_serial_driver_error:
+		free(_serial->Path);
 out_serial_path_error:
 		free(_serial->Name);
 out_serial_name_error:
@@ -360,6 +369,7 @@ void freerdp_device_collection_free(rdpSettings* settings)
 		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_SERIAL)
 		{
 			free(((RDPDR_SERIAL*) device)->Path);
+			free(((RDPDR_SERIAL*) device)->Driver);
 		}
 		else if (settings->DeviceArray[index]->Type == RDPDR_DTYP_PARALLEL)
 		{

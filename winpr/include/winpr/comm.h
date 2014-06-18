@@ -383,6 +383,20 @@ WINPR_API BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOver
 #define MAXULONG (4294967295UL)
 #endif
 
+
+/**
+ * IOCTLs table according the server's serial driver:
+ * http://msdn.microsoft.com/en-us/library/windows/hardware/dn265347%28v=vs.85%29.aspx
+ */
+typedef enum _SERIAL_DRIVER_ID
+{
+	SerialDriverUnknown = 0,
+	SerialDriverSerialSys,
+	SerialDriverSerCxSys,
+	SerialDriverSerCx2Sys /* default fallback, see also CommDeviceIoControl() */
+} SERIAL_DRIVER_ID;
+
+
 /*
  * About DefineCommDevice() / QueryDosDevice()
  *
@@ -533,6 +547,11 @@ static const _SERIAL_IOCTL_NAME _SERIAL_IOCTL_NAMES[] =
  * FIXME: got a proper function name and place
  */
 const char* _comm_serial_ioctl_name(ULONG number);
+
+/**
+ * FIXME: got a proper function name and place
+ */
+void _comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID);
 
 /**
  * FIXME: got a proper function name and place

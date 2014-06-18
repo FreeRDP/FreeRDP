@@ -64,6 +64,7 @@ typedef struct _SERIAL_DEVICE SERIAL_DEVICE;
 struct _SERIAL_DEVICE
 {
 	DEVICE device;
+	SERIAL_DRIVER_ID ServerSerialDriverId;
 	HANDLE* hComm;
 
 	/* TODO: use of log (prefered the old fashion DEBUG_SVC and
@@ -192,6 +193,8 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		goto error_handle;
 	}
+
+	_comm_setServerSerialDriver(serial->hComm, serial->ServerSerialDriverId);
 
 	/* FIXME: Appeared to be useful to setup some devices. Guess
 	 * the device driver asked to setup some unsupported feature
@@ -744,12 +747,14 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	int i, len;
 	char* name;
 	char* path;
+	char* driver;
 	RDPDR_SERIAL* device;
 	SERIAL_DEVICE* serial;
 
 	device = (RDPDR_SERIAL*) pEntryPoints->device;
 	name = device->Name;
 	path = device->Path;
+	driver = device->Driver;
 
 	if (!name || (name[0] == '*'))
 	{
@@ -781,6 +786,31 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		for (i = 0; i <= len; i++)
 			Stream_Write_UINT8(serial->device.data, name[i] < 0 ? '_' : name[i]);
+
+		if (driver != NULL)
+		{
+			if (_stricmp(driver, "Serial") == 0)
+				serial->ServerSerialDriverId = SerialDriverSerialSys;
+			else if (_stricmp(driver, "SerCx") == 0)
+				serial->ServerSerialDriverId = SerialDriverSerCxSys;
+			else if (_stricmp(driver, "SerCx2") == 0)
+				serial->ServerSerialDriverId = SerialDriverSerCx2Sys;
+			else
+			{
+				assert(FALSE);
+
+				DEBUG_SVC("Unknown server's serial driver: %s. SerCx2 will be used", driver);
+				serial->ServerSerialDriverId = SerialDriverSerCx2Sys;
+			}
+		}
+		else
+		{
+			/* default driver */
+			serial->ServerSerialDriverId = SerialDriverSerCx2Sys;
+		}
+
+		DEBUG_SVC("Server's serial driver: %s (id: %d)", driver, serial->ServerSerialDriverId);
+		/* TODO: implement auto detection of the server's serial driver */
 
 		serial->MainIrpQueue = MessageQueue_New(NULL);
 

@@ -347,7 +347,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
 	DWORD bytesReturned;
 
-	// TMP: FIXME: validate changes according GetCommProperties
+	/* FIXME: validate changes according GetCommProperties? */
 
 	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
 	{
@@ -538,8 +538,6 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 		upcomingTermios.c_iflag &= ~INPCK;
 	}
 
-	// TMP: TODO:
-	// (...)
 
 	/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363423%28v=vs.85%29.aspx
 	 *
@@ -1160,11 +1158,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 	InitializeCriticalSection(&pComm->WriteLock);
 
-
-	/* TMP: TODO: FIXME: this information is at least needed for
-	 * get/set baud functions. Is it possible to pull this
-	 * information? Could be a command line argument.
-	 */
+	/* can also be setup later on with _comm_setServerSerialDriver() */
 	pComm->serverSerialDriverId = SerialDriverUnknown;
 
 	InitializeCriticalSection(&pComm->EventsLock);
