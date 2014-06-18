@@ -139,7 +139,7 @@ static const speed_t _SERCX_SYS_BAUD_TABLE[][3] = {
 static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 {
 	int i;
-	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	if (!pSerialSys->get_properties(pComm, pProperties))
 	{
@@ -235,7 +235,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 {
 	SERIAL_HANDFLOW SerCxHandflow;
 	BOOL result = TRUE;
-	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	memcpy(&SerCxHandflow, pHandflow, sizeof(SERIAL_HANDFLOW));
 
@@ -314,7 +314,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 static BOOL _get_handflow(WINPR_COMM *pComm, SERIAL_HANDFLOW *pHandflow)
 {
 	BOOL result;
-	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	result = pSerialSys->get_handflow(pComm, pHandflow);
 
@@ -350,7 +350,7 @@ static const ULONG _SERCX_SYS_SUPPORTED_EV_MASK =
 static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 {
 	ULONG possibleMask;
-	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	possibleMask = *pWaitMask & _SERCX_SYS_SUPPORTED_EV_MASK;
 
@@ -369,9 +369,9 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 
 /* specific functions only */
-static REMOTE_SERIAL_DRIVER _SerCxSys =
+static SERIAL_DRIVER _SerCxSys =
 {
-	.id		  = RemoteSerialDriverSerCxSys,
+	.id		  = SerialDriverSerCxSys,
 	.name		  = _T("SerCx.sys"),
 	.set_baud_rate    = _set_baud_rate,
 	.get_baud_rate    = _get_baud_rate,
@@ -407,10 +407,10 @@ static REMOTE_SERIAL_DRIVER _SerCxSys =
 
 
 
-REMOTE_SERIAL_DRIVER* SerCxSys_s()
+SERIAL_DRIVER* SerCxSys_s()
 {
 	/* _SerCxSys completed with inherited functions from SerialSys */
-	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	_SerCxSys.set_serial_chars = pSerialSys->set_serial_chars;
 	_SerCxSys.get_serial_chars = pSerialSys->get_serial_chars;

@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-REMOTE_SERIAL_DRIVER* SerCx2Sys_s();
+SERIAL_DRIVER* SerCx2Sys_s();
 
 #ifdef __cplusplus
 }

@@ -999,7 +999,7 @@ BOOL IsCommDevice(LPCTSTR lpDeviceName)
 /**
  * Sets
  */
-void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID driverId)
+void _comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID driverId)
 {
 	ULONG Type;
 	PVOID Object;
@@ -1007,12 +1007,12 @@ void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID driverId)
 
 	if (!winpr_Handle_GetInfo(hComm, &Type, &Object))
 	{
-		DEBUG_WARN("_comm_setRemoteSerialDriver failure");
+		DEBUG_WARN("_comm_setServerSerialDriver failure");
 		return;
 	}
 
 	pComm = (WINPR_COMM*)Object;
-	pComm->remoteSerialDriverId = driverId;
+	pComm->serverSerialDriverId = driverId;
 }
 
 
@@ -1165,7 +1165,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	 * get/set baud functions. Is it possible to pull this
 	 * information? Could be a command line argument.
 	 */
-	pComm->remoteSerialDriverId = RemoteSerialDriverUnknown;
+	pComm->serverSerialDriverId = SerialDriverUnknown;
 
 	InitializeCriticalSection(&pComm->EventsLock);
 

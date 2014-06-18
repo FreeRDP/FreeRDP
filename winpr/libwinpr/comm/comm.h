@@ -34,13 +34,13 @@
  * IOCTLs table according the remote serial driver:
  * http://msdn.microsoft.com/en-us/library/windows/hardware/dn265347%28v=vs.85%29.aspx
  */
-typedef enum _REMOTE_SERIAL_DRIVER_ID
+typedef enum _SERIAL_DRIVER_ID
 {
-	RemoteSerialDriverUnknown = 0,
-	RemoteSerialDriverSerialSys,
-	RemoteSerialDriverSerCxSys,
-	RemoteSerialDriverSerCx2Sys /* default fallback, see also CommDeviceIoControl() */
-} REMOTE_SERIAL_DRIVER_ID;
+	SerialDriverUnknown = 0,
+	SerialDriverSerialSys,
+	SerialDriverSerCxSys,
+	SerialDriverSerCx2Sys /* default fallback, see also CommDeviceIoControl() */
+} SERIAL_DRIVER_ID;
 
 struct winpr_comm
 {
@@ -65,8 +65,7 @@ struct winpr_comm
 	 */
 	BOOL permissive;
 
-	// TMP: to be renamed serverSerialDriverId
-	REMOTE_SERIAL_DRIVER_ID remoteSerialDriverId;
+	SERIAL_DRIVER_ID serverSerialDriverId;
 
 	COMMTIMEOUTS timeouts;
 
@@ -80,7 +79,7 @@ struct winpr_comm
 
 typedef struct winpr_comm WINPR_COMM;
 
-void _comm_setRemoteSerialDriver(HANDLE hComm, REMOTE_SERIAL_DRIVER_ID);
+void _comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID);
 
 /* TMP: TODO: move all specific defines and types here? at least SERIAL_EV_* */
 #define SERIAL_EV_FREERDP_WAITING	0x4000 /* bit unused by SERIAL_EV_* */

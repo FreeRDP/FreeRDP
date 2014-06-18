@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-REMOTE_SERIAL_DRIVER* SerialSys_s();
+SERIAL_DRIVER* SerialSys_s();
 
 #ifdef __cplusplus
 }

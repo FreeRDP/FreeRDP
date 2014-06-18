@@ -1512,9 +1512,9 @@ BOOL _reset_device(WINPR_COMM *pComm)
 	return TRUE;
 }
 
-static REMOTE_SERIAL_DRIVER _SerialSys =
+static SERIAL_DRIVER _SerialSys =
 {
-	.id		  = RemoteSerialDriverSerialSys,
+	.id		  = SerialDriverSerialSys,
 	.name		  = _T("Serial.sys"),
 	.set_baud_rate	  = _set_baud_rate,
 	.get_baud_rate	  = _get_baud_rate,
@@ -1549,7 +1549,7 @@ static REMOTE_SERIAL_DRIVER _SerialSys =
 };
 
 
-REMOTE_SERIAL_DRIVER* SerialSys_s()
+SERIAL_DRIVER* SerialSys_s()
 {
 	return &_SerialSys;
 }

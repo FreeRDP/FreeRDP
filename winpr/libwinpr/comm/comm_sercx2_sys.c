@@ -75,7 +75,7 @@ static const ULONG _SERCX2_SYS_SUPPORTED_EV_MASK =
 static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 {
 	ULONG possibleMask;
-	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	possibleMask = *pWaitMask & _SERCX2_SYS_SUPPORTED_EV_MASK;
 
@@ -95,7 +95,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 {
-	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	/* http://msdn.microsoft.com/en-us/library/windows/hardware/ff546655%28v=vs.85%29.aspx */
 
@@ -120,9 +120,9 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 
 
 /* specific functions only */
-static REMOTE_SERIAL_DRIVER _SerCx2Sys =
+static SERIAL_DRIVER _SerCx2Sys =
 {
-	.id		  = RemoteSerialDriverSerCx2Sys,
+	.id		  = SerialDriverSerCx2Sys,
 	.name		  = _T("SerCx2.sys"),
 	.set_baud_rate	  = NULL,
 	.get_baud_rate    = NULL,
@@ -157,11 +157,11 @@ static REMOTE_SERIAL_DRIVER _SerCx2Sys =
 };
 
 
-REMOTE_SERIAL_DRIVER* SerCx2Sys_s()
+SERIAL_DRIVER* SerCx2Sys_s()
 {
 	/* _SerCx2Sys completed with inherited functions from SerialSys or SerCxSys */
-	REMOTE_SERIAL_DRIVER* pSerialSys = SerialSys_s();
-	REMOTE_SERIAL_DRIVER* pSerCxSys = SerCxSys_s();
+	SERIAL_DRIVER* pSerialSys = SerialSys_s();
+	SERIAL_DRIVER* pSerCxSys = SerCxSys_s();
 
 	_SerCx2Sys.set_baud_rate    = pSerCxSys->set_baud_rate;
 	_SerCx2Sys.get_baud_rate    = pSerCxSys->get_baud_rate;

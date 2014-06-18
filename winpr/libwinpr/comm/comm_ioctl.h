@@ -206,13 +206,13 @@ typedef struct _SERIAL_STATUS
 #define SERIAL_DCD_STATE         ((ULONG)0x00000080)
 
 /**
- * A function might be NULL if not supported by the underlying remote driver.
+ * A function might be NULL if not supported by the underlying driver.
  *
  * FIXME: better have to use input and output buffers for all functions?
  */
-typedef struct _REMOTE_SERIAL_DRIVER
+typedef struct _SERIAL_DRIVER
 {
-	REMOTE_SERIAL_DRIVER_ID id;
+	SERIAL_DRIVER_ID id;
 	TCHAR *name;
 	BOOL (*set_baud_rate)(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate);
 	BOOL (*get_baud_rate)(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate);
@@ -245,7 +245,7 @@ typedef struct _REMOTE_SERIAL_DRIVER
 	BOOL (*immediate_char)(WINPR_COMM *pComm, const UCHAR *pChar);
 	BOOL (*reset_device)(WINPR_COMM *pComm);
 
-} REMOTE_SERIAL_DRIVER;
+} SERIAL_DRIVER;
 
 
 int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *termios_p);

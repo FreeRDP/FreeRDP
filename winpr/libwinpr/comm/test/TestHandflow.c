@@ -54,21 +54,21 @@ int TestHandflow(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	_comm_setRemoteSerialDriver(hComm, RemoteSerialDriverSerialSys);
+	_comm_setServerSerialDriver(hComm, SerialDriverSerialSys);
 	if (!test_SerialSys(hComm))
 	{
 		fprintf(stderr, "test_SerCxSys failure\n");
 		return EXIT_FAILURE;
 	}
 
-	/* _comm_setRemoteSerialDriver(hComm, RemoteSerialDriverSerCxSys); */
+	/* _comm_setServerSerialDriver(hComm, SerialDriverSerCxSys); */
 	/* if (!test_SerCxSys(hComm)) */
 	/* { */
 	/* 	fprintf(stderr, "test_SerCxSys failure\n"); */
 	/* 	return EXIT_FAILURE; */
 	/* } */
 
-	/* _comm_setRemoteSerialDriver(hComm, RemoteSerialDriverSerCx2Sys); */
+	/* _comm_setServerSerialDriver(hComm, SerialDriverSerCx2Sys); */
 	/* if (!test_SerCx2Sys(hComm)) */
 	/* { */
 	/* 	fprintf(stderr, "test_SerCxSys failure\n"); */

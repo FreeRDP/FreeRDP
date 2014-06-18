@@ -94,28 +94,28 @@ int TestGetCommState(int argc, char* argv[])
 
 	if (!test_generic(hComm))
 	{
-		printf("test_generic failure (RemoteSerialDriverUnknown)\n");
+		printf("test_generic failure (SerialDriverUnknown)\n");
 		return EXIT_FAILURE;
 	}
 
-	_comm_setRemoteSerialDriver(hComm, RemoteSerialDriverSerialSys);
+	_comm_setServerSerialDriver(hComm, SerialDriverSerialSys);
 	if (!test_generic(hComm))
 	{
-		printf("test_generic failure (RemoteSerialDriverSerialSys)\n");
+		printf("test_generic failure (SerialDriverSerialSys)\n");
 		return EXIT_FAILURE;
 	}
 
-	_comm_setRemoteSerialDriver(hComm, RemoteSerialDriverSerCxSys);
+	_comm_setServerSerialDriver(hComm, SerialDriverSerCxSys);
 	if (!test_generic(hComm))
 	{
-		printf("test_generic failure (RemoteSerialDriverSerCxSys)\n");
+		printf("test_generic failure (SerialDriverSerCxSys)\n");
 		return EXIT_FAILURE;
 	}
 
-	_comm_setRemoteSerialDriver(hComm, RemoteSerialDriverSerCx2Sys);
+	_comm_setServerSerialDriver(hComm, SerialDriverSerCx2Sys);
 	if (!test_generic(hComm))
 	{
-		printf("test_generic failure (RemoteSerialDriverSerCx2Sys)\n");
+		printf("test_generic failure (SerialDriverSerCx2Sys)\n");
 		return EXIT_FAILURE;
 	}
 
