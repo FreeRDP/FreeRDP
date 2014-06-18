@@ -997,6 +997,10 @@ extern "C" {
 #define SECPKG_ATTR_AUTH_IDENTITY			1001
 #define SECPKG_ATTR_AUTH_PASSWORD			1002
 #define SECPKG_ATTR_AUTH_NTLM_HASH			1003
+#define SECPKG_ATTR_AUTH_NTLM_MESSAGE			1100
+#define SECPKG_ATTR_AUTH_NTLM_TIMESTAMP			1101
+#define SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE		1102
+#define SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE		1103
 
 struct _SecPkgContext_AuthIdentity
 {
@@ -1013,9 +1017,37 @@ typedef struct _SecPkgContext_AuthPassword SecPkgContext_AuthPassword;
 
 struct _SecPkgContext_AuthNtlmHash
 {
+	int Version;
 	BYTE NtlmHash[16];
 };
 typedef struct _SecPkgContext_AuthNtlmHash SecPkgContext_AuthNtlmHash;
+
+struct _SecPkgContext_AuthNtlmTimestamp
+{
+	BYTE Timestamp[8];
+	BOOL ChallengeOrResponse;
+};
+typedef struct _SecPkgContext_AuthNtlmTimestamp SecPkgContext_AuthNtlmTimestamp;
+
+struct _SecPkgContext_AuthNtlmClientChallenge
+{
+	BYTE ClientChallenge[8];
+};
+typedef struct _SecPkgContext_AuthNtlmClientChallenge SecPkgContext_AuthNtlmClientChallenge;
+
+struct _SecPkgContext_AuthNtlmServerChallenge
+{
+	BYTE ServerChallenge[8];
+};
+typedef struct _SecPkgContext_AuthNtlmServerChallenge SecPkgContext_AuthNtlmServerChallenge;
+
+struct _SecPkgContext_AuthNtlmMessage
+{
+	UINT32 type;
+	UINT32 length;
+	BYTE* buffer;
+};
+typedef struct _SecPkgContext_AuthNtlmMessage SecPkgContext_AuthNtlmMessage;
 
 #define SSPI_INTERFACE_WINPR	0x00000001
 #define SSPI_INTERFACE_NATIVE	0x00000002

@@ -39,7 +39,7 @@ static const char NTLM_SERVER_SIGN_MAGIC[] = "session key to server-to-client si
 static const char NTLM_CLIENT_SEAL_MAGIC[] = "session key to client-to-server sealing key magic constant";
 static const char NTLM_SERVER_SEAL_MAGIC[] = "session key to server-to-client sealing key magic constant";
 
-static const BYTE NTLM_NULL_HASH[16] =
+static const BYTE NTLM_NULL_BUFFER[16] =
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 /**
@@ -193,11 +193,7 @@ void ntlm_current_time(BYTE* timestamp)
 
 void ntlm_generate_timestamp(NTLM_CONTEXT* context)
 {
-	BYTE ZeroTimestamp[8];
-
-	ZeroMemory(ZeroTimestamp, 8);
-
-	if (memcmp(ZeroTimestamp, context->ChallengeTimestamp, 8) != 0)
+	if (memcmp(context->ChallengeTimestamp, NTLM_NULL_BUFFER, 8) != 0)
 		CopyMemory(context->Timestamp, context->ChallengeTimestamp, 8);
 	else
 		ntlm_current_time(context->Timestamp);
@@ -303,7 +299,10 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 {
 	SSPI_CREDENTIALS* credentials = context->credentials;
 
-	if (memcmp(context->NtlmHash, NTLM_NULL_HASH, 16) != 0)
+	if (memcmp(context->NtlmV2Hash, NTLM_NULL_BUFFER, 16) != 0)
+		return 1;
+
+	if (memcmp(context->NtlmHash, NTLM_NULL_BUFFER, 16) != 0)
 	{
 		NTOWFv2FromHashW(context->NtlmHash,
 				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
@@ -328,7 +327,7 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
 				(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2, (BYTE*) hash);
 	}
-	else
+	else if (context->UseSamFileDatabase)
 	{
 		ntlm_fetch_ntlm_v2_hash(context, hash);
 	}
@@ -388,7 +387,9 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	SecBuffer ntlm_v2_temp;
 	SecBuffer ntlm_v2_temp_chal;
 	PSecBuffer TargetInfo;
+	SSPI_CREDENTIALS* credentials;
 
+	credentials = context->credentials;
 	TargetInfo = &context->ChallengeTargetInfo;
 
 	if (!sspi_SecBufferAlloc(&ntlm_v2_temp, TargetInfo->cbBuffer + 28))
@@ -403,16 +404,16 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 		return -1;
 
 #ifdef WITH_DEBUG_NTLM
-	fprintf(stderr, "Password (length = %d)\n", context->identity.PasswordLength * 2);
-	winpr_HexDump((BYTE*) context->identity.Password, context->identity.PasswordLength * 2);
+	fprintf(stderr, "Password (length = %d)\n", credentials->identity.PasswordLength * 2);
+	winpr_HexDump((BYTE*) credentials->identity.Password, credentials->identity.PasswordLength * 2);
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "Username (length = %d)\n", context->identity.UserLength * 2);
-	winpr_HexDump((BYTE*) context->identity.User, context->identity.UserLength * 2);
+	fprintf(stderr, "Username (length = %d)\n", credentials->identity.UserLength * 2);
+	winpr_HexDump((BYTE*) credentials->identity.User, credentials->identity.UserLength * 2);
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "Domain (length = %d)\n", context->identity.DomainLength * 2);
-	winpr_HexDump((BYTE*) context->identity.Domain, context->identity.DomainLength * 2);
+	fprintf(stderr, "Domain (length = %d)\n", credentials->identity.DomainLength * 2);
+	winpr_HexDump((BYTE*) credentials->identity.Domain, credentials->identity.DomainLength * 2);
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "Workstation (length = %d)\n", context->Workstation.Length);
@@ -497,7 +498,9 @@ void ntlm_rc4k(BYTE* key, int length, BYTE* plaintext, BYTE* ciphertext)
 void ntlm_generate_client_challenge(NTLM_CONTEXT* context)
 {
 	/* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-	RAND_bytes(context->ClientChallenge, 8);
+
+	if (memcmp(context->ClientChallenge, NTLM_NULL_BUFFER, 8) == 0)
+		RAND_bytes(context->ClientChallenge, 8);
 }
 
 /**
@@ -507,7 +510,8 @@ void ntlm_generate_client_challenge(NTLM_CONTEXT* context)
 
 void ntlm_generate_server_challenge(NTLM_CONTEXT* context)
 {
-	RAND_bytes(context->ServerChallenge, 8);
+	if (memcmp(context->ServerChallenge, NTLM_NULL_BUFFER, 8) == 0)
+		RAND_bytes(context->ServerChallenge, 8);
 }
 
 /**
@@ -561,7 +565,18 @@ void ntlm_encrypt_random_session_key(NTLM_CONTEXT* context)
 void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
 {
 	/* In NTLMv2, EncryptedRandomSessionKey is the ExportedSessionKey RC4-encrypted with the KeyExchangeKey */
-	ntlm_rc4k(context->KeyExchangeKey, 16, context->EncryptedRandomSessionKey, context->RandomSessionKey);
+
+	/**
+	 * 	if (NegotiateFlags & NTLMSSP_NEGOTIATE_KEY_EXCH)
+	 * 		Set RandomSessionKey to RC4K(KeyExchangeKey, AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey)
+	 * 	else
+	 * 		Set RandomSessionKey to KeyExchangeKey
+	 */
+
+	if (context->NegotiateKeyExchange)
+		ntlm_rc4k(context->KeyExchangeKey, 16, context->EncryptedRandomSessionKey, context->RandomSessionKey);
+	else
+		CopyMemory(context->RandomSessionKey, context->KeyExchangeKey, 16);
 }
 
 /**
