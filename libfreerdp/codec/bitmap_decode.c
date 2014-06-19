@@ -276,7 +276,7 @@ BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int 
 		pDstData = dstData;
 
 		status = planar_decompress(NULL, srcData, size, &pDstData,
-				PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height);
+				PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
 
 		if (status < 0)
 			return FALSE;
