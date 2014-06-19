@@ -42,7 +42,7 @@
 
 /**
  * api-ms-win-core-file-l1-2-0.dll:
- * 
+ *
  * CreateFileA
  * CreateFileW
  * CreateFile2
@@ -150,8 +150,10 @@
 #include <unistd.h>
 #endif
 
+#include <assert.h>
 #include <time.h>
 #include <errno.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -190,34 +192,45 @@
  * winpr-collections to avoid a circular dependency
  * _HandleCreators = ArrayList_New(TRUE);
  */
+/* _HandleCreators is a NULL-terminated array with a maximun of HANDLE_CREATOR_MAX HANDLE_CREATOR */
+#define HANDLE_CREATOR_MAX 128
 static HANDLE_CREATOR **_HandleCreators = NULL;
 
-#define HANDLE_CREATOR_MAX 128
-
+static pthread_once_t _HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 static void _HandleCreatorsInit()
 {
-	/* 
-	 * TMP: FIXME: What kind of mutex should be used here? use of
-	 * a module_init()?
-	 */ 
+	/* NB: error management to be done outside of this function */
 
-	if (_HandleCreators == NULL)
-	{
-		_HandleCreators = (HANDLE_CREATOR**)calloc(HANDLE_CREATOR_MAX+1, sizeof(HANDLE_CREATOR*));
-	}
+	assert(_HandleCreators == NULL);
+
+	_HandleCreators = (HANDLE_CREATOR**)calloc(HANDLE_CREATOR_MAX+1, sizeof(HANDLE_CREATOR*));
+
+	assert(_HandleCreators != NULL);
 }
 
 /**
  * Returns TRUE on success, FALSE otherwise.
  *
  * ERRORS:
+ *   ERROR_DLL_INIT_FAILED
  *   ERROR_INSUFFICIENT_BUFFER _HandleCreators full
  */
 BOOL RegisterHandleCreator(PHANDLE_CREATOR pHandleCreator)
 {
 	int i;
 
-	_HandleCreatorsInit();
+	if (pthread_once(&_HandleCreatorsInitialized, _HandleCreatorsInit) != 0)
+	{
+		SetLastError(ERROR_DLL_INIT_FAILED);
+		return FALSE;
+	}
+
+	if (_HandleCreators == NULL)
+	{
+		SetLastError(ERROR_DLL_INIT_FAILED);
+		return FALSE;
+	}
+
 
 	for (i=0; i<HANDLE_CREATOR_MAX; i++)
 	{
@@ -265,7 +278,7 @@ int InstallAioSignalHandler()
 #endif /* HAVE_AIO_H */
 
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-		   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	int i;
 	char* name;
@@ -277,9 +290,17 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	if (!lpFileName)
 		return INVALID_HANDLE_VALUE;
 
-	_HandleCreatorsInit();
-	if (_HandleCreators == NULL)
+	if (pthread_once(&_HandleCreatorsInitialized, _HandleCreatorsInit) != 0)
+	{
+		SetLastError(ERROR_DLL_INIT_FAILED);
 		return INVALID_HANDLE_VALUE;
+	}
+
+	if (_HandleCreators == NULL)
+	{
+		SetLastError(ERROR_DLL_INIT_FAILED);
+		return INVALID_HANDLE_VALUE;
+	}
 
 	for (i=0; _HandleCreators[i] != NULL; i++)
 	{
@@ -291,7 +312,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 		}
 	}
 
-	/* * */
+	/* TODO: use of a HANDLE_CREATOR for named pipes as well */
 
 	if (!IsNamedPipeFileNameA(lpFileName))
 		return INVALID_HANDLE_VALUE;

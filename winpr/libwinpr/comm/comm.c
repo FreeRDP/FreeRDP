@@ -26,14 +26,15 @@
 
 #ifndef _WIN32
 
+#include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
-
-#include <errno.h>
 
 #include <freerdp/utils/debug.h>
 
@@ -749,31 +750,33 @@ typedef struct _COMM_DEVICE
 } COMM_DEVICE;
 
 /* FIXME: get a clever data structure, see also io.h functions */
-static COMM_DEVICE **_CommDevices = NULL;
-
+/* _CommDevices is a NULL-terminated array with a maximun of COMM_DEVICE_MAX COMM_DEVICE */
 #define COMM_DEVICE_MAX	128
+static COMM_DEVICE **_CommDevices = NULL;
 
 static HANDLE_CREATOR *_CommHandleCreator = NULL;
 
-
-static void _CommDevicesInit()
+static pthread_once_t _CommInitialized = PTHREAD_ONCE_INIT;
+static void _CommInit()
 {
-	/*
-	 * TMP: FIXME: What kind of mutex should be used here?
-	 * better have to let DefineCommDevice() and QueryCommDevice() thread unsafe ?
-	 * use of a module_init() ?
-	 */
+	/* NB: error management to be done outside of this function */
 
-	if (_CommDevices == NULL)
+	assert(_CommDevices == NULL);
+	assert(_CommHandleCreator == NULL);
+
+	_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX+1, sizeof(COMM_DEVICE*));
+
+	_CommHandleCreator = (HANDLE_CREATOR*)malloc(sizeof(HANDLE_CREATOR));
+	if (_CommHandleCreator)
 	{
-		_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX+1, sizeof(COMM_DEVICE*));
-
-		_CommHandleCreator = (HANDLE_CREATOR*)malloc(sizeof(HANDLE_CREATOR));
 		_CommHandleCreator->IsHandled = IsCommDevice;
 		_CommHandleCreator->CreateFileA = CommCreateFileA;
-
+		
 		RegisterHandleCreator(_CommHandleCreator);
 	}
+
+	assert(_CommDevices != NULL);
+	assert(_CommHandleCreator != NULL);
 }
 
 
@@ -818,6 +821,7 @@ static BOOL _IsReservedCommDeviceName(LPCTSTR lpName)
  * information, call GetLastError.
  *
  * ERRORS:
+ *   ERROR_DLL_INIT_FAILED
  *   ERROR_OUTOFMEMORY was not possible to get mappings.
  *   ERROR_INVALID_DATA was not possible to add the device.
  */
@@ -827,10 +831,15 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 	LPTSTR storedDeviceName = NULL;
 	LPTSTR storedTargetPath = NULL;
 
-	_CommDevicesInit();
+	if (pthread_once(&_CommInitialized, _CommInit) != 0)
+	{
+		SetLastError(ERROR_DLL_INIT_FAILED);
+		goto error_handle;
+	}
+
 	if (_CommDevices == NULL)
 	{
-		SetLastError(ERROR_OUTOFMEMORY);
+		SetLastError(ERROR_DLL_INIT_FAILED);
 		goto error_handle;
 	}
 
@@ -918,6 +927,7 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
  *
  * ERRORS:
  *   ERROR_SUCCESS
+ *   ERROR_DLL_INIT_FAILED
  *   ERROR_OUTOFMEMORY was not possible to get mappings.
  *   ERROR_NOT_SUPPORTED equivalent QueryDosDevice feature not supported.
  *   ERROR_INVALID_DATA was not possible to retrieve any device information.
@@ -930,10 +940,15 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 
 	SetLastError(ERROR_SUCCESS);
 
-	_CommDevicesInit();
+	if (pthread_once(&_CommInitialized, _CommInit) != 0)
+	{
+		SetLastError(ERROR_DLL_INIT_FAILED);
+		return 0;
+	}
+
 	if (_CommDevices == NULL)
 	{
-		SetLastError(ERROR_OUTOFMEMORY);
+		SetLastError(ERROR_DLL_INIT_FAILED);
 		return 0;
 	}
 
