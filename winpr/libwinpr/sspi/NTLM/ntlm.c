@@ -167,6 +167,8 @@ NTLM_CONTEXT* ntlm_ContextNew()
 	context->SendVersionInfo = TRUE;
 	context->SendSingleHostData = FALSE;
 	context->SendWorkstationName = TRUE;
+	context->NegotiateKeyExchange = TRUE;
+	context->UseSamFileDatabase = TRUE;
 
 	status = RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\WinPR\\NTLM"), 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -674,6 +676,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext, UL
 		SSPI_CREDENTIALS* credentials;
 		SecPkgContext_AuthIdentity* AuthIdentity = (SecPkgContext_AuthIdentity*) pBuffer;
 
+		context->UseSamFileDatabase = FALSE;
+
 		credentials = context->credentials;
 		ZeroMemory(AuthIdentity, sizeof(SecPkgContext_AuthIdentity));
 
@@ -723,7 +727,74 @@ SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContext, ULON
 		if (cbBuffer < sizeof(SecPkgContext_AuthNtlmHash))
 			return SEC_E_INVALID_PARAMETER;
 
-		CopyMemory(context->NtlmHash, AuthNtlmHash->NtlmHash, 16);
+		if (AuthNtlmHash->Version == 1)
+			CopyMemory(context->NtlmHash, AuthNtlmHash->NtlmHash, 16);
+		else if (AuthNtlmHash->Version == 2)
+			CopyMemory(context->NtlmV2Hash, AuthNtlmHash->NtlmHash, 16);
+
+		return SEC_E_OK;
+	}
+	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_MESSAGE)
+	{
+		SecPkgContext_AuthNtlmMessage* AuthNtlmMessage = (SecPkgContext_AuthNtlmMessage*) pBuffer;
+
+		if (cbBuffer < sizeof(SecPkgContext_AuthNtlmMessage))
+			return SEC_E_INVALID_PARAMETER;
+
+		if (AuthNtlmMessage->type == 1)
+		{
+			sspi_SecBufferFree(&context->NegotiateMessage);
+			sspi_SecBufferAlloc(&context->NegotiateMessage, AuthNtlmMessage->length);
+			CopyMemory(context->NegotiateMessage.pvBuffer, AuthNtlmMessage->buffer, AuthNtlmMessage->length);
+		}
+		else if (AuthNtlmMessage->type == 2)
+		{
+			sspi_SecBufferFree(&context->ChallengeMessage);
+			sspi_SecBufferAlloc(&context->ChallengeMessage, AuthNtlmMessage->length);
+			CopyMemory(context->ChallengeMessage.pvBuffer, AuthNtlmMessage->buffer, AuthNtlmMessage->length);
+		}
+		else if (AuthNtlmMessage->type == 3)
+		{
+			sspi_SecBufferFree(&context->AuthenticateMessage);
+			sspi_SecBufferAlloc(&context->AuthenticateMessage, AuthNtlmMessage->length);
+			CopyMemory(context->AuthenticateMessage.pvBuffer, AuthNtlmMessage->buffer, AuthNtlmMessage->length);
+		}
+
+		return SEC_E_OK;
+	}
+	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_TIMESTAMP)
+	{
+		SecPkgContext_AuthNtlmTimestamp* AuthNtlmTimestamp = (SecPkgContext_AuthNtlmTimestamp*) pBuffer;
+
+		if (cbBuffer < sizeof(SecPkgContext_AuthNtlmTimestamp))
+			return SEC_E_INVALID_PARAMETER;
+
+		if (AuthNtlmTimestamp->ChallengeOrResponse)
+			CopyMemory(context->ChallengeTimestamp, AuthNtlmTimestamp->Timestamp, 8);
+		else
+			CopyMemory(context->Timestamp, AuthNtlmTimestamp->Timestamp, 8);
+
+		return SEC_E_OK;
+	}
+	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE)
+	{
+		SecPkgContext_AuthNtlmClientChallenge* AuthNtlmClientChallenge = (SecPkgContext_AuthNtlmClientChallenge*) pBuffer;
+
+		if (cbBuffer < sizeof(SecPkgContext_AuthNtlmClientChallenge))
+			return SEC_E_INVALID_PARAMETER;
+
+		CopyMemory(context->ClientChallenge, AuthNtlmClientChallenge->ClientChallenge, 8);
+
+		return SEC_E_OK;
+	}
+	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE)
+	{
+		SecPkgContext_AuthNtlmServerChallenge* AuthNtlmServerChallenge = (SecPkgContext_AuthNtlmServerChallenge*) pBuffer;
+
+		if (cbBuffer < sizeof(SecPkgContext_AuthNtlmServerChallenge))
+			return SEC_E_INVALID_PARAMETER;
+
+		CopyMemory(context->ServerChallenge, AuthNtlmServerChallenge->ServerChallenge, 8);
 
 		return SEC_E_OK;
 	}
