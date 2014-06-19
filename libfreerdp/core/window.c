@@ -35,6 +35,11 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* icon_info)
 	Stream_Read_UINT16(s, icon_info->cacheEntry); /* cacheEntry (2 bytes) */
 	Stream_Read_UINT8(s, icon_info->cacheId); /* cacheId (1 byte) */
 	Stream_Read_UINT8(s, icon_info->bpp); /* bpp (1 byte) */
+	if ((icon_info->bpp < 1) || (icon_info->bpp > 32))
+	{
+		fprintf(stderr, "%s: invalid bpp %d\n", __FUNCTION__, icon_info->bpp);
+		return FALSE;
+	}
 	Stream_Read_UINT16(s, icon_info->width); /* width (2 bytes) */
 	Stream_Read_UINT16(s, icon_info->height); /* height (2 bytes) */
 
