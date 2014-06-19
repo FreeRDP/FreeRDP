@@ -28,14 +28,13 @@
 
 #include "planar.h"
 
-static int planar_decompress_plane_rle(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData, int nWidth, int nHeight, int nChannel)
+static int planar_decompress_plane_rle(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
+		int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, int nChannel)
 {
-	int k;
 	int x, y;
 	BYTE* srcp;
 	BYTE* dstp;
 	UINT32 pixel;
-	int scanline;
 	int cRawBytes;
 	int nRunLength;
 	int deltaValue;
@@ -43,18 +42,14 @@ static int planar_decompress_plane_rle(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDs
 	BYTE* currentScanline;
 	BYTE* previousScanline;
 
-	k = 0;
-	pDstData = &pDstData[nChannel];
-
 	srcp = pSrcData;
 	dstp = pDstData;
-	scanline = nWidth * 4;
 	previousScanline = NULL;
 
 	for (y = 0; y < nHeight; y++)
 	{
 		pixel = 0;
-		dstp = &pDstData[(nHeight - y - 1) * scanline];
+		dstp = &pDstData[((nHeight - y - 1) * nDstStep) + nChannel];
 		currentScanline = dstp;
 
 		for (x = 0; x < nWidth; )
@@ -64,7 +59,7 @@ static int planar_decompress_plane_rle(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDs
 
 			if ((srcp - pSrcData) > SrcSize)
 			{
-				printf("planar_decompress_plane_rle: error reading input buffer\n");
+				fprintf(stderr, "planar_decompress_plane_rle: error reading input buffer\n");
 				return -1;
 			}
 
@@ -84,7 +79,7 @@ static int planar_decompress_plane_rle(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDs
 
 			if (((dstp + (cRawBytes + nRunLength)) - currentScanline) > nWidth * 4)
 			{
-				printf("planar_decompress_plane_rle: too many pixels in scanline\n");
+				fprintf(stderr, "planar_decompress_plane_rle: too many pixels in scanline\n");
 				return -1;
 			}
 
@@ -156,23 +151,26 @@ static int planar_decompress_plane_rle(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDs
 	return (int) (srcp - pSrcData);
 }
 
-static int planar_decompress_plane_raw(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData, int nWidth, int nHeight, int nChannel)
+static int planar_decompress_plane_raw(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
+		int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, int nChannel)
 {
 	int x, y;
+	BYTE* dstp = NULL;
 	BYTE* srcp = pSrcData;
-
-	pDstData = &pDstData[nChannel];
 
 	for (y = 0; y < nHeight; y++)
 	{
+		dstp = &pDstData[((nHeight - y - 1) * nDstStep) + nChannel];
+
 		for (x = 0; x < nWidth; x++)
 		{
-			pDstData[(((nHeight - y - 1) * nWidth) + x) * 4] = *srcp;
+			*dstp = *srcp;
+			dstp += 4;
 			srcp++;
 		}
 	}
 
-	return (nWidth * nHeight);
+	return (int) (srcp - pSrcData);
 }
 
 int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcSize,
@@ -212,7 +210,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 		if (FormatHeader & PLANAR_FORMAT_HEADER_RLE)
 		{
 			status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
-					pDstData, nWidth, nHeight, 3);
+					pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 3);
 
 			if (status < 0)
 				return -1;
@@ -222,7 +220,10 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 		else
 		{
 			status = planar_decompress_plane_raw(srcp, SrcSize - (srcp - pSrcData),
-					pDstData, nWidth, nHeight, 3);
+					pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 3);
+
+			if (status < 0)
+				return -1;
 
 			srcp += status;
 		}
@@ -233,7 +234,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 		/* LumaOrRedPlane */
 
 		status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
-				pDstData, nWidth, nHeight, 2);
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 2);
 
 		if (status < 0)
 			return -1;
@@ -243,7 +244,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 		/* OrangeChromaOrGreenPlane */
 
 		status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
-				pDstData, nWidth, nHeight, 1);
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 1);
 
 		if (status < 0)
 			return -1;
@@ -253,7 +254,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 		/* GreenChromeOrBluePlane */
 
 		status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
-				pDstData, nWidth, nHeight, 0);
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 0);
 
 		if (status < 0)
 			return -1;
@@ -265,21 +266,30 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 		/* LumaOrRedPlane */
 
 		status = planar_decompress_plane_raw(srcp, SrcSize - (srcp - pSrcData),
-				pDstData, nWidth, nHeight, 2);
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 2);
+
+		if (status < 0)
+			return -1;
 
 		srcp += status;
 
 		/* OrangeChromaOrGreenPlane */
 
 		status = planar_decompress_plane_raw(srcp, SrcSize - (srcp - pSrcData),
-				pDstData, nWidth, nHeight, 1);
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 1);
+
+		if (status < 0)
+			return -1;
 
 		srcp += status;
 
 		/* GreenChromeOrBluePlane */
 
 		status = planar_decompress_plane_raw(srcp, SrcSize - (srcp - pSrcData),
-				pDstData, nWidth, nHeight, 0);
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 0);
+
+		if (status < 0)
+			return -1;
 
 		srcp += status;
 		srcp++;
