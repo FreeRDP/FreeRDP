@@ -385,6 +385,9 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
   error_handle:
 
+	/* FIXME: find out whether it's required or not to get
+	 * BytesReturned == OutputBufferLength when
+	 * CommDeviceIoControl returns FALSE */
 	assert(OutputBufferLength == BytesReturned);
 
 	Stream_Write_UINT32(irp->output, BytesReturned); /* OutputBufferLength (4 bytes) */

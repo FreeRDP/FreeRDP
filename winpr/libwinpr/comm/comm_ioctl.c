@@ -462,7 +462,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 
 				if (!pServerSerialDriver->wait_on_mask(pComm, pOutputMask))
 				{
-					*lpBytesReturned = sizeof(ULONG); /* TMP: TODO: all lpBytesReturned values to be reviewed on error */
+					*lpBytesReturned = sizeof(ULONG);
 					return FALSE;
 				}
 
@@ -670,6 +670,12 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	result = _CommDeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize,
 				lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
 
+	if (lpBytesReturned && *lpBytesReturned != nOutBufferSize)
+	{
+		/* This might be a hint for a bug, especially when result==TRUE */
+		DEBUG_WARN("lpBytesReturned=%d and nOutBufferSize=%d are different!", *lpBytesReturned, nOutBufferSize);
+	}
+
 	if (pComm->permissive)
 	{
 		if (!result)
@@ -722,7 +728,7 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *te
 		if (memcmp(&currentState, termios_p, sizeof(struct termios)) != 0)
 		{
 			DEBUG_WARN("Failure: all termios parameters are still not set on a second attempt");
-			return -1; /* TMP: double-check whether some parameters can differ anyway */
+			return -1;
 		}
 	}
 

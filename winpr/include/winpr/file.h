@@ -314,13 +314,13 @@ WINPR_API BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecu
 
 /* Extra Functions */
 
-typedef BOOL (*pcIsHandled)(LPCSTR lpFileName);
+typedef BOOL (*pcIsFileHandled)(LPCSTR lpFileName);
 typedef HANDLE (*pcCreateFileA)(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 				DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
 
 typedef struct _HANDLE_CREATOR
 {
-	pcIsHandled IsHandled;
+	pcIsFileHandled IsHandled;
 	pcCreateFileA CreateFileA;
 } HANDLE_CREATOR, *PHANDLE_CREATOR, *LPHANDLE_CREATOR;
 

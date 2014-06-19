@@ -755,6 +755,7 @@ typedef struct _COMM_DEVICE
 static COMM_DEVICE **_CommDevices = NULL;
 
 static HANDLE_CREATOR *_CommHandleCreator = NULL;
+static HANDLE_CLOSE_CB *_CommHandleCloseCb = NULL;
 
 static pthread_once_t _CommInitialized = PTHREAD_ONCE_INIT;
 static void _CommInit()
@@ -763,6 +764,7 @@ static void _CommInit()
 
 	assert(_CommDevices == NULL);
 	assert(_CommHandleCreator == NULL);
+	assert(_CommHandleCloseCb == NULL);
 
 	_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX+1, sizeof(COMM_DEVICE*));
 
@@ -775,8 +777,18 @@ static void _CommInit()
 		RegisterHandleCreator(_CommHandleCreator);
 	}
 
+	_CommHandleCloseCb = (HANDLE_CLOSE_CB*)malloc(sizeof(HANDLE_CLOSE_CB));
+	if (_CommHandleCloseCb)
+	{
+		_CommHandleCloseCb->IsHandled = CommIsHandled;
+		_CommHandleCloseCb->CloseHandle = CommCloseHandle;
+		
+		RegisterHandleCloseCb(_CommHandleCloseCb);
+	}
+
 	assert(_CommDevices != NULL);
 	assert(_CommHandleCreator != NULL);
+	assert(_CommHandleCloseCb != NULL);
 }
 
 
@@ -1229,6 +1241,71 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 
 	return INVALID_HANDLE_VALUE;
+}
+
+
+BOOL CommIsHandled(HANDLE handle)
+{
+	WINPR_COMM *pComm;
+
+	pComm = (WINPR_COMM*)handle;
+
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+BOOL CommCloseHandle(HANDLE handle)
+{
+	WINPR_COMM *pComm;
+
+	pComm = (WINPR_COMM*)handle;
+
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	if (pComm->PendingEvents & SERIAL_EV_FREERDP_WAITING)
+	{
+		ULONG WaitMask = 0;
+		DWORD BytesReturned = 0;
+
+		/* ensures to gracefully stop the WAIT_ON_MASK's loop */
+		if (!CommDeviceIoControl(handle, IOCTL_SERIAL_SET_WAIT_MASK, &WaitMask, sizeof(ULONG), NULL, 0, &BytesReturned, NULL))
+		{
+			DEBUG_WARN("failure to WAIT_ON_MASK's loop!");
+		}
+	}
+
+	DeleteCriticalSection(&pComm->ReadLock);
+	DeleteCriticalSection(&pComm->WriteLock);
+	DeleteCriticalSection(&pComm->EventsLock);
+
+	if (pComm->fd > 0)
+		close(pComm->fd);
+
+	if (pComm->fd_write > 0)
+		close(pComm->fd_write);
+
+	if (pComm->fd_write_event > 0)
+		close(pComm->fd_write_event);
+
+	if (pComm->fd_read > 0)
+		close(pComm->fd_read);
+
+	if (pComm->fd_read_event > 0)
+		close(pComm->fd_read_event);
+
+	free(pComm);
+
+	return TRUE;
 }
 
 

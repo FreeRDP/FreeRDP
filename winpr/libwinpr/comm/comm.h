@@ -74,6 +74,9 @@ typedef struct winpr_comm WINPR_COMM;
 #define FREERDP_PURGE_TXABORT		0x00000001 /* abort pending transmission */
 #define FREERDP_PURGE_RXABORT		0x00000002 /* abort pending reception */
 
+BOOL CommIsHandled(HANDLE handle);
+BOOL CommCloseHandle(HANDLE handle);
+
 #endif /* _WIN32 */
 
 #endif /* WINPR_COMM_PRIVATE_H */
