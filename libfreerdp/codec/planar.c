@@ -62,7 +62,7 @@ static int planar_decompress_plane_rle(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDs
 
 	for (y = beg; y != end; y += inc)
 	{
-		dstp = &pDstData[(y * nDstStep) + nChannel];
+		dstp = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4) + nChannel];
 
 		pixel = 0;
 		currentScanline = dstp;
@@ -189,7 +189,7 @@ static int planar_decompress_plane_raw(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDs
 
 	for (y = beg; y != end; y += inc)
 	{
-		dstp = &pDstData[(y * nDstStep) + nChannel];
+		dstp = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4) + nChannel];
 
 		for (x = 0; x < nWidth; x++)
 		{

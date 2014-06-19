@@ -303,13 +303,10 @@ int xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGF
 	if (!surface)
 		return -1;
 
+	DstData = surface->data;
+
 	status = planar_decompress(NULL, cmd->data, cmd->length, &DstData,
-			PIXEL_FORMAT_XRGB32, cmd->width * 4, 0, 0, cmd->width, cmd->height);
-
-	freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top,
-			cmd->width, cmd->height, DstData, PIXEL_FORMAT_XRGB32, cmd->width * 4, 0, 0);
-
-	free(DstData);
+			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
 
 	invalidRect.left = cmd->left;
 	invalidRect.top = cmd->top;
