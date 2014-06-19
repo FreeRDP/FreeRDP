@@ -42,7 +42,6 @@ struct xf_gfx_cache_entry
 	UINT32 height;
 	BOOL alpha;
 	BYTE* data;
-	XImage* image;
 	int scanline;
 };
 typedef struct xf_gfx_cache_entry xfGfxCacheEntry;

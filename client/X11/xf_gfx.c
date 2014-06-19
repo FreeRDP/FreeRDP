@@ -80,8 +80,8 @@ int xf_OutputUpdate(xfContext* xfc)
 
 	surfaceRect.left = 0;
 	surfaceRect.top = 0;
-	surfaceRect.right = xfc->width - 1;
-	surfaceRect.bottom = xfc->height - 1;
+	surfaceRect.right = xfc->width;
+	surfaceRect.bottom = xfc->height;
 
 	region16_intersect_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &surfaceRect);
 
@@ -93,8 +93,8 @@ int xf_OutputUpdate(xfContext* xfc)
 	{
 		extents = region16_extents(&(xfc->invalidRegion));
 
-		width = extents->right - extents->left + 1;
-		height = extents->bottom - extents->top + 1;
+		width = extents->right - extents->left;
+		height = extents->bottom - extents->top;
 
 		if (width > xfc->width)
 			width = xfc->width;
@@ -121,8 +121,8 @@ int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height)
 
 	invalidRect.left = x;
 	invalidRect.top = y;
-	invalidRect.right = x + width - 1;
-	invalidRect.bottom = y + height - 1;
+	invalidRect.right = x + width;
+	invalidRect.bottom = y + height;
 
 	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
 
@@ -212,8 +212,8 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 
 		clippingRect.left = cmd->left + rect->x;
 		clippingRect.top = cmd->top + rect->y;
-		clippingRect.right = clippingRect.left + rect->width - 1;
-		clippingRect.bottom = clippingRect.top + rect->height - 1;
+		clippingRect.right = clippingRect.left + rect->width;
+		clippingRect.bottom = clippingRect.top + rect->height;
 
 		region16_union_rect(&clippingRects, &clippingRects, &clippingRect);
 	}
@@ -224,8 +224,8 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 
 		updateRect.left = cmd->left + tile->x;
 		updateRect.top = cmd->top + tile->y;
-		updateRect.right = updateRect.left + 64 - 1;
-		updateRect.bottom = updateRect.top + 64 - 1;
+		updateRect.right = updateRect.left + 64;
+		updateRect.bottom = updateRect.top + 64;
 
 		region16_init(&updateRegion);
 		region16_intersect_rect(&updateRegion, &clippingRects, &updateRect);
@@ -235,8 +235,8 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 		{
 			nXDst = updateRects[j].left;
 			nYDst = updateRects[j].top;
-			nWidth = updateRects[j].right - updateRects[j].left + 1;
-			nHeight = updateRects[j].bottom - updateRects[j].top + 1;
+			nWidth = updateRects[j].right - updateRects[j].left;
+			nHeight = updateRects[j].bottom - updateRects[j].top;
 
 			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
 					nXDst, nYDst, nWidth, nHeight,
@@ -389,14 +389,14 @@ int xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* cr
 	surface->height = (UINT32) createSurface->height;
 	surface->alpha = (createSurface->pixelFormat == PIXEL_FORMAT_ARGB_8888) ? TRUE : FALSE;
 
-	surface->scanline = surface->width * 4;
+	surface->scanline = (surface->width + (surface->width % 4)) * 4;
 	surface->data = (BYTE*) calloc(1, surface->scanline * surface->height);
 
 	if (!surface->data)
 		return -1;
 
 	surface->image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
-			(char*) surface->data, surface->width, surface->height, 32, 0);
+			(char*) surface->data, surface->width, surface->height, 32, surface->scanline);
 
 	context->SetSurfaceData(context, surface->surfaceId, (void*) surface);
 
@@ -546,7 +546,7 @@ int xf_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU*
 	cacheEntry->height = (UINT32) (rect->bottom - rect->top);
 	cacheEntry->alpha = surface->alpha;
 
-	cacheEntry->scanline = cacheEntry->width * 4;
+	cacheEntry->scanline = (cacheEntry->width + (cacheEntry->width % 4)) * 4;
 	cacheEntry->data = (BYTE*) calloc(1, surface->scanline * surface->height);
 
 	if (!cacheEntry->data)
@@ -608,7 +608,19 @@ int xf_CacheImportReply(RdpgfxClientContext* context, RDPGFX_CACHE_IMPORT_REPLY_
 
 int xf_EvictCacheEntry(RdpgfxClientContext* context, RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry)
 {
+	xfGfxCacheEntry* cacheEntry;
+
 	printf("xf_EvictCacheEntry\n");
+
+	cacheEntry = (xfGfxCacheEntry*) context->GetCacheSlotData(context, evictCacheEntry->cacheSlot);
+
+	if (cacheEntry)
+	{
+		free(cacheEntry->data);
+		free(cacheEntry);
+	}
+
+	context->SetCacheSlotData(context, evictCacheEntry->cacheSlot, NULL);
 
 	return 1;
 }

@@ -479,7 +479,7 @@ wHashTable* HashTable_New(BOOL synchronized)
 	if (table)
 	{
 		table->synchronized = synchronized;
-		InitializeCriticalSectionAndSpinCount(&table->lock, 4000);
+		InitializeCriticalSectionAndSpinCount(&(table->lock), 4000);
 
 		table->numOfBuckets = 64;
 		table->numOfElements = 0;
@@ -536,6 +536,8 @@ void HashTable_Free(wHashTable* table)
 				pair = nextPair;
 			}
 		}
+
+		DeleteCriticalSection(&(table->lock));
 
 		free(table->bucketArray);
 		free(table);
