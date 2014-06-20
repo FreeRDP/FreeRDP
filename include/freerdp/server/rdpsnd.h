@@ -32,7 +32,8 @@ typedef int (*psRdpsndStop)(RdpsndServerContext* context);
 
 typedef BOOL (*psRdpsndServerInitialize)(RdpsndServerContext* context);
 typedef BOOL (*psRdpsndServerSelectFormat)(RdpsndServerContext* context, int client_format_index);
-typedef BOOL (*psRdpsndServerSendSamples)(RdpsndServerContext* context, const void* buf, int nframes);
+typedef BOOL (*psRdpsndServerSendSamples)(RdpsndServerContext* context, const void* buf, int nframes, UINT16 wTimestamp);
+typedef BOOL (*psRdpsndServerConfirmBlock)(RdpsndServerContext* context, BYTE confirmBlockNum, UINT16 wtimestamp);
 typedef BOOL (*psRdpsndServerSetVolume)(RdpsndServerContext* context, int left, int right);
 typedef BOOL (*psRdpsndServerClose)(RdpsndServerContext* context);
 
@@ -82,6 +83,10 @@ struct _rdpsnd_server_context
 	 * nframes * src_format.nBitsPerSample * src_format.nChannels / 8
 	 */
 	psRdpsndServerSendSamples SendSamples;
+	/**
+	 * Called when block confirm is received from the client
+	 */
+	psRdpsndServerConfirmBlock ConfirmBlock;
 	/**
 	 * Set the volume level of the client. Valid range is between 0 and 0xFFFF.
 	 */

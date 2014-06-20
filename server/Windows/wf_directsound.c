@@ -162,8 +162,8 @@ DWORD WINAPI wf_rdpsnd_directsound_thread(LPVOID lpParam)
 
 			//FIXME: frames = bytes/(bytespersample * channels)
 		
-			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData, dwCaptureLength/4);
-			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData2, dwCaptureLength2/4);
+			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData, dwCaptureLength/4, (UINT16)(beg & 0xffff));
+			context->rdpsnd->SendSamples(context->rdpsnd, pbCaptureData2, dwCaptureLength2/4, (UINT16)(beg & 0xffff));
 
 
 			hr = capBuf->lpVtbl->Unlock(capBuf, pbCaptureData, dwCaptureLength, pbCaptureData2, dwCaptureLength2);
