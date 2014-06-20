@@ -210,6 +210,8 @@ int rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s
 		context->ResetGraphics(context, &pdu);
 	}
 
+	free(pdu.monitorDefArray);
+
 	return 1;
 }
 
@@ -595,6 +597,8 @@ int rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream*
 		context->CacheToSurface(context, &pdu);
 	}
 
+	free(pdu.destPts);
+
 	return 1;
 }
 
@@ -850,7 +854,11 @@ static int rdpgfx_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 
 static int rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 {
+	int count;
+	int index;
+	ULONG_PTR* pKeys = NULL;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) pPlugin;
+	RdpgfxClientContext* context = (RdpgfxClientContext*) gfx->iface.pInterface;
 
 	WLog_Print(gfx->log, WLOG_DEBUG, "Terminated");
 
@@ -859,7 +867,40 @@ static int rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 
 	zgfx_context_free(gfx->zgfx);
 
+	count = HashTable_GetKeys(gfx->SurfaceTable, &pKeys);
+
+	for (index = 0; index < count; index++)
+	{
+		RDPGFX_DELETE_SURFACE_PDU pdu;
+
+		pdu.surfaceId = ((UINT16) pKeys[index]) - 1;
+
+		if (context && context->DeleteSurface)
+		{
+			context->DeleteSurface(context, &pdu);
+		}
+	}
+
+	free(pKeys);
+
 	HashTable_Free(gfx->SurfaceTable);
+
+	for (index = 0; index < gfx->MaxCacheSlot; index++)
+	{
+		if (gfx->CacheSlots[index])
+		{
+			RDPGFX_EVICT_CACHE_ENTRY_PDU pdu;
+
+			pdu.cacheSlot = (UINT16) index;
+
+			if (context && context->EvictCacheEntry)
+			{
+				context->EvictCacheEntry(context, &pdu);
+			}
+
+			gfx->CacheSlots[index] = NULL;
+		}
+	}
 
 	free(gfx);
 

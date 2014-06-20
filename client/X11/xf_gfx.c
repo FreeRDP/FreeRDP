@@ -610,7 +610,7 @@ int xf_EvictCacheEntry(RdpgfxClientContext* context, RDPGFX_EVICT_CACHE_ENTRY_PD
 {
 	xfGfxCacheEntry* cacheEntry;
 
-	printf("xf_EvictCacheEntry\n");
+	//printf("xf_EvictCacheEntry\n");
 
 	cacheEntry = (xfGfxCacheEntry*) context->GetCacheSlotData(context, evictCacheEntry->cacheSlot);
 
@@ -639,7 +639,7 @@ int xf_MapSurfaceToWindow(RdpgfxClientContext* context, RDPGFX_MAP_SURFACE_TO_WI
 	return 1;
 }
 
-void xf_register_graphics_pipeline(xfContext* xfc, RdpgfxClientContext* gfx)
+void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 {
 	xfc->gfx = gfx;
 	gfx->custom = (void*) xfc;
@@ -661,4 +661,12 @@ void xf_register_graphics_pipeline(xfContext* xfc, RdpgfxClientContext* gfx)
 	gfx->MapSurfaceToWindow = xf_MapSurfaceToWindow;
 
 	region16_init(&(xfc->invalidRegion));
+}
+
+void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)
+{
+	region16_uninit(&(xfc->invalidRegion));
+
+	gfx->custom = NULL;
+	xfc->gfx = NULL;
 }

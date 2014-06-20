@@ -822,25 +822,33 @@ BOOL xf_IsWindowBorder(xfContext *xfc, xfWindow *xfw, int x, int y)
 
 void xf_DestroyWindow(xfContext *xfc, xfWindow *window)
 {
-	if(window == NULL)
+	if (!window)
 		return;
-	if(xfc->window == window)
+
+	if (xfc->window == window)
 		xfc->window = NULL;
-	if(window->gc)
+
+	if (window->gc)
 		XFreeGC(xfc->display, window->gc);
-	if(window->handle)
+
+	if (window->handle)
 	{
 		XUnmapWindow(xfc->display, window->handle);
 		XDestroyWindow(xfc->display, window->handle);
 	}
-	free(window);
-	if(window->xfwin)
+
+	if (window->xfwin)
 		munmap(0, sizeof(*window->xfwin));
-	if(window->shmid >= 0)
+
+	if (window->shmid >= 0)
 		close(window->shmid);
+
 	shm_unlink(get_shm_id());
+
 	window->xfwin = -1;
 	window->shmid = -1;
+
+	free(window);
 }
 
 rdpWindow *xf_rdpWindowFromWindow(xfContext *xfc, Window wnd)

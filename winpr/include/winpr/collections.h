@@ -326,6 +326,8 @@ WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
 
 /* Hash Table */
 
+typedef void (*KEY_VALUE_FREE_FN)(void* context, void* key, void* value);
+
 struct _wHashTable
 {
 	BOOL synchronized;
@@ -342,6 +344,9 @@ struct _wHashTable
 	unsigned long (*hashFunction)(void* key);
 	void (*keyDeallocator)(void* key);
 	void (*valueDeallocator)(void* value);
+
+	void* context;
+	KEY_VALUE_FREE_FN pfnKeyValueFree;
 };
 typedef struct _wHashTable wHashTable;
 
@@ -354,6 +359,8 @@ WINPR_API BOOL HashTable_ContainsKey(wHashTable* table, void* key);
 WINPR_API BOOL HashTable_ContainsValue(wHashTable* table, void* value);
 WINPR_API void* HashTable_GetItemValue(wHashTable* table, void* key);
 WINPR_API BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value);
+WINPR_API void HashTable_SetFreeFunction(wHashTable* table, void* context, KEY_VALUE_FREE_FN pfnKeyValueFree);
+WINPR_API int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys);
 
 WINPR_API wHashTable* HashTable_New(BOOL synchronized);
 WINPR_API void HashTable_Free(wHashTable* table);

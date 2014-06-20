@@ -38,11 +38,20 @@ void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		xf_register_graphics_pipeline(xfc, (RdpgfxClientContext*) e->pInterface);
+		xf_graphics_pipeline_init(xfc, (RdpgfxClientContext*) e->pInterface);
 	}
 }
 
 void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
 {
+	xfContext* xfc = (xfContext*) context;
 
+	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		xfc->rdpei = NULL;
+	}
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_graphics_pipeline_uninit(xfc, (RdpgfxClientContext*) e->pInterface);
+	}
 }

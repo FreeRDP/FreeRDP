@@ -48,6 +48,7 @@ typedef struct xf_gfx_cache_entry xfGfxCacheEntry;
 
 int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height);
 
-void xf_register_graphics_pipeline(xfContext* xfc, RdpgfxClientContext* gfx);
+void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx);
+void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx);
 
 #endif /* __XF_GRAPHICS_PIPELINE_H */

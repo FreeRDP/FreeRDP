@@ -475,7 +475,7 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UI
 
 int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, wStream* data)
 {
-	int error = 0;
+	int status = 0;
 	DVCMAN_CHANNEL* channel;
 	UINT32 dataSize = Stream_GetRemainingLength(data);
 
@@ -504,16 +504,16 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 		{
 			Stream_SealLength(channel->dvc_data);
 			Stream_SetPosition(channel->dvc_data, 0);
-			error = channel->channel_callback->OnDataReceived(channel->channel_callback, channel->dvc_data);
+			status = channel->channel_callback->OnDataReceived(channel->channel_callback, channel->dvc_data);
 			Stream_Release(channel->dvc_data);
 			channel->dvc_data = NULL;
 		}
 	}
 	else
 	{
-		error = channel->channel_callback->OnDataReceived(channel->channel_callback, data);
+		status = channel->channel_callback->OnDataReceived(channel->channel_callback, data);
 	}
 
-	return error;
+	return status;
 }
 
