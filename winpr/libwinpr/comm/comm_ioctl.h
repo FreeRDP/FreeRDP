@@ -147,21 +147,6 @@ typedef struct _SERIAL_TIMEOUTS
 #define SERIAL_MSR_RI       0x40
 #define SERIAL_MSR_DCD      0x80
 
-
-#define SERIAL_EV_RXCHAR           0x0001
-#define SERIAL_EV_RXFLAG           0x0002
-#define SERIAL_EV_TXEMPTY          0x0004
-#define SERIAL_EV_CTS              0x0008
-#define SERIAL_EV_DSR              0x0010
-#define SERIAL_EV_RLSD             0x0020
-#define SERIAL_EV_BREAK            0x0040
-#define SERIAL_EV_ERR              0x0080
-#define SERIAL_EV_RING             0x0100
-#define SERIAL_EV_PERR             0x0200
-#define SERIAL_EV_RX80FULL         0x0400
-#define SERIAL_EV_EVENT1           0x0800
-#define SERIAL_EV_EVENT2           0x1000
-
 typedef struct _SERIAL_QUEUE_SIZE
 {
 	ULONG InSize;
