@@ -145,12 +145,12 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 	/* FIXME: what about PST_RS232? see also: serial_struct */
 	pProperties->dwProvSubType = PST_UNSPECIFIED;
 
-	/* TMP: TODO: to be finalized */
+	/* TODO: to be finalized */
 	pProperties->dwProvCapabilities =
-		/*PCF_16BITMODE | PCF_DTRDSR |*/ PCF_INTTIMEOUTS | PCF_PARITY_CHECK | /*PCF_RLSD | */
-		PCF_RTSCTS | PCF_SETXCHAR | /*PCF_SPECIALCHARS | PCF_TOTALTIMEOUTS |*/ PCF_XONXOFF;
+		/*PCF_16BITMODE |*/ PCF_DTRDSR | PCF_INTTIMEOUTS | PCF_PARITY_CHECK | /*PCF_RLSD |*/
+		PCF_RTSCTS | PCF_SETXCHAR | /*PCF_SPECIALCHARS |*/ PCF_TOTALTIMEOUTS | PCF_XONXOFF;
 
-	/* TMP: TODO: double check SP_RLSD */
+	/* TODO: double check SP_RLSD */
 	pProperties->dwSettableParams = SP_BAUD | SP_DATABITS | SP_HANDSHAKING | SP_PARITY | SP_PARITY_CHECK | /*SP_RLSD |*/ SP_STOPBITS;
 
 	pProperties->dwSettableBaud = 0;
@@ -310,7 +310,7 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 		result = FALSE; /* but keep on */
 	}
 
-	/* TMP: FIXME: Didn't find anything similar yet on Linux. What about ISIG? */
+	/* FIXME: could be implemented during read/write I/O. What about ISIG? */
 	if (pSerialChars->EventChar != '\0')
 	{
 		DEBUG_WARN("EventChar='%c' (0x%x) cannot be set\n", pSerialChars->EventChar, pSerialChars->EventChar);
@@ -352,7 +352,7 @@ static BOOL _get_serial_chars(WINPR_COMM *pComm, SERIAL_CHARS *pSerialChars)
 
 	/* BreakChar unsupported */
 
-	/* TMP: FIXME: see also: _set_serial_chars() */
+	/* FIXME: see also: _set_serial_chars() */
 	/* EventChar */
 
 	pSerialChars->XonChar = currentTermios.c_cc[VSTART];
@@ -609,7 +609,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 		result = FALSE; /* but keep on */
 	}
 
-	// TMP: FIXME: could be implemented during read/write I/O
+	// FIXME: could be implemented during read/write I/O
 	if (pHandflow->ControlHandShake & SERIAL_DSR_SENSITIVITY)
 	{
 		/* DSR line control not supported on Linux */
@@ -618,7 +618,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 		result = FALSE; /* but keep on */
 	}
 
-	// TMP: FIXME: could be implemented during read/write I/O
+	// FIXME: could be implemented during read/write I/O
 	if (pHandflow->ControlHandShake & SERIAL_ERROR_ABORT)
 	{
 		/* Aborting operations on error not supported on Linux */
@@ -647,7 +647,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 		upcomingTermios.c_iflag &= ~IXOFF;
 	}
 
-	// TMP: FIXME: could be implemented during read/write I/O, as of today ErrorChar is necessary '\0'
+	// FIXME: could be implemented during read/write I/O, as of today ErrorChar is necessary '\0'
 	if (pHandflow->FlowReplace & SERIAL_ERROR_CHAR)
 	{
 		/* errors will be replaced by the character '\0'. */
@@ -667,7 +667,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 		upcomingTermios.c_iflag &= ~IGNBRK;
 	}
 
-	// TMP: FIXME: could be implemented during read/write I/O
+	// FIXME: could be implemented during read/write I/O
 	if (pHandflow->FlowReplace & SERIAL_BREAK_CHAR)
 	{
 		DEBUG_WARN("Attempt to use the unsupported SERIAL_BREAK_CHAR feature.");
@@ -1038,18 +1038,6 @@ static BOOL _get_wait_mask(WINPR_COMM *pComm, ULONG *pWaitMask)
 
 static BOOL _set_queue_size(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSize)
 {
-
-/* TMP: FIXME: do at least a purge/reset ? */
-/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363423%28v=vs.85%29.aspx */
-/* A process reinitializes a communications resource by using the SetupComm function, which performs the following tasks: */
-
-/*     Terminates pending read and write operations, even if they have not been completed. */
-/*     Discards unread characters and frees the internal output and input buffers of the driver associated with the specified resource. */
-/*     Reallocates the internal output and input buffers. */
-
-/* A process is not required to call SetupComm. If it does not, the resource's driver initializes the device with the default settings the first time that the communications resource handle is used. */
-
-
 	if ((pQueueSize->InSize <= N_TTY_BUF_SIZE) && (pQueueSize->OutSize <= N_TTY_BUF_SIZE))
 		return TRUE; /* nothing to do */
 
@@ -1240,7 +1228,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	/*  BOOLEAN EofReceived; FIXME: once EofChar supported */
 
 
-	/*  BOOLEAN WaitForImmediate; TMP: TODO: once IOCTL_SERIAL_IMMEDIATE_CHAR supported */
+	/*  BOOLEAN WaitForImmediate; TODO: once IOCTL_SERIAL_IMMEDIATE_CHAR fully supported */
 
 
 	/* other events based on counters */
@@ -1496,7 +1484,11 @@ BOOL _immediate_char(WINPR_COMM *pComm, const UCHAR *pChar)
 	BOOL result;
 	DWORD nbBytesWritten = -1;
 
-	/* FIXME: CommWriteFile uses a critical section, shall it be interrupted? */
+	/* FIXME: CommWriteFile uses a critical section, shall it be
+	 * interrupted?
+	 *
+	 * FIXME: see also _get_commstatus()'s WaitForImmediate boolean
+	 */
 
 	result = CommWriteFile(pComm, pChar, 1, &nbBytesWritten, NULL);
 
