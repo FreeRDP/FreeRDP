@@ -151,7 +151,11 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 
 	// According to http://msdn.microsoft.com/en-us/library/gg441209.aspx
 	// CACHE_BITMAP_REV3_ORDER::bitmapData::codecID = 0x00 (uncompressed)
-	BOOL isCompressed = (bitmapData->codecID != RDP_CODEC_ID_NONE);
+	BOOL isCompressed = TRUE;
+	if (bitmapData->codecID == RDP_CODEC_ID_NONE)
+	{
+		isCompressed = FALSE;
+	}
 
 	bitmap->Decompress(context, bitmap,
 			bitmapData->data, bitmap->width, bitmap->height,
