@@ -13,6 +13,41 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
+import android.inputmethodservice.Keyboard;
+import android.inputmethodservice.KeyboardView;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.ScaleGestureDetector;
+import android.view.View;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.Toast;
+import android.widget.ZoomControls;
+
 import com.freerdp.freerdpcore.R;
 import com.freerdp.freerdpcore.application.GlobalApp;
 import com.freerdp.freerdpcore.application.GlobalSettings;
@@ -21,45 +56,11 @@ import com.freerdp.freerdpcore.domain.BookmarkBase;
 import com.freerdp.freerdpcore.domain.ConnectionReference;
 import com.freerdp.freerdpcore.domain.ManualBookmark;
 import com.freerdp.freerdpcore.services.LibFreeRDP;
+import com.freerdp.freerdpcore.utils.ClipboardManagerProxy;
 import com.freerdp.freerdpcore.utils.KeyboardMapper;
 import com.freerdp.freerdpcore.utils.Mouse;
-import com.freerdp.freerdpcore.utils.ClipboardManagerProxy;
 
-import android.app.Activity;
-import android.app.Dialog;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.res.Configuration;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
-import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
-import android.graphics.Point;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.ScaleGestureDetector;
-import android.view.View;
-import android.view.WindowManager;
-import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import android.widget.Toast;
-import android.widget.ZoomControls;
-import android.inputmethodservice.Keyboard;
-import android.inputmethodservice.KeyboardView;
-
-
-public class SessionActivity extends Activity 
+public class SessionActivity extends ActionBarActivity 
 	implements LibFreeRDP.UIEventListener, KeyboardView.OnKeyboardActionListener, ScrollView2D.ScrollView2DListener, 
 			   KeyboardMapper.KeyProcessingListener, SessionView.SessionViewListener, TouchPointerView.TouchPointerListener,
 			   ClipboardManagerProxy.OnClipboardChangedListener
@@ -491,7 +492,10 @@ public class SessionActivity extends Activity
 		registerReceiver(libFreeRDPBroadcastReceiver, filter);
 		
 		mClipboardManager = ClipboardManagerProxy.getClipboardManager(this);
-        mClipboardManager.addClipboardChangedListener(this);		
+        mClipboardManager.addClipboardChangedListener(this);	
+        
+        ActionBar actionBar = this.getSupportActionBar();
+        actionBar.show();
 	}
 
 	@Override
