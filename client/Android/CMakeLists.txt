@@ -61,5 +61,11 @@ else()
 	set(NDK_DEBUG "0")
 endif()
 
+set(APPCOMPAT_DIR "${CMAKE_CURRENT_BINARY_DIR}/appcompat_v7")
+add_custom_target(copy_appcompat ALL
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${ANDROID_SDK}/extras/android/support/v7/appcompat ${APPCOMPAT_DIR}
+  COMMAND android update lib-project -p ${APPCOMPAT_DIR}
+)
+
 add_subdirectory(FreeRDPCore)
 add_subdirectory(aFreeRDP)
