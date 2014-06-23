@@ -154,9 +154,9 @@ int main(int argc, char *argv[])
 		fprintf(fp, "\t\t\t\t\t<para>%s</para>\n", format);
 		fprintf(fp, "\t\t\t\t</listitem>\n");
 		fprintf(fp, "\t\t\t</varlistentry>\n");
-		free(name);
-		free(format);
-		free(text);
+		free((void*) name);
+		free((void*) format);
+		free((void*) text);
 	}
 	fprintf(fp, "\t\t</variablelist>\n");
 	fprintf(fp, "\t</refsect1>\n");
