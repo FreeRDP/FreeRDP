@@ -42,6 +42,13 @@ if(ANDROID_BUILD_JAVA)
 	endif()
 endif(ANDROID_BUILD_JAVA)
 
+SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
+find_program(ANDROID_COMMAND android)
+SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
+if(ANDROID_COMMAND STREQUAL "ANDROID_COMMAND-NOTFOUND")
+	message(FATAL_ERROR "android not found but required to build android java")
+endif()
+
 if(ANDROID_BUILD_JAVA_DEBUG)
 	set(ANDROID_BUILD_TYPE "debug")
 else()
