@@ -13,3 +13,4 @@
 # Project target.
 target=android-@ANDROID_APP_TARGET_SDK@
 android.library=true
+android.library.reference.1=../appcompat_v7

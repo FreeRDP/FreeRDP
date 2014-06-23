@@ -23,7 +23,7 @@
     <string name="menu_ext_keyboard">Funcion teclado</string>
     <string name="menu_touch_pointer">Puntero Tactil</string>
     <string name="menu_home">Inicio</string>
-    <string name="menu_disconnect">desconectart</string>
+    <string name="menu_disconnect">Desconectart</string>
     <!-- List section headers -->
     <string name="section_bookmarks">Conexión Manual</string>
     <string name="section_active_sessions">Sesiones Activas</string>
@@ -197,4 +197,6 @@
     <string name="dlg_msg_exit">Esta seguro que desea salir del programa?</string>
     <string name="dlg_title_clear_cert_cache">Borrar Certificados?</string>
     <string name="dlg_msg_clear_cert_cache">Esta seguro que desea borrar todos los certificados?</string>
+    <string name="debug_level">Debug Level</string>
+    <string name="settings_debug">Debug Settings</string>
 </resources>

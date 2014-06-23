@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <resources>
-    <style name="Theme.Settings" parent="android:Theme.Light">
+    <style name="Theme.Settings" parent="@style/Theme.AppCompat">
   		<item name="android:listSeparatorTextViewStyle">@style/SettingsCategory</item>
     </style>
-    <style name="Theme.Main" parent="android:Theme.Light">
+    <style name="Theme.Main" parent="@style/Theme.AppCompat">
     </style>
     <style name="SettingsCategory">
         <item name="android:layout_width">match_parent</item>

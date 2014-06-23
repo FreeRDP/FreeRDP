@@ -363,10 +363,6 @@ public class HomeActivity extends Activity
 			Intent helpIntent = new Intent(this, HelpActivity.class);
 			startActivity(helpIntent);
 		}
-		else if (itemId == R.id.exit)
-		{
-			finish();
-		}
 		else if (itemId == R.id.about)
 		{
 			Intent aboutIntent = new Intent(this, AboutActivity.class);

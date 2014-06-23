@@ -4,21 +4,21 @@
 	<item android:id="@+id/newBookmark"
 		  android:icon="@drawable/icon_menu_add"
 		  android:title="@string/menu_new_bookmark"
+		  android:showAsAction="ifRoom"
 	/>
 	<item android:id="@+id/appSettings"
 		  android:icon="@drawable/icon_menu_settings"
 		  android:title="@string/menu_app_settings"
+		  android:showAsAction="ifRoom"
 	/>
 	<item android:id="@+id/help"
 		  android:icon="@drawable/icon_menu_help"
 		  android:title="@string/menu_help"
+		  android:showAsAction="ifRoom"
 	/>
 	<item android:id="@+id/about"
 		  android:icon="@drawable/icon_menu_about"
 		  android:title="@string/menu_about"
+		  android:showAsAction="ifRoom"
 	/>
-	<item android:id="@+id/exit"
-		  android:icon="@drawable/icon_menu_exit"
-		  android:title="@string/menu_exit"
-	/>	
 </menu>
