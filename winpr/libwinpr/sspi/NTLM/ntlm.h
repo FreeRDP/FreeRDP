@@ -241,6 +241,7 @@ struct _NTLM_CONTEXT
 	BYTE* SendSealingKey;
 	BYTE* RecvSealingKey;
 	UINT32 NegotiateFlags;
+	BOOL UseSamFileDatabase;
 	int LmCompatibilityLevel;
 	int SuppressExtendedProtection;
 	BOOL SendWorkstationName;

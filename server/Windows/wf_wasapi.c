@@ -271,7 +271,7 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 			//Here we are writing the audio data
 			//not sure if this flag is ever set by the system; msdn is not clear about it
 			if (!(flags & AUDCLNT_BUFFERFLAGS_SILENT))
-				context->rdpsnd->SendSamples(context->rdpsnd, pData, packetLength);
+				context->rdpsnd->SendSamples(context->rdpsnd, pData, packetLength, (UINT16)(GetTickCount() & 0xffff));
 
 			hr = pCaptureClient->lpVtbl->ReleaseBuffer(pCaptureClient, numFramesAvailable);
 			if (FAILED(hr))

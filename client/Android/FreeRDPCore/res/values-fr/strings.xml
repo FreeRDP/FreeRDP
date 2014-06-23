@@ -196,4 +196,6 @@
     <string name="dlg_msg_exit">"Êtes-vous sûr de vouloir quitter l'application?"</string>
     <string name="dlg_title_clear_cert_cache">"Êtes-vous sûrs de vouloir supprimer les certificats?"</string>
     <string name="dlg_msg_clear_cert_cache">"Êtes-vous sûr de vouloir supprimer tous les certificats mis en cache?"</string>
+    <string name="debug_level">Debug Level</string>
+    <string name="settings_debug">Debug Settings</string>
 </resources>

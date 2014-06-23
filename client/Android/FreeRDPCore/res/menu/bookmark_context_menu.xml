@@ -4,14 +4,17 @@
 
 	<item android:id="@+id/bookmark_connect"
 		  android:title="@string/menu_connect"
+		  android:showAsAction="ifRoom"
 	/>
 
 	<item android:id="@+id/bookmark_edit"
 		  android:title="@string/menu_edit"
+		  android:showAsAction="ifRoom"
 	/>
 
 	<item android:id="@+id/bookmark_delete"
 		  android:title="@string/menu_delete"
+		  android:showAsAction="ifRoom"
 	/>
 	    
 </menu>

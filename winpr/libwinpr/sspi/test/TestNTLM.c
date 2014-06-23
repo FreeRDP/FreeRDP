@@ -66,6 +66,11 @@ static const char* TEST_NTLM_PASSWORD = "P4ss123!";
 static const BYTE TEST_NTLM_HASH[16] =
 	{ 0xd5, 0x92, 0x2a, 0x65, 0xc4, 0xd5, 0xc0, 0x82, 0xca, 0x44, 0x4a, 0xf1, 0xbe, 0x00, 0x01, 0xdb };
 
+//static const char* TEST_NTLM_HASH_V2_STRING = "4c7f706f7dde05a9d1a0f4e7ffe3bfb8";
+
+static const BYTE TEST_NTLM_V2_HASH[16] =
+	{ 0x4c, 0x7f, 0x70, 0x6f, 0x7d, 0xde, 0x05, 0xa9, 0xd1, 0xa0, 0xf4, 0xe7, 0xff, 0xe3, 0xbf, 0xb8 };
+
 //#define NTLM_PACKAGE_NAME	NEGOSSP_NAME
 #define NTLM_PACKAGE_NAME	NTLMSP_NAME
 
@@ -303,6 +308,7 @@ struct _TEST_NTLM_SERVER
 	SecBuffer outputBuffer[2];
 	BOOL haveContext;
 	BOOL haveInputBuffer;
+	BOOL UseNtlmV2Hash;
 	LPTSTR ServicePrincipalName;
 	SecBufferDesc inputBufferDesc;
 	SecBufferDesc outputBufferDesc;
@@ -317,6 +323,8 @@ typedef struct _TEST_NTLM_SERVER TEST_NTLM_SERVER;
 int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 {
 	SECURITY_STATUS status;
+
+	ntlm->UseNtlmV2Hash = TRUE;
 
 	SecInvalidateHandle(&(ntlm->context));
 
@@ -422,10 +430,19 @@ int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 		{
 			if (strcmp(AuthIdentity.User, TEST_NTLM_USER) == 0)
 			{
-				CopyMemory(AuthNtlmHash.NtlmHash, TEST_NTLM_HASH, 16);
+				if (ntlm->UseNtlmV2Hash)
+				{
+					AuthNtlmHash.Version = 2;
+					CopyMemory(AuthNtlmHash.NtlmHash, TEST_NTLM_V2_HASH, 16);
+				}
+				else
+				{
+					AuthNtlmHash.Version = 1;
+					CopyMemory(AuthNtlmHash.NtlmHash, TEST_NTLM_HASH, 16);
+				}
 
 				status = ntlm->table->SetContextAttributes(&ntlm->context,
-						SECPKG_ATTR_AUTH_NTLM_HASH, &AuthNtlmHash, sizeof(SecPkgContext_AuthNtlmHash));
+					SECPKG_ATTR_AUTH_NTLM_HASH, &AuthNtlmHash, sizeof(SecPkgContext_AuthNtlmHash));
 			}
 		}
 

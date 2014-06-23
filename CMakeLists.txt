@@ -76,11 +76,11 @@ if(ANDROID OR IOS)
 	SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)
 endif(ANDROID OR IOS)
 include(GetGitRevisionDescription)
+git_describe(GIT_REVISION --match "[0-9]*" --abbrev=4 --tags --always)
 if(ANDROID OR IOS)
 	SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
 endif(ANDROID OR IOS)
 
-git_describe(GIT_REVISION --match "[0-9]*" --abbrev=4 --tags --always)
 message(STATUS "Git Revision ${GIT_REVISION}")
 
 # Turn on solution folders (2.8.4+)
