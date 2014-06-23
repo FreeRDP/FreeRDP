@@ -23,7 +23,7 @@
     <string name="menu_ext_keyboard">Function Keys</string>
     <string name="menu_touch_pointer">Touch Pointer</string>
     <string name="menu_home">home</string>
-    <string name="menu_disconnect">disconnect</string>
+    <string name="menu_disconnect">Disconnect</string>
     <!-- List section headers -->
     <string name="section_bookmarks">Manual Connections</string>
     <string name="section_active_sessions">Active Sessions</string>

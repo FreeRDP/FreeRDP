@@ -23,7 +23,7 @@
     <string name="menu_ext_keyboard">Funcion teclado</string>
     <string name="menu_touch_pointer">Puntero Tactil</string>
     <string name="menu_home">Inicio</string>
-    <string name="menu_disconnect">desconectart</string>
+    <string name="menu_disconnect">Desconectart</string>
     <!-- List section headers -->
     <string name="section_bookmarks">Conexión Manual</string>
     <string name="section_active_sessions">Sesiones Activas</string>
