@@ -517,11 +517,16 @@ out_free:
 
 void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
 {
-	UINT32 index;
+	int j;
+	UINT32 i;
 
-	for (index = 0; index < settings->DynamicChannelCount; index++)
+	for (i = 0; i < settings->DynamicChannelCount; i++)
 	{
-		free(settings->DynamicChannelArray[index]);
+		for (j = 0; j < settings->DynamicChannelArray[i]->argc; j++)
+			free(settings->DynamicChannelArray[i]->argv[j]);
+
+		free(settings->DynamicChannelArray[i]->argv);
+		free(settings->DynamicChannelArray[i]);
 	}
 
 	free(settings->DynamicChannelArray);

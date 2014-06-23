@@ -63,7 +63,7 @@ BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, int va
 		file->ScreenModeId = value;
 	else if (_stricmp(name, "span monitors") == 0)
 		file->SpanMonitors = value;
-	else if (_stricmp(name, "smartsizing") == 0)
+	else if (_stricmp(name, "smart sizing") == 0)
 		file->SmartSizing = value;
 	else if (_stricmp(name, "enablesuperpan") == 0)
 		file->EnableSuperSpan = value;

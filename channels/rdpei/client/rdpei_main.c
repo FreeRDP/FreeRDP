@@ -434,17 +434,12 @@ int rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 	return 0;
 }
 
-static int rdpei_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* pBuffer)
+static int rdpei_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
-	wStream* s;
 	int status = 0;
 	RDPEI_CHANNEL_CALLBACK* callback = (RDPEI_CHANNEL_CALLBACK*) pChannelCallback;
 
-	s = Stream_New(pBuffer, cbSize);
-
-	status = rdpei_recv_pdu(callback, s);
-
-	Stream_Free(s, FALSE);
+	status = rdpei_recv_pdu(callback, data);
 
 	return status;
 }

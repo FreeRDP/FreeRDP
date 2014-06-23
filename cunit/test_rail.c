@@ -46,13 +46,11 @@
 
 int init_rail_suite(void)
 {
-	freerdp_channels_global_init();
 	return 0;
 }
 
 int clean_rail_suite(void)
 {
-	freerdp_channels_global_uninit();
 	return 0;
 }
 

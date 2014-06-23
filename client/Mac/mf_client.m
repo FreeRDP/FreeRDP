@@ -33,12 +33,11 @@
 void mfreerdp_client_global_init()
 {
 	freerdp_handle_signals();
-	freerdp_channels_global_init();
 }
 
 void mfreerdp_client_global_uninit()
 {
-	freerdp_channels_global_uninit();
+
 }
 
 int mfreerdp_client_start(rdpContext* context)

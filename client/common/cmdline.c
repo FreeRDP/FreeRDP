@@ -1609,6 +1609,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "gfx")
 		{
 			settings->SupportGraphicsPipeline = TRUE;
+			settings->FastPathOutput = TRUE;
+			settings->ColorDepth = 32;
+			settings->LargePointerFlag = TRUE;
+			settings->FrameMarkerCommandEnabled = TRUE;
 		}
 		CommandLineSwitchCase(arg, "rfx")
 		{

@@ -61,10 +61,12 @@ struct _ECHO_PLUGIN
 	ECHO_LISTENER_CALLBACK* listener_callback;
 };
 
-static int echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* pBuffer)
+static int echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
 	int error;
 	ECHO_CHANNEL_CALLBACK* callback = (ECHO_CHANNEL_CALLBACK*) pChannelCallback;
+  BYTE *pBuffer = Stream_Pointer(data);
+  UINT32 cbSize = Stream_GetRemainingLength(data);
 
 #ifdef WITH_DEBUG_DVC
 	int i = 0;

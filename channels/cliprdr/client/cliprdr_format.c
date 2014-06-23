@@ -31,7 +31,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/cliprdr.h>
 
 #include "cliprdr_main.h"

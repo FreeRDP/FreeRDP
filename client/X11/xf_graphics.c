@@ -145,8 +145,8 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			break;
 
 		case RDP_CODEC_ID_REMOTEFX:
-			rfx_context_set_pixel_format(xfc->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-			msg = rfx_process_message(xfc->rfx_context, data, length);
+			rfx_context_set_pixel_format(xfc->rfx, RDP_PIXEL_FORMAT_B8G8R8A8);
+			msg = rfx_process_message(xfc->rfx, data, length);
 
 			if (msg == NULL)
 			{
@@ -166,7 +166,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 						src++;
 					}
 				}
-				rfx_message_free(xfc->rfx_context, msg);
+				rfx_message_free(xfc->rfx, msg);
 			}
 			break;
 

@@ -182,6 +182,11 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 		pool->aCapacity *= 2;
 		pool->aArray = (wStream**) realloc(pool->aArray, sizeof(wStream*) * pool->aCapacity);
 	}
+	else if ((pool->aSize + 1) * 3 < pool->aCapacity)
+	{
+		pool->aCapacity /= 2;
+		pool->aArray = (wStream**) realloc(pool->aArray, sizeof(wStream*) * pool->aCapacity);
+	}
 
 	pool->aArray[(pool->aSize)++] = s;
 	StreamPool_RemoveUsed(pool, s);

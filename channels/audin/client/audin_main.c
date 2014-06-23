@@ -312,34 +312,31 @@ static int audin_process_format_change(IWTSVirtualChannelCallback* pChannelCallb
 	return 0;
 }
 
-static int audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* pBuffer)
+static int audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
 	int error;
-	wStream* s;
 	BYTE MessageId;
 
-	s = Stream_New(pBuffer, cbSize);
-
-	Stream_Read_UINT8(s, MessageId);
+	Stream_Read_UINT8(data, MessageId);
 
 	DEBUG_DVC("MessageId=0x%x", MessageId);
 
 	switch (MessageId)
 	{
 		case MSG_SNDIN_VERSION:
-			error = audin_process_version(pChannelCallback, s);
+			error = audin_process_version(pChannelCallback, data);
 			break;
 
 		case MSG_SNDIN_FORMATS:
-			error = audin_process_formats(pChannelCallback, s);
+			error = audin_process_formats(pChannelCallback, data);
 			break;
 
 		case MSG_SNDIN_OPEN:
-			error = audin_process_open(pChannelCallback, s);
+			error = audin_process_open(pChannelCallback, data);
 			break;
 
 		case MSG_SNDIN_FORMATCHANGE:
-			error = audin_process_format_change(pChannelCallback, s);
+			error = audin_process_format_change(pChannelCallback, data);
 			break;
 
 		default:
@@ -347,8 +344,6 @@ static int audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 			error = 1;
 			break;
 	}
-
-	Stream_Free(s, FALSE);
 
 	return error;
 }
