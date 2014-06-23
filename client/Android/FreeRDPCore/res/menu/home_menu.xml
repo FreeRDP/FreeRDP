@@ -21,9 +21,4 @@
 		  android:title="@string/menu_about"
 		  android:showAsAction="ifRoom"
 	/>
-	<item android:id="@+id/exit"
-		  android:icon="@drawable/icon_menu_exit"
-		  android:title="@string/menu_exit"
-		  android:showAsAction="ifRoom"
-	/>	
 </menu>
