@@ -25,19 +25,576 @@
 
 #include "encomsp_main.h"
 
+EncomspClientContext* encomsp_get_client_interface(encomspPlugin* encomsp)
+{
+	EncomspClientContext* pInterface;
+	pInterface = (EncomspClientContext*) encomsp->channelEntryPoints.pInterface;
+	return pInterface;
+}
+
+int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
+		return -1;
+
+	Stream_Read_UINT16(s, header->Type); /* Type (2 bytes) */
+	Stream_Read_UINT16(s, header->Length); /* Length (2 bytes) */
+
+	return 1;
+}
+
+int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
+{
+	ZeroMemory(str, sizeof(ENCOMSP_UNICODE_STRING));
+
+	if (Stream_GetRemainingLength(s) < 2)
+		return -1;
+
+	Stream_Read_UINT16(s, str->cchString); /* cchString (2 bytes) */
+
+	if (str->cchString > 1024)
+		return -1;
+
+	if (Stream_GetRemainingLength(s) < (str->cchString * 2))
+		return -1;
+
+	Stream_Read(s, &(str->wString), (str->cchString * 2)); /* String (variable) */
+
+	return 1;
+}
+
+int encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	EncomspClientContext* context;
+	ENCOMSP_FILTER_UPDATED_PDU pdu;
+
+	context = encomsp_get_client_interface(encomsp);
+
+	if (!context)
+		return -1;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	if (Stream_GetRemainingLength(s) < 1)
+		return -1;
+
+	Stream_Read_UINT8(s, pdu.Flags); /* Flags (1 byte) */
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->FilterUpdated)
+	{
+		return context->FilterUpdated(context, &pdu);
+	}
+
+	return 1;
+}
+
+int encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	EncomspClientContext* context;
+	ENCOMSP_APPLICATION_CREATED_PDU pdu;
+
+	context = encomsp_get_client_interface(encomsp);
+
+	if (!context)
+		return -1;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	if (Stream_GetRemainingLength(s) < 6)
+		return -1;
+
+	Stream_Read_UINT16(s, pdu.Flags); /* Flags (2 bytes) */
+	Stream_Read_UINT32(s, pdu.AppId); /* AppId (4 bytes) */
+
+	if (encomsp_read_unicode_string(s, &(pdu.Name)) < 0)
+		return -1;
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->ApplicationCreated)
+	{
+		return context->ApplicationCreated(context, &pdu);
+	}
+
+	return 1;
+}
+
+int encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	EncomspClientContext* context;
+	ENCOMSP_APPLICATION_REMOVED_PDU pdu;
+
+	context = encomsp_get_client_interface(encomsp);
+
+	if (!context)
+		return -1;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return -1;
+
+	Stream_Read_UINT32(s, pdu.AppId); /* AppId (4 bytes) */
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->ApplicationRemoved)
+	{
+		return context->ApplicationRemoved(context, &pdu);
+	}
+
+	return 1;
+}
+
+int encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	EncomspClientContext* context;
+	ENCOMSP_WINDOW_CREATED_PDU pdu;
+
+	context = encomsp_get_client_interface(encomsp);
+
+	if (!context)
+		return -1;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	if (Stream_GetRemainingLength(s) < 10)
+		return -1;
+
+	Stream_Read_UINT16(s, pdu.Flags); /* Flags (2 bytes) */
+	Stream_Read_UINT32(s, pdu.AppId); /* AppId (4 bytes) */
+	Stream_Read_UINT32(s, pdu.WndId); /* WndId (4 bytes) */
+
+	if (encomsp_read_unicode_string(s, &(pdu.Name)) < 0)
+		return -1;
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->WindowCreated)
+	{
+		return context->WindowCreated(context, &pdu);
+	}
+
+	return 1;
+}
+
+int encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	EncomspClientContext* context;
+	ENCOMSP_WINDOW_REMOVED_PDU pdu;
+
+	context = encomsp_get_client_interface(encomsp);
+
+	if (!context)
+		return -1;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return -1;
+
+	Stream_Read_UINT32(s, pdu.WndId); /* WndId (4 bytes) */
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->WindowRemoved)
+	{
+		return context->WindowRemoved(context, &pdu);
+	}
+
+	return 1;
+}
+
+int encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	EncomspClientContext* context;
+	ENCOMSP_SHOW_WINDOW_PDU pdu;
+
+	context = encomsp_get_client_interface(encomsp);
+
+	if (!context)
+		return -1;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return -1;
+
+	Stream_Read_UINT32(s, pdu.WndId); /* WndId (4 bytes) */
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->ShowWindow)
+	{
+		return context->ShowWindow(context, &pdu);
+	}
+
+	return 1;
+}
+
+int encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	EncomspClientContext* context;
+	ENCOMSP_PARTICIPANT_CREATED_PDU pdu;
+
+	context = encomsp_get_client_interface(encomsp);
+
+	if (!context)
+		return -1;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	if (Stream_GetRemainingLength(s) < 10)
+		return -1;
+
+	Stream_Read_UINT32(s, pdu.ParticipantId); /* ParticipantId (4 bytes) */
+	Stream_Read_UINT32(s, pdu.GroupId); /* GroupId (4 bytes) */
+	Stream_Read_UINT16(s, pdu.Flags); /* Flags (2 bytes) */
+
+	if (encomsp_read_unicode_string(s, &(pdu.FriendlyName)) < 0)
+		return -1;
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->ParticipantCreated)
+	{
+		return context->ParticipantCreated(context, &pdu);
+	}
+
+	return 1;
+}
+
+int encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	EncomspClientContext* context;
+	ENCOMSP_PARTICIPANT_REMOVED_PDU pdu;
+
+	context = encomsp_get_client_interface(encomsp);
+
+	if (!context)
+		return -1;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	if (Stream_GetRemainingLength(s) < 12)
+		return -1;
+
+	Stream_Read_UINT32(s, pdu.ParticipantId); /* ParticipantId (4 bytes) */
+	Stream_Read_UINT32(s, pdu.DiscType); /* DiscType (4 bytes) */
+	Stream_Read_UINT32(s, pdu.DiscCode); /* DiscCode (4 bytes) */
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->ParticipantRemoved)
+	{
+		return context->ParticipantRemoved(context, &pdu);
+	}
+
+	return 1;
+}
+
+int encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	EncomspClientContext* context;
+	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
+
+	context = encomsp_get_client_interface(encomsp);
+
+	if (!context)
+		return -1;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	if (Stream_GetRemainingLength(s) < 6)
+		return -1;
+
+	Stream_Read_UINT16(s, pdu.Flags); /* Flags (2 bytes) */
+	Stream_Read_UINT32(s, pdu.ParticipantId); /* ParticipantId (4 bytes) */
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->ChangeParticipantControlLevel)
+	{
+		return context->ChangeParticipantControlLevel(context, &pdu);
+	}
+
+	return 1;
+}
+
+int encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	EncomspClientContext* context;
+	ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU pdu;
+
+	context = encomsp_get_client_interface(encomsp);
+
+	if (!context)
+		return -1;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->GraphicsStreamPaused)
+	{
+		return context->GraphicsStreamPaused(context, &pdu);
+	}
+
+	return 1;
+}
+
+int encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	EncomspClientContext* context;
+	ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU pdu;
+
+	context = encomsp_get_client_interface(encomsp);
+
+	if (!context)
+		return -1;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->GraphicsStreamResumed)
+	{
+		return context->GraphicsStreamResumed(context, &pdu);
+	}
+
+	return 1;
+}
+
+static int encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
+{
+	int status = 1;
+	ENCOMSP_ORDER_HEADER header;
+
+	while (Stream_GetRemainingLength(s) > 0)
+	{
+		if (encomsp_read_header(s, &header) < 0)
+			return -1;
+
+		switch (header.Type)
+		{
+			case ODTYPE_FILTER_STATE_UPDATED:
+				status = encomsp_recv_filter_updated_pdu(encomsp, s, &header);
+				break;
+
+			case ODTYPE_APP_REMOVED:
+				status = encomsp_recv_application_removed_pdu(encomsp, s, &header);
+				break;
+
+			case ODTYPE_APP_CREATED:
+				status = encomsp_recv_application_created_pdu(encomsp, s, &header);
+				break;
+
+			case ODTYPE_WND_REMOVED:
+				status = encomsp_recv_window_removed_pdu(encomsp, s, &header);
+				break;
+
+			case ODTYPE_WND_CREATED:
+				status = encomsp_recv_window_created_pdu(encomsp, s, &header);
+				break;
+
+			case ODTYPE_WND_SHOW:
+				status = encomsp_recv_show_window_pdu(encomsp, s, &header);
+				break;
+
+			case ODTYPE_PARTICIPANT_REMOVED:
+				status = encomsp_recv_participant_removed_pdu(encomsp, s, &header);
+				break;
+
+			case ODTYPE_PARTICIPANT_CREATED:
+				status = encomsp_recv_participant_created_pdu(encomsp, s, &header);
+				break;
+
+			case ODTYPE_PARTICIPANT_CTRL_CHANGED:
+				status = encomsp_recv_change_participant_control_level_pdu(encomsp, s, &header);
+				break;
+
+			case ODTYPE_GRAPHICS_STREAM_PAUSED:
+				status = encomsp_recv_graphics_stream_paused_pdu(encomsp, s, &header);
+				break;
+
+			case ODTYPE_GRAPHICS_STREAM_RESUMED:
+				status = encomsp_recv_graphics_stream_resumed_pdu(encomsp, s, &header);
+				break;
+
+			default:
+				status = -1;
+				break;
+		}
+
+		if (status < 0)
+			return -1;
+	}
+
+	return status;
+}
+
 static void encomsp_process_connect(encomspPlugin* encomsp)
 {
 
 }
 
-static void encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
-{
-
-}
-
-
 /****************************************************************************************/
-
 
 static wListDictionary* g_InitHandles;
 static wListDictionary* g_OpenHandles;
@@ -300,6 +857,18 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		context = (EncomspClientContext*) calloc(1, sizeof(EncomspClientContext));
 
 		context->handle = (void*) encomsp;
+
+		context->FilterUpdated = NULL;
+		context->ApplicationCreated = NULL;
+		context->ApplicationRemoved = NULL;
+		context->WindowCreated = NULL;
+		context->WindowRemoved = NULL;
+		context->ShowWindow = NULL;
+		context->ParticipantCreated = NULL;
+		context->ParticipantRemoved = NULL;
+		context->ChangeParticipantControlLevel = NULL;
+		context->GraphicsStreamPaused = NULL;
+		context->GraphicsStreamResumed = NULL;
 
 		*(pEntryPointsEx->ppInterface) = (void*) context;
 	}
