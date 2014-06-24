@@ -32,45 +32,41 @@
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
 
-static ITSMFDecoder* tsmf_load_decoder_by_name(const char* name, TS_AM_MEDIA_TYPE* media_type)
+static ITSMFDecoder *tsmf_load_decoder_by_name(const char *name, TS_AM_MEDIA_TYPE *media_type)
 {
-	ITSMFDecoder* decoder;
+	ITSMFDecoder *decoder;
 	TSMF_DECODER_ENTRY entry;
-
 	entry = (TSMF_DECODER_ENTRY) freerdp_load_channel_addin_entry("tsmf", (LPSTR) name, "decoder", 0);
-
-	if (entry == NULL)
+	if(entry == NULL)
 		return NULL;
-
 	decoder = entry();
-
-	if (decoder == NULL)
+	if(decoder == NULL)
 	{
 		DEBUG_WARN("failed to call export function in %s", name);
 		return NULL;
 	}
-
-	if (!decoder->SetFormat(decoder, media_type))
+	if(!decoder->SetFormat(decoder, media_type))
 	{
 		decoder->Free(decoder);
 		decoder = NULL;
 	}
-
 	return decoder;
 }
 
-ITSMFDecoder* tsmf_load_decoder(const char* name, TS_AM_MEDIA_TYPE* media_type)
+ITSMFDecoder *tsmf_load_decoder(const char *name, TS_AM_MEDIA_TYPE *media_type)
 {
-	ITSMFDecoder* decoder;
-
-	if (name)
+	ITSMFDecoder *decoder = NULL;
+	if(name)
 	{
 		decoder = tsmf_load_decoder_by_name(name, media_type);
 	}
-	else
-	{
+#if defined(WITH_GSTREAMER_1_0) || defined(WITH_GSTREAMER_0_10)
+	if(!decoder)
+		decoder = tsmf_load_decoder_by_name("gstreamer", media_type);
+#endif
+#if defined(WITH_FFMPEG)
+	if(!decoder)
 		decoder = tsmf_load_decoder_by_name("ffmpeg", media_type);
-	}
-
+#endif
 	return decoder;
 }

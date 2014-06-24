@@ -28,11 +28,10 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 #include <winpr/interlocked.h>
 
-#include <winpr/stream.h>
 #include <freerdp/channels/rdpdr.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #ifdef WITH_CUPS
 #include "printer_cups.h"
@@ -69,15 +68,11 @@ static void printer_process_irp_create(PRINTER_DEVICE* printer_dev, IRP* irp)
 	if (printjob)
 	{
 		Stream_Write_UINT32(irp->output, printjob->id); /* FileId */
-
-		DEBUG_SVC("printjob id: %d", printjob->id);
 	}
 	else
 	{
 		Stream_Write_UINT32(irp->output, 0); /* FileId */
 		irp->IoStatus = STATUS_PRINT_QUEUE_FULL;
-
-		DEBUG_WARN("error creating print job.");
 	}
 
 	irp->Complete(irp);
@@ -87,20 +82,16 @@ static void printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
 	rdpPrintJob* printjob = NULL;
 
-	if (printer_dev->printer != NULL)
+	if (printer_dev->printer)
 		printjob = printer_dev->printer->FindPrintJob(printer_dev->printer, irp->FileId);
 
 	if (!printjob)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
-
-		DEBUG_WARN("printjob id %d not found.", irp->FileId);
 	}
 	else
 	{
 		printjob->Close(printjob);
-
-		DEBUG_SVC("printjob id %d closed.", irp->FileId);
 	}
 
 	Stream_Zero(irp->output, 4); /* Padding(4) */
@@ -125,14 +116,10 @@ static void printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
-
-		DEBUG_WARN("printjob id %d not found.", irp->FileId);
 	}
 	else
 	{
 		printjob->Write(printjob, Stream_Pointer(irp->input), Length);
-
-		DEBUG_SVC("printjob id %d written %d bytes.", irp->FileId, Length);
 	}
 
 	Stream_Write_UINT32(irp->output, Length);
@@ -168,7 +155,6 @@ static void printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 			break;
 
 		default:
-			DEBUG_WARN("MajorFunction 0x%X not supported", irp->MajorFunction);
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			irp->Complete(irp);
 			break;
@@ -267,8 +253,6 @@ void printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* pri
 	CachedFieldsLen = 0;
 	CachedPrinterConfigData = NULL;
 
-	DEBUG_SVC("Printer %s registered", printer->name);
-
 	Flags = 0;
 
 	if (printer->is_default)
@@ -332,9 +316,8 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	driver = printer_win_get_driver();
 #endif
 
-	if (driver == NULL)
+	if (!driver)
 	{
-		DEBUG_WARN("no driver");
 		return 1;
 	}
 
@@ -347,10 +330,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		printer = driver->GetPrinter(driver, name);
 
 		if (!printer)
-		{
-			DEBUG_WARN("printer %s not found.", name);
 			return 1;
-		}
 
 		if (driver_name && driver_name[0])
 			printer->driver = driver_name;

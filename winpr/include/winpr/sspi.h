@@ -2,7 +2,7 @@
  * WinPR: Windows Portable Runtime
  * Security Support Provider Interface (SSPI)
  *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,37 +20,23 @@
 #ifndef WINPR_SSPI_H
 #define WINPR_SSPI_H
 
-#include <winpr/config.h>
-
-#include <wchar.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/windows.h>
 #include <winpr/security.h>
-
-#define _NO_KSECDD_IMPORT_	1
 
 #ifdef _WIN32
 
 #include <tchar.h>
 #include <winerror.h>
 
-#ifdef WITH_NATIVE_SSPI
 #define SECURITY_WIN32
 #include <sspi.h>
 #include <security.h>
-#else
-#define WINPR_SSPI
-#define SEC_ENTRY __stdcall
-#endif
-
-#else
-
-#define WINPR_SSPI
 
 #endif
 
-#ifdef WINPR_SSPI
+#ifndef _WIN32
 
 #ifndef SEC_ENTRY
 #define SEC_ENTRY
@@ -266,7 +252,7 @@ typedef SecPkgInfoW* PSecPkgInfoW;
 #define SECPKG_ATTR_NEGO_STATUS				32
 #define SECPKG_ATTR_CONTEXT_DELETED			33
 
-#ifdef WINPR_SSPI
+#ifndef _WIN32
 
 struct _SecPkgContext_AccessToken
 {
@@ -593,7 +579,7 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 #define SEC_WINNT_AUTH_IDENTITY_ANSI		0x1
 #define SEC_WINNT_AUTH_IDENTITY_UNICODE		0x2
 
-#ifdef WINPR_SSPI
+#ifndef _WIN32
 
 typedef struct _SEC_WINNT_AUTH_IDENTITY_W
 {
@@ -679,7 +665,7 @@ typedef CtxtHandle* PCtxtHandle;
 #define SECBUFFER_READONLY_WITH_CHECKSUM	0x10000000
 #define SECBUFFER_RESERVED			0x60000000
 
-#ifdef WINPR_SSPI
+#ifndef _WIN32
 
 struct _SecBuffer
 {
@@ -1000,8 +986,7 @@ WINPR_API SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext, PSecB
 }
 #endif
 
-#endif // WINPR_SSPI
-
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -1009,14 +994,88 @@ extern "C" {
 
 /* Custom API */
 
+#define SECPKG_ATTR_AUTH_IDENTITY			1001
+#define SECPKG_ATTR_AUTH_PASSWORD			1002
+#define SECPKG_ATTR_AUTH_NTLM_HASH			1003
+#define SECPKG_ATTR_AUTH_NTLM_MESSAGE			1100
+#define SECPKG_ATTR_AUTH_NTLM_TIMESTAMP			1101
+#define SECPKG_ATTR_AUTH_NTLM_CLIENT_CHALLENGE		1102
+#define SECPKG_ATTR_AUTH_NTLM_SERVER_CHALLENGE		1103
+
+struct _SecPkgContext_AuthIdentity
+{
+	char User[256 + 1];
+	char Domain[256 + 1];
+};
+typedef struct _SecPkgContext_AuthIdentity SecPkgContext_AuthIdentity;
+
+struct _SecPkgContext_AuthPassword
+{
+	char Password[256 + 1];
+};
+typedef struct _SecPkgContext_AuthPassword SecPkgContext_AuthPassword;
+
+struct _SecPkgContext_AuthNtlmHash
+{
+	int Version;
+	BYTE NtlmHash[16];
+};
+typedef struct _SecPkgContext_AuthNtlmHash SecPkgContext_AuthNtlmHash;
+
+struct _SecPkgContext_AuthNtlmTimestamp
+{
+	BYTE Timestamp[8];
+	BOOL ChallengeOrResponse;
+};
+typedef struct _SecPkgContext_AuthNtlmTimestamp SecPkgContext_AuthNtlmTimestamp;
+
+struct _SecPkgContext_AuthNtlmClientChallenge
+{
+	BYTE ClientChallenge[8];
+};
+typedef struct _SecPkgContext_AuthNtlmClientChallenge SecPkgContext_AuthNtlmClientChallenge;
+
+struct _SecPkgContext_AuthNtlmServerChallenge
+{
+	BYTE ServerChallenge[8];
+};
+typedef struct _SecPkgContext_AuthNtlmServerChallenge SecPkgContext_AuthNtlmServerChallenge;
+
+struct _SecPkgContext_AuthNtlmMessage
+{
+	UINT32 type;
+	UINT32 length;
+	BYTE* buffer;
+};
+typedef struct _SecPkgContext_AuthNtlmMessage SecPkgContext_AuthNtlmMessage;
+
+#define SSPI_INTERFACE_WINPR	0x00000001
+#define SSPI_INTERFACE_NATIVE	0x00000002
+
+typedef PSecurityFunctionTableA (SEC_ENTRY * INIT_SECURITY_INTERFACE_EX_A)(DWORD flags);
+typedef PSecurityFunctionTableW (SEC_ENTRY * INIT_SECURITY_INTERFACE_EX_W)(DWORD flags);
+
 WINPR_API void sspi_GlobalInit(void);
 WINPR_API void sspi_GlobalFinish(void);
 
-WINPR_API void sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size);
+WINPR_API void* sspi_SecBufferAlloc(PSecBuffer SecBuffer, ULONG size);
 WINPR_API void sspi_SecBufferFree(PSecBuffer SecBuffer);
 
-WINPR_API void sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, char* user, char* domain, char* password);
-WINPR_API void sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDENTITY* srcIdentity);
+WINPR_API int sspi_SetAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, const char* domain, const char* password);
+WINPR_API int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDENTITY* srcIdentity);
+
+WINPR_API const char* GetSecurityStatusString(SECURITY_STATUS status);
+
+WINPR_API SecurityFunctionTableW* SEC_ENTRY InitSecurityInterfaceExW(DWORD flags);
+WINPR_API SecurityFunctionTableA* SEC_ENTRY InitSecurityInterfaceExA(DWORD flags);
+
+#ifdef UNICODE
+#define InitSecurityInterfaceEx InitSecurityInterfaceExW
+#define INIT_SECURITY_INTERFACE_EX INIT_SECURITY_INTERFACE_EX_W
+#else
+#define InitSecurityInterfaceEx InitSecurityInterfaceExA
+#define INIT_SECURITY_INTERFACE_EX INIT_SECURITY_INTERFACE_EX_A
+#endif
 
 #ifdef __cplusplus
 }

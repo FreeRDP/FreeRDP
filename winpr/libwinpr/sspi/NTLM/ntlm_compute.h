@@ -2,7 +2,7 @@
  * WinPR: Windows Portable Runtime
  * NTLM Security Package (Compute)
  *
- * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,24 +25,22 @@
 #include "ntlm_av_pairs.h"
 
 void ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo);
-void ntlm_read_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo);
+int ntlm_read_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo);
 void ntlm_write_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo);
 void ntlm_print_version_info(NTLM_VERSION_INFO* versionInfo);
 
-void ntlm_read_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response);
-void ntlm_write_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response);
+int ntlm_read_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response);
+int ntlm_write_ntlm_v2_response(wStream* s, NTLMv2_RESPONSE* response);
 
-void ntlm_output_restriction_encoding(NTLM_CONTEXT* context);
 void ntlm_output_target_name(NTLM_CONTEXT* context);
 void ntlm_output_channel_bindings(NTLM_CONTEXT* context);
 
 void ntlm_current_time(BYTE* timestamp);
 void ntlm_generate_timestamp(NTLM_CONTEXT* context);
 
-void ntlm_compute_ntlm_hash(UINT16* password, UINT32 length, char* hash);
-void ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, char* hash);
-void ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
-void ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);
+int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash);
+int ntlm_compute_lm_v2_response(NTLM_CONTEXT* context);
+int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context);
 
 void ntlm_rc4k(BYTE* key, int length, BYTE* plaintext, BYTE* ciphertext);
 void ntlm_generate_client_challenge(NTLM_CONTEXT* context);

@@ -102,10 +102,11 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
-		if (plugin->data_in != NULL)
-			Stream_Free(plugin->data_in, TRUE);
+		if (plugin->data_in)
+			Stream_Release(plugin->data_in);
 
-		plugin->data_in = Stream_New(NULL, totalLength);
+		plugin->data_in = StreamPool_Take(plugin->pool, totalLength);
+		Stream_AddRef(plugin->data_in);
 	}
 
 	s = plugin->data_in;
@@ -178,6 +179,7 @@ static void* svc_plugin_thread_func(void* arg)
 	IFCALL(plugin->connect_callback, plugin);
 
 	SetEvent(plugin->started);
+
 	while (1)
 	{
 		if (!MessageQueue_Wait(plugin->MsgPipe->In))
@@ -192,6 +194,7 @@ static void* svc_plugin_thread_func(void* arg)
 			{
 				data = (wStream*) message.wParam;
 				IFCALL(plugin->receive_callback, plugin, data);
+				Stream_Release(data);
 			}
 			else if (message.id == 1)
 			{
@@ -236,7 +239,12 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 
 	MessagePipe_Free(plugin->MsgPipe);
 	CloseHandle(plugin->thread);
-	CloseHandle(plugin->started);
+
+	if (plugin->started)
+	{
+		CloseHandle(plugin->started);
+		plugin->started = NULL;
+	}
 
 	plugin->channel_entry_points.pVirtualChannelClose(plugin->OpenHandle);
 
@@ -246,10 +254,10 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 		plugin->data_in = NULL;
 	}
 
-	IFCALL(plugin->terminate_callback, plugin);
-
 	svc_plugin_remove_open_handle_data(plugin->OpenHandle);
 	svc_plugin_remove_init_handle_data(plugin->InitHandle);
+
+	IFCALL(plugin->terminate_callback, plugin);
 }
 
 static VOID VCAPITYPE svc_plugin_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
@@ -295,9 +303,25 @@ void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints)
 
 	plugin->channel_entry_points.pInterface = *(plugin->channel_entry_points.ppInterface);
 	plugin->channel_entry_points.ppInterface = &(plugin->channel_entry_points.pInterface);
-	plugin->started = CreateEvent(NULL,TRUE,FALSE,NULL);
+	plugin->started = CreateEvent(NULL, TRUE, FALSE, NULL);
+	plugin->pool = StreamPool_New(TRUE, 10);
 
 	svc_plugin_add_init_handle_data(plugin->InitHandle, plugin);
+}
+
+void svc_plugin_terminate(rdpSvcPlugin* plugin)
+{
+	if (plugin->pool)
+	{
+		StreamPool_Free(plugin->pool);
+		plugin->pool = NULL;
+	}
+
+	if (plugin->started)
+	{
+		CloseHandle(plugin->started);
+		plugin->started = NULL;
+	}
 }
 
 int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)

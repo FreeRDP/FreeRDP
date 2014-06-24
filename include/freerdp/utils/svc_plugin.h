@@ -55,6 +55,7 @@ struct rdp_svc_plugin
 	void* InitHandle;
 	DWORD OpenHandle;
 	wMessagePipe* MsgPipe;
+	wStreamPool *pool;
 };
 
 #ifdef __cplusplus
@@ -62,6 +63,8 @@ extern "C" {
 #endif
 
 FREERDP_API void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEntryPoints);
+FREERDP_API void svc_plugin_terminate(rdpSvcPlugin* plugin);
+
 FREERDP_API int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out);
 FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event);
 

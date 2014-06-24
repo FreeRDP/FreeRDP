@@ -431,8 +431,7 @@ void freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
 
-	client->context = (rdpContext*) malloc(client->ContextSize);
-	ZeroMemory(client->context, client->ContextSize);
+	client->context = (rdpContext *)calloc(1, client->ContextSize);
 
 	client->context->ServerMode = TRUE;
 
@@ -470,6 +469,8 @@ void freerdp_peer_context_new(freerdp_peer* client)
 void freerdp_peer_context_free(freerdp_peer* client)
 {
 	IFCALL(client->ContextFree, client, client->context);
+
+	metrics_free(client->context->metrics);
 }
 
 freerdp_peer* freerdp_peer_new(int sockfd)

@@ -47,6 +47,8 @@
 int main(int argc, char* argv[])
 {
 	int index = 1;
+	int format = 0;
+	int version = 1;
 	BYTE NtHash[16];
 	char* User = NULL;
 	UINT32 UserLength;
@@ -93,10 +95,40 @@ int main(int argc, char* argv[])
 
 			Password = argv[index];
 		}
+		else if (strcmp("-v", argv[index]) == 0)
+		{
+			index++;
+
+			if (index == argc)
+			{
+				printf("missing version\n");
+				exit(1);
+			}
+
+			version = atoi(argv[index]);
+
+			if ((version != 1) && (version != 2))
+				version = 1;
+		}
+		else if (strcmp("-f", argv[index]) == 0)
+		{
+			index++;
+
+			if (index == argc)
+			{
+				printf("missing format\n");
+				exit(1);
+			}
+
+			if (strcmp("default", argv[index]) == 0)
+				format = 0;
+			else if (strcmp("sam", argv[index]) == 0)
+				format = 1;
+		}
 		else if (strcmp("-h", argv[index]) == 0)
 		{
 			printf("winpr-hash: NTLM hashing tool\n");
-			printf("Usage: winpr-hash -u <username> -p <password> [-d <domain>]\n");
+			printf("Usage: winpr-hash -u <username> -p <password> [-d <domain>] -f <default,sam> -v <1,2>\n");
 			exit(1);
 		}
 
@@ -113,22 +145,44 @@ int main(int argc, char* argv[])
 	PasswordLength = strlen(Password);
 	DomainLength = (Domain) ? strlen(Domain) : 0;
 
-	NTOWFv1A(Password, PasswordLength, NtHash);
+	if (version == 2)
+	{
+		if (!Domain)
+		{
+			printf("missing domain\n");
+			exit(1);
+		}
 
-	printf("%s:", User);
-
-	if (DomainLength > 0)
-		printf("%s:", Domain);
+		NTOWFv2A(Password, PasswordLength, User, UserLength, Domain, DomainLength, NtHash);
+	}
 	else
+	{
+		NTOWFv1A(Password, PasswordLength, NtHash);
+	}
+
+	if (format == 0)
+	{
+		for (index = 0; index < 16; index++)
+			printf("%02x", NtHash[index]);
+		printf("\n");
+	}
+	else if (format == 1)
+	{
+		printf("%s:", User);
+
+		if (DomainLength > 0)
+			printf("%s:", Domain);
+		else
+			printf(":");
+
 		printf(":");
 
-	printf(":");
+		for (index = 0; index < 16; index++)
+			printf("%02x", NtHash[index]);
 
-	for (index = 0; index < 16; index++)
-		printf("%02x", NtHash[index]);
-
-	printf(":::");
-	printf("\n");
+		printf(":::");
+		printf("\n");
+	}
 
 	return 0;
 }

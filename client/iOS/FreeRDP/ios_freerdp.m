@@ -303,12 +303,11 @@ void ios_freerdp_free(freerdp* instance)
 void ios_init_freerdp()
 {
 	signal(SIGPIPE, SIG_IGN);
-	freerdp_channels_global_init();
     freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 }
 
 void ios_uninit_freerdp()
 {
-	freerdp_channels_global_uninit();
+
 }
 

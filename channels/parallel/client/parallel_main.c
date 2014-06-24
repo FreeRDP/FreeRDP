@@ -47,13 +47,12 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/stream.h>
 #include <winpr/collections.h>
 #include <winpr/interlocked.h>
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <winpr/stream.h>
-#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
 
 struct _PARALLEL_DEVICE
@@ -93,16 +92,14 @@ static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 	{
 		irp->IoStatus = STATUS_ACCESS_DENIED;
 		parallel->id = 0;
-
-		DEBUG_WARN("failed to create %s: %s", parallel->path, strerror(errno));
 	}
 	else
 	{
 		/* all read and write operations should be non-blocking */
 		if (fcntl(parallel->file, F_SETFL, O_NONBLOCK) == -1)
-			DEBUG_WARN("%s fcntl %s", path, strerror(errno));
+		{
 
-		DEBUG_SVC("%s(%d) created", parallel->path, parallel->file);
+		}
 	}
 
 	Stream_Write_UINT32(irp->output, parallel->id);
@@ -116,9 +113,13 @@ static void parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 static void parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	if (close(parallel->file) < 0)
-		DEBUG_SVC("failed to close %s(%d)", parallel->path, parallel->id);
+	{
+
+	}
 	else
-		DEBUG_SVC("%s(%d) closed", parallel->path, parallel->id);
+	{
+
+	}
 
 	Stream_Zero(irp->output, 5); /* Padding(5) */
 
@@ -145,12 +146,10 @@ static void parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 		free(buffer);
 		buffer = NULL;
 		Length = 0;
-
-		DEBUG_WARN("read %s(%d) failed", parallel->path, parallel->id);
 	}
 	else
 	{
-		DEBUG_SVC("read %llu-%llu from %d", Offset, Offset + Length, parallel->id);
+
 	}
 
 	Stream_Write_UINT32(irp->output, Length);
@@ -177,8 +176,6 @@ static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 	Stream_Read_UINT64(irp->input, Offset);
 	Stream_Seek(irp->input, 20); /* Padding */
 
-	DEBUG_SVC("Length %u Offset %llu", Length, Offset);
-
 	len = Length;
 
 	while (len > 0)
@@ -189,8 +186,6 @@ static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 		{
 			irp->IoStatus = STATUS_UNSUCCESSFUL;
 			Length = 0;
-
-			DEBUG_WARN("write %s(%d) failed.", parallel->path, parallel->id);
 			break;
 		}
 
@@ -206,15 +201,12 @@ static void parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 
 static void parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	DEBUG_SVC("in");
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
 	irp->Complete(irp);
 }
 
 static void parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	DEBUG_SVC("MajorFunction %u", irp->MajorFunction);
-
 	switch (irp->MajorFunction)
 	{
 		case IRP_MJ_CREATE:
@@ -238,7 +230,6 @@ static void parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 			break;
 
 		default:
-			DEBUG_WARN("MajorFunction 0x%X not supported", irp->MajorFunction);
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			irp->Complete(irp);
 			break;
@@ -280,8 +271,6 @@ static void parallel_irp_request(DEVICE* device, IRP* irp)
 static void parallel_free(DEVICE* device)
 {
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*) device;
-
-	DEBUG_SVC("freeing device");
 
 	MessageQueue_PostQuit(parallel->queue, 0);
 	WaitForSingleObject(parallel->thread, INFINITE);

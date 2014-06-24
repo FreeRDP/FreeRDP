@@ -83,11 +83,7 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 
 	disp = (DISP_PLUGIN*) callback->plugin;
 
-#ifdef DISP_PREVIEW
-	MonitorLayoutSize = 32;
-#else
 	MonitorLayoutSize = 40;
-#endif
 
 	length = 8 + 8 + (NumMonitors * MonitorLayoutSize);
 
@@ -101,11 +97,7 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 	if (NumMonitors > disp->MaxNumMonitors)
 		NumMonitors = disp->MaxNumMonitors;
 
-#ifdef DISP_PREVIEW
-	Stream_Write_UINT32(s, NumMonitors); /* NumMonitors (4 bytes) */
-#else
 	Stream_Write_UINT32(s, MonitorLayoutSize); /* MonitorLayoutSize (4 bytes) */
-#endif
 
 	Stream_Write_UINT32(s, NumMonitors); /* NumMonitors (4 bytes) */
 
@@ -147,10 +139,8 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 		fprintf(stderr, "\t: Orientation: %d\n", Monitors[index].Orientation);
 #endif
 
-#ifndef DISP_PREVIEW
 		Stream_Write_UINT32(s, Monitors[index].DesktopScaleFactor); /* DesktopScaleFactor (4 bytes) */
 		Stream_Write_UINT32(s, Monitors[index].DeviceScaleFactor); /* DeviceScaleFactor (4 bytes) */
-#endif
 	}
 
 	Stream_SealLength(s);
@@ -201,17 +191,12 @@ int disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 	return 0;
 }
 
-static int disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* pBuffer)
+static int disp_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
-	wStream* s;
 	int status = 0;
 	DISP_CHANNEL_CALLBACK* callback = (DISP_CHANNEL_CALLBACK*) pChannelCallback;
 
-	s = Stream_New(pBuffer, cbSize);
-
-	status = disp_recv_pdu(callback, s);
-
-	Stream_Free(s, FALSE);
+	status = disp_recv_pdu(callback, data);
 
 	return status;
 }
@@ -308,33 +293,34 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	disp = (DISP_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "disp");
 
-	if (disp == NULL)
+	if (!disp)
 	{
-		disp = (DISP_PLUGIN*) malloc(sizeof(DISP_PLUGIN));
+		disp = (DISP_PLUGIN*) calloc(1, sizeof(DISP_PLUGIN));
 
-		if (disp)
-		{
-			ZeroMemory(disp, sizeof(DISP_PLUGIN));
+		if (!disp)
+			return -1;
 
-			disp->iface.Initialize = disp_plugin_initialize;
-			disp->iface.Connected = NULL;
-			disp->iface.Disconnected = NULL;
-			disp->iface.Terminated = disp_plugin_terminated;
+		disp->iface.Initialize = disp_plugin_initialize;
+		disp->iface.Connected = NULL;
+		disp->iface.Disconnected = NULL;
+		disp->iface.Terminated = disp_plugin_terminated;
 
-			context = (DispClientContext*) malloc(sizeof(DispClientContext));
+		context = (DispClientContext*) calloc(1, sizeof(DispClientContext));
 
-			context->handle = (void*) disp;
+		if (!context)
+			return -1;
 
-			context->SendMonitorLayout = disp_send_monitor_layout;
+		context->handle = (void*) disp;
 
-			disp->iface.pInterface = (void*) context;
+		context->SendMonitorLayout = disp_send_monitor_layout;
 
-			disp->MaxNumMonitors = 16;
-			disp->MaxMonitorWidth = 8192;
-			disp->MaxMonitorHeight = 8192;
+		disp->iface.pInterface = (void*) context;
 
-			error = pEntryPoints->RegisterPlugin(pEntryPoints, "disp", (IWTSPlugin*) disp);
-		}
+		disp->MaxNumMonitors = 16;
+		disp->MaxMonitorWidth = 8192;
+		disp->MaxMonitorHeight = 8192;
+
+		error = pEntryPoints->RegisterPlugin(pEntryPoints, "disp", (IWTSPlugin*) disp);
 	}
 
 	return error;
