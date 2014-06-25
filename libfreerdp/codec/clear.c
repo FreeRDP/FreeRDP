@@ -25,9 +25,11 @@
 #include <winpr/print.h>
 #include <winpr/bitstream.h>
 
+#include <freerdp/codec/color.h>
 #include <freerdp/codec/clear.h>
 
-int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize)
+int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
 {
 	int index;
 	BYTE glyphFlags;
@@ -81,11 +83,13 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 
 	if (residualByteCount > 0)
 	{
+		UINT32 color;
 		BYTE blueValue;
 		BYTE greenValue;
 		BYTE redValue;
 		UINT32 suboffset;
 		BYTE* residualData;
+		UINT32 pixelIndex = 0;
 		BYTE runLengthFactor1 = 0;
 		UINT16 runLengthFactor2 = 0;
 		UINT32 runLengthFactor3 = 0;
@@ -105,6 +109,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 			blueValue = residualData[suboffset];
 			greenValue = residualData[suboffset + 1];
 			redValue = residualData[suboffset + 2];
+			color = RGB32(redValue, greenValue, blueValue);
 			suboffset += 3;
 
 			runLengthFactor1 = residualData[suboffset];
@@ -130,6 +135,17 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE*
 					suboffset += 4;
 				}
 			}
+
+			//freerdp_image_fill(*ppDstData, DstFormat, nDstStep,
+			//		nXDst + (pixelIndex % nWidth), nYDst + (pixelIndex / nWidth), nWidth, nHeight, color);
+
+			pixelIndex += runLengthFactor;
+		}
+
+		if (pixelIndex != (nWidth * nHeight))
+		{
+			fprintf(stderr, "ClearCodec residual data unexpected pixel count: Actual: %d, Expected: %d\n",
+					pixelIndex, (nWidth * nHeight));
 		}
 
 		/* Decompress residual layer and write to output bitmap */

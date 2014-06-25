@@ -256,8 +256,7 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status;
-	UINT32 DstSize = 0;
-	BYTE* pDstData = NULL;
+	BYTE* DstData = NULL;
 	xfGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 
@@ -266,9 +265,10 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 	if (!surface)
 		return -1;
 
-	status = clear_decompress(xfc->clear, cmd->data, cmd->length, &pDstData, &DstSize);
+	DstData = surface->data;
 
-	printf("xf_SurfaceCommand_ClearCodec: status: %d\n", status);
+	status = clear_decompress(NULL, cmd->data, cmd->length, &DstData,
+			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
 
 	/* fill with pink for now to distinguish from the rest */
 
