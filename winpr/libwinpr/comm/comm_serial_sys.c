@@ -1044,10 +1044,10 @@ static BOOL _set_queue_size(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSi
 	/* FIXME: could be implemented on top of N_TTY */
 
 	if (pQueueSize->InSize > N_TTY_BUF_SIZE)
-		DEBUG_WARN("Requested an incompatible input buffer size: %lu, keeping on with a %lu bytes buffer.", pQueueSize->InSize, N_TTY_BUF_SIZE);
+		DEBUG_WARN("Requested an incompatible input buffer size: %lu, keeping on with a %d bytes buffer.", pQueueSize->InSize, N_TTY_BUF_SIZE);
 
 	if (pQueueSize->OutSize > N_TTY_BUF_SIZE)
-		DEBUG_WARN("Requested an incompatible output buffer size: %lu, keeping on with a %lu bytes buffer.", pQueueSize->OutSize, N_TTY_BUF_SIZE);
+		DEBUG_WARN("Requested an incompatible output buffer size: %lu, keeping on with a %d bytes buffer.", pQueueSize->OutSize, N_TTY_BUF_SIZE);
 
 	SetLastError(ERROR_CANCELLED);
 	return FALSE;

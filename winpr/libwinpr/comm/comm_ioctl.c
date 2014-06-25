@@ -673,7 +673,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	if (lpBytesReturned && *lpBytesReturned != nOutBufferSize)
 	{
 		/* This might be a hint for a bug, especially when result==TRUE */
-		DEBUG_WARN("lpBytesReturned=%d and nOutBufferSize=%d are different!", *lpBytesReturned, nOutBufferSize);
+		DEBUG_WARN("lpBytesReturned=%ld and nOutBufferSize=%ld are different!", *lpBytesReturned, nOutBufferSize);
 	}
 
 	if (pComm->permissive)
