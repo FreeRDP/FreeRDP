@@ -37,11 +37,7 @@
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-
 #include <winpr/wtsapi.h>
-
-#define WTSVirtualEventHandle	3 /* Extended */
-#define WTSVirtualChannelReady	4 /* Extended */
 
 #ifdef __cplusplus
 extern "C" {
