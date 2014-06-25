@@ -9,7 +9,7 @@
     <string name="logout">Logout</string>
     <!-- Home menu items -->
     <string name="menu_exit">Beenden</string>
-    <string name="menu_about">Über</string>
+    <string name="menu_about">Impressum</string>
     <string name="menu_help">Hilfe</string>
     <string name="menu_new_bookmark">Neue Verbindung</string>
     <string name="menu_app_settings">Einstellungen</string>
@@ -167,10 +167,10 @@
     <string name="title_home">aFreeRDP - FreeRDP für Android</string>
     <string name="title_create_shortcut">RDP Verbindungen</string>
     <string name="title_help">Hilfe</string>
-    <string name="title_about">Über</string>
+    <string name="title_about">Impressum</string>
     <!-- Error message strings -->
-    <string name="error_bookmark_incomplete_title">Abbrechen ohne zu speichern?</string>
-    <string name="error_bookmark_incomplete">"Abbrechen" um abzubrechen\n"Fortfahren" drücken um zur Eingabemaske zu gelangen!</string>
+    <string name="error_bookmark_incomplete_title">Verlassen ohne zu speichern?</string>
+    <string name="error_bookmark_incomplete"><i><b>Abbrechen</b></i> um Einstellungen zu verwerfen\n<i><b>Fortfahren</b></i> um weiter zu editieren</string>
     <string name="error_connection_failure">Konnte keine Verbindung zum Server herstellen!</string>
     <!-- Info message strings -->
     <string name="info_capabilities_changed">Die Bildschirmeinstellungen mussten angepasst werden, da der Server die gewählten nicht unterstützt!</string>
