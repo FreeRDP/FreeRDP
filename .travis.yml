@@ -1,0 +1,9 @@
+language: cpp
+compiler:
+  - clang
+  - gcc
+before_script:
+  - sudo apt-get install libxv-dev libxkbfile-dev libasound2-dev libcups2-dev libxml2 libxml2-dev libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev libcunit1-dev libdirectfb-dev libxtst-dev
+script:
+  - cmake .
+  - make all
