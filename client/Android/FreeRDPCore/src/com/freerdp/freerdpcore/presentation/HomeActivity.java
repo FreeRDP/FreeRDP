@@ -9,7 +9,10 @@
 
 package com.freerdp.freerdpcore.presentation;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Locale;
 
 import com.freerdp.freerdpcore.R;
 import com.freerdp.freerdpcore.application.GlobalApp;
@@ -111,7 +114,23 @@ public class HomeActivity extends Activity
 		webViewGetStarted = (WebView) findViewById(R.id.webViewWelcome);
 		
 		String filename = ((getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE) ? "welcome.html" : "welcome_phone.html";
-		webViewGetStarted.loadUrl("file:///android_asset/welcome_page/" + filename);		
+		webViewGetStarted.getSettings().setJavaScriptEnabled(true);
+		Locale def = Locale.getDefault();
+		String prefix = def.getLanguage().toLowerCase(def);
+
+		String base = "file:///android_asset/"; 
+		String dir = prefix + "_help_page/"
+				+ filename;
+		try {
+			InputStream is = getAssets().open(dir);
+			is.close();
+			dir = base + dir;
+		} catch (IOException e) {
+			Log.e(TAG, "Missing localized asset " + dir, e);
+			dir = "file:///android_asset/help_page/" + filename;
+		} 
+
+		webViewGetStarted.loadUrl(dir);	
 		
 		// set listeners for the list view 
 		listViewBookmarks.setOnItemClickListener(new AdapterView.OnItemClickListener() {
