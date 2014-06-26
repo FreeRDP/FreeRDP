@@ -270,10 +270,12 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 	status = clear_decompress(NULL, cmd->data, cmd->length, &DstData,
 			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
 
+#if 0
 	/* fill with pink for now to distinguish from the rest */
 
 	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
 			cmd->left, cmd->top, cmd->width, cmd->height, 0xFF69B4);
+#endif
 
 	invalidRect.left = cmd->left;
 	invalidRect.top = cmd->top;
