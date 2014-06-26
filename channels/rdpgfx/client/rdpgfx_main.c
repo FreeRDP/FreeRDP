@@ -648,7 +648,7 @@ int rdpgfx_recv_map_surface_to_window_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wSt
 
 int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	int status;
+	int status = -1;
 	int beg, end;
 	RDPGFX_HEADER header;
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*) callback->plugin;
