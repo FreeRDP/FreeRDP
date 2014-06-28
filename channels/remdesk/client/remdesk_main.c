@@ -39,8 +39,8 @@ static int remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 {
 	int status = 1;
 
-	printf("RemDeskReceive: %d\n", Stream_Length(s));
-	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
+	printf("RemdeskReceive: %d\n", Stream_GetRemainingLength(s));
+	winpr_HexDump(Stream_Pointer(s), Stream_GetRemainingLength(s));
 
 	return status;
 }
@@ -302,8 +302,6 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 			CHANNEL_OPTION_ENCRYPT_RDP |
 			CHANNEL_OPTION_COMPRESS_RDP |
 			CHANNEL_OPTION_SHOW_PROTOCOL;
-
-	printf("remdesk_VirtualChannelEntry\n");
 
 	strcpy(remdesk->channelDef.name, "remdesk");
 

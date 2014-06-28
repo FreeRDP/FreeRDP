@@ -575,6 +575,68 @@ int freerdp_client_assistance_parse_file_buffer(rdpAssistanceFile* file, const c
 	return 1;
 }
 
+int freerdp_client_assistance_parse_file(rdpAssistanceFile* file, const char* name)
+{
+	int status;
+	BYTE* buffer;
+	FILE* fp = NULL;
+	size_t readSize;
+	long int fileSize;
+
+	fp = fopen(name, "r");
+
+	if (!fp)
+		return -1;
+
+	fseek(fp, 0, SEEK_END);
+	fileSize = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	if (fileSize < 1)
+	{
+		fclose(fp);
+		return -1;
+	}
+
+	buffer = (BYTE*) malloc(fileSize + 2);
+	readSize = fread(buffer, fileSize, 1, fp);
+
+	if (!readSize)
+	{
+		if (!ferror(fp))
+			readSize = fileSize;
+	}
+	fclose(fp);
+
+	if (readSize < 1)
+	{
+		free(buffer);
+		buffer = NULL;
+		return -1;
+	}
+
+	buffer[fileSize] = '\0';
+	buffer[fileSize + 1] = '\0';
+
+	status = freerdp_client_assistance_parse_file_buffer(file, (char*) buffer, fileSize);
+
+	free(buffer);
+
+	return status;
+}
+
+int freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* file, rdpSettings* settings)
+{
+	freerdp_set_param_bool(settings, FreeRDP_RemoteAssistanceMode, TRUE);
+
+	if (!file->RASessionId)
+		return -1;
+
+	freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceSessionId, file->RASessionId);
+
+	return 1;
+}
+
 rdpAssistanceFile* freerdp_client_assistance_file_new()
 {
 	rdpAssistanceFile* file;

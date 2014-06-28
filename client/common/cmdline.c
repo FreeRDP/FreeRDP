@@ -156,6 +156,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "print-reconnect-cookie", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Print base64 reconnect cookie after connecting" },
 	{ "heartbeat", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support heartbeat PDUs" },
 	{ "multitransport", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support multitransport protocol" },
+	{ "assistance", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Remote assistance mode" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -280,6 +281,17 @@ int freerdp_client_command_line_pre_filter(void* context, int index, int argc, L
 			{
 				settings = (rdpSettings*) context;
 				settings->ConnectionFile = _strdup(argv[index]);
+
+				return 1;
+			}
+		}
+
+		if (length > 13)
+		{
+			if (_stricmp(&(argv[index])[length - 13], ".msrcIncident") == 0)
+			{
+				settings = (rdpSettings*) context;
+				settings->AssistanceFile = _strdup(argv[index]);
 
 				return 1;
 			}
@@ -1845,6 +1857,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->PrintReconnectCookie = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "assistance")
+		{
+			settings->RemoteAssistanceMode = arg->Value ? TRUE : FALSE;
+		}
 		CommandLineSwitchDefault(arg)
 		{
 		}
@@ -2018,6 +2034,27 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 			char* params[1];
 
 			params[0] = "cliprdr";
+
+			freerdp_client_add_static_channel(settings, 1, (char**) params);
+		}
+	}
+
+	if (settings->RemoteAssistanceMode)
+	{
+		if (!freerdp_static_channel_collection_find(settings, "encomsp"))
+		{
+			char* params[1];
+
+			params[0] = "encomsp";
+
+			freerdp_client_add_static_channel(settings, 1, (char**) params);
+		}
+
+		if (!freerdp_static_channel_collection_find(settings, "remdesk"))
+		{
+			char* params[1];
+
+			params[0] = "remdesk";
 
 			freerdp_client_add_static_channel(settings, 1, (char**) params);
 		}

@@ -585,6 +585,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_DisableCursorShadow				966
 #define FreeRDP_DisableCursorBlinking				967
 #define FreeRDP_AllowDesktopComposition				968
+#define FreeRDP_RemoteAssistanceMode				1024
+#define FreeRDP_RemoteAssistanceSessionId			1025
 #define FreeRDP_TlsSecurity					1088
 #define FreeRDP_NlaSecurity					1089
 #define FreeRDP_RdpSecurity					1090
@@ -654,6 +656,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_CredentialsFromStdin				1604
 #define FreeRDP_ComputerName					1664
 #define FreeRDP_ConnectionFile					1728
+#define FreeRDP_AssistanceFile					1729
 #define FreeRDP_HomePath					1792
 #define FreeRDP_ConfigPath					1793
 #define FreeRDP_CurrentPath					1794
@@ -935,7 +938,11 @@ struct rdp_settings
 	ALIGN64 BOOL DisableCursorBlinking; /* 967 */
 	ALIGN64 BOOL AllowDesktopComposition; /* 968 */
 	UINT64 padding1024[1024 - 969]; /* 969 */
-	UINT64 padding1088[1088 - 1024]; /* 1024 */
+
+	/* Remote Assistance */
+	ALIGN64 BOOL RemoteAssistanceMode; /* 1024 */
+	ALIGN64 char* RemoteAssistanceSessionId; /* 1025 */
+	UINT64 padding1088[1088 - 1026]; /* 1026 */
 
 	/**
 	 * X.224 Connection Request/Confirm
@@ -1047,7 +1054,8 @@ struct rdp_settings
 
 	/* Files */
 	ALIGN64 char* ConnectionFile; /* 1728 */
-	UINT64 padding1792[1792 - 1729]; /* 1729 */
+	ALIGN64 char* AssistanceFile; /* 1729 */
+	UINT64 padding1792[1792 - 1730]; /* 1730 */
 
 	/* Paths */
 	ALIGN64 char* HomePath; /* 1792 */

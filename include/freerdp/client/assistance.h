@@ -56,7 +56,10 @@ extern "C" {
 #endif
 
 FREERDP_API int freerdp_client_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* buffer, size_t size);
+FREERDP_API int freerdp_client_assistance_parse_file(rdpAssistanceFile* file, const char* name);
 FREERDP_API int freerdp_client_assistance_decrypt(rdpAssistanceFile* file, const char* password);
+
+FREERDP_API int freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* file, rdpSettings* settings);
 
 FREERDP_API rdpAssistanceFile* freerdp_client_assistance_file_new();
 FREERDP_API void freerdp_client_assistance_file_free(rdpAssistanceFile* file);
