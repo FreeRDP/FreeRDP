@@ -63,6 +63,11 @@ int TestClientAssistance(int argc, char* argv[])
 	printf("DtLength: %d\n", file->DtLength);
 	printf("LowSpeed: %d\n", file->LowSpeed);
 
+	printf("RASessionId: %s\n", file->RASessionId);
+	printf("RASpecificParams: %s\n", file->RASpecificParams);
+	printf("MachineAddress: %s\n", file->MachineAddress);
+	printf("MachinePort: %d\n", (int) file->MachinePort);
+
 	status = freerdp_client_assistance_decrypt(file, TEST_MSRC_INCIDENT_PASSWORD);
 
 	printf("freerdp_client_assistance_decrypt: %d\n", status);

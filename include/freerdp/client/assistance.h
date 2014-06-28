@@ -35,9 +35,19 @@ struct rdp_assistance_file
 	BOOL LowSpeed;
 	BOOL RCTicketEncrypted;
 
-	char* ConnectionString;
-	BYTE* EncryptedConnectionString;
-	int EncryptedConnectionStringLength;
+	char* ConnectionString1;
+	char* ConnectionString2;
+
+	BYTE* EncryptedPassStub;
+	int EncryptedPassStubLength;
+
+	BYTE* EncryptedLHTicket;
+	int EncryptedLHTicketLength;
+
+	char* MachineAddress;
+	UINT32 MachinePort;
+	char* RASessionId;
+	char* RASpecificParams;
 };
 typedef struct rdp_assistance_file rdpAssistanceFile;
 
