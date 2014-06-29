@@ -4,9 +4,25 @@
 
 #include <freerdp/client/assistance.h>
 
-const char* TEST_MSRC_INCIDENT_PASSWORD = "48BJQ853X3B4";
+const char* TEST_MSRC_INCIDENT_PASSWORD_TYPE1 = "Password1";
 
-static const char* TEST_MSRC_INCIDENT_FILE =
+static const char* TEST_MSRC_INCIDENT_FILE_TYPE1 =
+"<?xml version=\"1.0\" encoding=\"Unicode\" ?>"
+"<UPLOADINFO TYPE=\"Escalated\">"
+"<UPLOADDATA "
+"USERNAME=\"Administrator\" "
+"RCTICKET=\"65538,1,10.0.3.105:3389;winxpsp3.contoso3.com:3389,*,"
+"rb+v0oPmEISmi8N2zK/vuhgul/ABqlDt6wW0VxMyxK8=,*,*,IuaRySSbPDNna4+2mKcsKxsbJFI=\""
+"RCTICKETENCRYPTED=\"1\" "
+"DtStart=\"1314905741\" "
+"DtLength=\"180\" "
+"PassStub=\"RT=0PvIndan52*\" "
+"L=\"0\" />"
+"</UPLOADINFO>";
+
+const char* TEST_MSRC_INCIDENT_PASSWORD_TYPE2 = "48BJQ853X3B4";
+
+static const char* TEST_MSRC_INCIDENT_FILE_TYPE2 =
 "<?xml version=\"1.0\"?>"
 "<UPLOADINFO TYPE=\"Escalated\">"
 "<UPLOADDATA USERNAME=\"awake\" "
@@ -40,14 +56,15 @@ static const char* TEST_MSRC_INCIDENT_FILE =
 "L=\"0\"/>"
 "</UPLOADINFO>";
 
-int TestClientAssistance(int argc, char* argv[])
+int test_msrsc_incident_file_type1()
 {
 	int status;
 	rdpAssistanceFile* file;
 
 	file = freerdp_client_assistance_file_new();
 
-	status = freerdp_client_assistance_parse_file_buffer(file, TEST_MSRC_INCIDENT_FILE, sizeof(TEST_MSRC_INCIDENT_FILE));
+	status = freerdp_client_assistance_parse_file_buffer(file,
+			TEST_MSRC_INCIDENT_FILE_TYPE1, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE1));
 
 	printf("freerdp_client_assistance_parse_file_buffer: %d\n", status);
 
@@ -68,7 +85,7 @@ int TestClientAssistance(int argc, char* argv[])
 	printf("MachineAddress: %s\n", file->MachineAddress);
 	printf("MachinePort: %d\n", (int) file->MachinePort);
 
-	status = freerdp_client_assistance_decrypt(file, TEST_MSRC_INCIDENT_PASSWORD);
+	status = freerdp_client_assistance_decrypt(file, TEST_MSRC_INCIDENT_PASSWORD_TYPE1);
 
 	printf("freerdp_client_assistance_decrypt: %d\n", status);
 
@@ -76,6 +93,56 @@ int TestClientAssistance(int argc, char* argv[])
 		return -1;
 
 	freerdp_client_assistance_file_free(file);
+
+	return 0;
+}
+
+int test_msrsc_incident_file_type2()
+{
+	int status;
+	rdpAssistanceFile* file;
+
+	file = freerdp_client_assistance_file_new();
+
+	status = freerdp_client_assistance_parse_file_buffer(file,
+			TEST_MSRC_INCIDENT_FILE_TYPE2, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE2));
+
+	printf("freerdp_client_assistance_parse_file_buffer: %d\n", status);
+
+	if (status < 0)
+		return -1;
+
+	printf("Username: %s\n", file->Username);
+	printf("LHTicket: %s\n", file->LHTicket);
+	printf("RCTicket: %s\n", file->RCTicket);
+	printf("RCTicketEncrypted: %d\n", file->RCTicketEncrypted);
+	printf("PassStub: %s\n", file->PassStub);
+	printf("DtStart: %d\n", file->DtStart);
+	printf("DtLength: %d\n", file->DtLength);
+	printf("LowSpeed: %d\n", file->LowSpeed);
+
+	printf("RASessionId: %s\n", file->RASessionId);
+	printf("RASpecificParams: %s\n", file->RASpecificParams);
+	printf("MachineAddress: %s\n", file->MachineAddress);
+	printf("MachinePort: %d\n", (int) file->MachinePort);
+
+	status = freerdp_client_assistance_decrypt(file, TEST_MSRC_INCIDENT_PASSWORD_TYPE2);
+
+	printf("freerdp_client_assistance_decrypt: %d\n", status);
+
+	if (status < 0)
+		return -1;
+
+	freerdp_client_assistance_file_free(file);
+
+	return 0;
+}
+
+int TestClientAssistance(int argc, char* argv[])
+{
+	test_msrsc_incident_file_type1();
+
+	//test_msrsc_incident_file_type2();
 
 	return 0;
 }

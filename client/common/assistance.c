@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
 #include <winpr/windows.h>
 
 #include <openssl/ssl.h>
@@ -37,6 +38,14 @@
 #include <freerdp/client/cmdline.h>
 
 #include <freerdp/client/assistance.h>
+
+/**
+ * Password encryption in establishing a remote assistance session of type 1:
+ * http://blogs.msdn.com/b/openspecification/archive/2011/10/31/password-encryption-in-establishing-a-remote-assistance-session-of-type-1.aspx
+ *
+ * Creation of PassStub for the Remote Assistance Ticket:
+ * http://social.msdn.microsoft.com/Forums/en-US/6316c3f4-ea09-4343-a4a1-9cca46d70d28/creation-of-passstub-for-the-remote-assistance-ticket?forum=os_windowsprotocols
+ */
 
 /**
  * CryptDeriveKey Function:
@@ -102,20 +111,38 @@ int freerdp_client_assistance_decrypt1(rdpAssistanceFile* file, const char* pass
 	int status;
 	RC4_KEY rc4;
 	MD5_CTX md5Ctx;
-	int PassStubLength;
+	int cbPasswordW;
+	int cbPassStubW;
 	BYTE* PlainBlob = NULL;
 	WCHAR* PasswordW = NULL;
+	WCHAR* PassStubW = NULL;
 	BYTE EncryptionKey[AES_BLOCK_SIZE];
 	BYTE PasswordHash[MD5_DIGEST_LENGTH];
+
+	/**
+	 * PROV_RSA_FULL provider
+	 * CALG_MD5 hashing
+	 * CALG_RC4 encryption
+	 * Key Length: 40 bits
+	 * Salt Length: 88 bits
+	 */
 
 	status = ConvertToUnicode(CP_UTF8, 0, password, -1, &PasswordW, 0);
 
 	if (status <= 0)
 		return -1;
 
+	cbPasswordW = (status - 1) * 2;
+
+	printf("PasswordW (%d)\n", cbPasswordW);
+	winpr_HexDump(PasswordW, cbPasswordW);
+
 	MD5_Init(&md5Ctx);
-	MD5_Update(&md5Ctx, PasswordW, status * 2);
+	MD5_Update(&md5Ctx, PasswordW, cbPasswordW);
 	MD5_Final((void*) PasswordHash, &md5Ctx);
+
+	printf("PasswordHash (%s):\n", password);
+	winpr_HexDump(PasswordHash, sizeof(PasswordHash));
 
 	status = freerdp_client_assistance_crypt_derive_key(PasswordHash, sizeof(PasswordHash),
 			EncryptionKey, sizeof(EncryptionKey));
@@ -123,8 +150,20 @@ int freerdp_client_assistance_decrypt1(rdpAssistanceFile* file, const char* pass
 	if (status < 0)
 		return -1;
 
-	PassStubLength = strlen(file->PassStub);
-	file->EncryptedPassStubLength = PassStubLength + 4;
+	printf("DerivedKey (%d):\n", sizeof(EncryptionKey));
+	winpr_HexDump(EncryptionKey, sizeof(EncryptionKey));
+
+	status = ConvertToUnicode(CP_UTF8, 0, file->PassStub, -1, &PassStubW, 0);
+
+	if (status <= 0)
+		return -1;
+
+	cbPassStubW = (status - 1) * 2;
+
+	printf("PassStubW (%d)\n", cbPassStubW);
+	winpr_HexDump(PassStubW, cbPassStubW);
+
+	file->EncryptedPassStubLength = cbPassStubW + 4;
 
 	PlainBlob = (BYTE*) calloc(1, file->EncryptedPassStubLength);
 	file->EncryptedPassStub = (BYTE*) calloc(1, file->EncryptedPassStubLength);
@@ -135,11 +174,23 @@ int freerdp_client_assistance_decrypt1(rdpAssistanceFile* file, const char* pass
 	if (!file->EncryptedPassStubLength)
 		return -1;
 
-	*((UINT32*) PlainBlob) = PassStubLength;
-	CopyMemory(&PlainBlob[4], file->PassStub, PassStubLength);
+	*((UINT32*) PlainBlob) = cbPassStubW;
+	CopyMemory(&PlainBlob[4], PassStubW, cbPassStubW);
+
+	printf("PlainBlob (%d)\n", file->EncryptedPassStubLength);
+	winpr_HexDump(PlainBlob, file->EncryptedPassStubLength);
+
+#if 0
+	void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data);
+	void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
+			unsigned char *outdata);
+#endif
 
 	RC4_set_key(&rc4, sizeof(EncryptionKey), EncryptionKey);
 	RC4(&rc4, file->EncryptedPassStubLength, PlainBlob, file->EncryptedPassStub);
+
+	printf("EncryptedPassStub (%d):\n", file->EncryptedPassStubLength);
+	winpr_HexDump(file->EncryptedPassStub, file->EncryptedPassStubLength);
 
 	return 1;
 }
@@ -561,8 +612,13 @@ int freerdp_client_assistance_parse_file_buffer(rdpAssistanceFile* file, const c
 			file->LowSpeed = TRUE;
 	}
 
-	file->EncryptedLHTicket = freerdp_client_assistance_parse_hex_string(file->LHTicket,
-			&file->EncryptedLHTicketLength);
+	file->Type = (file->LHTicket) ? 2 : 1;
+
+	if (file->LHTicket)
+	{
+		file->EncryptedLHTicket = freerdp_client_assistance_parse_hex_string(file->LHTicket,
+				&file->EncryptedLHTicketLength);
+	}
 
 	status = freerdp_client_assistance_parse_connection_string1(file);
 

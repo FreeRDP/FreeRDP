@@ -25,7 +25,8 @@
 
 struct rdp_assistance_file
 {
-	char* Type;
+	UINT32 Type;
+
 	char* Username;
 	char* LHTicket;
 	char* RCTicket;
