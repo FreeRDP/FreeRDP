@@ -42,6 +42,8 @@ struct remdesk_plugin
 	void* InitHandle;
 	DWORD OpenHandle;
 	wMessagePipe* MsgPipe;
+
+	UINT32 Version;
 };
 typedef struct remdesk_plugin remdeskPlugin;
 

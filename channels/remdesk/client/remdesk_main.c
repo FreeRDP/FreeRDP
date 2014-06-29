@@ -35,12 +35,249 @@ RemdeskClientContext* remdesk_get_client_interface(remdeskPlugin* remdesk)
 	return pInterface;
 }
 
-static int remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
+int remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
+{
+	UINT32 status = 0;
+
+	if (!remdesk)
+		return -1;
+
+	status = remdesk->channelEntryPoints.pVirtualChannelWrite(remdesk->OpenHandle,
+			Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
+
+	if (status != CHANNEL_RC_OK)
+	{
+		fprintf(stderr, "remdesk_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
+		return -1;
+	}
+
+	Stream_Free(s, TRUE);
+
+	return 1;
+}
+
+int remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
+{
+	int status;
+	UINT32 ChannelNameLen;
+	char* pChannelName = NULL;
+
+	if (Stream_GetRemainingLength(s) < 8)
+		return -1;
+
+	Stream_Read_UINT32(s, ChannelNameLen); /* ChannelNameLen (4 bytes) */
+	Stream_Read_UINT32(s, header->DataLength); /* DataLen (4 bytes) */
+
+	if (ChannelNameLen > 64)
+		return -1;
+
+	if ((ChannelNameLen % 2) != 0)
+		return -1;
+
+	if (Stream_GetRemainingLength(s) < ChannelNameLen)
+		return -1;
+
+	ZeroMemory(header->ChannelName, sizeof(header->ChannelName));
+
+	pChannelName = (char*) header->ChannelName;
+	status = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s),
+			ChannelNameLen / 2, &pChannelName, 32, NULL, NULL);
+
+	Stream_Seek(s, ChannelNameLen);
+
+	if (status <= 0)
+		return -1;
+
+	return 1;
+}
+
+int remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
+{
+	int status;
+	UINT32 ChannelNameLen;
+	WCHAR ChannelNameW[32];
+	WCHAR* pChannelName = NULL;
+
+	ZeroMemory(ChannelNameW, sizeof(ChannelNameW));
+
+	pChannelName = (WCHAR*) ChannelNameW;
+	status = ConvertToUnicode(CP_UTF8, 0, header->ChannelName, -1, &pChannelName, 32);
+
+	if (status <= 0)
+		return -1;
+
+	ChannelNameLen = (status + 1) * 2;
+
+	Stream_Write_UINT32(s, ChannelNameLen); /* ChannelNameLen (4 bytes) */
+	Stream_Write_UINT32(s, header->DataLength); /* DataLen (4 bytes) */
+
+	Stream_Write(s, pChannelName, ChannelNameLen); /* ChannelName (variable) */
+
+	return 1;
+}
+
+int remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
+{
+	remdesk_write_channel_header(s, (REMDESK_CHANNEL_HEADER*) ctlHeader);
+	Stream_Write_UINT32(s, ctlHeader->msgType); /* msgType (4 bytes) */
+	return 1;
+}
+
+int remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UINT32 msgSize)
+{
+	ctlHeader->msgType = REMDESK_CTL_VERSIONINFO;
+	strcpy(ctlHeader->ChannelName, REMDESK_CHANNEL_CTL_NAME);
+	ctlHeader->DataLength = 4 + msgSize;
+	return 1;
+}
+
+int remdesk_recv_ctl_server_announce_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
+{
+	printf("RemdeskServerAnnounce\n");
+
+	return 1;
+}
+
+int remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
+{
+	UINT32 versionMajor;
+	UINT32 versionMinor;
+
+	if (Stream_GetRemainingLength(s) < 8)
+		return -1;
+
+	Stream_Read_UINT32(s, versionMajor); /* versionMajor (4 bytes) */
+	Stream_Read_UINT32(s, versionMinor); /* versionMinor (4 bytes) */
+
+	printf("RemdeskVersionInfo: versionMajor: 0x%04X versionMinor: 0x%04X\n",
+			versionMajor, versionMinor);
+
+	return 1;
+}
+
+int remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
+{
+	wStream* s;
+	REMDESK_CTL_VERSION_INFO_PDU pdu;
+
+	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_VERSIONINFO, 8);
+
+	pdu.versionMajor = 1;
+	pdu.versionMinor = 2;
+
+	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
+
+	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+
+	Stream_Write_UINT32(s, pdu.versionMajor); /* versionMajor (4 bytes) */
+	Stream_Write_UINT32(s, pdu.versionMinor); /* versionMinor (4 bytes) */
+
+	Stream_SealLength(s);
+
+	remdesk_virtual_channel_write(remdesk, s);
+
+	return 1;
+}
+
+int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status = 1;
+	UINT32 msgType;
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return -1;
+
+	Stream_Read_UINT32(s, msgType); /* msgType (4 bytes) */
+
+	printf("msgType: %d\n", msgType);
+
+	switch (msgType)
+	{
+		case REMDESK_CTL_REMOTE_CONTROL_DESKTOP:
+			break;
+
+		case REMDESK_CTL_RESULT:
+			break;
+
+		case REMDESK_CTL_AUTHENTICATE:
+			break;
+
+		case REMDESK_CTL_SERVER_ANNOUNCE:
+			status = remdesk_recv_ctl_server_announce_pdu(remdesk, s, header);
+			break;
+
+		case REMDESK_CTL_DISCONNECT:
+			break;
+
+		case REMDESK_CTL_VERSIONINFO:
+			status = remdesk_recv_ctl_version_info_pdu(remdesk, s, header);
+			break;
+
+		case REMDESK_CTL_ISCONNECTED:
+			break;
+
+		case REMDESK_CTL_VERIFY_PASSWORD:
+			break;
+
+		case REMDESK_CTL_EXPERT_ON_VISTA:
+			break;
+
+		case REMDESK_CTL_RANOVICE_NAME:
+			break;
+
+		case REMDESK_CTL_RAEXPERT_NAME:
+			break;
+
+		case REMDESK_CTL_TOKEN:
+			break;
+
+		default:
+			fprintf(stderr, "remdesk_recv_control_pdu: unknown msgType: %d\n", msgType);
+			status = -1;
+			break;
+	}
+
+	return status;
+}
+
+int remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
+{
+	int status = 1;
+	REMDESK_CHANNEL_HEADER header;
 
 	printf("RemdeskReceive: %d\n", Stream_GetRemainingLength(s));
 	winpr_HexDump(Stream_Pointer(s), Stream_GetRemainingLength(s));
+
+	remdesk_read_channel_header(s, &header);
+
+	if (strcmp(header.ChannelName, "RC_CTL") == 0)
+	{
+		status = remdesk_recv_ctl_pdu(remdesk, s, &header);
+	}
+	else if (strcmp(header.ChannelName, "70") == 0)
+	{
+
+	}
+	else if (strcmp(header.ChannelName, "71") == 0)
+	{
+
+	}
+	else if (strcmp(header.ChannelName, ".") == 0)
+	{
+
+	}
+	else if (strcmp(header.ChannelName, "1000.") == 0)
+	{
+
+	}
+	else if (strcmp(header.ChannelName, "RA_FX") == 0)
+	{
+
+	}
+	else
+	{
+
+	}
 
 	return status;
 }
@@ -297,6 +534,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	remdesk = (remdeskPlugin*) calloc(1, sizeof(remdeskPlugin));
 
+	if (!remdesk)
+		return FALSE;
+
 	remdesk->channelDef.options =
 			CHANNEL_OPTION_INITIALIZED |
 			CHANNEL_OPTION_ENCRYPT_RDP |
@@ -304,6 +544,8 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 			CHANNEL_OPTION_SHOW_PROTOCOL;
 
 	strcpy(remdesk->channelDef.name, "remdesk");
+
+	remdesk->Version = 2;
 
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
 

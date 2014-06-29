@@ -634,6 +634,12 @@ int freerdp_client_populate_settings_from_assistance_file(rdpAssistanceFile* fil
 
 	freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceSessionId, file->RASessionId);
 
+	if (!file->MachineAddress)
+		return -1;
+
+	freerdp_set_param_string(settings, FreeRDP_ServerHostname, file->MachineAddress);
+	freerdp_set_param_uint32(settings, FreeRDP_ServerPort, file->MachinePort);
+
 	return 1;
 }
 
