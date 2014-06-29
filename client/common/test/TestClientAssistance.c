@@ -146,7 +146,7 @@ int TestClientAssistance(int argc, char* argv[])
 {
 	test_msrsc_incident_file_type1();
 
-	//test_msrsc_incident_file_type2();
+	test_msrsc_incident_file_type2();
 
 	return 0;
 }

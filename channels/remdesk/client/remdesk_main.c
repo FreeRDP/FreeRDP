@@ -43,15 +43,13 @@ int remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 		return -1;
 
 	status = remdesk->channelEntryPoints.pVirtualChannelWrite(remdesk->OpenHandle,
-			Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
+			Stream_Buffer(s), (UINT32) Stream_Length(s), s);
 
 	if (status != CHANNEL_RC_OK)
 	{
 		fprintf(stderr, "remdesk_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
 		return -1;
 	}
-
-	Stream_Free(s, TRUE);
 
 	return 1;
 }
@@ -179,10 +177,135 @@ int remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 	return 1;
 }
 
+int remdesk_recv_result_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header, UINT32 *pResult)
+{
+	UINT32 result;
+
+	if (Stream_GetRemainingLength(s) < 4)
+		return -1;
+
+	Stream_Read_UINT32(s, result); /* result (4 bytes) */
+
+	*pResult = result;
+
+	printf("RemdeskRecvResult: 0x%04X\n", result);
+
+	return 1;
+}
+
+int remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
+{
+	int status;
+	wStream* s;
+	int cbExpertBlobW = 0;
+	WCHAR* expertBlobW = NULL;
+	int cbRaConnectionStringW = 0;
+	WCHAR* raConnectionStringW = NULL;
+	REMDESK_CTL_AUTHENTICATE_PDU pdu;
+
+	pdu.expertBlob = NULL;
+	pdu.raConnectionString = NULL;
+
+	status = ConvertToUnicode(CP_UTF8, 0, pdu.raConnectionString, -1, &raConnectionStringW, 0);
+
+	if (status <= 0)
+		return -1;
+
+	cbRaConnectionStringW = status * 2;
+
+	status = ConvertToUnicode(CP_UTF8, 0, pdu.expertBlob, -1, &expertBlobW, 0);
+
+	if (status <= 0)
+		return -1;
+
+	cbExpertBlobW = status * 2;
+
+	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_AUTHENTICATE,
+			cbRaConnectionStringW + cbExpertBlobW);
+
+	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
+
+	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+
+	Stream_Write(s, (BYTE*) raConnectionStringW, cbRaConnectionStringW);
+	Stream_Write(s, (BYTE*) expertBlobW, cbExpertBlobW);
+
+	Stream_SealLength(s);
+
+	remdesk_virtual_channel_write(remdesk, s);
+
+	free(raConnectionStringW);
+	free(expertBlobW);
+
+	return 1;
+}
+
+int remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
+{
+	int status;
+	wStream* s;
+	int cbExpertBlobW = 0;
+	WCHAR* expertBlobW = NULL;
+	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu;
+
+	pdu.expertBlob = NULL;
+
+	status = ConvertToUnicode(CP_UTF8, 0, pdu.expertBlob, -1, &expertBlobW, 0);
+
+	if (status <= 0)
+		return -1;
+
+	cbExpertBlobW = status * 2;
+
+	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_AUTHENTICATE, cbExpertBlobW);
+
+	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
+
+	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+
+	Stream_Write(s, (BYTE*) expertBlobW, cbExpertBlobW);
+
+	Stream_SealLength(s);
+
+	remdesk_virtual_channel_write(remdesk, s);
+
+	free(expertBlobW);
+
+	return 1;
+}
+
+int remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
+{
+	wStream* s;
+	BYTE EncryptedPassword[32];
+	REMDESK_CTL_EXPERT_ON_VISTA_PDU pdu;
+
+	ZeroMemory(EncryptedPassword, 32);
+
+	pdu.EncryptedPasswordLength = 32;
+	pdu.EncryptedPassword = (BYTE*) EncryptedPassword;
+
+	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_EXPERT_ON_VISTA,
+			pdu.EncryptedPasswordLength);
+
+	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
+
+	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+
+	Stream_Write(s, pdu.EncryptedPassword, pdu.EncryptedPasswordLength);
+
+	Stream_SealLength(s);
+
+	remdesk_virtual_channel_write(remdesk, s);
+
+	return 1;
+}
+
 int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status = 1;
-	UINT32 msgType;
+	UINT32 msgType = 0;
+	UINT32 result = 0;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return -1;
@@ -197,6 +320,7 @@ int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEA
 			break;
 
 		case REMDESK_CTL_RESULT:
+			status = remdesk_recv_result_pdu(remdesk, s, header, &result);
 			break;
 
 		case REMDESK_CTL_AUTHENTICATE:
@@ -211,6 +335,10 @@ int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEA
 
 		case REMDESK_CTL_VERSIONINFO:
 			status = remdesk_recv_ctl_version_info_pdu(remdesk, s, header);
+
+			if (status >= 0)
+				status = remdesk_send_ctl_version_info_pdu(remdesk);
+
 			break;
 
 		case REMDESK_CTL_ISCONNECTED:

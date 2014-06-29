@@ -134,13 +134,13 @@ int freerdp_client_assistance_crypt_derive_key_sha1(BYTE* hash, int hashLength, 
 	if (!buffer)
 		return -1;
 
-	SHA_Init(&hashCtx);
-	SHA_Update(&hashCtx, pad1, 64);
-	SHA_Final((void*) buffer, &hashCtx);
+	SHA1_Init(&hashCtx);
+	SHA1_Update(&hashCtx, pad1, 64);
+	SHA1_Final((void*) buffer, &hashCtx);
 
-	SHA_Init(&hashCtx);
-	SHA_Update(&hashCtx, pad2, 64);
-	SHA_Final((void*) &buffer[hashLength], &hashCtx);
+	SHA1_Init(&hashCtx);
+	SHA1_Update(&hashCtx, pad2, 64);
+	SHA1_Final((void*) &buffer[hashLength], &hashCtx);
 
 	CopyMemory(key, buffer, keyLength);
 
@@ -259,6 +259,10 @@ int freerdp_client_assistance_decrypt1(rdpAssistanceFile* file, const char* pass
 	printf("EncryptedPassStub (%d):\n", file->EncryptedPassStubLength);
 	winpr_HexDump(file->EncryptedPassStub, file->EncryptedPassStubLength);
 
+	free(PlainBlob);
+	free(PasswordW);
+	free(PassStubW);
+
 	return 1;
 }
 
@@ -272,6 +276,7 @@ int freerdp_client_assistance_decrypt2(rdpAssistanceFile* file, const char* pass
 	BYTE *pbIn, *pbOut;
 	int cbOut, cbIn, cbFinal;
 	BYTE DerivedKey[AES_BLOCK_SIZE];
+	BYTE InitializationVector[AES_BLOCK_SIZE];
 	BYTE PasswordHash[SHA_DIGEST_LENGTH];
 
 	status = ConvertToUnicode(CP_UTF8, 0, password, -1, &PasswordW, 0);
@@ -281,9 +286,9 @@ int freerdp_client_assistance_decrypt2(rdpAssistanceFile* file, const char* pass
 
 	cbPasswordW = (status - 1) * 2;
 
-	SHA_Init(&shaCtx);
-	SHA_Update(&shaCtx, PasswordW, cbPasswordW);
-	SHA_Final((void*) PasswordHash, &shaCtx);
+	SHA1_Init(&shaCtx);
+	SHA1_Update(&shaCtx, PasswordW, cbPasswordW);
+	SHA1_Final((void*) PasswordHash, &shaCtx);
 
 	status = freerdp_client_assistance_crypt_derive_key_sha1(PasswordHash, sizeof(PasswordHash),
 			DerivedKey, sizeof(DerivedKey));
@@ -291,11 +296,19 @@ int freerdp_client_assistance_decrypt2(rdpAssistanceFile* file, const char* pass
 	if (status < 0)
 		return -1;
 
+	ZeroMemory(InitializationVector, sizeof(InitializationVector));
+
 	EVP_CIPHER_CTX_init(&aesDec);
 
+	status = EVP_DecryptInit_ex(&aesDec, EVP_aes_128_cbc(), NULL, NULL, NULL);
+
+	if (status != 1)
+		return -1;
+
+	EVP_CIPHER_CTX_set_key_length(&aesDec, (128 / 8));
 	EVP_CIPHER_CTX_set_padding(&aesDec, 0);
 
-	status = EVP_DecryptInit_ex(&aesDec, EVP_aes_128_cbc(), NULL, DerivedKey, NULL);
+	status = EVP_DecryptInit_ex(&aesDec, EVP_aes_128_cbc(), NULL, DerivedKey, InitializationVector);
 
 	if (status != 1)
 		return -1;
@@ -303,7 +316,7 @@ int freerdp_client_assistance_decrypt2(rdpAssistanceFile* file, const char* pass
 	cbOut = cbFinal = 0;
 	cbIn = file->EncryptedLHTicketLength;
 
-	file->ConnectionString2 = (char*) calloc(1, cbOut + AES_BLOCK_SIZE);
+	file->ConnectionString2 = (char*) calloc(1, cbIn + AES_BLOCK_SIZE);
 
 	if (!file->ConnectionString2)
 		return -1;
@@ -318,8 +331,6 @@ int freerdp_client_assistance_decrypt2(rdpAssistanceFile* file, const char* pass
 
 	status = EVP_DecryptFinal_ex(&aesDec, pbOut + cbOut, &cbFinal);
 
-	/* FIXME: still fails */
-
 	if (status != 1)
 	{
 		fprintf(stderr, "EVP_DecryptFinal_ex failure\n");
@@ -327,6 +338,8 @@ int freerdp_client_assistance_decrypt2(rdpAssistanceFile* file, const char* pass
 	}
 
 	EVP_CIPHER_CTX_cleanup(&aesDec);
+
+	free(PasswordW);
 
 	return 1;
 }
@@ -808,8 +821,13 @@ void freerdp_client_assistance_file_free(rdpAssistanceFile* file)
 	free(file->LHTicket);
 	free(file->RCTicket);
 	free(file->PassStub);
+	free(file->ConnectionString1);
 	free(file->ConnectionString2);
 	free(file->EncryptedLHTicket);
+	free(file->RASessionId);
+	free(file->RASpecificParams);
+	free(file->MachineAddress);
+	free(file->EncryptedPassStub);
 
 	free(file);
 }
