@@ -71,10 +71,12 @@ struct xf_window
 	int bottom;
 	int width;
 	int height;
+	int shmid;
 	Window handle;
+	Window *xfwin;
 	BOOL fullscreen;
 	BOOL decorations;
-	rdpWindow* window;
+	rdpWindow *window;
 	BOOL is_mapped;
 	BOOL is_transient;
 	xfLocalMove local_move;
@@ -82,39 +84,39 @@ struct xf_window
 	BOOL rail_ignore_configure;
 };
 
-void xf_ewmhints_init(xfContext* xfc);
+void xf_ewmhints_init(xfContext *xfc);
 
-BOOL xf_GetCurrentDesktop(xfContext* xfc);
-BOOL xf_GetWorkArea(xfContext* xfc);
+BOOL xf_GetCurrentDesktop(xfContext *xfc);
+BOOL xf_GetWorkArea(xfContext *xfc);
 
-void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen);
-void xf_SetWindowDecorations(xfContext* xfc, xfWindow* window, BOOL show);
-void xf_SetWindowUnlisted(xfContext* xfc, xfWindow* window);
+void xf_SetWindowFullscreen(xfContext *xfc, xfWindow *window, BOOL fullscreen);
+void xf_SetWindowDecorations(xfContext *xfc, xfWindow *window, BOOL show);
+void xf_SetWindowUnlisted(xfContext *xfc, xfWindow *window);
 
-xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height, BOOL decorations);
-void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int height);
+xfWindow *xf_CreateDesktopWindow(xfContext *xfc, char *name, int width, int height, BOOL decorations);
+void xf_ResizeDesktopWindow(xfContext *xfc, xfWindow *window, int width, int height);
 
-xfWindow* xf_CreateWindow(xfContext* xfc, rdpWindow* wnd, int x, int y, int width, int height, UINT32 id);
-void xf_SetWindowText(xfContext* xfc, xfWindow* window, char *name);
-void xf_MoveWindow(xfContext* xfc, xfWindow* window, int x, int y, int width, int height);
-void xf_ShowWindow(xfContext* xfc, xfWindow* window, BYTE state);
-void xf_SetWindowIcon(xfContext* xfc, xfWindow* window, rdpIcon* icon);
-void xf_SetWindowRects(xfContext* xfc, xfWindow* window, RECTANGLE_16* rects, int nrects);
-void xf_SetWindowVisibilityRects(xfContext* xfc, xfWindow* window, RECTANGLE_16* rects, int nrects);
-void xf_SetWindowStyle(xfContext* xfc, xfWindow* window, UINT32 style, UINT32 ex_style);
-void xf_UpdateWindowArea(xfContext* xfc, xfWindow* window, int x, int y, int width, int height);
-BOOL xf_IsWindowBorder(xfContext* xfc, xfWindow* xfw, int x, int y);
-void xf_DestroyWindow(xfContext* xfc, xfWindow* window);
-rdpWindow* xf_rdpWindowFromWindow(xfContext* xfc, Window wnd);
+xfWindow *xf_CreateWindow(xfContext *xfc, rdpWindow *wnd, int x, int y, int width, int height, UINT32 id);
+void xf_SetWindowText(xfContext *xfc, xfWindow *window, char *name);
+void xf_MoveWindow(xfContext *xfc, xfWindow *window, int x, int y, int width, int height);
+void xf_ShowWindow(xfContext *xfc, xfWindow *window, BYTE state);
+void xf_SetWindowIcon(xfContext *xfc, xfWindow *window, rdpIcon *icon);
+void xf_SetWindowRects(xfContext *xfc, xfWindow *window, RECTANGLE_16 *rects, int nrects);
+void xf_SetWindowVisibilityRects(xfContext *xfc, xfWindow *window, RECTANGLE_16 *rects, int nrects);
+void xf_SetWindowStyle(xfContext *xfc, xfWindow *window, UINT32 style, UINT32 ex_style);
+void xf_UpdateWindowArea(xfContext *xfc, xfWindow *window, int x, int y, int width, int height);
+BOOL xf_IsWindowBorder(xfContext *xfc, xfWindow *xfw, int x, int y);
+void xf_DestroyWindow(xfContext *xfc, xfWindow *window);
+rdpWindow *xf_rdpWindowFromWindow(xfContext *xfc, Window wnd);
 
-BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int length,
-		unsigned long* nitems, unsigned long* bytes, BYTE** prop);
+BOOL xf_GetWindowProperty(xfContext *xfc, Window window, Atom property, int length,
+						  unsigned long *nitems, unsigned long *bytes, BYTE **prop);
 
-void xf_SetWindowMinMaxInfo(xfContext* xfc, xfWindow* window, int maxWidth, int maxHeight,
-		int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight);
+void xf_SetWindowMinMaxInfo(xfContext *xfc, xfWindow *window, int maxWidth, int maxHeight,
+							int maxPosX, int maxPosY, int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight);
 
-void xf_StartLocalMoveSize(xfContext* xfc, xfWindow* window, int direction, int x, int y);
-void xf_EndLocalMoveSize(xfContext* xfc, xfWindow *window);
-void xf_SendClientEvent(xfContext* xfc, xfWindow* window, Atom atom, unsigned int numArgs, ...);
+void xf_StartLocalMoveSize(xfContext *xfc, xfWindow *window, int direction, int x, int y);
+void xf_EndLocalMoveSize(xfContext *xfc, xfWindow *window);
+void xf_SendClientEvent(xfContext *xfc, xfWindow *window, Atom atom, unsigned int numArgs, ...);
 
 #endif /* __XF_WINDOW_H */

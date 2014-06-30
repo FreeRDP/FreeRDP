@@ -55,7 +55,7 @@ if(WITH_FFMPEG)
 	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "ffmpeg" "decoder")
 endif()
 
-if(WITH_GSTREAMER)
+if(WITH_GSTREAMER_0_10 OR WITH_GSTREAMER_1_0)
 	set(XRANDR_FEATURE_TYPE "REQUIRED")
 	set(XRANDR_FEATURE_PURPOSE "X11 randr")
 	set(XRANDR_FEATURE_DESCRIPTION "X11 randr extension")

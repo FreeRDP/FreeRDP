@@ -1112,7 +1112,7 @@ int transport_check_fds(rdpTransport* transport)
 			return status;
 
 		if ((pos = Stream_GetPosition(transport->ReceiveBuffer)) < 2)
-			return status;
+			return 0;
 
 		Stream_SetPosition(transport->ReceiveBuffer, 0);
 		length = 0;

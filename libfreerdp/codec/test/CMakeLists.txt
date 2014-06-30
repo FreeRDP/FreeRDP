@@ -9,7 +9,9 @@ set(${MODULE_PREFIX}_TESTS
 	TestFreeRDPCodecMppc.c
 	TestFreeRDPCodecNCrush.c
 	TestFreeRDPCodecXCrush.c
+	TestFreeRDPCodecZGfx.c
 	TestFreeRDPCodecPlanar.c
+	TestFreeRDPCodecClear.c
 	TestFreeRDPCodecRemoteFX.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS

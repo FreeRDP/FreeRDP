@@ -53,7 +53,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
-#include <freerdp/utils/svc_plugin.h>
 
 typedef struct _SERIAL_DEVICE SERIAL_DEVICE;
 
@@ -100,13 +99,10 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		FileId = 0;
-
-		DEBUG_WARN("failed to create %s", path);
 	}
 	else
 	{
 		serial->tty = tty;
-		DEBUG_SVC("%s(%d) created.", serial->path, FileId);
 	}
 
 	Stream_Write_UINT32(irp->output, FileId); /* FileId (4 bytes) */
@@ -126,12 +122,9 @@ static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 	if (!tty)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
-		DEBUG_WARN("tty not valid.");
 	}
 	else
 	{
-		DEBUG_SVC("%s(%d) closed.", serial->path, tty->id);
-
 		serial_tty_free(tty);
 		serial->tty = NULL;
 	}
@@ -156,8 +149,6 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
-
-		DEBUG_WARN("tty not valid.");
 	}
 	else
 	{
@@ -169,12 +160,10 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 			free(buffer);
 			buffer = NULL;
 			Length = 0;
-
-			DEBUG_WARN("read %s(%d) failed.", serial->path, tty->id);
 		}
 		else
 		{
-			DEBUG_SVC("read %llu-%llu from %d", Offset, Offset + Length, tty->id);
+
 		}
 	}
 
@@ -206,8 +195,6 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		Length = 0;
-
-		DEBUG_WARN("tty not valid.");
 
 		Stream_Write_UINT32(irp->output, Length); /* Length (4 bytes) */
 		Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
@@ -252,8 +239,6 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 	{
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		OutputBufferLength = 0;
-
-		DEBUG_WARN("tty not valid.");
 	}
 	else
 	{
@@ -291,7 +276,6 @@ static void serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 			break;
 
 		default:
-			DEBUG_WARN("MajorFunction 0x%X not supported", irp->MajorFunction);
 			irp->IoStatus = STATUS_NOT_SUPPORTED;
 			irp->Complete(irp);
 			break;

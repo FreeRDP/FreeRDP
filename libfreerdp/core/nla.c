@@ -85,11 +85,7 @@
 #define WITH_DEBUG_CREDSSP
 #endif
 
-#ifdef WITH_NATIVE_SSPI
-#define NLA_PKG_NAME	NTLMSP_NAME
-#else
-#define NLA_PKG_NAME	NTLMSP_NAME
-#endif
+#define NLA_PKG_NAME	NEGOSSP_NAME
 
 #define TERMSRV_SPN_PREFIX	"TERMSRV/"
 
@@ -267,24 +263,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	if (credssp_ntlm_client_init(credssp) == 0)
 		return 0;
 
-#ifdef WITH_NATIVE_SSPI
-	{
-		HMODULE hSSPI;
-		INIT_SECURITY_INTERFACE InitSecurityInterface;
-		PSecurityFunctionTable pSecurityInterface = NULL;
-
-		hSSPI = LoadLibrary(_T("secur32.dll"));
-
-#ifdef UNICODE
-		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceW");
-#else
-		InitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
-#endif
-		credssp->table = (*InitSecurityInterface)();
-	}
-#else
-	credssp->table = InitSecurityInterface();
-#endif
+	credssp->table = InitSecurityInterfaceEx(0);
 
 	status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &pPackageInfo);
 
@@ -337,17 +316,25 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 				SECURITY_NATIVE_DREP, (have_input_buffer) ? &input_buffer_desc : NULL,
 				0, &credssp->context, &output_buffer_desc, &pfContextAttr, &expiration);
 
-		if (have_input_buffer && (input_buffer.pvBuffer != NULL))
+		if (have_input_buffer && (input_buffer.pvBuffer))
 		{
 			free(input_buffer.pvBuffer);
 			input_buffer.pvBuffer = NULL;
 		}
 
-		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED) || (status == SEC_E_OK))
+		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
 		{
-			if (credssp->table->CompleteAuthToken != NULL)
+			if (credssp->table->CompleteAuthToken)
 				credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
 
+			if (status == SEC_I_COMPLETE_NEEDED)
+				status = SEC_E_OK;
+			else if (status == SEC_I_COMPLETE_AND_CONTINUE)
+				status = SEC_I_CONTINUE_NEEDED;
+		}
+
+		if (status == SEC_E_OK)
+		{
 			have_pub_key_auth = TRUE;
 
 			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
@@ -357,11 +344,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			}
 
 			credssp_encrypt_public_key_echo(credssp);
-
-			if (status == SEC_I_COMPLETE_NEEDED)
-				status = SEC_E_OK;
-			else if (status == SEC_I_COMPLETE_AND_CONTINUE)
-				status = SEC_I_CONTINUE_NEEDED;
 		}
 
 		/* send authentication token to server */
@@ -469,11 +451,6 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	if (credssp_ntlm_server_init(credssp) == 0)
 		return 0;
 
-#ifdef WITH_NATIVE_SSPI
-	if (!credssp->SspiModule)
-		credssp->SspiModule = _tcsdup(_T("secur32.dll"));
-#endif
-
 	if (credssp->SspiModule)
 	{
 		HMODULE hSSPI;
@@ -493,14 +470,12 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 		pInitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
 #endif
 
-		credssp->table = (*pInitSecurityInterface)();
+		credssp->table = pInitSecurityInterface();
 	}
-#ifndef WITH_NATIVE_SSPI
 	else
 	{
-		credssp->table = InitSecurityInterface();
+		credssp->table = InitSecurityInterfaceEx(0);
 	}
-#endif
 
 	status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &pPackageInfo);
 
@@ -597,7 +572,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED))
 		{
-			if (credssp->table->CompleteAuthToken != NULL)
+			if (credssp->table->CompleteAuthToken)
 				credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
 
 			if (status == SEC_I_COMPLETE_NEEDED)
@@ -1385,7 +1360,7 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings*
 {
 	rdpCredssp* credssp;
 
-	credssp = (rdpCredssp*) malloc(sizeof(rdpCredssp));
+	credssp = (rdpCredssp*) calloc(1, sizeof(rdpCredssp));
 
 	if (credssp)
 	{
@@ -1393,8 +1368,6 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings*
 		LONG status;
 		DWORD dwType;
 		DWORD dwSize;
-
-		ZeroMemory(credssp, sizeof(rdpCredssp));
 
 		credssp->instance = instance;
 		credssp->settings = settings;

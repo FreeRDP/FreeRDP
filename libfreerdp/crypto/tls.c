@@ -480,7 +480,7 @@ static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 	if (peer)
 		remote_cert = SSL_get_peer_certificate(tls->ssl);
 	else
-		remote_cert = SSL_get_certificate(tls->ssl);
+		remote_cert = X509_dup( SSL_get_certificate(tls->ssl) );
 
 	if (!remote_cert)
 	{
@@ -624,9 +624,6 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 	}
 	while (TRUE);
 
-	if (!clientMode)
-		return 1;
-
 	cert = tls_get_certificate(tls, clientMode);
 	if (!cert)
 	{
@@ -638,26 +635,34 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 	if (!tls->Bindings)
 	{
 		fprintf(stderr, "%s: unable to retrieve bindings\n", __FUNCTION__);
-		return -1;
+		verify_status = -1;
+		goto out;
 	}
 
 	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 	{
 		fprintf(stderr, "%s: crypto_cert_get_public_key failed to return the server public key.\n", __FUNCTION__);
-		tls_free_certificate(cert);
-		return -1;
+		verify_status = -1;
+		goto out;
 	}
 
-	verify_status = tls_verify_certificate(tls, cert, tls->hostname, tls->port);
-
-	if (verify_status < 1)
+	/* Note: server-side NLA needs public keys (keys from us, the server) but no
+	 * 		certificate verify
+	 */
+	verify_status = 1;
+	if (clientMode)
 	{
-		fprintf(stderr, "%s: certificate not trusted, aborting.\n", __FUNCTION__);
-		tls_disconnect(tls);
-		tls_free_certificate(cert);
-		return 0;
+		verify_status = tls_verify_certificate(tls, cert, tls->hostname, tls->port);
+
+		if (verify_status < 1)
+		{
+			fprintf(stderr, "%s: certificate not trusted, aborting.\n", __FUNCTION__);
+			tls_disconnect(tls);
+			verify_status = 0;
+		}
 	}
 
+out:
 	tls_free_certificate(cert);
 
 	return verify_status;

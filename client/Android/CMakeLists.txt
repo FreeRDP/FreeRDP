@@ -42,6 +42,11 @@ if(ANDROID_BUILD_JAVA)
 	endif()
 endif(ANDROID_BUILD_JAVA)
 
+set(ANDROID_COMMAND "${ANDROID_SDK}/tools/android")
+if(NOT EXISTS ${ANDROID_COMMAND})
+	message(FATAL_ERROR "android not found but required to build android java")
+endif()
+
 if(ANDROID_BUILD_JAVA_DEBUG)
 	set(ANDROID_BUILD_TYPE "debug")
 else()
@@ -55,6 +60,12 @@ else()
 	set(ANDROID_DEBUG_ENABLE "false")
 	set(NDK_DEBUG "0")
 endif()
+
+set(APPCOMPAT_DIR "${CMAKE_CURRENT_BINARY_DIR}/appcompat_v7")
+add_custom_target(copy_appcompat ALL
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${ANDROID_SDK}/extras/android/support/v7/appcompat ${APPCOMPAT_DIR}
+  COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR}
+)
 
 add_subdirectory(FreeRDPCore)
 add_subdirectory(aFreeRDP)

@@ -18,7 +18,6 @@
     android:paddingRight="6dip"
     android:paddingTop="7dip"
     android:paddingBottom="16dip"
-    android:background="@drawable/search_plate"
     android:gravity="center_vertical"
     android:focusable="true"
   	android:descendantFocusability="afterDescendants">
@@ -36,8 +35,6 @@
         android:singleLine="true"
         android:ellipsize="end"
         android:inputType="text"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textColorHint="?android:attr/textColorHint"
         android:drawableLeft="@drawable/icon_edittext_search"
         android:drawableRight="@drawable/icon_edittext_clear"
         />

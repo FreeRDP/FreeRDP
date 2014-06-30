@@ -26,6 +26,17 @@
 #include <freerdp/client/drdynvc.h>
 #include <freerdp/utils/svc_plugin.h>
 
+enum _DRDYNVC_STATE
+{
+	DRDYNVC_STATE_INITIAL,
+	DRDYNVC_STATE_CAPABILITIES,
+	DRDYNVC_STATE_READY,
+	DRDYNVC_STATE_OPENING_CHANNEL,
+	DRDYNVC_STATE_SEND_RECEIVE,
+	DRDYNVC_STATE_FINAL
+};
+typedef enum _DRDYNVC_STATE DRDYNVC_STATE;
+
 #define CREATE_REQUEST_PDU		0x01
 #define DATA_FIRST_PDU			0x02
 #define DATA_PDU			0x03
@@ -38,6 +49,7 @@ struct drdynvc_plugin
 {
 	rdpSvcPlugin plugin;
 
+	DRDYNVC_STATE state;
 	DrdynvcClientContext* context;
 
 	int version;

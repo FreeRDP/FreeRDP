@@ -30,7 +30,6 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
-#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
 
 #ifndef _WIN32
@@ -119,19 +118,16 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 		case IOCTL_SERIAL_SET_BAUD_RATE:
 			Stream_Read_UINT32(input, tty->baud_rate);
 			tty_set_termios(tty);
-			DEBUG_SVC("SERIAL_SET_BAUD_RATE %d", tty->baud_rate);
 			break;
 
 		case IOCTL_SERIAL_GET_BAUD_RATE:
 			OutputBufferLength = 4;
 			Stream_Write_UINT32(output, tty->baud_rate);
-			DEBUG_SVC("SERIAL_GET_BAUD_RATE %d", tty->baud_rate);
 			break;
 
 		case IOCTL_SERIAL_SET_QUEUE_SIZE:
 			Stream_Read_UINT32(input, tty->queue_in_size);
 			Stream_Read_UINT32(input, tty->queue_out_size);
-			DEBUG_SVC("SERIAL_SET_QUEUE_SIZE in %d out %d", tty->queue_in_size, tty->queue_out_size);
 			break;
 
 		case IOCTL_SERIAL_SET_LINE_CONTROL:
@@ -139,12 +135,9 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			Stream_Read_UINT8(input, tty->parity);
 			Stream_Read_UINT8(input, tty->word_length);
 			tty_set_termios(tty);
-			DEBUG_SVC("SERIAL_SET_LINE_CONTROL stop %d parity %d word %d",
-				tty->stop_bits, tty->parity, tty->word_length);
 			break;
 
 		case IOCTL_SERIAL_GET_LINE_CONTROL:
-			DEBUG_SVC("SERIAL_GET_LINE_CONTROL");
 			OutputBufferLength = 3;
 			Stream_Write_UINT8(output, tty->stop_bits);
 			Stream_Write_UINT8(output, tty->parity);
@@ -152,25 +145,21 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			break;
 
 		case IOCTL_SERIAL_IMMEDIATE_CHAR:
-			DEBUG_SVC("SERIAL_IMMEDIATE_CHAR");
 			Stream_Read_UINT8(input, immediate);
 			tty_write_data(tty, &immediate, 1);
 			break;
 
 		case IOCTL_SERIAL_CONFIG_SIZE:
-			DEBUG_SVC("SERIAL_CONFIG_SIZE");
 			OutputBufferLength = 4;
 			Stream_Write_UINT32(output, 0);
 			break;
 
 		case IOCTL_SERIAL_GET_CHARS:
-			DEBUG_SVC("SERIAL_GET_CHARS");
 			OutputBufferLength = 6;
 			Stream_Write(output, tty->chars, 6);
 			break;
 
 		case IOCTL_SERIAL_SET_CHARS:
-			DEBUG_SVC("SERIAL_SET_CHARS");
 			Stream_Read(input, tty->chars, 6);
 			tty_set_termios(tty);
 			break;
@@ -182,8 +171,6 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			Stream_Write_UINT32(output, tty->xonoff);
 			Stream_Write_UINT32(output, tty->onlimit);
 			Stream_Write_UINT32(output, tty->offlimit);
-			DEBUG_SVC("IOCTL_SERIAL_GET_HANDFLOW %X %X %X %X",
-				tty->control, tty->xonoff, tty->onlimit, tty->offlimit);
 			break;
 
 		case IOCTL_SERIAL_SET_HANDFLOW:
@@ -191,8 +178,6 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			Stream_Read_UINT32(input, tty->xonoff);
 			Stream_Read_UINT32(input, tty->onlimit);
 			Stream_Read_UINT32(input, tty->offlimit);
-			DEBUG_SVC("IOCTL_SERIAL_SET_HANDFLOW %X %X %X %X",
-				tty->control, tty->xonoff, tty->onlimit, tty->offlimit);
 			tty_set_termios(tty);
 			break;
 
@@ -211,17 +196,9 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 				tty->read_total_timeout_multiplier = 0;
 			}
 
-			DEBUG_SVC("SERIAL_SET_TIMEOUTS read timeout %d %d %d",
-				tty->read_interval_timeout,
-				tty->read_total_timeout_multiplier,
-				tty->read_total_timeout_constant);
 			break;
 
 		case IOCTL_SERIAL_GET_TIMEOUTS:
-			DEBUG_SVC("SERIAL_GET_TIMEOUTS read timeout %d %d %d",
-				tty->read_interval_timeout,
-				tty->read_total_timeout_multiplier,
-				tty->read_total_timeout_constant);
 			OutputBufferLength = 20;
 			Stream_Write_UINT32(output, tty->read_interval_timeout);
 			Stream_Write_UINT32(output, tty->read_total_timeout_multiplier);
@@ -231,18 +208,15 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			break;
 
 		case IOCTL_SERIAL_GET_WAIT_MASK:
-			DEBUG_SVC("SERIAL_GET_WAIT_MASK %X", tty->wait_mask);
 			OutputBufferLength = 4;
 			Stream_Write_UINT32(output, tty->wait_mask);
 			break;
 
 		case IOCTL_SERIAL_SET_WAIT_MASK:
 			Stream_Read_UINT32(input, tty->wait_mask);
-			DEBUG_SVC("SERIAL_SET_WAIT_MASK %X", tty->wait_mask);
 			break;
 
 		case IOCTL_SERIAL_SET_DTR:
-			DEBUG_SVC("SERIAL_SET_DTR");
 			ioctl(tty->fd, TIOCMGET, &result);
 			result |= TIOCM_DTR;
 			ioctl(tty->fd, TIOCMSET, &result);
@@ -250,7 +224,6 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			break;
 
 		case IOCTL_SERIAL_CLR_DTR:
-			DEBUG_SVC("SERIAL_CLR_DTR");
 			ioctl(tty->fd, TIOCMGET, &result);
 			result &= ~TIOCM_DTR;
 			ioctl(tty->fd, TIOCMSET, &result);
@@ -258,7 +231,6 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			break;
 
 		case IOCTL_SERIAL_SET_RTS:
-			DEBUG_SVC("SERIAL_SET_RTS");
 			ioctl(tty->fd, TIOCMGET, &result);
 			result |= TIOCM_RTS;
 			ioctl(tty->fd, TIOCMSET, &result);
@@ -266,7 +238,6 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			break;
 
 		case IOCTL_SERIAL_CLR_RTS:
-			DEBUG_SVC("SERIAL_CLR_RTS");
 			ioctl(tty->fd, TIOCMGET, &result);
 			result &= ~TIOCM_RTS;
 			ioctl(tty->fd, TIOCMSET, &result);
@@ -290,7 +261,6 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			if (result & TIOCM_RTS)
 				modemstate |= SERIAL_MS_RTS;
 #endif
-			DEBUG_SVC("SERIAL_GET_MODEMSTATUS %X", modemstate);
 			OutputBufferLength = 4;
 			Stream_Write_UINT32(output, modemstate);
 			break;
@@ -305,23 +275,18 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			ioctl(tty->fd, TIOCINQ, &result);
 #endif
 			Stream_Write_UINT32(output, result); /* Amount in in queue */
-			if (result)
-				DEBUG_SVC("SERIAL_GET_COMMSTATUS in queue %d", result);
 
 			result = 0;
 #ifdef TIOCOUTQ
 			ioctl(tty->fd, TIOCOUTQ, &result);
 #endif
 			Stream_Write_UINT32(output, result);	/* Amount in out queue */
-			DEBUG_SVC("SERIAL_GET_COMMSTATUS out queue %d", result);
-
 			Stream_Write_UINT8(output, 0); /* EofReceived */
 			Stream_Write_UINT8(output, 0); /* WaitForImmediate */
 			break;
 
 		case IOCTL_SERIAL_PURGE:
 			Stream_Read_UINT32(input, purge_mask);
-			DEBUG_SVC("SERIAL_PURGE purge_mask %X", purge_mask);
 
 		/*	See http://msdn.microsoft.com/en-us/library/ms901431.aspx
 			PURGE_TXCLEAR 	Clears the output buffer, if the driver has one.
@@ -330,25 +295,16 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			It clearly states to clear the *driver* buffer, not the port buffer
 		*/
 
-#ifdef DEBUG_SVC
-			if (purge_mask & SERIAL_PURGE_TXCLEAR)
-				DEBUG_SVC("Ignoring SERIAL_PURGE_TXCLEAR");
-			if (purge_mask & SERIAL_PURGE_RXCLEAR)
-				DEBUG_SVC("Ignoring SERIAL_PURGE_RXCLEAR");
-#endif
-
 			if (purge_mask & SERIAL_PURGE_TXABORT)
 				*abortIo |= SERIAL_ABORT_IO_WRITE;
 			if (purge_mask & SERIAL_PURGE_RXABORT)
 				*abortIo |= SERIAL_ABORT_IO_READ;
 			break;
 		case IOCTL_SERIAL_WAIT_ON_MASK:
-			DEBUG_SVC("SERIAL_WAIT_ON_MASK %X", tty->wait_mask);
 			tty->event_pending = 1;
 			OutputBufferLength = 4;
 			if (serial_tty_get_event(tty, &result))
 			{
-				DEBUG_SVC("WAIT end  event = %X", result);
 				Stream_Write_UINT32(output, result);
 				break;
 			}
@@ -356,29 +312,23 @@ UINT32 serial_tty_control(SERIAL_TTY* tty, UINT32 IoControlCode, wStream* input,
 			break;
 
 		case IOCTL_SERIAL_SET_BREAK_ON:
-			DEBUG_SVC("SERIAL_SET_BREAK_ON");
 			tcsendbreak(tty->fd, 0);
 			break;
 
 		case IOCTL_SERIAL_RESET_DEVICE:
-			DEBUG_SVC("SERIAL_RESET_DEVICE");
 			break;
 
 		case IOCTL_SERIAL_SET_BREAK_OFF:
-			DEBUG_SVC("SERIAL_SET_BREAK_OFF");
 			break;
 
 		case IOCTL_SERIAL_SET_XOFF:
-			DEBUG_SVC("SERIAL_SET_XOFF");
 			break;
 
 		case IOCTL_SERIAL_SET_XON:
-			DEBUG_SVC("SERIAL_SET_XON");
 			tcflow(tty->fd, TCION);
 			break;
 
 		default:
-			DEBUG_SVC("NOT FOUND IoControlCode SERIAL IOCTL 0x%08X", IoControlCode);
 			return STATUS_INVALID_PARAMETER;
 	}
 
@@ -457,11 +407,7 @@ BOOL serial_tty_read(SERIAL_TTY* tty, BYTE* buffer, UINT32* Length)
 	status = read(tty->fd, buffer, *Length);
 
 	if (status < 0)
-	{
-		DEBUG_WARN("failed with %zd, errno=[%d] %s\n", 
-				status, errno, strerror(errno));
 		return FALSE;
-	}
 
 	tty->event_txempty = status;
 	*Length = status;
@@ -535,13 +481,12 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 	if (tty->fd < 0)
 	{
 		perror("open");
-		DEBUG_WARN("failed to open device %s", path);
 		serial_tty_free(tty);
 		return NULL;
 	}
 	else
 	{
-		DEBUG_SVC("tty fd %d successfully opened", tty->fd);
+
 	}
 
 	tty->ptermios = (struct termios*) calloc(1, sizeof(struct termios));
@@ -563,7 +508,6 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 
 	if (!tty_get_termios(tty))
 	{
-		DEBUG_WARN("%s access denied", path);
 		fflush(stdout);
 		serial_tty_free(tty);
 		return NULL;
@@ -589,7 +533,6 @@ SERIAL_TTY* serial_tty_new(const char* path, UINT32 id)
 	/* all read and writes should be non-blocking */
 	if (fcntl(tty->fd, F_SETFL, O_NONBLOCK) == -1)
 	{
-		DEBUG_WARN("%s fcntl", path);
 		perror("fcntl");
 		serial_tty_free(tty) ;
 		return NULL;
@@ -620,15 +563,12 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 
 	if (bytes > 0)
 	{
-		DEBUG_SVC("bytes %d", bytes);
-
 		if (bytes > tty->event_rlsd)
 		{
 			tty->event_rlsd = bytes;
 
 			if (tty->wait_mask & SERIAL_EV_RLSD)
 			{
-				DEBUG_SVC("SERIAL_EV_RLSD");
 				*result |= SERIAL_EV_RLSD;
 				status = TRUE;
 			}
@@ -636,14 +576,12 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 
 		if ((bytes > 1) && (tty->wait_mask & SERIAL_EV_RXFLAG))
 		{
-			DEBUG_SVC("SERIAL_EV_RXFLAG bytes %d", bytes);
 			*result |= SERIAL_EV_RXFLAG;
 			status = TRUE;
 		}
 
 		if ((tty->wait_mask & SERIAL_EV_RXCHAR))
 		{
-			DEBUG_SVC("SERIAL_EV_RXCHAR bytes %d", bytes);
 			*result |= SERIAL_EV_RXCHAR;
 			status = TRUE;
 		}
@@ -658,7 +596,6 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 	ioctl(tty->fd, TIOCOUTQ, &bytes);
 	if ((bytes == 0) && (tty->event_txempty > 0) && (tty->wait_mask & SERIAL_EV_TXEMPTY))
 	{
-		DEBUG_SVC("SERIAL_EV_TXEMPTY");
 		*result |= SERIAL_EV_TXEMPTY;
 		status = TRUE;
 	}
@@ -669,9 +606,9 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 	if ((bytes & TIOCM_DSR) != tty->event_dsr)
 	{
 		tty->event_dsr = bytes & TIOCM_DSR;
+
 		if (tty->wait_mask & SERIAL_EV_DSR)
 		{
-			DEBUG_SVC("SERIAL_EV_DSR %s", (bytes & TIOCM_DSR) ? "ON" : "OFF");
 			*result |= SERIAL_EV_DSR;
 			status = TRUE;
 		}
@@ -680,9 +617,9 @@ BOOL serial_tty_get_event(SERIAL_TTY* tty, UINT32* result)
 	if ((bytes & TIOCM_CTS) != tty->event_cts)
 	{
 		tty->event_cts = bytes & TIOCM_CTS;
+
 		if (tty->wait_mask & SERIAL_EV_CTS)
 		{
-			DEBUG_SVC("SERIAL_EV_CTS %s", (bytes & TIOCM_CTS) ? "ON" : "OFF");
 			*result |= SERIAL_EV_CTS;
 			status = TRUE;
 		}
@@ -699,8 +636,6 @@ static BOOL tty_get_termios(SERIAL_TTY* tty)
 	speed_t speed;
 	struct termios* ptermios;
 	ptermios = tty->ptermios;
-
-	DEBUG_SVC("tcgetattr? %d", tcgetattr(tty->fd, ptermios) >= 0);
 
 	if (tcgetattr(tty->fd, ptermios) < 0)
 		return FALSE;

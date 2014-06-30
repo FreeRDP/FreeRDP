@@ -9,8 +9,9 @@ set(${MODULE_PREFIX}_TESTS
 	TestEnumerateSecurityPackages.c
 	TestInitializeSecurityContext.c
 	TestAcquireCredentialsHandle.c
-	TestNTLM.c
-	)
+	TestCredSSP.c
+	TestSchannel.c
+	TestNTLM.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}

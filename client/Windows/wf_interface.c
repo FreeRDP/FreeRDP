@@ -43,9 +43,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/svc_plugin.h>
 
-//#include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
@@ -1170,8 +1168,6 @@ void wfreerdp_client_global_init(void)
 #if defined(WITH_DEBUG) || defined(_DEBUG)
 	wf_create_console();
 #endif
-
-	freerdp_channels_global_init();
 
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 }

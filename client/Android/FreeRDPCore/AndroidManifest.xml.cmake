@@ -65,7 +65,7 @@
 				android:windowSoftInputMode="stateHidden">
 			</activity>
 			<activity android:name=".presentation.SessionActivity"
-				android:theme="@android:style/Theme.Black.NoTitleBar"
+				android:theme="@style/Theme.AppCompat"
 				android:configChanges="orientation|keyboardHidden|keyboard"
 				android:windowSoftInputMode="adjustResize">
 			</activity>

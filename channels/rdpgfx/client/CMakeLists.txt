@@ -20,6 +20,8 @@ define_channel_client("rdpgfx")
 set(${MODULE_PREFIX}_SRCS
 	rdpgfx_main.c
 	rdpgfx_main.h
+	rdpgfx_codec.c
+	rdpgfx_codec.h
 	rdpgfx_common.c
 	rdpgfx_common.h)
 
@@ -32,7 +34,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
-	MODULES freerdp-common freerdp-utils)
+	MODULES freerdp-common freerdp-codec freerdp-utils)
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}

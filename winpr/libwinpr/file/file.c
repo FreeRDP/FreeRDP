@@ -333,7 +333,11 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		pipe = (WINPR_PIPE*) Object;
 
-		io_status = read(pipe->fd, lpBuffer, nNumberOfBytesToRead);
+		do
+		{
+			io_status = read(pipe->fd, lpBuffer, nNumberOfBytesToRead);
+		}
+		while ((io_status < 0) && (errno == EINTR));
 
 		if (io_status < 0)
 		{
@@ -361,22 +365,19 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		if (!(pipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 		{
-			io_status = nNumberOfBytesToRead;
-
 			if (pipe->clientfd == -1)
 				return FALSE;
 
-			io_status = read(pipe->clientfd, lpBuffer, nNumberOfBytesToRead);
+			do
+			{
+				io_status = read(pipe->clientfd, lpBuffer, nNumberOfBytesToRead);
+			}
+			while ((io_status < 0) && (errno == EINTR));
 
 			if (io_status == 0)
 			{
-				switch (errno)
-				{
-					case ECONNRESET:
-						SetLastError(ERROR_BROKEN_PIPE);
-						io_status = 0;
-						break;
-				}
+				SetLastError(ERROR_BROKEN_PIPE);
+				status = FALSE;
 			}
 			else if (io_status < 0)
 			{
@@ -386,6 +387,9 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 				{
 					case EWOULDBLOCK:
 						SetLastError(ERROR_NO_DATA);
+						break;
+					default:
+						SetLastError(ERROR_BROKEN_PIPE);
 						break;
 				}
 			}
@@ -482,7 +486,11 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 
 		pipe = (WINPR_PIPE*) Object;
 
-		io_status = write(pipe->fd, lpBuffer, nNumberOfBytesToWrite);
+		do
+		{
+			io_status = write(pipe->fd, lpBuffer, nNumberOfBytesToWrite);
+		}
+		while ((io_status < 0) && (errno == EINTR));
 
 		if ((io_status < 0) && (errno == EWOULDBLOCK))
 			io_status = 0;
@@ -505,7 +513,11 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 			if (pipe->clientfd == -1)
 				return FALSE;
 
-			io_status = write(pipe->clientfd, lpBuffer, nNumberOfBytesToWrite);
+			do
+			{
+				io_status = write(pipe->clientfd, lpBuffer, nNumberOfBytesToWrite);
+			}
+			while ((io_status < 0) && (errno == EINTR));
 
 			if (io_status < 0)
 			{
