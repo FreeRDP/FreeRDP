@@ -27,9 +27,6 @@ int xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* re
 {
 	xfContext* xfc = (xfContext*) context->custom;
 
-	printf("xf_ResetGraphics: width: %d height: %d\n",
-			resetGraphics->width, resetGraphics->height);
-
 	if (xfc->rfx)
 	{
 		rfx_context_free(xfc->rfx);
@@ -259,8 +256,7 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status;
-	UINT32 DstSize = 0;
-	BYTE* pDstData = NULL;
+	BYTE* DstData = NULL;
 	xfGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 
@@ -269,14 +265,17 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 	if (!surface)
 		return -1;
 
-	status = clear_decompress(xfc->clear, cmd->data, cmd->length, &pDstData, &DstSize);
+	DstData = surface->data;
 
-	printf("xf_SurfaceCommand_ClearCodec: status: %d\n", status);
+	status = clear_decompress(NULL, cmd->data, cmd->length, &DstData,
+			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
 
+#if 0
 	/* fill with pink for now to distinguish from the rest */
 
 	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
 			cmd->left, cmd->top, cmd->width, cmd->height, 0xFF69B4);
+#endif
 
 	invalidRect.left = cmd->left;
 	invalidRect.top = cmd->top;
@@ -376,9 +375,6 @@ int xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* cr
 	xfGfxSurface* surface;
 	xfContext* xfc = (xfContext*) context->custom;
 
-	printf("xf_CreateSurface: surfaceId: %d width: %d height: %d format: 0x%02X\n",
-			createSurface->surfaceId, createSurface->width, createSurface->height, createSurface->pixelFormat);
-
 	surface = (xfGfxSurface*) calloc(1, sizeof(xfGfxSurface));
 
 	if (!surface)
@@ -408,8 +404,6 @@ int xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* de
 	xfGfxSurface* surface = NULL;
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, deleteSurface->surfaceId);
-
-	printf("xf_DeleteSurface: surfaceId: %d\n", deleteSurface->surfaceId);
 
 	if (surface)
 	{
@@ -496,8 +490,8 @@ int xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_
 	if (!surfaceSrc || !surfaceDst)
 		return -1;
 
-	nWidth = rectSrc->right - rectSrc->left + 1;
-	nHeight = rectSrc->bottom - rectSrc->top + 1;
+	nWidth = rectSrc->right - rectSrc->left;
+	nHeight = rectSrc->bottom - rectSrc->top;
 
 	for (index = 0; index < surfaceToSurface->destPtsCount; index++)
 	{

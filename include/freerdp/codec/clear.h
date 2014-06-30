@@ -23,6 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <freerdp/codec/color.h>
+
 #define CLEARCODEC_FLAG_GLYPH_INDEX	0x01
 #define CLEARCODEC_FLAG_GLYPH_HIT	0x02
 #define CLEARCODEC_FLAG_CACHE_RESET	0x03
@@ -42,7 +44,9 @@ extern "C" {
 #endif
 
 FREERDP_API int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
-FREERDP_API int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
+
+FREERDP_API int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight);
 
 FREERDP_API void clear_context_reset(CLEAR_CONTEXT* clear);
 
