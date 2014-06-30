@@ -149,7 +149,7 @@ int remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 		ChannelNameW[index] = (WCHAR) header->ChannelName[index];
 	}
 
-	ChannelNameLen = strlen(header->ChannelName) * 2;
+	ChannelNameLen = (strlen(header->ChannelName) + 1) * 2;
 
 	Stream_Write_UINT32(s, ChannelNameLen); /* ChannelNameLen (4 bytes) */
 	Stream_Write_UINT32(s, header->DataLength); /* DataLen (4 bytes) */
@@ -168,7 +168,7 @@ int remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
 
 int remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UINT32 msgSize)
 {
-	ctlHeader->msgType = REMDESK_CTL_VERSIONINFO;
+	ctlHeader->msgType = msgType;
 	strcpy(ctlHeader->ChannelName, REMDESK_CHANNEL_CTL_NAME);
 	ctlHeader->DataLength = 4 + msgSize;
 	return 1;
@@ -290,6 +290,40 @@ int remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	return 1;
 }
 
+int remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
+{
+	int status;
+	wStream* s;
+	int cbRaConnectionStringW = 0;
+	WCHAR* raConnectionStringW = NULL;
+	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu;
+
+	pdu.raConnectionString = remdesk->settings->RemoteAssistanceRCTicket;
+
+	status = ConvertToUnicode(CP_UTF8, 0, pdu.raConnectionString, -1, &raConnectionStringW, 0);
+
+	if (status <= 0)
+		return -1;
+
+	cbRaConnectionStringW = status * 2;
+
+	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_REMOTE_CONTROL_DESKTOP, cbRaConnectionStringW);
+
+	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
+
+	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
+
+	Stream_Write(s, (BYTE*) raConnectionStringW, cbRaConnectionStringW);
+
+	Stream_SealLength(s);
+
+	remdesk_virtual_channel_write(remdesk, s);
+
+	free(raConnectionStringW);
+
+	return 1;
+}
+
 int remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 {
 	int status;
@@ -298,7 +332,12 @@ int remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 	WCHAR* expertBlobW = NULL;
 	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu;
 
-	pdu.expertBlob = NULL;
+	status = remdesk_generate_expert_blob(remdesk);
+
+	if (status < 0)
+		return -1;
+
+	pdu.expertBlob = remdesk->ExpertBlob;
 
 	status = ConvertToUnicode(CP_UTF8, 0, pdu.expertBlob, -1, &expertBlobW, 0);
 
@@ -307,7 +346,7 @@ int remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 
 	cbExpertBlobW = status * 2;
 
-	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_AUTHENTICATE, cbExpertBlobW);
+	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_VERIFY_PASSWORD, cbExpertBlobW);
 
 	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.DataLength);
 
@@ -326,14 +365,17 @@ int remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 
 int remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 {
+	int status;
 	wStream* s;
-	BYTE EncryptedPassword[32];
 	REMDESK_CTL_EXPERT_ON_VISTA_PDU pdu;
 
-	ZeroMemory(EncryptedPassword, 32);
+	status = remdesk_generate_expert_blob(remdesk);
 
-	pdu.EncryptedPasswordLength = 32;
-	pdu.EncryptedPassword = (BYTE*) EncryptedPassword;
+	if (status < 0)
+		return -1;
+
+	pdu.EncryptedPasswordLength = remdesk->EncryptedPassStubSize;
+	pdu.EncryptedPassword = remdesk->EncryptedPassStub;
 
 	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_EXPERT_ON_VISTA,
 			pdu.EncryptedPasswordLength);
@@ -386,11 +428,25 @@ int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEA
 		case REMDESK_CTL_VERSIONINFO:
 			status = remdesk_recv_ctl_version_info_pdu(remdesk, s, header);
 
-			if (status >= 0)
-				status = remdesk_send_ctl_version_info_pdu(remdesk);
+			if (remdesk->Version == 1)
+			{
+				if (status >= 0)
+					status = remdesk_send_ctl_version_info_pdu(remdesk);
 
-			if (status >= 0)
-				status = remdesk_send_ctl_authenticate_pdu(remdesk);
+				if (status >= 0)
+					status = remdesk_send_ctl_authenticate_pdu(remdesk);
+
+				if (status >= 0)
+					status = remdesk_send_ctl_remote_control_desktop_pdu(remdesk);
+			}
+			else if (remdesk->Version == 2)
+			{
+				if (status >= 0)
+					status = remdesk_send_ctl_expert_on_vista_pdu(remdesk);
+
+				if (status >= 0)
+					status = remdesk_send_ctl_verify_password_pdu(remdesk);
+			}
 
 			break;
 

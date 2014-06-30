@@ -1861,8 +1861,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->RemoteAssistanceMode = TRUE;
 			settings->RemoteAssistancePassword = _strdup(arg->Value);
-
-			printf("AssistancePassword: %s settings: %p\n", settings->RemoteAssistancePassword, settings);
 		}
 		CommandLineSwitchDefault(arg)
 		{
