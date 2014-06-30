@@ -156,7 +156,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "print-reconnect-cookie", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Print base64 reconnect cookie after connecting" },
 	{ "heartbeat", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support heartbeat PDUs" },
 	{ "multitransport", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support multitransport protocol" },
-	{ "assistance", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Remote assistance mode" },
+	{ "assistance", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Remote assistance password" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -1859,7 +1859,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "assistance")
 		{
-			settings->RemoteAssistanceMode = arg->Value ? TRUE : FALSE;
+			settings->RemoteAssistanceMode = TRUE;
+			settings->RemoteAssistancePassword = _strdup(arg->Value);
+
+			printf("AssistancePassword: %s settings: %p\n", settings->RemoteAssistancePassword, settings);
 		}
 		CommandLineSwitchDefault(arg)
 		{
@@ -2041,23 +2044,8 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->RemoteAssistanceMode)
 	{
-		if (!freerdp_static_channel_collection_find(settings, "encomsp"))
-		{
-			char* params[1];
-
-			params[0] = "encomsp";
-
-			freerdp_client_add_static_channel(settings, 1, (char**) params);
-		}
-
-		if (!freerdp_static_channel_collection_find(settings, "remdesk"))
-		{
-			char* params[1];
-
-			params[0] = "remdesk";
-
-			freerdp_client_add_static_channel(settings, 1, (char**) params);
-		}
+		freerdp_client_load_static_channel_addin(channels, settings, "encomsp", settings);
+		freerdp_client_load_static_channel_addin(channels, settings, "remdesk", settings);
 	}
 
 	for (index = 0; index < settings->StaticChannelCount; index++)

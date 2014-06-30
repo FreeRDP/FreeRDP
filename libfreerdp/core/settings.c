@@ -465,6 +465,9 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->ClientDir = _strdup(settings->ClientDir); /* 770 */
 		_settings->DynamicDSTTimeZoneKeyName = _strdup(settings->DynamicDSTTimeZoneKeyName); /* 897 */
 		_settings->RemoteAssistanceSessionId = _strdup(settings->RemoteAssistanceSessionId); /* 1025 */
+		_settings->RemoteAssistancePassStub = _strdup(settings->RemoteAssistancePassStub); /* 1026 */
+		_settings->RemoteAssistancePassword = _strdup(settings->RemoteAssistancePassword); /* 1027 */
+		_settings->RemoteAssistanceRCTicket = _strdup(settings->RemoteAssistanceRCTicket); /* 1028 */
 		_settings->AuthenticationServiceClass = _strdup(settings->AuthenticationServiceClass); /* 1098 */
 		_settings->PreconnectionBlob = _strdup(settings->PreconnectionBlob); /* 1155 */
 		_settings->KerberosKdc = _strdup(settings->KerberosKdc); /* 1344 */

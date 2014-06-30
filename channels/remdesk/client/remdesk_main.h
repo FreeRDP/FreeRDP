@@ -29,6 +29,7 @@
 #include <freerdp/api.h>
 #include <freerdp/svc.h>
 #include <freerdp/addin.h>
+#include <freerdp/settings.h>
 
 #include <freerdp/client/remdesk.h>
 
@@ -42,8 +43,12 @@ struct remdesk_plugin
 	void* InitHandle;
 	DWORD OpenHandle;
 	wMessagePipe* MsgPipe;
+	rdpSettings* settings;
 
 	UINT32 Version;
+	char* ExpertBlob;
+	BYTE* EncryptedPassStub;
+	int EncryptedPassStubSize;
 };
 typedef struct remdesk_plugin remdeskPlugin;
 

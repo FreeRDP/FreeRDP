@@ -179,12 +179,12 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, const c
 	int status;
 	rdpAssistanceFile* file;
 
-	file = freerdp_client_assistance_file_new();
+	file = freerdp_assistance_file_new();
 
 	if (!file)
 		return -1;
 
-	status = freerdp_client_assistance_parse_file(file, filename);
+	status = freerdp_assistance_parse_file(file, filename);
 
 	if (status < 0)
 		return -1;
@@ -194,7 +194,7 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, const c
 	if (status < 0)
 		return -1;
 
-	freerdp_client_assistance_file_free(file);
+	freerdp_assistance_file_free(file);
 
 	return 0;
 }

@@ -24,6 +24,8 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
+#include <freerdp/assistance.h>
+
 #include <freerdp/client/remdesk.h>
 
 #include "remdesk_main.h"
@@ -42,6 +44,9 @@ int remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 	if (!remdesk)
 		return -1;
 
+	printf("RemdeskWrite (%d)\n", Stream_Length(s));
+	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
+
 	status = remdesk->channelEntryPoints.pVirtualChannelWrite(remdesk->OpenHandle,
 			Stream_Buffer(s), (UINT32) Stream_Length(s), s);
 
@@ -50,6 +55,48 @@ int remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 		fprintf(stderr, "remdesk_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
 		return -1;
 	}
+
+	return 1;
+}
+
+int remdesk_generate_expert_blob(remdeskPlugin* remdesk)
+{
+	char* name;
+	char* pass;
+	char* password;
+	rdpSettings* settings = remdesk->settings;
+
+	if (remdesk->ExpertBlob)
+		return 1;
+
+	if (settings->RemoteAssistancePassword)
+		password = settings->RemoteAssistancePassword;
+	else
+		password = settings->Password;
+
+	if (!password)
+		return -1;
+
+	name = settings->Username;
+
+	if (!name)
+		name = "Expert";
+
+	remdesk->EncryptedPassStub = freerdp_assistance_encrypt_pass_stub(password,
+			settings->RemoteAssistancePassStub, &(remdesk->EncryptedPassStubSize));
+
+	if (!remdesk->EncryptedPassStub)
+		return -1;
+
+	pass = freerdp_assistance_bin_to_hex_string(remdesk->EncryptedPassStub, remdesk->EncryptedPassStubSize);
+
+	if (!pass)
+		return -1;
+
+	remdesk->ExpertBlob = freerdp_assistance_construct_expert_blob(name, pass);
+
+	if (!remdesk->ExpertBlob)
+		return -1;
 
 	return 1;
 }
@@ -91,25 +138,23 @@ int remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 
 int remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
-	int status;
+	int index;
 	UINT32 ChannelNameLen;
 	WCHAR ChannelNameW[32];
-	WCHAR* pChannelName = NULL;
 
 	ZeroMemory(ChannelNameW, sizeof(ChannelNameW));
 
-	pChannelName = (WCHAR*) ChannelNameW;
-	status = ConvertToUnicode(CP_UTF8, 0, header->ChannelName, -1, &pChannelName, 32);
+	for (index = 0; index < 32; index++)
+	{
+		ChannelNameW[index] = (WCHAR) header->ChannelName[index];
+	}
 
-	if (status <= 0)
-		return -1;
-
-	ChannelNameLen = (status + 1) * 2;
+	ChannelNameLen = strlen(header->ChannelName) * 2;
 
 	Stream_Write_UINT32(s, ChannelNameLen); /* ChannelNameLen (4 bytes) */
 	Stream_Write_UINT32(s, header->DataLength); /* DataLen (4 bytes) */
 
-	Stream_Write(s, pChannelName, ChannelNameLen); /* ChannelName (variable) */
+	Stream_Write(s, ChannelNameW, ChannelNameLen); /* ChannelName (variable) */
 
 	return 1;
 }
@@ -203,8 +248,13 @@ int remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	WCHAR* raConnectionStringW = NULL;
 	REMDESK_CTL_AUTHENTICATE_PDU pdu;
 
-	pdu.expertBlob = NULL;
-	pdu.raConnectionString = NULL;
+	status = remdesk_generate_expert_blob(remdesk);
+
+	if (status < 0)
+		return -1;
+
+	pdu.expertBlob = remdesk->ExpertBlob;
+	pdu.raConnectionString = remdesk->settings->RemoteAssistanceRCTicket;
 
 	status = ConvertToUnicode(CP_UTF8, 0, pdu.raConnectionString, -1, &raConnectionStringW, 0);
 
@@ -339,6 +389,9 @@ int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEA
 			if (status >= 0)
 				status = remdesk_send_ctl_version_info_pdu(remdesk);
 
+			if (status >= 0)
+				status = remdesk_send_ctl_authenticate_pdu(remdesk);
+
 			break;
 
 		case REMDESK_CTL_ISCONNECTED:
@@ -413,6 +466,8 @@ int remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 static void remdesk_process_connect(remdeskPlugin* remdesk)
 {
 	printf("RemdeskProcessConnect\n");
+
+	remdesk->settings = (rdpSettings*) remdesk->channelEntryPoints.pExtendedData;
 }
 
 /****************************************************************************************/

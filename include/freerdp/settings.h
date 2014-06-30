@@ -587,6 +587,9 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_AllowDesktopComposition				968
 #define FreeRDP_RemoteAssistanceMode				1024
 #define FreeRDP_RemoteAssistanceSessionId			1025
+#define FreeRDP_RemoteAssistancePassStub			1026
+#define FreeRDP_RemoteAssistancePassword			1027
+#define FreeRDP_RemoteAssistanceRCTicket			1028
 #define FreeRDP_TlsSecurity					1088
 #define FreeRDP_NlaSecurity					1089
 #define FreeRDP_RdpSecurity					1090
@@ -942,7 +945,10 @@ struct rdp_settings
 	/* Remote Assistance */
 	ALIGN64 BOOL RemoteAssistanceMode; /* 1024 */
 	ALIGN64 char* RemoteAssistanceSessionId; /* 1025 */
-	UINT64 padding1088[1088 - 1026]; /* 1026 */
+	ALIGN64 char* RemoteAssistancePassStub; /* 1026 */
+	ALIGN64 char* RemoteAssistancePassword; /* 1027 */
+	ALIGN64 char* RemoteAssistanceRCTicket; /* 1028 */
+	UINT64 padding1088[1088 - 1029]; /* 1029 */
 
 	/**
 	 * X.224 Connection Request/Confirm

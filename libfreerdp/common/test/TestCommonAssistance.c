@@ -79,14 +79,16 @@ static const char* TEST_MSRC_INCIDENT_FILE_TYPE2 =
 int test_msrsc_incident_file_type1()
 {
 	int status;
+	char* pass;
+	char* expertBlob;
 	rdpAssistanceFile* file;
 
-	file = freerdp_client_assistance_file_new();
+	file = freerdp_assistance_file_new();
 
-	status = freerdp_client_assistance_parse_file_buffer(file,
+	status = freerdp_assistance_parse_file_buffer(file,
 			TEST_MSRC_INCIDENT_FILE_TYPE1, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE1));
 
-	printf("freerdp_client_assistance_parse_file_buffer: %d\n", status);
+	printf("freerdp_assistance_parse_file_buffer: %d\n", status);
 
 	if (status < 0)
 		return -1;
@@ -105,14 +107,24 @@ int test_msrsc_incident_file_type1()
 	printf("MachineAddress: %s\n", file->MachineAddress);
 	printf("MachinePort: %d\n", (int) file->MachinePort);
 
-	status = freerdp_client_assistance_decrypt(file, TEST_MSRC_INCIDENT_PASSWORD_TYPE1);
+	status = freerdp_assistance_decrypt(file, TEST_MSRC_INCIDENT_PASSWORD_TYPE1);
 
-	printf("freerdp_client_assistance_decrypt: %d\n", status);
+	printf("freerdp_assistance_decrypt: %d\n", status);
 
 	if (status < 0)
 		return -1;
 
-	freerdp_client_assistance_file_free(file);
+	pass = freerdp_assistance_bin_to_hex_string(file->EncryptedPassStub, file->EncryptedPassStubLength);
+
+	if (!pass)
+		return -1;
+
+	expertBlob = freerdp_assistance_construct_expert_blob("Edgar Olougouna", pass);
+
+	freerdp_assistance_file_free(file);
+
+	free(pass);
+	free(expertBlob);
 
 	return 0;
 }
@@ -122,12 +134,12 @@ int test_msrsc_incident_file_type2()
 	int status;
 	rdpAssistanceFile* file;
 
-	file = freerdp_client_assistance_file_new();
+	file = freerdp_assistance_file_new();
 
-	status = freerdp_client_assistance_parse_file_buffer(file,
+	status = freerdp_assistance_parse_file_buffer(file,
 			TEST_MSRC_INCIDENT_FILE_TYPE2, sizeof(TEST_MSRC_INCIDENT_FILE_TYPE2));
 
-	printf("freerdp_client_assistance_parse_file_buffer: %d\n", status);
+	printf("freerdp_assistance_parse_file_buffer: %d\n", status);
 
 	if (status < 0)
 		return -1;
@@ -146,16 +158,16 @@ int test_msrsc_incident_file_type2()
 	printf("MachineAddress: %s\n", file->MachineAddress);
 	printf("MachinePort: %d\n", (int) file->MachinePort);
 
-	status = freerdp_client_assistance_decrypt(file, TEST_MSRC_INCIDENT_PASSWORD_TYPE2);
+	status = freerdp_assistance_decrypt(file, TEST_MSRC_INCIDENT_PASSWORD_TYPE2);
 
-	printf("freerdp_client_assistance_decrypt: %d\n", status);
+	printf("freerdp_assistance_decrypt: %d\n", status);
 
 	if (status < 0)
 		return -1;
 
 	printf("ConnectionString2: %s\n", file->ConnectionString2);
 
-	freerdp_client_assistance_file_free(file);
+	freerdp_assistance_file_free(file);
 
 	return 0;
 }
