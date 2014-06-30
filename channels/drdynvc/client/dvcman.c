@@ -409,7 +409,8 @@ int dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId
 	if (channel->status == 0)
 	{
 		pCallback = channel->channel_callback;
-		pCallback->OnOpen(pCallback);
+		if (pCallback->OnOpen)
+			pCallback->OnOpen(pCallback);
 	}
 
 	return 0;
