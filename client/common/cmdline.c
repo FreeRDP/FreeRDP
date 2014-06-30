@@ -400,6 +400,9 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count > 2)
 			serial->Path = _strdup(params[2]);
 
+		if (count > 3)
+			serial->Driver = _strdup(params[3]);
+
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) serial);
 
 		return 1;
