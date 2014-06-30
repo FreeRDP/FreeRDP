@@ -149,6 +149,197 @@ int freerdp_client_assistance_crypt_derive_key_sha1(BYTE* hash, int hashLength, 
 	return 1;
 }
 
+int freerdp_client_assistance_parse_connection_string1(rdpAssistanceFile* file)
+{
+	int i;
+	char* p;
+	char* q;
+	char* str;
+	int count;
+	int length;
+	char* list;
+	char* tokens[8];
+
+	/**
+	 * <ProtocolVersion>,<protocolType>,<machineAddressList>,<assistantAccountPwd>,
+	 * <RASessionID>,<RASessionName>,<RASessionPwd>,<protocolSpecificParms>
+	 */
+
+	count = 1;
+	str = _strdup(file->RCTicket);
+
+	if (!str)
+		return -1;
+
+	length = strlen(str);
+
+	for (i = 0; i < length; i++)
+	{
+		if (str[i] == ',')
+			count++;
+	}
+
+	if (count != 8)
+		return -1;
+
+	count = 0;
+	tokens[count++] = str;
+
+	for (i = 0; i < length; i++)
+	{
+		if (str[i] == ',')
+		{
+			str[i] = '\0';
+			tokens[count++] = &str[i + 1];
+		}
+	}
+
+	if (strcmp(tokens[0], "65538") != 0)
+		return -1;
+
+	if (strcmp(tokens[1], "1") != 0)
+		return -1;
+
+	if (strcmp(tokens[3], "*") != 0)
+		return -1;
+
+	if (strcmp(tokens[5], "*") != 0)
+		return -1;
+
+	if (strcmp(tokens[6], "*") != 0)
+		return -1;
+
+	file->RASessionId = _strdup(tokens[4]);
+
+	if (!file->RASessionId)
+		return -1;
+
+	file->RASpecificParams = _strdup(tokens[7]);
+
+	if (!file->RASpecificParams)
+		return -1;
+
+	list = tokens[2];
+
+	q = strchr(list, ';');
+
+	if (q)
+		q[0] = '\0';
+
+	p = list;
+
+	q = strchr(p, ':');
+
+	if (!q)
+		return -1;
+
+	q[0] = '\0';
+	q++;
+
+	file->MachineAddress = _strdup(p);
+	file->MachinePort = (UINT32) atoi(q);
+
+	free(str);
+
+	return 1;
+}
+
+/**
+ * Decrypted Connection String 2:
+ *
+ * <E>
+ * <A KH="BNRjdu97DyczQSRuMRrDWoue+HA=" ID="+ULZ6ifjoCa6cGPMLQiGHRPwkg6VyJqGwxMnO6GcelwUh9a6/FBq3It5ADSndmLL"/>
+ * <C>
+ * <T ID="1" SID="0">
+ * 	<L P="49228" N="fe80::1032:53d9:5a01:909b%3"/>
+ * 	<L P="49229" N="fe80::3d8f:9b2d:6b4e:6aa%6"/>
+ * 	<L P="49230" N="192.168.1.200"/>
+ * 	<L P="49231" N="169.254.6.170"/>
+ * </T>
+ * </C>
+ * </E>
+ */
+
+int freerdp_client_assistance_parse_connection_string2(rdpAssistanceFile* file)
+{
+	char* p;
+	char* q;
+	char* str;
+	size_t length;
+
+	str = _strdup(file->ConnectionString2);
+
+	if (!str)
+		return -1;
+
+	p = strstr(str, "<E>");
+
+	if (!p)
+		return -1;
+
+	p = strstr(str, "<C>");
+
+	if (!p)
+		return -1;
+
+	/* Auth String Node (<A>) */
+
+	p = strstr(str, "<A");
+
+	if (!p)
+		return -1;
+
+	p = strstr(p, "KH=\"");
+
+	if (p)
+	{
+		p += sizeof("KH=\"") - 1;
+		q = strchr(p, '"');
+
+		if (!q)
+			return -1;
+
+		length = q - p;
+		free(file->RASpecificParams);
+		file->RASpecificParams = (char*) malloc(length + 1);
+
+		if (!file->RASpecificParams)
+			return -1;
+
+		CopyMemory(file->RASpecificParams, p, length);
+		file->RASpecificParams[length] = '\0';
+
+		p += length;
+	}
+
+	p = strstr(p, "ID=\"");
+
+	if (p)
+	{
+		p += sizeof("ID=\"") - 1;
+		q = strchr(p, '"');
+
+		if (!q)
+			return -1;
+
+		length = q - p;
+		free(file->RASessionId);
+		file->RASessionId = (char*) malloc(length + 1);
+
+		if (!file->RASessionId)
+			return -1;
+
+		CopyMemory(file->RASessionId, p, length);
+		file->RASessionId[length] = '\0';
+
+		p += length;
+	}
+
+	free(str);
+
+	return 1;
+}
+
 int freerdp_client_assistance_decrypt1(rdpAssistanceFile* file, const char* password)
 {
 	int status;
@@ -271,6 +462,8 @@ int freerdp_client_assistance_decrypt2(rdpAssistanceFile* file, const char* pass
 	int status;
 	SHA_CTX shaCtx;
 	int cbPasswordW;
+	int cchOutW = 0;
+	WCHAR* pbOutW = NULL;
 	EVP_CIPHER_CTX aesDec;
 	WCHAR* PasswordW = NULL;
 	BYTE *pbIn, *pbOut;
@@ -315,14 +508,11 @@ int freerdp_client_assistance_decrypt2(rdpAssistanceFile* file, const char* pass
 
 	cbOut = cbFinal = 0;
 	cbIn = file->EncryptedLHTicketLength;
-
-	file->ConnectionString2 = (char*) calloc(1, cbIn + AES_BLOCK_SIZE);
-
-	if (!file->ConnectionString2)
-		return -1;
-
 	pbIn = (BYTE*) file->EncryptedLHTicket;
-	pbOut = (BYTE*) file->ConnectionString2;
+	pbOut = (BYTE*) calloc(1, cbIn + AES_BLOCK_SIZE + 2);
+
+	if (!pbOut)
+		return -1;
 
 	status = EVP_DecryptUpdate(&aesDec, pbOut, &cbOut, pbIn, cbIn);
 
@@ -339,7 +529,24 @@ int freerdp_client_assistance_decrypt2(rdpAssistanceFile* file, const char* pass
 
 	EVP_CIPHER_CTX_cleanup(&aesDec);
 
+	cbOut += cbFinal;
+	cbFinal = 0;
+
+	pbOutW = (WCHAR*) pbOut;
+	cchOutW = cbOut / 2;
+
+	file->ConnectionString2 = NULL;
+	status = ConvertFromUnicode(CP_UTF8, 0, pbOutW, cchOutW, &file->ConnectionString2, 0, NULL, NULL);
+
+	if (status <= 0)
+		return -1;
+
 	free(PasswordW);
+	free(pbOut);
+
+	status = freerdp_client_assistance_parse_connection_string2(file);
+
+	printf("freerdp_client_assistance_parse_connection_string2: %d\n", status);
 
 	return 1;
 }
@@ -404,101 +611,6 @@ BYTE* freerdp_client_assistance_parse_hex_string(const char* hexStr, int* size)
 	}
 
 	return buffer;
-}
-
-int freerdp_client_assistance_parse_connection_string1(rdpAssistanceFile* file)
-{
-	int i;
-	char* p;
-	char* q;
-	char* str;
-	int count;
-	int length;
-	char* list;
-	char* tokens[8];
-
-	/**
-	 * <ProtocolVersion>,<protocolType>,<machineAddressList>,<assistantAccountPwd>,
-	 * <RASessionID>,<RASessionName>,<RASessionPwd>,<protocolSpecificParms>
-	 */
-
-	count = 1;
-	str = _strdup(file->RCTicket);
-
-	if (!str)
-		return -1;
-
-	length = strlen(str);
-
-	for (i = 0; i < length; i++)
-	{
-		if (str[i] == ',')
-			count++;
-	}
-
-	if (count != 8)
-		return -1;
-
-	count = 0;
-	tokens[count++] = str;
-
-	for (i = 0; i < length; i++)
-	{
-		if (str[i] == ',')
-		{
-			str[i] = '\0';
-			tokens[count++] = &str[i + 1];
-		}
-	}
-
-	if (strcmp(tokens[0], "65538") != 0)
-		return -1;
-
-	if (strcmp(tokens[1], "1") != 0)
-		return -1;
-
-	if (strcmp(tokens[3], "*") != 0)
-		return -1;
-
-	if (strcmp(tokens[5], "*") != 0)
-		return -1;
-
-	if (strcmp(tokens[6], "*") != 0)
-		return -1;
-
-	file->RASessionId = _strdup(tokens[4]);
-
-	if (!file->RASessionId)
-		return -1;
-
-	file->RASpecificParams = _strdup(tokens[7]);
-
-	if (!file->RASpecificParams)
-		return -1;
-
-	list = tokens[2];
-
-	q = strchr(list, ';');
-
-	if (q)
-		q[0] = '\0';
-
-	p = list;
-
-	q = strchr(p, ':');
-
-	if (!q)
-		return -1;
-
-	q[0] = '\0';
-	q++;
-
-	file->MachineAddress = _strdup(p);
-	file->MachinePort = (UINT32) atoi(q);
-
-	free(str);
-
-	return 1;
 }
 
 int freerdp_client_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* buffer, size_t size)

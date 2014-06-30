@@ -60,6 +60,22 @@ static const char* TEST_MSRC_INCIDENT_FILE_TYPE2 =
 "L=\"0\"/>"
 "</UPLOADINFO>";
 
+/**
+ * Decrypted Connection String 2:
+ *
+ * <E>
+ * <A KH="BNRjdu97DyczQSRuMRrDWoue+HA=" ID="+ULZ6ifjoCa6cGPMLQiGHRPwkg6VyJqGwxMnO6GcelwUh9a6/FBq3It5ADSndmLL"/>
+ * <C>
+ * <T ID="1" SID="0">
+ * 	<L P="49228" N="fe80::1032:53d9:5a01:909b%3"/>
+ * 	<L P="49229" N="fe80::3d8f:9b2d:6b4e:6aa%6"/>
+ * 	<L P="49230" N="192.168.1.200"/>
+ * 	<L P="49231" N="169.254.6.170"/>
+ * </T>
+ * </C>
+ * </E>
+ */
+
 int test_msrsc_incident_file_type1()
 {
 	int status;
@@ -136,6 +152,8 @@ int test_msrsc_incident_file_type2()
 
 	if (status < 0)
 		return -1;
+
+	printf("ConnectionString2: %s\n", file->ConnectionString2);
 
 	freerdp_client_assistance_file_free(file);
 
