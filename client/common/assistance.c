@@ -75,43 +75,6 @@
  * Use the first n bytes of the result of step 5 as the derived key.
  */
 
-int freerdp_client_assistance_crypt_derive_key_md5(BYTE* hash, int hashLength, BYTE* key, int keyLength)
-{
-	int i;
-	BYTE* buffer;
-	BYTE pad1[64];
-	BYTE pad2[64];
-	MD5_CTX hashCtx;
-
-	memset(pad1, 0x36, 64);
-	memset(pad2, 0x5C, 64);
-
-	for (i = 0; i < hashLength; i++)
-	{
-		pad1[i] ^= hash[i];
-		pad2[i] ^= hash[i];
-	}
-
-	buffer = (BYTE*) calloc(1, hashLength * 2);
-
-	if (!buffer)
-		return -1;
-
-	MD5_Init(&hashCtx);
-	MD5_Update(&hashCtx, pad1, 64);
-	MD5_Final((void*) buffer, &hashCtx);
-
-	MD5_Init(&hashCtx);
-	MD5_Update(&hashCtx, pad2, 64);
-	MD5_Final((void*) &buffer[hashLength], &hashCtx);
-
-	CopyMemory(key, buffer, keyLength);
-
-	free(buffer);
-
-	return 1;
-}
-
 int freerdp_client_assistance_crypt_derive_key_sha1(BYTE* hash, int hashLength, BYTE* key, int keyLength)
 {
 	int i;
@@ -343,7 +306,6 @@ int freerdp_client_assistance_parse_connection_string2(rdpAssistanceFile* file)
 int freerdp_client_assistance_decrypt1(rdpAssistanceFile* file, const char* password)
 {
 	int status;
-	int cbOutLen;
 	MD5_CTX md5Ctx;
 	int cbPasswordW;
 	int cbPassStubW;
@@ -351,9 +313,11 @@ int freerdp_client_assistance_decrypt1(rdpAssistanceFile* file, const char* pass
 	BYTE* PlainBlob = NULL;
 	WCHAR* PasswordW = NULL;
 	WCHAR* PassStubW = NULL;
+	BYTE *pbIn, *pbOut;
+	int cbOut, cbIn, cbFinal;
 	BYTE DerivedKey[16];
 	BYTE InitializationVector[16];
-	BYTE PasswordHash[MD5_DIGEST_LENGTH];
+	BYTE PasswordHash[16];
 
 	/**
 	 * PROV_RSA_FULL provider
@@ -380,11 +344,7 @@ int freerdp_client_assistance_decrypt1(rdpAssistanceFile* file, const char* pass
 	printf("PasswordHash (%s):\n", password);
 	winpr_HexDump(PasswordHash, sizeof(PasswordHash));
 
-	status = freerdp_client_assistance_crypt_derive_key_md5(PasswordHash, sizeof(PasswordHash),
-			DerivedKey, sizeof(DerivedKey));
-
-	if (status < 0)
-		return -1;
+	CopyMemory(DerivedKey, PasswordHash, 16);
 
 	printf("DerivedKey (%d):\n", sizeof(DerivedKey));
 	winpr_HexDump(DerivedKey, sizeof(DerivedKey));
@@ -420,7 +380,7 @@ int freerdp_client_assistance_decrypt1(rdpAssistanceFile* file, const char* pass
 
 	EVP_CIPHER_CTX_init(&rc4Ctx);
 
-	status = EVP_EncryptInit_ex(&rc4Ctx, EVP_rc4(), NULL, DerivedKey, InitializationVector);
+	status = EVP_EncryptInit_ex(&rc4Ctx, EVP_rc4(), NULL, NULL, NULL);
 
 	if (!status)
 	{
@@ -428,8 +388,22 @@ int freerdp_client_assistance_decrypt1(rdpAssistanceFile* file, const char* pass
 		return -1;
 	}
 
-	cbOutLen = file->EncryptedPassStubLength;
-	status = EVP_EncryptUpdate(&rc4Ctx, file->EncryptedPassStub, &cbOutLen, PlainBlob, file->EncryptedPassStubLength);
+	EVP_CIPHER_CTX_set_padding(&rc4Ctx, 0);
+
+	status = EVP_EncryptInit_ex(&rc4Ctx, NULL, NULL, DerivedKey, InitializationVector);
+
+	if (!status)
+	{
+		fprintf(stderr, "EVP_CipherInit_ex failure\n");
+		return -1;
+	}
+
+	cbOut = cbFinal = 0;
+	cbIn = file->EncryptedPassStubLength;
+	pbOut = file->EncryptedPassStub;
+	pbIn = PlainBlob;
+
+	status = EVP_EncryptUpdate(&rc4Ctx, pbOut, &cbOut, pbIn, cbIn);
 
 	if (!status)
 	{
@@ -437,7 +411,7 @@ int freerdp_client_assistance_decrypt1(rdpAssistanceFile* file, const char* pass
 		return -1;
 	}
 
-	status = EVP_EncryptFinal_ex(&rc4Ctx, file->EncryptedPassStub, &cbOutLen);
+	status = EVP_EncryptFinal_ex(&rc4Ctx, pbOut + cbOut, &cbFinal);
 
 	if (!status)
 	{
