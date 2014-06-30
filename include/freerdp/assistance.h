@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CLIENT_ASSISTANCE_H
-#define FREERDP_CLIENT_ASSISTANCE_H
+#ifndef FREERDP_REMOTE_ASSISTANCE_H
+#define FREERDP_REMOTE_ASSISTANCE_H
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
@@ -69,5 +69,5 @@ FREERDP_API void freerdp_client_assistance_file_free(rdpAssistanceFile* file);
 }
 #endif
 
-#endif /* FREERDP_CLIENT_ASSISTANCE_H */
+#endif /* FREERDP_REMOTE_ASSISTANCE_H */
 

@@ -37,7 +37,7 @@
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
-#include <freerdp/client/assistance.h>
+#include <freerdp/assistance.h>
 
 /**
  * Password encryption in establishing a remote assistance session of type 1:

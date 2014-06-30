@@ -24,10 +24,10 @@
 #include <freerdp/client.h>
 
 #include <freerdp/addin.h>
+#include <freerdp/assistance.h>
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
-#include <freerdp/client/assistance.h>
 
 int freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {

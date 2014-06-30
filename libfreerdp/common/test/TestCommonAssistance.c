@@ -2,7 +2,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include <freerdp/client/assistance.h>
+#include <freerdp/assistance.h>
 
 const char* TEST_MSRC_INCIDENT_PASSWORD_TYPE1 = "Password1";
 
@@ -160,7 +160,7 @@ int test_msrsc_incident_file_type2()
 	return 0;
 }
 
-int TestClientAssistance(int argc, char* argv[])
+int TestCommonAssistance(int argc, char* argv[])
 {
 	test_msrsc_incident_file_type1();
 

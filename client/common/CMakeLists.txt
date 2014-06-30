@@ -28,7 +28,6 @@ endif()
 set(${MODULE_PREFIX}_SRCS
 	client.c
 	cmdline.c
-	assistance.c
 	compatibility.c
 	compatibility.h
 	file.c)
@@ -73,4 +72,5 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Common")
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
+
 export_complex_library(LIBNAME ${MODULE_NAME})
