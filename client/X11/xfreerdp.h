@@ -137,6 +137,7 @@ struct xf_context
 	BOOL mouse_active;
 	BOOL suppress_output;
 	BOOL fullscreen_toggle;
+	BOOL controlToggle;
 	UINT32 KeyboardLayout;
 	BOOL KeyboardState[256];
 	XModifierKeymap* modifierMap;
@@ -182,11 +183,16 @@ struct xf_context
 	/* Channels */
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
+	EncomspClientContext* encomsp;
 };
 
 void xf_create_window(xfContext* xfc);
 void xf_toggle_fullscreen(xfContext* xfc);
+void xf_toggle_control(xfContext* xfc);
 BOOL xf_post_connect(freerdp* instance);
+
+void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp);
+void xf_encomsp_uninit(xfContext* xfc, EncomspClientContext* encomsp);
 
 enum XF_EXIT_CODE
 {

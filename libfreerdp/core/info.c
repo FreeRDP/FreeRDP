@@ -393,15 +393,15 @@ BOOL rdp_read_info_packet(wStream* s, rdpSettings* settings)
 void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 {
 	UINT32 flags;
-	WCHAR* domain = NULL;
+	WCHAR* domainW = NULL;
 	int cbDomain = 0;
-	WCHAR* userName = NULL;
+	WCHAR* userNameW = NULL;
 	int cbUserName = 0;
-	WCHAR* password = NULL;
+	WCHAR* passwordW = NULL;
 	int cbPassword = 0;
-	WCHAR* alternateShell = NULL;
+	WCHAR* alternateShellW = NULL;
 	int cbAlternateShell = 0;
-	WCHAR* workingDir = NULL;
+	WCHAR* workingDirW = NULL;
 	int cbWorkingDir = 0;
 	BOOL usedPasswordCookie = FALSE;
 
@@ -439,30 +439,62 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 
 	if (settings->Domain)
 	{
-		cbDomain = ConvertToUnicode(CP_UTF8, 0, settings->Domain, -1, &domain, 0) * 2;
+		cbDomain = ConvertToUnicode(CP_UTF8, 0, settings->Domain, -1, &domainW, 0) * 2;
 	}
 	else
 	{
-		domain = NULL;
+		domainW = NULL;
 		cbDomain = 0;
 	}
 
-	cbUserName = ConvertToUnicode(CP_UTF8, 0, settings->Username, -1, &userName, 0) * 2;
-
-	if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
+	if (!settings->RemoteAssistanceMode)
 	{
-		usedPasswordCookie = TRUE;
-		password = (WCHAR*) settings->RedirectionPassword;
-		cbPassword = settings->RedirectionPasswordLength - 2; /* Strip double zero termination */
+		cbUserName = ConvertToUnicode(CP_UTF8, 0, settings->Username, -1, &userNameW, 0) * 2;
 	}
 	else
 	{
-		cbPassword = ConvertToUnicode(CP_UTF8, 0, settings->Password, -1, &password, 0) * 2;
+		/* user name provided by the expert for connecting to the novice computer */
+		cbUserName = ConvertToUnicode(CP_UTF8, 0, settings->Username, -1, &userNameW, 0) * 2;
 	}
 
-	cbAlternateShell = ConvertToUnicode(CP_UTF8, 0, settings->AlternateShell, -1, &alternateShell, 0) * 2;
+	if (!settings->RemoteAssistanceMode)
+	{
+		if (settings->RedirectionPassword && settings->RedirectionPasswordLength > 0)
+		{
+			usedPasswordCookie = TRUE;
+			passwordW = (WCHAR*) settings->RedirectionPassword;
+			cbPassword = settings->RedirectionPasswordLength - 2; /* Strip double zero termination */
+		}
+		else
+		{
+			cbPassword = ConvertToUnicode(CP_UTF8, 0, settings->Password, -1, &passwordW, 0) * 2;
+		}
+	}
+	else
+	{
+		/* This field MUST be filled with "*" */
+		cbPassword = ConvertToUnicode(CP_UTF8, 0, "*", -1, &passwordW, 0) * 2;
+	}
 
-	cbWorkingDir = ConvertToUnicode(CP_UTF8, 0, settings->ShellWorkingDirectory, -1, &workingDir, 0) * 2;
+	if (!settings->RemoteAssistanceMode)
+	{
+		cbAlternateShell = ConvertToUnicode(CP_UTF8, 0, settings->AlternateShell, -1, &alternateShellW, 0) * 2;
+	}
+	else
+	{
+		/* This field MUST be filled with "*" */
+		cbAlternateShell = ConvertToUnicode(CP_UTF8, 0, "*", -1, &alternateShellW, 0) * 2;
+	}
+
+	if (!settings->RemoteAssistanceMode)
+	{
+		cbWorkingDir = ConvertToUnicode(CP_UTF8, 0, settings->ShellWorkingDirectory, -1, &workingDirW, 0) * 2;
+	}
+	else
+	{
+		/* Remote Assistance Session Id */
+		cbWorkingDir = ConvertToUnicode(CP_UTF8, 0, settings->RemoteAssistanceSessionId, -1, &workingDirW, 0) * 2;
+	}
 
 	Stream_Write_UINT32(s, 0); /* CodePage */
 	Stream_Write_UINT32(s, flags); /* flags */
@@ -474,32 +506,32 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 	Stream_Write_UINT16(s, cbWorkingDir); /* cbWorkingDir */
 
 	if (cbDomain > 0)
-		Stream_Write(s, domain, cbDomain);
+		Stream_Write(s, domainW, cbDomain);
 	Stream_Write_UINT16(s, 0);
 
 	if (cbUserName > 0)
-		Stream_Write(s, userName, cbUserName);
+		Stream_Write(s, userNameW, cbUserName);
 	Stream_Write_UINT16(s, 0);
 
 	if (cbPassword > 0)
-		Stream_Write(s, password, cbPassword);
+		Stream_Write(s, passwordW, cbPassword);
 	Stream_Write_UINT16(s, 0);
 
 	if (cbAlternateShell > 0)
-		Stream_Write(s, alternateShell, cbAlternateShell);
+		Stream_Write(s, alternateShellW, cbAlternateShell);
 	Stream_Write_UINT16(s, 0);
 
 	if (cbWorkingDir > 0)
-		Stream_Write(s, workingDir, cbWorkingDir);
+		Stream_Write(s, workingDirW, cbWorkingDir);
 	Stream_Write_UINT16(s, 0);
 
-	free(domain);
-	free(userName);
-	free(alternateShell);
-	free(workingDir);
+	free(domainW);
+	free(userNameW);
+	free(alternateShellW);
+	free(workingDirW);
 
 	if (!usedPasswordCookie)
-		free(password);
+		free(passwordW);
 
 	if (settings->RdpVersion >= 5)
 		rdp_write_extended_info_packet(s, settings); /* extraInfo */

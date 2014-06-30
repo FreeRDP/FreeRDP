@@ -415,6 +415,16 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		}
 	}
 
+	if ((keysym == XK_c) || (keysym == XK_C))
+	{
+		if (mod.Ctrl && mod.Alt)
+		{
+			/* Ctrl-Alt-C: toggle control */
+			xf_toggle_control(xfc);
+			return TRUE;
+		}
+	}
+
 	if (keysym == XK_period)
 	{
 		if (mod.Ctrl && mod.Alt)

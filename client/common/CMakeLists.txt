@@ -52,6 +52,9 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVER
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 	${FREERDP_CHANNELS_CLIENT_LIBS})
 	
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
+	${OPENSSL_LIBRARIES} ${ZLIB_LIBRARIES})
+	
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
 	MODULES freerdp-core)
@@ -59,8 +62,6 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHI
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
 	MODULES winpr-crt winpr-utils)
-
-
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
@@ -71,4 +72,5 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Common")
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
+
 export_complex_library(LIBNAME ${MODULE_NAME})

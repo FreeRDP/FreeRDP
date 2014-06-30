@@ -464,6 +464,10 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->ClientAddress = _strdup(settings->ClientAddress); /* 769 */
 		_settings->ClientDir = _strdup(settings->ClientDir); /* 770 */
 		_settings->DynamicDSTTimeZoneKeyName = _strdup(settings->DynamicDSTTimeZoneKeyName); /* 897 */
+		_settings->RemoteAssistanceSessionId = _strdup(settings->RemoteAssistanceSessionId); /* 1025 */
+		_settings->RemoteAssistancePassStub = _strdup(settings->RemoteAssistancePassStub); /* 1026 */
+		_settings->RemoteAssistancePassword = _strdup(settings->RemoteAssistancePassword); /* 1027 */
+		_settings->RemoteAssistanceRCTicket = _strdup(settings->RemoteAssistanceRCTicket); /* 1028 */
 		_settings->AuthenticationServiceClass = _strdup(settings->AuthenticationServiceClass); /* 1098 */
 		_settings->PreconnectionBlob = _strdup(settings->PreconnectionBlob); /* 1155 */
 		_settings->KerberosKdc = _strdup(settings->KerberosKdc); /* 1344 */
@@ -476,6 +480,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->WmClass = _strdup(settings->WmClass); /* 1549 */
 		_settings->ComputerName = _strdup(settings->ComputerName); /* 1664 */
 		_settings->ConnectionFile = _strdup(settings->ConnectionFile); /* 1728 */
+		_settings->AssistanceFile = _strdup(settings->AssistanceFile); /* 1729 */
 		_settings->HomePath = _strdup(settings->HomePath); /* 1792 */
 		_settings->ConfigPath = _strdup(settings->ConfigPath); /* 1793 */
 		_settings->CurrentPath = _strdup(settings->CurrentPath); /* 1794 */
@@ -624,6 +629,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->DisableCursorShadow = settings->DisableCursorShadow; /* 966 */
 		_settings->DisableCursorBlinking = settings->DisableCursorBlinking; /* 967 */
 		_settings->AllowDesktopComposition = settings->AllowDesktopComposition; /* 968 */
+		_settings->RemoteAssistanceMode = settings->RemoteAssistanceMode; /* 1024 */
 		_settings->TlsSecurity = settings->TlsSecurity; /* 1088 */
 		_settings->NlaSecurity = settings->NlaSecurity; /* 1089 */
 		_settings->RdpSecurity = settings->RdpSecurity; /* 1090 */
@@ -810,6 +816,8 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->ClientDir);
 		free(settings->CertificateFile);
 		free(settings->PrivateKeyFile);
+		free(settings->ConnectionFile);
+		free(settings->AssistanceFile);
 		free(settings->ReceivedCapabilities);
 		free(settings->OrderSupport);
 		free(settings->ClientHostname);
@@ -837,6 +845,7 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->RedirectionDomain);
 		free(settings->RedirectionPassword);
 		free(settings->RedirectionTsvUrl);
+		free(settings->RemoteAssistanceSessionId);
 		free(settings->AuthenticationServiceClass);
 		freerdp_target_net_addresses_free(settings);
 		freerdp_device_collection_free(settings);

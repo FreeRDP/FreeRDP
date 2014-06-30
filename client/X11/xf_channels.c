@@ -40,6 +40,10 @@ void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 	{
 		xf_graphics_pipeline_init(xfc, (RdpgfxClientContext*) e->pInterface);
 	}
+	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_encomsp_init(xfc, (EncomspClientContext*) e->pInterface);
+	}
 }
 
 void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
@@ -53,5 +57,9 @@ void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnect
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
 		xf_graphics_pipeline_uninit(xfc, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_encomsp_uninit(xfc, (EncomspClientContext*) e->pInterface);
 	}
 }
