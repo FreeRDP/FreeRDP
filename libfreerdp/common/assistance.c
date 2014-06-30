@@ -112,7 +112,7 @@ int freerdp_assistance_crypt_derive_key_sha1(BYTE* hash, int hashLength, BYTE* k
 	return 1;
 }
 
-int freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
+int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 {
 	int i;
 	char* p;
@@ -120,7 +120,71 @@ int freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
 	char* str;
 	int count;
 	int length;
-	char* list;
+	char** tokens;
+
+	count = 1;
+	str = _strdup(list);
+
+	if (!str)
+		return -1;
+
+	length = strlen(str);
+
+	for (i = 0; i < length; i++)
+	{
+		if (str[i] == ';')
+			count++;
+	}
+
+	tokens = (char**) malloc(sizeof(char*) * count);
+
+	count = 0;
+	tokens[count++] = str;
+
+	for (i = 0; i < length; i++)
+	{
+		if (str[i] == ';')
+		{
+			str[i] = '\0';
+			tokens[count++] = &str[i + 1];
+		}
+	}
+
+	for (i = 0; i < count; i++)
+	{
+		length = strlen(tokens[i]);
+
+		if (length > 8)
+		{
+			if (strncmp(tokens[i], "169.254.", 8) == 0)
+				continue;
+		}
+
+		p = tokens[i];
+
+		q = strchr(p, ':');
+
+		if (!q)
+			return -1;
+
+		q[0] = '\0';
+		q++;
+
+		file->MachineAddress = _strdup(p);
+		file->MachinePort = (UINT32) atoi(q);
+
+		break;
+	}
+
+	return 1;
+}
+
+int freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
+{
+	int i;
+	char* str;
+	int count;
+	int length;
 	char* tokens[8];
 
 	/**
@@ -182,25 +246,7 @@ int freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file)
 	if (!file->RASpecificParams)
 		return -1;
 
-	list = tokens[2];
-
-	q = strchr(list, ';');
-
-	if (q)
-		q[0] = '\0';
-
-	p = list;
-
-	q = strchr(p, ':');
-
-	if (!q)
-		return -1;
-
-	q[0] = '\0';
-	q++;
-
-	file->MachineAddress = _strdup(p);
-	file->MachinePort = (UINT32) atoi(q);
+	freerdp_assistance_parse_address_list(file, tokens[2]);
 
 	free(str);
 
@@ -374,9 +420,6 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	*((UINT32*) pbIn) = cbPassStubW;
 	CopyMemory(&pbIn[4], PassStubW, cbPassStubW);
 
-	printf("PlainBlob (%d)\n", EncryptedSize);
-	winpr_HexDump(pbIn, EncryptedSize);
-
 	EVP_CIPHER_CTX_init(&rc4Ctx);
 
 	status = EVP_EncryptInit_ex(&rc4Ctx, EVP_rc4(), NULL, NULL, NULL);
@@ -415,9 +458,6 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	}
 
 	EVP_CIPHER_CTX_cleanup(&rc4Ctx);
-
-	printf("EncryptedBlob (%d):\n", EncryptedSize);
-	winpr_HexDump(pbOut, EncryptedSize);
 
 	free(pbIn);
 	free(PasswordW);

@@ -21,6 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/print.h>
+
 #include <freerdp/client/encomsp.h>
 
 #include "encomsp_main.h"
@@ -32,6 +35,30 @@ EncomspClientContext* encomsp_get_client_interface(encomspPlugin* encomsp)
 	return pInterface;
 }
 
+int encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
+{
+	UINT32 status = 0;
+
+	if (!encomsp)
+		return -1;
+
+#if 0
+	printf("EncomspWrite (%d)\n", Stream_Length(s));
+	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
+#endif
+
+	status = encomsp->channelEntryPoints.pVirtualChannelWrite(encomsp->OpenHandle,
+			Stream_Buffer(s), (UINT32) Stream_Length(s), s);
+
+	if (status != CHANNEL_RC_OK)
+	{
+		fprintf(stderr, "encomsp_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
+		return -1;
+	}
+
+	return 1;
+}
+
 int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
@@ -39,6 +66,14 @@ int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 
 	Stream_Read_UINT16(s, header->Type); /* Type (2 bytes) */
 	Stream_Read_UINT16(s, header->Length); /* Length (2 bytes) */
+
+	return 1;
+}
+
+int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	Stream_Write_UINT16(s, header->Type); /* Type (2 bytes) */
+	Stream_Write_UINT16(s, header->Length); /* Length (2 bytes) */
 
 	return 1;
 }
@@ -449,6 +484,30 @@ int encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wS
 	return 1;
 }
 
+int encomsp_send_change_participant_control_level_pdu(EncomspClientContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
+{
+	wStream* s;
+	encomspPlugin* encomsp;
+
+	encomsp = (encomspPlugin*) context->handle;
+
+	pdu->Type = ODTYPE_PARTICIPANT_CTRL_CHANGED;
+	pdu->Length = ENCOMSP_ORDER_HEADER_SIZE + 6;
+
+	s = Stream_New(NULL, pdu->Length);
+
+	encomsp_write_header(s, (ENCOMSP_ORDER_HEADER*) pdu);
+
+	Stream_Write_UINT16(s, pdu->Flags); /* Flags (2 bytes) */
+	Stream_Write_UINT32(s, pdu->ParticipantId); /* ParticipantId (4 bytes) */
+
+	Stream_SealLength(s);
+
+	encomsp_virtual_channel_write(encomsp, s);
+
+	return 1;
+}
+
 int encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
@@ -530,6 +589,8 @@ static int encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 	{
 		if (encomsp_read_header(s, &header) < 0)
 			return -1;
+
+		//printf("EncomspReceive: Type: %d Length: %d\n", header.Type, header.Length);
 
 		switch (header.Type)
 		{
@@ -866,7 +927,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		context->ShowWindow = NULL;
 		context->ParticipantCreated = NULL;
 		context->ParticipantRemoved = NULL;
-		context->ChangeParticipantControlLevel = NULL;
+		context->ChangeParticipantControlLevel = encomsp_send_change_participant_control_level_pdu;
 		context->GraphicsStreamPaused = NULL;
 		context->GraphicsStreamResumed = NULL;
 
@@ -877,6 +938,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	encomsp->channelEntryPoints.pVirtualChannelInit(&encomsp->InitHandle,
 		&encomsp->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, encomsp_virtual_channel_init_event);
+
+	encomsp->channelEntryPoints.pInterface = *(encomsp->channelEntryPoints.ppInterface);
+	encomsp->channelEntryPoints.ppInterface = &(encomsp->channelEntryPoints.pInterface);
 
 	encomsp_add_init_handle_data(encomsp->InitHandle, (void*) encomsp);
 

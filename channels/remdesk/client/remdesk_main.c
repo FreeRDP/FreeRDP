@@ -44,9 +44,6 @@ int remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 	if (!remdesk)
 		return -1;
 
-	printf("RemdeskWrite (%d)\n", Stream_Length(s));
-	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
-
 	status = remdesk->channelEntryPoints.pVirtualChannelWrite(remdesk->OpenHandle,
 			Stream_Buffer(s), (UINT32) Stream_Length(s), s);
 
@@ -176,8 +173,6 @@ int remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UI
 
 int remdesk_recv_ctl_server_announce_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
-	printf("RemdeskServerAnnounce\n");
-
 	return 1;
 }
 
@@ -191,9 +186,6 @@ int remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s, REMDES
 
 	Stream_Read_UINT32(s, versionMajor); /* versionMajor (4 bytes) */
 	Stream_Read_UINT32(s, versionMinor); /* versionMinor (4 bytes) */
-
-	printf("RemdeskVersionInfo: versionMajor: 0x%04X versionMinor: 0x%04X\n",
-			versionMajor, versionMinor);
 
 	return 1;
 }
@@ -233,7 +225,7 @@ int remdesk_recv_result_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_
 
 	*pResult = result;
 
-	printf("RemdeskRecvResult: 0x%04X\n", result);
+	//printf("RemdeskRecvResult: 0x%04X\n", result);
 
 	return 1;
 }
@@ -404,7 +396,7 @@ int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEA
 
 	Stream_Read_UINT32(s, msgType); /* msgType (4 bytes) */
 
-	printf("msgType: %d\n", msgType);
+	//printf("msgType: %d\n", msgType);
 
 	switch (msgType)
 	{
@@ -482,8 +474,10 @@ int remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 	int status = 1;
 	REMDESK_CHANNEL_HEADER header;
 
+#if 0
 	printf("RemdeskReceive: %d\n", Stream_GetRemainingLength(s));
 	winpr_HexDump(Stream_Pointer(s), Stream_GetRemainingLength(s));
+#endif
 
 	remdesk_read_channel_header(s, &header);
 
@@ -521,8 +515,6 @@ int remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 
 static void remdesk_process_connect(remdeskPlugin* remdesk)
 {
-	printf("RemdeskProcessConnect\n");
-
 	remdesk->settings = (rdpSettings*) remdesk->channelEntryPoints.pExtendedData;
 }
 
@@ -802,6 +794,9 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	remdesk->channelEntryPoints.pVirtualChannelInit(&remdesk->InitHandle,
 		&remdesk->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, remdesk_virtual_channel_init_event);
+
+	remdesk->channelEntryPoints.pInterface = *(remdesk->channelEntryPoints.ppInterface);
+	remdesk->channelEntryPoints.ppInterface = &(remdesk->channelEntryPoints.pInterface);
 
 	remdesk_add_init_handle_data(remdesk->InitHandle, (void*) remdesk);
 
