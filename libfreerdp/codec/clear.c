@@ -56,7 +56,8 @@ static BYTE CLEAR_8BIT_MASKS[9] =
 int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
 {
-	UINT32 i, y;
+	UINT32 i;
+	UINT32 y;
 	UINT32 count;
 	BYTE r, g, b;
 	UINT32 color;
@@ -93,6 +94,12 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 
 	printf("glyphFlags: 0x%02X seqNumber: %d\n", glyphFlags, seqNumber);
 
+	if (glyphFlags & CLEARCODEC_FLAG_CACHE_RESET)
+	{
+		clear->VBarStorageCursor = 0;
+		clear->ShortVBarStorageCursor = 0;
+	}
+
 	if (glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX)
 	{
 		if ((nWidth * nHeight) > (1024 * 1024))
@@ -103,6 +110,9 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 
 		glyphIndex = *((UINT16*) &pSrcData[2]);
 		offset += 2;
+
+		if (glyphIndex >= 4000)
+			return -1;
 
 		if (glyphFlags & CLEARCODEC_FLAG_GLYPH_HIT)
 		{
@@ -243,13 +253,18 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			UINT16 xEnd;
 			UINT16 yStart;
 			UINT16 yEnd;
-			BYTE* vBars;
+			BYTE* vBar;
+			BYTE* vBarPixels;
+			BOOL vBarUpdate;
 			UINT16 vBarHeader;
 			UINT16 vBarIndex;
 			UINT16 vBarYOn;
 			UINT16 vBarYOff;
-			int vBarCount;
-			int vBarPixelCount;
+			UINT32 vBarCount;
+			UINT32 vBarPixelCount;
+			UINT32 vBarShortPixelCount;
+			CLEAR_VBAR_ENTRY* vBarEntry;
+			CLEAR_VBAR_ENTRY* vBarShortEntry;
 
 			if ((bandsByteCount - suboffset) < 11)
 				return -1009;
@@ -271,12 +286,13 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 
 			for (i = 0; i < vBarCount; i++)
 			{
-				vBars = &bandsData[suboffset];
+				vBarUpdate = FALSE;
+				vBar = &bandsData[suboffset];
 
 				if ((bandsByteCount - suboffset) < 2)
 					return -1010;
 
-				vBarHeader = *((UINT16*) &vBars[0]);
+				vBarHeader = *((UINT16*) &vBar[0]);
 				suboffset += 2;
 
 				if ((vBarHeader & 0xC000) == 0x8000) /* VBAR_CACHE_HIT */
@@ -285,43 +301,162 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 
 					printf("VBAR_CACHE_HIT: vBarIndex: %d\n",
 							vBarIndex);
+
+					if (vBarIndex >= 32768)
+						return -1;
+
+					vBarPixelCount = (yEnd - yStart + 1);
+
+					vBarEntry = &(clear->VBarStorage[clear->VBarStorageCursor]);
+
+					if (vBarEntry->count != vBarPixelCount)
+						return -1;
 				}
 				else if ((vBarHeader & 0xC000) == 0xC000) /* SHORT_VBAR_CACHE_HIT */
 				{
 					vBarIndex = (vBarHeader & 0x3FFF);
 
+					if (vBarIndex >= 16384)
+						return -1;
+
 					if ((bandsByteCount - suboffset) < 1)
 						return -1011;
 
-					vBarYOn = vBars[2];
+					vBarYOn = vBar[2];
 					suboffset += 1;
 
 					printf("SHORT_VBAR_CACHE_HIT: vBarIndex: %d vBarYOn: %d\n",
 							vBarIndex, vBarYOn);
+
+					vBarShortPixelCount = (yEnd - yStart + 1 - vBarYOn); /* maximum value */
+
+					vBarShortEntry = &(clear->ShortVBarStorage[clear->ShortVBarStorageCursor]);
+
+					if (!vBarShortEntry)
+						return -1;
+
+					clear->VBarStorageCursor++;
+
+					vBarUpdate = TRUE;
 				}
 				else if ((vBarHeader & 0xC000) == 0x0000) /* SHORT_VBAR_CACHE_MISS */
 				{
 					vBarYOn = (vBarHeader & 0xFF);
 					vBarYOff = ((vBarHeader >> 8) & 0x3F);
 
-					if (vBarYOff < vBarYOn)
+					if (vBarYOff <= vBarYOn)
 						return -1012;
 
 					/* shortVBarPixels: variable */
 
-					vBarPixelCount = (3 * (vBarYOff - vBarYOn));
+					vBarPixels = &vBar[2];
+					vBarShortPixelCount = (vBarYOff - vBarYOn);
 
-					printf("SHORT_VBAR_CACHE_MISS: vBarYOn: %d vBarYOff: %d bytes: %d\n",
-							vBarYOn, vBarYOff, vBarPixelCount);
+					printf("SHORT_VBAR_CACHE_MISS: vBarYOn: %d vBarYOff: %d vBarPixelCount: %d\n",
+							vBarYOn, vBarYOff, vBarShortPixelCount);
 
-					if ((bandsByteCount - suboffset) < vBarPixelCount)
+					if ((bandsByteCount - suboffset) < (vBarShortPixelCount * 3))
 						return -1013;
 
-					suboffset += vBarPixelCount;
+					vBarShortEntry = &(clear->ShortVBarStorage[clear->ShortVBarStorageCursor]);
+
+					if (vBarShortPixelCount && (vBarShortEntry->size < vBarShortPixelCount))
+					{
+						if (!vBarShortEntry->pixels)
+							vBarShortEntry->pixels = (UINT32*) malloc(vBarShortPixelCount * 4);
+						else
+							vBarShortEntry->pixels = (UINT32*) realloc(vBarShortEntry->pixels, vBarShortPixelCount * 4);
+
+						vBarShortEntry->size = vBarShortPixelCount;
+					}
+
+					if (vBarShortPixelCount && !vBarShortEntry->pixels)
+						return -1;
+
+					pDstPixel = vBarShortEntry->pixels;
+
+					for (y = 0; y < vBarShortPixelCount; y++)
+					{
+						*pDstPixel = RGB32(vBarPixels[2], vBarPixels[1], vBarPixels[0]);
+						vBarPixels += 3;
+						pDstPixel++;
+					}
+
+					suboffset += (vBarShortPixelCount * 3);
+
+					vBarShortEntry->count = vBarShortPixelCount;
+					clear->ShortVBarStorageCursor++;
+
+					vBarUpdate = TRUE;
 				}
 				else
 				{
 					return -1014; /* invalid vBarHeader */
+				}
+
+				if (vBarUpdate)
+				{
+					vBarEntry = &(clear->VBarStorage[clear->VBarStorageCursor]);
+
+					vBarPixelCount = (yEnd - yStart + 1);
+
+					if (vBarPixelCount && (vBarEntry->size < vBarPixelCount))
+					{
+						if (!vBarEntry->pixels)
+							vBarEntry->pixels = (UINT32*) malloc(vBarPixelCount * 4);
+						else
+							vBarEntry->pixels = (UINT32*) realloc(vBarEntry->pixels, vBarPixelCount * 4);
+
+						vBarEntry->size = vBarPixelCount;
+					}
+
+					if (vBarPixelCount && !vBarEntry->pixels)
+						return -1;
+
+					pDstPixel = vBarEntry->pixels;
+
+					/* if (y < vBarYOn), use colorBkg */
+
+					y = 0;
+					count = vBarYOn;
+
+					if ((y + count) > vBarPixelCount)
+						count = (vBarPixelCount > y) ? (vBarPixelCount - y) : 0;
+
+					for ( ; y < count; y++)
+					{
+						*pDstPixel = color;
+						pDstPixel++;
+					}
+
+					/*
+					 * if ((y >= vBarYOn) && (y < (vBarYOn + vBarShortPixelCount))),
+					 * use vBarShortPixels at index (y - shortVBarYOn)
+					 */
+
+					y = vBarYOn;
+					count = vBarShortPixelCount;
+
+					if ((y + count) > vBarPixelCount)
+						count = (vBarPixelCount > y) ? (vBarPixelCount - y) : 0;
+
+					pSrcPixel = &(vBarShortEntry->pixels[y - vBarYOn]);
+					CopyMemory(pDstPixel, pSrcPixel, count * 4);
+					pDstPixel += count;
+
+					/* if (y >= (vBarYOn + vBarShortPixelCount)), use colorBkg */
+
+					y = vBarYOn + vBarShortPixelCount;
+					count = (vBarPixelCount > y) ? (vBarPixelCount - y) : 0;
+
+					for ( ; y < count; y++)
+					{
+						*pDstPixel = color;
+						pDstPixel++;
+					}
+
+					vBarEntry->count = vBarPixelCount;
+					clear->VBarStorageCursor++;
 				}
 			}
 		}
@@ -508,6 +643,12 @@ void clear_context_free(CLEAR_CONTEXT* clear)
 
 	for (i = 0; i < 4000; i++)
 		free(clear->GlyphCache[i]);
+
+	for (i = 0; i < 32768; i++)
+		free(clear->VBarStorage[i].pixels);
+
+	for (i = 0; i < 16384; i++)
+		free(clear->ShortVBarStorage[i].pixels);
 
 	free(clear);
 }

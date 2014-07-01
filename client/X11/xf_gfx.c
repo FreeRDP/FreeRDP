@@ -430,7 +430,7 @@ int xf_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill)
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, solidFill->surfaceId);
 
-	printf("xf_SolidFill\n");
+	//printf("xf_SolidFill\n");
 
 	if (!surface)
 		return -1;
