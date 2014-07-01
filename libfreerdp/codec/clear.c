@@ -494,8 +494,6 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		suboffset = 0;
 		subcodecs = &pSrcData[offset];
 
-		pixelIndex = pixelCount = 0;
-
 		while (suboffset < subcodecByteCount)
 		{
 			if ((subcodecByteCount - suboffset) < 13)
@@ -526,7 +524,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 
 				for (y = 0; y < height; y++)
 				{
-					pDstPixel = (UINT32*) &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+					pDstPixel = (UINT32*) &pDstData[((nYDst + yStart + y) * nDstStep) + ((nXDst + xStart) * 4)];
 
 					for (x = 0; x < width; x++)
 					{
@@ -545,7 +543,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 				for (y = 0; y < height; y++)
 				{
 					pSrcPixel = (UINT32*) &pixels[y * (width * 4)];
-					pDstPixel = (UINT32*) &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+					pDstPixel = (UINT32*) &pDstData[((nYDst + yStart + y) * nDstStep) + ((nXDst + xStart) * 4)];
 					CopyMemory(pDstPixel, pSrcPixel, width * 4);
 				}
 			}
@@ -565,6 +563,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 				paletteEntries = &bitmapData[1];
 				bitmapDataOffset = 1 + (paletteCount * 3);
 
+				pixelIndex = 0;
 				paletteEntry = paletteEntries;
 
 				for (i = 0; i < paletteCount; i++)
@@ -612,62 +611,30 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					if (stopIndex > paletteCount)
 						return -1035;
 
-					/* Repeated color */
-
 					suiteIndex = startIndex;
-					color = palette[startIndex];
 
-					pixelX = (pixelIndex % nWidth);
-					pixelY = (pixelIndex - pixelX) / nWidth;
-					pixelCount = runLengthFactor;
-
-					while (pixelCount > 0)
+					for (y = 0; y < height; y++)
 					{
-						count = nWidth - pixelX;
+						pDstPixel = (UINT32*) &pDstData[((nYDst + yStart + y) * nDstStep) + ((nXDst + xStart) * 4)];
 
-						if (count > pixelCount)
-							count = pixelCount;
-
-						pDstPixel = (UINT32*) &pDstData[((nYDst + pixelY) * nDstStep) + ((nXDst + pixelX) * 4)];
-						pixelCount -= count;
-
-						while (count--)
+						for (x = 0; x < width; x++)
 						{
-							*pDstPixel++ = color;
+							*pDstPixel = palette[suiteIndex];
+							pDstPixel++;
+
+							if (runLengthFactor)
+							{
+								runLengthFactor--;
+							}
+							else
+							{
+								suiteIndex++;
+
+								if (suiteIndex >= stopIndex)
+									break;
+							}
 						}
-
-						pixelX = 0;
-						pixelY++;
 					}
-
-					pixelIndex += runLengthFactor;
-
-					/* Monotonically increasing suite */
-
-					pixelX = (pixelIndex % nWidth);
-					pixelY = (pixelIndex - pixelX) / nWidth;
-					pixelCount = suiteDepth;
-
-					while (pixelCount > 0)
-					{
-						count = nWidth - pixelX;
-
-						if (count > pixelCount)
-							count = pixelCount;
-
-						pDstPixel = (UINT32*) &pDstData[((nYDst + pixelY) * nDstStep) + ((nXDst + pixelX) * 4)];
-						pixelCount -= count;
-
-						while (count--)
-						{
-							*pDstPixel++ = palette[suiteIndex++];
-						}
-
-						pixelX = 0;
-						pixelY++;
-					}
-
-					pixelIndex += suiteDepth;
 				}
 			}
 			else
