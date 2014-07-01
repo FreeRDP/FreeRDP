@@ -118,7 +118,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 
 			for (y = 0; y < nHeight; y++)
 			{
-				pDstPixel = (UINT32*) &pSrcData[y * (nWidth * 4)];
+				pDstPixel = (UINT32*) &glyphData[y * (nWidth * 4)];
 				pSrcPixel = (UINT32*) &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
 				CopyMemory(pDstPixel, pSrcPixel, nWidth * 4);
 			}
@@ -460,7 +460,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		for (y = 0; y < nHeight; y++)
 		{
 			pSrcPixel = (UINT32*) &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
-			pDstPixel = (UINT32*) &pSrcData[y * (nWidth * 4)];
+			pDstPixel = (UINT32*) &glyphData[y * (nWidth * 4)];
 			CopyMemory(pDstPixel, pSrcPixel, nWidth * 4);
 		}
 	}
