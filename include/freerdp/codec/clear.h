@@ -32,6 +32,7 @@
 struct _CLEAR_CONTEXT
 {
 	BOOL Compressor;
+	BYTE* GlyphCache[4000];
 	UINT32 VBarStorageCursor;
 	void* VBarStorage[32768];
 	UINT32 ShortVBarStorageCursor;

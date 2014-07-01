@@ -267,7 +267,7 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 
 	DstData = surface->data;
 
-	status = clear_decompress(NULL, cmd->data, cmd->length, &DstData,
+	status = clear_decompress(xfc->clear, cmd->data, cmd->length, &DstData,
 			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
 
 #if 0

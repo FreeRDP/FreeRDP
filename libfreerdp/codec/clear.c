@@ -56,12 +56,13 @@ static BYTE CLEAR_8BIT_MASKS[9] =
 int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
 {
-	UINT32 i;
+	UINT32 i, y;
 	UINT32 count;
 	BYTE r, g, b;
 	UINT32 color;
-	BYTE glyphFlags;
 	BYTE seqNumber;
+	BYTE glyphFlags;
+	BYTE* glyphData;
 	UINT16 glyphIndex;
 	UINT32 offset = 0;
 	BYTE* pDstData = NULL;
@@ -72,6 +73,8 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	UINT16 runLengthFactor2;
 	UINT32 runLengthFactor3;
 	UINT32 runLengthFactor;
+	UINT32* pSrcPixel = NULL;
+	UINT32* pDstPixel = NULL;
 
 	if (!ppDstData)
 		return -1;
@@ -92,6 +95,9 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 
 	if (glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX)
 	{
+		if ((nWidth * nHeight) > (1024 * 1024))
+			return -1;
+
 		if (SrcSize < 4)
 			return -1002;
 
@@ -104,6 +110,18 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			 * Copy pixels from the Decompressor Glyph Storage position
 			 * specified by the glyphIndex field to the output bitmap
 			 */
+
+			glyphData = clear->GlyphCache[glyphIndex];
+
+			if (!glyphData)
+				return -1;
+
+			for (y = 0; y < nHeight; y++)
+			{
+				pDstPixel = (UINT32*) &pSrcData[y * (nWidth * 4)];
+				pSrcPixel = (UINT32*) &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+				CopyMemory(pDstPixel, pSrcPixel, nWidth * 4);
+			}
 
 			return 1; /* Finish */
 		}
@@ -430,6 +448,21 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		 * Copy decompressed bitmap to the Decompressor Glyph
 		 * Storage position specified by the glyphIndex field
 		 */
+
+		if (!clear->GlyphCache[glyphIndex])
+			clear->GlyphCache[glyphIndex] = (BYTE*) malloc(1024 * 1024 * 4);
+
+		glyphData = clear->GlyphCache[glyphIndex];
+
+		if (!glyphData)
+			return -1;
+
+		for (y = 0; y < nHeight; y++)
+		{
+			pSrcPixel = (UINT32*) &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+			pDstPixel = (UINT32*) &pSrcData[y * (nWidth * 4)];
+			CopyMemory(pDstPixel, pSrcPixel, nWidth * 4);
+		}
 	}
 
 	if (offset != SrcSize)
@@ -468,9 +501,14 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 
 void clear_context_free(CLEAR_CONTEXT* clear)
 {
-	if (clear)
-	{
-		free(clear);
-	}
+	int i;
+
+	if (!clear)
+		return;
+
+	for (i = 0; i < 4000; i++)
+		free(clear->GlyphCache[i]);
+
+	free(clear);
 }
 
