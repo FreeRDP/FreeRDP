@@ -270,6 +270,11 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 	status = clear_decompress(xfc->clear, cmd->data, cmd->length, &DstData,
 			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
 
+	if (status < 0)
+	{
+		printf("clear_decompress failure: %d\n", status);
+	}
+
 #if 0
 	/* fill with pink for now to distinguish from the rest */
 
