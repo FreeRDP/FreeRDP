@@ -23,6 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <freerdp/codec/color.h>
+
 #define CLEARCODEC_FLAG_GLYPH_INDEX	0x01
 #define CLEARCODEC_FLAG_GLYPH_HIT	0x02
 #define CLEARCODEC_FLAG_CACHE_RESET	0x03
