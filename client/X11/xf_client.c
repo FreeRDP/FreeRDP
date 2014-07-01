@@ -468,7 +468,7 @@ void xf_create_window(xfContext *xfc)
 	}
 }
 
-void xf_toggle_fullscreen(xfContext *xfc)
+void xf_toggle_fullscreen(xfContext* xfc)
 {
 	Pixmap contents = 0;
 	WindowStateChangeEventArgs e;
@@ -484,6 +484,53 @@ void xf_toggle_fullscreen(xfContext *xfc)
 	EventArgsInit(&e, "xfreerdp");
 	e.state = xfc->fullscreen ? FREERDP_WINDOW_STATE_FULLSCREEN : 0;
 	PubSub_OnWindowStateChange(((rdpContext *) xfc)->pubSub, xfc, &e);
+}
+
+void xf_toggle_control(xfContext* xfc)
+{
+	EncomspClientContext* encomsp;
+	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
+
+	encomsp = xfc->encomsp;
+
+	if (!encomsp)
+		return;
+
+	pdu.ParticipantId = 0;
+	pdu.Flags = ENCOMSP_REQUEST_VIEW;
+
+	if (!xfc->controlToggle)
+		pdu.Flags |= ENCOMSP_REQUEST_INTERACT;
+
+	encomsp->ChangeParticipantControlLevel(encomsp, &pdu);
+
+	xfc->controlToggle = !xfc->controlToggle;
+}
+
+int xf_encomsp_participant_created(EncomspClientContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
+{
+#if 0
+	xfContext* xfc = (xfContext*) context->custom;
+
+	printf("ParticipantCreated: ParticipantId: %d GroupId: %d Flags: 0x%04X xfc: %p\n",
+			(int) participantCreated->ParticipantId, (int) participantCreated->GroupId,
+			(int) participantCreated->Flags, xfc);
+#endif
+
+	return 1;
+}
+
+void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp)
+{
+	xfc->encomsp = encomsp;
+	encomsp->custom = (void*) xfc;
+
+	encomsp->ParticipantCreated = xf_encomsp_participant_created;
+}
+
+void xf_encomsp_uninit(xfContext* xfc, EncomspClientContext* encomsp)
+{
+	xfc->encomsp = NULL;
 }
 
 void xf_lock_x11(xfContext *xfc, BOOL display)
