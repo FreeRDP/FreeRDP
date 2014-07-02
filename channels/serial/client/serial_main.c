@@ -48,7 +48,7 @@
 #include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-/* #include <winpr/wlog.h> */
+#include <winpr/wlog.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
@@ -63,10 +63,7 @@ struct _SERIAL_DEVICE
 	SERIAL_DRIVER_ID ServerSerialDriverId;
 	HANDLE* hComm;
 
-	/* TODO: use of log (prefered the old fashion DEBUG_SVC and
-	 * DEBUG_WARN macros for backward compatibility resaons)
-	 */
-	/* wLog* log; */
+	wLog* log;
 	HANDLE MainThread;
 	wMessageQueue* MainIrpQueue;
 
@@ -84,7 +81,7 @@ struct _IRP_THREAD_DATA
 	IRP *irp;
 };
 
-static UINT32 _GetLastErrorToIoStatus()
+static UINT32 _GetLastErrorToIoStatus(SERIAL_DEVICE* serial)
 {
 	/* http://msdn.microsoft.com/en-us/library/ff547466%28v=vs.85%29.aspx#generic_status_values_for_serial_device_control_requests */
 
@@ -126,7 +123,7 @@ static UINT32 _GetLastErrorToIoStatus()
 		/* no default */
 	}
 
-	DEBUG_SVC("unexpected last-error: 0x%lx", GetLastError());
+	WLog_Print(serial->log, WLOG_DEBUG, "unexpected last-error: 0x%lx", GetLastError());
 	return STATUS_UNSUCCESSFUL;
 }
 
@@ -166,7 +163,7 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 	 *
 	 */
 
-	DEBUG_SVC("DesiredAccess: 0x%lX, SharedAccess: 0x%lX, CreateDisposition: 0x%lX", DesiredAccess, SharedAccess, CreateDisposition);
+	WLog_Print(serial->log, WLOG_DEBUG, "DesiredAccess: 0x%lX, SharedAccess: 0x%lX, CreateDisposition: 0x%lX", DesiredAccess, SharedAccess, CreateDisposition);
 
 	/* FIXME: As of today only the flags below are supported by CommCreateFileA: */
 	DesiredAccess     = GENERIC_READ | GENERIC_WRITE;
@@ -184,7 +181,7 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 
 	if (!serial->hComm || (serial->hComm == INVALID_HANDLE_VALUE))
 	{
-		DEBUG_WARN("CreateFile failure: %s last-error: Ox%lX\n", serial->device.name, GetLastError());
+		WLog_Print(serial->log, WLOG_WARN, "CreateFile failure: %s last-error: Ox%lX\n", serial->device.name, GetLastError());
 
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		goto error_handle;
@@ -212,7 +209,7 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 
 	irp->IoStatus = STATUS_SUCCESS;
 
-	DEBUG_SVC("%s (DeviceId: %d, FileId: %d) created.", serial->device.name, irp->device->id, irp->FileId);
+	WLog_Print(serial->log, WLOG_DEBUG, "%s (DeviceId: %d, FileId: %d) created.", serial->device.name, irp->device->id, irp->FileId);
 
   error_handle:
 	Stream_Write_UINT32(irp->output, irp->FileId);	/* FileId (4 bytes) */
@@ -225,12 +222,12 @@ static void serial_process_irp_close(SERIAL_DEVICE* serial, IRP* irp)
 
 	if (!CloseHandle(serial->hComm))
 	{
-		DEBUG_WARN("CloseHandle failure: %s (%d) closed.", serial->device.name, irp->device->id);
+		WLog_Print(serial->log, WLOG_WARN, "CloseHandle failure: %s (%d) closed.", serial->device.name, irp->device->id);
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		goto error_handle;
 	}
 
-	DEBUG_SVC("%s (DeviceId: %d, FileId: %d) closed.", serial->device.name, irp->device->id, irp->FileId);
+	WLog_Print(serial->log, WLOG_DEBUG, "%s (DeviceId: %d, FileId: %d) closed.", serial->device.name, irp->device->id, irp->FileId);
 
 	serial->hComm = NULL;
 	irp->IoStatus = STATUS_SUCCESS;
@@ -264,7 +261,7 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	 */
 
 
-	DEBUG_SVC("reading %d bytes from %s", Length, serial->device.name);
+	WLog_Print(serial->log, WLOG_DEBUG, "reading %d bytes from %s", Length, serial->device.name);
 
 	/* FIXME: CommReadFile to be replaced by ReadFile */
 	if (CommReadFile(serial->hComm, buffer, Length, &nbRead, NULL))
@@ -273,12 +270,12 @@ static void serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 	}
 	else
 	{
-		DEBUG_SVC("read failure to %s, nbRead=%ld, last-error: 0x%lX", serial->device.name, nbRead, GetLastError());
+		WLog_Print(serial->log, WLOG_DEBUG, "read failure to %s, nbRead=%ld, last-error: 0x%lX", serial->device.name, nbRead, GetLastError());
 
-		irp->IoStatus = _GetLastErrorToIoStatus();
+		irp->IoStatus = _GetLastErrorToIoStatus(serial);
 	}
 
-	DEBUG_SVC("%lu bytes read from %s", nbRead, serial->device.name);
+	WLog_Print(serial->log, WLOG_DEBUG, "%lu bytes read from %s", nbRead, serial->device.name);
 
   error_handle:
 
@@ -311,7 +308,7 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	 * set.
 	 */
 
-	DEBUG_SVC("writing %d bytes to %s", Length, serial->device.name);
+	WLog_Print(serial->log, WLOG_DEBUG, "writing %d bytes to %s", Length, serial->device.name);
 
 	/* FIXME: CommWriteFile to be replaced by WriteFile */
 	if (CommWriteFile(serial->hComm, Stream_Pointer(irp->input), Length, &nbWritten, NULL))
@@ -320,12 +317,12 @@ static void serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	}
 	else
 	{
-		DEBUG_SVC("write failure to %s, nbWritten=%ld, last-error: 0x%lX", serial->device.name, nbWritten, GetLastError());
+		WLog_Print(serial->log, WLOG_DEBUG, "write failure to %s, nbWritten=%ld, last-error: 0x%lX", serial->device.name, nbWritten, GetLastError());
 
-		irp->IoStatus = _GetLastErrorToIoStatus();
+		irp->IoStatus = _GetLastErrorToIoStatus(serial);
 	}
 
-	DEBUG_SVC("%lu bytes written to %s", nbWritten, serial->device.name);
+	WLog_Print(serial->log, WLOG_DEBUG, "%lu bytes written to %s", nbWritten, serial->device.name);
 
 	Stream_Write_UINT32(irp->output, nbWritten); /* Length (4 bytes) */
 	Stream_Write_UINT8(irp->output, 0); /* Padding (1 byte) */
@@ -362,21 +359,21 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 	Stream_Read(irp->input, InputBuffer, InputBufferLength);
 
-	DEBUG_SVC("CommDeviceIoControl: CompletionId=%d, IoControlCode=[0x%X] %s", irp->CompletionId, IoControlCode, _comm_serial_ioctl_name(IoControlCode));
+	WLog_Print(serial->log, WLOG_DEBUG, "CommDeviceIoControl: CompletionId=%d, IoControlCode=[0x%X] %s", irp->CompletionId, IoControlCode, _comm_serial_ioctl_name(IoControlCode));
 
 	/* FIXME: CommDeviceIoControl to be replaced by DeviceIoControl() */
 	if (CommDeviceIoControl(serial->hComm, IoControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, &BytesReturned, NULL))
 	{
-		/* DEBUG_SVC("CommDeviceIoControl: CompletionId=%d, IoControlCode=[0x%X] %s done", irp->CompletionId, IoControlCode, _comm_serial_ioctl_name(IoControlCode)); */
+		/* WLog_Print(serial->log, WLOG_DEBUG, "CommDeviceIoControl: CompletionId=%d, IoControlCode=[0x%X] %s done", irp->CompletionId, IoControlCode, _comm_serial_ioctl_name(IoControlCode)); */
 
 		irp->IoStatus = STATUS_SUCCESS;
 	}
 	else
 	{
-		DEBUG_SVC("CommDeviceIoControl failure: IoControlCode=[0x%X] %s, last-error: 0x%lX",
+		WLog_Print(serial->log, WLOG_DEBUG, "CommDeviceIoControl failure: IoControlCode=[0x%X] %s, last-error: 0x%lX",
 			IoControlCode, _comm_serial_ioctl_name(IoControlCode), GetLastError());
 
-		irp->IoStatus = _GetLastErrorToIoStatus();
+		irp->IoStatus = _GetLastErrorToIoStatus(serial);
 	}
 
   error_handle:
@@ -411,8 +408,8 @@ static void serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 
 static void serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 {
-	/* WLog_Print(serial->log, WLOG_DEBUG, "IRP MajorFunction: 0x%04X MinorFunction: 0x%04X\n", */
-	/* 	irp->MajorFunction, irp->MinorFunction); */
+	WLog_Print(serial->log, WLOG_DEBUG, "IRP MajorFunction: 0x%04X MinorFunction: 0x%04X\n",
+		irp->MajorFunction, irp->MinorFunction);
 
 	switch (irp->MajorFunction)
 	{
@@ -513,7 +510,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 			{
 				/* terminating thread */
 
-				/* DEBUG_SVC("IRP thread with CompletionId=%d naturally died", id); */
+				/* WLog_Print(serial->log, WLOG_DEBUG, "IRP thread with CompletionId=%d naturally died", id); */
 
 				CloseHandle(irpThread);
 				ListDictionary_Remove(serial->IrpThreads, (void*)id);
@@ -524,7 +521,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
  			{
 				/* unexpected thread state */
 
-				DEBUG_WARN("WaitForSingleObject, got an unexpected result=0x%lX\n", waitResult);
+				WLog_Print(serial->log, WLOG_WARN, "WaitForSingleObject, got an unexpected result=0x%lX\n", waitResult);
 				assert(FALSE);
 			}
 			/* pending thread (but not yet terminating thread) if waitResult == WAIT_TIMEOUT */
@@ -533,7 +530,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 
 		if (serial->IrpThreadToBeTerminatedCount > 0)
 		{
-			DEBUG_SVC("%d IRP thread(s) not yet terminated", serial->IrpThreadToBeTerminatedCount);
+			WLog_Print(serial->log, WLOG_DEBUG, "%d IRP thread(s) not yet terminated", serial->IrpThreadToBeTerminatedCount);
 			Sleep(1); /* 1 ms */
 		}
 	}
@@ -555,7 +552,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 	{
 		/* Thread still alived <=> Request still pending */
 
-		DEBUG_SVC("IRP recall: IRP with the CompletionId=%d not yet completed!", irp->CompletionId);
+		WLog_Print(serial->log, WLOG_DEBUG, "IRP recall: IRP with the CompletionId=%d not yet completed!", irp->CompletionId);
 
 		assert(FALSE); /* unimplemented */
 
@@ -581,7 +578,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 
 	if (ListDictionary_Count(serial->IrpThreads) >= MAX_IRP_THREADS)
 	{
-		DEBUG_WARN("Number of IRP threads threshold reached: %d, keep on anyway", ListDictionary_Count(serial->IrpThreads));
+		WLog_Print(serial->log, WLOG_WARN, "Number of IRP threads threshold reached: %d, keep on anyway", ListDictionary_Count(serial->IrpThreads));
 
 		assert(FALSE); /* unimplemented */
 
@@ -598,7 +595,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 	data = (IRP_THREAD_DATA*)calloc(1, sizeof(IRP_THREAD_DATA));
 	if (data == NULL)
 	{
-		DEBUG_WARN("Could not allocate a new IRP_THREAD_DATA.");
+		WLog_Print(serial->log, WLOG_WARN, "Could not allocate a new IRP_THREAD_DATA.");
 		goto error_handle;
 	}
 
@@ -616,7 +613,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 
 	if (irpThread == INVALID_HANDLE_VALUE)
 	{
-		DEBUG_WARN("Could not allocate a new IRP thread.");
+		WLog_Print(serial->log, WLOG_WARN, "Could not allocate a new IRP thread.");
 		goto error_handle;
 	}
 
@@ -643,7 +640,7 @@ static void terminate_pending_irp_threads(SERIAL_DEVICE *serial)
 
 	nbIds = ListDictionary_GetKeys(serial->IrpThreads, &ids);
 
-	DEBUG_SVC("Terminating %d IRP thread(s)", nbIds);
+	WLog_Print(serial->log, WLOG_DEBUG, "Terminating %d IRP thread(s)", nbIds);
 
 	for (i=0; i<nbIds; i++)
 	{
@@ -658,7 +655,7 @@ static void terminate_pending_irp_threads(SERIAL_DEVICE *serial)
 
 		CloseHandle(irpThread);
 
-		DEBUG_SVC("IRP thread terminated, CompletionId %d", id);
+		WLog_Print(serial->log, WLOG_DEBUG, "IRP thread terminated, CompletionId %d", id);
 	}
 
 	ListDictionary_Clear(serial->IrpThreads);
@@ -718,7 +715,7 @@ static void serial_free(DEVICE* device)
 {
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*) device;
 
-	/* WLog_Print(serial->log, WLOG_DEBUG, "freeing"); */
+	WLog_Print(serial->log, WLOG_DEBUG, "freeing");
 
 	MessageQueue_PostQuit(serial->MainIrpQueue, 0);
 	WaitForSingleObject(serial->MainThread, INFINITE);
@@ -762,17 +759,19 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	if ((name && name[0]) && (path && path[0]))
 	{
-		DEBUG_SVC("Defining %s as %s", name, path);
-
 		if (!DefineCommDevice(name /* eg: COM1 */, path /* eg: /dev/ttyS0 */))
 		{
-			DEBUG_SVC("Could not define %s as %s", name, path);
 			return -1;
 		}
 
 		serial = (SERIAL_DEVICE*) calloc(1, sizeof(SERIAL_DEVICE));
 		if (!serial)
 			return -1;
+
+		WLog_Init();
+		serial->log = WLog_Get("com.freerdp.channel.serial.client");
+		WLog_Print(serial->log, WLOG_DEBUG, "initializing");
+		WLog_Print(serial->log, WLOG_DEBUG, "Defining %s as %s", name, path);
 
 		serial->device.type = RDPDR_DTYP_SERIAL;
 		serial->device.name = name;
@@ -797,7 +796,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			{
 				assert(FALSE);
 
-				DEBUG_SVC("Unknown server's serial driver: %s. SerCx2 will be used", driver);
+				WLog_Print(serial->log, WLOG_DEBUG, "Unknown server's serial driver: %s. SerCx2 will be used", driver);
 				serial->ServerSerialDriverId = SerialDriverSerCx2Sys;
 			}
 		}
@@ -807,7 +806,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			serial->ServerSerialDriverId = SerialDriverSerCx2Sys;
 		}
 
-		DEBUG_SVC("Server's serial driver: %s (id: %d)", driver, serial->ServerSerialDriverId);
+		WLog_Print(serial->log, WLOG_DEBUG, "Server's serial driver: %s (id: %d)", driver, serial->ServerSerialDriverId);
 		/* TODO: implement auto detection of the server's serial driver */
 
 		serial->MainIrpQueue = MessageQueue_New(NULL);
@@ -816,10 +815,6 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		serial->IrpThreads = ListDictionary_New(FALSE);
 		serial->IrpThreadToBeTerminatedCount = 0;
 		InitializeCriticalSection(&serial->TerminatingIrpThreadsLock);
-
-		/* WLog_Init(); */
-		/* serial->log = WLog_Get("com.freerdp.channel.serial.client"); */
-		/* WLog_Print(serial->log, WLOG_DEBUG, "initializing"); */
 
 		pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*) serial);
 
