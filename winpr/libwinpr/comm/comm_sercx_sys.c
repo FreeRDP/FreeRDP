@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <termios.h>
 
-#include <freerdp/utils/debug.h>
+#include <winpr/wlog.h>
 
 #include "comm_serial_sys.h"
 
@@ -180,7 +180,7 @@ static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 			newSpeed = _SERCX_SYS_BAUD_TABLE[i][0];
 			if (cfsetspeed(&futureState, newSpeed) < 0)
 			{
-				DEBUG_WARN("failed to set speed 0x%x (%lu)", newSpeed, pBaudRate->BaudRate);
+				CommLog_Print(WLOG_WARN, "failed to set speed 0x%x (%lu)", newSpeed, pBaudRate->BaudRate);
 				return FALSE;
 			}
 
@@ -188,7 +188,7 @@ static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 
 			if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &futureState) < 0)
 			{
-				DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
+				CommLog_Print(WLOG_WARN, "_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
 				return FALSE;
 			}
 
@@ -196,7 +196,7 @@ static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 		}
 	}
 
-	DEBUG_WARN("could not find a matching speed for the baud rate %lu", pBaudRate->BaudRate);
+	CommLog_Print(WLOG_WARN, "could not find a matching speed for the baud rate %lu", pBaudRate->BaudRate);
 	SetLastError(ERROR_INVALID_DATA);
 	return FALSE;
 }
@@ -226,7 +226,7 @@ static BOOL _get_baud_rate(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate)
 		}
 	}
 
-	DEBUG_WARN("could not find a matching baud rate for the speed 0x%x", currentSpeed);
+	CommLog_Print(WLOG_WARN, "could not find a matching baud rate for the speed 0x%x", currentSpeed);
 	SetLastError(ERROR_INVALID_DATA);
 	return FALSE;
 }
@@ -251,17 +251,17 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	{
 		if (pHandflow->ControlHandShake & SERIAL_DCD_HANDSHAKE)
 		{
-			DEBUG_WARN("SERIAL_DCD_HANDSHAKE not supposed to be implemented by SerCx.sys");
+			CommLog_Print(WLOG_WARN, "SERIAL_DCD_HANDSHAKE not supposed to be implemented by SerCx.sys");
 		}
 
 		if (pHandflow->ControlHandShake & SERIAL_DSR_SENSITIVITY)
 		{
-			DEBUG_WARN("SERIAL_DSR_SENSITIVITY not supposed to be implemented by SerCx.sys");
+			CommLog_Print(WLOG_WARN, "SERIAL_DSR_SENSITIVITY not supposed to be implemented by SerCx.sys");
 		}
 
 		if (pHandflow->ControlHandShake & SERIAL_ERROR_ABORT)
 		{
-			DEBUG_WARN("SERIAL_ERROR_ABORT not supposed to be implemented by SerCx.sys");
+			CommLog_Print(WLOG_WARN, "SERIAL_ERROR_ABORT not supposed to be implemented by SerCx.sys");
 		}
 
 		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -272,32 +272,32 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	{
 		if (pHandflow->ControlHandShake & SERIAL_AUTO_TRANSMIT)
 		{
-			DEBUG_WARN("SERIAL_AUTO_TRANSMIT not supposed to be implemented by SerCx.sys");
+			CommLog_Print(WLOG_WARN, "SERIAL_AUTO_TRANSMIT not supposed to be implemented by SerCx.sys");
 		}
 
 		if (pHandflow->ControlHandShake & SERIAL_AUTO_RECEIVE)
 		{
-			DEBUG_WARN("SERIAL_AUTO_RECEIVE not supposed to be implemented by SerCx.sys");
+			CommLog_Print(WLOG_WARN, "SERIAL_AUTO_RECEIVE not supposed to be implemented by SerCx.sys");
 		}
 
 		if (pHandflow->ControlHandShake & SERIAL_ERROR_CHAR)
 		{
-			DEBUG_WARN("SERIAL_ERROR_CHAR not supposed to be implemented by SerCx.sys");
+			CommLog_Print(WLOG_WARN, "SERIAL_ERROR_CHAR not supposed to be implemented by SerCx.sys");
 		}
 
 		if (pHandflow->ControlHandShake & SERIAL_NULL_STRIPPING)
 		{
-			DEBUG_WARN("SERIAL_NULL_STRIPPING not supposed to be implemented by SerCx.sys");
+			CommLog_Print(WLOG_WARN, "SERIAL_NULL_STRIPPING not supposed to be implemented by SerCx.sys");
 		}
 
 		if (pHandflow->ControlHandShake & SERIAL_BREAK_CHAR)
 		{
-			DEBUG_WARN("SERIAL_BREAK_CHAR not supposed to be implemented by SerCx.sys");
+			CommLog_Print(WLOG_WARN, "SERIAL_BREAK_CHAR not supposed to be implemented by SerCx.sys");
 		}
 
 		if (pHandflow->ControlHandShake & SERIAL_XOFF_CONTINUE)
 		{
-			DEBUG_WARN("SERIAL_XOFF_CONTINUE not supposed to be implemented by SerCx.sys");
+			CommLog_Print(WLOG_WARN, "SERIAL_XOFF_CONTINUE not supposed to be implemented by SerCx.sys");
 		}
 
 		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -356,7 +356,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 	if (possibleMask != *pWaitMask)
 	{
-		DEBUG_WARN("Not all wait events supported (SerCx.sys), requested events= 0x%lX, possible events= 0x%lX", *pWaitMask, possibleMask);
+		CommLog_Print(WLOG_WARN, "Not all wait events supported (SerCx.sys), requested events= 0x%lX, possible events= 0x%lX", *pWaitMask, possibleMask);
 
 		/* FIXME: shall we really set the possibleMask and return FALSE? */
 		pComm->WaitEventMask = possibleMask;

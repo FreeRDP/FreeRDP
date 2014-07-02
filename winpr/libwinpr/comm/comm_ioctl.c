@@ -30,7 +30,7 @@
 #include <assert.h>
 #include <errno.h>
 
-#include <freerdp/utils/debug.h>
+#include <winpr/wlog.h>
 
 #include "comm.h"
 #include "comm_ioctl.h"
@@ -59,7 +59,7 @@
 const char* _comm_serial_ioctl_name(ULONG number)
 {
 	int i;
-
+	
 	for (i=0; _SERIAL_IOCTL_NAMES[i].number != 0; i++)
 	{
 		if (_SERIAL_IOCTL_NAMES[i].number == number)
@@ -107,7 +107,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 
 	*lpBytesReturned = 0; /* will be ajusted if required ... */
 
-	DEBUG_MSG("CommDeviceIoControl: IoControlCode: 0x%0.8x", dwIoControlCode);
+	CommLog_Print(WLOG_DEBUG, "CommDeviceIoControl: IoControlCode: 0x%0.8x", dwIoControlCode);
 
 	/* remoteSerialDriver to be use ...
 	 *
@@ -129,7 +129,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 
 		case SerialDriverUnknown:
 		default:
-			DEBUG_MSG("Unknown remote serial driver (%d), using SerCx2.sys", pComm->serverSerialDriverId);
+			CommLog_Print(WLOG_DEBUG, "Unknown remote serial driver (%d), using SerCx2.sys", pComm->serverSerialDriverId);
 			pServerSerialDriver = SerCx2Sys_s();
 			break;
 	}
@@ -629,7 +629,7 @@ static BOOL _CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID l
 		}
 	}
 
-	DEBUG_WARN(_T("unsupported IoControlCode=[0x%lX] %s (remote serial driver: %s)"),
+	CommLog_Print(WLOG_WARN, _T("unsupported IoControlCode=[0x%lX] %s (remote serial driver: %s)"),
 		dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), pServerSerialDriver->name);
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED); /* => STATUS_NOT_IMPLEMENTED */
 	return FALSE;
@@ -673,14 +673,14 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	if (lpBytesReturned && *lpBytesReturned != nOutBufferSize)
 	{
 		/* This might be a hint for a bug, especially when result==TRUE */
-		DEBUG_WARN("lpBytesReturned=%ld and nOutBufferSize=%ld are different!", *lpBytesReturned, nOutBufferSize);
+		CommLog_Print(WLOG_WARN, "lpBytesReturned=%ld and nOutBufferSize=%ld are different!", *lpBytesReturned, nOutBufferSize);
 	}
 
 	if (pComm->permissive)
 	{
 		if (!result)
 		{
-			DEBUG_WARN("[permissive]: whereas it failed, made to succeed IoControlCode=[0x%lX] %s, last-error: 0x%lX",
+			CommLog_Print(WLOG_WARN, "[permissive]: whereas it failed, made to succeed IoControlCode=[0x%lX] %s, last-error: 0x%lX",
 				dwIoControlCode, _comm_serial_ioctl_name(dwIoControlCode), GetLastError());
 		}
 
@@ -697,7 +697,7 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *te
 
 	if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)
 	{
-		DEBUG_WARN("tcsetattr failure, errno: %d", errno);
+		CommLog_Print(WLOG_WARN, "tcsetattr failure, errno: %d", errno);
 		return result;
 	}
 
@@ -705,29 +705,29 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *te
 	ZeroMemory(&currentState, sizeof(struct termios));
 	if ((result = tcgetattr(fd, &currentState)) < 0)
 	{
-		DEBUG_WARN("tcgetattr failure, errno: %d", errno);
+		CommLog_Print(WLOG_WARN, "tcgetattr failure, errno: %d", errno);
 		return result;
 	}
 
 	if (memcmp(&currentState, &termios_p, sizeof(struct termios)) != 0)
 	{
-		DEBUG_MSG("all termios parameters are not set yet, doing a second attempt...");
+		CommLog_Print(WLOG_DEBUG, "all termios parameters are not set yet, doing a second attempt...");
 		if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)
 		{
-			DEBUG_WARN("2nd tcsetattr failure, errno: %d", errno);
+			CommLog_Print(WLOG_WARN, "2nd tcsetattr failure, errno: %d", errno);
 			return result;
 		}
 
 		ZeroMemory(&currentState, sizeof(struct termios));
 		if ((result = tcgetattr(fd, &currentState)) < 0)
 		{
-			DEBUG_WARN("tcgetattr failure, errno: %d", errno);
+			CommLog_Print(WLOG_WARN, "tcgetattr failure, errno: %d", errno);
 			return result;
 		}
 
 		if (memcmp(&currentState, termios_p, sizeof(struct termios)) != 0)
 		{
-			DEBUG_WARN("Failure: all termios parameters are still not set on a second attempt");
+			CommLog_Print(WLOG_WARN, "Failure: all termios parameters are still not set on a second attempt");
 			return -1;
 		}
 	}

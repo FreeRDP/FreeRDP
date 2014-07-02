@@ -29,11 +29,10 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include <freerdp/utils/debug.h>
-
 #include "comm_serial_sys.h"
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 
 /* hard-coded in N_TTY */
 #define TTY_THRESHOLD_THROTTLE		128 /* now based on remaining room */
@@ -194,13 +193,13 @@ static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 			newSpeed = _SERIAL_SYS_BAUD_TABLE[i][0];
 			if (cfsetspeed(&upcomingTermios, newSpeed) < 0)
 			{
-				DEBUG_WARN("failed to set speed %u (%lu)", newSpeed, pBaudRate->BaudRate);
+				CommLog_Print(WLOG_WARN, "failed to set speed %u (%lu)", newSpeed, pBaudRate->BaudRate);
 				return FALSE;
 			}
 
 			if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 			{
-				DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
+				CommLog_Print(WLOG_WARN, "_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
 				return FALSE;
 			}
 
@@ -208,7 +207,7 @@ static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 		}
 	}
 
-	DEBUG_WARN("could not find a matching speed for the baud rate %lu", pBaudRate->BaudRate);
+	CommLog_Print(WLOG_WARN, "could not find a matching speed for the baud rate %lu", pBaudRate->BaudRate);
 	SetLastError(ERROR_INVALID_DATA);
 	return FALSE;
 }
@@ -238,7 +237,7 @@ static BOOL _get_baud_rate(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate)
 		}
 	}
 
-	DEBUG_WARN("could not find a matching baud rate for the speed 0x%x", currentSpeed);
+	CommLog_Print(WLOG_WARN, "could not find a matching baud rate for the speed 0x%x", currentSpeed);
 	SetLastError(ERROR_INVALID_DATA);
 	return FALSE;
 }
@@ -284,7 +283,7 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 	 */
 	if (pSerialChars->EofChar != '\0')
 	{
-		DEBUG_WARN("EofChar='%c' cannot be set\n", pSerialChars->EofChar);
+		CommLog_Print(WLOG_WARN, "EofChar='%c' cannot be set\n", pSerialChars->EofChar);
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -297,7 +296,7 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 	/* FIXME: see also: _set_handflow() */
 	if (pSerialChars->ErrorChar != '\0')
 	{
-		DEBUG_WARN("ErrorChar='%c' (0x%x) cannot be set (unsupported).\n", pSerialChars->ErrorChar, pSerialChars->ErrorChar);
+		CommLog_Print(WLOG_WARN, "ErrorChar='%c' (0x%x) cannot be set (unsupported).\n", pSerialChars->ErrorChar, pSerialChars->ErrorChar);
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -305,7 +304,7 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 	/* FIXME: see also: _set_handflow() */
 	if (pSerialChars->BreakChar != '\0')
 	{
-		DEBUG_WARN("BreakChar='%c' (0x%x) cannot be set (unsupported).\n", pSerialChars->BreakChar, pSerialChars->BreakChar);
+		CommLog_Print(WLOG_WARN, "BreakChar='%c' (0x%x) cannot be set (unsupported).\n", pSerialChars->BreakChar, pSerialChars->BreakChar);
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -313,7 +312,7 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 	/* FIXME: could be implemented during read/write I/O. What about ISIG? */
 	if (pSerialChars->EventChar != '\0')
 	{
-		DEBUG_WARN("EventChar='%c' (0x%x) cannot be set\n", pSerialChars->EventChar, pSerialChars->EventChar);
+		CommLog_Print(WLOG_WARN, "EventChar='%c' (0x%x) cannot be set\n", pSerialChars->EventChar, pSerialChars->EventChar);
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -325,7 +324,7 @@ static BOOL _set_serial_chars(WINPR_COMM *pComm, const SERIAL_CHARS *pSerialChar
 
 	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
-		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
+		CommLog_Print(WLOG_WARN, "_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
 		return FALSE;
 	}
 
@@ -395,7 +394,7 @@ static BOOL _set_line_control(WINPR_COMM *pComm, const SERIAL_LINE_CONTROL *pLin
 			break;
 
 		case STOP_BITS_1_5:
-			DEBUG_WARN("Unsupported one and a half stop bits.");
+			CommLog_Print(WLOG_WARN, "Unsupported one and a half stop bits.");
 			break;
 
 		case STOP_BITS_2:
@@ -403,7 +402,7 @@ static BOOL _set_line_control(WINPR_COMM *pComm, const SERIAL_LINE_CONTROL *pLin
 			break;
 
 		default:
-			DEBUG_WARN("unexpected number of stop bits: %d\n", pLineControl->StopBits);
+			CommLog_Print(WLOG_WARN, "unexpected number of stop bits: %d\n", pLineControl->StopBits);
 			result = FALSE; /* but keep on */
 			break;
 	}
@@ -435,7 +434,7 @@ static BOOL _set_line_control(WINPR_COMM *pComm, const SERIAL_LINE_CONTROL *pLin
 			break;
 
 		default:
-			DEBUG_WARN("unexpected type of parity: %d\n", pLineControl->Parity);
+			CommLog_Print(WLOG_WARN, "unexpected type of parity: %d\n", pLineControl->Parity);
 			result = FALSE; /* but keep on */
 			break;
 	}
@@ -463,14 +462,14 @@ static BOOL _set_line_control(WINPR_COMM *pComm, const SERIAL_LINE_CONTROL *pLin
 			break;
 
 		default:
-			DEBUG_WARN("unexpected number od data bits per character: %d\n", pLineControl->WordLength);
+			CommLog_Print(WLOG_WARN, "unexpected number od data bits per character: %d\n", pLineControl->WordLength);
 			result = FALSE; /* but keep on */
 			break;
 	}
 
 	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
-		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
+		CommLog_Print(WLOG_WARN, "_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
 		return FALSE;
 	}
 
@@ -543,7 +542,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	if ((!(pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && (pHandflow->FlowReplace & SERIAL_RTS_CONTROL)) ||
 		((pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) && !(pHandflow->FlowReplace & SERIAL_RTS_CONTROL)))
 	{
-		DEBUG_WARN("SERIAL_DTR_CONTROL:%s and SERIAL_RTS_CONTROL:%s cannot be different, HUPCL will be set since it is claimed for one of the both lines.",
+		CommLog_Print(WLOG_WARN, "SERIAL_DTR_CONTROL:%s and SERIAL_RTS_CONTROL:%s cannot be different, HUPCL will be set since it is claimed for one of the both lines.",
 			(pHandflow->ControlHandShake & SERIAL_DTR_CONTROL) ? "ON" : "OFF",
 			(pHandflow->FlowReplace & SERIAL_RTS_CONTROL) ? "ON" : "OFF");
 	}
@@ -567,7 +566,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	if ((!(pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) && (pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE)) ||
 		((pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) && !(pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE)))
 	{
-		DEBUG_WARN("SERIAL_CTS_HANDSHAKE:%s and SERIAL_RTS_HANDSHAKE:%s cannot be different, CRTSCTS will be set since it is claimed for one of the both lines.",
+		CommLog_Print(WLOG_WARN, "SERIAL_CTS_HANDSHAKE:%s and SERIAL_RTS_HANDSHAKE:%s cannot be different, CRTSCTS will be set since it is claimed for one of the both lines.",
 			(pHandflow->ControlHandShake & SERIAL_CTS_HANDSHAKE) ? "ON" : "OFF",
 			(pHandflow->FlowReplace & SERIAL_RTS_HANDSHAKE) ? "ON" : "OFF");
 	}
@@ -587,7 +586,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	if (pHandflow->ControlHandShake & SERIAL_DTR_HANDSHAKE)
 	{
 		/* DTR/DSR flow control not supported on Linux */
-		DEBUG_WARN("Attempt to use the unsupported SERIAL_DTR_HANDSHAKE feature.");
+		CommLog_Print(WLOG_WARN, "Attempt to use the unsupported SERIAL_DTR_HANDSHAKE feature.");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -596,7 +595,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	if (pHandflow->ControlHandShake & SERIAL_DSR_HANDSHAKE)
 	{
 		/* DTR/DSR flow control not supported on Linux */
-		DEBUG_WARN("Attempt to use the unsupported SERIAL_DSR_HANDSHAKE feature.");
+		CommLog_Print(WLOG_WARN, "Attempt to use the unsupported SERIAL_DSR_HANDSHAKE feature.");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -604,7 +603,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	if (pHandflow->ControlHandShake & SERIAL_DCD_HANDSHAKE)
 	{
 		/* DCD flow control not supported on Linux */
-		DEBUG_WARN("Attempt to use the unsupported SERIAL_DCD_HANDSHAKE feature.");
+		CommLog_Print(WLOG_WARN, "Attempt to use the unsupported SERIAL_DCD_HANDSHAKE feature.");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -613,7 +612,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	if (pHandflow->ControlHandShake & SERIAL_DSR_SENSITIVITY)
 	{
 		/* DSR line control not supported on Linux */
-		DEBUG_WARN("Attempt to use the unsupported SERIAL_DSR_SENSITIVITY feature.");
+		CommLog_Print(WLOG_WARN, "Attempt to use the unsupported SERIAL_DSR_SENSITIVITY feature.");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -622,7 +621,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	if (pHandflow->ControlHandShake & SERIAL_ERROR_ABORT)
 	{
 		/* Aborting operations on error not supported on Linux */
-		DEBUG_WARN("Attempt to use the unsupported SERIAL_ERROR_ABORT feature.");
+		CommLog_Print(WLOG_WARN, "Attempt to use the unsupported SERIAL_ERROR_ABORT feature.");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -670,7 +669,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	// FIXME: could be implemented during read/write I/O
 	if (pHandflow->FlowReplace & SERIAL_BREAK_CHAR)
 	{
-		DEBUG_WARN("Attempt to use the unsupported SERIAL_BREAK_CHAR feature.");
+		CommLog_Print(WLOG_WARN, "Attempt to use the unsupported SERIAL_BREAK_CHAR feature.");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -679,7 +678,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	if (pHandflow->FlowReplace & SERIAL_XOFF_CONTINUE)
 	{
 		/* not supported on Linux */
-		DEBUG_WARN("Attempt to use the unsupported SERIAL_XOFF_CONTINUE feature.");
+		CommLog_Print(WLOG_WARN, "Attempt to use the unsupported SERIAL_XOFF_CONTINUE feature.");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -689,7 +688,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	// FIXME: could be implemented during read/write I/O
 	if (pHandflow->XonLimit != TTY_THRESHOLD_UNTHROTTLE)
 	{
-		DEBUG_WARN("Attempt to set XonLimit with an unsupported value: %lu", pHandflow->XonLimit);
+		CommLog_Print(WLOG_WARN, "Attempt to set XonLimit with an unsupported value: %lu", pHandflow->XonLimit);
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -699,7 +698,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 	// FIXME: could be implemented during read/write I/O
 	if (pHandflow->XoffLimit != TTY_THRESHOLD_THROTTLE)
 	{
-		DEBUG_WARN("Attempt to set XoffLimit with an unsupported value: %lu", pHandflow->XoffLimit);
+		CommLog_Print(WLOG_WARN, "Attempt to set XoffLimit with an unsupported value: %lu", pHandflow->XoffLimit);
 		SetLastError(ERROR_NOT_SUPPORTED);
 		result = FALSE; /* but keep on */
 	}
@@ -707,7 +706,7 @@ static BOOL _set_handflow(WINPR_COMM *pComm, const SERIAL_HANDFLOW *pHandflow)
 
 	if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
 	{
-		DEBUG_WARN("_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
+		CommLog_Print(WLOG_WARN, "_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
 		return FALSE;
 	}
 
@@ -794,7 +793,7 @@ static BOOL _set_timeouts(WINPR_COMM *pComm, const SERIAL_TIMEOUTS *pTimeouts)
 	/* http://msdn.microsoft.com/en-us/library/windows/hardware/hh439614%28v=vs.85%29.aspx */
 	if ((pTimeouts->ReadIntervalTimeout == MAXULONG) && (pTimeouts->ReadTotalTimeoutConstant == MAXULONG))
 	{
-		DEBUG_WARN("ReadIntervalTimeout and ReadTotalTimeoutConstant cannot be both set to MAXULONG");
+		CommLog_Print(WLOG_WARN, "ReadIntervalTimeout and ReadTotalTimeoutConstant cannot be both set to MAXULONG");
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
@@ -824,7 +823,7 @@ static BOOL _set_lines(WINPR_COMM *pComm, UINT32 lines)
 {
 	if (ioctl(pComm->fd, TIOCMBIS, &lines) < 0)
 	{
-		DEBUG_WARN("TIOCMBIS ioctl failed, lines=0x%X, errno=[%d] %s", lines, errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "TIOCMBIS ioctl failed, lines=0x%X, errno=[%d] %s", lines, errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -837,7 +836,7 @@ static BOOL _clear_lines(WINPR_COMM *pComm, UINT32 lines)
 {
 	if (ioctl(pComm->fd, TIOCMBIC, &lines) < 0)
 	{
-		DEBUG_WARN("TIOCMBIC ioctl failed, lines=0x%X, errno=[%d] %s", lines, errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "TIOCMBIC ioctl failed, lines=0x%X, errno=[%d] %s", lines, errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -919,7 +918,7 @@ static BOOL _get_modemstatus(WINPR_COMM *pComm, ULONG *pRegister)
 	UINT32 lines=0;
 	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
 	{
-		DEBUG_WARN("TIOCMGET ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "TIOCMGET ioctl failed, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -998,7 +997,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 		if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
 		{
-			DEBUG_WARN("TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
+			CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
 			SetLastError(ERROR_IO_DEVICE);
 
 			LeaveCriticalSection(&pComm->EventsLock);
@@ -1012,7 +1011,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 	if (possibleMask != *pWaitMask)
 	{
-		DEBUG_WARN("Not all wait events supported (Serial.sys), requested events= 0X%lX, possible events= 0X%lX", *pWaitMask, possibleMask);
+		CommLog_Print(WLOG_WARN, "Not all wait events supported (Serial.sys), requested events= 0X%lX, possible events= 0X%lX", *pWaitMask, possibleMask);
 
 		/* FIXME: shall we really set the possibleMask and return FALSE? */
 		pComm->WaitEventMask = possibleMask;
@@ -1044,10 +1043,10 @@ static BOOL _set_queue_size(WINPR_COMM *pComm, const SERIAL_QUEUE_SIZE *pQueueSi
 	/* FIXME: could be implemented on top of N_TTY */
 
 	if (pQueueSize->InSize > N_TTY_BUF_SIZE)
-		DEBUG_WARN("Requested an incompatible input buffer size: %lu, keeping on with a %d bytes buffer.", pQueueSize->InSize, N_TTY_BUF_SIZE);
+		CommLog_Print(WLOG_WARN, "Requested an incompatible input buffer size: %lu, keeping on with a %d bytes buffer.", pQueueSize->InSize, N_TTY_BUF_SIZE);
 
 	if (pQueueSize->OutSize > N_TTY_BUF_SIZE)
-		DEBUG_WARN("Requested an incompatible output buffer size: %lu, keeping on with a %d bytes buffer.", pQueueSize->OutSize, N_TTY_BUF_SIZE);
+		CommLog_Print(WLOG_WARN, "Requested an incompatible output buffer size: %lu, keeping on with a %d bytes buffer.", pQueueSize->OutSize, N_TTY_BUF_SIZE);
 
 	SetLastError(ERROR_CANCELLED);
 	return FALSE;
@@ -1058,7 +1057,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 {
 	if ((*pPurgeMask & ~(SERIAL_PURGE_TXABORT | SERIAL_PURGE_RXABORT | SERIAL_PURGE_TXCLEAR | SERIAL_PURGE_RXCLEAR)) > 0)
 	{
-		DEBUG_WARN("Invalid purge mask: 0x%lX\n", *pPurgeMask);
+		CommLog_Print(WLOG_WARN, "Invalid purge mask: 0x%lX\n", *pPurgeMask);
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
@@ -1076,7 +1075,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 		{
 			if (errno != EAGAIN)
 			{
-				DEBUG_WARN("eventfd_write failed, errno=[%d] %s", errno, strerror(errno));
+				CommLog_Print(WLOG_WARN, "eventfd_write failed, errno=[%d] %s", errno, strerror(errno));
 			}
 
 			assert(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_WRITE */
@@ -1091,7 +1090,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 		{
 			if (errno != EAGAIN)
 			{
-				DEBUG_WARN("eventfd_write failed, errno=[%d] %s", errno, strerror(errno));
+				CommLog_Print(WLOG_WARN, "eventfd_write failed, errno=[%d] %s", errno, strerror(errno));
 			}
 
 			assert(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_READ */
@@ -1104,7 +1103,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 
 		if (tcflush(pComm->fd, TCOFLUSH) < 0)
 		{
-			DEBUG_WARN("tcflush(TCOFLUSH) failure, errno=[%d] %s", errno, strerror(errno));
+			CommLog_Print(WLOG_WARN, "tcflush(TCOFLUSH) failure, errno=[%d] %s", errno, strerror(errno));
 			SetLastError(ERROR_CANCELLED);
 			return FALSE;
 		}
@@ -1117,7 +1116,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 
 		if (tcflush(pComm->fd, TCIFLUSH) < 0)
 		{
-			DEBUG_WARN("tcflush(TCIFLUSH) failure, errno=[%d] %s", errno, strerror(errno));
+			CommLog_Print(WLOG_WARN, "tcflush(TCIFLUSH) failure, errno=[%d] %s", errno, strerror(errno));
 			SetLastError(ERROR_CANCELLED);
 			return FALSE;
 		}
@@ -1144,7 +1143,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	ZeroMemory(&currentCounters, sizeof(struct serial_icounter_struct));
 	if (ioctl(pComm->fd, TIOCGICOUNT, &currentCounters) < 0)
 	{
-		DEBUG_WARN("TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 
 		LeaveCriticalSection(&pComm->EventsLock);
@@ -1206,7 +1205,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 
 	if (ioctl(pComm->fd, TIOCINQ, &(pCommstatus->AmountInInQueue)) < 0)
 	{
-		DEBUG_WARN("TIOCINQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "TIOCINQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 
 		LeaveCriticalSection(&pComm->EventsLock);
@@ -1218,7 +1217,7 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 
 	if (ioctl(pComm->fd, TIOCOUTQ, &(pCommstatus->AmountInOutQueue)) < 0)
 	{
-		DEBUG_WARN("TIOCOUTQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "TIOCOUTQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 
 		LeaveCriticalSection(&pComm->EventsLock);
@@ -1390,7 +1389,7 @@ static BOOL _wait_on_mask(WINPR_COMM *pComm, ULONG *pOutputMask)
 		Sleep(100); /* 100 ms */
 	}
 
-	DEBUG_WARN("_wait_on_mask, unexpected return, WaitEventMask=0X%lX", pComm->WaitEventMask);
+	CommLog_Print(WLOG_WARN, "_wait_on_mask, unexpected return, WaitEventMask=0X%lX", pComm->WaitEventMask);
 	EnterCriticalSection(&pComm->EventsLock);
 	pComm->PendingEvents &= ~SERIAL_EV_FREERDP_WAITING;
 	LeaveCriticalSection(&pComm->EventsLock);
@@ -1402,7 +1401,7 @@ static BOOL _set_break_on(WINPR_COMM *pComm)
 {
 	if (ioctl(pComm->fd, TIOCSBRK, NULL) < 0)
 	{
-		DEBUG_WARN("TIOCSBRK ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "TIOCSBRK ioctl failed, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -1415,7 +1414,7 @@ static BOOL _set_break_off(WINPR_COMM *pComm)
 {
 	if (ioctl(pComm->fd, TIOCCBRK, NULL) < 0)
 	{
-		DEBUG_WARN("TIOCSBRK ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "TIOCSBRK ioctl failed, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -1428,7 +1427,7 @@ static BOOL _set_xoff(WINPR_COMM *pComm)
 {
 	if (tcflow(pComm->fd, TCIOFF) < 0)
 	{
-		DEBUG_WARN("TCIOFF failure, errno=[%d] %s", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "TCIOFF failure, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -1441,7 +1440,7 @@ static BOOL _set_xon(WINPR_COMM *pComm)
 {
 	if (tcflow(pComm->fd, TCION) < 0)
 	{
-		DEBUG_WARN("TCION failure, errno=[%d] %s", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "TCION failure, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -1455,7 +1454,7 @@ BOOL _get_dtrrts(WINPR_COMM *pComm, ULONG *pMask)
 	UINT32 lines=0;
 	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
 	{
-		DEBUG_WARN("TIOCMGET ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "TIOCMGET ioctl failed, errno=[%d] %s", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}

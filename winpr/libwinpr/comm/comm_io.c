@@ -28,9 +28,8 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include <freerdp/utils/debug.h>
-
 #include <winpr/io.h>
+#include <winpr/wlog.h>
 #include <winpr/wtypes.h>
 
 #include "comm.h"
@@ -136,7 +135,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	if (currentTermios.c_lflag & ICANON)
 	{
-		DEBUG_WARN("Canonical mode not supported"); /* the timeout could not be set */
+		CommLog_Print(WLOG_WARN, "Canonical mode not supported"); /* the timeout could not be set */
 		SetLastError(ERROR_NOT_SUPPORTED);
 		goto return_false;
 	}
@@ -162,7 +161,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	if ((pTimeouts->ReadIntervalTimeout == MAXULONG) && (pTimeouts->ReadTotalTimeoutConstant == MAXULONG))
 	{
-		DEBUG_WARN("ReadIntervalTimeout and ReadTotalTimeoutConstant cannot be both set to MAXULONG");
+		CommLog_Print(WLOG_WARN, "ReadIntervalTimeout and ReadTotalTimeoutConstant cannot be both set to MAXULONG");
 		SetLastError(ERROR_INVALID_PARAMETER);
 		goto return_false;
 	}
@@ -214,7 +213,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		if (tcsetattr(pComm->fd, TCSANOW, &currentTermios) < 0)
 		{
-			DEBUG_WARN("CommReadFile failure, could not apply new timeout values: VMIN=%u, VTIME=%u", vmin, vtime);
+			CommLog_Print(WLOG_WARN, "CommReadFile failure, could not apply new timeout values: VMIN=%u, VTIME=%u", vmin, vtime);
 			SetLastError(ERROR_IO_DEVICE);
 			goto return_false;
 		}
@@ -252,7 +251,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	nbFds = select(biggestFd+1, &read_set, NULL, NULL, pTmaxTimeout);
 	if (nbFds < 0)
 	{
-		DEBUG_WARN("select() failure, errno=[%d] %s\n", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno, strerror(errno));
 		SetLastError(ERROR_IO_DEVICE);
 		goto return_false;
 	}
@@ -281,7 +280,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			}
 			else
 			{
-				DEBUG_WARN("unexpected error on reading fd_read_event, errno=[%d] %s\n", errno, strerror(errno));
+				CommLog_Print(WLOG_WARN, "unexpected error on reading fd_read_event, errno=[%d] %s\n", errno, strerror(errno));
 				/* FIXME: goto return_false ? */
 			}
 
@@ -304,10 +303,10 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		nbRead = read(pComm->fd_read, lpBuffer, nNumberOfBytesToRead);
 		if (nbRead < 0)
 		{
-			DEBUG_WARN("CommReadFile failed, ReadIntervalTimeout=%lu, ReadTotalTimeoutMultiplier=%lu, ReadTotalTimeoutConstant=%lu VMIN=%u, VTIME=%u",
+			CommLog_Print(WLOG_WARN, "CommReadFile failed, ReadIntervalTimeout=%lu, ReadTotalTimeoutMultiplier=%lu, ReadTotalTimeoutConstant=%lu VMIN=%u, VTIME=%u",
 				pTimeouts->ReadIntervalTimeout, pTimeouts->ReadTotalTimeoutMultiplier, pTimeouts->ReadTotalTimeoutConstant,
 				currentTermios.c_cc[VMIN], currentTermios.c_cc[VTIME]);
-			DEBUG_WARN("CommReadFile failed, nNumberOfBytesToRead=%lu, errno=[%d] %s", nNumberOfBytesToRead, errno, strerror(errno));
+			CommLog_Print(WLOG_WARN, "CommReadFile failed, nNumberOfBytesToRead=%lu, errno=[%d] %s", nNumberOfBytesToRead, errno, strerror(errno));
 
 			if (errno == EAGAIN)
 			{
@@ -443,7 +442,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		nbFds = select(biggestFd+1, &event_set, &write_set, NULL, pTmaxTimeout);
 		if (nbFds < 0)
 		{
-			DEBUG_WARN("select() failure, errno=[%d] %s\n", errno, strerror(errno));
+			CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno, strerror(errno));
 			SetLastError(ERROR_IO_DEVICE);
 			goto return_false;
 		}
@@ -472,7 +471,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 				}
 				else
 				{
-					DEBUG_WARN("unexpected error on reading fd_write_event, errno=[%d] %s\n", errno, strerror(errno));
+					CommLog_Print(WLOG_WARN, "unexpected error on reading fd_write_event, errno=[%d] %s\n", errno, strerror(errno));
 					/* FIXME: goto return_false ? */
 				}
 
@@ -501,7 +500,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 			if (nbWritten < 0)
 			{
-				DEBUG_WARN("CommWriteFile failed after %lu bytes written, errno=[%d] %s\n", *lpNumberOfBytesWritten, errno, strerror(errno));
+				CommLog_Print(WLOG_WARN, "CommWriteFile failed after %lu bytes written, errno=[%d] %s\n", *lpNumberOfBytesWritten, errno, strerror(errno));
 
 				if (errno == EAGAIN)
 				{

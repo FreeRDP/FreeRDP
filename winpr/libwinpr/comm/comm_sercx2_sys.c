@@ -22,7 +22,7 @@
 
 #ifndef _WIN32
 
-#include <freerdp/utils/debug.h>
+#include <winpr/wlog.h>
 
 #include "comm_serial_sys.h"
 #include "comm_sercx_sys.h"
@@ -81,7 +81,7 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 	if (possibleMask != *pWaitMask)
 	{
-		DEBUG_WARN("Not all wait events supported (SerCx2.sys), requested events= 0X%lX, possible events= 0X%lX", *pWaitMask, possibleMask);
+		CommLog_Print(WLOG_WARN, "Not all wait events supported (SerCx2.sys), requested events= 0X%lX, possible events= 0X%lX", *pWaitMask, possibleMask);
 
 		/* FIXME: shall we really set the possibleMask and return FALSE? */
 		pComm->WaitEventMask = possibleMask;
@@ -101,7 +101,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 
 	if ((*pPurgeMask & SERIAL_PURGE_RXCLEAR) && !(*pPurgeMask & SERIAL_PURGE_RXABORT))
 	{
-		DEBUG_WARN("Expecting SERIAL_PURGE_RXABORT since SERIAL_PURGE_RXCLEAR is set");
+		CommLog_Print(WLOG_WARN, "Expecting SERIAL_PURGE_RXABORT since SERIAL_PURGE_RXCLEAR is set");
 		SetLastError(ERROR_INVALID_DEVICE_OBJECT_PARAMETER);
 		return FALSE;
 	}
@@ -109,7 +109,7 @@ static BOOL _purge(WINPR_COMM *pComm, const ULONG *pPurgeMask)
 
 	if ((*pPurgeMask & SERIAL_PURGE_TXCLEAR) && !(*pPurgeMask & SERIAL_PURGE_TXABORT))
 	{
-		DEBUG_WARN("Expecting SERIAL_PURGE_TXABORT since SERIAL_PURGE_TXCLEAR is set");
+		CommLog_Print(WLOG_WARN, "Expecting SERIAL_PURGE_TXABORT since SERIAL_PURGE_TXCLEAR is set");
 		SetLastError(ERROR_INVALID_DEVICE_OBJECT_PARAMETER);
 		return FALSE;
 	}
