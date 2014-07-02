@@ -84,8 +84,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-input winpr-crt)
+	MODULE winpr)
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

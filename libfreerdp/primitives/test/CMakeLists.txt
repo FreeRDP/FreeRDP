@@ -138,7 +138,7 @@ endif()
 
 set_property(SOURCE ${PRIMITIVE_TEST_CFILES} PROPERTY COMPILE_FLAGS ${OPTFLAGS})
 
-target_link_libraries(prim_test rt winpr-sysinfo)
+target_link_libraries(prim_test rt winpr)
 if(NOT TESTING_OUTPUT_DIRECTORY)
 	set(TESTING_OUTPUT_DIRECTORY .)
 endif()

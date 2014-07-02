@@ -35,8 +35,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-synch)
+	MODULE winpr)
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)
 	

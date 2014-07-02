@@ -37,8 +37,7 @@ set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 	${OPENSSL_LIBRARIES} ${ZLIB_LIBRARIES})
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-path winpr-file winpr-library winpr-utils)
+	MODULE winpr)
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
