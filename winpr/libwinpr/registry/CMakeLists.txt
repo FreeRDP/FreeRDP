@@ -23,22 +23,11 @@ set(${MODULE_PREFIX}_SRCS
 	registry_reg.h
 	registry.c)
 
-if(MSVC AND (NOT MONOLITHIC_BUILD))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
-endif()
-
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
-	MONOLITHIC ${MONOLITHIC_BUILD}
+	MONOLITHIC ON
 	SOURCES ${${MODULE_PREFIX}_SRCS}
 	EXPORT)
 	
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
-
-if(MONOLITHIC_BUILD)
-
-else()
-	target_link_libraries(${MODULE_NAME} winpr-utils)
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT WinPRTargets)
-endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")

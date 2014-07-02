@@ -16,7 +16,7 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
+	MONOLITHIC ON
 	MODULE winpr
 	MODULES winpr-interlocked)
 
