@@ -32,7 +32,6 @@
 
 struct _CLEAR_VBAR_ENTRY
 {
-	UINT32 size;
 	UINT32 count;
 	UINT32* pixels;
 };
