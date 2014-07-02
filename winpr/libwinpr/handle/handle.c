@@ -42,13 +42,81 @@
 
 #include "../handle/handle.h"
 
+/* _HandleCreators is a NULL-terminated array with a maximun of HANDLE_CREATOR_MAX HANDLE_CREATOR */
+#define HANDLE_CLOSE_CB_MAX 128
+static HANDLE_CLOSE_CB **_HandleCloseCbs = NULL;
+
+static pthread_once_t _HandleCloseCbsInitialized = PTHREAD_ONCE_INIT;
+static void _HandleCloseCbsInit()
+{
+	/* NB: error management to be done outside of this function */
+
+	assert(_HandleCloseCbs == NULL);
+
+	_HandleCloseCbs = (HANDLE_CLOSE_CB**)calloc(HANDLE_CLOSE_CB_MAX+1, sizeof(HANDLE_CLOSE_CB*));
+
+	assert(_HandleCloseCbs != NULL);
+}
+
+/**
+ * Returns TRUE on success, FALSE otherwise.
+ */
+BOOL RegisterHandleCloseCb(HANDLE_CLOSE_CB *pHandleCloseCb)
+{
+	int i;
+
+	if (pthread_once(&_HandleCloseCbsInitialized, _HandleCloseCbsInit) != 0)
+	{
+		return FALSE;
+	}
+
+	if (_HandleCloseCbs == NULL)
+	{
+		return FALSE;
+	}
+
+
+	for (i=0; i<HANDLE_CLOSE_CB_MAX; i++)
+	{
+		if (_HandleCloseCbs[i] == NULL)
+		{
+			_HandleCloseCbs[i] = pHandleCloseCb;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+
+
 BOOL CloseHandle(HANDLE hObject)
 {
+	int i;
 	ULONG Type;
 	PVOID Object;
 
 	if (!winpr_Handle_GetInfo(hObject, &Type, &Object))
 		return FALSE;
+
+	if (pthread_once(&_HandleCloseCbsInitialized, _HandleCloseCbsInit) != 0)
+	{
+		return FALSE;
+	}
+
+	if (_HandleCloseCbs == NULL)
+	{
+		return FALSE;
+	}
+
+	for (i=0; _HandleCloseCbs[i] != NULL; i++)
+	{
+		HANDLE_CLOSE_CB *close_cb = (HANDLE_CLOSE_CB*)_HandleCloseCbs[i];
+		if (close_cb && close_cb->IsHandled(hObject))
+		{
+			return close_cb->CloseHandle(hObject);
+		}
+	}
 
 
 	if (Type == HANDLE_TYPE_THREAD)
@@ -206,10 +274,6 @@ BOOL CloseHandle(HANDLE hObject)
 		free(token);
 
 		return TRUE;
-	}
-	else if (Type == HANDLE_TYPE_COMM)
-	{
-		return CommCloseHandle(hObject);
 	}
 
 	return FALSE;

@@ -70,6 +70,7 @@ typedef struct comm_device COMM_DEVICE;
 static COMM_DEVICE **_CommDevices = NULL;
 
 static HANDLE_CREATOR *_CommHandleCreator = NULL;
+static HANDLE_CLOSE_CB *_CommHandleCloseCb = NULL;
 
 static pthread_once_t _CommInitialized = PTHREAD_ONCE_INIT;
 static void _CommInit()
@@ -79,6 +80,7 @@ static void _CommInit()
 	assert(_Log == NULL);
 	assert(_CommDevices == NULL);
 	assert(_CommHandleCreator == NULL);
+	assert(_CommHandleCloseCb == NULL);
 
 	_Log = WLog_Get("com.winpr.comm");
 
@@ -93,9 +95,19 @@ static void _CommInit()
 		RegisterHandleCreator(_CommHandleCreator);
 	}
 
+	_CommHandleCloseCb = (HANDLE_CLOSE_CB*)malloc(sizeof(HANDLE_CLOSE_CB));
+	if (_CommHandleCloseCb)
+	{
+		_CommHandleCloseCb->IsHandled = CommIsHandled;
+		_CommHandleCloseCb->CloseHandle = CommCloseHandle;
+		
+		RegisterHandleCloseCb(_CommHandleCloseCb);
+	}
+
 	assert(_Log != NULL);
 	assert(_CommDevices != NULL);
 	assert(_CommHandleCreator != NULL);
+	assert(_CommHandleCloseCb != NULL);
 }
 
 
@@ -1400,6 +1412,25 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 
 	return INVALID_HANDLE_VALUE;
+}
+
+
+BOOL CommIsHandled(HANDLE handle)
+{
+	WINPR_COMM *pComm;
+
+	if (!CommInitialized())
+		return FALSE;
+
+	pComm = (WINPR_COMM*)handle;
+
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 

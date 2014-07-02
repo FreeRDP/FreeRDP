@@ -89,6 +89,7 @@ typedef struct winpr_comm WINPR_COMM;
 
 void CommLog_Print(int wlog_level, char *fmt, ...);
 
+BOOL CommIsHandled(HANDLE handle);
 BOOL CommCloseHandle(HANDLE handle);
 
 #endif /* _WIN32 */
