@@ -52,7 +52,8 @@ set(${MODULE_PREFIX}_SRCS
 	mppc.c
 	zgfx.c
 	clear.c
-	jpeg.c)
+	jpeg.c
+	h264.c)
 
 set(${MODULE_PREFIX}_SSE2_SRCS
 	rfx_sse2.c
@@ -82,8 +83,13 @@ if(WITH_NEON)
 endif()
 
 if(WITH_JPEG)
-    include_directories(${JPEG_INCLUDE_DIR})
-    set(FREERDP_JPEG_LIBS ${JPEG_LIBRARIES})
+	include_directories(${JPEG_INCLUDE_DIR})
+	set(FREERDP_JPEG_LIBS ${JPEG_LIBRARIES})
+endif()
+
+if(WITH_OPENH264)
+	include_directories(${OPENH264_INCLUDE_DIR})
+	set(FREERDP_OPENH264_LIBS ${OPENH264_LIBRARIES})
 endif()
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
@@ -94,7 +100,8 @@ add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
 
 set(${MODULE_PREFIX}_LIBS
-	${FREERDP_JPEG_LIBS})
+	${FREERDP_JPEG_LIBS}
+	${FREERDP_OPENH264_LIBS})
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL

@@ -51,7 +51,21 @@ int xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* re
 	xfc->nsc->height = resetGraphics->height;
 	nsc_context_set_pixel_format(xfc->nsc, RDP_PIXEL_FORMAT_B8G8R8A8);
 
+	if (xfc->clear)
+	{
+		clear_context_free(xfc->clear);
+		xfc->clear = NULL;
+	}
+
 	xfc->clear = clear_context_new(FALSE);
+
+	if (xfc->h264)
+	{
+		h264_context_free(xfc->h264);
+		xfc->h264 = NULL;
+	}
+
+	xfc->h264 = h264_context_new(FALSE);
 
 	region16_init(&(xfc->invalidRegion));
 
@@ -267,10 +281,16 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 
 	DstData = surface->data;
 
+#if 0
 	status = clear_decompress(NULL, cmd->data, cmd->length, &DstData,
 			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
+#else
+	status = -1;
+#endif
 
-#if 0
+	printf("xf_SurfaceCommand_ClearCodec: status: %d\n", status);
+
+#if 1
 	/* fill with pink for now to distinguish from the rest */
 
 	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
@@ -320,6 +340,142 @@ int xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGF
 	return 1;
 }
 
+int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+{
+	int status;
+	BYTE* DstData = NULL;
+	xfGfxSurface* surface;
+	RECTANGLE_16 invalidRect;
+
+	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
+
+	if (!surface)
+		return -1;
+
+	DstData = surface->data;
+
+#if 1
+	status = h264_decompress(xfc->h264, cmd->data, cmd->length, &DstData,
+			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
+#else
+	status = -1;
+#endif
+
+	printf("xf_SurfaceCommand_H264: status: %d\n", status);
+
+#if 0
+	/* fill with red for now to distinguish from the rest */
+
+	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
+			cmd->left, cmd->top, cmd->width, cmd->height, 0xFF0000);
+#endif
+
+	invalidRect.left = cmd->left;
+	invalidRect.top = cmd->top;
+	invalidRect.right = cmd->right;
+	invalidRect.bottom = cmd->bottom;
+
+	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+
+	if (!xfc->inGfxFrame)
+		xf_OutputUpdate(xfc);
+
+	return 1;
+}
+
+int xf_SurfaceCommand_Alpha(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+{
+	int status = 0;
+	xfGfxSurface* surface;
+	RECTANGLE_16 invalidRect;
+
+	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
+
+	if (!surface)
+		return -1;
+
+	printf("xf_SurfaceCommand_Alpha: status: %d\n", status);
+
+	/* fill with green for now to distinguish from the rest */
+
+	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
+			cmd->left, cmd->top, cmd->width, cmd->height, 0x00FF00);
+
+	invalidRect.left = cmd->left;
+	invalidRect.top = cmd->top;
+	invalidRect.right = cmd->right;
+	invalidRect.bottom = cmd->bottom;
+
+	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+
+	if (!xfc->inGfxFrame)
+		xf_OutputUpdate(xfc);
+
+	return 1;
+}
+
+int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+{
+	int status = 0;
+	xfGfxSurface* surface;
+	RECTANGLE_16 invalidRect;
+
+	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
+
+	if (!surface)
+		return -1;
+
+	printf("xf_SurfaceCommand_Progressive: status: %d\n", status);
+
+	/* fill with blue for now to distinguish from the rest */
+
+	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
+			cmd->left, cmd->top, cmd->width, cmd->height, 0x0000FF);
+
+	invalidRect.left = cmd->left;
+	invalidRect.top = cmd->top;
+	invalidRect.right = cmd->right;
+	invalidRect.bottom = cmd->bottom;
+
+	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+
+	if (!xfc->inGfxFrame)
+		xf_OutputUpdate(xfc);
+
+	return 1;
+}
+
+int xf_SurfaceCommand_ProgressiveV2(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
+{
+	int status = 0;
+	xfGfxSurface* surface;
+	RECTANGLE_16 invalidRect;
+
+	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
+
+	if (!surface)
+		return -1;
+
+	printf("xf_SurfaceCommand_ProgressiveV2: status: %d\n", status);
+
+	/* fill with white for now to distinguish from the rest */
+
+	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
+			cmd->left, cmd->top, cmd->width, cmd->height, 0xFFFFFF);
+
+	invalidRect.left = cmd->left;
+	invalidRect.top = cmd->top;
+	invalidRect.right = cmd->right;
+	invalidRect.bottom = cmd->bottom;
+
+	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+
+	if (!xfc->inGfxFrame)
+		xf_OutputUpdate(xfc);
+
+	return 1;
+}
+
 int xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status = 1;
@@ -344,19 +500,19 @@ int xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 			break;
 
 		case RDPGFX_CODECID_H264:
-			printf("xf_SurfaceCommand_H264\n");
+			status = xf_SurfaceCommand_H264(xfc, context, cmd);
 			break;
 
 		case RDPGFX_CODECID_ALPHA:
-			printf("xf_SurfaceCommand_Alpha\n");
+			status = xf_SurfaceCommand_Alpha(xfc, context, cmd);
 			break;
 
 		case RDPGFX_CODECID_CAPROGRESSIVE:
-			printf("xf_SurfaceCommand_Progressive\n");
+			status = xf_SurfaceCommand_Progressive(xfc, context, cmd);
 			break;
 
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
-			printf("xf_SurfaceCommand_ProgressiveV2\n");
+			status = xf_SurfaceCommand_ProgressiveV2(xfc, context, cmd);
 			break;
 	}
 
