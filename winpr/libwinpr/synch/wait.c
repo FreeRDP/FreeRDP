@@ -3,6 +3,7 @@
  * Synchronization Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Hardening <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +24,10 @@
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+#ifdef HAVE_POLL_H
+#include <poll.h>
 #endif
 
 #include <assert.h>
@@ -164,6 +169,47 @@ static void ts_add_ms(struct timespec *ts, DWORD dwMilliseconds)
 	ts->tv_nsec = ts->tv_nsec % 1000000000L;
 }
 
+static int waitOnFd(int fd, DWORD dwMilliseconds)
+{
+	int status;
+
+#ifdef HAVE_POLL_H
+	struct pollfd pollfds;
+
+	pollfds.fd = fd;
+	pollfds.events = POLLIN;
+	pollfds.revents = 0;
+
+	do
+	{
+		status = poll(&pollfds, 1, dwMilliseconds);
+	}
+	while ((status < 0) && (errno == EINTR));
+
+#else
+	struct timespec timeout;
+	fd_set rfds;
+
+	FD_ZERO(&rfds);
+	FD_SET(fd, &rfds);
+	ZeroMemory(&timeout, sizeof(timeout));
+
+	if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
+	{
+		timeout.tv_sec = dwMilliseconds / 1000;
+		timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
+	}
+
+	do
+	{
+		status = select(fd + 1, &rfds, NULL, NULL, (dwMilliseconds == INFINITE) ? NULL : &timeout);
+	}
+	while (status < 0 && (errno == EINTR));
+#endif
+
+	return status;
+}
+
 DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 {
 	ULONG Type;
@@ -256,29 +302,11 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	else if (Type == HANDLE_TYPE_EVENT)
 	{
 		int status;
-		fd_set rfds;
 		WINPR_EVENT* event;
-		struct timeval timeout;
 
 		event = (WINPR_EVENT*) Object;
 
-		FD_ZERO(&rfds);
-		FD_SET(event->pipe_fd[0], &rfds);
-		ZeroMemory(&timeout, sizeof(timeout));
-
-		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
-		{
-			timeout.tv_sec = dwMilliseconds / 1000;
-			timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
-		}
-
-		do
-		{
-			status = select(event->pipe_fd[0] + 1, &rfds, NULL, NULL,
-					(dwMilliseconds == INFINITE) ? NULL : &timeout);
-		}
-		while (status < 0 && (errno == EINTR));
-
+		status = waitOnFd(event->pipe_fd[0], dwMilliseconds);
 		if (status < 0)
 		{
 			fprintf(stderr, "WaitForSingleObject: event select() failure [%d] %s\n", errno, strerror(errno));
@@ -299,26 +327,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		{
 			int status;
 			int length;
-			fd_set rfds;
-			struct timeval timeout;
 
-			FD_ZERO(&rfds);
-			FD_SET(semaphore->pipe_fd[0], &rfds);
-			ZeroMemory(&timeout, sizeof(timeout));
-
-			if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
-			{
-				timeout.tv_sec = dwMilliseconds / 1000;
-				timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
-			}
-
-			do
-			{
-				status = select(semaphore->pipe_fd[0] + 1, &rfds, 0, 0,
-						(dwMilliseconds == INFINITE) ? NULL : &timeout);
-			}
-			while (status < 0 && (errno == EINTR));
-
+			status = waitOnFd(semaphore->pipe_fd[0], dwMilliseconds);
 			if (status < 0)
 			{
 				fprintf(stderr, "WaitForSingleObject: semaphore select() failure [%d] %s\n", errno, strerror(errno));
@@ -356,27 +366,9 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		if (timer->fd != -1)
 		{
 			int status;
-			fd_set rfds;
 			UINT64 expirations;
-			struct timeval timeout;
 
-			FD_ZERO(&rfds);
-			FD_SET(timer->fd, &rfds);
-			ZeroMemory(&timeout, sizeof(timeout));
-
-			if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
-			{
-				timeout.tv_sec = dwMilliseconds / 1000;
-				timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
-			}
-
-			do
-			{
-				status = select(timer->fd + 1, &rfds, 0, 0,
-						(dwMilliseconds == INFINITE) ? NULL : &timeout);
-			}
-			while (status < 0 && (errno == EINTR));
-
+			status = waitOnFd(timer->fd, dwMilliseconds);
 			if (status < 0)
 			{
 				fprintf(stderr, "WaitForSingleObject: timer select() failure [%d] %s\n", errno, strerror(errno));
@@ -420,8 +412,6 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	{
 		int fd;
 		int status;
-		fd_set rfds;
-		struct timeval timeout;
 		WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
 
 		fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
@@ -432,23 +422,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			return WAIT_FAILED;
 		}
 
-		FD_ZERO(&rfds);
-		FD_SET(fd, &rfds);
-		ZeroMemory(&timeout, sizeof(timeout));
-
-		if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
-		{
-			timeout.tv_sec = dwMilliseconds / 1000;
-			timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
-		}
-
-		do
-		{
-			status = select(fd + 1, &rfds, NULL, NULL,
-					(dwMilliseconds == INFINITE) ? NULL : &timeout);
-		}
-		while (status < 0 && (errno == EINTR));
-
+		status = waitOnFd(fd, dwMilliseconds);
 		if (status < 0)
 		{
 			fprintf(stderr, "WaitForSingleObject: named pipe select() failure [%d] %s\n", errno, strerror(errno));
@@ -478,13 +452,17 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
 {
 	int fd = -1;
-	int maxfd;
 	int index;
 	int status;
-	fd_set fds;
 	ULONG Type;
 	PVOID Object;
+#ifdef HAVE_POLL_H
+	struct pollfd *pollfds;
+#else
+	int maxfd;
+	fd_set fds;
 	struct timeval timeout;
+#endif
 
 	if (!nCount)
 	{
@@ -492,9 +470,14 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		return WAIT_FAILED;
 	}
 
+#ifdef HAVE_POLL_H
+	pollfds = alloca(nCount * sizeof(struct pollfd));
+#else
 	maxfd = 0;
 	FD_ZERO(&fds);
 	ZeroMemory(&timeout, sizeof(timeout));
+
+#endif
 
 	if (bWaitAll)
 	{
@@ -564,12 +547,25 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 			return WAIT_FAILED;
 		}
 
+#ifdef HAVE_POLL_H
+		pollfds[index].fd = fd;
+		pollfds[index].events = POLLIN;
+		pollfds[index].revents = 0;
+#else
 		FD_SET(fd, &fds);
 
 		if (fd > maxfd)
 			maxfd = fd;
+#endif
 	}
 
+#ifdef HAVE_POLL_H
+	do
+	{
+		status = poll(pollfds, nCount, dwMilliseconds);
+	}
+	while (status < 0 && errno == EINTR);
+#else
 	if ((dwMilliseconds != INFINITE) && (dwMilliseconds != 0))
 	{
 		timeout.tv_sec = dwMilliseconds / 1000;
@@ -582,6 +578,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 				(dwMilliseconds == INFINITE) ? NULL : &timeout);
 	}
 	while (status < 0 && errno == EINTR);
+#endif
 
 	if (status < 0)
 	{
@@ -615,7 +612,11 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 			fd = (pipe->ServerMode) ? pipe->serverfd : pipe->clientfd;
 		}
 
+#ifdef HAVE_POLL_H
+		if (pollfds[index].revents & POLLIN)
+#else
 		if (FD_ISSET(fd, &fds))
+#endif
 		{
 			if (Type == HANDLE_TYPE_SEMAPHORE)
 			{
@@ -677,3 +678,4 @@ DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD 
 }
 
 #endif
+
