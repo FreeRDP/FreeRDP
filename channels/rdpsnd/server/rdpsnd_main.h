@@ -31,10 +31,16 @@
 
 struct _rdpsnd_server_private
 {
+	BOOL ownThread;
 	HANDLE Thread;
 	HANDLE StopEvent;
+	HANDLE channelEvent;
 	void* ChannelHandle;
 
+	BOOL waitingHeader;
+	DWORD expectedBytes;
+	BYTE msgType;
+	wStream* input_stream;
 	wStream* rdpsnd_pdu;
 	BYTE* out_buffer;
 	int out_buffer_size;

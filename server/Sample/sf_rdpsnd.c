@@ -52,7 +52,7 @@ BOOL sf_peer_rdpsnd_init(testPeerContext* context)
 
 	context->rdpsnd->Activated = sf_peer_rdpsnd_activated;
 
-	context->rdpsnd->Initialize(context->rdpsnd);
+	context->rdpsnd->Initialize(context->rdpsnd, TRUE);
 
 	return TRUE;
 }
