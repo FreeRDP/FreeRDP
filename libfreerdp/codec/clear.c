@@ -102,7 +102,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		clear->ShortVBarStorageCursor = 0;
 	}
 
-	printf("glyphFlags: 0x%02X seqNumber: %d\n", glyphFlags, seqNumber);
+	//printf("glyphFlags: 0x%02X seqNumber: %d\n", glyphFlags, seqNumber);
 
 	if ((glyphFlags & CLEARCODEC_FLAG_GLYPH_HIT) && !(glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX))
 		return -1004;
@@ -158,8 +158,8 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	subcodecByteCount = *((UINT32*) &pSrcData[offset + 8]);
 	offset += 12;
 
-	//printf("residualByteCount: %d bandsByteCount: %d subcodecByteCount: %d\n",
-	//		residualByteCount, bandsByteCount, subcodecByteCount);
+	printf("residualByteCount: %d bandsByteCount: %d subcodecByteCount: %d\n",
+			residualByteCount, bandsByteCount, subcodecByteCount);
 
 	if (residualByteCount > 0)
 	{
@@ -253,7 +253,6 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			UINT16 yStart;
 			UINT16 yEnd;
 			BYTE* vBar;
-			BYTE* vBarPixels;
 			BOOL vBarUpdate;
 			UINT32 colorBkg;
 			UINT16 vBarHeader;
@@ -352,7 +351,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					if (vBarYOff < vBarYOn)
 						return -1025;
 
-					vBarPixels = &vBar[2];
+					pSrcPixel8 = &vBar[2];
 					vBarShortPixelCount = (vBarYOff - vBarYOn);
 
 					if (vBarShortPixelCount > 52)
@@ -376,8 +375,8 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 
 					for (y = 0; y < vBarShortPixelCount; y++)
 					{
-						*pDstPixel32 = RGB32(vBarPixels[2], vBarPixels[1], vBarPixels[0]);
-						vBarPixels += 3;
+						*pDstPixel32 = RGB32(pSrcPixel8[2], pSrcPixel8[1], pSrcPixel8[0]);
+						pSrcPixel8 += 3;
 						pDstPixel32++;
 					}
 
@@ -554,7 +553,6 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 				BYTE suiteIndex;
 				BYTE suiteDepth;
 				BYTE paletteCount;
-				BYTE* paletteEntry;
 				BYTE* paletteEntries;
 				UINT32 palette[256];
 
@@ -563,12 +561,12 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 				bitmapDataOffset = 1 + (paletteCount * 3);
 
 				pixelIndex = 0;
-				paletteEntry = paletteEntries;
+				pSrcPixel8 = paletteEntries;
 
 				for (i = 0; i < paletteCount; i++)
 				{
-					palette[i] = RGB32(paletteEntry[2], paletteEntry[1], paletteEntry[0]);
-					paletteEntry += 3;
+					palette[i] = RGB32(pSrcPixel8[2], pSrcPixel8[1], pSrcPixel8[0]);
+					pSrcPixel8 += 3;
 				}
 
 				numBits = CLEAR_LOG2_FLOOR[paletteCount - 1] + 1;
