@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <sys/stat.h>
 #include <termios.h>
 
 #include <winpr/comm.h>
@@ -128,10 +129,16 @@ static BOOL test_SerCx2Sys(HANDLE hComm)
 
 int TestSerialChars(int argc, char* argv[])
 {
+	struct stat statbuf;
 	BOOL result;
 	HANDLE hComm;
 
-	// TMP: FIXME: check if we can proceed with tests on the actual device, skip and warn otherwise but don't fail
+	if (stat("/dev/ttyS0", &statbuf) < 0)
+	{
+		fprintf(stderr, "/dev/ttyS0 not available, making the test to succeed though\n");
+		return EXIT_SUCCESS;
+	}
+
 	result = DefineCommDevice("COM1", "/dev/ttyS0");
 	if (!result)
 	{

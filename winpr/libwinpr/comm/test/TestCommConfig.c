@@ -18,6 +18,8 @@
  * limitations under the License.
  */
 
+#include <sys/stat.h>
+
 #include <winpr/crt.h>
 #include <winpr/comm.h>
 #include <winpr/file.h>
@@ -31,6 +33,7 @@ int TestCommConfig(int argc, char* argv[])
 	BOOL success;
 	LPCSTR lpFileName = "\\\\.\\COM1";
 	COMMPROP commProp;
+	struct stat statbuf;
 
 	hComm = CreateFileA(lpFileName,
 			GENERIC_READ | GENERIC_WRITE,
@@ -42,7 +45,12 @@ int TestCommConfig(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	// TMP: FIXME: check if we can proceed with tests on the actual device, skip and warn otherwise but don't fail
+	if (stat("/dev/ttyS0", &statbuf) < 0)
+	{
+		fprintf(stderr, "/dev/ttyS0 not available, making the test to succeed though\n");
+		return EXIT_SUCCESS;
+	}
+
 	success = DefineCommDevice(lpFileName, "/dev/ttyS0");
 	if(!success)
 	{
