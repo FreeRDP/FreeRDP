@@ -24,6 +24,7 @@
 #include <freerdp/client.h>
 
 #include <freerdp/addin.h>
+#include <freerdp/assistance.h>
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
@@ -118,6 +119,11 @@ int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, 
 		status = freerdp_client_settings_parse_connection_file(settings, settings->ConnectionFile);
 	}
 
+	if (settings->AssistanceFile)
+	{
+		status = freerdp_client_settings_parse_assistance_file(settings, settings->AssistanceFile);
+	}
+
 	return status;
 }
 
@@ -164,6 +170,31 @@ int freerdp_client_settings_write_connection_file(const rdpSettings* settings, c
 		return -1;
 
 	freerdp_client_rdp_file_free(file);
+
+	return 0;
+}
+
+int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, const char* filename)
+{
+	int status;
+	rdpAssistanceFile* file;
+
+	file = freerdp_assistance_file_new();
+
+	if (!file)
+		return -1;
+
+	status = freerdp_assistance_parse_file(file, filename);
+
+	if (status < 0)
+		return -1;
+
+	status = freerdp_client_populate_settings_from_assistance_file(file, settings);
+
+	if (status < 0)
+		return -1;
+
+	freerdp_assistance_file_free(file);
 
 	return 0;
 }

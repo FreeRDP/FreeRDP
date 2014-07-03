@@ -819,6 +819,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->AllowDesktopComposition;
 			break;
 
+		case FreeRDP_RemoteAssistanceMode:
+			return settings->RemoteAssistanceMode;
+			break;
+
 		case FreeRDP_TlsSecurity:
 			return settings->TlsSecurity;
 			break;
@@ -1302,6 +1306,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_AllowDesktopComposition:
 			settings->AllowDesktopComposition = param;
+			break;
+
+		case FreeRDP_RemoteAssistanceMode:
+			settings->RemoteAssistanceMode = param;
 			break;
 
 		case FreeRDP_TlsSecurity:
@@ -2378,6 +2386,22 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 			return settings->DynamicDSTTimeZoneKeyName;
 			break;
 
+		case FreeRDP_RemoteAssistanceSessionId:
+			return settings->RemoteAssistanceSessionId;
+			break;
+
+		case FreeRDP_RemoteAssistancePassStub:
+			return settings->RemoteAssistancePassStub;
+			break;
+
+		case FreeRDP_RemoteAssistancePassword:
+			return settings->RemoteAssistancePassword;
+			break;
+
+		case FreeRDP_RemoteAssistanceRCTicket:
+			return settings->RemoteAssistanceRCTicket;
+			break;
+
 		case FreeRDP_AuthenticationServiceClass:
 			return settings->AuthenticationServiceClass;
 			break;
@@ -2420,6 +2444,10 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 
 		case FreeRDP_ConnectionFile:
 			return settings->ConnectionFile;
+			break;
+
+		case FreeRDP_AssistanceFile:
+			return settings->AssistanceFile;
 			break;
 
 		case FreeRDP_HomePath:
@@ -2563,6 +2591,26 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 			settings->DynamicDSTTimeZoneKeyName = _strdup(param);
 			break;
 
+		case FreeRDP_RemoteAssistanceSessionId:
+			free(settings->RemoteAssistanceSessionId);
+			settings->RemoteAssistanceSessionId = _strdup(param);
+			break;
+
+		case FreeRDP_RemoteAssistancePassStub:
+			free(settings->RemoteAssistancePassStub);
+			settings->RemoteAssistancePassStub = _strdup(param);
+			break;
+
+		case FreeRDP_RemoteAssistancePassword:
+			free(settings->RemoteAssistancePassword);
+			settings->RemoteAssistancePassword = _strdup(param);
+			break;
+
+		case FreeRDP_RemoteAssistanceRCTicket:
+			free(settings->RemoteAssistanceRCTicket);
+			settings->RemoteAssistanceRCTicket = _strdup(param);
+			break;
+
 		case FreeRDP_AuthenticationServiceClass:
 			free(settings->AuthenticationServiceClass);
 			settings->AuthenticationServiceClass = _strdup(param);
@@ -2616,6 +2664,11 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 		case FreeRDP_ConnectionFile:
 			free(settings->ConnectionFile);
 			settings->ConnectionFile = _strdup(param);
+			break;
+
+		case FreeRDP_AssistanceFile:
+			free(settings->AssistanceFile);
+			settings->AssistanceFile = _strdup(param);
 			break;
 
 		case FreeRDP_HomePath:

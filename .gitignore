@@ -113,6 +113,7 @@ Release
 Win32
 build*/
 *.orig
+*.msrcIncident
 
 default.log
 *Amplifier XE*
