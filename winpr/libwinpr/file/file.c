@@ -195,6 +195,7 @@
 /* _HandleCreators is a NULL-terminated array with a maximun of HANDLE_CREATOR_MAX HANDLE_CREATOR */
 #define HANDLE_CREATOR_MAX 128
 static HANDLE_CREATOR **_HandleCreators = NULL;
+static CRITICAL_SECTION _HandleCreatorsLock;
 
 static pthread_once_t _HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
 static void _HandleCreatorsInit()
@@ -204,6 +205,8 @@ static void _HandleCreatorsInit()
 	assert(_HandleCreators == NULL);
 
 	_HandleCreators = (HANDLE_CREATOR**)calloc(HANDLE_CREATOR_MAX+1, sizeof(HANDLE_CREATOR*));
+
+	InitializeCriticalSection(&_HandleCreatorsLock);
 
 	assert(_HandleCreators != NULL);
 }
@@ -232,16 +235,23 @@ BOOL RegisterHandleCreator(PHANDLE_CREATOR pHandleCreator)
 	}
 
 
+	EnterCriticalSection(&_HandleCreatorsLock);
+
 	for (i=0; i<HANDLE_CREATOR_MAX; i++)
 	{
 		if (_HandleCreators[i] == NULL)
 		{
 			_HandleCreators[i] = pHandleCreator;
+
+
+			LeaveCriticalSection(&_HandleCreatorsLock);
 			return TRUE;
 		}
 	}
 
 	SetLastError(ERROR_INSUFFICIENT_BUFFER);
+
+	LeaveCriticalSection(&_HandleCreatorsLock);
 	return FALSE;
 }
 
@@ -302,15 +312,22 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 		return INVALID_HANDLE_VALUE;
 	}
 
+	EnterCriticalSection(&_HandleCreatorsLock);
+
 	for (i=0; _HandleCreators[i] != NULL; i++)
 	{
 		HANDLE_CREATOR *creator = (HANDLE_CREATOR*)_HandleCreators[i];
 		if (creator && creator->IsHandled(lpFileName))
 		{
-			return creator->CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
-						    dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+			HANDLE newHandle = creator->CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
+								dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+
+			LeaveCriticalSection(&_HandleCreatorsLock);
+			return newHandle;
 		}
 	}
+
+	LeaveCriticalSection(&_HandleCreatorsLock);
 
 	/* TODO: use of a HANDLE_CREATOR for named pipes as well */
 
