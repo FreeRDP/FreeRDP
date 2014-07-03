@@ -68,6 +68,7 @@ typedef struct comm_device COMM_DEVICE;
 /* _CommDevices is a NULL-terminated array with a maximun of COMM_DEVICE_MAX COMM_DEVICE */
 #define COMM_DEVICE_MAX	128
 static COMM_DEVICE **_CommDevices = NULL;
+static CRITICAL_SECTION _CommDevicesLock;
 
 static HANDLE_CREATOR *_CommHandleCreator = NULL;
 static HANDLE_CLOSE_CB *_CommHandleCloseCb = NULL;
@@ -85,6 +86,7 @@ static void _CommInit()
 	_Log = WLog_Get("com.winpr.comm");
 
 	_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX+1, sizeof(COMM_DEVICE*));
+	InitializeCriticalSection(&_CommDevicesLock);
 
 	_CommHandleCreator = (HANDLE_CREATOR*)malloc(sizeof(HANDLE_CREATOR));
 	if (_CommHandleCreator)
@@ -1012,7 +1014,9 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 	LPTSTR storedTargetPath = NULL;
 
 	if (!CommInitialized())
-		goto error_handle;
+		return FALSE;
+
+	EnterCriticalSection(&_CommDevicesLock);
 
 	if (_CommDevices == NULL)
 	{
@@ -1080,6 +1084,7 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 		goto error_handle;
 	}
 
+	LeaveCriticalSection(&_CommDevicesLock);
 	return TRUE;
 
 
@@ -1090,6 +1095,7 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 	if (storedTargetPath != NULL)
 		free(storedTargetPath);
 
+	LeaveCriticalSection(&_CommDevicesLock);
 	return FALSE;
 }
 
@@ -1132,6 +1138,8 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 		return 0;
 	}
 
+	EnterCriticalSection(&_CommDevicesLock);
+
 	storedTargetPath = NULL;
 	for (i=0; i<COMM_DEVICE_MAX; i++)
 	{
@@ -1148,6 +1156,8 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 
 		break;
 	}
+
+	LeaveCriticalSection(&_CommDevicesLock);
 
 	if (storedTargetPath == NULL)
 	{
