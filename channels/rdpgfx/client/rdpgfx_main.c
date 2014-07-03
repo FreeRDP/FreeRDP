@@ -58,14 +58,19 @@ int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 
 	gfx->ThinClient = TRUE;
 	gfx->SmallCache = FALSE;
+
+#ifdef WITH_OPENH264
+	gfx->H264 = TRUE;
+#else
 	gfx->H264 = FALSE;
+#endif
 
 	gfx->MaxCacheSlot = (gfx->ThinClient) ? 4096 : 25600;
 
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_CAPSADVERTISE;
 
-	pdu.capsSetCount = 1;
+	pdu.capsSetCount = 2;
 	pdu.capsSets = (RDPGFX_CAPSET*) capsSets;
 
 	capsSet = &capsSets[0];
