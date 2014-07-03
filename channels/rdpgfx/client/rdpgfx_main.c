@@ -56,25 +56,13 @@ int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 
 	gfx = (RDPGFX_PLUGIN*) callback->plugin;
 
-	gfx->ThinClient = TRUE;
-	gfx->SmallCache = FALSE;
-
-#ifdef WITH_OPENH264
-	gfx->H264 = TRUE;
-#else
-	gfx->H264 = FALSE;
-#endif
-
-	gfx->MaxCacheSlot = (gfx->ThinClient) ? 4096 : 25600;
-
 	header.flags = 0;
 	header.cmdId = RDPGFX_CMDID_CAPSADVERTISE;
 
-	pdu.capsSetCount = 2;
+	pdu.capsSetCount = 0;
 	pdu.capsSets = (RDPGFX_CAPSET*) capsSets;
 
-	capsSet = &capsSets[0];
-
+	capsSet = &capsSets[pdu.capsSetCount++];
 	capsSet->version = RDPGFX_CAPVERSION_8;
 	capsSet->flags = 0;
 
@@ -84,8 +72,7 @@ int rdpgfx_send_caps_advertise_pdu(RDPGFX_CHANNEL_CALLBACK* callback)
 	if (gfx->SmallCache)
 		capsSet->flags |= RDPGFX_CAPS_FLAG_SMALL_CACHE;
 
-	capsSet = &capsSets[1];
-
+	capsSet = &capsSets[pdu.capsSetCount++];
 	capsSet->version = RDPGFX_CAPVERSION_81;
 	capsSet->flags = 0;
 
@@ -1066,6 +1053,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			return -1;
 
 		gfx->log = WLog_Get("com.freerdp.gfx.client");
+		gfx->settings = (rdpSettings*) pEntryPoints->GetRdpSettings(pEntryPoints);
 
 		gfx->iface.Initialize = rdpgfx_plugin_initialize;
 		gfx->iface.Connected = NULL;
@@ -1077,7 +1065,18 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		if (!gfx->SurfaceTable)
 			return -1;
 
-		gfx->ThinClient = TRUE;
+		gfx->ThinClient = gfx->settings->GfxThinClient;
+		gfx->SmallCache = gfx->settings->GfxSmallCache;
+		gfx->Progressive = gfx->settings->GfxProgressive;
+		gfx->ProgressiveV2 = gfx->settings->GfxProgressiveV2;
+		gfx->H264 = gfx->settings->GfxH264;
+
+		if (gfx->H264)
+			gfx->SmallCache = TRUE;
+
+		if (gfx->SmallCache)
+			gfx->ThinClient = FALSE;
+
 		gfx->MaxCacheSlot = (gfx->ThinClient) ? 4096 : 25600;
 
 		context = (RdpgfxClientContext*) calloc(1, sizeof(RdpgfxClientContext));

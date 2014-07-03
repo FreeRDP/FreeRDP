@@ -401,6 +401,12 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->AutoReconnectionEnabled = FALSE;
 		settings->AutoReconnectMaxRetries = 20;
 
+		settings->GfxThinClient = TRUE;
+		settings->GfxSmallCache = FALSE;
+		settings->GfxProgressive = FALSE;
+		settings->GfxProgressiveV2 = FALSE;
+		settings->GfxH264 = FALSE;
+
 		settings->ClientAutoReconnectCookie = (ARC_CS_PRIVATE_PACKET*) malloc(sizeof(ARC_CS_PRIVATE_PACKET));
 		settings->ServerAutoReconnectCookie = (ARC_SC_PRIVATE_PACKET*) malloc(sizeof(ARC_SC_PRIVATE_PACKET));
 		ZeroMemory(settings->ClientAutoReconnectCookie, sizeof(ARC_CS_PRIVATE_PACKET));
@@ -697,6 +703,11 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->RemoteFxImageCodec = settings->RemoteFxImageCodec; /* 3652 */
 		_settings->NSCodec = settings->NSCodec; /* 3712 */
 		_settings->JpegCodec = settings->JpegCodec; /* 3776 */
+		_settings->GfxThinClient = settings->GfxThinClient; /* 3840 */
+		_settings->GfxSmallCache = settings->GfxSmallCache; /* 3841 */
+		_settings->GfxProgressive = settings->GfxProgressive; /* 3842 */
+		_settings->GfxProgressiveV2 = settings->GfxProgressiveV2; /* 3843 */
+		_settings->GfxH264 = settings->GfxH264; /* 3844 */
 		_settings->DrawNineGridEnabled = settings->DrawNineGridEnabled; /* 3968 */
 		_settings->DrawGdiPlusEnabled = settings->DrawGdiPlusEnabled; /* 4032 */
 		_settings->DrawGdiPlusCacheEnabled = settings->DrawGdiPlusCacheEnabled; /* 4033 */

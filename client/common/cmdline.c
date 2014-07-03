@@ -111,6 +111,11 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "wallpaper", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Wallpaper" },
 	{ "gdi", COMMAND_LINE_VALUE_REQUIRED, "<sw|hw>", NULL, NULL, -1, NULL, "GDI rendering" },
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, NULL, NULL, NULL, -1, NULL, "RDP8 graphics pipeline (experimental)" },
+	{ "gfx-thin-client", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline thin client mode" },
+	{ "gfx-small-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline small cache mode" },
+	{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline progressive codec" },
+	{ "gfx-progressive-v2", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8.1 graphics pipeline progressive v2 codec" },
+	{ "gfx-h264", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8.1 graphics pipeline H264 codec" },
 	{ "rfx", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "RemoteFX" },
 	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "<image|video>", NULL, NULL, -1, NULL, "RemoteFX mode" },
 	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Frame acknowledgement" },
@@ -1621,10 +1626,31 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "gfx")
 		{
 			settings->SupportGraphicsPipeline = TRUE;
-			settings->FastPathOutput = TRUE;
-			settings->ColorDepth = 32;
-			settings->LargePointerFlag = TRUE;
-			settings->FrameMarkerCommandEnabled = TRUE;
+		}
+		CommandLineSwitchCase(arg, "gfx-thin-client")
+		{
+			settings->GfxThinClient = arg->Value ? TRUE : FALSE;
+			settings->SupportGraphicsPipeline = TRUE;
+		}
+		CommandLineSwitchCase(arg, "gfx-small-cache")
+		{
+			settings->GfxSmallCache = arg->Value ? TRUE : FALSE;
+			settings->SupportGraphicsPipeline = TRUE;
+		}
+		CommandLineSwitchCase(arg, "gfx-progressive")
+		{
+			settings->GfxProgressive = arg->Value ? TRUE : FALSE;
+			settings->SupportGraphicsPipeline = TRUE;
+		}
+		CommandLineSwitchCase(arg, "gfx-progressive-v2")
+		{
+			settings->GfxProgressiveV2 = arg->Value ? TRUE : FALSE;
+			settings->SupportGraphicsPipeline = TRUE;
+		}
+		CommandLineSwitchCase(arg, "gfx-h264")
+		{
+			settings->GfxH264 = arg->Value ? TRUE : FALSE;
+			settings->SupportGraphicsPipeline = TRUE;
 		}
 		CommandLineSwitchCase(arg, "rfx")
 		{
@@ -1885,6 +1911,14 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (settings->Password)
 				settings->GatewayPassword = _strdup(settings->Password);
 		}
+	}
+
+	if (settings->SupportGraphicsPipeline)
+	{
+		settings->FastPathOutput = TRUE;
+		settings->ColorDepth = 32;
+		settings->LargePointerFlag = TRUE;
+		settings->FrameMarkerCommandEnabled = TRUE;
 	}
 
 	arg = CommandLineFindArgumentA(args, "port");
