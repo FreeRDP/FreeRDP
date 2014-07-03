@@ -172,7 +172,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		suboffset = 0;
 		residualData = &pSrcData[offset];
 
-		pixelIndex = pixelCount = 0;
+		pixelIndex = 0;
 
 		while (suboffset < residualByteCount)
 		{
@@ -260,6 +260,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			UINT16 vBarYOn;
 			UINT16 vBarYOff;
 			UINT32 vBarCount;
+			UINT32 vBarHeight;
 			UINT32 vBarPixelCount;
 			UINT32 vBarShortPixelCount;
 			CLEAR_VBAR_ENTRY* vBarEntry;
@@ -299,9 +300,9 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 				vBarHeader = *((UINT16*) &vBar[0]);
 				suboffset += 2;
 
-				vBarPixelCount = (yEnd - yStart + 1);
+				vBarHeight = (yEnd - yStart + 1);
 
-				if (vBarPixelCount > 52)
+				if (vBarHeight > 52)
 					return -1020;
 
 				if ((vBarHeader & 0xC000) == 0x8000) /* VBAR_CACHE_HIT */
@@ -402,6 +403,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					if (!vBarEntry->pixels)
 						return -1030;
 
+					vBarPixelCount = vBarHeight;
 					pDstPixel32 = vBarEntry->pixels;
 
 					/* if (y < vBarYOn), use colorBkg */
@@ -448,18 +450,44 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					clear->VBarStorageCursor++;
 				}
 
-				count = vBarEntry->count;
 				nXDstRel = nXDst + xStart;
 				nYDstRel = nYDst + yStart;
 
-				pSrcPixel32 = (UINT32*) vBarEntry->pixels;
+				pSrcPixel32 = vBarEntry->pixels;
 				pDstPixel8 = &pDstData[(nYDstRel * nDstStep) + ((nXDstRel + i) * 4)];
 
-				for (y = 0; y < count; y++)
+				count = yEnd - yStart + 1;
+
+				if (vBarEntry->count < count) /* vBar is smaller */
 				{
-					*((UINT32*) pDstPixel8) = *pSrcPixel32;
-					pDstPixel8 += nDstStep;
-					pSrcPixel32++;
+					for (y = 0; y < vBarEntry->count; y++)
+					{
+						*((UINT32*) pDstPixel8) = *pSrcPixel32;
+						pDstPixel8 += nDstStep;
+						pSrcPixel32++;
+					}
+
+					count -= vBarEntry->count;
+
+					if (vBarEntry->count)
+						color = vBarEntry->pixels[vBarEntry->count - 1];
+					else
+						color = 0;
+
+					for (y = 0; y < count; y++)
+					{
+						*((UINT32*) pDstPixel8) = color;
+						pDstPixel8 += nDstStep;
+					}
+				}
+				else /* vBar is taller or equal */
+				{
+					for (y = 0; y < count; y++)
+					{
+						*((UINT32*) pDstPixel8) = *pSrcPixel32;
+						pDstPixel8 += nDstStep;
+						pSrcPixel32++;
+					}
 				}
 			}
 		}
