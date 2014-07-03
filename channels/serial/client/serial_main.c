@@ -24,10 +24,11 @@
 #endif
 
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #ifdef HAVE_SYS_MODEM_H
 #include <sys/modem.h>
@@ -470,6 +471,7 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 	IRP_THREAD_DATA *data = NULL;
 	HANDLE irpThread = INVALID_HANDLE_VALUE;
 	HANDLE previousIrpThread;
+	uintptr_t key;
 
 	/* for a test/debug purpose, uncomment the code below to get a
 	 * single thread for all IRPs. NB: two IRPs could not be
@@ -547,7 +549,8 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 	 * observed with FreeRDP).
 	 */
 
-	previousIrpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)irp->CompletionId);
+	key = irp->CompletionId;
+	previousIrpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)key);
 	if (previousIrpThread)
 	{
 		/* Thread still alived <=> Request still pending */
@@ -618,8 +621,8 @@ static void create_irp_thread(SERIAL_DEVICE *serial, IRP *irp)
 	}
 
 
-
-	ListDictionary_Add(serial->IrpThreads, (void*)irp->CompletionId, irpThread);
+	key = irp->CompletionId;
+	ListDictionary_Add(serial->IrpThreads, (void*)key, irpThread);
 
 	return;
 
