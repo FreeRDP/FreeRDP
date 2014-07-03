@@ -45,6 +45,7 @@
 /* _HandleCreators is a NULL-terminated array with a maximun of HANDLE_CREATOR_MAX HANDLE_CREATOR */
 #define HANDLE_CLOSE_CB_MAX 128
 static HANDLE_CLOSE_CB **_HandleCloseCbs = NULL;
+static CRITICAL_SECTION _HandleCloseCbsLock;
 
 static pthread_once_t _HandleCloseCbsInitialized = PTHREAD_ONCE_INIT;
 static void _HandleCloseCbsInit()
@@ -54,6 +55,8 @@ static void _HandleCloseCbsInit()
 	assert(_HandleCloseCbs == NULL);
 
 	_HandleCloseCbs = (HANDLE_CLOSE_CB**)calloc(HANDLE_CLOSE_CB_MAX+1, sizeof(HANDLE_CLOSE_CB*));
+
+	InitializeCriticalSection(&_HandleCloseCbsLock);
 
 	assert(_HandleCloseCbs != NULL);
 }
@@ -75,16 +78,20 @@ BOOL RegisterHandleCloseCb(HANDLE_CLOSE_CB *pHandleCloseCb)
 		return FALSE;
 	}
 
+	EnterCriticalSection(&_HandleCloseCbsLock);
 
 	for (i=0; i<HANDLE_CLOSE_CB_MAX; i++)
 	{
 		if (_HandleCloseCbs[i] == NULL)
 		{
 			_HandleCloseCbs[i] = pHandleCloseCb;
+
+			LeaveCriticalSection(&_HandleCloseCbsLock);
 			return TRUE;
 		}
 	}
 
+	LeaveCriticalSection(&_HandleCloseCbsLock);
 	return FALSE;
 }
 
@@ -109,14 +116,22 @@ BOOL CloseHandle(HANDLE hObject)
 		return FALSE;
 	}
 
+
+	EnterCriticalSection(&_HandleCloseCbsLock);
+
 	for (i=0; _HandleCloseCbs[i] != NULL; i++)
 	{
 		HANDLE_CLOSE_CB *close_cb = (HANDLE_CLOSE_CB*)_HandleCloseCbs[i];
 		if (close_cb && close_cb->IsHandled(hObject))
 		{
-			return close_cb->CloseHandle(hObject);
+			BOOL result = close_cb->CloseHandle(hObject);
+
+			LeaveCriticalSection(&_HandleCloseCbsLock);
+			return result;
 		}
 	}
+
+	LeaveCriticalSection(&_HandleCloseCbsLock);
 
 
 	if (Type == HANDLE_TYPE_THREAD)
