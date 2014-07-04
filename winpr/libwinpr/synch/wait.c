@@ -191,7 +191,7 @@ static int waitOnFd(int fd, DWORD dwMilliseconds)
 	while ((status < 0) && (errno == EINTR));
 
 #else
-	struct timespec timeout;
+	struct timeval timeout;
 	fd_set rfds;
 
 	FD_ZERO(&rfds);
