@@ -28,6 +28,9 @@
 
 #ifdef HAVE_POLL_H
 #include <poll.h>
+#else
+#include <time.h>
+#include <sys/select.h>
 #endif
 
 #include <assert.h>
