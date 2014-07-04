@@ -24,6 +24,7 @@
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
+#include <winpr/winsock.h>
 
 #include <freerdp/utils/tcp.h>
 
