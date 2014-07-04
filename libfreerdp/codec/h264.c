@@ -28,8 +28,6 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/h264.h>
 
-#ifdef WITH_OPENH264
-
 #define USE_DUMP_IMAGE	0
 #define USE_GRAY_SCALE	0
 
@@ -97,6 +95,7 @@ static void h264_dump_i420_image(BYTE* imageData, int imageWidth, int imageHeigh
 int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
 {
+#ifdef WITH_OPENH264
 	DECODING_STATE state;
 	SBufferInfo sBufferInfo;
 	SSysMEMBuffer* pSystemBuffer;
@@ -198,6 +197,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 			pXRGB += 4;
 		}
 	}
+#endif
 
 	return 1;
 }
@@ -213,11 +213,7 @@ void h264_context_reset(H264_CONTEXT* h264)
 
 H264_CONTEXT* h264_context_new(BOOL Compressor)
 {
-	static EVideoFormatType videoFormat = videoFormatI420;
-
 	H264_CONTEXT* h264;
-	SDecodingParam sDecParam;
-	long status;
 
 	h264 = (H264_CONTEXT*) calloc(1, sizeof(H264_CONTEXT));
 
@@ -225,28 +221,37 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	{
 		h264->Compressor = Compressor;
 
-		WelsCreateDecoder(&h264->pDecoder);
-
-		if (!h264->pDecoder)
+#ifdef WITH_OPENH264
 		{
-			printf("Failed to create OpenH264 decoder\n");
-			goto EXCEPTION;
-		}
+			static EVideoFormatType videoFormat = videoFormatI420;
 
-		ZeroMemory(&sDecParam, sizeof(sDecParam));
-		sDecParam.iOutputColorFormat = videoFormatARGB;
-		status = (*h264->pDecoder)->Initialize(h264->pDecoder, &sDecParam);
-		if (status != 0)
-		{
-			printf("Failed to initialize OpenH264 decoder (status=%ld)\n", status);
-			goto EXCEPTION;
-		}
+			SDecodingParam sDecParam;
+			long status;
 
-		status = (*h264->pDecoder)->SetOption(h264->pDecoder, DECODER_OPTION_DATAFORMAT, &videoFormat);
-		if (status != 0)
-		{
-			printf("Failed to set data format option on OpenH264 decoder (status=%ld)\n", status);
+			WelsCreateDecoder(&h264->pDecoder);
+
+			if (!h264->pDecoder)
+			{
+				printf("Failed to create OpenH264 decoder\n");
+				goto EXCEPTION;
+			}
+
+			ZeroMemory(&sDecParam, sizeof(sDecParam));
+			sDecParam.iOutputColorFormat = videoFormatARGB;
+			status = (*h264->pDecoder)->Initialize(h264->pDecoder, &sDecParam);
+			if (status != 0)
+			{
+				printf("Failed to initialize OpenH264 decoder (status=%ld)\n", status);
+				goto EXCEPTION;
+			}
+
+			status = (*h264->pDecoder)->SetOption(h264->pDecoder, DECODER_OPTION_DATAFORMAT, &videoFormat);
+			if (status != 0)
+			{
+				printf("Failed to set data format option on OpenH264 decoder (status=%ld)\n", status);
+			}
 		}
+#endif
 			
 		h264_context_reset(h264);
 	}
@@ -254,10 +259,12 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	return h264;
 
 EXCEPTION:
+#ifdef WITH_OPENH264
 	if (h264->pDecoder)
 	{
 		WelsDestroyDecoder(h264->pDecoder);
 	}
+#endif
 
 	free(h264);
 
@@ -268,14 +275,14 @@ void h264_context_free(H264_CONTEXT* h264)
 {
 	if (h264)
 	{
+#ifdef WITH_OPENH264
 		if (h264->pDecoder)
 		{
 			(*h264->pDecoder)->Uninitialize(h264->pDecoder);
 			WelsDestroyDecoder(h264->pDecoder);
 		}
+#endif
 
 		free(h264);
 	}
 }
-
-#endif
