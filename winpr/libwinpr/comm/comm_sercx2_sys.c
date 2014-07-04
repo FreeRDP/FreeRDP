@@ -20,7 +20,7 @@
  * limitations under the License.
  */
 
-#ifndef _WIN32
+#ifdef __linux__
 
 #include <winpr/wlog.h>
 
@@ -204,4 +204,4 @@ SERIAL_DRIVER* SerCx2Sys_s()
 	return &_SerCx2Sys;
 }
 
-#endif /* _WIN32 */
+#endif /* __linux__ */

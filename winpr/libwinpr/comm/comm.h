@@ -21,7 +21,7 @@
 #ifndef WINPR_COMM_PRIVATE_H
 #define WINPR_COMM_PRIVATE_H
 
-#ifndef _WIN32
+#ifdef __linux__
 
 #include <linux/serial.h>
 #include <sys/eventfd.h>
@@ -92,6 +92,6 @@ void CommLog_Print(int wlog_level, char *fmt, ...);
 BOOL CommIsHandled(HANDLE handle);
 BOOL CommCloseHandle(HANDLE handle);
 
-#endif /* _WIN32 */
+#endif /* __linux__ */
 
 #endif /* WINPR_COMM_PRIVATE_H */

@@ -30,19 +30,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_SYS_MODEM_H
-#include <sys/modem.h>
-#endif
-#ifdef HAVE_SYS_FILIO_H
-#include <sys/filio.h>
-#endif
-#ifdef HAVE_SYS_STRTIO_H
-#include <sys/strtio.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #include <winpr/collections.h>
 #include <winpr/comm.h>
 #include <winpr/crt.h>

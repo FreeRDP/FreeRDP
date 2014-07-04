@@ -20,7 +20,7 @@
  * limitations under the License.
  */
 
-#ifndef _WIN32
+#ifdef __linux__
 
 #include <assert.h>
 #include <errno.h>
@@ -1545,4 +1545,4 @@ SERIAL_DRIVER* SerialSys_s()
 	return &_SerialSys;
 }
 
-#endif /* _WIN32 */
+#endif /* __linux__ */

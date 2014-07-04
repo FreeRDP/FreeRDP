@@ -20,7 +20,7 @@
  * limitations under the License.
  */
 
-#ifndef _WIN32
+#ifdef __linux__
 
 #include <assert.h>
 #include <termios.h>
@@ -452,4 +452,4 @@ SERIAL_DRIVER* SerCxSys_s()
 	return &_SerCxSys;
 }
 
-#endif /* _WIN32 */
+#endif /* __linux__ */

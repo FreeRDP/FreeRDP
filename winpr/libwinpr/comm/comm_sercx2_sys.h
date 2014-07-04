@@ -20,7 +20,7 @@
 #ifndef COMM_SERCX2_SYS_H
 #define COMM_SERCX2_SYS_H
 
-#ifndef _WIN32
+#ifdef __linux__
 
 #include "comm_ioctl.h"
 
@@ -34,6 +34,6 @@ SERIAL_DRIVER* SerCx2Sys_s();
 }
 #endif
 
-#endif /* _WIN32 */
+#endif /* __linux__ */
 
 #endif /* COMM_SERCX2_SYS_H */

@@ -22,7 +22,7 @@
 #ifndef WINPR_COMM_IOCTL_H_
 #define WINPR_COMM_IOCTL_H_
 
-#ifndef _WIN32
+#ifdef __linux__
 
 #include <termios.h>
 
@@ -239,6 +239,6 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *te
 }
 #endif
 
-#endif /* _WIN32 */
+#endif /* __linux__ */
 
 #endif /* WINPR_COMM_IOCTL_H_ */

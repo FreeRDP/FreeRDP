@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#ifndef _WIN32
+#ifdef __linux__
 
 #include <assert.h>
 #include <errno.h>
@@ -547,4 +547,4 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 }
 
 
-#endif /* _WIN32 */
+#endif /* __linux__ */

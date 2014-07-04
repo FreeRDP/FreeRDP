@@ -24,7 +24,7 @@
 #include "config.h"
 #endif
 
-#ifndef _WIN32
+#ifdef __linux__
 
 
 #include <assert.h>
@@ -736,4 +736,4 @@ int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios *te
 }
 
 
-#endif /* _WIN32 */
+#endif /* __linux__ */

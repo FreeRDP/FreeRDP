@@ -29,7 +29,7 @@
 #include <winpr/wtypes.h>
 
 
-#ifndef _WIN32
+#ifdef __linux__
 
 #define NOPARITY		0
 #define ODDPARITY		1
@@ -583,7 +583,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 }
 #endif
 
-#endif /* _WIN32 */
+#endif /* __linux__ */
 
 #endif /* WINPR_COMM_H */
 
