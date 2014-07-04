@@ -291,7 +291,6 @@ public class HomeActivity extends Activity
 		if (GlobalSettings.getAskOnExit())
 		{
 			final CheckBox cb = new CheckBox(this);
-			cb.setTextAppearance(this, android.R.style.TextAppearance_Medium_Inverse);
 			cb.setChecked(!GlobalSettings.getAskOnExit());
 			cb.setText(R.string.dlg_dont_show_again);
 			

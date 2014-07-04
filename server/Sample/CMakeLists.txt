@@ -24,7 +24,9 @@ set(${MODULE_PREFIX}_SRCS
 	sf_audin.c
 	sf_audin.h
 	sf_rdpsnd.c
-	sf_rdpsnd.h)
+	sf_rdpsnd.h
+	sf_encomsp.c
+	sf_encomsp.h)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 

@@ -281,16 +281,15 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 
 	DstData = surface->data;
 
-#if 0
-	status = clear_decompress(NULL, cmd->data, cmd->length, &DstData,
+	status = clear_decompress(xfc->clear, cmd->data, cmd->length, &DstData,
 			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
-#else
-	status = -1;
-#endif
 
-	printf("xf_SurfaceCommand_ClearCodec: status: %d\n", status);
+	if (status < 0)
+	{
+		printf("clear_decompress failure: %d\n", status);
+	}
 
-#if 1
+#if 0
 	/* fill with pink for now to distinguish from the rest */
 
 	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
@@ -586,7 +585,7 @@ int xf_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill)
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, solidFill->surfaceId);
 
-	printf("xf_SolidFill\n");
+	//printf("xf_SolidFill\n");
 
 	if (!surface)
 		return -1;

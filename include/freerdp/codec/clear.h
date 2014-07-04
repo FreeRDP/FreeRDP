@@ -23,19 +23,29 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <freerdp/codec/nsc.h>
 #include <freerdp/codec/color.h>
 
 #define CLEARCODEC_FLAG_GLYPH_INDEX	0x01
 #define CLEARCODEC_FLAG_GLYPH_HIT	0x02
 #define CLEARCODEC_FLAG_CACHE_RESET	0x03
 
+struct _CLEAR_VBAR_ENTRY
+{
+	UINT32 count;
+	UINT32* pixels;
+};
+typedef struct _CLEAR_VBAR_ENTRY CLEAR_VBAR_ENTRY;
+
 struct _CLEAR_CONTEXT
 {
 	BOOL Compressor;
+	NSC_CONTEXT* nsc;
+	BYTE* GlyphCache[4000];
 	UINT32 VBarStorageCursor;
-	void* VBarStorage[32768];
+	CLEAR_VBAR_ENTRY VBarStorage[32768];
 	UINT32 ShortVBarStorageCursor;
-	void* ShortVBarStorage[16384];
+	CLEAR_VBAR_ENTRY ShortVBarStorage[16384];
 };
 typedef struct _CLEAR_CONTEXT CLEAR_CONTEXT;
 

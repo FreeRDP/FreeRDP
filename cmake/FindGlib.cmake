@@ -28,11 +28,10 @@ find_library(Gobject_LIBRARY
 			 PATHS ${Glib_PKGCONF_LIBRARY_DIRS} ${GLIB_ROOT_DIR}
 			)
 
-# Glib-related libraries also use a separate config header, which is in lib dir
+# Glib-related libraries also use a separate config header, which is relative to lib dir
 find_path(GlibConfig_INCLUDE_DIR
 		  NAMES glibconfig.h
-		  PATHS ${Glib_PKGCONF_INCLUDE_DIRS} /usr ${GLIB_ROOT_DIR}
-		  PATH_SUFFIXES lib/glib-2.0/include glib-2.0/include
+		  PATHS ${Glib_PKGCONF_INCLUDE_DIRS} ${GLIB_ROOT_DIR}
 		 )
 
 # Set the include dir variables and the libraries and let libfind_process do the rest.

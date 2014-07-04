@@ -355,11 +355,15 @@ void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_f
 	}
 }
 
-void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT16 width, UINT16 height, BYTE* data, UINT32 length)
+int nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT16 width, UINT16 height, BYTE* data, UINT32 length)
 {
 	wStream* s;
 
 	s = Stream_New(data, length);
+
+	if (!s)
+		return -1;
+
 	context->bpp = bpp;
 	context->width = width;
 	context->height = height;
@@ -375,4 +379,6 @@ void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT16 width, UINT16 
 	PROFILER_ENTER(context->priv->prof_nsc_decode);
 	context->decode(context);
 	PROFILER_EXIT(context->priv->prof_nsc_decode);
+
+	return 1;
 }

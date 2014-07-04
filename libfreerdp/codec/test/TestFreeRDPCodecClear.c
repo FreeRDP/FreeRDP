@@ -50,8 +50,7 @@ int test_ClearDecompressExample1()
 	SrcSize = sizeof(TEST_CLEAR_EXAMPLE_1) - 1;
 	pSrcData = (BYTE*) TEST_CLEAR_EXAMPLE_1;
 
-	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData,
-			PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
+	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
 
 	printf("clear_decompress example 1 status: %d\n", status);
 
@@ -73,8 +72,7 @@ int test_ClearDecompressExample2()
 	SrcSize = sizeof(TEST_CLEAR_EXAMPLE_2) - 1;
 	pSrcData = (BYTE*) TEST_CLEAR_EXAMPLE_2;
 
-	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData,
-			PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
+	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
 
 	printf("clear_decompress example 2 status: %d\n", status);
 
@@ -96,8 +94,7 @@ int test_ClearDecompressExample3()
 	SrcSize = sizeof(TEST_CLEAR_EXAMPLE_3) - 1;
 	pSrcData = (BYTE*) TEST_CLEAR_EXAMPLE_3;
 
-	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData,
-			PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
+	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
 
 	printf("clear_decompress example 3 status: %d\n", status);
 
@@ -119,8 +116,7 @@ int test_ClearDecompressExample4()
 	SrcSize = sizeof(TEST_CLEAR_EXAMPLE_4) - 1;
 	pSrcData = (BYTE*) TEST_CLEAR_EXAMPLE_4;
 
-	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData,
-			PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
+	status = clear_decompress(clear, pSrcData, SrcSize, &pDstData, PIXEL_FORMAT_XRGB32, 0, 0, 0, 0, 0);
 
 	printf("clear_decompress example 4 status: %d\n", status);
 

@@ -209,11 +209,19 @@ int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 
 void h264_context_reset(H264_CONTEXT* h264)
 {
+
 }
 
 H264_CONTEXT* h264_context_new(BOOL Compressor)
 {
+<<<<<<< HEAD
 	H264_CONTEXT* h264;
+=======
+	long status;
+	H264_CONTEXT* h264;
+	SDecodingParam sDecParam;
+	static EVideoFormatType videoFormat = videoFormatI420;
+>>>>>>> 5c5386fe042de2a638a03e856afa3ec89f9d1a12
 
 	h264 = (H264_CONTEXT*) calloc(1, sizeof(H264_CONTEXT));
 
@@ -221,7 +229,31 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	{
 		h264->Compressor = Compressor;
 
+<<<<<<< HEAD
 #ifdef WITH_OPENH264
+=======
+		WelsCreateDecoder(&h264->pDecoder);
+
+		if (!h264->pDecoder)
+		{
+			printf("Failed to create OpenH264 decoder\n");
+			goto EXCEPTION;
+		}
+
+		ZeroMemory(&sDecParam, sizeof(sDecParam));
+		sDecParam.iOutputColorFormat = videoFormatARGB;
+		status = (*h264->pDecoder)->Initialize(h264->pDecoder, &sDecParam);
+
+		if (status != 0)
+		{
+			printf("Failed to initialize OpenH264 decoder (status=%ld)\n", status);
+			goto EXCEPTION;
+		}
+
+		status = (*h264->pDecoder)->SetOption(h264->pDecoder, DECODER_OPTION_DATAFORMAT, &videoFormat);
+
+		if (status != 0)
+>>>>>>> 5c5386fe042de2a638a03e856afa3ec89f9d1a12
 		{
 			static EVideoFormatType videoFormat = videoFormatI420;
 

@@ -329,6 +329,7 @@ static int tsmf_on_new_channel_connection(IWTSListenerCallback *pListenerCallbac
 	ZeroMemory(callback, sizeof(TSMF_CHANNEL_CALLBACK));
 	callback->iface.OnDataReceived = tsmf_on_data_received;
 	callback->iface.OnClose = tsmf_on_close;
+	callback->iface.OnOpen = NULL;
 	callback->plugin = listener_callback->plugin;
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = pChannel;

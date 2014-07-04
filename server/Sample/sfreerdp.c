@@ -30,9 +30,9 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
-
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/tcp.h>
@@ -40,6 +40,7 @@
 
 #include "sf_audin.h"
 #include "sf_rdpsnd.h"
+#include "sf_encomsp.h"
 
 #include "sfreerdp.h"
 
@@ -95,6 +96,9 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 
 		if (context->rdpsnd)
 			rdpsnd_server_context_free(context->rdpsnd);
+
+		if (context->encomsp)
+			encomsp_server_context_free(context->encomsp);
 
 		WTSCloseServer((HANDLE) context->vcm);
 	}
@@ -514,6 +518,11 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpsnd"))
 	{
 		sf_peer_rdpsnd_init(context); /* Audio Output */
+	}
+
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "encomsp"))
+	{
+		sf_peer_encomsp_init(context); /* Lync Multiparty */
 	}
 
 	/* Dynamic Virtual Channels */

@@ -88,6 +88,7 @@ if(WITH_JPEG)
 endif()
 
 if(WITH_OPENH264)
+	add_definitions(-DWITH_OPENH264)
 	include_directories(${OPENH264_INCLUDE_DIR})
 	set(FREERDP_OPENH264_LIBS ${OPENH264_LIBRARIES})
 endif()
