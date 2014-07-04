@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
