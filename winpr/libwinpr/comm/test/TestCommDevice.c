@@ -53,7 +53,7 @@ static int test_CommDevice(LPCTSTR lpDeviceName, BOOL expectedResult)
 	tcslen = QueryCommDevice(lpDeviceName, lpTargetPath, MAX_PATH);
 	if (expectedResult)
 	{
-		if (tcslen <= _tcslen(lpDeviceName)) /* at least 2 more TCHAR are expected */
+		if (tcslen <= _tcslen(lpTargetPath)) /* at least 2 more TCHAR are expected */
 		{
 			_tprintf(_T("QueryCommDevice failure: didn't found the device name: %s\n"), lpDeviceName);
 			return FALSE;

@@ -970,7 +970,7 @@ static BOOL _IsReservedCommDeviceName(LPCTSTR lpName)
 	for (i=1; i<10; i++)
 	{
 		TCHAR genericName[5];
-		if (_stprintf_s(genericName, 5, "COM%d", i) < 0)
+		if (_stprintf_s(genericName, 5, _T("COM%d"), i) < 0)
 		{
 			return FALSE;
 		}
@@ -983,7 +983,7 @@ static BOOL _IsReservedCommDeviceName(LPCTSTR lpName)
 	for (i=1; i<10; i++)
 	{
 		TCHAR genericName[5];
-		if (_stprintf_s(genericName, 5, "LPT%d", i) < 0)
+		if (_stprintf_s(genericName, 5, _T("LPT%d"), i) < 0)
 		{
 			return FALSE;
 		}
@@ -1172,7 +1172,7 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 	}
 
 	_tcscpy(lpTargetPath, storedTargetPath);
-	_tcscat(lpTargetPath, ""); /* 2nd final '\0' */
+	lpTargetPath[_tcslen(storedTargetPath) + 1] = '\0'; /* 2nd final '\0' */
 
 	return _tcslen(lpTargetPath) + 2;
 }
