@@ -22,7 +22,7 @@
 #ifndef WINPR_COMM_IOCTL_H_
 #define WINPR_COMM_IOCTL_H_
 
-#ifdef __linux__
+#if defined __linux__ && !defined ANDROID
 
 #include <termios.h>
 

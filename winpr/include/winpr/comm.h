@@ -29,7 +29,7 @@
 #include <winpr/wtypes.h>
 
 
-#ifdef __linux__
+#if defined __linux__ && !defined ANDROID
 
 #define NOPARITY		0
 #define ODDPARITY		1

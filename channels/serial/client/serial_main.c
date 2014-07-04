@@ -44,7 +44,7 @@
 /* TODO: all #ifdef __linux__ could be removed once only some generic
  * functions will be used. Replace CommReadFile by ReadFile,
  * CommWriteFile by WriteFile etc..  */
-#ifdef __linux__ 
+#if defined __linux__ && !defined ANDROID 
 
 #define MAX_IRP_THREADS	5
 
@@ -740,7 +740,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	char* path;
 	char* driver;
 	RDPDR_SERIAL* device;
-#ifdef __linux__
+#if defined __linux__ && !defined ANDROID
 	int i, len;
 	SERIAL_DEVICE* serial;
 #endif /* __linux__ */

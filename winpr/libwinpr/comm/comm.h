@@ -21,7 +21,7 @@
 #ifndef WINPR_COMM_PRIVATE_H
 #define WINPR_COMM_PRIVATE_H
 
-#ifdef __linux__
+#if defined __linux__ && !defined ANDROID
 
 #include <linux/serial.h>
 #include <sys/eventfd.h>

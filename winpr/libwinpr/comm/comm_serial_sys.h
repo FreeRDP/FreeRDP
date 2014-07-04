@@ -20,7 +20,7 @@
 #ifndef COMM_SERIAL_SYS_H
 #define COMM_SERIAL_SYS_H
 
-#ifdef __linux__
+#if defined __linux__ && !defined ANDROID
 
 #include "comm_ioctl.h"
 

@@ -20,7 +20,7 @@
  * limitations under the License.
  */
 
-#ifdef __linux__
+#if defined __linux__ && !defined ANDROID
 
 #include <assert.h>
 #include <termios.h>

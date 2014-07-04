@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#ifdef __linux__
+#if defined __linux__ && !defined ANDROID
 
 #include <assert.h>
 #include <errno.h>
