@@ -41,6 +41,11 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
 
+/* TODO: all #ifdef __linux__ could be removed once only some generic
+ * functions will be used. Replace CommReadFile by ReadFile,
+ * CommWriteFile by WriteFile etc..  */
+#ifdef __linux__ 
+
 #define MAX_IRP_THREADS	5
 
 typedef struct _SERIAL_DEVICE SERIAL_DEVICE;
@@ -723,18 +728,22 @@ static void serial_free(DEVICE* device)
 	free(serial);
 }
 
+#endif /* __linux__ */
+
 #ifdef STATIC_CHANNELS
 #define DeviceServiceEntry	serial_DeviceServiceEntry
 #endif
 
 int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
-	int i, len;
 	char* name;
 	char* path;
 	char* driver;
 	RDPDR_SERIAL* device;
+#ifdef __linux__
+	int i, len;
 	SERIAL_DEVICE* serial;
+#endif /* __linux__ */
 
 	device = (RDPDR_SERIAL*) pEntryPoints->device;
 	name = device->Name;
@@ -749,6 +758,21 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	if ((name && name[0]) && (path && path[0]))
 	{
+		wLog* log;
+
+		WLog_Init();
+		log = WLog_Get("com.freerdp.channel.serial.client");
+		WLog_Print(log, WLOG_DEBUG, "initializing");
+
+#ifndef __linux__ /* to be removed */
+
+		WLog_Print(log, WLOG_WARN, "Serial ports redirection not supported on this platform.");
+		return -1;
+
+#else /* __linux __ */
+
+		WLog_Print(log, WLOG_DEBUG, "Defining %s as %s", name, path);
+
 		if (!DefineCommDevice(name /* eg: COM1 */, path /* eg: /dev/ttyS0 */))
 		{
 			return -1;
@@ -758,10 +782,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		if (!serial)
 			return -1;
 
-		WLog_Init();
-		serial->log = WLog_Get("com.freerdp.channel.serial.client");
-		WLog_Print(serial->log, WLOG_DEBUG, "initializing");
-		WLog_Print(serial->log, WLOG_DEBUG, "Defining %s as %s", name, path);
+		serial->log = log;
 
 		serial->device.type = RDPDR_DTYP_SERIAL;
 		serial->device.name = name;
@@ -814,6 +835,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 						(void*) serial,
 						0,
 						NULL);
+#endif /* __linux __ */
 	}
 
 	return 0;
