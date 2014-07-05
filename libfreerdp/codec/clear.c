@@ -73,7 +73,6 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	UINT32 bandsByteCount;
 	UINT32 subcodecByteCount;
 	UINT32 runLengthFactor;
-	UINT32 pixelX, pixelY;
 	UINT32 pixelIndex = 0;
 	UINT32 pixelCount = 0;
 	BYTE* pSrcPixel8 = NULL;
@@ -92,9 +91,17 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	if (SrcSize < 2)
 		return -1003;
 
+	if ((nWidth > 0xFFFF) || (nHeight > 0xFFFF))
+		return -1004;
+
 	glyphFlags = pSrcData[0];
 	seqNumber = pSrcData[1];
 	offset += 2;
+
+	if (seqNumber != clear->seqNumber)
+		return -1005;
+
+	clear->seqNumber = (seqNumber + 1) % 256;
 
 	if (glyphFlags & CLEARCODEC_FLAG_CACHE_RESET)
 	{
@@ -102,24 +109,22 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		clear->ShortVBarStorageCursor = 0;
 	}
 
-	//printf("glyphFlags: 0x%02X seqNumber: %d\n", glyphFlags, seqNumber);
-
 	if ((glyphFlags & CLEARCODEC_FLAG_GLYPH_HIT) && !(glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX))
-		return -1004;
+		return -1006;
 
 	if (glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX)
 	{
 		if ((nWidth * nHeight) > (1024 * 1024))
-			return -1005;
+			return -1007;
 
 		if (SrcSize < 4)
-			return -1006;
+			return -1008;
 
 		glyphIndex = *((UINT16*) &pSrcData[2]);
 		offset += 2;
 
 		if (glyphIndex >= 4000)
-			return -1007;
+			return -1009;
 
 		if (glyphFlags & CLEARCODEC_FLAG_GLYPH_HIT)
 		{
@@ -131,7 +136,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			glyphData = clear->GlyphCache[glyphIndex];
 
 			if (!glyphData)
-				return -1008;
+				return -1010;
 
 			nSrcStep = nWidth * 4;
 			pSrcPixel8 = glyphData;
@@ -151,15 +156,15 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	/* Read composition payload header parameters */
 
 	if ((SrcSize - offset) < 12)
-		return -1009;
+		return -1011;
 
 	residualByteCount = *((UINT32*) &pSrcData[offset]);
 	bandsByteCount = *((UINT32*) &pSrcData[offset + 4]);
 	subcodecByteCount = *((UINT32*) &pSrcData[offset + 8]);
 	offset += 12;
 
-	printf("residualByteCount: %d bandsByteCount: %d subcodecByteCount: %d\n",
-			residualByteCount, bandsByteCount, subcodecByteCount);
+	//printf("residualByteCount: %d bandsByteCount: %d subcodecByteCount: %d\n",
+	//		residualByteCount, bandsByteCount, subcodecByteCount);
 
 	if (residualByteCount > 0)
 	{
@@ -167,17 +172,28 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE* residualData;
 
 		if ((SrcSize - offset) < residualByteCount)
-			return -1010;
+			return -1012;
 
 		suboffset = 0;
 		residualData = &pSrcData[offset];
 
-		pixelIndex = pixelCount = 0;
+		if ((nWidth * nHeight * 4) > clear->TempSize)
+		{
+			clear->TempSize = (nWidth * nHeight * 4);
+			clear->TempBuffer = (BYTE*) realloc(clear->TempBuffer, clear->TempSize);
+
+			if (!clear->TempBuffer)
+				return -1013;
+		}
+
+		pixelIndex = 0;
+		pixelCount = nWidth * nHeight;
+		pDstPixel32 = (UINT32*) clear->TempBuffer;
 
 		while (suboffset < residualByteCount)
 		{
 			if ((residualByteCount - suboffset) < 4)
-				return -1011;
+				return -1014;
 
 			color = RGB32(residualData[suboffset + 2], residualData[suboffset + 1], residualData[suboffset + 0]);
 			suboffset += 3;
@@ -188,7 +204,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			if (runLengthFactor >= 0xFF)
 			{
 				if ((residualByteCount - suboffset) < 2)
-					return -1012;
+					return -1015;
 
 				runLengthFactor = (UINT32) *((UINT16*) &residualData[suboffset]);
 				suboffset += 2;
@@ -196,41 +212,38 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 				if (runLengthFactor >= 0xFFFF)
 				{
 					if ((residualByteCount - suboffset) < 4)
-						return -1013;
+						return -1016;
 
 					runLengthFactor = *((UINT32*) &residualData[suboffset]);
 					suboffset += 4;
 				}
 			}
 
-			pixelX = (pixelIndex % nWidth);
-			pixelY = (pixelIndex - pixelX) / nWidth;
-			pixelCount = runLengthFactor;
+			if ((pixelIndex + runLengthFactor) > pixelCount)
+				return -1017;
 
-			while (pixelCount > 0)
+			for (i = 0; i < runLengthFactor; i++)
 			{
-				count = nWidth - pixelX;
-
-				if (count > pixelCount)
-					count = pixelCount;
-
-				pDstPixel32 = (UINT32*) &pDstData[((nYDst + pixelY) * nDstStep) + ((nXDst + pixelX) * 4)];
-				pixelCount -= count;
-
-				while (count--)
-				{
-					*pDstPixel32++ = color;
-				}
-
-				pixelX = 0;
-				pixelY++;
+				*pDstPixel32 = color;
+				pDstPixel32++;
 			}
 
 			pixelIndex += runLengthFactor;
 		}
 
-		if (pixelIndex != (nWidth * nHeight))
-			return -1014;
+		nSrcStep = nWidth * 4;
+		pSrcPixel8 = clear->TempBuffer;
+		pDstPixel8 = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
+
+		if (pixelIndex != pixelCount)
+			return -1018;
+
+		for (y = 0; y < nHeight; y++)
+		{
+			CopyMemory(pDstPixel8, pSrcPixel8, nSrcStep);
+			pSrcPixel8 += nSrcStep;
+			pDstPixel8 += nDstStep;
+		}
 
 		offset += residualByteCount;
 	}
@@ -241,7 +254,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		UINT32 suboffset;
 
 		if ((SrcSize - offset) < bandsByteCount)
-			return -1015;
+			return -1019;
 
 		suboffset = 0;
 		bandsData = &pSrcData[offset];
@@ -260,13 +273,14 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			UINT16 vBarYOn;
 			UINT16 vBarYOff;
 			UINT32 vBarCount;
+			UINT32 vBarHeight;
 			UINT32 vBarPixelCount;
 			UINT32 vBarShortPixelCount;
 			CLEAR_VBAR_ENTRY* vBarEntry;
 			CLEAR_VBAR_ENTRY* vBarShortEntry;
 
 			if ((bandsByteCount - suboffset) < 11)
-				return -1016;
+				return -1020;
 
 			xStart = *((UINT16*) &bandsData[suboffset]);
 			xEnd = *((UINT16*) &bandsData[suboffset + 2]);
@@ -278,15 +292,12 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			suboffset += 3;
 
 			if (xEnd < xStart)
-				return -1017;
+				return -1021;
 
 			if (yEnd < yStart)
-				return -1018;
+				return -1022;
 
 			vBarCount = (xEnd - xStart) + 1;
-
-			//printf("CLEARCODEC_BAND: xStart: %d xEnd: %d yStart: %d yEnd: %d vBarCount: %d blueBkg: 0x%02X greenBkg: 0x%02X redBkg: 0x%02X\n",
-			//		xStart, xEnd, yStart, yEnd, vBarCount, b, g, r);
 
 			for (i = 0; i < vBarCount; i++)
 			{
@@ -294,50 +305,33 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 				vBar = &bandsData[suboffset];
 
 				if ((bandsByteCount - suboffset) < 2)
-					return -1019;
+					return -1023;
 
 				vBarHeader = *((UINT16*) &vBar[0]);
 				suboffset += 2;
 
-				vBarPixelCount = (yEnd - yStart + 1);
+				vBarHeight = (yEnd - yStart + 1);
 
-				if (vBarPixelCount > 52)
-					return -1020;
+				if (vBarHeight > 52)
+					return -1024;
 
-				if ((vBarHeader & 0xC000) == 0x8000) /* VBAR_CACHE_HIT */
-				{
-					vBarIndex = (vBarHeader & 0x7FFF);
-
-					//printf("VBAR_CACHE_HIT: vBarIndex: %d Cursor: %d / %d\n",
-					//		vBarIndex, clear->VBarStorageCursor, clear->ShortVBarStorageCursor);
-
-					if (vBarIndex >= 32768)
-						return -1021;
-
-					vBarEntry = &(clear->VBarStorage[vBarIndex]);
-				}
-				else if ((vBarHeader & 0xC000) == 0x4000) /* SHORT_VBAR_CACHE_HIT */
+				if ((vBarHeader & 0xC000) == 0x4000) /* SHORT_VBAR_CACHE_HIT */
 				{
 					vBarIndex = (vBarHeader & 0x3FFF);
 
 					if (vBarIndex >= 16384)
-						return -1022;
+						return -1025;
 
 					if ((bandsByteCount - suboffset) < 1)
-						return -1023;
+						return -1026;
 
 					vBarYOn = vBar[2];
 					suboffset += 1;
 
-					//printf("SHORT_VBAR_CACHE_HIT: vBarIndex: %d vBarYOn: %d Cursor: %d / %d\n",
-					//		vBarIndex, vBarYOn, clear->VBarStorageCursor, clear->ShortVBarStorageCursor);
-
-					vBarShortPixelCount = (yEnd - yStart + 1 - vBarYOn); /* should be maximum value */
-
-					vBarShortEntry = &(clear->ShortVBarStorage[clear->ShortVBarStorageCursor]);
+					vBarShortEntry = &(clear->ShortVBarStorage[vBarIndex]);
 
 					if (!vBarShortEntry)
-						return -1024;
+						return -1027;
 
 					vBarShortPixelCount = vBarShortEntry->count;
 
@@ -349,19 +343,19 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					vBarYOff = ((vBarHeader >> 8) & 0x3F);
 
 					if (vBarYOff < vBarYOn)
-						return -1025;
+						return -1028;
 
 					pSrcPixel8 = &vBar[2];
 					vBarShortPixelCount = (vBarYOff - vBarYOn);
 
 					if (vBarShortPixelCount > 52)
-						return -1026;
-
-					//printf("SHORT_VBAR_CACHE_MISS: vBarYOn: %d vBarYOff: %d vBarPixelCount: %d Cursor: %d / %d\n",
-					//		vBarYOn, vBarYOff, vBarShortPixelCount, clear->VBarStorageCursor, clear->ShortVBarStorageCursor);
+						return -1029;
 
 					if ((bandsByteCount - suboffset) < (vBarShortPixelCount * 3))
-						return -1027;
+						return -1030;
+
+					if (clear->ShortVBarStorageCursor >= 16384)
+						return -1031;
 
 					vBarShortEntry = &(clear->ShortVBarStorage[clear->ShortVBarStorageCursor]);
 
@@ -369,7 +363,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 						vBarShortEntry->pixels = (UINT32*) malloc(52 * 4);
 
 					if (!vBarShortEntry->pixels)
-						return -1028;
+						return -1032;
 
 					pDstPixel32 = vBarShortEntry->pixels;
 
@@ -383,25 +377,38 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					suboffset += (vBarShortPixelCount * 3);
 
 					vBarShortEntry->count = vBarShortPixelCount;
-					clear->ShortVBarStorageCursor++;
+					clear->ShortVBarStorageCursor = (clear->ShortVBarStorageCursor + 1) % 16384;
 
 					vBarUpdate = TRUE;
 				}
+				else if ((vBarHeader & 0x8000) == 0x8000) /* VBAR_CACHE_HIT */
+				{
+					vBarIndex = (vBarHeader & 0x7FFF);
+
+					if (vBarIndex >= 32768)
+						return -1033;
+
+					vBarEntry = &(clear->VBarStorage[vBarIndex]);
+				}
 				else
 				{
-					return -1029; /* invalid vBarHeader */
+					return -1034; /* invalid vBarHeader */
 				}
 
 				if (vBarUpdate)
 				{
+					if (clear->VBarStorageCursor >= 32768)
+						return -1035;
+
 					vBarEntry = &(clear->VBarStorage[clear->VBarStorageCursor]);
 
 					if (!vBarEntry->pixels)
 						vBarEntry->pixels = (UINT32*) malloc(52 * 4);
 
 					if (!vBarEntry->pixels)
-						return -1030;
+						return -1036;
 
+					vBarPixelCount = vBarHeight;
 					pDstPixel32 = vBarEntry->pixels;
 
 					/* if (y < vBarYOn), use colorBkg */
@@ -445,15 +452,19 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					}
 
 					vBarEntry->count = vBarPixelCount;
-					clear->VBarStorageCursor++;
+					clear->VBarStorageCursor = (clear->VBarStorageCursor + 1) % 32768;
 				}
 
-				count = vBarEntry->count;
 				nXDstRel = nXDst + xStart;
 				nYDstRel = nYDst + yStart;
 
-				pSrcPixel32 = (UINT32*) vBarEntry->pixels;
+				pSrcPixel32 = vBarEntry->pixels;
 				pDstPixel8 = &pDstData[(nYDstRel * nDstStep) + ((nXDstRel + i) * 4)];
+
+				count = yEnd - yStart + 1;
+
+				if (vBarEntry->count != count)
+					return -1037;
 
 				for (y = 0; y < count; y++)
 				{
@@ -481,7 +492,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		UINT32 suboffset;
 
 		if ((SrcSize - offset) < subcodecByteCount)
-			return -1031;
+			return -1038;
 
 		suboffset = 0;
 		subcodecs = &pSrcData[offset];
@@ -489,7 +500,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		while (suboffset < subcodecByteCount)
 		{
 			if ((subcodecByteCount - suboffset) < 13)
-				return -1032;
+				return -1039;
 
 			xStart = *((UINT16*) &subcodecs[suboffset]);
 			yStart = *((UINT16*) &subcodecs[suboffset + 2]);
@@ -503,17 +514,32 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			//		bitmapDataByteCount, subcodecByteCount, suboffset, subcodecId);
 
 			if ((subcodecByteCount - suboffset) < bitmapDataByteCount)
-				return -1033;
+				return -1040;
 
 			nXDstRel = nXDst + xStart;
 			nYDstRel = nYDst + yStart;
+
+			if (width > nWidth)
+				return -1041;
+
+			if (height > nHeight)
+				return -1042;
+
+			if ((width * height * 4) > clear->TempSize)
+			{
+				clear->TempSize = (width * height * 4);
+				clear->TempBuffer = (BYTE*) realloc(clear->TempBuffer, clear->TempSize);
+
+				if (!clear->TempBuffer)
+					return -1043;
+			}
 
 			bitmapData = &subcodecs[suboffset];
 
 			if (subcodecId == 0) /* Uncompressed */
 			{
 				if (bitmapDataByteCount != (width * height * 3))
-					return -1034;
+					return -1044;
 
 				pSrcPixel8 = bitmapData;
 
@@ -532,7 +558,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			else if (subcodecId == 1) /* NSCodec */
 			{
 				if (nsc_process_message(clear->nsc, 32, width, height, bitmapData, bitmapDataByteCount) < 0)
-					return -1035;
+					return -1045;
 
 				nSrcStep = width * 4;
 				pSrcPixel8 = clear->nsc->BitmapData;
@@ -553,15 +579,14 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 				BYTE suiteIndex;
 				BYTE suiteDepth;
 				BYTE paletteCount;
-				BYTE* paletteEntries;
-				UINT32 palette[256];
+				UINT32 palette[128];
 
 				paletteCount = bitmapData[0];
-				paletteEntries = &bitmapData[1];
+				pSrcPixel8 = &bitmapData[1];
 				bitmapDataOffset = 1 + (paletteCount * 3);
 
-				pixelIndex = 0;
-				pSrcPixel8 = paletteEntries;
+				if (paletteCount > 127)
+					return -1046;
 
 				for (i = 0; i < paletteCount; i++)
 				{
@@ -569,15 +594,19 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					pSrcPixel8 += 3;
 				}
 
+				pixelIndex = 0;
+				pixelCount = width * height;
+				pDstPixel32 = (UINT32*) clear->TempBuffer;
+
 				numBits = CLEAR_LOG2_FLOOR[paletteCount - 1] + 1;
 
 				while (bitmapDataOffset < bitmapDataByteCount)
 				{
 					if ((bitmapDataByteCount - bitmapDataOffset) < 2)
-						return -1;
+						return -1047;
 
 					stopIndex = bitmapData[bitmapDataOffset] & CLEAR_8BIT_MASKS[numBits];
-					suiteDepth = (bitmapData[bitmapDataOffset] >> numBits) & CLEAR_8BIT_MASKS[numBits];
+					suiteDepth = (bitmapData[bitmapDataOffset] >> numBits) & CLEAR_8BIT_MASKS[(8 - numBits)];
 					startIndex = stopIndex - suiteDepth;
 					bitmapDataOffset++;
 
@@ -587,7 +616,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					if (runLengthFactor >= 0xFF)
 					{
 						if ((bitmapDataByteCount - bitmapDataOffset) < 2)
-							return -1036;
+							return -1048;
 
 						runLengthFactor = (UINT32) *((UINT16*) &bitmapData[bitmapDataOffset]);
 						bitmapDataOffset += 2;
@@ -595,48 +624,63 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 						if (runLengthFactor >= 0xFFFF)
 						{
 							if ((bitmapDataByteCount - bitmapDataOffset) < 4)
-								return -1034;
+								return -1049;
 
 							runLengthFactor = *((UINT32*) &bitmapData[bitmapDataOffset]);
 							bitmapDataOffset += 4;
 						}
 					}
 
-					if (startIndex > paletteCount)
-						return -1037;
+					if (startIndex >= paletteCount)
+						return -1050;
 
-					if (stopIndex > paletteCount)
-						return -1038;
+					if (stopIndex >= paletteCount)
+						return -1051;
 
 					suiteIndex = startIndex;
+					color = palette[suiteIndex];
 
-					for (y = 0; y < height; y++)
+					if ((pixelIndex + runLengthFactor) > pixelCount)
+						return -1052;
+
+					for (i = 0; i < runLengthFactor; i++)
 					{
-						pDstPixel32 = (UINT32*) &pDstData[((nYDstRel + y) * nDstStep) + (nXDstRel * 4)];
-
-						for (x = 0; x < width; x++)
-						{
-							*pDstPixel32 = palette[suiteIndex];
-							pDstPixel32++;
-
-							if (runLengthFactor)
-							{
-								runLengthFactor--;
-							}
-							else
-							{
-								suiteIndex++;
-
-								if (suiteIndex >= stopIndex)
-									break;
-							}
-						}
+						*pDstPixel32 = color;
+						pDstPixel32++;
 					}
+
+					pixelIndex += runLengthFactor;
+
+					if ((pixelIndex + (suiteDepth + 1)) > pixelCount)
+						return -1053;
+
+					for (i = 0; i <= suiteDepth; i++)
+					{
+						*pDstPixel32 = palette[suiteIndex++];
+						pDstPixel32++;
+					}
+
+					pixelIndex += (suiteDepth + 1);
+				}
+
+				nSrcStep = width * 4;
+				pSrcPixel8 = clear->TempBuffer;
+				pDstPixel8 = &pDstData[(nYDstRel * nDstStep) + (nXDstRel * 4)];
+
+				if (pixelIndex != pixelCount)
+					return -1054;
+
+				for (y = 0; y < height; y++)
+				{
+					CopyMemory(pDstPixel8, pSrcPixel8, nSrcStep);
+					pSrcPixel8 += nSrcStep;
+					pDstPixel8 += nDstStep;
+					pixelCount -= count;
 				}
 			}
 			else
 			{
-				return -1039;
+				return -1055;
 			}
 
 			suboffset += bitmapDataByteCount;
@@ -658,7 +702,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		glyphData = clear->GlyphCache[glyphIndex];
 
 		if (!glyphData)
-			return -1040;
+			return -1056;
 
 		nSrcStep = nWidth * 4;
 		pDstPixel8 = glyphData;
@@ -673,7 +717,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	}
 
 	if (offset != SrcSize)
-		return -1041;
+		return -1057;
 
 	return 1;
 }
@@ -685,7 +729,9 @@ int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE** 
 
 void clear_context_reset(CLEAR_CONTEXT* clear)
 {
-
+	clear->seqNumber = 0;
+	clear->VBarStorageCursor = 0;
+	clear->ShortVBarStorageCursor = 0;
 }
 
 CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
@@ -705,6 +751,9 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 
 		nsc_context_set_pixel_format(clear->nsc, RDP_PIXEL_FORMAT_R8G8B8);
 
+		clear->TempSize = 1024 * 1024 * 4;
+		clear->TempBuffer = (BYTE*) malloc(clear->TempSize);
+
 		clear_context_reset(clear);
 	}
 
@@ -719,6 +768,8 @@ void clear_context_free(CLEAR_CONTEXT* clear)
 		return;
 
 	nsc_context_free(clear->nsc);
+
+	free(clear->TempBuffer);
 
 	for (i = 0; i < 4000; i++)
 		free(clear->GlyphCache[i]);
