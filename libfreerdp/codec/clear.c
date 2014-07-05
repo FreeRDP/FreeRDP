@@ -96,6 +96,11 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	seqNumber = pSrcData[1];
 	offset += 2;
 
+	if (seqNumber != clear->seqNumber)
+		return -1;
+
+	clear->seqNumber = (seqNumber + 1) % 256;
+
 	if (glyphFlags & CLEARCODEC_FLAG_CACHE_RESET)
 	{
 		clear->VBarStorageCursor = 0;
@@ -305,19 +310,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 				if (vBarHeight > 52)
 					return -1020;
 
-				if ((vBarHeader & 0xC000) == 0x8000) /* VBAR_CACHE_HIT */
-				{
-					vBarIndex = (vBarHeader & 0x7FFF);
-
-					//printf("VBAR_CACHE_HIT: vBarIndex: %d Cursor: %d / %d\n",
-					//		vBarIndex, clear->VBarStorageCursor, clear->ShortVBarStorageCursor);
-
-					if (vBarIndex >= 32768)
-						return -1021;
-
-					vBarEntry = &(clear->VBarStorage[vBarIndex]);
-				}
-				else if ((vBarHeader & 0xC000) == 0x4000) /* SHORT_VBAR_CACHE_HIT */
+				if ((vBarHeader & 0xC000) == 0x4000) /* SHORT_VBAR_CACHE_HIT */
 				{
 					vBarIndex = (vBarHeader & 0x3FFF);
 
@@ -334,6 +327,9 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					//		vBarIndex, vBarYOn, clear->VBarStorageCursor, clear->ShortVBarStorageCursor);
 
 					vBarShortPixelCount = (yEnd - yStart + 1 - vBarYOn); /* should be maximum value */
+
+					if (clear->ShortVBarStorageCursor >= 16384)
+						return -1;
 
 					vBarShortEntry = &(clear->ShortVBarStorage[clear->ShortVBarStorageCursor]);
 
@@ -364,6 +360,9 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					if ((bandsByteCount - suboffset) < (vBarShortPixelCount * 3))
 						return -1027;
 
+					if (clear->ShortVBarStorageCursor >= 16384)
+						return -1;
+
 					vBarShortEntry = &(clear->ShortVBarStorage[clear->ShortVBarStorageCursor]);
 
 					if (!vBarShortEntry->pixels)
@@ -388,6 +387,18 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 
 					vBarUpdate = TRUE;
 				}
+				else if ((vBarHeader & 0x8000) == 0x8000) /* VBAR_CACHE_HIT */
+				{
+					vBarIndex = (vBarHeader & 0x7FFF);
+
+					//printf("VBAR_CACHE_HIT: vBarIndex: %d Cursor: %d / %d\n",
+					//		vBarIndex, clear->VBarStorageCursor, clear->ShortVBarStorageCursor);
+
+					if (vBarIndex >= 32768)
+						return -1021;
+
+					vBarEntry = &(clear->VBarStorage[vBarIndex]);
+				}
 				else
 				{
 					return -1029; /* invalid vBarHeader */
@@ -395,6 +406,9 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 
 				if (vBarUpdate)
 				{
+					if (clear->VBarStorageCursor >= 32768)
+						return -1;
+
 					vBarEntry = &(clear->VBarStorage[clear->VBarStorageCursor]);
 
 					if (!vBarEntry->pixels)
@@ -713,7 +727,9 @@ int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE** 
 
 void clear_context_reset(CLEAR_CONTEXT* clear)
 {
-
+	clear->seqNumber = 0;
+	clear->VBarStorageCursor = 0;
+	clear->ShortVBarStorageCursor = 0;
 }
 
 CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
