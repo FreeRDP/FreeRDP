@@ -40,6 +40,7 @@ typedef CHAR TCHAR;
 #define _tcslen		_wcslen
 #define _tcsdup		_wcsdup
 #define _tcscmp		wcscmp
+#define _tcsncmp	wcsncmp
 #define _tcscpy		wcscpy
 #define _tcscat		wcscat
 #define _tcschr		wcschr
@@ -51,6 +52,7 @@ typedef CHAR TCHAR;
 #define _tcslen		strlen
 #define _tcsdup		_strdup
 #define _tcscmp		strcmp
+#define _tcsncmp	strncmp
 #define _tcscpy		strcpy
 #define _tcscat		strcat
 #define _tcschr		strchr

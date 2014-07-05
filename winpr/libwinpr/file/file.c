@@ -3,6 +3,7 @@
  * File Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Hewlett-Packard Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +28,7 @@
 #include <winpr/error.h>
 #include <winpr/handle.h>
 #include <winpr/platform.h>
+#include <winpr/collections.h>
 
 #include <winpr/file.h>
 
@@ -40,7 +42,7 @@
 
 /**
  * api-ms-win-core-file-l1-2-0.dll:
- * 
+ *
  * CreateFileA
  * CreateFileW
  * CreateFile2
@@ -148,8 +150,10 @@
 #include <unistd.h>
 #endif
 
+#include <assert.h>
 #include <time.h>
 #include <errno.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -184,6 +188,74 @@
 
 #include "../pipe/pipe.h"
 
+/* TODO: FIXME: use of a wArrayList and split winpr-utils with
+ * winpr-collections to avoid a circular dependency
+ * _HandleCreators = ArrayList_New(TRUE);
+ */
+/* _HandleCreators is a NULL-terminated array with a maximun of HANDLE_CREATOR_MAX HANDLE_CREATOR */
+#define HANDLE_CREATOR_MAX 128
+static HANDLE_CREATOR **_HandleCreators = NULL;
+static CRITICAL_SECTION _HandleCreatorsLock;
+
+static pthread_once_t _HandleCreatorsInitialized = PTHREAD_ONCE_INIT;
+static void _HandleCreatorsInit()
+{
+	/* NB: error management to be done outside of this function */
+
+	assert(_HandleCreators == NULL);
+
+	_HandleCreators = (HANDLE_CREATOR**)calloc(HANDLE_CREATOR_MAX+1, sizeof(HANDLE_CREATOR*));
+
+	InitializeCriticalSection(&_HandleCreatorsLock);
+
+	assert(_HandleCreators != NULL);
+}
+
+/**
+ * Returns TRUE on success, FALSE otherwise.
+ *
+ * ERRORS:
+ *   ERROR_DLL_INIT_FAILED
+ *   ERROR_INSUFFICIENT_BUFFER _HandleCreators full
+ */
+BOOL RegisterHandleCreator(PHANDLE_CREATOR pHandleCreator)
+{
+	int i;
+
+	if (pthread_once(&_HandleCreatorsInitialized, _HandleCreatorsInit) != 0)
+	{
+		SetLastError(ERROR_DLL_INIT_FAILED);
+		return FALSE;
+	}
+
+	if (_HandleCreators == NULL)
+	{
+		SetLastError(ERROR_DLL_INIT_FAILED);
+		return FALSE;
+	}
+
+
+	EnterCriticalSection(&_HandleCreatorsLock);
+
+	for (i=0; i<HANDLE_CREATOR_MAX; i++)
+	{
+		if (_HandleCreators[i] == NULL)
+		{
+			_HandleCreators[i] = pHandleCreator;
+
+
+			LeaveCriticalSection(&_HandleCreatorsLock);
+			return TRUE;
+		}
+	}
+
+	SetLastError(ERROR_INSUFFICIENT_BUFFER);
+
+	LeaveCriticalSection(&_HandleCreatorsLock);
+	return FALSE;
+}
+
+
 #ifdef HAVE_AIO_H
 
 static BOOL g_AioSignalHandlerInstalled = FALSE;
@@ -213,11 +285,12 @@ int InstallAioSignalHandler()
 	return 0;
 }
 
-#endif
+#endif /* HAVE_AIO_H */
 
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
+	int i;
 	char* name;
 	int status;
 	HANDLE hNamedPipe;
@@ -225,6 +298,40 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
 	WINPR_NAMED_PIPE* pNamedPipe;
 
 	if (!lpFileName)
+		return INVALID_HANDLE_VALUE;
+
+	if (pthread_once(&_HandleCreatorsInitialized, _HandleCreatorsInit) != 0)
+	{
+		SetLastError(ERROR_DLL_INIT_FAILED);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	if (_HandleCreators == NULL)
+	{
+		SetLastError(ERROR_DLL_INIT_FAILED);
+		return INVALID_HANDLE_VALUE;
+	}
+
+	EnterCriticalSection(&_HandleCreatorsLock);
+
+	for (i=0; _HandleCreators[i] != NULL; i++)
+	{
+		HANDLE_CREATOR *creator = (HANDLE_CREATOR*)_HandleCreators[i];
+		if (creator && creator->IsHandled(lpFileName))
+		{
+			HANDLE newHandle = creator->CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
+								dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+
+			LeaveCriticalSection(&_HandleCreatorsLock);
+			return newHandle;
+		}
+	}
+
+	LeaveCriticalSection(&_HandleCreatorsLock);
+
+	/* TODO: use of a HANDLE_CREATOR for named pipes as well */
+
+	if (!IsNamedPipeFileNameA(lpFileName))
 		return INVALID_HANDLE_VALUE;
 
 	name = GetNamedPipeNameWithoutPrefixA(lpFileName);
@@ -821,6 +928,14 @@ BOOL CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttrib
 
 #define NAMED_PIPE_PREFIX_PATH		"\\\\.\\pipe\\"
 
+BOOL IsNamedPipeFileNameA(LPCSTR lpName)
+{
+	if (strncmp(lpName, NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH) - 1) != 0)
+		return FALSE;
+
+	return TRUE;
+}
+
 char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
 {
 	char* lpFileName;
@@ -828,7 +943,7 @@ char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
 	if (!lpName)
 		return NULL;
 
-	if (strncmp(lpName, NAMED_PIPE_PREFIX_PATH, sizeof(NAMED_PIPE_PREFIX_PATH) - 1) != 0)
+	if (!IsNamedPipeFileNameA(lpName))
 		return NULL;
 
 	lpFileName = _strdup(&lpName[strlen(NAMED_PIPE_PREFIX_PATH)]);
