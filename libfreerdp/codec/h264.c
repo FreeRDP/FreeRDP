@@ -28,8 +28,15 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/h264.h>
 
-#define USE_DUMP_IMAGE	0
 #define USE_GRAY_SCALE	0
+#define USE_UPCONVERT	0
+
+static BYTE clip(int x)
+{
+	if (x < 0) return 0;
+	if (x > 255) return 255;
+	return (BYTE)x;
+}
 
 static UINT32 YUV_to_RGB(BYTE Y, BYTE U, BYTE V)
 {
@@ -43,14 +50,13 @@ static UINT32 YUV_to_RGB(BYTE Y, BYTE U, BYTE V)
 	G = Y;
 	B = Y;
 #else
+	int C, D, E;
+
+#if 0
 	/*
 	 * Documented colorspace conversion from YUV to RGB.
 	 * See http://msdn.microsoft.com/en-us/library/ms893078.aspx
 	 */
-
-#define clip(x) ((x) & 0xFF)
-
-	int C, D, E;
 
 	C = Y - 16;
 	D = U - 128;
@@ -61,34 +67,88 @@ static UINT32 YUV_to_RGB(BYTE Y, BYTE U, BYTE V)
 	B = clip(( 298 * C + 516 * D           + 128) >> 8);
 #endif
 
+#if 0
+	/*
+	 * These coefficients produce better results.
+	 * See http://www.microchip.com/forums/m599060.aspx
+	 */
+
+	C = Y;
+	D = U - 128;
+	E = V - 128;
+
+	R = clip(( 256 * C           + 359 * E + 128) >> 8);
+	G = clip(( 256 * C -  88 * D - 183 * E + 128) >> 8);
+	B = clip(( 256 * C + 454 * D           + 128) >> 8);
+#endif
+
+#if 1
+	/*
+	 * These coefficients produce excellent results.
+	 */
+
+	C = Y;
+	D = U - 128;
+	E = V - 128;
+
+	R = clip(( 256 * C           + 403 * E + 128) >> 8);
+	G = clip(( 256 * C -  48 * D - 120 * E + 128) >> 8);
+	B = clip(( 256 * C + 475 * D           + 128) >> 8);
+#endif
+
+#endif
+
 	return RGB32(R, G, B);
 }
 
-#if USE_DUMP_IMAGE
-static void h264_dump_i420_image(BYTE* imageData, int imageWidth, int imageHeight, int* imageStride)
+#if USE_UPCONVERT
+static BYTE* convert_420_to_444(BYTE* chroma420, int chroma420Width, int chroma420Height, int chroma420Stride)
 {
-	static int frame_num;
+	BYTE *chroma444, *src, *dst;
+	int chroma444Width;
+	int chroma444Height;
+	int i, j;
 
-	FILE* fp;
-	char buffer[64];
-	BYTE* yp;
-	int x, y;
+	chroma444Width = chroma420Width * 2;
+	chroma444Height = chroma420Height * 2;
 
-	sprintf(buffer, "/tmp/h264_frame_%d.ppm", frame_num++);
-	fp = fopen(buffer, "wb");
-	fwrite("P5\n", 1, 3, fp);
-	sprintf(buffer, "%d %d\n", imageWidth, imageHeight);
-	fwrite(buffer, 1, strlen(buffer), fp);
-	fwrite("255\n", 1, 4, fp);
+	chroma444 = (BYTE*) malloc(chroma444Width * chroma444Height);
 
-	yp = imageData;
-	for (y = 0; y < imageHeight; y++)
+	if (!chroma444)
+		return NULL;
+
+	/* Upconvert in the horizontal direction. */
+
+	for (j = 0; j < chroma420Height; j++)
 	{
-		fwrite(yp, 1, imageWidth, fp);
-		yp += imageStride[0];
+		src = chroma420 + j * chroma420Stride;
+		dst = chroma444 + j * chroma444Width;
+		dst[0] = src[0];
+		for (i = 1; i < chroma420Width; i++)
+		{
+			dst[2*i-1] = (3 * src[i-1] + src[i] + 2) >> 2;
+			dst[2*i] = (src[i-1] + 3 * src[i] + 2) >> 2;
+		}
+		dst[chroma444Width-1] = src[chroma420Width-1];
 	}
 
-	fclose(fp);
+	/* Upconvert in the vertical direction (in-place, bottom-up). */
+
+	for (i = 0; i < chroma444Width; i++)   
+	{
+		src = chroma444 + i + (chroma420Height-2) * chroma444Width;
+		dst = chroma444 + i + (2*(chroma420Height-2)+1) * chroma444Width;
+		dst[2*chroma444Width] = src[chroma444Width];
+		for (j = chroma420Height - 2; j >= 0; j--)
+		{
+			dst[chroma444Width] = (src[0] + 3 * src[chroma444Width] + 2) >> 2;
+			dst[0] = (3 * src[0] + src[chroma444Width] + 2) >> 2;
+			dst -= 2 * chroma444Width;
+			src -= chroma444Width;
+		}
+	}
+
+	return chroma444;
 }
 #endif
 
@@ -111,8 +171,10 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	if (!h264 || !h264->pDecoder)
 		return -1;
 
+#if 0
 	printf("h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, DstFormat=%lx, nDstStep=%d, nXDst=%d, nYDst=%d, nWidth=%d, nHeight=%d)\n",
 		pSrcData, SrcSize, *ppDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight);
+#endif
 
 	/* Allocate a destination buffer (if needed). */
 
@@ -152,10 +214,12 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
 
+#if 0
 	printf("h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]\n",
 		state, pYUVData[0], pYUVData[1], pYUVData[2], sBufferInfo.iBufferStatus,
 		pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
 		pSystemBuffer->iStride[0], pSystemBuffer->iStride[1]);
+#endif
 
 	if (state != 0)
 		return -1;
@@ -171,13 +235,15 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	/* Convert I420 (same as IYUV) to XRGB. */
 
-#if USE_DUMP_IMAGE
-	h264_dump_i420_image(pY, pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iStride);
-#endif
-
 	pY = pYUVData[0];
 	pU = pYUVData[1];
 	pV = pYUVData[2];
+
+#if USE_UPCONVERT
+	/* Convert 4:2:0 YUV to 4:4:4 YUV. */
+	pU = convert_420_to_444(pU, pSystemBuffer->iWidth / 2, pSystemBuffer->iHeight / 2, pSystemBuffer->iStride[1]);
+	pV = convert_420_to_444(pV, pSystemBuffer->iWidth / 2, pSystemBuffer->iHeight / 2, pSystemBuffer->iStride[1]);
+#endif
 
 	for (j = 0; j < nHeight; j++)
 	{
@@ -189,14 +255,24 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 			int x = nXDst + i;
 
 			Y = pY[(y * pSystemBuffer->iStride[0]) + x];
+#if USE_UPCONVERT
+			U = pU[(y * pSystemBuffer->iWidth) + x];
+			V = pV[(y * pSystemBuffer->iWidth) + x];
+#else
 			U = pU[(y/2) * pSystemBuffer->iStride[1] + (x/2)];
 			V = pV[(y/2) * pSystemBuffer->iStride[1] + (x/2)];
+#endif
 
 			*(UINT32*)pXRGB = YUV_to_RGB(Y, U, V);
 		
 			pXRGB += 4;
 		}
 	}
+
+#if USE_UPCONVERT
+	free(pU);
+	free(pV);
+#endif
 #endif
 
 	return 1;
