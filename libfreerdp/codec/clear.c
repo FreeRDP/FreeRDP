@@ -224,7 +224,8 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 
 				while (count--)
 				{
-					*pDstPixel32++ = color;
+					*pDstPixel32 = color;
+					pDstPixel32++;
 				}
 
 				pixelX = 0;
@@ -550,12 +551,21 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			nXDstRel = nXDst + xStart;
 			nYDstRel = nYDst + yStart;
 
+			if ((width * height * 4) > clear->TempSize)
+			{
+				clear->TempSize = (width * height * 4);
+				clear->TempBuffer = (BYTE*) realloc(clear->TempBuffer, clear->TempSize);
+
+				if (!clear->TempBuffer)
+					return -1038;
+			}
+
 			bitmapData = &subcodecs[suboffset];
 
 			if (subcodecId == 0) /* Uncompressed */
 			{
 				if (bitmapDataByteCount != (width * height * 3))
-					return -1038;
+					return -1039;
 
 				pSrcPixel8 = bitmapData;
 
@@ -574,7 +584,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			else if (subcodecId == 1) /* NSCodec */
 			{
 				if (nsc_process_message(clear->nsc, 32, width, height, bitmapData, bitmapDataByteCount) < 0)
-					return -1039;
+					return -1040;
 
 				nSrcStep = width * 4;
 				pSrcPixel8 = clear->nsc->BitmapData;
@@ -595,15 +605,14 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 				BYTE suiteIndex;
 				BYTE suiteDepth;
 				BYTE paletteCount;
-				BYTE* paletteEntries;
-				UINT32 palette[256];
+				UINT32 palette[128];
 
 				paletteCount = bitmapData[0];
-				paletteEntries = &bitmapData[1];
+				pSrcPixel8 = &bitmapData[1];
 				bitmapDataOffset = 1 + (paletteCount * 3);
 
-				pixelIndex = 0;
-				pSrcPixel8 = paletteEntries;
+				if (paletteCount > 127)
+					return -1041;
 
 				for (i = 0; i < paletteCount; i++)
 				{
@@ -611,15 +620,18 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					pSrcPixel8 += 3;
 				}
 
+				pixelCount = 0;
+				pDstPixel32 = (UINT32*) clear->TempBuffer;
+
 				numBits = CLEAR_LOG2_FLOOR[paletteCount - 1] + 1;
 
 				while (bitmapDataOffset < bitmapDataByteCount)
 				{
 					if ((bitmapDataByteCount - bitmapDataOffset) < 2)
-						return -1040;
+						return -1042;
 
 					stopIndex = bitmapData[bitmapDataOffset] & CLEAR_8BIT_MASKS[numBits];
-					suiteDepth = (bitmapData[bitmapDataOffset] >> numBits) & CLEAR_8BIT_MASKS[numBits];
+					suiteDepth = (bitmapData[bitmapDataOffset] >> numBits) & CLEAR_8BIT_MASKS[(8 - numBits)];
 					startIndex = stopIndex - suiteDepth;
 					bitmapDataOffset++;
 
@@ -629,7 +641,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 					if (runLengthFactor >= 0xFF)
 					{
 						if ((bitmapDataByteCount - bitmapDataOffset) < 2)
-							return -1041;
+							return -1043;
 
 						runLengthFactor = (UINT32) *((UINT16*) &bitmapData[bitmapDataOffset]);
 						bitmapDataOffset += 2;
@@ -637,48 +649,57 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 						if (runLengthFactor >= 0xFFFF)
 						{
 							if ((bitmapDataByteCount - bitmapDataOffset) < 4)
-								return -1042;
+								return -1044;
 
 							runLengthFactor = *((UINT32*) &bitmapData[bitmapDataOffset]);
 							bitmapDataOffset += 4;
 						}
 					}
 
-					if (startIndex > paletteCount)
-						return -1043;
+					if (startIndex >= paletteCount)
+						return -1045;
 
-					if (stopIndex > paletteCount)
-						return -1044;
+					if (stopIndex >= paletteCount)
+						return -1046;
 
 					suiteIndex = startIndex;
+					color = palette[suiteIndex];
 
-					for (y = 0; y < height; y++)
+					for (i = 0; i < runLengthFactor; i++)
 					{
-						pDstPixel32 = (UINT32*) &pDstData[((nYDstRel + y) * nDstStep) + (nXDstRel * 4)];
-
-						for (x = 0; x < width; x++)
-						{
-							*pDstPixel32 = palette[suiteIndex];
-							pDstPixel32++;
-
-							if (runLengthFactor)
-							{
-								runLengthFactor--;
-							}
-							else
-							{
-								suiteIndex++;
-
-								if (suiteIndex >= stopIndex)
-									break;
-							}
-						}
+						*pDstPixel32 = color;
+						pDstPixel32++;
 					}
+
+					for (i = 0; i <= suiteDepth; i++)
+					{
+						*pDstPixel32 = palette[suiteIndex++];
+						pDstPixel32++;
+					}
+
+					pixelCount += (runLengthFactor + suiteDepth + 1);
+				}
+
+				pSrcPixel8 = clear->TempBuffer;
+				pDstPixel8 = &pDstData[(nYDstRel * nDstStep) + (nXDstRel * 4)];
+
+				if (pixelCount != (width * height))
+					return -1047;
+
+				for (y = 0; (y < height) && (pixelCount > 0); y++)
+				{
+					count = (width > pixelCount) ? pixelCount : width;
+					nSrcStep = count * 4;
+
+					CopyMemory(pDstPixel8, pSrcPixel8, nSrcStep);
+					pSrcPixel8 += nSrcStep;
+					pDstPixel8 += nDstStep;
+					pixelCount -= count;
 				}
 			}
 			else
 			{
-				return -1045;
+				return -1048;
 			}
 
 			suboffset += bitmapDataByteCount;
@@ -700,7 +721,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		glyphData = clear->GlyphCache[glyphIndex];
 
 		if (!glyphData)
-			return -1046;
+			return -1049;
 
 		nSrcStep = nWidth * 4;
 		pDstPixel8 = glyphData;
@@ -715,7 +736,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	}
 
 	if (offset != SrcSize)
-		return -1047;
+		return -1050;
 
 	return 1;
 }
@@ -749,6 +770,9 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 
 		nsc_context_set_pixel_format(clear->nsc, RDP_PIXEL_FORMAT_R8G8B8);
 
+		clear->TempSize = 1024 * 1024 * 4;
+		clear->TempBuffer = (BYTE*) malloc(clear->TempSize);
+
 		clear_context_reset(clear);
 	}
 
@@ -763,6 +787,8 @@ void clear_context_free(CLEAR_CONTEXT* clear)
 		return;
 
 	nsc_context_free(clear->nsc);
+
+	free(clear->TempBuffer);
 
 	for (i = 0; i < 4000; i++)
 		free(clear->GlyphCache[i]);

@@ -42,6 +42,8 @@ struct _CLEAR_CONTEXT
 	BOOL Compressor;
 	NSC_CONTEXT* nsc;
 	UINT32 seqNumber;
+	BYTE* TempBuffer;
+	UINT32 TempSize;
 	BYTE* GlyphCache[4000];
 	UINT32 VBarStorageCursor;
 	CLEAR_VBAR_ENTRY VBarStorage[32768];
