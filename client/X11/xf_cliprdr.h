@@ -26,10 +26,5 @@
 void xf_cliprdr_init(xfContext* xfc, rdpChannels* channels);
 void xf_cliprdr_uninit(xfContext* xfc);
 void xf_process_cliprdr_event(xfContext* xfc, wMessage* event);
-BOOL xf_cliprdr_process_selection_notify(xfContext* xfc, XEvent* xevent);
-BOOL xf_cliprdr_process_selection_request(xfContext* xfc, XEvent* xevent);
-BOOL xf_cliprdr_process_selection_clear(xfContext* xfc, XEvent* xevent);
-BOOL xf_cliprdr_process_property_notify(xfContext* xfc, XEvent* xevent);
-void xf_cliprdr_check_owner(xfContext* xfc);
-
+void xf_cliprdr_handle_xevent(xfContext* xfc, XEvent* event);
 #endif /* __XF_CLIPRDR_H */

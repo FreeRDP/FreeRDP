@@ -25,6 +25,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
+#ifdef WITH_XFIXES
+#include <X11/extensions/Xfixes.h>
+#endif
+
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
@@ -88,6 +92,11 @@ struct clipboard_context
 	BOOL incr_starts;
 	BYTE* incr_data;
 	int incr_data_length;
+
+	/* X Fixes extension */
+	int xfixes_event_base;
+	int xfixes_error_base;
+	BOOL xfixes_supported;
 };
 
 void xf_cliprdr_init(xfContext* xfc, rdpChannels* channels)
@@ -120,6 +129,30 @@ void xf_cliprdr_init(xfContext* xfc, rdpChannels* channels)
 			XA_INTEGER, 32, PropModeReplace, (BYTE*) &id, 1);
 
 	XSelectInput(xfc->display, cb->root_window, PropertyChangeMask);
+
+#ifdef WITH_XFIXES
+	if (XFixesQueryExtension(xfc->display, &cb->xfixes_event_base, &cb->xfixes_error_base))
+	{
+		int xfmajor, xfminor;
+		if (XFixesQueryVersion(xfc->display, &xfmajor, &xfminor))
+		{
+			DEBUG_X11_CLIPRDR("Found X Fixes extension version %d.%d", xfmajor, xfminor);
+			XFixesSelectSelectionInput(xfc->display, cb->root_window,
+				cb->clipboard_atom, XFixesSetSelectionOwnerNotifyMask);
+			cb->xfixes_supported = TRUE;
+		}
+		else
+		{
+			fprintf(stderr, "%s: Error querying X Fixes extension version\n", __FUNCTION__);
+		}
+	}
+	else
+	{
+		fprintf(stderr, "%s: Error loading X Fixes extension\n", __FUNCTION__);
+	}
+#else
+	fprintf(stderr, "Warning: Using clipboard redirection without XFIXES extension is strongly discouraged!\n");
+#endif
 
 	n = 0;
 	cb->format_mappings[n].target_format = XInternAtom(xfc->display, "_FREERDP_RAW", FALSE);
@@ -718,8 +751,11 @@ static void xf_cliprdr_process_requested_data(xfContext* xfc, BOOL has_data, BYT
 	else
 		xf_cliprdr_send_null_data_response(xfc);
 
-	/* Resend the format list, otherwise the server won't request again for the next paste */
-	xf_cliprdr_send_format_list(xfc);
+	if (!cb->xfixes_supported)
+	{
+		/* Resend the format list, otherwise the server won't request again for the next paste */
+		xf_cliprdr_send_format_list(xfc);
+	}
 }
 
 static BOOL xf_cliprdr_get_requested_data(xfContext* xfc, Atom target)
@@ -1077,7 +1113,7 @@ void xf_process_cliprdr_event(xfContext* xfc, wMessage* event)
 	}
 }
 
-BOOL xf_cliprdr_process_selection_notify(xfContext* xfc, XEvent* xevent)
+static BOOL xf_cliprdr_process_selection_notify(xfContext* xfc, XEvent* xevent)
 {
 	clipboardContext* cb = (clipboardContext*) xfc->clipboard_context;
 
@@ -1101,7 +1137,7 @@ BOOL xf_cliprdr_process_selection_notify(xfContext* xfc, XEvent* xevent)
 	}
 }
 
-BOOL xf_cliprdr_process_selection_request(xfContext* xfc, XEvent* xevent)
+static BOOL xf_cliprdr_process_selection_request(xfContext* xfc, XEvent* xevent)
 {
 	int i;
 	int fmt;
@@ -1218,7 +1254,7 @@ BOOL xf_cliprdr_process_selection_request(xfContext* xfc, XEvent* xevent)
 	return TRUE;
 }
 
-BOOL xf_cliprdr_process_selection_clear(xfContext* xfc, XEvent* xevent)
+static BOOL xf_cliprdr_process_selection_clear(xfContext* xfc, XEvent* xevent)
 {
 	clipboardContext* cb = (clipboardContext*) xfc->clipboard_context;
 
@@ -1230,7 +1266,7 @@ BOOL xf_cliprdr_process_selection_clear(xfContext* xfc, XEvent* xevent)
 	return TRUE;
 }
 
-BOOL xf_cliprdr_process_property_notify(xfContext* xfc, XEvent* xevent)
+static BOOL xf_cliprdr_process_property_notify(xfContext* xfc, XEvent* xevent)
 {
 	clipboardContext* cb = (clipboardContext*) xfc->clipboard_context;
 
@@ -1257,7 +1293,7 @@ BOOL xf_cliprdr_process_property_notify(xfContext* xfc, XEvent* xevent)
 	return TRUE;
 }
 
-void xf_cliprdr_check_owner(xfContext* xfc)
+static void xf_cliprdr_check_owner(xfContext* xfc)
 {
 	Window owner;
 	clipboardContext* cb = (clipboardContext*) xfc->clipboard_context;
@@ -1274,3 +1310,53 @@ void xf_cliprdr_check_owner(xfContext* xfc)
 	}
 }
 
+void xf_cliprdr_handle_xevent(xfContext* xfc, XEvent* event)
+{
+	clipboardContext* cb;
+
+	if (!xfc || !event)
+		return;
+
+	if (!(cb = (clipboardContext*) xfc->clipboard_context))
+		return;
+
+#ifdef WITH_XFIXES
+	if (cb->xfixes_supported && event->type == XFixesSelectionNotify + cb->xfixes_event_base)
+	{
+		XFixesSelectionNotifyEvent* se = (XFixesSelectionNotifyEvent*) event;
+		if (se->subtype == XFixesSetSelectionOwnerNotify)
+		{
+			if (se->selection != cb->clipboard_atom)
+				return;
+
+			if (XGetSelectionOwner(xfc->display, se->selection) == xfc->drawable)
+				return;
+
+			cb->owner = None;
+			xf_cliprdr_check_owner(xfc);
+		}
+		return;
+	}
+#endif
+	switch (event->type)
+	{
+		case SelectionNotify:
+			xf_cliprdr_process_selection_notify(xfc, event);
+			break;
+		case SelectionRequest:
+			xf_cliprdr_process_selection_request(xfc, event);
+			break;
+		case SelectionClear:
+			xf_cliprdr_process_selection_clear(xfc, event);
+			break;
+		case PropertyNotify:
+			xf_cliprdr_process_property_notify(xfc, event);
+			break;
+		case FocusIn:
+			if (!cb->xfixes_supported)
+			{
+				xf_cliprdr_check_owner(xfc);
+			}
+			break;
+	}
+}
