@@ -20,7 +20,7 @@
 body{
   margin:0;
   padding:<length> 0 0 0;
-  font: 100%/1.4 Helvetica;
+  font: 100% Helvetica;
   background-image:url(../background.jpg);
   background-position:center;
 
@@ -30,9 +30,9 @@ body{
  #headline{
 
   background-color:#353639;
-  
+  opacity:0.9;
 
-  color:#FFF;
+  color:FFF;
   text-align:center;
 
 
@@ -58,19 +58,19 @@ position:relative;
  
 #header{
 
-  height:auto;
+  
   width:100%;
   background-color:#353639;
-  padding-bottom:5px;
+  padding-bottom:1px;
   padding-left:5px;
   padding-right:5px;
-  padding-top:10px;	
+  padding-top:5px;	
   position: fixed;
   top: 0;
   left: 0;
-  height:40px;
-  overflow:visible;
-  min-width:400px;
+  height:30px;
+  
+  min-width:250px;
   z-index:20;
   
   
@@ -80,9 +80,9 @@ position:relative;
 
 
 #content{
-	padding-top:70px;
+	padding-top:40px;
 	z-index:-20;
-	max-width:420px;
+	max-width:300px;
 	
 	}
 	
@@ -124,8 +124,6 @@ a:hover, a:active, a:focus { /* this group of selectors will give a keyboard nav
 
 
 
-
-	
 	
 </style>
 
@@ -145,30 +143,30 @@ a:hover, a:active, a:focus { /* this group of selectors will give a keyboard nav
 
 <div id="header">
 
-	<a href="gestures.html"><img src="nav_gestures.png"></a>
-	<a href="toolbar.html"><img src="nav_toolbar.png"></a>
-	<a href="touch_pointer.html"><img src="nav_touch_pointer.png"></a>
+<a href="gestures_phone.html"><img src="nav_gestures.png" height="90%"></a>
+	<a href="toolbar_phone.html"><img src="nav_toolbar.png" height="90%"></a>
+	<a href="touch_pointer_phone.html"><img src="nav_touch_pointer.png" height="90%""></a>
 
 </div>
 
 <div id="content"> 
 
-<h1>Toolbar</h1>
+<h2>Toolbar</h2>
 <p>
 With the toolbar you'll be able to display and hide the main tools in your session. This allows together with the touch pointer and the gestures an intuitiv workflow for remote computing on touch sensitive screens. 
 </p>
-<p><img src="toolbar.png"></p>
+<p><img src="toolbar_phone.png"></p>
 
 <div id="article">
 <div id="headline">
-<h3><span style="color:white">Keyboards</span></h3></div>
-Display/hide the default keyboard as well as an extended keyboard with function keys</div>
+<h4><span style="color:white">Tastatur</h4></span></div>
+Zeige/verstecke die standard und die erweiterte Tastatur mit Funktionstasten</div>
 <div id="article">
-<div id="headline"><h3><span style="color:white">Touch Pointer</span></h3></div>
-Display/hide the gesture controlled cursor</div>
+<div id="headline"><h4><span style="color:white">Touch Zeiger</h4></div>
+Zeige/verstecke den gesten gesteuerten Zeiger</div>
 <div id="article">
-<div id="headline"><h3><span style="color:white">Disconnect</span></h3></div>
-Disconnect your current session. Please be aware that a disconnect is not the same as a log out.</div>
+<div id="headline"><h4><span style="color:white">Beenden</span></h4></div>
+Beende die aktuelle Sitzung. Seihen sie sich bewusst, dass das Beenden kein Logout ist.
 
 </div>
 
