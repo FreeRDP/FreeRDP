@@ -644,11 +644,11 @@ static int transport_wait_for_read(rdpTransport* transport)
 
 	if (tcpIn->readBlocked)
 	{
-		return tcp_wait_read(tcpIn, 1000);
+		return tcp_wait_read(tcpIn, 10);
 	}
 	else if (tcpIn->writeBlocked)
 	{
-		return tcp_wait_write(tcpIn, 1000);
+		return tcp_wait_write(tcpIn, 10);
 	}
 
 	USleep(1000);
@@ -662,11 +662,11 @@ static int transport_wait_for_write(rdpTransport* transport)
 	tcpOut = transport->SplitInputOutput ? transport->TcpOut : transport->TcpIn;
 	if (tcpOut->writeBlocked)
 	{
-		return tcp_wait_write(tcpOut, 1000);
+		return tcp_wait_write(tcpOut, 10);
 	}
 	else if (tcpOut->readBlocked)
 	{
-		return tcp_wait_read(tcpOut, 1000);
+		return tcp_wait_read(tcpOut, 10);
 	}
 
 	USleep(1000);
