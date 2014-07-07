@@ -453,6 +453,8 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 	return WAIT_OBJECT_0;
 }
 
+#define MAXIMUM_WAIT_OBJECTS 64
+
 DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
 {
 	int fd = -1;
@@ -468,9 +470,9 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	struct timeval timeout;
 #endif
 
-	if (!nCount)
+	if (!nCount || (nCount > MAXIMUM_WAIT_OBJECTS))
 	{
-		fprintf(stderr, "WaitForMultipleObjects: invalid handles count\n");
+		fprintf(stderr, "%s: invalid handles count(%d)\n", __FUNCTION__, nCount);
 		return WAIT_FAILED;
 	}
 
@@ -485,7 +487,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 	if (bWaitAll)
 	{
-		fprintf(stderr, "WaitForMultipleObjects: bWaitAll not yet implemented\n");
+		fprintf(stderr, "%s: bWaitAll not yet implemented\n", __FUNCTION__);
 		assert(0);
 	}
 
@@ -493,7 +495,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 	{
 		if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
 		{
-			fprintf(stderr, "WaitForMultipleObjects: invalid handle\n");
+			fprintf(stderr, "%s: invalid handle\n", __FUNCTION__);
 
 			return WAIT_FAILED;
 		}
@@ -504,7 +506,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 			if (fd == -1)
 			{
-				fprintf(stderr, "WaitForMultipleObjects: invalid event file descriptor\n");
+				fprintf(stderr, "%s: invalid event file descriptor\n", __FUNCTION__);
 				return WAIT_FAILED;
 			}
 		}
@@ -513,7 +515,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 #ifdef WINPR_PIPE_SEMAPHORE
 			fd = ((WINPR_SEMAPHORE*) Object)->pipe_fd[0];
 #else
-			fprintf(stderr, "WaitForMultipleObjects: semaphore not supported\n");
+			fprintf(stderr, "%s: semaphore not supported\n", __FUNCTION__);
 			return WAIT_FAILED;
 #endif
 		}
@@ -524,7 +526,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 			if (fd == -1)
 			{
-				fprintf(stderr, "WaitForMultipleObjects: invalid timer file descriptor\n");
+				fprintf(stderr, "%s: invalid timer file descriptor\n", __FUNCTION__);
 				return WAIT_FAILED;
 			}
 		}
@@ -535,19 +537,19 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 			if (fd == -1)
 			{
-				fprintf(stderr, "WaitForMultipleObjects: invalid timer file descriptor\n");
+				fprintf(stderr, "%s: invalid timer file descriptor\n", __FUNCTION__);
 				return WAIT_FAILED;
 			}
 		}
 		else
 		{
-			fprintf(stderr, "WaitForMultipleObjects: unknown handle type %d\n", (int) Type);
+			fprintf(stderr, "%s: unknown handle type %d\n", __FUNCTION__, (int) Type);
 			return WAIT_FAILED;
 		}
 
 		if (fd == -1)
 		{
-			fprintf(stderr, "WaitForMultipleObjects: invalid file descriptor\n");
+			fprintf(stderr, "%s: invalid file descriptor\n", __FUNCTION__);
 			return WAIT_FAILED;
 		}
 
@@ -586,7 +588,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 	if (status < 0)
 	{
-		fprintf(stderr, "WaitForMultipleObjects: select() failure [%d] %s\n", errno, strerror(errno));
+		fprintf(stderr, "%s: select() failure [%d] %s\n", __FUNCTION__, errno, strerror(errno));
 		return WAIT_FAILED;
 	}
 
@@ -630,7 +632,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 				if (length != 1)
 				{
-					fprintf(stderr, "WaitForMultipleObjects: semaphore read() failure [%d] %s\n", errno, strerror(errno));
+					fprintf(stderr, "%s: semaphore read() failure [%d] %s\n", __FUNCTION__, errno, strerror(errno));
 					return WAIT_FAILED;
 				}
 			}
@@ -648,11 +650,11 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 						if (errno == ETIMEDOUT)
 							return WAIT_TIMEOUT;
 
-						fprintf(stderr, "WaitForMultipleObjects: timer read() failure [%d] %s\n", errno, strerror(errno));
+						fprintf(stderr, "%s: timer read() failure [%d] %s\n", __FUNCTION__, errno, strerror(errno));
 					}
 					else
 					{
-						fprintf(stderr, "WaitForMultipleObjects: timer read() failure - incorrect number of bytes read");
+						fprintf(stderr, "%s: timer read() failure - incorrect number of bytes read", __FUNCTION__);
 					}
 
 					return WAIT_FAILED;
@@ -663,7 +665,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		}
 	}
 
-	fprintf(stderr, "WaitForMultipleObjects: failed (unknown error)\n");
+	fprintf(stderr, "%s: failed (unknown error)\n", __FUNCTION__);
 	return WAIT_FAILED;
 }
 
