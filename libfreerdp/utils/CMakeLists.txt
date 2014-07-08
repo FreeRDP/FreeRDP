@@ -45,6 +45,7 @@ add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
 
 set(${MODULE_PREFIX}_LIBS
+	winpr
 	${CMAKE_THREAD_LIBS_INIT}
 	${CMAKE_DL_LIBS})
 
@@ -55,11 +56,6 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rt)
 endif()
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-synch winpr-thread winpr-utils winpr-path)
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

@@ -149,8 +149,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-sspi winpr-crt winpr-utils winpr-input winpr-sysinfo)
+	MODULE winpr)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-makecert-tool)
 

@@ -20,7 +20,7 @@ if(WIN32)
 endif()
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
+	MONOLITHIC ON
 	MODULE winpr
 	MODULES winpr-crt winpr-crypto winpr-utils)
 

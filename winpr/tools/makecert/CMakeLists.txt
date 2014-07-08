@@ -30,7 +30,7 @@ set(${MODULE_PREFIX}_LIBS
 	${OPENSSL_LIBRARIES})
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
+	MONOLITHIC ON 
 	MODULE winpr
 	MODULES winpr-crt winpr-utils winpr-sysinfo winpr-file winpr-path)
 

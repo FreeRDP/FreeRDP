@@ -103,8 +103,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-path winpr-file winpr-synch winpr-library winpr-interlocked)
+	MODULE winpr)
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} PARENT_SCOPE)
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
