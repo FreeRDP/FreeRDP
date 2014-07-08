@@ -426,6 +426,9 @@ int rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	cmd.length = pdu.bitmapDataLength;
 	cmd.data = pdu.bitmapData;
 
+	if (cmd.codecId == RDPGFX_CODECID_H264)
+		rdpgfx_decode(gfx, &cmd);
+
 	if (context && context->SurfaceCommand)
 	{
 		context->SurfaceCommand(context, &cmd);

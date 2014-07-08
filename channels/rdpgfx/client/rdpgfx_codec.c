@@ -24,6 +24,8 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+#include "rdpgfx_common.h"
+
 #include "rdpgfx_codec.h"
 
 int rdpgfx_decode_uncompressed(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
@@ -46,8 +48,66 @@ int rdpgfx_decode_planar(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 	return 1;
 }
 
+int rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s)
+{
+	UINT32 index;
+	RDPGFX_RECT16* regionRect;
+	RDPGFX_H264_METABLOCK metablock;
+	RDPGFX_H264_QUANT_QUALITY* quantQualityVal;
+
+	Stream_Read_UINT32(s, metablock.numRegionRects); /* numRegionRects (4 bytes) */
+
+	metablock.regionRects = (RDPGFX_RECT16*) malloc(metablock.numRegionRects * sizeof(RDPGFX_RECT16));
+
+	if (!metablock.regionRects)
+		return -1;
+
+	metablock.quantQualityVals = (RDPGFX_H264_QUANT_QUALITY*) malloc(metablock.numRegionRects * sizeof(RDPGFX_H264_QUANT_QUALITY));
+
+	if (!metablock.quantQualityVals)
+		return -1;
+
+	printf("H264_METABLOCK: numRegionRects: %d\n", (int) metablock.numRegionRects);
+
+	for (index = 0; index < metablock.numRegionRects; index++)
+	{
+		regionRect = &(metablock.regionRects[index]);
+		rdpgfx_read_rect16(s, regionRect);
+
+		printf("regionRects[%d]: left: %d top: %d right: %d bottom: %d\n",
+				index, regionRect->left, regionRect->top, regionRect->right, regionRect->bottom);
+	}
+
+	for (index = 0; index < metablock.numRegionRects; index++)
+	{
+		quantQualityVal = &(metablock.quantQualityVals[index]);
+		Stream_Read_UINT8(s, quantQualityVal->qpVal); /* qpVal (1 byte) */
+		Stream_Read_UINT8(s, quantQualityVal->qualityVal); /* qualityVal (1 byte) */
+
+		quantQualityVal->qp = quantQualityVal->qpVal & 0x3F;
+		quantQualityVal->r = (quantQualityVal->qpVal >> 6) & 1;
+		quantQualityVal->p = (quantQualityVal->qpVal >> 7) & 1;
+
+		printf("quantQualityVals[%d]: qp: %d r: %d p: %d qualityVal: %d\n",
+				index, quantQualityVal->qp, quantQualityVal->r, quantQualityVal->p, quantQualityVal->qualityVal);
+	}
+
+	free(metablock.regionRects);
+	free(metablock.quantQualityVals);
+
+	return 1;
+}
+
 int rdpgfx_decode_h264(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
+	wStream* s;
+
+	s = Stream_New(cmd->data, cmd->length);
+
+	rdpgfx_read_h264_metablock(gfx, s);
+
+	Stream_Free(s, FALSE);
+
 	return 1;
 }
 

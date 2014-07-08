@@ -171,7 +171,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	if (!h264 || !h264->pDecoder)
 		return -1;
 
-#if 0
+#if 1
 	printf("h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, DstFormat=%lx, nDstStep=%d, nXDst=%d, nYDst=%d, nWidth=%d, nHeight=%d)\n",
 		pSrcData, SrcSize, *ppDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight);
 #endif
@@ -214,7 +214,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
 
-#if 0
+#if 1
 	printf("h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]\n",
 		state, pYUVData[0], pYUVData[1], pYUVData[2], sBufferInfo.iBufferStatus,
 		pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
@@ -314,8 +314,12 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 			}
 
 			ZeroMemory(&sDecParam, sizeof(sDecParam));
-			sDecParam.iOutputColorFormat = videoFormatARGB;
+			sDecParam.iOutputColorFormat  = videoFormatI420;
+			sDecParam.uiEcActiveFlag  = 1;
+			sDecParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_DEFAULT;
+
 			status = (*h264->pDecoder)->Initialize(h264->pDecoder, &sDecParam);
+
 			if (status != 0)
 			{
 				printf("Failed to initialize OpenH264 decoder (status=%ld)\n", status);
@@ -323,6 +327,7 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 			}
 
 			status = (*h264->pDecoder)->SetOption(h264->pDecoder, DECODER_OPTION_DATAFORMAT, &videoFormat);
+
 			if (status != 0)
 			{
 				printf("Failed to set data format option on OpenH264 decoder (status=%ld)\n", status);
