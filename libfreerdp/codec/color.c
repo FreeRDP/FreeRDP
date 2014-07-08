@@ -29,6 +29,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/primitives.h>
 #include <freerdp/codec/color.h>
 
 int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp)
@@ -602,72 +603,22 @@ BYTE* freerdp_image_convert_16bpp(BYTE* srcData, BYTE* dstData, int width, int h
 	}
 	else if (dstBpp == 32)
 	{
-		int i;
-		UINT32 pixel;
-		UINT16* src16;
-		UINT32* dst32;
-		BYTE red, green, blue;
+		primitives_t* prims;
 
 		if (dstData == NULL)
-			dstData = (BYTE*) malloc(width * height * 4);
-
-		src16 = (UINT16*) srcData;
-		dst32 = (UINT32*) dstData;
-
-		if (clrconv->alpha)
 		{
-			if (clrconv->invert)
+			if (posix_memalign((void **) &dstData, 16,
+					width * height * sizeof(UINT32)) != 0)
 			{
-				for (i = width * height; i > 0; i--)
-				{
-					pixel = *src16;
-					src16++;
-					GetBGR16(red, green, blue, pixel);
-					pixel = ARGB32(0xFF, red, green, blue);
-					*dst32 = pixel;
-					dst32++;
-				}
-			}
-			else
-			{
-				for (i = width * height; i > 0; i--)
-				{
-					pixel = *src16;
-					src16++;
-					GetBGR16(red, green, blue, pixel);
-					pixel = ABGR32(0xFF, red, green, blue);
-					*dst32 = pixel;
-					dst32++;
-				}
+				return NULL;
 			}
 		}
-		else
-		{
-			if (clrconv->invert)
-			{
-				for (i = width * height; i > 0; i--)
-				{
-					pixel = *src16;
-					src16++;
-					GetBGR16(red, green, blue, pixel);
-					pixel = RGB32(red, green, blue);
-					*dst32 = pixel;
-					dst32++;
-				}
-			}
-			else
-			{
-				for (i = width * height; i > 0; i--)
-				{
-					pixel = *src16;
-					src16++;
-					GetBGR16(red, green, blue, pixel);
-					pixel = BGR32(red, green, blue);
-					*dst32 = pixel;
-					dst32++;
-				}
-			}
-		}
+
+		prims = primitives_get();
+		prims->RGB565ToARGB_16u32u_C3C4(
+			(const UINT16*) srcData, width * sizeof(UINT16),
+			(UINT32*) dstData, width * sizeof(UINT32),
+			width, height, clrconv->alpha, clrconv->invert);
 
 		return dstData;
 	}

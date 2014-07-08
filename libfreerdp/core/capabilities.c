@@ -361,7 +361,17 @@ void rdp_write_bitmap_capability_set(wStream* s, rdpSettings* settings)
 	header = rdp_capability_set_start(s);
 
 	drawingFlags |= DRAW_ALLOW_SKIP_ALPHA;
-	drawingFlags |= DRAW_ALLOW_COLOR_SUBSAMPLING;
+	/* While bitmap_decode.c now implements YCoCg, in turning it
+	 * on we have found Microsoft is inconsistent on whether to invert R & B.
+	 * And it's not only from one server to another; on Win7/2008R2, it appears
+	 * to send the main content with a different inversion than the Windows
+	 * button!  So... don't advertise that we support YCoCg and the server
+	 * will not send it.  YCoCg is still needed for EGFX, but it at least
+	 * appears consistent in its use.
+	 */
+	/* drawingFlags |= DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY; */
+	/* YCoCg with chroma subsampling is not implemented in bitmap_decode.c. */
+	/* drawingFlags |= DRAW_ALLOW_COLOR_SUBSAMPLING; */
 
 	if (settings->RdpVersion > 5)
 		preferredBitsPerPixel = settings->ColorDepth;

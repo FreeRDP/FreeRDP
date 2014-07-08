@@ -31,7 +31,7 @@
 
 #include "rdpsnd_main.h"
 
-static BOOL rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
+BOOL rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
 {
 	int pos;
 	UINT16 i;
@@ -187,49 +187,20 @@ out_free:
 
 static void* rdpsnd_server_thread(void* arg)
 {
-	wStream* s;
-	DWORD status;
-	DWORD nCount;
-	void* buffer;
-	BYTE msgType;
-	UINT16 BodySize;
+	DWORD nCount, status;
 	HANDLE events[8];
-	HANDLE ChannelEvent;
-	DWORD bytesReturned;
 	RdpsndServerContext* context;
 	BOOL doRun;
-	BOOL waitingHeader;
-	DWORD expectedBytes;
 
 	context = (RdpsndServerContext *)arg;
-
-	buffer = NULL;
-	bytesReturned = 0;
-
-	s = Stream_New(NULL, 4096);
-	if (!s)
-		return NULL;
-
-	if (!WTSVirtualChannelQuery(context->priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &bytesReturned) || (bytesReturned != sizeof(HANDLE)))
-	{
-		fprintf(stderr, "%s: error during WTSVirtualChannelQuery(WTSVirtualEventHandle) or invalid returned size(%d)\n",
-				__FUNCTION__, bytesReturned);
-		return NULL;
-	}
-
-	CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
-	WTSFreeMemory(buffer);
-
 	nCount = 0;
-	events[nCount++] = ChannelEvent;
+	events[nCount++] = context->priv->channelEvent;
 	events[nCount++] = context->priv->StopEvent;
 
-	if (!rdpsnd_server_send_formats(context, s))
+	if (!rdpsnd_server_send_formats(context, context->priv->rdpsnd_pdu))
 		goto out;
 
 	doRun = TRUE;
-	waitingHeader = TRUE;
-	expectedBytes = 4;
 	while (doRun)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
@@ -237,69 +208,17 @@ static void* rdpsnd_server_thread(void* arg)
 		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
-		if (!WTSVirtualChannelRead(ChannelEvent, 0, (PCHAR)Stream_Pointer(s), expectedBytes, &bytesReturned))
-		{
-			fprintf(stderr, "%s: channel connection closed\n", __FUNCTION__);
+		if (!rdpsnd_server_handle_messages(context))
 			break;
-		}
-		expectedBytes -= bytesReturned;
-		Stream_Seek(s, bytesReturned);
-
-		if (expectedBytes)
-			continue;
-
-		Stream_SetPosition(s, 0);
-		if (waitingHeader)
-		{
-			/* header case */
-			Stream_Read_UINT8(s, msgType);
-			Stream_Seek_UINT8(s); /* bPad */
-			Stream_Read_UINT16(s, BodySize);
-
-			expectedBytes = BodySize;
-			waitingHeader = FALSE;
-			Stream_SetPosition(s, 0);
-			Stream_EnsureCapacity(s, BodySize);
-			if (expectedBytes)
-				continue;
-		}
-
-		/* when here we have the header + the body */
-		switch (msgType)
-		{
-			case SNDC_WAVECONFIRM:
-				doRun = rdpsnd_server_recv_waveconfirm(context, s);
-				break;
-
-			case SNDC_QUALITYMODE:
-				doRun = rdpsnd_server_recv_quality_mode(context, s);
-				break;
-
-			case SNDC_FORMATS:
-				doRun = rdpsnd_server_recv_formats(context, s);
-				if (doRun)
-				{
-					IFCALL(context->Activated, context);
-				}
-				break;
-
-			default:
-				fprintf(stderr, "%s: UNKOWN MESSAGE TYPE!! (%#0X)\n\n", __FUNCTION__, msgType);
-				break;
-		}
-
-		expectedBytes = 4;
-		waitingHeader = TRUE;
-		Stream_SetPosition(s, 0);
 	}
 
 out:
-	Stream_Free(s, TRUE);
 	return NULL;
 }
 
-static BOOL rdpsnd_server_initialize(RdpsndServerContext* context)
+static BOOL rdpsnd_server_initialize(RdpsndServerContext* context, BOOL ownThread)
 {
+	context->priv->ownThread = ownThread;
 	return context->Start(context) >= 0;
 }
 
@@ -546,22 +465,41 @@ static BOOL rdpsnd_server_close(RdpsndServerContext* context)
 
 static int rdpsnd_server_start(RdpsndServerContext* context)
 {
-	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "rdpsnd");
-	if (!context->priv->ChannelHandle)
+	void *buffer = NULL;
+	DWORD bytesReturned;
+	RdpsndServerPrivate *priv = context->priv;
+
+	priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "rdpsnd");
+	if (!priv->ChannelHandle)
 		return -1;
 
-	context->priv->rdpsnd_pdu = Stream_New(NULL, 4096);
-	if (!context->priv->rdpsnd_pdu)
+	if (!WTSVirtualChannelQuery(priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &bytesReturned) || (bytesReturned != sizeof(HANDLE)))
+	{
+		fprintf(stderr, "%s: error during WTSVirtualChannelQuery(WTSVirtualEventHandle) or invalid returned size(%d)\n",
+				__FUNCTION__, bytesReturned);
+		if (buffer)
+			WTSFreeMemory(buffer);
+		goto out_close;
+	}
+	CopyMemory(&priv->channelEvent, buffer, sizeof(HANDLE));
+	WTSFreeMemory(buffer);
+
+	priv->rdpsnd_pdu = Stream_New(NULL, 4096);
+	if (!priv->rdpsnd_pdu)
 		goto out_close;
 
-	context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (!context->priv->StopEvent)
-		goto out_pdu;
 
-	context->priv->Thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) rdpsnd_server_thread, (void*) context, 0, NULL);
-	if (!context->priv->Thread)
-		goto out_stopEvent;
+	if (priv->ownThread)
+	{
+		context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		if (!context->priv->StopEvent)
+			goto out_pdu;
+
+		context->priv->Thread = CreateThread(NULL, 0,
+				(LPTHREAD_START_ROUTINE) rdpsnd_server_thread, (void*) context, 0, NULL);
+		if (!context->priv->Thread)
+			goto out_stopEvent;
+	}
 
 	return 0;
 
@@ -579,12 +517,15 @@ out_close:
 
 static int rdpsnd_server_stop(RdpsndServerContext* context)
 {
-	if (context->priv->StopEvent)
+	if (context->priv->ownThread)
 	{
-		SetEvent(context->priv->StopEvent);
+		if (context->priv->StopEvent)
+		{
+			SetEvent(context->priv->StopEvent);
 
-		WaitForSingleObject(context->priv->Thread, INFINITE);
-		CloseHandle(context->priv->Thread);
+			WaitForSingleObject(context->priv->Thread, INFINITE);
+			CloseHandle(context->priv->Thread);
+		}
 	}
 
 	return 0;
@@ -593,8 +534,9 @@ static int rdpsnd_server_stop(RdpsndServerContext* context)
 RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm)
 {
 	RdpsndServerContext* context;
+	RdpsndServerPrivate *priv;
 
-	context = (RdpsndServerContext*) calloc(1, sizeof(RdpsndServerContext));
+	context = (RdpsndServerContext *)calloc(1, sizeof(RdpsndServerContext));
 	if (!context)
 		return NULL;
 
@@ -610,21 +552,39 @@ RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm)
 	context->SetVolume = rdpsnd_server_set_volume;
 	context->Close = rdpsnd_server_close;
 
-	context->priv = (RdpsndServerPrivate*) calloc(1, sizeof(RdpsndServerPrivate));
-	if (!context->priv)
+	context->priv = priv = (RdpsndServerPrivate *)calloc(1, sizeof(RdpsndServerPrivate));
+	if (!priv)
 		goto out_free;
 
-	context->priv->dsp_context = freerdp_dsp_context_new();
-	if (!context->priv->dsp_context)
+	priv->dsp_context = freerdp_dsp_context_new();
+	if (!priv->dsp_context)
 		goto out_free_priv;
 
+	priv->input_stream = Stream_New(NULL, 4);
+	if (!priv->input_stream)
+		goto out_free_dsp;
+
+	priv->expectedBytes = 4;
+	priv->waitingHeader = TRUE;
+	priv->ownThread = TRUE;
 	return context;
 
+out_free_dsp:
+	freerdp_dsp_context_free(priv->dsp_context);
 out_free_priv:
 	free(context->priv);
 out_free:
 	free(context);
 	return NULL;
+}
+
+
+void rdpsnd_server_context_reset(RdpsndServerContext *context)
+{
+	context->priv->expectedBytes = 4;
+	context->priv->waitingHeader = TRUE;
+
+	Stream_SetPosition(context->priv->input_stream, 0);
 }
 
 void rdpsnd_server_context_free(RdpsndServerContext* context)
@@ -651,4 +611,85 @@ void rdpsnd_server_context_free(RdpsndServerContext* context)
 		free(context->client_formats);
 
 	free(context);
+}
+
+HANDLE rdpsnd_server_get_event_handle(RdpsndServerContext *context)
+{
+	return context->priv->channelEvent;
+}
+
+BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
+{
+	DWORD bytesReturned;
+	BOOL ret;
+
+	RdpsndServerPrivate *priv = context->priv;
+	wStream *s = priv->input_stream;
+
+	if (!WTSVirtualChannelRead(priv->channelEvent, 0, (PCHAR)Stream_Pointer(s), priv->expectedBytes, &bytesReturned))
+	{
+		if (GetLastError() == ERROR_NO_DATA)
+			return TRUE;
+
+		fprintf(stderr, "%s: channel connection closed\n", __FUNCTION__);
+		return FALSE;
+	}
+	priv->expectedBytes -= bytesReturned;
+	Stream_Seek(s, bytesReturned);
+
+	if (priv->expectedBytes)
+		return TRUE;
+
+	Stream_SetPosition(s, 0);
+	if (priv->waitingHeader)
+	{
+		/* header case */
+		Stream_Read_UINT8(s, priv->msgType);
+		Stream_Seek_UINT8(s); /* bPad */
+		Stream_Read_UINT16(s, priv->expectedBytes);
+
+		priv->waitingHeader = FALSE;
+		Stream_SetPosition(s, 0);
+		if (priv->expectedBytes)
+		{
+			Stream_EnsureCapacity(s, priv->expectedBytes);
+			return TRUE;
+		}
+	}
+
+	/* when here we have the header + the body */
+#ifdef WITH_DEBUG_SND
+	fprintf(stderr, "%s: message type %d\n", __FUNCTION__, priv->msgType);
+#endif
+	priv->expectedBytes = 4;
+	priv->waitingHeader = TRUE;
+
+	switch (priv->msgType)
+	{
+		case SNDC_WAVECONFIRM:
+			ret = rdpsnd_server_recv_waveconfirm(context, s);
+			break;
+
+		case SNDC_FORMATS:
+			ret = rdpsnd_server_recv_formats(context, s);
+			break;
+
+		case SNDC_QUALITYMODE:
+			ret = rdpsnd_server_recv_quality_mode(context, s);
+			Stream_SetPosition(s, 0); /* in case the Activated callback tries to treat some messages */
+
+			if (ret)
+			{
+				IFCALL(context->Activated, context);
+			}
+			break;
+
+		default:
+			fprintf(stderr, "%s: UNKOWN MESSAGE TYPE!! (%#0X)\n\n", __FUNCTION__, priv->msgType);
+			ret = FALSE;
+			break;
+	}
+	Stream_SetPosition(s, 0);
+
+	return ret;
 }

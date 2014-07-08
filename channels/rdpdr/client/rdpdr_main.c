@@ -460,6 +460,8 @@ static void* drive_hotplug_thread_func(void* arg)
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
 
+	handle_hotplug(rdpdr);
+
 	while ((rv = select(mfd+1, NULL, NULL, &rfds, &tv)) >= 0)
 	{
 		if (WaitForSingleObject(rdpdr->stopEvent, 0) == WAIT_OBJECT_0)
