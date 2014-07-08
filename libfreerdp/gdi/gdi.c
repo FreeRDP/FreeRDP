@@ -943,7 +943,7 @@ void gdi_init_primary(rdpGdi* gdi)
 	gdi->primary = (gdiBitmap*) malloc(sizeof(gdiBitmap));
 
 	if (!gdi->primary)
-		return NULL;
+		return;
 
 	gdi->primary->hdc = gdi_CreateCompatibleDC(gdi->hdc);
 

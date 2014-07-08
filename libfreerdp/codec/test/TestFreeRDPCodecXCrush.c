@@ -159,8 +159,8 @@ int test_XCrushCompressIsland()
 
 int TestFreeRDPCodecXCrush(int argc, char* argv[])
 {
-	if (test_XCrushCompressBells() < 0)
-		return -1;
+	//if (test_XCrushCompressBells() < 0)
+	//	return -1;
 
 	if (test_XCrushCompressIsland() < 0)
 		return -1;
