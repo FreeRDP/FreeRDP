@@ -287,14 +287,8 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 	if (status < 0)
 	{
 		printf("clear_decompress failure: %d\n", status);
+		return -1;
 	}
-
-#if 0
-	/* fill with pink for now to distinguish from the rest */
-
-	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
-			cmd->left, cmd->top, cmd->width, cmd->height, 0xFF69B4);
-#endif
 
 	invalidRect.left = cmd->left;
 	invalidRect.top = cmd->top;
@@ -444,37 +438,6 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 	return 1;
 }
 
-int xf_SurfaceCommand_ProgressiveV2(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
-{
-	int status = 0;
-	xfGfxSurface* surface;
-	RECTANGLE_16 invalidRect;
-
-	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
-
-	if (!surface)
-		return -1;
-
-	printf("xf_SurfaceCommand_ProgressiveV2: status: %d\n", status);
-
-	/* fill with white for now to distinguish from the rest */
-
-	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
-			cmd->left, cmd->top, cmd->width, cmd->height, 0xFFFFFF);
-
-	invalidRect.left = cmd->left;
-	invalidRect.top = cmd->top;
-	invalidRect.right = cmd->right;
-	invalidRect.bottom = cmd->bottom;
-
-	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
-
-	if (!xfc->inGfxFrame)
-		xf_OutputUpdate(xfc);
-
-	return 1;
-}
-
 int xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status = 1;
@@ -511,7 +474,6 @@ int xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 			break;
 
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
-			status = xf_SurfaceCommand_ProgressiveV2(xfc, context, cmd);
 			break;
 	}
 
@@ -520,8 +482,6 @@ int xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 
 int xf_DeleteEncodingContext(RdpgfxClientContext* context, RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext)
 {
-	printf("xf_DeleteEncodingContext\n");
-
 	return 1;
 }
 
@@ -584,8 +544,6 @@ int xf_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill)
 	xfContext* xfc = (xfContext*) context->custom;
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, solidFill->surfaceId);
-
-	//printf("xf_SolidFill\n");
 
 	if (!surface)
 		return -1;
@@ -680,9 +638,6 @@ int xf_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU*
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, surfaceToCache->surfaceId);
 
-	//printf("xf_SurfaceToCache: cacheKey: 0x%016X cacheSlot: %ld\n",
-	//		surfaceToCache->cacheKey, surfaceToCache->cacheSlot);
-
 	if (!surface)
 		return -1;
 
@@ -722,9 +677,6 @@ int xf_CacheToSurface(RdpgfxClientContext* context, RDPGFX_CACHE_TO_SURFACE_PDU*
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, cacheToSurface->surfaceId);
 	cacheEntry = (xfGfxCacheEntry*) context->GetCacheSlotData(context, cacheToSurface->cacheSlot);
 
-	//printf("xf_CacheToSurface: cacheEntry: %d\n",
-	//		cacheToSurface->cacheSlot);
-
 	if (!surface || !cacheEntry)
 		return -1;
 
@@ -758,8 +710,6 @@ int xf_CacheImportReply(RdpgfxClientContext* context, RDPGFX_CACHE_IMPORT_REPLY_
 int xf_EvictCacheEntry(RdpgfxClientContext* context, RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry)
 {
 	xfGfxCacheEntry* cacheEntry;
-
-	//printf("xf_EvictCacheEntry\n");
 
 	cacheEntry = (xfGfxCacheEntry*) context->GetCacheSlotData(context, evictCacheEntry->cacheSlot);
 
