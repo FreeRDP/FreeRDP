@@ -30,6 +30,7 @@
 
 #define USE_GRAY_SCALE	0
 #define USE_UPCONVERT	0
+#define USE_TRACE		1
 
 static BYTE clip(int x)
 {
@@ -149,6 +150,13 @@ static BYTE* convert_420_to_444(BYTE* chroma420, int chroma420Width, int chroma4
 	}
 
 	return chroma444;
+}
+#endif
+
+#if USE_TRACE
+static void trace_callback(H264_CONTEXT* h264, int level, const char* message)
+{
+	printf("%d - %s\n", level, message);
 }
 #endif
 
@@ -302,6 +310,11 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 		{
 			static EVideoFormatType videoFormat = videoFormatI420;
 
+#if USE_TRACE
+			static int traceLevel = WELS_LOG_DEBUG;
+			static WelsTraceCallback traceCallback = trace_callback;
+#endif
+
 			SDecodingParam sDecParam;
 			long status;
 
@@ -332,6 +345,26 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 			{
 				printf("Failed to set data format option on OpenH264 decoder (status=%ld)\n", status);
 			}
+
+#if USE_TRACE
+			status = (*h264->pDecoder)->SetOption(h264->pDecoder, DECODER_OPTION_TRACE_LEVEL, &traceLevel);
+			if (status != 0)
+			{
+				printf("Failed to set trace level option on OpenH264 decoder (status=%ld)\n", status);
+			}
+
+			status = (*h264->pDecoder)->SetOption(h264->pDecoder, DECODER_OPTION_TRACE_CALLBACK, &traceCallback);
+			if (status != 0)
+			{
+				printf("Failed to set trace callback option on OpenH264 decoder (status=%ld)\n", status);
+			}
+
+			status = (*h264->pDecoder)->SetOption(h264->pDecoder, DECODER_OPTION_TRACE_CALLBACK_CONTEXT, &h264);
+			if (status != 0)
+			{
+				printf("Failed to set trace callback context option on OpenH264 decoder (status=%ld)\n", status);
+			}
+#endif
 		}
 #endif
 			
