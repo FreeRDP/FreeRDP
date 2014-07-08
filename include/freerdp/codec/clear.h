@@ -30,8 +30,17 @@
 #define CLEARCODEC_FLAG_GLYPH_HIT	0x02
 #define CLEARCODEC_FLAG_CACHE_RESET	0x04
 
+struct _CLEAR_GLYPH_ENTRY
+{
+	UINT32 size;
+	UINT32 count;
+	UINT32* pixels;
+};
+typedef struct _CLEAR_GLYPH_ENTRY CLEAR_GLYPH_ENTRY;
+
 struct _CLEAR_VBAR_ENTRY
 {
+	UINT32 size;
 	UINT32 count;
 	UINT32* pixels;
 };
@@ -44,7 +53,7 @@ struct _CLEAR_CONTEXT
 	UINT32 seqNumber;
 	BYTE* TempBuffer;
 	UINT32 TempSize;
-	BYTE* GlyphCache[4000];
+	CLEAR_GLYPH_ENTRY GlyphCache[4000];
 	UINT32 VBarStorageCursor;
 	CLEAR_VBAR_ENTRY VBarStorage[32768];
 	UINT32 ShortVBarStorageCursor;
