@@ -59,9 +59,12 @@ struct _RDPGFX_PLUGIN
 	RDPGFX_LISTENER_CALLBACK* listener_callback;
 
 	wLog* log;
+	rdpSettings* settings;
 
 	BOOL ThinClient;
 	BOOL SmallCache;
+	BOOL Progressive;
+	BOOL ProgressiveV2;
 	BOOL H264;
 
 	ZGFX_CONTEXT* zgfx;

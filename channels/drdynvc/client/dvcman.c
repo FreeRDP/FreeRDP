@@ -135,6 +135,11 @@ ADDIN_ARGV* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 	return ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->args;
 }
 
+void* dvcman_get_rdp_settings(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+{
+	return (void*) ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->settings;
+}
+
 UINT32 dvcman_get_channel_id(IWTSVirtualChannel * channel)
 {
 	return ((DVCMAN_CHANNEL*) channel)->channel_id;
@@ -208,7 +213,7 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	return (IWTSVirtualChannelManager*) dvcman;
 }
 
-int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args)
+int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args, rdpSettings* settings)
 {
 	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
@@ -223,8 +228,10 @@ int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args)
 		entryPoints.iface.RegisterPlugin = dvcman_register_plugin;
 		entryPoints.iface.GetPlugin = dvcman_get_plugin;
 		entryPoints.iface.GetPluginData = dvcman_get_plugin_data;
+		entryPoints.iface.GetRdpSettings = dvcman_get_rdp_settings;
 		entryPoints.dvcman = (DVCMAN*) pChannelMgr;
 		entryPoints.args = args;
+		entryPoints.settings = settings;
 
 		pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
 	}
