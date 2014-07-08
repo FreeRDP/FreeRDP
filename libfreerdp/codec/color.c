@@ -605,13 +605,12 @@ BYTE* freerdp_image_convert_16bpp(BYTE* srcData, BYTE* dstData, int width, int h
 	{
 		primitives_t* prims;
 
-		if (dstData == NULL)
+		if (!dstData)
 		{
-			if (posix_memalign((void **) &dstData, 16,
-					width * height * sizeof(UINT32)) != 0)
-			{
+			dstData = _aligned_malloc(width * height * sizeof(UINT32), 16);
+
+			if (!dstData)
 				return NULL;
-			}
 		}
 
 		prims = primitives_get();
