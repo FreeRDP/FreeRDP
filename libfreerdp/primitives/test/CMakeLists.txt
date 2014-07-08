@@ -23,6 +23,7 @@ set(MODULE_PREFIX "PRIMITIVES_LIBRARY_TEST")
 
 set(PRIMITIVE_TEST_CFILES
 	prim_test.c
+	test_16to32bpp.c
 	test_add.c
 	test_alphaComp.c
 	test_andor.c
@@ -31,6 +32,8 @@ set(PRIMITIVE_TEST_CFILES
 	test_set.c
 	test_shift.c
 	test_sign.c
+	test_YCoCg.c
+	../prim_16to32bpp.c
 	../prim_add.c
 	../prim_andor.c
 	../prim_alphaComp.c
@@ -39,6 +42,8 @@ set(PRIMITIVE_TEST_CFILES
 	../prim_set.c
 	../prim_shift.c
 	../prim_sign.c
+	../prim_YCoCg.c
+	../prim_16to32bpp_opt.c
 	../prim_add_opt.c
 	../prim_alphaComp_opt.c
 	../prim_andor_opt.c
@@ -46,6 +51,7 @@ set(PRIMITIVE_TEST_CFILES
 	../prim_set_opt.c
 	../prim_shift_opt.c
 	../prim_sign_opt.c
+	../prim_YCoCg_opt.c
 	../primitives.c
     )
 
@@ -138,7 +144,9 @@ endif()
 
 set_property(SOURCE ${PRIMITIVE_TEST_CFILES} PROPERTY COMPILE_FLAGS ${OPTFLAGS})
 
-target_link_libraries(prim_test rt winpr-sysinfo)
+find_library(WINPR_SYSINFO NAMES winpr-sysinfo HINTS ../../../winpr/libwinpr/sysinfo)
+target_link_libraries(prim_test rt ${WINPR_SYSINFO})
+
 if(NOT TESTING_OUTPUT_DIRECTORY)
 	set(TESTING_OUTPUT_DIRECTORY .)
 endif()

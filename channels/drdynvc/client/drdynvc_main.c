@@ -398,7 +398,7 @@ static void drdynvc_process_connect(rdpSvcPlugin* plugin)
 	for (index = 0; index < settings->DynamicChannelCount; index++)
 	{
 		args = settings->DynamicChannelArray[index];
-		dvcman_load_addin(drdynvc->channel_mgr, args);
+		dvcman_load_addin(drdynvc->channel_mgr, args, settings);
 	}
 
 	dvcman_init(drdynvc->channel_mgr);

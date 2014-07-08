@@ -84,7 +84,7 @@ struct _NSC_CONTEXT
 
 FREERDP_API NSC_CONTEXT* nsc_context_new(void);
 FREERDP_API void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format);
-FREERDP_API void nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
+FREERDP_API int nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 	UINT16 width, UINT16 height, BYTE* data, UINT32 length);
 FREERDP_API void nsc_compose_message(NSC_CONTEXT* context, wStream* s,
 	BYTE* bmpdata, int width, int height, int rowstride);

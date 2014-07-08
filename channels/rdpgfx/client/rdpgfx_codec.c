@@ -33,8 +33,6 @@ int rdpgfx_decode_uncompressed(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 
 int rdpgfx_decode_remotefx(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
-	fprintf(stderr, "RdpGfxDecodeRemoteFx\n");
-
 	return 1;
 }
 
@@ -59,11 +57,6 @@ int rdpgfx_decode_alpha(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 }
 
 int rdpgfx_decode_progressive(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
-{
-	return 1;
-}
-
-int rdpgfx_decode_progressive_v2(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	return 1;
 }
@@ -103,7 +96,6 @@ int rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 			break;
 
 		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
-			status = rdpgfx_decode_progressive_v2(gfx, cmd);
 			break;
 	}
 

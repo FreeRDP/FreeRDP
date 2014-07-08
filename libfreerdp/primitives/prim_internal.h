@@ -75,4 +75,14 @@ extern void primitives_init_colors(
 extern void primitives_deinit_colors(
 	primitives_t *prims);
 
+extern void primitives_init_YCoCg(
+	primitives_t *prims);
+extern void primitives_deinit_YCoCg(
+	primitives_t *prims);
+
+extern void primitives_init_16to32bpp(
+	primitives_t *prims);
+extern void primitives_deinit_16to32bpp(
+	primitives_t *prims);
+
 #endif /* !__PRIM_INTERNAL_H_INCLUDED__ */

@@ -50,7 +50,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	pixmap = XCreatePixmap(xfc->display, xfc->drawable, bitmap->width, bitmap->height, xfc->depth);
 
-	if (bitmap->data != NULL)
+	if (bitmap->data)
 	{
 		data = freerdp_image_convert(bitmap->data, NULL,
 				bitmap->width, bitmap->height, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
@@ -64,12 +64,12 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 			XFree(image);
 
 			if (data != bitmap->data)
-				free(data);
+				_aligned_free(data);
 		}
 		else
 		{
 			if (data != bitmap->data)
-				free(bitmap->data);
+				_aligned_free(bitmap->data);
 
 			bitmap->data = data;
 		}
@@ -133,10 +133,10 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 	size = width * height * ((bpp + 7) / 8);
 
-	if (bitmap->data == NULL)
-		bitmap->data = (BYTE*) malloc(size);
+	if (!bitmap->data)
+		bitmap->data = (BYTE*) _aligned_malloc(size, 16);
 	else
-		bitmap->data = (BYTE*) realloc(bitmap->data, size);
+		bitmap->data = (BYTE*) _aligned_realloc(bitmap->data, size, 16);
 
 	switch (codec_id)
 	{
@@ -148,7 +148,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			rfx_context_set_pixel_format(xfc->rfx, RDP_PIXEL_FORMAT_B8G8R8A8);
 			msg = rfx_process_message(xfc->rfx, data, length);
 
-			if (msg == NULL)
+			if (!msg)
 			{
 				fprintf(stderr, "xf_Bitmap_Decompress: rfx Decompression Failed\n");
 			}
@@ -231,8 +231,10 @@ void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	ci.xhot = pointer->xPos;
 	ci.yhot = pointer->yPos;
 
-	ci.pixels = (XcursorPixel*) malloc(ci.width * ci.height * 4);
-	ZeroMemory(ci.pixels, ci.width * ci.height * 4);
+	ci.pixels = (XcursorPixel*) calloc(1, ci.width * ci.height * 4);
+
+	if (!ci.pixels)
+		return;
 
 	if ((pointer->andMaskData != 0) && (pointer->xorMaskData != 0))
 	{
@@ -434,8 +436,10 @@ void xf_register_graphics(rdpGraphics* graphics)
 	rdpPointer* pointer;
 	rdpGlyph* glyph;
 
-	bitmap = (rdpBitmap*) malloc(sizeof(rdpBitmap));
-	ZeroMemory(bitmap, sizeof(rdpBitmap));
+	bitmap = (rdpBitmap*) calloc(1, sizeof(rdpBitmap));
+
+	if (!bitmap)
+		return;
 
 	bitmap->size = sizeof(xfBitmap);
 
@@ -448,8 +452,10 @@ void xf_register_graphics(rdpGraphics* graphics)
 	graphics_register_bitmap(graphics, bitmap);
 	free(bitmap);
 
-	pointer = (rdpPointer*) malloc(sizeof(rdpPointer));
-	ZeroMemory(pointer, sizeof(rdpPointer));
+	pointer = (rdpPointer*) calloc(1, sizeof(rdpPointer));
+
+	if (!pointer)
+		return;
 
 	pointer->size = sizeof(xfPointer);
 
@@ -462,8 +468,10 @@ void xf_register_graphics(rdpGraphics* graphics)
 	graphics_register_pointer(graphics, pointer);
 	free(pointer);
 
-	glyph = (rdpGlyph*) malloc(sizeof(rdpGlyph));
-	ZeroMemory(glyph, sizeof(rdpGlyph));
+	glyph = (rdpGlyph*) calloc(1, sizeof(rdpGlyph));
+
+	if (!glyph)
+		return;
 
 	glyph->size = sizeof(xfGlyph);
 

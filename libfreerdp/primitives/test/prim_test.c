@@ -227,6 +227,8 @@ void _floatprint(
 #define TEST_ALPHA			(1<<11)
 #define TEST_AND			(1<<12)
 #define TEST_OR				(1<<13)
+#define TEST_YCOCG			(1<<14)
+#define TEST_16TO32			(1<<15)
 
 /* Specific types of testing: */
 #define TEST_FUNCTIONALITY		(1<<0)
@@ -264,9 +266,11 @@ static const test_t testList[] =
 	{ "rgb",		TEST_RGB },
 	{ "color",		TEST_RGB },
 	{ "colors",		TEST_RGB },
+	{ "ycocg",		TEST_YCOCG },
 	{ "alpha",		TEST_ALPHA },
 	{ "and",		TEST_AND },
-	{ "or",			TEST_OR }
+	{ "or",			TEST_OR },
+	{ "16to32",		TEST_16TO32 }
 };
 
 #define NUMTESTS (sizeof(testList)/sizeof(test_t))
@@ -473,6 +477,29 @@ int main(int argc, char** argv)
 		if (testTypes & TEST_PERFORMANCE)
 		{
 			results |= test_yCbCrToRGB_16s16s_P3P3_speed();
+		}
+	}
+	if (testSet & TEST_YCOCG)
+	{
+		if (testTypes & TEST_FUNCTIONALITY)
+		{
+			results |= test_YCoCgRToRGB_8u_AC4R_func();
+		}
+		if (testTypes & TEST_PERFORMANCE)
+		{
+			results |= test_YCoCgRToRGB_8u_AC4R_speed();
+		}
+	}
+	/* 16 to 32 BPP */
+	if (testSet & TEST_16TO32)
+	{
+		if (testTypes & TEST_FUNCTIONALITY)
+		{
+			results |= test_RGB565ToARGB_16u32u_C3C4_func();
+		}
+		if (testTypes & TEST_PERFORMANCE)
+		{
+			results |= test_RGB565ToARGB_16u32u_C3C4_speed();
 		}
 	}
 	/* ALPHA COMPOSITION */

@@ -27,6 +27,10 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _REGION16_DATA;
 typedef struct _REGION16_DATA REGION16_DATA;
 
@@ -124,5 +128,8 @@ FREERDP_API BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, con
  */
 FREERDP_API void region16_uninit(REGION16 *region);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __REGION_H___ */

@@ -163,15 +163,15 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 
 int gdi_DeleteObject(HGDIOBJECT hgdiobject)
 {
-	if (hgdiobject == NULL)
+	if (!hgdiobject)
 		return 0;
 
 	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
 	{
 		HGDI_BITMAP hBitmap = (HGDI_BITMAP) hgdiobject;
 
-		if (hBitmap->data != NULL)
-			free(hBitmap->data);
+		if (hBitmap->data)
+			_aligned_free(hBitmap->data);
 
 		free(hBitmap);
 	}

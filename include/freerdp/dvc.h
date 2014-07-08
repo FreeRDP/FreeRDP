@@ -152,7 +152,8 @@ struct _IDRDYNVC_ENTRY_POINTS
 						  const char *name, IWTSPlugin *pPlugin);
 	IWTSPlugin *(*GetPlugin)(IDRDYNVC_ENTRY_POINTS *pEntryPoints,
 							 const char *name);
-	ADDIN_ARGV *(*GetPluginData)(IDRDYNVC_ENTRY_POINTS *pEntryPoints);
+	ADDIN_ARGV* (*GetPluginData)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
+	void* (*GetRdpSettings)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
 };
 
 typedef int (*PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS *);

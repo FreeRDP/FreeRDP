@@ -754,6 +754,11 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_JpegCodec					3776
 #define FreeRDP_JpegCodecId					3777
 #define FreeRDP_JpegQuality					3778
+#define FreeRDP_GfxThinClient					3840
+#define FreeRDP_GfxSmallCache					3841
+#define FreeRDP_GfxProgressive					3842
+#define FreeRDP_GfxProgressiveV2				3843
+#define FreeRDP_GfxH264						3844
 #define FreeRDP_BitmapCacheV3CodecId				3904
 #define FreeRDP_DrawNineGridEnabled				3968
 #define FreeRDP_DrawNineGridCacheSize				3969
@@ -1262,7 +1267,13 @@ struct rdp_settings
 	ALIGN64 UINT32 JpegCodecId; /* 3777 */
 	ALIGN64 UINT32 JpegQuality; /* 3778 */
 	UINT64 padding3840[3840 - 3779]; /* 3779 */
-	UINT64 padding3904[3904 - 3840]; /* 3840 */
+
+	ALIGN64 BOOL GfxThinClient; /* 3840 */
+	ALIGN64 BOOL GfxSmallCache; /* 3841 */
+	ALIGN64 BOOL GfxProgressive; /* 3842 */
+	ALIGN64 BOOL GfxProgressiveV2; /* 3843 */
+	ALIGN64 BOOL GfxH264; /* 3844 */
+	UINT64 padding3904[3904 - 3845]; /* 3845 */
 
 	/**
 	 * Caches

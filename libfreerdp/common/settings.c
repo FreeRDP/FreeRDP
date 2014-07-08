@@ -1087,6 +1087,26 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->JpegCodec;
 			break;
 
+		case FreeRDP_GfxThinClient:
+			return settings->GfxThinClient;
+			break;
+
+		case FreeRDP_GfxSmallCache:
+			return settings->GfxSmallCache;
+			break;
+
+		case FreeRDP_GfxProgressive:
+			return settings->GfxProgressive;
+			break;
+
+		case FreeRDP_GfxProgressiveV2:
+			return settings->GfxProgressiveV2;
+			break;
+
+		case FreeRDP_GfxH264:
+			return settings->GfxH264;
+			break;
+
 		case FreeRDP_DrawNineGridEnabled:
 			return settings->DrawNineGridEnabled;
 			break;
@@ -1574,6 +1594,26 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_JpegCodec:
 			settings->JpegCodec = param;
+			break;
+
+		case FreeRDP_GfxThinClient:
+			settings->GfxThinClient = param;
+			break;
+
+		case FreeRDP_GfxSmallCache:
+			settings->GfxSmallCache = param;
+			break;
+
+		case FreeRDP_GfxProgressive:
+			settings->GfxProgressive = param;
+			break;
+
+		case FreeRDP_GfxProgressiveV2:
+			settings->GfxProgressiveV2 = param;
+			break;
+
+		case FreeRDP_GfxH264:
+			settings->GfxH264 = param;
 			break;
 
 		case FreeRDP_DrawNineGridEnabled:

@@ -148,10 +148,10 @@ void wf_Bitmap_Decompress(wfContext* wfc, rdpBitmap* bitmap,
 
 	size = width * height * (bpp / 8);
 
-	if (bitmap->data == NULL)
-		bitmap->data = (BYTE*) malloc(size);
+	if (!bitmap->data)
+		bitmap->data = (BYTE*) _aligned_malloc(size, 16);
 	else
-		bitmap->data = (BYTE*) realloc(bitmap->data, size);
+		bitmap->data = (BYTE*) _aligned_realloc(bitmap->data, size, 16);
 
 	if (compressed)
 	{
