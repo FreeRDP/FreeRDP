@@ -36,6 +36,7 @@
 #define HANDLE_TYPE_FILE			10
 #define HANDLE_TYPE_TIMER_QUEUE			11
 #define HANDLE_TYPE_TIMER_QUEUE_TIMER		12
+#define HANDLE_TYPE_COMM			13
 
 #define WINPR_HANDLE_DEF() \
 	ULONG Type
@@ -63,5 +64,17 @@ static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObj
 
 	return TRUE;
 }
+
+
+typedef BOOL (*pcIsHandled)(HANDLE handle);
+typedef BOOL (*pcCloseHandle)(HANDLE handle);
+
+typedef struct _HANDLE_CLOSE_CB
+{
+	pcIsHandled IsHandled;
+	pcCloseHandle CloseHandle;
+} HANDLE_CLOSE_CB;
+
+BOOL RegisterHandleCloseCb(HANDLE_CLOSE_CB *pHandleClose);
 
 #endif /* WINPR_HANDLE_PRIVATE_H */

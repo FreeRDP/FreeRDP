@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
@@ -210,6 +211,7 @@ struct _wLog
 };
 
 WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
+WINPR_API int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args);
 
 #define WLog_Print(_log, _log_level, _fmt, ...) \
 	if (_log_level >= WLog_GetLogLevel(_log)) { \
@@ -221,6 +223,18 @@ WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 		_log_message.FileName = __FILE__; \
 		_log_message.FunctionName = __FUNCTION__; \
 		WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
+	}
+
+#define WLog_PrintVA(_log, _log_level, _fmt, _args) \
+	if (_log_level >= WLog_GetLogLevel(_log)) { \
+		wLogMessage _log_message; \
+		_log_message.Type = WLOG_MESSAGE_TEXT; \
+		_log_message.Level = _log_level; \
+		_log_message.FormatString = _fmt; \
+		_log_message.LineNumber = __LINE__; \
+		_log_message.FileName = __FILE__; \
+		_log_message.FunctionName = __FUNCTION__; \
+		WLog_PrintMessageVA(_log, &(_log_message), _args); \
 	}
 
 #define WLog_Data(_log, _log_level, ...) \

@@ -24,6 +24,7 @@
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
+#include <winpr/winsock.h>
 
 #include <freerdp/utils/tcp.h>
 
@@ -41,10 +42,15 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/select.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
+
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#else
+#include <sys/select.h>
+#endif
 
 #ifdef __APPLE__
 #ifndef TCP_KEEPIDLE
@@ -186,8 +192,14 @@ int freerdp_tcp_write(int sockfd, BYTE* data, int length)
 
 int freerdp_tcp_wait_read(int sockfd)
 {
+	int status;
+
+#ifdef HAVE_POLL_H
+	struct pollfd pollfds;
+#else
 	fd_set fds;
 	struct timeval timeout;
+#endif
 
 	if (sockfd < 1)
 	{
@@ -195,37 +207,61 @@ int freerdp_tcp_wait_read(int sockfd)
 		return 0 ;
 	}
 
+#ifdef HAVE_POLL_H
+	pollfds.fd = sockfd;
+	pollfds.events = POLLIN;
+	pollfds.revents = 0;
+	do
+	{
+		status = poll(&pollfds, 1, 5 * 1000);
+	}
+	while ((status < 0) && (errno == EINTR));
+#else
 	FD_ZERO(&fds);
 	FD_SET(sockfd, &fds);
 	timeout.tv_sec = 5;
 	timeout.tv_usec = 0;
-	select(sockfd+1, &fds, NULL, NULL, &timeout);
-	if (!FD_ISSET(sockfd, &fds))
-		return -1;
+	status = _select(sockfd+1, &fds, NULL, NULL, &timeout);
+#endif
 
-	return 0;
+	return status > 0 ? 1 : 0;
 }
 
 int freerdp_tcp_wait_write(int sockfd)
 {
+	int status;
+
+#ifdef HAVE_POLL_H
+	struct pollfd pollfds;
+#else
 	fd_set fds;
 	struct timeval timeout;
+#endif
 
 	if (sockfd < 1)
 	{
 		fprintf(stderr, "Invalid socket to watch: %d\n", sockfd);
-		return 0;
+		return 0 ;
 	}
 
+#ifdef HAVE_POLL_H
+	pollfds.fd = sockfd;
+	pollfds.events = POLLOUT;
+	pollfds.revents = 0;
+	do
+	{
+		status = poll(&pollfds, 1, 5 * 1000);
+	}
+	while ((status < 0) && (errno == EINTR));
+#else
 	FD_ZERO(&fds);
 	FD_SET(sockfd, &fds);
 	timeout.tv_sec = 5;
 	timeout.tv_usec = 0;
-	select(sockfd+1, NULL, &fds, NULL, &timeout);
-	if (!FD_ISSET(sockfd, &fds))
-		return -1;
+	status = _select(sockfd+1, NULL, &fds, NULL, &timeout);
+#endif
 
-	return 0;
+	return status > 0 ? 1 : 0;
 }
 
 int freerdp_tcp_disconnect(int sockfd)

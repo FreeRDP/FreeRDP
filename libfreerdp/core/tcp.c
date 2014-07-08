@@ -41,6 +41,13 @@
 #include <netinet/tcp.h>
 #include <net/if.h>
 
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#else
+#include <time.h>
+#include <sys/select.h>
+#endif
+
 #ifdef __FreeBSD__
 #ifndef SOL_TCP
 #define SOL_TCP	IPPROTO_TCP
@@ -737,6 +744,83 @@ HANDLE tcp_get_event_handle(rdpTcp* tcp)
 #else
 	return (HANDLE) tcp->wsa_event;
 #endif
+}
+
+
+int tcp_wait_read(rdpTcp* tcp, DWORD dwMilliSeconds)
+{
+	int status;
+
+#ifdef HAVE_POLL_H
+	struct pollfd pollset;
+
+	pollset.fd = tcp->sockfd;
+	pollset.events = POLLIN;
+	pollset.revents = 0;
+
+	do
+	{
+		status = poll(&pollset, 1, dwMilliSeconds);
+	}
+	while ((status < 0) && (errno == EINTR));
+#else
+	struct timeval tv;
+	fd_set rset;
+
+	FD_ZERO(&rset);
+	FD_SET(tcp->sockfd, &rset);
+
+	if (dwMilliSeconds)
+	{
+		tv.tv_sec = dwMilliSeconds / 1000;
+		tv.tv_usec = (dwMilliSeconds % 1000) * 1000;
+	}
+
+	do
+	{
+		status = select(tcp->sockfd + 1, &rset, NULL, NULL, dwMilliSeconds ? &tv : NULL);
+	}
+	while ((status < 0) && (errno == EINTR));
+#endif
+	return status;
+}
+
+int tcp_wait_write(rdpTcp* tcp, DWORD dwMilliSeconds)
+{
+	int status;
+
+#ifdef HAVE_POLL_H
+	struct pollfd pollset;
+
+	pollset.fd = tcp->sockfd;
+	pollset.events = POLLOUT;
+	pollset.revents = 0;
+
+	do
+	{
+		status = poll(&pollset, 1, dwMilliSeconds);
+	}
+	while ((status < 0) && (errno == EINTR));
+#else
+	struct timeval tv;
+	fd_set rset;
+
+	FD_ZERO(&rset);
+	FD_SET(tcp->sockfd, &rset);
+
+	if (dwMilliSeconds)
+	{
+		tv.tv_sec = dwMilliSeconds / 1000;
+		tv.tv_usec = (dwMilliSeconds % 1000) * 1000;
+	}
+
+	do
+	{
+		status = select(tcp->sockfd + 1, NULL, &rset, NULL, dwMilliSeconds ? &tv : NULL);
+	}
+	while ((status < 0) && (errno == EINTR));
+#endif
+	return status;
 }
 
 rdpTcp* tcp_new(rdpSettings* settings)

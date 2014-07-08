@@ -33,6 +33,11 @@
 #include <freerdp/crypto/tls.h>
 #include "../core/tcp.h"
 
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+
+
 struct _BIO_RDP_TLS
 {
 	SSL* ssl;
@@ -586,8 +591,12 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 
 	do
 	{
+#ifdef HAVE_POLL_H
+		struct pollfd pollfds;
+#else
 		struct timeval tv;
 		fd_set rset;
+#endif
 		int fd;
 
 		status = BIO_do_handshake(tls->bio);
@@ -600,8 +609,6 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 
 		/* we select() only for read even if we should test both read and write
 		 * depending of what have blocked */
-		FD_ZERO(&rset);
-
 		fd = BIO_get_fd(tls->bio, NULL);
 
 		if (fd < 0)
@@ -610,12 +617,24 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 			return -1;
 		}
 
+#ifdef HAVE_POLL_H
+		pollfds.fd = fd;
+		pollfds.events = POLLIN;
+		pollfds.revents = 0;
+
+		do
+		{
+			status = poll(&pollfds, 1, 10 * 1000);
+		}
+		while ((status < 0) && (errno == EINTR));
+#else
+		FD_ZERO(&rset);
 		FD_SET(fd, &rset);
 		tv.tv_sec = 0;
 		tv.tv_usec = 10 * 1000; /* 10ms */
 
-		status = select(fd + 1, &rset, NULL, NULL, &tv);
-
+		status = _select(fd + 1, &rset, NULL, NULL, &tv);
+#endif
 		if (status < 0)
 		{
 			fprintf(stderr, "%s: error during select()\n", __FUNCTION__);
@@ -830,9 +849,13 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 {
 	int status, nchunks, commitedBytes;
 	rdpTcp *tcp;
+#ifdef HAVE_POLL_H
+	struct pollfd pollfds;
+#else
 	fd_set rset, wset;
 	fd_set *rsetPtr, *wsetPtr;
 	struct timeval tv;
+#endif
 	BIO* bio = tls->bio;
 	DataChunk chunks[2];
 
@@ -855,9 +878,34 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 
 		if (!BIO_should_retry(bio))
 			return -1;
+#ifdef HAVE_POLL_H
+		pollfds.fd = tcp->sockfd;
+		pollfds.revents = 0;
+		pollfds.events = 0;
 
+		if (tcp->writeBlocked)
+		{
+			pollfds.events |= POLLOUT;
+		}
+		else if (tcp->readBlocked)
+		{
+			pollfds.events |= POLLIN;
+		}
+		else
+		{
+			fprintf(stderr, "%s: weird we're blocked but the underlying is not read or write blocked !\n", __FUNCTION__);
+			USleep(10);
+			continue;
+		}
+
+		do
+		{
+			status = poll(&pollfds, 1, 100);
+		}
+		while ((status < 0) && (errno == EINTR));
+#else
 		/* we try to handle SSL want_read and want_write nicely */
-		rsetPtr = wsetPtr = 0;
+		rsetPtr = wsetPtr = NULL;
 
 		if (tcp->writeBlocked)
 		{
@@ -881,8 +929,8 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 		tv.tv_sec = 0;
 		tv.tv_usec = 100 * 1000;
 
-		status = select(tcp->sockfd + 1, rsetPtr, wsetPtr, NULL, &tv);
-
+		status = _select(tcp->sockfd + 1, rsetPtr, wsetPtr, NULL, &tv);
+#endif
 		if (status < 0)
 			return -1;
 	}
@@ -911,13 +959,24 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 				if (!BIO_should_retry(tcp->socketBio))
 					goto out_fail;
 
+#ifdef HAVE_POLL_H
+				pollfds.fd = tcp->sockfd;
+				pollfds.events = POLLIN;
+				pollfds.revents = 0;
+
+				do
+				{
+					status = poll(&pollfds, 1, 100);
+				}
+				while ((status < 0) && (errno == EINTR));
+#else
 				FD_ZERO(&rset);
 				FD_SET(tcp->sockfd, &rset);
 				tv.tv_sec = 0;
 				tv.tv_usec = 100 * 1000;
 
-				status = select(tcp->sockfd + 1, &rset, NULL, NULL, &tv);
-
+				status = _select(tcp->sockfd + 1, &rset, NULL, NULL, &tv);
+#endif
 				if (status < 0)
 					goto out_fail;
 			}

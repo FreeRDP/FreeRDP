@@ -11,8 +11,10 @@ package com.freerdp.freerdpcore.presentation;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.IllegalFormatException;
+import java.util.Locale;
 
 import com.freerdp.freerdpcore.services.LibFreeRDP;
 
@@ -21,10 +23,12 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.webkit.WebView;
 
 public class AboutActivity extends Activity {
 	
+	private static final String TAG = "FreeRDPCore.AboutActivity";
 	@Override	
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -47,6 +51,18 @@ public class AboutActivity extends Activity {
 		try
 		{
 			String filename = ((getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE) ? "about.html" : "about_phone.html";
+			Locale def = Locale.getDefault();
+			String prefix = def.getLanguage().toLowerCase(def);
+
+			String file = prefix + "_about_page/" + filename;
+			InputStream is;
+			try {
+				is = getAssets().open(file);
+				is.close();
+			} catch (IOException e) {
+				Log.e(TAG, "Missing localized asset " + file, e);
+				file = "about_page/" + filename;
+			} 
 			BufferedReader r = new BufferedReader(new InputStreamReader(getAssets().open("about_page/" + filename)));
 			String line;
 			while ((line = r.readLine()) != null) {
@@ -70,6 +86,22 @@ public class AboutActivity extends Activity {
 			about_html="Nothing here ;(";
 		}
 		webview.getSettings().setJavaScriptEnabled(true);
-		webview.loadDataWithBaseURL("file:///android_asset/about_page/", about_html, "text/html", null, "about:blank");
+		Locale def = Locale.getDefault();
+		String prefix = def.getLanguage().toLowerCase(def);
+
+		String base = "file:///android_asset/"; 
+		String dir = prefix + "_about_page/";
+		String file = dir + about_html;
+		try {
+			InputStream is = getAssets().open(dir);
+			is.close();
+			dir = base + dir;
+		} catch (IOException e) {
+			Log.e(TAG, "Missing localized asset " + dir, e);
+			dir = "file:///android_asset/about_page/";
+		} 
+
+		webview.loadDataWithBaseURL(dir, about_html, "text/html", null,
+				"about:blank");
 	}
 }
