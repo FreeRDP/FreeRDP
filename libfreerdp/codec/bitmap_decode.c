@@ -253,10 +253,10 @@ BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int 
 
 	if (srcBpp == 16 && dstBpp == 16)
 	{
-	        TmpBfr = (BYTE*) malloc(width * height * 2);
-	        RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
-	        freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
-	        free(TmpBfr);
+		TmpBfr = (BYTE*) _aligned_malloc(width * height * 2, 16);
+		RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
+		freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
+		_aligned_free(TmpBfr);
 	}
 	else if (srcBpp == 32 && dstBpp == 32)
 	{
@@ -270,24 +270,24 @@ BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int 
 	}
 	else if (srcBpp == 15 && dstBpp == 15)
 	{
-                TmpBfr = (BYTE*) malloc(width * height * 2);
-                RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
-                freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
-                free(TmpBfr);
+		TmpBfr = (BYTE*) _aligned_malloc(width * height * 2, 16);
+		RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
+		freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
+		_aligned_free(TmpBfr);
 	}
 	else if (srcBpp == 8 && dstBpp == 8)
 	{
-                TmpBfr = (BYTE*) malloc(width * height);
-                RleDecompress8to8(srcData, size, TmpBfr, width, width, height);
-                freerdp_bitmap_flip(TmpBfr, dstData, width, height);
-                free(TmpBfr);
+		TmpBfr = (BYTE*) _aligned_malloc(width * height, 16);
+		RleDecompress8to8(srcData, size, TmpBfr, width, width, height);
+		freerdp_bitmap_flip(TmpBfr, dstData, width, height);
+		_aligned_free(TmpBfr);
 	}
 	else if (srcBpp == 24 && dstBpp == 24)
 	{
-                TmpBfr = (BYTE*) malloc(width * height * 3);
-                RleDecompress24to24(srcData, size, TmpBfr, width * 3, width, height);
-                freerdp_bitmap_flip(TmpBfr, dstData, width * 3, height);
-                free(TmpBfr);
+		TmpBfr = (BYTE*) _aligned_malloc(width * height * 3, 16);
+		RleDecompress24to24(srcData, size, TmpBfr, width * 3, width, height);
+		freerdp_bitmap_flip(TmpBfr, dstData, width * 3, height);
+		_aligned_free(TmpBfr);
 	}
 	else
 	{

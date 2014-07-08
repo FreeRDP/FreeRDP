@@ -66,8 +66,8 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	BYTE seqNumber;
 	BYTE glyphFlags;
 	BYTE* glyphData;
-	UINT16 glyphIndex;
 	UINT32 offset = 0;
+	UINT16 glyphIndex = 0;
 	BYTE* pDstData = NULL;
 	UINT32 residualByteCount;
 	UINT32 bandsByteCount;

@@ -805,9 +805,9 @@ BOOL xf_pre_connect(freerdp *instance)
 BOOL xf_post_connect(freerdp *instance)
 {
 	XGCValues gcv;
-	rdpCache *cache;
-	rdpChannels *channels;
-	rdpSettings *settings;
+	rdpCache* cache;
+	rdpChannels* channels;
+	rdpSettings* settings;
 	ResizeWindowEventArgs e;
 	xfContext* xfc = (xfContext*) instance->context;
 
@@ -820,33 +820,34 @@ BOOL xf_post_connect(freerdp *instance)
 
 	xf_register_graphics(instance->context->graphics);
 
-	if (xfc->settings->SoftwareGdi)
+	if (settings->SoftwareGdi)
 	{
-		rdpGdi *gdi;
+		rdpGdi* gdi;
 		UINT32 flags;
 		flags = CLRCONV_ALPHA;
+
 		if(xfc->bpp > 16)
 			flags |= CLRBUF_32BPP;
 		else
 			flags |= CLRBUF_16BPP;
+
 		gdi_init(instance, flags, NULL);
+
 		gdi = instance->context->gdi;
 		xfc->primary_buffer = gdi->primary_buffer;
-
-		xfc->rfx = gdi->rfx_context;
 	}
 	else
 	{
-		xfc->srcBpp = instance->settings->ColorDepth;
+		xfc->srcBpp = settings->ColorDepth;
 		xf_gdi_register_update_callbacks(instance->update);
 		xfc->hdc = gdi_CreateDC(xfc->clrconv, xfc->bpp);
 
-		if (instance->settings->RemoteFxCodec)
+		if (settings->RemoteFxCodec)
 		{
 			xfc->rfx = rfx_context_new(FALSE);
 		}
 
-		if (instance->settings->NSCodec)
+		if (settings->NSCodec)
 		{
 			xfc->nsc = nsc_context_new();
 		}
