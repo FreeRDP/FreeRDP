@@ -12,6 +12,7 @@
 #  android_setup_build_env.sh <source root>
 
 OPENSSL_SCM=https://github.com/akallabeth/openssl-android.git
+OPENSSL_TAG=1.0.1h
 NDK_PROFILER_SCM=https://github.com/richq/android-ndk-profiler.git
 JPEG_LIBRARY_SCM=https://github.com/akallabeth/jpeg8d.git
 
@@ -47,6 +48,10 @@ if [ $RETVAL -ne 0 ]; then
 	exit -3
 fi
 cd $OPENSSL_SRC
+
+# We want to build a specific TAG
+git checkout $OPENSSL_TAG
+
 make clean
 # The makefile has a bug, which aborts during
 # first compilation. Rerun make to build the whole lib.
