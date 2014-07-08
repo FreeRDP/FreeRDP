@@ -339,6 +339,12 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 	BYTE* DstData = NULL;
 	xfGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
+	RDPGFX_H264_BITMAP_STREAM* h264;
+
+	h264 = (RDPGFX_H264_BITMAP_STREAM*) cmd->extra;
+
+	if (!h264)
+		return -1;
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
@@ -348,7 +354,7 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 	DstData = surface->data;
 
 #if 1
-	status = h264_decompress(xfc->h264, cmd->data, cmd->length, &DstData,
+	status = h264_decompress(xfc->h264, h264->data, h264->length, &DstData,
 			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
 #else
 	status = -1;
