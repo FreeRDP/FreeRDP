@@ -1870,6 +1870,10 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 			return settings->KeyboardFunctionKey;
 			break;
 
+		case FreeRDP_KeyboardHook:
+			return settings->KeyboardHook;
+			break;
+
 		case FreeRDP_BrushSupportLevel:
 			return settings->BrushSupportLevel;
 			break;
@@ -2177,6 +2181,10 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_KeyboardFunctionKey:
 			settings->KeyboardFunctionKey = param;
+			break;
+
+		case FreeRDP_KeyboardHook:
+			settings->KeyboardHook = param;
 			break;
 
 		case FreeRDP_BrushSupportLevel:
