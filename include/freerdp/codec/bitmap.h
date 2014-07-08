@@ -28,6 +28,10 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FREERDP_API BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size, int srcBpp, int dstBpp);
 
 FREERDP_API int freerdp_bitmap_compress(char* in_data, int width, int height,
@@ -48,5 +52,9 @@ FREERDP_API void freerdp_bitmap_planar_context_free(BITMAP_PLANAR_CONTEXT* conte
 
 FREERDP_API int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CODEC_BITMAP_H */
