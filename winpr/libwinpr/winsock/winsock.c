@@ -612,7 +612,11 @@ int _select(int nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, cons
 {
 	int status;
 
-	status = select(nfds, readfds, writefds, exceptfds, (struct timeval*) timeout);
+	do
+	{
+		status = select(nfds, readfds, writefds, exceptfds, (struct timeval*) timeout);
+	}
+	while ((status < 0) && (errno == EINTR));
 
 	return status;
 }
