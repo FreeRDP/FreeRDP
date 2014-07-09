@@ -28,8 +28,8 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/h264.h>
 
-#define USE_GRAY_SCALE		1
-#define USE_UPCONVERT		0
+#define USE_GRAY_SCALE	0
+#define USE_UPCONVERT	0
 #define USE_TRACE		1
 
 static BYTE clip(int x)
@@ -191,17 +191,25 @@ int freerdp_image_copy_yuv420p_to_xrgb(BYTE* pDstData, int nDstStep, int nXDst, 
 	BYTE* pDstPixel8;
 	BYTE *pY, *pU, *pV;
 
-	pY = pSrcData[0];
-	pU = pSrcData[1];
-	pV = pSrcData[0];
+	pY = pSrcData[0] + (nYSrc * nSrcStep[0]) + nXSrc;
 
 	pDstPixel8 = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
 
 	for (y = 0; y < nHeight; y++)
 	{
+		pU = pSrcData[1] + ((nYSrc + y) >> 1) * nSrcStep[1];
+		pV = pSrcData[2] + ((nYSrc + y) >> 1) * nSrcStep[1];
+
 		for (x = 0; x < nWidth; x++)
 		{
-			*((UINT32*) pDstPixel8) = RGB32(*pY, *pY, *pY);
+			BYTE Y, U, V;
+
+			Y = *pY;
+			U = pU[(nXSrc + x) >> 1];
+			V = pV[(nXSrc + x) >> 1];
+
+			*((UINT32*) pDstPixel8) = YUV_to_RGB(Y, U, V);
+
 			pDstPixel8 += 4;
 			pY++;
 		}
