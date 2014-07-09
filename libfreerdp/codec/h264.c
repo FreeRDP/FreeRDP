@@ -28,8 +28,8 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/h264.h>
 
-#define USE_GRAY_SCALE	0
-#define USE_UPCONVERT	0
+#define USE_GRAY_SCALE		1
+#define USE_UPCONVERT		0
 #define USE_TRACE		1
 
 static BYTE clip(int x)
@@ -160,6 +160,107 @@ static void trace_callback(H264_CONTEXT* h264, int level, const char* message)
 }
 #endif
 
+static int g_H264FrameId = 0;
+static BOOL g_H264DumpFrames = FALSE;
+
+int h264_prepare_rgb_buffer(H264_CONTEXT* h264, int width, int height)
+{
+	UINT32 size;
+
+	h264->width = width;
+	h264->height = height;
+	h264->scanline = h264->width * 4;
+	size = h264->scanline * h264->height;
+
+	if (size > h264->size)
+	{
+		h264->size = size;
+		h264->data = (BYTE*) realloc(h264->data, h264->size);
+	}
+
+	if (!h264->data)
+		return -1;
+
+	return 1;
+}
+
+int freerdp_image_copy_yuv420p_to_xrgb(BYTE* pDstData, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData[3], int nSrcStep[2], int nXSrc, int nYSrc)
+{
+	int x, y;
+	BYTE* pDstPixel8;
+	BYTE *pY, *pU, *pV;
+
+	pY = pSrcData[0];
+	pU = pSrcData[1];
+	pV = pSrcData[0];
+
+	pDstPixel8 = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
+
+	for (y = 0; y < nHeight; y++)
+	{
+		for (x = 0; x < nWidth; x++)
+		{
+			*((UINT32*) pDstPixel8) = RGB32(*pY, *pY, *pY);
+			pDstPixel8 += 4;
+			pY++;
+		}
+
+		pDstPixel8 += (nDstStep - (nWidth * 4));
+		pY += (nSrcStep[0] - nWidth);
+	}
+
+	return 1;
+}
+
+BYTE* h264_strip_nal_unit_au_delimiter(BYTE* pSrcData, UINT32* pSrcSize)
+{
+	BYTE* data = pSrcData;
+	UINT32 size = *pSrcSize;
+	BYTE forbidden_zero_bit = 0;
+	BYTE nal_ref_idc = 0;
+	BYTE nal_unit_type = 0;
+
+	/* ITU-T H.264 B.1.1 Byte stream NAL unit syntax */
+
+	while (size > 0)
+	{
+		if (*data)
+			break;
+
+		data++;
+		size--;
+	}
+
+	if (*data != 1)
+		return pSrcData;
+
+	data++;
+	size--;
+
+	forbidden_zero_bit = (data[0] >> 7);
+	nal_ref_idc = (data[0] >> 5);
+	nal_unit_type = (data[0] & 0x1F);
+
+	if (forbidden_zero_bit)
+		return pSrcData; /* invalid */
+
+	if (nal_unit_type == 9)
+	{
+		/* NAL Unit AU Delimiter */
+
+		printf("NAL Unit AU Delimiter: idc: %d\n", nal_ref_idc);
+
+		data += 2;
+		size -= 2;
+
+		*pSrcSize = size;
+		return data;
+	}
+
+	return pSrcData;
+}
+
 int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
 {
@@ -179,9 +280,11 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	if (!h264 || !h264->pDecoder)
 		return -1;
 
+	pSrcData = h264_strip_nal_unit_au_delimiter(pSrcData, &SrcSize);
+
 #if 1
-	printf("h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, DstFormat=%lx, nDstStep=%d, nXDst=%d, nYDst=%d, nWidth=%d, nHeight=%d)\n",
-		pSrcData, SrcSize, *ppDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight);
+	printf("h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, nDstStep=%d, nXDst=%d, nYDst=%d, nWidth=%d, nHeight=%d)\n",
+		pSrcData, SrcSize, *ppDstData, nDstStep, nXDst, nYDst, nWidth, nHeight);
 #endif
 
 	/* Allocate a destination buffer (if needed). */
@@ -201,6 +304,18 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 			return -1;
 
 		*ppDstData = pDstData;
+	}
+
+	if (g_H264DumpFrames)
+	{
+		FILE* fp;
+		char buf[4096];
+
+		snprintf(buf, sizeof(buf), "/tmp/wlog/bs_%d.h264", g_H264FrameId);
+		fp = fopen(buf, "wb");
+		fwrite(pSrcData, 1, SrcSize, fp);
+		fflush(fp);
+		fclose(fp);
 	}
 
 	/*
@@ -246,6 +361,41 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	pY = pYUVData[0];
 	pU = pYUVData[1];
 	pV = pYUVData[2];
+
+	if (g_H264DumpFrames)
+	{
+		FILE* fp;
+		BYTE* srcp;
+		char buf[4096];
+
+		snprintf(buf, sizeof(buf), "/tmp/wlog/H264_%d.ppm", g_H264FrameId);
+		fp = fopen(buf, "wb");
+		fwrite("P5\n", 1, 3, fp);
+		snprintf(buf, sizeof(buf), "%d %d\n", pSystemBuffer->iWidth, pSystemBuffer->iHeight);
+		fwrite(buf, 1, strlen(buf), fp);
+		fwrite("255\n", 1, 4, fp);
+
+		srcp = pY;
+
+		for (j = 0; j < pSystemBuffer->iHeight; j++)
+		{
+			fwrite(srcp, 1, pSystemBuffer->iWidth, fp);
+			srcp += pSystemBuffer->iStride[0];
+		}
+
+		fflush(fp);
+		fclose(fp);
+	}
+
+	g_H264FrameId++;
+
+	if (h264_prepare_rgb_buffer(h264, pSystemBuffer->iWidth, pSystemBuffer->iHeight) < 0)
+		return -1;
+
+	freerdp_image_copy_yuv420p_to_xrgb(h264->data, h264->scanline, 0, 0,
+			h264->width, h264->height, pYUVData, pSystemBuffer->iStride, 0, 0);
+
+	return 1;
 
 #if USE_UPCONVERT
 	/* Convert 4:2:0 YUV to 4:4:4 YUV. */
@@ -306,13 +456,16 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	{
 		h264->Compressor = Compressor;
 
+		if (h264_prepare_rgb_buffer(h264, 256, 256) < 0)
+			return NULL;
+
 #ifdef WITH_OPENH264
 		{
 			static EVideoFormatType videoFormat = videoFormatI420;
 
 #if USE_TRACE
 			static int traceLevel = WELS_LOG_DEBUG;
-			static WelsTraceCallback traceCallback = trace_callback;
+			static WelsTraceCallback traceCallback = (WelsTraceCallback) trace_callback;
 #endif
 
 			SDecodingParam sDecParam;
@@ -390,6 +543,8 @@ void h264_context_free(H264_CONTEXT* h264)
 {
 	if (h264)
 	{
+		free(h264->data);
+
 #ifdef WITH_OPENH264
 		if (h264->pDecoder)
 		{

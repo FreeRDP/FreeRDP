@@ -32,6 +32,12 @@ struct _H264_CONTEXT
 {
 	BOOL Compressor;
 
+	BYTE* data;
+	UINT32 size;
+	UINT32 width;
+	UINT32 height;
+	int scanline;
+
 #ifdef WITH_OPENH264
 	ISVCDecoder* pDecoder;
 #endif
