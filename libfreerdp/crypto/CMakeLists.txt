@@ -26,6 +26,7 @@ set(${MODULE_PREFIX}_SRCS
 	base64.c
 	certificate.c
 	crypto.c
+	ssl_trace.c
 	tls.c)
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"

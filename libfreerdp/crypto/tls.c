@@ -32,11 +32,13 @@
 
 #include <freerdp/crypto/tls.h>
 #include "../core/tcp.h"
+#include "ssl_trace.h"
 
 #ifdef HAVE_POLL_H
 #include <poll.h>
 #endif
 
+BIO *msg_bio = NULL;
 
 struct _BIO_RDP_TLS
 {
@@ -315,6 +317,13 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			break;
 
 		case BIO_C_DO_STATE_MACHINE:
+
+			if (!msg_bio)
+			{
+				msg_bio = BIO_new_fp(stdout,BIO_NOCLOSE);
+			}
+			SSL_set_msg_callback(tls->ssl, SSL_trace);
+			SSL_set_msg_callback_arg(tls->ssl,msg_bio);
 			BIO_clear_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_WRITE | BIO_FLAGS_IO_SPECIAL);
 			bio->retry_reason = 0;
 
