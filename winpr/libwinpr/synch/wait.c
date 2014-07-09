@@ -22,6 +22,10 @@
 #include "config.h"
 #endif
 
+#ifdef HAVE_PTHREAD_GNU_EXT
+#define _GNU_SOURCE
+#endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
