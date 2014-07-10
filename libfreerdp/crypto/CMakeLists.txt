@@ -41,11 +41,7 @@ set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVER
 set(${MODULE_PREFIX}_LIBS
 	${OPENSSL_LIBRARIES})
 
-if(MONOLITHIC_BUILD)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
-else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-sspi winpr-library winpr-path winpr-file)
-endif()
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 
 if(WIN32)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
@@ -58,11 +54,6 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE freerdp
 	MODULES freerdp-utils)
 	
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-library)
-
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
 else()

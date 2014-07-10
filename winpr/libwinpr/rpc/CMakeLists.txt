@@ -15,10 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "winpr-rpc")
-set(MODULE_PREFIX "WINPR_RPC")
-
-set(${MODULE_PREFIX}_SRCS
+winpr_module_add(
 	rpc.c
 	ndr.c
 	ndr_array.c
@@ -41,35 +38,13 @@ set(${MODULE_PREFIX}_SRCS
 	ndr_union.h
 	midl.c)
 
-if(MSVC AND (NOT MONOLITHIC_BUILD))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
-endif()
+winpr_include_directory_add(${OPENSSL_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIRS})
 
-add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS}
-	EXPORT)
-
-include_directories(${OPENSSL_INCLUDE_DIR})
-include_directories(${ZLIB_INCLUDE_DIRS})
-
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
-
-set(${MODULE_PREFIX}_LIBS
-	${OPENSSL_LIBRARIES})
+winpr_library_add(${OPENSSL_LIBRARIES})
 
 if(WIN32)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rpcrt4)
+	winpr_library_add(ws2_32 rpcrt4)
 else()
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ZLIB_LIBRARIES})
+	winpr_library_add(${ZLIB_LIBRARIES})
 endif()
-
-if(MONOLITHIC_BUILD)
-	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
-else()
-	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT WinPRTargets)
-endif()
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")

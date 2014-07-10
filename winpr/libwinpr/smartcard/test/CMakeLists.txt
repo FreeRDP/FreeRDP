@@ -13,12 +13,7 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-smartcard winpr-crt)
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} winpr)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 

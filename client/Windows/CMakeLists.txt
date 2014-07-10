@@ -58,10 +58,8 @@ endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-credui winpr-utils)
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}

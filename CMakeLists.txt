@@ -682,6 +682,7 @@ else(MONOLITHIC_BUILD)
 	foreach(EXPORT_MODULE ${MEXPORTS})
 			list(APPEND WINPR_PC_LIBS "-lwinpr-${EXPORT_MODULE}")
 	endforeach()
+	list(APPEND WINPR_PC_LIBS "-lwinpr")
 	string(REPLACE ";" " " WINPR_PC_LIBS "${WINPR_PC_LIBS}")
 endif(MONOLITHIC_BUILD)
 
