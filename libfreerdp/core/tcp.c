@@ -122,23 +122,28 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
 	status = _recv((SOCKET) bio->num, buf, size, 0);
+	if (status > 0)
+		return status;
 
-	if (status <= 0)
+	if (status == 0)
 	{
-		error = WSAGetLastError();
-
-		if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
-			(error == WSAEINPROGRESS) || (error == WSAEALREADY))
-		{
-			BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
-		}
-		else
-		{
-			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-		}
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		return 0;
 	}
 
-	return status;
+	error = WSAGetLastError();
+
+	if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
+		(error == WSAEINPROGRESS) || (error == WSAEALREADY))
+	{
+		BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
+	}
+	else
+	{
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	}
+
+	return -1;
 }
 
 static int transport_bio_simple_puts(BIO* bio, const char* str)
@@ -327,7 +332,6 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 		if (!BIO_should_retry(bio->next_bio))
 		{
 			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-			status = -1;
 			goto out;
 		}
 
