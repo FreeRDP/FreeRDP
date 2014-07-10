@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Server Cursor
+ * Session Shadowing
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@
  * limitations under the License.
  */
 
-#ifndef XFREERDP_SERVER_CURSOR_H
-#define XFREERDP_SERVER_CURSOR_H
+#ifndef FREERDP_SERVER_SHADOW_H
+#define FREERDP_SERVER_SHADOW_H
 
-#include "xfreerdp.h"
+#include <freerdp/api.h>
+#include <freerdp/types.h>
 
-int xf_cursor_init(xfInfo* xfi);
 
-#endif /* XFREERDP_SERVER_CURSOR_H */
+
+#endif /* FREERDP_SERVER_SHADOW_H */
+

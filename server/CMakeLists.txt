@@ -18,6 +18,7 @@
 # Servers
 
 add_subdirectory(common)
+add_subdirectory(shadow)
 
 if(FREERDP_VENDOR)
 	if(WITH_SAMPLE)
@@ -25,10 +26,6 @@ if(FREERDP_VENDOR)
 	endif()
 
 	if(NOT WIN32)
-		if(WITH_X11)
-			add_subdirectory(X11)
-		endif()
-
 		if(APPLE AND (NOT IOS))
 			add_subdirectory(Mac)
 		endif()
@@ -62,3 +59,4 @@ endforeach()
 foreach(FREERDP_SERVER ${FREERDP_EXTRA_SERVERS})
 	add_subdirectory(${FREERDP_SERVER})
 endforeach()
+
