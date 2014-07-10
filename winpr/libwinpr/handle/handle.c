@@ -139,6 +139,9 @@ BOOL CloseHandle(HANDLE hObject)
 		WINPR_THREAD* thread;
 
 		thread = (WINPR_THREAD*) Object;
+		if (thread->started) {
+			pthread_detach(thread->thread);
+		}
 		free(thread);
 
 		return TRUE;
