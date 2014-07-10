@@ -30,7 +30,7 @@
 
 #include "x11_shadow.h"
 
-int xf_cursor_init(xfInfo* xfi)
+int x11_shadow_cursor_init(xfInfo* xfi)
 {
 #ifdef WITH_XFIXES
 	int event;
@@ -50,12 +50,12 @@ int xf_cursor_init(xfInfo* xfi)
 	return 0;
 }
 
-void xf_input_synchronize_event(rdpInput* input, UINT32 flags)
+void x11_shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	fprintf(stderr, "Client sent a synchronize event (flags:0x%X)\n", flags);
 }
 
-void xf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+void x11_shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 #ifdef WITH_XTEST
 	DWORD vkcode;
@@ -87,12 +87,12 @@ void xf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 #endif
 }
 
-void xf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
+void x11_shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	fprintf(stderr, "Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 }
 
-void xf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+void x11_shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 #ifdef WITH_XTEST
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
@@ -137,7 +137,7 @@ void xf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 #endif
 }
 
-void xf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
+void x11_shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 #ifdef WITH_XTEST
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
@@ -163,11 +163,11 @@ void xf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT
 #endif
 }
 
-void xf_input_register_callbacks(rdpInput* input)
+void x11_shadow_input_register_callbacks(rdpInput* input)
 {
-	input->SynchronizeEvent = xf_input_synchronize_event;
-	input->KeyboardEvent = xf_input_keyboard_event;
-	input->UnicodeKeyboardEvent = xf_input_unicode_keyboard_event;
-	input->MouseEvent = xf_input_mouse_event;
-	input->ExtendedMouseEvent = xf_input_extended_mouse_event;
+	input->SynchronizeEvent = x11_shadow_input_synchronize_event;
+	input->KeyboardEvent = x11_shadow_input_keyboard_event;
+	input->UnicodeKeyboardEvent = x11_shadow_input_unicode_keyboard_event;
+	input->MouseEvent = x11_shadow_input_mouse_event;
+	input->ExtendedMouseEvent = x11_shadow_input_extended_mouse_event;
 }

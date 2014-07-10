@@ -135,7 +135,7 @@ xfServer* x11_shadow_server_new(int argc, char** argv)
 	if (server)
 	{
 		server->listener = freerdp_listener_new();
-		server->listener->PeerAccepted = xf_peer_accepted;
+		server->listener->PeerAccepted = x11_shadow_peer_accepted;
 	}
 
 	signal(SIGPIPE, SIG_IGN);

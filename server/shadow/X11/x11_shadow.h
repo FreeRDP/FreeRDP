@@ -24,8 +24,8 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
-typedef struct xf_info xfInfo;
-typedef struct xf_server xfServer;
+typedef struct x11_shadow_info xfInfo;
+typedef struct x11_shadow_server xfServer;
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,7 +73,7 @@ FREERDP_API void x11_shadow_server_free(xfServer* server);
 #include <X11/extensions/Xdamage.h>
 #endif
 
-struct xf_info
+struct x11_shadow_info
 {
 	int bpp;
 	int xfds;
@@ -108,7 +108,7 @@ struct xf_info
 #endif
 };
 
-struct xf_server
+struct x11_shadow_server
 {
 	DWORD port;
 	HANDLE thread;
@@ -128,7 +128,7 @@ struct xf_server
 #include <freerdp/listener.h>
 #include <freerdp/utils/stopwatch.h>
 
-typedef struct xf_peer_context xfPeerContext;
+typedef struct x11_shadow_peer_context xfPeerContext;
 
 #define PeerEvent_Base						0
 
@@ -136,7 +136,7 @@ typedef struct xf_peer_context xfPeerContext;
 
 #define PeerEvent_EncodeRegion					1
 
-struct xf_peer_context
+struct x11_shadow_peer_context
 {
 	rdpContext _p;
 
@@ -151,23 +151,23 @@ struct xf_peer_context
 	RFX_CONTEXT* rfx_context;
 };
 
-void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
+void x11_shadow_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
 
 void* x11_shadow_server_thread(void* param);
 
-void* xf_update_thread(void* param);
+void* x11_shadow_update_thread(void* param);
 
-int xf_cursor_init(xfInfo* xfi);
+int x11_shadow_cursor_init(xfInfo* xfi);
 
-XImage* xf_snapshot(xfPeerContext* xfp, int x, int y, int width, int height);
-void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height);
-int xf_update_encode(freerdp_peer* client, int x, int y, int width, int height);
+XImage* x11_shadow_snapshot(xfPeerContext* xfp, int x, int y, int width, int height);
+void x11_shadow_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height);
+int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int height);
 
-void xf_input_synchronize_event(rdpInput* input, UINT32 flags);
-void xf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
-void xf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
-void xf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
-void xf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
-void xf_input_register_callbacks(rdpInput* input);
+void x11_shadow_input_synchronize_event(rdpInput* input, UINT32 flags);
+void x11_shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
+void x11_shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code);
+void x11_shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+void x11_shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+void x11_shadow_input_register_callbacks(rdpInput* input);
 
 #endif /* FREERDP_SHADOW_SERVER_X11_H */

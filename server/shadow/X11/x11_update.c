@@ -29,7 +29,7 @@
 
 #include "x11_shadow.h"
 
-XImage* xf_snapshot(xfPeerContext* xfp, int x, int y, int width, int height)
+XImage* x11_shadow_snapshot(xfPeerContext* xfp, int x, int y, int width, int height)
 {
 	XImage* image;
 	xfInfo* xfi = xfp->info;
@@ -47,7 +47,7 @@ XImage* xf_snapshot(xfPeerContext* xfp, int x, int y, int width, int height)
 	return image;
 }
 
-void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height)
+void x11_shadow_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height)
 {
 	XRectangle region;
 	xfInfo* xfi = xfp->info;
@@ -63,7 +63,7 @@ void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int
 #endif
 }
 
-int xf_update_encode(freerdp_peer* client, int x, int y, int width, int height)
+int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int height)
 {
 	wStream* s;
 	BYTE* data;
@@ -101,7 +101,7 @@ int xf_update_encode(freerdp_peer* client, int x, int y, int width, int height)
 		rect.width = width;
 		rect.height = height;
 
-		image = xf_snapshot(xfp, x, y, width, height);
+		image = x11_shadow_snapshot(xfp, x, y, width, height);
 
 		data = (BYTE*) image->data;
 		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel / 8)];
@@ -121,7 +121,7 @@ int xf_update_encode(freerdp_peer* client, int x, int y, int width, int height)
 		rect.width = width;
 		rect.height = height;
 
-		image = xf_snapshot(xfp, x, y, width, height);
+		image = x11_shadow_snapshot(xfp, x, y, width, height);
 
 		data = (BYTE*) image->data;
 
@@ -146,7 +146,7 @@ int xf_update_encode(freerdp_peer* client, int x, int y, int width, int height)
 	return 0;
 }
 
-void* xf_update_thread(void* param)
+void* x11_shadow_update_thread(void* param)
 {
 	xfInfo* xfi;
 	HANDLE event;
@@ -184,9 +184,9 @@ void* xf_update_thread(void* param)
 				width = notify->area.width;
 				height = notify->area.height;
 
-				if (xf_update_encode(client, x, y, width, height) >= 0)
+				if (x11_shadow_update_encode(client, x, y, width, height) >= 0)
 				{
-					xf_xdamage_subtract_region(xfp, x, y, width, height);
+					x11_shadow_xdamage_subtract_region(xfp, x, y, width, height);
 
 					SetEvent(xfp->updateReadyEvent);
 

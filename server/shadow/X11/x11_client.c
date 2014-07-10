@@ -48,7 +48,7 @@
 
 #ifdef WITH_XDAMAGE
 
-void xf_xdamage_init(xfInfo* xfi)
+void x11_shadow_xdamage_init(xfInfo* xfi)
 {
 	int damage_event;
 	int damage_error;
@@ -102,7 +102,7 @@ void xf_xdamage_init(xfInfo* xfi)
 
 #endif
 
-int xf_xshm_init(xfInfo* xfi)
+int x11_shadow_xshm_init(xfInfo* xfi)
 {
 	Bool pixmaps;
 	int major, minor;
@@ -169,7 +169,7 @@ int xf_xshm_init(xfInfo* xfi)
 	return 0;
 }
 
-void xf_info_free(xfInfo *info)
+void x11_shadow_info_free(xfInfo *info)
 {
 	if (info->display)
 		XCloseDisplay(info->display);
@@ -178,7 +178,7 @@ void xf_info_free(xfInfo *info)
 	free(info);
 }
 
-xfInfo* xf_info_init()
+xfInfo* x11_shadow_info_init()
 {
 	int i;
 	xfInfo* xfi;
@@ -271,7 +271,7 @@ xfInfo* xf_info_init()
 
 	if (xfi->use_xshm)
 	{
-		if (xf_xshm_init(xfi) < 0)
+		if (x11_shadow_xshm_init(xfi) < 0)
 			xfi->use_xshm = FALSE;
 	}
 
@@ -279,10 +279,10 @@ xfInfo* xf_info_init()
 		printf("Using X Shared Memory Extension (XShm)\n");
 
 #ifdef WITH_XDAMAGE
-	xf_xdamage_init(xfi);
+	x11_shadow_xdamage_init(xfi);
 #endif
 
-	xf_cursor_init(xfi);
+	x11_shadow_cursor_init(xfi);
 
 	xfi->bytesPerPixel = 4;
 	xfi->activePeerCount = 0;
@@ -292,9 +292,9 @@ xfInfo* xf_info_init()
 	return xfi;
 }
 
-void xf_peer_context_new(freerdp_peer* client, xfPeerContext* context)
+void x11_shadow_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 {
-	context->info = xf_info_init();
+	context->info = x11_shadow_info_init();
 	context->rfx_context = rfx_context_new(TRUE);
 	context->rfx_context->mode = RLGR3;
 	context->rfx_context->width = context->info->width;
@@ -309,11 +309,11 @@ void xf_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 	context->updateSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 }
 
-void xf_peer_context_free(freerdp_peer* client, xfPeerContext* context)
+void x11_shadow_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 {
 	if (context)
 	{
-		xf_info_free(context->info);
+		x11_shadow_info_free(context->info);
 
 		CloseHandle(context->updateReadyEvent);
 		CloseHandle(context->updateSentEvent);
@@ -323,14 +323,14 @@ void xf_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 	}
 }
 
-void xf_peer_init(freerdp_peer* client)
+void x11_shadow_peer_init(freerdp_peer* client)
 {
 	xfInfo* xfi;
 	xfPeerContext* xfp;
 
 	client->ContextSize = sizeof(xfPeerContext);
-	client->ContextNew = (psPeerContextNew) xf_peer_context_new;
-	client->ContextFree = (psPeerContextFree) xf_peer_context_free;
+	client->ContextNew = (psPeerContextNew) x11_shadow_peer_context_new;
+	client->ContextFree = (psPeerContextFree) x11_shadow_peer_context_free;
 	freerdp_peer_context_new(client);
 
 	xfp = (xfPeerContext*) client->context;
@@ -341,7 +341,7 @@ void xf_peer_init(freerdp_peer* client)
 	xfp->mutex = CreateMutex(NULL, FALSE, NULL);
 }
 
-void xf_peer_send_update(freerdp_peer* client)
+void x11_shadow_peer_send_update(freerdp_peer* client)
 {
 	rdpUpdate* update;
 	SURFACE_BITS_COMMAND* cmd;
@@ -353,7 +353,7 @@ void xf_peer_send_update(freerdp_peer* client)
 		update->SurfaceBits(update->context, cmd);
 }
 
-BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
+BOOL x11_shadow_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 {
 	int fds;
 	HANDLE event;
@@ -367,7 +367,7 @@ BOOL xf_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 	return TRUE;
 }
 
-BOOL xf_peer_check_fds(freerdp_peer* client)
+BOOL x11_shadow_peer_check_fds(freerdp_peer* client)
 {
 	xfInfo* xfi;
 	xfPeerContext* xfp;
@@ -380,7 +380,7 @@ BOOL xf_peer_check_fds(freerdp_peer* client)
 		if (!xfp->activated)
 			return TRUE;
 
-		xf_peer_send_update(client);
+		x11_shadow_peer_send_update(client);
 
 		ResetEvent(xfp->updateReadyEvent);
 		SetEvent(xfp->updateSentEvent);
@@ -389,12 +389,12 @@ BOOL xf_peer_check_fds(freerdp_peer* client)
 	return TRUE;
 }
 
-BOOL xf_peer_capabilities(freerdp_peer* client)
+BOOL x11_shadow_peer_capabilities(freerdp_peer* client)
 {
 	return TRUE;
 }
 
-BOOL xf_peer_post_connect(freerdp_peer* client)
+BOOL x11_shadow_peer_post_connect(freerdp_peer* client)
 {
 	xfInfo* xfi;
 	xfPeerContext* xfp;
@@ -431,7 +431,7 @@ BOOL xf_peer_post_connect(freerdp_peer* client)
 	return TRUE;
 }
 
-BOOL xf_peer_activate(freerdp_peer* client)
+BOOL x11_shadow_peer_activate(freerdp_peer* client)
 {
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
 
@@ -441,7 +441,7 @@ BOOL xf_peer_activate(freerdp_peer* client)
 	xfp->info->activePeerCount++;
 
 	xfp->monitorThread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) xf_update_thread, (void*) client, 0, NULL);
+			(LPTHREAD_START_ROUTINE) x11_shadow_update_thread, (void*) client, 0, NULL);
 
 	return TRUE;
 }
@@ -456,7 +456,7 @@ const char* makecert_argv[4] =
 
 int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
 
-int xf_generate_certificate(rdpSettings* settings)
+int x11_shadow_generate_certificate(rdpSettings* settings)
 {
 	char* server_file_path;
 	MAKECERT_CONTEXT* context;
@@ -492,7 +492,7 @@ int xf_generate_certificate(rdpSettings* settings)
 	return 0;
 }
 
-static void* xf_peer_main_loop(void* arg)
+static void* x11_shadow_peer_main_loop(void* arg)
 {
 	int i;
 	int fds;
@@ -510,11 +510,11 @@ static void* xf_peer_main_loop(void* arg)
 
 	fprintf(stderr, "We've got a client %s\n", client->hostname);
 
-	xf_peer_init(client);
+	x11_shadow_peer_init(client);
 	xfp = (xfPeerContext*) client->context;
 	settings = client->settings;
 
-	xf_generate_certificate(settings);
+	x11_shadow_generate_certificate(settings);
 
 	settings->RemoteFxCodec = TRUE;
 	settings->ColorDepth = 32;
@@ -523,11 +523,11 @@ static void* xf_peer_main_loop(void* arg)
 	settings->TlsSecurity = TRUE;
 	settings->RdpSecurity = FALSE;
 
-	client->Capabilities = xf_peer_capabilities;
-	client->PostConnect = xf_peer_post_connect;
-	client->Activate = xf_peer_activate;
+	client->Capabilities = x11_shadow_peer_capabilities;
+	client->PostConnect = x11_shadow_peer_post_connect;
+	client->Activate = x11_shadow_peer_activate;
 
-	xf_input_register_callbacks(client->input);
+	x11_shadow_input_register_callbacks(client->input);
 
 	client->Initialize(client);
 
@@ -541,7 +541,7 @@ static void* xf_peer_main_loop(void* arg)
 			break;
 		}
 
-		if (xf_peer_get_fds(client, rfds, &rcount) != TRUE)
+		if (x11_shadow_peer_get_fds(client, rfds, &rcount) != TRUE)
 		{
 			fprintf(stderr, "Failed to get xfreerdp file descriptor\n");
 			break;
@@ -585,7 +585,7 @@ static void* xf_peer_main_loop(void* arg)
 			break;
 		}
 
-		if ((xf_peer_check_fds(client)) != TRUE)
+		if ((x11_shadow_peer_check_fds(client)) != TRUE)
 		{
 			fprintf(stderr, "Failed to check xfreerdp file descriptor\n");
 			break;
@@ -604,9 +604,9 @@ static void* xf_peer_main_loop(void* arg)
 	return NULL;
 }
 
-void xf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
+void x11_shadow_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	HANDLE thread;
 
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_peer_main_loop, client, 0, NULL);
+	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) x11_shadow_peer_main_loop, client, 0, NULL);
 }

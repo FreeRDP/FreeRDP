@@ -1,6 +1,5 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Shadow Server
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -27,16 +26,44 @@
 
 void* shadow_server_thread(void* param)
 {
+	DWORD status;
+	DWORD nCount;
+	HANDLE events[32];
+	rdpShadowServer* server;
+	freerdp_listener* listener;
+
+	server = (rdpShadowServer*) param;
+	listener = (freerdp_listener*) server->listener;
+
+	while (1)
+	{
+		nCount = 0;
+
+		if (listener->GetEventHandles(listener, events, &nCount) < 0)
+		{
+			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
+			break;
+		}
+
+		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+
+		if (!listener->CheckFileDescriptor(listener))
+		{
+			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
+			break;
+		}
+	}
+
+	listener->Close(listener);
+
 	ExitThread(0);
 
 	return NULL;
 }
 
-int shadow_server_start(xfServer* server)
+int shadow_server_start(rdpShadowServer* server)
 {
-	server->thread = NULL;
-
-	if (server->listener->Open(server->listener, NULL, 3389))
+	if (server->listener->Open(server->listener, NULL, server->port))
 	{
 		server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
 				shadow_server_thread, (void*) server, 0, NULL);
@@ -45,7 +72,7 @@ int shadow_server_start(xfServer* server)
 	return 0;
 }
 
-int shadow_server_stop(xfServer* server)
+int shadow_server_stop(rdpShadowServer* server)
 {
 	if (server->thread)
 	{
@@ -59,27 +86,29 @@ int shadow_server_stop(xfServer* server)
 	return 0;
 }
 
-HANDLE shadow_server_get_thread(xfServer* server)
+HANDLE shadow_server_get_thread(rdpShadowServer* server)
 {
 	return server->thread;
 }
 
-xfServer* shadow_server_new(int argc, char** argv)
+rdpShadowServer* shadow_server_new(int argc, char** argv)
 {
-	xfServer* server;
+	rdpShadowServer* server;
 
-	server = (xfServer*) malloc(sizeof(xfServer));
+	server = (rdpShadowServer*) malloc(sizeof(rdpShadowServer));
 
 	if (server)
 	{
+		server->port = 3389;
+
 		server->listener = freerdp_listener_new();
-		server->listener->PeerAccepted = NULL;
+		server->listener->PeerAccepted = shadow_client_accepted;
 	}
 
 	return server;
 }
 
-void shadow_server_free(xfServer* server)
+void shadow_server_free(rdpShadowServer* server)
 {
 	if (server)
 	{
@@ -91,8 +120,10 @@ void shadow_server_free(xfServer* server)
 int main(int argc, char* argv[])
 {
 	HANDLE thread;
-	xfServer* server;
 	DWORD dwExitCode;
+
+#if 0
+	xfServer* server;
 
 	server = x11_shadow_server_new(argc, argv);
 
@@ -108,6 +139,24 @@ int main(int argc, char* argv[])
 	GetExitCodeThread(thread, &dwExitCode);
 
 	x11_shadow_server_free(server);
+#else
+	rdpShadowServer* server;
+
+	server = shadow_server_new(argc, argv);
+
+	if (!server)
+		return 0;
+
+	shadow_server_start(server);
+
+	thread = shadow_server_get_thread(server);
+
+	WaitForSingleObject(thread, INFINITE);
+
+	GetExitCodeThread(thread, &dwExitCode);
+
+	shadow_server_free(server);
+#endif
 
 	return 0;
 }

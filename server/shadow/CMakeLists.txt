@@ -116,12 +116,15 @@ if(WITH_X11)
 endif()
 
 set(${MODULE_PREFIX}_SRCS
+	shadow_client.c
+	shadow_input.c
+	shadow_update.c
 	shadow.c
 	shadow.h)
 
 set(${MODULE_PREFIX}_X11_SRCS
 	X11/x11_input.c
-	X11/x11_peer.c
+	X11/x11_client.c
 	X11/x11_update.c
 	X11/x11_shadow.c
 	X11/x11_shadow.h)

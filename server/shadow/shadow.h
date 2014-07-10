@@ -24,14 +24,31 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/listener.h>
 
 #include <freerdp/server/shadow.h>
+
+typedef struct rdp_shadow_client rdpShadowClient;
+typedef struct rdp_shadow_server rdpShadowServer;
+
+struct rdp_shadow_client
+{
+	rdpContext context;
+};
+
+struct rdp_shadow_server
+{
+	DWORD port;
+	HANDLE thread;
+	freerdp_listener* listener;
+};
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
+void shadow_input_register_callbacks(rdpInput* input);
+void shadow_client_accepted(freerdp_listener* instance, freerdp_peer* client);
 
 #ifdef __cplusplus
 }
