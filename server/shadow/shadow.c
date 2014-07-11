@@ -22,18 +22,14 @@
 
 #include "shadow.h"
 
-#include "X11/x11_shadow.h"
-
-void* shadow_server_thread(void* param)
+void* shadow_server_thread(rdpShadowServer* server)
 {
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[32];
-	rdpShadowServer* server;
 	freerdp_listener* listener;
 
-	server = (rdpShadowServer*) param;
-	listener = (freerdp_listener*) server->listener;
+	listener = server->listener;
 
 	while (1)
 	{
@@ -95,51 +91,45 @@ rdpShadowServer* shadow_server_new(int argc, char** argv)
 {
 	rdpShadowServer* server;
 
-	server = (rdpShadowServer*) malloc(sizeof(rdpShadowServer));
+	server = (rdpShadowServer*) calloc(1, sizeof(rdpShadowServer));
 
-	if (server)
-	{
-		server->port = 3389;
+	if (!server)
+		return NULL;
 
-		server->listener = freerdp_listener_new();
-		server->listener->PeerAccepted = shadow_client_accepted;
-	}
+	server->port = 3389;
+
+	server->listener = freerdp_listener_new();
+
+	if (!server->listener)
+		return NULL;
+
+	server->listener->info = (void*) server;
+	server->listener->PeerAccepted = shadow_client_accepted;
+
+	server->ext = x11_shadow_server_new(server);
+
+	if (!server->ext)
+		return NULL;
 
 	return server;
 }
 
 void shadow_server_free(rdpShadowServer* server)
 {
-	if (server)
-	{
-		freerdp_listener_free(server->listener);
-		free(server);
-	}
+	if (!server)
+		return;
+
+	freerdp_listener_free(server->listener);
+
+	x11_shadow_server_free(server->ext);
+
+	free(server);
 }
 
 int main(int argc, char* argv[])
 {
 	HANDLE thread;
 	DWORD dwExitCode;
-
-#if 1
-	x11ShadowServer* server;
-
-	server = x11_shadow_server_new(argc, argv);
-
-	if (!server)
-		return 0;
-
-	x11_shadow_server_start(server);
-
-	thread = x11_shadow_server_get_thread(server);
-
-	WaitForSingleObject(thread, INFINITE);
-
-	GetExitCodeThread(thread, &dwExitCode);
-
-	x11_shadow_server_free(server);
-#else
 	rdpShadowServer* server;
 
 	server = shadow_server_new(argc, argv);
@@ -156,7 +146,6 @@ int main(int argc, char* argv[])
 	GetExitCodeThread(thread, &dwExitCode);
 
 	shadow_server_free(server);
-#endif
 
 	return 0;
 }

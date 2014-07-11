@@ -23,7 +23,27 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <freerdp/listener.h>
 
+typedef struct rdp_shadow_client rdpShadowClient;
+typedef struct rdp_shadow_server rdpShadowServer;
+
+struct rdp_shadow_client
+{
+	rdpContext context;
+	rdpShadowServer* server;
+
+	void* ext;
+};
+
+struct rdp_shadow_server
+{
+	DWORD port;
+	HANDLE thread;
+	freerdp_listener* listener;
+
+	void* ext;
+};
 
 #endif /* FREERDP_SERVER_SHADOW_H */
 

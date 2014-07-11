@@ -431,7 +431,7 @@ void freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
 
-	client->context = (rdpContext *)calloc(1, client->ContextSize);
+	client->context = (rdpContext*) calloc(1, client->ContextSize);
 
 	client->context->ServerMode = TRUE;
 

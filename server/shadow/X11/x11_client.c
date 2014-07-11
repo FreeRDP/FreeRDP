@@ -20,7 +20,6 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +27,7 @@
 #include <unistd.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <sys/select.h>
@@ -169,7 +169,7 @@ int x11_shadow_xshm_init(x11ShadowServer* server)
 	return 0;
 }
 
-void x11_shadow_peer_context_new(freerdp_peer* client, x11ShadowClient* context)
+x11ShadowClient* x11_shadow_client_new(rdpShadowClient* rdp)
 {
 	int i;
 	int pf_count;
@@ -180,9 +180,15 @@ void x11_shadow_peer_context_new(freerdp_peer* client, x11ShadowClient* context)
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
 	x11ShadowServer* server;
+	x11ShadowClient* client;
 
-	server = (x11ShadowServer*) client->context;
-	context->server = server;
+	client = (x11ShadowClient*) calloc(1, sizeof(x11ShadowClient));
+
+	if (!client)
+		return NULL;
+
+	server = (x11ShadowServer*) rdp->server->ext;
+	client->server = server;
 
 	/**
 	 * Recent X11 servers drop support for shared pixmaps
@@ -279,78 +285,33 @@ void x11_shadow_peer_context_new(freerdp_peer* client, x11ShadowClient* context)
 
 	freerdp_keyboard_init(0);
 
-	context->rfx_context = rfx_context_new(TRUE);
-	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = server->width;
-	context->rfx_context->height = server->height;
+	client->rfx_context = rfx_context_new(TRUE);
+	client->rfx_context->mode = RLGR3;
+	client->rfx_context->width = server->width;
+	client->rfx_context->height = server->height;
 
-	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
+	rfx_context_set_pixel_format(client->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 
-	context->s = Stream_New(NULL, 65536);
-	Stream_Clear(context->s);
+	client->s = Stream_New(NULL, 65536);
+	Stream_Clear(client->s);
+
+	return client;
 }
 
-void x11_shadow_peer_context_free(freerdp_peer* client, x11ShadowClient* context)
+void x11_shadow_client_free(x11ShadowClient* client)
 {
 	x11ShadowServer* server;
 
-	if (context)
-	{
-		server = context->server;
+	if (!client)
+		return;
 
-		if (server->display)
-			XCloseDisplay(server->display);
+	server = client->server;
 
-		Stream_Free(context->s, TRUE);
-		rfx_context_free(context->rfx_context);
-	}
-}
+	if (server->display)
+		XCloseDisplay(server->display);
 
-void x11_shadow_peer_init(freerdp_peer* client)
-{
-	client->ContextSize = sizeof(x11ShadowClient);
-	client->ContextNew = (psPeerContextNew) x11_shadow_peer_context_new;
-	client->ContextFree = (psPeerContextFree) x11_shadow_peer_context_free;
-	freerdp_peer_context_new(client);
-}
-
-BOOL x11_shadow_peer_capabilities(freerdp_peer* client)
-{
-	return TRUE;
-}
-
-BOOL x11_shadow_peer_post_connect(freerdp_peer* client)
-{
-	x11ShadowClient* context;
-	x11ShadowServer* server;
-
-	context = (x11ShadowClient*) client->context;
-	server = context->server;
-
-	fprintf(stderr, "Client %s is activated", client->hostname);
-	if (client->settings->AutoLogonEnabled)
-	{
-		fprintf(stderr, " and wants to login automatically as %s\\%s",
-			client->settings->Domain ? client->settings->Domain : "",
-			client->settings->Username);
-	}
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "Client requested desktop: %dx%dx%d\n",
-		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
-
-	if (!client->settings->RemoteFxCodec)
-	{
-		fprintf(stderr, "Client does not support RemoteFX\n");
-		return FALSE;
-	}
-
-	client->settings->DesktopWidth = server->width;
-	client->settings->DesktopHeight = server->height;
-
-	client->update->DesktopResize(client->update->context);
-
-	return TRUE;
+	Stream_Free(client->s, TRUE);
+	rfx_context_free(client->rfx_context);
 }
 
 BOOL x11_shadow_peer_activate(freerdp_peer* client)
@@ -363,163 +324,8 @@ BOOL x11_shadow_peer_activate(freerdp_peer* client)
 
 	server->activePeerCount++;
 
-	context->monitorThread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) x11_shadow_update_thread, (void*) client, 0, NULL);
+	context->monitorThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+			x11_shadow_update_thread, (void*) client, 0, NULL);
 
 	return TRUE;
-}
-
-const char* makecert_argv[4] =
-{
-	"makecert",
-	"-rdp",
-	"-live",
-	"-silent"
-};
-
-int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
-
-int x11_shadow_generate_certificate(rdpSettings* settings)
-{
-	char* server_file_path;
-	MAKECERT_CONTEXT* context;
-
-	server_file_path = GetCombinedPath(settings->ConfigPath, "server");
-
-	if (!PathFileExistsA(server_file_path))
-		CreateDirectoryA(server_file_path, 0);
-
-	settings->CertificateFile = GetCombinedPath(server_file_path, "server.crt");
-	settings->PrivateKeyFile = GetCombinedPath(server_file_path, "server.key");
-
-	if ((!PathFileExistsA(settings->CertificateFile)) ||
-			(!PathFileExistsA(settings->PrivateKeyFile)))
-	{
-		context = makecert_context_new();
-
-		makecert_context_process(context, makecert_argc, (char**) makecert_argv);
-
-		makecert_context_set_output_file_name(context, "server");
-
-		if (!PathFileExistsA(settings->CertificateFile))
-			makecert_context_output_certificate_file(context, server_file_path);
-
-		if (!PathFileExistsA(settings->PrivateKeyFile))
-			makecert_context_output_private_key_file(context, server_file_path);
-
-		makecert_context_free(context);
-	}
-
-	free(server_file_path);
-
-	return 0;
-}
-
-static void* x11_shadow_client_thread(void* arg)
-{
-	int i;
-	int fds;
-	int max_fds;
-	int rcount;
-	void* rfds[32];
-	fd_set rfds_set;
-	rdpSettings* settings;
-	x11ShadowClient* xfp;
-	struct timeval timeout;
-	freerdp_peer* client = (freerdp_peer*) arg;
-
-	ZeroMemory(rfds, sizeof(rfds));
-	ZeroMemory(&timeout, sizeof(struct timeval));
-
-	fprintf(stderr, "We've got a client %s\n", client->hostname);
-
-	x11_shadow_peer_init(client);
-
-	xfp = (x11ShadowClient*) client->context;
-	settings = client->settings;
-
-	x11_shadow_generate_certificate(settings);
-
-	settings->RemoteFxCodec = TRUE;
-	settings->ColorDepth = 32;
-
-	settings->NlaSecurity = FALSE;
-	settings->TlsSecurity = TRUE;
-	settings->RdpSecurity = FALSE;
-
-	client->Capabilities = x11_shadow_peer_capabilities;
-	client->PostConnect = x11_shadow_peer_post_connect;
-	client->Activate = x11_shadow_peer_activate;
-
-	x11_shadow_input_register_callbacks(client->input);
-
-	client->Initialize(client);
-
-	while (1)
-	{
-		rcount = 0;
-
-		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
-		{
-			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
-			break;
-		}
-
-		max_fds = 0;
-		FD_ZERO(&rfds_set);
-
-		for (i = 0; i < rcount; i++)
-		{
-			fds = (int)(long)(rfds[i]);
-
-			if (fds > max_fds)
-				max_fds = fds;
-
-			FD_SET(fds, &rfds_set);
-		}
-
-		if (max_fds == 0)
-			break;
-
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 100;
-
-		if (select(max_fds + 1, &rfds_set, NULL, NULL, &timeout) == -1)
-		{
-			/* these are not really errors */
-			if (!((errno == EAGAIN) ||
-				(errno == EWOULDBLOCK) ||
-				(errno == EINPROGRESS) ||
-				(errno == EINTR))) /* signal occurred */
-			{
-				fprintf(stderr, "select failed\n");
-				break;
-			}
-		}
-
-		if (client->CheckFileDescriptor(client) != TRUE)
-		{
-			//fprintf(stderr, "Failed to check freerdp file descriptor\n");
-			//break;
-		}
-	}
-
-	fprintf(stderr, "Client %s disconnected.\n", client->hostname);
-
-	client->Disconnect(client);
-	
-	freerdp_peer_context_free(client);
-	freerdp_peer_free(client);
-
-	ExitThread(0);
-
-	return NULL;
-}
-
-void x11_shadow_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
-{
-	HANDLE thread;
-
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-			x11_shadow_client_thread, client, 0, NULL);
 }

@@ -30,55 +30,52 @@
 
 #include "shadow.h"
 
-void shadow_client_context_new(freerdp_peer* client, rdpShadowClient* context)
+void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 {
+	rdpShadowServer* server;
 
+	server = (rdpShadowServer*) peer->ContextExtra;
+	client->server = server;
+
+	client->ext = x11_shadow_client_new(client);
 }
 
-void shadow_client_context_free(freerdp_peer* client, rdpShadowClient* context)
+void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 {
-
+	x11_shadow_client_free(client->ext);
 }
 
-void shadow_client_init(freerdp_peer* client)
-{
-	client->ContextSize = sizeof(rdpShadowClient);
-	client->ContextNew = (psPeerContextNew) shadow_client_context_new;
-	client->ContextFree = (psPeerContextFree) shadow_client_context_free;
-	freerdp_peer_context_new(client);
-}
-
-BOOL shadow_client_get_fds(freerdp_peer* client, void** rfds, int* rcount)
+BOOL shadow_client_get_fds(freerdp_peer* peer, void** rfds, int* rcount)
 {
 	return TRUE;
 }
 
-BOOL shadow_client_check_fds(freerdp_peer* client)
+BOOL shadow_client_check_fds(freerdp_peer* peer)
 {
 	return TRUE;
 }
 
-BOOL shadow_client_capabilities(freerdp_peer* client)
+BOOL shadow_client_capabilities(freerdp_peer* peer)
 {
 	return TRUE;
 }
 
-BOOL shadow_client_post_connect(freerdp_peer* client)
+BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
-	fprintf(stderr, "Client %s is activated", client->hostname);
+	fprintf(stderr, "Client %s is activated", peer->hostname);
 
-	if (client->settings->AutoLogonEnabled)
+	if (peer->settings->AutoLogonEnabled)
 	{
 		fprintf(stderr, " and wants to login automatically as %s\\%s",
-			client->settings->Domain ? client->settings->Domain : "",
-			client->settings->Username);
+			peer->settings->Domain ? peer->settings->Domain : "",
+			peer->settings->Username);
 	}
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "Client requested desktop: %dx%dx%d\n",
-		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
+		peer->settings->DesktopWidth, peer->settings->DesktopHeight, peer->settings->ColorDepth);
 
-	if (!client->settings->RemoteFxCodec)
+	if (!peer->settings->RemoteFxCodec)
 	{
 		fprintf(stderr, "Client does not support RemoteFX\n");
 		return FALSE;
@@ -87,12 +84,12 @@ BOOL shadow_client_post_connect(freerdp_peer* client)
 	//client->settings->DesktopWidth = 1024;
 	//client->settings->DesktopHeight = 768;
 
-	client->update->DesktopResize(client->update->context);
+	peer->update->DesktopResize(peer->update->context);
 
 	return TRUE;
 }
 
-BOOL shadow_client_activate(freerdp_peer* client)
+BOOL shadow_client_activate(freerdp_peer* peer)
 {
 	return TRUE;
 }
@@ -143,20 +140,17 @@ int shadow_generate_certificate(rdpSettings* settings)
 	return 0;
 }
 
-void* shadow_client_thread(void* param)
+void* shadow_client_thread(rdpShadowClient* client)
 {
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[32];
 	HANDLE ClientEvent;
+	freerdp_peer* peer;
 	rdpSettings* settings;
-	rdpShadowClient* context;
-	freerdp_peer* client = (freerdp_peer*) param;
 
-	shadow_client_init(client);
-
-	settings = client->settings;
-	context = (rdpShadowClient*) client->context;
+	peer = ((rdpContext*) client)->peer;
+	settings = peer->settings;
 
 	shadow_generate_certificate(settings);
 
@@ -167,15 +161,15 @@ void* shadow_client_thread(void* param)
 	settings->TlsSecurity = TRUE;
 	settings->RdpSecurity = FALSE;
 
-	client->Capabilities = shadow_client_capabilities;
-	client->PostConnect = shadow_client_post_connect;
-	client->Activate = shadow_client_activate;
+	peer->Capabilities = shadow_client_capabilities;
+	peer->PostConnect = shadow_client_post_connect;
+	peer->Activate = shadow_client_activate;
 
-	shadow_input_register_callbacks(client->input);
+	shadow_input_register_callbacks(peer->input);
 
-	client->Initialize(client);
+	peer->Initialize(peer);
 
-	ClientEvent = client->GetEventHandle(client);
+	ClientEvent = peer->GetEventHandle(peer);
 
 	while (1)
 	{
@@ -186,7 +180,7 @@ void* shadow_client_thread(void* param)
 
 		if (WaitForSingleObject(ClientEvent, 0) == WAIT_OBJECT_0)
 		{
-			if (!client->CheckFileDescriptor(client))
+			if (!peer->CheckFileDescriptor(peer))
 			{
 				fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
 				break;
@@ -194,20 +188,32 @@ void* shadow_client_thread(void* param)
 		}
 	}
 
-	client->Disconnect(client);
+	peer->Disconnect(peer);
 	
-	freerdp_peer_context_free(client);
-	freerdp_peer_free(client);
+	freerdp_peer_context_free(peer);
+	freerdp_peer_free(peer);
 
 	ExitThread(0);
 
 	return NULL;
 }
 
-void shadow_client_accepted(freerdp_listener* instance, freerdp_peer* client)
+void shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 {
 	HANDLE thread;
+	rdpShadowClient* client;
+	rdpShadowServer* server;
 
-	thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) shadow_client_thread, client, 0, NULL);
+	server = (rdpShadowServer*) listener->info;
+
+	peer->ContextExtra = (void*) server;
+	peer->ContextSize = sizeof(rdpShadowClient);
+	peer->ContextNew = (psPeerContextNew) shadow_client_context_new;
+	peer->ContextFree = (psPeerContextFree) shadow_client_context_free;
+	freerdp_peer_context_new(peer);
+
+	client = (rdpShadowClient*) peer->context;
+
+	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+			shadow_client_thread, client, 0, NULL);
 }

@@ -19,33 +19,23 @@
 #ifndef FREERDP_SHADOW_SERVER_X11_H
 #define FREERDP_SHADOW_SERVER_X11_H
 
-#include <winpr/crt.h>
+#include <freerdp/server/shadow.h>
 
-#include <freerdp/api.h>
-#include <freerdp/freerdp.h>
-
+typedef struct x11_shadow_client x11ShadowClient;
 typedef struct x11_shadow_server x11ShadowServer;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/stream.h>
+#include <winpr/collections.h>
 
-FREERDP_API int x11_shadow_server_start(x11ShadowServer* server);
-FREERDP_API int x11_shadow_server_stop(x11ShadowServer* server);
-
-FREERDP_API HANDLE x11_shadow_server_get_thread(x11ShadowServer* server);
-
-FREERDP_API x11ShadowServer* x11_shadow_server_new(int argc, char** argv);
-FREERDP_API void x11_shadow_server_free(x11ShadowServer* server);
-
-#ifdef __cplusplus
-}
-#endif
-
-#include <freerdp/api.h>
-#include <freerdp/freerdp.h>
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/region.h>
+#include <freerdp/codec/rfx.h>
 #include <freerdp/listener.h>
-#include <freerdp/codec/color.h>
+#include <freerdp/utils/stopwatch.h>
 
 #include <X11/Xlib.h>
 
@@ -103,21 +93,6 @@ struct x11_shadow_server
 #endif
 };
 
-#include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/collections.h>
-
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/gdi/dc.h>
-#include <freerdp/gdi/region.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/listener.h>
-#include <freerdp/utils/stopwatch.h>
-
-typedef struct x11_shadow_client x11ShadowClient;
-
 struct x11_shadow_client
 {
 	rdpContext _p;
@@ -129,16 +104,24 @@ struct x11_shadow_client
 	x11ShadowServer* server;
 };
 
-void x11_shadow_peer_accepted(freerdp_listener* instance, freerdp_peer* client);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void* x11_shadow_server_thread(void* param);
+FREERDP_API x11ShadowServer* x11_shadow_server_new(rdpShadowServer* rdp);
+FREERDP_API void x11_shadow_server_free(x11ShadowServer* server);
+
+x11ShadowClient* x11_shadow_client_new(rdpShadowClient* rdp);
+void x11_shadow_client_free(x11ShadowClient* client);
 
 void* x11_shadow_update_thread(void* param);
 
 int x11_shadow_cursor_init(x11ShadowServer* server);
-
 void x11_shadow_input_register_callbacks(rdpInput* input);
-
 int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int height);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_SHADOW_SERVER_X11_H */
