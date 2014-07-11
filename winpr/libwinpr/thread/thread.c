@@ -96,7 +96,7 @@ static pthread_once_t thread_initialized = PTHREAD_ONCE_INIT;
 static HANDLE_CLOSE_CB _ThreadHandleCloseCb;
 static wListDictionary *thread_list = NULL;
 
-static void ThreadCloseHandle(WINPR_THREAD *thread);
+static BOOL ThreadCloseHandle(HANDLE handle);
 static void cleanup_handle(WINPR_THREAD *thread);
 
 static BOOL ThreadIsHandled(HANDLE handle)
@@ -311,8 +311,10 @@ void cleanup_handle(WINPR_THREAD *thread)
 	free(thread);
 }
 
-void ThreadCloseHandle(WINPR_THREAD *thread)
+BOOL ThreadCloseHandle(HANDLE handle)
 {
+	WINPR_THREAD *thread = (WINPR_THREAD*)handle;
+
 	if (!thread_list)
 	{
 		fprintf(stderr, "[%s]: Thread list does not exist, check call!\n", __FUNCTION__);
@@ -345,6 +347,8 @@ void ThreadCloseHandle(WINPR_THREAD *thread)
 			thread_list = NULL;
 		}
 	}
+
+	return TRUE;
 }
 
 HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
