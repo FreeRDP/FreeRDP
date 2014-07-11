@@ -76,7 +76,10 @@ add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	SOURCES ${${MODULE_PREFIX}_SRCS}
 	EXPORT)
 
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+if (WITH_LIBRARY_VERSIONING)
+  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+endif()
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
 
 if(IPP_FOUND)
 	include_directories(${IPP_INCLUDE_DIRS})
@@ -85,10 +88,7 @@ if(IPP_FOUND)
 	endforeach()
 endif()
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-       MONOLITHIC ${MONOLITHIC_BUILD}
-       MODULE winpr
-       MODULES winpr-sysinfo)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 	   
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

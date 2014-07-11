@@ -15,23 +15,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "winpr-sspicli")
-set(MODULE_PREFIX "WINPR_SSPICLI")
-
-set(${MODULE_PREFIX}_SRCS
-	sspicli.c)
-
-add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS}
-	EXPORT)
-
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
-
-if(MONOLITHIC_BUILD)
-
-else()
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT WinPRTargets)
-endif()
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
+winpr_module_add(sspicli.c)

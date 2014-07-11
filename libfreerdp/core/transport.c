@@ -744,6 +744,7 @@ int transport_read(rdpTransport* transport, wStream* s)
 
 	if (position < 4)
 	{
+		Stream_EnsureCapacity(s, 4);
 		status = transport_read_layer(transport, Stream_Buffer(s) + position, 4 - position);
 
 		if (status < 0)
@@ -811,6 +812,13 @@ int transport_read(rdpTransport* transport, wStream* s)
 		}
 	}
 
+	if (pduLength < 0 || pduLength > 0xFFFF)
+	{
+		fprintf(stderr, "%s: invalid pduLength: %d\n", __FUNCTION__, pduLength);
+		return -1;
+	}
+
+	Stream_EnsureCapacity(s, pduLength);
 	status = transport_read_layer(transport, Stream_Buffer(s) + position, pduLength - position);
 
 	if (status < 0)

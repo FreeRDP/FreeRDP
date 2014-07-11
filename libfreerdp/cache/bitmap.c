@@ -136,6 +136,7 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 {
 	rdpBitmap* bitmap;
 	rdpBitmap* prevBitmap;
+	BOOL isCompressed = TRUE;
 	rdpCache* cache = context->cache;
 	BITMAP_DATA_EX* bitmapData = &cacheBitmapV3->bitmapData;
 
@@ -149,9 +150,13 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 		cacheBitmapV3->bitmapData.bpp = context->instance->settings->ColorDepth;
 	}
 
+	/* According to http://msdn.microsoft.com/en-us/library/gg441209.aspx
+	 * CACHE_BITMAP_REV3_ORDER::bitmapData::codecID = 0x00 (uncompressed) */
+	isCompressed = (bitmapData->codecID != RDP_CODEC_ID_NONE);
+
 	bitmap->Decompress(context, bitmap,
 			bitmapData->data, bitmap->width, bitmap->height,
-			bitmapData->bpp, bitmapData->length, TRUE,
+			bitmapData->bpp, bitmapData->length, isCompressed,
 			bitmapData->codecID);
 
 	bitmap->New(context, bitmap);

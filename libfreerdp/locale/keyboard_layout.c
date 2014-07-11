@@ -120,6 +120,7 @@ static const RDP_KEYBOARD_LAYOUT RDP_KEYBOARD_LAYOUT_TABLE[] =
 	{ KBD_CANADIAN_FRENCH_LEGACY,	"Canadian French (legacy)" },
 	{ KBD_SERBIAN_CYRILLIC,		"Serbian (Cyrillic)" },
 	{ KBD_CANADIAN_FRENCH,		"Canadian French" },
+	{ KBD_CANADIAN_ENGLISH,		"Canadian English" },
 	{ KBD_SWISS_FRENCH,		"Swiss French" },
 	{ KBD_BOSNIAN,			"Bosnian" },
 	{ KBD_IRISH,			"Irish" },

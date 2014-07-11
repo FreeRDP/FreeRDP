@@ -152,7 +152,8 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 				break;
 
 			case SSL_ERROR_SYSCALL:
-				status = 0;
+				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				status = -1;
 				break;
 		}
 	}

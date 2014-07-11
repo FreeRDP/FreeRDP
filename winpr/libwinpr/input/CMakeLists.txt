@@ -15,32 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "winpr-input")
-set(MODULE_PREFIX "WINPR_INPUT")
-
-set(${MODULE_PREFIX}_SRCS
+winpr_module_add(
 	virtualkey.c
 	scancode.c
 	keycode.c)
-
-add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS}
-	EXPORT)
-
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
-	MODULE winpr
-	MODULES winpr-crt)
-
-if(MONOLITHIC_BUILD)
-
-else()
-	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT WinPRTargets)
-endif()
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")
-
