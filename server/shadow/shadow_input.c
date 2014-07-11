@@ -16,6 +16,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "shadow.h"
 
 void shadow_input_synchronize_event(rdpInput* input, UINT32 flags)

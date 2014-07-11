@@ -122,8 +122,8 @@ int main(int argc, char* argv[])
 	HANDLE thread;
 	DWORD dwExitCode;
 
-#if 0
-	xfServer* server;
+#if 1
+	x11ShadowServer* server;
 
 	server = x11_shadow_server_new(argc, argv);
 

@@ -30,21 +30,21 @@
 
 #include "x11_shadow.h"
 
-int x11_shadow_cursor_init(xfInfo* xfi)
+int x11_shadow_cursor_init(x11ShadowServer* server)
 {
 #ifdef WITH_XFIXES
 	int event;
 	int error;
 
-	if (!XFixesQueryExtension(xfi->display, &event, &error))
+	if (!XFixesQueryExtension(server->display, &event, &error))
 	{
 		fprintf(stderr, "XFixesQueryExtension failed\n");
 		return -1;
 	}
 
-	xfi->xfixes_notify_event = event + XFixesCursorNotify;
+	server->xfixes_notify_event = event + XFixesCursorNotify;
 
-	XFixesSelectCursorInput(xfi->display, DefaultRootWindow(xfi->display), XFixesDisplayCursorNotifyMask);
+	XFixesSelectCursorInput(server->display, DefaultRootWindow(server->display), XFixesDisplayCursorNotifyMask);
 #endif
 
 	return 0;
@@ -62,7 +62,7 @@ void x11_shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	DWORD keycode;
 	BOOL extended = FALSE;
 	xfPeerContext* xfp = (xfPeerContext*) input->context;
-	xfInfo* xfi = xfp->info;
+	x11ShadowServer* server = xfp->server;
 
 	if (flags & KBD_FLAGS_EXTENDED)
 		extended = TRUE;
@@ -75,14 +75,14 @@ void x11_shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 	if (keycode != 0)
 	{
-		XTestGrabControl(xfi->display, True);
+		XTestGrabControl(server->display, True);
 
 		if (flags & KBD_FLAGS_DOWN)
-			XTestFakeKeyEvent(xfi->display, keycode, True, 0);
+			XTestFakeKeyEvent(server->display, keycode, True, 0);
 		else if (flags & KBD_FLAGS_RELEASE)
-			XTestFakeKeyEvent(xfi->display, keycode, False, 0);
+			XTestFakeKeyEvent(server->display, keycode, False, 0);
 
-		XTestGrabControl(xfi->display, False);
+		XTestGrabControl(server->display, False);
 	}
 #endif
 }
@@ -95,12 +95,12 @@ void x11_shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT
 void x11_shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 #ifdef WITH_XTEST
-	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	int button = 0;
 	BOOL down = FALSE;
-	xfInfo* xfi = xfp->info;
+	xfPeerContext* xfp = (xfPeerContext*) input->context;
+	x11ShadowServer* server = xfp->server;
 
-	XTestGrabControl(xfi->display, True);
+	XTestGrabControl(server->display, True);
 
 	if (flags & PTR_FLAGS_WHEEL)
 	{
@@ -111,13 +111,13 @@ void x11_shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 
 		button = (negative) ? 5 : 4;
 
-		XTestFakeButtonEvent(xfi->display, button, True, 0);
-		XTestFakeButtonEvent(xfi->display, button, False, 0);
+		XTestFakeButtonEvent(server->display, button, True, 0);
+		XTestFakeButtonEvent(server->display, button, False, 0);
 	}
 	else
 	{
 		if (flags & PTR_FLAGS_MOVE)
-			XTestFakeMotionEvent(xfi->display, 0, x, y, 0);
+			XTestFakeMotionEvent(server->display, 0, x, y, 0);
 
 		if (flags & PTR_FLAGS_BUTTON1)
 			button = 1;
@@ -130,23 +130,23 @@ void x11_shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 			down = TRUE;
 
 		if (button != 0)
-			XTestFakeButtonEvent(xfi->display, button, down, 0);
+			XTestFakeButtonEvent(server->display, button, down, 0);
 	}
 
-	XTestGrabControl(xfi->display, False);
+	XTestGrabControl(server->display, False);
 #endif
 }
 
 void x11_shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 #ifdef WITH_XTEST
-	xfPeerContext* xfp = (xfPeerContext*) input->context;
 	int button = 0;
 	BOOL down = FALSE;
-	xfInfo* xfi = xfp->info;
+	xfPeerContext* xfp = (xfPeerContext*) input->context;
+	x11ShadowServer* server = xfp->server;
 
-	XTestGrabControl(xfi->display, True);
-	XTestFakeMotionEvent(xfi->display, 0, x, y, CurrentTime);
+	XTestGrabControl(server->display, True);
+	XTestFakeMotionEvent(server->display, 0, x, y, CurrentTime);
 
 	if (flags & PTR_XFLAGS_BUTTON1)
 		button = 8;
@@ -157,9 +157,9 @@ void x11_shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16
 		down = TRUE;
 
 	if (button != 0)
-		XTestFakeButtonEvent(xfi->display, button, down, 0);
+		XTestFakeButtonEvent(server->display, button, down, 0);
 
-	XTestGrabControl(xfi->display, False);
+	XTestGrabControl(server->display, False);
 #endif
 }
 

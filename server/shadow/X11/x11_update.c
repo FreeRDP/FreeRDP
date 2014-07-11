@@ -32,16 +32,16 @@
 XImage* x11_shadow_snapshot(xfPeerContext* xfp, int x, int y, int width, int height)
 {
 	XImage* image;
-	xfInfo* xfi = xfp->info;
+	x11ShadowServer* server = xfp->server;
 
-	if (xfi->use_xshm)
+	if (server->use_xshm)
 	{
-		XCopyArea(xfi->display, xfi->root_window, xfi->fb_pixmap, xfi->xdamage_gc, x, y, width, height, x, y);
-		image = xfi->fb_image;
+		XCopyArea(server->display, server->root_window, server->fb_pixmap, server->xdamage_gc, x, y, width, height, x, y);
+		image = server->fb_image;
 	}
 	else
 	{
-		image = XGetImage(xfi->display, xfi->root_window, x, y, width, height, AllPlanes, ZPixmap);
+		image = XGetImage(server->display, server->root_window, x, y, width, height, AllPlanes, ZPixmap);
 	}
 
 	return image;
@@ -50,7 +50,7 @@ XImage* x11_shadow_snapshot(xfPeerContext* xfp, int x, int y, int width, int hei
 void x11_shadow_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height)
 {
 	XRectangle region;
-	xfInfo* xfi = xfp->info;
+	x11ShadowServer* server = xfp->server;
 
 	region.x = x;
 	region.y = y;
@@ -58,8 +58,8 @@ void x11_shadow_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int wi
 	region.height = height;
 
 #ifdef WITH_XFIXES
-	XFixesSetRegion(xfi->display, xfi->xdamage_region, &region, 1);
-	XDamageSubtract(xfi->display, xfi->xdamage, xfi->xdamage_region, None);
+	XFixesSetRegion(server->display, server->xdamage_region, &region, 1);
+	XDamageSubtract(server->display, server->xdamage, server->xdamage_region, None);
 #endif
 }
 
@@ -67,17 +67,18 @@ int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int 
 {
 	wStream* s;
 	BYTE* data;
-	xfInfo* xfi;
 	RFX_RECT rect;
 	XImage* image;
 	rdpUpdate* update;
 	xfPeerContext* xfp;
+	x11ShadowServer* server;
 	SURFACE_BITS_COMMAND* cmd;
 
-	update = client->update;
 	xfp = (xfPeerContext*) client->context;
+	server = xfp->server;
+
+	update = client->update;
 	cmd = &update->surface_bits_command;
-	xfi = xfp->info;
 
 	if (width * height <= 0)
 	{
@@ -89,7 +90,7 @@ int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int 
 	Stream_Clear(s);
 	Stream_SetPosition(s, 0);
 
-	if (xfi->use_xshm)
+	if (server->use_xshm)
 	{
 		/**
 		 * Passing an offset source rectangle to rfx_compose_message()
@@ -148,34 +149,34 @@ int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int 
 
 void* x11_shadow_update_thread(void* param)
 {
-	xfInfo* xfi;
 	HANDLE event;
 	XEvent xevent;
 	DWORD beg, end;
 	DWORD diff, rate;
 	xfPeerContext* xfp;
+	x11ShadowServer* server;
 	freerdp_peer* client;
 	int x, y, width, height;
 	XDamageNotifyEvent* notify;
 
 	client = (freerdp_peer*) param;
 	xfp = (xfPeerContext*) client->context;
-	xfi = xfp->info;
+	server = xfp->server;
 
 	rate = 1000 / xfp->fps;
 
-	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfi->xfds);
+	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, server->xfds);
 
 	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
 		beg = GetTickCount();
 
-		while (XPending(xfi->display) > 0)
+		while (XPending(server->display) > 0)
 		{
 			ZeroMemory(&xevent, sizeof(xevent));
-			XNextEvent(xfi->display, &xevent);
+			XNextEvent(server->display, &xevent);
 
-			if (xevent.type == xfi->xdamage_notify_event)
+			if (xevent.type == server->xdamage_notify_event)
 			{
 				notify = (XDamageNotifyEvent*) &xevent;
 
@@ -195,9 +196,9 @@ void* x11_shadow_update_thread(void* param)
 				}
 			}
 #ifdef WITH_XFIXES
-			else if (xevent.type == xfi->xfixes_notify_event)
+			else if (xevent.type == server->xfixes_notify_event)
 			{
-				XFixesCursorImage* ci = XFixesGetCursorImage(xfi->display);
+				XFixesCursorImage* ci = XFixesGetCursorImage(server->display);
 				XFree(ci);
 			}
 #endif

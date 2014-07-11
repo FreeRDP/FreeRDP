@@ -48,22 +48,22 @@
 
 #ifdef WITH_XDAMAGE
 
-void x11_shadow_xdamage_init(xfInfo* xfi)
+void x11_shadow_xdamage_init(x11ShadowServer* server)
 {
 	int damage_event;
 	int damage_error;
 	int major, minor;
 	XGCValues values;
 
-	if (XDamageQueryExtension(xfi->display, &damage_event, &damage_error) == 0)
+	if (XDamageQueryExtension(server->display, &damage_event, &damage_error) == 0)
 	{
 		fprintf(stderr, "XDamageQueryExtension failed\n");
 		return;
 	}
 
-	XDamageQueryVersion(xfi->display, &major, &minor);
+	XDamageQueryVersion(server->display, &major, &minor);
 
-	if (XDamageQueryVersion(xfi->display, &major, &minor) == 0)
+	if (XDamageQueryVersion(server->display, &major, &minor) == 0)
 	{
 		fprintf(stderr, "XDamageQueryVersion failed\n");
 		return;
@@ -74,42 +74,42 @@ void x11_shadow_xdamage_init(xfInfo* xfi)
 		return;
 	}
 
-	xfi->xdamage_notify_event = damage_event + XDamageNotify;
-	xfi->xdamage = XDamageCreate(xfi->display, xfi->root_window, XDamageReportDeltaRectangles);
+	server->xdamage_notify_event = damage_event + XDamageNotify;
+	server->xdamage = XDamageCreate(server->display, server->root_window, XDamageReportDeltaRectangles);
 
-	if (xfi->xdamage == None)
+	if (server->xdamage == None)
 	{
 		fprintf(stderr, "XDamageCreate failed\n");
 		return;
 	}
 
 #ifdef WITH_XFIXES
-	xfi->xdamage_region = XFixesCreateRegion(xfi->display, NULL, 0);
+	server->xdamage_region = XFixesCreateRegion(server->display, NULL, 0);
 
-	if (xfi->xdamage_region == None)
+	if (server->xdamage_region == None)
 	{
 		fprintf(stderr, "XFixesCreateRegion failed\n");
-		XDamageDestroy(xfi->display, xfi->xdamage);
-		xfi->xdamage = None;
+		XDamageDestroy(server->display, server->xdamage);
+		server->xdamage = None;
 		return;
 	}
 #endif
 
 	values.subwindow_mode = IncludeInferiors;
-	xfi->xdamage_gc = XCreateGC(xfi->display, xfi->root_window, GCSubwindowMode, &values);
-	XSetFunction(xfi->display, xfi->xdamage_gc, GXcopy);
+	server->xdamage_gc = XCreateGC(server->display, server->root_window, GCSubwindowMode, &values);
+	XSetFunction(server->display, server->xdamage_gc, GXcopy);
 }
 
 #endif
 
-int x11_shadow_xshm_init(xfInfo* xfi)
+int x11_shadow_xshm_init(x11ShadowServer* server)
 {
 	Bool pixmaps;
 	int major, minor;
 
-	if (XShmQueryExtension(xfi->display) != False)
+	if (XShmQueryExtension(server->display) != False)
 	{
-		XShmQueryVersion(xfi->display, &major, &minor, &pixmaps);
+		XShmQueryVersion(server->display, &major, &minor, &pixmaps);
 
 		if (pixmaps != True)
 		{
@@ -123,65 +123,55 @@ int x11_shadow_xshm_init(xfInfo* xfi)
 		return -1;
 	}
 
-	xfi->fb_shm_info.shmid = -1;
-	xfi->fb_shm_info.shmaddr = (char*) -1;
+	server->fb_shm_info.shmid = -1;
+	server->fb_shm_info.shmaddr = (char*) -1;
 
-	xfi->fb_image = XShmCreateImage(xfi->display, xfi->visual, xfi->depth,
-			ZPixmap, NULL, &(xfi->fb_shm_info), xfi->width, xfi->height);
+	server->fb_image = XShmCreateImage(server->display, server->visual, server->depth,
+			ZPixmap, NULL, &(server->fb_shm_info), server->width, server->height);
 
-	if (!xfi->fb_image)
+	if (!server->fb_image)
 	{
 		fprintf(stderr, "XShmCreateImage failed\n");
 		return -1;
 	}
 
-	xfi->fb_shm_info.shmid = shmget(IPC_PRIVATE,
-			xfi->fb_image->bytes_per_line * xfi->fb_image->height, IPC_CREAT | 0600);
+	server->fb_shm_info.shmid = shmget(IPC_PRIVATE,
+			server->fb_image->bytes_per_line * server->fb_image->height, IPC_CREAT | 0600);
 
-	if (xfi->fb_shm_info.shmid == -1)
+	if (server->fb_shm_info.shmid == -1)
 	{
 		fprintf(stderr, "shmget failed\n");
 		return -1;
 	}
 
-	xfi->fb_shm_info.readOnly = False;
-	xfi->fb_shm_info.shmaddr = shmat(xfi->fb_shm_info.shmid, 0, 0);
-	xfi->fb_image->data = xfi->fb_shm_info.shmaddr;
+	server->fb_shm_info.readOnly = False;
+	server->fb_shm_info.shmaddr = shmat(server->fb_shm_info.shmid, 0, 0);
+	server->fb_image->data = server->fb_shm_info.shmaddr;
 
-	if (xfi->fb_shm_info.shmaddr == ((char*) -1))
+	if (server->fb_shm_info.shmaddr == ((char*) -1))
 	{
 		fprintf(stderr, "shmat failed\n");
 		return -1;
 	}
 
-	XShmAttach(xfi->display, &(xfi->fb_shm_info));
-	XSync(xfi->display, False);
+	XShmAttach(server->display, &(server->fb_shm_info));
+	XSync(server->display, False);
 
-	shmctl(xfi->fb_shm_info.shmid, IPC_RMID, 0);
+	shmctl(server->fb_shm_info.shmid, IPC_RMID, 0);
 
 	fprintf(stderr, "display: %p root_window: %p width: %d height: %d depth: %d\n",
-			xfi->display, (void*) xfi->root_window, xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
+			server->display, (void*) server->root_window, server->fb_image->width, server->fb_image->height, server->fb_image->depth);
 
-	xfi->fb_pixmap = XShmCreatePixmap(xfi->display,
-			xfi->root_window, xfi->fb_image->data, &(xfi->fb_shm_info),
-			xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
+	server->fb_pixmap = XShmCreatePixmap(server->display,
+			server->root_window, server->fb_image->data, &(server->fb_shm_info),
+			server->fb_image->width, server->fb_image->height, server->fb_image->depth);
 
 	return 0;
 }
 
-void x11_shadow_info_free(xfInfo *info)
-{
-	if (info->display)
-		XCloseDisplay(info->display);
-	
-	freerdp_clrconv_free(info->clrconv);
-	free(info);
-}
-
-xfInfo* x11_shadow_info_init()
+void x11_shadow_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 {
 	int i;
-	xfInfo* xfi;
 	int pf_count;
 	int vi_count;
 	XVisualInfo* vi;
@@ -189,38 +179,40 @@ xfInfo* x11_shadow_info_init()
 	XVisualInfo template;
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
+	x11ShadowServer* server;
 
-	xfi = (xfInfo*) calloc(1, sizeof(xfInfo));
+	server = (x11ShadowServer*) client->context;
+	context->server = server;
 
 	/**
 	 * Recent X11 servers drop support for shared pixmaps
 	 * To see if your X11 server supports shared pixmaps, use:
 	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
 	 */
-	xfi->use_xshm = TRUE;
+	server->use_xshm = TRUE;
 
 	setenv("DISPLAY", ":0", 1); /* Set DISPLAY variable if not already set */
 
 	if (!XInitThreads())
 		fprintf(stderr, "warning: XInitThreads() failure\n");
 
-	xfi->display = XOpenDisplay(NULL);
+	server->display = XOpenDisplay(NULL);
 
-	if (!xfi->display)
+	if (!server->display)
 	{
 		fprintf(stderr, "failed to open display: %s\n", XDisplayName(NULL));
 		exit(1);
 	}
 
-	xfi->xfds = ConnectionNumber(xfi->display);
-	xfi->number = DefaultScreen(xfi->display);
-	xfi->screen = ScreenOfDisplay(xfi->display, xfi->number);
-	xfi->depth = DefaultDepthOfScreen(xfi->screen);
-	xfi->width = WidthOfScreen(xfi->screen);
-	xfi->height = HeightOfScreen(xfi->screen);
-	xfi->root_window = DefaultRootWindow(xfi->display);
+	server->xfds = ConnectionNumber(server->display);
+	server->number = DefaultScreen(server->display);
+	server->screen = ScreenOfDisplay(server->display, server->number);
+	server->depth = DefaultDepthOfScreen(server->screen);
+	server->width = WidthOfScreen(server->screen);
+	server->height = HeightOfScreen(server->screen);
+	server->root_window = DefaultRootWindow(server->display);
 
-	pfs = XListPixmapFormats(xfi->display, &pf_count);
+	pfs = XListPixmapFormats(server->display, &pf_count);
 
 	if (!pfs)
 	{
@@ -232,10 +224,10 @@ xfInfo* x11_shadow_info_init()
 	{
 		pf = pfs + i;
 
-		if (pf->depth == xfi->depth)
+		if (pf->depth == server->depth)
 		{
-			xfi->bpp = pf->bits_per_pixel;
-			xfi->scanline_pad = pf->scanline_pad;
+			server->bpp = pf->bits_per_pixel;
+			server->scanline_pad = pf->scanline_pad;
 			break;
 		}
 	}
@@ -243,9 +235,9 @@ xfInfo* x11_shadow_info_init()
 
 	ZeroMemory(&template, sizeof(template));
 	template.class = TrueColor;
-	template.screen = xfi->number;
+	template.screen = server->number;
 
-	vis = XGetVisualInfo(xfi->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
+	vis = XGetVisualInfo(server->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
 
 	if (!vis)
 	{
@@ -257,48 +249,42 @@ xfInfo* x11_shadow_info_init()
 	{
 		vi = vis + i;
 
-		if (vi->depth == xfi->depth)
+		if (vi->depth == server->depth)
 		{
-			xfi->visual = vi->visual;
+			server->visual = vi->visual;
 			break;
 		}
 	}
 	XFree(vis);
 
-	xfi->clrconv = freerdp_clrconv_new(CLRCONV_ALPHA | CLRCONV_INVERT);
+	server->clrconv = freerdp_clrconv_new(CLRCONV_ALPHA | CLRCONV_INVERT);
 
-	XSelectInput(xfi->display, xfi->root_window, SubstructureNotifyMask);
+	XSelectInput(server->display, server->root_window, SubstructureNotifyMask);
 
-	if (xfi->use_xshm)
+	if (server->use_xshm)
 	{
-		if (x11_shadow_xshm_init(xfi) < 0)
-			xfi->use_xshm = FALSE;
+		if (x11_shadow_xshm_init(server) < 0)
+			server->use_xshm = FALSE;
 	}
 
-	if (xfi->use_xshm)
+	if (server->use_xshm)
 		printf("Using X Shared Memory Extension (XShm)\n");
 
 #ifdef WITH_XDAMAGE
-	x11_shadow_xdamage_init(xfi);
+	x11_shadow_xdamage_init(server);
 #endif
 
-	x11_shadow_cursor_init(xfi);
+	x11_shadow_cursor_init(server);
 
-	xfi->bytesPerPixel = 4;
-	xfi->activePeerCount = 0;
+	server->bytesPerPixel = 4;
+	server->activePeerCount = 0;
 
 	freerdp_keyboard_init(0);
 
-	return xfi;
-}
-
-void x11_shadow_peer_context_new(freerdp_peer* client, xfPeerContext* context)
-{
-	context->info = x11_shadow_info_init();
 	context->rfx_context = rfx_context_new(TRUE);
 	context->rfx_context->mode = RLGR3;
-	context->rfx_context->width = context->info->width;
-	context->rfx_context->height = context->info->height;
+	context->rfx_context->width = server->width;
+	context->rfx_context->height = server->height;
 
 	rfx_context_set_pixel_format(context->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
 
@@ -311,9 +297,16 @@ void x11_shadow_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 
 void x11_shadow_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 {
+	x11ShadowServer* server;
+
 	if (context)
 	{
-		x11_shadow_info_free(context->info);
+		server = context->server;
+
+		if (server->display)
+			XCloseDisplay(server->display);
+
+		freerdp_clrconv_free(server->clrconv);
 
 		CloseHandle(context->updateReadyEvent);
 		CloseHandle(context->updateSentEvent);
@@ -325,7 +318,6 @@ void x11_shadow_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 
 void x11_shadow_peer_init(freerdp_peer* client)
 {
-	xfInfo* xfi;
 	xfPeerContext* xfp;
 
 	client->ContextSize = sizeof(xfPeerContext);
@@ -336,8 +328,6 @@ void x11_shadow_peer_init(freerdp_peer* client)
 	xfp = (xfPeerContext*) client->context;
 
 	xfp->fps = 16;
-	xfi = xfp->info;
-
 	xfp->mutex = CreateMutex(NULL, FALSE, NULL);
 }
 
@@ -369,11 +359,9 @@ BOOL x11_shadow_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
 
 BOOL x11_shadow_peer_check_fds(freerdp_peer* client)
 {
-	xfInfo* xfi;
 	xfPeerContext* xfp;
 
 	xfp = (xfPeerContext*) client->context;
-	xfi = xfp->info;
 
 	if (WaitForSingleObject(xfp->updateReadyEvent, 0) == WAIT_OBJECT_0)
 	{
@@ -396,11 +384,11 @@ BOOL x11_shadow_peer_capabilities(freerdp_peer* client)
 
 BOOL x11_shadow_peer_post_connect(freerdp_peer* client)
 {
-	xfInfo* xfi;
 	xfPeerContext* xfp;
+	x11ShadowServer* server;
 
 	xfp = (xfPeerContext*) client->context;
-	xfi = (xfInfo*) xfp->info;
+	server = xfp->server;
 
 	fprintf(stderr, "Client %s is activated", client->hostname);
 	if (client->settings->AutoLogonEnabled)
@@ -422,8 +410,8 @@ BOOL x11_shadow_peer_post_connect(freerdp_peer* client)
 
 	/* A real server should tag the peer as activated here and start sending updates in main loop. */
 
-	client->settings->DesktopWidth = xfi->width;
-	client->settings->DesktopHeight = xfi->height;
+	client->settings->DesktopWidth = server->width;
+	client->settings->DesktopHeight = server->height;
 
 	client->update->DesktopResize(client->update->context);
 
@@ -434,11 +422,12 @@ BOOL x11_shadow_peer_post_connect(freerdp_peer* client)
 BOOL x11_shadow_peer_activate(freerdp_peer* client)
 {
 	xfPeerContext* xfp = (xfPeerContext*) client->context;
+	x11ShadowServer* server = xfp->server;
 
 	rfx_context_reset(xfp->rfx_context);
 	xfp->activated = TRUE;
 
-	xfp->info->activePeerCount++;
+	server->activePeerCount++;
 
 	xfp->monitorThread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) x11_shadow_update_thread, (void*) client, 0, NULL);
@@ -511,6 +500,7 @@ static void* x11_shadow_peer_main_loop(void* arg)
 	fprintf(stderr, "We've got a client %s\n", client->hostname);
 
 	x11_shadow_peer_init(client);
+
 	xfp = (xfPeerContext*) client->context;
 	settings = client->settings;
 
@@ -608,5 +598,6 @@ void x11_shadow_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	HANDLE thread;
 
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) x11_shadow_peer_main_loop, client, 0, NULL);
+	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+			x11_shadow_peer_main_loop, client, 0, NULL);
 }

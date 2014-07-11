@@ -37,10 +37,10 @@ void* x11_shadow_server_thread(void* param)
 	int rcount;
 	void* rfds[32];
 	fd_set rfds_set;
-	xfServer* server;
+	x11ShadowServer* server;
 	freerdp_listener* listener;
 
-	server = (xfServer*) param;
+	server = (x11ShadowServer*) param;
 	listener = server->listener;
 
 	while (1)
@@ -95,7 +95,7 @@ void* x11_shadow_server_thread(void* param)
 	return NULL;
 }
 
-int x11_shadow_server_start(xfServer* server)
+int x11_shadow_server_start(x11ShadowServer* server)
 {
 	server->thread = NULL;
 
@@ -108,7 +108,7 @@ int x11_shadow_server_start(xfServer* server)
 	return 0;
 }
 
-int x11_shadow_server_stop(xfServer* server)
+int x11_shadow_server_stop(x11ShadowServer* server)
 {
 	if (server->thread)
 	{
@@ -121,16 +121,16 @@ int x11_shadow_server_stop(xfServer* server)
 	return 0;
 }
 
-HANDLE x11_shadow_server_get_thread(xfServer* server)
+HANDLE x11_shadow_server_get_thread(x11ShadowServer* server)
 {
 	return server->thread;
 }
 
-xfServer* x11_shadow_server_new(int argc, char** argv)
+x11ShadowServer* x11_shadow_server_new(int argc, char** argv)
 {
-	xfServer* server;
+	x11ShadowServer* server;
 
-	server = (xfServer*) malloc(sizeof(xfServer));
+	server = (x11ShadowServer*) malloc(sizeof(x11ShadowServer));
 
 	if (server)
 	{
@@ -143,7 +143,7 @@ xfServer* x11_shadow_server_new(int argc, char** argv)
 	return server;
 }
 
-void x11_shadow_server_free(xfServer* server)
+void x11_shadow_server_free(x11ShadowServer* server)
 {
 	if (server)
 	{
