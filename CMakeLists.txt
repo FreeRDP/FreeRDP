@@ -59,7 +59,7 @@ include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 
 # Soname versioning
-set(WITH_LIBRARY_VERSIONING "1")
+set(WITH_LIBRARY_VERSIONING "ON")
 set(FREERDP_VERSION_MAJOR "1")
 set(FREERDP_VERSION_MINOR "2")
 set(FREERDP_VERSION_REVISION "0")
@@ -302,7 +302,7 @@ endif(APPLE)
 
 # Android
 if(ANDROID)
-  set(WITH_LIBRARY_VERSIONING "")
+  set(WITH_LIBRARY_VERSIONING "OFF")
 
 	if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 		add_definitions(-DNDK_DEBUG=1)
