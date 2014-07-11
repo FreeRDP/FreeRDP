@@ -61,8 +61,6 @@ struct winpr_process
 };
 typedef struct winpr_process WINPR_PROCESS;
 
-void CloseThread(WINPR_THREAD *thread);
-
 #endif
 
 #endif /* WINPR_THREAD_PRIVATE_H */

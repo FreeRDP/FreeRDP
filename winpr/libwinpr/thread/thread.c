@@ -90,8 +90,33 @@
 
 #include "../handle/handle.h"
 
-
+static pthread_once_t thread_initialized = PTHREAD_ONCE_INIT;
+static HANDLE_CLOSE_CB _ThreadHandleCloseCb;
 static wListDictionary *thread_list = NULL;
+
+static void ThreadCloseHandle(WINPR_THREAD *thread);
+
+static BOOL ThreadIsHandled(HANDLE handle)
+{
+	WINPR_THREAD *pThread = (WINPR_THREAD*)handle;
+
+	if (!pThread || pThread->Type != HANDLE_TYPE_THREAD)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+static void ThreadInitialize(void)
+{
+	_ThreadHandleCloseCb.IsHandled = ThreadIsHandled;
+	_ThreadHandleCloseCb.CloseHandle = ThreadCloseHandle;
+
+	RegisterHandleCloseCb(&_ThreadHandleCloseCb);
+}
 
 static void dump_thread(WINPR_THREAD *thread)
 {
@@ -219,6 +244,8 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	if (!thread)
 		return NULL;
 
+	pthread_once(&thread_initialized, ThreadIsHandled);
+
 	thread->dwStackSize = dwStackSize;
 	thread->lpParameter = lpParameter;
 	thread->lpStartAddress = lpStartAddress;
@@ -265,7 +292,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	return handle;
 }
 
-void CloseThread(WINPR_THREAD *thread)
+void ThreadCloseHandle(WINPR_THREAD *thread)
 {
 	if (!thread_list)
 	{
@@ -390,15 +417,9 @@ HANDLE _GetCurrentThread(VOID)
 
 DWORD GetCurrentThreadId(VOID)
 {
-#if defined(__linux__) && !defined(__ANDROID__)
-	pid_t tid;
-	tid = syscall(SYS_gettid);
-	return (DWORD) tid;
-#else
 	pthread_t tid;
 	tid = pthread_self();
 	return (DWORD) tid;
-#endif
 }
 
 DWORD ResumeThread(HANDLE hThread)

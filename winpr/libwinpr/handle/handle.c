@@ -133,7 +133,7 @@ BOOL CloseHandle(HANDLE hObject)
 
 	LeaveCriticalSection(&_HandleCloseCbsLock);
 
-	else if (Type == HANDLE_TYPE_PROCESS)
+	if (Type == HANDLE_TYPE_PROCESS)
 	{
 		WINPR_PROCESS* process;
 
