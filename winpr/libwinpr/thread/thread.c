@@ -80,7 +80,9 @@
 #include <sys/eventfd.h>
 #endif
 
+#if defined(WITH_DEBUG_THREADS)
 #include <execinfo.h>
+#endif
 
 #include <errno.h>
 
