@@ -61,8 +61,8 @@ void x11_shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	DWORD vkcode;
 	DWORD keycode;
 	BOOL extended = FALSE;
-	xfPeerContext* xfp = (xfPeerContext*) input->context;
-	x11ShadowServer* server = xfp->server;
+	x11ShadowClient* context = (x11ShadowClient*) input->context;
+	x11ShadowServer* server = context->server;
 
 	if (flags & KBD_FLAGS_EXTENDED)
 		extended = TRUE;
@@ -97,8 +97,8 @@ void x11_shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 #ifdef WITH_XTEST
 	int button = 0;
 	BOOL down = FALSE;
-	xfPeerContext* xfp = (xfPeerContext*) input->context;
-	x11ShadowServer* server = xfp->server;
+	x11ShadowClient* context = (x11ShadowClient*) input->context;
+	x11ShadowServer* server = context->server;
 
 	XTestGrabControl(server->display, True);
 
@@ -142,8 +142,8 @@ void x11_shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16
 #ifdef WITH_XTEST
 	int button = 0;
 	BOOL down = FALSE;
-	xfPeerContext* xfp = (xfPeerContext*) input->context;
-	x11ShadowServer* server = xfp->server;
+	x11ShadowClient* context = (x11ShadowClient*) input->context;
+	x11ShadowServer* server = context->server;
 
 	XTestGrabControl(server->display, True);
 	XTestFakeMotionEvent(server->display, 0, x, y, CurrentTime);

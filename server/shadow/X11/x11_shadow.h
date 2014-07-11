@@ -83,10 +83,9 @@ struct x11_shadow_server
 	Display* display;
 	int scanline_pad;
 	int bytesPerPixel;
-	HCLRCONV clrconv;
-	BOOL use_xshm;
 	int activePeerCount;
 
+	BOOL use_xshm;
 	XImage* fb_image;
 	Pixmap fb_pixmap;
 	Window root_window;
@@ -117,25 +116,15 @@ struct x11_shadow_server
 #include <freerdp/listener.h>
 #include <freerdp/utils/stopwatch.h>
 
-typedef struct x11_shadow_peer_context xfPeerContext;
+typedef struct x11_shadow_client x11ShadowClient;
 
-#define PeerEvent_Base						0
-
-#define PeerEvent_Class						(PeerEvent_Base + 1)
-
-#define PeerEvent_EncodeRegion					1
-
-struct x11_shadow_peer_context
+struct x11_shadow_client
 {
 	rdpContext _p;
 
-	int fps;
 	wStream* s;
-	HANDLE mutex;
 	BOOL activated;
 	HANDLE monitorThread;
-	HANDLE updateReadyEvent;
-	HANDLE updateSentEvent;
 	RFX_CONTEXT* rfx_context;
 	x11ShadowServer* server;
 };

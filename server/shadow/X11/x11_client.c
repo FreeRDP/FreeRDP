@@ -169,7 +169,7 @@ int x11_shadow_xshm_init(x11ShadowServer* server)
 	return 0;
 }
 
-void x11_shadow_peer_context_new(freerdp_peer* client, xfPeerContext* context)
+void x11_shadow_peer_context_new(freerdp_peer* client, x11ShadowClient* context)
 {
 	int i;
 	int pf_count;
@@ -257,8 +257,6 @@ void x11_shadow_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 	}
 	XFree(vis);
 
-	server->clrconv = freerdp_clrconv_new(CLRCONV_ALPHA | CLRCONV_INVERT);
-
 	XSelectInput(server->display, server->root_window, SubstructureNotifyMask);
 
 	if (server->use_xshm)
@@ -290,12 +288,9 @@ void x11_shadow_peer_context_new(freerdp_peer* client, xfPeerContext* context)
 
 	context->s = Stream_New(NULL, 65536);
 	Stream_Clear(context->s);
-
-	context->updateReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	context->updateSentEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 }
 
-void x11_shadow_peer_context_free(freerdp_peer* client, xfPeerContext* context)
+void x11_shadow_peer_context_free(freerdp_peer* client, x11ShadowClient* context)
 {
 	x11ShadowServer* server;
 
@@ -306,11 +301,6 @@ void x11_shadow_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 		if (server->display)
 			XCloseDisplay(server->display);
 
-		freerdp_clrconv_free(server->clrconv);
-
-		CloseHandle(context->updateReadyEvent);
-		CloseHandle(context->updateSentEvent);
-
 		Stream_Free(context->s, TRUE);
 		rfx_context_free(context->rfx_context);
 	}
@@ -318,63 +308,10 @@ void x11_shadow_peer_context_free(freerdp_peer* client, xfPeerContext* context)
 
 void x11_shadow_peer_init(freerdp_peer* client)
 {
-	xfPeerContext* xfp;
-
-	client->ContextSize = sizeof(xfPeerContext);
+	client->ContextSize = sizeof(x11ShadowClient);
 	client->ContextNew = (psPeerContextNew) x11_shadow_peer_context_new;
 	client->ContextFree = (psPeerContextFree) x11_shadow_peer_context_free;
 	freerdp_peer_context_new(client);
-
-	xfp = (xfPeerContext*) client->context;
-
-	xfp->fps = 16;
-	xfp->mutex = CreateMutex(NULL, FALSE, NULL);
-}
-
-void x11_shadow_peer_send_update(freerdp_peer* client)
-{
-	rdpUpdate* update;
-	SURFACE_BITS_COMMAND* cmd;
-
-	update = client->update;
-	cmd = &update->surface_bits_command;
-
-	if (cmd->bitmapDataLength)
-		update->SurfaceBits(update->context, cmd);
-}
-
-BOOL x11_shadow_peer_get_fds(freerdp_peer* client, void** rfds, int* rcount)
-{
-	int fds;
-	HANDLE event;
-	xfPeerContext* xfp = (xfPeerContext*) client->context;
-
-	event = xfp->updateReadyEvent;
-	fds = GetEventFileDescriptor(event);
-	rfds[*rcount] = (void*) (long) fds;
-	(*rcount)++;
-
-	return TRUE;
-}
-
-BOOL x11_shadow_peer_check_fds(freerdp_peer* client)
-{
-	xfPeerContext* xfp;
-
-	xfp = (xfPeerContext*) client->context;
-
-	if (WaitForSingleObject(xfp->updateReadyEvent, 0) == WAIT_OBJECT_0)
-	{
-		if (!xfp->activated)
-			return TRUE;
-
-		x11_shadow_peer_send_update(client);
-
-		ResetEvent(xfp->updateReadyEvent);
-		SetEvent(xfp->updateSentEvent);
-	}
-
-	return TRUE;
 }
 
 BOOL x11_shadow_peer_capabilities(freerdp_peer* client)
@@ -384,11 +321,11 @@ BOOL x11_shadow_peer_capabilities(freerdp_peer* client)
 
 BOOL x11_shadow_peer_post_connect(freerdp_peer* client)
 {
-	xfPeerContext* xfp;
+	x11ShadowClient* context;
 	x11ShadowServer* server;
 
-	xfp = (xfPeerContext*) client->context;
-	server = xfp->server;
+	context = (x11ShadowClient*) client->context;
+	server = context->server;
 
 	fprintf(stderr, "Client %s is activated", client->hostname);
 	if (client->settings->AutoLogonEnabled)
@@ -408,28 +345,25 @@ BOOL x11_shadow_peer_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
-	/* A real server should tag the peer as activated here and start sending updates in main loop. */
-
 	client->settings->DesktopWidth = server->width;
 	client->settings->DesktopHeight = server->height;
 
 	client->update->DesktopResize(client->update->context);
 
-	/* Return FALSE here would stop the execution of the peer main loop. */
 	return TRUE;
 }
 
 BOOL x11_shadow_peer_activate(freerdp_peer* client)
 {
-	xfPeerContext* xfp = (xfPeerContext*) client->context;
-	x11ShadowServer* server = xfp->server;
+	x11ShadowClient* context = (x11ShadowClient*) client->context;
+	x11ShadowServer* server = context->server;
 
-	rfx_context_reset(xfp->rfx_context);
-	xfp->activated = TRUE;
+	rfx_context_reset(context->rfx_context);
+	context->activated = TRUE;
 
 	server->activePeerCount++;
 
-	xfp->monitorThread = CreateThread(NULL, 0,
+	context->monitorThread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) x11_shadow_update_thread, (void*) client, 0, NULL);
 
 	return TRUE;
@@ -481,7 +415,7 @@ int x11_shadow_generate_certificate(rdpSettings* settings)
 	return 0;
 }
 
-static void* x11_shadow_peer_main_loop(void* arg)
+static void* x11_shadow_client_thread(void* arg)
 {
 	int i;
 	int fds;
@@ -490,7 +424,7 @@ static void* x11_shadow_peer_main_loop(void* arg)
 	void* rfds[32];
 	fd_set rfds_set;
 	rdpSettings* settings;
-	xfPeerContext* xfp;
+	x11ShadowClient* xfp;
 	struct timeval timeout;
 	freerdp_peer* client = (freerdp_peer*) arg;
 
@@ -501,7 +435,7 @@ static void* x11_shadow_peer_main_loop(void* arg)
 
 	x11_shadow_peer_init(client);
 
-	xfp = (xfPeerContext*) client->context;
+	xfp = (x11ShadowClient*) client->context;
 	settings = client->settings;
 
 	x11_shadow_generate_certificate(settings);
@@ -528,12 +462,6 @@ static void* x11_shadow_peer_main_loop(void* arg)
 		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
 			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
-			break;
-		}
-
-		if (x11_shadow_peer_get_fds(client, rfds, &rcount) != TRUE)
-		{
-			fprintf(stderr, "Failed to get xfreerdp file descriptor\n");
 			break;
 		}
 
@@ -571,14 +499,8 @@ static void* x11_shadow_peer_main_loop(void* arg)
 
 		if (client->CheckFileDescriptor(client) != TRUE)
 		{
-			fprintf(stderr, "Failed to check freerdp file descriptor\n");
-			break;
-		}
-
-		if ((x11_shadow_peer_check_fds(client)) != TRUE)
-		{
-			fprintf(stderr, "Failed to check xfreerdp file descriptor\n");
-			break;
+			//fprintf(stderr, "Failed to check freerdp file descriptor\n");
+			//break;
 		}
 	}
 
@@ -599,5 +521,5 @@ void x11_shadow_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 	HANDLE thread;
 
 	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
-			x11_shadow_peer_main_loop, client, 0, NULL);
+			x11_shadow_client_thread, client, 0, NULL);
 }

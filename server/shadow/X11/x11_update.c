@@ -29,10 +29,10 @@
 
 #include "x11_shadow.h"
 
-XImage* x11_shadow_snapshot(xfPeerContext* xfp, int x, int y, int width, int height)
+XImage* x11_shadow_snapshot(x11ShadowClient* context, int x, int y, int width, int height)
 {
 	XImage* image;
-	x11ShadowServer* server = xfp->server;
+	x11ShadowServer* server = context->server;
 
 	if (server->use_xshm)
 	{
@@ -47,10 +47,10 @@ XImage* x11_shadow_snapshot(xfPeerContext* xfp, int x, int y, int width, int hei
 	return image;
 }
 
-void x11_shadow_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height)
+void x11_shadow_xdamage_subtract_region(x11ShadowClient* context, int x, int y, int width, int height)
 {
 	XRectangle region;
-	x11ShadowServer* server = xfp->server;
+	x11ShadowServer* server = context->server;
 
 	region.x = x;
 	region.y = y;
@@ -70,12 +70,12 @@ int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int 
 	RFX_RECT rect;
 	XImage* image;
 	rdpUpdate* update;
-	xfPeerContext* xfp;
+	x11ShadowClient* context;
 	x11ShadowServer* server;
 	SURFACE_BITS_COMMAND* cmd;
 
-	xfp = (xfPeerContext*) client->context;
-	server = xfp->server;
+	context = (x11ShadowClient*) client->context;
+	server = context->server;
 
 	update = client->update;
 	cmd = &update->surface_bits_command;
@@ -86,7 +86,7 @@ int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int 
 		return -1;
 	}
 
-	s = xfp->s;
+	s = context->s;
 	Stream_Clear(s);
 	Stream_SetPosition(s, 0);
 
@@ -102,12 +102,12 @@ int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int 
 		rect.width = width;
 		rect.height = height;
 
-		image = x11_shadow_snapshot(xfp, x, y, width, height);
+		image = x11_shadow_snapshot(context, x, y, width, height);
 
 		data = (BYTE*) image->data;
 		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel / 8)];
 
-		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
+		rfx_compose_message(context->rfx_context, s, &rect, 1, data,
 				width, height, image->bytes_per_line);
 
 		cmd->destLeft = x;
@@ -122,11 +122,11 @@ int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int 
 		rect.width = width;
 		rect.height = height;
 
-		image = x11_shadow_snapshot(xfp, x, y, width, height);
+		image = x11_shadow_snapshot(context, x, y, width, height);
 
 		data = (BYTE*) image->data;
 
-		rfx_compose_message(xfp->rfx_context, s, &rect, 1, data,
+		rfx_compose_message(context->rfx_context, s, &rect, 1, data,
 				width, height, image->bytes_per_line);
 
 		cmd->destLeft = x;
@@ -147,23 +147,35 @@ int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int 
 	return 0;
 }
 
+void x11_shadow_client_send_update(freerdp_peer* client)
+{
+	rdpUpdate* update;
+	SURFACE_BITS_COMMAND* cmd;
+
+	update = client->update;
+	cmd = &update->surface_bits_command;
+
+	if (cmd->bitmapDataLength)
+		update->SurfaceBits(update->context, cmd);
+}
+
 void* x11_shadow_update_thread(void* param)
 {
 	HANDLE event;
 	XEvent xevent;
 	DWORD beg, end;
 	DWORD diff, rate;
-	xfPeerContext* xfp;
+	x11ShadowClient* context;
 	x11ShadowServer* server;
 	freerdp_peer* client;
 	int x, y, width, height;
 	XDamageNotifyEvent* notify;
 
 	client = (freerdp_peer*) param;
-	xfp = (xfPeerContext*) client->context;
-	server = xfp->server;
+	context = (x11ShadowClient*) client->context;
+	server = context->server;
 
-	rate = 1000 / xfp->fps;
+	rate = 1000 / 10;
 
 	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, server->xfds);
 
@@ -187,12 +199,10 @@ void* x11_shadow_update_thread(void* param)
 
 				if (x11_shadow_update_encode(client, x, y, width, height) >= 0)
 				{
-					x11_shadow_xdamage_subtract_region(xfp, x, y, width, height);
+					x11_shadow_xdamage_subtract_region(context, x, y, width, height);
 
-					SetEvent(xfp->updateReadyEvent);
-
-					WaitForSingleObject(xfp->updateSentEvent, INFINITE);
-					ResetEvent(xfp->updateSentEvent);
+					if (context->activated)
+						x11_shadow_client_send_update(client);
 				}
 			}
 #ifdef WITH_XFIXES
