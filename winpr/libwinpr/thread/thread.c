@@ -80,7 +80,7 @@
 #include <sys/eventfd.h>
 #endif
 
-#if defined(WITH_DEBUG_THREADS)
+#ifdef HAVE_EXECINFO_H
 #include <execinfo.h>
 #endif
 
@@ -100,7 +100,7 @@ static void ThreadCloseHandle(WINPR_THREAD *thread);
 
 static BOOL ThreadIsHandled(HANDLE handle)
 {
-	WINPR_THREAD *pThread = (WINPR_THREAD*)handle;
+	WINPR_THREAD *pThread = (WINPR_THREAD *)handle;
 
 	if (!pThread || pThread->Type != HANDLE_TYPE_THREAD)
 	{
@@ -116,19 +116,17 @@ static void ThreadInitialize(void)
 {
 	_ThreadHandleCloseCb.IsHandled = ThreadIsHandled;
 	_ThreadHandleCloseCb.CloseHandle = ThreadCloseHandle;
-
 	RegisterHandleCloseCb(&_ThreadHandleCloseCb);
 }
 
 static void dump_thread(WINPR_THREAD *thread)
 {
-#if defined(WITH_DEBUG_THREADS)
-  void *stack[20];
-
+#if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
+	void *stack[20];
 	fprintf(stderr, "Called from:\n");
-backtrace_symbols_fd(stack, 20, STDERR_FILENO);
+	backtrace_symbols_fd(stack, 20, STDERR_FILENO);
 	fprintf(stderr, "Thread handle created still not closed!\n");
-backtrace_symbols_fd(thread->create_stack, 20, STDERR_FILENO);
+	backtrace_symbols_fd(thread->create_stack, 20, STDERR_FILENO);
 
 	if (thread->started)
 		fprintf(stderr, "Thread still running!\n");
@@ -137,7 +135,7 @@ backtrace_symbols_fd(thread->create_stack, 20, STDERR_FILENO);
 	else
 	{
 		fprintf(stderr, "Thread exited at:\n");
-backtrace_symbols_fd(thread->exit_stack, 20, STDERR_FILENO);
+		backtrace_symbols_fd(thread->exit_stack, 20, STDERR_FILENO);
 	}
 
 #endif
@@ -247,12 +245,11 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 		return NULL;
 
 	pthread_once(&thread_initialized, ThreadInitialize);
-
 	thread->dwStackSize = dwStackSize;
 	thread->lpParameter = lpParameter;
 	thread->lpStartAddress = lpStartAddress;
 	thread->lpThreadAttributes = lpThreadAttributes;
-#if defined(WITH_DEBUG_THREADS)
+#if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
 	backtrace(thread->create_stack, 20);
 	dump_thread(thread);
 #endif
@@ -365,7 +362,7 @@ VOID ExitThread(DWORD dwExitCode)
 		ListDictionary_Lock(thread_list);
 		thread = ListDictionary_GetItemValue(thread_list, &tid);
 		assert(thread);
-#if defined(WITH_DEBUG_THREADS)
+#if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
 		backtrace(thread->exit_stack, 20);
 #endif
 		set_event(thread);
@@ -479,10 +476,14 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 #if defined(WITH_DEBUG_THREADS)
 VOID DumpThreadHandles(void)
 {
-void *stack[20];
-backtrace(stack, 20);
-  fprintf(stderr, "---------------- Called from ----------------------------\n");
-backtrace_symbols_fd(stack, 20, STDERR_FILENO);
+	void *stack[20];
+#if defined(HAVE_EXECINFO_H)
+	backtrace(stack, 20);
+#endif
+	fprintf(stderr, "---------------- Called from ----------------------------\n");
+#if defined(HAVE_EXECINFO_H)
+	backtrace_symbols_fd(stack, 20, STDERR_FILENO);
+#endif
 	fprintf(stderr, "---------------- Start Dumping thread handles -----------\n");
 
 	if (!thread_list)
@@ -498,14 +499,17 @@ backtrace_symbols_fd(stack, 20, STDERR_FILENO);
 		{
 			WINPR_THREAD *thread = ListDictionary_GetItemValue(thread_list, (void *)keys[x]);
 			fprintf(stderr, "Thread [%d] handle created still not closed!\n", x);
+#if defined(HAVE_EXECINFO_H)
 			backtrace_symbols_fd(thread->create_stack, 20, STDERR_FILENO);
-
+#endif
 			if (thread->started)
 				fprintf(stderr, "Thread [%d] still running!\n",	x);
 			else
 			{
 				fprintf(stderr, "Thread [%d] exited at:\n", x);
-			backtrace_symbols_fd(thread->exit_stack, 20, STDERR_FILENO);
+#if defined(HAVE_EXECINFO_H)
+				backtrace_symbols_fd(thread->exit_stack, 20, STDERR_FILENO);
+#endif
 			}
 		}
 
