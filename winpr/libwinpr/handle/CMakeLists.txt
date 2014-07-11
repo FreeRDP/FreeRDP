@@ -14,8 +14,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-winpr_module_add(handle.c handle.h)
 
+winpr_module_add(handle.c handle.h)
+	
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
 	winpr_library_add(rt)
 endif()

@@ -54,10 +54,8 @@ winpr_module_add(${${MODULE_PREFIX}_NTLM_SRCS}
 	${${MODULE_PREFIX}_SCHANNEL_SRCS}
 	${${MODULE_PREFIX}_SRCS})
 
-
 winpr_include_directory_add(${ZLIB_INCLUDE_DIRS}
 	${OPENSSL_INCLUDE_DIR})
-
 
 winpr_library_add(${ZLIB_LIBRARIES}
 	${OPENSSL_LIBRARIES})

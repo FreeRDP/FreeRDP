@@ -16,7 +16,7 @@
 # limitations under the License.
 
 winpr_module_add(
-  crypto.c
+	crypto.c
 	crypto.h
 	cert.c)
 
