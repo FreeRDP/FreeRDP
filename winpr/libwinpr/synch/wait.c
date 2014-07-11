@@ -259,6 +259,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			else
 				status = pthread_join(thread->thread, &thread_status);
 
+			thread->started = FALSE;
+
 			if (status != 0)
 			{
 				fprintf(stderr, "WaitForSingleObject: pthread_join failure: [%d] %s\n",
