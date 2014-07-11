@@ -97,6 +97,7 @@ static HANDLE_CLOSE_CB _ThreadHandleCloseCb;
 static wListDictionary *thread_list = NULL;
 
 static void ThreadCloseHandle(WINPR_THREAD *thread);
+static void cleanup_handle(WINPR_THREAD *thread);
 
 static BOOL ThreadIsHandled(HANDLE handle)
 {
@@ -258,7 +259,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 
 	if (thread->pipe_fd[0] < 0)
 	{
-		fprintf(stderr, "[%s]: failed to create thread\n", __func__);
+		fprintf(stderr, "[%s]: failed to create thread\n", __FUNCTION__);
 		free(thread);
 		return NULL;
 	}
@@ -267,7 +268,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 
 	if (pipe(thread->pipe_fd) < 0)
 	{
-		fprintf(stderr, "[%s]: failed to create thread\n", __func__);
+		fprintf(stderr, "[%s]: failed to create thread\n", __FUNCTION__);
 		free(thread);
 		return NULL;
 	}
@@ -291,35 +292,14 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	return handle;
 }
 
-void ThreadCloseHandle(WINPR_THREAD *thread)
+void cleanup_handle(WINPR_THREAD *thread)
 {
-	if (!thread_list)
-	{
-		fprintf(stderr, "[%s]: Thread list does not exist, check call!\n", __func__);
-		dump_thread(thread);
-	}
-	else if (!ListDictionary_Contains(thread_list, &thread->thread))
-	{
-		fprintf(stderr, "[%s]: Thread list does not contain this thread! check call!\n", __func__);
-		dump_thread(thread);
-	}
-	else
-	{
-		dump_thread(thread);
-		ListDictionary_Remove(thread_list, &thread->thread);
-
-		if (ListDictionary_Count(thread_list) < 1)
-		{
-			ListDictionary_Free(thread_list);
-			thread_list = NULL;
-		}
-	}
-
+	ListDictionary_Remove(thread_list, &thread->thread);
 	int rc = pthread_mutex_destroy(&thread->mutex);
 
 	if (rc)
 	{
-		fprintf(stderr, "[%s]: failed to destroy mutex [%d] %s (%d)\n", __func__,  rc, strerror(errno), errno);
+		fprintf(stderr, "[%s]: failed to destroy mutex [%d] %s (%d)\n", __FUNCTION__,  rc, strerror(errno), errno);
 	}
 
 	if (thread->pipe_fd[0])
@@ -331,10 +311,46 @@ void ThreadCloseHandle(WINPR_THREAD *thread)
 	free(thread);
 }
 
+void ThreadCloseHandle(WINPR_THREAD *thread)
+{
+	if (!thread_list)
+	{
+		fprintf(stderr, "[%s]: Thread list does not exist, check call!\n", __FUNCTION__);
+		dump_thread(thread);
+	}
+	else if (!ListDictionary_Contains(thread_list, &thread->thread))
+	{
+		fprintf(stderr, "[%s]: Thread list does not contain this thread! check call!\n", __FUNCTION__);
+		dump_thread(thread);
+	}
+	else
+	{
+		ListDictionary_Lock(thread_list);
+		dump_thread(thread);
+
+		if (WaitForSingleObject(thread, 0) == WAIT_OBJECT_0)
+			cleanup_handle(thread);
+		else
+		{
+			fprintf(stderr, "[%s]: Thread running, setting to detached state!\n", __FUNCTION__);
+			thread->detached = TRUE;
+			pthread_detach(thread->thread);
+		}
+
+		ListDictionary_Unlock(thread_list);
+
+		if (ListDictionary_Count(thread_list) < 1)
+		{
+			ListDictionary_Free(thread_list);
+			thread_list = NULL;
+		}
+	}
+}
+
 HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 						  LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
-	fprintf(stderr, "[%s]: not implemented\n", __func__);
+	fprintf(stderr, "[%s]: not implemented\n", __FUNCTION__);
 	return NULL;
 }
 
@@ -344,14 +360,14 @@ VOID ExitThread(DWORD dwExitCode)
 
 	if (NULL == thread_list)
 	{
-		fprintf(stderr, "[%s]: function called without existing thread list!\n", __func__);
+		fprintf(stderr, "[%s]: function called without existing thread list!\n", __FUNCTION__);
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
 	}
 	else if (!ListDictionary_Contains(thread_list, &tid))
 	{
-		fprintf(stderr, "[%s]: function called, but no matching entry in thread list!\n", __func__);
+		fprintf(stderr, "[%s]: function called, but no matching entry in thread list!\n", __FUNCTION__);
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
@@ -365,8 +381,15 @@ VOID ExitThread(DWORD dwExitCode)
 #if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
 		backtrace(thread->exit_stack, 20);
 #endif
-		set_event(thread);
-		thread->dwExitCode = dwExitCode;
+
+		if (!thread->detached)
+		{
+			set_event(thread);
+			thread->dwExitCode = dwExitCode;
+		}
+		else
+			cleanup_handle(thread);
+
 		ListDictionary_Unlock(thread_list);
 	}
 
@@ -394,14 +417,14 @@ HANDLE _GetCurrentThread(VOID)
 
 	if (NULL == thread_list)
 	{
-		fprintf(stderr, "[%s]: function called without existing thread list!\n", __func__);
+		fprintf(stderr, "[%s]: function called without existing thread list!\n", __FUNCTION__);
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
 	}
 	else if (!ListDictionary_Contains(thread_list, &tid))
 	{
-		fprintf(stderr, "[%s]: function called, but no matching entry in thread list!\n", __func__);
+		fprintf(stderr, "[%s]: function called, but no matching entry in thread list!\n", __FUNCTION__);
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
@@ -436,7 +459,7 @@ DWORD ResumeThread(HANDLE hThread)
 	if (!thread->started)
 		winpr_StartThread(thread);
 	else
-		fprintf(stderr, "[%s]: Thread already started!\n", __func__);
+		fprintf(stderr, "[%s]: Thread already started!\n", __FUNCTION__);
 
 	pthread_mutex_unlock(&thread->mutex);
 	return 0;
@@ -444,7 +467,7 @@ DWORD ResumeThread(HANDLE hThread)
 
 DWORD SuspendThread(HANDLE hThread)
 {
-	fprintf(stderr, "[%s]: Function not implemented!\n", __func__);
+	fprintf(stderr, "[%s]: Function not implemented!\n", __FUNCTION__);
 	return 0;
 }
 
@@ -467,7 +490,7 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 #ifndef ANDROID
 	pthread_cancel(thread->thread);
 #else
-	fprintf(stderr, "[%s]: Function not supported on this platform!\n", __func__);
+	fprintf(stderr, "[%s]: Function not supported on this platform!\n", __FUNCTION__);
 #endif
 	pthread_mutex_unlock(&thread->mutex);
 	return TRUE;
@@ -502,6 +525,7 @@ VOID DumpThreadHandles(void)
 #if defined(HAVE_EXECINFO_H)
 			backtrace_symbols_fd(thread->create_stack, 20, STDERR_FILENO);
 #endif
+
 			if (thread->started)
 				fprintf(stderr, "Thread [%d] still running!\n",	x);
 			else

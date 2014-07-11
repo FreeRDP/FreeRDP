@@ -37,6 +37,7 @@ struct winpr_thread
 	BOOL started;
 	int pipe_fd[2];
 	BOOL mainProcess;
+	BOOL detached;
 	DWORD dwExitCode;
 	pthread_t thread;
 	SIZE_T dwStackSize;
