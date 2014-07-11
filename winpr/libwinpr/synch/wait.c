@@ -97,11 +97,10 @@ int clock_gettime(int clk_id, struct timespec *t)
 #include <pthread.h>
 
 static long long ts_difftime(const struct timespec *o,
-		const struct timespec *n)
+							 const struct timespec *n)
 {
 	long long oldValue = o->tv_sec * 1000000000LL + o->tv_nsec;
 	long long newValue = n->tv_sec * 1000000000LL + n->tv_nsec;
-
 	return newValue - oldValue;
 }
 
@@ -114,11 +113,11 @@ static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec
 {
 	struct timespec timenow;
 	struct timespec sleepytime;
-  unsigned long long diff;
+	unsigned long long diff;
 	int retcode;
 	/* This is just to avoid a completely busy wait */
 	clock_gettime(CLOCK_MONOTONIC, &timenow);
-  diff = ts_difftime(&timenow, timeout);
+	diff = ts_difftime(&timenow, timeout);
 	sleepytime.tv_sec = diff / 1000000000LL;
 	sleepytime.tv_nsec = diff % 1000000000LL;
 
@@ -179,6 +178,7 @@ static int waitOnFd(int fd, DWORD dwMilliseconds)
 		status = select(fd + 1, &rfds, NULL, NULL, (dwMilliseconds == INFINITE) ? NULL : &timeout);
 	}
 	while (status < 0 && (errno == EINTR));
+
 #endif
 	return status;
 }
@@ -300,6 +300,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 				return WAIT_FAILED;
 			}
 		}
+
 #else
 #if defined __APPLE__
 		semaphore_wait(*((winpr_sem_t *) semaphore->sem));
@@ -575,12 +576,8 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 		}
 		else if (Type == HANDLE_TYPE_THREAD)
 		{
-			WINPR_THREAD *thread = (WINPR_THREAD *)Object;
-			void *thread_status = NULL;
-			pthread_join(thread->thread, &thread_status);
-
-			if (thread_status)
-				thread->dwExitCode = ((DWORD)(size_t) thread_status);
+			WINPR_THREAD *thread = (WINPR_THREAD *) Object;
+			fd = thread->pipe_fd[0];
 		}
 		else if (Type == HANDLE_TYPE_NAMED_PIPE)
 		{
@@ -628,6 +625,23 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 					return WAIT_FAILED;
 				}
+			}
+			else if (Type == HANDLE_TYPE_THREAD)
+			{
+				void *thread_status;
+				int status;
+				WINPR_THREAD *thread = (WINPR_THREAD *)Object;
+				status = pthread_join(thread->thread, &thread_status);
+
+				if (status != 0)
+				{
+					fprintf(stderr, "WaitForMultipleObjects: pthread_join failure: [%d] %s\n",
+							status, strerror(status));
+					return WAIT_FAILED;
+				}
+
+				if (thread_status)
+					thread->dwExitCode = ((DWORD)(size_t) thread_status);
 			}
 
 			return (WAIT_OBJECT_0 + index);
