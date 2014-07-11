@@ -244,7 +244,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	if (!thread)
 		return NULL;
 
-	pthread_once(&thread_initialized, ThreadIsHandled);
+	pthread_once(&thread_initialized, ThreadInitialize);
 
 	thread->dwStackSize = dwStackSize;
 	thread->lpParameter = lpParameter;
