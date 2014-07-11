@@ -569,6 +569,52 @@ void xf_toggle_fullscreen(xfContext* xfc)
 	PubSub_OnWindowStateChange(((rdpContext*) xfc)->pubSub, xfc, &e);
 }
 
+void xf_toggle_control(xfContext* xfc)
+{
+	EncomspClientContext* encomsp;
+	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
+
+	encomsp = xfc->encomsp;
+
+	if (!encomsp)
+		return;
+
+	pdu.ParticipantId = 0;
+	pdu.Flags = ENCOMSP_REQUEST_VIEW;
+
+	if (!xfc->controlToggle)
+		pdu.Flags |= ENCOMSP_REQUEST_INTERACT;
+
+	encomsp->ChangeParticipantControlLevel(encomsp, &pdu);
+
+	xfc->controlToggle = !xfc->controlToggle;
+}
+
+int xf_encomsp_participant_created(EncomspClientContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated)
+{
+#if 0
+	xfContext* xfc = (xfContext*) context->custom;
+
+	printf("ParticipantCreated: ParticipantId: %d GroupId: %d Flags: 0x%04X xfc: %p\n",
+			(int) participantCreated->ParticipantId, (int) participantCreated->GroupId,
+			(int) participantCreated->Flags, xfc);
+#endif
+
+	return 1;
+}
+
+void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp)
+{
+	xfc->encomsp = encomsp;
+	encomsp->custom = (void*) xfc;
+
+	encomsp->ParticipantCreated = xf_encomsp_participant_created;
+}
+
+void xf_encomsp_uninit(xfContext* xfc, EncomspClientContext* encomsp)
+{
+	xfc->encomsp = NULL;
+}
 void xf_lock_x11(xfContext* xfc, BOOL display)
 {
 	if (!xfc->UseXThreads)
@@ -892,8 +938,6 @@ BOOL xf_post_connect(freerdp* instance)
 	rdpChannels* channels;
 	rdpSettings* settings;
 	ResizeWindowEventArgs e;
-	RFX_CONTEXT* rfx_context = NULL;
-	NSC_CONTEXT* nsc_context = NULL;
 	xfContext* xfc = (xfContext*) instance->context;
 
 	cache = instance->context->cache;
@@ -905,7 +949,7 @@ BOOL xf_post_connect(freerdp* instance)
 
 	xf_register_graphics(instance->context->graphics);
 
-	if (xfc->settings->SoftwareGdi)
+	if (settings->SoftwareGdi)
 	{
 		rdpGdi* gdi;
 		UINT32 flags;
@@ -920,26 +964,22 @@ BOOL xf_post_connect(freerdp* instance)
 		gdi_init(instance, flags, NULL);
 		gdi = instance->context->gdi;
 		xfc->primary_buffer = gdi->primary_buffer;
-
-		rfx_context = gdi->rfx_context;
 	}
 	else
 	{
-		xfc->srcBpp = instance->settings->ColorDepth;
+		xfc->srcBpp = settings->ColorDepth;
 		xf_gdi_register_update_callbacks(instance->update);
 
 		xfc->hdc = gdi_CreateDC(xfc->clrconv, xfc->bpp);
 
-		if (instance->settings->RemoteFxCodec)
+		if (settings->RemoteFxCodec)
 		{
-			rfx_context = (void*) rfx_context_new(FALSE);
-			xfc->rfx_context = rfx_context;
+			xfc->rfx = rfx_context_new(FALSE);
 		}
 
-		if (instance->settings->NSCodec)
+		if (settings->NSCodec)
 		{
-			nsc_context = (void*) nsc_context_new();
-			xfc->nsc_context = nsc_context;
+			xfc->nsc = nsc_context_new();
 		}
 	}
 
@@ -1202,16 +1242,22 @@ void xf_window_free(xfContext* xfc)
 		context->rail = NULL;
 	}
 
-	if (xfc->rfx_context)
+	if (xfc->rfx)
 	{
-		rfx_context_free(xfc->rfx_context);
-		xfc->rfx_context = NULL;
+		rfx_context_free(xfc->rfx);
+		xfc->rfx = NULL;
 	}
 
-	if (xfc->nsc_context)
+	if (xfc->nsc)
 	{
-		nsc_context_free(xfc->nsc_context);
-		xfc->nsc_context = NULL;
+		nsc_context_free(xfc->nsc);
+		xfc->nsc = NULL;
+	}
+
+	if (xfc->clear)
+	{
+		clear_context_free(xfc->clear);
+		xfc->clear = NULL;
 	}
 
 	if (xfc->clrconv)
