@@ -20,6 +20,11 @@
 #include "config.h"
 #endif
 
+#ifndef _WIN32
+#include <sys/select.h>
+#include <sys/signal.h>
+#endif
+
 #include "shadow.h"
 
 void* shadow_server_thread(rdpShadowServer* server)
@@ -59,6 +64,10 @@ void* shadow_server_thread(rdpShadowServer* server)
 
 int shadow_server_start(rdpShadowServer* server)
 {
+#ifndef _WIN32
+	signal(SIGPIPE, SIG_IGN);
+#endif
+
 	if (server->listener->Open(server->listener, NULL, server->port))
 	{
 		server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
@@ -116,9 +125,9 @@ rdpShadowServer* shadow_server_new(int argc, char** argv)
 	if (!server->encoder)
 		return NULL;
 
-	server->ext = x11_shadow_server_new(server);
+	server->subsystem = x11_shadow_subsystem_new(server);
 
-	if (!server->ext)
+	if (!server->subsystem)
 		return NULL;
 
 	return server;
@@ -133,7 +142,7 @@ void shadow_server_free(rdpShadowServer* server)
 
 	shadow_encoder_free(server->encoder);
 
-	x11_shadow_server_free(server->ext);
+	x11_shadow_subsystem_free(server->subsystem);
 
 	free(server);
 }

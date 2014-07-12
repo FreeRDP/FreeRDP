@@ -36,13 +36,11 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 
 	server = (rdpShadowServer*) peer->ContextExtra;
 	client->server = server;
-
-	client->ext = x11_shadow_client_new(client);
 }
 
 void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 {
-	x11_shadow_client_free(client->ext);
+
 }
 
 BOOL shadow_client_get_fds(freerdp_peer* peer, void** rfds, int* rcount)

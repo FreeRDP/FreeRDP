@@ -29,28 +29,26 @@
 
 #include "x11_shadow.h"
 
-XImage* x11_shadow_snapshot(x11ShadowClient* context, int x, int y, int width, int height)
+XImage* x11_shadow_snapshot(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
 {
 	XImage* image;
-	x11ShadowServer* server = context->server;
 
-	if (server->use_xshm)
+	if (subsystem->use_xshm)
 	{
-		XCopyArea(server->display, server->root_window, server->fb_pixmap, server->xdamage_gc, x, y, width, height, x, y);
-		image = server->fb_image;
+		XCopyArea(subsystem->display, subsystem->root_window, subsystem->fb_pixmap, subsystem->xdamage_gc, x, y, width, height, x, y);
+		image = subsystem->fb_image;
 	}
 	else
 	{
-		image = XGetImage(server->display, server->root_window, x, y, width, height, AllPlanes, ZPixmap);
+		image = XGetImage(subsystem->display, subsystem->root_window, x, y, width, height, AllPlanes, ZPixmap);
 	}
 
 	return image;
 }
 
-void x11_shadow_xdamage_subtract_region(x11ShadowClient* context, int x, int y, int width, int height)
+void x11_shadow_xdamage_subtract_region(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
 {
 	XRectangle region;
-	x11ShadowServer* server = context->server;
 
 	region.x = x;
 	region.y = y;
@@ -58,39 +56,18 @@ void x11_shadow_xdamage_subtract_region(x11ShadowClient* context, int x, int y, 
 	region.height = height;
 
 #ifdef WITH_XFIXES
-	XFixesSetRegion(server->display, server->xdamage_region, &region, 1);
-	XDamageSubtract(server->display, server->xdamage, server->xdamage_region, None);
+	XFixesSetRegion(subsystem->display, subsystem->xdamage_region, &region, 1);
+	XDamageSubtract(subsystem->display, subsystem->xdamage, subsystem->xdamage_region, None);
 #endif
 }
 
-int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int height)
+int x11_shadow_update_encode(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
 {
-	wStream* s;
 	BYTE* data;
-	RFX_RECT rect;
 	XImage* image;
-	rdpUpdate* update;
-	x11ShadowClient* context;
-	x11ShadowServer* server;
-	SURFACE_BITS_COMMAND* cmd;
+	RFX_RECT rect;
 
-	context = (x11ShadowClient*) client->context;
-	server = context->server;
-
-	update = client->update;
-	cmd = &update->surface_bits_command;
-
-	if (width * height <= 0)
-	{
-		cmd->bitmapDataLength = 0;
-		return -1;
-	}
-
-	s = context->s;
-	Stream_Clear(s);
-	Stream_SetPosition(s, 0);
-
-	if (server->use_xshm)
+	if (subsystem->use_xshm)
 	{
 		/**
 		 * Passing an offset source rectangle to rfx_compose_message()
@@ -102,18 +79,10 @@ int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int 
 		rect.width = width;
 		rect.height = height;
 
-		image = x11_shadow_snapshot(context, x, y, width, height);
+		image = x11_shadow_snapshot(subsystem, x, y, width, height);
 
 		data = (BYTE*) image->data;
 		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel / 8)];
-
-		rfx_compose_message(context->rfx_context, s, &rect, 1, data,
-				width, height, image->bytes_per_line);
-
-		cmd->destLeft = x;
-		cmd->destTop = y;
-		cmd->destRight = x + width;
-		cmd->destBottom = y + height;
 	}
 	else
 	{
@@ -122,73 +91,40 @@ int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int 
 		rect.width = width;
 		rect.height = height;
 
-		image = x11_shadow_snapshot(context, x, y, width, height);
+		image = x11_shadow_snapshot(subsystem, x, y, width, height);
 
 		data = (BYTE*) image->data;
-
-		rfx_compose_message(context->rfx_context, s, &rect, 1, data,
-				width, height, image->bytes_per_line);
-
-		cmd->destLeft = x;
-		cmd->destTop = y;
-		cmd->destRight = x + width;
-		cmd->destBottom = y + height;
 
 		XDestroyImage(image);
 	}
 
-	cmd->bpp = 32;
-	cmd->codecID = client->settings->RemoteFxCodecId;
-	cmd->width = width;
-	cmd->height = height;
-	cmd->bitmapDataLength = Stream_GetPosition(s);
-	cmd->bitmapData = Stream_Buffer(s);
-
 	return 0;
 }
 
-void x11_shadow_client_send_update(freerdp_peer* client)
-{
-	rdpUpdate* update;
-	SURFACE_BITS_COMMAND* cmd;
-
-	update = client->update;
-	cmd = &update->surface_bits_command;
-
-	if (cmd->bitmapDataLength)
-		update->SurfaceBits(update->context, cmd);
-}
-
-void* x11_shadow_update_thread(void* param)
+void* x11_shadow_update_thread(x11ShadowSubsystem* subsystem)
 {
 	HANDLE event;
 	XEvent xevent;
 	DWORD beg, end;
 	DWORD diff, rate;
-	x11ShadowClient* context;
-	x11ShadowServer* server;
-	freerdp_peer* client;
+	XFixesCursorImage* ci;
 	int x, y, width, height;
 	XDamageNotifyEvent* notify;
 
-	client = (freerdp_peer*) param;
-	context = (x11ShadowClient*) client->context;
-	server = context->server;
-
 	rate = 1000 / 10;
 
-	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, server->xfds);
+	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, subsystem->xfds);
 
 	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
 		beg = GetTickCount();
 
-		while (XPending(server->display) > 0)
+		while (XPending(subsystem->display) > 0)
 		{
 			ZeroMemory(&xevent, sizeof(xevent));
-			XNextEvent(server->display, &xevent);
+			XNextEvent(subsystem->display, &xevent);
 
-			if (xevent.type == server->xdamage_notify_event)
+			if (xevent.type == subsystem->xdamage_notify_event)
 			{
 				notify = (XDamageNotifyEvent*) &xevent;
 
@@ -197,18 +133,17 @@ void* x11_shadow_update_thread(void* param)
 				width = notify->area.width;
 				height = notify->area.height;
 
-				if (x11_shadow_update_encode(client, x, y, width, height) >= 0)
+				if (x11_shadow_update_encode(subsystem, x, y, width, height) >= 0)
 				{
-					x11_shadow_xdamage_subtract_region(context, x, y, width, height);
+					x11_shadow_xdamage_subtract_region(subsystem, x, y, width, height);
 
-					if (context->activated)
-						x11_shadow_client_send_update(client);
+					/* send update */
 				}
 			}
 #ifdef WITH_XFIXES
-			else if (xevent.type == server->xfixes_notify_event)
+			else if (xevent.type == subsystem->xfixes_notify_event)
 			{
-				XFixesCursorImage* ci = XFixesGetCursorImage(server->display);
+				ci = XFixesGetCursorImage(subsystem->display);
 				XFree(ci);
 			}
 #endif

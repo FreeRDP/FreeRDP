@@ -21,8 +21,7 @@
 
 #include <freerdp/server/shadow.h>
 
-typedef struct x11_shadow_client x11ShadowClient;
-typedef struct x11_shadow_server x11ShadowServer;
+typedef struct x11_shadow_subsystem x11ShadowSubsystem;
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -55,11 +54,11 @@ typedef struct x11_shadow_server x11ShadowServer;
 #include <X11/extensions/Xdamage.h>
 #endif
 
-struct x11_shadow_server
+struct x11_shadow_subsystem
 {
-	DWORD port;
+	RDP_SHADOW_SUBSYSTEM_COMMON();
+
 	HANDLE thread;
-	freerdp_listener* listener;
 
 	int bpp;
 	int xfds;
@@ -73,7 +72,6 @@ struct x11_shadow_server
 	Display* display;
 	int scanline_pad;
 	int bytesPerPixel;
-	int activePeerCount;
 
 	BOOL use_xshm;
 	XImage* fb_image;
@@ -93,32 +91,12 @@ struct x11_shadow_server
 #endif
 };
 
-struct x11_shadow_client
-{
-	rdpContext _p;
-
-	wStream* s;
-	BOOL activated;
-	HANDLE monitorThread;
-	RFX_CONTEXT* rfx_context;
-	x11ShadowServer* server;
-};
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-FREERDP_API x11ShadowServer* x11_shadow_server_new(rdpShadowServer* rdp);
-FREERDP_API void x11_shadow_server_free(x11ShadowServer* server);
-
-x11ShadowClient* x11_shadow_client_new(rdpShadowClient* rdp);
-void x11_shadow_client_free(x11ShadowClient* client);
-
-void* x11_shadow_update_thread(void* param);
-
-int x11_shadow_cursor_init(x11ShadowServer* server);
-void x11_shadow_input_register_callbacks(rdpInput* input);
-int x11_shadow_update_encode(freerdp_peer* client, int x, int y, int width, int height);
+rdpShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server);
+void x11_shadow_subsystem_free(rdpShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
 }

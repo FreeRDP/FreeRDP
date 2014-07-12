@@ -30,6 +30,7 @@ typedef struct rdp_shadow_server rdpShadowServer;
 typedef struct rdp_shadow_screen rdpShadowScreen;
 typedef struct rdp_shadow_surface rdpShadowSurface;
 typedef struct rdp_shadow_encoder rdpShadowEncoder;
+typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
 
 struct rdp_shadow_client
 {
@@ -47,9 +48,18 @@ struct rdp_shadow_server
 	rdpShadowScreen* screen;
 	rdpShadowSurface* surface;
 	rdpShadowEncoder* encoder;
+	rdpShadowSubsystem* subsystem;
 
 	DWORD port;
 	freerdp_listener* listener;
+};
+
+#define RDP_SHADOW_SUBSYSTEM_COMMON() \
+	rdpShadowServer* server
+
+struct rdp_shadow_subsystem
+{
+	RDP_SHADOW_SUBSYSTEM_COMMON();
 };
 
 #endif /* FREERDP_SERVER_SHADOW_H */
