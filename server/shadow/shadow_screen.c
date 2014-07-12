@@ -16,27 +16,29 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_H
-#define FREERDP_SHADOW_SERVER_H
-
-#include <freerdp/server/shadow.h>
-
-#include "X11/x11_shadow.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "shadow_screen.h"
-#include "shadow_surface.h"
-#include "shadow_encoder.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
+{
+	rdpShadowScreen* screen;
 
-void shadow_input_register_callbacks(rdpInput* input);
-void shadow_client_accepted(freerdp_listener* instance, freerdp_peer* client);
+	screen = (rdpShadowScreen*) calloc(1, sizeof(rdpShadowScreen));
 
-#ifdef __cplusplus
+	if (!screen)
+		return NULL;
+
+	screen->server = server;
+
+	return screen;
 }
-#endif
 
-#endif /* FREERDP_SHADOW_SERVER_H */
+void shadow_screen_free(rdpShadowScreen* screen)
+{
+	if (!screen)
+		return;
+}
 

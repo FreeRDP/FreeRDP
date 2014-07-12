@@ -117,8 +117,15 @@ endif()
 
 set(${MODULE_PREFIX}_SRCS
 	shadow_client.c
+	shadow_client.h
 	shadow_input.c
-	shadow_update.c
+	shadow_input.h
+	shadow_screen.c
+	shadow_screen.h
+	shadow_surface.c
+	shadow_surface.h
+	shadow_encoder.c
+	shadow_encoder.h
 	shadow.c
 	shadow.h)
 

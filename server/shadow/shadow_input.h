@@ -16,9 +16,19 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#ifndef FREERDP_SHADOW_SERVER_INPUT_H
+#define FREERDP_SHADOW_SERVER_INPUT_H
+
+#include <freerdp/server/shadow.h>
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#include "shadow.h"
 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_SHADOW_SERVER_INPUT_H */

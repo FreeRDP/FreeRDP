@@ -106,6 +106,16 @@ rdpShadowServer* shadow_server_new(int argc, char** argv)
 	server->listener->info = (void*) server;
 	server->listener->PeerAccepted = shadow_client_accepted;
 
+	server->screen = shadow_screen_new(server);
+
+	if (!server->screen)
+		return NULL;
+
+	server->encoder = shadow_encoder_new(server);
+
+	if (!server->encoder)
+		return NULL;
+
 	server->ext = x11_shadow_server_new(server);
 
 	if (!server->ext)
@@ -120,6 +130,8 @@ void shadow_server_free(rdpShadowServer* server)
 		return;
 
 	freerdp_listener_free(server->listener);
+
+	shadow_encoder_free(server->encoder);
 
 	x11_shadow_server_free(server->ext);
 

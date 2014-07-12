@@ -55,4 +55,3 @@ void shadow_input_register_callbacks(rdpInput* input)
 	input->MouseEvent = shadow_input_mouse_event;
 	input->ExtendedMouseEvent = shadow_input_extended_mouse_event;
 }
-

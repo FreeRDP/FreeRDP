@@ -1,6 +1,5 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Session Shadowing
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,40 +16,27 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SERVER_SHADOW_H
-#define FREERDP_SERVER_SHADOW_H
+#ifndef FREERDP_SHADOW_SERVER_SCREEN_H
+#define FREERDP_SHADOW_SERVER_SCREEN_H
 
-#include <freerdp/api.h>
-#include <freerdp/types.h>
+#include <freerdp/server/shadow.h>
 
-#include <freerdp/listener.h>
-
-typedef struct rdp_shadow_client rdpShadowClient;
-typedef struct rdp_shadow_server rdpShadowServer;
-typedef struct rdp_shadow_screen rdpShadowScreen;
-typedef struct rdp_shadow_surface rdpShadowSurface;
-typedef struct rdp_shadow_encoder rdpShadowEncoder;
-
-struct rdp_shadow_client
+struct rdp_shadow_screen
 {
-	rdpContext context;
-
-	void* ext;
-	HANDLE thread;
 	rdpShadowServer* server;
+
+	rdpShadowSurface* primary;
 };
 
-struct rdp_shadow_server
-{
-	void* ext;
-	HANDLE thread;
-	rdpShadowScreen* screen;
-	rdpShadowSurface* surface;
-	rdpShadowEncoder* encoder;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-	DWORD port;
-	freerdp_listener* listener;
-};
+rdpShadowScreen* shadow_screen_new(rdpShadowServer* server);
+void shadow_screen_free(rdpShadowScreen* screen);
 
-#endif /* FREERDP_SERVER_SHADOW_H */
+#ifdef __cplusplus
+}
+#endif
 
+#endif /* FREERDP_SHADOW_SERVER_SCREEN_H */
