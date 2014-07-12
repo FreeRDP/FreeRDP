@@ -45,7 +45,8 @@ echo "Preparing OpenSSL..."
 OPENSSL_SRC=$ROOT/openssl-build
 if [ -d $OPENSSL_SRC ]; then
 	cd $OPENSSL_SRC
-	git pull
+	git checkout 1.0.1h
+	git pull origin 1.0.1h
 	RETVAL=$?
 else
 	git clone $OPENSSL_SCM $OPENSSL_SRC
@@ -58,7 +59,7 @@ fi
 cd $OPENSSL_SRC
 
 # We want to build a specific TAG
-git checkout $OPENSSL_TAG
+# git checkout $OPENSSL_TAG
 
 make clean
 # The makefile has a bug, which aborts during
