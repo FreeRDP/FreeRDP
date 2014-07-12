@@ -30,7 +30,7 @@
 
 void x11_shadow_input_synchronize_event(x11ShadowSubsystem* subsystem, UINT32 flags)
 {
-	fprintf(stderr, "Client sent a synchronize event (flags:0x%X)\n", flags);
+
 }
 
 void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 code)
@@ -65,7 +65,7 @@ void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags
 
 void x11_shadow_input_unicode_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 code)
 {
-	fprintf(stderr, "Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+
 }
 
 void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y)

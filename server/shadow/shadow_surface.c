@@ -20,6 +20,8 @@
 #include "config.h"
 #endif
 
+#include "shadow.h"
+
 #include "shadow_surface.h"
 
 rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int width, int height)
@@ -44,6 +46,8 @@ rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int width, int hei
 
 	ZeroMemory(surface->data, surface->scanline * surface->height);
 
+	region16_init(&(surface->invalidRegion));
+
 	return surface;
 }
 
@@ -51,4 +55,10 @@ void shadow_surface_free(rdpShadowSurface* surface)
 {
 	if (!surface)
 		return;
+
+	free(surface->data);
+
+	region16_uninit(&(surface->invalidRegion));
+
+	free(surface);
 }

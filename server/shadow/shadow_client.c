@@ -36,11 +36,13 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 
 	server = (rdpShadowServer*) peer->ContextExtra;
 	client->server = server;
+
+	client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 }
 
 void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 {
-
+	CloseHandle(client->StopEvent);
 }
 
 BOOL shadow_client_capabilities(freerdp_peer* peer)
@@ -54,24 +56,7 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 
 	client = (rdpShadowClient*) peer->context;
 
-	fprintf(stderr, "Client %s is activated", peer->hostname);
-
-	if (peer->settings->AutoLogonEnabled)
-	{
-		fprintf(stderr, " and wants to login automatically as %s\\%s",
-			peer->settings->Domain ? peer->settings->Domain : "",
-			peer->settings->Username);
-	}
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "Client requested desktop: %dx%d@%d\n",
-		peer->settings->DesktopWidth, peer->settings->DesktopHeight, peer->settings->ColorDepth);
-
-	if (!peer->settings->RemoteFxCodec)
-	{
-		fprintf(stderr, "Client does not support RemoteFX\n");
-		return FALSE;
-	}
+	fprintf(stderr, "Client from %s is activated\n", peer->hostname);
 
 	peer->settings->DesktopWidth = client->server->screen->width;
 	peer->settings->DesktopHeight = client->server->screen->height;
@@ -97,6 +82,12 @@ int shadow_client_send_surface_bits(rdpShadowClient* client)
 {
 	int i;
 	wStream* s;
+	int nXSrc;
+	int nYSrc;
+	int nWidth;
+	int nHeight;
+	int nSrcStep;
+	BYTE* pSrcData;
 	int numMessages;
 	rdpUpdate* update;
 	rdpContext* context;
@@ -104,14 +95,9 @@ int shadow_client_send_surface_bits(rdpShadowClient* client)
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
 	rdpShadowEncoder* encoder;
+	RECTANGLE_16 surfaceRect;
 	SURFACE_BITS_COMMAND cmd;
-
-	BYTE* pSrcData;
-	int nSrcStep;
-	int nXSrc;
-	int nYSrc;
-	int nWidth;
-	int nHeight;
+	const RECTANGLE_16* extents;
 
 	context = (rdpContext*) client;
 	update = context->update;
@@ -121,12 +107,24 @@ int shadow_client_send_surface_bits(rdpShadowClient* client)
 	encoder = server->encoder;
 	surface = server->surface;
 
+	surfaceRect.left = 0;
+	surfaceRect.top = 0;
+	surfaceRect.right = surface->width;
+	surfaceRect.bottom = surface->height;
+
+	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
+
+	if (region16_is_empty(&(surface->invalidRegion)))
+		return 1;
+
+	extents = region16_extents(&(surface->invalidRegion));
+
+	nXSrc = extents->left;
+	nYSrc = extents->top;
+	nWidth = extents->right - extents->left;
+	nHeight = extents->bottom - extents->top;
 	pSrcData = surface->data;
 	nSrcStep = surface->scanline;
-	nWidth = surface->width;
-	nHeight = surface->height;
-	nXSrc = 0;
-	nYSrc = 0;
 
 	if (settings->RemoteFxCodec)
 	{
@@ -168,8 +166,6 @@ int shadow_client_send_surface_bits(rdpShadowClient* client)
 		}
 
 		free(messages);
-
-		return 0;
 	}
 	else if (settings->NSCodec)
 	{
@@ -205,9 +201,9 @@ int shadow_client_send_surface_bits(rdpShadowClient* client)
 		}
 
 		free(messages);
-
-		return 0;
 	}
+
+	region16_clear(&(surface->invalidRegion));
 
 	return 0;
 }
@@ -263,9 +259,18 @@ void* shadow_client_thread(rdpShadowClient* client)
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[32];
+	HANDLE StopEvent;
 	HANDLE ClientEvent;
+	HANDLE SubsystemEvent;
 	freerdp_peer* peer;
 	rdpSettings* settings;
+	rdpShadowServer* server;
+	rdpShadowSurface* surface;
+	rdpShadowSubsystem* subsystem;
+
+	server = client->server;
+	surface = server->surface;
+	subsystem = server->subsystem;
 
 	peer = ((rdpContext*) client)->peer;
 	settings = peer->settings;
@@ -287,14 +292,23 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 	peer->Initialize(peer);
 
+	StopEvent = client->StopEvent;
 	ClientEvent = peer->GetEventHandle(peer);
+	SubsystemEvent = subsystem->event;
 
 	while (1)
 	{
 		nCount = 0;
+		events[nCount++] = StopEvent;
 		events[nCount++] = ClientEvent;
+		events[nCount++] = SubsystemEvent;
 
-		status = WaitForMultipleObjects(nCount, events, FALSE, 100);
+		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+
+		if (WaitForSingleObject(client->StopEvent, 0) == WAIT_OBJECT_0)
+		{
+			break;
+		}
 
 		if (WaitForSingleObject(ClientEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -305,8 +319,15 @@ void* shadow_client_thread(rdpShadowClient* client)
 			}
 		}
 
-		if (client->activated)
-			shadow_client_send_surface_bits(client);
+		if (WaitForSingleObject(SubsystemEvent, 0) == WAIT_OBJECT_0)
+		{
+			x11_shadow_check_event((x11ShadowSubsystem*) subsystem);
+
+			if (client->activated)
+			{
+				shadow_client_send_surface_bits(client);
+			}
+		}
 	}
 
 	peer->Disconnect(peer);
@@ -321,7 +342,6 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 void shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 {
-	HANDLE thread;
 	rdpShadowClient* client;
 	rdpShadowServer* server;
 
@@ -335,6 +355,6 @@ void shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 
 	client = (rdpShadowClient*) peer->context;
 
-	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+	client->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
 			shadow_client_thread, client, 0, NULL);
 }

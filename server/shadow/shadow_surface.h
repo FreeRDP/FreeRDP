@@ -29,6 +29,8 @@ struct rdp_shadow_surface
 	int height;
 	int scanline;
 	BYTE* data;
+
+	REGION16 invalidRegion;
 };
 
 #ifdef __cplusplus

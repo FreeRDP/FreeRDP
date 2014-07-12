@@ -26,6 +26,9 @@
 #include <freerdp/settings.h>
 #include <freerdp/listener.h>
 
+#include <freerdp/codec/color.h>
+#include <freerdp/codec/region.h>
+
 typedef struct rdp_shadow_client rdpShadowClient;
 typedef struct rdp_shadow_server rdpShadowServer;
 typedef struct rdp_shadow_screen rdpShadowScreen;
@@ -39,6 +42,7 @@ struct rdp_shadow_client
 
 	HANDLE thread;
 	BOOL activated;
+	HANDLE StopEvent;
 	rdpShadowServer* server;
 };
 
@@ -46,6 +50,7 @@ struct rdp_shadow_server
 {
 	void* ext;
 	HANDLE thread;
+	HANDLE StopEvent;
 	rdpShadowScreen* screen;
 	rdpShadowSurface* surface;
 	rdpShadowEncoder* encoder;
@@ -57,6 +62,7 @@ struct rdp_shadow_server
 
 #define RDP_SHADOW_SUBSYSTEM_COMMON() \
 	rdpShadowServer* server; \
+	HANDLE event; \
 	int monitorCount; \
 	MONITOR_DEF monitors[16]
 

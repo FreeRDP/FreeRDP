@@ -29,8 +29,6 @@ typedef struct x11_shadow_subsystem x11ShadowSubsystem;
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
-#include <freerdp/codec/rfx.h>
-
 #include <X11/Xlib.h>
 
 #ifdef WITH_XSHM
@@ -88,6 +86,15 @@ struct x11_shadow_subsystem
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+int x11_shadow_check_event(x11ShadowSubsystem* subsystem);
+int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem, int x, int y, int width, int height);
+
+void x11_shadow_input_synchronize_event(x11ShadowSubsystem* subsystem, UINT32 flags);
+void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
+void x11_shadow_input_unicode_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
+void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y);
+void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y);
 
 rdpShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server);
 void x11_shadow_subsystem_free(rdpShadowSubsystem* subsystem);

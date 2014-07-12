@@ -32,9 +32,11 @@ void* shadow_server_thread(rdpShadowServer* server)
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[32];
+	HANDLE StopEvent;
 	freerdp_listener* listener;
 
 	listener = server->listener;
+	StopEvent = server->StopEvent;
 
 	while (1)
 	{
@@ -46,7 +48,14 @@ void* shadow_server_thread(rdpShadowServer* server)
 			break;
 		}
 
+		events[nCount++] = server->StopEvent;
+
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+
+		if (WaitForSingleObject(server->StopEvent, 0) == WAIT_OBJECT_0)
+		{
+			break;
+		}
 
 		if (!listener->CheckFileDescriptor(listener))
 		{
@@ -81,19 +90,15 @@ int shadow_server_stop(rdpShadowServer* server)
 {
 	if (server->thread)
 	{
-		TerminateThread(server->thread, 0);
+		SetEvent(server->StopEvent);
 		WaitForSingleObject(server->thread, INFINITE);
 		CloseHandle(server->thread);
+		server->thread = NULL;
 
 		server->listener->Close(server->listener);
 	}
 
 	return 0;
-}
-
-HANDLE shadow_server_get_thread(rdpShadowServer* server)
-{
-	return server->thread;
 }
 
 rdpShadowServer* shadow_server_new(int argc, char** argv)
@@ -106,6 +111,8 @@ rdpShadowServer* shadow_server_new(int argc, char** argv)
 		return NULL;
 
 	server->port = 3389;
+
+	server->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	server->listener = freerdp_listener_new();
 
@@ -138,6 +145,8 @@ void shadow_server_free(rdpShadowServer* server)
 	if (!server)
 		return;
 
+	shadow_server_stop(server);
+
 	freerdp_listener_free(server->listener);
 
 	shadow_encoder_free(server->encoder);
@@ -149,7 +158,6 @@ void shadow_server_free(rdpShadowServer* server)
 
 int main(int argc, char* argv[])
 {
-	HANDLE thread;
 	DWORD dwExitCode;
 	rdpShadowServer* server;
 
@@ -160,11 +168,9 @@ int main(int argc, char* argv[])
 
 	shadow_server_start(server);
 
-	thread = shadow_server_get_thread(server);
+	WaitForSingleObject(server->thread, INFINITE);
 
-	WaitForSingleObject(thread, INFINITE);
-
-	GetExitCodeThread(thread, &dwExitCode);
+	GetExitCodeThread(server->thread, &dwExitCode);
 
 	shadow_server_free(server);
 

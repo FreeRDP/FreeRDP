@@ -24,8 +24,12 @@
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
 
+#include <freerdp/codec/color.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+
+#include "../shadow_surface.h"
 
 #include "x11_shadow.h"
 
@@ -35,12 +39,14 @@ XImage* x11_shadow_snapshot(x11ShadowSubsystem* subsystem, int x, int y, int wid
 
 	if (subsystem->use_xshm)
 	{
-		XCopyArea(subsystem->display, subsystem->root_window, subsystem->fb_pixmap, subsystem->xdamage_gc, x, y, width, height, x, y);
+		XCopyArea(subsystem->display, subsystem->root_window, subsystem->fb_pixmap,
+				subsystem->xdamage_gc, x, y, width, height, x, y);
 		image = subsystem->fb_image;
 	}
 	else
 	{
-		image = XGetImage(subsystem->display, subsystem->root_window, x, y, width, height, AllPlanes, ZPixmap);
+		image = XGetImage(subsystem->display, subsystem->root_window,
+				x, y, width, height, AllPlanes, ZPixmap);
 	}
 
 	return image;
@@ -61,100 +67,76 @@ void x11_shadow_xdamage_subtract_region(x11ShadowSubsystem* subsystem, int x, in
 #endif
 }
 
-int x11_shadow_update_encode(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
+int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
 {
-	BYTE* data;
 	XImage* image;
-	RFX_RECT rect;
+	rdpShadowServer* server;
+	rdpShadowSurface* surface;
+	RECTANGLE_16 invalidRect;
+
+	server = subsystem->server;
+	surface = server->surface;
+
+	printf("x11_shadow_surface_copy: x: %d y: %d width: %d height: %d\n",
+			x, y, width, height);
 
 	if (subsystem->use_xshm)
 	{
-		/**
-		 * Passing an offset source rectangle to rfx_compose_message()
-		 * leads to protocol errors, so offset the data pointer instead.
-		 */
-
-		rect.x = 0;
-		rect.y = 0;
-		rect.width = width;
-		rect.height = height;
-
 		image = x11_shadow_snapshot(subsystem, x, y, width, height);
 
-		data = (BYTE*) image->data;
-		data = &data[(y * image->bytes_per_line) + (x * image->bits_per_pixel / 8)];
+		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
+				surface->scanline, x, y, width, height,
+				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
+				image->bytes_per_line, x, y);
 	}
 	else
 	{
-		rect.x = 0;
-		rect.y = 0;
-		rect.width = width;
-		rect.height = height;
-
 		image = x11_shadow_snapshot(subsystem, x, y, width, height);
 
-		data = (BYTE*) image->data;
+		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
+				surface->scanline, x, y, width, height,
+				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
+				image->bytes_per_line, x, y);
 
 		XDestroyImage(image);
 	}
 
-	return 0;
+	invalidRect.left = x;
+	invalidRect.top = y;
+	invalidRect.right = width;
+	invalidRect.bottom = height;
+
+	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
+
+	return 1;
 }
 
-void* x11_shadow_update_thread(x11ShadowSubsystem* subsystem)
+int x11_shadow_check_event(x11ShadowSubsystem* subsystem)
 {
-	HANDLE event;
 	XEvent xevent;
-	DWORD beg, end;
-	DWORD diff, rate;
-	XFixesCursorImage* ci;
 	int x, y, width, height;
 	XDamageNotifyEvent* notify;
 
-	rate = 1000 / 10;
-
-	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, subsystem->xfds);
-
-	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+	while (XPending(subsystem->display) > 0)
 	{
-		beg = GetTickCount();
+		ZeroMemory(&xevent, sizeof(xevent));
+		XNextEvent(subsystem->display, &xevent);
 
-		while (XPending(subsystem->display) > 0)
+		if (xevent.type == subsystem->xdamage_notify_event)
 		{
-			ZeroMemory(&xevent, sizeof(xevent));
-			XNextEvent(subsystem->display, &xevent);
+			notify = (XDamageNotifyEvent*) &xevent;
 
-			if (xevent.type == subsystem->xdamage_notify_event)
+			x = notify->area.x;
+			y = notify->area.y;
+			width = notify->area.width;
+			height = notify->area.height;
+
+			if (x11_shadow_surface_copy(subsystem, x, y, width, height) > 0)
 			{
-				notify = (XDamageNotifyEvent*) &xevent;
-
-				x = notify->area.x;
-				y = notify->area.y;
-				width = notify->area.width;
-				height = notify->area.height;
-
-				if (x11_shadow_update_encode(subsystem, x, y, width, height) >= 0)
-				{
-					x11_shadow_xdamage_subtract_region(subsystem, x, y, width, height);
-
-					/* send update */
-				}
+				x11_shadow_xdamage_subtract_region(subsystem, x, y, width, height);
 			}
-#ifdef WITH_XFIXES
-			else if (xevent.type == subsystem->xfixes_notify_event)
-			{
-				ci = XFixesGetCursorImage(subsystem->display);
-				XFree(ci);
-			}
-#endif
 		}
-
-		end = GetTickCount();
-		diff = end - beg;
-
-		if (diff < rate)
-			Sleep(rate - diff);
 	}
 
-	return NULL;
+	return 1;
 }

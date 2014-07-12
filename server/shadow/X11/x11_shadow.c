@@ -191,7 +191,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	 * To see if your X11 server supports shared pixmaps, use:
 	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
 	 */
-	subsystem->use_xshm = TRUE;
+	subsystem->use_xshm = FALSE;
 
 	setenv("DISPLAY", ":0", 1); /* Set DISPLAY variable if not already set */
 
@@ -276,6 +276,8 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 
 	x11_shadow_cursor_init(subsystem);
 
+	subsystem->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, subsystem->xfds);
+
 	subsystem->monitorCount = 1;
 	subsystem->monitors[0].left = 0;
 	subsystem->monitors[0].top = 0;
@@ -295,6 +297,12 @@ int x11_shadow_subsystem_uninit(x11ShadowSubsystem* subsystem)
 	{
 		XCloseDisplay(subsystem->display);
 		subsystem->display = NULL;
+	}
+
+	if (subsystem->event)
+	{
+		CloseHandle(subsystem->event);
+		subsystem->event = NULL;
 	}
 
 	return 1;

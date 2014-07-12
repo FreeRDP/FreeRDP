@@ -56,5 +56,13 @@ void shadow_screen_free(rdpShadowScreen* screen)
 {
 	if (!screen)
 		return;
+
+	if (screen->primary)
+	{
+		shadow_surface_free(screen->primary);
+		screen->primary = NULL;
+	}
+
+	free(screen);
 }
 
