@@ -25,6 +25,9 @@ struct rdp_shadow_screen
 {
 	rdpShadowServer* server;
 
+	int width;
+	int height;
+
 	rdpShadowSurface* primary;
 };
 

@@ -43,16 +43,6 @@ void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 
 }
 
-BOOL shadow_client_get_fds(freerdp_peer* peer, void** rfds, int* rcount)
-{
-	return TRUE;
-}
-
-BOOL shadow_client_check_fds(freerdp_peer* peer)
-{
-	return TRUE;
-}
-
 BOOL shadow_client_capabilities(freerdp_peer* peer)
 {
 	return TRUE;
@@ -60,6 +50,10 @@ BOOL shadow_client_capabilities(freerdp_peer* peer)
 
 BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
+	rdpShadowClient* client;
+
+	client = (rdpShadowClient*) peer->context;
+
 	fprintf(stderr, "Client %s is activated", peer->hostname);
 
 	if (peer->settings->AutoLogonEnabled)
@@ -70,7 +64,7 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	}
 	fprintf(stderr, "\n");
 
-	fprintf(stderr, "Client requested desktop: %dx%dx%d\n",
+	fprintf(stderr, "Client requested desktop: %dx%d@%d\n",
 		peer->settings->DesktopWidth, peer->settings->DesktopHeight, peer->settings->ColorDepth);
 
 	if (!peer->settings->RemoteFxCodec)
@@ -79,8 +73,9 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 		return FALSE;
 	}
 
-	//client->settings->DesktopWidth = 1024;
-	//client->settings->DesktopHeight = 768;
+	peer->settings->DesktopWidth = client->server->screen->width;
+	peer->settings->DesktopHeight = client->server->screen->height;
+	peer->settings->ColorDepth = 32;
 
 	peer->update->DesktopResize(peer->update->context);
 
@@ -89,7 +84,132 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 
 BOOL shadow_client_activate(freerdp_peer* peer)
 {
+	rdpShadowClient* client;
+
+	client = (rdpShadowClient*) peer->context;
+
+	client->activated = TRUE;
+
 	return TRUE;
+}
+
+int shadow_client_send_surface_bits(rdpShadowClient* client)
+{
+	int i;
+	wStream* s;
+	int numMessages;
+	rdpUpdate* update;
+	rdpContext* context;
+	rdpSettings* settings;
+	rdpShadowServer* server;
+	rdpShadowSurface* surface;
+	rdpShadowEncoder* encoder;
+	SURFACE_BITS_COMMAND cmd;
+
+	BYTE* pSrcData;
+	int nSrcStep;
+	int nXSrc;
+	int nYSrc;
+	int nWidth;
+	int nHeight;
+
+	context = (rdpContext*) client;
+	update = context->update;
+	settings = context->settings;
+
+	server = client->server;
+	encoder = server->encoder;
+	surface = server->surface;
+
+	pSrcData = surface->data;
+	nSrcStep = surface->scanline;
+	nWidth = surface->width;
+	nHeight = surface->height;
+	nXSrc = 0;
+	nYSrc = 0;
+
+	if (settings->RemoteFxCodec)
+	{
+		RFX_RECT rect;
+		RFX_MESSAGE* messages;
+
+		s = encoder->rfx_s;
+
+		rect.x = nXSrc;
+		rect.y = nYSrc;
+		rect.width = nWidth;
+		rect.height = nHeight;
+
+		messages = rfx_encode_messages(encoder->rfx, &rect, 1, pSrcData,
+				surface->width, surface->height, nSrcStep, &numMessages,
+				settings->MultifragMaxRequestSize);
+
+		cmd.codecID = settings->RemoteFxCodecId;
+
+		cmd.destLeft = 0;
+		cmd.destTop = 0;
+		cmd.destRight = surface->width;
+		cmd.destBottom = surface->height;
+
+		cmd.bpp = 32;
+		cmd.width = surface->width;
+		cmd.height = surface->height;
+
+		for (i = 0; i < numMessages; i++)
+		{
+			Stream_SetPosition(s, 0);
+			rfx_write_message(encoder->rfx, s, &messages[i]);
+			rfx_message_free(encoder->rfx, &messages[i]);
+
+			cmd.bitmapDataLength = Stream_GetPosition(s);
+			cmd.bitmapData = Stream_Buffer(s);
+
+			IFCALL(update->SurfaceBits, update->context, &cmd);
+		}
+
+		free(messages);
+
+		return 0;
+	}
+	else if (settings->NSCodec)
+	{
+		NSC_MESSAGE* messages;
+
+		s = encoder->nsc_s;
+
+		messages = nsc_encode_messages(encoder->nsc, pSrcData,
+				nXSrc, nYSrc, nWidth, nHeight, nSrcStep,
+				&numMessages, settings->MultifragMaxRequestSize);
+
+		cmd.bpp = 32;
+		cmd.codecID = settings->NSCodecId;
+
+		for (i = 0; i < numMessages; i++)
+		{
+			Stream_SetPosition(s, 0);
+
+			nsc_write_message(encoder->nsc, s, &messages[i]);
+			nsc_message_free(encoder->nsc, &messages[i]);
+
+			cmd.destLeft = messages[i].x;
+			cmd.destTop = messages[i].y;
+			cmd.destRight = messages[i].x + messages[i].width;
+			cmd.destBottom = messages[i].y + messages[i].height;
+			cmd.width = messages[i].width;
+			cmd.height = messages[i].height;
+
+			cmd.bitmapDataLength = Stream_GetPosition(s);
+			cmd.bitmapData = Stream_Buffer(s);
+
+			IFCALL(update->SurfaceBits, update->context, &cmd);
+		}
+
+		free(messages);
+
+		return 0;
+	}
+
+	return 0;
 }
 
 static const char* makecert_argv[4] =
@@ -174,7 +294,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 		nCount = 0;
 		events[nCount++] = ClientEvent;
 
-		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		status = WaitForMultipleObjects(nCount, events, FALSE, 100);
 
 		if (WaitForSingleObject(ClientEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -184,6 +304,9 @@ void* shadow_client_thread(rdpShadowClient* client)
 				break;
 			}
 		}
+
+		if (client->activated)
+			shadow_client_send_surface_bits(client);
 	}
 
 	peer->Disconnect(peer);

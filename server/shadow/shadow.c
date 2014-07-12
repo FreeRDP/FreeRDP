@@ -115,6 +115,11 @@ rdpShadowServer* shadow_server_new(int argc, char** argv)
 	server->listener->info = (void*) server;
 	server->listener->PeerAccepted = shadow_client_accepted;
 
+	server->subsystem = x11_shadow_subsystem_new(server);
+
+	if (!server->subsystem)
+		return NULL;
+
 	server->screen = shadow_screen_new(server);
 
 	if (!server->screen)
@@ -123,11 +128,6 @@ rdpShadowServer* shadow_server_new(int argc, char** argv)
 	server->encoder = shadow_encoder_new(server);
 
 	if (!server->encoder)
-		return NULL;
-
-	server->subsystem = x11_shadow_subsystem_new(server);
-
-	if (!server->subsystem)
 		return NULL;
 
 	return server;

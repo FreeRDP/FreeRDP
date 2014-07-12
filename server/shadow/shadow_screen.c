@@ -20,11 +20,15 @@
 #include "config.h"
 #endif
 
+#include "shadow_surface.h"
+
 #include "shadow_screen.h"
 
 rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 {
+	MONITOR_DEF* primary;
 	rdpShadowScreen* screen;
+	rdpShadowSubsystem* subsystem;
 
 	screen = (rdpShadowScreen*) calloc(1, sizeof(rdpShadowScreen));
 
@@ -32,6 +36,18 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 		return NULL;
 
 	screen->server = server;
+	subsystem = server->subsystem;
+
+	primary = &(subsystem->monitors[0]);
+	screen->width = primary->right;
+	screen->height = primary->bottom;
+
+	screen->primary = shadow_surface_new(server, screen->width, screen->height);
+
+	if (!screen->primary)
+		return NULL;
+
+	server->surface = screen->primary;
 
 	return screen;
 }

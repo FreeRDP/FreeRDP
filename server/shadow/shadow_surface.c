@@ -22,7 +22,7 @@
 
 #include "shadow_surface.h"
 
-rdpShadowSurface* shadow_surface_new(rdpShadowServer* server)
+rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int width, int height)
 {
 	rdpShadowSurface* surface;
 
@@ -32,6 +32,17 @@ rdpShadowSurface* shadow_surface_new(rdpShadowServer* server)
 		return NULL;
 
 	surface->server = server;
+
+	surface->width = width;
+	surface->height = height;
+	surface->scanline = (surface->width + (surface->width % 4)) * 4;
+
+	surface->data = (BYTE*) malloc(surface->scanline * surface->height);
+
+	if (!surface->data)
+		return NULL;
+
+	ZeroMemory(surface->data, surface->scanline * surface->height);
 
 	return surface;
 }

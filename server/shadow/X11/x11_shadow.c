@@ -276,7 +276,12 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 
 	x11_shadow_cursor_init(subsystem);
 
-	subsystem->bytesPerPixel = 4;
+	subsystem->monitorCount = 1;
+	subsystem->monitors[0].left = 0;
+	subsystem->monitors[0].top = 0;
+	subsystem->monitors[0].right = subsystem->width;
+	subsystem->monitors[0].bottom = subsystem->height;
+	subsystem->monitors[0].flags = 1;
 
 	return 1;
 }

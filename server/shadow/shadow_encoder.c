@@ -20,6 +20,8 @@
 #include "config.h"
 #endif
 
+#include "shadow.h"
+
 #include "shadow_encoder.h"
 
 int shadow_encoder_grid_init(rdpShadowEncoder* encoder)
@@ -88,8 +90,8 @@ rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server)
 
 	encoder->server = server;
 
-	encoder->width = 1024;
-	encoder->height = 768;
+	encoder->width = server->screen->width;
+	encoder->height = server->screen->height;
 
 	encoder->bitsPerPixel = 32;
 	encoder->bytesPerPixel = 4;

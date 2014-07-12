@@ -29,12 +29,7 @@ typedef struct x11_shadow_subsystem x11ShadowSubsystem;
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/gdi/dc.h>
-#include <freerdp/gdi/region.h>
 #include <freerdp/codec/rfx.h>
-#include <freerdp/listener.h>
-#include <freerdp/utils/stopwatch.h>
 
 #include <X11/Xlib.h>
 
@@ -71,7 +66,6 @@ struct x11_shadow_subsystem
 	Visual* visual;
 	Display* display;
 	int scanline_pad;
-	int bytesPerPixel;
 
 	BOOL use_xshm;
 	XImage* fb_image;

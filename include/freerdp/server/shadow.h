@@ -23,6 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <freerdp/settings.h>
 #include <freerdp/listener.h>
 
 typedef struct rdp_shadow_client rdpShadowClient;
@@ -36,8 +37,8 @@ struct rdp_shadow_client
 {
 	rdpContext context;
 
-	void* ext;
 	HANDLE thread;
+	BOOL activated;
 	rdpShadowServer* server;
 };
 
@@ -55,7 +56,9 @@ struct rdp_shadow_server
 };
 
 #define RDP_SHADOW_SUBSYSTEM_COMMON() \
-	rdpShadowServer* server
+	rdpShadowServer* server; \
+	int monitorCount; \
+	MONITOR_DEF monitors[16]
 
 struct rdp_shadow_subsystem
 {
