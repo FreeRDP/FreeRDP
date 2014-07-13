@@ -130,9 +130,6 @@ set(${MODULE_PREFIX}_SRCS
 	shadow.h)
 
 set(${MODULE_PREFIX}_X11_SRCS
-	X11/x11_input.c
-	X11/x11_client.c
-	X11/x11_update.c
 	X11/x11_shadow.c
 	X11/x11_shadow.h)
 

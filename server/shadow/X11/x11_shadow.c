@@ -30,7 +30,216 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/sysinfo.h>
+
+#include <freerdp/codec/color.h>
+#include <freerdp/codec/region.h>
+
+#include "../shadow_surface.h"
+
 #include "x11_shadow.h"
+
+void x11_shadow_input_synchronize_event(x11ShadowSubsystem* subsystem, UINT32 flags)
+{
+
+}
+
+void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 code)
+{
+#ifdef WITH_XTEST
+	DWORD vkcode;
+	DWORD keycode;
+	BOOL extended = FALSE;
+
+	if (flags & KBD_FLAGS_EXTENDED)
+		extended = TRUE;
+
+	if (extended)
+		code |= KBDEXT;
+
+	vkcode = GetVirtualKeyCodeFromVirtualScanCode(code, 4);
+	keycode = GetKeycodeFromVirtualKeyCode(vkcode, KEYCODE_TYPE_EVDEV);
+
+	if (keycode != 0)
+	{
+		XTestGrabControl(subsystem->display, True);
+
+		if (flags & KBD_FLAGS_DOWN)
+			XTestFakeKeyEvent(subsystem->display, keycode, True, 0);
+		else if (flags & KBD_FLAGS_RELEASE)
+			XTestFakeKeyEvent(subsystem->display, keycode, False, 0);
+
+		XTestGrabControl(subsystem->display, False);
+	}
+#endif
+}
+
+void x11_shadow_input_unicode_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 code)
+{
+
+}
+
+void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y)
+{
+#ifdef WITH_XTEST
+	int button = 0;
+	BOOL down = FALSE;
+
+	XTestGrabControl(subsystem->display, True);
+
+	if (flags & PTR_FLAGS_WHEEL)
+	{
+		BOOL negative = FALSE;
+
+		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
+			negative = TRUE;
+
+		button = (negative) ? 5 : 4;
+
+		XTestFakeButtonEvent(subsystem->display, button, True, 0);
+		XTestFakeButtonEvent(subsystem->display, button, False, 0);
+	}
+	else
+	{
+		if (flags & PTR_FLAGS_MOVE)
+			XTestFakeMotionEvent(subsystem->display, 0, x, y, 0);
+
+		if (flags & PTR_FLAGS_BUTTON1)
+			button = 1;
+		else if (flags & PTR_FLAGS_BUTTON2)
+			button = 3;
+		else if (flags & PTR_FLAGS_BUTTON3)
+			button = 2;
+
+		if (flags & PTR_FLAGS_DOWN)
+			down = TRUE;
+
+		if (button != 0)
+			XTestFakeButtonEvent(subsystem->display, button, down, 0);
+	}
+
+	XTestGrabControl(subsystem->display, False);
+#endif
+}
+
+void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y)
+{
+#ifdef WITH_XTEST
+	int button = 0;
+	BOOL down = FALSE;
+
+	XTestGrabControl(subsystem->display, True);
+	XTestFakeMotionEvent(subsystem->display, 0, x, y, CurrentTime);
+
+	if (flags & PTR_XFLAGS_BUTTON1)
+		button = 8;
+	else if (flags & PTR_XFLAGS_BUTTON2)
+		button = 9;
+
+	if (flags & PTR_XFLAGS_DOWN)
+		down = TRUE;
+
+	if (button != 0)
+		XTestFakeButtonEvent(subsystem->display, button, down, 0);
+
+	XTestGrabControl(subsystem->display, False);
+#endif
+}
+
+void x11_shadow_xdamage_subtract_region(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
+{
+	XRectangle region;
+
+	region.x = x;
+	region.y = y;
+	region.width = width;
+	region.height = height;
+
+#ifdef WITH_XFIXES
+	XFixesSetRegion(subsystem->display, subsystem->xdamage_region, &region, 1);
+	XDamageSubtract(subsystem->display, subsystem->xdamage, subsystem->xdamage_region, None);
+#endif
+}
+
+int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
+{
+	XImage* image;
+	rdpShadowServer* server;
+	rdpShadowSurface* surface;
+	RECTANGLE_16 invalidRect;
+
+	server = subsystem->server;
+	surface = server->surface;
+
+	printf("x11_shadow_surface_copy: x: %d y: %d width: %d height: %d\n",
+			x, y, width, height);
+
+	if (subsystem->use_xshm)
+	{
+		XCopyArea(subsystem->display, subsystem->root_window, subsystem->fb_pixmap,
+				subsystem->xdamage_gc, x, y, width, height, x, y);
+
+		image = subsystem->fb_image;
+
+		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
+				surface->scanline, x, y, width, height,
+				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
+				image->bytes_per_line, x, y);
+	}
+	else
+	{
+		image = XGetImage(subsystem->display, subsystem->root_window,
+						x, y, width, height, AllPlanes, ZPixmap);
+
+		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
+				surface->scanline, x, y, width, height,
+				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
+				image->bytes_per_line, x, y);
+
+		XDestroyImage(image);
+	}
+
+	invalidRect.left = x;
+	invalidRect.top = y;
+	invalidRect.right = width;
+	invalidRect.bottom = height;
+
+	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
+
+	return 1;
+}
+
+int x11_shadow_check_event(x11ShadowSubsystem* subsystem)
+{
+	XEvent xevent;
+	int x, y, width, height;
+	XDamageNotifyEvent* notify;
+
+	while (XPending(subsystem->display) > 0)
+	{
+		ZeroMemory(&xevent, sizeof(xevent));
+		XNextEvent(subsystem->display, &xevent);
+
+		if (xevent.type == subsystem->xdamage_notify_event)
+		{
+			notify = (XDamageNotifyEvent*) &xevent;
+
+			x = notify->area.x;
+			y = notify->area.y;
+			width = notify->area.width;
+			height = notify->area.height;
+
+			if (x11_shadow_surface_copy(subsystem, x, y, width, height) > 0)
+			{
+				x11_shadow_xdamage_subtract_region(subsystem, x, y, width, height);
+			}
+		}
+	}
+
+	return 1;
+}
 
 int x11_shadow_cursor_init(x11ShadowSubsystem* subsystem)
 {
@@ -113,19 +322,15 @@ int x11_shadow_xshm_init(x11ShadowSubsystem* server)
 	Bool pixmaps;
 	int major, minor;
 
-	if (XShmQueryExtension(server->display) != False)
-	{
-		XShmQueryVersion(server->display, &major, &minor, &pixmaps);
+	if (!XShmQueryExtension(server->display))
+		return -1;
 
-		if (pixmaps != True)
-		{
-			fprintf(stderr, "XShmQueryVersion failed\n");
-			return -1;
-		}
-	}
-	else
+	if (!XShmQueryVersion(server->display, &major, &minor, &pixmaps))
+		return -1;
+
+	if (!pixmaps)
 	{
-		fprintf(stderr, "XShmQueryExtension failed\n");
+		fprintf(stderr, "XShmQueryVersion failed\n");
 		return -1;
 	}
 
@@ -160,7 +365,9 @@ int x11_shadow_xshm_init(x11ShadowSubsystem* server)
 		return -1;
 	}
 
-	XShmAttach(server->display, &(server->fb_shm_info));
+	if (!XShmAttach(server->display, &(server->fb_shm_info)))
+		return -1;
+
 	XSync(server->display, False);
 
 	shmctl(server->fb_shm_info.shmid, IPC_RMID, 0);
@@ -172,7 +379,10 @@ int x11_shadow_xshm_init(x11ShadowSubsystem* server)
 			server->root_window, server->fb_image->data, &(server->fb_shm_info),
 			server->fb_image->width, server->fb_image->height, server->fb_image->depth);
 
-	return 0;
+	if (!server->fb_pixmap)
+		return -1;
+
+	return 1;
 }
 
 int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
@@ -191,12 +401,18 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	 * To see if your X11 server supports shared pixmaps, use:
 	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
 	 */
-	subsystem->use_xshm = FALSE;
+	subsystem->use_xshm = TRUE;
 
-	setenv("DISPLAY", ":0", 1); /* Set DISPLAY variable if not already set */
+	if (!getenv("DISPLAY"))
+	{
+		/* Set DISPLAY variable if not already set */
+		setenv("DISPLAY", ":0", 1);
+	}
 
 	if (!XInitThreads())
+	{
 		fprintf(stderr, "warning: XInitThreads() failure\n");
+	}
 
 	subsystem->display = XOpenDisplay(NULL);
 
