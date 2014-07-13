@@ -303,7 +303,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 		events[nCount++] = ClientEvent;
 		events[nCount++] = SubsystemEvent;
 
-		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		status = WaitForMultipleObjects(nCount, events, FALSE, 250);
 
 		if (WaitForSingleObject(client->StopEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -322,11 +322,13 @@ void* shadow_client_thread(rdpShadowClient* client)
 		if (WaitForSingleObject(SubsystemEvent, 0) == WAIT_OBJECT_0)
 		{
 			x11_shadow_check_event((x11ShadowSubsystem*) subsystem);
+		}
 
-			if (client->activated)
-			{
-				shadow_client_send_surface_bits(client);
-			}
+		if (client->activated)
+		{
+			x11_shadow_surface_copy((x11ShadowSubsystem*) subsystem);
+			shadow_client_send_surface_bits(client);
+			region16_clear(&(surface->invalidRegion));
 		}
 	}
 

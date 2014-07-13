@@ -148,7 +148,7 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 #endif
 }
 
-void x11_shadow_xdamage_subtract_region(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
+void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
 {
 	XRectangle region;
 
@@ -163,15 +163,50 @@ void x11_shadow_xdamage_subtract_region(x11ShadowSubsystem* subsystem, int x, in
 #endif
 }
 
-int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
+int x11_shadow_invalidate_region(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
 {
-	XImage* image;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
 	RECTANGLE_16 invalidRect;
 
 	server = subsystem->server;
 	surface = server->surface;
+
+	invalidRect.left = x;
+	invalidRect.top = y;
+	invalidRect.right = x + width;
+	invalidRect.bottom = y + height;
+
+	printf("x11_shadow_invalidate_region: x: %d y: %d width: %d height: %d\n",
+			x, y, width, height);
+
+	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
+
+	return 1;
+}
+
+int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
+{
+	int x, y;
+	int width;
+	int height;
+	XImage* image;
+	rdpShadowServer* server;
+	rdpShadowSurface* surface;
+	const RECTANGLE_16* extents;
+
+	server = subsystem->server;
+	surface = server->surface;
+
+	if (region16_is_empty(&(surface->invalidRegion)))
+		return 1;
+
+	extents = region16_extents(&(surface->invalidRegion));
+
+	x = extents->left;
+	y = extents->top;
+	width = extents->right - extents->left;
+	height = extents->bottom - extents->top;
 
 	printf("x11_shadow_surface_copy: x: %d y: %d width: %d height: %d\n",
 			x, y, width, height);
@@ -196,17 +231,12 @@ int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem, int x, int y, int wid
 		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 				surface->scanline, x, y, width, height,
 				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
-				image->bytes_per_line, x, y);
+				image->bytes_per_line, 0, 0);
 
 		XDestroyImage(image);
 	}
 
-	invalidRect.left = x;
-	invalidRect.top = y;
-	invalidRect.right = width;
-	invalidRect.bottom = height;
-
-	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
+	x11_shadow_validate_region(subsystem, x, y, width, height);
 
 	return 1;
 }
@@ -231,10 +261,7 @@ int x11_shadow_check_event(x11ShadowSubsystem* subsystem)
 			width = notify->area.width;
 			height = notify->area.height;
 
-			if (x11_shadow_surface_copy(subsystem, x, y, width, height) > 0)
-			{
-				x11_shadow_xdamage_subtract_region(subsystem, x, y, width, height);
-			}
+			x11_shadow_invalidate_region(subsystem, x, y, width, height);
 		}
 	}
 
@@ -263,56 +290,49 @@ int x11_shadow_cursor_init(x11ShadowSubsystem* subsystem)
 
 #ifdef WITH_XDAMAGE
 
-void x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
+int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
 {
 	int damage_event;
 	int damage_error;
 	int major, minor;
 	XGCValues values;
 
-	if (XDamageQueryExtension(subsystem->display, &damage_event, &damage_error) == 0)
-	{
-		fprintf(stderr, "XDamageQueryExtension failed\n");
-		return;
-	}
+	if (!XDamageQueryExtension(subsystem->display, &damage_event, &damage_error))
+		return -1;
 
-	XDamageQueryVersion(subsystem->display, &major, &minor);
+	if (!XDamageQueryVersion(subsystem->display, &major, &minor))
+		return -1;
 
-	if (XDamageQueryVersion(subsystem->display, &major, &minor) == 0)
-	{
-		fprintf(stderr, "XDamageQueryVersion failed\n");
-		return;
-	}
-	else if (major < 1)
+	if (major < 1)
 	{
 		fprintf(stderr, "XDamageQueryVersion failed: major:%d minor:%d\n", major, minor);
-		return;
+		return -1;
 	}
 
 	subsystem->xdamage_notify_event = damage_event + XDamageNotify;
 	subsystem->xdamage = XDamageCreate(subsystem->display, subsystem->root_window, XDamageReportDeltaRectangles);
 
-	if (subsystem->xdamage == None)
-	{
-		fprintf(stderr, "XDamageCreate failed\n");
-		return;
-	}
+	if (!subsystem->xdamage)
+		return -1;
 
 #ifdef WITH_XFIXES
 	subsystem->xdamage_region = XFixesCreateRegion(subsystem->display, NULL, 0);
 
-	if (subsystem->xdamage_region == None)
+	if (!subsystem->xdamage_region)
 	{
 		fprintf(stderr, "XFixesCreateRegion failed\n");
 		XDamageDestroy(subsystem->display, subsystem->xdamage);
 		subsystem->xdamage = None;
-		return;
+		return -1;
 	}
 #endif
 
 	values.subwindow_mode = IncludeInferiors;
-	subsystem->xdamage_gc = XCreateGC(subsystem->display, subsystem->root_window, GCSubwindowMode, &values);
+	subsystem->xdamage_gc = XCreateGC(subsystem->display,
+			subsystem->root_window, GCSubwindowMode, &values);
 	XSetFunction(subsystem->display, subsystem->xdamage_gc, GXcopy);
+
+	return 1;
 }
 
 #endif
@@ -401,7 +421,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	 * To see if your X11 server supports shared pixmaps, use:
 	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
 	 */
-	subsystem->use_xshm = TRUE;
+	subsystem->use_xshm = FALSE;
 
 	if (!getenv("DISPLAY"))
 	{
@@ -419,7 +439,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	if (!subsystem->display)
 	{
 		fprintf(stderr, "failed to open display: %s\n", XDisplayName(NULL));
-		exit(1);
+		return -1;
 	}
 
 	subsystem->xfds = ConnectionNumber(subsystem->display);
@@ -435,7 +455,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	if (!pfs)
 	{
 		fprintf(stderr, "XListPixmapFormats failed\n");
-		exit(1);
+		return -1;
 	}
 
 	for (i = 0; i < pf_count; i++)
@@ -460,7 +480,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	if (!vis)
 	{
 		fprintf(stderr, "XGetVisualInfo failed\n");
-		exit(1);
+		return -1;
 	}
 
 	for (i = 0; i < vi_count; i++)
