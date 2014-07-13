@@ -21,6 +21,9 @@
 
 #include <freerdp/server/shadow.h>
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+
 struct rdp_shadow_surface
 {
 	rdpShadowServer* server;
@@ -30,6 +33,7 @@ struct rdp_shadow_surface
 	int scanline;
 	BYTE* data;
 
+	CRITICAL_SECTION lock;
 	REGION16 invalidRegion;
 };
 

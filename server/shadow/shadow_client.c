@@ -25,6 +25,7 @@
 #include <winpr/path.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/sysinfo.h>
 
 #include <winpr/tools/makecert.h>
 
@@ -32,10 +33,18 @@
 
 void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 {
+	rdpSettings* settings;
 	rdpShadowServer* server;
 
 	server = (rdpShadowServer*) peer->ContextExtra;
 	client->server = server;
+
+	settings = peer->settings;
+	settings->ColorDepth = 32;
+	settings->RemoteFxCodec = TRUE;
+	settings->BitmapCacheV3Enabled = TRUE;
+	settings->FrameMarkerCommandEnabled = TRUE;
+	settings->SurfaceFrameMarkerEnabled = TRUE;
 
 	client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 }
@@ -78,6 +87,40 @@ BOOL shadow_client_activate(freerdp_peer* peer)
 	return TRUE;
 }
 
+void shadow_client_surface_frame_acknowledge(rdpShadowClient* client, UINT32 frameId)
+{
+	SURFACE_FRAME* frame;
+	wListDictionary* frameList;
+
+	frameList = client->server->encoder->frameList;
+	frame = (SURFACE_FRAME*) ListDictionary_GetItemValue(frameList, (void*) (size_t) frameId);
+
+	if (frame)
+	{
+		ListDictionary_Remove(frameList, (void*) (size_t) frameId);
+		free(frame);
+	}
+}
+
+void shadow_client_suppress_output(rdpShadowClient* client, BYTE allow, RECTANGLE_16* area)
+{
+
+}
+
+int shadow_client_send_surface_frame_marker(rdpShadowClient* client, UINT32 action, UINT32 id)
+{
+	SURFACE_FRAME_MARKER surfaceFrameMarker;
+	rdpContext* context = (rdpContext*) client;
+	rdpUpdate* update = context->update;
+
+	surfaceFrameMarker.frameAction = action;
+	surfaceFrameMarker.frameId = id;
+
+	IFCALL(update->SurfaceFrameMarker, context, &surfaceFrameMarker);
+
+	return 1;
+}
+
 int shadow_client_send_surface_bits(rdpShadowClient* client)
 {
 	int i;
@@ -89,6 +132,7 @@ int shadow_client_send_surface_bits(rdpShadowClient* client)
 	int nSrcStep;
 	BYTE* pSrcData;
 	int numMessages;
+	UINT32 frameId = 0;
 	rdpUpdate* update;
 	rdpContext* context;
 	rdpSettings* settings;
@@ -125,6 +169,12 @@ int shadow_client_send_surface_bits(rdpShadowClient* client)
 	nHeight = extents->bottom - extents->top;
 	pSrcData = surface->data;
 	nSrcStep = surface->scanline;
+
+	if (encoder->frameAck)
+	{
+		frameId = (UINT32) shadow_encoder_create_frame_id(encoder);
+		shadow_client_send_surface_frame_marker(client, SURFACECMD_FRAMEACTION_BEGIN, frameId);
+	}
 
 	if (settings->RemoteFxCodec)
 	{
@@ -205,6 +255,11 @@ int shadow_client_send_surface_bits(rdpShadowClient* client)
 
 	region16_clear(&(surface->invalidRegion));
 
+	if (encoder->frameAck)
+	{
+		shadow_client_send_surface_frame_marker(client, SURFACECMD_FRAMEACTION_END, frameId);
+	}
+
 	return 0;
 }
 
@@ -256,19 +311,25 @@ int shadow_generate_certificate(rdpSettings* settings)
 
 void* shadow_client_thread(rdpShadowClient* client)
 {
+	int fps;
 	DWORD status;
 	DWORD nCount;
+	UINT64 cTime;
+	DWORD dwTimeout;
+	DWORD dwInterval;
+	UINT64 frameTime;
 	HANDLE events[32];
 	HANDLE StopEvent;
 	HANDLE ClientEvent;
-	HANDLE SubsystemEvent;
 	freerdp_peer* peer;
 	rdpSettings* settings;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
+	rdpShadowEncoder* encoder;
 	rdpShadowSubsystem* subsystem;
 
 	server = client->server;
+	encoder = server->encoder;
 	surface = server->surface;
 	subsystem = server->subsystem;
 
@@ -292,18 +353,27 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 	peer->Initialize(peer);
 
+	peer->update->SurfaceFrameAcknowledge = (pSurfaceFrameAcknowledge)
+			shadow_client_surface_frame_acknowledge;
+	peer->update->SuppressOutput = (pSuppressOutput) shadow_client_suppress_output;
+
+	fps = 16;
+	dwInterval = 1000 / fps;
+	frameTime = GetTickCount64() + dwInterval;
+
 	StopEvent = client->StopEvent;
 	ClientEvent = peer->GetEventHandle(peer);
-	SubsystemEvent = subsystem->event;
 
 	while (1)
 	{
 		nCount = 0;
 		events[nCount++] = StopEvent;
 		events[nCount++] = ClientEvent;
-		events[nCount++] = SubsystemEvent;
 
-		status = WaitForMultipleObjects(nCount, events, FALSE, 250);
+		cTime = GetTickCount64();
+		dwTimeout = (cTime > frameTime) ? 0 : frameTime - cTime;
+
+		status = WaitForMultipleObjects(nCount, events, FALSE, dwTimeout);
 
 		if (WaitForSingleObject(client->StopEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -319,16 +389,20 @@ void* shadow_client_thread(rdpShadowClient* client)
 			}
 		}
 
-		if (WaitForSingleObject(SubsystemEvent, 0) == WAIT_OBJECT_0)
+		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
-			x11_shadow_check_event((x11ShadowSubsystem*) subsystem);
-		}
+			if (client->activated)
+			{
+				EnterCriticalSection(&(surface->lock));
+				x11_shadow_surface_copy((x11ShadowSubsystem*) subsystem);
+				shadow_client_send_surface_bits(client);
+				region16_clear(&(surface->invalidRegion));
+				LeaveCriticalSection(&(surface->lock));
+			}
 
-		if (client->activated)
-		{
-			x11_shadow_surface_copy((x11ShadowSubsystem*) subsystem);
-			shadow_client_send_surface_bits(client);
-			region16_clear(&(surface->invalidRegion));
+			fps = encoder->fps;
+			dwInterval = 1000 / fps;
+			frameTime += dwInterval;
 		}
 	}
 

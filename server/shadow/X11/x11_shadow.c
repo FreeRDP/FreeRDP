@@ -177,10 +177,9 @@ int x11_shadow_invalidate_region(x11ShadowSubsystem* subsystem, int x, int y, in
 	invalidRect.right = x + width;
 	invalidRect.bottom = y + height;
 
-	printf("x11_shadow_invalidate_region: x: %d y: %d width: %d height: %d\n",
-			x, y, width, height);
-
+	EnterCriticalSection(&(surface->lock));
 	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
+	LeaveCriticalSection(&(surface->lock));
 
 	return 1;
 }
@@ -208,8 +207,7 @@ int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
 	width = extents->right - extents->left;
 	height = extents->bottom - extents->top;
 
-	printf("x11_shadow_surface_copy: x: %d y: %d width: %d height: %d\n",
-			x, y, width, height);
+	XLockDisplay(subsystem->display);
 
 	if (subsystem->use_xshm)
 	{
@@ -226,7 +224,7 @@ int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
 	else
 	{
 		image = XGetImage(subsystem->display, subsystem->root_window,
-						x, y, width, height, AllPlanes, ZPixmap);
+				x, y, width, height, AllPlanes, ZPixmap);
 
 		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 				surface->scanline, x, y, width, height,
@@ -238,34 +236,57 @@ int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
 
 	x11_shadow_validate_region(subsystem, x, y, width, height);
 
+	XUnlockDisplay(subsystem->display);
+
 	return 1;
 }
 
-int x11_shadow_check_event(x11ShadowSubsystem* subsystem)
+void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 {
+	DWORD status;
+	DWORD nCount;
 	XEvent xevent;
+	HANDLE events[32];
+	HANDLE StopEvent;
 	int x, y, width, height;
 	XDamageNotifyEvent* notify;
 
-	while (XPending(subsystem->display) > 0)
+	StopEvent = subsystem->server->StopEvent;
+
+	nCount = 0;
+	events[nCount++] = StopEvent;
+	events[nCount++] = subsystem->event;
+
+	while (1)
 	{
-		ZeroMemory(&xevent, sizeof(xevent));
-		XNextEvent(subsystem->display, &xevent);
+		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-		if (xevent.type == subsystem->xdamage_notify_event)
+		if (WaitForSingleObject(StopEvent, 0) == WAIT_OBJECT_0)
 		{
-			notify = (XDamageNotifyEvent*) &xevent;
+			break;
+		}
 
-			x = notify->area.x;
-			y = notify->area.y;
-			width = notify->area.width;
-			height = notify->area.height;
+		while (XPending(subsystem->display))
+		{
+			ZeroMemory(&xevent, sizeof(xevent));
+			XNextEvent(subsystem->display, &xevent);
 
-			x11_shadow_invalidate_region(subsystem, x, y, width, height);
+			if (xevent.type == subsystem->xdamage_notify_event)
+			{
+				notify = (XDamageNotifyEvent*) &xevent;
+
+				x = notify->area.x;
+				y = notify->area.y;
+				width = notify->area.width;
+				height = notify->area.height;
+
+				x11_shadow_invalidate_region(subsystem, x, y, width, height);
+			}
 		}
 	}
 
-	return 1;
+	ExitThread(0);
+	return NULL;
 }
 
 int x11_shadow_cursor_init(x11ShadowSubsystem* subsystem)
@@ -275,10 +296,7 @@ int x11_shadow_cursor_init(x11ShadowSubsystem* subsystem)
 	int error;
 
 	if (!XFixesQueryExtension(subsystem->display, &event, &error))
-	{
-		fprintf(stderr, "XFixesQueryExtension failed\n");
 		return -1;
-	}
 
 	subsystem->xfixes_notify_event = event + XFixesCursorNotify;
 
@@ -304,10 +322,7 @@ int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
 		return -1;
 
 	if (major < 1)
-	{
-		fprintf(stderr, "XDamageQueryVersion failed: major:%d minor:%d\n", major, minor);
 		return -1;
-	}
 
 	subsystem->xdamage_notify_event = damage_event + XDamageNotify;
 	subsystem->xdamage = XDamageCreate(subsystem->display, subsystem->root_window, XDamageReportDeltaRectangles);
@@ -349,10 +364,7 @@ int x11_shadow_xshm_init(x11ShadowSubsystem* server)
 		return -1;
 
 	if (!pixmaps)
-	{
-		fprintf(stderr, "XShmQueryVersion failed\n");
 		return -1;
-	}
 
 	server->fb_shm_info.shmid = -1;
 	server->fb_shm_info.shmaddr = (char*) -1;
@@ -417,7 +429,6 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	XPixmapFormatValues* pfs;
 
 	/**
-	 * Recent X11 servers drop support for shared pixmaps
 	 * To see if your X11 server supports shared pixmaps, use:
 	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
 	 */
@@ -430,9 +441,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	}
 
 	if (!XInitThreads())
-	{
-		fprintf(stderr, "warning: XInitThreads() failure\n");
-	}
+		return -1;
 
 	subsystem->display = XOpenDisplay(NULL);
 

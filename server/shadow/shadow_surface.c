@@ -46,6 +46,9 @@ rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int width, int hei
 
 	ZeroMemory(surface->data, surface->scanline * surface->height);
 
+	if (!InitializeCriticalSectionAndSpinCount(&(surface->lock), 4000))
+		return NULL;
+
 	region16_init(&(surface->invalidRegion));
 
 	return surface;
@@ -57,6 +60,8 @@ void shadow_surface_free(rdpShadowSurface* surface)
 		return;
 
 	free(surface->data);
+
+	DeleteCriticalSection(&(surface->lock));
 
 	region16_uninit(&(surface->invalidRegion));
 

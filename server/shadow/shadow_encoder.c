@@ -24,6 +24,40 @@
 
 #include "shadow_encoder.h"
 
+int shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
+{
+	UINT32 frameId;
+	int inFlightFrames;
+	SURFACE_FRAME* frame;
+
+	inFlightFrames = ListDictionary_Count(encoder->frameList);
+
+	if (inFlightFrames > encoder->frameAck)
+	{
+		encoder->fps = (100 / (inFlightFrames + 1) * encoder->maxFps) / 100;
+	}
+	else
+	{
+		encoder->fps += 2;
+
+		if (encoder->fps > encoder->maxFps)
+			encoder->fps = encoder->maxFps;
+	}
+
+	if (encoder->fps < 1)
+		encoder->fps = 1;
+
+	frame = (SURFACE_FRAME*) malloc(sizeof(SURFACE_FRAME));
+
+	if (!frame)
+		return -1;
+
+	frameId = frame->frameId = ++encoder->frameId;
+	ListDictionary_Add(encoder->frameList, (void*) (size_t) frame->frameId, frame);
+
+	return (int) frame->frameId;
+}
+
 int shadow_encoder_grid_init(rdpShadowEncoder* encoder)
 {
 	int i, j, k;
@@ -129,6 +163,12 @@ rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server)
 
 	shadow_encoder_grid_init(encoder);
 
+	encoder->fps = 10;
+	encoder->maxFps = 32;
+	encoder->frameId = 0;
+	encoder->frameAck = TRUE;
+	encoder->frameList = ListDictionary_New(TRUE);
+
 	return encoder;
 }
 
@@ -149,6 +189,8 @@ void shadow_encoder_free(rdpShadowEncoder* encoder)
 	freerdp_bitmap_planar_context_free(encoder->planar);
 
 	shadow_encoder_grid_uninit(encoder);
+
+	ListDictionary_Free(encoder->frameList);
 
 	free(encoder);
 }

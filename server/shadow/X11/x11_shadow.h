@@ -87,8 +87,8 @@ struct x11_shadow_subsystem
 extern "C" {
 #endif
 
-int x11_shadow_check_event(x11ShadowSubsystem* subsystem);
 int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem);
+void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem);
 
 void x11_shadow_input_synchronize_event(x11ShadowSubsystem* subsystem, UINT32 flags);
 void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 code);

@@ -57,11 +57,19 @@ struct rdp_shadow_encoder
 	wStream* bs;
 	wStream* bts;
 	BITMAP_PLANAR_CONTEXT* planar;
+
+	int fps;
+	int maxFps;
+	BOOL frameAck;
+	UINT32 frameId;
+	wListDictionary* frameList;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+int shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
 
 rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server);
 void shadow_encoder_free(rdpShadowEncoder* encoder);

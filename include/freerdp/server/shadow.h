@@ -29,6 +29,10 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/collections.h>
+
 typedef struct rdp_shadow_client rdpShadowClient;
 typedef struct rdp_shadow_server rdpShadowServer;
 typedef struct rdp_shadow_screen rdpShadowScreen;

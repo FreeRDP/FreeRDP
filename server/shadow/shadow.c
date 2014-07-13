@@ -31,12 +31,17 @@ void* shadow_server_thread(rdpShadowServer* server)
 {
 	DWORD status;
 	DWORD nCount;
+	HANDLE thread;
 	HANDLE events[32];
 	HANDLE StopEvent;
 	freerdp_listener* listener;
 
 	listener = server->listener;
 	StopEvent = server->StopEvent;
+
+	thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) x11_shadow_subsystem_thread,
+			(void*) server->subsystem, 0, NULL);
 
 	while (1)
 	{
