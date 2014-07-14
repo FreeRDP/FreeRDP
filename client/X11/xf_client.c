@@ -1128,30 +1128,6 @@ void xf_window_free(xfContext *xfc)
 	}
 }
 
-void* xf_update_thread(void *arg)
-{
-	int status;
-	wMessage message;
-	wMessageQueue *queue;
-	freerdp *instance = (freerdp *) arg;
-	assert(NULL != instance);
-	status = 1;
-	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-	while(MessageQueue_Wait(queue))
-	{
-		while(MessageQueue_Peek(queue, &message, TRUE))
-		{
-			status = freerdp_message_queue_process_message(instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message);
-			if(!status)
-				break;
-		}
-		if(!status)
-			break;
-	}
-	ExitThread(0);
-	return NULL;
-}
-
 void *xf_input_thread(void *arg)
 {
 	xfContext *xfc;
@@ -1277,11 +1253,9 @@ void *xf_thread(void *param)
 	int fd_input_event;
 	HANDLE input_event;
 	int select_status;
-	BOOL async_update;
 	BOOL async_input;
 	BOOL async_channels;
 	BOOL async_transport;
-	HANDLE update_thread;
 	HANDLE input_thread;
 	HANDLE channels_thread;
 	rdpChannels *channels;
@@ -1318,14 +1292,10 @@ void *xf_thread(void *param)
 	}
 	channels = instance->context->channels;
 	settings = instance->context->settings;
-	async_update = settings->AsyncUpdate;
 	async_input = settings->AsyncInput;
 	async_channels = settings->AsyncChannels;
 	async_transport = settings->AsyncTransport;
-	if(async_update)
-	{
-		update_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_update_thread, instance, 0, NULL);
-	}
+
 	if(async_input)
 	{
 		input_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_input_thread, instance, 0, NULL);
@@ -1454,13 +1424,7 @@ void *xf_thread(void *param)
 	/* Close the channels first. This will signal the internal message pipes
 	 * that the threads should quit. */
 	freerdp_channels_close(channels, instance);
-	if(async_update)
-	{
-		wMessageQueue *update_queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(update_queue, 0);
-		WaitForSingleObject(update_thread, INFINITE);
-		CloseHandle(update_thread);
-	}
+
 	if(async_input)
 	{
 		wMessageQueue *input_queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);

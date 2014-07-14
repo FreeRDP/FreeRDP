@@ -2159,11 +2159,37 @@ void update_message_register_interface(rdpUpdateProxy* message, rdpUpdate* updat
 	pointer->PointerCached = update_message_PointerCached;
 }
 
-rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update)
+static void *update_message_proxy_thread(void *arg)
 {
-	rdpUpdateProxy* message;
+	rdpUpdate *update = (rdpUpdate *)arg;
+	wMessage message;
 
-	message = (rdpUpdateProxy*) malloc(sizeof(rdpUpdateProxy));
+	if (!update || !update->queue)
+	{
+		DEBUG_WARN("update=%p, update->queue=%p", update, update ? update->queue : NULL);
+		ExitThread(-1);
+		return NULL;
+	}
+
+	while (MessageQueue_Wait(update->queue))
+	{
+		int status = 0;
+
+		if (MessageQueue_Peek(update->queue, &message, TRUE))
+			status = update_message_queue_process_message(update, &message);
+
+		if (!status)
+			break;
+	}
+
+	ExitThread(0);
+	return NULL;
+}
+
+rdpUpdateProxy *update_message_proxy_new(rdpUpdate *update)
+{
+	rdpUpdateProxy *message;
+	message = (rdpUpdateProxy *) malloc(sizeof(rdpUpdateProxy));
 
 	if (message)
 	{
@@ -2171,6 +2197,7 @@ rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update)
 
 		message->update = update;
 		update_message_register_interface(message, update);
+		message->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_message_proxy_thread, update, 0, NULL);
 	}
 
 	return message;
@@ -2180,6 +2207,9 @@ void update_message_proxy_free(rdpUpdateProxy* message)
 {
 	if (message)
 	{
+		MessageQueue_PostQuit(message->update->queue, 0);
+		WaitForSingleObject(message->thread, INFINITE);
+		CloseHandle(message->thread);
 		free(message);
 	}
 }

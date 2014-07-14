@@ -652,39 +652,6 @@ void* wf_input_thread(void* arg)
 	return NULL;
 }
 
-void* wf_update_thread(void* arg)
-{
-	int status;
-	wMessage message;
-	wMessageQueue* queue;
-	freerdp* instance = (freerdp*) arg;
-
-	assert( NULL != instance);
-
-	status = 1;
-	queue = freerdp_get_message_queue(instance,
-					FREERDP_UPDATE_MESSAGE_QUEUE);
-
-	while (MessageQueue_Wait(queue))
-	{
-		while (MessageQueue_Peek(queue, &message, TRUE))
-		{
-			status = freerdp_message_queue_process_message(instance,
-					FREERDP_UPDATE_MESSAGE_QUEUE, &message);
-
-			if (!status)
-				break;
-		}
-
-		if (!status)
-			break;
-	}
-
-	ExitThread(0);
-
-	return NULL;
-}
-
 void* wf_channels_thread(void* arg)
 {
 	int status;
@@ -728,11 +695,9 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	rdpChannels* channels;
 	rdpSettings* settings;
 
-	BOOL async_update;
 	BOOL async_input;
 	BOOL async_channels;
 	BOOL async_transport;
-	HANDLE update_thread;
 	HANDLE input_thread;
 	HANDLE channels_thread;
 
@@ -751,17 +716,9 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	channels = instance->context->channels;
 	settings = instance->context->settings;
 
-	async_update = settings->AsyncUpdate;
 	async_input = settings->AsyncInput;
 	async_channels = settings->AsyncChannels;
 	async_transport = settings->AsyncTransport;
-
-	if (async_update)
-	{
-		update_thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) wf_update_thread,
-				instance, 0, NULL);
-	}
 
 	if (async_input)
 	{
@@ -904,17 +861,6 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 
 	/* cleanup */
 	freerdp_channels_close(channels, instance);
-
-	if (async_update)
-	{
-		wMessageQueue* update_queue;
-
-		update_queue = freerdp_get_message_queue(instance,
-						FREERDP_UPDATE_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(update_queue, 0);
-		WaitForSingleObject(update_thread, INFINITE);
-		CloseHandle(update_thread);
-	}
 
 	if (async_input)
 	{

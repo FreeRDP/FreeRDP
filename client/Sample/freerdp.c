@@ -294,6 +294,7 @@ void* thread_func(void* param)
         if (g_thread_count < 1)
         	ReleaseSemaphore(g_sem, 1, NULL);
 
+	ExitThread(0);
 	return NULL;
 }
 
