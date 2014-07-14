@@ -313,7 +313,7 @@ void cleanup_handle(WINPR_THREAD *thread)
 
 BOOL ThreadCloseHandle(HANDLE handle)
 {
-	WINPR_THREAD *thread = (WINPR_THREAD*)handle;
+	WINPR_THREAD *thread = (WINPR_THREAD *)handle;
 
 	if (!thread_list)
 	{
@@ -330,7 +330,9 @@ BOOL ThreadCloseHandle(HANDLE handle)
 		ListDictionary_Lock(thread_list);
 		dump_thread(thread);
 
-		if (WaitForSingleObject(thread, 0) == WAIT_OBJECT_0)
+		if (!thread->started)
+			cleanup_handle(thread);
+		else if (WaitForSingleObject(thread, 0) == WAIT_OBJECT_0)
 			cleanup_handle(thread);
 		else
 		{
