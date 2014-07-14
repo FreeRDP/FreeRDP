@@ -74,6 +74,8 @@ elseif(EXISTS "${compatibilitydir}" AND IS_DIRECTORY "${compatibilitydir}")
                COMMAND ${CMAKE_COMMAND} -E copy_directory "${compatibilitydir}" ${APPCOMPAT_DIR}
                COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR}
        )
+else()
+	message( FATAL_ERROR "${ANDROID_SDK}/extras/android/{support|compatibility}/v7/appcompat directory not found.  Please install a recent version of Android Support Library, CMake will now exit." )
 endif()
 
 add_subdirectory(FreeRDPCore)
