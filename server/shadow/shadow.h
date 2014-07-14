@@ -21,8 +21,8 @@
 
 #include <freerdp/server/shadow.h>
 
-#include "X11/x11_shadow.h"
-
+#include "shadow_client.h"
+#include "shadow_input.h"
 #include "shadow_screen.h"
 #include "shadow_surface.h"
 #include "shadow_encoder.h"
@@ -31,8 +31,7 @@
 extern "C" {
 #endif
 
-void shadow_input_register_callbacks(rdpInput* input);
-void shadow_client_accepted(freerdp_listener* instance, freerdp_peer* client);
+
 
 #ifdef __cplusplus
 }

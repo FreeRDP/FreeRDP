@@ -40,6 +40,22 @@ typedef struct rdp_shadow_surface rdpShadowSurface;
 typedef struct rdp_shadow_encoder rdpShadowEncoder;
 typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
 
+typedef rdpShadowSubsystem* (*pfnShadowCreateSubsystem)(rdpShadowServer* server);
+
+typedef int (*pfnShadowSubsystemInit)(rdpShadowSubsystem* subsystem);
+typedef int (*pfnShadowSubsystemUninit)(rdpShadowSubsystem* subsystem);
+typedef int (*pfnShadowSubsystemStart)(rdpShadowSubsystem* subsystem);
+typedef int (*pfnShadowSubsystemStop)(rdpShadowSubsystem* subsystem);
+typedef void (*pfnShadowSubsystemFree)(rdpShadowSubsystem* subsystem);
+
+typedef int (*pfnShadowSurfaceCopy)(rdpShadowSubsystem* subsystem);
+
+typedef int (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem, UINT32 flags);
+typedef int (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
+typedef int (*pfnShadowUnicodeKeyboardEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
+typedef int (*pfnShadowMouseEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y);
+typedef int (*pfnShadowExtendedMouseEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y);
+
 struct rdp_shadow_client
 {
 	rdpContext context;
@@ -62,13 +78,29 @@ struct rdp_shadow_server
 
 	DWORD port;
 	freerdp_listener* listener;
+	pfnShadowCreateSubsystem CreateSubsystem;
 };
 
 #define RDP_SHADOW_SUBSYSTEM_COMMON() \
-	rdpShadowServer* server; \
 	HANDLE event; \
 	int monitorCount; \
-	MONITOR_DEF monitors[16]
+	MONITOR_DEF monitors[16]; \
+	\
+	pfnShadowSubsystemInit Init; \
+	pfnShadowSubsystemUninit Uninit; \
+	pfnShadowSubsystemStart Start; \
+	pfnShadowSubsystemStop Stop; \
+	pfnShadowSubsystemFree Free; \
+	\
+	pfnShadowSurfaceCopy SurfaceCopy; \
+	\
+	pfnShadowSynchronizeEvent SynchronizeEvent; \
+	pfnShadowKeyboardEvent KeyboardEvent; \
+	pfnShadowUnicodeKeyboardEvent UnicodeKeyboardEvent; \
+	pfnShadowMouseEvent MouseEvent; \
+	pfnShadowExtendedMouseEvent ExtendedMouseEvent; \
+	\
+	rdpShadowServer* server
 
 struct rdp_shadow_subsystem
 {

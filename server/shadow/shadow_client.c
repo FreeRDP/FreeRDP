@@ -394,7 +394,10 @@ void* shadow_client_thread(rdpShadowClient* client)
 			if (client->activated)
 			{
 				EnterCriticalSection(&(surface->lock));
-				x11_shadow_surface_copy((x11ShadowSubsystem*) subsystem);
+
+				if (subsystem->SurfaceCopy)
+					subsystem->SurfaceCopy(subsystem);
+
 				shadow_client_send_surface_bits(client);
 				region16_clear(&(surface->invalidRegion));
 				LeaveCriticalSection(&(surface->lock));

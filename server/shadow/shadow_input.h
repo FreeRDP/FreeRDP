@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-
+void shadow_input_register_callbacks(rdpInput* input);
 
 #ifdef __cplusplus
 }

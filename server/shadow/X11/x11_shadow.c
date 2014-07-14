@@ -212,7 +212,9 @@ int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
 	if (subsystem->use_xshm)
 	{
 		XCopyArea(subsystem->display, subsystem->root_window, subsystem->fb_pixmap,
-				subsystem->xdamage_gc, x, y, width, height, x, y);
+				subsystem->xshm_gc, x, y, width, height, x, y);
+
+		XSync(subsystem->display, False);
 
 		image = subsystem->fb_image;
 
@@ -306,14 +308,12 @@ int x11_shadow_cursor_init(x11ShadowSubsystem* subsystem)
 	return 0;
 }
 
-#ifdef WITH_XDAMAGE
-
 int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
 {
+#ifdef WITH_XDAMAGE
 	int damage_event;
 	int damage_error;
 	int major, minor;
-	XGCValues values;
 
 	if (!XDamageQueryExtension(subsystem->display, &damage_event, &damage_error))
 		return -1;
@@ -334,85 +334,88 @@ int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
 	subsystem->xdamage_region = XFixesCreateRegion(subsystem->display, NULL, 0);
 
 	if (!subsystem->xdamage_region)
-	{
-		fprintf(stderr, "XFixesCreateRegion failed\n");
-		XDamageDestroy(subsystem->display, subsystem->xdamage);
-		subsystem->xdamage = None;
 		return -1;
-	}
 #endif
-
-	values.subwindow_mode = IncludeInferiors;
-	subsystem->xdamage_gc = XCreateGC(subsystem->display,
-			subsystem->root_window, GCSubwindowMode, &values);
-	XSetFunction(subsystem->display, subsystem->xdamage_gc, GXcopy);
 
 	return 1;
+#else
+	return -1;
+#endif
 }
 
-#endif
-
-int x11_shadow_xshm_init(x11ShadowSubsystem* server)
+int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 {
 	Bool pixmaps;
 	int major, minor;
+	XGCValues values;
 
-	if (!XShmQueryExtension(server->display))
+	if (!XShmQueryExtension(subsystem->display))
 		return -1;
 
-	if (!XShmQueryVersion(server->display, &major, &minor, &pixmaps))
+	if (!XShmQueryVersion(subsystem->display, &major, &minor, &pixmaps))
 		return -1;
 
 	if (!pixmaps)
 		return -1;
 
-	server->fb_shm_info.shmid = -1;
-	server->fb_shm_info.shmaddr = (char*) -1;
+	subsystem->fb_shm_info.shmid = -1;
+	subsystem->fb_shm_info.shmaddr = (char*) -1;
+	subsystem->fb_shm_info.readOnly = False;
 
-	server->fb_image = XShmCreateImage(server->display, server->visual, server->depth,
-			ZPixmap, NULL, &(server->fb_shm_info), server->width, server->height);
+	subsystem->fb_image = XShmCreateImage(subsystem->display, subsystem->visual, subsystem->depth,
+			ZPixmap, NULL, &(subsystem->fb_shm_info), subsystem->width, subsystem->height);
 
-	if (!server->fb_image)
+	if (!subsystem->fb_image)
 	{
 		fprintf(stderr, "XShmCreateImage failed\n");
 		return -1;
 	}
 
-	server->fb_shm_info.shmid = shmget(IPC_PRIVATE,
-			server->fb_image->bytes_per_line * server->fb_image->height, IPC_CREAT | 0600);
+	subsystem->fb_shm_info.shmid = shmget(IPC_PRIVATE,
+			subsystem->fb_image->bytes_per_line * subsystem->fb_image->height, IPC_CREAT | 0600);
 
-	if (server->fb_shm_info.shmid == -1)
+	if (subsystem->fb_shm_info.shmid == -1)
 	{
 		fprintf(stderr, "shmget failed\n");
 		return -1;
 	}
 
-	server->fb_shm_info.readOnly = False;
-	server->fb_shm_info.shmaddr = shmat(server->fb_shm_info.shmid, 0, 0);
-	server->fb_image->data = server->fb_shm_info.shmaddr;
+	subsystem->fb_shm_info.shmaddr = shmat(subsystem->fb_shm_info.shmid, 0, 0);
+	subsystem->fb_image->data = subsystem->fb_shm_info.shmaddr;
 
-	if (server->fb_shm_info.shmaddr == ((char*) -1))
+	if (subsystem->fb_shm_info.shmaddr == ((char*) -1))
 	{
 		fprintf(stderr, "shmat failed\n");
 		return -1;
 	}
 
-	if (!XShmAttach(server->display, &(server->fb_shm_info)))
+	if (!XShmAttach(subsystem->display, &(subsystem->fb_shm_info)))
 		return -1;
 
-	XSync(server->display, False);
+	XSync(subsystem->display, False);
 
-	shmctl(server->fb_shm_info.shmid, IPC_RMID, 0);
+	shmctl(subsystem->fb_shm_info.shmid, IPC_RMID, 0);
 
 	fprintf(stderr, "display: %p root_window: %p width: %d height: %d depth: %d\n",
-			server->display, (void*) server->root_window, server->fb_image->width, server->fb_image->height, server->fb_image->depth);
+			subsystem->display, (void*) subsystem->root_window, subsystem->fb_image->width, subsystem->fb_image->height, subsystem->fb_image->depth);
 
-	server->fb_pixmap = XShmCreatePixmap(server->display,
-			server->root_window, server->fb_image->data, &(server->fb_shm_info),
-			server->fb_image->width, server->fb_image->height, server->fb_image->depth);
+	subsystem->fb_pixmap = XShmCreatePixmap(subsystem->display,
+			subsystem->root_window, subsystem->fb_image->data, &(subsystem->fb_shm_info),
+			subsystem->fb_image->width, subsystem->fb_image->height, subsystem->fb_image->depth);
 
-	if (!server->fb_pixmap)
+	XSync(subsystem->display, False);
+
+	if (!subsystem->fb_pixmap)
 		return -1;
+
+	values.subwindow_mode = IncludeInferiors;
+	values.graphics_exposures = False;
+
+	subsystem->xshm_gc = XCreateGC(subsystem->display, subsystem->root_window,
+			GCSubwindowMode | GCGraphicsExposures, &values);
+
+	XSetFunction(subsystem->display, subsystem->xshm_gc, GXcopy);
+	XSync(subsystem->display, False);
 
 	return 1;
 }
@@ -432,7 +435,9 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	 * To see if your X11 server supports shared pixmaps, use:
 	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
 	 */
-	subsystem->use_xshm = FALSE;
+
+	subsystem->use_xshm = TRUE;
+	subsystem->use_xdamage = TRUE;
 
 	if (!getenv("DISPLAY"))
 	{
@@ -512,12 +517,11 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 			subsystem->use_xshm = FALSE;
 	}
 
-	if (subsystem->use_xshm)
-		printf("Using X Shared Memory Extension (XShm)\n");
-
-#ifdef WITH_XDAMAGE
-	x11_shadow_xdamage_init(subsystem);
-#endif
+	if (subsystem->use_xdamage)
+	{
+		if (x11_shadow_xdamage_init(subsystem) < 0)
+			subsystem->use_xdamage = FALSE;
+	}
 
 	x11_shadow_cursor_init(subsystem);
 
@@ -529,6 +533,9 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	subsystem->monitors[0].right = subsystem->width;
 	subsystem->monitors[0].bottom = subsystem->height;
 	subsystem->monitors[0].flags = 1;
+
+	if (subsystem->use_xshm)
+		printf("Using X Shared Memory Extension (XShm)\n");
 
 	return 1;
 }
@@ -553,7 +560,39 @@ int x11_shadow_subsystem_uninit(x11ShadowSubsystem* subsystem)
 	return 1;
 }
 
-rdpShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
+int x11_shadow_subsystem_start(x11ShadowSubsystem* subsystem)
+{
+	HANDLE thread;
+
+	if (!subsystem)
+		return -1;
+
+	thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) x11_shadow_subsystem_thread,
+			(void*) subsystem, 0, NULL);
+
+	return 1;
+}
+
+int x11_shadow_subsystem_stop(x11ShadowSubsystem* subsystem)
+{
+	if (!subsystem)
+		return -1;
+
+	return 1;
+}
+
+void x11_shadow_subsystem_free(x11ShadowSubsystem* subsystem)
+{
+	if (!subsystem)
+		return;
+
+	x11_shadow_subsystem_uninit(subsystem);
+
+	free(subsystem);
+}
+
+x11ShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
 {
 	x11ShadowSubsystem* subsystem;
 
@@ -564,18 +603,24 @@ rdpShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
 
 	subsystem->server = server;
 
-	x11_shadow_subsystem_init(subsystem);
+	subsystem->Init = (pfnShadowSubsystemInit) x11_shadow_subsystem_init;
+	subsystem->Uninit = (pfnShadowSubsystemInit) x11_shadow_subsystem_uninit;
+	subsystem->Start = (pfnShadowSubsystemStart) x11_shadow_subsystem_start;
+	subsystem->Stop = (pfnShadowSubsystemStop) x11_shadow_subsystem_stop;
+	subsystem->Free = (pfnShadowSubsystemFree) x11_shadow_subsystem_free;
 
-	return (rdpShadowSubsystem*) subsystem;
+	subsystem->SurfaceCopy = (pfnShadowSurfaceCopy) x11_shadow_surface_copy;
+
+	subsystem->SynchronizeEvent = (pfnShadowSynchronizeEvent) x11_shadow_input_synchronize_event;
+	subsystem->KeyboardEvent = (pfnShadowKeyboardEvent) x11_shadow_input_keyboard_event;
+	subsystem->UnicodeKeyboardEvent = (pfnShadowUnicodeKeyboardEvent) x11_shadow_input_unicode_keyboard_event;
+	subsystem->MouseEvent = (pfnShadowMouseEvent) x11_shadow_input_mouse_event;
+	subsystem->ExtendedMouseEvent = (pfnShadowExtendedMouseEvent) x11_shadow_input_extended_mouse_event;
+
+	return subsystem;
 }
 
-void x11_shadow_subsystem_free(rdpShadowSubsystem* subsystem)
+rdpShadowSubsystem* X11_ShadowCreateSubsystem(rdpShadowServer* server)
 {
-	if (!subsystem)
-		return;
-
-	x11_shadow_subsystem_uninit((x11ShadowSubsystem*) subsystem);
-
-	free(subsystem);
+	return (rdpShadowSubsystem*) x11_shadow_subsystem_new(server);
 }
-

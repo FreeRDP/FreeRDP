@@ -66,13 +66,14 @@ struct x11_shadow_subsystem
 	int scanline_pad;
 
 	BOOL use_xshm;
+	BOOL use_xdamage;
 	XImage* fb_image;
 	Pixmap fb_pixmap;
 	Window root_window;
 	XShmSegmentInfo fb_shm_info;
 
 #ifdef WITH_XDAMAGE
-	GC xdamage_gc;
+	GC xshm_gc;
 	Damage xdamage;
 	int xdamage_notify_event;
 	XserverRegion xdamage_region;
@@ -87,17 +88,7 @@ struct x11_shadow_subsystem
 extern "C" {
 #endif
 
-int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem);
-void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem);
 
-void x11_shadow_input_synchronize_event(x11ShadowSubsystem* subsystem, UINT32 flags);
-void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
-void x11_shadow_input_unicode_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
-void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y);
-void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y);
-
-rdpShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server);
-void x11_shadow_subsystem_free(rdpShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
 }

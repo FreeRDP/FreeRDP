@@ -27,21 +27,31 @@
 
 #include "shadow.h"
 
+#ifdef WITH_X11
+#define WITH_SHADOW_X11
+#endif
+
+#ifdef WITH_SHADOW_X11
+extern rdpShadowSubsystem* X11_ShadowCreateSubsystem(rdpShadowServer* server);
+#endif
+
 void* shadow_server_thread(rdpShadowServer* server)
 {
 	DWORD status;
 	DWORD nCount;
-	HANDLE thread;
 	HANDLE events[32];
 	HANDLE StopEvent;
 	freerdp_listener* listener;
+	rdpShadowSubsystem* subsystem;
 
 	listener = server->listener;
 	StopEvent = server->StopEvent;
+	subsystem = server->subsystem;
 
-	thread = CreateThread(NULL, 0,
-			(LPTHREAD_START_ROUTINE) x11_shadow_subsystem_thread,
-			(void*) server->subsystem, 0, NULL);
+	if (subsystem->Start)
+	{
+		subsystem->Start(subsystem);
+	}
 
 	while (1)
 	{
@@ -70,6 +80,11 @@ void* shadow_server_thread(rdpShadowServer* server)
 	}
 
 	listener->Close(listener);
+
+	if (subsystem->Stop)
+	{
+		subsystem->Stop(subsystem);
+	}
 
 	ExitThread(0);
 
@@ -127,7 +142,12 @@ rdpShadowServer* shadow_server_new(int argc, char** argv)
 	server->listener->info = (void*) server;
 	server->listener->PeerAccepted = shadow_client_accepted;
 
-	server->subsystem = x11_shadow_subsystem_new(server);
+#ifdef WITH_SHADOW_X11
+	server->CreateSubsystem = X11_ShadowCreateSubsystem;
+#endif
+
+	if (server->CreateSubsystem)
+		server->subsystem = server->CreateSubsystem(server);
 
 	if (!server->subsystem)
 		return NULL;
@@ -156,7 +176,7 @@ void shadow_server_free(rdpShadowServer* server)
 
 	shadow_encoder_free(server->encoder);
 
-	x11_shadow_subsystem_free(server->subsystem);
+	server->subsystem->Free(server->subsystem);
 
 	free(server);
 }

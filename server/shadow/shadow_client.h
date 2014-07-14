@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-
+void shadow_client_accepted(freerdp_listener* instance, freerdp_peer* client);
 
 #ifdef __cplusplus
 }
