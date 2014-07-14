@@ -28,6 +28,8 @@ struct rdp_shadow_surface
 {
 	rdpShadowServer* server;
 
+	int x;
+	int y;
 	int width;
 	int height;
 	int scanline;
@@ -41,7 +43,7 @@ struct rdp_shadow_surface
 extern "C" {
 #endif
 
-rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int width, int height);
+rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y, int width, int height);
 void shadow_surface_free(rdpShadowSurface* surface);
 
 #ifdef __cplusplus

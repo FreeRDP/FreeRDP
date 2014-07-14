@@ -37,6 +37,7 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
 
+#include "../shadow_screen.h"
 #include "../shadow_surface.h"
 
 #include "x11_shadow.h"
@@ -152,6 +153,9 @@ void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int y, int
 {
 	XRectangle region;
 
+	if (!subsystem->use_xfixes)
+		return;
+
 	region.x = x;
 	region.y = y;
 	region.width = width;
@@ -166,20 +170,20 @@ void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int y, int
 int x11_shadow_invalidate_region(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
 {
 	rdpShadowServer* server;
-	rdpShadowSurface* surface;
+	rdpShadowScreen* screen;
 	RECTANGLE_16 invalidRect;
 
 	server = subsystem->server;
-	surface = server->surface;
+	screen = server->screen;
 
 	invalidRect.left = x;
 	invalidRect.top = y;
 	invalidRect.right = x + width;
 	invalidRect.bottom = y + height;
 
-	EnterCriticalSection(&(surface->lock));
-	region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
-	LeaveCriticalSection(&(surface->lock));
+	EnterCriticalSection(&(screen->lock));
+	region16_union_rect(&(screen->invalidRegion), &(screen->invalidRegion), &invalidRect);
+	LeaveCriticalSection(&(screen->lock));
 
 	return 1;
 }
@@ -190,12 +194,23 @@ int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
 	int width;
 	int height;
 	XImage* image;
+	rdpShadowScreen* screen;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
+	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* extents;
 
 	server = subsystem->server;
 	surface = server->surface;
+	screen = server->screen;
+
+	surfaceRect.left = surface->x;
+	surfaceRect.top = surface->y;
+	surfaceRect.right = surface->x + surface->width;
+	surfaceRect.bottom = surface->y + surface->height;
+
+	region16_clear(&(surface->invalidRegion));
+	region16_intersect_rect(&(surface->invalidRegion), &(screen->invalidRegion), &surfaceRect);
 
 	if (region16_is_empty(&(surface->invalidRegion)))
 		return 1;
@@ -219,7 +234,7 @@ int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
 		image = subsystem->fb_image;
 
 		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
-				surface->scanline, x, y, width, height,
+				surface->scanline, x - surface->x, y - surface->y, width, height,
 				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
 				image->bytes_per_line, x, y);
 	}
@@ -229,7 +244,7 @@ int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
 				x, y, width, height, AllPlanes, ZPixmap);
 
 		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
-				surface->scanline, x, y, width, height,
+				surface->scanline, x - surface->x, y - surface->y, width, height,
 				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
 				image->bytes_per_line, 0, 0);
 
@@ -291,29 +306,87 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 	return NULL;
 }
 
-int x11_shadow_cursor_init(x11ShadowSubsystem* subsystem)
+int x11_shadow_xfixes_init(x11ShadowSubsystem* subsystem)
 {
 #ifdef WITH_XFIXES
-	int event;
-	int error;
+	int xfixes_event;
+	int xfixes_error;
+	int major, minor;
 
-	if (!XFixesQueryExtension(subsystem->display, &event, &error))
+	if (!XFixesQueryExtension(subsystem->display, &xfixes_event, &xfixes_error))
 		return -1;
 
-	subsystem->xfixes_notify_event = event + XFixesCursorNotify;
+	if (!XFixesQueryVersion(subsystem->display, &major, &minor))
+		return -1;
+
+	subsystem->xfixes_notify_event = xfixes_event + XFixesCursorNotify;
 
 	XFixesSelectCursorInput(subsystem->display, DefaultRootWindow(subsystem->display), XFixesDisplayCursorNotifyMask);
+
+	return 1;
+#else
+	return -1;
+#endif
+}
+
+int x11_shadow_xinerama_init(x11ShadowSubsystem* subsystem)
+{
+#ifdef WITH_XINERAMA
+	int index;
+	int numMonitors;
+	int major, minor;
+	int xinerama_event;
+	int xinerama_error;
+	MONITOR_DEF* monitor;
+	XineramaScreenInfo* screen;
+	XineramaScreenInfo* screens;
+
+	if (!XineramaQueryExtension(subsystem->display, &xinerama_event, &xinerama_error))
+		return -1;
+
+	if (!XDamageQueryVersion(subsystem->display, &major, &minor))
+		return -1;
+
+	if (!XineramaIsActive(subsystem->display))
+		return -1;
+
+	screens = XineramaQueryScreens(subsystem->display, &numMonitors);
+
+	if (numMonitors > 16)
+		numMonitors = 16;
+
+	if (!screens || (numMonitors < 1))
+		return -1;
+
+	subsystem->monitorCount = numMonitors;
+
+	for (index = 0; index < numMonitors; index++)
+	{
+		screen = &screens[index];
+		monitor = &(subsystem->monitors[index]);
+
+		monitor->left = screen->x_org;
+		monitor->top = screen->y_org;
+		monitor->right = monitor->left + screen->width;
+		monitor->bottom = monitor->top + screen->height;
+		monitor->flags = (index == 0) ? 1 : 0;
+	}
+
+	XFree(screens);
 #endif
 
-	return 0;
+	return 1;
 }
 
 int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
 {
 #ifdef WITH_XDAMAGE
+	int major, minor;
 	int damage_event;
 	int damage_error;
-	int major, minor;
+
+	if (!subsystem->use_xfixes)
+		return -1;
 
 	if (!XDamageQueryExtension(subsystem->display, &damage_event, &damage_error))
 		return -1;
@@ -396,9 +469,6 @@ int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 
 	shmctl(subsystem->fb_shm_info.shmid, IPC_RMID, 0);
 
-	fprintf(stderr, "display: %p root_window: %p width: %d height: %d depth: %d\n",
-			subsystem->display, (void*) subsystem->root_window, subsystem->fb_image->width, subsystem->fb_image->height, subsystem->fb_image->depth);
-
 	subsystem->fb_pixmap = XShmCreatePixmap(subsystem->display,
 			subsystem->root_window, subsystem->fb_image->data, &(subsystem->fb_shm_info),
 			subsystem->fb_image->width, subsystem->fb_image->height, subsystem->fb_image->depth);
@@ -430,14 +500,12 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	XVisualInfo template;
 	XPixmapFormatValues* pf;
 	XPixmapFormatValues* pfs;
+	MONITOR_DEF* virtualScreen;
 
 	/**
 	 * To see if your X11 server supports shared pixmaps, use:
 	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
 	 */
-
-	subsystem->use_xshm = TRUE;
-	subsystem->use_xdamage = TRUE;
 
 	if (!getenv("DISPLAY"))
 	{
@@ -511,6 +579,18 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 
 	XSelectInput(subsystem->display, subsystem->root_window, SubstructureNotifyMask);
 
+	if (subsystem->use_xfixes)
+	{
+		if (x11_shadow_xfixes_init(subsystem) < 0)
+			subsystem->use_xfixes = FALSE;
+	}
+
+	if (subsystem->use_xinerama)
+	{
+		if (x11_shadow_xinerama_init(subsystem) < 0)
+			subsystem->use_xinerama = FALSE;
+	}
+
 	if (subsystem->use_xshm)
 	{
 		if (x11_shadow_xshm_init(subsystem) < 0)
@@ -523,19 +603,28 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 			subsystem->use_xdamage = FALSE;
 	}
 
-	x11_shadow_cursor_init(subsystem);
-
 	subsystem->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, subsystem->xfds);
 
-	subsystem->monitorCount = 1;
-	subsystem->monitors[0].left = 0;
-	subsystem->monitors[0].top = 0;
-	subsystem->monitors[0].right = subsystem->width;
-	subsystem->monitors[0].bottom = subsystem->height;
-	subsystem->monitors[0].flags = 1;
+	virtualScreen = &(subsystem->virtualScreen);
 
-	if (subsystem->use_xshm)
-		printf("Using X Shared Memory Extension (XShm)\n");
+	virtualScreen->left = 0;
+	virtualScreen->top = 0;
+	virtualScreen->right = subsystem->width;
+	virtualScreen->bottom = subsystem->height;
+	virtualScreen->flags = 1;
+
+	if (subsystem->monitorCount < 1)
+	{
+		subsystem->monitorCount = 1;
+		subsystem->monitors[0].left = virtualScreen->left;
+		subsystem->monitors[0].top = virtualScreen->top;
+		subsystem->monitors[0].right = virtualScreen->right;
+		subsystem->monitors[0].bottom = virtualScreen->bottom;
+		subsystem->monitors[0].flags = 1;
+	}
+
+	printf("X11 Extensions: XFixes: %d Xinerama: %d XDamage: %d XShm: %d\n",
+			subsystem->use_xfixes, subsystem->use_xinerama, subsystem->use_xdamage, subsystem->use_xshm);
 
 	return 1;
 }
@@ -616,6 +705,11 @@ x11ShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
 	subsystem->UnicodeKeyboardEvent = (pfnShadowUnicodeKeyboardEvent) x11_shadow_input_unicode_keyboard_event;
 	subsystem->MouseEvent = (pfnShadowMouseEvent) x11_shadow_input_mouse_event;
 	subsystem->ExtendedMouseEvent = (pfnShadowExtendedMouseEvent) x11_shadow_input_extended_mouse_event;
+
+	subsystem->use_xshm = TRUE;
+	subsystem->use_xfixes = TRUE;
+	subsystem->use_xdamage = TRUE;
+	subsystem->use_xinerama = TRUE;
 
 	return subsystem;
 }

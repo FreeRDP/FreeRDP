@@ -47,6 +47,10 @@ typedef struct x11_shadow_subsystem x11ShadowSubsystem;
 #include <X11/extensions/Xdamage.h>
 #endif
 
+#ifdef WITH_XINERAMA
+#include <X11/extensions/Xinerama.h>
+#endif
+
 struct x11_shadow_subsystem
 {
 	RDP_SHADOW_SUBSYSTEM_COMMON();
@@ -66,7 +70,10 @@ struct x11_shadow_subsystem
 	int scanline_pad;
 
 	BOOL use_xshm;
+	BOOL use_xfixes;
 	BOOL use_xdamage;
+	BOOL use_xinerama;
+
 	XImage* fb_image;
 	Pixmap fb_pixmap;
 	Window root_window;

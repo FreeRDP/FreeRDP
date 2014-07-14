@@ -61,15 +61,18 @@ BOOL shadow_client_capabilities(freerdp_peer* peer)
 
 BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
+	rdpSettings* settings;
 	rdpShadowClient* client;
 
 	client = (rdpShadowClient*) peer->context;
+	settings = peer->settings;
 
-	fprintf(stderr, "Client from %s is activated\n", peer->hostname);
+	settings->DesktopWidth = client->server->screen->width;
+	settings->DesktopHeight = client->server->screen->height;
+	settings->ColorDepth = 32;
 
-	peer->settings->DesktopWidth = client->server->screen->width;
-	peer->settings->DesktopHeight = client->server->screen->height;
-	peer->settings->ColorDepth = 32;
+	fprintf(stderr, "Client from %s is activated (%dx%d@%d)\n",
+			peer->hostname, settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
 
 	peer->update->DesktopResize(peer->update->context);
 
@@ -151,10 +154,10 @@ int shadow_client_send_surface_bits(rdpShadowClient* client)
 	encoder = server->encoder;
 	surface = server->surface;
 
-	surfaceRect.left = 0;
-	surfaceRect.top = 0;
-	surfaceRect.right = surface->width;
-	surfaceRect.bottom = surface->height;
+	surfaceRect.left = surface->x;
+	surfaceRect.top = surface->y;
+	surfaceRect.right = surface->x + surface->width;
+	surfaceRect.bottom = surface->y + surface->height;
 
 	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
 
@@ -163,8 +166,8 @@ int shadow_client_send_surface_bits(rdpShadowClient* client)
 
 	extents = region16_extents(&(surface->invalidRegion));
 
-	nXSrc = extents->left;
-	nYSrc = extents->top;
+	nXSrc = extents->left - surface->x;
+	nYSrc = extents->top - surface->y;
 	nWidth = extents->right - extents->left;
 	nHeight = extents->bottom - extents->top;
 	pSrcData = surface->data;
@@ -324,13 +327,13 @@ void* shadow_client_thread(rdpShadowClient* client)
 	freerdp_peer* peer;
 	rdpSettings* settings;
 	rdpShadowServer* server;
-	rdpShadowSurface* surface;
+	rdpShadowScreen* screen;
 	rdpShadowEncoder* encoder;
 	rdpShadowSubsystem* subsystem;
 
 	server = client->server;
+	screen = server->screen;
 	encoder = server->encoder;
-	surface = server->surface;
 	subsystem = server->subsystem;
 
 	peer = ((rdpContext*) client)->peer;
@@ -393,14 +396,15 @@ void* shadow_client_thread(rdpShadowClient* client)
 		{
 			if (client->activated)
 			{
-				EnterCriticalSection(&(surface->lock));
+				EnterCriticalSection(&(screen->lock));
 
 				if (subsystem->SurfaceCopy)
 					subsystem->SurfaceCopy(subsystem);
 
 				shadow_client_send_surface_bits(client);
-				region16_clear(&(surface->invalidRegion));
-				LeaveCriticalSection(&(surface->lock));
+				region16_clear(&(screen->invalidRegion));
+
+				LeaveCriticalSection(&(screen->lock));
 			}
 
 			fps = encoder->fps;

@@ -24,7 +24,7 @@
 
 #include "shadow_surface.h"
 
-rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int width, int height)
+rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y, int width, int height)
 {
 	rdpShadowSurface* surface;
 
@@ -35,6 +35,8 @@ rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int width, int hei
 
 	surface->server = server;
 
+	surface->x = x;
+	surface->y = y;
 	surface->width = width;
 	surface->height = height;
 	surface->scanline = (surface->width + (surface->width % 4)) * 4;

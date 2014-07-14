@@ -21,12 +21,18 @@
 
 #include <freerdp/server/shadow.h>
 
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+
 struct rdp_shadow_screen
 {
 	rdpShadowServer* server;
 
 	int width;
 	int height;
+
+	CRITICAL_SECTION lock;
+	REGION16 invalidRegion;
 
 	rdpShadowSurface* primary;
 };

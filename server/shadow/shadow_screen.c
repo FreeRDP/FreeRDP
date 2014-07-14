@@ -26,6 +26,8 @@
 
 rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 {
+	int x, y;
+	int width, height;
 	MONITOR_DEF* primary;
 	rdpShadowScreen* screen;
 	rdpShadowSubsystem* subsystem;
@@ -38,11 +40,22 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 	screen->server = server;
 	subsystem = server->subsystem;
 
-	primary = &(subsystem->monitors[0]);
-	screen->width = primary->right;
-	screen->height = primary->bottom;
+	if (!InitializeCriticalSectionAndSpinCount(&(screen->lock), 4000))
+		return NULL;
 
-	screen->primary = shadow_surface_new(server, screen->width, screen->height);
+	region16_init(&(screen->invalidRegion));
+
+	primary = &(subsystem->monitors[0]);
+
+	x = primary->left;
+	y = primary->top;
+	width = primary->right - primary->left;
+	height = primary->bottom - primary->top;
+
+	screen->width = width;
+	screen->height = height;
+
+	screen->primary = shadow_surface_new(server, x, y, width, height);
 
 	if (!screen->primary)
 		return NULL;
@@ -56,6 +69,10 @@ void shadow_screen_free(rdpShadowScreen* screen)
 {
 	if (!screen)
 		return;
+
+	DeleteCriticalSection(&(screen->lock));
+
+	region16_uninit(&(screen->invalidRegion));
 
 	if (screen->primary)
 	{

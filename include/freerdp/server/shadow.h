@@ -85,6 +85,7 @@ struct rdp_shadow_server
 	HANDLE event; \
 	int monitorCount; \
 	MONITOR_DEF monitors[16]; \
+	MONITOR_DEF virtualScreen; \
 	\
 	pfnShadowSubsystemInit Init; \
 	pfnShadowSubsystemUninit Uninit; \
