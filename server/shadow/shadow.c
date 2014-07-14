@@ -44,6 +44,8 @@ static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL, "Select or list monitors" },
+	{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may view without prompt" },
+	{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may interact without prompt" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "Print version" },
 	{ "help", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_HELP, NULL, NULL, NULL, -1, "?", "Print help" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
@@ -165,8 +167,17 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			server->port = (DWORD) atoi(arg->Value);
 		}
+		CommandLineSwitchCase(arg, "may-view")
+		{
+			server->mayView = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "may-interact")
+		{
+			server->mayInteract = arg->Value ? TRUE : FALSE;
+		}
 		CommandLineSwitchDefault(arg)
 		{
+
 		}
 
 		CommandLineSwitchEnd(arg)
@@ -175,7 +186,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 	arg = CommandLineFindArgumentA(shadow_args, "monitors");
 
-	if (arg)
+	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
@@ -297,6 +308,8 @@ int shadow_server_stop(rdpShadowServer* server)
 
 int shadow_server_init(rdpShadowServer* server)
 {
+	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
+
 	server->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	server->listener = freerdp_listener_new();
@@ -368,6 +381,8 @@ rdpShadowServer* shadow_server_new()
 		return NULL;
 
 	server->port = 3389;
+	server->mayView = TRUE;
+	server->mayInteract = TRUE;
 
 	return server;
 }

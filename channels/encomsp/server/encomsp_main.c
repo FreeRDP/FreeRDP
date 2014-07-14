@@ -25,11 +25,82 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
+#include "encomsp_common.h"
+
 #include "encomsp_main.h"
 
 static int encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
 {
-	return 0;
+	int status = 1;
+	ENCOMSP_ORDER_HEADER header;
+
+	while (Stream_GetRemainingLength(s) > 0)
+	{
+		if (encomsp_read_header(s, &header) < 0)
+			return -1;
+
+		printf("EncomspReceive: Type: %d Length: %d\n", header.Type, header.Length);
+
+		return 1;
+
+#if 0
+		switch (header.Type)
+		{
+			case ODTYPE_FILTER_STATE_UPDATED:
+				status = encomsp_recv_filter_updated_pdu(context, s, &header);
+				break;
+
+			case ODTYPE_APP_REMOVED:
+				status = encomsp_recv_application_removed_pdu(context, s, &header);
+				break;
+
+			case ODTYPE_APP_CREATED:
+				status = encomsp_recv_application_created_pdu(context, s, &header);
+				break;
+
+			case ODTYPE_WND_REMOVED:
+				status = encomsp_recv_window_removed_pdu(context, s, &header);
+				break;
+
+			case ODTYPE_WND_CREATED:
+				status = encomsp_recv_window_created_pdu(context, s, &header);
+				break;
+
+			case ODTYPE_WND_SHOW:
+				status = encomsp_recv_show_window_pdu(context, s, &header);
+				break;
+
+			case ODTYPE_PARTICIPANT_REMOVED:
+				status = encomsp_recv_participant_removed_pdu(context, s, &header);
+				break;
+
+			case ODTYPE_PARTICIPANT_CREATED:
+				status = encomsp_recv_participant_created_pdu(context, s, &header);
+				break;
+
+			case ODTYPE_PARTICIPANT_CTRL_CHANGED:
+				status = encomsp_recv_change_participant_control_level_pdu(context, s, &header);
+				break;
+
+			case ODTYPE_GRAPHICS_STREAM_PAUSED:
+				status = encomsp_recv_graphics_stream_paused_pdu(context, s, &header);
+				break;
+
+			case ODTYPE_GRAPHICS_STREAM_RESUMED:
+				status = encomsp_recv_graphics_stream_resumed_pdu(context, s, &header);
+				break;
+
+			default:
+				status = -1;
+				break;
+		}
+
+		if (status < 0)
+			return -1;
+#endif
+	}
+
+	return status;
 }
 
 static void* encomsp_server_thread(void* arg)
@@ -83,10 +154,7 @@ static void* encomsp_server_thread(void* arg)
 			Stream_EnsureRemainingCapacity(s, BytesReturned);
 		}
 
-		if (0)
-		{
-			encomsp_server_receive_pdu(context, s);
-		}
+		encomsp_server_receive_pdu(context, s);
 	}
 
 	Stream_Free(s, TRUE);

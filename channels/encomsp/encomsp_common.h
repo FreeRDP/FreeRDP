@@ -1,5 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
+ * Multiparty Virtual Channel
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -16,27 +17,17 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_H
-#define FREERDP_SHADOW_SERVER_H
+#ifndef FREERDP_CHANNEL_ENCOMSP_COMMON_H
+#define FREERDP_CHANNEL_ENCOMSP_COMMON_H
 
-#include <freerdp/server/shadow.h>
+#include <winpr/crt.h>
+#include <winpr/stream.h>
 
-#include "shadow_client.h"
-#include "shadow_input.h"
-#include "shadow_screen.h"
-#include "shadow_surface.h"
-#include "shadow_encoder.h"
-#include "shadow_channels.h"
+#include <freerdp/channels/encomsp.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header);
+int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header);
 
+int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str);
 
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* FREERDP_SHADOW_SERVER_H */
-
+#endif /* FREERDP_CHANNEL_ENCOMSP_COMMON_H */

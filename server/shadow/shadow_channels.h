@@ -16,27 +16,22 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_H
-#define FREERDP_SHADOW_SERVER_H
+#ifndef FREERDP_SHADOW_SERVER_CHANNELS_H
+#define FREERDP_SHADOW_SERVER_CHANNELS_H
 
 #include <freerdp/server/shadow.h>
 
-#include "shadow_client.h"
-#include "shadow_input.h"
-#include "shadow_screen.h"
-#include "shadow_surface.h"
-#include "shadow_encoder.h"
-#include "shadow_channels.h"
+#include <winpr/crt.h>
+#include <winpr/synch.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
+int shadow_client_channels_post_connect(rdpShadowClient* client);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_H */
-
+#endif /* FREERDP_SHADOW_SERVER_CHANNELS_H */

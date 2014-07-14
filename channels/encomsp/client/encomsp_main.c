@@ -26,6 +26,8 @@
 
 #include <freerdp/client/encomsp.h>
 
+#include "encomsp_common.h"
+
 #include "encomsp_main.h"
 
 EncomspClientContext* encomsp_get_client_interface(encomspPlugin* encomsp)
@@ -55,45 +57,6 @@ int encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 		fprintf(stderr, "encomsp_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
 		return -1;
 	}
-
-	return 1;
-}
-
-int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
-{
-	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
-		return -1;
-
-	Stream_Read_UINT16(s, header->Type); /* Type (2 bytes) */
-	Stream_Read_UINT16(s, header->Length); /* Length (2 bytes) */
-
-	return 1;
-}
-
-int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
-{
-	Stream_Write_UINT16(s, header->Type); /* Type (2 bytes) */
-	Stream_Write_UINT16(s, header->Length); /* Length (2 bytes) */
-
-	return 1;
-}
-
-int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
-{
-	ZeroMemory(str, sizeof(ENCOMSP_UNICODE_STRING));
-
-	if (Stream_GetRemainingLength(s) < 2)
-		return -1;
-
-	Stream_Read_UINT16(s, str->cchString); /* cchString (2 bytes) */
-
-	if (str->cchString > 1024)
-		return -1;
-
-	if (Stream_GetRemainingLength(s) < (str->cchString * 2))
-		return -1;
-
-	Stream_Read(s, &(str->wString), (str->cchString * 2)); /* String (variable) */
 
 	return 1;
 }

@@ -26,6 +26,12 @@
 #include <freerdp/settings.h>
 #include <freerdp/listener.h>
 
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/channels/channels.h>
+
+#include <freerdp/server/encomsp.h>
+#include <freerdp/server/remdesk.h>
+
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
 
@@ -62,8 +68,16 @@ struct rdp_shadow_client
 
 	HANDLE thread;
 	BOOL activated;
+	BOOL inLobby;
+	BOOL mayView;
+	BOOL mayInteract;
 	HANDLE StopEvent;
 	rdpShadowServer* server;
+	rdpShadowSurface* lobby;
+
+	HANDLE vcm;
+	EncomspServerContext* encomsp;
+	RemdeskServerContext* remdesk;
 };
 
 struct rdp_shadow_server
@@ -77,6 +91,8 @@ struct rdp_shadow_server
 	rdpShadowSubsystem* subsystem;
 
 	DWORD port;
+	BOOL mayView;
+	BOOL mayInteract;
 	freerdp_listener* listener;
 	pfnShadowCreateSubsystem CreateSubsystem;
 };

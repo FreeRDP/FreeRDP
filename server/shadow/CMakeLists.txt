@@ -126,6 +126,8 @@ set(${MODULE_PREFIX}_SRCS
 	shadow_surface.h
 	shadow_encoder.c
 	shadow_encoder.h
+	shadow_channels.c
+	shadow_channels.h
 	shadow.c
 	shadow.h)
 
@@ -141,6 +143,8 @@ endif()
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "freerdp-shadow")
 
+list(APPEND ${MODULE_PREFIX}_LIBS freerdp-server)
+
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE freerdp
@@ -151,7 +155,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE winpr
 	MODULES winpr-sspi winpr-crt winpr-utils winpr-input winpr-sysinfo)
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-makecert-tool)
+list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

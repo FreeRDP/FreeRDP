@@ -16,27 +16,31 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_H
-#define FREERDP_SHADOW_SERVER_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include <freerdp/server/shadow.h>
+#include "shadow.h"
 
-#include "shadow_client.h"
-#include "shadow_input.h"
-#include "shadow_screen.h"
-#include "shadow_surface.h"
-#include "shadow_encoder.h"
 #include "shadow_channels.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+int shadow_client_channels_post_connect(rdpShadowClient* client)
+{
+	if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, ENCOMSP_SVC_CHANNEL_NAME))
+	{
+		client->encomsp = encomsp_server_context_new(client->vcm);
 
+		if (client->encomsp)
+			client->encomsp->Start(client->encomsp);
+	}
 
+	if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, REMDESK_SVC_CHANNEL_NAME))
+	{
+		client->remdesk = remdesk_server_context_new(client->vcm);
 
-#ifdef __cplusplus
+		if (client->remdesk)
+			client->remdesk->Start(client->remdesk);
+	}
+
+	return 0;
 }
-#endif
-
-#endif /* FREERDP_SHADOW_SERVER_H */
-

@@ -46,12 +46,26 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	settings->FrameMarkerCommandEnabled = TRUE;
 	settings->SurfaceFrameMarkerEnabled = TRUE;
 
+	client->inLobby = TRUE;
+	client->mayView = server->mayView;
+	client->mayInteract = server->mayInteract;
+
+	client->vcm = WTSOpenServerA((LPSTR) peer->context);
+
 	client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 }
 
 void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 {
+	WTSCloseServer((HANDLE) client->vcm);
+
 	CloseHandle(client->StopEvent);
+
+	if (client->lobby)
+	{
+		shadow_surface_free(client->lobby);
+		client->lobby = NULL;
+	}
 }
 
 BOOL shadow_client_capabilities(freerdp_peer* peer)
@@ -63,6 +77,8 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
 	rdpSettings* settings;
 	rdpShadowClient* client;
+	rdpShadowSurface* lobby;
+	RECTANGLE_16 invalidRect;
 
 	client = (rdpShadowClient*) peer->context;
 	settings = peer->settings;
@@ -76,6 +92,23 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 
 	peer->update->DesktopResize(peer->update->context);
 
+	shadow_client_channels_post_connect(client);
+
+	lobby = client->lobby = shadow_surface_new(client->server, 0, 0, settings->DesktopWidth, settings->DesktopHeight);
+
+	if (!client->lobby)
+		return FALSE;
+
+	freerdp_image_fill(lobby->data, PIXEL_FORMAT_XRGB32, lobby->scanline,
+			0, 0, lobby->width, lobby->height, 0x3BB9FF);
+
+	invalidRect.left = 0;
+	invalidRect.top = 0;
+	invalidRect.right = lobby->width;
+	invalidRect.bottom = lobby->height;
+
+	region16_union_rect(&(lobby->invalidRegion), &(lobby->invalidRegion), &invalidRect);
+
 	return TRUE;
 }
 
@@ -86,6 +119,7 @@ BOOL shadow_client_activate(freerdp_peer* peer)
 	client = (rdpShadowClient*) peer->context;
 
 	client->activated = TRUE;
+	client->inLobby = client->mayView ? FALSE : TRUE;
 
 	return TRUE;
 }
@@ -152,7 +186,8 @@ int shadow_client_send_surface_bits(rdpShadowClient* client)
 
 	server = client->server;
 	encoder = server->encoder;
-	surface = server->surface;
+
+	surface = client->inLobby ? client->lobby : server->surface;
 
 	surfaceRect.left = surface->x;
 	surfaceRect.top = surface->y;
