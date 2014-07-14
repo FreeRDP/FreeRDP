@@ -35,7 +35,9 @@ struct winpr_thread
 	WINPR_HANDLE_DEF();
 
 	BOOL started;
+	int pipe_fd[2];
 	BOOL mainProcess;
+	BOOL detached;
 	DWORD dwExitCode;
 	pthread_t thread;
 	SIZE_T dwStackSize;
@@ -43,6 +45,10 @@ struct winpr_thread
 	pthread_mutex_t mutex;
 	LPTHREAD_START_ROUTINE lpStartAddress;
 	LPSECURITY_ATTRIBUTES lpThreadAttributes;
+#if defined(WITH_DEBUG_THREADS)
+	void *create_stack[20];
+	void *exit_stack[20];
+#endif
 };
 typedef struct winpr_thread WINPR_THREAD;
 

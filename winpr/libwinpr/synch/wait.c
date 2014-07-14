@@ -107,33 +107,6 @@ static long long ts_difftime(const struct timespec* o,
 	return newValue - oldValue;
 }
 
-static int pthread_timedjoin_np(pthread_t td, void** res,
-								struct timespec* timeout)
-{
-	struct timespec timenow;
-	struct timespec sleepytime;
-	/* This is just to avoid a completely busy wait */
-	sleepytime.tv_sec = 0;
-	sleepytime.tv_nsec = 10000000; /* 10ms */
-
-	do
-	{
-		if (pthread_kill(td, 0))
-			return pthread_join(td, res);
-
-		nanosleep(&sleepytime, NULL);
-		clock_gettime(CLOCK_MONOTONIC, &timenow);
-
-		if (ts_difftime(timeout, &timenow) >= 0)
-		{
-			return ETIMEDOUT;
-		}
-	}
-	while (TRUE);
-
-	return ETIMEDOUT;
-}
-
 #if defined(__FreeBSD__)
 /*the only way to get it work is to remove the static*/
 int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec* timeout)
@@ -143,10 +116,13 @@ static int pthread_mutex_timedlock(pthread_mutex_t* mutex, const struct timespec
 {
 	struct timespec timenow;
 	struct timespec sleepytime;
+	unsigned long long diff;
 	int retcode;
 	/* This is just to avoid a completely busy wait */
-	sleepytime.tv_sec = 0;
-	sleepytime.tv_nsec = 10000000; /* 10ms */
+	clock_gettime(CLOCK_MONOTONIC, &timenow);
+	diff = ts_difftime(&timenow, timeout);
+	sleepytime.tv_sec = diff / 1000000000LL;
+	sleepytime.tv_nsec = diff % 1000000000LL;
 
 	while ((retcode = pthread_mutex_trylock(mutex)) == EBUSY)
 	{
@@ -223,43 +199,30 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 	if (Type == HANDLE_TYPE_THREAD)
 	{
-		int status = 0;
-		WINPR_THREAD* thread;
-		void* thread_status = NULL;
-		thread = (WINPR_THREAD*) Object;
+		void *thread_status;
+		int status;
+		WINPR_THREAD *thread = (WINPR_THREAD *)Object;
+		status = waitOnFd(thread->pipe_fd[0], dwMilliseconds);
 
-		if (thread->started)
+		if (status < 0)
 		{
-			if (dwMilliseconds != INFINITE)
-			{
-				struct timespec timeout;
-
-				/* pthread_timedjoin_np returns ETIMEDOUT in case the timeout is 0,
-				 * so set it to the smallest value to get a proper return value. */
-				if (dwMilliseconds == 0)
-					dwMilliseconds ++;
-
-				clock_gettime(CLOCK_MONOTONIC, &timeout);
-				ts_add_ms(&timeout, dwMilliseconds);
-				status = pthread_timedjoin_np(thread->thread, &thread_status, &timeout);
-
-				if (ETIMEDOUT == status)
-					return WAIT_TIMEOUT;
-			}
-			else
-				status = pthread_join(thread->thread, &thread_status);
-
-			thread->started = FALSE;
-
-			if (status != 0)
-			{
-				WLog_ERR(TAG, "pthread_join failure: [%d] %s",
-						 status, strerror(status));
-			}
-
-			if (thread_status)
-				thread->dwExitCode = ((DWORD)(size_t) thread_status);
+			WLog_ERR(TAG, "waitOnFd() failure [%d] %s", errno, strerror(errno));
+			return WAIT_FAILED;
 		}
+>
+		if (status != 1)
+			return WAIT_TIMEOUT;
+
+		status = pthread_join(thread->thread, &thread_status);
+
+		if (status != 0)
+		{
+			WLog_ERR(TAG, "pthread_join failure: [%d] %s",
+					status, strerror(status));
+		}
+
+		if (thread_status)
+			thread->dwExitCode = ((DWORD)(size_t) thread_status);
 	}
 	else if (Type == HANDLE_TYPE_PROCESS)
 	{
@@ -517,6 +480,17 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 				return WAIT_FAILED;
 			}
 		}
+		else if (Type == HANDLE_TYPE_THREAD)
+		{
+			WINPR_THREAD *thread = (WINPR_THREAD *) Object;
+			fd = thread->pipe_fd[0];
+
+			if (fd == -1)
+			{
+				WLog_ERR(TAG, "invalid thread file descriptor");
+				return WAIT_FAILED;
+			}
+		}
 		else if (Type == HANDLE_TYPE_NAMED_PIPE)
 		{
 			WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
@@ -604,6 +578,11 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 			WINPR_TIMER* timer = (WINPR_TIMER*) Object;
 			fd = timer->fd;
 		}
+		else if (Type == HANDLE_TYPE_THREAD)
+		{
+			WINPR_THREAD *thread = (WINPR_THREAD *) Object;
+			fd = thread->pipe_fd[0];
+		}
 		else if (Type == HANDLE_TYPE_NAMED_PIPE)
 		{
 			WINPR_NAMED_PIPE* pipe = (WINPR_NAMED_PIPE*) Object;
@@ -650,6 +629,23 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 
 					return WAIT_FAILED;
 				}
+			}
+			else if (Type == HANDLE_TYPE_THREAD)
+			{
+				void *thread_status;
+				int status;
+				WINPR_THREAD *thread = (WINPR_THREAD *)Object;
+				status = pthread_join(thread->thread, &thread_status);
+
+				if (status != 0)
+				{
+					WLog_ERR(TAG,  " pthread_join failure: [%d] %s",
+							status, strerror(status));
+					return WAIT_FAILED;
+				}
+
+				if (thread_status)
+					thread->dwExitCode = ((DWORD)(size_t) thread_status);
 			}
 
 			return (WAIT_OBJECT_0 + index);

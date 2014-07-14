@@ -127,20 +127,7 @@ BOOL CloseHandle(HANDLE hObject)
 
 	LeaveCriticalSection(&_HandleCloseCbsLock);
 
-	if (Type == HANDLE_TYPE_THREAD)
-	{
-		WINPR_THREAD* thread;
-		thread = (WINPR_THREAD*) Object;
-
-		if (thread->started)
-		{
-			pthread_detach(thread->thread);
-		}
-
-		free(thread);
-		return TRUE;
-	}
-	else if (Type == HANDLE_TYPE_PROCESS)
+	if (Type == HANDLE_TYPE_PROCESS)
 	{
 		WINPR_PROCESS* process;
 		process = (WINPR_PROCESS*) Object;
