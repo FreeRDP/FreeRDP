@@ -600,6 +600,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 	HANDLE events[32];
 	HANDLE StopEvent;
 	HANDLE ClientEvent;
+	HANDLE ChannelEvent;
 	freerdp_peer* peer;
 	rdpSettings* settings;
 	rdpShadowServer* server;
@@ -633,12 +634,14 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 	StopEvent = client->StopEvent;
 	ClientEvent = peer->GetEventHandle(peer);
+	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(client->vcm);
 
 	while (1)
 	{
 		nCount = 0;
 		events[nCount++] = StopEvent;
 		events[nCount++] = ClientEvent;
+		events[nCount++] = ChannelEvent;
 
 		cTime = GetTickCount64();
 		dwTimeout = (cTime > frameTime) ? 0 : frameTime - cTime;
@@ -655,6 +658,15 @@ void* shadow_client_thread(rdpShadowClient* client)
 			if (!peer->CheckFileDescriptor(peer))
 			{
 				fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
+				break;
+			}
+		}
+
+		if (WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0)
+		{
+			if (WTSVirtualChannelManagerCheckFileDescriptor(client->vcm) != TRUE)
+			{
+				fprintf(stderr, "WTSVirtualChannelManagerCheckFileDescriptor failure\n");
 				break;
 			}
 		}
