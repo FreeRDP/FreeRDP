@@ -128,7 +128,11 @@ set(${MODULE_PREFIX}_SRCS
 	shadow_encoder.h
 	shadow_channels.c
 	shadow_channels.h
-	shadow.c
+	shadow_encomsp.c
+	shadow_encomsp.h
+	shadow_remdesk.c
+	shadow_remdesk.h
+	shadow_server.c
 	shadow.h)
 
 set(${MODULE_PREFIX}_X11_SRCS

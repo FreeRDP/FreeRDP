@@ -25,9 +25,82 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
-#include "encomsp_common.h"
-
 #include "encomsp_main.h"
+
+static int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
+		return -1;
+
+	Stream_Read_UINT16(s, header->Type); /* Type (2 bytes) */
+	Stream_Read_UINT16(s, header->Length); /* Length (2 bytes) */
+
+	return 1;
+}
+
+static int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	Stream_Write_UINT16(s, header->Type); /* Type (2 bytes) */
+	Stream_Write_UINT16(s, header->Length); /* Length (2 bytes) */
+
+	return 1;
+}
+
+static int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
+{
+	ZeroMemory(str, sizeof(ENCOMSP_UNICODE_STRING));
+
+	if (Stream_GetRemainingLength(s) < 2)
+		return -1;
+
+	Stream_Read_UINT16(s, str->cchString); /* cchString (2 bytes) */
+
+	if (str->cchString > 1024)
+		return -1;
+
+	if (Stream_GetRemainingLength(s) < (str->cchString * 2))
+		return -1;
+
+	Stream_Read(s, &(str->wString), (str->cchString * 2)); /* String (variable) */
+
+	return 1;
+}
+
+static int encomsp_recv_change_participant_control_level_pdu(EncomspServerContext* context, wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	int beg, end;
+	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
+
+	beg = ((int) Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
+
+	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
+
+	if (Stream_GetRemainingLength(s) < 6)
+		return -1;
+
+	Stream_Read_UINT16(s, pdu.Flags); /* Flags (2 bytes) */
+	Stream_Read_UINT32(s, pdu.ParticipantId); /* ParticipantId (4 bytes) */
+
+	end = (int) Stream_GetPosition(s);
+
+	if ((beg + header->Length) < end)
+		return -1;
+
+	if ((beg + header->Length) > end)
+	{
+		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+			return -1;
+
+		Stream_SetPosition(s, (beg + header->Length));
+	}
+
+	if (context->ChangeParticipantControlLevel)
+	{
+		return context->ChangeParticipantControlLevel(context, &pdu);
+	}
+
+	return 1;
+}
 
 static int encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
 {
@@ -41,53 +114,10 @@ static int encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
 
 		printf("EncomspReceive: Type: %d Length: %d\n", header.Type, header.Length);
 
-		return 1;
-
-#if 0
 		switch (header.Type)
 		{
-			case ODTYPE_FILTER_STATE_UPDATED:
-				status = encomsp_recv_filter_updated_pdu(context, s, &header);
-				break;
-
-			case ODTYPE_APP_REMOVED:
-				status = encomsp_recv_application_removed_pdu(context, s, &header);
-				break;
-
-			case ODTYPE_APP_CREATED:
-				status = encomsp_recv_application_created_pdu(context, s, &header);
-				break;
-
-			case ODTYPE_WND_REMOVED:
-				status = encomsp_recv_window_removed_pdu(context, s, &header);
-				break;
-
-			case ODTYPE_WND_CREATED:
-				status = encomsp_recv_window_created_pdu(context, s, &header);
-				break;
-
-			case ODTYPE_WND_SHOW:
-				status = encomsp_recv_show_window_pdu(context, s, &header);
-				break;
-
-			case ODTYPE_PARTICIPANT_REMOVED:
-				status = encomsp_recv_participant_removed_pdu(context, s, &header);
-				break;
-
-			case ODTYPE_PARTICIPANT_CREATED:
-				status = encomsp_recv_participant_created_pdu(context, s, &header);
-				break;
-
 			case ODTYPE_PARTICIPANT_CTRL_CHANGED:
 				status = encomsp_recv_change_participant_control_level_pdu(context, s, &header);
-				break;
-
-			case ODTYPE_GRAPHICS_STREAM_PAUSED:
-				status = encomsp_recv_graphics_stream_paused_pdu(context, s, &header);
-				break;
-
-			case ODTYPE_GRAPHICS_STREAM_RESUMED:
-				status = encomsp_recv_graphics_stream_resumed_pdu(context, s, &header);
 				break;
 
 			default:
@@ -97,7 +127,6 @@ static int encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
 
 		if (status < 0)
 			return -1;
-#endif
 	}
 
 	return status;
@@ -112,6 +141,7 @@ static void* encomsp_server_thread(void* arg)
 	HANDLE events[8];
 	HANDLE ChannelEvent;
 	DWORD BytesReturned;
+	ENCOMSP_ORDER_HEADER* header;
 	EncomspServerContext* context;
 
 	context = (EncomspServerContext*) arg;
@@ -154,7 +184,18 @@ static void* encomsp_server_thread(void* arg)
 			Stream_EnsureRemainingCapacity(s, BytesReturned);
 		}
 
-		encomsp_server_receive_pdu(context, s);
+		if (Stream_GetPosition(s) >= ENCOMSP_ORDER_HEADER_SIZE)
+		{
+			header = (ENCOMSP_ORDER_HEADER*) Stream_Buffer(s);
+
+			if (header->Length >= Stream_GetPosition(s))
+			{
+				Stream_SealLength(s);
+				Stream_SetPosition(s, 0);
+				encomsp_server_receive_pdu(context, s);
+				Stream_SetPosition(s, 0);
+			}
+		}
 	}
 
 	Stream_Free(s, TRUE);

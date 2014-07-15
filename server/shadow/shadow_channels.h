@@ -24,6 +24,9 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
+#include "shadow_encomsp.h"
+#include "shadow_remdesk.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
