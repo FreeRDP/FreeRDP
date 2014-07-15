@@ -29,7 +29,7 @@
 
 /**
  * api-ms-win-core-processthreads-l1-1-1.dll
- * 
+ *
  * CreateRemoteThread
  * CreateRemoteThreadEx
  * CreateThread
@@ -93,11 +93,12 @@
 #include "../handle/handle.h"
 
 static pthread_once_t thread_initialized = PTHREAD_ONCE_INIT;
+
 static HANDLE_CLOSE_CB _ThreadHandleCloseCb;
 static wListDictionary *thread_list = NULL;
 
 static BOOL ThreadCloseHandle(HANDLE handle);
-static void cleanup_handle(WINPR_THREAD *thread);
+static void cleanup_handle(void *obj);
 
 static BOOL ThreadIsHandled(HANDLE handle)
 {
@@ -219,18 +220,53 @@ static int thread_compare(void *a, void *b)
 	return rc;
 }
 
-void winpr_StartThread(WINPR_THREAD *thread)
+/* Thread launcher function responsible for registering
+ * cleanup handlers and calling pthread_exit, if not done
+ * in thread function. */
+static void *thread_launcher(void *arg)
+{
+	void *rc = NULL;
+	WINPR_THREAD *thread = (WINPR_THREAD *)arg;
+
+	if (!thread)
+	{
+		fprintf(stderr, "[%s]: Called with invalid argument %p\n", __FUNCTION__, arg);
+		goto exit;
+	}
+	else
+	{
+		void *(*fkt)(void *) = (void *)thread->lpStartAddress;
+
+		if (!fkt)
+		{
+			fprintf(stderr, "[%s]: Thread function argument is %p\n", fkt);
+			goto exit;
+		}
+
+		rc = fkt(thread->lpParameter);
+	}
+
+exit:
+	set_event(thread);
+	thread->dwExitCode = (DWORD)(size_t)rc;
+
+	if (thread->detached || !thread->started)
+		cleanup_handle(thread);
+
+	pthread_exit(rc);
+	return rc;
+}
+
+static void winpr_StartThread(WINPR_THREAD *thread)
 {
 	pthread_attr_t attr;
-
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	if (thread->dwStackSize > 0)
 		pthread_attr_setstacksize(&attr, (size_t) thread->dwStackSize);
 
-	pthread_create(&thread->thread, &attr, (pthread_start_routine) thread->lpStartAddress, thread->lpParameter);
-
+	pthread_create(&thread->thread, &attr, thread_launcher, thread);
 	pthread_attr_destroy(&attr);
 	reset_event(thread);
 	ListDictionary_Add(thread_list, &thread->thread, thread);
@@ -238,12 +274,11 @@ void winpr_StartThread(WINPR_THREAD *thread)
 }
 
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
-	LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
+					LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
 	HANDLE handle;
-	WINPR_THREAD* thread;
-
-	thread = (WINPR_THREAD*) calloc(1, sizeof(WINPR_THREAD));
+	WINPR_THREAD *thread;
+	thread = (WINPR_THREAD *) calloc(1, sizeof(WINPR_THREAD));
 
 	if (!thread)
 		return NULL;
@@ -278,7 +313,6 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 
 #endif
 	pthread_mutex_init(&thread->mutex, 0);
-
 	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
 	handle = (HANDLE) thread;
 
@@ -296,21 +330,23 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	return handle;
 }
 
-void cleanup_handle(WINPR_THREAD *thread)
+void cleanup_handle(void *obj)
 {
-	ListDictionary_Remove(thread_list, &thread->thread);
+	WINPR_THREAD *thread = (WINPR_THREAD *)obj;
 	int rc = pthread_mutex_destroy(&thread->mutex);
 
 	if (rc)
-	{
-		fprintf(stderr, "[%s]: failed to destroy mutex [%d] %s (%d)\n", __FUNCTION__,  rc, strerror(errno), errno);
-	}
+		fprintf(stderr, "[%s]: failed to destroy mutex [%d] %s (%d)\n",
+				__FUNCTION__,  rc, strerror(errno), errno);
 
 	if (thread->pipe_fd[0])
 		close(thread->pipe_fd[0]);
 
 	if (thread->pipe_fd[1])
 		close(thread->pipe_fd[1]);
+
+	if (thread_list && ListDictionary_Contains(thread_list, &thread->thread))
+		ListDictionary_Remove(thread_list, &thread->thread);
 
 	free(thread);
 }
@@ -334,17 +370,14 @@ BOOL ThreadCloseHandle(HANDLE handle)
 		ListDictionary_Lock(thread_list);
 		dump_thread(thread);
 
-		if (!thread->started)
-			cleanup_handle(thread);
-		else if (WaitForSingleObject(thread, 0) == WAIT_OBJECT_0)
-			cleanup_handle(thread);
-		else
+		if ((thread->started) && (WaitForSingleObject(thread, 0) != WAIT_OBJECT_0))
 		{
 			fprintf(stderr, "[%s]: Thread running, setting to detached state!\n", __FUNCTION__);
 			thread->detached = TRUE;
 			pthread_detach(thread->thread);
 		}
-
+		else
+			cleanup_handle(thread);
 		ListDictionary_Unlock(thread_list);
 
 		if (ListDictionary_Count(thread_list) < 1)
@@ -358,7 +391,7 @@ BOOL ThreadCloseHandle(HANDLE handle)
 }
 
 HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
-		LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
+						  LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
 	fprintf(stderr, "[%s]: not implemented\n", __FUNCTION__);
 	return NULL;
@@ -366,6 +399,7 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
 
 VOID ExitThread(DWORD dwExitCode)
 {
+#if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
 	pthread_t tid = pthread_self();
 
 	if (NULL == thread_list)
@@ -388,37 +422,25 @@ VOID ExitThread(DWORD dwExitCode)
 		ListDictionary_Lock(thread_list);
 		thread = ListDictionary_GetItemValue(thread_list, &tid);
 		assert(thread);
-#if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
 		backtrace(thread->exit_stack, 20);
-#endif
-
-		if (!thread->detached)
-		{
-			set_event(thread);
-			thread->dwExitCode = dwExitCode;
-		}
-		else
-			cleanup_handle(thread);
-
 		ListDictionary_Unlock(thread_list);
 	}
 
-	pthread_exit((void *)(size_t) dwExitCode);
+#endif
+	fprintf(stderr, "[%s] terminated...\n", __FUNCTION__);
 }
 
 BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 {
 	ULONG Type;
 	PVOID Object;
-	WINPR_THREAD* thread;
+	WINPR_THREAD *thread;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
 		return FALSE;
 
-	thread = (WINPR_THREAD*) Object;
-
+	thread = (WINPR_THREAD *) Object;
 	*lpExitCode = thread->dwExitCode;
-
 	return TRUE;
 }
 
@@ -460,13 +482,12 @@ DWORD ResumeThread(HANDLE hThread)
 {
 	ULONG Type;
 	PVOID Object;
-	WINPR_THREAD* thread;
+	WINPR_THREAD *thread;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
 		return 0;
 
-	thread = (WINPR_THREAD*) Object;
-
+	thread = (WINPR_THREAD *) Object;
 	pthread_mutex_lock(&thread->mutex);
 
 	if (!thread->started)
@@ -475,7 +496,6 @@ DWORD ResumeThread(HANDLE hThread)
 		fprintf(stderr, "[%s]: Thread already started!\n", __FUNCTION__);
 
 	pthread_mutex_unlock(&thread->mutex);
-
 	return 0;
 }
 
@@ -494,23 +514,19 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 {
 	ULONG Type;
 	PVOID Object;
-	WINPR_THREAD* thread;
+	WINPR_THREAD *thread;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
 		return 0;
 
-	thread = (WINPR_THREAD*) Object;
-
+	thread = (WINPR_THREAD *) Object;
 	pthread_mutex_lock(&thread->mutex);
-
 #ifndef ANDROID
 	pthread_cancel(thread->thread);
 #else
 	fprintf(stderr, "[%s]: Function not supported on this platform!\n", __FUNCTION__);
 #endif
-
 	pthread_mutex_unlock(&thread->mutex);
-
 	return TRUE;
 }
 
@@ -557,7 +573,6 @@ VOID DumpThreadHandles(void)
 
 		if (keys)
 			free(keys);
-
 		ListDictionary_Unlock(thread_list);
 	}
 
