@@ -169,6 +169,8 @@ BOOL freerdp_connect(freerdp* instance)
 				update_recv_surfcmds(update, Stream_Length(s) , s);
 				update->EndPaint(update->context);
 				Stream_Release(s);
+			
+				StreamPool_Return(rdp->transport->ReceivePool, s);
 			}
 
 			pcap_close(update->pcap_rfx);
@@ -195,14 +197,43 @@ BOOL freerdp_connect(freerdp* instance)
 	return status;
 }
 
-BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
+HANDLE *freerdp_get_event_handles(freerdp *instance, HANDLE *handles, DWORD *count)
 {
+	HANDLE *hdl1, *hdl2;
 	rdpRdp* rdp;
+	if (!instance || !count || !instance->context || !instance->context->rdp)
+	{
+		DEBUG_WARN("instance || !count || !instance->context || !instance->context->rdp=%p",
+				   instance, count, instance ? instance->context : NULL,
+			   instance ? instance->context ? instance->context->rdp : NULL : NULL);
+		return NULL;
+	}
+
+	if (!instance->context || !instance->context->rdp)
+	{
+		DEBUG_WARN("instance->context=%p instance->context->rdp=%p", instance->context, instance->context ? instance->context->rdp : NULL);
+		return NULL;
+	}
 
 	rdp = instance->context->rdp;
-	transport_get_fds(rdp->transport, rfds, rcount);
 
-	return TRUE;
+	if (!rdp)
+	{
+		DEBUG_WARN("rdp=%p", rdp);
+		return NULL;
+	}
+
+	hdl1 = update_get_event_handles(rdp->update, handles, count);
+
+	if (!hdl1)
+		return NULL;
+
+	hdl2 = transport_get_event_handles(rdp->transport, hdl1, count);
+
+	if (!hdl2)
+		return hdl1;
+
+	return hdl2;
 }
 
 BOOL freerdp_check_fds(freerdp* instance)
@@ -317,6 +348,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 	rdp = instance->context->rdp;
 	transport_disconnect(rdp->transport);
 
+	update_post_disconnect(instance->update);
 	IFCALL(instance->PostDisconnect, instance);
 
 	if (instance->update->pcap_rfx)

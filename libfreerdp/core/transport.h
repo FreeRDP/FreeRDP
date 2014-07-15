@@ -98,12 +98,17 @@ BOOL transport_accept_nla(rdpTransport* transport);
 void transport_stop(rdpTransport* transport);
 int transport_read(rdpTransport* transport, wStream* s);
 int transport_write(rdpTransport* transport, wStream* s);
-void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
+/* This function takes the malloced array 'handles' of 'count'
+ * size, resizes the array with 'realloc' and stores the new size in 'count'
+ * and returns the updated array.
+ * if 'handles' is NULL, a new array is allocated.
+ * if 'count' is NULL, the function will return NULL.
+ */
+HANDLE *transport_get_event_handles(rdpTransport *transport, HANDLE *handles, DWORD *count);
 int transport_check_fds(rdpTransport* transport);
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
 void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled);
 void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode);
-void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count);
 BOOL tranport_is_write_blocked(rdpTransport* transport);
 int tranport_drain_output_buffer(rdpTransport* transport);
 

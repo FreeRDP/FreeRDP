@@ -22,6 +22,7 @@
 #endif
 
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -132,7 +133,6 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 	tsg = (rdpTsg*) bio->ptr;
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
-
 	status = tsg_write(tsg, (BYTE*) buf, num);
 
 	if (status < 0)
@@ -196,6 +196,7 @@ static int transport_bio_tsg_new(BIO* bio)
 	bio->num = 0;
 	bio->ptr = NULL;
 	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+
 	return 1;
 }
 
@@ -224,6 +225,8 @@ BIO_METHOD* BIO_s_tsg(void)
 {
 	return &transport_bio_tsg_methods;
 }
+
+
 
 BOOL transport_connect_tls(rdpTransport* transport)
 {
@@ -384,15 +387,12 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	if (!transport->TlsIn)
 	{
 		transport->TlsIn = tls_new(settings);
-
 		if (!transport->TlsIn)
 			return FALSE;
 	}
-
 	if (!transport->TlsOut)
 	{
 		transport->TlsOut = tls_new(settings);
-
 		if (!transport->TlsOut)
 			return FALSE;
 	}
@@ -407,7 +407,6 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	transport->TlsIn->isGatewayTransport = TRUE;
 
 	tls_status = tls_connect(transport->TlsIn, transport->TcpIn->bufferedBio);
-
 	if (tls_status < 1)
 	{
 		if (tls_status < 0)
@@ -427,7 +426,6 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	transport->TlsOut->isGatewayTransport = TRUE;
 
 	tls_status = tls_connect(transport->TlsOut, transport->TcpOut->bufferedBio);
-
 	if (tls_status < 1)
 	{
 		if (tls_status < 0)
@@ -449,7 +447,6 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 	transport->frontBio = BIO_new(BIO_s_tsg());
 	transport->frontBio->ptr = tsg;
-
 	return TRUE;
 }
 
@@ -476,7 +473,6 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 		if (!transport_tsg_connect(transport, hostname, port))
 			return FALSE;
-
 		status = TRUE;
 	}
 	else
@@ -655,6 +651,7 @@ static int transport_wait_for_read(rdpTransport* transport)
 	return 0;
 }
 
+
 static int transport_wait_for_write(rdpTransport* transport)
 {
 	rdpTcp *tcpOut;
@@ -672,6 +669,7 @@ static int transport_wait_for_write(rdpTransport* transport)
 	USleep(1000);
 	return 0;
 }
+
 
 int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 {
@@ -720,6 +718,8 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 
 	return read;
 }
+
+
 
 int transport_read(rdpTransport* transport, wStream* s)
 {
@@ -946,51 +946,56 @@ int transport_write(rdpTransport* transport, wStream* s)
 	return status;
 }
 
-void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
+HANDLE *transport_get_event_handles(rdpTransport *transport, HANDLE *handles, DWORD *count)
 {
-	void* pfd;
+	HANDLE *hdl;
+	DWORD cnt = 7;
+
+	if (!count)
+	{
+		DEBUG_WARN("count=%p", count);
+		return NULL;
+	}
+
+	/* Allocate the maximum number of event handles that can be added.
+	 * Bit of a waste, but works ;) */
+	cnt += *count;
+	hdl = realloc(handles, cnt * sizeof(HANDLE));
+
+	if (!hdl)
+	{
+		DEBUG_WARN("could not realloc to size %08X: %s (%d)", cnt,
+				   strerror(errno), errno);
+		return NULL;
+	}
+
+	if (transport->async)
+		hdl[(*count)++] = transport->thread;
 
 #ifdef _WIN32
-	rfds[*rcount] = transport->TcpIn->wsa_event;
-	(*rcount)++;
+	hdl[(*count)++] = transport->TcpIn->wsa_event;
 
 	if (transport->SplitInputOutput)
-	{
-		rfds[*rcount] = transport->TcpOut->wsa_event;
-		(*rcount)++;
-	}
+		hdl[(*count)++] = transport->TcpOut->wsa_event;
 #else
-	rfds[*rcount] = (void*)(long)(transport->TcpIn->sockfd);
-	(*rcount)++;
+	hdl[(*count)++] = tcp_get_event_handle(transport->TcpIn);
 
 	if (transport->SplitInputOutput)
 	{
-		rfds[*rcount] = (void*)(long)(transport->TcpOut->sockfd);
-		(*rcount)++;
+		hdl[(*count)++] = tcp_get_event_handle(transport->TcpOut);
 	}
 #endif
 
-	pfd = GetEventWaitObject(transport->ReceiveEvent);
-
-	if (pfd)
-	{
-		rfds[*rcount] = pfd;
-		(*rcount)++;
-	}
+	if (transport->ReceiveEvent)
+		hdl[(*count++)] = transport->ReceiveEvent;
 
 	if (transport->GatewayEvent)
-	{
-		pfd = GetEventWaitObject(transport->GatewayEvent);
+		hdl[(*count++)] = transport->GatewayEvent;
 
-		if (pfd)
-		{
-			rfds[*rcount] = pfd;
-			(*rcount)++;
-		}
-	}
+	return hdl;
 }
 
-void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count)
+static void transport_get_read_handles(rdpTransport *transport, HANDLE *events, DWORD *count)
 {
 	events[*count] = tcp_get_event_handle(transport->TcpIn);
 	(*count)++;
@@ -1272,7 +1277,6 @@ static void* transport_client_thread(void* arg)
 		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
 
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
-
 		if (transport->layer == TRANSPORT_LAYER_CLOSED)
 		{
 			rdpRdp* rdp = (rdpRdp*) transport->rdp;

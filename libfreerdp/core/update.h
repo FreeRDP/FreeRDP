@@ -40,10 +40,12 @@
 rdpUpdate* update_new(rdpRdp* rdp);
 void update_free(rdpUpdate* update);
 
+HANDLE *update_get_event_handles(rdpUpdate *update, HANDLE *handles, DWORD *count);
 void update_free_bitmap(BITMAP_UPDATE* bitmap_update);
 
 void update_reset_state(rdpUpdate* update);
 void update_post_connect(rdpUpdate* update);
+void update_post_disconnect(rdpUpdate* update);
 
 BOOL update_read_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bitmapUpdate);
 BOOL update_read_palette(rdpUpdate* update, wStream* s, PALETTE_UPDATE* palette_update);

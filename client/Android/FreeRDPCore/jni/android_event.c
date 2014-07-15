@@ -154,19 +154,6 @@ int android_process_event(ANDROID_EVENT_QUEUE * queue, freerdp * inst)
 	return 0;
 }
 
-BOOL android_get_fds(freerdp * inst, void ** read_fds,
-		int * read_count, void ** write_fds, int * write_count)
-{
-	androidContext* aCtx = (androidContext*)inst->context;
-	if (aCtx->event_queue->pipe_fd[0] == -1)
-		return TRUE;
-
-	read_fds[*read_count] = (void *)(long) aCtx->event_queue->pipe_fd[0];
-
-	(*read_count)++;
-	return TRUE;
-}
-
 BOOL android_check_fds(freerdp * inst)
 {
 	androidContext* aCtx = (androidContext*)inst->context;

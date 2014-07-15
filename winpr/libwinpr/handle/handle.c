@@ -133,20 +133,7 @@ BOOL CloseHandle(HANDLE hObject)
 
 	LeaveCriticalSection(&_HandleCloseCbsLock);
 
-
-	if (Type == HANDLE_TYPE_THREAD)
-	{
-		WINPR_THREAD* thread;
-
-		thread = (WINPR_THREAD*) Object;
-		if (thread->started) {
-			pthread_detach(thread->thread);
-		}
-		free(thread);
-
-		return TRUE;
-	}
-	else if (Type == HANDLE_TYPE_PROCESS)
+	if (Type == HANDLE_TYPE_PROCESS)
 	{
 		WINPR_PROCESS* process;
 
@@ -261,7 +248,7 @@ BOOL CloseHandle(HANDLE hObject)
 		if (pNamedPipe->clientfd != -1) {
 			//fprintf(stderr, "%s: closing clientfd %d\n", __FUNCTION__, pNamedPipe->clientfd);
 			close(pNamedPipe->clientfd);
-		}
+				}
 		if (pNamedPipe->serverfd != -1) {
 			//fprintf(stderr, "%s: closing serverfd %d\n", __FUNCTION__, pNamedPipe->serverfd);
 			close(pNamedPipe->serverfd);

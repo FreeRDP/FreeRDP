@@ -32,29 +32,24 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
+  int exit = 0;
 	int status;
 	HANDLE thread;
-	xfContext* xfc;
+	xfContext *xfc;
 	DWORD dwExitCode;
-	rdpContext* context;
-	rdpSettings* settings;
+	rdpContext *context;
+	rdpSettings *settings;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-
 	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
 	clientEntryPoints.Version = RDP_CLIENT_INTERFACE_VERSION;
-
 	RdpClientEntry(&clientEntryPoints);
-
 	context = freerdp_client_context_new(&clientEntryPoints);
-
 	settings = context->settings;
-	xfc = (xfContext*) context;
-
+	xfc = (xfContext *) context;
 	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv);
-
 	status = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
 
 	if (status)
@@ -63,20 +58,22 @@ int main(int argc, char* argv[])
 			xf_list_monitors(xfc);
 
 		freerdp_client_context_free(context);
-		return 0;
+		goto cleanup;
 	}
 
 	freerdp_client_start(context);
-
 	thread = freerdp_client_get_thread(context);
-
 	WaitForSingleObject(thread, INFINITE);
-
 	GetExitCodeThread(thread, &dwExitCode);
-
+	CloseHandle(thread);
 	freerdp_client_stop(context);
-
 	freerdp_client_context_free(context);
+	exit = xf_exit_code_from_disconnect_reason(dwExitCode);
 
-	return xf_exit_code_from_disconnect_reason(dwExitCode);
+cleanup:
+#if defined(WITH_DEBUG_THREADS)
+  DumpThreadHandles();
+#endif
+
+  return exit;
 }

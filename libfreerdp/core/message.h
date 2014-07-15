@@ -31,7 +31,7 @@
 
 struct rdp_update_proxy
 {
-	rdpUpdate* update;
+	rdpUpdate *update;
 
 	/* Update */
 
@@ -120,15 +120,20 @@ struct rdp_update_proxy
 	pPointerColor PointerColor;
 	pPointerNew PointerNew;
 	pPointerCached PointerCached;
+
+	HANDLE thread;
 };
 
-int update_message_queue_process_message(rdpUpdate* update, wMessage* message);
-int update_message_queue_free_message(wMessage* message);
+int update_message_queue_process_message(rdpUpdate *update, wMessage *message);
+int update_message_queue_free_message(wMessage *message);
 
-int update_message_queue_process_pending_messages(rdpUpdate* update);
+int update_message_queue_process_pending_messages(rdpUpdate *update);
 
-rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update);
-void update_message_proxy_free(rdpUpdateProxy* message);
+rdpUpdateProxy *update_message_proxy_new(rdpUpdate *update);
+void update_message_proxy_free(rdpUpdateProxy *message);
+
+HANDLE *update_message_proxy_get_event_handles(rdpUpdateProxy *message,
+		HANDLE *handles, DWORD *count);
 
 /**
  * Input Message Queue
@@ -138,7 +143,7 @@ void update_message_proxy_free(rdpUpdateProxy* message);
 
 struct rdp_input_proxy
 {
-	rdpInput* input;
+	rdpInput *input;
 
 	/* Input */
 
@@ -149,11 +154,11 @@ struct rdp_input_proxy
 	pExtendedMouseEvent ExtendedMouseEvent;
 };
 
-int input_message_queue_process_message(rdpInput* input, wMessage* message);
-int input_message_queue_free_message(wMessage* message);
-int input_message_queue_process_pending_messages(rdpInput* input);
+int input_message_queue_process_message(rdpInput *input, wMessage *message);
+int input_message_queue_free_message(wMessage *message);
+int input_message_queue_process_pending_messages(rdpInput *input);
 
-rdpInputProxy* input_message_proxy_new(rdpInput* input);
-void input_message_proxy_free(rdpInputProxy* proxy);
+rdpInputProxy *input_message_proxy_new(rdpInput *input);
+void input_message_proxy_free(rdpInputProxy *proxy);
 
 #endif /* FREERDP_CORE_MESSAGE_PRIVATE_H */

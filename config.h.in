@@ -27,7 +27,7 @@
 #cmakedefine HAVE_POLL_H
 #cmakedefine HAVE_PTHREAD_GNU_EXT
 #cmakedefine HAVE_VALGRIND_MEMCHECK_H
-
+#cmakedefine HAVE_EXECINFO_H
 
 /* Options */
 #cmakedefine WITH_PROFILER
@@ -80,6 +80,7 @@
 #cmakedefine WITH_DEBUG_SVC
 #cmakedefine WITH_DEBUG_RDPEI
 #cmakedefine WITH_DEBUG_TIMEZONE
+#cmakedefine WITH_DEBUG_THREADS
 #cmakedefine WITH_DEBUG_TRANSPORT
 #cmakedefine WITH_DEBUG_WND
 #cmakedefine WITH_DEBUG_X11

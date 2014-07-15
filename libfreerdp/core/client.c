@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+#include <errno.h>
 #include "rdp.h"
 
 #include "client.h"
@@ -72,14 +74,27 @@ rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const char* na
 	return NULL;
 }
 
+/**
+ * this is called shortly after the application starts and
+ * before any other function in the file
+ * called only from main thread
+ */
+int freerdp_channels_global_init(void)
+{
+	return 0;
+}
+
+int freerdp_channels_global_uninit(void)
+{
+	return 0;
+}
+
 rdpChannels* freerdp_channels_new(void)
 {
 	rdpChannels* channels;
 
-	channels = (rdpChannels*) calloc(1, sizeof(rdpChannels));
-
-	if (!channels)
-		return NULL;
+	channels = (rdpChannels*) malloc(sizeof(rdpChannels));
+	ZeroMemory(channels, sizeof(rdpChannels));
 
 	channels->MsgPipe = MessagePipe_New();
 
@@ -267,6 +282,10 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, wMessage* eve
 
 	switch (GetMessageClass(event->id))
 	{
+		case DebugChannel_Class:
+			name = "rdpdbg";
+			break;
+
 		case CliprdrChannel_Class:
 			name = "cliprdr";
 			break;
