@@ -28,7 +28,7 @@
 
 #include "../handle/handle.h"
 
-typedef void *(*pthread_start_routine)(void*);
+typedef void *(*pthread_start_routine)(void *);
 
 struct winpr_thread
 {
@@ -38,6 +38,7 @@ struct winpr_thread
 	int pipe_fd[2];
 	BOOL mainProcess;
 	BOOL detached;
+	BOOL exited;
 	DWORD dwExitCode;
 	pthread_t thread;
 	SIZE_T dwStackSize;

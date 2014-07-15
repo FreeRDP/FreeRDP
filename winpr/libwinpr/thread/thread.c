@@ -248,7 +248,9 @@ static void *thread_launcher(void *arg)
 
 exit:
 	set_event(thread);
-	thread->dwExitCode = (DWORD)(size_t)rc;
+
+	if (!thread->exited)
+		thread->dwExitCode = (DWORD)(size_t)rc;
 
 	if (thread->detached || !thread->started)
 		cleanup_handle(thread);
@@ -378,6 +380,7 @@ BOOL ThreadCloseHandle(HANDLE handle)
 		}
 		else
 			cleanup_handle(thread);
+
 		ListDictionary_Unlock(thread_list);
 
 		if (ListDictionary_Count(thread_list) < 1)
@@ -399,7 +402,6 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
 
 VOID ExitThread(DWORD dwExitCode)
 {
-#if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
 	pthread_t tid = pthread_self();
 
 	if (NULL == thread_list)
@@ -422,12 +424,13 @@ VOID ExitThread(DWORD dwExitCode)
 		ListDictionary_Lock(thread_list);
 		thread = ListDictionary_GetItemValue(thread_list, &tid);
 		assert(thread);
+		thread->exited = TRUE;
+		thread->dwExitCode = dwExitCode;
+#if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
 		backtrace(thread->exit_stack, 20);
+#endif
 		ListDictionary_Unlock(thread_list);
 	}
-
-#endif
-	fprintf(stderr, "[%s] terminated...\n", __FUNCTION__);
 }
 
 BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
@@ -573,6 +576,7 @@ VOID DumpThreadHandles(void)
 
 		if (keys)
 			free(keys);
+
 		ListDictionary_Unlock(thread_list);
 	}
 
