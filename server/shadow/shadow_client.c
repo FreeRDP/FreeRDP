@@ -173,6 +173,8 @@ BOOL shadow_client_activate(freerdp_peer* peer)
 	client->activated = TRUE;
 	client->inLobby = client->mayView ? FALSE : TRUE;
 
+	shadow_encoder_reset(client->server->encoder);
+
 	return TRUE;
 }
 

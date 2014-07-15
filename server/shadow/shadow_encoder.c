@@ -112,29 +112,16 @@ int shadow_encoder_grid_uninit(rdpShadowEncoder* encoder)
 	return 0;
 }
 
-rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server)
+int shadow_encoder_init(rdpShadowEncoder* encoder)
 {
 	DWORD planarFlags;
-	rdpShadowEncoder* encoder;
 
-	encoder = (rdpShadowEncoder*) calloc(1, sizeof(rdpShadowEncoder));
-
-	if (!encoder)
-		return NULL;
-
-	encoder->server = server;
-
-	encoder->width = server->screen->width;
-	encoder->height = server->screen->height;
-
-	encoder->bitsPerPixel = 32;
-	encoder->bytesPerPixel = 4;
 	encoder->scanline = (encoder->width + (encoder->width % 4)) * 4;
 
 	encoder->data = (BYTE*) malloc(encoder->scanline * encoder->height);
 
 	if (!encoder->data)
-		return NULL;
+		return -1;
 
 	encoder->maxTileWidth = 64;
 	encoder->maxTileHeight = 64;
@@ -169,6 +156,92 @@ rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server)
 	encoder->frameAck = TRUE;
 	encoder->frameList = ListDictionary_New(TRUE);
 
+	return 1;
+}
+
+int shadow_encoder_uninit(rdpShadowEncoder* encoder)
+{
+	if (encoder->bs)
+	{
+		Stream_Free(encoder->bs, TRUE);
+		encoder->bs = NULL;
+	}
+
+	if (encoder->bts)
+	{
+		Stream_Free(encoder->bts, TRUE);
+		encoder->bts = NULL;
+	}
+
+	if (encoder->rfx_s)
+	{
+		Stream_Free(encoder->rfx_s, TRUE);
+		encoder->rfx_s = NULL;
+	}
+
+	if (encoder->rfx)
+	{
+		rfx_context_free(encoder->rfx);
+		encoder->rfx = NULL;
+	}
+
+	if (encoder->nsc_s)
+	{
+		Stream_Free(encoder->nsc_s, TRUE);
+		encoder->nsc_s = NULL;
+	}
+
+	if (encoder->nsc)
+	{
+		nsc_context_free(encoder->nsc);
+		encoder->nsc = NULL;
+	}
+
+	if (encoder->planar)
+	{
+		freerdp_bitmap_planar_context_free(encoder->planar);
+		encoder->planar = NULL;
+	}
+
+	shadow_encoder_grid_uninit(encoder);
+
+	if (encoder->frameList)
+	{
+		ListDictionary_Free(encoder->frameList);
+		encoder->frameList = NULL;
+	}
+
+	return 1;
+}
+
+int shadow_encoder_reset(rdpShadowEncoder* encoder)
+{
+	if (shadow_encoder_uninit(encoder) < 0)
+		return -1;
+
+	return shadow_encoder_init(encoder);
+}
+
+rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server)
+{
+	rdpShadowEncoder* encoder;
+
+	encoder = (rdpShadowEncoder*) calloc(1, sizeof(rdpShadowEncoder));
+
+	if (!encoder)
+		return NULL;
+
+	encoder->server = server;
+
+	encoder->width = server->screen->width;
+	encoder->height = server->screen->height;
+
+	encoder->bitsPerPixel = 32;
+	encoder->bytesPerPixel = 4;
+
+	if (shadow_encoder_init(encoder) < 0)
+		return NULL;
+
 	return encoder;
 }
 
@@ -177,20 +250,7 @@ void shadow_encoder_free(rdpShadowEncoder* encoder)
 	if (!encoder)
 		return;
 
-	Stream_Free(encoder->bs, TRUE);
-	Stream_Free(encoder->bts, TRUE);
-
-	Stream_Free(encoder->rfx_s, TRUE);
-	rfx_context_free(encoder->rfx);
-
-	Stream_Free(encoder->nsc_s, TRUE);
-	nsc_context_free(encoder->nsc);
-
-	freerdp_bitmap_planar_context_free(encoder->planar);
-
-	shadow_encoder_grid_uninit(encoder);
-
-	ListDictionary_Free(encoder->frameList);
+	shadow_encoder_uninit(encoder);
 
 	free(encoder);
 }

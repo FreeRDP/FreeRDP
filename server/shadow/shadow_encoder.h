@@ -69,6 +69,7 @@ struct rdp_shadow_encoder
 extern "C" {
 #endif
 
+int shadow_encoder_reset(rdpShadowEncoder* encoder);
 int shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
 
 rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server);
