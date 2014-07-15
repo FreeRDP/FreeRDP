@@ -247,14 +247,13 @@ static void *thread_launcher(void *arg)
 	}
 
 exit:
-	set_event(thread);
-
 	if (!thread->exited)
 		thread->dwExitCode = (DWORD)(size_t)rc;
 
 	if (thread->detached || !thread->started)
 		cleanup_handle(thread);
 
+	set_event(thread);
 	pthread_exit(rc);
 	return rc;
 }
