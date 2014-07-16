@@ -98,7 +98,7 @@ int TestSynchThread(int argc, char *argv[])
 		return -1;
 	}
 
-	/* Thread detach test */i
+	/* Thread detach test */
 	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)test_thread,
 						  NULL, 0, NULL);
 
