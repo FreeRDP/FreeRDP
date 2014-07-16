@@ -27,8 +27,10 @@
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 
-#include <openssl/pem.h>
 #include <openssl/conf.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include <openssl/pkcs12.h>
 #include <openssl/x509v3.h>
 
 #include <winpr/tools/makecert.h>
@@ -42,9 +44,16 @@ struct _MAKECERT_CONTEXT
 	RSA* rsa;
 	X509* x509;
 	EVP_PKEY* pkey;
+	PKCS12* pkcs12;
 
 	BOOL live;
 	BOOL silent;
+
+	BOOL crtFormat;
+	BOOL pemFormat;
+	BOOL pfxFormat;
+
+	char* password;
 
 	char* output_file;
 	char* default_name;
@@ -62,6 +71,12 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	},
 	{ "live", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 			"Generate certificate live in memory when used as a library."
+	},
+	{ "format", COMMAND_LINE_VALUE_REQUIRED, "<crt|pem|pfx>", NULL, NULL, -1, NULL,
+			"Specify certificate file format"
+	},
+	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL,
+			"Specify certificate export password"
 	},
 
 	/* Basic Options */
@@ -346,6 +361,37 @@ int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc, char**
 		{
 			context->live = TRUE;
 		}
+		CommandLineSwitchCase(arg, "format")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			if (strcmp(arg->Value, "crt") == 0)
+			{
+				context->crtFormat = TRUE;
+				context->pemFormat = FALSE;
+				context->pfxFormat = FALSE;
+			}
+			else if (strcmp(arg->Value, "pem") == 0)
+			{
+				context->crtFormat = FALSE;
+				context->pemFormat = TRUE;
+				context->pfxFormat = FALSE;
+			}
+			else if (strcmp(arg->Value, "pfx") == 0)
+			{
+				context->crtFormat = FALSE;
+				context->pemFormat = FALSE;
+				context->pfxFormat = TRUE;
+			}
+		}
+		CommandLineSwitchCase(arg, "p")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			context->password = _strdup(arg->Value);
+		}
 
 		CommandLineSwitchDefault(arg)
 		{
@@ -383,7 +429,13 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 	length = strlen(context->output_file);
 	filename = malloc(length + 8);
 	strcpy(filename, context->output_file);
-	strcpy(&filename[length], ".crt");
+
+	if (context->crtFormat)
+		strcpy(&filename[length], ".crt");
+	else if (context->pemFormat)
+		strcpy(&filename[length], ".pem");
+	else if (context->pfxFormat)
+		strcpy(&filename[length], ".pfx");
 
 	if (path)
 		fullpath = GetCombinedPath(path, filename);
@@ -394,7 +446,31 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 	if (fp)
 	{
-		PEM_write_X509(fp, context->x509);
+		if (context->pfxFormat)
+		{
+			if (!context->password)
+			{
+				context->password = _strdup("password");
+				printf("Using default export password \"password\"\n");
+			}
+
+			OpenSSL_add_all_algorithms();
+			OpenSSL_add_all_ciphers();
+			OpenSSL_add_all_digests();
+
+			context->pkcs12 = PKCS12_create(context->password, context->default_name, context->pkey,
+					context->x509, NULL, 0, 0, 0, 0, 0);
+
+			i2d_PKCS12_fp(fp, context->pkcs12);
+		}
+		else
+		{
+			PEM_write_X509(fp, context->x509);
+
+			if (context->pemFormat)
+				PEM_write_PrivateKey(fp, context->pkey, NULL, NULL, 0, NULL, NULL);
+		}
+
 		fclose(fp);
 	}
 
@@ -410,6 +486,9 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 	int length;
 	char* filename;
 	char* fullpath;
+
+	if (!context->crtFormat)
+		return 1;
 
 	if (!context->output_file)
 		context->output_file = context->default_name;
@@ -593,7 +672,9 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	if (!context->live)
 	{
 		makecert_context_output_certificate_file(context, NULL);
-		makecert_context_output_private_key_file(context, NULL);
+
+		if (context->crtFormat)
+			makecert_context_output_private_key_file(context, NULL);
 	}
 
 	return 0;
@@ -603,11 +684,11 @@ MAKECERT_CONTEXT* makecert_context_new()
 {
 	MAKECERT_CONTEXT* context = NULL;
 
-	context = (MAKECERT_CONTEXT*) malloc(sizeof(MAKECERT_CONTEXT));
+	context = (MAKECERT_CONTEXT*) calloc(1, sizeof(MAKECERT_CONTEXT));
 
 	if (context)
 	{
-		ZeroMemory(context, sizeof(MAKECERT_CONTEXT));
+		context->crtFormat = TRUE;
 	}
 
 	return context;
@@ -617,6 +698,8 @@ void makecert_context_free(MAKECERT_CONTEXT* context)
 {
 	if (context)
 	{
+		free(context->password);
+
 		X509_free(context->x509);
 		EVP_PKEY_free(context->pkey);
 
