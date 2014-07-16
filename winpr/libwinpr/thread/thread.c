@@ -395,7 +395,7 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
 	return NULL;
 }
 
-VOID _ExitThread(DWORD dwExitCode)
+VOID ExitThread(DWORD dwExitCode)
 {
 	pthread_t tid = pthread_self();
 
@@ -518,7 +518,8 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 		return 0;
 
 	thread = (WINPR_THREAD *) Object;
-  thread->dwExitCode = dwExitCode;
+	thread->exited = TRUE;
+	thread->dwExitCode = dwExitCode;
 	pthread_mutex_lock(&thread->mutex);
 #ifndef ANDROID
 	pthread_cancel(thread->thread);
