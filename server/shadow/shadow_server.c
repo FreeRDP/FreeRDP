@@ -32,12 +32,12 @@
 
 #include "shadow.h"
 
-#ifdef WITH_X11
-#define WITH_SHADOW_X11
-#endif
-
 #ifdef WITH_SHADOW_X11
 extern rdpShadowSubsystem* X11_ShadowCreateSubsystem(rdpShadowServer* server);
+#endif
+
+#ifdef WITH_SHADOW_MAC
+extern rdpShadowSubsystem* Mac_ShadowCreateSubsystem(rdpShadowServer* server);
 #endif
 
 static COMMAND_LINE_ARGUMENT_A shadow_args[] =
@@ -324,6 +324,10 @@ int shadow_server_init(rdpShadowServer* server)
 	server->CreateSubsystem = X11_ShadowCreateSubsystem;
 #endif
 
+#ifdef WITH_SHADOW_MAC
+	server->CreateSubsystem = Mac_ShadowCreateSubsystem;
+#endif
+	
 	if (server->CreateSubsystem)
 		server->subsystem = server->CreateSubsystem(server);
 
