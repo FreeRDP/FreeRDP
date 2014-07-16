@@ -68,6 +68,7 @@ struct x11_shadow_subsystem
 	Visual* visual;
 	Display* display;
 	int scanline_pad;
+	BOOL composite;
 
 	BOOL use_xshm;
 	BOOL use_xfixes;

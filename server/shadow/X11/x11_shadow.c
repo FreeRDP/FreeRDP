@@ -153,7 +153,7 @@ void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int y, int
 {
 	XRectangle region;
 
-	if (!subsystem->use_xfixes)
+	if (!subsystem->use_xfixes || !subsystem->use_xdamage)
 		return;
 
 	region.x = x;
@@ -260,9 +260,14 @@ int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
 
 void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 {
+	int fps;
 	DWORD status;
 	DWORD nCount;
 	XEvent xevent;
+	UINT64 cTime;
+	DWORD dwTimeout;
+	DWORD dwInterval;
+	UINT64 frameTime;
 	HANDLE events[32];
 	HANDLE StopEvent;
 	int x, y, width, height;
@@ -274,9 +279,21 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 	events[nCount++] = StopEvent;
 	events[nCount++] = subsystem->event;
 
+	fps = 16;
+	dwInterval = 1000 / fps;
+	frameTime = GetTickCount64() + dwInterval;
+
 	while (1)
 	{
-		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		dwTimeout = INFINITE;
+
+		if (!subsystem->use_xdamage)
+		{
+			cTime = GetTickCount64();
+			dwTimeout = (cTime > frameTime) ? 0 : frameTime - cTime;
+		}
+
+		status = WaitForMultipleObjects(nCount, events, FALSE, dwTimeout);
 
 		if (WaitForSingleObject(StopEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -298,6 +315,17 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 				height = notify->area.height;
 
 				x11_shadow_invalidate_region(subsystem, x, y, width, height);
+			}
+		}
+
+		if (!subsystem->use_xdamage)
+		{
+			if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
+			{
+				x11_shadow_invalidate_region(subsystem, 0, 0, subsystem->width, subsystem->height);
+
+				dwInterval = 1000 / fps;
+				frameTime += dwInterval;
 			}
 		}
 	}
@@ -495,6 +523,8 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	int i;
 	int pf_count;
 	int vi_count;
+	int nextensions;
+	char** extensions;
 	XVisualInfo* vi;
 	XVisualInfo* vis;
 	XVisualInfo template;
@@ -523,6 +553,25 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 		fprintf(stderr, "failed to open display: %s\n", XDisplayName(NULL));
 		return -1;
 	}
+
+	extensions = XListExtensions(subsystem->display, &nextensions);
+
+	if (!extensions || (nextensions < 0))
+		return -1;
+
+	for (i = 0; i < nextensions; i++)
+	{
+		if (strcmp(extensions[i], "Composite") == 0)
+			subsystem->composite = TRUE;
+	}
+
+	XFreeExtensionList(extensions);
+
+	if (subsystem->composite)
+		subsystem->use_xdamage = FALSE;
+
+	if (!subsystem->use_xdamage)
+		subsystem->use_xfixes = FALSE;
 
 	subsystem->xfds = ConnectionNumber(subsystem->display);
 	subsystem->number = DefaultScreen(subsystem->display);
@@ -706,9 +755,10 @@ x11ShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
 	subsystem->MouseEvent = (pfnShadowMouseEvent) x11_shadow_input_mouse_event;
 	subsystem->ExtendedMouseEvent = (pfnShadowExtendedMouseEvent) x11_shadow_input_extended_mouse_event;
 
+	subsystem->composite = FALSE;
 	subsystem->use_xshm = TRUE;
 	subsystem->use_xfixes = TRUE;
-	subsystem->use_xdamage = TRUE;
+	subsystem->use_xdamage = FALSE;
 	subsystem->use_xinerama = TRUE;
 
 	return subsystem;

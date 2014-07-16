@@ -248,7 +248,7 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 		RFX_RECT rect;
 		RFX_MESSAGE* messages;
 
-		s = encoder->rfx_s;
+		s = encoder->bs;
 
 		rect.x = nXSrc;
 		rect.y = nYSrc;
@@ -288,7 +288,7 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 	{
 		NSC_MESSAGE* messages;
 
-		s = encoder->nsc_s;
+		s = encoder->bs;
 
 		messages = nsc_encode_messages(encoder->nsc, pSrcData,
 				nXSrc, nYSrc, nWidth, nHeight, nSrcStep,
@@ -550,12 +550,14 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 	rdpSettings* settings;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
+	rdpShadowEncoder* encoder;
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* extents;
 
 	context = (rdpContext*) client;
 	settings = context->settings;
 	server = client->server;
+	encoder = server->encoder;
 
 	surface = client->inLobby ? client->lobby : server->surface;
 
@@ -578,10 +580,17 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 
 	if (settings->RemoteFxCodec || settings->NSCodec)
 	{
+		if (settings->RemoteFxCodec)
+			shadow_encoder_prepare(encoder, SHADOW_CODEC_REMOTEFX);
+		else if (settings->NSCodec)
+			shadow_encoder_prepare(encoder, SHADOW_CODEC_NSCODEC);
+
 		status = shadow_client_send_surface_bits(client, surface, nXSrc, nYSrc, nWidth, nHeight);
 	}
 	else
 	{
+		shadow_encoder_prepare(encoder, SHADOW_CODEC_BITMAP);
+
 		status = shadow_client_send_bitmap_update(client, surface, nXSrc, nYSrc, nWidth, nHeight);
 	}
 

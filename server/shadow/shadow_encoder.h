@@ -29,17 +29,17 @@
 
 #include <freerdp/server/shadow.h>
 
+#define SHADOW_CODEC_REMOTEFX		1
+#define SHADOW_CODEC_NSCODEC		2
+#define SHADOW_CODEC_BITMAP		4
+
 struct rdp_shadow_encoder
 {
 	rdpShadowServer* server;
 
-	BYTE* data;
 	int width;
 	int height;
-	int scanline;
-
-	UINT32 bitsPerPixel;
-	UINT32 bytesPerPixel;
+	UINT32 codecs;
 
 	BYTE** grid;
 	int gridWidth;
@@ -48,14 +48,11 @@ struct rdp_shadow_encoder
 	int maxTileWidth;
 	int maxTileHeight;
 
-	wStream* rfx_s;
-	RFX_CONTEXT* rfx;
-
-	wStream* nsc_s;
-	NSC_CONTEXT* nsc;
-
 	wStream* bs;
 	wStream* bts;
+
+	RFX_CONTEXT* rfx;
+	NSC_CONTEXT* nsc;
 	BITMAP_PLANAR_CONTEXT* planar;
 
 	int fps;
@@ -70,6 +67,7 @@ extern "C" {
 #endif
 
 int shadow_encoder_reset(rdpShadowEncoder* encoder);
+int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs);
 int shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
 
 rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server);
