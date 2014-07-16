@@ -38,6 +38,7 @@ struct winpr_thread
 	int pipe_fd[2];
 	BOOL mainProcess;
 	BOOL detached;
+	BOOL joined;
 	BOOL exited;
 	DWORD dwExitCode;
 	pthread_t thread;
