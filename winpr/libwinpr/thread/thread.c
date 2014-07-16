@@ -184,31 +184,26 @@ static BOOL reset_event(WINPR_THREAD *thread)
 {
 	int length;
 	BOOL status = FALSE;
-
-	while (WaitForSingleObject(thread, 0) == WAIT_OBJECT_0)
-	{
 #ifdef HAVE_EVENTFD_H
-		eventfd_t value;
+	eventfd_t value;
 
-		do
-		{
-			length = eventfd_read(thread->pipe_fd[0], &value);
-		}
-		while ((length < 0) && (errno == EINTR));
+	do
+	{
+		length = eventfd_read(thread->pipe_fd[0], &value);
+	}
+	while ((length < 0) && (errno == EINTR));
 
-		if ((length > 0) && (!status))
-			status = TRUE;
+	if ((length > 0) && (!status))
+		status = TRUE;
 
 #else
-		length = read(thread->pipe_fd[0], &length, 1);
+	length = read(thread->pipe_fd[0], &length, 1);
 
-		if ((length == 1) && (!status))
-			status = TRUE;
+	if ((length == 1) && (!status))
+		status = TRUE;
 
 #endif
-	}
-
-	thread->started = TRUE;
+	thread->started = status;
 	return status;
 }
 
