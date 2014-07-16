@@ -139,6 +139,9 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	settings->DesktopWidth = client->server->screen->width;
 	settings->DesktopHeight = client->server->screen->height;
 
+	if (settings->ColorDepth == 24)
+		settings->ColorDepth = 16; /* disable 24bpp */
+
 	fprintf(stderr, "Client from %s is activated (%dx%d@%d)\n",
 			peer->hostname, settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
 
@@ -333,7 +336,6 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* surface, int nXSrc, int nYSrc, int nWidth, int nHeight)
 {
 	BYTE* data;
-	BYTE* tile;
 	BYTE* buffer;
 	int i, j, k;
 	wStream* s;
@@ -405,11 +407,6 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 
 		return 1;
 	}
-
-	tile = (BYTE*) malloc(64 * 64 * 4);
-
-	if (!tile)
-		return -1;
 
 	rows = (nWidth + (64 - (nWidth % 64))) / 64;
 	cols = (nHeight + (64 - (nHeight % 64))) / 64;
@@ -500,14 +497,16 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 					else if (settings->ColorDepth == 24)
 					{
 						bytesPerPixel = 3;
-						dstFormat = PIXEL_FORMAT_RGB32;
+						dstFormat = PIXEL_FORMAT_XRGB32;
 					}
 
-					freerdp_image_copy(tile, dstFormat, -1, 0, 0, nWidth, nHeight,
+					buffer = encoder->grid[k];
+
+					freerdp_image_copy(buffer, dstFormat, -1, 0, 0, nWidth, nHeight,
 							data, srcFormat, nSrcStep, 0, 0);
 
-					lines = freerdp_bitmap_compress((char*) tile, nWidth, nHeight, s,
-							settings->ColorDepth, 16384, nHeight - 1, ts, e);
+					lines = freerdp_bitmap_compress((char*) buffer, nWidth, nHeight, s,
+							settings->ColorDepth, 64 * 64 * 4, nHeight - 1, ts, e);
 
 					Stream_SealLength(s);
 
@@ -536,7 +535,6 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 	IFCALL(update->BitmapUpdate, context, &bitmapUpdate);
 
 	free(bitmapData);
-	free(tile);
 
 	return 1;
 }

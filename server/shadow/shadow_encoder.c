@@ -357,6 +357,9 @@ rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server)
 
 	encoder->server = server;
 
+	encoder->fps = 16;
+	encoder->maxFps = 32;
+
 	encoder->width = server->screen->width;
 	encoder->height = server->screen->height;
 
