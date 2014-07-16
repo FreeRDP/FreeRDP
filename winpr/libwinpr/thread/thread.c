@@ -125,18 +125,18 @@ static void dump_thread(WINPR_THREAD *thread)
 {
 #if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
 	void *stack[20];
-	fprintf(stderr, "Called from:\n");
+	fprintf(stderr, "[%s]: Called from:\n", __FUNCTION__);
 	backtrace_symbols_fd(stack, 20, STDERR_FILENO);
-	fprintf(stderr, "Thread handle created still not closed!\n");
+	fprintf(stderr, "[%s]: Thread handle created still not closed!\n", __FUNCTION__);
 	backtrace_symbols_fd(thread->create_stack, 20, STDERR_FILENO);
 
 	if (thread->started)
-		fprintf(stderr, "Thread still running!\n");
+		fprintf(stderr, "[%s]: Thread still running!\n", __FUNCTION__);
 	else if (!thread->exit_stack)
-		fprintf(stderr, "Thread suspended.\n");
+		fprintf(stderr, "[%s]: Thread suspended.\n", __FUNCTION__);
 	else
 	{
-		fprintf(stderr, "Thread exited at:\n");
+		fprintf(stderr, "[%s]: Thread exited at:\n", __FUNCTION__);
 		backtrace_symbols_fd(thread->exit_stack, 20, STDERR_FILENO);
 	}
 
@@ -176,7 +176,6 @@ static BOOL set_event(WINPR_THREAD *thread)
 	}
 
 #endif
-	thread->started = FALSE;
 	return status;
 }
 
@@ -203,7 +202,6 @@ static BOOL reset_event(WINPR_THREAD *thread)
 		status = TRUE;
 
 #endif
-	thread->started = status;
 	return status;
 }
 
@@ -220,7 +218,6 @@ static int thread_compare(void *a, void *b)
  * in thread function. */
 static void *thread_launcher(void *arg)
 {
-	BOOL started;
 	void *rc = NULL;
 	WINPR_THREAD *thread = (WINPR_THREAD *)arg;
 
@@ -247,13 +244,12 @@ exit:
 	if (!thread->exited)
 		thread->dwExitCode = (DWORD)(size_t)rc;
 
-	started = thread->started;
 	set_event(thread);
 
-	if (thread->detached || !started)
+	if (thread->detached || !thread->started)
 		cleanup_handle(thread);
 
-	pthread_exit(rc);
+	pthread_exit(thread->dwExitCode);
 	return rc;
 }
 
@@ -271,6 +267,7 @@ static void winpr_StartThread(WINPR_THREAD *thread)
 	reset_event(thread);
 	ListDictionary_Add(thread_list, &thread->thread, thread);
 	dump_thread(thread);
+	thread->started = TRUE;
 }
 
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
@@ -398,7 +395,7 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
 	return NULL;
 }
 
-VOID ExitThread(DWORD dwExitCode)
+VOID _ExitThread(DWORD dwExitCode)
 {
 	pthread_t tid = pthread_self();
 
@@ -521,6 +518,7 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 		return 0;
 
 	thread = (WINPR_THREAD *) Object;
+  thread->dwExitCode = dwExitCode;
 	pthread_mutex_lock(&thread->mutex);
 #ifndef ANDROID
 	pthread_cancel(thread->thread);
@@ -538,6 +536,7 @@ VOID DumpThreadHandles(void)
 #if defined(HAVE_EXECINFO_H)
 	backtrace(stack, 20);
 #endif
+  fprintf(stderr, "---------------- %s ----------------------\n", __FUNCTION);
 	fprintf(stderr, "---------------- Called from ----------------------------\n");
 #if defined(HAVE_EXECINFO_H)
 	backtrace_symbols_fd(stack, 20, STDERR_FILENO);
