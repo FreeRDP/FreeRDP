@@ -225,6 +225,7 @@ static int thread_compare(void *a, void *b)
  * in thread function. */
 static void *thread_launcher(void *arg)
 {
+	BOOL started;
 	void *rc = NULL;
 	WINPR_THREAD *thread = (WINPR_THREAD *)arg;
 
@@ -247,13 +248,16 @@ static void *thread_launcher(void *arg)
 	}
 
 exit:
+
 	if (!thread->exited)
 		thread->dwExitCode = (DWORD)(size_t)rc;
 
-	if (thread->detached || !thread->started)
+	started = thread->started;
+	set_event(thread);
+
+	if (thread->detached || !started)
 		cleanup_handle(thread);
 
-	set_event(thread);
 	pthread_exit(rc);
 	return rc;
 }
