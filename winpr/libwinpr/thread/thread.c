@@ -425,6 +425,12 @@ VOID ExitThread(DWORD dwExitCode)
 		backtrace(thread->exit_stack, 20);
 #endif
 		ListDictionary_Unlock(thread_list);
+		set_event(thread);
+
+		if (thread->detached || !thread->started)
+			cleanup_handle(thread);
+
+		pthread_exit(thread->dwExitCode);
 	}
 }
 
@@ -537,7 +543,7 @@ VOID DumpThreadHandles(void)
 #if defined(HAVE_EXECINFO_H)
 	backtrace(stack, 20);
 #endif
-  fprintf(stderr, "---------------- %s ----------------------\n", __FUNCTION);
+	fprintf(stderr, "---------------- %s ----------------------\n", __FUNCTION);
 	fprintf(stderr, "---------------- Called from ----------------------------\n");
 #if defined(HAVE_EXECINFO_H)
 	backtrace_symbols_fd(stack, 20, STDERR_FILENO);

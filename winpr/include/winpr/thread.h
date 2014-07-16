@@ -163,7 +163,7 @@ WINPR_API HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T d
 WINPR_API HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 		LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
 
-WINPR_API VOID ExitThread(DWORD dwExitCode);
+WINPR_API DECLSPEC_NORETURN VOID ExitThread(DWORD dwExitCode);
 WINPR_API BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode);
 
 WINPR_API HANDLE _GetCurrentThread(void);
