@@ -72,15 +72,19 @@ int rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_METAB
 	if (!meta->quantQualityVals)
 		return -1;
 
+#if 0
 	printf("H264_METABLOCK: numRegionRects: %d\n", (int) meta->numRegionRects);
+#endif
 
 	for (index = 0; index < meta->numRegionRects; index++)
 	{
 		regionRect = &(meta->regionRects[index]);
 		rdpgfx_read_rect16(s, regionRect);
 
+#if 0
 		printf("regionRects[%d]: left: %d top: %d right: %d bottom: %d\n",
 				index, regionRect->left, regionRect->top, regionRect->right, regionRect->bottom);
+#endif
 	}
 
 	if (Stream_GetRemainingLength(s) < (meta->numRegionRects * 2))
@@ -96,8 +100,10 @@ int rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_METAB
 		quantQualityVal->r = (quantQualityVal->qpVal >> 6) & 1;
 		quantQualityVal->p = (quantQualityVal->qpVal >> 7) & 1;
 
+#if 0
 		printf("quantQualityVals[%d]: qp: %d r: %d p: %d qualityVal: %d\n",
 				index, quantQualityVal->qp, quantQualityVal->r, quantQualityVal->p, quantQualityVal->qualityVal);
+#endif
 	}
 
 	return 1;
