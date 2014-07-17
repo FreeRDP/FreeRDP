@@ -56,6 +56,8 @@ static void module_init()
 
 #endif
 
+#if WINPR_THREAD_POOL
+
 PTP_CLEANUP_GROUP CreateThreadpoolCleanupGroup()
 {
 	PTP_CLEANUP_GROUP cleanupGroup = NULL;
@@ -94,4 +96,5 @@ VOID CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg)
 #endif
 }
 
+#endif
 

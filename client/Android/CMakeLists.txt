@@ -62,10 +62,21 @@ else()
 endif()
 
 set(APPCOMPAT_DIR "${CMAKE_CURRENT_BINARY_DIR}/appcompat_v7")
-add_custom_target(copy_appcompat ALL
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${ANDROID_SDK}/extras/android/support/v7/appcompat ${APPCOMPAT_DIR}
-  COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR}
-)
+set(supportdir "${ANDROID_SDK}/extras/android/support/v7/appcompat")
+set(compatibilitydir "${ANDROID_SDK}/extras/android/compatibility/v7/appcompat")
+if(EXISTS "${supportdir}" AND IS_DIRECTORY "${supportdir}")
+       add_custom_target(copy_appcompat ALL
+               COMMAND ${CMAKE_COMMAND} -E copy_directory "${supportdir}" ${APPCOMPAT_DIR}
+               COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR}
+       )
+elseif(EXISTS "${compatibilitydir}" AND IS_DIRECTORY "${compatibilitydir}")
+       add_custom_target(copy_appcompat ALL
+               COMMAND ${CMAKE_COMMAND} -E copy_directory "${compatibilitydir}" ${APPCOMPAT_DIR}
+               COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR}
+       )
+else()
+	message( FATAL_ERROR "${ANDROID_SDK}/extras/android/{support|compatibility}/v7/appcompat directory not found.  Please install a recent version of Android Support Library, CMake will now exit." )
+endif()
 
 add_subdirectory(FreeRDPCore)
 add_subdirectory(aFreeRDP)

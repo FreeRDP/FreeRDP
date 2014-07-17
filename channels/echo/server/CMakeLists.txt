@@ -15,12 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel("echo")
+define_channel_server("echo")
 
-if(WITH_CLIENT_CHANNELS)
-	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
-endif()
+set(${MODULE_PREFIX}_SRCS
+	echo_main.c)
 
-if(WITH_SERVER_CHANNELS)
-	add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
-endif()
+add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DVCPluginEntry")
+
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils freerdp-core)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)
+	
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Server")

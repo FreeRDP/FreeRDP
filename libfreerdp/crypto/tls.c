@@ -51,6 +51,7 @@ long bio_rdp_tls_callback(BIO* bio, int mode, const char* argp, int argi, long a
 
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
+	int error;
 	int status;
 	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) bio->ptr;
 
@@ -70,11 +71,11 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 				break;
 
 			case SSL_ERROR_WANT_WRITE:
-				BIO_set_flags(bio, BIO_FLAGS_WRITE);
+				BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_READ:
-				BIO_set_flags(bio, BIO_FLAGS_READ);
+				BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_X509_LOOKUP:
@@ -88,7 +89,16 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 				break;
 
 			case SSL_ERROR_SYSCALL:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				error = WSAGetLastError();
+				if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
+					(error == WSAEINPROGRESS) || (error == WSAEALREADY))
+				{
+					BIO_set_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY));
+				}
+				else
+				{
+					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				}
 				break;
 
 			case SSL_ERROR_SSL:
@@ -102,6 +112,7 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 
 static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 {
+	int error;
 	int status;
 	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) bio->ptr;
 
@@ -121,11 +132,11 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 				break;
 
 			case SSL_ERROR_WANT_READ:
-				BIO_set_flags(bio, BIO_FLAGS_READ);
+				BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_WRITE:
-				BIO_set_flags(bio, BIO_FLAGS_WRITE);
+				BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_X509_LOOKUP:
@@ -152,8 +163,16 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 				break;
 
 			case SSL_ERROR_SYSCALL:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-				status = -1;
+				error = WSAGetLastError();
+				if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
+					(error == WSAEINPROGRESS) || (error == WSAEALREADY))
+				{
+					BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
+				}
+				else
+				{
+					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				}
 				break;
 		}
 	}

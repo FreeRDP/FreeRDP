@@ -936,6 +936,20 @@ static void update_send_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap
 	Stream_Release(s);
 }
 
+static void update_send_play_sound(rdpContext* context, PLAY_SOUND_UPDATE* play_sound)
+{
+	wStream* s;
+	rdpRdp* rdp = context->rdp;
+
+	if (!rdp->settings->ReceivedCapabilities[CAPSET_TYPE_SOUND]) {
+		return;
+	}
+	s = rdp_data_pdu_init(rdp);
+	Stream_Write_UINT32(s, play_sound->duration);
+	Stream_Write_UINT32(s, play_sound->frequency);
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_PLAY_SOUND, rdp->mcs->userId);
+	Stream_Release(s);
+}
 /**
  * Primary Drawing Orders
  */
@@ -1448,7 +1462,7 @@ static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDAT
 		updateCode = FASTPATH_UPDATETYPE_PTR_NULL;
 	else
 		updateCode = FASTPATH_UPDATETYPE_PTR_DEFAULT;
-	
+
 	fastpath_send_update_pdu(rdp->fastpath, updateCode, s);
 	Stream_Release(s);
 }
@@ -1467,10 +1481,10 @@ static void update_write_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer
 
 	if (pointer_color->lengthXorMask > 0)
 		Stream_Write(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
-	
+
 	if (pointer_color->lengthAndMask > 0)
 		Stream_Write(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
-	
+
 	Stream_Write_UINT8(s, 0); /* pad (1 byte) */
 }
 
@@ -1570,6 +1584,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SurfaceBits = update_send_surface_bits;
 	update->SurfaceFrameMarker = update_send_surface_frame_marker;
 	update->SurfaceCommand = update_send_surface_command;
+	update->PlaySound = update_send_play_sound;
 	update->primary->DstBlt = update_send_dstblt;
 	update->primary->PatBlt = update_send_patblt;
 	update->primary->ScrBlt = update_send_scrblt;
