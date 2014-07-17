@@ -20,6 +20,10 @@ winpr_module_add(
 	crypto.h
 	cert.c)
 
+if(WIN32)
+	winpr_library_add(crypt32)
+endif()
+
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
