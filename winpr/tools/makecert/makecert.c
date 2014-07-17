@@ -56,7 +56,12 @@ struct _MAKECERT_CONTEXT
 	char* password;
 
 	char* output_file;
+	char* output_path;
 	char* default_name;
+	char* common_name;
+
+	int duration_years;
+	int duration_months;
 };
 
 COMMAND_LINE_ARGUMENT_A args[] =
@@ -74,6 +79,9 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	},
 	{ "format", COMMAND_LINE_VALUE_REQUIRED, "<crt|pem|pfx>", NULL, NULL, -1, NULL,
 			"Specify certificate file format"
+	},
+	{ "path", COMMAND_LINE_VALUE_REQUIRED, "<path>", NULL, NULL, -1, NULL,
+			"Specify certificate file output path"
 	},
 	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL,
 			"Specify certificate export password"
@@ -168,6 +176,9 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	},
 	{ "m", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
 			"Specifies the duration, in months, of the certificate validity period."
+	},
+	{ "y", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
+			"Specifies the duration, in years, of the certificate validity period."
 	},
 	{ "nscp", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 			"Includes the Netscape client-authorization extension."
@@ -385,12 +396,40 @@ int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc, char**
 				context->pfxFormat = TRUE;
 			}
 		}
+		CommandLineSwitchCase(arg, "path")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			context->output_path = _strdup(arg->Value);
+		}
 		CommandLineSwitchCase(arg, "p")
 		{
 			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 				continue;
 
 			context->password = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "n")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			context->common_name = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "y")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			context->duration_years = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "m")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			context->duration_months = atoi(arg->Value);
 		}
 
 		CommandLineSwitchDefault(arg)
@@ -420,7 +459,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 	char* fullpath;
 
 	if (!context->output_file)
-		context->output_file = context->default_name;
+		context->output_file = _strdup(context->default_name);
 
 	/*
 	 * Output Certificate File
@@ -535,7 +574,13 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	if (makecert_context_parse_arguments(context, argc, argv) < 1)
 		return 0;
 
-	context->default_name = x509_get_default_name();
+	if (!context->default_name && !context->common_name)
+		context->default_name = x509_get_default_name();
+	else
+		context->default_name = _strdup(context->common_name);
+
+	if (!context->common_name)
+		context->common_name = _strdup(context->default_name);
 
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 	context->bio = BIO_new_fp(stderr, BIO_NOCLOSE);
@@ -580,7 +625,16 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	ASN1_INTEGER_set(X509_get_serialNumber(context->x509), serial);
 
 	X509_gmtime_adj(X509_get_notBefore(context->x509), 0);
-	X509_gmtime_adj(X509_get_notAfter(context->x509), (long) 60 * 60 * 24 * 365);
+
+	if (context->duration_months)
+	{
+		X509_gmtime_adj(X509_get_notAfter(context->x509), (long) (60 * 60 * 24 * 31 * context->duration_months));
+	}
+	else if (context->duration_years)
+	{
+		X509_gmtime_adj(X509_get_notAfter(context->x509), (long) (60 * 60 * 24 * 365 * context->duration_years));
+	}
+	
 	X509_set_pubkey(context->x509, context->pkey);
 
 	name = X509_get_subject_name(context->x509);
@@ -614,19 +668,14 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		if (entry)
 			X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 
-		entry = x509_name_parse(arg->Value, "CN", &length);
-
-		if (!entry)
-		{
-			entry = context->default_name;
-			length = strlen(entry);
-		}
+		entry = context->common_name;
+		length = strlen(entry);
 
 		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 	}
 	else
 	{
-		entry = context->default_name;
+		entry = context->common_name;
 		length = strlen(entry);
 
 		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
@@ -671,10 +720,10 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 	if (!context->live)
 	{
-		makecert_context_output_certificate_file(context, NULL);
+		makecert_context_output_certificate_file(context, context->output_path);
 
 		if (context->crtFormat)
-			makecert_context_output_private_key_file(context, NULL);
+			makecert_context_output_private_key_file(context, context->output_path);
 	}
 
 	return 0;
@@ -689,6 +738,7 @@ MAKECERT_CONTEXT* makecert_context_new()
 	if (context)
 	{
 		context->crtFormat = TRUE;
+		context->duration_years = 1;
 	}
 
 	return context;
