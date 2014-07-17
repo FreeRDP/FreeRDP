@@ -45,7 +45,7 @@ echo "Preparing OpenSSL..."
 OPENSSL_SRC=$ROOT/openssl-build
 if [ -d $OPENSSL_SRC ]; then
 	cd $OPENSSL_SRC
-	git pull
+	git fetch
 	RETVAL=$?
 else
 	git clone $OPENSSL_SCM $OPENSSL_SRC
@@ -64,9 +64,7 @@ make clean
 # The makefile has a bug, which aborts during
 # first compilation. Rerun make to build the whole lib.
 make
-make
-make
-RETVAL=0 # TODO: Check, why 2 is returned.
+RETVAL=$?
 if [ $RETVAL -ne 0 ]; then
 	echo "Failed to execute make command [$RETVAL]"
 	exit -4
