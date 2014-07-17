@@ -188,7 +188,7 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		EnumDisplayMonitors(NULL, NULL, wf_info_monEnumCB, 0);
 		_IDcount = 0;
 
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 		if (wfi->peerCount == 0)
 			wf_dxgi_init(wfi);
 #else
@@ -234,7 +234,7 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 
 		printf("Unregistering Peer: id=%d, #=%d\n", peerId, wfi->peerCount);
 
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 		if (wfi->peerCount == 0)
 			wf_dxgi_cleanup(wfi);
 #endif
@@ -247,7 +247,7 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 
 BOOL wf_info_have_updates(wfInfo* wfi)
 {
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 	if(wfi->framesWaiting == 0)
 		return FALSE;
 #else
@@ -259,7 +259,7 @@ BOOL wf_info_have_updates(wfInfo* wfi)
 
 void wf_info_update_changes(wfInfo* wfi)
 {
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 	wf_dxgi_nextFrame(wfi, wfi->framesPerSecond * 1000);
 #else
 	GETCHANGESBUF* buf;
@@ -271,7 +271,7 @@ void wf_info_update_changes(wfInfo* wfi)
 
 void wf_info_find_invalid_region(wfInfo* wfi)
 {
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 	wf_dxgi_getInvalidRegion(&wfi->invalid);
 #else
 	int i;
@@ -334,7 +334,7 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits,
 	*width = (wfi->invalid.right - wfi->invalid.left);
 	*height = (wfi->invalid.bottom - wfi->invalid.top);
 
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 	wf_dxgi_getPixelData(wfi, pBits, pitch, &wfi->invalid);
 #else
 	{

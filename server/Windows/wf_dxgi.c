@@ -23,7 +23,7 @@
 
 #include "wf_interface.h"
 
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 
 #define CINTERFACE
 
@@ -67,8 +67,9 @@ DXGI_OUTDUPL_FRAME_INFO FrameInfo;
 
 int wf_dxgi_init(wfInfo* wfi)
 {
-	//not sure if needed
 	gAcquiredDesktopImage = NULL;
+
+	printf("wf_dxgi_init\n");
 
 	if (wf_dxgi_createDevice(wfi) != 0)
 	{
@@ -81,7 +82,6 @@ int wf_dxgi_init(wfInfo* wfi)
 	}
 
 	return 0;
-	
 }
 
 int wf_dxgi_createDevice(wfInfo* wfi)

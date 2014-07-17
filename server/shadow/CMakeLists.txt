@@ -135,6 +135,10 @@ set(${MODULE_PREFIX}_SRCS
 	shadow_server.c
 	shadow.h)
 
+set(${MODULE_PREFIX}_WIN_SRCS
+	Win/win_shadow.c
+	Win/win_shadow.h)
+
 set(${MODULE_PREFIX}_X11_SRCS
 	X11/x11_shadow.c
 	X11/x11_shadow.h)
@@ -143,13 +147,19 @@ set(${MODULE_PREFIX}_MAC_SRCS
 	Mac/mac_shadow.c
 	Mac/mac_shadow.h)
 
-if(X11_FOUND AND NOT APPLE)
+if(WIN32)
+	set(WITH_SHADOW_WIN 1)
+elseif(X11_FOUND AND NOT APPLE)
 	set(WITH_SHADOW_X11 1)
 elseif(APPLE AND NOT IOS)
 	set(WITH_SHADOW_MAC 1)
 endif()
 
-if(WITH_SHADOW_X11)
+if(WITH_SHADOW_WIN)
+	add_definitions(-DWITH_SHADOW_WIN)
+	list(APPEND ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_WIN_SRCS})
+	list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_WIN_LIBS})
+elseif(WITH_SHADOW_X11)
 	add_definitions(-DWITH_SHADOW_X11)
 	list(APPEND ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_X11_SRCS})
 	list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_X11_LIBS})

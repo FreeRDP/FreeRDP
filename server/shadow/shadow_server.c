@@ -40,6 +40,10 @@ extern rdpShadowSubsystem* X11_ShadowCreateSubsystem(rdpShadowServer* server);
 extern rdpShadowSubsystem* Mac_ShadowCreateSubsystem(rdpShadowServer* server);
 #endif
 
+#ifdef WITH_SHADOW_WIN
+extern rdpShadowSubsystem* Win_ShadowCreateSubsystem(rdpShadowServer* server);
+#endif
+
 static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
@@ -326,6 +330,10 @@ int shadow_server_init(rdpShadowServer* server)
 
 #ifdef WITH_SHADOW_MAC
 	server->CreateSubsystem = Mac_ShadowCreateSubsystem;
+#endif
+
+#ifdef WITH_SHADOW_WIN
+	server->CreateSubsystem = Win_ShadowCreateSubsystem;
 #endif
 	
 	if (server->CreateSubsystem)

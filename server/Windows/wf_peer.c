@@ -127,14 +127,6 @@ BOOL wf_peer_activate(freerdp_peer* client)
 
 BOOL wf_peer_logon(freerdp_peer* client, SEC_WINNT_AUTH_IDENTITY* identity, BOOL automatic)
 {
-	/*
-	if (automatic)
-	{
-		_tprintf(_T("Logon: User:%s Domain:%s Password:%s\n"),
-			identity->User, identity->Domain, identity->Password);
-	}
-	*/
-
 	wfreerdp_server_peer_callback_event(((rdpContext*) client->context)->peer->pId, WF_SRV_CALLBACK_EVENT_AUTH);
 	return TRUE;
 }
