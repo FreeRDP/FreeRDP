@@ -212,12 +212,14 @@ enum RDPDR_PRINTER_ANNOUNCE_FLAG
 
 /* [MS-FSCC] FSCTL Structures */
 
+#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 #define FSCTL_LMR_SET_LINK_TRACKING_INFORMATION		0x1400ec
 #define FSCTL_PIPE_PEEK					0x11400c
 #define FSCTL_PIPE_TRANSCEIVE				0x11c017
 #define FSCTL_PIPE_WAIT					0x110018
 #define FSCTL_QUERY_ON_DISK_VOLUME_INFO			0x9013c
 #define FSCTL_QUERY_SPARING_INFO			0x90138
+#endif
 
 #ifndef _WIN32
 #define FSCTL_CREATE_OR_GET_OBJECT_ID			0x900c0
@@ -239,8 +241,10 @@ enum RDPDR_PRINTER_ANNOUNCE_FLAG
 #define FSCTL_WRITE_USN_CLOSE_RECORD			0x900ef
 #endif
 
+#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 #define FSCTL_SET_DEFECT_MANAGEMENT			0x98134
 #define FSCTL_SET_ZERO_ON_DEALLOCATION			0x90194
+#endif
 
 /* [MS-FSCC] FileFsAttributeInformation.FileSystemAttributes */
 
