@@ -236,11 +236,11 @@ LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG 
 
 #endif /* _WIN32 */
 
-#if defined(_WIN64)
+#if defined(_WIN32) && !defined(WINPR_INTERLOCKED_COMPARE_EXCHANGE64)
 
 /* InterlockedCompareExchange64 already defined */
 
-#elif (_WIN32 && (_WIN32_WINNT < 0x0502))
+#elif defined(_WIN32) && defined(WINPR_INTERLOCKED_COMPARE_EXCHANGE64)
 
 static volatile HANDLE mutex = NULL;
 
@@ -256,8 +256,6 @@ int static_mutex_lock(volatile HANDLE* static_mutex)
 
 	return (WaitForSingleObject(*static_mutex, INFINITE) == WAIT_FAILED);
 }
-
-/* Not available in XP */
 
 LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
 {

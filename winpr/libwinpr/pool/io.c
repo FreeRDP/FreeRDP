@@ -24,6 +24,8 @@
 #include <winpr/crt.h>
 #include <winpr/pool.h>
 
+#ifdef WINPR_THREAD_POOL
+
 PTP_IO CreateThreadpoolIo(HANDLE fl, PTP_WIN32_IO_CALLBACK pfnio, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
 {
 	return NULL;
@@ -49,3 +51,4 @@ VOID WaitForThreadpoolIoCallbacks(PTP_IO pio, BOOL fCancelPendingCallbacks)
 
 }
 
+#endif

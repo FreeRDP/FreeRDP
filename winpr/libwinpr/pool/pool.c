@@ -150,6 +150,8 @@ PTP_POOL GetDefaultThreadpool()
 
 #endif
 
+#ifdef WINPR_THREAD_POOL
+
 PTP_POOL CreateThreadpool(PVOID reserved)
 {
 	PTP_POOL pool = NULL;
@@ -235,6 +237,8 @@ VOID SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost)
 	ptpp->Maximum = cthrdMost;
 #endif
 }
+
+#endif
 
 /* dummy */
 

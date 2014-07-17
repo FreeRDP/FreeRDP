@@ -33,6 +33,6 @@ set(${MODULE_PREFIX}_SRCS
 
 winpr_module_add(${${MODULE_PREFIX}_SRCS})
 
-if(BUILD_TESTING)
+if(BUILD_TESTING AND UNIX AND NOT WIN32)
 	add_subdirectory(test)
 endif()

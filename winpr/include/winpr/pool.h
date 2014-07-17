@@ -81,7 +81,6 @@ typedef struct _TP_CALLBACK_ENVIRON_V1
 
 /* Non-Windows and pre Windows 7 */
 #if ((!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0601)))
-//#if !defined(_WIN32_WINNT_VISTA)
 
 typedef struct _TP_CALLBACK_ENVIRON_V3
 {
@@ -121,7 +120,9 @@ typedef struct _TP_WAIT TP_WAIT, *PTP_WAIT;
 
 typedef struct _TP_IO TP_IO, *PTP_IO;
 
+#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0601))
 typedef TP_CALLBACK_ENVIRON_V1 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
+#endif
 
 #ifndef _WIN32
 
@@ -152,12 +153,17 @@ typedef VOID (*PTP_WIN32_IO_CALLBACK)(PTP_CALLBACK_INSTANCE Instance, PVOID Cont
 
 #endif
 
+#if (!defined(_WIN32) || ((defined(_WIN32) && (_WIN32_WINNT < 0x0601))))
+#define WINPR_THREAD_POOL	1
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
 /* Synch */
+
+#ifdef WINPR_THREAD_POOL
 
 WINPR_API PTP_WAIT CreateThreadpoolWait(PTP_WAIT_CALLBACK pfnwa, PVOID pv, PTP_CALLBACK_ENVIRON pcbe);
 WINPR_API VOID CloseThreadpoolWait(PTP_WAIT pwa);
@@ -224,6 +230,8 @@ WINPR_API VOID ReleaseMutexWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HANDLE
 WINPR_API VOID LeaveCriticalSectionWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, PCRITICAL_SECTION pcs);
 WINPR_API VOID FreeLibraryWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HMODULE mod);
 WINPR_API VOID DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE pci);
+
+#endif
 
 /* Dummy */
 
