@@ -33,6 +33,17 @@ typedef struct win_shadow_subsystem winShadowSubsystem;
 #define WITH_DXGI_1_2	1
 #endif
 
+#ifdef WITH_DXGI_1_2
+
+#ifndef CINTERFACE
+#define CINTERFACE
+#endif
+
+#include <D3D11.h>
+#include <dxgi1_2.h>
+
+#endif
+
 struct win_shadow_subsystem
 {
 	RDP_SHADOW_SUBSYSTEM_COMMON();
@@ -40,6 +51,18 @@ struct win_shadow_subsystem
 	int bpp;
 	int width;
 	int height;
+
+#ifdef WITH_DXGI_1_2
+	UINT pendingFrames;
+	ID3D11Device* dxgiDevice;
+	IDXGISurface* dxgiSurface;
+	ID3D11Texture2D* dxgiStage;
+	D3D_FEATURE_LEVEL featureLevel;
+	ID3D11Texture2D* dxgiDesktopImage;
+	DXGI_OUTDUPL_FRAME_INFO dxgiFrameInfo;
+	ID3D11DeviceContext* dxgiDeviceContext;
+	IDXGIOutputDuplication* dxgiOutputDuplication;
+#endif
 };
 
 #ifdef __cplusplus
