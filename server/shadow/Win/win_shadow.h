@@ -54,9 +54,12 @@ struct win_shadow_subsystem
 
 #ifdef WITH_DXGI_1_2
 	UINT pendingFrames;
+	BYTE* MetadataBuffer;
+	UINT MetadataBufferSize;
 	ID3D11Device* dxgiDevice;
 	IDXGISurface* dxgiSurface;
 	ID3D11Texture2D* dxgiStage;
+	IDXGIResource* dxgiResource;
 	D3D_FEATURE_LEVEL featureLevel;
 	ID3D11Texture2D* dxgiDesktopImage;
 	DXGI_OUTDUPL_FRAME_INFO dxgiFrameInfo;

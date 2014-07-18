@@ -153,31 +153,34 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 {
 	HRESULT hr;
 	UINT dTop, i = 0;
-	DXGI_OUTPUT_DESC desc;
 	IDXGIOutput* pOutput;
+	DXGI_OUTPUT_DESC outputDesc;
+	D3D11_TEXTURE2D_DESC textureDesc;
 	IDXGIDevice* DxgiDevice = NULL;
 	IDXGIAdapter* DxgiAdapter = NULL;
 	IDXGIOutput* DxgiOutput = NULL;
 	IDXGIOutput1* DxgiOutput1 = NULL;
 
-	hr = subsystem->dxgiDevice->lpVtbl->QueryInterface(subsystem->dxgiDevice, &IID_IDXGIDevice, (void**) &DxgiDevice);
+	hr = subsystem->dxgiDevice->lpVtbl->QueryInterface(subsystem->dxgiDevice,
+		&IID_IDXGIDevice, (void**) &DxgiDevice);
 
 	if (FAILED(hr))
 		return -1;
 
 	hr = DxgiDevice->lpVtbl->GetParent(DxgiDevice, &IID_IDXGIAdapter, (void**) &DxgiAdapter);
+
 	DxgiDevice->lpVtbl->Release(DxgiDevice);
 	DxgiDevice = NULL;
 
 	if (FAILED(hr))
 		return -1;
 
-	ZeroMemory(&desc, sizeof(desc));
 	pOutput = NULL;
+	ZeroMemory(&outputDesc, sizeof(outputDesc));
 
 	while (DxgiAdapter->lpVtbl->EnumOutputs(DxgiAdapter, i, &pOutput) != DXGI_ERROR_NOT_FOUND)
 	{
-		DXGI_OUTPUT_DESC* pDesc = &desc;
+		DXGI_OUTPUT_DESC* pDesc = &outputDesc;
 
 		hr = pOutput->lpVtbl->GetDesc(pOutput, pDesc);
 
@@ -188,12 +191,13 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 			dTop = i;
 
 		pOutput->lpVtbl->Release(pOutput);
-		++i;
+		i++;
 	}
 
 	dTop = 0; /* screen id */
 
 	hr = DxgiAdapter->lpVtbl->EnumOutputs(DxgiAdapter, dTop, &DxgiOutput);
+
 	DxgiAdapter->lpVtbl->Release(DxgiAdapter);
 	DxgiAdapter = NULL;
 
@@ -201,6 +205,7 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 		return -1;
 
 	hr = DxgiOutput->lpVtbl->QueryInterface(DxgiOutput, &IID_IDXGIOutput1, (void**) &DxgiOutput1);
+
 	DxgiOutput->lpVtbl->Release(DxgiOutput);
 	DxgiOutput = NULL;
 
@@ -212,6 +217,24 @@ int win_shadow_dxgi_init_duplication(winShadowSubsystem* subsystem)
 
 	DxgiOutput1->lpVtbl->Release(DxgiOutput1);
 	DxgiOutput1 = NULL;
+
+	if (FAILED(hr))
+		return -1;
+
+	textureDesc.Width = subsystem->width;
+	textureDesc.Height = subsystem->height;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_STAGING;
+	textureDesc.BindFlags = 0;
+	textureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	textureDesc.MiscFlags = 0;
+
+	hr = subsystem->dxgiDevice->lpVtbl->CreateTexture2D(subsystem->dxgiDevice,
+		&textureDesc, NULL, &(subsystem->dxgiStage));
 
 	if (FAILED(hr))
 		return -1;
@@ -254,6 +277,12 @@ int win_shadow_dxgi_init(winShadowSubsystem* subsystem)
 
 int win_shadow_dxgi_uninit(winShadowSubsystem* subsystem)
 {
+	if (subsystem->dxgiStage)
+	{
+		subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
+		subsystem->dxgiStage = NULL;
+	}
+
 	if (subsystem->dxgiDesktopImage)
 	{
 		subsystem->dxgiDesktopImage->lpVtbl->Release(subsystem->dxgiDesktopImage);
@@ -287,19 +316,6 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem,
 	HRESULT hr;
 	D3D11_BOX Box;
 	DXGI_MAPPED_RECT mappedRect;
-	D3D11_TEXTURE2D_DESC tDesc;
-
-	tDesc.Width = width;
-	tDesc.Height = height;
-	tDesc.MipLevels = 1;
-	tDesc.ArraySize = 1;
-	tDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	tDesc.SampleDesc.Count = 1;
-	tDesc.SampleDesc.Quality = 0;
-	tDesc.Usage = D3D11_USAGE_STAGING;
-	tDesc.BindFlags = 0;
-	tDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-	tDesc.MiscFlags = 0;
 
 	Box.top = x;
 	Box.left = y;
@@ -308,13 +324,8 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem,
 	Box.front = 0;
 	Box.back = 1;
 
-	hr = subsystem->dxgiDevice->lpVtbl->CreateTexture2D(subsystem->dxgiDevice, &tDesc, NULL, &(subsystem->dxgiStage));
-
-	if (FAILED(hr))
-		return -1;
-
 	subsystem->dxgiDeviceContext->lpVtbl->CopySubresourceRegion(subsystem->dxgiDeviceContext,
-		(ID3D11Resource*) subsystem->dxgiStage, 0, 0, 0, 0, (ID3D11Resource*) subsystem->dxgiDesktopImage, 0, &Box);	 
+		(ID3D11Resource*) subsystem->dxgiStage, 0, x, y, 0, (ID3D11Resource*) subsystem->dxgiDesktopImage, 0, &Box);	 
 
 	hr = subsystem->dxgiStage->lpVtbl->QueryInterface(subsystem->dxgiStage,
 		&IID_IDXGISurface, (void**) &(subsystem->dxgiSurface));
@@ -344,18 +355,12 @@ int win_shadow_dxgi_release_frame_data(winShadowSubsystem* subsystem)
 		subsystem->dxgiSurface = NULL;
 	}
 
-	if (subsystem->dxgiStage)
-	{
-		subsystem->dxgiStage->lpVtbl->Release(subsystem->dxgiStage);
-		subsystem->dxgiStage = NULL;
-	}
-
 	hr = subsystem->dxgiOutputDuplication->lpVtbl->ReleaseFrame(subsystem->dxgiOutputDuplication);
+
+	subsystem->pendingFrames = 0;
 
 	if (FAILED(hr))
 		return -1;
-
-	subsystem->pendingFrames = 0;
 
 	return 1;
 }
@@ -367,7 +372,6 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 	HRESULT hr = 0;
 	UINT DataBufferSize = 0;
 	BYTE* DataBuffer = NULL;
-	IDXGIResource* DesktopResource = NULL;
 
 	if (subsystem->pendingFrames > 0)
 	{
@@ -381,7 +385,7 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 	}
 
 	hr = subsystem->dxgiOutputDuplication->lpVtbl->AcquireNextFrame(subsystem->dxgiOutputDuplication,
-		0, &(subsystem->dxgiFrameInfo), &DesktopResource);
+		0, &(subsystem->dxgiFrameInfo), &(subsystem->dxgiResource));
 
 	if (hr == DXGI_ERROR_WAIT_TIMEOUT)
 		return 0;
@@ -420,18 +424,18 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 		}
 	}
 		
-	hr = DesktopResource->lpVtbl->QueryInterface(DesktopResource,
+	hr = subsystem->dxgiResource->lpVtbl->QueryInterface(subsystem->dxgiResource,
 		&IID_ID3D11Texture2D, (void**) &(subsystem->dxgiDesktopImage));
 
-	DesktopResource->lpVtbl->Release(DesktopResource);
-	DesktopResource = NULL;
+	subsystem->dxgiResource->lpVtbl->Release(subsystem->dxgiResource);
+	subsystem->dxgiResource = NULL;
 
 	if (FAILED(hr))
 		return -1;
 
 	subsystem->pendingFrames = subsystem->dxgiFrameInfo.AccumulatedFrames;
 
-	if (subsystem->dxgiFrameInfo.AccumulatedFrames == 0)
+	if (subsystem->pendingFrames == 0)
 	{
 		hr = subsystem->dxgiOutputDuplication->lpVtbl->ReleaseFrame(subsystem->dxgiOutputDuplication);
 
@@ -446,15 +450,20 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 {
 	UINT i;
 	HRESULT hr;
-	UINT BufSize;
 	RECT* pRect;
-	UINT numRects;
-	BYTE* DirtyRects;
+	UINT numDirtyRects;
+	UINT UsedBufferSize;
 	rdpShadowServer* server;
 	rdpShadowScreen* screen;
-	UINT DataBufferSize = 0;
-	BYTE* DataBuffer = NULL;
 	RECTANGLE_16 invalidRect;
+	UINT MetadataBufferSize;
+	UINT DirtyRectsBufferSize;
+	UINT MoveRectsBufferSize;
+	UINT PointerShapeBufferSize;
+	RECT* pDirtyRectsBuffer;
+	void* pPointerShapeBuffer;
+	DXGI_OUTDUPL_MOVE_RECT* pMoveRectBuffer;
+	DXGI_OUTDUPL_POINTER_SHAPE_INFO PointerShapeInfo;
 
 	server = subsystem->server;
 	screen = server->screen;
@@ -462,61 +471,77 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 	if (subsystem->dxgiFrameInfo.AccumulatedFrames == 0)
 		return 0;
 
-	if (subsystem->dxgiFrameInfo.TotalMetadataBufferSize)
+	if (subsystem->dxgiFrameInfo.TotalMetadataBufferSize == 0)
+		return 0;
+
+	MetadataBufferSize = subsystem->dxgiFrameInfo.TotalMetadataBufferSize;
+
+	if (MetadataBufferSize > subsystem->MetadataBufferSize)
 	{
-		if (subsystem->dxgiFrameInfo.TotalMetadataBufferSize > DataBufferSize)
-		{
-			if (DataBuffer)
-			{
-				free(DataBuffer);
-				DataBuffer = NULL;
-			}
-
-			DataBuffer = (BYTE*) malloc(subsystem->dxgiFrameInfo.TotalMetadataBufferSize);
+		subsystem->MetadataBuffer = (BYTE*) realloc(subsystem->MetadataBuffer, MetadataBufferSize);
 			
-			if (!DataBuffer)
-				return -1;
-
-			DataBufferSize = subsystem->dxgiFrameInfo.TotalMetadataBufferSize;
-		}
-
-		BufSize = subsystem->dxgiFrameInfo.TotalMetadataBufferSize;
-
-		hr = subsystem->dxgiOutputDuplication->lpVtbl->GetFrameMoveRects(subsystem->dxgiOutputDuplication,
-			BufSize, (DXGI_OUTDUPL_MOVE_RECT*) DataBuffer, &BufSize);
-
-		if (FAILED(hr))
+		if (!subsystem->MetadataBuffer)
 			return -1;
 
-		DirtyRects = DataBuffer + BufSize;
-		BufSize = subsystem->dxgiFrameInfo.TotalMetadataBufferSize - BufSize;
-
-		hr = subsystem->dxgiOutputDuplication->lpVtbl->GetFrameDirtyRects(subsystem->dxgiOutputDuplication,
-			BufSize, (RECT*) DirtyRects, &BufSize);
-
-		if (FAILED(hr))
-			return -1;
-
-		numRects = BufSize / sizeof(RECT);
-
-		pRect = (RECT*) DirtyRects;
-
-		EnterCriticalSection(&(screen->lock));
-
-		for (i = 0; i < numRects; i++)
-		{
-			invalidRect.left = (UINT16) pRect->left;
-			invalidRect.top = (UINT16) pRect->top;
-			invalidRect.right = (UINT16) pRect->right;
-			invalidRect.bottom = (UINT16) pRect->bottom;
-
-			region16_union_rect(&(screen->invalidRegion), &(screen->invalidRegion), &invalidRect);
-
-			pRect++;
-		}
-
-		LeaveCriticalSection(&(screen->lock));
+		subsystem->MetadataBufferSize = MetadataBufferSize;
 	}
+
+	/* GetFrameDirtyRects */
+
+	UsedBufferSize = 0;
+
+	DirtyRectsBufferSize = MetadataBufferSize - UsedBufferSize;
+	pDirtyRectsBuffer = (RECT*) &(subsystem->MetadataBuffer[UsedBufferSize]);
+
+	hr = subsystem->dxgiOutputDuplication->lpVtbl->GetFrameDirtyRects(subsystem->dxgiOutputDuplication,
+		DirtyRectsBufferSize, pDirtyRectsBuffer, &DirtyRectsBufferSize);
+
+	if (FAILED(hr))
+		return -1;
+
+	/* GetFrameMoveRects */
+
+	UsedBufferSize += DirtyRectsBufferSize;
+
+	MoveRectsBufferSize = MetadataBufferSize - UsedBufferSize;
+	pMoveRectBuffer = (DXGI_OUTDUPL_MOVE_RECT*) &(subsystem->MetadataBuffer[UsedBufferSize]);
+
+	hr = subsystem->dxgiOutputDuplication->lpVtbl->GetFrameMoveRects(subsystem->dxgiOutputDuplication,
+		MoveRectsBufferSize, pMoveRectBuffer, &MoveRectsBufferSize);
+
+	if (FAILED(hr))
+		return -1;
+
+	/* GetFramePointerShape */
+
+	UsedBufferSize += MoveRectsBufferSize;
+
+	PointerShapeBufferSize = MetadataBufferSize - UsedBufferSize;
+	pPointerShapeBuffer = (void*) &(subsystem->MetadataBuffer[UsedBufferSize]);
+
+	hr = subsystem->dxgiOutputDuplication->lpVtbl->GetFramePointerShape(subsystem->dxgiOutputDuplication,
+		PointerShapeBufferSize, pPointerShapeBuffer, &PointerShapeBufferSize, &PointerShapeInfo);
+
+	if (FAILED(hr))
+		return -1;
+
+	EnterCriticalSection(&(screen->lock));
+
+	numDirtyRects = DirtyRectsBufferSize / sizeof(RECT);
+
+	for (i = 0; i < numDirtyRects; i++)
+	{
+		pRect = &pDirtyRectsBuffer[i];
+
+		invalidRect.left = (UINT16) pRect->left;
+		invalidRect.top = (UINT16) pRect->top;
+		invalidRect.right = (UINT16) pRect->right;
+		invalidRect.bottom = (UINT16) pRect->bottom;
+
+		region16_union_rect(&(screen->invalidRegion), &(screen->invalidRegion), &invalidRect);
+	}
+
+	LeaveCriticalSection(&(screen->lock));
 
 	return 1;
 }
@@ -730,7 +755,8 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	width = extents->right - extents->left;
 	height = extents->bottom - extents->top;
 
-	printf("x: %d y: %d width: %d height: %d\n", x, y, width, height);
+	printf("x: %d y: %d width: %d height: %d right: %d bottom: %d\n",
+		x, y, width, height, x + width, y + height);
 
 	status = win_shadow_dxgi_fetch_frame_data(subsystem, &pDstData, &nDstStep, x, y, width, height);
 
@@ -739,7 +765,7 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 
 	freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 			surface->scanline, x - surface->x, y - surface->y, width, height,
-			pDstData, PIXEL_FORMAT_XRGB32, nDstStep, 0, 0);
+			pDstData, PIXEL_FORMAT_XRGB32, nDstStep, x, y);
 
 	return 1;
 }
