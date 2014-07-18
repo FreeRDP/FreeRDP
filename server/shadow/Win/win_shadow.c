@@ -450,18 +450,22 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 {
 	UINT i;
 	HRESULT hr;
-	RECT* pRect;
+	POINT* pSrcPt;
+	RECT*  pDstRect;
+	RECT* pDirtyRect;
+	UINT numMoveRects;
 	UINT numDirtyRects;
 	UINT UsedBufferSize;
 	rdpShadowServer* server;
 	rdpShadowScreen* screen;
 	RECTANGLE_16 invalidRect;
 	UINT MetadataBufferSize;
-	UINT DirtyRectsBufferSize;
 	UINT MoveRectsBufferSize;
+	UINT DirtyRectsBufferSize;
 	UINT PointerShapeBufferSize;
 	RECT* pDirtyRectsBuffer;
 	void* pPointerShapeBuffer;
+	DXGI_OUTDUPL_MOVE_RECT* pMoveRect;
 	DXGI_OUTDUPL_MOVE_RECT* pMoveRectBuffer;
 	DXGI_OUTDUPL_POINTER_SHAPE_INFO PointerShapeInfo;
 
@@ -486,28 +490,28 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 		subsystem->MetadataBufferSize = MetadataBufferSize;
 	}
 
-	/* GetFrameDirtyRects */
-
-	UsedBufferSize = 0;
-
-	DirtyRectsBufferSize = MetadataBufferSize - UsedBufferSize;
-	pDirtyRectsBuffer = (RECT*) &(subsystem->MetadataBuffer[UsedBufferSize]);
-
-	hr = subsystem->dxgiOutputDuplication->lpVtbl->GetFrameDirtyRects(subsystem->dxgiOutputDuplication,
-		DirtyRectsBufferSize, pDirtyRectsBuffer, &DirtyRectsBufferSize);
-
-	if (FAILED(hr))
-		return -1;
-
 	/* GetFrameMoveRects */
 
-	UsedBufferSize += DirtyRectsBufferSize;
+	UsedBufferSize = 0;
 
 	MoveRectsBufferSize = MetadataBufferSize - UsedBufferSize;
 	pMoveRectBuffer = (DXGI_OUTDUPL_MOVE_RECT*) &(subsystem->MetadataBuffer[UsedBufferSize]);
 
 	hr = subsystem->dxgiOutputDuplication->lpVtbl->GetFrameMoveRects(subsystem->dxgiOutputDuplication,
 		MoveRectsBufferSize, pMoveRectBuffer, &MoveRectsBufferSize);
+
+	if (FAILED(hr))
+		return -1;
+
+	/* GetFrameDirtyRects */
+
+	UsedBufferSize += MoveRectsBufferSize;
+
+	DirtyRectsBufferSize = MetadataBufferSize - UsedBufferSize;
+	pDirtyRectsBuffer = (RECT*) &(subsystem->MetadataBuffer[UsedBufferSize]);
+
+	hr = subsystem->dxgiOutputDuplication->lpVtbl->GetFrameDirtyRects(subsystem->dxgiOutputDuplication,
+		DirtyRectsBufferSize, pDirtyRectsBuffer, &DirtyRectsBufferSize);
 
 	if (FAILED(hr))
 		return -1;
@@ -527,16 +531,32 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 
 	EnterCriticalSection(&(screen->lock));
 
+	numMoveRects = MoveRectsBufferSize / sizeof(DXGI_OUTDUPL_MOVE_RECT);
+
+	for (i = 0; i < numMoveRects; i++)
+	{
+		pMoveRect = &pMoveRectBuffer[i];
+		pSrcPt = &(pMoveRect->SourcePoint);
+		pDstRect = &(pMoveRect->DestinationRect);
+
+		invalidRect.left = (UINT16) pDstRect->left;
+		invalidRect.top = (UINT16) pDstRect->top;
+		invalidRect.right = (UINT16) pDstRect->right;
+		invalidRect.bottom = (UINT16) pDstRect->bottom;
+
+		region16_union_rect(&(screen->invalidRegion), &(screen->invalidRegion), &invalidRect);
+	}
+
 	numDirtyRects = DirtyRectsBufferSize / sizeof(RECT);
 
 	for (i = 0; i < numDirtyRects; i++)
 	{
-		pRect = &pDirtyRectsBuffer[i];
+		pDirtyRect = &pDirtyRectsBuffer[i];
 
-		invalidRect.left = (UINT16) pRect->left;
-		invalidRect.top = (UINT16) pRect->top;
-		invalidRect.right = (UINT16) pRect->right;
-		invalidRect.bottom = (UINT16) pRect->bottom;
+		invalidRect.left = (UINT16) pDirtyRect->left;
+		invalidRect.top = (UINT16) pDirtyRect->top;
+		invalidRect.right = (UINT16) pDirtyRect->right;
+		invalidRect.bottom = (UINT16) pDirtyRect->bottom;
 
 		region16_union_rect(&(screen->invalidRegion), &(screen->invalidRegion), &invalidRect);
 	}
