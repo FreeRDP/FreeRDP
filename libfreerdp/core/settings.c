@@ -825,6 +825,7 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->MonitorDefArray);
 		free(settings->ClientAddress);
 		free(settings->ClientDir);
+		free(settings->PermittedTLSCiphers);
 		free(settings->CertificateFile);
 		free(settings->PrivateKeyFile);
 		free(settings->ConnectionFile);
