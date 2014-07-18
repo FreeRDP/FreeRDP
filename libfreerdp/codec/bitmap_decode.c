@@ -82,43 +82,30 @@ static const BYTE g_MaskLiteRunLength = 0x0F;
  * Reads the supplied order header and extracts the compression
  * order code ID.
  */
-static UINT32 ExtractCodeId(BYTE bOrderHdr)
+static INLINE UINT32 ExtractCodeId(BYTE bOrderHdr)
 {
-	int code;
-
-	switch (bOrderHdr)
-	{
-		case MEGA_MEGA_BG_RUN:
-		case MEGA_MEGA_FG_RUN:
-		case MEGA_MEGA_SET_FG_RUN:
-		case MEGA_MEGA_DITHERED_RUN:
-		case MEGA_MEGA_COLOR_RUN:
-		case MEGA_MEGA_FGBG_IMAGE:
-		case MEGA_MEGA_SET_FGBG_IMAGE:
-		case MEGA_MEGA_COLOR_IMAGE:
-		case SPECIAL_FGBG_1:
-		case SPECIAL_FGBG_2:
-		case SPECIAL_WHITE:
-		case SPECIAL_BLACK:
-			return bOrderHdr;
+	if ((bOrderHdr & 0xC0U) != 0xC0U) {
+		/* REGULAR orders
+		 * (000x xxxx, 001x xxxx, 010x xxxx, 011x xxxx, 100x xxxx)
+		 */
+		return bOrderHdr >> 5;
 	}
-	code = bOrderHdr >> 5;
-	switch (code)
-	{
-		case REGULAR_BG_RUN:
-		case REGULAR_FG_RUN:
-		case REGULAR_COLOR_RUN:
-		case REGULAR_FGBG_IMAGE:
-		case REGULAR_COLOR_IMAGE:
-			return code;
+	else if ((bOrderHdr & 0xF0U) == 0xF0U) {
+		/* MEGA and SPECIAL orders (0xF*) */
+		return bOrderHdr;
 	}
-	return bOrderHdr >> 4;
+	else {
+		/* LITE orders
+		 * 1100 xxxx, 1101 xxxx, 1110 xxxx)
+		 */
+		return bOrderHdr >> 4;
+	}
 }
 
 /**
  * Extract the run length of a compression order.
  */
-static UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* advance)
+static INLINE UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* advance)
 {
 	UINT32 runLength;
 	UINT32 ladvance;
@@ -266,10 +253,10 @@ BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int 
 
 	if (srcBpp == 16 && dstBpp == 16)
 	{
-	        TmpBfr = (BYTE*) malloc(width * height * 2);
-	        RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
-	        freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
-	        free(TmpBfr);
+		TmpBfr = (BYTE*) _aligned_malloc(width * height * 2, 16);
+		RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
+		freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
+		_aligned_free(TmpBfr);
 	}
 	else if (srcBpp == 32 && dstBpp == 32)
 	{
@@ -283,24 +270,24 @@ BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int 
 	}
 	else if (srcBpp == 15 && dstBpp == 15)
 	{
-                TmpBfr = (BYTE*) malloc(width * height * 2);
-                RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
-                freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
-                free(TmpBfr);
+		TmpBfr = (BYTE*) _aligned_malloc(width * height * 2, 16);
+		RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
+		freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
+		_aligned_free(TmpBfr);
 	}
 	else if (srcBpp == 8 && dstBpp == 8)
 	{
-                TmpBfr = (BYTE*) malloc(width * height);
-                RleDecompress8to8(srcData, size, TmpBfr, width, width, height);
-                freerdp_bitmap_flip(TmpBfr, dstData, width, height);
-                free(TmpBfr);
+		TmpBfr = (BYTE*) _aligned_malloc(width * height, 16);
+		RleDecompress8to8(srcData, size, TmpBfr, width, width, height);
+		freerdp_bitmap_flip(TmpBfr, dstData, width, height);
+		_aligned_free(TmpBfr);
 	}
 	else if (srcBpp == 24 && dstBpp == 24)
 	{
-                TmpBfr = (BYTE*) malloc(width * height * 3);
-                RleDecompress24to24(srcData, size, TmpBfr, width * 3, width, height);
-                freerdp_bitmap_flip(TmpBfr, dstData, width * 3, height);
-                free(TmpBfr);
+		TmpBfr = (BYTE*) _aligned_malloc(width * height * 3, 16);
+		RleDecompress24to24(srcData, size, TmpBfr, width * 3, width, height);
+		freerdp_bitmap_flip(TmpBfr, dstData, width * 3, height);
+		_aligned_free(TmpBfr);
 	}
 	else
 	{

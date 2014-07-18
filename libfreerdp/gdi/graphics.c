@@ -61,7 +61,7 @@ void gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	gdi_bitmap = (gdiBitmap*) bitmap;
 	gdi_bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
 
-	if (bitmap->data == NULL)
+	if (!bitmap->data)
 		gdi_bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, bitmap->width, bitmap->height);
 	else
 		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, gdi->dstBpp, bitmap->data);
@@ -74,7 +74,7 @@ void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	gdiBitmap* gdi_bitmap = (gdiBitmap*) bitmap;
 
-	if (gdi_bitmap != NULL)
+	if (gdi_bitmap)
 	{
 		gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->org_bitmap);
 		gdi_DeleteObject((HGDIOBJECT) gdi_bitmap->bitmap);
@@ -110,9 +110,9 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	size = width * height * ((bpp + 7) / 8);
 
 	if (!bitmap->data)
-		bitmap->data = (BYTE*) malloc(size);
+		bitmap->data = (BYTE*) _aligned_malloc(size, 16);
 	else
-		bitmap->data = (BYTE*) realloc(bitmap->data, size);
+		bitmap->data = (BYTE*) _aligned_realloc(bitmap->data, size, 16);
 
 	switch (codecId)
 	{
@@ -217,7 +217,7 @@ void gdi_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 
 	gdi_glyph = (gdiGlyph*) glyph;
 
-	if (gdi_glyph != 0)
+	if (gdi_glyph)
 	{
 		gdi_SelectObject(gdi_glyph->hdc, (HGDIOBJECT) gdi_glyph->org_bitmap);
 		gdi_DeleteObject((HGDIOBJECT) gdi_glyph->bitmap);

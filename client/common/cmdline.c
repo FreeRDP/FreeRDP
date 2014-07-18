@@ -114,7 +114,6 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gfx-thin-client", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline thin client mode" },
 	{ "gfx-small-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline small cache mode" },
 	{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8 graphics pipeline progressive codec" },
-	{ "gfx-progressive-v2", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8.1 graphics pipeline progressive v2 codec" },
 	{ "gfx-h264", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "RDP8.1 graphics pipeline H264 codec" },
 	{ "rfx", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "RemoteFX" },
 	{ "rfx-mode", COMMAND_LINE_VALUE_REQUIRED, "<image|video>", NULL, NULL, -1, NULL, "RemoteFX mode" },
@@ -416,6 +415,9 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 
 		if (count > 2)
 			serial->Path = _strdup(params[2]);
+
+		if (count > 3)
+			serial->Driver = _strdup(params[3]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) serial);
 
@@ -1640,11 +1642,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "gfx-progressive")
 		{
 			settings->GfxProgressive = arg->Value ? TRUE : FALSE;
-			settings->SupportGraphicsPipeline = TRUE;
-		}
-		CommandLineSwitchCase(arg, "gfx-progressive-v2")
-		{
-			settings->GfxProgressiveV2 = arg->Value ? TRUE : FALSE;
 			settings->SupportGraphicsPipeline = TRUE;
 		}
 		CommandLineSwitchCase(arg, "gfx-h264")

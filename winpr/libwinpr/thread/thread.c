@@ -71,7 +71,6 @@
 #include <winpr/platform.h>
 
 #if defined(__linux__) && !defined(__ANDROID__)
-#define _GNU_SOURCE
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>

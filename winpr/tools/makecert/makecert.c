@@ -27,8 +27,10 @@
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 
-#include <openssl/pem.h>
 #include <openssl/conf.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include <openssl/pkcs12.h>
 #include <openssl/x509v3.h>
 
 #include <winpr/tools/makecert.h>
@@ -42,12 +44,24 @@ struct _MAKECERT_CONTEXT
 	RSA* rsa;
 	X509* x509;
 	EVP_PKEY* pkey;
+	PKCS12* pkcs12;
 
 	BOOL live;
 	BOOL silent;
 
+	BOOL crtFormat;
+	BOOL pemFormat;
+	BOOL pfxFormat;
+
+	char* password;
+
 	char* output_file;
+	char* output_path;
 	char* default_name;
+	char* common_name;
+
+	int duration_years;
+	int duration_months;
 };
 
 COMMAND_LINE_ARGUMENT_A args[] =
@@ -62,6 +76,15 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	},
 	{ "live", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 			"Generate certificate live in memory when used as a library."
+	},
+	{ "format", COMMAND_LINE_VALUE_REQUIRED, "<crt|pem|pfx>", NULL, NULL, -1, NULL,
+			"Specify certificate file format"
+	},
+	{ "path", COMMAND_LINE_VALUE_REQUIRED, "<path>", NULL, NULL, -1, NULL,
+			"Specify certificate file output path"
+	},
+	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL,
+			"Specify certificate export password"
 	},
 
 	/* Basic Options */
@@ -153,6 +176,9 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	},
 	{ "m", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
 			"Specifies the duration, in months, of the certificate validity period."
+	},
+	{ "y", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
+			"Specifies the duration, in years, of the certificate validity period."
 	},
 	{ "nscp", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 			"Includes the Netscape client-authorization extension."
@@ -346,6 +372,65 @@ int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc, char**
 		{
 			context->live = TRUE;
 		}
+		CommandLineSwitchCase(arg, "format")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			if (strcmp(arg->Value, "crt") == 0)
+			{
+				context->crtFormat = TRUE;
+				context->pemFormat = FALSE;
+				context->pfxFormat = FALSE;
+			}
+			else if (strcmp(arg->Value, "pem") == 0)
+			{
+				context->crtFormat = FALSE;
+				context->pemFormat = TRUE;
+				context->pfxFormat = FALSE;
+			}
+			else if (strcmp(arg->Value, "pfx") == 0)
+			{
+				context->crtFormat = FALSE;
+				context->pemFormat = FALSE;
+				context->pfxFormat = TRUE;
+			}
+		}
+		CommandLineSwitchCase(arg, "path")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			context->output_path = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "p")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			context->password = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "n")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			context->common_name = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "y")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			context->duration_years = atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "m")
+		{
+			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+				continue;
+
+			context->duration_months = atoi(arg->Value);
+		}
 
 		CommandLineSwitchDefault(arg)
 		{
@@ -374,7 +459,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 	char* fullpath;
 
 	if (!context->output_file)
-		context->output_file = context->default_name;
+		context->output_file = _strdup(context->default_name);
 
 	/*
 	 * Output Certificate File
@@ -383,7 +468,13 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 	length = strlen(context->output_file);
 	filename = malloc(length + 8);
 	strcpy(filename, context->output_file);
-	strcpy(&filename[length], ".crt");
+
+	if (context->crtFormat)
+		strcpy(&filename[length], ".crt");
+	else if (context->pemFormat)
+		strcpy(&filename[length], ".pem");
+	else if (context->pfxFormat)
+		strcpy(&filename[length], ".pfx");
 
 	if (path)
 		fullpath = GetCombinedPath(path, filename);
@@ -394,7 +485,31 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 	if (fp)
 	{
-		PEM_write_X509(fp, context->x509);
+		if (context->pfxFormat)
+		{
+			if (!context->password)
+			{
+				context->password = _strdup("password");
+				printf("Using default export password \"password\"\n");
+			}
+
+			OpenSSL_add_all_algorithms();
+			OpenSSL_add_all_ciphers();
+			OpenSSL_add_all_digests();
+
+			context->pkcs12 = PKCS12_create(context->password, context->default_name, context->pkey,
+					context->x509, NULL, 0, 0, 0, 0, 0);
+
+			i2d_PKCS12_fp(fp, context->pkcs12);
+		}
+		else
+		{
+			PEM_write_X509(fp, context->x509);
+
+			if (context->pemFormat)
+				PEM_write_PrivateKey(fp, context->pkey, NULL, NULL, 0, NULL, NULL);
+		}
+
 		fclose(fp);
 	}
 
@@ -410,6 +525,9 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 	int length;
 	char* filename;
 	char* fullpath;
+
+	if (!context->crtFormat)
+		return 1;
 
 	if (!context->output_file)
 		context->output_file = context->default_name;
@@ -456,7 +574,13 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	if (makecert_context_parse_arguments(context, argc, argv) < 1)
 		return 0;
 
-	context->default_name = x509_get_default_name();
+	if (!context->default_name && !context->common_name)
+		context->default_name = x509_get_default_name();
+	else
+		context->default_name = _strdup(context->common_name);
+
+	if (!context->common_name)
+		context->common_name = _strdup(context->default_name);
 
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 	context->bio = BIO_new_fp(stderr, BIO_NOCLOSE);
@@ -501,7 +625,16 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	ASN1_INTEGER_set(X509_get_serialNumber(context->x509), serial);
 
 	X509_gmtime_adj(X509_get_notBefore(context->x509), 0);
-	X509_gmtime_adj(X509_get_notAfter(context->x509), (long) 60 * 60 * 24 * 365);
+
+	if (context->duration_months)
+	{
+		X509_gmtime_adj(X509_get_notAfter(context->x509), (long) (60 * 60 * 24 * 31 * context->duration_months));
+	}
+	else if (context->duration_years)
+	{
+		X509_gmtime_adj(X509_get_notAfter(context->x509), (long) (60 * 60 * 24 * 365 * context->duration_years));
+	}
+	
 	X509_set_pubkey(context->x509, context->pkey);
 
 	name = X509_get_subject_name(context->x509);
@@ -535,19 +668,14 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		if (entry)
 			X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 
-		entry = x509_name_parse(arg->Value, "CN", &length);
-
-		if (!entry)
-		{
-			entry = context->default_name;
-			length = strlen(entry);
-		}
+		entry = context->common_name;
+		length = strlen(entry);
 
 		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 	}
 	else
 	{
-		entry = context->default_name;
+		entry = context->common_name;
 		length = strlen(entry);
 
 		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
@@ -592,8 +720,10 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 	if (!context->live)
 	{
-		makecert_context_output_certificate_file(context, NULL);
-		makecert_context_output_private_key_file(context, NULL);
+		makecert_context_output_certificate_file(context, context->output_path);
+
+		if (context->crtFormat)
+			makecert_context_output_private_key_file(context, context->output_path);
 	}
 
 	return 0;
@@ -603,11 +733,12 @@ MAKECERT_CONTEXT* makecert_context_new()
 {
 	MAKECERT_CONTEXT* context = NULL;
 
-	context = (MAKECERT_CONTEXT*) malloc(sizeof(MAKECERT_CONTEXT));
+	context = (MAKECERT_CONTEXT*) calloc(1, sizeof(MAKECERT_CONTEXT));
 
 	if (context)
 	{
-		ZeroMemory(context, sizeof(MAKECERT_CONTEXT));
+		context->crtFormat = TRUE;
+		context->duration_years = 1;
 	}
 
 	return context;
@@ -617,6 +748,8 @@ void makecert_context_free(MAKECERT_CONTEXT* context)
 {
 	if (context)
 	{
+		free(context->password);
+
 		X509_free(context->x509);
 		EVP_PKEY_free(context->pkey);
 

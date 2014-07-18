@@ -116,12 +116,10 @@ wObjectPool* ObjectPool_New(BOOL synchronized)
 {
 	wObjectPool* pool = NULL;
 
-	pool = (wObjectPool*) malloc(sizeof(wObjectPool));
+	pool = (wObjectPool*) calloc(1, sizeof(wObjectPool));
 
 	if (pool)
 	{
-		ZeroMemory(pool, sizeof(wObjectPool));
-
 		pool->synchronized = synchronized;
 
 		if (pool->synchronized)

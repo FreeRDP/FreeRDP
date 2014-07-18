@@ -390,6 +390,9 @@ gdiBitmap* gdi_glyph_new(rdpGdi* gdi, GLYPH_DATA* glyph)
 
 	gdi_bmp = (gdiBitmap*) malloc(sizeof(gdiBitmap));
 
+	if (!gdi_bmp)
+		return NULL;
+
 	gdi_bmp->hdc = gdi_GetDC();
 	gdi_bmp->hdc->bytesPerPixel = 1;
 	gdi_bmp->hdc->bitsPerPixel = 1;
@@ -405,9 +408,9 @@ gdiBitmap* gdi_glyph_new(rdpGdi* gdi, GLYPH_DATA* glyph)
 	return gdi_bmp;
 }
 
-void gdi_glyph_free(gdiBitmap *gdi_bmp)
+void gdi_glyph_free(gdiBitmap* gdi_bmp)
 {
-	if (gdi_bmp != 0)
+	if (gdi_bmp)
 	{
 		gdi_SelectObject(gdi_bmp->hdc, (HGDIOBJECT) gdi_bmp->org_bitmap);
 		gdi_DeleteObject((HGDIOBJECT) gdi_bmp->bitmap);
@@ -421,11 +424,15 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* 
 	gdiBitmap* bitmap;
 
 	bitmap = (gdiBitmap*) malloc(sizeof(gdiBitmap));
+
+	if (!bitmap)
+		return NULL;
+
 	bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
 
 	DEBUG_GDI("gdi_bitmap_new: width:%d height:%d bpp:%d", width, height, bpp);
 
-	if (data == NULL)
+	if (!data)
 		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, width, height);
 	else
 		bitmap->bitmap = gdi_create_bitmap(gdi, width, height, bpp, data);
@@ -795,8 +802,10 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		surface_bits_command->width, surface_bits_command->height,
 		surface_bits_command->bitmapDataLength);
 
-	tile_bitmap = (char*) malloc(32);
-	ZeroMemory(tile_bitmap, 32);
+	tile_bitmap = (char*) _aligned_malloc(32, 16);
+
+	if (!tile_bitmap)
+		return;
 
 	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
@@ -841,7 +850,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		gdi->image->bitmap->height = surface_bits_command->height;
 		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
 		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
-		gdi->image->bitmap->data = (BYTE*) realloc(gdi->image->bitmap->data, gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
+		gdi->image->bitmap->data = (BYTE*) _aligned_realloc(gdi->image->bitmap->data, gdi->image->bitmap->width * gdi->image->bitmap->height * 4, 16);
 		freerdp_image_flip(nsc_context->BitmapData, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
 	} 
@@ -852,8 +861,8 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
 		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
 
-		gdi->image->bitmap->data = (BYTE*) realloc(gdi->image->bitmap->data,
-				gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
+		gdi->image->bitmap->data = (BYTE*) _aligned_realloc(gdi->image->bitmap->data,
+				gdi->image->bitmap->width * gdi->image->bitmap->height * 4, 16);
 
 		if ((surface_bits_command->bpp != 32) || (gdi->clrconv->alpha == TRUE))
 		{
@@ -866,9 +875,9 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 			surface_bits_command->bpp = 32;
 			surface_bits_command->bitmapData = gdi->image->bitmap->data;
 
-			temp_image = (BYTE*) malloc(gdi->image->bitmap->width * gdi->image->bitmap->height * 4);
+			temp_image = (BYTE*) _aligned_malloc(gdi->image->bitmap->width * gdi->image->bitmap->height * 4, 16);
 			freerdp_image_flip(gdi->image->bitmap->data, temp_image, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
-			free(gdi->image->bitmap->data);
+			_aligned_free(gdi->image->bitmap->data);
 			gdi->image->bitmap->data = temp_image;
 		}
 		else
@@ -885,8 +894,8 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		fprintf(stderr, "Unsupported codecID %d\n", surface_bits_command->codecID);
 	}
 
-	if (tile_bitmap != NULL)
-		free(tile_bitmap);
+	if (tile_bitmap)
+		_aligned_free(tile_bitmap);
 }
 
 /**
@@ -932,6 +941,10 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 void gdi_init_primary(rdpGdi* gdi)
 {
 	gdi->primary = (gdiBitmap*) malloc(sizeof(gdiBitmap));
+
+	if (!gdi->primary)
+		return;
+
 	gdi->primary->hdc = gdi_CreateCompatibleDC(gdi->hdc);
 
 	if (!gdi->primary_buffer)
@@ -984,8 +997,10 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	rdpGdi* gdi;
 	rdpCache* cache;
 
-	gdi = (rdpGdi*) malloc(sizeof(rdpGdi));
-	ZeroMemory(gdi, sizeof(rdpGdi));
+	gdi = (rdpGdi*) calloc(1, sizeof(rdpGdi));
+
+	if (!gdi)
+		return -1;
 
 	instance->context->gdi = gdi;
 	cache = instance->context->cache;
@@ -1036,10 +1051,17 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	gdi->hdc->bytesPerPixel = gdi->bytesPerPixel;
 
 	gdi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
+
+	if (!gdi->clrconv)
+		return -1;
+
 	gdi->clrconv->alpha = (flags & CLRCONV_ALPHA) ? 1 : 0;
 	gdi->clrconv->invert = (flags & CLRCONV_INVERT) ? 1 : 0;
 	gdi->clrconv->rgb555 = (flags & CLRCONV_RGB555) ? 1 : 0;
 	gdi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
+
+	if (!gdi->clrconv->palette)
+		return -1;
 
 	gdi->hdc->alpha = gdi->clrconv->alpha;
 	gdi->hdc->invert = gdi->clrconv->invert;

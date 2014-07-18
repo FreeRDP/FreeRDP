@@ -388,8 +388,9 @@ static UINT32 smartcard_GetStatusChangeA_Call(SMARTCARD_DEVICE* smartcard, SMART
 
 	status = ret.ReturnCode = SCardGetStatusChangeA(operation->hContext, call->dwTimeOut, call->rgReaderStates, call->cReaders);
 
-	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED))
-		return status;
+	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED)){
+		call->cReaders=0;
+	}
 
 	ret.cReaders = call->cReaders;
 	ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
@@ -453,8 +454,9 @@ static UINT32 smartcard_GetStatusChangeW_Call(SMARTCARD_DEVICE* smartcard, SMART
 
 	status = ret.ReturnCode = SCardGetStatusChangeW(operation->hContext, call->dwTimeOut, call->rgReaderStates, call->cReaders);
 
-	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED))
-		return status;
+	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED)){
+		call->cReaders=0;
+	}
 
 	ret.cReaders = call->cReaders;
 	ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));

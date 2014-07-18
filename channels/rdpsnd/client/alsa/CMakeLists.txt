@@ -32,10 +32,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE freerdp
 	MODULES freerdp-codec freerdp-utils)
 	
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-utils)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 	
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ALSA_LIBRARIES})
 

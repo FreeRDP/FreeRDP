@@ -89,6 +89,11 @@ extern int test_RGBToRGB_16s8u_P3AC4R_func(void);
 extern int test_RGBToRGB_16s8u_P3AC4R_speed(void);
 extern int test_yCbCrToRGB_16s16s_P3P3_func(void);
 extern int test_yCbCrToRGB_16s16s_P3P3_speed(void);
+extern int test_YCoCgRToRGB_8u_AC4R_func(void);
+extern int test_YCoCgRToRGB_8u_AC4R_speed(void);
+
+extern int test_RGB565ToARGB_16u32u_C3C4_func(void);
+extern int test_RGB565ToARGB_16u32u_C3C4_speed(void);
 
 extern int test_alphaComp_func(void);
 extern int test_alphaComp_speed(void);

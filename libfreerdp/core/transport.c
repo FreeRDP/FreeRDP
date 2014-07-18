@@ -43,9 +43,7 @@
 #ifndef _WIN32
 #include <netdb.h>
 #include <sys/socket.h>
-#include <sys/select.h>
-#include <sys/time.h>
-#endif
+#endif /* _WIN32 */
 
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
@@ -642,69 +640,37 @@ UINT32 nla_header_length(wStream* s)
 
 static int transport_wait_for_read(rdpTransport* transport)
 {
-	struct timeval tv;
-	fd_set rset, wset;
-	fd_set *rsetPtr = NULL, *wsetPtr = NULL;
-	rdpTcp *tcpIn;
-
-	tcpIn = transport->TcpIn;
+	rdpTcp *tcpIn = transport->TcpIn;
 
 	if (tcpIn->readBlocked)
 	{
-		rsetPtr = &rset;
-		FD_ZERO(rsetPtr);
-		FD_SET(tcpIn->sockfd, rsetPtr);
+		return tcp_wait_read(tcpIn, 10);
 	}
 	else if (tcpIn->writeBlocked)
 	{
-		wsetPtr = &wset;
-		FD_ZERO(wsetPtr);
-		FD_SET(tcpIn->sockfd, wsetPtr);
+		return tcp_wait_write(tcpIn, 10);
 	}
 
-	if (!wsetPtr && !rsetPtr)
-	{
-		USleep(1000);
-		return 0;
-	}
-
-	tv.tv_sec = 0;
-	tv.tv_usec = 1000;
-
-	return select(tcpIn->sockfd + 1, rsetPtr, wsetPtr, NULL, &tv);
+	USleep(1000);
+	return 0;
 }
 
 static int transport_wait_for_write(rdpTransport* transport)
 {
-	struct timeval tv;
-	fd_set rset, wset;
-	fd_set *rsetPtr = NULL, *wsetPtr = NULL;
 	rdpTcp *tcpOut;
 
 	tcpOut = transport->SplitInputOutput ? transport->TcpOut : transport->TcpIn;
 	if (tcpOut->writeBlocked)
 	{
-		wsetPtr = &wset;
-		FD_ZERO(wsetPtr);
-		FD_SET(tcpOut->sockfd, wsetPtr);
+		return tcp_wait_write(tcpOut, 10);
 	}
 	else if (tcpOut->readBlocked)
 	{
-		rsetPtr = &rset;
-		FD_ZERO(rsetPtr);
-		FD_SET(tcpOut->sockfd, rsetPtr);
+		return tcp_wait_read(tcpOut, 10);
 	}
 
-	if (!wsetPtr && !rsetPtr)
-	{
-		USleep(1000);
-		return 0;
-	}
-
-	tv.tv_sec = 0;
-	tv.tv_usec = 1000;
-
-	return select(tcpOut->sockfd + 1, rsetPtr, wsetPtr, NULL, &tv);
+	USleep(1000);
+	return 0;
 }
 
 int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
@@ -778,6 +744,7 @@ int transport_read(rdpTransport* transport, wStream* s)
 
 	if (position < 4)
 	{
+		Stream_EnsureCapacity(s, 4);
 		status = transport_read_layer(transport, Stream_Buffer(s) + position, 4 - position);
 
 		if (status < 0)
@@ -845,6 +812,13 @@ int transport_read(rdpTransport* transport, wStream* s)
 		}
 	}
 
+	if (pduLength < 0 || pduLength > 0xFFFF)
+	{
+		fprintf(stderr, "%s: invalid pduLength: %d\n", __FUNCTION__, pduLength);
+		return -1;
+	}
+
+	Stream_EnsureCapacity(s, pduLength);
 	status = transport_read_layer(transport, Stream_Buffer(s) + position, pduLength - position);
 
 	if (status < 0)

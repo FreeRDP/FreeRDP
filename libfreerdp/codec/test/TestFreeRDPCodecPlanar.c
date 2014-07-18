@@ -3388,7 +3388,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	free(decompressedBitmap);
 
 	freerdp_clrconv_free(clrconv);
-	free(srcBitmap32);
+	_aligned_free(srcBitmap32);
 
 	freerdp_bitmap_planar_context_free(planar);
 

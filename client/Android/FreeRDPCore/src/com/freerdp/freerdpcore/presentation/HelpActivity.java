@@ -12,10 +12,15 @@ package com.freerdp.freerdpcore.presentation;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.util.Log;
 import android.webkit.WebView;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Locale;
 public class HelpActivity extends Activity {
 
+	private static final String TAG = "FreeRDPCore.HelpActivity";
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -23,7 +28,28 @@ public class HelpActivity extends Activity {
 		WebView webview = new WebView(this);
 		setContentView(webview);
 
-		String filename = ((getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE) ? "gestures.html" : "gestures_phone.html";
-		webview.loadUrl("file:///android_asset/help_page/" + filename);
+		String filename;
+		if ((getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE)
+			filename = "gestures.html";
+		else
+			filename = "gestures_phone.html";
+
+		webview.getSettings().setJavaScriptEnabled(true);
+		Locale def = Locale.getDefault();
+		String prefix = def.getLanguage().toLowerCase(def);
+
+		String base = "file:///android_asset/"; 
+		String dir = prefix + "_help_page/"
+				+ filename;
+		try {
+			InputStream is = getAssets().open(dir);
+			is.close();
+			dir = base + dir;
+		} catch (IOException e) {
+			Log.e(TAG, "Missing localized asset " + dir, e);
+			dir = "file:///android_asset/help_page/" + filename;
+		} 
+
+		webview.loadUrl(dir);
 	}
 }

@@ -471,6 +471,7 @@ struct _RDPDR_SERIAL
 	UINT32 Type;
 	char* Name;
 	char* Path;
+	char* Driver; 
 };
 typedef struct _RDPDR_SERIAL RDPDR_SERIAL;
 

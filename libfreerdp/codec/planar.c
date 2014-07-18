@@ -25,6 +25,7 @@
 #include <winpr/print.h>
 
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/primitives.h>
 
 #include "planar.h"
 
@@ -325,6 +326,29 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 
 		srcp += status;
 		srcp++;
+	}
+
+	if (FormatHeader & PLANAR_FORMAT_HEADER_CLL_MASK)
+	{
+		/* The data is in YCoCg colorspace rather than RGB. */
+		if (FormatHeader & PLANAR_FORMAT_HEADER_CS)
+		{
+			static BOOL been_warned = FALSE;
+			if (!been_warned)
+				fprintf(stderr, "Chroma-Subsampling is not implemented.\n");
+			been_warned = TRUE;
+		}
+		else
+		{
+			BOOL alpha;
+			int cll;
+
+			alpha = (FormatHeader & PLANAR_FORMAT_HEADER_NA) ? FALSE : TRUE;
+			cll = FormatHeader & PLANAR_FORMAT_HEADER_CLL_MASK;
+			primitives_get()->YCoCgRToRGB_8u_AC4R(
+				pDstData, nDstStep, pDstData, nDstStep,
+				nWidth, nHeight, cll, alpha, FALSE);
+		}
 	}
 
 	status = (SrcSize == (srcp - pSrcData)) ? 1 : -1;
