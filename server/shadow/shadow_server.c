@@ -27,6 +27,8 @@
 
 #include <freerdp/version.h>
 
+#include <winpr/tools/makecert.h>
+
 #ifndef _WIN32
 #include <sys/select.h>
 #include <sys/signal.h>
@@ -226,6 +228,32 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	return status;
 }
 
+int shadow_server_surface_update(rdpShadowSubsystem* subsystem, REGION16* region)
+{
+	int index;
+	int count;
+	wArrayList* clients;
+	rdpShadowServer* server;
+	rdpShadowClient* client;
+
+	server = subsystem->server;
+	clients = server->clients;
+
+	ArrayList_Lock(clients);
+
+	count = ArrayList_Count(clients);
+
+	for (index = 0; index < count; index++)
+	{
+		client = ArrayList_GetItem(clients, index);
+		shadow_client_surface_update(client, region);
+	}
+
+	ArrayList_Unlock(clients);
+
+	return 1;
+}
+
 void* shadow_server_thread(rdpShadowServer* server)
 {
 	DWORD status;
@@ -317,6 +345,59 @@ int shadow_server_stop(rdpShadowServer* server)
 	return 0;
 }
 
+int shadow_server_init_certificate(rdpShadowServer* server)
+{
+	char* filepath;
+	MAKECERT_CONTEXT* makecert;
+
+	const char* makecert_argv[6] =
+	{
+		"makecert",
+		"-rdp",
+		"-live",
+		"-silent",
+		"-y", "5"
+	};
+
+	int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
+
+	if (!PathFileExistsA(server->ConfigPath))
+		CreateDirectoryA(server->ConfigPath, 0);
+
+	filepath = GetCombinedPath(server->ConfigPath, "shadow");
+
+	if (!filepath)
+		return -1;
+
+	if (!PathFileExistsA(filepath))
+		CreateDirectoryA(filepath, 0);
+
+	server->CertificateFile = GetCombinedPath(filepath, "shadow.crt");
+	server->PrivateKeyFile = GetCombinedPath(filepath, "shadow.key");
+
+	if ((!PathFileExistsA(server->CertificateFile)) ||
+			(!PathFileExistsA(server->PrivateKeyFile)))
+	{
+		makecert = makecert_context_new();
+
+		makecert_context_process(makecert, makecert_argc, (char**) makecert_argv);
+
+		makecert_context_set_output_file_name(makecert, "shadow");
+
+		if (!PathFileExistsA(server->CertificateFile))
+			makecert_context_output_certificate_file(makecert, filepath);
+
+		if (!PathFileExistsA(server->PrivateKeyFile))
+			makecert_context_output_private_key_file(makecert, filepath);
+
+		makecert_context_free(makecert);
+	}
+
+	free(filepath);
+
+	return 1;
+}
+
 int shadow_server_init(rdpShadowServer* server)
 {
 	int status;
@@ -324,6 +405,11 @@ int shadow_server_init(rdpShadowServer* server)
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 
 	server->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	status = shadow_server_init_certificate(server);
+
+	if (status < 0)
+		return -1;
 
 	server->listener = freerdp_listener_new();
 
@@ -351,6 +437,8 @@ int shadow_server_init(rdpShadowServer* server)
 	if (!server->subsystem)
 		return -1;
 
+	server->subsystem->SurfaceUpdate = shadow_server_surface_update;
+
 	if (server->subsystem->Init)
 	{
 		status = server->subsystem->Init(server->subsystem);
@@ -362,11 +450,6 @@ int shadow_server_init(rdpShadowServer* server)
 	server->screen = shadow_screen_new(server);
 
 	if (!server->screen)
-		return -1;
-
-	server->encoder = shadow_encoder_new(server);
-
-	if (!server->encoder)
 		return -1;
 
 	return 1;
@@ -382,16 +465,22 @@ int shadow_server_uninit(rdpShadowServer* server)
 		server->listener = NULL;
 	}
 
-	if (server->encoder)
-	{
-		shadow_encoder_free(server->encoder);
-		server->encoder = NULL;
-	}
-
 	if (server->subsystem)
 	{
 		server->subsystem->Free(server->subsystem);
 		server->subsystem = NULL;
+	}
+
+	if (server->CertificateFile)
+	{
+		free(server->CertificateFile);
+		server->CertificateFile = NULL;
+	}
+	
+	if (server->PrivateKeyFile)
+	{
+		free(server->PrivateKeyFile);
+		server->PrivateKeyFile = NULL;
 	}
 
 	return 1;
@@ -417,6 +506,10 @@ rdpShadowServer* shadow_server_new()
 	if (!server->ConfigPath)
 		server->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
 
+	InitializeCriticalSectionAndSpinCount(&(server->lock), 4000);
+
+	server->clients = ArrayList_New(TRUE);
+
 	return server;
 }
 
@@ -424,6 +517,14 @@ void shadow_server_free(rdpShadowServer* server)
 {
 	if (!server)
 		return;
+
+	DeleteCriticalSection(&(server->lock));
+
+	if (server->clients)
+	{
+		ArrayList_Free(server->clients);
+		server->clients = NULL;
+	}
 
 	shadow_server_uninit(server);
 

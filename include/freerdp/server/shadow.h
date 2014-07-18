@@ -55,6 +55,7 @@ typedef int (*pfnShadowSubsystemStop)(rdpShadowSubsystem* subsystem);
 typedef void (*pfnShadowSubsystemFree)(rdpShadowSubsystem* subsystem);
 
 typedef int (*pfnShadowSurfaceCopy)(rdpShadowSubsystem* subsystem);
+typedef int (*pfnShadowSurfaceUpdate)(rdpShadowSubsystem* subsystem, REGION16* region);
 
 typedef int (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem, UINT32 flags);
 typedef int (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
@@ -72,8 +73,11 @@ struct rdp_shadow_client
 	BOOL mayView;
 	BOOL mayInteract;
 	HANDLE StopEvent;
+	CRITICAL_SECTION lock;
+	REGION16 invalidRegion;
 	rdpShadowServer* server;
 	rdpShadowSurface* lobby;
+	rdpShadowEncoder* encoder;
 
 	HANDLE vcm;
 	EncomspServerContext* encomsp;
@@ -85,15 +89,18 @@ struct rdp_shadow_server
 	void* ext;
 	HANDLE thread;
 	HANDLE StopEvent;
+	wArrayList* clients;
 	rdpShadowScreen* screen;
 	rdpShadowSurface* surface;
-	rdpShadowEncoder* encoder;
 	rdpShadowSubsystem* subsystem;
 
 	DWORD port;
 	BOOL mayView;
 	BOOL mayInteract;
 	char* ConfigPath;
+	char* CertificateFile;
+	char* PrivateKeyFile;
+	CRITICAL_SECTION lock;
 	freerdp_listener* listener;
 	pfnShadowCreateSubsystem CreateSubsystem;
 };
@@ -103,6 +110,7 @@ struct rdp_shadow_server
 	int monitorCount; \
 	MONITOR_DEF monitors[16]; \
 	MONITOR_DEF virtualScreen; \
+	REGION16 invalidRegion; \
 	\
 	pfnShadowSubsystemInit Init; \
 	pfnShadowSubsystemUninit Uninit; \
@@ -111,6 +119,7 @@ struct rdp_shadow_server
 	pfnShadowSubsystemFree Free; \
 	\
 	pfnShadowSurfaceCopy SurfaceCopy; \
+	pfnShadowSurfaceUpdate SurfaceUpdate; \
 	\
 	pfnShadowSynchronizeEvent SynchronizeEvent; \
 	pfnShadowKeyboardEvent KeyboardEvent; \

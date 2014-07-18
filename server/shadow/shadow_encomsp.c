@@ -83,7 +83,7 @@ static int encomsp_change_participant_control_level(EncomspServerContext* contex
 
 	if (inLobby != client->inLobby)
 	{
-		shadow_encoder_reset(client->server->encoder);
+		shadow_encoder_reset(client->encoder);
 		client->inLobby = inLobby;
 	}
 

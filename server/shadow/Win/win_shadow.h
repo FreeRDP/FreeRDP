@@ -56,6 +56,8 @@ struct win_shadow_subsystem
 	UINT pendingFrames;
 	BYTE* MetadataBuffer;
 	UINT MetadataBufferSize;
+	BOOL dxgiSurfaceMapped;
+	BOOL dxgiFrameAcquired;
 	ID3D11Device* dxgiDevice;
 	IDXGISurface* dxgiSurface;
 	ID3D11Texture2D* dxgiStage;

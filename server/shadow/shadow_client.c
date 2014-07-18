@@ -27,68 +27,7 @@
 #include <winpr/thread.h>
 #include <winpr/sysinfo.h>
 
-#include <winpr/tools/makecert.h>
-
 #include "shadow.h"
-
-static const char* makecert_argv[6] =
-{
-	"makecert",
-	"-rdp",
-	"-live",
-	"-silent",
-	"-y", "5"
-};
-
-static int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
-
-int shadow_generate_certificate(rdpShadowClient* client)
-{
-	char* filepath;
-	rdpContext* context;
-	rdpSettings* settings;
-	MAKECERT_CONTEXT* makecert;
-	rdpShadowServer* server = client->server;
-
-	context = (rdpContext*) client;
-	settings = context->settings;
-
-	if (!PathFileExistsA(server->ConfigPath))
-		CreateDirectoryA(server->ConfigPath, 0);
-
-	filepath = GetCombinedPath(server->ConfigPath, "shadow");
-
-	if (!filepath)
-		return -1;
-
-	if (!PathFileExistsA(filepath))
-		CreateDirectoryA(filepath, 0);
-
-	settings->CertificateFile = GetCombinedPath(filepath, "shadow.crt");
-	settings->PrivateKeyFile = GetCombinedPath(filepath, "shadow.key");
-
-	if ((!PathFileExistsA(settings->CertificateFile)) ||
-			(!PathFileExistsA(settings->PrivateKeyFile)))
-	{
-		makecert = makecert_context_new();
-
-		makecert_context_process(makecert, makecert_argc, (char**) makecert_argv);
-
-		makecert_context_set_output_file_name(makecert, "shadow");
-
-		if (!PathFileExistsA(settings->CertificateFile))
-			makecert_context_output_certificate_file(makecert, filepath);
-
-		if (!PathFileExistsA(settings->PrivateKeyFile))
-			makecert_context_output_private_key_file(makecert, filepath);
-
-		makecert_context_free(makecert);
-	}
-
-	free(filepath);
-
-	return 1;
-}
 
 void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 {
@@ -110,19 +49,36 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	settings->TlsSecurity = TRUE;
 	settings->NlaSecurity = FALSE;
 
-	shadow_generate_certificate(client);
+	settings->CertificateFile = _strdup(server->CertificateFile);
+	settings->PrivateKeyFile = _strdup(server->PrivateKeyFile);
 
 	client->inLobby = TRUE;
 	client->mayView = server->mayView;
 	client->mayInteract = server->mayInteract;
 
+	InitializeCriticalSectionAndSpinCount(&(client->lock), 4000);
+
+	region16_init(&(client->invalidRegion));
+
 	client->vcm = WTSOpenServerA((LPSTR) peer->context);
 
 	client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	client->encoder = shadow_encoder_new(server);
+
+	ArrayList_Add(server->clients, (void*) client);
 }
 
 void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 {
+	rdpShadowServer* server = client->server;
+
+	ArrayList_Remove(server->clients, (void*) client);
+
+	DeleteCriticalSection(&(client->lock));
+
+	region16_uninit(&(client->invalidRegion));
+
 	WTSCloseServer((HANDLE) client->vcm);
 
 	CloseHandle(client->StopEvent);
@@ -131,6 +87,12 @@ void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 	{
 		shadow_surface_free(client->lobby);
 		client->lobby = NULL;
+	}
+
+	if (client->encoder)
+	{
+		shadow_encoder_free(client->encoder);
+		client->encoder = NULL;
 	}
 }
 
@@ -189,7 +151,7 @@ BOOL shadow_client_activate(freerdp_peer* peer)
 	client->activated = TRUE;
 	client->inLobby = client->mayView ? FALSE : TRUE;
 
-	shadow_encoder_reset(client->server->encoder);
+	shadow_encoder_reset(client->encoder);
 
 	return TRUE;
 }
@@ -199,7 +161,7 @@ void shadow_client_surface_frame_acknowledge(rdpShadowClient* client, UINT32 fra
 	SURFACE_FRAME* frame;
 	wListDictionary* frameList;
 
-	frameList = client->server->encoder->frameList;
+	frameList = client->encoder->frameList;
 	frame = (SURFACE_FRAME*) ListDictionary_GetItemValue(frameList, (void*) (size_t) frameId);
 
 	if (frame)
@@ -248,7 +210,7 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 	settings = context->settings;
 
 	server = client->server;
-	encoder = server->encoder;
+	encoder = client->encoder;
 
 	pSrcData = surface->data;
 	nSrcStep = surface->scanline;
@@ -336,8 +298,6 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 		free(messages);
 	}
 
-	region16_clear(&(surface->invalidRegion));
-
 	if (encoder->frameAck)
 	{
 		shadow_client_send_surface_frame_marker(client, SURFACECMD_FRAMEACTION_END, frameId);
@@ -372,7 +332,7 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 	settings = context->settings;
 
 	server = client->server;
-	encoder = server->encoder;
+	encoder = client->encoder;
 
 	pSrcData = surface->data;
 	nSrcStep = surface->scanline;
@@ -562,27 +522,39 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
 	rdpShadowEncoder* encoder;
+	REGION16 invalidRegion;
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* extents;
 
 	context = (rdpContext*) client;
 	settings = context->settings;
 	server = client->server;
-	encoder = server->encoder;
+	encoder = client->encoder;
 
 	surface = client->inLobby ? client->lobby : server->surface;
+
+	EnterCriticalSection(&(client->lock));
+
+	region16_init(&invalidRegion);
+	region16_copy(&invalidRegion, &(client->invalidRegion));
+	region16_clear(&(client->invalidRegion));
+
+	LeaveCriticalSection(&(client->lock));
 
 	surfaceRect.left = surface->x;
 	surfaceRect.top = surface->y;
 	surfaceRect.right = surface->x + surface->width;
 	surfaceRect.bottom = surface->y + surface->height;
 
-	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
+	region16_intersect_rect(&invalidRegion, &invalidRegion, &surfaceRect);
 
-	if (region16_is_empty(&(surface->invalidRegion)))
+	if (region16_is_empty(&invalidRegion))
+	{
+		region16_uninit(&invalidRegion);
 		return 1;
+	}
 
-	extents = region16_extents(&(surface->invalidRegion));
+	extents = region16_extents(&invalidRegion);
 
 	nXSrc = extents->left - surface->x;
 	nYSrc = extents->top - surface->y;
@@ -608,7 +580,29 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 		status = shadow_client_send_bitmap_update(client, surface, nXSrc, nYSrc, nWidth, nHeight);
 	}
 
+	region16_uninit(&invalidRegion);
+
 	return status;
+}
+
+int shadow_client_surface_update(rdpShadowClient* client, REGION16* region)
+{
+	int index;
+	int numRects = 0;
+	const RECTANGLE_16* rects;
+
+	EnterCriticalSection(&(client->lock));
+
+	rects = region16_rects(region, &numRects);
+
+	for (index = 0; index < numRects; index++)
+	{
+		region16_union_rect(&(client->invalidRegion), &(client->invalidRegion), &rects[index]);
+	}
+
+	LeaveCriticalSection(&(client->lock));
+
+	return 1;
 }
 
 void* shadow_client_thread(rdpShadowClient* client)
@@ -633,7 +627,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 	server = client->server;
 	screen = server->screen;
-	encoder = server->encoder;
+	encoder = client->encoder;
 	subsystem = server->subsystem;
 
 	peer = ((rdpContext*) client)->peer;
