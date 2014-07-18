@@ -69,8 +69,6 @@ int wf_dxgi_init(wfInfo* wfi)
 {
 	gAcquiredDesktopImage = NULL;
 
-	printf("wf_dxgi_init\n");
-
 	if (wf_dxgi_createDevice(wfi) != 0)
 	{
 		return 1;

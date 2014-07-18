@@ -951,12 +951,12 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	void* pfd;
 
 #ifdef _WIN32
-	rfds[*rcount] = transport->TcpIn->wsa_event;
+	rfds[*rcount] = transport->TcpIn->event;
 	(*rcount)++;
 
 	if (transport->SplitInputOutput)
 	{
-		rfds[*rcount] = transport->TcpOut->wsa_event;
+		rfds[*rcount] = transport->TcpOut->event;
 		(*rcount)++;
 	}
 #else
@@ -1058,7 +1058,7 @@ int transport_check_fds(rdpTransport* transport)
 		return -1;
 
 #ifdef _WIN32
-	WSAResetEvent(transport->TcpIn->wsa_event);
+	WSAResetEvent(transport->TcpIn->event);
 #endif
 	ResetEvent(transport->ReceiveEvent);
 

@@ -21,7 +21,9 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/path.h>
 #include <winpr/cmdline.h>
+#include <winpr/winsock.h>
 
 #include <freerdp/version.h>
 
@@ -282,11 +284,16 @@ void* shadow_server_thread(rdpShadowServer* server)
 
 int shadow_server_start(rdpShadowServer* server)
 {
+	WSADATA wsaData;
+
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		return -1;
+
 #ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
 #endif
 
-	if (server->listener->Open(server->listener, NULL, server->port))
+	if (server->listener->Open(server->listener, NULL, (UINT16) server->port))
 	{
 		server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
 				shadow_server_thread, (void*) server, 0, NULL);
@@ -312,6 +319,8 @@ int shadow_server_stop(rdpShadowServer* server)
 
 int shadow_server_init(rdpShadowServer* server)
 {
+	int status;
+
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 
 	server->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -343,7 +352,12 @@ int shadow_server_init(rdpShadowServer* server)
 		return -1;
 
 	if (server->subsystem->Init)
-		server->subsystem->Init(server->subsystem);
+	{
+		status = server->subsystem->Init(server->subsystem);
+
+		if (status < 0)
+			fprintf(stderr, "subsystem init failure: %d\n", status);
+	}
 
 	server->screen = shadow_screen_new(server);
 
@@ -395,6 +409,13 @@ rdpShadowServer* shadow_server_new()
 	server->port = 3389;
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
+
+#ifdef _WIN32
+	server->ConfigPath = GetEnvironmentSubPath("LOCALAPPDATA", "freerdp");
+#endif
+
+	if (!server->ConfigPath)
+		server->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
 
 	return server;
 }

@@ -31,48 +31,61 @@
 
 #include "shadow.h"
 
-static const char* makecert_argv[4] =
+static const char* makecert_argv[6] =
 {
 	"makecert",
 	"-rdp",
 	"-live",
-	"-silent"
+	"-silent",
+	"-y", "5"
 };
 
 static int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
 
-int shadow_generate_certificate(rdpSettings* settings)
+int shadow_generate_certificate(rdpShadowClient* client)
 {
-	char* serverFilePath;
-	MAKECERT_CONTEXT* context;
+	char* filepath;
+	rdpContext* context;
+	rdpSettings* settings;
+	MAKECERT_CONTEXT* makecert;
+	rdpShadowServer* server = client->server;
 
-	serverFilePath = GetCombinedPath(settings->ConfigPath, "server");
+	context = (rdpContext*) client;
+	settings = context->settings;
 
-	if (!PathFileExistsA(serverFilePath))
-		CreateDirectoryA(serverFilePath, 0);
+	if (!PathFileExistsA(server->ConfigPath))
+		CreateDirectoryA(server->ConfigPath, 0);
 
-	settings->CertificateFile = GetCombinedPath(serverFilePath, "server.crt");
-	settings->PrivateKeyFile = GetCombinedPath(serverFilePath, "server.key");
+	filepath = GetCombinedPath(server->ConfigPath, "shadow");
+
+	if (!filepath)
+		return -1;
+
+	if (!PathFileExistsA(filepath))
+		CreateDirectoryA(filepath, 0);
+
+	settings->CertificateFile = GetCombinedPath(filepath, "shadow.crt");
+	settings->PrivateKeyFile = GetCombinedPath(filepath, "shadow.key");
 
 	if ((!PathFileExistsA(settings->CertificateFile)) ||
 			(!PathFileExistsA(settings->PrivateKeyFile)))
 	{
-		context = makecert_context_new();
+		makecert = makecert_context_new();
 
-		makecert_context_process(context, makecert_argc, (char**) makecert_argv);
+		makecert_context_process(makecert, makecert_argc, (char**) makecert_argv);
 
-		makecert_context_set_output_file_name(context, "server");
+		makecert_context_set_output_file_name(makecert, "shadow");
 
 		if (!PathFileExistsA(settings->CertificateFile))
-			makecert_context_output_certificate_file(context, serverFilePath);
+			makecert_context_output_certificate_file(makecert, filepath);
 
 		if (!PathFileExistsA(settings->PrivateKeyFile))
-			makecert_context_output_private_key_file(context, serverFilePath);
+			makecert_context_output_private_key_file(makecert, filepath);
 
-		makecert_context_free(context);
+		makecert_context_free(makecert);
 	}
 
-	free(serverFilePath);
+	free(filepath);
 
 	return 1;
 }
@@ -97,7 +110,7 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	settings->TlsSecurity = TRUE;
 	settings->NlaSecurity = FALSE;
 
-	shadow_generate_certificate(settings);
+	shadow_generate_certificate(client);
 
 	client->inLobby = TRUE;
 	client->mayView = server->mayView;
@@ -651,7 +664,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 		events[nCount++] = ChannelEvent;
 
 		cTime = GetTickCount64();
-		dwTimeout = (cTime > frameTime) ? 0 : frameTime - cTime;
+		dwTimeout = (DWORD) ((cTime > frameTime) ? 0 : frameTime - cTime);
 
 		status = WaitForMultipleObjects(nCount, events, FALSE, dwTimeout);
 

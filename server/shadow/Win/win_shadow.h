@@ -29,11 +29,17 @@ typedef struct win_shadow_subsystem winShadowSubsystem;
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
+#if _WIN32_WINNT >= 0x0602
+#define WITH_DXGI_1_2	1
+#endif
+
 struct win_shadow_subsystem
 {
 	RDP_SHADOW_SUBSYSTEM_COMMON();
 
-
+	int bpp;
+	int width;
+	int height;
 };
 
 #ifdef __cplusplus

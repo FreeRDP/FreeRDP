@@ -93,6 +93,7 @@ struct rdp_shadow_server
 	DWORD port;
 	BOOL mayView;
 	BOOL mayInteract;
+	char* ConfigPath;
 	freerdp_listener* listener;
 	pfnShadowCreateSubsystem CreateSubsystem;
 };
