@@ -775,20 +775,19 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 */
 		fileHasFullscreen = ((file->ScreenModeId == 2) ? TRUE : FALSE);
 	}
-	//Changes below cause RDP file to match cmdline implementation
+	/* Changes below cause RDP file to match cmdline implementation */
 	if( fileHasSpanMonitors )
 		freerdp_set_param_bool(settings, FreeRDP_SpanMonitors, TRUE);
-	//span monitors' should also result in 'useMultimon'.
+	/* span monitors' should also result in 'useMultimon'. */
 	if( fileHasMultimon || fileHasSpanMonitors )
 		freerdp_set_param_bool(settings, FreeRDP_UseMultimon, TRUE);
-	//span monitors' or 'useMultimon' should also result in fullscreen.
+	/* span monitors' or 'useMultimon' should also result in fullscreen. */
 	if( fileHasFullscreen || fileHasMultimon || fileHasSpanMonitors )
 		freerdp_set_param_bool(settings, FreeRDP_Fullscreen, TRUE);
 
 		
 	if (~((size_t) file->Domain))
 		freerdp_set_param_string(settings, FreeRDP_Domain, file->Domain);
-
 
 	if (~((size_t) file->Username))
 	{
