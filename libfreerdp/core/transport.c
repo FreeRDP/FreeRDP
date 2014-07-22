@@ -721,7 +721,7 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 	return read;
 }
 
-int transport_read(rdpTransport* transport, wStream* s)
+int transport_read_pdu(rdpTransport* transport, wStream* s)
 {
 	int status;
 	int position;
@@ -847,7 +847,7 @@ static int transport_read_nonblocking(rdpTransport* transport)
 {
 	int status;
 
-	status = transport_read(transport, transport->ReceiveBuffer);
+	status = transport_read_pdu(transport, transport->ReceiveBuffer);
 
 	if (status <= 0)
 		return status;

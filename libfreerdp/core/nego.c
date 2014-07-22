@@ -503,7 +503,7 @@ BOOL nego_recv_response(rdpNego* nego)
 	if (!s)
 		return FALSE;
 
-	status = transport_read(nego->transport, s);
+	status = transport_read_pdu(nego->transport, s);
 	if (status < 0)
 	{
 		Stream_Free(s, TRUE);

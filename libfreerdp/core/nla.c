@@ -1198,7 +1198,7 @@ int credssp_recv(rdpCredssp* credssp)
 
 	s = Stream_New(NULL, 4096);
 
-	status = transport_read(credssp->transport, s);
+	status = transport_read_pdu(credssp->transport, s);
 	Stream_Length(s) = status;
 
 	if (status < 0)
