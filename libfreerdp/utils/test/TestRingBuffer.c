@@ -111,7 +111,7 @@ int TestRingBuffer(int argc, char* argv[])
 
 	if (ringbuffer_used(&ringBuffer) != 15)
 	{
-		fprintf(stderr, "invalid used size got %d when i would expect 15\n", ringbuffer_used(&ringBuffer));
+		fprintf(stderr, "invalid used size got %ld when i would expect 15\n", ringbuffer_used(&ringBuffer));
 		return -1;
 	}
 
@@ -134,7 +134,7 @@ int TestRingBuffer(int argc, char* argv[])
 
 	if (ringbuffer_used(&ringBuffer) != 5)
 	{
-		fprintf(stderr, "invalid used size after read got %d when i would expect 5\n", ringbuffer_used(&ringBuffer));
+		fprintf(stderr, "invalid used size after read got %ld when i would expect 5\n", ringbuffer_used(&ringBuffer));
 		return -1;
 	}
 
@@ -189,7 +189,7 @@ int TestRingBuffer(int argc, char* argv[])
 
 	if (ringbuffer_capacity(&ringBuffer) != 10)
 	{
-		fprintf(stderr, "not the expected capacity, have %d and expects 10\n", ringbuffer_capacity(&ringBuffer));
+		fprintf(stderr, "not the expected capacity, have %ld and expects 10\n", ringbuffer_capacity(&ringBuffer));
 		return -1;
 	}
 	fprintf(stderr, "ok\n");
@@ -213,7 +213,7 @@ int TestRingBuffer(int argc, char* argv[])
 	fprintf(stderr, "%d: specific overlaps test...", ++testNo);
 	if (!test_overlaps())
 	{
-		fprintf(stderr, "ko\n", i);
+		fprintf(stderr, "ko\n");
 		return -1;
 	}
 	fprintf(stderr, "ok\n");
