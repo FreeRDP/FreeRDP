@@ -131,7 +131,14 @@ static void clear_format_map(cliprdrContext *cliprdr)
 
 	cliprdr->map_size= 0;
 }
-
+/*
+2.2.2.3   Client Temporary Directory PDU (CLIPRDR_TEMP_DIRECTORY)
+  The Temporary Directory PDU is an optional PDU sent from the client to the server.
+	This PDU informs the server of a location on the client file system that MUST be
+	used to deposit files being copied to the client. The location MUST be accessible
+	by the server to be useful. Section 3.1.1.3 specifies how direct file access
+	impacts file copy and paste.
+*/
 int cliprdr_send_tempdir(cliprdrContext *cliprdr)
 {
 	RDP_CB_TEMPDIR_EVENT *cliprdr_event;
@@ -142,6 +149,9 @@ int cliprdr_send_tempdir(cliprdrContext *cliprdr)
 	if (!cliprdr_event)
 		return -1;
 
+	/* Sending the TEMP path would only be valid iff the path is accessible from the server.
+		 This should perhaps to change to a command line parameter value
+	*/
 	GetEnvironmentVariableW(L"TEMP", (LPWSTR)cliprdr_event->dirname, 260);
 
 	return freerdp_channels_send_event(cliprdr->channels, (wMessage *)cliprdr_event);
@@ -635,9 +645,12 @@ static void wf_cliprdr_process_cb_clip_caps_event(wfContext *wfc, RDP_CB_CLIP_CA
 static void wf_cliprdr_process_cb_monitor_ready_event(wfContext *wfc, RDP_CB_MONITOR_READY_EVENT *ready_event)
 {
 	cliprdrContext *cliprdr = (cliprdrContext *)wfc->cliprdr_context;
-
+#if 0
+	/*Disabled since the current function only sends the temp directory which is not 
+	  guaranteed to be accessible to the server
+	*/
 	cliprdr_send_tempdir(cliprdr);
-
+#endif	
 	cliprdr->channel_initialized = TRUE;
 
 	cliprdr_send_format_list(wfc->cliprdr_context);
