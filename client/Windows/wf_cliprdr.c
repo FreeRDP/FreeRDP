@@ -20,7 +20,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
 #include <assert.h>
 #include <winpr/crt.h>
 
@@ -31,6 +30,9 @@
 #include <Strsafe.h>
 
 #include "wf_cliprdr.h"
+
+extern BOOL WINAPI AddClipboardFormatListener(_In_ HWND hwnd);
+extern BOOL WINAPI RemoveClipboardFormatListener(_In_  HWND hwnd);
 
 #define WM_CLIPRDR_MESSAGE  (WM_USER + 156)
 #define OLE_SETCLIPBOARD    1
@@ -367,32 +369,21 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 	switch (Msg)
 	{
 		case WM_CREATE:
+			DEBUG_CLIPRDR("info: %s - WM_CREATE", __FUNCTION__);
 			cliprdr = (cliprdrContext *)((CREATESTRUCT *)lParam)->lpCreateParams;
-			cliprdr->hwndNextViewer = SetClipboardViewer(hWnd);
-
-			if (cliprdr->hwndNextViewer == NULL && GetLastError() != 0)
-			{
-				DEBUG_CLIPRDR("error: SetClipboardViewer failed with 0x%0x.", GetLastError());
+			if (!AddClipboardFormatListener(hWnd)) {
+				DEBUG_CLIPRDR("error: AddClipboardFormatListener failed with %#x.", GetLastError());
 			}
 			cliprdr->hwndClipboard = hWnd;
 			break;
 
 		case WM_CLOSE:
-			ChangeClipboardChain(hWnd, cliprdr->hwndNextViewer);
+			DEBUG_CLIPRDR("info: %s - WM_CLOSE", __FUNCTION__);
+			RemoveClipboardFormatListener(hWnd);
 			break;
 
-		case WM_CHANGECBCHAIN:
-			if (cliprdr->hwndNextViewer == (HWND)wParam)
-			{
-				cliprdr->hwndNextViewer = (HWND)lParam;
-			}
-			else if (cliprdr->hwndNextViewer != NULL)
-			{
-				SendMessage(cliprdr->hwndNextViewer, Msg, wParam, lParam);
-			}
-			break;
-
-		case WM_DRAWCLIPBOARD:
+		case WM_CLIPBOARDUPDATE:
+			DEBUG_CLIPRDR("info: %s - WM_CLIPBOARDUPDATE", __FUNCTION__);
 			if (cliprdr->channel_initialized)
 			{
 				if ((GetClipboardOwner() != cliprdr->hwndClipboard) && (S_FALSE == OleIsCurrentClipboard(cliprdr->data_obj)))
@@ -404,11 +395,10 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 						cliprdr_send_format_list(cliprdr);
 				}
 			}
-			if (cliprdr->hwndNextViewer != NULL && cliprdr->hwndNextViewer != hWnd)
-				SendMessage(cliprdr->hwndNextViewer, Msg, wParam, lParam);
 			break;
 
 		case WM_RENDERALLFORMATS:
+			DEBUG_CLIPRDR("info: %s - WM_RENDERALLFORMATS", __FUNCTION__);
 			/* discard all contexts in clipboard */
 			if (!OpenClipboard(cliprdr->hwndClipboard))
 			{
@@ -420,6 +410,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			break;
 
 		case WM_RENDERFORMAT:
+			DEBUG_CLIPRDR("info: %s - WM_RENDERFORMAT", __FUNCTION__);
 			if (cliprdr_send_data_request(cliprdr, (UINT32)wParam) != 0)
 			{
 				DEBUG_CLIPRDR("error: cliprdr_send_data_request failed.");
@@ -435,9 +426,11 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			break;
 
 		case WM_CLIPRDR_MESSAGE:
+			DEBUG_CLIPRDR("info: %s - WM_CLIPRDR_MESSAGE", __FUNCTION__);
 			switch (wParam)
 			{
 				case OLE_SETCLIPBOARD:
+					DEBUG_CLIPRDR("info: %s - OLE_SETCLIPBOARD", __FUNCTION__);
 					if (wf_create_file_obj(cliprdr, &cliprdr->data_obj))
 						if (OleSetClipboard(cliprdr->data_obj) != S_OK)
 							wf_destroy_file_obj(cliprdr->data_obj);
@@ -448,7 +441,6 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			}
 			break;
 
-		case WM_CLIPBOARDUPDATE:
 		case WM_DESTROYCLIPBOARD:
 		case WM_ASKCBFORMATNAME:
 		case WM_HSCROLLCLIPBOARD:
