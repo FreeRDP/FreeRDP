@@ -101,7 +101,7 @@ static UINT32 YUV_to_RGB(BYTE Y, BYTE U, BYTE V)
 
 	return RGB32(R, G, B);
 }
-#endif //WITH_OPENH264
+#endif /* WITH_OPENH264 */
 
 #if USE_UPCONVERT
 static BYTE* convert_420_to_444(BYTE* chroma420, int chroma420Width, int chroma420Height, int chroma420Stride)

@@ -56,7 +56,7 @@ static const char PROTOCOL_SECURITY_STRINGS[9][4] =
 	"UNK",
 	"EXT"
 };
-#endif // WITH_DEBUG_NEGO
+#endif /* WITH_DEBUG_NEGO */
 
 BOOL nego_security_connect(rdpNego* nego);
 

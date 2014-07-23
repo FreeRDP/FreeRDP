@@ -196,8 +196,8 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 	LONGLONG nanoseconds = 0;
 #ifdef HAVE_TIMERFD_H
 	int status = 0;
-#endif // HAVE_TIMERFD_H
-#endif // WITH_POSIX_TIMER
+#endif /* HAVE_TIMERFD_H */
+#endif /* WITH_POSIX_TIMER */
 
 	if (!winpr_Handle_GetInfo(hTimer, &Type, &Object))
 		return FALSE;
