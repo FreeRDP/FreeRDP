@@ -234,6 +234,15 @@ LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG 
 #endif
 }
 
+PVOID InterlockedCompareExchangePointer(PVOID volatile *Destination, PVOID Exchange, PVOID Comperand)
+{
+#ifdef __GNUC__
+	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
+#else
+	return 0;
+#endif
+}
+
 #endif /* _WIN32 */
 
 #if defined(_WIN32) && !defined(WINPR_INTERLOCKED_COMPARE_EXCHANGE64)
@@ -249,7 +258,7 @@ int static_mutex_lock(volatile HANDLE* static_mutex)
 	if (*static_mutex == NULL)
 	{
 		HANDLE handle = CreateMutex(NULL, FALSE, NULL);
-		
+
 		if (InterlockedCompareExchangePointer((PVOID*) static_mutex, (PVOID) handle, NULL) != NULL)
 			CloseHandle(handle);
 	}
