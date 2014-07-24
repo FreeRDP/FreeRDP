@@ -1905,21 +1905,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 	freerdp_performance_flags_make(settings);
 
-	if (settings->GatewayEnabled)
-	{
-		if (settings->GatewayUseSameCredentials)
-		{
-			if (settings->Username)
-				settings->GatewayUsername = _strdup(settings->Username);
-
-			if (settings->Domain)
-				settings->GatewayDomain = _strdup(settings->Domain);
-
-			if (settings->Password)
-				settings->GatewayPassword = _strdup(settings->Password);
-		}
-	}
-
 	if (settings->SupportGraphicsPipeline)
 	{
 		settings->FastPathOutput = TRUE;
