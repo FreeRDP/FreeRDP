@@ -746,6 +746,46 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 
 BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings)
 {
+	BOOL fileHasFullscreen = FALSE;
+	BOOL fileHasMultimon = FALSE;
+	BOOL fileHasSpanMonitors = FALSE;
+	
+	
+	if (~file->SpanMonitors)
+	{
+		fileHasSpanMonitors = file->SpanMonitors;
+	}
+	if (~file->UseMultiMon)
+	{
+		fileHasMultimon = file->UseMultiMon;
+	}
+	if (~file->ScreenModeId)
+	{
+		/**
+		 * Screen Mode Id:
+		 * http://technet.microsoft.com/en-us/library/ff393692/
+		 *
+		 * This setting corresponds to the selection in the Display
+		 * configuration slider on the Display tab under Options in RDC.
+		 *
+		 * Values:
+		 *
+		 * 1: The remote session will appear in a window.
+		 * 2: The remote session will appear full screen.
+		 */
+		fileHasFullscreen = ((file->ScreenModeId == 2) ? TRUE : FALSE);
+	}
+	/* Changes below cause RDP file to match cmdline implementation */
+	if( fileHasSpanMonitors )
+		freerdp_set_param_bool(settings, FreeRDP_SpanMonitors, TRUE);
+	/* span monitors' should also result in 'useMultimon'. */
+	if( fileHasMultimon || fileHasSpanMonitors )
+		freerdp_set_param_bool(settings, FreeRDP_UseMultimon, TRUE);
+	/* span monitors' or 'useMultimon' should also result in fullscreen. */
+	if( fileHasFullscreen || fileHasMultimon || fileHasSpanMonitors )
+		freerdp_set_param_bool(settings, FreeRDP_Fullscreen, TRUE);
+
+		
 	if (~((size_t) file->Domain))
 		freerdp_set_param_string(settings, FreeRDP_Domain, file->Domain);
 
@@ -804,24 +844,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t) file->ShellWorkingDirectory))
 		freerdp_set_param_string(settings, FreeRDP_ShellWorkingDirectory, file->ShellWorkingDirectory);
 
-	if (~file->ScreenModeId)
-	{
-		/**
-		 * Screen Mode Id:
-		 * http://technet.microsoft.com/en-us/library/ff393692/
-		 *
-		 * This setting corresponds to the selection in the Display
-		 * configuration slider on the Display tab under Options in RDC.
-		 *
-		 * Values:
-		 *
-		 * 1: The remote session will appear in a window.
-		 * 2: The remote session will appear full screen.
-		 */
 
-		freerdp_set_param_bool(settings, FreeRDP_Fullscreen,
-				(file->ScreenModeId == 2) ? TRUE : FALSE);
-	}
 
 	if (~((size_t) file->SmartSizing))
 	{
@@ -912,12 +935,6 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationGuid, file->RemoteApplicationGuid);
 	if (~((size_t) file->RemoteApplicationCmdLine))
 		freerdp_set_param_string(settings, FreeRDP_RemoteApplicationCmdLine, file->RemoteApplicationCmdLine);
-
-	if (~file->SpanMonitors)
-		freerdp_set_param_bool(settings, FreeRDP_SpanMonitors, file->SpanMonitors);
-	if (~file->UseMultiMon)
-		freerdp_set_param_bool(settings, FreeRDP_UseMultimon, file->UseMultiMon);
-
 	if (~file->AllowFontSmoothing)
 		freerdp_set_param_bool(settings, FreeRDP_AllowFontSmoothing, file->AllowFontSmoothing);
 	if (~file->DisableWallpaper)
