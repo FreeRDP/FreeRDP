@@ -20,6 +20,22 @@
 #ifndef __FASTPATH_H
 #define __FASTPATH_H
 
+/*
+ * Fast-Path has 15 bits available for length information which would lead to a
+ * maximal pdu size of 0x8000. However in practice only 14 bits are used
+ * this isn't documented anywhere but it looks like most implementations will
+ * fail if fast-path packages > 0x3FFF arrive.
+ */
+#define FASTPATH_MAX_PACKET_SIZE 0x3FFF
+
+/*
+ *  The following size guarantees that no fast-path PDU fragmentation occurs.
+ *  It was calculated by subtracting 128 from FASTPATH_MAX_PACKET_SIZE.
+ *  128 was chosen because it includes all required and optional headers as well as
+ *  possible paddings and some extra bytes for safety.
+ */
+#define FASTPATH_FRAGMENT_SAFE_SIZE 0x3F80
+
 typedef struct rdp_fastpath rdpFastPath;
 
 #include "rdp.h"
