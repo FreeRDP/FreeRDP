@@ -48,7 +48,6 @@
  * two less significant bits of the first byte.
  */
 
-#define FASTPATH_MAX_PACKET_SIZE 0x3FFF
 
 #ifdef WITH_DEBUG_RDP
 static const char* const FASTPATH_UPDATETYPE_STRINGS[] =

@@ -980,7 +980,8 @@ struct rdp_settings
 	ALIGN64 char* AuthenticationServiceClass; /* 1098 */
 	ALIGN64 BOOL DisableCredentialsDelegation; /* 1099 */
 	ALIGN64 BOOL AuthenticationLevel; /* 1100 */
-	UINT64 padding1152[1152 - 1101]; /* 1101 */
+	ALIGN64 char* PermittedTLSCiphers; /* 1101 */
+	UINT64 padding1152[1152 - 1102]; /* 1102 */
 
 	/* Connection Cookie */
 	ALIGN64 BOOL MstscCookieMode; /* 1152 */

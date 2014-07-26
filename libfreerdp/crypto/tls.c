@@ -591,6 +591,13 @@ BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int opt
 	SSL_CTX_set_options(tls->ctx, options);
 	SSL_CTX_set_read_ahead(tls->ctx, 1);
 
+	if (tls->settings->PermittedTLSCiphers) {
+		if(!SSL_CTX_set_cipher_list(tls->ctx, tls->settings->PermittedTLSCiphers)) {
+			fprintf(stderr, "SSL_CTX_set_cipher_list %s failed\n", tls->settings->PermittedTLSCiphers);
+			return FALSE;
+		}
+	}
+ 
 	tls->bio = BIO_new_rdp_tls(tls->ctx, clientMode);
 
 	if (BIO_get_ssl(tls->bio, &tls->ssl) < 0)

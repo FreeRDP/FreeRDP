@@ -123,8 +123,34 @@ int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, 
 	{
 		status = freerdp_client_settings_parse_assistance_file(settings, settings->AssistanceFile);
 	}
+	
+	/* This function will call logic that is applicable to the settings
+	 * from command line parsing AND the rdp file parsing */
+	status = freerdp_client_combined_logic(settings);
 
 	return status;
+}
+
+int freerdp_client_combined_logic(rdpSettings* settings)
+{
+	/* Moved GatewayUseSameCredentials logic outside of cmdline.c, so 
+	 * that the rdp file also triggers this functionality */
+	if (settings->GatewayEnabled)
+	{
+		if (settings->GatewayUseSameCredentials)
+		{
+			if (settings->Username)
+				settings->GatewayUsername = _strdup(settings->Username);
+
+			if (settings->Domain)
+				settings->GatewayDomain = _strdup(settings->Domain);
+
+			if (settings->Password)
+				settings->GatewayPassword = _strdup(settings->Password);
+		}
+	}
+	
+	return 0;
 }
 
 int freerdp_client_settings_parse_connection_file(rdpSettings* settings, const char* filename)

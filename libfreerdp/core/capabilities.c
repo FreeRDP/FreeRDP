@@ -22,6 +22,7 @@
 #endif
 
 #include "capabilities.h"
+#include "fastpath.h"
 
 #include <winpr/crt.h>
 #include <winpr/rpc.h>
@@ -2287,6 +2288,17 @@ BOOL rdp_read_multifragment_update_capability_set(wStream* s, UINT16 length, rdp
 
 	if (settings->ServerMode)
 	{
+		/*
+		 * Special case: The client announces multifragment update support but sets the maximum request size
+		 * to something smaller than maximum size for *one* fast-path PDU.
+		 * In this case behave like no multifragment updates were supported and make sure no
+		 * fragmentation happens by setting FASTPATH_FRAGMENT_SAFE_SIZE.
+		 *
+		 * This behaviour was observed with some windows ce rdp clients.
+		 */
+		if (multifragMaxRequestSize < FASTPATH_MAX_PACKET_SIZE)
+			multifragMaxRequestSize = FASTPATH_FRAGMENT_SAFE_SIZE;
+
 		if (settings->RemoteFxCodec)
 		{
 			/**
@@ -3669,7 +3681,8 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s)
 
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_MULTI_FRAGMENT_UPDATE])
 	{
-		/* client does not support multi fragment updates */
+		/* client does not support multi fragment updates - make sure packages are not fragmented */
+		settings->MultifragMaxRequestSize = FASTPATH_FRAGMENT_SAFE_SIZE;
 	}
 
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_LARGE_POINTER])
