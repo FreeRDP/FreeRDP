@@ -667,12 +667,12 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
  * In case it was not possible to read toRead bytes 0 is returned. The stream is always advanced by the
  * number of bytes read.
  *
- * The function assumes that the stream has enought capacity to hold the dat.a
+ * The function assumes that the stream has enough capacity to hold the data.
  *
  * @param[in] transport rdpTransport
  * @param[in] s wStream
  * @param[in] toRead number of bytes to read
- * @return < 0 on error; 0 if not enought data is available (non blocking mode); 1 toRead bytes read
+ * @return < 0 on error; 0 if not enough data is available (non blocking mode); 1 toRead bytes read
  */
 static int transport_read_layer_bytes(rdpTransport* transport, wStream* s, unsigned int toRead)
 {
@@ -686,7 +686,7 @@ static int transport_read_layer_bytes(rdpTransport* transport, wStream* s, unsig
 }
 
 /**
- * @brief Try to read a complete PDU (NLA, fast-path or tpkt) from the underlaying transport.
+ * @brief Try to read a complete PDU (NLA, fast-path or tpkt) from the underlying transport.
  *
  * If possible a complete PDU is read, in case of non blocking transport this might not succeed.
  * Except in case of an error the passed stream will point to the last byte read (correct
@@ -694,7 +694,7 @@ static int transport_read_layer_bytes(rdpTransport* transport, wStream* s, unsig
  *
  * @param[in] transport rdpTransport
  * @param[in] s wStream
- * @return < 0 on error; 0 if not enought data is available (non blocking mode); > 0 number of
+ * @return < 0 on error; 0 if not enough data is available (non blocking mode); > 0 number of
  * bytes of the *complete* pdu read
  */
 int transport_read_pdu(rdpTransport* transport, wStream* s)
@@ -715,7 +715,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 
 	position = Stream_GetPosition(s);
 
-	/* Make sure there is enought space for the longest header within the stream */
+	/* Make sure there is enough space for the longest header within the stream */
 	Stream_EnsureCapacity(s, 4);
 
 	/* Make sure at least two bytes are read for futher processing */
@@ -730,7 +730,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	if (transport->NlaMode)
 	{
 		/*
-		 * In case NlaMode is set we TSRequest package(s) are expected
+		 * In case NlaMode is set TSRequest package(s) are expected
 		 * 0x30 = DER encoded data with these bits set:
 		 * bit 6 P/C constructed
 		 * bit 5 tag number - sequence
@@ -787,7 +787,8 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 		else
 		{
 			/* Fast-Path Header */
-			if (header[1] & 0x80) {
+			if (header[1] & 0x80)
+			{
 				if ((status = transport_read_layer_bytes(transport, s, 1)) != 1)
 					return status;
 				pduLength = ((header[1] & 0x7F) << 8) | header[2];
@@ -818,7 +819,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 
 #ifdef WITH_DEBUG_TRANSPORT
 	/* dump when whole PDU is read */
-	if (Stream_GetPosition >= pduLength)
+	if (Stream_GetPosition(s) >= pduLength)
 	{
 		fprintf(stderr, "Local < Remote\n");
 		winpr_HexDump(Stream_Buffer(s), pduLength);
@@ -826,9 +827,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 #endif
 
 	if (Stream_GetPosition(s) >= pduLength)
-	{
 		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
-	}
 
 	Stream_SealLength(s);
 	Stream_SetPosition(s, 0);
@@ -1050,7 +1049,7 @@ int transport_check_fds(rdpTransport* transport)
 		/**
 		 * Note: transport_read_pdu tries to read one PDU from
 		 * the transport layer.
-		 * The ReceiveBuffer mit have a position > 0 in case of a non blocking
+		 * The ReceiveBuffer might have a position > 0 in case of a non blocking
 		 * transport. If transport_read_pdu returns 0 the pdu couldn't be read at
 		 * this point.
 		 * Note that transport->ReceiveBuffer is replaced after each iteration
