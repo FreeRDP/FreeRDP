@@ -431,6 +431,9 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 	if (settings->RemoteConsoleAudio)
 		flags |= INFO_REMOTECONSOLEAUDIO;
 
+	if (settings->HiDefRemoteApp)
+		flags |= INFO_HIDEF_RAIL_SUPPORTED;
+
 	if (settings->CompressionEnabled)
 	{
 		flags |= INFO_COMPRESSION;
