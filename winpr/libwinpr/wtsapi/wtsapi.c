@@ -126,6 +126,7 @@ int WtsApi32_InitializeWtsApi(void)
 	if (!g_WtsApi32Module)
 		return -1;
 
+#ifdef _WIN32
 	WTSAPI32_LOAD_PROC(StopRemoteControlSession, WTS_STOP_REMOTE_CONTROL_SESSION_FN);
 	WTSAPI32_LOAD_PROC(StartRemoteControlSessionW, WTS_START_REMOTE_CONTROL_SESSION_FN_W);
 	WTSAPI32_LOAD_PROC(StartRemoteControlSessionA, WTS_START_REMOTE_CONTROL_SESSION_FN_A);
@@ -189,6 +190,7 @@ int WtsApi32_InitializeWtsApi(void)
 	WTSAPI32_LOAD_PROC(IsChildSessionsEnabled, WTS_IS_CHILD_SESSIONS_ENABLED_FN);
 	WTSAPI32_LOAD_PROC(GetChildSessionId, WTS_GET_CHILD_SESSION_ID_FN);
 	WTSAPI32_LOAD_PROC(GetActiveConsoleSessionId, WTS_GET_ACTIVE_CONSOLE_SESSION_ID_FN);
+#endif
 
 	g_WtsApi = &WtsApi32_WtsApiFunctionTable;
 

@@ -167,7 +167,7 @@ static void h264_dump_h264_data(BYTE* data, int size)
 	fclose(fp);
 }
 
-static void h264_dump_yuv_data(BYTE* yuv[], int width, int height, int stride[])
+void h264_dump_yuv_data(BYTE* yuv[], int width, int height, int stride[])
 {
 	FILE* fp;
 	BYTE* srcp;
@@ -326,7 +326,7 @@ BYTE* h264_strip_nal_unit_au_delimiter(BYTE* pSrcData, UINT32* pSrcSize)
 
 #ifdef WITH_OPENH264
 
-static BOOL g_openh264_trace_enabled = TRUE;
+static BOOL g_openh264_trace_enabled = FALSE;
 
 static void openh264_trace_callback(H264_CONTEXT* h264, int level, const char* message)
 {
@@ -360,6 +360,16 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 		SrcSize,
 		pYUVData,
 		&sBufferInfo);
+
+	/**
+	 * Calling DecodeFrame2 twice apparently works around Openh264 issue #1136:
+	 * https://github.com/cisco/openh264/issues/1136
+	 *
+	 * This is a hack, but it works and it is only necessary for the first frame.
+	 */
+
+	if (sBufferInfo.iBufferStatus != 1)
+		state = (*h264->pDecoder)->DecodeFrame2(h264->pDecoder, NULL, 0, pYUVData, &sBufferInfo);
 
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
 
