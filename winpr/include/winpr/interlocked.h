@@ -154,6 +154,8 @@ WINPR_API LONG InterlockedExchangeAdd(LONG volatile *Addend, LONG Value);
 
 WINPR_API LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG Comperand);
 
+WINPR_API PVOID InterlockedCompareExchangePointer(PVOID volatile *Destination, PVOID Exchange, PVOID Comperand);
+
 #endif /* _WIN32 */
 
 #if (!defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0502)))
