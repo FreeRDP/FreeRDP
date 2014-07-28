@@ -42,6 +42,15 @@
 #define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
+struct _wtsChannelMessage
+{
+	UINT16 channelId;
+	UINT16 reserved;
+	UINT32 length;
+	UINT32 offset;
+};
+typedef struct _wtsChannelMessage wtsChannelMessage;
+
 static DWORD g_SessionId = 1;
 static wHashTable* g_ServerHandles = NULL;
 
@@ -75,15 +84,16 @@ static rdpPeerChannel* wts_get_dvc_channel_by_id(WTSVirtualChannelManager* vcm, 
 static void wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* Buffer, UINT32 Length)
 {
 	BYTE* buffer;
-	UINT32 length;
-	UINT16 channelId;
+	wtsChannelMessage* messageCtx;
 
-	length = Length;
-	buffer = (BYTE*) malloc(length);
-	CopyMemory(buffer, Buffer, length);
-	channelId = channel->channelId;
+	messageCtx = (wtsChannelMessage*) malloc(sizeof(wtsChannelMessage) + Length);
+	messageCtx->channelId = channel->channelId;
+	messageCtx->length = Length;
+	messageCtx->offset = 0;
+	buffer = (BYTE*) (messageCtx + 1);
+	CopyMemory(buffer, Buffer, Length);
 
-	MessageQueue_Post(channel->queue, (void*) (UINT_PTR) channelId, 0, (void*) buffer, (void*) (UINT_PTR) length);
+	MessageQueue_Post(channel->queue, messageCtx, 0, NULL, NULL);
 }
 
 static void wts_queue_send_item(rdpPeerChannel* channel, BYTE* Buffer, UINT32 Length)
@@ -1027,28 +1037,35 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer, ULONG BufferSize, PULONG pBytesRead)
 {
 	BYTE* buffer;
-	UINT32 length;
-	UINT16 channelId;
 	wMessage message;
+	wtsChannelMessage* messageCtx;
 	rdpPeerChannel* channel = (rdpPeerChannel*) hChannelHandle;
 
-	if (!MessageQueue_Peek(channel->queue, &message, TRUE))
+	if (!MessageQueue_Peek(channel->queue, &message, FALSE))
 	{
+		SetLastError(ERROR_NO_DATA);
 		*pBytesRead = 0;
-		return TRUE;
+		return FALSE;
 	}
 
-	channelId = (UINT16) (UINT_PTR) message.context;
-	buffer = (BYTE*) message.wParam;
-	length = (UINT32) (UINT_PTR) message.lParam;
+	messageCtx = (wtsChannelMessage*) (UINT_PTR) message.context;
+	buffer = (BYTE*) (messageCtx + 1);
 
-	*pBytesRead = length;
+	*pBytesRead = messageCtx->length - messageCtx->offset;
+	if (Buffer == NULL || BufferSize == 0)
+	{
+		return TRUE;
+	}
+	if (*pBytesRead > BufferSize)
+		*pBytesRead = BufferSize;
 
-	if (length > BufferSize)
-		return FALSE;
-
-	CopyMemory(Buffer, buffer, length);
-	free(buffer);
+	CopyMemory(Buffer, buffer + messageCtx->offset, *pBytesRead);
+	messageCtx->offset += *pBytesRead;
+	if (messageCtx->offset >= messageCtx->length)
+	{
+		MessageQueue_Peek(channel->queue, &message, TRUE);
+		free(messageCtx);
+	}
 
 	return TRUE;
 }

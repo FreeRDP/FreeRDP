@@ -598,15 +598,14 @@ static void* rdpdr_server_thread(void* arg)
 			break;
 		}
 
-		if (WTSVirtualChannelRead(context->priv->ChannelHandle, 0, (PCHAR) Stream_Pointer(s),
-				Stream_Capacity(s) - Stream_GetPosition(s), &BytesReturned))
+		WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned);
+		if (BytesReturned < 1)
+			continue;
+		Stream_EnsureRemainingCapacity(s, BytesReturned);
+		if (!WTSVirtualChannelRead(context->priv->ChannelHandle, 0,
+			(PCHAR) Stream_Buffer(s), Stream_Capacity(s), &BytesReturned))
 		{
-			if (BytesReturned)
-				Stream_Seek(s, BytesReturned);
-		}
-		else
-		{
-			Stream_EnsureRemainingCapacity(s, BytesReturned);
+			break;
 		}
 
 		if (Stream_GetPosition(s) >= RDPDR_HEADER_LENGTH)

@@ -19,7 +19,10 @@
 
 #include <stdio.h>
 #include <sys/stat.h>
+
+#ifndef _WIN32
 #include <termios.h>
+#endif
 
 #include <winpr/comm.h>
 #include <winpr/crt.h>

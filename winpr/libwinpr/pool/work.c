@@ -60,6 +60,8 @@ static void module_init()
 
 #endif
 
+#ifdef WINPR_THREAD_POOL
+
 PTP_WORK CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
 {
 	PTP_WORK work = NULL;
@@ -153,3 +155,5 @@ VOID WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks)
 		printf("WaitForThreadpoolWorkCallbacks: error waiting on work completion\n");
 #endif
 }
+
+#endif

@@ -222,6 +222,11 @@
 #define LB_CLIENT_TSV_URL			0x00001000
 #define LB_SERVER_TSV_CAPABLE			0x00002000
 
+/* Keyboard Hook */
+#define KEYBOARD_HOOK_LOCAL			0
+#define KEYBOARD_HOOK_REMOTE			1
+#define KEYBOARD_HOOK_FULLSCREEN_ONLY		2
+
 struct _TARGET_NET_ADDRESS
 {
 	UINT32 Length;
@@ -726,6 +731,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_FastPathInput					2630
 #define FreeRDP_MultiTouchInput					2631
 #define FreeRDP_MultiTouchGestures				2632
+#define FreeRDP_KeyboardHook					2633
 #define FreeRDP_BrushSupportLevel				2688
 #define FreeRDP_GlyphSupportLevel				2752
 #define FreeRDP_GlyphCache					2753
@@ -974,7 +980,8 @@ struct rdp_settings
 	ALIGN64 char* AuthenticationServiceClass; /* 1098 */
 	ALIGN64 BOOL DisableCredentialsDelegation; /* 1099 */
 	ALIGN64 BOOL AuthenticationLevel; /* 1100 */
-	UINT64 padding1152[1152 - 1101]; /* 1101 */
+	ALIGN64 char* PermittedTLSCiphers; /* 1101 */
+	UINT64 padding1152[1152 - 1102]; /* 1102 */
 
 	/* Connection Cookie */
 	ALIGN64 BOOL MstscCookieMode; /* 1152 */
@@ -1180,7 +1187,8 @@ struct rdp_settings
 	ALIGN64 BOOL FastPathInput; /* 2630 */
 	ALIGN64 BOOL MultiTouchInput; /* 2631 */
 	ALIGN64 BOOL MultiTouchGestures; /* 2632 */
-	UINT64 padding2688[2688 - 2633]; /* 2633 */
+	ALIGN64 UINT32 KeyboardHook; /* 2633 */
+	UINT64 padding2688[2688 - 2634]; /* 2634 */
 
 	/* Brush Capabilities */
 	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */

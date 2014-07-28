@@ -127,6 +127,8 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "tls protocol security" },
 	{ "sec-nla", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "nla protocol security" },
 	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "nla extended protocol security" },
+	{ "tls-ciphers", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "List of permitted openssl ciphers - see ciphers(1)" },
+	{ "tls-ciphers-netmon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use tls ciphers that netmon can parse" },
 	{ "cert-name", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL, "certificate name" },
 	{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "ignore certificate" },
 	{ "pcb", COMMAND_LINE_VALUE_REQUIRED, "<blob>", NULL, NULL, -1, NULL, "Preconnection Blob" },
@@ -1279,8 +1281,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "multimon")
 		{
 			settings->UseMultimon = TRUE;
-			settings->SpanMonitors = FALSE;
-			settings->Fullscreen = TRUE;
 
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
@@ -1292,9 +1292,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "span")
 		{
-			settings->UseMultimon = TRUE;
 			settings->SpanMonitors = TRUE;
-			settings->Fullscreen = TRUE;
 		}
 		CommandLineSwitchCase(arg, "workarea")
 		{
@@ -1753,6 +1751,14 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->ExtSecurity = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "tls-ciphers")
+		{
+			settings->PermittedTLSCiphers = _strdup(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "tls-ciphers-netmon")
+		{
+			settings->PermittedTLSCiphers = arg->Value ? _strdup("ALL:!ECDH") : NULL;
+		}
 		CommandLineSwitchCase(arg, "cert-name")
 		{
 			settings->CertificateName = _strdup(arg->Value);
@@ -1894,21 +1900,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
 	freerdp_performance_flags_make(settings);
-
-	if (settings->GatewayEnabled)
-	{
-		if (settings->GatewayUseSameCredentials)
-		{
-			if (settings->Username)
-				settings->GatewayUsername = _strdup(settings->Username);
-
-			if (settings->Domain)
-				settings->GatewayDomain = _strdup(settings->Domain);
-
-			if (settings->Password)
-				settings->GatewayPassword = _strdup(settings->Password);
-		}
-	}
 
 	if (settings->SupportGraphicsPipeline)
 	{

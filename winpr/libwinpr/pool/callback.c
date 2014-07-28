@@ -50,6 +50,8 @@ static void module_init()
 
 #endif
 
+#ifdef WINPR_THREAD_POOL
+
 BOOL CallbackMayRunLong(PTP_CALLBACK_INSTANCE pci)
 {
 #ifdef _WIN32
@@ -61,3 +63,5 @@ BOOL CallbackMayRunLong(PTP_CALLBACK_INSTANCE pci)
 #endif
 	return FALSE;
 }
+
+#endif

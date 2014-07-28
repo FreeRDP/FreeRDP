@@ -345,23 +345,15 @@ static void* audin_server_thread_func(void* arg)
 
 		Stream_SetPosition(s, 0);
 
+		WTSVirtualChannelRead(audin->audin_channel, 0, NULL, 0, &BytesReturned);
+		if (BytesReturned < 1)
+			continue;
+		Stream_EnsureRemainingCapacity(s, BytesReturned);
 		if (WTSVirtualChannelRead(audin->audin_channel, 0, (PCHAR) Stream_Buffer(s),
 			Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
-			if (BytesReturned == 0)
-				break;
-			
-			Stream_EnsureRemainingCapacity(s, BytesReturned);
-
-			if (WTSVirtualChannelRead(audin->audin_channel, 0, (PCHAR) Stream_Buffer(s),
-				Stream_Capacity(s), &BytesReturned) == FALSE)
-			{
-				break;
-			}
+			break;
 		}
-
-		if (BytesReturned < 1)
-			continue;
 
 		Stream_Read_UINT8(s, MessageId);
 		BytesReturned--;

@@ -22,6 +22,10 @@
 #include "config.h"
 #endif
 
+#ifdef HAVE_PTHREAD_GNU_EXT
+#define _GNU_SOURCE
+#endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -254,6 +258,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			}
 			else
 				status = pthread_join(thread->thread, &thread_status);
+
+			thread->started = FALSE;
 
 			if (status != 0)
 			{
