@@ -24,6 +24,7 @@ set(${MODULE_PREFIX}_SRCS
 	audio.c
 	planar.c
 	planar.h
+	progressive.c
 	bitmap_decode.c
 	bitmap_encode.c
 	rfx_bitstream.h
