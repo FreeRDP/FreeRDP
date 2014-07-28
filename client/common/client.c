@@ -169,7 +169,7 @@ int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, 
 	/* This function will call logic that is applicable to the settings
 	 * from command line parsing AND the rdp file parsing */
 	if(!freerdp_client_settings_post_process(settings))
-		return -1;
+		status = -1;
 
 	return status;
 }
