@@ -25,6 +25,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
+#include <winpr/ssl.h>
 
 #include <winpr/stream.h>
 #include <freerdp/utils/tcp.h>
@@ -1343,8 +1344,7 @@ rdpTls* tls_new(rdpSettings* settings)
 	if (!tls)
 		return NULL;
 
-	SSL_load_error_strings();
-	SSL_library_init();
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	tls->settings = settings;
 	tls->certificate_store = certificate_store_new(settings);
