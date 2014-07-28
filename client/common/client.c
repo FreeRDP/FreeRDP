@@ -114,23 +114,29 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 			{
 				settings->GatewayUsername = _strdup(settings->Username);
 				if (!settings->GatewayUsername)
-					return FALSE;
+					goto out_error;
 			}
 			if (settings->Domain)
 			{
 				settings->GatewayDomain = _strdup(settings->Domain);
 				if (!settings->GatewayDomain)
-					return FALSE;
+					goto out_error;
 			}
 			if (settings->Password)
 			{
 				settings->GatewayPassword = _strdup(settings->Password);
 				if (!settings->GatewayPassword)
-					return FALSE;
+					goto out_error;
 			}
 		}
 	}
 	return TRUE;
+
+out_error:
+	free(settings->GatewayUsername);
+	free(settings->GatewayDomain);
+	free(settings->GatewayPassword);
+	return FALSE;
 }
 
 
