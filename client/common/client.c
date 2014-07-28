@@ -130,6 +130,19 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 			}
 		}
 	}
+	
+	/* Moved logic for Multimon and Span monitors to force fullscreen, so
+	 * that the rdp file also triggers this functionality */
+	if (settings->SpanMonitors)
+	{
+		settings->UseMultimon = TRUE;
+		settings->Fullscreen = TRUE;
+	}
+	else if (settings->UseMultimon)
+	{
+		settings->Fullscreen = TRUE;
+	}
+	
 	return TRUE;
 
 out_error:
