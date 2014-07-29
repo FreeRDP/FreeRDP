@@ -72,16 +72,17 @@ const char* progressive_get_block_type_string(UINT16 blockType)
 	return "PROGRESSIVE_WBT_UNKNOWN";
 }
 
-int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
+int progressive_process_blocks(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UINT32 blocksLen, UINT32 blockCount, UINT32 flags)
 {
+	int status;
 	BYTE* block;
 	UINT16 index;
 	UINT32 boffset;
 	UINT16 blockType;
 	UINT32 blockLen;
-	RFX_RECT* rect;
+	UINT32 count = 0;
 	UINT32 offset = 0;
+	RFX_RECT* rect = NULL;
 	PROGRESSIVE_BLOCK_SYNC sync;
 	PROGRESSIVE_BLOCK_REGION region;
 	PROGRESSIVE_BLOCK_CONTEXT context;
@@ -93,22 +94,40 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 	RFX_COMPONENT_CODEC_QUANT* quantVal;
 	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
 
-	printf("ProgressiveDecompress\n");
-
-	if (SrcSize < 6)
-		return -1001;
-
-	while ((SrcSize - offset) >= 6)
+	while ((blocksLen - offset) >= 6)
 	{
 		boffset = 0;
-		block = &pSrcData[offset];
+		block = &blocks[offset];
 
 		blockType = *((UINT16*) &block[boffset + 0]); /* blockType (2 bytes) */
 		blockLen = *((UINT32*) &block[boffset + 2]); /* blockLen (4 bytes) */
 		boffset += 6;
 
-		if ((SrcSize - offset) < blockLen)
-			return -1002;
+		if (flags & PROGRESSIVE_BLOCKS_REGION)
+		{
+			if ((count + 1) > blockCount)
+				break;
+
+			if (blockType != PROGRESSIVE_WBT_REGION)
+				return -1001;
+		}
+		else if (flags & PROGRESSIVE_BLOCKS_TILE)
+		{
+			if ((count + 1) > blockCount)
+				break;
+
+			if ((blockType != PROGRESSIVE_WBT_TILE_SIMPLE) &&
+				(blockType != PROGRESSIVE_WBT_TILE_FIRST) &&
+				(blockType != PROGRESSIVE_WBT_TILE_UPGRADE))
+			{
+				return -1002;
+			}
+		}
+
+		printf("%s\n", progressive_get_block_type_string(blockType));
+
+		if ((blocksLen - offset) < blockLen)
+			return -1003;
 
 		switch (blockType)
 		{
@@ -117,15 +136,18 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				sync.blockType = blockType;
 				sync.blockLen = blockLen;
 
-				if (blockLen != 12)
-					return -1003;
+				if ((blockLen - boffset) != 6)
+					return -1004;
 
 				sync.magic = (UINT32) *((UINT32*) &block[boffset + 0]); /* magic (4 bytes) */
 				sync.version = (UINT32) *((UINT16*) &block[boffset + 4]); /* version (2 bytes) */
 				boffset += 6;
 
-				/* magic SHOULD be set to 0xCACCACCA, but the decoder SHOULD ignore it */
-				/* version SHOULD be set to 0x0100, but the decoder SHOULD ignore it */
+				if (sync.magic != 0xCACCACCA)
+					return -1005;
+
+				if (sync.version != 0x0100)
+					return -1006;
 
 				break;
 
@@ -135,7 +157,7 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				frameBegin.blockLen = blockLen;
 
 				if ((blockLen - boffset) < 6)
-					return -1004;
+					return -1007;
 
 				frameBegin.frameIndex = (UINT32) *((UINT32*) &block[boffset + 0]); /* frameIndex (4 bytes) */
 				frameBegin.regionCount = (UINT32) *((UINT16*) &block[boffset + 4]); /* regionCount (2 bytes) */
@@ -147,12 +169,16 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				 * the decoder SHOULD ignore this inconsistency.
 				 */
 
-				if ((blockLen - boffset) > 6)
+				if ((blockLen - boffset) > 0)
 				{
-					fprintf(stderr, "warning: regions present in frame begin block are ignored\n");
-				}
+					status = progressive_process_blocks(progressive, &block[boffset],
+							blockLen - boffset, frameBegin.regionCount, PROGRESSIVE_BLOCKS_REGION);
 
-				boffset = blockLen;
+					if (status < 0)
+						return status;
+
+					boffset += status;
+				}
 
 				break;
 
@@ -161,8 +187,8 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				frameEnd.blockType = blockType;
 				frameEnd.blockLen = blockLen;
 
-				if (blockLen != 6)
-					return -1005;
+				if ((blockLen - boffset) != 0)
+					return -1008;
 
 				break;
 
@@ -171,8 +197,8 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				context.blockType = blockType;
 				context.blockLen = blockLen;
 
-				if (blockLen != 10)
-					return -1006;
+				if ((blockLen - boffset) != 4)
+					return -1009;
 
 				context.ctxId = block[boffset + 0]; /* ctxId (1 byte) */
 				context.tileSize = *((UINT16*) &block[boffset + 1]); /* tileSize (2 bytes) */
@@ -180,7 +206,7 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				boffset += 4;
 
 				if (context.tileSize != 64)
-					return -1007;
+					return -1010;
 
 				break;
 
@@ -190,7 +216,7 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				region.blockLen = blockLen;
 
 				if ((blockLen - boffset) < 12)
-					return -1008;
+					return -1011;
 
 				region.tileSize = block[boffset + 0]; /* tileSize (1 byte) */
 				region.numRects = *((UINT16*) &block[boffset + 1]); /* numRects (2 bytes) */
@@ -202,21 +228,27 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				boffset += 12;
 
 				if (region.tileSize != 64)
-					return -1;
+					return -1012;
 
 				if (region.numRects < 1)
-					return -1;
+					return -1013;
 
 				if (region.numQuant > 7)
-					return -1;
+					return -1014;
 
 				if ((blockLen - boffset) < (region.numRects * 8))
-					return -1;
+					return -1015;
 
-				region.rects = (RFX_RECT*) malloc(region.numRects * sizeof(RFX_RECT));
+				if (region.numRects > progressive->cRects)
+				{
+					progressive->rects = (RFX_RECT*) realloc(progressive->rects, region.numRects * sizeof(RFX_RECT));
+					progressive->cRects = region.numRects;
+				}
+
+				region.rects = progressive->rects;
 
 				if (!region.rects)
-					return -1;
+					return -1016;
 
 				for (index = 0; index < region.numRects; index++)
 				{
@@ -228,58 +260,75 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 					boffset += 8;
 				}
 
-				if (region.numQuant > 0)
+				if ((blockLen - boffset) < (region.numQuant * 5))
+					return -1017;
+
+				if (region.numQuant > progressive->cQuant)
 				{
-					if ((blockLen - boffset) < (region.numQuant * 5))
-						return -1;
-
-					region.quantVals = (RFX_COMPONENT_CODEC_QUANT*) malloc(region.numQuant * sizeof(RFX_COMPONENT_CODEC_QUANT));
-
-					if (!region.quantVals)
-						return -1;
-
-					for (index = 0; index < region.numQuant; index++)
-					{
-						quantVal = &(region.quantVals[index]);
-						quantVal->LL3 = block[boffset + 0] & 0x0F;
-						quantVal->HL3 = block[boffset + 0] >> 4;
-						quantVal->LH3 = block[boffset + 1] & 0x0F;
-						quantVal->HH3 = block[boffset + 1] >> 4;
-						quantVal->HL2 = block[boffset + 2] & 0x0F;
-						quantVal->LH2 = block[boffset + 2] >> 4;
-						quantVal->HH2 = block[boffset + 3] & 0x0F;
-						quantVal->HL1 = block[boffset + 3] >> 4;
-						quantVal->LH1 = block[boffset + 4] & 0x0F;
-						quantVal->HH1 = block[boffset + 4] >> 4;
-						boffset += 5;
-					}
+					progressive->quantVals = (RFX_COMPONENT_CODEC_QUANT*) realloc(progressive->quantVals,
+							region.numQuant * sizeof(RFX_COMPONENT_CODEC_QUANT));
+					progressive->cQuant = region.numQuant;
 				}
 
-				if (region.numProgQuant > 0)
+				region.quantVals = progressive->quantVals;
+
+				if (!region.quantVals)
+					return -1018;
+
+				for (index = 0; index < region.numQuant; index++)
 				{
-					if ((blockLen - boffset) < (region.numProgQuant * 16))
-						return -1;
-
-					region.quantProgVals = (RFX_PROGRESSIVE_CODEC_QUANT*) malloc(region.numProgQuant * sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
-
-					if (!region.quantVals)
-						return -1;
-
-					for (index = 0; index < region.numProgQuant; index++)
-					{
-						quantProgVal = &(region.quantProgVals[index]);
-						quantProgVal->quality = block[boffset + 0];
-						CopyMemory(quantProgVal->yQuantValues, &block[boffset + 1], 5);
-						CopyMemory(quantProgVal->cbQuantValues, &block[boffset + 6], 5);
-						CopyMemory(quantProgVal->crQuantValues, &block[boffset + 11], 5);
-						boffset += 16;
-					}
+					quantVal = &(region.quantVals[index]);
+					quantVal->LL3 = block[boffset + 0] & 0x0F;
+					quantVal->HL3 = block[boffset + 0] >> 4;
+					quantVal->LH3 = block[boffset + 1] & 0x0F;
+					quantVal->HH3 = block[boffset + 1] >> 4;
+					quantVal->HL2 = block[boffset + 2] & 0x0F;
+					quantVal->LH2 = block[boffset + 2] >> 4;
+					quantVal->HH2 = block[boffset + 3] & 0x0F;
+					quantVal->HL1 = block[boffset + 3] >> 4;
+					quantVal->LH1 = block[boffset + 4] & 0x0F;
+					quantVal->HH1 = block[boffset + 4] >> 4;
+					boffset += 5;
 				}
 
-				printf("numTiles: %d tileDataSize: %d numQuant: %d numProgQuant: %d\n",
-						region.numTiles, region.tileDataSize, region.numQuant, region.numProgQuant);
+				if ((blockLen - boffset) < (region.numProgQuant * 16))
+					return -1019;
 
-				boffset += region.tileDataSize; /* skip for now */
+				if (region.numProgQuant > progressive->cProgQuant)
+				{
+					progressive->quantProgVals = (RFX_PROGRESSIVE_CODEC_QUANT*) realloc(progressive->quantProgVals,
+							region.numProgQuant * sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
+					progressive->cProgQuant = region.numProgQuant;
+				}
+
+				region.quantProgVals = progressive->quantProgVals;
+
+				if (!region.quantProgVals)
+					return -1020;
+
+				for (index = 0; index < region.numProgQuant; index++)
+				{
+					quantProgVal = &(region.quantProgVals[index]);
+					quantProgVal->quality = block[boffset + 0];
+					CopyMemory(quantProgVal->yQuantValues, &block[boffset + 1], 5);
+					CopyMemory(quantProgVal->cbQuantValues, &block[boffset + 6], 5);
+					CopyMemory(quantProgVal->crQuantValues, &block[boffset + 11], 5);
+					boffset += 16;
+				}
+
+				if ((blockLen - boffset) < region.tileDataSize)
+					return -1021;
+
+				printf("numRects: %d numTiles: %d numQuant: %d numProgQuant: %d\n",
+						region.numRects, region.numTiles, region.numQuant, region.numProgQuant);
+
+				status = progressive_process_blocks(progressive, &block[boffset],
+						region.tileDataSize, region.numTiles, PROGRESSIVE_BLOCKS_TILE);
+
+				if (status < 0)
+					return status;
+
+				boffset += (UINT32) status;
 
 				break;
 
@@ -289,7 +338,7 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				simple.blockLen = blockLen;
 
 				if ((blockLen - boffset) < 16)
-					return -1009;
+					return -1022;
 
 				simple.quantIdxY = block[boffset + 0]; /* quantIdxY (1 byte) */
 				simple.quantIdxCb = block[boffset + 1]; /* quantIdxCb (1 byte) */
@@ -303,14 +352,26 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				simple.tailLen = *((UINT16*) &block[boffset + 14]); /* tailLen (2 bytes) */
 				boffset += 16;
 
+				if ((blockLen - boffset) < simple.yLen)
+					return -1023;
+
 				simple.yData = &block[boffset];
 				boffset += simple.yLen;
+
+				if ((blockLen - boffset) < simple.cbLen)
+					return -1024;
 
 				simple.cbData = &block[boffset];
 				boffset += simple.cbLen;
 
+				if ((blockLen - boffset) < simple.crLen)
+					return -1025;
+
 				simple.crData = &block[boffset];
 				boffset += simple.crLen;
+
+				if ((blockLen - boffset) < simple.tailLen)
+					return -1026;
 
 				simple.tailData = &block[boffset];
 				boffset += simple.tailLen;
@@ -323,7 +384,7 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				first.blockLen = blockLen;
 
 				if ((blockLen - boffset) < 17)
-					return -1010;
+					return -1027;
 
 				first.quantIdxY = block[boffset + 0]; /* quantIdxY (1 byte) */
 				first.quantIdxCb = block[boffset + 1]; /* quantIdxCb (1 byte) */
@@ -339,25 +400,25 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				boffset += 17;
 
 				if ((blockLen - boffset) < first.yLen)
-					return -1011;
+					return -1028;
 
 				first.yData = &block[boffset];
 				boffset += first.yLen;
 
 				if ((blockLen - boffset) < first.cbLen)
-					return -1012;
+					return -1029;
 
 				first.cbData = &block[boffset];
 				boffset += first.cbLen;
 
 				if ((blockLen - boffset) < first.crLen)
-					return -1013;
+					return -1030;
 
 				first.crData = &block[boffset];
 				boffset += first.crLen;
 
 				if ((blockLen - boffset) < first.tailLen)
-					return -1014;
+					return -1031;
 
 				first.tailData = &block[boffset];
 				boffset += first.tailLen;
@@ -369,8 +430,8 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				upgrade.blockType = blockType;
 				upgrade.blockLen = blockLen;
 
-				if ((blockLen - boffset) < 18)
-					return -1015;
+				if ((blockLen - boffset) < 20)
+					return -1032;
 
 				upgrade.quantIdxY = block[boffset + 0]; /* quantIdxY (1 byte) */
 				upgrade.quantIdxCb = block[boffset + 1]; /* quantIdxCb (1 byte) */
@@ -384,40 +445,40 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				upgrade.cbRawLen = *((UINT16*) &block[boffset + 14]); /* cbRawLen (2 bytes) */
 				upgrade.crSrlLen = *((UINT16*) &block[boffset + 16]); /* crSrlLen (2 bytes) */
 				upgrade.crRawLen = *((UINT16*) &block[boffset + 18]); /* crRawLen (2 bytes) */
-				boffset += 18;
+				boffset += 20;
 
 				if ((blockLen - boffset) < upgrade.ySrlLen)
-					return -1016;
+					return -1033;
 
 				upgrade.ySrlData = &block[boffset];
 				boffset += upgrade.ySrlLen;
 
 				if ((blockLen - boffset) < upgrade.yRawLen)
-					return -1017;
+					return -1034;
 
 				upgrade.yRawData = &block[boffset];
 				boffset += upgrade.yRawLen;
 
 				if ((blockLen - boffset) < upgrade.cbSrlLen)
-					return -1018;
+					return -1035;
 
 				upgrade.cbSrlData = &block[boffset];
 				boffset += upgrade.cbSrlLen;
 
 				if ((blockLen - boffset) < upgrade.cbRawLen)
-					return -1019;
+					return -1036;
 
 				upgrade.cbRawData = &block[boffset];
 				boffset += upgrade.cbRawLen;
 
 				if ((blockLen - boffset) < upgrade.crSrlLen)
-					return -1020;
+					return -1037;
 
 				upgrade.crSrlData = &block[boffset];
 				boffset += upgrade.crSrlLen;
 
 				if ((blockLen - boffset) < upgrade.crRawLen)
-					return -1021;
+					return -1038;
 
 				upgrade.crRawData = &block[boffset];
 				boffset += upgrade.crRawLen;
@@ -425,23 +486,34 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				break;
 
 			default:
-				return -1022;
+				return -1039;
 				break;
 		}
 
 		if (boffset != blockLen)
-		{
-			printf("failure %s\n", progressive_get_block_type_string(blockType));
-			return -1023;
-		}
+			return -1040;
 
 		offset += blockLen;
+		count++;
 	}
 
-	if (offset != SrcSize)
-		return -1024;
+	if (offset != blocksLen)
+		return -1041;
 
-	return 1;
+	return (int) offset;
+}
+
+int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT32 SrcSize,
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
+{
+	int status;
+
+	status = progressive_process_blocks(progressive, pSrcData, SrcSize, 0, PROGRESSIVE_BLOCKS_ALL);
+
+	if (status >= 0)
+		status = 1;
+
+	return status;
 }
 
 int progressive_compress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize)
@@ -463,6 +535,26 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 	if (progressive)
 	{
 		progressive->Compressor = Compressor;
+
+		progressive->cRects = 64;
+		progressive->rects = (RFX_RECT*) malloc(progressive->cRects * sizeof(RFX_RECT));
+
+		if (!progressive->rects)
+			return NULL;
+
+		progressive->cQuant = 8;
+		progressive->quantVals = (RFX_COMPONENT_CODEC_QUANT*) malloc(progressive->cQuant * sizeof(RFX_COMPONENT_CODEC_QUANT));
+
+		if (!progressive->quantVals)
+			return NULL;
+
+		progressive->cProgQuant = 8;
+		progressive->quantProgVals = (RFX_PROGRESSIVE_CODEC_QUANT*) malloc(progressive->cProgQuant * sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
+
+		if (!progressive->quantProgVals)
+			return NULL;
+
+		progressive_context_reset(progressive);
 	}
 
 	return progressive;
@@ -472,6 +564,10 @@ void progressive_context_free(PROGRESSIVE_CONTEXT* progressive)
 {
 	if (!progressive)
 		return;
+
+	free(progressive->rects);
+	free(progressive->quantVals);
+	free(progressive->quantProgVals);
 
 	free(progressive);
 }
