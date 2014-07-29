@@ -626,7 +626,7 @@ BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
 	RdpsndServerPrivate *priv = context->priv;
 	wStream *s = priv->input_stream;
 
-	if (!WTSVirtualChannelRead(priv->channelEvent, 0, (PCHAR)Stream_Pointer(s), priv->expectedBytes, &bytesReturned))
+	if (!WTSVirtualChannelRead(priv->ChannelHandle, 0, (PCHAR)Stream_Pointer(s), priv->expectedBytes, &bytesReturned))
 	{
 		if (GetLastError() == ERROR_NO_DATA)
 			return TRUE;

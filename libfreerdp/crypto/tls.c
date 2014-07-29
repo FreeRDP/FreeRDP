@@ -25,6 +25,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
+#include <winpr/ssl.h>
 
 #include <winpr/stream.h>
 #include <freerdp/utils/tcp.h>
@@ -51,6 +52,7 @@ long bio_rdp_tls_callback(BIO* bio, int mode, const char* argp, int argi, long a
 
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
+	int error;
 	int status;
 	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) bio->ptr;
 
@@ -70,11 +72,11 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 				break;
 
 			case SSL_ERROR_WANT_WRITE:
-				BIO_set_flags(bio, BIO_FLAGS_WRITE);
+				BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_READ:
-				BIO_set_flags(bio, BIO_FLAGS_READ);
+				BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_X509_LOOKUP:
@@ -88,7 +90,16 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 				break;
 
 			case SSL_ERROR_SYSCALL:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				error = WSAGetLastError();
+				if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
+					(error == WSAEINPROGRESS) || (error == WSAEALREADY))
+				{
+					BIO_set_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY));
+				}
+				else
+				{
+					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				}
 				break;
 
 			case SSL_ERROR_SSL:
@@ -102,6 +113,7 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 
 static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 {
+	int error;
 	int status;
 	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) bio->ptr;
 
@@ -121,11 +133,11 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 				break;
 
 			case SSL_ERROR_WANT_READ:
-				BIO_set_flags(bio, BIO_FLAGS_READ);
+				BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_WRITE:
-				BIO_set_flags(bio, BIO_FLAGS_WRITE);
+				BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_X509_LOOKUP:
@@ -152,7 +164,16 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 				break;
 
 			case SSL_ERROR_SYSCALL:
-				status = 0;
+				error = WSAGetLastError();
+				if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
+					(error == WSAEINPROGRESS) || (error == WSAEALREADY))
+				{
+					BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
+				}
+				else
+				{
+					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				}
 				break;
 		}
 	}
@@ -571,6 +592,13 @@ BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int opt
 	SSL_CTX_set_options(tls->ctx, options);
 	SSL_CTX_set_read_ahead(tls->ctx, 1);
 
+	if (tls->settings->PermittedTLSCiphers) {
+		if(!SSL_CTX_set_cipher_list(tls->ctx, tls->settings->PermittedTLSCiphers)) {
+			fprintf(stderr, "SSL_CTX_set_cipher_list %s failed\n", tls->settings->PermittedTLSCiphers);
+			return FALSE;
+		}
+	}
+ 
 	tls->bio = BIO_new_rdp_tls(tls->ctx, clientMode);
 
 	if (BIO_get_ssl(tls->bio, &tls->ssl) < 0)
@@ -1316,8 +1344,7 @@ rdpTls* tls_new(rdpSettings* settings)
 	if (!tls)
 		return NULL;
 
-	SSL_load_error_strings();
-	SSL_library_init();
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	tls->settings = settings;
 	tls->certificate_store = certificate_store_new(settings);

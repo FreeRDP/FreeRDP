@@ -122,23 +122,28 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
 	status = _recv((SOCKET) bio->num, buf, size, 0);
+	if (status > 0)
+		return status;
 
-	if (status <= 0)
+	if (status == 0)
 	{
-		error = WSAGetLastError();
-
-		if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
-			(error == WSAEINPROGRESS) || (error == WSAEALREADY))
-		{
-			BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
-		}
-		else
-		{
-			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-		}
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		return 0;
 	}
 
-	return status;
+	error = WSAGetLastError();
+
+	if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
+		(error == WSAEINPROGRESS) || (error == WSAEALREADY))
+	{
+		BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
+	}
+	else
+	{
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	}
+
+	return -1;
 }
 
 static int transport_bio_simple_puts(BIO* bio, const char* str)
@@ -327,7 +332,6 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 		if (!BIO_should_retry(bio->next_bio))
 		{
 			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-			status = -1;
 			goto out;
 		}
 
@@ -505,8 +509,12 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 	}
 	else
 	{
+#ifdef HAVE_POLL_H
+		struct pollfd pollfds;
+#else
 		fd_set cfds;
 		struct timeval tv;
+#endif
 
 		tcp->socketBio = BIO_new(BIO_s_connect());
 
@@ -530,14 +538,24 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 
 		if (status <= 0)
 		{
+#ifdef HAVE_POLL_H
+			pollfds.fd = tcp->sockfd;
+			pollfds.events = POLLOUT;
+			pollfds.revents = 0;
+			do
+			{
+				status = poll(&pollfds, 1, timeout * 1000);
+			}
+			while ((status < 0) && (errno == EINTR));
+#else
 			FD_ZERO(&cfds);
 			FD_SET(tcp->sockfd, &cfds);
 
 			tv.tv_sec = timeout;
 			tv.tv_usec = 0;
 
-			status = select(tcp->sockfd + 1, NULL, &cfds, NULL, &tv);
-
+			status = _select(tcp->sockfd + 1, NULL, &cfds, NULL, &tv);
+#endif
 			if (status == 0)
 			{
 				return FALSE; /* timeout */

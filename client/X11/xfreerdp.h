@@ -35,6 +35,7 @@ typedef struct xf_context xfContext;
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/h264.h>
+#include <freerdp/codec/progressive.h>
 #include <freerdp/codec/region.h>
 
 struct xf_WorkArea
@@ -155,6 +156,7 @@ struct xf_context
 	NSC_CONTEXT* nsc;
 	CLEAR_CONTEXT* clear;
 	H264_CONTEXT* h264;
+	PROGRESSIVE_CONTEXT* progressive;
 	void* xv_context;
 	void* clipboard_context;
 

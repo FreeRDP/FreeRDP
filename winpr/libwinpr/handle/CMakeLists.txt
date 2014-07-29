@@ -15,37 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "winpr-handle")
-set(MODULE_PREFIX "WINPR_HANDLE")
-
-set(${MODULE_PREFIX}_SRCS
-	handle.c
-	handle.h)
-
-if(MSVC AND (NOT MONOLITHIC_BUILD))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
-endif()
-
-add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS}
-	EXPORT)
-
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
-
-set(${MODULE_PREFIX}_LIBS
-	${CMAKE_THREAD_LIBS_INIT}
-	${CMAKE_DL_LIBS})
+winpr_module_add(handle.c handle.h)
 	
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rt)
+	winpr_library_add(rt)
 endif()
-
-if(MONOLITHIC_BUILD)
-	set(WINPR_LIBS ${WINPR_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
-else()
-	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT WinPRTargets)
-endif()
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR")

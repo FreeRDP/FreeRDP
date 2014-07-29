@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
+#include <winpr/ssl.h>
 #include <winpr/print.h>
 
 #include "schannel_openssl.h"
@@ -456,10 +457,7 @@ SCHANNEL_OPENSSL* schannel_openssl_new()
 	if (context != NULL)
 	{
 		ZeroMemory(context, sizeof(SCHANNEL_OPENSSL));
-
-		SSL_load_error_strings();
-		SSL_library_init();
-
+		winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 		context->connected = FALSE;
 	}
 

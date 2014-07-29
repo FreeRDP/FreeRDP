@@ -26,11 +26,10 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/cmdline.h>
 
 #include <freerdp/addin.h>
-
-#include <winpr/stream.h>
 
 #include "echo_main.h"
 
@@ -63,46 +62,20 @@ struct _ECHO_PLUGIN
 
 static int echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
-	int error;
+	int status;
 	ECHO_CHANNEL_CALLBACK* callback = (ECHO_CHANNEL_CALLBACK*) pChannelCallback;
-  BYTE *pBuffer = Stream_Pointer(data);
-  UINT32 cbSize = Stream_GetRemainingLength(data);
-
-#ifdef WITH_DEBUG_DVC
-	int i = 0;
-	char* debug_buffer;
-	char* p;
-
-	if (cbSize > 0)
-	{
-		debug_buffer = (char*) malloc(3 * cbSize);
-		ZeroMemory(debug_buffer, 3 * cbSize);
-
-		p = debug_buffer;
-
-		for (i = 0; i < (int) (cbSize - 1); i++)
-		{
-			sprintf(p, "%02x ", pBuffer[i]);
-			p += 3;
-		}
-		sprintf(p, "%02x", pBuffer[i]);
-
-		DEBUG_DVC("ECHO %d: %s", cbSize, debug_buffer);
-		free(debug_buffer);
-	}
-#endif
+	BYTE* pBuffer = Stream_Pointer(data);
+	UINT32 cbSize = Stream_GetRemainingLength(data);
 
 	/* echo back what we have received. ECHO does not have any message IDs. */
-	error = callback->channel->Write(callback->channel, cbSize, pBuffer, NULL);
+	status = callback->channel->Write(callback->channel, cbSize, pBuffer, NULL);
 
-	return error;
+	return status;
 }
 
 static int echo_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 {
 	ECHO_CHANNEL_CALLBACK* callback = (ECHO_CHANNEL_CALLBACK*) pChannelCallback;
-
-	DEBUG_DVC("");
 
 	free(callback);
 
@@ -116,10 +89,10 @@ static int echo_on_new_channel_connection(IWTSListenerCallback* pListenerCallbac
 	ECHO_CHANNEL_CALLBACK* callback;
 	ECHO_LISTENER_CALLBACK* listener_callback = (ECHO_LISTENER_CALLBACK*) pListenerCallback;
 
-	DEBUG_DVC("");
+	callback = (ECHO_CHANNEL_CALLBACK*) calloc(1, sizeof(ECHO_CHANNEL_CALLBACK));
 
-	callback = (ECHO_CHANNEL_CALLBACK*) malloc(sizeof(ECHO_CHANNEL_CALLBACK));
-	ZeroMemory(callback, sizeof(ECHO_CHANNEL_CALLBACK));
+	if (!callback)
+		return -1;
 
 	callback->iface.OnDataReceived = echo_on_data_received;
 	callback->iface.OnClose = echo_on_close;
@@ -136,10 +109,10 @@ static int echo_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager
 {
 	ECHO_PLUGIN* echo = (ECHO_PLUGIN*) pPlugin;
 
-	DEBUG_DVC("");
+	echo->listener_callback = (ECHO_LISTENER_CALLBACK*) calloc(1, sizeof(ECHO_LISTENER_CALLBACK));
 
-	echo->listener_callback = (ECHO_LISTENER_CALLBACK*) malloc(sizeof(ECHO_LISTENER_CALLBACK));
-	ZeroMemory(echo->listener_callback, sizeof(ECHO_LISTENER_CALLBACK));
+	if (!echo->listener_callback)
+		return -1;
 
 	echo->listener_callback->iface.OnNewChannelConnection = echo_on_new_channel_connection;
 	echo->listener_callback->plugin = pPlugin;
@@ -153,36 +126,35 @@ static int echo_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	ECHO_PLUGIN* echo = (ECHO_PLUGIN*) pPlugin;
 
-	DEBUG_DVC("");
-
-	free(echo);
+	if (echo)
+	{
+		free(echo);
+	}
 
 	return 0;
 }
 
-#ifdef STATIC_CHANNELS
-#define DVCPluginEntry		echo_DVCPluginEntry
-#endif
-
-int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+int echo_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
-	int error = 0;
+	int status = 0;
 	ECHO_PLUGIN* echo;
 
 	echo = (ECHO_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "echo");
 
-	if (echo == NULL)
+	if (!echo)
 	{
-		echo = (ECHO_PLUGIN*) malloc(sizeof(ECHO_PLUGIN));
-		ZeroMemory(echo, sizeof(ECHO_PLUGIN));
+		echo = (ECHO_PLUGIN*) calloc(1, sizeof(ECHO_PLUGIN));
+
+		if (!echo)
+			return -1;
 
 		echo->iface.Initialize = echo_plugin_initialize;
 		echo->iface.Connected = NULL;
 		echo->iface.Disconnected = NULL;
 		echo->iface.Terminated = echo_plugin_terminated;
 
-		error = pEntryPoints->RegisterPlugin(pEntryPoints, "echo", (IWTSPlugin*) echo);
+		status = pEntryPoints->RegisterPlugin(pEntryPoints, "echo", (IWTSPlugin*) echo);
 	}
 
-	return error;
+	return status;
 }

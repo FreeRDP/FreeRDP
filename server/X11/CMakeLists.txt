@@ -44,7 +44,10 @@ if(WITH_SERVER_INTERFACE)
 	else()
 		add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 	endif()
-	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+  if (WITH_LIBRARY_VERSIONING)
+  	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+  endif()
+  set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
 else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/xfreerdp.c)
 	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
@@ -147,10 +150,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE freerdp
 	MODULES freerdp-core freerdp-common freerdp-codec freerdp-primitives freerdp-utils freerdp-gdi freerdp-crypto freerdp-locale)
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-sspi winpr-crt winpr-utils winpr-input winpr-sysinfo)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr-makecert-tool)
 

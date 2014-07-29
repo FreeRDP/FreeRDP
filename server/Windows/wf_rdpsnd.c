@@ -160,7 +160,7 @@ BOOL wf_peer_rdpsnd_init(wfPeerContext* context)
 
 	context->rdpsnd->Activated = wf_peer_rdpsnd_activated;
 
-	context->rdpsnd->Initialize(context->rdpsnd);
+	context->rdpsnd->Initialize(context->rdpsnd, TRUE);
 
 	wf_rdpsnd_set_latest_peer(context);
 
