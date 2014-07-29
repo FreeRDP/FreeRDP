@@ -23,7 +23,134 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <freerdp/codec/rfx.h>
 #include <freerdp/codec/color.h>
+
+#define PROGRESSIVE_WBT_SYNC				0xCCC0
+#define PROGRESSIVE_WBT_FRAME_BEGIN			0xCCC1
+#define PROGRESSIVE_WBT_FRAME_END			0xCCC2
+#define PROGRESSIVE_WBT_CONTEXT				0xCCC3
+#define PROGRESSIVE_WBT_REGION				0xCCC4
+#define PROGRESSIVE_WBT_TILE_SIMPLE			0xCCC5
+#define PROGRESSIVE_WBT_TILE_PROGRESSIVE_FIRST		0xCCC6
+#define PROGRESSIVE_WBT_TILE_PROGRESSIVE_UPGRADE	0xCCC7
+
+struct _PROGRESSIVE_SYNC
+{
+	UINT16 blockType;
+	UINT32 blockLen;
+
+	UINT32 magic;
+	UINT16 version;
+};
+typedef struct _PROGRESSIVE_SYNC PROGRESSIVE_SYNC;
+
+struct _PROGRESSIVE_REGION
+{
+	UINT16 blockType;
+	UINT32 blockLen;
+
+	BYTE tileSize;
+	UINT16 numRects;
+	BYTE numQuant;
+	BYTE numProgQuant;
+	BYTE flags;
+	UINT16 numTiles;
+	UINT32 tileDataSize;
+	RFX_RECT* rects;
+	UINT32* quantVals;
+	UINT32* quantProgVals;
+};
+typedef struct _PROGRESSIVE_REGION PROGRESSIVE_REGION;
+
+struct _PROGRESSIVE_FRAME_BEGIN
+{
+	UINT16 blockType;
+	UINT32 blockLen;
+
+	UINT32 frameIndex;
+	UINT16 regionCount;
+	PROGRESSIVE_REGION* regions;
+};
+typedef struct _PROGRESSIVE_FRAME_BEGIN PROGRESSIVE_FRAME_BEGIN;
+
+struct _PROGRESSIVE_FRAME_END
+{
+	UINT16 blockType;
+	UINT32 blockLen;
+};
+typedef struct _PROGRESSIVE_FRAME_END PROGRESSIVE_FRAME_END;
+
+struct _PROGRESSIVE_TILE_SIMPLE
+{
+	UINT16 blockType;
+	UINT32 blockLen;
+
+	BYTE quantIdxY;
+	BYTE quantIdxCb;
+	BYTE quantIdxCr;
+	UINT16 xIdx;
+	UINT16 yIdx;
+	BYTE flags;
+	UINT16 yLen;
+	UINT16 cbLen;
+	UINT16 crLen;
+	UINT16 tailLen;
+	BYTE* yData;
+	BYTE* cbData;
+	BYTE* crData;
+	BYTE* tailData;
+};
+typedef struct _PROGRESSIVE_TILE_SIMPLE PROGRESSIVE_TILE_SIMPLE;
+
+struct _PROGRESSIVE_TILE_FIRST
+{
+	UINT16 blockType;
+	UINT32 blockLen;
+
+	BYTE quantIdxY;
+	BYTE quantIdxCb;
+	BYTE quantIdxCr;
+	UINT16 xIdx;
+	UINT16 yIdx;
+	BYTE flags;
+	BYTE quality;
+	UINT16 yLen;
+	UINT16 cbLen;
+	UINT16 crLen;
+	UINT16 tailLen;
+	BYTE* yData;
+	BYTE* cbData;
+	BYTE* crData;
+	BYTE* tailData;
+};
+typedef struct _PROGRESSIVE_TILE_FIRST PROGRESSIVE_TILE_FIRST;
+
+struct _PROGRESSIVE_TILE_UPGRADE
+{
+	UINT16 blockType;
+	UINT32 blockLen;
+
+	BYTE quantIdxY;
+	BYTE quantIdxCb;
+	BYTE quantIdxCr;
+	UINT16 xIdx;
+	UINT16 yIdx;
+	BYTE quality;
+	UINT16 ySrlLen;
+	UINT16 yRawLen;
+	UINT16 cbSrlLen;
+	UINT16 cbRawLen;
+	UINT16 crSrlLen;
+	UINT16 crRawLen;
+	BYTE* ySrlData;
+	BYTE* yRawData;
+	BYTE* cbSrlData;
+	BYTE* cbRawData;
+	BYTE* crSrlData;
+	BYTE* crRawData;
+};
+typedef struct _PROGRESSIVE_TILE_UPGRADE PROGRESSIVE_TILE_UPGRADE;
 
 struct _PROGRESSIVE_CONTEXT
 {
