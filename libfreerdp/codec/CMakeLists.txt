@@ -91,6 +91,19 @@ if(WITH_OPENH264)
 	add_definitions(-DWITH_OPENH264)
 	include_directories(${OPENH264_INCLUDE_DIR})
 	set(FREERDP_OPENH264_LIBS ${OPENH264_LIBRARIES})
+	
+	if(WITH_OPENH264_ASM)
+		set(OPENH264_ASM  OPENH264_ASM_o)
+		set(OBJ ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${OPENH264_ASM}.dir/h264.asm.o)
+		set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/h264.asm)
+		
+		add_definitions(-DWITH_OPENH264_ASM)
+		add_custom_target(${OPENH264_ASM})
+		add_custom_command(TARGET ${OPENH264_ASM}
+			COMMAND nasm ARGS -f elf64 -o ${OBJ} ${SRC}
+			COMMENT "building H.264 asm objects ...")
+		set(FREERDP_OPENH264_LIBS ${OPENH264_LIBRARIES} ${OBJ})
+	endif()
 endif()
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
@@ -119,6 +132,10 @@ if(MONOLITHIC_BUILD)
 else()
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT FreeRDPTargets)
+endif()
+
+if(WITH_OPENH264_ASM)
+	add_dependencies(${MODULE_NAME} ${OPENH264_ASM})
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")

@@ -32,6 +32,12 @@
 #define USE_UPCONVERT		0
 #define USE_TRACE		0
 
+#include <sys/time.h>
+
+#ifdef WITH_OPENH264_ASM
+extern int freerdp_image_yuv_to_xrgb_asm(BYTE *pDstData,BYTE **pSrcData,int nWidth,int nHeight,int iStride0,int iStride1);
+#endif
+
 static BYTE clip(int x)
 {
 	if (x < 0) return 0;
@@ -39,7 +45,7 @@ static BYTE clip(int x)
 	return (BYTE)x;
 }
 
-static UINT32 YUV_to_RGB(BYTE Y, BYTE U, BYTE V)
+UINT32 YUV_to_RGB(BYTE Y, BYTE U, BYTE V)
 {
 	BYTE R, G, B;
 
@@ -297,11 +303,15 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	BYTE* pV;
 	int Y, U, V;
 	int i, j;
+	
+	struct timeval T1,T2,T3;
+	
+	gettimeofday(&T2,NULL);
 
 	if (!h264 || !h264->pDecoder)
 		return -1;
 
-	pSrcData = h264_strip_nal_unit_au_delimiter(pSrcData, &SrcSize);
+	//pSrcData = h264_strip_nal_unit_au_delimiter(pSrcData, &SrcSize);
 
 #if 0
 	printf("h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, nDstStep=%d, nXDst=%d, nYDst=%d, nWidth=%d, nHeight=%d)\n",
@@ -349,6 +359,10 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	ZeroMemory(&sBufferInfo, sizeof(sBufferInfo));
 
+	gettimeofday(&T1,NULL);
+	printf("\ttime before first DecodeFrame2: %d sec %d usec\n",(int)(T1.tv_sec-T2.tv_sec),(int)(T1.tv_usec-T2.tv_usec));
+	
+	gettimeofday(&T1,NULL);
 	state = (*h264->pDecoder)->DecodeFrame2(
 		h264->pDecoder,
 		pSrcData,
@@ -356,13 +370,17 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 		pYUVData,
 		&sBufferInfo);
 
-
-		state = (*h264->pDecoder)->DecodeFrame2(
+	gettimeofday(&T2,NULL);
+	state = (*h264->pDecoder)->DecodeFrame2(
 		h264->pDecoder,
 		NULL,
 		0,
 		pYUVData,
 		&sBufferInfo);	
+	gettimeofday(&T3,NULL);
+	
+//	printf("\tfirst DecodeFrame2 took %d sec %d usec, second %d sec %d usec\n",(int)(T2.tv_sec-T1.tv_sec),(int)(T2.tv_usec-T1.tv_usec),
+//	       (int)(T3.tv_sec-T2.tv_sec),(int)(T3.tv_usec-T2.tv_usec));
 
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
 
@@ -420,8 +438,16 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	if (h264_prepare_rgb_buffer(h264, pSystemBuffer->iWidth, pSystemBuffer->iHeight) < 0)
 		return -1;
 
+	gettimeofday(&T3,NULL);
+#ifdef WITH_OPENH264_ASM
+	freerdp_image_yuv_to_xrgb_asm(h264->data,pYUVData,h264->width,h264->height,pSystemBuffer->iStride[0],pSystemBuffer->iStride[1]);
+#else
 	freerdp_image_copy_yuv420p_to_xrgb(h264->data, h264->scanline, 0, 0,
 			h264->width, h264->height, pYUVData, pSystemBuffer->iStride, 0, 0);
+#endif
+
+	gettimeofday(&T1,NULL);//takes about 35ms!!
+	printf("\tfreerdp_image_copy_yuv420p_to_xrgb took %d sec %d usec\n",(int)(T1.tv_sec-T3.tv_sec),(int)(T1.tv_usec-T3.tv_usec));
 
 	if (g_H264DumpFrames)
 	{

@@ -23,6 +23,8 @@
 
 #include "xf_gfx.h"
 
+#include <sys/time.h>
+
 int xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
 	xfContext* xfc = (xfContext*) context->custom;
@@ -353,6 +355,16 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 	RDPGFX_H264_METABLOCK* meta;
 	RDPGFX_H264_BITMAP_STREAM* bs;
 
+	static struct timeval TGES1;
+	struct timeval TGES2,TDEC1,TDEC2;
+
+	TGES2.tv_usec=TGES1.tv_usec;
+	TGES2.tv_sec=TGES1.tv_sec;
+	
+	gettimeofday(&TGES1,NULL);
+	printf("time since last xf_SurfaceCommand_H264: %d sec %d usec\n",(int)(TGES1.tv_sec-TGES2.tv_sec),(int)(TGES1.tv_usec-TGES2.tv_usec));
+
+
 	h264 = xfc->h264;
 
 	bs = (RDPGFX_H264_BITMAP_STREAM*) cmd->extra;
@@ -369,8 +381,13 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 
 	DstData = surface->data;
 
+	gettimeofday(&TDEC1,NULL);
 	status = h264_decompress(xfc->h264, bs->data, bs->length, &DstData,
 			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
+	gettimeofday(&TDEC2,NULL);
+	printf("decoding took %d sec %d usec\n",(int)(TDEC2.tv_sec-TDEC1.tv_sec),(int)(TDEC2.tv_usec-TDEC1.tv_usec));
+	
+	free(bs->data);
 
 	printf("xf_SurfaceCommand_H264: status: %d\n", status);
 
@@ -440,6 +457,9 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 	if (!xfc->inGfxFrame){
 		xf_OutputUpdate(xfc);
 	}
+	
+	gettimeofday(&TGES2,NULL);
+	printf("the whole command took %d sec %d usec\n",(int)(TGES2.tv_sec-TGES1.tv_sec),(int)(TGES2.tv_usec-TGES1.tv_usec));
 
 	return 1;
 }

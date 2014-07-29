@@ -1,0 +1,262 @@
+;R=(256*Y+403*(V-128)+128)/265			=(256*Y+403*V-51456)/256
+;G=(256*Y-48*(U-128)-120*(V-128)+128)/256	=(256*Y-48*U-120*V+21632)/256
+;B=(256*Y+475*(U-128)+128)/256			=(256*Y+475*U-60672)/256
+
+section .data
+	dbg1:	db "DEBUG1",10
+	dbg2:	db "DEBUG2",10
+	dbg3:	db "DEBUG3",10
+	dbg4:	db "DEBUG4",10
+	dbg	equ $-dbg4
+
+section .bss
+	temp1:	resd 1
+	temp2:	resd 1
+	temp3:	resd 1
+	temp4:	resd 1
+
+section .text
+	extern printf
+
+	;global YUV_to_RGB_asm
+YUV_to_RGB_asm:
+	shl edi,8
+	
+	mov eax,edx
+	imul eax,403
+	mov [temp1],eax
+	add eax,edi
+	sub eax,51456
+	
+	jae YUV_to_RGB_asm1
+	mov eax,0
+	jmp YUV_to_RGB_asm11
+
+YUV_to_RGB_asm1:
+	cmp eax, 0xFFFF
+	jbe YUV_to_RGB_asm11
+	mov eax,0xFF00
+	
+YUV_to_RGB_asm11:
+	and eax,0xFF00
+	shl eax,8
+	
+	mov ebx,esi
+	imul ebx,475
+	mov [temp2],ebx
+	add ebx,edi
+	sub ebx,60672
+	
+	jae YUV_to_RGB_asm2
+	mov ebx, 0
+	jmp YUV_to_RGB_asm21
+
+YUV_to_RGB_asm2:
+	cmp ebx,0xFFFF
+	jbe YUV_to_RGB_asm21
+	mov ebx,0xFF00
+	
+YUV_to_RGB_asm21:
+	and ebx,0xFF00
+	shr ebx,8
+	
+	imul edx,120
+	mov [temp3],edx
+	sub edi,edx
+	imul esi,48
+	mov [temp4],esi
+	sub edi,esi
+	add edi,21632
+	
+	jae YUV_to_RGB_asm3
+	mov edi, 0
+	jmp YUV_to_RGB_asm31
+	
+YUV_to_RGB_asm3:
+	cmp edi,0xFFFF
+	jbe YUV_to_RGB_asm31
+	mov edi, 0xFF00
+	
+YUV_to_RGB_asm31:
+	and edi,0xFF00
+	
+	or eax,edi
+	or eax,ebx
+	
+	ret
+	
+	
+
+YUV_to_RGB_2asm:
+	shl edi,8
+	
+	mov eax,[temp1]
+	add eax,edi
+	sub eax,51456
+	
+	jae YUV_to_RGB_2asm1
+	mov eax,0
+	jmp YUV_to_RGB_2asm11
+
+YUV_to_RGB_2asm1:
+	cmp eax, 0xFFFF
+	jbe YUV_to_RGB_2asm11
+	mov eax,0xFF00
+	
+YUV_to_RGB_2asm11:
+	and eax,0xFF00
+	shl eax,8
+	
+	mov ebx,[temp2]
+	add ebx,edi
+	sub ebx,60672
+	
+	jae YUV_to_RGB_2asm2
+	mov ebx, 0
+	jmp YUV_to_RGB_2asm21
+
+YUV_to_RGB_2asm2:
+	cmp ebx,0xFFFF
+	jbe YUV_to_RGB_2asm21
+	mov ebx,0xFF00
+	
+YUV_to_RGB_2asm21:
+	and ebx,0xFF00
+	shr ebx,8
+	
+	sub edi,[temp3]
+	sub edi,[temp4]
+	add edi,21632
+	
+	jae YUV_to_RGB_2asm3
+	mov edi, 0
+	jmp YUV_to_RGB_2asm31
+	
+YUV_to_RGB_2asm3:
+	cmp edi,0xFFFF
+	jbe YUV_to_RGB_2asm31
+	mov edi, 0xFF00
+	
+YUV_to_RGB_2asm31:
+	and edi,0xFF00
+	
+	or eax,edi
+	or eax,ebx
+	
+	ret
+
+
+;extern int freerdp_image_yuv_to_xrgb_asm(unsigned char *pDstData,unsigned char **pSrcData,int nWidth,int nHeight);
+	global freerdp_image_yuv_to_xrgb_asm
+freerdp_image_yuv_to_xrgb_asm:
+	push rbp
+	mov rbp, rsp
+			;cWidth: cx
+	sub rsp,56	;pDstData,pSrcData[3],nWidth,nHeight,cHeight
+	push rbx
+	
+	
+	mov [rbp-8],rdi
+	
+	mov rax,[rsi]
+	mov [rbp-16],rax
+	mov rax,[rsi+8]
+	mov [rbp-24],rax
+	mov rax,[rsi+16]
+	mov [rbp-32],rax
+	
+	mov [rbp-40],rdx
+	
+	
+	shr rcx,1	;/2
+	mov [rbp-48],rcx
+	
+	
+	mov rax,[rbp-48]
+	mov [rbp-56],rax
+	
+freerdp_image_yuv_to_xrgb_asm_loopH:
+	mov rcx,[rbp-40]
+	shr rcx,1
+	
+	
+freerdp_image_yuv_to_xrgb_asm_loopW:
+	mov rax,[rbp-16]
+	mov edi,[rax]
+	
+	mov rax,[rbp-24]
+	mov esi,[rax]
+	inc rax
+	mov [rbp-24],rax
+	
+	mov rax,[rbp-32]
+	mov edx,[rax]
+	inc rax
+	mov [rbp-32],rax
+	
+	call YUV_to_RGB_asm
+	
+	mov rbx,[rbp-8]
+	mov [rbx],eax
+	
+	
+	mov rax,[rbp-16]
+	mov rbx,[rbp-40]
+	mov edi,[rax+rbx]
+	inc rax
+	mov [rbp-16],rax
+	
+	call YUV_to_RGB_2asm
+	
+	mov rbx,[rbp-8]
+	mov rdx,[rbp-40]
+	mov [rbx+rdx],eax
+	add rbx,4
+	mov [rbp-8],rbx
+	
+	
+	mov rax,[rbp-16]
+	mov edi,[rax]
+	
+	call YUV_to_RGB_2asm
+	
+	mov rbx,[rbp-8]
+	mov [rbx],eax
+	
+	
+	mov rax,[rbp-16]
+	mov rbx,[rbp-40]
+	mov edi,[rax+rbx]
+	inc rax
+	mov [rbp-16],rax
+	
+	call YUV_to_RGB_2asm
+
+	mov rbx,[rbp-8]
+	mov rdx,[rbp-40]
+	mov [rbx+rdx],eax
+	add rbx,4
+	mov [rbp-8],rbx
+
+	dec cx
+	jne freerdp_image_yuv_to_xrgb_asm_loopW
+	
+	
+	mov rax,[rbp-8]
+	add rax,[rbp-40]
+	mov [rbp-8],rax
+	
+	mov rax,[rbp-16]
+	add rax,[rbp-40]
+	mov [rbp-16],rax
+	
+	dec qword [rbp-56]
+	jne freerdp_image_yuv_to_xrgb_asm_loopH
+	
+;END
+	mov rax,0
+END:
+	pop rbx
+	mov rsp,rbp
+	pop rbp
+	ret
