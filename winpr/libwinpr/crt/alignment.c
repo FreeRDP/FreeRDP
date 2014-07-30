@@ -139,7 +139,6 @@ void* _aligned_offset_realloc(void* memblock, size_t size, size_t alignment, siz
 
 void* _aligned_offset_recalloc(void* memblock, size_t num, size_t size, size_t alignment, size_t offset)
 {
-	size_t copySize;
 	void* newMemblock;
 	WINPR_ALIGNED_MEM* pMem;
 	WINPR_ALIGNED_MEM* pNewMem;

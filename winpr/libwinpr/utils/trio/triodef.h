@@ -168,9 +168,9 @@
 
 #if defined(__cplusplus)
 # define PREDEF_STANDARD_CXX
-#endif
-#if __cplusplus - 0 >= 199711L
-# define PREDEF_STANDARD_CXX89
+#	if __cplusplus - 0 >= 199711L
+#	 define PREDEF_STANDARD_CXX89
+#	endif
 #endif
 
 #if defined(TRIO_PLATFORM_UNIX)
