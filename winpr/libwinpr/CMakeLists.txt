@@ -15,48 +15,92 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MODULE_NAME "winpr")
-set(MODULE_PREFIX "WINPR")
-
 if (APPLE)
 	# flat_namespace should be avoided, but is required for -undefined warning. Since WinPR currently has
 	# a lot of undefined symbols in use, use this hack until they're filled out.
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-flat_namespace,-undefined,warning")	
 endif()
 
-if(MONOLITHIC_BUILD)
-	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
+set(WINPR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(WINPR_SRCS "")
+set(WINPR_LIBS "")
+set(WINPR_INCLUDES "")
+set(WINPR_DEFINITIONS "")
 
-set(FILENAME "ModuleOptions.cmake")
-file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
+macro (winpr_module_add)
+    file (RELATIVE_PATH _relPath "${WINPR_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+    foreach (_src ${ARGN})
+        if (_relPath)
+            list (APPEND WINPR_SRCS "${_relPath}/${_src}")
+        else()
+            list (APPEND WINPR_SRCS "${_src}")
+        endif()
+    endforeach()
+    if (_relPath)
+        set (WINPR_SRCS ${WINPR_SRCS} PARENT_SCOPE)
+    endif()
+endmacro()
 
-foreach(FILEPATH ${FILEPATHS})
-	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
-		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" ${MODULE_PREFIX}_SUBMODULE ${FILEPATH})
-		set(${MODULE_PREFIX}_SUBMODULES ${${MODULE_PREFIX}_SUBMODULES} ${${MODULE_PREFIX}_SUBMODULE})
-	endif()
-endforeach(FILEPATH)
+macro (winpr_include_directory_add)
+    file (RELATIVE_PATH _relPath "${WINPR_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+    foreach (_inc ${ARGN})
+				if (IS_ABSOLUTE ${_inc})
+							list (APPEND WINPR_INCLUDES "${_inc}")
+				else()
+					if (_relPath)
+							list (APPEND WINPR_INCLUDES "${_relPath}/${_inc}")
+					else()
+							list (APPEND WINPR_INCLUDES "${_inc}")
+					endif()
+				endif()
+    endforeach()
+    if (_relPath)
+        set (WINPR_INCLUDES ${WINPR_INCLUDES} PARENT_SCOPE)
+    endif()
+endmacro()
 
-foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
-	add_subdirectory(${${MODULE_PREFIX}_SUBMODULE})
+macro (winpr_library_add)
+    foreach (_lib ${ARGN})
+            list (APPEND WINPR_LIBS "${_lib}")
+    endforeach()
+     set (WINPR_LIBS ${WINPR_LIBS} PARENT_SCOPE)
+endmacro()
+
+macro (winpr_definition_add)
+    foreach (_define ${ARGN})
+            list (APPEND WINPR_DEFINITIONS "${_define}")
+    endforeach()
+     set (WINPR_DEFINITIONS ${WINPR_DEFINITIONS} PARENT_SCOPE)
+endmacro()
+
+# Level "1" API as defined for MinCore.lib
+set(WINPR_CORE synch locale library file comm pipe interlocked security 
+	environment crypto registry credentials path io memory input 
+	heap utils error com timezone sysinfo pool handle thread) 
+
+foreach(DIR ${WINPR_CORE})
+	add_subdirectory(${DIR})
 endforeach()
 
-if(MONOLITHIC_BUILD)
+set(WINPR_LEVEL2 winsock sspi winhttp asn1 sspicli crt bcrypt rpc credui 
+	wtsapi dsparse wnd smartcard nt)
 
-	foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
-		set(${MODULE_PREFIX}_OBJECTS ${${MODULE_PREFIX}_OBJECTS} "$<TARGET_OBJECTS:${MODULE_NAME}-${${MODULE_PREFIX}_SUBMODULE}>")
-	endforeach()
+foreach(DIR ${WINPR_LEVEL2})
+	add_subdirectory(${DIR})
+endforeach()
 
-	add_library(${MODULE_NAME} dummy.c ${${MODULE_PREFIX}_OBJECTS})
-
-	set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
-	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
-
-	list(REMOVE_DUPLICATES WINPR_LIBS)
-	target_link_libraries(${MODULE_NAME} ${WINPR_LIBS})
-
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT WinPRTargets)
-	
-	set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/libwinpr")
+set(MODULE_NAME winpr)
+list(REMOVE_DUPLICATES WINPR_DEFINITIONS)
+list(REMOVE_DUPLICATES WINPR_LIBS)
+list(REMOVE_DUPLICATES WINPR_INCLUDES)
+include_directories(${WINPR_INCLUDES})
+add_library(${MODULE_NAME} ${WINPR_SRCS})
+set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
+if (WITH_LIBRARY_VERSIONING)
+ 	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION})
 endif()
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
+add_definitions(${WINPR_DEFINITIONS})
+target_link_libraries(${MODULE_NAME} ${WINPR_LIBS})
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT WinPRTargets)
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/libwinpr")

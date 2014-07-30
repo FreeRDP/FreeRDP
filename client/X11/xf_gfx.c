@@ -69,6 +69,14 @@ int xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* re
 
 	xfc->h264 = h264_context_new(FALSE);
 
+	if (xfc->progressive)
+	{
+		progressive_context_free(xfc->progressive);
+		xfc->progressive = NULL;
+	}
+
+	xfc->progressive = progressive_context_new(TRUE);
+
 	region16_init(&(xfc->invalidRegion));
 
 	xfc->graphicsReset = TRUE;
@@ -498,6 +506,7 @@ int xf_SurfaceCommand_Alpha(xfContext* xfc, RdpgfxClientContext* context, RDPGFX
 int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status = 0;
+	BYTE* DstData = NULL;
 	xfGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 
@@ -505,6 +514,17 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 
 	if (!surface)
 		return -1;
+
+	DstData = surface->data;
+
+	status = progressive_decompress(xfc->progressive, cmd->data, cmd->length, &DstData,
+			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
+
+	if (status < 0)
+	{
+		printf("progressive_decompress failure: %d\n", status);
+		return -1;
+	}
 
 	printf("xf_SurfaceCommand_Progressive: status: %d\n", status);
 

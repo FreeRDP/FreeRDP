@@ -24,6 +24,7 @@ set(${MODULE_PREFIX}_SRCS
 	audio.c
 	planar.c
 	planar.h
+	progressive.c
 	bitmap_decode.c
 	bitmap_encode.c
 	rfx_bitstream.h
@@ -106,26 +107,35 @@ if(WITH_OPENH264)
 	endif()
 endif()
 
+if(WITH_LIBAVCODEC)
+	add_definitions(-DWITH_LIBAVCODEC)
+	find_library(LIBAVCODEC_LIB avcodec)
+	find_library(LIBAVUTIL_LIB avutil)
+	set(FREERDP_LIBAVCODEC_LIBS ${LIBAVCODEC_LIB} ${LIBAVUTIL_LIB})
+endif()
+
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	SOURCES ${${MODULE_PREFIX}_SRCS}
 	EXPORT)
 
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+if (WITH_LIBRARY_VERSIONING)
+  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+endif()
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
 
 set(${MODULE_PREFIX}_LIBS
 	${FREERDP_JPEG_LIBS}
-	${FREERDP_OPENH264_LIBS})
+	${FREERDP_OPENH264_LIBS}
+	${FREERDP_LIBAVCODEC_LIBS})
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
 	MODULE freerdp
 	MODULES freerdp-primitives freerdp-utils)
 	
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-pool winpr-registry winpr-sysinfo winpr-utils)
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

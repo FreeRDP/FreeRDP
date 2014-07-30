@@ -1040,11 +1040,7 @@ void* rdpgfx_get_cache_slot_data(RdpgfxClientContext* context, UINT16 cacheSlot)
 	return pData;
 }
 
-#ifdef STATIC_CHANNELS
-#define DVCPluginEntry		rdpgfx_DVCPluginEntry
-#endif
-
-int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+int rdpgfx_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	int status = 0;
 	RDPGFX_PLUGIN* gfx;
@@ -1101,6 +1097,9 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		gfx->iface.pInterface = (void*) context;
 
 		gfx->zgfx = zgfx_context_new(FALSE);
+
+		if (!gfx->zgfx)
+			return -1;
 
 		status = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpgfx", (IWTSPlugin*) gfx);
 	}

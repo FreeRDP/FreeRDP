@@ -1,5 +1,5 @@
 # Copyright (c) 2010-2011, Ethan Rublee
-# Copyright (c) 2011-2013, Andrey Kamaev
+# Copyright (c) 2011-2014, Andrey Kamaev
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -12,9 +12,9 @@
 #     this list of conditions and the following disclaimer in the documentation
 #     and/or other materials provided with the distribution.
 #
-# 3.  The name of the copyright holders may be used to endorse or promote
-#     products derived from this software without specific prior written
-#     permission.
+# 3.  Neither the name of the copyright holder nor the names of its
+#     contributors may be used to endorse or promote products derived from this
+#     software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -29,7 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # ------------------------------------------------------------------------------
-#  Android CMake toolchain file, for use with the Android NDK r5-r8
+#  Android CMake toolchain file, for use with the Android NDK r5-r9
 #  Requires cmake 2.6.3 or newer (2.8.5 or newer is recommended).
 #  See home page: https://github.com/taka-no-me/android-cmake
 #
@@ -87,8 +87,7 @@
 #        "armeabi-v6 with VFP" - tuned for ARMv6 processors having VFP.
 #        "x86" - matches to the NDK ABI with the same name.
 #            See ${ANDROID_NDK}/docs/CPU-ARCH-ABIS.html for the documentation.
-#        "mips" - matches to the NDK ABI with the same name
-#            (It is not tested on real devices by the authos of this toolchain)
+#        "mips" - matches to the NDK ABI with the same name.
 #            See ${ANDROID_NDK}/docs/CPU-ARCH-ABIS.html for the documentation.
 #
 #    ANDROID_NATIVE_API_LEVEL=android-8 - level of Android API compile for.
@@ -294,6 +293,16 @@
 #     [~] automatically detect if explicit link to crtbegin_*.o is needed
 #   - June 2013
 #     [~] fixed stl include path for standalone toolchain made by NDK >= r8c
+#   - July 2013
+#     [+] updated for NDK r9
+#   - November 2013
+#     [+] updated for NDK r9b
+#   - December 2013
+#     [+] updated for NDK r9c
+#   - January 2014
+#     [~] fix copying of shared STL
+#   - April 2014
+#     [+] updated for NDK r9d
 # ------------------------------------------------------------------------------
 
 cmake_minimum_required( VERSION 2.6.3 )
@@ -326,7 +335,7 @@ endif()
 # rpath makes low sence for Android
 set( CMAKE_SKIP_RPATH TRUE CACHE BOOL "If set, runtime paths are not added when using shared libraries." )
 
-set( ANDROID_SUPPORTED_NDK_VERSIONS ${ANDROID_EXTRA_NDK_VERSIONS} -r9b -r9 -r8e -r8d -r8c -r8b -r8 -r7c -r7b -r7 -r6b -r6 -r5c -r5b -r5 "" )
+set( ANDROID_SUPPORTED_NDK_VERSIONS ${ANDROID_EXTRA_NDK_VERSIONS} -r9d -r9c -r9b -r9 -r8e -r8d -r8c -r8b -r8 -r7c -r7b -r7 -r6b -r6 -r5c -r5b -r5 "" )
 if(NOT DEFINED ANDROID_NDK_SEARCH_PATHS)
  if( CMAKE_HOST_WIN32 )
   file( TO_CMAKE_PATH "$ENV{PROGRAMFILES}" ANDROID_NDK_SEARCH_PATHS )
@@ -470,10 +479,9 @@ if( ANDROID_FORBID_SYGWIN )
  endif()
 endif()
 
-# FIXME: properly detect 64-bit host, currently reported as 32-bit
 
 # detect current host platform
-if( NOT DEFINED ANDROID_NDK_HOST_X64 AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "amd64|x86_64|AMD64")
+if( NOT DEFINED ANDROID_NDK_HOST_X64 AND (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "amd64|x86_64|AMD64" OR CMAKE_HOST_APPLE) )
  set( ANDROID_NDK_HOST_X64 1 CACHE BOOL "Try to use 64-bit compiler toolchain" )
  mark_as_advanced( ANDROID_NDK_HOST_X64 )
 endif()
@@ -494,7 +502,7 @@ else()
 endif()
 
 if( NOT ANDROID_NDK_HOST_X64 )
- #set( ANDROID_NDK_HOST_SYSTEM_NAME ${ANDROID_NDK_HOST_SYSTEM_NAME2} )
+ set( ANDROID_NDK_HOST_SYSTEM_NAME ${ANDROID_NDK_HOST_SYSTEM_NAME2} )
 endif()
 
 # see if we have path to Android NDK
@@ -1139,15 +1147,7 @@ endif()
 # case of shared STL linkage
 if( ANDROID_STL MATCHES "shared" AND DEFINED __libstl )
  string( REPLACE "_static.a" "_shared.so" __libstl "${__libstl}" )
- if( NOT _CMAKE_IN_TRY_COMPILE AND __libstl MATCHES "[.]so$" )
-  get_filename_component( __libstlname "${__libstl}" NAME )
-  execute_process( COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${__libstl}" "${LIBRARY_OUTPUT_PATH}/${__libstlname}" RESULT_VARIABLE __fileCopyProcess )
-  if( NOT __fileCopyProcess EQUAL 0 OR NOT EXISTS "${LIBRARY_OUTPUT_PATH}/${__libstlname}")
-   message( SEND_ERROR "Failed copying of ${__libstl} to the ${LIBRARY_OUTPUT_PATH}/${__libstlname}" )
-  endif()
-  unset( __fileCopyProcess )
-  unset( __libstlname )
- endif()
+ # TODO: check if .so file exists before the renaming
 endif()
 
 
@@ -1512,7 +1512,8 @@ endif()
 
 # global includes and link directories
 include_directories( SYSTEM "${ANDROID_SYSROOT}/usr/include" ${ANDROID_STL_INCLUDE_DIRS} )
-link_directories( "${CMAKE_INSTALL_PREFIX}/libs/${ANDROID_NDK_ABI_NAME}" )
+get_filename_component(__android_install_path "${CMAKE_INSTALL_PREFIX}/libs/${ANDROID_NDK_ABI_NAME}" ABSOLUTE) # avoid CMP0015 policy warning
+link_directories( "${__android_install_path}" )
 
 # detect if need link crtbegin_so.o explicitly
 if( NOT DEFINED ANDROID_EXPLICIT_CRT_LINK )
@@ -1563,6 +1564,18 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
  endif()
  set( LIBRARY_OUTPUT_PATH "${LIBRARY_OUTPUT_PATH_ROOT}/libs/${ANDROID_NDK_ABI_NAME}" CACHE PATH "path for android libs" )
 endif()
+
+# copy shaed stl library to build directory
+if( NOT _CMAKE_IN_TRY_COMPILE AND __libstl MATCHES "[.]so$" )
+ get_filename_component( __libstlname "${__libstl}" NAME )
+ execute_process( COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${__libstl}" "${LIBRARY_OUTPUT_PATH}/${__libstlname}" RESULT_VARIABLE __fileCopyProcess )
+ if( NOT __fileCopyProcess EQUAL 0 OR NOT EXISTS "${LIBRARY_OUTPUT_PATH}/${__libstlname}")
+  message( SEND_ERROR "Failed copying of ${__libstl} to the ${LIBRARY_OUTPUT_PATH}/${__libstlname}" )
+ endif()
+ unset( __fileCopyProcess )
+ unset( __libstlname )
+endif()
+
 
 # set these global flags for cmake client scripts to change behavior
 set( ANDROID True )
@@ -1672,6 +1685,19 @@ if( NOT PROJECT_NAME STREQUAL "CMAKE_TRY_COMPILE" )
 endif()
 
 
+# force cmake to produce / instead of \ in build commands for Ninja generator
+if( CMAKE_GENERATOR MATCHES "Ninja" AND CMAKE_HOST_WIN32 )
+ # it is a bad hack after all
+ # CMake generates Ninja makefiles with UNIX paths only if it thinks that we are going to build with MinGW
+ set( CMAKE_COMPILER_IS_MINGW TRUE ) # tell CMake that we are MinGW
+ set( CMAKE_CROSSCOMPILING TRUE )    # stop recursion
+ enable_language( C )
+ enable_language( CXX )
+ # unset( CMAKE_COMPILER_IS_MINGW ) # can't unset because CMake does not convert back-slashes in response files without it
+ unset( MINGW )
+endif()
+
+
 # set some obsolete variables for backward compatibility
 set( ANDROID_SET_OBSOLETE_VARIABLES ON CACHE BOOL "Define obsolete Andrid-specific cmake variables" )
 mark_as_advanced( ANDROID_SET_OBSOLETE_VARIABLES )
@@ -1726,7 +1752,7 @@ endif()
 #   BUILD_WITH_STANDALONE_TOOLCHAIN : TRUE if standalone toolchain is used
 #   ANDROID_NDK_HOST_SYSTEM_NAME : "windows", "linux-x86" or "darwin-x86" depending on host platform
 #   ANDROID_NDK_ABI_NAME : "armeabi", "armeabi-v7a", "x86" or "mips" depending on ANDROID_ABI
-#   ANDROID_NDK_RELEASE : one of r5, r5b, r5c, r6, r6b, r7, r7b, r7c, r8, r8b, r8c, r8d, r8e; set only for NDK
+#   ANDROID_NDK_RELEASE : one of r5, r5b, r5c, r6, r6b, r7, r7b, r7c, r8, r8b, r8c, r8d, r8e, r9, r9b, r9c, r9d; set only for NDK
 #   ANDROID_ARCH_NAME : "arm" or "x86" or "mips" depending on ANDROID_ABI
 #   ANDROID_SYSROOT : path to the compiler sysroot
 #   TOOL_OS_SUFFIX : "" or ".exe" depending on host platform

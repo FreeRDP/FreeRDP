@@ -23,9 +23,20 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#ifdef WITH_LIBAVCODEC
+#ifdef WITH_OPENH264
+#undef WITH_OPENH264
+#endif
+#endif
+
 #ifdef WITH_OPENH264
 #include "wels/codec_def.h"
 #include "wels/codec_api.h"
+#endif
+
+#ifdef WITH_LIBAVCODEC
+#include <libavcodec/avcodec.h>
+#include <libavutil/avutil.h>
 #endif
 
 struct _H264_CONTEXT
@@ -40,6 +51,13 @@ struct _H264_CONTEXT
 
 #ifdef WITH_OPENH264
 	ISVCDecoder* pDecoder;
+#endif
+
+#ifdef WITH_LIBAVCODEC
+	AVCodec* codec;
+	AVCodecContext* codecContext;
+	AVCodecParserContext* codecParser;
+	AVFrame* videoFrame;
 #endif
 };
 typedef struct _H264_CONTEXT H264_CONTEXT;

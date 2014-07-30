@@ -208,15 +208,16 @@ static const XKB_VARIANT ma_variants[] =
 /* Canada */
 static const XKB_VARIANT ca_variants[] =
 {
+	{ "fr",				KBD_CANADIAN_FRENCH }, /* French Dvorak */
 	{ "fr-dvorak",		KBD_UNITED_STATES_DVORAK }, /* French Dvorak */
-	{ "fr-legacy",		KBD_CANADIAN_FRENCH }, /* French (legacy) */
+	{ "fr-legacy",		KBD_CANADIAN_FRENCH_LEGACY }, /* French (legacy) */
 	{ "multix",		KBD_CANADIAN_MULTILINGUAL_STANDARD }, /* Multilingual */
 	{ "multi",		KBD_CANADIAN_MULTILINGUAL_STANDARD }, /* Multilingual, first part */
 	{ "multi-2gr",		KBD_CANADIAN_MULTILINGUAL_STANDARD }, /* Multilingual, second part */
 	{ "ike",		KBD_INUKTITUT_LATIN }, /* Inuktitut */
 	{ "shs",		0 }, /* Secwepemctsin */
 	{ "kut",		0 }, /* Ktunaxa */
-	{ "eng",		KBD_US }, /* English */
+	{ "eng",		KBD_CANADIAN_ENGLISH }, /* English */
 	{ "",			0 },
 };
 
