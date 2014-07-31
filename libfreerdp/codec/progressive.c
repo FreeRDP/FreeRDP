@@ -72,6 +72,125 @@ const char* progressive_get_block_type_string(UINT16 blockType)
 	return "PROGRESSIVE_WBT_UNKNOWN";
 }
 
+int progressive_decompress_tile_simple(PROGRESSIVE_CONTEXT* progressive, PROGRESSIVE_BLOCK_TILE_SIMPLE* tile)
+{
+	PROGRESSIVE_BLOCK_REGION* region;
+	RFX_COMPONENT_CODEC_QUANT* quantY;
+	RFX_COMPONENT_CODEC_QUANT* quantCb;
+	RFX_COMPONENT_CODEC_QUANT* quantCr;
+	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
+
+	printf("ProgressiveTileSimple: quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d flags: %d yLen: %d cbLen: %d crLen: %d tailLen: %d\n",
+			tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx, tile->flags, tile->yLen, tile->cbLen, tile->crLen, tile->tailLen);
+
+	region = &(progressive->region);
+
+	if (tile->quantIdxY >= region->numQuant)
+		return -1;
+
+	quantY = &(region->quantVals[tile->quantIdxY]);
+
+	if (tile->quantIdxCb >= region->numQuant)
+		return -1;
+
+	quantCb = &(region->quantVals[tile->quantIdxCb]);
+
+	if (tile->quantIdxCr >= region->numQuant)
+		return -1;
+
+	quantCr = &(region->quantVals[tile->quantIdxCr]);
+
+	quantProgVal = &(progressive->quantProgValFull);
+
+	return 1;
+}
+
+int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, PROGRESSIVE_BLOCK_TILE_FIRST* tile)
+{
+	PROGRESSIVE_BLOCK_REGION* region;
+	RFX_COMPONENT_CODEC_QUANT* quantY;
+	RFX_COMPONENT_CODEC_QUANT* quantCb;
+	RFX_COMPONENT_CODEC_QUANT* quantCr;
+	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
+
+	printf("ProgressiveTileFirst: quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d flags: %d quality: %d yLen: %d cbLen: %d crLen: %d tailLen: %d\n",
+			tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx, tile->flags, tile->quality, tile->yLen, tile->cbLen, tile->crLen, tile->tailLen);
+
+	region = &(progressive->region);
+
+	if (tile->quantIdxY >= region->numQuant)
+		return -1;
+
+	quantY = &(region->quantVals[tile->quantIdxY]);
+
+	if (tile->quantIdxCb >= region->numQuant)
+		return -1;
+
+	quantCb = &(region->quantVals[tile->quantIdxCb]);
+
+	if (tile->quantIdxCr >= region->numQuant)
+		return -1;
+
+	quantCr = &(region->quantVals[tile->quantIdxCr]);
+
+	if (tile->quality == 0xFF)
+	{
+		quantProgVal = &(progressive->quantProgValFull);
+	}
+	else
+	{
+		if (tile->quality >= region->numProgQuant)
+			return -1;
+
+		quantProgVal = &(region->quantProgVals[tile->quality]);
+	}
+
+	return 1;
+}
+
+int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, PROGRESSIVE_BLOCK_TILE_UPGRADE* tile)
+{
+	PROGRESSIVE_BLOCK_REGION* region;
+	RFX_COMPONENT_CODEC_QUANT* quantY;
+	RFX_COMPONENT_CODEC_QUANT* quantCb;
+	RFX_COMPONENT_CODEC_QUANT* quantCr;
+	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
+
+	printf("ProgressiveTileUpgrade: quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d quality: %d ySrlLen: %d yRawLen: %d cbSrlLen: %d cbRawLen: %d crSrlLen: %d crRawLen: %d\n",
+			tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx, tile->quality, tile->ySrlLen, tile->yRawLen, tile->cbSrlLen, tile->cbRawLen, tile->crSrlLen, tile->crRawLen);
+
+	region = &(progressive->region);
+
+	if (tile->quantIdxY >= region->numQuant)
+		return -1;
+
+	quantY = &(region->quantVals[tile->quantIdxY]);
+
+	if (tile->quantIdxCb >= region->numQuant)
+		return -1;
+
+	quantCb = &(region->quantVals[tile->quantIdxCb]);
+
+	if (tile->quantIdxCr >= region->numQuant)
+		return -1;
+
+	quantCr = &(region->quantVals[tile->quantIdxCr]);
+
+	if (tile->quality == 0xFF)
+	{
+		quantProgVal = &(progressive->quantProgValFull);
+	}
+	else
+	{
+		if (tile->quality >= region->numProgQuant)
+			return -1;
+
+		quantProgVal = &(region->quantProgVals[tile->quality]);
+	}
+
+	return 1;
+}
+
 int progressive_process_blocks(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UINT32 blocksLen, UINT32 blockCount, UINT32 flags)
 {
 	int status;
@@ -84,7 +203,7 @@ int progressive_process_blocks(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, U
 	UINT32 offset = 0;
 	RFX_RECT* rect = NULL;
 	PROGRESSIVE_BLOCK_SYNC sync;
-	PROGRESSIVE_BLOCK_REGION region;
+	PROGRESSIVE_BLOCK_REGION* region;
 	PROGRESSIVE_BLOCK_CONTEXT context;
 	PROGRESSIVE_BLOCK_FRAME_BEGIN frameBegin;
 	PROGRESSIVE_BLOCK_FRAME_END frameEnd;
@@ -93,6 +212,8 @@ int progressive_process_blocks(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, U
 	PROGRESSIVE_BLOCK_TILE_UPGRADE upgrade;
 	RFX_COMPONENT_CODEC_QUANT* quantVal;
 	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
+
+	region = &(progressive->region);
 
 	while ((blocksLen - offset) >= 6)
 	{
@@ -212,47 +333,47 @@ int progressive_process_blocks(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, U
 
 			case PROGRESSIVE_WBT_REGION:
 
-				region.blockType = blockType;
-				region.blockLen = blockLen;
+				region->blockType = blockType;
+				region->blockLen = blockLen;
 
 				if ((blockLen - boffset) < 12)
 					return -1011;
 
-				region.tileSize = block[boffset + 0]; /* tileSize (1 byte) */
-				region.numRects = *((UINT16*) &block[boffset + 1]); /* numRects (2 bytes) */
-				region.numQuant = block[boffset + 3]; /* numQuant (1 byte) */
-				region.numProgQuant = block[boffset + 4]; /* numProgQuant (1 byte) */
-				region.flags = block[boffset + 5]; /* flags (1 byte) */
-				region.numTiles = *((UINT16*) &block[boffset + 6]); /* numTiles (2 bytes) */
-				region.tileDataSize = *((UINT32*) &block[boffset + 8]); /* tileDataSize (4 bytes) */
+				region->tileSize = block[boffset + 0]; /* tileSize (1 byte) */
+				region->numRects = *((UINT16*) &block[boffset + 1]); /* numRects (2 bytes) */
+				region->numQuant = block[boffset + 3]; /* numQuant (1 byte) */
+				region->numProgQuant = block[boffset + 4]; /* numProgQuant (1 byte) */
+				region->flags = block[boffset + 5]; /* flags (1 byte) */
+				region->numTiles = *((UINT16*) &block[boffset + 6]); /* numTiles (2 bytes) */
+				region->tileDataSize = *((UINT32*) &block[boffset + 8]); /* tileDataSize (4 bytes) */
 				boffset += 12;
 
-				if (region.tileSize != 64)
+				if (region->tileSize != 64)
 					return -1012;
 
-				if (region.numRects < 1)
+				if (region->numRects < 1)
 					return -1013;
 
-				if (region.numQuant > 7)
+				if (region->numQuant > 7)
 					return -1014;
 
-				if ((blockLen - boffset) < (region.numRects * 8))
+				if ((blockLen - boffset) < (region->numRects * 8))
 					return -1015;
 
-				if (region.numRects > progressive->cRects)
+				if (region->numRects > progressive->cRects)
 				{
-					progressive->rects = (RFX_RECT*) realloc(progressive->rects, region.numRects * sizeof(RFX_RECT));
-					progressive->cRects = region.numRects;
+					progressive->rects = (RFX_RECT*) realloc(progressive->rects, region->numRects * sizeof(RFX_RECT));
+					progressive->cRects = region->numRects;
 				}
 
-				region.rects = progressive->rects;
+				region->rects = progressive->rects;
 
-				if (!region.rects)
+				if (!region->rects)
 					return -1016;
 
-				for (index = 0; index < region.numRects; index++)
+				for (index = 0; index < region->numRects; index++)
 				{
-					rect = &(region.rects[index]);
+					rect = &(region->rects[index]);
 					rect->x = *((UINT16*) &block[boffset + 0]);
 					rect->y = *((UINT16*) &block[boffset + 2]);
 					rect->width = *((UINT16*) &block[boffset + 4]);
@@ -260,24 +381,24 @@ int progressive_process_blocks(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, U
 					boffset += 8;
 				}
 
-				if ((blockLen - boffset) < (region.numQuant * 5))
+				if ((blockLen - boffset) < (region->numQuant * 5))
 					return -1017;
 
-				if (region.numQuant > progressive->cQuant)
+				if (region->numQuant > progressive->cQuant)
 				{
 					progressive->quantVals = (RFX_COMPONENT_CODEC_QUANT*) realloc(progressive->quantVals,
-							region.numQuant * sizeof(RFX_COMPONENT_CODEC_QUANT));
-					progressive->cQuant = region.numQuant;
+							region->numQuant * sizeof(RFX_COMPONENT_CODEC_QUANT));
+					progressive->cQuant = region->numQuant;
 				}
 
-				region.quantVals = progressive->quantVals;
+				region->quantVals = progressive->quantVals;
 
-				if (!region.quantVals)
+				if (!region->quantVals)
 					return -1018;
 
-				for (index = 0; index < region.numQuant; index++)
+				for (index = 0; index < region->numQuant; index++)
 				{
-					quantVal = &(region.quantVals[index]);
+					quantVal = &(region->quantVals[index]);
 					quantVal->LL3 = block[boffset + 0] & 0x0F;
 					quantVal->HL3 = block[boffset + 0] >> 4;
 					quantVal->LH3 = block[boffset + 1] & 0x0F;
@@ -291,24 +412,24 @@ int progressive_process_blocks(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, U
 					boffset += 5;
 				}
 
-				if ((blockLen - boffset) < (region.numProgQuant * 16))
+				if ((blockLen - boffset) < (region->numProgQuant * 16))
 					return -1019;
 
-				if (region.numProgQuant > progressive->cProgQuant)
+				if (region->numProgQuant > progressive->cProgQuant)
 				{
 					progressive->quantProgVals = (RFX_PROGRESSIVE_CODEC_QUANT*) realloc(progressive->quantProgVals,
-							region.numProgQuant * sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
-					progressive->cProgQuant = region.numProgQuant;
+							region->numProgQuant * sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
+					progressive->cProgQuant = region->numProgQuant;
 				}
 
-				region.quantProgVals = progressive->quantProgVals;
+				region->quantProgVals = progressive->quantProgVals;
 
-				if (!region.quantProgVals)
+				if (!region->quantProgVals)
 					return -1020;
 
-				for (index = 0; index < region.numProgQuant; index++)
+				for (index = 0; index < region->numProgQuant; index++)
 				{
-					quantProgVal = &(region.quantProgVals[index]);
+					quantProgVal = &(region->quantProgVals[index]);
 					quantProgVal->quality = block[boffset + 0];
 					CopyMemory(quantProgVal->yQuantValues, &block[boffset + 1], 5);
 					CopyMemory(quantProgVal->cbQuantValues, &block[boffset + 6], 5);
@@ -316,14 +437,14 @@ int progressive_process_blocks(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, U
 					boffset += 16;
 				}
 
-				if ((blockLen - boffset) < region.tileDataSize)
+				if ((blockLen - boffset) < region->tileDataSize)
 					return -1021;
 
 				printf("numRects: %d numTiles: %d numQuant: %d numProgQuant: %d\n",
-						region.numRects, region.numTiles, region.numQuant, region.numProgQuant);
+						region->numRects, region->numTiles, region->numQuant, region->numProgQuant);
 
 				status = progressive_process_blocks(progressive, &block[boffset],
-						region.tileDataSize, region.numTiles, PROGRESSIVE_BLOCKS_TILE);
+						region->tileDataSize, region->numTiles, PROGRESSIVE_BLOCKS_TILE);
 
 				if (status < 0)
 					return status;
@@ -376,6 +497,8 @@ int progressive_process_blocks(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, U
 				simple.tailData = &block[boffset];
 				boffset += simple.tailLen;
 
+				status = progressive_decompress_tile_simple(progressive, &simple);
+
 				break;
 
 			case PROGRESSIVE_WBT_TILE_FIRST:
@@ -422,6 +545,11 @@ int progressive_process_blocks(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, U
 
 				first.tailData = &block[boffset];
 				boffset += first.tailLen;
+
+				status = progressive_decompress_tile_first(progressive, &first);
+
+				if (status < 0)
+					return -1;
 
 				break;
 
@@ -482,6 +610,8 @@ int progressive_process_blocks(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, U
 
 				upgrade.crRawData = &block[boffset];
 				boffset += upgrade.crRawLen;
+
+				status = progressive_decompress_tile_upgrade(progressive, &upgrade);
 
 				break;
 
@@ -553,6 +683,9 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 
 		if (!progressive->quantProgVals)
 			return NULL;
+
+		ZeroMemory(&(progressive->quantProgValFull), sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
+		progressive->quantProgValFull.quality = 100;
 
 		progressive_context_reset(progressive);
 	}
