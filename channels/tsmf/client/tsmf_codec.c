@@ -286,6 +286,7 @@ static const TSMFMediaTypeMap tsmf_format_type_map[] =
 
 static void tsmf_print_guid(const char *type, const char *name, const BYTE *guid)
 {
+#if defined(WITH_DEBUG_TSMF)
 	int i;
 	fprintf(stderr, "%s: ", type);
 
@@ -298,6 +299,7 @@ static void tsmf_print_guid(const char *type, const char *name, const BYTE *guid
 		fprintf(stderr, "0x%02X, ", guid[i]);
 
 	fprintf(stderr, "0x%02X}\n", guid[15]);
+#endif
 }
 
 /* http://msdn.microsoft.com/en-us/library/dd318229.aspx */
