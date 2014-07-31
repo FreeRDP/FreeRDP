@@ -208,6 +208,18 @@ static const TSMFMediaTypeMap tsmf_sub_type_map[] =
 	*/
 
 	{
+		{0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71},
+		"MEDIASUBTYPE_FLAC",
+		TSMF_SUB_TYPE_FLAC
+	},
+
+	{
+		{0x61, 0x34, 0x70, 0x6D, 0x7A, 0x76, 0x4D, 0x49, 0xB4, 0x78, 0xF2, 0x9D, 0x25, 0xDC, 0x90, 0x37},
+		"MEDIASUBTYPE_OGG",
+		TSMF_SUB_TYPE_FLAC
+	},
+
+	{
 		{ 0 },
 		"Unknown",
 		TSMF_SUB_TYPE_UNKNOWN
@@ -261,38 +273,18 @@ static const TSMFMediaTypeMap tsmf_format_type_map[] =
 
 static void tsmf_print_guid(const char *type, const char *name, const BYTE *guid)
 {
-#ifdef WITH_DEBUG_TSMF
 	int i;
 	fprintf(stderr, "%s: ", type);
 
 	if (name)
 		fprintf(stderr, "[%s] ", name);
 
-	for (i = 3; i >= 0; i--)
-		fprintf(stderr, "%02X", guid[i]);
+	fprintf(stderr, "{");
 
-	fprintf(stderr, "-");
+	for (i = 0; i < 15; i++)
+		fprintf(stderr, "0x%02X, ", guid[i]);
 
-	for (i = 5; i >= 4; i--)
-		fprintf(stderr, "%02X", guid[i]);
-
-	fprintf(stderr, "-");
-
-	for (i = 7; i >= 6; i--)
-		fprintf(stderr, "%02X", guid[i]);
-
-	fprintf(stderr, "-");
-
-	for (i = 8; i < 16; i++)
-	{
-		fprintf(stderr, "%02X", guid[i]);
-
-		if (i == 9)
-			fprintf(stderr, "-");
-	}
-
-	fprintf(stderr, "\n");
-#endif
+	fprintf(stderr, "0x%02X}\n", guid[15]);
 }
 
 /* http://msdn.microsoft.com/en-us/library/dd318229.aspx */
@@ -381,9 +373,8 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE *mediatype, wStream *s)
 	UINT32 cbFormat;
 	BOOL ret = TRUE;
 	memset(mediatype, 0, sizeof(TS_AM_MEDIA_TYPE));
-	/* MajorType */
-	tsmf_print_guid("MajorType", NULL, Stream_Pointer(s));
 
+	/* MajorType */
 	for (i = 0; tsmf_major_type_map[i].type != TSMF_MAJOR_TYPE_UNKNOWN; i++)
 	{
 		if (memcmp(tsmf_major_type_map[i].guid, Stream_Pointer(s), 16) == 0)
@@ -391,14 +382,14 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE *mediatype, wStream *s)
 	}
 
 	mediatype->MajorType = tsmf_major_type_map[i].type;
+	tsmf_print_guid("MajorType", tsmf_major_type_map[i].name, Stream_Pointer(s));
 
 	if (mediatype->MajorType == TSMF_MAJOR_TYPE_UNKNOWN)
 		ret = FALSE;
 
 	Stream_Seek(s, 16);
-	/* SubType */
-	tsmf_print_guid("SubType", tsmf_major_type_map[i].name, Stream_Pointer(s));
 
+	/* SubType */
 	for (i = 0; tsmf_sub_type_map[i].type != TSMF_SUB_TYPE_UNKNOWN; i++)
 	{
 		if (memcmp(tsmf_sub_type_map[i].guid, Stream_Pointer(s), 16) == 0)
@@ -406,6 +397,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE *mediatype, wStream *s)
 	}
 
 	mediatype->SubType = tsmf_sub_type_map[i].type;
+	tsmf_print_guid("SubType", tsmf_sub_type_map[i].name, Stream_Pointer(s));
 
 	if (mediatype->SubType == TSMF_SUB_TYPE_UNKNOWN)
 		ret = FALSE;
@@ -413,9 +405,8 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE *mediatype, wStream *s)
 	Stream_Seek(s, 16);
 	/* bFixedSizeSamples, bTemporalCompression, SampleSize */
 	Stream_Seek(s, 12);
-	/* FormatType */
-	tsmf_print_guid("FormatType", tsmf_sub_type_map[i].name, Stream_Pointer(s));
 
+	/* FormatType */
 	for (i = 0; tsmf_format_type_map[i].type != TSMF_FORMAT_TYPE_UNKNOWN; i++)
 	{
 		if (memcmp(tsmf_format_type_map[i].guid, Stream_Pointer(s), 16) == 0)
@@ -423,6 +414,7 @@ BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE *mediatype, wStream *s)
 	}
 
 	mediatype->FormatType = tsmf_format_type_map[i].type;
+	tsmf_print_guid("FormatType", tsmf_format_type_map[i].name, Stream_Pointer(s));
 
 	if (mediatype->FormatType == TSMF_FORMAT_TYPE_UNKNOWN)
 		ret = FALSE;
