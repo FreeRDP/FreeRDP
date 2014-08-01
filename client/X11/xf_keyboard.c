@@ -191,6 +191,13 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BYTE keycode)
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 	{
+		//recognize a power button push, exit immediately returning 124 (keycode valule for power button)
+		if (keycode == 0x7c )
+        	{
+		fprintf(stderr,"Power Button\n");
+		exit(124);
+		}
+
 		fprintf(stderr, "Unknown key with X keycode 0x%02x\n", keycode);
 	}
 	else if (rdp_scancode == RDP_SCANCODE_PAUSE &&
