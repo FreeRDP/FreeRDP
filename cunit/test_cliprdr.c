@@ -31,13 +31,11 @@
 
 int init_cliprdr_suite(void)
 {
-	freerdp_channels_global_init();
 	return 0;
 }
 
 int clean_cliprdr_suite(void)
 {
-	freerdp_channels_global_uninit();
 	return 0;
 }
 

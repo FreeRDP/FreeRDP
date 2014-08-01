@@ -52,13 +52,13 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 			fprintf(stderr, "%s: inavlid RDP key file %s\n", __FUNCTION__, settings->RdpKeyFile);
 			return FALSE;
 		}
+
 		if (settings->RdpServerRsaKey->ModulusLength > 256)
 		{
 			fprintf(stderr, "%s: Key sizes > 2048 are currently not supported for RDP security.\n", __FUNCTION__);
 			fprintf(stderr, "%s: Set a different key file than %s\n", __FUNCTION__, settings->RdpKeyFile);
 			exit(1);
 		}
-
 	}
 
 	return TRUE;
@@ -77,12 +77,13 @@ static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 	return client->context->rdp->transport->TcpIn->event;
 }
 
-static BOOL freerdp_peer_check_fds(freerdp_peer* client)
+
+static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
 {
 	int status;
 	rdpRdp* rdp;
 
-	rdp = client->context->rdp;
+	rdp = peer->context->rdp;
 
 	status = rdp_check_fds(rdp);
 
@@ -413,14 +414,28 @@ static int freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId
 	return rdp_send_channel_data(client->context->rdp, channelId, data, size);
 }
 
+static BOOL freerdp_peer_is_write_blocked(freerdp_peer* peer)
+{
+	return tranport_is_write_blocked(peer->context->rdp->transport);
+}
+
+static int freerdp_peer_drain_output_buffer(freerdp_peer* peer)
+{
+
+	rdpTransport *transport = peer->context->rdp->transport;
+
+	return tranport_drain_output_buffer(transport);
+}
+
 void freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
 
-	client->context = (rdpContext*) malloc(client->ContextSize);
-	ZeroMemory(client->context, client->ContextSize);
+	client->context = (rdpContext *)calloc(1, client->ContextSize);
 
 	client->context->ServerMode = TRUE;
+
+	client->context->metrics = metrics_new(client->context);
 
 	rdp = rdp_new(client->context);
 
@@ -445,20 +460,24 @@ void freerdp_peer_context_new(freerdp_peer* client)
 	rdp->transport->ReceiveExtra = client;
 	transport_set_blocking_mode(rdp->transport, FALSE);
 
+	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
+	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
+
 	IFCALL(client->ContextNew, client, client->context);
 }
 
 void freerdp_peer_context_free(freerdp_peer* client)
 {
 	IFCALL(client->ContextFree, client, client->context);
+
+	metrics_free(client->context->metrics);
 }
 
 freerdp_peer* freerdp_peer_new(int sockfd)
 {
 	freerdp_peer* client;
 
-	client = (freerdp_peer*) malloc(sizeof(freerdp_peer));
-	ZeroMemory(client, sizeof(freerdp_peer));
+	client = (freerdp_peer*) calloc(1, sizeof(freerdp_peer));
 
 	freerdp_tcp_set_no_delay(sockfd, TRUE);
 
@@ -473,6 +492,8 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		client->Close = freerdp_peer_close;
 		client->Disconnect = freerdp_peer_disconnect;
 		client->SendChannelData = freerdp_peer_send_channel_data;
+		client->IsWriteBlocked = freerdp_peer_is_write_blocked;
+		client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
 	}
 
 	return client;
@@ -480,10 +501,10 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 
 void freerdp_peer_free(freerdp_peer* client)
 {
-	if (client)
-	{
-		rdp_free(client->context->rdp);
-		free(client->context);
-		free(client);
-	}
+	if (!client)
+		return;
+
+	rdp_free(client->context->rdp);
+	free(client->context);
+	free(client);
 }

@@ -21,10 +21,13 @@ set(MODULE_PREFIX "FREERDP_CLIENT_X11_CONTROL")
 
 include(FindDocBookXSL)
 include_directories(${X11_INCLUDE_DIRS})
+include_directories(${OPENSSL_INCLUDE_DIR})
 
 set(${MODULE_PREFIX}_SRCS
 	xf_gdi.c
 	xf_gdi.h
+	xf_gfx.c
+	xf_gfx.h
 	xf_rail.c
 	xf_rail.h
 	xf_tsmf.c

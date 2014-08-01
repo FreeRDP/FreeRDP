@@ -55,7 +55,7 @@ CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpChannels* 
 /* returns rdpChannel for the channel name passed in */
 rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const char* name)
 {
-	int index;
+	UINT32 index;
 	rdpMcsChannel* channel;
 	rdpMcs* mcs = rdp->mcs;
 
@@ -72,27 +72,14 @@ rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const char* na
 	return NULL;
 }
 
-/**
- * this is called shortly after the application starts and
- * before any other function in the file
- * called only from main thread
- */
-int freerdp_channels_global_init(void)
-{
-	return 0;
-}
-
-int freerdp_channels_global_uninit(void)
-{
-	return 0;
-}
-
 rdpChannels* freerdp_channels_new(void)
 {
 	rdpChannels* channels;
 
-	channels = (rdpChannels*) malloc(sizeof(rdpChannels));
-	ZeroMemory(channels, sizeof(rdpChannels));
+	channels = (rdpChannels*) calloc(1, sizeof(rdpChannels));
+
+	if (!channels)
+		return NULL;
 
 	channels->MsgPipe = MessagePipe_New();
 
@@ -221,7 +208,7 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 
 int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data, int dataSize, int flags, int totalSize)
 {
-	int index;
+	UINT32 index;
 	rdpMcs* mcs;
 	rdpChannels* channels;
 	rdpMcsChannel* channel = NULL;
@@ -280,10 +267,6 @@ FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, wMessage* eve
 
 	switch (GetMessageClass(event->id))
 	{
-		case DebugChannel_Class:
-			name = "rdpdbg";
-			break;
-
 		case CliprdrChannel_Class:
 			name = "cliprdr";
 			break;

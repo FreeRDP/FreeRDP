@@ -48,7 +48,10 @@ set(${MODULE_PREFIX}_SRCS
 	nsc_encode.h
 	nsc_types.h
 	ncrush.c
+	xcrush.c
 	mppc.c
+	zgfx.c
+	clear.c
 	jpeg.c)
 
 set(${MODULE_PREFIX}_SSE2_SRCS
@@ -79,12 +82,14 @@ if(WITH_NEON)
 endif()
 
 if(WITH_JPEG)
-	set(FREERDP_JPEG_LIBS jpeg)
+    include_directories(${JPEG_INCLUDE_DIR})
+    set(FREERDP_JPEG_LIBS ${JPEG_LIBRARIES})
 endif()
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS})
+	SOURCES ${${MODULE_PREFIX}_SRCS}
+	EXPORT)
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
 

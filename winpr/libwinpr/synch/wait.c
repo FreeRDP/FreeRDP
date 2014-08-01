@@ -124,7 +124,12 @@ static int pthread_timedjoin_np(pthread_t td, void **res,
 	return ETIMEDOUT;
 }
 
-static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
+#if defined(__FreeBSD__)
+	/*the only way to get it work is to remove the static*/
+	int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
+#else
+	static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
+#endif
 {
 	struct timespec timenow;
 	struct timespec sleepytime;
@@ -453,7 +458,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 	}
 	else
 	{
-		fprintf(stderr, "WaitForSingleObject: unknown handle type %lu\n", Type);
+		fprintf(stderr, "WaitForSingleObject: unknown handle type %d\n", (int) Type);
 	}
 
 	return WAIT_OBJECT_0;
@@ -545,7 +550,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAl
 		}
 		else
 		{
-			fprintf(stderr, "WaitForMultipleObjects: unknown handle type %lu\n", Type);
+			fprintf(stderr, "WaitForMultipleObjects: unknown handle type %d\n", (int) Type);
 			return WAIT_FAILED;
 		}
 

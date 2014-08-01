@@ -23,24 +23,92 @@
 
 #include <winpr/timezone.h>
 
-/**
- * api-ms-win-core-timezone-l1-1-0.dll:
- * 
- * EnumDynamicTimeZoneInformation
- * FileTimeToSystemTime
- * GetDynamicTimeZoneInformation
- * GetDynamicTimeZoneInformationEffectiveYears
- * GetTimeZoneInformation
- * GetTimeZoneInformationForYear
- * SetDynamicTimeZoneInformation
- * SetTimeZoneInformation
- * SystemTimeToFileTime
- * SystemTimeToTzSpecificLocalTime
- * TzSpecificLocalTimeToSystemTime
- */
-
 #ifndef _WIN32
 
+DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
+{
+	return 0;
+}
 
+BOOL SetTimeZoneInformation(const TIME_ZONE_INFORMATION* lpTimeZoneInformation)
+{
+	return FALSE;
+}
+
+BOOL SystemTimeToFileTime(const SYSTEMTIME* lpSystemTime, LPFILETIME lpFileTime)
+{
+	return FALSE;
+}
+
+BOOL FileTimeToSystemTime(const FILETIME *lpFileTime, LPSYSTEMTIME lpSystemTime)
+{
+	return FALSE;
+}
+
+BOOL SystemTimeToTzSpecificLocalTime(LPTIME_ZONE_INFORMATION lpTimeZone,
+		LPSYSTEMTIME lpUniversalTime, LPSYSTEMTIME lpLocalTime)
+{
+	return FALSE;
+}
+
+BOOL TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
+		LPSYSTEMTIME lpLocalTime, LPSYSTEMTIME lpUniversalTime)
+{
+	return FALSE;
+}
+
+#endif
+
+/*
+ * GetDynamicTimeZoneInformation is provided by the SDK if _WIN32_WINNT >= 0x0600 in SDKs above 7.1A
+ * and incorrectly if _WIN32_WINNT >= 0x0501 in older SDKs
+ */
+#if !defined(_WIN32) || (defined(_WIN32) && (defined(NTDDI_WIN8) && _WIN32_WINNT < 0x0600 || !defined(NTDDI_WIN8) && _WIN32_WINNT < 0x0501)) /* Windows Vista */
+
+DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInformation)
+{
+	return 0;
+}
+
+BOOL SetDynamicTimeZoneInformation(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation)
+{
+	return FALSE;
+}
+
+BOOL GetTimeZoneInformationForYear(USHORT wYear, PDYNAMIC_TIME_ZONE_INFORMATION pdtzi, LPTIME_ZONE_INFORMATION ptzi)
+{
+	return FALSE;
+}
+
+#endif
+
+#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0601)) /* Windows 7 */
+
+BOOL SystemTimeToTzSpecificLocalTimeEx(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation,
+		const SYSTEMTIME* lpUniversalTime, LPSYSTEMTIME lpLocalTime)
+{
+	return FALSE;
+}
+
+BOOL TzSpecificLocalTimeToSystemTimeEx(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation,
+		const SYSTEMTIME* lpLocalTime, LPSYSTEMTIME lpUniversalTime)
+{
+	return FALSE;
+}
+
+#endif
+
+#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602)) /* Windows 8 */
+
+DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex, PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation)
+{
+	return 0;
+}
+
+DWORD GetDynamicTimeZoneInformationEffectiveYears(const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation,
+		LPDWORD FirstYear, LPDWORD LastYear)
+{
+	return 0;
+}
 
 #endif

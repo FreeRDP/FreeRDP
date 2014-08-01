@@ -52,8 +52,6 @@ set(${MODULE_PREFIX}_SRCS
 	bulk.h
 	activation.c
 	activation.h
-	extension.c
-	extension.h
 	gcc.c
 	gcc.h
 	mcs.c
@@ -81,6 +79,7 @@ set(${MODULE_PREFIX}_SRCS
 	client.h
 	server.c
 	server.h
+	metrics.c
 	capabilities.c
 	capabilities.h
 	certificate.c
@@ -128,7 +127,8 @@ set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SR
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS})
+	SOURCES ${${MODULE_PREFIX}_SRCS}
+	EXPORT)
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
 
@@ -148,7 +148,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-registry winpr-utils winpr-interlocked winpr-dsparse winpr-sspi winpr-rpc winpr-wtsapi winpr-handle winpr-crt)
+	MODULES winpr-registry winpr-utils winpr-interlocked winpr-dsparse winpr-sspi winpr-rpc winpr-wtsapi winpr-handle winpr-winsock winpr-crt)
 
 if(MONOLITHIC_BUILD)
 	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)

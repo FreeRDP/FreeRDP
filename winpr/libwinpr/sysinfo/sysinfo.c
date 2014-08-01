@@ -35,41 +35,19 @@
  * api-ms-win-core-sysinfo-l1-1-1.dll:
  *
  * EnumSystemFirmwareTables
- * GetComputerNameExA
- * GetComputerNameExW
- * GetDynamicTimeZoneInformation
- * GetLocalTime
+ * GetSystemFirmwareTable
  * GetLogicalProcessorInformation
  * GetLogicalProcessorInformationEx
- * GetSystemInfo
- * GetNativeSystemInfo
  * GetProductInfo
  * GetSystemDirectoryA
  * GetSystemDirectoryW
- * GetSystemFirmwareTable
- * GetSystemTime
  * GetSystemTimeAdjustment
- * GetSystemTimeAsFileTime
  * GetSystemWindowsDirectoryA
  * GetSystemWindowsDirectoryW
- * GetTickCount
- * GetTickCount64
- * GetTimeZoneInformation
- * GetTimeZoneInformationForYear
- * GetVersion
- * GetVersionExA
- * GetVersionExW
  * GetWindowsDirectoryA
  * GetWindowsDirectoryW
  * GlobalMemoryStatusEx
  * SetComputerNameExW
- * SetDynamicTimeZoneInformation
- * SetLocalTime
- * SetSystemTime
- * SetTimeZoneInformation
- * SystemTimeToFileTime
- * SystemTimeToTzSpecificLocalTime
- * TzSpecificLocalTimeToSystemTime
  * VerSetConditionMask
  */
 
@@ -129,7 +107,11 @@ static DWORD GetNumberOfProcessors()
 		size_t length = sizeof(numCPUs);
 
 		mib[0] = CTL_HW;
-		mib[1] = HW_AVAILCPU;
+		#if defined(__FreeBSD__)
+			mib[1] = HW_NCPU;
+		#else
+			mib[1] = HW_AVAILCPU;
+		#endif
 
 		sysctl(mib, 2, &numCPUs, &length, NULL, 0);
 
@@ -292,6 +274,68 @@ BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 	return 1;
 }
 
+void GetSystemTime(LPSYSTEMTIME lpSystemTime)
+{
+	time_t ct = 0;
+	struct tm* stm = NULL;
+	WORD wMilliseconds = 0;
+
+	ct = time(NULL);
+	wMilliseconds = (WORD) (GetTickCount() % 1000);
+
+	stm = gmtime(&ct);
+
+	ZeroMemory(lpSystemTime, sizeof(SYSTEMTIME));
+
+	if (stm)
+	{
+		lpSystemTime->wYear = (WORD) (stm->tm_year + 1900);
+		lpSystemTime->wMonth = (WORD) (stm->tm_mon + 1);
+		lpSystemTime->wDayOfWeek = (WORD) stm->tm_wday;
+		lpSystemTime->wDay = (WORD) stm->tm_mday;
+		lpSystemTime->wHour = (WORD) stm->tm_hour;
+		lpSystemTime->wMinute = (WORD) stm->tm_min;
+		lpSystemTime->wSecond = (WORD) stm->tm_sec;
+		lpSystemTime->wMilliseconds = wMilliseconds;
+	}
+}
+
+BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime)
+{
+	return FALSE;
+}
+
+VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
+{
+	time_t ct = 0;
+	struct tm* ltm = NULL;
+	WORD wMilliseconds = 0;
+
+	ct = time(NULL);
+	wMilliseconds = (WORD) (GetTickCount() % 1000);
+
+	ltm = localtime(&ct);
+
+	ZeroMemory(lpSystemTime, sizeof(SYSTEMTIME));
+
+	if (ltm)
+	{
+		lpSystemTime->wYear = (WORD) (ltm->tm_year + 1900);
+		lpSystemTime->wMonth = (WORD) (ltm->tm_mon + 1);
+		lpSystemTime->wDayOfWeek = (WORD) ltm->tm_wday;
+		lpSystemTime->wDay = (WORD) ltm->tm_mday;
+		lpSystemTime->wHour = (WORD) ltm->tm_hour;
+		lpSystemTime->wMinute = (WORD) ltm->tm_min;
+		lpSystemTime->wSecond = (WORD) ltm->tm_sec;
+		lpSystemTime->wMilliseconds = wMilliseconds;
+	}
+}
+
+BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime)
+{
+	return FALSE;
+}
+
 VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 {
 	ULARGE_INTEGER time64;
@@ -305,6 +349,11 @@ VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 
 	lpSystemTimeAsFileTime->dwLowDateTime = time64.LowPart;
 	lpSystemTimeAsFileTime->dwHighDateTime = time64.HighPart;
+}
+
+BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement, PBOOL lpTimeAdjustmentDisabled)
+{
+	return FALSE;
 }
 
 #ifndef CLOCK_MONOTONIC_RAW
@@ -602,6 +651,7 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 #endif
 	return ret;
 }
+
 #endif //_WIN32
 
 BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)

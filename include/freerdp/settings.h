@@ -597,6 +597,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_RestrictedAdminModeRequired			1097
 #define FreeRDP_AuthenticationServiceClass 			1098
 #define FreeRDP_DisableCredentialsDelegation 			1099
+#define FreeRDP_AuthenticationLevel				1100
 #define FreeRDP_MstscCookieMode					1152
 #define FreeRDP_CookieMaxLength					1153
 #define FreeRDP_PreconnectionId					1154
@@ -798,7 +799,8 @@ struct rdp_settings
 	ALIGN64 char* Password; /* 22 */
 	ALIGN64 char* Domain; /* 23 */
 	ALIGN64 char* PasswordHash; /* 24 */
-	UINT64 padding0064[64 - 25]; /* 25 */
+	ALIGN64 BOOL WaitForOutputBufferFlush; /* 25 */
+	UINT64 padding0064[64 - 26]; /* 26 */
 	UINT64 padding0128[128 - 64]; /* 64 */
 
 	/**
@@ -952,7 +954,8 @@ struct rdp_settings
 	ALIGN64 BOOL RestrictedAdminModeRequired; /* 1097 */
 	ALIGN64 char* AuthenticationServiceClass; /* 1098 */
 	ALIGN64 BOOL DisableCredentialsDelegation; /* 1099 */
-	UINT64 padding1152[1152 - 1100]; /* 1100 */
+	ALIGN64 BOOL AuthenticationLevel; /* 1100 */
+	UINT64 padding1152[1152 - 1101]; /* 1101 */
 
 	/* Connection Cookie */
 	ALIGN64 BOOL MstscCookieMode; /* 1152 */
@@ -960,7 +963,7 @@ struct rdp_settings
 	ALIGN64 UINT32 PreconnectionId; /* 1154 */
 	ALIGN64 char* PreconnectionBlob; /* 1155 */
 	ALIGN64 BOOL SendPreconnectionPdu; /* 1156 */
-	UINT64 padding1216[1216 - 1057]; /* 1157 */
+	UINT64 padding1216[1216 - 1157]; /* 1157 */
 
 	/* Server Redirection */
 	ALIGN64 UINT32 RedirectionFlags; /* 1216 */
@@ -1029,7 +1032,7 @@ struct rdp_settings
 	ALIGN64 int XPan; /* 1552 */
 	ALIGN64 int YPan; /* 1553 */
 	ALIGN64 double ScalingFactor; /* 1554 */
-	UINT64 padding1600[1600 - 1555]; /* 1555 */
+	UINT64 padding1601[1601 - 1555]; /* 1555 */
 
 	/* Miscellaneous */
 	ALIGN64 BOOL SoftwareGdi; /* 1601 */
@@ -1040,7 +1043,7 @@ struct rdp_settings
 
 	/* Names */
 	ALIGN64 char* ComputerName; /* 1664 */
-	UINT64 padding1728[1728 - 1605]; /* 1665 */
+	UINT64 padding1728[1728 - 1665]; /* 1665 */
 
 	/* Files */
 	ALIGN64 char* ConnectionFile; /* 1728 */
@@ -1097,7 +1100,7 @@ struct rdp_settings
 	ALIGN64 UINT32 RemoteAppNumIconCacheEntries; /* 2123 */
 	ALIGN64 BOOL RemoteAppLanguageBarSupported; /* 2124 */
 	UINT64 padding2176[2176 - 2125]; /* 2125 */
-	UINT64 padding2240[2240 - 2124]; /* 2176 */
+	UINT64 padding2240[2240 - 2176]; /* 2176 */
 
 	/**
 	 * Mandatory Capabilities
@@ -1131,7 +1134,7 @@ struct rdp_settings
 	ALIGN64 BYTE* OrderSupport; /* 2432 */
 	ALIGN64 BOOL BitmapCacheV3Enabled; /* 2433 */
 	ALIGN64 BOOL AltSecFrameMarkerSupport; /* 2434 */
-	UINT64 padding2496[2496 - 2435]; /* 2435 */
+	UINT64 padding2497[2497 - 2435]; /* 2435 */
 
 	/* Bitmap Cache Capabilities */
 	ALIGN64 BOOL BitmapCacheEnabled; /* 2497 */
@@ -1199,7 +1202,7 @@ struct rdp_settings
 	UINT64 padding3264[3264 - 3200]; /* 3200 */
 
 	/* Font Capabilities */
-	UINT64 padding3328[3328 - 3200]; /* 3264 */
+	UINT64 padding3328[3328 - 3264]; /* 3264 */
 
 	/* Multifragment Update Capabilities */
 	ALIGN64 UINT32 MultifragMaxRequestSize; /* 3328 */
@@ -1244,7 +1247,7 @@ struct rdp_settings
 	ALIGN64 UINT32 JpegCodecId; /* 3777 */
 	ALIGN64 UINT32 JpegQuality; /* 3778 */
 	UINT64 padding3840[3840 - 3779]; /* 3779 */
-	UINT64 padding3904[3904 - 3779]; /* 3840 */
+	UINT64 padding3904[3904 - 3840]; /* 3840 */
 
 	/**
 	 * Caches
@@ -1377,6 +1380,9 @@ FREERDP_API void freerdp_target_net_addresses_free(rdpSettings* settings);
 
 FREERDP_API void freerdp_performance_flags_make(rdpSettings* settings);
 FREERDP_API void freerdp_performance_flags_split(rdpSettings* settings);
+
+FREERDP_API void freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsageMethod);
+FREERDP_API void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEnabled, UINT32 GatewayBypassLocal);
 
 FREERDP_API BOOL freerdp_get_param_bool(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param);

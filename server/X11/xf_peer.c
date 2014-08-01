@@ -49,7 +49,7 @@
 #include "xf_update.h"
 #include "xf_monitors.h"
 
-#include "makecert.h"
+#include <winpr/tools/makecert.h>
 
 #include "xf_peer.h"
 
@@ -540,6 +540,10 @@ static void* xf_peer_main_loop(void* arg)
 
 	settings->RemoteFxCodec = TRUE;
 	settings->ColorDepth = 32;
+
+	settings->NlaSecurity = FALSE;
+	settings->TlsSecurity = TRUE;
+	settings->RdpSecurity = FALSE;
 
 	client->Capabilities = xf_peer_capabilities;
 	client->PostConnect = xf_peer_post_connect;

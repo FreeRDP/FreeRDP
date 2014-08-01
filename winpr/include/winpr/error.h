@@ -29,10 +29,6 @@
 
 #else
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef NO_ERROR
 #define NO_ERROR    0
 #endif
@@ -3002,6 +2998,10 @@ typedef LONG (*PTOP_LEVEL_EXCEPTION_FILTER)(PEXCEPTION_POINTERS ExceptionInfo);
 typedef PTOP_LEVEL_EXCEPTION_FILTER LPTOP_LEVEL_EXCEPTION_FILTER;
 
 typedef LONG (*PVECTORED_EXCEPTION_HANDLER)(PEXCEPTION_POINTERS ExceptionInfo);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 WINPR_API UINT GetErrorMode(void);
 

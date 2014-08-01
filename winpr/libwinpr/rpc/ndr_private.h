@@ -24,8 +24,8 @@
 
 #ifndef _WIN32
 
-void NdrpAlignLength(unsigned long* length, unsigned int alignment);
-void NdrpIncrementLength(unsigned long* length, unsigned int size);
+void NdrpAlignLength(ULONG* length, unsigned int alignment);
+void NdrpIncrementLength(ULONG* length, unsigned int size);
 
 extern const NDR_TYPE_SIZE_ROUTINE pfnSizeRoutines[];
 extern const NDR_TYPE_MARSHALL_ROUTINE pfnMarshallRoutines[];

@@ -29,7 +29,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #include <AudioToolbox/AudioToolbox.h>
 #include <AudioToolbox/AudioQueue.h>
@@ -282,23 +281,21 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 {
 	rdpsndMacPlugin* mac;
     
-	mac = (rdpsndMacPlugin*) malloc(sizeof(rdpsndMacPlugin));
+	mac = (rdpsndMacPlugin*) calloc(1, sizeof(rdpsndMacPlugin));
 	
-	if (mac)
-	{
-		ZeroMemory(mac, sizeof(rdpsndMacPlugin));
+	if (!mac)
+		return -1;
 	
-		mac->device.Open = rdpsnd_mac_open;
-		mac->device.FormatSupported = rdpsnd_mac_format_supported;
-		mac->device.SetFormat = rdpsnd_mac_set_format;
-		mac->device.SetVolume = rdpsnd_mac_set_volume;
-		mac->device.Play = rdpsnd_mac_play;
-		mac->device.Start = rdpsnd_mac_start;
-		mac->device.Close = rdpsnd_mac_close;
-		mac->device.Free = rdpsnd_mac_free;
+	mac->device.Open = rdpsnd_mac_open;
+	mac->device.FormatSupported = rdpsnd_mac_format_supported;
+	mac->device.SetFormat = rdpsnd_mac_set_format;
+	mac->device.SetVolume = rdpsnd_mac_set_volume;
+	mac->device.Play = rdpsnd_mac_play;
+	mac->device.Start = rdpsnd_mac_start;
+	mac->device.Close = rdpsnd_mac_close;
+	mac->device.Free = rdpsnd_mac_free;
 
-		pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) mac);
-	}
+	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) mac);
 
 	return 0;
 }

@@ -31,6 +31,7 @@ typedef struct rdp_tsg rdpTsg;
 #include <winpr/rpc.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/synch.h>
 #include <winpr/error.h>
 
 #include <time.h>

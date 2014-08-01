@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -160,8 +159,11 @@ static void* rdpei_schedule_thread(void* arg)
 	RdpeiClientContext* context = (RdpeiClientContext*) rdpei->iface.pInterface;
 	HANDLE hdl[] = {rdpei->event, rdpei->stopEvent};
 
-	assert(NULL != rdpei);
-	assert(NULL != context);
+	if (!rdpei)
+		return NULL;
+
+	if (!context)
+		return NULL;
 
 	while (1)
 	{
@@ -432,17 +434,12 @@ int rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 	return 0;
 }
 
-static int rdpei_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* pBuffer)
+static int rdpei_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
-	wStream* s;
 	int status = 0;
 	RDPEI_CHANNEL_CALLBACK* callback = (RDPEI_CHANNEL_CALLBACK*) pChannelCallback;
 
-	s = Stream_New(pBuffer, cbSize);
-
-	status = rdpei_recv_pdu(callback, s);
-
-	Stream_Free(s, FALSE);
+	status = rdpei_recv_pdu(callback, data);
 
 	return status;
 }
@@ -516,7 +513,8 @@ static int rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 
 	DEBUG_DVC("");
 
-	assert(NULL != pPlugin);
+	if (!pPlugin)
+		return -1;
 
 	SetEvent(rdpei->stopEvent);
 	EnterCriticalSection(&rdpei->lock);

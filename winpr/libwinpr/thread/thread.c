@@ -68,6 +68,14 @@
 #ifndef _WIN32
 
 #include <winpr/crt.h>
+#include <winpr/platform.h>
+
+#if defined(__linux__) && !defined(__ANDROID__)
+#define _GNU_SOURCE
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#endif
 
 #include "thread.h"
 
@@ -100,8 +108,10 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	HANDLE handle;
 	WINPR_THREAD* thread;
 
-	thread = (WINPR_THREAD*) malloc(sizeof(WINPR_THREAD));
-	ZeroMemory(thread, sizeof(WINPR_THREAD));
+	thread = (WINPR_THREAD*) calloc(1, sizeof(WINPR_THREAD));
+
+	if (!thread)
+		return NULL;
 
 	thread->started = FALSE;
 	thread->dwStackSize = dwStackSize;
@@ -154,9 +164,15 @@ HANDLE _GetCurrentThread(VOID)
 
 DWORD GetCurrentThreadId(VOID)
 {
+#if defined(__linux__) && !defined(__ANDROID__)
+	pid_t tid;
+	tid = syscall(SYS_gettid);
+	return (DWORD) tid;
+#else
 	pthread_t tid;
 	tid = pthread_self();
 	return (DWORD) tid;
+#endif
 }
 
 DWORD ResumeThread(HANDLE hThread)

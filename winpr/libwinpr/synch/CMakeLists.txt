@@ -35,14 +35,14 @@ set(${MODULE_PREFIX}_SRCS
 	semaphore.c
 	sleep.c
 	srw.c
-	synch.c
 	synch.h
 	timer.c
 	wait.c)
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS})
+	SOURCES ${${MODULE_PREFIX}_SRCS}
+	EXPORT)
 
 set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION_FULL} SOVERSION ${WINPR_VERSION} PREFIX "lib")
 

@@ -24,6 +24,7 @@
 #include <winpr/stream.h>
 
 #include <freerdp/utils/debug.h>
+#include <freerdp/utils/svc_plugin.h>
 
 struct cliprdr_plugin
 {

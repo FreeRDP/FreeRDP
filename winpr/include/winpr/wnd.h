@@ -292,11 +292,6 @@ typedef LONG_PTR LRESULT;
 typedef FARPROC SENDASYNCPROC;
 typedef LRESULT (CALLBACK* WNDPROC)(HWND, UINT, WPARAM, LPARAM);
 
-typedef HANDLE HICON;
-typedef HANDLE HCURSOR;
-typedef HANDLE HBRUSH;
-typedef HANDLE HMENU;
-
 typedef struct tagWNDCLASSA
 {
 	UINT style;

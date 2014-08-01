@@ -25,6 +25,7 @@
 #include <wctype.h>
 
 #include <winpr/crt.h>
+#include <winpr/error.h>
 #include <winpr/print.h>
 
 #ifndef _WIN32
@@ -303,7 +304,15 @@ int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		allocate = TRUE;
 
 	if (allocate)
-		*lpWideCharStr = (LPWSTR) malloc(cchWideChar * sizeof(WCHAR));
+	{
+		*lpWideCharStr = (LPWSTR) calloc(cchWideChar, sizeof(WCHAR));
+
+		if (!(*lpWideCharStr))
+		{
+			//SetLastError(ERROR_INSUFFICIENT_BUFFER);
+			return 0;
+		}
+	}
 
 	status = MultiByteToWideChar(CodePage, dwFlags, lpMultiByteStr, cbMultiByte, *lpWideCharStr, cchWideChar);
 
@@ -342,15 +351,22 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 
 	if (allocate)
 	{
-		*lpMultiByteStr = (LPSTR) malloc(cbMultiByte + 1);
-		ZeroMemory(*lpMultiByteStr, cbMultiByte + 1);
+		*lpMultiByteStr = (LPSTR) calloc(1, cbMultiByte + 1);
+
+		if (!(*lpMultiByteStr))
+		{
+			//SetLastError(ERROR_INSUFFICIENT_BUFFER);
+			return 0;
+		}
 	}
 
 	status = WideCharToMultiByte(CodePage, dwFlags, lpWideCharStr, cchWideChar,
 			*lpMultiByteStr, cbMultiByte, lpDefaultChar, lpUsedDefaultChar);
 
-	if (status != cbMultiByte)
+	if ((status != cbMultiByte) && allocate)
+	{
 		status = 0;
+	}
 
 	if ((status <= 0) && allocate)
 	{

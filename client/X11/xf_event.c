@@ -30,6 +30,7 @@
 #include "xf_window.h"
 #include "xf_cliprdr.h"
 #include "xf_input.h"
+#include "xf_gfx.h"
 
 #include "xf_event.h"
 #include "xf_input.h"
@@ -189,7 +190,13 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 	y = event->xexpose.y;
 	w = event->xexpose.width;
 	h = event->xexpose.height;
-	
+
+	if (xfc->gfx)
+	{
+		xf_OutputExpose(xfc, x, y, w, h);
+		return TRUE;
+	}
+
 	if (!app)
 	{
 		if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
@@ -199,9 +206,7 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 		}
 		else
 		{
-			XCopyArea(xfc->display, xfc->primary,
-				  xfc->window->handle, xfc->gc, x, y, w,
-				  h, x, y);
+			XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
 		}
 	}
 	else

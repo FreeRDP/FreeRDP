@@ -31,7 +31,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/utils/rail.h>
 #include <freerdp/rail.h>
 
@@ -95,13 +94,13 @@ static void rail_process_terminate(rdpSvcPlugin* plugin)
 	railPlugin* rail = (railPlugin*) plugin;
 
 	WLog_Print(rail->log, WLOG_DEBUG, "Terminate");
+  svc_plugin_terminate(plugin);
 }
 
 static void rail_process_receive(rdpSvcPlugin* plugin, wStream* s)
 {
 	railPlugin* rail = (railPlugin*) plugin;
 	rail_order_recv(rail, s);
-	Stream_Free(s, TRUE);
 }
 
 static void rail_process_addin_args(rdpRailOrder* railOrder, rdpSettings* settings)
@@ -507,8 +506,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	RailClientContext* context;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
 
-	rail = (railPlugin*) malloc(sizeof(railPlugin));
-	ZeroMemory(rail, sizeof(railPlugin));
+	rail = (railPlugin*) calloc(1, sizeof(railPlugin));
 
 	rail->plugin.channel_def.options =
 			CHANNEL_OPTION_INITIALIZED |

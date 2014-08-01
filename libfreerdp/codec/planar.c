@@ -28,53 +28,58 @@
 
 #include "planar.h"
 
-static int freerdp_bitmap_planar_decompress_plane_rle(BYTE* inPlane, int width, int height, BYTE* outPlane, int srcSize)
+static int planar_decompress_plane_rle(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
+		int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, int nChannel, BOOL vFlip)
 {
-	int k;
 	int x, y;
 	BYTE* srcp;
 	BYTE* dstp;
 	UINT32 pixel;
-	int scanline;
 	int cRawBytes;
 	int nRunLength;
 	int deltaValue;
+	int beg, end, inc;
 	BYTE controlByte;
 	BYTE* currentScanline;
 	BYTE* previousScanline;
 
-	k = 0;
-
-	srcp = inPlane;
-	dstp = outPlane;
-	scanline = width * 4;
+	srcp = pSrcData;
+	dstp = pDstData;
 	previousScanline = NULL;
 
-	y = 0;
-
-	while (y < height)
+	if (vFlip)
 	{
+		beg = nHeight - 1;
+		end = -1;
+		inc = -1;
+	}
+	else
+	{
+		beg = 0;
+		end = nHeight;
+		inc = 1;
+	}
+
+	for (y = beg; y != end; y += inc)
+	{
+		dstp = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4) + nChannel];
+
 		pixel = 0;
-		dstp = (outPlane + height * scanline) - ((y + 1) * scanline);
 		currentScanline = dstp;
 
-		x = 0;
-
-		while (x < width)
+		for (x = 0; x < nWidth; )
 		{
 			controlByte = *srcp;
 			srcp++;
 
-			if ((srcp - inPlane) > srcSize)
+			if ((srcp - pSrcData) > SrcSize)
 			{
-				printf("freerdp_bitmap_planar_decompress_plane_rle: error reading input buffer\n");
+				fprintf(stderr, "planar_decompress_plane_rle: error reading input buffer\n");
 				return -1;
 			}
 
 			nRunLength = PLANAR_CONTROL_BYTE_RUN_LENGTH(controlByte);
 			cRawBytes = PLANAR_CONTROL_BYTE_RAW_BYTES(controlByte);
-
-			//printf("CONTROL(%d, %d)\n", cRawBytes, nRunLength);
 
 			if (nRunLength == 1)
 			{
@@ -87,23 +92,9 @@ static int freerdp_bitmap_planar_decompress_plane_rle(BYTE* inPlane, int width, 
 				cRawBytes = 0;
 			}
 
-#if 0
-			printf("y: %d cRawBytes: %d nRunLength: %d\n", y, cRawBytes, nRunLength);
-
-			printf("RAW[");
-
-			for (k = 0; k < cRawBytes; k++)
+			if (((dstp + (cRawBytes + nRunLength)) - currentScanline) > nWidth * 4)
 			{
-				printf("0x%02X%s", srcp[k],
-						((k + 1) == cRawBytes) ? "" : ", ");
-			}
-
-			printf("] RUN[%d]\n", nRunLength);
-#endif
-
-			if (((dstp + (cRawBytes + nRunLength)) - currentScanline) > width * 4)
-			{
-				printf("freerdp_bitmap_planar_decompress_plane_rle: too many pixels in scanline\n");
+				fprintf(stderr, "planar_decompress_plane_rle: too many pixels in scanline\n");
 				return -1;
 			}
 
@@ -170,34 +161,76 @@ static int freerdp_bitmap_planar_decompress_plane_rle(BYTE* inPlane, int width, 
 		}
 
 		previousScanline = currentScanline;
-		y++;
 	}
 
-	return (int) (srcp - inPlane);
+	return (int) (srcp - pSrcData);
 }
 
-static int freerdp_bitmap_planar_decompress_plane_raw(BYTE* srcData, int width, int height, BYTE* dstData, int size)
+static int planar_decompress_plane_raw(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstData,
+		int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, int nChannel, BOOL vFlip)
 {
 	int x, y;
+	int beg, end, inc;
+	BYTE* dstp = NULL;
+	BYTE* srcp = pSrcData;
 
-	for (y = 0; y < height; y++)
+	if (vFlip)
 	{
-		for (x = 0; x < width; x++)
+		beg = nHeight - 1;
+		end = -1;
+		inc = -1;
+	}
+	else
+	{
+		beg = 0;
+		end = nHeight;
+		inc = 1;
+	}
+
+	for (y = beg; y != end; y += inc)
+	{
+		dstp = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4) + nChannel];
+
+		for (x = 0; x < nWidth; x++)
 		{
-			dstData[(((height - y - 1) * width) + x) * 4] = srcData[((y * width) + x)];
+			*dstp = *srcp;
+			dstp += 4;
+			srcp++;
 		}
 	}
 
-	return (width * height);
+	return (int) (srcp - pSrcData);
 }
 
-int freerdp_bitmap_planar_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size)
+int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcSize,
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
 {
+	int status;
 	BYTE* srcp;
-	int dstSize;
+	BOOL vFlip;
 	BYTE FormatHeader;
+	BYTE* pDstData = NULL;
+	UINT32 UncompressedSize;
 
-	srcp = srcData;
+	if ((nWidth * nHeight) <= 0)
+		return -1;
+
+	vFlip = FREERDP_PIXEL_FORMAT_FLIP(DstFormat) ? TRUE : FALSE;
+
+	srcp = pSrcData;
+	UncompressedSize = nWidth * nHeight * 4;
+
+	pDstData = *ppDstData;
+
+	if (!pDstData)
+	{
+		pDstData = (BYTE*) malloc(UncompressedSize);
+
+		if (!pDstData)
+			return -1;
+
+		*ppDstData = pDstData;
+	}
 
 	FormatHeader = *srcp;
 	srcp++;
@@ -208,17 +241,23 @@ int freerdp_bitmap_planar_decompress(BYTE* srcData, BYTE* dstData, int width, in
 	{
 		if (FormatHeader & PLANAR_FORMAT_HEADER_RLE)
 		{
-			dstSize = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 3, size - (srcp - srcData));
+			status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
+					pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 3, vFlip);
 
-			if (dstSize < 0)
+			if (status < 0)
 				return -1;
 
-			srcp += dstSize;
+			srcp += status;
 		}
 		else
 		{
-			dstSize = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 3, size - (srcp - srcData));
-			srcp += dstSize;
+			status = planar_decompress_plane_raw(srcp, SrcSize - (srcp - pSrcData),
+					pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 3, vFlip);
+
+			if (status < 0)
+				return -1;
+
+			srcp += status;
 		}
 	}
 
@@ -226,51 +265,71 @@ int freerdp_bitmap_planar_decompress(BYTE* srcData, BYTE* dstData, int width, in
 	{
 		/* LumaOrRedPlane */
 
-		dstSize = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 2, size - (srcp - srcData));
+		status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 2, vFlip);
 
-		if (dstSize < 0)
+		if (status < 0)
 			return -1;
 
-		srcp += dstSize;
+		srcp += status;
 
 		/* OrangeChromaOrGreenPlane */
 
-		dstSize = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 1, size - (srcp - srcData));
+		status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 1, vFlip);
 
-		if (dstSize < 0)
+		if (status < 0)
 			return -1;
 
-		srcp += dstSize;
+		srcp += status;
 
 		/* GreenChromeOrBluePlane */
 
-		dstSize = freerdp_bitmap_planar_decompress_plane_rle(srcp, width, height, dstData + 0, size - (srcp - srcData));
+		status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 0, vFlip);
 
-		if (dstSize < 0)
+		if (status < 0)
 			return -1;
 
-		srcp += dstSize;
+		srcp += status;
 	}
 	else
 	{
 		/* LumaOrRedPlane */
 
-		dstSize = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 2, size - (srcp - srcData));
-		srcp += dstSize;
+		status = planar_decompress_plane_raw(srcp, SrcSize - (srcp - pSrcData),
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 2, vFlip);
+
+		if (status < 0)
+			return -1;
+
+		srcp += status;
 
 		/* OrangeChromaOrGreenPlane */
 
-		dstSize = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 1, size - (srcp - srcData));
-		srcp += dstSize;
+		status = planar_decompress_plane_raw(srcp, SrcSize - (srcp - pSrcData),
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 1, vFlip);
+
+		if (status < 0)
+			return -1;
+
+		srcp += status;
 
 		/* GreenChromeOrBluePlane */
 
-		dstSize = freerdp_bitmap_planar_decompress_plane_raw(srcp, width, height, dstData + 0, size - (srcp - srcData));
-		srcp += dstSize;
+		status = planar_decompress_plane_raw(srcp, SrcSize - (srcp - pSrcData),
+				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 0, vFlip);
+
+		if (status < 0)
+			return -1;
+
+		srcp += status;
 		srcp++;
 	}
 
-	return (size == (srcp - srcData)) ? 0 : -1;
+	status = (SrcSize == (srcp - pSrcData)) ? 1 : -1;
+
+	return status;
 }
 
 int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[4])

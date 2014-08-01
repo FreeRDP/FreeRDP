@@ -77,7 +77,7 @@ int TestHashTable(int argc, char* argv[])
 
 	if (strcmp(value, val1) != 0)
 	{
-		printf("HashTable_GetItemValue: Expected : %d, Actual: %d\n", val1, value);
+		printf("HashTable_GetItemValue: Expected : %s, Actual: %s\n", val1, value);
 		return -1;
 	}
 
@@ -85,7 +85,7 @@ int TestHashTable(int argc, char* argv[])
 
 	if (strcmp(value, val2) != 0)
 	{
-		printf("HashTable_GetItemValue: Expected : %d, Actual: %d\n", val2, value);
+		printf("HashTable_GetItemValue: Expected : %s, Actual: %s\n", val2, value);
 		return -1;
 	}
 
@@ -93,7 +93,7 @@ int TestHashTable(int argc, char* argv[])
 
 	if (strcmp(value, val3) != 0)
 	{
-		printf("HashTable_GetItemValue: Expected : %d, Actual: %d\n", val3, value);
+		printf("HashTable_GetItemValue: Expected : %s, Actual: %s\n", val3, value);
 		return -1;
 	}
 
@@ -103,7 +103,7 @@ int TestHashTable(int argc, char* argv[])
 
 	if (strcmp(value, "apple") != 0)
 	{
-		printf("HashTable_GetItemValue: Expected : %d, Actual: %d\n", "apple", value);
+		printf("HashTable_GetItemValue: Expected : %s, Actual: %s\n", "apple", value);
 		return -1;
 	}
 

@@ -94,7 +94,7 @@ void tf_end_paint(rdpContext* context)
 		return;
 }
 
-int tf_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
+int tf_receive_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
@@ -305,8 +305,6 @@ int main(int argc, char* argv[])
 	rdpChannels* channels;
 	struct thread_data* data;
 
-	freerdp_channels_global_init();
-
 	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
 
 	instance = freerdp_new();
@@ -340,8 +338,6 @@ int main(int argc, char* argv[])
 	{
 		WaitForSingleObject(g_sem, INFINITE);
 	}
-
-	freerdp_channels_global_uninit();
 
 	return 0;
 }

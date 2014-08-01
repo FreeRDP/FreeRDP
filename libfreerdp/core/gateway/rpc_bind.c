@@ -103,6 +103,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	DEBUG_RPC("Sending bind PDU");
 
 	rpc->ntlm = ntlm_new();
+	if (!rpc->ntlm)
+		return -1;
 
 	if ((!settings->GatewayPassword) || (!settings->GatewayUsername)
 			|| (!strlen(settings->GatewayPassword)) || (!strlen(settings->GatewayUsername)))
@@ -129,17 +131,22 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 				settings->Username = _strdup(settings->GatewayUsername);
 				settings->Domain = _strdup(settings->GatewayDomain);
 				settings->Password = _strdup(settings->GatewayPassword);
+
+				if (!settings->Username || !settings->Domain || settings->Password)
+					return -1;
 			}
 		}
 	}
 
-	ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain, settings->GatewayPassword, NULL);
-	ntlm_client_make_spn(rpc->ntlm, NULL, settings->GatewayHostname);
+	if (!ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain, settings->GatewayPassword, NULL) ||
+		!ntlm_client_make_spn(rpc->ntlm, NULL, settings->GatewayHostname) ||
+		!ntlm_authenticate(rpc->ntlm)
+		)
+		return -1;
 
-	ntlm_authenticate(rpc->ntlm);
-
-	bind_pdu = (rpcconn_bind_hdr_t*) malloc(sizeof(rpcconn_bind_hdr_t));
-	ZeroMemory(bind_pdu, sizeof(rpcconn_bind_hdr_t));
+	bind_pdu = (rpcconn_bind_hdr_t*) calloc(1, sizeof(rpcconn_bind_hdr_t));
+	if (!bind_pdu)
+		return -1;
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) bind_pdu);
 
@@ -159,6 +166,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->p_context_elem.reserved2 = 0;
 
 	bind_pdu->p_context_elem.p_cont_elem = malloc(sizeof(p_cont_elem_t) * bind_pdu->p_context_elem.n_context_elem);
+	if (!bind_pdu->p_context_elem.p_cont_elem)
+		return -1;
 
 	p_cont_elem = &bind_pdu->p_context_elem.p_cont_elem[0];
 
@@ -196,6 +205,8 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	bind_pdu->frag_length = offset;
 
 	buffer = (BYTE*) malloc(bind_pdu->frag_length);
+	if (!buffer)
+		return -1;
 
 	CopyMemory(buffer, bind_pdu, 24);
 	CopyMemory(&buffer[24], &bind_pdu->p_context_elem, 4);
@@ -214,7 +225,10 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	length = bind_pdu->frag_length;
 
 	clientCall = rpc_client_call_new(bind_pdu->call_id, 0);
-	ArrayList_Add(rpc->client->ClientCallList, clientCall);
+	if (!clientCall)
+		return -1;
+	if (ArrayList_Add(rpc->client->ClientCallList, clientCall) < 0)
+		return -1;
 
 	if (rpc_send_enqueue_pdu(rpc, buffer, length) != 0)
 		length = -1;
@@ -300,27 +314,25 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	auth_3_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_CONC_MPX;
 	auth_3_pdu->call_id = 2;
 
-	offset = 20;
-
 	auth_3_pdu->max_xmit_frag = rpc->max_xmit_frag;
 	auth_3_pdu->max_recv_frag = rpc->max_recv_frag;
 
-	offset += 4;
+	offset = 20;
 	auth_3_pdu->auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
 
 	auth_3_pdu->auth_verifier.auth_type = RPC_C_AUTHN_WINNT;
 	auth_3_pdu->auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
 	auth_3_pdu->auth_verifier.auth_reserved = 0x00;
 	auth_3_pdu->auth_verifier.auth_context_id = 0x00000000;
+	offset += (8 + auth_3_pdu->auth_length);
 
-	auth_3_pdu->frag_length = 20 + 4 +
-			auth_3_pdu->auth_verifier.auth_pad_length + auth_3_pdu->auth_length + 8;
+	auth_3_pdu->frag_length = offset;
 
 	buffer = (BYTE*) malloc(auth_3_pdu->frag_length);
 
-	CopyMemory(buffer, auth_3_pdu, 24);
+	CopyMemory(buffer, auth_3_pdu, 20);
 
-	offset = 24;
+	offset = 20;
 	rpc_offset_pad(&offset, auth_3_pdu->auth_verifier.auth_pad_length);
 
 	CopyMemory(&buffer[offset], &auth_3_pdu->auth_verifier.auth_type, 8);

@@ -368,6 +368,9 @@ void HashTable_Clear(wHashTable* table)
 		{
 			nextPair = pair->next;
 
+			if (table->pfnKeyValueFree)
+				table->pfnKeyValueFree(table->context, pair->key, pair->value);
+
 			if (table->keyDeallocator)
 				table->keyDeallocator((void*) pair->key);
 
@@ -387,6 +390,48 @@ void HashTable_Clear(wHashTable* table)
 
 	if (table->synchronized)
 		LeaveCriticalSection(&table->lock);
+}
+
+/**
+ * Gets the list of keys as an array
+ */
+
+int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
+{
+	int iKey;
+	int count;
+	int index;
+	ULONG_PTR* pKeys;
+	wKeyValuePair* pair;
+	wKeyValuePair* nextPair;
+
+	if (table->synchronized)
+		EnterCriticalSection(&table->lock);
+
+	iKey = 0;
+	count = table->numOfElements;
+	pKeys = (ULONG_PTR*) calloc(count, sizeof(ULONG_PTR));
+
+	for (index = 0; index < table->numOfBuckets; index++)
+	{
+		pair = table->bucketArray[index];
+
+		while (pair)
+		{
+			nextPair = pair->next;
+
+			pKeys[iKey++] = (ULONG_PTR) pair->key;
+
+			pair = nextPair;
+		}
+	}
+
+	if (table->synchronized)
+		LeaveCriticalSection(&table->lock);
+
+	*ppKeys = pKeys;
+
+	return count;
 }
 
 /**
@@ -465,6 +510,12 @@ BOOL HashTable_ContainsValue(wHashTable* table, void* value)
 	return status;
 }
 
+void HashTable_SetFreeFunction(wHashTable* table, void* context, KEY_VALUE_FREE_FN pfnKeyValueFree)
+{
+	table->context = context;
+	table->pfnKeyValueFree = pfnKeyValueFree;
+}
+
 /**
  * Construction, Destruction
  */
@@ -479,7 +530,7 @@ wHashTable* HashTable_New(BOOL synchronized)
 	if (table)
 	{
 		table->synchronized = synchronized;
-		InitializeCriticalSectionAndSpinCount(&table->lock, 4000);
+		InitializeCriticalSectionAndSpinCount(&(table->lock), 4000);
 
 		table->numOfBuckets = 64;
 		table->numOfElements = 0;
@@ -536,6 +587,8 @@ void HashTable_Free(wHashTable* table)
 				pair = nextPair;
 			}
 		}
+
+		DeleteCriticalSection(&(table->lock));
 
 		free(table->bucketArray);
 		free(table);

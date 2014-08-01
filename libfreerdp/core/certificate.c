@@ -584,20 +584,14 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
  * @param length certificate length
  */
 
-int certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length)
+BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length)
 {
 	wStream* s;
 	UINT32 dwVersion;
-	int status = 1;
+	BOOL ret;
 
-	if (length < 1)
-	{
-		DEBUG_CERTIFICATE("null server certificate\n");
-		return 0;
-	}
-
-	if (length < 4)
-		return -1;
+	if (length < 4)  /* NULL certificate is not an error see #1795 */
+		return TRUE;
 
 	s = Stream_New(server_cert, length);
 
@@ -606,22 +600,22 @@ int certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serve
 	switch (dwVersion & CERT_CHAIN_VERSION_MASK)
 	{
 		case CERT_CHAIN_VERSION_1:
-			status = certificate_read_server_proprietary_certificate(certificate, s);
+			ret = certificate_read_server_proprietary_certificate(certificate, s);
 			break;
 
 		case CERT_CHAIN_VERSION_2:
-			status = certificate_read_server_x509_certificate_chain(certificate, s);
+			ret = certificate_read_server_x509_certificate_chain(certificate, s);
 			break;
 
 		default:
 			fprintf(stderr, "invalid certificate chain version:%d\n", dwVersion & CERT_CHAIN_VERSION_MASK);
-			status = -1;
+			ret = FALSE;
 			break;
 	}
 
 	Stream_Free(s, FALSE);
 
-	return status;
+	return ret;
 }
 
 rdpRsaKey* key_new(const char* keyfile)
@@ -723,13 +717,7 @@ void key_free(rdpRsaKey* key)
 
 rdpCertificate* certificate_new()
 {
-	rdpCertificate* certificate;
-
-	certificate = (rdpCertificate*) calloc(1, sizeof(rdpCertificate));
-	if (!certificate)
-		return NULL;
-
-	return certificate;
+	return (rdpCertificate*) calloc(1, sizeof(rdpCertificate));
 }
 
 /**

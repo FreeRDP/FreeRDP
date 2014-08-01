@@ -12,7 +12,7 @@ void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, P
 	BYTE b[1024];
 	BYTE c[1024];
 
-	printf("Hello %s: %ld (thread: %lu)\n", (char *)context,
+	printf("Hello %s: %d (thread: %d)\n", (char*) context,
 		InterlockedIncrement(&count), GetCurrentThreadId());
 
 	for (index = 0; index < 100; index++)

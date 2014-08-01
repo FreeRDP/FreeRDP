@@ -44,11 +44,17 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	set(CMAKE_COMPILER_IS_CLANG 1)
 endif()
 
+if(NOT WIN32)
+    option(WITH_VALGRIND_MEMCHECK "Compile with valgrind helpers." OFF)
+endif()
+
 if(MSVC)
 	option(WITH_NATIVE_SSPI "Use native SSPI modules" ON)
 	option(WITH_WINMM "Use Windows Multimedia" ON)
 	option(WITH_WIN8 "Use Windows 8 libraries" OFF)
 endif()
+
+option(WITH_SMARTCARD_INSPECT "Enable SmartCard API Inspector" OFF)
 
 option(BUILD_TESTING "Build unit tests" OFF)
 option(WITH_SAMPLE "Build sample code" OFF)
@@ -94,6 +100,7 @@ option(WITH_DEBUG_CAPABILITIES "Print capability negotiation debug messages." ${
 option(WITH_DEBUG_CHANNELS "Print channel manager debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_CLIPRDR "Print clipboard redirection debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_DVC "Print dynamic virtual channel debug messages." ${DEFAULT_DEBUG_OPTION})
+option(WITH_DEBUG_TSMF "Print TSMF virtual channel debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_GDI "Print graphics debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_KBD "Print keyboard related debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_LICENSE "Print license debug messages." ${DEFAULT_DEBUG_OPTION})

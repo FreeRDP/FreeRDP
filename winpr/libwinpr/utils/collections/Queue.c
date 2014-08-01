@@ -40,7 +40,15 @@
 
 int Queue_Count(wQueue* queue)
 {
-	return queue->size;
+	int ret;
+	if (queue->synchronized)
+		EnterCriticalSection(&queue->lock);
+
+	ret = queue->size;
+
+	if (queue->synchronized)
+		LeaveCriticalSection(&queue->lock);
+	return ret;
 }
 
 /**
@@ -114,7 +122,7 @@ BOOL Queue_Contains(wQueue* queue, void* obj)
 
 	for (index = 0; index < queue->tail; index++)
 	{
-		if (queue->array[index] == obj)
+		if (queue->object.fnObjectEquals(queue->array[index], obj))
 		{
 			found = TRUE;
 			break;
@@ -131,8 +139,10 @@ BOOL Queue_Contains(wQueue* queue, void* obj)
  * Adds an object to the end of the Queue.
  */
 
-void Queue_Enqueue(wQueue* queue, void* obj)
+BOOL Queue_Enqueue(wQueue* queue, void* obj)
 {
+	BOOL ret = TRUE;
+
 	if (queue->synchronized)
 		EnterCriticalSection(&queue->lock);
 
@@ -140,12 +150,20 @@ void Queue_Enqueue(wQueue* queue, void* obj)
 	{
 		int old_capacity;
 		int new_capacity;
+		void **newArray;
 
 		old_capacity = queue->capacity;
 		new_capacity = queue->capacity * queue->growthFactor;
 
+		newArray = (void **)realloc(queue->array, sizeof(void*) * new_capacity);
+		if (!newArray)
+		{
+			ret = FALSE;
+			goto out;
+		}
+
 		queue->capacity = new_capacity;
-		queue->array = (void**) realloc(queue->array, sizeof(void*) * queue->capacity);
+		queue->array = newArray;
 		ZeroMemory(&(queue->array[old_capacity]), old_capacity * sizeof(void*));
 
 		if (queue->tail < old_capacity)
@@ -161,8 +179,10 @@ void Queue_Enqueue(wQueue* queue, void* obj)
 
 	SetEvent(queue->event);
 
+out:
 	if (queue->synchronized)
 		LeaveCriticalSection(&queue->lock);
+	return ret;
 }
 
 /**
@@ -213,6 +233,11 @@ void* Queue_Peek(wQueue* queue)
 	return obj;
 }
 
+static BOOL default_queue_equals(void *obj1, void *obj2)
+{
+	return (obj1 == obj2);
+}
+
 /**
  * Construction, Destruction
  */
@@ -221,39 +246,49 @@ wQueue* Queue_New(BOOL synchronized, int capacity, int growthFactor)
 {
 	wQueue* queue = NULL;
 
-	queue = (wQueue*) malloc(sizeof(wQueue));
+	queue = (wQueue *)calloc(1, sizeof(wQueue));
+	if (!queue)
+		return NULL;
 
-	if (queue)
-	{
-		queue->head = 0;
-		queue->tail = 0;
-		queue->size = 0;
+	queue->capacity = 32;
+	queue->growthFactor = 2;
 
-		queue->capacity = 32;
-		queue->growthFactor = 2;
+	queue->synchronized = synchronized;
 
-		queue->synchronized = synchronized;
+	if (capacity > 0)
+		queue->capacity = capacity;
 
-		if (capacity > 0)
-			queue->capacity = capacity;
+	if (growthFactor > 0)
+		queue->growthFactor = growthFactor;
 
-		if (growthFactor > 0)
-			queue->growthFactor = growthFactor;
+	queue->array = (void **)calloc(queue->capacity, sizeof(void *));
+	if (!queue->array)
+		goto out_free;
 
-		queue->array = (void**) malloc(sizeof(void*) * queue->capacity);
-		ZeroMemory(queue->array, sizeof(void*) * queue->capacity);
+	queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!queue->event)
+		goto out_free_array;
 
-		InitializeCriticalSectionAndSpinCount(&queue->lock, 4000);
-		queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!InitializeCriticalSectionAndSpinCount(&queue->lock, 4000))
+		goto out_free_event;
 
-		ZeroMemory(&queue->object, sizeof(wObject));
-	}
-
+	queue->object.fnObjectEquals = default_queue_equals;
 	return queue;
+
+out_free_event:
+	CloseHandle(queue->event);
+out_free_array:
+	free(queue->array);
+out_free:
+	free(queue);
+	return NULL;
 }
 
 void Queue_Free(wQueue* queue)
 {
+	if (!queue)
+		return;
+
 	Queue_Clear(queue);
 
 	CloseHandle(queue->event);

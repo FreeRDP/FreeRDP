@@ -2,7 +2,7 @@
  * WinPR: Windows Portable Runtime
  * Schannel Security Package (OpenSSL)
  *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -280,7 +280,7 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 
 		if (status > 0)
 		{
-			if (pBuffer->cbBuffer < status)
+			if (pBuffer->cbBuffer < (unsigned long) status)
 				return SEC_E_INSUFFICIENT_MEMORY;
 
 			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
@@ -339,7 +339,7 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 
 		if (status > 0)
 		{
-			if (pBuffer->cbBuffer < status)
+			if (pBuffer->cbBuffer < (unsigned long) status)
 				return SEC_E_INSUFFICIENT_MEMORY;
 
 			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
@@ -387,17 +387,17 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSec
 	if (status > 0)
 	{
 		offset = 0;
-		length = (pStreamHeaderBuffer->cbBuffer > status) ? status : pStreamHeaderBuffer->cbBuffer;
+		length = (pStreamHeaderBuffer->cbBuffer > (unsigned long) status) ? status : pStreamHeaderBuffer->cbBuffer;
 		CopyMemory(pStreamHeaderBuffer->pvBuffer, &context->ReadBuffer[offset], length);
 		status -= length;
 
 		offset += length;
-		length = (pStreamBodyBuffer->cbBuffer > status) ? status : pStreamBodyBuffer->cbBuffer;
+		length = (pStreamBodyBuffer->cbBuffer > (unsigned long) status) ? status : pStreamBodyBuffer->cbBuffer;
 		CopyMemory(pStreamBodyBuffer->pvBuffer, &context->ReadBuffer[offset], length);
 		status -= length;
 
 		offset += length;
-		length = (pStreamTrailerBuffer->cbBuffer > status) ? status : pStreamTrailerBuffer->cbBuffer;
+		length = (pStreamTrailerBuffer->cbBuffer > (unsigned long) status) ? status : pStreamTrailerBuffer->cbBuffer;
 		CopyMemory(pStreamTrailerBuffer->pvBuffer, &context->ReadBuffer[offset], length);
 		status -= length;
 	}

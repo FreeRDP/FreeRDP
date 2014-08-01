@@ -73,6 +73,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
+	{ "gateway-usage-method", COMMAND_LINE_VALUE_REQUIRED, "<direct|detect>", NULL, NULL, -1, NULL, "Gateway usage method" },
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info string>", NULL, NULL, -1, NULL, "Load balance info" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "<executable path> or <||alias>", NULL, NULL, -1, NULL, "Remote application program" },
 	{ "app-name", COMMAND_LINE_VALUE_REQUIRED, "<app name>", NULL, NULL, -1, NULL, "Remote application name for user interface" },
@@ -297,6 +298,8 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count < 3)
 			return -1;
 
+		settings->DeviceRedirection = TRUE;
+
 		drive = (RDPDR_DRIVE*) calloc(1, sizeof(RDPDR_DRIVE));
 
 		if (!drive)
@@ -311,7 +314,6 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 			drive->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) drive);
-		settings->DeviceRedirection = TRUE;
 
 		return 1;
 	}
@@ -322,21 +324,26 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count < 1)
 			return -1;
 
-		printer = (RDPDR_PRINTER*) calloc(1, sizeof(RDPDR_PRINTER));
-
-		if (!printer)
-			return -1;
-
-		printer->Type = RDPDR_DTYP_PRINT;
+		settings->RedirectPrinters = TRUE;
+		settings->DeviceRedirection = TRUE;
 
 		if (count > 1)
-			printer->Name = _strdup(params[1]);
+		{
+			printer = (RDPDR_PRINTER*) calloc(1, sizeof(RDPDR_PRINTER));
 
-		if (count > 2)
-			printer->DriverName = _strdup(params[2]);
+			if (!printer)
+				return -1;
 
-		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer);
-		settings->DeviceRedirection = TRUE;
+			printer->Type = RDPDR_DTYP_PRINT;
+
+			if (count > 1)
+				printer->Name = _strdup(params[1]);
+
+			if (count > 2)
+				printer->DriverName = _strdup(params[2]);
+
+			freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer);
+		}
 
 		return 1;
 	}
@@ -347,21 +354,26 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count < 1)
 			return -1;
 
-		smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
-
-		if (!smartcard)
-			return -1;
-
-		smartcard->Type = RDPDR_DTYP_SMARTCARD;
+		settings->RedirectSmartCards = TRUE;
+		settings->DeviceRedirection = TRUE;
 
 		if (count > 1)
-			smartcard->Name = _strdup(params[1]);
+		{
+			smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
 
-		if (count > 2)
-			smartcard->Path = _strdup(params[2]);
+			if (!smartcard)
+				return -1;
 
-		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard);
-		settings->DeviceRedirection = TRUE;
+			smartcard->Type = RDPDR_DTYP_SMARTCARD;
+
+			if (count > 1)
+				smartcard->Name = _strdup(params[1]);
+
+			if (count > 2)
+				smartcard->Path = _strdup(params[2]);
+
+			freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard);
+		}
 
 		return 1;
 	}
@@ -371,6 +383,9 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 
 		if (count < 1)
 			return -1;
+
+		settings->RedirectSerialPorts = TRUE;
+		settings->DeviceRedirection = TRUE;
 
 		serial = (RDPDR_SERIAL*) calloc(1, sizeof(RDPDR_SERIAL));
 
@@ -386,7 +401,6 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 			serial->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) serial);
-		settings->DeviceRedirection = TRUE;
 
 		return 1;
 	}
@@ -396,6 +410,9 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 
 		if (count < 1)
 			return -1;
+
+		settings->RedirectParallelPorts = TRUE;
+		settings->DeviceRedirection = TRUE;
 
 		parallel = (RDPDR_PARALLEL*) calloc(1, sizeof(RDPDR_PARALLEL));
 
@@ -407,11 +424,10 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 		if (count > 1)
 			parallel->Name = _strdup(params[1]);
 
-		if (count > 1)
+		if (count > 2)
 			parallel->Path = _strdup(params[2]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) parallel);
-		settings->DeviceRedirection = TRUE;
 
 		return 1;
 	}
@@ -798,6 +814,38 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 	return 0;
 }
 
+int freerdp_parse_hostname(char* hostname, char** host, int* port)
+{
+	char* p;
+	int length;
+
+	p = strrchr(hostname, ':');
+
+	if (p)
+	{
+		length = (p - hostname);
+		*host = (char*) malloc(length + 1);
+
+		if (!(*host))
+			return -1;
+
+		CopyMemory(*host, hostname, length);
+		(*host)[length] = '\0';
+		*port = atoi(p + 1);
+	}
+	else
+	{
+		*host = _strdup(hostname);
+
+		if (!(*host))
+			return -1;
+
+		*port = -1;
+	}
+
+	return 0;
+}
+
 int freerdp_set_connection_type(rdpSettings* settings, int type)
 {
 	settings->ConnectionType = type;
@@ -1071,19 +1119,19 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
 			printf("\nKeyboard Layouts\n");
 			for (i = 0; layouts[i].code; i++)
-				printf("0x%08lX\t%s\n", layouts[i].code, layouts[i].name);
+				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
 
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
 			printf("\nKeyboard Layout Variants\n");
 			for (i = 0; layouts[i].code; i++)
-				printf("0x%08lX\t%s\n", layouts[i].code, layouts[i].name);
+				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
 
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
 			printf("\nKeyboard Input Method Editors (IMEs)\n");
 			for (i = 0; layouts[i].code; i++)
-				printf("0x%08lX\t%s\n", layouts[i].code, layouts[i].name);
+				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
 
 			printf("\n");
@@ -1369,11 +1417,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				settings->GatewayHostname = _strdup(settings->ServerHostname);
 			}
 
+			settings->GatewayEnabled = TRUE;
 			settings->GatewayUseSameCredentials = TRUE;
 
-			settings->GatewayUsageMethod = TSC_PROXY_MODE_DETECT;
-			settings->GatewayEnabled = TRUE;
-			settings->GatewayBypassLocal = TRUE;
+			freerdp_set_gateway_usage_method(settings, TSC_PROXY_MODE_DETECT);
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
@@ -1396,6 +1443,27 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->GatewayPassword = _strdup(arg->Value);
 			settings->GatewayUseSameCredentials = FALSE;
+		}
+		CommandLineSwitchCase(arg, "gateway-usage-method")
+		{
+			int type;
+			char* pEnd;
+
+			type = strtol(arg->Value, &pEnd, 10);
+
+			if (type == 0)
+			{
+				if (_stricmp(arg->Value, "none") == 0)
+					type = TSC_PROXY_MODE_NONE_DIRECT;
+				else if (_stricmp(arg->Value, "direct") == 0)
+					type = TSC_PROXY_MODE_DIRECT;
+				else if (_stricmp(arg->Value, "detect") == 0)
+					type = TSC_PROXY_MODE_DETECT;
+				else if (_stricmp(arg->Value, "default") == 0)
+					type = TSC_PROXY_MODE_DEFAULT;
+			}
+
+			freerdp_set_gateway_usage_method(settings, (UINT32) type);
 		}
 		CommandLineSwitchCase(arg, "app")
 		{
@@ -1541,6 +1609,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "gfx")
 		{
 			settings->SupportGraphicsPipeline = TRUE;
+			settings->FastPathOutput = TRUE;
+			settings->ColorDepth = 32;
+			settings->LargePointerFlag = TRUE;
+			settings->FrameMarkerCommandEnabled = TRUE;
 		}
 		CommandLineSwitchCase(arg, "rfx")
 		{
@@ -1756,8 +1828,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			BYTE *base64;
 			int length;
-			crypto_base64_decode((BYTE *) (arg->Value),
-				(int) strlen(arg->Value), &base64, &length);
+			crypto_base64_decode((const char *) (arg->Value), (int) strlen(arg->Value),
+								&base64, &length);
 			if ((base64 != NULL) && (length == sizeof(ARC_SC_PRIVATE_PACKET)))
 			{
 				memcpy(settings->ServerAutoReconnectCookie, base64, length);
@@ -1861,13 +1933,17 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		settings->SupportHeartbeatPdu ||
 		settings->SupportMultitransport)
 	{
-		settings->DeviceRedirection = TRUE; /* these RDP 8 features require rdpdr to be registered */
+		settings->DeviceRedirection = TRUE; /* these RDP8 features require rdpdr to be registered */
+	}
+
+	if (settings->RedirectDrives || settings->RedirectHomeDrive || settings->RedirectSerialPorts
+			|| settings->RedirectSmartCards || settings->RedirectPrinters)
+	{
+		settings->DeviceRedirection = TRUE; /* All of these features require rdpdr */
 	}
 
 	if (settings->RedirectDrives)
 	{
-		settings->DeviceRedirection = TRUE;
-
 		if (!freerdp_device_collection_find(settings, "drive"))
 		{
 			char* params[3];
@@ -1882,8 +1958,6 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	if (settings->RedirectHomeDrive)
 	{
-		settings->DeviceRedirection = TRUE;
-
 		if (!freerdp_device_collection_find(settings, "drive"))
 		{
 			char* params[3];
@@ -1909,6 +1983,32 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 			freerdp_client_add_static_channel(settings, 2, (char**) params);
 		}
+	}
+
+	if (settings->RedirectSmartCards)
+	{
+		RDPDR_SMARTCARD* smartcard;
+
+		smartcard = (RDPDR_SMARTCARD*) calloc(1, sizeof(RDPDR_SMARTCARD));
+
+		if (!smartcard)
+			return -1;
+
+		smartcard->Type = RDPDR_DTYP_SMARTCARD;
+		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) smartcard);
+	}
+
+	if (settings->RedirectPrinters)
+	{
+		RDPDR_PRINTER* printer;
+
+		printer = (RDPDR_PRINTER*) calloc(1, sizeof(RDPDR_PRINTER));
+
+		if (!printer)
+			return -1;
+
+		printer->Type = RDPDR_DTYP_PRINT;
+		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) printer);
 	}
 
 	if (settings->RedirectClipboard)

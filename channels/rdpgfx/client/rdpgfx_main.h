@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Graphics Pipeline Extension
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2013-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,60 @@
 #ifndef FREERDP_CHANNEL_RDPGFX_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_RDPGFX_CLIENT_MAIN_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
 
+#include <winpr/wlog.h>
+#include <winpr/collections.h>
+
 #include <freerdp/client/rdpgfx.h>
 
+#include <freerdp/codec/zgfx.h>
 
+struct _RDPGFX_CHANNEL_CALLBACK
+{
+	IWTSVirtualChannelCallback iface;
+
+	IWTSPlugin* plugin;
+	IWTSVirtualChannelManager* channel_mgr;
+	IWTSVirtualChannel* channel;
+};
+typedef struct _RDPGFX_CHANNEL_CALLBACK RDPGFX_CHANNEL_CALLBACK;
+
+struct _RDPGFX_LISTENER_CALLBACK
+{
+	IWTSListenerCallback iface;
+
+	IWTSPlugin* plugin;
+	IWTSVirtualChannelManager* channel_mgr;
+	RDPGFX_CHANNEL_CALLBACK* channel_callback;
+};
+typedef struct _RDPGFX_LISTENER_CALLBACK RDPGFX_LISTENER_CALLBACK;
+
+struct _RDPGFX_PLUGIN
+{
+	IWTSPlugin iface;
+
+	IWTSListener* listener;
+	RDPGFX_LISTENER_CALLBACK* listener_callback;
+
+	wLog* log;
+
+	BOOL ThinClient;
+	BOOL SmallCache;
+	BOOL H264;
+
+	ZGFX_CONTEXT* zgfx;
+	UINT32 UnacknowledgedFrames;
+	UINT32 TotalDecodedFrames;
+
+	wHashTable* SurfaceTable;
+
+	UINT16 MaxCacheSlot;
+	void* CacheSlots[25600];
+};
+typedef struct _RDPGFX_PLUGIN RDPGFX_PLUGIN;
 
 #endif /* FREERDP_CHANNEL_RDPGFX_CLIENT_MAIN_H */
 

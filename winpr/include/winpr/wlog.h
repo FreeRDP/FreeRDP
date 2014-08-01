@@ -145,6 +145,7 @@ struct _wLogAppender
 
 #define WLOG_CONSOLE_STDOUT	1
 #define WLOG_CONSOLE_STDERR	2
+#define WLOG_CONSOLE_DEBUG	3
 
 struct _wLogConsoleAppender
 {
@@ -175,6 +176,18 @@ struct _wLogBinaryAppender
 	FILE* FileDescriptor;
 };
 typedef struct _wLogBinaryAppender wLogBinaryAppender;
+
+/**
+ * Filter
+ */
+
+struct _wLogFilter
+{
+	DWORD Level;
+	LPSTR* Names;
+	DWORD NameCount;
+};
+typedef struct _wLogFilter wLogFilter;
 
 /**
  * Logger
@@ -245,6 +258,9 @@ WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 		_log_message.FunctionName = __FUNCTION__; \
 		WLog_PrintMessage(_log, &(_log_message), ## __VA_ARGS__ ); \
 	}
+
+#define WLog_IsLevelActive(_log, _log_level) \
+	(_log_level >= WLog_GetLogLevel(_log))
 
 WINPR_API DWORD WLog_GetLogLevel(wLog* log);
 WINPR_API void WLog_SetLogLevel(wLog* log, DWORD logLevel);

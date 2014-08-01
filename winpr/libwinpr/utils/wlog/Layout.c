@@ -27,6 +27,8 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/sysinfo.h>
+#include <winpr/environment.h>
 
 #include <winpr/wlog.h>
 
@@ -64,7 +66,10 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 	int index;
 	int argc = 0;
 	void* args[32];
-	char format[128];
+	char format[256];
+	SYSTEMTIME localTime;
+
+	GetLocalTime(&localTime);
 
 	index = 0;
 	p = (char*) layout->FormatString;
@@ -77,21 +82,21 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 
 			if (*p)
 			{
-				if ((*p == 'l') && (*(p + 1) == 'v')) /* log level */
+				if ((p[0] == 'l') && (p[1] == 'v')) /* log level */
 				{
 					args[argc++] = (void*) WLOG_LEVELS[message->Level];
 					format[index++] = '%';
 					format[index++] = 's';
 					p++;
 				}
-				else if ((*p == 'm') && (*(p + 1) == 'n')) /* module name */
+				else if ((p[0] == 'm') && (p[1] == 'n')) /* module name */
 				{
 					args[argc++] = (void*) log->Name;
 					format[index++] = '%';
 					format[index++] = 's';
 					p++;
 				}
-				else if ((*p == 'f') && (*(p + 1) == 'l')) /* file */
+				else if ((p[0] == 'f') && (p[1] == 'l')) /* file */
 				{
 					char* file;
 
@@ -110,17 +115,101 @@ void WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = 's';
 					p++;
 				}
-				else if ((*p == 'f') && (*(p + 1) == 'n')) /* function */
+				else if ((p[0] == 'f') && (p[1] == 'n')) /* function */
 				{
 					args[argc++] = (void*) message->FunctionName;
 					format[index++] = '%';
 					format[index++] = 's';
 					p++;
 				}
-				else if ((*p == 'l') && (*(p + 1) == 'n')) /* line number */
+				else if ((p[0] == 'l') && (p[1] == 'n')) /* line number */
 				{
-					args[argc++] = (void*) message->LineNumber;
+					args[argc++] = (void*) (size_t) message->LineNumber;
 					format[index++] = '%';
+					format[index++] = 'd';
+					p++;
+				}
+				else if ((p[0] == 'p') && (p[1] == 'i') && (p[2] == 'd')) /* process id */
+				{
+					args[argc++] = (void*) (size_t) GetCurrentProcessId();
+					format[index++] = '%';
+					format[index++] = 'd';
+					p += 2;
+				}
+				else if ((p[0] == 't') && (p[1] == 'i') && (p[2] == 'd')) /* thread id */
+				{
+					args[argc++] = (void*) (size_t) GetCurrentThreadId();
+					format[index++] = '%';
+					format[index++] = 'd';
+					p += 2;
+				}
+				else if ((p[0] == 'y') && (p[1] == 'r')) /* year */
+				{
+					args[argc++] = (void*) (size_t) localTime.wYear;
+					format[index++] = '%';
+					format[index++] = 'd';
+					p++;
+				}
+				else if ((p[0] == 'm') && (p[1] == 'o')) /* month */
+				{
+					args[argc++] = (void*) (size_t) localTime.wMonth;
+					format[index++] = '%';
+					format[index++] = '0';
+					format[index++] = '2';
+					format[index++] = 'd';
+					p++;
+				}
+				else if ((p[0] == 'd') && (p[1] == 'w')) /* day of week */
+				{
+					args[argc++] = (void*) (size_t) localTime.wDayOfWeek;
+					format[index++] = '%';
+					format[index++] = '0';
+					format[index++] = '2';
+					format[index++] = 'd';
+					p++;
+				}
+				else if ((p[0] == 'd') && (p[1] == 'y')) /* day */
+				{
+					args[argc++] = (void*) (size_t) localTime.wDay;
+					format[index++] = '%';
+					format[index++] = '0';
+					format[index++] = '2';
+					format[index++] = 'd';
+					p++;
+				}
+				else if ((p[0] == 'h') && (p[1] == 'r')) /* hours */
+				{
+					args[argc++] = (void*) (size_t) localTime.wHour;
+					format[index++] = '%';
+					format[index++] = '0';
+					format[index++] = '2';
+					format[index++] = 'd';
+					p++;
+				}
+				else if ((p[0] == 'm') && (p[1] == 'i')) /* minutes */
+				{
+					args[argc++] = (void*) (size_t) localTime.wMinute;
+					format[index++] = '%';
+					format[index++] = '0';
+					format[index++] = '2';
+					format[index++] = 'd';
+					p++;
+				}
+				else if ((p[0] == 's') && (p[1] == 'e')) /* seconds */
+				{
+					args[argc++] = (void*) (size_t) localTime.wSecond;
+					format[index++] = '%';
+					format[index++] = '0';
+					format[index++] = '2';
+					format[index++] = 'd';
+					p++;
+				}
+				else if ((p[0] == 'm') && (p[1] == 'l')) /* milliseconds */
+				{
+					args[argc++] = (void*) (size_t) localTime.wMilliseconds;
+					format[index++] = '%';
+					format[index++] = '0';
+					format[index++] = '3';
 					format[index++] = 'd';
 					p++;
 				}
@@ -237,22 +326,37 @@ wLogLayout* WLog_GetLogLayout(wLog* log)
 void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format)
 {
 	if (layout->FormatString)
+	{
 		free(layout->FormatString);
+		layout->FormatString = NULL;
+	}
 
-	layout->FormatString = _strdup(format);
+	if (format)
+		layout->FormatString = _strdup(format);
 }
 
 wLogLayout* WLog_Layout_New(wLog* log)
 {
+	DWORD nSize;
+	char* env = NULL;
 	wLogLayout* layout;
 
-	layout = (wLogLayout*) malloc(sizeof(wLogLayout));
+	layout = (wLogLayout*) calloc(1, sizeof(wLogLayout));
 
 	if (layout)
 	{
-		ZeroMemory(layout, sizeof(wLogLayout));
+		nSize = GetEnvironmentVariableA("WLOG_PREFIX", NULL, 0);
 
-		layout->FormatString = _strdup("[%lv][%mn] - ");
+		if (nSize)
+		{
+			env = (LPSTR) malloc(nSize);
+			nSize = GetEnvironmentVariableA("WLOG_PREFIX", env, nSize);
+		}
+
+		if (env)
+			layout->FormatString = env;
+		else
+			layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - ");
 	}
 
 	return layout;
@@ -263,7 +367,10 @@ void WLog_Layout_Free(wLog* log, wLogLayout* layout)
 	if (layout)
 	{
 		if (layout->FormatString)
+		{
 			free(layout->FormatString);
+			layout->FormatString = NULL;
+		}
 
 		free(layout);
 	}

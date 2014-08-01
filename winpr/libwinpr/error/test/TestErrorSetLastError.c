@@ -108,7 +108,7 @@ int TestErrorSetLastError(int argc, char* argv[])
 		return -1;
 	}
 
-	printf("Completed %lu iterations.\n", *pLoopCount);
+	printf("Completed %d iterations.\n", *pLoopCount);
 
 	return status;
 }

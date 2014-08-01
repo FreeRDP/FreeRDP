@@ -31,7 +31,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/client/cliprdr.h>
 
 #include "cliprdr_main.h"
@@ -481,8 +480,8 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 			Stream_Read(s, formatDataResponse.requestedFormatData, dataLen);
 		}
 		
-		if (context->ClientFormatDataResponse)
-			context->ClientFormatDataResponse(context, &formatDataResponse);
+		if (context->ServerFormatDataResponse)
+			context->ServerFormatDataResponse(context, &formatDataResponse);
 		
 		free(formatDataResponse.requestedFormatData);
 	}

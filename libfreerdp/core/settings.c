@@ -209,6 +209,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		ZeroMemory(settings, sizeof(rdpSettings));
 
 		settings->ServerMode = (flags & FREERDP_SETTINGS_SERVER_MODE) ? TRUE : FALSE;
+		settings->WaitForOutputBufferFlush = TRUE;
 
 		settings->DesktopWidth = 1024;
 		settings->DesktopHeight = 768;
@@ -255,13 +256,15 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->CompressionEnabled = TRUE;
 
 		if (settings->ServerMode)
-			settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
+			settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;
 		else
-			settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
+			settings->CompressionLevel = PACKET_COMPR_TYPE_RDP61;
 
 		settings->Authentication = TRUE;
 		settings->AuthenticationOnly = FALSE;
 		settings->CredentialsFromStdin = FALSE;
+		settings->DisableCredentialsDelegation = FALSE;
+		settings->AuthenticationLevel = 2;
 
 		settings->ChannelCount = 0;
 		settings->ChannelDefArraySize = 32;
@@ -387,6 +390,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->MultifragMaxRequestSize = 0xFFFF;
 
 		settings->GatewayUseSameCredentials = FALSE;
+		settings->GatewayBypassLocal = TRUE;
 
 		settings->FastPathInput = TRUE;
 		settings->FastPathOutput = TRUE;
@@ -578,6 +582,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		/* BOOL values */
 
 		_settings->ServerMode = settings->ServerMode; /* 16 */
+		_settings->WaitForOutputBufferFlush = settings->WaitForOutputBufferFlush; /* 25 */
 		_settings->NetworkAutoDetect = settings->NetworkAutoDetect; /* 137 */
 		_settings->SupportAsymetricKeys = settings->SupportAsymetricKeys; /* 138 */
 		_settings->SupportErrorInfoPdu = settings->SupportErrorInfoPdu; /* 139 */
@@ -627,6 +632,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->NegotiateSecurityLayer = settings->NegotiateSecurityLayer; /* 1096 */
 		_settings->RestrictedAdminModeRequired = settings->RestrictedAdminModeRequired; /* 1097 */
 		_settings->DisableCredentialsDelegation = settings->DisableCredentialsDelegation; /* 1099 */
+		_settings->AuthenticationLevel = settings->AuthenticationLevel; /* 1100 */
 		_settings->MstscCookieMode = settings->MstscCookieMode; /* 1152 */
 		_settings->SendPreconnectionPdu = settings->SendPreconnectionPdu; /* 1156 */
 		_settings->IgnoreCertificate = settings->IgnoreCertificate; /* 1408 */

@@ -30,7 +30,6 @@
 #include <winpr/stream.h>
 
 #include <freerdp/addin.h>
-#include <freerdp/utils/list.h>
 
 #include "drdynvc_types.h"
 #include "dvcman.h"
@@ -196,8 +195,7 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 {
 	DVCMAN* dvcman;
 
-	dvcman = (DVCMAN*) malloc(sizeof(DVCMAN));
-	ZeroMemory(dvcman, sizeof(DVCMAN));
+	dvcman = (DVCMAN*) calloc(1, sizeof(DVCMAN));
 
 	dvcman->iface.CreateListener = dvcman_create_listener;
 	dvcman->iface.PushEvent = dvcman_push_event;
@@ -205,6 +203,7 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	dvcman->iface.GetChannelId = dvcman_get_channel_id;
 	dvcman->drdynvc = plugin;
 	dvcman->channels = ArrayList_New(TRUE);
+	dvcman->pool = StreamPool_New(TRUE, 10);
 
 	return (IWTSVirtualChannelManager*) dvcman;
 }
@@ -237,6 +236,8 @@ static void dvcman_channel_free(DVCMAN_CHANNEL* channel)
 {
 	if (channel->channel_callback)
 		channel->channel_callback->OnClose(channel->channel_callback);
+
+	DeleteCriticalSection(&(channel->lock));
 
 	free(channel);
 }
@@ -279,6 +280,7 @@ void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
 			pPlugin->Terminated(pPlugin);
 	}
 
+	StreamPool_Free(dvcman->pool);
 	free(dvcman);
 }
 
@@ -304,9 +306,11 @@ static int dvcman_write_channel(IWTSVirtualChannel* pChannel, UINT32 cbSize, BYT
 	int status;
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
 
-	WaitForSingleObject(channel->dvc_chan_mutex, INFINITE);
+	EnterCriticalSection(&(channel->lock));
+
 	status = drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize);
-	ReleaseMutex(channel->dvc_chan_mutex);
+
+	LeaveCriticalSection(&(channel->lock));
 
 	return status;
 }
@@ -335,8 +339,10 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 	IWTSVirtualChannelCallback* pCallback;
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
 
-	channel = (DVCMAN_CHANNEL*) malloc(sizeof(DVCMAN_CHANNEL));
-	ZeroMemory(channel, sizeof(DVCMAN_CHANNEL));
+	channel = (DVCMAN_CHANNEL*) calloc(1, sizeof(DVCMAN_CHANNEL));
+
+	if (!channel)
+		return -1;
 
 	channel->dvcman = dvcman;
 	channel->channel_id = ChannelId;
@@ -350,7 +356,8 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 		{
 			channel->iface.Write = dvcman_write_channel;
 			channel->iface.Close = dvcman_close_channel_iface;
-			channel->dvc_chan_mutex = CreateMutex(NULL, FALSE, NULL);
+
+			InitializeCriticalSection(&(channel->lock));
 
 			bAccept = 1;
 			pCallback = NULL;
@@ -386,6 +393,28 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 	return 1;
 }
 
+int dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
+{
+	DVCMAN_CHANNEL* channel;
+	IWTSVirtualChannelCallback* pCallback;
+
+	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+
+	if (!channel)
+	{
+		DEBUG_WARN("ChannelId %d not found!", ChannelId);
+		return 1;
+	}
+
+	if (channel->status == 0)
+	{
+		pCallback = channel->channel_callback;
+		pCallback->OnOpen(pCallback);
+	}
+
+	return 0;
+}
+
 int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
 {
 	DVCMAN_CHANNEL* channel;
@@ -403,7 +432,7 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 
 	if (channel->dvc_data)
 	{
-		Stream_Free(channel->dvc_data, TRUE);
+		Stream_Release(channel->dvc_data);
 		channel->dvc_data = NULL;
 	}
 
@@ -436,17 +465,19 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UI
 	}
 
 	if (channel->dvc_data)
-		Stream_Free(channel->dvc_data, TRUE);
+		Stream_Release(channel->dvc_data);
 
-	channel->dvc_data = Stream_New(NULL, length);
+	channel->dvc_data = StreamPool_Take(channel->dvcman->pool, length);
+	Stream_AddRef(channel->dvc_data);
 
 	return 0;
 }
 
-int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, BYTE* data, UINT32 data_size)
+int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, wStream* data)
 {
-	int error = 0;
+	int status = 0;
 	DVCMAN_CHANNEL* channel;
+	UINT32 dataSize = Stream_GetRemainingLength(data);
 
 	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
@@ -459,28 +490,30 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 	if (channel->dvc_data)
 	{
 		/* Fragmented data */
-		if (Stream_GetPosition(channel->dvc_data) + data_size > (UINT32) Stream_Capacity(channel->dvc_data))
+		if (Stream_GetPosition(channel->dvc_data) + dataSize > (UINT32) Stream_Capacity(channel->dvc_data))
 		{
 			DEBUG_WARN("data exceeding declared length!");
-			Stream_Free(channel->dvc_data, TRUE);
+			Stream_Release(channel->dvc_data);
 			channel->dvc_data = NULL;
 			return 1;
 		}
 
-		Stream_Write(channel->dvc_data, data, data_size);
+		Stream_Write(channel->dvc_data, Stream_Pointer(data), dataSize);
 
 		if (((size_t) Stream_GetPosition(channel->dvc_data)) >= Stream_Capacity(channel->dvc_data))
 		{
-			error = channel->channel_callback->OnDataReceived(channel->channel_callback,
-				Stream_Capacity(channel->dvc_data), Stream_Buffer(channel->dvc_data));
-			Stream_Free(channel->dvc_data, TRUE);
+			Stream_SealLength(channel->dvc_data);
+			Stream_SetPosition(channel->dvc_data, 0);
+			status = channel->channel_callback->OnDataReceived(channel->channel_callback, channel->dvc_data);
+			Stream_Release(channel->dvc_data);
 			channel->dvc_data = NULL;
 		}
 	}
 	else
 	{
-		error = channel->channel_callback->OnDataReceived(channel->channel_callback, data_size, data);
+		status = channel->channel_callback->OnDataReceived(channel->channel_callback, data);
 	}
 
-	return error;
+	return status;
 }
+

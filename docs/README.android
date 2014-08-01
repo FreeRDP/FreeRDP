@@ -31,10 +31,12 @@ Multiple source versions and builds of static openssl libraries are floating aro
 At the time of writing we have tested and used:
 https://github.com/bmiklautz/Android-external-openssl-ndk-static
 https://github.com/akallabeth/openssl-android
-However, any other static build should work as well.
 
-To build openssl:
+For jpeg support https://github.com/akallabeth/jpeg8d has been tested and used.
+However, any other static builds should work as well.
 
+Build openssl and jpeg
+======================
 Set up ANDROID_NDK and ANDROID_SDK to the absolute paths on your machine.
 From the project root folder run './scripts/android_setup_build_env.sh'
 This will set up openssl and gprof helper libraries as required for FreeRDP.
@@ -47,12 +49,13 @@ Integrated build
 ----------------
 
 Run the following commands in the top level freerdp directory. Don't
-forget to set ANDROID_NDK, ANDROID_SDK and FREERDP_ANDROID_EXTERNAL_SSL_PATH
+forget to set ANDROID_NDK, ANDROID_SDK and FREERDP_EXTERNAL_SSL_PATH
 to the absolut paths on your machine:
 
 cmake -DCMAKE_TOOLCHAIN_FILE=cmake/AndroidToolchain.cmake \
 -DANDROID_NDK="_your_ndk_path_here_" \
--DFREERDP_ANDROID_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
+-DFREERDP_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
+-DFREERDP_EXTERNAL_JPEG_PATH="_your_jpeg_build_root_path_" \
 -DANDROID_SDK="_your_sdk_path_here_" \
 -DCMAKE_BUILD_TYPE=Debug
 make
@@ -62,12 +65,13 @@ After that you should have a client/Android/bin/aFreeRDP-debug.apk.
 Manual ant builds
 -----------------
 First run cmake to prepare the build and build JNI.
-Don't forget to set ANDROID_NDK, ANDROID_SDK and FREERDP_ANDROID_EXTERNAL_SSL_PATH
+Don't forget to set ANDROID_NDK, ANDROID_SDK and FREERDP_EXTERNAL_SSL_PATH
 to the absolut paths on your machine:
 
 cmake -DCMAKE_TOOLCHAIN_FILE=cmake/AndroidToolchain.cmake \
 -DANDROID_NDK="_your_ndk_path_here_" \
--DFREERDP_ANDROID_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
+-DFREERDP_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
+-DFREERDP_EXTERNAL_JPEG_PATH="_your_jpeg_build_root_path_" \
 -DANDROID_SDK="_your_sdk_path_here_" -DANDROID_BUILD_JAVA=OFF \
 -DCMAKE_BUILD_TYPE=Debug
 make
@@ -85,7 +89,7 @@ the eclipse marketplace).
 
 cmake -DCMAKE_TOOLCHAIN_FILE=cmake/AndroidToolchain.cmake \
 -DANDROID_NDK="_your_ndk_path_here_" \
--DFREERDP_ANDROID_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
+-DFREERDP_EXTERNAL_SSL_PATH="_your_ssl_build_root_path_" \
 -DCMAKE_BUILD_TYPE=Debug -DANDROID_BUILD_JAVA=OFF
 make
 
@@ -124,8 +128,11 @@ ANDROID_NDK (used from toolchain file)
 ANDROID_ABI (used from toolchain file)
 * Android ABI to build for (default is armeabi-v7a)
 
-FREERDP_ANDROID_EXTERNAL_SSL_PATH (used by FindOpenSSL)
+FREERDP_EXTERNAL_SSL_PATH (used by FindOpenSSL)
 * absolut root path to the prebuild static openssl libraries
+
+FREERDP_EXTERNAL_JPEG_PATH (used by FindJPEG)
+* absolute root path to the prebuild static jpeg libraries
 
 WITH_DEBUG_ANDROID_JNI
 - enable debugging for JNI

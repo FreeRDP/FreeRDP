@@ -260,7 +260,9 @@ static UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* advance)
  */
 BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size, int srcBpp, int dstBpp)
 {
-        BYTE* TmpBfr;
+	int status;
+	BYTE* TmpBfr;
+	BYTE* pDstData;
 
 	if (srcBpp == 16 && dstBpp == 16)
 	{
@@ -271,7 +273,12 @@ BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int 
 	}
 	else if (srcBpp == 32 && dstBpp == 32)
 	{
-		if (freerdp_bitmap_planar_decompress(srcData, dstData, width, height, size) < 0)
+		pDstData = dstData;
+
+		status = planar_decompress(NULL, srcData, size, &pDstData,
+				PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
+
+		if (status < 0)
 			return FALSE;
 	}
 	else if (srcBpp == 15 && dstBpp == 15)

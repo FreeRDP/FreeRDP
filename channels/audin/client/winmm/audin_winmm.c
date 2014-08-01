@@ -138,8 +138,8 @@ static DWORD audin_winmm_thread_func(void* arg)
 
 static void audin_winmm_free(IAudinDevice* device)
 {
+	UINT32 i;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
-	int i;
 
 	for (i = 0; i < winmm->cFormats; i++)
 	{
@@ -172,8 +172,8 @@ static void audin_winmm_close(IAudinDevice* device)
 
 static void audin_winmm_set_format(IAudinDevice* device, audinFormat* format, UINT32 FramesPerPacket)
 {
+	UINT32 i;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*) device;
-	int i;
 
 	winmm->frames_per_packet = FramesPerPacket;
 

@@ -187,6 +187,7 @@ int freerdp_tcp_write(int sockfd, BYTE* data, int length)
 int freerdp_tcp_wait_read(int sockfd)
 {
 	fd_set fds;
+	struct timeval timeout;
 
 	if (sockfd < 1)
 	{
@@ -196,7 +197,11 @@ int freerdp_tcp_wait_read(int sockfd)
 
 	FD_ZERO(&fds);
 	FD_SET(sockfd, &fds);
-	select(sockfd+1, &fds, NULL, NULL, NULL);
+	timeout.tv_sec = 5;
+	timeout.tv_usec = 0;
+	select(sockfd+1, &fds, NULL, NULL, &timeout);
+	if (!FD_ISSET(sockfd, &fds))
+		return -1;
 
 	return 0;
 }
@@ -204,6 +209,7 @@ int freerdp_tcp_wait_read(int sockfd)
 int freerdp_tcp_wait_write(int sockfd)
 {
 	fd_set fds;
+	struct timeval timeout;
 
 	if (sockfd < 1)
 	{
@@ -213,7 +219,11 @@ int freerdp_tcp_wait_write(int sockfd)
 
 	FD_ZERO(&fds);
 	FD_SET(sockfd, &fds);
-	select(sockfd+1, NULL, &fds, NULL, NULL);
+	timeout.tv_sec = 5;
+	timeout.tv_usec = 0;
+	select(sockfd+1, NULL, &fds, NULL, &timeout);
+	if (!FD_ISSET(sockfd, &fds))
+		return -1;
 
 	return 0;
 }

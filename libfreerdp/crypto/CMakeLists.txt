@@ -30,7 +30,8 @@ set(${MODULE_PREFIX}_SRCS
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS})
+	SOURCES ${${MODULE_PREFIX}_SRCS}
+	EXPORT)
 
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
@@ -70,3 +71,7 @@ else()
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()

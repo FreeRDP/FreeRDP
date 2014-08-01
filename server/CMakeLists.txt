@@ -19,27 +19,29 @@
 
 add_subdirectory(common)
 
-if(WITH_SAMPLE)
-	add_subdirectory(Sample)
-endif()
-
-if(NOT WIN32)
-	if(WITH_X11)
-		add_subdirectory(X11)
+if(FREERDP_VENDOR)
+	if(WITH_SAMPLE)
+		add_subdirectory(Sample)
 	endif()
 
-	if(APPLE AND (NOT IOS))
-		add_subdirectory(Mac)
+	if(NOT WIN32)
+		if(WITH_X11)
+			add_subdirectory(X11)
+		endif()
+
+		if(APPLE AND (NOT IOS))
+			add_subdirectory(Mac)
+		endif()
+	else()
+		add_subdirectory(Windows)
 	endif()
-else()
-	add_subdirectory(Windows)
+
+	if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/FreeRDS")
+		add_subdirectory("FreeRDS")
+	endif()
 endif()
 
-if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/FreeRDS")
-	add_subdirectory("FreeRDS")
-endif()
-
-# Pick up other clients
+# Pick up other servers
 
 set(FILENAME "ModuleOptions.cmake")
 file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")

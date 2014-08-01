@@ -27,7 +27,6 @@
 #include "surface.h"
 #include "transport.h"
 #include "connection.h"
-#include "extension.h"
 #include "message.h"
 
 #include <assert.h>
@@ -79,9 +78,6 @@ BOOL freerdp_connect(freerdp* instance)
 		settings->KeyboardFunctionKey = 12;
 	}
 
-	extension_load_and_init_plugins(rdp->extension);
-	extension_pre_connect(rdp->extension);
-
 	if (!status)
 	{
 		if (!connectErrorCode)
@@ -94,7 +90,7 @@ BOOL freerdp_connect(freerdp* instance)
 			freerdp_set_last_error(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
 		}
 
-		fprintf(stderr, "%s:%d: freerdp_pre_connect failed\n", __FILE__, __LINE__);
+		fprintf(stderr, "freerdp_pre_connect failed\n");
 
 		goto freerdp_connect_finally;
 	}
@@ -104,7 +100,7 @@ BOOL freerdp_connect(freerdp* instance)
 	/* --authonly tests the connection without a UI */
 	if (instance->settings->AuthenticationOnly)
 	{
-		fprintf(stderr, "%s:%d: Authentication only, exit status %d\n", __FILE__, __LINE__, !status);
+		fprintf(stderr, "Authentication only, exit status %d\n", !status);
 		goto freerdp_connect_finally;
 	}
 
@@ -116,8 +112,6 @@ BOOL freerdp_connect(freerdp* instance)
 			if (instance->update->pcap_rfx)
 				instance->update->dump_rfx = TRUE;
 		}
-
-		extension_post_connect(rdp->extension);
 
 		IFCALLRET(instance->PostConnect, status, instance);
 		update_post_connect(instance->update);
@@ -175,8 +169,6 @@ BOOL freerdp_connect(freerdp* instance)
 				update_recv_surfcmds(update, Stream_Length(s) , s);
 				update->EndPaint(update->context);
 				Stream_Release(s);
-			
-				StreamPool_Return(rdp->transport->ReceivePool, s);
 			}
 
 			pcap_close(update->pcap_rfx);
@@ -218,9 +210,14 @@ BOOL freerdp_check_fds(freerdp* instance)
 	int status;
 	rdpRdp* rdp;
 
-	assert(instance);
-	assert(instance->context);
-	assert(instance->context->rdp);
+	if (!instance)
+		return FALSE;
+
+	if (!instance->context)
+		return FALSE;
+
+	if (!instance->context->rdp)
+		return FALSE;
 
 	rdp = instance->context->rdp;
 
@@ -411,6 +408,8 @@ int freerdp_context_new(freerdp* instance)
 	context->pubSub = PubSub_New(TRUE);
 	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEventType));
 
+	context->metrics = metrics_new(context);
+
 	rdp = rdp_new(context);
 	instance->input = rdp->input;
 	instance->update = rdp->update;
@@ -463,6 +462,8 @@ void freerdp_context_free(freerdp* instance)
 	instance->context->graphics = NULL;
 
 	PubSub_Free(instance->context->pubSub);
+
+	metrics_free(instance->context->metrics);
 
 	free(instance->context);
 	instance->context = NULL;

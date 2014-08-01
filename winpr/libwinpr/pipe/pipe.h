@@ -27,6 +27,7 @@
 
 #include "../handle/handle.h"
 
+
 struct winpr_pipe
 {
 	WINPR_HANDLE_DEF();
@@ -37,13 +38,11 @@ typedef struct winpr_pipe WINPR_PIPE;
 
 typedef struct winpr_named_pipe WINPR_NAMED_PIPE;
 
+typedef void(*fnUnrefNamedPipe)(WINPR_NAMED_PIPE* pNamedPipe);
+
 struct winpr_named_pipe
 {
 	WINPR_HANDLE_DEF();
-
-	WINPR_NAMED_PIPE* pBaseNamedPipe;
-
-	DWORD dwRefCount;
 
 	int clientfd;
 	int serverfd;
@@ -61,17 +60,11 @@ struct winpr_named_pipe
 	DWORD nDefaultTimeOut;
 	DWORD dwFlagsAndAttributes;
 	LPOVERLAPPED lpOverlapped;
+
+	fnUnrefNamedPipe pfnUnrefNamedPipe;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-wArrayList* WinPR_GetBaseNamedPipeList();
-
-#ifdef __cplusplus
-}
-#endif
+BOOL winpr_destroy_named_pipe(WINPR_NAMED_PIPE* pNamedPipe);
 
 #endif
 

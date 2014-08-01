@@ -1186,7 +1186,14 @@ void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking)
 int rdp_check_fds(rdpRdp* rdp)
 {
 	int status;
+
 	status = transport_check_fds(rdp->transport);
+
+	if (status == 1)
+	{
+		status = rdp_client_redirect(rdp); /* session redirection */
+	}
+
 	return status;
 }
 
@@ -1199,47 +1206,114 @@ rdpRdp* rdp_new(rdpContext* context)
 {
 	rdpRdp* rdp;
 	DWORD flags;
+	BOOL newSettings = FALSE;
 
-	rdp = (rdpRdp*) malloc(sizeof(rdpRdp));
+	rdp = (rdpRdp*) calloc(1, sizeof(rdpRdp));
+	if (!rdp)
+		return NULL;
 
-	if (rdp)
+	rdp->context = context;
+	rdp->instance = context->instance;
+
+	flags = 0;
+
+	if (context->ServerMode)
+		flags |= FREERDP_SETTINGS_SERVER_MODE;
+
+	if (!context->settings)
 	{
-		ZeroMemory(rdp, sizeof(rdpRdp));
-
-		rdp->context = context;
-		rdp->instance = context->instance;
-
-		flags = 0;
-
-		if (context->ServerMode)
-			flags |= FREERDP_SETTINGS_SERVER_MODE;
-
+		context->settings = freerdp_settings_new(flags);
 		if (!context->settings)
-			context->settings = freerdp_settings_new(flags);
-
-		rdp->settings = context->settings;
-		rdp->settings->instance = context->instance;
-
-		if (context->instance)
-			context->instance->settings = rdp->settings;
-
-		rdp->extension = extension_new(context->instance);
-		rdp->transport = transport_new(rdp->settings);
-		rdp->transport->rdp = rdp;
-		rdp->license = license_new(rdp);
-		rdp->input = input_new(rdp);
-		rdp->update = update_new(rdp);
-		rdp->fastpath = fastpath_new(rdp);
-		rdp->nego = nego_new(rdp->transport);
-		rdp->mcs = mcs_new(rdp->transport);
-		rdp->redirection = redirection_new();
-		rdp->autodetect = autodetect_new();
-		rdp->heartbeat = heartbeat_new();
-		rdp->multitransport = multitransport_new();
-		rdp->bulk = bulk_new(context);
+			goto out_free;
+		newSettings = TRUE;
 	}
 
+	rdp->settings = context->settings;
+	rdp->settings->instance = context->instance;
+	
+	if (context->instance)
+		context->instance->settings = rdp->settings;
+
+	rdp->transport = transport_new(rdp->settings);
+	if (!rdp->transport)
+		goto out_free_settings;
+	
+	rdp->transport->rdp = rdp;
+
+	rdp->license = license_new(rdp);
+	if (!rdp->license)
+		goto out_free_transport;
+
+	rdp->input = input_new(rdp);
+	if (!rdp->input)
+		goto out_free_license;
+
+	rdp->update = update_new(rdp);
+	if (!rdp->update)
+		goto out_free_input;
+
+	rdp->fastpath = fastpath_new(rdp);
+	if (!rdp->fastpath)
+		goto out_free_update;
+
+	rdp->nego = nego_new(rdp->transport);
+	if (!rdp->nego)
+		goto out_free_fastpath;
+
+	rdp->mcs = mcs_new(rdp->transport);
+	if (!rdp->mcs)
+		goto out_free_nego;
+
+	rdp->redirection = redirection_new();
+	if (!rdp->redirection)
+		goto out_free_mcs;
+
+	rdp->autodetect = autodetect_new();
+	if (!rdp->autodetect)
+		goto out_free_redirection;
+
+	rdp->heartbeat = heartbeat_new();
+	if (!rdp->heartbeat)
+		goto out_free_autodetect;
+
+	rdp->multitransport = multitransport_new();
+	if (!rdp->multitransport)
+		goto out_free_heartbeat;
+
+	rdp->bulk = bulk_new(context);
+	if (!rdp->bulk)
+		goto out_free_multitransport;
+
 	return rdp;
+
+out_free_multitransport:
+	multitransport_free(rdp->multitransport);
+out_free_heartbeat:
+	heartbeat_free(rdp->heartbeat);
+out_free_autodetect:
+	autodetect_free(rdp->autodetect);
+out_free_redirection:
+	redirection_free(rdp->redirection);
+out_free_mcs:
+	mcs_free(rdp->mcs);
+out_free_nego:
+	nego_free(rdp->nego);
+out_free_fastpath:
+	fastpath_free(rdp->fastpath);
+out_free_update:
+	update_free(rdp->update);
+out_free_input:
+	input_free(rdp->input);
+out_free_license:
+	license_free(rdp->license);
+out_free_transport:
+	transport_free(rdp->transport);
+out_free_settings:
+	if (newSettings)
+		freerdp_settings_free(rdp->settings);
+out_free:
+	free(rdp);
+	return NULL;
 }
 
 void rdp_reset(rdpRdp* rdp)
@@ -1297,7 +1371,6 @@ void rdp_free(rdpRdp* rdp)
 		crypto_hmac_free(rdp->fips_hmac);
 		freerdp_settings_free(rdp->settings);
 		freerdp_settings_free(rdp->settingsCopy);
-		extension_free(rdp->extension);
 		transport_free(rdp->transport);
 		license_free(rdp->license);
 		input_free(rdp->input);

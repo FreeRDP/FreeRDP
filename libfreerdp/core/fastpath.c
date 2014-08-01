@@ -299,7 +299,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 			break;
 
 		case FASTPATH_UPDATETYPE_COLOR:
-			if (!update_read_pointer_color(s, &pointer->pointer_color))
+			if (!update_read_pointer_color(s, &pointer->pointer_color, 24))
 				return -1;
 			IFCALL(pointer->PointerColor, context, &pointer->pointer_color);
 			break;
@@ -910,7 +910,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		BYTE* pDstData = NULL;
 		UINT32 compressionFlags = 0;
 		BYTE pad = 0;
-		BYTE* pSignature;
+		BYTE* pSignature = NULL;
 
 		fpUpdatePduHeader.action = 0;
 		fpUpdatePduHeader.secFlags = 0;
@@ -932,7 +932,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		{
 			if (bulk_compress(rdp->bulk, pSrcData, SrcSize, &pDstData, &DstSize, &compressionFlags) >= 0)
 			{
-				if (compressionFlags & PACKET_COMPRESSED)
+				if (compressionFlags)
 				{
 					fpUpdateHeader.compressionFlags = compressionFlags;
 					fpUpdateHeader.compression = FASTPATH_OUTPUT_COMPRESSION_USED;

@@ -760,8 +760,6 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 		return;
 	
 	gdi_free(context->instance);
-
-	freerdp_channels_global_uninit();
 	
 	if (pixel_data)
 		free(pixel_data);

@@ -264,15 +264,14 @@ rdpCertificateStore* certificate_store_new(rdpSettings* settings)
 {
 	rdpCertificateStore* certificate_store;
 
-	certificate_store = (rdpCertificateStore*) malloc(sizeof(rdpCertificateStore));
+	certificate_store = (rdpCertificateStore *)calloc(1, sizeof(rdpCertificateStore));
 
-	if (certificate_store != NULL)
-	{
-		ZeroMemory(certificate_store, sizeof(rdpCertificateStore));
+	if (!certificate_store)
+		return NULL;
 
-		certificate_store->settings = settings;
-		certificate_store_init(certificate_store);
-	}
+	certificate_store->settings = settings;
+	certificate_store_init(certificate_store);
+	/* TODO: certificate_store_init should not fail silently */
 
 	return certificate_store;
 }

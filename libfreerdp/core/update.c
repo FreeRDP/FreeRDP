@@ -286,16 +286,32 @@ BOOL update_read_pointer_system(wStream* s, POINTER_SYSTEM_UPDATE* pointer_syste
 	return TRUE;
 }
 
-BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color)
+BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, int xorBpp)
 {
+	BYTE *newMask;
+	int scanlineSize;
+
 	if (Stream_GetRemainingLength(s) < 14)
 		return FALSE;
 
 	Stream_Read_UINT16(s, pointer_color->cacheIndex); /* cacheIndex (2 bytes) */
 	Stream_Read_UINT16(s, pointer_color->xPos); /* xPos (2 bytes) */
 	Stream_Read_UINT16(s, pointer_color->yPos); /* yPos (2 bytes) */
+
+	/**
+	 *  As stated in 2.2.9.1.1.4.4 Color Pointer Update:
+	 *  The maximum allowed pointer width/height is 96 pixels if the client indicated support
+	 *  for large pointers by setting the LARGE_POINTER_FLAG (0x00000001) in the Large
+	 *  Pointer Capability Set (section 2.2.7.2.7). If the LARGE_POINTER_FLAG was not
+	 *  set, the maximum allowed pointer width/height is 32 pixels.
+	 *
+	 *  So we check for a maximum of 96 for CVE-2014-0250.
+	 */
 	Stream_Read_UINT16(s, pointer_color->width); /* width (2 bytes) */
 	Stream_Read_UINT16(s, pointer_color->height); /* height (2 bytes) */
+	if ((pointer_color->width > 96) || (pointer_color->height > 96))
+		return FALSE;
+
 	Stream_Read_UINT16(s, pointer_color->lengthAndMask); /* lengthAndMask (2 bytes) */
 	Stream_Read_UINT16(s, pointer_color->lengthXorMask); /* lengthXorMask (2 bytes) */
 
@@ -312,26 +328,65 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color)
 
 	if (pointer_color->lengthXorMask > 0)
 	{
+		/**
+		 * Spec states that:
+		 *
+		 * xorMaskData (variable): A variable-length array of bytes. Contains the 24-bpp, bottom-up
+		 * XOR mask scan-line data. The XOR mask is padded to a 2-byte boundary for each encoded
+		 * scan-line. For example, if a 3x3 pixel cursor is being sent, then each scan-line will consume 10
+		 * bytes (3 pixels per scan-line multiplied by 3 bytes per pixel, rounded up to the next even
+		 * number of bytes).
+		 *
+		 * In fact instead of 24-bpp, the bpp parameter is given by the containing packet.
+		 */
 		if (Stream_GetRemainingLength(s) < pointer_color->lengthXorMask)
 			return FALSE;
 
-		if (!pointer_color->xorMaskData)
-			pointer_color->xorMaskData = malloc(pointer_color->lengthXorMask);
-		else
-			pointer_color->xorMaskData = realloc(pointer_color->xorMaskData, pointer_color->lengthXorMask);
+		scanlineSize = (7 + xorBpp * pointer_color->width) / 8;
+		scanlineSize = ((scanlineSize + 1) / 2) * 2;
+		if (scanlineSize * pointer_color->height != pointer_color->lengthXorMask)
+		{
+			fprintf(stderr, "%s: invalid lengthXorMask: width=%d height=%d, %d instead of %d\n", __FUNCTION__,
+					pointer_color->width, pointer_color->height,
+					pointer_color->lengthXorMask, scanlineSize * pointer_color->height);
+			return FALSE;
+		}
+
+		newMask = realloc(pointer_color->xorMaskData, pointer_color->lengthXorMask);
+		if (!newMask)
+			return FALSE;
+
+		pointer_color->xorMaskData = newMask;
 
 		Stream_Read(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
 	}
 
 	if (pointer_color->lengthAndMask > 0)
 	{
+		/**
+		 * andMaskData (variable): A variable-length array of bytes. Contains the 1-bpp, bottom-up
+		 * AND mask scan-line data. The AND mask is padded to a 2-byte boundary for each encoded
+		 * scan-line. For example, if a 7x7 pixel cursor is being sent, then each scan-line will consume 2
+		 * bytes (7 pixels per scan-line multiplied by 1 bpp, rounded up to the next even number of
+		 * bytes).
+		 */
 		if (Stream_GetRemainingLength(s) < pointer_color->lengthAndMask)
 			return FALSE;
 
-		if (!pointer_color->andMaskData)
-			pointer_color->andMaskData = malloc(pointer_color->lengthAndMask);
-		else
-			pointer_color->andMaskData = realloc(pointer_color->andMaskData, pointer_color->lengthAndMask);
+		scanlineSize = ((7 + pointer_color->width) / 8);
+		scanlineSize = ((1 + scanlineSize) / 2) * 2;
+		if (scanlineSize * pointer_color->height != pointer_color->lengthAndMask)
+		{
+			fprintf(stderr, "%s: invalid lengthAndMask: %d instead of %d\n", __FUNCTION__,
+					pointer_color->lengthAndMask, scanlineSize * pointer_color->height);
+			return FALSE;
+		}
+
+		newMask = realloc(pointer_color->andMaskData, pointer_color->lengthAndMask);
+		if (!newMask)
+			return FALSE;
+
+		pointer_color->andMaskData = newMask;
 
 		Stream_Read(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
 	}
@@ -348,7 +403,12 @@ BOOL update_read_pointer_new(wStream* s, POINTER_NEW_UPDATE* pointer_new)
 		return FALSE;
 
 	Stream_Read_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
-	return update_read_pointer_color(s, &pointer_new->colorPtrAttr); /* colorPtrAttr */
+	if ((pointer_new->xorBpp < 1) || (pointer_new->xorBpp > 32))
+	{
+		fprintf(stderr, "%s: invalid xorBpp %d\n", __FUNCTION__, pointer_new->xorBpp);
+		return FALSE;
+	}
+	return update_read_pointer_color(s, &pointer_new->colorPtrAttr, pointer_new->xorBpp); /* colorPtrAttr */
 }
 
 BOOL update_read_pointer_cached(wStream* s, POINTER_CACHED_UPDATE* pointer_cached)
@@ -387,7 +447,7 @@ BOOL update_recv_pointer(rdpUpdate* update, wStream* s)
 			break;
 
 		case PTR_MSG_TYPE_COLOR:
-			if (!update_read_pointer_color(s, &pointer->pointer_color))
+			if (!update_read_pointer_color(s, &pointer->pointer_color, 24))
 				return FALSE;
 			IFCALL(pointer->PointerColor, context, &pointer->pointer_color);
 			break;
@@ -544,7 +604,7 @@ static void update_end_paint(rdpContext* context)
 
 	if (update->numberOrders > 0)
 	{
-		printf("Sending %d orders\n", update->numberOrders);
+		fprintf(stderr, "%s: sending %d orders\n", __FUNCTION__, update->numberOrders);
 		fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
 	}
 
