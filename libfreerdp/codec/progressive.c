@@ -72,6 +72,280 @@ const char* progressive_get_block_type_string(UINT16 blockType)
 	return "PROGRESSIVE_WBT_UNKNOWN";
 }
 
+/* Constants used within the RLGR1/RLGR3 algorithm */
+#define KPMAX	(80)  /* max value for kp or krp */
+#define LSGR	(3)   /* shift count to convert kp to k */
+#define UP_GR	(4)   /* increase in kp after a zero run in RL mode */
+#define DN_GR	(6)   /* decrease in kp after a nonzero symbol in RL mode */
+#define UQ_GR	(3)   /* increase in kp after nonzero symbol in GR mode */
+#define DQ_GR	(3)   /* decrease in kp after zero symbol in GR mode */
+
+/**
+ * __lzcnt16, __lzcnt, __lzcnt64:
+ * http://msdn.microsoft.com/en-us/library/bb384809/
+ */
+
+#ifndef _WIN32
+
+INLINE UINT16 __lzcnt16(UINT16 value)
+{
+	return (UINT16) (__builtin_clz((UINT32) value) - 16);
+}
+
+INLINE UINT32 __lzcnt(UINT32 value)
+{
+	return __builtin_clz(value);
+}
+
+INLINE UINT64 __lzcnt64(UINT64 value)
+{
+	return __builtin_clzll(value);
+}
+
+#endif
+
+int progressive_rfx_rlgr_decode(PROGRESSIVE_CONTEXT* progressive, BYTE* data, UINT16 length)
+{
+	int vk;
+	int run;
+	INT16 mag;
+	int k, kp;
+	int kr, krp;
+	UINT16 code;
+	UINT32 sign;
+	wBitStream* bs;
+	UINT32 accumulator;
+
+	k = 1;
+	kp = k << LSGR;
+
+	kr = 1;
+	krp = kr << LSGR;
+
+	bs = BitStream_New();
+
+	BitStream_Attach(bs, data, length);
+	BitStream_Fetch(bs);
+
+	while ((bs->length - bs->position) > 0)
+	{
+		accumulator = bs->accumulator;
+
+		if (k)
+		{
+			/* Run-Length (RL) Mode */
+
+			run = 0;
+
+			/* count number of leading 0s */
+
+			vk = __lzcnt(bs->accumulator);
+
+			while (vk && (vk % 32 == 0))
+			{
+				BitStream_Shift(bs, vk);
+				vk += __lzcnt(bs->accumulator);
+			}
+
+			BitStream_Shift(bs, ((vk % 32) + 1));
+
+			while (vk--)
+			{
+				run += (1 << k); /* add (1 << k) to run length */
+
+				/* update k, kp params */
+
+				kp += UP_GR;
+
+				if (kp > KPMAX)
+					kp = KPMAX;
+				else if (kp < 0)
+					kp = 0;
+
+				k = kp >> LSGR;
+			}
+
+			/* next k bits contain run length remainder */
+
+			run += (bs->accumulator >> (32 - k));
+			BitStream_Shift(bs, k);
+
+			/* read sign bit */
+
+			sign = (bs->accumulator & 0x80000000) ? 1 : 0;
+			BitStream_Shift(bs, 1);
+
+			/* count number of leading 1s */
+
+			vk = __lzcnt(~(bs->accumulator));
+
+			while (vk && (vk % 32 == 0))
+			{
+				BitStream_Shift(bs, vk);
+				vk += __lzcnt(~(bs->accumulator));
+			}
+
+			BitStream_Shift(bs, ((vk % 32) + 1));
+
+			/* add (vk << kr) to code */
+
+			code = (vk << kr);
+
+			/* next kr bits contain code remainder */
+
+			code += (bs->accumulator >> (32 - kr));
+			BitStream_Shift(bs, kr);
+
+			if (!vk)
+			{
+				/* update kr, krp params */
+
+				krp += -2;
+
+				if (krp > KPMAX)
+					krp = KPMAX;
+				else if (krp < 0)
+					krp = 0;
+
+				kr = krp >> LSGR;
+			}
+			else if (vk != 1)
+			{
+				/* update kr, krp params */
+
+				krp += vk;
+
+				if (krp > KPMAX)
+					krp = KPMAX;
+				else if (krp < 0)
+					krp = 0;
+
+				kr = krp >> LSGR;
+			}
+
+			/* update k, kp params */
+
+			kp += -DN_GR;
+
+			if (kp > KPMAX)
+				kp = KPMAX;
+			else if (kp < 0)
+				kp = 0;
+
+			k = kp >> LSGR;
+
+			/* compute magnitude from code */
+
+			if (sign)
+				mag = ((INT16) (code + 1)) * -1;
+			else
+				mag = (INT16) (code + 1);
+
+			/* write to output stream */
+
+			// WriteZeroes(run);
+			// WriteValue(mag);
+		}
+		else
+		{
+			/* Golomb-Rice (GR) Mode */
+
+			/* count number of leading 1s */
+
+			vk = __lzcnt(~(bs->accumulator));
+
+			while (vk && (vk % 32 == 0))
+			{
+				BitStream_Shift(bs, vk);
+				vk += __lzcnt(~(bs->accumulator));
+			}
+
+			BitStream_Shift(bs, ((vk % 32) + 1));
+
+			/* add (vk << kr) to code */
+
+			code = (vk << kr);
+
+			/* next kr bits contain code remainder */
+
+			code += (bs->accumulator >> (32 - kr));
+			BitStream_Shift(bs, kr);
+
+			if (!vk)
+			{
+				/* update kr, krp params */
+
+				krp += -2;
+
+				if (krp > KPMAX)
+					krp = KPMAX;
+				else if (krp < 0)
+					krp = 0;
+
+				kr = krp >> LSGR;
+			}
+			else if (vk != 1)
+			{
+				/* update kr, krp params */
+
+				krp += vk;
+
+				if (krp > KPMAX)
+					krp = KPMAX;
+				else if (krp < 0)
+					krp = 0;
+
+				kr = krp >> LSGR;
+			}
+
+			if (!code)
+			{
+				/* update k, kp params */
+
+				kp += UQ_GR;
+
+				if (kp > KPMAX)
+					kp = KPMAX;
+				else if (kp < 0)
+					kp = 0;
+
+				k = kp >> LSGR;
+
+				// WriteValue(0);
+			}
+			else
+			{
+				/* update k, kp params */
+
+				kp += -DQ_GR;
+
+				if (kp > KPMAX)
+					kp = KPMAX;
+				else if (kp < 0)
+					kp = 0;
+
+				k = kp >> LSGR;
+
+				/*
+				 * code = 2 * mag - sign
+				 * sign + code = 2 * mag
+				 */
+
+				if (code & 1)
+					mag = ((INT16) ((code + 1) >> 1)) * -1;
+				else
+					mag = (INT16) (mag >> 1);
+
+				// WriteValue(mag);
+			}
+		}
+	}
+
+	BitStream_Free(bs);
+
+	return 1;
+}
+
 int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROGRESSIVE_TILE* tile)
 {
 	PROGRESSIVE_BLOCK_REGION* region;
