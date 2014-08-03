@@ -139,9 +139,6 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 
 			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
-				printf("__lzcnt loop: cnt: %d length: %d position: %d\n",
-						cnt, bs->length, bs->position);
-
 				BitStream_Shift32(bs);
 
 				cnt = __lzcnt(bs->accumulator);
@@ -182,7 +179,8 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 			if (BitStream_GetRemainingLength(bs) < k)
 				break;
 
-			run += (bs->accumulator >> (32 - k));
+			bs->mask = ((1 << k) - 1);
+			run += ((bs->accumulator >> (32 - k)) & bs->mask);
 			BitStream_Shift(bs, k);
 
 			/* read sign bit */
@@ -225,17 +223,18 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 
 			BitStream_Shift(bs, 1);
 
-			/* add (vk << kr) to code */
-
-			code = (vk << kr);
-
 			/* next kr bits contain code remainder */
 
 			if (BitStream_GetRemainingLength(bs) < kr)
 				break;
 
-			code += (bs->accumulator >> (32 - kr));
+			bs->mask = ((1 << kr) - 1);
+			code = (UINT16) ((bs->accumulator >> (32 - kr)) & bs->mask);
 			BitStream_Shift(bs, kr);
+
+			/* add (vk << kr) to code */
+
+			code |= (vk << kr);
 
 			if (!vk)
 			{
@@ -340,17 +339,18 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 
 			BitStream_Shift(bs, 1);
 
-			/* add (vk << kr) to code */
-
-			code = (vk << kr);
-
 			/* next kr bits contain code remainder */
 
 			if (BitStream_GetRemainingLength(bs) < kr)
 				break;
 
-			code += (bs->accumulator >> (32 - kr));
+			bs->mask = ((1 << kr) - 1);
+			code = (UINT16) ((bs->accumulator >> (32 - kr)) & bs->mask);
 			BitStream_Shift(bs, kr);
+
+			/* add (vk << kr) to code */
+
+			code |= (vk << kr);
 
 			if (!vk)
 			{
@@ -415,7 +415,7 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 				if (code & 1)
 					mag = ((INT16) ((code + 1) >> 1)) * -1;
 				else
-					mag = (INT16) (mag >> 1);
+					mag = (INT16) (code >> 1);
 			}
 
 			offset = (int) (pOutput - pDstData);
