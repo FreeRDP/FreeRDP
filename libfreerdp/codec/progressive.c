@@ -80,41 +80,21 @@ const char* progressive_get_block_type_string(UINT16 blockType)
 #define UQ_GR	(3)   /* increase in kp after nonzero symbol in GR mode */
 #define DQ_GR	(3)   /* decrease in kp after zero symbol in GR mode */
 
-/**
- * __lzcnt16, __lzcnt, __lzcnt64:
- * http://msdn.microsoft.com/en-us/library/bb384809/
- */
-
-#ifndef _WIN32
-
-INLINE UINT16 __lzcnt16(UINT16 value)
-{
-	return (UINT16) (__builtin_clz((UINT32) value) - 16);
-}
-
-INLINE UINT32 __lzcnt(UINT32 value)
-{
-	return __builtin_clz(value);
-}
-
-INLINE UINT64 __lzcnt64(UINT64 value)
-{
-	return __builtin_clzll(value);
-}
-
-#endif
-
-int progressive_rfx_rlgr_decode(PROGRESSIVE_CONTEXT* progressive, BYTE* data, UINT16 length)
+int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 DstSize)
 {
 	int vk;
 	int run;
+	int cnt;
+	int size;
+	int nbits;
+	int offset;
 	INT16 mag;
 	int k, kp;
 	int kr, krp;
 	UINT16 code;
 	UINT32 sign;
+	INT16* pOutput;
 	wBitStream* bs;
-	UINT32 accumulator;
 
 	k = 1;
 	kp = k << LSGR;
@@ -122,15 +102,24 @@ int progressive_rfx_rlgr_decode(PROGRESSIVE_CONTEXT* progressive, BYTE* data, UI
 	kr = 1;
 	krp = kr << LSGR;
 
+	if (!pSrcData)
+		return -2001;
+
+	if (SrcSize < 1)
+		return -2002;
+
+	pOutput = pDstData;
+
 	bs = BitStream_New();
 
-	BitStream_Attach(bs, data, length);
+	if (!bs)
+		return -2003;
+
+	BitStream_Attach(bs, pSrcData, SrcSize);
 	BitStream_Fetch(bs);
 
-	while ((bs->length - bs->position) > 0)
+	while ((BitStream_GetRemainingLength(bs) > 0) && ((pOutput - pDstData) < DstSize))
 	{
-		accumulator = bs->accumulator;
-
 		if (k)
 		{
 			/* Run-Length (RL) Mode */
@@ -139,15 +128,38 @@ int progressive_rfx_rlgr_decode(PROGRESSIVE_CONTEXT* progressive, BYTE* data, UI
 
 			/* count number of leading 0s */
 
-			vk = __lzcnt(bs->accumulator);
+			cnt = __lzcnt(bs->accumulator);
 
-			while (vk && (vk % 32 == 0))
+			nbits = BitStream_GetRemainingLength(bs);
+
+			if (cnt > nbits)
+				cnt = nbits;
+
+			vk = cnt;
+
+			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
-				BitStream_Shift(bs, vk);
-				vk += __lzcnt(bs->accumulator);
+				printf("__lzcnt loop: cnt: %d length: %d position: %d\n",
+						cnt, bs->length, bs->position);
+
+				BitStream_Shift32(bs);
+
+				cnt = __lzcnt(bs->accumulator);
+
+				nbits = BitStream_GetRemainingLength(bs);
+
+				if (cnt > nbits)
+					cnt = nbits;
+
+				vk += cnt;
 			}
 
-			BitStream_Shift(bs, ((vk % 32) + 1));
+			BitStream_Shift(bs, (vk % 32));
+
+			if (BitStream_GetRemainingLength(bs) < 1)
+				break;
+
+			BitStream_Shift(bs, 1);
 
 			while (vk--)
 			{
@@ -167,31 +179,60 @@ int progressive_rfx_rlgr_decode(PROGRESSIVE_CONTEXT* progressive, BYTE* data, UI
 
 			/* next k bits contain run length remainder */
 
+			if (BitStream_GetRemainingLength(bs) < k)
+				break;
+
 			run += (bs->accumulator >> (32 - k));
 			BitStream_Shift(bs, k);
 
 			/* read sign bit */
+
+			if (BitStream_GetRemainingLength(bs) < 1)
+				break;
 
 			sign = (bs->accumulator & 0x80000000) ? 1 : 0;
 			BitStream_Shift(bs, 1);
 
 			/* count number of leading 1s */
 
-			vk = __lzcnt(~(bs->accumulator));
+			cnt = __lzcnt(~(bs->accumulator));
 
-			while (vk && (vk % 32 == 0))
+			nbits = BitStream_GetRemainingLength(bs);
+
+			if (cnt > nbits)
+				cnt = nbits;
+
+			vk = cnt;
+
+			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
-				BitStream_Shift(bs, vk);
-				vk += __lzcnt(~(bs->accumulator));
+				BitStream_Shift32(bs);
+
+				cnt = __lzcnt(~(bs->accumulator));
+
+				nbits = BitStream_GetRemainingLength(bs);
+
+				if (cnt > nbits)
+					cnt = nbits;
+
+				vk += cnt;
 			}
 
-			BitStream_Shift(bs, ((vk % 32) + 1));
+			BitStream_Shift(bs, (vk % 32));
+
+			if (BitStream_GetRemainingLength(bs) < 1)
+				break;
+
+			BitStream_Shift(bs, 1);
 
 			/* add (vk << kr) to code */
 
 			code = (vk << kr);
 
 			/* next kr bits contain code remainder */
+
+			if (BitStream_GetRemainingLength(bs) < kr)
+				break;
 
 			code += (bs->accumulator >> (32 - kr));
 			BitStream_Shift(bs, kr);
@@ -243,8 +284,25 @@ int progressive_rfx_rlgr_decode(PROGRESSIVE_CONTEXT* progressive, BYTE* data, UI
 
 			/* write to output stream */
 
-			// WriteZeroes(run);
-			// WriteValue(mag);
+			offset = (int) (pOutput - pDstData);
+			size = run;
+
+			if ((offset + size) > DstSize)
+				size = DstSize - offset;
+
+			if (size)
+			{
+				ZeroMemory(pOutput, size * sizeof(INT16));
+				pOutput += size;
+			}
+
+			offset = (int) (pOutput - pDstData);
+
+			if ((offset + 1) <= DstSize)
+			{
+				*pOutput = mag;
+				pOutput++;
+			}
 		}
 		else
 		{
@@ -252,21 +310,44 @@ int progressive_rfx_rlgr_decode(PROGRESSIVE_CONTEXT* progressive, BYTE* data, UI
 
 			/* count number of leading 1s */
 
-			vk = __lzcnt(~(bs->accumulator));
+			cnt = __lzcnt(~(bs->accumulator));
 
-			while (vk && (vk % 32 == 0))
+			nbits = BitStream_GetRemainingLength(bs);
+
+			if (cnt > nbits)
+				cnt = nbits;
+
+			vk = cnt;
+
+			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
-				BitStream_Shift(bs, vk);
-				vk += __lzcnt(~(bs->accumulator));
+				BitStream_Shift32(bs);
+
+				cnt = __lzcnt(~(bs->accumulator));
+
+				nbits = BitStream_GetRemainingLength(bs);
+
+				if (cnt > nbits)
+					cnt = nbits;
+
+				vk += cnt;
 			}
 
-			BitStream_Shift(bs, ((vk % 32) + 1));
+			BitStream_Shift(bs, (vk % 32));
+
+			if (BitStream_GetRemainingLength(bs) < 1)
+				break;
+
+			BitStream_Shift(bs, 1);
 
 			/* add (vk << kr) to code */
 
 			code = (vk << kr);
 
 			/* next kr bits contain code remainder */
+
+			if (BitStream_GetRemainingLength(bs) < kr)
+				break;
 
 			code += (bs->accumulator >> (32 - kr));
 			BitStream_Shift(bs, kr);
@@ -311,7 +392,7 @@ int progressive_rfx_rlgr_decode(PROGRESSIVE_CONTEXT* progressive, BYTE* data, UI
 
 				k = kp >> LSGR;
 
-				// WriteValue(0);
+				mag = 0;
 			}
 			else
 			{
@@ -335,15 +416,21 @@ int progressive_rfx_rlgr_decode(PROGRESSIVE_CONTEXT* progressive, BYTE* data, UI
 					mag = ((INT16) ((code + 1) >> 1)) * -1;
 				else
 					mag = (INT16) (mag >> 1);
+			}
 
-				// WriteValue(mag);
+			offset = (int) (pOutput - pDstData);
+
+			if ((offset + 1) <= DstSize)
+			{
+				*pOutput = mag;
+				pOutput++;
 			}
 		}
 	}
 
 	BitStream_Free(bs);
 
-	return 1;
+	return (int) (pOutput - pDstData);
 }
 
 int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROGRESSIVE_TILE* tile)
