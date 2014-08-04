@@ -1092,11 +1092,25 @@ BYTE* freerdp_mono_image_convert(BYTE* srcData, int width, int height, int srcBp
 			{
 				if ((bitMask >> bitIndex) & 0x01)
 				{
-					*dst32 = (clrconv->invert) ? BGR32(redBg, greenBg, blueBg) : RGB32(redBg, greenBg, blueBg);
+					if (clrconv->alpha)
+					{
+						*dst32 = (clrconv->invert) ? ABGR32(0xFF, redBg, greenBg, blueBg) : ARGB32(0xFF, redBg, greenBg, blueBg);
+					}
+					else
+					{
+						*dst32 = (clrconv->invert) ? BGR32(redBg, greenBg, blueBg) : RGB32(redBg, greenBg, blueBg);
+					}
 				}
 				else
 				{
-					*dst32 = (clrconv->invert) ? BGR32(redFg, greenFg, blueFg) : RGB32(redFg, greenFg, blueFg);
+					if (clrconv->alpha)
+					{
+						*dst32 = (clrconv->invert) ? ABGR32(0xFF, redFg, greenFg, blueFg) : ARGB32(0xFF, redFg, greenFg, blueFg);
+					}
+					else
+					{
+						*dst32 = (clrconv->invert) ? BGR32(redFg, greenFg, blueFg) : RGB32(redFg, greenFg, blueFg);
+					}
 				}
 				dst32++;
 			}
