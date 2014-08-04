@@ -836,44 +836,15 @@ JNIEXPORT void JNICALL jni_freerdp_set_performance_flags(
 	}
 
 	/* store performance settings */
-	if (disableWallpaper == JNI_TRUE)
-		settings->DisableWallpaper = TRUE;
-
-	if (disableFullWindowDrag == JNI_TRUE)
-		settings->DisableFullWindowDrag = TRUE;
-
-	if (disableMenuAnimations == JNI_TRUE)
-		settings->DisableMenuAnims = TRUE;
-
-	if (disableTheming == JNI_TRUE)
-		settings->DisableThemes = TRUE;
-
-	if (enableFontSmoothing == JNI_TRUE)
-		settings->AllowFontSmoothing = TRUE;
-
-	if(enableDesktopComposition == JNI_TRUE)
-		settings->AllowDesktopComposition = TRUE;
-
+	settings->DisableWallpaper = (disableWallpaper == JNI_TRUE) ? TRUE : FALSE;
+	settings->DisableFullWindowDrag = (disableFullWindowDrag == JNI_TRUE) ? TRUE : FALSE;
+	settings->DisableMenuAnims = (disableMenuAnimations == JNI_TRUE) ? TRUE : FALSE;
+	settings->DisableThemes = (disableTheming == JNI_TRUE) ? TRUE : FALSE;
+	settings->AllowFontSmoothing = (enableFontSmoothing == JNI_TRUE) ? TRUE : FALSE;
+	settings->AllowDesktopComposition = (enableDesktopComposition == JNI_TRUE) ? TRUE : FALSE;
 
 	/* Create performance flags from settings */
-	settings->PerformanceFlags = PERF_FLAG_NONE;
-	if (settings->AllowFontSmoothing)
-		settings->PerformanceFlags |= PERF_ENABLE_FONT_SMOOTHING;
-
-	if (settings->AllowDesktopComposition)
-		settings->PerformanceFlags |= PERF_ENABLE_DESKTOP_COMPOSITION;
-
-	if (settings->DisableWallpaper)
-		settings->PerformanceFlags |= PERF_DISABLE_WALLPAPER;
-
-	if (settings->DisableFullWindowDrag)
-		settings->PerformanceFlags |= PERF_DISABLE_FULLWINDOWDRAG;
-
-	if (settings->DisableMenuAnims)
-		settings->PerformanceFlags |= PERF_DISABLE_MENUANIMATIONS;
-
-	if (settings->DisableThemes)
-		settings->PerformanceFlags |= PERF_DISABLE_THEMING;
+	freerdp_performance_flags_make(settings);
 
 	DEBUG_ANDROID("performance_flags: %04X", settings->PerformanceFlags);
 }
