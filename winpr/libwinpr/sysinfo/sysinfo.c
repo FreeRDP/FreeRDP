@@ -222,7 +222,6 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 
 		default:
 			return FALSE;
-			break;
 	}
 
 	return TRUE;

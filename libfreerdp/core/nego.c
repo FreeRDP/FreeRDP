@@ -32,6 +32,7 @@
 
 #include "transport.h"
 
+#ifdef WITH_DEBUG_NEGO
 static const char* const NEGO_STATE_STRINGS[] =
 {
 	"NEGO_STATE_INITIAL",
@@ -55,6 +56,7 @@ static const char PROTOCOL_SECURITY_STRINGS[9][4] =
 	"UNK",
 	"EXT"
 };
+#endif /* WITH_DEBUG_NEGO */
 
 BOOL nego_security_connect(rdpNego* nego);
 

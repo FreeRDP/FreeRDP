@@ -100,7 +100,7 @@ int TestCommConfig(int argc, char* argv[])
 	ZeroMemory(&commProp, sizeof(COMMPROP));
 	if (!GetCommProperties(hComm, &commProp))
 	{
-		fprintf(stderr, "GetCommProperties failure: GetLastError(): 0x0.8x\n", GetLastError());
+		fprintf(stderr, "GetCommProperties failure: GetLastError(): 0x%0.8x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 
