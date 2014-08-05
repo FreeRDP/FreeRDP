@@ -95,6 +95,7 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 	UINT32 sign;
 	INT16* pOutput;
 	wBitStream* bs;
+	wBitStream s_bs;
 
 	k = 1;
 	kp = k << LSGR;
@@ -102,23 +103,20 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 	kr = 1;
 	krp = kr << LSGR;
 
-	if (!pSrcData)
-		return -2001;
+	if (!pSrcData || !SrcSize)
+		return -1;
 
-	if (SrcSize < 1)
-		return -2002;
+	if (!pDstData || !DstSize)
+		return -1;
 
 	pOutput = pDstData;
 
-	bs = BitStream_New();
-
-	if (!bs)
-		return -2003;
+	bs = &s_bs;
 
 	BitStream_Attach(bs, pSrcData, SrcSize);
 	BitStream_Fetch(bs);
 
-	while ((BitStream_GetRemainingLength(bs) > 0) && ((pOutput - pDstData) < DstSize))
+	while ((BitStream_GetRemainingLength(bs) > 1) && ((pOutput - pDstData) < DstSize))
 	{
 		if (k)
 		{
@@ -428,9 +426,24 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 		}
 	}
 
-	BitStream_Free(bs);
+	offset = (int) (pOutput - pDstData);
 
-	return (int) (pOutput - pDstData);
+	if (offset < DstSize)
+	{
+		size = DstSize - offset;
+		ZeroMemory(pOutput, size * 2);
+		pOutput += size;
+	}
+
+	offset = (int) (pOutput - pDstData);
+
+	if (offset != DstSize)
+		return -1;
+
+	if (((bs->position + 7) / 8) != SrcSize)
+		return -1;
+
+	return 1;
 }
 
 int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROGRESSIVE_TILE* tile)
