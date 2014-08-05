@@ -102,6 +102,57 @@ HANDLE freerdp_client_get_thread(rdpContext* context)
 	return ((rdpClientContext*) context)->thread;
 }
 
+static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
+{
+	/* Moved GatewayUseSameCredentials logic outside of cmdline.c, so
+	 * that the rdp file also triggers this functionality */
+	if (settings->GatewayEnabled)
+	{
+		if (settings->GatewayUseSameCredentials)
+		{
+			if (settings->Username)
+			{
+				settings->GatewayUsername = _strdup(settings->Username);
+				if (!settings->GatewayUsername)
+					goto out_error;
+			}
+			if (settings->Domain)
+			{
+				settings->GatewayDomain = _strdup(settings->Domain);
+				if (!settings->GatewayDomain)
+					goto out_error;
+			}
+			if (settings->Password)
+			{
+				settings->GatewayPassword = _strdup(settings->Password);
+				if (!settings->GatewayPassword)
+					goto out_error;
+			}
+		}
+	}
+	
+	/* Moved logic for Multimon and Span monitors to force fullscreen, so
+	 * that the rdp file also triggers this functionality */
+	if (settings->SpanMonitors)
+	{
+		settings->UseMultimon = TRUE;
+		settings->Fullscreen = TRUE;
+	}
+	else if (settings->UseMultimon)
+	{
+		settings->Fullscreen = TRUE;
+	}
+	
+	return TRUE;
+
+out_error:
+	free(settings->GatewayUsername);
+	free(settings->GatewayDomain);
+	free(settings->GatewayPassword);
+	return FALSE;
+}
+
+
 int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, char** argv)
 {
 	int status;
@@ -123,6 +174,15 @@ int freerdp_client_settings_parse_command_line(rdpSettings* settings, int argc, 
 	{
 		status = freerdp_client_settings_parse_assistance_file(settings, settings->AssistanceFile);
 	}
+	
+	/* Only call post processing if no status/error was returned*/
+	if (status < 0)
+		return status;
+
+	/* This function will call logic that is applicable to the settings
+	 * from command line parsing AND the rdp file parsing */
+	if(!freerdp_client_settings_post_process(settings))
+		status = -1;
 
 	return status;
 }
@@ -198,3 +258,4 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, const c
 
 	return 0;
 }
+

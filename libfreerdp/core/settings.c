@@ -563,6 +563,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->KeyboardType = settings->KeyboardType; /* 2625 */
 		_settings->KeyboardSubType = settings->KeyboardSubType; /* 2626 */
 		_settings->KeyboardFunctionKey = settings->KeyboardFunctionKey; /* 2627 */
+		_settings->KeyboardHook = settings->KeyboardHook; /* 2633 */
 		_settings->BrushSupportLevel = settings->BrushSupportLevel; /* 2688 */
 		_settings->GlyphSupportLevel = settings->GlyphSupportLevel; /* 2752 */
 		_settings->OffscreenSupportLevel = settings->OffscreenSupportLevel; /* 2816 */
@@ -825,6 +826,7 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->MonitorDefArray);
 		free(settings->ClientAddress);
 		free(settings->ClientDir);
+		free(settings->PermittedTLSCiphers);
 		free(settings->CertificateFile);
 		free(settings->PrivateKeyFile);
 		free(settings->ConnectionFile);

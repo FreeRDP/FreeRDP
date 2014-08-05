@@ -25,6 +25,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
+#include <winpr/ssl.h>
 
 #include <winpr/stream.h>
 #include <freerdp/utils/tcp.h>
@@ -591,6 +592,13 @@ BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int opt
 	SSL_CTX_set_options(tls->ctx, options);
 	SSL_CTX_set_read_ahead(tls->ctx, 1);
 
+	if (tls->settings->PermittedTLSCiphers) {
+		if(!SSL_CTX_set_cipher_list(tls->ctx, tls->settings->PermittedTLSCiphers)) {
+			fprintf(stderr, "SSL_CTX_set_cipher_list %s failed\n", tls->settings->PermittedTLSCiphers);
+			return FALSE;
+		}
+	}
+ 
 	tls->bio = BIO_new_rdp_tls(tls->ctx, clientMode);
 
 	if (BIO_get_ssl(tls->bio, &tls->ssl) < 0)
@@ -1336,8 +1344,7 @@ rdpTls* tls_new(rdpSettings* settings)
 	if (!tls)
 		return NULL;
 
-	SSL_load_error_strings();
-	SSL_library_init();
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	tls->settings = settings;
 

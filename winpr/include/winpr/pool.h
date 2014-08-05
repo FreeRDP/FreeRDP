@@ -120,7 +120,7 @@ typedef struct _TP_WAIT TP_WAIT, *PTP_WAIT;
 
 typedef struct _TP_IO TP_IO, *PTP_IO;
 
-#if (defined(_WIN32) && (_WIN32_WINNT < 0x0601))
+#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0601))
 typedef TP_CALLBACK_ENVIRON_V1 TP_CALLBACK_ENVIRON, *PTP_CALLBACK_ENVIRON;
 #endif
 

@@ -576,68 +576,6 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-BOOL nla_verify_header(wStream* s)
-{
-	if ((Stream_Pointer(s)[0] == 0x30) && (Stream_Pointer(s)[1] & 0x80))
-		return TRUE;
-
-	return FALSE;
-}
-
-UINT32 nla_read_header(wStream* s)
-{
-	UINT32 length = 0;
-
-	if (Stream_Pointer(s)[1] & 0x80)
-	{
-		if ((Stream_Pointer(s)[1] & ~(0x80)) == 1)
-		{
-			length = Stream_Pointer(s)[2];
-			length += 3;
-			Stream_Seek(s, 3);
-		}
-		else if ((Stream_Pointer(s)[1] & ~(0x80)) == 2)
-		{
-			length = (Stream_Pointer(s)[2] << 8) | Stream_Pointer(s)[3];
-			length += 4;
-			Stream_Seek(s, 4);
-		}
-		else
-		{
-			fprintf(stderr, "Error reading TSRequest!\n");
-		}
-	}
-	else
-	{
-		length = Stream_Pointer(s)[1];
-		length += 2;
-		Stream_Seek(s, 2);
-	}
-
-	return length;
-}
-
-UINT32 nla_header_length(wStream* s)
-{
-	UINT32 length = 0;
-
-	if (Stream_Pointer(s)[1] & 0x80)
-	{
-		if ((Stream_Pointer(s)[1] & ~(0x80)) == 1)
-			length = 3;
-		else if ((Stream_Pointer(s)[1] & ~(0x80)) == 2)
-			length = 4;
-		else
-			fprintf(stderr, "Error reading TSRequest!\n");
-	}
-	else
-	{
-		length = 2;
-	}
-
-	return length;
-}
-
 static int transport_wait_for_read(rdpTransport* transport)
 {
 	rdpTcp *tcpIn = transport->TcpIn;
@@ -721,17 +659,53 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 	return read;
 }
 
-int transport_read(rdpTransport* transport, wStream* s)
+
+/**
+ * @brief Tries to read toRead bytes from the specified transport
+ *
+ * Try to read toRead bytes from the transport to the stream.
+ * In case it was not possible to read toRead bytes 0 is returned. The stream is always advanced by the
+ * number of bytes read.
+ *
+ * The function assumes that the stream has enough capacity to hold the data.
+ *
+ * @param[in] transport rdpTransport
+ * @param[in] s wStream
+ * @param[in] toRead number of bytes to read
+ * @return < 0 on error; 0 if not enough data is available (non blocking mode); 1 toRead bytes read
+ */
+static int transport_read_layer_bytes(rdpTransport* transport, wStream* s, unsigned int toRead)
+{
+	int status;
+	status = transport_read_layer(transport, Stream_Pointer(s), toRead);
+	if (status <= 0)
+		return status;
+
+	Stream_Seek(s, status);
+	return status == toRead ? 1 : 0;
+}
+
+/**
+ * @brief Try to read a complete PDU (NLA, fast-path or tpkt) from the underlying transport.
+ *
+ * If possible a complete PDU is read, in case of non blocking transport this might not succeed.
+ * Except in case of an error the passed stream will point to the last byte read (correct
+ * position). When the pdu read is completed the stream is sealed and the pointer set to 0
+ *
+ * @param[in] transport rdpTransport
+ * @param[in] s wStream
+ * @return < 0 on error; 0 if not enough data is available (non blocking mode); > 0 number of
+ * bytes of the *complete* pdu read
+ */
+int transport_read_pdu(rdpTransport* transport, wStream* s)
 {
 	int status;
 	int position;
 	int pduLength;
 	BYTE *header;
-	int transport_status;
 
 	position = 0;
 	pduLength = 0;
-	transport_status = 0;
 
 	if (!transport)
 		return -1;
@@ -739,44 +713,44 @@ int transport_read(rdpTransport* transport, wStream* s)
 	if (!s)
 		return -1;
 
-	/* first check if we have header */
 	position = Stream_GetPosition(s);
 
-	if (position < 4)
+	/* Make sure there is enough space for the longest header within the stream */
+	Stream_EnsureCapacity(s, 4);
+
+	/* Make sure at least two bytes are read for futher processing */
+	if (position < 2 && (status = transport_read_layer_bytes(transport, s, 2 - position)) != 1)
 	{
-		Stream_EnsureCapacity(s, 4);
-		status = transport_read_layer(transport, Stream_Buffer(s) + position, 4 - position);
-
-		if (status < 0)
-			return status;
-
-		transport_status += status;
-
-		if ((status + position) < 4)
-			return transport_status;
-
-		position += status;
+		/* No data available at the moment */
+		return status;
 	}
 
 	header = Stream_Buffer(s);
 
-	/* if header is present, read exactly one PDU */
-
 	if (transport->NlaMode)
 	{
+		/*
+		 * In case NlaMode is set TSRequest package(s) are expected
+		 * 0x30 = DER encoded data with these bits set:
+		 * bit 6 P/C constructed
+		 * bit 5 tag number - sequence
+		 */
 		if (header[0] == 0x30)
 		{
 			/* TSRequest (NLA) */
-
 			if (header[1] & 0x80)
 			{
 				if ((header[1] & ~(0x80)) == 1)
 				{
+					if ((status = transport_read_layer_bytes(transport, s, 1)) != 1)
+						return status;
 					pduLength = header[2];
 					pduLength += 3;
 				}
 				else if ((header[1] & ~(0x80)) == 2)
 				{
+					if ((status = transport_read_layer_bytes(transport, s, 2)) != 1)
+						return status;
 					pduLength = (header[2] << 8) | header[3];
 					pduLength += 4;
 				}
@@ -798,63 +772,66 @@ int transport_read(rdpTransport* transport, wStream* s)
 		if (header[0] == 0x03)
 		{
 			/* TPKT header */
+			if ((status = transport_read_layer_bytes(transport, s, 2)) != 1)
+				return status;
 
 			pduLength = (header[2] << 8) | header[3];
+
+			/* min and max values according to ITU-T Rec. T.123 (01/2007) section 8 */
+			if (pduLength < 7 || pduLength > 0xFFFF)
+			{
+				fprintf(stderr, "%s: tpkt - invalid pduLength: %d\n", __FUNCTION__, pduLength);
+				return -1;
+			}
 		}
 		else
 		{
 			/* Fast-Path Header */
-
 			if (header[1] & 0x80)
+			{
+				if ((status = transport_read_layer_bytes(transport, s, 1)) != 1)
+					return status;
 				pduLength = ((header[1] & 0x7F) << 8) | header[2];
+			}
 			else
 				pduLength = header[1];
+
+			/*
+			 * fast-path has 7 bits for length so the maximum size, including headers is 0x8000
+			 * The theoretical minimum fast-path PDU consists only of two header bytes plus one
+			 * byte for data (e.g. fast-path input synchronize pdu)
+			 */
+			if (pduLength < 3 || pduLength > 0x8000)
+			{
+				fprintf(stderr, "%s: fast path - invalid pduLength: %d\n", __FUNCTION__, pduLength);
+				return -1;
+			}
 		}
 	}
 
-	if (pduLength < 0 || pduLength > 0xFFFF)
-	{
-		fprintf(stderr, "%s: invalid pduLength: %d\n", __FUNCTION__, pduLength);
-		return -1;
-	}
 
-	Stream_EnsureCapacity(s, pduLength);
-	status = transport_read_layer(transport, Stream_Buffer(s) + position, pduLength - position);
+	Stream_EnsureCapacity(s, Stream_GetPosition(s) + pduLength);
 
-	if (status < 0)
+	status = transport_read_layer_bytes(transport, s, pduLength - Stream_GetPosition(s));
+
+	if (status != 1)
 		return status;
-
-	transport_status += status;
 
 #ifdef WITH_DEBUG_TRANSPORT
 	/* dump when whole PDU is read */
-	if (position + status >= pduLength)
+	if (Stream_GetPosition(s) >= pduLength)
 	{
 		fprintf(stderr, "Local < Remote\n");
 		winpr_HexDump(Stream_Buffer(s), pduLength);
 	}
 #endif
 
-	if (position + status >= pduLength)
-	{
+	if (Stream_GetPosition(s) >= pduLength)
 		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
-	}
 
-	return transport_status;
-}
-
-static int transport_read_nonblocking(rdpTransport* transport)
-{
-	int status;
-
-	status = transport_read(transport, transport->ReceiveBuffer);
-
-	if (status <= 0)
-		return status;
-
-	Stream_Seek(transport->ReceiveBuffer, status);
-
-	return status;
+	Stream_SealLength(s);
+	Stream_SetPosition(s, 0);
+	return Stream_Length(s);
 }
 
 BOOL transport_bio_buffered_drain(BIO *bio);
@@ -1048,9 +1025,7 @@ int tranport_drain_output_buffer(rdpTransport* transport)
 
 int transport_check_fds(rdpTransport* transport)
 {
-	int pos;
 	int status;
-	int length;
 	int recv_status;
 	wStream* received;
 
@@ -1072,105 +1047,22 @@ int transport_check_fds(rdpTransport* transport)
 	for (;;)
 	{
 		/**
-		 * Note: transport_read_nonblocking() reads max 1 additional PDU from
-		 * the layer. Also note that transport_read_nonblocking() is also called
-		 * outside of this function in transport_write()! This means that when
-		 * entering transport_check_fds it is possible that the stream position
-		 * of transport->ReceiveBuffer position is > 0. We must process this data
-		 * even if transport_read_nonblocking() returns 0.
+		 * Note: transport_read_pdu tries to read one PDU from
+		 * the transport layer.
+		 * The ReceiveBuffer might have a position > 0 in case of a non blocking
+		 * transport. If transport_read_pdu returns 0 the pdu couldn't be read at
+		 * this point.
 		 * Note that transport->ReceiveBuffer is replaced after each iteration
 		 * of this loop with a fresh stream instance from a pool.
 		 */
 
-		if ((status = transport_read_nonblocking(transport)) < 0)
+		if ((status = transport_read_pdu(transport, transport->ReceiveBuffer)) <= 0)
+		{
 			return status;
-
-		if ((pos = Stream_GetPosition(transport->ReceiveBuffer)) < 2)
-			return 0;
-
-		Stream_SetPosition(transport->ReceiveBuffer, 0);
-		length = 0;
-
-		if (transport->NlaMode)
-		{
-			if (nla_verify_header(transport->ReceiveBuffer))
-			{
-				/* TSRequest */
-
-				/* Ensure the TSRequest header is available. */
-				if (pos <= 4)
-				{
-					Stream_SetPosition(transport->ReceiveBuffer, pos);
-					return 0;
-				}
-
-				/* TSRequest header can be 2, 3 or 4 bytes long */
-				length = nla_header_length(transport->ReceiveBuffer);
-
-				if (pos < length)
-				{
-					Stream_SetPosition(transport->ReceiveBuffer, pos);
-					return 0;
-				}
-
-				length = nla_read_header(transport->ReceiveBuffer);
-			}
-		}
-		else
-		{
-			if (tpkt_verify_header(transport->ReceiveBuffer)) /* TPKT */
-			{
-				/* Ensure the TPKT header is available. */
-				if (pos <= 4)
-				{
-					Stream_SetPosition(transport->ReceiveBuffer, pos);
-					return 0;
-				}
-
-				length = tpkt_read_header(transport->ReceiveBuffer);
-			}
-			else /* Fast Path */
-			{
-				/* Ensure the Fast Path header is available. */
-				if (pos <= 2)
-				{
-					Stream_SetPosition(transport->ReceiveBuffer, pos);
-					return 0;
-				}
-
-				/* Fastpath header can be two or three bytes long. */
-				length = fastpath_header_length(transport->ReceiveBuffer);
-
-				if (pos < length)
-				{
-					Stream_SetPosition(transport->ReceiveBuffer, pos);
-					return 0;
-				}
-
-				length = fastpath_read_header(NULL, transport->ReceiveBuffer);
-			}
-		}
-
-		if (length == 0)
-		{
-			fprintf(stderr, "transport_check_fds: protocol error, not a TPKT or Fast Path header.\n");
-			winpr_HexDump(Stream_Buffer(transport->ReceiveBuffer), pos);
-			return -1;
-		}
-
-		if (pos < length)
-		{
-			Stream_SetPosition(transport->ReceiveBuffer, pos);
-			return 0; /* Packet is not yet completely received. */
 		}
 
 		received = transport->ReceiveBuffer;
 		transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
-
-		Stream_SetPosition(received, length);
-		Stream_SealLength(received);
-		Stream_SetPosition(received, 0);
-
 		/**
 		 * status:
 		 * 	-1: error

@@ -31,6 +31,7 @@
 #define USE_GRAY_SCALE	0
 #define USE_UPCONVERT	0
 
+#ifdef WITH_OPENH264
 static BYTE clip(int x)
 {
 	if (x < 0) return 0;
@@ -100,6 +101,7 @@ static UINT32 YUV_to_RGB(BYTE Y, BYTE U, BYTE V)
 
 	return RGB32(R, G, B);
 }
+#endif /* WITH_OPENH264 */
 
 #if USE_UPCONVERT
 static BYTE* convert_420_to_444(BYTE* chroma420, int chroma420Width, int chroma420Height, int chroma420Stride)
@@ -335,8 +337,8 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 
 	return h264;
 
-EXCEPTION:
 #ifdef WITH_OPENH264
+EXCEPTION:
 	if (h264->pDecoder)
 	{
 		WelsDestroyDecoder(h264->pDecoder);
@@ -363,3 +365,4 @@ void h264_context_free(H264_CONTEXT* h264)
 		free(h264);
 	}
 }
+

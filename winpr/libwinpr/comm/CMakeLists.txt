@@ -18,21 +18,23 @@
 set(MODULE_NAME "winpr-comm")
 set(MODULE_PREFIX "WINPR_COMM")
 
-set(${MODULE_PREFIX}_SRCS
-	comm.c
-	comm.h
-	comm_io.c
-	comm_ioctl.c
-	comm_ioctl.h
-	comm_serial_sys.c
-	comm_serial_sys.h
-	comm_sercx_sys.c
-	comm_sercx_sys.h
-	comm_sercx2_sys.c
-	comm_sercx2_sys.h)
+if(UNIX AND NOT WIN32 AND NOT APPLE)
+	set(${MODULE_PREFIX}_SRCS
+		comm.c
+		comm.h
+		comm_io.c
+		comm_ioctl.c
+		comm_ioctl.h
+		comm_serial_sys.c
+		comm_serial_sys.h
+		comm_sercx_sys.c
+		comm_sercx_sys.h
+		comm_sercx2_sys.c
+		comm_sercx2_sys.h)
 
-winpr_module_add(${${MODULE_PREFIX}_SRCS})
+	winpr_module_add(${${MODULE_PREFIX}_SRCS})
 
-if(BUILD_TESTING AND UNIX AND NOT WIN32)
-	add_subdirectory(test)
+	if(BUILD_TESTING)
+		add_subdirectory(test)
+		endif()
 endif()

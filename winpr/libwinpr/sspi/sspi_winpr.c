@@ -27,6 +27,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
+#include <winpr/ssl.h>
 #include <winpr/print.h>
 
 #include <openssl/ssl.h>
@@ -463,8 +464,7 @@ void sspi_GlobalInit()
 {
 	if (!sspi_initialized)
 	{
-		SSL_load_error_strings();
-		SSL_library_init();
+		winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 		sspi_ContextBufferAllocTableNew();
 		sspi_initialized = TRUE;

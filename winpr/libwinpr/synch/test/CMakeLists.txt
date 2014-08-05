@@ -5,6 +5,7 @@ set(MODULE_PREFIX "TEST_SYNCH")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
+	TestSynchInit.c
 	TestSynchEvent.c
 	TestSynchMutex.c
 	TestSynchCritical.c
