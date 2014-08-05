@@ -166,8 +166,6 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 
 				if (kp > KPMAX)
 					kp = KPMAX;
-				else if (kp < 0)
-					kp = 0;
 
 				k = kp >> LSGR;
 			}
@@ -238,11 +236,9 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 			{
 				/* update kr, krp params */
 
-				krp += -2;
+				krp -= 2;
 
-				if (krp > KPMAX)
-					krp = KPMAX;
-				else if (krp < 0)
+				if (krp < 0)
 					krp = 0;
 
 				kr = krp >> LSGR;
@@ -255,19 +251,15 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 
 				if (krp > KPMAX)
 					krp = KPMAX;
-				else if (krp < 0)
-					krp = 0;
 
 				kr = krp >> LSGR;
 			}
 
 			/* update k, kp params */
 
-			kp += -DN_GR;
+			kp -= DN_GR;
 
-			if (kp > KPMAX)
-				kp = KPMAX;
-			else if (kp < 0)
+			if (kp < 0)
 				kp = 0;
 
 			k = kp >> LSGR;
@@ -354,11 +346,9 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 			{
 				/* update kr, krp params */
 
-				krp += -2;
+				krp -= 2;
 
-				if (krp > KPMAX)
-					krp = KPMAX;
-				else if (krp < 0)
+				if (krp < 0)
 					krp = 0;
 
 				kr = krp >> LSGR;
@@ -371,8 +361,6 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 
 				if (krp > KPMAX)
 					krp = KPMAX;
-				else if (krp < 0)
-					krp = 0;
 
 				kr = krp >> LSGR;
 			}
@@ -385,8 +373,6 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 
 				if (kp > KPMAX)
 					kp = KPMAX;
-				else if (kp < 0)
-					kp = 0;
 
 				k = kp >> LSGR;
 
@@ -396,11 +382,9 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 			{
 				/* update k, kp params */
 
-				kp += -DQ_GR;
+				kp -= DQ_GR;
 
-				if (kp > KPMAX)
-					kp = KPMAX;
-				else if (kp < 0)
+				if (kp < 0)
 					kp = 0;
 
 				k = kp >> LSGR;
