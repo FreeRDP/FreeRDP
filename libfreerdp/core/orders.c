@@ -223,11 +223,11 @@ static INLINE BOOL update_read_color(wStream* s, UINT32* color)
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte);
-	*color = byte;
+	*color = (UINT32) byte << 16;
 	Stream_Read_UINT8(s, byte);
-	*color |= (byte << 8);
+	*color |= ((UINT32) byte << 8);
 	Stream_Read_UINT8(s, byte);
-	*color |= (byte << 16);
+	*color |= (UINT32) byte;
 
 	return TRUE;
 }
@@ -979,7 +979,7 @@ BOOL update_read_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_REC
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		opaque_rect->color = (opaque_rect->color & 0xFFFFFF00) | byte;
+		opaque_rect->color = (opaque_rect->color & 0xFF00FFFF) | ((UINT32) byte << 16);
 	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_06)
@@ -988,7 +988,7 @@ BOOL update_read_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_REC
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		opaque_rect->color = (opaque_rect->color & 0xFFFF00FF) | (byte << 8);
+		opaque_rect->color = (opaque_rect->color & 0xFFFF00FF) | ((UINT32) byte << 8);
 	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
@@ -997,7 +997,7 @@ BOOL update_read_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_REC
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		opaque_rect->color = (opaque_rect->color & 0xFF00FFFF) | (byte << 16);
+		opaque_rect->color = (opaque_rect->color & 0xFFFFFF00) | (UINT32) byte;
 	}
 
 	return TRUE;
@@ -1178,7 +1178,7 @@ BOOL update_read_multi_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, MULT
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFFFF00) | byte;
+		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFF00FFFF) | ((UINT32) byte << 16);
 	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_06)
@@ -1187,7 +1187,7 @@ BOOL update_read_multi_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, MULT
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFF00FF) | (byte << 8);
+		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFF00FF) | ((UINT32) byte << 8);
 	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
@@ -1196,7 +1196,7 @@ BOOL update_read_multi_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, MULT
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFF00FFFF) | (byte << 16);
+		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFFFF00) | (UINT32) byte;
 	}
 
 	ORDER_FIELD_BYTE(8, multi_opaque_rect->numRectangles);

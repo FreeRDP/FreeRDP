@@ -43,7 +43,7 @@ UINT16 gdi_get_color_16bpp(HGDI_DC hdc, GDI_COLOR color)
 	BYTE r, g, b;
 	UINT16 color16;
 
-	GetBGR32(r, g, b, color);
+	GetRGB32(r, g, b, color);
 
 	if (hdc->rgb555)
 	{
