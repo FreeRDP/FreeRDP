@@ -97,6 +97,7 @@ struct rdp_shadow_server
 	DWORD port;
 	BOOL mayView;
 	BOOL mayInteract;
+	char* ipcSocket;
 	char* ConfigPath;
 	char* CertificateFile;
 	char* PrivateKeyFile;

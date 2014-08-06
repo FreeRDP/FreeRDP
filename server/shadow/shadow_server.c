@@ -51,6 +51,7 @@ extern rdpShadowSubsystem* Win_ShadowCreateSubsystem(rdpShadowServer* server);
 static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
+	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL, "Server IPC socket" },
 	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL, "Select or list monitors" },
 	{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may view without prompt" },
 	{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may interact without prompt" },
@@ -174,6 +175,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		CommandLineSwitchCase(arg, "port")
 		{
 			server->port = (DWORD) atoi(arg->Value);
+		}
+		CommandLineSwitchCase(arg, "ipc-socket")
+		{
+			server->ipcSocket = _strdup(arg->Value);
 		}
 		CommandLineSwitchCase(arg, "may-view")
 		{
@@ -312,6 +317,7 @@ void* shadow_server_thread(rdpShadowServer* server)
 
 int shadow_server_start(rdpShadowServer* server)
 {
+	BOOL status;
 	WSADATA wsaData;
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
@@ -321,7 +327,12 @@ int shadow_server_start(rdpShadowServer* server)
 	signal(SIGPIPE, SIG_IGN);
 #endif
 
-	if (server->listener->Open(server->listener, NULL, (UINT16) server->port))
+	if (!server->ipcSocket)
+		status = server->listener->Open(server->listener, NULL, (UINT16) server->port);
+	else
+		status = server->listener->OpenLocal(server->listener, server->ipcSocket);
+
+	if (status)
 	{
 		server->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
 				shadow_server_thread, (void*) server, 0, NULL);
@@ -481,6 +492,12 @@ int shadow_server_uninit(rdpShadowServer* server)
 	{
 		free(server->PrivateKeyFile);
 		server->PrivateKeyFile = NULL;
+	}
+
+	if (server->ipcSocket)
+	{
+		free(server->ipcSocket);
+		server->ipcSocket = NULL;
 	}
 
 	return 1;
