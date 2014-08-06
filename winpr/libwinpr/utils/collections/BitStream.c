@@ -316,13 +316,13 @@ void BitStream_Write_Bits(wBitStream* bs, UINT32 bits, UINT32 nbits)
 
 #endif
 
-void BitStream_Attach(wBitStream* bs, BYTE* buffer, UINT32 capacity)
+void BitStream_Attach(wBitStream* bs, const BYTE* buffer, UINT32 capacity)
 {
 	bs->position = 0;
 	bs->buffer = buffer;
 	bs->offset = 0;
 	bs->accumulator = 0;
-	bs->pointer = bs->buffer;
+	bs->pointer = (BYTE*) bs->buffer;
 	bs->capacity = capacity;
 	bs->length = bs->capacity * 8;
 }

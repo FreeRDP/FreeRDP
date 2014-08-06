@@ -27,7 +27,7 @@
 
 struct _wBitStream
 {
-	BYTE* buffer;
+	const BYTE* buffer;
 	BYTE* pointer;
 	int position;
 	int length;
@@ -140,7 +140,7 @@ extern "C" {
 WINPR_API void BitDump(const BYTE* buffer, UINT32 length, UINT32 flags);
 WINPR_API UINT32 ReverseBits32(UINT32 bits, UINT32 nbits);
 
-WINPR_API void BitStream_Attach(wBitStream* bs, BYTE* buffer, UINT32 capacity);
+WINPR_API void BitStream_Attach(wBitStream* bs, const BYTE* buffer, UINT32 capacity);
 
 WINPR_API wBitStream* BitStream_New();
 WINPR_API void BitStream_Free(wBitStream* bs);
