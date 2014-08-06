@@ -170,20 +170,16 @@ void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int y, int
 int x11_shadow_invalidate_region(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
 {
 	rdpShadowServer* server;
-	rdpShadowScreen* screen;
 	RECTANGLE_16 invalidRect;
 
 	server = subsystem->server;
-	screen = server->screen;
 
 	invalidRect.left = x;
 	invalidRect.top = y;
 	invalidRect.right = x + width;
 	invalidRect.bottom = y + height;
 
-	EnterCriticalSection(&(screen->lock));
-	region16_union_rect(&(screen->invalidRegion), &(screen->invalidRegion), &invalidRect);
-	LeaveCriticalSection(&(screen->lock));
+	region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
 
 	return 1;
 }
@@ -210,7 +206,8 @@ int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
 	surfaceRect.bottom = surface->y + surface->height;
 
 	region16_clear(&(surface->invalidRegion));
-	region16_intersect_rect(&(surface->invalidRegion), &(screen->invalidRegion), &surfaceRect);
+	region16_copy(&(surface->invalidRegion), &(subsystem->invalidRegion));
+	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
 
 	if (region16_is_empty(&(surface->invalidRegion)))
 		return 1;
@@ -233,20 +230,28 @@ int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
 
 		image = subsystem->fb_image;
 
+		EnterCriticalSection(&(surface->lock));
+
 		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 				surface->scanline, x - surface->x, y - surface->y, width, height,
 				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
 				image->bytes_per_line, x, y);
+
+		LeaveCriticalSection(&(surface->lock));
 	}
 	else
 	{
 		image = XGetImage(subsystem->display, subsystem->root_window,
 				x, y, width, height, AllPlanes, ZPixmap);
 
+		EnterCriticalSection(&(surface->lock));
+
 		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 				surface->scanline, x - surface->x, y - surface->y, width, height,
 				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
 				image->bytes_per_line, 0, 0);
+
+		LeaveCriticalSection(&(surface->lock));
 
 		XDestroyImage(image);
 	}
@@ -323,6 +328,12 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 			if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 			{
 				x11_shadow_invalidate_region(subsystem, 0, 0, subsystem->width, subsystem->height);
+				x11_shadow_surface_copy(subsystem);
+
+				if (subsystem->SurfaceUpdate)
+					subsystem->SurfaceUpdate((rdpShadowSubsystem*) subsystem, &(subsystem->invalidRegion));
+
+				region16_clear(&(subsystem->invalidRegion));
 
 				dwInterval = 1000 / fps;
 				frameTime += dwInterval;
@@ -727,6 +738,8 @@ void x11_shadow_subsystem_free(x11ShadowSubsystem* subsystem)
 
 	x11_shadow_subsystem_uninit(subsystem);
 
+	region16_uninit(&(subsystem->invalidRegion));
+
 	free(subsystem);
 }
 
@@ -740,6 +753,8 @@ x11ShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
 		return NULL;
 
 	subsystem->server = server;
+
+	region16_init(&(subsystem->invalidRegion));
 
 	subsystem->Init = (pfnShadowSubsystemInit) x11_shadow_subsystem_init;
 	subsystem->Uninit = (pfnShadowSubsystemInit) x11_shadow_subsystem_uninit;
