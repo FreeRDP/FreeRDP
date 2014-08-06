@@ -72,8 +72,23 @@ const char* progressive_get_block_type_string(UINT16 blockType)
 	return "PROGRESSIVE_WBT_UNKNOWN";
 }
 
+int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
+		RFX_COMPONENT_CODEC_QUANT* quant, const BYTE* data, int length, INT16* buffer)
+{
+	int status;
+
+	status = rfx_rlgr_decode(data, length, buffer, 4096, 1);
+
+	if (status < 0)
+		return status;
+
+	return 1;
+}
+
 int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROGRESSIVE_TILE* tile)
 {
+	BYTE* pBuffer;
+	INT16* pSrcDst[3];
 	PROGRESSIVE_BLOCK_REGION* region;
 	RFX_COMPONENT_CODEC_QUANT* quantY;
 	RFX_COMPONENT_CODEC_QUANT* quantCb;
@@ -111,6 +126,17 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 
 		quantProgVal = &(region->quantProgVals[tile->quality]);
 	}
+
+	pBuffer = (BYTE*) BufferPool_Take(progressive->bufferPool, -1);
+	pSrcDst[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16])); /* Y/R buffer */
+	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
+	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
+
+	progressive_rfx_decode_component(progressive, quantY, tile->yData, tile->yLen, pSrcDst[0]); /* Y */
+	progressive_rfx_decode_component(progressive, quantCb, tile->cbData, tile->cbLen, pSrcDst[1]); /* Cb */
+	progressive_rfx_decode_component(progressive, quantCr, tile->crData, tile->crLen, pSrcDst[2]); /* Cr */
+
+	BufferPool_Return(progressive->bufferPool, pBuffer);
 
 	return 1;
 }
@@ -654,6 +680,8 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 	{
 		progressive->Compressor = Compressor;
 
+		progressive->bufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
+
 		progressive->cRects = 64;
 		progressive->rects = (RFX_RECT*) malloc(progressive->cRects * sizeof(RFX_RECT));
 
@@ -691,6 +719,8 @@ void progressive_context_free(PROGRESSIVE_CONTEXT* progressive)
 {
 	if (!progressive)
 		return;
+
+	BufferPool_Free(progressive->bufferPool);
 
 	free(progressive->rects);
 	free(progressive->tiles);

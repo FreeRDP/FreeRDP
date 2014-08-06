@@ -23,6 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <winpr/collections.h>
+
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/color.h>
 
@@ -246,6 +248,8 @@ typedef struct _PROGRESSIVE_BLOCK_FRAME_END PROGRESSIVE_BLOCK_FRAME_END;
 struct _PROGRESSIVE_CONTEXT
 {
 	BOOL Compressor;
+
+	wBufferPool* bufferPool;
 
 	UINT32 cRects;
 	RFX_RECT* rects;
