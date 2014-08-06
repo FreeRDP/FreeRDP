@@ -44,6 +44,7 @@ typedef struct rdp_shadow_server rdpShadowServer;
 typedef struct rdp_shadow_screen rdpShadowScreen;
 typedef struct rdp_shadow_surface rdpShadowSurface;
 typedef struct rdp_shadow_encoder rdpShadowEncoder;
+typedef struct rdp_shadow_capture rdpShadowCapture;
 typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
 
 typedef rdpShadowSubsystem* (*pfnShadowCreateSubsystem)(rdpShadowServer* server);
@@ -92,6 +93,7 @@ struct rdp_shadow_server
 	wArrayList* clients;
 	rdpShadowScreen* screen;
 	rdpShadowSurface* surface;
+	rdpShadowCapture* capture;
 	rdpShadowSubsystem* subsystem;
 
 	DWORD port;

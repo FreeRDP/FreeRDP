@@ -16,28 +16,35 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_H
-#define FREERDP_SHADOW_SERVER_H
+#ifndef FREERDP_SHADOW_SERVER_CAPTURE_H
+#define FREERDP_SHADOW_SERVER_CAPTURE_H
 
 #include <freerdp/server/shadow.h>
 
-#include "shadow_client.h"
-#include "shadow_input.h"
-#include "shadow_screen.h"
-#include "shadow_surface.h"
-#include "shadow_encoder.h"
-#include "shadow_capture.h"
-#include "shadow_channels.h"
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+
+struct rdp_shadow_capture
+{
+	rdpShadowServer* server;
+
+	int width;
+	int height;
+
+	CRITICAL_SECTION lock;
+};
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BYTE* pData2, int nStep2, RECTANGLE_16* rect);
 
+rdpShadowCapture* shadow_capture_new(rdpShadowServer* server);
+void shadow_capture_free(rdpShadowCapture* capture);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_H */
-
+#endif /* FREERDP_SHADOW_SERVER_CAPTURE_H */

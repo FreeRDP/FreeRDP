@@ -463,6 +463,11 @@ int shadow_server_init(rdpShadowServer* server)
 	if (!server->screen)
 		return -1;
 
+	server->capture = shadow_capture_new(server);
+
+	if (!server->capture)
+		return -1;
+
 	return 1;
 }
 
