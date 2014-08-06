@@ -72,15 +72,15 @@ const char* progressive_get_block_type_string(UINT16 blockType)
 	return "PROGRESSIVE_WBT_UNKNOWN";
 }
 
-/* Constants used within the RLGR1/RLGR3 algorithm */
-#define KPMAX	(80)  /* max value for kp or krp */
-#define LSGR	(3)   /* shift count to convert kp to k */
-#define UP_GR	(4)   /* increase in kp after a zero run in RL mode */
-#define DN_GR	(6)   /* decrease in kp after a nonzero symbol in RL mode */
-#define UQ_GR	(3)   /* increase in kp after nonzero symbol in GR mode */
-#define DQ_GR	(3)   /* decrease in kp after zero symbol in GR mode */
+/* Constants used in RLGR1/RLGR3 algorithm */
+#define KPMAX	(80)	/* max value for kp or krp */
+#define LSGR	(3)	/* shift count to convert kp to k */
+#define UP_GR	(4)	/* increase in kp after a zero run in RL mode */
+#define DN_GR	(6)	/* decrease in kp after a nonzero symbol in RL mode */
+#define UQ_GR	(3)	/* increase in kp after nonzero symbol in GR mode */
+#define DQ_GR	(3)	/* decrease in kp after zero symbol in GR mode */
 
-int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 DstSize)
+int rfx_rlgrx_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 DstSize, int mode)
 {
 	int vk;
 	int run;
@@ -93,6 +93,9 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 	int kr, krp;
 	UINT16 code;
 	UINT32 sign;
+	UINT32 nIdx;
+	UINT32 val1;
+	UINT32 val2;
 	INT16* pOutput;
 	wBitStream* bs;
 	wBitStream s_bs;
@@ -102,6 +105,9 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 
 	kr = 1;
 	krp = kr << LSGR;
+
+	if ((mode != 1) && (mode != 3))
+		mode = 1;
 
 	if (!pSrcData || !SrcSize)
 		return -1;
@@ -116,7 +122,7 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 	BitStream_Attach(bs, pSrcData, SrcSize);
 	BitStream_Fetch(bs);
 
-	while ((BitStream_GetRemainingLength(bs) > 1) && ((pOutput - pDstData) < DstSize))
+	while ((BitStream_GetRemainingLength(bs) > 0) && ((pOutput - pDstData) < DstSize))
 	{
 		if (k)
 		{
@@ -285,9 +291,7 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 				pOutput += size;
 			}
 
-			offset = (int) (pOutput - pDstData);
-
-			if ((offset + 1) <= DstSize)
+			if ((pOutput - pDstData) < DstSize)
 			{
 				*pOutput = mag;
 				pOutput++;
@@ -365,47 +369,112 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 				kr = krp >> LSGR;
 			}
 
-			if (!code)
+			if (mode == 1) /* RLGR1 */
 			{
-				/* update k, kp params */
+				if (!code)
+				{
+					/* update k, kp params */
 
-				kp += UQ_GR;
+					kp += UQ_GR;
 
-				if (kp > KPMAX)
-					kp = KPMAX;
+					if (kp > KPMAX)
+						kp = KPMAX;
 
-				k = kp >> LSGR;
+					k = kp >> LSGR;
 
-				mag = 0;
-			}
-			else
-			{
-				/* update k, kp params */
-
-				kp -= DQ_GR;
-
-				if (kp < 0)
-					kp = 0;
-
-				k = kp >> LSGR;
-
-				/*
-				 * code = 2 * mag - sign
-				 * sign + code = 2 * mag
-				 */
-
-				if (code & 1)
-					mag = ((INT16) ((code + 1) >> 1)) * -1;
+					mag = 0;
+				}
 				else
-					mag = (INT16) (code >> 1);
+				{
+					/* update k, kp params */
+
+					kp -= DQ_GR;
+
+					if (kp < 0)
+						kp = 0;
+
+					k = kp >> LSGR;
+
+					/*
+					 * code = 2 * mag - sign
+					 * sign + code = 2 * mag
+					 */
+
+					if (code & 1)
+						mag = ((INT16) ((code + 1) >> 1)) * -1;
+					else
+						mag = (INT16) (code >> 1);
+				}
+
+				if ((pOutput - pDstData) < DstSize)
+				{
+					*pOutput = mag;
+					pOutput++;
+				}
 			}
-
-			offset = (int) (pOutput - pDstData);
-
-			if ((offset + 1) <= DstSize)
+			else if (mode == 3) /* RLGR3 */
 			{
-				*pOutput = mag;
-				pOutput++;
+				nIdx = 0;
+
+				if (code)
+				{
+					mag = (UINT32) code;
+					nIdx = 32 - __lzcnt(mag);
+				}
+
+				if (BitStream_GetRemainingLength(bs) < nIdx)
+					break;
+
+				bs->mask = ((1 << nIdx) - 1);
+				val1 = ((bs->accumulator >> (32 - nIdx)) & bs->mask);
+				BitStream_Shift(bs, nIdx);
+
+				val2 = code - val1;
+
+				if (val1 && val2)
+				{
+					/* update k, kp params */
+
+					kp -= (2 * DQ_GR);
+
+					if (kp < 0)
+						kp = 0;
+
+					k = kp >> LSGR;
+				}
+				else if (!val1 && !val2)
+				{
+					/* update k, kp params */
+
+					kp += (2 * UQ_GR);
+
+					if (kp > KPMAX)
+						kp = KPMAX;
+
+					k = kp >> LSGR;
+				}
+
+				if (val1 & 1)
+					mag = ((INT16) ((val1 + 1) >> 1)) * -1;
+				else
+					mag = (INT16) (val1 >> 1);
+
+				if ((pOutput - pDstData) < DstSize)
+				{
+					*pOutput = mag;
+					pOutput++;
+				}
+
+				if (val2 & 1)
+					mag = ((INT16) ((val2 + 1) >> 1)) * -1;
+				else
+					mag = (INT16) (val2 >> 1);
+
+				if ((pOutput - pDstData) < DstSize)
+				{
+					*pOutput = mag;
+					pOutput++;
+				}
 			}
 		}
 	}
@@ -422,9 +491,6 @@ int rfx_rlgr1_decode(BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 Dst
 	offset = (int) (pOutput - pDstData);
 
 	if (offset != DstSize)
-		return -1;
-
-	if (((bs->position + 7) / 8) != SrcSize)
 		return -1;
 
 	return 1;
