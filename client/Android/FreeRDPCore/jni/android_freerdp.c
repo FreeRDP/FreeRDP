@@ -141,6 +141,7 @@ BOOL android_pre_connect(freerdp* instance)
 
 static BOOL android_post_connect(freerdp* instance)
 {
+	UINT32 gdi_flags;
 	rdpSettings *settings = instance->settings;
 
 	DEBUG_ANDROID("android_post_connect");
@@ -154,9 +155,12 @@ static BOOL android_post_connect(freerdp* instance)
 
 	instance->context->cache = cache_new(settings);
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT |
-			((instance->settings->ColorDepth > 16) ? CLRBUF_32BPP : CLRBUF_16BPP),
-			NULL);
+	if (instance->settings->ColorDepth > 16)
+		gdi_flags = CLRBUF_32BPP | CLRCONV_ALPHA | CLRCONV_INVERT;
+	else
+		gdi_flags = CLRBUF_16BPP;
+
+	gdi_init(instance, gdi_flags, NULL);
 
 	instance->update->BeginPaint = android_begin_paint;
 	instance->update->EndPaint = android_end_paint;
@@ -1014,7 +1018,7 @@ JNIEXPORT void JNICALL jni_freerdp_set_gateway_info(JNIEnv *env, jclass cls, jin
 
 static void copy_pixel_buffer(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int width, int height, int wBuf, int hBuf, int bpp)
 {
-	int i, j;
+	int i;
 	int length;
 	int scanline;
 	UINT8 *dstp, *srcp;
@@ -1025,31 +1029,11 @@ static void copy_pixel_buffer(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int wi
 	srcp = (UINT8*) &srcBuf[(scanline * y) + (x * bpp)];
 	dstp = (UINT8*) &dstBuf[(scanline * y) + (x * bpp)];
 
-	if (bpp == 4)
+	for (i = 0; i < height; i++)
 	{
-		for (i = 0; i < height; i++)
-		{
-			for (j = 0; j < width * 4; j += 4)
-			{
-				// ARGB <-> ABGR
-				dstp[j + 0] = srcp[j + 2];
-				dstp[j + 1] = srcp[j + 1];
-				dstp[j + 2] = srcp[j + 0];
-				dstp[j + 3] = srcp[j + 3];
-			}		
-
-			srcp += scanline;
-			dstp += scanline;
-		}
-	}
-	else
-	{
-		for (i = 0; i < height; i++)
-		{
-			memcpy(dstp, srcp, length);
-			srcp += scanline;
-			dstp += scanline;
-		}
+		memcpy(dstp, srcp, length);
+		srcp += scanline;
+		dstp += scanline;
 	}
 }
 
