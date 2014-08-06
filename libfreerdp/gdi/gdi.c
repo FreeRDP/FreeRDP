@@ -981,6 +981,7 @@ void gdi_resize(rdpGdi* gdi, int width, int height)
 			gdi->width = width;
 			gdi->height = height;
 			gdi_bitmap_free_ex(gdi->primary);
+			gdi->primary_buffer = NULL;
 			gdi_init_primary(gdi);
 		}
 	}
