@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <alloca.h>
 #include <stdarg.h>
 #include <winpr/wlog.h>
 
