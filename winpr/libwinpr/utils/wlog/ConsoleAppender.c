@@ -120,7 +120,7 @@ int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, 
 	}
 
 	if (level != ANDROID_LOG_SILENT)
-		__android_log_print(level, "winpr", "%s%s", message->PrefixString, message->TextString);
+		__android_log_print(level, log->Name, "%s%s", message->PrefixString, message->TextString);
 
 #else
 	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;
