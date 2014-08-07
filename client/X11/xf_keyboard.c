@@ -191,7 +191,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BYTE keycode)
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 	{
-		fprintf(stderr, "Unknown key with X keycode 0x%02x\n", keycode);
+		DEBUG_WARN( "Unknown key with X keycode 0x%02x\n", keycode);
 	}
 	else if (rdp_scancode == RDP_SCANCODE_PAUSE &&
 			!xf_keyboard_key_pressed(xfc, XK_Control_L) && !xf_keyboard_key_pressed(xfc, XK_Control_R))
