@@ -461,7 +461,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			tv[1].tv_sec = (LastWriteTime > 0 ? FILE_TIME_RDP_TO_SYSTEM(LastWriteTime) : st.st_mtime);
 #ifndef WIN32
 			/* TODO on win32 */
-#if ANDROID
+#ifdef ANDROID
 			tv[0].tv_usec = 0;
 			tv[1].tv_usec = 0;
 			utimes(file->fullpath, tv);
