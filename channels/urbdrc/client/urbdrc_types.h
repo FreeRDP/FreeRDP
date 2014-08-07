@@ -317,9 +317,9 @@ enum device_descriptor_table
 
 #define LOG_LEVEL 1
 #define LLOG(_level, _args) \
-  do { if (_level < LOG_LEVEL) { printf _args ; } } while (0)
+  do { if (_level < LOG_LEVEL) { DEBUG_MSG(_args); } } while (0)
 #define LLOGLN(_level, _args) \
-  do { if (_level < LOG_LEVEL) { printf _args ; printf("\n"); } } while (0)
+  do { if (_level < LOG_LEVEL) { DEBUG_MSG(_args); } } while (0)
 
 #define dummy_wait_obj(void) do{ sleep(5); } while(0)  
 #define dummy_wait_s_obj(_s) do{ sleep(_s); } while(0)  
