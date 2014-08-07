@@ -92,6 +92,11 @@ void CommLog_Print(int wlog_level, char *fmt, ...);
 BOOL CommIsHandled(HANDLE handle);
 BOOL CommCloseHandle(HANDLE handle);
 
+#ifdef __UCLIBC__
+int eventfd_read(int fd, eventfd_t* value);
+int eventfd_write(int fd, eventfd_t value);
+#endif
+
 #endif /* __linux__ */
 
 #endif /* WINPR_COMM_PRIVATE_H */

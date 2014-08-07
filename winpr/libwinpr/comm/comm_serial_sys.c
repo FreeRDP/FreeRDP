@@ -30,6 +30,9 @@
 #include <unistd.h>
 
 #include "comm_serial_sys.h"
+#ifdef __UCLIBC__
+#include "comm.h"
+#endif
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
