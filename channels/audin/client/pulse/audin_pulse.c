@@ -297,7 +297,7 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 	 */
 	if (pulse->buffer == NULL)
 	{
-		/* DEBUG_WARN( "%s: ignoring input, pulse buffer not ready.\n", __func__); */
+		/* fprintf(stderr, "%s: ignoring input, pulse buffer not ready.\n", __func__); */
 		return;
 	}
 

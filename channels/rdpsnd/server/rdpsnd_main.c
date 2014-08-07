@@ -29,6 +29,8 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
+#include <freerdp/utils/debug.h>
+
 #include "rdpsnd_main.h"
 
 BOOL rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)

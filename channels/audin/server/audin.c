@@ -385,7 +385,7 @@ static void* audin_server_thread_func(void* arg)
 				break;
 
 			default:
-				DEBUG_WARN( "audin_server_thread_func: unknown MessageId %d\n", MessageId);
+				fprintf(stderr, "audin_server_thread_func: unknown MessageId %d\n", MessageId);
 				break;
 		}
 	}

@@ -25,6 +25,7 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
+#include <freerdp/utils/debug.h>
 #include "cliprdr_main.h"
 
 /**

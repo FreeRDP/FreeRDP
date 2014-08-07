@@ -87,7 +87,7 @@ void cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 	Stream_SetPosition(s, pos);
 
 #ifdef WITH_DEBUG_CLIPRDR
-	DEBUG_MSG("Cliprdr Sending (%d bytes)\n", dataLen + 8);
+	printf("Cliprdr Sending (%d bytes)\n", dataLen + 8);
 	winpr_HexDump(Stream_Buffer(s), dataLen + 8);
 #endif
 
@@ -101,18 +101,18 @@ static void cliprdr_process_connect(rdpSvcPlugin* plugin)
 
 void cliprdr_print_general_capability_flags(UINT32 flags)
 {
-	DEBUG_WARN( "generalFlags (0x%08X) {\n", flags);
+	fprintf(stderr, "generalFlags (0x%08X) {\n", flags);
 
 	if (flags & CB_USE_LONG_FORMAT_NAMES)
-		DEBUG_WARN( "\tCB_USE_LONG_FORMAT_NAMES\n");
+		fprintf(stderr, "\tCB_USE_LONG_FORMAT_NAMES\n");
 	if (flags & CB_STREAM_FILECLIP_ENABLED)
-		DEBUG_WARN( "\tCB_STREAM_FILECLIP_ENABLED\n");
+		fprintf(stderr, "\tCB_STREAM_FILECLIP_ENABLED\n");
 	if (flags & CB_FILECLIP_NO_FILE_PATHS)
-		DEBUG_WARN( "\tCB_FILECLIP_NO_FILE_PATHS\n");
+		fprintf(stderr, "\tCB_FILECLIP_NO_FILE_PATHS\n");
 	if (flags & CB_CAN_LOCK_CLIPDATA)
-		DEBUG_WARN( "\tCB_CAN_LOCK_CLIPDATA\n");
+		fprintf(stderr, "\tCB_CAN_LOCK_CLIPDATA\n");
 
-	DEBUG_WARN( "}\n");
+	fprintf(stderr, "}\n");
 }
 
 static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* s)
