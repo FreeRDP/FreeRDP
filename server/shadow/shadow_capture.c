@@ -57,19 +57,26 @@ int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BY
 
 	for (ty = 0; ty < nrow; ty++)
 	{
-		th = ((ty + 1) == nrow) ? nHeight % 16 : 16;
+		th = ((ty + 1) == nrow) ? (nHeight % 16) : 16;
+
+		if (!th)
+			th = 16;
 
 		for (tx = 0; tx < ncol; tx++)
 		{
 			equal = TRUE;
-			tw = ((tx + 1) == ncol) ? nWidth % 16 : 16;
+
+			tw = ((tx + 1) == ncol) ? (nWidth % 16) : 16;
+
+			if (!tw)
+				tw = 16;
 
 			p1 = &pData1[(ty * 16 * nStep1) + (tx * 16 * 4)];
 			p2 = &pData2[(ty * 16 * nStep2) + (tx * 16 * 4)];
 
 			for (k = 0; k < th; k++)
 			{
-				if (memcmp(p1, p2, tw) != 0)
+				if (memcmp(p1, p2, tw * 4) != 0)
 				{
 					equal = FALSE;
 					break;
@@ -112,6 +119,12 @@ int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BY
 	rect->top = t * 16;
 	rect->right = (r + 1) * 16;
 	rect->bottom = (b + 1) * 16;
+
+	if (rect->right > nWidth)
+		rect->right = nWidth;
+
+	if (rect->bottom > nHeight)
+		rect->bottom = nHeight;
 
 	if (0)
 	{

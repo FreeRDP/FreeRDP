@@ -185,85 +185,6 @@ int x11_shadow_invalidate_region(x11ShadowSubsystem* subsystem, int x, int y, in
 	return 1;
 }
 
-int x11_shadow_surface_copy(x11ShadowSubsystem* subsystem)
-{
-	int x, y;
-	int width;
-	int height;
-	XImage* image;
-	rdpShadowScreen* screen;
-	rdpShadowServer* server;
-	rdpShadowSurface* surface;
-	RECTANGLE_16 surfaceRect;
-	const RECTANGLE_16* extents;
-
-	server = subsystem->server;
-	surface = server->surface;
-	screen = server->screen;
-
-	surfaceRect.left = surface->x;
-	surfaceRect.top = surface->y;
-	surfaceRect.right = surface->x + surface->width;
-	surfaceRect.bottom = surface->y + surface->height;
-
-	region16_clear(&(surface->invalidRegion));
-	region16_copy(&(surface->invalidRegion), &(subsystem->invalidRegion));
-	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
-
-	if (region16_is_empty(&(surface->invalidRegion)))
-		return 1;
-
-	extents = region16_extents(&(surface->invalidRegion));
-
-	x = extents->left;
-	y = extents->top;
-	width = extents->right - extents->left;
-	height = extents->bottom - extents->top;
-
-	XLockDisplay(subsystem->display);
-
-	if (subsystem->use_xshm)
-	{
-		XCopyArea(subsystem->display, subsystem->root_window, subsystem->fb_pixmap,
-				subsystem->xshm_gc, x, y, width, height, x, y);
-
-		XSync(subsystem->display, False);
-
-		image = subsystem->fb_image;
-
-		EnterCriticalSection(&(surface->lock));
-
-		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
-				surface->scanline, x - surface->x, y - surface->y, width, height,
-				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
-				image->bytes_per_line, x, y);
-
-		LeaveCriticalSection(&(surface->lock));
-	}
-	else
-	{
-		image = XGetImage(subsystem->display, subsystem->root_window,
-				x, y, width, height, AllPlanes, ZPixmap);
-
-		EnterCriticalSection(&(surface->lock));
-
-		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
-				surface->scanline, x - surface->x, y - surface->y, width, height,
-				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
-				image->bytes_per_line, 0, 0);
-
-		LeaveCriticalSection(&(surface->lock));
-
-		XDestroyImage(image);
-	}
-
-	x11_shadow_validate_region(subsystem, x, y, width, height);
-
-	XUnlockDisplay(subsystem->display);
-
-	return 1;
-}
-
 int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 {
 	int status;
@@ -290,7 +211,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 		image = subsystem->fb_image;
 
-		EnterCriticalSection(&(surface->lock));
+		EnterCriticalSection(&(screen->lock));
 
 		status = shadow_capture_compare(surface->data, surface->scanline, surface->width, surface->height,
 				(BYTE*) image->data, image->bytes_per_line, &invalidRect);
@@ -301,29 +222,28 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			y = invalidRect.top;
 			width = invalidRect.right - invalidRect.left;
 			height = invalidRect.bottom - invalidRect.top;
-
-			if (width > subsystem->width)
-				width = subsystem->width;
-
-			if (height > subsystem->height)
-				height = subsystem->height;
 
 			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 					surface->scanline, x - surface->x, y - surface->y, width, height,
 					(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
 					image->bytes_per_line, x, y);
 
-			x11_shadow_invalidate_region(subsystem, x, y, width, height);
+			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
+
+			if (subsystem->SurfaceUpdate)
+				subsystem->SurfaceUpdate((rdpShadowSubsystem*) subsystem, &(subsystem->invalidRegion));
+
+			region16_clear(&(subsystem->invalidRegion));
 		}
 
-		LeaveCriticalSection(&(surface->lock));
+		LeaveCriticalSection(&(screen->lock));
 	}
 	else
 	{
 		image = XGetImage(subsystem->display, subsystem->root_window,
 				0, 0, subsystem->width, subsystem->height, AllPlanes, ZPixmap);
 
-		EnterCriticalSection(&(surface->lock));
+		EnterCriticalSection(&(screen->lock));
 
 		status = shadow_capture_compare(surface->data, surface->scanline, surface->width, surface->height,
 				(BYTE*) image->data, image->bytes_per_line, &invalidRect);
@@ -335,21 +255,20 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			width = invalidRect.right - invalidRect.left;
 			height = invalidRect.bottom - invalidRect.top;
 
-			if (width > subsystem->width)
-				width = subsystem->width;
-
-			if (height > subsystem->height)
-				height = subsystem->height;
-
 			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
-					surface->scanline, x, y, width, height,
+					surface->scanline, x - surface->x, y - surface->y, width, height,
 					(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
 					image->bytes_per_line, x, y);
 
-			x11_shadow_invalidate_region(subsystem, x, y, width, height);
+			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
+
+			if (subsystem->SurfaceUpdate)
+				subsystem->SurfaceUpdate((rdpShadowSubsystem*) subsystem, &(subsystem->invalidRegion));
+
+			region16_clear(&(subsystem->invalidRegion));
 		}
 
-		LeaveCriticalSection(&(surface->lock));
+		LeaveCriticalSection(&(screen->lock));
 
 		XDestroyImage(image);
 	}
@@ -380,12 +299,9 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 	events[nCount++] = StopEvent;
 	events[nCount++] = subsystem->event;
 
-	fps = 16;
+	fps = 24;
 	dwInterval = 1000 / fps;
 	frameTime = GetTickCount64() + dwInterval;
-
-	//x11_shadow_invalidate_region(subsystem, 0, 0, subsystem->width, subsystem->height);
-	//x11_shadow_surface_copy(subsystem);
 
 	while (1)
 	{
@@ -427,17 +343,6 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 			if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 			{
 				x11_shadow_screen_grab(subsystem);
-
-				if (0)
-				{
-					x11_shadow_invalidate_region(subsystem, 0, 0, subsystem->width, subsystem->height);
-					x11_shadow_surface_copy(subsystem);
-				}
-
-				if (subsystem->SurfaceUpdate)
-					subsystem->SurfaceUpdate((rdpShadowSubsystem*) subsystem, &(subsystem->invalidRegion));
-
-				region16_clear(&(subsystem->invalidRegion));
 
 				dwInterval = 1000 / fps;
 				frameTime += dwInterval;
@@ -865,8 +770,6 @@ x11ShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
 	subsystem->Start = (pfnShadowSubsystemStart) x11_shadow_subsystem_start;
 	subsystem->Stop = (pfnShadowSubsystemStop) x11_shadow_subsystem_stop;
 	subsystem->Free = (pfnShadowSubsystemFree) x11_shadow_subsystem_free;
-
-	subsystem->SurfaceCopy = (pfnShadowSurfaceCopy) x11_shadow_surface_copy;
 
 	subsystem->SynchronizeEvent = (pfnShadowSynchronizeEvent) x11_shadow_input_synchronize_event;
 	subsystem->KeyboardEvent = (pfnShadowKeyboardEvent) x11_shadow_input_keyboard_event;

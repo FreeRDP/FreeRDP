@@ -103,6 +103,7 @@ BOOL shadow_client_capabilities(freerdp_peer* peer)
 
 BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
+	int width, height;
 	rdpSettings* settings;
 	rdpShadowClient* client;
 	rdpShadowSurface* lobby;
@@ -124,18 +125,23 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 
 	shadow_client_channels_post_connect(client);
 
-	lobby = client->lobby = shadow_surface_new(client->server, 0, 0, settings->DesktopWidth, settings->DesktopHeight);
+	width = settings->DesktopWidth;
+	height = settings->DesktopHeight;
+
+	invalidRect.left = 0;
+	invalidRect.top = 0;
+	invalidRect.right = width;
+	invalidRect.bottom = height;
+
+	region16_union_rect(&(client->invalidRegion), &(client->invalidRegion), &invalidRect);
+
+	lobby = client->lobby = shadow_surface_new(client->server, 0, 0, width, height);
 
 	if (!client->lobby)
 		return FALSE;
 
 	freerdp_image_fill(lobby->data, PIXEL_FORMAT_XRGB32, lobby->scanline,
 			0, 0, lobby->width, lobby->height, 0x3BB9FF);
-
-	invalidRect.left = 0;
-	invalidRect.top = 0;
-	invalidRect.right = lobby->width;
-	invalidRect.bottom = lobby->height;
 
 	region16_union_rect(&(lobby->invalidRegion), &(lobby->invalidRegion), &invalidRect);
 
@@ -694,11 +700,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 			{
 				EnterCriticalSection(&(screen->lock));
 
-				if (subsystem->SurfaceCopy)
-					subsystem->SurfaceCopy(subsystem);
-
 				shadow_client_send_surface_update(client);
-				region16_clear(&(screen->invalidRegion));
 
 				LeaveCriticalSection(&(screen->lock));
 			}
