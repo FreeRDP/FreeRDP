@@ -30,7 +30,6 @@ set(${MODULE_PREFIX}_SRCS
 	stopwatch.c
 	svc_plugin.c
 	tcp.c
-	debug.c
 	time.c
 	uds.c)
 
