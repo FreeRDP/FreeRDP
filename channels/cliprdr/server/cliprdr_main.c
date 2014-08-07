@@ -70,7 +70,7 @@ static int cliprdr_server_send_capabilities(CliprdrServerContext* context)
 	CLIPRDR_HEADER header;
 	ULONG written;
 
-	printf("CliprdrServerSendCapabilities\n");
+	DEBUG_MSG("CliprdrServerSendCapabilities\n");
 
 	header.msgType = CB_CLIP_CAPS;
 	header.msgFlags = 0;
@@ -111,7 +111,7 @@ static int cliprdr_server_send_monitor_ready(CliprdrServerContext* context)
 	CLIPRDR_HEADER header;
 	ULONG written;
 
-	printf("CliprdrServerSendMonitorReady\n");
+	DEBUG_MSG("CliprdrServerSendMonitorReady\n");
 
 	header.msgType = CB_MONITOR_READY;
 	header.msgFlags = 0;
@@ -139,7 +139,7 @@ static int cliprdr_server_send_format_list_response(CliprdrServerContext* contex
 	CLIPRDR_HEADER header;
 	ULONG written;
 
-	printf("CliprdrServerSendFormatListResponse\n");
+	DEBUG_MSG("CliprdrServerSendFormatListResponse\n");
 
 	header.msgType = CB_FORMAT_LIST_RESPONSE;
 	header.msgFlags = CB_RESPONSE_OK;
@@ -207,7 +207,7 @@ static int cliprdr_server_receive_temporary_directory(CliprdrServerContext* cont
 	ConvertFromUnicode(CP_UTF8, 0, wszTempDir, -1,
 			&(context->priv->ClientTemporaryDirectory), 0, NULL, NULL);
 
-	printf("ClientTemporaryDirectory: %s\n", context->priv->ClientTemporaryDirectory);
+	DEBUG_MSG("ClientTemporaryDirectory: %s\n", context->priv->ClientTemporaryDirectory);
 
 	return 0;
 }
@@ -252,7 +252,7 @@ static int cliprdr_server_receive_long_format_list(CliprdrServerContext* context
 	int length;
 	int position;
 
-	printf("%s\n", __FUNCTION__);
+	DEBUG_MSG("%s\n", __FUNCTION__);
 
 	position = Stream_GetPosition(s);
 	Stream_SetPosition(s, Stream_Length(s));
@@ -305,7 +305,7 @@ static int cliprdr_server_receive_long_format_list(CliprdrServerContext* context
 
 	for (i = 0; i < context->priv->ClientFormatNameCount; i++)
 	{
-		printf("Format %d: Id: 0x%04X Name: %s Length: %d\n", i,
+		DEBUG_MSG("Format %d: Id: 0x%04X Name: %s Length: %d\n", i,
 				context->priv->ClientFormatNames[i].id,
 				context->priv->ClientFormatNames[i].name,
 				context->priv->ClientFormatNames[i].length);
@@ -316,7 +316,7 @@ static int cliprdr_server_receive_long_format_list(CliprdrServerContext* context
 
 static int cliprdr_server_receive_short_format_list(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
 {
-	printf("%s: unimplemented\n", __FUNCTION__);
+	DEBUG_MSG("%s: unimplemented\n", __FUNCTION__);
 	return 0;
 }
 
@@ -340,7 +340,7 @@ static int cliprdr_server_receive_format_list(CliprdrServerContext* context, wSt
 
 static int cliprdr_server_receive_pdu(CliprdrServerContext* context, wStream* s, CLIPRDR_HEADER* header)
 {
-	printf("CliprdrServerReceivePdu: msgType: %d msgFlags: 0x%08X dataLen: %d\n",
+	DEBUG_MSG("CliprdrServerReceivePdu: msgType: %d msgFlags: 0x%08X dataLen: %d\n",
 			header->msgType, header->msgFlags, header->dataLen);
 
 	switch (header->msgType)
@@ -379,7 +379,7 @@ static int cliprdr_server_receive_pdu(CliprdrServerContext* context, wStream* s,
 			break;
 
 		default:
-			printf("Unexpected clipboard PDU type: %d\n", header->msgType);
+			DEBUG_MSG("Unexpected clipboard PDU type: %d\n", header->msgType);
 			break;
 	}
 

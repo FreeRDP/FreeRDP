@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/client/encomsp.h>
 
 #include "encomsp_main.h"
@@ -43,7 +44,7 @@ int encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 		return -1;
 
 #if 0
-	printf("EncomspWrite (%d)\n", Stream_Length(s));
+	DEBUG_MSG("EncomspWrite (%d)\n", Stream_Length(s));
 	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
 #endif
 
@@ -52,7 +53,7 @@ int encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 
 	if (status != CHANNEL_RC_OK)
 	{
-		fprintf(stderr, "encomsp_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
+		DEBUG_WARN( "encomsp_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
 		return -1;
 	}
 
@@ -590,7 +591,7 @@ static int encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 		if (encomsp_read_header(s, &header) < 0)
 			return -1;
 
-		//printf("EncomspReceive: Type: %d Length: %d\n", header.Type, header.Length);
+		//DEBUG_MSG("EncomspReceive: Type: %d Length: %d\n", header.Type, header.Length);
 
 		switch (header.Type)
 		{
@@ -722,7 +723,7 @@ int encomsp_send(encomspPlugin* encomsp, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		fprintf(stderr, "encomsp_send: VirtualChannelWrite failed %d\n", status);
+		DEBUG_WARN( "encomsp_send: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
@@ -754,7 +755,7 @@ static void encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp,
 	{
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
-			fprintf(stderr, "encomsp_plugin_process_received: read error\n");
+			DEBUG_WARN( "encomsp_plugin_process_received: read error\n");
 		}
 
 		encomsp->data_in = NULL;
@@ -774,7 +775,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle, UINT 
 
 	if (!encomsp)
 	{
-		fprintf(stderr, "encomsp_virtual_channel_open_event: error no match\n");
+		DEBUG_WARN( "encomsp_virtual_channel_open_event: error no match\n");
 		return;
 	}
 
@@ -834,7 +835,7 @@ static void encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 
 	if (status != CHANNEL_RC_OK)
 	{
-		fprintf(stderr, "encomsp_virtual_channel_event_connected: open failed: status: %d\n", status);
+		DEBUG_WARN( "encomsp_virtual_channel_event_connected: open failed: status: %d\n", status);
 		return;
 	}
 
@@ -872,7 +873,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UIN
 
 	if (!encomsp)
 	{
-		fprintf(stderr, "encomsp_virtual_channel_init_event: error no match\n");
+		DEBUG_WARN( "encomsp_virtual_channel_init_event: error no match\n");
 		return;
 	}
 

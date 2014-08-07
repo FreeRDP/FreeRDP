@@ -218,7 +218,7 @@ int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args, 
 	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
 
-	fprintf(stderr, "Loading Dynamic Virtual Channel %s\n", args->argv[0]);
+	DEBUG_WARN( "Loading Dynamic Virtual Channel %s\n", args->argv[0]);
 
 	pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_channel_addin_entry(args->argv[0],
 			NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);

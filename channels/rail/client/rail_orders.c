@@ -522,7 +522,7 @@ BOOL rail_order_recv(railPlugin* rail, wStream* s)
 		}
 
 		default:
-			fprintf(stderr, "Unknown RAIL PDU order reveived.");
+			DEBUG_WARN( "Unknown RAIL PDU order reveived.");
 			break;
 	}
 

@@ -468,7 +468,7 @@ static void* urbdrc_search_usb_device(void* arg)
 
 	if (!udev)
 	{
-		fprintf(stderr, "Can't create udev\n");
+		DEBUG_WARN( "Can't create udev\n");
 		return 0;
 	}
 
@@ -652,7 +652,7 @@ static void* urbdrc_search_usb_device(void* arg)
 			}
 			else
 			{
-				fprintf(stderr, "No Device from receive_device(). An error occured.\n");
+				DEBUG_WARN( "No Device from receive_device(). An error occured.\n");
 			}
 		}
 	}
@@ -835,7 +835,7 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 
 			if (transfer_data == NULL)
 			{
-				fprintf(stderr, "transfer_data is NULL!!");
+				DEBUG_WARN( "transfer_data is NULL!!");
 				return 0;
 			}
 

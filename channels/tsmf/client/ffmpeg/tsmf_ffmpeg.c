@@ -27,10 +27,12 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
 
 #include <libavcodec/avcodec.h>
+#include <libavutil/common.h>
 
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
@@ -504,7 +506,7 @@ ITSMFDecoder *freerdp_tsmf_client_decoder_subsystem_entry(void)
 		avcodec_register_all();
 		initialized = TRUE;
 	}
-	fprintf(stderr, "TSMFDecoderEntry FFMPEG\n");
+	DEBUG_WARN( "TSMFDecoderEntry FFMPEG\n");
 	decoder = (TSMFFFmpegDecoder *) malloc(sizeof(TSMFFFmpegDecoder));
 	ZeroMemory(decoder, sizeof(TSMFFFmpegDecoder));
 	decoder->iface.SetFormat = tsmf_ffmpeg_set_format;

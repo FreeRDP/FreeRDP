@@ -185,7 +185,7 @@ static rdpPrinter* printer_win_new_printer(rdpWinPrinterDriver* win_driver, cons
 	win_printer->printer.FindPrintJob = printer_win_find_printjob;
 	win_printer->printer.Free = printer_win_free_printer;
 
-	swprintf(wname, 256, L"%hs", name);
+	swDEBUG_MSG(wname, 256, L"%hs", name);
 	OpenPrinter(wname, &(win_printer->hPrinter), NULL);
 
 	GetPrinter(win_printer->hPrinter, 2, (LPBYTE) prninfo, 0, &needed);

@@ -195,13 +195,13 @@ void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	}
 
 #if 0
-	fprintf(stderr, "Server ");
+	DEBUG_WARN( "Server ");
 	rdpsnd_print_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "Client ");
+	DEBUG_WARN( "Client ");
 	rdpsnd_print_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 #endif
 }
 
@@ -544,7 +544,7 @@ static void rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	Stream_Seek_UINT8(s); /* bPad */
 	Stream_Read_UINT16(s, BodySize);
 
-	//fprintf(stderr, "msgType %d BodySize %d\n", msgType, BodySize);
+	//DEBUG_WARN( "msgType %d BodySize %d\n", msgType, BodySize);
 
 	switch (msgType)
 	{
@@ -875,7 +875,7 @@ int rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		fprintf(stderr, "rdpdr_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
+		DEBUG_WARN( "rdpdr_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
@@ -907,7 +907,7 @@ static void rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 	{
 		if (Stream_Capacity(s) != Stream_GetPosition(s))
 		{
-			fprintf(stderr, "rdpsnd_virtual_channel_event_data_received: read error\n");
+			DEBUG_WARN( "rdpsnd_virtual_channel_event_data_received: read error\n");
 		}
 
 		plugin->data_in = NULL;
@@ -927,7 +927,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT e
 
 	if (!plugin)
 	{
-		fprintf(stderr, "rdpsnd_virtual_channel_open_event: error no match\n");
+		DEBUG_WARN( "rdpsnd_virtual_channel_open_event: error no match\n");
 		return;
 	}
 
@@ -987,7 +987,7 @@ static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID 
 
 	if (status != CHANNEL_RC_OK)
 	{
-		fprintf(stderr, "rdpsnd_virtual_channel_event_connected: open failed: status: %d\n", status);
+		DEBUG_WARN( "rdpsnd_virtual_channel_event_connected: open failed: status: %d\n", status);
 		return;
 	}
 
@@ -1040,7 +1040,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT
 
 	if (!plugin)
 	{
-		fprintf(stderr, "rdpsnd_virtual_channel_init_event: error no match\n");
+		DEBUG_WARN( "rdpsnd_virtual_channel_init_event: error no match\n");
 		return;
 	}
 
