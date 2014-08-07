@@ -858,7 +858,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		freerdp_image_convert(nsc_context->BitmapData, gdi->image->bitmap->data,
 				surface_bits_command->width, surface_bits_command->height,
 				surface_bits_command->bpp, gdi->dstBpp, gdi->clrconv);
-		freerdp_image_flip(gdi->image->bitmap->data, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
+		freerdp_image_flip(gdi->image->bitmap->data, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, gdi->dstBpp);
 		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
 	} 
 	else if (surface_bits_command->codecID == RDP_CODEC_ID_NONE)
