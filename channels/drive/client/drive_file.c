@@ -433,10 +433,10 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 	int status;
 	char* fullpath;
 	struct STAT st;
-#if defined(ANDROID)
-	struct timeval tv[2];
-#else
+#if defined(__linux__) && !defined(ANDROID)
 	struct timespec tv[2];
+#else
+	struct timeval tv[2];
 #endif
 	UINT64 LastWriteTime;
 	UINT32 FileAttributes;
@@ -461,14 +461,18 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			tv[1].tv_sec = (LastWriteTime > 0 ? FILE_TIME_RDP_TO_SYSTEM(LastWriteTime) : st.st_mtime);
 #ifndef WIN32
 			/* TODO on win32 */
-#ifdef ANDROID
+#if ANDROID
 			tv[0].tv_usec = 0;
 			tv[1].tv_usec = 0;
 			utimes(file->fullpath, tv);
-#else
+#elif defined (__linux__)
 			tv[0].tv_nsec = 0;
 			tv[1].tv_nsec = 0;			
 			futimens(file->fd, tv);
+#else
+			tv[0].tv_usec = 0;
+			tv[1].tv_usec = 0;
+			futimes(file->fd, tv);
 #endif
 
 			if (FileAttributes > 0)
