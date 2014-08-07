@@ -44,7 +44,7 @@ int xf_cursor_init(xfInfo* xfi)
 
 	if (!XFixesQueryExtension(xfi->display, &event, &error))
 	{
-		fprintf(stderr, "XFixesQueryExtension failed\n");
+		DEBUG_WARN( "XFixesQueryExtension failed\n");
 		return -1;
 	}
 

@@ -64,7 +64,7 @@ void xf_xdamage_init(xfInfo* xfi)
 
 	if (XDamageQueryExtension(xfi->display, &damage_event, &damage_error) == 0)
 	{
-		fprintf(stderr, "XDamageQueryExtension failed\n");
+		DEBUG_WARN( "XDamageQueryExtension failed\n");
 		return;
 	}
 
@@ -72,12 +72,12 @@ void xf_xdamage_init(xfInfo* xfi)
 
 	if (XDamageQueryVersion(xfi->display, &major, &minor) == 0)
 	{
-		fprintf(stderr, "XDamageQueryVersion failed\n");
+		DEBUG_WARN( "XDamageQueryVersion failed\n");
 		return;
 	}
 	else if (major < 1)
 	{
-		fprintf(stderr, "XDamageQueryVersion failed: major:%d minor:%d\n", major, minor);
+		DEBUG_WARN( "XDamageQueryVersion failed: major:%d minor:%d\n", major, minor);
 		return;
 	}
 
@@ -86,7 +86,7 @@ void xf_xdamage_init(xfInfo* xfi)
 
 	if (xfi->xdamage == None)
 	{
-		fprintf(stderr, "XDamageCreate failed\n");
+		DEBUG_WARN( "XDamageCreate failed\n");
 		return;
 	}
 
@@ -95,7 +95,7 @@ void xf_xdamage_init(xfInfo* xfi)
 
 	if (xfi->xdamage_region == None)
 	{
-		fprintf(stderr, "XFixesCreateRegion failed\n");
+		DEBUG_WARN( "XFixesCreateRegion failed\n");
 		XDamageDestroy(xfi->display, xfi->xdamage);
 		xfi->xdamage = None;
 		return;
@@ -120,13 +120,13 @@ int xf_xshm_init(xfInfo* xfi)
 
 		if (pixmaps != True)
 		{
-			fprintf(stderr, "XShmQueryVersion failed\n");
+			DEBUG_WARN( "XShmQueryVersion failed\n");
 			return -1;
 		}
 	}
 	else
 	{
-		fprintf(stderr, "XShmQueryExtension failed\n");
+		DEBUG_WARN( "XShmQueryExtension failed\n");
 		return -1;
 	}
 
@@ -138,7 +138,7 @@ int xf_xshm_init(xfInfo* xfi)
 
 	if (!xfi->fb_image)
 	{
-		fprintf(stderr, "XShmCreateImage failed\n");
+		DEBUG_WARN( "XShmCreateImage failed\n");
 		return -1;
 	}
 
@@ -147,7 +147,7 @@ int xf_xshm_init(xfInfo* xfi)
 
 	if (xfi->fb_shm_info.shmid == -1)
 	{
-		fprintf(stderr, "shmget failed\n");
+		DEBUG_WARN( "shmget failed\n");
 		return -1;
 	}
 
@@ -157,7 +157,7 @@ int xf_xshm_init(xfInfo* xfi)
 
 	if (xfi->fb_shm_info.shmaddr == ((char*) -1))
 	{
-		fprintf(stderr, "shmat failed\n");
+		DEBUG_WARN( "shmat failed\n");
 		return -1;
 	}
 
@@ -166,7 +166,7 @@ int xf_xshm_init(xfInfo* xfi)
 
 	shmctl(xfi->fb_shm_info.shmid, IPC_RMID, 0);
 
-	fprintf(stderr, "display: %p root_window: %p width: %d height: %d depth: %d\n",
+	DEBUG_WARN( "display: %p root_window: %p width: %d height: %d depth: %d\n",
 			xfi->display, (void*) xfi->root_window, xfi->fb_image->width, xfi->fb_image->height, xfi->fb_image->depth);
 
 	xfi->fb_pixmap = XShmCreatePixmap(xfi->display,
@@ -212,13 +212,13 @@ xfInfo* xf_info_init()
 	setenv("DISPLAY", ":0", 1); /* Set DISPLAY variable if not already set */
 
 	if (!XInitThreads())
-		fprintf(stderr, "warning: XInitThreads() failure\n");
+		DEBUG_WARN( "warning: XInitThreads() failure\n");
 
 	xfi->display = XOpenDisplay(NULL);
 
 	if (!xfi->display)
 	{
-		fprintf(stderr, "failed to open display: %s\n", XDisplayName(NULL));
+		DEBUG_WARN( "failed to open display: %s\n", XDisplayName(NULL));
 		exit(1);
 	}
 
@@ -236,7 +236,7 @@ xfInfo* xf_info_init()
 
 	if (!pfs)
 	{
-		fprintf(stderr, "XListPixmapFormats failed\n");
+		DEBUG_WARN( "XListPixmapFormats failed\n");
 		exit(1);
 	}
 
@@ -261,7 +261,7 @@ xfInfo* xf_info_init()
 
 	if (!vis)
 	{
-		fprintf(stderr, "XGetVisualInfo failed\n");
+		DEBUG_WARN( "XGetVisualInfo failed\n");
 		exit(1);
 	}
 
@@ -420,23 +420,23 @@ BOOL xf_peer_post_connect(freerdp_peer* client)
 	 * The server may start sending graphics output and receiving keyboard/mouse input after this
 	 * callback returns.
 	 */
-	fprintf(stderr, "Client %s is activated", client->hostname);
+	DEBUG_WARN( "Client %s is activated", client->hostname);
 	if (client->settings->AutoLogonEnabled)
 	{
-		fprintf(stderr, " and wants to login automatically as %s\\%s",
+		DEBUG_WARN( " and wants to login automatically as %s\\%s",
 			client->settings->Domain ? client->settings->Domain : "",
 			client->settings->Username);
 
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "Client requested desktop: %dx%dx%d\n",
+	DEBUG_WARN( "Client requested desktop: %dx%dx%d\n",
 		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
 	if (!client->settings->RemoteFxCodec)
 	{
-		fprintf(stderr, "Client does not support RemoteFX\n");
+		DEBUG_WARN( "Client does not support RemoteFX\n");
 		return FALSE;
 	}
 
@@ -530,7 +530,7 @@ static void* xf_peer_main_loop(void* arg)
 	ZeroMemory(rfds, sizeof(rfds));
 	ZeroMemory(&timeout, sizeof(struct timeval));
 
-	fprintf(stderr, "We've got a client %s\n", client->hostname);
+	DEBUG_WARN( "We've got a client %s\n", client->hostname);
 
 	xf_peer_init(client);
 	xfp = (xfPeerContext*) client->context;
@@ -559,13 +559,13 @@ static void* xf_peer_main_loop(void* arg)
 
 		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
-			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
+			DEBUG_WARN( "Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 
 		if (xf_peer_get_fds(client, rfds, &rcount) != TRUE)
 		{
-			fprintf(stderr, "Failed to get xfreerdp file descriptor\n");
+			DEBUG_WARN( "Failed to get xfreerdp file descriptor\n");
 			break;
 		}
 
@@ -596,25 +596,25 @@ static void* xf_peer_main_loop(void* arg)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				fprintf(stderr, "select failed\n");
+				DEBUG_WARN( "select failed\n");
 				break;
 			}
 		}
 
 		if (client->CheckFileDescriptor(client) != TRUE)
 		{
-			fprintf(stderr, "Failed to check freerdp file descriptor\n");
+			DEBUG_WARN( "Failed to check freerdp file descriptor\n");
 			break;
 		}
 
 		if ((xf_peer_check_fds(client)) != TRUE)
 		{
-			fprintf(stderr, "Failed to check xfreerdp file descriptor\n");
+			DEBUG_WARN( "Failed to check xfreerdp file descriptor\n");
 			break;
 		}
 	}
 
-	fprintf(stderr, "Client %s disconnected.\n", client->hostname);
+	DEBUG_WARN( "Client %s disconnected.\n", client->hostname);
 
 	client->Disconnect(client);
 	
