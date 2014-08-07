@@ -128,7 +128,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			msg = rfx_process_message(gdi->rfx_context, data, length);
 			if (!msg)
 			{
-				fprintf(stderr, "gdi_Bitmap_Decompress: rfx Decompression Failed\n");
+				DEBUG_WARN( "gdi_Bitmap_Decompress: rfx Decompression Failed\n");
 			}
 			else
 			{
@@ -151,7 +151,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 #ifdef WITH_JPEG
 			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
 			{
-				fprintf(stderr, "gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
+				DEBUG_WARN( "gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
 			}
 #endif
 			break;
@@ -162,7 +162,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 				if (!status)
 				{
-					fprintf(stderr, "gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
+					DEBUG_WARN( "gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
 				}
 			}
 			else

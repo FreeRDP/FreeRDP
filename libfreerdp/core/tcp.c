@@ -65,6 +65,7 @@
 
 #endif
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/uds.h>
 #include <winpr/stream.h>
@@ -276,7 +277,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	 */
 	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE*) buf, num))
 	{
-		fprintf(stderr, "%s: an error occured when writing(toWrite=%d)\n", __FUNCTION__, num);
+		DEBUG_WARN( "%s: an error occured when writing(toWrite=%d)\n", __FUNCTION__, num);
 		return -1;
 	}
 
@@ -475,14 +476,14 @@ void tcp_get_mac_address(rdpTcp* tcp)
 
 	if (ioctl(tcp->sockfd, SIOCGIFHWADDR, &if_req) != 0)
 	{
-		fprintf(stderr, "failed to obtain MAC address\n");
+		DEBUG_WARN( "failed to obtain MAC address\n");
 		return;
 	}
 
 	memmove((void*) mac, (void*) &if_req.ifr_ifru.ifru_hwaddr.sa_data[0], 6);
 #endif
 
-	/* fprintf(stderr, "MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
+	/* DEBUG_WARN( "MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
@@ -582,7 +583,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 	option_len = sizeof(option_value);
 
 	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
-		fprintf(stderr, "%s: unable to set TCP_NODELAY\n", __FUNCTION__);
+		DEBUG_WARN( "%s: unable to set TCP_NODELAY\n", __FUNCTION__);
 
 	/* receive buffer must be a least 32 K */
 	if (getsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, &option_len) == 0)
@@ -594,7 +595,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 
 			if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len) < 0)
 			{
-				fprintf(stderr, "%s: unable to set receive buffer len\n", __FUNCTION__);
+				DEBUG_WARN( "%s: unable to set receive buffer len\n", __FUNCTION__);
 				return FALSE;
 			}
 		}
@@ -631,7 +632,7 @@ BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 
 	if (flags == -1)
 	{
-		fprintf(stderr, "%s: fcntl failed, %s.\n", __FUNCTION__, strerror(errno));
+		DEBUG_WARN( "%s: fcntl failed, %s.\n", __FUNCTION__, strerror(errno));
 		return FALSE;
 	}
 
@@ -646,7 +647,7 @@ BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 	status = ioctlsocket(tcp->sockfd, FIONBIO, &arg);
 
 	if (status != NO_ERROR)
-		fprintf(stderr, "ioctlsocket() failed with error: %ld\n", status);
+		DEBUG_WARN( "ioctlsocket() failed with error: %ld\n", status);
 
 	tcp->wsa_event = WSACreateEvent();
 	WSAEventSelect(tcp->sockfd, tcp->wsa_event, FD_READ);

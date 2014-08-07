@@ -26,6 +26,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/utils/signal.h>
+#include <freerdp/utils/debug.h>
 
 #ifdef _WIN32
 
@@ -49,7 +50,7 @@ static void fatal_handler(int signum)
 	struct sigaction default_sigaction;
 	sigset_t this_mask;
 
-	printf("fatal_handler: signum=%d\n", signum);
+	DEBUG_MSG("fatal_handler: signum=%d\n", signum);
 
 	if (terminal_needs_reset)
 		tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);

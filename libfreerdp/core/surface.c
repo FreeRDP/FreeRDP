@@ -40,7 +40,7 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT3
 	Stream_Read_UINT8(s, cmd->bpp);
 	if ((cmd->bpp < 1) || (cmd->bpp > 32))
 	{
-		fprintf(stderr, "%s: invalid bpp value %d", __FUNCTION__, cmd->bpp);
+		DEBUG_WARN( "%s: invalid bpp value %d", __FUNCTION__, cmd->bpp);
 		return FALSE;
 	}
 

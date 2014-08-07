@@ -29,6 +29,7 @@
 #include <freerdp/freerdp.h>
 #include <winpr/stream.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/cache/nine_grid.h>
 
 void update_gdi_draw_nine_grid(rdpContext* context, DRAW_NINE_GRID_ORDER* draw_nine_grid)
@@ -60,7 +61,7 @@ void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
 
 	if (index >= nine_grid->maxEntries)
 	{
-		fprintf(stderr, "invalid NineGrid index: 0x%04X\n", index);
+		DEBUG_WARN( "invalid NineGrid index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -68,7 +69,7 @@ void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
 
 	if (entry == NULL)
 	{
-		fprintf(stderr, "invalid NineGrid at index: 0x%04X\n", index);
+		DEBUG_WARN( "invalid NineGrid at index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -81,7 +82,7 @@ void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry)
 
 	if (index >= nine_grid->maxEntries)
 	{
-		fprintf(stderr, "invalid NineGrid index: 0x%04X\n", index);
+		DEBUG_WARN( "invalid NineGrid index: 0x%04X\n", index);
 		return;
 	}
 

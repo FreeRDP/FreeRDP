@@ -322,41 +322,41 @@ void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 	MSUSB_PIPE_DESCRIPTOR * MsPipe;
 	int inum = 0, pnum = 0;
 
-	fprintf(stderr, "=================MsConfig:========================\n");
-	fprintf(stderr, "wTotalLength:%d\n", MsConfig->wTotalLength);
-	fprintf(stderr, "bConfigurationValue:%d\n", MsConfig->bConfigurationValue);
-	fprintf(stderr, "ConfigurationHandle:0x%x\n", MsConfig->ConfigurationHandle);
-	fprintf(stderr, "InitCompleted:%d\n", MsConfig->InitCompleted);
-	fprintf(stderr, "MsOutSize:%d\n", MsConfig->MsOutSize);
-	fprintf(stderr, "NumInterfaces:%d\n\n", MsConfig->NumInterfaces);
+	DEBUG_WARN( "=================MsConfig:========================\n");
+	DEBUG_WARN( "wTotalLength:%d\n", MsConfig->wTotalLength);
+	DEBUG_WARN( "bConfigurationValue:%d\n", MsConfig->bConfigurationValue);
+	DEBUG_WARN( "ConfigurationHandle:0x%x\n", MsConfig->ConfigurationHandle);
+	DEBUG_WARN( "InitCompleted:%d\n", MsConfig->InitCompleted);
+	DEBUG_WARN( "MsOutSize:%d\n", MsConfig->MsOutSize);
+	DEBUG_WARN( "NumInterfaces:%d\n\n", MsConfig->NumInterfaces);
 	MsInterfaces = MsConfig->MsInterfaces;
 	for(inum = 0; inum < MsConfig->NumInterfaces; inum++)
 	{
 		MsInterface = MsInterfaces[inum];
-		fprintf(stderr, "	Interfase: %d\n", MsInterface->InterfaceNumber);
-		fprintf(stderr, "	Length: %d\n", MsInterface->Length);
-		fprintf(stderr, "	NumberOfPipesExpected: %d\n", MsInterface->NumberOfPipesExpected);
-		fprintf(stderr, "	AlternateSetting: %d\n", MsInterface->AlternateSetting);
-		fprintf(stderr, "	NumberOfPipes: %d\n", MsInterface->NumberOfPipes);
-		fprintf(stderr, "	InterfaceHandle: 0x%x\n", MsInterface->InterfaceHandle);
-		fprintf(stderr, "	bInterfaceClass: 0x%x\n", MsInterface->bInterfaceClass);
-		fprintf(stderr, "	bInterfaceSubClass: 0x%x\n", MsInterface->bInterfaceSubClass);
-		fprintf(stderr, "	bInterfaceProtocol: 0x%x\n", MsInterface->bInterfaceProtocol);
-		fprintf(stderr, "	InitCompleted: %d\n\n", MsInterface->InitCompleted);
+		DEBUG_WARN( "	Interfase: %d\n", MsInterface->InterfaceNumber);
+		DEBUG_WARN( "	Length: %d\n", MsInterface->Length);
+		DEBUG_WARN( "	NumberOfPipesExpected: %d\n", MsInterface->NumberOfPipesExpected);
+		DEBUG_WARN( "	AlternateSetting: %d\n", MsInterface->AlternateSetting);
+		DEBUG_WARN( "	NumberOfPipes: %d\n", MsInterface->NumberOfPipes);
+		DEBUG_WARN( "	InterfaceHandle: 0x%x\n", MsInterface->InterfaceHandle);
+		DEBUG_WARN( "	bInterfaceClass: 0x%x\n", MsInterface->bInterfaceClass);
+		DEBUG_WARN( "	bInterfaceSubClass: 0x%x\n", MsInterface->bInterfaceSubClass);
+		DEBUG_WARN( "	bInterfaceProtocol: 0x%x\n", MsInterface->bInterfaceProtocol);
+		DEBUG_WARN( "	InitCompleted: %d\n\n", MsInterface->InitCompleted);
 		MsPipes = MsInterface->MsPipes;
 		for (pnum = 0; pnum < MsInterface->NumberOfPipes; pnum++)
 		{
 			MsPipe = MsPipes[pnum];
-			fprintf(stderr, "		Pipe: %d\n", pnum);
-			fprintf(stderr, "		MaximumPacketSize: 0x%x\n", MsPipe->MaximumPacketSize);
-			fprintf(stderr, "		MaximumTransferSize: 0x%x\n", MsPipe->MaximumTransferSize);
-			fprintf(stderr, "		PipeFlags: 0x%x\n", MsPipe->PipeFlags);
-			fprintf(stderr, "		PipeHandle: 0x%x\n", MsPipe->PipeHandle);
-			fprintf(stderr, "		bEndpointAddress: 0x%x\n", MsPipe->bEndpointAddress);
-			fprintf(stderr, "		bInterval: %d\n", MsPipe->bInterval);
-			fprintf(stderr, "		PipeType: 0x%x\n", MsPipe->PipeType);
-			fprintf(stderr, "		InitCompleted: %d\n\n", MsPipe->InitCompleted);
+			DEBUG_WARN( "		Pipe: %d\n", pnum);
+			DEBUG_WARN( "		MaximumPacketSize: 0x%x\n", MsPipe->MaximumPacketSize);
+			DEBUG_WARN( "		MaximumTransferSize: 0x%x\n", MsPipe->MaximumTransferSize);
+			DEBUG_WARN( "		PipeFlags: 0x%x\n", MsPipe->PipeFlags);
+			DEBUG_WARN( "		PipeHandle: 0x%x\n", MsPipe->PipeHandle);
+			DEBUG_WARN( "		bEndpointAddress: 0x%x\n", MsPipe->bEndpointAddress);
+			DEBUG_WARN( "		bInterval: %d\n", MsPipe->bInterval);
+			DEBUG_WARN( "		PipeType: 0x%x\n", MsPipe->PipeType);
+			DEBUG_WARN( "		InitCompleted: %d\n\n", MsPipe->InitCompleted);
 		}
 	}
-	fprintf(stderr, "==================================================\n");
+	DEBUG_WARN( "==================================================\n");
 }

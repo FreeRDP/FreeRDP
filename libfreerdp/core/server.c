@@ -195,7 +195,7 @@ static void wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s, UINT32 le
 		if (Stream_GetPosition(channel->receiveData) + length > channel->dvc_total_length)
 		{
 			channel->dvc_total_length = 0;
-			fprintf(stderr, "wts_read_drdynvc_data: incorrect fragment data, discarded.\n");
+			DEBUG_WARN( "wts_read_drdynvc_data: incorrect fragment data, discarded.\n");
 			return;
 		}
 
@@ -279,7 +279,7 @@ static void wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 					break;
 
 				default:
-					fprintf(stderr, "wts_read_drdynvc_pdu: Cmd %d not recognized.\n", Cmd);
+					DEBUG_WARN( "wts_read_drdynvc_pdu: Cmd %d not recognized.\n", Cmd);
 					break;
 			}
 		}
@@ -290,7 +290,7 @@ static void wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 	}
 	else
 	{
-		fprintf(stderr, "wts_read_drdynvc_pdu: received Cmd %d but channel is not ready.\n", Cmd);
+		DEBUG_WARN( "wts_read_drdynvc_pdu: received Cmd %d but channel is not ready.\n", Cmd);
 	}
 }
 
@@ -352,7 +352,7 @@ static void WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, BYT
 	{
 		if (Stream_GetPosition(channel->receiveData) != totalSize)
 		{
-			fprintf(stderr, "WTSProcessChannelData: read error\n");
+			DEBUG_WARN( "WTSProcessChannelData: read error\n");
 		}
 		if (channel == channel->vcm->drdynvc_channel)
 		{

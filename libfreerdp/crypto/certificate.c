@@ -37,6 +37,7 @@ static const char certificate_store_dir[] = "certs";
 static const char certificate_server_dir[] = "server";
 static const char certificate_known_hosts_file[] = "known_hosts";
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/crypto/certificate.h>
 
 void certificate_store_init(rdpCertificateStore* certificate_store)
@@ -49,7 +50,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 	if (!PathFileExistsA(settings->ConfigPath))
 	{
 		CreateDirectoryA(settings->ConfigPath, 0);
-		fprintf(stderr, "creating directory %s\n", settings->ConfigPath);
+		DEBUG_WARN( "creating directory %s\n", settings->ConfigPath);
 	}
 
 	certificate_store->path = GetCombinedPath(settings->ConfigPath, (char*) certificate_store_dir);
@@ -57,7 +58,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 	if (!PathFileExistsA(certificate_store->path))
 	{
 		CreateDirectoryA(certificate_store->path, 0);
-		fprintf(stderr, "creating directory %s\n", certificate_store->path);
+		DEBUG_WARN( "creating directory %s\n", certificate_store->path);
 	}
 
 	server_path = GetCombinedPath(settings->ConfigPath, (char*) certificate_server_dir);
@@ -65,7 +66,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 	if (!PathFileExistsA(server_path))
 	{
 		CreateDirectoryA(server_path, 0);
-		fprintf(stderr, "creating directory %s\n", server_path);
+		DEBUG_WARN( "creating directory %s\n", server_path);
 	}
 
 	free(server_path);
@@ -78,7 +79,7 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 
 		if (certificate_store->fp == NULL)
 		{
-			fprintf(stderr, "certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
+			DEBUG_WARN( "certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
 			return;
 		}
 

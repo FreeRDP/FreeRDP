@@ -25,6 +25,7 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/cache/palette.h>
 
 static void update_gdi_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cacheColorTable)
@@ -44,7 +45,7 @@ void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 
 	if (index >= paletteCache->maxEntries)
 	{
-		fprintf(stderr, "invalid color table index: 0x%04X\n", index);
+		DEBUG_WARN( "invalid color table index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -52,7 +53,7 @@ void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 
 	if (!entry)
 	{
-		fprintf(stderr, "invalid color table at index: 0x%04X\n", index);
+		DEBUG_WARN( "invalid color table at index: 0x%04X\n", index);
 		return NULL;
 	}
 
@@ -63,7 +64,7 @@ void palette_cache_put(rdpPaletteCache* paletteCache, UINT32 index, void* entry)
 {
 	if (index >= paletteCache->maxEntries)
 	{
-		fprintf(stderr, "invalid color table index: 0x%04X\n", index);
+		DEBUG_WARN( "invalid color table index: 0x%04X\n", index);
 
 		if (entry)
 			free(entry);

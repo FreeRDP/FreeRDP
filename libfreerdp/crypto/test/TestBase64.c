@@ -45,7 +45,7 @@ int TestBase64(int argc, char* argv[])
 	BYTE *decoded;
 
 	testNb++;
-	fprintf(stderr, "%d:encode base64...", testNb);
+	DEBUG_WARN( "%d:encode base64...", testNb);
 
 	for (i = 0; encodeTests[i].input; i++)
 	{
@@ -53,53 +53,53 @@ int TestBase64(int argc, char* argv[])
 
 		if (strcmp(encodeTests[i].output, encoded))
 		{
-			fprintf(stderr, "ko, error for string %d\n", i);
+			DEBUG_WARN( "ko, error for string %d\n", i);
 			return -1;
 		}
 
 		free(encoded);
 	}
-	fprintf(stderr, "ok\n");
+	DEBUG_WARN( "ok\n");
 
 	testNb++;
-	fprintf(stderr, "%d:decode base64...", testNb);
+	DEBUG_WARN( "%d:decode base64...", testNb);
 	for (i = 0; encodeTests[i].input; i++)
 	{
 		crypto_base64_decode(encodeTests[i].output, strlen(encodeTests[i].output), &decoded, &outLen);
 
 		if (!decoded || (outLen != encodeTests[i].len) || memcmp(encodeTests[i].input, decoded, outLen))
 		{
-			fprintf(stderr, "ko, error for string %d\n", i);
+			DEBUG_WARN( "ko, error for string %d\n", i);
 			return -1;
 		}
 
 		free(decoded);
 	}
-	fprintf(stderr, "ok\n");
+	DEBUG_WARN( "ok\n");
 
 	testNb++;
-	fprintf(stderr, "%d:decode base64 errors...", testNb);
+	DEBUG_WARN( "%d:decode base64 errors...", testNb);
 	crypto_base64_decode("000", 3, &decoded, &outLen);
 	if (decoded)
 	{
-		fprintf(stderr, "ko, badly padded string\n");
+		DEBUG_WARN( "ko, badly padded string\n");
 		return -1;
 	}
 
 	crypto_base64_decode("0=00", 4, &decoded, &outLen);
 	if (decoded)
 	{
-		fprintf(stderr, "ko, = in a wrong place\n");
+		DEBUG_WARN( "ko, = in a wrong place\n");
 		return -1;
 	}
 
 	crypto_base64_decode("00=0", 4, &decoded, &outLen);
 	if (decoded)
 	{
-		fprintf(stderr, "ko, = in a wrong place\n");
+		DEBUG_WARN( "ko, = in a wrong place\n");
 		return -1;
 	}
-	fprintf(stderr, "ok\n");
+	DEBUG_WARN( "ok\n");
 
 
 	return 0;

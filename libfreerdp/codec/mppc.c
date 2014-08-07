@@ -413,7 +413,7 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		}
 
 #ifdef DEBUG_MPPC
-		printf("<%d,%d>\n", (int) CopyOffset, (int) LengthOfMatch);
+		DEBUG_MSG("<%d,%d>\n", (int) CopyOffset, (int) LengthOfMatch);
 #endif
 
 		SrcPtr = HistoryPtr - CopyOffset;
@@ -555,7 +555,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 			accumulator = Sym1;
 
 #ifdef DEBUG_MPPC
-			printf("%c", accumulator);
+			DEBUG_MSG("%c", accumulator);
 #endif
 
 			if (accumulator < 0x80)
@@ -589,7 +589,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 			}
 
 #ifdef DEBUG_MPPC
-			printf("<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
+			DEBUG_MSG("<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
 #endif
 
 			/* Encode CopyOffset */
@@ -764,7 +764,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 		accumulator = *pSrcPtr;
 
 #ifdef DEBUG_MPPC
-		printf("%c", accumulator);
+		DEBUG_MSG("%c", accumulator);
 #endif
 
 		if (accumulator < 0x80)
@@ -799,7 +799,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 	mppc->HistoryOffset = HistoryPtr - HistoryBuffer;
 
 #ifdef DEBUG_MPPC
-	printf("\n");
+	DEBUG_MSG("\n");
 #endif
 
 	return 1;
