@@ -186,7 +186,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 #endif
 
 #ifdef WITH_DEBUG_NLA
-	_tDEBUG_MSG(_T("User: %s Domain: %s Password: %s\n"),
+	DEBUG_MSG("User: %s Domain: %s Password: %s\n",
 		(char*) credssp->identity.User, (char*) credssp->identity.Domain, (char*) credssp->identity.Password);
 #endif
 
