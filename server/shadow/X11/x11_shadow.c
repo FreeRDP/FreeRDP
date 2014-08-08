@@ -187,6 +187,7 @@ int x11_shadow_invalidate_region(x11ShadowSubsystem* subsystem, int x, int y, in
 
 int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 {
+	int count;
 	int status;
 	int x, y;
 	int width, height;
@@ -200,18 +201,18 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	surface = server->surface;
 	screen = server->screen;
 
-	XLockDisplay(subsystem->display);
-
 	if (subsystem->use_xshm)
 	{
+		XLockDisplay(subsystem->display);
+
 		XCopyArea(subsystem->display, subsystem->root_window, subsystem->fb_pixmap,
 				subsystem->xshm_gc, 0, 0, subsystem->width, subsystem->height, 0, 0);
 
 		XSync(subsystem->display, False);
 
-		image = subsystem->fb_image;
+		XUnlockDisplay(subsystem->display);
 
-		EnterCriticalSection(&(screen->lock));
+		image = subsystem->fb_image;
 
 		status = shadow_capture_compare(surface->data, surface->scanline, surface->width, surface->height,
 				(BYTE*) image->data, image->bytes_per_line, &invalidRect);
@@ -230,20 +231,29 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
 
-			if (subsystem->SurfaceUpdate)
-				subsystem->SurfaceUpdate((rdpShadowSubsystem*) subsystem, &(subsystem->invalidRegion));
+			count = ArrayList_Count(server->clients);
+
+			InitializeSynchronizationBarrier(&(subsystem->barrier), count + 1, -1);
+
+			SetEvent(subsystem->updateEvent);
+
+			EnterSynchronizationBarrier(&(subsystem->barrier), 0);
+
+			DeleteSynchronizationBarrier(&(subsystem->barrier));
+
+			ResetEvent(subsystem->updateEvent);
 
 			region16_clear(&(subsystem->invalidRegion));
 		}
-
-		LeaveCriticalSection(&(screen->lock));
 	}
 	else
 	{
+		XLockDisplay(subsystem->display);
+
 		image = XGetImage(subsystem->display, subsystem->root_window,
 				0, 0, subsystem->width, subsystem->height, AllPlanes, ZPixmap);
 
-		EnterCriticalSection(&(screen->lock));
+		XUnlockDisplay(subsystem->display);
 
 		status = shadow_capture_compare(surface->data, surface->scanline, surface->width, surface->height,
 				(BYTE*) image->data, image->bytes_per_line, &invalidRect);
@@ -262,18 +272,23 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
 
-			if (subsystem->SurfaceUpdate)
-				subsystem->SurfaceUpdate((rdpShadowSubsystem*) subsystem, &(subsystem->invalidRegion));
+			count = ArrayList_Count(server->clients);
+
+			InitializeSynchronizationBarrier(&(subsystem->barrier), count + 1, -1);
+
+			SetEvent(subsystem->updateEvent);
+
+			EnterSynchronizationBarrier(&(subsystem->barrier), 0);
+
+			DeleteSynchronizationBarrier(&(subsystem->barrier));
+
+			ResetEvent(subsystem->updateEvent);
 
 			region16_clear(&(subsystem->invalidRegion));
 		}
 
-		LeaveCriticalSection(&(screen->lock));
-
 		XDestroyImage(image);
 	}
-
-	XUnlockDisplay(subsystem->display);
 
 	return 1;
 }
@@ -299,7 +314,7 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 	events[nCount++] = StopEvent;
 	events[nCount++] = subsystem->event;
 
-	fps = 24;
+	fps = 16;
 	dwInterval = 1000 / fps;
 	frameTime = GetTickCount64() + dwInterval;
 
@@ -749,6 +764,8 @@ void x11_shadow_subsystem_free(x11ShadowSubsystem* subsystem)
 
 	region16_uninit(&(subsystem->invalidRegion));
 
+	CloseHandle(subsystem->updateEvent);
+
 	free(subsystem);
 }
 
@@ -762,6 +779,8 @@ x11ShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
 		return NULL;
 
 	subsystem->server = server;
+
+	subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	region16_init(&(subsystem->invalidRegion));
 

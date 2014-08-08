@@ -1072,6 +1072,8 @@ void win_shadow_subsystem_free(winShadowSubsystem* subsystem)
 
 	region16_uninit(&(subsystem->invalidRegion));
 
+	CloseHandle(subsystem->updateEvent);
+
 	free(subsystem);
 }
 
@@ -1085,6 +1087,8 @@ winShadowSubsystem* win_shadow_subsystem_new(rdpShadowServer* server)
 		return NULL;
 
 	subsystem->server = server;
+
+	subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	region16_init(&(subsystem->invalidRegion));
 

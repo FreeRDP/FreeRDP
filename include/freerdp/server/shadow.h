@@ -113,7 +113,9 @@ struct rdp_shadow_server
 	int monitorCount; \
 	MONITOR_DEF monitors[16]; \
 	MONITOR_DEF virtualScreen; \
+	HANDLE updateEvent; \
 	REGION16 invalidRegion; \
+	SYNCHRONIZATION_BARRIER barrier; \
 	\
 	pfnShadowSubsystemInit Init; \
 	pfnShadowSubsystemUninit Uninit; \
