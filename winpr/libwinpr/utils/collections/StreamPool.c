@@ -155,6 +155,8 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 
 		Stream_SetPosition(s, 0);
 		Stream_EnsureCapacity(s, size);
+
+		Stream_SetLength(s,size);
 	}
 
 	s->pool = pool;

@@ -138,6 +138,9 @@ int xf_OutputUpdate(xfContext* xfc)
 
 int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height)
 {
+/** *********************************
+ * to be improved
+ * *********************************/
 	RECTANGLE_16 invalidRect;
 
 	invalidRect.left = x;
@@ -393,11 +396,9 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 	status = h264_decompress(xfc->h264, bs->data, bs->length, &DstData,
 			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
 	gettimeofday(&TDEC2,NULL);
-	printf("decoding took %d sec %d usec\n",(int)(TDEC2.tv_sec-TDEC1.tv_sec),(int)(TDEC2.tv_usec-TDEC1.tv_usec));
-	
-	free(bs->data);
+	//printf("decoding took %d sec %d usec\n",(int)(TDEC2.tv_sec-TDEC1.tv_sec),(int)(TDEC2.tv_usec-TDEC1.tv_usec));
 
-	printf("xf_SurfaceCommand_H264: status: %d\n", status);
+	//printf("xf_SurfaceCommand_H264: status: %d\n", status);
 
 	if (status < 0)
 		return -1;
@@ -454,6 +455,7 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 	}
 
 	region16_uninit(&updateRegion);
+	region16_uninit(&clippingRects);
 
 #if 0
 	/* fill with red for now to distinguish from the rest */
@@ -700,6 +702,7 @@ int xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_
 
 	rectSrc = &(surfaceToSurface->rectSrc);
 	destPt = &surfaceToSurface->destPts[0];
+	/**not needed?*/
 
 	surfaceSrc = (xfGfxSurface*) context->GetSurfaceData(context, surfaceToSurface->surfaceIdSrc);
 
@@ -726,6 +729,8 @@ int xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_
 		invalidRect.top = destPt->y;
 		invalidRect.right = destPt->x + rectSrc->right;
 		invalidRect.bottom = destPt->y + rectSrc->bottom;
+		
+		/**width,height?*/
 
 		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
 	}
@@ -759,7 +764,7 @@ int xf_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU*
 	cacheEntry->alpha = surface->alpha;
 
 	cacheEntry->scanline = (cacheEntry->width + (cacheEntry->width % 4)) * 4;
-	cacheEntry->data = (BYTE*) calloc(1, surface->scanline * surface->height);
+	cacheEntry->data = (BYTE*) calloc(1, cacheEntry->scanline * cacheEntry->height);
 
 	if (!cacheEntry->data)
 		return -1;

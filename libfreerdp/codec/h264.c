@@ -28,6 +28,12 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/h264.h>
 
+#include <sys/time.h>
+
+#ifdef WITH_OPENH264_ASM
+extern int freerdp_image_yuv_to_xrgb_asm(BYTE *pDstData,BYTE **pSrcData,int nWidth,int nHeight,int iStride0,int iStride1);
+#endif
+
 #define USE_GRAY_SCALE	0
 #define USE_UPCONVERT	0
 
@@ -340,6 +346,8 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	SBufferInfo sBufferInfo;
 	SSysMEMBuffer* pSystemBuffer;
 	BYTE* pYUVData[3];
+	
+	struct timeval T1,T2;
 
 	if (!h264->pDecoder)
 		return -1;
@@ -354,6 +362,7 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 
 	ZeroMemory(&sBufferInfo, sizeof(sBufferInfo));
 
+	gettimeofday(&T1,NULL);
 	state = (*h264->pDecoder)->DecodeFrame2(
 		h264->pDecoder,
 		pSrcData,
@@ -370,10 +379,13 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 
 	if (sBufferInfo.iBufferStatus != 1)
 		state = (*h264->pDecoder)->DecodeFrame2(h264->pDecoder, NULL, 0, pYUVData, &sBufferInfo);
+	
+	gettimeofday(&T2,NULL);
+	printf("\tdecoding took: %u sec %u usec\n",(unsigned int)(T2.tv_sec-T1.tv_sec),(unsigned int)(T2.tv_usec-T1.tv_usec));
 
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
 
-#if 1
+#if 0
 	printf("h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]\n",
 		state, pYUVData[0], pYUVData[1], pYUVData[2], sBufferInfo.iBufferStatus,
 		pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
@@ -404,8 +416,15 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	if (h264_prepare_rgb_buffer(h264, pSystemBuffer->iWidth, pSystemBuffer->iHeight) < 0)
 		return -1;
 
+#ifdef WITH_OPENH264_ASM
+	gettimeofday(&T1,NULL);
+	freerdp_image_yuv_to_xrgb_asm(h264->data,pYUVData,h264->width,h264->height,pSystemBuffer->iStride[0],pSystemBuffer->iStride[1]);
+	gettimeofday(&T2,NULL);
+	printf("\tconverting took: %u sec %u usec\n",(unsigned int)(T2.tv_sec-T1.tv_sec),(unsigned int)(T2.tv_usec-T1.tv_usec));
+#else
 	freerdp_image_copy_yuv420p_to_xrgb(h264->data, h264->scanline, 0, 0,
 			h264->width, h264->height, pYUVData, pSystemBuffer->iStride, 0, 0);
+#endif
 
 	return 1;
 }
@@ -630,7 +649,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	pSrcData = h264_strip_nal_unit_au_delimiter(pSrcData, &SrcSize);
 #endif
 
-#if 1
+#if 0
 	printf("h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, nDstStep=%d, nXDst=%d, nYDst=%d, nWidth=%d, nHeight=%d)\n",
 		pSrcData, SrcSize, *ppDstData, nDstStep, nXDst, nYDst, nWidth, nHeight);
 #endif

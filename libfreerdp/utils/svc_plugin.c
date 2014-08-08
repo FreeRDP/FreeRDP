@@ -106,7 +106,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 			Stream_Release(plugin->data_in);
 
 		plugin->data_in = StreamPool_Take(plugin->pool, totalLength);
-		Stream_AddRef(plugin->data_in);
+		//Stream_AddRef(plugin->data_in);
 	}
 
 	s = plugin->data_in;
@@ -115,7 +115,7 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
-		if (Stream_Capacity(s) != Stream_GetPosition(s))
+		if (Stream_Length(s) != Stream_GetPosition(s))
 		{
 			fprintf(stderr, "svc_plugin_process_received: read error\n");
 		}
@@ -250,7 +250,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 
 	if (plugin->data_in)
 	{
-		Stream_Free(plugin->data_in, TRUE);
+		Stream_Release(plugin->data_in);
 		plugin->data_in = NULL;
 	}
 
