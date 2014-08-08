@@ -23,6 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <winpr/collections.h>
+
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/color.h>
 
@@ -97,43 +99,6 @@ struct _PROGRESSIVE_BLOCK_CONTEXT
 };
 typedef struct _PROGRESSIVE_BLOCK_CONTEXT PROGRESSIVE_BLOCK_CONTEXT;
 
-struct _PROGRESSIVE_BLOCK_REGION
-{
-	UINT16 blockType;
-	UINT32 blockLen;
-
-	BYTE tileSize;
-	UINT16 numRects;
-	BYTE numQuant;
-	BYTE numProgQuant;
-	BYTE flags;
-	UINT16 numTiles;
-	UINT32 tileDataSize;
-	RFX_RECT* rects;
-	RFX_COMPONENT_CODEC_QUANT* quantVals;
-	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVals;
-	PROGRESSIVE_BLOCK** tiles;
-};
-typedef struct _PROGRESSIVE_BLOCK_REGION PROGRESSIVE_BLOCK_REGION;
-
-struct _PROGRESSIVE_BLOCK_FRAME_BEGIN
-{
-	UINT16 blockType;
-	UINT32 blockLen;
-
-	UINT32 frameIndex;
-	UINT16 regionCount;
-	PROGRESSIVE_BLOCK_REGION* regions;
-};
-typedef struct _PROGRESSIVE_BLOCK_FRAME_BEGIN PROGRESSIVE_BLOCK_FRAME_BEGIN;
-
-struct _PROGRESSIVE_BLOCK_FRAME_END
-{
-	UINT16 blockType;
-	UINT32 blockLen;
-};
-typedef struct _PROGRESSIVE_BLOCK_FRAME_END PROGRESSIVE_BLOCK_FRAME_END;
-
 struct _PROGRESSIVE_BLOCK_TILE_SIMPLE
 {
 	UINT16 blockType;
@@ -205,18 +170,101 @@ struct _PROGRESSIVE_BLOCK_TILE_UPGRADE
 };
 typedef struct _PROGRESSIVE_BLOCK_TILE_UPGRADE PROGRESSIVE_BLOCK_TILE_UPGRADE;
 
+struct _RFX_PROGRESSIVE_TILE
+{
+	UINT16 blockType;
+	UINT32 blockLen;
+
+	BYTE quantIdxY;
+	BYTE quantIdxCb;
+	BYTE quantIdxCr;
+	UINT16 xIdx;
+	UINT16 yIdx;
+
+	BYTE flags;
+	BYTE quality;
+
+	UINT16 yLen;
+	UINT16 cbLen;
+	UINT16 crLen;
+	UINT16 tailLen;
+	BYTE* yData;
+	BYTE* cbData;
+	BYTE* crData;
+	BYTE* tailData;
+
+	UINT16 ySrlLen;
+	UINT16 yRawLen;
+	UINT16 cbSrlLen;
+	UINT16 cbRawLen;
+	UINT16 crSrlLen;
+	UINT16 crRawLen;
+	BYTE* ySrlData;
+	BYTE* yRawData;
+	BYTE* cbSrlData;
+	BYTE* cbRawData;
+	BYTE* crSrlData;
+	BYTE* crRawData;
+};
+typedef struct _RFX_PROGRESSIVE_TILE RFX_PROGRESSIVE_TILE;
+
+struct _PROGRESSIVE_BLOCK_REGION
+{
+	UINT16 blockType;
+	UINT32 blockLen;
+
+	BYTE tileSize;
+	UINT16 numRects;
+	BYTE numQuant;
+	BYTE numProgQuant;
+	BYTE flags;
+	UINT16 numTiles;
+	UINT32 tileDataSize;
+	RFX_RECT* rects;
+	RFX_COMPONENT_CODEC_QUANT* quantVals;
+	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVals;
+	RFX_PROGRESSIVE_TILE* tiles;
+};
+typedef struct _PROGRESSIVE_BLOCK_REGION PROGRESSIVE_BLOCK_REGION;
+
+struct _PROGRESSIVE_BLOCK_FRAME_BEGIN
+{
+	UINT16 blockType;
+	UINT32 blockLen;
+
+	UINT32 frameIndex;
+	UINT16 regionCount;
+	PROGRESSIVE_BLOCK_REGION* regions;
+};
+typedef struct _PROGRESSIVE_BLOCK_FRAME_BEGIN PROGRESSIVE_BLOCK_FRAME_BEGIN;
+
+struct _PROGRESSIVE_BLOCK_FRAME_END
+{
+	UINT16 blockType;
+	UINT32 blockLen;
+};
+typedef struct _PROGRESSIVE_BLOCK_FRAME_END PROGRESSIVE_BLOCK_FRAME_END;
+
 struct _PROGRESSIVE_CONTEXT
 {
 	BOOL Compressor;
 
+	wBufferPool* bufferPool;
+
 	UINT32 cRects;
 	RFX_RECT* rects;
+
+	UINT32 cTiles;
+	RFX_PROGRESSIVE_TILE* tiles;
 
 	UINT32 cQuant;
 	RFX_COMPONENT_CODEC_QUANT* quantVals;
 
 	UINT32 cProgQuant;
 	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVals;
+
+	PROGRESSIVE_BLOCK_REGION region;
+	RFX_PROGRESSIVE_CODEC_QUANT quantProgValFull;
 };
 typedef struct _PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
 
