@@ -32,9 +32,9 @@
 #define WITH_POSIX_TIMER	1
 #endif
 
-#ifndef _WIN32
-
 #include "../handle/handle.h"
+
+#ifndef _WIN32
 
 #define WINPR_PIPE_SEMAPHORE	1
 
@@ -143,5 +143,19 @@ struct winpr_timer_queue_timer
 };
 
 #endif
+
+struct winpr_barrier
+{
+	LONG lTotalThreads;
+	LONG lSpinCount;
+
+#if !defined(_WIN32)
+	pthread_barrier_t barrier;
+#elif (defined(_WIN32) && (_WIN32_WINNT < 0x0602))
+	HANDLE event;
+	DECLSPEC_ALIGN(4) LONG count;
+#endif
+};
+typedef struct winpr_barrier WINPR_BARRIER;
 
 #endif /* WINPR_SYNCH_PRIVATE_H */

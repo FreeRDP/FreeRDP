@@ -23,26 +23,237 @@
 
 #include <winpr/synch.h>
 
-/**
- * InitializeSynchronizationBarrier
- * EnterSynchronizationBarrier
- * DeleteSynchronizationBarrier
- */
+#include "synch.h"
+
+#include <winpr/crt.h>
 
 #ifndef _WIN32
 
-BOOL InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount)
+BOOL WINAPI InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount)
 {
+	int status;
+	WINPR_BARRIER* pBarrier;
+
+	if (!lpBarrier)
+		return FALSE;
+
+	ZeroMemory(lpBarrier, sizeof(SYNCHRONIZATION_BARRIER));
+
+	pBarrier = (WINPR_BARRIER*) calloc(1, sizeof(WINPR_BARRIER));
+
+	if (!pBarrier)
+		return FALSE;
+
+	if (lSpinCount < 0)
+		lSpinCount = 2000;
+
+	pBarrier->lTotalThreads = lTotalThreads;
+	pBarrier->lSpinCount = lSpinCount;
+
+	status = pthread_barrier_init(&(pBarrier->barrier), NULL, pBarrier->lTotalThreads);
+
+	if (status != 0)
+	{
+		free(pBarrier);
+		return FALSE;
+	}
+
+	lpBarrier->Reserved3[0] = (ULONG_PTR) pBarrier;
+
 	return TRUE;
 }
 
-BOOL EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags)
+BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags)
 {
+	BOOL status;
+	int waitStatus;
+	WINPR_BARRIER* pBarrier;
+
+	if (!lpBarrier)
+		return FALSE;
+
+	pBarrier = (WINPR_BARRIER*) lpBarrier->Reserved3[0];
+
+	if (!pBarrier)
+		return FALSE;
+
+	waitStatus = pthread_barrier_wait(&(pBarrier->barrier));
+
+	if (waitStatus == 0)
+	{
+		status = FALSE; /* success, this is not the last thread */
+	}
+	else if (waitStatus == PTHREAD_BARRIER_SERIAL_THREAD)
+	{
+		status = TRUE; /* success, this is the last thread */
+	}
+	else
+	{
+		status = FALSE; /* failure */
+	}
+
+	return status;
+}
+
+BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
+{
+	WINPR_BARRIER* pBarrier;
+
+	/**
+	 * According to MSDN, DeleteSynchronizationBarrier always returns TRUE
+	 */
+
+	if (!lpBarrier)
+		return TRUE;
+
+	pBarrier = (WINPR_BARRIER*) lpBarrier->Reserved3[0];
+
+	if (!pBarrier)
+		return TRUE;
+
+	pthread_barrier_destroy(&(pBarrier->barrier));
+
+	free(pBarrier);
+
+	ZeroMemory(lpBarrier, sizeof(SYNCHRONIZATION_BARRIER));
+
 	return TRUE;
 }
 
-BOOL DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
+#elif (defined(_WIN32) && (_WIN32_WINNT < 0x0602))
+
+#include <winpr/library.h>
+#include <winpr/interlocked.h>
+
+static HMODULE g_Kernel32 = NULL;
+static BOOL g_NativeBarrier = FALSE;
+static INIT_ONCE g_InitOnce = INIT_ONCE_STATIC_INIT;
+
+typedef BOOL (WINAPI * fnInitializeSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount);
+typedef BOOL (WINAPI * fnEnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
+typedef BOOL (WINAPI * fnDeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
+
+static fnInitializeSynchronizationBarrier pfnInitializeSynchronizationBarrier = NULL;
+static fnEnterSynchronizationBarrier pfnEnterSynchronizationBarrier = NULL;
+static fnDeleteSynchronizationBarrier pfnDeleteSynchronizationBarrier = NULL;
+
+static BOOL CALLBACK InitOnce_Barrier(PINIT_ONCE once, PVOID param, PVOID *context)
 {
+	g_Kernel32 = LoadLibraryA("kernel32.dll");
+
+	if (!g_Kernel32)
+		return TRUE;
+
+	pfnInitializeSynchronizationBarrier = (fnInitializeSynchronizationBarrier)
+			GetProcAddress(g_Kernel32, "InitializeSynchronizationBarrier");
+
+	pfnEnterSynchronizationBarrier = (fnEnterSynchronizationBarrier)
+			GetProcAddress(g_Kernel32, "EnterSynchronizationBarrier");
+
+	pfnDeleteSynchronizationBarrier = (fnDeleteSynchronizationBarrier)
+			GetProcAddress(g_Kernel32, "DeleteSynchronizationBarrier");
+
+	if (pfnInitializeSynchronizationBarrier && pfnEnterSynchronizationBarrier
+			&& pfnDeleteSynchronizationBarrier)
+	{
+		g_NativeBarrier = TRUE;
+	}
+
+	return TRUE;
+}
+
+BOOL WINAPI InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount)
+{
+	WINPR_BARRIER* pBarrier;
+
+	InitOnceExecuteOnce(&g_InitOnce, InitOnce_Barrier, NULL, NULL);
+
+	if (g_NativeBarrier)
+		return pfnInitializeSynchronizationBarrier(lpBarrier, lTotalThreads, lSpinCount);
+
+	if (!lpBarrier)
+		return FALSE;
+
+	ZeroMemory(lpBarrier, sizeof(SYNCHRONIZATION_BARRIER));
+
+	pBarrier = (WINPR_BARRIER*) calloc(1, sizeof(WINPR_BARRIER));
+
+	if (!pBarrier)
+		return FALSE;
+
+	if (lSpinCount < 0)
+		lSpinCount = 2000;
+
+	pBarrier->lTotalThreads = lTotalThreads;
+	pBarrier->lSpinCount = lSpinCount;
+	pBarrier->count = 0;
+
+	pBarrier->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	if (!pBarrier->event)
+	{
+		free(pBarrier);
+		return FALSE;
+	}
+
+	lpBarrier->Reserved3[0] = (ULONG_PTR) pBarrier;
+
+	return TRUE;
+}
+
+BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags)
+{
+	LONG count;
+	BOOL status = FALSE;
+	WINPR_BARRIER* pBarrier;
+
+	if (g_NativeBarrier)
+		return pfnEnterSynchronizationBarrier(lpBarrier, dwFlags);
+
+	if (!lpBarrier)
+		return FALSE;
+
+	pBarrier = (WINPR_BARRIER*) lpBarrier->Reserved3[0];
+
+	if (!pBarrier)
+		return FALSE;
+
+	count = InterlockedIncrement(&(pBarrier->count));
+
+	if (count < pBarrier->lTotalThreads)
+	{
+		WaitForSingleObject(pBarrier->event, INFINITE);
+	}
+	else
+	{
+		SetEvent(pBarrier->event);
+		status = TRUE;
+	}
+
+	return status;
+}
+
+BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
+{
+	WINPR_BARRIER* pBarrier;
+
+	if (g_NativeBarrier)
+		return pfnDeleteSynchronizationBarrier(lpBarrier);
+
+	if (!lpBarrier)
+		return TRUE;
+
+	pBarrier = (WINPR_BARRIER*) lpBarrier->Reserved3[0];
+
+	if (!pBarrier)
+		return TRUE;
+
+	CloseHandle(pBarrier->event);
+
+	free(pBarrier);
+
+	ZeroMemory(lpBarrier, sizeof(SYNCHRONIZATION_BARRIER));
+
 	return TRUE;
 }
 
