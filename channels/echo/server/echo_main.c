@@ -29,6 +29,7 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 #include <winpr/stream.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/server/echo.h>
 
@@ -166,7 +167,7 @@ static void* echo_server_thread_func(void* arg)
 			break;
 		}
 
-		IFCALL(echo->context.Response, &echo->context, (PCHAR) Stream_Buffer(s), BytesReturned);
+		IFCALL(echo->context.Response, &echo->context, (BYTE *) Stream_Buffer(s), BytesReturned);
 	}
 
 	Stream_Free(s, TRUE);

@@ -161,7 +161,7 @@ BOOL mf_peer_rdpsnd_init(mfPeerContext* context)
 	
 	context->rdpsnd->Activated = mf_peer_rdpsnd_activated;
 	
-	context->rdpsnd->Initialize(context->rdpsnd);
+	context->rdpsnd->Initialize(context->rdpsnd, TRUE);
 	
 	return TRUE;
 }

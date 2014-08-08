@@ -68,7 +68,7 @@ WINPR_SAM* SamOpen(BOOL read_only)
 	return sam;
 }
 
-BOOL SamLookupStart(WINPR_SAM* sam)
+static BOOL SamLookupStart(WINPR_SAM* sam)
 {
 	size_t read_size;
 	long int file_size;
@@ -105,7 +105,7 @@ BOOL SamLookupStart(WINPR_SAM* sam)
 	return TRUE;
 }
 
-void SamLookupFinish(WINPR_SAM* sam)
+static void SamLookupFinish(WINPR_SAM* sam)
 {
 	free(sam->buffer);
 
@@ -113,7 +113,7 @@ void SamLookupFinish(WINPR_SAM* sam)
 	sam->line = NULL;
 }
 
-void HexStrToBin(char* str, BYTE* bin, int length)
+static void HexStrToBin(char* str, BYTE* bin, int length)
 {
 	int i;
 

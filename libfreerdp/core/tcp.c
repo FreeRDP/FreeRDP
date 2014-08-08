@@ -562,7 +562,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 			}
 		}
 
-		BIO_set_close(tcp->socketBio, BIO_NOCLOSE);
+		(void)BIO_set_close(tcp->socketBio, BIO_NOCLOSE);
 		BIO_free(tcp->socketBio);
 
 		tcp->socketBio = BIO_new(BIO_s_simple_socket());
