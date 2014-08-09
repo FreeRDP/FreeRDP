@@ -146,16 +146,10 @@ struct winpr_timer_queue_timer
 
 struct winpr_barrier
 {
+	DECLSPEC_ALIGN(4) LONG count;
 	LONG lTotalThreads;
 	LONG lSpinCount;
-
-#if !defined(_WIN32)
-	pthread_barrier_t barrier;
-	pthread_barrierattr_t attr;
-#elif (defined(_WIN32) && (_WIN32_WINNT < 0x0602))
 	HANDLE event;
-	DECLSPEC_ALIGN(4) LONG count;
-#endif
 };
 typedef struct winpr_barrier WINPR_BARRIER;
 
