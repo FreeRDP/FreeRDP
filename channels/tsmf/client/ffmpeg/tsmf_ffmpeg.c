@@ -67,7 +67,11 @@ typedef struct _TSMFFFmpegDecoder
 	ITSMFDecoder iface;
 
 	int media_type;
+#if LIBAVCODEC_VERSION_MAJOR < 55
 	enum CodecID codec_id;
+#else
+	enum AVCodecID codec_id;
+#endif
 	AVCodecContext* codec_context;
 	AVCodec* codec;
 	AVFrame* frame;
@@ -116,7 +120,7 @@ static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MED
 	mdecoder->codec_context->bit_rate = media_type->BitRate;
 	mdecoder->codec_context->channels = media_type->Channels;
 	mdecoder->codec_context->block_align = media_type->BlockAlign;
-
+#if LIBAVCODEC_VERSION_MAJOR < 55
 #ifdef AV_CPU_FLAG_SSE2
 	mdecoder->codec_context->dsp_mask = AV_CPU_FLAG_SSE2 | AV_CPU_FLAG_MMX2;
 #else
@@ -126,7 +130,13 @@ static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MED
 	mdecoder->codec_context->dsp_mask = FF_MM_SSE2 | FF_MM_MMX2;
 #endif
 #endif
-
+#else  /* LIBAVCODEC_VERSION_MAJOR < 55 */
+#ifdef AV_CPU_FLAG_SSE2
+	av_set_cpu_flags_mask(AV_CPU_FLAG_SSE2 | AV_CPU_FLAG_MMX2);
+#else
+	av_set_cpu_flags_mask(FF_MM_SSE2 | FF_MM_MMX2);
+#endif
+#endif /* LIBAVCODEC_VERSION_MAJOR < 55 */
 	return TRUE;
 }
 
@@ -370,7 +380,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 #endif
 
 	if (mdecoder->decoded_size_max == 0)
-		mdecoder->decoded_size_max = AVCODEC_MAX_AUDIO_FRAME_SIZE + 16;
+		mdecoder->decoded_size_max = MAX_AUDIO_FRAME_SIZE + 16;
 	mdecoder->decoded_data = malloc(mdecoder->decoded_size_max);
 	ZeroMemory(mdecoder->decoded_data, mdecoder->decoded_size_max);
 	/* align the memory for SSE2 needs */
@@ -382,7 +392,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 	while (src_size > 0)
 	{
 		/* Ensure enough space for decoding */
-		if (mdecoder->decoded_size_max - mdecoder->decoded_size < AVCODEC_MAX_AUDIO_FRAME_SIZE)
+		if (mdecoder->decoded_size_max - mdecoder->decoded_size < MAX_AUDIO_FRAME_SIZE)
 		{
 			mdecoder->decoded_size_max = mdecoder->decoded_size_max * 2 + 16;
 			mdecoder->decoded_data = realloc(mdecoder->decoded_data, mdecoder->decoded_size_max);
