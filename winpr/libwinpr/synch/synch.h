@@ -151,6 +151,7 @@ struct winpr_barrier
 
 #if !defined(_WIN32)
 	pthread_barrier_t barrier;
+	pthread_barrierattr_t attr;
 #elif (defined(_WIN32) && (_WIN32_WINNT < 0x0602))
 	HANDLE event;
 	DECLSPEC_ALIGN(4) LONG count;

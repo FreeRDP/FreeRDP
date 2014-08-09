@@ -298,15 +298,12 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 	int fps;
 	DWORD status;
 	DWORD nCount;
-	XEvent xevent;
 	UINT64 cTime;
 	DWORD dwTimeout;
 	DWORD dwInterval;
 	UINT64 frameTime;
 	HANDLE events[32];
 	HANDLE StopEvent;
-	int x, y, width, height;
-	XDamageNotifyEvent* notify;
 
 	StopEvent = subsystem->server->StopEvent;
 
@@ -320,13 +317,8 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 
 	while (1)
 	{
-		dwTimeout = INFINITE;
-
-		if (!subsystem->use_xdamage)
-		{
-			cTime = GetTickCount64();
-			dwTimeout = (cTime > frameTime) ? 0 : frameTime - cTime;
-		}
+		cTime = GetTickCount64();
+		dwTimeout = (cTime > frameTime) ? 0 : frameTime - cTime;
 
 		status = WaitForMultipleObjects(nCount, events, FALSE, dwTimeout);
 
@@ -335,33 +327,12 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 			break;
 		}
 
-		while (XPending(subsystem->display))
+		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
-			ZeroMemory(&xevent, sizeof(xevent));
-			XNextEvent(subsystem->display, &xevent);
+			x11_shadow_screen_grab(subsystem);
 
-			if (xevent.type == subsystem->xdamage_notify_event)
-			{
-				notify = (XDamageNotifyEvent*) &xevent;
-
-				x = notify->area.x;
-				y = notify->area.y;
-				width = notify->area.width;
-				height = notify->area.height;
-
-				x11_shadow_invalidate_region(subsystem, x, y, width, height);
-			}
-		}
-
-		if (!subsystem->use_xdamage)
-		{
-			if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
-			{
-				x11_shadow_screen_grab(subsystem);
-
-				dwInterval = 1000 / fps;
-				frameTime += dwInterval;
-			}
+			dwInterval = 1000 / fps;
+			frameTime += dwInterval;
 		}
 	}
 

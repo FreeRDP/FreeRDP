@@ -567,8 +567,8 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 	nWidth = extents->right - extents->left;
 	nHeight = extents->bottom - extents->top;
 
-	printf("shadow_client_send_surface_update: x: %d y: %d width: %d height: %d right: %d bottom: %d\n",
-		nXSrc, nYSrc, nWidth, nHeight, nXSrc + nWidth, nYSrc + nHeight);
+	//printf("shadow_client_send_surface_update: x: %d y: %d width: %d height: %d right: %d bottom: %d\n",
+	//	nXSrc, nYSrc, nWidth, nHeight, nXSrc + nWidth, nYSrc + nHeight);
 
 	if (settings->RemoteFxCodec || settings->NSCodec)
 	{

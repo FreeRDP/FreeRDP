@@ -29,6 +29,8 @@
 
 #ifndef _WIN32
 
+#include <errno.h>
+
 BOOL WINAPI InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount)
 {
 	int status;
@@ -50,10 +52,22 @@ BOOL WINAPI InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier
 	pBarrier->lTotalThreads = lTotalThreads;
 	pBarrier->lSpinCount = lSpinCount;
 
-	status = pthread_barrier_init(&(pBarrier->barrier), NULL, pBarrier->lTotalThreads);
+	status = pthread_barrierattr_init(&(pBarrier->attr));
 
 	if (status != 0)
 	{
+		fprintf(stderr, "pthread_barrierattr_init failure: %d\n", errno);
+		free(pBarrier);
+		return FALSE;
+	}
+
+	pthread_barrierattr_setpshared(&(pBarrier->attr), PTHREAD_PROCESS_SHARED);
+
+	status = pthread_barrier_init(&(pBarrier->barrier), &(pBarrier->attr), lTotalThreads);
+
+	if (status != 0)
+	{
+		fprintf(stderr, "pthread_barrier_init failure: %d\n", errno);
 		free(pBarrier);
 		return FALSE;
 	}
@@ -89,6 +103,7 @@ BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWO
 	}
 	else
 	{
+		fprintf(stderr, "pthread_barrier_wait failure: %d\n", errno);
 		status = FALSE; /* failure */
 	}
 
@@ -112,6 +127,8 @@ BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier)
 		return TRUE;
 
 	pthread_barrier_destroy(&(pBarrier->barrier));
+
+	pthread_barrierattr_destroy(&(pBarrier->attr));
 
 	free(pBarrier);
 

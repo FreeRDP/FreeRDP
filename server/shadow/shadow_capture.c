@@ -151,6 +151,9 @@ int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BY
 
 			printf("|%s|\n", rows[ty] ? "O" : "X");
 		}
+
+		printf("left: %d top: %d right: %d bottom: %d ncol: %d nrow: %d\n",
+				l, t, r, b, ncol, nrow);
 	}
 
 	return 1;
