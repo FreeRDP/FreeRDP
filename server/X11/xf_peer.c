@@ -42,6 +42,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/utils/debug.h>
 
 #include "xf_input.h"
 #include "xf_cursor.h"
@@ -288,7 +289,7 @@ xfInfo* xf_info_init()
 	}
 
 	if (xfi->use_xshm)
-		printf("Using X Shared Memory Extension (XShm)\n");
+		DEBUG_MSG("Using X Shared Memory Extension (XShm)\n");
 
 #ifdef WITH_XDAMAGE
 	xf_xdamage_init(xfi);

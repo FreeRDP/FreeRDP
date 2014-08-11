@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <freerdp/utils/debug.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 

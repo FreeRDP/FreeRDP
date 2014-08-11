@@ -52,7 +52,7 @@ int wf_info_lock(wfInfo* wfi)
 		break;
 
 	case WAIT_FAILED:
-		printf("wf_info_lock failed with 0x%08X\n", GetLastError());
+		DEBUG_MSG("wf_info_lock failed with 0x%08X\n", GetLastError());
 		return -1;
 		break;
 	}
@@ -78,7 +78,7 @@ int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
 		break;
 
 	case WAIT_FAILED:
-		printf("wf_info_try_lock failed with 0x%08X\n", GetLastError());
+		DEBUG_MSG("wf_info_try_lock failed with 0x%08X\n", GetLastError());
 		return -1;
 		break;
 	}
@@ -90,7 +90,7 @@ int wf_info_unlock(wfInfo* wfi)
 {
 	if (ReleaseMutex(wfi->mutex) == 0)
 	{
-		printf("wf_info_unlock failed with 0x%08X\n", GetLastError());
+		DEBUG_MSG("wf_info_unlock failed with 0x%08X\n", GetLastError());
 		return -1;
 	}
 
@@ -213,7 +213,7 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		wfi->peers[peerId] = ((rdpContext*) context)->peer;
 		wfi->peers[peerId]->pId = peerId;
 		wfi->peerCount++;
-		printf("Registering Peer: id=%d #=%d\n", peerId, wfi->peerCount);
+		DEBUG_MSG("Registering Peer: id=%d #=%d\n", peerId, wfi->peerCount);
 
 		wf_info_unlock(wfi);
 
@@ -232,7 +232,7 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 		wfi->peerCount--;
 		CloseHandle(context->updateEvent);
 
-		printf("Unregistering Peer: id=%d, #=%d\n", peerId, wfi->peerCount);
+		DEBUG_MSG("Unregistering Peer: id=%d, #=%d\n", peerId, wfi->peerCount);
 
 #ifdef WITH_WIN8
 		if (wfi->peerCount == 0)
