@@ -624,7 +624,7 @@ int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 	}
 	else if (evtype == XI_TouchUpdate)
 	{
-	        printf("TouchUpdate: %d\n", touchId);
+	        DEBUG_MSG("TouchUpdate: %d\n", touchId);
 		contactId = rdpei->TouchUpdate(rdpei, touchId, x, y);
 	}
 	else if (evtype == XI_TouchEnd)

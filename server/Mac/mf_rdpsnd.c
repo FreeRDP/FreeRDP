@@ -47,7 +47,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	//we should actually loop through the list of client formats here
 	//and see if we can send the client something that it supports...
 	
-	printf("Client supports the following %d formats: \n", context->num_client_formats);
+	DEBUG_MSG("Client supports the following %d formats: \n", context->num_client_formats);
 	
 	for (i = 0; i < context->num_client_formats; i++)
 	{
@@ -58,7 +58,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
 			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
 			{
-				printf("agreed on format!\n");
+				DEBUG_MSG("agreed on format!\n");
 				formatAgreed = TRUE;
 				agreedFormat = (AUDIO_FORMAT*)&context->server_formats[j];
 				break;
@@ -71,7 +71,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	if (formatAgreed == FALSE)
 	{
-		printf("Could not agree on a audio format with the server\n");
+		DEBUG_MSG("Could not agree on a audio format with the server\n");
 		return;
 	}
 	
@@ -114,7 +114,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	if (status != noErr)
 	{
-		printf("Failed to create a new Audio Queue. Status code: %d\n", status);
+		DEBUG_MSG("Failed to create a new Audio Queue. Status code: %d\n", status);
 	}
 	
 	
@@ -211,7 +211,7 @@ void mf_peer_rdpsnd_input_callback (void                                *inUserD
 	
 	if (status != noErr)
 	{
-		printf("AudioQueueEnqueueBuffer() returned status = %d\n", status);
+		DEBUG_MSG("AudioQueueEnqueueBuffer() returned status = %d\n", status);
 	}
 	
 }

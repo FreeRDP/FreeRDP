@@ -78,7 +78,7 @@ int TestCommConfig(int argc, char* argv[])
 
 	if (!hComm || (hComm == INVALID_HANDLE_VALUE))
 	{
-		fprintf(stderr, "CreateFileA failure: %s GetLastError() = 0x%0.8x\n", lpFileName, GetLastError());
+		fprintf(stderr, "CreateFileA failure: %s GetLastError() = 0x%08x\n", lpFileName, GetLastError());
 		return EXIT_FAILURE;
 	}
 
@@ -100,7 +100,7 @@ int TestCommConfig(int argc, char* argv[])
 	ZeroMemory(&commProp, sizeof(COMMPROP));
 	if (!GetCommProperties(hComm, &commProp))
 	{
-		fprintf(stderr, "GetCommProperties failure: GetLastError(): 0x%0.8x\n", GetLastError());
+		fprintf(stderr, "GetCommProperties failure: GetLastError(): 0x%08x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 

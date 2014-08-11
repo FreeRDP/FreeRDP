@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/primitives.h>
 
@@ -75,7 +76,7 @@ static int planar_decompress_plane_rle(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDs
 
 			if ((srcp - pSrcData) > SrcSize)
 			{
-				fprintf(stderr, "planar_decompress_plane_rle: error reading input buffer\n");
+				DEBUG_WARN( "planar_decompress_plane_rle: error reading input buffer\n");
 				return -1;
 			}
 
@@ -95,7 +96,7 @@ static int planar_decompress_plane_rle(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDs
 
 			if (((dstp + (cRawBytes + nRunLength)) - currentScanline) > nWidth * 4)
 			{
-				fprintf(stderr, "planar_decompress_plane_rle: too many pixels in scanline\n");
+				DEBUG_WARN( "planar_decompress_plane_rle: too many pixels in scanline\n");
 				return -1;
 			}
 
@@ -335,7 +336,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 		{
 			static BOOL been_warned = FALSE;
 			if (!been_warned)
-				fprintf(stderr, "Chroma-Subsampling is not implemented.\n");
+				DEBUG_WARN( "Chroma-Subsampling is not implemented.\n");
 			been_warned = TRUE;
 		}
 		else
@@ -781,7 +782,7 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data,
 			context->rlePlanes[3] = &context->rlePlanesBuffer[offset];
 			offset += dstSizes[3];
 
-			//printf("R: [%d/%d] G: [%d/%d] B: [%d/%d]\n",
+			//DEBUG_MSG("R: [%d/%d] G: [%d/%d] B: [%d/%d]\n",
 			//		dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3], planeSize);
 		}
 	}

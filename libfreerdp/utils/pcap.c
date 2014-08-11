@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <freerdp/utils/debug.h>
 
 #ifndef _WIN32
 #include <sys/time.h>
@@ -162,7 +163,7 @@ rdpPcap* pcap_open(char* name, BOOL write)
 
 	if (pcap_fp == NULL)
 	{
-		perror("opening pcap dump");
+		DEBUG_WARN("opening pcap dump");
 		return NULL;
 	}
 

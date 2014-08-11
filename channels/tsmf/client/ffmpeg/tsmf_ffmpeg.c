@@ -27,10 +27,12 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/channels/log.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
 
 #include <libavcodec/avcodec.h>
+#include <libavutil/common.h>
 
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
@@ -46,6 +48,20 @@
 #else
 #define MAX_AUDIO_FRAME_SIZE 192000
 #endif
+
+#if LIBAVCODEC_VERSION_MAJOR < 55
+#define AV_CODEC_ID_VC1 CODEC_ID_VC1
+#define AV_CODEC_ID_WMAV2 CODEC_ID_WMAV2
+#define AV_CODEC_ID_WMAPRO CODEC_ID_WMAPRO
+#define AV_CODEC_ID_MP3 CODEC_ID_MP3
+#define AV_CODEC_ID_MP2 CODEC_ID_MP2
+#define AV_CODEC_ID_MPEG2VIDEO CODEC_ID_MPEG2VIDEO
+#define AV_CODEC_ID_WMV3 CODEC_ID_WMV3
+#define AV_CODEC_ID_AAC CODEC_ID_AAC
+#define AV_CODEC_ID_H264 CODEC_ID_H264
+#define AV_CODEC_ID_AC3 CODEC_ID_AC3
+#endif
+
 
 typedef struct _TSMFFFmpegDecoder
 {
@@ -73,7 +89,7 @@ static BOOL tsmf_ffmpeg_init_context(ITSMFDecoder *decoder)
 	mdecoder->codec_context = avcodec_alloc_context3(NULL);
 	if(!mdecoder->codec_context)
 	{
-		DEBUG_WARN("avcodec_alloc_context failed.");
+		CLOG_ERR("avcodec_alloc_context failed.");
 		return FALSE;
 	}
 	return TRUE;
@@ -127,7 +143,7 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder *decoder, const TS_AM_MEDIA_TYP
 	mdecoder->codec = avcodec_find_decoder(mdecoder->codec_id);
 	if(!mdecoder->codec)
 	{
-		DEBUG_WARN("avcodec_find_decoder failed.");
+		CLOG_ERR("avcodec_find_decoder failed.");
 		return FALSE;
 	}
 	mdecoder->codec_context->codec_id = mdecoder->codec_id;
@@ -189,7 +205,7 @@ static BOOL tsmf_ffmpeg_prepare(ITSMFDecoder *decoder)
 	TSMFFFmpegDecoder *mdecoder = (TSMFFFmpegDecoder *) decoder;
 	if(avcodec_open2(mdecoder->codec_context, mdecoder->codec, NULL) < 0)
 	{
-		DEBUG_WARN("avcodec_open2 failed.");
+		CLOG_ERR("avcodec_open2 failed.");
 		return FALSE;
 	}
 	mdecoder->prepared = 1;
@@ -213,28 +229,28 @@ static BOOL tsmf_ffmpeg_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *medi
 	switch(media_type->SubType)
 	{
 		case TSMF_SUB_TYPE_WVC1:
-			mdecoder->codec_id = CODEC_ID_VC1;
+			mdecoder->codec_id = AV_CODEC_ID_VC1;
 			break;
 		case TSMF_SUB_TYPE_WMA2:
-			mdecoder->codec_id = CODEC_ID_WMAV2;
+			mdecoder->codec_id = AV_CODEC_ID_WMAV2;
 			break;
 		case TSMF_SUB_TYPE_WMA9:
-			mdecoder->codec_id = CODEC_ID_WMAPRO;
+			mdecoder->codec_id = AV_CODEC_ID_WMAPRO;
 			break;
 		case TSMF_SUB_TYPE_MP3:
-			mdecoder->codec_id = CODEC_ID_MP3;
+			mdecoder->codec_id = AV_CODEC_ID_MP3;
 			break;
 		case TSMF_SUB_TYPE_MP2A:
-			mdecoder->codec_id = CODEC_ID_MP2;
+			mdecoder->codec_id = AV_CODEC_ID_MP2;
 			break;
 		case TSMF_SUB_TYPE_MP2V:
-			mdecoder->codec_id = CODEC_ID_MPEG2VIDEO;
+			mdecoder->codec_id = AV_CODEC_ID_MPEG2VIDEO;
 			break;
 		case TSMF_SUB_TYPE_WMV3:
-			mdecoder->codec_id = CODEC_ID_WMV3;
+			mdecoder->codec_id = AV_CODEC_ID_WMV3;
 			break;
 		case TSMF_SUB_TYPE_AAC:
-			mdecoder->codec_id = CODEC_ID_AAC;
+			mdecoder->codec_id = AV_CODEC_ID_AAC;
 			/* For AAC the pFormat is a HEAACWAVEINFO struct, and the codec data
 			   is at the end of it. See
 			   http://msdn.microsoft.com/en-us/library/dd757806.aspx */
@@ -246,10 +262,10 @@ static BOOL tsmf_ffmpeg_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *medi
 			break;
 		case TSMF_SUB_TYPE_H264:
 		case TSMF_SUB_TYPE_AVC1:
-			mdecoder->codec_id = CODEC_ID_H264;
+			mdecoder->codec_id = AV_CODEC_ID_H264;
 			break;
 		case TSMF_SUB_TYPE_AC3:
-			mdecoder->codec_id = CODEC_ID_AC3;
+			mdecoder->codec_id = AV_CODEC_ID_AC3;
 			break;
 		default:
 			return FALSE;
@@ -285,13 +301,13 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder *decoder, const BYTE *data, UI
 #endif
 	if(len < 0)
 	{
-		DEBUG_WARN("data_size %d, avcodec_decode_video failed (%d)", data_size, len);
+		CLOG_ERR("data_size %d, avcodec_decode_video failed (%d)", data_size, len);
 		ret = FALSE;
 	}
 	else
 		if(!decoded)
 		{
-			DEBUG_WARN("data_size %d, no frame is decoded.", data_size);
+			CLOG_ERR("data_size %d, no frame is decoded.", data_size);
 			ret = FALSE;
 		}
 		else
@@ -387,7 +403,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder *decoder, const BYTE *data, UI
 #endif
 		if(len <= 0 || frame_size <= 0)
 		{
-			DEBUG_WARN("error decoding");
+			CLOG_ERR("error decoding");
 			break;
 		}
 		src += len;
@@ -427,7 +443,7 @@ static BOOL tsmf_ffmpeg_decode(ITSMFDecoder *decoder, const BYTE *data, UINT32 d
 		case AVMEDIA_TYPE_AUDIO:
 			return tsmf_ffmpeg_decode_audio(decoder, data, data_size, extensions);
 		default:
-			DEBUG_WARN("unknown media type.");
+			CLOG_ERR("unknown media type.");
 			return FALSE;
 	}
 }
@@ -451,7 +467,7 @@ static UINT32 tsmf_ffmpeg_get_decoded_format(ITSMFDecoder *decoder)
 		case PIX_FMT_YUV420P:
 			return RDP_PIXFMT_I420;
 		default:
-			DEBUG_WARN("unsupported pixel format %u",
+			CLOG_ERR("unsupported pixel format %u",
 					   mdecoder->codec_context->pix_fmt);
 			return (UINT32) -1;
 	}
@@ -504,7 +520,7 @@ ITSMFDecoder *freerdp_tsmf_client_decoder_subsystem_entry(void)
 		avcodec_register_all();
 		initialized = TRUE;
 	}
-	fprintf(stderr, "TSMFDecoderEntry FFMPEG\n");
+	CLOG_ERR( "TSMFDecoderEntry FFMPEG\n");
 	decoder = (TSMFFFmpegDecoder *) malloc(sizeof(TSMFFFmpegDecoder));
 	ZeroMemory(decoder, sizeof(TSMFFFmpegDecoder));
 	decoder->iface.SetFormat = tsmf_ffmpeg_set_format;

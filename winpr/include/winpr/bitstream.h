@@ -27,11 +27,11 @@
 
 struct _wBitStream
 {
-	BYTE* buffer;
+	const BYTE* buffer;
 	BYTE* pointer;
-	DWORD position;
-	DWORD length;
-	DWORD capacity;
+	int position;
+	int length;
+	int capacity;
 	UINT32 mask;
 	UINT32 offset;
 	UINT32 prefetch;
@@ -83,26 +83,36 @@ extern "C" {
 } while(0)
 
 #define BitStream_Shift(_bs, _nbits) do { \
-	_bs->accumulator <<= _nbits; \
-	_bs->position += _nbits; \
-	_bs->offset += _nbits; \
-	if (_bs->offset < 32) { \
-		_bs->mask = ((1 << _nbits) - 1); \
-		_bs->accumulator |= ((_bs->prefetch >> (32 - _nbits)) & _bs->mask); \
-		_bs->prefetch <<= _nbits; \
-	} else { \
-		_bs->mask = ((1 << _nbits) - 1); \
-		_bs->accumulator |= ((_bs->prefetch >> (32 - _nbits)) & _bs->mask); \
-		_bs->prefetch <<= _nbits; \
-		_bs->offset -= 32; \
-		_bs->pointer += 4; \
-		BitStream_Prefetch(_bs); \
-		if (_bs->offset) { \
-			_bs->mask = ((1 << _bs->offset) - 1); \
-			_bs->accumulator |= ((_bs->prefetch >> (32 - _bs->offset)) & _bs->mask); \
-			_bs->prefetch <<= _bs->offset; \
+	if (_nbits == 0) { \
+	} else if ((_nbits > 0) && (_nbits < 32)) { \
+		_bs->accumulator <<= _nbits; \
+		_bs->position += _nbits; \
+		_bs->offset += _nbits; \
+		if (_bs->offset < 32) { \
+			_bs->mask = ((1 << _nbits) - 1); \
+			_bs->accumulator |= ((_bs->prefetch >> (32 - _nbits)) & _bs->mask); \
+			_bs->prefetch <<= _nbits; \
+		} else { \
+			_bs->mask = ((1 << _nbits) - 1); \
+			_bs->accumulator |= ((_bs->prefetch >> (32 - _nbits)) & _bs->mask); \
+			_bs->prefetch <<= _nbits; \
+			_bs->offset -= 32; \
+			_bs->pointer += 4; \
+			BitStream_Prefetch(_bs); \
+			if (_bs->offset) { \
+				_bs->mask = ((1 << _bs->offset) - 1); \
+				_bs->accumulator |= ((_bs->prefetch >> (32 - _bs->offset)) & _bs->mask); \
+				_bs->prefetch <<= _bs->offset; \
+			} \
 		} \
+	} else { \
+		fprintf(stderr, "warning: BitStream_Shift(%d)\n", _nbits); \
 	} \
+} while(0)
+
+#define BitStream_Shift32(_bs) do { \
+	BitStream_Shift(_bs, 16); \
+	BitStream_Shift(_bs, 16); \
 } while(0)
 
 #define BitStream_Write_Bits(_bs, _bits, _nbits) do { \
@@ -124,10 +134,13 @@ extern "C" {
 	} \
 } while(0)
 
+#define BitStream_GetRemainingLength(_bs) \
+	(_bs->length - _bs->position)
+
 WINPR_API void BitDump(const BYTE* buffer, UINT32 length, UINT32 flags);
 WINPR_API UINT32 ReverseBits32(UINT32 bits, UINT32 nbits);
 
-WINPR_API void BitStream_Attach(wBitStream* bs, BYTE* buffer, UINT32 capacity);
+WINPR_API void BitStream_Attach(wBitStream* bs, const BYTE* buffer, UINT32 capacity);
 
 WINPR_API wBitStream* BitStream_New();
 WINPR_API void BitStream_Free(wBitStream* bs);

@@ -140,7 +140,7 @@ void cliprdr_process_short_format_names(cliprdrPlugin* cliprdr, wStream* s, UINT
 	}
 
 	if (num_formats * 36 != length)
-		DEBUG_WARN("dataLen %d not divided by 36!", length);
+		CLOG_ERR("dataLen %d not divided by 36!", length);
 
 	ascii = (flags & CB_ASCII_NAMES) ? TRUE : FALSE;
 

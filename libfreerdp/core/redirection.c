@@ -29,36 +29,36 @@
 
 void rdp_print_redirection_flags(UINT32 flags)
 {
-	fprintf(stderr, "redirectionFlags = {\n");
+	DEBUG_WARN( "redirectionFlags = {\n");
 
 	if (flags & LB_TARGET_NET_ADDRESS)
-		fprintf(stderr, "\tLB_TARGET_NET_ADDRESS\n");
+		DEBUG_WARN( "\tLB_TARGET_NET_ADDRESS\n");
 	if (flags & LB_LOAD_BALANCE_INFO)
-		fprintf(stderr, "\tLB_LOAD_BALANCE_INFO\n");
+		DEBUG_WARN( "\tLB_LOAD_BALANCE_INFO\n");
 	if (flags & LB_USERNAME)
-		fprintf(stderr, "\tLB_USERNAME\n");
+		DEBUG_WARN( "\tLB_USERNAME\n");
 	if (flags & LB_DOMAIN)
-		fprintf(stderr, "\tLB_DOMAIN\n");
+		DEBUG_WARN( "\tLB_DOMAIN\n");
 	if (flags & LB_PASSWORD)
-		fprintf(stderr, "\tLB_PASSWORD\n");
+		DEBUG_WARN( "\tLB_PASSWORD\n");
 	if (flags & LB_DONTSTOREUSERNAME)
-		fprintf(stderr, "\tLB_DONTSTOREUSERNAME\n");
+		DEBUG_WARN( "\tLB_DONTSTOREUSERNAME\n");
 	if (flags & LB_SMARTCARD_LOGON)
-		fprintf(stderr, "\tLB_SMARTCARD_LOGON\n");
+		DEBUG_WARN( "\tLB_SMARTCARD_LOGON\n");
 	if (flags & LB_NOREDIRECT)
-		fprintf(stderr, "\tLB_NOREDIRECT\n");
+		DEBUG_WARN( "\tLB_NOREDIRECT\n");
 	if (flags & LB_TARGET_FQDN)
-		fprintf(stderr, "\tLB_TARGET_FQDN\n");
+		DEBUG_WARN( "\tLB_TARGET_FQDN\n");
 	if (flags & LB_TARGET_NETBIOS_NAME)
-		fprintf(stderr, "\tLB_TARGET_NETBIOS_NAME\n");
+		DEBUG_WARN( "\tLB_TARGET_NETBIOS_NAME\n");
 	if (flags & LB_TARGET_NET_ADDRESSES)
-		fprintf(stderr, "\tLB_TARGET_NET_ADDRESSES\n");
+		DEBUG_WARN( "\tLB_TARGET_NET_ADDRESSES\n");
 	if (flags & LB_CLIENT_TSV_URL)
-		fprintf(stderr, "\tLB_CLIENT_TSV_URL\n");
+		DEBUG_WARN( "\tLB_CLIENT_TSV_URL\n");
 	if (flags & LB_SERVER_TSV_CAPABLE)
-		fprintf(stderr, "\tLB_SERVER_TSV_CAPABLE\n");
+		DEBUG_WARN( "\tLB_SERVER_TSV_CAPABLE\n");
 
-	fprintf(stderr, "}\n");
+	DEBUG_WARN( "}\n");
 }
 
 BOOL rdp_redirection_read_string(wStream* s, char** str)
@@ -67,7 +67,7 @@ BOOL rdp_redirection_read_string(wStream* s, char** str)
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		fprintf(stderr, "rdp_redirection_read_string failure: cannot read length\n");
+		DEBUG_WARN( "rdp_redirection_read_string failure: cannot read length\n");
 		return FALSE;
 	}
 
@@ -75,7 +75,7 @@ BOOL rdp_redirection_read_string(wStream* s, char** str)
 
 	if (Stream_GetRemainingLength(s) < length)
 	{
-		fprintf(stderr, "rdp_redirection_read_string failure: incorrect length %d\n", length);
+		DEBUG_WARN( "rdp_redirection_read_string failure: incorrect length %d\n", length);
 		return FALSE;
 	}
 

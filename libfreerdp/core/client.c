@@ -715,7 +715,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 
 	if (channels->clientDataCount + 1 >= CHANNEL_MAX_COUNT)
 	{
-		fprintf(stderr, "error: too many channels\n");
+		DEBUG_WARN( "error: too many channels\n");
 		return 1;
 	}
 
@@ -754,7 +754,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 
 	if (!status)
 	{
-		fprintf(stderr, "error: channel export function call failed\n");
+		DEBUG_WARN( "error: channel export function call failed\n");
 		return 1;
 	}
 

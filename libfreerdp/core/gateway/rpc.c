@@ -92,45 +92,45 @@ const RPC_SECURITY_PROVIDER_INFO RPC_SECURITY_PROVIDER_INFO_TABLE[] =
 
 void rpc_pdu_header_print(rpcconn_hdr_t* header)
 {
-	fprintf(stderr, "rpc_vers: %d\n", header->common.rpc_vers);
-	fprintf(stderr, "rpc_vers_minor: %d\n", header->common.rpc_vers_minor);
+	DEBUG_WARN( "rpc_vers: %d\n", header->common.rpc_vers);
+	DEBUG_WARN( "rpc_vers_minor: %d\n", header->common.rpc_vers_minor);
 
 	if (header->common.ptype > PTYPE_RTS)
-		fprintf(stderr, "ptype: %s (%d)\n", "PTYPE_UNKNOWN", header->common.ptype);
+		DEBUG_WARN( "ptype: %s (%d)\n", "PTYPE_UNKNOWN", header->common.ptype);
 	else
-		fprintf(stderr, "ptype: %s (%d)\n", PTYPE_STRINGS[header->common.ptype], header->common.ptype);
+		DEBUG_WARN( "ptype: %s (%d)\n", PTYPE_STRINGS[header->common.ptype], header->common.ptype);
 
-	fprintf(stderr, "pfc_flags (0x%02X) = {", header->common.pfc_flags);
+	DEBUG_WARN( "pfc_flags (0x%02X) = {", header->common.pfc_flags);
 	if (header->common.pfc_flags & PFC_FIRST_FRAG)
-		fprintf(stderr, " PFC_FIRST_FRAG");
+		DEBUG_WARN( " PFC_FIRST_FRAG");
 	if (header->common.pfc_flags & PFC_LAST_FRAG)
-		fprintf(stderr, " PFC_LAST_FRAG");
+		DEBUG_WARN( " PFC_LAST_FRAG");
 	if (header->common.pfc_flags & PFC_PENDING_CANCEL)
-		fprintf(stderr, " PFC_PENDING_CANCEL");
+		DEBUG_WARN( " PFC_PENDING_CANCEL");
 	if (header->common.pfc_flags & PFC_RESERVED_1)
-		fprintf(stderr, " PFC_RESERVED_1");
+		DEBUG_WARN( " PFC_RESERVED_1");
 	if (header->common.pfc_flags & PFC_CONC_MPX)
-		fprintf(stderr, " PFC_CONC_MPX");
+		DEBUG_WARN( " PFC_CONC_MPX");
 	if (header->common.pfc_flags & PFC_DID_NOT_EXECUTE)
-		fprintf(stderr, " PFC_DID_NOT_EXECUTE");
+		DEBUG_WARN( " PFC_DID_NOT_EXECUTE");
 	if (header->common.pfc_flags & PFC_OBJECT_UUID)
-		fprintf(stderr, " PFC_OBJECT_UUID");
-	fprintf(stderr, " }\n");
+		DEBUG_WARN( " PFC_OBJECT_UUID");
+	DEBUG_WARN( " }\n");
 
-	fprintf(stderr, "packed_drep[4]: %02X %02X %02X %02X\n",
+	DEBUG_WARN( "packed_drep[4]: %02X %02X %02X %02X\n",
 			header->common.packed_drep[0], header->common.packed_drep[1],
 			header->common.packed_drep[2], header->common.packed_drep[3]);
 
-	fprintf(stderr, "frag_length: %d\n", header->common.frag_length);
-	fprintf(stderr, "auth_length: %d\n", header->common.auth_length);
-	fprintf(stderr, "call_id: %d\n", header->common.call_id);
+	DEBUG_WARN( "frag_length: %d\n", header->common.frag_length);
+	DEBUG_WARN( "auth_length: %d\n", header->common.auth_length);
+	DEBUG_WARN( "call_id: %d\n", header->common.call_id);
 
 	if (header->common.ptype == PTYPE_RESPONSE)
 	{
-		fprintf(stderr, "alloc_hint: %d\n", header->response.alloc_hint);
-		fprintf(stderr, "p_cont_id: %d\n", header->response.p_cont_id);
-		fprintf(stderr, "cancel_count: %d\n", header->response.cancel_count);
-		fprintf(stderr, "reserved: %d\n", header->response.reserved);
+		DEBUG_WARN( "alloc_hint: %d\n", header->response.alloc_hint);
+		DEBUG_WARN( "p_cont_id: %d\n", header->response.p_cont_id);
+		DEBUG_WARN( "cancel_count: %d\n", header->response.cancel_count);
+		DEBUG_WARN( "reserved: %d\n", header->response.reserved);
 	}
 }
 
@@ -265,7 +265,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 			*offset += 4;
 			break;
 		default:
-			fprintf(stderr, "%s: unknown ptype=0x%x\n", __FUNCTION__, header->common.ptype);
+			DEBUG_WARN( "%s: unknown ptype=0x%x\n", __FUNCTION__, header->common.ptype);
 			return FALSE;
 	}
 
@@ -290,7 +290,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 	auth_pad_length = sec_trailer->auth_pad_length;
 
 #if 0
-	fprintf(stderr, "sec_trailer: type: %d level: %d pad_length: %d reserved: %d context_id: %d\n",
+	DEBUG_WARN( "sec_trailer: type: %d level: %d pad_length: %d reserved: %d context_id: %d\n",
 			sec_trailer->auth_type,
 			sec_trailer->auth_level,
 			sec_trailer->auth_pad_length,
@@ -306,7 +306,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 
 	if ((frag_length - (sec_trailer_offset + 8)) != auth_length)
 	{
-		fprintf(stderr, "invalid auth_length: actual: %d, expected: %d\n", auth_length,
+		DEBUG_WARN( "invalid auth_length: actual: %d, expected: %d\n", auth_length,
 				(frag_length - (sec_trailer_offset + 8)));
 	}
 
@@ -347,10 +347,10 @@ int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length)
 	int status;
 
 #ifdef WITH_DEBUG_TSG
-	fprintf(stderr, "Sending PDU (length: %d)\n", length);
+	DEBUG_WARN( "Sending PDU (length: %d)\n", length);
 	rpc_pdu_header_print((rpcconn_hdr_t*) data);
 	winpr_HexDump(data, length);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 #endif
 	
 	status = tls_write_all(rpc->TlsIn, data, length);
@@ -374,13 +374,13 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	if (!ntlm || !ntlm->table)
 	{
-		fprintf(stderr, "%s: invalid ntlm context\n", __FUNCTION__);
+		DEBUG_WARN( "%s: invalid ntlm context\n", __FUNCTION__);
 		return -1;
 	}
 
 	if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 	{
-		fprintf(stderr, "%s: QueryContextAttributes SECPKG_ATTR_SIZES failure\n", __FUNCTION__);
+		DEBUG_WARN( "%s: QueryContextAttributes SECPKG_ATTR_SIZES failure\n", __FUNCTION__);
 		return -1;
 	}
 
@@ -456,7 +456,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	encrypt_status = ntlm->table->EncryptMessage(&ntlm->context, 0, &Message, rpc->SendSeqNum++);
 	if (encrypt_status != SEC_E_OK)
 	{
-		fprintf(stderr, "EncryptMessage status: 0x%08X\n", encrypt_status);
+		DEBUG_WARN( "EncryptMessage status: 0x%08X\n", encrypt_status);
 		free(request_pdu);
 		return -1;
 	}
@@ -486,7 +486,7 @@ BOOL rpc_connect(rdpRpc* rpc)
 
 	if (!rts_connect(rpc))
 	{
-		fprintf(stderr, "rts_connect error!\n");
+		DEBUG_WARN( "rts_connect error!\n");
 		return FALSE;
 	}
 
@@ -494,7 +494,7 @@ BOOL rpc_connect(rdpRpc* rpc)
 
 	if (rpc_secure_bind(rpc) != 0)
 	{
-		fprintf(stderr, "rpc_secure_bind error!\n");
+		DEBUG_WARN( "rpc_secure_bind error!\n");
 		return FALSE;
 	}
 

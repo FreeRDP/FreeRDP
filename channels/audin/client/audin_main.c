@@ -133,7 +133,7 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, w
 	DEBUG_DVC("NumFormats %d", NumFormats);
 	if ((NumFormats < 1) || (NumFormats > 1000))
 	{
-		DEBUG_WARN("bad NumFormats %d", NumFormats);
+		CLOG_ERR("bad NumFormats %d", NumFormats);
 		return 1;
 	}
 	Stream_Seek_UINT32(s); /* cbSizeFormatsPacket */
@@ -262,7 +262,7 @@ static int audin_process_open(IWTSVirtualChannelCallback* pChannelCallback, wStr
 
 	if (initialFormat >= (UINT32) callback->formats_count)
 	{
-		DEBUG_WARN("invalid format index %d (total %d)",
+		CLOG_ERR("invalid format index %d (total %d)",
 			initialFormat, callback->formats_count);
 		return 1;
 	}
@@ -293,7 +293,7 @@ static int audin_process_format_change(IWTSVirtualChannelCallback* pChannelCallb
 
 	if (NewFormat >= (UINT32) callback->formats_count)
 	{
-		DEBUG_WARN("invalid format index %d (total %d)",
+		CLOG_ERR("invalid format index %d (total %d)",
 			NewFormat, callback->formats_count);
 		return 1;
 	}
@@ -340,7 +340,7 @@ static int audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 			break;
 
 		default:
-			DEBUG_WARN("unknown MessageId=0x%x", MessageId);
+			CLOG_ERR("unknown MessageId=0x%x", MessageId);
 			error = 1;
 			break;
 	}
@@ -429,7 +429,7 @@ static void audin_register_device_plugin(IWTSPlugin* pPlugin, IAudinDevice* devi
 
 	if (audin->device)
 	{
-		DEBUG_WARN("existing device, abort.");
+		CLOG_ERR("existing device, abort.");
 		return;
 	}
 
@@ -454,7 +454,7 @@ static BOOL audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, ADDI
 
 	if (entry(&entryPoints) != 0)
 	{
-		DEBUG_WARN("%s entry returns error.", name);
+		CLOG_ERR("%s entry returns error.", name);
 		return FALSE;
 	}
 
@@ -613,7 +613,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	if (audin->device == NULL)
 	{
-		DEBUG_WARN("no sound device.");
+		CLOG_ERR("no sound device.");
 	}
 
 	return error;

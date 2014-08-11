@@ -318,13 +318,13 @@ int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature)
 	UINT32 SignatureId;
 	RTS_PDU_SIGNATURE_ENTRY* entry;
 
-	fprintf(stderr, "RTS PDU Signature: Flags: 0x%04X NumberOfCommands: %d\n",
+	DEBUG_WARN( "RTS PDU Signature: Flags: 0x%04X NumberOfCommands: %d\n",
 			signature->Flags, signature->NumberOfCommands);
 
 	SignatureId = rts_identify_pdu_signature(rpc, signature, &entry);
 
 	if (SignatureId)
-		fprintf(stderr, "Identified %s RTS PDU\n", entry->PduName);
+		DEBUG_WARN( "Identified %s RTS PDU\n", entry->PduName);
 
 	return 0;
 }

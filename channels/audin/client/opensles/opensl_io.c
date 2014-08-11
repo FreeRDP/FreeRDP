@@ -362,7 +362,7 @@ int android_RecIn(OPENSL_STREAM *p,short *buffer,int size)
 	e = Queue_Dequeue(p->queue);
 	if (!e)
 	{
-		DEBUG_WARN("[ERROR] got e=%p from queue", e);
+		CLOG_ERR("[ERROR] got e=%p from queue", e);
 		return -1;
 	}
 

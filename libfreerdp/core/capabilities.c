@@ -262,7 +262,7 @@ BOOL rdp_print_general_capability_set(wStream* s, UINT16 length)
 	if (length < 24)
 		return FALSE;
 
-	fprintf(stderr, "GeneralCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "GeneralCapabilitySet (length %d):\n", length);
 
 	Stream_Read_UINT16(s, osMajorType); /* osMajorType (2 bytes) */
 	Stream_Read_UINT16(s, osMinorType); /* osMinorType (2 bytes) */
@@ -276,17 +276,17 @@ BOOL rdp_print_general_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT8(s, refreshRectSupport); /* refreshRectSupport (1 byte) */
 	Stream_Read_UINT8(s, suppressOutputSupport); /* suppressOutputSupport (1 byte) */
 
-	fprintf(stderr, "\tosMajorType: 0x%04X\n", osMajorType);
-	fprintf(stderr, "\tosMinorType: 0x%04X\n", osMinorType);
-	fprintf(stderr, "\tprotocolVersion: 0x%04X\n", protocolVersion);
-	fprintf(stderr, "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
-	fprintf(stderr, "\tgeneralCompressionTypes: 0x%04X\n", generalCompressionTypes);
-	fprintf(stderr, "\textraFlags: 0x%04X\n", extraFlags);
-	fprintf(stderr, "\tupdateCapabilityFlag: 0x%04X\n", updateCapabilityFlag);
-	fprintf(stderr, "\tremoteUnshareFlag: 0x%04X\n", remoteUnshareFlag);
-	fprintf(stderr, "\tgeneralCompressionLevel: 0x%04X\n", generalCompressionLevel);
-	fprintf(stderr, "\trefreshRectSupport: 0x%02X\n", refreshRectSupport);
-	fprintf(stderr, "\tsuppressOutputSupport: 0x%02X\n", suppressOutputSupport);
+	DEBUG_WARN( "\tosMajorType: 0x%04X\n", osMajorType);
+	DEBUG_WARN( "\tosMinorType: 0x%04X\n", osMinorType);
+	DEBUG_WARN( "\tprotocolVersion: 0x%04X\n", protocolVersion);
+	DEBUG_WARN( "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
+	DEBUG_WARN( "\tgeneralCompressionTypes: 0x%04X\n", generalCompressionTypes);
+	DEBUG_WARN( "\textraFlags: 0x%04X\n", extraFlags);
+	DEBUG_WARN( "\tupdateCapabilityFlag: 0x%04X\n", updateCapabilityFlag);
+	DEBUG_WARN( "\tremoteUnshareFlag: 0x%04X\n", remoteUnshareFlag);
+	DEBUG_WARN( "\tgeneralCompressionLevel: 0x%04X\n", generalCompressionLevel);
+	DEBUG_WARN( "\trefreshRectSupport: 0x%02X\n", refreshRectSupport);
+	DEBUG_WARN( "\tsuppressOutputSupport: 0x%02X\n", suppressOutputSupport);
 
 	return TRUE;
 }
@@ -414,7 +414,7 @@ BOOL rdp_print_bitmap_capability_set(wStream* s, UINT16 length)
 	UINT16 multipleRectangleSupport;
 	UINT16 pad2OctetsB;
 
-	fprintf(stderr, "BitmapCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "BitmapCapabilitySet (length %d):\n", length);
 
 	if (length < 28)
 		return FALSE;
@@ -433,19 +433,19 @@ BOOL rdp_print_bitmap_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, multipleRectangleSupport); /* multipleRectangleSupport (2 bytes) */
 	Stream_Read_UINT16(s, pad2OctetsB); /* pad2OctetsB (2 bytes) */
 
-	fprintf(stderr, "\tpreferredBitsPerPixel: 0x%04X\n", preferredBitsPerPixel);
-	fprintf(stderr, "\treceive1BitPerPixel: 0x%04X\n", receive1BitPerPixel);
-	fprintf(stderr, "\treceive4BitsPerPixel: 0x%04X\n", receive4BitsPerPixel);
-	fprintf(stderr, "\treceive8BitsPerPixel: 0x%04X\n", receive8BitsPerPixel);
-	fprintf(stderr, "\tdesktopWidth: 0x%04X\n", desktopWidth);
-	fprintf(stderr, "\tdesktopHeight: 0x%04X\n", desktopHeight);
-	fprintf(stderr, "\tpad2Octets: 0x%04X\n", pad2Octets);
-	fprintf(stderr, "\tdesktopResizeFlag: 0x%04X\n", desktopResizeFlag);
-	fprintf(stderr, "\tbitmapCompressionFlag: 0x%04X\n", bitmapCompressionFlag);
-	fprintf(stderr, "\thighColorFlags: 0x%02X\n", highColorFlags);
-	fprintf(stderr, "\tdrawingFlags: 0x%02X\n", drawingFlags);
-	fprintf(stderr, "\tmultipleRectangleSupport: 0x%04X\n", multipleRectangleSupport);
-	fprintf(stderr, "\tpad2OctetsB: 0x%04X\n", pad2OctetsB);
+	DEBUG_WARN( "\tpreferredBitsPerPixel: 0x%04X\n", preferredBitsPerPixel);
+	DEBUG_WARN( "\treceive1BitPerPixel: 0x%04X\n", receive1BitPerPixel);
+	DEBUG_WARN( "\treceive4BitsPerPixel: 0x%04X\n", receive4BitsPerPixel);
+	DEBUG_WARN( "\treceive8BitsPerPixel: 0x%04X\n", receive8BitsPerPixel);
+	DEBUG_WARN( "\tdesktopWidth: 0x%04X\n", desktopWidth);
+	DEBUG_WARN( "\tdesktopHeight: 0x%04X\n", desktopHeight);
+	DEBUG_WARN( "\tpad2Octets: 0x%04X\n", pad2Octets);
+	DEBUG_WARN( "\tdesktopResizeFlag: 0x%04X\n", desktopResizeFlag);
+	DEBUG_WARN( "\tbitmapCompressionFlag: 0x%04X\n", bitmapCompressionFlag);
+	DEBUG_WARN( "\thighColorFlags: 0x%02X\n", highColorFlags);
+	DEBUG_WARN( "\tdrawingFlags: 0x%02X\n", drawingFlags);
+	DEBUG_WARN( "\tmultipleRectangleSupport: 0x%04X\n", multipleRectangleSupport);
+	DEBUG_WARN( "\tpad2OctetsB: 0x%04X\n", pad2OctetsB);
 
 	return TRUE;
 }
@@ -591,7 +591,7 @@ BOOL rdp_print_order_capability_set(wStream* s, UINT16 length)
 	UINT16 textANSICodePage;
 	UINT16 pad2OctetsE;
 
-	fprintf(stderr, "OrderCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "OrderCapabilitySet (length %d):\n", length);
 
 	if (length < 88)
 		return FALSE;
@@ -614,56 +614,56 @@ BOOL rdp_print_order_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, textANSICodePage); /* textANSICodePage (2 bytes) */
 	Stream_Read_UINT16(s, pad2OctetsE); /* pad2OctetsE (2 bytes) */
 
-	fprintf(stderr, "\tpad4OctetsA: 0x%08X\n", pad4OctetsA);
-	fprintf(stderr, "\tdesktopSaveXGranularity: 0x%04X\n", desktopSaveXGranularity);
-	fprintf(stderr, "\tdesktopSaveYGranularity: 0x%04X\n", desktopSaveYGranularity);
-	fprintf(stderr, "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
-	fprintf(stderr, "\tmaximumOrderLevel: 0x%04X\n", maximumOrderLevel);
-	fprintf(stderr, "\tnumberFonts: 0x%04X\n", numberFonts);
-	fprintf(stderr, "\torderFlags: 0x%04X\n", orderFlags);
+	DEBUG_WARN( "\tpad4OctetsA: 0x%08X\n", pad4OctetsA);
+	DEBUG_WARN( "\tdesktopSaveXGranularity: 0x%04X\n", desktopSaveXGranularity);
+	DEBUG_WARN( "\tdesktopSaveYGranularity: 0x%04X\n", desktopSaveYGranularity);
+	DEBUG_WARN( "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
+	DEBUG_WARN( "\tmaximumOrderLevel: 0x%04X\n", maximumOrderLevel);
+	DEBUG_WARN( "\tnumberFonts: 0x%04X\n", numberFonts);
+	DEBUG_WARN( "\torderFlags: 0x%04X\n", orderFlags);
 
-	fprintf(stderr, "\torderSupport:\n");
-	fprintf(stderr, "\t\tDSTBLT: %d\n", orderSupport[NEG_DSTBLT_INDEX]);
-	fprintf(stderr, "\t\tPATBLT: %d\n", orderSupport[NEG_PATBLT_INDEX]);
-	fprintf(stderr, "\t\tSCRBLT: %d\n", orderSupport[NEG_SCRBLT_INDEX]);
-	fprintf(stderr, "\t\tMEMBLT: %d\n", orderSupport[NEG_MEMBLT_INDEX]);
-	fprintf(stderr, "\t\tMEM3BLT: %d\n", orderSupport[NEG_MEM3BLT_INDEX]);
-	fprintf(stderr, "\t\tATEXTOUT: %d\n", orderSupport[NEG_ATEXTOUT_INDEX]);
-	fprintf(stderr, "\t\tAEXTTEXTOUT: %d\n", orderSupport[NEG_AEXTTEXTOUT_INDEX]);
-	fprintf(stderr, "\t\tDRAWNINEGRID: %d\n", orderSupport[NEG_DRAWNINEGRID_INDEX]);
-	fprintf(stderr, "\t\tLINETO: %d\n", orderSupport[NEG_LINETO_INDEX]);
-	fprintf(stderr, "\t\tMULTI_DRAWNINEGRID: %d\n", orderSupport[NEG_MULTI_DRAWNINEGRID_INDEX]);
-	fprintf(stderr, "\t\tOPAQUE_RECT: %d\n", orderSupport[NEG_OPAQUE_RECT_INDEX]);
-	fprintf(stderr, "\t\tSAVEBITMAP: %d\n", orderSupport[NEG_SAVEBITMAP_INDEX]);
-	fprintf(stderr, "\t\tWTEXTOUT: %d\n", orderSupport[NEG_WTEXTOUT_INDEX]);
-	fprintf(stderr, "\t\tMEMBLT_V2: %d\n", orderSupport[NEG_MEMBLT_V2_INDEX]);
-	fprintf(stderr, "\t\tMEM3BLT_V2: %d\n", orderSupport[NEG_MEM3BLT_V2_INDEX]);
-	fprintf(stderr, "\t\tMULTIDSTBLT: %d\n", orderSupport[NEG_MULTIDSTBLT_INDEX]);
-	fprintf(stderr, "\t\tMULTIPATBLT: %d\n", orderSupport[NEG_MULTIPATBLT_INDEX]);
-	fprintf(stderr, "\t\tMULTISCRBLT: %d\n", orderSupport[NEG_MULTISCRBLT_INDEX]);
-	fprintf(stderr, "\t\tMULTIOPAQUERECT: %d\n", orderSupport[NEG_MULTIOPAQUERECT_INDEX]);
-	fprintf(stderr, "\t\tFAST_INDEX: %d\n", orderSupport[NEG_FAST_INDEX_INDEX]);
-	fprintf(stderr, "\t\tPOLYGON_SC: %d\n", orderSupport[NEG_POLYGON_SC_INDEX]);
-	fprintf(stderr, "\t\tPOLYGON_CB: %d\n", orderSupport[NEG_POLYGON_CB_INDEX]);
-	fprintf(stderr, "\t\tPOLYLINE: %d\n", orderSupport[NEG_POLYLINE_INDEX]);
-	fprintf(stderr, "\t\tUNUSED23: %d\n", orderSupport[NEG_UNUSED23_INDEX]);
-	fprintf(stderr, "\t\tFAST_GLYPH: %d\n", orderSupport[NEG_FAST_GLYPH_INDEX]);
-	fprintf(stderr, "\t\tELLIPSE_SC: %d\n", orderSupport[NEG_ELLIPSE_SC_INDEX]);
-	fprintf(stderr, "\t\tELLIPSE_CB: %d\n", orderSupport[NEG_ELLIPSE_CB_INDEX]);
-	fprintf(stderr, "\t\tGLYPH_INDEX: %d\n", orderSupport[NEG_GLYPH_INDEX_INDEX]);
-	fprintf(stderr, "\t\tGLYPH_WEXTTEXTOUT: %d\n", orderSupport[NEG_GLYPH_WEXTTEXTOUT_INDEX]);
-	fprintf(stderr, "\t\tGLYPH_WLONGTEXTOUT: %d\n", orderSupport[NEG_GLYPH_WLONGTEXTOUT_INDEX]);
-	fprintf(stderr, "\t\tGLYPH_WLONGEXTTEXTOUT: %d\n", orderSupport[NEG_GLYPH_WLONGEXTTEXTOUT_INDEX]);
-	fprintf(stderr, "\t\tUNUSED31: %d\n", orderSupport[NEG_UNUSED31_INDEX]);
+	DEBUG_WARN( "\torderSupport:\n");
+	DEBUG_WARN( "\t\tDSTBLT: %d\n", orderSupport[NEG_DSTBLT_INDEX]);
+	DEBUG_WARN( "\t\tPATBLT: %d\n", orderSupport[NEG_PATBLT_INDEX]);
+	DEBUG_WARN( "\t\tSCRBLT: %d\n", orderSupport[NEG_SCRBLT_INDEX]);
+	DEBUG_WARN( "\t\tMEMBLT: %d\n", orderSupport[NEG_MEMBLT_INDEX]);
+	DEBUG_WARN( "\t\tMEM3BLT: %d\n", orderSupport[NEG_MEM3BLT_INDEX]);
+	DEBUG_WARN( "\t\tATEXTOUT: %d\n", orderSupport[NEG_ATEXTOUT_INDEX]);
+	DEBUG_WARN( "\t\tAEXTTEXTOUT: %d\n", orderSupport[NEG_AEXTTEXTOUT_INDEX]);
+	DEBUG_WARN( "\t\tDRAWNINEGRID: %d\n", orderSupport[NEG_DRAWNINEGRID_INDEX]);
+	DEBUG_WARN( "\t\tLINETO: %d\n", orderSupport[NEG_LINETO_INDEX]);
+	DEBUG_WARN( "\t\tMULTI_DRAWNINEGRID: %d\n", orderSupport[NEG_MULTI_DRAWNINEGRID_INDEX]);
+	DEBUG_WARN( "\t\tOPAQUE_RECT: %d\n", orderSupport[NEG_OPAQUE_RECT_INDEX]);
+	DEBUG_WARN( "\t\tSAVEBITMAP: %d\n", orderSupport[NEG_SAVEBITMAP_INDEX]);
+	DEBUG_WARN( "\t\tWTEXTOUT: %d\n", orderSupport[NEG_WTEXTOUT_INDEX]);
+	DEBUG_WARN( "\t\tMEMBLT_V2: %d\n", orderSupport[NEG_MEMBLT_V2_INDEX]);
+	DEBUG_WARN( "\t\tMEM3BLT_V2: %d\n", orderSupport[NEG_MEM3BLT_V2_INDEX]);
+	DEBUG_WARN( "\t\tMULTIDSTBLT: %d\n", orderSupport[NEG_MULTIDSTBLT_INDEX]);
+	DEBUG_WARN( "\t\tMULTIPATBLT: %d\n", orderSupport[NEG_MULTIPATBLT_INDEX]);
+	DEBUG_WARN( "\t\tMULTISCRBLT: %d\n", orderSupport[NEG_MULTISCRBLT_INDEX]);
+	DEBUG_WARN( "\t\tMULTIOPAQUERECT: %d\n", orderSupport[NEG_MULTIOPAQUERECT_INDEX]);
+	DEBUG_WARN( "\t\tFAST_INDEX: %d\n", orderSupport[NEG_FAST_INDEX_INDEX]);
+	DEBUG_WARN( "\t\tPOLYGON_SC: %d\n", orderSupport[NEG_POLYGON_SC_INDEX]);
+	DEBUG_WARN( "\t\tPOLYGON_CB: %d\n", orderSupport[NEG_POLYGON_CB_INDEX]);
+	DEBUG_WARN( "\t\tPOLYLINE: %d\n", orderSupport[NEG_POLYLINE_INDEX]);
+	DEBUG_WARN( "\t\tUNUSED23: %d\n", orderSupport[NEG_UNUSED23_INDEX]);
+	DEBUG_WARN( "\t\tFAST_GLYPH: %d\n", orderSupport[NEG_FAST_GLYPH_INDEX]);
+	DEBUG_WARN( "\t\tELLIPSE_SC: %d\n", orderSupport[NEG_ELLIPSE_SC_INDEX]);
+	DEBUG_WARN( "\t\tELLIPSE_CB: %d\n", orderSupport[NEG_ELLIPSE_CB_INDEX]);
+	DEBUG_WARN( "\t\tGLYPH_INDEX: %d\n", orderSupport[NEG_GLYPH_INDEX_INDEX]);
+	DEBUG_WARN( "\t\tGLYPH_WEXTTEXTOUT: %d\n", orderSupport[NEG_GLYPH_WEXTTEXTOUT_INDEX]);
+	DEBUG_WARN( "\t\tGLYPH_WLONGTEXTOUT: %d\n", orderSupport[NEG_GLYPH_WLONGTEXTOUT_INDEX]);
+	DEBUG_WARN( "\t\tGLYPH_WLONGEXTTEXTOUT: %d\n", orderSupport[NEG_GLYPH_WLONGEXTTEXTOUT_INDEX]);
+	DEBUG_WARN( "\t\tUNUSED31: %d\n", orderSupport[NEG_UNUSED31_INDEX]);
 
-	fprintf(stderr, "\ttextFlags: 0x%04X\n", textFlags);
-	fprintf(stderr, "\torderSupportExFlags: 0x%04X\n", orderSupportExFlags);
-	fprintf(stderr, "\tpad4OctetsB: 0x%08X\n", pad4OctetsB);
-	fprintf(stderr, "\tdesktopSaveSize: 0x%08X\n", desktopSaveSize);
-	fprintf(stderr, "\tpad2OctetsC: 0x%04X\n", pad2OctetsC);
-	fprintf(stderr, "\tpad2OctetsD: 0x%04X\n", pad2OctetsD);
-	fprintf(stderr, "\ttextANSICodePage: 0x%04X\n", textANSICodePage);
-	fprintf(stderr, "\tpad2OctetsE: 0x%04X\n", pad2OctetsE);
+	DEBUG_WARN( "\ttextFlags: 0x%04X\n", textFlags);
+	DEBUG_WARN( "\torderSupportExFlags: 0x%04X\n", orderSupportExFlags);
+	DEBUG_WARN( "\tpad4OctetsB: 0x%08X\n", pad4OctetsB);
+	DEBUG_WARN( "\tdesktopSaveSize: 0x%08X\n", desktopSaveSize);
+	DEBUG_WARN( "\tpad2OctetsC: 0x%04X\n", pad2OctetsC);
+	DEBUG_WARN( "\tpad2OctetsD: 0x%04X\n", pad2OctetsD);
+	DEBUG_WARN( "\ttextANSICodePage: 0x%04X\n", textANSICodePage);
+	DEBUG_WARN( "\tpad2OctetsE: 0x%04X\n", pad2OctetsE);
 
 	return TRUE;
 }
@@ -749,7 +749,7 @@ BOOL rdp_print_bitmap_cache_capability_set(wStream* s, UINT16 length)
 	UINT16 Cache2Entries;
 	UINT16 Cache2MaximumCellSize;
 
-	fprintf(stderr, "BitmapCacheCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "BitmapCacheCapabilitySet (length %d):\n", length);
 
 	if (length < 40)
 		return FALSE;
@@ -767,18 +767,18 @@ BOOL rdp_print_bitmap_cache_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, Cache2Entries); /* Cache2Entries (2 bytes) */
 	Stream_Read_UINT16(s, Cache2MaximumCellSize); /* Cache2MaximumCellSize (2 bytes) */
 
-	fprintf(stderr, "\tpad1: 0x%08X\n", pad1);
-	fprintf(stderr, "\tpad2: 0x%08X\n", pad2);
-	fprintf(stderr, "\tpad3: 0x%08X\n", pad3);
-	fprintf(stderr, "\tpad4: 0x%08X\n", pad4);
-	fprintf(stderr, "\tpad5: 0x%08X\n", pad5);
-	fprintf(stderr, "\tpad6: 0x%08X\n", pad6);
-	fprintf(stderr, "\tCache0Entries: 0x%04X\n", Cache0Entries);
-	fprintf(stderr, "\tCache0MaximumCellSize: 0x%04X\n", Cache0MaximumCellSize);
-	fprintf(stderr, "\tCache1Entries: 0x%04X\n", Cache1Entries);
-	fprintf(stderr, "\tCache1MaximumCellSize: 0x%04X\n", Cache1MaximumCellSize);
-	fprintf(stderr, "\tCache2Entries: 0x%04X\n", Cache2Entries);
-	fprintf(stderr, "\tCache2MaximumCellSize: 0x%04X\n", Cache2MaximumCellSize);
+	DEBUG_WARN( "\tpad1: 0x%08X\n", pad1);
+	DEBUG_WARN( "\tpad2: 0x%08X\n", pad2);
+	DEBUG_WARN( "\tpad3: 0x%08X\n", pad3);
+	DEBUG_WARN( "\tpad4: 0x%08X\n", pad4);
+	DEBUG_WARN( "\tpad5: 0x%08X\n", pad5);
+	DEBUG_WARN( "\tpad6: 0x%08X\n", pad6);
+	DEBUG_WARN( "\tCache0Entries: 0x%04X\n", Cache0Entries);
+	DEBUG_WARN( "\tCache0MaximumCellSize: 0x%04X\n", Cache0MaximumCellSize);
+	DEBUG_WARN( "\tCache1Entries: 0x%04X\n", Cache1Entries);
+	DEBUG_WARN( "\tCache1MaximumCellSize: 0x%04X\n", Cache1MaximumCellSize);
+	DEBUG_WARN( "\tCache2Entries: 0x%04X\n", Cache2Entries);
+	DEBUG_WARN( "\tCache2MaximumCellSize: 0x%04X\n", Cache2MaximumCellSize);
 
 	return TRUE;
 }
@@ -834,7 +834,7 @@ BOOL rdp_print_control_capability_set(wStream* s, UINT16 length)
 	UINT16 controlInterest;
 	UINT16 detachInterest;
 
-	fprintf(stderr, "ControlCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "ControlCapabilitySet (length %d):\n", length);
 
 	if (length < 12)
 		return FALSE;
@@ -844,10 +844,10 @@ BOOL rdp_print_control_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, controlInterest); /* controlInterest (2 bytes) */
 	Stream_Read_UINT16(s, detachInterest); /* detachInterest (2 bytes) */
 
-	fprintf(stderr, "\tcontrolFlags: 0x%04X\n", controlFlags);
-	fprintf(stderr, "\tremoteDetachFlag: 0x%04X\n", remoteDetachFlag);
-	fprintf(stderr, "\tcontrolInterest: 0x%04X\n", controlInterest);
-	fprintf(stderr, "\tdetachInterest: 0x%04X\n", detachInterest);
+	DEBUG_WARN( "\tcontrolFlags: 0x%04X\n", controlFlags);
+	DEBUG_WARN( "\tremoteDetachFlag: 0x%04X\n", remoteDetachFlag);
+	DEBUG_WARN( "\tcontrolInterest: 0x%04X\n", controlInterest);
+	DEBUG_WARN( "\tdetachInterest: 0x%04X\n", detachInterest);
 
 	return TRUE;
 }
@@ -903,7 +903,7 @@ BOOL rdp_print_window_activation_capability_set(wStream* s, UINT16 length)
 	UINT16 helpExtendedKeyFlag;
 	UINT16 windowManagerKeyFlag;
 
-	fprintf(stderr, "WindowActivationCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "WindowActivationCapabilitySet (length %d):\n", length);
 
 	if (length < 12)
 		return FALSE;
@@ -913,10 +913,10 @@ BOOL rdp_print_window_activation_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, helpExtendedKeyFlag); /* helpExtendedKeyFlag (2 bytes) */
 	Stream_Read_UINT16(s, windowManagerKeyFlag); /* windowManagerKeyFlag (2 bytes) */
 
-	fprintf(stderr, "\thelpKeyFlag: 0x%04X\n", helpKeyFlag);
-	fprintf(stderr, "\thelpKeyIndexFlag: 0x%04X\n", helpKeyIndexFlag);
-	fprintf(stderr, "\thelpExtendedKeyFlag: 0x%04X\n", helpExtendedKeyFlag);
-	fprintf(stderr, "\twindowManagerKeyFlag: 0x%04X\n", windowManagerKeyFlag);
+	DEBUG_WARN( "\thelpKeyFlag: 0x%04X\n", helpKeyFlag);
+	DEBUG_WARN( "\thelpKeyIndexFlag: 0x%04X\n", helpKeyIndexFlag);
+	DEBUG_WARN( "\thelpExtendedKeyFlag: 0x%04X\n", helpExtendedKeyFlag);
+	DEBUG_WARN( "\twindowManagerKeyFlag: 0x%04X\n", windowManagerKeyFlag);
 
 	return TRUE;
 }
@@ -990,15 +990,15 @@ BOOL rdp_print_pointer_capability_set(wStream* s, UINT16 length)
 	if (length < 10)
 		return FALSE;
 
-	fprintf(stderr, "PointerCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "PointerCapabilitySet (length %d):\n", length);
 
 	Stream_Read_UINT16(s, colorPointerFlag); /* colorPointerFlag (2 bytes) */
 	Stream_Read_UINT16(s, colorPointerCacheSize); /* colorPointerCacheSize (2 bytes) */
 	Stream_Read_UINT16(s, pointerCacheSize); /* pointerCacheSize (2 bytes) */
 
-	fprintf(stderr, "\tcolorPointerFlag: 0x%04X\n", colorPointerFlag);
-	fprintf(stderr, "\tcolorPointerCacheSize: 0x%04X\n", colorPointerCacheSize);
-	fprintf(stderr, "\tpointerCacheSize: 0x%04X\n", pointerCacheSize);
+	DEBUG_WARN( "\tcolorPointerFlag: 0x%04X\n", colorPointerFlag);
+	DEBUG_WARN( "\tcolorPointerCacheSize: 0x%04X\n", colorPointerCacheSize);
+	DEBUG_WARN( "\tpointerCacheSize: 0x%04X\n", pointerCacheSize);
 
 	return TRUE;
 }
@@ -1051,7 +1051,7 @@ BOOL rdp_print_share_capability_set(wStream* s, UINT16 length)
 	UINT16 nodeId;
 	UINT16 pad2Octets;
 
-	fprintf(stderr, "ShareCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "ShareCapabilitySet (length %d):\n", length);
 
 	if (length < 8)
 		return FALSE;
@@ -1059,8 +1059,8 @@ BOOL rdp_print_share_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, nodeId); /* nodeId (2 bytes) */
 	Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
 
-	fprintf(stderr, "\tnodeId: 0x%04X\n", nodeId);
-	fprintf(stderr, "\tpad2Octets: 0x%04X\n", pad2Octets);
+	DEBUG_WARN( "\tnodeId: 0x%04X\n", nodeId);
+	DEBUG_WARN( "\tpad2Octets: 0x%04X\n", pad2Octets);
 
 	return TRUE;
 }
@@ -1110,7 +1110,7 @@ BOOL rdp_print_color_cache_capability_set(wStream* s, UINT16 length)
 	UINT16 colorTableCacheSize;
 	UINT16 pad2Octets;
 
-	fprintf(stderr, "ColorCacheCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "ColorCacheCapabilitySet (length %d):\n", length);
 
 	if (length < 8)
 		return FALSE;
@@ -1118,8 +1118,8 @@ BOOL rdp_print_color_cache_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, colorTableCacheSize); /* colorTableCacheSize (2 bytes) */
 	Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
 
-	fprintf(stderr, "\tcolorTableCacheSize: 0x%04X\n", colorTableCacheSize);
-	fprintf(stderr, "\tpad2Octets: 0x%04X\n", pad2Octets);
+	DEBUG_WARN( "\tcolorTableCacheSize: 0x%04X\n", colorTableCacheSize);
+	DEBUG_WARN( "\tpad2Octets: 0x%04X\n", pad2Octets);
 
 	return TRUE;
 }
@@ -1176,7 +1176,7 @@ BOOL rdp_print_sound_capability_set(wStream* s, UINT16 length)
 	UINT16 soundFlags;
 	UINT16 pad2OctetsA;
 
-	fprintf(stderr, "SoundCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "SoundCapabilitySet (length %d):\n", length);
 
 	if (length < 8)
 		return FALSE;
@@ -1184,8 +1184,8 @@ BOOL rdp_print_sound_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, soundFlags); /* soundFlags (2 bytes) */
 	Stream_Read_UINT16(s, pad2OctetsA); /* pad2OctetsA (2 bytes) */
 
-	fprintf(stderr, "\tsoundFlags: 0x%04X\n", soundFlags);
-	fprintf(stderr, "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
+	DEBUG_WARN( "\tsoundFlags: 0x%04X\n", soundFlags);
+	DEBUG_WARN( "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
 
 	return TRUE;
 }
@@ -1288,7 +1288,7 @@ BOOL rdp_print_input_capability_set(wStream* s, UINT16 length)
 	UINT32 keyboardSubType;
 	UINT32 keyboardFunctionKey;
 
-	fprintf(stderr, "InputCapabilitySet (length %d)\n", length);
+	DEBUG_WARN( "InputCapabilitySet (length %d)\n", length);
 
 	if (length < 88)
 		return FALSE;
@@ -1301,12 +1301,12 @@ BOOL rdp_print_input_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT32(s, keyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
 	Stream_Seek(s, 64); /* imeFileName (64 bytes) */
 
-	fprintf(stderr, "\tinputFlags: 0x%04X\n", inputFlags);
-	fprintf(stderr, "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
-	fprintf(stderr, "\tkeyboardLayout: 0x%08X\n", keyboardLayout);
-	fprintf(stderr, "\tkeyboardType: 0x%08X\n", keyboardType);
-	fprintf(stderr, "\tkeyboardSubType: 0x%08X\n", keyboardSubType);
-	fprintf(stderr, "\tkeyboardFunctionKey: 0x%08X\n", keyboardFunctionKey);
+	DEBUG_WARN( "\tinputFlags: 0x%04X\n", inputFlags);
+	DEBUG_WARN( "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
+	DEBUG_WARN( "\tkeyboardLayout: 0x%08X\n", keyboardLayout);
+	DEBUG_WARN( "\tkeyboardType: 0x%08X\n", keyboardType);
+	DEBUG_WARN( "\tkeyboardSubType: 0x%08X\n", keyboardSubType);
+	DEBUG_WARN( "\tkeyboardFunctionKey: 0x%08X\n", keyboardFunctionKey);
 
 	return TRUE;
 }
@@ -1356,7 +1356,7 @@ BOOL rdp_print_font_capability_set(wStream* s, UINT16 length)
 	UINT16 fontSupportFlags = 0;
 	UINT16 pad2Octets = 0;
 
-	fprintf(stderr, "FontCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "FontCapabilitySet (length %d):\n", length);
 
 	if (length > 4)
 		Stream_Read_UINT16(s, fontSupportFlags); /* fontSupportFlags (2 bytes) */
@@ -1364,8 +1364,8 @@ BOOL rdp_print_font_capability_set(wStream* s, UINT16 length)
 	if (length > 6)
 		Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
 
-	fprintf(stderr, "\tfontSupportFlags: 0x%04X\n", fontSupportFlags);
-	fprintf(stderr, "\tpad2Octets: 0x%04X\n", pad2Octets);
+	DEBUG_WARN( "\tfontSupportFlags: 0x%04X\n", fontSupportFlags);
+	DEBUG_WARN( "\tpad2Octets: 0x%04X\n", pad2Octets);
 
 	return TRUE;
 }
@@ -1412,14 +1412,14 @@ BOOL rdp_print_brush_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 brushSupportLevel;
 
-	fprintf(stderr, "BrushCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "BrushCapabilitySet (length %d):\n", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, brushSupportLevel); /* brushSupportLevel (4 bytes) */
 
-	fprintf(stderr, "\tbrushSupportLevel: 0x%08X\n", brushSupportLevel);
+	DEBUG_WARN( "\tbrushSupportLevel: 0x%08X\n", brushSupportLevel);
 
 	return TRUE;
 }
@@ -1521,7 +1521,7 @@ BOOL rdp_print_glyph_cache_capability_set(wStream* s, UINT16 length)
 	UINT16 glyphSupportLevel;
 	UINT16 pad2Octets;
 
-	fprintf(stderr, "GlyphCacheCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "GlyphCacheCapabilitySet (length %d):\n", length);
 
 	if (length < 52)
 		return FALSE;
@@ -1542,19 +1542,19 @@ BOOL rdp_print_glyph_cache_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, glyphSupportLevel); /* glyphSupportLevel (2 bytes) */
 	Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
 
-	fprintf(stderr, "\tglyphCache0: Entries: %d MaximumCellSize: %d\n", glyphCache[0].cacheEntries, glyphCache[0].cacheMaximumCellSize);
-	fprintf(stderr, "\tglyphCache1: Entries: %d MaximumCellSize: %d\n", glyphCache[1].cacheEntries, glyphCache[1].cacheMaximumCellSize);
-	fprintf(stderr, "\tglyphCache2: Entries: %d MaximumCellSize: %d\n", glyphCache[2].cacheEntries, glyphCache[2].cacheMaximumCellSize);
-	fprintf(stderr, "\tglyphCache3: Entries: %d MaximumCellSize: %d\n", glyphCache[3].cacheEntries, glyphCache[3].cacheMaximumCellSize);
-	fprintf(stderr, "\tglyphCache4: Entries: %d MaximumCellSize: %d\n", glyphCache[4].cacheEntries, glyphCache[4].cacheMaximumCellSize);
-	fprintf(stderr, "\tglyphCache5: Entries: %d MaximumCellSize: %d\n", glyphCache[5].cacheEntries, glyphCache[5].cacheMaximumCellSize);
-	fprintf(stderr, "\tglyphCache6: Entries: %d MaximumCellSize: %d\n", glyphCache[6].cacheEntries, glyphCache[6].cacheMaximumCellSize);
-	fprintf(stderr, "\tglyphCache7: Entries: %d MaximumCellSize: %d\n", glyphCache[7].cacheEntries, glyphCache[7].cacheMaximumCellSize);
-	fprintf(stderr, "\tglyphCache8: Entries: %d MaximumCellSize: %d\n", glyphCache[8].cacheEntries, glyphCache[8].cacheMaximumCellSize);
-	fprintf(stderr, "\tglyphCache9: Entries: %d MaximumCellSize: %d\n", glyphCache[9].cacheEntries, glyphCache[9].cacheMaximumCellSize);
-	fprintf(stderr, "\tfragCache: Entries: %d MaximumCellSize: %d\n", fragCache.cacheEntries, fragCache.cacheMaximumCellSize);
-	fprintf(stderr, "\tglyphSupportLevel: 0x%04X\n", glyphSupportLevel);
-	fprintf(stderr, "\tpad2Octets: 0x%04X\n", pad2Octets);
+	DEBUG_WARN( "\tglyphCache0: Entries: %d MaximumCellSize: %d\n", glyphCache[0].cacheEntries, glyphCache[0].cacheMaximumCellSize);
+	DEBUG_WARN( "\tglyphCache1: Entries: %d MaximumCellSize: %d\n", glyphCache[1].cacheEntries, glyphCache[1].cacheMaximumCellSize);
+	DEBUG_WARN( "\tglyphCache2: Entries: %d MaximumCellSize: %d\n", glyphCache[2].cacheEntries, glyphCache[2].cacheMaximumCellSize);
+	DEBUG_WARN( "\tglyphCache3: Entries: %d MaximumCellSize: %d\n", glyphCache[3].cacheEntries, glyphCache[3].cacheMaximumCellSize);
+	DEBUG_WARN( "\tglyphCache4: Entries: %d MaximumCellSize: %d\n", glyphCache[4].cacheEntries, glyphCache[4].cacheMaximumCellSize);
+	DEBUG_WARN( "\tglyphCache5: Entries: %d MaximumCellSize: %d\n", glyphCache[5].cacheEntries, glyphCache[5].cacheMaximumCellSize);
+	DEBUG_WARN( "\tglyphCache6: Entries: %d MaximumCellSize: %d\n", glyphCache[6].cacheEntries, glyphCache[6].cacheMaximumCellSize);
+	DEBUG_WARN( "\tglyphCache7: Entries: %d MaximumCellSize: %d\n", glyphCache[7].cacheEntries, glyphCache[7].cacheMaximumCellSize);
+	DEBUG_WARN( "\tglyphCache8: Entries: %d MaximumCellSize: %d\n", glyphCache[8].cacheEntries, glyphCache[8].cacheMaximumCellSize);
+	DEBUG_WARN( "\tglyphCache9: Entries: %d MaximumCellSize: %d\n", glyphCache[9].cacheEntries, glyphCache[9].cacheMaximumCellSize);
+	DEBUG_WARN( "\tfragCache: Entries: %d MaximumCellSize: %d\n", fragCache.cacheEntries, fragCache.cacheMaximumCellSize);
+	DEBUG_WARN( "\tglyphSupportLevel: 0x%04X\n", glyphSupportLevel);
+	DEBUG_WARN( "\tpad2Octets: 0x%04X\n", pad2Octets);
 
 	return TRUE;
 }
@@ -1616,7 +1616,7 @@ BOOL rdp_print_offscreen_bitmap_cache_capability_set(wStream* s, UINT16 length)
 	UINT16 offscreenCacheSize;
 	UINT16 offscreenCacheEntries;
 
-	fprintf(stderr, "OffscreenBitmapCacheCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "OffscreenBitmapCacheCapabilitySet (length %d):\n", length);
 
 	if (length < 12)
 		return FALSE;
@@ -1625,9 +1625,9 @@ BOOL rdp_print_offscreen_bitmap_cache_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, offscreenCacheSize); /* offscreenCacheSize (2 bytes) */
 	Stream_Read_UINT16(s, offscreenCacheEntries); /* offscreenCacheEntries (2 bytes) */
 
-	fprintf(stderr, "\toffscreenSupportLevel: 0x%08X\n", offscreenSupportLevel);
-	fprintf(stderr, "\toffscreenCacheSize: 0x%04X\n", offscreenCacheSize);
-	fprintf(stderr, "\toffscreenCacheEntries: 0x%04X\n", offscreenCacheEntries);
+	DEBUG_WARN( "\toffscreenSupportLevel: 0x%08X\n", offscreenSupportLevel);
+	DEBUG_WARN( "\toffscreenCacheSize: 0x%04X\n", offscreenCacheSize);
+	DEBUG_WARN( "\toffscreenCacheEntries: 0x%04X\n", offscreenCacheEntries);
 
 	return TRUE;
 }
@@ -1685,7 +1685,7 @@ BOOL rdp_print_bitmap_cache_host_support_capability_set(wStream* s, UINT16 lengt
 	BYTE pad1;
 	UINT16 pad2;
 
-	fprintf(stderr, "BitmapCacheHostSupportCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "BitmapCacheHostSupportCapabilitySet (length %d):\n", length);
 
 	if (length < 8)
 		return FALSE;
@@ -1694,9 +1694,9 @@ BOOL rdp_print_bitmap_cache_host_support_capability_set(wStream* s, UINT16 lengt
 	Stream_Read_UINT8(s, pad1); /* pad1 (1 byte) */
 	Stream_Read_UINT16(s, pad2); /* pad2 (2 bytes) */
 
-	fprintf(stderr, "\tcacheVersion: 0x%02X\n", cacheVersion);
-	fprintf(stderr, "\tpad1: 0x%02X\n", pad1);
-	fprintf(stderr, "\tpad2: 0x%04X\n", pad2);
+	DEBUG_WARN( "\tcacheVersion: 0x%02X\n", cacheVersion);
+	DEBUG_WARN( "\tpad1: 0x%02X\n", pad1);
+	DEBUG_WARN( "\tpad2: 0x%04X\n", pad2);
 
 	return TRUE;
 }
@@ -1796,7 +1796,7 @@ BOOL rdp_print_bitmap_cache_v2_capability_set(wStream* s, UINT16 length)
 	BYTE numCellCaches;
 	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[5];
 
-	fprintf(stderr, "BitmapCacheV2CapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "BitmapCacheV2CapabilitySet (length %d):\n", length);
 
 	if (length < 40)
 		return FALSE;
@@ -1811,14 +1811,14 @@ BOOL rdp_print_bitmap_cache_v2_capability_set(wStream* s, UINT16 length)
 	rdp_read_bitmap_cache_cell_info(s, &bitmapCacheV2CellInfo[4]); /* bitmapCache4CellInfo (4 bytes) */
 	Stream_Seek(s, 12); /* pad3 (12 bytes) */
 
-	fprintf(stderr, "\tcacheFlags: 0x%04X\n", cacheFlags);
-	fprintf(stderr, "\tpad2: 0x%02X\n", pad2);
-	fprintf(stderr, "\tnumCellCaches: 0x%02X\n", numCellCaches);
-	fprintf(stderr, "\tbitmapCache0CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[0].numEntries, bitmapCacheV2CellInfo[0].persistent);
-	fprintf(stderr, "\tbitmapCache1CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[1].numEntries, bitmapCacheV2CellInfo[1].persistent);
-	fprintf(stderr, "\tbitmapCache2CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[2].numEntries, bitmapCacheV2CellInfo[2].persistent);
-	fprintf(stderr, "\tbitmapCache3CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[3].numEntries, bitmapCacheV2CellInfo[3].persistent);
-	fprintf(stderr, "\tbitmapCache4CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[4].numEntries, bitmapCacheV2CellInfo[4].persistent);
+	DEBUG_WARN( "\tcacheFlags: 0x%04X\n", cacheFlags);
+	DEBUG_WARN( "\tpad2: 0x%02X\n", pad2);
+	DEBUG_WARN( "\tnumCellCaches: 0x%02X\n", numCellCaches);
+	DEBUG_WARN( "\tbitmapCache0CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[0].numEntries, bitmapCacheV2CellInfo[0].persistent);
+	DEBUG_WARN( "\tbitmapCache1CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[1].numEntries, bitmapCacheV2CellInfo[1].persistent);
+	DEBUG_WARN( "\tbitmapCache2CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[2].numEntries, bitmapCacheV2CellInfo[2].persistent);
+	DEBUG_WARN( "\tbitmapCache3CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[3].numEntries, bitmapCacheV2CellInfo[3].persistent);
+	DEBUG_WARN( "\tbitmapCache4CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[4].numEntries, bitmapCacheV2CellInfo[4].persistent);
 
 	return TRUE;
 }
@@ -1881,7 +1881,7 @@ BOOL rdp_print_virtual_channel_capability_set(wStream* s, UINT16 length)
 	UINT32 flags;
 	UINT32 VCChunkSize;
 
-	fprintf(stderr, "VirtualChannelCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "VirtualChannelCapabilitySet (length %d):\n", length);
 
 	if (length < 8)
 		return FALSE;
@@ -1893,8 +1893,8 @@ BOOL rdp_print_virtual_channel_capability_set(wStream* s, UINT16 length)
 	else
 		VCChunkSize = 1600;
 
-	fprintf(stderr, "\tflags: 0x%08X\n", flags);
-	fprintf(stderr, "\tVCChunkSize: 0x%08X\n", VCChunkSize);
+	DEBUG_WARN( "\tflags: 0x%08X\n", flags);
+	DEBUG_WARN( "\tVCChunkSize: 0x%08X\n", VCChunkSize);
 
 	return TRUE;
 }
@@ -1980,7 +1980,7 @@ BOOL rdp_print_draw_nine_grid_cache_capability_set(wStream* s, UINT16 length)
 	UINT16 DrawNineGridCacheSize;
 	UINT16 DrawNineGridCacheEntries;
 
-	fprintf(stderr, "DrawNineGridCacheCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "DrawNineGridCacheCapabilitySet (length %d):\n", length);
 
 	if (length < 12)
 		return FALSE;
@@ -2060,7 +2060,7 @@ BOOL rdp_print_draw_gdiplus_cache_capability_set(wStream* s, UINT16 length)
 	UINT32 GdipVersion;
 	UINT32 drawGdiplusCacheLevel;
 
-	fprintf(stderr, "DrawGdiPlusCacheCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "DrawGdiPlusCacheCapabilitySet (length %d):\n", length);
 
 	if (length < 40)
 		return FALSE;
@@ -2133,14 +2133,14 @@ BOOL rdp_print_remote_programs_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 railSupportLevel;
 
-	fprintf(stderr, "RemoteProgramsCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "RemoteProgramsCapabilitySet (length %d):\n", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, railSupportLevel); /* railSupportLevel (4 bytes) */
 
-	fprintf(stderr, "\trailSupportLevel: 0x%08X\n", railSupportLevel);
+	DEBUG_WARN( "\trailSupportLevel: 0x%08X\n", railSupportLevel);
 
 	return TRUE;
 }
@@ -2196,7 +2196,7 @@ BOOL rdp_print_window_list_capability_set(wStream* s, UINT16 length)
 	BYTE numIconCaches;
 	UINT16 numIconCacheEntries;
 
-	fprintf(stderr, "WindowListCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "WindowListCapabilitySet (length %d):\n", length);
 
 	if (length < 11)
 		return FALSE;
@@ -2205,9 +2205,9 @@ BOOL rdp_print_window_list_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT8(s, numIconCaches); /* numIconCaches (1 byte) */
 	Stream_Read_UINT16(s, numIconCacheEntries); /* numIconCacheEntries (2 bytes) */
 
-	fprintf(stderr, "\twndSupportLevel: 0x%08X\n", wndSupportLevel);
-	fprintf(stderr, "\tnumIconCaches: 0x%02X\n", numIconCaches);
-	fprintf(stderr, "\tnumIconCacheEntries: 0x%04X\n", numIconCacheEntries);
+	DEBUG_WARN( "\twndSupportLevel: 0x%08X\n", wndSupportLevel);
+	DEBUG_WARN( "\tnumIconCaches: 0x%02X\n", numIconCaches);
+	DEBUG_WARN( "\tnumIconCacheEntries: 0x%04X\n", numIconCacheEntries);
 
 	return TRUE;
 }
@@ -2257,14 +2257,14 @@ BOOL rdp_print_desktop_composition_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 compDeskSupportLevel;
 
-	fprintf(stderr, "DesktopCompositionCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "DesktopCompositionCapabilitySet (length %d):\n", length);
 
 	if (length < 6)
 		return FALSE;
 
 	Stream_Read_UINT16(s, compDeskSupportLevel); /* compDeskSupportLevel (2 bytes) */
 
-	fprintf(stderr, "\tcompDeskSupportLevel: 0x%04X\n", compDeskSupportLevel);
+	DEBUG_WARN( "\tcompDeskSupportLevel: 0x%04X\n", compDeskSupportLevel);
 
 	return TRUE;
 }
@@ -2386,14 +2386,14 @@ BOOL rdp_print_multifragment_update_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 maxRequestSize;
 
-	fprintf(stderr, "MultifragmentUpdateCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "MultifragmentUpdateCapabilitySet (length %d):\n", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, maxRequestSize); /* maxRequestSize (4 bytes) */
 
-	fprintf(stderr, "\tmaxRequestSize: 0x%04X\n", maxRequestSize);
+	DEBUG_WARN( "\tmaxRequestSize: 0x%04X\n", maxRequestSize);
 
 	return TRUE;
 }
@@ -2447,14 +2447,14 @@ BOOL rdp_print_large_pointer_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 largePointerSupportFlags;
 
-	fprintf(stderr, "LargePointerCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "LargePointerCapabilitySet (length %d):\n", length);
 
 	if (length < 6)
 		return FALSE;
 
 	Stream_Read_UINT16(s, largePointerSupportFlags); /* largePointerSupportFlags (2 bytes) */
 
-	fprintf(stderr, "\tlargePointerSupportFlags: 0x%04X\n", largePointerSupportFlags);
+	DEBUG_WARN( "\tlargePointerSupportFlags: 0x%04X\n", largePointerSupportFlags);
 
 	return TRUE;
 }
@@ -2514,7 +2514,7 @@ BOOL rdp_print_surface_commands_capability_set(wStream* s, UINT16 length)
 	UINT32 cmdFlags;
 	UINT32 reserved;
 
-	fprintf(stderr, "SurfaceCommandsCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "SurfaceCommandsCapabilitySet (length %d):\n", length);
 
 	if (length < 12)
 		return FALSE;
@@ -2522,8 +2522,8 @@ BOOL rdp_print_surface_commands_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT32(s, cmdFlags); /* cmdFlags (4 bytes) */
 	Stream_Read_UINT32(s, reserved); /* reserved (4 bytes) */
 
-	fprintf(stderr, "\tcmdFlags: 0x%08X\n", cmdFlags);
-	fprintf(stderr, "\treserved: 0x%08X\n", reserved);
+	DEBUG_WARN( "\tcmdFlags: 0x%08X\n", cmdFlags);
+	DEBUG_WARN( "\treserved: 0x%08X\n", reserved);
 
 	return TRUE;
 }
@@ -2573,7 +2573,7 @@ void rdp_write_bitmap_codec_guid(wStream* s, GUID* guid)
 
 void rdp_print_bitmap_codec_guid(GUID* guid)
 {
-	fprintf(stderr, "%08X%04X%04X%02X%02X%02X%02X%02X%02X%02X%02X",
+	DEBUG_WARN( "%08X%04X%04X%02X%02X%02X%02X%02X%02X%02X%02X",
 		guid->Data1, guid->Data2, guid->Data3,
 		guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
 		guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
@@ -2906,7 +2906,7 @@ BOOL rdp_print_bitmap_codecs_capability_set(wStream* s, UINT16 length)
 	UINT16 codecPropertiesLength;
 	UINT16 remainingLength;
 
-	fprintf(stderr, "BitmapCodecsCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "BitmapCodecsCapabilitySet (length %d):\n", length);
 
 	if (length < 5)
 		return FALSE;
@@ -2914,7 +2914,7 @@ BOOL rdp_print_bitmap_codecs_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT8(s, bitmapCodecCount); /* bitmapCodecCount (1 byte) */
 	remainingLength = length - 5;
 
-	fprintf(stderr, "\tbitmapCodecCount: %d\n", bitmapCodecCount);
+	DEBUG_WARN( "\tbitmapCodecCount: %d\n", bitmapCodecCount);
 
 	while (bitmapCodecCount > 0)
 	{
@@ -2924,14 +2924,14 @@ BOOL rdp_print_bitmap_codecs_capability_set(wStream* s, UINT16 length)
 		rdp_read_bitmap_codec_guid(s, &codecGuid); /* codecGuid (16 bytes) */
 		Stream_Read_UINT8(s, codecId); /* codecId (1 byte) */
 
-		fprintf(stderr, "\tcodecGuid: 0x");
+		DEBUG_WARN( "\tcodecGuid: 0x");
 		rdp_print_bitmap_codec_guid(&codecGuid);
-		fprintf(stderr, " (%s)\n", rdp_get_bitmap_codec_guid_name(&codecGuid));
+		DEBUG_WARN( " (%s)\n", rdp_get_bitmap_codec_guid_name(&codecGuid));
 
-		fprintf(stderr, "\tcodecId: %d\n", codecId);
+		DEBUG_WARN( "\tcodecId: %d\n", codecId);
 
 		Stream_Read_UINT16(s, codecPropertiesLength); /* codecPropertiesLength (2 bytes) */
-		fprintf(stderr, "\tcodecPropertiesLength: %d\n", codecPropertiesLength);
+		DEBUG_WARN( "\tcodecPropertiesLength: %d\n", codecPropertiesLength);
 
 		remainingLength -= 19;
 
@@ -2994,14 +2994,14 @@ BOOL rdp_print_frame_acknowledge_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 frameAcknowledge;
 
-	fprintf(stderr, "FrameAcknowledgeCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "FrameAcknowledgeCapabilitySet (length %d):\n", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, frameAcknowledge); /* frameAcknowledge (4 bytes) */
 
-	fprintf(stderr, "\tframeAcknowledge: 0x%08X\n", frameAcknowledge);
+	DEBUG_WARN( "\tframeAcknowledge: 0x%08X\n", frameAcknowledge);
 
 	return TRUE;
 }
@@ -3034,14 +3034,14 @@ BOOL rdp_print_bitmap_cache_v3_codec_id_capability_set(wStream* s, UINT16 length
 {
 	BYTE bitmapCacheV3CodecId;
 
-	fprintf(stderr, "BitmapCacheV3CodecIdCapabilitySet (length %d):\n", length);
+	DEBUG_WARN( "BitmapCacheV3CodecIdCapabilitySet (length %d):\n", length);
 
 	if (length < 5)
 		return FALSE;
 
 	Stream_Read_UINT8(s, bitmapCacheV3CodecId); /* bitmapCacheV3CodecId (1 byte) */
 
-	fprintf(stderr, "\tbitmapCacheV3CodecId: 0x%02X\n", bitmapCacheV3CodecId);
+	DEBUG_WARN( "\tbitmapCacheV3CodecId: 0x%02X\n", bitmapCacheV3CodecId);
 
 	return TRUE;
 }
@@ -3058,13 +3058,13 @@ BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOOL recei
 
 		rdp_read_capability_set_header(s, &length, &type);
 
-		fprintf(stderr, "%s ", receiving ? "Receiving" : "Sending");
+		DEBUG_WARN( "%s ", receiving ? "Receiving" : "Sending");
 
 		em = bm + length;
 
 		if (Stream_GetRemainingLength(s) < (size_t) (length - 4))
 		{
-			fprintf(stderr, "error processing stream\n");
+			DEBUG_WARN( "error processing stream\n");
 			return FALSE;
 		}
 
@@ -3216,13 +3216,13 @@ BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOOL recei
 				break;
 
 			default:
-				fprintf(stderr, "unknown capability type %d\n", type);
+				DEBUG_WARN( "unknown capability type %d\n", type);
 				break;
 		}
 
 		if (s->pointer != em)
 		{
-			fprintf(stderr, "incorrect offset, type:0x%02X actual:%d expected:%d\n",
+			DEBUG_WARN( "incorrect offset, type:0x%02X actual:%d expected:%d\n",
 				type, (int) (s->pointer - bm), (int) (em - bm));
 		}
 
@@ -3256,14 +3256,14 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 		}
 		else
 		{
-			fprintf(stderr, "%s: not handling capability type %d yet\n", __FUNCTION__, type);
+			DEBUG_WARN( "%s: not handling capability type %d yet\n", __FUNCTION__, type);
 		}
 
 		em = bm + length;
 
 		if (Stream_GetRemainingLength(s) < ((size_t) length - 4))
 		{
-			fprintf(stderr, "error processing stream\n");
+			DEBUG_WARN( "error processing stream\n");
 			return FALSE;
 		}
 
@@ -3415,13 +3415,13 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 				break;
 
 			default:
-				fprintf(stderr, "unknown capability type %d\n", type);
+				DEBUG_WARN( "unknown capability type %d\n", type);
 				break;
 		}
 
 		if (s->pointer != em)
 		{
-			fprintf(stderr, "incorrect offset, type:0x%02X actual:%d expected:%d\n",
+			DEBUG_WARN( "incorrect offset, type:0x%02X actual:%d expected:%d\n",
 				type, (int) (s->pointer - bm), (int) (em - bm));
 		}
 
@@ -3431,7 +3431,7 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 
 	if (numberCapabilities)
 	{
-		fprintf(stderr, "%s: strange we haven't read the number of announced capacity sets, read=%d expected=%d\n",
+		DEBUG_WARN( "%s: strange we haven't read the number of announced capacity sets, read=%d expected=%d\n",
 				__FUNCTION__, count-numberCapabilities, count);
 	}
 
@@ -3466,7 +3466,7 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				fprintf(stderr, "rdp_decrypt failed\n");
+				DEBUG_WARN( "rdp_decrypt failed\n");
 				return FALSE;
 			}
 		}
@@ -3478,7 +3478,7 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 
 		if ((mcsMessageChannelId == 0) || (*pChannelId != mcsMessageChannelId))
 		{
-			fprintf(stderr, "unexpected MCS channel id %04x received\n", *pChannelId);
+			DEBUG_WARN( "unexpected MCS channel id %04x received\n", *pChannelId);
 			return FALSE;
 		}
 	}
@@ -3504,14 +3504,14 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 	{
-		fprintf(stderr, "rdp_read_share_control_header failed\n");
+		DEBUG_WARN( "rdp_read_share_control_header failed\n");
 		return FALSE;
 	}
 
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 	{
 		if (pduType != PDU_TYPE_SERVER_REDIRECTION)
-			fprintf(stderr, "expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x\n", PDU_TYPE_DEMAND_ACTIVE, pduType);
+			DEBUG_WARN( "expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x\n", PDU_TYPE_DEMAND_ACTIVE, pduType);
 
 		return FALSE;
 	}
@@ -3534,7 +3534,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	/* capabilitySets */
 	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities))
 	{
-		fprintf(stderr, "rdp_read_capability_sets failed\n");
+		DEBUG_WARN( "rdp_read_capability_sets failed\n");
 		return FALSE;
 	}
 

@@ -31,6 +31,7 @@
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/ringbuffer.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/crypto/tls.h>
 #include "../core/tcp.h"
 
@@ -510,7 +511,7 @@ static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 
 	if (!remote_cert)
 	{
-		fprintf(stderr, "%s: failed to get the server TLS certificate\n", __FUNCTION__);
+		DEBUG_WARN( "%s: failed to get the server TLS certificate\n", __FUNCTION__);
 		return NULL;
 	}
 
@@ -583,7 +584,7 @@ BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int opt
 	tls->ctx = SSL_CTX_new(method);
 	if (!tls->ctx)
 	{
-		fprintf(stderr, "%s: SSL_CTX_new failed\n", __FUNCTION__);
+		DEBUG_WARN( "%s: SSL_CTX_new failed\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -594,7 +595,7 @@ BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int opt
 
 	if (tls->settings->PermittedTLSCiphers) {
 		if(!SSL_CTX_set_cipher_list(tls->ctx, tls->settings->PermittedTLSCiphers)) {
-			fprintf(stderr, "SSL_CTX_set_cipher_list %s failed\n", tls->settings->PermittedTLSCiphers);
+			DEBUG_WARN( "SSL_CTX_set_cipher_list %s failed\n", tls->settings->PermittedTLSCiphers);
 			return FALSE;
 		}
 	}
@@ -603,7 +604,7 @@ BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int opt
 
 	if (BIO_get_ssl(tls->bio, &tls->ssl) < 0)
 	{
-		fprintf(stderr, "%s: unable to retrieve the SSL of the connection\n", __FUNCTION__);
+		DEBUG_WARN( "%s: unable to retrieve the SSL of the connection\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -641,7 +642,7 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 
 		if (fd < 0)
 		{
-			fprintf(stderr, "%s: unable to retrieve BIO fd\n", __FUNCTION__);
+			DEBUG_WARN( "%s: unable to retrieve BIO fd\n", __FUNCTION__);
 			return -1;
 		}
 
@@ -665,7 +666,7 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 #endif
 		if (status < 0)
 		{
-			fprintf(stderr, "%s: error during select()\n", __FUNCTION__);
+			DEBUG_WARN( "%s: error during select()\n", __FUNCTION__);
 			return -1;
 		}
 	}
@@ -674,21 +675,21 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 	cert = tls_get_certificate(tls, clientMode);
 	if (!cert)
 	{
-		fprintf(stderr, "%s: tls_get_certificate failed to return the server certificate.\n", __FUNCTION__);
+		DEBUG_WARN( "%s: tls_get_certificate failed to return the server certificate.\n", __FUNCTION__);
 		return -1;
 	}
 
 	tls->Bindings = tls_get_channel_bindings(cert->px509);
 	if (!tls->Bindings)
 	{
-		fprintf(stderr, "%s: unable to retrieve bindings\n", __FUNCTION__);
+		DEBUG_WARN( "%s: unable to retrieve bindings\n", __FUNCTION__);
 		verify_status = -1;
 		goto out;
 	}
 
 	if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 	{
-		fprintf(stderr, "%s: crypto_cert_get_public_key failed to return the server public key.\n", __FUNCTION__);
+		DEBUG_WARN( "%s: crypto_cert_get_public_key failed to return the server public key.\n", __FUNCTION__);
 		verify_status = -1;
 		goto out;
 	}
@@ -703,7 +704,7 @@ int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 
 		if (verify_status < 1)
 		{
-			fprintf(stderr, "%s: certificate not trusted, aborting.\n", __FUNCTION__);
+			DEBUG_WARN( "%s: certificate not trusted, aborting.\n", __FUNCTION__);
 			tls_disconnect(tls);
 			verify_status = 0;
 		}
@@ -802,14 +803,14 @@ BOOL tls_accept(rdpTls* tls, BIO *underlying, const char* cert_file, const char*
 
 	if (SSL_use_RSAPrivateKey_file(tls->ssl, privatekey_file, SSL_FILETYPE_PEM) <= 0)
 	{
-		fprintf(stderr, "%s: SSL_CTX_use_RSAPrivateKey_file failed\n", __FUNCTION__);
-		fprintf(stderr, "PrivateKeyFile: %s\n", privatekey_file);
+		DEBUG_WARN( "%s: SSL_CTX_use_RSAPrivateKey_file failed\n", __FUNCTION__);
+		DEBUG_WARN( "PrivateKeyFile: %s\n", privatekey_file);
 		return FALSE;
 	}
 
 	if (SSL_use_certificate_file(tls->ssl, cert_file, SSL_FILETYPE_PEM) <= 0)
 	{
-		fprintf(stderr, "%s: SSL_use_certificate_file failed\n", __FUNCTION__);
+		DEBUG_WARN( "%s: SSL_use_certificate_file failed\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -891,7 +892,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 
 	if (!bufferedBio)
 	{
-		fprintf(stderr, "%s: error unable to retrieve the bufferedBio in the BIO chain\n", __FUNCTION__);
+		DEBUG_WARN( "%s: error unable to retrieve the bufferedBio in the BIO chain\n", __FUNCTION__);
 		return -1;
 	}
 
@@ -921,7 +922,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 		}
 		else
 		{
-			fprintf(stderr, "%s: weird we're blocked but the underlying is not read or write blocked !\n", __FUNCTION__);
+			DEBUG_WARN( "%s: weird we're blocked but the underlying is not read or write blocked !\n", __FUNCTION__);
 			USleep(10);
 			continue;
 		}
@@ -949,7 +950,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 		}
 		else
 		{
-			fprintf(stderr, "%s: weird we're blocked but the underlying is not read or write blocked !\n", __FUNCTION__);
+			DEBUG_WARN( "%s: weird we're blocked but the underlying is not read or write blocked !\n", __FUNCTION__);
 			USleep(10);
 			continue;
 		}
@@ -1080,7 +1081,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		
 		if (!bio)
 		{
-			fprintf(stderr, "%s: BIO_new() failure\n", __FUNCTION__);
+			DEBUG_WARN( "%s: BIO_new() failure\n", __FUNCTION__);
 			return -1;
 		}
 
@@ -1088,7 +1089,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 
 		if (status < 0)
 		{
-			fprintf(stderr, "%s: PEM_write_bio_X509 failure: %d\n", __FUNCTION__, status);
+			DEBUG_WARN( "%s: PEM_write_bio_X509 failure: %d\n", __FUNCTION__, status);
 			return -1;
 		}
 		
@@ -1100,7 +1101,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 		
 		if (status < 0)
 		{
-			fprintf(stderr, "%s: failed to read certificate\n", __FUNCTION__);
+			DEBUG_WARN( "%s: failed to read certificate\n", __FUNCTION__);
 			return -1;
 		}
 		
@@ -1121,7 +1122,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 
 		if (status < 0)
 		{
-			fprintf(stderr, "%s: failed to read certificate\n", __FUNCTION__);
+			DEBUG_WARN( "%s: failed to read certificate\n", __FUNCTION__);
 			return -1;
 		}
 		
@@ -1135,7 +1136,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 			status = instance->VerifyX509Certificate(instance, pemCert, length, hostname, port, tls->isGatewayTransport);
 		}
 		
-		fprintf(stderr, "%s: (length = %d) status: %d\n%s\n", __FUNCTION__,	length, status, pemCert);
+		DEBUG_WARN( "%s: (length = %d) status: %d\n%s\n", __FUNCTION__,	length, status, pemCert);
 
 		free(pemCert);
 		BIO_free(bio);
@@ -1295,18 +1296,18 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int por
 
 void tls_print_certificate_error(char* hostname, char* fingerprint, char *hosts_file)
 {
-	fprintf(stderr, "The host key for %s has changed\n", hostname);
-	fprintf(stderr, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
-	fprintf(stderr, "@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n");
-	fprintf(stderr, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
-	fprintf(stderr, "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\n");
-	fprintf(stderr, "Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n");
-	fprintf(stderr, "It is also possible that a host key has just been changed.\n");
-	fprintf(stderr, "The fingerprint for the host key sent by the remote host is\n%s\n", fingerprint);
-	fprintf(stderr, "Please contact your system administrator.\n");
-	fprintf(stderr, "Add correct host key in %s to get rid of this message.\n", hosts_file);
-	fprintf(stderr, "Host key for %s has changed and you have requested strict checking.\n", hostname);
-	fprintf(stderr, "Host key verification failed.\n");
+	DEBUG_WARN( "The host key for %s has changed\n", hostname);
+	DEBUG_WARN( "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	DEBUG_WARN( "@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n");
+	DEBUG_WARN( "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	DEBUG_WARN( "IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\n");
+	DEBUG_WARN( "Someone could be eavesdropping on you right now (man-in-the-middle attack)!\n");
+	DEBUG_WARN( "It is also possible that a host key has just been changed.\n");
+	DEBUG_WARN( "The fingerprint for the host key sent by the remote host is\n%s\n", fingerprint);
+	DEBUG_WARN( "Please contact your system administrator.\n");
+	DEBUG_WARN( "Add correct host key in %s to get rid of this message.\n", hosts_file);
+	DEBUG_WARN( "Host key for %s has changed and you have requested strict checking.\n", hostname);
+	DEBUG_WARN( "Host key verification failed.\n");
 }
 
 void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count)
@@ -1315,24 +1316,24 @@ void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name
 
 	assert(NULL != hostname);
 
-	fprintf(stderr, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
-	fprintf(stderr, "@           WARNING: CERTIFICATE NAME MISMATCH!           @\n");
-	fprintf(stderr, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
-	fprintf(stderr, "The hostname used for this connection (%s) \n", hostname);
-	fprintf(stderr, "does not match %s given in the certificate:\n", alt_names_count < 1 ? "the name" : "any of the names");
-	fprintf(stderr, "Common Name (CN):\n");
-	fprintf(stderr, "\t%s\n", common_name ? common_name : "no CN found in certificate");
+	DEBUG_WARN( "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	DEBUG_WARN( "@           WARNING: CERTIFICATE NAME MISMATCH!           @\n");
+	DEBUG_WARN( "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+	DEBUG_WARN( "The hostname used for this connection (%s) \n", hostname);
+	DEBUG_WARN( "does not match %s given in the certificate:\n", alt_names_count < 1 ? "the name" : "any of the names");
+	DEBUG_WARN( "Common Name (CN):\n");
+	DEBUG_WARN( "\t%s\n", common_name ? common_name : "no CN found in certificate");
 	if (alt_names_count > 0)
 	{
 		assert(NULL != alt_names);
-		fprintf(stderr, "Alternative names:\n");
+		DEBUG_WARN( "Alternative names:\n");
 		for (index = 0; index < alt_names_count; index++)
 		{
 			assert(alt_names[index]);
-			fprintf(stderr, "\t %s\n", alt_names[index]);
+			DEBUG_WARN( "\t %s\n", alt_names[index]);
 		}
 	}
-	fprintf(stderr, "A valid certificate for the wrong name should NOT be trusted!\n");
+	DEBUG_WARN( "A valid certificate for the wrong name should NOT be trusted!\n");
 }
 
 rdpTls* tls_new(rdpSettings* settings)

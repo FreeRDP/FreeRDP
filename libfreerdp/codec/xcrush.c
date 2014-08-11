@@ -990,7 +990,7 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	OriginalData[1] = (BYTE) Level2ComprFlags;
 
 #if 0
-	printf("XCrushCompress: Level1ComprFlags: %s Level2ComprFlags: %s\n",
+	DEBUG_MSG("XCrushCompress: Level1ComprFlags: %s Level2ComprFlags: %s\n",
 			xcrush_get_level_1_compression_flags_string(Level1ComprFlags),
 			xcrush_get_level_2_compression_flags_string(Level2ComprFlags));
 #endif

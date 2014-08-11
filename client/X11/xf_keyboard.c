@@ -191,18 +191,18 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BYTE keycode)
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 	{
-		fprintf(stderr, "Unknown key with X keycode 0x%02x\n", keycode);
+		DEBUG_WARN( "Unknown key with X keycode 0x%02x\n", keycode);
 	}
 	else if (rdp_scancode == RDP_SCANCODE_PAUSE &&
 			!xf_keyboard_key_pressed(xfc, XK_Control_L) && !xf_keyboard_key_pressed(xfc, XK_Control_R))
 	{
-		/* Pause without Ctrl has to be sent as Ctrl + NumLock. */
+		/* Pause without Ctrl has to be sent as a series of keycodes
+		 * in a single input PDU.  Pause only happens on "press";
+		 * no code is sent on "release".
+		 */
 		if (down)
 		{
-			freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_LCONTROL);
-			freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_NUMLOCK);
-			freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_LCONTROL);
-			freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_NUMLOCK);
+			freerdp_input_send_keyboard_pause_event(input);
 		}
 	}
 	else

@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
@@ -54,7 +55,7 @@ BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, int va
 	BOOL bStandard = TRUE;
 
 #ifdef DEBUG_CLIENT_FILE
-	fprintf(stderr, "%s:i:%d\n", name, value);
+	DEBUG_WARN( "%s:i:%d\n", name, value);
 #endif
 
 	if (_stricmp(name, "use multimon") == 0)
@@ -240,7 +241,7 @@ BOOL freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, const c
 	BOOL bStandard = TRUE;
 
 #ifdef DEBUG_CLIENT_FILE
-	fprintf(stderr, "%s:s:%s\n", name, value);
+	DEBUG_WARN( "%s:s:%s\n", name, value);
 #endif
 
 	if (_stricmp(name, "username") == 0)
@@ -665,7 +666,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 
 	if (length < 0)
 	{
-		fprintf(stderr, "freerdp_client_write_rdp_file: error determining buffer size.\n");
+		DEBUG_WARN( "freerdp_client_write_rdp_file: error determining buffer size.\n");
 		return FALSE;
 	}
 
@@ -673,7 +674,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 
 	if (freerdp_client_write_rdp_file_buffer(file, buffer, length + 1) != length)
 	{
-		fprintf(stderr, "freerdp_client_write_rdp_file: error writing to output buffer\n");
+		DEBUG_WARN( "freerdp_client_write_rdp_file: error writing to output buffer\n");
 		free(buffer);
 		return FALSE;
 	}

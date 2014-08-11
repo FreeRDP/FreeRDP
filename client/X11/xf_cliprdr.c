@@ -143,15 +143,15 @@ void xf_cliprdr_init(xfContext* xfc, rdpChannels* channels)
 		}
 		else
 		{
-			fprintf(stderr, "%s: Error querying X Fixes extension version\n", __FUNCTION__);
+			DEBUG_WARN( "%s: Error querying X Fixes extension version\n", __FUNCTION__);
 		}
 	}
 	else
 	{
-		fprintf(stderr, "%s: Error loading X Fixes extension\n", __FUNCTION__);
+		DEBUG_WARN( "%s: Error loading X Fixes extension\n", __FUNCTION__);
 	}
 #else
-	fprintf(stderr, "Warning: Using clipboard redirection without XFIXES extension is strongly discouraged!\n");
+	DEBUG_WARN( "Warning: Using clipboard redirection without XFIXES extension is strongly discouraged!\n");
 #endif
 
 	n = 0;
@@ -970,7 +970,7 @@ static BOOL xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 	Stream_Read_UINT16(s, bpp);
 	if ((bpp < 1) || (bpp > 32))
 	{
-		fprintf(stderr, "%s: invalid bpp value %d", __FUNCTION__, bpp);
+		DEBUG_WARN( "%s: invalid bpp value %d", __FUNCTION__, bpp);
 		return FALSE;
 	}
 

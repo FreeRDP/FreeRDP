@@ -101,7 +101,7 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 
 	Stream_Write_UINT32(s, NumMonitors); /* NumMonitors (4 bytes) */
 
-	//fprintf(stderr, "NumMonitors: %d\n", NumMonitors);
+	//CLOG_ERR( "NumMonitors: %d\n", NumMonitors);
 
 	for (index = 0; index < NumMonitors; index++)
 	{
@@ -125,14 +125,14 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 		Stream_Write_UINT32(s, Monitors[index].DeviceScaleFactor); /* DeviceScaleFactor (4 bytes) */
 
 #if 0
-		fprintf(stderr, "\t: Flags: 0x%04X\n", Monitors[index].Flags);
-		fprintf(stderr, "\t: Left: %d\n", Monitors[index].Left);
-		fprintf(stderr, "\t: Top: %d\n", Monitors[index].Top);
-		fprintf(stderr, "\t: Width: %d\n", Monitors[index].Width);
-		fprintf(stderr, "\t: Height: %d\n", Monitors[index].Height);
-		fprintf(stderr, "\t: PhysicalWidth: %d\n", Monitors[index].PhysicalWidth);
-		fprintf(stderr, "\t: PhysicalHeight: %d\n", Monitors[index].PhysicalHeight);
-		fprintf(stderr, "\t: Orientation: %d\n", Monitors[index].Orientation);
+		CLOG_ERR( "\t: Flags: 0x%04X\n", Monitors[index].Flags);
+		CLOG_ERR( "\t: Left: %d\n", Monitors[index].Left);
+		CLOG_ERR( "\t: Top: %d\n", Monitors[index].Top);
+		CLOG_ERR( "\t: Width: %d\n", Monitors[index].Width);
+		CLOG_ERR( "\t: Height: %d\n", Monitors[index].Height);
+		CLOG_ERR( "\t: PhysicalWidth: %d\n", Monitors[index].PhysicalWidth);
+		CLOG_ERR( "\t: PhysicalHeight: %d\n", Monitors[index].PhysicalHeight);
+		CLOG_ERR( "\t: Orientation: %d\n", Monitors[index].Orientation);
 #endif
 	}
 
@@ -158,8 +158,8 @@ int disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream*
 	Stream_Read_UINT32(s, disp->MaxMonitorAreaFactorA); /* MaxMonitorAreaFactorA (4 bytes) */
 	Stream_Read_UINT32(s, disp->MaxMonitorAreaFactorB); /* MaxMonitorAreaFactorB (4 bytes) */
 
-	//fprintf(stderr, "DisplayControlCapsPdu: MaxNumMonitors: %d MaxMonitorAreaFactorA: %d MaxMonitorAreaFactorB: %d\n",
-	//       disp->MaxNumMonitors, disp->MaxMonitorAreaFactorA, disp->MaxMonitorAreaFactorB);
+	//CLOG_ERR( "DisplayControlCapsPdu: MaxNumMonitors: %d MaxMonitorWidth: %d MaxMonitorHeight: %d\n",
+	//       disp->MaxNumMonitors, disp->MaxMonitorWidth, disp->MaxMonitorHeight);
 
 	return 0;
 }
@@ -175,7 +175,7 @@ int disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, type); /* Type (4 bytes) */
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
-	//fprintf(stderr, "Type: %d Length: %d\n", type, length);
+	//CLOG_ERR( "Type: %d Length: %d\n", type, length);
 
 	switch (type)
 	{
