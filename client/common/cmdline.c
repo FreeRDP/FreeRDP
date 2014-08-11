@@ -1360,17 +1360,17 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "kbd")
 		{
-			int id;
+			unsigned long int id;
 			char* pEnd;
 
-			id = strtol(arg->Value, &pEnd, 16);
+			id = strtoul(arg->Value, &pEnd, 16);
 
 			if (pEnd != (arg->Value + strlen(arg->Value)))
 				id = 0;
 
 			if (id == 0)
 			{
-				id = freerdp_map_keyboard_layout_name_to_id(arg->Value);
+				id = (unsigned long int) freerdp_map_keyboard_layout_name_to_id(arg->Value);
 
 				if (!id)
 				{
@@ -1378,7 +1378,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				}
 			}
 
-			settings->KeyboardLayout = id;
+			settings->KeyboardLayout = (UINT32) id;
 		}
 		CommandLineSwitchCase(arg, "kbd-type")
 		{
