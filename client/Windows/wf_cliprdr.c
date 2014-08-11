@@ -20,7 +20,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
 #include <assert.h>
 #include <winpr/crt.h>
 
@@ -31,6 +30,9 @@
 #include <Strsafe.h>
 
 #include "wf_cliprdr.h"
+
+extern BOOL WINAPI AddClipboardFormatListener(_In_ HWND hwnd);
+extern BOOL WINAPI RemoveClipboardFormatListener(_In_  HWND hwnd);
 
 #define WM_CLIPRDR_MESSAGE  (WM_USER + 156)
 #define OLE_SETCLIPBOARD    1
@@ -129,7 +131,14 @@ static void clear_format_map(cliprdrContext *cliprdr)
 
 	cliprdr->map_size= 0;
 }
-
+/*
+2.2.2.3   Client Temporary Directory PDU (CLIPRDR_TEMP_DIRECTORY)
+  The Temporary Directory PDU is an optional PDU sent from the client to the server.
+	This PDU informs the server of a location on the client file system that MUST be
+	used to deposit files being copied to the client. The location MUST be accessible
+	by the server to be useful. Section 3.1.1.3 specifies how direct file access
+	impacts file copy and paste.
+*/
 int cliprdr_send_tempdir(cliprdrContext *cliprdr)
 {
 	RDP_CB_TEMPDIR_EVENT *cliprdr_event;
@@ -140,6 +149,9 @@ int cliprdr_send_tempdir(cliprdrContext *cliprdr)
 	if (!cliprdr_event)
 		return -1;
 
+	/* Sending the TEMP path would only be valid iff the path is accessible from the server.
+		 This should perhaps to change to a command line parameter value
+	*/
 	GetEnvironmentVariableW(L"TEMP", (LPWSTR)cliprdr_event->dirname, 260);
 
 	return freerdp_channels_send_event(cliprdr->channels, (wMessage *)cliprdr_event);
@@ -367,32 +379,21 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 	switch (Msg)
 	{
 		case WM_CREATE:
+			DEBUG_CLIPRDR("info: %s - WM_CREATE", __FUNCTION__);
 			cliprdr = (cliprdrContext *)((CREATESTRUCT *)lParam)->lpCreateParams;
-			cliprdr->hwndNextViewer = SetClipboardViewer(hWnd);
-
-			if (cliprdr->hwndNextViewer == NULL && GetLastError() != 0)
-			{
-				DEBUG_CLIPRDR("error: SetClipboardViewer failed with 0x%0x.", GetLastError());
+			if (!AddClipboardFormatListener(hWnd)) {
+				DEBUG_CLIPRDR("error: AddClipboardFormatListener failed with %#x.", GetLastError());
 			}
 			cliprdr->hwndClipboard = hWnd;
 			break;
 
 		case WM_CLOSE:
-			ChangeClipboardChain(hWnd, cliprdr->hwndNextViewer);
+			DEBUG_CLIPRDR("info: %s - WM_CLOSE", __FUNCTION__);
+			RemoveClipboardFormatListener(hWnd);
 			break;
 
-		case WM_CHANGECBCHAIN:
-			if (cliprdr->hwndNextViewer == (HWND)wParam)
-			{
-				cliprdr->hwndNextViewer = (HWND)lParam;
-			}
-			else if (cliprdr->hwndNextViewer != NULL)
-			{
-				SendMessage(cliprdr->hwndNextViewer, Msg, wParam, lParam);
-			}
-			break;
-
-		case WM_DRAWCLIPBOARD:
+		case WM_CLIPBOARDUPDATE:
+			DEBUG_CLIPRDR("info: %s - WM_CLIPBOARDUPDATE", __FUNCTION__);
 			if (cliprdr->channel_initialized)
 			{
 				if ((GetClipboardOwner() != cliprdr->hwndClipboard) && (S_FALSE == OleIsCurrentClipboard(cliprdr->data_obj)))
@@ -404,11 +405,10 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 						cliprdr_send_format_list(cliprdr);
 				}
 			}
-			if (cliprdr->hwndNextViewer != NULL && cliprdr->hwndNextViewer != hWnd)
-				SendMessage(cliprdr->hwndNextViewer, Msg, wParam, lParam);
 			break;
 
 		case WM_RENDERALLFORMATS:
+			DEBUG_CLIPRDR("info: %s - WM_RENDERALLFORMATS", __FUNCTION__);
 			/* discard all contexts in clipboard */
 			if (!OpenClipboard(cliprdr->hwndClipboard))
 			{
@@ -420,6 +420,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			break;
 
 		case WM_RENDERFORMAT:
+			DEBUG_CLIPRDR("info: %s - WM_RENDERFORMAT", __FUNCTION__);
 			if (cliprdr_send_data_request(cliprdr, (UINT32)wParam) != 0)
 			{
 				DEBUG_CLIPRDR("error: cliprdr_send_data_request failed.");
@@ -435,9 +436,11 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			break;
 
 		case WM_CLIPRDR_MESSAGE:
+			DEBUG_CLIPRDR("info: %s - WM_CLIPRDR_MESSAGE", __FUNCTION__);
 			switch (wParam)
 			{
 				case OLE_SETCLIPBOARD:
+					DEBUG_CLIPRDR("info: %s - OLE_SETCLIPBOARD", __FUNCTION__);
 					if (wf_create_file_obj(cliprdr, &cliprdr->data_obj))
 						if (OleSetClipboard(cliprdr->data_obj) != S_OK)
 							wf_destroy_file_obj(cliprdr->data_obj);
@@ -448,7 +451,6 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			}
 			break;
 
-		case WM_CLIPBOARDUPDATE:
 		case WM_DESTROYCLIPBOARD:
 		case WM_ASKCBFORMATNAME:
 		case WM_HSCROLLCLIPBOARD:
@@ -643,9 +645,12 @@ static void wf_cliprdr_process_cb_clip_caps_event(wfContext *wfc, RDP_CB_CLIP_CA
 static void wf_cliprdr_process_cb_monitor_ready_event(wfContext *wfc, RDP_CB_MONITOR_READY_EVENT *ready_event)
 {
 	cliprdrContext *cliprdr = (cliprdrContext *)wfc->cliprdr_context;
-
+#if 0
+	/*Disabled since the current function only sends the temp directory which is not 
+	  guaranteed to be accessible to the server
+	*/
 	cliprdr_send_tempdir(cliprdr);
-
+#endif	
 	cliprdr->channel_initialized = TRUE;
 
 	cliprdr_send_format_list(wfc->cliprdr_context);
