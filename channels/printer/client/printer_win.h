@@ -23,9 +23,9 @@
 rdpPrinterDriver* printer_win_get_driver(void);
 
 #ifdef WITH_DEBUG_WINPR
-#define DEBUG_WINPR(fmt, ...) DEBUG_CLASS(WINPR, fmt, ## __VA_ARGS__)
+#define DEBUG_WINPR(fmt, ...) CLOG_CLASS(WINPR, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_WINPR(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_WINPR(fmt, ...) CLOG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
 #endif

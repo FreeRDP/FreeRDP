@@ -35,7 +35,7 @@ int wf_directsound_activate(RdpsndServerContext* context)
 
 	wfi = wf_info_get_instance();
 
-	printf("RDPSND (direct sound) Activated\n");
+	DEBUG_MSG("RDPSND (direct sound) Activated\n");
 
 	hr = DirectSoundCaptureCreate8(NULL, &cap, NULL);
 

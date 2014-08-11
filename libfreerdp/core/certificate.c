@@ -279,7 +279,7 @@ error2:
 	free(info->Modulus);
 	info->Modulus = 0;
 error1:
-	fprintf(stderr, "error reading when reading certificate: part=%s error=%d\n", certificate_read_errors[error], error);
+	DEBUG_WARN( "error reading when reading certificate: part=%s error=%d\n", certificate_read_errors[error], error);
 	Stream_Free(s, FALSE);
 	return FALSE;
 }
@@ -344,7 +344,7 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 
 	if (memcmp(magic, "RSA1", 4) != 0)
 	{
-		fprintf(stderr, "%s: magic error\n", __FUNCTION__);
+		DEBUG_WARN( "%s: magic error\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -391,7 +391,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 
 	if (sum != 0)
 	{
-		fprintf(stderr, "%s: invalid signature\n", __FUNCTION__);
+		DEBUG_WARN( "%s: invalid signature\n", __FUNCTION__);
 		//return FALSE;
 	}
 
@@ -403,7 +403,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	/* Verify signature. */
 	if (memcmp(md5hash, sig, sizeof(md5hash)) != 0)
 	{
-		fprintf(stderr, "%s: invalid signature\n", __FUNCTION__);
+		DEBUG_WARN( "%s: invalid signature\n", __FUNCTION__);
 		//return FALSE;
 	}
 
@@ -419,7 +419,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 
 	if (sig[16] != 0x00 || sum != 0xFF * (62 - 17) || sig[62] != 0x01)
 	{
-		fprintf(stderr, "%s: invalid signature\n", __FUNCTION__);
+		DEBUG_WARN( "%s: invalid signature\n", __FUNCTION__);
 		//return FALSE;
 	}
 
@@ -453,7 +453,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (!(dwSigAlgId == SIGNATURE_ALG_RSA && dwKeyAlgId == KEY_EXCHANGE_ALG_RSA))
 	{
-		fprintf(stderr, "%s: unsupported signature or key algorithm, dwSigAlgId=%d dwKeyAlgId=%d\n",
+		DEBUG_WARN( "%s: unsupported signature or key algorithm, dwSigAlgId=%d dwKeyAlgId=%d\n",
 				__FUNCTION__, dwSigAlgId, dwKeyAlgId);
 		return FALSE;
 	}
@@ -462,7 +462,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (wPublicKeyBlobType != BB_RSA_KEY_BLOB)
 	{
-		fprintf(stderr, "%s: unsupported public key blob type %d\n", __FUNCTION__, wPublicKeyBlobType);
+		DEBUG_WARN( "%s: unsupported public key blob type %d\n", __FUNCTION__, wPublicKeyBlobType);
 		return FALSE;
 	}
 
@@ -472,7 +472,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
 	{
-		fprintf(stderr, "%s: error in server public key\n", __FUNCTION__);
+		DEBUG_WARN( "%s: error in server public key\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -484,26 +484,26 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
 	{
-		fprintf(stderr, "%s: unsupported blob signature %d\n", __FUNCTION__, wSignatureBlobType);
+		DEBUG_WARN( "%s: unsupported blob signature %d\n", __FUNCTION__, wSignatureBlobType);
 		return FALSE;
 	}
 
 	Stream_Read_UINT16(s, wSignatureBlobLen);
 	if (Stream_GetRemainingLength(s) < wSignatureBlobLen)
 	{
-		fprintf(stderr, "%s: not enought bytes for signature(len=%d)\n", __FUNCTION__, wSignatureBlobLen);
+		DEBUG_WARN( "%s: not enought bytes for signature(len=%d)\n", __FUNCTION__, wSignatureBlobLen);
 		return FALSE;
 	}
 
 	if (wSignatureBlobLen != 72)
 	{
-		fprintf(stderr, "%s: invalid signature length (got %d, expected %d)\n", __FUNCTION__, wSignatureBlobLen, 64);
+		DEBUG_WARN( "%s: invalid signature length (got %d, expected %d)\n", __FUNCTION__, wSignatureBlobLen, 64);
 		return FALSE;
 	}
 
 	if (!certificate_process_server_public_signature(certificate, sigdata, sigdatalen, s, wSignatureBlobLen))
 	{
-		fprintf(stderr, "%s: unable to parse server public signature\n", __FUNCTION__);
+		DEBUG_WARN( "%s: unable to parse server public signature\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -560,7 +560,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 			if (cert_info.Modulus)
 				free(cert_info.Modulus);
 			if (!ret) {
-				fprintf(stderr, "failed to read License Server, content follows:\n");
+				DEBUG_WARN( "failed to read License Server, content follows:\n");
 				winpr_HexDump(certificate->x509_cert_chain->array[i].data, certificate->x509_cert_chain->array[i].length);
 				return FALSE;
 			}
@@ -608,7 +608,7 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 			break;
 
 		default:
-			fprintf(stderr, "invalid certificate chain version:%d\n", dwVersion & CERT_CHAIN_VERSION_MASK);
+			DEBUG_WARN( "invalid certificate chain version:%d\n", dwVersion & CERT_CHAIN_VERSION_MASK);
 			ret = FALSE;
 			break;
 	}
@@ -631,14 +631,14 @@ rdpRsaKey* key_new(const char* keyfile)
 	fp = fopen(keyfile, "r");
 	if (fp == NULL)
 	{
-		fprintf(stderr, "%s: unable to open RSA key file %s: %s.", __FUNCTION__, keyfile, strerror(errno));
+		DEBUG_WARN( "%s: unable to open RSA key file %s: %s.", __FUNCTION__, keyfile, strerror(errno));
 		goto out_free;
 	}
 
 	rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
 	if (rsa == NULL)
 	{
-		fprintf(stderr, "%s: unable to load RSA key from %s: %s.", __FUNCTION__, keyfile, strerror(errno));
+		DEBUG_WARN( "%s: unable to load RSA key from %s: %s.", __FUNCTION__, keyfile, strerror(errno));
 		ERR_print_errors_fp(stderr);
 		fclose(fp);
 		goto out_free;
@@ -649,7 +649,7 @@ rdpRsaKey* key_new(const char* keyfile)
 	switch (RSA_check_key(rsa))
 	{
 		case 0:
-			fprintf(stderr, "%s: invalid RSA key in %s\n", __FUNCTION__, keyfile);
+			DEBUG_WARN( "%s: invalid RSA key in %s\n", __FUNCTION__, keyfile);
 			goto out_free_rsa;
 
 		case 1:
@@ -657,14 +657,14 @@ rdpRsaKey* key_new(const char* keyfile)
 			break;
 
 		default:
-			fprintf(stderr, "%s: unexpected error when checking RSA key from %s: %s.", __FUNCTION__, keyfile, strerror(errno));
+			DEBUG_WARN( "%s: unexpected error when checking RSA key from %s: %s.", __FUNCTION__, keyfile, strerror(errno));
 			ERR_print_errors_fp(stderr);
 			goto out_free_rsa;
 	}
 
 	if (BN_num_bytes(rsa->e) > 4)
 	{
-		fprintf(stderr, "%s: RSA public exponent too large in %s\n", __FUNCTION__, keyfile);
+		DEBUG_WARN( "%s: RSA public exponent too large in %s\n", __FUNCTION__, keyfile);
 		goto out_free_rsa;
 	}
 

@@ -137,7 +137,7 @@ static BOOL test_SerialSys(HANDLE hComm)
 	result = SetCommState(hComm, &dcb);
 	if (!result)
 	{
-		fprintf(stderr, "SetCommState failure: 0x%0.8x\n", GetLastError());
+		fprintf(stderr, "SetCommState failure: 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -207,7 +207,7 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	result = SetCommState(hComm, &dcb);
 	if (!result)
 	{
-		fprintf(stderr, "SetCommState failure: 0x%0.8x\n", GetLastError());
+		fprintf(stderr, "SetCommState failure: 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -284,7 +284,7 @@ static BOOL test_generic(HANDLE hComm)
 	result = SetCommState(hComm, &dcb);
 	if (!result)
 	{
-		fprintf(stderr, "SetCommState failure: 0x%0.8x\n", GetLastError());
+		fprintf(stderr, "SetCommState failure: 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -389,7 +389,7 @@ int TestSetCommState(int argc, char* argv[])
 
 	if (!CloseHandle(hComm))
 	{
-		fprintf(stderr, "CloseHandle failure, GetLastError()=%0.8x\n", GetLastError());
+		fprintf(stderr, "CloseHandle failure, GetLastError()=%08x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 

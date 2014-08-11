@@ -156,16 +156,16 @@ static void searchman_list_show(USB_SEARCHMAN* self)
 	int num = 0;
 	USB_SEARCHDEV* usb;
 	
-	fprintf(stderr, "=========== Usb Search List ========= \n");
+	CLOG_ERR( "=========== Usb Search List ========= \n");
 	self->rewind(self);
 	while (self->has_next(self))
 	{
 		usb = self->get_next(self);
-		fprintf(stderr, "  USB %d: \n", num++);
-		fprintf(stderr, "	idVendor: 0x%04X \n", usb->idVendor);
-		fprintf(stderr, "	idProduct: 0x%04X \n", usb->idProduct);
+		CLOG_ERR( "  USB %d: \n", num++);
+		CLOG_ERR( "	idVendor: 0x%04X \n", usb->idVendor);
+		CLOG_ERR( "	idProduct: 0x%04X \n", usb->idProduct);
 	}
-	fprintf(stderr, "================= END =============== \n");
+	CLOG_ERR( "================= END =============== \n");
 }
 
 void searchman_free(USB_SEARCHMAN* self)
@@ -202,7 +202,7 @@ USB_SEARCHMAN* searchman_new(void * urbdrc, UINT32 UsbDevice)
 
 	if (ret != 0)
 	{
-		fprintf(stderr, "searchman mutex initialization: searchman->mutex failed");
+		CLOG_ERR( "searchman mutex initialization: searchman->mutex failed");
 		exit(EXIT_FAILURE);
 	}
 	

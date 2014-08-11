@@ -27,13 +27,13 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/client/audin.h>
 
 #ifdef WITH_DEBUG_DVC
-#define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) CLOG_CLASS(DVC, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) CLOG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
 #endif /* FREERDP_AUDIN_CLIENT_MAIN_H */

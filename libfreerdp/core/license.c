@@ -89,10 +89,10 @@ void license_print_product_info(LICENSE_PRODUCT_INFO* productInfo)
 	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) productInfo->pbProductId,
 			productInfo->cbProductId / 2, &ProductId, 0, NULL, NULL);
 
-	fprintf(stderr, "ProductInfo:\n");
-	fprintf(stderr, "\tdwVersion: 0x%08X\n", productInfo->dwVersion);
-	fprintf(stderr, "\tCompanyName: %s\n", CompanyName);
-	fprintf(stderr, "\tProductId: %s\n", ProductId);
+	DEBUG_WARN( "ProductInfo:\n");
+	DEBUG_WARN( "\tdwVersion: 0x%08X\n", productInfo->dwVersion);
+	DEBUG_WARN( "\tCompanyName: %s\n", CompanyName);
+	DEBUG_WARN( "\tProductId: %s\n", ProductId);
 
 	free(CompanyName);
 	free(ProductId);
@@ -103,12 +103,12 @@ void license_print_scope_list(SCOPE_LIST* scopeList)
 	int index;
 	LICENSE_BLOB* scope;
 
-	fprintf(stderr, "ScopeList (%d):\n", scopeList->count);
+	DEBUG_WARN( "ScopeList (%d):\n", scopeList->count);
 
 	for (index = 0; index < scopeList->count; index++)
 	{
 		scope = &scopeList->array[index];
-		fprintf(stderr, "\t%s\n", (char*) scope->data);
+		DEBUG_WARN( "\t%s\n", (char*) scope->data);
 	}
 }
 
@@ -210,7 +210,7 @@ BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 	license_write_preamble(s, type, flags, wMsgSize);
 
 #ifdef WITH_DEBUG_LICENSE
-	fprintf(stderr, "Sending %s Packet, length %d\n", LICENSE_MESSAGE_STRINGS[type & 0x1F], wMsgSize);
+	DEBUG_WARN( "Sending %s Packet, length %d\n", LICENSE_MESSAGE_STRINGS[type & 0x1F], wMsgSize);
 	winpr_HexDump(Stream_Pointer(s) - LICENSE_PREAMBLE_LENGTH, wMsgSize);
 #endif
 
@@ -241,7 +241,7 @@ int license_recv(rdpLicense* license, wStream* s)
 
 	if (!rdp_read_header(license->rdp, s, &length, &channelId))
 	{
-		fprintf(stderr, "%s: Incorrect RDP header.\n", __FUNCTION__);
+		DEBUG_WARN( "%s: Incorrect RDP header.\n", __FUNCTION__);
 		return -1;
 	}
 
@@ -252,7 +252,7 @@ int license_recv(rdpLicense* license, wStream* s)
 	{
 		if (!rdp_decrypt(license->rdp, s, length - 4, securityFlags))
 		{
-			fprintf(stderr, "%s: rdp_decrypt failed\n", __FUNCTION__);
+			DEBUG_WARN( "%s: rdp_decrypt failed\n", __FUNCTION__);
 			return -1;
 		}
 	}
@@ -268,7 +268,7 @@ int license_recv(rdpLicense* license, wStream* s)
 
 		if (status < 0)
 		{
-			fprintf(stderr, "%s: unexpected license packet.\n", __FUNCTION__);
+			DEBUG_WARN( "%s: unexpected license packet.\n", __FUNCTION__);
 			return status;
 		}
 
@@ -308,7 +308,7 @@ int license_recv(rdpLicense* license, wStream* s)
 			break;
 
 		default:
-			fprintf(stderr, "%s: invalid bMsgType:%d\n", __FUNCTION__, bMsgType);
+			DEBUG_WARN( "%s: invalid bMsgType:%d\n", __FUNCTION__, bMsgType);
 			return FALSE;
 	}
 
@@ -349,33 +349,33 @@ void license_generate_keys(rdpLicense* license)
 			license->ServerRandom, license->LicensingEncryptionKey); /* LicensingEncryptionKey */
 
 #ifdef WITH_DEBUG_LICENSE
-	fprintf(stderr, "ClientRandom:\n");
+	DEBUG_WARN( "ClientRandom:\n");
 	winpr_HexDump(license->ClientRandom, CLIENT_RANDOM_LENGTH);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "ServerRandom:\n");
+	DEBUG_WARN( "ServerRandom:\n");
 	winpr_HexDump(license->ServerRandom, SERVER_RANDOM_LENGTH);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "PremasterSecret:\n");
+	DEBUG_WARN( "PremasterSecret:\n");
 	winpr_HexDump(license->PremasterSecret, PREMASTER_SECRET_LENGTH);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "MasterSecret:\n");
+	DEBUG_WARN( "MasterSecret:\n");
 	winpr_HexDump(license->MasterSecret, MASTER_SECRET_LENGTH);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "SessionKeyBlob:\n");
+	DEBUG_WARN( "SessionKeyBlob:\n");
 	winpr_HexDump(license->SessionKeyBlob, SESSION_KEY_BLOB_LENGTH);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "MacSaltKey:\n");
+	DEBUG_WARN( "MacSaltKey:\n");
 	winpr_HexDump(license->MacSaltKey, MAC_SALT_KEY_LENGTH);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "LicensingEncryptionKey:\n");
+	DEBUG_WARN( "LicensingEncryptionKey:\n");
 	winpr_HexDump(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 #endif
 }
 
@@ -395,7 +395,7 @@ void license_generate_hwid(rdpLicense* license)
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		DEBUG_WARN( "%s: unable to allocate a md5\n", __FUNCTION__);
 		return;
 	}
 
@@ -434,13 +434,13 @@ void license_encrypt_premaster_secret(rdpLicense* license)
 	license_get_server_rsa_public_key(license);
 
 #ifdef WITH_DEBUG_LICENSE
-	fprintf(stderr, "Modulus (%d bits):\n", license->ModulusLength * 8);
+	DEBUG_WARN( "Modulus (%d bits):\n", license->ModulusLength * 8);
 	winpr_HexDump(license->Modulus, license->ModulusLength);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "Exponent:\n");
+	DEBUG_WARN( "Exponent:\n");
 	winpr_HexDump(license->Exponent, 4);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 #endif
 
 	EncryptedPremasterSecret = (BYTE*) malloc(license->ModulusLength);
@@ -467,7 +467,7 @@ void license_decrypt_platform_challenge(rdpLicense* license)
 	rc4 = crypto_rc4_init(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
 	if (!rc4)
 	{
-		fprintf(stderr, "%s: unable to allocate a rc4\n", __FUNCTION__);
+		DEBUG_WARN( "%s: unable to allocate a rc4\n", __FUNCTION__);
 		return;
 	}
 
@@ -582,7 +582,7 @@ BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob)
 
 	if ((blob->type != wBlobType) && (blob->type != BB_ANY_BLOB))
 	{
-		fprintf(stderr, "license binary blob type (%x) does not match expected type (%x).\n", wBlobType, blob->type);
+		DEBUG_WARN( "license binary blob type (%x) does not match expected type (%x).\n", wBlobType, blob->type);
 	}
 
 	blob->type = wBlobType;
@@ -618,7 +618,7 @@ void license_write_encrypted_premaster_secret_blob(wStream* s, LICENSE_BLOB* blo
 
 	if (blob->length > ModulusLength)
 	{
-		fprintf(stderr, "license_write_encrypted_premaster_secret_blob: invalid blob\n");
+		DEBUG_WARN( "license_write_encrypted_premaster_secret_blob: invalid blob\n");
 		return;
 	}
 
@@ -783,15 +783,15 @@ BOOL license_read_license_request_packet(rdpLicense* license, wStream* s)
 	license_encrypt_premaster_secret(license);
 
 #ifdef WITH_DEBUG_LICENSE
-	fprintf(stderr, "ServerRandom:\n");
+	DEBUG_WARN( "ServerRandom:\n");
 	winpr_HexDump(license->ServerRandom, 32);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
 	license_print_product_info(license->ProductInfo);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
 	license_print_scope_list(license->ScopeList);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 #endif
 
 	return TRUE;
@@ -829,20 +829,20 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	license_decrypt_platform_challenge(license);
 
 #ifdef WITH_DEBUG_LICENSE
-	fprintf(stderr, "ConnectFlags: 0x%08X\n", ConnectFlags);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "ConnectFlags: 0x%08X\n", ConnectFlags);
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "EncryptedPlatformChallenge:\n");
+	DEBUG_WARN( "EncryptedPlatformChallenge:\n");
 	winpr_HexDump(license->EncryptedPlatformChallenge->data, license->EncryptedPlatformChallenge->length);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "PlatformChallenge:\n");
+	DEBUG_WARN( "PlatformChallenge:\n");
 	winpr_HexDump(license->PlatformChallenge->data, license->PlatformChallenge->length);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "MacData:\n");
+	DEBUG_WARN( "MacData:\n");
 	winpr_HexDump(MacData, 16);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 #endif
 
 	return TRUE;
@@ -896,7 +896,7 @@ BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s)
 		return FALSE;
 
 #ifdef WITH_DEBUG_LICENSE
-	fprintf(stderr, "dwErrorCode: %s, dwStateTransition: %s\n",
+	DEBUG_WARN( "dwErrorCode: %s, dwStateTransition: %s\n",
 			error_codes[dwErrorCode], state_transitions[dwStateTransition]);
 #endif
 
@@ -952,22 +952,22 @@ void license_write_new_license_request_packet(rdpLicense* license, wStream* s)
 	license_write_binary_blob(s, license->ClientMachineName); /* ClientMachineName */
 
 #ifdef WITH_DEBUG_LICENSE
-	fprintf(stderr, "PreferredKeyExchangeAlg: 0x%08X\n", PreferredKeyExchangeAlg);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "PreferredKeyExchangeAlg: 0x%08X\n", PreferredKeyExchangeAlg);
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "ClientRandom:\n");
+	DEBUG_WARN( "ClientRandom:\n");
 	winpr_HexDump(license->ClientRandom, 32);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "EncryptedPremasterSecret\n");
+	DEBUG_WARN( "EncryptedPremasterSecret\n");
 	winpr_HexDump(license->EncryptedPremasterSecret->data, license->EncryptedPremasterSecret->length);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "ClientUserName (%d): %s\n", license->ClientUserName->length, (char*) license->ClientUserName->data);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "ClientUserName (%d): %s\n", license->ClientUserName->length, (char*) license->ClientUserName->data);
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "ClientMachineName (%d): %s\n", license->ClientMachineName->length, (char*) license->ClientMachineName->data);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "ClientMachineName (%d): %s\n", license->ClientMachineName->length, (char*) license->ClientMachineName->data);
+	DEBUG_WARN( "\n");
 #endif
 }
 
@@ -1056,7 +1056,7 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 	rc4 = crypto_rc4_init(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
 	if (!rc4)
 	{
-		fprintf(stderr, "%s: unable to allocate a rc4\n", __FUNCTION__);
+		DEBUG_WARN( "%s: unable to allocate a rc4\n", __FUNCTION__);
 		free(buffer);
 		return;
 	}
@@ -1068,17 +1068,17 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 	license->EncryptedHardwareId->length = HWID_LENGTH;
 
 #ifdef WITH_DEBUG_LICENSE
-	fprintf(stderr, "LicensingEncryptionKey:\n");
+	DEBUG_WARN( "LicensingEncryptionKey:\n");
 	winpr_HexDump(license->LicensingEncryptionKey, 16);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "HardwareId:\n");
+	DEBUG_WARN( "HardwareId:\n");
 	winpr_HexDump(license->HardwareId, HWID_LENGTH);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 
-	fprintf(stderr, "EncryptedHardwareId:\n");
+	DEBUG_WARN( "EncryptedHardwareId:\n");
 	winpr_HexDump(license->EncryptedHardwareId->data, HWID_LENGTH);
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 #endif
 
 	license_write_platform_challenge_response_packet(license, s, mac_data);

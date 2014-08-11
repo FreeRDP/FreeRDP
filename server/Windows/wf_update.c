@@ -176,7 +176,7 @@ void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
 
 		/* This is an unexpected error condition */
 
-		printf("Unexpected Frame Index: Actual: %d Expected: %d\n",
+		DEBUG_MSG("Unexpected Frame Index: Actual: %d Expected: %d\n",
 			wfi->frame_idx, context->frame_idx + 1);
 	}
 
@@ -189,7 +189,7 @@ void wf_update_encoder_reset(wfInfo* wfi)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		printf("Resetting encoder\n");
+		DEBUG_MSG("Resetting encoder\n");
 
 		if (wfi->rfx_context)
 		{
@@ -226,7 +226,7 @@ void wf_update_peer_activate(wfInfo* wfi, wfPeerContext* context)
 		wf_update_encoder_reset(wfi);
 		wfi->activePeerCount++;
 
-		printf("Activating Peer Updates: %d\n", wfi->activePeerCount);
+		DEBUG_MSG("Activating Peer Updates: %d\n", wfi->activePeerCount);
 
 		wf_info_unlock(wfi);
 	}
@@ -248,7 +248,7 @@ void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context)
 			client->activated = FALSE;
 			wfi->activePeerCount--;
 
-			printf("Deactivating Peer Updates: %d\n", wfi->activePeerCount);
+			DEBUG_MSG("Deactivating Peer Updates: %d\n", wfi->activePeerCount);
 		}
 
 		wf_info_unlock(wfi);

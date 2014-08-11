@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <winpr/print.h>
 
+#include <freerdp/utils/debug.h>
+
 #include "tpdu.h"
 
 /**
@@ -130,7 +132,7 @@ BOOL tpdu_read_connection_request(wStream* s, BYTE* li)
 
 	if (code != X224_TPDU_CONNECTION_REQUEST)
 	{
-		fprintf(stderr, "Error: expected X224_TPDU_CONNECTION_REQUEST\n");
+		DEBUG_WARN( "Error: expected X224_TPDU_CONNECTION_REQUEST\n");
 		return FALSE;
 	}
 
@@ -168,7 +170,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)
 	{
-		fprintf(stderr, "Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
+		DEBUG_WARN( "Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
 		return FALSE;
 	}
 	/*

@@ -568,7 +568,7 @@ void wf_cliprdr_init(wfContext* wfc, rdpChannels* channels)
 	if (!wfc->instance->settings->RedirectClipboard)
 	{
 		wfc->cliprdr_context = NULL;
-		fprintf(stderr, "clipboard is not redirected.\n");
+		DEBUG_WARN( "clipboard is not redirected.\n");
 		return;
 	}
 
@@ -658,7 +658,7 @@ static BOOL wf_cliprdr_get_file_contents(wchar_t *file_name, BYTE *buffer, int p
 
 	if (file_name == NULL || buffer == NULL || puSize == NULL)
 	{
-		fprintf(stderr, "get file contents Invalid Arguments.\n");
+		DEBUG_WARN( "get file contents Invalid Arguments.\n");
 		return FALSE;
 	}
 	hFile = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, NULL);
@@ -1175,7 +1175,7 @@ static void wf_cliprdr_process_cb_filecontents_request_event(wfContext *wfc, RDP
 	hRet = OleGetClipboard(&pDataObj);
 	if (!SUCCEEDED(hRet))
 	{
-		fprintf(stderr, "filecontents: get ole clipboard failed.\n");
+		DEBUG_WARN( "filecontents: get ole clipboard failed.\n");
 		goto error;
 	}
 	
@@ -1273,7 +1273,7 @@ static void wf_cliprdr_process_cb_filecontents_request_event(wfContext *wfc, RDP
 				event->nPositionLow, event->nPositionHigh, event->cbRequested, &uSize);
 			if (bRet == FALSE)
 			{
-				fprintf(stderr, "get file contents failed.\n");
+				DEBUG_WARN( "get file contents failed.\n");
 				uSize = 0;
 				goto error;
 			}
@@ -1304,7 +1304,7 @@ error:
 		IDataObject_Release(pDataObj);
 		pDataObj = NULL;
 	}
-	fprintf(stderr, "filecontents: send failed response.\n");
+	DEBUG_WARN( "filecontents: send failed response.\n");
 	cliprdr_send_response_filecontents(cliprdr, event->streamId, 0, NULL);
 	return;
 }

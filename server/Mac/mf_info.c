@@ -43,7 +43,7 @@ int mf_info_lock(mfInfo* mfi)
 			break;
 			
 		default:
-			printf("mf_info_lock failed with %#X\n", status);
+			DEBUG_MSG("mf_info_lock failed with %#X\n", status);
 			return -1;
 			break;
 	}
@@ -65,7 +65,7 @@ int mf_info_try_lock(mfInfo* mfi, UINT32 ms)
 			break;
 			
 		default:
-			printf("mf_info_try_lock failed with %#X\n", status);
+			DEBUG_MSG("mf_info_try_lock failed with %#X\n", status);
 			return -1;
 			break;
 	}
@@ -82,7 +82,7 @@ int mf_info_unlock(mfInfo* mfi)
 			break;
 			
 		default:
-			printf("mf_info_unlock failed with %#X\n", status);
+			DEBUG_MSG("mf_info_unlock failed with %#X\n", status);
 			return -1;
 			break;
 	}
@@ -110,7 +110,7 @@ mfInfo* mf_info_init()
 		
 		if (mutexInitStatus != 0)
 		{
-			printf(_T("CreateMutex error: %#X\n"), mutexInitStatus);
+			DEBUG_MSG(_T("CreateMutex error: %#X\n"), mutexInitStatus);
 		}
 		
 		mfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * MF_INFO_MAXPEERS);
@@ -163,7 +163,7 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 		int peerId;
 		if (mfi->peerCount == MF_INFO_MAXPEERS)
 		{
-			printf("TODO: socketClose on OS X\n");
+			DEBUG_MSG("TODO: socketClose on OS X\n");
 			//context->socketClose = TRUE;
 			mf_info_unlock(mfi);
 			return;

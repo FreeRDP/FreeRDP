@@ -163,7 +163,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	subcodecByteCount = *((UINT32*) &pSrcData[offset + 8]);
 	offset += 12;
 
-	//printf("residualByteCount: %d bandsByteCount: %d subcodecByteCount: %d\n",
+	//DEBUG_MSG("residualByteCount: %d bandsByteCount: %d subcodecByteCount: %d\n",
 	//		residualByteCount, bandsByteCount, subcodecByteCount);
 
 	if (residualByteCount > 0)
@@ -528,7 +528,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			subcodecId = subcodecs[suboffset + 12];
 			suboffset += 13;
 
-			//printf("bitmapDataByteCount: %d subcodecByteCount: %d suboffset: %d subCodecId: %d\n",
+			//DEBUG_MSG("bitmapDataByteCount: %d subcodecByteCount: %d suboffset: %d subCodecId: %d\n",
 			//		bitmapDataByteCount, subcodecByteCount, suboffset, subcodecId);
 
 			if ((subcodecByteCount - suboffset) < bitmapDataByteCount)

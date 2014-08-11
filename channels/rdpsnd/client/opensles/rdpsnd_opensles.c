@@ -35,7 +35,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 
 #include "opensl_io.h"
 #include "rdpsnd_main.h"
@@ -187,7 +187,7 @@ static void rdpsnd_opensles_open(rdpsndDevicePlugin* device,
 	assert(opensles->stream);
 
 	if (!opensles->stream)
-		DEBUG_WARN("android_OpenAudioDevice failed");
+		CLOG_ERR("android_OpenAudioDevice failed");
 	else
 		rdpsnd_opensles_set_volume(device, opensles->volume);
 
@@ -364,7 +364,7 @@ static void rdpsnd_opensles_play(rdpsndDevicePlugin* device,
 
 	ret = android_AudioOut(opensles->stream, src.s, size / 2);
 	if (ret < 0)
-		DEBUG_WARN("android_AudioOut failed (%d)", ret);
+		CLOG_ERR("android_AudioOut failed (%d)", ret);
 }
 
 static void rdpsnd_opensles_start(rdpsndDevicePlugin* device)

@@ -32,6 +32,7 @@
 
 #include <freerdp/dvc.h>
 #include <freerdp/addin.h>
+#include <freerdp/channels/log.h>
 
 #include "urbdrc_types.h"
 #include "urbdrc_main.h"
@@ -468,7 +469,7 @@ static void* urbdrc_search_usb_device(void* arg)
 
 	if (!udev)
 	{
-		fprintf(stderr, "Can't create udev\n");
+		CLOG_ERR( "Can't create udev\n");
 		return 0;
 	}
 
@@ -652,7 +653,7 @@ static void* urbdrc_search_usb_device(void* arg)
 			}
 			else
 			{
-				fprintf(stderr, "No Device from receive_device(). An error occured.\n");
+				CLOG_ERR( "No Device from receive_device(). An error occured.\n");
 			}
 		}
 	}
@@ -835,7 +836,7 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 
 			if (transfer_data == NULL)
 			{
-				fprintf(stderr, "transfer_data is NULL!!");
+				CLOG_ERR( "transfer_data is NULL!!");
 				return 0;
 			}
 
@@ -1000,7 +1001,7 @@ static void urbdrc_register_udevman_addin(IWTSPlugin* pPlugin, IUDEVMAN* udevman
 
 	if (urbdrc->udevman)
 	{
-		DEBUG_WARN("existing device, abort.");
+		CLOG_ERR("existing device, abort.");
 		return;
 	}
 
@@ -1025,7 +1026,7 @@ static int urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, const char* name, ADDI
 
 	if (entry(&entryPoints) != 0)
 	{
-		DEBUG_WARN("%s entry returns error.", name);
+		CLOG_ERR("%s entry returns error.", name);
 		return FALSE;
 	}
 

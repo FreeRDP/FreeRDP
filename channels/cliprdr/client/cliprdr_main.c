@@ -87,7 +87,7 @@ void cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 	Stream_SetPosition(s, pos);
 
 #ifdef WITH_DEBUG_CLIPRDR
-	printf("Cliprdr Sending (%d bytes)\n", dataLen + 8);
+	CLOG_DBG("Cliprdr Sending (%d bytes)\n", dataLen + 8);
 	winpr_HexDump(Stream_Buffer(s), dataLen + 8);
 #endif
 
@@ -101,18 +101,18 @@ static void cliprdr_process_connect(rdpSvcPlugin* plugin)
 
 void cliprdr_print_general_capability_flags(UINT32 flags)
 {
-	fprintf(stderr, "generalFlags (0x%08X) {\n", flags);
+	CLOG_ERR( "generalFlags (0x%08X) {\n", flags);
 
 	if (flags & CB_USE_LONG_FORMAT_NAMES)
-		fprintf(stderr, "\tCB_USE_LONG_FORMAT_NAMES\n");
+		CLOG_ERR( "\tCB_USE_LONG_FORMAT_NAMES\n");
 	if (flags & CB_STREAM_FILECLIP_ENABLED)
-		fprintf(stderr, "\tCB_STREAM_FILECLIP_ENABLED\n");
+		CLOG_ERR( "\tCB_STREAM_FILECLIP_ENABLED\n");
 	if (flags & CB_FILECLIP_NO_FILE_PATHS)
-		fprintf(stderr, "\tCB_FILECLIP_NO_FILE_PATHS\n");
+		CLOG_ERR( "\tCB_FILECLIP_NO_FILE_PATHS\n");
 	if (flags & CB_CAN_LOCK_CLIPDATA)
-		fprintf(stderr, "\tCB_CAN_LOCK_CLIPDATA\n");
+		CLOG_ERR( "\tCB_CAN_LOCK_CLIPDATA\n");
 
-	fprintf(stderr, "}\n");
+	CLOG_ERR( "}\n");
 }
 
 static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* s)
@@ -198,7 +198,7 @@ static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT16
 				break;
 
 			default:
-				DEBUG_WARN("unknown cliprdr capability set: %d", capabilitySetType);
+				CLOG_ERR("unknown cliprdr capability set: %d", capabilitySetType);
 				break;
 		}
 	}
@@ -380,7 +380,7 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 			break;
 
 		default:
-			DEBUG_WARN("unknown msgType %d", msgType);
+			CLOG_ERR("unknown msgType %d", msgType);
 			break;
 	}
 }
@@ -496,7 +496,7 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
 			break;
 
 		default:
-			DEBUG_WARN("unknown event type %d", GetMessageType(event->id));
+			CLOG_ERR("unknown event type %d", GetMessageType(event->id));
 			break;
 	}
 

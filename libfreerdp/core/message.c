@@ -762,7 +762,7 @@ static void update_message_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* or
 	lParam = (WINDOW_ICON_ORDER*) malloc(sizeof(WINDOW_ICON_ORDER));
 	CopyMemory(lParam, windowIcon, sizeof(WINDOW_ICON_ORDER));
 
-	fprintf(stderr, "update_message_WindowIcon\n");
+	DEBUG_WARN( "update_message_WindowIcon\n");
 
 	if (windowIcon->iconInfo->cbBitsColor > 0)
 	{
@@ -1871,7 +1871,7 @@ static int update_message_free_class(wMessage*msg, int msgClass, int msgType)
 	}
 
 	if (status < 0)
-		fprintf(stderr, "Unknown message: class: %d type: %d\n", msgClass, msgType);
+		DEBUG_WARN( "Unknown message: class: %d type: %d\n", msgClass, msgType);
 
 	return status;
 }
@@ -1912,7 +1912,7 @@ static int update_message_process_class(rdpUpdateProxy* proxy, wMessage* msg, in
 	}
 
 	if (status < 0)
-		fprintf(stderr, "Unknown message: class: %d type: %d\n", msgClass, msgType);
+		DEBUG_WARN( "Unknown message: class: %d type: %d\n", msgClass, msgType);
 
 	return status;
 }
@@ -2318,7 +2318,7 @@ static int input_message_free_class(wMessage* msg, int msgClass, int msgType)
 	}
 
 	if (status < 0)
-		fprintf(stderr, "Unknown event: class: %d type: %d\n", msgClass, msgType);
+		DEBUG_WARN( "Unknown event: class: %d type: %d\n", msgClass, msgType);
 
 	return status;
 }
@@ -2339,7 +2339,7 @@ static int input_message_process_class(rdpInputProxy* proxy, wMessage* msg, int 
 	}
 
 	if (status < 0)
-		fprintf(stderr, "Unknown event: class: %d type: %d\n", msgClass, msgType);
+		DEBUG_WARN( "Unknown event: class: %d type: %d\n", msgClass, msgType);
 
 	return status;
 }

@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <freerdp/utils/debug.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -44,7 +46,7 @@ int xf_cursor_init(xfInfo* xfi)
 
 	if (!XFixesQueryExtension(xfi->display, &event, &error))
 	{
-		fprintf(stderr, "XFixesQueryExtension failed\n");
+		DEBUG_WARN( "XFixesQueryExtension failed\n");
 		return -1;
 	}
 

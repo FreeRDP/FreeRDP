@@ -85,25 +85,25 @@ int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE**
 
 	if (status < 0)
 	{
-		printf("compression/decompression failure\n");
+		DEBUG_MSG("compression/decompression failure\n");
 		return status;
 	}
 
 	if (_DstSize != SrcSize)
 	{
-		printf("compression/decompression size mismatch: Actual: %d, Expected: %d\n", _DstSize, SrcSize);
+		DEBUG_MSG("compression/decompression size mismatch: Actual: %d, Expected: %d\n", _DstSize, SrcSize);
 		return -1;
 	}
 
 	if (memcmp(_pDstData, pSrcData, SrcSize) != 0)
 	{
-		printf("compression/decompression input/output mismatch! flags: 0x%04X\n", _Flags);
+		DEBUG_MSG("compression/decompression input/output mismatch! flags: 0x%04X\n", _Flags);
 
 #if 1
-		printf("Actual:\n");
+		DEBUG_MSG("Actual:\n");
 		winpr_HexDump(_pDstData, SrcSize);
 
-		printf("Expected:\n");
+		DEBUG_MSG("Expected:\n");
 		winpr_HexDump(pSrcData, SrcSize);
 #endif
 
@@ -170,7 +170,7 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 
 #ifdef WITH_BULK_DEBUG
 		{
-			printf("Decompress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)\n",
+			DEBUG_MSG("Decompress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)\n",
 					type, bulk_get_compression_flags_string(flags), flags,
 					CompressionRatio, CompressedBytes, UncompressedBytes,
 					metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,
@@ -180,7 +180,7 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 	}
 	else
 	{
-		fprintf(stderr, "Decompression failure!\n");
+		DEBUG_WARN( "Decompression failure!\n");
 	}
 
 	return status;
@@ -237,7 +237,7 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 
 #ifdef WITH_BULK_DEBUG
 		{
-			printf("Compress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)\n",
+			DEBUG_MSG("Compress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)\n",
 					bulk->CompressionLevel, bulk_get_compression_flags_string(*pFlags), *pFlags,
 					CompressionRatio, CompressedBytes, UncompressedBytes,
 					metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,

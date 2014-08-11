@@ -34,19 +34,19 @@ static const AUDIO_FORMAT supported_audio_formats[] =
 
 static void mf_peer_audin_opening(audin_server_context* context)
 {
-	fprintf(stderr, "AUDIN opening.\n");
+	DEBUG_WARN( "AUDIN opening.\n");
 	/* Simply choose the first format supported by the client. */
 	context->SelectFormat(context, 0);
 }
 
 static void mf_peer_audin_open_result(audin_server_context* context, UINT32 result)
 {
-	fprintf(stderr, "AUDIN open result %d.\n", result);
+	DEBUG_WARN( "AUDIN open result %d.\n", result);
 }
 
 static void mf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
 {
-	fprintf(stderr, "AUDIN receive %d frames.\n", nframes);
+	DEBUG_WARN( "AUDIN receive %d frames.\n", nframes);
 }
 
 void mf_peer_audin_init(mfPeerContext* context)

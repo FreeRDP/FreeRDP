@@ -34,7 +34,7 @@
 
 void xf_input_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	fprintf(stderr, "Client sent a synchronize event (flags:0x%X)\n", flags);
+	DEBUG_WARN( "Client sent a synchronize event (flags:0x%X)\n", flags);
 }
 
 void xf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -71,7 +71,7 @@ void xf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 void xf_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	fprintf(stderr, "Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+	DEBUG_WARN( "Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 }
 
 void xf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)

@@ -32,6 +32,7 @@
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/locale/keyboard.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
 
@@ -1190,7 +1191,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 	if (compatibility)
 	{
-		fprintf(stderr, "WARNING: Using deprecated command-line interface!\n");
+		DEBUG_WARN( "WARNING: Using deprecated command-line interface!\n");
 		return freerdp_client_parse_old_command_line_arguments(argc, argv, settings);
 	}
 	else
@@ -1360,25 +1361,25 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "kbd")
 		{
-			int id;
+			unsigned long int id;
 			char* pEnd;
 
-			id = strtol(arg->Value, &pEnd, 16);
+			id = strtoul(arg->Value, &pEnd, 16);
 
 			if (pEnd != (arg->Value + strlen(arg->Value)))
 				id = 0;
 
 			if (id == 0)
 			{
-				id = freerdp_map_keyboard_layout_name_to_id(arg->Value);
+				id = (unsigned long int) freerdp_map_keyboard_layout_name_to_id(arg->Value);
 
 				if (!id)
 				{
-					fprintf(stderr, "Could not identify keyboard layout: %s\n", arg->Value);
+					DEBUG_WARN( "Could not identify keyboard layout: %s\n", arg->Value);
 				}
 			}
 
-			settings->KeyboardLayout = id;
+			settings->KeyboardLayout = (UINT32) id;
 		}
 		CommandLineSwitchCase(arg, "kbd-type")
 		{
@@ -1732,7 +1733,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 			else
 			{
-				fprintf(stderr, "unknown protocol security: %s\n", arg->Value);
+				DEBUG_WARN( "unknown protocol security: %s\n", arg->Value);
 			}
 		}
 		CommandLineSwitchCase(arg, "sec-rdp")
@@ -1878,7 +1879,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 			else
 			{
-				fprintf(stderr, "reconnect-cookie:  invalid base64 '%s'\n",
+				DEBUG_WARN( "reconnect-cookie:  invalid base64 '%s'\n",
 					arg->Value);
 			}
 		}
@@ -1943,7 +1944,7 @@ int freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings*
 	{
 		if (freerdp_channels_client_load(channels, settings, entry, data) == 0)
 		{
-			fprintf(stderr, "loading channel %s\n", name);
+			DEBUG_WARN( "loading channel %s\n", name);
 			return 0;
 		}
 	}
