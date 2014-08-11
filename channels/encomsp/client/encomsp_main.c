@@ -91,7 +91,7 @@ int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 	if (str->cchString > 1024)
 		return -1;
 
-	if (Stream_GetRemainingLength(s) < (str->cchString * 2))
+	if (Stream_GetRemainingLength(s) < (size_t) (str->cchString * 2))
 		return -1;
 
 	Stream_Read(s, &(str->wString), (str->cchString * 2)); /* String (variable) */
@@ -126,7 +126,7 @@ int encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -171,7 +171,7 @@ int encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s, ENC
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -212,7 +212,7 @@ int encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s, ENC
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -258,7 +258,7 @@ int encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -299,7 +299,7 @@ int encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -340,7 +340,7 @@ int encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORD
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -386,7 +386,7 @@ int encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s, ENC
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -429,7 +429,7 @@ int encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s, ENC
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -471,7 +471,7 @@ int encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wS
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -531,7 +531,7 @@ int encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, 
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -567,7 +567,7 @@ int encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));

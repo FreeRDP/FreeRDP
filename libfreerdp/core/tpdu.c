@@ -182,7 +182,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 	 */
 	bytes_read = (Stream_GetPosition(s) - position) - 1;
 
-	return (Stream_GetRemainingLength(s) >= (*li - bytes_read));
+	return (Stream_GetRemainingLength(s) >= (size_t) (*li - bytes_read));
 }
 
 /**

@@ -32,6 +32,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/sysinfo.h>
 #include <winpr/bitstream.h>
 
 #include "rfx_bitstream.h"
@@ -72,6 +73,28 @@
 	_k = (_param >> LSGR); \
 }
 
+static BOOL g_LZCNT = FALSE;
+
+static INLINE UINT32 lzcnt_s(UINT32 x)
+{
+	if (!x)
+		return 32;
+	
+	if (!g_LZCNT)
+	{
+		UINT32 y;
+		int n = 32;
+		y = x >> 16;  if (y != 0) { n = n - 16; x = y; }
+		y = x >>  8;  if (y != 0) { n = n -  8; x = y; }
+		y = x >>  4;  if (y != 0) { n = n -  4; x = y; }
+		y = x >>  2;  if (y != 0) { n = n -  2; x = y; }
+		y = x >>  1;  if (y != 0) return n - 2;
+		return n - x;
+	}
+
+	return __lzcnt(x);
+}
+
 int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 DstSize, int mode)
 {
 	int vk;
@@ -91,6 +114,8 @@ int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT3
 	INT16* pOutput;
 	wBitStream* bs;
 	wBitStream s_bs;
+
+	g_LZCNT = IsProcessorFeaturePresentEx(PF_EX_LZCNT);
 
 	k = 1;
 	kp = k << LSGR;
@@ -124,7 +149,7 @@ int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT3
 
 			/* count number of leading 0s */
 
-			cnt = __lzcnt(bs->accumulator);
+			cnt = lzcnt_s(bs->accumulator);
 
 			nbits = BitStream_GetRemainingLength(bs);
 
@@ -137,7 +162,7 @@ int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT3
 			{
 				BitStream_Shift32(bs);
 
-				cnt = __lzcnt(bs->accumulator);
+				cnt = lzcnt_s(bs->accumulator);
 
 				nbits = BitStream_GetRemainingLength(bs);
 
@@ -187,7 +212,7 @@ int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT3
 
 			/* count number of leading 1s */
 
-			cnt = __lzcnt(~(bs->accumulator));
+			cnt = lzcnt_s(~(bs->accumulator));
 
 			nbits = BitStream_GetRemainingLength(bs);
 
@@ -200,7 +225,7 @@ int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT3
 			{
 				BitStream_Shift32(bs);
 
-				cnt = __lzcnt(~(bs->accumulator));
+				cnt = lzcnt_s(~(bs->accumulator));
 
 				nbits = BitStream_GetRemainingLength(bs);
 
@@ -295,7 +320,7 @@ int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT3
 
 			/* count number of leading 1s */
 
-			cnt = __lzcnt(~(bs->accumulator));
+			cnt = lzcnt_s(~(bs->accumulator));
 
 			nbits = BitStream_GetRemainingLength(bs);
 
@@ -308,7 +333,7 @@ int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT3
 			{
 				BitStream_Shift32(bs);
 
-				cnt = __lzcnt(~(bs->accumulator));
+				cnt = lzcnt_s(~(bs->accumulator));
 
 				nbits = BitStream_GetRemainingLength(bs);
 
@@ -411,7 +436,7 @@ int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT3
 				if (code)
 				{
 					mag = (UINT32) code;
-					nIdx = 32 - __lzcnt(mag);
+					nIdx = 32 - lzcnt_s(mag);
 				}
 
 				if (BitStream_GetRemainingLength(bs) < nIdx)
