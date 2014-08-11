@@ -34,6 +34,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
+#include <freerdp/channels/log.h>
 
 #include "rdpsnd_main.h"
 
