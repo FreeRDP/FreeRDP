@@ -31,43 +31,21 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <winpr/print.h>
+#include <winpr/sysinfo.h>
+#include <winpr/bitstream.h>
 
 #include "rfx_bitstream.h"
 
 #include "rfx_rlgr.h"
 
-/* Constants used within the RLGR1/RLGR3 algorithm */
-#define KPMAX	(80)  /* max value for kp or krp */
-#define LSGR	(3)   /* shift count to convert kp to k */
-#define UP_GR	(4)   /* increase in kp after a zero run in RL mode */
-#define DN_GR	(6)   /* decrease in kp after a nonzero symbol in RL mode */
-#define UQ_GR	(3)   /* increase in kp after nonzero symbol in GR mode */
-#define DQ_GR	(3)   /* decrease in kp after zero symbol in GR mode */
-
-/* Gets (returns) the next nBits from the bitstream */
-#define GetBits(nBits, r) rfx_bitstream_get_bits(bs, nBits, r)
-
-/* From current output pointer, write "value", check and update buffer_size */
-#define WriteValue(value) \
-{ \
-	if (buffer_size > 0) \
-		*dst++ = (value); \
-	buffer_size--; \
-}
-
-/* From current output pointer, write next nZeroes terms with value 0, check and update buffer_size */
-#define WriteZeroes(nZeroes) \
-{ \
-	int nZeroesWritten = (nZeroes); \
-	if (nZeroesWritten > buffer_size) \
-		nZeroesWritten = buffer_size; \
-	if (nZeroesWritten > 0) \
-	{ \
-		memset(dst, 0, nZeroesWritten * sizeof(INT16)); \
-		dst += nZeroesWritten; \
-	} \
-	buffer_size -= (nZeroes); \
-}
+/* Constants used in RLGR1/RLGR3 algorithm */
+#define KPMAX	(80)	/* max value for kp or krp */
+#define LSGR	(3)	/* shift count to convert kp to k */
+#define UP_GR	(4)	/* increase in kp after a zero run in RL mode */
+#define DN_GR	(6)	/* decrease in kp after a nonzero symbol in RL mode */
+#define UQ_GR	(3)	/* increase in kp after nonzero symbol in GR mode */
+#define DQ_GR	(3)	/* decrease in kp after zero symbol in GR mode */
 
 /* Returns the least number of bits required to represent a given value */
 #define GetMinBits(_val, _nbits) \
@@ -80,9 +58,6 @@
 		_nbits++; \
 	} \
 }
-
-/* Converts from (2 * magnitude - sign) to integer */
-#define GetIntFrom2MagSign(twoMs) (((twoMs) & 1) ? -1 * (INT16)(((twoMs) + 1) >> 1) : (INT16)((twoMs) >> 1))
 
 /*
  * Update the passed parameter and clamp it to the range [0, KPMAX]
@@ -98,147 +73,444 @@
 	_k = (_param >> LSGR); \
 }
 
-/* Outputs the Golomb/Rice encoding of a non-negative integer */
-#define GetGRCode(krp, kr, vk, _mag) \
-	vk = 0; \
-	_mag = 0; \
-	/* chew up/count leading 1s and escape 0 */ \
-	do { \
-		GetBits(1, r); \
-		if (r == 1) \
-			vk++; \
-		else \
-			break; \
-	} while (1); \
-	/* get next *kr bits, and combine with leading 1s */ \
-	GetBits(*kr, _mag); \
-	_mag |= (vk << *kr); \
-	/* adjust krp and kr based on vk */ \
-	if (!vk) { \
-		UpdateParam(*krp, -2, *kr); \
-	} \
-	else if (vk != 1) { \
-		UpdateParam(*krp, vk, *kr); /* at 1, no change! */ \
+static BOOL g_LZCNT = FALSE;
+
+static INLINE UINT32 lzcnt_s(UINT32 x)
+{
+	if (!x)
+		return 32;
+	
+	if (!g_LZCNT)
+	{
+		UINT32 y;
+		int n = 32;
+		y = x >> 16;  if (y != 0) { n = n - 16; x = y; }
+		y = x >>  8;  if (y != 0) { n = n -  8; x = y; }
+		y = x >>  4;  if (y != 0) { n = n -  4; x = y; }
+		y = x >>  2;  if (y != 0) { n = n -  2; x = y; }
+		y = x >>  1;  if (y != 0) return n - 2;
+		return n - x;
 	}
 
-int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* data, int data_size, INT16* buffer, int buffer_size)
+	return __lzcnt(x);
+}
+
+int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 DstSize, int mode)
 {
-	int k;
-	int kp;
-	int kr;
-	int krp;
-	UINT16 r;
-	INT16* dst;
-	RFX_BITSTREAM* bs;
-
 	int vk;
-	UINT16 mag16;
+	int run;
+	int cnt;
+	int size;
+	int nbits;
+	int offset;
+	INT16 mag;
+	int k, kp;
+	int kr, krp;
+	UINT16 code;
+	UINT32 sign;
+	UINT32 nIdx;
+	UINT32 val1;
+	UINT32 val2;
+	INT16* pOutput;
+	wBitStream* bs;
+	wBitStream s_bs;
 
-	bs = (RFX_BITSTREAM*) malloc(sizeof(RFX_BITSTREAM));
-	ZeroMemory(bs, sizeof(RFX_BITSTREAM));
+	g_LZCNT = IsProcessorFeaturePresentEx(PF_EX_LZCNT);
 
-	rfx_bitstream_attach(bs, data, data_size);
-	dst = buffer;
-
-	/* initialize the parameters */
 	k = 1;
 	kp = k << LSGR;
+
 	kr = 1;
 	krp = kr << LSGR;
 
-	while (!rfx_bitstream_eos(bs) && buffer_size > 0)
+	if ((mode != 1) && (mode != 3))
+		mode = 1;
+
+	if (!pSrcData || !SrcSize)
+		return -1;
+
+	if (!pDstData || !DstSize)
+		return -1;
+
+	pOutput = pDstData;
+
+	bs = &s_bs;
+
+	BitStream_Attach(bs, pSrcData, SrcSize);
+	BitStream_Fetch(bs);
+
+	while ((BitStream_GetRemainingLength(bs) > 0) && ((pOutput - pDstData) < DstSize))
 	{
-		int run;
 		if (k)
 		{
-			int mag;
-			UINT32 sign;
+			/* Run-Length (RL) Mode */
 
-			/* RL MODE */
-			while (!rfx_bitstream_eos(bs))
+			run = 0;
+
+			/* count number of leading 0s */
+
+			cnt = lzcnt_s(bs->accumulator);
+
+			nbits = BitStream_GetRemainingLength(bs);
+
+			if (cnt > nbits)
+				cnt = nbits;
+
+			vk = cnt;
+
+			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
-				GetBits(1, r);
-				if (r)
-					break;
-				/* we have an RL escape "0", which translates to a run (1<<k) of zeros */
-				WriteZeroes(1 << k);
-				UpdateParam(kp, UP_GR, k); /* raise k and kp up because of zero run */
+				BitStream_Shift32(bs);
+
+				cnt = lzcnt_s(bs->accumulator);
+
+				nbits = BitStream_GetRemainingLength(bs);
+
+				if (cnt > nbits)
+					cnt = nbits;
+
+				vk += cnt;
 			}
 
-			/* next k bits will contain remaining run or zeros */
-			GetBits(k, run);
-			WriteZeroes(run);
+			BitStream_Shift(bs, (vk % 32));
 
-			/* get nonzero value, starting with sign bit and then GRCode for magnitude -1 */
-			GetBits(1, sign);
+			if (BitStream_GetRemainingLength(bs) < 1)
+				break;
 
-			/* magnitude - 1 was coded (because it was nonzero) */
-			GetGRCode(&krp, &kr, vk, mag16)
-			mag = (int) (mag16 + 1);
+			BitStream_Shift(bs, 1);
 
-			WriteValue(sign ? -mag : mag);
-			UpdateParam(kp, -DN_GR, k); /* lower k and kp because of nonzero term */
+			while (vk--)
+			{
+				run += (1 << k); /* add (1 << k) to run length */
+
+				/* update k, kp params */
+
+				kp += UP_GR;
+
+				if (kp > KPMAX)
+					kp = KPMAX;
+
+				k = kp >> LSGR;
+			}
+
+			/* next k bits contain run length remainder */
+
+			if (BitStream_GetRemainingLength(bs) < k)
+				break;
+
+			bs->mask = ((1 << k) - 1);
+			run += ((bs->accumulator >> (32 - k)) & bs->mask);
+			BitStream_Shift(bs, k);
+
+			/* read sign bit */
+
+			if (BitStream_GetRemainingLength(bs) < 1)
+				break;
+
+			sign = (bs->accumulator & 0x80000000) ? 1 : 0;
+			BitStream_Shift(bs, 1);
+
+			/* count number of leading 1s */
+
+			cnt = lzcnt_s(~(bs->accumulator));
+
+			nbits = BitStream_GetRemainingLength(bs);
+
+			if (cnt > nbits)
+				cnt = nbits;
+
+			vk = cnt;
+
+			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
+			{
+				BitStream_Shift32(bs);
+
+				cnt = lzcnt_s(~(bs->accumulator));
+
+				nbits = BitStream_GetRemainingLength(bs);
+
+				if (cnt > nbits)
+					cnt = nbits;
+
+				vk += cnt;
+			}
+
+			BitStream_Shift(bs, (vk % 32));
+
+			if (BitStream_GetRemainingLength(bs) < 1)
+				break;
+
+			BitStream_Shift(bs, 1);
+
+			/* next kr bits contain code remainder */
+
+			if (BitStream_GetRemainingLength(bs) < kr)
+				break;
+
+			bs->mask = ((1 << kr) - 1);
+			code = (UINT16) ((bs->accumulator >> (32 - kr)) & bs->mask);
+			BitStream_Shift(bs, kr);
+
+			/* add (vk << kr) to code */
+
+			code |= (vk << kr);
+
+			if (!vk)
+			{
+				/* update kr, krp params */
+
+				krp -= 2;
+
+				if (krp < 0)
+					krp = 0;
+
+				kr = krp >> LSGR;
+			}
+			else if (vk != 1)
+			{
+				/* update kr, krp params */
+
+				krp += vk;
+
+				if (krp > KPMAX)
+					krp = KPMAX;
+
+				kr = krp >> LSGR;
+			}
+
+			/* update k, kp params */
+
+			kp -= DN_GR;
+
+			if (kp < 0)
+				kp = 0;
+
+			k = kp >> LSGR;
+
+			/* compute magnitude from code */
+
+			if (sign)
+				mag = ((INT16) (code + 1)) * -1;
+			else
+				mag = (INT16) (code + 1);
+
+			/* write to output stream */
+
+			offset = (int) (pOutput - pDstData);
+			size = run;
+
+			if ((offset + size) > DstSize)
+				size = DstSize - offset;
+
+			if (size)
+			{
+				ZeroMemory(pOutput, size * sizeof(INT16));
+				pOutput += size;
+			}
+
+			if ((pOutput - pDstData) < DstSize)
+			{
+				*pOutput = mag;
+				pOutput++;
+			}
 		}
 		else
 		{
-			UINT32 mag;
-			UINT32 nIdx;
-			UINT32 val1;
-			UINT32 val2;
+			/* Golomb-Rice (GR) Mode */
 
-			/* GR (GOLOMB-RICE) MODE */
-			GetGRCode(&krp, &kr, vk, mag16) /* values coded are 2 * magnitude - sign */
-			mag = (UINT32) mag16;
+			/* count number of leading 1s */
 
-			if (mode == RLGR1)
+			cnt = lzcnt_s(~(bs->accumulator));
+
+			nbits = BitStream_GetRemainingLength(bs);
+
+			if (cnt > nbits)
+				cnt = nbits;
+
+			vk = cnt;
+
+			while ((cnt == 32) && (BitStream_GetRemainingLength(bs) > 0))
 			{
-				if (!mag)
+				BitStream_Shift32(bs);
+
+				cnt = lzcnt_s(~(bs->accumulator));
+
+				nbits = BitStream_GetRemainingLength(bs);
+
+				if (cnt > nbits)
+					cnt = nbits;
+
+				vk += cnt;
+			}
+
+			BitStream_Shift(bs, (vk % 32));
+
+			if (BitStream_GetRemainingLength(bs) < 1)
+				break;
+
+			BitStream_Shift(bs, 1);
+
+			/* next kr bits contain code remainder */
+
+			if (BitStream_GetRemainingLength(bs) < kr)
+				break;
+
+			bs->mask = ((1 << kr) - 1);
+			code = (UINT16) ((bs->accumulator >> (32 - kr)) & bs->mask);
+			BitStream_Shift(bs, kr);
+
+			/* add (vk << kr) to code */
+
+			code |= (vk << kr);
+
+			if (!vk)
+			{
+				/* update kr, krp params */
+
+				krp -= 2;
+
+				if (krp < 0)
+					krp = 0;
+
+				kr = krp >> LSGR;
+			}
+			else if (vk != 1)
+			{
+				/* update kr, krp params */
+
+				krp += vk;
+
+				if (krp > KPMAX)
+					krp = KPMAX;
+
+				kr = krp >> LSGR;
+			}
+
+			if (mode == 1) /* RLGR1 */
+			{
+				if (!code)
 				{
-					WriteValue(0);
-					UpdateParam(kp, UQ_GR, k); /* raise k and kp due to zero */
+					/* update k, kp params */
+
+					kp += UQ_GR;
+
+					if (kp > KPMAX)
+						kp = KPMAX;
+
+					k = kp >> LSGR;
+
+					mag = 0;
 				}
 				else
 				{
-					WriteValue(GetIntFrom2MagSign(mag));
-					UpdateParam(kp, -DQ_GR, k); /* lower k and kp due to nonzero */
+					/* update k, kp params */
+
+					kp -= DQ_GR;
+
+					if (kp < 0)
+						kp = 0;
+
+					k = kp >> LSGR;
+
+					/*
+					 * code = 2 * mag - sign
+					 * sign + code = 2 * mag
+					 */
+
+					if (code & 1)
+						mag = ((INT16) ((code + 1) >> 1)) * -1;
+					else
+						mag = (INT16) (code >> 1);
+				}
+
+				if ((pOutput - pDstData) < DstSize)
+				{
+					*pOutput = mag;
+					pOutput++;
 				}
 			}
-			else /* mode == RLGR3 */
+			else if (mode == 3) /* RLGR3 */
 			{
-				/*
-				 * In GR mode FOR RLGR3, we have encoded the
-				 * sum of two (2 * mag - sign) values
-				 */
+				nIdx = 0;
 
-				/* maximum possible bits for first term */
-				GetMinBits(mag, nIdx);
+				if (code)
+				{
+					mag = (UINT32) code;
+					nIdx = 32 - lzcnt_s(mag);
+				}
 
-				/* decode val1 is first term's (2 * mag - sign) value */
-				GetBits(nIdx, val1);
+				if (BitStream_GetRemainingLength(bs) < nIdx)
+					break;
 
-				/* val2 is second term's (2 * mag - sign) value */
-				val2 = mag - val1;
+				bs->mask = ((1 << nIdx) - 1);
+				val1 = ((bs->accumulator >> (32 - nIdx)) & bs->mask);
+				BitStream_Shift(bs, nIdx);
+
+				val2 = code - val1;
 
 				if (val1 && val2)
 				{
-					/* raise k and kp if both terms nonzero */
-					UpdateParam(kp, -2 * DQ_GR, k);
+					/* update k, kp params */
+
+					kp -= (2 * DQ_GR);
+
+					if (kp < 0)
+						kp = 0;
+
+					k = kp >> LSGR;
 				}
 				else if (!val1 && !val2)
 				{
-					/* lower k and kp if both terms zero */
-					UpdateParam(kp, 2 * UQ_GR, k);
+					/* update k, kp params */
+
+					kp += (2 * UQ_GR);
+
+					if (kp > KPMAX)
+						kp = KPMAX;
+
+					k = kp >> LSGR;
 				}
 
-				WriteValue(GetIntFrom2MagSign(val1));
-				WriteValue(GetIntFrom2MagSign(val2));
+				if (val1 & 1)
+					mag = ((INT16) ((val1 + 1) >> 1)) * -1;
+				else
+					mag = (INT16) (val1 >> 1);
+
+				if ((pOutput - pDstData) < DstSize)
+				{
+					*pOutput = mag;
+					pOutput++;
+				}
+
+				if (val2 & 1)
+					mag = ((INT16) ((val2 + 1) >> 1)) * -1;
+				else
+					mag = (INT16) (val2 >> 1);
+
+				if ((pOutput - pDstData) < DstSize)
+				{
+					*pOutput = mag;
+					pOutput++;
+				}
 			}
 		}
 	}
 
-	free(bs);
+	offset = (int) (pOutput - pDstData);
 
-	return (dst - buffer);
+	if (offset < DstSize)
+	{
+		size = DstSize - offset;
+		ZeroMemory(pOutput, size * 2);
+		pOutput += size;
+	}
+
+	offset = (int) (pOutput - pDstData);
+
+	if (offset != DstSize)
+		return -1;
+
+	return 1;
 }
 
 /* Returns the next coefficient (a signed int) to encode, from the input stream */

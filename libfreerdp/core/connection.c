@@ -388,11 +388,14 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	wStream* s;
 	UINT32 length;
 	UINT32 key_len;
-	BYTE *crypt_client_random = NULL;
-	BOOL ret = FALSE;
 	int status = 0;
+	BOOL ret = FALSE;
+	rdpSettings* settings;
+	BYTE* crypt_client_random = NULL;
 
-	if (!rdp->settings->DisableEncryption)
+	settings = rdp->settings;
+
+	if (!settings->DisableEncryption)
 	{
 		/* no RDP encryption */
 		return TRUE;
@@ -400,27 +403,30 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	/* encrypt client random */
 
-	if (rdp->settings->ClientRandom)
-		free(rdp->settings->ClientRandom);
+	if (settings->ClientRandom)
+		free(settings->ClientRandom);
 
-	rdp->settings->ClientRandom = malloc(CLIENT_RANDOM_LENGTH);
+	settings->ClientRandomLength = CLIENT_RANDOM_LENGTH;
+	settings->ClientRandom = malloc(settings->ClientRandomLength);
 
-	if (!rdp->settings->ClientRandom)
+	if (!settings->ClientRandom)
 		return FALSE;
 
+	crypto_nonce(settings->ClientRandom, settings->ClientRandomLength);
+	key_len = settings->RdpServerCertificate->cert_info.ModulusLength;
+	mod = settings->RdpServerCertificate->cert_info.Modulus;
+	exp = settings->RdpServerCertificate->cert_info.exponent;
 
-	crypto_nonce(rdp->settings->ClientRandom, CLIENT_RANDOM_LENGTH);
-	key_len = rdp->settings->RdpServerCertificate->cert_info.ModulusLength;
-	mod = rdp->settings->RdpServerCertificate->cert_info.Modulus;
-	exp = rdp->settings->RdpServerCertificate->cert_info.exponent;
 	/*
 	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
 	 * for details
 	 */
-	crypt_client_random = calloc(1,key_len+8);
+	crypt_client_random = calloc(1, key_len + 8);
+
 	if (!crypt_client_random)
 		return FALSE;
-	crypto_rsa_public_encrypt(rdp->settings->ClientRandom, CLIENT_RANDOM_LENGTH, key_len, mod, exp, crypt_client_random);
+
+	crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, key_len, mod, exp, crypt_client_random);
 
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
@@ -441,15 +447,15 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		goto end;
 
 	/* now calculate encrypt / decrypt and update keys */
-	if (!security_establish_keys(rdp->settings->ClientRandom, rdp))
+	if (!security_establish_keys(settings->ClientRandom, rdp))
 		goto end;
 
 	rdp->do_crypt = TRUE;
 
-	if (rdp->settings->SaltedChecksum)
+	if (settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 
-	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
 		if (!rdp->fips_encrypt)

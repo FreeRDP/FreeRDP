@@ -135,14 +135,14 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			if (!glyphData)
 				return -1010;
 
-			if ((nWidth * nHeight) > glyphEntry->count)
+			if ((nWidth * nHeight) > (int) glyphEntry->count)
 				return -1011;
 
 			nSrcStep = nWidth * 4;
 			pSrcPixel8 = glyphData;
 			pDstPixel8 = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
 
-			for (y = 0; y < nHeight; y++)
+			for (y = 0; y < (UINT32) nHeight; y++)
 			{
 				CopyMemory(pDstPixel8, pSrcPixel8, nSrcStep);
 				pSrcPixel8 += nSrcStep;
@@ -177,7 +177,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		suboffset = 0;
 		residualData = &pSrcData[offset];
 
-		if ((nWidth * nHeight * 4) > clear->TempSize)
+		if ((nWidth * nHeight * 4) > (int) clear->TempSize)
 		{
 			clear->TempSize = (nWidth * nHeight * 4);
 			clear->TempBuffer = (BYTE*) realloc(clear->TempBuffer, clear->TempSize);
@@ -238,7 +238,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		if (pixelIndex != pixelCount)
 			return -1019;
 
-		for (y = 0; y < nHeight; y++)
+		for (y = 0; y < (UINT32) nHeight; y++)
 		{
 			CopyMemory(pDstPixel8, pSrcPixel8, nSrcStep);
 			pSrcPixel8 += nSrcStep;
@@ -543,7 +543,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			if (height > nHeight)
 				return -1043;
 
-			if ((width * height * 4) > clear->TempSize)
+			if (((UINT32) (width * height * 4)) > clear->TempSize)
 			{
 				clear->TempSize = (width * height * 4);
 				clear->TempBuffer = (BYTE*) realloc(clear->TempBuffer, clear->TempSize);
@@ -732,7 +732,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 		pDstPixel8 = glyphData;
 		pSrcPixel8 = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
 
-		for (y = 0; y < nHeight; y++)
+		for (y = 0; y < (UINT32) nHeight; y++)
 		{
 			CopyMemory(pDstPixel8, pSrcPixel8, nSrcStep);
 			pDstPixel8 += nSrcStep;

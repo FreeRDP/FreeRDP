@@ -203,7 +203,7 @@ int rdpgfx_recv_reset_graphics_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s
 
 	pad = 340 - (RDPGFX_HEADER_SIZE + 12 + (pdu.monitorCount * 20));
 
-	if (Stream_GetRemainingLength(s) < pad)
+	if (Stream_GetRemainingLength(s) < (size_t) pad)
 		return -1;
 
 	Stream_Seek(s, pad); /* pad (total size is 340 bytes) */
@@ -254,7 +254,7 @@ int rdpgfx_recv_cache_import_reply_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 
 	Stream_Read_UINT16(s, pdu.importedEntriesCount); /* cacheSlot (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (pdu.importedEntriesCount * 2))
+	if (Stream_GetRemainingLength(s) < (size_t) (pdu.importedEntriesCount * 2))
 		return -1;
 
 	pdu.cacheSlots = (UINT16*) calloc(pdu.importedEntriesCount, sizeof(UINT16));
@@ -427,9 +427,16 @@ int rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 	cmd.length = pdu.bitmapDataLength;
 	cmd.data = pdu.bitmapData;
 
-	if (context && context->SurfaceCommand)
+	if (cmd.codecId == RDPGFX_CODECID_H264)
 	{
-		context->SurfaceCommand(context, &cmd);
+		rdpgfx_decode(gfx, &cmd);
+	}
+	else
+	{
+		if (context && context->SurfaceCommand)
+		{
+			context->SurfaceCommand(context, &cmd);
+		}
 	}
 
 	return 1;
@@ -518,7 +525,7 @@ int rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	rdpgfx_read_color32(s, &(pdu.fillPixel)); /* fillPixel (4 bytes) */
 	Stream_Read_UINT16(s, pdu.fillRectCount); /* fillRectCount (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (pdu.fillRectCount * 8))
+	if (Stream_GetRemainingLength(s) < (size_t) (pdu.fillRectCount * 8))
 		return -1;
 
 	pdu.fillRects = (RDPGFX_RECT16*) calloc(pdu.fillRectCount, sizeof(RDPGFX_RECT16));
@@ -559,7 +566,7 @@ int rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 	rdpgfx_read_rect16(s, &(pdu.rectSrc)); /* rectSrc (8 bytes ) */
 	Stream_Read_UINT16(s, pdu.destPtsCount); /* destPtsCount (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (pdu.destPtsCount * 4))
+	if (Stream_GetRemainingLength(s) < (size_t) (pdu.destPtsCount * 4))
 			return -1;
 
 	pdu.destPts = (RDPGFX_POINT16*) calloc(pdu.destPtsCount, sizeof(RDPGFX_POINT16));
@@ -630,7 +637,7 @@ int rdpgfx_recv_cache_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream*
 	Stream_Read_UINT16(s, pdu.surfaceId); /* surfaceId (2 bytes) */
 	Stream_Read_UINT16(s, pdu.destPtsCount); /* destPtsCount (2 bytes) */
 
-	if (Stream_GetRemainingLength(s) < (pdu.destPtsCount * 4))
+	if (Stream_GetRemainingLength(s) < (size_t) (pdu.destPtsCount * 4))
 		return -1;
 
 	pdu.destPts = (RDPGFX_POINT16*) calloc(pdu.destPtsCount, sizeof(RDPGFX_POINT16));
@@ -840,7 +847,7 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 
 	s = Stream_New(pDstData, DstSize);
 
-	while (Stream_GetPosition(s) < Stream_Length(s))
+	while (((size_t) Stream_GetPosition(s)) < Stream_Length(s))
 	{
 		status = rdpgfx_recv_pdu(callback, s);
 
@@ -1034,11 +1041,7 @@ void* rdpgfx_get_cache_slot_data(RdpgfxClientContext* context, UINT16 cacheSlot)
 	return pData;
 }
 
-#ifdef STATIC_CHANNELS
-#define DVCPluginEntry		rdpgfx_DVCPluginEntry
-#endif
-
-int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+int rdpgfx_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	int status = 0;
 	RDPGFX_PLUGIN* gfx;
@@ -1095,6 +1098,9 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		gfx->iface.pInterface = (void*) context;
 
 		gfx->zgfx = zgfx_context_new(FALSE);
+
+		if (!gfx->zgfx)
+			return -1;
 
 		status = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpgfx", (IWTSPlugin*) gfx);
 	}

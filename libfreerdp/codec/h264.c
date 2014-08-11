@@ -365,3 +365,4 @@ void h264_context_free(H264_CONTEXT* h264)
 		free(h264);
 	}
 }
+

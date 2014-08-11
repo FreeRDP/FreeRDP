@@ -1626,6 +1626,12 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 		case FreeRDP_EncryptionLevel:
 			return settings->EncryptionLevel;
 
+		case FreeRDP_ServerRandomLength:
+			return settings->ServerRandomLength;
+
+		case FreeRDP_ClientRandomLength:
+			return settings->ClientRandomLength;
+
 		case FreeRDP_ChannelCount:
 			return settings->ChannelCount;
 
@@ -1736,6 +1742,10 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 
 		case FreeRDP_KeyboardFunctionKey:
 			return settings->KeyboardFunctionKey;
+
+		case FreeRDP_KeyboardHook:
+			return settings->KeyboardHook;
+			break;
 
 		case FreeRDP_BrushSupportLevel:
 			return settings->BrushSupportLevel;
@@ -1869,6 +1879,14 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_EncryptionLevel:
 			settings->EncryptionLevel = param;
+			break;
+
+		case FreeRDP_ServerRandomLength:
+			settings->ServerRandomLength = param;
+			break;
+
+		case FreeRDP_ClientRandomLength:
+			settings->ClientRandomLength = param;
 			break;
 
 		case FreeRDP_ChannelCount:
@@ -2017,6 +2035,10 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_KeyboardFunctionKey:
 			settings->KeyboardFunctionKey = param;
+			break;
+
+		case FreeRDP_KeyboardHook:
+			settings->KeyboardHook = param;
 			break;
 
 		case FreeRDP_BrushSupportLevel:
