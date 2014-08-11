@@ -24,7 +24,7 @@
 
 #define CLOG_PRINT(level, file, fkt, line, dbg_str, fmt, ...) \
 	do { \
-		char tag[1024]; \
+		char tag[1024] = { 0 }; \
 		wLogMessage msg; \
 		wLog *log; \
 		\
