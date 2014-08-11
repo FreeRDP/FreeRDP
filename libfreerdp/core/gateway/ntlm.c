@@ -71,7 +71,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "QuerySecurityPackageInfo status: 0x%08X\n", status);
+		DEBUG_WARN( "QuerySecurityPackageInfo status: 0x%08X\n", status);
 		return FALSE;
 	}
 
@@ -82,7 +82,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "AcquireCredentialsHandle status: 0x%08X\n", status);
+		DEBUG_WARN( "AcquireCredentialsHandle status: 0x%08X\n", status);
 		return FALSE;
 	}
 
@@ -235,7 +235,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 	if ((!ntlm) || (!ntlm->table))
 	{
-		fprintf(stderr, "ntlm_authenticate: invalid ntlm context\n");
+		DEBUG_WARN( "ntlm_authenticate: invalid ntlm context\n");
 		return FALSE;
 	}
 
@@ -254,7 +254,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 		{
-			fprintf(stderr, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+			DEBUG_WARN( "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
 			return FALSE;
 		}
 

@@ -33,6 +33,7 @@
 
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/utils/debug.h>
 
 #include <freerdp/constants.h>
 #include <freerdp/utils/tcp.h>
@@ -341,7 +342,7 @@ static BOOL test_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec,
 
 	if ((sec < 0) || ((sec == 0) && (usec < 0)))
 	{
-		printf("Invalid time stamp detected.\n");
+		DEBUG_MSG("Invalid time stamp detected.\n");
 		return FALSE;
 	}
 
@@ -451,7 +452,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 		Stream_SetPosition(s, BytesReturned);
 
-		printf("got %lu bytes\n", BytesReturned);
+		DEBUG_MSG("got %lu bytes\n", BytesReturned);
 	}
 
 	Stream_Free(s, TRUE);
@@ -470,30 +471,30 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	 * callback returns.
 	 */
 
-	printf("Client %s is activated (osMajorType %d osMinorType %d)", client->local ? "(local)" : client->hostname,
+	DEBUG_MSG("Client %s is activated (osMajorType %d osMinorType %d)", client->local ? "(local)" : client->hostname,
 			client->settings->OsMajorType, client->settings->OsMinorType);
 
 	if (client->settings->AutoLogonEnabled)
 	{
-		printf(" and wants to login automatically as %s\\%s",
+		DEBUG_MSG(" and wants to login automatically as %s\\%s",
 			client->settings->Domain ? client->settings->Domain : "",
 			client->settings->Username);
 
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
-	printf("\n");
+	DEBUG_MSG("\n");
 
-	printf("Client requested desktop: %dx%dx%d\n",
+	DEBUG_MSG("Client requested desktop: %dx%dx%d\n",
 		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 
 #if (SAMPLE_SERVER_USE_CLIENT_RESOLUTION == 1)
 	context->rfx_context->width = client->settings->DesktopWidth;
 	context->rfx_context->height = client->settings->DesktopHeight;
-	printf("Using resolution requested by client.\n");
+	DEBUG_MSG("Using resolution requested by client.\n");
 #else
 	client->settings->DesktopWidth = context->rfx_context->width;
 	client->settings->DesktopHeight = context->rfx_context->height;
-	printf("Resizing client to %dx%d\n", client->settings->DesktopWidth, client->settings->DesktopHeight);
+	DEBUG_MSG("Resizing client to %dx%d\n", client->settings->DesktopWidth, client->settings->DesktopHeight);
 	client->update->DesktopResize(client->update->context);
 #endif
 
@@ -506,7 +507,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 
 		if (context->debug_channel != NULL)
 		{
-			printf("Open channel rdpdbg.\n");
+			DEBUG_MSG("Open channel rdpdbg.\n");
 
 			context->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -561,7 +562,7 @@ BOOL tf_peer_activate(freerdp_peer* client)
 
 void tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
+	DEBUG_MSG("Client sent a synchronize event (flags:0x%X)\n", flags);
 }
 
 void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -570,7 +571,7 @@ void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	rdpUpdate* update = client->update;
 	testPeerContext* context = (testPeerContext*) input->context;
 
-	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+	DEBUG_MSG("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 
 	if ((flags & 0x4000) && code == 0x22) /* 'g' key */
 	{
@@ -622,7 +623,7 @@ void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 void tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	printf("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+	DEBUG_MSG("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
 }
 
 void tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
@@ -641,11 +642,11 @@ static void tf_peer_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* 
 {
 	BYTE i;
 
-	printf("Client requested to refresh:\n");
+	DEBUG_MSG("Client requested to refresh:\n");
 
 	for (i = 0; i < count; i++)
 	{
-		printf("  (%d, %d) (%d, %d)\n", areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
+		DEBUG_MSG("  (%d, %d) (%d, %d)\n", areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
 	}
 }
 
@@ -653,11 +654,11 @@ static void tf_peer_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_1
 {
 	if (allow > 0)
 	{
-		printf("Client restore output (%d, %d) (%d, %d).\n", area->left, area->top, area->right, area->bottom);
+		DEBUG_MSG("Client restore output (%d, %d) (%d, %d).\n", area->left, area->top, area->right, area->bottom);
 	}
 	else
 	{
-		printf("Client minimized and suppress output.\n");
+		DEBUG_MSG("Client minimized and suppress output.\n");
 	}
 }
 
@@ -700,7 +701,7 @@ static void* test_peer_mainloop(void* arg)
 	client->Initialize(client);
 	context = (testPeerContext*) client->context;
 
-	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
+	DEBUG_MSG("We've got a client %s\n", client->local ? "(local)" : client->hostname);
 
 	while (1)
 	{
@@ -709,7 +710,7 @@ static void* test_peer_mainloop(void* arg)
 		memset(rfds, 0, sizeof(rfds));
 		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			DEBUG_MSG("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 
@@ -743,7 +744,7 @@ static void* test_peer_mainloop(void* arg)
 				(wsa_error == WSAEINPROGRESS) ||
 				(wsa_error == WSAEINTR)))
 			{
-				printf("select failed (WSAGetLastError: %d)\n", wsa_error);
+				DEBUG_MSG("select failed (WSAGetLastError: %d)\n", wsa_error);
 				break;
 			}
 #else
@@ -753,7 +754,7 @@ static void* test_peer_mainloop(void* arg)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("select failed (errno: %d)\n", errno);
+				DEBUG_MSG("select failed (errno: %d)\n", errno);
 				break;
 			}
 #endif
@@ -766,7 +767,7 @@ static void* test_peer_mainloop(void* arg)
 			break;
 	}
 
-	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
+	DEBUG_MSG("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
 
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);
@@ -799,7 +800,7 @@ static void test_server_mainloop(freerdp_listener* instance)
 		memset(rfds, 0, sizeof(rfds));
 		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			DEBUG_MSG("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 
@@ -827,14 +828,14 @@ static void test_server_mainloop(freerdp_listener* instance)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("select failed\n");
+				DEBUG_MSG("select failed\n");
 				break;
 			}
 		}
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			DEBUG_MSG("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 	}

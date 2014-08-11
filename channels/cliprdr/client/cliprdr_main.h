@@ -23,7 +23,7 @@
 
 #include <winpr/stream.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/utils/svc_plugin.h>
 
 struct cliprdr_plugin
@@ -45,9 +45,9 @@ void cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* data_out);
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
 
 #ifdef WITH_DEBUG_CLIPRDR
-#define DEBUG_CLIPRDR(fmt, ...) DEBUG_CLASS(CLIPRDR, fmt, ## __VA_ARGS__)
+#define DEBUG_CLIPRDR(fmt, ...) CLOG_CLASS(CLIPRDR, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_CLIPRDR(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_CLIPRDR(fmt, ...) CLOG_NULL(fmt, ## __VA_ARGS__)
 #endif
 
 #endif /* __CLIPRDR_MAIN_H */

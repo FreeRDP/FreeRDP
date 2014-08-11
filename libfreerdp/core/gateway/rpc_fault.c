@@ -315,7 +315,7 @@ int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 	int index;
 	UINT32 code;
 
-	fprintf(stderr, "RPC Fault PDU:\n");
+	DEBUG_WARN( "RPC Fault PDU:\n");
 
 	code = rpc_map_status_code_to_win32_error_code(header->fault.status);
 
@@ -323,7 +323,7 @@ int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 	{
 		if (RPC_FAULT_CODES[index].code == code)
 		{
-			fprintf(stderr, "status: %s (0x%08X)\n", RPC_FAULT_CODES[index].name, code);
+			DEBUG_WARN( "status: %s (0x%08X)\n", RPC_FAULT_CODES[index].name, code);
 			return 0;
 		}
 	}
@@ -332,12 +332,12 @@ int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 	{
 		if (RPC_TSG_FAULT_CODES[index].code == code)
 		{
-			fprintf(stderr, "status: %s (0x%08X)\n", RPC_TSG_FAULT_CODES[index].name, code);
+			DEBUG_WARN( "status: %s (0x%08X)\n", RPC_TSG_FAULT_CODES[index].name, code);
 			return 0;
 		}
 	}
 
-	fprintf(stderr, "status: %s (0x%08X)\n", "UNKNOWN", code);
+	DEBUG_WARN( "status: %s (0x%08X)\n", "UNKNOWN", code);
 
 	return 0;
 }

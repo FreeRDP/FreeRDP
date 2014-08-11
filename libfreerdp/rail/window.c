@@ -100,7 +100,7 @@ void print_window_styles(UINT32 style)
 {
 	int i;
 
-	fprintf(stderr, "Window Styles:\n{\n");
+	DEBUG_WARN( "Window Styles:\n{\n");
 	for (i = 0; i < ARRAYSIZE(WINDOW_STYLES); i++)
 	{
 		if (style & WINDOW_STYLES[i].style)
@@ -111,17 +111,17 @@ void print_window_styles(UINT32 style)
 						continue;
 			}
 
-			fprintf(stderr, "\t%s\n", WINDOW_STYLES[i].name);
+			DEBUG_WARN( "\t%s\n", WINDOW_STYLES[i].name);
 		}
 	}
-	fprintf(stderr, "}\n");
+	DEBUG_WARN( "}\n");
 }
 
 void print_extended_window_styles(UINT32 style)
 {
 	int i;
 
-	fprintf(stderr, "Extended Window Styles:\n{\n");
+	DEBUG_WARN( "Extended Window Styles:\n{\n");
 	for (i = 0; i < ARRAYSIZE(EXTENDED_WINDOW_STYLES); i++)
 	{
 		if (style & EXTENDED_WINDOW_STYLES[i].style)
@@ -132,10 +132,10 @@ void print_extended_window_styles(UINT32 style)
 						continue;
 			}
 
-			fprintf(stderr, "\t%s\n", EXTENDED_WINDOW_STYLES[i].name);
+			DEBUG_WARN( "\t%s\n", EXTENDED_WINDOW_STYLES[i].name);
 		}
 	}
-	fprintf(stderr, "}\n");
+	DEBUG_WARN( "}\n");
 }
 
 void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)

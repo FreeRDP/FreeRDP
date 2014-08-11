@@ -434,7 +434,7 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 			break;
 
 		default:
-			fprintf(stderr, "Unknown messageType %u\n", messageType);
+			DEBUG_WARN( "Unknown messageType %u\n", messageType);
 			/* Each input event uses 6 bytes. */
 			Stream_Seek(s, 6);
 			break;

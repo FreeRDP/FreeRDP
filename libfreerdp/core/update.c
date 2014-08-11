@@ -346,7 +346,7 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, 
 		scanlineSize = ((scanlineSize + 1) / 2) * 2;
 		if (scanlineSize * pointer_color->height != pointer_color->lengthXorMask)
 		{
-			fprintf(stderr, "%s: invalid lengthXorMask: width=%d height=%d, %d instead of %d\n", __FUNCTION__,
+			DEBUG_WARN( "%s: invalid lengthXorMask: width=%d height=%d, %d instead of %d\n", __FUNCTION__,
 					pointer_color->width, pointer_color->height,
 					pointer_color->lengthXorMask, scanlineSize * pointer_color->height);
 			return FALSE;
@@ -377,7 +377,7 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, 
 		scanlineSize = ((1 + scanlineSize) / 2) * 2;
 		if (scanlineSize * pointer_color->height != pointer_color->lengthAndMask)
 		{
-			fprintf(stderr, "%s: invalid lengthAndMask: %d instead of %d\n", __FUNCTION__,
+			DEBUG_WARN( "%s: invalid lengthAndMask: %d instead of %d\n", __FUNCTION__,
 					pointer_color->lengthAndMask, scanlineSize * pointer_color->height);
 			return FALSE;
 		}
@@ -405,7 +405,7 @@ BOOL update_read_pointer_new(wStream* s, POINTER_NEW_UPDATE* pointer_new)
 	Stream_Read_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
 	if ((pointer_new->xorBpp < 1) || (pointer_new->xorBpp > 32))
 	{
-		fprintf(stderr, "%s: invalid xorBpp %d\n", __FUNCTION__, pointer_new->xorBpp);
+		DEBUG_WARN( "%s: invalid xorBpp %d\n", __FUNCTION__, pointer_new->xorBpp);
 		return FALSE;
 	}
 	return update_read_pointer_color(s, &pointer_new->colorPtrAttr, pointer_new->xorBpp); /* colorPtrAttr */
@@ -480,7 +480,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 
 	Stream_Read_UINT16(s, updateType); /* updateType (2 bytes) */
 
-	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	//DEBUG_MSG("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
 	IFCALL(update->BeginPaint, context);
 
@@ -604,7 +604,7 @@ static void update_end_paint(rdpContext* context)
 
 	if (update->numberOrders > 0)
 	{
-		fprintf(stderr, "%s: sending %d orders\n", __FUNCTION__, update->numberOrders);
+		DEBUG_WARN( "%s: sending %d orders\n", __FUNCTION__, update->numberOrders);
 		fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
 	}
 

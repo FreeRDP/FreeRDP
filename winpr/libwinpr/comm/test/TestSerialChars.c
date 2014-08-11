@@ -48,7 +48,7 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "GetCommState failure, GetLastError(): 0x%0.8x\n", GetLastError());
+		fprintf(stderr, "GetCommState failure, GetLastError(): 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -74,7 +74,7 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	dcb.XoffChar = XonChar;
 	if (!SetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "SetCommState failure, GetLastError(): 0x%0.8x\n", GetLastError());
+		fprintf(stderr, "SetCommState failure, GetLastError(): 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -82,7 +82,7 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "GetCommState failure, GetLastError(): 0x%0.8x\n", GetLastError());
+		fprintf(stderr, "GetCommState failure, GetLastError(): 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -117,7 +117,7 @@ static BOOL test_SerCx2Sys(HANDLE hComm)
 	dcb.DCBlength = sizeof(DCB);
 	if (!GetCommState(hComm, &dcb))
 	{
-		fprintf(stderr, "GetCommState failure; GetLastError(): %0.8x\n", GetLastError());
+		fprintf(stderr, "GetCommState failure; GetLastError(): %08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -175,7 +175,7 @@ int TestSerialChars(int argc, char* argv[])
 
 	if (!CloseHandle(hComm))
 	{
-		fprintf(stderr, "CloseHandle failure, GetLastError()=%0.8x\n", GetLastError());
+		fprintf(stderr, "CloseHandle failure, GetLastError()=%08x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 

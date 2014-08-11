@@ -1142,7 +1142,7 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCAR
 			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 
 #if 0
-	printf("%s (0x%08X) FileId: %d CompletionId: %d\n",
+	CLOG_DBG("%s (0x%08X) FileId: %d CompletionId: %d\n",
 		smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 #endif
 

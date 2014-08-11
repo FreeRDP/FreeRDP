@@ -22,6 +22,7 @@
 #endif
 
 #include <freerdp/utils/uds.h>
+#include <freerdp/utils/debug.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +55,7 @@ int freerdp_uds_connect(const char* path)
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sockfd == -1)
 	{
-		perror("socket");
+		DEBUG_WARN("socket");
 		return -1;
 	}
 
@@ -63,7 +64,7 @@ int freerdp_uds_connect(const char* path)
 	status = connect(sockfd, (struct sockaddr *) &addr, sizeof(addr));
 	if (status < 0)
 	{
-		perror("connect");
+		DEBUG_WARN("connect");
 		close(sockfd);
 		return -1;
 	}

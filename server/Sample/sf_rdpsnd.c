@@ -22,6 +22,7 @@
 #endif
 
 #include <freerdp/server/audin.h>
+#include <freerdp/utils/debug.h>
 
 #include "sf_rdpsnd.h"
 
@@ -33,7 +34,7 @@ static const AUDIO_FORMAT test_audio_formats[] =
 
 static void sf_peer_rdpsnd_activated(RdpsndServerContext* context)
 {
-	printf("RDPSND Activated\n");
+	DEBUG_MSG("RDPSND Activated\n");
 }
 
 BOOL sf_peer_rdpsnd_init(testPeerContext* context)

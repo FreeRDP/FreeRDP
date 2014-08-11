@@ -96,7 +96,7 @@ static void* audin_opensles_thread_func(void* arg)
 		int rc = android_RecIn(opensles->stream, buffer.s, raw_size);
 		if (rc < 0)
 		{
-			DEBUG_WARN("android_RecIn %d", rc);
+			CLOG_ERR("android_RecIn %d", rc);
 			continue;
 		}
 
@@ -250,7 +250,7 @@ static void audin_opensles_set_format(IAudinDevice* device,
 			break;
 
 		default:
-			DEBUG_WARN("Encoding '%d' [%08X] not supported",
+			CLOG_ERR("Encoding '%d' [%08X] not supported",
 				(format->wFormatTag),
 				format->wFormatTag); 
 			return;
@@ -309,7 +309,7 @@ static void audin_opensles_close(IAudinDevice* device)
 	 * ignore duplicate requests. */
 	if (!opensles->stopEvent)
 	{
-		DEBUG_WARN("[ERROR] function called without matching open.");
+		CLOG_ERR("[ERROR] function called without matching open.");
 		return;
 	}
 
