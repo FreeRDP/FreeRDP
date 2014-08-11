@@ -103,6 +103,7 @@ BOOL shadow_client_capabilities(freerdp_peer* peer)
 
 BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
+	int width, height;
 	rdpSettings* settings;
 	rdpShadowClient* client;
 	rdpShadowSurface* lobby;
@@ -124,18 +125,23 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 
 	shadow_client_channels_post_connect(client);
 
-	lobby = client->lobby = shadow_surface_new(client->server, 0, 0, settings->DesktopWidth, settings->DesktopHeight);
+	width = settings->DesktopWidth;
+	height = settings->DesktopHeight;
+
+	invalidRect.left = 0;
+	invalidRect.top = 0;
+	invalidRect.right = width;
+	invalidRect.bottom = height;
+
+	region16_union_rect(&(client->invalidRegion), &(client->invalidRegion), &invalidRect);
+
+	lobby = client->lobby = shadow_surface_new(client->server, 0, 0, width, height);
 
 	if (!client->lobby)
 		return FALSE;
 
 	freerdp_image_fill(lobby->data, PIXEL_FORMAT_XRGB32, lobby->scanline,
 			0, 0, lobby->width, lobby->height, 0x3BB9FF);
-
-	invalidRect.left = 0;
-	invalidRect.top = 0;
-	invalidRect.right = lobby->width;
-	invalidRect.bottom = lobby->height;
 
 	region16_union_rect(&(lobby->invalidRegion), &(lobby->invalidRegion), &invalidRect);
 
@@ -561,8 +567,8 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 	nWidth = extents->right - extents->left;
 	nHeight = extents->bottom - extents->top;
 
-	printf("shadow_client_send_surface_update: x: %d y: %d width: %d height: %d right: %d bottom: %d\n",
-		nXSrc, nYSrc, nWidth, nHeight, nXSrc + nWidth, nYSrc + nHeight);
+	//printf("shadow_client_send_surface_update: x: %d y: %d width: %d height: %d right: %d bottom: %d\n",
+	//	nXSrc, nYSrc, nWidth, nHeight, nXSrc + nWidth, nYSrc + nHeight);
 
 	if (settings->RemoteFxCodec || settings->NSCodec)
 	{
@@ -607,17 +613,13 @@ int shadow_client_surface_update(rdpShadowClient* client, REGION16* region)
 
 void* shadow_client_thread(rdpShadowClient* client)
 {
-	int fps;
 	DWORD status;
 	DWORD nCount;
-	UINT64 cTime;
-	DWORD dwTimeout;
-	DWORD dwInterval;
-	UINT64 frameTime;
 	HANDLE events[32];
 	HANDLE StopEvent;
 	HANDLE ClientEvent;
 	HANDLE ChannelEvent;
+	HANDLE UpdateEvent;
 	freerdp_peer* peer;
 	rdpSettings* settings;
 	rdpShadowServer* server;
@@ -645,11 +647,8 @@ void* shadow_client_thread(rdpShadowClient* client)
 			shadow_client_surface_frame_acknowledge;
 	peer->update->SuppressOutput = (pSuppressOutput) shadow_client_suppress_output;
 
-	fps = 16;
-	dwInterval = 1000 / fps;
-	frameTime = GetTickCount64() + dwInterval;
-
 	StopEvent = client->StopEvent;
+	UpdateEvent = subsystem->updateEvent;
 	ClientEvent = peer->GetEventHandle(peer);
 	ChannelEvent = WTSVirtualChannelManagerGetEventHandle(client->vcm);
 
@@ -657,17 +656,41 @@ void* shadow_client_thread(rdpShadowClient* client)
 	{
 		nCount = 0;
 		events[nCount++] = StopEvent;
+		events[nCount++] = UpdateEvent;
 		events[nCount++] = ClientEvent;
 		events[nCount++] = ChannelEvent;
 
-		cTime = GetTickCount64();
-		dwTimeout = (DWORD) ((cTime > frameTime) ? 0 : frameTime - cTime);
+		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
-		status = WaitForMultipleObjects(nCount, events, FALSE, dwTimeout);
-
-		if (WaitForSingleObject(client->StopEvent, 0) == WAIT_OBJECT_0)
+		if (WaitForSingleObject(StopEvent, 0) == WAIT_OBJECT_0)
 		{
+			if (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0)
+			{
+				EnterSynchronizationBarrier(&(subsystem->barrier), 0);
+			}
+
 			break;
+		}
+
+		if (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0)
+		{
+			if (client->activated)
+			{
+				int index;
+				int numRects = 0;
+				const RECTANGLE_16* rects;
+
+				rects = region16_rects(&(subsystem->invalidRegion), &numRects);
+
+				for (index = 0; index < numRects; index++)
+				{
+					region16_union_rect(&(client->invalidRegion), &(client->invalidRegion), &rects[index]);
+				}
+
+				shadow_client_send_surface_update(client);
+			}
+
+			EnterSynchronizationBarrier(&(subsystem->barrier), 0);
 		}
 
 		if (WaitForSingleObject(ClientEvent, 0) == WAIT_OBJECT_0)
@@ -686,26 +709,6 @@ void* shadow_client_thread(rdpShadowClient* client)
 				fprintf(stderr, "WTSVirtualChannelManagerCheckFileDescriptor failure\n");
 				break;
 			}
-		}
-
-		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
-		{
-			if (client->activated)
-			{
-				EnterCriticalSection(&(screen->lock));
-
-				if (subsystem->SurfaceCopy)
-					subsystem->SurfaceCopy(subsystem);
-
-				shadow_client_send_surface_update(client);
-				region16_clear(&(screen->invalidRegion));
-
-				LeaveCriticalSection(&(screen->lock));
-			}
-
-			fps = encoder->fps;
-			dwInterval = 1000 / fps;
-			frameTime += dwInterval;
 		}
 	}
 

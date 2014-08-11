@@ -32,6 +32,7 @@
 
 #include "transport.h"
 
+#ifdef WITH_DEBUG_NEGO
 static const char* const NEGO_STATE_STRINGS[] =
 {
 	"NEGO_STATE_INITIAL",
@@ -55,6 +56,7 @@ static const char PROTOCOL_SECURITY_STRINGS[9][4] =
 	"UNK",
 	"EXT"
 };
+#endif /* WITH_DEBUG_NEGO */
 
 BOOL nego_security_connect(rdpNego* nego);
 
@@ -503,7 +505,7 @@ BOOL nego_recv_response(rdpNego* nego)
 	if (!s)
 		return FALSE;
 
-	status = transport_read(nego->transport, s);
+	status = transport_read_pdu(nego->transport, s);
 	if (status < 0)
 	{
 		Stream_Free(s, TRUE);

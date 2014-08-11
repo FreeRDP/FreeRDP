@@ -496,16 +496,21 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 		return FALSE;
 
 	if (hostname[0] == '/')
+		tcp->ipcSocket = TRUE;
+
+	if (tcp->ipcSocket)
 	{
 		tcp->sockfd = freerdp_uds_connect(hostname);
 
 		if (tcp->sockfd < 0)
 			return FALSE;
 
-		tcp->socketBio = BIO_new_fd(tcp->sockfd, 1);
+		tcp->socketBio = BIO_new(BIO_s_simple_socket());
 
 		if (!tcp->socketBio)
 			return FALSE;
+
+		BIO_set_fd(tcp->socketBio, tcp->sockfd, BIO_CLOSE);
 	}
 	else
 	{
@@ -562,13 +567,13 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 			}
 		}
 
-		BIO_set_close(tcp->socketBio, BIO_NOCLOSE);
+		(void)BIO_set_close(tcp->socketBio, BIO_NOCLOSE);
 		BIO_free(tcp->socketBio);
 
 		tcp->socketBio = BIO_new(BIO_s_simple_socket());
 
 		if (!tcp->socketBio)
-			return -1;
+			return FALSE;
 
 		BIO_set_fd(tcp->socketBio, tcp->sockfd, BIO_CLOSE);
 	}
@@ -581,8 +586,11 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 	option_value = 1;
 	option_len = sizeof(option_value);
 
-	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
-		fprintf(stderr, "%s: unable to set TCP_NODELAY\n", __FUNCTION__);
+	if (!tcp->ipcSocket)
+	{
+		if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
+			fprintf(stderr, "%s: unable to set TCP_NODELAY\n", __FUNCTION__);
+	}
 
 	/* receive buffer must be a least 32 K */
 	if (getsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, &option_len) == 0)
@@ -600,8 +608,11 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 		}
 	}
 
-	if (!tcp_set_keep_alive_mode(tcp))
-		return FALSE;
+	if (!tcp->ipcSocket)
+	{
+		if (!tcp_set_keep_alive_mode(tcp))
+			return FALSE;
+	}
 
 	tcp->bufferedBio = BIO_new(BIO_s_buffered_socket());
 

@@ -3,7 +3,7 @@
  * Synchronization Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2014 Thincast Technologies GmbH <norbert.federa@thincast.com>
+ * Copyright 2014 Thincast Technologies GmbH
  * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

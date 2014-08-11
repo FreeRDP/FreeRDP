@@ -1,7 +1,9 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * WinPR: Windows Portable Runtime
+ * OpenSSL Library Initialization
  *
- * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Thincast Technologies GmbH
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +18,28 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_H
-#define FREERDP_SHADOW_SERVER_H
+#ifndef WINPR_SSL_H
+#define WINPR_SSL_H
 
-#include <freerdp/server/shadow.h>
+#include <winpr/wtypes.h>
 
-#include "shadow_client.h"
-#include "shadow_input.h"
-#include "shadow_screen.h"
-#include "shadow_surface.h"
-#include "shadow_encoder.h"
-#include "shadow_capture.h"
-#include "shadow_channels.h"
+#define WINPR_SSL_INIT_DEFAULT 0x00
+#define WINPR_SSL_INIT_ALREADY_INITIALIZED 0x01
+#define WINPR_SSL_INIT_ENABLE_LOCKING 0x2
 
-#ifdef __cplusplus
+#define WINPR_SSL_CLEANUP_GLOBAL 0x01
+#define WINPR_SSL_CLEANUP_THREAD 0x02
+
+#ifdef	__cplusplus
 extern "C" {
 #endif
 
+WINPR_API BOOL winpr_InitializeSSL(DWORD flags);
+WINPR_API BOOL winpr_CleanupSSL(DWORD flags);
 
-
-#ifdef __cplusplus
+#ifdef	__cplusplus
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_H */
+#endif	/* WINPR_SSL_H */
 

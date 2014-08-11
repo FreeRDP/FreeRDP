@@ -54,7 +54,7 @@ WCHAR* _wcsdup(const WCHAR* strSource)
 	if (strSource == NULL)
 		return NULL;
 
-#if sun
+#if defined(sun) && sun
 	strDestination = wsdup(strSource);
 #elif defined(__APPLE__) && defined(__MACH__) || defined(ANDROID)
 	strDestination = malloc(wcslen((wchar_t*)strSource));

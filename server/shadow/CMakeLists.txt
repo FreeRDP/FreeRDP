@@ -126,6 +126,8 @@ set(${MODULE_PREFIX}_SRCS
 	shadow_surface.h
 	shadow_encoder.c
 	shadow_encoder.h
+	shadow_capture.c
+	shadow_capture.h
 	shadow_channels.c
 	shadow_channels.h
 	shadow_encomsp.c

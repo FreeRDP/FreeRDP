@@ -36,6 +36,7 @@
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
 
+#ifdef WITH_DEBUG_CLIPRDR
 static const char* const CB_MSG_TYPE_STRINGS[] =
 {
 	"",
@@ -51,6 +52,7 @@ static const char* const CB_MSG_TYPE_STRINGS[] =
 	"CB_LOCK_CLIPDATA"
 	"CB_UNLOCK_CLIPDATA"
 };
+#endif
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr)
 {

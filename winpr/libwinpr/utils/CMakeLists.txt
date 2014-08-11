@@ -77,7 +77,8 @@ set(${MODULE_PREFIX}_SRCS
 	ntlm.c
 	print.c
 	stream.c
-	cmdline.c)
+	cmdline.c
+	ssl.c)
 
 winpr_module_add(${${MODULE_PREFIX}_SRCS}
 	${${MODULE_PREFIX}_COLLECTIONS_SRCS}

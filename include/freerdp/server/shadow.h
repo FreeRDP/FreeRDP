@@ -44,6 +44,7 @@ typedef struct rdp_shadow_server rdpShadowServer;
 typedef struct rdp_shadow_screen rdpShadowScreen;
 typedef struct rdp_shadow_surface rdpShadowSurface;
 typedef struct rdp_shadow_encoder rdpShadowEncoder;
+typedef struct rdp_shadow_capture rdpShadowCapture;
 typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
 
 typedef rdpShadowSubsystem* (*pfnShadowCreateSubsystem)(rdpShadowServer* server);
@@ -92,11 +93,13 @@ struct rdp_shadow_server
 	wArrayList* clients;
 	rdpShadowScreen* screen;
 	rdpShadowSurface* surface;
+	rdpShadowCapture* capture;
 	rdpShadowSubsystem* subsystem;
 
 	DWORD port;
 	BOOL mayView;
 	BOOL mayInteract;
+	char* ipcSocket;
 	char* ConfigPath;
 	char* CertificateFile;
 	char* PrivateKeyFile;
@@ -110,7 +113,9 @@ struct rdp_shadow_server
 	int monitorCount; \
 	MONITOR_DEF monitors[16]; \
 	MONITOR_DEF virtualScreen; \
+	HANDLE updateEvent; \
 	REGION16 invalidRegion; \
+	SYNCHRONIZATION_BARRIER barrier; \
 	\
 	pfnShadowSubsystemInit Init; \
 	pfnShadowSubsystemUninit Uninit; \

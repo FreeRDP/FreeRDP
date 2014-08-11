@@ -46,6 +46,7 @@ typedef struct rdp_tcp rdpTcp;
 struct rdp_tcp
 {
 	int sockfd;
+	BOOL ipcSocket;
 	char ip_address[32];
 	BYTE mac_address[6];
 	rdpSettings* settings;
