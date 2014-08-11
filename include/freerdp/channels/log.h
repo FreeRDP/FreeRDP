@@ -24,12 +24,12 @@
 
 #define CLOG_PRINT(level, file, fkt, line, dbg_str, fmt, ...) \
 	do { \
-		char tag[1024]; \
+		char tag[1024] = {0}; \
 		wLogMessage msg; \
 		wLog *log; \
 		\
-		strcat(tag, "com.freerdp.channels."); \
-		strcat(tag, dbg_str); \
+		strncat(tag, "com.freerdp.channels.", sizeof(tag)); \
+		strncat(tag, dbg_str, sizeof(tag) - sizeof("com.freerdp.channels.")); \
 		log = WLog_Get(tag); \
 		\
 		msg.Type = WLOG_MESSAGE_TEXT; \
