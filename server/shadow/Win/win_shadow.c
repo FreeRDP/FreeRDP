@@ -868,7 +868,7 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	int x, y;
 	int width;
 	int height;
-	int status;
+	int status = 1;
 	int nDstStep = 0;
 	BYTE* pDstData = NULL;
 	rdpShadowServer* server;
@@ -901,7 +901,9 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	printf("SurfaceCopy x: %d y: %d width: %d height: %d right: %d bottom: %d\n",
 		x, y, width, height, x + width, y + height);
 
+#ifdef WITH_DXGI_1_2
 	status = win_shadow_dxgi_fetch_frame_data(subsystem, &pDstData, &nDstStep, x, y, width, height);
+#endif
 
 	if (status < 0)
 		return -1;

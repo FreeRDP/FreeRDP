@@ -29,6 +29,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/rfx.h>
+#include <freerdp/utils/debug.h>
 
 #include <freerdp/server/rdpsnd.h>
 

@@ -39,8 +39,8 @@ static BOOL g_NativeBarrier = FALSE;
 static INIT_ONCE g_InitOnce = INIT_ONCE_STATIC_INIT;
 
 typedef BOOL (WINAPI * fnInitializeSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount);
-typedef BOOL (WINAPI * fnEnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
-typedef BOOL (WINAPI * fnDeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
+typedef BOOL (WINAPI * fnEnterSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
+typedef BOOL (WINAPI * fnDeleteSynchronizationBarrier)(LPSYNCHRONIZATION_BARRIER lpBarrier);
 
 static fnInitializeSynchronizationBarrier pfnInitializeSynchronizationBarrier = NULL;
 static fnEnterSynchronizationBarrier pfnEnterSynchronizationBarrier = NULL;

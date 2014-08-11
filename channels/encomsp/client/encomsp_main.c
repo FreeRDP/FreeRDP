@@ -29,42 +29,7 @@
 
 #include "encomsp_main.h"
 
-<<<<<<< HEAD
 static int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
-=======
-EncomspClientContext* encomsp_get_client_interface(encomspPlugin* encomsp)
-{
-	EncomspClientContext* pInterface;
-	pInterface = (EncomspClientContext*) encomsp->channelEntryPoints.pInterface;
-	return pInterface;
-}
-
-int encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
-{
-	UINT32 status = 0;
-
-	if (!encomsp)
-		return -1;
-
-#if 0
-	CLOG_DBG("EncomspWrite (%d)\n", Stream_Length(s));
-	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
-#endif
-
-	status = encomsp->channelEntryPoints.pVirtualChannelWrite(encomsp->OpenHandle,
-			Stream_Buffer(s), (UINT32) Stream_Length(s), s);
-
-	if (status != CHANNEL_RC_OK)
-	{
-		CLOG_ERR( "encomsp_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
-		return -1;
-	}
-
-	return 1;
-}
-
-int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
->>>>>>> 31ac35698fe9fe0214669028098885f69e4b6a37
 {
 	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
 		return -1;

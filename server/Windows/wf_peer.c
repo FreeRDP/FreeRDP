@@ -92,7 +92,7 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 	if ((settings->DesktopWidth != wfi->servscreen_width) || (settings->DesktopHeight != wfi->servscreen_height))
 	{
 		/*
-		DEBUG_MSG("Client requested resolution %dx%d, but will resize to %dx%d\n",
+		DEBUG_WARN("Client requested resolution %dx%d, but will resize to %dx%d\n",
 			settings->DesktopWidth, settings->DesktopHeight, wfi->servscreen_width, wfi->servscreen_height);
 			*/
 
@@ -248,7 +248,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 	if (wfi->input_disabled)
 	{
-		DEBUG_MSG("client input is disabled\n");
+		DEBUG_WARN("client input is disabled\n");
 		client->input->KeyboardEvent = wf_peer_keyboard_event_dummy;
 		client->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event_dummy;
 		client->input->MouseEvent = wf_peer_mouse_event_dummy;
@@ -260,7 +260,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	context->socketSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
 	context->socketThread = CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
 
-	DEBUG_MSG("We've got a client %s\n", client->local ? "(local)" : client->hostname);
+	DEBUG_WARN("We've got a client %s\n", client->local ? "(local)" : client->hostname);
 
 	nCount = 0;
 	handles[nCount++] = context->updateEvent;
@@ -272,7 +272,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 		if ((status == WAIT_FAILED) || (status == WAIT_TIMEOUT))
 		{
-			DEBUG_MSG("WaitForMultipleObjects failed\n");
+			DEBUG_WARN("WaitForMultipleObjects failed\n");
 			break;
 		}
 
@@ -303,7 +303,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 		//force disconnect
 		if (wfi->force_all_disconnect == TRUE)
 		{
-			DEBUG_MSG("Forcing Disconnect -> ");
+			DEBUG_WARN("Forcing Disconnect -> ");
 			break;
 		}
 
@@ -312,7 +312,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			break;
 	}
 
-	DEBUG_MSG("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
+	DEBUG_WARN("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
 
 	if (WaitForSingleObject(context->updateEvent, 0) == 0)
 	{
