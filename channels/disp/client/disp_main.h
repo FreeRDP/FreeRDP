@@ -27,7 +27,7 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 
 #include <freerdp/client/disp.h>
 

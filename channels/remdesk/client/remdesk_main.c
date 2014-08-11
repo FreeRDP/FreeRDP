@@ -26,7 +26,7 @@
 
 #include <freerdp/assistance.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/client/remdesk.h>
 
 #include "remdesk_main.h"
@@ -50,7 +50,7 @@ int remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 
 	if (status != CHANNEL_RC_OK)
 	{
-		DEBUG_WARN( "remdesk_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
+		CLOG_ERR( "remdesk_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
 		return -1;
 	}
 
@@ -226,7 +226,7 @@ int remdesk_recv_result_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_
 
 	*pResult = result;
 
-	//DEBUG_MSG("RemdeskRecvResult: 0x%04X\n", result);
+	//CLOG_DBG("RemdeskRecvResult: 0x%04X\n", result);
 
 	return 1;
 }
@@ -397,7 +397,7 @@ int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEA
 
 	Stream_Read_UINT32(s, msgType); /* msgType (4 bytes) */
 
-	//DEBUG_MSG("msgType: %d\n", msgType);
+	//CLOG_DBG("msgType: %d\n", msgType);
 
 	switch (msgType)
 	{
@@ -462,7 +462,7 @@ int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEA
 			break;
 
 		default:
-			DEBUG_WARN( "remdesk_recv_control_pdu: unknown msgType: %d\n", msgType);
+			CLOG_ERR( "remdesk_recv_control_pdu: unknown msgType: %d\n", msgType);
 			status = -1;
 			break;
 	}
@@ -476,7 +476,7 @@ int remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 	REMDESK_CHANNEL_HEADER header;
 
 #if 0
-	DEBUG_MSG("RemdeskReceive: %d\n", Stream_GetRemainingLength(s));
+	CLOG_DBG("RemdeskReceive: %d\n", Stream_GetRemainingLength(s));
 	winpr_HexDump(Stream_Pointer(s), Stream_GetRemainingLength(s));
 #endif
 
@@ -586,7 +586,7 @@ int remdesk_send(remdeskPlugin* remdesk, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		DEBUG_WARN( "remdesk_send: VirtualChannelWrite failed %d\n", status);
+		CLOG_ERR( "remdesk_send: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
@@ -618,7 +618,7 @@ static void remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk,
 	{
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
-			DEBUG_WARN( "remdesk_plugin_process_received: read error\n");
+			CLOG_ERR( "remdesk_plugin_process_received: read error\n");
 		}
 
 		remdesk->data_in = NULL;
@@ -638,7 +638,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event(DWORD openHandle, UINT 
 
 	if (!remdesk)
 	{
-		DEBUG_WARN( "remdesk_virtual_channel_open_event: error no match\n");
+		CLOG_ERR( "remdesk_virtual_channel_open_event: error no match\n");
 		return;
 	}
 
@@ -698,7 +698,7 @@ static void remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVO
 
 	if (status != CHANNEL_RC_OK)
 	{
-		DEBUG_WARN( "remdesk_virtual_channel_event_connected: open failed: status: %d\n", status);
+		CLOG_ERR( "remdesk_virtual_channel_event_connected: open failed: status: %d\n", status);
 		return;
 	}
 
@@ -736,7 +736,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle, UIN
 
 	if (!remdesk)
 	{
-		DEBUG_WARN( "remdesk_virtual_channel_init_event: error no match\n");
+		CLOG_ERR( "remdesk_virtual_channel_init_event: error no match\n");
 		return;
 	}
 

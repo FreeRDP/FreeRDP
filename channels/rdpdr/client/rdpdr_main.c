@@ -31,7 +31,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/channels/rdpdr.h>
 
 #ifdef _WIN32
@@ -452,7 +452,7 @@ static void* drive_hotplug_thread_func(void* arg)
 
 	if (mfd < 0)
 	{
-		DEBUG_WARN( "ERROR: Unable to open /proc/mounts.");
+		CLOG_ERR( "ERROR: Unable to open /proc/mounts.");
 		return NULL;
 	}
 
@@ -663,7 +663,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 
 			count++;
 
-			DEBUG_WARN( "registered device #%d: %s (type=%d id=%d)\n",
+			CLOG_ERR( "registered device #%d: %s (type=%d id=%d)\n",
 				count, device->name, device->type, device->id);
 		}
 	}
@@ -846,7 +846,7 @@ int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		DEBUG_WARN( "rdpdr_send: VirtualChannelWrite failed %d\n", status);
+		CLOG_ERR( "rdpdr_send: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
@@ -884,7 +884,7 @@ static void rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 	{
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
-			DEBUG_WARN( "svc_plugin_process_received: read error\n");
+			CLOG_ERR( "svc_plugin_process_received: read error\n");
 		}
 
 		rdpdr->data_in = NULL;
@@ -904,7 +904,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle, UINT ev
 
 	if (!rdpdr)
 	{
-		DEBUG_WARN( "rdpdr_virtual_channel_open_event: error no match\n");
+		CLOG_ERR( "rdpdr_virtual_channel_open_event: error no match\n");
 		return;
 	}
 
@@ -964,7 +964,7 @@ static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 
 	if (status != CHANNEL_RC_OK)
 	{
-		DEBUG_WARN( "rdpdr_virtual_channel_event_connected: open failed: status: %d\n", status);
+		CLOG_ERR( "rdpdr_virtual_channel_event_connected: open failed: status: %d\n", status);
 		return;
 	}
 
@@ -1010,7 +1010,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT 
 
 	if (!rdpdr)
 	{
-		DEBUG_WARN( "rdpdr_virtual_channel_init_event: error no match\n");
+		CLOG_ERR( "rdpdr_virtual_channel_init_event: error no match\n");
 		return;
 	}
 

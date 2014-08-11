@@ -27,7 +27,7 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
 
@@ -75,7 +75,7 @@ static BOOL tsmf_ffmpeg_init_context(ITSMFDecoder *decoder)
 	mdecoder->codec_context = avcodec_alloc_context3(NULL);
 	if(!mdecoder->codec_context)
 	{
-		DEBUG_WARN("avcodec_alloc_context failed.");
+		CLOG_ERR("avcodec_alloc_context failed.");
 		return FALSE;
 	}
 	return TRUE;
@@ -129,7 +129,7 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder *decoder, const TS_AM_MEDIA_TYP
 	mdecoder->codec = avcodec_find_decoder(mdecoder->codec_id);
 	if(!mdecoder->codec)
 	{
-		DEBUG_WARN("avcodec_find_decoder failed.");
+		CLOG_ERR("avcodec_find_decoder failed.");
 		return FALSE;
 	}
 	mdecoder->codec_context->codec_id = mdecoder->codec_id;
@@ -191,7 +191,7 @@ static BOOL tsmf_ffmpeg_prepare(ITSMFDecoder *decoder)
 	TSMFFFmpegDecoder *mdecoder = (TSMFFFmpegDecoder *) decoder;
 	if(avcodec_open2(mdecoder->codec_context, mdecoder->codec, NULL) < 0)
 	{
-		DEBUG_WARN("avcodec_open2 failed.");
+		CLOG_ERR("avcodec_open2 failed.");
 		return FALSE;
 	}
 	mdecoder->prepared = 1;
@@ -287,13 +287,13 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder *decoder, const BYTE *data, UI
 #endif
 	if(len < 0)
 	{
-		DEBUG_WARN("data_size %d, avcodec_decode_video failed (%d)", data_size, len);
+		CLOG_ERR("data_size %d, avcodec_decode_video failed (%d)", data_size, len);
 		ret = FALSE;
 	}
 	else
 		if(!decoded)
 		{
-			DEBUG_WARN("data_size %d, no frame is decoded.", data_size);
+			CLOG_ERR("data_size %d, no frame is decoded.", data_size);
 			ret = FALSE;
 		}
 		else
@@ -389,7 +389,7 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder *decoder, const BYTE *data, UI
 #endif
 		if(len <= 0 || frame_size <= 0)
 		{
-			DEBUG_WARN("error decoding");
+			CLOG_ERR("error decoding");
 			break;
 		}
 		src += len;
@@ -429,7 +429,7 @@ static BOOL tsmf_ffmpeg_decode(ITSMFDecoder *decoder, const BYTE *data, UINT32 d
 		case AVMEDIA_TYPE_AUDIO:
 			return tsmf_ffmpeg_decode_audio(decoder, data, data_size, extensions);
 		default:
-			DEBUG_WARN("unknown media type.");
+			CLOG_ERR("unknown media type.");
 			return FALSE;
 	}
 }
@@ -453,7 +453,7 @@ static UINT32 tsmf_ffmpeg_get_decoded_format(ITSMFDecoder *decoder)
 		case PIX_FMT_YUV420P:
 			return RDP_PIXFMT_I420;
 		default:
-			DEBUG_WARN("unsupported pixel format %u",
+			CLOG_ERR("unsupported pixel format %u",
 					   mdecoder->codec_context->pix_fmt);
 			return (UINT32) -1;
 	}
@@ -506,7 +506,7 @@ ITSMFDecoder *freerdp_tsmf_client_decoder_subsystem_entry(void)
 		avcodec_register_all();
 		initialized = TRUE;
 	}
-	DEBUG_WARN( "TSMFDecoderEntry FFMPEG\n");
+	CLOG_ERR( "TSMFDecoderEntry FFMPEG\n");
 	decoder = (TSMFFFmpegDecoder *) malloc(sizeof(TSMFFFmpegDecoder));
 	ZeroMemory(decoder, sizeof(TSMFFFmpegDecoder));
 	decoder->iface.SetFormat = tsmf_ffmpeg_set_format;

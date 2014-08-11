@@ -121,7 +121,7 @@ static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	
 	if (status != 0)
 	{
-		DEBUG_WARN( "AudioQueueNewOutput failure\n");
+		CLOG_ERR( "AudioQueueNewOutput failure\n");
 		return;
 	}
 	
@@ -135,7 +135,7 @@ static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	
 	if (status != 0)
 	{
-		DEBUG_MSG("AudioQueueGetProperty failure: kAudioQueueProperty_DecodeBufferSizeFrames\n");
+		CLOG_DBG("AudioQueueGetProperty failure: kAudioQueueProperty_DecodeBufferSizeFrames\n");
 	}
     
 	for (index = 0; index < MAC_AUDIO_QUEUE_NUM_BUFFERS; index++)
@@ -144,7 +144,7 @@ static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 		
 		if (status != 0)
 		{
-			DEBUG_WARN( "AudioQueueAllocateBuffer failed\n");
+			CLOG_ERR( "AudioQueueAllocateBuffer failed\n");
 		}
 	}
     
@@ -219,7 +219,7 @@ static void rdpsnd_mac_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	
 	if (status != 0)
 	{
-		DEBUG_WARN( "AudioQueueSetParameter kAudioQueueParam_Volume failed: %f\n", fVolume);
+		CLOG_ERR( "AudioQueueSetParameter kAudioQueueParam_Volume failed: %f\n", fVolume);
 	}
 }
 
@@ -238,7 +238,7 @@ static void rdpsnd_mac_start(rdpsndDevicePlugin* device)
 		
 		if (status != 0)
 		{
-			DEBUG_WARN( "AudioQueueStart failed\n");
+			CLOG_ERR( "AudioQueueStart failed\n");
 		}
 		
 		mac->isPlaying = TRUE;

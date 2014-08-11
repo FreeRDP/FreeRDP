@@ -130,7 +130,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 	if (status != CHANNEL_RC_OK)
 	{
 		drdynvc->channel_error = status;
-		DEBUG_WARN("VirtualChannelWrite failed %d", status);
+		CLOG_ERR("VirtualChannelWrite failed %d", status);
 		return 1;
 	}
 
@@ -145,7 +145,7 @@ int drdynvc_push_event(drdynvcPlugin* drdynvc, wMessage* event)
 
 	if (status != CHANNEL_RC_OK)
 	{
-		DEBUG_WARN("pVirtualChannelEventPush failed %d", status);
+		CLOG_ERR("pVirtualChannelEventPush failed %d", status);
 		return 1;
 	}
 
@@ -165,7 +165,7 @@ static int drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 
 	if (status != CHANNEL_RC_OK)
 	{
-		DEBUG_WARN("VirtualChannelWrite failed %d", status);
+		CLOG_ERR("VirtualChannelWrite failed %d", status);
 		return 1;
 	}
 
@@ -270,7 +270,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 
 	if (status != CHANNEL_RC_OK)
 	{
-		DEBUG_WARN("VirtualChannelWrite failed %d", status);
+		CLOG_ERR("VirtualChannelWrite failed %d", status);
 		return 1;
 	}
 
@@ -329,7 +329,7 @@ static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbC
 	
 	if (error != CHANNEL_RC_OK)
 	{
-		DEBUG_WARN("VirtualChannelWrite failed %d", error);
+		CLOG_ERR("VirtualChannelWrite failed %d", error);
 		return 1;
 	}
 	
@@ -376,7 +376,7 @@ static void drdynvc_process_receive(rdpSvcPlugin* plugin, wStream* s)
 			break;
 
 		default:
-			DEBUG_WARN("unknown drdynvc cmd 0x%x", Cmd);
+			CLOG_ERR("unknown drdynvc cmd 0x%x", Cmd);
 			break;
 	}
 }

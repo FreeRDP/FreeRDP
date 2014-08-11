@@ -264,21 +264,21 @@ static void tsmf_print_guid(const BYTE *guid)
 #ifdef WITH_DEBUG_TSMF
 	int i;
 	for(i = 3; i >= 0; i--)
-		DEBUG_WARN( "%02X", guid[i]);
-	DEBUG_WARN( "-");
+		CLOG_ERR( "%02X", guid[i]);
+	CLOG_ERR( "-");
 	for(i = 5; i >= 4; i--)
-		DEBUG_WARN( "%02X", guid[i]);
-	DEBUG_WARN( "-");
+		CLOG_ERR( "%02X", guid[i]);
+	CLOG_ERR( "-");
 	for(i = 7; i >= 6; i--)
-		DEBUG_WARN( "%02X", guid[i]);
-	DEBUG_WARN( "-");
+		CLOG_ERR( "%02X", guid[i]);
+	CLOG_ERR( "-");
 	for(i = 8; i < 16; i++)
 	{
-		DEBUG_WARN( "%02X", guid[i]);
+		CLOG_ERR( "%02X", guid[i]);
 		if(i == 9)
-			DEBUG_WARN( "-");
+			CLOG_ERR( "-");
 	}
-	DEBUG_WARN( "\n");
+	CLOG_ERR( "\n");
 #endif
 }
 

@@ -101,7 +101,7 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 
 	Stream_Write_UINT32(s, NumMonitors); /* NumMonitors (4 bytes) */
 
-	//DEBUG_WARN( "NumMonitors: %d\n", NumMonitors);
+	//CLOG_ERR( "NumMonitors: %d\n", NumMonitors);
 
 	for (index = 0; index < NumMonitors; index++)
 	{
@@ -129,14 +129,14 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 		Stream_Write_UINT32(s, Monitors[index].Orientation); /* Orientation (4 bytes) */
 
 #if 0
-		DEBUG_WARN( "\t: Flags: 0x%04X\n", Monitors[index].Flags);
-		DEBUG_WARN( "\t: Left: %d\n", Monitors[index].Left);
-		DEBUG_WARN( "\t: Top: %d\n", Monitors[index].Top);
-		DEBUG_WARN( "\t: Width: %d\n", Monitors[index].Width);
-		DEBUG_WARN( "\t: Height: %d\n", Monitors[index].Height);
-		DEBUG_WARN( "\t: PhysicalWidth: %d\n", Monitors[index].PhysicalWidth);
-		DEBUG_WARN( "\t: PhysicalHeight: %d\n", Monitors[index].PhysicalHeight);
-		DEBUG_WARN( "\t: Orientation: %d\n", Monitors[index].Orientation);
+		CLOG_ERR( "\t: Flags: 0x%04X\n", Monitors[index].Flags);
+		CLOG_ERR( "\t: Left: %d\n", Monitors[index].Left);
+		CLOG_ERR( "\t: Top: %d\n", Monitors[index].Top);
+		CLOG_ERR( "\t: Width: %d\n", Monitors[index].Width);
+		CLOG_ERR( "\t: Height: %d\n", Monitors[index].Height);
+		CLOG_ERR( "\t: PhysicalWidth: %d\n", Monitors[index].PhysicalWidth);
+		CLOG_ERR( "\t: PhysicalHeight: %d\n", Monitors[index].PhysicalHeight);
+		CLOG_ERR( "\t: Orientation: %d\n", Monitors[index].Orientation);
 #endif
 
 		Stream_Write_UINT32(s, Monitors[index].DesktopScaleFactor); /* DesktopScaleFactor (4 bytes) */
@@ -162,7 +162,7 @@ int disp_recv_display_control_caps_pdu(DISP_CHANNEL_CALLBACK* callback, wStream*
 	Stream_Read_UINT32(s, disp->MaxMonitorWidth); /* MaxMonitorWidth (4 bytes) */
 	Stream_Read_UINT32(s, disp->MaxMonitorHeight); /* MaxMonitorHeight (4 bytes) */
 
-	//DEBUG_WARN( "DisplayControlCapsPdu: MaxNumMonitors: %d MaxMonitorWidth: %d MaxMonitorHeight: %d\n",
+	//CLOG_ERR( "DisplayControlCapsPdu: MaxNumMonitors: %d MaxMonitorWidth: %d MaxMonitorHeight: %d\n",
 	//       disp->MaxNumMonitors, disp->MaxMonitorWidth, disp->MaxMonitorHeight);
 
 	return 0;
@@ -176,7 +176,7 @@ int disp_recv_pdu(DISP_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, type); /* Type (4 bytes) */
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
-	//DEBUG_WARN( "Type: %d Length: %d\n", type, length);
+	//CLOG_ERR( "Type: %d Length: %d\n", type, length);
 
 	switch (type)
 	{

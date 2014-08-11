@@ -37,7 +37,7 @@
 #include <winpr/collections.h>
 
 #include <freerdp/addin.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 
 #include "rdpgfx_common.h"
 #include "rdpgfx_codec.h"
@@ -803,7 +803,7 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	if (status < 0)
 	{
-		DEBUG_WARN( "Error while parsing GFX cmdId: %s (0x%04X)\n",
+		CLOG_ERR( "Error while parsing GFX cmdId: %s (0x%04X)\n",
 				rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId);
 		return -1;
 	}
@@ -812,7 +812,7 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	if (end != (beg + header.pduLength))
 	{
-		DEBUG_WARN( "Unexpected gfx pdu end: Actual: %d, Expected: %d\n",
+		CLOG_ERR( "Unexpected gfx pdu end: Actual: %d, Expected: %d\n",
 				end, (beg + header.pduLength));
 
 		Stream_SetPosition(s, (beg + header.pduLength));
@@ -834,7 +834,7 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 
 	if (status < 0)
 	{
-		DEBUG_MSG("zgfx_decompress failure! status: %d\n", status);
+		CLOG_DBG("zgfx_decompress failure! status: %d\n", status);
 		return 0;
 	}
 
