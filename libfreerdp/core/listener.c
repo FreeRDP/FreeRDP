@@ -104,7 +104,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 #ifdef _WIN32
 		_tprintf(_T("getaddrinfo error: %s\n"), gai_strerror(status));
 #else
-		perror("getaddrinfo");
+		DEBUG_WARN("getaddrinfo");
 #endif
 		return FALSE;
 	}
@@ -118,14 +118,14 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 
 		if (sockfd == -1)
 		{
-			perror("socket");
+			DEBUG_WARN("socket");
 			continue;
 		}
 
 		option_value = 1;
 
 		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void*) &option_value, sizeof(option_value)) == -1)
-			perror("setsockopt");
+			DEBUG_WARN("setsockopt");
 
 #ifndef _WIN32
 		fcntl(sockfd, F_SETFL, O_NONBLOCK);
@@ -142,7 +142,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 			_tprintf(L"bind() failed with error: %u\n", WSAGetLastError());
 			WSACleanup();
 #else
-			perror("bind");
+			DEBUG_WARN("bind");
 			close(sockfd);
 #endif
 			continue;
@@ -152,7 +152,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 
 		if (status != 0)
 		{
-			perror("listen");
+			DEBUG_WARN("listen");
 			close(sockfd);
 			continue;
 		}
@@ -186,7 +186,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 
 	if (sockfd == -1)
 	{
-		perror("socket");
+		DEBUG_WARN("socket");
 		return FALSE;
 	}
 
@@ -200,7 +200,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 
 	if (status != 0)
 	{
-		perror("bind");
+		DEBUG_WARN("bind");
 		close(sockfd);
 		return FALSE;
 	}
@@ -209,7 +209,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 
 	if (status != 0)
 	{
-		perror("listen");
+		DEBUG_WARN("listen");
 		close(sockfd);
 		return FALSE;
 	}
@@ -306,7 +306,7 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
 				continue;
 #endif
-			perror("accept");
+			DEBUG_WARN("accept");
 			if (client)
 				free(client);
 			return FALSE;

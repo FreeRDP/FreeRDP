@@ -156,7 +156,7 @@ int freerdp_tcp_read(int sockfd, BYTE* data, int length)
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return 0;
 
-		perror("recv");
+		DEBUG_WARN("recv");
 #endif
 		return -1;
 	}
@@ -179,12 +179,12 @@ int freerdp_tcp_write(int sockfd, BYTE* data, int length)
 		if (wsa_error == WSAEWOULDBLOCK)
 			status = 0;
 		else
-			perror("send");
+			DEBUG_WARN("send");
 #else
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			status = 0;
 		else
-			perror("send");
+			DEBUG_WARN("send");
 #endif
 	}
 

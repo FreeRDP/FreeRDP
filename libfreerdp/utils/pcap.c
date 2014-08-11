@@ -162,7 +162,7 @@ rdpPcap* pcap_open(char* name, BOOL write)
 
 	if (pcap_fp == NULL)
 	{
-		perror("opening pcap dump");
+		DEBUG_WARN("opening pcap dump");
 		return NULL;
 	}
 

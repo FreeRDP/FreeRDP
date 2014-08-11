@@ -460,7 +460,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		if (!hSSPI)
 		{
-			_tprintf(_T("Failed to load SSPI module: %s\n"), credssp->SspiModule);
+			DEBUG_WARN("Failed to load SSPI module: %s\n", credssp->SspiModule);
 			return 0;
 		}
 
@@ -1397,7 +1397,7 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings*
 
 					if (status == ERROR_SUCCESS)
 					{
-						_tprintf(_T("Using SSPI Module: %s\n"), credssp->SspiModule);
+						DEBUG_WARN("Using SSPI Module: %s\n", credssp->SspiModule);
 						RegCloseKey(hKey);
 					}
 				}
