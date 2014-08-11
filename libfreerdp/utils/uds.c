@@ -22,6 +22,7 @@
 #endif
 
 #include <freerdp/utils/uds.h>
+#include <freerdp/utils/debug.h>
 
 #include <stdio.h>
 #include <stdlib.h>
