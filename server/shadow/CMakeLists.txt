@@ -138,6 +138,10 @@ set(${MODULE_PREFIX}_SRCS
 	shadow.h)
 
 set(${MODULE_PREFIX}_WIN_SRCS
+	Win/win_wds.c
+	Win/win_wds.h
+	Win/win_dxgi.c
+	Win/win_dxgi.h
 	Win/win_shadow.c
 	Win/win_shadow.h)
 

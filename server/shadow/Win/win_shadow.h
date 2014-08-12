@@ -29,20 +29,7 @@ typedef struct win_shadow_subsystem winShadowSubsystem;
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
-#if _WIN32_WINNT >= 0x0602
-#define WITH_DXGI_1_2	1
-#endif
-
-#ifdef WITH_DXGI_1_2
-
-#ifndef CINTERFACE
-#define CINTERFACE
-#endif
-
-#include <D3D11.h>
-#include <dxgi1_2.h>
-
-#endif
+#include "win_dxgi.h"
 
 struct win_shadow_subsystem
 {
