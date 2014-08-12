@@ -355,7 +355,7 @@ char* crypto_cert_fingerprint(X509* xcert)
 		sprintf(p, "%02x:", fp[i]);
 		p = &fp_buffer[(i + 1) * 3];
 	}
-	DEBUG_MSG(p, "%02x", fp[i]);
+	sprintf(p, "%02x", fp[i]);
 
 	return fp_buffer;
 }
