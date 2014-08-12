@@ -27,6 +27,55 @@
 
 #include "shadow_capture.h"
 
+int shadow_capture_align_clip_rect(RECTANGLE_16* rect, RECTANGLE_16* clip)
+{
+	int dx, dy;
+
+	dx = (rect->left % 16);
+
+	if (dx != 0)
+	{
+		rect->left -= dx;
+		rect->right += dx;
+	}
+
+	dx = (rect->right % 16);
+
+	if (dx != 0)
+	{
+		rect->right += (16 - dx);
+	}
+
+	dy = (rect->top % 16);
+
+	if (dy != 0)
+	{
+		rect->top -= dy;
+		rect->bottom += dy;
+	}
+
+	dy = (rect->bottom % 16);
+
+	if (dy != 0)
+	{
+		rect->bottom += (16 - dy);
+	}
+
+	if (rect->left < clip->left)
+		rect->left = clip->left;
+
+	if (rect->top < clip->top)
+		rect->top = clip->top;
+
+	if (rect->right > clip->right)
+		rect->right = clip->right;
+
+	if (rect->bottom > clip->bottom)
+		rect->bottom = clip->bottom;
+
+	return 1;
+}
+
 int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BYTE* pData2, int nStep2, RECTANGLE_16* rect)
 {
 	BOOL equal;

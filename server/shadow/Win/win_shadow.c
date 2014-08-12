@@ -25,6 +25,7 @@
 
 #include "../shadow_screen.h"
 #include "../shadow_surface.h"
+#include "../shadow_capture.h"
 
 #include "win_shadow.h"
 
@@ -212,6 +213,8 @@ const char* GetDxgiErrorString(HRESULT hr)
 			return "DXGI_DDI_ERR_UNSUPPORTED";
 		case DXGI_DDI_ERR_NONEXCLUSIVE:
 			return "DXGI_DDI_ERR_NONEXCLUSIVE";
+		case 0x80070005:
+			return "DXGI_ERROR_ACCESS_DENIED";
 	}
 
 	return "DXGI_ERROR_UNKNOWN";
@@ -368,6 +371,7 @@ int win_shadow_dxgi_init(winShadowSubsystem* subsystem)
 {
 	UINT i = 0;
 	HRESULT hr;
+	int status;
 	UINT DriverTypeIndex;
 	IDXGIDevice* DxgiDevice = NULL;
 	IDXGIAdapter* DxgiAdapter = NULL;
@@ -395,9 +399,9 @@ int win_shadow_dxgi_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	win_shadow_dxgi_init_duplication(subsystem);
+	status = win_shadow_dxgi_init_duplication(subsystem);
 
-	return 1;
+	return status;
 }
 
 int win_shadow_dxgi_uninit(winShadowSubsystem* subsystem)
@@ -438,12 +442,13 @@ int win_shadow_dxgi_uninit(winShadowSubsystem* subsystem)
 int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem,
 	BYTE** ppDstData, int* pnDstStep, int x, int y, int width, int height)
 {
+	int status;
 	HRESULT hr;
 	D3D11_BOX Box;
 	DXGI_MAPPED_RECT mappedRect;
 
 	if ((width * height) < 1)
-		return 1;
+		return 0;
 
 	Box.top = x;
 	Box.left = y;
@@ -453,7 +458,7 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem,
 	Box.back = 1;
 
 	subsystem->dxgiDeviceContext->lpVtbl->CopySubresourceRegion(subsystem->dxgiDeviceContext,
-		(ID3D11Resource*) subsystem->dxgiStage, 0, x, y, 0, (ID3D11Resource*) subsystem->dxgiDesktopImage, 0, &Box);	 
+		(ID3D11Resource*) subsystem->dxgiStage, 0, 0, 0, 0, (ID3D11Resource*) subsystem->dxgiDesktopImage, 0, &Box);	 
 
 	hr = subsystem->dxgiStage->lpVtbl->QueryInterface(subsystem->dxgiStage,
 		&IID_IDXGISurface, (void**) &(subsystem->dxgiSurface));
@@ -471,6 +476,19 @@ int win_shadow_dxgi_fetch_frame_data(winShadowSubsystem* subsystem,
 	{
 		fprintf(stderr, "IDXGISurface::Map failure: %s 0x%04X\n",
 			GetDxgiErrorString(hr), hr);
+
+		if (hr == DXGI_ERROR_DEVICE_REMOVED)
+		{
+			win_shadow_dxgi_uninit(subsystem);
+
+			status = win_shadow_dxgi_init(subsystem);
+
+			if (status < 0)
+				return -1;
+
+			return 0;
+		}
+
 		return -1;
 	}
 
@@ -496,10 +514,13 @@ int win_shadow_dxgi_release_frame_data(winShadowSubsystem* subsystem)
 		subsystem->dxgiSurface = NULL;
 	}
 
-	if (subsystem->dxgiFrameAcquired)
+	if (subsystem->dxgiOutputDuplication)
 	{
-		subsystem->dxgiOutputDuplication->lpVtbl->ReleaseFrame(subsystem->dxgiOutputDuplication);
-		subsystem->dxgiFrameAcquired = FALSE;
+		if (subsystem->dxgiFrameAcquired)
+		{
+			subsystem->dxgiOutputDuplication->lpVtbl->ReleaseFrame(subsystem->dxgiOutputDuplication);
+			subsystem->dxgiFrameAcquired = FALSE;
+		}
 	}
 
 	subsystem->pendingFrames = 0;
@@ -512,6 +533,7 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 	UINT i = 0;
 	int status;
 	HRESULT hr = 0;
+	UINT timeout = 15;
 	UINT DataBufferSize = 0;
 	BYTE* DataBuffer = NULL;
 
@@ -527,7 +549,7 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 	}
 
 	hr = subsystem->dxgiOutputDuplication->lpVtbl->AcquireNextFrame(subsystem->dxgiOutputDuplication,
-		0, &(subsystem->dxgiFrameInfo), &(subsystem->dxgiResource));
+		timeout, &(subsystem->dxgiFrameInfo), &(subsystem->dxgiResource));
 
 	if (SUCCEEDED(hr))
 	{
@@ -545,6 +567,8 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 
 		if (hr == DXGI_ERROR_ACCESS_LOST)
 		{
+			win_shadow_dxgi_release_frame_data(subsystem);
+
 			if (subsystem->dxgiDesktopImage)
 			{
 				subsystem->dxgiDesktopImage->lpVtbl->Release(subsystem->dxgiDesktopImage);
@@ -558,6 +582,17 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 			} 
 
 			status = win_shadow_dxgi_init_duplication(subsystem);
+
+			if (status < 0)
+				return -1;
+
+			return 0;
+		}
+		else if (hr == DXGI_ERROR_INVALID_CALL)
+		{
+			win_shadow_dxgi_uninit(subsystem);
+
+			status = win_shadow_dxgi_init(subsystem);
 
 			if (status < 0)
 				return -1;
@@ -868,12 +903,14 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	int x, y;
 	int width;
 	int height;
+	int count;
 	int status = 1;
 	int nDstStep = 0;
 	BYTE* pDstData = NULL;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
 	RECTANGLE_16 surfaceRect;
+	RECTANGLE_16 invalidRect;
 	const RECTANGLE_16* extents;
 
 	server = subsystem->server;
@@ -884,19 +921,28 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	surfaceRect.right = surface->x + surface->width;
 	surfaceRect.bottom = surface->y + surface->height;
 
-	region16_clear(&(surface->invalidRegion));
-	region16_copy(&(surface->invalidRegion), &(subsystem->invalidRegion));
-	region16_intersect_rect(&(surface->invalidRegion), &(surface->invalidRegion), &surfaceRect);
+	region16_intersect_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &surfaceRect);
 
-	if (region16_is_empty(&(surface->invalidRegion)))
+	if (region16_is_empty(&(subsystem->invalidRegion)))
 		return 1;
 
-	extents = region16_extents(&(surface->invalidRegion));
+	extents = region16_extents(&(subsystem->invalidRegion));
+	CopyMemory(&invalidRect, extents, sizeof(RECTANGLE_16));
 
-	x = extents->left;
-	y = extents->top;
-	width = extents->right - extents->left;
-	height = extents->bottom - extents->top;
+	shadow_capture_align_clip_rect(&invalidRect, &surfaceRect);
+
+	x = invalidRect.left;
+	y = invalidRect.top;
+	width = invalidRect.right - invalidRect.left;
+	height = invalidRect.bottom - invalidRect.top;
+
+	if (0)
+	{
+		x = 0;
+		y = 0;
+		width = surface->width;
+		height = surface->height;
+	}
 
 	printf("SurfaceCopy x: %d y: %d width: %d height: %d right: %d bottom: %d\n",
 		x, y, width, height, x + width, y + height);
@@ -905,16 +951,26 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	status = win_shadow_dxgi_fetch_frame_data(subsystem, &pDstData, &nDstStep, x, y, width, height);
 #endif
 
-	if (status < 0)
-		return -1;
-
-	EnterCriticalSection(&(surface->lock));
+	if (status <= 0)
+		return status;
 
 	freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 			surface->scanline, x - surface->x, y - surface->y, width, height,
-			pDstData, PIXEL_FORMAT_XRGB32, nDstStep, x, y);
+			pDstData, PIXEL_FORMAT_XRGB32, nDstStep, 0, 0);
 
-	LeaveCriticalSection(&(surface->lock));
+	count = ArrayList_Count(server->clients);
+
+	InitializeSynchronizationBarrier(&(subsystem->barrier), count + 1, -1);
+
+	SetEvent(subsystem->updateEvent);
+
+	EnterSynchronizationBarrier(&(subsystem->barrier), 0);
+
+	DeleteSynchronizationBarrier(&(subsystem->barrier));
+
+	ResetEvent(subsystem->updateEvent);
+
+	region16_clear(&(subsystem->invalidRegion));
 
 	return 1;
 }
@@ -940,8 +996,6 @@ void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
 	dwInterval = 1000 / fps;
 	frameTime = GetTickCount64() + dwInterval;
 
-	win_shadow_invalidate_region(subsystem, 0, 0, subsystem->width, subsystem->height);
-
 	while (1)
 	{
 		dwTimeout = INFINITE;
@@ -961,16 +1015,13 @@ void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
 #ifdef WITH_DXGI_1_2
 			int dxgi_status;
 
-			//win_shadow_invalidate_region(subsystem, 0, 0, subsystem->width, subsystem->height);
-
 			dxgi_status = win_shadow_dxgi_get_next_frame(subsystem);
-			dxgi_status = win_shadow_dxgi_get_invalid_region(subsystem);
-			win_shadow_surface_copy(subsystem);
+			
+			if (dxgi_status > 0)
+				dxgi_status = win_shadow_dxgi_get_invalid_region(subsystem);
 
-			if (subsystem->SurfaceUpdate)
-				subsystem->SurfaceUpdate((rdpShadowSubsystem*) subsystem, &(subsystem->invalidRegion));
-
-			region16_clear(&(subsystem->invalidRegion));
+			if (dxgi_status > 0)
+				win_shadow_surface_copy(subsystem);
 #endif
 
 			dwInterval = 1000 / fps;

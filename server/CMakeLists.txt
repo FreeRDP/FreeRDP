@@ -30,7 +30,7 @@ if(FREERDP_VENDOR)
 			add_subdirectory(Mac)
 		endif()
 	else()
-		add_subdirectory(Windows)
+		#add_subdirectory(Windows)
 	endif()
 
 	if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/FreeRDS")
