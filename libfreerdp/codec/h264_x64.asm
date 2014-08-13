@@ -2,10 +2,6 @@
 ;G=(256*Y-48*(U-128)-120*(V-128)+128)/256	=(256*Y-48*U-120*V+21632)/256
 ;B=(256*Y+475*(U-128)+128)/256			=(256*Y+475*U-60672)/256
 
-section .data
-	debug:	db "DEBUG",10
-	dblen:	equ $-debug
-
 section .text
 	;global YUV_to_RGB_asm
 YUV_to_RGB_asm:

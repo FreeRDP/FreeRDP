@@ -139,7 +139,7 @@ int xf_OutputUpdate(xfContext* xfc)
 int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height)
 {
 /** *********************************
- * to be improved
+ * to be improved?
  * *********************************/
 	RECTANGLE_16 invalidRect;
 
@@ -366,15 +366,6 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 	RDPGFX_H264_METABLOCK* meta;
 	RDPGFX_H264_BITMAP_STREAM* bs;
 
-	static struct timeval TGES1;
-	struct timeval TGES2,TDEC1,TDEC2;
-
-	TGES2.tv_usec=TGES1.tv_usec;
-	TGES2.tv_sec=TGES1.tv_sec;
-	
-	gettimeofday(&TGES1,NULL);
-	printf("time since last xf_SurfaceCommand_H264: %d sec %d usec\n",(int)(TGES1.tv_sec-TGES2.tv_sec),(int)(TGES1.tv_usec-TGES2.tv_usec));
-
 
 	h264 = xfc->h264;
 
@@ -392,13 +383,14 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 
 	DstData = surface->data;
 
-	gettimeofday(&TDEC1,NULL);
 	status = h264_decompress(xfc->h264, bs->data, bs->length, &DstData,
 			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
-	gettimeofday(&TDEC2,NULL);
-	//printf("decoding took %d sec %d usec\n",(int)(TDEC2.tv_sec-TDEC1.tv_sec),(int)(TDEC2.tv_usec-TDEC1.tv_usec));
 
-	//printf("xf_SurfaceCommand_H264: status: %d\n", status);
+	if (status < 0)
+	{
+		printf("h264_decompress failure: %d\n",status);
+		return -1;
+	}
 
 	if (status < 0)
 		return -1;
@@ -427,9 +419,6 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 
 	updateRects = (RECTANGLE_16*) region16_rects(&updateRegion, &nbUpdateRects);
 
-#if 0
-	printf("numRegionRects: %d nbUpdateRects: %d\n", meta->numRegionRects, nbUpdateRects);
-#endif
 
 	for (j = 0; j < nbUpdateRects; j++)
 	{
@@ -439,13 +428,6 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 		nHeight = updateRects[j].bottom - updateRects[j].top;
 
 		/* update region from decoded H264 buffer */
-
-#if 0
-		printf("nXDst: %d nYDst: %d nWidth: %d nHeight: %d decoded: width: %d height: %d cmd: left: %d top: %d right: %d bottom: %d\n",
-				nXDst, nYDst, nWidth, nHeight, h264->width, h264->height,
-				cmd->left, cmd->top, cmd->right, cmd->bottom);
-#endif
-
 		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
 				nXDst, nYDst, nWidth, nHeight,
 				h264->data, PIXEL_FORMAT_XRGB32, h264->scanline, nXDst, nYDst);
@@ -457,19 +439,9 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 	region16_uninit(&updateRegion);
 	region16_uninit(&clippingRects);
 
-#if 0
-	/* fill with red for now to distinguish from the rest */
 
-	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
-			cmd->left, cmd->top, cmd->width, cmd->height, 0xFF0000);
-#endif
-
-	if (!xfc->inGfxFrame){
+	if (!xfc->inGfxFrame)
 		xf_OutputUpdate(xfc);
-	}
-	
-	gettimeofday(&TGES2,NULL);
-	printf("the whole command took %d sec %d usec\n",(int)(TGES2.tv_sec-TGES1.tv_sec),(int)(TGES2.tv_usec-TGES1.tv_usec));
 
 	return 1;
 }

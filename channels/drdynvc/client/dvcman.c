@@ -478,7 +478,6 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UI
 		Stream_Release(channel->dvc_data);
 
 	channel->dvc_data = StreamPool_Take(channel->dvcman->pool, length);
-	//Stream_AddRef(channel->dvc_data);
 
 	return 0;
 }
@@ -488,6 +487,7 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 	int status = 0;
 	DVCMAN_CHANNEL* channel;
 	UINT32 dataSize = Stream_GetRemainingLength(data);
+	wStream* s;
 
 	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
 
@@ -500,7 +500,6 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 	if (channel->dvc_data)
 	{
 		/* Fragmented data */
-		//if (Stream_GetPosition(channel->dvc_data) + dataSize > (UINT32) Stream_Capacity(channel->dvc_data))
 		if (Stream_GetPosition(channel->dvc_data) + dataSize > (UINT32) Stream_Length(channel->dvc_data))
 		{
 			DEBUG_WARN("data exceeding declared length!");
@@ -511,14 +510,15 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 
 		Stream_Write(channel->dvc_data, Stream_Pointer(data), dataSize);
 
-		//if (((size_t) Stream_GetPosition(channel->dvc_data)) >= Stream_Capacity(channel->dvc_data)-1)
 		if (((size_t) Stream_GetPosition(channel->dvc_data)) >= Stream_Length(channel->dvc_data)-1)
 		{
 			Stream_SealLength(channel->dvc_data);
 			Stream_SetPosition(channel->dvc_data, 0);
-			status = channel->channel_callback->OnDataReceived(channel->channel_callback, channel->dvc_data);
-			Stream_Release(channel->dvc_data);
+			s=channel->dvc_data;
 			channel->dvc_data = NULL;
+
+			status = channel->channel_callback->OnDataReceived(channel->channel_callback, s);
+			Stream_Release(s);
 		}
 	}
 	else
