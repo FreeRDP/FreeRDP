@@ -373,6 +373,14 @@ typedef CLRCONV* HCLRCONV;
 
 typedef BYTE* (*p_freerdp_image_convert)(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv);
 
+static INLINE UINT32 RGB32_to_BGR32(UINT32 pixel)
+{
+	UINT32 temp;
+
+	temp = (pixel ^ (pixel >> 16)) & ((1 << 8) - 1);
+	return (pixel ^ (temp | (temp << 16)));
+}
+
 FREERDP_API int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp);
 FREERDP_API void freerdp_set_pixel(BYTE* data, int x, int y, int width, int height, int bpp, int pixel);
 

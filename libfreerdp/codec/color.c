@@ -705,7 +705,9 @@ BYTE* freerdp_image_convert_24bpp(BYTE* srcData, BYTE* dstData, int width, int h
 
 	if (dstBpp == 32)
 	{
-		BYTE* dstp;
+		UINT32 pixel, alpha_mask, temp;
+		UINT32* srcp;
+		UINT32* dstp;
 
 		if (!dstData)
 			dstData = (BYTE*) _aligned_malloc(width * height * 4, 16);
@@ -713,14 +715,81 @@ BYTE* freerdp_image_convert_24bpp(BYTE* srcData, BYTE* dstData, int width, int h
 		if (!dstData)
 			return NULL;
 
-		dstp = dstData;
+		alpha_mask = clrconv->alpha ? 0xFF000000 : 0;
 
-		for (i = width * height; i > 0; i--)
+		srcp = (UINT32*) srcData;
+		dstp = (UINT32*) dstData;
+
+		if (clrconv->invert)
 		{
-			*(dstp++) = *(srcData++);
-			*(dstp++) = *(srcData++);
-			*(dstp++) = *(srcData++);
-			*(dstp++) = 0xFF;
+			/* Each iteration handles four pixels using 32-bit load and
+			   store operations. */
+			for (i = ((width * height) / 4); i > 0; i--)
+			{
+				temp = 0;
+
+				pixel = temp;
+				temp = *srcp++;
+				pixel |= temp & 0x00FFFFFF;
+				temp = temp >> 24;
+				*dstp++ = alpha_mask | RGB32_to_BGR32(pixel);
+
+				pixel = temp;
+				temp = *srcp++;
+				pixel |= (temp & 0x0000FFFF) << 8;
+				temp = temp >> 16;
+				*dstp++ = alpha_mask | RGB32_to_BGR32(pixel);
+
+				pixel = temp;
+				temp = *srcp++;
+				pixel |= (temp & 0x000000FF) << 16;
+				temp = temp >> 8;
+				*dstp++ = alpha_mask | RGB32_to_BGR32(pixel);
+
+				*dstp++ = alpha_mask | RGB32_to_BGR32(temp);
+			}
+
+			/* Handle any remainder. */
+			for (i = (width * height) % 4; i > 0; i--)
+			{
+				pixel = ABGR32(alpha_mask, srcData[2], srcData[1], srcData[0]);
+				*dstp++ = pixel;
+				srcData += 3;
+			}
+		}
+		else
+		{
+			for (i = ((width * height) / 4); i > 0; i--)
+			{
+				temp = 0;
+
+				pixel = temp;
+				temp = *srcp++;
+				pixel |= temp & 0x00FFFFFF;
+				temp = temp >> 24;
+				*dstp++ = alpha_mask | pixel;
+
+				pixel = temp;
+				temp = *srcp++;
+				pixel |= (temp & 0x0000FFFF) << 8;
+				temp = temp >> 16;
+				*dstp++ = alpha_mask | pixel;
+
+				pixel = temp;
+				temp = *srcp++;
+				pixel |= (temp & 0x000000FF) << 16;
+				temp = temp >> 8;
+				*dstp++ = alpha_mask | pixel;
+
+				*dstp++ = alpha_mask | temp;
+			}
+
+			for (i = (width * height) % 4; i > 0; i--)
+			{
+				pixel = ARGB32(alpha_mask, srcData[2], srcData[1], srcData[0]);
+				*dstp++ = pixel;
+				srcData += 3;
+			}
 		}
 
 		return dstData;
