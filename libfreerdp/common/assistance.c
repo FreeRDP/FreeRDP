@@ -388,7 +388,7 @@ char* freerdp_assistance_generate_pass_stub(DWORD flags)
 	passStub = (char*) malloc(15);
 
 	if (!passStub)
-		return -1;
+		return NULL;
 
 	/**
 	 * PassStub generation:

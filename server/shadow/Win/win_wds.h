@@ -19,11 +19,22 @@
 #ifndef FREERDP_SHADOW_SERVER_WIN_WDS_H
 #define FREERDP_SHADOW_SERVER_WIN_WDS_H
 
+#define WITH_WDS_API	1
+
+#ifndef CINTERFACE
+#define CINTERFACE
+#endif
+
+#include <rdpencomapi.h>
+
+#include "win_shadow.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
+int win_shadow_wds_init(winShadowSubsystem* subsystem);
+int win_shadow_wds_uninit(winShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
 }

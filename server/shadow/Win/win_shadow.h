@@ -19,6 +19,8 @@
 #ifndef FREERDP_SHADOW_SERVER_WIN_H
 #define FREERDP_SHADOW_SERVER_WIN_H
 
+#include <freerdp/assistance.h>
+
 #include <freerdp/server/shadow.h>
 
 typedef struct win_shadow_subsystem winShadowSubsystem;
@@ -29,6 +31,7 @@ typedef struct win_shadow_subsystem winShadowSubsystem;
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
+#include "win_wds.h"
 #include "win_dxgi.h"
 
 struct win_shadow_subsystem
@@ -38,6 +41,14 @@ struct win_shadow_subsystem
 	int bpp;
 	int width;
 	int height;
+
+#ifdef WITH_WDS_API
+	rdpAssistanceFile* pAssistanceFile;
+	_IRDPSessionEvents* pSessionEvents;
+	IRDPSRAPISharingSession* pSharingSession;
+	IRDPSRAPIInvitation* pInvitation;
+	IRDPSRAPIInvitationManager* pInvitationMgr;
+#endif
 
 #ifdef WITH_DXGI_1_2
 	UINT pendingFrames;

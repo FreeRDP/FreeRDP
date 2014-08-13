@@ -357,7 +357,9 @@ int win_shadow_subsystem_init(winShadowSubsystem* subsystem)
 
 	DeleteDC(hdc);
 
-#ifdef WITH_DXGI_1_2
+#if defined(WITH_WDS_API)
+	status = win_shadow_wds_init(subsystem);
+#elif defined(WITH_DXGI_1_2)
 	status = win_shadow_dxgi_init(subsystem);
 #endif
 
@@ -389,7 +391,9 @@ int win_shadow_subsystem_uninit(winShadowSubsystem* subsystem)
 	if (!subsystem)
 		return -1;
 
-#ifdef WITH_DXGI_1_2
+#if defined(WITH_WDS_API)
+	win_shadow_wds_uninit(subsystem);
+#elif defined(WITH_DXGI_1_2)
 	win_shadow_dxgi_uninit(subsystem);
 #endif
 
