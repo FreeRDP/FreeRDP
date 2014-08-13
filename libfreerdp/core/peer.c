@@ -49,7 +49,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 		settings->RdpServerRsaKey = key_new(settings->RdpKeyFile);
 		if (!settings->RdpServerRsaKey)
 		{
-			fprintf(stderr, "%s: inavlid RDP key file %s\n", __FUNCTION__, settings->RdpKeyFile);
+			fprintf(stderr, "%s: invalid RDP key file %s\n", __FUNCTION__, settings->RdpKeyFile);
 			return FALSE;
 		}
 
