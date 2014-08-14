@@ -23,6 +23,8 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
+#include "win_rdp.h"
+
 #include "win_wds.h"
 
 #undef DEFINE_GUID
@@ -516,13 +518,16 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	DWORD dwCookie;
 	long left, top;
 	long right, bottom;
+	long width, height;
 	IUnknown* pUnknown;
+	rdpSettings* settings;
 	BSTR bstrAuthString;
 	BSTR bstrGroupName;
 	BSTR bstrPassword;
 	BSTR bstrConnectionString;
 	BSTR bstrPropertyName;
 	VARIANT varPropertyValue;
+	rdpAssistanceFile* file;
 	IConnectionPoint* pCP;
 	IConnectionPointContainer* pCPC;
 
@@ -599,8 +604,11 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	printf("GetDesktopSharedRect(): left: %d top: %d right: %d bottom: %d\n",
-		left, top, right, bottom);
+	width = right - left;
+	height = bottom - top;
+
+	printf("GetDesktopSharedRect(): left: %d top: %d right: %d bottom: %d width: %d height: %d\n",
+		left, top, right, bottom, width, height);
 
 	hr = subsystem->pSharingSession->lpVtbl->get_VirtualChannelManager(subsystem->pSharingSession,
 		&(subsystem->pVirtualChannelMgr));
@@ -727,23 +735,23 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	subsystem->pAssistanceFile = freerdp_assistance_file_new();
+	file = subsystem->pAssistanceFile = freerdp_assistance_file_new();
 
-	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) bstrConnectionString, ((UINT32*) bstrConnectionString)[-1],
-		&(subsystem->pAssistanceFile->ConnectionString2), 0, NULL, NULL);
+	ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) bstrConnectionString,
+		((UINT32*) bstrConnectionString)[-1], &(file->ConnectionString2), 0, NULL, NULL);
 
-	status = freerdp_assistance_parse_connection_string2(subsystem->pAssistanceFile);
+	status = freerdp_assistance_parse_connection_string2(file);
 
 	if (status < 0)
 		return -1;
 
-	printf("ConnectionString: %s\n", subsystem->pAssistanceFile->ConnectionString2);
+	printf("ConnectionString: %s\n", file->ConnectionString2);
 
-	printf("RemoteAssistanceSessionId: %s\n", subsystem->pAssistanceFile->RASessionId);
-	printf("RemoteAssistanceRCTicket: %s\n", subsystem->pAssistanceFile->RCTicket);
-	printf("RemoteAssistancePassStub: %s\n", subsystem->pAssistanceFile->PassStub);
-	printf("RemoteAssistanceMachineAddress: %s\n", subsystem->pAssistanceFile->MachineAddress);
-	printf("RemoteAssistanceMachinePort: %s\n", subsystem->pAssistanceFile->MachinePort);
+	printf("RemoteAssistanceSessionId: %s\n", file->RASessionId);
+	printf("RemoteAssistanceRCTicket: %s\n", file->RCTicket);
+	printf("RemoteAssistancePassStub: %s\n", file->PassStub);
+	printf("RemoteAssistanceMachineAddress: %s\n", file->MachineAddress);
+	printf("RemoteAssistanceMachinePort: %d\n", file->MachinePort);
 
 	if (1)
 	{
@@ -754,11 +762,46 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 		if (fp)
 		{
-			size = strlen(subsystem->pAssistanceFile->ConnectionString2);
-			fwrite(subsystem->pAssistanceFile->ConnectionString2, 1, size, fp);
+			size = strlen(file->ConnectionString2);
+			fwrite(file->ConnectionString2, 1, size, fp);
 			fwrite("\r\n", 1, 2, fp);
 			fclose(fp);
 		}
+	}
+
+	status = win_shadow_rdp_init(subsystem);
+
+	if (status < 0)
+	{
+		printf("win_shadow_rdp_init() failure: %d\n", status);
+		return status;
+	}
+
+	settings = subsystem->shw->settings;
+
+	freerdp_set_param_bool(settings, FreeRDP_RemoteAssistanceMode, TRUE);
+
+	freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceSessionId, file->RASessionId);
+
+	freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceRCTicket, file->ConnectionString2);
+
+	freerdp_set_param_string(settings, FreeRDP_RemoteAssistancePassStub, "Shadow123!");
+
+	freerdp_set_param_string(settings, FreeRDP_Username, "Shadow");
+	freerdp_set_param_string(settings, FreeRDP_RemoteAssistancePassword, "Shadow123!");
+
+	freerdp_set_param_string(settings, FreeRDP_ServerHostname, file->MachineAddress);
+	freerdp_set_param_uint32(settings, FreeRDP_ServerPort, file->MachinePort);
+
+	freerdp_set_param_uint32(settings, FreeRDP_DesktopWidth, width);
+	freerdp_set_param_uint32(settings, FreeRDP_DesktopHeight, height);
+
+	status = win_shadow_rdp_start(subsystem);
+
+	if (status < 0)
+	{
+		printf("win_shadow_rdp_start() failure: %d\n", status);
+		return status;
 	}
 
 	return 1;

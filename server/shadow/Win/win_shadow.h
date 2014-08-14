@@ -31,6 +31,7 @@ typedef struct win_shadow_subsystem winShadowSubsystem;
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
+#include "win_rdp.h"
 #include "win_wds.h"
 #include "win_dxgi.h"
 
@@ -44,6 +45,7 @@ struct win_shadow_subsystem
 
 #ifdef WITH_WDS_API
 	HWND hWnd;
+	shwContext* shw;
 	rdpAssistanceFile* pAssistanceFile;
 	_IRDPSessionEvents* pSessionEvents;
 	IRDPSRAPISharingSession* pSharingSession;

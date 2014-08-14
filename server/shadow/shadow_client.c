@@ -38,6 +38,7 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	client->server = server;
 
 	settings = peer->settings;
+
 	settings->ColorDepth = 32;
 	settings->NSCodec = TRUE;
 	settings->RemoteFxCodec = TRUE;
@@ -45,7 +46,7 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	settings->FrameMarkerCommandEnabled = TRUE;
 	settings->SurfaceFrameMarkerEnabled = TRUE;
 
-	settings->RdpSecurity = FALSE;
+	settings->RdpSecurity = TRUE;
 	settings->TlsSecurity = TRUE;
 	settings->NlaSecurity = FALSE;
 

@@ -274,6 +274,7 @@ int freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 {
 	char* p;
 	char* q;
+	int port;
 	char* str;
 	size_t length;
 
@@ -343,6 +344,52 @@ int freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 		file->RASessionId[length] = '\0';
 
 		p += length;
+	}
+
+	p = strstr(p, "<L P=\"");
+
+	while (p)
+	{
+		p += sizeof("<L P=\"") - 1;
+
+		q = strchr(p, '"');
+
+		if (!q)
+			return -1;
+
+		q[0] = '\0';
+		q++;
+
+		port = atoi(p);
+
+		p = strstr(q, " N=\"");
+
+		if (!p)
+			return -1;
+
+		p += sizeof(" N=\"") - 1;
+
+		q = strchr(p, '"');
+
+		if (!q)
+			return -1;
+
+		q[0] = '\0';
+		q++;
+
+		length = strlen(p);
+
+		if (length > 8)
+		{
+			if (strncmp(p, "169.254.", 8) != 0)
+			{
+				file->MachineAddress = _strdup(p);
+				file->MachinePort = (UINT32) port;
+				break;
+			}
+		}
+
+		p = strstr(q, "<L P=\"");
 	}
 
 	free(str);

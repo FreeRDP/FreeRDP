@@ -138,6 +138,8 @@ set(${MODULE_PREFIX}_SRCS
 	shadow.h)
 
 set(${MODULE_PREFIX}_WIN_SRCS
+	Win/win_rdp.c
+	Win/win_rdp.h
 	Win/win_wds.c
 	Win/win_wds.h
 	Win/win_dxgi.c
@@ -191,6 +193,7 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE winpr
 	MODULES winpr-sspi winpr-crt winpr-utils winpr-input winpr-sysinfo)
 
+list(APPEND ${MODULE_PREFIX}_LIBS freerdp-client)
 list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
