@@ -568,6 +568,14 @@ void update_post_connect(rdpUpdate* update)
 	update->initialState = FALSE;
 }
 
+void update_post_disconnect(rdpUpdate* update)
+{
+	update->asynchronous = update->context->settings->AsyncUpdate;
+
+	if (update->asynchronous)
+		update_message_proxy_free(update->proxy);
+}
+
 static void update_begin_paint(rdpContext* context)
 {
 	wStream* s;
@@ -1702,9 +1710,6 @@ void update_free(rdpUpdate* update)
 		free(update->secondary);
 		free(update->altsec);
 		free(update->window);
-
-		if (update->asynchronous)
-			update_message_proxy_free(update->proxy);
 
 		MessageQueue_Free(update->queue);
 

@@ -270,40 +270,6 @@ static void android_process_channel_event(rdpChannels* channels, freerdp* instan
 	}
 }
 
-static void *jni_update_thread(void *arg)
-{
-	int status;
-	wMessage message;
-	wMessageQueue* queue;
-	freerdp* instance = (freerdp*) arg;
-
-	assert( NULL != instance);
-
-	DEBUG_ANDROID("Start.");
-
-	status = 1;
-	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-
-	while (MessageQueue_Wait(queue))
-	{
-		while (MessageQueue_Peek(queue, &message, TRUE))
-		{
-			status = freerdp_message_queue_process_message(instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message);
-
-			if (!status)
-				break;
-		}
-
-		if (!status)
-			break;
-	}
-
-	DEBUG_ANDROID("Quit.");
-
-	ExitThread(0);
-	return NULL;
-}
-
 static void* jni_input_thread(void* arg)
 {
 	HANDLE event[3];
@@ -394,11 +360,9 @@ static int android_freerdp_run(freerdp* instance)
 
 	const rdpSettings* settings = instance->context->settings;
 
-	HANDLE update_thread;
 	HANDLE input_thread;
 	HANDLE channels_thread;
 	
-	BOOL async_update = settings->AsyncUpdate;
 	BOOL async_input = settings->AsyncInput;
 	BOOL async_channels = settings->AsyncChannels;
 	BOOL async_transport = settings->AsyncTransport;
@@ -417,12 +381,6 @@ static int android_freerdp_run(freerdp* instance)
 		return 0;
 	}
 
-	if (async_update)
-	{
-		update_thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) jni_update_thread, instance, 0, NULL);
-	}
-   
 	if (async_input)
 	{
 		input_thread = CreateThread(NULL, 0,
@@ -571,15 +529,7 @@ static int android_freerdp_run(freerdp* instance)
 		WaitForSingleObject(channels_thread, INFINITE);
 		CloseHandle(channels_thread);
 	}
-
-	if (async_update)
-	{
-		wMessageQueue* update_queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(update_queue, 0);
-		WaitForSingleObject(update_thread, INFINITE);
-		CloseHandle(update_thread);
-	}
-	 
+ 
 	if (async_input)
 	{
 		wMessageQueue* input_queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
