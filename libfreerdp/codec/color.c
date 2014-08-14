@@ -1121,31 +1121,23 @@ BYTE* freerdp_mono_image_convert(BYTE* srcData, int width, int height, int srcBp
 
 	if (dstBpp == 16)
 	{
-		if (clrconv->rgb555)
-		{
-			if (srcBpp == 16)
-			{
-				/* convert 15-bit colors to 16-bit colors */
-				RGB16_RGB15(redBg, greenBg, blueBg, bgcolor);
-				RGB16_RGB15(redFg, greenFg, blueFg, fgcolor);
-			}
-		}
-		else
-		{
-			if (srcBpp == 15)
-			{
-				/* convert 15-bit colors to 16-bit colors */
-				RGB15_RGB16(redBg, greenBg, blueBg, bgcolor);
-				RGB15_RGB16(redFg, greenFg, blueFg, fgcolor);
-			}
-		}
-
 		dstData = (BYTE*) _aligned_malloc(width * height * 2, 16);
 
 		if (!dstData)
 			return NULL;
 
 		dst16 = (UINT16*) dstData;
+
+		if (clrconv->rgb555)
+		{
+			bgcolor = clrconv->invert ? BGR15(redBg, greenBg, blueBg) : RGB15(redBg, greenBg, blueBg);
+			fgcolor = clrconv->invert ? BGR15(redFg, greenFg, blueFg) : RGB15(redFg, greenFg, blueFg);
+		}
+		else
+		{
+			bgcolor = clrconv->invert ? BGR16(redBg, greenBg, blueBg) : RGB16(redBg, greenBg, blueBg);
+			fgcolor = clrconv->invert ? BGR16(redFg, greenFg, blueFg) : RGB16(redFg, greenFg, blueFg);
+		}
 
 		for (index = height; index > 0; index--)
 		{
