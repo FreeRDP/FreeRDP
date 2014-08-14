@@ -2093,6 +2093,9 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	}
 
 	if (settings->DynamicChannelCount)
+		settings->SupportDynamicChannels = TRUE;
+
+	if (settings->SupportDynamicChannels)
 	{
 		freerdp_client_load_static_channel_addin(channels, settings, "drdynvc", settings);
 	}

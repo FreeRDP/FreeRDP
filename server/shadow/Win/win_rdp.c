@@ -197,7 +197,7 @@ void* shw_client_thread(void* arg)
 
 	printf("freerdp_connect: %d\n", bSuccess);
 
-	if (!freerdp_connect(instance))
+	if (!bSuccess)
 	{
 		ExitThread(0);
 		return NULL;
@@ -356,6 +356,10 @@ int shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	settings->CompressionEnabled = TRUE;
 
 	settings->AutoReconnectionEnabled = FALSE;
+
+	settings->DeviceRedirection = TRUE;
+	settings->RedirectClipboard = TRUE;
+	settings->SupportDynamicChannels = TRUE;
 
 	return 0;
 }
