@@ -48,6 +48,10 @@ struct win_shadow_subsystem
 	IRDPSRAPISharingSession* pSharingSession;
 	IRDPSRAPIInvitation* pInvitation;
 	IRDPSRAPIInvitationManager* pInvitationMgr;
+	IRDPSRAPISessionProperties* pSessionProperties;
+	IRDPSRAPIVirtualChannelManager* pVirtualChannelMgr;
+	IRDPSRAPIApplicationFilter* pApplicationFilter;
+	IRDPSRAPIAttendeeManager* pAttendeeMgr;
 #endif
 
 #ifdef WITH_DXGI_1_2
