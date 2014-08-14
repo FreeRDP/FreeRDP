@@ -43,6 +43,7 @@ struct win_shadow_subsystem
 	int height;
 
 #ifdef WITH_WDS_API
+	HWND hWnd;
 	rdpAssistanceFile* pAssistanceFile;
 	_IRDPSessionEvents* pSessionEvents;
 	IRDPSRAPISharingSession* pSharingSession;

@@ -176,6 +176,7 @@ elseif(WITH_SHADOW_MAC)
 endif()
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "freerdp-shadow")
 
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp-server)

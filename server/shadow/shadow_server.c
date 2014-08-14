@@ -21,6 +21,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/wnd.h>
 #include <winpr/path.h>
 #include <winpr/cmdline.h>
 #include <winpr/winsock.h>
@@ -35,6 +36,12 @@
 #endif
 
 #include "shadow.h"
+
+#ifdef _WIN32
+static BOOL g_MessagePump = TRUE;
+#else
+static BOOL g_MessagePump = FALSE;
+#endif
 
 #ifdef WITH_SHADOW_X11
 extern rdpShadowSubsystem* X11_ShadowCreateSubsystem(rdpShadowServer* server);
@@ -553,8 +560,9 @@ void shadow_server_free(rdpShadowServer* server)
 	free(server);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char** argv)
 {
+	MSG msg;
 	int status;
 	DWORD dwExitCode;
 	rdpShadowServer* server;
@@ -576,6 +584,15 @@ int main(int argc, char* argv[])
 
 	if (shadow_server_start(server) < 0)
 		return 0;
+
+	if (g_MessagePump)
+	{
+		while (GetMessage(&msg, 0, 0, 0))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
 
 	WaitForSingleObject(server->thread, INFINITE);
 

@@ -33,10 +33,125 @@
 DEFINE_GUID(CLSID_RDPSession,0x9B78F0E6,0x3E05,0x4A5B,0xB2,0xE8,0xE7,0x43,0xA8,0x95,0x6B,0x65);
 DEFINE_GUID(DIID__IRDPSessionEvents,0x98a97042,0x6698,0x40e9,0x8e,0xfd,0xb3,0x20,0x09,0x90,0x00,0x4b);
 DEFINE_GUID(IID_IRDPSRAPISharingSession,0xeeb20886,0xe470,0x4cf6,0x84,0x2b,0x27,0x39,0xc0,0xec,0x5c,0xfb);
+DEFINE_GUID(IID_IRDPSRAPIAttendee,0xec0671b3,0x1b78,0x4b80,0xa4,0x64,0x91,0x32,0x24,0x75,0x43,0xe3);
 DEFINE_GUID(IID_IRDPSRAPIAttendeeManager,0xba3a37e8,0x33da,0x4749,0x8d,0xa0,0x07,0xfa,0x34,0xda,0x79,0x44);
 DEFINE_GUID(IID_IRDPSRAPISessionProperties,0x339b24f2,0x9bc0,0x4f16,0x9a,0xac,0xf1,0x65,0x43,0x3d,0x13,0xd4);
 DEFINE_GUID(CLSID_RDPSRAPIApplicationFilter,0xe35ace89,0xc7e8,0x427e,0xa4,0xf9,0xb9,0xda,0x07,0x28,0x26,0xbd);
 DEFINE_GUID(CLSID_RDPSRAPIInvitationManager,0x53d9c9db,0x75ab,0x4271,0x94,0x8a,0x4c,0x4e,0xb3,0x6a,0x8f,0x2b);
+
+static ULONG Shadow_IRDPSessionEvents_RefCount = 0;
+
+const char* GetRDPSessionEventString(DISPID id)
+{
+	switch (id)
+	{
+		case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_CONNECTED:
+			return "OnAttendeeConnected";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_DISCONNECTED:
+			return "OnAttendeeDisconnected";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_UPDATE:
+			return "OnAttendeeUpdate";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_ERROR:
+			return "OnError";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIEWER_CONNECTED:
+			return "OnConnectionEstablished";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIEWER_DISCONNECTED:
+			return "OnConnectionTerminated";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIEWER_AUTHENTICATED:
+			return "OnConnectionAuthenticated";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIEWER_CONNECTFAILED:
+			return "OnConnectionFailed";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_CTRLLEVEL_CHANGE_REQUEST:
+			return "OnControlLevelChangeRequest";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_GRAPHICS_STREAM_PAUSED:
+			return "OnGraphicsStreamPaused";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_GRAPHICS_STREAM_RESUMED:
+			return "OnGraphicsStreamResumed";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIRTUAL_CHANNEL_JOIN:
+			return "OnChannelJoin";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIRTUAL_CHANNEL_LEAVE:
+			return "OnChannelLeave";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIRTUAL_CHANNEL_DATARECEIVED:
+			return "OnChannelDataReceived";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIRTUAL_CHANNEL_SENDCOMPLETED:
+			return "OnChannelDataSent";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_APPLICATION_OPEN:
+			return "OnApplicationOpen";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_APPLICATION_CLOSE:
+			return "OnApplicationClose";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_APPLICATION_UPDATE:
+			return "OnApplicationUpdate";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_WINDOW_OPEN:
+			return "OnWindowOpen";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_WINDOW_CLOSE:
+			return "OnWindowClose";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_WINDOW_UPDATE:
+			return "OnWindowUpdate";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_APPFILTER_UPDATE:
+			return "OnAppFilterUpdate";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_SHARED_RECT_CHANGED:
+			return "OnSharedRectChanged";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_FOCUSRELEASED:
+			return "OnFocusReleased";
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_SHARED_DESKTOP_SETTINGS_CHANGED:
+			return "OnSharedDesktopSettingsChanged";
+			break;
+
+		case DISPID_RDPAPI_EVENT_ON_BOUNDING_RECT_CHANGED:
+			return "OnViewingSizeChanged";
+			break;
+	}
+
+	return "OnUnknown";
+}
 
 static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_QueryInterface( 
             __RPC__in _IRDPSessionEvents * This,
@@ -44,16 +159,6 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_QueryInterface(
             /* [annotation][iid_is][out] */ 
             _COM_Outptr_  void **ppvObject)
 {
-	GUID* pGuid = (GUID*) riid;
-
-	printf("Shadow_IRDPSessionEvents_QueryInterface\n");
-
-	printf("{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-		pGuid->Data1, pGuid->Data2, pGuid->Data3,
-		pGuid->Data4[0], pGuid->Data4[1],
-		pGuid->Data4[2], pGuid->Data4[3], pGuid->Data4[4],
-		pGuid->Data4[5], pGuid->Data4[6], pGuid->Data4[7]);
-
 	*ppvObject = NULL;
 
 	if (IsEqualIID(riid, &DIID__IRDPSessionEvents) ||
@@ -73,15 +178,19 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_QueryInterface(
 static ULONG STDMETHODCALLTYPE Shadow_IRDPSessionEvents_AddRef( 
             __RPC__in _IRDPSessionEvents * This)
 {
-	printf("Shadow_IRDPSessionEvents_AddRef\n");
-	return 1;
+	Shadow_IRDPSessionEvents_RefCount++;
+	return Shadow_IRDPSessionEvents_RefCount;
 }
         
 static ULONG STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Release( 
             __RPC__in _IRDPSessionEvents * This)
 {
-	printf("Shadow_IRDPSessionEvents_Release\n");
-	return 0;
+	if (!Shadow_IRDPSessionEvents_RefCount)
+		return 0;
+
+	Shadow_IRDPSessionEvents_RefCount--;
+
+	return Shadow_IRDPSessionEvents_RefCount;
 }
         
 static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_GetTypeInfoCount( 
@@ -134,7 +243,188 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
             /* [annotation][out] */ 
             _Out_opt_  UINT *puArgErr)
 {
-	printf("Shadow_IRDPSessionEvents_Invoke\n");
+	HRESULT hr;
+	VARIANT vr;
+	UINT uArgErr;
+
+	printf("%s (%d)\n", GetRDPSessionEventString(dispIdMember), dispIdMember);
+
+	switch (dispIdMember)
+	{
+		case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_CONNECTED:
+			{
+				int level;
+				IDispatch* pDispatch;
+				IRDPSRAPIAttendee* pAttendee;
+
+				vr.vt = VT_DISPATCH;
+				vr.pdispVal = NULL;
+
+				hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr, &uArgErr);
+
+				if (FAILED(hr))
+				{
+					printf("%s DispGetParam(0, VT_DISPATCH) failure: 0x%08X\n",
+						GetRDPSessionEventString(dispIdMember), hr);
+					return hr;
+				}
+				
+				pDispatch = vr.pdispVal;
+
+				hr = pDispatch->lpVtbl->QueryInterface(pDispatch, &IID_IRDPSRAPIAttendee, (void**) &pAttendee);
+
+				if (FAILED(hr))
+				{
+					printf("%s IDispatch::QueryInterface(IRDPSRAPIAttendee) failure: 0x%08X\n",
+						GetRDPSessionEventString(dispIdMember), hr);
+					return hr;
+				}
+
+				level = CTRL_LEVEL_VIEW;
+				//level = CTRL_LEVEL_INTERACTIVE;
+
+				hr = pAttendee->lpVtbl->put_ControlLevel(pAttendee, level);
+
+				if (FAILED(hr))
+				{
+					printf("%s IRDPSRAPIAttendee::put_ControlLevel() failure: 0x%08X\n",
+						GetRDPSessionEventString(dispIdMember), hr);
+					return hr;
+				}
+
+				pAttendee->lpVtbl->Release(pAttendee);
+			}
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_DISCONNECTED:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_ATTENDEE_UPDATE:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_ERROR:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIEWER_CONNECTED:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIEWER_DISCONNECTED:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIEWER_AUTHENTICATED:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIEWER_CONNECTFAILED:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_CTRLLEVEL_CHANGE_REQUEST:
+			{
+				int level;
+				IDispatch* pDispatch;
+				IRDPSRAPIAttendee* pAttendee;
+
+				vr.vt = VT_INT;
+				vr.pdispVal = NULL;
+
+				hr = DispGetParam(pDispParams, 1, VT_INT, &vr, &uArgErr);
+
+				if (FAILED(hr))
+				{
+					printf("%s DispGetParam(1, VT_INT) failure: 0x%08X\n",
+						GetRDPSessionEventString(dispIdMember), hr);
+					return hr;
+				}
+
+				level = vr.intVal;
+
+				vr.vt = VT_DISPATCH;
+				vr.pdispVal = NULL;
+
+				hr = DispGetParam(pDispParams, 0, VT_DISPATCH, &vr, &uArgErr);
+
+				if (FAILED(hr))
+				{
+					printf("%s DispGetParam(0, VT_DISPATCH) failure: 0x%08X\n",
+						GetRDPSessionEventString(dispIdMember), hr);
+					return hr;
+				}
+				
+				pDispatch = vr.pdispVal;
+
+				hr = pDispatch->lpVtbl->QueryInterface(pDispatch, &IID_IRDPSRAPIAttendee, (void**) &pAttendee);
+
+				if (FAILED(hr))
+				{
+					printf("%s IDispatch::QueryInterface(IRDPSRAPIAttendee) failure: 0x%08X\n",
+						GetRDPSessionEventString(dispIdMember), hr);
+					return hr;
+				}
+
+				hr = pAttendee->lpVtbl->put_ControlLevel(pAttendee, level);
+
+				if (FAILED(hr))
+				{
+					printf("%s IRDPSRAPIAttendee::put_ControlLevel() failure: 0x%08X\n",
+						GetRDPSessionEventString(dispIdMember), hr);
+					return hr;
+				}
+
+				pAttendee->lpVtbl->Release(pAttendee);
+			}
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_GRAPHICS_STREAM_PAUSED:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_GRAPHICS_STREAM_RESUMED:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIRTUAL_CHANNEL_JOIN:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIRTUAL_CHANNEL_LEAVE:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIRTUAL_CHANNEL_DATARECEIVED:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_VIRTUAL_CHANNEL_SENDCOMPLETED:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_APPLICATION_OPEN:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_APPLICATION_CLOSE:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_APPLICATION_UPDATE:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_WINDOW_OPEN:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_WINDOW_CLOSE:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_WINDOW_UPDATE:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_APPFILTER_UPDATE:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_SHARED_RECT_CHANGED:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_FOCUSRELEASED:
+			break;
+
+		case DISPID_RDPSRAPI_EVENT_ON_SHARED_DESKTOP_SETTINGS_CHANGED:
+			break;
+
+		case DISPID_RDPAPI_EVENT_ON_BOUNDING_RECT_CHANGED:
+			break;
+	}
+
 	return S_OK;
 }
 
@@ -157,6 +447,68 @@ static _IRDPSessionEvents Shadow_IRDPSessionEvents =
 	&Shadow_IRDPSessionEventsVtbl
 };
 
+static LRESULT CALLBACK ShadowWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+		case WM_CLOSE:
+			DestroyWindow(hwnd);
+			break;
+
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			break;
+
+		default:
+			return DefWindowProc(hwnd, uMsg, wParam, lParam);
+			break;
+	}
+
+	return 0;
+}
+
+int win_shadow_wds_wnd_init(winShadowSubsystem* subsystem)
+{
+	HMODULE hModule;
+	HINSTANCE hInstance;
+	WNDCLASSEX wndClassEx;
+
+	hModule = GetModuleHandle(NULL);
+
+	ZeroMemory(&wndClassEx, sizeof(WNDCLASSEX));
+	wndClassEx.cbSize = sizeof(WNDCLASSEX);
+	wndClassEx.style = 0;
+	wndClassEx.lpfnWndProc = ShadowWndProc;
+	wndClassEx.cbClsExtra = 0;
+	wndClassEx.cbWndExtra = 0;
+	wndClassEx.hInstance = hModule;
+	wndClassEx.hIcon = NULL;
+	wndClassEx.hCursor = NULL;
+	wndClassEx.hbrBackground = NULL;
+	wndClassEx.lpszMenuName = _T("ShadowWndMenu");
+	wndClassEx.lpszClassName = _T("ShadowWndClass");
+	wndClassEx.hIconSm = NULL;
+
+	if (!RegisterClassEx(&wndClassEx))
+	{
+		printf("RegisterClassEx failure\n");
+		return -1;
+	}
+
+	hInstance = wndClassEx.hInstance;
+
+	subsystem->hWnd = CreateWindowEx(0, wndClassEx.lpszClassName,
+		0, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInstance, NULL);
+
+	if (!subsystem->hWnd)
+	{
+		printf("CreateWindowEx failure\n");
+		return -1;
+	}
+
+	return 1;
+}
+
 int win_shadow_wds_init(winShadowSubsystem* subsystem)
 {
 	int status;
@@ -173,6 +525,8 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	VARIANT varPropertyValue;
 	IConnectionPoint* pCP;
 	IConnectionPointContainer* pCPC;
+
+	win_shadow_wds_wnd_init(subsystem);
 
 	hr = OleInitialize(NULL);
 
@@ -216,7 +570,11 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	hr = pCP->lpVtbl->Advise(pCP, (IUnknown*) &Shadow_IRDPSessionEvents, &dwCookie);
+	dwCookie = 0;
+	subsystem->pSessionEvents = &Shadow_IRDPSessionEvents;
+	subsystem->pSessionEvents->lpVtbl->AddRef(subsystem->pSessionEvents);
+
+	hr = pCP->lpVtbl->Advise(pCP, (IUnknown*) subsystem->pSessionEvents, &dwCookie);
 
 	if (FAILED(hr))
 	{
@@ -457,6 +815,12 @@ int win_shadow_wds_uninit(winShadowSubsystem* subsystem)
 	{
 		freerdp_assistance_file_free(subsystem->pAssistanceFile);
 		subsystem->pAssistanceFile = NULL;
+	}
+
+	if (subsystem->hWnd)
+	{
+		DestroyWindow(subsystem->hWnd);
+		subsystem->hWnd = NULL;
 	}
 
 	return 1;
