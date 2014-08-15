@@ -34,6 +34,7 @@
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
@@ -426,7 +427,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		fprintf(stderr, "EVP_CipherInit_ex failure\n");
+		DEBUG_WARN( "EVP_CipherInit_ex failure\n");
 		return NULL;
 	}
 
@@ -434,7 +435,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		fprintf(stderr, "EVP_CipherInit_ex failure\n");
+		DEBUG_WARN( "EVP_CipherInit_ex failure\n");
 		return NULL;
 	}
 
@@ -445,7 +446,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		fprintf(stderr, "EVP_CipherUpdate failure\n");
+		DEBUG_WARN( "EVP_CipherUpdate failure\n");
 		return NULL;
 	}
 
@@ -453,7 +454,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		fprintf(stderr, "EVP_CipherFinal_ex failure\n");
+		DEBUG_WARN( "EVP_CipherFinal_ex failure\n");
 		return NULL;
 	}
 
@@ -534,7 +535,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	if (status != 1)
 	{
-		fprintf(stderr, "EVP_DecryptFinal_ex failure\n");
+		DEBUG_WARN( "EVP_DecryptFinal_ex failure\n");
 		return -1;
 	}
 
@@ -557,7 +558,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	status = freerdp_assistance_parse_connection_string2(file);
 
-	printf("freerdp_assistance_parse_connection_string2: %d\n", status);
+	DEBUG_MSG("freerdp_assistance_parse_connection_string2: %d\n", status);
 
 	return 1;
 }
@@ -873,7 +874,7 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 
 	if (status < 0)
 	{
-		fprintf(stderr, "freerdp_assistance_parse_connection_string1 failure: %d\n", status);
+		DEBUG_WARN( "freerdp_assistance_parse_connection_string1 failure: %d\n", status);
 		return -1;
 	}
 

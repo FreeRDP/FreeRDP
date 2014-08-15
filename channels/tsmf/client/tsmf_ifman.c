@@ -80,7 +80,7 @@ int tsmf_ifman_exchange_capability_request(TSMF_IFMAN *ifman)
 									MMREDIR_CAPABILITY_PLATFORM_MF | MMREDIR_CAPABILITY_PLATFORM_DSHOW);
 				break;
 			default:
-				DEBUG_WARN("unknown capability type %d", CapabilityType);
+				CLOG_ERR("unknown capability type %d", CapabilityType);
 				break;
 		}
 		Stream_SetPosition(ifman->output, pos + cbCapabilityLength);
@@ -236,7 +236,7 @@ int tsmf_ifman_shutdown_presentation(TSMF_IFMAN *ifman)
 	if(presentation)
 		tsmf_presentation_free(presentation);
 	else
-		DEBUG_WARN("unknown presentation id");
+		CLOG_ERR("unknown presentation id");
 	Stream_EnsureRemainingCapacity(ifman->output, 4);
 	Stream_Write_UINT32(ifman->output, 0); /* Result */
 	ifman->output_interface_id = TSMF_INTERFACE_DEFAULT | STREAM_ID_STUB;
@@ -261,7 +261,7 @@ int tsmf_ifman_on_stream_volume(TSMF_IFMAN *ifman)
 	}
 	else
 	{
-		DEBUG_WARN("unknown presentation id");
+		CLOG_ERR("unknown presentation id");
 	}
 	ifman->output_pending = TRUE;
 	return 0;
@@ -393,13 +393,13 @@ int tsmf_ifman_on_sample(TSMF_IFMAN *ifman)
 	presentation = tsmf_presentation_find_by_id(ifman->presentation_id);
 	if(presentation == NULL)
 	{
-		DEBUG_WARN("unknown presentation id");
+		CLOG_ERR("unknown presentation id");
 		return 1;
 	}
 	stream = tsmf_stream_find_by_id(presentation, StreamId);
 	if(stream == NULL)
 	{
-		DEBUG_WARN("unknown stream id");
+		CLOG_ERR("unknown stream id");
 		return 1;
 	}
 	tsmf_stream_push_sample(stream, ifman->channel_callback,
@@ -420,7 +420,7 @@ int tsmf_ifman_on_flush(TSMF_IFMAN *ifman)
 	presentation = tsmf_presentation_find_by_id(ifman->presentation_id);
 	if(presentation == NULL)
 	{
-		DEBUG_WARN("unknown presentation id");
+		CLOG_ERR("unknown presentation id");
 		return 1;
 	}
 	tsmf_presentation_flush(presentation);
@@ -460,7 +460,7 @@ int tsmf_ifman_on_playback_started(TSMF_IFMAN *ifman)
 	if(presentation)
 		tsmf_presentation_start(presentation);
 	else
-		DEBUG_WARN("unknown presentation id");
+		CLOG_ERR("unknown presentation id");
 	Stream_EnsureRemainingCapacity(ifman->output, 16);
 	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
 	Stream_Write_UINT32(ifman->output, 0); /* StreamId */
@@ -480,7 +480,7 @@ int tsmf_ifman_on_playback_paused(TSMF_IFMAN *ifman)
 	if(presentation)
 		tsmf_presentation_paused(presentation);
 	else
-		DEBUG_WARN("unknown presentation id");
+		CLOG_ERR("unknown presentation id");
 	return 0;
 }
 
@@ -494,7 +494,7 @@ int tsmf_ifman_on_playback_restarted(TSMF_IFMAN *ifman)
 	if(presentation)
 		tsmf_presentation_restarted(presentation);
 	else
-		DEBUG_WARN("unknown presentation id");
+		CLOG_ERR("unknown presentation id");
 	return 0;
 }
 
@@ -506,7 +506,7 @@ int tsmf_ifman_on_playback_stopped(TSMF_IFMAN *ifman)
 	if(presentation)
 		tsmf_presentation_stop(presentation);
 	else
-		DEBUG_WARN("unknown presentation id");
+		CLOG_ERR("unknown presentation id");
 	Stream_EnsureRemainingCapacity(ifman->output, 16);
 	Stream_Write_UINT32(ifman->output, CLIENT_EVENT_NOTIFICATION); /* FunctionId */
 	Stream_Write_UINT32(ifman->output, 0); /* StreamId */

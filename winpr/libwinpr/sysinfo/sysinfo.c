@@ -222,7 +222,6 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 
 		default:
 			return FALSE;
-			break;
 	}
 
 	return TRUE;
@@ -439,6 +438,7 @@ ULONGLONG GetTickCount64(void)
 #define D_BIT_3DN       (1<<30)
 #define C_BIT_SSE3      (1<<0)
 #define C_BIT_PCLMULQDQ (1<<1)
+#define C_BIT_LZCNT     (1<<5)
 #define C_BIT_3DNP      (1<<8)
 #define C_BIT_3DNP      (1<<8)
 #define C_BIT_SSSE3     (1<<9)
@@ -692,6 +692,10 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 
 	switch (ProcessorFeature)
 	{
+		case PF_EX_LZCNT:
+			if (c & C_BIT_LZCNT)
+				ret = TRUE;
+			break;
 		case PF_EX_3DNOW_PREFETCH:
 			if (c & C_BIT_3DNP)
 				ret = TRUE;

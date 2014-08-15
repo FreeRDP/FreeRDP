@@ -222,6 +222,11 @@
 #define LB_CLIENT_TSV_URL			0x00001000
 #define LB_SERVER_TSV_CAPABLE			0x00002000
 
+/* Keyboard Hook */
+#define KEYBOARD_HOOK_LOCAL			0
+#define KEYBOARD_HOOK_REMOTE			1
+#define KEYBOARD_HOOK_FULLSCREEN_ONLY		2
+
 struct _TARGET_NET_ADDRESS
 {
 	UINT32 Length;
@@ -531,6 +536,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_ServerRandomLength				197
 #define FreeRDP_ServerCertificate				198
 #define FreeRDP_ServerCertificateLength				199
+#define FreeRDP_ClientRandom					200
+#define FreeRDP_ClientRandomLength				201
 #define FreeRDP_ChannelCount					256
 #define FreeRDP_ChannelDefArraySize				257
 #define FreeRDP_ChannelDefArray					258
@@ -726,6 +733,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_FastPathInput					2630
 #define FreeRDP_MultiTouchInput					2631
 #define FreeRDP_MultiTouchGestures				2632
+#define FreeRDP_KeyboardHook					2633
 #define FreeRDP_BrushSupportLevel				2688
 #define FreeRDP_GlyphSupportLevel				2752
 #define FreeRDP_GlyphCache					2753
@@ -845,11 +853,12 @@ struct rdp_settings
 	ALIGN64 UINT32 ExtEncryptionMethods; /* 194 */
 	ALIGN64 UINT32 EncryptionLevel; /* 195 */
 	ALIGN64 BYTE* ServerRandom; /* 196 */
-	ALIGN64 DWORD ServerRandomLength; /* 197 */
+	ALIGN64 UINT32 ServerRandomLength; /* 197 */
 	ALIGN64 BYTE* ServerCertificate; /* 198 */
-	ALIGN64 DWORD ServerCertificateLength; /* 199 */
+	ALIGN64 UINT32 ServerCertificateLength; /* 199 */
 	ALIGN64 BYTE* ClientRandom; /* 200 */
-	UINT64 padding0256[256 - 201]; /* 201 */
+	ALIGN64 UINT32 ClientRandomLength; /* 201 */
+	UINT64 padding0256[256 - 202]; /* 202 */
 
 	/* Client Network Data */
 	ALIGN64 UINT32 ChannelCount; /* 256 */
@@ -1008,7 +1017,7 @@ struct rdp_settings
 
 	/* Credentials Cache */
 	ALIGN64 BYTE* Password51; /* 1280 */
-	ALIGN64 DWORD Password51Length; /* 1281 */
+	ALIGN64 UINT32 Password51Length; /* 1281 */
 	UINT64 padding1344[1344 - 1282]; /* 1282 */
 
 	/* Kerberos Authentication */
@@ -1114,8 +1123,8 @@ struct rdp_settings
 	ALIGN64 char* RemoteApplicationFile; /* 2116 */
 	ALIGN64 char* RemoteApplicationGuid; /* 2117 */
 	ALIGN64 char* RemoteApplicationCmdLine; /* 2118 */
-	ALIGN64 DWORD RemoteApplicationExpandCmdLine; /* 2119 */
-	ALIGN64 DWORD RemoteApplicationExpandWorkingDir; /* 2120 */
+	ALIGN64 UINT32 RemoteApplicationExpandCmdLine; /* 2119 */
+	ALIGN64 UINT32 RemoteApplicationExpandWorkingDir; /* 2120 */
 	ALIGN64 BOOL DisableRemoteAppCapsCheck; /* 2121 */
 	ALIGN64 UINT32 RemoteAppNumIconCaches; /* 2122 */
 	ALIGN64 UINT32 RemoteAppNumIconCacheEntries; /* 2123 */
@@ -1181,7 +1190,8 @@ struct rdp_settings
 	ALIGN64 BOOL FastPathInput; /* 2630 */
 	ALIGN64 BOOL MultiTouchInput; /* 2631 */
 	ALIGN64 BOOL MultiTouchGestures; /* 2632 */
-	UINT64 padding2688[2688 - 2633]; /* 2633 */
+	ALIGN64 UINT32 KeyboardHook; /* 2633 */
+	UINT64 padding2688[2688 - 2634]; /* 2634 */
 
 	/* Brush Capabilities */
 	ALIGN64 UINT32 BrushSupportLevel; /* 2688 */

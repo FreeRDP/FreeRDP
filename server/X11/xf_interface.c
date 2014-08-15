@@ -53,7 +53,7 @@ void* xf_server_thread(void* param)
 		ZeroMemory(rfds, sizeof(rfds));
 		if (listener->GetFileDescriptor(listener, rfds, &rcount) != TRUE)
 		{
-			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
+			DEBUG_WARN( "Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 
@@ -81,14 +81,14 @@ void* xf_server_thread(void* param)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				fprintf(stderr, "select failed\n");
+				DEBUG_WARN( "select failed\n");
 				break;
 			}
 		}
 
 		if (listener->CheckFileDescriptor(listener) != TRUE)
 		{
-			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
+			DEBUG_WARN( "Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 	}

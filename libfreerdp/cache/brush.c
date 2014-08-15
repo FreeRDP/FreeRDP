@@ -28,6 +28,7 @@
 #include <freerdp/freerdp.h>
 #include <winpr/stream.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/cache/brush.h>
 
 void update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
@@ -100,7 +101,7 @@ void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 	{
 		if (index >= brushCache->maxMonoEntries)
 		{
-			fprintf(stderr, "invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
+			DEBUG_WARN( "invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
 			return NULL;
 		}
 
@@ -111,7 +112,7 @@ void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 	{
 		if (index >= brushCache->maxEntries)
 		{
-			fprintf(stderr, "invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
+			DEBUG_WARN( "invalid brush (%d bpp) index: 0x%04X\n", *bpp, index);
 			return NULL;
 		}
 
@@ -121,7 +122,7 @@ void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 
 	if (entry == NULL)
 	{
-		fprintf(stderr, "invalid brush (%d bpp) at index: 0x%04X\n", *bpp, index);
+		DEBUG_WARN( "invalid brush (%d bpp) at index: 0x%04X\n", *bpp, index);
 		return NULL;
 	}
 
@@ -136,7 +137,7 @@ void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT3
 	{
 		if (index >= brushCache->maxMonoEntries)
 		{
-			fprintf(stderr, "invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
+			DEBUG_WARN( "invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
 
 			if (entry)
 				free(entry);
@@ -156,7 +157,7 @@ void brush_cache_put(rdpBrushCache* brushCache, UINT32 index, void* entry, UINT3
 	{
 		if (index >= brushCache->maxEntries)
 		{
-			fprintf(stderr, "invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
+			DEBUG_WARN( "invalid brush (%d bpp) index: 0x%04X\n", bpp, index);
 
 			if (entry)
 				free(entry);

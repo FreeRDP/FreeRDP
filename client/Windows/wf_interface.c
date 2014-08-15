@@ -65,7 +65,7 @@ int wf_create_console(void)
 	freopen("CONOUT$", "w", stdout);
 	freopen("CONOUT$", "w", stderr);
 
-	fprintf(stderr, "Debug console created.\n");
+	DEBUG_WARN( "Debug console created.\n");
 
 	return 0;
 }
@@ -202,7 +202,7 @@ BOOL wf_pre_connect(freerdp* instance)
 
 		wfc->connectionRdpFile = freerdp_client_rdp_file_new();
 
-		fprintf(stderr, "Using connection file: %s\n", settings->ConnectionFile);
+		DEBUG_WARN( "Using connection file: %s\n", settings->ConnectionFile);
 
 		freerdp_client_parse_rdp_file(wfc->connectionRdpFile, settings->ConnectionFile);
 		freerdp_client_populate_settings_from_rdp_file(wfc->connectionRdpFile, settings);
@@ -291,7 +291,7 @@ BOOL wf_pre_connect(freerdp* instance)
 	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
 		(settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
 	{
-		fprintf(stderr, "wf_pre_connect: invalid dimensions %d %d\n", settings->DesktopWidth, settings->DesktopHeight);
+		DEBUG_WARN( "wf_pre_connect: invalid dimensions %d %d\n", settings->DesktopWidth, settings->DesktopHeight);
 		return 1;
 	}
 
@@ -487,7 +487,7 @@ BOOL wf_authenticate(freerdp* instance, char** username, char** password, char**
 
 	if (status != NO_ERROR)
 	{
-		fprintf(stderr, "CredUIPromptForCredentials unexpected status: 0x%08X\n", status);
+		DEBUG_WARN( "CredUIPromptForCredentials unexpected status: 0x%08X\n", status);
 		return FALSE;
 	}
 
@@ -496,7 +496,7 @@ BOOL wf_authenticate(freerdp* instance, char** username, char** password, char**
 
 	status = CredUIParseUserNameA(UserName, User, sizeof(User), Domain, sizeof(Domain));
 
-	//fprintf(stderr, "User: %s Domain: %s Password: %s\n", User, Domain, Password);
+	//DEBUG_WARN( "User: %s Domain: %s Password: %s\n", User, Domain, Password);
 
 	*username = _strdup(User);
 
@@ -590,7 +590,7 @@ static BOOL wf_auto_reconnect(freerdp* instance)
 		return FALSE;
 
 	/* A network disconnect was detected */
-	fprintf(stderr, "Network disconnect!\n");
+	DEBUG_WARN( "Network disconnect!\n");
 	if (!instance->settings->AutoReconnectionEnabled)
 	{
 		/* No auto-reconnect - just quit */
@@ -605,7 +605,7 @@ static BOOL wf_auto_reconnect(freerdp* instance)
 			return FALSE;
 
 		/* Attempt the next reconnect */
-		fprintf(stderr, "Attempting reconnect (%u of %u)\n", num_retries, max_retries);
+		DEBUG_WARN( "Attempting reconnect (%u of %u)\n", num_retries, max_retries);
 		if (freerdp_reconnect(instance))
 		{
 			return TRUE;
@@ -614,7 +614,7 @@ static BOOL wf_auto_reconnect(freerdp* instance)
 		Sleep(5000);
 	}
 
-	fprintf(stderr, "Maximum reconnect retries exceeded\n");
+	DEBUG_WARN( "Maximum reconnect retries exceeded\n");
 
 	return FALSE;
 }
@@ -638,39 +638,6 @@ void* wf_input_thread(void* arg)
 		{
 			status = freerdp_message_queue_process_message(instance,
 					FREERDP_INPUT_MESSAGE_QUEUE, &message);
-
-			if (!status)
-				break;
-		}
-
-		if (!status)
-			break;
-	}
-
-	ExitThread(0);
-
-	return NULL;
-}
-
-void* wf_update_thread(void* arg)
-{
-	int status;
-	wMessage message;
-	wMessageQueue* queue;
-	freerdp* instance = (freerdp*) arg;
-
-	assert( NULL != instance);
-
-	status = 1;
-	queue = freerdp_get_message_queue(instance,
-					FREERDP_UPDATE_MESSAGE_QUEUE);
-
-	while (MessageQueue_Wait(queue))
-	{
-		while (MessageQueue_Peek(queue, &message, TRUE))
-		{
-			status = freerdp_message_queue_process_message(instance,
-					FREERDP_UPDATE_MESSAGE_QUEUE, &message);
 
 			if (!status)
 				break;
@@ -728,11 +695,9 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	rdpChannels* channels;
 	rdpSettings* settings;
 
-	BOOL async_update;
 	BOOL async_input;
 	BOOL async_channels;
 	BOOL async_transport;
-	HANDLE update_thread;
 	HANDLE input_thread;
 	HANDLE channels_thread;
 
@@ -751,17 +716,9 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	channels = instance->context->channels;
 	settings = instance->context->settings;
 
-	async_update = settings->AsyncUpdate;
 	async_input = settings->AsyncInput;
 	async_channels = settings->AsyncChannels;
 	async_transport = settings->AsyncTransport;
-
-	if (async_update)
-	{
-		update_thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) wf_update_thread,
-				instance, 0, NULL);
-	}
 
 	if (async_input)
 	{
@@ -784,13 +741,13 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		{
 			if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
-				fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
+				DEBUG_WARN( "Failed to get FreeRDP file descriptor\n");
 				break;
 			}
 		}
 		if (wf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			fprintf(stderr, "Failed to get wfreerdp file descriptor\n");
+			DEBUG_WARN( "Failed to get wfreerdp file descriptor\n");
 			break;
 		}
 
@@ -798,7 +755,7 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		{
 			if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
-				fprintf(stderr, "Failed to get channel manager file descriptor\n");
+				DEBUG_WARN( "Failed to get channel manager file descriptor\n");
 				break;
 			}
 		}
@@ -816,14 +773,14 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		/* exit if nothing to do */
 		if (fds_count == 0)
 		{
-			fprintf(stderr, "wfreerdp_run: fds_count is zero\n");
+			DEBUG_WARN( "wfreerdp_run: fds_count is zero\n");
 			//break;
 		}
 
 		/* do the wait */
 		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
 		{
-			fprintf(stderr, "wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
+			DEBUG_WARN( "wfreerdp_run: WaitForMultipleObjects failed: 0x%04X\n", GetLastError());
 			break;
 		}
 
@@ -834,7 +791,7 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 				if (wf_auto_reconnect(instance))
 					continue;
 
-				fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
+				DEBUG_WARN( "Failed to check FreeRDP file descriptor\n");
 				break;
 			}
 		}
@@ -844,7 +801,7 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		}
 		if (wf_check_fds(instance) != TRUE)
 		{
-			fprintf(stderr, "Failed to check wfreerdp file descriptor\n");
+			DEBUG_WARN( "Failed to check wfreerdp file descriptor\n");
 			break;
 		}
 
@@ -852,7 +809,7 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		{
 			if (freerdp_channels_check_fds(channels, instance) != TRUE)
 			{
-				fprintf(stderr, "Failed to check channel manager file descriptor\n");
+				DEBUG_WARN( "Failed to check channel manager file descriptor\n");
 				break;
 			}
 
@@ -905,17 +862,6 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	/* cleanup */
 	freerdp_channels_close(channels, instance);
 
-	if (async_update)
-	{
-		wMessageQueue* update_queue;
-
-		update_queue = freerdp_get_message_queue(instance,
-						FREERDP_UPDATE_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(update_queue, 0);
-		WaitForSingleObject(update_thread, INFINITE);
-		CloseHandle(update_thread);
-	}
-
 	if (async_input)
 	{
 		wMessageQueue* input_queue;
@@ -960,7 +906,7 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 		{
 			if (status == -1)
 			{
-				fprintf(stderr, "keyboard thread error getting message\n");
+				DEBUG_WARN( "keyboard thread error getting message\n");
 				break;
 			}
 			else
@@ -974,7 +920,7 @@ DWORD WINAPI wf_keyboard_thread(LPVOID lpParam)
 	}
 	else
 	{
-		fprintf(stderr, "failed to install keyboard hook\n");
+		DEBUG_WARN( "failed to install keyboard hook\n");
 	}
 
 	printf("Keyboard thread exited.\n");
@@ -1002,7 +948,7 @@ int freerdp_client_focus_out(wfContext* wfc)
 
 int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
 {
-	fprintf(stderr, "freerdp_client_set_window_size %d, %d", width, height);
+	DEBUG_WARN( "freerdp_client_set_window_size %d, %d", width, height);
 	
 	if ((width != wfc->client_width) || (height != wfc->client_height))
 	{
@@ -1027,7 +973,7 @@ int freerdp_client_load_settings_from_rdp_file(wfContext* wfc, char* filename)
 		freerdp_client_rdp_file_free(wfc->connectionRdpFile);
 		wfc->connectionRdpFile = freerdp_client_rdp_file_new();
 
-		fprintf(stderr, "Using connection file: %s\n", settings->ConnectionFile);
+		DEBUG_WARN( "Using connection file: %s\n", settings->ConnectionFile);
 
 		if (!freerdp_client_parse_rdp_file(wfc->connectionRdpFile, settings->ConnectionFile))
 		{

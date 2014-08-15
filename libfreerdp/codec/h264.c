@@ -31,6 +31,7 @@
 #define USE_GRAY_SCALE	0
 #define USE_UPCONVERT	0
 
+#ifdef WITH_OPENH264
 static BYTE clip(int x)
 {
 	if (x < 0) return 0;
@@ -100,6 +101,7 @@ static UINT32 YUV_to_RGB(BYTE Y, BYTE U, BYTE V)
 
 	return RGB32(R, G, B);
 }
+#endif /* WITH_OPENH264 */
 
 #if USE_UPCONVERT
 static BYTE* convert_420_to_444(BYTE* chroma420, int chroma420Width, int chroma420Height, int chroma420Stride)
@@ -172,7 +174,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 		return -1;
 
 #if 0
-	printf("h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, DstFormat=%lx, nDstStep=%d, nXDst=%d, nYDst=%d, nWidth=%d, nHeight=%d)\n",
+	DEBUG_MSG("h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, DstFormat=%lx, nDstStep=%d, nXDst=%d, nYDst=%d, nWidth=%d, nHeight=%d)\n",
 		pSrcData, SrcSize, *ppDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight);
 #endif
 
@@ -215,7 +217,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
 
 #if 0
-	printf("h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]\n",
+	DEBUG_MSG("h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]\n",
 		state, pYUVData[0], pYUVData[1], pYUVData[2], sBufferInfo.iBufferStatus,
 		pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
 		pSystemBuffer->iStride[0], pSystemBuffer->iStride[1]);
@@ -309,7 +311,7 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 
 			if (!h264->pDecoder)
 			{
-				printf("Failed to create OpenH264 decoder\n");
+				DEBUG_MSG("Failed to create OpenH264 decoder\n");
 				goto EXCEPTION;
 			}
 
@@ -318,14 +320,14 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 			status = (*h264->pDecoder)->Initialize(h264->pDecoder, &sDecParam);
 			if (status != 0)
 			{
-				printf("Failed to initialize OpenH264 decoder (status=%ld)\n", status);
+				DEBUG_MSG("Failed to initialize OpenH264 decoder (status=%ld)\n", status);
 				goto EXCEPTION;
 			}
 
 			status = (*h264->pDecoder)->SetOption(h264->pDecoder, DECODER_OPTION_DATAFORMAT, &videoFormat);
 			if (status != 0)
 			{
-				printf("Failed to set data format option on OpenH264 decoder (status=%ld)\n", status);
+				DEBUG_MSG("Failed to set data format option on OpenH264 decoder (status=%ld)\n", status);
 			}
 		}
 #endif
@@ -335,8 +337,8 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 
 	return h264;
 
-EXCEPTION:
 #ifdef WITH_OPENH264
+EXCEPTION:
 	if (h264->pDecoder)
 	{
 		WelsDestroyDecoder(h264->pDecoder);
@@ -363,3 +365,4 @@ void h264_context_free(H264_CONTEXT* h264)
 		free(h264);
 	}
 }
+

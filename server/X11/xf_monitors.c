@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <freerdp/utils/debug.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -47,7 +48,7 @@ int xf_list_monitors(xfInfo* xfi)
 
 			for (i = 0; i < nmonitors; i++)
 			{
-				printf("      %s [%d] %dx%d\t+%d+%d\n",
+				DEBUG_MSG("      %s [%d] %dx%d\t+%d+%d\n",
 				       (i == 0) ? "*" : " ", i,
 				       screen[i].width, screen[i].height,
 				       screen[i].x_org, screen[i].y_org);
@@ -60,7 +61,7 @@ int xf_list_monitors(xfInfo* xfi)
 	Screen* screen;
 
 	screen = ScreenOfDisplay(xfi->display, DefaultScreen(xfi->display));
-	printf("      * [0] %dx%d\t+%d+%d\n", WidthOfScreen(screen), HeightOfScreen(screen), 0, 0);
+	DEBUG_MSG("      * [0] %dx%d\t+%d+%d\n", WidthOfScreen(screen), HeightOfScreen(screen), 0, 0);
 #endif
 
 	return 0;

@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <winpr/memory.h>
+#include <freerdp/utils/debug.h>
 #include <freerdp/codec/region.h>
 
 /*
@@ -219,20 +220,20 @@ void region16_print(const REGION16 *region)
 	int currentBandY = -1;
 
 	rects = region16_rects(region, &nbRects);
-	fprintf(stderr, "nrects=%d", nbRects);
+	DEBUG_WARN( "nrects=%d", nbRects);
 
 	for (i = 0; i < nbRects; i++, rects++)
 	{
 		if (rects->top != currentBandY)
 		{
 			currentBandY = rects->top;
-			fprintf(stderr, "\nband %d: ", currentBandY);
+			DEBUG_WARN( "\nband %d: ", currentBandY);
 		}
 
-		fprintf(stderr, "(%d,%d-%d,%d)", rects->left, rects->top, rects->right, rects->bottom);
+		DEBUG_WARN( "(%d,%d-%d,%d)", rects->left, rects->top, rects->right, rects->bottom);
 	}
 
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 }
 
 void region16_copy_band_with_union(RECTANGLE_16 *dst,

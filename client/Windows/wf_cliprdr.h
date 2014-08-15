@@ -53,7 +53,6 @@ struct cliprdr_context {
 	BOOL channel_initialized;
 
 	HWND hwndClipboard;
-	HWND hwndNextViewer;
 
 	HANDLE cliprdr_thread;
 	HANDLE hmem;

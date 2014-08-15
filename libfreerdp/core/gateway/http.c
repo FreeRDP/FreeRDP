@@ -26,6 +26,8 @@
 #include <winpr/stream.h>
 #include <winpr/string.h>
 
+#include <freerdp/utils/debug.h>
+
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 #endif
@@ -457,9 +459,9 @@ void http_response_print(HttpResponse* http_response)
 
 	for (i = 0; i < http_response->count; i++)
 	{
-		fprintf(stderr, "%s\n", http_response->lines[i]);
+		DEBUG_WARN( "%s\n", http_response->lines[i]);
 	}
-	fprintf(stderr, "\n");
+	DEBUG_WARN( "\n");
 }
 
 HttpResponse* http_response_recv(rdpTls* tls)
@@ -513,7 +515,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
         
 		if (!header_end)
 		{
-			fprintf(stderr, "%s: invalid response:\n", __FUNCTION__);
+			DEBUG_WARN( "%s: invalid response:\n", __FUNCTION__);
 			winpr_HexDump(buffer, status);
 			goto out_error;
 		}

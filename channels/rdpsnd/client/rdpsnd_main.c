@@ -45,7 +45,7 @@
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/utils/signal.h>
 
 #include "rdpsnd_main.h"
@@ -195,13 +195,13 @@ void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	}
 
 #if 0
-	fprintf(stderr, "Server ");
+	CLOG_ERR( "Server ");
 	rdpsnd_print_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
-	fprintf(stderr, "\n");
+	CLOG_ERR( "\n");
 
-	fprintf(stderr, "Client ");
+	CLOG_ERR( "Client ");
 	rdpsnd_print_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
-	fprintf(stderr, "\n");
+	CLOG_ERR( "\n");
 #endif
 }
 
@@ -544,7 +544,7 @@ static void rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	Stream_Seek_UINT8(s); /* bPad */
 	Stream_Read_UINT16(s, BodySize);
 
-	//fprintf(stderr, "msgType %d BodySize %d\n", msgType, BodySize);
+	//CLOG_ERR( "msgType %d BodySize %d\n", msgType, BodySize);
 
 	switch (msgType)
 	{
@@ -569,7 +569,7 @@ static void rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 			break;
 
 		default:
-			DEBUG_WARN("unknown msgType %d", msgType);
+			CLOG_ERR("unknown msgType %d", msgType);
 			break;
 	}
 
@@ -580,7 +580,7 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 {
 	if (rdpsnd->device)
 	{
-		DEBUG_WARN("existing device, abort.");
+		CLOG_ERR("existing device, abort.");
 		return;
 	}
 
@@ -606,7 +606,7 @@ static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, AD
 
 	if (entry(&entryPoints) != 0)
 	{
-		DEBUG_WARN("%s entry returns error.", name);
+		CLOG_ERR("%s entry returns error.", name);
 		return FALSE;
 	}
 
@@ -795,7 +795,7 @@ static void rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 
 	if (!rdpsnd->device)
 	{
-		DEBUG_WARN("no sound device.");
+		CLOG_ERR("no sound device.");
 		return;
 	}
 
@@ -875,7 +875,7 @@ int rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		fprintf(stderr, "rdpdr_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
+		CLOG_ERR( "rdpdr_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
@@ -907,7 +907,7 @@ static void rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 	{
 		if (Stream_Capacity(s) != Stream_GetPosition(s))
 		{
-			fprintf(stderr, "rdpsnd_virtual_channel_event_data_received: read error\n");
+			CLOG_ERR( "rdpsnd_virtual_channel_event_data_received: read error\n");
 		}
 
 		plugin->data_in = NULL;
@@ -927,7 +927,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT e
 
 	if (!plugin)
 	{
-		fprintf(stderr, "rdpsnd_virtual_channel_open_event: error no match\n");
+		CLOG_ERR( "rdpsnd_virtual_channel_open_event: error no match\n");
 		return;
 	}
 
@@ -987,7 +987,7 @@ static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID 
 
 	if (status != CHANNEL_RC_OK)
 	{
-		fprintf(stderr, "rdpsnd_virtual_channel_event_connected: open failed: status: %d\n", status);
+		CLOG_ERR( "rdpsnd_virtual_channel_event_connected: open failed: status: %d\n", status);
 		return;
 	}
 
@@ -1040,7 +1040,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT
 
 	if (!plugin)
 	{
-		fprintf(stderr, "rdpsnd_virtual_channel_init_event: error no match\n");
+		CLOG_ERR( "rdpsnd_virtual_channel_init_event: error no match\n");
 		return;
 	}
 

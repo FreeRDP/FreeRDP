@@ -28,6 +28,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/utils/rail.h>
+#include <freerdp/channels/log.h>
 
 #include "rail_orders.h"
 
@@ -522,7 +523,7 @@ BOOL rail_order_recv(railPlugin* rail, wStream* s)
 		}
 
 		default:
-			fprintf(stderr, "Unknown RAIL PDU order reveived.");
+			CLOG_ERR( "Unknown RAIL PDU order reveived.");
 			break;
 	}
 

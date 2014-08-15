@@ -63,7 +63,7 @@ BOOL wf_set_rop2(HDC hdc, int rop2)
 {
 	if ((rop2 < 0x01) || (rop2 > 0x10))
 	{
-		fprintf(stderr, "Unsupported ROP2: %d\n", rop2);
+		DEBUG_WARN( "Unsupported ROP2: %d\n", rop2);
 		return FALSE;
 	}
 
@@ -643,7 +643,7 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 	}
 	else
 	{
-		fprintf(stderr, "Unsupported codecID %d\n", surface_bits_command->codecID);
+		DEBUG_WARN( "Unsupported codecID %d\n", surface_bits_command->codecID);
 	}
 
 	if (tile_bitmap != NULL)

@@ -34,7 +34,7 @@
  * Methods
  */
 
-BOOL BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
+static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
 {
 	if (count > 0)
 	{
@@ -61,7 +61,7 @@ BOOL BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
 	return TRUE;
 }
 
-BOOL BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
+static BOOL BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
 {
 	if (count > 0)
 	{

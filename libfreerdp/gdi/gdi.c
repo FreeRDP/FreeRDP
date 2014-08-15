@@ -342,7 +342,7 @@ INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 	}
 	else
 	{
-		fprintf(stderr, "gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d\n", x, y, hBmp->width, hBmp->height);
+		DEBUG_WARN( "gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d\n", x, y, hBmp->width, hBmp->height);
 		return 0;
 	}
 }
@@ -557,7 +557,7 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	}
 	else
 	{
-		fprintf(stderr, "unimplemented brush style:%d\n", brush->style);
+		DEBUG_WARN( "unimplemented brush style:%d\n", brush->style);
 	}
 
 	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
@@ -734,7 +734,7 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	}
 	else
 	{
-		fprintf(stderr, "Mem3Blt unimplemented brush style:%d\n", brush->style);
+		DEBUG_WARN( "Mem3Blt unimplemented brush style:%d\n", brush->style);
 	}
 
 	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
@@ -742,22 +742,22 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 void gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 {
-	fprintf(stderr, "PolygonSC\n");
+	DEBUG_WARN( "PolygonSC\n");
 }
 
 void gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
-	fprintf(stderr, "PolygonCB\n");
+	DEBUG_WARN( "PolygonCB\n");
 }
 
 void gdi_ellipse_sc(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc)
 {
-	fprintf(stderr, "EllipseSC\n");
+	DEBUG_WARN( "EllipseSC\n");
 }
 
 void gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 {
-	fprintf(stderr, "EllipseCB\n");
+	DEBUG_WARN( "EllipseCB\n");
 }
 
 void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
@@ -891,7 +891,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 	}
 	else
 	{
-		fprintf(stderr, "Unsupported codecID %d\n", surface_bits_command->codecID);
+		DEBUG_WARN( "Unsupported codecID %d\n", surface_bits_command->codecID);
 	}
 
 	if (tile_bitmap)
@@ -981,6 +981,7 @@ void gdi_resize(rdpGdi* gdi, int width, int height)
 			gdi->width = width;
 			gdi->height = height;
 			gdi_bitmap_free_ex(gdi->primary);
+			gdi->primary_buffer = NULL;
 			gdi_init_primary(gdi);
 		}
 	}

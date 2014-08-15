@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <winpr/crt.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/crypto/ber.h>
 
 BOOL ber_read_length(wStream* s, int* length)
@@ -399,12 +400,12 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 	}
 	else if (length == 8)
 	{
-		fprintf(stderr, "%s: should implement reading an 8 bytes integer\n", __FUNCTION__);
+		DEBUG_WARN( "%s: should implement reading an 8 bytes integer\n", __FUNCTION__);
 		return FALSE;
 	}
 	else
 	{
-		fprintf(stderr, "%s: should implement reading an integer with length=%d\n", __FUNCTION__, length);
+		DEBUG_WARN( "%s: should implement reading an integer with length=%d\n", __FUNCTION__, length);
 		return FALSE;
 	}
 
