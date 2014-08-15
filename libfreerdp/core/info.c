@@ -503,8 +503,16 @@ void rdp_write_info_packet(wStream* s, rdpSettings* settings)
 	}
 	else
 	{
-		/* This field MUST be filled with "*" */
-		cbAlternateShell = ConvertToUnicode(CP_UTF8, 0, "*", -1, &alternateShellW, 0) * 2;
+		if (settings->RemoteAssistancePassStub)
+		{
+			/* This field MUST be filled with "*" */
+			cbAlternateShell = ConvertToUnicode(CP_UTF8, 0, "*", -1, &alternateShellW, 0) * 2;
+		}
+		else
+		{
+			/* This field must contain the remote assistance password */
+			cbAlternateShell = ConvertToUnicode(CP_UTF8, 0, settings->RemoteAssistancePassword, -1, &alternateShellW, 0) * 2;
+		}
 	}
 
 	if (!settings->RemoteAssistanceMode)

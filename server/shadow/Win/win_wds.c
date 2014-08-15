@@ -747,12 +747,6 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	printf("ConnectionString: %s\n", file->ConnectionString2);
 
-	printf("RemoteAssistanceSessionId: %s\n", file->RASessionId);
-	printf("RemoteAssistanceRCTicket: %s\n", file->RCTicket);
-	printf("RemoteAssistancePassStub: %s\n", file->PassStub);
-	printf("RemoteAssistanceMachineAddress: %s\n", file->MachineAddress);
-	printf("RemoteAssistanceMachinePort: %d\n", file->MachinePort);
-
 	if (1)
 	{
 		FILE* fp;
@@ -785,10 +779,10 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	freerdp_set_param_string(settings, FreeRDP_RemoteAssistanceRCTicket, file->ConnectionString2);
 
-	freerdp_set_param_string(settings, FreeRDP_RemoteAssistancePassStub, "Shadow123!");
-
+	freerdp_set_param_string(settings, FreeRDP_Domain, "RDP");
 	freerdp_set_param_string(settings, FreeRDP_Username, "Shadow");
 	freerdp_set_param_string(settings, FreeRDP_RemoteAssistancePassword, "Shadow123!");
+	freerdp_set_param_bool(settings, FreeRDP_AutoLogonEnabled, TRUE);
 
 	freerdp_set_param_string(settings, FreeRDP_ServerHostname, file->MachineAddress);
 	freerdp_set_param_uint32(settings, FreeRDP_ServerPort, file->MachinePort);
