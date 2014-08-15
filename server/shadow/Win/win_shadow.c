@@ -249,7 +249,20 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	printf("SurfaceCopy x: %d y: %d width: %d height: %d right: %d bottom: %d\n",
 		x, y, width, height, x + width, y + height);
 
-#ifdef WITH_DXGI_1_2
+#if defined(WITH_WDS_API)
+	{
+		rdpGdi* gdi;
+		shwContext* shw;
+		rdpContext* context;
+
+		shw = subsystem->shw;
+		context = (rdpContext*) shw;
+		gdi = context->gdi;
+
+		pDstData = gdi->primary_buffer;
+		nDstStep = gdi->width * 4;
+	}
+#elif defined(WITH_DXGI_1_2)
 	status = win_shadow_dxgi_fetch_frame_data(subsystem, &pDstData, &nDstStep, x, y, width, height);
 #endif
 
@@ -276,6 +289,44 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 
 	return 1;
 }
+
+#if defined(WITH_WDS_API)
+
+void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
+{
+	DWORD status;
+	DWORD nCount;
+	HANDLE events[32];
+	HANDLE StopEvent;
+
+	StopEvent = subsystem->server->StopEvent;
+
+	nCount = 0;
+	events[nCount++] = StopEvent;
+	events[nCount++] = subsystem->RdpUpdateEnterEvent;
+
+	while (1)
+	{
+		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+
+		if (WaitForSingleObject(StopEvent, 0) == WAIT_OBJECT_0)
+		{
+			break;
+		}
+
+		if (WaitForSingleObject(subsystem->RdpUpdateEnterEvent, 0) == WAIT_OBJECT_0)
+		{
+			win_shadow_surface_copy(subsystem);
+			ResetEvent(subsystem->RdpUpdateEnterEvent);
+			SetEvent(subsystem->RdpUpdateLeaveEvent);
+		}
+	}
+
+	ExitThread(0);
+	return NULL;
+}
+
+#elif defined(WITH_DXGI_1_2)
 
 void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
 {
@@ -314,7 +365,6 @@ void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
 
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
-#ifdef WITH_DXGI_1_2
 			int dxgi_status;
 
 			dxgi_status = win_shadow_dxgi_get_next_frame(subsystem);
@@ -324,7 +374,6 @@ void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
 
 			if (dxgi_status > 0)
 				win_shadow_surface_copy(subsystem);
-#endif
 
 			dwInterval = 1000 / fps;
 			frameTime += dwInterval;
@@ -334,6 +383,8 @@ void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
 	ExitThread(0);
 	return NULL;
 }
+
+#endif
 
 int win_shadow_subsystem_init(winShadowSubsystem* subsystem)
 {

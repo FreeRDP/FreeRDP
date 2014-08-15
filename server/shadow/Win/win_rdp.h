@@ -19,6 +19,11 @@
 #ifndef FREERDP_SHADOW_SERVER_WIN_RDP_H
 #define FREERDP_SHADOW_SERVER_WIN_RDP_H
 
+#include <freerdp/addin.h>
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/client/cmdline.h>
+#include <freerdp/channels/channels.h>
+
 typedef struct shw_context shwContext;
 
 #include "win_shadow.h"
@@ -31,6 +36,7 @@ struct shw_context
 	HANDLE StopEvent;
 	freerdp* instance;
 	rdpSettings* settings;
+	winShadowSubsystem* subsystem;
 };
 
 #ifdef __cplusplus

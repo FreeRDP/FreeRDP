@@ -46,6 +46,8 @@ struct win_shadow_subsystem
 #ifdef WITH_WDS_API
 	HWND hWnd;
 	shwContext* shw;
+	HANDLE RdpUpdateEnterEvent;
+	HANDLE RdpUpdateLeaveEvent;
 	rdpAssistanceFile* pAssistanceFile;
 	_IRDPSessionEvents* pSessionEvents;
 	IRDPSRAPISharingSession* pSharingSession;

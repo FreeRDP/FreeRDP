@@ -23,11 +23,6 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include <freerdp/addin.h>
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/client/cmdline.h>
-#include <freerdp/channels/channels.h>
-
 #include "win_rdp.h"
 
 void shw_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
@@ -57,58 +52,30 @@ void shw_begin_paint(rdpContext* context)
 
 void shw_end_paint(rdpContext* context)
 {
-	INT32 x, y;
-	UINT32 w, h;
-	shwContext* shw;
-	HGDI_RGN invalid;
+	int index;
+	int ninvalid;
 	HGDI_RGN cinvalid;
-	rdpSettings* settings;
+	RECTANGLE_16 invalidRect;
 	rdpGdi* gdi = context->gdi;
+	shwContext* shw = (shwContext*) context;
+	winShadowSubsystem* subsystem = shw->subsystem;
 
-	shw = (shwContext*) context;
-	settings = context->settings;
-
-	invalid = gdi->primary->hdc->hwnd->invalid;
+	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 
-	x = invalid->x;
-	y = invalid->y;
-	w = invalid->w;
-	h = invalid->h;
+	for (index = 0; index < ninvalid; index++)
+	{
+		invalidRect.left = cinvalid[index].x;
+		invalidRect.top = cinvalid[index].y;
+		invalidRect.right = cinvalid[index].x + cinvalid[index].w;
+		invalidRect.bottom = cinvalid[index].y + cinvalid[index].h;
 
-	if (x < 0)
-		x = 0;
+		region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
+	}
 
-	if (x > settings->DesktopWidth - 1)
-		x = settings->DesktopWidth - 1;
-
-	w += x % 16;
-	x -= x % 16;
-
-	w += w % 16;
-
-	if (x + w > settings->DesktopWidth)
-		w = settings->DesktopWidth - x;
-
-	if (y < 0)
-		y = 0;
-
-	if (y > settings->DesktopHeight - 1)
-		y = settings->DesktopHeight - 1;
-
-	h += y % 16;
-	y -= y % 16;
-
-	h += h % 16;
-
-	if (h > settings->DesktopHeight)
-		h = settings->DesktopHeight;
-
-	if (y + h > settings->DesktopHeight)
-		h = settings->DesktopHeight - y;
-
-	if (w * h < 1)
-		return;
+	SetEvent(subsystem->RdpUpdateEnterEvent);
+	WaitForSingleObject(subsystem->RdpUpdateLeaveEvent, INFINITE);
+	ResetEvent(subsystem->RdpUpdateLeaveEvent);
 }
 
 void shw_desktop_resize(rdpContext* context)
@@ -402,6 +369,10 @@ int win_shadow_rdp_init(winShadowSubsystem* subsystem)
 
 	subsystem->shw = (shwContext*) context;
 	subsystem->shw->settings = context->settings;
+	subsystem->shw->subsystem = subsystem;
+
+	subsystem->RdpUpdateEnterEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	subsystem->RdpUpdateLeaveEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	return 1;
 }

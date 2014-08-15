@@ -747,7 +747,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	printf("ConnectionString: %s\n", file->ConnectionString2);
 
-	if (1)
+	if (0)
 	{
 		FILE* fp;
 		size_t size;
@@ -803,8 +803,6 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 int win_shadow_wds_uninit(winShadowSubsystem* subsystem)
 {
-	printf("win_shadow_wds_uninit\n");
-
 	if (subsystem->pSharingSession)
 	{
 		subsystem->pSharingSession->lpVtbl->Close(subsystem->pSharingSession);
@@ -858,6 +856,12 @@ int win_shadow_wds_uninit(winShadowSubsystem* subsystem)
 	{
 		DestroyWindow(subsystem->hWnd);
 		subsystem->hWnd = NULL;
+	}
+
+	if (subsystem->shw)
+	{
+		win_shadow_rdp_uninit(subsystem);
+		subsystem->shw = NULL;
 	}
 
 	return 1;
