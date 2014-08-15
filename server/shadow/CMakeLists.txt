@@ -115,6 +115,8 @@ if(WITH_X11)
 	endif()
 endif()
 
+include_directories(${OPENSSL_INCLUDE_DIR})
+
 set(${MODULE_PREFIX}_SRCS
 	shadow_client.c
 	shadow_client.h

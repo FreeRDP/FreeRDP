@@ -53,6 +53,8 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	settings->CertificateFile = _strdup(server->CertificateFile);
 	settings->PrivateKeyFile = _strdup(server->PrivateKeyFile);
 
+	settings->RdpKeyFile = _strdup(settings->PrivateKeyFile);
+
 	client->inLobby = TRUE;
 	client->mayView = server->mayView;
 	client->mayInteract = server->mayInteract;

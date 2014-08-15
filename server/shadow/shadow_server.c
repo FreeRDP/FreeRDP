@@ -21,6 +21,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/ssl.h>
 #include <winpr/wnd.h>
 #include <winpr/path.h>
 #include <winpr/cmdline.h>
@@ -29,6 +30,10 @@
 #include <freerdp/version.h>
 
 #include <winpr/tools/makecert.h>
+
+#ifdef _WIN32
+#include <openssl/applink.c>
+#endif
 
 #ifndef _WIN32
 #include <sys/select.h>
@@ -419,6 +424,8 @@ int shadow_server_init_certificate(rdpShadowServer* server)
 int shadow_server_init(rdpShadowServer* server)
 {
 	int status;
+
+	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 
