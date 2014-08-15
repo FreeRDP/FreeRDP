@@ -706,21 +706,12 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 	}
 	else
 	{
-		p = strchr(username, '@');
-
-		if (p)
-		{
-			length = p - username;
-			*user = (char*) malloc(length + 1);
-			strncpy(*user, username, length);
-			(*user)[length] = '\0';
-			*domain = _strdup(&p[1]);
-		}
-		else
-		{
-			*user = _strdup(username);
-			*domain = NULL;
-		}
+		/* Do not break up the name for '@'; both credSSP and the
+		 * ClientInfo PDU expect 'user@corp.net' to be transmitted
+		 * as username 'user@corp.net', domain empty.
+		 */
+		*user = _strdup(username);
+		*domain = NULL;
 	}
 
 	return 0;
