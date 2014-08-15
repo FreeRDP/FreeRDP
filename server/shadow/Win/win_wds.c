@@ -27,6 +27,20 @@
 
 #include "win_wds.h"
 
+/**
+ * Windows Desktop Sharing API:
+ * http://blogs.msdn.com/b/rds/archive/2007/03/08/windows-desktop-sharing-api.aspx
+ *
+ * Windows Desktop Sharing Interfaces:
+ * http://msdn.microsoft.com/en-us/library/aa373871%28v=vs.85%29.aspx
+ *
+ * Offer Remote Assistance Sample C:
+ * http://msdn.microsoft.com/en-us/library/ms811079.aspx#remoteassistanceapi_topic2b
+ *
+ * Remote Assistance in XP: Programmatically establish an RDP session:
+ * http://www.codeproject.com/Articles/29939/Remote-Assistance-in-XP-Programmatically-establish
+ */
+
 #undef DEFINE_GUID
 #define INITGUID
 
