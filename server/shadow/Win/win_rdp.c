@@ -88,6 +88,21 @@ void shw_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface
 	shwContext* shw = (shwContext*) context;
 }
 
+BOOL shw_authenticate(freerdp* instance, char** username, char** password, char** domain)
+{
+	return TRUE;
+}
+
+BOOL shw_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+{
+	return TRUE;
+}
+
+int shw_verify_x509_certificate(freerdp* instance, BYTE* data, int length, const char* hostname, int port, DWORD flags)
+{
+	return 1;
+}
+
 void shw_OnConnectionResultEventHandler(rdpContext* context, ConnectionResultEventArgs* e)
 {
 	shwContext* shw = (shwContext*) context;
@@ -273,6 +288,9 @@ int shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 
 	instance->PreConnect = shw_pre_connect;
 	instance->PostConnect = shw_post_connect;
+	instance->Authenticate = shw_authenticate;
+	instance->VerifyCertificate = shw_verify_certificate;
+	instance->VerifyX509Certificate = shw_verify_x509_certificate;
 
 	context->channels = freerdp_channels_new();
 
@@ -281,48 +299,51 @@ int shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 	settings = instance->settings;
 	shw->settings = instance->context->settings;
 
-	settings->SoftwareGdi = TRUE;
-	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_SCRBLT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_OPAQUE_RECT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_DRAWNINEGRID_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIDSTBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIPATBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTISCRBLT_INDEX] = FALSE;
-	settings->OrderSupport[NEG_MULTIOPAQUERECT_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MULTI_DRAWNINEGRID_INDEX] = FALSE;
-	settings->OrderSupport[NEG_LINETO_INDEX] = TRUE;
-	settings->OrderSupport[NEG_POLYLINE_INDEX] = TRUE;
-	settings->OrderSupport[NEG_MEMBLT_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_INDEX] = (settings->SoftwareGdi) ? TRUE : FALSE;
-	settings->OrderSupport[NEG_MEMBLT_V2_INDEX] = settings->BitmapCacheEnabled;
-	settings->OrderSupport[NEG_MEM3BLT_V2_INDEX] = FALSE;
-	settings->OrderSupport[NEG_SAVEBITMAP_INDEX] = FALSE;
-	settings->OrderSupport[NEG_GLYPH_INDEX_INDEX] = TRUE;
-	settings->OrderSupport[NEG_FAST_INDEX_INDEX] = TRUE;
-	settings->OrderSupport[NEG_FAST_GLYPH_INDEX] = TRUE;
-	settings->OrderSupport[NEG_POLYGON_SC_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
-	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = (settings->SoftwareGdi) ? FALSE : TRUE;
-	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
-	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
-
 	settings->AsyncTransport = FALSE;
 	settings->AsyncChannels = FALSE;
 	settings->AsyncUpdate = FALSE;
 	settings->AsyncInput = FALSE;
 
 	settings->IgnoreCertificate = TRUE;
+	settings->ExternalCertificateManagement = TRUE;
 
 	settings->RdpSecurity = TRUE;
 	settings->TlsSecurity = TRUE;
 	settings->NlaSecurity = FALSE;
 
-	settings->ColorDepth = 32;
+	settings->BitmapCacheEnabled = FALSE;
+	settings->BitmapCacheV3Enabled = FALSE;
+	settings->OffscreenSupportLevel = FALSE;
+	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
+	settings->BrushSupportLevel = FALSE;
 
-	settings->CompressionEnabled = TRUE;
+	ZeroMemory(settings->OrderSupport, 32);
+
+	settings->FrameMarkerCommandEnabled = TRUE;
+	settings->SurfaceFrameMarkerEnabled = TRUE;
+	settings->AltSecFrameMarkerSupport = TRUE;
+
+	settings->ColorDepth = 32;
+	settings->NSCodec = TRUE;
+	settings->RemoteFxCodec = TRUE;
+	settings->FastPathInput = TRUE;
+	settings->FastPathOutput = TRUE;
+	settings->LargePointerFlag = TRUE;
+
+	settings->CompressionEnabled = FALSE;
 
 	settings->AutoReconnectionEnabled = FALSE;
+	settings->NetworkAutoDetect = FALSE;
+	settings->SupportHeartbeatPdu = FALSE;
+	settings->SupportMultitransport = FALSE;
+	settings->ConnectionType = CONNECTION_TYPE_LAN;
+
+	settings->AllowFontSmoothing = TRUE;
+	settings->AllowDesktopComposition = TRUE;
+	settings->DisableWallpaper = FALSE;
+	settings->DisableFullWindowDrag = TRUE;
+	settings->DisableMenuAnims = TRUE;
+	settings->DisableThemes = FALSE;
 
 	settings->DeviceRedirection = TRUE;
 	settings->RedirectClipboard = TRUE;

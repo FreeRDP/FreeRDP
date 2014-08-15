@@ -157,6 +157,8 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 			continue;
 		}
 
+		/* FIXME: these file descriptors do not work on Windows */
+
 		listener->sockfds[listener->num_sockfds] = sockfd;
 		listener->events[listener->num_sockfds] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd);
 		listener->num_sockfds++;

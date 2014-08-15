@@ -313,6 +313,10 @@ void* shadow_server_thread(rdpShadowServer* server)
 			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
 			break;
 		}
+
+#ifdef _WIN32
+		Sleep(100); /* FIXME: listener event handles */
+#endif
 	}
 
 	listener->Close(listener);

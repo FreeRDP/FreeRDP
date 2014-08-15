@@ -218,6 +218,12 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	server = subsystem->server;
 	surface = server->surface;
 
+	if (ArrayList_Count(server->clients) < 1)
+	{
+		region16_clear(&(subsystem->invalidRegion));
+		return 1;
+	}
+
 	surfaceRect.left = surface->x;
 	surfaceRect.top = surface->y;
 	surfaceRect.right = surface->x + surface->width;
@@ -273,6 +279,8 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 			surface->scanline, x - surface->x, y - surface->y, width, height,
 			pDstData, PIXEL_FORMAT_XRGB32, nDstStep, 0, 0);
 
+	ArrayList_Lock(server->clients);
+
 	count = ArrayList_Count(server->clients);
 
 	InitializeSynchronizationBarrier(&(subsystem->barrier), count + 1, -1);
@@ -280,10 +288,11 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	SetEvent(subsystem->updateEvent);
 
 	EnterSynchronizationBarrier(&(subsystem->barrier), 0);
+	ResetEvent(subsystem->updateEvent);
 
 	DeleteSynchronizationBarrier(&(subsystem->barrier));
 
-	ResetEvent(subsystem->updateEvent);
+	ArrayList_Unlock(server->clients);
 
 	region16_clear(&(subsystem->invalidRegion));
 
