@@ -29,14 +29,17 @@
 
 #include "registry_reg.h"
 
+#include "../log.h"
+#define TAG "registry"
+
 #define WINPR_HKLM_HIVE		"/etc/winpr/HKLM.reg"
 
-static void reg_print_key(Reg* reg, RegKey* key);
-static void reg_print_value(Reg* reg, RegVal* value);
+static void reg_print_key(Reg *reg, RegKey *key);
+static void reg_print_value(Reg *reg, RegVal *value);
 
 struct reg_data_type
 {
-	char* tag;
+	char *tag;
 	int length;
 	DWORD type;
 };
@@ -55,7 +58,7 @@ static struct reg_data_type REG_DATA_TYPE_TABLE[] =
 	{ NULL,		0,	0		}
 };
 
-static char* REG_DATA_TYPE_STRINGS[] =
+static char *REG_DATA_TYPE_STRINGS[] =
 {
 	"REG_NONE",
 	"REG_SZ",
@@ -71,14 +74,12 @@ static char* REG_DATA_TYPE_STRINGS[] =
 	"REG_QWORD"
 };
 
-static void reg_load_start(Reg* reg)
+static void reg_load_start(Reg *reg)
 {
 	long int file_size;
-
 	fseek(reg->fp, 0, SEEK_END);
 	file_size = ftell(reg->fp);
 	fseek(reg->fp, 0, SEEK_SET);
-
 	reg->line = NULL;
 	reg->next_line = NULL;
 	reg->buffer = NULL;
@@ -86,7 +87,7 @@ static void reg_load_start(Reg* reg)
 	if (file_size < 1)
 		return;
 
-	reg->buffer = (char*) malloc(file_size + 2);
+	reg->buffer = (char *) malloc(file_size + 2);
 
 	if (fread(reg->buffer, file_size, 1, reg->fp) != 1)
 	{
@@ -97,11 +98,10 @@ static void reg_load_start(Reg* reg)
 
 	reg->buffer[file_size] = '\n';
 	reg->buffer[file_size + 1] = '\0';
-
 	reg->next_line = strtok(reg->buffer, "\n");
 }
 
-static void reg_load_finish(Reg* reg)
+static void reg_load_finish(Reg *reg)
 {
 	if (!reg)
 		return;
@@ -113,16 +113,15 @@ static void reg_load_finish(Reg* reg)
 	}
 }
 
-static RegVal* reg_load_value(Reg* reg, RegKey* key)
+static RegVal *reg_load_value(Reg *reg, RegKey *key)
 {
 	int index;
-	char* p[5];
+	char *p[5];
 	int length;
-	char* name;
-	char* type;
-	char* data;
-	RegVal* value;
-
+	char *name;
+	char *type;
+	char *data;
+	RegVal *value;
 	p[0] = reg->line + 1;
 	p[1] = strstr(p[0], "\"=");
 	p[2] = p[1] + 2;
@@ -134,14 +133,11 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 		p[3] = strchr(p[2], ':');
 
 	data = p[3] + 1;
-
 	length = p[1] - p[0];
-	name = (char*) malloc(length + 1);
+	name = (char *) malloc(length + 1);
 	memcpy(name, p[0], length);
 	name[length] = '\0';
-
-	value = (RegVal*) malloc(sizeof(RegVal));
-
+	value = (RegVal *) malloc(sizeof(RegVal));
 	value->name = name;
 	value->type = REG_NONE;
 	value->next = value->prev = NULL;
@@ -167,7 +163,7 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 	}
 	else
 	{
-		fprintf(stderr, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		WLog_ERR(TAG, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 
 	if (!key->values)
@@ -176,7 +172,7 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 	}
 	else
 	{
-		RegVal* pValue = key->values;
+		RegVal *pValue = key->values;
 
 		while (pValue->next != NULL)
 		{
@@ -190,7 +186,7 @@ static RegVal* reg_load_value(Reg* reg, RegKey* key)
 	return value;
 }
 
-static BOOL reg_load_has_next_line(Reg* reg)
+static BOOL reg_load_has_next_line(Reg *reg)
 {
 	if (!reg)
 		return 0;
@@ -198,7 +194,7 @@ static BOOL reg_load_has_next_line(Reg* reg)
 	return (reg->next_line != NULL) ? 1 : 0;
 }
 
-static char* reg_load_get_next_line(Reg* reg)
+static char *reg_load_get_next_line(Reg *reg)
 {
 	if (!reg)
 		return NULL;
@@ -206,24 +202,21 @@ static char* reg_load_get_next_line(Reg* reg)
 	reg->line = reg->next_line;
 	reg->next_line = strtok(NULL, "\n");
 	reg->line_length = strlen(reg->line);
-
 	return reg->line;
 }
 
-static char* reg_load_peek_next_line(Reg* reg)
+static char *reg_load_peek_next_line(Reg *reg)
 {
 	return reg->next_line;
 }
 
-static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
+static void reg_insert_key(Reg *reg, RegKey *key, RegKey *subkey)
 {
-	char* name;
-	char* path;
-	char* save;
+	char *name;
+	char *path;
+	char *save;
 	int length;
-
 	path = _strdup(subkey->name);
-
 	name = strtok_s(path, "\\", &save);
 
 	while (name != NULL)
@@ -241,23 +234,19 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 	free(path);
 }
 
-static RegKey* reg_load_key(Reg* reg, RegKey* key)
+static RegKey *reg_load_key(Reg *reg, RegKey *key)
 {
-	char* p[2];
+	char *p[2];
 	int length;
-	char* line;
-	RegKey* subkey;
-
+	char *line;
+	RegKey *subkey;
 	p[0] = reg->line + 1;
 	p[1] = strrchr(p[0], ']');
-
-	subkey = (RegKey*) malloc(sizeof(RegKey));
-
+	subkey = (RegKey *) malloc(sizeof(RegKey));
 	subkey->values = NULL;
 	subkey->prev = subkey->next = NULL;
-
 	length = p[1] - p[0];
-	subkey->name = (char*) malloc(length + 1);
+	subkey->name = (char *) malloc(length + 1);
 	memcpy(subkey->name, p[0], length);
 	subkey->name[length] = '\0';
 
@@ -284,7 +273,7 @@ static RegKey* reg_load_key(Reg* reg, RegKey* key)
 	}
 	else
 	{
-		RegKey* pKey = key->subkeys;
+		RegKey *pKey = key->subkeys;
 
 		while (pKey->next != NULL)
 		{
@@ -298,7 +287,7 @@ static RegKey* reg_load_key(Reg* reg, RegKey* key)
 	return subkey;
 }
 
-void reg_load(Reg* reg)
+void reg_load(Reg *reg)
 {
 	reg_load_start(reg);
 
@@ -315,11 +304,10 @@ void reg_load(Reg* reg)
 	reg_load_finish(reg);
 }
 
-static void reg_unload_value(Reg* reg, RegVal* value)
+static void reg_unload_value(Reg *reg, RegVal *value)
 {
 	if (value->type == REG_DWORD)
 	{
-
 	}
 	else if (value->type == REG_SZ)
 	{
@@ -327,17 +315,16 @@ static void reg_unload_value(Reg* reg, RegVal* value)
 	}
 	else
 	{
-		fprintf(stderr, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		WLog_ERR(TAG, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 
 	free(value);
 }
 
-static void reg_unload_key(Reg* reg, RegKey* key)
+static void reg_unload_key(Reg *reg, RegKey *key)
 {
-	RegVal* pValue;
-	RegVal* pValueNext;
-
+	RegVal *pValue;
+	RegVal *pValueNext;
 	pValue = key->values;
 
 	while (pValue != NULL)
@@ -351,11 +338,10 @@ static void reg_unload_key(Reg* reg, RegKey* key)
 	free(key);
 }
 
-void reg_unload(Reg* reg)
+void reg_unload(Reg *reg)
 {
-	RegKey* pKey;
-	RegKey* pKeyNext;
-
+	RegKey *pKey;
+	RegKey *pKeyNext;
 	pKey = reg->root_key->subkeys;
 
 	while (pKey != NULL)
@@ -368,11 +354,10 @@ void reg_unload(Reg* reg)
 	free(reg->root_key);
 }
 
-Reg* reg_open(BOOL read_only)
+Reg *reg_open(BOOL read_only)
 {
-	Reg* reg;
-
-	reg = (Reg*) malloc(sizeof(Reg));
+	Reg *reg;
+	reg = (Reg *) malloc(sizeof(Reg));
 
 	if (reg)
 	{
@@ -397,19 +382,17 @@ Reg* reg_open(BOOL read_only)
 			return NULL;
 		}
 
-		reg->root_key = (RegKey*) malloc(sizeof(RegKey));
-
+		reg->root_key = (RegKey *) malloc(sizeof(RegKey));
 		reg->root_key->values = NULL;
 		reg->root_key->subkeys = NULL;
 		reg->root_key->name = "HKEY_LOCAL_MACHINE";
-
 		reg_load(reg);
 	}
 
 	return reg;
 }
 
-void reg_close(Reg* reg)
+void reg_close(Reg *reg)
 {
 	if (reg)
 	{
@@ -419,31 +402,29 @@ void reg_close(Reg* reg)
 	}
 }
 
-void reg_print_value(Reg* reg, RegVal* value)
+void reg_print_value(Reg *reg, RegVal *value)
 {
-	fprintf(stderr, "\"%s\"=", value->name);
+	WLog_INFO(TAG, "\"%s\"=", value->name);
 
 	if (value->type == REG_DWORD)
 	{
-		fprintf(stderr, "dword:%08X\n", (int) value->data.dword);
+		WLog_INFO(TAG, "dword:%08X\n", (int) value->data.dword);
 	}
 	else if (value->type == REG_SZ)
 	{
-		fprintf(stderr, "%s\"\n", value->data.string);
+		WLog_INFO(TAG, "%s\"\n", value->data.string);
 	}
 	else
 	{
-		fprintf(stderr, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		WLog_ERR(TAG, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 }
 
-void reg_print_key(Reg* reg, RegKey* key)
+void reg_print_key(Reg *reg, RegKey *key)
 {
-	RegVal* pValue;
-
+	RegVal *pValue;
 	pValue = key->values;
-
-	fprintf(stderr, "[%s]\n", key->name);
+	WLog_INFO(TAG, "[%s]\n", key->name);
 
 	while (pValue != NULL)
 	{
@@ -452,10 +433,9 @@ void reg_print_key(Reg* reg, RegKey* key)
 	}
 }
 
-void reg_print(Reg* reg)
+void reg_print(Reg *reg)
 {
-	RegKey* pKey;
-
+	RegKey *pKey;
 	pKey = reg->root_key->subkeys;
 
 	while (pKey != NULL)

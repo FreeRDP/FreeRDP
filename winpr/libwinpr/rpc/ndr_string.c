@@ -30,14 +30,17 @@
 
 #include "ndr_string.h"
 
-void NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+#include "../log.h"
+#define TAG "rpc"
+
+void NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
-	fprintf(stderr, "warning: NdrConformantStringBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrConformantStringBufferSize unimplemented");
 }
 
-void NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
-	fprintf(stderr, "warning: NdrNonConformantStringBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrNonConformantStringBufferSize unimplemented");
 }
 
 #endif

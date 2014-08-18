@@ -25,6 +25,8 @@
 #include <winpr/pool.h>
 
 #include "pool.h"
+#include "../log.h"
+#define TAG "pool"
 
 #ifdef _WIN32
 
@@ -152,7 +154,7 @@ VOID WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks)
 	event = CountdownEvent_WaitHandle(pool->WorkComplete);
 
 	if (WaitForSingleObject(event, INFINITE) != WAIT_OBJECT_0)
-		printf("WaitForThreadpoolWorkCallbacks: error waiting on work completion\n");
+		WLog_ERR(TAG, "error waiting on work completion");
 #endif
 }
 

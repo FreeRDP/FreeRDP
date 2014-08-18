@@ -31,6 +31,9 @@
 #include <unistd.h>
 #endif
 
+#include "../log.h"
+#define TAG "thread"
+
 /**
  * CommandLineToArgvW function:
  * http://msdn.microsoft.com/en-us/library/windows/desktop/bb776391/
@@ -265,7 +268,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 			if (p[index] != '"')
 			{
-				printf("CommandLineToArgvA parsing error: uneven number of unescaped double quotes!\n");
+				WLog_ERR(TAG, "parsing error: uneven number of unescaped double quotes!");
 			}
 
 			if (p[index] == '\0')

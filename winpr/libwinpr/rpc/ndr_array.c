@@ -30,7 +30,10 @@
 
 #ifndef _WIN32
 
-void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+#include "../log.h"
+#define TAG "rpc"
+
+void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_CARRAY
@@ -41,25 +44,23 @@ void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pM
 	 * element_description<>
 	 * FC_END
 	 */
-
 	unsigned char type;
 	unsigned char alignment;
 	unsigned short element_size;
-
 	type = pFormat[0];
 	alignment = pFormat[1] + 1;
-	element_size = *(unsigned short*) &pFormat[2];
+	element_size = *(unsigned short *) &pFormat[2];
 
 	if (type != FC_CARRAY)
 	{
-		fprintf(stderr, "error: expected FC_CARRAY, got 0x%02X\n", type);
+		WLog_ERR(TAG, "error: expected FC_CARRAY, got 0x%02X", type);
 		return;
 	}
 
-	fprintf(stderr, "warning: NdrConformantArrayBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrConformantArrayBufferSize unimplemented");
 }
 
-void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_CVARRAY
@@ -71,11 +72,10 @@ void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned c
 	 * element_description<>
 	 * FC_END
 	 */
-
-	fprintf(stderr, "warning: NdrConformantVaryingArrayBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrConformantVaryingArrayBufferSize unimplemented");
 }
 
-void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_SMFARRAY
@@ -85,7 +85,6 @@ void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory
 	 * element_description<>
 	 * FC_END
 	 */
-
 	/**
 	 * FC_LGFARRAY
 	 * alignment<1>
@@ -94,11 +93,10 @@ void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory
 	 * element_description<>
 	 * FC_END
 	 */
-
-	fprintf(stderr, "warning: NdrFixedArrayBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrFixedArrayBufferSize unimplemented");
 }
 
-void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_SMVARRAY
@@ -111,7 +109,6 @@ void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	 * element_description<>
 	 * FC_END
 	 */
-
 	/**
 	 * FC_LGVARRAY
 	 * alignment<1>
@@ -123,11 +120,10 @@ void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	 * element_description<>
 	 * FC_END
 	 */
-
-	fprintf(stderr, "warning: NdrVaryingArrayBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrVaryingArrayBufferSize unimplemented");
 }
 
-void NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+void NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_BOGUS_ARRAY
@@ -138,8 +134,7 @@ void NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	 * element_description<>
 	 * FC_END
 	 */
-
-	fprintf(stderr, "warning: NdrComplexArrayBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrComplexArrayBufferSize unimplemented");
 }
 
 #endif

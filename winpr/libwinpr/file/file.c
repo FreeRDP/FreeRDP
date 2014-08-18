@@ -40,6 +40,9 @@
 #include <fcntl.h>
 #endif
 
+#include "../log.h"
+#define TAG "file"
+
 /**
  * api-ms-win-core-file-l1-2-0.dll:
  *
@@ -262,7 +265,7 @@ static BOOL g_AioSignalHandlerInstalled = FALSE;
 
 void AioSignalHandler(int signum, siginfo_t* siginfo, void* arg)
 {
-	printf("AioSignalHandler\n");
+	WLog_INFO("%d", signum);
 }
 
 int InstallAioSignalHandler()
@@ -534,7 +537,7 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 				aio_status = aio_read(&cb);
 
-				printf("aio_read status: %d\n", aio_status);
+				WLog_DBG(TAG, "aio_read status: %d", aio_status);
 
 				if (aio_status < 0)
 					status = FALSE;
@@ -674,7 +677,7 @@ BOOL WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 
 				io_status = aio_write(&cb);
 
-				printf("aio_write status: %d\n", io_status);
+				WLog_DBG("aio_write status: %d", io_status);
 
 				if (io_status < 0)
 					status = FALSE;

@@ -31,6 +31,9 @@
 #include "ndr_correlation.h"
 #include "ndr_private.h"
 
+#include "../log.h"
+#define TAG "rpc"
+
 /*
  * Correlation Descriptors: http://msdn.microsoft.com/en-us/library/windows/desktop/aa373607/
  *
@@ -41,7 +44,7 @@
  *
  */
 
-PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat, ULONG_PTR* pCount)
+PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat, ULONG_PTR *pCount)
 {
 	LPVOID ptr = NULL;
 	ULONG_PTR data = 0;
@@ -50,13 +53,11 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	unsigned char conformance;
 	unsigned char correlation_type;
 	unsigned char correlation_operator;
-
 	correlation_type = pFormat[0];
 	type = correlation_type & 0x0F;
 	conformance = correlation_type & 0xF0;
-
 	correlation_operator = pFormat[1];
-	offset = *(unsigned short*) & pFormat[2];
+	offset = *(unsigned short *) & pFormat[2];
 
 	if (conformance == FC_NORMAL_CONFORMANCE)
 	{
@@ -70,7 +71,7 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	{
 		ptr = pStubMsg->StackTop;
 	}
-	else if (conformance == FC_CONSTANT_CONFORMANCE	)
+	else if (conformance == FC_CONSTANT_CONFORMANCE)
 	{
 		data = offset | ((DWORD) pFormat[1] << 16);
 		*pCount = data;
@@ -86,28 +87,23 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	switch (correlation_operator)
 	{
 		case FC_DEREFERENCE:
-			ptr = *(LPVOID*)((char*) ptr + offset);
+			ptr = *(LPVOID *)((char *) ptr + offset);
 			break;
-
 		case FC_DIV_2:
-			ptr = (char*) ptr + offset;
+			ptr = (char *) ptr + offset;
 			break;
-
 		case FC_MULT_2:
-			ptr = (char*) ptr + offset;
+			ptr = (char *) ptr + offset;
 			break;
-
 		case FC_SUB_1:
-			ptr = (char*) ptr + offset;
+			ptr = (char *) ptr + offset;
 			break;
-
 		case FC_ADD_1:
-			ptr = (char*) ptr + offset;
+			ptr = (char *) ptr + offset;
 			break;
-
 		case FC_CALLBACK:
 			{
-				fprintf(stderr, "warning: NdrpComputeConformance FC_CALLBACK unimplemented\n");
+				WLog_ERR(TAG, "warning: NdrpComputeConformance FC_CALLBACK unimplemented\n");
 			}
 			break;
 	}
@@ -118,33 +114,27 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	switch (type)
 	{
 		case FC_LONG:
-			data = *(LONG*) ptr;
+			data = *(LONG *) ptr;
 			break;
-
 		case FC_ULONG:
-			data = *(ULONG*) ptr;
+			data = *(ULONG *) ptr;
 			break;
-
 		case FC_SHORT:
-			data = *(SHORT*) ptr;
+			data = *(SHORT *) ptr;
 			break;
-
 		case FC_USHORT:
-			data = *(USHORT*) ptr;
+			data = *(USHORT *) ptr;
 			break;
-
 		case FC_CHAR:
 		case FC_SMALL:
-			data = *(CHAR*) ptr;
+			data = *(CHAR *) ptr;
 			break;
-
 		case FC_BYTE:
 		case FC_USMALL:
-			data = *(BYTE*) ptr;
+			data = *(BYTE *) ptr;
 			break;
-
 		case FC_HYPER:
-			data = (ULONG_PTR) *(ULONGLONG*) ptr;
+			data = (ULONG_PTR) *(ULONGLONG *) ptr;
 			break;
 	}
 
@@ -154,23 +144,18 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 		case FC_DEREFERENCE:
 			*pCount = data;
 			break;
-
 		case FC_DIV_2:
 			*pCount = data / 1;
 			break;
-
 		case FC_MULT_2:
 			*pCount = data * 1;
 			break;
-
 		case FC_SUB_1:
 			*pCount = data - 1;
 			break;
-
 		case FC_ADD_1:
 			*pCount = data + 1;
 			break;
-
 		case FC_CALLBACK:
 			break;
 	}
@@ -183,18 +168,16 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	return pFormat;
 }
 
-PFORMAT_STRING NdrpComputeConformance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+PFORMAT_STRING NdrpComputeConformance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
 	return NdrpComputeCount(pStubMsg, pMemory, pFormat, &pStubMsg->MaxCount);
 }
 
-PFORMAT_STRING NdrpComputeVariance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
+PFORMAT_STRING NdrpComputeVariance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {
 	ULONG_PTR ActualCount = pStubMsg->ActualCount;
-
 	pFormat = NdrpComputeCount(pStubMsg, pMemory, pFormat, &ActualCount);
 	pStubMsg->ActualCount = (ULONG) ActualCount;
-
 	return pFormat;
 }
 
