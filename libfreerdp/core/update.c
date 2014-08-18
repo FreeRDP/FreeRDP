@@ -230,9 +230,9 @@ BOOL update_read_palette(rdpUpdate* update, wStream* s, PALETTE_UPDATE* palette_
 	{
 		entry = &palette_update->entries[i];
 
-		Stream_Read_UINT8(s, entry->blue);
-		Stream_Read_UINT8(s, entry->green);
 		Stream_Read_UINT8(s, entry->red);
+		Stream_Read_UINT8(s, entry->green);
+		Stream_Read_UINT8(s, entry->blue);
 	}
 	return TRUE;
 }
