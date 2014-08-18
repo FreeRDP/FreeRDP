@@ -42,7 +42,7 @@
  * http://docs.python.org/2/library/logging.html
  */
 
-const char* WLOG_LEVELS[7] =
+const char *WLOG_LEVELS[7] =
 {
 	"TRACE",
 	"DEBUG",
@@ -54,12 +54,26 @@ const char* WLOG_LEVELS[7] =
 };
 
 static DWORD g_FilterCount = 0;
-static wLogFilter* g_Filters = NULL;
+static wLogFilter *g_Filters = NULL;
 
-int WLog_Write(wLog* log, wLogMessage* message)
+static void log_recursion(const char *file, const char *fkt, int line)
 {
-	int status;
-	wLogAppender* appender;
+	/* TODO: Stack trace here! */
+#if defined(ANDROID)
+	const char *tag = "com.winpr.utils.wlog";
+	level = ANDROID_LOG_FATAL;
+	__android_log_print(ANDROID_LOG_FATAL, tag, "Recursion detected!!!");
+	__android_log_print(ANDROID_LOG_FATAL, tag, "Check %s [%s:%d]", fkt, file, line);
+#else
+	fprintf(stderr, "[%s]: Recursion detected!\n", fkt);
+	fprintf(stderr, "[%s]: Check %s:%d\n", fkt, file, line);
+#endif
+}
+
+int WLog_Write(wLog *log, wLogMessage *message)
+{
+	int status = -1;
+	wLogAppender *appender;
 	appender = WLog_GetLogAppender(log);
 
 	if (!appender)
@@ -74,19 +88,22 @@ int WLog_Write(wLog* log, wLogMessage* message)
 	EnterCriticalSection(&appender->lock);
 
 	if (appender->recursive)
-		fprintf(stderr, "%s: Recursion detected!!!!", __FUNCTION__);
+		log_recursion(message->FileName, message->FunctionName, message->LineNumber);
+	else
+	{
+		appender->recursive = TRUE;
+		status = appender->WriteMessage(log, appender, message);
+		appender->recursive = FALSE;
+	}
 
-	appender->recursive = TRUE;
-	status = appender->WriteMessage(log, appender, message);
-	appender->recursive = FALSE;
 	LeaveCriticalSection(&appender->lock);
 	return status;
 }
 
-int WLog_WriteData(wLog* log, wLogMessage* message)
+int WLog_WriteData(wLog *log, wLogMessage *message)
 {
-	int status;
-	wLogAppender* appender;
+	int status = -1;
+	wLogAppender *appender;
 	appender = WLog_GetLogAppender(log);
 
 	if (!appender)
@@ -101,19 +118,22 @@ int WLog_WriteData(wLog* log, wLogMessage* message)
 	EnterCriticalSection(&appender->lock);
 
 	if (appender->recursive)
-		fprintf(stderr, "%s: Recursion detected!!!!", __FUNCTION__);
+		log_recursion(message->FileName, message->FunctionName, message->LineNumber);
+	else
+	{
+		appender->recursive = TRUE;
+		status = appender->WriteDataMessage(log, appender, message);
+		appender->recursive = FALSE;
+	}
 
-	appender->recursive = TRUE;
-	status = appender->WriteDataMessage(log, appender, message);
-	appender->recursive = FALSE;
 	LeaveCriticalSection(&appender->lock);
 	return status;
 }
 
-int WLog_WriteImage(wLog* log, wLogMessage* message)
+int WLog_WriteImage(wLog *log, wLogMessage *message)
 {
-	int status;
-	wLogAppender* appender;
+	int status = -1;
+	wLogAppender *appender;
 	appender = WLog_GetLogAppender(log);
 
 	if (!appender)
@@ -128,19 +148,22 @@ int WLog_WriteImage(wLog* log, wLogMessage* message)
 	EnterCriticalSection(&appender->lock);
 
 	if (appender->recursive)
-		fprintf(stderr, "%s: Recursion detected!!!!", __FUNCTION__);
+		log_recursion(message->FileName, message->FunctionName, message->LineNumber);
+	else
+	{
+		appender->recursive = TRUE;
+		status = appender->WriteImageMessage(log, appender, message);
+		appender->recursive = FALSE;
+	}
 
-	appender->recursive = TRUE;
-	status = appender->WriteImageMessage(log, appender, message);
-	appender->recursive = FALSE;
 	LeaveCriticalSection(&appender->lock);
 	return status;
 }
 
-int WLog_WritePacket(wLog* log, wLogMessage* message)
+int WLog_WritePacket(wLog *log, wLogMessage *message)
 {
-	int status;
-	wLogAppender* appender;
+	int status = -1;
+	wLogAppender *appender;
 	appender = WLog_GetLogAppender(log);
 
 	if (!appender)
@@ -155,16 +178,19 @@ int WLog_WritePacket(wLog* log, wLogMessage* message)
 	EnterCriticalSection(&appender->lock);
 
 	if (appender->recursive)
-		fprintf(stderr, "%s: Recursion detected!!!!", __FUNCTION__);
+		log_recursion(message->FileName, message->FunctionName, message->LineNumber);
+	else
+	{
+		appender->recursive = TRUE;
+		status = appender->WritePacketMessage(log, appender, message);
+		appender->recursive = FALSE;
+	}
 
-	appender->recursive = TRUE;
-	status = appender->WritePacketMessage(log, appender, message);
-	appender->recursive = FALSE;
 	LeaveCriticalSection(&appender->lock);
 	return status;
 }
 
-int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
+int WLog_PrintMessageVA(wLog *log, wLogMessage *message, va_list args)
 {
 	int status = -1;
 
@@ -185,13 +211,13 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 	}
 	else if (message->Type == WLOG_MESSAGE_DATA)
 	{
-		message->Data = va_arg(args, void*);
+		message->Data = va_arg(args, void *);
 		message->Length = va_arg(args, int);
 		status = WLog_WriteData(log, message);
 	}
 	else if (message->Type == WLOG_MESSAGE_IMAGE)
 	{
-		message->ImageData = va_arg(args, void*);
+		message->ImageData = va_arg(args, void *);
 		message->ImageWidth = va_arg(args, int);
 		message->ImageHeight = va_arg(args, int);
 		message->ImageBpp = va_arg(args, int);
@@ -199,7 +225,7 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 	}
 	else if (message->Type == WLOG_MESSAGE_PACKET)
 	{
-		message->PacketData = va_arg(args, void*);
+		message->PacketData = va_arg(args, void *);
 		message->PacketLength = va_arg(args, int);
 		message->PacketFlags = va_arg(args, int);
 		status = WLog_WritePacket(log, message);
@@ -208,7 +234,7 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 	return status;
 }
 
-void WLog_PrintMessage(wLog* log, wLogMessage* message, ...)
+void WLog_PrintMessage(wLog *log, wLogMessage *message, ...)
 {
 	int status;
 	va_list args;
@@ -217,7 +243,7 @@ void WLog_PrintMessage(wLog* log, wLogMessage* message, ...)
 	va_end(args);
 }
 
-DWORD WLog_GetLogLevel(wLog* log)
+DWORD WLog_GetLogLevel(wLog *log)
 {
 	if (log->Level == WLOG_LEVEL_INHERIT)
 	{
@@ -229,7 +255,7 @@ DWORD WLog_GetLogLevel(wLog* log)
 	}
 }
 
-void WLog_SetLogLevel(wLog* log, DWORD logLevel)
+void WLog_SetLogLevel(wLog *log, DWORD logLevel)
 {
 	if ((logLevel > WLOG_OFF) && (logLevel != WLOG_LEVEL_INHERIT))
 	{
@@ -239,7 +265,7 @@ void WLog_SetLogLevel(wLog* log, DWORD logLevel)
 	log->Level = logLevel;
 }
 
-int WLog_ParseLogLevel(const char* level)
+int WLog_ParseLogLevel(const char *level)
 {
 	int iLevel = -1;
 
@@ -264,15 +290,15 @@ int WLog_ParseLogLevel(const char* level)
 	return iLevel;
 }
 
-int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
+int WLog_ParseFilter(wLogFilter *filter, LPCSTR name)
 {
-	char* p;
-	char* q;
+	char *p;
+	char *q;
 	int count;
 	LPSTR names;
 	int iLevel;
 	count = 1;
-	p = (char*) name;
+	p = (char *) name;
 
 	while ((p = strchr(p, '.')) != NULL)
 	{
@@ -282,10 +308,10 @@ int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 
 	names = _strdup(name);
 	filter->NameCount = count;
-	filter->Names = (LPSTR*) malloc(sizeof(LPSTR) * (count + 1));
+	filter->Names = (LPSTR *) malloc(sizeof(LPSTR) * (count + 1));
 	filter->Names[count] = NULL;
 	count = 0;
-	p = (char*) names;
+	p = (char *) names;
 	filter->Names[count++] = p;
 	q = strrchr(p, ':');
 
@@ -313,12 +339,12 @@ int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 
 int WLog_ParseFilters()
 {
-	char* p;
-	char* env;
+	char *p;
+	char *env;
 	DWORD count;
 	DWORD nSize;
 	int status;
-	char** strs;
+	char **strs;
 	nSize = GetEnvironmentVariableA("WLOG_FILTER", NULL, 0);
 
 	if (nSize < 1)
@@ -342,7 +368,7 @@ int WLog_ParseFilters()
 	g_FilterCount = count;
 	p = env;
 	count = 0;
-	strs = (char**) calloc(g_FilterCount, sizeof(char*));
+	strs = (char **) calloc(g_FilterCount, sizeof(char *));
 	strs[count++] = p;
 
 	while ((p = strchr(p, ',')) != NULL)
@@ -369,7 +395,7 @@ int WLog_ParseFilters()
 	return 0;
 }
 
-int WLog_GetFilterLogLevel(wLog* log)
+int WLog_GetFilterLogLevel(wLog *log)
 {
 	DWORD i, j;
 	int iLevel = -1;
@@ -410,13 +436,13 @@ int WLog_GetFilterLogLevel(wLog* log)
 	return iLevel;
 }
 
-int WLog_ParseName(wLog* log, LPCSTR name)
+int WLog_ParseName(wLog *log, LPCSTR name)
 {
-	char* p;
+	char *p;
 	int count;
 	LPSTR names;
 	count = 1;
-	p = (char*) name;
+	p = (char *) name;
 
 	while ((p = strchr(p, '.')) != NULL)
 	{
@@ -426,10 +452,10 @@ int WLog_ParseName(wLog* log, LPCSTR name)
 
 	names = _strdup(name);
 	log->NameCount = count;
-	log->Names = (LPSTR*) malloc(sizeof(LPSTR) * (count + 1));
+	log->Names = (LPSTR *) malloc(sizeof(LPSTR) * (count + 1));
 	log->Names[count] = NULL;
 	count = 0;
-	p = (char*) names;
+	p = (char *) names;
 	log->Names[count++] = p;
 
 	while ((p = strchr(p, '.')) != NULL)
@@ -442,13 +468,13 @@ int WLog_ParseName(wLog* log, LPCSTR name)
 	return 0;
 }
 
-wLog* WLog_New(LPCSTR name, wLog* rootLogger)
+wLog *WLog_New(LPCSTR name, wLog *rootLogger)
 {
-	wLog* log;
-	char* env;
+	wLog *log;
+	char *env;
 	DWORD nSize;
 	int iLevel;
-	log = (wLog*) calloc(1, sizeof(wLog));
+	log = (wLog *) calloc(1, sizeof(wLog));
 
 	if (log)
 	{
@@ -461,7 +487,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 		log->Parent = rootLogger;
 		log->ChildrenCount = 0;
 		log->ChildrenSize = 16;
-		log->Children = (wLog**) calloc(log->ChildrenSize, sizeof(wLog*));
+		log->Children = (wLog **) calloc(log->ChildrenSize, sizeof(wLog *));
 
 		if (!log->Children)
 			return NULL;
@@ -499,7 +525,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 	return log;
 }
 
-void WLog_Free(wLog* log)
+void WLog_Free(wLog *log)
 {
 	if (log)
 	{
@@ -517,11 +543,11 @@ void WLog_Free(wLog* log)
 	}
 }
 
-static wLog* g_RootLog = NULL;
+static wLog *g_RootLog = NULL;
 
-wLog* WLog_GetRoot()
+wLog *WLog_GetRoot()
 {
-	char* env;
+	char *env;
 	DWORD nSize;
 	DWORD logAppenderType;
 
@@ -557,12 +583,12 @@ wLog* WLog_GetRoot()
 	return g_RootLog;
 }
 
-int WLog_AddChild(wLog* parent, wLog* child)
+int WLog_AddChild(wLog *parent, wLog *child)
 {
 	if (parent->ChildrenCount >= parent->ChildrenSize)
 	{
 		parent->ChildrenSize *= 2;
-		parent->Children = (wLog**) realloc(parent->Children, sizeof(wLog*) * parent->ChildrenSize);
+		parent->Children = (wLog **) realloc(parent->Children, sizeof(wLog *) * parent->ChildrenSize);
 	}
 
 	parent->Children[parent->ChildrenCount++] = child;
@@ -570,11 +596,11 @@ int WLog_AddChild(wLog* parent, wLog* child)
 	return 0;
 }
 
-wLog* WLog_FindChild(LPCSTR name)
+wLog *WLog_FindChild(LPCSTR name)
 {
 	DWORD index;
-	wLog* root;
-	wLog* child = NULL;
+	wLog *root;
+	wLog *child = NULL;
 	BOOL found = FALSE;
 	root = WLog_GetRoot();
 
@@ -592,10 +618,10 @@ wLog* WLog_FindChild(LPCSTR name)
 	return (found) ? child : NULL;
 }
 
-wLog* WLog_Get(LPCSTR name)
+wLog *WLog_Get(LPCSTR name)
 {
-	wLog* log;
-	wLog* root;
+	wLog *log;
+	wLog *root;
 	root = WLog_GetRoot();
 	log = WLog_FindChild(name);
 
@@ -615,9 +641,9 @@ void WLog_Init()
 
 void WLog_Uninit()
 {
-	wLog* root = WLog_GetRoot();
+	wLog *root = WLog_GetRoot();
 	DWORD index;
-	wLog* child = NULL;
+	wLog *child = NULL;
 
 	for (index = 0; index < root->ChildrenCount; index++)
 	{

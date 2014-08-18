@@ -28,6 +28,9 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
+#include "../../log.h"
+#define TAG WINPR_TAG("utils.wlog")
+
 #ifndef _WIN32
 #include <sys/time.h>
 #else
@@ -175,7 +178,7 @@ wPcap* Pcap_Open(char* name, BOOL write)
 
 	if (!pcap_fp)
 	{
-		perror("opening pcap file");
+		WLog_ERR(TAG,"opening pcap file");
 		return NULL;
 	}
 
