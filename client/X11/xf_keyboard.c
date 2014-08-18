@@ -405,14 +405,17 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		return TRUE;
 	}
 
-	if (keysym == XK_Return)
+	if(xfc->fullscreen_toggle)
 	{
-		if (mod.Ctrl && mod.Alt)
-		{
-			/* Ctrl-Alt-Enter: toggle full screen */
-			xf_toggle_fullscreen(xfc);
-			return TRUE;
-		}
+            if (keysym == XK_Return)
+            {
+                    if (mod.Ctrl && mod.Alt)
+                    {
+                            /* Ctrl-Alt-Enter: toggle full screen */
+                            xf_toggle_fullscreen(xfc);
+                            return TRUE;
+                    }
+            }
 	}
 
 	if ((keysym == XK_c) || (keysym == XK_C))
