@@ -52,6 +52,11 @@
 #include <fcntl.h>
 #endif
 
+#ifdef _WIN32
+#pragma comment(lib, "Shlwapi.lib")
+#include <Shlwapi.h>
+#endif
+
 #include "drive_file.h"
 
 #ifdef _WIN32
@@ -425,6 +430,29 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 	return TRUE;
 }
 
+int dir_empty(const char *path)
+{
+#ifdef _WIN32
+	return PathIsDirectoryEmptyA(path);
+#else
+	struct dirent *dp;
+	int empty = 1;
+
+	DIR *dir = opendir(path);
+	if (dir == NULL) //Not a directory or doesn't exist
+		return 1;
+
+	while ((dp = readdir(dir)) != NULL) {
+		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
+			continue;    /* Skip . and .. */
+
+		empty = 0;
+		break;
+	}
+	closedir(dir);
+	return empty;
+#endif
+}
 BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length, wStream* input)
 {
 	char* s = NULL;
@@ -492,6 +520,9 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 		case FileDispositionInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232098.aspx */
 			/* http://msdn.microsoft.com/en-us/library/cc241371.aspx */
+			if (file->is_dir && !dir_empty(file->fullpath))
+				break;
+
 			if (Length)
 				Stream_Read_UINT8(input, file->delete_pending);
 			else
