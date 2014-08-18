@@ -27,7 +27,7 @@
 
 //#define WITH_BULK_DEBUG		1
 
-const char *bulk_get_compression_flags_string(UINT32 flags)
+const char* bulk_get_compression_flags_string(UINT32 flags)
 {
 	flags &= BULK_COMPRESSION_FLAGS_MASK;
 
@@ -51,26 +51,26 @@ const char *bulk_get_compression_flags_string(UINT32 flags)
 	return "PACKET_UNKNOWN";
 }
 
-UINT32 bulk_compression_level(rdpBulk *bulk)
+UINT32 bulk_compression_level(rdpBulk* bulk)
 {
-	rdpSettings *settings = bulk->context->settings;
+	rdpSettings* settings = bulk->context->settings;
 	bulk->CompressionLevel = (settings->CompressionLevel >= PACKET_COMPR_TYPE_RDP61) ?
 							 PACKET_COMPR_TYPE_RDP61 : settings->CompressionLevel;
 	return bulk->CompressionLevel;
 }
 
-UINT32 bulk_compression_max_size(rdpBulk *bulk)
+UINT32 bulk_compression_max_size(rdpBulk* bulk)
 {
 	bulk_compression_level(bulk);
 	bulk->CompressionMaxSize = (bulk->CompressionLevel < PACKET_COMPR_TYPE_64K) ? 8192 : 65536;
 	return bulk->CompressionMaxSize;
 }
 
-int bulk_compress_validate(rdpBulk *bulk, BYTE *pSrcData, UINT32 SrcSize, BYTE **ppDstData, UINT32 *pDstSize, UINT32 *pFlags)
+int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
 	int status;
-	BYTE *_pSrcData = NULL;
-	BYTE *_pDstData = NULL;
+	BYTE* _pSrcData = NULL;
+	BYTE* _pDstData = NULL;
 	UINT32 _SrcSize = 0;
 	UINT32 _DstSize = 0;
 	UINT32 _Flags = 0;
@@ -106,11 +106,11 @@ int bulk_compress_validate(rdpBulk *bulk, BYTE *pSrcData, UINT32 SrcSize, BYTE *
 	return status;
 }
 
-int bulk_decompress(rdpBulk *bulk, BYTE *pSrcData, UINT32 SrcSize, BYTE **ppDstData, UINT32 *pDstSize, UINT32 flags)
+int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
 	UINT32 type;
 	int status = -1;
-	rdpMetrics *metrics;
+	rdpMetrics* metrics;
 	UINT32 CompressedBytes;
 	UINT32 UncompressedBytes;
 	double CompressionRatio;
@@ -126,16 +126,20 @@ int bulk_decompress(rdpBulk *bulk, BYTE *pSrcData, UINT32 SrcSize, BYTE **ppDstD
 				mppc_set_compression_level(bulk->mppcRecv, 0);
 				status = mppc_decompress(bulk->mppcRecv, pSrcData, SrcSize, ppDstData, pDstSize, flags);
 				break;
+
 			case PACKET_COMPR_TYPE_64K:
 				mppc_set_compression_level(bulk->mppcRecv, 1);
 				status = mppc_decompress(bulk->mppcRecv, pSrcData, SrcSize, ppDstData, pDstSize, flags);
 				break;
+
 			case PACKET_COMPR_TYPE_RDP6:
 				status = ncrush_decompress(bulk->ncrushRecv, pSrcData, SrcSize, ppDstData, pDstSize, flags);
 				break;
+
 			case PACKET_COMPR_TYPE_RDP61:
 				status = xcrush_decompress(bulk->xcrushRecv, pSrcData, SrcSize, ppDstData, pDstSize, flags);
 				break;
+
 			case PACKET_COMPR_TYPE_RDP8:
 				status = -1;
 				break;
@@ -171,10 +175,10 @@ int bulk_decompress(rdpBulk *bulk, BYTE *pSrcData, UINT32 SrcSize, BYTE **ppDstD
 	return status;
 }
 
-int bulk_compress(rdpBulk *bulk, BYTE *pSrcData, UINT32 SrcSize, BYTE **ppDstData, UINT32 *pDstSize, UINT32 *pFlags)
+int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
 	int status = -1;
-	rdpMetrics *metrics;
+	rdpMetrics* metrics;
 	UINT32 CompressedBytes;
 	UINT32 UncompressedBytes;
 	double CompressionRatio;
@@ -236,7 +240,7 @@ int bulk_compress(rdpBulk *bulk, BYTE *pSrcData, UINT32 SrcSize, BYTE **ppDstDat
 	return status;
 }
 
-void bulk_reset(rdpBulk *bulk)
+void bulk_reset(rdpBulk* bulk)
 {
 	mppc_context_reset(bulk->mppcSend, FALSE);
 	mppc_context_reset(bulk->mppcRecv, FALSE);
@@ -246,10 +250,10 @@ void bulk_reset(rdpBulk *bulk)
 	xcrush_context_reset(bulk->xcrushSend, FALSE);
 }
 
-rdpBulk *bulk_new(rdpContext *context)
+rdpBulk* bulk_new(rdpContext* context)
 {
-	rdpBulk *bulk;
-	bulk = (rdpBulk *) calloc(1, sizeof(rdpBulk));
+	rdpBulk* bulk;
+	bulk = (rdpBulk*) calloc(1, sizeof(rdpBulk));
 
 	if (bulk)
 	{
@@ -266,7 +270,7 @@ rdpBulk *bulk_new(rdpContext *context)
 	return bulk;
 }
 
-void bulk_free(rdpBulk *bulk)
+void bulk_free(rdpBulk* bulk)
 {
 	if (!bulk)
 		return;

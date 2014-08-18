@@ -16,13 +16,13 @@ static HANDLE ReadyEvent;
 
 static LPTSTR lpszPipeName = _T("\\\\.\\pipe\\winpr_test_pipe_overlapped");
 
-static void *named_pipe_client_thread(void *arg)
+static void* named_pipe_client_thread(void* arg)
 {
 	DWORD status;
 	HANDLE hEvent;
 	HANDLE hNamedPipe;
-	BYTE *lpReadBuffer;
-	BYTE *lpWriteBuffer;
+	BYTE* lpReadBuffer;
+	BYTE* lpWriteBuffer;
 	BOOL fSuccess = FALSE;
 	OVERLAPPED overlapped;
 	DWORD nNumberOfBytesToRead;
@@ -43,8 +43,8 @@ static void *named_pipe_client_thread(void *arg)
 		return NULL;
 	}
 
-	lpReadBuffer = (BYTE *) malloc(PIPE_BUFFER_SIZE);
-	lpWriteBuffer = (BYTE *) malloc(PIPE_BUFFER_SIZE);
+	lpReadBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
+	lpWriteBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
 	ZeroMemory(&overlapped, sizeof(OVERLAPPED));
 	hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	overlapped.hEvent = hEvent;
@@ -99,13 +99,13 @@ static void *named_pipe_client_thread(void *arg)
 	return NULL;
 }
 
-static void *named_pipe_server_thread(void *arg)
+static void* named_pipe_server_thread(void* arg)
 {
 	DWORD status;
 	HANDLE hEvent;
 	HANDLE hNamedPipe;
-	BYTE *lpReadBuffer;
-	BYTE *lpWriteBuffer;
+	BYTE* lpReadBuffer;
+	BYTE* lpWriteBuffer;
 	OVERLAPPED overlapped;
 	BOOL fSuccess = FALSE;
 	BOOL fConnected = FALSE;
@@ -151,8 +151,8 @@ static void *named_pipe_server_thread(void *arg)
 		return NULL;
 	}
 
-	lpReadBuffer = (BYTE *) malloc(PIPE_BUFFER_SIZE);
-	lpWriteBuffer = (BYTE *) malloc(PIPE_BUFFER_SIZE);
+	lpReadBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
+	lpWriteBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE);
 	nNumberOfBytesToRead = PIPE_BUFFER_SIZE;
 	ZeroMemory(lpReadBuffer, PIPE_BUFFER_SIZE);
 	fSuccess = ReadFile(hNamedPipe, lpReadBuffer, nNumberOfBytesToRead, NULL, &overlapped);
@@ -204,7 +204,7 @@ static void *named_pipe_server_thread(void *arg)
 	return NULL;
 }
 
-int TestPipeCreateNamedPipeOverlapped(int argc, char *argv[])
+int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 {
 	HANDLE ClientThread;
 	HANDLE ServerThread;

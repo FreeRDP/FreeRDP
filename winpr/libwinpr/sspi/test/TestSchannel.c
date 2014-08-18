@@ -227,11 +227,11 @@ BYTE test_LastDummyMessage[64] =
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext, BYTE *buffer, UINT32 length)
+int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext, BYTE* buffer, UINT32 length)
 {
-	BYTE *ioBuffer;
+	BYTE* ioBuffer;
 	UINT32 ioBufferLength;
-	BYTE *pMessageBuffer;
+	BYTE* pMessageBuffer;
 	SecBuffer Buffers[4];
 	SecBufferDesc Message;
 	SECURITY_STATUS status;
@@ -240,7 +240,7 @@ int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	ZeroMemory(&StreamSizes, sizeof(SecPkgContext_StreamSizes));
 	status = table->QueryContextAttributes(phContext, SECPKG_ATTR_STREAM_SIZES, &StreamSizes);
 	ioBufferLength = StreamSizes.cbHeader + StreamSizes.cbMaximumMessage + StreamSizes.cbTrailer;
-	ioBuffer = (BYTE *) malloc(ioBufferLength);
+	ioBuffer = (BYTE*) malloc(ioBufferLength);
 	ZeroMemory(ioBuffer, ioBufferLength);
 	pMessageBuffer = ioBuffer + StreamSizes.cbHeader;
 	CopyMemory(pMessageBuffer, buffer, length);
@@ -285,7 +285,7 @@ int schannel_send(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 
 int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phContext)
 {
-	BYTE *ioBuffer;
+	BYTE* ioBuffer;
 	UINT32 ioBufferLength;
 	//BYTE* pMessageBuffer;
 	SecBuffer Buffers[4];
@@ -296,7 +296,7 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	ZeroMemory(&StreamSizes, sizeof(SecPkgContext_StreamSizes));
 	status = table->QueryContextAttributes(phContext, SECPKG_ATTR_STREAM_SIZES, &StreamSizes);
 	ioBufferLength = StreamSizes.cbHeader + StreamSizes.cbMaximumMessage + StreamSizes.cbTrailer;
-	ioBuffer = (BYTE *) malloc(ioBufferLength);
+	ioBuffer = (BYTE*) malloc(ioBufferLength);
 	ZeroMemory(ioBuffer, ioBufferLength);
 
 	if (!ReadFile(hPipe, ioBuffer, ioBufferLength, &NumberOfBytesRead, NULL))
@@ -332,7 +332,7 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 		return -1;
 
 	printf("Decrypted Message (%d)\n", Message.pBuffers[1].cbBuffer);
-	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE *) Message.pBuffers[1].pvBuffer, Message.pBuffers[1].cbBuffer);
+	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) Message.pBuffers[1].pvBuffer, Message.pBuffers[1].cbBuffer);
 
 	if (memcmp(Message.pBuffers[1].pvBuffer, test_LastDummyMessage, sizeof(test_LastDummyMessage)) == 0)
 		return -1;
@@ -340,11 +340,11 @@ int schannel_recv(PSecurityFunctionTable table, HANDLE hPipe, PCtxtHandle phCont
 	return 0;
 }
 
-static void *schannel_test_server_thread(void *arg)
+static void* schannel_test_server_thread(void* arg)
 {
 	BOOL extraData;
-	BYTE *lpTokenIn;
-	BYTE *lpTokenOut;
+	BYTE* lpTokenIn;
+	BYTE* lpTokenOut;
 	TimeStamp expiry;
 	UINT32 cbMaxToken;
 	UINT32 fContextReq;
@@ -422,8 +422,8 @@ static void *schannel_test_server_thread(void *arg)
 
 	extraData = FALSE;
 	g_ServerWait = TRUE;
-	lpTokenIn = (BYTE *) malloc(cbMaxToken);
-	lpTokenOut = (BYTE *) malloc(cbMaxToken);
+	lpTokenIn = (BYTE*) malloc(cbMaxToken);
+	lpTokenOut = (BYTE*) malloc(cbMaxToken);
 	fContextReq = ASC_REQ_STREAM |
 				  ASC_REQ_SEQUENCE_DETECT | ASC_REQ_REPLAY_DETECT |
 				  ASC_REQ_CONFIDENTIALITY | ASC_REQ_EXTENDED_ERROR;
@@ -503,7 +503,7 @@ static void *schannel_test_server_thread(void *arg)
 			if (pSecBuffer->cbBuffer > 0)
 			{
 				printf("Server > Client (%d)\n", pSecBuffer->cbBuffer);
-				winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE *) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
+				winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 
 				if (!WriteFile(g_ClientWritePipe, pSecBuffer->pvBuffer, pSecBuffer->cbBuffer, &NumberOfBytesWritten, NULL))
 				{
@@ -533,8 +533,8 @@ static void *schannel_test_server_thread(void *arg)
 
 int dump_test_certificate_files()
 {
-	FILE *fp;
-	char *fullpath;
+	FILE* fp;
+	char* fullpath;
 	/*
 	 * Output Certificate File
 	 */
@@ -543,7 +543,7 @@ int dump_test_certificate_files()
 
 	if (fp)
 	{
-		fwrite((void *) test_localhost_crt, sizeof(test_localhost_crt), 1, fp);
+		fwrite((void*) test_localhost_crt, sizeof(test_localhost_crt), 1, fp);
 		fclose(fp);
 	}
 
@@ -556,7 +556,7 @@ int dump_test_certificate_files()
 
 	if (fp)
 	{
-		fwrite((void *) test_localhost_key, sizeof(test_localhost_key), 1, fp);
+		fwrite((void*) test_localhost_key, sizeof(test_localhost_key), 1, fp);
 		fclose(fp);
 	}
 
@@ -564,14 +564,14 @@ int dump_test_certificate_files()
 	return 1;
 }
 
-int TestSchannel(int argc, char *argv[])
+int TestSchannel(int argc, char* argv[])
 {
 	int count;
 	DWORD index;
 	ALG_ID algId;
 	HANDLE thread;
-	BYTE *lpTokenIn;
-	BYTE *lpTokenOut;
+	BYTE* lpTokenIn;
+	BYTE* lpTokenOut;
 	TimeStamp expiry;
 	UINT32 cbMaxToken;
 	SCHANNEL_CRED cred;
@@ -691,8 +691,8 @@ int TestSchannel(int argc, char *argv[])
 				  ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT |
 				  ISC_REQ_CONFIDENTIALITY | ISC_RET_EXTENDED_ERROR |
 				  ISC_REQ_MANUAL_CRED_VALIDATION | ISC_REQ_INTEGRITY;
-	lpTokenIn = (BYTE *) malloc(cbMaxToken);
-	lpTokenOut = (BYTE *) malloc(cbMaxToken);
+	lpTokenIn = (BYTE*) malloc(cbMaxToken);
+	lpTokenOut = (BYTE*) malloc(cbMaxToken);
 	ZeroMemory(&SecBuffer_in, sizeof(SecBuffer_in));
 	ZeroMemory(&SecBuffer_out, sizeof(SecBuffer_out));
 	ZeroMemory(&SecBufferDesc_in, sizeof(SecBufferDesc));
@@ -762,7 +762,7 @@ int TestSchannel(int argc, char *argv[])
 			if (pSecBuffer->cbBuffer > 0)
 			{
 				printf("Client > Server (%d)\n", pSecBuffer->cbBuffer);
-				winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE *) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
+				winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 
 				if (!WriteFile(g_ServerWritePipe, pSecBuffer->pvBuffer, pSecBuffer->cbBuffer, &NumberOfBytesWritten, NULL))
 				{

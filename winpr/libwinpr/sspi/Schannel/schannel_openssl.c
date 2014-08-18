@@ -31,7 +31,7 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.schannel")
 
-char *openssl_get_ssl_error_string(int ssl_error)
+char* openssl_get_ssl_error_string(int ssl_error)
 {
 	switch (ssl_error)
 	{
@@ -55,7 +55,7 @@ char *openssl_get_ssl_error_string(int ssl_error)
 	return "SSL_ERROR_UNKNOWN";
 }
 
-int schannel_openssl_client_init(SCHANNEL_OPENSSL *context)
+int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 {
 	int status;
 	long options = 0;
@@ -122,12 +122,12 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL *context)
 	status = BIO_set_write_buf_size(context->bioWrite, SCHANNEL_CB_MAX_TOKEN);
 	status = BIO_make_bio_pair(context->bioRead, context->bioWrite);
 	SSL_set_bio(context->ssl, context->bioRead, context->bioWrite);
-	context->ReadBuffer = (BYTE *) malloc(SCHANNEL_CB_MAX_TOKEN);
-	context->WriteBuffer = (BYTE *) malloc(SCHANNEL_CB_MAX_TOKEN);
+	context->ReadBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
+	context->WriteBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
 	return 0;
 }
 
-int schannel_openssl_server_init(SCHANNEL_OPENSSL *context)
+int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 {
 	int status;
 	long options = 0;
@@ -215,12 +215,12 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL *context)
 	status = BIO_set_write_buf_size(context->bioWrite, SCHANNEL_CB_MAX_TOKEN);
 	status = BIO_make_bio_pair(context->bioRead, context->bioWrite);
 	SSL_set_bio(context->ssl, context->bioRead, context->bioWrite);
-	context->ReadBuffer = (BYTE *) malloc(SCHANNEL_CB_MAX_TOKEN);
-	context->WriteBuffer = (BYTE *) malloc(SCHANNEL_CB_MAX_TOKEN);
+	context->ReadBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
+	context->WriteBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
 	return 0;
 }
 
-SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL *context, PSecBufferDesc pInput, PSecBufferDesc pOutput)
+SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context, PSecBufferDesc pInput, PSecBufferDesc pOutput)
 {
 	int status;
 	int ssl_error;
@@ -281,7 +281,7 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL *context
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL *context, PSecBufferDesc pInput, PSecBufferDesc pOutput)
+SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context, PSecBufferDesc pInput, PSecBufferDesc pOutput)
 {
 	int status;
 	int ssl_error;
@@ -338,7 +338,7 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL *context
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL *context, PSecBufferDesc pMessage)
+SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSecBufferDesc pMessage)
 {
 	int status;
 	int length;
@@ -383,11 +383,11 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL *context, PSec
 	return SEC_E_OK;
 }
 
-SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL *context, PSecBufferDesc pMessage)
+SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSecBufferDesc pMessage)
 {
 	int status;
 	int length;
-	BYTE *buffer;
+	BYTE* buffer;
 	int ssl_error;
 	PSecBuffer pBuffer;
 	pBuffer = sspi_FindSecBuffer(pMessage, SECBUFFER_DATA);
@@ -418,10 +418,10 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL *context, PSec
 	return SEC_E_OK;
 }
 
-SCHANNEL_OPENSSL *schannel_openssl_new()
+SCHANNEL_OPENSSL* schannel_openssl_new()
 {
-	SCHANNEL_OPENSSL *context;
-	context = (SCHANNEL_OPENSSL *) malloc(sizeof(SCHANNEL_OPENSSL));
+	SCHANNEL_OPENSSL* context;
+	context = (SCHANNEL_OPENSSL*) malloc(sizeof(SCHANNEL_OPENSSL));
 
 	if (context != NULL)
 	{
@@ -433,7 +433,7 @@ SCHANNEL_OPENSSL *schannel_openssl_new()
 	return context;
 }
 
-void schannel_openssl_free(SCHANNEL_OPENSSL *context)
+void schannel_openssl_free(SCHANNEL_OPENSSL* context)
 {
 	if (context)
 	{

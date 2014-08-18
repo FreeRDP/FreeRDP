@@ -36,12 +36,12 @@
 
 #define TAG "gateway"
 
-HttpContext *http_context_new()
+HttpContext* http_context_new()
 {
-	return (HttpContext *)calloc(1, sizeof(HttpContext));
+	return (HttpContext*)calloc(1, sizeof(HttpContext));
 }
 
-void http_context_set_method(HttpContext *http_context, char *method)
+void http_context_set_method(HttpContext* http_context, char* method)
 {
 	if (http_context->Method)
 		free(http_context->Method);
@@ -50,7 +50,7 @@ void http_context_set_method(HttpContext *http_context, char *method)
 	// TODO: check result
 }
 
-void http_context_set_uri(HttpContext *http_context, char *uri)
+void http_context_set_uri(HttpContext* http_context, char* uri)
 {
 	if (http_context->URI)
 		free(http_context->URI);
@@ -59,7 +59,7 @@ void http_context_set_uri(HttpContext *http_context, char *uri)
 	// TODO: check result
 }
 
-void http_context_set_user_agent(HttpContext *http_context, char *user_agent)
+void http_context_set_user_agent(HttpContext* http_context, char* user_agent)
 {
 	if (http_context->UserAgent)
 		free(http_context->UserAgent);
@@ -68,7 +68,7 @@ void http_context_set_user_agent(HttpContext *http_context, char *user_agent)
 	// TODO: check result
 }
 
-void http_context_set_host(HttpContext *http_context, char *host)
+void http_context_set_host(HttpContext* http_context, char* host)
 {
 	if (http_context->Host)
 		free(http_context->Host);
@@ -77,7 +77,7 @@ void http_context_set_host(HttpContext *http_context, char *host)
 	// TODO: check result
 }
 
-void http_context_set_accept(HttpContext *http_context, char *accept)
+void http_context_set_accept(HttpContext* http_context, char* accept)
 {
 	if (http_context->Accept)
 		free(http_context->Accept);
@@ -86,7 +86,7 @@ void http_context_set_accept(HttpContext *http_context, char *accept)
 	// TODO: check result
 }
 
-void http_context_set_cache_control(HttpContext *http_context, char *cache_control)
+void http_context_set_cache_control(HttpContext* http_context, char* cache_control)
 {
 	if (http_context->CacheControl)
 		free(http_context->CacheControl);
@@ -95,7 +95,7 @@ void http_context_set_cache_control(HttpContext *http_context, char *cache_contr
 	// TODO: check result
 }
 
-void http_context_set_connection(HttpContext *http_context, char *connection)
+void http_context_set_connection(HttpContext* http_context, char* connection)
 {
 	if (http_context->Connection)
 		free(http_context->Connection);
@@ -104,7 +104,7 @@ void http_context_set_connection(HttpContext *http_context, char *connection)
 	// TODO: check result
 }
 
-void http_context_set_pragma(HttpContext *http_context, char *pragma)
+void http_context_set_pragma(HttpContext* http_context, char* pragma)
 {
 	if (http_context->Pragma)
 		free(http_context->Pragma);
@@ -113,7 +113,7 @@ void http_context_set_pragma(HttpContext *http_context, char *pragma)
 	// TODO: check result
 }
 
-void http_context_free(HttpContext *http_context)
+void http_context_free(HttpContext* http_context)
 {
 	if (http_context != NULL)
 	{
@@ -129,7 +129,7 @@ void http_context_free(HttpContext *http_context)
 	}
 }
 
-void http_request_set_method(HttpRequest *http_request, char *method)
+void http_request_set_method(HttpRequest* http_request, char* method)
 {
 	if (http_request->Method)
 		free(http_request->Method);
@@ -138,7 +138,7 @@ void http_request_set_method(HttpRequest *http_request, char *method)
 	// TODO: check result
 }
 
-void http_request_set_uri(HttpRequest *http_request, char *uri)
+void http_request_set_uri(HttpRequest* http_request, char* uri)
 {
 	if (http_request->URI)
 		free(http_request->URI);
@@ -147,7 +147,7 @@ void http_request_set_uri(HttpRequest *http_request, char *uri)
 	// TODO: check result
 }
 
-void http_request_set_auth_scheme(HttpRequest *http_request, char *auth_scheme)
+void http_request_set_auth_scheme(HttpRequest* http_request, char* auth_scheme)
 {
 	if (http_request->AuthScheme)
 		free(http_request->AuthScheme);
@@ -156,7 +156,7 @@ void http_request_set_auth_scheme(HttpRequest *http_request, char *auth_scheme)
 	// TODO: check result
 }
 
-void http_request_set_auth_param(HttpRequest *http_request, char *auth_param)
+void http_request_set_auth_param(HttpRequest* http_request, char* auth_param)
 {
 	if (http_request->AuthParam)
 		free(http_request->AuthParam);
@@ -165,12 +165,12 @@ void http_request_set_auth_param(HttpRequest *http_request, char *auth_param)
 	// TODO: check result
 }
 
-char *http_encode_body_line(char *param, char *value)
+char* http_encode_body_line(char* param, char* value)
 {
-	char *line;
+	char* line;
 	int length;
 	length = strlen(param) + strlen(value) + 2;
-	line = (char *) malloc(length + 1);
+	line = (char*) malloc(length + 1);
 
 	if (!line)
 		return NULL;
@@ -179,14 +179,14 @@ char *http_encode_body_line(char *param, char *value)
 	return line;
 }
 
-char *http_encode_content_length_line(int ContentLength)
+char* http_encode_content_length_line(int ContentLength)
 {
-	char *line;
+	char* line;
 	int length;
 	char str[32];
 	_itoa_s(ContentLength, str, sizeof(str), 10);
 	length = strlen("Content-Length") + strlen(str) + 2;
-	line = (char *)malloc(length + 1);
+	line = (char*)malloc(length + 1);
 
 	if (!line)
 		return NULL;
@@ -195,12 +195,12 @@ char *http_encode_content_length_line(int ContentLength)
 	return line;
 }
 
-char *http_encode_header_line(char *Method, char *URI)
+char* http_encode_header_line(char* Method, char* URI)
 {
-	char *line;
+	char* line;
 	int length;
 	length = strlen("HTTP/1.1") + strlen(Method) + strlen(URI) + 2;
-	line = (char *)malloc(length + 1);
+	line = (char*)malloc(length + 1);
 
 	if (!line)
 		return NULL;
@@ -209,12 +209,12 @@ char *http_encode_header_line(char *Method, char *URI)
 	return line;
 }
 
-char *http_encode_authorization_line(char *AuthScheme, char *AuthParam)
+char* http_encode_authorization_line(char* AuthScheme, char* AuthParam)
 {
-	char *line;
+	char* line;
 	int length;
 	length = strlen("Authorization") + strlen(AuthScheme) + strlen(AuthParam) + 3;
-	line = (char *) malloc(length + 1);
+	line = (char*) malloc(length + 1);
 
 	if (!line)
 		return NULL;
@@ -223,14 +223,14 @@ char *http_encode_authorization_line(char *AuthScheme, char *AuthParam)
 	return line;
 }
 
-wStream *http_request_write(HttpContext *http_context, HttpRequest *http_request)
+wStream* http_request_write(HttpContext* http_context, HttpRequest* http_request)
 {
 	int i, count;
-	char **lines;
-	wStream *s;
+	char** lines;
+	wStream* s;
 	int length = 0;
 	count = 9;
-	lines = (char **)calloc(count, sizeof(char *));
+	lines = (char**)calloc(count, sizeof(char*));
 
 	if (!lines)
 		return NULL;
@@ -303,12 +303,12 @@ out_free:
 	return NULL;
 }
 
-HttpRequest *http_request_new()
+HttpRequest* http_request_new()
 {
-	return (HttpRequest *) calloc(1, sizeof(HttpRequest));
+	return (HttpRequest*) calloc(1, sizeof(HttpRequest));
 }
 
-void http_request_free(HttpRequest *http_request)
+void http_request_free(HttpRequest* http_request)
 {
 	if (!http_request)
 		return;
@@ -328,11 +328,11 @@ void http_request_free(HttpRequest *http_request)
 	free(http_request);
 }
 
-BOOL http_response_parse_header_status_line(HttpResponse *http_response, char *status_line)
+BOOL http_response_parse_header_status_line(HttpResponse* http_response, char* status_line)
 {
-	char *separator;
-	char *status_code;
-	char *reason_phrase;
+	char* separator;
+	char* status_code;
+	char* reason_phrase;
 	separator = strchr(status_line, ' ');
 
 	if (!separator)
@@ -356,7 +356,7 @@ BOOL http_response_parse_header_status_line(HttpResponse *http_response, char *s
 	return TRUE;
 }
 
-BOOL http_response_parse_header_field(HttpResponse *http_response, char *name, char *value)
+BOOL http_response_parse_header_field(HttpResponse* http_response, char* name, char* value)
 {
 	if (_stricmp(name, "Content-Length") == 0)
 	{
@@ -364,8 +364,8 @@ BOOL http_response_parse_header_field(HttpResponse *http_response, char *name, c
 	}
 	else if (_stricmp(name, "WWW-Authenticate") == 0)
 	{
-		char *separator;
-		char *authScheme, *authValue;
+		char* separator;
+		char* authScheme, *authValue;
 		separator = strchr(value, ' ');
 
 		if (separator != NULL)
@@ -401,14 +401,14 @@ BOOL http_response_parse_header_field(HttpResponse *http_response, char *name, c
 	return TRUE;
 }
 
-BOOL http_response_parse_header(HttpResponse *http_response)
+BOOL http_response_parse_header(HttpResponse* http_response)
 {
 	int count;
-	char *line;
-	char *name;
-	char *value;
-	char *colon_pos;
-	char *end_of_header;
+	char* line;
+	char* name;
+	char* value;
+	char* colon_pos;
+	char* end_of_header;
 	char end_of_header_char;
 	char c;
 
@@ -470,7 +470,7 @@ BOOL http_response_parse_header(HttpResponse *http_response)
 	return TRUE;
 }
 
-void http_response_print(HttpResponse *http_response)
+void http_response_print(HttpResponse* http_response)
 {
 	int i;
 
@@ -482,16 +482,16 @@ void http_response_print(HttpResponse *http_response)
 	DEBUG_WARN("\n");
 }
 
-HttpResponse *http_response_recv(rdpTls *tls)
+HttpResponse* http_response_recv(rdpTls* tls)
 {
-	BYTE *p;
+	BYTE* p;
 	int nbytes;
 	int length;
 	int status;
-	BYTE *buffer;
-	char *content;
-	char *header_end;
-	HttpResponse *http_response;
+	BYTE* buffer;
+	char* content;
+	char* header_end;
+	HttpResponse* http_response;
 	nbytes = 0;
 	length = 10000;
 	content = NULL;
@@ -527,10 +527,10 @@ HttpResponse *http_response_recv(rdpTls *tls)
 			VALGRIND_MAKE_MEM_DEFINED(p, status);
 #endif
 			nbytes += status;
-			p = (BYTE *) &buffer[nbytes];
+			p = (BYTE*) &buffer[nbytes];
 		}
 
-		header_end = strstr((char *) buffer, "\r\n\r\n");
+		header_end = strstr((char*) buffer, "\r\n\r\n");
 
 		if (!header_end)
 		{
@@ -544,12 +544,12 @@ HttpResponse *http_response_recv(rdpTls *tls)
 		if (header_end != NULL)
 		{
 			int count;
-			char *line;
+			char* line;
 			header_end[0] = '\0';
 			header_end[1] = '\0';
 			content = header_end + 2;
 			count = 0;
-			line = (char *) buffer;
+			line = (char*) buffer;
 
 			while ((line = strstr(line, "\r\n")) != NULL)
 			{
@@ -561,14 +561,14 @@ HttpResponse *http_response_recv(rdpTls *tls)
 
 			if (count)
 			{
-				http_response->lines = (char **)calloc(http_response->count, sizeof(char *));
+				http_response->lines = (char**)calloc(http_response->count, sizeof(char*));
 
 				if (!http_response->lines)
 					goto out_error;
 			}
 
 			count = 0;
-			line = strtok((char *) buffer, "\r\n");
+			line = strtok((char*) buffer, "\r\n");
 
 			while (line != NULL)
 			{
@@ -584,11 +584,11 @@ HttpResponse *http_response_recv(rdpTls *tls)
 			if (!http_response_parse_header(http_response))
 				goto out_error;
 
-			http_response->bodyLen = nbytes - (content - (char *)buffer);
+			http_response->bodyLen = nbytes - (content - (char*)buffer);
 
 			if (http_response->bodyLen > 0)
 			{
-				http_response->BodyContent = (BYTE *)malloc(http_response->bodyLen);
+				http_response->BodyContent = (BYTE*)malloc(http_response->bodyLen);
 
 				if (!http_response->BodyContent)
 					goto out_error;
@@ -603,7 +603,7 @@ HttpResponse *http_response_recv(rdpTls *tls)
 		{
 			length *= 2;
 			buffer = realloc(buffer, length);
-			p = (BYTE *) &buffer[nbytes];
+			p = (BYTE*) &buffer[nbytes];
 		}
 	}
 
@@ -616,7 +616,7 @@ out_free:
 	return NULL;
 }
 
-static BOOL strings_equals_nocase(void *obj1, void *obj2)
+static BOOL strings_equals_nocase(void* obj1, void* obj2)
 {
 	if (!obj1 || !obj2)
 		return FALSE;
@@ -624,7 +624,7 @@ static BOOL strings_equals_nocase(void *obj1, void *obj2)
 	return _stricmp(obj1, obj2) == 0;
 }
 
-static void string_free(void *obj1)
+static void string_free(void* obj1)
 {
 	if (!obj1)
 		return;
@@ -632,9 +632,9 @@ static void string_free(void *obj1)
 	free(obj1);
 }
 
-HttpResponse *http_response_new()
+HttpResponse* http_response_new()
 {
-	HttpResponse *ret = (HttpResponse *)calloc(1, sizeof(HttpResponse));
+	HttpResponse* ret = (HttpResponse*)calloc(1, sizeof(HttpResponse));
 
 	if (!ret)
 		return NULL;
@@ -647,7 +647,7 @@ HttpResponse *http_response_new()
 	return ret;
 }
 
-void http_response_free(HttpResponse *http_response)
+void http_response_free(HttpResponse* http_response)
 {
 	int i;
 

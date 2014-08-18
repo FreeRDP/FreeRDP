@@ -31,7 +31,7 @@
 
 #ifndef _WIN32
 
-void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
+void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_CARRAY
@@ -47,7 +47,7 @@ void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pM
 	unsigned short element_size;
 	type = pFormat[0];
 	alignment = pFormat[1] + 1;
-	element_size = *(unsigned short *) &pFormat[2];
+	element_size = *(unsigned short*) &pFormat[2];
 
 	if (type != FC_CARRAY)
 	{
@@ -58,7 +58,7 @@ void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pM
 	WLog_ERR(TAG, "warning: NdrConformantArrayBufferSize unimplemented");
 }
 
-void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
+void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_CVARRAY
@@ -73,7 +73,7 @@ void NdrConformantVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned c
 	WLog_ERR(TAG, "warning: NdrConformantVaryingArrayBufferSize unimplemented");
 }
 
-void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
+void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_SMFARRAY
@@ -94,7 +94,7 @@ void NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory
 	WLog_ERR(TAG, "warning: NdrFixedArrayBufferSize unimplemented");
 }
 
-void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
+void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_SMVARRAY
@@ -121,7 +121,7 @@ void NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemo
 	WLog_ERR(TAG, "warning: NdrVaryingArrayBufferSize unimplemented");
 }
 
-void NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
+void NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
 	/**
 	 * FC_BOGUS_ARRAY

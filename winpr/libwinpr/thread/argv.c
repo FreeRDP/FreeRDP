@@ -88,22 +88,22 @@
  *
  */
 
-LPSTR *CommandLineToArgvA(LPCSTR lpCmdLine, int *pNumArgs)
+LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 {
-	char *p;
+	char* p;
 	int index;
 	int length;
-	char *pBeg;
-	char *pEnd;
-	char *buffer;
-	char *pOutput;
+	char* pBeg;
+	char* pEnd;
+	char* buffer;
+	char* pOutput;
 	int numArgs;
-	LPSTR *pArgs;
+	LPSTR* pArgs;
 	int maxNumArgs;
 	int maxBufferSize;
 	int currentIndex;
 	int cmdLineLength;
-	BOOL *lpEscapedChars;
+	BOOL* lpEscapedChars;
 	LPSTR lpEscapedCmdLine;
 
 	if (!lpCmdLine)
@@ -116,17 +116,17 @@ LPSTR *CommandLineToArgvA(LPCSTR lpCmdLine, int *pNumArgs)
 	numArgs = 0;
 	lpEscapedCmdLine = NULL;
 	cmdLineLength = strlen(lpCmdLine);
-	lpEscapedChars = (BOOL *) malloc((cmdLineLength + 1) * sizeof(BOOL));
+	lpEscapedChars = (BOOL*) malloc((cmdLineLength + 1) * sizeof(BOOL));
 	ZeroMemory(lpEscapedChars, (cmdLineLength + 1) * sizeof(BOOL));
 
 	if (strstr(lpCmdLine, "\\\""))
 	{
 		int i, n;
-		char *pLastEnd = NULL;
-		lpEscapedCmdLine = (char *) malloc((cmdLineLength + 1) * sizeof(char));
-		p = (char *) lpCmdLine;
-		pLastEnd = (char *) lpCmdLine;
-		pOutput = (char *) lpEscapedCmdLine;
+		char* pLastEnd = NULL;
+		lpEscapedCmdLine = (char*) malloc((cmdLineLength + 1) * sizeof(char));
+		p = (char*) lpCmdLine;
+		pLastEnd = (char*) lpCmdLine;
+		pOutput = (char*) lpEscapedCmdLine;
 
 		while (p < &lpCmdLine[cmdLineLength])
 		{
@@ -184,27 +184,27 @@ LPSTR *CommandLineToArgvA(LPCSTR lpCmdLine, int *pNumArgs)
 
 	maxNumArgs = 2;
 	currentIndex = 0;
-	p = (char *) lpCmdLine;
+	p = (char*) lpCmdLine;
 
 	while (currentIndex < cmdLineLength - 1)
 	{
 		index = strcspn(p, " \t");
 		currentIndex += (index + 1);
-		p = (char *) &lpCmdLine[currentIndex];
+		p = (char*) &lpCmdLine[currentIndex];
 		maxNumArgs++;
 	}
 
-	maxBufferSize = (maxNumArgs * (sizeof(char *))) + (cmdLineLength + 1);
-	buffer = (char *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, maxBufferSize);
+	maxBufferSize = (maxNumArgs * (sizeof(char*))) + (cmdLineLength + 1);
+	buffer = (char*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, maxBufferSize);
 
 	if (!buffer)
 		return NULL;
 
-	pArgs = (LPSTR *) buffer;
-	pOutput = (char *) &buffer[maxNumArgs * (sizeof(char *))];
+	pArgs = (LPSTR*) buffer;
+	pOutput = (char*) &buffer[maxNumArgs * (sizeof(char*))];
 	numArgs = 0;
 	currentIndex = 0;
-	p = (char *) lpCmdLine;
+	p = (char*) lpCmdLine;
 
 	while (currentIndex < cmdLineLength)
 	{
@@ -306,7 +306,7 @@ LPSTR *CommandLineToArgvA(LPCSTR lpCmdLine, int *pNumArgs)
 
 #ifndef _WIN32
 
-LPWSTR *CommandLineToArgvW(LPCWSTR lpCmdLine, int *pNumArgs)
+LPWSTR* CommandLineToArgvW(LPCWSTR lpCmdLine, int* pNumArgs)
 {
 	return NULL;
 }

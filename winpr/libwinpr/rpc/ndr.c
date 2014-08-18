@@ -86,7 +86,7 @@ void NdrPrintParamAttributes(PARAM_ATTRIBUTES attributes)
 		WLog_INFO(TAG, "MustSize, ");
 }
 
-void NdrProcessParam(PMIDL_STUB_MESSAGE pStubMsg, NDR_PHASE phase, unsigned char *pMemory, NDR_PARAM *param)
+void NdrProcessParam(PMIDL_STUB_MESSAGE pStubMsg, NDR_PHASE phase, unsigned char* pMemory, NDR_PARAM* param)
 {
 	unsigned char type;
 	PFORMAT_STRING pFormat;
@@ -98,14 +98,14 @@ void NdrProcessParam(PMIDL_STUB_MESSAGE pStubMsg, NDR_PHASE phase, unsigned char
 		pFormat = &param->Type.FormatChar;
 
 		if (param->Attributes.IsSimpleRef)
-			pMemory = *(unsigned char **) pMemory;
+			pMemory = *(unsigned char**) pMemory;
 	}
 	else
 	{
 		pFormat = &pStubMsg->StubDesc->pFormatTypes[param->Type.Offset];
 
 		if (!(param->Attributes.IsByValue))
-			pMemory = *(unsigned char **) pMemory;
+			pMemory = *(unsigned char**) pMemory;
 	}
 
 	type = (pFormat[0] & 0x7F);
@@ -143,14 +143,14 @@ void NdrProcessParam(PMIDL_STUB_MESSAGE pStubMsg, NDR_PHASE phase, unsigned char
 	}
 }
 
-void NdrProcessParams(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, NDR_PHASE phase, void **fpuArgs, unsigned short numberParams)
+void NdrProcessParams(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, NDR_PHASE phase, void** fpuArgs, unsigned short numberParams)
 {
 	unsigned int i;
-	NDR_PARAM *params;
+	NDR_PARAM* params;
 	PFORMAT_STRING fmt;
-	unsigned char *arg;
+	unsigned char* arg;
 	unsigned char type;
-	params = (NDR_PARAM *) pFormat;
+	params = (NDR_PARAM*) pFormat;
 	WLog_INFO(TAG, "Params = ");
 
 	for (i = 0; i < numberParams; i++)
@@ -166,8 +166,8 @@ void NdrProcessParams(PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, NDR_P
 				!(params[i].Attributes.IsSimpleRef) &&
 				((params[i].Type.FormatChar) == FC_FLOAT) && !fpuArgs)
 		{
-			tmp = *(double *) arg;
-			arg = (unsigned char *) &tmp;
+			tmp = *(double*) arg;
+			arg = (unsigned char*) &tmp;
 		}
 
 #endif
@@ -243,7 +243,7 @@ void NdrPrintExtFlags(INTERPRETER_OPT_FLAGS2 extFlags)
 		WLog_INFO(TAG, "HasNotify2, ");
 }
 
-CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, void **stackTop, void **fpuStack)
+CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING pFormat, void** stackTop, void** fpuStack)
 {
 	RPC_MESSAGE rpcMsg;
 	unsigned short procNum;
@@ -253,11 +253,11 @@ CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING
 	MIDL_STUB_MESSAGE stubMsg;
 	INTERPRETER_FLAGS flags;
 	INTERPRETER_OPT_FLAGS optFlags;
-	NDR_PROC_HEADER *procHeader;
-	NDR_OI2_PROC_HEADER *oi2ProcHeader;
+	NDR_PROC_HEADER* procHeader;
+	NDR_OI2_PROC_HEADER* oi2ProcHeader;
 	CLIENT_CALL_RETURN client_call_return;
 	procNum = stackSize = numberParams = 0;
-	procHeader = (NDR_PROC_HEADER *) &pFormat[0];
+	procHeader = (NDR_PROC_HEADER*) &pFormat[0];
 	client_call_return.Pointer = NULL;
 	handleType = procHeader->HandleType;
 	flags = procHeader->OldOiFlags;
@@ -268,28 +268,28 @@ CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING
 	/* Procedure Header Descriptor: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374387/ */
 	/* Handles: http://msdn.microsoft.com/en-us/library/windows/desktop/aa373932/ */
 	WLog_DBG(TAG, "Oi Header: HandleType: 0x%02X OiFlags: 0x%02X ProcNum: %d StackSize: 0x%04X",
-			 handleType, *((unsigned char *) &flags),
+			 handleType, *((unsigned char*) &flags),
 			 (unsigned short) procNum, (unsigned short) stackSize);
 
 	if (handleType > 0)
 	{
 		/* implicit handle */
 		WLog_INFO(TAG, "Implicit Handle");
-		oi2ProcHeader = (NDR_OI2_PROC_HEADER *) &pFormat[0];
+		oi2ProcHeader = (NDR_OI2_PROC_HEADER*) &pFormat[0];
 		pFormat += sizeof(NDR_OI2_PROC_HEADER);
 	}
 	else
 	{
 		/* explicit handle */
 		WLog_INFO(TAG, "Explicit Handle");
-		oi2ProcHeader = (NDR_OI2_PROC_HEADER *) &pFormat[6];
+		oi2ProcHeader = (NDR_OI2_PROC_HEADER*) &pFormat[6];
 		pFormat += sizeof(NDR_OI2_PROC_HEADER) + 6;
 	}
 
 	optFlags = oi2ProcHeader->Oi2Flags;
 	numberParams = oi2ProcHeader->NumberParams;
 	WLog_DBG(TAG, "Oi2 Header: Oi2Flags: 0x%02X, NumberParams: %d ClientBufferSize: %d ServerBufferSize: %d",
-			 *((unsigned char *) &optFlags),
+			 *((unsigned char*) &optFlags),
 			 (unsigned char) numberParams,
 			 oi2ProcHeader->ClientBufferSize,
 			 oi2ProcHeader->ServerBufferSize);
@@ -300,28 +300,28 @@ CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING
 	if (optFlags.HasExtensions)
 	{
 		INTERPRETER_OPT_FLAGS2 extFlags;
-		NDR_PROC_HEADER_EXTS *extensions = (NDR_PROC_HEADER_EXTS *) pFormat;
+		NDR_PROC_HEADER_EXTS* extensions = (NDR_PROC_HEADER_EXTS*) pFormat;
 		pFormat += extensions->Size;
 		extFlags = extensions->Flags2;
 		WLog_DBG(TAG, "Extensions: Size: %d, flags2: 0x%02X",
-				 extensions->Size, *((unsigned char *) &extensions->Flags2));
+				 extensions->Size, *((unsigned char*) &extensions->Flags2));
 #ifdef __x86_64__
 
 		if (extensions->Size > sizeof(*extensions) && fpuStack)
 		{
 			int i;
-			unsigned short fpuMask = *(unsigned short *)(extensions + 1);
+			unsigned short fpuMask = *(unsigned short*)(extensions + 1);
 
 			for (i = 0; i < 4; i++, fpuMask >>= 2)
 			{
 				switch (fpuMask & 3)
 				{
 					case 1:
-						*(float *) &stackTop[i] = *(float *) &fpuStack[i];
+						*(float*) &stackTop[i] = *(float*) &fpuStack[i];
 						break;
 
 					case 2:
-						*(double *) &stackTop[i] = *(double *) &fpuStack[i];
+						*(double*) &stackTop[i] = *(double*) &fpuStack[i];
 						break;
 				}
 			}
@@ -332,7 +332,7 @@ CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING
 		NdrPrintExtFlags(extFlags);
 	}
 
-	stubMsg.StackTop = (unsigned char *) stackTop;
+	stubMsg.StackTop = (unsigned char*) stackTop;
 	NdrProcessParams(&stubMsg, pFormat, NDR_PHASE_SIZE, fpuStack, numberParams);
 	WLog_DBG(TAG, "stubMsg BufferLength: %d", (int) stubMsg.BufferLength);
 	return client_call_return;
@@ -343,7 +343,7 @@ CLIENT_CALL_RETURN NdrClientCall2(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRIN
 	va_list args;
 	CLIENT_CALL_RETURN client_call_return;
 	va_start(args, pFormat);
-	client_call_return = NdrClientCall(pStubDescriptor, pFormat, va_arg(args, void **), NULL);
+	client_call_return = NdrClientCall(pStubDescriptor, pFormat, va_arg(args, void**), NULL);
 	va_end(args);
 	return client_call_return;
 }

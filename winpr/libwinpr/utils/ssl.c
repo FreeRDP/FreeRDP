@@ -30,7 +30,7 @@
 #define TAG WINPR_TAG("utils.ssl")
 
 static int g_winpr_openssl_num_locks = 0;
-static HANDLE *g_winpr_openssl_locks = NULL;
+static HANDLE* g_winpr_openssl_locks = NULL;
 static BOOL g_winpr_openssl_initialized_by_winpr = FALSE;
 
 struct CRYPTO_dynlock_value
@@ -46,7 +46,7 @@ static unsigned long _winpr_openssl_id(void)
 }
 #endif
 
-static void _winpr_openssl_locking(int mode, int type, const char *file, int line)
+static void _winpr_openssl_locking(int mode, int type, const char* file, int line)
 {
 	if (mode & CRYPTO_LOCK)
 	{
@@ -58,9 +58,9 @@ static void _winpr_openssl_locking(int mode, int type, const char *file, int lin
 	}
 }
 
-static struct CRYPTO_dynlock_value *_winpr_openssl_dynlock_create(const char *file, int line)
+static struct CRYPTO_dynlock_value* _winpr_openssl_dynlock_create(const char* file, int line)
 {
-	struct CRYPTO_dynlock_value *dynlock = (struct CRYPTO_dynlock_value *)
+	struct CRYPTO_dynlock_value* dynlock = (struct CRYPTO_dynlock_value*)
 										   malloc(sizeof(struct CRYPTO_dynlock_value));
 
 	if (dynlock)
@@ -71,7 +71,7 @@ static struct CRYPTO_dynlock_value *_winpr_openssl_dynlock_create(const char *fi
 	return dynlock;
 }
 
-static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value *dynlock, const char *file, int line)
+static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* dynlock, const char* file, int line)
 {
 	if (mode & CRYPTO_LOCK)
 	{
@@ -83,7 +83,7 @@ static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value *d
 	}
 }
 
-static void _winpr_openssl_dynlock_destroy(struct CRYPTO_dynlock_value *dynlock, const char *file, int line)
+static void _winpr_openssl_dynlock_destroy(struct CRYPTO_dynlock_value* dynlock, const char* file, int line)
 {
 	CloseHandle(dynlock->mutex);
 	free(dynlock);
@@ -103,7 +103,7 @@ static BOOL _winpr_openssl_initialize_locking(void)
 	{
 		if ((count = CRYPTO_num_locks()) > 0)
 		{
-			HANDLE *locks;
+			HANDLE* locks;
 
 			if (!(locks = calloc(count, sizeof(HANDLE))))
 			{
@@ -210,7 +210,7 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 	return TRUE;
 }
 
-static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID *context)
+static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	DWORD flags = param ? *(PDWORD)param : WINPR_SSL_INIT_DEFAULT;
 

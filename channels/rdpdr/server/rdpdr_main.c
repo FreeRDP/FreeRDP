@@ -32,9 +32,9 @@
 
 static UINT32 g_ClientId = 0;
 
-static int rdpdr_server_send_announce_request(RdpdrServerContext *context)
+static int rdpdr_server_send_announce_request(RdpdrServerContext* context)
 {
-	wStream *s;
+	wStream* s;
 	BOOL status;
 	RDPDR_HEADER header;
 	ULONG written;
@@ -53,7 +53,7 @@ static int rdpdr_server_send_announce_request(RdpdrServerContext *context)
 	return 0;
 }
 
-static int rdpdr_server_receive_announce_response(RdpdrServerContext *context, wStream *s, RDPDR_HEADER *header)
+static int rdpdr_server_receive_announce_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	UINT32 ClientId;
 	UINT16 VersionMajor;
@@ -67,7 +67,7 @@ static int rdpdr_server_receive_announce_response(RdpdrServerContext *context, w
 	return 0;
 }
 
-static int rdpdr_server_receive_client_name_request(RdpdrServerContext *context, wStream *s, RDPDR_HEADER *header)
+static int rdpdr_server_receive_client_name_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	UINT32 UnicodeFlag;
 	UINT32 ComputerNameLen;
@@ -88,12 +88,12 @@ static int rdpdr_server_receive_client_name_request(RdpdrServerContext *context,
 
 	if (UnicodeFlag)
 	{
-		ConvertFromUnicode(CP_UTF8, 0, (WCHAR *) Stream_Pointer(s),
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) Stream_Pointer(s),
 						   -1, &(context->priv->ClientComputerName), 0, NULL, NULL);
 	}
 	else
 	{
-		context->priv->ClientComputerName = _strdup((char *) Stream_Pointer(s));
+		context->priv->ClientComputerName = _strdup((char*) Stream_Pointer(s));
 	}
 
 	Stream_Seek(s, ComputerNameLen);
@@ -101,7 +101,7 @@ static int rdpdr_server_receive_client_name_request(RdpdrServerContext *context,
 	return 0;
 }
 
-static int rdpdr_server_read_capability_set_header(wStream *s, RDPDR_CAPABILITY_HEADER *header)
+static int rdpdr_server_read_capability_set_header(wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
 	Stream_Read_UINT16(s, header->CapabilityType); /* CapabilityType (2 bytes) */
 	Stream_Read_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
@@ -109,7 +109,7 @@ static int rdpdr_server_read_capability_set_header(wStream *s, RDPDR_CAPABILITY_
 	return 0;
 }
 
-static int rdpdr_server_write_capability_set_header(wStream *s, RDPDR_CAPABILITY_HEADER *header)
+static int rdpdr_server_write_capability_set_header(wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
 	Stream_Write_UINT16(s, header->CapabilityType); /* CapabilityType (2 bytes) */
 	Stream_Write_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
@@ -117,7 +117,7 @@ static int rdpdr_server_write_capability_set_header(wStream *s, RDPDR_CAPABILITY
 	return 0;
 }
 
-static int rdpdr_server_read_general_capability_set(RdpdrServerContext *context, wStream *s, RDPDR_CAPABILITY_HEADER *header)
+static int rdpdr_server_read_general_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
 	UINT32 ioCode1;
 	UINT32 extraFlags1;
@@ -139,7 +139,7 @@ static int rdpdr_server_read_general_capability_set(RdpdrServerContext *context,
 	return 0;
 }
 
-static int rdpdr_server_write_general_capability_set(RdpdrServerContext *context, wStream *s)
+static int rdpdr_server_write_general_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	UINT32 ioCode1;
 	UINT32 extendedPdu;
@@ -191,12 +191,12 @@ static int rdpdr_server_write_general_capability_set(RdpdrServerContext *context
 	return 0;
 }
 
-static int rdpdr_server_read_printer_capability_set(RdpdrServerContext *context, wStream *s, RDPDR_CAPABILITY_HEADER *header)
+static int rdpdr_server_read_printer_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
 	return 0;
 }
 
-static int rdpdr_server_write_printer_capability_set(RdpdrServerContext *context, wStream *s)
+static int rdpdr_server_write_printer_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	RDPDR_CAPABILITY_HEADER header;
 	header.CapabilityType = CAP_PRINTER_TYPE;
@@ -207,12 +207,12 @@ static int rdpdr_server_write_printer_capability_set(RdpdrServerContext *context
 	return 0;
 }
 
-static int rdpdr_server_read_port_capability_set(RdpdrServerContext *context, wStream *s, RDPDR_CAPABILITY_HEADER *header)
+static int rdpdr_server_read_port_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
 	return 0;
 }
 
-static int rdpdr_server_write_port_capability_set(RdpdrServerContext *context, wStream *s)
+static int rdpdr_server_write_port_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	RDPDR_CAPABILITY_HEADER header;
 	header.CapabilityType = CAP_PORT_TYPE;
@@ -223,12 +223,12 @@ static int rdpdr_server_write_port_capability_set(RdpdrServerContext *context, w
 	return 0;
 }
 
-static int rdpdr_server_read_drive_capability_set(RdpdrServerContext *context, wStream *s, RDPDR_CAPABILITY_HEADER *header)
+static int rdpdr_server_read_drive_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
 	return 0;
 }
 
-static int rdpdr_server_write_drive_capability_set(RdpdrServerContext *context, wStream *s)
+static int rdpdr_server_write_drive_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	RDPDR_CAPABILITY_HEADER header;
 	header.CapabilityType = CAP_DRIVE_TYPE;
@@ -239,12 +239,12 @@ static int rdpdr_server_write_drive_capability_set(RdpdrServerContext *context, 
 	return 0;
 }
 
-static int rdpdr_server_read_smartcard_capability_set(RdpdrServerContext *context, wStream *s, RDPDR_CAPABILITY_HEADER *header)
+static int rdpdr_server_read_smartcard_capability_set(RdpdrServerContext* context, wStream* s, RDPDR_CAPABILITY_HEADER* header)
 {
 	return 0;
 }
 
-static int rdpdr_server_write_smartcard_capability_set(RdpdrServerContext *context, wStream *s)
+static int rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* context, wStream* s)
 {
 	RDPDR_CAPABILITY_HEADER header;
 	header.CapabilityType = CAP_SMARTCARD_TYPE;
@@ -255,9 +255,9 @@ static int rdpdr_server_write_smartcard_capability_set(RdpdrServerContext *conte
 	return 0;
 }
 
-static int rdpdr_server_send_core_capability_request(RdpdrServerContext *context)
+static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context)
 {
-	wStream *s;
+	wStream* s;
 	BOOL status;
 	RDPDR_HEADER header;
 	UINT16 numCapabilities;
@@ -282,7 +282,7 @@ static int rdpdr_server_send_core_capability_request(RdpdrServerContext *context
 	return 0;
 }
 
-static int rdpdr_server_receive_core_capability_response(RdpdrServerContext *context, wStream *s, RDPDR_HEADER *header)
+static int rdpdr_server_receive_core_capability_response(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	int i;
 	UINT16 numCapabilities;
@@ -299,18 +299,23 @@ static int rdpdr_server_receive_core_capability_response(RdpdrServerContext *con
 			case CAP_GENERAL_TYPE:
 				rdpdr_server_read_general_capability_set(context, s, &capabilityHeader);
 				break;
+
 			case CAP_PRINTER_TYPE:
 				rdpdr_server_read_printer_capability_set(context, s, &capabilityHeader);
 				break;
+
 			case CAP_PORT_TYPE:
 				rdpdr_server_read_port_capability_set(context, s, &capabilityHeader);
 				break;
+
 			case CAP_DRIVE_TYPE:
 				rdpdr_server_read_drive_capability_set(context, s, &capabilityHeader);
 				break;
+
 			case CAP_SMARTCARD_TYPE:
 				rdpdr_server_read_smartcard_capability_set(context, s, &capabilityHeader);
 				break;
+
 			default:
 				CLOG_DBG("Unknown capabilityType %d\n", capabilityHeader.CapabilityType);
 				Stream_Seek(s, capabilityHeader.CapabilityLength - RDPDR_CAPABILITY_HEADER_LENGTH);
@@ -321,9 +326,9 @@ static int rdpdr_server_receive_core_capability_response(RdpdrServerContext *con
 	return 0;
 }
 
-static int rdpdr_server_send_client_id_confirm(RdpdrServerContext *context)
+static int rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 {
-	wStream *s;
+	wStream* s;
 	BOOL status;
 	RDPDR_HEADER header;
 	ULONG written;
@@ -342,7 +347,7 @@ static int rdpdr_server_send_client_id_confirm(RdpdrServerContext *context)
 	return 0;
 }
 
-static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext *context, wStream *s, RDPDR_HEADER *header)
+static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	int i;
 	UINT32 DeviceCount;
@@ -367,14 +372,19 @@ static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext 
 		{
 			case RDPDR_DTYP_FILESYSTEM:
 				break;
+
 			case RDPDR_DTYP_PRINT:
 				break;
+
 			case RDPDR_DTYP_SERIAL:
 				break;
+
 			case RDPDR_DTYP_PARALLEL:
 				break;
+
 			case RDPDR_DTYP_SMARTCARD:
 				break;
+
 			default:
 				break;
 		}
@@ -385,9 +395,9 @@ static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext 
 	return 0;
 }
 
-static int rdpdr_server_send_user_logged_on(RdpdrServerContext *context)
+static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 {
-	wStream *s;
+	wStream* s;
 	BOOL status;
 	RDPDR_HEADER header;
 	ULONG written;
@@ -403,7 +413,7 @@ static int rdpdr_server_send_user_logged_on(RdpdrServerContext *context)
 	return 0;
 }
 
-static int rdpdr_server_receive_pdu(RdpdrServerContext *context, wStream *s, RDPDR_HEADER *header)
+static int rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
 	CLOG_DBG("RdpdrServerReceivePdu: Component: 0x%04X PacketId: 0x%04X\n",
 			 header->Component, header->PacketId);
@@ -416,10 +426,12 @@ static int rdpdr_server_receive_pdu(RdpdrServerContext *context, wStream *s, RDP
 			case PAKID_CORE_CLIENTID_CONFIRM:
 				rdpdr_server_receive_announce_response(context, s, header);
 				break;
+
 			case PAKID_CORE_CLIENT_NAME:
 				rdpdr_server_receive_client_name_request(context, s, header);
 				rdpdr_server_send_core_capability_request(context);
 				break;
+
 			case PAKID_CORE_CLIENT_CAPABILITY:
 				rdpdr_server_receive_core_capability_response(context, s, header);
 				rdpdr_server_send_client_id_confirm(context);
@@ -428,17 +440,23 @@ static int rdpdr_server_receive_pdu(RdpdrServerContext *context, wStream *s, RDP
 					rdpdr_server_send_user_logged_on(context);
 
 				break;
+
 			case PAKID_CORE_DEVICELIST_ANNOUNCE:
 				rdpdr_server_receive_device_list_announce_request(context, s, header);
 				break;
+
 			case PAKID_CORE_DEVICE_REPLY:
 				break;
+
 			case PAKID_CORE_DEVICE_IOREQUEST:
 				break;
+
 			case PAKID_CORE_DEVICE_IOCOMPLETION:
 				break;
+
 			case PAKID_CORE_DEVICELIST_REMOVE:
 				break;
+
 			default:
 				break;
 		}
@@ -449,8 +467,10 @@ static int rdpdr_server_receive_pdu(RdpdrServerContext *context, wStream *s, RDP
 		{
 			case PAKID_PRN_CACHE_DATA:
 				break;
+
 			case PAKID_PRN_USING_XPS:
 				break;
+
 			default:
 				break;
 		}
@@ -464,19 +484,19 @@ static int rdpdr_server_receive_pdu(RdpdrServerContext *context, wStream *s, RDP
 	return 0;
 }
 
-static void *rdpdr_server_thread(void *arg)
+static void* rdpdr_server_thread(void* arg)
 {
-	wStream *s;
+	wStream* s;
 	DWORD status;
 	DWORD nCount;
-	void *buffer;
+	void* buffer;
 	int position;
 	HANDLE events[8];
 	RDPDR_HEADER header;
 	HANDLE ChannelEvent;
 	DWORD BytesReturned;
-	RdpdrServerContext *context;
-	context = (RdpdrServerContext *) arg;
+	RdpdrServerContext* context;
+	context = (RdpdrServerContext*) arg;
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
@@ -536,7 +556,7 @@ static void *rdpdr_server_thread(void *arg)
 	return NULL;
 }
 
-static int rdpdr_server_start(RdpdrServerContext *context)
+static int rdpdr_server_start(RdpdrServerContext* context)
 {
 	context->priv->ChannelHandle = WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, "rdpdr");
 
@@ -545,11 +565,11 @@ static int rdpdr_server_start(RdpdrServerContext *context)
 
 	context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	context->priv->Thread = CreateThread(NULL, 0,
-										 (LPTHREAD_START_ROUTINE) rdpdr_server_thread, (void *) context, 0, NULL);
+										 (LPTHREAD_START_ROUTINE) rdpdr_server_thread, (void*) context, 0, NULL);
 	return 0;
 }
 
-static int rdpdr_server_stop(RdpdrServerContext *context)
+static int rdpdr_server_stop(RdpdrServerContext* context)
 {
 	SetEvent(context->priv->StopEvent);
 	WaitForSingleObject(context->priv->Thread, INFINITE);
@@ -557,10 +577,10 @@ static int rdpdr_server_stop(RdpdrServerContext *context)
 	return 0;
 }
 
-RdpdrServerContext *rdpdr_server_context_new(HANDLE vcm)
+RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm)
 {
-	RdpdrServerContext *context;
-	context = (RdpdrServerContext *) malloc(sizeof(RdpdrServerContext));
+	RdpdrServerContext* context;
+	context = (RdpdrServerContext*) malloc(sizeof(RdpdrServerContext));
 
 	if (context)
 	{
@@ -568,7 +588,7 @@ RdpdrServerContext *rdpdr_server_context_new(HANDLE vcm)
 		context->vcm = vcm;
 		context->Start = rdpdr_server_start;
 		context->Stop = rdpdr_server_stop;
-		context->priv = (RdpdrServerPrivate *) malloc(sizeof(RdpdrServerPrivate));
+		context->priv = (RdpdrServerPrivate*) malloc(sizeof(RdpdrServerPrivate));
 
 		if (context->priv)
 		{
@@ -583,7 +603,7 @@ RdpdrServerContext *rdpdr_server_context_new(HANDLE vcm)
 	return context;
 }
 
-void rdpdr_server_context_free(RdpdrServerContext *context)
+void rdpdr_server_context_free(RdpdrServerContext* context)
 {
 	if (context)
 	{

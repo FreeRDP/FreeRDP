@@ -42,7 +42,7 @@
  * http://download.microsoft.com/download/4/3/8/43889780-8d45-4b2e-9d3a-c696a890309f/File%20System%20Behavior%20Overview.pdf
  */
 
-LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD *pFlags)
+LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags)
 {
 	LPSTR lpWildcard;
 	*pFlags = 0;
@@ -84,7 +84,7 @@ LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD *pFlags)
 }
 
 BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
-									LPCSTR lpX, size_t cchX, LPCSTR lpY, size_t cchY, LPCSTR lpWildcard, LPSTR *ppMatchEnd)
+									LPCSTR lpX, size_t cchX, LPCSTR lpY, size_t cchY, LPCSTR lpWildcard, LPSTR* ppMatchEnd)
 {
 	LPSTR lpMatch;
 

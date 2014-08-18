@@ -123,7 +123,7 @@
  *
  */
 
-static const char *certificate_read_errors[] =
+static const char* certificate_read_errors[] =
 {
 	"Certificate tag",
 	"TBSCertificate",
@@ -153,9 +153,9 @@ static const char *certificate_read_errors[] =
  * @param cert X.509 certificate
  */
 
-BOOL certificate_read_x509_certificate(rdpCertBlob *cert, rdpCertInfo *info)
+BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 {
-	wStream *s;
+	wStream* s;
 	int length;
 	BYTE padding;
 	UINT32 version;
@@ -273,7 +273,7 @@ BOOL certificate_read_x509_certificate(rdpCertBlob *cert, rdpCertInfo *info)
 		goto error1;
 
 	info->ModulusLength = modulus_length;
-	info->Modulus = (BYTE *) malloc(info->ModulusLength);
+	info->Modulus = (BYTE*) malloc(info->ModulusLength);
 
 	if (!info->Modulus)
 		goto error1;
@@ -309,16 +309,16 @@ error1:
  * @return new X.509 certificate chain
  */
 
-rdpX509CertChain *certificate_new_x509_certificate_chain(UINT32 count)
+rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count)
 {
-	rdpX509CertChain *x509_cert_chain;
-	x509_cert_chain = (rdpX509CertChain *)malloc(sizeof(rdpX509CertChain));
+	rdpX509CertChain* x509_cert_chain;
+	x509_cert_chain = (rdpX509CertChain*)malloc(sizeof(rdpX509CertChain));
 
 	if (!x509_cert_chain)
 		return NULL;
 
 	x509_cert_chain->count = count;
-	x509_cert_chain->array = (rdpCertBlob *)calloc(count, sizeof(rdpCertBlob));
+	x509_cert_chain->array = (rdpCertBlob*)calloc(count, sizeof(rdpCertBlob));
 
 	if (!x509_cert_chain->array)
 	{
@@ -334,7 +334,7 @@ rdpX509CertChain *certificate_new_x509_certificate_chain(UINT32 count)
  * @param x509_cert_chain X.509 certificate chain to be freed
  */
 
-void certificate_free_x509_certificate_chain(rdpX509CertChain *x509_cert_chain)
+void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 {
 	int i;
 
@@ -351,7 +351,7 @@ void certificate_free_x509_certificate_chain(rdpX509CertChain *x509_cert_chain)
 	free(x509_cert_chain);
 }
 
-static BOOL certificate_process_server_public_key(rdpCertificate *certificate, wStream *s, UINT32 length)
+static BOOL certificate_process_server_public_key(rdpCertificate* certificate, wStream* s, UINT32 length)
 {
 	BYTE magic[4];
 	UINT32 keylen;
@@ -391,8 +391,8 @@ static BOOL certificate_process_server_public_key(rdpCertificate *certificate, w
 	return TRUE;
 }
 
-static BOOL certificate_process_server_public_signature(rdpCertificate *certificate,
-		const BYTE *sigdata, int sigdatalen, wStream *s, UINT32 siglen)
+static BOOL certificate_process_server_public_signature(rdpCertificate* certificate,
+		const BYTE* sigdata, int sigdatalen, wStream* s, UINT32 siglen)
 {
 	int i, sum;
 	CryptoMd5 md5ctx;
@@ -455,7 +455,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate *certific
  * @param s stream
  */
 
-BOOL certificate_read_server_proprietary_certificate(rdpCertificate *certificate, wStream *s)
+BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, wStream* s)
 {
 	UINT32 dwSigAlgId;
 	UINT32 dwKeyAlgId;
@@ -463,7 +463,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate *certificate
 	UINT32 wPublicKeyBlobLen;
 	UINT32 wSignatureBlobType;
 	UINT32 wSignatureBlobLen;
-	BYTE *sigdata;
+	BYTE* sigdata;
 	int sigdatalen;
 
 	if (Stream_GetRemainingLength(s) < 12)
@@ -541,7 +541,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate *certificate
  * @param s stream
  */
 
-BOOL certificate_read_server_x509_certificate_chain(rdpCertificate *certificate, wStream *s)
+BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, wStream* s)
 {
 	int i;
 	UINT32 certLength;
@@ -569,7 +569,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate *certificate,
 			return FALSE;
 
 		DEBUG_CERTIFICATE("\nX.509 Certificate #%d, length:%d", i + 1, certLength);
-		certificate->x509_cert_chain->array[i].data = (BYTE *) malloc(certLength);
+		certificate->x509_cert_chain->array[i].data = (BYTE*) malloc(certLength);
 
 		if (!certificate->x509_cert_chain->array[i].data)
 			return FALSE;
@@ -615,9 +615,9 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate *certificate,
  * @param length certificate length
  */
 
-BOOL certificate_read_server_certificate(rdpCertificate *certificate, BYTE *server_cert, int length)
+BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length)
 {
-	wStream *s;
+	wStream* s;
 	UINT32 dwVersion;
 	BOOL ret;
 
@@ -632,9 +632,11 @@ BOOL certificate_read_server_certificate(rdpCertificate *certificate, BYTE *serv
 		case CERT_CHAIN_VERSION_1:
 			ret = certificate_read_server_proprietary_certificate(certificate, s);
 			break;
+
 		case CERT_CHAIN_VERSION_2:
 			ret = certificate_read_server_x509_certificate_chain(certificate, s);
 			break;
+
 		default:
 			DEBUG_WARN("invalid certificate chain version:%d\n", dwVersion & CERT_CHAIN_VERSION_MASK);
 			ret = FALSE;
@@ -645,12 +647,12 @@ BOOL certificate_read_server_certificate(rdpCertificate *certificate, BYTE *serv
 	return ret;
 }
 
-rdpRsaKey *key_new(const char *keyfile)
+rdpRsaKey* key_new(const char* keyfile)
 {
-	FILE *fp;
-	RSA *rsa;
-	rdpRsaKey *key;
-	key = (rdpRsaKey *)calloc(1, sizeof(rdpRsaKey));
+	FILE* fp;
+	RSA* rsa;
+	rdpRsaKey* key;
+	key = (rdpRsaKey*)calloc(1, sizeof(rdpRsaKey));
 
 	if (!key)
 		return NULL;
@@ -680,9 +682,11 @@ rdpRsaKey *key_new(const char *keyfile)
 		case 0:
 			DEBUG_WARN("%s: invalid RSA key in %s\n", __FUNCTION__, keyfile);
 			goto out_free_rsa;
+
 		case 1:
 			/* Valid key. */
 			break;
+
 		default:
 			DEBUG_WARN("%s: unexpected error when checking RSA key from %s: %s.", __FUNCTION__, keyfile, strerror(errno));
 			ERR_print_errors_fp(stderr);
@@ -696,7 +700,7 @@ rdpRsaKey *key_new(const char *keyfile)
 	}
 
 	key->ModulusLength = BN_num_bytes(rsa->n);
-	key->Modulus = (BYTE *)malloc(key->ModulusLength);
+	key->Modulus = (BYTE*)malloc(key->ModulusLength);
 
 	if (!key->Modulus)
 		goto out_free_rsa;
@@ -704,7 +708,7 @@ rdpRsaKey *key_new(const char *keyfile)
 	BN_bn2bin(rsa->n, key->Modulus);
 	crypto_reverse(key->Modulus, key->ModulusLength);
 	key->PrivateExponentLength = BN_num_bytes(rsa->d);
-	key->PrivateExponent = (BYTE *)malloc(key->PrivateExponentLength);
+	key->PrivateExponent = (BYTE*)malloc(key->PrivateExponentLength);
 
 	if (!key->PrivateExponent)
 		goto out_free_modulus;
@@ -725,7 +729,7 @@ out_free:
 	return NULL;
 }
 
-void key_free(rdpRsaKey *key)
+void key_free(rdpRsaKey* key)
 {
 	if (!key)
 		return;
@@ -743,9 +747,9 @@ void key_free(rdpRsaKey *key)
  * @return new certificate module
  */
 
-rdpCertificate *certificate_new()
+rdpCertificate* certificate_new()
 {
-	return (rdpCertificate *) calloc(1, sizeof(rdpCertificate));
+	return (rdpCertificate*) calloc(1, sizeof(rdpCertificate));
 }
 
 /**
@@ -753,7 +757,7 @@ rdpCertificate *certificate_new()
  * @param certificate certificate module to be freed
  */
 
-void certificate_free(rdpCertificate *certificate)
+void certificate_free(rdpCertificate* certificate)
 {
 	if (!certificate)
 		return;

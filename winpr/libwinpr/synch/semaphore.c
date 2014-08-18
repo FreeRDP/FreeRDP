@@ -38,15 +38,15 @@
 HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName)
 {
 	HANDLE handle;
-	WINPR_SEMAPHORE *semaphore;
-	semaphore = (WINPR_SEMAPHORE *) malloc(sizeof(WINPR_SEMAPHORE));
+	WINPR_SEMAPHORE* semaphore;
+	semaphore = (WINPR_SEMAPHORE*) malloc(sizeof(WINPR_SEMAPHORE));
 
 	if (!semaphore)
 		return NULL;
 
 	semaphore->pipe_fd[0] = -1;
 	semaphore->pipe_fd[0] = -1;
-	semaphore->sem = (winpr_sem_t *) NULL;
+	semaphore->sem = (winpr_sem_t*) NULL;
 
 	if (semaphore)
 	{
@@ -73,7 +73,7 @@ HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lIniti
 		}
 
 #else
-		semaphore->sem = (winpr_sem_t *) malloc(sizeof(winpr_sem_t));
+		semaphore->sem = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
 #if defined __APPLE__
 		semaphore_create(mach_task_self(), semaphore->sem, SYNC_POLICY_FIFO, lMaximumCount);
 #else
@@ -108,14 +108,14 @@ BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCo
 {
 	ULONG Type;
 	PVOID Object;
-	WINPR_SEMAPHORE *semaphore;
+	WINPR_SEMAPHORE* semaphore;
 
 	if (!winpr_Handle_GetInfo(hSemaphore, &Type, &Object))
 		return FALSE;
 
 	if (Type == HANDLE_TYPE_SEMAPHORE)
 	{
-		semaphore = (WINPR_SEMAPHORE *) Object;
+		semaphore = (WINPR_SEMAPHORE*) Object;
 #ifdef WINPR_PIPE_SEMAPHORE
 
 		if (semaphore->pipe_fd[0] != -1)
@@ -131,9 +131,9 @@ BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCo
 
 #else
 #if defined __APPLE__
-		semaphore_signal(*((winpr_sem_t *) semaphore->sem));
+		semaphore_signal(*((winpr_sem_t*) semaphore->sem));
 #else
-		sem_post((winpr_sem_t *) semaphore->sem);
+		sem_post((winpr_sem_t*) semaphore->sem);
 #endif
 #endif
 		return TRUE;

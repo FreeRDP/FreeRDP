@@ -66,7 +66,7 @@ BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwS
 	lpCriticalSection->SpinCount = 0;
 	lpCriticalSection->RecursionCount = 0;
 	lpCriticalSection->OwningThread = NULL;
-	lpCriticalSection->LockSemaphore = (winpr_sem_t *) malloc(sizeof(winpr_sem_t));
+	lpCriticalSection->LockSemaphore = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
 #if defined(__APPLE__)
 	semaphore_create(mach_task_self(), lpCriticalSection->LockSemaphore, SYNC_POLICY_FIFO, 0);
 #else
@@ -106,18 +106,18 @@ DWORD SetCriticalSectionSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dw
 static VOID _WaitForCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 #if defined(__APPLE__)
-	semaphore_wait(*((winpr_sem_t *) lpCriticalSection->LockSemaphore));
+	semaphore_wait(*((winpr_sem_t*) lpCriticalSection->LockSemaphore));
 #else
-	sem_wait((winpr_sem_t *) lpCriticalSection->LockSemaphore);
+	sem_wait((winpr_sem_t*) lpCriticalSection->LockSemaphore);
 #endif
 }
 
 static VOID _UnWaitCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 #if defined __APPLE__
-	semaphore_signal(*((winpr_sem_t *) lpCriticalSection->LockSemaphore));
+	semaphore_signal(*((winpr_sem_t*) lpCriticalSection->LockSemaphore));
 #else
-	sem_post((winpr_sem_t *) lpCriticalSection->LockSemaphore);
+	sem_post((winpr_sem_t*) lpCriticalSection->LockSemaphore);
 #endif
 }
 
@@ -229,9 +229,9 @@ VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 	if (lpCriticalSection->LockSemaphore != NULL)
 	{
 #if defined __APPLE__
-		semaphore_destroy(mach_task_self(), *((winpr_sem_t *) lpCriticalSection->LockSemaphore));
+		semaphore_destroy(mach_task_self(), *((winpr_sem_t*) lpCriticalSection->LockSemaphore));
 #else
-		sem_destroy((winpr_sem_t *) lpCriticalSection->LockSemaphore);
+		sem_destroy((winpr_sem_t*) lpCriticalSection->LockSemaphore);
 #endif
 		free(lpCriticalSection->LockSemaphore);
 		lpCriticalSection->LockSemaphore = NULL;
@@ -242,7 +242,7 @@ VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 
 #if (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 
-typedef BOOL (WINAPI *PINITIALIZE_CRITICAL_SECTION_EX_FN)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
+typedef BOOL (WINAPI* PINITIALIZE_CRITICAL_SECTION_EX_FN)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
 
 static HMODULE g_KERNEL32_Library = NULL;
 static BOOL g_InitializeCriticalSectionEx_Detected = FALSE;

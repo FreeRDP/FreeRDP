@@ -34,11 +34,11 @@ static BOOL module_initialized = FALSE;
 static BOOL module_available = FALSE;
 static HMODULE kernel32_module = NULL;
 
-static PTP_WORK(WINAPI *pCreateThreadpoolWork)(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_ENVIRON pcbe);
-static VOID (WINAPI *pCloseThreadpoolWork)(PTP_WORK pwk);
-static VOID (WINAPI *pSubmitThreadpoolWork)(PTP_WORK pwk);
-static BOOL (WINAPI *pTrySubmitThreadpoolCallback)(PTP_SIMPLE_CALLBACK pfns, PVOID pv, PTP_CALLBACK_ENVIRON pcbe);
-static VOID (WINAPI *pWaitForThreadpoolWorkCallbacks)(PTP_WORK pwk, BOOL fCancelPendingCallbacks);
+static PTP_WORK(WINAPI* pCreateThreadpoolWork)(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_ENVIRON pcbe);
+static VOID (WINAPI* pCloseThreadpoolWork)(PTP_WORK pwk);
+static VOID (WINAPI* pSubmitThreadpoolWork)(PTP_WORK pwk);
+static BOOL (WINAPI* pTrySubmitThreadpoolCallback)(PTP_SIMPLE_CALLBACK pfns, PVOID pv, PTP_CALLBACK_ENVIRON pcbe);
+static VOID (WINAPI* pWaitForThreadpoolWorkCallbacks)(PTP_WORK pwk, BOOL fCancelPendingCallbacks);
 
 static void module_init()
 {
@@ -52,11 +52,11 @@ static void module_init()
 		return;
 
 	module_available = TRUE;
-	pCreateThreadpoolWork = (void *) GetProcAddress(kernel32_module, "CreateThreadpoolWork");
-	pCloseThreadpoolWork = (void *) GetProcAddress(kernel32_module, "CloseThreadpoolWork");
-	pSubmitThreadpoolWork = (void *) GetProcAddress(kernel32_module, "SubmitThreadpoolWork");
-	pTrySubmitThreadpoolCallback = (void *) GetProcAddress(kernel32_module, "TrySubmitThreadpoolCallback");
-	pWaitForThreadpoolWorkCallbacks = (void *) GetProcAddress(kernel32_module, "WaitForThreadpoolWorkCallbacks");
+	pCreateThreadpoolWork = (void*) GetProcAddress(kernel32_module, "CreateThreadpoolWork");
+	pCloseThreadpoolWork = (void*) GetProcAddress(kernel32_module, "CloseThreadpoolWork");
+	pSubmitThreadpoolWork = (void*) GetProcAddress(kernel32_module, "SubmitThreadpoolWork");
+	pTrySubmitThreadpoolCallback = (void*) GetProcAddress(kernel32_module, "TrySubmitThreadpoolCallback");
+	pWaitForThreadpoolWorkCallbacks = (void*) GetProcAddress(kernel32_module, "WaitForThreadpoolWorkCallbacks");
 }
 
 #endif

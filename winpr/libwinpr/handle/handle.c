@@ -44,7 +44,7 @@
 
 /* _HandleCreators is a NULL-terminated array with a maximun of HANDLE_CREATOR_MAX HANDLE_CREATOR */
 #define HANDLE_CLOSE_CB_MAX 128
-static HANDLE_CLOSE_CB **_HandleCloseCbs = NULL;
+static HANDLE_CLOSE_CB** _HandleCloseCbs = NULL;
 static CRITICAL_SECTION _HandleCloseCbsLock;
 
 static pthread_once_t _HandleCloseCbsInitialized = PTHREAD_ONCE_INIT;
@@ -52,7 +52,7 @@ static void _HandleCloseCbsInit()
 {
 	/* NB: error management to be done outside of this function */
 	assert(_HandleCloseCbs == NULL);
-	_HandleCloseCbs = (HANDLE_CLOSE_CB **)calloc(HANDLE_CLOSE_CB_MAX+1, sizeof(HANDLE_CLOSE_CB *));
+	_HandleCloseCbs = (HANDLE_CLOSE_CB**)calloc(HANDLE_CLOSE_CB_MAX+1, sizeof(HANDLE_CLOSE_CB*));
 	InitializeCriticalSection(&_HandleCloseCbsLock);
 	assert(_HandleCloseCbs != NULL);
 }
@@ -60,7 +60,7 @@ static void _HandleCloseCbsInit()
 /**
  * Returns TRUE on success, FALSE otherwise.
  */
-BOOL RegisterHandleCloseCb(HANDLE_CLOSE_CB *pHandleCloseCb)
+BOOL RegisterHandleCloseCb(HANDLE_CLOSE_CB* pHandleCloseCb)
 {
 	int i;
 
@@ -115,7 +115,7 @@ BOOL CloseHandle(HANDLE hObject)
 
 	for (i=0; _HandleCloseCbs[i] != NULL; i++)
 	{
-		HANDLE_CLOSE_CB *close_cb = (HANDLE_CLOSE_CB *)_HandleCloseCbs[i];
+		HANDLE_CLOSE_CB* close_cb = (HANDLE_CLOSE_CB*)_HandleCloseCbs[i];
 
 		if (close_cb && close_cb->IsHandled(hObject))
 		{
@@ -129,8 +129,8 @@ BOOL CloseHandle(HANDLE hObject)
 
 	if (Type == HANDLE_TYPE_THREAD)
 	{
-		WINPR_THREAD *thread;
-		thread = (WINPR_THREAD *) Object;
+		WINPR_THREAD* thread;
+		thread = (WINPR_THREAD*) Object;
 
 		if (thread->started)
 		{
@@ -142,23 +142,23 @@ BOOL CloseHandle(HANDLE hObject)
 	}
 	else if (Type == HANDLE_TYPE_PROCESS)
 	{
-		WINPR_PROCESS *process;
-		process = (WINPR_PROCESS *) Object;
+		WINPR_PROCESS* process;
+		process = (WINPR_PROCESS*) Object;
 		free(process);
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
-		WINPR_MUTEX *mutex;
-		mutex = (WINPR_MUTEX *) Object;
+		WINPR_MUTEX* mutex;
+		mutex = (WINPR_MUTEX*) Object;
 		pthread_mutex_destroy(&mutex->mutex);
 		free(Object);
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_EVENT)
 	{
-		WINPR_EVENT *event;
-		event = (WINPR_EVENT *) Object;
+		WINPR_EVENT* event;
+		event = (WINPR_EVENT*) Object;
 
 		if (!event->bAttached)
 		{
@@ -180,8 +180,8 @@ BOOL CloseHandle(HANDLE hObject)
 	}
 	else if (Type == HANDLE_TYPE_SEMAPHORE)
 	{
-		WINPR_SEMAPHORE *semaphore;
-		semaphore = (WINPR_SEMAPHORE *) Object;
+		WINPR_SEMAPHORE* semaphore;
+		semaphore = (WINPR_SEMAPHORE*) Object;
 #ifdef WINPR_PIPE_SEMAPHORE
 
 		if (semaphore->pipe_fd[0] != -1)
@@ -198,9 +198,9 @@ BOOL CloseHandle(HANDLE hObject)
 
 #else
 #if defined __APPLE__
-		semaphore_destroy(mach_task_self(), *((winpr_sem_t *) semaphore->sem));
+		semaphore_destroy(mach_task_self(), *((winpr_sem_t*) semaphore->sem));
 #else
-		sem_destroy((winpr_sem_t *) semaphore->sem);
+		sem_destroy((winpr_sem_t*) semaphore->sem);
 #endif
 #endif
 		free(Object);
@@ -208,8 +208,8 @@ BOOL CloseHandle(HANDLE hObject)
 	}
 	else if (Type == HANDLE_TYPE_TIMER)
 	{
-		WINPR_TIMER *timer;
-		timer = (WINPR_TIMER *) Object;
+		WINPR_TIMER* timer;
+		timer = (WINPR_TIMER*) Object;
 #ifdef __linux__
 
 		if (timer->fd != -1)
@@ -221,8 +221,8 @@ BOOL CloseHandle(HANDLE hObject)
 	}
 	else if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
 	{
-		WINPR_PIPE *pipe;
-		pipe = (WINPR_PIPE *) Object;
+		WINPR_PIPE* pipe;
+		pipe = (WINPR_PIPE*) Object;
 
 		if (pipe->fd != -1)
 		{
@@ -234,7 +234,7 @@ BOOL CloseHandle(HANDLE hObject)
 	}
 	else if (Type == HANDLE_TYPE_NAMED_PIPE)
 	{
-		WINPR_NAMED_PIPE *pNamedPipe = (WINPR_NAMED_PIPE *) Object;
+		WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*) Object;
 
 		if (pNamedPipe->clientfd != -1)
 		{
@@ -251,16 +251,16 @@ BOOL CloseHandle(HANDLE hObject)
 		if (pNamedPipe->pfnUnrefNamedPipe)
 			pNamedPipe->pfnUnrefNamedPipe(pNamedPipe);
 
-		free((void *)pNamedPipe->lpFileName);
-		free((void *)pNamedPipe->lpFilePath);
-		free((void *)pNamedPipe->name);
+		free((void*)pNamedPipe->lpFileName);
+		free((void*)pNamedPipe->lpFilePath);
+		free((void*)pNamedPipe->name);
 		free(pNamedPipe);
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_ACCESS_TOKEN)
 	{
-		WINPR_ACCESS_TOKEN *token;
-		token = (WINPR_ACCESS_TOKEN *) Object;
+		WINPR_ACCESS_TOKEN* token;
+		token = (WINPR_ACCESS_TOKEN*) Object;
 
 		if (token->Username)
 			free(token->Username);

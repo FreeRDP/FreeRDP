@@ -35,9 +35,9 @@
 #include "../log.h"
 #define TAG WINPR_TAG("crt")
 
-char *_strdup(const char *strSource)
+char* _strdup(const char* strSource)
 {
-	char *strDestination;
+	char* strDestination;
 
 	if (strSource == NULL)
 		return NULL;
@@ -50,9 +50,9 @@ char *_strdup(const char *strSource)
 	return strDestination;
 }
 
-WCHAR *_wcsdup(const WCHAR *strSource)
+WCHAR* _wcsdup(const WCHAR* strSource)
 {
-	WCHAR *strDestination;
+	WCHAR* strDestination;
 
 	if (strSource == NULL)
 		return NULL;
@@ -60,13 +60,13 @@ WCHAR *_wcsdup(const WCHAR *strSource)
 #if defined(sun) && sun
 	strDestination = wsdup(strSource);
 #elif defined(__APPLE__) && defined(__MACH__) || defined(ANDROID)
-	strDestination = malloc(wcslen((wchar_t *)strSource));
+	strDestination = malloc(wcslen((wchar_t*)strSource));
 
 	if (strDestination != NULL)
-		wcscpy((wchar_t *)strDestination, (const wchar_t *)strSource);
+		wcscpy((wchar_t*)strDestination, (const wchar_t*)strSource);
 
 #else
-	strDestination = (WCHAR *) wcsdup((wchar_t *) strSource);
+	strDestination = (WCHAR*) wcsdup((wchar_t*) strSource);
 #endif
 
 	if (strDestination == NULL)
@@ -75,19 +75,19 @@ WCHAR *_wcsdup(const WCHAR *strSource)
 	return strDestination;
 }
 
-int _stricmp(const char *string1, const char *string2)
+int _stricmp(const char* string1, const char* string2)
 {
 	return strcasecmp(string1, string2);
 }
 
-int _strnicmp(const char *string1, const char *string2, size_t count)
+int _strnicmp(const char* string1, const char* string2, size_t count)
 {
 	return strncasecmp(string1, string2, count);
 }
 
 /* _wcscmp -> wcscmp */
 
-int _wcscmp(const WCHAR *string1, const WCHAR *string2)
+int _wcscmp(const WCHAR* string1, const WCHAR* string2)
 {
 	while (*string1 && (*string1 == *string2))
 	{
@@ -100,9 +100,9 @@ int _wcscmp(const WCHAR *string1, const WCHAR *string2)
 
 /* _wcslen -> wcslen */
 
-size_t _wcslen(const WCHAR *str)
+size_t _wcslen(const WCHAR* str)
 {
-	WCHAR *p = (WCHAR *) str;
+	WCHAR* p = (WCHAR*) str;
 
 	if (!p)
 		return 0;
@@ -115,9 +115,9 @@ size_t _wcslen(const WCHAR *str)
 
 /* _wcschr -> wcschr */
 
-WCHAR *_wcschr(const WCHAR *str, WCHAR c)
+WCHAR* _wcschr(const WCHAR* str, WCHAR c)
 {
-	WCHAR *p = (WCHAR *) str;
+	WCHAR* p = (WCHAR*) str;
 
 	while (*p && (*p != c))
 		p++;
@@ -125,14 +125,14 @@ WCHAR *_wcschr(const WCHAR *str, WCHAR c)
 	return ((*p == c) ? p : NULL);
 }
 
-char *strtok_s(char *strToken, const char *strDelimit, char **context)
+char* strtok_s(char* strToken, const char* strDelimit, char** context)
 {
 	return strtok_r(strToken, strDelimit, context);
 }
 
-WCHAR *wcstok_s(WCHAR *strToken, const WCHAR *strDelimit, WCHAR **context)
+WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 {
-	WCHAR *nextToken;
+	WCHAR* nextToken;
 
 	if (!strToken)
 		strToken = *context;

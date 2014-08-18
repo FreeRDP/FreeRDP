@@ -23,11 +23,11 @@ static LPTSTR lpszPipeNameSt = _T("\\\\.\\pipe\\winpr_test_pipe_st");
 
 BOOL testFailed = FALSE;
 
-static void *named_pipe_client_thread(void *arg)
+static void* named_pipe_client_thread(void* arg)
 {
 	HANDLE hNamedPipe = NULL;
-	BYTE *lpReadBuffer = NULL;
-	BYTE *lpWriteBuffer = NULL;
+	BYTE* lpReadBuffer = NULL;
+	BYTE* lpWriteBuffer = NULL;
 	BOOL fSuccess = FALSE;
 	DWORD nNumberOfBytesToRead;
 	DWORD nNumberOfBytesToWrite;
@@ -48,13 +48,13 @@ static void *named_pipe_client_thread(void *arg)
 		goto out;
 	}
 
-	if (!(lpReadBuffer = (BYTE *) malloc(PIPE_BUFFER_SIZE)))
+	if (!(lpReadBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE)))
 	{
 		printf("%s: Error allocating read buffer\n", __FUNCTION__);
 		goto out;
 	}
 
-	if (!(lpWriteBuffer = (BYTE *) malloc(PIPE_BUFFER_SIZE)))
+	if (!(lpWriteBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE)))
 	{
 		printf("%s: Error allocating write buffer\n", __FUNCTION__);
 		goto out;
@@ -96,11 +96,11 @@ out:
 	return NULL;
 }
 
-static void *named_pipe_server_thread(void *arg)
+static void* named_pipe_server_thread(void* arg)
 {
 	HANDLE hNamedPipe = NULL;
-	BYTE *lpReadBuffer = NULL;
-	BYTE *lpWriteBuffer = NULL;
+	BYTE* lpReadBuffer = NULL;
+	BYTE* lpWriteBuffer = NULL;
 	BOOL fSuccess = FALSE;
 	BOOL fConnected = FALSE;
 	DWORD nNumberOfBytesToRead;
@@ -135,13 +135,13 @@ static void *named_pipe_server_thread(void *arg)
 		goto out;
 	}
 
-	if (!(lpReadBuffer = (BYTE *) malloc(PIPE_BUFFER_SIZE)))
+	if (!(lpReadBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE)))
 	{
 		printf("%s: Error allocating read buffer\n", __FUNCTION__);
 		goto out;
 	}
 
-	if (!(lpWriteBuffer = (BYTE *) malloc(PIPE_BUFFER_SIZE)))
+	if (!(lpWriteBuffer = (BYTE*) malloc(PIPE_BUFFER_SIZE)))
 	{
 		printf("%s: Error allocating write buffer\n", __FUNCTION__);
 		goto out;
@@ -184,7 +184,7 @@ out:
 }
 
 #define TESTNUMPIPESST 16
-static void *named_pipe_single_thread(void *arg)
+static void* named_pipe_single_thread(void* arg)
 {
 	HANDLE servers[TESTNUMPIPESST];
 	HANDLE clients[TESTNUMPIPESST];
@@ -196,7 +196,7 @@ static void *named_pipe_single_thread(void *arg)
 	int numPipes;
 	BOOL bSuccess = FALSE;
 #ifndef _WIN32
-	WINPR_NAMED_PIPE *p;
+	WINPR_NAMED_PIPE* p;
 #endif
 	numPipes = TESTNUMPIPESST;
 	memset(servers, 0, sizeof(servers));
@@ -218,7 +218,7 @@ static void *named_pipe_single_thread(void *arg)
 
 	for (i = 0; i < numPipes; i++)
 	{
-		p = (WINPR_NAMED_PIPE *)servers[i];
+		p = (WINPR_NAMED_PIPE*)servers[i];
 
 		if (strcmp(lpszPipeNameSt, p->name))
 		{
@@ -431,7 +431,7 @@ out:
 }
 
 
-int TestPipeCreateNamedPipe(int argc, char *argv[])
+int TestPipeCreateNamedPipe(int argc, char* argv[])
 {
 	HANDLE SingleThread;
 	HANDLE ClientThread;

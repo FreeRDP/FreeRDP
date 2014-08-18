@@ -28,9 +28,9 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("utils.wlog")
 
-int WLog_DataMessage_Write(char *filename, void *data, int length)
+int WLog_DataMessage_Write(char* filename, void* data, int length)
 {
-	FILE *fp;
+	FILE* fp;
 	fp = fopen(filename, "w+b");
 
 	if (!fp)

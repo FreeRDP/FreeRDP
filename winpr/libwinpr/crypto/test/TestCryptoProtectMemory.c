@@ -4,19 +4,19 @@
 #include <winpr/crypto.h>
 #include <winpr/wlog.h>
 
-static const char *SECRET_PASSWORD_TEST = "MySecretPassword123!";
+static const char* SECRET_PASSWORD_TEST = "MySecretPassword123!";
 
-int TestCryptoProtectMemory(int argc, char *argv[])
+int TestCryptoProtectMemory(int argc, char* argv[])
 {
 	int cbPlainText;
 	int cbCipherText;
-	char *pPlainText;
-	BYTE *pCipherText;
-	pPlainText = (char *) SECRET_PASSWORD_TEST;
+	char* pPlainText;
+	BYTE* pCipherText;
+	pPlainText = (char*) SECRET_PASSWORD_TEST;
 	cbPlainText = strlen(pPlainText) + 1;
 	cbCipherText = cbPlainText + (CRYPTPROTECTMEMORY_BLOCK_SIZE - (cbPlainText % CRYPTPROTECTMEMORY_BLOCK_SIZE));
 	printf("cbPlainText: %d cbCipherText: %d\n", cbPlainText, cbCipherText);
-	pCipherText = (BYTE *) malloc(cbCipherText);
+	pCipherText = (BYTE*) malloc(cbCipherText);
 	CopyMemory(pCipherText, pPlainText, cbPlainText);
 	ZeroMemory(&pCipherText[cbPlainText], (cbCipherText - cbPlainText));
 

@@ -33,14 +33,14 @@
 
 #include "../log.h"
 
-void winpr_HexDump(const char *tag, int level, const BYTE *data, int length)
+void winpr_HexDump(const char* tag, int level, const BYTE* data, int length)
 {
-	const BYTE *p = data;
+	const BYTE* p = data;
 	int i, line, offset = 0;
 	const size_t llen = (length > WINPR_HEXDUMP_LINE_LENGTH) ? WINPR_HEXDUMP_LINE_LENGTH : length;
 	size_t blen = 5 + llen * 5;
 	size_t pos = 0;
-	char *buffer = malloc(blen);
+	char* buffer = malloc(blen);
 
 	if (!buffer)
 	{
@@ -76,13 +76,13 @@ void winpr_HexDump(const char *tag, int level, const BYTE *data, int length)
 	free(buffer);
 }
 
-void winpr_CArrayDump(const char *tag, int level, const BYTE *data, int length, int width)
+void winpr_CArrayDump(const char* tag, int level, const BYTE* data, int length, int width)
 {
-	const BYTE *p = data;
+	const BYTE* p = data;
 	int i, line, offset = 0;
 	const size_t llen = ((length > width) ? width : length) * 4 + 1;
 	size_t pos;
-	char *buffer = malloc(llen);
+	char* buffer = malloc(llen);
 
 	if (!buffer)
 	{
@@ -110,15 +110,15 @@ void winpr_CArrayDump(const char *tag, int level, const BYTE *data, int length, 
 	free(buffer);
 }
 
-char *winpr_BinToHexString(const BYTE *data, int length, BOOL space)
+char* winpr_BinToHexString(const BYTE* data, int length, BOOL space)
 {
 	int i;
 	int n;
-	char *p;
+	char* p;
 	int ln, hn;
 	char bin2hex[] = "0123456789ABCDEF";
 	n = space ? 3 : 2;
-	p = (char *) malloc((length + 1) * n);
+	p = (char*) malloc((length + 1) * n);
 
 	for (i = 0; i < length; i++)
 	{
@@ -135,12 +135,12 @@ char *winpr_BinToHexString(const BYTE *data, int length, BOOL space)
 	return p;
 }
 
-int wvprintfx(const char *fmt, va_list args)
+int wvprintfx(const char* fmt, va_list args)
 {
 	return trio_vprintf(fmt, args);
 }
 
-int wprintfx(const char *fmt, ...)
+int wprintfx(const char* fmt, ...)
 {
 	va_list args;
 	int status;
@@ -150,7 +150,7 @@ int wprintfx(const char *fmt, ...)
 	return status;
 }
 
-int wvsnprintfx(char *buffer, size_t bufferSize, const char *fmt, va_list args)
+int wvsnprintfx(char* buffer, size_t bufferSize, const char* fmt, va_list args)
 {
 	return trio_vsnprintf(buffer, bufferSize, fmt, args);
 }

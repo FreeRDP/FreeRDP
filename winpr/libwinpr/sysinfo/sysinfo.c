@@ -151,7 +151,7 @@ void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 
 BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 {
-	char *dot;
+	char* dot;
 	int length;
 	char hostname[256];
 	gethostname(hostname, sizeof(hostname));
@@ -261,7 +261,7 @@ BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 void GetSystemTime(LPSYSTEMTIME lpSystemTime)
 {
 	time_t ct = 0;
-	struct tm *stm = NULL;
+	struct tm* stm = NULL;
 	WORD wMilliseconds = 0;
 	ct = time(NULL);
 	wMilliseconds = (WORD)(GetTickCount() % 1000);
@@ -281,7 +281,7 @@ void GetSystemTime(LPSYSTEMTIME lpSystemTime)
 	}
 }
 
-BOOL SetSystemTime(CONST SYSTEMTIME *lpSystemTime)
+BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime)
 {
 	return FALSE;
 }
@@ -289,7 +289,7 @@ BOOL SetSystemTime(CONST SYSTEMTIME *lpSystemTime)
 VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
 {
 	time_t ct = 0;
-	struct tm *ltm = NULL;
+	struct tm* ltm = NULL;
 	WORD wMilliseconds = 0;
 	ct = time(NULL);
 	wMilliseconds = (WORD)(GetTickCount() % 1000);
@@ -309,7 +309,7 @@ VOID GetLocalTime(LPSYSTEMTIME lpSystemTime)
 	}
 }
 
-BOOL SetLocalTime(CONST SYSTEMTIME *lpSystemTime)
+BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime)
 {
 	return FALSE;
 }
@@ -418,10 +418,10 @@ ULONGLONG GetTickCount64(void)
 
 static void cpuid(
 	unsigned info,
-	unsigned *eax,
-	unsigned *ebx,
-	unsigned *ecx,
-	unsigned *edx)
+	unsigned* eax,
+	unsigned* ebx,
+	unsigned* ecx,
+	unsigned* edx)
 {
 #ifdef __GNUC__
 	*eax = *ebx = *ecx = *edx = 0;
@@ -496,7 +496,7 @@ static unsigned GetARMCPUCaps(void)
 	while (1)
 	{
 		int num;
-		num = read(fd, (char *)&auxvec, sizeof(auxvec));
+		num = read(fd, (char*)&auxvec, sizeof(auxvec));
 
 		if (num < 1 || (auxvec.a_type == 0 && auxvec.a_val == 0))
 			break;

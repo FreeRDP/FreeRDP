@@ -61,11 +61,11 @@
  * descriptor gets closed and the entry is removed from the list.
  */
 
-static wArrayList *g_NamedPipeServerSockets = NULL;
+static wArrayList* g_NamedPipeServerSockets = NULL;
 
 typedef struct _NamedPipeServerSocketEntry
 {
-	char *name;
+	char* name;
 	int serverfd;
 	int references;
 } NamedPipeServerSocketEntry;
@@ -86,8 +86,8 @@ static void InitWinPRPipeModule()
 BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpPipeAttributes, DWORD nSize)
 {
 	int pipe_fd[2];
-	WINPR_PIPE *pReadPipe;
-	WINPR_PIPE *pWritePipe;
+	WINPR_PIPE* pReadPipe;
+	WINPR_PIPE* pWritePipe;
 	pipe_fd[0] = -1;
 	pipe_fd[1] = -1;
 
@@ -97,8 +97,8 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 		return FALSE;
 	}
 
-	pReadPipe = (WINPR_PIPE *) malloc(sizeof(WINPR_PIPE));
-	pWritePipe = (WINPR_PIPE *) malloc(sizeof(WINPR_PIPE));
+	pReadPipe = (WINPR_PIPE*) malloc(sizeof(WINPR_PIPE));
+	pWritePipe = (WINPR_PIPE*) malloc(sizeof(WINPR_PIPE));
 
 	if (!pReadPipe || !pWritePipe)
 	{
@@ -114,9 +114,9 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 	pReadPipe->fd = pipe_fd[0];
 	pWritePipe->fd = pipe_fd[1];
 	WINPR_HANDLE_SET_TYPE(pReadPipe, HANDLE_TYPE_ANONYMOUS_PIPE);
-	*((ULONG_PTR *) hReadPipe) = (ULONG_PTR) pReadPipe;
+	*((ULONG_PTR*) hReadPipe) = (ULONG_PTR) pReadPipe;
 	WINPR_HANDLE_SET_TYPE(pWritePipe, HANDLE_TYPE_ANONYMOUS_PIPE);
-	*((ULONG_PTR *) hWritePipe) = (ULONG_PTR) pWritePipe;
+	*((ULONG_PTR*) hWritePipe) = (ULONG_PTR) pWritePipe;
 	return TRUE;
 }
 
@@ -124,10 +124,10 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
  * Named pipe
  */
 
-static void winpr_unref_named_pipe(WINPR_NAMED_PIPE *pNamedPipe)
+static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
 {
 	int index;
-	NamedPipeServerSocketEntry *baseSocket;
+	NamedPipeServerSocketEntry* baseSocket;
 
 	if (!pNamedPipe)
 		return;
@@ -139,7 +139,7 @@ static void winpr_unref_named_pipe(WINPR_NAMED_PIPE *pNamedPipe)
 
 	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
 	{
-		baseSocket = (NamedPipeServerSocketEntry *) ArrayList_GetItem(
+		baseSocket = (NamedPipeServerSocketEntry*) ArrayList_GetItem(
 						 g_NamedPipeServerSockets, index);
 		assert(baseSocket->name);
 
@@ -170,17 +170,17 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 {
 	int index;
 	HANDLE hNamedPipe = INVALID_HANDLE_VALUE;
-	char *lpPipePath;
+	char* lpPipePath;
 	struct sockaddr_un s;
-	WINPR_NAMED_PIPE *pNamedPipe = NULL;
+	WINPR_NAMED_PIPE* pNamedPipe = NULL;
 	int serverfd = -1;
-	NamedPipeServerSocketEntry *baseSocket = NULL;
+	NamedPipeServerSocketEntry* baseSocket = NULL;
 
 	if (!lpName)
 		return INVALID_HANDLE_VALUE;
 
 	InitWinPRPipeModule();
-	pNamedPipe = (WINPR_NAMED_PIPE *) calloc(1, sizeof(WINPR_NAMED_PIPE));
+	pNamedPipe = (WINPR_NAMED_PIPE*) calloc(1, sizeof(WINPR_NAMED_PIPE));
 	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
 
 	if (!(pNamedPipe->name = _strdup(lpName)))
@@ -205,7 +205,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
 	{
-		baseSocket = (NamedPipeServerSocketEntry *) ArrayList_GetItem(
+		baseSocket = (NamedPipeServerSocketEntry*) ArrayList_GetItem(
 						 g_NamedPipeServerSockets, index);
 
 		if (!strcmp(baseSocket->name, lpName))
@@ -246,7 +246,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 		s.sun_family = AF_UNIX;
 		strcpy(s.sun_path, pNamedPipe->lpFilePath);
 
-		if (bind(serverfd, (struct sockaddr *) &s, sizeof(struct sockaddr_un)) == -1)
+		if (bind(serverfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un)) == -1)
 		{
 			WLog_ERR(TAG, "CreateNamedPipeA: bind error, %s", strerror(errno));
 			goto out;
@@ -260,7 +260,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
 
-		if (!(baseSocket = (NamedPipeServerSocketEntry *) malloc(sizeof(NamedPipeServerSocketEntry))))
+		if (!(baseSocket = (NamedPipeServerSocketEntry*) malloc(sizeof(NamedPipeServerSocketEntry))))
 			goto out;
 
 		if (!(baseSocket->name = _strdup(lpName)))
@@ -298,9 +298,9 @@ out:
 	{
 		if (pNamedPipe)
 		{
-			free((void *)pNamedPipe->name);
-			free((void *)pNamedPipe->lpFileName);
-			free((void *)pNamedPipe->lpFilePath);
+			free((void*)pNamedPipe->name);
+			free((void*)pNamedPipe->lpFileName);
+			free((void*)pNamedPipe->lpFilePath);
 			free(pNamedPipe);
 		}
 
@@ -323,18 +323,18 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 	int status;
 	socklen_t length;
 	struct sockaddr_un s;
-	WINPR_NAMED_PIPE *pNamedPipe;
+	WINPR_NAMED_PIPE* pNamedPipe;
 
 	if (!hNamedPipe)
 		return FALSE;
 
-	pNamedPipe = (WINPR_NAMED_PIPE *) hNamedPipe;
+	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
 
 	if (!(pNamedPipe->dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED))
 	{
 		length = sizeof(struct sockaddr_un);
 		ZeroMemory(&s, sizeof(struct sockaddr_un));
-		status = accept(pNamedPipe->serverfd, (struct sockaddr *) &s, &length);
+		status = accept(pNamedPipe->serverfd, (struct sockaddr*) &s, &length);
 
 		if (status < 0)
 		{
@@ -366,8 +366,8 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 
 BOOL DisconnectNamedPipe(HANDLE hNamedPipe)
 {
-	WINPR_NAMED_PIPE *pNamedPipe;
-	pNamedPipe = (WINPR_NAMED_PIPE *) hNamedPipe;
+	WINPR_NAMED_PIPE* pNamedPipe;
+	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
 
 	if (pNamedPipe->clientfd != -1)
 	{
@@ -396,7 +396,7 @@ BOOL WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut)
 {
 	BOOL status;
 	DWORD nWaitTime;
-	char *lpFilePath;
+	char* lpFilePath;
 	DWORD dwSleepInterval;
 
 	if (!lpNamedPipeName)
@@ -437,8 +437,8 @@ BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCol
 {
 	int fd;
 	int flags;
-	WINPR_NAMED_PIPE *pNamedPipe;
-	pNamedPipe = (WINPR_NAMED_PIPE *) hNamedPipe;
+	WINPR_NAMED_PIPE* pNamedPipe;
+	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
 
 	if (lpMode)
 	{

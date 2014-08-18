@@ -58,9 +58,9 @@ static BYTE TEST_NTLM_AUTHENTICATE[] =
 
 #define TEST_SSPI_INTERFACE SSPI_INTERFACE_WINPR
 
-static const char *TEST_NTLM_USER = "Username";
-static const char *TEST_NTLM_DOMAIN = "Domain";
-static const char *TEST_NTLM_PASSWORD = "P4ss123!";
+static const char* TEST_NTLM_USER = "Username";
+static const char* TEST_NTLM_DOMAIN = "Domain";
+static const char* TEST_NTLM_PASSWORD = "P4ss123!";
 
 //static const char* TEST_NTLM_HASH_STRING = "d5922a65c4d5c082ca444af1be0001db";
 
@@ -92,13 +92,13 @@ struct _TEST_NTLM_CLIENT
 	SecBufferDesc outputBufferDesc;
 	CredHandle credentials;
 	BOOL confidentiality;
-	SecPkgInfo *pPackageInfo;
-	SecurityFunctionTable *table;
+	SecPkgInfo* pPackageInfo;
+	SecurityFunctionTable* table;
 	SEC_WINNT_AUTH_IDENTITY identity;
 };
 typedef struct _TEST_NTLM_CLIENT TEST_NTLM_CLIENT;
 
-int test_ntlm_client_init(TEST_NTLM_CLIENT *ntlm, const char *user, const char *domain, const char *password)
+int test_ntlm_client_init(TEST_NTLM_CLIENT* ntlm, const char* user, const char* domain, const char* password)
 {
 	SECURITY_STATUS status;
 	SecInvalidateHandle(&(ntlm->context));
@@ -140,7 +140,7 @@ int test_ntlm_client_init(TEST_NTLM_CLIENT *ntlm, const char *user, const char *
 	return 1;
 }
 
-void test_ntlm_client_uninit(TEST_NTLM_CLIENT *ntlm)
+void test_ntlm_client_uninit(TEST_NTLM_CLIENT* ntlm)
 {
 	if (!ntlm)
 		return;
@@ -202,7 +202,7 @@ void test_ntlm_client_uninit(TEST_NTLM_CLIENT *ntlm)
  *                                           --------------
  */
 
-int test_ntlm_client_authenticate(TEST_NTLM_CLIENT *ntlm)
+int test_ntlm_client_authenticate(TEST_NTLM_CLIENT* ntlm)
 {
 	SECURITY_STATUS status;
 
@@ -265,10 +265,10 @@ int test_ntlm_client_authenticate(TEST_NTLM_CLIENT *ntlm)
 	return (status == SEC_I_CONTINUE_NEEDED) ? 1 : 0;
 }
 
-TEST_NTLM_CLIENT *test_ntlm_client_new()
+TEST_NTLM_CLIENT* test_ntlm_client_new()
 {
-	TEST_NTLM_CLIENT *ntlm;
-	ntlm = (TEST_NTLM_CLIENT *) calloc(1, sizeof(TEST_NTLM_CLIENT));
+	TEST_NTLM_CLIENT* ntlm;
+	ntlm = (TEST_NTLM_CLIENT*) calloc(1, sizeof(TEST_NTLM_CLIENT));
 
 	if (!ntlm)
 		return NULL;
@@ -276,7 +276,7 @@ TEST_NTLM_CLIENT *test_ntlm_client_new()
 	return ntlm;
 }
 
-void test_ntlm_client_free(TEST_NTLM_CLIENT *ntlm)
+void test_ntlm_client_free(TEST_NTLM_CLIENT* ntlm)
 {
 	if (!ntlm)
 		return;
@@ -303,13 +303,13 @@ struct _TEST_NTLM_SERVER
 	SecBufferDesc outputBufferDesc;
 	CredHandle credentials;
 	BOOL confidentiality;
-	SecPkgInfo *pPackageInfo;
-	SecurityFunctionTable *table;
+	SecPkgInfo* pPackageInfo;
+	SecurityFunctionTable* table;
 	SEC_WINNT_AUTH_IDENTITY identity;
 };
 typedef struct _TEST_NTLM_SERVER TEST_NTLM_SERVER;
 
-int test_ntlm_server_init(TEST_NTLM_SERVER *ntlm)
+int test_ntlm_server_init(TEST_NTLM_SERVER* ntlm)
 {
 	SECURITY_STATUS status;
 	ntlm->UseNtlmV2Hash = TRUE;
@@ -352,7 +352,7 @@ int test_ntlm_server_init(TEST_NTLM_SERVER *ntlm)
 	return 1;
 }
 
-void test_ntlm_server_uninit(TEST_NTLM_SERVER *ntlm)
+void test_ntlm_server_uninit(TEST_NTLM_SERVER* ntlm)
 {
 	if (!ntlm)
 		return;
@@ -376,7 +376,7 @@ void test_ntlm_server_uninit(TEST_NTLM_SERVER *ntlm)
 	}
 }
 
-int test_ntlm_server_authenticate(TEST_NTLM_SERVER *ntlm)
+int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 {
 	SECURITY_STATUS status;
 	ntlm->inputBufferDesc.ulVersion = SECBUFFER_VERSION;
@@ -442,10 +442,10 @@ int test_ntlm_server_authenticate(TEST_NTLM_SERVER *ntlm)
 	return (status == SEC_I_CONTINUE_NEEDED) ? 1 : 0;
 }
 
-TEST_NTLM_SERVER *test_ntlm_server_new()
+TEST_NTLM_SERVER* test_ntlm_server_new()
 {
-	TEST_NTLM_SERVER *ntlm;
-	ntlm = (TEST_NTLM_SERVER *) calloc(1, sizeof(TEST_NTLM_SERVER));
+	TEST_NTLM_SERVER* ntlm;
+	ntlm = (TEST_NTLM_SERVER*) calloc(1, sizeof(TEST_NTLM_SERVER));
 
 	if (!ntlm)
 		return NULL;
@@ -453,7 +453,7 @@ TEST_NTLM_SERVER *test_ntlm_server_new()
 	return ntlm;
 }
 
-void test_ntlm_server_free(TEST_NTLM_SERVER *ntlm)
+void test_ntlm_server_free(TEST_NTLM_SERVER* ntlm)
 {
 	if (!ntlm)
 		return;
@@ -462,12 +462,12 @@ void test_ntlm_server_free(TEST_NTLM_SERVER *ntlm)
 	free(ntlm);
 }
 
-int TestNTLM(int argc, char *argv[])
+int TestNTLM(int argc, char* argv[])
 {
 	int status;
 	PSecBuffer pSecBuffer;
-	TEST_NTLM_CLIENT *client;
-	TEST_NTLM_SERVER *server;
+	TEST_NTLM_CLIENT* client;
+	TEST_NTLM_SERVER* server;
 	BOOL DynamicTest = TRUE;
 	/**
 	 * Client Initialization
@@ -529,12 +529,12 @@ int TestNTLM(int argc, char *argv[])
 	if (!DynamicTest)
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_NEGOTIATE) -1;
-		pSecBuffer->pvBuffer = (void *) malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_NEGOTIATE, pSecBuffer->cbBuffer);
 	}
 
 	fprintf(stderr, "NTLM_NEGOTIATE (length = %d):\n", pSecBuffer->cbBuffer);
-	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE *) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
+	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Server <- Negotiate Message
 	 * Server -> Challenge Message
@@ -577,17 +577,17 @@ int TestNTLM(int argc, char *argv[])
 	{
 		SecPkgContext_AuthNtlmMessage AuthNtlmMessage;
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_CHALLENGE) -1;
-		pSecBuffer->pvBuffer = (void *) malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_CHALLENGE, pSecBuffer->cbBuffer);
 		AuthNtlmMessage.type = 2;
 		AuthNtlmMessage.length = pSecBuffer->cbBuffer;
-		AuthNtlmMessage.buffer = (BYTE *) pSecBuffer->pvBuffer;
+		AuthNtlmMessage.buffer = (BYTE*) pSecBuffer->pvBuffer;
 		server->table->SetContextAttributes(&server->context, SECPKG_ATTR_AUTH_NTLM_MESSAGE,
 											&AuthNtlmMessage, sizeof(SecPkgContext_AuthNtlmMessage));
 	}
 
 	fprintf(stderr, "NTLM_CHALLENGE (length = %d):\n", pSecBuffer->cbBuffer);
-	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE *) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
+	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Client <- Challenge Message
 	 * Client -> Authenticate Message
@@ -609,12 +609,12 @@ int TestNTLM(int argc, char *argv[])
 	if (!DynamicTest)
 	{
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_AUTHENTICATE) -1;
-		pSecBuffer->pvBuffer = (void *) malloc(pSecBuffer->cbBuffer);
+		pSecBuffer->pvBuffer = (void*) malloc(pSecBuffer->cbBuffer);
 		CopyMemory(pSecBuffer->pvBuffer, TEST_NTLM_AUTHENTICATE, pSecBuffer->cbBuffer);
 	}
 
 	fprintf(stderr, "NTLM_AUTHENTICATE (length = %d):\n", pSecBuffer->cbBuffer);
-	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE *) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
+	winpr_HexDump("sspi.test", WLOG_DEBUG, (BYTE*) pSecBuffer->pvBuffer, pSecBuffer->cbBuffer);
 	/**
 	 * Server <- Authenticate Message
 	 */
