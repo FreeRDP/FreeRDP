@@ -92,46 +92,6 @@ if(WITH_OPENH264)
 	add_definitions(-DWITH_OPENH264)
 	include_directories(${OPENH264_INCLUDE_DIR})
 	set(FREERDP_OPENH264_LIBS ${OPENH264_LIBRARIES})
-
-	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		set(arch64 TRUE)
-	else()
-		set(arch64 FALSE)
-	endif()
-
-	if(WITH_OPENH264_ASM)
-		set(OPENH264_ASM  OPENH264_ASM_o)
-		add_definitions(-DWITH_OPENH264_ASM)
-		add_custom_target(${OPENH264_ASM})
-
-		if(arch64)
-			set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/h264_x64.asm)
-			set(OBJ ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${OPENH264_ASM}.dir/h264_x64.asm.o)
-			add_custom_command(TARGET ${OPENH264_ASM}
-			COMMAND nasm ARGS -f elf64 -o ${OBJ} ${SRC})
-		else()
-			message(FATAL_ERROR "OpenH264 YUV data converting is not implemented in 32 bit assembly yet.")
-		endif()
-
-		set(FREERDP_OPENH264_LIBS ${OPENH264_LIBRARIES} ${OBJ})
-	endif()
-
-	if(WITH_OPENH264_SSSE3)
-		set(OPENH264_ASM  OPENH264_ASM_o)
-		add_definitions(-DWITH_OPENH264_SSSE3)
-		add_custom_target(${OPENH264_ASM})
-
-		if(arch64)
-			set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/h264_ssse3_x64.asm)
-			set(OBJ ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${OPENH264_ASM}.dir/h264_ssse3_x64.asm.o)
-			add_custom_command(TARGET ${OPENH264_ASM}
-				COMMAND nasm ARGS -f elf64 -o ${OBJ} ${SRC})
-		else()
-			message(FATAL_ERROR "OpenH264 YUV data converting with SSSE3 is not implemented in 32 bit assembly yet.")
-		endif()
-
-		set(FREERDP_OPENH264_LIBS ${OPENH264_LIBRARIES} ${OBJ})
-	endif()
 endif()
 
 if(WITH_LIBAVCODEC)
@@ -139,6 +99,48 @@ if(WITH_LIBAVCODEC)
 	find_library(LIBAVCODEC_LIB avcodec)
 	find_library(LIBAVUTIL_LIB avutil)
 	set(FREERDP_LIBAVCODEC_LIBS ${LIBAVCODEC_LIB} ${LIBAVUTIL_LIB})
+endif()
+
+if(WITH_LIBAVCODEC OR WITH_OPENH264)
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		set(arch64 TRUE)
+	else()
+		set(arch64 FALSE)
+	endif()
+
+	if(WITH_H264_ASM)
+		set(H264_ASM  H264_ASM_o)
+		add_definitions(-DWITH_H264_ASM)
+		add_custom_target(${H264_ASM})
+
+		if(arch64)
+			set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/h264_x64.asm)
+			set(OBJ ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${H264_ASM}.dir/h264_x64.asm.o)
+			add_custom_command(TARGET ${H264_ASM}
+			COMMAND nasm ARGS -f elf64 -o ${OBJ} ${SRC})
+		else()
+			message(FATAL_ERROR "H264 YUV data converting is not implemented in 32 bit assembly yet.")
+		endif()
+
+		set(FREERDP_OPENH264_LIBS ${OPENH264_LIBRARIES} ${OBJ})
+	endif()
+
+	if(WITH_H264_SSSE3)
+		set(H264_ASM  H264_ASM_o)
+		add_definitions(-DWITH_H264_SSSE3)
+		add_custom_target(${H264_ASM})
+
+		if(arch64)
+			set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/h264_ssse3_x64.asm)
+			set(OBJ ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${H264_ASM}.dir/h264_ssse3_x64.asm.o)
+			add_custom_command(TARGET ${H264_ASM}
+				COMMAND nasm ARGS -f elf64 -o ${OBJ} ${SRC})
+		else()
+			message(FATAL_ERROR "H264 YUV data converting with SSSE3 is not implemented in 32 bit assembly yet.")
+		endif()
+
+		set(FREERDP_OPENH264_LIBS ${OPENH264_LIBRARIES} ${OBJ})
+	endif()
 endif()
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
@@ -171,8 +173,8 @@ else()
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT FreeRDPTargets)
 endif()
 
-if(WITH_OPENH264_ASM OR WITH_OPENH264_SSSE3)
-	add_dependencies(${MODULE_NAME} ${OPENH264_ASM})
+if(WITH_H264_ASM OR WITH_H264_SSSE3)
+	add_dependencies(${MODULE_NAME} ${H264_ASM})
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")

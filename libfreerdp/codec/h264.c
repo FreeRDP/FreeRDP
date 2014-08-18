@@ -30,11 +30,11 @@
 
 #include <sys/time.h>
 
-#ifdef WITH_OPENH264_SSSE3
+#ifdef WITH_H264_SSSE3
 extern int check_ssse3();
 extern int freerdp_image_yuv420p_to_xrgb(BYTE *pDstData,BYTE **pSrcData,int nWidth,int nHeight,int iStride0,int iStride1);
 #else
-#ifdef WITH_OPENH264_ASM
+#ifdef WITH_H264_ASM
 extern int freerdp_image_yuv_to_xrgb_asm(BYTE *pDstData,BYTE **pSrcData,int nWidth,int nHeight,int iStride0,int iStride1);
 #endif
 #endif
@@ -386,7 +386,7 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 		state = (*h264->pDecoder)->DecodeFrame2(h264->pDecoder, NULL, 0, pYUVData, &sBufferInfo);
 	
 	gettimeofday(&T2,NULL);
-	//printf("\tdecoding took: %u sec %u usec\n",(unsigned int)(T2.tv_sec-T1.tv_sec),(unsigned int)(T2.tv_usec-T1.tv_usec));
+	printf("OpenH264: decoding took: %u sec %u usec\n",(unsigned int)(T2.tv_sec-T1.tv_sec),(unsigned int)(T2.tv_usec-T1.tv_usec));
 
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
 
@@ -421,16 +421,19 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	if (h264_prepare_rgb_buffer(h264, pSystemBuffer->iWidth, pSystemBuffer->iHeight) < 0)
 		return -1;
 
-#ifdef WITH_OPENH264_SSSE3
+	gettimeofday(&T1,NULL);
+#ifdef WITH_H264_SSSE3
 	freerdp_image_yuv420p_to_xrgb(h264->data,pYUVData,h264->width,h264->height,pSystemBuffer->iStride[0],pSystemBuffer->iStride[1]);
 #else
-#ifdef WITH_OPENH264_ASM
+#ifdef WITH_H264_ASM
 	freerdp_image_yuv_to_xrgb_asm(h264->data,pYUVData,h264->width,h264->height,pSystemBuffer->iStride[0],pSystemBuffer->iStride[1]);
 #else
 	freerdp_image_copy_yuv420p_to_xrgb(h264->data, h264->scanline, 0, 0,
 			h264->width, h264->height, pYUVData, pSystemBuffer->iStride, 0, 0);
 #endif
 #endif
+		gettimeofday(&T2,NULL);
+		printf("\tconverting took %u sec %u usec\n",(unsigned int)(T2.tv_sec-T1.tv_sec),(unsigned int)(T2.tv_usec-T1.tv_usec));
 
 	return 1;
 }
@@ -454,13 +457,6 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 	SDecodingParam sDecParam;
 	long status;
-	
-#ifdef WITH_OPENH264_SSSE3
-	if(check_ssse3()){
-		printf("SSSE3 seems to be not supported on this system, try without WITH_OPENH264_ASM ...");
-		return FALSE;
-	}
-#endif
 
 	WelsCreateDecoder(&h264->pDecoder);
 
@@ -537,13 +533,19 @@ static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcS
 	AVPacket packet;
 	int gotFrame = 0;
 	int status;
+	
+	struct timeval T1,T2;
 
 	av_init_packet(&packet);
 
 	packet.data = pSrcData;
 	packet.size = SrcSize;
 
+	gettimeofday(&T1,NULL);
 	status = avcodec_decode_video2(h264->codecContext, h264->videoFrame, &gotFrame, &packet);
+	gettimeofday(&T2,NULL);
+
+	printf("libavcodec: decoding took: %u sec %u usec\n",(unsigned int)(T2.tv_sec-T1.tv_sec),(unsigned int)(T2.tv_usec-T1.tv_usec));
 
 	if (status < 0)
 	{
@@ -568,8 +570,19 @@ static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcS
 		if (h264_prepare_rgb_buffer(h264, h264->videoFrame->width, h264->videoFrame->height) < 0)
 			return -1;
 
+		gettimeofday(&T1,NULL);
+#ifdef WITH_H264_SSSE3
+		freerdp_image_yuv420p_to_xrgb(h264->data,h264->videoFrame->data,h264->width,h264->height,h264->videoFrame->linesize[0],h264->videoFrame->linesize[1]);
+#else
+#ifdef WITH_H264_ASM
+		freerdp_image_yuv_to_xrgb_asm(h264->data,h264->videoFrame->data,h264->width,h264->height,h264->videoFrame->linesize[0],h264->videoFrame->linesize[1]);
+#else
 		freerdp_image_copy_yuv420p_to_xrgb(h264->data, h264->scanline, 0, 0,
 			h264->width, h264->height, h264->videoFrame->data, h264->videoFrame->linesize, 0, 0);
+#endif
+#endif
+		gettimeofday(&T2,NULL);
+		printf("\tconverting took %u sec %u usec\n",(unsigned int)(T2.tv_sec-T1.tv_sec),(unsigned int)(T2.tv_usec-T1.tv_usec));
 	}
 
 	return 1;
@@ -722,6 +735,13 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	H264_CONTEXT* h264;
 
 	h264 = (H264_CONTEXT*) calloc(1, sizeof(H264_CONTEXT));
+
+#ifdef WITH_H264_SSSE3
+	if(check_ssse3()){
+		printf("SSSE3 seems to be not supported on this system, try without WITH_H264_ASM ...");
+		return FALSE;
+	}
+#endif
 
 	if (h264)
 	{
