@@ -277,6 +277,21 @@ extern "C" {
 #define WLog_IsLevelActive(_log, _log_level) \
 	(_log_level >= WLog_GetLogLevel(_log))
 
+#define WLog_LVL(tag, lvl, fmt, ...) WLog_Print(WLog_Get(tag), lvl, __FILE__, __FUNCTION__, \
+		__LINE__, tag, fmt, ## __VA_ARGS__)
+#define WLog_VRB(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_TRACE, __FILE__, __FUNCTION__, \
+		__LINE__, tag, fmt, ## __VA_ARGS__)
+#define WLog_DBG(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_DEBUG, __FILE__, __FUNCTION__, \
+		__LINE__, tag, fmt, ## __VA_ARGS__)
+#define WLog_INFO(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_INFO, __FILE__, __FUNCTION__, \
+		__LINE__, tag, fmt, ## __VA_ARGS__)
+#define WLog_WARN(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_WARN, __FILE__, __FUNCTION__, \
+		__LINE__, tag, fmt, ## __VA_ARGS__)
+#define WLog_ERR(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_ERROR, __FILE__, __FUNCTION__, \
+		__LINE__, tag, fmt, ## __VA_ARGS__)
+#define WLog_FATAL(tag, fmt, ...) WLog_Print(WLog_Get(tag), WLOG_FATAL, __FILE__, __FUNCTION__, \
+		__LINE__, tag, fmt, ## __VA_ARGS__)
+
 	WINPR_API DWORD WLog_GetLogLevel(wLog *log);
 	WINPR_API void WLog_SetLogLevel(wLog *log, DWORD logLevel);
 

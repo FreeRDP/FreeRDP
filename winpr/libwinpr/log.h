@@ -24,35 +24,4 @@
 
 #define WINPR_TAG(tag) "com.winpr." tag
 
-#define WLOG_PRINT(level, file, fkt, line, tag, fmt, ...) \
-	do { \
-		wLogMessage msg; \
-		wLog *log; \
-		\
-		log = WLog_Get(tag); \
-		\
-		msg.Type = WLOG_MESSAGE_TEXT; \
-		msg.Level = level; \
-		msg.FormatString = fmt; \
-		msg.LineNumber = line; \
-		msg.FileName = file; \
-		msg.FunctionName = fkt; \
-		WLog_PrintMessage(log, &msg, ##__VA_ARGS__); \
-	} while (0 )
-
-#define WLog_LVL(tag, lvl, fmt, ...) WLOG_PRINT(lvl, __FILE__, __FUNCTION__, \
-		__LINE__, tag, fmt, ## __VA_ARGS__)
-#define WLog_VRB(tag, fmt, ...) WLOG_PRINT(WLOG_TRACE, __FILE__, __FUNCTION__, \
-		__LINE__, tag, fmt, ## __VA_ARGS__)
-#define WLog_DBG(tag, fmt, ...) WLOG_PRINT(WLOG_DEBUG, __FILE__, __FUNCTION__, \
-		__LINE__, tag, fmt, ## __VA_ARGS__)
-#define WLog_INFO(tag, fmt, ...) WLOG_PRINT(WLOG_INFO, __FILE__, __FUNCTION__, \
-		__LINE__, tag, fmt, ## __VA_ARGS__)
-#define WLog_WARN(tag, fmt, ...) WLOG_PRINT(WLOG_WARN, __FILE__, __FUNCTION__, \
-		__LINE__, tag, fmt, ## __VA_ARGS__)
-#define WLog_ERR(tag, fmt, ...) WLOG_PRINT(WLOG_ERROR, __FILE__, __FUNCTION__, \
-		__LINE__, tag, fmt, ## __VA_ARGS__)
-#define WLog_FATAL(tag, fmt, ...) WLOG_PRINT(WLOG_FATAL, __FILE__, __FUNCTION__, \
-		__LINE__, tag, fmt, ## __VA_ARGS__)
-
 #endif /* FREERDP_UTILS_DEBUG_H */
