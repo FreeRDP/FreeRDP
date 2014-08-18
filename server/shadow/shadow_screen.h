@@ -1,8 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Server Cursor
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +16,36 @@
  * limitations under the License.
  */
 
-#ifndef XFREERDP_SERVER_CURSOR_H
-#define XFREERDP_SERVER_CURSOR_H
+#ifndef FREERDP_SHADOW_SERVER_SCREEN_H
+#define FREERDP_SHADOW_SERVER_SCREEN_H
 
-#include "xfreerdp.h"
+#include <freerdp/server/shadow.h>
 
-int xf_cursor_init(xfInfo* xfi);
+#include <winpr/crt.h>
+#include <winpr/synch.h>
 
-#endif /* XFREERDP_SERVER_CURSOR_H */
+struct rdp_shadow_screen
+{
+	rdpShadowServer* server;
+
+	int width;
+	int height;
+
+	CRITICAL_SECTION lock;
+	REGION16 invalidRegion;
+
+	rdpShadowSurface* primary;
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+rdpShadowScreen* shadow_screen_new(rdpShadowServer* server);
+void shadow_screen_free(rdpShadowScreen* screen);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_SHADOW_SERVER_SCREEN_H */

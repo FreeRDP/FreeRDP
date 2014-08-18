@@ -885,9 +885,9 @@ BOOL xf_post_connect(freerdp *instance)
 	XFillRectangle(xfc->display, xfc->primary, xfc->gc, 0, 0, xfc->width, xfc->height);
 	XFlush(xfc->display);
 	xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-							  (char *) xfc->primary_buffer, xfc->width, xfc->height, xfc->scanline_pad, 0);
+			(char*) xfc->primary_buffer, xfc->width, xfc->height, xfc->scanline_pad, 0);
 	xfc->bmp_codec_none = (BYTE *) malloc(64 * 64 * 4);
-	
+
 	if (xfc->settings->SoftwareGdi)
 	{
 		instance->update->BeginPaint = xf_sw_begin_paint;

@@ -70,7 +70,7 @@ else()
 endif()
 
 
-if(WITH_WIN8)		
+if(CMAKE_WINDOWS_VERSION STREQUAL "WIN8")
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} d3d11 dxgi dxguid)
 endif()
 

@@ -31,6 +31,8 @@ struct _remdesk_server_private
 	HANDLE Thread;
 	HANDLE StopEvent;
 	void* ChannelHandle;
+
+	UINT32 Version;
 };
 
 #endif /* FREERDP_CHANNEL_SERVER_REMDESK_MAIN_H */

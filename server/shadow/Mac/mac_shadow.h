@@ -1,8 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 RemoteFX Encoder
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +16,34 @@
  * limitations under the License.
  */
 
-#ifndef __XF_ENCODE_H
-#define __XF_ENCODE_H
+#ifndef FREERDP_SHADOW_SERVER_MAC_H
+#define FREERDP_SHADOW_SERVER_MAC_H
 
-#include "xfreerdp.h"
+#include <freerdp/server/shadow.h>
 
-#include "xf_peer.h"
+typedef struct mac_shadow_subsystem macShadowSubsystem;
 
-XImage* xf_snapshot(xfPeerContext* xfp, int x, int y, int width, int height);
-void xf_xdamage_subtract_region(xfPeerContext* xfp, int x, int y, int width, int height);
-int xf_update_encode(freerdp_peer* client, int x, int y, int width, int height);
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/stream.h>
+#include <winpr/collections.h>
 
-#endif /* __XF_ENCODE_H */
+struct mac_shadow_subsystem
+{
+	RDP_SHADOW_SUBSYSTEM_COMMON();
+
+
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_SHADOW_SERVER_MAC_H */

@@ -317,6 +317,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		event = (WINPR_EVENT*) Object;
 
 		status = waitOnFd(event->pipe_fd[0], dwMilliseconds);
+
 		if (status < 0)
 		{
 			fprintf(stderr, "WaitForSingleObject: event select() failure [%d] %s\n", errno, strerror(errno));

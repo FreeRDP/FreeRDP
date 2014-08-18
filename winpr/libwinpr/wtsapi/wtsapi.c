@@ -549,6 +549,7 @@ DWORD WINAPI WTSGetActiveConsoleSessionId(void)
 BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)
 {
 	g_WtsApi = table;
+	g_Initialized = TRUE;
 	return TRUE;
 }
 

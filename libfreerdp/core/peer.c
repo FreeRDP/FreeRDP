@@ -36,17 +36,18 @@ extern const char* DATA_PDU_TYPE_STRINGS[80];
 
 static BOOL freerdp_peer_initialize(freerdp_peer* client)
 {
-	rdpRdp *rdp = client->context->rdp;
-	rdpSettings *settings = rdp->settings;
+	rdpRdp* rdp = client->context->rdp;
+	rdpSettings* settings = rdp->settings;
 
 	settings->ServerMode = TRUE;
 	settings->FrameAcknowledge = 0;
 	settings->LocalConnection = client->local;
 	rdp->state = CONNECTION_STATE_INITIAL;
 
-	if (settings->RdpKeyFile != NULL)
+	if (settings->RdpKeyFile)
 	{
 		settings->RdpServerRsaKey = key_new(settings->RdpKeyFile);
+
 		if (!settings->RdpServerRsaKey)
 		{
 			DEBUG_WARN( "%s: inavlid RDP key file %s\n", __FUNCTION__, settings->RdpKeyFile);
@@ -76,7 +77,6 @@ static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 {
 	return client->context->rdp->transport->TcpIn->event;
 }
-
 
 static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
 {
@@ -431,7 +431,7 @@ void freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
 
-	client->context = (rdpContext *)calloc(1, client->ContextSize);
+	client->context = (rdpContext*) calloc(1, client->ContextSize);
 
 	client->context->ServerMode = TRUE;
 

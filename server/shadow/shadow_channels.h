@@ -1,8 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP X11 Server
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,36 +16,25 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#ifndef FREERDP_SHADOW_SERVER_CHANNELS_H
+#define FREERDP_SHADOW_SERVER_CHANNELS_H
+
+#include <freerdp/server/shadow.h>
+
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+
+#include "shadow_encomsp.h"
+#include "shadow_remdesk.h"
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#include "xf_interface.h"
+int shadow_client_channels_post_connect(rdpShadowClient* client);
 
-int main(int argc, char* argv[])
-{
-	HANDLE thread;
-	xfServer* server;
-	DWORD dwExitCode;
-
-	freerdp_server_global_init();
-
-	server = freerdp_server_new(argc, argv);
-
-	if (!server)
-		return 0;
-
-	freerdp_server_start(server);
-
-	thread = freerdp_server_get_thread(server);
-
-	WaitForSingleObject(thread, INFINITE);
-
-	GetExitCodeThread(thread, &dwExitCode);
-
-	freerdp_server_free(server);
-
-	freerdp_server_global_uninit();
-
-	return 0;
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* FREERDP_SHADOW_SERVER_CHANNELS_H */
