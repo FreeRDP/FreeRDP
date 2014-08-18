@@ -25,8 +25,12 @@
 #include <winpr/print.h>
 #include <winpr/bitstream.h>
 
+#include <freerdp/primitives.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/progressive.h>
+
+#include "rfx_differential.h"
+#include "rfx_quantization.h"
 
 const char* progressive_get_block_type_string(UINT16 blockType)
 {
@@ -72,15 +76,50 @@ const char* progressive_get_block_type_string(UINT16 blockType)
 	return "PROGRESSIVE_WBT_UNKNOWN";
 }
 
+/*
+ * Band		Offset		Dimensions	Size
+ *
+ * HL1		0		31x33		1023
+ * LH1		1023		33x31		1023
+ * HH1		2046		31x31		961
+ *
+ * HL2		3007		16x17		272
+ * LH2		3279		17x16		272
+ * HH2		3551		16x16		256
+ *
+ * HL3		3807		8x9		72
+ * LH3		3879		9x8		72
+ * HH3		3951		8x8		64
+ *
+ * LL3		4015		9x9		81
+ */
+
 int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
 		RFX_COMPONENT_CODEC_QUANT* quant, const BYTE* data, int length, INT16* buffer)
 {
 	int status;
+	const primitives_t* prims = primitives_get();
 
 	status = rfx_rlgr_decode(data, length, buffer, 4096, 1);
 
 	if (status < 0)
 		return status;
+
+	rfx_differential_decode(&buffer[4015], 81); /* LL3 */
+
+	/* Scale the values so that they are represented as 11.5 fixed-point number */
+	rfx_quantization_decode_block(prims, buffer, 4096, 5);
+
+	rfx_quantization_decode_block(prims, &buffer[0], 1023, (quant->HL1 - 6)); /* HL1 */
+	rfx_quantization_decode_block(prims, &buffer[1023], 1023, (quant->LH1 - 6)); /* LH1 */
+	rfx_quantization_decode_block(prims, &buffer[2046], 961, (quant->HH1 - 6)); /* HH1 */
+	rfx_quantization_decode_block(prims, &buffer[3007], 272, (quant->HL2 - 6)); /* HL2 */
+	rfx_quantization_decode_block(prims, &buffer[3279], 272, (quant->LH2 - 6)); /* LH2 */
+	rfx_quantization_decode_block(prims, &buffer[3551], 256, (quant->HH2 - 6)); /* HH2 */
+	rfx_quantization_decode_block(prims, &buffer[3807], 72, (quant->HL3 - 6)); /* HL3 */
+	rfx_quantization_decode_block(prims, &buffer[3879], 72, (quant->LH3 - 6)); /* LH3 */
+	rfx_quantization_decode_block(prims, &buffer[3951], 64, (quant->HH3 - 6)); /* HH3 */
+	rfx_quantization_decode_block(prims, &buffer[4015], 81, (quant->LL3 - 6)); /* LL3 */
 
 	return 1;
 }

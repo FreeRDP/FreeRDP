@@ -22,9 +22,28 @@
 #endif
 
 #include <freerdp/primitives.h>
+
 #include "rfx_quantization.h"
 
-static void rfx_quantization_decode_block(const primitives_t *prims, INT16* buffer, int buffer_size, UINT32 factor)
+/*
+ * Band		Offset		Size
+ *
+ * HL1		0		1024
+ * LH1		1024		1024
+ * HH1		2048		1024
+ *
+ * HL2		3072		256
+ * LH2		3328		256
+ * HH2		3584		256
+ *
+ * HL3		3840		64
+ * LH3		3904		64
+ * HH3		3968		64
+ *
+ * LL3		4032		64
+ */
+
+void rfx_quantization_decode_block(const primitives_t *prims, INT16* buffer, int buffer_size, UINT32 factor)
 {
 	if (factor == 0)
 		return;
@@ -34,7 +53,7 @@ static void rfx_quantization_decode_block(const primitives_t *prims, INT16* buff
 
 void rfx_quantization_decode(INT16* buffer, const UINT32* quantization_values)
 {
-	const primitives_t *prims = primitives_get();
+	const primitives_t* prims = primitives_get();
 
 	/* Scale the values so that they are represented as 11.5 fixed-point number */
 	rfx_quantization_decode_block(prims, buffer, 4096, 5);
