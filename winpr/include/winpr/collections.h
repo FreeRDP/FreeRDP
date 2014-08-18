@@ -247,10 +247,10 @@ WINPR_API void* LinkedList_Last(wLinkedList* list);
 WINPR_API BOOL LinkedList_Contains(wLinkedList* list, void* value);
 WINPR_API void LinkedList_Clear(wLinkedList* list);
 
-WINPR_API void LinkedList_AddFirst(wLinkedList* list, void* value);
-WINPR_API void LinkedList_AddLast(wLinkedList* list, void* value);
+WINPR_API BOOL LinkedList_AddFirst(wLinkedList* list, void* value);
+WINPR_API BOOL LinkedList_AddLast(wLinkedList* list, void* value);
 
-WINPR_API void LinkedList_Remove(wLinkedList* list, void* value);
+WINPR_API BOOL LinkedList_Remove(wLinkedList* list, void* value);
 WINPR_API void LinkedList_RemoveFirst(wLinkedList* list);
 WINPR_API void LinkedList_RemoveLast(wLinkedList* list);
 
