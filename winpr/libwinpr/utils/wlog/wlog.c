@@ -26,6 +26,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/debug.h>
 #include <winpr/environment.h>
 
 #if defined(ANDROID)
@@ -64,15 +65,26 @@ static wLogFilter *g_Filters = NULL;
 
 static void log_recursion(const char *file, const char *fkt, int line)
 {
-	/* TODO: Stack trace here! */
+	size_t used, i;
+	void *bt = winpr_backtrace(20);
+	char **msg = winpr_backtrace_symbols(bt, &used);
+
 #if defined(ANDROID)
 	const char *tag = WINPR_TAG("utils.wlog");
 	__android_log_print(ANDROID_LOG_FATAL, tag, "Recursion detected!!!");
 	__android_log_print(ANDROID_LOG_FATAL, tag, "Check %s [%s:%d]", fkt, file, line);
+	for (i=0; i<used; i++)
+		__android_log_print(ANDROID_LOG_FATAL, tag, "%d: %s", msg[i]);
 #else
 	fprintf(stderr, "[%s]: Recursion detected!\n", fkt);
 	fprintf(stderr, "[%s]: Check %s:%d\n", fkt, file, line);
+	for (i=0; i<used; i++)
+		fprintf(stderr, "%s: %zd: %s\n", fkt, i, msg[i]);
 #endif
+
+	if (msg)
+		free(msg);
+	winpr_backtrace_free(bt);
 }
 
 int WLog_Write(wLog *log, wLogMessage *message)
