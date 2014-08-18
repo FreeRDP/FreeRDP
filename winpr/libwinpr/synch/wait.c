@@ -50,7 +50,7 @@
 #include <winpr/thread.h>
 
 #include "../log.h"
-#define TAG "winpr.sync.wait"
+#define TAG WINPR_TAG("sync.wait")
 
 /**
  * WaitForSingleObject

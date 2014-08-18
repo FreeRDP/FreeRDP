@@ -38,7 +38,7 @@
 #include "smartcard_pcsc.h"
 
 #include "../log.h"
-#define TAG "smartcard"
+#define TAG WINPR_TAG("smartcard")
 
 /**
  * PC/SC transactions:
@@ -171,7 +171,7 @@ static wListDictionary *g_MemoryBlocks = NULL;
 char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
 
 WCHAR SMARTCARD_PNP_NOTIFICATION_W[] = { '\\','\\','?','P','n','P','?',
-									   '\\','N','o','t','i','f','i','c','a','t','i','o','n','\0'
+										 '\\','N','o','t','i','f','i','c','a','t','i','o','n','\0'
 									   };
 
 const PCSC_SCARD_IO_REQUEST g_PCSC_rgSCardT0Pci = { SCARD_PROTOCOL_T0, sizeof(PCSC_SCARD_IO_REQUEST) };
@@ -347,7 +347,7 @@ void PCSC_ReleaseCardContext(SCARDCONTEXT hContext)
 
 	if (!pContext)
 	{
-		WLog_ERR(TAG, "PCSC_ReleaseCardContext: null pContext!\n");
+		WLog_ERR(TAG, "PCSC_ReleaseCardContext: null pContext!");
 		return;
 	}
 
@@ -367,7 +367,7 @@ BOOL PCSC_LockCardContext(SCARDCONTEXT hContext)
 
 	if (!pContext)
 	{
-		WLog_ERR(TAG, "PCSC_LockCardContext: invalid context (%p)\n", (void *) hContext);
+		WLog_ERR(TAG, "PCSC_LockCardContext: invalid context (%p)", (void *) hContext);
 		return FALSE;
 	}
 
@@ -382,7 +382,7 @@ BOOL PCSC_UnlockCardContext(SCARDCONTEXT hContext)
 
 	if (!pContext)
 	{
-		WLog_ERR(TAG, "PCSC_UnlockCardContext: invalid context (%p)\n", (void *) hContext);
+		WLog_ERR(TAG, "PCSC_UnlockCardContext: invalid context (%p)", (void *) hContext);
 		return FALSE;
 	}
 
@@ -424,7 +424,7 @@ PCSC_SCARDHANDLE *PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDCONTE
 
 	if (!pContext)
 	{
-		WLog_ERR(TAG, "PCSC_ConnectCardHandle: null pContext!\n");
+		WLog_ERR(TAG, "PCSC_ConnectCardHandle: null pContext!");
 		return NULL;
 	}
 
@@ -480,7 +480,7 @@ BOOL PCSC_LockCardHandle(SCARDHANDLE hCard)
 
 	if (!pCard)
 	{
-		WLog_ERR(TAG, "PCSC_LockCardHandle: invalid handle (%p)\n", (void *) hCard);
+		WLog_ERR(TAG, "PCSC_LockCardHandle: invalid handle (%p)", (void *) hCard);
 		return FALSE;
 	}
 
@@ -495,7 +495,7 @@ BOOL PCSC_UnlockCardHandle(SCARDHANDLE hCard)
 
 	if (!pCard)
 	{
-		WLog_ERR(TAG, "PCSC_UnlockCardHandle: invalid handle (%p)\n", (void *) hCard);
+		WLog_ERR(TAG, "PCSC_UnlockCardHandle: invalid handle (%p)", (void *) hCard);
 		return FALSE;
 	}
 
@@ -511,7 +511,7 @@ BOOL PCSC_LockCardTransaction(SCARDHANDLE hCard)
 
 	if (!pCard)
 	{
-		WLog_ERR(TAG, "PCSC_LockCardTransaction: invalid handle (%p)\n", (void *) hCard);
+		WLog_ERR(TAG, "PCSC_LockCardTransaction: invalid handle (%p)", (void *) hCard);
 		return FALSE;
 	}
 
@@ -527,7 +527,7 @@ BOOL PCSC_UnlockCardTransaction(SCARDHANDLE hCard)
 
 	if (!pCard)
 	{
-		WLog_ERR(TAG, "PCSC_UnlockCardTransaction: invalid handle (%p)\n", (void *) hCard);
+		WLog_ERR(TAG, "PCSC_UnlockCardTransaction: invalid handle (%p)", (void *) hCard);
 		return FALSE;
 	}
 
@@ -727,7 +727,7 @@ char *PCSC_ConvertReaderNameToWinSCard(const char *name)
 	 */
 	index = 0;
 	sprintf_s(nameWinSCard, size, "%.*s %d", length, p, index);
-	//printf("Smart Card Reader Name Alias: %s -> %s\n", p, nameWinSCard);
+	//printf("Smart Card Reader Name Alias: %s -> %s", p, nameWinSCard);
 	return nameWinSCard;
 }
 
@@ -893,7 +893,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardReleaseContext_Internal(SCARDCONTEXT hContext)
 
 	if (!hContext)
 	{
-		WLog_ERR(TAG, "SCardReleaseContext: null hContext\n");
+		WLog_ERR(TAG, "SCardReleaseContext: null hContext");
 		return status;
 	}
 

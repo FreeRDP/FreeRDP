@@ -43,7 +43,7 @@
 #endif
 
 #include "../log.h"
-#define TAG "crt"
+#define TAG WINPR_TAG("crt")
 
 struct winpr_aligned_mem
 {
@@ -126,7 +126,7 @@ void *_aligned_offset_realloc(void *memblock, size_t size, size_t alignment, siz
 
 	if (pMem->sig != WINPR_ALIGNED_MEM_SIGNATURE)
 	{
-		WLog_ERR(TAG, "_aligned_offset_realloc: memory block was not allocated by _aligned_malloc!\n");
+		WLog_ERR(TAG, "_aligned_offset_realloc: memory block was not allocated by _aligned_malloc!");
 		return NULL;
 	}
 
@@ -161,7 +161,7 @@ void *_aligned_offset_recalloc(void *memblock, size_t num, size_t size, size_t a
 
 	if (pMem->sig != WINPR_ALIGNED_MEM_SIGNATURE)
 	{
-		WLog_ERR(TAG, "_aligned_offset_recalloc: memory block was not allocated by _aligned_malloc!\n");
+		WLog_ERR(TAG, "_aligned_offset_recalloc: memory block was not allocated by _aligned_malloc!");
 		return NULL;
 	}
 
@@ -181,7 +181,7 @@ size_t _aligned_msize(void *memblock, size_t alignment, size_t offset)
 
 	if (pMem->sig != WINPR_ALIGNED_MEM_SIGNATURE)
 	{
-		WLog_ERR(TAG, "_aligned_msize: memory block was not allocated by _aligned_malloc!\n");
+		WLog_ERR(TAG, "_aligned_msize: memory block was not allocated by _aligned_malloc!");
 		return 0;
 	}
 
@@ -199,7 +199,7 @@ void _aligned_free(void *memblock)
 
 	if (pMem->sig != WINPR_ALIGNED_MEM_SIGNATURE)
 	{
-		WLog_ERR(TAG, "_aligned_free: memory block was not allocated by _aligned_malloc!\n");
+		WLog_ERR(TAG, "_aligned_free: memory block was not allocated by _aligned_malloc!");
 		return;
 	}
 

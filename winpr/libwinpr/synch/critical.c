@@ -37,7 +37,7 @@
 #ifndef _WIN32
 
 #include "../log.h"
-#define TAG "synch.critical"
+#define TAG WINPR_TAG("synch.critical")
 
 VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {

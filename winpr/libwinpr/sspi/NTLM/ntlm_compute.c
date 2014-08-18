@@ -33,7 +33,7 @@
 #include "ntlm_compute.h"
 
 #include "../../log.h"
-#define TAG "sspi.NTLM"
+#define TAG WINPR_TAG("sspi.NTLM")
 
 const char LM_MAGIC[] = "KGS!@#$%";
 

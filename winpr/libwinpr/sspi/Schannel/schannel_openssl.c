@@ -29,7 +29,7 @@
 #include "schannel_openssl.h"
 
 #include "../../log.h"
-#define TAG "sspi.schannel"
+#define TAG WINPR_TAG("sspi.schannel")
 
 char *openssl_get_ssl_error_string(int ssl_error)
 {
@@ -37,12 +37,16 @@ char *openssl_get_ssl_error_string(int ssl_error)
 	{
 		case SSL_ERROR_ZERO_RETURN:
 			return "SSL_ERROR_ZERO_RETURN";
+
 		case SSL_ERROR_WANT_READ:
 			return "SSL_ERROR_WANT_READ";
+
 		case SSL_ERROR_WANT_WRITE:
 			return "SSL_ERROR_WANT_WRITE";
+
 		case SSL_ERROR_SYSCALL:
 			return "SSL_ERROR_SYSCALL";
+
 		case SSL_ERROR_SSL:
 			ERR_print_errors_fp(stdout);
 			return "SSL_ERROR_SSL";
@@ -59,7 +63,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL *context)
 
 	if (!context->ctx)
 	{
-		WLog_ERR(TAG, "SSL_CTX_new failed\n");
+		WLog_ERR(TAG, "SSL_CTX_new failed");
 		return -1;
 	}
 
@@ -94,7 +98,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL *context)
 
 	if (!context->ssl)
 	{
-		WLog_ERR(TAG, "SSL_new failed\n");
+		WLog_ERR(TAG, "SSL_new failed");
 		return -1;
 	}
 
@@ -102,7 +106,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL *context)
 
 	if (!context->bioRead)
 	{
-		WLog_ERR(TAG, "BIO_new failed\n");
+		WLog_ERR(TAG, "BIO_new failed");
 		return -1;
 	}
 
@@ -111,7 +115,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL *context)
 
 	if (!context->bioWrite)
 	{
-		WLog_ERR(TAG, "BIO_new failed\n");
+		WLog_ERR(TAG, "BIO_new failed");
 		return -1;
 	}
 
@@ -132,7 +136,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL *context)
 
 	if (!context->ctx)
 	{
-		WLog_ERR(TAG, "SSL_CTX_new failed\n");
+		WLog_ERR(TAG, "SSL_CTX_new failed");
 		return -1;
 	}
 
@@ -173,7 +177,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL *context)
 
 	if (SSL_CTX_use_RSAPrivateKey_file(context->ctx, "/tmp/localhost.key", SSL_FILETYPE_PEM) <= 0)
 	{
-		WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed\n");
+		WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed");
 		return -1;
 	}
 
@@ -181,13 +185,13 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL *context)
 
 	if (!context->ssl)
 	{
-		WLog_ERR(TAG, "SSL_new failed\n");
+		WLog_ERR(TAG, "SSL_new failed");
 		return -1;
 	}
 
 	if (SSL_use_certificate_file(context->ssl, "/tmp/localhost.crt", SSL_FILETYPE_PEM) <= 0)
 	{
-		WLog_ERR(TAG, "SSL_use_certificate_file failed\n");
+		WLog_ERR(TAG, "SSL_use_certificate_file failed");
 		return -1;
 	}
 
@@ -195,7 +199,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL *context)
 
 	if (!context->bioRead)
 	{
-		WLog_ERR(TAG, "BIO_new failed\n");
+		WLog_ERR(TAG, "BIO_new failed");
 		return -1;
 	}
 
@@ -204,7 +208,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL *context)
 
 	if (!context->bioWrite)
 	{
-		WLog_ERR(TAG, "BIO_new failed\n");
+		WLog_ERR(TAG, "BIO_new failed");
 		return -1;
 	}
 
@@ -242,7 +246,7 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL *context
 		if (status < 0)
 		{
 			ssl_error = SSL_get_error(context->ssl, status);
-			WLog_ERR(TAG, "SSL_connect error: %s\n", openssl_get_ssl_error_string(ssl_error));
+			WLog_ERR(TAG, "SSL_connect error: %s", openssl_get_ssl_error_string(ssl_error));
 		}
 
 		if (status == 1)
@@ -299,7 +303,7 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL *context
 		if (status < 0)
 		{
 			ssl_error = SSL_get_error(context->ssl, status);
-			WLog_ERR(TAG, "SSL_accept error: %s\n", openssl_get_ssl_error_string(ssl_error));
+			WLog_ERR(TAG, "SSL_accept error: %s", openssl_get_ssl_error_string(ssl_error));
 		}
 
 		if (status == 1)
@@ -355,7 +359,7 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL *context, PSec
 	if (status < 0)
 	{
 		ssl_error = SSL_get_error(context->ssl, status);
-		WLog_ERR(TAG, "SSL_write: %s\n", openssl_get_ssl_error_string(ssl_error));
+		WLog_ERR(TAG, "SSL_write: %s", openssl_get_ssl_error_string(ssl_error));
 	}
 
 	status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
@@ -397,7 +401,7 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL *context, PSec
 	if (status < 0)
 	{
 		ssl_error = SSL_get_error(context->ssl, status);
-		WLog_ERR(TAG, "SSL_read: %s\n", openssl_get_ssl_error_string(ssl_error));
+		WLog_ERR(TAG, "SSL_read: %s", openssl_get_ssl_error_string(ssl_error));
 	}
 
 	length = status;

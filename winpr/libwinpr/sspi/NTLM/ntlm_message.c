@@ -34,7 +34,7 @@
 #include "ntlm_message.h"
 
 #include "../log.h"
-#define TAG "sspi.NTLM"
+#define TAG WINPR_TAG("sspi.NTLM")
 
 static const char NTLM_SIGNATURE[8] = { 'N', 'T', 'L', 'M', 'S', 'S', 'P', '\0' };
 

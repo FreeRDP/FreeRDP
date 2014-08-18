@@ -26,7 +26,7 @@
 #include "wlog/DataMessage.h"
 
 #include "../../log.h"
-#define TAG "utils.wlog"
+#define TAG WINPR_TAG("utils.wlog")
 
 int WLog_DataMessage_Write(char *filename, void *data, int length)
 {
@@ -35,7 +35,7 @@ int WLog_DataMessage_Write(char *filename, void *data, int length)
 
 	if (!fp)
 	{
-		WLog_ERR(TAG, "failed to open file %s\n", filename);
+		WLog_ERR(TAG, "failed to open file %s", filename);
 		return -1;
 	}
 

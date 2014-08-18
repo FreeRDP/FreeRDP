@@ -69,7 +69,7 @@ defined(__OpenBSD__) || defined(__DragonFly__)
 #endif
 
 #include "../log.h"
-#define TAG "sysinfo"
+#define TAG WINPR_TAG("sysinfo")
 
 static DWORD GetProcessorArchitecture()
 {
@@ -194,7 +194,6 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 		case ComputerNamePhysicalDnsHostname:
 		case ComputerNamePhysicalDnsDomain:
 		case ComputerNamePhysicalDnsFullyQualified:
-
 			if (*lpnSize <= length)
 			{
 				*lpnSize = length + 1;
@@ -207,6 +206,7 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 			CopyMemory(lpBuffer, hostname, length);
 			lpBuffer[length] = '\0';
 			break;
+
 		default:
 			return FALSE;
 	}
@@ -216,7 +216,7 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 
 BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD nSize)
 {
-	WLog_ERR(TAG, "GetComputerNameExW unimplemented\n");
+	WLog_ERR(TAG, "GetComputerNameExW unimplemented");
 	return 0;
 }
 
@@ -254,7 +254,7 @@ BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 
 BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 {
-	WLog_ERR(TAG, "GetVersionExW unimplemented\n");
+	WLog_ERR(TAG, "GetVersionExW unimplemented");
 	return 1;
 }
 
@@ -528,68 +528,65 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 	{
 		case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
 		case PF_ARM_NEON:
-
 			if (caps & HWCAP_NEON)
 				ret = TRUE;
 
 			break;
-		case PF_ARM_THUMB:
 
+		case PF_ARM_THUMB:
 			if (caps & HWCAP_THUMB)
 				ret = TRUE;
 
 		case PF_ARM_VFP_32_REGISTERS_AVAILABLE:
-
 			if (caps & HWCAP_VFPD32)
 				ret = TRUE;
 
 		case PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE:
-
 			if ((caps & HWCAP_IDIVA) || (caps & HWCAP_IDIVT))
 				ret = TRUE;
 
 		case PF_ARM_VFP3:
-
 			if (caps & HWCAP_VFPv3)
 				ret = TRUE;
 
 			break;
-		case PF_ARM_JAZELLE:
 
+		case PF_ARM_JAZELLE:
 			if (caps & HWCAP_JAVA)
 				ret = TRUE;
 
 			break;
+
 		case PF_ARM_DSP:
-
 			if (caps & HWCAP_EDSP)
 				ret = TRUE;
 
 			break;
+
 		case PF_ARM_MPU:
-
 			if (caps & HWCAP_EDSP)
 				ret = TRUE;
 
 			break;
-		case PF_ARM_THUMB2:
 
+		case PF_ARM_THUMB2:
 			if ((caps & HWCAP_IDIVT) || (caps & HWCAP_VFPv4))
 				ret = TRUE;
 
 			break;
-		case PF_ARM_T2EE:
 
+		case PF_ARM_T2EE:
 			if (caps & HWCAP_THUMBEE)
 				ret = TRUE;
 
 			break;
-		case PF_ARM_INTEL_WMMX:
 
+		case PF_ARM_INTEL_WMMX:
 			if (caps & HWCAP_IWMMXT)
 				ret = TRUE;
 
 			break;
+
 		default:
 			break;
 	}
@@ -613,35 +610,35 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 	switch (ProcessorFeature)
 	{
 		case PF_MMX_INSTRUCTIONS_AVAILABLE:
-
 			if (d & D_BIT_MMX)
 				ret = TRUE;
 
 			break;
-		case PF_XMMI_INSTRUCTIONS_AVAILABLE:
 
+		case PF_XMMI_INSTRUCTIONS_AVAILABLE:
 			if (d & D_BIT_SSE)
 				ret = TRUE;
 
 			break;
-		case PF_XMMI64_INSTRUCTIONS_AVAILABLE:
 
+		case PF_XMMI64_INSTRUCTIONS_AVAILABLE:
 			if (d & D_BIT_SSE2)
 				ret = TRUE;
 
 			break;
-		case PF_3DNOW_INSTRUCTIONS_AVAILABLE:
 
+		case PF_3DNOW_INSTRUCTIONS_AVAILABLE:
 			if (d & D_BIT_3DN)
 				ret = TRUE;
 
 			break;
-		case PF_SSE3_INSTRUCTIONS_AVAILABLE:
 
+		case PF_SSE3_INSTRUCTIONS_AVAILABLE:
 			if (c & C_BIT_SSE3)
 				ret = TRUE;
 
 			break;
+
 		default:
 			break;
 	}
@@ -664,31 +661,30 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 	switch (ProcessorFeature)
 	{
 		case PF_EX_ARM_VFP1:
-
 			if (caps & HWCAP_VFP)
 				ret = TRUE;
 
 			break;
-		case PF_EX_ARM_VFP3D16:
 
+		case PF_EX_ARM_VFP3D16:
 			if (caps & HWCAP_VFPv3D16)
 				ret = TRUE;
 
 			break;
-		case PF_EX_ARM_VFP4:
 
+		case PF_EX_ARM_VFP4:
 			if (caps & HWCAP_VFPv4)
 				ret = TRUE;
 
 			break;
-		case PF_EX_ARM_IDIVA:
 
+		case PF_EX_ARM_IDIVA:
 			if (caps & HWCAP_IDIVA)
 				ret = TRUE;
 
 			break;
-		case PF_EX_ARM_IDIVT:
 
+		case PF_EX_ARM_IDIVT:
 			if (caps & HWCAP_IDIVT)
 				ret = TRUE;
 
@@ -703,36 +699,36 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 	switch (ProcessorFeature)
 	{
 		case PF_EX_LZCNT:
-
 			if (c & C_BIT_LZCNT)
 				ret = TRUE;
 
 			break;
-		case PF_EX_3DNOW_PREFETCH:
 
+		case PF_EX_3DNOW_PREFETCH:
 			if (c & C_BIT_3DNP)
 				ret = TRUE;
 
 			break;
-		case PF_EX_SSSE3:
 
+		case PF_EX_SSSE3:
 			if (c & C_BIT_SSSE3)
 				ret = TRUE;
 
 			break;
-		case PF_EX_SSE41:
 
+		case PF_EX_SSE41:
 			if (c & C_BIT_SSE41)
 				ret = TRUE;
 
 			break;
-		case PF_EX_SSE42:
 
+		case PF_EX_SSE42:
 			if (c & C_BIT_SSE42)
 				ret = TRUE;
 
 			break;
 #if defined(__GNUC__) && defined(__AVX__)
+
 		case PF_EX_AVX:
 		case PF_EX_FMA:
 		case PF_EX_AVX_AES:
@@ -753,20 +749,20 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 						case PF_EX_AVX:
 							ret = TRUE;
 							break;
-						case PF_EX_FMA:
 
+						case PF_EX_FMA:
 							if (c & C_BIT_FMA)
 								ret = TRUE;
 
 							break;
-						case PF_EX_AVX_AES:
 
+						case PF_EX_AVX_AES:
 							if (c & C_BIT_AES)
 								ret = TRUE;
 
 							break;
-						case PF_EX_AVX_PCLMULQDQ:
 
+						case PF_EX_AVX_PCLMULQDQ:
 							if (c & C_BIT_PCLMULQDQ)
 								ret = TRUE;
 
@@ -776,6 +772,7 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 			}
 			break;
 #endif //__AVX__
+
 		default:
 			break;
 	}

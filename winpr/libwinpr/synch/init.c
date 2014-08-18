@@ -27,7 +27,7 @@
 #include <winpr/interlocked.h>
 
 #include "../log.h"
-#define TAG "com.winpr.sync"
+#define TAG WINPR_TAG("sync")
 
 #if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 
@@ -57,6 +57,7 @@ BOOL InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parame
 			case 2:
 				/* already completed successfully */
 				return TRUE;
+
 			case 0:
 
 				/* first time */
@@ -77,9 +78,11 @@ BOOL InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parame
 				/* the init function returned an error,  reset the status */
 				InitOnce->Ptr = (PVOID)0;
 				return FALSE;
+
 			case 1:
 				/* in progress */
 				break;
+
 			default:
 				WLog_ERR(TAG, "internal error");
 				return FALSE;

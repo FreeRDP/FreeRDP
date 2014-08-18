@@ -26,7 +26,7 @@
 
 #include "pool.h"
 #include "../log.h"
-#define TAG "pool"
+#define TAG WINPR_TAG("pool")
 
 #ifdef _WIN32
 
@@ -34,11 +34,11 @@ static BOOL module_initialized = FALSE;
 static BOOL module_available = FALSE;
 static HMODULE kernel32_module = NULL;
 
-static PTP_WORK (WINAPI * pCreateThreadpoolWork)(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_ENVIRON pcbe);
-static VOID (WINAPI * pCloseThreadpoolWork)(PTP_WORK pwk);
-static VOID (WINAPI * pSubmitThreadpoolWork)(PTP_WORK pwk);
-static BOOL (WINAPI * pTrySubmitThreadpoolCallback)(PTP_SIMPLE_CALLBACK pfns, PVOID pv, PTP_CALLBACK_ENVIRON pcbe);
-static VOID (WINAPI * pWaitForThreadpoolWorkCallbacks)(PTP_WORK pwk, BOOL fCancelPendingCallbacks);
+static PTP_WORK(WINAPI *pCreateThreadpoolWork)(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_ENVIRON pcbe);
+static VOID (WINAPI *pCloseThreadpoolWork)(PTP_WORK pwk);
+static VOID (WINAPI *pSubmitThreadpoolWork)(PTP_WORK pwk);
+static BOOL (WINAPI *pTrySubmitThreadpoolCallback)(PTP_SIMPLE_CALLBACK pfns, PVOID pv, PTP_CALLBACK_ENVIRON pcbe);
+static VOID (WINAPI *pWaitForThreadpoolWorkCallbacks)(PTP_WORK pwk, BOOL fCancelPendingCallbacks);
 
 static void module_init()
 {
@@ -52,12 +52,11 @@ static void module_init()
 		return;
 
 	module_available = TRUE;
-
-	pCreateThreadpoolWork = (void*) GetProcAddress(kernel32_module, "CreateThreadpoolWork");
-	pCloseThreadpoolWork = (void*) GetProcAddress(kernel32_module, "CloseThreadpoolWork");
-	pSubmitThreadpoolWork = (void*) GetProcAddress(kernel32_module, "SubmitThreadpoolWork");
-	pTrySubmitThreadpoolCallback = (void*) GetProcAddress(kernel32_module, "TrySubmitThreadpoolCallback");
-	pWaitForThreadpoolWorkCallbacks = (void*) GetProcAddress(kernel32_module, "WaitForThreadpoolWorkCallbacks");
+	pCreateThreadpoolWork = (void *) GetProcAddress(kernel32_module, "CreateThreadpoolWork");
+	pCloseThreadpoolWork = (void *) GetProcAddress(kernel32_module, "CloseThreadpoolWork");
+	pSubmitThreadpoolWork = (void *) GetProcAddress(kernel32_module, "SubmitThreadpoolWork");
+	pTrySubmitThreadpoolCallback = (void *) GetProcAddress(kernel32_module, "TrySubmitThreadpoolCallback");
+	pWaitForThreadpoolWorkCallbacks = (void *) GetProcAddress(kernel32_module, "WaitForThreadpoolWorkCallbacks");
 }
 
 #endif
@@ -67,12 +66,12 @@ static void module_init()
 PTP_WORK CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_ENVIRON pcbe)
 {
 	PTP_WORK work = NULL;
-
 #ifdef _WIN32
 	module_init();
 
 	if (pCreateThreadpoolWork)
 		return pCreateThreadpoolWork(pfnwk, pv, pcbe);
+
 #else
 	work = (PTP_WORK) malloc(sizeof(TP_WORK));
 
@@ -86,8 +85,8 @@ PTP_WORK CreateThreadpoolWork(PTP_WORK_CALLBACK pfnwk, PVOID pv, PTP_CALLBACK_EN
 
 		work->CallbackEnvironment = pcbe;
 	}
-#endif
 
+#endif
 	return work;
 }
 
@@ -98,6 +97,7 @@ VOID CloseThreadpoolWork(PTP_WORK pwk)
 
 	if (pCloseThreadpoolWork)
 		pCloseThreadpoolWork(pwk);
+
 #else
 	free(pwk);
 #endif
@@ -110,12 +110,11 @@ VOID SubmitThreadpoolWork(PTP_WORK pwk)
 
 	if (pSubmitThreadpoolWork)
 		pSubmitThreadpoolWork(pwk);
+
 #else
 	PTP_POOL pool;
 	PTP_CALLBACK_INSTANCE callbackInstance;
-
 	pool = pwk->CallbackEnvironment->Pool;
-
 	callbackInstance = (PTP_CALLBACK_INSTANCE) malloc(sizeof(TP_CALLBACK_INSTANCE));
 
 	if (callbackInstance)
@@ -124,6 +123,7 @@ VOID SubmitThreadpoolWork(PTP_WORK pwk)
 		CountdownEvent_AddCount(pool->WorkComplete, 1);
 		Queue_Enqueue(pool->PendingQueue, callbackInstance);
 	}
+
 #endif
 }
 
@@ -134,6 +134,7 @@ BOOL TrySubmitThreadpoolCallback(PTP_SIMPLE_CALLBACK pfns, PVOID pv, PTP_CALLBAC
 
 	if (pTrySubmitThreadpoolCallback)
 		return pTrySubmitThreadpoolCallback(pfns, pv, pcbe);
+
 #else
 #endif
 	return FALSE;
@@ -146,15 +147,16 @@ VOID WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks)
 
 	if (pWaitForThreadpoolWorkCallbacks)
 		pWaitForThreadpoolWorkCallbacks(pwk, fCancelPendingCallbacks);
+
 #else
 	HANDLE event;
 	PTP_POOL pool;
-
 	pool = pwk->CallbackEnvironment->Pool;
 	event = CountdownEvent_WaitHandle(pool->WorkComplete);
 
 	if (WaitForSingleObject(event, INFINITE) != WAIT_OBJECT_0)
 		WLog_ERR(TAG, "error waiting on work completion");
+
 #endif
 }
 

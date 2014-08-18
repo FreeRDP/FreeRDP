@@ -40,7 +40,7 @@
 #include "ntlm_message.h"
 
 #include "../../log.h"
-#define TAG "sspi.NTLM"
+#define TAG WINPR_TAG("sspi.NTLM")
 
 char *NTLM_PACKAGE_NAME = "NTLM";
 
@@ -935,7 +935,7 @@ SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 	if (memcmp(signature_buffer->pvBuffer, expected_signature, 16) != 0)
 	{
 		/* signature verification failed! */
-		WLog_ERR(TAG, "signature verification failed, something nasty is going on!\n");
+		WLog_ERR(TAG, "signature verification failed, something nasty is going on!");
 		WLog_ERR(TAG, "Expected Signature:");
 		winpr_HexDump(TAG, WLOG_ERROR, expected_signature, 16);
 		WLog_ERR(TAG, "Actual Signature:");

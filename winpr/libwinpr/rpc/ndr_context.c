@@ -32,7 +32,7 @@
 #include "ndr_private.h"
 
 #include "../log.h"
-#define TAG "rpc"
+#define TAG WINPR_TAG("rpc")
 
 void NdrContextHandleBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {

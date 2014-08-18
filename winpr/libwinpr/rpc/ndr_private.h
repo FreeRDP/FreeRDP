@@ -22,10 +22,13 @@
 
 #include <winpr/rpc.h>
 
+#include "../log.h"
+#define TAG WINPR_TAG("rpc")
+
 #ifndef _WIN32
 
-void NdrpAlignLength(ULONG* length, unsigned int alignment);
-void NdrpIncrementLength(ULONG* length, unsigned int size);
+void NdrpAlignLength(ULONG *length, unsigned int alignment);
+void NdrpIncrementLength(ULONG *length, unsigned int size);
 
 extern const NDR_TYPE_SIZE_ROUTINE pfnSizeRoutines[];
 extern const NDR_TYPE_MARSHALL_ROUTINE pfnMarshallRoutines[];
@@ -37,7 +40,7 @@ extern const char SimpleTypeBufferSize[];
 extern const char SimpleTypeMemorySize[];
 
 extern const char NdrTypeFlags[];
-extern const char* FC_TYPE_STRINGS[];
+extern const char *FC_TYPE_STRINGS[];
 
 #include "ndr_correlation.h"
 

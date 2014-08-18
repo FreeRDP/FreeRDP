@@ -31,9 +31,6 @@
 #include "ndr_correlation.h"
 #include "ndr_private.h"
 
-#include "../log.h"
-#define TAG "rpc"
-
 /*
  * Correlation Descriptors: http://msdn.microsoft.com/en-us/library/windows/desktop/aa373607/
  *
@@ -89,18 +86,23 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMem
 		case FC_DEREFERENCE:
 			ptr = *(LPVOID *)((char *) ptr + offset);
 			break;
+
 		case FC_DIV_2:
 			ptr = (char *) ptr + offset;
 			break;
+
 		case FC_MULT_2:
 			ptr = (char *) ptr + offset;
 			break;
+
 		case FC_SUB_1:
 			ptr = (char *) ptr + offset;
 			break;
+
 		case FC_ADD_1:
 			ptr = (char *) ptr + offset;
 			break;
+
 		case FC_CALLBACK:
 			{
 				WLog_ERR(TAG, "warning: NdrpComputeConformance FC_CALLBACK unimplemented\n");
@@ -116,23 +118,29 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMem
 		case FC_LONG:
 			data = *(LONG *) ptr;
 			break;
+
 		case FC_ULONG:
 			data = *(ULONG *) ptr;
 			break;
+
 		case FC_SHORT:
 			data = *(SHORT *) ptr;
 			break;
+
 		case FC_USHORT:
 			data = *(USHORT *) ptr;
 			break;
+
 		case FC_CHAR:
 		case FC_SMALL:
 			data = *(CHAR *) ptr;
 			break;
+
 		case FC_BYTE:
 		case FC_USMALL:
 			data = *(BYTE *) ptr;
 			break;
+
 		case FC_HYPER:
 			data = (ULONG_PTR) *(ULONGLONG *) ptr;
 			break;
@@ -144,18 +152,23 @@ PFORMAT_STRING NdrpComputeCount(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMem
 		case FC_DEREFERENCE:
 			*pCount = data;
 			break;
+
 		case FC_DIV_2:
 			*pCount = data / 1;
 			break;
+
 		case FC_MULT_2:
 			*pCount = data * 1;
 			break;
+
 		case FC_SUB_1:
 			*pCount = data - 1;
 			break;
+
 		case FC_ADD_1:
 			*pCount = data + 1;
 			break;
+
 		case FC_CALLBACK:
 			break;
 	}

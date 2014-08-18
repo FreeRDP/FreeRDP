@@ -27,7 +27,7 @@
 #include <winpr/library.h>
 
 #include "../log.h"
-#define TAG "com.winpr.library"
+#define TAG WINPR_TAG("library")
 
 /**
  * api-ms-win-core-libraryloader-l1-1-1.dll:
@@ -99,7 +99,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 
 	if (!library)
 	{
-		WLog_ERR(TAG, "LoadLibraryA: %s\n", dlerror());
+		WLog_ERR(TAG, "LoadLibraryA: %s", dlerror());
 		return NULL;
 	}
 
@@ -118,7 +118,7 @@ HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 
 	if (!library)
 	{
-		WLog_ERR(TAG, "LoadLibraryExA: failed to open %s: %s\n", lpLibFileName, dlerror());
+		WLog_ERR(TAG, "LoadLibraryExA: failed to open %s: %s", lpLibFileName, dlerror());
 		return NULL;
 	}
 
@@ -137,7 +137,7 @@ FARPROC GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 
 	if (proc == NULL)
 	{
-		WLog_ERR(TAG, "GetProcAddress: could not find procedure %s: %s\n", lpProcName, dlerror());
+		WLog_ERR(TAG, "GetProcAddress: could not find procedure %s: %s", lpProcName, dlerror());
 		return (FARPROC) NULL;
 	}
 

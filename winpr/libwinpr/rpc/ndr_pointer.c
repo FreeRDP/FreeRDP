@@ -31,9 +31,6 @@
 #include "ndr_pointer.h"
 #include "ndr_private.h"
 
-#include "../log.h"
-#define TAG "rpc"
-
 /**
  * Pointer Layout: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374376/
  *
@@ -142,13 +139,14 @@ void NdrpPointerBufferSize(unsigned char *pMemory, PFORMAT_STRING pFormat, PMIDL
 	{
 		case FC_RP: /* Reference Pointer */
 			break;
+
 		case FC_UP: /* Unique Pointer */
 		case FC_OP: /* Unique Pointer in an object interface */
-
 			if (!pMemory)
 				return;
 
 			break;
+
 		case FC_FP: /* Full Pointer */
 			WLog_ERR(TAG, "warning: FC_FP unimplemented");
 			break;
@@ -195,7 +193,7 @@ PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, 
 
 		if (pFormat[1] == FC_VARIABLE_OFFSET)
 		{
-			pMemory += pStubMsg->Offset * *((unsigned short *) &pFormat[1]);
+			pMemory += pStubMsg->Offset **((unsigned short *) &pFormat[1]);
 		}
 	}
 

@@ -33,7 +33,7 @@
 #include "ntlm_av_pairs.h"
 
 #include "../../log.h"
-#define TAG "sspi.NTLM"
+#define TAG WINPR_TAG("sspi.NTLM")
 
 const char *const AV_PAIR_STRINGS[] =
 {

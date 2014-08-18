@@ -33,7 +33,7 @@
 
 #include "../handle/handle.h"
 #include "../log.h"
-#define TAG "synch.semaphore"
+#define TAG WINPR_TAG("synch.semaphore")
 
 HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount, LONG lMaximumCount, LPCWSTR lpName)
 {

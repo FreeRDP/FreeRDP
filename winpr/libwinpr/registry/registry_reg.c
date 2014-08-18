@@ -30,7 +30,7 @@
 #include "registry_reg.h"
 
 #include "../log.h"
-#define TAG "registry"
+#define TAG WINPR_TAG("registry")
 
 #define WINPR_HKLM_HIVE		"/etc/winpr/HKLM.reg"
 
@@ -163,7 +163,7 @@ static RegVal *reg_load_value(Reg *reg, RegKey *key)
 	}
 	else
 	{
-		WLog_ERR(TAG, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		WLog_ERR(TAG, "unimplemented format: %s", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 
 	if (!key->values)
@@ -315,7 +315,7 @@ static void reg_unload_value(Reg *reg, RegVal *value)
 	}
 	else
 	{
-		WLog_ERR(TAG, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		WLog_ERR(TAG, "unimplemented format: %s", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 
 	free(value);
@@ -408,15 +408,15 @@ void reg_print_value(Reg *reg, RegVal *value)
 
 	if (value->type == REG_DWORD)
 	{
-		WLog_INFO(TAG, "dword:%08X\n", (int) value->data.dword);
+		WLog_INFO(TAG, "dword:%08X", (int) value->data.dword);
 	}
 	else if (value->type == REG_SZ)
 	{
-		WLog_INFO(TAG, "%s\"\n", value->data.string);
+		WLog_INFO(TAG, "%s\"", value->data.string);
 	}
 	else
 	{
-		WLog_ERR(TAG, "unimplemented format: %s\n", REG_DATA_TYPE_STRINGS[value->type]);
+		WLog_ERR(TAG, "unimplemented format: %s", REG_DATA_TYPE_STRINGS[value->type]);
 	}
 }
 
@@ -424,7 +424,7 @@ void reg_print_key(Reg *reg, RegKey *key)
 {
 	RegVal *pValue;
 	pValue = key->values;
-	WLog_INFO(TAG, "[%s]\n", key->name);
+	WLog_INFO(TAG, "[%s]", key->name);
 
 	while (pValue != NULL)
 	{

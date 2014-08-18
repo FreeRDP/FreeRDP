@@ -27,7 +27,7 @@
 #include <openssl/err.h>
 
 #include "../log.h"
-#define TAG "utils.ssl"
+#define TAG WINPR_TAG("utils.ssl")
 
 static int g_winpr_openssl_num_locks = 0;
 static HANDLE *g_winpr_openssl_locks = NULL;

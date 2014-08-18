@@ -33,7 +33,7 @@
 #include "wtsapi.h"
 
 #include "../log.h"
-#define TAG "wtsapi"
+#define TAG WINPR_TAG("wtsapi")
 
 /**
  * Remote Desktop Services API Functions:
@@ -611,14 +611,14 @@ void InitializeWtsApiStubs_FreeRDS()
 	if (IniFile_Parse(ini, "/var/run/freerds.instance") < 0)
 	{
 		IniFile_Free(ini);
-		WLog_ERR(TAG, "failed to parse freerds.instance\n");
+		WLog_ERR(TAG, "failed to parse freerds.instance");
 		LoadAndInitialize(FREERDS_LIBRARY_NAME);
 		return;
 	}
 
 	prefix = IniFile_GetKeyValueString(ini, "FreeRDS", "prefix");
 	libdir = IniFile_GetKeyValueString(ini, "FreeRDS", "libdir");
-	WLog_INFO(TAG, "FreeRDS (prefix / libdir): %s / %s\n", prefix, libdir);
+	WLog_INFO(TAG, "FreeRDS (prefix / libdir): %s / %s", prefix, libdir);
 
 	if (prefix && libdir)
 	{

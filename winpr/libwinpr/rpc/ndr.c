@@ -40,7 +40,7 @@
 #include "ndr_private.h"
 
 #include "../log.h"
-#define TAG "rpc"
+#define TAG WINPR_TAG("rpc")
 
 /**
  * MSRPC NDR Types Technical Overview:
@@ -319,6 +319,7 @@ CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING
 					case 1:
 						*(float *) &stackTop[i] = *(float *) &fpuStack[i];
 						break;
+
 					case 2:
 						*(double *) &stackTop[i] = *(double *) &fpuStack[i];
 						break;

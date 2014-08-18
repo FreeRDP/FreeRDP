@@ -44,7 +44,7 @@
 #include "../pipe/pipe.h"
 
 #include "../log.h"
-#define TAG "synch.event"
+#define TAG WINPR_TAG("synch.event")
 
 CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
 

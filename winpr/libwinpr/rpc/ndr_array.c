@@ -27,11 +27,9 @@
 #include <winpr/rpc.h>
 
 #include "ndr_array.h"
+#include "ndr_private.h"
 
 #ifndef _WIN32
-
-#include "../log.h"
-#define TAG "rpc"
 
 void NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {

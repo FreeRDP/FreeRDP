@@ -35,7 +35,7 @@
 #endif
 
 #include "../log.h"
-#define TAG "file"
+#define TAG WINPR_TAG("file")
 
 /**
  * File System Behavior in the Microsoft Windows Environment:
@@ -189,7 +189,7 @@ BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName,
 	}
 	else if (*lpWildcard == '~')
 	{
-		WLog_ERR(TAG, "warning: unimplemented '~' pattern match\n");
+		WLog_ERR(TAG, "warning: unimplemented '~' pattern match");
 		return TRUE;
 	}
 

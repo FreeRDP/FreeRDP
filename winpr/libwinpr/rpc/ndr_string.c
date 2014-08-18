@@ -29,9 +29,7 @@
 #ifndef _WIN32
 
 #include "ndr_string.h"
-
-#include "../log.h"
-#define TAG "rpc"
+#include "ndr_private.h"
 
 void NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat)
 {

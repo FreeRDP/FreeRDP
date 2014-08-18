@@ -22,15 +22,13 @@
 
 #include <winpr/wlog.h>
 
-#define WLOG_PRINT(level, file, fkt, line, dbg_str, fmt, ...) \
+#define WINPR_TAG(tag) "com.winpr." tag
+
+#define WLOG_PRINT(level, file, fkt, line, tag, fmt, ...) \
 	do { \
-		const char *hdr = "com.winpr."; \
-		char tag[1024] = { 0 }; \
 		wLogMessage msg; \
 		wLog *log; \
 		\
-		strncat(tag, hdr, sizeof(tag)); \
-		strncat(tag, dbg_str, sizeof(tag) - sizeof(hdr)); \
 		log = WLog_Get(tag); \
 		\
 		msg.Type = WLOG_MESSAGE_TEXT; \

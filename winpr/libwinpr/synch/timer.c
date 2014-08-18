@@ -40,7 +40,7 @@
 #include "../handle/handle.h"
 
 #include "../log.h"
-#define TAG "synch.timer"
+#define TAG WINPR_TAG("synch.timer")
 
 #ifdef WITH_POSIX_TIMER
 
@@ -258,7 +258,7 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER *lpDueTime, LONG lPerio
 
 		if (status)
 		{
-			WLog_ERR(TAG, "timerfd_settime failure: %d\n", status);
+			WLog_ERR(TAG, "timerfd_settime failure: %d", status);
 			return FALSE;
 		}
 

@@ -28,9 +28,15 @@
 #include <winpr/print.h>
 #include <winpr/environment.h>
 
+#if defined(ANDROID)
+#include <android/log.h>
+#endif
+
 #include <winpr/wlog.h>
 
 #include "wlog/wlog.h"
+
+#include "../../log.h"
 
 /**
  * References for general logging concepts:
@@ -60,8 +66,7 @@ static void log_recursion(const char *file, const char *fkt, int line)
 {
 	/* TODO: Stack trace here! */
 #if defined(ANDROID)
-	const char *tag = "com.winpr.utils.wlog";
-	level = ANDROID_LOG_FATAL;
+	const char *tag = WINPR_TAG("utils.wlog");
 	__android_log_print(ANDROID_LOG_FATAL, tag, "Recursion detected!!!");
 	__android_log_print(ANDROID_LOG_FATAL, tag, "Check %s [%s:%d]", fkt, file, line);
 #else

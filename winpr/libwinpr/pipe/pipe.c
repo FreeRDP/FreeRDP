@@ -46,7 +46,7 @@
 #include "pipe.h"
 
 #include "../log.h"
-#define TAG "pipe"
+#define TAG WINPR_TAG("pipe")
 
 /*
  * Since the WinPR implementation of named pipes makes use of UNIX domain
@@ -134,7 +134,7 @@ static void winpr_unref_named_pipe(WINPR_NAMED_PIPE *pNamedPipe)
 
 	assert(pNamedPipe->name);
 	assert(g_NamedPipeServerSockets);
-	//WLog_VRB(TAG, "%s: %p (%s)\n", __FUNCTION__, pNamedPipe, pNamedPipe->name);
+	//WLog_VRB(TAG, "%s: %p (%s)", __FUNCTION__, pNamedPipe, pNamedPipe->name);
 	ArrayList_Lock(g_NamedPipeServerSockets);
 
 	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
@@ -150,8 +150,8 @@ static void winpr_unref_named_pipe(WINPR_NAMED_PIPE *pNamedPipe)
 
 			if (--baseSocket->references == 0)
 			{
-				//WLog_DBG(TAG, "%s: removing shared server socked resource\n", __FUNCTION__);
-				//WLog_DBG(TAG, "%s: closing shared serverfd %d\n", __FUNCTION__, baseSocket->serverfd);
+				//WLog_DBG(TAG, "%s: removing shared server socked resource", __FUNCTION__);
+				//WLog_DBG(TAG, "%s: closing shared serverfd %d", __FUNCTION__, baseSocket->serverfd);
 				ArrayList_Remove(g_NamedPipeServerSockets, baseSocket);
 				close(baseSocket->serverfd);
 				free(baseSocket->name);
@@ -211,7 +211,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 		if (!strcmp(baseSocket->name, lpName))
 		{
 			serverfd = baseSocket->serverfd;
-			//WLog_DBG(TAG, "using shared socked resource for pipe %p (%s)\n", pNamedPipe, lpName);
+			//WLog_DBG(TAG, "using shared socked resource for pipe %p (%s)", pNamedPipe, lpName);
 			break;
 		}
 	}
@@ -238,7 +238,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		if ((serverfd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
-			WLog_ERR(TAG, "CreateNamedPipeA: socket error, %s\n", strerror(errno));
+			WLog_ERR(TAG, "CreateNamedPipeA: socket error, %s", strerror(errno));
 			goto out;
 		}
 
@@ -248,13 +248,13 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		if (bind(serverfd, (struct sockaddr *) &s, sizeof(struct sockaddr_un)) == -1)
 		{
-			WLog_ERR(TAG, "CreateNamedPipeA: bind error, %s\n", strerror(errno));
+			WLog_ERR(TAG, "CreateNamedPipeA: bind error, %s", strerror(errno));
 			goto out;
 		}
 
 		if (listen(serverfd, 2) == -1)
 		{
-			WLog_ERR(TAG, "CreateNamedPipeA: listen error, %s\n", strerror(errno));
+			WLog_ERR(TAG, "CreateNamedPipeA: listen error, %s", strerror(errno));
 			goto out;
 		}
 
@@ -272,11 +272,11 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 		baseSocket->serverfd = serverfd;
 		baseSocket->references = 0;
 		ArrayList_Add(g_NamedPipeServerSockets, baseSocket);
-		//WLog_DBG(TAG, "created shared socked resource for pipe %p (%s). base serverfd = %d\n", pNamedPipe, lpName, serverfd);
+		//WLog_DBG(TAG, "created shared socked resource for pipe %p (%s). base serverfd = %d", pNamedPipe, lpName, serverfd);
 	}
 
 	pNamedPipe->serverfd = dup(baseSocket->serverfd);
-	//WLog_DBG(TAG, "using serverfd %d (duplicated from %d)\n", pNamedPipe->serverfd, baseSocket->serverfd);
+	//WLog_DBG(TAG, "using serverfd %d (duplicated from %d)", pNamedPipe->serverfd, baseSocket->serverfd);
 	pNamedPipe->pfnUnrefNamedPipe = winpr_unref_named_pipe;
 	baseSocket->references++;
 
@@ -338,7 +338,7 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 
 		if (status < 0)
 		{
-			WLog_ERR(TAG, "ConnectNamedPipe: accept error\n");
+			WLog_ERR(TAG, "ConnectNamedPipe: accept error");
 			return FALSE;
 		}
 
@@ -381,12 +381,14 @@ BOOL DisconnectNamedPipe(HANDLE hNamedPipe)
 BOOL PeekNamedPipe(HANDLE hNamedPipe, LPVOID lpBuffer, DWORD nBufferSize,
 				   LPDWORD lpBytesRead, LPDWORD lpTotalBytesAvail, LPDWORD lpBytesLeftThisMessage)
 {
+	WLog_ERR(TAG, "Not implemented");
 	return TRUE;
 }
 
 BOOL TransactNamedPipe(HANDLE hNamedPipe, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer,
 					   DWORD nOutBufferSize, LPDWORD lpBytesRead, LPOVERLAPPED lpOverlapped)
 {
+	WLog_ERR(TAG, "Not implemented");
 	return TRUE;
 }
 
@@ -427,6 +429,7 @@ BOOL WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut)
 
 BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 {
+	WLog_ERR(TAG, "Not implemented");
 	return TRUE;
 }
 
@@ -468,16 +471,19 @@ BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCol
 
 BOOL ImpersonateNamedPipeClient(HANDLE hNamedPipe)
 {
+	WLog_ERR(TAG, "Not implemented");
 	return FALSE;
 }
 
 BOOL GetNamedPipeClientComputerNameA(HANDLE Pipe, LPCSTR ClientComputerName, ULONG ClientComputerNameLength)
 {
+	WLog_ERR(TAG, "Not implemented");
 	return FALSE;
 }
 
 BOOL GetNamedPipeClientComputerNameW(HANDLE Pipe, LPCWSTR ClientComputerName, ULONG ClientComputerNameLength)
 {
+	WLog_ERR(TAG, "Not implemented");
 	return FALSE;
 }
 
