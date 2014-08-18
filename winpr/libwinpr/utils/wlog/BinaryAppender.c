@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <assert.h>
+
 #include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
@@ -70,6 +72,9 @@ int WLog_BinaryAppender_Open(wLog* log, wLogBinaryAppender* appender)
 	DWORD ProcessId;
 
 	ProcessId = GetCurrentProcessId();
+
+	if (!log || !appender)
+		return -1;
 
 	if (!appender->FilePath)
 	{
@@ -121,6 +126,9 @@ int WLog_BinaryAppender_WriteMessage(wLog* log, wLogBinaryAppender* appender, wL
 	int FileNameLength;
 	int FunctionNameLength;
 	int TextStringLength;
+
+	if (!log || !appender || !message)
+		return -1;
 
 	fp = appender->FileDescriptor;
 
