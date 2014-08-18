@@ -38,6 +38,8 @@ static int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 	return 1;
 }
 
+#if 0
+
 static int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	Stream_Write_UINT16(s, header->Type); /* Type (2 bytes) */
@@ -65,6 +67,8 @@ static int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 
 	return 1;
 }
+
+#endif
 
 static int encomsp_recv_change_participant_control_level_pdu(EncomspServerContext* context, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
