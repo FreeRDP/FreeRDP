@@ -230,9 +230,9 @@ BOOL update_read_palette(rdpUpdate* update, wStream* s, PALETTE_UPDATE* palette_
 	{
 		entry = &palette_update->entries[i];
 
-		Stream_Read_UINT8(s, entry->blue);
-		Stream_Read_UINT8(s, entry->green);
 		Stream_Read_UINT8(s, entry->red);
+		Stream_Read_UINT8(s, entry->green);
+		Stream_Read_UINT8(s, entry->blue);
 	}
 	return TRUE;
 }
@@ -566,6 +566,14 @@ void update_post_connect(rdpUpdate* update)
 	IFCALL(update->altsec->SwitchSurface, update->context, &(update->altsec->switch_surface));
 
 	update->initialState = FALSE;
+}
+
+void update_post_disconnect(rdpUpdate* update)
+{
+	update->asynchronous = update->context->settings->AsyncUpdate;
+
+	if (update->asynchronous)
+		update_message_proxy_free(update->proxy);
 }
 
 static void update_begin_paint(rdpContext* context)
@@ -1702,9 +1710,6 @@ void update_free(rdpUpdate* update)
 		free(update->secondary);
 		free(update->altsec);
 		free(update->window);
-
-		if (update->asynchronous)
-			update_message_proxy_free(update->proxy);
 
 		MessageQueue_Free(update->queue);
 

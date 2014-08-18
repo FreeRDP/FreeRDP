@@ -317,6 +317,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 	rdp = instance->context->rdp;
 	transport_disconnect(rdp->transport);
 
+	update_post_disconnect(instance->update);
 	IFCALL(instance->PostDisconnect, instance);
 
 	if (instance->update->pcap_rfx)
