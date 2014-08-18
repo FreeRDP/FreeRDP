@@ -1,8 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Server Graphical Updates
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +16,24 @@
  * limitations under the License.
  */
 
-#ifndef __XF_UPDATE_H
-#define __XF_UPDATE_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "xfreerdp.h"
+#include "shadow.h"
 
-void* xf_update_thread(void* param);
+#include "shadow_remdesk.h"
 
-#endif /* __XF_UPDATE_H */
+int shadow_client_remdesk_init(rdpShadowClient* client)
+{
+	RemdeskServerContext* remdesk;
 
+	remdesk = client->remdesk = remdesk_server_context_new(client->vcm);
+
+	remdesk->custom = (void*) client;
+
+	if (client->remdesk)
+		client->remdesk->Start(client->remdesk);
+
+	return 1;
+}

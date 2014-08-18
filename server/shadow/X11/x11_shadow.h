@@ -1,8 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP X11 Server
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2011-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +16,18 @@
  * limitations under the License.
  */
 
-#ifndef __XFREERDP_H
-#define __XFREERDP_H
+#ifndef FREERDP_SHADOW_SERVER_X11_H
+#define FREERDP_SHADOW_SERVER_X11_H
 
-#include "xf_interface.h"
+#include <freerdp/server/shadow.h>
 
-#include <freerdp/api.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/listener.h>
-#include <freerdp/codec/color.h>
+typedef struct x11_shadow_subsystem x11ShadowSubsystem;
+
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/stream.h>
+#include <winpr/collections.h>
 
 #include <X11/Xlib.h>
 
@@ -45,8 +47,16 @@
 #include <X11/extensions/Xdamage.h>
 #endif
 
-struct xf_info
+#ifdef WITH_XINERAMA
+#include <X11/extensions/Xinerama.h>
+#endif
+
+struct x11_shadow_subsystem
 {
+	RDP_SHADOW_SUBSYSTEM_COMMON();
+
+	HANDLE thread;
+
 	int bpp;
 	int xfds;
 	int depth;
@@ -58,10 +68,12 @@ struct xf_info
 	Visual* visual;
 	Display* display;
 	int scanline_pad;
-	int bytesPerPixel;
-	HCLRCONV clrconv;
+	BOOL composite;
+
 	BOOL use_xshm;
-	int activePeerCount;
+	BOOL use_xfixes;
+	BOOL use_xdamage;
+	BOOL use_xinerama;
 
 	XImage* fb_image;
 	Pixmap fb_pixmap;
@@ -69,7 +81,7 @@ struct xf_info
 	XShmSegmentInfo fb_shm_info;
 
 #ifdef WITH_XDAMAGE
-	GC xdamage_gc;
+	GC xshm_gc;
 	Damage xdamage;
 	int xdamage_notify_event;
 	XserverRegion xdamage_region;
@@ -80,13 +92,14 @@ struct xf_info
 #endif
 };
 
-struct xf_server
-{
-	DWORD port;
-	HANDLE thread;
-	freerdp_listener* listener;
-};
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void* xf_server_thread(void* param);
 
-#endif /* __XFREERDP_H */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_SHADOW_SERVER_X11_H */

@@ -8,6 +8,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestSynchInit.c
 	TestSynchEvent.c
 	TestSynchMutex.c
+	TestSynchBarrier.c
 	TestSynchCritical.c
 	TestSynchSemaphore.c
 	TestSynchThread.c

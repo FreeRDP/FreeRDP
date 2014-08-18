@@ -29,38 +29,7 @@
 
 #include "encomsp_main.h"
 
-EncomspClientContext* encomsp_get_client_interface(encomspPlugin* encomsp)
-{
-	EncomspClientContext* pInterface;
-	pInterface = (EncomspClientContext*) encomsp->channelEntryPoints.pInterface;
-	return pInterface;
-}
-
-int encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
-{
-	UINT32 status = 0;
-
-	if (!encomsp)
-		return -1;
-
-#if 0
-	CLOG_DBG("EncomspWrite (%d)\n", Stream_Length(s));
-	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
-#endif
-
-	status = encomsp->channelEntryPoints.pVirtualChannelWrite(encomsp->OpenHandle,
-			Stream_Buffer(s), (UINT32) Stream_Length(s), s);
-
-	if (status != CHANNEL_RC_OK)
-	{
-		CLOG_ERR( "encomsp_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
-		return -1;
-	}
-
-	return 1;
-}
-
-int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
 		return -1;
@@ -71,7 +40,7 @@ int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 	return 1;
 }
 
-int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	Stream_Write_UINT16(s, header->Type); /* Type (2 bytes) */
 	Stream_Write_UINT16(s, header->Length); /* Length (2 bytes) */
@@ -79,7 +48,7 @@ int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 	return 1;
 }
 
-int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
+static int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 {
 	ZeroMemory(str, sizeof(ENCOMSP_UNICODE_STRING));
 
@@ -99,7 +68,38 @@ int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
 	return 1;
 }
 
-int encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+EncomspClientContext* encomsp_get_client_interface(encomspPlugin* encomsp)
+{
+	EncomspClientContext* pInterface;
+	pInterface = (EncomspClientContext*) encomsp->channelEntryPoints.pInterface;
+	return pInterface;
+}
+
+int encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
+{
+	UINT32 status = 0;
+
+	if (!encomsp)
+		return -1;
+
+#if 0
+	printf("EncomspWrite (%d)\n", Stream_Length(s));
+	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
+#endif
+
+	status = encomsp->channelEntryPoints.pVirtualChannelWrite(encomsp->OpenHandle,
+			Stream_Buffer(s), (UINT32) Stream_Length(s), s);
+
+	if (status != CHANNEL_RC_OK)
+	{
+		fprintf(stderr, "encomsp_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
+		return -1;
+	}
+
+	return 1;
+}
+
+static int encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -140,7 +140,7 @@ int encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 	return 1;
 }
 
-int encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -185,7 +185,7 @@ int encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s, ENC
 	return 1;
 }
 
-int encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -226,7 +226,7 @@ int encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s, ENC
 	return 1;
 }
 
-int encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -272,7 +272,7 @@ int encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 	return 1;
 }
 
-int encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -313,7 +313,7 @@ int encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 	return 1;
 }
 
-int encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -354,7 +354,7 @@ int encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORD
 	return 1;
 }
 
-int encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -400,7 +400,7 @@ int encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s, ENC
 	return 1;
 }
 
-int encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -443,7 +443,7 @@ int encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s, ENC
 	return 1;
 }
 
-int encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -485,7 +485,7 @@ int encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wS
 	return 1;
 }
 
-int encomsp_send_change_participant_control_level_pdu(EncomspClientContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
+static int encomsp_send_change_participant_control_level_pdu(EncomspClientContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
 {
 	wStream* s;
 	encomspPlugin* encomsp;
@@ -509,7 +509,7 @@ int encomsp_send_change_participant_control_level_pdu(EncomspClientContext* cont
 	return 1;
 }
 
-int encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -545,7 +545,7 @@ int encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, 
 	return 1;
 }
 
-int encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;

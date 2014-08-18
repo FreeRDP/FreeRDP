@@ -497,16 +497,21 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 		return FALSE;
 
 	if (hostname[0] == '/')
+		tcp->ipcSocket = TRUE;
+
+	if (tcp->ipcSocket)
 	{
 		tcp->sockfd = freerdp_uds_connect(hostname);
 
 		if (tcp->sockfd < 0)
 			return FALSE;
 
-		tcp->socketBio = BIO_new_fd(tcp->sockfd, 1);
+		tcp->socketBio = BIO_new(BIO_s_simple_socket());
 
 		if (!tcp->socketBio)
 			return FALSE;
+
+		BIO_set_fd(tcp->socketBio, tcp->sockfd, BIO_CLOSE);
 	}
 	else
 	{
@@ -569,7 +574,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 		tcp->socketBio = BIO_new(BIO_s_simple_socket());
 
 		if (!tcp->socketBio)
-			return -1;
+			return FALSE;
 
 		BIO_set_fd(tcp->socketBio, tcp->sockfd, BIO_CLOSE);
 	}
@@ -582,8 +587,11 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 	option_value = 1;
 	option_len = sizeof(option_value);
 
-	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
-		DEBUG_WARN( "%s: unable to set TCP_NODELAY\n", __FUNCTION__);
+	if (!tcp->ipcSocket)
+	{
+		if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
+			fprintf(stderr, "%s: unable to set TCP_NODELAY\n", __FUNCTION__);
+	}
 
 	/* receive buffer must be a least 32 K */
 	if (getsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, &option_len) == 0)
@@ -601,8 +609,11 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 		}
 	}
 
-	if (!tcp_set_keep_alive_mode(tcp))
-		return FALSE;
+	if (!tcp->ipcSocket)
+	{
+		if (!tcp_set_keep_alive_mode(tcp))
+			return FALSE;
+	}
 
 	tcp->bufferedBio = BIO_new(BIO_s_buffered_socket());
 
@@ -641,16 +652,31 @@ BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 	else
 		fcntl(tcp->sockfd, F_SETFL, flags | O_NONBLOCK);
 #else
-	int status;
-	u_long arg = blocking;
+	/**
+	 * ioctlsocket function:
+	 * msdn.microsoft.com/en-ca/library/windows/desktop/ms738573/
+	 * 
+	 * The WSAAsyncSelect and WSAEventSelect functions automatically set a socket to nonblocking mode.
+	 * If WSAAsyncSelect or WSAEventSelect has been issued on a socket, then any attempt to use
+	 * ioctlsocket to set the socket back to blocking mode will fail with WSAEINVAL.
+	 * 
+	 * To set the socket back to blocking mode, an application must first disable WSAAsyncSelect
+	 * by calling WSAAsyncSelect with the lEvent parameter equal to zero, or disable WSAEventSelect
+	 * by calling WSAEventSelect with the lNetworkEvents parameter equal to zero.
+	 */
 
-	status = ioctlsocket(tcp->sockfd, FIONBIO, &arg);
+	if (blocking == TRUE)
+	{
+		if (tcp->event)
+			WSAEventSelect(tcp->sockfd, tcp->event, 0);
+	}
+	else
+	{
+		if (!tcp->event)
+			tcp->event = WSACreateEvent();
 
-	if (status != NO_ERROR)
-		DEBUG_WARN( "ioctlsocket() failed with error: %ld\n", status);
-
-	tcp->wsa_event = WSACreateEvent();
-	WSAEventSelect(tcp->sockfd, tcp->wsa_event, FD_READ);
+		WSAEventSelect(tcp->sockfd, tcp->event, FD_READ);
+	}
 #endif
 
 	return TRUE;
@@ -758,13 +784,8 @@ HANDLE tcp_get_event_handle(rdpTcp* tcp)
 	if (!tcp)
 		return NULL;
 	
-#ifndef _WIN32
 	return tcp->event;
-#else
-	return (HANDLE) tcp->wsa_event;
-#endif
 }
-
 
 int tcp_wait_read(rdpTcp* tcp, DWORD dwMilliSeconds)
 {

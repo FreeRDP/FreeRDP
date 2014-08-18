@@ -158,8 +158,6 @@ void wf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 			x += wfi->servscreen_xoffset;
 			y += wfi->servscreen_yoffset;
 
-			//mouse_event.mi.dx = x * (0xFFFF / width);
-			//mouse_event.mi.dy = y * (0xFFFF / height);
 			mouse_event.mi.dx = (LONG) ((float) x * (65535.0f / width));
 			mouse_event.mi.dy = (LONG) ((float) y * (65535.0f / height));
 			mouse_event.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;

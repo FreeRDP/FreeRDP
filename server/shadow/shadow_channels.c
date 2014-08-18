@@ -1,8 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Server Monitors
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +16,25 @@
  * limitations under the License.
  */
 
-#ifndef XFREERDP_SERVER_MONITORS_H
-#define XFREERDP_SERVER_MONITORS_H
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#include "xfreerdp.h"
+#include "shadow.h"
 
-int xf_list_monitors(xfInfo* xfi);
+#include "shadow_channels.h"
 
-#endif /* XFREERDP_SERVER_MONITORS_H */
+int shadow_client_channels_post_connect(rdpShadowClient* client)
+{
+	if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, ENCOMSP_SVC_CHANNEL_NAME))
+	{
+		shadow_client_encomsp_init(client);
+	}
 
+	if (WTSVirtualChannelManagerIsChannelJoined(client->vcm, REMDESK_SVC_CHANNEL_NAME))
+	{
+		shadow_client_remdesk_init(client);
+	}
+
+	return 1;
+}

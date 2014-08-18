@@ -1359,7 +1359,8 @@ struct rdp_settings
 	ALIGN64 UINT32 DynamicChannelCount; /* 5056 */
 	ALIGN64 UINT32 DynamicChannelArraySize; /* 5057 */
 	ALIGN64 ADDIN_ARGV** DynamicChannelArray; /* 5058 */
-	UINT64 padding5184[5184 - 5059]; /* 5059 */
+	ALIGN64 BOOL SupportDynamicChannels; /* 5059 */
+	UINT64 padding5184[5184 - 5060]; /* 5060 */
 
 	/**
 	 * WARNING: End of ABI stable zone!
