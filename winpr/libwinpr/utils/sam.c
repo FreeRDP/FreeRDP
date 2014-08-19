@@ -29,6 +29,7 @@
 #include <winpr/sam.h>
 #include <winpr/print.h>
 
+#include "../log.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -38,6 +39,7 @@
 #else
 #define WINPR_SAM_FILE		"/etc/winpr/SAM"
 #endif
+#define TAG WINPR_TAG("utils")
 
 WINPR_SAM* SamOpen(BOOL read_only)
 {
@@ -63,7 +65,7 @@ WINPR_SAM* SamOpen(BOOL read_only)
 		sam->fp = fp;
 	}
 	else
-		printf("Could not open SAM file!\n");
+		WLog_ERR(TAG, "Could not open SAM file!");
 
 	return sam;
 }
@@ -72,7 +74,6 @@ static BOOL SamLookupStart(WINPR_SAM* sam)
 {
 	size_t read_size;
 	long int file_size;
-
 	fseek(sam->fp, 0, SEEK_END);
 	file_size = ftell(sam->fp);
 	fseek(sam->fp, 0, SEEK_SET);
@@ -81,7 +82,6 @@ static BOOL SamLookupStart(WINPR_SAM* sam)
 		return FALSE;
 
 	sam->buffer = (char*) malloc(file_size + 2);
-
 	read_size = fread(sam->buffer, file_size, 1, sam->fp);
 
 	if (!read_size)
@@ -99,16 +99,13 @@ static BOOL SamLookupStart(WINPR_SAM* sam)
 
 	sam->buffer[file_size] = '\n';
 	sam->buffer[file_size + 1] = '\0';
-
 	sam->line = strtok(sam->buffer, "\n");
-
 	return TRUE;
 }
 
 static void SamLookupFinish(WINPR_SAM* sam)
 {
 	free(sam->buffer);
-
 	sam->buffer = NULL;
 	sam->line = NULL;
 }
@@ -116,7 +113,6 @@ static void SamLookupFinish(WINPR_SAM* sam)
 static void HexStrToBin(char* str, BYTE* bin, int length)
 {
 	int i;
-
 	CharUpperBuffA(str, length * 2);
 
 	for (i = 0; i < length; i++)
@@ -142,7 +138,6 @@ WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 	char* p[7];
 	int LmHashLength;
 	int NtHashLength;
-
 	p[0] = sam->line;
 	p[1] = strchr(p[0], ':') + 1;
 	p[2] = strchr(p[1], ':') + 1;
@@ -150,13 +145,10 @@ WINPR_SAM_ENTRY* SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 	p[4] = strchr(p[3], ':') + 1;
 	p[5] = strchr(p[4], ':') + 1;
 	p[6] = p[0] + strlen(p[0]);
-
-	entry->UserLength = (UINT32) (p[1] - p[0] - 1);
-	entry->DomainLength = (UINT32) (p[2] - p[1] - 1);
-
-	LmHashLength = (int) (p[3] - p[2] - 1);
-	NtHashLength = (int) (p[4] - p[3] - 1);
-
+	entry->UserLength = (UINT32)(p[1] - p[0] - 1);
+	entry->DomainLength = (UINT32)(p[2] - p[1] - 1);
+	LmHashLength = (int)(p[3] - p[2] - 1);
+	NtHashLength = (int)(p[4] - p[3] - 1);
 	entry->User = (LPSTR) malloc(entry->UserLength + 1);
 	memcpy(entry->User, p[0], entry->UserLength);
 	entry->User[entry->UserLength] = '\0';
@@ -204,9 +196,7 @@ WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPSTR User, UINT32 UserLength, L
 	int length;
 	BOOL found = 0;
 	WINPR_SAM_ENTRY* entry;
-
 	entry = (WINPR_SAM_ENTRY*) malloc(sizeof(WINPR_SAM_ENTRY));
-
 	SamLookupStart(sam);
 
 	while (sam->line != NULL)
@@ -252,9 +242,7 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 	LPWSTR EntryDomain;
 	UINT32 EntryDomainLength;
 	WINPR_SAM_ENTRY* entry;
-
 	entry = (WINPR_SAM_ENTRY*) malloc(sizeof(WINPR_SAM_ENTRY));
-
 	SamLookupStart(sam);
 
 	while (sam->line != NULL)
@@ -267,7 +255,6 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 			{
 				DomainMatch = 0;
 				UserMatch = 0;
-
 				entry = SamReadEntry(sam, entry);
 
 				if (DomainLength > 0)
@@ -277,7 +264,7 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 						EntryDomainLength = (UINT32) strlen(entry->Domain) * 2;
 						EntryDomain = (LPWSTR) malloc(EntryDomainLength + 2);
 						MultiByteToWideChar(CP_ACP, 0, entry->Domain, EntryDomainLength / 2,
-								(LPWSTR) EntryDomain, EntryDomainLength / 2);
+											(LPWSTR) EntryDomain, EntryDomainLength / 2);
 
 						if (DomainLength == EntryDomainLength)
 						{
@@ -286,6 +273,7 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 								DomainMatch = 1;
 							}
 						}
+
 						free(EntryDomain);
 					}
 					else
@@ -303,7 +291,7 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPWSTR User, UINT32 UserLength, 
 					EntryUserLength = (UINT32) strlen(entry->User) * 2;
 					EntryUser = (LPWSTR) malloc(EntryUserLength + 2);
 					MultiByteToWideChar(CP_ACP, 0, entry->User, EntryUserLength / 2,
-							(LPWSTR) EntryUser, EntryUserLength / 2);
+										(LPWSTR) EntryUser, EntryUserLength / 2);
 
 					if (UserLength == EntryUserLength)
 					{

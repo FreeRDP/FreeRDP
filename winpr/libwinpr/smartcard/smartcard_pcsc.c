@@ -171,7 +171,7 @@ static wListDictionary* g_MemoryBlocks = NULL;
 char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
 
 WCHAR SMARTCARD_PNP_NOTIFICATION_W[] = { '\\','\\','?','P','n','P','?',
-										 '\\','N','o','t','i','f','i','c','a','t','i','o','n','\0'
+									   '\\','N','o','t','i','f','i','c','a','t','i','o','n','\0'
 									   };
 
 const PCSC_SCARD_IO_REQUEST g_PCSC_rgSCardT0Pci = { SCARD_PROTOCOL_T0, sizeof(PCSC_SCARD_IO_REQUEST) };
@@ -727,7 +727,6 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	 */
 	index = 0;
 	sprintf_s(nameWinSCard, size, "%.*s %d", length, p, index);
-	//printf("Smart Card Reader Name Alias: %s -> %s", p, nameWinSCard);
 	return nameWinSCard;
 }
 
