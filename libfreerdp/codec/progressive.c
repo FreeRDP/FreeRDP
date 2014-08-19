@@ -107,19 +107,16 @@ int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
 
 	rfx_differential_decode(&buffer[4015], 81); /* LL3 */
 
-	/* Scale the values so that they are represented as 11.5 fixed-point number */
-	rfx_quantization_decode_block(prims, buffer, 4096, 5);
-
-	rfx_quantization_decode_block(prims, &buffer[0], 1023, (quant->HL1 - 6)); /* HL1 */
-	rfx_quantization_decode_block(prims, &buffer[1023], 1023, (quant->LH1 - 6)); /* LH1 */
-	rfx_quantization_decode_block(prims, &buffer[2046], 961, (quant->HH1 - 6)); /* HH1 */
-	rfx_quantization_decode_block(prims, &buffer[3007], 272, (quant->HL2 - 6)); /* HL2 */
-	rfx_quantization_decode_block(prims, &buffer[3279], 272, (quant->LH2 - 6)); /* LH2 */
-	rfx_quantization_decode_block(prims, &buffer[3551], 256, (quant->HH2 - 6)); /* HH2 */
-	rfx_quantization_decode_block(prims, &buffer[3807], 72, (quant->HL3 - 6)); /* HL3 */
-	rfx_quantization_decode_block(prims, &buffer[3879], 72, (quant->LH3 - 6)); /* LH3 */
-	rfx_quantization_decode_block(prims, &buffer[3951], 64, (quant->HH3 - 6)); /* HH3 */
-	rfx_quantization_decode_block(prims, &buffer[4015], 81, (quant->LL3 - 6)); /* LL3 */
+	rfx_quantization_decode_block(prims, &buffer[0], 1023, (quant->HL1 - 1)); /* HL1 */
+	rfx_quantization_decode_block(prims, &buffer[1023], 1023, (quant->LH1 - 1)); /* LH1 */
+	rfx_quantization_decode_block(prims, &buffer[2046], 961, (quant->HH1 - 1)); /* HH1 */
+	rfx_quantization_decode_block(prims, &buffer[3007], 272, (quant->HL2 - 1)); /* HL2 */
+	rfx_quantization_decode_block(prims, &buffer[3279], 272, (quant->LH2 - 1)); /* LH2 */
+	rfx_quantization_decode_block(prims, &buffer[3551], 256, (quant->HH2 - 1)); /* HH2 */
+	rfx_quantization_decode_block(prims, &buffer[3807], 72, (quant->HL3 - 1)); /* HL3 */
+	rfx_quantization_decode_block(prims, &buffer[3879], 72, (quant->LH3 - 1)); /* LH3 */
+	rfx_quantization_decode_block(prims, &buffer[3951], 64, (quant->HH3 - 1)); /* HH3 */
+	rfx_quantization_decode_block(prims, &buffer[4015], 81, (quant->LL3 - 1)); /* LL3 */
 
 	return 1;
 }
