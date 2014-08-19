@@ -190,13 +190,8 @@ set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MODULE freerdp
 	MODULES freerdp-core freerdp-common freerdp-codec freerdp-primitives freerdp-utils freerdp-gdi freerdp-crypto freerdp-locale)
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-sspi winpr-crt winpr-utils winpr-input winpr-sysinfo)
-
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp-client)
-list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool)
+list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool winpr)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
