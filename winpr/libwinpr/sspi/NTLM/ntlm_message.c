@@ -246,7 +246,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	context->NegotiateMessage.BufferType = buffer->BufferType;
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "NEGOTIATE_MESSAGE (length = %d)", (int) context->NegotiateMessage.cbBuffer);
-	winpr_HexDump(context->NegotiateMessage.pvBuffer, context->NegotiateMessage.cbBuffer);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->NegotiateMessage.pvBuffer, context->NegotiateMessage.cbBuffer);
 	ntlm_print_negotiate_flags(message->NegotiateFlags);
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -322,7 +322,7 @@ SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	context->NegotiateMessage.BufferType = buffer->BufferType;
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "NEGOTIATE_MESSAGE (length = %d)", length);
-	winpr_HexDump(Stream_Buffer(s), length);
+	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), length);
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_print_version_info(&(message->Version));
@@ -421,7 +421,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	CopyMemory(context->ChallengeMessage.pvBuffer, StartOffset, length);
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "CHALLENGE_MESSAGE (length = %d)", length);
-	winpr_HexDump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
 	ntlm_print_negotiate_flags(context->NegotiateFlags);
 
 	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -471,27 +471,27 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	ntlm_init_rc4_seal_states(context);
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "ClientChallenge");
-	winpr_HexDump(context->ClientChallenge, 8);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ClientChallenge, 8);
 	WLog_DBG(TAG, "ServerChallenge");
-	winpr_HexDump(context->ServerChallenge, 8);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ServerChallenge, 8);
 	WLog_DBG(TAG, "SessionBaseKey");
-	winpr_HexDump(context->SessionBaseKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->SessionBaseKey, 16);
 	WLog_DBG(TAG, "KeyExchangeKey");
-	winpr_HexDump(context->KeyExchangeKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->KeyExchangeKey, 16);
 	WLog_DBG(TAG, "ExportedSessionKey");
-	winpr_HexDump(context->ExportedSessionKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ExportedSessionKey, 16);
 	WLog_DBG(TAG, "RandomSessionKey");
-	winpr_HexDump(context->RandomSessionKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->RandomSessionKey, 16);
 	WLog_DBG(TAG, "ClientSigningKey");
-	winpr_HexDump(context->ClientSigningKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ClientSigningKey, 16);
 	WLog_DBG(TAG, "ClientSealingKey");
-	winpr_HexDump(context->ClientSealingKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ClientSealingKey, 16);
 	WLog_DBG(TAG, "ServerSigningKey");
-	winpr_HexDump(context->ServerSigningKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ServerSigningKey, 16);
 	WLog_DBG(TAG, "ServerSealingKey");
-	winpr_HexDump(context->ServerSealingKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ServerSealingKey, 16);
 	WLog_DBG(TAG, "Timestamp");
-	winpr_HexDump(context->Timestamp, 8);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->Timestamp, 8);
 #endif
 	context->state = NTLM_STATE_AUTHENTICATE;
 	ntlm_free_message_fields_buffer(&(message->TargetName));
@@ -574,7 +574,7 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	CopyMemory(context->ChallengeMessage.pvBuffer, Stream_Buffer(s), length);
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "CHALLENGE_MESSAGE (length = %d)", length);
-	winpr_HexDump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
 	ntlm_print_negotiate_flags(message->NegotiateFlags);
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -716,7 +716,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "AUTHENTICATE_MESSAGE (length = %d)", (int) context->AuthenticateMessage.cbBuffer);
-	winpr_HexDump(context->AuthenticateMessage.pvBuffer, context->AuthenticateMessage.cbBuffer);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->AuthenticateMessage.pvBuffer, context->AuthenticateMessage.cbBuffer);
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
 		ntlm_print_version_info(&(message->Version));
@@ -732,7 +732,7 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (flags & MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK)
 	{
 		WLog_DBG(TAG, "MessageIntegrityCheck:");
-		winpr_HexDump(message->MessageIntegrityCheck, 16);
+		winpr_HexDump(TAG, WLOG_DEBUG, message->MessageIntegrityCheck, 16);
 	}
 
 #endif
@@ -909,7 +909,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "AUTHENTICATE_MESSAGE (length = %d)", length);
-	winpr_HexDump(Stream_Buffer(s), length);
+	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), length);
 	ntlm_print_negotiate_flags(message->NegotiateFlags);
 
 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
@@ -931,7 +931,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 	if (context->UseMIC)
 	{
 		WLog_DBG(TAG, "MessageIntegrityCheck (length = 16)");
-		winpr_HexDump(context->MessageIntegrityCheck, 16);
+		winpr_HexDump(TAG, WLOG_DEBUG, context->MessageIntegrityCheck, 16);
 	}
 
 #endif
@@ -996,27 +996,27 @@ SECURITY_STATUS ntlm_server_AuthenticateComplete(NTLM_CONTEXT* context)
 	ntlm_init_rc4_seal_states(context);
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "ClientChallenge");
-	winpr_HexDump(context->ClientChallenge, 8);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ClientChallenge, 8);
 	WLog_DBG(TAG, "ServerChallenge");
-	winpr_HexDump(context->ServerChallenge, 8);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ServerChallenge, 8);
 	WLog_DBG(TAG, "SessionBaseKey");
-	winpr_HexDump(context->SessionBaseKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->SessionBaseKey, 16);
 	WLog_DBG(TAG, "KeyExchangeKey");
-	winpr_HexDump(context->KeyExchangeKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->KeyExchangeKey, 16);
 	WLog_DBG(TAG, "ExportedSessionKey");
-	winpr_HexDump(context->ExportedSessionKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ExportedSessionKey, 16);
 	WLog_DBG(TAG, "RandomSessionKey");
-	winpr_HexDump(context->RandomSessionKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->RandomSessionKey, 16);
 	WLog_DBG(TAG, "ClientSigningKey");
-	winpr_HexDump(context->ClientSigningKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ClientSigningKey, 16);
 	WLog_DBG(TAG, "ClientSealingKey");
-	winpr_HexDump(context->ClientSealingKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ClientSealingKey, 16);
 	WLog_DBG(TAG, "ServerSigningKey");
-	winpr_HexDump(context->ServerSigningKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ServerSigningKey, 16);
 	WLog_DBG(TAG, "ServerSealingKey");
-	winpr_HexDump(context->ServerSealingKey, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->ServerSealingKey, 16);
 	WLog_DBG(TAG, "Timestamp");
-	winpr_HexDump(context->Timestamp, 8);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->Timestamp, 8);
 #endif
 	context->state = NTLM_STATE_FINAL;
 	ntlm_free_message_fields_buffer(&(message->DomainName));

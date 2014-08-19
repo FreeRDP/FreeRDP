@@ -207,7 +207,7 @@ int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	{
 #ifdef WITH_DEBUG_NTLM
 		WLog_DBG(TAG, "NTLM Hash:");
-		winpr_HexDump(entry->NtHash, 16);
+		winpr_HexDump(TAG, WLOG_DEBUG, entry->NtHash, 16);
 #endif
 		NTOWFv2FromHashW(entry->NtHash,
 						 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
@@ -225,7 +225,7 @@ int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	{
 #ifdef WITH_DEBUG_NTLM
 		WLog_DBG(TAG, "NTLM Hash:");
-		winpr_HexDump(entry->NtHash, 16);
+		winpr_HexDump(TAG, WLOG_DEBUG, entry->NtHash, 16);
 #endif
 		NTOWFv2FromHashW(entry->NtHash,
 						 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
@@ -377,15 +377,15 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "Password (length = %d)", credentials->identity.PasswordLength * 2);
-	winpr_HexDump((BYTE*) credentials->identity.Password, credentials->identity.PasswordLength * 2);
+	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.Password, credentials->identity.PasswordLength * 2);
 	WLog_DBG(TAG, "Username (length = %d)", credentials->identity.UserLength * 2);
-	winpr_HexDump((BYTE*) credentials->identity.User, credentials->identity.UserLength * 2);
+	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.User, credentials->identity.UserLength * 2);
 	WLog_DBG(TAG, "Domain (length = %d)", credentials->identity.DomainLength * 2);
-	winpr_HexDump((BYTE*) credentials->identity.Domain, credentials->identity.DomainLength * 2);
+	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.Domain, credentials->identity.DomainLength * 2);
 	WLog_DBG(TAG, "Workstation (length = %d)", context->Workstation.Length);
-	winpr_HexDump((BYTE*) context->Workstation.Buffer, context->Workstation.Length);
+	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) context->Workstation.Buffer, context->Workstation.Length);
 	WLog_DBG(TAG, "NTOWFv2, NTLMv2 Hash");
-	winpr_HexDump(context->NtlmV2Hash, 16);
+	winpr_HexDump(TAG, WLOG_DEBUG, context->NtlmV2Hash, 16);
 #endif
 	/* Construct temp */
 	blob[0] = 1; /* RespType (1 byte) */
@@ -398,7 +398,7 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	CopyMemory(&blob[28], TargetInfo->pvBuffer, TargetInfo->cbBuffer);
 #ifdef WITH_DEBUG_NTLM
 	WLog_DBG(TAG, "NTLMv2 Response Temp Blob");
-	winpr_HexDump(ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
+	winpr_HexDump(TAG, WLOG_DEBUG, ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 #endif
 
 	/* Concatenate server challenge with temp */
