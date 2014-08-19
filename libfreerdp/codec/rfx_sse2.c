@@ -340,9 +340,9 @@ static void rfx_dwt_2d_decode_sse2(INT16* buffer, INT16* dwt_buffer)
 {
 	_mm_prefetch_buffer((char*) buffer, 4096 * sizeof(INT16));
 	
-	rfx_dwt_2d_decode_block_sse2(buffer + 3840, dwt_buffer, 8);
-	rfx_dwt_2d_decode_block_sse2(buffer + 3072, dwt_buffer, 16);
-	rfx_dwt_2d_decode_block_sse2(buffer, dwt_buffer, 32);
+	rfx_dwt_2d_decode_block_sse2(&buffer[3840], dwt_buffer, 8);
+	rfx_dwt_2d_decode_block_sse2(&buffer[3072], dwt_buffer, 16);
+	rfx_dwt_2d_decode_block_sse2(&buffer[0], dwt_buffer, 32);
 }
 
 static __inline void __attribute__((ATTRIBUTES))

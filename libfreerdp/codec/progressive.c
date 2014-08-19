@@ -94,10 +94,106 @@ const char* progressive_get_block_type_string(UINT16 blockType)
  * LL3		4015		9x9		81
  */
 
+static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int N)
+{
+	int N2;
+	int x, y, k;
+	INT16 *dst, *l, *h;
+	INT16 *l_dst, *h_dst;
+	INT16 *HL, *LH, *HH, *LL;
+
+	N2 = N << 1;
+
+	/* Inverse DWT in horizontal direction, results in 2 sub-bands in L, H order in tmp buffer idwt. */
+	/* The 4 sub-bands are stored in HL(0), LH(1), HH(2), LL(3) order. */
+	/* The lower part L uses LL(3) and HL(0). */
+	/* The higher part H uses LH(1) and HH(2). */
+
+	LL = &buffer[(N * N) * 3];
+	HL = &buffer[0];
+	l_dst = &dwt[0];
+
+	LH = &buffer[N * N];
+	HH = &buffer[(N * N) * 2];
+	h_dst = &dwt[(N * N) * 2];
+
+	for (y = 0; y < N; y++)
+	{
+		/* Even coefficients */
+		l_dst[0] = LL[0] - ((HL[0] + HL[0] + 1) >> 1);
+		h_dst[0] = LH[0] - ((HH[0] + HH[0] + 1) >> 1);
+
+		for (k = 1; k < N; k++)
+		{
+			x = k << 1;
+			l_dst[x] = LL[k] - ((HL[k-1] + HL[k] + 1) >> 1);
+			h_dst[x] = LH[k] - ((HH[k-1] + HH[k] + 1) >> 1);
+		}
+
+		/* Odd coefficients */
+		for (k = 0; k < N-1; k++)
+		{
+			x = k << 1;
+			l_dst[x + 1] = (HL[k] << 1) + ((l_dst[x] + l_dst[x + 2]) >> 1);
+			h_dst[x + 1] = (HH[k] << 1) + ((h_dst[x] + h_dst[x + 2]) >> 1);
+		}
+
+		x = k << 1;
+		l_dst[x + 1] = (HL[k] << 1) + (l_dst[x]);
+		h_dst[x + 1] = (HH[k] << 1) + (h_dst[x]);
+
+		LL += N;
+		HL += N;
+		l_dst += N2;
+
+		LH += N;
+		HH += N;
+		h_dst += N2;
+	}
+
+	/* Inverse DWT in vertical direction, results are stored in original buffer. */
+	for (x = 0; x < N2; x++)
+	{
+		/* Even coefficients */
+		for (k = 0; k < N; k++)
+		{
+			y = k << 1;
+			dst = buffer + y * N2 + x;
+			l = dwt + k * N2 + x;
+			h = l + N * N2;
+			dst[0] = *l - (((k > 0 ? *(h - N2) : *h) + (*h) + 1) >> 1);
+		}
+
+		/* Odd coefficients */
+		for (k = 0; k < N; k++)
+		{
+			y = k << 1;
+			dst = buffer + y * N2 + x;
+			l = dwt + k * N2 + x;
+			h = l + N * N2;
+			dst[N2] = (*h << 1) + ((dst[0] + dst[k < N - 1 ? 2 * N2 : 0]) >> 1);
+		}
+	}
+}
+
+void progressive_rfx_dwt_2d_decode(INT16* buffer, INT16* dwt)
+{
+#if 0
+	progressive_rfx_dwt_2d_decode_block(&buffer[3807], dwt, 8);
+	progressive_rfx_dwt_2d_decode_block(&buffer[3007], dwt, 16);
+	//progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt, 32);
+#else
+	progressive_rfx_dwt_2d_decode_block(&buffer[3840], dwt, 8);
+	progressive_rfx_dwt_2d_decode_block(&buffer[3072], dwt, 16);
+	progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt, 32);
+#endif
+}
+
 int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
 		RFX_COMPONENT_CODEC_QUANT* quant, const BYTE* data, int length, INT16* buffer)
 {
 	int status;
+	INT16* dwt;
 	const primitives_t* prims = primitives_get();
 
 	status = rfx_rlgr_decode(data, length, buffer, 4096, 1);
@@ -118,6 +214,12 @@ int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
 	rfx_quantization_decode_block(prims, &buffer[3951], 64, (quant->HH3 - 1)); /* HH3 */
 	rfx_quantization_decode_block(prims, &buffer[4015], 81, (quant->LL3 - 1)); /* LL3 */
 
+	dwt = (INT16*) BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
+
+	progressive_rfx_dwt_2d_decode(buffer, dwt);
+
+	BufferPool_Return(progressive->bufferPool, dwt);
+
 	return 1;
 }
 
@@ -130,6 +232,8 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 	RFX_COMPONENT_CODEC_QUANT* quantCb;
 	RFX_COMPONENT_CODEC_QUANT* quantCr;
 	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
+	static const prim_size_t roi_64x64 = { 64, 64 };
+	const primitives_t* prims = primitives_get();
 
 	printf("ProgressiveTileFirst: quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d flags: %d quality: %d yLen: %d cbLen: %d crLen: %d tailLen: %d\n",
 			tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx, tile->flags, tile->quality, tile->yLen, tile->cbLen, tile->crLen, tile->tailLen);
@@ -164,6 +268,7 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 	}
 
 	pBuffer = (BYTE*) BufferPool_Take(progressive->bufferPool, -1);
+
 	pSrcDst[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16])); /* Y/R buffer */
 	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
 	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
@@ -171,6 +276,17 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 	progressive_rfx_decode_component(progressive, quantY, tile->yData, tile->yLen, pSrcDst[0]); /* Y */
 	progressive_rfx_decode_component(progressive, quantCb, tile->cbData, tile->cbLen, pSrcDst[1]); /* Cb */
 	progressive_rfx_decode_component(progressive, quantCr, tile->crData, tile->crLen, pSrcDst[2]); /* Cr */
+
+	prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
+			pSrcDst, 64 * sizeof(INT16), &roi_64x64);
+
+	if (!tile->data)
+	{
+		tile->data = _aligned_malloc(64 * 64 * 4, 16);
+	}
+
+	prims->RGBToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * sizeof(INT16),
+			tile->data, 64 * 4, &roi_64x64);
 
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 
@@ -296,6 +412,11 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 				tile->tailData = &block[boffset];
 				boffset += tile->tailLen;
 
+				tile->width = 64;
+				tile->height = 64;
+				tile->x = tile->xIdx * 64;
+				tile->y = tile->yIdx * 64;
+
 				break;
 
 			case PROGRESSIVE_WBT_TILE_FIRST:
@@ -339,6 +460,11 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 
 				tile->tailData = &block[boffset];
 				boffset += tile->tailLen;
+
+				tile->width = 64;
+				tile->height = 64;
+				tile->x = tile->xIdx * 64;
+				tile->y = tile->yIdx * 64;
 
 				break;
 
@@ -396,6 +522,11 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 
 				tile->crRawData = &block[boffset];
 				boffset += tile->crRawLen;
+
+				tile->width = 64;
+				tile->height = 64;
+				tile->x = tile->xIdx * 64;
+				tile->y = tile->yIdx * 64;
 
 				break;
 

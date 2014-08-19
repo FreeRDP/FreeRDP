@@ -205,6 +205,12 @@ struct _RFX_PROGRESSIVE_TILE
 	BYTE* cbRawData;
 	BYTE* crSrlData;
 	BYTE* crRawData;
+
+	int x;
+	int y;
+	int width;
+	int height;
+	BYTE* data;
 };
 typedef struct _RFX_PROGRESSIVE_TILE RFX_PROGRESSIVE_TILE;
 
