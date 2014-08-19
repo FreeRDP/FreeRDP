@@ -128,6 +128,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	switch (header->common.ptype)
 	{
 		case PTYPE_RTS:
+
 			if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 			{
 				DEBUG_WARN("%s: warning: unhandled RTS PDU\n", __FUNCTION__);
@@ -138,15 +139,12 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
 			rpc_client_fragment_pool_return(rpc, fragment);
 			return 0;
-
 		case PTYPE_FAULT:
 			rpc_recv_fault_pdu(header);
 			Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
 			return -1;
-
 		case PTYPE_RESPONSE:
 			break;
-
 		default:
 			DEBUG_WARN("%s: unexpected RPC PDU type %d\n", __FUNCTION__, header->common.ptype);
 			Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
@@ -456,7 +454,7 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 	if (pdu)
 	{
 		DEBUG_WARN("Receiving PDU (length: %d, CallId: %d)\n", pdu->s->length, pdu->CallId);
-		winpr_HexDump(Stream_Buffer(pdu->s), Stream_Length(pdu->s));
+		winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
 		DEBUG_WARN("\n");
 	}
 	else

@@ -27,6 +27,7 @@
 #include <unistd.h>
 #endif
 
+#include <freerdp/log.h>
 #include <freerdp/crypto/tls.h>
 
 #include <winpr/crt.h>
@@ -39,7 +40,8 @@
 
 #include "nla.h"
 
-#define TAG "com.freerdp.core"
+#define TAG FREERDP_TAG("core")
+
 /**
  * TSRequest ::= SEQUENCE {
  * 	version    [0] INTEGER,
@@ -340,7 +342,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			credssp->negoToken.cbBuffer = output_buffer.cbBuffer;
 #ifdef WITH_DEBUG_CREDSSP
 			DEBUG_WARN("Sending Authentication Token\n");
-			winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
+			winpr_HexDump(TAG, WLOG_DEBUG, credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 			credssp_send(credssp);
 			credssp_buffer_free(credssp);
@@ -360,7 +362,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 #ifdef WITH_DEBUG_CREDSSP
 		DEBUG_WARN("Receiving Authentication Token (%d)\n", (int) credssp->negoToken.cbBuffer);
-		winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
+		winpr_HexDump(TAG, WLOG_DEBUG, credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 		input_buffer.pvBuffer = credssp->negoToken.pvBuffer;
 		input_buffer.cbBuffer = credssp->negoToken.cbBuffer;
