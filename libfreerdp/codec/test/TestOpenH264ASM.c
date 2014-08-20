@@ -7,16 +7,21 @@
 #define WIDTH 1920
 #define HEIGHT 1080
 
+#define SSSE3 1
+
+
 int main(void){
 	int i,j,k;
 	int ret;
 	unsigned char *pDstData_c,*pDstData_asm,*pSrcData[3];
 	int nSrcStep[2];
 	
+#if SSSE3
 	if(check_ssse3()){
 		fprintf(stderr,"ssse3 not supported!\n");
 		return EXIT_FAILURE;
 	}
+#endif
 	
 	struct timeval t1,t2,t3;
 	
@@ -36,7 +41,11 @@ int main(void){
 	nSrcStep[1]=992;
 	
 	gettimeofday(&t1,NULL);
+#if SSSE3
 		ret=freerdp_image_yuv420p_to_xrgb(pDstData_asm,pSrcData,WIDTH,HEIGHT,nSrcStep[0],nSrcStep[1]);
+#else
+		ret=freerdp_image_yuv_to_xrgb_asm(pDstData_asm,pSrcData,WIDTH,HEIGHT,nSrcStep[0],nSrcStep[1]);
+#endif
 	gettimeofday(&t2,NULL);
 		freerdp_image_copy_yuv420p_to_xrgb(pDstData_c,WIDTH*4,0,0,WIDTH,HEIGHT,pSrcData,nSrcStep,0,0);
 	gettimeofday(&t3,NULL);
