@@ -216,8 +216,7 @@ int h264_prepare_rgb_buffer(H264_CONTEXT* h264, int width, int height)
 	if (size > h264->size)
 	{
 		h264->size = size;
-		h264->data = (BYTE*) realloc(h264->data, h264->size);
-		memset(h264->data, 0, h264->size);
+		h264->data = (BYTE*) _aligned_realloc(h264->data, h264->size,16);
 	}
 
 	if (!h264->data)
@@ -747,9 +746,6 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	{
 		h264->Compressor = Compressor;
 
-		if (h264_prepare_rgb_buffer(h264, 256, 256) < 0)
-			return NULL;
-
 #ifdef WITH_OPENH264
 		if (!openh264_init(h264))
 		{
@@ -776,7 +772,7 @@ void h264_context_free(H264_CONTEXT* h264)
 {
 	if (h264)
 	{
-		free(h264->data);
+		_aligne_free(h264->data);
 
 #ifdef WITH_OPENH264
 		openh264_free(h264);

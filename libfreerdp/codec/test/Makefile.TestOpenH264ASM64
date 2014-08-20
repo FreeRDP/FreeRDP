@@ -1,5 +1,5 @@
 TestOpenH264ASM: TestOpenH264ASM.c.o h264.c.o h264_ssse3.asm.o h264.asm.o
-	gcc -o TestOpenH264ASM TestOpenH264ASM.c.o h264.c.o h264_ssse3.asm.o h264.asm.o
+	gcc -o TestOpenH264ASM TestOpenH264ASM.c.o h264.c.o h264_ssse3.asm.o h264.asm.o -lwinpr
 
 h264_ssse3.asm.o: ../h264_ssse3_x64.asm
 	nasm -f elf64 -o h264_ssse3.asm.o ../h264_ssse3_x64.asm

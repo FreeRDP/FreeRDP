@@ -1,3 +1,8 @@
+; a entire function for converting YUV420p data to the RGB format (without any special upconverting)
+; It's completely written in nasm-x86-assembly for intel processors supporting SSSE3 and higher.
+; Restrictions are that output data has to be aligned to 16 byte (a question of REAL performance!)
+; and the width of resolution must be divisable by four.
+;
 section .text
 	global check_ssse3
 
@@ -385,7 +390,7 @@ valid_yuv_data:
 	por xmm4,xmm5
 	por xmm4,xmm6
 	
-	movdqu [rdi],xmm4
+	movdqa [rdi],xmm4
 	
 	
 	;Y data processing in secound line
@@ -424,7 +429,7 @@ valid_yuv_data:
 	por xmm4,xmm5
 	por xmm4,xmm6
 	
-	movdqu [rdi+r10],xmm4
+	movdqa [rdi+r10],xmm4
 	
 skip_last_line1:
 	add rdi,16

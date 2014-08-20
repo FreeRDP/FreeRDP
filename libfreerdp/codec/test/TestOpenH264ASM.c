@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
+#include <winpr/crt.h>
+
 #include "TestOpenH264ASM.h"
 
 #define WIDTH 1920
@@ -28,7 +30,7 @@ int main(void){
 	pSrcData[0]=malloc(1984*HEIGHT*sizeof(char));
 	pSrcData[1]=malloc(1984*HEIGHT/4*sizeof(char));
 	pSrcData[2]=malloc(1984*HEIGHT/4*sizeof(char));
-	pDstData_asm=malloc(WIDTH*HEIGHT*4*sizeof(char));
+	pDstData_asm=_aligned_malloc(WIDTH*HEIGHT*4*sizeof(char),16);
 	pDstData_c=malloc(WIDTH*HEIGHT*4*sizeof(char));
 	
 	for(i=0;i<WIDTH*HEIGHT;i++){
@@ -81,7 +83,7 @@ int main(void){
 	free(pSrcData[1]);
 	free(pSrcData[2]);
 	free(pDstData_c);
-	free(pDstData_asm);
+	_aligned_free(pDstData_asm);
 	
 	return 0;
 }

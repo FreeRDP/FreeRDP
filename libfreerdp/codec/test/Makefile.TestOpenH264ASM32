@@ -1,11 +1,11 @@
-TestOpenH264ASM: TestOpenH264ASM.c.o h264.c.o h264_ssse3.asm.o #h264.asm.o
-	gcc -o TestOpenH264ASM TestOpenH264ASM.c.o h264.c.o h264_ssse3.asm.o #h264.asm.o
+TestOpenH264ASM: TestOpenH264ASM.c.o h264.c.o h264_ssse3.asm.o h264.asm.o
+	gcc -o TestOpenH264ASM TestOpenH264ASM.c.o h264.c.o h264_ssse3.asm.o h264.asm.o -lwinpr
 
 h264_ssse3.asm.o: ../h264_ssse3_x32.asm
-	nasm -f elf64 -o h264_ssse3.asm.o ../h264_ssse3_x32.asm
+	nasm -f elf32 -o h264_ssse3.asm.o ../h264_ssse3_x32.asm
 	
 h264.asm.o: ../h264_x32.asm
-	nasm -f elf64 -o h264.asm.o ../h264_x32.asm
+	nasm -f elf32 -o h264.asm.o ../h264_x32.asm
 
 TestOpenH264ASM.c.o: TestOpenH264ASM.c
 	gcc -c -o TestOpenH264ASM.c.o TestOpenH264ASM.c
