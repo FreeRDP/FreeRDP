@@ -94,118 +94,275 @@ const char* progressive_get_block_type_string(UINT16 blockType)
  * LL3		4015		9x9		81
  */
 
+static void progressive_rfx_idwt_x(INT16* pLowBand, int nLowStep, INT16* pHighBand, int nHighStep,
+		INT16* pDstBand, int nDstStep, int nLowCount, int nHighCount, int nDstCount)
+{
+	int i, j;
+	INT16 L0;
+	INT16 H0, H1;
+	INT16 X0, X1, X2;
+	INT16 *pL, *pH, *pX;
+
+	printf("progressive_rfx_idwt_x: nLowStep: %d nHighStep: %d nDstStep: %d nLowCount: %d nHighCount: %d nCount: %d\n",
+			nLowStep, nHighStep, nDstStep, nLowCount, nHighCount, nDstCount);
+
+	for (i = 0; i < nDstCount; i++)
+	{
+		pL = pLowBand;
+		pH = pHighBand;
+		pX = pDstBand;
+
+		H0 = *pH;
+		pH++;
+
+		L0 = *pL;
+		pL++;
+
+		X0 = L0 - H0;
+		X2 = L0 - H0;
+
+		for (j = 0; j < (nHighCount - 1); j++)
+		{
+			H1 = *pH;
+			pH++;
+
+			L0 = *pL;
+			pL++;
+
+			X2 = L0 - ((H0 + H1) / 2);
+			X1 = ((X0 + X2) / 2) + (2 * H0);
+
+			pX[0] = X0;
+			pX[1] = X1;
+			pX += 2;
+
+			X0 = X2;
+			H0 = H1;
+		}
+
+		if (nLowCount <= (nHighCount + 1))
+		{
+			if (nLowCount <= nHighCount)
+			{
+				pX[0] = X2;
+				pX[1] = X2 + (2 * H0);
+			}
+			else
+			{
+				L0 = *pL;
+				pL++;
+
+				X0 = L0 - H0;
+
+				pX[0] = X2;
+				pX[1] = ((X0 + X2) / 2) + (2 * H0);
+				pX[2] = X0;
+			}
+		}
+		else
+		{
+			L0 = *pL;
+			pL++;
+
+			X0 = L0 - (H0 / 2);
+
+			pX[0] = X2;
+			pX[1] = ((X0 + X2) / 2) + (2 * H0);
+			pX[2] = X0;
+
+			L0 = *pL;
+			pL++;
+
+			pX[3] = (X0 + L0) / 2;
+		}
+
+		pLowBand += nLowStep;
+		pHighBand += nHighStep;
+		pDstBand += nDstStep;
+	}
+}
+
+static void progressive_rfx_idwt_y(INT16* pLowBand, int nLowStep, INT16* pHighBand, int nHighStep,
+		INT16* pDstBand, int nDstStep, int nLowCount, int nHighCount, int nDstCount)
+{
+	int i, j;
+	INT16 L0;
+	INT16 H0, H1;
+	INT16 X0, X1, X2;
+	INT16 *pL, *pH, *pX;
+
+	printf("progressive_rfx_idwt_y: nLowStep: %d nHighStep: %d nDstStep: %d nLowCount: %d nHighCount: %d nDstCount: %d\n",
+			nLowStep, nHighStep, nDstStep, nLowCount, nHighCount, nDstCount);
+
+	for (i = 0; i < nDstCount; i++)
+	{
+		pL = pLowBand;
+		pH = pHighBand;
+		pX = pDstBand;
+
+		H0 = *pH;
+		pH += nHighStep;
+
+		L0 = *pL;
+		pL += nLowStep;
+
+		X0 = L0 - H0;
+		X2 = L0 - H0;
+
+		for (j = 0; j < (nHighCount - 1); j++)
+		{
+			H1 = *pH;
+			pH += nHighStep;
+
+			L0 = *pL;
+			pL += nLowStep;
+
+			X2 = L0 - ((H0 + H1) / 2);
+			X1 = ((X0 + X2) / 2) + (2 * H0);
+
+			*pX = X0;
+			pX += nDstStep;
+
+			*pX = X1;
+			pX += nDstStep;
+
+			X0 = X2;
+			H0 = H1;
+		}
+
+		if (nLowCount <= (nHighCount + 1))
+		{
+			if (nLowCount <= nHighCount)
+			{
+				*pX = X2;
+				pX += nDstStep;
+
+				*pX = X2 + (2 * H0);
+				pX += nDstStep;
+			}
+			else
+			{
+				L0 = *pL;
+				pL += nLowStep;
+
+				X0 = L0 - H0;
+
+				*pX = X2;
+				pX += nDstStep;
+
+				*pX = ((X0 + X2) / 2) + (2 * H0);
+				pX += nDstStep;
+
+				*pX = X0;
+				pX += nDstStep;
+			}
+		}
+		else
+		{
+			L0 = *pL;
+			pL += nLowStep;
+
+			X0 = L0 - (H0 / 2);
+
+			*pX = X2;
+			pX += nDstStep;
+
+			*pX = ((X0 + X2) / 2) + (2 * H0);
+			pX += nDstStep;
+
+			*pX = X0;
+			pX += nDstStep;
+
+			L0 = *pL;
+			pL += nLowStep;
+
+			*pX = (X0 + L0) / 2;
+			pX += nDstStep;
+		}
+
+		pLowBand += 1;
+		pHighBand += 1;
+		pDstBand += 1;
+	}
+}
+
 static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int N)
 {
-	int width;
-	int height;
-	int x, y, k;
-	int Nx2, Ne2;
+	INT16* pLowBand;
+	INT16* pHighBand;
+	INT16* pDstBand;
+	int nLowStep;
+	int nHighStep;
+	int nDstStep;
+	int nLowCount;
+	int nHighCount;
+	int nDstCount;
 	INT16 *L, *H;
 	INT16 *HL, *LH, *HH, *LL;
 
-	Nx2 = N * 2;
-	Ne2 = N * N;
-
 	HL = &buffer[0];
-	LH = &buffer[Ne2 - N]; /* (N^2 - N) */
-	HH = &buffer[2 * (Ne2 - N)]; /* 2 * (N^2 - N) */
-	LL = &buffer[(3 * Ne2) - (4 * N) + 1]; /* 3N^2 - 4N + 1) */
+	LH = &buffer[(N * N) - N]; /* (N^2 - N) */
+	HH = &buffer[2 * ((N * N) - N)]; /* 2 * (N^2 - N) */
+	LL = &buffer[(3 * (N * N)) - (4 * N) + 1]; /* 3N^2 - 4N + 1) */
 
 	L = &dwt[0];
-	H = &dwt[(2 * Ne2) - N]; /* 2N^2 - N */
+	H = &dwt[(2 * (N * N)) - N]; /* 2N^2 - N */
 
 	/* horizontal (LL + HL -> L) */
 
-	L[0] = LL[0] - ((HL[0] + HL[0] + 1) / 2);
+	pLowBand = LL;
+	nLowStep = N * N;
+	pHighBand = HL;
+	nHighStep = N * (N - 1);
+	pDstBand = L;
+	nDstStep = N + (N - 1);
+	nLowCount = N;
+	nHighCount = (N - 1);
+	nDstCount = (N - 1);
 
-	for (y = 0; y < N; y++)
-	{
-		/* Even coefficients */
-
-		for (k = 1; k < N; k++)
-		{
-			L[k * 2] = LL[k] - ((HL[k - 1] + HL[k] + 1) / 2);
-		}
-
-		/* Odd coefficients */
-
-		for (k = 0; k < N - 1; k++)
-		{
-			L[(k * 2) + 1] = (HL[k] * 2) + ((L[k * 2] + L[(k * 2) + 2]) / 2);
-		}
-
-		LL += N;
-		HL += (N - 1);
-		L += (2 * N) - 1;
-	}
+	progressive_rfx_idwt_x(pLowBand, nLowStep, pHighBand, nHighStep, pDstBand, nDstStep, nLowCount, nHighCount, nDstCount);
 
 	/* horizontal (LH + HH -> H) */
 
-	for (y = 0; y < N - 1; y++)
-	{
-		/* Even coefficients */
+	pLowBand = LH;
+	nLowStep = N * (N - 1);
+	pHighBand = HH;
+	nHighStep = (N - 1) * (N - 1);
+	pDstBand = H;
+	nDstStep = N + (N - 1);
+	nLowCount = N;
+	nHighCount = (N - 1);
+	nDstCount = (N - 1);
 
-		H[0] = LH[0] - ((HH[0] + HH[0] + 1) / 2);
-
-		for (k = 1; k < N; k++)
-		{
-			H[k * 2] = LH[k] - ((HH[k - 1] + HH[k] + 1) / 2);
-		}
-
-		/* Odd coefficients */
-
-		for (k = 0; k < N - 1; k++)
-		{
-			H[(k * 2) + 1] = (HH[k] * 2) + ((H[k * 2] + H[(k * 2) + 2]) / 2);
-		}
-
-		LH += N;
-		HH += (N - 1);
-		H += (2 * N) - 1;
-	}
+	progressive_rfx_idwt_x(pLowBand, nLowStep, pHighBand, nHighStep, pDstBand, nDstStep, nLowCount, nHighCount, nDstCount);
 
 	/* vertical (L + H -> LL) */
 
 	LL = &buffer[0];
 
 	L = &dwt[0];
-	H = &dwt[(2 * Ne2) - N]; /* 2N^2 - N */
+	H = &dwt[(2 * (N * N)) - N]; /* 2N^2 - N */
 
-	for (x = 0; x < (2 * N) - 1; x++)
-	{
-		/* Even coefficients */
+	pLowBand = L;
+	nLowStep = N + (N - 1);
+	pHighBand = H;
+	nHighStep = N + (N - 1);
+	pDstBand = LL;
+	nDstStep = N + (N - 1);
+	nLowCount = N;
+	nHighCount = (N - 1);
+	nDstCount = N + (N - 1);
 
-		LL[0] = L[0] - ((H[0] + H[0] + 1) / 2);
-
-		for (k = 1; k < N; k++)
-		{
-			LL = &buffer[(k * 2) * (N * 2) + x];
-			L = &dwt[k * (N * 2) + x];
-			H = &L[N * (N * 2)];
-
-			LL[0] = L[0] - (((H[-1 * (N * 2)]) + H[0] + 1) / 2);
-		}
-
-		/* Odd coefficients */
-
-		for (k = 0; k < N - 1; k++)
-		{
-			LL = &buffer[(k * 2) * (N * 2) + x];
-			L = &dwt[k * (N * 2) + x];
-			H = &L[N * (N * 2)];
-
-			LL[N * 2] = (H[0] * 2) + ((LL[0] + LL[2 * (N * 2)]) / 2);
-		}
-	}
+	progressive_rfx_idwt_y(pLowBand, nLowStep, pHighBand, nHighStep, pDstBand, nDstStep, nLowCount, nHighCount, nDstCount);
 }
 
 void progressive_rfx_dwt_2d_decode(INT16* buffer, INT16* dwt)
 {
-	if (0)
+	if (1)
 	{
 		progressive_rfx_dwt_2d_decode_block(&buffer[3807], dwt, 9);
 		progressive_rfx_dwt_2d_decode_block(&buffer[3007], dwt, 17);
-		progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt, 31);
+		//progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt, 33);
 	}
 }
 
