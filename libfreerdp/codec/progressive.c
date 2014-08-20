@@ -96,97 +96,117 @@ const char* progressive_get_block_type_string(UINT16 blockType)
 
 static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int N)
 {
-	int N2;
+	int width;
+	int height;
 	int x, y, k;
-	INT16 *dst, *l, *h;
-	INT16 *l_dst, *h_dst;
+	int Nx2, Ne2;
+	INT16 *L, *H;
 	INT16 *HL, *LH, *HH, *LL;
 
-	N2 = N << 1;
+	Nx2 = N * 2;
+	Ne2 = N * N;
 
-	/* Inverse DWT in horizontal direction, results in 2 sub-bands in L, H order in tmp buffer idwt. */
-	/* The 4 sub-bands are stored in HL(0), LH(1), HH(2), LL(3) order. */
-	/* The lower part L uses LL(3) and HL(0). */
-	/* The higher part H uses LH(1) and HH(2). */
-
-	LL = &buffer[(N * N) * 3];
 	HL = &buffer[0];
-	l_dst = &dwt[0];
+	LH = &buffer[Ne2 - N]; /* (N^2 - N) */
+	HH = &buffer[2 * (Ne2 - N)]; /* 2 * (N^2 - N) */
+	LL = &buffer[(3 * Ne2) - (4 * N) + 1]; /* 3N^2 - 4N + 1) */
 
-	LH = &buffer[N * N];
-	HH = &buffer[(N * N) * 2];
-	h_dst = &dwt[(N * N) * 2];
+	L = &dwt[0];
+	H = &dwt[(2 * Ne2) - N]; /* 2N^2 - N */
+
+	/* horizontal (LL + HL -> L) */
+
+	L[0] = LL[0] - ((HL[0] + HL[0] + 1) / 2);
 
 	for (y = 0; y < N; y++)
 	{
 		/* Even coefficients */
-		l_dst[0] = LL[0] - ((HL[0] + HL[0] + 1) >> 1);
-		h_dst[0] = LH[0] - ((HH[0] + HH[0] + 1) >> 1);
 
 		for (k = 1; k < N; k++)
 		{
-			x = k << 1;
-			l_dst[x] = LL[k] - ((HL[k-1] + HL[k] + 1) >> 1);
-			h_dst[x] = LH[k] - ((HH[k-1] + HH[k] + 1) >> 1);
+			L[k * 2] = LL[k] - ((HL[k - 1] + HL[k] + 1) / 2);
 		}
 
 		/* Odd coefficients */
-		for (k = 0; k < N-1; k++)
-		{
-			x = k << 1;
-			l_dst[x + 1] = (HL[k] << 1) + ((l_dst[x] + l_dst[x + 2]) >> 1);
-			h_dst[x + 1] = (HH[k] << 1) + ((h_dst[x] + h_dst[x + 2]) >> 1);
-		}
 
-		x = k << 1;
-		l_dst[x + 1] = (HL[k] << 1) + (l_dst[x]);
-		h_dst[x + 1] = (HH[k] << 1) + (h_dst[x]);
+		for (k = 0; k < N - 1; k++)
+		{
+			L[(k * 2) + 1] = (HL[k] * 2) + ((L[k * 2] + L[(k * 2) + 2]) / 2);
+		}
 
 		LL += N;
-		HL += N;
-		l_dst += N2;
-
-		LH += N;
-		HH += N;
-		h_dst += N2;
+		HL += (N - 1);
+		L += (2 * N) - 1;
 	}
 
-	/* Inverse DWT in vertical direction, results are stored in original buffer. */
-	for (x = 0; x < N2; x++)
+	/* horizontal (LH + HH -> H) */
+
+	for (y = 0; y < N - 1; y++)
 	{
 		/* Even coefficients */
-		for (k = 0; k < N; k++)
+
+		H[0] = LH[0] - ((HH[0] + HH[0] + 1) / 2);
+
+		for (k = 1; k < N; k++)
 		{
-			y = k << 1;
-			dst = buffer + y * N2 + x;
-			l = dwt + k * N2 + x;
-			h = l + N * N2;
-			dst[0] = *l - (((k > 0 ? *(h - N2) : *h) + (*h) + 1) >> 1);
+			H[k * 2] = LH[k] - ((HH[k - 1] + HH[k] + 1) / 2);
 		}
 
 		/* Odd coefficients */
-		for (k = 0; k < N; k++)
+
+		for (k = 0; k < N - 1; k++)
 		{
-			y = k << 1;
-			dst = buffer + y * N2 + x;
-			l = dwt + k * N2 + x;
-			h = l + N * N2;
-			dst[N2] = (*h << 1) + ((dst[0] + dst[k < N - 1 ? 2 * N2 : 0]) >> 1);
+			H[(k * 2) + 1] = (HH[k] * 2) + ((H[k * 2] + H[(k * 2) + 2]) / 2);
+		}
+
+		LH += N;
+		HH += (N - 1);
+		H += (2 * N) - 1;
+	}
+
+	/* vertical (L + H -> LL) */
+
+	LL = &buffer[0];
+
+	L = &dwt[0];
+	H = &dwt[(2 * Ne2) - N]; /* 2N^2 - N */
+
+	for (x = 0; x < (2 * N) - 1; x++)
+	{
+		/* Even coefficients */
+
+		LL[0] = L[0] - ((H[0] + H[0] + 1) / 2);
+
+		for (k = 1; k < N; k++)
+		{
+			LL = &buffer[(k * 2) * (N * 2) + x];
+			L = &dwt[k * (N * 2) + x];
+			H = &L[N * (N * 2)];
+
+			LL[0] = L[0] - (((H[-1 * (N * 2)]) + H[0] + 1) / 2);
+		}
+
+		/* Odd coefficients */
+
+		for (k = 0; k < N - 1; k++)
+		{
+			LL = &buffer[(k * 2) * (N * 2) + x];
+			L = &dwt[k * (N * 2) + x];
+			H = &L[N * (N * 2)];
+
+			LL[N * 2] = (H[0] * 2) + ((LL[0] + LL[2 * (N * 2)]) / 2);
 		}
 	}
 }
 
 void progressive_rfx_dwt_2d_decode(INT16* buffer, INT16* dwt)
 {
-#if 0
-	progressive_rfx_dwt_2d_decode_block(&buffer[3807], dwt, 8);
-	progressive_rfx_dwt_2d_decode_block(&buffer[3007], dwt, 16);
-	//progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt, 32);
-#else
-	progressive_rfx_dwt_2d_decode_block(&buffer[3840], dwt, 8);
-	progressive_rfx_dwt_2d_decode_block(&buffer[3072], dwt, 16);
-	progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt, 32);
-#endif
+	if (0)
+	{
+		progressive_rfx_dwt_2d_decode_block(&buffer[3807], dwt, 9);
+		progressive_rfx_dwt_2d_decode_block(&buffer[3007], dwt, 17);
+		progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt, 31);
+	}
 }
 
 int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
