@@ -286,84 +286,116 @@ static void progressive_rfx_idwt_y(INT16* pLowBand, int nLowStep, INT16* pHighBa
 	}
 }
 
-static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int N)
+static int progressive_rfx_get_band_l_count(int level)
 {
-	INT16* pLowBand;
-	INT16* pHighBand;
-	INT16* pDstBand;
-	int nLowStep;
-	int nHighStep;
-	int nDstStep;
-	int nLowCount;
-	int nHighCount;
-	int nDstCount;
-	INT16 *L, *H;
-	INT16 *HL, *LH, *HH, *LL;
+	return (64 >> level) + 1;
+}
 
-	HL = &buffer[0];
-	LH = &buffer[(N * N) - N]; /* (N^2 - N) */
-	HH = &buffer[2 * ((N * N) - N)]; /* 2 * (N^2 - N) */
-	LL = &buffer[(3 * (N * N)) - (4 * N) + 1]; /* 3N^2 - 4N + 1) */
+static int progressive_rfx_get_band_h_count(int level)
+{
+	if (level == 1)
+		return (64 >> 1) - 1;
+	else
+		return (64 + (1 << (level - 1))) >> level;
+}
+
+static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int level)
+{
+	int offset;
+	int nBandL;
+	int nBandH;
+	int nDstStepX;
+	int nDstStepY;
+	INT16 *L, *H;
+	INT16 *HL, *LH;
+	INT16 *HH, *LL;
+	INT16* pLowBand[3];
+	INT16* pHighBand[3];
+	INT16* pDstBand[3];
+	int nLowStep[3];
+	int nHighStep[3];
+	int nDstStep[3];
+	int nLowCount[3];
+	int nHighCount[3];
+	int nDstCount[3];
+
+	nBandL = progressive_rfx_get_band_l_count(level);
+	nBandH = progressive_rfx_get_band_h_count(level);
+
+	offset = 0;
+
+	HL = &buffer[offset];
+	offset += (nBandH * nBandL);
+
+	LH = &buffer[offset];
+	offset += (nBandL * nBandH);
+
+	HH = &buffer[offset];
+	offset += (nBandH * nBandH);
+
+	LL = &buffer[offset];
+	offset += (nBandL * nBandL);
+
+	nDstStepX = 2 * (nBandL + nBandH);
+	nDstStepY = 2 * progressive_rfx_get_band_l_count(level - 1);
+
+	if (0)
+	{
+		nDstStepX = (nDstStepX + 15) & ~0xF;
+		nDstStepY = (nDstStepY + 15) & ~0xF;
+	}
 
 	L = &dwt[0];
-	H = &dwt[(2 * (N * N)) - N]; /* 2N^2 - N */
+	H = &dwt[nBandL * nDstStepX];
 
 	/* horizontal (LL + HL -> L) */
 
-	pLowBand = LL;
-	nLowStep = N * N;
-	pHighBand = HL;
-	nHighStep = N * (N - 1);
-	pDstBand = L;
-	nDstStep = N + (N - 1);
-	nLowCount = N;
-	nHighCount = (N - 1);
-	nDstCount = (N - 1);
+	pLowBand[0] = LL;
+	nLowStep[0] = 2 * nBandL;
+	pHighBand[0] = HL;
+	nHighStep[0] = 2 * nBandH;
+	pDstBand[0] = L;
+	nDstStep[0] = nDstStepX;
+	nLowCount[0] = nBandL;
+	nHighCount[0] = nBandH;
+	nDstCount[0] = nBandL;
 
-	progressive_rfx_idwt_x(pLowBand, nLowStep, pHighBand, nHighStep, pDstBand, nDstStep, nLowCount, nHighCount, nDstCount);
+	progressive_rfx_idwt_x(pLowBand[0], nLowStep[0], pHighBand[0], nHighStep[0], pDstBand[0], nDstStep[0], nLowCount[0], nHighCount[0], nDstCount[0]);
 
 	/* horizontal (LH + HH -> H) */
 
-	pLowBand = LH;
-	nLowStep = N * (N - 1);
-	pHighBand = HH;
-	nHighStep = (N - 1) * (N - 1);
-	pDstBand = H;
-	nDstStep = N + (N - 1);
-	nLowCount = N;
-	nHighCount = (N - 1);
-	nDstCount = (N - 1);
+	pLowBand[1] = LH;
+	nLowStep[1] = 2 * nBandL;
+	pHighBand[1] = HH;
+	nHighStep[1] = 2 * nBandH;
+	pDstBand[1] = H;
+	nDstStep[1] = nDstStepX;
+	nLowCount[1] = nBandL;
+	nHighCount[1] = nBandH;
+	nDstCount[1] = nBandH;
 
-	progressive_rfx_idwt_x(pLowBand, nLowStep, pHighBand, nHighStep, pDstBand, nDstStep, nLowCount, nHighCount, nDstCount);
+	progressive_rfx_idwt_x(pLowBand[1], nLowStep[1], pHighBand[1], nHighStep[1], pDstBand[1], nDstStep[1], nLowCount[1], nHighCount[1], nDstCount[1]);
 
 	/* vertical (L + H -> LL) */
 
-	LL = &buffer[0];
+	pLowBand[2] = pDstBand[0];
+	nLowStep[2] = nDstStep[0];
+	pHighBand[2] = pDstBand[1];
+	nHighStep[2] = nDstStep[1];
+	pDstBand[2] = &buffer[0];
+	nDstStep[2] = nDstStepY;
+	nLowCount[2] = nBandL;
+	nHighCount[2] = nBandH;
+	nDstCount[2] = nBandL + nBandH;
 
-	L = &dwt[0];
-	H = &dwt[(2 * (N * N)) - N]; /* 2N^2 - N */
-
-	pLowBand = L;
-	nLowStep = N + (N - 1);
-	pHighBand = H;
-	nHighStep = N + (N - 1);
-	pDstBand = LL;
-	nDstStep = N + (N - 1);
-	nLowCount = N;
-	nHighCount = (N - 1);
-	nDstCount = N + (N - 1);
-
-	progressive_rfx_idwt_y(pLowBand, nLowStep, pHighBand, nHighStep, pDstBand, nDstStep, nLowCount, nHighCount, nDstCount);
+	progressive_rfx_idwt_y(pLowBand[2], nLowStep[2], pHighBand[2], nHighStep[2], pDstBand[2], nDstStep[2], nLowCount[2], nHighCount[2], nDstCount[2]);
 }
 
 void progressive_rfx_dwt_2d_decode(INT16* buffer, INT16* dwt)
 {
-	if (1)
-	{
-		progressive_rfx_dwt_2d_decode_block(&buffer[3807], dwt, 9);
-		progressive_rfx_dwt_2d_decode_block(&buffer[3007], dwt, 17);
-		//progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt, 33);
-	}
+	progressive_rfx_dwt_2d_decode_block(&buffer[3807], dwt, 3);
+	progressive_rfx_dwt_2d_decode_block(&buffer[3007], dwt, 2);
+	progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt, 1);
 }
 
 int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
