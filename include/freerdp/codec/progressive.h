@@ -23,6 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <winpr/wlog.h>
 #include <winpr/collections.h>
 
 #include <freerdp/codec/rfx.h>
@@ -255,6 +256,7 @@ struct _PROGRESSIVE_CONTEXT
 {
 	BOOL Compressor;
 
+	wLog* log;
 	wBufferPool* bufferPool;
 
 	UINT32 cRects;

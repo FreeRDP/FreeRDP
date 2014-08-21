@@ -103,9 +103,6 @@ static void progressive_rfx_idwt_x(INT16* pLowBand, int nLowStep, INT16* pHighBa
 	INT16 X0, X1, X2;
 	INT16 *pL, *pH, *pX;
 
-	printf("progressive_rfx_idwt_x: nLowStep: %d nHighStep: %d nDstStep: %d nLowCount: %d nHighCount: %d nCount: %d\n",
-			nLowStep, nHighStep, nDstStep, nLowCount, nHighCount, nDstCount);
-
 	for (i = 0; i < nDstCount; i++)
 	{
 		pL = pLowBand;
@@ -190,9 +187,6 @@ static void progressive_rfx_idwt_y(INT16* pLowBand, int nLowStep, INT16* pHighBa
 	INT16 H0, H1;
 	INT16 X0, X1, X2;
 	INT16 *pL, *pH, *pX;
-
-	printf("progressive_rfx_idwt_y: nLowStep: %d nHighStep: %d nDstStep: %d nLowCount: %d nHighCount: %d nDstCount: %d\n",
-			nLowStep, nHighStep, nDstStep, nLowCount, nHighCount, nDstCount);
 
 	for (i = 0; i < nDstCount; i++)
 	{
@@ -348,9 +342,6 @@ static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int l
 	L = &dwt[0];
 	H = &dwt[nBandL * nDstStepX];
 
-	printf("L: %d H: %d LL: %d\n",
-			nBandL * nDstStepX, nBandH * nDstStepX, (nBandL + nBandH) * nDstStepY);
-
 	/* horizontal (LL + HL -> L) */
 
 	pLowBand[0] = LL;
@@ -415,16 +406,16 @@ int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
 
 	rfx_differential_decode(&buffer[4015], 81); /* LL3 */
 
-	rfx_quantization_decode_block(prims, &buffer[0], 1023, (quant->HL1 - 1)); /* HL1 */
-	rfx_quantization_decode_block(prims, &buffer[1023], 1023, (quant->LH1 - 1)); /* LH1 */
-	rfx_quantization_decode_block(prims, &buffer[2046], 961, (quant->HH1 - 1)); /* HH1 */
-	rfx_quantization_decode_block(prims, &buffer[3007], 272, (quant->HL2 - 1)); /* HL2 */
-	rfx_quantization_decode_block(prims, &buffer[3279], 272, (quant->LH2 - 1)); /* LH2 */
-	rfx_quantization_decode_block(prims, &buffer[3551], 256, (quant->HH2 - 1)); /* HH2 */
-	rfx_quantization_decode_block(prims, &buffer[3807], 72, (quant->HL3 - 1)); /* HL3 */
-	rfx_quantization_decode_block(prims, &buffer[3879], 72, (quant->LH3 - 1)); /* LH3 */
-	rfx_quantization_decode_block(prims, &buffer[3951], 64, (quant->HH3 - 1)); /* HH3 */
-	rfx_quantization_decode_block(prims, &buffer[4015], 81, (quant->LL3 - 1)); /* LL3 */
+	rfx_quantization_decode_block(prims, &buffer[0], 1023, quant->HL1); /* HL1 */
+	rfx_quantization_decode_block(prims, &buffer[1023], 1023, quant->LH1); /* LH1 */
+	rfx_quantization_decode_block(prims, &buffer[2046], 961, quant->HH1); /* HH1 */
+	rfx_quantization_decode_block(prims, &buffer[3007], 272, quant->HL2); /* HL2 */
+	rfx_quantization_decode_block(prims, &buffer[3279], 272, quant->LH2); /* LH2 */
+	rfx_quantization_decode_block(prims, &buffer[3551], 256, quant->HH2); /* HH2 */
+	rfx_quantization_decode_block(prims, &buffer[3807], 72, quant->HL3); /* HL3 */
+	rfx_quantization_decode_block(prims, &buffer[3879], 72, quant->LH3); /* LH3 */
+	rfx_quantization_decode_block(prims, &buffer[3951], 64, quant->HH3); /* HH3 */
+	rfx_quantization_decode_block(prims, &buffer[4015], 81, quant->LL3); /* LL3 */
 
 	dwt = (INT16*) BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
 
@@ -501,6 +492,8 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 			tile->data, 64 * 4, &roi_64x64);
 
 	BufferPool_Return(progressive->bufferPool, pBuffer);
+
+	WLog_Image(progressive->log, WLOG_TRACE, tile->data, 64, 64, 32);
 
 	return 1;
 }
@@ -1058,6 +1051,8 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 	if (progressive)
 	{
 		progressive->Compressor = Compressor;
+
+		progressive->log = WLog_Get("com.freerdp.codec.progressive");
 
 		progressive->bufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
 
