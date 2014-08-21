@@ -272,8 +272,12 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			timeout.tv_usec = (dwMilliseconds % 1000) * 1000;
 		}
 
-		status = select(event->pipe_fd[0] + 1, &rfds, NULL, NULL,
-				(dwMilliseconds == INFINITE) ? NULL : &timeout);
+		do
+		{
+			status = select(event->pipe_fd[0] + 1, &rfds, NULL, NULL,
+					(dwMilliseconds == INFINITE) ? NULL : &timeout);
+		}
+		while (status < 0 && (errno == EINTR));
 
 		if (status < 0)
 		{
