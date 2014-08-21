@@ -280,9 +280,9 @@ static void progressive_rfx_idwt_y(INT16* pLowBand, int nLowStep, INT16* pHighBa
 			pX += nDstStep;
 		}
 
-		pLowBand += nLowStep;
-		pHighBand += nHighStep;
-		pDstBand += nDstStep;
+		pLowBand++;
+		pHighBand++;
+		pDstBand++;
 	}
 }
 
@@ -354,9 +354,9 @@ static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int l
 	/* horizontal (LL + HL -> L) */
 
 	pLowBand[0] = LL;
-	nLowStep[0] = 2 * nBandL;
+	nLowStep[0] = nBandL;
 	pHighBand[0] = HL;
-	nHighStep[0] = 2 * nBandH;
+	nHighStep[0] = nBandH;
 	pDstBand[0] = L;
 	nDstStep[0] = nDstStepX;
 	nLowCount[0] = nBandL;
@@ -368,9 +368,9 @@ static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int l
 	/* horizontal (LH + HH -> H) */
 
 	pLowBand[1] = LH;
-	nLowStep[1] = 2 * nBandL;
+	nLowStep[1] = nBandL;
 	pHighBand[1] = HH;
-	nHighStep[1] = 2 * nBandH;
+	nHighStep[1] = nBandH;
 	pDstBand[1] = H;
 	nDstStep[1] = nDstStepX;
 	nLowCount[1] = nBandL;
