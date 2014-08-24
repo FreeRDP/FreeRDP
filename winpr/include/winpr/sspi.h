@@ -20,8 +20,6 @@
 #ifndef WINPR_SSPI_H
 #define WINPR_SSPI_H
 
-#include <winpr/config.h>
-
 #include <wchar.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
