@@ -255,7 +255,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					// Set maximum window size for resizing
 
 					minmax = (MINMAXINFO*) lParam;
-					wf_update_canvas_diff(wfc);
+
+					//always use the last determined canvas diff, because it could be
+					//that the window is minimized when this gets called
+					//wf_update_canvas_diff(wfc);
 
 					if (!wfc->fullscreen)
 					{
