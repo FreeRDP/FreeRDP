@@ -482,6 +482,7 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 	BYTE* DstData;
 	RFX_RECT* rect;
 	int nXDst, nYDst;
+	int nXSrc, nYSrc;
 	int nWidth, nHeight;
 	int nbUpdateRects;
 	xfGfxSurface* surface;
@@ -531,6 +532,9 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 	{
 		tile = &(region->tiles[i]);
 
+		if (tile->blockType == PROGRESSIVE_WBT_TILE_UPGRADE)
+			continue;
+
 		updateRect.left = cmd->left + tile->x;
 		updateRect.top = cmd->top + tile->y;
 		updateRect.right = updateRect.left + 64;
@@ -547,9 +551,12 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 			nWidth = updateRects[j].right - updateRects[j].left;
 			nHeight = updateRects[j].bottom - updateRects[j].top;
 
-			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
-					nXDst, nYDst, nWidth, nHeight,
-					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, 0, 0);
+			nXSrc = nXDst - (cmd->left + tile->x);
+			nYSrc = nYDst - (cmd->top + tile->y);
+
+			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
+					surface->scanline, nXDst, nYDst, nWidth, nHeight,
+					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc);
 
 			region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &updateRects[j]);
 		}
