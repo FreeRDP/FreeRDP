@@ -392,8 +392,8 @@ void progressive_rfx_dwt_2d_decode(INT16* buffer, INT16* dwt)
 	progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt, 1);
 }
 
-int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
-		RFX_COMPONENT_CODEC_QUANT* quant, const BYTE* data, int length, INT16* buffer)
+int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive, RFX_COMPONENT_CODEC_QUANT* quant,
+		RFX_COMPONENT_CODEC_QUANT* quantProg, const BYTE* data, int length, INT16* buffer)
 {
 	int status;
 	INT16* dwt;
@@ -406,16 +406,16 @@ int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
 
 	rfx_differential_decode(&buffer[4015], 81); /* LL3 */
 
-	rfx_quantization_decode_block(prims, &buffer[0], 1023, quant->HL1); /* HL1 */
-	rfx_quantization_decode_block(prims, &buffer[1023], 1023, quant->LH1); /* LH1 */
-	rfx_quantization_decode_block(prims, &buffer[2046], 961, quant->HH1); /* HH1 */
-	rfx_quantization_decode_block(prims, &buffer[3007], 272, quant->HL2); /* HL2 */
-	rfx_quantization_decode_block(prims, &buffer[3279], 272, quant->LH2); /* LH2 */
-	rfx_quantization_decode_block(prims, &buffer[3551], 256, quant->HH2); /* HH2 */
-	rfx_quantization_decode_block(prims, &buffer[3807], 72, quant->HL3); /* HL3 */
-	rfx_quantization_decode_block(prims, &buffer[3879], 72, quant->LH3); /* LH3 */
-	rfx_quantization_decode_block(prims, &buffer[3951], 64, quant->HH3); /* HH3 */
-	rfx_quantization_decode_block(prims, &buffer[4015], 81, quant->LL3); /* LL3 */
+	rfx_quantization_decode_block(prims, &buffer[0], 1023, quant->HL1 + quantProg->HL1); /* HL1 */
+	rfx_quantization_decode_block(prims, &buffer[1023], 1023, quant->LH1 + quantProg->LH1); /* LH1 */
+	rfx_quantization_decode_block(prims, &buffer[2046], 961, quant->HH1 + quantProg->HH1); /* HH1 */
+	rfx_quantization_decode_block(prims, &buffer[3007], 272, quant->HL2 + quantProg->HL2); /* HL2 */
+	rfx_quantization_decode_block(prims, &buffer[3279], 272, quant->LH2 + quantProg->LH2); /* LH2 */
+	rfx_quantization_decode_block(prims, &buffer[3551], 256, quant->HH2 + quantProg->HH2); /* HH2 */
+	rfx_quantization_decode_block(prims, &buffer[3807], 72, quant->HL3 + quantProg->HL3); /* HL3 */
+	rfx_quantization_decode_block(prims, &buffer[3879], 72, quant->LH3 + quantProg->LH3); /* LH3 */
+	rfx_quantization_decode_block(prims, &buffer[3951], 64, quant->HH3 + quantProg->HH3); /* HH3 */
+	rfx_quantization_decode_block(prims, &buffer[4015], 81, quant->LL3 + quantProg->LL3); /* LL3 */
 
 	dwt = (INT16*) BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
 
@@ -434,6 +434,9 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 	RFX_COMPONENT_CODEC_QUANT* quantY;
 	RFX_COMPONENT_CODEC_QUANT* quantCb;
 	RFX_COMPONENT_CODEC_QUANT* quantCr;
+	RFX_COMPONENT_CODEC_QUANT* quantProgY;
+	RFX_COMPONENT_CODEC_QUANT* quantProgCb;
+	RFX_COMPONENT_CODEC_QUANT* quantProgCr;
 	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
 	static const prim_size_t roi_64x64 = { 64, 64 };
 	const primitives_t* prims = primitives_get();
@@ -470,15 +473,19 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 		quantProgVal = &(region->quantProgVals[tile->quality]);
 	}
 
+	quantProgY = &(quantProgVal->yQuantValues);
+	quantProgCb = &(quantProgVal->cbQuantValues);
+	quantProgCr = &(quantProgVal->crQuantValues);
+
 	pBuffer = (BYTE*) BufferPool_Take(progressive->bufferPool, -1);
 
 	pSrcDst[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16])); /* Y/R buffer */
 	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
 	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
-	progressive_rfx_decode_component(progressive, quantY, tile->yData, tile->yLen, pSrcDst[0]); /* Y */
-	progressive_rfx_decode_component(progressive, quantCb, tile->cbData, tile->cbLen, pSrcDst[1]); /* Cb */
-	progressive_rfx_decode_component(progressive, quantCr, tile->crData, tile->crLen, pSrcDst[2]); /* Cr */
+	progressive_rfx_decode_component(progressive, quantY, quantProgY, tile->yData, tile->yLen, pSrcDst[0]); /* Y */
+	progressive_rfx_decode_component(progressive, quantCb, quantProgCb, tile->cbData, tile->cbLen, pSrcDst[1]); /* Cb */
+	progressive_rfx_decode_component(progressive, quantCr, quantProgCr, tile->crData, tile->crLen, pSrcDst[2]); /* Cr */
 
 	prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
 			pSrcDst, 64 * sizeof(INT16), &roi_64x64);
@@ -770,6 +777,20 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 	return (int) offset;
 }
 
+void progressive_component_codec_quant_read(BYTE* block, RFX_COMPONENT_CODEC_QUANT* quantVal)
+{
+	quantVal->LL3 = block[0] & 0x0F;
+	quantVal->HL3 = block[0] >> 4;
+	quantVal->LH3 = block[1] & 0x0F;
+	quantVal->HH3 = block[1] >> 4;
+	quantVal->HL2 = block[2] & 0x0F;
+	quantVal->LH2 = block[2] >> 4;
+	quantVal->HH2 = block[3] & 0x0F;
+	quantVal->HL1 = block[3] >> 4;
+	quantVal->LH1 = block[4] & 0x0F;
+	quantVal->HH1 = block[4] >> 4;
+}
+
 int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
 {
@@ -949,16 +970,7 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				for (index = 0; index < region->numQuant; index++)
 				{
 					quantVal = &(region->quantVals[index]);
-					quantVal->LL3 = block[boffset + 0] & 0x0F;
-					quantVal->HL3 = block[boffset + 0] >> 4;
-					quantVal->LH3 = block[boffset + 1] & 0x0F;
-					quantVal->HH3 = block[boffset + 1] >> 4;
-					quantVal->HL2 = block[boffset + 2] & 0x0F;
-					quantVal->LH2 = block[boffset + 2] >> 4;
-					quantVal->HH2 = block[boffset + 3] & 0x0F;
-					quantVal->HL1 = block[boffset + 3] >> 4;
-					quantVal->LH1 = block[boffset + 4] & 0x0F;
-					quantVal->HH1 = block[boffset + 4] >> 4;
+					progressive_component_codec_quant_read(&block[boffset], quantVal);
 					boffset += 5;
 				}
 
@@ -981,9 +993,9 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				{
 					quantProgVal = &(region->quantProgVals[index]);
 					quantProgVal->quality = block[boffset + 0];
-					CopyMemory(quantProgVal->yQuantValues, &block[boffset + 1], 5);
-					CopyMemory(quantProgVal->cbQuantValues, &block[boffset + 6], 5);
-					CopyMemory(quantProgVal->crQuantValues, &block[boffset + 11], 5);
+					progressive_component_codec_quant_read(&block[boffset + 1], &(quantProgVal->yQuantValues));
+					progressive_component_codec_quant_read(&block[boffset + 6], &(quantProgVal->cbQuantValues));
+					progressive_component_codec_quant_read(&block[boffset + 11], &(quantProgVal->crQuantValues));
 					boffset += 16;
 				}
 
