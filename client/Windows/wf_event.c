@@ -284,11 +284,14 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					wfc->client_y = windowRect.top;
 				}
 				
-				wf_size_scrollbars(wfc, LOWORD(lParam), HIWORD(lParam));
+				if (wfc->client_width && wfc->client_height)
+				{
+					wf_size_scrollbars(wfc, LOWORD(lParam), HIWORD(lParam));
 
-				// Workaround: when the window is maximized, the call to "ShowScrollBars" returns TRUE but has no effect.
-				if (wParam == SIZE_MAXIMIZED && !wfc->fullscreen)
-					SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, SWP_NOMOVE | SWP_FRAMECHANGED);
+					// Workaround: when the window is maximized, the call to "ShowScrollBars" returns TRUE but has no effect.
+					if (wParam == SIZE_MAXIMIZED && !wfc->fullscreen)
+						SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, SWP_NOMOVE | SWP_FRAMECHANGED);
+				}
 
 				break;
 
