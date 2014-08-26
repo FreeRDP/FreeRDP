@@ -293,16 +293,16 @@ static int progressive_rfx_get_band_h_count(int level)
 		return (64 + (1 << (level - 1))) >> level;
 }
 
-static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int level)
+static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* temp, int level)
 {
 	int offset;
 	int nBandL;
 	int nBandH;
 	int nDstStepX;
 	int nDstStepY;
-	INT16 *L, *H;
 	INT16 *HL, *LH;
 	INT16 *HH, *LL;
+	INT16 *L, *H, *LLx;
 	INT16* pLowBand[3];
 	INT16* pHighBand[3];
 	INT16* pDstBand[3];
@@ -333,14 +333,15 @@ static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int l
 	nDstStepX = (nBandL + nBandH);
 	nDstStepY = (nBandL + nBandH);
 
-	if (0)
-	{
-		nDstStepX = (nDstStepX + 15) & ~0xF;
-		nDstStepY = (nDstStepY + 15) & ~0xF;
-	}
+	offset = 0;
 
-	L = &dwt[0];
-	H = &dwt[nBandL * nDstStepX];
+	L = &temp[offset];
+	offset += (nBandL * nDstStepX);
+
+	H = &temp[offset];
+	offset += (nBandH * nDstStepX);
+
+	LLx = &buffer[0];
 
 	/* horizontal (LL + HL -> L) */
 
@@ -376,7 +377,7 @@ static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int l
 	nLowStep[2] = nDstStep[0];
 	pHighBand[2] = pDstBand[1];
 	nHighStep[2] = nDstStep[1];
-	pDstBand[2] = &buffer[0];
+	pDstBand[2] = LLx;
 	nDstStep[2] = nDstStepY;
 	nLowCount[2] = nBandL;
 	nHighCount[2] = nBandH;
@@ -385,18 +386,27 @@ static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* dwt, int l
 	progressive_rfx_idwt_y(pLowBand[2], nLowStep[2], pHighBand[2], nHighStep[2], pDstBand[2], nDstStep[2], nLowCount[2], nHighCount[2], nDstCount[2]);
 }
 
-void progressive_rfx_dwt_2d_decode(INT16* buffer, INT16* dwt)
+void progressive_rfx_dwt_2d_decode(INT16* buffer, INT16* temp, INT16* current, BOOL diff)
 {
-	progressive_rfx_dwt_2d_decode_block(&buffer[3807], dwt, 3);
-	progressive_rfx_dwt_2d_decode_block(&buffer[3007], dwt, 2);
-	progressive_rfx_dwt_2d_decode_block(&buffer[0], dwt, 1);
+	const primitives_t* prims = primitives_get();
+
+	progressive_rfx_dwt_2d_decode_block(&buffer[3807], temp, 3);
+	progressive_rfx_dwt_2d_decode_block(&buffer[3007], temp, 2);
+	progressive_rfx_dwt_2d_decode_block(&buffer[0], temp, 1);
+
+	if (diff)
+	{
+		prims->add_16s(buffer, current, buffer, 4096);
+	}
+
+	CopyMemory(current, buffer, 4096 * 2);
 }
 
 int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive, RFX_COMPONENT_CODEC_QUANT* quant,
-		RFX_COMPONENT_CODEC_QUANT* quantProg, const BYTE* data, int length, INT16* buffer)
+		RFX_COMPONENT_CODEC_QUANT* quantProg, const BYTE* data, int length, INT16* buffer, INT16* current, BOOL diff)
 {
 	int status;
-	INT16* dwt;
+	INT16* temp;
 	const primitives_t* prims = primitives_get();
 
 	status = rfx_rlgr_decode(data, length, buffer, 4096, 1);
@@ -427,19 +437,21 @@ int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive, RFX_COMPO
 	rfx_quantization_decode_block(prims, &buffer[3951], 64, quant->HH3 - 1 + quantProg->HH3); /* HH3 */
 	rfx_quantization_decode_block(prims, &buffer[4015], 81, quant->LL3 - 1 + quantProg->LL3); /* LL3 */
 
-	dwt = (INT16*) BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
+	temp = (INT16*) BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
 
-	progressive_rfx_dwt_2d_decode(buffer, dwt);
+	progressive_rfx_dwt_2d_decode(buffer, temp, current, diff);
 
-	BufferPool_Return(progressive->bufferPool, dwt);
+	BufferPool_Return(progressive->bufferPool, temp);
 
 	return 1;
 }
 
 int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROGRESSIVE_TILE* tile)
 {
+	BOOL diff;
 	BYTE* pBuffer;
 	INT16* pSrcDst[3];
+	INT16* pCurrent[3];
 	PROGRESSIVE_BLOCK_REGION* region;
 	RFX_COMPONENT_CODEC_QUANT* quantY;
 	RFX_COMPONENT_CODEC_QUANT* quantCb;
@@ -483,9 +495,27 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 		quantProgVal = &(region->quantProgVals[tile->quality]);
 	}
 
+	diff = tile->flags & RFX_TILE_DIFFERENCE;
+
 	quantProgY = &(quantProgVal->yQuantValues);
 	quantProgCb = &(quantProgVal->cbQuantValues);
 	quantProgCr = &(quantProgVal->crQuantValues);
+
+	if (!tile->data)
+	{
+		tile->data = (BYTE*) _aligned_malloc(64 * 64 * 4, 16);
+	}
+
+	if (!tile->yCbCrData)
+	{
+		tile->yCbCrData = (BYTE*) _aligned_malloc((8192 + 32) * 3, 16);
+	}
+
+	pBuffer = tile->yCbCrData;
+
+	pCurrent[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16])); /* Y/R buffer */
+	pCurrent[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
+	pCurrent[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
 	pBuffer = (BYTE*) BufferPool_Take(progressive->bufferPool, -1);
 
@@ -493,17 +523,12 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
 	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
-	progressive_rfx_decode_component(progressive, quantY, quantProgY, tile->yData, tile->yLen, pSrcDst[0]); /* Y */
-	progressive_rfx_decode_component(progressive, quantCb, quantProgCb, tile->cbData, tile->cbLen, pSrcDst[1]); /* Cb */
-	progressive_rfx_decode_component(progressive, quantCr, quantProgCr, tile->crData, tile->crLen, pSrcDst[2]); /* Cr */
+	progressive_rfx_decode_component(progressive, quantY, quantProgY, tile->yData, tile->yLen, pSrcDst[0], pCurrent[0], diff); /* Y */
+	progressive_rfx_decode_component(progressive, quantCb, quantProgCb, tile->cbData, tile->cbLen, pSrcDst[1], pCurrent[1], diff); /* Cb */
+	progressive_rfx_decode_component(progressive, quantCr, quantProgCr, tile->crData, tile->crLen, pSrcDst[2], pCurrent[2], diff); /* Cr */
 
 	prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
 			pSrcDst, 64 * sizeof(INT16), &roi_64x64);
-
-	if (!tile->data)
-	{
-		tile->data = _aligned_malloc(64 * 64 * 4, 16);
-	}
 
 	prims->RGBToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * sizeof(INT16),
 			tile->data, 64 * 4, &roi_64x64);
