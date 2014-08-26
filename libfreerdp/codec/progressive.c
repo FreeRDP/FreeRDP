@@ -76,6 +76,80 @@ const char* progressive_get_block_type_string(UINT16 blockType)
 	return "PROGRESSIVE_WBT_UNKNOWN";
 }
 
+int progressive_set_surface_data(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId, void* pData)
+{
+	ULONG_PTR key;
+
+	key = ((ULONG_PTR) surfaceId) + 1;
+
+	if (pData)
+		HashTable_Add(progressive->SurfaceContexts, (void*) key, pData);
+	else
+		HashTable_Remove(progressive->SurfaceContexts, (void*) key);
+
+	return 1;
+}
+
+void* progressive_get_surface_data(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId)
+{
+	ULONG_PTR key;
+	void* pData = NULL;
+
+	key = ((ULONG_PTR) surfaceId) + 1;
+
+	pData = HashTable_GetItemValue(progressive->SurfaceContexts, (void*) key);
+
+	return pData;
+}
+
+int progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId, UINT32 width, UINT32 height)
+{
+	PROGRESSIVE_SURFACE_CONTEXT* surface;
+
+	surface = (PROGRESSIVE_SURFACE_CONTEXT*) progressive_get_surface_data(progressive, surfaceId);
+
+	if (!surface)
+	{
+		surface = (PROGRESSIVE_SURFACE_CONTEXT*) malloc(sizeof(PROGRESSIVE_SURFACE_CONTEXT));
+
+		if (!surface)
+			return -1;
+
+		surface->id = surfaceId;
+		surface->width = width;
+		surface->height = height;
+		surface->gridWidth = (width + (width % 64)) / 64;
+		surface->gridHeight = (height + (height % 64)) / 64;
+		surface->gridSize = surface->gridWidth * surface->gridHeight;
+
+		surface->tiles = (RFX_PROGRESSIVE_TILE*) calloc(surface->gridSize, sizeof(RFX_PROGRESSIVE_TILE));
+
+		if (!surface->tiles)
+			return -1;
+
+		progressive_set_surface_data(progressive, surfaceId, (void*) surface);
+	}
+
+	return 1;
+}
+
+int progressive_delete_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId)
+{
+	PROGRESSIVE_SURFACE_CONTEXT* surface;
+
+	surface = (PROGRESSIVE_SURFACE_CONTEXT*) progressive_get_surface_data(progressive, surfaceId);
+
+	if (surface)
+	{
+		progressive_set_surface_data(progressive, surfaceId, NULL);
+
+		free(surface->tiles);
+		free(surface);
+	}
+
+	return 1;
+}
+
 /*
  * Band		Offset		Dimensions	Size
  *
@@ -583,15 +657,20 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 	return 1;
 }
 
-int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UINT32 blocksLen)
+int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UINT32 blocksLen, PROGRESSIVE_SURFACE_CONTEXT* surface)
 {
 	BYTE* block;
+	UINT16 xIdx;
+	UINT16 yIdx;
+	UINT16 zIdx;
 	UINT16 index;
 	UINT32 boffset;
+	UINT16 blockType;
+	UINT32 blockLen;
 	UINT32 count = 0;
 	UINT32 offset = 0;
 	RFX_PROGRESSIVE_TILE* tile;
-	RFX_PROGRESSIVE_TILE* tiles;
+	RFX_PROGRESSIVE_TILE** tiles;
 	PROGRESSIVE_BLOCK_REGION* region;
 
 	region = &(progressive->region);
@@ -603,23 +682,34 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 		boffset = 0;
 		block = &blocks[offset];
 
-		tile = &tiles[count];
-
-		tile->blockType = *((UINT16*) &block[boffset + 0]); /* blockType (2 bytes) */
-		tile->blockLen = *((UINT32*) &block[boffset + 2]); /* blockLen (4 bytes) */
+		blockType = *((UINT16*) &block[boffset + 0]); /* blockType (2 bytes) */
+		blockLen = *((UINT32*) &block[boffset + 2]); /* blockLen (4 bytes) */
 		boffset += 6;
 
-		printf("%s\n", progressive_get_block_type_string(tile->blockType));
+		printf("%s\n", progressive_get_block_type_string(blockType));
 
-		if ((blocksLen - offset) < tile->blockLen)
+		if ((blocksLen - offset) < blockLen)
 			return -1003;
 
-		switch (tile->blockType)
+		switch (blockType)
 		{
 			case PROGRESSIVE_WBT_TILE_SIMPLE:
 
-				if ((tile->blockLen - boffset) < 16)
+				if ((blockLen - boffset) < 16)
 					return -1022;
+
+				xIdx = *((UINT16*) &block[boffset + 3]); /* xIdx (2 bytes) */
+				yIdx = *((UINT16*) &block[boffset + 5]); /* yIdx (2 bytes) */
+
+				zIdx = (yIdx * surface->gridWidth) + xIdx;
+
+				if (zIdx >= surface->gridSize)
+					return -1;
+
+				tiles[count] = tile = &(surface->tiles[zIdx]);
+
+				tile->blockType = blockType;
+				tile->blockLen = blockLen;
 
 				tile->quality = 0xFF; /* simple tiles use no progressive techniques */
 
@@ -670,8 +760,21 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 
 			case PROGRESSIVE_WBT_TILE_FIRST:
 
-				if ((tile->blockLen - boffset) < 17)
+				if ((blockLen - boffset) < 17)
 					return -1027;
+
+				xIdx = *((UINT16*) &block[boffset + 3]); /* xIdx (2 bytes) */
+				yIdx = *((UINT16*) &block[boffset + 5]); /* yIdx (2 bytes) */
+
+				zIdx = (yIdx * surface->gridWidth) + xIdx;
+
+				if (zIdx >= surface->gridSize)
+					return -1;
+
+				tiles[count] = tile = &(surface->tiles[zIdx]);
+
+				tile->blockType = blockType;
+				tile->blockLen = blockLen;
 
 				tile->quantIdxY = block[boffset + 0]; /* quantIdxY (1 byte) */
 				tile->quantIdxCb = block[boffset + 1]; /* quantIdxCb (1 byte) */
@@ -719,8 +822,21 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 
 			case PROGRESSIVE_WBT_TILE_UPGRADE:
 
-				if ((tile->blockLen - boffset) < 20)
+				if ((blockLen - boffset) < 20)
 					return -1032;
+
+				xIdx = *((UINT16*) &block[boffset + 3]); /* xIdx (2 bytes) */
+				yIdx = *((UINT16*) &block[boffset + 5]); /* yIdx (2 bytes) */
+
+				zIdx = (yIdx * surface->gridWidth) + xIdx;
+
+				if (zIdx >= surface->gridSize)
+					return -1;
+
+				tiles[count] = tile = &(surface->tiles[zIdx]);
+
+				tile->blockType = blockType;
+				tile->blockLen = blockLen;
 
 				tile->flags = 0;
 
@@ -786,10 +902,10 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 				break;
 		}
 
-		if (boffset != tile->blockLen)
+		if (boffset != blockLen)
 			return -1040;
 
-		offset += tile->blockLen;
+		offset += blockLen;
 		count++;
 	}
 
@@ -798,7 +914,7 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 
 	for (index = 0; index < region->numTiles; index++)
 	{
-		tile = &tiles[index];
+		tile = tiles[index];
 
 		switch (tile->blockType)
 		{
@@ -831,7 +947,7 @@ void progressive_component_codec_quant_read(BYTE* block, RFX_COMPONENT_CODEC_QUA
 }
 
 int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, UINT16 surfaceId)
 {
 	int status;
 	BYTE* block;
@@ -849,8 +965,14 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 	PROGRESSIVE_BLOCK_CONTEXT context;
 	PROGRESSIVE_BLOCK_FRAME_BEGIN frameBegin;
 	PROGRESSIVE_BLOCK_FRAME_END frameEnd;
+	PROGRESSIVE_SURFACE_CONTEXT* surface;
 	RFX_COMPONENT_CODEC_QUANT* quantVal;
 	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
+
+	surface = (PROGRESSIVE_SURFACE_CONTEXT*) progressive_get_surface_data(progressive, surfaceId);
+
+	if (!surface)
+		return -1001;
 
 	blocks = pSrcData;
 	blocksLen = SrcSize;
@@ -1043,8 +1165,8 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 
 				if (region->numTiles > progressive->cTiles)
 				{
-					progressive->tiles = (RFX_PROGRESSIVE_TILE*) realloc(progressive->tiles,
-							region->numTiles * sizeof(RFX_PROGRESSIVE_TILE));
+					progressive->tiles = (RFX_PROGRESSIVE_TILE**) realloc(progressive->tiles,
+							region->numTiles * sizeof(RFX_PROGRESSIVE_TILE*));
 					progressive->cTiles = region->numTiles;
 				}
 
@@ -1056,7 +1178,7 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				printf("numRects: %d numTiles: %d numQuant: %d numProgQuant: %d\n",
 						region->numRects, region->numTiles, region->numQuant, region->numProgQuant);
 
-				status = progressive_process_tiles(progressive, &block[boffset], region->tileDataSize);
+				status = progressive_process_tiles(progressive, &block[boffset], region->tileDataSize, surface);
 
 				if (status < 0)
 					return status;
@@ -1114,7 +1236,7 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 			return NULL;
 
 		progressive->cTiles = 64;
-		progressive->tiles = (RFX_PROGRESSIVE_TILE*) malloc(progressive->cTiles * sizeof(RFX_PROGRESSIVE_TILE));
+		progressive->tiles = (RFX_PROGRESSIVE_TILE**) malloc(progressive->cTiles * sizeof(RFX_PROGRESSIVE_TILE*));
 
 		if (!progressive->tiles)
 			return NULL;
@@ -1134,6 +1256,8 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 		ZeroMemory(&(progressive->quantProgValFull), sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
 		progressive->quantProgValFull.quality = 100;
 
+		progressive->SurfaceContexts = HashTable_New(TRUE);
+
 		progressive_context_reset(progressive);
 	}
 
@@ -1151,6 +1275,8 @@ void progressive_context_free(PROGRESSIVE_CONTEXT* progressive)
 	free(progressive->tiles);
 	free(progressive->quantVals);
 	free(progressive->quantProgVals);
+
+	HashTable_Free(progressive->SurfaceContexts);
 
 	free(progressive);
 }

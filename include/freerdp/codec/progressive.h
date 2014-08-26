@@ -231,7 +231,7 @@ struct _PROGRESSIVE_BLOCK_REGION
 	RFX_RECT* rects;
 	RFX_COMPONENT_CODEC_QUANT* quantVals;
 	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVals;
-	RFX_PROGRESSIVE_TILE* tiles;
+	RFX_PROGRESSIVE_TILE** tiles;
 };
 typedef struct _PROGRESSIVE_BLOCK_REGION PROGRESSIVE_BLOCK_REGION;
 
@@ -253,6 +253,18 @@ struct _PROGRESSIVE_BLOCK_FRAME_END
 };
 typedef struct _PROGRESSIVE_BLOCK_FRAME_END PROGRESSIVE_BLOCK_FRAME_END;
 
+struct _PROGRESSIVE_SURFACE_CONTEXT
+{
+	UINT16 id;
+	UINT32 width;
+	UINT32 height;
+	UINT32 gridWidth;
+	UINT32 gridHeight;
+	UINT32 gridSize;
+	RFX_PROGRESSIVE_TILE* tiles;
+};
+typedef struct _PROGRESSIVE_SURFACE_CONTEXT PROGRESSIVE_SURFACE_CONTEXT;
+
 struct _PROGRESSIVE_CONTEXT
 {
 	BOOL Compressor;
@@ -264,7 +276,7 @@ struct _PROGRESSIVE_CONTEXT
 	RFX_RECT* rects;
 
 	UINT32 cTiles;
-	RFX_PROGRESSIVE_TILE* tiles;
+	RFX_PROGRESSIVE_TILE** tiles;
 
 	UINT32 cQuant;
 	RFX_COMPONENT_CODEC_QUANT* quantVals;
@@ -274,6 +286,8 @@ struct _PROGRESSIVE_CONTEXT
 
 	PROGRESSIVE_BLOCK_REGION region;
 	RFX_PROGRESSIVE_CODEC_QUANT quantProgValFull;
+
+	wHashTable* SurfaceContexts;
 };
 typedef struct _PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
 
@@ -284,7 +298,10 @@ extern "C" {
 FREERDP_API int progressive_compress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
 
 FREERDP_API int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight);
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, UINT16 surfaceId);
+
+FREERDP_API int progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId, UINT32 width, UINT32 height);
+FREERDP_API int progressive_delete_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId);
 
 FREERDP_API void progressive_context_reset(PROGRESSIVE_CONTEXT* progressive);
 

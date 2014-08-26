@@ -499,10 +499,12 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 	if (!surface)
 		return -1;
 
+	progressive_create_surface_context(xfc->progressive, cmd->surfaceId, surface->width, surface->height);
+
 	DstData = surface->data;
 
 	status = progressive_decompress(xfc->progressive, cmd->data, cmd->length, &DstData,
-			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
+			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height, cmd->surfaceId);
 
 	if (status < 0)
 	{
@@ -530,7 +532,7 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 
 	for (i = 0; i < region->numTiles; i++)
 	{
-		tile = &(region->tiles[i]);
+		tile = region->tiles[i];
 
 		if (tile->blockType == PROGRESSIVE_WBT_TILE_UPGRADE)
 			continue;
@@ -649,6 +651,7 @@ int xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* cr
 int xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
 	xfGfxSurface* surface = NULL;
+	xfContext* xfc = (xfContext*) context->custom;
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, deleteSurface->surfaceId);
 
@@ -660,6 +663,8 @@ int xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* de
 	}
 
 	context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
+
+	progressive_delete_surface_context(xfc->progressive, deleteSurface->surfaceId);
 
 	return 1;
 }
