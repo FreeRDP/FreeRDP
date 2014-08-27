@@ -464,16 +464,14 @@ void progressive_rfx_dwt_2d_decode(INT16* buffer, INT16* temp, INT16* current, B
 {
 	const primitives_t* prims = primitives_get();
 
+	if (diff)
+		prims->add_16s(buffer, current, buffer, 4096);
+
+	CopyMemory(current, buffer, 4096 * 2);
+
 	progressive_rfx_dwt_2d_decode_block(&buffer[3807], temp, 3);
 	progressive_rfx_dwt_2d_decode_block(&buffer[3007], temp, 2);
 	progressive_rfx_dwt_2d_decode_block(&buffer[0], temp, 1);
-
-	if (diff)
-	{
-		prims->add_16s(buffer, current, buffer, 4096);
-	}
-
-	CopyMemory(current, buffer, 4096 * 2);
 }
 
 int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive, RFX_COMPONENT_CODEC_QUANT* quant,
@@ -620,6 +618,9 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 	RFX_COMPONENT_CODEC_QUANT* quantY;
 	RFX_COMPONENT_CODEC_QUANT* quantCb;
 	RFX_COMPONENT_CODEC_QUANT* quantCr;
+	RFX_COMPONENT_CODEC_QUANT* quantProgY;
+	RFX_COMPONENT_CODEC_QUANT* quantProgCb;
+	RFX_COMPONENT_CODEC_QUANT* quantProgCr;
 	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
 
 	printf("ProgressiveTileUpgrade: quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d quality: %d ySrlLen: %d yRawLen: %d cbSrlLen: %d cbRawLen: %d crSrlLen: %d crRawLen: %d\n",
@@ -654,6 +655,10 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 		quantProgVal = &(region->quantProgVals[tile->quality]);
 	}
 
+	quantProgY = &(quantProgVal->yQuantValues);
+	quantProgCb = &(quantProgVal->cbQuantValues);
+	quantProgCr = &(quantProgVal->crQuantValues);
+
 	return 1;
 }
 
@@ -686,7 +691,7 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 		blockLen = *((UINT32*) &block[boffset + 2]); /* blockLen (4 bytes) */
 		boffset += 6;
 
-		printf("%s\n", progressive_get_block_type_string(blockType));
+		//printf("%s\n", progressive_get_block_type_string(blockType));
 
 		if ((blocksLen - offset) < blockLen)
 			return -1003;
