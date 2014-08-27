@@ -474,8 +474,8 @@ void progressive_rfx_dwt_2d_decode(INT16* buffer, INT16* temp, INT16* current, B
 	progressive_rfx_dwt_2d_decode_block(&buffer[0], temp, 1);
 }
 
-int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive, RFX_COMPONENT_CODEC_QUANT* quant,
-		RFX_COMPONENT_CODEC_QUANT* quantProg, const BYTE* data, int length, INT16* buffer, INT16* current, BOOL diff)
+int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive, RFX_COMPONENT_CODEC_QUANT* bitPos,
+		const BYTE* data, int length, INT16* buffer, INT16* current, BOOL diff)
 {
 	int status;
 	INT16* temp;
@@ -488,26 +488,16 @@ int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive, RFX_COMPO
 
 	rfx_differential_decode(&buffer[4015], 81); /* LL3 */
 
-#if 0
-	printf("quant:     HL1: %d LH1: %d HH1: %d HL2: %d LH2: %d HH2: %d HL3: %d LH3: %d HH3: %d LL3: %d\n",
-			quant->HL1, quant->LH1, quant->HH1, quant->HL2, quant->LH2, quant->HH2,
-			quant->HL3, quant->LH3, quant->HH3, quant->LL3);
-
-	printf("quantProg: HL1: %d LH1: %d HH1: %d HL2: %d LH2: %d HH2: %d HL3: %d LH3: %d HH3: %d LL3: %d\n",
-			quantProg->HL1, quantProg->LH1, quantProg->HH1, quantProg->HL2, quantProg->LH2, quantProg->HH2,
-			quantProg->HL3, quantProg->LH3, quantProg->HH3, quantProg->LL3);
-#endif
-
-	rfx_quantization_decode_block(prims, &buffer[0], 1023, quant->HL1 - 1 + quantProg->HL1); /* HL1 */
-	rfx_quantization_decode_block(prims, &buffer[1023], 1023, quant->LH1 - 1 + quantProg->LH1); /* LH1 */
-	rfx_quantization_decode_block(prims, &buffer[2046], 961, quant->HH1 - 1 + quantProg->HH1); /* HH1 */
-	rfx_quantization_decode_block(prims, &buffer[3007], 272, quant->HL2 - 1 + quantProg->HL2); /* HL2 */
-	rfx_quantization_decode_block(prims, &buffer[3279], 272, quant->LH2 - 1 + quantProg->LH2); /* LH2 */
-	rfx_quantization_decode_block(prims, &buffer[3551], 256, quant->HH2 - 1 + quantProg->HH2); /* HH2 */
-	rfx_quantization_decode_block(prims, &buffer[3807], 72, quant->HL3 - 1 + quantProg->HL3); /* HL3 */
-	rfx_quantization_decode_block(prims, &buffer[3879], 72, quant->LH3 - 1 + quantProg->LH3); /* LH3 */
-	rfx_quantization_decode_block(prims, &buffer[3951], 64, quant->HH3 - 1 + quantProg->HH3); /* HH3 */
-	rfx_quantization_decode_block(prims, &buffer[4015], 81, quant->LL3 - 1 + quantProg->LL3); /* LL3 */
+	rfx_quantization_decode_block(prims, &buffer[0], 1023, bitPos->HL1 - 1); /* HL1 */
+	rfx_quantization_decode_block(prims, &buffer[1023], 1023, bitPos->LH1 - 1); /* LH1 */
+	rfx_quantization_decode_block(prims, &buffer[2046], 961, bitPos->HH1 - 1); /* HH1 */
+	rfx_quantization_decode_block(prims, &buffer[3007], 272, bitPos->HL2 - 1); /* HL2 */
+	rfx_quantization_decode_block(prims, &buffer[3279], 272, bitPos->LH2 - 1); /* LH2 */
+	rfx_quantization_decode_block(prims, &buffer[3551], 256, bitPos->HH2 - 1); /* HH2 */
+	rfx_quantization_decode_block(prims, &buffer[3807], 72, bitPos->HL3 - 1); /* HL3 */
+	rfx_quantization_decode_block(prims, &buffer[3879], 72, bitPos->LH3 - 1); /* LH3 */
+	rfx_quantization_decode_block(prims, &buffer[3951], 64, bitPos->HH3 - 1); /* HH3 */
+	rfx_quantization_decode_block(prims, &buffer[4015], 81, bitPos->LL3 - 1); /* LL3 */
 
 	temp = (INT16*) BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
 
@@ -516,6 +506,34 @@ int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive, RFX_COMPO
 	BufferPool_Return(progressive->bufferPool, temp);
 
 	return 1;
+}
+
+void progressive_rfx_quant_add(RFX_COMPONENT_CODEC_QUANT* q1, RFX_COMPONENT_CODEC_QUANT* q2, RFX_COMPONENT_CODEC_QUANT* dst)
+{
+	dst->HL1 = q1->HL1 + q2->HL1; /* HL1 */
+	dst->LH1 = q1->LH1 + q2->LH1; /* LH1 */
+	dst->HH1 = q1->HH1 + q2->HH1; /* HH1 */
+	dst->HL2 = q1->HL2 + q2->HL2; /* HL2 */
+	dst->LH2 = q1->LH2 + q2->LH2; /* LH2 */
+	dst->HH2 = q1->HH2 + q2->HH2; /* HH2 */
+	dst->HL3 = q1->HL3 + q2->HL3; /* HL3 */
+	dst->LH3 = q1->LH3 + q2->LH3; /* LH3 */
+	dst->HH3 = q1->HH3 + q2->HH3; /* HH3 */
+	dst->LL3 = q1->LL3 + q2->LL3; /* LL3 */
+}
+
+void progressive_rfx_quant_sub(RFX_COMPONENT_CODEC_QUANT* q1, RFX_COMPONENT_CODEC_QUANT* q2, RFX_COMPONENT_CODEC_QUANT* dst)
+{
+	dst->HL1 = q1->HL1 - q2->HL1; /* HL1 */
+	dst->LH1 = q1->LH1 - q2->LH1; /* LH1 */
+	dst->HH1 = q1->HH1 - q2->HH1; /* HH1 */
+	dst->HL2 = q1->HL2 - q2->HL2; /* HL2 */
+	dst->LH2 = q1->LH2 - q2->LH2; /* LH2 */
+	dst->HH2 = q1->HH2 - q2->HH2; /* HH2 */
+	dst->HL3 = q1->HL3 - q2->HL3; /* HL3 */
+	dst->LH3 = q1->LH3 - q2->LH3; /* LH3 */
+	dst->HH3 = q1->HH3 - q2->HH3; /* HH3 */
+	dst->LL3 = q1->LL3 - q2->LL3; /* LL3 */
 }
 
 int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROGRESSIVE_TILE* tile)
@@ -573,17 +591,21 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 	quantProgCb = &(quantProgVal->cbQuantValues);
 	quantProgCr = &(quantProgVal->crQuantValues);
 
+	progressive_rfx_quant_add(quantY, quantProgY, &(tile->yBitPos));
+	progressive_rfx_quant_add(quantCb, quantProgCb, &(tile->cbBitPos));
+	progressive_rfx_quant_add(quantCr, quantProgCr, &(tile->crBitPos));
+
 	if (!tile->data)
 	{
 		tile->data = (BYTE*) _aligned_malloc(64 * 64 * 4, 16);
 	}
 
-	if (!tile->yCbCrData)
+	if (!tile->current)
 	{
-		tile->yCbCrData = (BYTE*) _aligned_malloc((8192 + 32) * 3, 16);
+		tile->current = (BYTE*) _aligned_malloc((8192 + 32) * 3, 16);
 	}
 
-	pBuffer = tile->yCbCrData;
+	pBuffer = tile->current;
 
 	pCurrent[0] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 0) + 16])); /* Y/R buffer */
 	pCurrent[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
@@ -595,9 +617,9 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 	pSrcDst[1] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 1) + 16])); /* Cb/G buffer */
 	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* Cr/B buffer */
 
-	progressive_rfx_decode_component(progressive, quantY, quantProgY, tile->yData, tile->yLen, pSrcDst[0], pCurrent[0], diff); /* Y */
-	progressive_rfx_decode_component(progressive, quantCb, quantProgCb, tile->cbData, tile->cbLen, pSrcDst[1], pCurrent[1], diff); /* Cb */
-	progressive_rfx_decode_component(progressive, quantCr, quantProgCr, tile->crData, tile->crLen, pSrcDst[2], pCurrent[2], diff); /* Cr */
+	progressive_rfx_decode_component(progressive, &(tile->yBitPos), tile->yData, tile->yLen, pSrcDst[0], pCurrent[0], diff); /* Y */
+	progressive_rfx_decode_component(progressive, &(tile->crBitPos), tile->cbData, tile->cbLen, pSrcDst[1], pCurrent[1], diff); /* Cb */
+	progressive_rfx_decode_component(progressive, &(tile->cbBitPos), tile->crData, tile->crLen, pSrcDst[2], pCurrent[2], diff); /* Cr */
 
 	prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
 			pSrcDst, 64 * sizeof(INT16), &roi_64x64);
@@ -614,14 +636,21 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 
 int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PROGRESSIVE_TILE* tile)
 {
+	RFX_COMPONENT_CODEC_QUANT* q;
 	PROGRESSIVE_BLOCK_REGION* region;
+	RFX_COMPONENT_CODEC_QUANT yBitPos;
+	RFX_COMPONENT_CODEC_QUANT cbBitPos;
+	RFX_COMPONENT_CODEC_QUANT crBitPos;
+	RFX_COMPONENT_CODEC_QUANT yNumBits;
+	RFX_COMPONENT_CODEC_QUANT cbNumBits;
+	RFX_COMPONENT_CODEC_QUANT crNumBits;
 	RFX_COMPONENT_CODEC_QUANT* quantY;
 	RFX_COMPONENT_CODEC_QUANT* quantCb;
 	RFX_COMPONENT_CODEC_QUANT* quantCr;
 	RFX_COMPONENT_CODEC_QUANT* quantProgY;
 	RFX_COMPONENT_CODEC_QUANT* quantProgCb;
 	RFX_COMPONENT_CODEC_QUANT* quantProgCr;
-	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
+	RFX_PROGRESSIVE_CODEC_QUANT* quantProg;
 
 	printf("ProgressiveTileUpgrade: quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d quality: %d ySrlLen: %d yRawLen: %d cbSrlLen: %d cbRawLen: %d crSrlLen: %d crRawLen: %d\n",
 			tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx, tile->quality, tile->ySrlLen, tile->yRawLen, tile->cbSrlLen, tile->cbRawLen, tile->crSrlLen, tile->crRawLen);
@@ -645,19 +674,37 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 
 	if (tile->quality == 0xFF)
 	{
-		quantProgVal = &(progressive->quantProgValFull);
+		quantProg = &(progressive->quantProgValFull);
 	}
 	else
 	{
 		if (tile->quality >= region->numProgQuant)
 			return -1;
 
-		quantProgVal = &(region->quantProgVals[tile->quality]);
+		quantProg = &(region->quantProgVals[tile->quality]);
 	}
 
-	quantProgY = &(quantProgVal->yQuantValues);
-	quantProgCb = &(quantProgVal->cbQuantValues);
-	quantProgCr = &(quantProgVal->crQuantValues);
+	quantProgY = &(quantProg->yQuantValues);
+	quantProgCb = &(quantProg->cbQuantValues);
+	quantProgCr = &(quantProg->crQuantValues);
+
+	progressive_rfx_quant_add(quantY, quantProgY, &yBitPos);
+	progressive_rfx_quant_add(quantCb, quantProgCb, &cbBitPos);
+	progressive_rfx_quant_add(quantCr, quantProgCr, &crBitPos);
+
+	progressive_rfx_quant_sub(&(tile->yBitPos), &yBitPos, &yNumBits);
+	progressive_rfx_quant_sub(&(tile->cbBitPos), &cbBitPos, &cbNumBits);
+	progressive_rfx_quant_sub(&(tile->crBitPos), &crBitPos, &crNumBits);
+
+	q = &(tile->yBitPos);
+	printf("Old yBitPos: HL1: %02d LH1: %02d HH1: %02d HL2: %02d LH2: %02d HH2: %02d HL3: %02d LH3: %02d HH3: %02d LL3: %02d\n",
+			q->HL1, q->LH1, q->HH1, q->HL2, q->LH2, q->HH2, q->HL3, q->LH3, q->HH3, q->LL3);
+	q = &(yBitPos);
+	printf("New yBitPos: HL1: %02d LH1: %02d HH1: %02d HL2: %02d LH2: %02d HH2: %02d HL3: %02d LH3: %02d HH3: %02d LL3: %02d\n",
+			q->HL1, q->LH1, q->HH1, q->HL2, q->LH2, q->HH2, q->HL3, q->LH3, q->HH3, q->LL3);
+	q = &(yNumBits);
+	printf("   yNumBits: HL1: %02d LH1: %02d HH1: %02d HL2: %02d LH2: %02d HH2: %02d HL3: %02d LH3: %02d HH3: %02d LL3: %02d\n",
+			q->HL1, q->LH1, q->HH1, q->HL2, q->LH2, q->HH2, q->HL3, q->LH3, q->HH3, q->LL3);
 
 	return 1;
 }
