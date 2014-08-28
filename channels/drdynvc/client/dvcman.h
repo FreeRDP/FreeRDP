@@ -82,6 +82,7 @@ struct _DVCMAN_CHANNEL
 	IWTSVirtualChannelCallback* channel_callback;
 
 	wStream* dvc_data;
+	UINT32 dvc_data_length;
 	CRITICAL_SECTION lock;
 };
 typedef struct _DVCMAN_CHANNEL DVCMAN_CHANNEL;

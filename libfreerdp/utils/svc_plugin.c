@@ -106,7 +106,6 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 			Stream_Release(plugin->data_in);
 
 		plugin->data_in = StreamPool_Take(plugin->pool, totalLength);
-		Stream_AddRef(plugin->data_in);
 	}
 
 	s = plugin->data_in;
