@@ -28,8 +28,8 @@
 		wLogMessage msg; \
 		wLog *log; \
 		\
-		strncat(tag, "com.freerdp.channels.", sizeof(tag)); \
-		strncat(tag, dbg_str, sizeof(tag) - sizeof("com.freerdp.channels.")); \
+		strncat(tag, "com.freerdp.channels.", sizeof(tag) - 1); \
+		strncat(tag, dbg_str, sizeof(tag) - 1 - sizeof("com.freerdp.channels.")); \
 		log = WLog_Get(tag); \
 		\
 		msg.Type = WLOG_MESSAGE_TEXT; \
