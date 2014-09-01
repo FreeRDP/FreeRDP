@@ -23,6 +23,12 @@ set(${MODULE_PREFIX}_SRCS makecert.c)
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 
+if(CMAKE_COMPILER_IS_GNUCC)
+        if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm*")
+                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+        endif()
+endif()
+
 add_library(${MODULE_NAME} STATIC ${${MODULE_PREFIX}_SRCS}) 
 
 set(${MODULE_PREFIX}_LIBS
