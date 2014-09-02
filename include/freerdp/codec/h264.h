@@ -22,6 +22,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <freerdp/channels/rdpgfx.h>
 
 #ifdef WITH_LIBAVCODEC
 #ifdef WITH_OPENH264
@@ -43,14 +44,16 @@ struct _H264_CONTEXT
 {
 	BOOL Compressor;
 
-	BYTE* data;
-	UINT32 size;
+	//BYTE* data;
+	//UINT32 size;
 	UINT32 width;
 	UINT32 height;
-	int scanline;
+	//int scanline;
 
 #ifdef WITH_OPENH264
 	ISVCDecoder* pDecoder;
+	BYTE* pYUVData[3];
+	int iStride[2];
 #endif
 
 #ifdef WITH_LIBAVCODEC
@@ -69,7 +72,7 @@ extern "C" {
 FREERDP_API int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
 
 FREERDP_API int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight);
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nDstHeight, RDPGFX_RECT16* regionRects, int numRegionRect);
 
 FREERDP_API void h264_context_reset(H264_CONTEXT* h264);
 

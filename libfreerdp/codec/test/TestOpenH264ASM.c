@@ -19,7 +19,7 @@ int main(void){
 	int nSrcStep[2];
 	
 #if SSSE3
-	if(check_ssse3()){
+	if(freerdp_check_ssse3()){
 		fprintf(stderr,"ssse3 not supported!\n");
 		return EXIT_FAILURE;
 	}
@@ -30,8 +30,11 @@ int main(void){
 	pSrcData[0]=malloc(1984*HEIGHT*sizeof(char));
 	pSrcData[1]=malloc(1984*HEIGHT/4*sizeof(char));
 	pSrcData[2]=malloc(1984*HEIGHT/4*sizeof(char));
-	pDstData_asm=_aligned_malloc(WIDTH*HEIGHT*4*sizeof(char),16);
-	pDstData_c=malloc(WIDTH*HEIGHT*4*sizeof(char));
+	pDstData_asm=_aligned_malloc(WIDTH*(HEIGHT+1)*4*sizeof(char),16);
+	pDstData_c=malloc(WIDTH*(HEIGHT+1)*4*sizeof(char));
+	
+	memset(pDstData_asm,0xFF,WIDTH*(HEIGHT+1)*4*sizeof(char));
+	memset(pDstData_c,0xFF,WIDTH*(HEIGHT+1)*4*sizeof(char));
 	
 	for(i=0;i<WIDTH*HEIGHT;i++){
 		pSrcData[0][i]=i%255;
@@ -44,9 +47,9 @@ int main(void){
 	
 	gettimeofday(&t1,NULL);
 #if SSSE3
-		ret=freerdp_image_yuv420p_to_xrgb(pDstData_asm,pSrcData,WIDTH,HEIGHT,nSrcStep[0],nSrcStep[1]);
+		ret=freerdp_image_yuv420p_to_xrgb_ssse3(pDstData_asm,pSrcData,WIDTH,HEIGHT,nSrcStep,WIDTH*4);
 #else
-		ret=freerdp_image_yuv_to_xrgb_asm(pDstData_asm,pSrcData,WIDTH,HEIGHT,nSrcStep[0],nSrcStep[1]);
+		ret=freerdp_image_yuv_to_xrgb_asm(pDstData_asm,pSrcData,WIDTH,HEIGHT,nSrcStep,WIDTH*4);
 #endif
 	gettimeofday(&t2,NULL);
 		freerdp_image_copy_yuv420p_to_xrgb(pDstData_c,WIDTH*4,0,0,WIDTH,HEIGHT,pSrcData,nSrcStep,0,0);

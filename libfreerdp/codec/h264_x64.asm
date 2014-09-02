@@ -67,14 +67,17 @@ YUV_to_RGB_asm31:
 	
 	ret
 
-;extern int freerdp_image_yuv_to_xrgb_asm(unsigned char *pDstData,unsigned char **pSrcData,int nWidth,int nHeight);
+;extern int freerdp_image_yuv_to_xrgb_asm(unsigned char *pDstData,unsigned char **pSrcData,int nWidth,int nHeight,int *istride,int scanline);
 	global freerdp_image_yuv_to_xrgb_asm
 freerdp_image_yuv_to_xrgb_asm:
+	push rbx
 	push rbp
 	mov rbp, rsp
 			;cWidth: cx
-	sub rsp,72	;pDstData,pSrcData[3],nWidth,nHeight,cHeight,scanline,iStride[1]
-	push rbx
+	sub rsp,82	;pDstData -8,pSrcData[3] -32,nWidth -40,nHeight -48,cHeight -56,scanline -64,iStride[0] -72,VaddDst -80,last_column 1 -81,last_line 1 -82
+	
+;last_column: set to 10B, if last column should be skipped ('cause UV data is the same for two columns and two columns are processed at once)
+;last_line: set to 10B, if last line should be skipped ('cause UV data is the same for two lines and two lines are processed at once)
 	
 	
 	mov [rbp-8],rdi
@@ -86,126 +89,160 @@ freerdp_image_yuv_to_xrgb_asm:
 	mov rax,[rsi+16]
 	mov [rbp-32],rax
 	
-	mov [rbp-40],rdx
+	and rdx,0FFFFH
+	;mov [rbp-40],rdx
 	
 	
 	shr rcx,1	;/2
 	mov [rbp-48],rcx
 	
 	
-	shl rdx,2
-	mov [rbp-64],rdx
+	and r9,0FFFFH
+	mov [rbp-64],r9
+	
+	shr r9d,1
+	sub r9d,edx
+	shl r9d,2
+	mov [rbp-80],r9
 	
 	
 	mov rax,[rbp-48]
 	mov [rbp-56],rax
 	
 	
-	mov [rbp-72],r8
-	mov rax,[rbp-40]
+	mov rcx,[r8]
+	and rcx,0FFFFH
+	mov [rbp-72],rcx
 	shl dword [rbp-72],1
-	sub [rbp-72],rax
+	sub [rbp-72],rdx
 
+	mov r9,[r8+4]
+	mov r8,rcx
+	
+	and r9,0FFFFH
 	shr rax,1
 	sub r9,rax
 	
+	
+	mov al,dl
+	and al,1B
+	mov [rbp-81],al
+	inc dx
+	shr edx,1
+	mov [rbp-40],rdx
+	
 freerdp_image_yuv_to_xrgb_asm_loopH:
-	mov rcx,[rbp-40]
-	shr rcx,1
+	mov cx,[rbp-40]
 	
 	
 freerdp_image_yuv_to_xrgb_asm_loopW:
-	mov rax,[rbp-16]
-	mov edi,[rax]
-	and edi,0xFF
-	
-	mov rax,[rbp-24]
-	mov esi,[rax]
-	and esi,0xFF
-	
-	mov rax,[rbp-32]
-	mov edx,[rax]
-	and edx,0xFF
-	
-	call YUV_to_RGB_asm
-	
-	mov rbx,[rbp-8]
-	mov [rbx],eax
-	
-	
-	mov rax,[rbp-16]
-	mov edi,[rax+r8]
-	inc rax
-	mov [rbp-16],rax
-	and edi,0xFF
-	
-	mov rax,[rbp-24]
-	mov esi,[rax]
-	and esi,0xFF
-	
-	mov rax,[rbp-32]
-	mov edx,[rax]
-	and edx,0xFF
-	
-	call YUV_to_RGB_asm
-	
-	mov rbx,[rbp-8]
-	mov rdx,[rbp-64]
-	mov [rbx+rdx],eax
-	add rbx,4
-	mov [rbp-8],rbx
-	
-	
-	mov rax,[rbp-16]
-	mov edi,[rax]
-	and edi,0xFF
-	
-	mov rax,[rbp-24]
-	mov esi,[rax]
-	and esi,0xFF
-	
-	mov rax,[rbp-32]
-	mov edx,[rax]
-	and edx,0xFF
-	
-	call YUV_to_RGB_asm
-	
-	mov rbx,[rbp-8]
-	mov [rbx],eax
-	
-	
-	mov rax,[rbp-16]
-	mov edi,[rax+r8]
-	inc rax
-	mov [rbp-16],rax
-	and edi,0xFF
-	
-	mov rax,[rbp-24]
-	mov esi,[rax]
-	inc rax
-	mov [rbp-24],rax
-	and esi,0xFF
-	
-	mov rax,[rbp-32]
-	mov edx,[rax]
-	inc rax
-	mov [rbp-32],rax
-	and edx,0xFF
-	
-	call YUV_to_RGB_asm
-
-	mov rbx,[rbp-8]
-	mov rdx,[rbp-64]
-	mov [rbx+rdx],eax
-	add rbx,4
-	mov [rbp-8],rbx
-
 	dec cx
+	jne freerdp_image_yuv_to_xrgb_asm_not_last_column
+	
+	shl byte [rbp-81],1
+	
+freerdp_image_yuv_to_xrgb_asm_not_last_column:
+
+
+	mov rax,[rbp-16]
+	mov edi,[rax]
+	and edi,0xFF
+	
+	mov rax,[rbp-24]
+	mov esi,[rax]
+	and esi,0xFF
+	
+	mov rax,[rbp-32]
+	mov edx,[rax]
+	and edx,0xFF
+	
+	call YUV_to_RGB_asm
+	
+	mov rbx,[rbp-8]
+	mov [rbx],eax
+	
+	
+	test byte [rbp-81],2
+	jne freerdp_image_yuv_to_xrgb_asm_skip_last_column
+	
+	mov rax,[rbp-16]
+	mov edi,[rax+r8]
+	and edi,0xFF
+	
+	mov rax,[rbp-24]
+	mov esi,[rax]
+	and esi,0xFF
+	
+	mov rax,[rbp-32]
+	mov edx,[rax]
+	and edx,0xFF
+	
+	call YUV_to_RGB_asm
+	
+	mov rbx,[rbp-8]
+	mov rdx,[rbp-64]
+	mov [rbx+rdx],eax
+	
+freerdp_image_yuv_to_xrgb_asm_skip_last_column:
+	add qword [rbp-8],4
+	inc qword [rbp-16]
+	
+	
+	mov rax,[rbp-16]
+	mov edi,[rax]
+	and edi,0xFF
+	
+	mov rax,[rbp-24]
+	mov esi,[rax]
+	and esi,0xFF
+	
+	mov rax,[rbp-32]
+	mov edx,[rax]
+	and edx,0xFF
+	
+	call YUV_to_RGB_asm
+	
+	mov rbx,[rbp-8]
+	mov [rbx],eax
+	
+	
+	test byte [rbp-81],2
+	jne freerdp_image_yuv_to_xrgb_asm_skip_last_column2
+	
+	mov rax,[rbp-16]
+	mov edi,[rax+r8]
+	and edi,0xFF
+	
+	mov rax,[rbp-24]
+	mov esi,[rax]
+	and esi,0xFF
+	
+	mov rax,[rbp-32]
+	mov edx,[rax]
+	and edx,0xFF
+	
+	call YUV_to_RGB_asm
+	
+	;shr [rbp-81],1
+	
+	mov rbx,[rbp-8]
+	mov rdx,[rbp-64]
+	mov [rbx+rdx],eax
+	
+freerdp_image_yuv_to_xrgb_asm_skip_last_column2:
+	add qword [rbp-8],4
+	inc qword [rbp-16]
+	inc qword [rbp-24]
+	inc qword [rbp-32]
+
+
+	test cx,0FFFFH
 	jne freerdp_image_yuv_to_xrgb_asm_loopW
+	jmp END
 	
 	
 	mov rax,[rbp-8]
-	add rax,[rbp-64]
+	add rax,[rbp-80]
 	mov [rbp-8],rax
 	
 	mov rax,[rbp-16]
@@ -226,7 +263,7 @@ freerdp_image_yuv_to_xrgb_asm_loopW:
 ;END
 	mov rax,0
 END:
-	pop rbx
 	mov rsp,rbp
 	pop rbp
+	pop rbx
 	ret

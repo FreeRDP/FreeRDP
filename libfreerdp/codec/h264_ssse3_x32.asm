@@ -73,7 +73,7 @@ freerdp_image_yuv420p_to_xrgb:
 	mov ebp,esp
 	
 ;"local variables"
-	sub esp,318	;res 8 -8,res 8 -16,res 8 -24,U 8 -32,nWidth 2 -34,nHeight 2 -36,iStride0 2 -38,iStride1 2 -40,last_column 1 -41,res 1 -42,G 16 -58,B 16 -74,
+	sub esp,318	;res 8 -8,res 8 -16,res 8 -24,U 8 -32,nWidth 2 -34,nHeight 2 -36,iStride0 2 -38,iStride1 2 -40,last_line 1 -41,res 1 -42,G 16 -58,B 16 -74,
 	;R 16 -90,add:128 16 -106,sub:128 16 -122,mul:48 16 -138,mul:475 16 -154,mul:403 16 -170,mul:120 16 -186,VaddY 4 -190,VaddUV 4 -194,stack offset 8 -202,
 	;cmp:255 16 -218,cmp:0 16 -234,shuflleR 16 -250,andG 16 -266,shuffleB 16 -280,shuffleY 16 -296,shuffleUV 16 -314,scanline 4 -318
 	

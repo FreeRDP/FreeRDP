@@ -23,8 +23,6 @@
 
 #include "xf_gfx.h"
 
-#include <sys/time.h>
-
 int xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
 	xfContext* xfc = (xfContext*) context->custom;
@@ -350,19 +348,10 @@ int xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGF
 int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status;
-	UINT32 i, j;
-	int nXDst, nYDst;
-	int nWidth, nHeight;
-	int nbUpdateRects;
+	UINT32 i;
 	BYTE* DstData = NULL;
-	RDPGFX_RECT16* rect;
 	H264_CONTEXT* h264;
 	xfGfxSurface* surface;
-	REGION16 updateRegion;
-	RECTANGLE_16 updateRect;
-	RECTANGLE_16* updateRects;
-	REGION16 clippingRects;
-	RECTANGLE_16 clippingRect;
 	RDPGFX_H264_METABLOCK* meta;
 	RDPGFX_H264_BITMAP_STREAM* bs;
 
@@ -384,7 +373,7 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 	DstData = surface->data;
 
 	status = h264_decompress(xfc->h264, bs->data, bs->length, &DstData,
-			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
+			PIXEL_FORMAT_XRGB32, surface->scanline , surface->height, meta->regionRects, meta->numRegionRects);
 
 	if (status < 0)
 	{
@@ -392,53 +381,10 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 		return -1;
 	}
 
-	if (status < 0)
-		return -1;
-
-	region16_init(&clippingRects);
-
 	for (i = 0; i < meta->numRegionRects; i++)
 	{
-		rect = &(meta->regionRects[i]);
-
-		clippingRect.left = rect->left;
-		clippingRect.top = rect->top;
-		clippingRect.right = rect->right;
-		clippingRect.bottom = rect->bottom;
-
-		region16_union_rect(&clippingRects, &clippingRects, &clippingRect);
+		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), (RECTANGLE_16*) &(meta->regionRects[i]));
 	}
-
-	updateRect.left = cmd->left;
-	updateRect.top = cmd->top;
-	updateRect.right = cmd->right;
-	updateRect.bottom = cmd->bottom;
-
-	region16_init(&updateRegion);
-	region16_intersect_rect(&updateRegion, &clippingRects, &updateRect);
-
-	updateRects = (RECTANGLE_16*) region16_rects(&updateRegion, &nbUpdateRects);
-
-
-	for (j = 0; j < nbUpdateRects; j++)
-	{
-		nXDst = updateRects[j].left;
-		nYDst = updateRects[j].top;
-		nWidth = updateRects[j].right - updateRects[j].left;
-		nHeight = updateRects[j].bottom - updateRects[j].top;
-
-		/* update region from decoded H264 buffer */
-		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
-				nXDst, nYDst, nWidth, nHeight,
-				h264->data, PIXEL_FORMAT_XRGB32, h264->scanline, nXDst, nYDst);
-
-
-		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &updateRects[j]);
-	}
-
-	region16_uninit(&updateRegion);
-	region16_uninit(&clippingRects);
-
 
 	if (!xfc->inGfxFrame)
 		xf_OutputUpdate(xfc);
