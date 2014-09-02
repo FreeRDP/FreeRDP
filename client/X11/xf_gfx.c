@@ -512,7 +512,8 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 		return -1;
 	}
 
-	printf("xf_SurfaceCommand_Progressive: status: %d\n", status);
+	printf("xf_SurfaceCommand_Progressive: status: %d surfaceId: %d contextId: %d\n", status,
+			cmd->surfaceId, cmd->contextId);
 
 	region = &(xfc->progressive->region);
 
@@ -533,9 +534,6 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 	for (i = 0; i < region->numTiles; i++)
 	{
 		tile = region->tiles[i];
-
-		if (tile->blockType == PROGRESSIVE_WBT_TILE_UPGRADE)
-			continue;
 
 		updateRect.left = cmd->left + tile->x;
 		updateRect.top = cmd->top + tile->y;
@@ -616,6 +614,9 @@ int xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 
 int xf_DeleteEncodingContext(RdpgfxClientContext* context, RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext)
 {
+	printf("DeleteEncodingContext: surfaceId: %d codecId: %d\n",
+			deleteEncodingContext->surfaceId,
+			deleteEncodingContext->codecContextId);
 	return 1;
 }
 

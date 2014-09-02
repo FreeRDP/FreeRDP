@@ -436,7 +436,7 @@ int test_progressive_ms_sample(char* ms_sample_path)
 	if (status < 0)
 		return -1;
 
-	count = 2;
+	count = 3;
 
 	progressive = progressive_context_new(FALSE);
 
