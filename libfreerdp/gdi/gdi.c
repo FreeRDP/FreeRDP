@@ -26,11 +26,11 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
+#include <winpr/image.h>
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/bitmap.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/rfx.h>
@@ -828,7 +828,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 
 #ifdef DUMP_REMOTEFX_TILES
 			sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
-			freerdp_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
+			winpr_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
 #endif
 
 
