@@ -1196,7 +1196,7 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 
-	WLog_Image(progressive->log, WLOG_TRACE, tile->data, 64, 64, 32);
+	//WLog_Image(progressive->log, WLOG_TRACE, tile->data, 64, 64, 32);
 
 	return 1;
 }

@@ -23,46 +23,28 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-/*
- * Bitmap data structures
- */
-
-struct _WINPR_BITMAP_MAGIC
+struct _wImage
 {
-	BYTE magic[2];
+	int width;
+	int height;
+	BYTE* data;
+	int scanline;
+	int bitsPerPixel;
+	int bytesPerPixel;
 };
-typedef struct _WINPR_BITMAP_MAGIC WINPR_BITMAP_MAGIC;
-
-struct _WINPR_BITMAP_CORE_HEADER
-{
-	UINT32 filesz;
-	UINT16 creator1;
-	UINT16 creator2;
-	UINT32 bmp_offset;
-};
-typedef struct _WINPR_BITMAP_CORE_HEADER WINPR_BITMAP_CORE_HEADER;
-
-struct _WINPR_BITMAP_INFO_HEADER
-{
-	UINT32 header_sz;
-	INT32 width;
-	INT32 height;
-	UINT16 nplanes;
-	UINT16 bitspp;
-	UINT32 compress_type;
-	UINT32 bmp_bytesz;
-	INT32 hres;
-	INT32 vres;
-	UINT32 ncolors;
-	UINT32 nimpcolors;
-};
-typedef struct _WINPR_BITMAP_INFO_HEADER WINPR_BITMAP_INFO_HEADER;
+typedef struct _wImage wImage;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-WINPR_API int winpr_bitmap_write(char* filename, BYTE* data, int width, int height, int bpp);
+WINPR_API int winpr_bitmap_write(const char* filename, BYTE* data, int width, int height, int bpp);
+
+WINPR_API int winpr_image_write(wImage* image, const char* filename);
+WINPR_API int winpr_image_read(wImage* image, const char* filename);
+
+WINPR_API wImage* winpr_image_new();
+WINPR_API void winpr_image_free(wImage* image, BOOL bFreeBuffer);
 
 #ifdef __cplusplus
 }
