@@ -124,11 +124,13 @@ void LinkedList_Clear(wLinkedList* list)
  * Adds a new node containing the specified value at the start of the LinkedList.
  */
 
-void LinkedList_AddFirst(wLinkedList* list, void* value)
+BOOL LinkedList_AddFirst(wLinkedList* list, void* value)
 {
 	wLinkedListNode* node;
 
 	node = (wLinkedListNode*) malloc(sizeof(wLinkedListNode));
+	if (!node)
+		return FALSE;
 	node->prev = node->next = NULL;
 	node->value = value;
 
@@ -144,17 +146,20 @@ void LinkedList_AddFirst(wLinkedList* list, void* value)
 	}
 
 	list->count++;
+	return TRUE;
 }
 
 /**
  * Adds a new node containing the specified value at the end of the LinkedList.
  */
 
-void LinkedList_AddLast(wLinkedList* list, void* value)
+BOOL LinkedList_AddLast(wLinkedList* list, void* value)
 {
 	wLinkedListNode* node;
 
 	node = (wLinkedListNode*) malloc(sizeof(wLinkedListNode));
+	if (!node)
+		return FALSE;
 	node->prev = node->next = NULL;
 	node->value = value;
 
@@ -170,13 +175,14 @@ void LinkedList_AddLast(wLinkedList* list, void* value)
 	}
 
 	list->count++;
+	return TRUE;
 }
 
 /**
  * Removes the first occurrence of the specified value from the LinkedList.
  */
 
-void LinkedList_Remove(wLinkedList* list, void* value)
+BOOL LinkedList_Remove(wLinkedList* list, void* value)
 {
 	wLinkedListNode* node;
 
@@ -201,12 +207,12 @@ void LinkedList_Remove(wLinkedList* list, void* value)
 			free(node);
 
 			list->count--;
-
-			break;
+			return TRUE;
 		}
 
 		node = node->next;
 	}
+	return FALSE;
 }
 
 /**

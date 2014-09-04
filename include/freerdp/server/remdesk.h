@@ -39,6 +39,7 @@ typedef int (*psRemdeskStop)(RemdeskServerContext* context);
 struct _remdesk_server_context
 {
 	HANDLE vcm;
+	void* custom;
 
 	psRemdeskStart Start;
 	psRemdeskStop Stop;

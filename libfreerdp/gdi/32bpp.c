@@ -44,7 +44,7 @@ UINT32 gdi_get_color_32bpp(HGDI_DC hdc, GDI_COLOR color)
 	BYTE a, r, g, b;
 
 	a = 0xFF;
-	GetBGR32(r, g, b, color);
+	GetRGB32(r, g, b, color);
 
 	if (hdc->invert)
 	{

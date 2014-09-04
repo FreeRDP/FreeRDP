@@ -121,6 +121,20 @@ HANDLE OpenEventA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
 	return NULL;
 }
 
+#ifdef HAVE_EVENTFD_H
+#if defined(__UCLIBC__)
+static int eventfd_read(int fd, eventfd_t* value)
+{
+	return (read(fd, value, sizeof(*value)) == sizeof(*value)) ? 0 : -1;
+}
+
+static int eventfd_write(int fd, eventfd_t value)
+{
+	return (write(fd, &value, sizeof(value)) == sizeof(value)) ? 0 : -1;
+}
+#endif
+#endif
+
 BOOL SetEvent(HANDLE hEvent)
 {
 	ULONG Type;

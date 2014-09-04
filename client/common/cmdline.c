@@ -44,7 +44,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "w", COMMAND_LINE_VALUE_REQUIRED, "<width>", "1024", NULL, -1, NULL, "Width" },
 	{ "h", COMMAND_LINE_VALUE_REQUIRED, "<height>", "768", NULL, -1, NULL, "Height" },
-	{ "size", COMMAND_LINE_VALUE_REQUIRED, "<width>x<height>", "1024x768", NULL, -1, NULL, "Screen size" },
+	{ "size", COMMAND_LINE_VALUE_REQUIRED, "<width>x<height> or <percent>%", "1024x768", NULL, -1, NULL, "Screen size" },
 	{ "f", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Fullscreen mode" },
 	{ "bpp", COMMAND_LINE_VALUE_REQUIRED, "<depth>", "16", NULL, -1, NULL, "Session bpp (color depth)" },
 	{ "kbd", COMMAND_LINE_VALUE_REQUIRED, "0x<layout id> or <layout name>", NULL, NULL, -1, NULL, "Keyboard layout" },
@@ -816,21 +816,12 @@ int freerdp_parse_username(char* username, char** user, char** domain)
 	}
 	else
 	{
-		p = strchr(username, '@');
-
-		if (p)
-		{
-			length = (int) (p - username);
-			*user = (char*) malloc(length + 1);
-			strncpy(*user, username, length);
-			(*user)[length] = '\0';
-			*domain = _strdup(&p[1]);
-		}
-		else
-		{
-			*user = _strdup(username);
-			*domain = NULL;
-		}
+		/* Do not break up the name for '@'; both credSSP and the
+		 * ClientInfo PDU expect 'user@corp.net' to be transmitted
+		 * as username 'user@corp.net', domain empty.
+		 */
+		*user = _strdup(username);
+		*domain = NULL;
 	}
 
 	return 0;
@@ -1271,6 +1262,14 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				*p = '\0';
 				settings->DesktopWidth = atoi(str);
 				settings->DesktopHeight = atoi(&p[1]);
+			}
+			else
+			{
+				p = strchr(str, '%');
+				if(p)
+				{
+					settings->PercentScreen = atoi(str);
+				}
 			}
 
 			free(str);
@@ -2093,6 +2092,9 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	}
 
 	if (settings->DynamicChannelCount)
+		settings->SupportDynamicChannels = TRUE;
+
+	if (settings->SupportDynamicChannels)
 	{
 		freerdp_client_load_static_channel_addin(channels, settings, "drdynvc", settings);
 	}

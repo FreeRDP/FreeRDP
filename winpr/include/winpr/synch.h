@@ -162,15 +162,6 @@ WINPR_API VOID LeaveCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 
 WINPR_API VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection);
 
-/* Synchronization Barrier */
-
-typedef PVOID RTL_SYNCHRONIZATION_BARRIER;
-typedef RTL_SYNCHRONIZATION_BARRIER SYNCHRONIZATION_BARRIER, *PSYNCHRONIZATION_BARRIER, *LPSYNCHRONIZATION_BARRIER;
-
-WINPR_API BOOL InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount);
-WINPR_API BOOL EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
-WINPR_API BOOL DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
-
 /* Sleep */
 
 WINPR_API VOID Sleep(DWORD dwMilliseconds);
@@ -310,6 +301,33 @@ WINPR_API BOOL InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PB
 WINPR_API BOOL InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext);
 WINPR_API BOOL InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parameter, LPVOID* Context);
 WINPR_API VOID InitOnceInitialize(PINIT_ONCE InitOnce);
+
+#endif
+
+/* Synchronization Barrier */
+
+#if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602))
+
+typedef struct _RTL_BARRIER
+{
+	DWORD Reserved1;
+	DWORD Reserved2;
+	ULONG_PTR Reserved3[2];
+	DWORD Reserved4;
+	DWORD Reserved5;
+} RTL_BARRIER, *PRTL_BARRIER;
+
+typedef RTL_BARRIER SYNCHRONIZATION_BARRIER;
+typedef PRTL_BARRIER PSYNCHRONIZATION_BARRIER;
+typedef PRTL_BARRIER LPSYNCHRONIZATION_BARRIER;
+
+#define SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY		0x01
+#define SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY	0x02
+#define SYNCHRONIZATION_BARRIER_FLAGS_NO_DELETE		0x04
+
+WINPR_API BOOL WINAPI InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount);
+WINPR_API BOOL WINAPI EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
+WINPR_API BOOL WINAPI DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier);
 
 #endif
 

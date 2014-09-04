@@ -170,7 +170,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)
 	{
-		DEBUG_WARN( "Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
+		DEBUG_WARN( "Error: expected X224_TPDU_CONNECTION_CONFIRM: 0x%02X\n", code);
 		return FALSE;
 	}
 	/*

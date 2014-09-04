@@ -21,6 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/sysinfo.h>
+
 #include <freerdp/server/rdpsnd.h>
 
 #include "mf_info.h"
@@ -30,8 +33,8 @@ AQRecorderState recorderState;
 
 static const AUDIO_FORMAT supported_audio_formats[] =
 {
-	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, NULL },
-	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
+	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
+	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL }
 };
 
 static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)

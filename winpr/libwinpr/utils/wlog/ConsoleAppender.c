@@ -91,7 +91,7 @@ int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, 
 #ifdef ANDROID
 	(void)fp;
 	android_LogPriority level;
-	switch(log->Level)
+	switch(message->Level)
 	{
 		case WLOG_TRACE:
 			level = ANDROID_LOG_VERBOSE;
@@ -181,8 +181,9 @@ int WLog_ConsoleAppender_WritePacketMessage(wLog* log, wLogConsoleAppender* appe
 		free(FullFileName);
 	}
 
-	WLog_PacketMessage_Write((wPcap*) appender->PacketMessageContext,
-			message->PacketData, message->PacketLength, message->PacketFlags);
+	if (appender->PacketMessageContext)
+		WLog_PacketMessage_Write((wPcap*) appender->PacketMessageContext,
+				message->PacketData, message->PacketLength, message->PacketFlags);
 
 	return PacketId;
 }

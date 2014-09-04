@@ -24,7 +24,7 @@
 #include <freerdp/types.h>
 #include <freerdp/channels/wtsvc.h>
 
-#include <freerdp/client/encomsp.h>
+#include <freerdp/channels/encomsp.h>
 
 /**
  * Server Interface
@@ -36,12 +36,37 @@ typedef struct _encomsp_server_private EncomspServerPrivate;
 typedef int (*psEncomspStart)(EncomspServerContext* context);
 typedef int (*psEncomspStop)(EncomspServerContext* context);
 
+typedef int (*psEncomspFilterUpdated)(EncomspServerContext* context, ENCOMSP_FILTER_UPDATED_PDU* filterUpdated);
+typedef int (*psEncomspApplicationCreated)(EncomspServerContext* context, ENCOMSP_APPLICATION_CREATED_PDU* applicationCreated);
+typedef int (*psEncomspApplicationRemoved)(EncomspServerContext* context, ENCOMSP_APPLICATION_REMOVED_PDU* applicationRemoved);
+typedef int (*psEncomspWindowCreated)(EncomspServerContext* context, ENCOMSP_WINDOW_CREATED_PDU* windowCreated);
+typedef int (*psEncomspWindowRemoved)(EncomspServerContext* context, ENCOMSP_WINDOW_REMOVED_PDU* windowRemoved);
+typedef int (*psEncomspShowWindow)(EncomspServerContext* context, ENCOMSP_SHOW_WINDOW_PDU* showWindow);
+typedef int (*psEncomspParticipantCreated)(EncomspServerContext* context, ENCOMSP_PARTICIPANT_CREATED_PDU* participantCreated);
+typedef int (*psEncomspParticipantRemoved)(EncomspServerContext* context, ENCOMSP_PARTICIPANT_REMOVED_PDU* participantRemoved);
+typedef int (*psEncomspChangeParticipantControlLevel)(EncomspServerContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* changeParticipantControlLevel);
+typedef int (*psEncomspGraphicsStreamPaused)(EncomspServerContext* context, ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU* graphicsStreamPaused);
+typedef int (*psEncomspGraphicsStreamResumed)(EncomspServerContext* context, ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU* graphicsStreamResumed);
+
 struct _encomsp_server_context
 {
 	HANDLE vcm;
+	void* custom;
 
 	psEncomspStart Start;
 	psEncomspStop Stop;
+
+	psEncomspFilterUpdated FilterUpdated;
+	psEncomspApplicationCreated ApplicationCreated;
+	psEncomspApplicationRemoved ApplicationRemoved;
+	psEncomspWindowCreated WindowCreated;
+	psEncomspWindowRemoved WindowRemoved;
+	psEncomspShowWindow ShowWindow;
+	psEncomspParticipantCreated ParticipantCreated;
+	psEncomspParticipantRemoved ParticipantRemoved;
+	psEncomspChangeParticipantControlLevel ChangeParticipantControlLevel;
+	psEncomspGraphicsStreamPaused GraphicsStreamPaused;
+	psEncomspGraphicsStreamResumed GraphicsStreamResumed;
 
 	EncomspServerPrivate* priv;
 };

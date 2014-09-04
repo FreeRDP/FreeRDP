@@ -59,6 +59,10 @@ extern "C" {
 FREERDP_API BYTE* freerdp_assistance_hex_string_to_bin(const char* str, int* size);
 FREERDP_API char* freerdp_assistance_bin_to_hex_string(const BYTE* data, int size);
 
+FREERDP_API int freerdp_assistance_parse_connection_string1(rdpAssistanceFile* file);
+FREERDP_API int freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file);
+
+FREERDP_API char* freerdp_assistance_generate_pass_stub(DWORD flags);
 FREERDP_API char* freerdp_assistance_construct_expert_blob(const char* name, const char* pass);
 FREERDP_API BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* passStub, int* pEncryptedSize);
 

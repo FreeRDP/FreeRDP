@@ -373,6 +373,14 @@ typedef CLRCONV* HCLRCONV;
 
 typedef BYTE* (*p_freerdp_image_convert)(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv);
 
+static INLINE UINT32 RGB32_to_BGR32(UINT32 pixel)
+{
+	UINT32 temp;
+
+	temp = (pixel ^ (pixel >> 16)) & ((1 << 8) - 1);
+	return (pixel ^ (temp | (temp << 16)));
+}
+
 FREERDP_API int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp);
 FREERDP_API void freerdp_set_pixel(BYTE* data, int x, int y, int width, int height, int bpp, int pixel);
 
@@ -392,6 +400,7 @@ FREERDP_API UINT32 freerdp_color_convert_rgb_bgr(UINT32 srcColor, int srcBpp, in
 FREERDP_API UINT32 freerdp_color_convert_bgr_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API UINT32 freerdp_color_convert_var_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API UINT32 freerdp_color_convert_drawing_order_color_to_gdi_color(UINT32 color, int bpp, HCLRCONV clrconv);
 
 FREERDP_API HCLRCONV freerdp_clrconv_new(UINT32 flags);
 FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);

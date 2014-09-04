@@ -1348,10 +1348,14 @@ rdpTls* tls_new(rdpSettings* settings)
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	tls->settings = settings;
-	tls->certificate_store = certificate_store_new(settings);
 
-	if (!tls->certificate_store)
-		goto out_free;
+	if (!settings->ServerMode)
+	{
+		tls->certificate_store = certificate_store_new(settings);
+
+		if (!tls->certificate_store)
+			goto out_free;
+	}
 
 	tls->alertLevel = TLS_ALERT_LEVEL_WARNING;
 	tls->alertDescription = TLS_ALERT_DESCRIPTION_CLOSE_NOTIFY;
@@ -1387,8 +1391,11 @@ void tls_free(rdpTls* tls)
 		tls->Bindings = NULL;
 	}
 
-	certificate_store_free(tls->certificate_store);
-	tls->certificate_store = NULL;
+	if (tls->certificate_store)
+	{
+		certificate_store_free(tls->certificate_store);
+		tls->certificate_store = NULL;
+	}
 
 	free(tls);
 }

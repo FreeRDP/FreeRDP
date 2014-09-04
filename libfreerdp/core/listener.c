@@ -157,6 +157,8 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 			continue;
 		}
 
+		/* FIXME: these file descriptors do not work on Windows */
+
 		listener->sockfds[listener->num_sockfds] = sockfd;
 		listener->events[listener->num_sockfds] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd);
 		listener->num_sockfds++;
@@ -346,8 +348,10 @@ freerdp_listener* freerdp_listener_new(void)
 	freerdp_listener* instance;
 	rdpListener* listener;
 
-	instance = (freerdp_listener*) malloc(sizeof(freerdp_listener));
-	ZeroMemory(instance, sizeof(freerdp_listener));
+	instance = (freerdp_listener*) calloc(1, sizeof(freerdp_listener));
+
+	if (!instance)
+		return NULL;
 
 	instance->Open = freerdp_listener_open;
 	instance->OpenLocal = freerdp_listener_open_local;
@@ -356,8 +360,10 @@ freerdp_listener* freerdp_listener_new(void)
 	instance->CheckFileDescriptor = freerdp_listener_check_fds;
 	instance->Close = freerdp_listener_close;
 
-	listener = (rdpListener*) malloc(sizeof(rdpListener));
-	ZeroMemory(listener, sizeof(rdpListener));
+	listener = (rdpListener*) calloc(1, sizeof(rdpListener));
+
+	if (!listener)
+		return NULL;
 
 	listener->instance = instance;
 

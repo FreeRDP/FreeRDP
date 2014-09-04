@@ -47,35 +47,43 @@ static int gettimeofday(struct timeval* tp, void* tz)
 
 void Pcap_Read_Header(wPcap* pcap, wPcapHeader* header)
 {
-	fread((void*) header, sizeof(wPcapHeader), 1, pcap->fp);
+	if (pcap && pcap->fp)
+		fread((void*) header, sizeof(wPcapHeader), 1, pcap->fp);
 }
 
 void Pcap_Write_Header(wPcap* pcap, wPcapHeader* header)
 {
-	fwrite((void*) header, sizeof(wPcapHeader), 1, pcap->fp);
+	if (pcap && pcap->fp)
+		fwrite((void*) header, sizeof(wPcapHeader), 1, pcap->fp);
 }
 
 void Pcap_Read_RecordHeader(wPcap* pcap, wPcapRecordHeader* record)
 {
-	fread((void*) record, sizeof(wPcapRecordHeader), 1, pcap->fp);
+	if (pcap && pcap->fp)
+		fread((void*) record, sizeof(wPcapRecordHeader), 1, pcap->fp);
 }
 
 void Pcap_Write_RecordHeader(wPcap* pcap, wPcapRecordHeader* record)
 {
-	fwrite((void*) record, sizeof(wPcapRecordHeader), 1, pcap->fp);
+	if (pcap && pcap->fp)
+		fwrite((void*) record, sizeof(wPcapRecordHeader), 1, pcap->fp);
 }
 
 void Pcap_Write_RecordContent(wPcap* pcap, wPcapRecord* record)
 {
-	fwrite(record->data, record->length, 1, pcap->fp);
+	if (pcap && pcap->fp)
+		fwrite(record->data, record->length, 1, pcap->fp);
 }
 
 void Pcap_Read_Record(wPcap* pcap, wPcapRecord* record)
 {
-	Pcap_Read_RecordHeader(pcap, &record->header);
-	record->length = record->header.incl_len;
-	record->data = malloc(record->length);
-	fread(record->data, record->length, 1, pcap->fp);
+	if (pcap && pcap->fp)
+	{
+		Pcap_Read_RecordHeader(pcap, &record->header);
+		record->length = record->header.incl_len;
+		record->data = malloc(record->length);
+		fread(record->data, record->length, 1, pcap->fp);
+	}
 }
 
 void Pcap_Write_Record(wPcap* pcap, wPcapRecord* record)
@@ -141,8 +149,12 @@ BOOL Pcap_GetNext_RecordHeader(wPcap* pcap, wPcapRecord* record)
 
 BOOL Pcap_GetNext_RecordContent(wPcap* pcap, wPcapRecord* record)
 {
-	fread(record->data, record->length, 1, pcap->fp);
-	return TRUE;
+	if (pcap && pcap->fp)
+	{
+		fread(record->data, record->length, 1, pcap->fp);
+		return TRUE;
+	}
+	return FALSE;
 }
 
 BOOL Pcap_GetNext_Record(wPcap* pcap, wPcapRecord* record)
@@ -189,7 +201,7 @@ wPcap* Pcap_Open(char* name, BOOL write)
 			pcap->header.network = 1; /* ethernet */
 			Pcap_Write_Header(pcap, &pcap->header);
 		}
-		else
+		else if (pcap->fp)
 		{
 			fseek(pcap->fp, 0, SEEK_END);
 			pcap->file_size = (int) ftell(pcap->fp);
@@ -203,22 +215,26 @@ wPcap* Pcap_Open(char* name, BOOL write)
 
 void Pcap_Flush(wPcap* pcap)
 {
+	if (!pcap || !pcap->fp)
+		return;
+
 	while (pcap->record)
 	{
 		Pcap_Write_Record(pcap, pcap->record);
 		pcap->record = pcap->record->next;
 	}
 
-	if (pcap->fp)
-		fflush(pcap->fp);
+	fflush(pcap->fp);
 }
 
 void Pcap_Close(wPcap* pcap)
 {
+	if (!pcap || !pcap->fp)
+		return;
+
 	Pcap_Flush(pcap);
 
-	if (pcap->fp)
-		fclose(pcap->fp);
+	fclose(pcap->fp);
 
 	free(pcap);
 }
@@ -227,6 +243,9 @@ int WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader* ethern
 {
 	wStream* s;
 	BYTE buffer[14];
+
+	if (!pcap || !pcap->fp || !ethernet)
+		return -1;
 
 	s = Stream_New(buffer, 14);
 
@@ -268,6 +287,9 @@ int WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 	wStream* s;
 	BYTE buffer[20];
 
+	if (!pcap || !pcap->fp || !ipv4)
+		return -1;
+
 	s = Stream_New(buffer, 20);
 
 	Stream_Write_UINT8(s, (ipv4->Version << 4) | ipv4->InternetHeaderLength);
@@ -298,6 +320,9 @@ int WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 	wStream* s;
 	BYTE buffer[20];
 
+	if (!pcap || !pcap->fp || !tcp)
+		return -1;
+
 	s = Stream_New(buffer, 20);
 
 	Stream_Write_UINT16_BE(s, tcp->SourcePort);
@@ -310,7 +335,8 @@ int WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 	Stream_Write_UINT16_BE(s, tcp->Checksum);
 	Stream_Write_UINT16_BE(s, tcp->UrgentPointer);
 
-	fwrite(buffer, 20, 1, pcap->fp);
+	if (pcap->fp)
+		fwrite(buffer, 20, 1, pcap->fp);
 
 	Stream_Free(s, FALSE);
 
@@ -329,6 +355,9 @@ int WLog_PacketMessage_Write(wPcap* pcap, void* data, DWORD length, DWORD flags)
 	wEthernetHeader ethernet;
 
 	ethernet.Type = 0x0800;
+
+	if (!pcap || !pcap->fp)
+		return -1;
 
 	if (flags & WLOG_PACKET_OUTBOUND)
 	{
