@@ -22,6 +22,8 @@
 static const int SIGN_PRETEST_ITERATIONS = 100000;
 static const float TEST_TIME = 1.0;
 
+extern BOOL g_TestPrimitivesPerformance;
+
 extern pstatus_t general_sign_16s(const INT16 *pSrc, INT16 *pDst, int len);
 #ifdef WITH_SSE2
 extern pstatus_t ssse3_sign_16s(const INT16 *pSrc, INT16 *pDst, int len);
@@ -100,4 +102,24 @@ int test_sign16s_speed(void)
 	sign16s_speed_test("sign16s", "unaligned", src+1, NULL, 0, dst,
 		test_sizes, NUM_TEST_SIZES, SIGN_PRETEST_ITERATIONS, TEST_TIME);
 	return SUCCESS;
+}
+
+int TestPrimitivesSign(int argc, char* argv[])
+{
+	int status;
+
+	status = test_sign16s_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_sign16s_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	return 0;
 }

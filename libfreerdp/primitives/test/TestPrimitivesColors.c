@@ -23,6 +23,8 @@ static const int RGB_TRIAL_ITERATIONS = 1000;
 static const int YCBCR_TRIAL_ITERATIONS = 1000;
 static const float TEST_TIME = 4.0;
 
+extern BOOL g_TestPrimitivesPerformance;
+
 extern pstatus_t general_RGBToRGB_16s8u_P3AC4R(const INT16 *pSrc[3], 
 	int srcStep, BYTE *pDst, int dstStep, const prim_size_t *roi);
 extern pstatus_t sse2_RGBToRGB_16s8u_P3AC4R(const INT16 *pSrc[3], 
@@ -240,4 +242,37 @@ int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 	ycbcr_to_rgb_speed("yCbCrToRGB", "aligned", input, NULL, NULL, output,
 		size_array, 1, YCBCR_TRIAL_ITERATIONS, TEST_TIME);
 	return SUCCESS;
+}
+
+int TestPrimitivesColors(int argc, char* argv[])
+{
+	int status;
+
+	status = test_RGBToRGB_16s8u_P3AC4R_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_RGBToRGB_16s8u_P3AC4R_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	status = test_yCbCrToRGB_16s16s_P3P3_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_yCbCrToRGB_16s16s_P3P3_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	return 0;
 }

@@ -23,6 +23,8 @@
 static const int SHIFT_PRETEST_ITERATIONS = 50000;
 static const float TEST_TIME = 1.0;
 
+extern BOOL g_TestPrimitivesPerformance;
+
 extern pstatus_t general_lShiftC_16s(
 	const INT16 *pSrc, int val, INT16 *pDst, int len);
 extern pstatus_t general_rShiftC_16s(
@@ -186,4 +188,63 @@ int test_rShift_16u_speed(void)
 	speed_rShift_16u("rShift_16u", "unaligned", src+1, NULL, 3, dst,
 		test_sizes, NUM_TEST_SIZES, SHIFT_PRETEST_ITERATIONS, TEST_TIME);
 	return SUCCESS;
+}
+
+int TestPrimitivesShift(int argc, char* argv[])
+{
+	int status;
+
+	status = test_lShift_16s_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_lShift_16s_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	status = test_lShift_16u_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_lShift_16u_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	status = test_rShift_16s_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_rShift_16s_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	status = test_rShift_16u_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_rShift_16u_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	return 0;
 }

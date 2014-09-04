@@ -26,6 +26,8 @@ static const int TEST_TIME = 1.0;  // seconds
 extern pstatus_t sse3_copy_8u(const BYTE *pSrc, BYTE *pDst, int len);
 #endif
 
+extern BOOL g_TestPrimitivesPerformance;
+
 /* ------------------------------------------------------------------------- */
 int test_copy8u_func(void)
 {
@@ -83,4 +85,24 @@ int test_copy8u_speed(void)
 	copy8u_speed_test("copy8u", "unaligned", src+1, NULL, 0, dst,
 		test_sizes, NUM_TEST_SIZES, MEMCPY_PRETEST_ITERATIONS, TEST_TIME);
 	return SUCCESS;
+}
+
+int TestPrimitivesCopy(int argc, char* argv[])
+{
+	int status;
+
+	status = test_copy8u_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_copy8u_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	return 0;
 }
