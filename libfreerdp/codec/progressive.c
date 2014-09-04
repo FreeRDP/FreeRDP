@@ -779,10 +779,7 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 	progressive_rfx_decode_component(progressive, &shiftCb, tile->cbData, tile->cbLen, pSrcDst[1], pCurrent[1], pSign[1], diff); /* Cb */
 	progressive_rfx_decode_component(progressive, &shiftCr, tile->crData, tile->crLen, pSrcDst[2], pCurrent[2], pSign[2], diff); /* Cr */
 
-	prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
-			pSrcDst, 64 * sizeof(INT16), &roi_64x64);
-
-	prims->RGBToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * sizeof(INT16),
+	prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
 			tile->data, 64 * 4, &roi_64x64);
 
 	BufferPool_Return(progressive->bufferPool, pBuffer);
@@ -1188,10 +1185,7 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 	if (status < 0)
 		return -1;
 
-	prims->yCbCrToRGB_16s16s_P3P3((const INT16**) pSrcDst, 64 * sizeof(INT16),
-			pSrcDst, 64 * sizeof(INT16), &roi_64x64);
-
-	prims->RGBToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * sizeof(INT16),
+	prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
 			tile->data, 64 * 4, &roi_64x64);
 
 	BufferPool_Return(progressive->bufferPool, pBuffer);
