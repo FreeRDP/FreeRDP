@@ -799,7 +799,7 @@ int test_progressive_load_bitmaps(char* ms_sample_path, EGFX_SAMPLE_FILE bitmaps
 	return 1;
 }
 
-int test_memcmp(const BYTE* mem1, const BYTE* mem2, int size)
+static int test_memcmp(const BYTE* mem1, const BYTE* mem2, int size)
 {
 	int index = 0;
 

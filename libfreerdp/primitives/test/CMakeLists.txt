@@ -14,6 +14,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestPrimitivesSet.c
 	TestPrimitivesShift.c
 	TestPrimitivesSign.c
+	TestPrimitivesYCbCr.c
 	TestPrimitivesYCoCg.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
