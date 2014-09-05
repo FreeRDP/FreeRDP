@@ -28,6 +28,8 @@
 static const int RGB_TRIAL_ITERATIONS = 1000;
 static const float TEST_TIME = 4.0;
 
+extern BOOL g_TestPrimitivesPerformance;
+
 extern pstatus_t general_RGB565ToARGB_16u32u_C3C4(
 	const UINT16* pSrc, INT32 srcStep,
 	UINT32* pDst, INT32 dstStep,
@@ -134,7 +136,7 @@ static BOOL try_16To32(
 /* ------------------------------------------------------------------------- */
 int test_RGB565ToARGB_16u32u_C3C4_func(void)
 {
-	INT16 ALIGN(data16[4096+3]);
+	UINT16 ALIGN(data16[4096+3]);
 	BOOL success;
 
 	success = TRUE;
@@ -176,7 +178,6 @@ int test_RGB565ToARGB_16u32u_C3C4_speed(void)
 {
 	UINT16 ALIGN(src[4096]);
 	UINT32 ALIGN(dst[4096]);
-	int i;
 	int size_array[] = { 64 };
 
 	get_random_data(src, sizeof(src));
@@ -185,4 +186,24 @@ int test_RGB565ToARGB_16u32u_C3C4_speed(void)
 		(const UINT16 *) src, 0, 0, (UINT32 *) dst,
 		size_array, 1, RGB_TRIAL_ITERATIONS, TEST_TIME);
 	return SUCCESS;
+}
+
+int TestPrimitives16to32bpp(int argc, char* argv[])
+{
+	int status;
+
+	status = test_RGB565ToARGB_16u32u_C3C4_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_RGB565ToARGB_16u32u_C3C4_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	return 0;
 }

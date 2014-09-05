@@ -164,6 +164,8 @@ BOOL update_read_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bit
 
 	Stream_Read_UINT16(s, bitmapUpdate->number); /* numberRectangles (2 bytes) */
 
+	WLog_Print(update->log, WLOG_DEBUG, "BitmapUpdate: %d", bitmapUpdate->number);
+
 	if (bitmapUpdate->number > bitmapUpdate->count)
 	{
 		UINT16 count;

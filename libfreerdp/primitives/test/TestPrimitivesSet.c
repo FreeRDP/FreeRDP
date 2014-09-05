@@ -23,6 +23,8 @@ static const int MEMSET8_PRETEST_ITERATIONS = 100000000;
 static const int MEMSET32_PRETEST_ITERATIONS = 40000000;
 static const float TEST_TIME = 1.0;
 
+extern BOOL g_TestPrimitivesPerformance;
+
 extern pstatus_t general_set_8u(BYTE val, BYTE *pDst, int len);
 extern pstatus_t sse2_set_8u(BYTE val, BYTE *pDst, int len);
 extern pstatus_t general_set_32s(INT32 val, INT32 *pDst, int len);
@@ -302,4 +304,50 @@ int test_set32s_speed(void)
 		set_sizes, NUM_SET_SIZES, MEMSET32_PRETEST_ITERATIONS, TEST_TIME);
 #endif
 	return SUCCESS;
+}
+
+int TestPrimitivesSet(int argc, char* argv[])
+{
+	int status;
+
+	status = test_set8u_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_set8u_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	status = test_set32s_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_set32s_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	status = test_set32u_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_set32u_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	return 0;
 }

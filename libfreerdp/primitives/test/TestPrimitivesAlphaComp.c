@@ -22,6 +22,8 @@
 static const int ALPHA_PRETEST_ITERATIONS = 5000000;
 static const float TEST_TIME = 5.0;
 
+extern BOOL g_TestPrimitivesPerformance;
+
 static const int block_size[] = { 4, 64, 256 };
 #define NUM_BLOCK_SIZES (sizeof(block_size)/sizeof(int))
 #define MAX_BLOCK_SIZE 256
@@ -232,4 +234,24 @@ int test_alphaComp_speed(void)
 		block_size, NUM_BLOCK_SIZES, ALPHA_PRETEST_ITERATIONS, TEST_TIME);
 
 	return SUCCESS;
+}
+
+int TestPrimitivesAlphaComp(int argc, char* argv[])
+{
+	int status;
+
+	status = test_alphaComp_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_alphaComp_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	return 0;
 }

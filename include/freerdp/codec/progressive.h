@@ -23,6 +23,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
+#include <winpr/wlog.h>
 #include <winpr/collections.h>
 
 #include <freerdp/codec/rfx.h>
@@ -47,15 +48,6 @@
 #define PROGRESSIVE_BLOCKS_REGION			0x0002
 #define PROGRESSIVE_BLOCKS_TILE				0x0004
 
-struct _RFX_PROGRESSIVE_CODEC_QUANT
-{
-	BYTE quality;
-	BYTE yQuantValues[5];
-	BYTE cbQuantValues[5];
-	BYTE crQuantValues[5];
-};
-typedef struct _RFX_PROGRESSIVE_CODEC_QUANT RFX_PROGRESSIVE_CODEC_QUANT;
-
 struct _RFX_COMPONENT_CODEC_QUANT
 {
 	BYTE LL3;
@@ -70,6 +62,15 @@ struct _RFX_COMPONENT_CODEC_QUANT
 	BYTE HH1;
 };
 typedef struct _RFX_COMPONENT_CODEC_QUANT RFX_COMPONENT_CODEC_QUANT;
+
+struct _RFX_PROGRESSIVE_CODEC_QUANT
+{
+	BYTE quality;
+	RFX_COMPONENT_CODEC_QUANT yQuantValues;
+	RFX_COMPONENT_CODEC_QUANT cbQuantValues;
+	RFX_COMPONENT_CODEC_QUANT crQuantValues;
+};
+typedef struct _RFX_PROGRESSIVE_CODEC_QUANT RFX_PROGRESSIVE_CODEC_QUANT;
 
 struct _PROGRESSIVE_BLOCK
 {
@@ -205,6 +206,25 @@ struct _RFX_PROGRESSIVE_TILE
 	BYTE* cbRawData;
 	BYTE* crSrlData;
 	BYTE* crRawData;
+
+	int x;
+	int y;
+	int width;
+	int height;
+	BYTE* data;
+	BYTE* current;
+
+	int pass;
+	BYTE* sign;
+	RFX_COMPONENT_CODEC_QUANT yBitPos;
+	RFX_COMPONENT_CODEC_QUANT cbBitPos;
+	RFX_COMPONENT_CODEC_QUANT crBitPos;
+	RFX_COMPONENT_CODEC_QUANT yQuant;
+	RFX_COMPONENT_CODEC_QUANT cbQuant;
+	RFX_COMPONENT_CODEC_QUANT crQuant;
+	RFX_COMPONENT_CODEC_QUANT yProgQuant;
+	RFX_COMPONENT_CODEC_QUANT cbProgQuant;
+	RFX_COMPONENT_CODEC_QUANT crProgQuant;
 };
 typedef struct _RFX_PROGRESSIVE_TILE RFX_PROGRESSIVE_TILE;
 
@@ -223,7 +243,7 @@ struct _PROGRESSIVE_BLOCK_REGION
 	RFX_RECT* rects;
 	RFX_COMPONENT_CODEC_QUANT* quantVals;
 	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVals;
-	RFX_PROGRESSIVE_TILE* tiles;
+	RFX_PROGRESSIVE_TILE** tiles;
 };
 typedef struct _PROGRESSIVE_BLOCK_REGION PROGRESSIVE_BLOCK_REGION;
 
@@ -245,17 +265,30 @@ struct _PROGRESSIVE_BLOCK_FRAME_END
 };
 typedef struct _PROGRESSIVE_BLOCK_FRAME_END PROGRESSIVE_BLOCK_FRAME_END;
 
+struct _PROGRESSIVE_SURFACE_CONTEXT
+{
+	UINT16 id;
+	UINT32 width;
+	UINT32 height;
+	UINT32 gridWidth;
+	UINT32 gridHeight;
+	UINT32 gridSize;
+	RFX_PROGRESSIVE_TILE* tiles;
+};
+typedef struct _PROGRESSIVE_SURFACE_CONTEXT PROGRESSIVE_SURFACE_CONTEXT;
+
 struct _PROGRESSIVE_CONTEXT
 {
 	BOOL Compressor;
 
+	wLog* log;
 	wBufferPool* bufferPool;
 
 	UINT32 cRects;
 	RFX_RECT* rects;
 
 	UINT32 cTiles;
-	RFX_PROGRESSIVE_TILE* tiles;
+	RFX_PROGRESSIVE_TILE** tiles;
 
 	UINT32 cQuant;
 	RFX_COMPONENT_CODEC_QUANT* quantVals;
@@ -265,6 +298,8 @@ struct _PROGRESSIVE_CONTEXT
 
 	PROGRESSIVE_BLOCK_REGION region;
 	RFX_PROGRESSIVE_CODEC_QUANT quantProgValFull;
+
+	wHashTable* SurfaceContexts;
 };
 typedef struct _PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
 
@@ -275,7 +310,10 @@ extern "C" {
 FREERDP_API int progressive_compress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize);
 
 FREERDP_API int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight);
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, UINT16 surfaceId);
+
+FREERDP_API int progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId, UINT32 width, UINT32 height);
+FREERDP_API int progressive_delete_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId);
 
 FREERDP_API void progressive_context_reset(PROGRESSIVE_CONTEXT* progressive);
 

@@ -75,6 +75,7 @@ set(${MODULE_PREFIX}_SRCS
 	ini.c
 	sam.c
 	ntlm.c
+	image.c
 	print.c
 	stream.c
 	debug.c
