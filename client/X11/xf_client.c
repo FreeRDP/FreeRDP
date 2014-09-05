@@ -180,31 +180,41 @@ void xf_draw_screen_scaled(xfContext *xfc, int x, int y, int w, int h, BOOL scal
 
 void xf_sw_begin_paint(rdpContext *context)
 {
-	rdpGdi *gdi = context->gdi;
+	rdpGdi* gdi = context->gdi;
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
 
 void xf_sw_end_paint(rdpContext *context)
 {
-	rdpGdi *gdi;
+	int i;
 	INT32 x, y;
 	UINT32 w, h;
-	xfContext *xfc = (xfContext *) context;
-	gdi = context->gdi;
-	if(!xfc->remote_app)
+	int ninvalid;
+	HGDI_RGN cinvalid;
+	xfContext* xfc = (xfContext*) context;
+	rdpGdi* gdi = context->gdi;
+
+	x = gdi->primary->hdc->hwnd->invalid->x;
+	y = gdi->primary->hdc->hwnd->invalid->y;
+	w = gdi->primary->hdc->hwnd->invalid->w;
+	h = gdi->primary->hdc->hwnd->invalid->h;
+
+	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
+	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+
+	if (!xfc->remote_app)
 	{
-		if(!xfc->complex_regions)
+		if (!xfc->complex_regions)
 		{
-			if(gdi->primary->hdc->hwnd->invalid->null)
+			if (gdi->primary->hdc->hwnd->invalid->null)
 				return;
-			x = gdi->primary->hdc->hwnd->invalid->x;
-			y = gdi->primary->hdc->hwnd->invalid->y;
-			w = gdi->primary->hdc->hwnd->invalid->w;
-			h = gdi->primary->hdc->hwnd->invalid->h;
+
 			xf_lock_x11(xfc, FALSE);
+
 			XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
-			if((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
+
+			if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 			{
 				xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
 			}
@@ -212,27 +222,27 @@ void xf_sw_end_paint(rdpContext *context)
 			{
 				XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
 			}
+
 			xf_unlock_x11(xfc, FALSE);
 		}
 		else
 		{
-			int i;
-			int ninvalid;
-			HGDI_RGN cinvalid;
-			if(gdi->primary->hdc->hwnd->ninvalid < 1)
+			if (gdi->primary->hdc->hwnd->ninvalid < 1)
 				return;
-			ninvalid = gdi->primary->hdc->hwnd->ninvalid;
-			cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+
 			xf_lock_x11(xfc, FALSE);
-			for(i = 0; i < ninvalid; i++)
+
+			for (i = 0; i < ninvalid; i++)
 			{
 				x = cinvalid[i].x;
 				y = cinvalid[i].y;
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
+
 				//combine xfc->primary with xfc->image
 				XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
-				if((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
+
+				if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 				{
 					xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
 				}
@@ -241,20 +251,21 @@ void xf_sw_end_paint(rdpContext *context)
 					XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
 				}
 			}
+
 			XFlush(xfc->display);
+
 			xf_unlock_x11(xfc, FALSE);
 		}
 	}
 	else
 	{
-		if(gdi->primary->hdc->hwnd->invalid->null)
+		if (gdi->primary->hdc->hwnd->invalid->null)
 			return;
-		x = gdi->primary->hdc->hwnd->invalid->x;
-		y = gdi->primary->hdc->hwnd->invalid->y;
-		w = gdi->primary->hdc->hwnd->invalid->w;
-		h = gdi->primary->hdc->hwnd->invalid->h;
+
 		xf_lock_x11(xfc, FALSE);
+
 		xf_rail_paint(xfc, context->rail, x, y, x + w - 1, y + h - 1);
+
 		xf_unlock_x11(xfc, FALSE);
 	}
 }
@@ -264,12 +275,15 @@ void xf_sw_desktop_resize(rdpContext *context)
 	rdpSettings *settings;
 	xfContext *xfc = (xfContext *) context;
 	settings = xfc->instance->settings;
+
 	xf_lock_x11(xfc, TRUE);
-	if(!xfc->fullscreen)
+
+	if (!xfc->fullscreen)
 	{
 		rdpGdi *gdi = context->gdi;
 		gdi_resize(gdi, xfc->width, xfc->height);
-		if(xfc->image)
+
+		if (xfc->image)
 		{
 			xfc->image->data = NULL;
 			XDestroyImage(xfc->image);
@@ -277,6 +291,7 @@ void xf_sw_desktop_resize(rdpContext *context)
 									  (char *) gdi->primary_buffer, gdi->width, gdi->height, xfc->scanline_pad, 0);
 		}
 	}
+
 	xf_unlock_x11(xfc, TRUE);
 }
 

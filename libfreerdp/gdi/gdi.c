@@ -764,6 +764,11 @@ void gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 	DEBUG_WARN( "EllipseCB\n");
 }
 
+void gdi_frame_marker(rdpContext* context, FRAME_MARKER_ORDER* frameMarker)
+{
+
+}
+
 void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
 {
 	DEBUG_GDI("frameId %d frameAction %d",
@@ -943,6 +948,8 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 
 	update->SurfaceBits = gdi_surface_bits;
 	update->SurfaceFrameMarker = gdi_surface_frame_marker;
+
+	update->altsec->FrameMarker = gdi_frame_marker;
 }
 
 void gdi_init_primary(rdpGdi* gdi)
