@@ -794,6 +794,7 @@ BOOL xf_pre_connect(freerdp *instance)
 	xfc->grab_keyboard = settings->GrabKeyboard;
 	xfc->fullscreen_toggle = settings->ToggleFullscreen;
 	xf_detect_monitors(xfc, settings);
+	xfc->colormap = DefaultColormap(xfc->display, xfc->screen_number);
 	return TRUE;
 }
 

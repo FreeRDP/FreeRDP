@@ -214,6 +214,28 @@ BOOL xf_set_rop3(xfContext* xfc, int rop3)
 	return TRUE;
 }
 
+unsigned long xf_gdi_get_color(xfContext* xfc, GDI_COLOR color)
+{
+	XColor x11_color;
+
+	x11_color.flags = DoRed | DoGreen | DoBlue;
+	GetRGB32(x11_color.red, x11_color.green, x11_color.blue, color);
+	x11_color.red = x11_color.red << 8;
+	x11_color.green = x11_color.green << 8;
+	x11_color.blue = x11_color.blue << 8;
+
+	if (XAllocColor(xfc->display, xfc->colormap, &x11_color) != 0)
+	{
+		XFreeColors(xfc->display, xfc->colormap, &x11_color.pixel, 1, 0);
+	}
+	else
+	{
+		x11_color.pixel = BlackPixel(xfc->display, xfc->screen_number);
+	}
+
+	return x11_color.pixel;
+}
+
 Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp, BYTE* data)
 {
 	Pixmap bitmap;
@@ -337,8 +359,10 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	brush = &patblt->brush;
 	xf_set_rop3(xfc, gdi_rop3_code(patblt->bRop));
 
-	foreColor = freerdp_color_convert_var(patblt->foreColor, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
-	backColor = freerdp_color_convert_var(patblt->backColor, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	foreColor = freerdp_color_convert_drawing_order_color_to_gdi_color(patblt->foreColor, context->settings->ColorDepth, xfc->clrconv);
+	foreColor = xf_gdi_get_color(xfc, foreColor);
+	backColor = freerdp_color_convert_drawing_order_color_to_gdi_color(patblt->backColor, context->settings->ColorDepth, xfc->clrconv);
+	backColor = xf_gdi_get_color(xfc, backColor);
 
 	if (brush->style == GDI_BS_SOLID)
 	{
@@ -457,7 +481,8 @@ void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 
 	xf_lock_x11(xfc, FALSE);
 
-	color = freerdp_color_convert_var(opaque_rect->color, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	color = freerdp_color_convert_drawing_order_color_to_gdi_color(opaque_rect->color, context->settings->ColorDepth, xfc->clrconv);
+	color = xf_gdi_get_color(xfc, color);
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
@@ -491,7 +516,8 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 
 	xf_lock_x11(xfc, FALSE);
 
-	color = freerdp_color_convert_var(multi_opaque_rect->color, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	color = freerdp_color_convert_drawing_order_color_to_gdi_color(multi_opaque_rect->color, context->settings->ColorDepth, xfc->clrconv);
+	color = xf_gdi_get_color(xfc, color);
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
@@ -533,7 +559,8 @@ void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 	xf_lock_x11(xfc, FALSE);
 
 	xf_set_rop2(xfc, line_to->bRop2);
-	color = freerdp_color_convert_var(line_to->penColor, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	color = freerdp_color_convert_drawing_order_color_to_gdi_color(line_to->penColor, context->settings->ColorDepth, xfc->clrconv);
+	color = xf_gdi_get_color(xfc, color);
 
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, color);
@@ -583,7 +610,8 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	xf_lock_x11(xfc, FALSE);
 
 	xf_set_rop2(xfc, polyline->bRop2);
-	color = freerdp_color_convert_var(polyline->penColor, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	color = freerdp_color_convert_drawing_order_color_to_gdi_color(polyline->penColor, context->settings->ColorDepth, xfc->clrconv);
+	color = xf_gdi_get_color(xfc, color);
 
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, color);
@@ -679,8 +707,10 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	brush = &mem3blt->brush;
 	bitmap = (xfBitmap*) mem3blt->bitmap;
 	xf_set_rop3(xfc, gdi_rop3_code(mem3blt->bRop));
-	foreColor = freerdp_color_convert_var(mem3blt->foreColor, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
-	backColor = freerdp_color_convert_var(mem3blt->backColor, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	foreColor = freerdp_color_convert_drawing_order_color_to_gdi_color(mem3blt->foreColor, context->settings->ColorDepth, xfc->clrconv);
+	foreColor = xf_gdi_get_color(xfc, foreColor);
+	backColor = freerdp_color_convert_drawing_order_color_to_gdi_color(mem3blt->backColor, context->settings->ColorDepth, xfc->clrconv);
+	backColor = xf_gdi_get_color(xfc, backColor);
 
 	if (brush->style == GDI_BS_PATTERN)
 	{
@@ -752,7 +782,8 @@ void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 	xf_lock_x11(xfc, FALSE);
 
 	xf_set_rop2(xfc, polygon_sc->bRop2);
-	brush_color = freerdp_color_convert_var(polygon_sc->brushColor, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	brush_color = freerdp_color_convert_drawing_order_color_to_gdi_color(polygon_sc->brushColor, context->settings->ColorDepth, xfc->clrconv);
+	brush_color = xf_gdi_get_color(xfc, brush_color);
 
 	npoints = polygon_sc->numPoints + 1;
 	points = malloc(sizeof(XPoint) * npoints);
@@ -813,8 +844,10 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 
 	brush = &(polygon_cb->brush);
 	xf_set_rop2(xfc, polygon_cb->bRop2);
-	foreColor = freerdp_color_convert_var(polygon_cb->foreColor, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
-	backColor = freerdp_color_convert_var(polygon_cb->backColor, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	foreColor = freerdp_color_convert_drawing_order_color_to_gdi_color(polygon_cb->foreColor, context->settings->ColorDepth, xfc->clrconv);
+	foreColor = xf_gdi_get_color(xfc, foreColor);
+	backColor = freerdp_color_convert_drawing_order_color_to_gdi_color(polygon_cb->backColor, context->settings->ColorDepth, xfc->clrconv);
+	backColor = xf_gdi_get_color(xfc, backColor);
 
 	npoints = polygon_cb->numPoints + 1;
 	points = malloc(sizeof(XPoint) * npoints);
