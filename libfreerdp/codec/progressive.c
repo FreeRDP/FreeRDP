@@ -1710,8 +1710,8 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				if (!region->tiles)
 					return -1;
 
-				printf("numRects: %d numTiles: %d numQuant: %d numProgQuant: %d\n",
-						region->numRects, region->numTiles, region->numQuant, region->numProgQuant);
+				//printf("numRects: %d numTiles: %d numQuant: %d numProgQuant: %d\n",
+				//		region->numRects, region->numTiles, region->numQuant, region->numProgQuant);
 
 				status = progressive_process_tiles(progressive, &block[boffset], region->tileDataSize, surface);
 

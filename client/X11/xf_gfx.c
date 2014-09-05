@@ -512,9 +512,6 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 		return -1;
 	}
 
-	printf("xf_SurfaceCommand_Progressive: status: %d surfaceId: %d contextId: %d\n", status,
-			cmd->surfaceId, cmd->contextId);
-
 	region = &(xfc->progressive->region);
 
 	region16_init(&clippingRects);
@@ -614,9 +611,6 @@ int xf_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 
 int xf_DeleteEncodingContext(RdpgfxClientContext* context, RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext)
 {
-	printf("DeleteEncodingContext: surfaceId: %d codecId: %d\n",
-			deleteEncodingContext->surfaceId,
-			deleteEncodingContext->codecContextId);
 	return 1;
 }
 
