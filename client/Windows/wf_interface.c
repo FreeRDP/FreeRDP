@@ -394,10 +394,12 @@ BOOL wf_post_connect(freerdp* instance)
 	if (settings->EmbeddedWindow)
 		settings->Decorations = FALSE;
 	
-	if (!settings->Decorations)
+	if (wfc->fullscreen)
+		dwStyle = WS_POPUP;
+	else if (!settings->Decorations)
 		dwStyle = WS_CHILD | WS_BORDER;
 	else
-		dwStyle = 0;
+		dwStyle = WS_CAPTION | WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_SIZEBOX | WS_MAXIMIZEBOX;
 
 	if (!wfc->hwnd)
 	{

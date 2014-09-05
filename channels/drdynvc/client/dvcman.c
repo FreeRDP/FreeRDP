@@ -476,7 +476,7 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UI
 		Stream_Release(channel->dvc_data);
 
 	channel->dvc_data = StreamPool_Take(channel->dvcman->pool, length);
-	Stream_AddRef(channel->dvc_data);
+	channel->dvc_data_length = length;
 
 	return 0;
 }
@@ -508,7 +508,7 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 
 		Stream_Write(channel->dvc_data, Stream_Pointer(data), dataSize);
 
-		if (((size_t) Stream_GetPosition(channel->dvc_data)) >= Stream_Capacity(channel->dvc_data))
+		if (((size_t) Stream_GetPosition(channel->dvc_data)) >= channel->dvc_data_length)
 		{
 			Stream_SealLength(channel->dvc_data);
 			Stream_SetPosition(channel->dvc_data, 0);
