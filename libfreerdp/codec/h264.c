@@ -59,7 +59,7 @@ static void h264_dump_h264_data(BYTE* data, int size)
 	FILE* fp;
 	char buf[4096];
 
-	snprintf(buf, sizeof(buf), "/tmp/wlog/bs_%d.h264", g_H264FrameId);
+	sprintf_s(buf, sizeof(buf), "/tmp/wlog/bs_%d.h264", g_H264FrameId);
 	fp = fopen(buf, "wb");
 	fwrite(data, 1, size, fp);
 	fflush(fp);
@@ -73,10 +73,10 @@ void h264_dump_yuv_data(BYTE* yuv[], int width, int height, int stride[])
 	char buf[4096];
 	int j;
 
-	snprintf(buf, sizeof(buf), "/tmp/wlog/H264_%d.ppm", g_H264FrameId);
+	sprintf_s(buf, sizeof(buf), "/tmp/wlog/H264_%d.ppm", g_H264FrameId);
 	fp = fopen(buf, "wb");
 	fwrite("P5\n", 1, 3, fp);
-	snprintf(buf, sizeof(buf), "%d %d\n", width, height);
+	sprintf_s(buf, sizeof(buf), "%d %d\n", width, height);
 	fwrite(buf, 1, strlen(buf), fp);
 	fwrite("255\n", 1, 4, fp);
 
