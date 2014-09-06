@@ -26,6 +26,7 @@ set(${MODULE_PREFIX}_SRCS
 	prim_set.c
 	prim_shift.c
 	prim_sign.c
+	prim_YUV.c
 	prim_YCoCg.c
 	primitives.c
 	prim_internal.h)

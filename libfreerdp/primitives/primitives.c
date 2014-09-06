@@ -32,11 +32,11 @@ static primitives_t* pPrimitives = NULL;
 /* ------------------------------------------------------------------------- */
 void primitives_init(void)
 {
-	if (pPrimitives == NULL)
+	if (!pPrimitives)
 	{
 		pPrimitives = calloc(1, sizeof(primitives_t));
 
-		if (pPrimitives == NULL)
+		if (!pPrimitives)
 			return;
 	}
 
@@ -50,13 +50,14 @@ void primitives_init(void)
 	primitives_init_sign(pPrimitives);
 	primitives_init_colors(pPrimitives);
 	primitives_init_YCoCg(pPrimitives);
+	primitives_init_YUV(pPrimitives);
 	primitives_init_16to32bpp(pPrimitives);
 }
 
 /* ------------------------------------------------------------------------- */
 primitives_t* primitives_get(void)
 {
-	if (pPrimitives == NULL)
+	if (!pPrimitives)
 		primitives_init();
 
 	return pPrimitives;
@@ -65,7 +66,7 @@ primitives_t* primitives_get(void)
 /* ------------------------------------------------------------------------- */
 void primitives_deinit(void)
 {
-	if (pPrimitives == NULL)
+	if (!pPrimitives)
 		return;
 
 	/* Call each section's de-initialization routine. */
@@ -78,6 +79,7 @@ void primitives_deinit(void)
 	primitives_deinit_sign(pPrimitives);
 	primitives_deinit_colors(pPrimitives);
 	primitives_deinit_YCoCg(pPrimitives);
+	primitives_deinit_YUV(pPrimitives);
 	primitives_deinit_16to32bpp(pPrimitives);
 
 	free((void*) pPrimitives);

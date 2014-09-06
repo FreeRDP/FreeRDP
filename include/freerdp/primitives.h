@@ -164,6 +164,10 @@ typedef pstatus_t (*__RGB565ToARGB_16u32u_C3C4_t)(
 	UINT32* pDst, INT32 dstStep,
 	UINT32 width, UINT32 height,
 	BOOL alpha, BOOL invert);
+typedef pstatus_t (*__YUV420ToRGB_8u_P3AC4R_t)(
+	const BYTE* pSrc[3], INT32 srcStep[3],
+	BYTE* pDst, INT32 dstStep,
+	const prim_size_t* roi);
 typedef pstatus_t (*__andC_32u_t)(
 	const UINT32 *pSrc,
 	UINT32 val,
@@ -209,6 +213,7 @@ typedef struct
 	__RGBToRGB_16s8u_P3AC4R_t RGBToRGB_16s8u_P3AC4R;
 	__YCoCgRToRGB_8u_AC4R_t YCoCgRToRGB_8u_AC4R;
 	__RGB565ToARGB_16u32u_C3C4_t RGB565ToARGB_16u32u_C3C4;
+	__YUV420ToRGB_8u_P3AC4R_t YUV420ToRGB_8u_P3AC4R;
 } primitives_t;
 
 #ifdef __cplusplus
