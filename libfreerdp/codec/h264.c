@@ -37,16 +37,16 @@ static INLINE BYTE clip(int x)
 
 static INLINE UINT32 YUV_to_RGB(BYTE Y, BYTE U, BYTE V)
 {
-	int C, D, E;
 	BYTE R, G, B;
+	int Yp, Up, Vp;
 
-	C = Y;
-	D = U - 128;
-	E = V - 128;
+	Yp = Y * 256;
+	Up = U - 128;
+	Vp = V - 128;
 
-	R = clip(( 256 * C           + 403 * E + 128) >> 8);
-	G = clip(( 256 * C -  48 * D - 120 * E + 128) >> 8);
-	B = clip(( 256 * C + 475 * D           + 128) >> 8);
+	R = clip((Yp + (403 * Vp)) >> 8);
+	G = clip((Yp - (48 * Up) - (120 * Vp)) >> 8);
+	B = clip((Yp + (475 * Up)) >> 8);
 
 	return RGB32(R, G, B);
 }
