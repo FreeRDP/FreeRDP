@@ -27,60 +27,194 @@
 #include "prim_internal.h"
 #include "prim_YUV.h"
 
-static INLINE BYTE clip(int x)
-{
-	if (x < 0) return 0;
-	if (x > 255) return 255;
-	return (BYTE) x;
-}
-
-static INLINE UINT32 YUV_to_RGB(BYTE Y, BYTE U, BYTE V)
-{
-	BYTE R, G, B;
-	int Yp, Up, Vp;
-
-	Yp = Y * 256;
-	Up = U - 128;
-	Vp = V - 128;
-
-	R = clip((Yp + (403 * Vp)) >> 8);
-	G = clip((Yp - (48 * Up) - (120 * Vp)) >> 8);
-	B = clip((Yp + (475 * Up)) >> 8);
-
-	return ARGB32(0xFF, R, G, B);
-}
-
 pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], int srcStep[3],
 		BYTE* pDst, int dstStep, const prim_size_t* roi)
 {
 	int x, y;
+	int dstPad;
+	int srcPad[3];
 	BYTE Y, U, V;
+	int halfWidth;
+	int halfHeight;
 	const BYTE* pY;
 	const BYTE* pU;
 	const BYTE* pV;
+	int R, G, B;
+	int Yp, Up, Vp;
+	int Up48, Up475;
+	int Vp403, Vp120;
 	BYTE* pRGB = pDst;
 
 	pY = pSrc[0];
+	pU = pSrc[1];
+	pV = pSrc[2];
 
-	for (y = 0; y < roi->height; y++)
+	halfWidth = roi->width / 2;
+	halfHeight = roi->height / 2;
+
+	srcPad[0] = (srcStep[0] - roi->width);
+	srcPad[1] = (srcStep[1] - halfWidth);
+	srcPad[2] = (srcStep[2] - halfWidth);
+
+	dstPad = (dstStep - (roi->width * 4));
+
+	for (y = 0; y < halfHeight; y++)
 	{
-		pU = pSrc[1] + (y / 2) * srcStep[1];
-		pV = pSrc[2] + (y / 2) * srcStep[2];
-
-		for (x = 0; x < roi->width; x++)
+		for (x = 0; x < halfWidth; x++)
 		{
-			Y = *pY;
-			U = pU[x / 2];
-			V = pV[x / 2];
+			U = *pU++;
+			V = *pV++;
 
-			*((UINT32*) pRGB) = YUV_to_RGB(Y, U, V);
+			Up = U - 128;
+			Vp = V - 128;
 
-			pRGB += 4;
-			pY++;
+			Up48 = 48 * Up;
+			Up475 = 475 * Up;
+
+			Vp403 = Vp * 403;
+			Vp120 = Vp * 120;
+
+			/* 1st pixel */
+
+			Y = *pY++;
+			Yp = Y << 8;
+
+			R = (Yp + Vp403) >> 8;
+			G = (Yp - Up48 - Vp120) >> 8;
+			B = (Yp + Up475) >> 8;
+
+			if (R < 0)
+				R = 0;
+			else if (R > 255)
+				R = 255;
+
+			if (G < 0)
+				G = 0;
+			else if (G > 255)
+				G = 255;
+
+			if (B < 0)
+				B = 0;
+			else if (B > 255)
+				B = 255;
+
+			*pRGB++ = (BYTE) B;
+			*pRGB++ = (BYTE) G;
+			*pRGB++ = (BYTE) R;
+			*pRGB++ = 0xFF;
+
+			/* 2nd pixel */
+
+			Y = *pY++;
+			Yp = Y << 8;
+
+			R = (Yp + Vp403) >> 8;
+			G = (Yp - Up48 - Vp120) >> 8;
+			B = (Yp + Up475) >> 8;
+
+			if (R < 0)
+				R = 0;
+			else if (R > 255)
+				R = 255;
+
+			if (G < 0)
+				G = 0;
+			else if (G > 255)
+				G = 255;
+
+			if (B < 0)
+				B = 0;
+			else if (B > 255)
+				B = 255;
+
+			*pRGB++ = (BYTE) B;
+			*pRGB++ = (BYTE) G;
+			*pRGB++ = (BYTE) R;
+			*pRGB++ = 0xFF;
 		}
 
-		pRGB += (dstStep - (roi->width * 4));
-		pY += (srcStep[0] - roi->width);
+		pY += srcPad[0];
+		pU -= halfWidth;
+		pV -= halfWidth;
+		pRGB += dstPad;
+
+		for (x = 0; x < halfWidth; x++)
+		{
+			U = *pU++;
+			V = *pV++;
+
+			Up = U - 128;
+			Vp = V - 128;
+
+			Up48 = 48 * Up;
+			Up475 = 475 * Up;
+
+			Vp403 = Vp * 403;
+			Vp120 = Vp * 120;
+
+			/* 3rd pixel */
+
+			Y = *pY++;
+			Yp = Y << 8;
+
+			R = (Yp + Vp403) >> 8;
+			G = (Yp - Up48 - Vp120) >> 8;
+			B = (Yp + Up475) >> 8;
+
+			if (R < 0)
+				R = 0;
+			else if (R > 255)
+				R = 255;
+
+			if (G < 0)
+				G = 0;
+			else if (G > 255)
+				G = 255;
+
+			if (B < 0)
+				B = 0;
+			else if (B > 255)
+				B = 255;
+
+			*pRGB++ = (BYTE) B;
+			*pRGB++ = (BYTE) G;
+			*pRGB++ = (BYTE) R;
+			*pRGB++ = 0xFF;
+
+			/* 4th pixel */
+
+			Y = *pY++;
+			Yp = Y << 8;
+
+			R = (Yp + Vp403) >> 8;
+			G = (Yp - Up48 - Vp120) >> 8;
+			B = (Yp + Up475) >> 8;
+
+			if (R < 0)
+				R = 0;
+			else if (R > 255)
+				R = 255;
+
+			if (G < 0)
+				G = 0;
+			else if (G > 255)
+				G = 255;
+
+			if (B < 0)
+				B = 0;
+			else if (B > 255)
+				B = 255;
+
+			*pRGB++ = (BYTE) B;
+			*pRGB++ = (BYTE) G;
+			*pRGB++ = (BYTE) R;
+			*pRGB++ = 0xFF;
+		}
+
+		pY += srcPad[0];
+		pU += srcPad[1];
+		pV += srcPad[2];
+		pRGB += dstPad;
 	}
 
 	return PRIMITIVES_SUCCESS;
