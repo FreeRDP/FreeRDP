@@ -24,9 +24,9 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
+#include <freerdp/primitives.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/codec/bitmap.h>
-#include <freerdp/primitives.h>
 
 #include "planar.h"
 
@@ -204,15 +204,78 @@ static int planar_decompress_plane_raw(BYTE* pSrcData, UINT32 SrcSize, BYTE* pDs
 	return (int) (srcp - pSrcData);
 }
 
+static int planar_decompress_rgb_planes_raw(const BYTE* pSrcData[4], int nSrcStep, BYTE* pDstData,
+		int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, BOOL alpha, BOOL vFlip)
+{
+	int x, y;
+	int beg, end, inc;
+	BYTE* pRGB = pDstData;
+	const BYTE* pR = pSrcData[0];
+	const BYTE* pG = pSrcData[1];
+	const BYTE* pB = pSrcData[2];
+	const BYTE* pA = pSrcData[3];
+
+	if (vFlip)
+	{
+		beg = nHeight - 1;
+		end = -1;
+		inc = -1;
+	}
+	else
+	{
+		beg = 0;
+		end = nHeight;
+		inc = 1;
+	}
+
+	if (alpha)
+	{
+		for (y = beg; y != end; y += inc)
+		{
+			pRGB = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+
+			for (x = 0; x < nWidth; x++)
+			{
+				*pRGB++ = *pB++;
+				*pRGB++ = *pG++;
+				*pRGB++ = *pR++;
+				*pRGB++ = *pA++;
+			}
+		}
+	}
+	else
+	{
+		for (y = beg; y != end; y += inc)
+		{
+			pRGB = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+
+			for (x = 0; x < nWidth; x++)
+			{
+				*pRGB++ = *pB++;
+				*pRGB++ = *pG++;
+				*pRGB++ = *pR++;
+				*pRGB++ = 0xFF;
+			}
+		}
+	}
+
+	return 1;
+}
+
 int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcSize,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
 {
+	BOOL cs;
+	BOOL rle;
+	UINT32 cll;
+	BOOL alpha;
 	int status;
 	BYTE* srcp;
 	BOOL vFlip;
 	BYTE FormatHeader;
 	BYTE* pDstData = NULL;
 	UINT32 UncompressedSize;
+	const primitives_t* prims = primitives_get();
 
 	if ((nWidth * nHeight) <= 0)
 		return -1;
@@ -237,11 +300,142 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 	FormatHeader = *srcp;
 	srcp++;
 
+	cll = (FormatHeader & PLANAR_FORMAT_HEADER_CLL_MASK);
+	cs = (FormatHeader & PLANAR_FORMAT_HEADER_CS) ? TRUE : FALSE;
+	rle = (FormatHeader & PLANAR_FORMAT_HEADER_RLE) ? TRUE : FALSE;
+	alpha = (FormatHeader & PLANAR_FORMAT_HEADER_NA) ? FALSE : TRUE;
+
+	//printf("CLL: %d CS: %d RLE: %d ALPHA: %d\n", cll, cs, rle, alpha);
+
+	if (!cll) /* RGB */
+	{
+		if (!rle) /* RAW */
+		{
+			int planeSize;
+			const BYTE* planes[4];
+
+			planeSize = nWidth * nHeight;
+
+			if (alpha)
+			{
+				if ((SrcSize - (srcp - pSrcData)) < (planeSize * 4))
+					return -1;
+
+				planes[3] = &srcp[planeSize * 0]; /* AlphaPlane */
+				planes[0] = &srcp[planeSize * 1]; /* RedPlane */
+				planes[1] = &srcp[planeSize * 2]; /* GreenPlane */
+				planes[2] = &srcp[planeSize * 3]; /* BluePlane */
+
+				planar_decompress_rgb_planes_raw(planes, nWidth, pDstData, nDstStep,
+						nXDst, nYDst, nWidth, nHeight, alpha, vFlip);
+
+				srcp += (planeSize * 4);
+				srcp++; /* pad */
+			}
+			else /* NoAlpha */
+			{
+				if ((SrcSize - (srcp - pSrcData)) < (planeSize * 3))
+					return -1;
+
+				planes[0] = &srcp[planeSize * 0]; /* RedPlane */
+				planes[1] = &srcp[planeSize * 1]; /* GreenPlane */
+				planes[2] = &srcp[planeSize * 2]; /* BluePlane */
+
+				planar_decompress_rgb_planes_raw(planes, nWidth, pDstData, nDstStep,
+						nXDst, nYDst, nWidth, nHeight, alpha, vFlip);
+
+				srcp += (planeSize * 3);
+				srcp++; /* pad */
+			}
+		}
+		else /* RLE */
+		{
+			if (alpha)
+			{
+				/* AlphaPlane */
+
+				status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
+						pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 3, vFlip);
+
+				if (status < 0)
+					return -1;
+
+				srcp += status;
+
+				/* RedPlane */
+
+				status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
+						pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 2, vFlip);
+
+				if (status < 0)
+					return -1;
+
+				srcp += status;
+
+				/* GreenPlane */
+
+				status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
+						pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 1, vFlip);
+
+				if (status < 0)
+					return -1;
+
+				srcp += status;
+
+				/* BluePlane */
+
+				status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
+						pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 0, vFlip);
+
+				if (status < 0)
+					return -1;
+
+				srcp += status;
+			}
+			else /* NoAlpha */
+			{
+				/* RedPlane */
+
+				status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
+						pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 2, vFlip);
+
+				if (status < 0)
+					return -1;
+
+				srcp += status;
+
+				/* GreenPlane */
+
+				status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
+						pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 1, vFlip);
+
+				if (status < 0)
+					return -1;
+
+				srcp += status;
+
+				/* BluePlane */
+
+				status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
+						pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 0, vFlip);
+
+				if (status < 0)
+					return -1;
+
+				srcp += status;
+			}
+		}
+
+		status = (SrcSize == (srcp - pSrcData)) ? 1 : -1;
+
+		return status;
+	}
+
 	/* AlphaPlane */
 
-	if (!(FormatHeader & PLANAR_FORMAT_HEADER_NA))
+	if (alpha)
 	{
-		if (FormatHeader & PLANAR_FORMAT_HEADER_RLE)
+		if (rle)
 		{
 			status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
 					pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 3, vFlip);
@@ -263,9 +457,9 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 		}
 	}
 
-	if (FormatHeader & PLANAR_FORMAT_HEADER_RLE)
+	if (rle)
 	{
-		/* LumaOrRedPlane */
+		/* LumaPlane */
 
 		status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
 				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 2, vFlip);
@@ -275,7 +469,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 
 		srcp += status;
 
-		/* OrangeChromaOrGreenPlane */
+		/* OrangeChromaPlane */
 
 		status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
 				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 1, vFlip);
@@ -285,7 +479,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 
 		srcp += status;
 
-		/* GreenChromeOrBluePlane */
+		/* GreenChromaPlane */
 
 		status = planar_decompress_plane_rle(srcp, SrcSize - (srcp - pSrcData),
 				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 0, vFlip);
@@ -297,7 +491,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 	}
 	else
 	{
-		/* LumaOrRedPlane */
+		/* LumaPlane */
 
 		status = planar_decompress_plane_raw(srcp, SrcSize - (srcp - pSrcData),
 				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 2, vFlip);
@@ -307,7 +501,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 
 		srcp += status;
 
-		/* OrangeChromaOrGreenPlane */
+		/* OrangeChromaPlane */
 
 		status = planar_decompress_plane_raw(srcp, SrcSize - (srcp - pSrcData),
 				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 1, vFlip);
@@ -317,7 +511,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 
 		srcp += status;
 
-		/* GreenChromeOrBluePlane */
+		/* GreenChromaPlane */
 
 		status = planar_decompress_plane_raw(srcp, SrcSize - (srcp - pSrcData),
 				pDstData, nDstStep, nXDst, nYDst, nWidth, nHeight, 0, vFlip);
@@ -329,26 +523,17 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 		srcp++;
 	}
 
-	if (FormatHeader & PLANAR_FORMAT_HEADER_CLL_MASK)
+	if (cll)
 	{
 		/* The data is in YCoCg colorspace rather than RGB. */
-		if (FormatHeader & PLANAR_FORMAT_HEADER_CS)
+		if (cs)
 		{
-			static BOOL been_warned = FALSE;
-			if (!been_warned)
-				DEBUG_WARN("Chroma-Subsampling is not implemented.\n");
-			been_warned = TRUE;
+			DEBUG_WARN("Chroma-Subsampling is not implemented");
 		}
 		else
 		{
-			BOOL alpha;
-			int cll;
-
-			alpha = (FormatHeader & PLANAR_FORMAT_HEADER_NA) ? FALSE : TRUE;
-			cll = FormatHeader & PLANAR_FORMAT_HEADER_CLL_MASK;
-			primitives_get()->YCoCgToRGB_8u_AC4R(
-				pDstData, nDstStep, pDstData, nDstStep,
-				nWidth, nHeight, cll, alpha, FALSE);
+			prims->YCoCgToRGB_8u_AC4R(pDstData, nDstStep,
+				pDstData, nDstStep, nWidth, nHeight, cll, alpha, FALSE);
 		}
 	}
 
