@@ -336,7 +336,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 		{
 			static BOOL been_warned = FALSE;
 			if (!been_warned)
-				DEBUG_WARN( "Chroma-Subsampling is not implemented.\n");
+				DEBUG_WARN("Chroma-Subsampling is not implemented.\n");
 			been_warned = TRUE;
 		}
 		else
@@ -346,7 +346,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 
 			alpha = (FormatHeader & PLANAR_FORMAT_HEADER_NA) ? FALSE : TRUE;
 			cll = FormatHeader & PLANAR_FORMAT_HEADER_CLL_MASK;
-			primitives_get()->YCoCgRToRGB_8u_AC4R(
+			primitives_get()->YCoCgToRGB_8u_AC4R(
 				pDstData, nDstStep, pDstData, nDstStep,
 				nWidth, nHeight, cll, alpha, FALSE);
 		}

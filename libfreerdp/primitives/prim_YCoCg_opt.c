@@ -69,7 +69,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(
 	if ((width < 8) || (ULONG_PTR) dptr & 0x03)
 	{
 		/* Too small, or we'll never hit a 16-byte boundary.  Punt. */
-		return general_YCoCgRToRGB_8u_AC4R(pSrc, srcStep,
+		return general_YCoCgToRGB_8u_AC4R(pSrc, srcStep,
 			pDst, dstStep, width, height, shift, withAlpha, TRUE);
 	}
 
@@ -83,7 +83,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(
 		{
 			int startup = (16 - ((ULONG_PTR) dptr & 0x0f)) / 4;
 			if (startup > width) startup = width;
-			general_YCoCgRToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
+			general_YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
 				startup, 1, shift, withAlpha, TRUE);
 			sptr += startup * sizeof(UINT32);
 			dptr += startup * sizeof(UINT32);
@@ -185,7 +185,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(
 
 		/* Handle any remainder pixels. */
 		if (w > 0) {
-			general_YCoCgRToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
+			general_YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
 				w, 1, shift, withAlpha, TRUE);
 			sptr += w * sizeof(UINT32);
 			dptr += w * sizeof(UINT32);
@@ -228,7 +228,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
 	if ((width < 8) || (ULONG_PTR) dptr & 0x03)
 	{
 		/* Too small, or we'll never hit a 16-byte boundary.  Punt. */
-		return general_YCoCgRToRGB_8u_AC4R(pSrc, srcStep,
+		return general_YCoCgToRGB_8u_AC4R(pSrc, srcStep,
 			pDst, dstStep, width, height, shift, withAlpha, FALSE);
 	}
 
@@ -242,7 +242,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
 		{
 			int startup = (16 - ((ULONG_PTR) dptr & 0x0f)) / 4;
 			if (startup > width) startup = width;
-			general_YCoCgRToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
+			general_YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
 				startup, 1, shift, withAlpha, FALSE);
 			sptr += startup * sizeof(UINT32);
 			dptr += startup * sizeof(UINT32);
@@ -348,7 +348,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(
 
 		/* Handle any remainder pixels. */
 		if (w > 0) {
-			general_YCoCgRToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
+			general_YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, dstStep,
 				w, 1, shift, withAlpha, FALSE);
 			sptr += w * sizeof(UINT32);
 			dptr += w * sizeof(UINT32);
@@ -393,7 +393,7 @@ void primitives_init_YCoCg_opt(primitives_t* prims)
 	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3)
 			&& IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
-		prims->YCoCgRToRGB_8u_AC4R = ssse3_YCoCgRToRGB_8u_AC4R;
+		prims->YCoCgToRGB_8u_AC4R = ssse3_YCoCgRToRGB_8u_AC4R;
 	}
 #endif /* WITH_SSE2 */
 }
