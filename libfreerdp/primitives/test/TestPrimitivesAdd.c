@@ -23,6 +23,8 @@
 static const int ADD16S_PRETEST_ITERATIONS = 300000*64;
 static const int TEST_TIME = 2.0;  // seconds
 
+extern BOOL g_TestPrimitivesPerformance;
+
 extern pstatus_t general_add_16s(
 	const INT16 *pSrc1, const INT16 *pSrc2, INT16 *pDst, int len);
 extern pstatus_t sse3_add_16s(
@@ -111,4 +113,24 @@ int test_add16s_speed(void)
 	add16s_speed_test("add16s", "unaligned", src1+1, src2+2, 0, dst,
 		test_sizes, NUM_TEST_SIZES, ADD16S_PRETEST_ITERATIONS, TEST_TIME);
 	return SUCCESS;
+}
+
+int TestPrimitivesAdd(int argc, char* argv[])
+{
+	int status;
+
+	status = test_add16s_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_add16s_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	return 0;
 }

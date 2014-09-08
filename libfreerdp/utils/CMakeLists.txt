@@ -20,7 +20,6 @@ set(MODULE_PREFIX "FREERDP_UTILS")
 
 set(${MODULE_PREFIX}_SRCS
 	event.c
-	bitmap.c
 	passphrase.c
 	pcap.c
 	profiler.c

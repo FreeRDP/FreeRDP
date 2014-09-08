@@ -184,6 +184,9 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		return -1;
 	}
 
+	if (rdp->disconnect)
+		return 0;
+ 
 	if (rdp->settings->DisableEncryption)
 	{
 		if (!rdp_read_security_header(s, &securityFlags))

@@ -26,11 +26,11 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
+#include <winpr/image.h>
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/bitmap.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/rfx.h>
@@ -764,6 +764,11 @@ void gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 	DEBUG_WARN( "EllipseCB\n");
 }
 
+void gdi_frame_marker(rdpContext* context, FRAME_MARKER_ORDER* frameMarker)
+{
+
+}
+
 void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
 {
 	DEBUG_GDI("frameId %d frameAction %d",
@@ -828,7 +833,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 
 #ifdef DUMP_REMOTEFX_TILES
 			sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
-			freerdp_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
+			winpr_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
 #endif
 
 
@@ -943,6 +948,8 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 
 	update->SurfaceBits = gdi_surface_bits;
 	update->SurfaceFrameMarker = gdi_surface_frame_marker;
+
+	update->altsec->FrameMarker = gdi_frame_marker;
 }
 
 void gdi_init_primary(rdpGdi* gdi)

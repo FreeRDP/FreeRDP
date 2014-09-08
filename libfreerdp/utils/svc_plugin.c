@@ -114,11 +114,6 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
-		if (Stream_Capacity(s) != Stream_GetPosition(s))
-		{
-			DEBUG_WARN( "svc_plugin_process_received: read error\n");
-		}
-
 		plugin->data_in = NULL;
 		Stream_SealLength(s);
 		Stream_SetPosition(s, 0);

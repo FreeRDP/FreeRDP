@@ -389,18 +389,16 @@ void xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 
 void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
 {
-	xfContext* context_ = (xfContext*) context;
 	xfContext* xfc = (xfContext*) context;
 
-	bgcolor = (xfc->clrconv->invert)?
-		freerdp_color_convert_var_bgr(bgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv):
-		freerdp_color_convert_var_rgb(bgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	bgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(bgcolor, context->settings->ColorDepth, xfc->clrconv);
 
-	fgcolor = (xfc->clrconv->invert)?
-		freerdp_color_convert_var_bgr(fgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv):
-		freerdp_color_convert_var_rgb(fgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	fgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(fgcolor, context->settings->ColorDepth, xfc->clrconv);
 
 	xf_lock_x11(xfc, FALSE);
+
+	fgcolor = xf_gdi_get_color(xfc, fgcolor);
+	bgcolor = xf_gdi_get_color(xfc, bgcolor);
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);

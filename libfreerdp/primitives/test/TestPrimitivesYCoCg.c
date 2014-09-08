@@ -26,6 +26,8 @@
 static const int YCOCG_TRIAL_ITERATIONS = 20000;
 static const float TEST_TIME = 4.0;
 
+extern BOOL g_TestPrimitivesPerformance;
+
 extern pstatus_t general_YCoCgRToRGB_8u_AC4R(const BYTE *pSrc, INT32 srcStep,
 	BYTE *pDst, INT32 dstStep, UINT32 width, UINT32 height,
 	UINT8 shift, BOOL withAlpha, BOOL invert);
@@ -97,7 +99,6 @@ int test_YCoCgRToRGB_8u_AC4R_speed(void)
 {
 	INT32 ALIGN(in[4096]);
 	INT32 ALIGN(out[4096]);
-	int i;
 	int size_array[] = { 64 };
 
 	get_random_data(in, sizeof(in));
@@ -106,4 +107,24 @@ int test_YCoCgRToRGB_8u_AC4R_speed(void)
 		0, 0, (BYTE *) out,
 		size_array, 1, YCOCG_TRIAL_ITERATIONS, TEST_TIME);
 	return SUCCESS;
+}
+
+int TestPrimitivesYCoCg(int argc, char* argv[])
+{
+	int status;
+
+	status = test_YCoCgRToRGB_8u_AC4R_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_YCoCgRToRGB_8u_AC4R_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	return 0;
 }

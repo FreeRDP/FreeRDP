@@ -23,6 +23,8 @@
 static const int ANDOR_PRETEST_ITERATIONS = 100000;
 static const int TEST_TIME = 2.0;  // seconds
 
+extern BOOL g_TestPrimitivesPerformance;
+
 extern pstatus_t general_andC_32u(const UINT32 *pSrc, UINT32 val,
 	UINT32 *pDst, int len);
 extern pstatus_t sse3_andC_32u(const UINT32 *pSrc, UINT32 val,
@@ -184,4 +186,37 @@ int test_or_32u_speed(void)
 	orC_32u_speed_test("or32u", "unaligned", src+1, NULL, VALUE, dst,
 		test_sizes, NUM_TEST_SIZES, ANDOR_PRETEST_ITERATIONS, TEST_TIME);
 	return SUCCESS;
+}
+
+int TestPrimitivesAndOr(int argc, char* argv[])
+{
+	int status;
+
+	status = test_and_32u_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_and_32u_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	status = test_or_32u_func();
+
+	if (status != SUCCESS)
+		return 1;
+
+	if (g_TestPrimitivesPerformance)
+	{
+		status = test_or_32u_speed();
+
+		if (status != SUCCESS)
+			return 1;
+	}
+
+	return 0;
 }

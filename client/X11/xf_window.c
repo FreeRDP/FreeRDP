@@ -114,6 +114,8 @@ void xf_SendClientEvent(xfContext *xfc, xfWindow *window, Atom atom, unsigned in
 	unsigned int i;
 	va_list argp;
 	va_start(argp, numArgs);
+
+	ZeroMemory(&xevent, sizeof(XEvent));
 	xevent.xclient.type = ClientMessage;
 	xevent.xclient.serial = 0;
 	xevent.xclient.send_event = False;

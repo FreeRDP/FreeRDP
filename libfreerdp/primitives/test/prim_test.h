@@ -20,31 +20,22 @@
 #ifndef __PRIMTEST_H_INCLUDED__
 #define __PRIMTEST_H_INCLUDED__
 
-#include <config.h>
-#include <stdint.h>
+#include <winpr/crt.h>
+#include <winpr/spec.h>
 #include <winpr/wtypes.h>
-
-#include <measure.h>
-#include <string.h>
-#include <stdio.h>
+#include <winpr/platform.h>
 
 #include <freerdp/primitives.h>
-#include <winpr/platform.h>
+
+#include "measure.h"
 
 #ifdef WITH_IPP
 #include <ipps.h>
 #include <ippi.h>
 #endif
 
-#define BLOCK_ALIGNMENT 16
-#ifdef __GNUC__
-#define ALIGN(x) x __attribute((aligned(BLOCK_ALIGNMENT)))
-#define POSSIBLY_UNUSED(x)	x __attribute((unused))
-#else
-/* TODO: Someone needs to finish this for non-GNU C */
-#define ALIGN(x) x
-#define POSSIBLY_UNUSED(x)	x
-#endif
+#define ALIGN(x) x DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT)
+
 #define ABS(_x_) ((_x_) < 0 ? (-(_x_)) : (_x_))
 #define MAX_TEST_SIZE 4096
 
