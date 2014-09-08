@@ -2106,6 +2106,51 @@ static int test_memcmp_count(const BYTE* mem1, const BYTE* mem2, int size)
 	return count;
 }
 
+static void test_fill_bitmap_red_channel(BYTE* data, int width, int height, BYTE value)
+{
+	int i, j;
+	UINT32* pixel;
+
+	for (i = 0; i < height; i++)
+	{
+		for (j = 0; j < width; j++)
+		{
+			pixel = (UINT32*) &data[((i * width) + j) * 4];
+			*pixel = ((*pixel & 0xFF00FFFF) | (value << 16));
+		}
+	}
+}
+
+static void test_fill_bitmap_green_channel(BYTE* data, int width, int height, BYTE value)
+{
+	int i, j;
+	UINT32* pixel;
+
+	for (i = 0; i < height; i++)
+	{
+		for (j = 0; j < width; j++)
+		{
+			pixel = (UINT32*) &data[((i * width) + j) * 4];
+			*pixel = ((*pixel & 0xFFFF00FF) | (value << 8));
+		}
+	}
+}
+
+static void test_fill_bitmap_blue_channel(BYTE* data, int width, int height, BYTE value)
+{
+	int i, j;
+	UINT32* pixel;
+
+	for (i = 0; i < height; i++)
+	{
+		for (j = 0; j < width; j++)
+		{
+			pixel = (UINT32*) &data[((i * width) + j) * 4];
+			*pixel = ((*pixel & 0xFFFFFF00) | (value));
+		}
+	}
+}
+
 int TestPrimitivesYCbCr(int argc, char* argv[])
 {
 	int cmp;
@@ -2157,6 +2202,24 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 		_aligned_free(pSrcDst[0]);
 		_aligned_free(pSrcDst[1]);
 		_aligned_free(pSrcDst[2]);
+	}
+
+	if (0)
+	{
+		test_fill_bitmap_red_channel(actual, 64, 64, 0);
+		test_fill_bitmap_red_channel(expected, 64, 64, 0);
+	}
+
+	if (0)
+	{
+		test_fill_bitmap_green_channel(actual, 64, 64, 0);
+		test_fill_bitmap_green_channel(expected, 64, 64, 0);
+	}
+
+	if (0)
+	{
+		test_fill_bitmap_blue_channel(actual, 64, 64, 0);
+		test_fill_bitmap_blue_channel(expected, 64, 64, 0);
 	}
 
 	cmp = test_memcmp_offset(actual, expected, size);
