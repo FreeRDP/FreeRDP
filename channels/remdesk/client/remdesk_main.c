@@ -26,6 +26,7 @@
 
 #include <freerdp/assistance.h>
 
+#include <freerdp/channels/log.h>
 #include <freerdp/client/remdesk.h>
 
 #include "remdesk_main.h"
@@ -49,7 +50,7 @@ int remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 
 	if (status != CHANNEL_RC_OK)
 	{
-		fprintf(stderr, "remdesk_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
+		CLOG_ERR( "remdesk_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
 		return -1;
 	}
 
@@ -98,7 +99,7 @@ int remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 	return 1;
 }
 
-int remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
+static int remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status;
 	UINT32 ChannelNameLen;
@@ -133,7 +134,7 @@ int remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 	return 1;
 }
 
-int remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
+static int remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int index;
 	UINT32 ChannelNameLen;
@@ -156,14 +157,14 @@ int remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 	return 1;
 }
 
-int remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
+static int remdesk_write_ctl_header(wStream* s, REMDESK_CTL_HEADER* ctlHeader)
 {
 	remdesk_write_channel_header(s, (REMDESK_CHANNEL_HEADER*) ctlHeader);
 	Stream_Write_UINT32(s, ctlHeader->msgType); /* msgType (4 bytes) */
 	return 1;
 }
 
-int remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UINT32 msgSize)
+static int remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UINT32 msgSize)
 {
 	ctlHeader->msgType = msgType;
 	strcpy(ctlHeader->ChannelName, REMDESK_CHANNEL_CTL_NAME);
@@ -171,12 +172,12 @@ int remdesk_prepare_ctl_header(REMDESK_CTL_HEADER* ctlHeader, UINT32 msgType, UI
 	return 1;
 }
 
-int remdesk_recv_ctl_server_announce_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
+static int remdesk_recv_ctl_server_announce_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	return 1;
 }
 
-int remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
+static int remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	UINT32 versionMajor;
 	UINT32 versionMinor;
@@ -190,7 +191,7 @@ int remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s, REMDES
 	return 1;
 }
 
-int remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
+static int remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 {
 	wStream* s;
 	REMDESK_CTL_VERSION_INFO_PDU pdu;
@@ -214,7 +215,7 @@ int remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 	return 1;
 }
 
-int remdesk_recv_result_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header, UINT32 *pResult)
+static int remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header, UINT32 *pResult)
 {
 	UINT32 result;
 
@@ -225,12 +226,12 @@ int remdesk_recv_result_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_
 
 	*pResult = result;
 
-	//printf("RemdeskRecvResult: 0x%04X\n", result);
+	//CLOG_DBG("RemdeskRecvResult: 0x%04X\n", result);
 
 	return 1;
 }
 
-int remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
+static int remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 {
 	int status;
 	wStream* s;
@@ -282,7 +283,7 @@ int remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	return 1;
 }
 
-int remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
+static int remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 {
 	int status;
 	wStream* s;
@@ -316,7 +317,7 @@ int remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 	return 1;
 }
 
-int remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
+static int remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 {
 	int status;
 	wStream* s;
@@ -355,7 +356,7 @@ int remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 	return 1;
 }
 
-int remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
+static int remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 {
 	int status;
 	wStream* s;
@@ -385,7 +386,7 @@ int remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 	return 1;
 }
 
-int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
+static int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
 	int status = 1;
 	UINT32 msgType = 0;
@@ -396,7 +397,7 @@ int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEA
 
 	Stream_Read_UINT32(s, msgType); /* msgType (4 bytes) */
 
-	//printf("msgType: %d\n", msgType);
+	//CLOG_DBG("msgType: %d\n", msgType);
 
 	switch (msgType)
 	{
@@ -404,7 +405,7 @@ int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEA
 			break;
 
 		case REMDESK_CTL_RESULT:
-			status = remdesk_recv_result_pdu(remdesk, s, header, &result);
+			status = remdesk_recv_ctl_result_pdu(remdesk, s, header, &result);
 			break;
 
 		case REMDESK_CTL_AUTHENTICATE:
@@ -461,7 +462,7 @@ int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEA
 			break;
 
 		default:
-			fprintf(stderr, "remdesk_recv_control_pdu: unknown msgType: %d\n", msgType);
+			CLOG_ERR( "remdesk_recv_control_pdu: unknown msgType: %d\n", msgType);
 			status = -1;
 			break;
 	}
@@ -469,13 +470,13 @@ int remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHANNEL_HEA
 	return status;
 }
 
-int remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
+static int remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 {
 	int status = 1;
 	REMDESK_CHANNEL_HEADER header;
 
 #if 0
-	printf("RemdeskReceive: %d\n", Stream_GetRemainingLength(s));
+	CLOG_DBG("RemdeskReceive: %d\n", Stream_GetRemainingLength(s));
 	winpr_HexDump(Stream_Pointer(s), Stream_GetRemainingLength(s));
 #endif
 
@@ -585,7 +586,7 @@ int remdesk_send(remdeskPlugin* remdesk, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		fprintf(stderr, "remdesk_send: VirtualChannelWrite failed %d\n", status);
+		CLOG_ERR( "remdesk_send: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
@@ -617,7 +618,7 @@ static void remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk,
 	{
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
-			fprintf(stderr, "remdesk_plugin_process_received: read error\n");
+			CLOG_ERR( "remdesk_plugin_process_received: read error\n");
 		}
 
 		remdesk->data_in = NULL;
@@ -637,7 +638,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event(DWORD openHandle, UINT 
 
 	if (!remdesk)
 	{
-		fprintf(stderr, "remdesk_virtual_channel_open_event: error no match\n");
+		CLOG_ERR( "remdesk_virtual_channel_open_event: error no match\n");
 		return;
 	}
 
@@ -697,7 +698,7 @@ static void remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVO
 
 	if (status != CHANNEL_RC_OK)
 	{
-		fprintf(stderr, "remdesk_virtual_channel_event_connected: open failed: status: %d\n", status);
+		CLOG_ERR( "remdesk_virtual_channel_event_connected: open failed: status: %d\n", status);
 		return;
 	}
 
@@ -735,7 +736,7 @@ static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle, UIN
 
 	if (!remdesk)
 	{
-		fprintf(stderr, "remdesk_virtual_channel_init_event: error no match\n");
+		CLOG_ERR( "remdesk_virtual_channel_init_event: error no match\n");
 		return;
 	}
 

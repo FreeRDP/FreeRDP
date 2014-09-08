@@ -37,7 +37,7 @@
 #define reportResult(result,operation) (_reportResult((result),(operation),__FILE__,__LINE__))
 static inline bool _reportResult(kern_return_t result, const char *operation, const char* file, int line) {
     if ( result != ERR_SUCCESS ) {
-        printf("%s:%d: %s: %s\n", file, line, operation, mach_error_string(result)); 
+        CLOG_DBG("%s:%d: %s: %s\n", file, line, operation, mach_error_string(result)); 
         return false;
     }
     return true;
@@ -108,7 +108,7 @@ bool TPCircularBufferInit(TPCircularBuffer *buffer, int length) {
         if ( virtualAddress != bufferAddress+buffer->length ) {
             // If the memory is not contiguous, clean up both allocated buffers and try again
             if ( retries-- == 0 ) {
-                printf("Couldn't map buffer memory to end of buffer\n");
+                CLOG_DBG("Couldn't map buffer memory to end of buffer\n");
                 return false;
             }
 

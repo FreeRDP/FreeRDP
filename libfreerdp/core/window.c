@@ -39,7 +39,7 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 	Stream_Read_UINT8(s, iconInfo->bpp); /* bpp (1 byte) */
 	if ((iconInfo->bpp < 1) || (iconInfo->bpp > 32))
 	{
-		fprintf(stderr, "%s: invalid bpp value %d", __FUNCTION__, iconInfo->bpp);
+		DEBUG_WARN( "%s: invalid bpp value %d", __FUNCTION__, iconInfo->bpp);
 		return FALSE;
 	}
 

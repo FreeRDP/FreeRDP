@@ -26,11 +26,11 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
+#include <winpr/image.h>
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/bitmap.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/rfx.h>
@@ -342,7 +342,7 @@ INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 	}
 	else
 	{
-		fprintf(stderr, "gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d\n", x, y, hBmp->width, hBmp->height);
+		DEBUG_WARN( "gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d\n", x, y, hBmp->width, hBmp->height);
 		return 0;
 	}
 }
@@ -495,8 +495,8 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 	brush = &patblt->brush;
 
-	foreColor = freerdp_color_convert_rgb(patblt->foreColor, gdi->srcBpp, 24, gdi->clrconv);
-	backColor = freerdp_color_convert_rgb(patblt->backColor, gdi->srcBpp, 24, gdi->clrconv);
+	foreColor = freerdp_color_convert_drawing_order_color_to_gdi_color(patblt->foreColor, gdi->srcBpp, gdi->clrconv);
+	backColor = freerdp_color_convert_drawing_order_color_to_gdi_color(patblt->backColor, gdi->srcBpp, gdi->clrconv);
 
 	originalColor = gdi_SetTextColor(gdi->drawing->hdc, foreColor);
 
@@ -517,7 +517,7 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		HGDI_BITMAP hBmp;
 
 		data = freerdp_mono_image_convert(GDI_BS_HATCHED_PATTERNS + 8 * brush->hatch, 8, 8, 1,
-		gdi->dstBpp, patblt->backColor, patblt->foreColor, gdi->clrconv);
+		gdi->dstBpp, backColor, foreColor, gdi->clrconv);
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
 
@@ -541,7 +541,7 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 		else
 		{
 			data = freerdp_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dstBpp,
-				patblt->backColor, patblt->foreColor, gdi->clrconv);
+				backColor, foreColor, gdi->clrconv);
 		}
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
@@ -557,7 +557,7 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	}
 	else
 	{
-		fprintf(stderr, "unimplemented brush style:%d\n", brush->style);
+		DEBUG_WARN( "unimplemented brush style:%d\n", brush->style);
 	}
 
 	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
@@ -582,7 +582,8 @@ void gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 			opaque_rect->nWidth, opaque_rect->nHeight, &rect);
 
-	brush_color = freerdp_color_convert_var_bgr(opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+	brush_color = freerdp_color_convert_drawing_order_color_to_gdi_color(
+			opaque_rect->color, gdi->srcBpp, gdi->clrconv);
 
 	hBrush = gdi_CreateSolidBrush(brush_color);
 	gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
@@ -606,7 +607,8 @@ void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_o
 		gdi_CRgnToRect(rectangle->left, rectangle->top,
 				rectangle->width, rectangle->height, &rect);
 
-		brush_color = freerdp_color_convert_var_bgr(multi_opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+		brush_color = freerdp_color_convert_drawing_order_color_to_gdi_color(
+				multi_opaque_rect->color, gdi->srcBpp, gdi->clrconv);
 
 		hBrush = gdi_CreateSolidBrush(brush_color);
 		gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
@@ -621,7 +623,8 @@ void gdi_line_to(rdpContext* context, LINE_TO_ORDER* lineTo)
 	HGDI_PEN hPen;
 	rdpGdi* gdi = context->gdi;
 
-	color = freerdp_color_convert_rgb(lineTo->penColor, gdi->srcBpp, 32, gdi->clrconv);
+	color = freerdp_color_convert_drawing_order_color_to_gdi_color(
+			lineTo->penColor, gdi->srcBpp, gdi->clrconv);
 	hPen = gdi_CreatePen(lineTo->penStyle, lineTo->penWidth, (GDI_COLOR) color);
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, lineTo->bRop2);
@@ -642,7 +645,8 @@ void gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	DELTA_POINT* points;
 	rdpGdi* gdi = context->gdi;
 
-	color = freerdp_color_convert_rgb(polyline->penColor, gdi->srcBpp, 32, gdi->clrconv);
+	color = freerdp_color_convert_drawing_order_color_to_gdi_color(
+			polyline->penColor, gdi->srcBpp, gdi->clrconv);
 	hPen = gdi_CreatePen(GDI_PS_SOLID, 1, (GDI_COLOR) color);
 	gdi_SelectObject(gdi->drawing->hdc, (HGDIOBJECT) hPen);
 	gdi_SetROP2(gdi->drawing->hdc, polyline->bRop2);
@@ -689,8 +693,8 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	brush = &mem3blt->brush;
 	bitmap = (gdiBitmap*) mem3blt->bitmap;
 
-	foreColor = freerdp_color_convert_rgb(mem3blt->foreColor, gdi->srcBpp, 24, gdi->clrconv);
-	backColor = freerdp_color_convert_rgb(mem3blt->backColor, gdi->srcBpp, 24, gdi->clrconv);
+	foreColor = freerdp_color_convert_drawing_order_color_to_gdi_color(mem3blt->foreColor, gdi->srcBpp, gdi->clrconv);
+	backColor = freerdp_color_convert_drawing_order_color_to_gdi_color(mem3blt->backColor, gdi->srcBpp, gdi->clrconv);
 
 	originalColor = gdi_SetTextColor(gdi->drawing->hdc, foreColor);
 
@@ -717,7 +721,7 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 		else
 		{
 			data = freerdp_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dstBpp,
-					mem3blt->backColor, mem3blt->foreColor, gdi->clrconv);
+					backColor, foreColor, gdi->clrconv);
 		}
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
@@ -734,7 +738,7 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	}
 	else
 	{
-		fprintf(stderr, "Mem3Blt unimplemented brush style:%d\n", brush->style);
+		DEBUG_WARN( "Mem3Blt unimplemented brush style:%d\n", brush->style);
 	}
 
 	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
@@ -742,22 +746,27 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 void gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 {
-	fprintf(stderr, "PolygonSC\n");
+	DEBUG_WARN( "PolygonSC\n");
 }
 
 void gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
-	fprintf(stderr, "PolygonCB\n");
+	DEBUG_WARN( "PolygonCB\n");
 }
 
 void gdi_ellipse_sc(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc)
 {
-	fprintf(stderr, "EllipseSC\n");
+	DEBUG_WARN( "EllipseSC\n");
 }
 
 void gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 {
-	fprintf(stderr, "EllipseCB\n");
+	DEBUG_WARN( "EllipseCB\n");
+}
+
+void gdi_frame_marker(rdpContext* context, FRAME_MARKER_ORDER* frameMarker)
+{
+
 }
 
 void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
@@ -824,7 +833,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 
 #ifdef DUMP_REMOTEFX_TILES
 			sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
-			freerdp_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
+			winpr_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
 #endif
 
 
@@ -851,7 +860,10 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
 		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
 		gdi->image->bitmap->data = (BYTE*) _aligned_realloc(gdi->image->bitmap->data, gdi->image->bitmap->width * gdi->image->bitmap->height * 4, 16);
-		freerdp_image_flip(nsc_context->BitmapData, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
+		freerdp_image_convert(nsc_context->BitmapData, gdi->image->bitmap->data,
+				surface_bits_command->width, surface_bits_command->height,
+				surface_bits_command->bpp, gdi->dstBpp, gdi->clrconv);
+		freerdp_image_flip(gdi->image->bitmap->data, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, gdi->dstBpp);
 		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
 	} 
 	else if (surface_bits_command->codecID == RDP_CODEC_ID_NONE)
@@ -891,7 +903,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 	}
 	else
 	{
-		fprintf(stderr, "Unsupported codecID %d\n", surface_bits_command->codecID);
+		DEBUG_WARN( "Unsupported codecID %d\n", surface_bits_command->codecID);
 	}
 
 	if (tile_bitmap)
@@ -936,6 +948,8 @@ void gdi_register_update_callbacks(rdpUpdate* update)
 
 	update->SurfaceBits = gdi_surface_bits;
 	update->SurfaceFrameMarker = gdi_surface_frame_marker;
+
+	update->altsec->FrameMarker = gdi_frame_marker;
 }
 
 void gdi_init_primary(rdpGdi* gdi)
@@ -981,6 +995,7 @@ void gdi_resize(rdpGdi* gdi, int width, int height)
 			gdi->width = width;
 			gdi->height = height;
 			gdi_bitmap_free_ex(gdi->primary);
+			gdi->primary_buffer = NULL;
 			gdi_init_primary(gdi);
 		}
 	}

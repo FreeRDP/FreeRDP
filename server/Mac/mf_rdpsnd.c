@@ -21,6 +21,9 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/sysinfo.h>
+
 #include <freerdp/server/rdpsnd.h>
 
 #include "mf_info.h"
@@ -30,8 +33,8 @@ AQRecorderState recorderState;
 
 static const AUDIO_FORMAT supported_audio_formats[] =
 {
-	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, NULL },
-	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
+	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, 0, NULL },
+	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, 0, NULL }
 };
 
 static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
@@ -44,7 +47,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	//we should actually loop through the list of client formats here
 	//and see if we can send the client something that it supports...
 	
-	printf("Client supports the following %d formats: \n", context->num_client_formats);
+	DEBUG_MSG("Client supports the following %d formats: \n", context->num_client_formats);
 	
 	for (i = 0; i < context->num_client_formats; i++)
 	{
@@ -55,7 +58,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
 			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
 			{
-				printf("agreed on format!\n");
+				DEBUG_MSG("agreed on format!\n");
 				formatAgreed = TRUE;
 				agreedFormat = (AUDIO_FORMAT*)&context->server_formats[j];
 				break;
@@ -68,7 +71,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	if (formatAgreed == FALSE)
 	{
-		printf("Could not agree on a audio format with the server\n");
+		DEBUG_MSG("Could not agree on a audio format with the server\n");
 		return;
 	}
 	
@@ -111,7 +114,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	if (status != noErr)
 	{
-		printf("Failed to create a new Audio Queue. Status code: %d\n", status);
+		DEBUG_MSG("Failed to create a new Audio Queue. Status code: %d\n", status);
 	}
 	
 	
@@ -161,7 +164,7 @@ BOOL mf_peer_rdpsnd_init(mfPeerContext* context)
 	
 	context->rdpsnd->Activated = mf_peer_rdpsnd_activated;
 	
-	context->rdpsnd->Initialize(context->rdpsnd);
+	context->rdpsnd->Initialize(context->rdpsnd, TRUE);
 	
 	return TRUE;
 }
@@ -208,7 +211,7 @@ void mf_peer_rdpsnd_input_callback (void                                *inUserD
 	
 	if (status != noErr)
 	{
-		printf("AudioQueueEnqueueBuffer() returned status = %d\n", status);
+		DEBUG_MSG("AudioQueueEnqueueBuffer() returned status = %d\n", status);
 	}
 	
 }

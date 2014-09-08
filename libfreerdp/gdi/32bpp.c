@@ -44,7 +44,7 @@ UINT32 gdi_get_color_32bpp(HGDI_DC hdc, GDI_COLOR color)
 	BYTE a, r, g, b;
 
 	a = 0xFF;
-	GetBGR32(r, g, b, color);
+	GetRGB32(r, g, b, color);
 
 	if (hdc->invert)
 	{
@@ -997,7 +997,7 @@ int BitBlt_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 			break;
 	}
 	
-	fprintf(stderr, "BitBlt: unknown rop: 0x%08X\n", rop);
+	DEBUG_WARN( "BitBlt: unknown rop: 0x%08X\n", rop);
 	return 1;
 }
 
@@ -1042,7 +1042,7 @@ int PatBlt_32bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, i
 			break;
 	}
 	
-	fprintf(stderr, "PatBlt: unknown rop: 0x%08X\n", rop);
+	DEBUG_WARN( "PatBlt: unknown rop: 0x%08X\n", rop);
 	return 1;
 }
 

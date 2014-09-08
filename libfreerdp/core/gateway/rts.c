@@ -93,25 +93,25 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (!rpc_ntlm_http_out_connect(rpc))
 	{
-		fprintf(stderr, "%s: rpc_out_connect_http error!\n", __FUNCTION__);
+		DEBUG_WARN( "%s: rpc_out_connect_http error!\n", __FUNCTION__);
 		return FALSE;
 	}
 
 	if (rts_send_CONN_A1_pdu(rpc) != 0)
 	{
-		fprintf(stderr, "%s: rpc_send_CONN_A1_pdu error!\n", __FUNCTION__);
+		DEBUG_WARN( "%s: rpc_send_CONN_A1_pdu error!\n", __FUNCTION__);
 		return FALSE;
 	}
 
 	if (!rpc_ntlm_http_in_connect(rpc))
 	{
-		fprintf(stderr, "%s: rpc_in_connect_http error!\n", __FUNCTION__);
+		DEBUG_WARN( "%s: rpc_in_connect_http error!\n", __FUNCTION__);
 		return FALSE;
 	}
 
 	if (rts_send_CONN_B1_pdu(rpc) < 0)
 	{
-		fprintf(stderr, "%s: rpc_send_CONN_B1_pdu error!\n", __FUNCTION__);
+		DEBUG_WARN( "%s: rpc_send_CONN_B1_pdu error!\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -149,13 +149,13 @@ BOOL rts_connect(rdpRpc* rpc)
 	http_response = http_response_recv(rpc->TlsOut);
 	if (!http_response)
 	{
-		fprintf(stderr, "%s: unable to retrieve OUT Channel Response!\n", __FUNCTION__);
+		DEBUG_WARN( "%s: unable to retrieve OUT Channel Response!\n", __FUNCTION__);
 		return FALSE;
 	}
 
 	if (http_response->StatusCode != HTTP_STATUS_OK)
 	{
-		fprintf(stderr, "%s: error! Status Code: %d\n", __FUNCTION__, http_response->StatusCode);
+		DEBUG_WARN( "%s: error! Status Code: %d\n", __FUNCTION__, http_response->StatusCode);
 		http_response_print(http_response);
 		http_response_free(http_response);
 
@@ -215,7 +215,7 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_A3_SIGNATURE, rts))
 	{
-		fprintf(stderr, "%s: unexpected RTS PDU: Expected CONN/A3\n", __FUNCTION__);
+		DEBUG_WARN( "%s: unexpected RTS PDU: Expected CONN/A3\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -255,7 +255,7 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
 	{
-		fprintf(stderr, "%s: unexpected RTS PDU: Expected CONN/C2\n", __FUNCTION__);
+		DEBUG_WARN( "%s: unexpected RTS PDU: Expected CONN/C2\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -880,9 +880,9 @@ int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	fprintf(stderr, "BytesReceived: %d AvailableWindow: %d\n",
+	DEBUG_WARN( "BytesReceived: %d AvailableWindow: %d\n",
 			BytesReceived, AvailableWindow);
-	fprintf(stderr, "ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	DEBUG_WARN( "ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -921,9 +921,9 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	fprintf(stderr, "Destination: %d BytesReceived: %d AvailableWindow: %d\n",
+	DEBUG_WARN( "Destination: %d BytesReceived: %d AvailableWindow: %d\n",
 			Destination, BytesReceived, AvailableWindow);
-	fprintf(stderr, "ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	DEBUG_WARN( "ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -1027,7 +1027,7 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 			break;
 
 		default:
-			fprintf(stderr, "Error: Unknown RTS Command Type: 0x%x\n", CommandType);
+			DEBUG_WARN( "Error: Unknown RTS Command Type: 0x%x\n", CommandType);
 			return -1;
 			break;
 	}
@@ -1055,7 +1055,7 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 		case RTS_PDU_PING:
 			return rts_send_ping_pdu(rpc);
 		default:
-			fprintf(stderr, "%s: unimplemented signature id: 0x%08X\n", __FUNCTION__, SignatureId);
+			DEBUG_WARN( "%s: unimplemented signature id: 0x%08X\n", __FUNCTION__, SignatureId);
 			rts_print_pdu_signature(rpc, &signature);
 			break;
 	}

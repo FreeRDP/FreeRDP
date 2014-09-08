@@ -75,10 +75,16 @@ set(${MODULE_PREFIX}_SRCS
 	ini.c
 	sam.c
 	ntlm.c
+	image.c
 	print.c
 	stream.c
+	debug.c
 	cmdline.c
 	ssl.c)
+
+if (ANDROID)
+		include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+endif()
 
 winpr_module_add(${${MODULE_PREFIX}_SRCS}
 	${${MODULE_PREFIX}_COLLECTIONS_SRCS}

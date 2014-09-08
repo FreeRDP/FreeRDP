@@ -164,6 +164,8 @@ BOOL update_read_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bit
 
 	Stream_Read_UINT16(s, bitmapUpdate->number); /* numberRectangles (2 bytes) */
 
+	WLog_Print(update->log, WLOG_DEBUG, "BitmapUpdate: %d", bitmapUpdate->number);
+
 	if (bitmapUpdate->number > bitmapUpdate->count)
 	{
 		UINT16 count;
@@ -230,9 +232,9 @@ BOOL update_read_palette(rdpUpdate* update, wStream* s, PALETTE_UPDATE* palette_
 	{
 		entry = &palette_update->entries[i];
 
-		Stream_Read_UINT8(s, entry->blue);
-		Stream_Read_UINT8(s, entry->green);
 		Stream_Read_UINT8(s, entry->red);
+		Stream_Read_UINT8(s, entry->green);
+		Stream_Read_UINT8(s, entry->blue);
 	}
 	return TRUE;
 }
@@ -346,7 +348,7 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, 
 		scanlineSize = ((scanlineSize + 1) / 2) * 2;
 		if (scanlineSize * pointer_color->height != pointer_color->lengthXorMask)
 		{
-			fprintf(stderr, "%s: invalid lengthXorMask: width=%d height=%d, %d instead of %d\n", __FUNCTION__,
+			DEBUG_WARN( "%s: invalid lengthXorMask: width=%d height=%d, %d instead of %d\n", __FUNCTION__,
 					pointer_color->width, pointer_color->height,
 					pointer_color->lengthXorMask, scanlineSize * pointer_color->height);
 			return FALSE;
@@ -377,7 +379,7 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, 
 		scanlineSize = ((1 + scanlineSize) / 2) * 2;
 		if (scanlineSize * pointer_color->height != pointer_color->lengthAndMask)
 		{
-			fprintf(stderr, "%s: invalid lengthAndMask: %d instead of %d\n", __FUNCTION__,
+			DEBUG_WARN( "%s: invalid lengthAndMask: %d instead of %d\n", __FUNCTION__,
 					pointer_color->lengthAndMask, scanlineSize * pointer_color->height);
 			return FALSE;
 		}
@@ -405,7 +407,7 @@ BOOL update_read_pointer_new(wStream* s, POINTER_NEW_UPDATE* pointer_new)
 	Stream_Read_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
 	if ((pointer_new->xorBpp < 1) || (pointer_new->xorBpp > 32))
 	{
-		fprintf(stderr, "%s: invalid xorBpp %d\n", __FUNCTION__, pointer_new->xorBpp);
+		DEBUG_WARN( "%s: invalid xorBpp %d\n", __FUNCTION__, pointer_new->xorBpp);
 		return FALSE;
 	}
 	return update_read_pointer_color(s, &pointer_new->colorPtrAttr, pointer_new->xorBpp); /* colorPtrAttr */
@@ -480,7 +482,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 
 	Stream_Read_UINT16(s, updateType); /* updateType (2 bytes) */
 
-	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	//DEBUG_MSG("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
 
 	IFCALL(update->BeginPaint, context);
 
@@ -568,6 +570,14 @@ void update_post_connect(rdpUpdate* update)
 	update->initialState = FALSE;
 }
 
+void update_post_disconnect(rdpUpdate* update)
+{
+	update->asynchronous = update->context->settings->AsyncUpdate;
+
+	if (update->asynchronous)
+		update_message_proxy_free(update->proxy);
+}
+
 static void update_begin_paint(rdpContext* context)
 {
 	wStream* s;
@@ -604,7 +614,7 @@ static void update_end_paint(rdpContext* context)
 
 	if (update->numberOrders > 0)
 	{
-		fprintf(stderr, "%s: sending %d orders\n", __FUNCTION__, update->numberOrders);
+		DEBUG_WARN( "%s: sending %d orders\n", __FUNCTION__, update->numberOrders);
 		fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
 	}
 
@@ -1702,9 +1712,6 @@ void update_free(rdpUpdate* update)
 		free(update->secondary);
 		free(update->altsec);
 		free(update->window);
-
-		if (update->asynchronous)
-			update_message_proxy_free(update->proxy);
 
 		MessageQueue_Free(update->queue);
 

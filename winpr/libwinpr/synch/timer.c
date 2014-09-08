@@ -190,10 +190,14 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 {
 	ULONG Type;
 	PVOID Object;
-	int status = 0;
 	WINPR_TIMER* timer;
-	LONGLONG seconds = 0;
+#ifdef WITH_POSIX_TIMER
+    LONGLONG seconds = 0;
 	LONGLONG nanoseconds = 0;
+#ifdef HAVE_TIMERFD_H
+	int status = 0;
+#endif /* HAVE_TIMERFD_H */
+#endif /* WITH_POSIX_TIMER */
 
 	if (!winpr_Handle_GetInfo(hTimer, &Type, &Object))
 		return FALSE;

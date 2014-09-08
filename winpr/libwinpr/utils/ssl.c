@@ -21,6 +21,7 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/ssl.h>
+#include <winpr/thread.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -36,7 +37,7 @@ struct CRYPTO_dynlock_value
 
 
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L)
-static unsigned long _winpr_openssl_id()
+static unsigned long _winpr_openssl_id(void)
 {
 	return (unsigned long)GetCurrentThreadId();
 }
@@ -84,7 +85,7 @@ static void _winpr_openssl_dynlock_destroy(struct CRYPTO_dynlock_value *dynlock,
 	free(dynlock);
 }
 
-static BOOL _winpr_openssl_initialize_locking()
+static BOOL _winpr_openssl_initialize_locking(void)
 {
 	int i, count;
 
@@ -159,7 +160,7 @@ static BOOL _winpr_openssl_initialize_locking()
 	return TRUE;
 }
 
-static BOOL _winpr_openssl_cleanup_locking()
+static BOOL _winpr_openssl_cleanup_locking(void)
 {
 	/* undo our static locking modifications */
 
@@ -219,7 +220,7 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 
 	if (flags & WINPR_SSL_INIT_ENABLE_LOCKING)
 	{
-		if (!_winpr_openssl_initialize_locking(FALSE))
+		if (!_winpr_openssl_initialize_locking())
 		{
 			return FALSE;
 		}

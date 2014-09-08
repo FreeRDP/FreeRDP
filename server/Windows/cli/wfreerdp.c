@@ -36,7 +36,7 @@ int IDcount = 0;
 
 BOOL CALLBACK moncb(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
-	printf("%d\t(%d, %d), (%d, %d)\n",
+	DEBUG_MSG("%d\t(%d, %d), (%d, %d)\n",
 		IDcount, lprcMonitor->left, lprcMonitor->top,
 		lprcMonitor->right, lprcMonitor->bottom);
 
@@ -93,10 +93,10 @@ int main(int argc, char* argv[])
 				vscreen_w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 				vscreen_h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-				printf("\n");
+				DEBUG_MSG("\n");
 				EnumDisplayMonitors(NULL, NULL, moncb, 0);
 				IDcount = 0;
-				printf("\nVirtual Screen = %dx%d\n", vscreen_w, vscreen_h);
+				DEBUG_MSG("\nVirtual Screen = %dx%d\n", vscreen_w, vscreen_h);
 			}
 
 			return 0;
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 			index++;
 			if (index == argc)
 			{
-				printf("missing screen id parameter\n");
+				DEBUG_MSG("missing screen id parameter\n");
 				return 0;
 			}
 
@@ -154,13 +154,13 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	printf("Starting server\n");
+	DEBUG_MSG("Starting server\n");
 
 	wfreerdp_server_start(server);
 
 	WaitForSingleObject(server->thread, INFINITE);
 
-	printf("Stopping server\n");
+	DEBUG_MSG("Stopping server\n");
 
 	wfreerdp_server_stop(server);
 	wfreerdp_server_free(server);

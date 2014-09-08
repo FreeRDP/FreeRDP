@@ -425,20 +425,34 @@ int xf_SurfaceCommand_Alpha(xfContext* xfc, RdpgfxClientContext* context, RDPGFX
 
 int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
-	int status = 0;
-	BYTE* DstData = NULL;
+	int i, j;
+	int status;
+	BYTE* DstData;
+	RFX_RECT* rect;
+	int nXDst, nYDst;
+	int nXSrc, nYSrc;
+	int nWidth, nHeight;
+	int nbUpdateRects;
 	xfGfxSurface* surface;
-	RECTANGLE_16 invalidRect;
+	REGION16 updateRegion;
+	RECTANGLE_16 updateRect;
+	RECTANGLE_16* updateRects;
+	REGION16 clippingRects;
+	RECTANGLE_16 clippingRect;
+	RFX_PROGRESSIVE_TILE* tile;
+	PROGRESSIVE_BLOCK_REGION* region;
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, cmd->surfaceId);
 
 	if (!surface)
 		return -1;
 
+	progressive_create_surface_context(xfc->progressive, cmd->surfaceId, surface->width, surface->height);
+
 	DstData = surface->data;
 
 	status = progressive_decompress(xfc->progressive, cmd->data, cmd->length, &DstData,
-			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
+			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height, cmd->surfaceId);
 
 	if (status < 0)
 	{
@@ -446,19 +460,54 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 		return -1;
 	}
 
-	printf("xf_SurfaceCommand_Progressive: status: %d\n", status);
+	region = &(xfc->progressive->region);
 
-	/* fill with blue for now to distinguish from the rest */
+	region16_init(&clippingRects);
 
-	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
-			cmd->left, cmd->top, cmd->width, cmd->height, 0x0000FF);
+	for (i = 0; i < region->numRects; i++)
+	{
+		rect = &(region->rects[i]);
 
-	invalidRect.left = cmd->left;
-	invalidRect.top = cmd->top;
-	invalidRect.right = cmd->right;
-	invalidRect.bottom = cmd->bottom;
+		clippingRect.left = cmd->left + rect->x;
+		clippingRect.top = cmd->top + rect->y;
+		clippingRect.right = clippingRect.left + rect->width;
+		clippingRect.bottom = clippingRect.top + rect->height;
 
-	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
+		region16_union_rect(&clippingRects, &clippingRects, &clippingRect);
+	}
+
+	for (i = 0; i < region->numTiles; i++)
+	{
+		tile = region->tiles[i];
+
+		updateRect.left = cmd->left + tile->x;
+		updateRect.top = cmd->top + tile->y;
+		updateRect.right = updateRect.left + 64;
+		updateRect.bottom = updateRect.top + 64;
+
+		region16_init(&updateRegion);
+		region16_intersect_rect(&updateRegion, &clippingRects, &updateRect);
+		updateRects = (RECTANGLE_16*) region16_rects(&updateRegion, &nbUpdateRects);
+
+		for (j = 0; j < nbUpdateRects; j++)
+		{
+			nXDst = updateRects[j].left;
+			nYDst = updateRects[j].top;
+			nWidth = updateRects[j].right - updateRects[j].left;
+			nHeight = updateRects[j].bottom - updateRects[j].top;
+
+			nXSrc = nXDst - (cmd->left + tile->x);
+			nYSrc = nYDst - (cmd->top + tile->y);
+
+			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
+					surface->scanline, nXDst, nYDst, nWidth, nHeight,
+					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc);
+
+			region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &updateRects[j]);
+		}
+
+		region16_uninit(&updateRegion);
+	}
 
 	if (!xfc->inGfxFrame)
 		xf_OutputUpdate(xfc);
@@ -545,6 +594,7 @@ int xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* cr
 int xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
 	xfGfxSurface* surface = NULL;
+	xfContext* xfc = (xfContext*) context->custom;
 
 	surface = (xfGfxSurface*) context->GetSurfaceData(context, deleteSurface->surfaceId);
 
@@ -556,6 +606,8 @@ int xf_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* de
 	}
 
 	context->SetSurfaceData(context, deleteSurface->surfaceId, NULL);
+
+	progressive_delete_surface_context(xfc->progressive, deleteSurface->surfaceId);
 
 	return 1;
 }

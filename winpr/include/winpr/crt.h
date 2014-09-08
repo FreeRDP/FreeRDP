@@ -104,10 +104,6 @@ static INLINE UINT16 __lzcnt16(UINT16 _val16) {
 	return _val16 ? ((UINT16) (__builtin_clz((UINT32) _val16) - 16)) : 16;
 }
 
-static INLINE UINT64 __lzcnt64(UINT64 _val64) {
-	return _val64 ? ((UINT64) __builtin_clzll(_val64)) : 64;
-}
-
 #else
 
 static INLINE UINT32 __lzcnt(UINT32 x) {
@@ -123,10 +119,6 @@ static INLINE UINT32 __lzcnt(UINT32 x) {
 
 static INLINE UINT16 __lzcnt16(UINT16 x) {
 	return ((UINT16) __lzcnt((UINT32) x));
-}
-
-static INLINE UINT64 __lzcnt64(UINT64 x) {
-	return 0; /* TODO */
 }
 
 #endif

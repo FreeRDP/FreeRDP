@@ -41,14 +41,14 @@ static BOOL test_generic(HANDLE hComm)
 
 	if (!SetCommTimeouts(hComm, &timeouts))
 	{
-		fprintf(stderr, "SetCommTimeouts failure, GetLastError: 0x%0.8x\n", GetLastError());
+		fprintf(stderr, "SetCommTimeouts failure, GetLastError: 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
 	ZeroMemory(&timeouts2, sizeof(COMMTIMEOUTS));
 	if (!GetCommTimeouts(hComm, &timeouts2))
 	{
-		fprintf(stderr, "GetCommTimeouts failure, GetLastError: 0x%0.8x\n", GetLastError());
+		fprintf(stderr, "GetCommTimeouts failure, GetLastError: 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -63,13 +63,13 @@ static BOOL test_generic(HANDLE hComm)
 	timeouts.ReadTotalTimeoutConstant    = MAXULONG;
 	if (SetCommTimeouts(hComm, &timeouts))
 	{
-		fprintf(stderr, "SetCommTimeouts succeeded with ReadIntervalTimeout and ReadTotalTimeoutConstant set to MAXULONG. GetLastError: 0x%0.8x\n", GetLastError());
+		fprintf(stderr, "SetCommTimeouts succeeded with ReadIntervalTimeout and ReadTotalTimeoutConstant set to MAXULONG. GetLastError: 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
 	if (GetLastError() != ERROR_INVALID_PARAMETER)
 	{
-		fprintf(stderr, "SetCommTimeouts failure, expected GetLastError to return ERROR_INVALID_PARAMETER and got: 0x%0.8x\n", GetLastError());
+		fprintf(stderr, "SetCommTimeouts failure, expected GetLastError to return ERROR_INVALID_PARAMETER and got: 0x%08x\n", GetLastError());
 		return FALSE;
 	}
 
@@ -128,7 +128,7 @@ int TestTimeouts(int argc, char* argv[])
 
 	if (!CloseHandle(hComm))
 	{
-		fprintf(stderr, "CloseHandle failure, GetLastError()=%0.8x\n", GetLastError());
+		fprintf(stderr, "CloseHandle failure, GetLastError()=%08x\n", GetLastError());
 		return EXIT_FAILURE;
 	}
 

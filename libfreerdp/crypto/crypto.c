@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/crypto/crypto.h>
 
 CryptoSha1 crypto_sha1_init(void)
@@ -202,7 +203,7 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 	pkey = X509_get_pubkey(cert->px509);
 	if (!pkey)
 	{
-		fprintf(stderr, "%s: X509_get_pubkey() failed\n", __FUNCTION__);
+		DEBUG_WARN( "%s: X509_get_pubkey() failed\n", __FUNCTION__);
 		status = FALSE;
 		goto exit;
 	}
@@ -210,7 +211,7 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 	length = i2d_PublicKey(pkey, NULL);
 	if (length < 1)
 	{
-		fprintf(stderr, "%s: i2d_PublicKey() failed\n", __FUNCTION__);
+		DEBUG_WARN( "%s: i2d_PublicKey() failed\n", __FUNCTION__);
 		status = FALSE;
 		goto exit;
 	}
@@ -569,15 +570,15 @@ void crypto_cert_print_info(X509* xcert)
 	fp = crypto_cert_fingerprint(xcert);
 	if (!fp)
 	{
-		fprintf(stderr, "%s: error computing fingerprint\n", __FUNCTION__);
+		DEBUG_WARN( "%s: error computing fingerprint\n", __FUNCTION__);
 		goto out_free_issuer;
 	}
 
-	fprintf(stderr, "Certificate details:\n");
-	fprintf(stderr, "\tSubject: %s\n", subject);
-	fprintf(stderr, "\tIssuer: %s\n", issuer);
-	fprintf(stderr, "\tThumbprint: %s\n", fp);
-	fprintf(stderr, "The above X.509 certificate could not be verified, possibly because you do not have "
+	DEBUG_WARN( "Certificate details:\n");
+	DEBUG_WARN( "\tSubject: %s\n", subject);
+	DEBUG_WARN( "\tIssuer: %s\n", issuer);
+	DEBUG_WARN( "\tThumbprint: %s\n", fp);
+	DEBUG_WARN( "The above X.509 certificate could not be verified, possibly because you do not have "
 			"the CA certificate in your certificate store, or the certificate has expired. "
 			"Please look at the documentation on how to create local certificate store for a private CA.\n");
 

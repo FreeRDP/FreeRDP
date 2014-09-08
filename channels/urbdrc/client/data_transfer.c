@@ -237,7 +237,7 @@ static int urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK* callback, BYTE* da
 	{
 		case IOCTL_INTERNAL_USB_SUBMIT_URB:  /** 0x00220003 */
 			LLOGLN(urbdrc_debug, ("ioctl: IOCTL_INTERNAL_USB_SUBMIT_URB"));
-			fprintf(stderr, " Function IOCTL_INTERNAL_USB_SUBMIT_URB: Unchecked\n");
+			CLOG_ERR( " Function IOCTL_INTERNAL_USB_SUBMIT_URB: Unchecked\n");
 			break;
 
 		case IOCTL_INTERNAL_USB_RESET_PORT:  /** 0x00220007 */
@@ -269,12 +269,12 @@ static int urbdrc_process_io_control(URBDRC_CHANNEL_CALLBACK* callback, BYTE* da
 
 		case IOCTL_INTERNAL_USB_CYCLE_PORT:  /** 0x0022001F */
 			LLOGLN(urbdrc_debug, ("ioctl: IOCTL_INTERNAL_USB_CYCLE_PORT"));
-			fprintf(stderr, " Function IOCTL_INTERNAL_USB_CYCLE_PORT: Unchecked\n");
+			CLOG_ERR( " Function IOCTL_INTERNAL_USB_CYCLE_PORT: Unchecked\n");
 			break;
 
 		case IOCTL_INTERNAL_USB_SUBMIT_IDLE_NOTIFICATION: /** 0x00220027 */
 			LLOGLN(urbdrc_debug, ("ioctl: IOCTL_INTERNAL_USB_SUBMIT_IDLE_NOTIFICATION"));
-			fprintf(stderr, " Function IOCTL_INTERNAL_USB_SUBMIT_IDLE_NOTIFICATION: Unchecked\n");
+			CLOG_ERR( " Function IOCTL_INTERNAL_USB_SUBMIT_IDLE_NOTIFICATION: Unchecked\n");
 			break;
 
 		default:
@@ -448,7 +448,7 @@ static int urb_select_configuration(URBDRC_CHANNEL_CALLBACK* callback, BYTE* dat
 
 	if (transferDir == 0)
 	{
-		fprintf(stderr, "urb_select_configuration: not support transfer out\n");
+		CLOG_ERR( "urb_select_configuration: not support transfer out\n");
 		return -1;
 	}
 
@@ -540,7 +540,7 @@ static int urb_select_interface(URBDRC_CHANNEL_CALLBACK* callback, BYTE* data, U
 
 	if (transferDir == 0)
 	{
-		fprintf(stderr, "urb_select_interface: not support transfer out\n");
+		CLOG_ERR( "urb_select_interface: not support transfer out\n");
 		return -1;
 	}
 
@@ -1297,7 +1297,7 @@ static int urb_os_feature_descriptor_request(URBDRC_CHANNEL_CALLBACK * callback,
 	switch (transferDir)
 	{
 		case USBD_TRANSFER_DIRECTION_OUT:
-			fprintf(stderr, "Function urb_os_feature_descriptor_request: OUT Unchecked\n");
+			CLOG_ERR( "Function urb_os_feature_descriptor_request: OUT Unchecked\n");
 			memcpy(buffer, data + offset, OutputBufferSize);
 			break;
 		case USBD_TRANSFER_DIRECTION_IN:
@@ -1700,7 +1700,7 @@ static int urb_control_feature_request(URBDRC_CHANNEL_CALLBACK * callback, BYTE 
 	switch (transferDir)
 	{
 		case USBD_TRANSFER_DIRECTION_OUT:
-			fprintf(stderr, "Function urb_control_feature_request: OUT Unchecked\n");
+			CLOG_ERR( "Function urb_control_feature_request: OUT Unchecked\n");
 			memcpy(buffer, data + offset, OutputBufferSize);
 			bmRequestType |= 0x00;
 			break;
@@ -1718,7 +1718,7 @@ static int urb_control_feature_request(URBDRC_CHANNEL_CALLBACK * callback, BYTE 
 			bmRequest = 0x01; /* REQUEST_CLEAR_FEATURE */
 			break;
 		default:
-			fprintf(stderr, "urb_control_feature_request: Error Command %x\n", command);
+			CLOG_ERR( "urb_control_feature_request: Error Command %x\n", command);
 			zfree(out_data);
 			return -1;
 	}

@@ -86,7 +86,7 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
 		switch(status)
 		{
 			case kCGDisplayStreamFrameStatusFrameIdle:
-				printf("kCGDisplayStreamFrameStatusFrameIdle\n");
+				DEBUG_MSG("kCGDisplayStreamFrameStatusFrameIdle\n");
 				break;
 				
 			case kCGDisplayStreamFrameStatusStopped:
@@ -95,11 +95,11 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
 				break;
 				
 			case kCGDisplayStreamFrameStatusFrameBlank:
-				printf("kCGDisplayStreamFrameStatusFrameBlank\n");
+				DEBUG_MSG("kCGDisplayStreamFrameStatusFrameBlank\n");
 				break;
 				
 			default:
-				printf("Unhandled Frame Status!!!\n");
+				DEBUG_MSG("Unhandled Frame Status!!!\n");
 				
 		}
 	}
@@ -193,7 +193,7 @@ int mf_mlion_start_getting_screen_updates()
 	err = CGDisplayStreamStart(stream);
 	if(err != kCGErrorSuccess)
 	{
-		printf("Failed to start displaystream!! err = %d\n", err);
+		DEBUG_MSG("Failed to start displaystream!! err = %d\n", err);
 		return 1;
 	}
 	
@@ -207,7 +207,7 @@ int mf_mlion_stop_getting_screen_updates()
 	err = CGDisplayStreamStop(stream);
 	if(err != kCGErrorSuccess)
 	{
-		printf("Failed to stop displaystream!! err = %d\n", err);
+		DEBUG_MSG("Failed to stop displaystream!! err = %d\n", err);
 		return 1;
 	}
 	

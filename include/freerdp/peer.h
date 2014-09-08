@@ -58,6 +58,7 @@ struct rdp_freerdp_peer
 	rdpUpdate* update;
 	rdpSettings* settings;
 
+	void* ContextExtra;
 	size_t ContextSize;
 	psPeerContextNew ContextNew;
 	psPeerContextFree ContextFree;

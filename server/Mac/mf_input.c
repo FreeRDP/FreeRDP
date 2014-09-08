@@ -356,8 +356,8 @@ void mf_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	
 	/*
 	if (flags & KBD_FLAGS_EXTENDED)
-		fprintf(stderr, "extended ");
-	fprintf(stderr, "keypress: down = %d, SCAN=%#0X, VK=%#0X\n", keyDown, code, keymap[code]);
+		DEBUG_WARN( "extended ");
+	DEBUG_WARN( "keypress: down = %d, SCAN=%#0X, VK=%#0X\n", keyDown, code, keymap[code]);
 	*/
 }
 
@@ -548,7 +548,7 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 
 void mf_input_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	fprintf(stderr, "Unhandled mouse event!!!\n");
+	DEBUG_WARN( "Unhandled mouse event!!!\n");
 	/*
 	 if ((flags & PTR_XFLAGS_BUTTON1) || (flags & PTR_XFLAGS_BUTTON2))
 	 {

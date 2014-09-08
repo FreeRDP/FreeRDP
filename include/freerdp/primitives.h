@@ -136,6 +136,10 @@ typedef pstatus_t (*__sign_16s_t)(
 	const INT16 *pSrc,
 	INT16 *pDst,
 	INT32 len);
+typedef pstatus_t (*__yCbCrToRGB_16s8u_P3AC4R_t)(
+	const INT16* pSrc[3], INT32 srcStep,
+	BYTE* pDst, INT32 dstStep,
+	const prim_size_t* roi);
 typedef pstatus_t (*__yCbCrToRGB_16s16s_P3P3_t)(
 	const INT16 *pSrc[3],  INT32 srcStep,
 	INT16 *pDst[3],  INT32 dstStep,
@@ -148,7 +152,7 @@ typedef pstatus_t (*__RGBToRGB_16s8u_P3AC4R_t)(
 	const INT16 *pSrc[3],  INT32 srcStep,
 	BYTE *pDst,  INT32 dstStep,
 	const prim_size_t *roi);
-typedef pstatus_t (*__YCoCgRToRGB_8u_AC4R_t)(
+typedef pstatus_t (*__YCoCgToRGB_8u_AC4R_t)(
 	const BYTE *pSrc, INT32 srcStep,
 	BYTE *pDst, INT32 dstStep,
 	UINT32 width, UINT32 height,
@@ -160,6 +164,10 @@ typedef pstatus_t (*__RGB565ToARGB_16u32u_C3C4_t)(
 	UINT32* pDst, INT32 dstStep,
 	UINT32 width, UINT32 height,
 	BOOL alpha, BOOL invert);
+typedef pstatus_t (*__YUV420ToRGB_8u_P3AC4R_t)(
+	const BYTE* pSrc[3], INT32 srcStep[3],
+	BYTE* pDst, INT32 dstStep,
+	const prim_size_t* roi);
 typedef pstatus_t (*__andC_32u_t)(
 	const UINT32 *pSrc,
 	UINT32 val,
@@ -199,11 +207,13 @@ typedef struct
 	/* Sign */
 	__sign_16s_t sign_16s;
 	/* Color conversions */
+	__yCbCrToRGB_16s8u_P3AC4R_t yCbCrToRGB_16s8u_P3AC4R;
 	__yCbCrToRGB_16s16s_P3P3_t yCbCrToRGB_16s16s_P3P3;
 	__RGBToYCbCr_16s16s_P3P3_t RGBToYCbCr_16s16s_P3P3;
 	__RGBToRGB_16s8u_P3AC4R_t RGBToRGB_16s8u_P3AC4R;
-	__YCoCgRToRGB_8u_AC4R_t YCoCgRToRGB_8u_AC4R;
+	__YCoCgToRGB_8u_AC4R_t YCoCgToRGB_8u_AC4R;
 	__RGB565ToARGB_16u32u_C3C4_t RGB565ToARGB_16u32u_C3C4;
+	__YUV420ToRGB_8u_P3AC4R_t YUV420ToRGB_8u_P3AC4R;
 } primitives_t;
 
 #ifdef __cplusplus

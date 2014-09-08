@@ -34,6 +34,7 @@
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
@@ -273,6 +274,7 @@ int freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 {
 	char* p;
 	char* q;
+	int port;
 	char* str;
 	size_t length;
 
@@ -344,6 +346,52 @@ int freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 		p += length;
 	}
 
+	p = strstr(p, "<L P=\"");
+
+	while (p)
+	{
+		p += sizeof("<L P=\"") - 1;
+
+		q = strchr(p, '"');
+
+		if (!q)
+			return -1;
+
+		q[0] = '\0';
+		q++;
+
+		port = atoi(p);
+
+		p = strstr(q, " N=\"");
+
+		if (!p)
+			return -1;
+
+		p += sizeof(" N=\"") - 1;
+
+		q = strchr(p, '"');
+
+		if (!q)
+			return -1;
+
+		q[0] = '\0';
+		q++;
+
+		length = strlen(p);
+
+		if (length > 8)
+		{
+			if (strncmp(p, "169.254.", 8) != 0)
+			{
+				file->MachineAddress = _strdup(p);
+				file->MachinePort = (UINT32) port;
+				break;
+			}
+		}
+
+		p = strstr(q, "<L P=\"");
+	}
+
 	free(str);
 
 	return 1;
@@ -372,6 +420,54 @@ char* freerdp_assistance_construct_expert_blob(const char* name, const char* pas
 			nameLength, name, passLength, pass);
 
 	return ExpertBlob;
+}
+
+char* freerdp_assistance_generate_pass_stub(DWORD flags)
+{
+	UINT32 nums[14];
+	char* passStub = NULL;
+	char set1[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789*_";
+	char set2[12] = "!@#$&^*()-+=";
+	char set3[10] = "0123456789";
+	char set4[26] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	char set5[26] = "abcdefghijklmnopqrstuvwxyz";
+
+	passStub = (char*) malloc(15);
+
+	if (!passStub)
+		return NULL;
+
+	/**
+	 * PassStub generation:
+	 *
+	 * Characters 0 and 5-13 are from the set A-Z a-z 0-9 * _
+	 * Character 1 is from the set !@#$&^*()-+=
+	 * Character 2 is from the set 0-9
+	 * Character 3 is from the set A-Z
+	 * Character 4 is from the set a-z
+	 *
+	 * Example: WB^6HsrIaFmEpi
+	 */
+
+	RAND_bytes((BYTE*) nums, sizeof(nums));
+
+	passStub[0] = set1[nums[0] % sizeof(set1)]; /* character 0 */
+	passStub[1] = set2[nums[1] % sizeof(set2)]; /* character 1 */
+	passStub[2] = set3[nums[2] % sizeof(set3)]; /* character 2 */
+	passStub[3] = set4[nums[3] % sizeof(set4)]; /* character 3 */
+	passStub[4] = set5[nums[4] % sizeof(set5)]; /* character 4 */
+	passStub[5] = set1[nums[5] % sizeof(set1)]; /* character 5 */
+	passStub[6] = set1[nums[6] % sizeof(set1)]; /* character 6 */
+	passStub[7] = set1[nums[7] % sizeof(set1)]; /* character 7 */
+	passStub[8] = set1[nums[8] % sizeof(set1)]; /* character 8 */
+	passStub[9] = set1[nums[9] % sizeof(set1)]; /* character 9 */
+	passStub[10] = set1[nums[10] % sizeof(set1)]; /* character 10 */
+	passStub[11] = set1[nums[11] % sizeof(set1)]; /* character 11 */
+	passStub[12] = set1[nums[12] % sizeof(set1)]; /* character 12 */
+	passStub[13] = set1[nums[13] % sizeof(set1)]; /* character 13 */
+	passStub[14] = '\0';
+
+	return passStub;
 }
 
 BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* passStub, int* pEncryptedSize)
@@ -426,7 +522,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		fprintf(stderr, "EVP_CipherInit_ex failure\n");
+		DEBUG_WARN( "EVP_CipherInit_ex failure\n");
 		return NULL;
 	}
 
@@ -434,7 +530,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		fprintf(stderr, "EVP_CipherInit_ex failure\n");
+		DEBUG_WARN( "EVP_CipherInit_ex failure\n");
 		return NULL;
 	}
 
@@ -445,7 +541,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		fprintf(stderr, "EVP_CipherUpdate failure\n");
+		DEBUG_WARN( "EVP_CipherUpdate failure\n");
 		return NULL;
 	}
 
@@ -453,7 +549,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		fprintf(stderr, "EVP_CipherFinal_ex failure\n");
+		DEBUG_WARN( "EVP_CipherFinal_ex failure\n");
 		return NULL;
 	}
 
@@ -534,7 +630,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	if (status != 1)
 	{
-		fprintf(stderr, "EVP_DecryptFinal_ex failure\n");
+		DEBUG_WARN( "EVP_DecryptFinal_ex failure\n");
 		return -1;
 	}
 
@@ -557,7 +653,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	status = freerdp_assistance_parse_connection_string2(file);
 
-	printf("freerdp_assistance_parse_connection_string2: %d\n", status);
+	DEBUG_MSG("freerdp_assistance_parse_connection_string2: %d\n", status);
 
 	return 1;
 }
@@ -873,7 +969,7 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 
 	if (status < 0)
 	{
-		fprintf(stderr, "freerdp_assistance_parse_connection_string1 failure: %d\n", status);
+		DEBUG_WARN( "freerdp_assistance_parse_connection_string1 failure: %d\n", status);
 		return -1;
 	}
 

@@ -106,7 +106,6 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 			Stream_Release(plugin->data_in);
 
 		plugin->data_in = StreamPool_Take(plugin->pool, totalLength);
-		//Stream_AddRef(plugin->data_in);
 	}
 
 	s = plugin->data_in;
@@ -115,11 +114,6 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 
 	if (dataFlags & CHANNEL_FLAG_LAST)
 	{
-		if (Stream_Length(s) != Stream_GetPosition(s))
-		{
-			fprintf(stderr, "svc_plugin_process_received: read error\n");
-		}
-
 		plugin->data_in = NULL;
 		Stream_SealLength(s);
 		Stream_SetPosition(s, 0);
@@ -145,7 +139,7 @@ static VOID VCAPITYPE svc_plugin_open_event(DWORD openHandle, UINT event, LPVOID
 
 	if (!plugin)
 	{
-		fprintf(stderr, "svc_plugin_open_event: error no match\n");
+		DEBUG_WARN( "svc_plugin_open_event: error no match\n");
 		return;
 	}
 
@@ -220,7 +214,7 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, LPVOID pData, UIN
 
 	if (status != CHANNEL_RC_OK)
 	{
-		fprintf(stderr, "svc_plugin_process_connected: open failed: status: %d\n", status);
+		DEBUG_WARN( "svc_plugin_process_connected: open failed: status: %d\n", status);
 		return;
 	}
 
@@ -270,7 +264,7 @@ static VOID VCAPITYPE svc_plugin_init_event(LPVOID pInitHandle, UINT event, LPVO
 
 	if (!plugin)
 	{
-		fprintf(stderr, "svc_plugin_init_event: error no match\n");
+		DEBUG_WARN( "svc_plugin_init_event: error no match\n");
 		return;
 	}
 
@@ -339,7 +333,7 @@ int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(data_out, TRUE);
-		fprintf(stderr, "svc_plugin_send: VirtualChannelWrite failed %d\n", status);
+		DEBUG_WARN( "svc_plugin_send: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
@@ -355,7 +349,7 @@ int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event)
 	status = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->OpenHandle, event);
 
 	if (status != CHANNEL_RC_OK)
-		fprintf(stderr, "svc_plugin_send_event: VirtualChannelEventPush failed %d\n", status);
+		DEBUG_WARN( "svc_plugin_send_event: VirtualChannelEventPush failed %d\n", status);
 
 	return status;
 }

@@ -24,9 +24,49 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
+#include <freerdp/channels/log.h>
 #include <freerdp/client/encomsp.h>
 
 #include "encomsp_main.h"
+
+static int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
+		return -1;
+
+	Stream_Read_UINT16(s, header->Type); /* Type (2 bytes) */
+	Stream_Read_UINT16(s, header->Length); /* Length (2 bytes) */
+
+	return 1;
+}
+
+static int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
+{
+	Stream_Write_UINT16(s, header->Type); /* Type (2 bytes) */
+	Stream_Write_UINT16(s, header->Length); /* Length (2 bytes) */
+
+	return 1;
+}
+
+static int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
+{
+	ZeroMemory(str, sizeof(ENCOMSP_UNICODE_STRING));
+
+	if (Stream_GetRemainingLength(s) < 2)
+		return -1;
+
+	Stream_Read_UINT16(s, str->cchString); /* cchString (2 bytes) */
+
+	if (str->cchString > 1024)
+		return -1;
+
+	if (Stream_GetRemainingLength(s) < (size_t) (str->cchString * 2))
+		return -1;
+
+	Stream_Read(s, &(str->wString), (str->cchString * 2)); /* String (variable) */
+
+	return 1;
+}
 
 EncomspClientContext* encomsp_get_client_interface(encomspPlugin* encomsp)
 {
@@ -59,46 +99,7 @@ int encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 	return 1;
 }
 
-int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
-{
-	if (Stream_GetRemainingLength(s) < ENCOMSP_ORDER_HEADER_SIZE)
-		return -1;
-
-	Stream_Read_UINT16(s, header->Type); /* Type (2 bytes) */
-	Stream_Read_UINT16(s, header->Length); /* Length (2 bytes) */
-
-	return 1;
-}
-
-int encomsp_write_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
-{
-	Stream_Write_UINT16(s, header->Type); /* Type (2 bytes) */
-	Stream_Write_UINT16(s, header->Length); /* Length (2 bytes) */
-
-	return 1;
-}
-
-int encomsp_read_unicode_string(wStream* s, ENCOMSP_UNICODE_STRING* str)
-{
-	ZeroMemory(str, sizeof(ENCOMSP_UNICODE_STRING));
-
-	if (Stream_GetRemainingLength(s) < 2)
-		return -1;
-
-	Stream_Read_UINT16(s, str->cchString); /* cchString (2 bytes) */
-
-	if (str->cchString > 1024)
-		return -1;
-
-	if (Stream_GetRemainingLength(s) < (str->cchString * 2))
-		return -1;
-
-	Stream_Read(s, &(str->wString), (str->cchString * 2)); /* String (variable) */
-
-	return 1;
-}
-
-int encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -125,7 +126,7 @@ int encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -139,7 +140,7 @@ int encomsp_recv_filter_updated_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 	return 1;
 }
 
-int encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -170,7 +171,7 @@ int encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s, ENC
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -184,7 +185,7 @@ int encomsp_recv_application_created_pdu(encomspPlugin* encomsp, wStream* s, ENC
 	return 1;
 }
 
-int encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -211,7 +212,7 @@ int encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s, ENC
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -225,7 +226,7 @@ int encomsp_recv_application_removed_pdu(encomspPlugin* encomsp, wStream* s, ENC
 	return 1;
 }
 
-int encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -257,7 +258,7 @@ int encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -271,7 +272,7 @@ int encomsp_recv_window_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 	return 1;
 }
 
-int encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -298,7 +299,7 @@ int encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -312,7 +313,7 @@ int encomsp_recv_window_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_
 	return 1;
 }
 
-int encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -339,7 +340,7 @@ int encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORD
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -353,7 +354,7 @@ int encomsp_recv_show_window_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORD
 	return 1;
 }
 
-int encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -385,7 +386,7 @@ int encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s, ENC
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -399,7 +400,7 @@ int encomsp_recv_participant_created_pdu(encomspPlugin* encomsp, wStream* s, ENC
 	return 1;
 }
 
-int encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -428,7 +429,7 @@ int encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s, ENC
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -442,7 +443,7 @@ int encomsp_recv_participant_removed_pdu(encomspPlugin* encomsp, wStream* s, ENC
 	return 1;
 }
 
-int encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -470,7 +471,7 @@ int encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wS
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -484,7 +485,7 @@ int encomsp_recv_change_participant_control_level_pdu(encomspPlugin* encomsp, wS
 	return 1;
 }
 
-int encomsp_send_change_participant_control_level_pdu(EncomspClientContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
+static int encomsp_send_change_participant_control_level_pdu(EncomspClientContext* context, ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
 {
 	wStream* s;
 	encomspPlugin* encomsp;
@@ -508,7 +509,7 @@ int encomsp_send_change_participant_control_level_pdu(EncomspClientContext* cont
 	return 1;
 }
 
-int encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -530,7 +531,7 @@ int encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, 
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -544,7 +545,7 @@ int encomsp_recv_graphics_stream_paused_pdu(encomspPlugin* encomsp, wStream* s, 
 	return 1;
 }
 
-int encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
+static int encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	int beg, end;
 	EncomspClientContext* context;
@@ -566,7 +567,7 @@ int encomsp_recv_graphics_stream_resumed_pdu(encomspPlugin* encomsp, wStream* s,
 
 	if ((beg + header->Length) > end)
 	{
-		if (Stream_GetRemainingLength(s) < ((beg + header->Length) - end))
+		if (Stream_GetRemainingLength(s) < (size_t) ((beg + header->Length) - end))
 			return -1;
 
 		Stream_SetPosition(s, (beg + header->Length));
@@ -590,7 +591,7 @@ static int encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 		if (encomsp_read_header(s, &header) < 0)
 			return -1;
 
-		//printf("EncomspReceive: Type: %d Length: %d\n", header.Type, header.Length);
+		//CLOG_DBG("EncomspReceive: Type: %d Length: %d\n", header.Type, header.Length);
 
 		switch (header.Type)
 		{
@@ -722,7 +723,7 @@ int encomsp_send(encomspPlugin* encomsp, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		fprintf(stderr, "encomsp_send: VirtualChannelWrite failed %d\n", status);
+		CLOG_ERR( "encomsp_send: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
@@ -754,7 +755,7 @@ static void encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp,
 	{
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
-			fprintf(stderr, "encomsp_plugin_process_received: read error\n");
+			CLOG_ERR( "encomsp_plugin_process_received: read error\n");
 		}
 
 		encomsp->data_in = NULL;
@@ -774,7 +775,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle, UINT 
 
 	if (!encomsp)
 	{
-		fprintf(stderr, "encomsp_virtual_channel_open_event: error no match\n");
+		CLOG_ERR( "encomsp_virtual_channel_open_event: error no match\n");
 		return;
 	}
 
@@ -834,7 +835,7 @@ static void encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 
 	if (status != CHANNEL_RC_OK)
 	{
-		fprintf(stderr, "encomsp_virtual_channel_event_connected: open failed: status: %d\n", status);
+		CLOG_ERR( "encomsp_virtual_channel_event_connected: open failed: status: %d\n", status);
 		return;
 	}
 
@@ -872,7 +873,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UIN
 
 	if (!encomsp)
 	{
-		fprintf(stderr, "encomsp_virtual_channel_init_event: error no match\n");
+		CLOG_ERR( "encomsp_virtual_channel_init_event: error no match\n");
 		return;
 	}
 

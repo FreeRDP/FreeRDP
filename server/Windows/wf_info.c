@@ -52,7 +52,7 @@ int wf_info_lock(wfInfo* wfi)
 		break;
 
 	case WAIT_FAILED:
-		printf("wf_info_lock failed with 0x%08X\n", GetLastError());
+		DEBUG_WARN("wf_info_lock failed with 0x%08X\n", GetLastError());
 		return -1;
 		break;
 	}
@@ -78,7 +78,7 @@ int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
 		break;
 
 	case WAIT_FAILED:
-		printf("wf_info_try_lock failed with 0x%08X\n", GetLastError());
+		DEBUG_WARN("wf_info_try_lock failed with 0x%08X\n", GetLastError());
 		return -1;
 		break;
 	}
@@ -90,7 +90,7 @@ int wf_info_unlock(wfInfo* wfi)
 {
 	if (ReleaseMutex(wfi->mutex) == 0)
 	{
-		printf("wf_info_unlock failed with 0x%08X\n", GetLastError());
+		DEBUG_WARN("wf_info_unlock failed with 0x%08X\n", GetLastError());
 		return -1;
 	}
 
@@ -188,7 +188,7 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		EnumDisplayMonitors(NULL, NULL, wf_info_monEnumCB, 0);
 		_IDcount = 0;
 
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 		if (wfi->peerCount == 0)
 			wf_dxgi_init(wfi);
 #else
@@ -213,7 +213,7 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		wfi->peers[peerId] = ((rdpContext*) context)->peer;
 		wfi->peers[peerId]->pId = peerId;
 		wfi->peerCount++;
-		printf("Registering Peer: id=%d #=%d\n", peerId, wfi->peerCount);
+		DEBUG_WARN("Registering Peer: id=%d #=%d\n", peerId, wfi->peerCount);
 
 		wf_info_unlock(wfi);
 
@@ -232,9 +232,9 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 		wfi->peerCount--;
 		CloseHandle(context->updateEvent);
 
-		printf("Unregistering Peer: id=%d, #=%d\n", peerId, wfi->peerCount);
+		DEBUG_WARN("Unregistering Peer: id=%d, #=%d\n", peerId, wfi->peerCount);
 
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 		if (wfi->peerCount == 0)
 			wf_dxgi_cleanup(wfi);
 #endif
@@ -247,7 +247,7 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 
 BOOL wf_info_have_updates(wfInfo* wfi)
 {
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 	if(wfi->framesWaiting == 0)
 		return FALSE;
 #else
@@ -259,7 +259,7 @@ BOOL wf_info_have_updates(wfInfo* wfi)
 
 void wf_info_update_changes(wfInfo* wfi)
 {
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 	wf_dxgi_nextFrame(wfi, wfi->framesPerSecond * 1000);
 #else
 	GETCHANGESBUF* buf;
@@ -271,7 +271,7 @@ void wf_info_update_changes(wfInfo* wfi)
 
 void wf_info_find_invalid_region(wfInfo* wfi)
 {
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 	wf_dxgi_getInvalidRegion(&wfi->invalid);
 #else
 	int i;
@@ -334,7 +334,7 @@ void wf_info_getScreenData(wfInfo* wfi, long* width, long* height, BYTE** pBits,
 	*width = (wfi->invalid.right - wfi->invalid.left);
 	*height = (wfi->invalid.bottom - wfi->invalid.top);
 
-#ifdef WITH_WIN8
+#ifdef WITH_DXGI_1_2
 	wf_dxgi_getPixelData(wfi, pBits, pitch, &wfi->invalid);
 #else
 	{

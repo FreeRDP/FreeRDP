@@ -128,7 +128,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			msg = rfx_process_message(gdi->rfx_context, data, length);
 			if (!msg)
 			{
-				fprintf(stderr, "gdi_Bitmap_Decompress: rfx Decompression Failed\n");
+				DEBUG_WARN( "gdi_Bitmap_Decompress: rfx Decompression Failed\n");
 			}
 			else
 			{
@@ -151,7 +151,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 #ifdef WITH_JPEG
 			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
 			{
-				fprintf(stderr, "gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
+				DEBUG_WARN( "gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
 			}
 #endif
 			break;
@@ -162,7 +162,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 				if (!status)
 				{
-					fprintf(stderr, "gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
+					DEBUG_WARN( "gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
 				}
 			}
 			else
@@ -242,8 +242,10 @@ void gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int heigh
 	HGDI_BRUSH brush;
 	rdpGdi* gdi = context->gdi;
 
-	bgcolor = freerdp_color_convert_var_bgr(bgcolor, gdi->srcBpp, 32, gdi->clrconv);
-	fgcolor = freerdp_color_convert_var_bgr(fgcolor, gdi->srcBpp, 32, gdi->clrconv);
+	bgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(
+			bgcolor, gdi->srcBpp, gdi->clrconv);
+	fgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(
+			fgcolor, gdi->srcBpp, gdi->clrconv);
 
 	gdi_CRgnToRect(x, y, width, height, &rect);
 
@@ -258,7 +260,8 @@ void gdi_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height,
 {
 	rdpGdi* gdi = context->gdi;
 
-	bgcolor = freerdp_color_convert_var_bgr(bgcolor, gdi->srcBpp, 32, gdi->clrconv);
+	bgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(
+			bgcolor, gdi->srcBpp, gdi->clrconv);
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 }
 

@@ -35,54 +35,37 @@
 		: _mm_load_si128((__m128i *) (_ptr_)))
 
 /* Function prototypes for all the init/deinit routines. */
-extern void primitives_init_copy(
-	primitives_t *prims);
-extern void primitives_deinit_copy(
-	primitives_t *prims);
+extern void primitives_init_copy(primitives_t *prims);
+extern void primitives_deinit_copy(primitives_t *prims);
 
-extern void primitives_init_set(
-	primitives_t *prims);
-extern void primitives_deinit_set(
-	primitives_t *prims);
+extern void primitives_init_set(primitives_t *prims);
+extern void primitives_deinit_set(primitives_t *prims);
 
-extern void primitives_init_add(
-	primitives_t *prims);
-extern void primitives_deinit_add(
-	primitives_t *prims);
+extern void primitives_init_add(primitives_t *prims);
+extern void primitives_deinit_add(primitives_t *prims);
 
-extern void primitives_init_andor(
-	primitives_t *prims);
-extern void primitives_deinit_andor(
-	primitives_t *prims);
+extern void primitives_init_andor(primitives_t *prims);
+extern void primitives_deinit_andor(primitives_t *prims);
 
-extern void primitives_init_shift(
-	primitives_t *prims);
-extern void primitives_deinit_shift(
-	primitives_t *prims);
+extern void primitives_init_shift(primitives_t *prims);
+extern void primitives_deinit_shift(primitives_t *prims);
 
-extern void primitives_init_sign(
-	primitives_t *prims);
-extern void primitives_deinit_sign(
-	primitives_t *prims);
+extern void primitives_init_sign(primitives_t *prims);
+extern void primitives_deinit_sign(primitives_t *prims);
 
-extern void primitives_init_alphaComp(
-	primitives_t *prims);
-extern void primitives_deinit_alphaComp(
-	primitives_t *prims);
+extern void primitives_init_alphaComp(primitives_t *prims);
+extern void primitives_deinit_alphaComp(primitives_t *prims);
 
-extern void primitives_init_colors(
-	primitives_t *prims);
-extern void primitives_deinit_colors(
-	primitives_t *prims);
+extern void primitives_init_colors(primitives_t *prims);
+extern void primitives_deinit_colors(primitives_t *prims);
 
-extern void primitives_init_YCoCg(
-	primitives_t *prims);
-extern void primitives_deinit_YCoCg(
-	primitives_t *prims);
+extern void primitives_init_YCoCg(primitives_t *prims);
+extern void primitives_deinit_YCoCg(primitives_t *prims);
 
-extern void primitives_init_16to32bpp(
-	primitives_t *prims);
-extern void primitives_deinit_16to32bpp(
-	primitives_t *prims);
+extern void primitives_init_YUV(primitives_t *prims);
+extern void primitives_deinit_YUV(primitives_t *prims);
+
+extern void primitives_init_16to32bpp(primitives_t *prims);
+extern void primitives_deinit_16to32bpp(primitives_t *prims);
 
 #endif /* !__PRIM_INTERNAL_H_INCLUDED__ */

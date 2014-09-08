@@ -141,6 +141,7 @@ BOOL android_pre_connect(freerdp* instance)
 
 static BOOL android_post_connect(freerdp* instance)
 {
+	UINT32 gdi_flags;
 	rdpSettings *settings = instance->settings;
 
 	DEBUG_ANDROID("android_post_connect");
@@ -154,9 +155,12 @@ static BOOL android_post_connect(freerdp* instance)
 
 	instance->context->cache = cache_new(settings);
 
-	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT |
-			((instance->settings->ColorDepth > 16) ? CLRBUF_32BPP : CLRBUF_16BPP),
-			NULL);
+	if (instance->settings->ColorDepth > 16)
+		gdi_flags = CLRBUF_32BPP | CLRCONV_ALPHA | CLRCONV_INVERT;
+	else
+		gdi_flags = CLRBUF_16BPP;
+
+	gdi_init(instance, gdi_flags, NULL);
 
 	instance->update->BeginPaint = android_begin_paint;
 	instance->update->EndPaint = android_end_paint;
@@ -270,40 +274,6 @@ static void android_process_channel_event(rdpChannels* channels, freerdp* instan
 	}
 }
 
-static void *jni_update_thread(void *arg)
-{
-	int status;
-	wMessage message;
-	wMessageQueue* queue;
-	freerdp* instance = (freerdp*) arg;
-
-	assert( NULL != instance);
-
-	DEBUG_ANDROID("Start.");
-
-	status = 1;
-	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-
-	while (MessageQueue_Wait(queue))
-	{
-		while (MessageQueue_Peek(queue, &message, TRUE))
-		{
-			status = freerdp_message_queue_process_message(instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message);
-
-			if (!status)
-				break;
-		}
-
-		if (!status)
-			break;
-	}
-
-	DEBUG_ANDROID("Quit.");
-
-	ExitThread(0);
-	return NULL;
-}
-
 static void* jni_input_thread(void* arg)
 {
 	HANDLE event[3];
@@ -394,11 +364,9 @@ static int android_freerdp_run(freerdp* instance)
 
 	const rdpSettings* settings = instance->context->settings;
 
-	HANDLE update_thread;
 	HANDLE input_thread;
 	HANDLE channels_thread;
 	
-	BOOL async_update = settings->AsyncUpdate;
 	BOOL async_input = settings->AsyncInput;
 	BOOL async_channels = settings->AsyncChannels;
 	BOOL async_transport = settings->AsyncTransport;
@@ -417,12 +385,6 @@ static int android_freerdp_run(freerdp* instance)
 		return 0;
 	}
 
-	if (async_update)
-	{
-		update_thread = CreateThread(NULL, 0,
-				(LPTHREAD_START_ROUTINE) jni_update_thread, instance, 0, NULL);
-	}
-   
 	if (async_input)
 	{
 		input_thread = CreateThread(NULL, 0,
@@ -571,15 +533,7 @@ static int android_freerdp_run(freerdp* instance)
 		WaitForSingleObject(channels_thread, INFINITE);
 		CloseHandle(channels_thread);
 	}
-
-	if (async_update)
-	{
-		wMessageQueue* update_queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-		MessageQueue_PostQuit(update_queue, 0);
-		WaitForSingleObject(update_thread, INFINITE);
-		CloseHandle(update_thread);
-	}
-	 
+ 
 	if (async_input)
 	{
 		wMessageQueue* input_queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
@@ -836,44 +790,15 @@ JNIEXPORT void JNICALL jni_freerdp_set_performance_flags(
 	}
 
 	/* store performance settings */
-	if (disableWallpaper == JNI_TRUE)
-		settings->DisableWallpaper = TRUE;
-
-	if (disableFullWindowDrag == JNI_TRUE)
-		settings->DisableFullWindowDrag = TRUE;
-
-	if (disableMenuAnimations == JNI_TRUE)
-		settings->DisableMenuAnims = TRUE;
-
-	if (disableTheming == JNI_TRUE)
-		settings->DisableThemes = TRUE;
-
-	if (enableFontSmoothing == JNI_TRUE)
-		settings->AllowFontSmoothing = TRUE;
-
-	if(enableDesktopComposition == JNI_TRUE)
-		settings->AllowDesktopComposition = TRUE;
-
+	settings->DisableWallpaper = (disableWallpaper == JNI_TRUE) ? TRUE : FALSE;
+	settings->DisableFullWindowDrag = (disableFullWindowDrag == JNI_TRUE) ? TRUE : FALSE;
+	settings->DisableMenuAnims = (disableMenuAnimations == JNI_TRUE) ? TRUE : FALSE;
+	settings->DisableThemes = (disableTheming == JNI_TRUE) ? TRUE : FALSE;
+	settings->AllowFontSmoothing = (enableFontSmoothing == JNI_TRUE) ? TRUE : FALSE;
+	settings->AllowDesktopComposition = (enableDesktopComposition == JNI_TRUE) ? TRUE : FALSE;
 
 	/* Create performance flags from settings */
-	settings->PerformanceFlags = PERF_FLAG_NONE;
-	if (settings->AllowFontSmoothing)
-		settings->PerformanceFlags |= PERF_ENABLE_FONT_SMOOTHING;
-
-	if (settings->AllowDesktopComposition)
-		settings->PerformanceFlags |= PERF_ENABLE_DESKTOP_COMPOSITION;
-
-	if (settings->DisableWallpaper)
-		settings->PerformanceFlags |= PERF_DISABLE_WALLPAPER;
-
-	if (settings->DisableFullWindowDrag)
-		settings->PerformanceFlags |= PERF_DISABLE_FULLWINDOWDRAG;
-
-	if (settings->DisableMenuAnims)
-		settings->PerformanceFlags |= PERF_DISABLE_MENUANIMATIONS;
-
-	if (settings->DisableThemes)
-		settings->PerformanceFlags |= PERF_DISABLE_THEMING;
+	freerdp_performance_flags_make(settings);
 
 	DEBUG_ANDROID("performance_flags: %04X", settings->PerformanceFlags);
 }
@@ -1014,7 +939,7 @@ JNIEXPORT void JNICALL jni_freerdp_set_gateway_info(JNIEnv *env, jclass cls, jin
 
 static void copy_pixel_buffer(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int width, int height, int wBuf, int hBuf, int bpp)
 {
-	int i, j;
+	int i;
 	int length;
 	int scanline;
 	UINT8 *dstp, *srcp;
@@ -1025,31 +950,11 @@ static void copy_pixel_buffer(UINT8* dstBuf, UINT8* srcBuf, int x, int y, int wi
 	srcp = (UINT8*) &srcBuf[(scanline * y) + (x * bpp)];
 	dstp = (UINT8*) &dstBuf[(scanline * y) + (x * bpp)];
 
-	if (bpp == 4)
+	for (i = 0; i < height; i++)
 	{
-		for (i = 0; i < height; i++)
-		{
-			for (j = 0; j < width * 4; j += 4)
-			{
-				// ARGB <-> ABGR
-				dstp[j + 0] = srcp[j + 2];
-				dstp[j + 1] = srcp[j + 1];
-				dstp[j + 2] = srcp[j + 0];
-				dstp[j + 3] = srcp[j + 3];
-			}		
-
-			srcp += scanline;
-			dstp += scanline;
-		}
-	}
-	else
-	{
-		for (i = 0; i < height; i++)
-		{
-			memcpy(dstp, srcp, length);
-			srcp += scanline;
-			dstp += scanline;
-		}
+		memcpy(dstp, srcp, length);
+		srcp += scanline;
+		dstp += scanline;
 	}
 }
 

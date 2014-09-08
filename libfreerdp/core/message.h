@@ -120,6 +120,8 @@ struct rdp_update_proxy
 	pPointerColor PointerColor;
 	pPointerNew PointerNew;
 	pPointerCached PointerCached;
+
+	HANDLE thread;
 };
 
 int update_message_queue_process_message(rdpUpdate* update, wMessage* message);

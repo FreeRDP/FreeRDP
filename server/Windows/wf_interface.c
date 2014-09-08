@@ -102,7 +102,7 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 
 		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			DEBUG_WARN("Failed to get FreeRDP file descriptor\n");
 			break;
 		}
 
@@ -127,12 +127,12 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			DEBUG_WARN("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 	}
 
-	printf("wf_server_main_loop terminating\n");
+	DEBUG_WARN("wf_server_main_loop terminating\n");
 
 	instance->Close(instance);
 
@@ -164,7 +164,7 @@ BOOL wfreerdp_server_stop(wfServer* server)
 
 	wfi = wf_info_get_instance();
 
-	printf("Stopping server\n");
+	DEBUG_WARN("Stopping server\n");
 	wfi->force_all_disconnect = TRUE;
 	server->instance->Close(server->instance);
 	return TRUE;
@@ -210,7 +210,7 @@ FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server)
 	bRet = GetExitCodeThread(server->thread, &tStatus);
 	if (bRet == 0)
 	{
-		printf("Error in call to GetExitCodeThread\n");
+		DEBUG_WARN("Error in call to GetExitCodeThread\n");
 		return FALSE;
 	}
 
@@ -245,7 +245,7 @@ FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr)
 	}
 	else
 	{
-		printf("nonexistent peer id=%d\n", pId);
+		DEBUG_WARN("nonexistent peer id=%d\n", pId);
 		return 0;
 	}
 }

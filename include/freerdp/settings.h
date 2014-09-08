@@ -536,6 +536,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_ServerRandomLength				197
 #define FreeRDP_ServerCertificate				198
 #define FreeRDP_ServerCertificateLength				199
+#define FreeRDP_ClientRandom					200
+#define FreeRDP_ClientRandomLength				201
 #define FreeRDP_ChannelCount					256
 #define FreeRDP_ChannelDefArraySize				257
 #define FreeRDP_ChannelDefArray					258
@@ -851,11 +853,12 @@ struct rdp_settings
 	ALIGN64 UINT32 ExtEncryptionMethods; /* 194 */
 	ALIGN64 UINT32 EncryptionLevel; /* 195 */
 	ALIGN64 BYTE* ServerRandom; /* 196 */
-	ALIGN64 DWORD ServerRandomLength; /* 197 */
+	ALIGN64 UINT32 ServerRandomLength; /* 197 */
 	ALIGN64 BYTE* ServerCertificate; /* 198 */
-	ALIGN64 DWORD ServerCertificateLength; /* 199 */
+	ALIGN64 UINT32 ServerCertificateLength; /* 199 */
 	ALIGN64 BYTE* ClientRandom; /* 200 */
-	UINT64 padding0256[256 - 201]; /* 201 */
+	ALIGN64 UINT32 ClientRandomLength; /* 201 */
+	UINT64 padding0256[256 - 202]; /* 202 */
 
 	/* Client Network Data */
 	ALIGN64 UINT32 ChannelCount; /* 256 */
@@ -1014,7 +1017,7 @@ struct rdp_settings
 
 	/* Credentials Cache */
 	ALIGN64 BYTE* Password51; /* 1280 */
-	ALIGN64 DWORD Password51Length; /* 1281 */
+	ALIGN64 UINT32 Password51Length; /* 1281 */
 	UINT64 padding1344[1344 - 1282]; /* 1282 */
 
 	/* Kerberos Authentication */
@@ -1120,8 +1123,8 @@ struct rdp_settings
 	ALIGN64 char* RemoteApplicationFile; /* 2116 */
 	ALIGN64 char* RemoteApplicationGuid; /* 2117 */
 	ALIGN64 char* RemoteApplicationCmdLine; /* 2118 */
-	ALIGN64 DWORD RemoteApplicationExpandCmdLine; /* 2119 */
-	ALIGN64 DWORD RemoteApplicationExpandWorkingDir; /* 2120 */
+	ALIGN64 UINT32 RemoteApplicationExpandCmdLine; /* 2119 */
+	ALIGN64 UINT32 RemoteApplicationExpandWorkingDir; /* 2120 */
 	ALIGN64 BOOL DisableRemoteAppCapsCheck; /* 2121 */
 	ALIGN64 UINT32 RemoteAppNumIconCaches; /* 2122 */
 	ALIGN64 UINT32 RemoteAppNumIconCacheEntries; /* 2123 */
@@ -1356,7 +1359,8 @@ struct rdp_settings
 	ALIGN64 UINT32 DynamicChannelCount; /* 5056 */
 	ALIGN64 UINT32 DynamicChannelArraySize; /* 5057 */
 	ALIGN64 ADDIN_ARGV** DynamicChannelArray; /* 5058 */
-	UINT64 padding5184[5184 - 5059]; /* 5059 */
+	ALIGN64 BOOL SupportDynamicChannels; /* 5059 */
+	UINT64 padding5184[5184 - 5060]; /* 5060 */
 
 	/**
 	 * WARNING: End of ABI stable zone!

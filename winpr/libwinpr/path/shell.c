@@ -271,6 +271,39 @@ char* GetKnownSubPath(int id, const char* path)
 	return subPath;
 }
 
+char* GetEnvironmentPath(char* name)
+{
+	char* env;
+	DWORD nSize;
+
+	nSize = GetEnvironmentVariableA(name, NULL, 0);
+
+	if (nSize)
+	{
+		env = (LPSTR) malloc(nSize);
+		nSize = GetEnvironmentVariableA(name, env, nSize);
+	}
+
+	return env;
+}
+
+char* GetEnvironmentSubPath(char* name, const char* path)
+{
+	char* env;
+	char* subpath;
+
+	env = GetEnvironmentPath(name);
+
+	if (!env)
+		return NULL;
+
+	subpath = GetCombinedPath(env, path);
+
+	free(env);
+
+	return subpath;
+}
+
 char* GetCombinedPath(const char* basePath, const char* subPath)
 {
 	int length;
@@ -309,8 +342,6 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 	return path;
 }
 
-//#ifndef _WIN32
-
 BOOL PathFileExistsA(LPCSTR pszPath)
 {
 	struct stat stat_info;
@@ -326,4 +357,3 @@ BOOL PathFileExistsW(LPCWSTR pszPath)
 	return FALSE;
 }
 
-//#endif

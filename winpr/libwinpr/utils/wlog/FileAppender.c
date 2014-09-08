@@ -70,6 +70,9 @@ int WLog_FileAppender_Open(wLog* log, wLogFileAppender* appender)
 
 	ProcessId = GetCurrentProcessId();
 
+	if (!log || !appender)
+		return -1;
+
 	if (!appender->FilePath)
 	{
 		appender->FilePath = GetKnownSubPath(KNOWN_PATH_TEMP, "wlog");
@@ -102,6 +105,9 @@ int WLog_FileAppender_Open(wLog* log, wLogFileAppender* appender)
 
 int WLog_FileAppender_Close(wLog* log, wLogFileAppender* appender)
 {
+	if (!log || !appender)
+		return -1;
+
 	if (!appender->FileDescriptor)
 		return 0;
 
@@ -116,6 +122,9 @@ int WLog_FileAppender_WriteMessage(wLog* log, wLogFileAppender* appender, wLogMe
 {
 	FILE* fp;
 	char prefix[WLOG_MAX_PREFIX_SIZE];
+
+	if (!log || !appender || !message)
+		return -1;
 
 	fp = appender->FileDescriptor;
 
@@ -139,6 +148,9 @@ int WLog_FileAppender_WriteDataMessage(wLog* log, wLogFileAppender* appender, wL
 	int DataId;
 	char* FullFileName;
 
+	if (!log || !appender || !message)
+		return -1;
+
 	DataId = g_DataId++;
 	FullFileName = WLog_Message_GetOutputFileName(DataId, "dat");
 
@@ -155,6 +167,9 @@ int WLog_FileAppender_WriteImageMessage(wLog* log, wLogFileAppender* appender, w
 {
 	int ImageId;
 	char* FullFileName;
+
+	if (!log || !appender || !message)
+		return -1;
 
 	ImageId = g_ImageId++;
 	FullFileName = WLog_Message_GetOutputFileName(ImageId, "bmp");

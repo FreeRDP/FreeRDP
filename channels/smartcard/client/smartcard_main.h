@@ -21,7 +21,7 @@
 #ifndef FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/channels/rdpdr.h>
 
 #include <winpr/crt.h>

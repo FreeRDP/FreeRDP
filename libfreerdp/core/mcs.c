@@ -328,16 +328,16 @@ void mcs_write_domain_parameters(wStream* s, DomainParameters* domainParameters)
 
 void mcs_print_domain_parameters(DomainParameters* domainParameters)
 {
-	fprintf(stderr, "DomainParameters {\n");
-	fprintf(stderr, "\tmaxChannelIds:%d\n", domainParameters->maxChannelIds);
-	fprintf(stderr, "\tmaxUserIds:%d\n", domainParameters->maxUserIds);
-	fprintf(stderr, "\tmaxTokenIds:%d\n", domainParameters->maxTokenIds);
-	fprintf(stderr, "\tnumPriorities:%d\n", domainParameters->numPriorities);
-	fprintf(stderr, "\tminThroughput:%d\n", domainParameters->minThroughput);
-	fprintf(stderr, "\tmaxHeight:%d\n", domainParameters->maxHeight);
-	fprintf(stderr, "\tmaxMCSPDUsize:%d\n", domainParameters->maxMCSPDUsize);
-	fprintf(stderr, "\tprotocolVersion:%d\n", domainParameters->protocolVersion);
-	fprintf(stderr, "}\n");
+	DEBUG_WARN( "DomainParameters {\n");
+	DEBUG_WARN( "\tmaxChannelIds:%d\n", domainParameters->maxChannelIds);
+	DEBUG_WARN( "\tmaxUserIds:%d\n", domainParameters->maxUserIds);
+	DEBUG_WARN( "\tmaxTokenIds:%d\n", domainParameters->maxTokenIds);
+	DEBUG_WARN( "\tnumPriorities:%d\n", domainParameters->numPriorities);
+	DEBUG_WARN( "\tminThroughput:%d\n", domainParameters->minThroughput);
+	DEBUG_WARN( "\tmaxHeight:%d\n", domainParameters->maxHeight);
+	DEBUG_WARN( "\tmaxMCSPDUsize:%d\n", domainParameters->maxMCSPDUsize);
+	DEBUG_WARN( "\tprotocolVersion:%d\n", domainParameters->protocolVersion);
+	DEBUG_WARN( "}\n");
 }
 
 /**
@@ -661,7 +661,7 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 
 	if (!gcc_read_conference_create_response(s, mcs))
 	{
-		fprintf(stderr, "mcs_recv_connect_response: gcc_read_conference_create_response failed\n");
+		DEBUG_WARN( "mcs_recv_connect_response: gcc_read_conference_create_response failed\n");
 		return FALSE;
 	}
 

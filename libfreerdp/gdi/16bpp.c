@@ -43,7 +43,7 @@ UINT16 gdi_get_color_16bpp(HGDI_DC hdc, GDI_COLOR color)
 	BYTE r, g, b;
 	UINT16 color16;
 
-	GetBGR32(r, g, b, color);
+	GetRGB32(r, g, b, color);
 
 	if (hdc->rgb555)
 	{
@@ -412,7 +412,7 @@ static int BitBlt_DSPDxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 
 	if (hdcSrc->bytesPerPixel != 1)
 	{
-		fprintf(stderr, "BitBlt_DSPDxax expects 1 bpp, unimplemented for %d\n", hdcSrc->bytesPerPixel);
+		DEBUG_WARN( "BitBlt_DSPDxax expects 1 bpp, unimplemented for %d\n", hdcSrc->bytesPerPixel);
 		return 0;
 	}
 	
@@ -894,7 +894,7 @@ int BitBlt_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 			break;
 	}
 	
-	fprintf(stderr, "BitBlt: unknown rop: 0x%08X\n", rop);
+	DEBUG_WARN( "BitBlt: unknown rop: 0x%08X\n", rop);
 	return 1;
 }
 
@@ -939,7 +939,7 @@ int PatBlt_16bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, i
 			break;
 	}
 	
-	fprintf(stderr, "PatBlt: unknown rop: 0x%08X\n", rop);
+	DEBUG_WARN( "PatBlt: unknown rop: 0x%08X\n", rop);
 	return 1;
 }
 

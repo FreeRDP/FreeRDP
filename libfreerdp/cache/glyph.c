@@ -28,6 +28,7 @@
 #include <freerdp/freerdp.h>
 #include <winpr/stream.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/cache/glyph.h>
 
 void update_process_glyph(rdpContext* context, BYTE* data, int* index,
@@ -367,20 +368,20 @@ rdpGlyph* glyph_cache_get(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index)
 
 	if (id > 9)
 	{
-		fprintf(stderr, "invalid glyph cache id: %d\n", id);
+		DEBUG_WARN( "invalid glyph cache id: %d\n", id);
 		return NULL;
 	}
 
 	if (index > glyphCache->glyphCache[id].number)
 	{
-		fprintf(stderr, "index %d out of range for cache id: %d\n", index, id);
+		DEBUG_WARN( "index %d out of range for cache id: %d\n", index, id);
 		return NULL;
 	}
 
 	glyph = glyphCache->glyphCache[id].entries[index];
 
 	if (!glyph)
-		fprintf(stderr, "no glyph found at cache index: %d in cache id: %d\n", index, id);
+		DEBUG_WARN( "no glyph found at cache index: %d in cache id: %d\n", index, id);
 
 	return glyph;
 }
@@ -391,13 +392,13 @@ void glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyp
 
 	if (id > 9)
 	{
-		fprintf(stderr, "invalid glyph cache id: %d\n", id);
+		DEBUG_WARN( "invalid glyph cache id: %d\n", id);
 		return;
 	}
 
 	if (index > glyphCache->glyphCache[id].number)
 	{
-		fprintf(stderr, "invalid glyph cache index: %d in cache id: %d\n", index, id);
+		DEBUG_WARN( "invalid glyph cache index: %d in cache id: %d\n", index, id);
 		return;
 	}
 
@@ -423,7 +424,7 @@ void* glyph_cache_fragment_get(rdpGlyphCache* glyphCache, UINT32 index, UINT32* 
 
 	if (index > 255)
 	{
-		fprintf(stderr, "invalid glyph cache fragment index: %d\n", index);
+		DEBUG_WARN( "invalid glyph cache fragment index: %d\n", index);
 		return NULL;
 	}
 
@@ -433,7 +434,7 @@ void* glyph_cache_fragment_get(rdpGlyphCache* glyphCache, UINT32 index, UINT32* 
 	WLog_Print(glyphCache->log, WLOG_DEBUG, "GlyphCacheFragmentGet: index: %d size: %d", index, *size);
 
 	if (!fragment)
-		fprintf(stderr, "invalid glyph fragment at index:%d\n", index);
+		DEBUG_WARN( "invalid glyph fragment at index:%d\n", index);
 
 	return fragment;
 }
@@ -444,7 +445,7 @@ void glyph_cache_fragment_put(rdpGlyphCache* glyphCache, UINT32 index, UINT32 si
 
 	if (index > 255)
 	{
-		fprintf(stderr, "invalid glyph cache fragment index: %d\n", index);
+		DEBUG_WARN( "invalid glyph cache fragment index: %d\n", index);
 		return;
 	}
 

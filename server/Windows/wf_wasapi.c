@@ -45,7 +45,7 @@ int wf_wasapi_activate(RdpsndServerContext* context)
 		return 1;
 	}
 
-	printf("RDPSND (WASAPI) Activated\n");
+	DEBUG_WARN("RDPSND (WASAPI) Activated\n");
 
 	CreateThread(NULL, 0, wf_rdpsnd_wasapi_thread, latestPeer, 0, NULL);
 

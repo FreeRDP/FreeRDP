@@ -29,6 +29,8 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
+#include <freerdp/channels/log.h>
+
 #include "rdpsnd_main.h"
 
 BOOL rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s)
@@ -108,7 +110,7 @@ static BOOL rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, wStrea
 	Stream_Read_UINT16(s, quality);
 	Stream_Seek_UINT16(s); // reserved
 	
-	fprintf(stderr, "Client requested sound quality: %#0X\n", quality);
+	CLOG_ERR( "Client requested sound quality: %#0X\n", quality);
 	return TRUE;
 }
 
@@ -137,7 +139,7 @@ static BOOL rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 
 	if (!context->num_client_formats)
 	{
-		fprintf(stderr, "%s: client doesn't support any format!\n", __FUNCTION__);
+		CLOG_ERR( "%s: client doesn't support any format!\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -174,7 +176,7 @@ static BOOL rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 
 	if (!context->num_client_formats)
 	{
-		fprintf(stderr, "%s: client doesn't support any known format!\n", __FUNCTION__);
+		CLOG_ERR( "%s: client doesn't support any known format!\n", __FUNCTION__);
 		goto out_free;
 	}
 
@@ -230,7 +232,7 @@ static BOOL rdpsnd_server_select_format(RdpsndServerContext* context, int client
 
 	if (client_format_index < 0 || client_format_index >= context->num_client_formats)
 	{
-		fprintf(stderr, "%s: index %d is not correct.\n", __FUNCTION__, client_format_index);
+		CLOG_ERR( "%s: index %d is not correct.\n", __FUNCTION__, client_format_index);
 		return FALSE;
 	}
 	
@@ -242,7 +244,7 @@ static BOOL rdpsnd_server_select_format(RdpsndServerContext* context, int client
 	
 	if (format->nSamplesPerSec == 0)
 	{
-		fprintf(stderr, "%s: invalid Client Sound Format!!\n", __FUNCTION__);
+		CLOG_ERR( "%s: invalid Client Sound Format!!\n", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -475,7 +477,7 @@ static int rdpsnd_server_start(RdpsndServerContext* context)
 
 	if (!WTSVirtualChannelQuery(priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &bytesReturned) || (bytesReturned != sizeof(HANDLE)))
 	{
-		fprintf(stderr, "%s: error during WTSVirtualChannelQuery(WTSVirtualEventHandle) or invalid returned size(%d)\n",
+		CLOG_ERR( "%s: error during WTSVirtualChannelQuery(WTSVirtualEventHandle) or invalid returned size(%d)\n",
 				__FUNCTION__, bytesReturned);
 		if (buffer)
 			WTSFreeMemory(buffer);
@@ -631,7 +633,7 @@ BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
 		if (GetLastError() == ERROR_NO_DATA)
 			return TRUE;
 
-		fprintf(stderr, "%s: channel connection closed\n", __FUNCTION__);
+		CLOG_ERR( "%s: channel connection closed\n", __FUNCTION__);
 		return FALSE;
 	}
 	priv->expectedBytes -= bytesReturned;
@@ -659,7 +661,7 @@ BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
 
 	/* when here we have the header + the body */
 #ifdef WITH_DEBUG_SND
-	fprintf(stderr, "%s: message type %d\n", __FUNCTION__, priv->msgType);
+	CLOG_ERR( "%s: message type %d\n", __FUNCTION__, priv->msgType);
 #endif
 	priv->expectedBytes = 4;
 	priv->waitingHeader = TRUE;
@@ -685,7 +687,7 @@ BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
 			break;
 
 		default:
-			fprintf(stderr, "%s: UNKOWN MESSAGE TYPE!! (%#0X)\n\n", __FUNCTION__, priv->msgType);
+			CLOG_ERR( "%s: UNKOWN MESSAGE TYPE!! (%#0X)\n\n", __FUNCTION__, priv->msgType);
 			ret = FALSE;
 			break;
 	}

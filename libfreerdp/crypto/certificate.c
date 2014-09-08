@@ -37,9 +37,10 @@ static const char certificate_store_dir[] = "certs";
 static const char certificate_server_dir[] = "server";
 static const char certificate_known_hosts_file[] = "known_hosts";
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/crypto/certificate.h>
 
-void certificate_store_init(rdpCertificateStore* certificate_store)
+int certificate_store_init(rdpCertificateStore* certificate_store)
 {
 	char* server_path;
 	rdpSettings* settings;
@@ -49,37 +50,46 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 	if (!PathFileExistsA(settings->ConfigPath))
 	{
 		CreateDirectoryA(settings->ConfigPath, 0);
-		fprintf(stderr, "creating directory %s\n", settings->ConfigPath);
+		DEBUG_WARN( "creating directory %s\n", settings->ConfigPath);
 	}
 
 	certificate_store->path = GetCombinedPath(settings->ConfigPath, (char*) certificate_store_dir);
 
+	if (!certificate_store->path)
+		return -1;
+
 	if (!PathFileExistsA(certificate_store->path))
 	{
 		CreateDirectoryA(certificate_store->path, 0);
-		fprintf(stderr, "creating directory %s\n", certificate_store->path);
+		DEBUG_WARN( "creating directory %s\n", certificate_store->path);
 	}
 
 	server_path = GetCombinedPath(settings->ConfigPath, (char*) certificate_server_dir);
 
+	if (!server_path)
+		return -1;
+
 	if (!PathFileExistsA(server_path))
 	{
 		CreateDirectoryA(server_path, 0);
-		fprintf(stderr, "creating directory %s\n", server_path);
+		DEBUG_WARN( "creating directory %s\n", server_path);
 	}
 
 	free(server_path);
 
 	certificate_store->file = GetCombinedPath(settings->ConfigPath, (char*) certificate_known_hosts_file);
 
+	if (!certificate_store->file)
+		return -1;
+
 	if (PathFileExistsA(certificate_store->file) == FALSE)
 	{
 		certificate_store->fp = fopen((char*) certificate_store->file, "w+");
 
-		if (certificate_store->fp == NULL)
+		if (!certificate_store->fp)
 		{
-			fprintf(stderr, "certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
-			return;
+			DEBUG_WARN( "certificate_store_open: error opening [%s] for writing\n", certificate_store->file);
+			return -1;
 		}
 
 		fflush(certificate_store->fp);
@@ -88,6 +98,8 @@ void certificate_store_init(rdpCertificateStore* certificate_store)
 	{
 		certificate_store->fp = fopen((char*) certificate_store->file, "r+");
 	}
+
+	return 1;
 }
 
 int certificate_data_match(rdpCertificateStore* certificate_store, rdpCertificateData* certificate_data)
@@ -264,14 +276,14 @@ rdpCertificateStore* certificate_store_new(rdpSettings* settings)
 {
 	rdpCertificateStore* certificate_store;
 
-	certificate_store = (rdpCertificateStore *)calloc(1, sizeof(rdpCertificateStore));
+	certificate_store = (rdpCertificateStore*) calloc(1, sizeof(rdpCertificateStore));
 
 	if (!certificate_store)
 		return NULL;
 
 	certificate_store->settings = settings;
+
 	certificate_store_init(certificate_store);
-	/* TODO: certificate_store_init should not fail silently */
 
 	return certificate_store;
 }

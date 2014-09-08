@@ -54,7 +54,7 @@ static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	wfi = wf_info_get_instance();
 
 	wfi->agreed_format = NULL;
-	printf("Client supports the following %d formats: \n", context->num_client_formats);
+	DEBUG_WARN("Client supports the following %d formats: \n", context->num_client_formats);
 	for(i = 0; i < context->num_client_formats; i++)
 	{
 		//TODO: improve the way we agree on a format
@@ -64,7 +64,7 @@ static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)
 			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
 			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
 			{
-				printf("agreed on format!\n");
+				DEBUG_WARN("agreed on format!\n");
 				wfi->agreed_format = (AUDIO_FORMAT*) &context->server_formats[j];
 				break;
 			}
@@ -76,7 +76,7 @@ static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	if (wfi->agreed_format == NULL)
 	{
-		printf("Could not agree on a audio format with the server\n");
+		DEBUG_WARN("Could not agree on a audio format with the server\n");
 		return;
 	}
 	
@@ -116,7 +116,7 @@ int wf_rdpsnd_lock()
 		break;
 
 	case WAIT_FAILED:
-		printf("wf_rdpsnd_lock failed with 0x%08X\n", GetLastError());
+		DEBUG_WARN("wf_rdpsnd_lock failed with 0x%08X\n", GetLastError());
 		return -1;
 		break;
 	}
@@ -132,7 +132,7 @@ int wf_rdpsnd_unlock()
 
 	if (ReleaseMutex(wfi->snd_mutex) == 0)
 	{
-		printf("wf_rdpsnd_unlock failed with 0x%08X\n", GetLastError());
+		DEBUG_WARN("wf_rdpsnd_unlock failed with 0x%08X\n", GetLastError());
 		return -1;
 	}
 

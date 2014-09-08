@@ -141,7 +141,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	switch (codec_id)
 	{
 		case RDP_CODEC_ID_NSCODEC:
-			fprintf(stderr, "xf_Bitmap_Decompress: nsc not done\n");
+			DEBUG_WARN( "xf_Bitmap_Decompress: nsc not done\n");
 			break;
 
 		case RDP_CODEC_ID_REMOTEFX:
@@ -150,7 +150,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 			if (!msg)
 			{
-				fprintf(stderr, "xf_Bitmap_Decompress: rfx Decompression Failed\n");
+				DEBUG_WARN( "xf_Bitmap_Decompress: rfx Decompression Failed\n");
 			}
 			else
 			{
@@ -173,7 +173,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		case RDP_CODEC_ID_JPEG:
 			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
 			{
-				fprintf(stderr, "xf_Bitmap_Decompress: jpeg Decompression Failed\n");
+				DEBUG_WARN( "xf_Bitmap_Decompress: jpeg Decompression Failed\n");
 			}
 			break;
 
@@ -184,7 +184,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 				if (!status)
 				{
-					fprintf(stderr, "xf_Bitmap_Decompress: Bitmap Decompression Failed\n");
+					DEBUG_WARN( "xf_Bitmap_Decompress: Bitmap Decompression Failed\n");
 				}
 			}
 			else
@@ -389,18 +389,16 @@ void xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 
 void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
 {
-	xfContext* context_ = (xfContext*) context;
 	xfContext* xfc = (xfContext*) context;
 
-	bgcolor = (xfc->clrconv->invert)?
-		freerdp_color_convert_var_bgr(bgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv):
-		freerdp_color_convert_var_rgb(bgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	bgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(bgcolor, context->settings->ColorDepth, xfc->clrconv);
 
-	fgcolor = (xfc->clrconv->invert)?
-		freerdp_color_convert_var_bgr(fgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv):
-		freerdp_color_convert_var_rgb(fgcolor, context_->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+	fgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(fgcolor, context->settings->ColorDepth, xfc->clrconv);
 
 	xf_lock_x11(xfc, FALSE);
+
+	fgcolor = xf_gdi_get_color(xfc, fgcolor);
+	bgcolor = xf_gdi_get_color(xfc, bgcolor);
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);

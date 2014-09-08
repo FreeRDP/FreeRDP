@@ -27,7 +27,7 @@
 #cmakedefine HAVE_POLL_H
 #cmakedefine HAVE_PTHREAD_GNU_EXT
 #cmakedefine HAVE_VALGRIND_MEMCHECK_H
-
+#cmakedefine HAVE_EXECINFO_H
 
 /* Options */
 #cmakedefine WITH_PROFILER

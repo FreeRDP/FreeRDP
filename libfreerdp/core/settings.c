@@ -321,7 +321,11 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 		settings->DrawGdiPlusEnabled = FALSE;
 
-		settings->FrameMarkerCommandEnabled = FALSE;
+		settings->DrawAllowSkipAlpha = TRUE;
+		settings->DrawAllowColorSubsampling = FALSE;
+		settings->DrawAllowDynamicColorFidelity = FALSE;
+
+		settings->FrameMarkerCommandEnabled = TRUE;
 		settings->SurfaceFrameMarkerEnabled = TRUE;
 		settings->BitmapCacheV3Enabled = FALSE;
 
@@ -522,6 +526,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->EncryptionLevel = settings->EncryptionLevel; /* 195 */
 		_settings->ServerRandomLength = settings->ServerRandomLength; /* 197 */
 		_settings->ServerCertificateLength = settings->ServerCertificateLength; /* 199 */
+		_settings->ClientRandomLength = settings->ClientRandomLength; /* 201 */
 		_settings->ChannelCount = settings->ChannelCount; /* 256 */
 		_settings->ChannelDefArraySize = settings->ChannelDefArraySize; /* 257 */
 		_settings->ClusterInfoFlags = settings->ClusterInfoFlags; /* 320 */
@@ -725,6 +730,18 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		  * Manual Code
 		  */
 
+		if (_settings->ServerRandomLength)
+		{
+			_settings->ServerRandom = (BYTE*) malloc(_settings->ServerRandomLength);
+			CopyMemory(_settings->ServerRandom, settings->ServerRandom, _settings->ServerRandomLength);
+		}
+
+		if (_settings->ClientRandomLength)
+		{
+			_settings->ClientRandom = (BYTE*) malloc(_settings->ClientRandomLength);
+			CopyMemory(_settings->ClientRandom, settings->ClientRandom, _settings->ClientRandomLength);
+		}
+
 		_settings->ChannelCount = settings->ChannelCount;
 		_settings->ChannelDefArraySize = settings->ChannelDefArraySize;
 		_settings->ChannelDefArray = (CHANNEL_DEF*) malloc(sizeof(CHANNEL_DEF) * settings->ChannelDefArraySize);
@@ -836,7 +853,7 @@ void freerdp_settings_free(rdpSettings* settings)
 		free(settings->ClientHostname);
 		free(settings->ClientProductId);
 		free(settings->ServerRandom);
-		if (settings->ClientRandom) free(settings->ClientRandom);
+		free(settings->ClientRandom);
 		free(settings->ServerCertificate);
 		free(settings->RdpKeyFile);
 		certificate_free(settings->RdpServerCertificate);

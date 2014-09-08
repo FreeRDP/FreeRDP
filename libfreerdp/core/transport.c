@@ -292,7 +292,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	transport->frontBio = targetTls->bio;
 	if (!transport->frontBio)
 	{
-		fprintf(stderr, "%s: unable to prepend a filtering TLS bio", __FUNCTION__);
+		DEBUG_WARN( "%s: unable to prepend a filtering TLS bio", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -344,7 +344,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 			freerdp_set_last_error(instance->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 		}
 
-		fprintf(stderr, "Authentication failure, check credentials.\n"
+		DEBUG_WARN( "Authentication failure, check credentials.\n"
 			"If credentials are valid, the NTLMSSP implementation may be to blame.\n");
 
 		transport_set_nla_mode(transport, FALSE);
@@ -559,7 +559,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
-		fprintf(stderr, "client authentication failure\n");
+		DEBUG_WARN( "client authentication failure\n");
 
 		transport_set_nla_mode(transport, FALSE);
 		credssp_free(transport->credssp);
@@ -643,7 +643,7 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 			 * requested bytes */
 			if (transport_wait_for_read(transport) < 0)
 			{
-				fprintf(stderr, "%s: error when selecting for read\n", __FUNCTION__);
+				DEBUG_WARN( "%s: error when selecting for read\n", __FUNCTION__);
 				return -1;
 			}
 			continue;
@@ -756,7 +756,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 				}
 				else
 				{
-					fprintf(stderr, "Error reading TSRequest!\n");
+					DEBUG_WARN( "Error reading TSRequest!\n");
 					return -1;
 				}
 			}
@@ -780,7 +780,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 			/* min and max values according to ITU-T Rec. T.123 (01/2007) section 8 */
 			if (pduLength < 7 || pduLength > 0xFFFF)
 			{
-				fprintf(stderr, "%s: tpkt - invalid pduLength: %d\n", __FUNCTION__, pduLength);
+				DEBUG_WARN( "%s: tpkt - invalid pduLength: %d\n", __FUNCTION__, pduLength);
 				return -1;
 			}
 		}
@@ -803,7 +803,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 			 */
 			if (pduLength < 3 || pduLength > 0x8000)
 			{
-				fprintf(stderr, "%s: fast path - invalid pduLength: %d\n", __FUNCTION__, pduLength);
+				DEBUG_WARN( "%s: fast path - invalid pduLength: %d\n", __FUNCTION__, pduLength);
 				return -1;
 			}
 		}
@@ -821,7 +821,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	/* dump when whole PDU is read */
 	if (Stream_GetPosition(s) >= pduLength)
 	{
-		fprintf(stderr, "Local < Remote\n");
+		DEBUG_WARN( "Local < Remote\n");
 		winpr_HexDump(Stream_Buffer(s), pduLength);
 	}
 #endif
@@ -849,7 +849,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 #ifdef WITH_DEBUG_TRANSPORT
 	if (length > 0)
 	{
-		fprintf(stderr, "Local > Remote\n");
+		DEBUG_WARN( "Local > Remote\n");
 		winpr_HexDump(Stream_Buffer(s), length);
 	}
 #endif
@@ -878,7 +878,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 			if (transport_wait_for_write(transport) < 0)
 			{
-				fprintf(stderr, "%s: error when selecting for write\n", __FUNCTION__);
+				DEBUG_WARN( "%s: error when selecting for write\n", __FUNCTION__);
 				return -1;
 			}
 			continue;
@@ -893,13 +893,13 @@ int transport_write(rdpTransport* transport, wStream* s)
 			{
 				if (transport_wait_for_write(transport) < 0)
 				{
-					fprintf(stderr, "%s: error when selecting for write\n", __FUNCTION__);
+					DEBUG_WARN( "%s: error when selecting for write\n", __FUNCTION__);
 					return -1;
 				}
 
 				if (!transport_bio_buffered_drain(out->bufferedBio))
 				{
-					fprintf(stderr, "%s: error when draining outputBuffer\n", __FUNCTION__);
+					DEBUG_WARN( "%s: error when draining outputBuffer\n", __FUNCTION__);
 					return -1;
 				}
 			}
@@ -928,12 +928,12 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	void* pfd;
 
 #ifdef _WIN32
-	rfds[*rcount] = transport->TcpIn->wsa_event;
+	rfds[*rcount] = transport->TcpIn->event;
 	(*rcount)++;
 
 	if (transport->SplitInputOutput)
 	{
-		rfds[*rcount] = transport->TcpOut->wsa_event;
+		rfds[*rcount] = transport->TcpOut->event;
 		(*rcount)++;
 	}
 #else
@@ -1033,7 +1033,7 @@ int transport_check_fds(rdpTransport* transport)
 		return -1;
 
 #ifdef _WIN32
-	WSAResetEvent(transport->TcpIn->wsa_event);
+	WSAResetEvent(transport->TcpIn->event);
 #endif
 	ResetEvent(transport->ReceiveEvent);
 

@@ -50,7 +50,7 @@ typedef struct winpr_handle WINPR_HANDLE;
 #define WINPR_HANDLE_SET_TYPE(_handle, _type) \
 	_handle->Type = _type
 
-static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject)
+static INLINE BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject)
 {
 	WINPR_HANDLE* wHandle;
 
@@ -64,7 +64,6 @@ static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObj
 
 	return TRUE;
 }
-
 
 typedef BOOL (*pcIsHandled)(HANDLE handle);
 typedef BOOL (*pcCloseHandle)(HANDLE handle);

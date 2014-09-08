@@ -376,7 +376,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 			free(priv->tileWorkParams);
 
 #ifdef WITH_PROFILER
-		fprintf(stderr, "\nWARNING: Profiling results probably unusable with multithreaded RemoteFX codec!\n");
+		DEBUG_WARN( "\nWARNING: Profiling results probably unusable with multithreaded RemoteFX codec!\n");
 #endif
 	}
 
@@ -1426,7 +1426,7 @@ out_clean_tiles:
 	free(message->tiles);
 	region16_uninit(&tilesRegion);
 out_free_message:
-	fprintf(stderr, "remoteFx error\n");
+	DEBUG_WARN( "remoteFx error\n");
 	region16_uninit(&rectsRegion);
 	free(message);
 	return 0;

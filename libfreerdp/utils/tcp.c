@@ -26,6 +26,7 @@
 #include <winpr/crt.h>
 #include <winpr/winsock.h>
 
+#include <freerdp/utils/debug.h>
 #include <freerdp/utils/tcp.h>
 
 #include <stdio.h>
@@ -96,7 +97,7 @@ int freerdp_tcp_connect(const char* hostname, int port)
 
 	if (status != 0)
 	{
-		//fprintf(stderr, "tcp_connect: getaddrinfo (%s)\n", gai_strerror(status));
+		//DEBUG_WARN( "tcp_connect: getaddrinfo (%s)\n", gai_strerror(status));
 		return -1;
 	}
 
@@ -111,7 +112,7 @@ int freerdp_tcp_connect(const char* hostname, int port)
 
 		if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) == 0)
 		{
-			fprintf(stderr, "connected to %s:%s\n", hostname, servname);
+			DEBUG_WARN( "connected to %s:%s\n", hostname, servname);
 			break;
 		}
 
@@ -123,7 +124,7 @@ int freerdp_tcp_connect(const char* hostname, int port)
 
 	if (sockfd == -1)
 	{
-		fprintf(stderr, "unable to connect to %s:%s\n", hostname, servname);
+		DEBUG_WARN( "unable to connect to %s:%s\n", hostname, servname);
 		return -1;
 	}
 
@@ -149,13 +150,13 @@ int freerdp_tcp_read(int sockfd, BYTE* data, int length)
 		if (wsa_error == WSAEWOULDBLOCK)
 			return 0;
 
-		fprintf(stderr, "recv() error: %d\n", wsa_error);
+		DEBUG_WARN( "recv() error: %d\n", wsa_error);
 #else
 		/* No data available */
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return 0;
 
-		perror("recv");
+		DEBUG_WARN("recv");
 #endif
 		return -1;
 	}
@@ -178,12 +179,12 @@ int freerdp_tcp_write(int sockfd, BYTE* data, int length)
 		if (wsa_error == WSAEWOULDBLOCK)
 			status = 0;
 		else
-			perror("send");
+			DEBUG_WARN("send");
 #else
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			status = 0;
 		else
-			perror("send");
+			DEBUG_WARN("send");
 #endif
 	}
 
@@ -203,7 +204,7 @@ int freerdp_tcp_wait_read(int sockfd)
 
 	if (sockfd < 1)
 	{
-		fprintf(stderr, "Invalid socket to watch: %d\n", sockfd);
+		DEBUG_WARN( "Invalid socket to watch: %d\n", sockfd);
 		return 0 ;
 	}
 
@@ -240,7 +241,7 @@ int freerdp_tcp_wait_write(int sockfd)
 
 	if (sockfd < 1)
 	{
-		fprintf(stderr, "Invalid socket to watch: %d\n", sockfd);
+		DEBUG_WARN( "Invalid socket to watch: %d\n", sockfd);
 		return 0 ;
 	}
 

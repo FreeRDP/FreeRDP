@@ -26,6 +26,7 @@ set(${MODULE_PREFIX}_SRCS
 	prim_set.c
 	prim_shift.c
 	prim_sign.c
+	prim_YUV.c
 	prim_YCoCg.c
 	primitives.c
 	prim_internal.h)
@@ -100,6 +101,6 @@ endif()
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 
 if(BUILD_TESTING AND ((NOT WIN32) AND (NOT APPLE)))
-#	add_subdirectory(test)
+	add_subdirectory(test)
 endif()
 

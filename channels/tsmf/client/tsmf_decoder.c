@@ -42,7 +42,7 @@ static ITSMFDecoder *tsmf_load_decoder_by_name(const char *name, TS_AM_MEDIA_TYP
 	decoder = entry();
 	if(decoder == NULL)
 	{
-		DEBUG_WARN("failed to call export function in %s", name);
+		CLOG_ERR("failed to call export function in %s", name);
 		return NULL;
 	}
 	if(!decoder->SetFormat(decoder, media_type))

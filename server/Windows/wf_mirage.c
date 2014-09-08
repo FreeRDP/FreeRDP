@@ -92,9 +92,9 @@ BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode)
 
 	if (status != ERROR_SUCCESS)
 	{
-		printf("Error opening RegKey: status=%0X\n", status);
+		DEBUG_WARN("Error opening RegKey: status=%0X\n", status);
 		if (status == ERROR_ACCESS_DENIED) 
-				printf("access denied. Do you have admin privleges?\n");
+				DEBUG_WARN("access denied. Do you have admin privleges?\n");
 		return FALSE;
 	}
 
@@ -104,9 +104,9 @@ BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode)
 
 	if (status != ERROR_SUCCESS)
 	{
-		printf("Error querying RegKey: status=%0X\n", status);
+		DEBUG_WARN("Error querying RegKey: status=%0X\n", status);
 		if (status == ERROR_ACCESS_DENIED) 
-				printf("access denied. Do you have admin privleges?\n");
+				DEBUG_WARN("access denied. Do you have admin privleges?\n");
 		return FALSE;
 	}
 
@@ -120,10 +120,10 @@ BOOL wf_mirror_driver_display_device_attach(wfInfo* wfi, DWORD mode)
 
 		if (status != ERROR_SUCCESS)
 		{	
-			printf("Error writing registry key: %d ", status);
+			DEBUG_WARN("Error writing registry key: %d ", status);
 			if (status == ERROR_ACCESS_DENIED) 
-				printf("access denied. Do you have admin privleges?");
-			printf("\n");
+				DEBUG_WARN("access denied. Do you have admin privleges?");
+			DEBUG_WARN("\n");
 			return FALSE;
 		}
 	}
@@ -199,7 +199,7 @@ BOOL wf_mirror_driver_update(wfInfo* wfi, int mode)
 
 	if ( (mode != MIRROR_LOAD) && (mode != MIRROR_UNLOAD) )
 	{
-		printf("Invalid mirror mode!\n");
+		DEBUG_WARN("Invalid mirror mode!\n");
 		return FALSE;
 	}
 	
@@ -321,29 +321,29 @@ BOOL wf_mirror_driver_activate(wfInfo* wfi)
 {
 	if (!wfi->mirrorDriverActive)
 	{
-		printf("Activating Mirror Driver\n");
+		DEBUG_WARN("Activating Mirror Driver\n");
 
 		if (wf_mirror_driver_find_display_device(wfi) == FALSE)
 		{
-			printf("Could not find dfmirage mirror driver! Is it installed?\n");
+			DEBUG_WARN("Could not find dfmirage mirror driver! Is it installed?\n");
 			return FALSE;
 		}
 
 		if (wf_mirror_driver_display_device_attach(wfi, 1) == FALSE)
 		{
-			printf("Could not attach display device!\n");
+			DEBUG_WARN("Could not attach display device!\n");
 			return FALSE;
 		}
 
 		if (wf_mirror_driver_update(wfi, MIRROR_LOAD) == FALSE)
 		{
-			printf("could not update system with new display settings!\n");
+			DEBUG_WARN("could not update system with new display settings!\n");
 			return FALSE;
 		}
 
 		if (wf_mirror_driver_map_memory(wfi) == FALSE)
 		{
-			printf("Unable to map memory for mirror driver!\n");
+			DEBUG_WARN("Unable to map memory for mirror driver!\n");
 			return FALSE;
 		}
 		wfi->mirrorDriverActive = TRUE;
@@ -356,7 +356,7 @@ void wf_mirror_driver_deactivate(wfInfo* wfi)
 {
 	if (wfi->mirrorDriverActive)
 	{
-		printf("Deactivating Mirror Driver\n");
+		DEBUG_WARN("Deactivating Mirror Driver\n");
 
 		wf_mirror_driver_cleanup(wfi);
 		wf_mirror_driver_display_device_attach(wfi, 0);
