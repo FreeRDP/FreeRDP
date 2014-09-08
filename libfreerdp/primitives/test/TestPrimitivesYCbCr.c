@@ -2151,8 +2151,11 @@ static void test_fill_bitmap_blue_channel(BYTE* data, int width, int height, BYT
 	}
 }
 
-static float TEST_YCbCrToRGB_01[4] = { 1.403f,    0.344f,    0.714f,    1.770f    };
-static float TEST_YCbCrToRGB_02[4] = { 1.402525f, 0.343730f, 0.714401f, 1.769905f };
+#define TEST_FP_TYPE	float
+
+static TEST_FP_TYPE TEST_YCbCrToRGB_01[4] = { 1.403f,             0.344f,              0.714f,              1.770f    };
+static TEST_FP_TYPE TEST_YCbCrToRGB_02[4] = { 1.402525f,          0.343730f,           0.714401f,           1.769905f };
+static TEST_FP_TYPE TEST_YCbCrToRGB_03[4] = { 1.402524948120117L, 0.3437300026416779L, 0.7144010066986084L, 1.769904971122742L };
 
 static INT16 TEST_YCbCr_01[3] = { +115, +1720, -2145 };
 static BYTE TEST_RGB_01[3] = { 37, 161, 227 }; /* incorrect red */
@@ -2163,14 +2166,14 @@ static BYTE TEST_RGB_02[3] = { 21, 140, 221 }; /* incorrect green */
 static INT16 TEST_YCbCr_03[3] = { -504, +1896, -2168 };
 static BYTE TEST_RGB_03[3] = { 17, 140, 217 }; /* incorrect blue */
 
-int test_YCbCr_fp(float coeffs[4], INT16 YCbCr[3], BYTE RGB[3])
+int test_YCbCr_fp(TEST_FP_TYPE coeffs[4], INT16 YCbCr[3], BYTE RGB[3])
 {
 	INT16 R, G, B;
-	float Y, Cb, Cr;
+	TEST_FP_TYPE Y, Cb, Cr;
 
-	Y = (float) (YCbCr[0] + 4096);
-	Cb = (float) (YCbCr[1]);
-	Cr = (float) (YCbCr[2]);
+	Y = (TEST_FP_TYPE) (YCbCr[0] + 4096);
+	Cb = (TEST_FP_TYPE) (YCbCr[1]);
+	Cr = (TEST_FP_TYPE) (YCbCr[2]);
 
 	R = ((INT16) (((Cr * coeffs[0]) + Y + 16.0f)) >> 5);
 	G = ((INT16) ((Y - (Cb * coeffs[1]) - (Cr * coeffs[2]) + 16.0f)) >> 5);
@@ -2196,10 +2199,10 @@ int test_YCbCr_fp(float coeffs[4], INT16 YCbCr[3], BYTE RGB[3])
 	printf("G: A: %3d E: %3d %s\n", G, RGB[1], (G == RGB[1]) ? "" : "***");
 	printf("B: A: %3d E: %3d %s\n", B, RGB[2], (B == RGB[2]) ? "" : "***");
 	printf("Y: %+5d Cb: %+5d Cr: %+5d\n", YCbCr[0], YCbCr[1], YCbCr[2]);
-	printf("[0]: %20.16f\n", coeffs[0]);
-	printf("[1]: %20.16f\n", coeffs[1]);
-	printf("[2]: %20.16f\n", coeffs[2]);
-	printf("[3]: %20.16f\n", coeffs[3]);
+	//printf("[0]: %20.20lf\n", coeffs[0]);
+	//printf("[1]: %20.20lf\n", coeffs[1]);
+	//printf("[2]: %20.20lf\n", coeffs[2]);
+	//printf("[3]: %20.20lf\n", coeffs[3]);
 	printf("--------------------------------\n");
 
 	return 0;
@@ -2219,6 +2222,13 @@ int test_YCbCr_pixels()
 		test_YCbCr_fp(TEST_YCbCrToRGB_02, TEST_YCbCr_01, TEST_RGB_01);
 		test_YCbCr_fp(TEST_YCbCrToRGB_02, TEST_YCbCr_02, TEST_RGB_02);
 		test_YCbCr_fp(TEST_YCbCrToRGB_02, TEST_YCbCr_03, TEST_RGB_03);
+	}
+
+	if (0)
+	{
+		test_YCbCr_fp(TEST_YCbCrToRGB_03, TEST_YCbCr_01, TEST_RGB_01);
+		test_YCbCr_fp(TEST_YCbCrToRGB_03, TEST_YCbCr_02, TEST_RGB_02);
+		test_YCbCr_fp(TEST_YCbCrToRGB_03, TEST_YCbCr_03, TEST_RGB_03);
 	}
 
 	return 0;
