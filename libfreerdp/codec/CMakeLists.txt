@@ -102,50 +102,21 @@ if(WITH_LIBAVCODEC)
 endif()
 
 if(WITH_LIBAVCODEC OR WITH_OPENH264)
-	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		set(arch64 TRUE)
-	else()
-		set(arch64 FALSE)
-	endif()
-
-	if(WITH_H264_ASM)
-		set(H264_ASM  H264_ASM_o)
-		add_definitions(-DWITH_H264_ASM)
-		add_custom_target(${H264_ASM})
-
-		if(arch64)
-			set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/h264_x64.asm)
-			set(OBJ ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${H264_ASM}.dir/h264_x64.asm.o)
-			add_custom_command(TARGET ${H264_ASM}
-				COMMAND nasm ARGS -f elf64 -o ${OBJ} ${SRC})
-		else()
-			set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/h264_x32.asm)
-			set(OBJ ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${H264_ASM}.dir/h264_x32.asm.o)
-			add_custom_command(TARGET ${H264_ASM}
-				COMMAND nasm ARGS -f elf32 -o ${OBJ} ${SRC})
-		endif()
-
-		set(FREERDP_OPENH264_LIBS ${OPENH264_LIBRARIES} ${OBJ})
-	endif()
-
 	if(WITH_H264_SSSE3)
-		set(H264_ASM  H264_ASM_o)
 		add_definitions(-DWITH_H264_SSSE3)
-		add_custom_target(${H264_ASM})
-
-		if(arch64)
-			set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/h264_ssse3_x64.asm)
-			set(OBJ ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${H264_ASM}.dir/h264_ssse3_x64.asm.o)
-			add_custom_command(TARGET ${H264_ASM}
-				COMMAND nasm ARGS -f elf64 -o ${OBJ} ${SRC})
-		else()
-			set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/h264_ssse3_x32.asm)
-			set(OBJ ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${H264_ASM}.dir/h264_ssse3_x32.asm.o)
-			add_custom_command(TARGET ${H264_ASM}
-				COMMAND nasm ARGS -f elf32 -o ${OBJ} ${SRC})
+		set(${MODULE_PREFIX}_SRCS
+			${${MODULE_PREFIX}_SRCS}
+			h264_ssse3.c)
+		
+		if(CMAKE_COMPILER_IS_GNUCC)
+			set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3")
 		endif()
-
-		set(FREERDP_OPENH264_LIBS ${OPENH264_LIBRARIES} ${OBJ})
+		
+		if(MSVC)
+			set(OPTIMIZATION "${OPTIMIZATION} /arch:SSE2")
+		endif()
+		
+		set_property(SOURCE h264_ssse3.c PROPERTY COMPILE_FLAGS ${OPTIMIZATION})
 	endif()
 endif()
 
@@ -177,10 +148,6 @@ if(MONOLITHIC_BUILD)
 else()
 	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT FreeRDPTargets)
-endif()
-
-if(WITH_H264_ASM OR WITH_H264_SSSE3)
-	add_dependencies(${MODULE_NAME} ${H264_ASM})
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")

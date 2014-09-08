@@ -31,12 +31,8 @@
 #include <sys/time.h>
 
 #ifdef WITH_H264_SSSE3
-extern int check_ssse3();
-extern int freerdp_image_yuv420p_to_xrgb(BYTE *pDstData,BYTE **pSrcData,int nWidth,int nHeight,int *iStride,int scanline);
-#else
-#ifdef WITH_H264_ASM
-extern int freerdp_image_yuv_to_xrgb_asm(BYTE *pDstData,BYTE **pSrcData,int nWidth,int nHeight,int iStride0,int iStride1);
-#endif
+extern int freerdp_check_ssse3();
+extern int freerdp_image_yuv420p_to_xrgb_ssse3(BYTE *pDstData,BYTE **pSrcData,int nWidth,int nHeight,int *iStride,int scanline);
 #endif
 
 #define USE_GRAY_SCALE	0
@@ -408,7 +404,6 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	if (pSystemBuffer->iFormat != videoFormatI420)
 		return -1;
 
-	/* Convert I420 (same as IYUV) to XRGB. */
 
 	if (g_H264DumpFrames)
 	{
@@ -416,31 +411,12 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	}
 
 	g_H264FrameId++;
-	
+
 	h264->iStride[0] = pSystemBuffer->iStride[0];
 	h264->iStride[1] = pSystemBuffer->iStride[1];
 	h264->width = pSystemBuffer->iWidth;
 	h264->height = pSystemBuffer->iHeight;
-	
 
-#if 0
-	if (h264_prepare_rgb_buffer(h264, pSystemBuffer->iWidth, pSystemBuffer->iHeight) < 0)
-		return -1;
-
-	gettimeofday(&T1,NULL);
-#ifdef WITH_H264_SSSE3
-	freerdp_image_yuv420p_to_xrgb(h264->data,pYUVData,h264->width,h264->height,pSystemBuffer->iStride[0],pSystemBuffer->iStride[1]);
-#else
-#ifdef WITH_H264_ASM
-	freerdp_image_yuv_to_xrgb_asm(h264->data,pYUVData,h264->width,h264->height,pSystemBuffer->iStride[0],pSystemBuffer->iStride[1]);
-#else
-	freerdp_image_copy_yuv420p_to_xrgb(h264->data, h264->scanline, 0, 0,
-			h264->width, h264->height, pYUVData, pSystemBuffer->iStride, 0, 0);
-#endif
-#endif
-		gettimeofday(&T2,NULL);
-		printf("\tconverting took %u sec %u usec\n",(unsigned int)(T2.tv_sec-T1.tv_sec),(unsigned int)(T2.tv_usec-T1.tv_usec));
-#endif
 
 	return 1;
 }
@@ -677,7 +653,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	BYTE* pDstPoint;
 
 	BYTE** pYUVData;
-	BYTE* pYUVPoint[2];
+	BYTE* pYUVPoint[3];
 
 	RDPGFX_RECT16* rect;
 	int* iStride;
@@ -743,13 +719,16 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 		pYUVPoint[1] = pYUVData[1] + ret;
 		pYUVPoint[2] = pYUVData[2] + ret;
 
-#if 1
+#if 0
 		printf("regionRect: x: %d, y: %d, cx: %d, cy: %d\n",
 		       rect->left, rect->top, cx, cy);
 #endif
 
 #ifdef WITH_H264_SSSE3
-		freerdp_image_yuv420p_to_xrgb(pDstPoint, pYUVPoint, cx, cy, iStride, nDstStep);
+		freerdp_image_yuv420p_to_xrgb_ssse3(pDstPoint, pYUVPoint, cx, cy, iStride, nDstStep);
+#else
+		freerdp_image_copy_yuv420p_to_xrgb(pDstPoint, nDstStep, 0, 0,
+			cx, cy, pYUVPoint, iStride, 0, 0);
 #endif
 	}
 	gettimeofday(&T2,NULL);
@@ -774,9 +753,9 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	h264 = (H264_CONTEXT*) calloc(1, sizeof(H264_CONTEXT));
 
 #ifdef WITH_H264_SSSE3
-	if(check_ssse3()){
+	if(freerdp_check_ssse3()){
 		printf("SSSE3 seems to be not supported on this system, try without WITH_H264_SSSE3 ...");
-		return FALSE;
+		return NULL;
 	}
 #endif
 
