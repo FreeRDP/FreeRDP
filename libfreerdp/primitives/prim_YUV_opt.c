@@ -1,32 +1,32 @@
 /** function for converting YUV420p data to the RGB format (but without any special upconverting)
  * It's completely written in nasm-x86-assembly for intel processors supporting SSSE3 and higher.
- * The target scanline (6th parameter) must be a multiple of 16.
- * iStride[0] must be (target scanline) / 4 or bigger and iStride[1] the next multiple of four
- * of the half of iStride[0] or bigger
+ * The target dstStep (6th parameter) must be a multiple of 16.
+ * srcStep[0] must be (target dstStep) / 4 or bigger and srcStep[1] the next multiple of four
+ * of the half of srcStep[0] or bigger
  */
 
 #include <stdio.h>
 
-#include <emmintrin.h>
-//#include <immintrin.h>
-#include <tmmintrin.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <winpr/sysinfo.h>
 #include <winpr/crt.h>
-
-int freerdp_check_ssse3()
-{
-	if(IsProcessorFeaturePresentEx(PF_EX_SSSE3)&&IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
-		return 0;
-	
-	return 1;
-}
+#include <freerdp/types.h>
+#include <freerdp/primitives.h>
 
 
-int freerdp_image_yuv420p_to_xrgb_ssse3(BYTE *pDstData,BYTE **pSrcData,int nWidth,int nHeight,int *iStride,int scanline)
+#ifdef WITH_SSE2
+
+#include <emmintrin.h>
+#include <tmmintrin.h>
+
+pstatus_t ssse3_YUV420ToRGB_8u_P3AC4R(const BYTE **pSrc, int *srcStep,
+		BYTE *pDst, int dstStep, const prim_size_t *roi)
 {
 	char last_line,last_column;
-	int i,VaddDst,VaddY,VaddUV;
+	int i,nWidth,nHeight,VaddDst,VaddY,VaddU,VaddV;
 	
 	BYTE *UData,*VData,*YData;
 	
@@ -37,9 +37,12 @@ int freerdp_image_yuv420p_to_xrgb_ssse3(BYTE *pDstData,BYTE **pSrcData,int nWidt
 	buffer=_aligned_malloc(4*16,16);
 	
 	
-	YData=pSrcData[0];
-	UData=pSrcData[1];
-	VData=pSrcData[2];
+	YData=(BYTE *)pSrc[0];
+	UData=(BYTE *)pSrc[1];
+	VData=(BYTE *)pSrc[2];
+	
+	nWidth=roi->width;
+	nHeight=roi->height;
 	
 	
 	if((last_column=nWidth&3)){
@@ -48,7 +51,7 @@ int freerdp_image_yuv420p_to_xrgb_ssse3(BYTE *pDstData,BYTE **pSrcData,int nWidt
 			case 2: r7=_mm_set_epi32(0,0,0xFFFFFFFF,0xFFFFFFFF); break;
 			case 3: r7=_mm_set_epi32(0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF); break;
 		}
-		_mm_store_si128(buffer+48,r7);
+		_mm_store_si128(buffer+3,r7);
 		last_column=1;
 	}
 	
@@ -61,10 +64,10 @@ int freerdp_image_yuv420p_to_xrgb_ssse3(BYTE *pDstData,BYTE **pSrcData,int nWidt
 	nHeight=nHeight>>1;
 	
 	
-	VaddDst=(scanline<<1)-(nWidth<<4);
-	VaddY=(iStride[0]<<1)-(nWidth<<2);
-	VaddUV=iStride[1]-(((nWidth<<1)+2)&0xFFFC);
-	
+	VaddDst=(dstStep<<1)-(nWidth<<4);
+	VaddY=(srcStep[0]<<1)-(nWidth<<2);
+	VaddU=srcStep[1]-(((nWidth<<1)+2)&0xFFFC);
+	VaddV=srcStep[2]-(((nWidth<<1)+2)&0xFFFC);
 	
 	
 	while(nHeight-- >0){
@@ -129,7 +132,7 @@ int freerdp_image_yuv420p_to_xrgb_ssse3(BYTE *pDstData,BYTE **pSrcData,int nWidt
 				r1=_mm_add_epi32(r1,r6);
 				r7=_mm_add_epi32(r7,r6);
 				
-				_mm_store_si128(buffer+16,r7);
+				_mm_store_si128(buffer+1,r7);
 				
 /* Now we've prepared U-data. Preparing V-data is actually the same, just with other coefficients */
 				r2=_mm_cvtsi32_si128(*(UINT32 *)VData);
@@ -153,7 +156,7 @@ int freerdp_image_yuv420p_to_xrgb_ssse3(BYTE *pDstData,BYTE **pSrcData,int nWidt
 				r2=_mm_add_epi32(r2,r6);
 				r7=_mm_add_epi32(r7,r6);
 				
-				_mm_store_si128(buffer+32,r7);
+				_mm_store_si128(buffer+2,r7);
 				
 				
 				
@@ -170,8 +173,8 @@ int freerdp_image_yuv420p_to_xrgb_ssse3(BYTE *pDstData,BYTE **pSrcData,int nWidt
 				
 				_mm_store_si128(buffer,r4);
 			}else{
-				r1=_mm_load_si128(buffer+16);
-				r2=_mm_load_si128(buffer+32);
+				r1=_mm_load_si128(buffer+1);
+				r2=_mm_load_si128(buffer+2);
 				r0=_mm_load_si128(buffer);
 			}
 			
@@ -220,17 +223,17 @@ int freerdp_image_yuv420p_to_xrgb_ssse3(BYTE *pDstData,BYTE **pSrcData,int nWidt
 			
 			
 			if(last_column&0x02){
-				r6=_mm_load_si128(buffer+48);
+				r6=_mm_load_si128(buffer+3);
 				r4=_mm_and_si128(r4,r6);
-				r5=_mm_lddqu_si128((__m128i *)pDstData);
+				r5=_mm_lddqu_si128((__m128i *)pDst);
 				r6=_mm_andnot_si128(r6,r5);
 				r4=_mm_or_si128(r4,r6);
 			}
-			_mm_storeu_si128((__m128i *)pDstData,r4);
+			_mm_storeu_si128((__m128i *)pDst,r4);
 			
 			//Y data processing in secound line
 			if(!(last_line&0x02)){
-				r4=_mm_cvtsi32_si128(*(UINT32 *)(YData+iStride[0]));
+				r4=_mm_cvtsi32_si128(*(UINT32 *)(YData+srcStep[0]));
 				r7=_mm_set_epi32(0x80800380,0x80800280,0x80800180,0x80800080);
 				r4=_mm_shuffle_epi8(r4,r7);
 				
@@ -271,28 +274,40 @@ int freerdp_image_yuv420p_to_xrgb_ssse3(BYTE *pDstData,BYTE **pSrcData,int nWidt
 				
 				
 				if(last_column&0x02){
-					r6=_mm_load_si128(buffer+48);
+					r6=_mm_load_si128(buffer+3);
 					r4=_mm_and_si128(r4,r6);
-					r5=_mm_lddqu_si128((__m128i *)(pDstData+scanline));
+					r5=_mm_lddqu_si128((__m128i *)(pDst+dstStep));
 					r6=_mm_andnot_si128(r6,r5);
 					r4=_mm_or_si128(r4,r6);
 					
 					last_column=last_column>>1;
 				}
-				_mm_storeu_si128((__m128i *)(pDstData+scanline),r4);
+				_mm_storeu_si128((__m128i *)(pDst+dstStep),r4);
 			}
 			
-			pDstData+=16;
+			pDst+=16;
 			YData+=4;
 			
 		}while(i<nWidth);
 		
-		pDstData+=VaddDst;
+		pDst+=VaddDst;
 		YData+=VaddY;
-		UData+=VaddUV;
-		VData+=VaddUV;
+		UData+=VaddU;
+		VData+=VaddV;
 	}
 		
 	_aligned_free(buffer);
-	return 0;
+	
+	return PRIMITIVES_SUCCESS;
+}
+#endif
+
+void primitives_init_YUV_opt(primitives_t *prims)
+{
+#ifdef WITH_SSE2
+	if(IsProcessorFeaturePresentEx(PF_EX_SSSE3)&&IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
+	{
+		prims->YUV420ToRGB_8u_P3AC4R=ssse3_YUV420ToRGB_8u_P3AC4R;
+	}
+#endif
 }

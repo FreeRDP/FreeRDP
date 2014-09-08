@@ -101,24 +101,6 @@ if(WITH_LIBAVCODEC)
 	set(FREERDP_LIBAVCODEC_LIBS ${LIBAVCODEC_LIB} ${LIBAVUTIL_LIB})
 endif()
 
-if(WITH_LIBAVCODEC OR WITH_OPENH264)
-	if(WITH_H264_SSSE3)
-		add_definitions(-DWITH_H264_SSSE3)
-		set(${MODULE_PREFIX}_SRCS
-			${${MODULE_PREFIX}_SRCS}
-			h264_ssse3.c)
-		
-		if(CMAKE_COMPILER_IS_GNUCC)
-			set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3")
-		endif()
-		
-		if(MSVC)
-			set(OPTIMIZATION "${OPTIMIZATION} /arch:SSE2")
-		endif()
-		
-		set_property(SOURCE h264_ssse3.c PROPERTY COMPILE_FLAGS ${OPTIMIZATION})
-	endif()
-endif()
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}

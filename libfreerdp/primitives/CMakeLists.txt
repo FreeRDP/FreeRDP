@@ -40,6 +40,7 @@ set(${MODULE_PREFIX}_OPT_SRCS
 	prim_set_opt.c
 	prim_shift_opt.c
 	prim_sign_opt.c
+	prim_YUV_opt.c
 	prim_YCoCg_opt.c)
 
 add_definitions(-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
@@ -55,11 +56,11 @@ endif()
 
 if(WITH_SSE2)
 	if(CMAKE_COMPILER_IS_GNUCC)
-		set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3 -Wdeclaration-after-statement")
+		set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3 -O2 -Wdeclaration-after-statement")
 	endif()
 
 	if(MSVC)
-		set(OPTIMIZATION "${OPTIMIZATION} /arch:SSE2")
+		set(OPTIMIZATION "${OPTIMIZATION} /arch:SSE2 /O2")
 	endif()
 elseif(WITH_NEON)
 	if(CMAKE_COMPILER_IS_GNUCC)
@@ -69,6 +70,16 @@ elseif(WITH_NEON)
 endif()
 
 set_property(SOURCE ${${MODULE_PREFIX}_OPT_SRCS} PROPERTY COMPILE_FLAGS ${OPTIMIZATION})
+
+# always compile with optimization
+if(CMAKE_COMPILER_IS_GNUCC)
+	set_property(SOURCE ${${MODULE_PREFIX}_SRCS} PROPERTY COMPILE_FLAGS "-O2")
+endif()
+
+if(MSVC)
+	set_property(SOURCE ${${MODULE_PREFIX}_SRCS} PROPERTY COMPILE_FLAGS "/O2")
+endif()
+
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_OPT_SRCS})
 

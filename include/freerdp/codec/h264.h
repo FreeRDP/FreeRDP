@@ -29,8 +29,7 @@ typedef struct _H264_CONTEXT H264_CONTEXT;
 typedef BOOL (*pfnH264SubsystemInit)(H264_CONTEXT* h264);
 typedef void (*pfnH264SubsystemUninit)(H264_CONTEXT* h264);
 
-typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight);
+typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize);
 
 struct _H264_CONTEXT_SUBSYSTEM
 {
@@ -50,6 +49,9 @@ struct _H264_CONTEXT
 	UINT32 width;
 	UINT32 height;
 	//int scanline;
+	
+	BYTE* pYUVData[3];
+	int iStride[3];
 
 /*
 <<<<<<< HEAD
