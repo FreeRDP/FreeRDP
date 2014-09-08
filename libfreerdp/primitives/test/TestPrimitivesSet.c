@@ -243,7 +243,7 @@ int test_set32u_func(void)
 }
 
 /* ------------------------------------------------------------------------- */
-static inline void memset32u_naive(
+static INLINE void memset32u_naive(
 	UINT32 val,
 	UINT32 *dst,
 	size_t count)
@@ -275,7 +275,7 @@ int test_set32u_speed(void)
 }
 
 /* ------------------------------------------------------------------------- */
-static inline void memset32s_naive(
+static INLINE void memset32s_naive(
 	INT32 val,
 	INT32 *dst,
 	size_t count)

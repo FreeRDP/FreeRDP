@@ -18,9 +18,11 @@
 
 #include "prim_test.h"
 
+#ifndef _WIN32
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#endif
 
 #include <winpr/sysinfo.h>
 #include <winpr/platform.h>
@@ -83,6 +85,10 @@ void get_random_data(void *buffer, size_t size)
 }
 
 /* ------------------------------------------------------------------------- */
+
+#ifdef _WIN32
+float _delta_time(const struct timespec *t0, const struct timespec *t1) { return 0.0f; }
+#else
 float _delta_time(const struct timespec *t0, const struct timespec *t1)
 {
 	INT64 secs = (INT64) (t1->tv_sec) - (INT64) (t0->tv_sec);
@@ -98,6 +104,7 @@ float _delta_time(const struct timespec *t0, const struct timespec *t1)
 	retval = (double) secs + (double) nsecs / (double) 1000000000.0;
 	return (retval < 0.0) ? 0.0 : (float) retval;
 }
+#endif
 
 /* ------------------------------------------------------------------------- */
 void _floatprint(float t, char *output)
