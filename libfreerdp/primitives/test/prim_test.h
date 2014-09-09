@@ -13,10 +13,6 @@
  * this code may be covered by patents by HP, Microsoft, or other parties.
  */
 
-#ifdef __GNUC__
-# pragma once
-#endif
-
 #ifndef __PRIMTEST_H_INCLUDED__
 #define __PRIMTEST_H_INCLUDED__
 
@@ -34,7 +30,11 @@
 #include <ippi.h>
 #endif
 
+#ifdef _WIN32
+#define ALIGN(x) x
+#else
 #define ALIGN(x) x DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT)
+#endif
 
 #define ABS(_x_) ((_x_) < 0 ? (-(_x_)) : (_x_))
 #define MAX_TEST_SIZE 4096
@@ -112,7 +112,7 @@ extern int test_or_32u_speed(void);
 			int size = size_array[s]; \
 			_prework_; \
 			iter = iterations/size; \
-			sprintf(label, "%s-%-4d", oplabel, size); \
+			sprintf_s(label, "%s-%-4d", oplabel, size); \
 			MEASURE_TIMED(label, iter, test_time, resultNormal[s],  \
 				_funcNormal_); \
 		} \
@@ -128,7 +128,7 @@ extern int test_or_32u_speed(void);
 			int size = size_array[s]; \
 			_prework_; \
 			iter = iterations/size; \
-			sprintf(label, "%s-%s-%-4d", SIMD_TYPE, oplabel, size); \
+			sprintf_s(label, "%s-%s-%-4d", SIMD_TYPE, oplabel, size); \
 			MEASURE_TIMED(label, iter, test_time, resultOpt[s],  \
 				_funcOpt_); \
 		} \
@@ -147,7 +147,7 @@ extern int test_or_32u_speed(void);
 			int size = size_array[s]; \
 			_prework_; \
 			iter = iterations/size; \
-			sprintf(label, "IPP-%s-%-4d", oplabel, size); \
+			sprintf_s(label, "IPP-%s-%-4d", oplabel, size); \
 			MEASURE_TIMED(label, iter, test_time, resultIPP[s],  \
 				_funcIPP_); \
 		} \
@@ -158,6 +158,14 @@ extern int test_or_32u_speed(void);
 
 #define PRIM_NOP do {} while (0)
 /* ------------------------------------------------------------------------- */
+
+#ifdef _WIN32
+#define STD_SPEED_TEST( \
+	_name_, _srctype_, _dsttype_, _prework_, \
+	_doNormal_, _funcNormal_, \
+	_doOpt_,    _funcOpt_,  _flagOpt_, _flagExt_, \
+	_doIPP_,    _funcIPP_)
+#else
 #define STD_SPEED_TEST( \
 	_name_, _srctype_, _dsttype_, _prework_, \
 	_doNormal_, _funcNormal_, \
@@ -210,7 +218,7 @@ static void _name_( \
 			_floatprint(resultOpt[s], sSN); \
 			if (resultNormal[s] > 0.0) \
 			{ \
-				sprintf(sSNp, "%d%%", \
+				sprintf_s(sSNp, "%d%%", \
 					(int) (resultOpt[s] / resultNormal[s] * 100.0 + 0.5)); \
 			} \
 		} \
@@ -219,7 +227,7 @@ static void _name_( \
 			_floatprint(resultIPP[s], sIPP); \
 			if (resultNormal[s] > 0.0) \
 			{ \
-				sprintf(sIPPp, "%d%%", \
+				sprintf_s(sIPPp, "%d%%", \
 					(int) (resultIPP[s] / resultNormal[s] * 100.0 + 0.5)); \
 			} \
 		} \
@@ -228,5 +236,6 @@ static void _name_( \
 	} \
 	free(resultNormal); free(resultOpt);  free(resultIPP); \
 }
+#endif
 
 #endif // !__PRIMTEST_H_INCLUDED__

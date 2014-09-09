@@ -100,7 +100,7 @@ endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 
-if(BUILD_TESTING AND ((NOT WIN32) AND (NOT APPLE)))
+if(BUILD_TESTING AND NOT WIN32 AND NOT APPLE)
 	add_subdirectory(test)
 endif()
 
