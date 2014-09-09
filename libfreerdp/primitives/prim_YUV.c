@@ -27,6 +27,16 @@
 #include "prim_internal.h"
 #include "prim_YUV.h"
 
+/**
+ * | R |    ( | 256     0    403 | |    Y    | )
+ * | G | = (  | 256   -48   -120 | | U - 128 |  ) >> 8
+ * | B |    ( | 256   475      0 | | V - 128 | )
+ *
+ * | Y |    ( |  54   183     18 | | R | )         |  0  |
+ * | U | = (  | -29   -99    128 | | G |  ) >> 8 + | 128 |
+ * | V |    ( | 128  -116    -12 | | B | )         | 128 |
+ */
+
 pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], int srcStep[3],
 		BYTE* pDst, int dstStep, const prim_size_t* roi)
 {
@@ -45,14 +55,14 @@ pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], int srcStep[3],
 	int Vp403, Vp120;
 	BYTE* pRGB = pDst;
 	int nWidth, nHeight;
-	int last_line, last_column;
+	int lastRow, lastCol;
 
 	pY = pSrc[0];
 	pU = pSrc[1];
 	pV = pSrc[2];
 	
-	last_column = roi->width & 0x01;
-	last_line = roi->height & 0x01;
+	lastCol = roi->width & 0x01;
+	lastRow = roi->height & 0x01;
 	
 	nWidth = (roi->width + 1) & ~0x0001;
 	nHeight = (roi->height + 1) & ~0x0001;
@@ -68,15 +78,13 @@ pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], int srcStep[3],
 
 	for (y = 0; y < halfHeight; )
 	{
-		y++;
-		if (y == halfHeight)
-			last_line = last_line << 1;
+		if (++y == halfHeight)
+			lastRow <<= 1;
 
 		for (x = 0; x < halfWidth; )
 		{
-			x++;
-			if (x == halfWidth)
-				last_column = last_column << 1;
+			if (++x == halfWidth)
+				lastCol <<= 1;
 
 			U = *pU++;
 			V = *pV++;
@@ -121,7 +129,7 @@ pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], int srcStep[3],
 
 			/* 2nd pixel */
 
-			if (!(last_column & 0x02))
+			if (!(lastCol & 0x02))
 			{
 				Y = *pY++;
 				Yp = Y << 8;
@@ -154,7 +162,7 @@ pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], int srcStep[3],
 			{
 				pY++;
 				pRGB += 4;
-				last_column = last_column >> 1;
+				lastCol >>= 1;
 			}
 		}
 
@@ -165,9 +173,8 @@ pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], int srcStep[3],
 
 		for (x = 0; x < halfWidth; )
 		{
-			x++;
-			if (x == halfWidth)
-				last_column = last_column << 1;
+			if (++x == halfWidth)
+				lastCol <<= 1;
 
 			U = *pU++;
 			V = *pV++;
@@ -212,7 +219,7 @@ pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], int srcStep[3],
 
 			/* 4th pixel */
 
-			if(!(last_column & 0x02))
+			if (!(lastCol & 0x02))
 			{
 				Y = *pY++;
 				Yp = Y << 8;
@@ -245,7 +252,7 @@ pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* pSrc[3], int srcStep[3],
 			{
 				pY++;
 				pRGB += 4;
-				last_column = last_column >> 1;
+				lastCol >>= 1;
 			}
 		}
 

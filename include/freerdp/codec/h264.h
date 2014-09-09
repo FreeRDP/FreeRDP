@@ -44,31 +44,12 @@ struct _H264_CONTEXT
 {
 	BOOL Compressor;
 
-	//BYTE* data;
-	//UINT32 size;
 	UINT32 width;
 	UINT32 height;
-	//int scanline;
 	
-	BYTE* pYUVData[3];
 	int iStride[3];
-
-/*
-<<<<<<< HEAD
-#ifdef WITH_OPENH264
-	ISVCDecoder* pDecoder;
 	BYTE* pYUVData[3];
-	int iStride[2];
-#endif
 
-#ifdef WITH_LIBAVCODEC
-	AVCodec* codec;
-	AVCodecContext* codecContext;
-	AVCodecParserContext* codecParser;
-	AVFrame* videoFrame;
-#endif
-=======
-*/
 	void* pSystemData;
 	H264_CONTEXT_SUBSYSTEM* subsystem;
 };
