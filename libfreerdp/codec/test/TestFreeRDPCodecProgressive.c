@@ -220,6 +220,8 @@ static int test_image_fill_quarter(BYTE* pDstData, int nDstStep, int nWidth, int
 
 static int test_image_fill_unused_quarters(BYTE* pDstData, int nDstStep, int nWidth, int nHeight, UINT32 color, int quarter)
 {
+	return 1;
+
 	if (quarter == 0)
 	{
 		test_image_fill_quarter(pDstData, nDstStep, nWidth, nHeight, color, 1);
@@ -799,29 +801,21 @@ int test_progressive_load_bitmaps(char* ms_sample_path, EGFX_SAMPLE_FILE bitmaps
 	return 1;
 }
 
-static int test_memcmp_offset(const BYTE* mem1, const BYTE* mem2, int size)
+static int test_memcmp_count(const BYTE* mem1, const BYTE* mem2, int size, int margin)
 {
-	int index = 0;
-
-	while ((index < size) && (*mem1 == *mem2))
-	{
-		mem1++;
-		mem2++;
-		index++;
-	}
-
-	return (index == size) ? 1 : -index;
-}
-
-static int test_memcmp_count(const BYTE* mem1, const BYTE* mem2, int size)
-{
+	int error;
 	int count = 0;
 	int index = 0;
 
 	for (index = 0; index < size; index++)
 	{
 		if (*mem1 != *mem2)
-			count++;
+		{
+			error = (*mem1 > *mem2) ? *mem1 - *mem2 : *mem2 - *mem1;
+
+			if (error > margin)
+				count++;
+		}
 
 		mem1++;
 		mem2++;
@@ -832,7 +826,6 @@ static int test_memcmp_count(const BYTE* mem1, const BYTE* mem2, int size)
 
 int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE files[4], EGFX_SAMPLE_FILE bitmaps[4], int quarter, int count)
 {
-	int cmp;
 	int cnt;
 	int pass;
 	int size;
@@ -920,24 +913,13 @@ int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE f
 		}
 
 		size = bitmaps[pass].size;
-		cmp = test_memcmp_offset(g_DstData, bitmaps[pass].buffer, size);
-		cnt = test_memcmp_count(g_DstData, bitmaps[pass].buffer, size);
+		cnt = test_memcmp_count(g_DstData, bitmaps[pass].buffer, size, 1);
 
-		if (cmp <= 0)
+		if (cnt)
 		{
-#if 0
 			float rate = ((float) cnt) / ((float) size) * 100.0f;
-
-			cmp *= -1;
-
 			printf("Progressive RemoteFX decompression failure\n");
-
-			printf("Actual, Expected (offset: %d diff: %d/%d = %.3f%%):\n",
-					cmp, cnt, size, rate);
-
-			winpr_HexDump(&g_DstData[cmp], 16);
-			winpr_HexDump(&bitmaps[pass].buffer[cmp], 16);
-#endif
+			printf("Actual, Expected (%d/%d = %.3f%%):\n", cnt, size, rate);
 		}
 
 		//WLog_Image(progressive->log, WLOG_TRACE, g_DstData, g_Width, g_Height, 32);
@@ -957,6 +939,9 @@ int test_progressive_ms_sample(char* ms_sample_path)
 	g_Width = 1920;
 	g_Height = 1080;
 	g_DstStep = g_Width * 4;
+
+	ZeroMemory(files, sizeof(files));
+	ZeroMemory(bitmaps, sizeof(bitmaps));
 
 	status = test_progressive_load_files(ms_sample_path, files);
 
@@ -990,9 +975,9 @@ int test_progressive_ms_sample(char* ms_sample_path)
 
 	/* image 2 */
 
-	if (1)
+	if (0)
 	{
-		printf("\nSample Image 2\n");
+		printf("\nSample Image 2\n"); /* sample data is in incorrect order */
 		test_image_fill(g_DstData, g_DstStep, 0, 0, g_Width, g_Height, 0xFF000000);
 		test_progressive_decode(progressive, files[1][0], bitmaps[1][0], 0, count);
 		test_progressive_decode(progressive, files[1][1], bitmaps[1][1], 1, count);
@@ -1002,9 +987,9 @@ int test_progressive_ms_sample(char* ms_sample_path)
 
 	/* image 3 */
 
-	if (1)
+	if (0)
 	{
-		printf("\nSample Image 3\n");
+		printf("\nSample Image 3\n"); /* sample data is in incorrect order */
 		test_image_fill(g_DstData, g_DstStep, 0, 0, g_Width, g_Height, 0xFF000000);
 		test_progressive_decode(progressive, files[2][0], bitmaps[2][0], 0, count);
 		test_progressive_decode(progressive, files[2][1], bitmaps[2][1], 1, count);

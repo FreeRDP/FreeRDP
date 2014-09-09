@@ -2076,26 +2076,9 @@ static UINT32 TEST_XRGB_IMAGE[4096] =
 	0xFF169ff8, 0xFF159ef7, 0xFF149df7, 0xFF139cf6, 0xFF129bf5, 0xFF129bf5, 0xFF129bf5, 0xFF129bf5
 };
 
-static int test_bmp_cmp_offset(const BYTE* mem1, const BYTE* mem2, int size, int channel)
+static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int channel, int margin)
 {
-	int index = 0;
-
-	size /= 4;
-	mem1 += channel;
-	mem2 += channel;
-
-	while ((index < size) && (*mem1 == *mem2))
-	{
-		mem1 += 4;
-		mem2 += 4;
-		index++;
-	}
-
-	return (index == size) ? 1 : -index;
-}
-
-static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int channel)
-{
+	int error;
 	int count = 0;
 	int index = 0;
 
@@ -2106,7 +2089,12 @@ static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int 
 	for (index = 0; index < size; index++)
 	{
 		if (*mem1 != *mem2)
-			count++;
+		{
+			error = (*mem1 > *mem2) ? *mem1 - *mem2 : *mem2 - *mem1;
+
+			if (error > margin)
+				count++;
+		}
 
 		mem1 += 4;
 		mem2 += 4;
@@ -2115,8 +2103,10 @@ static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int 
 	return count;
 }
 
-static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size, int channel)
+static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size, int channel, int margin)
 {
+	int x, y;
+	int error[3];
 	UINT32 pixel;
 	int count = 0;
 	int index = 0;
@@ -2142,10 +2132,19 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 			Cb = TEST_CB_COMPONENT[index];
 			Cr = TEST_CR_COMPONENT[index];
 
-			printf("Idx: %d Y: %+5d Cb: %+5d Cr: %+5d Actual: R: %3d G: %3d B: %3d Expected: R: %3d G: %3d B: %3d\n",
-					index, Y, Cb, Cr, R, G, B, eR, eG, eB);
+			x = index % 64;
+			y = (index - x) / 64;
 
-			count++;
+			error[0] = (R > eR) ? R - eR : eR - R;
+			error[1] = (G > eG) ? G - eG : eG - G;
+			error[2] = (B > eB) ? B - eB : eB - B;
+
+			if ((error[0] > margin) || (error[1] > margin) || (error[2] > margin))
+			{
+				printf("(%2d,%2d)    Y: %+5d Cb: %+5d Cr: %+5d    R: %03d/%03d G: %03d/%03d B: %03d/%03d    %d %d %d\n",
+						x, y, Y, Cb, Cr, R, eR, G, eG, B, eB, R - eR, G - eG, B - eB);
+				count++;
+			}
 		}
 
 		actual += 4;
@@ -2178,35 +2177,42 @@ static TEST_FP_TYPE TEST_YCbCrToRGB_01[4] = { 1.403f,             0.344f,       
 static TEST_FP_TYPE TEST_YCbCrToRGB_02[4] = { 1.402525f,          0.343730f,           0.714401f,           1.769905f };
 static TEST_FP_TYPE TEST_YCbCrToRGB_03[4] = { 1.402524948120117L, 0.3437300026416779L, 0.7144010066986084L, 1.769904971122742L };
 
-static INT16 TEST_YCbCr_01[3] = { +115, +1720, -2145 };
-static BYTE TEST_RGB_01[3] = { 37, 161, 227 }; /* incorrect red */
+static INT16 TEST_YCbCr_01[3] = { +3443, -1863, +272 };
+static BYTE TEST_RGB_01[3] = { 247, 249, 132 };
 
-static INT16 TEST_YCbCr_02[3] = { -450, +1938, -2126 };
-static BYTE TEST_RGB_02[3] = { 21, 140, 221 }; /* incorrect green */
+static INT16 TEST_YCbCr_02[3] = { +1086, +1584, -2268 };
+static BYTE TEST_RGB_02[3] = { 62, 195, 249 };
 
-static INT16 TEST_YCbCr_03[3] = { -504, +1896, -2168 };
-static BYTE TEST_RGB_03[3] = { 17, 140, 217 }; /* incorrect blue */
+static INT16 TEST_YCbCr_03[3] = { -576, +2002, -2179 };
+static BYTE TEST_RGB_03[3] = { 15, 137, 221 };
 
 int test_YCbCr_fp(TEST_FP_TYPE coeffs[4], INT16 YCbCr[3], BYTE RGB[3])
 {
 	INT16 R, G, B;
 	TEST_FP_TYPE Y, Cb, Cr;
 	TEST_FP_TYPE fR, fG, fB;
+	TEST_FP_TYPE fR1, fR2;
 
 	Y = (TEST_FP_TYPE) (YCbCr[0] + 4096);
 	Cb = (TEST_FP_TYPE) (YCbCr[1]);
 	Cr = (TEST_FP_TYPE) (YCbCr[2]);
 
 #if 1
+	fR1 = Cr * coeffs[0];
+	fR2 = fR1 + Y + 16.0f;
+
 	fR = ((Cr * coeffs[0]) + Y + 16.0f);
 	fG = (Y - (Cb * coeffs[1]) - (Cr * coeffs[2]) + 16.0f);
 	fB = ((Cb * coeffs[3]) + Y + 16.0f);
 
-	printf("fR: %f fG: %f fB: %f\n", fR, fG, fB);
+	printf("fR: %f fG: %f fB: %f fY: %f\n", fR, fG, fB, Y);
 
 	R = (INT16) fR;
 	G = (INT16) fG;
 	B = (INT16) fB;
+
+	printf("mR: %d mG: %d mB: %d\n",
+			(R - 16) % 32, (G - 16) % 32, (B - 16) % 32);
 
 	printf("iR: %d iG: %d iB: %d\n", R, G, B);
 
@@ -2280,11 +2286,11 @@ int test_YCbCr_pixels()
 int TestPrimitivesYCbCr(int argc, char* argv[])
 {
 	int size;
-	int cmp[3];
 	int cnt[3];
 	float err[3];
 	BYTE* actual;
 	BYTE* expected;
+	int margin = 1;
 	INT16* pYCbCr[3];
 	const primitives_t* prims = primitives_get();
 	static const prim_size_t roi_64x64 = { 64, 64 };
@@ -2351,33 +2357,30 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 		test_fill_bitmap_channel(expected, 64, 64, 0, 0); /* blue */
 	}
 
-	cmp[2] = test_bmp_cmp_offset(actual, expected, size, 2); /* red */
-	cnt[2] = test_bmp_cmp_count(actual, expected, size, 2); /* red */
+	cnt[2] = test_bmp_cmp_count(actual, expected, size, 2, margin); /* red */
 	err[2] = ((float) cnt[2]) / ((float) size / 4) * 100.0f;
 
-	cmp[1] = test_bmp_cmp_offset(actual, expected, size, 1); /* green */
-	cnt[1] = test_bmp_cmp_count(actual, expected, size, 1); /* green */
+	cnt[1] = test_bmp_cmp_count(actual, expected, size, 1, margin); /* green */
 	err[1] = ((float) cnt[1]) / ((float) size / 4) * 100.0f;
 
-	cmp[0] = test_bmp_cmp_offset(actual, expected, size, 0); /* blue */
-	cnt[0] = test_bmp_cmp_count(actual, expected, size, 0); /* blue */
+	cnt[0] = test_bmp_cmp_count(actual, expected, size, 0, margin); /* blue */
 	err[0] = ((float) cnt[0]) / ((float) size / 4) * 100.0f;
 
-	if (0)
+	if (cnt[0] || cnt[1] || cnt[2])
 	{
 		printf("Red Error Dump:\n");
-		test_bmp_cmp_dump(actual, expected, size, 2); /* red */
+		test_bmp_cmp_dump(actual, expected, size, 2, margin); /* red */
 
 		printf("Green Error Dump:\n");
-		test_bmp_cmp_dump(actual, expected, size, 1); /* green */
+		test_bmp_cmp_dump(actual, expected, size, 1, margin); /* green */
 
 		printf("Blue Error Dump:\n");
-		test_bmp_cmp_dump(actual, expected, size, 0); /* blue */
-	}
+		test_bmp_cmp_dump(actual, expected, size, 0, margin); /* blue */
 
-	printf("R: diff: %d (%f%%)\n", cnt[2], err[2]);
-	printf("G: diff: %d (%f%%)\n", cnt[1], err[1]);
-	printf("B: diff: %d (%f%%)\n", cnt[0], err[0]);
+		printf("R: diff: %d (%f%%)\n", cnt[2], err[2]);
+		printf("G: diff: %d (%f%%)\n", cnt[1], err[1]);
+		printf("B: diff: %d (%f%%)\n", cnt[0], err[0]);
+	}
 
 	_aligned_free(actual);
 
