@@ -2,6 +2,7 @@
 #include "prim_test.h"
 
 #include <winpr/print.h>
+#include <freerdp/codec/color.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -2075,78 +2076,98 @@ static UINT32 TEST_XRGB_IMAGE[4096] =
 	0xFF169ff8, 0xFF159ef7, 0xFF149df7, 0xFF139cf6, 0xFF129bf5, 0xFF129bf5, 0xFF129bf5, 0xFF129bf5
 };
 
-static int test_memcmp_offset(const BYTE* mem1, const BYTE* mem2, int size)
+static int test_bmp_cmp_offset(const BYTE* mem1, const BYTE* mem2, int size, int channel)
 {
 	int index = 0;
 
+	size /= 4;
+	mem1 += channel;
+	mem2 += channel;
+
 	while ((index < size) && (*mem1 == *mem2))
 	{
-		mem1++;
-		mem2++;
+		mem1 += 4;
+		mem2 += 4;
 		index++;
 	}
 
 	return (index == size) ? 1 : -index;
 }
 
-static int test_memcmp_count(const BYTE* mem1, const BYTE* mem2, int size)
+static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int channel)
 {
 	int count = 0;
 	int index = 0;
+
+	size /= 4;
+	mem1 += channel;
+	mem2 += channel;
 
 	for (index = 0; index < size; index++)
 	{
 		if (*mem1 != *mem2)
 			count++;
 
-		mem1++;
-		mem2++;
+		mem1 += 4;
+		mem2 += 4;
 	}
 
 	return count;
 }
 
-static void test_fill_bitmap_red_channel(BYTE* data, int width, int height, BYTE value)
+static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size, int channel)
 {
-	int i, j;
-	UINT32* pixel;
+	UINT32 pixel;
+	int count = 0;
+	int index = 0;
+	BYTE R, G, B;
+	BYTE eR, eG, eB;
+	INT16 Y, Cb, Cr;
 
-	for (i = 0; i < height; i++)
+	size /= 4;
+	actual += channel;
+	expected += channel;
+
+	for (index = 0; index < size; index++)
 	{
-		for (j = 0; j < width; j++)
+		if (*actual != *expected)
 		{
-			pixel = (UINT32*) &data[((i * width) + j) * 4];
-			*pixel = ((*pixel & 0xFF00FFFF) | (value << 16));
+			pixel = *((UINT32*) &actual[-channel]);
+			GetRGB32(R, G, B, pixel);
+
+			pixel = *((UINT32*) &expected[-channel]);
+			GetRGB32(eR, eG, eB, pixel);
+
+			Y = TEST_Y_COMPONENT[index];
+			Cb = TEST_CB_COMPONENT[index];
+			Cr = TEST_CR_COMPONENT[index];
+
+			printf("Idx: %d Y: %+5d Cb: %+5d Cr: %+5d Actual: R: %3d G: %3d B: %3d Expected: R: %3d G: %3d B: %3d\n",
+					index, Y, Cb, Cr, R, G, B, eR, eG, eB);
+
+			count++;
 		}
+
+		actual += 4;
+		expected += 4;
 	}
+
+	return count;
 }
 
-static void test_fill_bitmap_green_channel(BYTE* data, int width, int height, BYTE value)
+static void test_fill_bitmap_channel(BYTE* data, int width, int height, BYTE value, int nChannel)
 {
-	int i, j;
-	UINT32* pixel;
+	int x, y;
+	BYTE* pChannel;
 
-	for (i = 0; i < height; i++)
+	pChannel = data + nChannel;
+
+	for (y = 0; y < height; y++)
 	{
-		for (j = 0; j < width; j++)
+		for (x = 0; x < width; x++)
 		{
-			pixel = (UINT32*) &data[((i * width) + j) * 4];
-			*pixel = ((*pixel & 0xFFFF00FF) | (value << 8));
-		}
-	}
-}
-
-static void test_fill_bitmap_blue_channel(BYTE* data, int width, int height, BYTE value)
-{
-	int i, j;
-	UINT32* pixel;
-
-	for (i = 0; i < height; i++)
-	{
-		for (j = 0; j < width; j++)
-		{
-			pixel = (UINT32*) &data[((i * width) + j) * 4];
-			*pixel = ((*pixel & 0xFFFFFF00) | (value));
+			*pChannel = value;
+			pChannel += 4;
 		}
 	}
 }
@@ -2170,14 +2191,36 @@ int test_YCbCr_fp(TEST_FP_TYPE coeffs[4], INT16 YCbCr[3], BYTE RGB[3])
 {
 	INT16 R, G, B;
 	TEST_FP_TYPE Y, Cb, Cr;
+	TEST_FP_TYPE fR, fG, fB;
 
 	Y = (TEST_FP_TYPE) (YCbCr[0] + 4096);
 	Cb = (TEST_FP_TYPE) (YCbCr[1]);
 	Cr = (TEST_FP_TYPE) (YCbCr[2]);
 
+#if 1
+	fR = ((Cr * coeffs[0]) + Y + 16.0f);
+	fG = (Y - (Cb * coeffs[1]) - (Cr * coeffs[2]) + 16.0f);
+	fB = ((Cb * coeffs[3]) + Y + 16.0f);
+
+	printf("fR: %f fG: %f fB: %f\n", fR, fG, fB);
+
+	R = (INT16) fR;
+	G = (INT16) fG;
+	B = (INT16) fB;
+
+	printf("iR: %d iG: %d iB: %d\n", R, G, B);
+
+	R >>= 5;
+	G >>= 5;
+	B >>= 5;
+
+	printf("R5: %d G5: %d B5: %d\n", R, G, B);
+
+#else
 	R = ((INT16) (((Cr * coeffs[0]) + Y + 16.0f)) >> 5);
 	G = ((INT16) ((Y - (Cb * coeffs[1]) - (Cr * coeffs[2]) + 16.0f)) >> 5);
 	B = ((INT16) (((Cb * coeffs[3]) + Y + 16.0f)) >> 5);
+#endif
 
 	if (R < 0)
 		R = 0;
@@ -2203,7 +2246,7 @@ int test_YCbCr_fp(TEST_FP_TYPE coeffs[4], INT16 YCbCr[3], BYTE RGB[3])
 	//printf("[1]: %20.20lf\n", coeffs[1]);
 	//printf("[2]: %20.20lf\n", coeffs[2]);
 	//printf("[3]: %20.20lf\n", coeffs[3]);
-	printf("--------------------------------\n");
+	printf("--------------------------------\n\n");
 
 	return 0;
 }
@@ -2236,16 +2279,17 @@ int test_YCbCr_pixels()
 
 int TestPrimitivesYCbCr(int argc, char* argv[])
 {
-	int cmp;
-	int cnt;
 	int size;
+	int cmp[3];
+	int cnt[3];
+	float err[3];
 	BYTE* actual;
 	BYTE* expected;
 	INT16* pYCbCr[3];
 	const primitives_t* prims = primitives_get();
 	static const prim_size_t roi_64x64 = { 64, 64 };
 
-	return test_YCbCr_pixels();
+	//return test_YCbCr_pixels();
 
 	expected = (BYTE*) TEST_XRGB_IMAGE;
 
@@ -2289,40 +2333,51 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 		_aligned_free(pSrcDst[2]);
 	}
 
-	if (1)
+	if (0)
 	{
-		test_fill_bitmap_red_channel(actual, 64, 64, 0);
-		test_fill_bitmap_red_channel(expected, 64, 64, 0);
-	}
-
-	if (1)
-	{
-		test_fill_bitmap_green_channel(actual, 64, 64, 0);
-		test_fill_bitmap_green_channel(expected, 64, 64, 0);
+		test_fill_bitmap_channel(actual, 64, 64, 0, 2); /* red */
+		test_fill_bitmap_channel(expected, 64, 64, 0, 2); /* red */
 	}
 
 	if (0)
 	{
-		test_fill_bitmap_blue_channel(actual, 64, 64, 0);
-		test_fill_bitmap_blue_channel(expected, 64, 64, 0);
+		test_fill_bitmap_channel(actual, 64, 64, 0, 1); /* green */
+		test_fill_bitmap_channel(expected, 64, 64, 0, 1); /* green */
 	}
 
-	cmp = test_memcmp_offset(actual, expected, size);
-	cnt = test_memcmp_count(actual, expected, size);
-
-	if (cmp <= 0)
+	if (0)
 	{
-		cmp *= -1;
-		float rate = ((float) cnt) / ((float) size) * 100.0f;
-
-		printf("YCbCr to RGB conversion failure\n");
-
-		printf("Actual, Expected (offset: %d diff: %d/%d = %d%%):\n",
-				cmp, cnt, size, (int) rate);
-
-		winpr_HexDump(&actual[cmp], 16);
-		winpr_HexDump(&expected[cmp], 16);
+		test_fill_bitmap_channel(actual, 64, 64, 0, 0); /* blue */
+		test_fill_bitmap_channel(expected, 64, 64, 0, 0); /* blue */
 	}
+
+	cmp[2] = test_bmp_cmp_offset(actual, expected, size, 2); /* red */
+	cnt[2] = test_bmp_cmp_count(actual, expected, size, 2); /* red */
+	err[2] = ((float) cnt[2]) / ((float) size / 4) * 100.0f;
+
+	cmp[1] = test_bmp_cmp_offset(actual, expected, size, 1); /* green */
+	cnt[1] = test_bmp_cmp_count(actual, expected, size, 1); /* green */
+	err[1] = ((float) cnt[1]) / ((float) size / 4) * 100.0f;
+
+	cmp[0] = test_bmp_cmp_offset(actual, expected, size, 0); /* blue */
+	cnt[0] = test_bmp_cmp_count(actual, expected, size, 0); /* blue */
+	err[0] = ((float) cnt[0]) / ((float) size / 4) * 100.0f;
+
+	if (0)
+	{
+		printf("Red Error Dump:\n");
+		test_bmp_cmp_dump(actual, expected, size, 2); /* red */
+
+		printf("Green Error Dump:\n");
+		test_bmp_cmp_dump(actual, expected, size, 1); /* green */
+
+		printf("Blue Error Dump:\n");
+		test_bmp_cmp_dump(actual, expected, size, 0); /* blue */
+	}
+
+	printf("R: diff: %d (%f%%)\n", cnt[2], err[2]);
+	printf("G: diff: %d (%f%%)\n", cnt[1], err[1]);
+	printf("B: diff: %d (%f%%)\n", cnt[0], err[0]);
 
 	_aligned_free(actual);
 
