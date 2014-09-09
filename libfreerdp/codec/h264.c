@@ -26,40 +26,16 @@
 #include <winpr/bitstream.h>
 
 #include <freerdp/primitives.h>
-
 #include <freerdp/codec/h264.h>
 
-int h264_prepare_rgb_buffer(H264_CONTEXT* h264, int width, int height)
-{
-	UINT32 size;
+#include <sys/time.h>
 
-	h264->width = width;
-	h264->height = height;
-	h264->scanline = h264->width * 4;
-	size = h264->scanline * h264->height;
-
-	if (size > h264->size)
-	{
-		h264->size = size;
-
-		if (!h264->data)
-			h264->data = (BYTE*) _aligned_malloc(h264->size, 16);
-		else
-			h264->data = (BYTE*) _aligned_realloc(h264->data, h264->size, 16);
-	}
-
-	if (!h264->data)
-		return -1;
-
-	return 1;
-}
 
 /**
  * Dummy subsystem
  */
 
-static int dummy_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
-	BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
+static int dummy_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 {
 	return -1;
 }
@@ -104,17 +80,14 @@ static void openh264_trace_callback(H264_CONTEXT* h264, int level, const char* m
 	printf("%d - %s\n", level, message);
 }
 
-static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
-	BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
+static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 {
-	int srcStep[3];
-	prim_size_t roi;
-	BYTE* pYUVData[3];
 	DECODING_STATE state;
 	SBufferInfo sBufferInfo;
 	SSysMEMBuffer* pSystemBuffer;
-	primitives_t* prims = primitives_get();
 	H264_CONTEXT_OPENH264* sys = (H264_CONTEXT_OPENH264*) h264->pSystemData;
+
+	struct timeval T1,T2;
 
 	if (!sys->pDecoder)
 		return -1;
@@ -123,17 +96,18 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	 * Decompress the image.  The RDP host only seems to send I420 format.
 	 */
 
-	pYUVData[0] = NULL;
-	pYUVData[1] = NULL;
-	pYUVData[2] = NULL;
+	h264->pYUVData[0] = NULL;
+	h264->pYUVData[1] = NULL;
+	h264->pYUVData[2] = NULL;
 
 	ZeroMemory(&sBufferInfo, sizeof(sBufferInfo));
 
+	gettimeofday(&T1,NULL);
 	state = (*sys->pDecoder)->DecodeFrame2(
 		sys->pDecoder,
 		pSrcData,
 		SrcSize,
-		pYUVData,
+		h264->pYUVData,
 		&sBufferInfo);
 
 	/**
@@ -144,13 +118,16 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	 */
 
 	if (sBufferInfo.iBufferStatus != 1)
-		state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, NULL, 0, pYUVData, &sBufferInfo);
+		state = (*sys->pDecoder)->DecodeFrame2(sys->pDecoder, NULL, 0, h264->pYUVData, &sBufferInfo);
+	
+	gettimeofday(&T2,NULL);
+	printf("OpenH264: decoding took: %u sec %u usec\n",(unsigned int)(T2.tv_sec-T1.tv_sec),(unsigned int)(T2.tv_usec-T1.tv_usec));
 
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
 
 #if 0
 	printf("h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]\n",
-		state, pYUVData[0], pYUVData[1], pYUVData[2], sBufferInfo.iBufferStatus,
+		state, h264->pYUVData[0], h264->pYUVData[1], h264->pYUVData[2], sBufferInfo.iBufferStatus,
 		pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
 		pSystemBuffer->iStride[0], pSystemBuffer->iStride[1]);
 #endif
@@ -158,27 +135,21 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	if (state != 0)
 		return -1;
 
-	if (!pYUVData[0] || !pYUVData[1] || !pYUVData[2])
-		return -1;
-
 	if (sBufferInfo.iBufferStatus != 1)
-		return -1;
+		return -2;
 
 	if (pSystemBuffer->iFormat != videoFormatI420)
 		return -1;
 
-	if (h264_prepare_rgb_buffer(h264, pSystemBuffer->iWidth, pSystemBuffer->iHeight) < 0)
+	if (!h264->pYUVData[0] || !h264->pYUVData[1] || !h264->pYUVData[2])
 		return -1;
 
-	roi.width = h264->width;
-	roi.height = h264->height;
+	h264->iStride[0] = pSystemBuffer->iStride[0];
+	h264->iStride[1] = pSystemBuffer->iStride[1];
+	h264->iStride[2] = pSystemBuffer->iStride[1];
 
-	/* convert iStride[2] to srcStep[3] */
-	srcStep[0] = pSystemBuffer->iStride[0];
-	srcStep[1] = pSystemBuffer->iStride[1];
-	srcStep[2] = pSystemBuffer->iStride[1];
-
-	prims->YUV420ToRGB_8u_P3AC4R((const BYTE**) pYUVData, srcStep, h264->data, h264->scanline, &roi);
+	h264->width = pSystemBuffer->iWidth;
+	h264->height = pSystemBuffer->iHeight;
 
 	return 1;
 }
@@ -307,24 +278,25 @@ struct _H264_CONTEXT_LIBAVCODEC
 };
 typedef struct _H264_CONTEXT_LIBAVCODEC H264_CONTEXT_LIBAVCODEC;
 
-static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
-	BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
+static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
 {
 	int status;
-	int srcStep[3];
 	int gotFrame = 0;
 	AVPacket packet;
-	prim_size_t roi;
-	const BYTE* pSrc[3];
-	primitives_t* prims = primitives_get();
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*) h264->pSystemData;
+
+	struct timeval T1,T2;
 
 	av_init_packet(&packet);
 
 	packet.data = pSrcData;
 	packet.size = SrcSize;
 
+	gettimeofday(&T1,NULL);
 	status = avcodec_decode_video2(sys->codecContext, sys->videoFrame, &gotFrame, &packet);
+	gettimeofday(&T2,NULL);
+
+	printf("libavcodec: decoding took: %u sec %u usec\n",(unsigned int)(T2.tv_sec-T1.tv_sec),(unsigned int)(T2.tv_usec-T1.tv_usec));
 
 	if (status < 0)
 	{
@@ -342,22 +314,19 @@ static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcS
 
 	if (gotFrame)
 	{
-		if (h264_prepare_rgb_buffer(h264, sys->videoFrame->width, sys->videoFrame->height) < 0)
-			return -1;
+		h264->pYUVData[0] = sys->videoFrame->data[0];
+		h264->pYUVData[1] = sys->videoFrame->data[1];
+		h264->pYUVData[2] = sys->videoFrame->data[2];
 
-		roi.width = h264->width;
-		roi.height = h264->height;
+		h264->iStride[0] = sys->videoFrame->linesize[0];
+		h264->iStride[1] = sys->videoFrame->linesize[1];
+		h264->iStride[2] = sys->videoFrame->linesize[2];
 
-		pSrc[0] = sys->videoFrame->data[0];
-		pSrc[1] = sys->videoFrame->data[1];
-		pSrc[2] = sys->videoFrame->data[2];
-
-		srcStep[0] = sys->videoFrame->linesize[0];
-		srcStep[1] = sys->videoFrame->linesize[1];
-		srcStep[2] = sys->videoFrame->linesize[2];
-
-		prims->YUV420ToRGB_8u_P3AC4R(pSrc, srcStep, h264->data, h264->scanline, &roi);
+		h264->width = sys->videoFrame->width;
+		h264->height = sys->videoFrame->height;
 	}
+	else
+		return -2;
 
 	return 1;
 }
@@ -466,40 +435,72 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec =
 #endif
 
 int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nDstHeight, RDPGFX_RECT16* regionRects, int numRegionRects)
 {
 	BYTE* pDstData;
-	UINT32 UncompressedSize;
+	BYTE* pDstPoint;
+
+	BYTE** pYUVData;
+	BYTE* pYUVPoint[3];
+
+	RDPGFX_RECT16* rect;
+	int* iStride;
+	int ret, i, cx, cy;
+	int UncompressedSize;
+	primitives_t *prims = primitives_get();
+	prim_size_t roi;
+	
+	struct timeval T1,T2;
 
 	if (!h264)
 		return -1;
 
 #if 0
-	printf("h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, nDstStep=%d, nXDst=%d, nYDst=%d, nWidth=%d, nHeight=%d)\n",
-		pSrcData, SrcSize, *ppDstData, nDstStep, nXDst, nYDst, nWidth, nHeight);
+	printf("h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, nDstStep=%d, nDstHeight=%d, numRegionRects=%d\n",
+		pSrcData, SrcSize, *ppDstData, nDstStep, nDstHeight, numRegionRects);
 #endif
 
-	/* Allocate a destination buffer (if needed). */
-
-	UncompressedSize = nWidth * nHeight * 4;
-
-	if (UncompressedSize == 0)
+	if (!(pDstData = *ppDstData))
 		return -1;
 
-	pDstData = *ppDstData;
 
-	if (!pDstData)
-	{
-		pDstData = (BYTE*) malloc(UncompressedSize);
+	if ((ret = h264->subsystem->Decompress(h264, pSrcData, SrcSize)) < 0)
+		return ret;
 
-		if (!pDstData)
-			return -1;
 
-		*ppDstData = pDstData;
+	UncompressedSize = h264->width * h264->height * 4;
+	if (UncompressedSize > (nDstStep * nDstHeight))
+		return -1;
+
+	pYUVData = h264->pYUVData;
+	iStride = h264->iStride;
+
+	gettimeofday(&T1,NULL);
+	for (i = 0; i < numRegionRects; i++){
+		rect = &(regionRects[i]);
+		cx = rect->right - rect->left;
+		cy = rect->bottom - rect->top;
+		
+		pDstPoint = pDstData + rect->top * nDstStep + rect->left * 4;
+		pYUVPoint[0] = pYUVData[0] + rect->top * iStride[0] + rect->left;
+
+		pYUVPoint[1] = pYUVData[1] + rect->top/2 * iStride[1] + rect->left/2;
+		pYUVPoint[2] = pYUVData[2] + rect->top/2 * iStride[2] + rect->left/2;
+
+#if 0
+		printf("regionRect: x: %d, y: %d, cx: %d, cy: %d\n",
+		       rect->left, rect->top, cx, cy);
+#endif
+
+		roi.width = cx;
+		roi.height = cy;
+
+		prims->YUV420ToRGB_8u_P3AC4R((const BYTE**) pYUVPoint, iStride, pDstPoint, nDstStep, &roi);
 	}
+	gettimeofday(&T2,NULL);
+	printf("converting took %u sec %u usec\n",(unsigned int)(T2.tv_sec-T1.tv_sec),(unsigned int)(T2.tv_usec-T1.tv_usec));
 
-	return h264->subsystem->Decompress(h264, pSrcData, SrcSize,
-			pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight);
+	return 1;
 }
 
 int h264_compress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize)
@@ -540,9 +541,6 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 
 		h264->subsystem = &g_Subsystem_dummy;
 
-		if (h264_prepare_rgb_buffer(h264, 256, 256) < 0)
-			return NULL;
-
 		if (!h264_context_init(h264))
 		{
 			free(h264);
@@ -557,8 +555,6 @@ void h264_context_free(H264_CONTEXT* h264)
 {
 	if (h264)
 	{
-		_aligned_free(h264->data);
-
 		h264->subsystem->Uninit(h264);
 
 		free(h264);

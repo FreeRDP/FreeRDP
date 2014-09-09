@@ -22,6 +22,7 @@
 pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep, BYTE* pDst, int dstStep, const prim_size_t* roi);
 
 void primitives_init_YUV(primitives_t* prims);
+void primitives_init_YUV_opt(primitives_t* prims);
 void primitives_deinit_YUV(primitives_t* prims);
 
 #endif /* FREERDP_PRIMITIVES_YUV_H */

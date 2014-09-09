@@ -136,6 +136,9 @@ int xf_OutputUpdate(xfContext* xfc)
 
 int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height)
 {
+/** *********************************
+ * to be improved?
+ * *********************************/
 	RECTANGLE_16 invalidRect;
 
 	invalidRect.left = x;
@@ -305,6 +308,7 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 
 	region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
 
+
 	if (!xfc->inGfxFrame)
 		xf_OutputUpdate(xfc);
 
@@ -344,21 +348,13 @@ int xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGF
 int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
 	int status;
-	UINT32 i, j;
-	int nXDst, nYDst;
-	int nWidth, nHeight;
-	int nbUpdateRects;
+	UINT32 i;
 	BYTE* DstData = NULL;
-	RDPGFX_RECT16* rect;
 	H264_CONTEXT* h264;
 	xfGfxSurface* surface;
-	REGION16 updateRegion;
-	RECTANGLE_16 updateRect;
-	RECTANGLE_16* updateRects;
-	REGION16 clippingRects;
-	RECTANGLE_16 clippingRect;
 	RDPGFX_H264_METABLOCK* meta;
 	RDPGFX_H264_BITMAP_STREAM* bs;
+
 
 	h264 = xfc->h264;
 
@@ -377,66 +373,18 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 	DstData = surface->data;
 
 	status = h264_decompress(xfc->h264, bs->data, bs->length, &DstData,
-			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
-
-	printf("xf_SurfaceCommand_H264: status: %d\n", status);
+			PIXEL_FORMAT_XRGB32, surface->scanline , surface->height, meta->regionRects, meta->numRegionRects);
 
 	if (status < 0)
+	{
+		printf("h264_decompress failure: %d\n",status);
 		return -1;
-
-	region16_init(&clippingRects);
+	}
 
 	for (i = 0; i < meta->numRegionRects; i++)
 	{
-		rect = &(meta->regionRects[i]);
-
-		clippingRect.left = rect->left;
-		clippingRect.top = rect->top;
-		clippingRect.right = rect->right;
-		clippingRect.bottom = rect->bottom;
-
-		region16_union_rect(&clippingRects, &clippingRects, &clippingRect);
+		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), (RECTANGLE_16*) &(meta->regionRects[i]));
 	}
-
-	updateRect.left = cmd->left;
-	updateRect.top = cmd->top;
-	updateRect.right = cmd->right;
-	updateRect.bottom = cmd->bottom;
-
-	region16_init(&updateRegion);
-	region16_intersect_rect(&updateRegion, &clippingRects, &updateRect);
-	updateRects = (RECTANGLE_16*) region16_rects(&updateRegion, &nbUpdateRects);
-
-	printf("numRegionRects: %d nbUpdateRects: %d\n", meta->numRegionRects, nbUpdateRects);
-
-	for (j = 0; j < nbUpdateRects; j++)
-	{
-		nXDst = updateRects[j].left;
-		nYDst = updateRects[j].top;
-		nWidth = updateRects[j].right - updateRects[j].left;
-		nHeight = updateRects[j].bottom - updateRects[j].top;
-
-		/* update region from decoded H264 buffer */
-
-		printf("nXDst: %d nYDst: %d nWidth: %d nHeight: %d decoded: width: %d height: %d cmd: left: %d top: %d right: %d bottom: %d\n",
-				nXDst, nYDst, nWidth, nHeight, h264->width, h264->height,
-				cmd->left, cmd->top, cmd->right, cmd->bottom);
-
-		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
-				nXDst, nYDst, nWidth, nHeight,
-				h264->data, PIXEL_FORMAT_XRGB32, h264->scanline, nXDst, nYDst);
-
-		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &updateRects[j]);
-	}
-
-	region16_uninit(&updateRegion);
-
-#if 0
-	/* fill with red for now to distinguish from the rest */
-
-	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
-			cmd->left, cmd->top, cmd->width, cmd->height, 0xFF0000);
-#endif
 
 	if (!xfc->inGfxFrame)
 		xf_OutputUpdate(xfc);
@@ -724,6 +672,7 @@ int xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_
 
 	rectSrc = &(surfaceToSurface->rectSrc);
 	destPt = &surfaceToSurface->destPts[0];
+	/**not needed?*/
 
 	surfaceSrc = (xfGfxSurface*) context->GetSurfaceData(context, surfaceToSurface->surfaceIdSrc);
 
@@ -750,6 +699,8 @@ int xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_
 		invalidRect.top = destPt->y;
 		invalidRect.right = destPt->x + rectSrc->right;
 		invalidRect.bottom = destPt->y + rectSrc->bottom;
+		
+		/**width,height?*/
 
 		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
 	}
@@ -783,7 +734,7 @@ int xf_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU*
 	cacheEntry->alpha = surface->alpha;
 
 	cacheEntry->scanline = (cacheEntry->width + (cacheEntry->width % 4)) * 4;
-	cacheEntry->data = (BYTE*) calloc(1, surface->scanline * surface->height);
+	cacheEntry->data = (BYTE*) calloc(1, cacheEntry->scanline * cacheEntry->height);
 
 	if (!cacheEntry->data)
 		return -1;
