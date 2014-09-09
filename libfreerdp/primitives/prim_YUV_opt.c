@@ -117,15 +117,7 @@ pstatus_t ssse3_YUV420ToRGB_8u_P3AC4R(const BYTE **pSrc, int *srcStep,
 				r0 = _mm_unpacklo_epi16(r0,r4);
 				r4 = _mm_unpackhi_epi16(r7,r4);
 				
-			/* to complete this step, add (?) 128 to each value (rounding ?!)
-			 * yeah, add. in the end this will be subtracted from something,
-			 * because it's part of G: 256*C - (48*D + 120*E - 128), 48*D-128 !
-			 * by the way, our values have become signed dwords during multiplication! */
-				r6 = _mm_set_epi32(128,128,128,128);
-				r0 = _mm_sub_epi32(r0,r6);
-				r4 = _mm_sub_epi32(r4,r6);
-				
-			/* to get B data, we need to prepare a secound value, D*475+128 */
+			/* to get B data, we need to prepare a second value, D*475 */
 				r1 = r2;
 				r7 = _mm_set_epi16(475,475,475,475,475,475,475,475);
 				r1 = _mm_mullo_epi16(r1,r7);
@@ -133,9 +125,6 @@ pstatus_t ssse3_YUV420ToRGB_8u_P3AC4R(const BYTE **pSrc, int *srcStep,
 				r7 = r1;
 				r1 = _mm_unpacklo_epi16(r1,r2);
 				r7 = _mm_unpackhi_epi16(r7,r2);
-				
-				r1 = _mm_add_epi32(r1,r6);
-				r7 = _mm_add_epi32(r7,r6);
 				
 			/* so we got something like this: xmm7:xmm1
 			 * this pair contains values for 16 pixel:
@@ -153,7 +142,7 @@ pstatus_t ssse3_YUV420ToRGB_8u_P3AC4R(const BYTE **pSrc, int *srcStep,
 				
 				r5 = r2;
 				
-			/* this is also known as E*403+128, we need it to convert R data */
+			/* this is also known as E*403, we need it to convert R data */
 				r3 = r2;
 				r7 = _mm_set_epi16(403,403,403,403,403,403,403,403);
 				r2 = _mm_mullo_epi16(r2,r7);
@@ -161,9 +150,6 @@ pstatus_t ssse3_YUV420ToRGB_8u_P3AC4R(const BYTE **pSrc, int *srcStep,
 				r7 = r2;
 				r2 = _mm_unpacklo_epi16(r2,r3);
 				r7 = _mm_unpackhi_epi16(r7,r3);
-				
-				r2 = _mm_add_epi32(r2,r6);
-				r7 = _mm_add_epi32(r7,r6);
 				
 			/* and preserve upper four values for future ... */
 				_mm_store_si128(buffer+2,r7);
@@ -178,7 +164,7 @@ pstatus_t ssse3_YUV420ToRGB_8u_P3AC4R(const BYTE **pSrc, int *srcStep,
 				r7 = _mm_unpackhi_epi16(r7,r5);
 				
 			/* now we complete what we've begun above:
-			 * (48*D-128) + (120*E) = (48*D +120*E -128) */
+			 * (48*D) + (120*E) = (48*D +120*E) */
 				r0 = _mm_add_epi32(r0,r3);
 				r4 = _mm_add_epi32(r4,r7);
 				
