@@ -194,22 +194,22 @@ static int test_image_fill_quarter(BYTE* pDstData, int nDstStep, int nWidth, int
 		case 1:
 			x = nWidth / 2;
 			y = nHeight / 2;
-			width = nWidth;
-			height = nHeight;
+			width = nWidth / 2;
+			height = nHeight /2;
 			break;
 
 		case 2:
-			x = nWidth / 2;
-			y = 0;
-			width = nWidth;
-			height = nHeight / 2;
-			break;
-
-		case 3:
 			x = 0;
 			y = nHeight / 2;
 			width = nWidth / 2;
-			height = nHeight;
+			height = nHeight /2;
+			break;
+
+		case 3:
+			x = nWidth / 2;
+			y = 0;
+			width = nWidth / 2;
+			height = nHeight /2;
 			break;
 	}
 
@@ -878,17 +878,17 @@ int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE f
 				break;
 
 			case 2:
-				clippingRect.left = g_Width / 2;
-				clippingRect.top = 0;
-				clippingRect.right = g_Width;
-				clippingRect.bottom = g_Height / 2;
-				break;
-
-			case 3:
 				clippingRect.left = 0;
 				clippingRect.top = g_Height / 2;
 				clippingRect.right = g_Width / 2;
 				clippingRect.bottom = g_Height;
+				break;
+
+			case 3:
+				clippingRect.left = g_Width / 2;
+				clippingRect.top = 0;
+				clippingRect.right = g_Width;
+				clippingRect.bottom = g_Height / 2;
 				break;
 		}
 
@@ -925,6 +925,7 @@ int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE f
 
 		if (cmp <= 0)
 		{
+#if 0
 			float rate = ((float) cnt) / ((float) size) * 100.0f;
 
 			cmp *= -1;
@@ -936,6 +937,7 @@ int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE f
 
 			winpr_HexDump(&g_DstData[cmp], 16);
 			winpr_HexDump(&bitmaps[pass].buffer[cmp], 16);
+#endif
 		}
 
 		//WLog_Image(progressive->log, WLOG_TRACE, g_DstData, g_Width, g_Height, 32);
@@ -966,7 +968,7 @@ int test_progressive_ms_sample(char* ms_sample_path)
 	if (status < 0)
 		return -1;
 
-	count = 1;
+	count = 4;
 
 	progressive = progressive_context_new(FALSE);
 
@@ -978,7 +980,7 @@ int test_progressive_ms_sample(char* ms_sample_path)
 
 	if (1)
 	{
-		printf("Sample Image 1\n");
+		printf("\nSample Image 1\n");
 		test_image_fill(g_DstData, g_DstStep, 0, 0, g_Width, g_Height, 0xFF000000);
 		test_progressive_decode(progressive, files[0][0], bitmaps[0][0], 0, count);
 		test_progressive_decode(progressive, files[0][1], bitmaps[0][1], 1, count);
@@ -986,11 +988,11 @@ int test_progressive_ms_sample(char* ms_sample_path)
 		test_progressive_decode(progressive, files[0][3], bitmaps[0][3], 3, count);
 	}
 
-	/* image 2 (incorrect) */
+	/* image 2 */
 
-	if (0)
+	if (1)
 	{
-		printf("Sample Image 2\n");
+		printf("\nSample Image 2\n");
 		test_image_fill(g_DstData, g_DstStep, 0, 0, g_Width, g_Height, 0xFF000000);
 		test_progressive_decode(progressive, files[1][0], bitmaps[1][0], 0, count);
 		test_progressive_decode(progressive, files[1][1], bitmaps[1][1], 1, count);
@@ -1000,9 +1002,9 @@ int test_progressive_ms_sample(char* ms_sample_path)
 
 	/* image 3 */
 
-	if (0)
+	if (1)
 	{
-		printf("Sample Image 3\n");
+		printf("\nSample Image 3\n");
 		test_image_fill(g_DstData, g_DstStep, 0, 0, g_Width, g_Height, 0xFF000000);
 		test_progressive_decode(progressive, files[2][0], bitmaps[2][0], 0, count);
 		test_progressive_decode(progressive, files[2][1], bitmaps[2][1], 1, count);

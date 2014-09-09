@@ -897,10 +897,36 @@ INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* state, UINT32 numB
 	return sign ? -mag : mag;
 }
 
+int progressive_rfx_upgrade_state_finish(RFX_PROGRESSIVE_UPGRADE_STATE* state)
+{
+	int pad;
+	wBitStream* srl;
+	wBitStream* raw;
+
+	srl = state->srl;
+	raw = state->raw;
+
+	/* Read trailing bits from RAW/SRL bit streams */
+
+	pad = (raw->position % 8) ? (8 - (raw->position % 8)) : 0;
+
+	if (pad)
+		BitStream_Shift(raw, pad);
+
+	pad = (srl->position % 8) ? (8 - (srl->position % 8)) : 0;
+
+	if (pad)
+		BitStream_Shift(srl, pad);
+
+	if (BitStream_GetRemainingLength(srl) == 8)
+		BitStream_Shift(srl, 8);
+
+	return 1;
+}
+
 int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* state, INT16* buffer,
 		INT16* sign, int length, UINT32 shift, UINT32 bitPos, UINT32 numBits)
 {
-	int pad;
 	int index;
 	INT16 input;
 	wBitStream* srl;
@@ -922,21 +948,6 @@ int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* state, INT16* b
 
 			buffer[index] += (input << shift);
 		}
-
-		/* This is the last band, read padding bits from RAW and SRL bit streams */
-
-		pad = (raw->position % 8) ? (8 - (raw->position % 8)) : 0;
-
-		if (pad)
-			BitStream_Shift(raw, pad);
-
-		pad = (srl->position % 8) ? (8 - (srl->position % 8)) : 0;
-
-		if (pad)
-			BitStream_Shift(srl, pad);
-
-		if (BitStream_GetRemainingLength(srl) == 8)
-			BitStream_Shift(srl, 8);
 
 		return 1;
 	}
@@ -966,10 +977,11 @@ int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* state, INT16* b
 			/* sign == 0, read from srl */
 
 			input = progressive_rfx_srl_read(state, numBits);
+
+			sign[index] = input;
 		}
 
 		buffer[index] += (input << shift);
-		sign[index] = input;
 	}
 
 	return 1;
@@ -1014,6 +1026,7 @@ int progressive_rfx_upgrade_component(PROGRESSIVE_CONTEXT* progressive, RFX_COMP
 
 	state.nonLL = FALSE;
 	progressive_rfx_upgrade_block(&state, &current[4015], &sign[4015], 81, shift->LL3, bitPos->LL3, numBits->LL3); /* LL3 */
+	progressive_rfx_upgrade_state_finish(&state);
 
 	aRawLen = (state.raw->position + 7) / 8;
 	aSrlLen = (state.srl->position + 7) / 8;
