@@ -27,8 +27,7 @@
 #include <freerdp/primitives.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/codec/bitmap.h>
-
-#include "planar.h"
+#include <freerdp/codec/planar.h>
 
 static int planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize, int nWidth, int nHeight)
 {

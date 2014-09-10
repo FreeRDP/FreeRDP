@@ -112,7 +112,7 @@ extern int test_or_32u_speed(void);
 			int size = size_array[s]; \
 			_prework_; \
 			iter = iterations/size; \
-			sprintf_s(label, "%s-%-4d", oplabel, size); \
+			sprintf(label, "%s-%-4d", oplabel, size); \
 			MEASURE_TIMED(label, iter, test_time, resultNormal[s],  \
 				_funcNormal_); \
 		} \
@@ -128,7 +128,7 @@ extern int test_or_32u_speed(void);
 			int size = size_array[s]; \
 			_prework_; \
 			iter = iterations/size; \
-			sprintf_s(label, "%s-%s-%-4d", SIMD_TYPE, oplabel, size); \
+			sprintf(label, "%s-%s-%-4d", SIMD_TYPE, oplabel, size); \
 			MEASURE_TIMED(label, iter, test_time, resultOpt[s],  \
 				_funcOpt_); \
 		} \
@@ -147,7 +147,7 @@ extern int test_or_32u_speed(void);
 			int size = size_array[s]; \
 			_prework_; \
 			iter = iterations/size; \
-			sprintf_s(label, "IPP-%s-%-4d", oplabel, size); \
+			sprintf(label, "IPP-%s-%-4d", oplabel, size); \
 			MEASURE_TIMED(label, iter, test_time, resultIPP[s],  \
 				_funcIPP_); \
 		} \
@@ -218,7 +218,7 @@ static void _name_( \
 			_floatprint(resultOpt[s], sSN); \
 			if (resultNormal[s] > 0.0) \
 			{ \
-				sprintf_s(sSNp, "%d%%", \
+				sprintf(sSNp, "%d%%", \
 					(int) (resultOpt[s] / resultNormal[s] * 100.0 + 0.5)); \
 			} \
 		} \
@@ -227,7 +227,7 @@ static void _name_( \
 			_floatprint(resultIPP[s], sIPP); \
 			if (resultNormal[s] > 0.0) \
 			{ \
-				sprintf_s(sIPPp, "%d%%", \
+				sprintf(sIPPp, "%d%%", \
 					(int) (resultIPP[s] / resultNormal[s] * 100.0 + 0.5)); \
 			} \
 		} \

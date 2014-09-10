@@ -97,6 +97,7 @@ struct wf_context
 	HGDI_DC hdc;
 	UINT16 srcBpp;
 	UINT16 dstBpp;
+	rdpCodecs* codecs;
 	freerdp* instance;
 	wfBitmap* primary;
 	wfBitmap* drawing;

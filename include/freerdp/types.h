@@ -32,6 +32,21 @@
 #define MAX(x,y)	(((x) > (y)) ? (x) : (y))
 #endif
 
+struct _PALETTE_ENTRY
+{
+	BYTE red;
+	BYTE green;
+	BYTE blue;
+};
+typedef struct _PALETTE_ENTRY PALETTE_ENTRY;
+
+struct rdp_palette
+{
+	UINT32 count;
+	PALETTE_ENTRY entries[256];
+};
+typedef struct rdp_palette rdpPalette;
+
 #include <freerdp/settings.h>
 
 struct _RDP_PLUGIN_DATA

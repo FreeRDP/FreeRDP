@@ -410,6 +410,7 @@ int freerdp_context_new(freerdp* instance)
 	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEventType));
 
 	context->metrics = metrics_new(context);
+	context->codecs = codecs_new(context);
 
 	rdp = rdp_new(context);
 	instance->input = rdp->input;
@@ -465,6 +466,7 @@ void freerdp_context_free(freerdp* instance)
 	PubSub_Free(instance->context->pubSub);
 
 	metrics_free(instance->context->metrics);
+	codecs_free(instance->context->codecs);
 
 	free(instance->context);
 	instance->context = NULL;

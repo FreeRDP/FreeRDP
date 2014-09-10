@@ -190,6 +190,7 @@ BOOL wf_pre_connect(freerdp* instance)
 	context = instance->context;
 	wfc = (wfContext*) instance->context;
 	wfc->instance = instance;
+	wfc->codecs = instance->context->codecs;
 
 	settings = instance->settings;
 

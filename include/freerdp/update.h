@@ -73,27 +73,12 @@ typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
 
 /* Palette Updates */
 
-struct _PALETTE_ENTRY
-{
-	BYTE red;
-	BYTE green;
-	BYTE blue;
-};
-typedef struct _PALETTE_ENTRY PALETTE_ENTRY;
-
 struct _PALETTE_UPDATE
 {
 	UINT32 number;
 	PALETTE_ENTRY entries[256];
 };
 typedef struct _PALETTE_UPDATE PALETTE_UPDATE;
-
-struct rdp_palette
-{
-	UINT32 count;
-	PALETTE_ENTRY entries[256];
-};
-typedef struct rdp_palette rdpPalette;
 
 /* Play Sound (System Beep) Updates */
 
