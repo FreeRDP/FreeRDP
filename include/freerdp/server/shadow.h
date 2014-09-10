@@ -56,7 +56,7 @@ typedef int (*pfnShadowSubsystemStop)(rdpShadowSubsystem* subsystem);
 typedef void (*pfnShadowSubsystemFree)(rdpShadowSubsystem* subsystem);
 
 typedef int (*pfnShadowSurfaceCopy)(rdpShadowSubsystem* subsystem);
-typedef int (*pfnShadowSurfaceUpdate)(rdpShadowSubsystem* subsystem, REGION16* region);
+typedef int (*pfnShadowSurfaceUpdate)(rdpShadowSubsystem* subsystem, REGION16* subRect);
 
 typedef int (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem, UINT32 flags);
 typedef int (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
@@ -99,6 +99,8 @@ struct rdp_shadow_server
 	DWORD port;
 	BOOL mayView;
 	BOOL mayInteract;
+	BOOL shareSubRect;
+	RECTANGLE_16 subRect;
 	char* ipcSocket;
 	char* ConfigPath;
 	char* CertificateFile;

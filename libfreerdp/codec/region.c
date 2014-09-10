@@ -128,6 +128,11 @@ static RECTANGLE_16 *region16_extents_noconst(REGION16 *region)
 	return &region->extents;
 }
 
+BOOL rectangle_is_empty(const RECTANGLE_16 *rect)
+{
+	return (rect->left + rect->top + rect->right + rect->bottom) ? TRUE : FALSE;
+}
+
 BOOL region16_is_empty(const REGION16 *region)
 {
 	assert(region);

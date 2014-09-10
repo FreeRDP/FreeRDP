@@ -77,6 +77,12 @@ FREERDP_API const RECTANGLE_16 *region16_rects(const REGION16 *region, int *nbRe
 /** @return the extents rectangle of this region */
 FREERDP_API const RECTANGLE_16 *region16_extents(const REGION16 *region);
 
+/** returns if the rectangle is empty
+ * @param rect
+ * @return if the rectangle is empty
+ */
+FREERDP_API BOOL rectangle_is_empty(const RECTANGLE_16 *rect);
+
 /** returns if the region is empty
  * @param region
  * @return if the region is empty

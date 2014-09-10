@@ -94,6 +94,15 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, U
 	server = subsystem->server;
 	surface = server->surface;
 
+	x += surface->x;
+	y += surface->y;
+
+	if (server->shareSubRect)
+	{
+		x += server->subRect.left;
+		y += server->subRect.top;
+	}
+
 	XTestGrabControl(subsystem->display, True);
 
 	if (flags & PTR_FLAGS_WHEEL)
@@ -110,9 +119,6 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, U
 	}
 	else
 	{
-		x += surface->x;
-		y += surface->y;
-
 		if (flags & PTR_FLAGS_MOVE)
 			XTestFakeMotionEvent(subsystem->display, 0, x, y, 0);
 
@@ -147,6 +153,12 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 
 	x += surface->x;
 	y += surface->y;
+
+	if (server->shareSubRect)
+	{
+		x += server->subRect.left;
+		y += server->subRect.top;
+	}
 
 	XTestGrabControl(subsystem->display, True);
 	XTestFakeMotionEvent(subsystem->display, 0, x, y, CurrentTime);

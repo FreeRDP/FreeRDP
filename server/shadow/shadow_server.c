@@ -65,6 +65,7 @@ static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL, "Server IPC socket" },
 	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL, "Select or list monitors" },
+	{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL, "Select rectangle within monitor to share" },
 	{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may view without prompt" },
 	{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may interact without prompt" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "Print version" },
@@ -199,6 +200,56 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		CommandLineSwitchCase(arg, "may-interact")
 		{
 			server->mayInteract = arg->Value ? TRUE : FALSE;
+		}
+		CommandLineSwitchCase(arg, "rect")
+		{
+			char* p;
+			char* tok[4];
+			int x, y, w, h;
+			char* str = _strdup(arg->Value);
+
+			if (!str)
+				return -1;
+
+			tok[0] = p = str;
+
+			p = strchr(p + 1, ',');
+
+			if (!p)
+				return -1;
+
+			*p++ = '\0';
+			tok[1] = p;
+
+			p = strchr(p + 1, ',');
+
+			if (!p)
+				return -1;
+
+			*p++ = '\0';
+			tok[2] = p;
+
+			p = strchr(p + 1, ',');
+
+			if (!p)
+				return -1;
+
+			*p++ = '\0';
+			tok[3] = p;
+
+			x = atoi(tok[0]);
+			y = atoi(tok[1]);
+			w = atoi(tok[2]);
+			h = atoi(tok[3]);
+
+			if ((x < 0) || (y < 0) || (w < 1) || (h < 1))
+				return -1;
+
+			server->subRect.left = x;
+			server->subRect.top = y;
+			server->subRect.right = x + w;
+			server->subRect.bottom = y + h;
+			server->shareSubRect = TRUE;
 		}
 		CommandLineSwitchDefault(arg)
 		{
