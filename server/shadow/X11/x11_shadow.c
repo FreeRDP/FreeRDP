@@ -88,6 +88,11 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, U
 #ifdef WITH_XTEST
 	int button = 0;
 	BOOL down = FALSE;
+	rdpShadowServer* server;
+	rdpShadowSurface* surface;
+
+	server = subsystem->server;
+	surface = server->surface;
 
 	XTestGrabControl(subsystem->display, True);
 
@@ -105,6 +110,9 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, U
 	}
 	else
 	{
+		x += surface->x;
+		y += surface->y;
+
 		if (flags & PTR_FLAGS_MOVE)
 			XTestFakeMotionEvent(subsystem->display, 0, x, y, 0);
 
@@ -131,6 +139,14 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 #ifdef WITH_XTEST
 	int button = 0;
 	BOOL down = FALSE;
+	rdpShadowServer* server;
+	rdpShadowSurface* surface;
+
+	server = subsystem->server;
+	surface = server->surface;
+
+	x += surface->x;
+	y += surface->y;
 
 	XTestGrabControl(subsystem->display, True);
 	XTestFakeMotionEvent(subsystem->display, 0, x, y, CurrentTime);
@@ -201,6 +217,11 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	surface = server->surface;
 	screen = server->screen;
 
+	count = ArrayList_Count(server->clients);
+
+	if (count < 1)
+		return 1;
+
 	if (subsystem->use_xshm)
 	{
 		XLockDisplay(subsystem->display);
@@ -215,7 +236,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		image = subsystem->fb_image;
 
 		status = shadow_capture_compare(surface->data, surface->scanline, surface->width, surface->height,
-				(BYTE*) image->data, image->bytes_per_line, &invalidRect);
+				(BYTE*) &(image->data[surface->width * 4]), image->bytes_per_line, &invalidRect);
 
 		if (status > 0)
 		{
@@ -251,7 +272,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		XLockDisplay(subsystem->display);
 
 		image = XGetImage(subsystem->display, subsystem->root_window,
-				0, 0, subsystem->width, subsystem->height, AllPlanes, ZPixmap);
+				surface->x, surface->y, surface->width, surface->height, AllPlanes, ZPixmap);
 
 		XUnlockDisplay(subsystem->display);
 
@@ -266,7 +287,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			height = invalidRect.bottom - invalidRect.top;
 
 			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
-					surface->scanline, x - surface->x, y - surface->y, width, height,
+					surface->scanline, x, y, width, height,
 					(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
 					image->bytes_per_line, x, y);
 
@@ -768,7 +789,7 @@ x11ShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
 	subsystem->ExtendedMouseEvent = (pfnShadowExtendedMouseEvent) x11_shadow_input_extended_mouse_event;
 
 	subsystem->composite = FALSE;
-	subsystem->use_xshm = TRUE;
+	subsystem->use_xshm = FALSE; /* temporarily disabled */
 	subsystem->use_xfixes = TRUE;
 	subsystem->use_xdamage = FALSE;
 	subsystem->use_xinerama = TRUE;

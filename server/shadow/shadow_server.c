@@ -213,16 +213,27 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{
+		int index;
+		rdpShadowSubsystem* subsystem = server->subsystem;
+
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
 			/* Select monitors */
+
+			index = atoi(arg->Value);
+
+			if (index < 0)
+				index = 0;
+
+			if (index >= subsystem->monitorCount)
+				index = 0;
+
+			subsystem->selectedMonitor = index;
 		}
 		else
 		{
-			int index;
 			int width, height;
 			MONITOR_DEF* monitor;
-			rdpShadowSubsystem* subsystem = server->subsystem;
 
 			/* List monitors */
 
@@ -343,6 +354,16 @@ int shadow_server_start(rdpShadowServer* server)
 	signal(SIGPIPE, SIG_IGN);
 #endif
 
+	server->screen = shadow_screen_new(server);
+
+	if (!server->screen)
+		return -1;
+
+	server->capture = shadow_capture_new(server);
+
+	if (!server->capture)
+		return -1;
+
 	if (!server->ipcSocket)
 		status = server->listener->Open(server->listener, NULL, (UINT16) server->port);
 	else
@@ -367,6 +388,18 @@ int shadow_server_stop(rdpShadowServer* server)
 		server->thread = NULL;
 
 		server->listener->Close(server->listener);
+	}
+
+	if (server->screen)
+	{
+		shadow_screen_free(server->screen);
+		server->screen = NULL;
+	}
+
+	if (server->capture)
+	{
+		shadow_capture_free(server->capture);
+		server->capture = NULL;
 	}
 
 	return 0;
@@ -475,16 +508,6 @@ int shadow_server_init(rdpShadowServer* server)
 		if (status < 0)
 			fprintf(stderr, "subsystem init failure: %d\n", status);
 	}
-
-	server->screen = shadow_screen_new(server);
-
-	if (!server->screen)
-		return -1;
-
-	server->capture = shadow_capture_new(server);
-
-	if (!server->capture)
-		return -1;
 
 	return 1;
 }

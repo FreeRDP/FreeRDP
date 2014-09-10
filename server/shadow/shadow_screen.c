@@ -45,7 +45,7 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 
 	region16_init(&(screen->invalidRegion));
 
-	primary = &(subsystem->monitors[0]);
+	primary = &(subsystem->monitors[subsystem->selectedMonitor]);
 
 	x = primary->left;
 	y = primary->top;

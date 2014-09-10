@@ -111,6 +111,7 @@ struct rdp_shadow_server
 #define RDP_SHADOW_SUBSYSTEM_COMMON() \
 	HANDLE event; \
 	int monitorCount; \
+	int selectedMonitor; \
 	MONITOR_DEF monitors[16]; \
 	MONITOR_DEF virtualScreen; \
 	HANDLE updateEvent; \

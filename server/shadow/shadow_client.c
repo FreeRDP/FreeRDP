@@ -550,10 +550,10 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 
 	LeaveCriticalSection(&(client->lock));
 
-	surfaceRect.left = surface->x;
-	surfaceRect.top = surface->y;
-	surfaceRect.right = surface->x + surface->width;
-	surfaceRect.bottom = surface->y + surface->height;
+	surfaceRect.left = 0;
+	surfaceRect.top = 0;
+	surfaceRect.right = surface->width;
+	surfaceRect.bottom = surface->height;
 
 	region16_intersect_rect(&invalidRegion, &invalidRegion, &surfaceRect);
 
@@ -565,8 +565,8 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 
 	extents = region16_extents(&invalidRegion);
 
-	nXSrc = extents->left - surface->x;
-	nYSrc = extents->top - surface->y;
+	nXSrc = extents->left - 0;
+	nYSrc = extents->top - 0;
 	nWidth = extents->right - extents->left;
 	nHeight = extents->bottom - extents->top;
 
