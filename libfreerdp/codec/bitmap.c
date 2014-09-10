@@ -22,6 +22,7 @@
 #endif
 
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/planar.h>
 
 #define GETPIXEL16(d, x, y, w) (*(((unsigned short*)d) + ((y) * (w) + (x))))
 #define GETPIXEL32(d, x, y, w) (*(((unsigned int*)d) + ((y) * (w) + (x))))

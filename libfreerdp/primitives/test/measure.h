@@ -22,10 +22,6 @@
  * Define GOOGLE_PROFILER if you want gperftools included.
  */
 
-#ifdef _GNUC_
-# pragma once
-#endif
-
 #ifndef __MEASURE_H_INCLUDED__
 #define __MEASURE_H_INCLUDED__
 
@@ -35,9 +31,21 @@
 #include <sys/param.h>
 #endif
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <winpr/crt.h>
+
+#ifdef _WIN32
+
+#define PROFILER_START(_prefix_)
+#define PROFILER_STOP
+
+#define MEASURE_LOOP_START(_prefix_, _count_)
+#define MEASURE_LOOP_STOP
+#define MEASURE_GET_RESULTS(_result_)
+#define MEASURE_SHOW_RESULTS(_result_)
+#define MEASURE_SHOW_RESULTS_SCALED(_scale_, _label_)
+#define MEASURE_TIMED(_label_, _init_iter_, _test_time_, _result_, _call_)
+
+#else
 
 #ifdef GOOGLE_PROFILER
 #include <gperftools/profiler.h>
@@ -121,5 +129,7 @@ extern void _floatprint(float t, char *output);
     MEASURE_LOOP_STOP;  \
     MEASURE_SHOW_RESULTS(_result_);  \
 }
+
+#endif
 
 #endif // __MEASURE_H_INCLUDED__

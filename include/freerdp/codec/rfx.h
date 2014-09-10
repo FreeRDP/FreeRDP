@@ -20,6 +20,12 @@
 #ifndef FREERDP_CODEC_REMOTEFX_H
 #define FREERDP_CODEC_REMOTEFX_H
 
+typedef enum _RLGR_MODE RLGR_MODE;
+typedef struct _RFX_RECT RFX_RECT;
+typedef struct _RFX_TILE RFX_TILE;
+typedef struct _RFX_MESSAGE RFX_MESSAGE;
+typedef struct _RFX_CONTEXT RFX_CONTEXT;
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
@@ -36,7 +42,6 @@ enum _RLGR_MODE
 	RLGR1,
 	RLGR3
 };
-typedef enum _RLGR_MODE RLGR_MODE;
 
 struct _RFX_RECT
 {
@@ -45,7 +50,6 @@ struct _RFX_RECT
 	UINT16 width;
 	UINT16 height;
 };
-typedef struct _RFX_RECT RFX_RECT;
 
 struct _RFX_TILE
 {
@@ -69,7 +73,6 @@ struct _RFX_TILE
 	BYTE* CrData;
 	BYTE* YCbCrData;
 };
-typedef struct _RFX_TILE RFX_TILE;
 
 struct _RFX_MESSAGE
 {
@@ -99,7 +102,6 @@ struct _RFX_MESSAGE
 
 	BOOL freeArray;
 };
-typedef struct _RFX_MESSAGE RFX_MESSAGE;
 
 typedef struct _RFX_CONTEXT_PRIV RFX_CONTEXT_PRIV;
 
@@ -150,7 +152,6 @@ struct _RFX_CONTEXT
 	/* private definitions */
 	RFX_CONTEXT_PRIV* priv;
 };
-typedef struct _RFX_CONTEXT RFX_CONTEXT;
 
 FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
 FREERDP_API void rfx_context_free(RFX_CONTEXT* context);

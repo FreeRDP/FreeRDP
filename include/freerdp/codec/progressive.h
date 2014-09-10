@@ -20,6 +20,8 @@
 #ifndef FREERDP_CODEC_PROGRESSIVE_H
 #define FREERDP_CODEC_PROGRESSIVE_H
 
+typedef struct _PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
@@ -301,7 +303,6 @@ struct _PROGRESSIVE_CONTEXT
 
 	wHashTable* SurfaceContexts;
 };
-typedef struct _PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
 
 #ifdef __cplusplus
 extern "C" {

@@ -97,6 +97,7 @@ struct wf_context
 	HGDI_DC hdc;
 	UINT16 srcBpp;
 	UINT16 dstBpp;
+	rdpCodecs* codecs;
 	freerdp* instance;
 	wfBitmap* primary;
 	wfBitmap* drawing;
@@ -110,8 +111,6 @@ struct wf_context
 	wfBitmap* tile;
 	DWORD mainThreadId;
 	DWORD keyboardThreadId;
-	RFX_CONTEXT* rfx_context;
-	NSC_CONTEXT* nsc_context;
 
 	BOOL sw_gdi;
 

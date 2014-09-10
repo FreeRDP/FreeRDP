@@ -75,6 +75,7 @@ struct xf_context
 
 	freerdp* instance;
 	rdpSettings* settings;
+	rdpCodecs* codecs;
 
 	GC gc;
 	int bpp;
@@ -152,11 +153,6 @@ struct xf_context
 	VIRTUAL_SCREEN vscreen;
 	BYTE* bmp_codec_none;
 	BYTE* bmp_codec_nsc;
-	RFX_CONTEXT* rfx;
-	NSC_CONTEXT* nsc;
-	CLEAR_CONTEXT* clear;
-	H264_CONTEXT* h264;
-	PROGRESSIVE_CONTEXT* progressive;
 	void* xv_context;
 	void* clipboard_context;
 

@@ -1033,7 +1033,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 
 	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
-		message = rfx_process_message(xfc->rfx,
+		message = rfx_process_message(xfc->codecs->rfx,
 				surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
@@ -1070,11 +1070,11 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		}
 
 		XSetClipMask(xfc->display, xfc->gc, None);
-		rfx_message_free(xfc->rfx, message);
+		rfx_message_free(xfc->codecs->rfx, message);
 	}
 	else if (surface_bits_command->codecID == RDP_CODEC_ID_NSCODEC)
 	{
-		nsc_process_message(xfc->nsc, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
+		nsc_process_message(xfc->codecs->nsc, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
 			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
@@ -1083,7 +1083,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits
 		xfc->bmp_codec_nsc = (BYTE*) realloc(xfc->bmp_codec_nsc,
 				surface_bits_command->width * surface_bits_command->height * 4);
 
-		freerdp_image_flip(xfc->nsc->BitmapData, xfc->bmp_codec_nsc,
+		freerdp_image_flip(xfc->codecs->nsc->BitmapData, xfc->bmp_codec_nsc,
 				surface_bits_command->width, surface_bits_command->height, 32);
 
 		image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,

@@ -39,7 +39,7 @@ pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
 {
 	int x, y;
 	INT16 R, G, B;
-	double Y, Cb, Cr;
+	float Y, Cb, Cr;
 	BYTE* pRGB = pDst;
 	const INT16* pY  = pSrc[0];
 	const INT16* pCb = pSrc[1];
@@ -51,13 +51,13 @@ pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
 	{
 		for (x = 0; x < roi->width; x++)
 		{
-			Y  = (double) ((*pY++ >> 1) + 2048);
-			Cb = (double) (*pCb++ >> 1);
-			Cr = (double) (*pCr++ >> 1);
+			Y = (float) (pY[0] + 4096);
+			Cb = (float) (pCb[0]);
+			Cr = (float) (pCr[0]);
 
-			R = (INT16) (((int) (Y + (1.402524948120117L * Cr) + 8.0L)) >> 4);
-			G = (INT16) (((int) (Y - (0.3437300026416779L * Cb) - (0.7144010066986084L * Cr) + 8.0L)) >> 4);
-			B = (INT16) (((int) (Y + (1.769904971122742L * Cb) + 8.0L)) >> 4);
+			R = ((INT16) (((Cr * 1.402525f) + Y + 16.0f)) >> 5);
+			G = ((INT16) ((Y - (Cb * 0.343730f) - (Cr * 0.714401f) + 16.0f)) >> 5);
+			B = ((INT16) (((Cb * 1.769905f) + Y + 16.0f)) >> 5);
 
 			if (R < 0)
 				R = 0;
@@ -78,6 +78,10 @@ pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
 			*pRGB++ = (BYTE) G;
 			*pRGB++ = (BYTE) R;
 			*pRGB++ = 0xFF;
+
+			pY++;
+			pCb++;
+			pCr++;
 		}
 
 		pY += srcPad;

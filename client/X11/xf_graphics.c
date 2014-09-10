@@ -120,14 +120,14 @@ void xf_Bitmap_Paint(rdpContext* context, rdpBitmap* bitmap)
 
 void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		BYTE* data, int width, int height, int bpp, int length,
-		BOOL compressed, int codec_id)
+		BOOL compressed, int codecId)
 {
+	int status;
 	UINT16 size;
 	BYTE* src;
 	BYTE* dst;
 	int yindex;
 	int xindex;
-	BOOL status;
 	RFX_MESSAGE* msg;
 	xfContext* xfc = (xfContext*) context;
 
@@ -138,19 +138,21 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	else
 		bitmap->data = (BYTE*) _aligned_realloc(bitmap->data, size, 16);
 
-	switch (codec_id)
+	switch (codecId)
 	{
 		case RDP_CODEC_ID_NSCODEC:
-			DEBUG_WARN( "xf_Bitmap_Decompress: nsc not done\n");
+			freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_NSCODEC);
+			DEBUG_WARN("xf_Bitmap_Decompress: nsc not done\n");
 			break;
 
 		case RDP_CODEC_ID_REMOTEFX:
-			rfx_context_set_pixel_format(xfc->rfx, RDP_PIXEL_FORMAT_B8G8R8A8);
-			msg = rfx_process_message(xfc->rfx, data, length);
+			freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_REMOTEFX);
+			rfx_context_set_pixel_format(xfc->codecs->rfx, RDP_PIXEL_FORMAT_B8G8R8A8);
+			msg = rfx_process_message(xfc->codecs->rfx, data, length);
 
 			if (!msg)
 			{
-				DEBUG_WARN( "xf_Bitmap_Decompress: rfx Decompression Failed\n");
+				DEBUG_WARN("xf_Bitmap_Decompress: rfx Decompression Failed\n");
 			}
 			else
 			{
@@ -166,7 +168,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 						src++;
 					}
 				}
-				rfx_message_free(xfc->rfx, msg);
+				rfx_message_free(xfc->codecs->rfx, msg);
 			}
 			break;
 
@@ -180,11 +182,35 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		default:
 			if (compressed)
 			{
-				status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
+				BYTE* pDstData;
+				UINT32 SrcSize;
 
-				if (!status)
+				SrcSize = (UINT32) length;
+				pDstData = bitmap->data;
+
+				if (bpp < 32)
 				{
-					DEBUG_WARN( "xf_Bitmap_Decompress: Bitmap Decompression Failed\n");
+					freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_INTERLEAVED);
+
+					status = interleaved_decompress(xfc->codecs->interleaved, data, SrcSize, bpp,
+							&pDstData, PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
+
+					if (status < 0)
+					{
+						DEBUG_WARN("xf_Bitmap_Decompress: Bitmap Decompression Failed\n");
+					}
+				}
+				else
+				{
+					freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_PLANAR);
+
+					status = planar_decompress(xfc->codecs->planar, data, SrcSize, &pDstData,
+							PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
+
+					if (status < 0)
+					{
+						DEBUG_WARN("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
+					}
 				}
 			}
 			else

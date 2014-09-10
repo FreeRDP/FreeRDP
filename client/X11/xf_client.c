@@ -695,17 +695,22 @@ static void xf_post_disconnect(freerdp *instance)
  * @return TRUE if successful. FALSE otherwise.
  * Can exit with error code XF_EXIT_PARSE_ARGUMENTS if there is an error in the parameters.
  */
-BOOL xf_pre_connect(freerdp *instance)
+BOOL xf_pre_connect(freerdp* instance)
 {
-	rdpChannels *channels;
-	rdpSettings *settings;
-	xfContext *xfc = (xfContext *) instance->context;
+	rdpChannels* channels;
+	rdpSettings* settings;
+	xfContext* xfc = (xfContext*) instance->context;
+
+	xfc->codecs = instance->context->codecs;
 	xfc->settings = instance->settings;
 	xfc->instance = instance;
+
 	settings = instance->settings;
 	channels = instance->context->channels;
+
 	settings->OsMajorType = OSMAJORTYPE_UNIX;
 	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
+
 	ZeroMemory(settings->OrderSupport, 32);
 	settings->OrderSupport[NEG_DSTBLT_INDEX] = TRUE;
 	settings->OrderSupport[NEG_PATBLT_INDEX] = TRUE;
@@ -810,6 +815,7 @@ BOOL xf_pre_connect(freerdp *instance)
 	xfc->fullscreen_toggle = settings->ToggleFullscreen;
 	xf_detect_monitors(xfc, settings);
 	xfc->colormap = DefaultColormap(xfc->display, xfc->screen_number);
+
 	return TRUE;
 }
 
@@ -860,12 +866,12 @@ BOOL xf_post_connect(freerdp *instance)
 
 		if (settings->RemoteFxCodec)
 		{
-			xfc->rfx = rfx_context_new(FALSE);
+			xfc->codecs->rfx = rfx_context_new(FALSE);
 		}
 
 		if (settings->NSCodec)
 		{
-			xfc->nsc = nsc_context_new();
+			xfc->codecs->nsc = nsc_context_new();
 		}
 	}
 
@@ -1102,22 +1108,22 @@ void xf_window_free(xfContext *xfc)
 		context->rail = NULL;
 	}
 
-	if (xfc->rfx)
+	if (xfc->codecs->rfx)
 	{
-		rfx_context_free(xfc->rfx);
-		xfc->rfx = NULL;
+		rfx_context_free(xfc->codecs->rfx);
+		xfc->codecs->rfx = NULL;
 	}
 
-	if (xfc->nsc)
+	if (xfc->codecs->nsc)
 	{
-		nsc_context_free(xfc->nsc);
-		xfc->nsc = NULL;
+		nsc_context_free(xfc->codecs->nsc);
+		xfc->codecs->nsc = NULL;
 	}
 
-	if (xfc->clear)
+	if (xfc->codecs->clear)
 	{
-		clear_context_free(xfc->clear);
-		xfc->clear = NULL;
+		clear_context_free(xfc->codecs->clear);
+		xfc->codecs->clear = NULL;
 	}
 
 	if (xfc->clrconv)

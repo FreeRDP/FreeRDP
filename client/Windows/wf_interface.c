@@ -190,6 +190,7 @@ BOOL wf_pre_connect(freerdp* instance)
 	context = instance->context;
 	wfc = (wfContext*) instance->context;
 	wfc->instance = instance;
+	wfc->codecs = instance->context->codecs;
 
 	settings = instance->settings;
 
@@ -375,12 +376,6 @@ BOOL wf_post_connect(freerdp* instance)
 		if (settings->RemoteFxCodec)
 		{
 			wfc->tile = wf_image_new(wfc, 64, 64, 32, NULL);
-			wfc->rfx_context = rfx_context_new(FALSE);
-		}
-
-		if (settings->NSCodec)
-		{
-			wfc->nsc_context = nsc_context_new();
 		}
 	}
 

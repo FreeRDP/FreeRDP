@@ -17,13 +17,20 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CODEC_PLANAR_PRIVATE_H
-#define FREERDP_CODEC_PLANAR_PRIVATE_H
+#ifndef FREERDP_CODEC_PLANAR_H
+#define FREERDP_CODEC_PLANAR_H
 
 #include <winpr/crt.h>
 
+typedef struct _BITMAP_PLANAR_CONTEXT BITMAP_PLANAR_CONTEXT;
+
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
+
+#define PLANAR_FORMAT_HEADER_CS		(1 << 3)
+#define PLANAR_FORMAT_HEADER_RLE	(1 << 4)
+#define PLANAR_FORMAT_HEADER_NA		(1 << 5)
+#define PLANAR_FORMAT_HEADER_CLL_MASK	0x07
 
 #define PLANAR_CONTROL_BYTE(_nRunLength, _cRawBytes) \
 	(_nRunLength & 0x0F) | ((_cRawBytes & 0x0F) << 4)
@@ -92,4 +99,14 @@ FREERDP_API BYTE* freerdp_bitmap_planar_compress_plane_rle(BYTE* plane, int widt
 FREERDP_API BYTE* freerdp_bitmap_planar_delta_encode_plane(BYTE* inPlane, int width, int height, BYTE* outPlane);
 FREERDP_API int freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[4], int width, int height, BYTE* outPlanes[4]);
 
-#endif /* FREERDP_CODEC_PLANAR_PRIVATE_H */
+FREERDP_API BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data, UINT32 format,
+		int width, int height, int scanline, BYTE* dstData, int* dstSize);
+
+FREERDP_API BITMAP_PLANAR_CONTEXT* freerdp_bitmap_planar_context_new(DWORD flags, int maxWidth, int maxHeight);
+FREERDP_API void freerdp_bitmap_planar_context_free(BITMAP_PLANAR_CONTEXT* context);
+
+FREERDP_API int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcSize,
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight);
+
+#endif /* FREERDP_CODEC_PLANAR_H */
+

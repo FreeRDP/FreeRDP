@@ -793,55 +793,49 @@ void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface
 
 int tilenum = 0;
 
-void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command)
+void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 {
 	int i, j;
 	int tx, ty;
 	char* tile_bitmap;
 	RFX_MESSAGE* message;
 	rdpGdi* gdi = context->gdi;
-	RFX_CONTEXT* rfx_context = (RFX_CONTEXT*) gdi->rfx_context;
-	NSC_CONTEXT* nsc_context = (NSC_CONTEXT*) gdi->nsc_context;
 
 	DEBUG_GDI("destLeft %d destTop %d destRight %d destBottom %d "
 		"bpp %d codecID %d width %d height %d length %d",
-		surface_bits_command->destLeft, surface_bits_command->destTop,
-		surface_bits_command->destRight, surface_bits_command->destBottom,
-		surface_bits_command->bpp, surface_bits_command->codecID,
-		surface_bits_command->width, surface_bits_command->height,
-		surface_bits_command->bitmapDataLength);
+		cmd->destLeft, cmd->destTop,
+		cmd->destRight, cmd->destBottom,
+		cmd->bpp, cmd->codecID,
+		cmd->width, cmd->height,
+		cmd->bitmapDataLength);
 
 	tile_bitmap = (char*) _aligned_malloc(32, 16);
 
 	if (!tile_bitmap)
 		return;
 
-	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
+	if (cmd->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
-		message = rfx_process_message(rfx_context,
-				surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+		freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_REMOTEFX);
+
+		message = rfx_process_message(gdi->codecs->rfx,
+				cmd->bitmapData, cmd->bitmapDataLength);
 
 		DEBUG_GDI("num_rects %d num_tiles %d", message->numRects, message->numTiles);
 
 		/* blit each tile */
 		for (i = 0; i < message->numTiles; i++)
 		{
-			tx = message->tiles[i]->x + surface_bits_command->destLeft;
-			ty = message->tiles[i]->y + surface_bits_command->destTop;
+			tx = message->tiles[i]->x + cmd->destLeft;
+			ty = message->tiles[i]->y + cmd->destTop;
 
 			freerdp_image_convert(message->tiles[i]->data, gdi->tile->bitmap->data, 64, 64, 32, 32, gdi->clrconv);
-
-#ifdef DUMP_REMOTEFX_TILES
-			sprintf(tile_bitmap, "/tmp/rfx/tile_%d.bmp", tilenum++);
-			winpr_bitmap_write(tile_bitmap, gdi->tile->bitmap->data, 64, 64, 32);
-#endif
-
 
 			for (j = 0; j < message->numRects; j++)
 			{
 				gdi_SetClipRgn(gdi->primary->hdc,
-					surface_bits_command->destLeft + message->rects[j].x,
-					surface_bits_command->destTop + message->rects[j].y,
+					cmd->destLeft + message->rects[j].x,
+					cmd->destTop + message->rects[j].y,
 					message->rects[j].width, message->rects[j].height);
 
 				gdi_BitBlt(gdi->primary->hdc, tx, ty, 64, 64, gdi->tile->hdc, 0, 0, GDI_SRCCOPY);
@@ -849,43 +843,45 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		}
 
 		gdi_SetNullClipRgn(gdi->primary->hdc);
-		rfx_message_free(rfx_context, message);
+		rfx_message_free(gdi->codecs->rfx, message);
 	}
-	else if (surface_bits_command->codecID == RDP_CODEC_ID_NSCODEC)
+	else if (cmd->codecID == RDP_CODEC_ID_NSCODEC)
 	{
-		nsc_process_message(nsc_context, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
-			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
-		gdi->image->bitmap->width = surface_bits_command->width;
-		gdi->image->bitmap->height = surface_bits_command->height;
-		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
+		freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_NSCODEC);
+
+		nsc_process_message(gdi->codecs->nsc, cmd->bpp, cmd->width, cmd->height,
+			cmd->bitmapData, cmd->bitmapDataLength);
+		gdi->image->bitmap->width = cmd->width;
+		gdi->image->bitmap->height = cmd->height;
+		gdi->image->bitmap->bitsPerPixel = cmd->bpp;
 		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
 		gdi->image->bitmap->data = (BYTE*) _aligned_realloc(gdi->image->bitmap->data, gdi->image->bitmap->width * gdi->image->bitmap->height * 4, 16);
-		freerdp_image_convert(nsc_context->BitmapData, gdi->image->bitmap->data,
-				surface_bits_command->width, surface_bits_command->height,
-				surface_bits_command->bpp, gdi->dstBpp, gdi->clrconv);
+		freerdp_image_convert(gdi->codecs->nsc->BitmapData, gdi->image->bitmap->data,
+				cmd->width, cmd->height,
+				cmd->bpp, gdi->dstBpp, gdi->clrconv);
 		freerdp_image_flip(gdi->image->bitmap->data, gdi->image->bitmap->data, gdi->image->bitmap->width, gdi->image->bitmap->height, gdi->dstBpp);
-		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop, surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
+		gdi_BitBlt(gdi->primary->hdc, cmd->destLeft, cmd->destTop, cmd->width, cmd->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
 	} 
-	else if (surface_bits_command->codecID == RDP_CODEC_ID_NONE)
+	else if (cmd->codecID == RDP_CODEC_ID_NONE)
 	{
-		gdi->image->bitmap->width = surface_bits_command->width;
-		gdi->image->bitmap->height = surface_bits_command->height;
-		gdi->image->bitmap->bitsPerPixel = surface_bits_command->bpp;
+		gdi->image->bitmap->width = cmd->width;
+		gdi->image->bitmap->height = cmd->height;
+		gdi->image->bitmap->bitsPerPixel = cmd->bpp;
 		gdi->image->bitmap->bytesPerPixel = gdi->image->bitmap->bitsPerPixel / 8;
 
 		gdi->image->bitmap->data = (BYTE*) _aligned_realloc(gdi->image->bitmap->data,
 				gdi->image->bitmap->width * gdi->image->bitmap->height * 4, 16);
 
-		if ((surface_bits_command->bpp != 32) || (gdi->clrconv->alpha == TRUE))
+		if ((cmd->bpp != 32) || (gdi->clrconv->alpha))
 		{
 			BYTE* temp_image;
 
-			freerdp_image_convert(surface_bits_command->bitmapData, gdi->image->bitmap->data,
+			freerdp_image_convert(cmd->bitmapData, gdi->image->bitmap->data,
 				gdi->image->bitmap->width, gdi->image->bitmap->height,
 				gdi->image->bitmap->bitsPerPixel, 32, gdi->clrconv);
 
-			surface_bits_command->bpp = 32;
-			surface_bits_command->bitmapData = gdi->image->bitmap->data;
+			cmd->bpp = 32;
+			cmd->bitmapData = gdi->image->bitmap->data;
 
 			temp_image = (BYTE*) _aligned_malloc(gdi->image->bitmap->width * gdi->image->bitmap->height * 4, 16);
 			freerdp_image_flip(gdi->image->bitmap->data, temp_image, gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
@@ -894,16 +890,16 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_co
 		}
 		else
 		{
-			freerdp_image_flip(surface_bits_command->bitmapData, gdi->image->bitmap->data,
+			freerdp_image_flip(cmd->bitmapData, gdi->image->bitmap->data,
 					gdi->image->bitmap->width, gdi->image->bitmap->height, 32);
 		}
 
-		gdi_BitBlt(gdi->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
-				surface_bits_command->width, surface_bits_command->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
+		gdi_BitBlt(gdi->primary->hdc, cmd->destLeft, cmd->destTop,
+				cmd->width, cmd->height, gdi->image->hdc, 0, 0, GDI_SRCCOPY);
 	}
 	else
 	{
-		DEBUG_WARN( "Unsupported codecID %d\n", surface_bits_command->codecID);
+		DEBUG_WARN( "Unsupported codecID %d\n", cmd->codecID);
 	}
 
 	if (tile_bitmap)
@@ -1020,6 +1016,7 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	instance->context->gdi = gdi;
 	cache = instance->context->cache;
 
+	gdi->codecs = instance->context->codecs;
 	gdi->width = instance->settings->DesktopWidth;
 	gdi->height = instance->settings->DesktopHeight;
 	gdi->srcBpp = instance->settings->ColorDepth;
@@ -1103,9 +1100,6 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 
 	gdi_register_graphics(instance->context->graphics);
 
-	gdi->rfx_context = rfx_context_new(FALSE);
-	gdi->nsc_context = nsc_context_new();
-
 	return 0;
 }
 
@@ -1119,8 +1113,6 @@ void gdi_free(freerdp* instance)
 		gdi_bitmap_free_ex(gdi->tile);
 		gdi_bitmap_free_ex(gdi->image);
 		gdi_DeleteDC(gdi->hdc);
-		rfx_context_free((RFX_CONTEXT*) gdi->rfx_context);
-		nsc_context_free((NSC_CONTEXT*) gdi->nsc_context);
 		free(gdi->clrconv->palette);
 		free(gdi->clrconv);
 		free(gdi);

@@ -26,6 +26,7 @@ set(${MODULE_PREFIX}_SRCS
 	prim_set.c
 	prim_shift.c
 	prim_sign.c
+	prim_YUV.c
 	prim_YCoCg.c
 	primitives.c
 	prim_internal.h)
@@ -39,6 +40,7 @@ set(${MODULE_PREFIX}_OPT_SRCS
 	prim_set_opt.c
 	prim_shift_opt.c
 	prim_sign_opt.c
+	prim_YUV_opt.c
 	prim_YCoCg_opt.c)
 
 add_definitions(-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
@@ -54,7 +56,7 @@ endif()
 
 if(WITH_SSE2)
 	if(CMAKE_COMPILER_IS_GNUCC)
-		set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3 -Wdeclaration-after-statement")
+		set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3 -O2 -Wdeclaration-after-statement")
 	endif()
 
 	if(MSVC)
@@ -68,6 +70,11 @@ elseif(WITH_NEON)
 endif()
 
 set_property(SOURCE ${${MODULE_PREFIX}_OPT_SRCS} PROPERTY COMPILE_FLAGS ${OPTIMIZATION})
+
+# always compile with optimization
+if(CMAKE_COMPILER_IS_GNUCC)
+	set_property(SOURCE ${${MODULE_PREFIX}_SRCS} PROPERTY COMPILE_FLAGS "-O2")
+endif()
 
 set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_OPT_SRCS})
 
@@ -99,7 +106,7 @@ endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 
-if(BUILD_TESTING AND ((NOT WIN32) AND (NOT APPLE)))
+if(BUILD_TESTING AND NOT WIN32 AND NOT APPLE)
 	add_subdirectory(test)
 endif()
 

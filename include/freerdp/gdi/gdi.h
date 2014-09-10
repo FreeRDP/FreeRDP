@@ -279,6 +279,7 @@ struct rdp_gdi
 	int cursor_x;
 	int cursor_y;
 	int bytesPerPixel;
+	rdpCodecs* codecs;
 
 	HGDI_DC hdc;
 	HCLRCONV clrconv;
@@ -286,8 +287,6 @@ struct rdp_gdi
 	gdiBitmap* drawing;
 	BYTE* primary_buffer;
 	GDI_COLOR textColor;
-	void* rfx_context;
-	void* nsc_context;
 	gdiBitmap* tile;
 	gdiBitmap* image;
 };

@@ -23,10 +23,9 @@ set(${MODULE_PREFIX}_SRCS
 	color.c
 	audio.c
 	planar.c
-	planar.h
+	bitmap.c
+	interleaved.c
 	progressive.c
-	bitmap_decode.c
-	bitmap_encode.c
 	rfx_bitstream.h
 	rfx_constants.h
 	rfx_decode.c
@@ -100,6 +99,7 @@ if(WITH_LIBAVCODEC)
 	find_library(LIBAVUTIL_LIB avutil)
 	set(FREERDP_LIBAVCODEC_LIBS ${LIBAVCODEC_LIB} ${LIBAVUTIL_LIB})
 endif()
+
 
 add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
 	MONOLITHIC ${MONOLITHIC_BUILD}

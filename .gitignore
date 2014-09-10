@@ -92,6 +92,7 @@ RelWithDebInfo
 
 # Binaries
 *.a
+*.o
 *.so
 *.so.*
 *.dylib
@@ -105,6 +106,7 @@ client/DirectFB/dfreerdp
 server/Sample/sfreerdp-server
 server/X11/xfreerdp-server
 xcode
+libfreerdp/codec/test/TestOpenH264ASM
 
 # Other
 *~

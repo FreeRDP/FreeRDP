@@ -13,10 +13,6 @@
  * this code may be covered by patents by HP, Microsoft, or other parties.
  */
 
-#ifdef __GNUC__
-# pragma once
-#endif
-
 #ifndef __PRIMTEST_H_INCLUDED__
 #define __PRIMTEST_H_INCLUDED__
 
@@ -34,7 +30,11 @@
 #include <ippi.h>
 #endif
 
+#ifdef _WIN32
+#define ALIGN(x) x
+#else
 #define ALIGN(x) x DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT)
+#endif
 
 #define ABS(_x_) ((_x_) < 0 ? (-(_x_)) : (_x_))
 #define MAX_TEST_SIZE 4096
@@ -158,6 +158,14 @@ extern int test_or_32u_speed(void);
 
 #define PRIM_NOP do {} while (0)
 /* ------------------------------------------------------------------------- */
+
+#ifdef _WIN32
+#define STD_SPEED_TEST( \
+	_name_, _srctype_, _dsttype_, _prework_, \
+	_doNormal_, _funcNormal_, \
+	_doOpt_,    _funcOpt_,  _flagOpt_, _flagExt_, \
+	_doIPP_,    _funcIPP_)
+#else
 #define STD_SPEED_TEST( \
 	_name_, _srctype_, _dsttype_, _prework_, \
 	_doNormal_, _funcNormal_, \
@@ -228,5 +236,6 @@ static void _name_( \
 	} \
 	free(resultNormal); free(resultOpt);  free(resultIPP); \
 }
+#endif
 
 #endif // !__PRIMTEST_H_INCLUDED__

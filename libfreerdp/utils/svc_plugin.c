@@ -244,7 +244,7 @@ static void svc_plugin_process_terminated(rdpSvcPlugin* plugin)
 
 	if (plugin->data_in)
 	{
-		Stream_Free(plugin->data_in, TRUE);
+		Stream_Release(plugin->data_in);
 		plugin->data_in = NULL;
 	}
 

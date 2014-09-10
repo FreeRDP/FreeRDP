@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Bitmap Decompression
+ * Interleaved RLE Bitmap Codec
  *
- * Copyright 2011 Jay Sorg <jay.sorg@gmail.com>
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,7 @@
 #include "config.h"
 #endif
 
-#include <winpr/crt.h>
-#include <winpr/stream.h>
-
-#include "planar.h"
-
-#include <freerdp/codec/color.h>
-
-#include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/interleaved.h>
 
 /*
    RLE Compressed Bitmap Stream (RLE_BITMAP_STREAM)
@@ -242,57 +235,104 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* adv
 #define RLEEXTRA
 #include "include/bitmap.c"
 
-/**
- * bitmap decompression routine
- */
-BOOL bitmap_decompress(BYTE* srcData, BYTE* dstData, int width, int height, int size, int srcBpp, int dstBpp)
+int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcData, UINT32 SrcSize, int bpp,
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
 {
-	int status;
-	BYTE* TmpBfr;
+	BOOL vFlip;
+	int scanline;
 	BYTE* pDstData;
+	UINT32 BufferSize;
+	int dstBitsPerPixel;
+	int dstBytesPerPixel;
 
-	if (srcBpp == 16 && dstBpp == 16)
-	{
-		TmpBfr = (BYTE*) _aligned_malloc(width * height * 2, 16);
-		RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
-		freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
-		_aligned_free(TmpBfr);
-	}
-	else if (srcBpp == 32 && dstBpp == 32)
-	{
-		pDstData = dstData;
+	pDstData = *ppDstData;
+	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(DstFormat);
+	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(DstFormat) / 8);
+	vFlip = FREERDP_PIXEL_FORMAT_FLIP(DstFormat) ? TRUE : FALSE;
 
-		status = planar_decompress(NULL, srcData, size, &pDstData,
-				PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
+	if (!interleaved)
+		return -1;
 
-		if (status < 0)
-			return FALSE;
-	}
-	else if (srcBpp == 15 && dstBpp == 15)
+	if (bpp == 24)
 	{
-		TmpBfr = (BYTE*) _aligned_malloc(width * height * 2, 16);
-		RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
-		freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
-		_aligned_free(TmpBfr);
+		scanline = nWidth * 3;
+		BufferSize = scanline * nHeight;
+
+		if (BufferSize > interleaved->FlipSize)
+		{
+			interleaved->FlipBuffer = _aligned_realloc(interleaved->FlipBuffer, BufferSize, 16);
+			interleaved->FlipSize = BufferSize;
+		}
+
+		if (!interleaved->FlipBuffer)
+			return -1;
+
+		RleDecompress24to24(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
+		freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
 	}
-	else if (srcBpp == 8 && dstBpp == 8)
+	else if ((bpp == 16) || (bpp == 15))
 	{
-		TmpBfr = (BYTE*) _aligned_malloc(width * height, 16);
-		RleDecompress8to8(srcData, size, TmpBfr, width, width, height);
-		freerdp_bitmap_flip(TmpBfr, dstData, width, height);
-		_aligned_free(TmpBfr);
+		scanline = nWidth * 2;
+		BufferSize = scanline * nHeight;
+
+		if (BufferSize > interleaved->FlipSize)
+		{
+			interleaved->FlipBuffer = _aligned_realloc(interleaved->FlipBuffer, BufferSize, 16);
+			interleaved->FlipSize = BufferSize;
+		}
+
+		if (!interleaved->FlipBuffer)
+			return -1;
+
+		RleDecompress16to16(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
+		freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
 	}
-	else if (srcBpp == 24 && dstBpp == 24)
+	else if (bpp == 8)
 	{
-		TmpBfr = (BYTE*) _aligned_malloc(width * height * 3, 16);
-		RleDecompress24to24(srcData, size, TmpBfr, width * 3, width, height);
-		freerdp_bitmap_flip(TmpBfr, dstData, width * 3, height);
-		_aligned_free(TmpBfr);
+		scanline = nWidth;
+		BufferSize = scanline * nHeight;
+
+		if (BufferSize > interleaved->FlipSize)
+		{
+			interleaved->FlipBuffer = _aligned_realloc(interleaved->FlipBuffer, BufferSize, 16);
+			interleaved->FlipSize = BufferSize;
+		}
+
+		if (!interleaved->FlipBuffer)
+			return -1;
+
+		RleDecompress8to8(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
+		freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
 	}
 	else
 	{
-		return FALSE;
+		return -1;
 	}
 
-	return TRUE;
+	return 1;
+}
+
+BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
+{
+	BITMAP_INTERLEAVED_CONTEXT* interleaved;
+
+	interleaved = (BITMAP_INTERLEAVED_CONTEXT*) calloc(1, sizeof(BITMAP_INTERLEAVED_CONTEXT));
+
+	if (interleaved)
+	{
+		interleaved->FlipSize = 64 * 64 * 3;
+		interleaved->FlipBuffer = _aligned_malloc(interleaved->FlipSize, 16);
+	}
+
+	return interleaved;
+}
+
+void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved)
+{
+	if (!interleaved)
+		return;
+
+	_aligned_free(interleaved->FlipBuffer);
+
+	free(interleaved);
 }

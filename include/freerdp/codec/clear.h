@@ -20,6 +20,8 @@
 #ifndef FREERDP_CODEC_CLEAR_H
 #define FREERDP_CODEC_CLEAR_H
 
+typedef struct _CLEAR_CONTEXT CLEAR_CONTEXT;
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
@@ -59,7 +61,6 @@ struct _CLEAR_CONTEXT
 	UINT32 ShortVBarStorageCursor;
 	CLEAR_VBAR_ENTRY ShortVBarStorage[16384];
 };
-typedef struct _CLEAR_CONTEXT CLEAR_CONTEXT;
 
 #ifdef __cplusplus
 extern "C" {

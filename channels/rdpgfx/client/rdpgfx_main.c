@@ -130,6 +130,8 @@ int rdpgfx_recv_caps_confirm_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, capsSet.version); /* version (4 bytes) */
 	Stream_Read_UINT32(s, capsDataLength); /* capsDataLength (4 bytes) */
 	Stream_Read_UINT32(s, capsSet.flags); /* capsData (4 bytes) */
+	
+	/*TODO: interpret this answer*/
 
 	WLog_Print(gfx->log, WLOG_DEBUG, "RecvCapsConfirmPdu: version: 0x%04X flags: 0x%04X",
 			capsSet.version, capsSet.flags);
@@ -546,6 +548,8 @@ int rdpgfx_recv_solid_fill_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	{
 		context->SolidFill(context, &pdu);
 	}
+	
+	free(pdu.fillRects);
 
 	return 1;
 }
@@ -590,6 +594,8 @@ int rdpgfx_recv_surface_to_surface_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStrea
 	{
 		context->SurfaceToSurface(context, &pdu);
 	}
+
+	free(pdu.destPts);
 
 	return 1;
 }
@@ -856,6 +862,9 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	}
 
 	Stream_Free(s, TRUE);
+	
+	//free(Stream_Buffer(data));
+	//Stream_Free(data,TRUE);
 
 	return status;
 }
@@ -1057,6 +1066,10 @@ int rdpgfx_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 			return -1;
 
 		gfx->log = WLog_Get("com.freerdp.gfx.client");
+#if 0
+		WLog_SetLogLevel(gfx->log, WLOG_DEBUG);
+#endif
+
 		gfx->settings = (rdpSettings*) pEntryPoints->GetRdpSettings(pEntryPoints);
 
 		gfx->iface.Initialize = rdpgfx_plugin_initialize;
