@@ -178,6 +178,76 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 #endif
 }
 
+int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
+{
+	int x, y;
+
+	if (getImage)
+	{
+#ifdef WITH_XFIXES
+		XFixesCursorImage* ci;
+
+		ci = XFixesGetCursorImage(subsystem->display);
+
+		x = ci->x;
+		y = ci->y;
+
+		if (ci->width > subsystem->cursorMaxWidth)
+			return -1;
+
+		if (ci->height > subsystem->cursorMaxHeight)
+			return -1;
+
+		subsystem->cursorWidth = ci->width;
+		subsystem->cursorHeight = ci->height;
+
+		subsystem->cursorId = ci->cursor_serial;
+
+		CopyMemory(subsystem->cursorPixels, ci->pixels, ci->width * ci->height * 4);
+
+		XFree(ci);
+#endif
+	}
+	else
+	{
+		UINT32 mask;
+		int win_x, win_y;
+		int root_x, root_y;
+		Window root, child;
+
+		if (!XQueryPointer(subsystem->display, subsystem->root_window,
+				&root, &child, &root_x, &root_y, &win_x, &win_y, &mask))
+		{
+			return -1;
+		}
+
+		x = root_x;
+		y = root_y;
+	}
+
+	subsystem->cursorX = x;
+	subsystem->cursorY = y;
+
+	return 1;
+}
+
+int x11_shadow_handle_xevent(x11ShadowSubsystem* subsystem, XEvent* xevent)
+{
+	if (xevent->type == MotionNotify)
+	{
+
+	}
+
+#ifdef WITH_XFIXES
+	if (xevent->type == subsystem->xfixes_cursor_notify_event)
+	{
+		x11_shadow_query_cursor(subsystem, TRUE);
+	}
+#endif
+
+	return 1;
+}
+
 void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
 {
 	XRectangle region;
@@ -329,6 +399,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 {
 	int fps;
+	XEvent xevent;
 	DWORD status;
 	DWORD nCount;
 	UINT64 cTime;
@@ -360,8 +431,15 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 			break;
 		}
 
+		if (WaitForSingleObject(subsystem->event, 0) == WAIT_OBJECT_0)
+		{
+			XNextEvent(subsystem->display, &xevent);
+			x11_shadow_handle_xevent(subsystem, &xevent);
+		}
+
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
+			x11_shadow_query_cursor(subsystem, FALSE);
 			x11_shadow_screen_grab(subsystem);
 
 			dwInterval = 1000 / fps;
@@ -386,7 +464,7 @@ int x11_shadow_xfixes_init(x11ShadowSubsystem* subsystem)
 	if (!XFixesQueryVersion(subsystem->display, &major, &minor))
 		return -1;
 
-	subsystem->xfixes_notify_event = xfixes_event + XFixesCursorNotify;
+	subsystem->xfixes_cursor_notify_event = xfixes_event + XFixesCursorNotify;
 
 	XFixesSelectCursorInput(subsystem->display, DefaultRootWindow(subsystem->display), XFixesDisplayCursorNotifyMask);
 
@@ -609,9 +687,6 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	if (subsystem->composite)
 		subsystem->use_xdamage = FALSE;
 
-	if (!subsystem->use_xdamage)
-		subsystem->use_xfixes = FALSE;
-
 	subsystem->xfds = ConnectionNumber(subsystem->display);
 	subsystem->number = DefaultScreen(subsystem->display);
 	subsystem->screen = ScreenOfDisplay(subsystem->display, subsystem->number);
@@ -666,6 +741,15 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	XFree(vis);
 
 	XSelectInput(subsystem->display, subsystem->root_window, SubstructureNotifyMask);
+
+	subsystem->cursorMaxWidth = 96;
+	subsystem->cursorMaxHeight = 96;
+	subsystem->cursorPixels = _aligned_malloc(subsystem->cursorMaxWidth * subsystem->cursorMaxHeight * 4, 16);
+
+	if (!subsystem->cursorPixels)
+		return -1;
+
+	x11_shadow_query_cursor(subsystem, TRUE);
 
 	if (subsystem->use_xfixes)
 	{
@@ -732,6 +816,12 @@ int x11_shadow_subsystem_uninit(x11ShadowSubsystem* subsystem)
 	{
 		CloseHandle(subsystem->event);
 		subsystem->event = NULL;
+	}
+
+	if (subsystem->cursorPixels)
+	{
+		_aligned_free(subsystem->cursorPixels);
+		subsystem->cursorPixels = NULL;
 	}
 
 	return 1;

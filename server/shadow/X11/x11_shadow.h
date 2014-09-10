@@ -80,6 +80,15 @@ struct x11_shadow_subsystem
 	Window root_window;
 	XShmSegmentInfo fb_shm_info;
 
+	int cursorX;
+	int cursorY;
+	int cursorWidth;
+	int cursorHeight;
+	UINT32 cursorId;
+	BYTE* cursorPixels;
+	int cursorMaxWidth;
+	int cursorMaxHeight;
+
 #ifdef WITH_XDAMAGE
 	GC xshm_gc;
 	Damage xdamage;
@@ -88,7 +97,7 @@ struct x11_shadow_subsystem
 #endif
 
 #ifdef WITH_XFIXES
-	int xfixes_notify_event;
+	int xfixes_cursor_notify_event;
 #endif
 };
 
