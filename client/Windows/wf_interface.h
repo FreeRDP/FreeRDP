@@ -111,8 +111,6 @@ struct wf_context
 	wfBitmap* tile;
 	DWORD mainThreadId;
 	DWORD keyboardThreadId;
-	RFX_CONTEXT* rfx_context;
-	NSC_CONTEXT* nsc_context;
 
 	BOOL sw_gdi;
 

@@ -568,15 +568,13 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 	RFX_MESSAGE* message;
 	BITMAPINFO bitmap_info;
 
-	RFX_CONTEXT* rfx_context = (RFX_CONTEXT*) wfc->rfx_context;
-	NSC_CONTEXT* nsc_context = (NSC_CONTEXT*) wfc->nsc_context;
-
 	tile_bitmap = (char*) malloc(32);
 	ZeroMemory(tile_bitmap, 32);
 
 	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
-		message = rfx_process_message(rfx_context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+		freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_REMOTEFX);
+		message = rfx_process_message(wfc->codecs->rfx, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		/* blit each tile */
 		for (i = 0; i < message->numTiles; i++)
@@ -607,11 +605,12 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 			wf_invalidate_region(wfc, tx, ty, message->rects[i].width, message->rects[i].height);
 		}
 
-		rfx_message_free(rfx_context, message);
+		rfx_message_free(wfc->codecs->rfx, message);
 	}
 	else if (surface_bits_command->codecID == RDP_CODEC_ID_NSCODEC)
 	{
-		nsc_process_message(nsc_context, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
+		freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_NSCODEC);
+		nsc_process_message(wfc->codecs->nsc, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
 			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 		ZeroMemory(&bitmap_info, sizeof(bitmap_info));
 		bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -622,7 +621,7 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 		bitmap_info.bmiHeader.biCompression = BI_RGB;
 		SetDIBitsToDevice(wfc->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height, 0, 0, 0, surface_bits_command->height,
-			nsc_context->BitmapData, &bitmap_info, DIB_RGB_COLORS);
+			wfc->codecs->nsc->BitmapData, &bitmap_info, DIB_RGB_COLORS);
 		wf_invalidate_region(wfc, surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height);
 	}

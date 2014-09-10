@@ -376,12 +376,6 @@ BOOL wf_post_connect(freerdp* instance)
 		if (settings->RemoteFxCodec)
 		{
 			wfc->tile = wf_image_new(wfc, 64, 64, 32, NULL);
-			wfc->rfx_context = rfx_context_new(FALSE);
-		}
-
-		if (settings->NSCodec)
-		{
-			wfc->nsc_context = nsc_context_new();
 		}
 	}
 

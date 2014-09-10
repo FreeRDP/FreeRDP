@@ -23,7 +23,7 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/codec/bitmap.h>
+#include <freerdp/codecs.h>
 
 #include "wf_gdi.h"
 #include "wf_graphics.h"

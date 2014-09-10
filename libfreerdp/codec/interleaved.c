@@ -316,7 +316,7 @@ BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 {
 	BITMAP_INTERLEAVED_CONTEXT* interleaved;
 
-	interleaved = (BITMAP_INTERLEAVED_CONTEXT*) calloc(1, sizeof(BITMAP_INTERLEAVED_CONTEXT*));
+	interleaved = (BITMAP_INTERLEAVED_CONTEXT*) calloc(1, sizeof(BITMAP_INTERLEAVED_CONTEXT));
 
 	if (interleaved)
 	{
