@@ -2,6 +2,7 @@
 #include <winpr/path.h>
 #include <winpr/image.h>
 #include <winpr/print.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/codec/region.h>
 
@@ -934,8 +935,8 @@ int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE f
 			printf("Actual, Expected (offset: %d diff: %d/%d = %.3f%%):\n",
 					cmp, cnt, size, rate);
 
-			winpr_HexDump(&g_DstData[cmp], 16);
-			winpr_HexDump(&bitmaps[pass].buffer[cmp], 16);
+			winpr_HexDump(__FILE__, WLOG_ERROR, &g_DstData[cmp], 16);
+			winpr_HexDump(__FILE__, WLOG_ERROR, &bitmaps[pass].buffer[cmp], 16);
 		}
 
 		//WLog_Image(progressive->log, WLOG_TRACE, g_DstData, g_Width, g_Height, 32);

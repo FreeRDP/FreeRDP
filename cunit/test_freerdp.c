@@ -37,6 +37,8 @@
 #include "test_mppc.h"
 #include "test_mppc_enc.h"
 
+#define TAG __FILE__
+
 void dump_data(unsigned char * p, int len, int width, char* name)
 {
 	unsigned char *line = p;
@@ -77,10 +79,10 @@ void assert_stream(wStream* s, BYTE* data, int length, const char* func, int lin
 		printf("\n %s (%d): length mismatch, actual:%d, expected:%d\n", func, line, actual_length, length);
 
 		printf("\nActual:\n");
-		winpr_HexDump(actual_data, actual_length);
+		winpr_HexDump(TAG, WLOG_ERR, actual_data, actual_length);
 
 		printf("Expected:\n");
-		winpr_HexDump(data, length);
+		winpr_HexDump(TAG, WLOG_ERR, data, length);
 
 		CU_FAIL("assert_stream, length mismatch");
 		return;
@@ -93,10 +95,10 @@ void assert_stream(wStream* s, BYTE* data, int length, const char* func, int lin
 			printf("\n %s (%d): buffer mismatch:\n", func, line);
 
 			printf("\nActual:\n");
-			winpr_HexDump(actual_data, length);
+			winpr_HexDump(TAG, WLOG_ERR, actual_data, length);
 
 			printf("Expected:\n");
-			winpr_HexDump(data, length);
+			winpr_HexDump(TAG, WLOG_ERR, data, length);
 
 			CU_FAIL("assert_stream, buffer mismatch");
 			return;

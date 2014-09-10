@@ -2,10 +2,13 @@
 #include "prim_test.h"
 
 #include <winpr/print.h>
+#include <winpr/wlog.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#define TAG __FILE__
 
 static INT16 TEST_Y_COMPONENT[4096] =
 {
@@ -2172,8 +2175,8 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 		printf("Actual, Expected (offset: %d diff: %d/%d = %d%%):\n",
 				cmp, cnt, size, (int) rate);
 
-		winpr_HexDump(&actual[cmp], 16);
-		winpr_HexDump(&expected[cmp], 16);
+		winpr_HexDump(TAG, WLOG_ERROR, &actual[cmp], 16);
+		winpr_HexDump(TAG, WLOG_ERROR, &expected[cmp], 16);
 	}
 
 	_aligned_free(actual);
