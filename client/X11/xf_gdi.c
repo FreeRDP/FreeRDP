@@ -258,7 +258,7 @@ Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp, BYTE* data)
 		XFree(image);
 
 		if (cdata != data)
-			free(cdata);
+			_aligned_free(cdata);
 
 		XFreeGC(xfc->display, gc);
 	}
