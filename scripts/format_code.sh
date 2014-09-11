@@ -35,4 +35,6 @@ $ASTYLE --lineend=linux --mode=c --indent=force-tab=4 --brackets=linux --pad-hea
 							   --indent-col1-comments --delete-empty-lines --break-closing-brackets \
 							   --align-pointer=type --indent-labels --brackets=break \
 							   --unpad-paren --break-blocks $@
-							   exit $?
+RC=$?
+rm -f $@.orig
+exit $RC
