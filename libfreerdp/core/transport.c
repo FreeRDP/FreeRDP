@@ -1071,12 +1071,13 @@ int transport_check_fds(rdpTransport* transport)
 		 */
 
 		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
-
-		if (recv_status == 1)
-		{
-			return 1; /* session redirection */
-		}
 		Stream_Release(received);
+
+		/* session redirection or activation */
+		if (recv_status == 1 || recv_status == 2)
+		{
+			return recv_status;
+		}
 
 		if (recv_status < 0)
 			return -1;
