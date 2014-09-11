@@ -29,7 +29,10 @@
 
 #include "librail.h"
 
+#include <freerdp/log.h>
 #include <freerdp/rail/window.h>
+
+#define TAG FREERDP_TAG("rail")
 
 struct _WINDOW_STYLE
 {
@@ -99,8 +102,8 @@ static const WINDOW_STYLE EXTENDED_WINDOW_STYLES[] =
 void print_window_styles(UINT32 style)
 {
 	int i;
+	DEBUG_WARN("Window Styles:\n{\n");
 
-	DEBUG_WARN( "Window Styles:\n{\n");
 	for (i = 0; i < ARRAYSIZE(WINDOW_STYLES); i++)
 	{
 		if (style & WINDOW_STYLES[i].style)
@@ -108,20 +111,21 @@ void print_window_styles(UINT32 style)
 			if (WINDOW_STYLES[i].multi)
 			{
 				if ((style & WINDOW_STYLES[i].style) != WINDOW_STYLES[i].style)
-						continue;
+					continue;
 			}
 
-			DEBUG_WARN( "\t%s\n", WINDOW_STYLES[i].name);
+			DEBUG_WARN("\t%s\n", WINDOW_STYLES[i].name);
 		}
 	}
-	DEBUG_WARN( "}\n");
+
+	DEBUG_WARN("}\n");
 }
 
 void print_extended_window_styles(UINT32 style)
 {
 	int i;
+	DEBUG_WARN("Extended Window Styles:\n{\n");
 
-	DEBUG_WARN( "Extended Window Styles:\n{\n");
 	for (i = 0; i < ARRAYSIZE(EXTENDED_WINDOW_STYLES); i++)
 	{
 		if (style & EXTENDED_WINDOW_STYLES[i].style)
@@ -129,13 +133,14 @@ void print_extended_window_styles(UINT32 style)
 			if (EXTENDED_WINDOW_STYLES[i].multi)
 			{
 				if ((style & EXTENDED_WINDOW_STYLES[i].style) != EXTENDED_WINDOW_STYLES[i].style)
-						continue;
+					continue;
 			}
 
-			DEBUG_WARN( "\t%s\n", EXTENDED_WINDOW_STYLES[i].name);
+			DEBUG_WARN("\t%s\n", EXTENDED_WINDOW_STYLES[i].name);
 		}
 	}
-	DEBUG_WARN( "}\n");
+
+	DEBUG_WARN("}\n");
 }
 
 void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)
@@ -149,13 +154,12 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	}
 
 	DEBUG_RAIL("windowId=0x%X ownerWindowId=0x%X",
-			window->windowId, window->ownerWindowId);
+			   window->windowId, window->ownerWindowId);
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
 		window->style = window_state->style;
 		window->extendedStyle = window_state->extendedStyle;
-
 #ifdef WITH_DEBUG_RAIL
 		print_window_styles(window->style);
 		print_extended_window_styles(window->extendedStyle);
@@ -173,9 +177,8 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		window->titleInfo.length = window_state->titleInfo.length;
 		window->titleInfo.string = malloc(window_state->titleInfo.length);
 		memcpy(window->titleInfo.string, window_state->titleInfo.string, window->titleInfo.length);
-
 #ifdef WITH_DEBUG_RAIL
-		winpr_HexDump(window->titleInfo.string, window->titleInfo.length);
+		winpr_HexDump(TAG, WLOG_DEBUG, window->titleInfo.string, window->titleInfo.length);
 #endif
 	}
 
@@ -183,18 +186,16 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	{
 		window->clientOffsetX = window_state->clientOffsetX;
 		window->clientOffsetY = window_state->clientOffsetY;
-
 		DEBUG_RAIL("Client Area Offset: (%d, %d)",
-				window->clientOffsetX, window->clientOffsetY);
+				   window->clientOffsetX, window->clientOffsetY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
 	{
 		window->clientAreaWidth = window_state->clientAreaWidth;
 		window->clientAreaHeight = window_state->clientAreaHeight;
-
 		DEBUG_RAIL("Client Area Size: (%d, %d)",
-				window->clientAreaWidth, window->clientAreaHeight);
+				   window->clientAreaWidth, window->clientAreaHeight);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
@@ -211,27 +212,24 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	{
 		window->windowOffsetX = window_state->windowOffsetX;
 		window->windowOffsetY = window_state->windowOffsetY;
-
 		DEBUG_RAIL("Window Offset: (%d, %d)",
-				window->windowOffsetX, window->windowOffsetY);
+				   window->windowOffsetX, window->windowOffsetY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
 	{
 		window->windowClientDeltaX = window_state->windowClientDeltaX;
 		window->windowClientDeltaY = window_state->windowClientDeltaY;
-
 		DEBUG_RAIL("Window Client Delta: (%d, %d)",
-				window->windowClientDeltaX, window->windowClientDeltaY);
+				   window->windowClientDeltaX, window->windowClientDeltaY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 	{
 		window->windowWidth = window_state->windowWidth;
 		window->windowHeight = window_state->windowHeight;
-
 		DEBUG_RAIL("Window Size: (%d, %d)",
-				window->windowWidth, window->windowHeight);
+				   window->windowWidth, window->windowHeight);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
@@ -247,8 +245,8 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		for (i = 0; i < (int) window_state->numWindowRects; i++)
 		{
 			DEBUG_RAIL("Window Rect #%d: left:%d top:%d right:%d bottom:%d", i,
-					window_state->windowRects[i].left, window_state->windowRects[i].top,
-					window_state->windowRects[i].right, window_state->windowRects[i].bottom);
+					   window_state->windowRects[i].left, window_state->windowRects[i].top,
+					   window_state->windowRects[i].right, window_state->windowRects[i].bottom);
 		}
 	}
 
@@ -256,9 +254,8 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 	{
 		window->visibleOffsetX = window_state->visibleOffsetX;
 		window->visibleOffsetY = window_state->visibleOffsetY;
-
 		DEBUG_RAIL("Window Visible Offset: (%d, %d)",
-				window->visibleOffsetX, window->visibleOffsetY);
+				   window->visibleOffsetX, window->visibleOffsetY);
 	}
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
@@ -274,8 +271,8 @@ void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW
 		for (i = 0; i < (int) window_state->numVisibilityRects; i++)
 		{
 			DEBUG_RAIL("Visibility Rect #%d: left:%d top:%d right:%d bottom:%d", i,
-					window_state->visibilityRects[i].left, window_state->visibilityRects[i].top,
-					window_state->visibilityRects[i].right, window_state->visibilityRects[i].bottom);
+					   window_state->visibilityRects[i].left, window_state->visibilityRects[i].top,
+					   window_state->visibilityRects[i].right, window_state->visibilityRects[i].bottom);
 		}
 	}
 }
@@ -285,7 +282,7 @@ void rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	if (window->titleInfo.length > 0)
 	{
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) window->titleInfo.string, window->titleInfo.length / 2,
-				&window->title, 0, NULL, NULL);
+						   &window->title, 0, NULL, NULL);
 	}
 	else
 	{
@@ -299,6 +296,7 @@ void rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	{
 		IFCALL(rail->rail_SetWindowRects, rail, window);
 	}
+
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
 		IFCALL(rail->rail_SetWindowVisibilityRects, rail, window);
@@ -309,12 +307,10 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 {
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_OWNER)
 	{
-
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_STYLE)
 	{
-
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_SHOW)
@@ -331,29 +327,24 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 		}
 
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) window->titleInfo.string, window->titleInfo.length / 2,
-				&window->title, 0, NULL, NULL);
-
+						   &window->title, 0, NULL, NULL);
 		IFCALL(rail->rail_SetWindowText, rail, window);
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
 	{
-
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_SIZE)
 	{
-
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_RP_CONTENT)
 	{
-
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_ROOT_PARENT)
 	{
-
 	}
 
 	if ((window->fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET) ||
@@ -364,7 +355,6 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_WND_CLIENT_DELTA)
 	{
-
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
@@ -374,7 +364,6 @@ void rail_UpdateWindow(rdpRail* rail, rdpWindow* window)
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_VIS_OFFSET)
 	{
-
 	}
 
 	if (window->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)

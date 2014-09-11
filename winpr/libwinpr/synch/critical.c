@@ -36,6 +36,9 @@
 
 #ifndef _WIN32
 
+#include "../log.h"
+#define TAG WINPR_TAG("synch.critical")
+
 VOID InitializeCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 	InitializeCriticalSectionEx(lpCriticalSection, 0, 0);
@@ -53,9 +56,9 @@ BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwS
 	 * - The RecursionCount field indicates the number of times that the owning
 	 *   thread has called EnterCriticalSection for this critical section.
 	 */
-
-	if (Flags != 0) {
-		 fprintf(stderr, "warning: InitializeCriticalSectionEx Flags unimplemented\n");
+	if (Flags != 0)
+	{
+		WLog_WARN(TAG, "Flags unimplemented");
 	}
 
 	lpCriticalSection->DebugInfo = NULL;
@@ -63,16 +66,13 @@ BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwS
 	lpCriticalSection->SpinCount = 0;
 	lpCriticalSection->RecursionCount = 0;
 	lpCriticalSection->OwningThread = NULL;
-
 	lpCriticalSection->LockSemaphore = (winpr_sem_t*) malloc(sizeof(winpr_sem_t));
 #if defined(__APPLE__)
 	semaphore_create(mach_task_self(), lpCriticalSection->LockSemaphore, SYNC_POLICY_FIFO, 0);
 #else
 	sem_init(lpCriticalSection->LockSemaphore, 0, 0);
 #endif
-
 	SetCriticalSectionSpinCount(lpCriticalSection, dwSpinCount);
-
 	return TRUE;
 }
 
@@ -91,9 +91,11 @@ DWORD SetCriticalSectionSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dw
 	{
 		/* Don't spin on uniprocessor systems! */
 		GetNativeSystemInfo(&sysinfo);
+
 		if (sysinfo.dwNumberOfProcessors < 2)
 			dwSpinCount = 0;
 	}
+
 	lpCriticalSection->SpinCount = dwSpinCount;
 	return dwPreviousSpinCount;
 #else
@@ -135,9 +137,10 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 		if (InterlockedCompareExchange(&lpCriticalSection->LockCount, 0, -1) == -1)
 		{
 			lpCriticalSection->RecursionCount = 1;
-			lpCriticalSection->OwningThread = (HANDLE) (ULONG_PTR) GetCurrentThreadId();
+			lpCriticalSection->OwningThread = (HANDLE)(ULONG_PTR) GetCurrentThreadId();
 			return;
 		}
+
 		/* Failed to get the lock. Let the scheduler know that we're spinning. */
 		if (sched_yield()!=0)
 		{
@@ -156,7 +159,7 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 	if (InterlockedIncrement(&lpCriticalSection->LockCount))
 	{
 		/* Section is already locked. Check if it is owned by the current thread. */
-		if (lpCriticalSection->OwningThread == (HANDLE) (ULONG_PTR) GetCurrentThreadId())
+		if (lpCriticalSection->OwningThread == (HANDLE)(ULONG_PTR) GetCurrentThreadId())
 		{
 			/* Recursion. No need to wait. */
 			lpCriticalSection->RecursionCount++;
@@ -166,17 +169,18 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 		/* Section is locked by another thread. We have to wait. */
 		_WaitForCriticalSection(lpCriticalSection);
 	}
+
 	/* We got the lock. Own it ... */
 	lpCriticalSection->RecursionCount = 1;
-	lpCriticalSection->OwningThread = (HANDLE) (ULONG_PTR) GetCurrentThreadId();
+	lpCriticalSection->OwningThread = (HANDLE)(ULONG_PTR) GetCurrentThreadId();
 }
 
 BOOL TryEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
-	HANDLE current_thread = (HANDLE) (ULONG_PTR) GetCurrentThreadId();
+	HANDLE current_thread = (HANDLE)(ULONG_PTR) GetCurrentThreadId();
 
 	/* Atomically acquire the the lock if the section is free. */
-	if (InterlockedCompareExchange(&lpCriticalSection->LockCount, 0, -1 ) == -1)
+	if (InterlockedCompareExchange(&lpCriticalSection->LockCount, 0, -1) == -1)
 	{
 		lpCriticalSection->RecursionCount = 1;
 		lpCriticalSection->OwningThread = current_thread;
@@ -202,6 +206,7 @@ VOID LeaveCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 	{
 		/* Last recursion, clear owner, unlock and if there are other waiting threads ... */
 		lpCriticalSection->OwningThread = NULL;
+
 		if (InterlockedDecrement(&lpCriticalSection->LockCount) >= 0)
 		{
 			/* ...signal the semaphore to unblock the next waiting thread */
@@ -237,7 +242,7 @@ VOID DeleteCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 
 #if (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 
-typedef BOOL (WINAPI * PINITIALIZE_CRITICAL_SECTION_EX_FN)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
+typedef BOOL (WINAPI* PINITIALIZE_CRITICAL_SECTION_EX_FN)(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
 
 static HMODULE g_KERNEL32_Library = NULL;
 static BOOL g_InitializeCriticalSectionEx_Detected = FALSE;
@@ -253,8 +258,7 @@ BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwS
 		if (g_KERNEL32_Library)
 		{
 			g_pInitializeCriticalSectionEx = (PINITIALIZE_CRITICAL_SECTION_EX_FN)
-				GetProcAddress(g_KERNEL32_Library, "InitializeCriticalSectionEx");
-
+											 GetProcAddress(g_KERNEL32_Library, "InitializeCriticalSectionEx");
 			g_InitializeCriticalSectionEx_Available = (g_pInitializeCriticalSectionEx) ? TRUE : FALSE;
 		}
 		else

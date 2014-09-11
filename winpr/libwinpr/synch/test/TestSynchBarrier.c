@@ -11,15 +11,15 @@ static SYNCHRONIZATION_BARRIER g_Barrier;
 static void* test_synch_barrier_thread_func(void* arg)
 {
 	BOOL status;
-
-	status = EnterSynchronizationBarrier(&g_Barrier, 0);
+  int count;
 
 	EnterCriticalSection(&g_Lock);
-
-	printf("Thread #%d status: %s\n", g_Count++,
-			status ? "TRUE" : "FALSE");
-
+  count = g_Count++;
 	LeaveCriticalSection(&g_Lock);
+	status = EnterSynchronizationBarrier(&g_Barrier, 0);
+
+	printf("Thread #%d status: %s\n", count,
+			status ? "TRUE" : "FALSE");
 
 	if (status)
 	{

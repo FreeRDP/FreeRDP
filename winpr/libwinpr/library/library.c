@@ -26,6 +26,9 @@
 
 #include <winpr/library.h>
 
+#include "../log.h"
+#define TAG WINPR_TAG("library")
+
 /**
  * api-ms-win-core-libraryloader-l1-1-1.dll:
  *
@@ -92,12 +95,11 @@ BOOL SetDefaultDllDirectories(DWORD DirectoryFlags)
 HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 {
 	HMODULE library;
-
 	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
 
 	if (!library)
 	{
-		fprintf(stderr, "LoadLibraryA: %s\n", dlerror());
+		WLog_ERR(TAG, "LoadLibraryA: %s", dlerror());
 		return NULL;
 	}
 
@@ -112,12 +114,11 @@ HMODULE LoadLibraryW(LPCWSTR lpLibFileName)
 HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
 	HMODULE library;
-
 	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
 
 	if (!library)
 	{
-		fprintf(stderr, "LoadLibraryExA: failed to open %s: %s\n", lpLibFileName, dlerror());
+		WLog_ERR(TAG, "LoadLibraryExA: failed to open %s: %s", lpLibFileName, dlerror());
 		return NULL;
 	}
 
@@ -132,12 +133,11 @@ HMODULE LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 FARPROC GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 {
 	FARPROC proc;
-
 	proc = dlsym(hModule, lpProcName);
 
 	if (proc == NULL)
 	{
-		fprintf(stderr, "GetProcAddress: could not find procedure %s: %s\n", lpProcName, dlerror());
+		WLog_ERR(TAG, "GetProcAddress: could not find procedure %s: %s", lpProcName, dlerror());
 		return (FARPROC) NULL;
 	}
 
@@ -147,7 +147,6 @@ FARPROC GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 BOOL FreeLibrary(HMODULE hLibModule)
 {
 	int status;
-
 	status = dlclose(hLibModule);
 
 	if (status != 0)
@@ -180,7 +179,7 @@ DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 }
 
 DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
-{	
+{
 #if defined(__linux__)
 	int status;
 	int length;
@@ -189,16 +188,13 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 	if (!hModule)
 	{
 		char buffer[4096];
-
 		sprintf(path, "/proc/%d/exe", getpid());
-
 		status = readlink(path, buffer, sizeof(buffer));
 
 		if (status < 0)
 			return 0;
 
 		buffer[status] = '\0';
-
 		length = strlen(buffer);
 
 		if (length < nSize)
@@ -214,33 +210,31 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 
 		return 0;
 	}
+
 #elif defined(__MACOSX__)
 	int status;
 	int length;
-	
+
 	if (!hModule)
 	{
 		char path[4096];
 		char buffer[4096];
 		uint32_t size = sizeof(path);
-	
 		status = _NSGetExecutablePath(path, &size);
-	
+
 		if (status != 0)
 		{
 			/* path too small */
 			return 0;
 		}
-		
+
 		/*
 		 * _NSGetExecutablePath may not return the canonical path,
 		 * so use realpath to find the absolute, canonical path.
 		 */
-		
 		realpath(path, buffer);
-	
 		length = strlen(buffer);
-	
+
 		if (length < nSize)
 		{
 			CopyMemory(lpFilename, buffer, length);
@@ -251,11 +245,11 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 			CopyMemory(lpFilename, buffer, nSize - 1);
 			lpFilename[nSize - 1] = '\0';
 		}
-		
+
 		return 0;
 	}
-#endif
 
+#endif
 	return 0;
 }
 

@@ -1,8 +1,8 @@
 /**
- * WinPR: Windows Portable Runtime
- * WinPR Logger
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Winpr log defines
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,29 +17,11 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef WINPR_LOG_PRIV_H
+#define WINPR_LOG_PRIV_H
 
 #include <winpr/wlog.h>
 
-#include "wlog/DataMessage.h"
+#define WINPR_TAG(tag) "com.winpr." tag
 
-#include "../../log.h"
-#define TAG WINPR_TAG("utils.wlog")
-
-int WLog_DataMessage_Write(char* filename, void* data, int length)
-{
-	FILE* fp;
-	fp = fopen(filename, "w+b");
-
-	if (!fp)
-	{
-		WLog_ERR(TAG, "failed to open file %s", filename);
-		return -1;
-	}
-
-	fwrite(data, length, 1, fp);
-	fclose(fp);
-	return 0;
-}
+#endif /* FREERDP_UTILS_DEBUG_H */

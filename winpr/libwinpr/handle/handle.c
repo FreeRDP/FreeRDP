@@ -44,27 +44,23 @@
 
 /* _HandleCreators is a NULL-terminated array with a maximun of HANDLE_CREATOR_MAX HANDLE_CREATOR */
 #define HANDLE_CLOSE_CB_MAX 128
-static HANDLE_CLOSE_CB **_HandleCloseCbs = NULL;
+static HANDLE_CLOSE_CB** _HandleCloseCbs = NULL;
 static CRITICAL_SECTION _HandleCloseCbsLock;
 
 static pthread_once_t _HandleCloseCbsInitialized = PTHREAD_ONCE_INIT;
 static void _HandleCloseCbsInit()
 {
 	/* NB: error management to be done outside of this function */
-
 	assert(_HandleCloseCbs == NULL);
-
 	_HandleCloseCbs = (HANDLE_CLOSE_CB**)calloc(HANDLE_CLOSE_CB_MAX+1, sizeof(HANDLE_CLOSE_CB*));
-
 	InitializeCriticalSection(&_HandleCloseCbsLock);
-
 	assert(_HandleCloseCbs != NULL);
 }
 
 /**
  * Returns TRUE on success, FALSE otherwise.
  */
-BOOL RegisterHandleCloseCb(HANDLE_CLOSE_CB *pHandleCloseCb)
+BOOL RegisterHandleCloseCb(HANDLE_CLOSE_CB* pHandleCloseCb)
 {
 	int i;
 
@@ -85,7 +81,6 @@ BOOL RegisterHandleCloseCb(HANDLE_CLOSE_CB *pHandleCloseCb)
 		if (_HandleCloseCbs[i] == NULL)
 		{
 			_HandleCloseCbs[i] = pHandleCloseCb;
-
 			LeaveCriticalSection(&_HandleCloseCbsLock);
 			return TRUE;
 		}
@@ -116,16 +111,15 @@ BOOL CloseHandle(HANDLE hObject)
 		return FALSE;
 	}
 
-
 	EnterCriticalSection(&_HandleCloseCbsLock);
 
 	for (i=0; _HandleCloseCbs[i] != NULL; i++)
 	{
-		HANDLE_CLOSE_CB *close_cb = (HANDLE_CLOSE_CB*)_HandleCloseCbs[i];
+		HANDLE_CLOSE_CB* close_cb = (HANDLE_CLOSE_CB*)_HandleCloseCbs[i];
+
 		if (close_cb && close_cb->IsHandled(hObject))
 		{
 			BOOL result = close_cb->CloseHandle(hObject);
-
 			LeaveCriticalSection(&_HandleCloseCbsLock);
 			return result;
 		}
@@ -133,44 +127,37 @@ BOOL CloseHandle(HANDLE hObject)
 
 	LeaveCriticalSection(&_HandleCloseCbsLock);
 
-
 	if (Type == HANDLE_TYPE_THREAD)
 	{
 		WINPR_THREAD* thread;
-
 		thread = (WINPR_THREAD*) Object;
-		if (thread->started) {
+
+		if (thread->started)
+		{
 			pthread_detach(thread->thread);
 		}
-		free(thread);
 
+		free(thread);
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_PROCESS)
 	{
 		WINPR_PROCESS* process;
-
 		process = (WINPR_PROCESS*) Object;
 		free(process);
-
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_MUTEX)
 	{
 		WINPR_MUTEX* mutex;
-
 		mutex = (WINPR_MUTEX*) Object;
-
 		pthread_mutex_destroy(&mutex->mutex);
-
 		free(Object);
-
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_EVENT)
 	{
 		WINPR_EVENT* event;
-
 		event = (WINPR_EVENT*) Object;
 
 		if (!event->bAttached)
@@ -180,6 +167,7 @@ BOOL CloseHandle(HANDLE hObject)
 				close(event->pipe_fd[0]);
 				event->pipe_fd[0] = -1;
 			}
+
 			if (event->pipe_fd[1] != -1)
 			{
 				close(event->pipe_fd[1]);
@@ -188,15 +176,12 @@ BOOL CloseHandle(HANDLE hObject)
 		}
 
 		free(Object);
-
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_SEMAPHORE)
 	{
 		WINPR_SEMAPHORE* semaphore;
-
 		semaphore = (WINPR_SEMAPHORE*) Object;
-
 #ifdef WINPR_PIPE_SEMAPHORE
 
 		if (semaphore->pipe_fd[0] != -1)
@@ -212,37 +197,31 @@ BOOL CloseHandle(HANDLE hObject)
 		}
 
 #else
-
 #if defined __APPLE__
 		semaphore_destroy(mach_task_self(), *((winpr_sem_t*) semaphore->sem));
 #else
 		sem_destroy((winpr_sem_t*) semaphore->sem);
 #endif
-
 #endif
 		free(Object);
-
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_TIMER)
 	{
 		WINPR_TIMER* timer;
-
 		timer = (WINPR_TIMER*) Object;
-
 #ifdef __linux__
+
 		if (timer->fd != -1)
 			close(timer->fd);
+
 #endif
-
 		free(Object);
-
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_ANONYMOUS_PIPE)
 	{
 		WINPR_PIPE* pipe;
-
 		pipe = (WINPR_PIPE*) Object;
 
 		if (pipe->fd != -1)
@@ -251,19 +230,21 @@ BOOL CloseHandle(HANDLE hObject)
 		}
 
 		free(Object);
-
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_NAMED_PIPE)
 	{
 		WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*) Object;
 
-		if (pNamedPipe->clientfd != -1) {
-			//fprintf(stderr, "%s: closing clientfd %d\n", __FUNCTION__, pNamedPipe->clientfd);
+		if (pNamedPipe->clientfd != -1)
+		{
+			//WLOG_DBG(TAG, "%s: closing clientfd %d\n", __FUNCTION__, pNamedPipe->clientfd);
 			close(pNamedPipe->clientfd);
 		}
-		if (pNamedPipe->serverfd != -1) {
-			//fprintf(stderr, "%s: closing serverfd %d\n", __FUNCTION__, pNamedPipe->serverfd);
+
+		if (pNamedPipe->serverfd != -1)
+		{
+			//WLOG_DBG(TAG, "%s: closing serverfd %d\n", __FUNCTION__, pNamedPipe->serverfd);
 			close(pNamedPipe->serverfd);
 		}
 
@@ -274,13 +255,11 @@ BOOL CloseHandle(HANDLE hObject)
 		free((void*)pNamedPipe->lpFilePath);
 		free((void*)pNamedPipe->name);
 		free(pNamedPipe);
-
 		return TRUE;
 	}
 	else if (Type == HANDLE_TYPE_ACCESS_TOKEN)
 	{
 		WINPR_ACCESS_TOKEN* token;
-
 		token = (WINPR_ACCESS_TOKEN*) Object;
 
 		if (token->Username)
@@ -290,7 +269,6 @@ BOOL CloseHandle(HANDLE hObject)
 			free(token->Domain);
 
 		free(token);
-
 		return TRUE;
 	}
 
@@ -298,7 +276,7 @@ BOOL CloseHandle(HANDLE hObject)
 }
 
 BOOL DuplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle,
-	LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions)
+					 LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions)
 {
 	return TRUE;
 }
