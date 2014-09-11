@@ -168,7 +168,7 @@ void BitDump(const char* tag, int level, const BYTE* buffer, UINT32 length, UINT
 	const char* str;
 	const char** strs;
 	char pbuffer[64 * 8 + 1];
-	size_t pos = 0, len = sizeof(pbuffer);
+	size_t pos = 0;
 	strs = (flags & BITDUMP_MSB_FIRST) ? BYTE_BIT_STRINGS_MSB : BYTE_BIT_STRINGS_LSB;
 
 	for (i = 0; i < length; i += 8)
