@@ -26,6 +26,9 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "../log.h"
+#define TAG WINPR_TAG("utils.ssl")
+
 static int g_winpr_openssl_num_locks = 0;
 static HANDLE* g_winpr_openssl_locks = NULL;
 static BOOL g_winpr_openssl_initialized_by_winpr = FALSE;
@@ -43,7 +46,7 @@ static unsigned long _winpr_openssl_id(void)
 }
 #endif
 
-static void _winpr_openssl_locking(int mode, int type, const char *file, int line)
+static void _winpr_openssl_locking(int mode, int type, const char* file, int line)
 {
 	if (mode & CRYPTO_LOCK)
 	{
@@ -55,19 +58,20 @@ static void _winpr_openssl_locking(int mode, int type, const char *file, int lin
 	}
 }
 
-static struct CRYPTO_dynlock_value *_winpr_openssl_dynlock_create(const char *file, int line)
+static struct CRYPTO_dynlock_value* _winpr_openssl_dynlock_create(const char* file, int line)
 {
-	struct CRYPTO_dynlock_value *dynlock = (struct CRYPTO_dynlock_value *)
-		malloc(sizeof(struct CRYPTO_dynlock_value));
+	struct CRYPTO_dynlock_value* dynlock = (struct CRYPTO_dynlock_value*)
+										   malloc(sizeof(struct CRYPTO_dynlock_value));
 
-	if (dynlock) {
+	if (dynlock)
+	{
 		dynlock->mutex = CreateMutex(NULL, FALSE, NULL);
 	}
 
 	return dynlock;
 }
 
-static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value *dynlock, const char *file, int line)
+static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value* dynlock, const char* file, int line)
 {
 	if (mode & CRYPTO_LOCK)
 	{
@@ -79,7 +83,7 @@ static void _winpr_openssl_dynlock_lock(int mode, struct CRYPTO_dynlock_value *d
 	}
 }
 
-static void _winpr_openssl_dynlock_destroy(struct CRYPTO_dynlock_value *dynlock, const char *file, int line)
+static void _winpr_openssl_dynlock_destroy(struct CRYPTO_dynlock_value* dynlock, const char* file, int line)
 {
 	CloseHandle(dynlock->mutex);
 	free(dynlock);
@@ -93,16 +97,17 @@ static BOOL _winpr_openssl_initialize_locking(void)
 
 	if (CRYPTO_get_locking_callback())
 	{
-		fprintf(stderr, "%s: warning: OpenSSL static locking callback is already set\n", __FUNCTION__);
+		WLog_WARN(TAG, "OpenSSL static locking callback is already set");
 	}
 	else
 	{
 		if ((count = CRYPTO_num_locks()) > 0)
 		{
-			HANDLE *locks;
+			HANDLE* locks;
+
 			if (!(locks = calloc(count, sizeof(HANDLE))))
 			{
-				fprintf(stderr, "%s: error allocating lock table\n", __FUNCTION__);
+				WLog_ERR(TAG, "error allocating lock table");
 				return FALSE;
 			}
 
@@ -110,11 +115,13 @@ static BOOL _winpr_openssl_initialize_locking(void)
 			{
 				if (!(locks[i] = CreateMutex(NULL, FALSE, NULL)))
 				{
-					fprintf(stderr, "%s: error creating lock #%d\n", __FUNCTION__, i);
+					WLog_ERR(TAG, "error creating lock #%d", i);
+
 					while (i--)
 					{
 						CloseHandle(g_winpr_openssl_locks[i]);
 					}
+
 					free(locks);
 					return FALSE;
 				}
@@ -122,19 +129,17 @@ static BOOL _winpr_openssl_initialize_locking(void)
 
 			g_winpr_openssl_locks = locks;
 			g_winpr_openssl_num_locks = count;
-
 			CRYPTO_set_locking_callback(_winpr_openssl_locking);
 		}
 	}
 
-
 	/* OpenSSL dynamic locking */
 
 	if (CRYPTO_get_dynlock_create_callback() ||
-	    CRYPTO_get_dynlock_lock_callback()   ||
-	    CRYPTO_get_dynlock_destroy_callback())
+			CRYPTO_get_dynlock_lock_callback()   ||
+			CRYPTO_get_dynlock_destroy_callback())
 	{
-		fprintf(stderr, "%s: warning: dynamic locking callbacks are already set\n", __FUNCTION__);
+		WLog_WARN(TAG, "dynamic locking callbacks are already set");
 	}
 	else
 	{
@@ -143,31 +148,28 @@ static BOOL _winpr_openssl_initialize_locking(void)
 		CRYPTO_set_dynlock_destroy_callback(_winpr_openssl_dynlock_destroy);
 	}
 
-
 	/* Use the deprecated CRYPTO_get_id_callback() if building against OpenSSL < 1.0.0 */
-
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L)
+
 	if (CRYPTO_get_id_callback())
 	{
-		fprintf(stderr, "%s: warning OpenSSL id_callback is already set\n", __FUNCTION__);
+		WLog_WARN(TAG, "OpenSSL id_callback is already set");
 	}
 	else
 	{
 		CRYPTO_set_id_callback(_winpr_openssl_id);
 	}
-#endif
 
+#endif
 	return TRUE;
 }
 
 static BOOL _winpr_openssl_cleanup_locking(void)
 {
 	/* undo our static locking modifications */
-
 	if (CRYPTO_get_locking_callback() == _winpr_openssl_locking)
 	{
 		int i;
-
 		CRYPTO_set_locking_callback(NULL);
 
 		for (i = 0; i < g_winpr_openssl_num_locks; i++)
@@ -179,7 +181,6 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 		free(g_winpr_openssl_locks);
 		g_winpr_openssl_locks = NULL;
 	}
-
 
 	/* unset our dynamic locking callbacks */
 
@@ -198,18 +199,18 @@ static BOOL _winpr_openssl_cleanup_locking(void)
 		CRYPTO_set_dynlock_destroy_callback(NULL);
 	}
 
-
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L)
+
 	if (CRYPTO_get_id_callback() == _winpr_openssl_id)
 	{
 		CRYPTO_set_id_callback(NULL);
 	}
-#endif
 
+#endif
 	return TRUE;
 }
 
-static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID *context)
+static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVOID* context)
 {
 	DWORD flags = param ? *(PDWORD)param : WINPR_SSL_INIT_DEFAULT;
 
@@ -228,12 +229,9 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 
 	/* SSL_load_error_strings() is void */
 	SSL_load_error_strings();
-
 	/* SSL_library_init() always returns "1" */
 	SSL_library_init();
-
 	g_winpr_openssl_initialized_by_winpr = TRUE;
-
 	return TRUE;
 }
 
@@ -252,9 +250,10 @@ BOOL winpr_CleanupSSL(DWORD flags)
 	{
 		if (!g_winpr_openssl_initialized_by_winpr)
 		{
-			fprintf(stderr, "%s: warning: ssl was not initialized by winpr\n", __FUNCTION__);
+			WLog_WARN(TAG, "ssl was not initialized by winpr");
 			return FALSE;
 		}
+
 		g_winpr_openssl_initialized_by_winpr = FALSE;
 		_winpr_openssl_cleanup_locking();
 		CRYPTO_cleanup_all_ex_data();

@@ -43,13 +43,15 @@
 #include "../handle/handle.h"
 #include "../pipe/pipe.h"
 
+#include "../log.h"
+#define TAG WINPR_TAG("synch.event")
+
 CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
 
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName)
 {
 	WINPR_EVENT* event;
 	HANDLE handle = NULL;
-
 	event = (WINPR_EVENT*) malloc(sizeof(WINPR_EVENT));
 
 	if (event)
@@ -59,30 +61,31 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 
 		if (!event->bManualReset)
 		{
-			fprintf(stderr, "CreateEventW: auto-reset events not yet implemented\n");
+			WLog_ERR(TAG, "auto-reset events not yet implemented");
 		}
 
 		event->pipe_fd[0] = -1;
 		event->pipe_fd[1] = -1;
-
 #ifdef HAVE_EVENTFD_H
 		event->pipe_fd[0] = eventfd(0, EFD_NONBLOCK);
 
 		if (event->pipe_fd[0] < 0)
 		{
-			fprintf(stderr, "CreateEventW: failed to create event\n");
+			WLog_ERR(TAG, "failed to create event");
 			free(event);
 			return NULL;
 		}
+
 #else
+
 		if (pipe(event->pipe_fd) < 0)
 		{
-			fprintf(stderr, "CreateEventW: failed to create event\n");
+			WLog_ERR(TAG, "failed to create event");
 			free(event);
 			return NULL;
 		}
-#endif
 
+#endif
 		WINPR_HANDLE_SET_TYPE(event, HANDLE_TYPE_EVENT);
 		handle = (HANDLE) event;
 
@@ -142,13 +145,11 @@ BOOL SetEvent(HANDLE hEvent)
 	int length;
 	BOOL status;
 	WINPR_EVENT* event;
-
 	status = FALSE;
 
 	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
 	{
 		event = (WINPR_EVENT*) Object;
-
 #ifdef HAVE_EVENTFD_H
 		eventfd_t val = 1;
 
@@ -160,6 +161,7 @@ BOOL SetEvent(HANDLE hEvent)
 
 		status = (length == 0) ? TRUE : FALSE;
 #else
+
 		if (WaitForSingleObject(hEvent, 0) != WAIT_OBJECT_0)
 		{
 			length = write(event->pipe_fd[1], "-", 1);
@@ -171,6 +173,7 @@ BOOL SetEvent(HANDLE hEvent)
 		{
 			status = TRUE;
 		}
+
 #endif
 	}
 
@@ -184,7 +187,6 @@ BOOL ResetEvent(HANDLE hEvent)
 	int length;
 	BOOL status;
 	WINPR_EVENT* event;
-
 	status = FALSE;
 
 	if (winpr_Handle_GetInfo(hEvent, &Type, &Object))
@@ -204,11 +206,13 @@ BOOL ResetEvent(HANDLE hEvent)
 
 			if ((length > 0) && (!status))
 				status = TRUE;
+
 #else
 			length = read(event->pipe_fd[0], &length, 1);
 
 			if ((length == 1) && (!status))
 				status = TRUE;
+
 #endif
 		}
 	}
@@ -223,17 +227,14 @@ HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
 #ifndef _WIN32
 	WINPR_EVENT* event;
 	HANDLE handle = NULL;
-
 	event = (WINPR_EVENT*) malloc(sizeof(WINPR_EVENT));
 
 	if (event)
 	{
 		event->bAttached = TRUE;
 		event->bManualReset = bManualReset;
-
 		event->pipe_fd[0] = FileDescriptor;
 		event->pipe_fd[1] = -1;
-
 		WINPR_HANDLE_SET_TYPE(event, HANDLE_TYPE_EVENT);
 		handle = (HANDLE) event;
 	}
@@ -253,15 +254,13 @@ HANDLE CreateFileDescriptorEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
  * Returns an event based on the handle returned by GetEventWaitObject()
  */
 HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes,
-	BOOL bManualReset, BOOL bInitialState, void* pObject)
+							 BOOL bManualReset, BOOL bInitialState, void* pObject)
 {
 #ifndef _WIN32
-	return CreateFileDescriptorEventW(lpEventAttributes, bManualReset, bInitialState, (int) (ULONG_PTR) pObject);
+	return CreateFileDescriptorEventW(lpEventAttributes, bManualReset, bInitialState, (int)(ULONG_PTR) pObject);
 #else
 	HANDLE hEvent = NULL;
-
 	DuplicateHandle(GetCurrentProcess(), pObject, GetCurrentProcess(), &hEvent, 0, FALSE, DUPLICATE_SAME_ACCESS);
-
 	return hEvent;
 #endif
 }
@@ -282,12 +281,17 @@ int GetEventFileDescriptor(HANDLE hEvent)
 		return -1;
 
 	event = (WINPR_EVENT*) Object;
+
 	if (Type == HANDLE_TYPE_NAMED_PIPE)
 	{
-		WINPR_NAMED_PIPE *named = (WINPR_NAMED_PIPE *)hEvent;
-		if (named->ServerMode) {
+		WINPR_NAMED_PIPE* named = (WINPR_NAMED_PIPE*)hEvent;
+
+		if (named->ServerMode)
+		{
 			return named->serverfd;
-		} else {
+		}
+		else
+		{
 			return named->clientfd;
 		}
 	}
@@ -314,9 +318,7 @@ int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor)
 		return -1;
 
 	event = (WINPR_EVENT*) Object;
-
 	event->pipe_fd[0] = FileDescriptor;
-
 	return 0;
 #else
 	return -1;
@@ -338,11 +340,8 @@ void* GetEventWaitObject(HANDLE hEvent)
 #ifndef _WIN32
 	int fd;
 	void* obj;
-
 	fd = GetEventFileDescriptor(hEvent);
-
-	obj = ((void*) (long) fd);
-
+	obj = ((void*)(long) fd);
 	return obj;
 #else
 	return hEvent;

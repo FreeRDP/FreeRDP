@@ -32,6 +32,9 @@
 
 #include "wtsapi.h"
 
+#include "../log.h"
+#define TAG WINPR_TAG("wtsapi")
+
 /**
  * Remote Desktop Services API Functions:
  * http://msdn.microsoft.com/en-us/library/windows/desktop/aa383464/
@@ -191,9 +194,7 @@ int WtsApi32_InitializeWtsApi(void)
 	WTSAPI32_LOAD_PROC(GetChildSessionId, WTS_GET_CHILD_SESSION_ID_FN);
 	WTSAPI32_LOAD_PROC(GetActiveConsoleSessionId, WTS_GET_ACTIVE_CONSOLE_SESSION_ID_FN);
 #endif
-
 	g_WtsApi = &WtsApi32_WtsApiFunctionTable;
-
 	return 1;
 }
 
@@ -325,17 +326,17 @@ BOOL WINAPI WTSSetUserConfigA(LPSTR pServerName, LPSTR pUserName, WTS_CONFIG_CLA
 }
 
 BOOL WINAPI WTSSendMessageW(HANDLE hServer, DWORD SessionId, LPWSTR pTitle, DWORD TitleLength,
-		LPWSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
+							LPWSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
 {
 	WTSAPI_STUB_CALL_BOOL(SendMessageW, hServer, SessionId, pTitle, TitleLength,
-			pMessage, MessageLength, Style, Timeout, pResponse, bWait);
+						  pMessage, MessageLength, Style, Timeout, pResponse, bWait);
 }
 
 BOOL WINAPI WTSSendMessageA(HANDLE hServer, DWORD SessionId, LPSTR pTitle, DWORD TitleLength,
-		LPSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
+							LPSTR pMessage, DWORD MessageLength, DWORD Style, DWORD Timeout, DWORD* pResponse, BOOL bWait)
 {
 	WTSAPI_STUB_CALL_BOOL(SendMessageA, hServer, SessionId, pTitle, TitleLength,
-			pMessage, MessageLength, Style, Timeout, pResponse, bWait);
+						  pMessage, MessageLength, Style, Timeout, pResponse, bWait);
 }
 
 BOOL WINAPI WTSDisconnectSession(HANDLE hServer, DWORD SessionId, BOOL bWait)
@@ -469,47 +470,47 @@ BOOL WINAPI WTSQueryListenerConfigA(HANDLE hServer, PVOID pReserved, DWORD Reser
 }
 
 BOOL WINAPI WTSCreateListenerW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag)
+							   LPWSTR pListenerName, PWTSLISTENERCONFIGW pBuffer, DWORD flag)
 {
 	WTSAPI_STUB_CALL_BOOL(CreateListenerW, hServer, pReserved, Reserved, pListenerName, pBuffer, flag);
 }
 
 BOOL WINAPI WTSCreateListenerA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer, DWORD flag)
+							   LPSTR pListenerName, PWTSLISTENERCONFIGA pBuffer, DWORD flag)
 {
 	WTSAPI_STUB_CALL_BOOL(CreateListenerA, hServer, pReserved, Reserved, pListenerName, pBuffer, flag);
 }
 
 BOOL WINAPI WTSSetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor)
+									LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+									PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
 	WTSAPI_STUB_CALL_BOOL(SetListenerSecurityW, hServer, pReserved, Reserved,
-			pListenerName, SecurityInformation, pSecurityDescriptor);
+						  pListenerName, SecurityInformation, pSecurityDescriptor);
 }
 
 BOOL WINAPI WTSSetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor)
+									LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+									PSECURITY_DESCRIPTOR pSecurityDescriptor)
 {
 	WTSAPI_STUB_CALL_BOOL(SetListenerSecurityA, hServer, pReserved, Reserved,
-			pListenerName, SecurityInformation, pSecurityDescriptor);
+						  pListenerName, SecurityInformation, pSecurityDescriptor);
 }
 
 BOOL WINAPI WTSGetListenerSecurityW(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
+									LPWSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+									PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
 {
 	WTSAPI_STUB_CALL_BOOL(GetListenerSecurityW, hServer, pReserved, Reserved, pListenerName,
-			SecurityInformation, pSecurityDescriptor, nLength, lpnLengthNeeded);
+						  SecurityInformation, pSecurityDescriptor, nLength, lpnLengthNeeded);
 }
 
 BOOL WINAPI WTSGetListenerSecurityA(HANDLE hServer, PVOID pReserved, DWORD Reserved,
-		LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
-		PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
+									LPSTR pListenerName, SECURITY_INFORMATION SecurityInformation,
+									PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
 {
 	WTSAPI_STUB_CALL_BOOL(GetListenerSecurityA, hServer, pReserved, Reserved, pListenerName,
-			SecurityInformation, pSecurityDescriptor, nLength, lpnLengthNeeded);
+						  SecurityInformation, pSecurityDescriptor, nLength, lpnLengthNeeded);
 }
 
 BOOL CDECL WTSEnableChildSessions(BOOL bEnable)
@@ -553,7 +554,7 @@ BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table)
 	return TRUE;
 }
 
-static BOOL LoadAndInitialize(char *library)
+static BOOL LoadAndInitialize(char* library)
 {
 	INIT_WTSAPI_FN pInitWtsApi;
 	g_WtsApiModule = LoadLibraryA(library);
@@ -567,6 +568,7 @@ static BOOL LoadAndInitialize(char *library)
 	{
 		return FALSE;
 	}
+
 	g_WtsApi = pInitWtsApi();
 	return TRUE;
 }
@@ -600,42 +602,40 @@ void InitializeWtsApiStubs_FreeRDS()
 	char* prefix;
 	char* libdir;
 	wIniFile* ini;
-	
+
 	if (g_WtsApi)
 		return;
-	
+
 	ini = IniFile_New();
 
 	if (IniFile_Parse(ini, "/var/run/freerds.instance") < 0)
 	{
 		IniFile_Free(ini);
-		fprintf(stderr, "failed to parse freerds.instance\n");
+		WLog_ERR(TAG, "failed to parse freerds.instance");
 		LoadAndInitialize(FREERDS_LIBRARY_NAME);
 		return;
 	}
-	
+
 	prefix = IniFile_GetKeyValueString(ini, "FreeRDS", "prefix");
 	libdir = IniFile_GetKeyValueString(ini, "FreeRDS", "libdir");
-	
-	fprintf(stderr, "FreeRDS (prefix / libdir): %s / %s\n", prefix, libdir);
-	
+	WLog_INFO(TAG, "FreeRDS (prefix / libdir): %s / %s", prefix, libdir);
+
 	if (prefix && libdir)
 	{
 		char* prefix_libdir;
 		char* wtsapi_library;
-		
 		prefix_libdir = GetCombinedPath(prefix, libdir);
 		wtsapi_library = GetCombinedPath(prefix_libdir, FREERDS_LIBRARY_NAME);
-		
+
 		if (wtsapi_library)
 		{
 			LoadAndInitialize(wtsapi_library);
 		}
-		
+
 		free(prefix_libdir);
 		free(wtsapi_library);
 	}
-	
+
 	IniFile_Free(ini);
 }
 
@@ -645,9 +645,7 @@ void InitializeWtsApiStubs(void)
 		return;
 
 	g_Initialized = TRUE;
-	
 	InitializeWtsApiStubs_Env();
-
 #ifdef _WIN32
 	WtsApi32_InitializeWtsApi();
 #endif

@@ -24,7 +24,7 @@
 
 #define DEBUG_PRINT(level, file, fkt, line, dbg_str, fmt, ...) \
 	do { \
-		wLog *log = WLog_Get("com.freerdp." dbg_str); \
+		wLog *log = WLog_Get("com.freerdp.legacy"); \
 		wLogMessage msg; \
 		\
 		msg.Type = WLOG_MESSAGE_TEXT; \
@@ -38,10 +38,10 @@
 
 #define DEBUG_NULL(fmt, ...) do { } while (0)
 #define DEBUG_CLASS(_dbg_class, fmt, ...) DEBUG_PRINT(WLOG_ERROR, __FILE__, \
-	__FUNCTION__, 	__LINE__, #_dbg_class, fmt, ## __VA_ARGS__)
+		__FUNCTION__, 	__LINE__, #_dbg_class, fmt, ## __VA_ARGS__)
 #define DEBUG_MSG(fmt, ...) DEBUG_PRINT(WLOG_DEBUG, __FILE__, __FUNCTION__, \
-	__LINE__, "freerdp", fmt, ## __VA_ARGS__)
+										__LINE__, "freerdp", fmt, ## __VA_ARGS__)
 #define DEBUG_WARN(fmt, ...) DEBUG_PRINT(WLOG_ERROR, __FILE__, __FUNCTION__, \
-	__LINE__, "freerdp", fmt, ## __VA_ARGS__)
+		__LINE__, "freerdp", fmt, ## __VA_ARGS__)
 
 #endif /* FREERDP_UTILS_DEBUG_H */

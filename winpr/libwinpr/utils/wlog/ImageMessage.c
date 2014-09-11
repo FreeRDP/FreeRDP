@@ -23,8 +23,6 @@
 
 #include <winpr/wlog.h>
 
-#include <winpr/image.h>
-
 #include "wlog/ImageMessage.h"
 
 int WLog_ImageMessage_Write(char* filename, void* data, int width, int height, int bpp)

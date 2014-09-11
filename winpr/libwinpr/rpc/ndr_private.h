@@ -22,6 +22,9 @@
 
 #include <winpr/rpc.h>
 
+#include "../log.h"
+#define TAG WINPR_TAG("rpc")
+
 #ifndef _WIN32
 
 void NdrpAlignLength(ULONG* length, unsigned int alignment);

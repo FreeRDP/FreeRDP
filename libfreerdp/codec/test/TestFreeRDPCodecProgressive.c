@@ -2,6 +2,7 @@
 #include <winpr/path.h>
 #include <winpr/image.h>
 #include <winpr/print.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/codec/region.h>
 

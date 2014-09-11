@@ -31,6 +31,9 @@
 #include <unistd.h>
 #endif
 
+#include "../log.h"
+#define TAG WINPR_TAG("thread")
+
 /**
  * CommandLineToArgvW function:
  * http://msdn.microsoft.com/en-us/library/windows/desktop/bb776391/
@@ -111,10 +114,8 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 	pArgs = NULL;
 	numArgs = 0;
-
 	lpEscapedCmdLine = NULL;
 	cmdLineLength = strlen(lpCmdLine);
-
 	lpEscapedChars = (BOOL*) malloc((cmdLineLength + 1) * sizeof(BOOL));
 	ZeroMemory(lpEscapedChars, (cmdLineLength + 1) * sizeof(BOOL));
 
@@ -122,9 +123,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	{
 		int i, n;
 		char* pLastEnd = NULL;
-
 		lpEscapedCmdLine = (char*) malloc((cmdLineLength + 1) * sizeof(char));
-
 		p = (char*) lpCmdLine;
 		pLastEnd = (char*) lpCmdLine;
 		pOutput = (char*) lpEscapedCmdLine;
@@ -139,7 +138,6 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 				CopyMemory(pOutput, p, length);
 				pOutput += length;
 				p += length;
-
 				break;
 			}
 
@@ -157,7 +155,6 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 			}
 
 			n = (pEnd - pBeg) - 1;
-
 			length = (pBeg - pLastEnd);
 			CopyMemory(pOutput, p, length);
 			pOutput += length;
@@ -176,13 +173,11 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 			*pOutput = '"';
 			pOutput++;
-
 			pLastEnd = p;
 		}
 
 		*pOutput = '\0';
 		pOutput++;
-
 		lpCmdLine = (LPCSTR) lpEscapedCmdLine;
 		cmdLineLength = strlen(lpCmdLine);
 	}
@@ -194,15 +189,12 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 	while (currentIndex < cmdLineLength - 1)
 	{
 		index = strcspn(p, " \t");
-
 		currentIndex += (index + 1);
 		p = (char*) &lpCmdLine[currentIndex];
-
 		maxNumArgs++;
 	}
 
 	maxBufferSize = (maxNumArgs * (sizeof(char*))) + (cmdLineLength + 1);
-
 	buffer = (char*) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, maxBufferSize);
 
 	if (!buffer)
@@ -210,7 +202,6 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 	pArgs = (LPSTR*) buffer;
 	pOutput = (char*) &buffer[maxNumArgs * (sizeof(char*))];
-
 	numArgs = 0;
 	currentIndex = 0;
 	p = (char*) lpCmdLine;
@@ -235,12 +226,9 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 		if (p[index] != '"')
 		{
 			/* no whitespace escaped with double quotes */
-
 			p = &p[index + 1];
 			pEnd = p - 1;
-
 			length = (pEnd - pBeg);
-
 			CopyMemory(pOutput, pBeg, length);
 			pOutput[length] = '\0';
 			pArgs[numArgs++] = pOutput;
@@ -265,7 +253,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 			if (p[index] != '"')
 			{
-				printf("CommandLineToArgvA parsing error: uneven number of unescaped double quotes!\n");
+				WLog_ERR(TAG, "parsing error: uneven number of unescaped double quotes!");
 			}
 
 			if (p[index] == '\0')
@@ -313,7 +301,6 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 		free(lpEscapedChars);
 
 	*pNumArgs = numArgs;
-
 	return pArgs;
 }
 

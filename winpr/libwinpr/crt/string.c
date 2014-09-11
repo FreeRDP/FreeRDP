@@ -32,6 +32,9 @@
 
 #include "casing.c"
 
+#include "../log.h"
+#define TAG WINPR_TAG("crt")
+
 char* _strdup(const char* strSource)
 {
 	char* strDestination;
@@ -42,7 +45,7 @@ char* _strdup(const char* strSource)
 	strDestination = strdup(strSource);
 
 	if (strDestination == NULL)
-		perror("strdup");
+		WLog_ERR(TAG,"strdup");
 
 	return strDestination;
 }
@@ -61,12 +64,13 @@ WCHAR* _wcsdup(const WCHAR* strSource)
 
 	if (strDestination != NULL)
 		wcscpy((wchar_t*)strDestination, (const wchar_t*)strSource);
+
 #else
 	strDestination = (WCHAR*) wcsdup((wchar_t*) strSource);
 #endif
 
 	if (strDestination == NULL)
-		perror("wcsdup");
+		WLog_ERR(TAG,"wcsdup");
 
 	return strDestination;
 }
@@ -148,7 +152,6 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 		*strToken++ = 0;
 
 	*context = strToken;
-
 	return nextToken;
 }
 
@@ -165,6 +168,7 @@ LPSTR CharUpperA(LPSTR lpsz)
 		return NULL;
 
 	length = strlen(lpsz);
+
 	if (length < 1)
 		return (LPSTR) NULL;
 
@@ -176,7 +180,6 @@ LPSTR CharUpperA(LPSTR lpsz)
 			c = c - 32;
 
 		*lpsz = c;
-
 		return lpsz;
 	}
 
@@ -191,8 +194,7 @@ LPSTR CharUpperA(LPSTR lpsz)
 
 LPWSTR CharUpperW(LPWSTR lpsz)
 {
-	fprintf(stderr, "CharUpperW unimplemented!\n");
-
+	WLog_ERR(TAG, "CharUpperW unimplemented!");
 	return (LPWSTR) NULL;
 }
 
@@ -245,7 +247,6 @@ LPSTR CharLowerA(LPSTR lpsz)
 			c = c + 32;
 
 		*lpsz = c;
-
 		return lpsz;
 	}
 
@@ -260,8 +261,7 @@ LPSTR CharLowerA(LPSTR lpsz)
 
 LPWSTR CharLowerW(LPWSTR lpsz)
 {
-	fprintf(stderr, "CharLowerW unimplemented!\n");
-
+	WLog_ERR(TAG, "CharLowerW unimplemented!");
 	return (LPWSTR) NULL;
 }
 
@@ -303,7 +303,7 @@ BOOL IsCharAlphaA(CHAR ch)
 
 BOOL IsCharAlphaW(WCHAR ch)
 {
-	fprintf(stderr, "IsCharAlphaW unimplemented!\n");
+	WLog_ERR(TAG, "IsCharAlphaW unimplemented!");
 	return 0;
 }
 
@@ -318,7 +318,7 @@ BOOL IsCharAlphaNumericA(CHAR ch)
 
 BOOL IsCharAlphaNumericW(WCHAR ch)
 {
-	fprintf(stderr, "IsCharAlphaNumericW unimplemented!\n");
+	WLog_ERR(TAG, "IsCharAlphaNumericW unimplemented!");
 	return 0;
 }
 
@@ -332,7 +332,7 @@ BOOL IsCharUpperA(CHAR ch)
 
 BOOL IsCharUpperW(WCHAR ch)
 {
-	fprintf(stderr, "IsCharUpperW unimplemented!\n");
+	WLog_ERR(TAG, "IsCharUpperW unimplemented!");
 	return 0;
 }
 
@@ -346,7 +346,7 @@ BOOL IsCharLowerA(CHAR ch)
 
 BOOL IsCharLowerW(WCHAR ch)
 {
-	fprintf(stderr, "IsCharLowerW unimplemented!\n");
+	WLog_ERR(TAG, "IsCharLowerW unimplemented!");
 	return 0;
 }
 

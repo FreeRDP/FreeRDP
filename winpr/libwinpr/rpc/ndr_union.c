@@ -29,15 +29,16 @@
 #ifndef _WIN32
 
 #include "ndr_union.h"
+#include "ndr_private.h"
 
 void NdrEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
-	fprintf(stderr, "warning: NdrEncapsulatedUnionBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrEncapsulatedUnionBufferSize unimplemented");
 }
 
 void NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
-	fprintf(stderr, "warning: NdrNonEncapsulatedUnionBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrNonEncapsulatedUnionBufferSize unimplemented");
 }
 
 #endif

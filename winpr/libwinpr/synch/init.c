@@ -26,36 +26,40 @@
 #include <winpr/synch.h>
 #include <winpr/interlocked.h>
 
+#include "../log.h"
+#define TAG WINPR_TAG("sync")
+
 #if (!defined(_WIN32)) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600))
 
 BOOL InitOnceBeginInitialize(LPINIT_ONCE lpInitOnce, DWORD dwFlags, PBOOL fPending, LPVOID* lpContext)
 {
-	fprintf(stderr, "%s: not implemented\n", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	return FALSE;
 }
 
 BOOL InitOnceComplete(LPINIT_ONCE lpInitOnce, DWORD dwFlags, LPVOID lpContext)
 {
-	fprintf(stderr, "%s: not implemented\n", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	return FALSE;
 }
 
 VOID InitOnceInitialize(PINIT_ONCE InitOnce)
 {
-	fprintf(stderr, "%s: not implemented\n", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 }
 
 BOOL InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parameter, LPVOID* Context)
 {
 	for (;;)
 	{
-		switch((ULONG_PTR)InitOnce->Ptr & 3)
+		switch ((ULONG_PTR)InitOnce->Ptr & 3)
 		{
 			case 2:
 				/* already completed successfully */
 				return TRUE;
 
 			case 0:
+
 				/* first time */
 				if (InterlockedCompareExchangePointer(&InitOnce->Ptr, (PVOID)1, (PVOID)0) != (PVOID)0)
 				{
@@ -80,7 +84,7 @@ BOOL InitOnceExecuteOnce(PINIT_ONCE InitOnce, PINIT_ONCE_FN InitFn, PVOID Parame
 				break;
 
 			default:
-				fprintf(stderr, "%s: internal error\n", __FUNCTION__);
+				WLog_ERR(TAG, "internal error");
 				return FALSE;
 		}
 
