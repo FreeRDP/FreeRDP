@@ -642,6 +642,7 @@ BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
 	if (priv->expectedBytes)
 		return TRUE;
 
+	Stream_SealLength(s);
 	Stream_SetPosition(s, 0);
 	if (priv->waitingHeader)
 	{
