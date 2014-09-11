@@ -105,6 +105,11 @@ struct _rdpsnd_server_context
 	 * synchronization.
 	 */
 	psRdpsndServerActivated Activated;
+
+	/**
+	 *  MS-RDPEA channel version the client announces
+	 */
+	UINT16 clientVersion;
 };
 
 #ifdef __cplusplus

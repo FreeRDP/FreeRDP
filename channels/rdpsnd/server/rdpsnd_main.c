@@ -118,7 +118,7 @@ static BOOL rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 {
 	int i, num_known_format = 0;
 	UINT32 flags, vol, pitch;
-	UINT16 udpPort, version;
+	UINT16 udpPort;
 	BYTE lastblock;
 
 	if (Stream_GetRemainingLength(s) < 20)
@@ -130,7 +130,7 @@ static BOOL rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	Stream_Read_UINT16(s, udpPort); /* wDGramPort */
 	Stream_Read_UINT16(s, context->num_client_formats); /* wNumberOfFormats */
 	Stream_Read_UINT8(s, lastblock); /* cLastBlockConfirmed */
-	Stream_Read_UINT16(s, version); /* wVersion */
+	Stream_Read_UINT16(s, context->clientVersion); /* wVersion */
 	Stream_Seek_UINT8(s); /* bPad */
 
 	/* this check is only a guess as cbSize can influence the size of a format record */
@@ -674,16 +674,18 @@ BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
 
 		case SNDC_FORMATS:
 			ret = rdpsnd_server_recv_formats(context, s);
+
+			if (ret && context->clientVersion < 6)
+				IFCALL(context->Activated, context);
+
 			break;
 
 		case SNDC_QUALITYMODE:
 			ret = rdpsnd_server_recv_quality_mode(context, s);
 			Stream_SetPosition(s, 0); /* in case the Activated callback tries to treat some messages */
 
-			if (ret)
-			{
+			if (ret && context->clientVersion >= 6)
 				IFCALL(context->Activated, context);
-			}
 			break;
 
 		default:
