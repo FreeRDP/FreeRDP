@@ -37,7 +37,6 @@ void winpr_HexDump(const char* tag, int level, const BYTE* data, int length)
 {
 	const BYTE* p = data;
 	int i, line, offset = 0;
-	const size_t llen = (length > WINPR_HEXDUMP_LINE_LENGTH) ? WINPR_HEXDUMP_LINE_LENGTH : length;
 	size_t blen = 7 + WINPR_HEXDUMP_LINE_LENGTH * 5;
 	size_t pos = 0;
 	char* buffer = malloc(blen);
@@ -64,9 +63,9 @@ void winpr_HexDump(const char* tag, int level, const BYTE* data, int length)
 
 		for (i = 0; i < line; i++)
 			pos += trio_snprintf(&buffer[pos], blen - pos, "%c",
-							(p[i] >= 0x20 && p[i] < 0x7F) ? p[i] : '.');
+								 (p[i] >= 0x20 && p[i] < 0x7F) ? p[i] : '.');
 
-		pos += trio_snprintf(&buffer[pos], blen - pos, "\n");
+		trio_snprintf(&buffer[pos], blen - pos, "\n");
 		WLog_LVL(tag, level, "%s", buffer);
 		offset += line;
 		p += line;
