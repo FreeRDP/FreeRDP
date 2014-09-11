@@ -348,7 +348,7 @@ BOOL wf_post_connect(freerdp* instance)
 	{
 		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
 
-		gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_32BPP, wfc->primary->pdata);
+		gdi_init(instance, CLRCONV_ALPHA | CLRBUF_32BPP, wfc->primary->pdata);
 
 		gdi = instance->context->gdi;
 		wfc->hdc = gdi->primary->hdc;
