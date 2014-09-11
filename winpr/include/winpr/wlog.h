@@ -211,7 +211,7 @@ struct _wLog
 	DWORD ChildrenSize;
 };
 
-WINPR_API void WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
+WINPR_API int WLog_PrintMessage(wLog* log, wLogMessage* message, ...);
 WINPR_API int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args);
 
 #define WLog_Print(_log, _log_level, _fmt, ...) \
