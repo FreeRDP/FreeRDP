@@ -44,7 +44,7 @@
 
 char* NTLM_PACKAGE_NAME = "NTLM";
 
-int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
+static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
 	int status;
 	DWORD nSize = 0;
@@ -64,17 +64,15 @@ int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 
 	context->Workstation.Buffer = NULL;
 	status = ConvertToUnicode(CP_UTF8, 0, ws, -1, &context->Workstation.Buffer, 0);
-	free(ws);
+
+	if (!Workstation)
+		free(ws);
 
 	if (status <= 0)
 		return -1;
 
 	context->Workstation.Length = (USHORT)(status - 1);
 	context->Workstation.Length *= 2;
-
-	if (!Workstation)
-		free(Workstation);
-
 	return 1;
 }
 
@@ -187,18 +185,26 @@ NTLM_CONTEXT* ntlm_ContextNew()
 
 		if (RegQueryValueEx(hKey, _T("WorkstationName"), NULL, &dwType, NULL, &dwSize) == ERROR_SUCCESS)
 		{
+			int rc;
 			char* workstation = (char*) malloc(dwSize + 1);
 
 			if (!workstation)
+			{
+				free(context);
+				RegCloseKey(hKey);
 				return NULL;
+			}
 
 			status = RegQueryValueExA(hKey, "WorkstationName", NULL, &dwType, (BYTE*) workstation, &dwSize);
 			workstation[dwSize] = '\0';
-
-			if (ntlm_SetContextWorkstation(context, workstation) < 0)
-				return NULL;
-
+			rc = ntlm_SetContextWorkstation(context, workstation);
 			free(workstation);
+
+			if (rc < 0)
+			{
+				RegCloseKey(hKey);
+				return NULL;
+			}
 		}
 
 		RegCloseKey(hKey);
