@@ -44,13 +44,13 @@ if(CMAKE_SYSTEM_NAME MATCHES Solaris)
 endif()
 
 if(WITH_X11)
-	add_definitions(-DWITH_X11)
-	include_directories(${X11_INCLUDE_DIRS})
+	freerdp_definition_add(-DWITH_X11)
+	freerdp_include_directory_add(${X11_INCLUDE_DIRS})
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_X11_SRCS})
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${X11_LIBRARIES})
+	freerdp_library_add(${X11_LIBRARIES})
 
 	if(WITH_SUN)
-		add_definitions(-DWITH_SUN)
+		freerdp_definition_add(-DWITH_SUN)
 		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_SUN_SRCS})
 	endif()
 
@@ -61,37 +61,13 @@ if(WITH_X11)
 	find_feature(XKBFile ${XKBFILE_FEATURE_TYPE} ${XKBFILE_FEATURE_PURPOSE} ${XKBFILE_FEATURE_DESCRIPTION})
 
 	if(WITH_XKBFILE AND (NOT APPLE))
-		add_definitions(-DWITH_XKBFILE)
-		include_directories(${XKBFILE_INCLUDE_DIRS})
+		freerdp_definition_add(-DWITH_XKBFILE)
+		freerdp_include_directory_add(${XKBFILE_INCLUDE_DIRS})
 		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_XKBFILE_SRCS})
-		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XKBFILE_LIBRARIES})
+		freerdp_library_add(${XKBFILE_LIBRARIES})
 	else()
 		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_X11_KEYMAP_SRCS})
 	endif()
 endif()
 
-add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS}
-	EXPORT)
-
-if (WITH_LIBRARY_VERSIONING)
-  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
-endif()
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD} INTERNAL
-	MODULE freerdp
-	MODULES freerdp-utils)
-	
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
-
-if(MONOLITHIC_BUILD)
-	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
-else()
-	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT FreeRDPTargets)
-endif()
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
+freerdp_module_add(${${MODULE_PREFIX}_SRCS})

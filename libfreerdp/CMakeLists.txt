@@ -18,18 +18,66 @@
 set(MODULE_NAME "freerdp")
 set(MODULE_PREFIX "FREERDP")
 
-if(MONOLITHIC_BUILD)
-	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
-
 # Create imported targets for Intel IPP libraries
 
 if(IPP_FOUND)
     foreach(ipp_lib ${IPP_LIBRARIES})
-    	add_library("${ipp_lib}_imported" STATIC IMPORTED)
+			add_library("${ipp_lib}_imported" STATIC IMPORTED)
 		set_property(TARGET "${ipp_lib}_imported" PROPERTY IMPORTED_LOCATION "${IPP_LIBRARY_DIRS}/${ipp_lib}")
 	endforeach()
 endif()
+
+set(LIBFREERDP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(LIBFREERDP_SRCS "")
+set(LIBFREERDP_LIBS "")
+set(LIBFREERDP_INCLUDES "")
+set(LIBFREERDP_DEFINITIONS "")
+
+macro (freerdp_module_add)
+    file (RELATIVE_PATH _relPath "${LIBFREERDP_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+    foreach (_src ${ARGN})
+        if (_relPath)
+            list (APPEND LIBFREERDP_SRCS "${_relPath}/${_src}")
+        else()
+            list (APPEND LIBFREERDP_SRCS "${_src}")
+        endif()
+    endforeach()
+    if (_relPath)
+        set (LIBFREERDP_SRCS ${LIBFREERDP_SRCS} PARENT_SCOPE)
+    endif()
+endmacro()
+
+macro (freerdp_include_directory_add)
+    file (RELATIVE_PATH _relPath "${LIBFREERDP_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+    foreach (_inc ${ARGN})
+				if (IS_ABSOLUTE ${_inc})
+							list (APPEND LIBFREERDP_INCLUDES "${_inc}")
+				else()
+					if (_relPath)
+							list (APPEND LIBFREERDP_INCLUDES "${_relPath}/${_inc}")
+					else()
+							list (APPEND LIBFREERDP_INCLUDES "${_inc}")
+					endif()
+				endif()
+    endforeach()
+    if (_relPath)
+        set (LIBFREERDP_INCLUDES ${LIBFREERDP_INCLUDES} PARENT_SCOPE)
+    endif()
+endmacro()
+
+macro (freerdp_library_add)
+    foreach (_lib ${ARGN})
+            list (APPEND LIBFREERDP_LIBS "${_lib}")
+    endforeach()
+     set (LIBFREERDP_LIBS ${LIBFREERDP_LIBS} PARENT_SCOPE)
+endmacro()
+
+macro (freerdp_definition_add)
+    foreach (_define ${ARGN})
+            list (APPEND LIBFREERDP_DEFINITIONS "${_define}")
+    endforeach()
+     set (LIBFREERDP_DEFINITIONS ${LIBFREERDP_DEFINITIONS} PARENT_SCOPE)
+endmacro()
 
 set(${MODULE_PREFIX}_SUBMODULES
 	utils
@@ -37,36 +85,205 @@ set(${MODULE_PREFIX}_SUBMODULES
 	gdi
 	rail
 	cache
-	codec
 	crypto
 	locale
-	primitives
 	core)
 
 foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
 	add_subdirectory(${${MODULE_PREFIX}_SUBMODULE})
 endforeach()
 
-if(MONOLITHIC_BUILD)
-	foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
-		set(${MODULE_PREFIX}_OBJECTS ${${MODULE_PREFIX}_OBJECTS} "$<TARGET_OBJECTS:${MODULE_NAME}-${${MODULE_PREFIX}_SUBMODULE}>")
+## cmake source properties are only seen by targets in the same CMakeLists.txt
+## therefore primitives and codecs need to be defined here
+
+# codec
+set(CODEC_SRCS
+	codec/dsp.c
+	codec/color.c
+	codec/audio.c
+	codec/planar.c
+	codec/bitmap.c
+	codec/interleaved.c
+	codec/progressive.c
+	codec/rfx_bitstream.h
+	codec/rfx_constants.h
+	codec/rfx_decode.c
+	codec/rfx_decode.h
+	codec/rfx_differential.c
+	codec/rfx_differential.h
+	codec/rfx_dwt.c
+	codec/rfx_dwt.h
+	codec/rfx_encode.c
+	codec/rfx_encode.h
+	codec/rfx_quantization.c
+	codec/rfx_quantization.h
+	codec/rfx_rlgr.c
+	codec/rfx_rlgr.h
+	codec/rfx_types.h
+	codec/rfx.c
+	codec/region.c
+	codec/nsc.c
+	codec/nsc_encode.c
+	codec/nsc_encode.h
+	codec/nsc_types.h
+	codec/ncrush.c
+	codec/xcrush.c
+	codec/mppc.c
+	codec/zgfx.c
+	codec/clear.c
+	codec/jpeg.c
+	codec/h264.c)
+
+set(CODEC_SSE2_SRCS
+	codec/rfx_sse2.c
+	codec/rfx_sse2.h
+	codec/nsc_sse2.c
+	codec/nsc_sse2.h)
+
+set(CODEC_NEON_SRCS
+	codec/rfx_neon.c
+	codec/rfx_neon.h)
+
+if(WITH_SSE2)
+	set(CODEC_SRCS ${CODEC_SRCS} ${CODEC_SSE2_SRCS})
+
+	if(CMAKE_COMPILER_IS_GNUCC)
+		set_source_files_properties(${CODEC_SSE2_SRCS} PROPERTIES COMPILE_FLAGS "-msse2" )
+	endif()
+
+	if(MSVC)
+		set_source_files_properties(${CODEC_SSE2_SRCS} PROPERTIES COMPILE_FLAGS "/arch:SSE2" )
+	endif()
+endif()
+
+if(WITH_NEON)
+	set_source_files_properties(${CODEC_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon -mfloat-abi=${ARM_FP_ABI} -Wno-unused-variable" )
+	set(CODEC_SRCS ${CODEC_SRCS} ${CODEC_NEON_SRCS})
+endif()
+
+if(WITH_JPEG)
+	freerdp_include_directory_add(${JPEG_INCLUDE_DIR})
+	freerdp_library_add(${JPEG_LIBRARIES})
+endif()
+
+if(WITH_OPENH264)
+	freerdp_definition_add(-DWITH_OPENH264)
+	freerdp_include_directory_add(${OPENH264_INCLUDE_DIR})
+	freerdp_library_add(${OPENH264_LIBRARIES})
+endif()
+
+if(WITH_LIBAVCODEC)
+	freerdp_definition_add(-DWITH_LIBAVCODEC)
+	find_library(LIBAVCODEC_LIB avcodec)
+	find_library(LIBAVUTIL_LIB avutil)
+	freerdp_library_add(${LIBAVCODEC_LIB} ${LIBAVUTIL_LIB})
+endif()
+
+freerdp_module_add(${CODEC_SRCS})
+
+if(BUILD_TESTING)
+	add_subdirectory(codec/test)
+endif()
+
+# /codec
+
+# primitives
+
+set(PRIMITIVES_SRCS
+	primitives/prim_16to32bpp.c
+	primitives/prim_add.c
+	primitives/prim_andor.c
+	primitives/prim_alphaComp.c
+	primitives/prim_colors.c
+	primitives/prim_copy.c
+	primitives/prim_set.c
+	primitives/prim_shift.c
+	primitives/prim_sign.c
+	primitives/prim_YUV.c
+	primitives/prim_YCoCg.c
+	primitives/primitives.c
+	primitives/prim_internal.h)
+
+set(PRIMITIVES_OPT_SRCS
+	primitives/prim_16to32bpp_opt.c
+	primitives/prim_add_opt.c
+	primitives/prim_andor_opt.c
+	primitives/prim_alphaComp_opt.c
+	primitives/prim_colors_opt.c
+	primitives/prim_set_opt.c
+	primitives/prim_shift_opt.c
+	primitives/prim_sign_opt.c
+	primitives/prim_YUV_opt.c
+	primitives/prim_YCoCg_opt.c)
+
+freerdp_definition_add(-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+
+### IPP Variable debugging
+if(WITH_IPP)
+	if(CMAKE_COMPILER_IS_GNUCC)
+		foreach(INCLDIR ${IPP_INCLUDE_DIRS})
+			set(OPTIMIZATION "${OPTIMIZATION} -I${INCLDIR}")
+		endforeach(INCLDIR)
+	endif()
+endif()
+
+if(WITH_SSE2)
+	if(CMAKE_COMPILER_IS_GNUCC)
+		set(OPTIMIZATION "${OPTIMIZATION} -msse2 -mssse3 -O2 -Wdeclaration-after-statement")
+	endif()
+
+	if(MSVC)
+		set(OPTIMIZATION "${OPTIMIZATION} /arch:SSE2")
+	endif()
+elseif(WITH_NEON)
+	if(CMAKE_COMPILER_IS_GNUCC)
+	    set(OPTIMIZATION "${OPTIMIZATION} -mfpu=neon -mfloat-abi=${ARM_FP_ABI}")
+	endif()
+	# TODO: Add MSVC equivalent
+endif()
+
+if(DEFINED OPTIMIZATION)
+	set_source_files_properties(${PRIMITIVES_OPT_SRCS} PROPERTIES COMPILE_FLAGS ${OPTIMIZATION})
+endif()
+
+
+# always compile with optimization
+if(CMAKE_COMPILER_IS_GNUCC)
+	set_source_files_properties(${PRIMITIVES_SRCS} PROPERTIES COMPILE_FLAGS "-O2")
+endif()
+
+set(PRIMITIVES_SRCS ${PRIMITIVES_SRCS} ${PRIMITIVES_OPT_SRCS})
+
+freerdp_module_add(${PRIMITIVES_SRCS})
+
+if(IPP_FOUND)
+	freerdp_include_directory_add(${IPP_INCLUDE_DIRS})
+    foreach(ipp_lib ${IPP_LIBRARIES})
+		freerdp_library_add("${ipp_lib}_imported")
 	endforeach()
+endif()
 
-	add_library(${MODULE_NAME} dummy.c
-		${${MODULE_PREFIX}_OBJECTS})
+if(BUILD_TESTING AND NOT WIN32 AND NOT APPLE)
+	add_subdirectory(primitives/test)
+endif()
 
-	set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
-  if (WITH_LIBRARY_VERSIONING)
-  	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
-  endif()
-  set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
 
-	list(APPEND FREERDP_LIBS ${PROFILER_LIBRARIES})
-	list(REMOVE_DUPLICATES FREERDP_LIBS)
+# /primitives
 
-	target_link_libraries(${MODULE_NAME} ${FREERDP_LIBS})
+list(REMOVE_DUPLICATES LIBFREERDP_DEFINITIONS)
+list(REMOVE_DUPLICATES LIBFREERDP_LIBS)
+list(REMOVE_DUPLICATES LIBFREERDP_INCLUDES)
+include_directories(${LIBFREERDP_INCLUDES})
+add_library(${MODULE_NAME} ${LIBFREERDP_SRCS})
+add_definitions(${LIBFREERDP_DEFINITIONS})
 
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
-	
-	set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
-endif(MONOLITHIC_BUILD)
+set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
+
+if (WITH_LIBRARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+endif()
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
+
+target_link_libraries(${MODULE_NAME} ${LIBFREERDP_LIBS} winpr)
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries EXPORT FreeRDPTargets)
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")

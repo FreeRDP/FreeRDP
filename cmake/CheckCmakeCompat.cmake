@@ -28,13 +28,6 @@ enable_cmake_compat(2.8.6)
 enable_cmake_compat(2.8.3)
 enable_cmake_compat(2.8.2)
 
-# If MONOLITHIC_BUILD is used with cmake < 2.8.8 build fails
-if (MONOLITHIC_BUILD)
-	if(${CMAKE_VERSION} VERSION_LESS 2.8.8)
-		message(FATAL_ERROR "CMAKE version >= 2.8.8 required for MONOLITHIC_BUILD")
-	endif()
-endif(MONOLITHIC_BUILD)
-
 # GetGitRevisionDescription requires FindGit which was added in version 2.8.2
 # build won't fail but GIT_REVISION is set to n/a
 if(${CMAKE_VERSION} VERSION_LESS 2.8.2)
