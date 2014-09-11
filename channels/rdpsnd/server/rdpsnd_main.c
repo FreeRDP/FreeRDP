@@ -118,7 +118,7 @@ static BOOL rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 {
 	int i, num_known_format = 0;
 	UINT32 flags, vol, pitch;
-	UINT16 udpPort, version;
+	UINT16 udpPort;
 	BYTE lastblock;
 
 	if (Stream_GetRemainingLength(s) < 20)
@@ -130,7 +130,7 @@ static BOOL rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 	Stream_Read_UINT16(s, udpPort); /* wDGramPort */
 	Stream_Read_UINT16(s, context->num_client_formats); /* wNumberOfFormats */
 	Stream_Read_UINT8(s, lastblock); /* cLastBlockConfirmed */
-	Stream_Read_UINT16(s, version); /* wVersion */
+	Stream_Read_UINT16(s, context->clientVersion); /* wVersion */
 	Stream_Seek_UINT8(s); /* bPad */
 
 	/* this check is only a guess as cbSize can influence the size of a format record */
@@ -210,7 +210,7 @@ static void* rdpsnd_server_thread(void* arg)
 		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
-		if (!rdpsnd_server_handle_messages(context))
+		if (rdpsnd_server_handle_messages(context) == 0)
 			break;
 	}
 
@@ -620,7 +620,16 @@ HANDLE rdpsnd_server_get_event_handle(RdpsndServerContext *context)
 	return context->priv->channelEvent;
 }
 
-BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
+/*
+ * Handle rpdsnd messages - server side
+ *
+ * @param Server side context
+ *
+ * @return -1 if no data could be read,
+ *          0 on error (like connection close),
+ *          1 on succsess (also if further bytes need to be read)
+ */
+int rdpsnd_server_handle_messages(RdpsndServerContext *context)
 {
 	DWORD bytesReturned;
 	BOOL ret;
@@ -631,17 +640,18 @@ BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
 	if (!WTSVirtualChannelRead(priv->ChannelHandle, 0, (PCHAR)Stream_Pointer(s), priv->expectedBytes, &bytesReturned))
 	{
 		if (GetLastError() == ERROR_NO_DATA)
-			return TRUE;
+			return -1;
 
 		CLOG_ERR( "%s: channel connection closed\n", __FUNCTION__);
-		return FALSE;
+		return 0;
 	}
 	priv->expectedBytes -= bytesReturned;
 	Stream_Seek(s, bytesReturned);
 
 	if (priv->expectedBytes)
-		return TRUE;
+		return 1;
 
+	Stream_SealLength(s);
 	Stream_SetPosition(s, 0);
 	if (priv->waitingHeader)
 	{
@@ -655,7 +665,7 @@ BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
 		if (priv->expectedBytes)
 		{
 			Stream_EnsureCapacity(s, priv->expectedBytes);
-			return TRUE;
+			return 1;
 		}
 	}
 
@@ -674,16 +684,18 @@ BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
 
 		case SNDC_FORMATS:
 			ret = rdpsnd_server_recv_formats(context, s);
+
+			if (ret && context->clientVersion < 6)
+				IFCALL(context->Activated, context);
+
 			break;
 
 		case SNDC_QUALITYMODE:
 			ret = rdpsnd_server_recv_quality_mode(context, s);
 			Stream_SetPosition(s, 0); /* in case the Activated callback tries to treat some messages */
 
-			if (ret)
-			{
+			if (ret && context->clientVersion >= 6)
 				IFCALL(context->Activated, context);
-			}
 			break;
 
 		default:
@@ -693,5 +705,8 @@ BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context)
 	}
 	Stream_SetPosition(s, 0);
 
-	return ret;
+	if (ret)
+		return 1;
+	else
+		return 0;
 }
