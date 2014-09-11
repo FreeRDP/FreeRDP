@@ -44,12 +44,12 @@
 #define LOGE(...) do { WLog_Print(WLog_Get(TAG), WLOG_ERROR, __VA_ARGS__); } while(0)
 #define LOGF(...) do { WLog_Print(WLog_Get(TAG), WLOG_FATAL, __VA_ARGS__); } while(0)
 
-static const char *support_msg = "Invalid stacktrace buffer! check if platform is supported!";
+static const char* support_msg = "Invalid stacktrace buffer! check if platform is supported!";
 
 #if defined(HAVE_EXECINFO_H)
 typedef struct
 {
-	void **buffer;
+	void** buffer;
 	size_t max;
 	size_t used;
 } t_execinfo;
@@ -62,31 +62,31 @@ typedef struct
 
 typedef struct
 {
-	backtrace_frame_t *buffer;
+	backtrace_frame_t* buffer;
 	size_t max;
 	size_t used;
 } t_corkscrew_data;
 
 typedef struct
 {
-	void *hdl;
-	ssize_t (*unwind_backtrace)(backtrace_frame_t *backtrace, size_t ignore_depth, size_t max_depth);
-	ssize_t (*unwind_backtrace_thread)(pid_t tid, backtrace_frame_t *backtrace,
+	void* hdl;
+	ssize_t (*unwind_backtrace)(backtrace_frame_t* backtrace, size_t ignore_depth, size_t max_depth);
+	ssize_t (*unwind_backtrace_thread)(pid_t tid, backtrace_frame_t* backtrace,
 									   size_t ignore_depth, size_t max_depth);
-	ssize_t (*unwind_backtrace_ptrace)(pid_t tid, const ptrace_context_t *context,
-									   backtrace_frame_t *backtrace, size_t ignore_depth, size_t max_depth);
-	void (*get_backtrace_symbols)(const backtrace_frame_t *backtrace, size_t frames,
-								  backtrace_symbol_t *backtrace_symbols);
-	void (*get_backtrace_symbols_ptrace)(const ptrace_context_t *context,
-										 const backtrace_frame_t *backtrace, size_t frames,
-										 backtrace_symbol_t *backtrace_symbols);
-	void (*free_backtrace_symbols)(backtrace_symbol_t *backtrace_symbols, size_t frames);
-	void (*format_backtrace_line)(unsigned frameNumber, const backtrace_frame_t *frame,
-								  const backtrace_symbol_t *symbol, char *buffer, size_t bufferSize);
+	ssize_t (*unwind_backtrace_ptrace)(pid_t tid, const ptrace_context_t* context,
+									   backtrace_frame_t* backtrace, size_t ignore_depth, size_t max_depth);
+	void (*get_backtrace_symbols)(const backtrace_frame_t* backtrace, size_t frames,
+								  backtrace_symbol_t* backtrace_symbols);
+	void (*get_backtrace_symbols_ptrace)(const ptrace_context_t* context,
+										 const backtrace_frame_t* backtrace, size_t frames,
+										 backtrace_symbol_t* backtrace_symbols);
+	void (*free_backtrace_symbols)(backtrace_symbol_t* backtrace_symbols, size_t frames);
+	void (*format_backtrace_line)(unsigned frameNumber, const backtrace_frame_t* frame,
+								  const backtrace_symbol_t* symbol, char* buffer, size_t bufferSize);
 } t_corkscrew;
 
 static pthread_once_t initialized = PTHREAD_ONCE_INIT;
-static t_corkscrew *fkt = NULL;
+static t_corkscrew* fkt = NULL;
 
 void load_library(void)
 {
@@ -169,7 +169,7 @@ fail:
 }
 #endif
 
-void winpr_backtrace_free(void *buffer)
+void winpr_backtrace_free(void* buffer)
 {
 	if (!buffer)
 	{
@@ -178,14 +178,14 @@ void winpr_backtrace_free(void *buffer)
 	}
 
 #if defined(HAVE_EXECINFO_H)
-	t_execinfo *data = (t_execinfo *)buffer;
+	t_execinfo* data = (t_execinfo*)buffer;
 
 	if (data->buffer)
 		free(data->buffer);
 
 	free(data);
 #elif defined(ANDROID)
-	t_corkscrew_data *data = (t_corkscrew_data *)buffer;
+	t_corkscrew_data* data = (t_corkscrew_data*)buffer;
 
 	if (data->buffer)
 		free(data->buffer);
@@ -196,24 +196,27 @@ void winpr_backtrace_free(void *buffer)
 #endif
 }
 
-void *winpr_backtrace(DWORD size)
+void* winpr_backtrace(DWORD size)
 {
 #if defined(HAVE_EXECINFO_H)
-	t_execinfo *data = calloc(1, sizeof(t_execinfo));
+	t_execinfo* data = calloc(1, sizeof(t_execinfo));
 
 	if (!data)
 		return NULL;
 
-	data->buffer = calloc(size, sizeof(void *));
+	data->buffer = calloc(size, sizeof(void*));
 
 	if (!data->buffer)
+	{
+		free(data);
 		return NULL;
+	}
 
 	data->max = size;
 	data->used = backtrace(data->buffer, size);
 	return data;
 #elif defined(ANDROID)
-	t_corkscrew_data *data = calloc(1, sizeof(t_corkscrew_data));
+	t_corkscrew_data* data = calloc(1, sizeof(t_corkscrew_data));
 
 	if (!data)
 		return NULL;
@@ -236,7 +239,7 @@ void *winpr_backtrace(DWORD size)
 #endif
 }
 
-char **winpr_backtrace_symbols(void *buffer, size_t *used)
+char** winpr_backtrace_symbols(void* buffer, size_t* used)
 {
 	if (used)
 		*used = 0;
@@ -248,7 +251,7 @@ char **winpr_backtrace_symbols(void *buffer, size_t *used)
 	}
 
 #if defined(HAVE_EXECINFO_H)
-	t_execinfo *data = (t_execinfo *)buffer;
+	t_execinfo* data = (t_execinfo*)buffer;
 	assert(data);
 
 	if (used)
@@ -256,7 +259,7 @@ char **winpr_backtrace_symbols(void *buffer, size_t *used)
 
 	return backtrace_symbols(data->buffer, data->used);
 #elif defined(ANDROID)
-	t_corkscrew_data *data = (t_corkscrew_data *)buffer;
+	t_corkscrew_data* data = (t_corkscrew_data*)buffer;
 	assert(data);
 	pthread_once(&initialized, load_library);
 
@@ -269,9 +272,9 @@ char **winpr_backtrace_symbols(void *buffer, size_t *used)
 	{
 		size_t line_len = (data->max > 1024) ? data->max : 1024;
 		size_t i;
-		char *lines = calloc(data->used + 1, sizeof(char *) * line_len);
-		char **vlines = (char **)lines;
-		backtrace_symbol_t *symbols = calloc(data->used, sizeof(backtrace_symbol_t));;
+		char* lines = calloc(data->used + 1, sizeof(char*) * line_len);
+		char** vlines = (char**)lines;
+		backtrace_symbol_t* symbols = calloc(data->used, sizeof(backtrace_symbol_t));;
 
 		if (!lines || !symbols)
 		{
@@ -299,7 +302,7 @@ char **winpr_backtrace_symbols(void *buffer, size_t *used)
 		if (used)
 			*used = data->used;
 
-		return (char **)lines;
+		return (char**)lines;
 	}
 
 #else
@@ -308,7 +311,7 @@ char **winpr_backtrace_symbols(void *buffer, size_t *used)
 #endif
 }
 
-void winpr_backtrace_symbols_fd(void *buffer, int fd)
+void winpr_backtrace_symbols_fd(void* buffer, int fd)
 {
 	if (!buffer)
 	{
@@ -317,14 +320,14 @@ void winpr_backtrace_symbols_fd(void *buffer, int fd)
 	}
 
 #if defined(HAVE_EXECINFO_H)
-	t_execinfo *data = (t_execinfo *)buffer;
+	t_execinfo* data = (t_execinfo*)buffer;
 	assert(data);
 	backtrace_symbols_fd(data->buffer, data->used, fd);
 #elif defined(ANDROID)
 	size_t used;
-	t_corkscrew_data *data = (t_corkscrew_data *)buffer;
+	t_corkscrew_data* data = (t_corkscrew_data*)buffer;
 	assert(data);
-	char **lines = winpr_backtrace_symbols(buffer, &used);
+	char** lines = winpr_backtrace_symbols(buffer, &used);
 
 	if (lines)
 	{
