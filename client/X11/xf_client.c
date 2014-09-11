@@ -863,16 +863,6 @@ BOOL xf_post_connect(freerdp *instance)
 		xfc->srcBpp = settings->ColorDepth;
 		xf_gdi_register_update_callbacks(instance->update);
 		xfc->hdc = gdi_CreateDC(xfc->clrconv, xfc->bpp);
-
-		if (settings->RemoteFxCodec)
-		{
-			xfc->codecs->rfx = rfx_context_new(FALSE);
-		}
-
-		if (settings->NSCodec)
-		{
-			xfc->codecs->nsc = nsc_context_new();
-		}
 	}
 
 	xfc->originalWidth = settings->DesktopWidth;
@@ -1106,24 +1096,6 @@ void xf_window_free(xfContext *xfc)
 	{
 		rail_free(context->rail);
 		context->rail = NULL;
-	}
-
-	if (xfc->codecs->rfx)
-	{
-		rfx_context_free(xfc->codecs->rfx);
-		xfc->codecs->rfx = NULL;
-	}
-
-	if (xfc->codecs->nsc)
-	{
-		nsc_context_free(xfc->codecs->nsc);
-		xfc->codecs->nsc = NULL;
-	}
-
-	if (xfc->codecs->clear)
-	{
-		clear_context_free(xfc->codecs->clear);
-		xfc->codecs->clear = NULL;
 	}
 
 	if (xfc->clrconv)
