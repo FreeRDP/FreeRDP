@@ -53,7 +53,7 @@
 #include "comm.h"
 
 
-static wLog *_Log = NULL;
+static wLog* _Log = NULL;
 
 struct comm_device
 {
@@ -67,42 +67,38 @@ typedef struct comm_device COMM_DEVICE;
 /* FIXME: get a clever data structure, see also io.h functions */
 /* _CommDevices is a NULL-terminated array with a maximun of COMM_DEVICE_MAX COMM_DEVICE */
 #define COMM_DEVICE_MAX	128
-static COMM_DEVICE **_CommDevices = NULL;
+static COMM_DEVICE** _CommDevices = NULL;
 static CRITICAL_SECTION _CommDevicesLock;
 
-static HANDLE_CREATOR *_CommHandleCreator = NULL;
-static HANDLE_CLOSE_CB *_CommHandleCloseCb = NULL;
+static HANDLE_CREATOR* _CommHandleCreator = NULL;
+static HANDLE_CLOSE_CB* _CommHandleCloseCb = NULL;
 
 static pthread_once_t _CommInitialized = PTHREAD_ONCE_INIT;
 static void _CommInit()
 {
 	/* NB: error management to be done outside of this function */
-
 	assert(_Log == NULL);
 	assert(_CommDevices == NULL);
 	assert(_CommHandleCreator == NULL);
 	assert(_CommHandleCloseCb == NULL);
-
 	_Log = WLog_Get("com.winpr.comm");
-
 	_CommDevices = (COMM_DEVICE**)calloc(COMM_DEVICE_MAX+1, sizeof(COMM_DEVICE*));
 	InitializeCriticalSection(&_CommDevicesLock);
-
 	_CommHandleCreator = (HANDLE_CREATOR*)malloc(sizeof(HANDLE_CREATOR));
+
 	if (_CommHandleCreator)
 	{
 		_CommHandleCreator->IsHandled = IsCommDevice;
 		_CommHandleCreator->CreateFileA = CommCreateFileA;
-		
 		RegisterHandleCreator(_CommHandleCreator);
 	}
 
 	_CommHandleCloseCb = (HANDLE_CLOSE_CB*)malloc(sizeof(HANDLE_CLOSE_CB));
+
 	if (_CommHandleCloseCb)
 	{
 		_CommHandleCloseCb->IsHandled = CommIsHandled;
 		_CommHandleCloseCb->CloseHandle = CommCloseHandle;
-		
 		RegisterHandleCloseCb(_CommHandleCloseCb);
 	}
 
@@ -129,7 +125,7 @@ static BOOL CommInitialized()
 }
 
 
-void CommLog_Print(int level, char *fmt, ...)
+void CommLog_Print(int level, char* fmt, ...)
 {
 	if (!CommInitialized())
 		return;
@@ -147,7 +143,6 @@ BOOL BuildCommDCBA(LPCSTR lpDef, LPDCB lpDCB)
 		return FALSE;
 
 	/* TODO: not implemented */
-
 	return TRUE;
 }
 
@@ -157,7 +152,6 @@ BOOL BuildCommDCBW(LPCWSTR lpDef, LPDCB lpDCB)
 		return FALSE;
 
 	/* TODO: not implemented */
-
 	return TRUE;
 }
 
@@ -167,7 +161,6 @@ BOOL BuildCommDCBAndTimeoutsA(LPCSTR lpDef, LPDCB lpDCB, LPCOMMTIMEOUTS lpCommTi
 		return FALSE;
 
 	/* TODO: not implemented */
-
 	return TRUE;
 }
 
@@ -177,7 +170,6 @@ BOOL BuildCommDCBAndTimeoutsW(LPCWSTR lpDef, LPDCB lpDCB, LPCOMMTIMEOUTS lpCommT
 		return FALSE;
 
 	/* TODO: not implemented */
-
 	return TRUE;
 }
 
@@ -187,7 +179,6 @@ BOOL CommConfigDialogA(LPCSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
 		return FALSE;
 
 	/* TODO: not implemented */
-
 	return TRUE;
 }
 
@@ -197,7 +188,6 @@ BOOL CommConfigDialogW(LPCWSTR lpszName, HWND hWnd, LPCOMMCONFIG lpCC)
 		return FALSE;
 
 	/* TODO: not implemented */
-
 	return TRUE;
 }
 
@@ -289,7 +279,7 @@ BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
 	if (!CommInitialized())
 		return FALSE;
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -317,7 +307,7 @@ BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
  */
 BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 {
-	DCB *lpLocalDcb;
+	DCB* lpLocalDcb;
 	struct termios currentState;
 	WINPR_COMM* pComm = (WINPR_COMM*) hFile;
 	DWORD bytesReturned;
@@ -325,7 +315,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	if (!CommInitialized())
 		return FALSE;
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -350,6 +340,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	lpLocalDcb = (DCB*)calloc(1, lpDCB->DCBlength);
+
 	if (lpLocalDcb == NULL)
 	{
 		SetLastError(ERROR_OUTOFMEMORY);
@@ -357,26 +348,26 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	/* error_handle */
-
 	lpLocalDcb->DCBlength = lpDCB->DCBlength;
-
 	SERIAL_BAUD_RATE baudRate;
+
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_BAUD_RATE, NULL, 0, &baudRate, sizeof(SERIAL_BAUD_RATE), &bytesReturned, NULL))
 	{
 		CommLog_Print(WLOG_WARN, "GetCommState failure: could not get the baud rate.");
 		goto error_handle;
 	}
-	lpLocalDcb->BaudRate = baudRate.BaudRate;
 
+	lpLocalDcb->BaudRate = baudRate.BaudRate;
 	lpLocalDcb->fBinary = (currentState.c_cflag & ICANON) == 0;
+
 	if (!lpLocalDcb->fBinary)
 	{
 		CommLog_Print(WLOG_WARN, "Unexpected nonbinary mode, consider to unset the ICANON flag.");
 	}
 
-	lpLocalDcb->fParity =  (currentState.c_iflag & INPCK) != 0;
-
+	lpLocalDcb->fParity = (currentState.c_iflag & INPCK) != 0;
 	SERIAL_HANDFLOW handflow;
+
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_HANDFLOW, NULL, 0, &handflow, sizeof(SERIAL_HANDFLOW), &bytesReturned, NULL))
 	{
 		CommLog_Print(WLOG_WARN, "GetCommState failure: could not get the handflow settings.");
@@ -384,7 +375,6 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	lpLocalDcb->fOutxCtsFlow = (handflow.ControlHandShake & SERIAL_CTS_HANDSHAKE) != 0;
-
 	lpLocalDcb->fOutxDsrFlow = (handflow.ControlHandShake & SERIAL_DSR_HANDSHAKE) != 0;
 
 	if (handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE)
@@ -401,15 +391,10 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	lpLocalDcb->fDsrSensitivity = (handflow.ControlHandShake & SERIAL_DSR_SENSITIVITY) != 0;
-
 	lpLocalDcb->fTXContinueOnXoff = (handflow.FlowReplace & SERIAL_XOFF_CONTINUE) != 0;
-
 	lpLocalDcb->fOutX = (handflow.FlowReplace & SERIAL_AUTO_TRANSMIT) != 0;
-
 	lpLocalDcb->fInX = (handflow.FlowReplace & SERIAL_AUTO_RECEIVE) != 0;
-
 	lpLocalDcb->fErrorChar = (handflow.FlowReplace & SERIAL_ERROR_CHAR) != 0;
-
 	lpLocalDcb->fNull = (handflow.FlowReplace & SERIAL_NULL_STRIPPING) != 0;
 
 	if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE)
@@ -426,19 +411,13 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	// FIXME: how to get the RTS_CONTROL_TOGGLE state? Does it match the UART 16750's Autoflow Control Enabled bit in its Modem Control Register (MCR)
-
-
 	lpLocalDcb->fAbortOnError = (handflow.ControlHandShake & SERIAL_ERROR_ABORT) != 0;
-
 	/* lpLocalDcb->fDummy2 not used */
-
 	lpLocalDcb->wReserved = 0; /* must be zero */
-
 	lpLocalDcb->XonLim = handflow.XonLimit;
-
 	lpLocalDcb->XoffLim = handflow.XoffLimit;
-
 	SERIAL_LINE_CONTROL lineControl;
+
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_LINE_CONTROL, NULL, 0, &lineControl, sizeof(SERIAL_LINE_CONTROL), &bytesReturned, NULL))
 	{
 		CommLog_Print(WLOG_WARN, "GetCommState failure: could not get the control settings.");
@@ -446,13 +425,10 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	lpLocalDcb->ByteSize = lineControl.WordLength;
-
 	lpLocalDcb->Parity = lineControl.Parity;
-
 	lpLocalDcb->StopBits = lineControl.StopBits;
-
-
 	SERIAL_CHARS serialChars;
+
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_CHARS, NULL, 0, &serialChars, sizeof(SERIAL_CHARS), &bytesReturned, NULL))
 	{
 		CommLog_Print(WLOG_WARN, "GetCommState failure: could not get the serial chars.");
@@ -460,21 +436,15 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	lpLocalDcb->XonChar = serialChars.XonChar;
-
 	lpLocalDcb->XoffChar = serialChars.XoffChar;
-
 	lpLocalDcb->ErrorChar = serialChars.ErrorChar;
-
 	lpLocalDcb->EofChar = serialChars.EofChar;
-
 	lpLocalDcb->EvtChar = serialChars.EventChar;
-
-
 	memcpy(lpDCB, lpLocalDcb, lpDCB->DCBlength);
+	free(lpLocalDcb);
 	return TRUE;
+error_handle:
 
-
-  error_handle:
 	if (lpLocalDcb)
 		free(lpLocalDcb);
 
@@ -504,7 +474,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	if (!CommInitialized())
 		return FALSE;
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -518,11 +488,10 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 
 	/* NB: did the choice to call ioctls first when available and
 	   then to setup upcomingTermios. Don't mix both stages. */
-
 	/** ioctl calls stage **/
-
 	SERIAL_BAUD_RATE baudRate;
 	baudRate.BaudRate = lpDCB->BaudRate;
+
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_BAUD_RATE, &baudRate, sizeof(SERIAL_BAUD_RATE), NULL, 0, &bytesReturned, NULL))
 	{
 		CommLog_Print(WLOG_WARN, "SetCommState failure: could not set the baud rate.");
@@ -530,16 +499,19 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	SERIAL_CHARS serialChars;
+
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_GET_CHARS, NULL, 0, &serialChars, sizeof(SERIAL_CHARS), &bytesReturned, NULL)) /* as of today, required for BreakChar */
 	{
 		CommLog_Print(WLOG_WARN, "SetCommState failure: could not get the initial serial chars.");
 		return FALSE;
 	}
+
 	serialChars.XonChar = lpDCB->XonChar;
 	serialChars.XoffChar = lpDCB->XoffChar;
 	serialChars.ErrorChar = lpDCB->ErrorChar;
 	serialChars.EofChar = lpDCB->EofChar;
 	serialChars.EventChar = lpDCB->EvtChar;
+
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_CHARS, &serialChars, sizeof(SERIAL_CHARS), NULL, 0, &bytesReturned, NULL))
 	{
 		CommLog_Print(WLOG_WARN, "SetCommState failure: could not set the serial chars.");
@@ -550,12 +522,12 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	lineControl.StopBits = lpDCB->StopBits;
 	lineControl.Parity = lpDCB->Parity;
 	lineControl.WordLength = lpDCB->ByteSize;
+
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_LINE_CONTROL, &lineControl, sizeof(SERIAL_LINE_CONTROL), NULL, 0, &bytesReturned, NULL))
 	{
 		CommLog_Print(WLOG_WARN, "SetCommState failure: could not set the control settings.");
 		return FALSE;
 	}
-
 
 	SERIAL_HANDFLOW handflow;
 	ZeroMemory(&handflow, sizeof(SERIAL_HANDFLOW));
@@ -564,7 +536,6 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	{
 		handflow.ControlHandShake |= SERIAL_CTS_HANDSHAKE;
 	}
-
 
 	if (lpDCB->fOutxDsrFlow)
 	{
@@ -650,11 +621,8 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 	}
 
 	/* lpDCB->fDummy2 not used */
-
 	/* lpLocalDcb->wReserved  ignored */
-
 	handflow.XonLimit = lpDCB->XonLim;
-
 	handflow.XoffLimit = lpDCB->XoffLim;
 
 	if (!CommDeviceIoControl(pComm, IOCTL_SERIAL_SET_HANDFLOW, &handflow, sizeof(SERIAL_HANDFLOW), NULL, 0, &bytesReturned, NULL))
@@ -663,11 +631,9 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 		return FALSE;
 	}
 
-
 	/** upcomingTermios stage **/
-
-
 	ZeroMemory(&upcomingTermios, sizeof(struct termios));
+
 	if (tcgetattr(pComm->fd, &upcomingTermios) < 0) /* NB: preserves current settings not directly handled by the Communication Functions */
 	{
 		SetLastError(ERROR_IO_DEVICE);
@@ -693,7 +659,6 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 		upcomingTermios.c_iflag &= ~INPCK;
 	}
 
-
 	/* http://msdn.microsoft.com/en-us/library/windows/desktop/aa363423%28v=vs.85%29.aspx
 	 *
 	 * The SetCommState function reconfigures the communications
@@ -711,7 +676,6 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 		return FALSE;
 	}
 
-
 	return TRUE;
 }
 
@@ -727,7 +691,7 @@ BOOL GetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 	if (!CommInitialized())
 		return FALSE;
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -757,7 +721,7 @@ BOOL SetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 	if (!CommInitialized())
 		return FALSE;
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -780,7 +744,6 @@ BOOL GetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize)
 		return FALSE;
 
 	/* TODO: not implemented */
-
 	return TRUE;
 }
 
@@ -790,7 +753,6 @@ BOOL GetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, LPDWORD lpdwSize
 		return FALSE;
 
 	/* TODO: not implemented */
-
 	return TRUE;
 }
 
@@ -800,7 +762,6 @@ BOOL SetDefaultCommConfigA(LPCSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
 		return FALSE;
 
 	/* TODO: not implemented */
-
 	return TRUE;
 }
 
@@ -810,7 +771,6 @@ BOOL SetDefaultCommConfigW(LPCWSTR lpszName, LPCOMMCONFIG lpCC, DWORD dwSize)
 		return FALSE;
 
 	/* TODO: not implemented */
-
 	return TRUE;
 }
 
@@ -868,7 +828,7 @@ BOOL PurgeComm(HANDLE hFile, DWORD dwFlags)
 	if (!CommInitialized())
 		return FALSE;
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -893,7 +853,7 @@ BOOL SetupComm(HANDLE hFile, DWORD dwInQueue, DWORD dwOutQueue)
 	if (!CommInitialized())
 		return FALSE;
 
-	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd )
+	if (!pComm || pComm->Type != HANDLE_TYPE_COMM || !pComm->fd)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -970,6 +930,7 @@ static BOOL _IsReservedCommDeviceName(LPCTSTR lpName)
 	for (i=1; i<10; i++)
 	{
 		TCHAR genericName[5];
+
 		if (_stprintf_s(genericName, 5, _T("COM%d"), i) < 0)
 		{
 			return FALSE;
@@ -983,6 +944,7 @@ static BOOL _IsReservedCommDeviceName(LPCTSTR lpName)
 	for (i=1; i<10; i++)
 	{
 		TCHAR genericName[5];
+
 		if (_stprintf_s(genericName, 5, _T("LPT%d"), i) < 0)
 		{
 			return FALSE;
@@ -993,7 +955,6 @@ static BOOL _IsReservedCommDeviceName(LPCTSTR lpName)
 	}
 
 	/* FIXME: what about PRN ? */
-
 	return FALSE;
 }
 
@@ -1034,6 +995,7 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 	}
 
 	storedDeviceName = _tcsdup(lpDeviceName);
+
 	if (storedDeviceName == NULL)
 	{
 		SetLastError(ERROR_OUTOFMEMORY);
@@ -1041,6 +1003,7 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 	}
 
 	storedTargetPath = _tcsdup(lpTargetPath);
+
 	if (storedTargetPath == NULL)
 	{
 		SetLastError(ERROR_OUTOFMEMORY);
@@ -1058,7 +1021,6 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 				free(_CommDevices[i]->path);
 				_CommDevices[i]->name = storedDeviceName;
 				_CommDevices[i]->path = storedTargetPath;
-
 				break;
 			}
 		}
@@ -1066,6 +1028,7 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 		{
 			/* new emplacement */
 			_CommDevices[i] = (COMM_DEVICE*)calloc(1, sizeof(COMM_DEVICE));
+
 			if (_CommDevices[i] == NULL)
 			{
 				SetLastError(ERROR_OUTOFMEMORY);
@@ -1086,9 +1049,8 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 
 	LeaveCriticalSection(&_CommDevicesLock);
 	return TRUE;
+error_handle:
 
-
-  error_handle:
 	if (storedDeviceName != NULL)
 		free(storedDeviceName);
 
@@ -1120,7 +1082,6 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 {
 	int i;
 	LPTSTR storedTargetPath;
-
 	SetLastError(ERROR_SUCCESS);
 
 	if (!CommInitialized())
@@ -1139,8 +1100,8 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 	}
 
 	EnterCriticalSection(&_CommDevicesLock);
-
 	storedTargetPath = NULL;
+
 	for (i=0; i<COMM_DEVICE_MAX; i++)
 	{
 		if (_CommDevices[i] != NULL)
@@ -1173,7 +1134,6 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 
 	_tcscpy(lpTargetPath, storedTargetPath);
 	lpTargetPath[_tcslen(storedTargetPath) + 1] = '\0'; /* 2nd final '\0' */
-
 	return _tcslen(lpTargetPath) + 2;
 }
 
@@ -1245,7 +1205,7 @@ void _comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID driverId)
  * @return INVALID_HANDLE_VALUE on error.
  */
 HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-		DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+					   DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
 	CHAR devicePath[MAX_PATH];
 	struct stat deviceStat;
@@ -1254,7 +1214,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 	if (!CommInitialized())
 		return INVALID_HANDLE_VALUE;
-	
+
 	if (dwDesiredAccess != (GENERIC_READ | GENERIC_WRITE))
 	{
 		CommLog_Print(WLOG_WARN, "unexpected access to the device: 0x%lX", dwDesiredAccess);
@@ -1267,7 +1227,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 	/* TODO: Prevents other processes from opening a file or
-         * device if they request delete, read, or write access. */
+	     * device if they request delete, read, or write access. */
 
 	if (lpSecurityAttributes != NULL)
 	{
@@ -1312,6 +1272,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 	pComm = (WINPR_COMM*) calloc(1, sizeof(WINPR_COMM));
+
 	if (pComm == NULL)
 	{
 		SetLastError(ERROR_OUTOFMEMORY);
@@ -1319,10 +1280,9 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 	WINPR_HANDLE_SET_TYPE(pComm, HANDLE_TYPE_COMM);
-
 	/* error_handle */
-
 	pComm->fd = open(devicePath, O_RDWR | O_NOCTTY | O_NONBLOCK);
+
 	if (pComm->fd < 0)
 	{
 		CommLog_Print(WLOG_WARN, "failed to open device %s", devicePath);
@@ -1331,6 +1291,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 	pComm->fd_read = open(devicePath, O_RDONLY | O_NOCTTY | O_NONBLOCK);
+
 	if (pComm->fd_read < 0)
 	{
 		CommLog_Print(WLOG_WARN, "failed to open fd_read, device: %s", devicePath);
@@ -1339,6 +1300,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 	pComm->fd_read_event = eventfd(0, EFD_NONBLOCK); /* EFD_NONBLOCK required because a read() is not always expected */
+
 	if (pComm->fd_read_event < 0)
 	{
 		CommLog_Print(WLOG_WARN, "failed to open fd_read_event, device: %s", devicePath);
@@ -1347,8 +1309,8 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 	InitializeCriticalSection(&pComm->ReadLock);
-
 	pComm->fd_write = open(devicePath, O_WRONLY | O_NOCTTY | O_NONBLOCK);
+
 	if (pComm->fd_write < 0)
 	{
 		CommLog_Print(WLOG_WARN, "failed to open fd_write, device: %s", devicePath);
@@ -1357,6 +1319,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 	pComm->fd_write_event = eventfd(0, EFD_NONBLOCK); /* EFD_NONBLOCK required because a read() is not always expected */
+
 	if (pComm->fd_write_event < 0)
 	{
 		CommLog_Print(WLOG_WARN, "failed to open fd_write_event, device: %s", devicePath);
@@ -1365,10 +1328,8 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 	InitializeCriticalSection(&pComm->WriteLock);
-
 	/* can also be setup later on with _comm_setServerSerialDriver() */
 	pComm->serverSerialDriverId = SerialDriverUnknown;
-
 	InitializeCriticalSection(&pComm->EventsLock);
 
 	if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
@@ -1378,12 +1339,11 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 		goto error_handle;
 	}
 
-
 	/* The binary/raw mode is required for the redirection but
 	 * only flags that are not handle somewhere-else, except
 	 * ICANON, are forced here. */
-
 	ZeroMemory(&upcomingTermios, sizeof(struct termios));
+
 	if (tcgetattr(pComm->fd, &upcomingTermios) < 0)
 	{
 		SetLastError(ERROR_IO_DEVICE);
@@ -1395,13 +1355,11 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	upcomingTermios.c_lflag = 0; /* <=> &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN); */
 	/* upcomingTermios.c_cflag &= ~(CSIZE | PARENB); */
 	/* upcomingTermios.c_cflag |= CS8; */
-
 	/* About missing flags recommended by termios(3):
 	 *
 	 *   IGNBRK and IXON, see: IOCTL_SERIAL_SET_HANDFLOW
 	 *   CSIZE, PARENB and CS8, see: IOCTL_SERIAL_SET_LINE_CONTROL
 	 */
-
 	/* a few more settings required for the redirection */
 	upcomingTermios.c_cflag |= CLOCAL | CREAD;
 
@@ -1412,14 +1370,12 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 	}
 
 	return (HANDLE)pComm;
+error_handle:
 
-
-  error_handle:
 	if (pComm != NULL)
 	{
 		CloseHandle(pComm);
 	}
-
 
 	return INVALID_HANDLE_VALUE;
 }
@@ -1427,7 +1383,7 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 BOOL CommIsHandled(HANDLE handle)
 {
-	WINPR_COMM *pComm;
+	WINPR_COMM* pComm;
 
 	if (!CommInitialized())
 		return FALSE;
@@ -1446,7 +1402,7 @@ BOOL CommIsHandled(HANDLE handle)
 
 BOOL CommCloseHandle(HANDLE handle)
 {
-	WINPR_COMM *pComm;
+	WINPR_COMM* pComm;
 
 	if (!CommInitialized())
 		return FALSE;
@@ -1491,7 +1447,6 @@ BOOL CommCloseHandle(HANDLE handle)
 		close(pComm->fd_read_event);
 
 	free(pComm);
-
 	return TRUE;
 }
 
