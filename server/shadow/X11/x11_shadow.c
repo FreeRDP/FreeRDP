@@ -32,6 +32,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/image.h>
 #include <winpr/sysinfo.h>
 
 #include <freerdp/codec/color.h>
@@ -180,11 +181,17 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 
 int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 {
-	int x, y;
+	int x, y, n, k;
+	rdpShadowServer* server;
+	rdpShadowSurface* surface;
+
+	server = subsystem->server;
+	surface = server->surface;
 
 	if (getImage)
 	{
 #ifdef WITH_XFIXES
+		UINT32* pDstPixel;
 		XFixesCursorImage* ci;
 
 		ci = XFixesGetCursorImage(subsystem->display);
@@ -198,12 +205,22 @@ int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 		if (ci->height > subsystem->cursorMaxHeight)
 			return -1;
 
+		subsystem->cursorHotX = ci->xhot;
+		subsystem->cursorHotY = ci->yhot;
+
 		subsystem->cursorWidth = ci->width;
 		subsystem->cursorHeight = ci->height;
 
 		subsystem->cursorId = ci->cursor_serial;
 
-		CopyMemory(subsystem->cursorPixels, ci->pixels, ci->width * ci->height * 4);
+		n = ci->width * ci->height;
+		pDstPixel = (UINT32*) subsystem->cursorPixels;
+
+		for (k = 0; k < n; k++)
+		{
+			/* XFixesCursorImage.pixels is in *unsigned long*, which may be 8 bytes */
+			*pDstPixel++ = (UINT32) ci->pixels[k];
+		}
 
 		XFree(ci);
 #endif
@@ -283,6 +300,121 @@ int x11_shadow_invalidate_region(x11ShadowSubsystem* subsystem, int x, int y, in
 	return 1;
 }
 
+int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
+{
+	int x, y;
+	int nXSrc;
+	int nYSrc;
+	int nXDst;
+	int nYDst;
+	int nWidth;
+	int nHeight;
+	int nSrcStep;
+	int nDstStep;
+	int nSrcPad;
+	int nDstPad;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	BYTE* pSrcPixel;
+	BYTE* pDstPixel;
+	BYTE A, R, G, B;
+	rdpShadowSurface* surface;
+
+	surface = subsystem->server->surface;
+
+	nXSrc = 0;
+	nYSrc = 0;
+
+	nWidth = subsystem->cursorWidth;
+	nHeight = subsystem->cursorHeight;
+
+	nXDst = subsystem->cursorX - surface->x - subsystem->cursorHotX;
+	nYDst = subsystem->cursorY - surface->y - subsystem->cursorHotY;
+
+	if (nXDst >= surface->width)
+		return 1;
+
+	if (nXDst < 0)
+	{
+		nXDst *= -1;
+
+		if (nXDst >= nWidth)
+			return 1;
+
+		nXSrc = nXDst;
+		nWidth -= nXDst;
+		nXDst = 0;
+	}
+
+	if (nYDst >= surface->height)
+		return 1;
+
+	if (nYDst < 0)
+	{
+		nYDst *= -1;
+
+		if (nYDst >= nHeight)
+			return 1;
+
+		nYSrc = nYDst;
+		nHeight -= nYDst;
+		nYDst = 0;
+	}
+
+	if ((nXDst + nWidth) > surface->width)
+		nWidth = surface->width - nXDst;
+
+	if ((nYDst + nHeight) > surface->height)
+		nHeight = surface->height - nYDst;
+
+	pSrcData = subsystem->cursorPixels;
+	nSrcStep = subsystem->cursorWidth * 4;
+
+	pDstData = surface->data;
+	nDstStep = surface->scanline;
+
+	nSrcPad = (nSrcStep - (nWidth * 4));
+	nDstPad = (nDstStep - (nWidth * 4));
+
+	pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
+	pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
+
+	for (y = 0; y < nHeight; y++)
+	{
+		pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
+		pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+
+		for (x = 0; x < nWidth; x++)
+		{
+			B = *pSrcPixel++;
+			G = *pSrcPixel++;
+			R = *pSrcPixel++;
+			A = *pSrcPixel++;
+
+			if (A == 0xFF)
+			{
+				pDstPixel[0] = B;
+				pDstPixel[1] = G;
+				pDstPixel[2] = R;
+			}
+			else
+			{
+				pDstPixel[0] = B + (pDstPixel[0] * (0xFF - A) + (0xFF / 2)) / 0xFF;
+				pDstPixel[1] = G + (pDstPixel[1] * (0xFF - A) + (0xFF / 2)) / 0xFF;
+				pDstPixel[2] = R + (pDstPixel[2] * (0xFF - A) + (0xFF / 2)) / 0xFF;
+			}
+
+			pDstPixel[3] = 0xFF;
+			pDstPixel += 4;
+		}
+
+		pSrcPixel += nSrcPad;
+		pDstPixel += nDstPad;
+	}
+
+	return 1;
+}
+
 int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 {
 	int count;
@@ -334,6 +466,8 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
 
+			x11_shadow_blend_cursor(subsystem);
+
 			count = ArrayList_Count(server->clients);
 
 			InitializeSynchronizationBarrier(&(subsystem->barrier), count + 1, -1);
@@ -374,6 +508,8 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 					image->bytes_per_line, x, y);
 
 			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
+
+			x11_shadow_blend_cursor(subsystem);
 
 			count = ArrayList_Count(server->clients);
 
@@ -742,8 +878,8 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 
 	XSelectInput(subsystem->display, subsystem->root_window, SubstructureNotifyMask);
 
-	subsystem->cursorMaxWidth = 96;
-	subsystem->cursorMaxHeight = 96;
+	subsystem->cursorMaxWidth = 256;
+	subsystem->cursorMaxHeight = 256;
 	subsystem->cursorPixels = _aligned_malloc(subsystem->cursorMaxWidth * subsystem->cursorMaxHeight * 4, 16);
 
 	if (!subsystem->cursorPixels)

@@ -82,6 +82,8 @@ struct x11_shadow_subsystem
 
 	int cursorX;
 	int cursorY;
+	int cursorHotX;
+	int cursorHotY;
 	int cursorWidth;
 	int cursorHeight;
 	UINT32 cursorId;
