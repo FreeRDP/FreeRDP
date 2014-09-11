@@ -59,14 +59,6 @@ option(WITH_SMARTCARD_INSPECT "Enable SmartCard API Inspector" OFF)
 option(BUILD_TESTING "Build unit tests" OFF)
 option(WITH_SAMPLE "Build sample code" OFF)
 
-if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
-	if(ANDROID)
-		option(MONOLITHIC_BUILD "Use monolithic build" ON)
-	else()
-		option(MONOLITHIC_BUILD "Use monolithic build" OFF)
-	endif()
-endif()
-
 option(WITH_CLIENT "Build client binaries" ON)
 option(WITH_SERVER "Build server binaries" OFF)
 
