@@ -1153,7 +1153,10 @@ static int rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			status = rdp_recv_pdu(rdp, s);
 
 			if ((status >= 0) && (rdp->finalize_sc_pdus == FINALIZE_SC_COMPLETE))
+			{
 				rdp_client_transition_to_state(rdp, CONNECTION_STATE_ACTIVE);
+				return 2;
+			}
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
