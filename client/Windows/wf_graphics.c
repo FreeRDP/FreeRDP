@@ -258,16 +258,25 @@ void wf_Pointer_SetDefault(wfContext* wfc)
 
 void wf_register_graphics(rdpGraphics* graphics)
 {
-	rdpBitmap bitmap;
+	wfContext* wfc;
 	rdpPointer pointer;
 
-	ZeroMemory(&bitmap, sizeof(rdpBitmap));
-	bitmap.size = sizeof(wfBitmap);
-	bitmap.New = (pBitmap_New) wf_Bitmap_New;
-	bitmap.Free = (pBitmap_Free) wf_Bitmap_Free;
-	bitmap.Paint = (pBitmap_Paint) wf_Bitmap_Paint;
-	bitmap.Decompress = (pBitmap_Decompress) wf_Bitmap_Decompress;
-	bitmap.SetSurface = (pBitmap_SetSurface) wf_Bitmap_SetSurface;
+	wfc = (wfContext*) graphics->context;
+
+	if (wfc->sw_gdi == FALSE)
+	{
+		rdpBitmap bitmap;
+
+		ZeroMemory(&bitmap, sizeof(rdpBitmap));
+		bitmap.size = sizeof(wfBitmap);
+		bitmap.New = (pBitmap_New) wf_Bitmap_New;
+		bitmap.Free = (pBitmap_Free) wf_Bitmap_Free;
+		bitmap.Paint = (pBitmap_Paint) wf_Bitmap_Paint;
+		bitmap.Decompress = (pBitmap_Decompress) wf_Bitmap_Decompress;
+		bitmap.SetSurface = (pBitmap_SetSurface) wf_Bitmap_SetSurface;
+
+		graphics_register_bitmap(graphics, &bitmap);
+	}
 
 	ZeroMemory(&pointer, sizeof(rdpPointer));
 	pointer.size = sizeof(wfPointer);
@@ -277,6 +286,5 @@ void wf_register_graphics(rdpGraphics* graphics)
 	pointer.SetNull = (pPointer_SetNull) wf_Pointer_SetNull;
 	pointer.SetDefault = (pPointer_SetDefault) wf_Pointer_SetDefault;
 
-	graphics_register_bitmap(graphics, &bitmap);
 	graphics_register_pointer(graphics, &pointer);
 }
