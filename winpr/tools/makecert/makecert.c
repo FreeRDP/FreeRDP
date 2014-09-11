@@ -541,6 +541,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* path)
 {
 	FILE* fp;
+	int length;
 	char* filename;
 	char* fullpath;
 
