@@ -47,7 +47,7 @@ void StreamPool_ShiftUsed(wStreamPool* pool, int index, int count)
 		if (pool->uSize - index + count > 0)
 		{
 			MoveMemory(&pool->uArray[index], &pool->uArray[index - count],
-					(pool->uSize - index + count) * sizeof(wStream*));
+					   (pool->uSize - index + count) * sizeof(wStream*));
 		}
 
 		pool->uSize += count;
@@ -109,7 +109,7 @@ void StreamPool_ShiftAvailable(wStreamPool* pool, int index, int count)
 		if (pool->aSize - index + count > 0)
 		{
 			MoveMemory(&pool->aArray[index], &pool->aArray[index - count],
-					(pool->aSize - index + count) * sizeof(wStream*));
+					   (pool->aSize - index + count) * sizeof(wStream*));
 		}
 
 		pool->aSize += count;
@@ -152,14 +152,12 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	else
 	{
 		StreamPool_ShiftAvailable(pool, foundIndex, -1);
-
 		Stream_SetPosition(s, 0);
 		Stream_EnsureCapacity(s, size);
 	}
 
 	s->pool = pool;
 	s->count = 1;
-
 	StreamPool_AddUsed(pool, s);
 
 	if (pool->synchronized)
@@ -255,7 +253,6 @@ wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
 	int index;
 	wStream* s = NULL;
 	BOOL found = FALSE;
-
 	EnterCriticalSection(&pool->lock);
 
 	for (index = 0; index < pool->uSize; index++)
@@ -270,7 +267,6 @@ wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
 	}
 
 	LeaveCriticalSection(&pool->lock);
-
 	return (found) ? s : NULL;
 }
 
@@ -281,7 +277,6 @@ wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
 void StreamPool_AddRef(wStreamPool* pool, BYTE* ptr)
 {
 	wStream* s;
-
 	s = StreamPool_Find(pool, ptr);
 
 	if (s)
@@ -295,7 +290,6 @@ void StreamPool_AddRef(wStreamPool* pool, BYTE* ptr)
 void StreamPool_Release(wStreamPool* pool, BYTE* ptr)
 {
 	wStream* s;
-
 	s = StreamPool_Find(pool, ptr);
 
 	if (s)
@@ -328,27 +322,32 @@ void StreamPool_Clear(wStreamPool* pool)
 wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize)
 {
 	wStreamPool* pool = NULL;
-
 	pool = (wStreamPool*) calloc(1, sizeof(wStreamPool));
 
 	if (pool)
 	{
 		pool->synchronized = synchronized;
 		pool->defaultSize = defaultSize;
-
 		pool->aSize = 0;
 		pool->aCapacity = 32;
 		pool->aArray = (wStream**) calloc(pool->aCapacity, sizeof(wStream*));
 
 		if (!pool->aArray)
+		{
+			free(pool);
 			return NULL;
+		}
 
 		pool->uSize = 0;
 		pool->uCapacity = 32;
 		pool->uArray = (wStream**) calloc(pool->uCapacity, sizeof(wStream*));
 
 		if (!pool->uArray)
+		{
+			free(pool->aArray);
+			free(pool);
 			return NULL;
+		}
 
 		InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 	}
@@ -361,12 +360,9 @@ void StreamPool_Free(wStreamPool* pool)
 	if (pool)
 	{
 		StreamPool_Clear(pool);
-
 		DeleteCriticalSection(&pool->lock);
-
 		free(pool->aArray);
 		free(pool->uArray);
-
 		free(pool);
 	}
 }
