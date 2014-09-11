@@ -171,7 +171,7 @@ static wListDictionary* g_MemoryBlocks = NULL;
 char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
 
 WCHAR SMARTCARD_PNP_NOTIFICATION_W[] = { '\\','\\','?','P','n','P','?',
-									   '\\','N','o','t','i','f','i','c','a','t','i','o','n','\0'
+										 '\\','N','o','t','i','f','i','c','a','t','i','o','n','\0'
 									   };
 
 const PCSC_SCARD_IO_REQUEST g_PCSC_rgSCardT0Pci = { SCARD_PROTOCOL_T0, sizeof(PCSC_SCARD_IO_REQUEST) };
@@ -963,7 +963,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext,
 	/* FIXME: unicode conversion */
 	status = (LONG) g_PCSC.pfnSCardListReaderGroups(hContext, (LPSTR) mszGroups, &pcsc_cchGroups);
 	status = PCSC_MapErrorCodeToWinSCard(status);
-	*pcchGroups = (DWORD) pcsc_cchGroups;
+
+	if (pcchGroups)
+		*pcchGroups = (DWORD) pcsc_cchGroups;
 
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
@@ -1498,10 +1500,14 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 	if ((status == SCARD_S_SUCCESS) && !stateChanged)
 		status = SCARD_E_TIMEOUT;
 	else if ((status == SCARD_E_TIMEOUT) && stateChanged)
-		return SCARD_S_SUCCESS;
+		status = SCARD_S_SUCCESS;
 
-	free(states);
-	free(map);
+	if (states)
+		free(states);
+
+	if (map)
+		free(map);
+
 	return status;
 }
 
@@ -2033,7 +2039,12 @@ WINSCARDAPI LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard,
 		pcsc_pioRecvPci = (PCSC_SCARD_IO_REQUEST*) malloc(sizeof(PCSC_SCARD_IO_REQUEST) + cbExtraBytes);
 
 		if (!pcsc_pioRecvPci)
+		{
+			if (pioSendPci)
+				free(pcsc_pioSendPci);
+
 			return SCARD_E_NO_MEMORY;
+		}
 
 		pcsc_pioRecvPci->dwProtocol = (PCSC_DWORD) pioRecvPci->dwProtocol;
 		pcsc_pioRecvPci->cbPciLength = sizeof(PCSC_SCARD_IO_REQUEST) + cbExtraBytes;
