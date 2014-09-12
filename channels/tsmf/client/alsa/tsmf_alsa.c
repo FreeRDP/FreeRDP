@@ -56,7 +56,7 @@ static BOOL tsmf_alsa_open_device(TSMFAlsaAudioDevice *alsa)
 	error = snd_pcm_open(&alsa->out_handle, alsa->device, SND_PCM_STREAM_PLAYBACK, 0);
 	if(error < 0)
 	{
-		CLOG_ERR("failed to open device %s", alsa->device);
+		WLog_ERR(TAG, "failed to open device %s", alsa->device);
 		return FALSE;
 	}
 	DEBUG_TSMF("open device %s", alsa->device);
@@ -95,7 +95,7 @@ static BOOL tsmf_alsa_set_format(ITSMFAudioDevice *audio,
 	error = snd_pcm_hw_params_malloc(&hw_params);
 	if(error < 0)
 	{
-		CLOG_ERR("snd_pcm_hw_params_malloc failed");
+		WLog_ERR(TAG, "snd_pcm_hw_params_malloc failed");
 		return FALSE;
 	}
 	snd_pcm_hw_params_any(alsa->out_handle, hw_params);
@@ -115,7 +115,7 @@ static BOOL tsmf_alsa_set_format(ITSMFAudioDevice *audio,
 	error = snd_pcm_sw_params_malloc(&sw_params);
 	if(error < 0)
 	{
-		CLOG_ERR("snd_pcm_sw_params_malloc");
+		WLog_ERR(TAG, "snd_pcm_sw_params_malloc");
 		return FALSE;
 	}
 	snd_pcm_sw_params_current(alsa->out_handle, sw_params);

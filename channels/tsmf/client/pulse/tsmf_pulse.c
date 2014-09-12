@@ -72,7 +72,7 @@ static BOOL tsmf_pulse_connect(TSMFPulseAudioDevice *pulse)
 		return FALSE;
 	if(pa_context_connect(pulse->context, NULL, 0, NULL))
 	{
-		CLOG_ERR("pa_context_connect failed (%d)",
+		WLog_ERR(TAG, "pa_context_connect failed (%d)",
 				   pa_context_errno(pulse->context));
 		return FALSE;
 	}
@@ -80,7 +80,7 @@ static BOOL tsmf_pulse_connect(TSMFPulseAudioDevice *pulse)
 	if(pa_threaded_mainloop_start(pulse->mainloop) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
-		CLOG_ERR("pa_threaded_mainloop_start failed (%d)",
+		WLog_ERR(TAG, "pa_threaded_mainloop_start failed (%d)",
 				   pa_context_errno(pulse->context));
 		return FALSE;
 	}
@@ -120,19 +120,19 @@ static BOOL tsmf_pulse_open(ITSMFAudioDevice *audio, const char *device)
 	pulse->mainloop = pa_threaded_mainloop_new();
 	if(!pulse->mainloop)
 	{
-		CLOG_ERR("pa_threaded_mainloop_new failed");
+		WLog_ERR(TAG, "pa_threaded_mainloop_new failed");
 		return FALSE;
 	}
 	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), "freerdp");
 	if(!pulse->context)
 	{
-		CLOG_ERR("pa_context_new failed");
+		WLog_ERR(TAG, "pa_context_new failed");
 		return FALSE;
 	}
 	pa_context_set_state_callback(pulse->context, tsmf_pulse_context_state_callback, pulse);
 	if(tsmf_pulse_connect(pulse))
 	{
-		CLOG_ERR("tsmf_pulse_connect failed");
+		WLog_ERR(TAG, "tsmf_pulse_connect failed");
 		return FALSE;
 	}
 	DEBUG_TSMF("open device %s", pulse->device);
@@ -214,7 +214,7 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice *pulse)
 	if(!pulse->stream)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
-		CLOG_ERR("pa_stream_new failed (%d)",
+		WLog_ERR(TAG, "pa_stream_new failed (%d)",
 				   pa_context_errno(pulse->context));
 		return FALSE;
 	}
@@ -233,7 +233,7 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice *pulse)
 								  NULL, NULL) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
-		CLOG_ERR("pa_stream_connect_playback failed (%d)",
+		WLog_ERR(TAG, "pa_stream_connect_playback failed (%d)",
 				   pa_context_errno(pulse->context));
 		return FALSE;
 	}
@@ -244,7 +244,7 @@ static BOOL tsmf_pulse_open_stream(TSMFPulseAudioDevice *pulse)
 			break;
 		if(!PA_STREAM_IS_GOOD(state))
 		{
-			CLOG_ERR("bad stream state (%d)",
+			WLog_ERR(TAG, "bad stream state (%d)",
 					   pa_context_errno(pulse->context));
 			break;
 		}

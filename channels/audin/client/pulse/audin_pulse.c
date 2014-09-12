@@ -94,16 +94,16 @@ static BOOL audin_pulse_connect(IAudinDevice* device)
 
 	if (pa_context_connect(pulse->context, NULL, 0, NULL))
 	{
-		CLOG_ERR("pa_context_connect failed (%d)",
-			pa_context_errno(pulse->context));
+		WLog_ERR(TAG, "pa_context_connect failed (%d)",
+				 pa_context_errno(pulse->context));
 		return FALSE;
 	}
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	if (pa_threaded_mainloop_start(pulse->mainloop) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
-		CLOG_ERR("pa_threaded_mainloop_start failed (%d)",
-			pa_context_errno(pulse->context));
+		WLog_ERR(TAG, "pa_threaded_mainloop_start failed (%d)",
+				 pa_context_errno(pulse->context));
 		return FALSE;
 	}
 	for (;;)
@@ -113,8 +113,8 @@ static BOOL audin_pulse_connect(IAudinDevice* device)
 			break;
 		if (!PA_CONTEXT_IS_GOOD(state))
 		{
-			CLOG_ERR("bad context state (%d)",
-				pa_context_errno(pulse->context));
+			WLog_ERR(TAG, "bad context state (%d)",
+					 pa_context_errno(pulse->context));
 			break;
 		}
 		pa_threaded_mainloop_wait(pulse->mainloop);
@@ -297,7 +297,7 @@ static void audin_pulse_stream_request_callback(pa_stream* stream, size_t length
 	 */
 	if (pulse->buffer == NULL)
 	{
-		/* CLOG_ERR( "%s: ignoring input, pulse buffer not ready.\n", __func__); */
+		/* WLog_ERR(TAG,  "%s: ignoring input, pulse buffer not ready.\n", __func__); */
 		return;
 	}
 
@@ -415,8 +415,8 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 		&buffer_attr, PA_STREAM_ADJUST_LATENCY) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
-		CLOG_ERR("pa_stream_connect_playback failed (%d)",
-			pa_context_errno(pulse->context));
+		WLog_ERR(TAG, "pa_stream_connect_playback failed (%d)",
+				 pa_context_errno(pulse->context));
 		return;
 	}
 
@@ -427,8 +427,8 @@ static void audin_pulse_open(IAudinDevice* device, AudinReceive receive, void* u
 			break;
 		if (!PA_STREAM_IS_GOOD(state))
 		{
-			CLOG_ERR("bad stream state (%d)",
-				pa_context_errno(pulse->context));
+			WLog_ERR(TAG, "bad stream state (%d)",
+					 pa_context_errno(pulse->context));
 			break;
 		}
 		pa_threaded_mainloop_wait(pulse->mainloop);
@@ -512,7 +512,7 @@ int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEnt
 
 	if (!pulse->mainloop)
 	{
-		CLOG_ERR("pa_threaded_mainloop_new failed");
+		WLog_ERR(TAG, "pa_threaded_mainloop_new failed");
 		audin_pulse_free((IAudinDevice*) pulse);
 		return 1;
 	}
@@ -521,7 +521,7 @@ int freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEnt
 
 	if (!pulse->context)
 	{
-		CLOG_ERR("pa_context_new failed");
+		WLog_ERR(TAG, "pa_context_new failed");
 		audin_pulse_free((IAudinDevice*) pulse);
 		return 1;
 	}

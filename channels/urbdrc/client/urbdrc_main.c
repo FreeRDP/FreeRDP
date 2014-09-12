@@ -39,9 +39,7 @@
 #include "data_transfer.h"
 #include "searchman.h"
 
-int urbdrc_debug = 0;
-
-static int func_hardware_id_format(IUDEVICE* pdev, char (*HardwareIds)[DEVICE_HARDWARE_ID_SIZE])
+static int func_hardware_id_format(IUDEVICE* pdev, char(*HardwareIds)[DEVICE_HARDWARE_ID_SIZE])
 {
 	char str[DEVICE_HARDWARE_ID_SIZE];
 	int idVendor, idProduct, bcdDevice;
@@ -230,8 +228,7 @@ static int urbdrc_process_capability_request(URBDRC_CHANNEL_CALLBACK* callback, 
 	UINT32 Version;
 	UINT32 out_size;
 	char * out_data;
-
-	LLOGLN(10, ("urbdrc_process_capability_request"));
+	WLog_VRB(TAG, "");
 	data_read_UINT32(data + 0, Version);
 
 	InterfaceId = ((STREAM_ID_NONE<<30) | CAPABILITIES_NEGOTIATOR);
@@ -257,8 +254,7 @@ static int urbdrc_process_channel_create(URBDRC_CHANNEL_CALLBACK* callback, char
 	UINT32 MinorVersion;
 	UINT32 Capabilities;
 	char* out_data;
-
-	LLOGLN(10, ("urbdrc_process_channel_create"));
+	WLog_VRB(TAG, "");
 	data_read_UINT32(data + 0, MajorVersion);
 	data_read_UINT32(data + 4, MinorVersion);
 	data_read_UINT32(data + 8, Capabilities);
@@ -286,9 +282,7 @@ static int urdbrc_send_virtual_channel_add(IWTSVirtualChannel* channel, UINT32 M
 	UINT32 out_size;
 	UINT32 InterfaceId;
 	char* out_data;
-
-	LLOGLN(10, ("urdbrc_send_virtual_channel_add"));
-
+	WLog_VRB(TAG, "");
 	assert(NULL != channel);
 	assert(NULL != channel->Write);
 
@@ -318,8 +312,7 @@ static int urdbrc_send_usb_device_add(URBDRC_CHANNEL_CALLBACK* callback, IUDEVIC
 	char strInstanceId[DEVICE_INSTANCE_STR_SIZE];
 	char* composite_str = "USB\\COMPOSITE";
 	int size, out_offset, cchCompatIds, bcdUSB;
-
-	LLOGLN(10, ("urdbrc_send_usb_device_add"));
+	WLog_VRB(TAG, "");
 	InterfaceId = ((STREAM_ID_PROXY<<30) | CLIENT_DEVICE_SINK);
 
 	/* USB kernel driver detach!! */
@@ -433,7 +426,7 @@ static int urbdrc_exchange_capabilities(URBDRC_CHANNEL_CALLBACK* callback, char*
 			break;
 
 		default:
-			LLOGLN(10, ("urbdrc_exchange_capabilities: unknown FunctionId 0x%X", FunctionId));
+			WLog_ERR(TAG, "unknown FunctionId 0x%X", FunctionId);
 			error = 1;
 			break;
 	}
@@ -455,9 +448,7 @@ static void* urbdrc_search_usb_device(void* arg)
 	int numobj, timeout;
 	int busnum, devnum;
 	int success = 0, error, on_close = 0, found = 0;
-
-	LLOGLN(10, ("urbdrc_search_usb_device: "));
-
+	WLog_VRB(TAG, "");
 	channel_mgr = urbdrc->listener_callback->channel_mgr;
 
 	/* init usb monitor */
@@ -469,7 +460,7 @@ static void* urbdrc_search_usb_device(void* arg)
 
 	if (!udev)
 	{
-		CLOG_ERR( "Can't create udev\n");
+		WLog_ERR(TAG,  "Can't create udev");
 		return 0;
 	}
 
@@ -484,7 +475,7 @@ static void* urbdrc_search_usb_device(void* arg)
 
 	while (1)
 	{
-		LLOGLN(10, ("=======  SEARCH  ======= "));
+		WLog_VRB(TAG, "=======  SEARCH  ======= ");
 		busnum = 0;
 		devnum = 0;
 		sdev = NULL;
@@ -541,8 +532,8 @@ static void* urbdrc_search_usb_device(void* arg)
 						if (sdev->idVendor == idVendor &&
 							sdev->idProduct == idProduct)
 						{
-							LLOGLN(10, ("Searchman Find Device: %04x:%04x ", 
-								sdev->idVendor, sdev->idProduct));
+							WLog_VRB(TAG, "Searchman Find Device: %04x:%04x ",
+									 sdev->idVendor, sdev->idProduct);
 							found = 1;
 							break;
 						}
@@ -550,8 +541,8 @@ static void* urbdrc_search_usb_device(void* arg)
 
 					if (!found && udevman->isAutoAdd(udevman))
 					{
-						LLOGLN(10, ("Auto Find Device: %04x:%04x ", 
-							idVendor, idProduct));
+						WLog_VRB(TAG, "Auto Find Device: %04x:%04x ",
+								 idVendor, idProduct);
 						found = 2;
 					}
 
@@ -611,7 +602,7 @@ static void* urbdrc_search_usb_device(void* arg)
 
 							if (dvc_channel == NULL)
 							{
-								LLOGLN(0, ("SEARCH: dvc_channel %d is NULL!!", pdev->get_channel_id(pdev)));
+								WLog_ERR(TAG, "SEARCH: dvc_channel %d is NULL!!", pdev->get_channel_id(pdev));
 								func_close_udevice(searchman, pdev);
 								break;
 							}
@@ -653,7 +644,7 @@ static void* urbdrc_search_usb_device(void* arg)
 			}
 			else
 			{
-				CLOG_ERR( "No Device from receive_device(). An error occured.\n");
+				WLog_ERR(TAG,  "No Device from receive_device(). An error occured.");
 			}
 		}
 	}
@@ -733,8 +724,8 @@ void* urbdrc_new_device_create(void* arg)
 			break;
 
 		default:
-			LLOGLN(0, ("urbdrc_new_device_create: vchannel_status unknown value %d",
-											urbdrc->vchannel_status));
+			WLog_ERR(TAG, "vchannel_status unknown value %d",
+					 urbdrc->vchannel_status);
 			break;
 	}
 
@@ -758,7 +749,7 @@ static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback
 			break;
 
 		case RIMCALL_RELEASE:
-			LLOGLN(10, ("urbdrc_process_channel_notification: recv RIMCALL_RELEASE"));
+			WLog_VRB(TAG, "recv RIMCALL_RELEASE");
 			pthread_t   thread;
 
 			TRANSFER_DATA*  transfer_data;
@@ -781,14 +772,14 @@ static int urbdrc_process_channel_notification(URBDRC_CHANNEL_CALLBACK* callback
 			break;
 
 		default:
-			LLOGLN(10, ("urbdrc_process_channel_notification: unknown FunctionId 0x%X", FunctionId));
+			WLog_VRB(TAG, "unknown FunctionId 0x%X", FunctionId);
 			error = 1;
 			break;
 	}
 	return error;
 }
 
-static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, UINT32 cbSize, BYTE* Buffer)
+static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	URBDRC_CHANNEL_CALLBACK* callback = (URBDRC_CHANNEL_CALLBACK*) pChannelCallback;
 	URBDRC_PLUGIN* urbdrc;
@@ -797,7 +788,8 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	UINT32 InterfaceId;
 	UINT32 Mask;
 	int error = 0;
-	char* pBuffer = (char*) Buffer;
+	char* pBuffer = (char*)Stream_Pointer(data);
+  UINT32 cbSize = Stream_GetRemainingLength(data);
 
 	if (callback == NULL)
 		return 0;
@@ -815,7 +807,7 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	data_read_UINT32(pBuffer + 0, InterfaceTemp);
 	InterfaceId = (InterfaceTemp & 0x0fffffff);
 	Mask = ((InterfaceTemp & 0xf0000000)>>30);
-	LLOGLN(10, ("urbdrc_on_data_received: Size=%d InterfaceId=0x%X Mask=0x%X", cbSize, InterfaceId, Mask));
+	WLog_VRB(TAG, "Size=%d InterfaceId=0x%X Mask=0x%X", cbSize, InterfaceId, Mask);
 
 	switch (InterfaceId)
 	{
@@ -828,7 +820,7 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			break;
 
 		default:
-			LLOGLN(10, ("urbdrc_on_data_received: InterfaceId 0x%X Start matching devices list", InterfaceId));
+			WLog_VRB(TAG, "InterfaceId 0x%X Start matching devices list", InterfaceId);
 			pthread_t thread;
 			TRANSFER_DATA* transfer_data;
 
@@ -836,7 +828,7 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 
 			if (transfer_data == NULL)
 			{
-				CLOG_ERR( "transfer_data is NULL!!");
+				WLog_ERR(TAG,  "transfer_data is NULL!!");
 				return 0;
 			}
 
@@ -860,7 +852,7 @@ static int urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 			error = pthread_create(&thread, 0, urbdrc_process_udev_data_transfer, transfer_data);
 
 			if (error < 0)
-				LLOGLN(0, ("Create Data Transfer Thread got error = %d", error));
+				WLog_ERR(TAG, "Create Data Transfer Thread got error = %d", error);
 			else
 				pthread_detach(thread);
 
@@ -881,9 +873,7 @@ static int urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
 	int found = 0;
 
 	ChannelId = callback->channel_mgr->GetChannelId(callback->channel);
-
-	LLOGLN(0, ("urbdrc_on_close: channel id %d", ChannelId));
-
+	WLog_INFO(TAG, "urbdrc_on_close: channel id %d", ChannelId);
 	udevman->loading_lock(udevman);
 	udevman->rewind(udevman);
 
@@ -907,9 +897,7 @@ static int urbdrc_on_close(IWTSVirtualChannelCallback * pChannelCallback)
 	}
 
 	zfree(callback);
-
-	LLOGLN(urbdrc_debug, ("urbdrc_on_close: success"));
-
+	WLog_DBG(TAG, "success");
 	return 0;
 }
 
@@ -918,8 +906,7 @@ static int urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 {
 	URBDRC_LISTENER_CALLBACK* listener_callback = (URBDRC_LISTENER_CALLBACK*) pListenerCallback;
 	URBDRC_CHANNEL_CALLBACK* callback;
-
-	LLOGLN(10, ("urbdrc_on_new_channel_connection:"));
+	WLog_VRB(TAG, "");
 	callback = (URBDRC_CHANNEL_CALLBACK*) malloc(sizeof(URBDRC_CHANNEL_CALLBACK));
 	callback->iface.OnDataReceived = urbdrc_on_data_received;
 	callback->iface.OnClose = urbdrc_on_close;
@@ -936,8 +923,7 @@ static int urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManag
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*) pPlugin;
 	IUDEVMAN* udevman = NULL;
 	USB_SEARCHMAN* searchman = NULL;
-
-	LLOGLN(10, ("urbdrc_plugin_initialize:"));
+	WLog_VRB(TAG, "");
 	urbdrc->listener_callback = (URBDRC_LISTENER_CALLBACK*) malloc(sizeof(URBDRC_LISTENER_CALLBACK));
 	memset(urbdrc->listener_callback, 0, sizeof(URBDRC_LISTENER_CALLBACK));
 
@@ -959,8 +945,7 @@ static int urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
 	URBDRC_PLUGIN*	urbdrc = (URBDRC_PLUGIN*) pPlugin;
 	IUDEVMAN* udevman = urbdrc->udevman;
 	USB_SEARCHMAN* searchman = urbdrc->searchman;
-
-	LLOGLN(10, ("urbdrc_plugin_terminated:"));
+	WLog_VRB(TAG, "");
 
 	if (searchman)
 	{
@@ -1001,7 +986,7 @@ static void urbdrc_register_udevman_addin(IWTSPlugin* pPlugin, IUDEVMAN* udevman
 
 	if (urbdrc->udevman)
 	{
-		CLOG_ERR("existing device, abort.");
+		WLog_ERR(TAG, "existing device, abort.");
 		return;
 	}
 
@@ -1026,7 +1011,7 @@ static int urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, const char* name, ADDI
 
 	if (entry(&entryPoints) != 0)
 	{
-		CLOG_ERR("%s entry returns error.", name);
+		WLog_ERR(TAG, "%s entry returns error.", name);
 		return FALSE;
 	}
 
@@ -1070,7 +1055,7 @@ static void urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
 
 		CommandLineSwitchCase(arg, "dbg")
 		{
-			urbdrc_debug = 0;
+			WLog_SetLogLevel(WLog_Get(TAG), WLOG_TRACE);
 		}
 		CommandLineSwitchCase(arg, "sys")
 		{
@@ -1110,8 +1095,6 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		urbdrc->iface.Terminated = urbdrc_plugin_terminated;
 		urbdrc->searchman = NULL;
 		urbdrc->vchannel_status = INIT_CHANNEL_IN;
-
-		urbdrc_debug = 10;
 
 		status = pEntryPoints->RegisterPlugin(pEntryPoints, "urbdrc", (IWTSPlugin*) urbdrc);
 	}

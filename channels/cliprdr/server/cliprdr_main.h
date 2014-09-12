@@ -25,7 +25,9 @@
 #include <winpr/thread.h>
 
 #include <freerdp/server/cliprdr.h>
+#include <freerdp/channels/log.h>
 
+#define TAG CHANNELS_TAG("cliprdr.server")
 #define CLIPRDR_HEADER_LENGTH	8
 
 struct _cliprdr_server_private

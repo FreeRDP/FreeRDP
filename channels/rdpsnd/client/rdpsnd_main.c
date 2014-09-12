@@ -195,13 +195,12 @@ void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	}
 
 #if 0
-	CLOG_ERR( "Server ");
+	WLog_ERR(TAG,  "Server ");
 	rdpsnd_print_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
-	CLOG_ERR( "\n");
-
-	CLOG_ERR( "Client ");
+	WLog_ERR(TAG,  "\n");
+	WLog_ERR(TAG,  "Client ");
 	rdpsnd_print_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
-	CLOG_ERR( "\n");
+	WLog_ERR(TAG,  "\n");
 #endif
 }
 
@@ -544,7 +543,7 @@ static void rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	Stream_Seek_UINT8(s); /* bPad */
 	Stream_Read_UINT16(s, BodySize);
 
-	//CLOG_ERR( "msgType %d BodySize %d\n", msgType, BodySize);
+	//WLog_ERR(TAG,  "msgType %d BodySize %d\n", msgType, BodySize);
 
 	switch (msgType)
 	{
@@ -569,7 +568,7 @@ static void rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 			break;
 
 		default:
-			CLOG_ERR("unknown msgType %d", msgType);
+			WLog_ERR(TAG, "unknown msgType %d", msgType);
 			break;
 	}
 
@@ -580,7 +579,7 @@ static void rdpsnd_register_device_plugin(rdpsndPlugin* rdpsnd, rdpsndDevicePlug
 {
 	if (rdpsnd->device)
 	{
-		CLOG_ERR("existing device, abort.");
+		WLog_ERR(TAG, "existing device, abort.");
 		return;
 	}
 
@@ -606,7 +605,7 @@ static BOOL rdpsnd_load_device_plugin(rdpsndPlugin* rdpsnd, const char* name, AD
 
 	if (entry(&entryPoints) != 0)
 	{
-		CLOG_ERR("%s entry returns error.", name);
+		WLog_ERR(TAG, "%s entry returns error.", name);
 		return FALSE;
 	}
 
@@ -795,7 +794,7 @@ static void rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 
 	if (!rdpsnd->device)
 	{
-		CLOG_ERR("no sound device.");
+		WLog_ERR(TAG, "no sound device.");
 		return;
 	}
 
@@ -875,7 +874,7 @@ int rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		CLOG_ERR( "rdpdr_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
+		WLog_ERR(TAG,  "rdpdr_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
@@ -907,7 +906,7 @@ static void rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 	{
 		if (Stream_Capacity(s) != Stream_GetPosition(s))
 		{
-			CLOG_ERR( "rdpsnd_virtual_channel_event_data_received: read error\n");
+			WLog_ERR(TAG,  "rdpsnd_virtual_channel_event_data_received: read error\n");
 		}
 
 		plugin->data_in = NULL;
@@ -927,7 +926,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT e
 
 	if (!plugin)
 	{
-		CLOG_ERR( "rdpsnd_virtual_channel_open_event: error no match\n");
+		WLog_ERR(TAG,  "rdpsnd_virtual_channel_open_event: error no match\n");
 		return;
 	}
 
@@ -987,7 +986,7 @@ static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID 
 
 	if (status != CHANNEL_RC_OK)
 	{
-		CLOG_ERR( "rdpsnd_virtual_channel_event_connected: open failed: status: %d\n", status);
+		WLog_ERR(TAG,  "rdpsnd_virtual_channel_event_connected: open failed: status: %d\n", status);
 		return;
 	}
 
@@ -1040,7 +1039,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT
 
 	if (!plugin)
 	{
-		CLOG_ERR( "rdpsnd_virtual_channel_init_event: error no match\n");
+		WLog_ERR(TAG,  "rdpsnd_virtual_channel_init_event: error no match\n");
 		return;
 	}
 

@@ -269,29 +269,27 @@ static void tsmf_print_guid(const BYTE* guid)
 	int i;
 
 	for (i = 3; i >= 0; i--)
-		CLOG_ERR("%02X", guid[i]);
+		WLog_INFO(TAG,  "%02X", guid[i]);
 
-	CLOG_ERR("-");
+	WLog_INFO(TAG,  "-");
 
 	for (i = 5; i >= 4; i--)
-		CLOG_ERR("%02X", guid[i]);
+		WLog_INFO(TAG,  "%02X", guid[i]);
 
-	CLOG_ERR("-");
+	WLog_INFO(TAG,  "-");
 
 	for (i = 7; i >= 6; i--)
-		CLOG_ERR("%02X", guid[i]);
+		WLog_INFO(TAG,  "%02X", guid[i]);
 
-	CLOG_ERR("-");
+	WLog_INFO(TAG,  "-");
 
 	for (i = 8; i < 16; i++)
 	{
-		CLOG_ERR("%02X", guid[i]);
+		WLog_INFO(TAG,  "%02X", guid[i]);
 
 		if (i == 9)
-			CLOG_ERR("-");
+			WLog_INFO(TAG,  "-");
 	}
-
-	CLOG_ERR("\n");
 #endif
 }
 

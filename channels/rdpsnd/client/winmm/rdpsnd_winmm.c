@@ -102,11 +102,11 @@ static void CALLBACK rdpsnd_winmm_callback_function(HWAVEOUT hwo, UINT uMsg, DWO
 	switch (uMsg)
 	{
 		case MM_WOM_OPEN:
-			CLOG_ERR( "MM_WOM_OPEN\n");
+			WLog_ERR(TAG,  "MM_WOM_OPEN\n");
 			break;
 		
 		case MM_WOM_CLOSE:
-			CLOG_ERR( "MM_WOM_CLOSE\n");
+			WLog_ERR(TAG,  "MM_WOM_CLOSE\n");
 			break;
 
 		case MM_WOM_DONE:
@@ -122,9 +122,8 @@ static void CALLBACK rdpsnd_winmm_callback_function(HWAVEOUT hwo, UINT uMsg, DWO
 				if (!wave)
 					return;
 
-				CLOG_ERR( "MM_WOM_DONE: dwBufferLength: %d cBlockNo: %d\n",
-					lpWaveHdr->dwBufferLength, wave->cBlockNo);
-
+				WLog_ERR(TAG,  "MM_WOM_DONE: dwBufferLength: %d cBlockNo: %d\n",
+						 lpWaveHdr->dwBufferLength, wave->cBlockNo);
 				wave->wLocalTimeB = GetTickCount();
 				wTimeDelta = wave->wLocalTimeB - wave->wLocalTimeA;
 				wave->wTimeStampB = wave->wTimeStampA + wTimeDelta;
@@ -156,7 +155,7 @@ static void rdpsnd_winmm_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, 
 
 	if (mmResult != MMSYSERR_NOERROR)
 	{
-		CLOG_ERR( "waveOutOpen failed: %d\n", mmResult);
+		WLog_ERR(TAG,  "waveOutOpen failed: %d\n", mmResult);
 	}
 }
 
@@ -173,7 +172,7 @@ static void rdpsnd_winmm_close(rdpsndDevicePlugin* device)
 
 		if (mmResult != MMSYSERR_NOERROR)
 		{
-			CLOG_ERR( "waveOutClose failure: %d\n", mmResult);
+			WLog_ERR(TAG,  "waveOutClose failure: %d\n", mmResult);
 		}
 		
 		winmm->hWaveOut = NULL;
@@ -300,7 +299,7 @@ void rdpsnd_winmm_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 
 	if (mmResult != MMSYSERR_NOERROR)
 	{
-		CLOG_ERR( "waveOutPrepareHeader failure: %d\n", mmResult);
+		WLog_ERR(TAG,  "waveOutPrepareHeader failure: %d\n", mmResult);
 		return;
 	}
 
@@ -308,7 +307,7 @@ void rdpsnd_winmm_wave_play(rdpsndDevicePlugin* device, RDPSND_WAVE* wave)
 
 	if (mmResult != MMSYSERR_NOERROR)
 	{
-		CLOG_ERR( "waveOutWrite failure: %d\n", mmResult);
+		WLog_ERR(TAG,  "waveOutWrite failure: %d\n", mmResult);
 		waveOutUnprepareHeader(winmm->hWaveOut, lpWaveHdr, sizeof(WAVEHDR));
 		return;
 	}

@@ -25,9 +25,12 @@
 #include <freerdp/svc.h>
 #include <freerdp/addin.h>
 #include <freerdp/client/rdpsnd.h>
+#include <freerdp/channels/log.h>
+
+#define TAG CHANNELS_TAG("rdpsnd.client")
 
 #if defined(WITH_DEBUG_SND)
-#define DEBUG_SND(fmt, ...) CLOG_CLASS("rdpsnd", fmt, ## __VA_ARGS__)
+#define DEBUG_SND(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
 #define DEBUG_SND(fmt, ...) do { } while (0)
 #endif

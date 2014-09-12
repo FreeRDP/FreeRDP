@@ -83,7 +83,7 @@ int encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 		return -1;
 
 #if 0
-	printf("EncomspWrite (%d)\n", Stream_Length(s));
+	WLog_INFO(TAG, "EncomspWrite (%d)", Stream_Length(s));
 	winpr_HexDump(Stream_Buffer(s), Stream_Length(s));
 #endif
 
@@ -92,7 +92,7 @@ int encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 
 	if (status != CHANNEL_RC_OK)
 	{
-		fprintf(stderr, "encomsp_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
+		WLog_ERR(TAG, "encomsp_virtual_channel_write: VirtualChannelWrite failed %d", status);
 		return -1;
 	}
 
@@ -591,7 +591,7 @@ static int encomsp_process_receive(encomspPlugin* encomsp, wStream* s)
 		if (encomsp_read_header(s, &header) < 0)
 			return -1;
 
-		//CLOG_DBG("EncomspReceive: Type: %d Length: %d\n", header.Type, header.Length);
+		//WLog_DBG(TAG, "EncomspReceive: Type: %d Length: %d", header.Type, header.Length);
 
 		switch (header.Type)
 		{
@@ -723,7 +723,7 @@ int encomsp_send(encomspPlugin* encomsp, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		CLOG_ERR( "encomsp_send: VirtualChannelWrite failed %d\n", status);
+		WLog_ERR(TAG,  "encomsp_send: VirtualChannelWrite failed %d", status);
 	}
 
 	return status;
@@ -755,7 +755,7 @@ static void encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp,
 	{
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
-			CLOG_ERR( "encomsp_plugin_process_received: read error\n");
+			WLog_ERR(TAG,  "encomsp_plugin_process_received: read error");
 		}
 
 		encomsp->data_in = NULL;
@@ -775,7 +775,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle, UINT 
 
 	if (!encomsp)
 	{
-		CLOG_ERR( "encomsp_virtual_channel_open_event: error no match\n");
+		WLog_ERR(TAG,  "encomsp_virtual_channel_open_event: error no match");
 		return;
 	}
 
@@ -835,7 +835,7 @@ static void encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 
 	if (status != CHANNEL_RC_OK)
 	{
-		CLOG_ERR( "encomsp_virtual_channel_event_connected: open failed: status: %d\n", status);
+		WLog_ERR(TAG,  "encomsp_virtual_channel_event_connected: open failed: status: %d", status);
 		return;
 	}
 
@@ -873,7 +873,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UIN
 
 	if (!encomsp)
 	{
-		CLOG_ERR( "encomsp_virtual_channel_init_event: error no match\n");
+		WLog_ERR(TAG,  "encomsp_virtual_channel_init_event: error no match");
 		return;
 	}
 

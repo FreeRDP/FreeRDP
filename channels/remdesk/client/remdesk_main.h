@@ -33,6 +33,9 @@
 
 #include <freerdp/client/remdesk.h>
 
+#include <freerdp/channels/log.h>
+#define TAG CHANNELS_TAG("remdesk.client")
+
 struct remdesk_plugin
 {
 	CHANNEL_DEF channelDef;
