@@ -34,7 +34,6 @@
 #include <winpr/collections.h>
 
 #include <freerdp/svc.h>
-#include <freerdp/utils/debug.h>
 #include <freerdp/log.h>
 #include <freerdp/utils/event.h>
 
