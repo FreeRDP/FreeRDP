@@ -330,6 +330,36 @@ INLINE UINT32 gdi_rop3_code(BYTE code)
 	return rop3_code_table[code];
 }
 
+UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel, BOOL vFlip)
+{
+	UINT32 format = PIXEL_FORMAT_XRGB32_VF;
+
+	switch (bitsPerPixel)
+	{
+		case 32:
+			format = vFlip ? PIXEL_FORMAT_XRGB32_VF : PIXEL_FORMAT_XRGB32;
+			break;
+
+		case 24:
+			format = vFlip ? PIXEL_FORMAT_RGB24_VF : PIXEL_FORMAT_RGB24;
+			break;
+
+		case 16:
+			format = vFlip ? PIXEL_FORMAT_RGB16_VF : PIXEL_FORMAT_RGB16;
+			break;
+
+		case 15:
+			format = vFlip ? PIXEL_FORMAT_RGB15_VF : PIXEL_FORMAT_RGB15;
+			break;
+
+		case 8:
+			format = vFlip ? PIXEL_FORMAT_RGB8_VF : PIXEL_FORMAT_RGB8;
+			break;
+	}
+
+	return format;
+}
+
 INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 {
 	BYTE* p;
@@ -466,7 +496,6 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 	int nSrcStep;
 	int nDstStep;
 	UINT32 index;
-	BYTE* buffer;
 	BYTE* pSrcData;
 	BYTE* pDstData;
 	UINT32 SrcSize;
@@ -477,8 +506,6 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 	BITMAP_DATA* bitmap;
 	rdpGdi* gdi = context->gdi;
 	rdpCodecs* codecs = context->codecs;
-
-	buffer = (BYTE*) _aligned_malloc(256 * 256 * 4, 16);
 
 	for (index = 0; index < bitmapUpdate->number; index++)
 	{
@@ -493,8 +520,6 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 		nWidth = bitmap->width;
 		nHeight = bitmap->height;
 
-		pDstData = buffer;
-
 		pSrcData = bitmap->bitmapDataStream;
 		SrcSize = bitmap->bitmapLength;
 
@@ -502,33 +527,21 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 		bitsPerPixel = bitmap->bitsPerPixel;
 		bytesPerPixel = (bitsPerPixel + 7) / 8;
 
-		SrcFormat = PIXEL_FORMAT_XRGB32_VF;
+		SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
 
-		switch (bitsPerPixel)
+		if (gdi->bitmap_size < (nWidth * nHeight * bytesPerPixel))
 		{
-			case 8:
-				SrcFormat = PIXEL_FORMAT_RGB8_VF;
-				break;
+			gdi->bitmap_size = nWidth * nHeight * bytesPerPixel;
+			gdi->bitmap_buffer = (BYTE*) _aligned_realloc(gdi->bitmap_buffer, gdi->bitmap_size, 16);
 
-			case 15:
-				SrcFormat = PIXEL_FORMAT_RGB15_VF;
-				break;
-
-			case 16:
-				SrcFormat = PIXEL_FORMAT_RGB16_VF;
-				break;
-
-			case 24:
-				SrcFormat = PIXEL_FORMAT_RGB24_VF;
-				break;
-
-			case 32:
-				SrcFormat = PIXEL_FORMAT_XRGB32_VF;
-				break;
+			if (!gdi->bitmap_buffer)
+				return;
 		}
 
 		if (compressed)
 		{
+			pDstData = gdi->bitmap_buffer;
+
 			if (bitsPerPixel < 32)
 			{
 				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
@@ -541,7 +554,7 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
 
 				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
-						PIXEL_FORMAT_XRGB32_VF, nWidth * 4, 0, 0, nWidth, nHeight);
+						PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight);
 			}
 
 			if (status < 0)
@@ -550,11 +563,7 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 				return;
 			}
 
-			pSrcData = buffer;
-		}
-		else
-		{
-
+			pSrcData = gdi->bitmap_buffer;
 		}
 
 		nSrcStep = nWidth * bytesPerPixel;
@@ -562,13 +571,14 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 		pDstData = gdi->primary_buffer;
 		nDstStep = gdi->width * 4;
 
+		nWidth = bitmap->destRight - bitmap->destLeft + 1; /* clip width */
+		nHeight = bitmap->destBottom - bitmap->destTop + 1; /* clip height */
+
 		status = freerdp_image_copy(pDstData, PIXEL_FORMAT_XRGB32, nDstStep, nXDst, nYDst,
 				nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc);
 
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
 	}
-
-	_aligned_free(buffer);
 }
 
 void gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
@@ -1232,6 +1242,7 @@ void gdi_free(freerdp* instance)
 		gdi_bitmap_free_ex(gdi->tile);
 		gdi_bitmap_free_ex(gdi->image);
 		gdi_DeleteDC(gdi->hdc);
+		_aligned_free(gdi->bitmap_buffer);
 		free(gdi->clrconv->palette);
 		free(gdi->clrconv);
 		free(gdi);

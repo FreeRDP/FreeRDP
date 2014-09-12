@@ -258,17 +258,17 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		scanline = nWidth * 3;
 		BufferSize = scanline * nHeight;
 
-		if (BufferSize > interleaved->FlipSize)
-		{
-			interleaved->FlipBuffer = _aligned_realloc(interleaved->FlipBuffer, BufferSize, 16);
-			interleaved->FlipSize = BufferSize;
-		}
-
-		if (!interleaved->FlipBuffer)
-			return -1;
-
 		if (vFlip)
 		{
+			if (BufferSize > interleaved->FlipSize)
+			{
+				interleaved->FlipBuffer = _aligned_realloc(interleaved->FlipBuffer, BufferSize, 16);
+				interleaved->FlipSize = BufferSize;
+			}
+
+			if (!interleaved->FlipBuffer)
+				return -1;
+
 			RleDecompress24to24(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
 			freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
 		}
@@ -282,17 +282,17 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		scanline = nWidth * 2;
 		BufferSize = scanline * nHeight;
 
-		if (BufferSize > interleaved->FlipSize)
-		{
-			interleaved->FlipBuffer = _aligned_realloc(interleaved->FlipBuffer, BufferSize, 16);
-			interleaved->FlipSize = BufferSize;
-		}
-
-		if (!interleaved->FlipBuffer)
-			return -1;
-
 		if (vFlip)
 		{
+			if (BufferSize > interleaved->FlipSize)
+			{
+				interleaved->FlipBuffer = _aligned_realloc(interleaved->FlipBuffer, BufferSize, 16);
+				interleaved->FlipSize = BufferSize;
+			}
+
+			if (!interleaved->FlipBuffer)
+				return -1;
+
 			RleDecompress16to16(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
 			freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
 		}
@@ -306,17 +306,17 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		scanline = nWidth;
 		BufferSize = scanline * nHeight;
 
-		if (BufferSize > interleaved->FlipSize)
-		{
-			interleaved->FlipBuffer = _aligned_realloc(interleaved->FlipBuffer, BufferSize, 16);
-			interleaved->FlipSize = BufferSize;
-		}
-
-		if (!interleaved->FlipBuffer)
-			return -1;
-
 		if (vFlip)
 		{
+			if (BufferSize > interleaved->FlipSize)
+			{
+				interleaved->FlipBuffer = _aligned_realloc(interleaved->FlipBuffer, BufferSize, 16);
+				interleaved->FlipSize = BufferSize;
+			}
+
+			if (!interleaved->FlipBuffer)
+				return -1;
+
 			RleDecompress8to8(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
 			freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
 		}

@@ -285,6 +285,8 @@ struct rdp_gdi
 	HCLRCONV clrconv;
 	gdiBitmap* primary;
 	gdiBitmap* drawing;
+	UINT32 bitmap_size;
+	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	GDI_COLOR textColor;
 	gdiBitmap* tile;
