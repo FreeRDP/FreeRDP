@@ -28,6 +28,7 @@
 #include <string.h>
 #include <conio.h>
 
+#include <freerdp/log.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/constants.h>
 #include <freerdp/codec/color.h>
@@ -38,6 +39,8 @@
 #include "wf_interface.h"
 #include "wf_graphics.h"
 #include "wf_gdi.h"
+
+#define TAG CLIENT_TAG("windows.gdi")
 
 const BYTE wf_rop2_table[] =
 {
@@ -63,7 +66,7 @@ BOOL wf_set_rop2(HDC hdc, int rop2)
 {
 	if ((rop2 < 0x01) || (rop2 > 0x10))
 	{
-		DEBUG_WARN( "Unsupported ROP2: %d\n", rop2);
+		WLog_ERR(TAG,  "Unsupported ROP2: %d", rop2);
 		return FALSE;
 	}
 
@@ -742,7 +745,7 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 	}
 	else
 	{
-		DEBUG_WARN( "Unsupported codecID %d\n", surface_bits_command->codecID);
+		WLog_ERR(TAG,  "Unsupported codecID %d", surface_bits_command->codecID);
 	}
 
 	if (tile_bitmap != NULL)

@@ -20,6 +20,9 @@
 #include <sys/select.h>
 #include <sys/types.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/log.h>
+
+#define TAG CLIENT_TAG("android")
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -49,7 +52,7 @@ void android_set_event(ANDROID_EVENT_QUEUE * queue)
 	length = write(queue->pipe_fd[1], "sig", 4);
 
 	if (length != 4)
-		printf("android_set_event: error\n");
+		WLog_ERR(TAG, "android_set_event: error");
 }
 
 
@@ -62,7 +65,7 @@ void android_clear_event(ANDROID_EVENT_QUEUE * queue)
 		length = read(queue->pipe_fd[0], &length, 4);
 
 		if (length != 4)
-			printf("android_clear_event: error\n");
+			WLog_ERR(TAG, "android_clear_event: error");
 	}
 }
 
@@ -306,7 +309,7 @@ void android_event_queue_init(freerdp * inst)
 	aCtx->event_queue->events = (ANDROID_EVENT**) malloc(sizeof(ANDROID_EVENT*) * aCtx->event_queue->size);
 
 	if (pipe(aCtx->event_queue->pipe_fd) < 0)
-		printf("android_pre_connect: pipe failed\n");
+		WLog_ERR(TAG, "android_pre_connect: pipe failed");
 }
 
 void android_event_queue_uninit(freerdp * inst)

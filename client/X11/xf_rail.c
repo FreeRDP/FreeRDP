@@ -26,6 +26,7 @@
 
 #include <winpr/wlog.h>
 #include <freerdp/utils/event.h>
+
 #include <winpr/print.h>
 #include <freerdp/utils/rail.h>
 #include <freerdp/rail/rail.h>
@@ -33,12 +34,12 @@
 #include "xf_window.h"
 #include "xf_rail.h"
 
-#define TAG "com.freerdp.client.X11"
+#define TAG CLIENT_TAG("x11")
 
 #ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
-#define DEBUG_X11_LMS(fmt, ...) DEBUG_CLASS(X11_LMS, fmt, ## __VA_ARGS__)
+#define DEBUG_X11_LMS(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_X11_LMS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_X11_LMS(fmt, ...) do { } while (0)
 #endif
 
 void xf_rail_enable_remoteapp_mode(xfContext* xfc)
@@ -446,8 +447,8 @@ void xf_process_rail_exec_result_event(xfContext* xfc, rdpChannels* channels, wM
 
 	if (exec_result->execResult != RAIL_EXEC_S_OK)
 	{
-		DEBUG_WARN("RAIL exec error: execResult=%s NtError=0x%X\n",
-				   error_code_names[exec_result->execResult], exec_result->rawResult);
+		WLog_ERR(TAG, "RAIL exec error: execResult=%s NtError=0x%X\n",
+				 error_code_names[exec_result->execResult], exec_result->rawResult);
 		xfc->disconnect = True;
 	}
 	else
@@ -615,9 +616,9 @@ void xf_process_rail_appid_resp_event(xfContext* xfc, rdpChannels* channels, wMe
 {
 	RAIL_GET_APPID_RESP_ORDER* appid_resp =
 		(RAIL_GET_APPID_RESP_ORDER*) event->wParam;
-	DEBUG_WARN("Server Application ID Response PDU: windowId=0x%X "
-			   "applicationId=(length=%d dump)\n",
-			   appid_resp->windowId, 512);
+	WLog_ERR(TAG, "Server Application ID Response PDU: windowId=0x%X "
+			 "applicationId=(length=%d dump)\n",
+			 appid_resp->windowId, 512);
 	winpr_HexDump(TAG, WLOG_ERROR, (BYTE*) &appid_resp->applicationId, 512);
 }
 
@@ -625,8 +626,8 @@ void xf_process_rail_langbarinfo_event(xfContext* xfc, rdpChannels* channels, wM
 {
 	RAIL_LANGBAR_INFO_ORDER* langbar =
 		(RAIL_LANGBAR_INFO_ORDER*) event->wParam;
-	DEBUG_WARN("Language Bar Information PDU: languageBarStatus=0x%X\n",
-			   langbar->languageBarStatus);
+	WLog_ERR(TAG, "Language Bar Information PDU: languageBarStatus=0x%X\n",
+			 langbar->languageBarStatus);
 }
 
 void xf_process_rail_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
