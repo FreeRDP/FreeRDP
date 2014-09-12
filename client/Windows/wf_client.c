@@ -46,10 +46,11 @@
 #include <freerdp/event.h>
 
 #include "wf_gdi.h"
+#include "wf_channels.h"
 #include "wf_graphics.h"
 #include "wf_cliprdr.h"
 
-#include "wf_interface.h"
+#include "wf_client.h"
 
 #include "resource.h"
 
@@ -293,6 +294,13 @@ BOOL wf_pre_connect(freerdp* instance)
 	}
 
 	freerdp_set_param_uint32(settings, FreeRDP_KeyboardLayout, (int) GetKeyboardLayout(0) & 0x0000FFFF);
+
+	PubSub_SubscribeChannelConnected(instance->context->pubSub,
+		(pChannelConnectedEventHandler) wf_OnChannelConnectedEventHandler);
+
+	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
+		(pChannelDisconnectedEventHandler) wf_OnChannelDisconnectedEventHandler);
+
 	freerdp_channels_pre_connect(instance->context->channels, instance);
 
 	return TRUE;

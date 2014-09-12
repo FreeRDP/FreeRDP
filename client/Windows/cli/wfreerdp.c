@@ -39,7 +39,7 @@
 
 #include "resource.h"
 
-#include "wf_interface.h"
+#include "wf_client.h"
 
 INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {

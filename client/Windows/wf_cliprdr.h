@@ -24,7 +24,8 @@
 
 #include <Ole2.h>
 #include <ShlObj.h>
-#include "wf_interface.h"
+
+#include "wf_client.h"
 
 #ifdef WITH_DEBUG_CLIPRDR
 #define DEBUG_CLIPRDR(fmt, ...) DEBUG_CLASS(WIN_CLIPRDR, fmt, ## __VA_ARGS__)

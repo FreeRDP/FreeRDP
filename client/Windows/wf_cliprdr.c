@@ -20,11 +20,13 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
 #include <assert.h>
+
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <freerdp/utils/event.h>
-#include <winpr/stream.h>
 #include <freerdp/client/cliprdr.h>
 
 #include <Strsafe.h>

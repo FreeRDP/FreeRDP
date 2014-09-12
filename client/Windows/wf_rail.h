@@ -19,7 +19,7 @@
 #ifndef __WF_RAIL_H
 #define __WF_RAIL_H
 
-#include "wf_interface.h"
+#include "wf_client.h"
 
 void wf_rail_paint(wfContext* wfc, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom);
 void wf_rail_register_callbacks(wfContext* wfc, rdpRail* rail);

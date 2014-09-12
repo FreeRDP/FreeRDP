@@ -35,7 +35,7 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 
-#include "wf_interface.h"
+#include "wf_client.h"
 #include "wf_graphics.h"
 #include "wf_gdi.h"
 

@@ -22,7 +22,7 @@
 #ifndef __WF_EVENT_H
 #define __WF_EVENT_H
 
-#include "wf_interface.h"
+#include "wf_client.h"
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);

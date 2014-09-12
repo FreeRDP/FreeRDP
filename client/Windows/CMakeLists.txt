@@ -29,16 +29,16 @@ set(${MODULE_PREFIX}_SRCS
 	wf_gdi.h
 	wf_event.c
 	wf_event.h
+	wf_channels.c
+	wf_channels.h
 	wf_graphics.c
 	wf_graphics.h
 	wf_cliprdr.c
 	wf_cliprdr.h
-	wf_window.c
-	wf_window.h
 	wf_rail.c
 	wf_rail.h
-	wf_interface.c
-	wf_interface.h
+	wf_client.c
+	wf_client.h
 	wf_floatbar.c
 	wf_floatbar.h
 	wfreerdp.rc

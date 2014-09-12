@@ -27,11 +27,12 @@
 
 #include <freerdp/freerdp.h>
 
-#include "wf_interface.h"
+#include "wf_client.h"
 
 #include "wf_gdi.h"
 #include "wf_event.h"
-#include "freerdp/event.h"
+
+#include <freerdp/event.h>
 
 static HWND g_focus_hWnd;
 
