@@ -28,9 +28,12 @@
 #include <freerdp/primitives.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/progressive.h>
+#include <freerdp/log.h>
 
 #include "rfx_differential.h"
 #include "rfx_quantization.h"
+
+#define TAG FREERDP_TAG("codec.progressive")
 
 const char* progressive_get_block_type_string(UINT16 blockType)
 {
@@ -722,8 +725,8 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 	diff = tile->flags & RFX_TILE_DIFFERENCE;
 
 #if 0
-	printf("ProgressiveTileFirst: quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d flags: 0x%02X quality: %d yLen: %d cbLen: %d crLen: %d tailLen: %d\n",
-			tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx, tile->flags, tile->quality, tile->yLen, tile->cbLen, tile->crLen, tile->tailLen);
+	WLog_INFO(TAG, "ProgressiveTileFirst: quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d flags: 0x%02X quality: %d yLen: %d cbLen: %d crLen: %d tailLen: %d",
+			 tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx, tile->flags, tile->quality, tile->yLen, tile->cbLen, tile->crLen, tile->tailLen);
 #endif
 
 	region = &(progressive->region);
@@ -1075,7 +1078,7 @@ int progressive_rfx_upgrade_component(PROGRESSIVE_CONTEXT* progressive, RFX_COMP
 		if (srlLen)
 			pSrlLen = (int) ((((float) aSrlLen) / ((float) srlLen)) * 100.0f);
 
-		printf("RAW: %d/%d %d%% (%d/%d:%d)\tSRL: %d/%d %d%% (%d/%d:%d)\n",
+		WLog_INFO(TAG, "RAW: %d/%d %d%% (%d/%d:%d)\tSRL: %d/%d %d%% (%d/%d:%d)",
 			aRawLen, rawLen, pRawLen, state.raw->position, rawLen * 8,
 			(rawLen * 8) - state.raw->position,
 			aSrlLen, srlLen, pSrlLen, state.srl->position, srlLen * 8,
@@ -1127,7 +1130,7 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 	tile->pass++;
 
 #if 0
-	printf("ProgressiveTileUpgrade: pass: %d quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d quality: %d ySrlLen: %d yRawLen: %d cbSrlLen: %d cbRawLen: %d crSrlLen: %d crRawLen: %d\n",
+	WLog_INFO(TAG, "ProgressiveTileUpgrade: pass: %d quantIdx Y: %d Cb: %d Cr: %d xIdx: %d yIdx: %d quality: %d ySrlLen: %d yRawLen: %d cbSrlLen: %d cbRawLen: %d crSrlLen: %d crRawLen: %d",
 			tile->pass, tile->quantIdxY, tile->quantIdxCb, tile->quantIdxCr, tile->xIdx, tile->yIdx, tile->quality, tile->ySrlLen, tile->yRawLen, tile->cbSrlLen, tile->cbRawLen, tile->crSrlLen, tile->crRawLen);
 #endif
 
@@ -1165,11 +1168,11 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 	quantProgCr = &(quantProg->crQuantValues);
 
 	if (!progressive_rfx_quant_cmp_equal(quantY, &(tile->yQuant)))
-		printf("warning: non-progressive quantY has changed!\n");
+		WLog_WARN(TAG, "non-progressive quantY has changed!");
 	if (!progressive_rfx_quant_cmp_equal(quantCb, &(tile->cbQuant)))
-		printf("warning: non-progressive quantCb has changed!\n");
+		WLog_WARN(TAG, "non-progressive quantCb has changed!");
 	if (!progressive_rfx_quant_cmp_equal(quantCr, &(tile->crQuant)))
-		printf("warning: non-progressive quantCr has changed!\n");
+		WLog_WARN(TAG, "non-progressive quantCr has changed!");
 
 	progressive_rfx_quant_add(quantY, quantProgY, &yBitPos);
 	progressive_rfx_quant_add(quantCb, quantProgCb, &cbBitPos);
@@ -1271,7 +1274,7 @@ int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UI
 		blockLen = *((UINT32*) &block[boffset + 2]); /* blockLen (4 bytes) */
 		boffset += 6;
 
-		//printf("%s\n", progressive_get_block_type_string(blockType));
+		//WLog_INFO(TAG, "%s", progressive_get_block_type_string(blockType));
 
 		if ((blocksLen - offset) < blockLen)
 			return -1003;
@@ -1561,8 +1564,7 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 		blockType = *((UINT16*) &block[boffset + 0]); /* blockType (2 bytes) */
 		blockLen = *((UINT32*) &block[boffset + 2]); /* blockLen (4 bytes) */
 		boffset += 6;
-
-		//printf("%s\n", progressive_get_block_type_string(blockType));
+		//WLog_INFO(TAG, "%s", progressive_get_block_type_string(blockType));
 
 		if ((blocksLen - offset) < blockLen)
 			return -1003;
@@ -1756,7 +1758,7 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 				if (!region->tiles)
 					return -1;
 
-				//printf("numRects: %d numTiles: %d numQuant: %d numProgQuant: %d\n",
+				//WLog_INFO(TAG, "numRects: %d numTiles: %d numQuant: %d numProgQuant: %d",
 				//		region->numRects, region->numTiles, region->numQuant, region->numProgQuant);
 
 				status = progressive_process_tiles(progressive, &block[boffset], region->tileDataSize, surface);
@@ -1806,7 +1808,7 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 	{
 		progressive->Compressor = Compressor;
 
-		progressive->log = WLog_Get("com.freerdp.codec.progressive");
+		progressive->log = WLog_Get(TAG);
 
 		progressive->bufferPool = BufferPool_New(TRUE, (8192 + 32) * 3, 16);
 

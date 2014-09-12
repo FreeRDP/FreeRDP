@@ -24,22 +24,27 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
 #include <freerdp/utils/rail.h>
 
 #include "window.h"
 
+#define TAG FREERDP_TAG("core.window")
+
 BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 {
-	BYTE *newBitMask;
+	BYTE* newBitMask;
+
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
 	Stream_Read_UINT16(s, iconInfo->cacheEntry); /* cacheEntry (2 bytes) */
 	Stream_Read_UINT8(s, iconInfo->cacheId); /* cacheId (1 byte) */
 	Stream_Read_UINT8(s, iconInfo->bpp); /* bpp (1 byte) */
+
 	if ((iconInfo->bpp < 1) || (iconInfo->bpp > 32))
 	{
-		DEBUG_WARN( "%s: invalid bpp value %d", __FUNCTION__, iconInfo->bpp);
+		WLog_ERR(TAG, "invalid bpp value %d", iconInfo->bpp);
 		return FALSE;
 	}
 

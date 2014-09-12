@@ -41,9 +41,8 @@ void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 		bitmap = offscreen_cache_get(cache->offscreen, memblt->cacheIndex);
 	else
 		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) memblt->cacheId, memblt->cacheIndex);
-
-	if (!bitmap)
-		return; /* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
+	/* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
+	if (bitmap == NULL) return;
 
 	memblt->bitmap = bitmap;
 	IFCALL(cache->bitmap->MemBlt, context, memblt);
@@ -61,8 +60,9 @@ void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	else
 		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) mem3blt->cacheId, mem3blt->cacheIndex);
 
+	/* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
 	if (!bitmap)
-		return; /* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
+		return;
 
 	style = brush->style;
 
@@ -96,7 +96,7 @@ void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cacheBitma
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex);
 
-	if (prevBitmap)
+	if (prevBitmap != NULL)
 		Bitmap_Free(context, prevBitmap);
 
 	bitmap_cache_put(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex, bitmap);
@@ -220,7 +220,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index
 
 	if (id > bitmapCache->maxCells)
 	{
-		DEBUG_WARN( "get invalid bitmap cell id: %d\n", id);
+		WLog_ERR(TAG,  "get invalid bitmap cell id: %d", id);
 		return NULL;
 	}
 
@@ -230,7 +230,7 @@ rdpBitmap* bitmap_cache_get(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index
 	}
 	else if (index > bitmapCache->cells[id].number)
 	{
-		DEBUG_WARN( "get invalid bitmap index %d in cell id: %d\n", index, id);
+		WLog_ERR(TAG,  "get invalid bitmap index %d in cell id: %d", index, id);
 		return NULL;
 	}
 
@@ -243,7 +243,7 @@ void bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index, rdpB
 {
 	if (id > bitmapCache->maxCells)
 	{
-		DEBUG_WARN( "put invalid bitmap cell id: %d\n", id);
+		WLog_ERR(TAG,  "put invalid bitmap cell id: %d", id);
 		return;
 	}
 
@@ -253,7 +253,7 @@ void bitmap_cache_put(rdpBitmapCache* bitmapCache, UINT32 id, UINT32 index, rdpB
 	}
 	else if (index > bitmapCache->cells[id].number)
 	{
-		DEBUG_WARN( "put invalid bitmap index %d in cell id: %d\n", index, id);
+		WLog_ERR(TAG,  "put invalid bitmap index %d in cell id: %d", index, id);
 		return;
 	}
 

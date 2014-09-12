@@ -41,6 +41,9 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/version.h>
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("core")
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
 
@@ -90,8 +93,7 @@ BOOL freerdp_connect(freerdp* instance)
 			freerdp_set_last_error(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
 		}
 
-		DEBUG_WARN( "freerdp_pre_connect failed\n");
-
+		WLog_ERR(TAG,  "freerdp_pre_connect failed");
 		goto freerdp_connect_finally;
 	}
 
@@ -100,7 +102,7 @@ BOOL freerdp_connect(freerdp* instance)
 	/* --authonly tests the connection without a UI */
 	if (instance->settings->AuthenticationOnly)
 	{
-		DEBUG_WARN( "Authentication only, exit status %d\n", !status);
+		WLog_ERR(TAG,  "Authentication only, exit status %d", !status);
 		goto freerdp_connect_finally;
 	}
 
@@ -118,7 +120,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 		if (!status)
 		{
-			DEBUG_WARN( "freerdp_post_connect failed\n");
+			WLog_ERR(TAG,  "freerdp_post_connect failed");
 
 			if (!connectErrorCode)
 			{
@@ -485,7 +487,7 @@ UINT32 freerdp_get_last_error(rdpContext* context)
 void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 {
 	if (lastError)
-		DEBUG_WARN( "freerdp_set_last_error 0x%04X\n", lastError);
+		WLog_ERR(TAG,  "freerdp_set_last_error 0x%04X", lastError);
 
 	context->LastError = lastError;
 }

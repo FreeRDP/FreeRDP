@@ -21,6 +21,7 @@
 #define FREERDP_GDI_H
 
 #include <freerdp/api.h>
+#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/cache/cache.h>
 #include <freerdp/utils/debug.h>
@@ -320,10 +321,11 @@ FREERDP_API void gdi_free(freerdp* instance);
 }
 #endif
 
+#define GDI_TAG FREERDP_TAG("gdi")
 #ifdef WITH_DEBUG_GDI
-#define DEBUG_GDI(fmt, ...) DEBUG_CLASS(GDI, fmt, ## __VA_ARGS__)
+#define DEBUG_GDI(fmt, ...) WLog_DBG(GDI_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_GDI(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_GDI(fmt, ...)
 #endif
 
 #endif /* FREERDP_GDI_H */

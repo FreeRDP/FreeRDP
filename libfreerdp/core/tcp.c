@@ -65,12 +65,14 @@
 
 #endif
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/uds.h>
 #include <winpr/stream.h>
 
 #include "tcp.h"
+
+#define TAG FREERDP_TAG("core")
 
 /* Simple Socket BIO */
 
@@ -277,7 +279,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	 */
 	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE*) buf, num))
 	{
-		DEBUG_WARN( "%s: an error occured when writing(toWrite=%d)\n", __FUNCTION__, num);
+		WLog_ERR(TAG,  "an error occured when writing(toWrite=%d)", num);
 		return -1;
 	}
 
@@ -476,14 +478,13 @@ void tcp_get_mac_address(rdpTcp* tcp)
 
 	if (ioctl(tcp->sockfd, SIOCGIFHWADDR, &if_req) != 0)
 	{
-		DEBUG_WARN( "failed to obtain MAC address\n");
+		WLog_ERR(TAG,  "failed to obtain MAC address");
 		return;
 	}
 
 	memmove((void*) mac, (void*) &if_req.ifr_ifru.ifru_hwaddr.sa_data[0], 6);
 #endif
-
-	/* DEBUG_WARN( "MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
+	/* WLog_ERR(TAG,  "MAC: %02X:%02X:%02X:%02X:%02X:%02X",
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
@@ -590,7 +591,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 	if (!tcp->ipcSocket)
 	{
 		if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
-			fprintf(stderr, "%s: unable to set TCP_NODELAY\n", __FUNCTION__);
+			WLog_ERR(TAG,  "unable to set TCP_NODELAY");
 	}
 
 	/* receive buffer must be a least 32 K */
@@ -603,7 +604,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 
 			if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len) < 0)
 			{
-				DEBUG_WARN( "%s: unable to set receive buffer len\n", __FUNCTION__);
+				WLog_ERR(TAG,  "unable to set receive buffer len");
 				return FALSE;
 			}
 		}
@@ -643,7 +644,7 @@ BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 
 	if (flags == -1)
 	{
-		DEBUG_WARN( "%s: fcntl failed, %s.\n", __FUNCTION__, strerror(errno));
+		WLog_ERR(TAG,  "fcntl failed, %s.", strerror(errno));
 		return FALSE;
 	}
 
@@ -693,7 +694,7 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*) &option_value, option_len) < 0)
 	{
-		DEBUG_WARN("setsockopt() SOL_SOCKET, SO_KEEPALIVE:");
+		WLog_ERR(TAG, "setsockopt() SOL_SOCKET, SO_KEEPALIVE:");
 		return FALSE;
 	}
 
@@ -703,7 +704,7 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
 	{
-		DEBUG_WARN("setsockopt() IPPROTO_TCP, TCP_KEEPIDLE:");
+		WLog_ERR(TAG, "setsockopt() IPPROTO_TCP, TCP_KEEPIDLE:");
 		return FALSE;
 	}
 #endif
@@ -714,7 +715,7 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPCNT, (void *) &option_value, option_len) < 0)
 	{
-		DEBUG_WARN("setsockopt() SOL_TCP, TCP_KEEPCNT:");
+		WLog_ERR(TAG, "setsockopt() SOL_TCP, TCP_KEEPCNT:");
 		return FALSE;
 	}
 #endif
@@ -725,7 +726,7 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPINTVL, (void *) &option_value, option_len) < 0)
 	{
-		DEBUG_WARN("setsockopt() SOL_TCP, TCP_KEEPINTVL:");
+		WLog_ERR(TAG, "setsockopt() SOL_TCP, TCP_KEEPINTVL:");
 		return FALSE;
 	}
 #endif
@@ -736,7 +737,7 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 	option_len = sizeof(option_value);
 	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void *) &option_value, option_len) < 0)
 	{
-		DEBUG_WARN("setsockopt() SOL_SOCKET, SO_NOSIGPIPE:");
+		WLog_ERR(TAG, "setsockopt() SOL_SOCKET, SO_NOSIGPIPE:");
 	}
 #endif
 	return TRUE;

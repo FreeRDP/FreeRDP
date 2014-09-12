@@ -31,11 +31,14 @@
 #include <winpr/tchar.h>
 #include <winpr/dsparse.h>
 
+#include <freerdp/log.h>
 #include <openssl/rand.h>
 
 #include "http.h"
 
 #include "ntlm.h"
+
+#define TAG FREERDP_TAG("core.gateway.ntlm")
 
 BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* password, SecPkgContext_Bindings* Bindings)
 {
@@ -71,7 +74,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN( "QuerySecurityPackageInfo status: 0x%08X\n", status);
+		WLog_ERR(TAG,  "QuerySecurityPackageInfo status: 0x%08X", status);
 		return FALSE;
 	}
 
@@ -82,7 +85,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN( "AcquireCredentialsHandle status: 0x%08X\n", status);
+		WLog_ERR(TAG,  "AcquireCredentialsHandle status: 0x%08X", status);
 		return FALSE;
 	}
 
@@ -235,7 +238,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 	if ((!ntlm) || (!ntlm->table))
 	{
-		DEBUG_WARN( "ntlm_authenticate: invalid ntlm context\n");
+		WLog_ERR(TAG,  "ntlm_authenticate: invalid ntlm context");
 		return FALSE;
 	}
 
@@ -254,7 +257,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 		{
-			DEBUG_WARN( "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+			WLog_ERR(TAG,  "QueryContextAttributes SECPKG_ATTR_SIZES failure");
 			return FALSE;
 		}
 

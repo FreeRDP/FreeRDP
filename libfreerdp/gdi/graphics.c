@@ -138,7 +138,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 		if (status < 0)
 		{
-			DEBUG_WARN("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
+			WLog_ERR(TAG, "Bitmap Decompression Failed");
 			return;
 		}
 	}

@@ -33,9 +33,11 @@
 #include <winpr/collections.h>
 
 #include <freerdp/constants.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/svc_plugin.h>
+
+#define TAG FREERDP_TAG("utils")
 
 static wListDictionary* g_InitHandles;
 static wListDictionary* g_OpenHandles;
@@ -139,7 +141,7 @@ static VOID VCAPITYPE svc_plugin_open_event(DWORD openHandle, UINT event, LPVOID
 
 	if (!plugin)
 	{
-		DEBUG_WARN( "svc_plugin_open_event: error no match\n");
+		WLog_ERR(TAG,  "svc_plugin_open_event: error no match");
 		return;
 	}
 
@@ -214,7 +216,7 @@ static void svc_plugin_process_connected(rdpSvcPlugin* plugin, LPVOID pData, UIN
 
 	if (status != CHANNEL_RC_OK)
 	{
-		DEBUG_WARN( "svc_plugin_process_connected: open failed: status: %d\n", status);
+		WLog_ERR(TAG,  "svc_plugin_process_connected: open failed: status: %d", status);
 		return;
 	}
 
@@ -264,7 +266,7 @@ static VOID VCAPITYPE svc_plugin_init_event(LPVOID pInitHandle, UINT event, LPVO
 
 	if (!plugin)
 	{
-		DEBUG_WARN( "svc_plugin_init_event: error no match\n");
+		WLog_ERR(TAG,  "svc_plugin_init_event: error no match");
 		return;
 	}
 
@@ -333,7 +335,7 @@ int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(data_out, TRUE);
-		DEBUG_WARN( "svc_plugin_send: VirtualChannelWrite failed %d\n", status);
+		WLog_ERR(TAG,  "svc_plugin_send: VirtualChannelWrite failed %d", status);
 	}
 
 	return status;
@@ -349,7 +351,7 @@ int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event)
 	status = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->OpenHandle, event);
 
 	if (status != CHANNEL_RC_OK)
-		DEBUG_WARN( "svc_plugin_send_event: VirtualChannelEventPush failed %d\n", status);
+		WLog_ERR(TAG,  "svc_plugin_send_event: VirtualChannelEventPush failed %d", status);
 
 	return status;
 }

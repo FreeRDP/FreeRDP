@@ -298,7 +298,7 @@ error2:
 	free(info->Modulus);
 	info->Modulus = 0;
 error1:
-	DEBUG_WARN("error reading when reading certificate: part=%s error=%d\n", certificate_read_errors[error], error);
+	WLog_ERR(TAG, "error reading when reading certificate: part=%s error=%d", certificate_read_errors[error], error);
 	Stream_Free(s, FALSE);
 	return FALSE;
 }
@@ -366,7 +366,7 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 
 	if (memcmp(magic, "RSA1", 4) != 0)
 	{
-		DEBUG_WARN("%s: magic error\n", __FUNCTION__);
+		WLog_ERR(TAG, "magic error");
 		return FALSE;
 	}
 
@@ -415,7 +415,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 
 	if (sum != 0)
 	{
-		DEBUG_WARN("%s: invalid signature\n", __FUNCTION__);
+		WLog_ERR(TAG, "invalid signature");
 		//return FALSE;
 	}
 
@@ -426,7 +426,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	/* Verify signature. */
 	if (memcmp(md5hash, sig, sizeof(md5hash)) != 0)
 	{
-		DEBUG_WARN("%s: invalid signature\n", __FUNCTION__);
+		WLog_ERR(TAG, "invalid signature");
 		//return FALSE;
 	}
 
@@ -442,7 +442,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 
 	if (sig[16] != 0x00 || sum != 0xFF * (62 - 17) || sig[62] != 0x01)
 	{
-		DEBUG_WARN("%s: invalid signature\n", __FUNCTION__);
+		WLog_ERR(TAG, "invalid signature");
 		//return FALSE;
 	}
 
@@ -476,8 +476,8 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (!(dwSigAlgId == SIGNATURE_ALG_RSA && dwKeyAlgId == KEY_EXCHANGE_ALG_RSA))
 	{
-		DEBUG_WARN("%s: unsupported signature or key algorithm, dwSigAlgId=%d dwKeyAlgId=%d\n",
-				   __FUNCTION__, dwSigAlgId, dwKeyAlgId);
+		WLog_ERR(TAG, "unsupported signature or key algorithm, dwSigAlgId=%d dwKeyAlgId=%d",
+				 dwSigAlgId, dwKeyAlgId);
 		return FALSE;
 	}
 
@@ -485,7 +485,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (wPublicKeyBlobType != BB_RSA_KEY_BLOB)
 	{
-		DEBUG_WARN("%s: unsupported public key blob type %d\n", __FUNCTION__, wPublicKeyBlobType);
+		WLog_ERR(TAG, "unsupported public key blob type %d", wPublicKeyBlobType);
 		return FALSE;
 	}
 
@@ -496,7 +496,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
 	{
-		DEBUG_WARN("%s: error in server public key\n", __FUNCTION__);
+		WLog_ERR(TAG, "error in server public key");
 		return FALSE;
 	}
 
@@ -508,7 +508,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
 	{
-		DEBUG_WARN("%s: unsupported blob signature %d\n", __FUNCTION__, wSignatureBlobType);
+		WLog_ERR(TAG, "unsupported blob signature %d", wSignatureBlobType);
 		return FALSE;
 	}
 
@@ -516,19 +516,19 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 
 	if (Stream_GetRemainingLength(s) < wSignatureBlobLen)
 	{
-		DEBUG_WARN("%s: not enought bytes for signature(len=%d)\n", __FUNCTION__, wSignatureBlobLen);
+		WLog_ERR(TAG, "not enought bytes for signature(len=%d)", wSignatureBlobLen);
 		return FALSE;
 	}
 
 	if (wSignatureBlobLen != 72)
 	{
-		DEBUG_WARN("%s: invalid signature length (got %d, expected %d)\n", __FUNCTION__, wSignatureBlobLen, 64);
+		WLog_ERR(TAG, "invalid signature length (got %d, expected %d)", wSignatureBlobLen, 64);
 		return FALSE;
 	}
 
 	if (!certificate_process_server_public_signature(certificate, sigdata, sigdatalen, s, wSignatureBlobLen))
 	{
-		DEBUG_WARN("%s: unable to parse server public signature\n", __FUNCTION__);
+		WLog_ERR(TAG, "unable to parse server public signature");
 		return FALSE;
 	}
 
@@ -589,7 +589,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 			if (!ret)
 			{
-				DEBUG_WARN("failed to read License Server, content follows:\n");
+				WLog_ERR(TAG, "failed to read License Server, content follows:");
 				winpr_HexDump(TAG, WLOG_ERROR, certificate->x509_cert_chain->array[i].data, certificate->x509_cert_chain->array[i].length);
 				return FALSE;
 			}
@@ -638,7 +638,7 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 			break;
 
 		default:
-			DEBUG_WARN("invalid certificate chain version:%d\n", dwVersion & CERT_CHAIN_VERSION_MASK);
+			WLog_ERR(TAG, "invalid certificate chain version:%d", dwVersion & CERT_CHAIN_VERSION_MASK);
 			ret = FALSE;
 			break;
 	}
@@ -661,7 +661,7 @@ rdpRsaKey* key_new(const char* keyfile)
 
 	if (fp == NULL)
 	{
-		DEBUG_WARN("%s: unable to open RSA key file %s: %s.", __FUNCTION__, keyfile, strerror(errno));
+		WLog_ERR(TAG, "unable to open RSA key file %s: %s.", keyfile, strerror(errno));
 		goto out_free;
 	}
 
@@ -669,7 +669,7 @@ rdpRsaKey* key_new(const char* keyfile)
 
 	if (rsa == NULL)
 	{
-		DEBUG_WARN("%s: unable to load RSA key from %s: %s.", __FUNCTION__, keyfile, strerror(errno));
+		WLog_ERR(TAG, "unable to load RSA key from %s: %s.", keyfile, strerror(errno));
 		ERR_print_errors_fp(stderr);
 		fclose(fp);
 		goto out_free;
@@ -680,7 +680,7 @@ rdpRsaKey* key_new(const char* keyfile)
 	switch (RSA_check_key(rsa))
 	{
 		case 0:
-			DEBUG_WARN("%s: invalid RSA key in %s\n", __FUNCTION__, keyfile);
+			WLog_ERR(TAG, "invalid RSA key in %s", keyfile);
 			goto out_free_rsa;
 
 		case 1:
@@ -688,14 +688,14 @@ rdpRsaKey* key_new(const char* keyfile)
 			break;
 
 		default:
-			DEBUG_WARN("%s: unexpected error when checking RSA key from %s: %s.", __FUNCTION__, keyfile, strerror(errno));
+			WLog_ERR(TAG, "unexpected error when checking RSA key from %s: %s.", keyfile, strerror(errno));
 			ERR_print_errors_fp(stderr);
 			goto out_free_rsa;
 	}
 
 	if (BN_num_bytes(rsa->e) > 4)
 	{
-		DEBUG_WARN("%s: RSA public exponent too large in %s\n", __FUNCTION__, keyfile);
+		WLog_ERR(TAG, "RSA public exponent too large in %s", keyfile);
 		goto out_free_rsa;
 	}
 

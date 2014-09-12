@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <freerdp/utils/tcp.h>
+#include <freerdp/log.h>
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
@@ -37,7 +38,7 @@
 #include "rpc_client.h"
 #include "../rdp.h"
 
-#define TAG "gateway"
+#define TAG FREERDP_TAG("core.gateway")
 #define SYNCHRONOUS_TIMEOUT 5000
 
 wStream* rpc_client_fragment_pool_take(rdpRpc* rpc)
@@ -131,11 +132,11 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 			if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 			{
-				DEBUG_WARN("%s: warning: unhandled RTS PDU\n", __FUNCTION__);
+				WLog_ERR(TAG, "warning: unhandled RTS PDU");
 				return 0;
 			}
 
-			DEBUG_WARN("%s: Receiving Out-of-Sequence RTS PDU\n", __FUNCTION__);
+			WLog_ERR(TAG, "Receiving Out-of-Sequence RTS PDU");
 			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
 			rpc_client_fragment_pool_return(rpc, fragment);
 			return 0;
@@ -146,7 +147,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 		case PTYPE_RESPONSE:
 			break;
 		default:
-			DEBUG_WARN("%s: unexpected RPC PDU type %d\n", __FUNCTION__, header->common.ptype);
+			WLog_ERR(TAG, "unexpected RPC PDU type %d", header->common.ptype);
 			Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
 			return -1;
 	}
@@ -156,15 +157,15 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (!rpc_get_stub_data_info(rpc, buffer, &StubOffset, &StubLength))
 	{
-		DEBUG_WARN("%s: expected stub\n", __FUNCTION__);
+		WLog_ERR(TAG, "expected stub");
 		Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
 		return -1;
 	}
 
 	if (StubLength == 4)
 	{
-		//DEBUG_WARN( "Ignoring TsProxySendToServer Response\n");
-		//DEBUG_MSG("Got stub length 4 with flags %d and callid %d\n", header->common.pfc_flags, header->common.call_id);
+		//WLog_ERR(TAG,  "Ignoring TsProxySendToServer Response");
+		//WLog_DBG(TAG, "Got stub length 4 with flags %d and callid %d", header->common.pfc_flags, header->common.call_id);
 
 		/* received a disconnect request from the server? */
 		if ((header->common.call_id == rpc->PipeCallId) && (header->common.pfc_flags & PFC_LAST_FRAG))
@@ -190,8 +191,8 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (rpc->StubCallId != header->common.call_id)
 	{
-		DEBUG_WARN("%s: invalid call_id: actual: %d, expected: %d, frag_count: %d\n", __FUNCTION__,
-				   rpc->StubCallId, header->common.call_id, rpc->StubFragCount);
+		WLog_ERR(TAG, "invalid call_id: actual: %d, expected: %d, frag_count: %d",
+				 rpc->StubCallId, header->common.call_id, rpc->StubFragCount);
 	}
 
 	Stream_Write(rpc->client->pdu->s, &buffer[StubOffset], StubLength);
@@ -200,7 +201,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
 	{
-		//DEBUG_WARN( "Sending Flow Control Ack PDU\n");
+		//WLog_ERR(TAG,  "Sending Flow Control Ack PDU");
 		rts_send_flow_control_ack_pdu(rpc);
 	}
 
@@ -245,7 +246,7 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 
 			if (status < 0)
 			{
-				DEBUG_WARN("rpc_client_frag_read: error reading header\n");
+				WLog_ERR(TAG, "rpc_client_frag_read: error reading header");
 				return -1;
 			}
 
@@ -262,8 +263,8 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 
 		if (header->frag_length > rpc->max_recv_frag)
 		{
-			DEBUG_WARN("rpc_client_frag_read: invalid fragment size: %d (max: %d)\n",
-					   header->frag_length, rpc->max_recv_frag);
+			WLog_ERR(TAG, "rpc_client_frag_read: invalid fragment size: %d (max: %d)",
+					 header->frag_length, rpc->max_recv_frag);
 			winpr_HexDump(TAG, WLOG_ERROR, Stream_Buffer(rpc->client->RecvFrag), Stream_GetPosition(rpc->client->RecvFrag));
 			return -1;
 		}
@@ -275,7 +276,7 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 
 			if (status < 0)
 			{
-				DEBUG_WARN("%s: error reading fragment body\n", __FUNCTION__);
+				WLog_ERR(TAG, "error reading fragment body");
 				return -1;
 			}
 
@@ -374,7 +375,7 @@ int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 		if (status == WAIT_TIMEOUT)
 		{
-			DEBUG_WARN("%s: timed out waiting for pdu sent event %p\n", __FUNCTION__, rpc->client->PduSentEvent);
+			WLog_ERR(TAG, "timed out waiting for pdu sent event %p", rpc->client->PduSentEvent);
 			return -1;
 		}
 
@@ -441,7 +442,7 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 
 	if (result == WAIT_TIMEOUT)
 	{
-		DEBUG_WARN("%s: timed out waiting for receive event\n", __FUNCTION__);
+		WLog_ERR(TAG, "timed out waiting for receive event");
 		return NULL;
 	}
 
@@ -453,13 +454,12 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 
 	if (pdu)
 	{
-		DEBUG_WARN("Receiving PDU (length: %d, CallId: %d)\n", pdu->s->length, pdu->CallId);
+		WLog_DBG(TAG, "Receiving PDU (length: %d, CallId: %d)", pdu->s->length, pdu->CallId);
 		winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
-		DEBUG_WARN("\n");
 	}
 	else
 	{
-		DEBUG_WARN("Receiving a NULL PDU\n");
+		WLog_DBG(TAG, "Receiving a NULL PDU");
 	}
 
 #endif
@@ -502,7 +502,7 @@ static void* rpc_client_thread(void* arg)
 	 */
 	if (rpc_client_on_read_event(rpc) < 0)
 	{
-		DEBUG_WARN("%s: an error occured when treating first packet\n", __FUNCTION__);
+		WLog_ERR(TAG, "an error occured when treating first packet");
 		goto out;
 	}
 

@@ -17,7 +17,11 @@
  * limitations under the License.
  */
 
+#include <freerdp/log.h>
+
 #include "rts_signature.h"
+
+#define TAG FREERDP_TAG("core.gateway")
 
 RtsPduSignature RTS_PDU_CONN_A1_SIGNATURE = { RTS_FLAG_NONE, 4,
 		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0, 0 } };
@@ -317,14 +321,12 @@ int rts_print_pdu_signature(rdpRpc* rpc, RtsPduSignature* signature)
 {
 	UINT32 SignatureId;
 	RTS_PDU_SIGNATURE_ENTRY* entry;
-
-	DEBUG_WARN( "RTS PDU Signature: Flags: 0x%04X NumberOfCommands: %d\n",
-			signature->Flags, signature->NumberOfCommands);
-
+	WLog_INFO(TAG,  "RTS PDU Signature: Flags: 0x%04X NumberOfCommands: %d",
+			  signature->Flags, signature->NumberOfCommands);
 	SignatureId = rts_identify_pdu_signature(rpc, signature, &entry);
 
 	if (SignatureId)
-		DEBUG_WARN( "Identified %s RTS PDU\n", entry->PduName);
+		WLog_ERR(TAG,  "Identified %s RTS PDU", entry->PduName);
 
 	return 0;
 }

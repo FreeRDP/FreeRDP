@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 #include <freerdp/api.h>
+#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/color.h>
@@ -37,6 +38,8 @@
 #include <freerdp/gdi/drawing.h>
 
 #include <freerdp/gdi/32bpp.h>
+
+#define TAG FREERDP_TAG("gdi")
 
 UINT32 gdi_get_color_32bpp(HGDI_DC hdc, GDI_COLOR color)
 {
@@ -859,7 +862,7 @@ static int BitBlt_PATINVERT_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int n
 			}
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -996,8 +999,8 @@ int BitBlt_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 			return BitBlt_PATPAINT_32bpp(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc);
 			break;
 	}
-	
-	DEBUG_WARN( "BitBlt: unknown rop: 0x%08X\n", rop);
+
+	WLog_ERR(TAG,  "BitBlt: unknown rop: 0x%08X", rop);
 	return 1;
 }
 
@@ -1041,8 +1044,8 @@ int PatBlt_32bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, i
 		default:
 			break;
 	}
-	
-	DEBUG_WARN( "PatBlt: unknown rop: 0x%08X\n", rop);
+
+	WLog_ERR(TAG,  "PatBlt: unknown rop: 0x%08X", rop);
 	return 1;
 }
 

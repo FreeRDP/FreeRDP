@@ -26,11 +26,15 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
+
 #include "tpkt.h"
 
 #include "nego.h"
 
 #include "transport.h"
+
+#define TAG FREERDP_TAG("core.nego")
 
 #ifdef WITH_DEBUG_NEGO
 static const char* const NEGO_STATE_STRINGS[] =
@@ -595,7 +599,7 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 	}
 	else
 	{
-		DEBUG_WARN( "invalid negotiation response\n");
+		WLog_ERR(TAG,  "invalid negotiation response");
 		nego->state = NEGO_STATE_FAIL;
 	}
 
@@ -621,7 +625,7 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 
 	if (li != Stream_GetRemainingLength(s) + 6)
 	{
-		DEBUG_WARN( "Incorrect TPDU length indicator.\n");
+		WLog_ERR(TAG,  "Incorrect TPDU length indicator.");
 		return FALSE;
 	}
 
@@ -653,7 +657,7 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 
 		if (type != TYPE_RDP_NEG_REQ)
 		{
-			DEBUG_WARN( "Incorrect negotiation request type %d\n", type);
+			WLog_ERR(TAG,  "Incorrect negotiation request type %d", type);
 			return FALSE;
 		}
 
@@ -904,8 +908,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		 * TODO: Check for other possibilities,
 		 *       like SSL_NOT_ALLOWED_BY_SERVER.
 		 */
-		DEBUG_WARN( "%s: client supports only Standard RDP Security\n", __FUNCTION__);
-
+		WLog_ERR(TAG,  "client supports only Standard RDP Security");
 		Stream_Write_UINT32(s, SSL_REQUIRED_BY_SERVER);
 		length += 8;
 		status = FALSE;
@@ -962,13 +965,13 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 			if (settings->DisableEncryption)
 			{
-				fprintf(stderr, "Encryption is disabled.\n");
+				WLog_WARN(TAG, "Encryption is disabled.");
 				return FALSE;
 			}
 
 			if (!settings->RdpServerRsaKey && !settings->RdpKeyFile)
 			{
-				fprintf(stderr, "Missing server certificate\n");
+				WLog_ERR(TAG, "Missing server certificate");
 				return FALSE;
 			}
 		}

@@ -22,7 +22,7 @@
 #endif
 
 #include <freerdp/utils/uds.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +44,8 @@
 
 #endif
 
+#define TAG FREERDP_TAG("utils")
+
 int freerdp_uds_connect(const char* path)
 {
 #ifndef _WIN32
@@ -55,7 +57,7 @@ int freerdp_uds_connect(const char* path)
 	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sockfd == -1)
 	{
-		DEBUG_WARN("socket");
+		WLog_ERR(TAG, "socket");
 		return -1;
 	}
 
@@ -64,7 +66,7 @@ int freerdp_uds_connect(const char* path)
 	status = connect(sockfd, (struct sockaddr *) &addr, sizeof(addr));
 	if (status < 0)
 	{
-		DEBUG_WARN("connect");
+		WLog_ERR(TAG, "connect");
 		close(sockfd);
 		return -1;
 	}
