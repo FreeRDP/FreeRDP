@@ -28,6 +28,7 @@
 #include <winpr/winsock.h>
 
 #include <freerdp/version.h>
+#include <freerdp/log.h>
 
 #include <winpr/tools/makecert.h>
 
@@ -41,6 +42,8 @@
 #endif
 
 #include "shadow.h"
+
+#define TAG SERVER_TAG("shadow")
 
 #ifdef _WIN32
 static BOOL g_MessagePump = TRUE;
@@ -78,14 +81,14 @@ int shadow_server_print_command_line_help(int argc, char** argv)
 	int length;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
-	printf("Usage: %s [options]\n", argv[0]);
-	printf("\n");
+	WLog_INFO(TAG, "Usage: %s [options]", argv[0]);
+	WLog_INFO(TAG, "");
 
-	printf("Syntax:\n");
-	printf("    /flag (enables flag)\n");
-	printf("    /option:<value> (specifies option with value)\n");
-	printf("    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')\n");
-	printf("\n");
+	WLog_INFO(TAG, "Syntax:");
+	WLog_INFO(TAG, "    /flag (enables flag)");
+	WLog_INFO(TAG, "    /option:<value> (specifies option with value)");
+	WLog_INFO(TAG, "    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')");
+	WLog_INFO(TAG, "");
 
 	arg = shadow_args;
 
@@ -93,28 +96,28 @@ int shadow_server_print_command_line_help(int argc, char** argv)
 	{
 		if (arg->Flags & COMMAND_LINE_VALUE_FLAG)
 		{
-			printf("    %s", "/");
-			printf("%-20s", arg->Name);
-			printf("\t%s\n", arg->Text);
+			WLog_INFO(TAG, "    %s", "/");
+			WLog_INFO(TAG, "%-20s", arg->Name);
+			WLog_INFO(TAG, "\t%s", arg->Text);
 		}
 		else if ((arg->Flags & COMMAND_LINE_VALUE_REQUIRED) || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 		{
-			printf("    %s", "/");
+			WLog_INFO(TAG, "    %s", "/");
 
 			if (arg->Format)
 			{
 				length = (int) (strlen(arg->Name) + strlen(arg->Format) + 2);
 				str = (char*) malloc(length + 1);
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
-				printf("%-20s", str);
+				WLog_INFO(TAG, "%-20s", str);
 				free(str);
 			}
 			else
 			{
-				printf("%-20s", arg->Name);
+				WLog_INFO(TAG, "%-20s", arg->Name);
 			}
 
-			printf("\t%s\n", arg->Text);
+			WLog_INFO(TAG, "\t%s", arg->Text);
 		}
 		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
 		{
@@ -123,12 +126,12 @@ int shadow_server_print_command_line_help(int argc, char** argv)
 			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
 					arg->Default ? "on" : "off");
 
-			printf("    %s", arg->Default ? "-" : "+");
+			WLog_INFO(TAG, "    %s", arg->Default ? "-" : "+");
 
-			printf("%-20s", str);
+			WLog_INFO(TAG, "%-20s", str);
 			free(str);
 
-			printf("\t%s\n", arg->Text);
+			WLog_INFO(TAG, "\t%s", arg->Text);
 		}
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
@@ -140,7 +143,7 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 {
 	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
 	{
-		printf("FreeRDP version %s (git %s)\n", FREERDP_VERSION_FULL, GIT_REVISION);
+		WLog_INFO(TAG, "FreeRDP version %s (git %s)", FREERDP_VERSION_FULL, GIT_REVISION);
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
@@ -233,7 +236,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 				width = monitor->right - monitor->left;
 				height = monitor->bottom - monitor->top;
 
-				printf("      %s [%d] %dx%d\t+%d+%d\n",
+				WLog_INFO(TAG, "      %s [%d] %dx%d\t+%d+%d",
 					(monitor->flags == 1) ? "*" : " ", index,
 					width, height, monitor->left, monitor->top);
 			}
@@ -295,7 +298,7 @@ void* shadow_server_thread(rdpShadowServer* server)
 
 		if (listener->GetEventHandles(listener, events, &nCount) < 0)
 		{
-			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
@@ -310,7 +313,7 @@ void* shadow_server_thread(rdpShadowServer* server)
 
 		if (!listener->CheckFileDescriptor(listener))
 		{
-			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
 
@@ -473,7 +476,7 @@ int shadow_server_init(rdpShadowServer* server)
 		status = server->subsystem->Init(server->subsystem);
 
 		if (status < 0)
-			fprintf(stderr, "subsystem init failure: %d\n", status);
+			WLog_ERR(TAG, "subsystem init failure: %d", status);
 	}
 
 	server->screen = shadow_screen_new(server);

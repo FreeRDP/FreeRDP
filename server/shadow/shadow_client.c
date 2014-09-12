@@ -27,7 +27,11 @@
 #include <winpr/thread.h>
 #include <winpr/sysinfo.h>
 
+#include <freerdp/log.h>
+
 #include "shadow.h"
+
+#define TAG CLIENT_TAG("shadow")
 
 void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 {
@@ -121,7 +125,7 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	if (settings->ColorDepth == 24)
 		settings->ColorDepth = 16; /* disable 24bpp */
 
-	fprintf(stderr, "Client from %s is activated (%dx%d@%d)\n",
+	WLog_ERR(TAG, "Client from %s is activated (%dx%d@%d)",
 			peer->hostname, settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
 
 	peer->update->DesktopResize(peer->update->context);
@@ -570,7 +574,7 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 	nWidth = extents->right - extents->left;
 	nHeight = extents->bottom - extents->top;
 
-	//printf("shadow_client_send_surface_update: x: %d y: %d width: %d height: %d right: %d bottom: %d\n",
+	//WLog_INFO(TAG, "shadow_client_send_surface_update: x: %d y: %d width: %d height: %d right: %d bottom: %d",
 	//	nXSrc, nYSrc, nWidth, nHeight, nXSrc + nWidth, nYSrc + nHeight);
 
 	if (settings->RemoteFxCodec || settings->NSCodec)
@@ -702,7 +706,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 		{
 			if (!peer->CheckFileDescriptor(peer))
 			{
-				fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
+				WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 				break;
 			}
 		}
@@ -711,7 +715,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 		{
 			if (WTSVirtualChannelManagerCheckFileDescriptor(client->vcm) != TRUE)
 			{
-				fprintf(stderr, "WTSVirtualChannelManagerCheckFileDescriptor failure\n");
+				WLog_ERR(TAG, "WTSVirtualChannelManagerCheckFileDescriptor failure");
 				break;
 			}
 		}

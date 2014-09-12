@@ -62,8 +62,7 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 				if (wf_info_have_updates(wfi))
 				{
 					wf_update_encode(wfi);
-
-					//printf("Start of parallel sending\n");
+					//WLog_DBG(TAG, "Start of parallel sending");
 					index = 0;
 					for (peerindex = 0; peerindex < wfi->peerCount; peerindex++)
 					{
@@ -71,7 +70,7 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 						{
 							if (wfi->peers[index] && wfi->peers[index]->activated)
 							{
-								//printf("Setting event for %d of %d\n", index + 1, wfi->activePeerCount);
+								//WLog_DBG(TAG, "Setting event for %d of %d", index + 1, wfi->activePeerCount);
 								SetEvent(((wfPeerContext*) wfi->peers[index]->context)->updateEvent);
 							}
 						}
@@ -80,13 +79,12 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 
 					for (index = 0; index < wfi->activePeerCount; index++)
 					{
-						//printf("Waiting for %d of %d\n", index + 1, wfi->activePeerCount);
+						//WLog_DBG(TAG, "Waiting for %d of %d", index + 1, wfi->activePeerCount);
 						//WaitForSingleObject(wfi->updateSemaphore, INFINITE);
 						WaitForSingleObject(wfi->updateSemaphore, 1000);
 					}
 
-					//printf("End of parallel sending\n");
-
+					//WLog_DBG(TAG, "End of parallel sending");
 					wf_info_clear_invalid_region(wfi);
 				}
 			}
@@ -103,8 +101,7 @@ DWORD WINAPI wf_update_thread(LPVOID lpParam)
 		}
 	}
 
-	//printf("Exiting Update Thread\n");
-
+	//WLog_DBG(TAG, "Exiting Update Thread");
 	return 0;
 }
 
@@ -129,9 +126,7 @@ void wf_update_encode(wfInfo* wfi)
 	rect.y = 0;
 	rect.width = (UINT16) width;
 	rect.height = (UINT16) height;
-
-	//printf("x:%d y:%d w:%d h:%d\n", wfi->invalid.left, wfi->invalid.top, width, height);
-
+	//WLog_DBG(TAG, "x:%d y:%d w:%d h:%d", wfi->invalid.left, wfi->invalid.top, width, height);
 	Stream_Clear(wfi->s);
 
 	rfx_compose_message(wfi->rfx_context, wfi->s, &rect, 1,
@@ -175,9 +170,8 @@ void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
 			return;
 
 		/* This is an unexpected error condition */
-
-		DEBUG_WARN("Unexpected Frame Index: Actual: %d Expected: %d\n",
-			wfi->frame_idx, context->frame_idx + 1);
+		WLog_DBG(TAG, "Unexpected Frame Index: Actual: %d Expected: %d",
+				 wfi->frame_idx, context->frame_idx + 1);
 	}
 
 	wfi->cmd.codecID = client->settings->RemoteFxCodecId;
@@ -189,7 +183,7 @@ void wf_update_encoder_reset(wfInfo* wfi)
 {
 	if (wf_info_lock(wfi) > 0)
 	{
-		DEBUG_WARN("Resetting encoder\n");
+		WLog_DBG(TAG, "Resetting encoder");
 
 		if (wfi->rfx_context)
 		{
@@ -225,9 +219,7 @@ void wf_update_peer_activate(wfInfo* wfi, wfPeerContext* context)
 
 		wf_update_encoder_reset(wfi);
 		wfi->activePeerCount++;
-
-		DEBUG_WARN("Activating Peer Updates: %d\n", wfi->activePeerCount);
-
+		WLog_DBG(TAG, "Activating Peer Updates: %d", wfi->activePeerCount);
 		wf_info_unlock(wfi);
 	}
 }
@@ -247,8 +239,7 @@ void wf_update_peer_deactivate(wfInfo* wfi, wfPeerContext* context)
 
 			client->activated = FALSE;
 			wfi->activePeerCount--;
-
-			DEBUG_WARN("Deactivating Peer Updates: %d\n", wfi->activePeerCount);
+			WLog_DBG(TAG, "Deactivating Peer Updates: %d", wfi->activePeerCount);
 		}
 
 		wf_info_unlock(wfi);

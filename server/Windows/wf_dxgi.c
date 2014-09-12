@@ -33,6 +33,9 @@
 #include <tchar.h>
 #include "wf_dxgi.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("windows")
+
 /* Driver types supported */
 D3D_DRIVER_TYPE DriverTypes[] =
 {
@@ -94,12 +97,12 @@ int wf_dxgi_createDevice(wfInfo* wfi)
 		if (SUCCEEDED(status))
 			break;
 
-		_tprintf(_T("D3D11CreateDevice returned [%d] for Driver Type %d\n"), status, DriverTypes[DriverTypeIndex]);
+		WLog_INFO(TAG, "D3D11CreateDevice returned [%d] for Driver Type %d", status, DriverTypes[DriverTypeIndex]);
 	}
 
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to create device in InitializeDx\n"));
+		WLog_ERR(TAG, "Failed to create device in InitializeDx");
 		return 1;
 	}
 
@@ -121,7 +124,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to get QI for DXGI Device\n"));
+		WLog_ERR(TAG, "Failed to get QI for DXGI Device");
 		return 1;
 	}
 	
@@ -131,7 +134,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 	
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to get parent DXGI Adapter\n"));
+		WLog_ERR(TAG, "Failed to get parent DXGI Adapter");
 		return 1;
 	}
 	
@@ -146,11 +149,11 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 
 		if (FAILED(status))
 		{
-			_tprintf(_T("Failed to get description\n"));
+			WLog_ERR(TAG, "Failed to get description");
 			return 1;
 		}
 
-		_tprintf(_T("Output %d: [%s] [%d]\n"), i, pDesc->DeviceName, pDesc->AttachedToDesktop);
+		WLog_INFO(TAG, "Output %d: [%s] [%d]", i, pDesc->DeviceName, pDesc->AttachedToDesktop);
 
 		if (pDesc->AttachedToDesktop)
 			dTop = i;
@@ -167,7 +170,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 	
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to get output\n"));
+		WLog_ERR(TAG, "Failed to get output");
 		return 1;
 	}
 
@@ -177,7 +180,7 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 	
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to get IDXGIOutput1\n"));
+		WLog_ERR(TAG, "Failed to get IDXGIOutput1");
 		return 1;
 	}
 
@@ -189,11 +192,11 @@ int wf_dxgi_getDuplication(wfInfo* wfi)
 	{
 		if (status == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
 		{
-			_tprintf(_T("There is already the maximum number of applications using the Desktop Duplication API running, please close one of those applications and then try again.\n"));
+			WLog_ERR(TAG, "There is already the maximum number of applications using the Desktop Duplication API running, please close one of those applications and then try again."));
 			return 1;
 		}
-		
-		_tprintf(_T("Failed to get duplicate output. Status = %#X\n"), status);
+
+		WLog_ERR(TAG, "Failed to get duplicate output. Status = %#X", status);
 		return 1;
 	}
 
@@ -265,8 +268,9 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 	{
 		if (status == DXGI_ERROR_ACCESS_LOST)
 		{
-			_tprintf(_T("Failed to acquire next frame with status=%#X\n"), status);
-			_tprintf(_T("Trying to reinitialize due to ACCESS LOST..."));
+			WLog_ERR(TAG, "Failed to acquire next frame with status=%#X", status);
+			WLog_ERR(TAG, "Trying to reinitialize due to ACCESS LOST...");
+
 			if (gAcquiredDesktopImage)
 			{
 				gAcquiredDesktopImage->lpVtbl->Release(gAcquiredDesktopImage);
@@ -285,13 +289,12 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 		}
 		else
 		{
-			_tprintf(_T("Failed to acquire next frame with status=%#X\n"), status);
-
+			WLog_ERR(TAG, "Failed to acquire next frame with status=%#X", status);
 			status = gOutputDuplication->lpVtbl->ReleaseFrame(gOutputDuplication);
 
 			if (FAILED(status))
 			{
-				_tprintf(_T("Failed to release frame with status=%d\n"), status);
+				WLog_ERR(TAG, "Failed to release frame with status=%d", status);
 			}
 		
 			return 1;
@@ -315,7 +318,7 @@ int wf_dxgi_nextFrame(wfInfo* wfi, UINT timeout)
 
 		if (FAILED(status))
 		{
-			_tprintf(_T("Failed to release frame with status=%d\n"), status);
+			WLog_ERR(TAG, "Failed to release frame with status=%d", status);
 		}
 	}
 
@@ -352,7 +355,7 @@ int wf_dxgi_getPixelData(wfInfo* wfi, BYTE** data, int* pitch, RECT* invalid)
 
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to create staging surface\n"));
+		WLog_ERR(TAG, "Failed to create staging surface");
 		exit(1);
 		return 1;
 	}
@@ -363,7 +366,7 @@ int wf_dxgi_getPixelData(wfInfo* wfi, BYTE** data, int* pitch, RECT* invalid)
 
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to QI staging surface\n"));
+		WLog_ERR(TAG, "Failed to QI staging surface");
 		exit(1);
 		return 1;
 	}
@@ -372,7 +375,7 @@ int wf_dxgi_getPixelData(wfInfo* wfi, BYTE** data, int* pitch, RECT* invalid)
 
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to map staging surface\n"));
+		WLog_ERR(TAG, "Failed to map staging surface");
 		exit(1);
 		return 1;
 	}
@@ -397,7 +400,7 @@ int wf_dxgi_releasePixelData(wfInfo* wfi)
 
 	if (FAILED(status))
 	{
-		_tprintf(_T("Failed to release frame\n"));
+		WLog_ERR(TAG, "Failed to release frame");
 		return 1;
 	}
 
@@ -438,7 +441,7 @@ int wf_dxgi_getInvalidRegion(RECT* invalid)
 			if (!DataBuffer)
 			{
 				DataBufferSize = 0;
-				_tprintf(_T("Failed to allocate memory for metadata\n"));
+				WLog_ERR(TAG, "Failed to allocate memory for metadata");
 				exit(1);
 			}
 
@@ -451,7 +454,7 @@ int wf_dxgi_getInvalidRegion(RECT* invalid)
 
 		if (FAILED(status))
 		{
-			_tprintf(_T("Failed to get frame move rects\n"));
+			WLog_ERR(TAG, "Failed to get frame move rects");
 			return 1;
 		}
 
@@ -462,7 +465,7 @@ int wf_dxgi_getInvalidRegion(RECT* invalid)
 
 		if (FAILED(status))
 		{
-			_tprintf(_T("Failed to get frame dirty rects\n"));
+			WLog_ERR(TAG, "Failed to get frame dirty rects");
 			return 1;
 		}
 		dirty = BufSize / sizeof(RECT);
