@@ -47,7 +47,7 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, BYTE*
 	BYTE* bmpData;
 	HGDI_BITMAP bitmap;
 
-	bmpData = freerdp_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, gdi->clrconv);
+	bmpData = freerdp_image_convert(data, NULL, width, height, 32, 32, gdi->clrconv);
 	bitmap = gdi_CreateBitmap(width, height, gdi->dstBpp, bmpData);
 
 	return bitmap;
@@ -100,111 +100,59 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 {
 	int status;
 	UINT16 size;
-	BYTE* src;
-	BYTE* dst;
-	int yindex;
-	int xindex;
-	rdpGdi* gdi;
-	RFX_MESSAGE* msg;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	UINT32 SrcSize;
+	UINT32 SrcFormat;
+	UINT32 bytesPerPixel;
+	rdpGdi* gdi = context->gdi;
 
-	gdi = context->gdi;
-
-	size = width * height * ((bpp + 7) / 8);
+	bytesPerPixel = (bpp + 7) / 8;
+	size = width * height * 4;
 
 	if (!bitmap->data)
 		bitmap->data = (BYTE*) _aligned_malloc(size, 16);
 	else
 		bitmap->data = (BYTE*) _aligned_realloc(bitmap->data, size, 16);
 
-	switch (codecId)
+	pSrcData = data;
+	SrcSize = (UINT32) length;
+	pDstData = bitmap->data;
+
+	if (compressed)
 	{
-		case RDP_CODEC_ID_NSCODEC:
-			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_NSCODEC);
-			nsc_process_message(gdi->codecs->nsc, bpp, width, height, data, length);
-			freerdp_image_flip(gdi->codecs->nsc->BitmapData, bitmap->data, width, height, bpp);
-			break;
+		if (bpp < 32)
+		{
+			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_INTERLEAVED);
 
-		case RDP_CODEC_ID_REMOTEFX:
-			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_REMOTEFX);
-			rfx_context_set_pixel_format(gdi->codecs->rfx, RDP_PIXEL_FORMAT_B8G8R8A8);
-			msg = rfx_process_message(gdi->codecs->rfx, data, length);
+			status = interleaved_decompress(gdi->codecs->interleaved, pSrcData, SrcSize, bpp,
+					&pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height);
+		}
+		else
+		{
+			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_PLANAR);
 
-			if (!msg)
-			{
-				DEBUG_WARN( "gdi_Bitmap_Decompress: rfx Decompression Failed\n");
-			}
-			else
-			{
-				for (yindex = 0; yindex < height; yindex++)
-				{
-					src = msg->tiles[0]->data + yindex * 64 * 4;
-					dst = bitmap->data + yindex * width * 3;
+			status = planar_decompress(gdi->codecs->planar, pSrcData, SrcSize, &pDstData,
+					PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
+		}
 
-					for (xindex = 0; xindex < width; xindex++)
-					{
-						*(dst++) = *(src++);
-						*(dst++) = *(src++);
-						*(dst++) = *(src++);
-						src++;
-					}
-				}
-				rfx_message_free(gdi->codecs->rfx, msg);
-			}
-			break;
-		case RDP_CODEC_ID_JPEG:
-#ifdef WITH_JPEG
-			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
-			{
-				DEBUG_WARN( "gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
-			}
-#endif
-			break;
-		default:
-			if (compressed)
-			{
-				BYTE* pDstData;
-				UINT32 SrcSize;
+		if (status < 0)
+		{
+			DEBUG_WARN("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
+			return;
+		}
+	}
+	else
+	{
+		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 
-				SrcSize = (UINT32) length;
-				pDstData = bitmap->data;
-
-				if (bpp < 32)
-				{
-					freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_INTERLEAVED);
-
-					status = interleaved_decompress(gdi->codecs->interleaved, data, SrcSize, bpp,
-							&pDstData, PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
-
-					if (status < 0)
-					{
-						DEBUG_WARN("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
-					}
-				}
-				else
-				{
-					freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_PLANAR);
-
-					status = planar_decompress(gdi->codecs->planar, data, SrcSize, &pDstData,
-							PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
-
-					if (status < 0)
-					{
-						DEBUG_WARN("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
-					}
-				}
-			}
-			else
-			{
-				freerdp_image_flip(data, bitmap->data, width, height, bpp);
-			}
-			break;
+		status = freerdp_image_copy(pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0,
+				width, height, pSrcData, SrcFormat, width * bytesPerPixel, 0, 0);
 	}
 
-	bitmap->width = width;
-	bitmap->height = height;
 	bitmap->compressed = FALSE;
 	bitmap->length = size;
-	bitmap->bpp = bpp;
+	bitmap->bpp = 32;
 }
 
 void gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
