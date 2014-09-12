@@ -113,6 +113,8 @@ struct xf_context
 	BOOL cursorHidden;
 
 	HGDI_DC hdc;
+	UINT32 bitmap_size;
+	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	REGION16 invalidRegion;
 	BOOL inGfxFrame;

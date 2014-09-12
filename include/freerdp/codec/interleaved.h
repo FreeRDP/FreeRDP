@@ -32,8 +32,8 @@ struct _BITMAP_INTERLEAVED_CONTEXT
 {
 	BOOL Compressor;
 
-	UINT32 FlipSize;
-	BYTE* FlipBuffer;
+	UINT32 TempSize;
+	BYTE* TempBuffer;
 };
 
 FREERDP_API int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcData, UINT32 SrcSize, int bpp,

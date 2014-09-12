@@ -529,9 +529,9 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 		SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
 
-		if (gdi->bitmap_size < (nWidth * nHeight * bytesPerPixel))
+		if (gdi->bitmap_size < (nWidth * nHeight * 4))
 		{
-			gdi->bitmap_size = nWidth * nHeight * bytesPerPixel;
+			gdi->bitmap_size = nWidth * nHeight * 4;
 			gdi->bitmap_buffer = (BYTE*) _aligned_realloc(gdi->bitmap_buffer, gdi->bitmap_size, 16);
 
 			if (!gdi->bitmap_buffer)
@@ -547,7 +547,7 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
 
 				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
-						&pDstData, PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight);
+						&pDstData, SrcFormat, nWidth * bytesPerPixel, 0, 0, nWidth, nHeight);
 			}
 			else
 			{

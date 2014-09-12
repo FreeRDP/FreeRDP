@@ -285,6 +285,108 @@ Pixmap xf_mono_bitmap_new(xfContext* xfc, int width, int height, BYTE* data)
 	return bitmap;
 }
 
+void xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
+{
+	int status;
+	int nXDst;
+	int nYDst;
+	int nXSrc;
+	int nYSrc;
+	int nWidth;
+	int nHeight;
+	UINT32 index;
+	XImage* image;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	UINT32 SrcSize;
+	BOOL compressed;
+	UINT32 SrcFormat;
+	UINT32 bitsPerPixel;
+	UINT32 bytesPerPixel;
+	BITMAP_DATA* bitmap;
+	rdpCodecs* codecs = context->codecs;
+	xfContext* xfc = (xfContext*) context;
+
+	for (index = 0; index < bitmapUpdate->number; index++)
+	{
+		bitmap = &(bitmapUpdate->rectangles[index]);
+
+		nXSrc = 0;
+		nYSrc = 0;
+
+		nXDst = bitmap->destLeft;
+		nYDst = bitmap->destTop;
+
+		nWidth = bitmap->width;
+		nHeight = bitmap->height;
+
+		pSrcData = bitmap->bitmapDataStream;
+		SrcSize = bitmap->bitmapLength;
+
+		compressed = bitmap->compressed;
+		bitsPerPixel = bitmap->bitsPerPixel;
+		bytesPerPixel = (bitsPerPixel + 7) / 8;
+
+		SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
+
+		if (xfc->bitmap_size < (nWidth * nHeight * 4))
+		{
+			xfc->bitmap_size = nWidth * nHeight * 4;
+			xfc->bitmap_buffer = (BYTE*) _aligned_realloc(xfc->bitmap_buffer, xfc->bitmap_size, 16);
+
+			if (!xfc->bitmap_buffer)
+				return;
+		}
+
+		if (compressed)
+		{
+			pDstData = xfc->bitmap_buffer;
+
+			if (bitsPerPixel < 32)
+			{
+				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
+
+				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
+						&pDstData, PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight);
+			}
+			else
+			{
+				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
+
+				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
+						PIXEL_FORMAT_XRGB32_VF, nWidth * 4, 0, 0, nWidth, nHeight);
+			}
+
+			if (status < 0)
+			{
+				DEBUG_WARN("xf_gdi_bitmap_update: bitmap decompression failure\n");
+				return;
+			}
+
+			pSrcData = xfc->bitmap_buffer;
+		}
+
+		xf_lock_x11(xfc, FALSE);
+
+		XSetFunction(xfc->display, xfc->gc, GXcopy);
+
+		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+				(char*) pSrcData, nWidth, nHeight, xfc->scanline_pad, 0);
+
+		nWidth = bitmap->destRight - bitmap->destLeft + 1; /* clip width */
+		nHeight = bitmap->destBottom - bitmap->destTop + 1; /* clip height */
+
+		XPutImage(xfc->display, xfc->primary, xfc->gc,
+				image, 0, 0, nXDst, nYDst, nWidth, nHeight);
+
+		XFree(image);
+
+		gdi_InvalidateRegion(xfc->hdc, nXDst, nYDst, nWidth, nHeight);
+
+		xf_unlock_x11(xfc, FALSE);
+	}
+}
+
 void xf_gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 {
 	xfContext* xfc = (xfContext*) context;
