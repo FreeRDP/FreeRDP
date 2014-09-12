@@ -1124,12 +1124,14 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 			for (i = 0; layouts[i].code; i++)
 				WLog_INFO(TAG, "0x%08X\t%s", (int) layouts[i].code, layouts[i].name);
 
+			free(layouts);
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
 			WLog_INFO(TAG, "Keyboard Layout Variants");
 
 			for (i = 0; layouts[i].code; i++)
 				WLog_INFO(TAG, "0x%08X\t%s", (int) layouts[i].code, layouts[i].name);
 
+			free(layouts);
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
 			WLog_INFO(TAG, "Keyboard Input Method Editors (IMEs)");
 
