@@ -33,11 +33,10 @@ rdpBitmap* Bitmap_Alloc(rdpContext* context)
 	rdpGraphics* graphics;
 
 	graphics = context->graphics;
-	bitmap = (rdpBitmap*) malloc(graphics->Bitmap_Prototype->size);
+	bitmap = (rdpBitmap*) calloc(1, graphics->Bitmap_Prototype->size);
 
 	if (bitmap)
 	{
-		ZeroMemory(bitmap, graphics->Bitmap_Prototype->size);
 		CopyMemory(bitmap, graphics->Bitmap_Prototype, sizeof(rdpBitmap));
 		bitmap->data = NULL;
 	}
@@ -96,11 +95,10 @@ rdpPointer* Pointer_Alloc(rdpContext* context)
 	rdpGraphics* graphics;
 
 	graphics = context->graphics;
-	pointer = (rdpPointer*) malloc(graphics->Pointer_Prototype->size);
+	pointer = (rdpPointer*) calloc(1, graphics->Pointer_Prototype->size);
 
 	if (pointer)
 	{
-		ZeroMemory(pointer, graphics->Pointer_Prototype->size);
 		CopyMemory(pointer, graphics->Pointer_Prototype, sizeof(rdpPointer));
 	}
 
@@ -163,11 +161,10 @@ rdpGlyph* Glyph_Alloc(rdpContext* context)
 	rdpGraphics* graphics;
 
 	graphics = context->graphics;
-	glyph = (rdpGlyph*) malloc(graphics->Glyph_Prototype->size);
+	glyph = (rdpGlyph*) calloc(1, graphics->Glyph_Prototype->size);
 
 	if (glyph)
 	{
-		ZeroMemory(glyph, graphics->Glyph_Prototype->size);
 		CopyMemory(glyph, graphics->Glyph_Prototype, sizeof(rdpGlyph));
 	}
 

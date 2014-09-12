@@ -91,6 +91,72 @@ int freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags)
 	return 1;
 }
 
+int freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags)
+{
+	if (flags & FREERDP_CODEC_INTERLEAVED)
+	{
+		if (codecs->interleaved)
+		{
+			bitmap_interleaved_context_reset(codecs->interleaved);
+		}
+	}
+
+	if (flags & FREERDP_CODEC_PLANAR)
+	{
+		if (codecs->planar)
+		{
+			freerdp_bitmap_planar_context_reset(codecs->planar);
+		}
+	}
+
+	if (flags & FREERDP_CODEC_NSCODEC)
+	{
+		if (codecs->nsc)
+		{
+			nsc_context_reset(codecs->nsc);
+		}
+	}
+
+	if (flags & FREERDP_CODEC_REMOTEFX)
+	{
+		if (codecs->rfx)
+		{
+			rfx_context_reset(codecs->rfx);
+		}
+	}
+
+	if (flags & FREERDP_CODEC_CLEARCODEC)
+	{
+		if (codecs->clear)
+		{
+			clear_context_reset(codecs->clear);
+		}
+	}
+
+	if (flags & FREERDP_CODEC_ALPHACODEC)
+	{
+
+	}
+
+	if (flags & FREERDP_CODEC_PROGRESSIVE)
+	{
+		if (codecs->progressive)
+		{
+			progressive_context_reset(codecs->progressive);
+		}
+	}
+
+	if (flags & FREERDP_CODEC_H264)
+	{
+		if (codecs->h264)
+		{
+			h264_context_reset(codecs->h264);
+		}
+	}
+
+	return 1;
+}
+
 rdpCodecs* codecs_new(rdpContext* context)
 {
 	rdpCodecs* codecs;

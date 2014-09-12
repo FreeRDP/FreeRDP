@@ -40,39 +40,24 @@
 
 void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 {
-	BYTE* data;
 	Pixmap pixmap;
 	XImage* image;
 	xfContext* xfc = (xfContext*) context;
 
 	xf_lock_x11(xfc, FALSE);
 
-	XSetFunction(xfc->display, xfc->gc, GXcopy);
 	pixmap = XCreatePixmap(xfc->display, xfc->drawable, bitmap->width, bitmap->height, xfc->depth);
 
 	if (bitmap->data)
 	{
-		data = freerdp_image_convert(bitmap->data, NULL,
-				bitmap->width, bitmap->height, context->settings->ColorDepth, xfc->bpp, xfc->clrconv);
+		XSetFunction(xfc->display, xfc->gc, GXcopy);
 
-		if (bitmap->ephemeral != TRUE)
-		{
-			image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
-				ZPixmap, 0, (char*) data, bitmap->width, bitmap->height, xfc->scanline_pad, 0);
+		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
+			ZPixmap, 0, (char*) bitmap->data, bitmap->width, bitmap->height, xfc->scanline_pad, 0);
 
-			XPutImage(xfc->display, pixmap, xfc->gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height);
-			XFree(image);
+		XPutImage(xfc->display, pixmap, xfc->gc, image, 0, 0, 0, 0, bitmap->width, bitmap->height);
 
-			if (data != bitmap->data)
-				_aligned_free(data);
-		}
-		else
-		{
-			if (data != bitmap->data)
-				_aligned_free(bitmap->data);
-
-			bitmap->data = data;
-		}
+		XFree(image);
 	}
 
 	((xfBitmap*) bitmap)->pixmap = pixmap;
@@ -124,105 +109,59 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 {
 	int status;
 	UINT16 size;
-	BYTE* src;
-	BYTE* dst;
-	int yindex;
-	int xindex;
-	RFX_MESSAGE* msg;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	UINT32 SrcSize;
+	UINT32 SrcFormat;
+	UINT32 bytesPerPixel;
 	xfContext* xfc = (xfContext*) context;
 
-	size = width * height * ((bpp + 7) / 8);
+	bytesPerPixel = (bpp + 7) / 8;
+	size = width * height * 4;
 
 	if (!bitmap->data)
 		bitmap->data = (BYTE*) _aligned_malloc(size, 16);
 	else
 		bitmap->data = (BYTE*) _aligned_realloc(bitmap->data, size, 16);
 
-	switch (codecId)
+	pSrcData = data;
+	SrcSize = (UINT32) length;
+	pDstData = bitmap->data;
+
+	if (compressed)
 	{
-		case RDP_CODEC_ID_NSCODEC:
-			freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_NSCODEC);
-			DEBUG_WARN("xf_Bitmap_Decompress: nsc not done\n");
-			break;
+		if (bpp < 32)
+		{
+			freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_INTERLEAVED);
 
-		case RDP_CODEC_ID_REMOTEFX:
-			freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_REMOTEFX);
-			rfx_context_set_pixel_format(xfc->codecs->rfx, RDP_PIXEL_FORMAT_B8G8R8A8);
-			msg = rfx_process_message(xfc->codecs->rfx, data, length);
+			status = interleaved_decompress(xfc->codecs->interleaved, pSrcData, SrcSize, bpp,
+					&pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height);
+		}
+		else
+		{
+			freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_PLANAR);
 
-			if (!msg)
-			{
-				DEBUG_WARN("xf_Bitmap_Decompress: rfx Decompression Failed\n");
-			}
-			else
-			{
-				for (yindex = 0; yindex < height; yindex++)
-				{
-					src = msg->tiles[0]->data + yindex * 64 * 4;
-					dst = bitmap->data + yindex * width * 3;
-					for (xindex = 0; xindex < width; xindex++)
-					{
-						*(dst++) = *(src++);
-						*(dst++) = *(src++);
-						*(dst++) = *(src++);
-						src++;
-					}
-				}
-				rfx_message_free(xfc->codecs->rfx, msg);
-			}
-			break;
+			status = planar_decompress(xfc->codecs->planar, pSrcData, SrcSize, &pDstData,
+					PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
+		}
 
-		case RDP_CODEC_ID_JPEG:
-			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
-			{
-				DEBUG_WARN( "xf_Bitmap_Decompress: jpeg Decompression Failed\n");
-			}
-			break;
+		if (status < 0)
+		{
+			DEBUG_WARN("xf_Bitmap_Decompress: Bitmap Decompression Failed\n");
+			return;
+		}
+	}
+	else
+	{
+		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 
-		default:
-			if (compressed)
-			{
-				BYTE* pDstData;
-				UINT32 SrcSize;
-
-				SrcSize = (UINT32) length;
-				pDstData = bitmap->data;
-
-				if (bpp < 32)
-				{
-					freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_INTERLEAVED);
-
-					status = interleaved_decompress(xfc->codecs->interleaved, data, SrcSize, bpp,
-							&pDstData, PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
-
-					if (status < 0)
-					{
-						DEBUG_WARN("xf_Bitmap_Decompress: Bitmap Decompression Failed\n");
-					}
-				}
-				else
-				{
-					freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_PLANAR);
-
-					status = planar_decompress(xfc->codecs->planar, data, SrcSize, &pDstData,
-							PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
-
-					if (status < 0)
-					{
-						DEBUG_WARN("gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
-					}
-				}
-			}
-			else
-			{
-				freerdp_image_flip(data, bitmap->data, width, height, bpp);
-			}
-			break;
+		status = freerdp_image_copy(pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0,
+				width, height, pSrcData, SrcFormat, width * bytesPerPixel, 0, 0);
 	}
 
 	bitmap->compressed = FALSE;
 	bitmap->length = size;
-	bitmap->bpp = bpp;
+	bitmap->bpp = 32;
 }
 
 void xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)

@@ -25,6 +25,9 @@
 #include <freerdp/cache/cache.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/codec/region.h>
+
+#include <freerdp/client/rdpgfx.h>
 
 /* For more information, see [MS-RDPEGDI] */
 
@@ -285,10 +288,18 @@ struct rdp_gdi
 	HCLRCONV clrconv;
 	gdiBitmap* primary;
 	gdiBitmap* drawing;
+	UINT32 bitmap_size;
+	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	GDI_COLOR textColor;
 	gdiBitmap* tile;
 	gdiBitmap* image;
+
+	BOOL inGfxFrame;
+	BOOL graphicsReset;
+	UINT16 outputSurfaceId;
+	REGION16 invalidRegion;
+	RdpgfxClientContext* gfx;
 };
 
 #ifdef __cplusplus
@@ -296,6 +307,7 @@ extern "C" {
 #endif
 
 FREERDP_API UINT32 gdi_rop3_code(BYTE code);
+FREERDP_API UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel, BOOL vFlip);
 FREERDP_API BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 FREERDP_API BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
 FREERDP_API int gdi_is_mono_pixel_set(BYTE* data, int x, int y, int width);

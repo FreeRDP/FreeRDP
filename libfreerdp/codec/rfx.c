@@ -416,10 +416,11 @@ void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_f
 	}
 }
 
-void rfx_context_reset(RFX_CONTEXT* context)
+int rfx_context_reset(RFX_CONTEXT* context)
 {
 	context->state = RFX_STATE_SEND_HEADERS;
 	context->frameIdx = 0;
+	return 1;
 }
 
 static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)

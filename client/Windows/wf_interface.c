@@ -36,10 +36,6 @@
 #include <assert.h>
 #include <sys/types.h>
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
-
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/event.h>
@@ -104,8 +100,8 @@ void wf_sw_end_paint(wfContext* wfc)
 
 		update_rect.left = x;
 		update_rect.top = y;
-		update_rect.right = x + w - 1;
-		update_rect.bottom = y + h - 1;
+		update_rect.right = x + w;
+		update_rect.bottom = y + h;
 
 		InvalidateRect(wfc->hwnd, &update_rect, FALSE);
 	}
@@ -237,9 +233,9 @@ BOOL wf_pre_connect(freerdp* instance)
 	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
 
 	wfc->fullscreen = settings->Fullscreen;
+
 	if (wfc->fullscreen)
 		wfc->fs_toggle = 1;
-	wfc->sw_gdi = settings->SoftwareGdi;
 
 	wfc->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
 	ZeroMemory(wfc->clrconv, sizeof(CLRCONV));
@@ -345,7 +341,7 @@ BOOL wf_post_connect(freerdp* instance)
 	wfc->width = settings->DesktopWidth;
 	wfc->height = settings->DesktopHeight;
 
-	if (wfc->sw_gdi)
+	if (settings->SoftwareGdi)
 	{
 		wfc->primary = wf_image_new(wfc, wfc->width, wfc->height, wfc->dstBpp, NULL);
 
@@ -421,7 +417,7 @@ BOOL wf_post_connect(freerdp* instance)
 	ShowWindow(wfc->hwnd, SW_SHOWNORMAL);
 	UpdateWindow(wfc->hwnd);
 
-	if (wfc->sw_gdi)
+	if (settings->SoftwareGdi)
 	{											
 		instance->update->BeginPaint = (pBeginPaint) wf_sw_begin_paint;
 		instance->update->EndPaint = (pEndPaint) wf_sw_end_paint;
@@ -435,19 +431,21 @@ BOOL wf_post_connect(freerdp* instance)
 	}
 
 	pointer_cache_register_callbacks(instance->update);
+	wf_register_pointer(context->graphics);
 
-	if (wfc->sw_gdi != TRUE)
+	if (!settings->SoftwareGdi)
 	{
 		brush_cache_register_callbacks(instance->update);
 		bitmap_cache_register_callbacks(instance->update);
 		offscreen_cache_register_callbacks(instance->update);
+		wf_register_graphics(context->graphics);
+		instance->update->BitmapUpdate = wf_gdi_bitmap_update;
 	}
 
-	wf_register_graphics(instance->context->graphics);
+	freerdp_channels_post_connect(context->channels, instance);
 
-	freerdp_channels_post_connect(instance->context->channels, instance);
+	wf_cliprdr_init(wfc, context->channels);
 
-	wf_cliprdr_init(wfc, instance->context->channels);
 	if (wfc->fullscreen)
 		floatbar_window_create(wfc);
 
@@ -1142,8 +1140,12 @@ int wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
+	wfContext* wfc = (wfContext*) context;
+
 	if (context->cache)
 		cache_free(context->cache);
+
+	_aligned_free(wfc->bitmap_buffer);
 
 	freerdp_channels_free(context->channels);
 }

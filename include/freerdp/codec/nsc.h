@@ -82,18 +82,21 @@ struct _NSC_CONTEXT
 	NSC_CONTEXT_PRIV* priv;
 };
 
-FREERDP_API NSC_CONTEXT* nsc_context_new(void);
 FREERDP_API void nsc_context_set_pixel_format(NSC_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format);
 FREERDP_API int nsc_process_message(NSC_CONTEXT* context, UINT16 bpp,
 	UINT16 width, UINT16 height, BYTE* data, UINT32 length);
 FREERDP_API void nsc_compose_message(NSC_CONTEXT* context, wStream* s,
 	BYTE* bmpdata, int width, int height, int rowstride);
-FREERDP_API void nsc_context_free(NSC_CONTEXT* context);
 
 FREERDP_API NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, int x, int y,
 		int width, int height, int scanline, int* numMessages, int maxDataSize);
 FREERDP_API int nsc_write_message(NSC_CONTEXT* context, wStream* s, NSC_MESSAGE* message);
 FREERDP_API int nsc_message_free(NSC_CONTEXT* context, NSC_MESSAGE* message);
+
+FREERDP_API int nsc_context_reset(NSC_CONTEXT* context);
+
+FREERDP_API NSC_CONTEXT* nsc_context_new(void);
+FREERDP_API void nsc_context_free(NSC_CONTEXT* context);
 
 #ifdef __cplusplus
 }

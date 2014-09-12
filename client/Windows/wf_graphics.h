@@ -26,6 +26,7 @@ HBITMAP wf_create_dib(wfContext* wfc, int width, int height, int bpp, BYTE* data
 wfBitmap* wf_image_new(wfContext* wfc, int width, int height, int bpp, BYTE* data);
 void wf_image_free(wfBitmap* image);
 
+void wf_register_pointer(rdpGraphics* graphics);
 void wf_register_graphics(rdpGraphics* graphics);
 
 #endif /* WF_GRAPHICS */

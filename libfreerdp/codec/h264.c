@@ -510,6 +510,11 @@ BOOL h264_context_init(H264_CONTEXT* h264)
 	return FALSE;
 }
 
+int h264_context_reset(H264_CONTEXT* h264)
+{
+	return 1;
+}
+
 H264_CONTEXT* h264_context_new(BOOL Compressor)
 {
 	H264_CONTEXT* h264;

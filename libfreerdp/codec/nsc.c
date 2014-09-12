@@ -252,6 +252,11 @@ static void nsc_profiler_print(NSC_CONTEXT* context)
 	PROFILER_PRINT_FOOTER;
 }
 
+int nsc_context_reset(NSC_CONTEXT* context)
+{
+	return 1;
+}
+
 NSC_CONTEXT* nsc_context_new(void)
 {
 	UINT8 i;
