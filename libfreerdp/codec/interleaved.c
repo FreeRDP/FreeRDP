@@ -267,8 +267,15 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		if (!interleaved->FlipBuffer)
 			return -1;
 
-		RleDecompress24to24(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
-		freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
+		if (vFlip)
+		{
+			RleDecompress24to24(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
+			freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
+		}
+		else
+		{
+			RleDecompress24to24(pSrcData, SrcSize, pDstData, scanline, nWidth, nHeight);
+		}
 	}
 	else if ((bpp == 16) || (bpp == 15))
 	{
@@ -284,8 +291,15 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		if (!interleaved->FlipBuffer)
 			return -1;
 
-		RleDecompress16to16(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
-		freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
+		if (vFlip)
+		{
+			RleDecompress16to16(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
+			freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
+		}
+		else
+		{
+			RleDecompress16to16(pSrcData, SrcSize, pDstData, scanline, nWidth, nHeight);
+		}
 	}
 	else if (bpp == 8)
 	{
@@ -301,8 +315,15 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		if (!interleaved->FlipBuffer)
 			return -1;
 
-		RleDecompress8to8(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
-		freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
+		if (vFlip)
+		{
+			RleDecompress8to8(pSrcData, SrcSize, interleaved->FlipBuffer, scanline, nWidth, nHeight);
+			freerdp_bitmap_flip(interleaved->FlipBuffer, pDstData, scanline, nHeight);
+		}
+		else
+		{
+			RleDecompress8to8(pSrcData, SrcSize, pDstData, scanline, nWidth, nHeight);
+		}
 	}
 	else
 	{

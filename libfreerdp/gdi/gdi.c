@@ -454,6 +454,123 @@ void gdi_bitmap_free_ex(gdiBitmap* bitmap)
 	}
 }
 
+void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
+{
+	int status;
+	int nXDst;
+	int nYDst;
+	int nXSrc;
+	int nYSrc;
+	int nWidth;
+	int nHeight;
+	int nSrcStep;
+	int nDstStep;
+	UINT32 index;
+	BYTE* buffer;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	UINT32 SrcSize;
+	BOOL compressed;
+	UINT32 SrcFormat;
+	UINT32 bitsPerPixel;
+	UINT32 bytesPerPixel;
+	BITMAP_DATA* bitmap;
+	rdpGdi* gdi = context->gdi;
+	rdpCodecs* codecs = context->codecs;
+
+	buffer = (BYTE*) _aligned_malloc(256 * 256 * 4, 16);
+
+	for (index = 0; index < bitmapUpdate->number; index++)
+	{
+		bitmap = &(bitmapUpdate->rectangles[index]);
+
+		nXSrc = 0;
+		nYSrc = 0;
+
+		nXDst = bitmap->destLeft;
+		nYDst = bitmap->destTop;
+
+		nWidth = bitmap->width;
+		nHeight = bitmap->height;
+
+		pDstData = buffer;
+
+		pSrcData = bitmap->bitmapDataStream;
+		SrcSize = bitmap->bitmapLength;
+
+		compressed = bitmap->compressed;
+		bitsPerPixel = bitmap->bitsPerPixel;
+		bytesPerPixel = (bitsPerPixel + 7) / 8;
+
+		SrcFormat = PIXEL_FORMAT_XRGB32_VF;
+
+		switch (bitsPerPixel)
+		{
+			case 8:
+				SrcFormat = PIXEL_FORMAT_RGB8_VF;
+				break;
+
+			case 15:
+				SrcFormat = PIXEL_FORMAT_RGB15_VF;
+				break;
+
+			case 16:
+				SrcFormat = PIXEL_FORMAT_RGB16_VF;
+				break;
+
+			case 24:
+				SrcFormat = PIXEL_FORMAT_RGB24_VF;
+				break;
+
+			case 32:
+				SrcFormat = PIXEL_FORMAT_XRGB32_VF;
+				break;
+		}
+
+		if (compressed)
+		{
+			if (bitsPerPixel < 32)
+			{
+				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
+
+				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
+						&pDstData, PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight);
+			}
+			else
+			{
+				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
+
+				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
+						PIXEL_FORMAT_XRGB32_VF, nWidth * 4, 0, 0, nWidth, nHeight);
+			}
+
+			if (status < 0)
+			{
+				DEBUG_WARN("gdi_bitmap_update: bitmap decompression failure\n");
+				return;
+			}
+
+			pSrcData = buffer;
+		}
+		else
+		{
+
+		}
+
+		nSrcStep = nWidth * bytesPerPixel;
+
+		pDstData = gdi->primary_buffer;
+		nDstStep = gdi->width * 4;
+
+		status = freerdp_image_copy(pDstData, PIXEL_FORMAT_XRGB32, nDstStep, nXDst, nYDst,
+				nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc);
+
+		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
+	}
+
+	_aligned_free(buffer);
+}
+
 void gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 {
 	rdpGdi* gdi = context->gdi;
@@ -1099,6 +1216,8 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	palette_cache_register_callbacks(instance->update);
 
 	gdi_register_graphics(instance->context->graphics);
+
+	instance->update->BitmapUpdate = gdi_bitmap_update;
 
 	return 0;
 }

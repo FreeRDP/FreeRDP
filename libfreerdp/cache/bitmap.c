@@ -41,8 +41,9 @@ void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 		bitmap = offscreen_cache_get(cache->offscreen, memblt->cacheIndex);
 	else
 		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) memblt->cacheId, memblt->cacheIndex);
-	/* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
-	if (bitmap == NULL) return;
+
+	if (!bitmap)
+		return; /* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
 
 	memblt->bitmap = bitmap;
 	IFCALL(cache->bitmap->MemBlt, context, memblt);
@@ -60,9 +61,8 @@ void update_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	else
 		bitmap = bitmap_cache_get(cache->bitmap, (BYTE) mem3blt->cacheId, mem3blt->cacheIndex);
 
-	/* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
 	if (!bitmap)
-		return;
+		return; /* XP-SP2 servers sometimes ask for cached bitmaps they've never defined. */
 
 	style = brush->style;
 
@@ -96,7 +96,7 @@ void update_gdi_cache_bitmap(rdpContext* context, CACHE_BITMAP_ORDER* cacheBitma
 
 	prevBitmap = bitmap_cache_get(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex);
 
-	if (prevBitmap != NULL)
+	if (prevBitmap)
 		Bitmap_Free(context, prevBitmap);
 
 	bitmap_cache_put(cache->bitmap, cacheBitmap->cacheId, cacheBitmap->cacheIndex, bitmap);
@@ -112,11 +112,8 @@ void update_gdi_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cach
 
 	Bitmap_SetDimensions(context, bitmap, cacheBitmapV2->bitmapWidth, cacheBitmapV2->bitmapHeight);
 
-	if (cacheBitmapV2->bitmapBpp == 0)
-	{
-		/* Workaround for Windows 8 bug where bitmapBpp is not set */
-		cacheBitmapV2->bitmapBpp = context->instance->settings->ColorDepth;
-	}
+	if (!cacheBitmapV2->bitmapBpp)
+		cacheBitmapV2->bitmapBpp = context->settings->ColorDepth;
 
 	bitmap->Decompress(context, bitmap,
 			cacheBitmapV2->bitmapDataStream, cacheBitmapV2->bitmapWidth, cacheBitmapV2->bitmapHeight,
@@ -145,11 +142,8 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 
 	Bitmap_SetDimensions(context, bitmap, bitmapData->width, bitmapData->height);
 
-	if (cacheBitmapV3->bitmapData.bpp == 0)
-	{
-		/* Workaround for Windows 8 bug where bitmapBpp is not set */
-		cacheBitmapV3->bitmapData.bpp = context->instance->settings->ColorDepth;
-	}
+	if (!cacheBitmapV3->bpp)
+		cacheBitmapV3->bpp = context->settings->ColorDepth;
 
 	/* According to http://msdn.microsoft.com/en-us/library/gg441209.aspx
 	 * CACHE_BITMAP_REV3_ORDER::bitmapData::codecID = 0x00 (uncompressed) */
@@ -173,9 +167,9 @@ void update_gdi_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cach
 void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 {
 	int i;
-	rdpBitmap* bitmap;
-	BITMAP_DATA* bitmap_data;
 	BOOL reused = TRUE;
+	rdpBitmap* bitmap;
+	BITMAP_DATA* bitmapData;
 	rdpCache* cache = context->cache;
 
 	if (!cache->bitmap->bitmap)
@@ -189,22 +183,22 @@ void update_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 	for (i = 0; i < (int) bitmapUpdate->number; i++)
 	{
-		bitmap_data = &bitmapUpdate->rectangles[i];
+		bitmapData = &bitmapUpdate->rectangles[i];
 
-		bitmap->bpp = bitmap_data->bitsPerPixel;
-		bitmap->length = bitmap_data->bitmapLength;
-		bitmap->compressed = bitmap_data->compressed;
+		bitmap->bpp = bitmapData->bitsPerPixel;
+		bitmap->length = bitmapData->bitmapLength;
+		bitmap->compressed = bitmapData->compressed;
 
 		Bitmap_SetRectangle(context, bitmap,
-				bitmap_data->destLeft, bitmap_data->destTop,
-				bitmap_data->destRight, bitmap_data->destBottom);
+				bitmapData->destLeft, bitmapData->destTop,
+				bitmapData->destRight, bitmapData->destBottom);
 
-		Bitmap_SetDimensions(context, bitmap, bitmap_data->width, bitmap_data->height);
+		Bitmap_SetDimensions(context, bitmap, bitmapData->width, bitmapData->height);
 
 		bitmap->Decompress(context, bitmap,
-				bitmap_data->bitmapDataStream, bitmap_data->width, bitmap_data->height,
-				bitmap_data->bitsPerPixel, bitmap_data->bitmapLength,
-				bitmap_data->compressed, RDP_CODEC_ID_NONE);
+				bitmapData->bitmapDataStream, bitmapData->width, bitmapData->height,
+				bitmapData->bitsPerPixel, bitmapData->bitmapLength,
+				bitmapData->compressed, RDP_CODEC_ID_NONE);
 
 		if (reused)
 			bitmap->Free(context, bitmap);
@@ -324,10 +318,8 @@ void bitmap_cache_free(rdpBitmapCache* bitmapCache)
 			{
 				bitmap = bitmapCache->cells[i].entries[j];
 
-				if (bitmap != NULL)
-				{
+				if (bitmap)
 					Bitmap_Free(bitmapCache->context, bitmap);
-				}
 			}
 
 			free(bitmapCache->cells[i].entries);

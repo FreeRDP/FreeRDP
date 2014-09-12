@@ -371,15 +371,15 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 	HGDI_RGN invalid;
 	HGDI_RGN cinvalid;
 
-	if (hdc->hwnd == NULL)
+	if (!hdc->hwnd)
 		return 0;
 
-	if (hdc->hwnd->invalid == NULL)
+	if (!hdc->hwnd->invalid)
 		return 0;
 
 	cinvalid = hdc->hwnd->cinvalid;
 
-	if (hdc->hwnd->ninvalid + 1 > hdc->hwnd->count)
+	if ((hdc->hwnd->ninvalid + 1) > hdc->hwnd->count)
 	{
 		hdc->hwnd->count *= 2;
 		cinvalid = (HGDI_RGN) realloc(cinvalid, sizeof(GDI_RGN) * (hdc->hwnd->count));
