@@ -91,7 +91,7 @@ int certificate_store_init(rdpCertificateStore* certificate_store)
 		if (!certificate_store->fp)
 		{
 			WLog_ERR(TAG,  "certificate_store_open: error opening [%s] for writing", certificate_store->file);
-			return;
+			return -1;
 		}
 
 		fflush(certificate_store->fp);
