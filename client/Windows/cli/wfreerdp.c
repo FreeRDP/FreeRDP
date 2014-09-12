@@ -63,6 +63,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	settings = context->settings;
 	wfc = (wfContext*) context;
 
+	settings->SoftwareGdi = TRUE;
+
 	context->argc = __argc;
 	context->argv = (char**) malloc(sizeof(char*) * __argc);
 
