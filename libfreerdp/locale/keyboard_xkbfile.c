@@ -345,7 +345,7 @@ int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD x11_keycode_to_
 	if (*keyboardLayoutId == 0)
 	{
 		detect_keyboard_layout_from_xkbfile(display, keyboardLayoutId);
-		DEBUG_KBD("detect_keyboard_layout_from_xkb: %X", (unsigned int) keyboardLayoutId);
+		DEBUG_KBD("detect_keyboard_layout_from_xkb: %p", keyboardLayoutId);
 	}
 
 	freerdp_keyboard_load_map_from_xkbfile(display, x11_keycode_to_rdp_scancode);
