@@ -247,6 +247,53 @@ void* progressive_get_surface_data(PROGRESSIVE_CONTEXT* progressive, UINT16 surf
 	return pData;
 }
 
+PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfaceId, UINT32 width, UINT32 height)
+{
+	PROGRESSIVE_SURFACE_CONTEXT* surface;
+
+	surface = (PROGRESSIVE_SURFACE_CONTEXT*) calloc(1, sizeof(PROGRESSIVE_SURFACE_CONTEXT));
+
+	if (!surface)
+		return NULL;
+
+	surface->id = surfaceId;
+	surface->width = width;
+	surface->height = height;
+	surface->gridWidth = (width + (width % 64)) / 64;
+	surface->gridHeight = (height + (height % 64)) / 64;
+	surface->gridSize = surface->gridWidth * surface->gridHeight;
+
+	surface->tiles = (RFX_PROGRESSIVE_TILE*) calloc(surface->gridSize, sizeof(RFX_PROGRESSIVE_TILE));
+
+	if (!surface->tiles)
+		return NULL;
+
+	return surface;
+}
+
+void progressive_surface_context_free(PROGRESSIVE_SURFACE_CONTEXT* surface)
+{
+	UINT32 index;
+	RFX_PROGRESSIVE_TILE* tile;
+
+	for (index = 0; index < surface->gridSize; index++)
+	{
+		tile = &(surface->tiles[index]);
+
+		if (tile->data)
+			_aligned_free(tile->data);
+
+		if (tile->sign)
+			_aligned_free(tile->sign);
+
+		if (tile->current)
+			_aligned_free(tile->current);
+	}
+
+	free(surface->tiles);
+	free(surface);
+}
+
 int progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 surfaceId, UINT32 width, UINT32 height)
 {
 	PROGRESSIVE_SURFACE_CONTEXT* surface;
@@ -255,21 +302,9 @@ int progressive_create_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 
 
 	if (!surface)
 	{
-		surface = (PROGRESSIVE_SURFACE_CONTEXT*) malloc(sizeof(PROGRESSIVE_SURFACE_CONTEXT));
+		surface = progressive_surface_context_new(surfaceId, width, height);
 
 		if (!surface)
-			return -1;
-
-		surface->id = surfaceId;
-		surface->width = width;
-		surface->height = height;
-		surface->gridWidth = (width + (width % 64)) / 64;
-		surface->gridHeight = (height + (height % 64)) / 64;
-		surface->gridSize = surface->gridWidth * surface->gridHeight;
-
-		surface->tiles = (RFX_PROGRESSIVE_TILE*) calloc(surface->gridSize, sizeof(RFX_PROGRESSIVE_TILE));
-
-		if (!surface->tiles)
 			return -1;
 
 		progressive_set_surface_data(progressive, surfaceId, (void*) surface);
@@ -287,9 +322,7 @@ int progressive_delete_surface_context(PROGRESSIVE_CONTEXT* progressive, UINT16 
 	if (surface)
 	{
 		progressive_set_surface_data(progressive, surfaceId, NULL);
-
-		free(surface->tiles);
-		free(surface);
+		progressive_surface_context_free(surface);
 	}
 
 	return 1;
@@ -1758,9 +1791,9 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UINT3
 	return 1;
 }
 
-void progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)
+int progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)
 {
-
+	return 1;
 }
 
 PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
@@ -1814,6 +1847,11 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 
 void progressive_context_free(PROGRESSIVE_CONTEXT* progressive)
 {
+	int count;
+	int index;
+	ULONG_PTR* pKeys = NULL;
+	PROGRESSIVE_SURFACE_CONTEXT* surface;
+
 	if (!progressive)
 		return;
 
@@ -1823,6 +1861,16 @@ void progressive_context_free(PROGRESSIVE_CONTEXT* progressive)
 	free(progressive->tiles);
 	free(progressive->quantVals);
 	free(progressive->quantProgVals);
+
+	count = HashTable_GetKeys(progressive->SurfaceContexts, &pKeys);
+
+	for (index = 0; index < count; index++)
+	{
+		surface = (PROGRESSIVE_SURFACE_CONTEXT*) HashTable_GetItemValue(progressive->SurfaceContexts, (void*) pKeys[index]);
+		progressive_surface_context_free(surface);
+	}
+
+	free(pKeys);
 
 	HashTable_Free(progressive->SurfaceContexts);
 

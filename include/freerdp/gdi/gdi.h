@@ -25,6 +25,9 @@
 #include <freerdp/cache/cache.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/codec/region.h>
+
+#include <freerdp/client/rdpgfx.h>
 
 /* For more information, see [MS-RDPEGDI] */
 
@@ -291,6 +294,12 @@ struct rdp_gdi
 	GDI_COLOR textColor;
 	gdiBitmap* tile;
 	gdiBitmap* image;
+
+	BOOL inGfxFrame;
+	BOOL graphicsReset;
+	UINT16 outputSurfaceId;
+	REGION16 invalidRegion;
+	RdpgfxClientContext* gfx;
 };
 
 #ifdef __cplusplus

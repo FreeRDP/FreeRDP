@@ -344,6 +344,11 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 	return 1;
 }
 
+int bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved)
+{
+	return 1;
+}
+
 BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 {
 	BITMAP_INTERLEAVED_CONTEXT* interleaved;

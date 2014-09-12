@@ -751,11 +751,12 @@ int clear_compress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize, BYTE** 
 	return 1;
 }
 
-void clear_context_reset(CLEAR_CONTEXT* clear)
+int clear_context_reset(CLEAR_CONTEXT* clear)
 {
 	clear->seqNumber = 0;
 	clear->VBarStorageCursor = 0;
 	clear->ShortVBarStorageCursor = 0;
+	return 1;
 }
 
 CLEAR_CONTEXT* clear_context_new(BOOL Compressor)

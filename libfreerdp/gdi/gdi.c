@@ -1139,6 +1139,7 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 		return -1;
 
 	instance->context->gdi = gdi;
+	gdi->context = instance->context;
 	cache = instance->context->cache;
 
 	gdi->codecs = instance->context->codecs;

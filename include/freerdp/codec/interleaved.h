@@ -39,6 +39,8 @@ struct _BITMAP_INTERLEAVED_CONTEXT
 FREERDP_API int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcData, UINT32 SrcSize, int bpp,
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight);
 
+FREERDP_API int bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved);
+
 FREERDP_API BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor);
 FREERDP_API void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved);
 
