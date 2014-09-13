@@ -22,7 +22,6 @@
 #endif
 
 #include <winpr/wlog.h>
-
 #include <winpr/image.h>
 
 #include "wlog/ImageMessage.h"

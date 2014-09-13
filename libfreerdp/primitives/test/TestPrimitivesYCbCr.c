@@ -3,10 +3,13 @@
 
 #include <winpr/print.h>
 #include <freerdp/codec/color.h>
+#include <winpr/wlog.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#define TAG __FILE__
 
 static INT16 TEST_Y_COMPONENT[4096] =
 {

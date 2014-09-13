@@ -35,7 +35,7 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 
-#include "wf_interface.h"
+#include "wf_client.h"
 #include "wf_graphics.h"
 #include "wf_gdi.h"
 
@@ -339,6 +339,106 @@ void wf_toggle_fullscreen(wfContext* wfc)
 	}
 }
 
+void wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
+{
+	HDC hdc;
+	int status;
+	int nXDst;
+	int nYDst;
+	int nXSrc;
+	int nYSrc;
+	int nWidth;
+	int nHeight;
+	HBITMAP dib;
+	UINT32 index;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	UINT32 SrcSize;
+	BOOL compressed;
+	UINT32 SrcFormat;
+	UINT32 bitsPerPixel;
+	UINT32 bytesPerPixel;
+	BITMAP_DATA* bitmap;
+	rdpCodecs* codecs = context->codecs;
+	wfContext* wfc = (wfContext*) context;
+
+	hdc = CreateCompatibleDC(GetDC(NULL));
+
+	for (index = 0; index < bitmapUpdate->number; index++)
+	{
+		bitmap = &(bitmapUpdate->rectangles[index]);
+
+		nXSrc = 0;
+		nYSrc = 0;
+
+		nXDst = bitmap->destLeft;
+		nYDst = bitmap->destTop;
+
+		nWidth = bitmap->width;
+		nHeight = bitmap->height;
+
+		pSrcData = bitmap->bitmapDataStream;
+		SrcSize = bitmap->bitmapLength;
+
+		compressed = bitmap->compressed;
+		bitsPerPixel = bitmap->bitsPerPixel;
+		bytesPerPixel = (bitsPerPixel + 7) / 8;
+
+		SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
+
+		if (wfc->bitmap_size < (nWidth * nHeight * 4))
+		{
+			wfc->bitmap_size = nWidth * nHeight * 4;
+			wfc->bitmap_buffer = (BYTE*) _aligned_realloc(wfc->bitmap_buffer, wfc->bitmap_size, 16);
+
+			if (!wfc->bitmap_buffer)
+				return;
+		}
+
+		if (compressed)
+		{
+			pDstData = wfc->bitmap_buffer;
+
+			if (bitsPerPixel < 32)
+			{
+				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
+
+				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
+						&pDstData, PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight);
+			}
+			else
+			{
+				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
+
+				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
+						PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight);
+			}
+
+			if (status < 0)
+			{
+				DEBUG_WARN("wf_gdi_bitmap_update: bitmap decompression failure\n");
+				return;
+			}
+
+			pSrcData = wfc->bitmap_buffer;
+		}
+
+		dib = wf_create_dib(wfc, nWidth, nHeight, 32, pSrcData, NULL);
+		SelectObject(hdc, dib);
+
+		nWidth = bitmap->destRight - bitmap->destLeft + 1; /* clip width */
+		nHeight = bitmap->destBottom - bitmap->destTop + 1; /* clip height */
+
+		BitBlt(wfc->primary->hdc, nXDst, nYDst, nWidth, nHeight, hdc, 0, 0, SRCCOPY);
+
+		gdi_InvalidateRegion(wfc->hdc, nXDst, nYDst, nWidth, nHeight);
+
+		DeleteObject(dib);
+	}
+
+	ReleaseDC(NULL, hdc);
+}
+
 void wf_gdi_palette_update(wfContext* wfc, PALETTE_UPDATE* palette)
 {
 
@@ -453,11 +553,11 @@ void wf_gdi_multi_opaque_rect(wfContext* wfc, MULTI_OPAQUE_RECT_ORDER* multi_opa
 	UINT32 brush_color;
 	DELTA_RECT* rectangle;
 
+	brush_color = freerdp_color_convert_var_rgb(multi_opaque_rect->color, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
+
 	for (i = 1; i < (int) multi_opaque_rect->numRectangles + 1; i++)
 	{
 		rectangle = &multi_opaque_rect->rectangles[i];
-
-		brush_color = freerdp_color_convert_var_bgr(multi_opaque_rect->color, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
 
 		rect.left = rectangle->left;
 		rect.top = rectangle->top;

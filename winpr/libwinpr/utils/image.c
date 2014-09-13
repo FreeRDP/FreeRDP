@@ -25,6 +25,9 @@
 
 #include <winpr/image.h>
 
+#include "../log.h"
+#define TAG WINPR_TAG("utils.image")
+
 /**
  * Refer to "Compressed Image File Formats: JPEG, PNG, GIF, XBM, BMP" book
  */
@@ -87,7 +90,7 @@ int winpr_bitmap_write(const char* filename, BYTE* data, int width, int height, 
 
 	if (!fp)
 	{
-		fprintf(stderr, "failed to open file %s\n", filename);
+		WLog_ERR(TAG, "failed to open file %s", filename);
 		return -1;
 	}
 
@@ -137,7 +140,7 @@ int winpr_image_read(wImage* image, const char* filename)
 
 	if (!fp)
 	{
-		fprintf(stderr, "failed to open file %s\n", filename);
+		WLog_ERR(TAG, "failed to open file %s", filename);
 		return -1;
 	}
 

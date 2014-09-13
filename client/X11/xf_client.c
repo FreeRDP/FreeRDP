@@ -863,16 +863,6 @@ BOOL xf_post_connect(freerdp *instance)
 		xfc->srcBpp = settings->ColorDepth;
 		xf_gdi_register_update_callbacks(instance->update);
 		xfc->hdc = gdi_CreateDC(xfc->clrconv, xfc->bpp);
-
-		if (settings->RemoteFxCodec)
-		{
-			xfc->codecs->rfx = rfx_context_new(FALSE);
-		}
-
-		if (settings->NSCodec)
-		{
-			xfc->codecs->nsc = nsc_context_new();
-		}
 	}
 
 	xfc->originalWidth = settings->DesktopWidth;
@@ -892,7 +882,7 @@ BOOL xf_post_connect(freerdp *instance)
 
 	ZeroMemory(&gcv, sizeof(gcv));
 
-	if(xfc->modifierMap)
+	if (xfc->modifierMap)
 		XFreeModifiermap(xfc->modifierMap);
 
 	xfc->modifierMap = XGetModifierMapping(xfc->display);
@@ -910,7 +900,7 @@ BOOL xf_post_connect(freerdp *instance)
 			(char*) xfc->primary_buffer, xfc->width, xfc->height, xfc->scanline_pad, 0);
 	xfc->bmp_codec_none = (BYTE *) malloc(64 * 64 * 4);
 
-	if (xfc->settings->SoftwareGdi)
+	if (settings->SoftwareGdi)
 	{
 		instance->update->BeginPaint = xf_sw_begin_paint;
 		instance->update->EndPaint = xf_sw_end_paint;
@@ -925,13 +915,14 @@ BOOL xf_post_connect(freerdp *instance)
 
 	pointer_cache_register_callbacks(instance->update);
 
-	if (!xfc->settings->SoftwareGdi)
+	if (!settings->SoftwareGdi)
 	{
 		glyph_cache_register_callbacks(instance->update);
 		brush_cache_register_callbacks(instance->update);
 		bitmap_cache_register_callbacks(instance->update);
 		offscreen_cache_register_callbacks(instance->update);
 		palette_cache_register_callbacks(instance->update);
+		instance->update->BitmapUpdate = xf_gdi_bitmap_update;
 	}
 
 	instance->context->rail = rail_new(instance->settings);
@@ -1106,24 +1097,6 @@ void xf_window_free(xfContext *xfc)
 	{
 		rail_free(context->rail);
 		context->rail = NULL;
-	}
-
-	if (xfc->codecs->rfx)
-	{
-		rfx_context_free(xfc->codecs->rfx);
-		xfc->codecs->rfx = NULL;
-	}
-
-	if (xfc->codecs->nsc)
-	{
-		nsc_context_free(xfc->codecs->nsc);
-		xfc->codecs->nsc = NULL;
-	}
-
-	if (xfc->codecs->clear)
-	{
-		clear_context_free(xfc->codecs->clear);
-		xfc->codecs->clear = NULL;
 	}
 
 	if (xfc->clrconv)
@@ -1505,22 +1478,29 @@ void xf_TerminateEventHandler(rdpContext *context, TerminateEventArgs *e)
 
 static void xf_ScalingFactorChangeEventHandler(rdpContext *context, ScalingFactorChangeEventArgs *e)
 {
-	xfContext *xfc = (xfContext *) context;
+	xfContext* xfc = (xfContext*) context;
+
 	xfc->settings->ScalingFactor += e->ScalingFactor;
-	if(xfc->settings->ScalingFactor > 1.2)
+
+	if (xfc->settings->ScalingFactor > 1.2)
 		xfc->settings->ScalingFactor = 1.2;
-	if(xfc->settings->ScalingFactor < 0.8)
+
+	if (xfc->settings->ScalingFactor < 0.8)
 		xfc->settings->ScalingFactor = 0.8;
+
 	xfc->currentWidth = xfc->originalWidth * xfc->settings->ScalingFactor;
 	xfc->currentHeight = xfc->originalHeight * xfc->settings->ScalingFactor;
+
 	xf_transform_window(xfc);
+
 	{
 		ResizeWindowEventArgs ev;
 		EventArgsInit(&ev, "xfreerdp");
 		ev.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
 		ev.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
-		PubSub_OnResizeWindow(((rdpContext *) xfc)->pubSub, xfc, &ev);
+		PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &ev);
 	}
+
 	xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
 }
 
@@ -1541,9 +1521,10 @@ static void xfreerdp_client_global_uninit()
 
 static int xfreerdp_client_start(rdpContext *context)
 {
-	xfContext *xfc = (xfContext *) context;
-	rdpSettings *settings = context->settings;
-	if(!settings->ServerHostname)
+	xfContext* xfc = (xfContext *) context;
+	rdpSettings* settings = context->settings;
+
+	if (!settings->ServerHostname)
 	{
 		DEBUG_WARN( "error: server hostname was not specified with /v:<server>[:port]\n");
 		return -1;
@@ -1553,11 +1534,11 @@ static int xfreerdp_client_start(rdpContext *context)
 	return 0;
 }
 
-static int xfreerdp_client_stop(rdpContext *context)
+static int xfreerdp_client_stop(rdpContext* context)
 {
-	xfContext *xfc = (xfContext *) context;
-	assert(NULL != context);
-	if(context->settings->AsyncInput)
+	xfContext* xfc = (xfContext*) context;
+
+	if (context->settings->AsyncInput)
 	{
 		wMessageQueue *queue;
 		queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
@@ -1568,19 +1549,23 @@ static int xfreerdp_client_stop(rdpContext *context)
 	{
 		xfc->disconnect = TRUE;
 	}
-	if(xfc->thread)
+
+	if (xfc->thread)
 	{
 		CloseHandle(xfc->thread);
 		xfc->thread = NULL;
 	}
+
 	return 0;
 }
 
-static int xfreerdp_client_new(freerdp *instance, rdpContext *context)
+static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
-	xfContext *xfc;
-	rdpSettings *settings;
-	xfc = (xfContext *) instance->context;
+	xfContext* xfc;
+	rdpSettings* settings;
+
+	xfc = (xfContext*) instance->context;
+
 	instance->PreConnect = xf_pre_connect;
 	instance->PostConnect = xf_post_connect;
 	instance->PostDisconnect = xf_post_disconnect;
@@ -1588,27 +1573,36 @@ static int xfreerdp_client_new(freerdp *instance, rdpContext *context)
 	instance->VerifyCertificate = xf_verify_certificate;
 	instance->LogonErrorInfo = xf_logon_error_info;
 	context->channels = freerdp_channels_new();
+
 	settings = instance->settings;
 	xfc->settings = instance->context->settings;
+
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
 	PubSub_SubscribeScalingFactorChange(context->pubSub, (pScalingFactorChangeEventHandler) xf_ScalingFactorChangeEventHandler);
+
 	return 0;
 }
 
-static void xfreerdp_client_free(freerdp *instance, rdpContext *context)
+static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
-	xfContext *xfc = (xfContext *) context;
-	if(context)
+	xfContext* xfc = (xfContext*) context;
+
+	if (context)
 	{
 		xf_window_free(xfc);
-		if(xfc->bmp_codec_none)
+
+		if (xfc->bmp_codec_none)
 			free(xfc->bmp_codec_none);
-		if(xfc->display)
+
+		if (xfc->bitmap_buffer)
+			_aligned_free(xfc->bitmap_buffer);
+
+		if (xfc->display)
 			XCloseDisplay(xfc->display);
 	}
 }
 
-int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS *pEntryPoints)
+int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->Version = 1;
 	pEntryPoints->Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);

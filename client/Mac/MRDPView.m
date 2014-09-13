@@ -820,6 +820,44 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	mfc->client_width = width;
 }
 
+void mac_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
+{
+	rdpSettings* settings = context->settings;
+	
+	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		
+	}
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		if (settings->SoftwareGdi)
+			gdi_graphics_pipeline_init(context->gdi, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
+	{
+		
+	}
+}
+
+void mac_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
+{
+	rdpSettings* settings = context->settings;
+	
+	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		
+	}
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		if (settings->SoftwareGdi)
+			gdi_graphics_pipeline_uninit(context->gdi, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
+	{
+		
+	}
+}
+
 BOOL mac_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
@@ -867,6 +905,12 @@ BOOL mac_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
+	
+	PubSub_SubscribeChannelConnected(instance->context->pubSub,
+					 (pChannelConnectedEventHandler) mac_OnChannelConnectedEventHandler);
+	
+	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
+					    (pChannelDisconnectedEventHandler) mac_OnChannelDisconnectedEventHandler);
 
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
 

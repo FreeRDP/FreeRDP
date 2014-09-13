@@ -32,6 +32,9 @@
 
 #include "ntlm_compute.h"
 
+#include "../../log.h"
+#define TAG WINPR_TAG("sspi.NTLM")
+
 const char LM_MAGIC[] = "KGS!@#$%";
 
 static const char NTLM_CLIENT_SIGN_MAGIC[] = "session key to client-to-server signing key magic constant";
@@ -40,10 +43,10 @@ static const char NTLM_CLIENT_SEAL_MAGIC[] = "session key to client-to-server se
 static const char NTLM_SERVER_SEAL_MAGIC[] = "session key to server-to-client sealing key magic constant";
 
 static const BYTE NTLM_NULL_BUFFER[16] =
-	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 /**
- * Populate VERSION structure.\n
+ * Populate VERSION structure.
  * VERSION @msdn{cc236654}
  * @param s
  */
@@ -51,11 +54,8 @@ static const BYTE NTLM_NULL_BUFFER[16] =
 void ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo)
 {
 	OSVERSIONINFOA osVersionInfo;
-
 	osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-
 	GetVersionExA(&osVersionInfo);
-
 	versionInfo->ProductMajorVersion = (UINT8) osVersionInfo.dwMajorVersion;
 	versionInfo->ProductMinorVersion = (UINT8) osVersionInfo.dwMinorVersion;
 	versionInfo->ProductBuild = (UINT16) osVersionInfo.dwBuildNumber;
@@ -64,7 +64,7 @@ void ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo)
 }
 
 /**
- * Read VERSION structure.\n
+ * Read VERSION structure.
  * VERSION @msdn{cc236654}
  * @param s
  */
@@ -79,12 +79,11 @@ int ntlm_read_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo)
 	Stream_Read_UINT16(s, versionInfo->ProductBuild); /* ProductBuild (2 bytes) */
 	Stream_Read(s, versionInfo->Reserved, sizeof(versionInfo->Reserved)); /* Reserved (3 bytes) */
 	Stream_Read_UINT8(s, versionInfo->NTLMRevisionCurrent); /* NTLMRevisionCurrent (1 byte) */
-
 	return 1;
 }
 
 /**
- * Write VERSION structure.\n
+ * Write VERSION structure.
  * VERSION @msdn{cc236654}
  * @param s
  */
@@ -99,26 +98,25 @@ void ntlm_write_version_info(wStream* s, NTLM_VERSION_INFO* versionInfo)
 }
 
 /**
- * Print VERSION structure.\n
+ * Print VERSION structure.
  * VERSION @msdn{cc236654}
  * @param s
  */
 
 void ntlm_print_version_info(NTLM_VERSION_INFO* versionInfo)
 {
-	fprintf(stderr, "VERSION =\n{\n");
-	fprintf(stderr, "\tProductMajorVersion: %d\n", versionInfo->ProductMajorVersion);
-	fprintf(stderr, "\tProductMinorVersion: %d\n", versionInfo->ProductMinorVersion);
-	fprintf(stderr, "\tProductBuild: %d\n", versionInfo->ProductBuild);
-	fprintf(stderr, "\tReserved: 0x%02X%02X%02X\n", versionInfo->Reserved[0],
-			versionInfo->Reserved[1], versionInfo->Reserved[2]);
-	fprintf(stderr, "\tNTLMRevisionCurrent: 0x%02X\n", versionInfo->NTLMRevisionCurrent);
+	WLog_INFO(TAG, "VERSION ={");
+	WLog_INFO(TAG, "\tProductMajorVersion: %d", versionInfo->ProductMajorVersion);
+	WLog_INFO(TAG, "\tProductMinorVersion: %d", versionInfo->ProductMinorVersion);
+	WLog_INFO(TAG, "\tProductBuild: %d", versionInfo->ProductBuild);
+	WLog_INFO(TAG, "\tReserved: 0x%02X%02X%02X", versionInfo->Reserved[0],
+			  versionInfo->Reserved[1], versionInfo->Reserved[2]);
+	WLog_INFO(TAG, "\tNTLMRevisionCurrent: 0x%02X", versionInfo->NTLMRevisionCurrent);
 }
 
 int ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* challenge)
 {
 	size_t size;
-
 	Stream_Read_UINT8(s, challenge->RespType);
 	Stream_Read_UINT8(s, challenge->HiRespType);
 	Stream_Read_UINT16(s, challenge->Reserved1);
@@ -126,7 +124,6 @@ int ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* chal
 	Stream_Read(s, challenge->Timestamp, 8);
 	Stream_Read(s, challenge->ClientChallenge, 8);
 	Stream_Read_UINT32(s, challenge->Reserved3);
-
 	size = Stream_Length(s) - Stream_GetPosition(s);
 	challenge->AvPairs = (NTLM_AV_PAIR*) malloc(size);
 
@@ -134,14 +131,12 @@ int ntlm_read_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* chal
 		return -1;
 
 	Stream_Read(s, challenge->AvPairs, size);
-
 	return 1;
 }
 
 int ntlm_write_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* challenge)
 {
 	ULONG length;
-
 	Stream_Write_UINT8(s, challenge->RespType);
 	Stream_Write_UINT8(s, challenge->HiRespType);
 	Stream_Write_UINT16(s, challenge->Reserved1);
@@ -149,10 +144,8 @@ int ntlm_write_ntlm_v2_client_challenge(wStream* s, NTLMv2_CLIENT_CHALLENGE* cha
 	Stream_Write(s, challenge->Timestamp, 8);
 	Stream_Write(s, challenge->ClientChallenge, 8);
 	Stream_Write_UINT32(s, challenge->Reserved3);
-
 	length = ntlm_av_pair_list_length(challenge->AvPairs);
 	Stream_Write(s, challenge->AvPairs, length);
-
 	return 1;
 }
 
@@ -177,12 +170,9 @@ void ntlm_current_time(BYTE* timestamp)
 {
 	FILETIME filetime;
 	ULARGE_INTEGER time64;
-
 	GetSystemTimeAsFileTime(&filetime);
-
 	time64.LowPart = filetime.dwLowDateTime;
 	time64.HighPart = filetime.dwHighDateTime;
-
 	CopyMemory(timestamp, &(time64.QuadPart), 8);
 }
 
@@ -204,62 +194,54 @@ int ntlm_fetch_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	WINPR_SAM* sam;
 	WINPR_SAM_ENTRY* entry;
 	SSPI_CREDENTIALS* credentials = context->credentials;
-
 	sam = SamOpen(TRUE);
-	
+
 	if (!sam)
 		return -1;
 
 	entry = SamLookupUserW(sam,
-			(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-			(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2);
+						   (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+						   (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2);
 
 	if (entry)
 	{
 #ifdef WITH_DEBUG_NTLM
-		fprintf(stderr, "NTLM Hash:\n");
-		winpr_HexDump(entry->NtHash, 16);
+		WLog_DBG(TAG, "NTLM Hash:");
+		winpr_HexDump(TAG, WLOG_DEBUG, entry->NtHash, 16);
 #endif
-
 		NTOWFv2FromHashW(entry->NtHash,
-			(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-			(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
-			(BYTE*) hash);
-
+						 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+						 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
+						 (BYTE*) hash);
 		SamFreeEntry(sam, entry);
 		SamClose(sam);
-
 		return 1;
 	}
 
 	entry = SamLookupUserW(sam,
-		(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2, NULL, 0);
+						   (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2, NULL, 0);
 
 	if (entry)
 	{
 #ifdef WITH_DEBUG_NTLM
-		fprintf(stderr, "NTLM Hash:\n");
-		winpr_HexDump(entry->NtHash, 16);
+		WLog_DBG(TAG, "NTLM Hash:");
+		winpr_HexDump(TAG, WLOG_DEBUG, entry->NtHash, 16);
 #endif
-
 		NTOWFv2FromHashW(entry->NtHash,
-			(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-			(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
-			(BYTE*) hash);
-
+						 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+						 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
+						 (BYTE*) hash);
 		SamFreeEntry(sam, entry);
 		SamClose(sam);
-
 		return 1;
 	}
 	else
 	{
-		fprintf(stderr, "Error: Could not find user in SAM database\n");
+		WLog_ERR(TAG, "Error: Could not find user in SAM database");
 		return 0;
 	}
 
 	SamClose(sam);
-
 	return 1;
 }
 
@@ -270,13 +252,10 @@ int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
 	char* PasswordHash = NULL;
 	UINT32 PasswordHashLength = 0;
 	SSPI_CREDENTIALS* credentials = context->credentials;
-
 	/* Password contains a password hash of length (PasswordLength / SSPI_CREDENTIALS_HASH_LENGTH_FACTOR) */
-
 	PasswordHashLength = credentials->identity.PasswordLength / SSPI_CREDENTIALS_HASH_LENGTH_FACTOR;
-	
 	status = ConvertFromUnicode(CP_UTF8, 0, (LPCWSTR) credentials->identity.Password,
-		PasswordHashLength, &PasswordHash, 0, NULL, NULL);
+								PasswordHashLength, &PasswordHash, 0, NULL, NULL);
 
 	if (status <= 0)
 		return -1;
@@ -291,7 +270,6 @@ int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
 	}
 
 	free(PasswordHash);
-
 	return 1;
 }
 
@@ -305,27 +283,26 @@ int ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	if (memcmp(context->NtlmHash, NTLM_NULL_BUFFER, 16) != 0)
 	{
 		NTOWFv2FromHashW(context->NtlmHash,
-				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-				(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
-				(BYTE*) hash);
+						 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+						 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
+						 (BYTE*) hash);
 	}
 	else if (credentials->identity.PasswordLength > 256)
 	{
 		/* Special case for WinPR: password hash */
-
 		if (ntlm_convert_password_hash(context, context->NtlmHash) < 0)
 			return -1;
 
 		NTOWFv2FromHashW(context->NtlmHash,
-				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-				(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
-				(BYTE*) hash);
+						 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+						 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2,
+						 (BYTE*) hash);
 	}
 	else if (credentials->identity.PasswordLength > 0)
 	{
 		NTOWFv2W((LPWSTR) credentials->identity.Password, credentials->identity.PasswordLength * 2,
-				(LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
-				(LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2, (BYTE*) hash);
+				 (LPWSTR) credentials->identity.User, credentials->identity.UserLength * 2,
+				 (LPWSTR) credentials->identity.Domain, credentials->identity.DomainLength * 2, (BYTE*) hash);
 	}
 	else if (context->UseSamFileDatabase)
 	{
@@ -346,7 +323,6 @@ int ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 			return -1;
 
 		ZeroMemory(context->LmChallengeResponse.pvBuffer, 24);
-
 		return 1;
 	}
 
@@ -363,19 +339,16 @@ int ntlm_compute_lm_v2_response(NTLM_CONTEXT* context)
 		return -1;
 
 	response = (BYTE*) context->LmChallengeResponse.pvBuffer;
-
 	/* Compute the HMAC-MD5 hash of the resulting value using the NTLMv2 hash as the key */
 	HMAC(EVP_md5(), (void*) context->NtlmV2Hash, 16, (BYTE*) value, 16, (BYTE*) response, NULL);
-
 	/* Concatenate the resulting HMAC-MD5 hash and the client challenge, giving us the LMv2 response (24 bytes) */
 	CopyMemory(&response[16], context->ClientChallenge, 8);
-
 	return 1;
 }
 
 /**
- * Compute NTLMv2 Response.\n
- * NTLMv2_RESPONSE @msdn{cc236653}\n
+ * Compute NTLMv2 Response.
+ * NTLMv2_RESPONSE @msdn{cc236653}
  * NTLMv2 Authentication @msdn{cc236700}
  * @param NTLM context
  */
@@ -388,7 +361,6 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	SecBuffer ntlm_v2_temp_chal;
 	PSecBuffer TargetInfo;
 	SSPI_CREDENTIALS* credentials;
-
 	credentials = context->credentials;
 	TargetInfo = &context->ChallengeTargetInfo;
 
@@ -404,27 +376,17 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 		return -1;
 
 #ifdef WITH_DEBUG_NTLM
-	fprintf(stderr, "Password (length = %d)\n", credentials->identity.PasswordLength * 2);
-	winpr_HexDump((BYTE*) credentials->identity.Password, credentials->identity.PasswordLength * 2);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "Username (length = %d)\n", credentials->identity.UserLength * 2);
-	winpr_HexDump((BYTE*) credentials->identity.User, credentials->identity.UserLength * 2);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "Domain (length = %d)\n", credentials->identity.DomainLength * 2);
-	winpr_HexDump((BYTE*) credentials->identity.Domain, credentials->identity.DomainLength * 2);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "Workstation (length = %d)\n", context->Workstation.Length);
-	winpr_HexDump((BYTE*) context->Workstation.Buffer, context->Workstation.Length);
-	fprintf(stderr, "\n");
-
-	fprintf(stderr, "NTOWFv2, NTLMv2 Hash\n");
-	winpr_HexDump(context->NtlmV2Hash, 16);
-	fprintf(stderr, "\n");
+	WLog_DBG(TAG, "Password (length = %d)", credentials->identity.PasswordLength * 2);
+	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.Password, credentials->identity.PasswordLength * 2);
+	WLog_DBG(TAG, "Username (length = %d)", credentials->identity.UserLength * 2);
+	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.User, credentials->identity.UserLength * 2);
+	WLog_DBG(TAG, "Domain (length = %d)", credentials->identity.DomainLength * 2);
+	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) credentials->identity.Domain, credentials->identity.DomainLength * 2);
+	WLog_DBG(TAG, "Workstation (length = %d)", context->Workstation.Length);
+	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) context->Workstation.Buffer, context->Workstation.Length);
+	WLog_DBG(TAG, "NTOWFv2, NTLMv2 Hash");
+	winpr_HexDump(TAG, WLOG_DEBUG, context->NtlmV2Hash, 16);
 #endif
-
 	/* Construct temp */
 	blob[0] = 1; /* RespType (1 byte) */
 	blob[1] = 1; /* HighRespType (1 byte) */
@@ -434,11 +396,9 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	CopyMemory(&blob[16], context->ClientChallenge, 8); /* ClientChallenge (8 bytes) */
 	/* Reserved3 (4 bytes) */
 	CopyMemory(&blob[28], TargetInfo->pvBuffer, TargetInfo->cbBuffer);
-
 #ifdef WITH_DEBUG_NTLM
-	fprintf(stderr, "NTLMv2 Response Temp Blob\n");
-	winpr_HexDump(ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
-	fprintf(stderr, "\n");
+	WLog_DBG(TAG, "NTLMv2 Response Temp Blob");
+	winpr_HexDump(TAG, WLOG_DEBUG, ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
 #endif
 
 	/* Concatenate server challenge with temp */
@@ -449,25 +409,21 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 	blob = (BYTE*) ntlm_v2_temp_chal.pvBuffer;
 	CopyMemory(blob, context->ServerChallenge, 8);
 	CopyMemory(&blob[8], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
-
 	HMAC(EVP_md5(), (BYTE*) context->NtlmV2Hash, 16, (BYTE*) ntlm_v2_temp_chal.pvBuffer,
-		ntlm_v2_temp_chal.cbBuffer, (BYTE*) nt_proof_str, NULL);
+		 ntlm_v2_temp_chal.cbBuffer, (BYTE*) nt_proof_str, NULL);
 
 	/* NtChallengeResponse, Concatenate NTProofStr with temp */
-	
+
 	if (!sspi_SecBufferAlloc(&context->NtChallengeResponse, ntlm_v2_temp.cbBuffer + 16))
 		return -1;
 
 	blob = (BYTE*) context->NtChallengeResponse.pvBuffer;
 	CopyMemory(blob, nt_proof_str, 16);
 	CopyMemory(&blob[16], ntlm_v2_temp.pvBuffer, ntlm_v2_temp.cbBuffer);
-
 	/* Compute SessionBaseKey, the HMAC-MD5 hash of NTProofStr using the NTLMv2 hash as the key */
 	HMAC(EVP_md5(), (BYTE*) context->NtlmV2Hash, 16, (BYTE*) nt_proof_str, 16, (BYTE*) context->SessionBaseKey, NULL);
-
 	sspi_SecBufferFree(&ntlm_v2_temp);
 	sspi_SecBufferFree(&ntlm_v2_temp_chal);
-
 	return 1;
 }
 
@@ -482,10 +438,8 @@ int ntlm_compute_ntlm_v2_response(NTLM_CONTEXT* context)
 void ntlm_rc4k(BYTE* key, int length, BYTE* plaintext, BYTE* ciphertext)
 {
 	RC4_KEY rc4;
-
 	/* Initialize RC4 cipher with key */
 	RC4_set_key(&rc4, 16, (void*) key);
-
 	/* Encrypt plaintext with key */
 	RC4(&rc4, length, (void*) plaintext, (void*) ciphertext);
 }
@@ -498,7 +452,6 @@ void ntlm_rc4k(BYTE* key, int length, BYTE* plaintext, BYTE* ciphertext)
 void ntlm_generate_client_challenge(NTLM_CONTEXT* context)
 {
 	/* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-
 	if (memcmp(context->ClientChallenge, NTLM_NULL_BUFFER, 8) == 0)
 		RAND_bytes(context->ClientChallenge, 8);
 }
@@ -515,7 +468,7 @@ void ntlm_generate_server_challenge(NTLM_CONTEXT* context)
 }
 
 /**
- * Generate KeyExchangeKey (the 128-bit SessionBaseKey).\n
+ * Generate KeyExchangeKey (the 128-bit SessionBaseKey).
  * @msdn{cc236710}
  * @param NTLM context
  */
@@ -572,7 +525,6 @@ void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
 	 * 	else
 	 * 		Set RandomSessionKey to KeyExchangeKey
 	 */
-
 	if (context->NegotiateKeyExchange)
 		ntlm_rc4k(context->KeyExchangeKey, 16, context->EncryptedRandomSessionKey, context->RandomSessionKey);
 	else
@@ -580,7 +532,7 @@ void ntlm_decrypt_random_session_key(NTLM_CONTEXT* context)
 }
 
 /**
- * Generate signing key.\n
+ * Generate signing key.
  * @msdn{cc236711}
  * @param exported_session_key ExportedSessionKey
  * @param sign_magic Sign magic string
@@ -592,7 +544,6 @@ int ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign_magic,
 	int length;
 	BYTE* value;
 	MD5_CTX md5;
-
 	length = 16 + sign_magic->cbBuffer;
 	value = (BYTE*) malloc(length);
 
@@ -602,18 +553,15 @@ int ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign_magic,
 	/* Concatenate ExportedSessionKey with sign magic */
 	CopyMemory(value, exported_session_key, 16);
 	CopyMemory(&value[16], sign_magic->pvBuffer, sign_magic->cbBuffer);
-
 	MD5_Init(&md5);
 	MD5_Update(&md5, value, length);
 	MD5_Final(signing_key, &md5);
-
 	free(value);
-
 	return 1;
 }
 
 /**
- * Generate client signing key (ClientSigningKey).\n
+ * Generate client signing key (ClientSigningKey).
  * @msdn{cc236711}
  * @param NTLM context
  */
@@ -621,15 +569,13 @@ int ntlm_generate_signing_key(BYTE* exported_session_key, PSecBuffer sign_magic,
 void ntlm_generate_client_signing_key(NTLM_CONTEXT* context)
 {
 	SecBuffer signMagic;
-
 	signMagic.pvBuffer = (void*) NTLM_CLIENT_SIGN_MAGIC;
 	signMagic.cbBuffer = sizeof(NTLM_CLIENT_SIGN_MAGIC);
-
 	ntlm_generate_signing_key(context->ExportedSessionKey, &signMagic, context->ClientSigningKey);
 }
 
 /**
- * Generate server signing key (ServerSigningKey).\n
+ * Generate server signing key (ServerSigningKey).
  * @msdn{cc236711}
  * @param NTLM context
  */
@@ -637,15 +583,13 @@ void ntlm_generate_client_signing_key(NTLM_CONTEXT* context)
 void ntlm_generate_server_signing_key(NTLM_CONTEXT* context)
 {
 	SecBuffer signMagic;
-	
 	signMagic.pvBuffer = (void*) NTLM_SERVER_SIGN_MAGIC;
 	signMagic.cbBuffer = sizeof(NTLM_SERVER_SIGN_MAGIC);
-
 	ntlm_generate_signing_key(context->ExportedSessionKey, &signMagic, context->ServerSigningKey);
 }
 
 /**
- * Generate sealing key.\n
+ * Generate sealing key.
  * @msdn{cc236712}
  * @param exported_session_key ExportedSessionKey
  * @param seal_magic Seal magic string
@@ -662,22 +606,18 @@ int ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal_magic,
 		return -1;
 
 	p = (BYTE*) buffer.pvBuffer;
-
 	/* Concatenate ExportedSessionKey with seal magic */
 	CopyMemory(p, exported_session_key, 16);
 	CopyMemory(&p[16], seal_magic->pvBuffer, seal_magic->cbBuffer);
-
 	MD5_Init(&md5);
 	MD5_Update(&md5, buffer.pvBuffer, buffer.cbBuffer);
 	MD5_Final(sealing_key, &md5);
-
 	sspi_SecBufferFree(&buffer);
-
 	return 1;
 }
 
 /**
- * Generate client sealing key (ClientSealingKey).\n
+ * Generate client sealing key (ClientSealingKey).
  * @msdn{cc236712}
  * @param NTLM context
  */
@@ -685,15 +625,13 @@ int ntlm_generate_sealing_key(BYTE* exported_session_key, PSecBuffer seal_magic,
 void ntlm_generate_client_sealing_key(NTLM_CONTEXT* context)
 {
 	SecBuffer sealMagic;
-
 	sealMagic.pvBuffer = (void*) NTLM_CLIENT_SEAL_MAGIC;
 	sealMagic.cbBuffer = sizeof(NTLM_CLIENT_SEAL_MAGIC);
-	
 	ntlm_generate_signing_key(context->ExportedSessionKey, &sealMagic, context->ClientSealingKey);
 }
 
 /**
- * Generate server sealing key (ServerSealingKey).\n
+ * Generate server sealing key (ServerSealingKey).
  * @msdn{cc236712}
  * @param NTLM context
  */
@@ -701,10 +639,8 @@ void ntlm_generate_client_sealing_key(NTLM_CONTEXT* context)
 void ntlm_generate_server_sealing_key(NTLM_CONTEXT* context)
 {
 	SecBuffer sealMagic;
-	
 	sealMagic.pvBuffer = (void*) NTLM_SERVER_SEAL_MAGIC;
 	sealMagic.cbBuffer = sizeof(NTLM_SERVER_SEAL_MAGIC);
-
 	ntlm_generate_signing_key(context->ExportedSessionKey, &sealMagic, context->ServerSealingKey);
 }
 
@@ -738,12 +674,10 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 void ntlm_compute_message_integrity_check(NTLM_CONTEXT* context)
 {
 	HMAC_CTX hmac_ctx;
-
 	/*
 	 * Compute the HMAC-MD5 hash of ConcatenationOf(NEGOTIATE_MESSAGE,
 	 * CHALLENGE_MESSAGE, AUTHENTICATE_MESSAGE) using the ExportedSessionKey
 	 */
-
 	HMAC_CTX_init(&hmac_ctx);
 	HMAC_Init_ex(&hmac_ctx, context->ExportedSessionKey, 16, EVP_md5(), NULL);
 	HMAC_Update(&hmac_ctx, (BYTE*) context->NegotiateMessage.pvBuffer, context->NegotiateMessage.cbBuffer);

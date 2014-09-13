@@ -36,6 +36,7 @@ set(${MODULE_PREFIX}_SRCS
 	shape.c
 	graphics.c
 	graphics.h
+	gfx.c
 	gdi.c
 	gdi.h)
 

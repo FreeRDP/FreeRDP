@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Windows RAIL
+ * FreeRDP log defines
  *
- * Copyright 2012 Jason Champion <jchampion@zetacentauri.com>
+ * Copyright 2014 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,13 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef FREERDP_LOG_H
+#define FREERDP_LOG_H
 
-#include "wf_window.h"
+#include <winpr/wlog.h>
+
+#define FREERDP_TAG(tag) "com.freerdp." tag
+#define SERVER_TAG(tag) FREERDP_TAG("server.") tag
+#define CLIENT_TAG(tag) FREERDP_TAG("client.") tag
+
+#endif /* FREERDP_UTILS_DEBUG_H */

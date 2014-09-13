@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Windows Graphical Objects
+ * Winpr log defines
  *
- * Copyright 2010-2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Armin Novak <armin.novak@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,11 @@
  * limitations under the License.
  */
 
-#ifndef __WF_GRAPHICS_H
-#define __WF_GRAPHICS_H
+#ifndef WINPR_LOG_PRIV_H
+#define WINPR_LOG_PRIV_H
 
-#include "wf_client.h"
+#include <winpr/wlog.h>
 
-HBITMAP wf_create_dib(wfContext* wfc, int width, int height, int bpp, BYTE* data, BYTE** pdata);
-wfBitmap* wf_image_new(wfContext* wfc, int width, int height, int bpp, BYTE* data);
-void wf_image_free(wfBitmap* image);
+#define WINPR_TAG(tag) "com.winpr." tag
 
-void wf_register_pointer(rdpGraphics* graphics);
-void wf_register_graphics(rdpGraphics* graphics);
-
-#endif /* WF_GRAPHICS */
+#endif /* FREERDP_UTILS_DEBUG_H */

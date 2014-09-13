@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Graphics Pipeline
+ * GDI Graphics Pipeline
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,27 +17,24 @@
  * limitations under the License.
  */
 
-#ifndef __XF_GRAPHICS_PIPELINE_H
-#define __XF_GRAPHICS_PIPELINE_H
+#ifndef FREERDP_GDI_GFX_H
+#define FREERDP_GDI_GFX_H
 
-#include "xf_client.h"
-#include "xfreerdp.h"
+#include <freerdp/api.h>
+#include <freerdp/gdi/gdi.h>
 
-#include <freerdp/gdi/gfx.h>
-
-struct xf_gfx_surface
+struct gdi_gfx_surface
 {
 	UINT16 surfaceId;
 	UINT32 width;
 	UINT32 height;
 	BOOL alpha;
 	BYTE* data;
-	XImage* image;
 	int scanline;
 };
-typedef struct xf_gfx_surface xfGfxSurface;
+typedef struct gdi_gfx_surface gdiGfxSurface;
 
-struct xf_gfx_cache_entry
+struct gdi_gfx_cache_entry
 {
 	UINT64 cacheKey;
 	UINT32 width;
@@ -46,11 +43,10 @@ struct xf_gfx_cache_entry
 	BYTE* data;
 	int scanline;
 };
-typedef struct xf_gfx_cache_entry xfGfxCacheEntry;
+typedef struct gdi_gfx_cache_entry gdiGfxCacheEntry;
 
-int xf_OutputExpose(xfContext* xfc, int x, int y, int width, int height);
+FREERDP_API void gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx);
+FREERDP_API void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx);
 
-void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx);
-void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx);
+#endif /* FREERDP_GDI_GFX_H */
 
-#endif /* __XF_GRAPHICS_PIPELINE_H */

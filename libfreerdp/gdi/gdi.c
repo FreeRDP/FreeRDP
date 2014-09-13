@@ -330,6 +330,36 @@ INLINE UINT32 gdi_rop3_code(BYTE code)
 	return rop3_code_table[code];
 }
 
+UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel, BOOL vFlip)
+{
+	UINT32 format = PIXEL_FORMAT_XRGB32_VF;
+
+	switch (bitsPerPixel)
+	{
+		case 32:
+			format = vFlip ? PIXEL_FORMAT_XRGB32_VF : PIXEL_FORMAT_XRGB32;
+			break;
+
+		case 24:
+			format = vFlip ? PIXEL_FORMAT_RGB24_VF : PIXEL_FORMAT_RGB24;
+			break;
+
+		case 16:
+			format = vFlip ? PIXEL_FORMAT_RGB16_VF : PIXEL_FORMAT_RGB16;
+			break;
+
+		case 15:
+			format = vFlip ? PIXEL_FORMAT_RGB15_VF : PIXEL_FORMAT_RGB15;
+			break;
+
+		case 8:
+			format = vFlip ? PIXEL_FORMAT_RGB8_VF : PIXEL_FORMAT_RGB8;
+			break;
+	}
+
+	return format;
+}
+
 INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 {
 	BYTE* p;
@@ -451,6 +481,103 @@ void gdi_bitmap_free_ex(gdiBitmap* bitmap)
 		gdi_DeleteObject((HGDIOBJECT) bitmap->bitmap);
 		gdi_DeleteDC(bitmap->hdc);
 		free(bitmap);
+	}
+}
+
+void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
+{
+	int status;
+	int nXDst;
+	int nYDst;
+	int nXSrc;
+	int nYSrc;
+	int nWidth;
+	int nHeight;
+	int nSrcStep;
+	int nDstStep;
+	UINT32 index;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	UINT32 SrcSize;
+	BOOL compressed;
+	UINT32 SrcFormat;
+	UINT32 bitsPerPixel;
+	UINT32 bytesPerPixel;
+	BITMAP_DATA* bitmap;
+	rdpGdi* gdi = context->gdi;
+	rdpCodecs* codecs = context->codecs;
+
+	for (index = 0; index < bitmapUpdate->number; index++)
+	{
+		bitmap = &(bitmapUpdate->rectangles[index]);
+
+		nXSrc = 0;
+		nYSrc = 0;
+
+		nXDst = bitmap->destLeft;
+		nYDst = bitmap->destTop;
+
+		nWidth = bitmap->width;
+		nHeight = bitmap->height;
+
+		pSrcData = bitmap->bitmapDataStream;
+		SrcSize = bitmap->bitmapLength;
+
+		compressed = bitmap->compressed;
+		bitsPerPixel = bitmap->bitsPerPixel;
+		bytesPerPixel = (bitsPerPixel + 7) / 8;
+
+		SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
+
+		if (gdi->bitmap_size < (nWidth * nHeight * 4))
+		{
+			gdi->bitmap_size = nWidth * nHeight * 4;
+			gdi->bitmap_buffer = (BYTE*) _aligned_realloc(gdi->bitmap_buffer, gdi->bitmap_size, 16);
+
+			if (!gdi->bitmap_buffer)
+				return;
+		}
+
+		if (compressed)
+		{
+			pDstData = gdi->bitmap_buffer;
+
+			if (bitsPerPixel < 32)
+			{
+				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
+
+				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
+						&pDstData, SrcFormat, nWidth * bytesPerPixel, 0, 0, nWidth, nHeight);
+			}
+			else
+			{
+				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
+
+				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
+						PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight);
+			}
+
+			if (status < 0)
+			{
+				DEBUG_WARN("gdi_bitmap_update: bitmap decompression failure\n");
+				return;
+			}
+
+			pSrcData = gdi->bitmap_buffer;
+		}
+
+		nSrcStep = nWidth * bytesPerPixel;
+
+		pDstData = gdi->primary_buffer;
+		nDstStep = gdi->width * 4;
+
+		nWidth = bitmap->destRight - bitmap->destLeft + 1; /* clip width */
+		nHeight = bitmap->destBottom - bitmap->destTop + 1; /* clip height */
+
+		status = freerdp_image_copy(pDstData, PIXEL_FORMAT_XRGB32, nDstStep, nXDst, nYDst,
+				nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc);
+
+		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
 	}
 }
 
@@ -791,8 +918,6 @@ void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface
 	}
 }
 
-int tilenum = 0;
-
 void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 {
 	int i, j;
@@ -1014,6 +1139,7 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 		return -1;
 
 	instance->context->gdi = gdi;
+	gdi->context = instance->context;
 	cache = instance->context->cache;
 
 	gdi->codecs = instance->context->codecs;
@@ -1100,6 +1226,8 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 
 	gdi_register_graphics(instance->context->graphics);
 
+	instance->update->BitmapUpdate = gdi_bitmap_update;
+
 	return 0;
 }
 
@@ -1113,6 +1241,7 @@ void gdi_free(freerdp* instance)
 		gdi_bitmap_free_ex(gdi->tile);
 		gdi_bitmap_free_ex(gdi->image);
 		gdi_DeleteDC(gdi->hdc);
+		_aligned_free(gdi->bitmap_buffer);
 		free(gdi->clrconv->palette);
 		free(gdi->clrconv);
 		free(gdi);

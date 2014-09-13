@@ -25,21 +25,21 @@
 
 #include "wlog/DataMessage.h"
 
+#include "../../log.h"
+#define TAG WINPR_TAG("utils.wlog")
+
 int WLog_DataMessage_Write(char* filename, void* data, int length)
 {
 	FILE* fp;
-
 	fp = fopen(filename, "w+b");
 
 	if (!fp)
 	{
-		fprintf(stderr, "failed to open file %s\n", filename);
+		WLog_ERR(TAG, "failed to open file %s", filename);
 		return -1;
 	}
 
 	fwrite(data, length, 1, fp);
-
 	fclose(fp);
-
 	return 0;
 }

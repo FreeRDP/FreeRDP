@@ -21,49 +21,37 @@ int test_NCrushCompressBells()
 	UINT32 expectedSize;
 	BYTE OutputBuffer[65536];
 	NCRUSH_CONTEXT* ncrush;
-
 	ncrush = ncrush_context_new(TRUE);
-
 	SrcSize = sizeof(TEST_BELLS_DATA) - 1;
 	pSrcData = (BYTE*) TEST_BELLS_DATA;
 	expectedSize = sizeof(TEST_BELLS_NCRUSH) - 1;
-
 	pDstData = OutputBuffer;
 	DstSize = sizeof(OutputBuffer);
 	ZeroMemory(OutputBuffer, sizeof(OutputBuffer));
-
 	status = ncrush_compress(ncrush, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-
 	printf("status: %d Flags: 0x%04X DstSize: %d\n", status, Flags, DstSize);
 
 	if (DstSize != expectedSize)
 	{
 		printf("NCrushCompressBells: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
-
 		printf("Actual\n");
-		BitDump(pDstData, DstSize * 8, 0);
-
+		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(TEST_BELLS_NCRUSH, expectedSize * 8, 0);
-
+		BitDump(__FUNCTION__, WLOG_INFO, TEST_BELLS_NCRUSH, expectedSize * 8, 0);
 		return -1;
 	}
 
 	if (memcmp(pDstData, TEST_BELLS_NCRUSH, DstSize) != 0)
 	{
 		printf("NCrushCompressBells: output mismatch\n");
-
 		printf("Actual\n");
-		BitDump(pDstData, DstSize * 8, 0);
-
+		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(TEST_BELLS_NCRUSH, expectedSize * 8, 0);
-
+		BitDump(__FUNCTION__, WLOG_INFO, TEST_BELLS_NCRUSH, expectedSize * 8, 0);
 		return -1;
 	}
 
 	ncrush_context_free(ncrush);
-
 	return 1;
 }
 
@@ -77,14 +65,11 @@ int test_NCrushDecompressBells()
 	UINT32 expectedSize;
 	BYTE* pDstData = NULL;
 	NCRUSH_CONTEXT* ncrush;
-
 	ncrush = ncrush_context_new(FALSE);
-
 	SrcSize = sizeof(TEST_BELLS_NCRUSH) - 1;
 	pSrcData = (BYTE*) TEST_BELLS_NCRUSH;
 	Flags = PACKET_COMPRESSED | 2;
 	expectedSize = sizeof(TEST_BELLS_DATA) - 1;
-
 	status = ncrush_decompress(ncrush, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
 	printf("Flags: 0x%04X DstSize: %d\n", Flags, DstSize);
 
@@ -101,7 +86,6 @@ int test_NCrushDecompressBells()
 	}
 
 	ncrush_context_free(ncrush);
-
 	return 1;
 }
 

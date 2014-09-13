@@ -3,7 +3,7 @@
  * Schannel Security Package (OpenSSL)
  *
  * Copyright 2012-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,6 +27,9 @@
 #include <winpr/print.h>
 
 #include "schannel_openssl.h"
+
+#include "../../log.h"
+#define TAG WINPR_TAG("sspi.schannel")
 
 char* openssl_get_ssl_error_string(int ssl_error)
 {
@@ -56,12 +59,11 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 {
 	int status;
 	long options = 0;
-
 	context->ctx = SSL_CTX_new(TLSv1_client_method());
 
 	if (!context->ctx)
 	{
-		fprintf(stderr, "SSL_CTX_new failed\n");
+		WLog_ERR(TAG, "SSL_CTX_new failed");
 		return -1;
 	}
 
@@ -77,7 +79,6 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 #ifdef SSL_OP_NO_COMPRESSION
 	options |= SSL_OP_NO_COMPRESSION;
 #endif
-
 	/**
 	 * SSL_OP_TLS_BLOCK_PADDING_BUG:
 	 *
@@ -85,7 +86,6 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 	 * It absolutely needs to be disabled otherwise it won't work.
 	 */
 	options |= SSL_OP_TLS_BLOCK_PADDING_BUG;
-
 	/**
 	 * SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS:
 	 *
@@ -93,14 +93,12 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 	 * support empty fragments. This needs to be disabled.
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
-
 	SSL_CTX_set_options(context->ctx, options);
-
 	context->ssl = SSL_new(context->ctx);
 
 	if (!context->ssl)
 	{
-		fprintf(stderr, "SSL_new failed\n");
+		WLog_ERR(TAG, "SSL_new failed");
 		return -1;
 	}
 
@@ -108,29 +106,24 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 
 	if (!context->bioRead)
 	{
-		fprintf(stderr, "BIO_new failed\n");
+		WLog_ERR(TAG, "BIO_new failed");
 		return -1;
 	}
 
 	status = BIO_set_write_buf_size(context->bioRead, SCHANNEL_CB_MAX_TOKEN);
-
 	context->bioWrite = BIO_new(BIO_s_mem());
 
 	if (!context->bioWrite)
 	{
-		fprintf(stderr, "BIO_new failed\n");
+		WLog_ERR(TAG, "BIO_new failed");
 		return -1;
 	}
 
 	status = BIO_set_write_buf_size(context->bioWrite, SCHANNEL_CB_MAX_TOKEN);
-
 	status = BIO_make_bio_pair(context->bioRead, context->bioWrite);
-
 	SSL_set_bio(context->ssl, context->bioRead, context->bioWrite);
-
 	context->ReadBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
 	context->WriteBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
-
 	return 0;
 }
 
@@ -138,13 +131,12 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 {
 	int status;
 	long options = 0;
-
 	//context->ctx = SSL_CTX_new(SSLv23_server_method());
 	context->ctx = SSL_CTX_new(TLSv1_server_method());
 
 	if (!context->ctx)
 	{
-		fprintf(stderr, "SSL_CTX_new failed\n");
+		WLog_ERR(TAG, "SSL_CTX_new failed");
 		return -1;
 	}
 
@@ -155,7 +147,6 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 	 * SSLv3 is used by, eg. Microsoft RDC for Mac OS X.
 	 */
 	options |= SSL_OP_NO_SSLv2;
-
 	/**
 	 * SSL_OP_NO_COMPRESSION:
 	 *
@@ -168,7 +159,6 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 #ifdef SSL_OP_NO_COMPRESSION
 	options |= SSL_OP_NO_COMPRESSION;
 #endif
-
 	/**
 	 * SSL_OP_TLS_BLOCK_PADDING_BUG:
 	 *
@@ -176,7 +166,6 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 	 * It absolutely needs to be disabled otherwise it won't work.
 	 */
 	options |= SSL_OP_TLS_BLOCK_PADDING_BUG;
-
 	/**
 	 * SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS:
 	 *
@@ -184,12 +173,11 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 	 * support empty fragments. This needs to be disabled.
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
-
 	SSL_CTX_set_options(context->ctx, options);
 
 	if (SSL_CTX_use_RSAPrivateKey_file(context->ctx, "/tmp/localhost.key", SSL_FILETYPE_PEM) <= 0)
 	{
-		fprintf(stderr, "SSL_CTX_use_RSAPrivateKey_file failed\n");
+		WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed");
 		return -1;
 	}
 
@@ -197,13 +185,13 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 
 	if (!context->ssl)
 	{
-		fprintf(stderr, "SSL_new failed\n");
+		WLog_ERR(TAG, "SSL_new failed");
 		return -1;
 	}
 
 	if (SSL_use_certificate_file(context->ssl, "/tmp/localhost.crt", SSL_FILETYPE_PEM) <= 0)
 	{
-		fprintf(stderr, "SSL_use_certificate_file failed\n");
+		WLog_ERR(TAG, "SSL_use_certificate_file failed");
 		return -1;
 	}
 
@@ -211,29 +199,24 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 
 	if (!context->bioRead)
 	{
-		fprintf(stderr, "BIO_new failed\n");
+		WLog_ERR(TAG, "BIO_new failed");
 		return -1;
 	}
 
 	status = BIO_set_write_buf_size(context->bioRead, SCHANNEL_CB_MAX_TOKEN);
-
 	context->bioWrite = BIO_new(BIO_s_mem());
 
 	if (!context->bioWrite)
 	{
-		fprintf(stderr, "BIO_new failed\n");
+		WLog_ERR(TAG, "BIO_new failed");
 		return -1;
 	}
 
 	status = BIO_set_write_buf_size(context->bioWrite, SCHANNEL_CB_MAX_TOKEN);
-
 	status = BIO_make_bio_pair(context->bioRead, context->bioWrite);
-
 	SSL_set_bio(context->ssl, context->bioRead, context->bioWrite);
-
 	context->ReadBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
 	context->WriteBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
-
 	return 0;
 }
 
@@ -263,7 +246,7 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 		if (status < 0)
 		{
 			ssl_error = SSL_get_error(context->ssl, status);
-			fprintf(stderr, "SSL_connect error: %s\n", openssl_get_ssl_error_string(ssl_error));
+			WLog_ERR(TAG, "SSL_connect error: %s", openssl_get_ssl_error_string(ssl_error));
 		}
 
 		if (status == 1)
@@ -286,7 +269,6 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 
 			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
 			pBuffer->cbBuffer = status;
-
 			return (context->connected) ? SEC_E_OK : SEC_I_CONTINUE_NEEDED;
 		}
 		else
@@ -316,13 +298,12 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 			return SEC_E_INVALID_TOKEN;
 
 		status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
-
 		status = SSL_accept(context->ssl);
 
 		if (status < 0)
 		{
 			ssl_error = SSL_get_error(context->ssl, status);
-			fprintf(stderr, "SSL_accept error: %s\n", openssl_get_ssl_error_string(ssl_error));
+			WLog_ERR(TAG, "SSL_accept error: %s", openssl_get_ssl_error_string(ssl_error));
 		}
 
 		if (status == 1)
@@ -345,7 +326,6 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 
 			CopyMemory(pBuffer->pvBuffer, context->ReadBuffer, status);
 			pBuffer->cbBuffer = status;
-
 			return (context->connected) ? SEC_E_OK : SEC_I_CONTINUE_NEEDED;
 		}
 		else
@@ -367,7 +347,6 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSec
 	PSecBuffer pStreamBodyBuffer;
 	PSecBuffer pStreamHeaderBuffer;
 	PSecBuffer pStreamTrailerBuffer;
-
 	pStreamHeaderBuffer = sspi_FindSecBuffer(pMessage, SECBUFFER_STREAM_HEADER);
 	pStreamBodyBuffer = sspi_FindSecBuffer(pMessage, SECBUFFER_DATA);
 	pStreamTrailerBuffer = sspi_FindSecBuffer(pMessage, SECBUFFER_STREAM_TRAILER);
@@ -380,7 +359,7 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSec
 	if (status < 0)
 	{
 		ssl_error = SSL_get_error(context->ssl, status);
-		fprintf(stderr, "SSL_write: %s\n", openssl_get_ssl_error_string(ssl_error));
+		WLog_ERR(TAG, "SSL_write: %s", openssl_get_ssl_error_string(ssl_error));
 	}
 
 	status = BIO_read(context->bioWrite, context->ReadBuffer, SCHANNEL_CB_MAX_TOKEN);
@@ -391,12 +370,10 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSec
 		length = (pStreamHeaderBuffer->cbBuffer > (unsigned long) status) ? status : pStreamHeaderBuffer->cbBuffer;
 		CopyMemory(pStreamHeaderBuffer->pvBuffer, &context->ReadBuffer[offset], length);
 		status -= length;
-
 		offset += length;
 		length = (pStreamBodyBuffer->cbBuffer > (unsigned long) status) ? status : pStreamBodyBuffer->cbBuffer;
 		CopyMemory(pStreamBodyBuffer->pvBuffer, &context->ReadBuffer[offset], length);
 		status -= length;
-
 		offset += length;
 		length = (pStreamTrailerBuffer->cbBuffer > (unsigned long) status) ? status : pStreamTrailerBuffer->cbBuffer;
 		CopyMemory(pStreamTrailerBuffer->pvBuffer, &context->ReadBuffer[offset], length);
@@ -413,45 +390,37 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSec
 	BYTE* buffer;
 	int ssl_error;
 	PSecBuffer pBuffer;
-
 	pBuffer = sspi_FindSecBuffer(pMessage, SECBUFFER_DATA);
 
 	if (!pBuffer)
 		return SEC_E_INVALID_TOKEN;
 
 	status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
-
 	status = SSL_read(context->ssl, pBuffer->pvBuffer, pBuffer->cbBuffer);
 
 	if (status < 0)
 	{
 		ssl_error = SSL_get_error(context->ssl, status);
-		fprintf(stderr, "SSL_read: %s\n", openssl_get_ssl_error_string(ssl_error));
+		WLog_ERR(TAG, "SSL_read: %s", openssl_get_ssl_error_string(ssl_error));
 	}
 
 	length = status;
 	buffer = pBuffer->pvBuffer;
-
 	pMessage->pBuffers[0].BufferType = SECBUFFER_STREAM_HEADER;
 	pMessage->pBuffers[0].cbBuffer = 5;
-
 	pMessage->pBuffers[1].BufferType = SECBUFFER_DATA;
 	pMessage->pBuffers[1].pvBuffer = buffer;
 	pMessage->pBuffers[1].cbBuffer = length;
-
 	pMessage->pBuffers[2].BufferType = SECBUFFER_STREAM_TRAILER;
 	pMessage->pBuffers[2].cbBuffer = 36;
-
 	pMessage->pBuffers[3].BufferType = SECBUFFER_EMPTY;
 	pMessage->pBuffers[3].cbBuffer = 0;
-
 	return SEC_E_OK;
 }
 
 SCHANNEL_OPENSSL* schannel_openssl_new()
 {
 	SCHANNEL_OPENSSL* context;
-
 	context = (SCHANNEL_OPENSSL*) malloc(sizeof(SCHANNEL_OPENSSL));
 
 	if (context != NULL)
@@ -470,7 +439,6 @@ void schannel_openssl_free(SCHANNEL_OPENSSL* context)
 	{
 		free(context->ReadBuffer);
 		free(context->WriteBuffer);
-
 		free(context);
 	}
 }
