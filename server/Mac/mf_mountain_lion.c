@@ -82,24 +82,19 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
 	
 	if (status != kCGDisplayStreamFrameStatusFrameComplete)
 	{
-		//unhandled
 		switch(status)
 		{
 			case kCGDisplayStreamFrameStatusFrameIdle:
-				DEBUG_MSG("kCGDisplayStreamFrameStatusFrameIdle\n");
 				break;
 				
 			case kCGDisplayStreamFrameStatusStopped:
-				//we dont need to clean up
-				//printf("kCGDisplayStreamFrameStatusStopped\n");
 				break;
 				
 			case kCGDisplayStreamFrameStatusFrameBlank:
-				DEBUG_MSG("kCGDisplayStreamFrameStatusFrameBlank\n");
 				break;
 				
 			default:
-				DEBUG_MSG("Unhandled Frame Status!!!\n");
+				break;
 				
 		}
 	}
@@ -191,9 +186,9 @@ int mf_mlion_start_getting_screen_updates()
 	CGError err;
 	
 	err = CGDisplayStreamStart(stream);
-	if(err != kCGErrorSuccess)
+	
+	if (err != kCGErrorSuccess)
 	{
-		DEBUG_MSG("Failed to start displaystream!! err = %d\n", err);
 		return 1;
 	}
 	
@@ -205,9 +200,9 @@ int mf_mlion_stop_getting_screen_updates()
 	CGError err;
 	
 	err = CGDisplayStreamStop(stream);
-	if(err != kCGErrorSuccess)
+	
+	if (err != kCGErrorSuccess)
 	{
-		DEBUG_MSG("Failed to stop displaystream!! err = %d\n", err);
 		return 1;
 	}
 	
@@ -224,7 +219,6 @@ int mf_mlion_get_dirty_region(RFX_RECT* invalid)
 	{
 		mf_mlion_peek_dirty_region(invalid);
 	}
-	
 	
 	dispatch_semaphore_signal(region_sem);
 	

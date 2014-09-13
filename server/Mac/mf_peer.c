@@ -83,7 +83,7 @@ BOOL mf_peer_check_fds(freerdp_peer* client)
 	{
 		if (event->type == MF_EVENT_TYPE_REGION)
 		{
-			DEBUG_WARN( "unhandled event\n");
+
 		}
 		else if (event->type == MF_EVENT_TYPE_FRAME_TICK)
 		{
@@ -253,18 +253,6 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	mfPeerContext* context = (mfPeerContext*) client->context;
 	rdpSettings* settings = client->settings;
 	
-	DEBUG_WARN( "Client %s post connect\n", client->hostname);
-	
-	if (client->settings->AutoLogonEnabled)
-	{
-		DEBUG_WARN( " and wants to login automatically as %s\\%s",
-		       client->settings->Domain ? client->settings->Domain : "",
-		       client->settings->Username);
-		
-		/* A real server may perform OS login here if NLA is not executed previously. */
-	}
-	DEBUG_WARN( "\n");
-	
 	mfInfo* mfi = mf_info_get_instance();
 	mfi->scale = 1;
 	
@@ -274,8 +262,7 @@ BOOL mf_peer_post_connect(freerdp_peer* client)
 	
 	if ((settings->DesktopWidth != mfi->servscreen_width) || (settings->DesktopHeight != mfi->servscreen_height))
 	{
-		DEBUG_WARN( "Client requested resolution %dx%d, but will resize to %dx%d\n",
-		       settings->DesktopWidth, settings->DesktopHeight, mfi->servscreen_width, mfi->servscreen_height);
+
 	}
 	
 	settings->DesktopWidth = mfi->servscreen_width;
@@ -314,13 +301,11 @@ BOOL mf_peer_activate(freerdp_peer* client)
 
 void mf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	DEBUG_WARN( "Client sent a synchronize event (flags:0x%08X)\n", flags);
+
 }
 
 void mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	DEBUG_WARN( "Client sent a keyboard event (flags:0x%04X code:0x%04X)\n", flags, code);
-	
 	UINT16 down = 0x4000;
 	//UINT16 up = 0x8000;
 	
@@ -330,52 +315,16 @@ void mf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	{
 		state_down = TRUE;
 	}
-	
-	/*
-	 CGEventRef event;
-	 event = CGEventCreateKeyboardEvent(NULL, (CGKeyCode)code, state_down);
-	 CGEventPost(kCGHIDEventTap, event);
-	 CFRelease(event);
-	 */
 }
 
 void mf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	DEBUG_WARN( "Client sent a unicode keyboard event (flags:0x%04X code:0x%04X)\n", flags, code);
+	
 }
-
-/*void mf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
-{
-	//DEBUG_WARN( "Client sent a mouse event (flags:0x%04X pos: %d,%d)\n", flags, x, y);
-}
-
-void mf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
-{
-	//DEBUG_WARN( "Client sent an extended mouse event (flags:0x%04X pos: %d,%d)\n", flags, x, y);
-}
-*/
-/*static void mf_peer_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
- {
- BYTE i;
- 
- DEBUG_WARN( "Client requested to refresh:\n");
- 
- for (i = 0; i < count; i++)
- {
- DEBUG_WARN( "  (%d, %d) (%d, %d)\n", areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
- }
- }*/
 
 static void mf_peer_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_16* area)
 {
-	if (allow > 0)
-	{
-		DEBUG_WARN( "Client restore output (%d, %d) (%d, %d).\n", area->left, area->top, area->right, area->bottom);
-	}
-	else
-	{
-		DEBUG_WARN( "Client minimized and suppress output.\n");
-	}
+
 }
 
 void mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
@@ -425,20 +374,18 @@ void* mf_peer_main_loop(void* arg)
 	client->Initialize(client);
 	context = (mfPeerContext*) client->context;
 	
-	DEBUG_WARN( "We've got a client %s\n", client->local ? "(local)" : client->hostname);
-	
+
 	while (1)
 	{
 		rcount = 0;
 		
 		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
-			DEBUG_WARN( "Failed to get FreeRDP file descriptor\n");
 			break;
 		}
+		
 		if (mf_peer_get_fds(client, rfds, &rcount) != TRUE)
 		{
-			DEBUG_WARN( "Failed to get mfreerdp file descriptor\n");
 			break;
 		}
 		
@@ -468,20 +415,17 @@ void* mf_peer_main_loop(void* arg)
 			      (errno == EINPROGRESS) ||
 			      (errno == EINTR))) /* signal occurred */
 			{
-				DEBUG_WARN( "select failed\n");
 				break;
 			}
 		}
 		
 		if (client->CheckFileDescriptor(client) != TRUE)
 		{
-			DEBUG_WARN( "Failed to check freerdp file descriptor\n");
 			break;
 		}
 		
 		if ((mf_peer_check_fds(client)) != TRUE)
 		{
-			DEBUG_WARN( "Failed to check mfreerdp file descriptor\n");
 			break;
 		}
 		
@@ -490,8 +434,6 @@ void* mf_peer_main_loop(void* arg)
 			break;
 		}
 	}
-	
-	DEBUG_WARN( "Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
 	
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);

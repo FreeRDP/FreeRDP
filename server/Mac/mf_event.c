@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-//#include <util.h>
 
 #include "mf_event.h"
 
@@ -49,9 +48,6 @@ void mf_signal_event(mfEventQueue* event_queue)
 	int length;
 	
 	length = write(event_queue->pipe_fd[1], "sig", 4);
-	
-	if (length != 4)
-		DEBUG_WARN( "mf_signal_event: error\n");
 }
 
 void mf_set_event(mfEventQueue* event_queue)
@@ -59,9 +55,6 @@ void mf_set_event(mfEventQueue* event_queue)
 	int length;
 	
 	length = write(event_queue->pipe_fd[1], "sig", 4);
-	
-	if (length != 4)
-		DEBUG_WARN( "mf_set_event: error\n");
 }
 
 void mf_clear_events(mfEventQueue* event_queue)
@@ -71,9 +64,6 @@ void mf_clear_events(mfEventQueue* event_queue)
 	while (mf_is_event_set(event_queue))
 	{
 		length = read(event_queue->pipe_fd[0], &length, 4);
-		
-		if (length != 4)
-			DEBUG_WARN( "mf_clear_event: error\n");
 	}
 }
 
@@ -82,9 +72,6 @@ void mf_clear_event(mfEventQueue* event_queue)
 	int length;
 	
 	length = read(event_queue->pipe_fd[0], &length, 4);
-	
-	if (length != 4)
-		DEBUG_WARN( "mf_clear_event: error\n");
 }
 
 void mf_event_push(mfEventQueue* event_queue, mfEvent* event)
@@ -188,7 +175,7 @@ mfEventQueue* mf_event_queue_new()
 		event_queue->events = (mfEvent**) malloc(sizeof(mfEvent*) * event_queue->size);
 		
 		if (pipe(event_queue->pipe_fd) < 0)
-			DEBUG_WARN( "mf_event_queue_new: pipe failed\n");
+			return NULL;
 		
 		pthread_mutex_init(&(event_queue->mutex), NULL);
 	}

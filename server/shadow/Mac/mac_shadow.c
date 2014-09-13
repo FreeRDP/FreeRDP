@@ -53,11 +53,6 @@ void mac_shadow_input_extended_mouse_event(macShadowSubsystem* subsystem, UINT16
 
 }
 
-int mac_shadow_surface_copy(macShadowSubsystem* subsystem)
-{
-	return 1;
-}
-
 void* mac_shadow_subsystem_thread(macShadowSubsystem* subsystem)
 {
 	DWORD status;
@@ -66,7 +61,7 @@ void* mac_shadow_subsystem_thread(macShadowSubsystem* subsystem)
 	HANDLE StopEvent;
 
 	StopEvent = subsystem->server->StopEvent;
-
+	
 	nCount = 0;
 	events[nCount++] = StopEvent;
 
@@ -86,6 +81,18 @@ void* mac_shadow_subsystem_thread(macShadowSubsystem* subsystem)
 
 int mac_shadow_subsystem_init(macShadowSubsystem* subsystem)
 {
+	MONITOR_DEF* monitor;
+	
+	subsystem->monitorCount = 1;
+	
+	monitor = &(subsystem->monitors[0]);
+		
+	monitor->left = 0;
+	monitor->top = 0;
+	monitor->right = 1024;
+	monitor->bottom = 768;
+	monitor->flags = 1;
+	
 	return 1;
 }
 
@@ -139,14 +146,16 @@ macShadowSubsystem* mac_shadow_subsystem_new(rdpShadowServer* server)
 		return NULL;
 
 	subsystem->server = server;
+	
+	subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	
+	region16_init(&(subsystem->invalidRegion));
 
 	subsystem->Init = (pfnShadowSubsystemInit) mac_shadow_subsystem_init;
 	subsystem->Uninit = (pfnShadowSubsystemInit) mac_shadow_subsystem_uninit;
 	subsystem->Start = (pfnShadowSubsystemStart) mac_shadow_subsystem_start;
 	subsystem->Stop = (pfnShadowSubsystemStop) mac_shadow_subsystem_stop;
 	subsystem->Free = (pfnShadowSubsystemFree) mac_shadow_subsystem_free;
-
-	subsystem->SurfaceCopy = (pfnShadowSurfaceCopy) mac_shadow_surface_copy;
 
 	subsystem->SynchronizeEvent = (pfnShadowSynchronizeEvent) mac_shadow_input_synchronize_event;
 	subsystem->KeyboardEvent = (pfnShadowKeyboardEvent) mac_shadow_input_keyboard_event;
