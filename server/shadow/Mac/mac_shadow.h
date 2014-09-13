@@ -44,7 +44,9 @@ struct mac_shadow_subsystem
 	BOOL retina;
 	int pixelWidth;
 	int pixelHeight;
-	
+	BOOL mouseDownLeft;
+	BOOL mouseDownRight;
+	BOOL mouseDownOther;
 	CGDisplayStreamRef stream;
 	dispatch_queue_t captureQueue;
 };

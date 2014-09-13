@@ -45,7 +45,106 @@ void mac_shadow_input_unicode_keyboard_event(macShadowSubsystem* subsystem, UINT
 
 void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y)
 {
-
+	UINT32 scrollX = 0;
+	UINT32 scrollY = 0;
+	CGWheelCount wheelCount = 2;
+	
+	if (flags & PTR_FLAGS_WHEEL)
+	{
+		scrollY = flags & WheelRotationMask;
+		
+		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
+		{
+			scrollY = -(flags & WheelRotationMask) / 392;
+		}
+		else
+		{
+			scrollY = (flags & WheelRotationMask) / 120;
+		}
+		
+		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
+		CGEventRef scroll = CGEventCreateScrollWheelEvent(source, kCGScrollEventUnitLine,
+								  wheelCount, scrollY, scrollX);
+		CGEventPost(kCGHIDEventTap, scroll);
+		
+		CFRelease(scroll);
+		CFRelease(source);
+	}
+	else
+	{
+		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
+		CGEventType mouseType = kCGEventNull;
+		CGMouseButton mouseButton = kCGMouseButtonLeft;
+		
+		if (flags & PTR_FLAGS_MOVE)
+		{
+			if (subsystem->mouseDownLeft)
+				mouseType = kCGEventLeftMouseDragged;
+			else if (subsystem->mouseDownRight)
+				mouseType = kCGEventRightMouseDragged;
+			else if (subsystem->mouseDownOther)
+				mouseType = kCGEventOtherMouseDragged;
+			else
+				mouseType = kCGEventMouseMoved;
+			
+			CGEventRef move = CGEventCreateMouseEvent(source, mouseType, CGPointMake(x, y), mouseButton);
+			CGEventPost(kCGHIDEventTap, move);
+			CFRelease(move);
+		}
+		
+		if (flags & PTR_FLAGS_BUTTON1)
+		{
+			mouseButton = kCGMouseButtonLeft;
+			
+			if (flags & PTR_FLAGS_DOWN)
+			{
+				mouseType = kCGEventLeftMouseDown;
+				subsystem->mouseDownLeft = TRUE;
+			}
+			else
+			{
+				mouseType = kCGEventLeftMouseUp;
+				subsystem->mouseDownLeft = FALSE;
+			}
+		}
+		else if (flags & PTR_FLAGS_BUTTON2)
+		{
+			mouseButton = kCGMouseButtonRight;
+			
+			if (flags & PTR_FLAGS_DOWN)
+			{
+				mouseType = kCGEventRightMouseDown;
+				subsystem->mouseDownRight = TRUE;
+			}
+			else
+			{
+				mouseType = kCGEventRightMouseUp;
+				subsystem->mouseDownRight = FALSE;
+			}
+			
+		}
+		else if (flags & PTR_FLAGS_BUTTON3)
+		{
+			mouseButton = kCGMouseButtonCenter;
+			
+			if (flags & PTR_FLAGS_DOWN)
+			{
+				mouseType = kCGEventOtherMouseDown;
+				subsystem->mouseDownOther = TRUE;
+			}
+			else
+			{
+				mouseType = kCGEventOtherMouseUp;
+				subsystem->mouseDownOther = FALSE;
+			}
+		}
+		
+		CGEventRef mouseEvent = CGEventCreateMouseEvent(source, mouseType, CGPointMake(x, y), mouseButton);
+		CGEventPost(kCGHIDEventTap, mouseEvent);
+		
+		CFRelease(mouseEvent);
+		CFRelease(source);
+	}
 }
 
 void mac_shadow_input_extended_mouse_event(macShadowSubsystem* subsystem, UINT16 flags, UINT16 x, UINT16 y)
