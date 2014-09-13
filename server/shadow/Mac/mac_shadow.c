@@ -79,19 +79,83 @@ void* mac_shadow_subsystem_thread(macShadowSubsystem* subsystem)
 	return NULL;
 }
 
-int mac_shadow_subsystem_init(macShadowSubsystem* subsystem)
+int mac_shadow_detect_monitors(macShadowSubsystem* subsystem)
 {
+	size_t wide, high;
 	MONITOR_DEF* monitor;
+	CGDirectDisplayID displayId;
+	
+	displayId = CGMainDisplayID();
+	
+	CGDisplayModeRef mode = CGDisplayCopyDisplayMode(displayId);
+	
+	subsystem->pixelWidth = CGDisplayModeGetPixelWidth(mode);
+	subsystem->pixelHeight = CGDisplayModeGetPixelHeight(mode);
+	
+	wide = CGDisplayPixelsWide(displayId);
+	high = CGDisplayPixelsHigh(displayId);
+	
+	CGDisplayModeRelease(mode);
+	
+	subsystem->retina = ((subsystem->pixelWidth / wide) == 2) ? TRUE : FALSE;
+	
+	if (subsystem->retina)
+	{
+		subsystem->width = wide;
+		subsystem->height = high;
+	}
+	else
+	{
+		subsystem->width = subsystem->pixelWidth;
+		subsystem->height = subsystem->pixelHeight;
+	}
 	
 	subsystem->monitorCount = 1;
 	
 	monitor = &(subsystem->monitors[0]);
-		
+	
 	monitor->left = 0;
 	monitor->top = 0;
-	monitor->right = 1024;
-	monitor->bottom = 768;
+	monitor->right = subsystem->width;
+	monitor->bottom = subsystem->height;
 	monitor->flags = 1;
+	
+	return 1;
+}
+
+void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisplayStreamUpdateRef) =  ^(CGDisplayStreamFrameStatus status, uint64_t displayTime, IOSurfaceRef frameSurface, CGDisplayStreamUpdateRef updateRef)
+{
+	
+};
+
+int mac_shadow_capture_init(macShadowSubsystem* subsystem)
+{
+	void* keys[2];
+	void* values[2];
+	CFDictionaryRef opts;
+	CGDirectDisplayID displayId;
+	
+	displayId = CGMainDisplayID();
+	
+	subsystem->captureQueue = dispatch_queue_create("mac.shadow.capture", NULL);
+	
+	keys[0] = (void*) kCGDisplayStreamShowCursor;
+	values[0] = (void*) kCFBooleanFalse;
+	
+	opts = CFDictionaryCreate(kCFAllocatorDefault, (const void**) keys, (const void**) values, 1, NULL, NULL);
+	
+	subsystem->stream = CGDisplayStreamCreateWithDispatchQueue(displayId,
+							subsystem->pixelWidth, subsystem->pixelHeight,
+							'BGRA', opts, subsystem->captureQueue, streamHandler);
+	
+	CFRelease(opts);
+	
+	return 1;
+}
+
+int mac_shadow_subsystem_init(macShadowSubsystem* subsystem)
+{
+	mac_shadow_detect_monitors(subsystem);
 	
 	return 1;
 }

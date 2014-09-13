@@ -29,11 +29,24 @@ typedef struct mac_shadow_subsystem macShadowSubsystem;
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
+#include <dispatch/dispatch.h>
+#include <IOKit/IOKitLib.h>
+#include <IOSurface/IOSurface.h>
+#include <CoreVideo/CoreVideo.h>
+#include <CoreGraphics/CoreGraphics.h>
+
 struct mac_shadow_subsystem
 {
 	RDP_SHADOW_SUBSYSTEM_COMMON();
 
-
+	int width;
+	int height;
+	BOOL retina;
+	int pixelWidth;
+	int pixelHeight;
+	
+	CGDisplayStreamRef stream;
+	dispatch_queue_t captureQueue;
 };
 
 #ifdef __cplusplus
