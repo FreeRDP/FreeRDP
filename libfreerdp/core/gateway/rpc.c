@@ -293,7 +293,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 	sec_trailer = (rpc_sec_trailer*) &buffer[sec_trailer_offset];
 	auth_pad_length = sec_trailer->auth_pad_length;
 #if 0
-	WLog_ERR(TAG,  "sec_trailer: type: %d level: %d pad_length: %d reserved: %d context_id: %d",
+	WLog_DBG(TAG,  "sec_trailer: type: %d level: %d pad_length: %d reserved: %d context_id: %d",
 			 sec_trailer->auth_type,
 			 sec_trailer->auth_level,
 			 sec_trailer->auth_pad_length,
