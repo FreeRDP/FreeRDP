@@ -155,17 +155,17 @@ static void searchman_list_show(USB_SEARCHMAN* self)
 {
 	int num = 0;
 	USB_SEARCHDEV* usb;
-	WLog_ERR(TAG,  "=========== Usb Search List =========");
+	WLog_DBG(TAG,  "=========== Usb Search List =========");
 	self->rewind(self);
 	while (self->has_next(self))
 	{
 		usb = self->get_next(self);
-		WLog_ERR(TAG,  "  USB %d: \n", num++);
-		WLog_ERR(TAG,  "	idVendor: 0x%04X", usb->idVendor);
-		WLog_ERR(TAG,  "	idProduct: 0x%04X", usb->idProduct);
+		WLog_DBG(TAG,  "  USB %d: ", num++);
+		WLog_DBG(TAG,  "	idVendor: 0x%04X", usb->idVendor);
+		WLog_DBG(TAG,  "	idProduct: 0x%04X", usb->idProduct);
 	}
 
-	WLog_ERR(TAG,  "================= END ===============");
+	WLog_DBG(TAG,  "================= END ===============");
 }
 
 void searchman_free(USB_SEARCHMAN* self)
