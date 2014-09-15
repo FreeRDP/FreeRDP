@@ -657,7 +657,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	vkcode &= 0xFF;
 
 #if 0
-	WLog_ERR(TAG,  "keyUp: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s",
+	WLog_DBG(TAG,  "keyUp: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s",
 	       keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
 
@@ -1241,7 +1241,7 @@ static void channel_activity_cb(freerdp* instance)
 
 	if (event)
 	{
-		WLog_ERR(TAG,  "channel_activity_cb: message %d", event->id);
+		WLog_DBG(TAG,  "channel_activity_cb: message %d", event->id);
 
 		switch (GetMessageClass(event->id))
 		{
