@@ -38,7 +38,7 @@ endif()
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DeviceServiceEntry")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 

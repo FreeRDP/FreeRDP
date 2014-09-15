@@ -25,7 +25,7 @@ include_directories(${PULSE_INCLUDE_DIR})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+
 
 list(APPEND ${MODULE_PREFIX}_LIBS ${PULSE_LIBRARY})
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
