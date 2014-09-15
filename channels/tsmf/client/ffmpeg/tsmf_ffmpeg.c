@@ -520,7 +520,7 @@ ITSMFDecoder *freerdp_tsmf_client_decoder_subsystem_entry(void)
 		initialized = TRUE;
 	}
 
-	WLog_ERR(TAG,  "TSMFDecoderEntry FFMPEG\n");
+	WLog_DBG(TAG,  "TSMFDecoderEntry FFMPEG");
 	decoder = (TSMFFFmpegDecoder*) malloc(sizeof(TSMFFFmpegDecoder));
 	ZeroMemory(decoder, sizeof(TSMFFFmpegDecoder));
 	decoder->iface.SetFormat = tsmf_ffmpeg_set_format;
