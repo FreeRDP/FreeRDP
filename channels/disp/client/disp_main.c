@@ -125,14 +125,14 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 		Stream_Write_UINT32(s, Monitors[index].DeviceScaleFactor); /* DeviceScaleFactor (4 bytes) */
 
 #if 0
-		WLog_ERR(TAG,  "\t: Flags: 0x%04X\n", Monitors[index].Flags);
-		WLog_ERR(TAG,  "\t: Left: %d\n", Monitors[index].Left);
-		WLog_ERR(TAG,  "\t: Top: %d\n", Monitors[index].Top);
-		WLog_ERR(TAG,  "\t: Width: %d\n", Monitors[index].Width);
-		WLog_ERR(TAG,  "\t: Height: %d\n", Monitors[index].Height);
-		WLog_ERR(TAG,  "\t: PhysicalWidth: %d\n", Monitors[index].PhysicalWidth);
-		WLog_ERR(TAG,  "\t: PhysicalHeight: %d\n", Monitors[index].PhysicalHeight);
-		WLog_ERR(TAG,  "\t: Orientation: %d\n", Monitors[index].Orientation);
+		WLog_DBG(TAG,  "\t: Flags: 0x%04X\n", Monitors[index].Flags);
+		WLog_DBG(TAG,  "\t: Left: %d\n", Monitors[index].Left);
+		WLog_DBG(TAG,  "\t: Top: %d\n", Monitors[index].Top);
+		WLog_DBG(TAG,  "\t: Width: %d\n", Monitors[index].Width);
+		WLog_DBG(TAG,  "\t: Height: %d\n", Monitors[index].Height);
+		WLog_DBG(TAG,  "\t: PhysicalWidth: %d\n", Monitors[index].PhysicalWidth);
+		WLog_DBG(TAG,  "\t: PhysicalHeight: %d\n", Monitors[index].PhysicalHeight);
+		WLog_DBG(TAG,  "\t: Orientation: %d\n", Monitors[index].Orientation);
 #endif
 	}
 
