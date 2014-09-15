@@ -273,7 +273,7 @@ static int func_set_usbd_status(UDEVICE* pdev, UINT32* status, int err_result)
 
 		case LIBUSB_ERROR_IO:
 			*status = USBD_STATUS_STALL_PID;
-			WLog_DBG(TAG,"urb_status: LIBUSB_ERROR_IO!!");
+			WLog_ERR(TAG,"LIBUSB_ERROR_IO!!");
 			break;
 
 		case LIBUSB_ERROR_INVALID_PARAM:
@@ -291,7 +291,7 @@ static int func_set_usbd_status(UDEVICE* pdev, UINT32* status, int err_result)
 				if (!(pdev->status & URBDRC_DEVICE_NOT_FOUND))
 				{
 					pdev->status |= URBDRC_DEVICE_NOT_FOUND;
-					WLog_DBG(TAG,"urb_status: LIBUSB_ERROR_NO_DEVICE!!");
+					WLog_WARN(TAG,"LIBUSB_ERROR_NO_DEVICE!!");
 				}
 			}
 			break;
@@ -601,7 +601,7 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 
 	if (!hub_found)
 	{
-		WLog_DBG(TAG,"hub was not found!");
+		WLog_WARN(TAG,"hub was not found!");
 		return -1;
 	}
 
