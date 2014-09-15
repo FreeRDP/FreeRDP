@@ -18,6 +18,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/input.h>
 #include <winpr/sysinfo.h>
 
 #include <freerdp/codec/color.h>
@@ -37,7 +38,43 @@ void mac_shadow_input_synchronize_event(macShadowSubsystem* subsystem, UINT32 fl
 
 void mac_shadow_input_keyboard_event(macShadowSubsystem* subsystem, UINT16 flags, UINT16 code)
 {
-
+	DWORD vkcode;
+	DWORD keycode;
+	BOOL extended;
+	CGEventRef kbdEvent;
+	CGEventSourceRef source;
+	
+	extended = (flags & KBD_FLAGS_EXTENDED) ? TRUE : FALSE;
+	
+	if (extended)
+		code |= KBDEXT;
+	
+	vkcode = GetVirtualKeyCodeFromVirtualScanCode(code, 4);
+	
+	if (extended)
+		vkcode |= KBDEXT;
+	
+	keycode = GetKeycodeFromVirtualKeyCode(vkcode, KEYCODE_TYPE_APPLE) - 8;
+	
+	if (keycode)
+	{
+		source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
+	
+		if (flags & KBD_FLAGS_DOWN)
+		{
+			kbdEvent = CGEventCreateKeyboardEvent(source, (CGKeyCode) keycode, TRUE);
+			CGEventPost(kCGHIDEventTap, kbdEvent);
+			CFRelease(kbdEvent);
+		}
+		else if (flags & KBD_FLAGS_RELEASE)
+		{
+			kbdEvent = CGEventCreateKeyboardEvent(source, (CGKeyCode) keycode, FALSE);
+			CGEventPost(kCGHIDEventTap, kbdEvent);
+			CFRelease(kbdEvent);
+		}
+	
+		CFRelease(source);
+	}
 }
 
 void mac_shadow_input_unicode_keyboard_event(macShadowSubsystem* subsystem, UINT16 flags, UINT16 code)
@@ -64,7 +101,7 @@ void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem, UINT16 flags, U
 			scrollY = (flags & WheelRotationMask) / 120;
 		}
 		
-		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
+		CGEventSourceRef source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
 		CGEventRef scroll = CGEventCreateScrollWheelEvent(source, kCGScrollEventUnitLine,
 								  wheelCount, scrollY, scrollX);
 		CGEventPost(kCGHIDEventTap, scroll);
@@ -74,7 +111,7 @@ void mac_shadow_input_mouse_event(macShadowSubsystem* subsystem, UINT16 flags, U
 	}
 	else
 	{
-		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateHIDSystemState);
+		CGEventSourceRef source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
 		CGEventType mouseType = kCGEventNull;
 		CGMouseButton mouseButton = kCGMouseButtonLeft;
 		
