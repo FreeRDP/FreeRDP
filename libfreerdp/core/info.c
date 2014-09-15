@@ -70,7 +70,7 @@ BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 		char *base64;
 		base64 = crypto_base64_encode((BYTE *) autoReconnectCookie,
 			sizeof(ARC_SC_PRIVATE_PACKET));
-		WLog_ERR(TAG,  "Reconnect-cookie: %s", base64);
+		WLog_INFO(TAG,  "Reconnect-cookie: %s", base64);
 		free(base64);
 	}
 	return TRUE;
