@@ -222,7 +222,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	listener->sockfds[listener->num_sockfds] = sockfd;
 	listener->events[listener->num_sockfds] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd);
 	listener->num_sockfds++;
-	WLog_ERR(TAG,  "Listening on socket %s.", addr.sun_path);
+	WLog_INFO(TAG,  "Listening on socket %s.", addr.sun_path);
 	return TRUE;
 #else
 	return TRUE;
