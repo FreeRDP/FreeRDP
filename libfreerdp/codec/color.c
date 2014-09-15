@@ -379,12 +379,20 @@ UINT32 freerdp_color_convert_var_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HC
 		return freerdp_color_convert_rgb_bgr(srcColor, srcBpp, dstBpp, clrconv);
 }
 
-UINT32 freerdp_color_convert_drawing_order_color_to_gdi_color(UINT32 color, int bpp, HCLRCONV clrconv)
+UINT32 freerdp_convert_gdi_order_color(UINT32 color, int bpp, UINT32 format)
 {
 	UINT32 r, g, b;
 
 	switch (bpp)
 	{
+		case 32:
+			GetRGB32(r, g, b, color);
+			break;
+
+		case 24:
+			GetRGB32(r, g, b, color);
+			break;
+
 		case 16:
 			color = (color & (UINT32) 0xFF00) | ((color >> 16) & (UINT32) 0xFF);
 			GetRGB16(r, g, b, color);
@@ -397,9 +405,9 @@ UINT32 freerdp_color_convert_drawing_order_color_to_gdi_color(UINT32 color, int 
 
 		case 8:
 			color = (color >> 16) & (UINT32) 0xFF;
-			r = clrconv->palette->entries[color].red;
-			g = clrconv->palette->entries[color].green;
-			b = clrconv->palette->entries[color].blue;
+			//r = clrconv->palette->entries[color].red;
+			//g = clrconv->palette->entries[color].green;
+			//b = clrconv->palette->entries[color].blue;
 			break;
 
 		case 1:
@@ -412,6 +420,9 @@ UINT32 freerdp_color_convert_drawing_order_color_to_gdi_color(UINT32 color, int 
 			return color;
 			break;
 	}
+
+	if (FREERDP_PIXEL_FORMAT_TYPE(format) == FREERDP_PIXEL_FORMAT_TYPE_ABGR)
+		return BGR32(r, g, b);
 
 	return RGB32(r, g, b);
 }

@@ -445,7 +445,7 @@ FREERDP_API UINT32 freerdp_color_convert_rgb_bgr(UINT32 srcColor, int srcBpp, in
 FREERDP_API UINT32 freerdp_color_convert_bgr_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API UINT32 freerdp_color_convert_var_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
-FREERDP_API UINT32 freerdp_color_convert_drawing_order_color_to_gdi_color(UINT32 color, int bpp, HCLRCONV clrconv);
+FREERDP_API UINT32 freerdp_convert_gdi_order_color(UINT32 color, int bpp, UINT32 format);
 
 FREERDP_API HCLRCONV freerdp_clrconv_new(UINT32 flags);
 FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);

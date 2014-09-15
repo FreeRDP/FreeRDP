@@ -356,9 +356,8 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 {
 	xfContext* xfc = (xfContext*) context;
 
-	bgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(bgcolor, context->settings->ColorDepth, xfc->clrconv);
-
-	fgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(fgcolor, context->settings->ColorDepth, xfc->clrconv);
+	bgcolor = freerdp_convert_gdi_order_color(bgcolor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	fgcolor = freerdp_convert_gdi_order_color(fgcolor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
 
 	xf_lock_x11(xfc, FALSE);
 
