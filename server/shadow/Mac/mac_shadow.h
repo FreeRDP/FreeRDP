@@ -47,8 +47,13 @@ struct mac_shadow_subsystem
 	BOOL mouseDownLeft;
 	BOOL mouseDownRight;
 	BOOL mouseDownOther;
+	BOOL updateReady;
+	BYTE* updateBuffer;
 	CGDisplayStreamRef stream;
 	dispatch_queue_t captureQueue;
+	dispatch_semaphore_t dataSemaphore;
+	dispatch_semaphore_t regionSemaphore;
+	CGDisplayStreamUpdateRef lastUpdate;
 };
 
 #ifdef __cplusplus

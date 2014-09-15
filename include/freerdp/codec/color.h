@@ -454,6 +454,9 @@ FREERDP_API int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstSt
 		int nWidth, int nHeight, BYTE* pSrcData, DWORD dwSrcFormat, int nSrcStep, int nXSrc, int nYSrc);
 FREERDP_API int freerdp_image_fill(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, UINT32 color);
+	
+FREERDP_API int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc);
 
 #ifdef __cplusplus
 }
