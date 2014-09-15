@@ -63,7 +63,7 @@ int wf_create_console(void)
 
 	freopen("CONOUT$", "w", stdout);
 	freopen("CONOUT$", "w", stderr);
-	WLog_ERR(TAG,  "Debug console created.");
+	WLog_INFO(TAG,  "Debug console created.");
 	return 0;
 }
 
@@ -199,7 +199,7 @@ BOOL wf_pre_connect(freerdp* instance)
 		}
 
 		wfc->connectionRdpFile = freerdp_client_rdp_file_new();
-		WLog_ERR(TAG,  "Using connection file: %s", settings->ConnectionFile);
+		WLog_INFO(TAG,  "Using connection file: %s", settings->ConnectionFile);
 		freerdp_client_parse_rdp_file(wfc->connectionRdpFile, settings->ConnectionFile);
 		freerdp_client_populate_settings_from_rdp_file(wfc->connectionRdpFile, settings);
 	}
@@ -938,7 +938,7 @@ int freerdp_client_focus_out(wfContext* wfc)
 
 int freerdp_client_set_window_size(wfContext* wfc, int width, int height)
 {
-	WLog_ERR(TAG,  "freerdp_client_set_window_size %d, %d", width, height);
+	WLog_DBG(TAG,  "freerdp_client_set_window_size %d, %d", width, height);
 
 	if ((width != wfc->client_width) || (height != wfc->client_height))
 	{
