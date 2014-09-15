@@ -412,7 +412,7 @@ int rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, pduLength); /* pduLength (4 bytes) */
 
 #ifdef WITH_DEBUG_RDPEI
-	WLog_ERR(TAG,  "rdpei_recv_pdu: eventId: %d (%s) length: %d",
+	WLog_DBG(TAG,  "rdpei_recv_pdu: eventId: %d (%s) length: %d",
 			 eventId, RDPEI_EVENTID_STRINGS[eventId], pduLength);
 #endif
 
