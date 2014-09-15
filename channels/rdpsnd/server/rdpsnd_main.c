@@ -671,7 +671,7 @@ int rdpsnd_server_handle_messages(RdpsndServerContext *context)
 
 	/* when here we have the header + the body */
 #ifdef WITH_DEBUG_SND
-	WLog_ERR(TAG,  "%s: message type %d\n", __FUNCTION__, priv->msgType);
+	WLog_DBG(TAG,  "message type %d", priv->msgType);
 #endif
 	priv->expectedBytes = 4;
 	priv->waitingHeader = TRUE;
