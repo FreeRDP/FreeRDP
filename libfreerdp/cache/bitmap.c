@@ -29,8 +29,10 @@
 #include <freerdp/constants.h>
 #include <winpr/stream.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/cache/bitmap.h>
+
+#define TAG FREERDP_TAG("cache.bitmap")
 
 void update_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 {

@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/shape.h>
@@ -40,6 +41,7 @@
 
 #include "graphics.h"
 
+#define TAG FREERDP_TAG("gdi")
 /* Bitmap Class */
 
 HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, BYTE* data)

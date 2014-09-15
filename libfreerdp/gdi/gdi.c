@@ -563,7 +563,7 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 			if (status < 0)
 			{
-				DEBUG_WARN("gdi_bitmap_update: bitmap decompression failure\n");
+				WLog_ERR(TAG, "bitmap decompression failure");
 				return;
 			}
 
