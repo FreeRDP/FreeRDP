@@ -1173,7 +1173,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 	if (compatibility)
 	{
-		WLog_ERR(TAG,  "WARNING: Using deprecated command-line interface!");
+		WLog_WARN(TAG,  "Using deprecated command-line interface!");
 		return freerdp_client_parse_old_command_line_arguments(argc, argv, settings);
 	}
 	else
