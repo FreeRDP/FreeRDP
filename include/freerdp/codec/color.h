@@ -26,8 +26,6 @@
 #define FREERDP_PIXEL_FORMAT_TYPE_A		0
 #define FREERDP_PIXEL_FORMAT_TYPE_ARGB		1
 #define FREERDP_PIXEL_FORMAT_TYPE_ABGR		2
-#define FREERDP_PIXEL_FORMAT_TYPE_BGRA		3
-#define FREERDP_PIXEL_FORMAT_TYPE_RGBA		4
 
 #define FREERDP_PIXEL_FLIP_NONE			0
 #define FREERDP_PIXEL_FLIP_VERTICAL		1
@@ -450,9 +448,9 @@ FREERDP_API UINT32 freerdp_color_convert_drawing_order_color_to_gdi_color(UINT32
 FREERDP_API HCLRCONV freerdp_clrconv_new(UINT32 flags);
 FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);
 
-FREERDP_API int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDst, int nYDst,
-		int nWidth, int nHeight, BYTE* pSrcData, DWORD dwSrcFormat, int nSrcStep, int nXSrc, int nYSrc);
-FREERDP_API int freerdp_image_fill(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDst, int nYDst,
+FREERDP_API int freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc);
+FREERDP_API int freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, UINT32 color);
 
 #ifdef __cplusplus
