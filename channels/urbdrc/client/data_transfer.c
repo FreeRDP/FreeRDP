@@ -648,7 +648,7 @@ static int urb_control_transfer(URBDRC_CHANNEL_CALLBACK* callback, BYTE* data,
 
 	if (length != OutputBufferSize)
 	{
-		WLog_DBG(TAG, "urb_control_transfer ERROR: buf != length");
+		WLog_ERR(TAG, "urb_control_transfer ERROR: buf != length");
 		return -1;
 	}
 
