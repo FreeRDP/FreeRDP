@@ -283,7 +283,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 
 				if (FAILED(hr))
 				{
-					WLog_INFO(TAG, "%s DispGetParam(0, VT_DISPATCH) failure: 0x%08X",
+					WLog_ERR(TAG, "%s DispGetParam(0, VT_DISPATCH) failure: 0x%08X",
 						GetRDPSessionEventString(dispIdMember), hr);
 					return hr;
 				}
@@ -510,7 +510,7 @@ int win_shadow_wds_wnd_init(winShadowSubsystem* subsystem)
 
 	if (!RegisterClassEx(&wndClassEx))
 	{
-		WLog_INFO(TAG, "RegisterClassEx failure");
+		WLog_ERR(TAG, "RegisterClassEx failure");
 		return -1;
 	}
 
@@ -784,7 +784,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (status < 0)
 	{
-		WLog_INFO(TAG, "win_shadow_rdp_init() failure: %d", status);
+		WLog_ERR(TAG, "win_shadow_rdp_init() failure: %d", status);
 		return status;
 	}
 
@@ -811,7 +811,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (status < 0)
 	{
-		WLog_INFO(TAG, "win_shadow_rdp_start() failure: %d", status);
+		WLog_ERR(TAG, "win_shadow_rdp_start() failure: %d", status);
 		return status;
 	}
 
