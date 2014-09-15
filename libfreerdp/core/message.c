@@ -764,7 +764,7 @@ static void update_message_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* or
 	lParam = (WINDOW_ICON_ORDER*) malloc(sizeof(WINDOW_ICON_ORDER));
 	CopyMemory(lParam, windowIcon, sizeof(WINDOW_ICON_ORDER));
 
-	WLog_ERR(TAG,  "update_message_WindowIcon");
+	WLog_VRB(TAG,  "update_message_WindowIcon");
 
 	if (windowIcon->iconInfo->cbBitsColor > 0)
 	{
