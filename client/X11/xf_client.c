@@ -848,7 +848,7 @@ BOOL xf_post_connect(freerdp *instance)
 		UINT32 flags;
 		flags = CLRCONV_ALPHA;
 
-		if(xfc->bpp > 16)
+		if (xfc->bpp > 16)
 			flags |= CLRBUF_32BPP;
 		else
 			flags |= CLRBUF_16BPP;

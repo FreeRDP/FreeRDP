@@ -42,13 +42,63 @@
 
 /* Bitmap Class */
 
-HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, BYTE* data)
+HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int nWidth, int nHeight, int bpp, BYTE* data)
 {
-	BYTE* bmpData;
+	int nSrcStep;
+	int nDstStep;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	UINT32 SrcFormat;
+	int bytesPerPixel;
 	HGDI_BITMAP bitmap;
 
-	bmpData = freerdp_image_convert(data, NULL, width, height, 32, 32, gdi->clrconv);
-	bitmap = gdi_CreateBitmap(width, height, gdi->dstBpp, bmpData);
+	nDstStep = nWidth * gdi->bytesPerPixel;
+	pDstData = _aligned_malloc(nHeight * nDstStep, 16);
+
+	if (!pDstData)
+		return NULL;
+
+	pSrcData = data;
+
+	switch (bpp)
+	{
+		case 32:
+			bytesPerPixel = 4;
+			SrcFormat = PIXEL_FORMAT_XRGB32;
+			break;
+
+		case 24:
+			bytesPerPixel = 3;
+			SrcFormat = PIXEL_FORMAT_RGB24;
+			break;
+
+		case 16:
+			bytesPerPixel = 2;
+			SrcFormat = PIXEL_FORMAT_RGB565;
+			break;
+
+		case 15:
+			bytesPerPixel = 2;
+			SrcFormat = PIXEL_FORMAT_RGB555;
+			break;
+
+		case 8:
+			bytesPerPixel = 1;
+			SrcFormat = PIXEL_FORMAT_RGB8;
+			break;
+
+		default:
+			SrcFormat = PIXEL_FORMAT_RGB565;
+			bytesPerPixel = 2;
+			break;
+	}
+
+	nSrcStep = nWidth * bytesPerPixel;
+
+	freerdp_image_copy(pDstData, gdi->format, nDstStep, 0, 0,
+			nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, 0, 0);
+
+	bitmap = gdi_CreateBitmap(nWidth, nHeight, gdi->dstBpp, pDstData);
 
 	return bitmap;
 }

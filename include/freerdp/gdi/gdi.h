@@ -284,7 +284,9 @@ struct rdp_gdi
 	int bytesPerPixel;
 	rdpCodecs* codecs;
 
+	BOOL abgr;
 	HGDI_DC hdc;
+	UINT32 format;
 	HCLRCONV clrconv;
 	gdiBitmap* primary;
 	gdiBitmap* drawing;
