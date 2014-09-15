@@ -1334,7 +1334,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 #endif
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
-	WLog_ERR(TAG,  "TS Gateway Connection Success");
+	WLog_INFO(TAG,  "TS Gateway Connection Success");
 	return TRUE;
 }
 
