@@ -181,32 +181,36 @@ int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BY
 
 	if (0)
 	{
-		WLog_INFO(TAG, "");
+		char *col_str = calloc(ncol + 1, sizeof(char));
+		if (!col_str)
+		{
+			WLog_ERR(TAG, "calloc failed!");
+			return 1;
+		}
 
 		for (tx = 0; tx < ncol; tx++)
-			WLog_INFO(TAG, "-");
-		WLog_INFO(TAG, "");
+			sprintf(&col_str[tx], "-");
+		WLog_INFO(TAG, "%s", col_str);
 
 		for (tx = 0; tx < ncol; tx++)
-			WLog_INFO(TAG, "%s", cols[tx] ? "O" : "X");
-		WLog_INFO(TAG, "");
+			sprintf(&col_str[tx], "%c", cols[tx] ? 'O' : 'X');
+		WLog_INFO(TAG, "%s", col_str);
 
 		for (tx = 0; tx < ncol; tx++)
-			WLog_INFO(TAG, "-");
-		WLog_INFO(TAG, "");
+			sprintf(&col_str[tx], "-");
+		WLog_INFO(TAG, "%s", col_str);
 
 		for (ty = 0; ty < nrow; ty++)
 		{
 			for (tx = 0; tx < ncol; tx++)
-			{
-				WLog_INFO(TAG, "%s", grid[ty][tx] ? "O" : "X");
-			}
-
+				sprintf(&col_str[tx], "%c", cols[tx] ? 'O' : 'X');
+			WLog_INFO(TAG, "%s", col_str);
 			WLog_INFO(TAG, "|%s|", rows[ty] ? "O" : "X");
 		}
 
 		WLog_INFO(TAG, "left: %d top: %d right: %d bottom: %d ncol: %d nrow: %d",
 				l, t, r, b, ncol, nrow);
+		free(col_str);
 	}
 
 	return 1;
