@@ -3110,7 +3110,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 		pDstData = decompressedBitmap;
 
 		if (planar_decompress(planar, compressedBitmap, dstSize, &pDstData,
-				PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height) < 0)
+				PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE) < 0)
 		{
 			printf("failed to decompress white bitmap: width: %d height: %d\n", width, height);
 			return -1;
@@ -3148,7 +3148,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 		pDstData = decompressedBitmap;
 
 		if (planar_decompress(planar, compressedBitmap, dstSize, &pDstData,
-				PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height) < 0)
+				PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE) < 0)
 		{
 			printf("failed to decompress black bitmap: width: %d height: %d\n", width, height);
 			return -1;
@@ -3185,7 +3185,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	pDstData = decompressedBitmap;
 
 	if (planar_decompress(planar, compressedBitmap, dstSize, &pDstData,
-			PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height) < 0)
+			PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE) < 0)
 	{
 		printf("failed to decompress experimental bitmap 01: width: %d height: %d\n", width, height);
 		return -1;
@@ -3223,7 +3223,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	pDstData = decompressedBitmap;
 
 	if (planar_decompress(planar, compressedBitmap, dstSize, &pDstData,
-			PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height) < 0)
+			PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE) < 0)
 	{
 		printf("failed to decompress experimental bitmap 02: width: %d height: %d\n", width, height);
 		return -1;
@@ -3268,7 +3268,7 @@ int TestFreeRDPCodecPlanar(int argc, char* argv[])
 	pDstData = decompressedBitmap;
 
 	if (planar_decompress(planar, compressedBitmap, dstSize, &pDstData,
-			PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height) < 0)
+			PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE) < 0)
 	{
 		printf("failed to decompress experimental bitmap 03: width: %d height: %d\n", width, height);
 		return -1;

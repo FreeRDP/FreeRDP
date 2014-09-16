@@ -244,7 +244,7 @@ Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp, BYTE* data)
 
 	bitmap = XCreatePixmap(xfc->display, xfc->drawable, width, height, xfc->depth);
 
-	if (data != NULL)
+	if (data)
 	{
 		GC gc;
 
@@ -347,14 +347,14 @@ void xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
 
 				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
-						&pDstData, PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight);
+						&pDstData, xfc->format, -1, 0, 0, nWidth, nHeight);
 			}
 			else
 			{
 				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
 
 				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
-						PIXEL_FORMAT_XRGB32_VF, nWidth * 4, 0, 0, nWidth, nHeight);
+						xfc->format, -1, 0, 0, nWidth, nHeight, TRUE);
 			}
 
 			if (status < 0)
@@ -362,6 +362,15 @@ void xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 				DEBUG_WARN("xf_gdi_bitmap_update: bitmap decompression failure\n");
 				return;
 			}
+
+			pSrcData = xfc->bitmap_buffer;
+		}
+		else
+		{
+			pDstData = xfc->bitmap_buffer;
+
+			status = freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
+						nWidth, nHeight, pSrcData, SrcFormat, -1, 0, 0);
 
 			pSrcData = xfc->bitmap_buffer;
 		}
@@ -405,7 +414,7 @@ void xf_gdi_set_bounds(rdpContext* context, rdpBounds* bounds)
 
 	xf_lock_x11(xfc, FALSE);
 
-	if (bounds != NULL)
+	if (bounds)
 	{
 		clip.x = bounds->left;
 		clip.y = bounds->top;
@@ -436,7 +445,7 @@ void xf_gdi_dstblt(rdpContext* context, DSTBLT_ORDER* dstblt)
 
 	if (xfc->drawing == xfc->primary)
 	{
-		if (xfc->remote_app != TRUE)
+		if (!xfc->remote_app)
 		{
 			XFillRectangle(xfc->display, xfc->drawable, xfc->gc, dstblt->nLeftRect, dstblt->nTopRect, dstblt->nWidth, dstblt->nHeight);
 		}
@@ -530,7 +539,7 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	if (xfc->drawing == xfc->primary)
 	{
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
-		if (xfc->remote_app != TRUE)
+		if (!xfc->remote_app)
 		{
 			XCopyArea(xfc->display, xfc->primary, xfc->drawable, xfc->gc, patblt->nLeftRect, patblt->nTopRect, patblt->nWidth, patblt->nHeight, patblt->nLeftRect, patblt->nTopRect);
 		}
@@ -555,7 +564,7 @@ void xf_gdi_scrblt(rdpContext* context, SCRBLT_ORDER* scrblt)
 
 	if (xfc->drawing == xfc->primary)
 	{
-		if (xfc->remote_app != TRUE)
+		if (!xfc->remote_app)
 		{
 			if (xfc->unobscured)
 			{
@@ -596,12 +605,13 @@ void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 
 	if (xfc->drawing == xfc->primary)
 	{
-		if (xfc->remote_app != TRUE)
+		if (!xfc->remote_app)
 		{
 			XFillRectangle(xfc->display, xfc->drawable, xfc->gc,
 					opaque_rect->nLeftRect, opaque_rect->nTopRect,
 					opaque_rect->nWidth, opaque_rect->nHeight);
 		}
+
 		gdi_InvalidateRegion(xfc->hdc, opaque_rect->nLeftRect, opaque_rect->nTopRect,
 				opaque_rect->nWidth, opaque_rect->nHeight);
 	}
@@ -635,7 +645,7 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 
 		if (xfc->drawing == xfc->primary)
 		{
-			if (xfc->remote_app != TRUE)
+			if (!xfc->remote_app)
 			{
 				XFillRectangle(xfc->display, xfc->drawable, xfc->gc,
 						rectangle->left, rectangle->top,
@@ -672,7 +682,7 @@ void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 
 	if (xfc->drawing == xfc->primary)
 	{
-		if (xfc->remote_app != TRUE)
+		if (!xfc->remote_app)
 		{
 			XDrawLine(xfc->display, xfc->drawable, xfc->gc,
 					line_to->nXStart, line_to->nYStart, line_to->nXEnd, line_to->nYEnd);
@@ -734,7 +744,7 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 
 	if (xfc->drawing == xfc->primary)
 	{
-		if (xfc->remote_app != TRUE)
+		if (!xfc->remote_app)
 		{
 			XDrawLines(xfc->display, xfc->drawable, xfc->gc, points, npoints, CoordModePrevious);
 		}
@@ -781,12 +791,13 @@ void xf_gdi_memblt(rdpContext* context, MEMBLT_ORDER* memblt)
 
 	if (xfc->drawing == xfc->primary)
 	{
-		if (xfc->remote_app != TRUE)
+		if (!xfc->remote_app)
 		{
 			XCopyArea(xfc->display, bitmap->pixmap, xfc->drawable, xfc->gc,
 					memblt->nXSrc, memblt->nYSrc, memblt->nWidth, memblt->nHeight,
 					memblt->nLeftRect, memblt->nTopRect);
 		}
+
 		gdi_InvalidateRegion(xfc->hdc, memblt->nLeftRect, memblt->nTopRect, memblt->nWidth, memblt->nHeight);
 	}
 
@@ -854,7 +865,7 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 	if (xfc->drawing == xfc->primary)
 	{
-		if (xfc->remote_app != TRUE)
+		if (!xfc->remote_app)
 		{
 			XCopyArea(xfc->display, bitmap->pixmap, xfc->drawable, xfc->gc,
 					mem3blt->nXSrc, mem3blt->nYSrc, mem3blt->nWidth, mem3blt->nHeight,
@@ -1165,7 +1176,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 		{
 			tx = message->rects[i].x + cmd->destLeft;
 			ty = message->rects[i].y + cmd->destTop;
-			if (xfc->remote_app != TRUE)
+			if (!xfc->remote_app)
 			{
 				XCopyArea(xfc->display, xfc->primary, xfc->drawable, xfc->gc, tx, ty, message->rects[i].width, message->rects[i].height, tx, ty);
 			}
@@ -1240,7 +1251,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 			free(xfc->bmp_codec_none);
 			xfc->bmp_codec_none = NULL;
 
-			if (xfc->remote_app != TRUE)
+			if (!xfc->remote_app)
 			{
 				XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, 
 						cmd->destLeft, cmd->destTop,

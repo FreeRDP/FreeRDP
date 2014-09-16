@@ -85,6 +85,8 @@ struct xf_context
 	int height;
 	int srcBpp;
 	GC gc_mono;
+	BOOL invert;
+	UINT32 format;
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;

@@ -554,7 +554,7 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
 
 				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
-						gdi->format, nWidth * 4, 0, 0, nWidth, nHeight);
+						gdi->format, nWidth * 4, 0, 0, nWidth, nHeight, TRUE);
 			}
 
 			if (status < 0)

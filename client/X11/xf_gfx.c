@@ -290,7 +290,7 @@ int xf_SurfaceCommand_Planar(xfContext* xfc, RdpgfxClientContext* context, RDPGF
 	DstData = surface->data;
 
 	status = planar_decompress(xfc->codecs->planar, cmd->data, cmd->length, &DstData,
-			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
+			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height, FALSE);
 
 	invalidRect.left = cmd->left;
 	invalidRect.top = cmd->top;
@@ -541,6 +541,7 @@ int xf_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* cr
 	surface->width = (UINT32) createSurface->width;
 	surface->height = (UINT32) createSurface->height;
 	surface->alpha = (createSurface->pixelFormat == PIXEL_FORMAT_ARGB_8888) ? TRUE : FALSE;
+	surface->format = xfc->format;
 
 	surface->scanline = (surface->width + (surface->width % 4)) * 4;
 	surface->data = (BYTE*) calloc(1, surface->scanline * surface->height);
@@ -690,6 +691,7 @@ int xf_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU*
 	RDPGFX_RECT16* rect;
 	xfGfxSurface* surface;
 	xfGfxCacheEntry* cacheEntry;
+	xfContext* xfc = (xfContext*) context->custom;
 
 	rect = &(surfaceToCache->rectSrc);
 
@@ -706,6 +708,7 @@ int xf_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU*
 	cacheEntry->width = (UINT32) (rect->right - rect->left);
 	cacheEntry->height = (UINT32) (rect->bottom - rect->top);
 	cacheEntry->alpha = surface->alpha;
+	cacheEntry->format = xfc->format;
 
 	cacheEntry->scanline = (cacheEntry->width + (cacheEntry->width % 4)) * 4;
 	cacheEntry->data = (BYTE*) calloc(1, cacheEntry->scanline * cacheEntry->height);

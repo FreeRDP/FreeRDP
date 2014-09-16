@@ -294,7 +294,7 @@ int gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_
 	DstData = surface->data;
 
 	status = planar_decompress(gdi->codecs->planar, cmd->data, cmd->length, &DstData,
-			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
+			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height, FALSE);
 
 	invalidRect.left = cmd->left;
 	invalidRect.top = cmd->top;

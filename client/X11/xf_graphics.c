@@ -135,14 +135,14 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_INTERLEAVED);
 
 			status = interleaved_decompress(xfc->codecs->interleaved, pSrcData, SrcSize, bpp,
-					&pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height);
+					&pDstData, xfc->format, -1, 0, 0, width, height);
 		}
 		else
 		{
 			freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_PLANAR);
 
-			status = planar_decompress(xfc->codecs->planar, pSrcData, SrcSize, &pDstData,
-					PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
+			status = planar_decompress(xfc->codecs->planar, pSrcData, SrcSize,
+					&pDstData, xfc->format, -1, 0, 0, width, height, TRUE);
 		}
 
 		if (status < 0)
@@ -155,13 +155,13 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 
-		status = freerdp_image_copy(pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0,
-				width, height, pSrcData, SrcFormat, width * bytesPerPixel, 0, 0);
+		status = freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
+				width, height, pSrcData, SrcFormat, -1, 0, 0);
 	}
 
 	bitmap->compressed = FALSE;
 	bitmap->length = size;
-	bitmap->bpp = 32;
+	bitmap->bpp = (xfc->depth >= 24) ? 32 : xfc->depth;
 }
 
 void xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)

@@ -275,7 +275,7 @@ static int planar_decompress_planes_raw(const BYTE* pSrcData[4], int nSrcStep, B
 }
 
 int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, BOOL vFlip)
 {
 	BOOL cs;
 	BOOL rle;
@@ -283,7 +283,6 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 	BOOL alpha;
 	int status;
 	BYTE* srcp;
-	BOOL vFlip;
 	int subSize;
 	int subWidth;
 	int subHeight;
@@ -300,8 +299,6 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 
 	if ((nWidth * nHeight) <= 0)
 		return -1;
-
-	vFlip = FREERDP_PIXEL_FORMAT_FLIP(DstFormat) ? TRUE : FALSE;
 
 	srcp = pSrcData;
 	UncompressedSize = nWidth * nHeight * 4;

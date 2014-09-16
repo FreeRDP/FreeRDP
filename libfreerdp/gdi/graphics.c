@@ -183,7 +183,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_PLANAR);
 
 			status = planar_decompress(gdi->codecs->planar, pSrcData, SrcSize, &pDstData,
-					PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
+					PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE);
 		}
 
 		if (status < 0)
