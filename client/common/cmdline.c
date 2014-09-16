@@ -253,8 +253,8 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 
 	printf("Drive Redirection: /drive:home,/home/user\n");
 	printf("Smartcard Redirection: /smartcard:<device>\n");
-	printf("Printer Redirection: /printer:<device>,<driver>\n");
-	printf("Serial Port Redirection: /serial:<device>\n");
+	printf("Serial Port Redirection: /serial:<name>,<device>,[SerCx2|SerCx|Serial],[permissive]\n");
+	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
 	printf("Parallel Port Redirection: /parallel:<device>\n");
 	printf("Printer Redirection: /printer:<device>,<driver>\n");
 	printf("\n");
@@ -421,6 +421,9 @@ int freerdp_client_add_device_channel(rdpSettings* settings, int count, char** p
 
 		if (count > 3)
 			serial->Driver = _strdup(params[3]);
+
+		if (count > 4)
+			serial->Permissive = _strdup(params[4]);
 
 		freerdp_device_collection_add(settings, (RDPDR_DEVICE*) serial);
 

@@ -44,12 +44,17 @@ struct winpr_comm
 	int fd_write_event; /* as of today, only used by _purge() */
 	CRITICAL_SECTION WriteLock;
 
-	/* permissive mode on errors if TRUE (default is FALSE).
+	/* permissive mode on errors. If TRUE (default is FALSE)
+	 * CommDeviceIoControl always return TRUE.
 	 *
-	 * Since not all features are supported, some devices and applications
-	 * can still be functional on such errors.
+	 * Not all features are supported yet and an error is then returned when
+	 * an application turns them on (e.g: i/o buffers > 4096). It appeared
+	 * though that devices and applications can be still functional on such
+	 * errors.
 	 *
-	 * TODO: command line switch or getting rid of it.
+	 * see also: comm_ioctl.c
+	 *
+	 * FIXME: getting rid of this flag once all features supported.
 	 */
 	BOOL permissive;
 
