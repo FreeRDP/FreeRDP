@@ -633,6 +633,7 @@ int gdi_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill
 int gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface)
 {
 	UINT16 index;
+	BOOL sameSurface;
 	int nWidth, nHeight;
 	RDPGFX_RECT16* rectSrc;
 	RDPGFX_POINT16* destPt;
@@ -646,7 +647,9 @@ int gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE
 
 	surfaceSrc = (gdiGfxSurface*) context->GetSurfaceData(context, surfaceToSurface->surfaceIdSrc);
 
-	if (surfaceToSurface->surfaceIdSrc != surfaceToSurface->surfaceIdDest)
+	sameSurface = (surfaceToSurface->surfaceIdSrc == surfaceToSurface->surfaceIdDest) ? TRUE : FALSE;
+
+	if (!sameSurface)
 		surfaceDst = (gdiGfxSurface*) context->GetSurfaceData(context, surfaceToSurface->surfaceIdDest);
 	else
 		surfaceDst = surfaceSrc;
@@ -661,9 +664,17 @@ int gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE
 	{
 		destPt = &surfaceToSurface->destPts[index];
 
-		freerdp_image_copy(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
-				destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data, surfaceSrc->format,
-				surfaceSrc->scanline, rectSrc->left, rectSrc->top);
+		if (sameSurface)
+		{
+			freerdp_image_move(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
+					destPt->x, destPt->y, nWidth, nHeight, rectSrc->left, rectSrc->top);
+		}
+		else
+		{
+			freerdp_image_copy(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
+					destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data, surfaceSrc->format,
+					surfaceSrc->scanline, rectSrc->left, rectSrc->top);
+		}
 
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;

@@ -1878,6 +1878,91 @@ int freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst,
 	return -1;
 }
 
+int freerdp_image_move(BYTE* pData, DWORD Format, int nStep, int nXDst, int nYDst, int nWidth, int nHeight, int nXSrc, int nYSrc)
+{
+	int y;
+	BOOL overlap;
+	BYTE* pSrcPixel;
+	BYTE* pDstPixel;
+
+	overlap = (((nXDst + nWidth) > nXSrc) && (nXDst < (nXSrc + nWidth)) &&
+		((nYDst + nHeight) > nYSrc) && (nYDst < (nYSrc + nHeight))) ? TRUE : FALSE;
+
+	if (!overlap)
+	{
+		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * 4)];
+		pDstPixel = &pData[(nYDst * nStep) + (nXDst * 4)];
+
+		for (y = 0; y < nHeight; y++)
+		{
+			CopyMemory(pDstPixel, pSrcPixel, nWidth * 4);
+			pSrcPixel += nStep;
+			pDstPixel += nStep;
+		}
+
+		return 1;
+	}
+
+	if (nYSrc < nYDst)
+	{
+		/* copy down */
+
+		pSrcPixel = &pData[((nYSrc + nHeight - 1) * nStep) + (nXSrc * 4)];
+		pDstPixel = &pData[((nYDst + nHeight - 1) * nStep) + (nXDst * 4)];
+
+		for (y = 0; y < nHeight; y++)
+		{
+			CopyMemory(pDstPixel, pSrcPixel, nWidth * 4);
+			pSrcPixel -= nStep;
+			pDstPixel -= nStep;
+		}
+	}
+	else if (nYSrc > nYDst)
+	{
+		/* copy up */
+
+		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * 4)];
+		pDstPixel = &pData[(nYDst * nStep) + (nXDst * 4)];
+
+		for (y = 0; y < nHeight; y++)
+		{
+			CopyMemory(pDstPixel, pSrcPixel, nWidth * 4);
+			pSrcPixel += nStep;
+			pDstPixel += nStep;
+		}
+	}
+	else if (nXSrc > nXDst)
+	{
+		/* copy left */
+
+		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * 4)];
+		pDstPixel = &pData[(nYDst * nStep) + (nXDst * 4)];
+
+		for (y = 0; y < nHeight; y++)
+		{
+			MoveMemory(pDstPixel, pSrcPixel, nWidth * 4);
+			pSrcPixel += nStep;
+			pDstPixel += nStep;
+		}
+	}
+	else
+	{
+		/* copy right */
+
+		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * 4)];
+		pDstPixel = &pData[(nYDst * nStep) + (nXDst * 4)];
+
+		for (y = 0; y < nHeight; y++)
+		{
+			MoveMemory(pDstPixel, pSrcPixel, nWidth * 4);
+			pSrcPixel += nStep;
+			pDstPixel += nStep;
+		}
+	}
+
+	return 1;
+}
+
 void* freerdp_image_memset32(UINT32* ptr, UINT32 fill, size_t length)
 {
 	while (length--)

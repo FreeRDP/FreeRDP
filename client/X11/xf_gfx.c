@@ -628,6 +628,7 @@ int xf_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill)
 int xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface)
 {
 	UINT16 index;
+	BOOL sameSurface;
 	int nWidth, nHeight;
 	RDPGFX_RECT16* rectSrc;
 	RDPGFX_POINT16* destPt;
@@ -638,11 +639,12 @@ int xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_
 
 	rectSrc = &(surfaceToSurface->rectSrc);
 	destPt = &surfaceToSurface->destPts[0];
-	/**not needed?*/
 
 	surfaceSrc = (xfGfxSurface*) context->GetSurfaceData(context, surfaceToSurface->surfaceIdSrc);
 
-	if (surfaceToSurface->surfaceIdSrc != surfaceToSurface->surfaceIdDest)
+	sameSurface = (surfaceToSurface->surfaceIdSrc == surfaceToSurface->surfaceIdDest) ? TRUE : FALSE;
+
+	if (!sameSurface)
 		surfaceDst = (xfGfxSurface*) context->GetSurfaceData(context, surfaceToSurface->surfaceIdDest);
 	else
 		surfaceDst = surfaceSrc;
@@ -657,16 +659,22 @@ int xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_
 	{
 		destPt = &surfaceToSurface->destPts[index];
 
-		freerdp_image_copy(surfaceDst->data, PIXEL_FORMAT_XRGB32, surfaceDst->scanline,
-				destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data, PIXEL_FORMAT_XRGB32,
-				surfaceSrc->scanline, rectSrc->left, rectSrc->top);
+		if (sameSurface)
+		{
+			freerdp_image_move(surfaceDst->data, PIXEL_FORMAT_XRGB32, surfaceDst->scanline,
+					destPt->x, destPt->y, nWidth, nHeight, rectSrc->left, rectSrc->top);
+		}
+		else
+		{
+			freerdp_image_copy(surfaceDst->data, PIXEL_FORMAT_XRGB32, surfaceDst->scanline,
+					destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data, PIXEL_FORMAT_XRGB32,
+					surfaceSrc->scanline, rectSrc->left, rectSrc->top);
+		}
 
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;
 		invalidRect.right = destPt->x + rectSrc->right;
 		invalidRect.bottom = destPt->y + rectSrc->bottom;
-		
-		/**width,height?*/
 
 		region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &invalidRect);
 	}
