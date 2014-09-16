@@ -31,7 +31,7 @@
 #include <freerdp/gdi/region.h>
 #include <freerdp/cache/cache.h>
 #include <freerdp/codec/color.h>
-#include <freerdp/utils/debug.h>
+
 #include <freerdp/channels/channels.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>

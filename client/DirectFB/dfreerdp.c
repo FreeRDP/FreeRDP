@@ -24,6 +24,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/event.h>
+
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
@@ -36,6 +37,9 @@
 #include "df_graphics.h"
 
 #include "dfreerdp.h"
+
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("directFB")
 
 static HANDLE g_sem;
 static int g_thread_count = 0;
@@ -232,18 +236,17 @@ BOOL df_post_connect(freerdp* instance)
 BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
 {
 	char answer;
-
-	printf("Certificate details:\n");
-	printf("\tSubject: %s\n", subject);
-	printf("\tIssuer: %s\n", issuer);
-	printf("\tThumbprint: %s\n", fingerprint);
-	printf("The above X.509 certificate could not be verified, possibly because you do not have "
-		"the CA certificate in your certificate store, or the certificate has expired. "
-		"Please look at the documentation on how to create local certificate store for a private CA.\n");
+	WLog_INFO(TAG, "Certificate details:");
+	WLog_INFO(TAG, "\tSubject: %s", subject);
+	WLog_INFO(TAG, "\tIssuer: %s", issuer);
+	WLog_INFO(TAG, "\tThumbprint: %s", fingerprint);
+	WLog_INFO(TAG, "The above X.509 certificate could not be verified, possibly because you do not have "
+			  "the CA certificate in your certificate store, or the certificate has expired. "
+			  "Please look at the documentation on how to create local certificate store for a private CA.");
 
 	while (1)
 	{
-		printf("Do you trust the above certificate? (Y/N) ");
+		WLog_INFO(TAG, "Do you trust the above certificate? (Y/N) ");
 		answer = fgetc(stdin);
 
 		if (answer == 'y' || answer == 'Y')
@@ -259,7 +262,7 @@ BOOL df_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 	return FALSE;
 }
 
-static int df_receive_channel_data(freerdp* instance, int channelId, BYTE* data, int size, int flags, int total_size)
+static int df_receive_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
@@ -292,7 +295,7 @@ static void df_process_channel_event(rdpChannels* channels, freerdp* instance)
 				break;
 
 			default:
-				DEBUG_WARN( "df_process_channel_event: unknown event type %d\n", GetMessageType(event->id));
+				WLog_ERR(TAG, "df_process_channel_event: unknown event type %d", GetMessageType(event->id));
 				break;
 		}
 
@@ -339,17 +342,17 @@ int dfreerdp_run(freerdp* instance)
 
 		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			DEBUG_WARN( "Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			DEBUG_WARN( "Failed to get channel manager file descriptor\n");
+			WLog_ERR(TAG, "Failed to get channel manager file descriptor");
 			break;
 		}
 		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			DEBUG_WARN( "Failed to get dfreerdp file descriptor\n");
+			WLog_ERR(TAG, "Failed to get dfreerdp file descriptor");
 			break;
 		}
 
@@ -378,24 +381,24 @@ int dfreerdp_run(freerdp* instance)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				DEBUG_WARN( "dfreerdp_run: select failed\n");
+				WLog_ERR(TAG, "dfreerdp_run: select failed");
 				break;
 			}
 		}
 
 		if (freerdp_check_fds(instance) != TRUE)
 		{
-			DEBUG_WARN( "Failed to check FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
 		if (df_check_fds(instance, &rfds_set) != TRUE)
 		{
-			DEBUG_WARN( "Failed to check dfreerdp file descriptor\n");
+			WLog_ERR(TAG, "Failed to check dfreerdp file descriptor");
 			break;
 		}
 		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
-			DEBUG_WARN( "Failed to check channel manager file descriptor\n");
+			WLog_ERR(TAG, "Failed to check channel manager file descriptor");
 			break;
 		}
 		df_process_channel_event(channels, instance);

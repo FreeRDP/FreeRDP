@@ -74,7 +74,7 @@ static void log_recursion(const char* file, const char* fkt, int line)
 	__android_log_print(ANDROID_LOG_FATAL, tag, "Check %s [%s:%d]", fkt, file, line);
 
 	for (i=0; i<used; i++)
-		__android_log_print(ANDROID_LOG_FATAL, tag, "%d: %s", msg[i]);
+		__android_log_print(ANDROID_LOG_FATAL, tag, "%d: %s", i, msg[i]);
 
 #else
 	fprintf(stderr, "[%s]: Recursion detected!\n", fkt);

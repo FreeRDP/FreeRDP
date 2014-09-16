@@ -84,15 +84,15 @@ BOOL wf_peer_post_connect(freerdp_peer* client)
 		(wfi->servscreen_height == 0) ||
 		(wfi->bitsPerPixel == 0) )
 	{
-		_tprintf(_T("postconnect: error getting screen info for screen %d\n"), wfi->screenID);
-		_tprintf(_T("\t%dx%dx%d\n"), wfi->servscreen_height, wfi->servscreen_width, wfi->bitsPerPixel);
+		WLog_ERR(TAG, "postconnect: error getting screen info for screen %d", wfi->screenID);
+		WLog_ERR(TAG, "\t%dx%dx%d", wfi->servscreen_height, wfi->servscreen_width, wfi->bitsPerPixel);
 		return FALSE;
 	}
 
 	if ((settings->DesktopWidth != wfi->servscreen_width) || (settings->DesktopHeight != wfi->servscreen_height))
 	{
 		/*
-		DEBUG_WARN("Client requested resolution %dx%d, but will resize to %dx%d\n",
+		WLog_DBG(TAG, "Client requested resolution %dx%d, but will resize to %dx%d",
 			settings->DesktopWidth, settings->DesktopHeight, wfi->servscreen_width, wfi->servscreen_height);
 			*/
 
@@ -160,7 +160,7 @@ DWORD WINAPI wf_peer_socket_listener(LPVOID lpParam)
 
 		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
-			//printf("Failed to get peer file descriptor\n");
+			WLog_ERR(TAG, "Failed to get peer file descriptor");
 			break;
 		}
 
@@ -248,7 +248,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 	if (wfi->input_disabled)
 	{
-		DEBUG_WARN("client input is disabled\n");
+		WLog_INFO(TAG, "client input is disabled");
 		client->input->KeyboardEvent = wf_peer_keyboard_event_dummy;
 		client->input->UnicodeKeyboardEvent = wf_peer_unicode_keyboard_event_dummy;
 		client->input->MouseEvent = wf_peer_mouse_event_dummy;
@@ -259,9 +259,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	
 	context->socketSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
 	context->socketThread = CreateThread(NULL, 0, wf_peer_socket_listener, client, 0, NULL);
-
-	DEBUG_WARN("We've got a client %s\n", client->local ? "(local)" : client->hostname);
-
+	WLog_INFO(TAG, "We've got a client %s", client->local ? "(local)" : client->hostname);
 	nCount = 0;
 	handles[nCount++] = context->updateEvent;
 	handles[nCount++] = context->socketEvent;
@@ -272,7 +270,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 
 		if ((status == WAIT_FAILED) || (status == WAIT_TIMEOUT))
 		{
-			DEBUG_WARN("WaitForMultipleObjects failed\n");
+			WLog_ERR(TAG, "WaitForMultipleObjects failed");
 			break;
 		}
 
@@ -289,7 +287,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 		{
 			if (client->CheckFileDescriptor(client) != TRUE)
 			{
-				//printf("Failed to check peer file descriptor\n");
+				WLog_ERR(TAG, "Failed to check peer file descriptor");
 				context->socketClose = TRUE;
 			}
 
@@ -303,7 +301,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 		//force disconnect
 		if (wfi->force_all_disconnect == TRUE)
 		{
-			DEBUG_WARN("Forcing Disconnect -> ");
+			WLog_INFO(TAG, "Forcing Disconnect -> ");
 			break;
 		}
 
@@ -312,7 +310,7 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 			break;
 	}
 
-	DEBUG_WARN("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
+	WLog_INFO(TAG, "Client %s disconnected.", client->local ? "(local)" : client->hostname);
 
 	if (WaitForSingleObject(context->updateEvent, 0) == 0)
 	{

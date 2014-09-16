@@ -22,12 +22,15 @@
 
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/log.h>
 
 #include "../shadow_screen.h"
 #include "../shadow_surface.h"
 #include "../shadow_capture.h"
 
 #include "win_shadow.h"
+
+#define TAG SERVER_TAG("shadow.win")
 
 void win_shadow_input_synchronize_event(winShadowSubsystem* subsystem, UINT32 flags)
 {
@@ -252,7 +255,7 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 		height = surface->height;
 	}
 
-	printf("SurfaceCopy x: %d y: %d width: %d height: %d right: %d bottom: %d\n",
+	WLog_INFO(TAG, "SurfaceCopy x: %d y: %d width: %d height: %d right: %d bottom: %d",
 		x, y, width, height, x + width, y + height);
 
 #if defined(WITH_WDS_API)
@@ -441,7 +444,7 @@ int win_shadow_subsystem_init(winShadowSubsystem* subsystem)
 		subsystem->monitors[0].flags = 1;
 	}
 
-	printf("width: %d height: %d\n", subsystem->width, subsystem->height);
+	WLog_INFO(TAG, "width: %d height: %d", subsystem->width, subsystem->height);
 
 	return 1;
 }

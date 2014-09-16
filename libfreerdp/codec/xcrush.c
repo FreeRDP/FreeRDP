@@ -25,7 +25,10 @@
 #include <winpr/print.h>
 #include <winpr/bitstream.h>
 
+#include <freerdp/log.h>
 #include <freerdp/codec/xcrush.h>
+
+#define TAG FREERDP_TAG("codec")
 
 const char* xcrush_get_level_2_compression_flags_string(UINT32 flags)
 {
@@ -990,7 +993,7 @@ int xcrush_compress(XCRUSH_CONTEXT* xcrush, BYTE* pSrcData, UINT32 SrcSize, BYTE
 	OriginalData[1] = (BYTE) Level2ComprFlags;
 
 #if 0
-	DEBUG_MSG("XCrushCompress: Level1ComprFlags: %s Level2ComprFlags: %s\n",
+	WLog_DBG(TAG, "XCrushCompress: Level1ComprFlags: %s Level2ComprFlags: %s",
 			xcrush_get_level_1_compression_flags_string(Level1ComprFlags),
 			xcrush_get_level_2_compression_flags_string(Level2ComprFlags));
 #endif

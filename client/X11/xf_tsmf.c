@@ -36,6 +36,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/utils/event.h>
+#include <freerdp/log.h>
 #include <freerdp/client/tsmf.h>
 
 #include "xf_tsmf.h"
@@ -57,10 +58,11 @@ struct xf_xv_context
 	UINT32* xv_pixfmts;
 };
 
+#define TAG CLIENT_TAG("x11")
 #ifdef WITH_DEBUG_XV
-#define DEBUG_XV(fmt, ...) DEBUG_CLASS(XV, fmt, ## __VA_ARGS__)
+#define DEBUG_XV(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_XV(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_XV(fmt, ...) do { } while (0)
 #endif
 
 void xf_tsmf_init(xfContext* xfc, long xv_port)
@@ -140,7 +142,7 @@ void xf_tsmf_init(xfContext* xfc, long xv_port)
 	XFree(attr);
 
 #ifdef WITH_DEBUG_XV
-	DEBUG_WARN( "xf_tsmf_init: pixel format ");
+	WLog_DBG(TAG, "xf_tsmf_init: pixel format ");
 #endif
 	fo = XvListImageFormats(xfc->display, xv->xv_port, &ret);
 	if (ret > 0)
@@ -152,16 +154,13 @@ void xf_tsmf_init(xfContext* xfc, long xv_port)
 		{
 			xv->xv_pixfmts[i] = fo[i].id;
 #ifdef WITH_DEBUG_XV
-			DEBUG_WARN( "%c%c%c%c ", ((char*)(xv->xv_pixfmts + i))[0], ((char*)(xv->xv_pixfmts + i))[1],
-				((char*)(xv->xv_pixfmts + i))[2], ((char*)(xv->xv_pixfmts + i))[3]);
+			WLog_DBG(TAG, "%c%c%c%c ", ((char*)(xv->xv_pixfmts + i))[0], ((char*)(xv->xv_pixfmts + i))[1],
+					 ((char*)(xv->xv_pixfmts + i))[2], ((char*)(xv->xv_pixfmts + i))[3]);
 #endif
 		}
 		xv->xv_pixfmts[i] = 0;
 	}
 	XFree(fo);
-#ifdef WITH_DEBUG_XV
-	DEBUG_WARN( "\n");
-#endif
 }
 
 void xf_tsmf_uninit(xfContext* xfc)
@@ -228,6 +227,7 @@ static void xf_process_tsmf_video_frame_event(xfContext* xfc, RDP_VIDEO_FRAME_EV
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 		XSetForeground(xfc->display, xfc->gc, colorkey);
+
 		for (i = 0; i < vevent->num_visible_rects; i++)
 		{
 			XFillRectangle(xfc->display, xfc->window->handle, xfc->gc,

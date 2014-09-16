@@ -26,6 +26,7 @@
 #include <freerdp/crypto/crypto.h>
 
 #include <freerdp/settings.h>
+#include <freerdp/log.h>
 
 #include <winpr/print.h>
 #include <winpr/stream.h>
@@ -58,10 +59,11 @@ void certificate_free(rdpCertificate* certificate);
 rdpRsaKey* key_new(const char *keyfile);
 void key_free(rdpRsaKey* key);
 
+#define CERTIFICATE_TAG FREERDP_TAG("core.certificate")
 #ifdef WITH_DEBUG_CERTIFICATE
-#define DEBUG_CERTIFICATE(fmt, ...) DEBUG_CLASS(CERTIFICATE, fmt, ## __VA_ARGS__)
+#define DEBUG_CERTIFICATE(fmt, ...) WLog_DBG(CERTIFICATE_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_CERTIFICATE(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_CERTIFICATE(fmt, ...) do { } while (0)
 #endif
 
 #endif /* __CERTIFICATE_H */

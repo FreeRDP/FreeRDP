@@ -29,7 +29,7 @@
 #include <winpr/wlog.h>
 #include <winpr/collections.h>
 
-#include <freerdp/utils/debug.h>
+
 #include <freerdp/utils/profiler.h>
 
 #define ROUND_UP_TO(_b, _n) (_b + ((~(_b & (_n-1)) + 0x1) & (_n-1)))

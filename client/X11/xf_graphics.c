@@ -36,6 +36,9 @@
 
 #include "xf_graphics.h"
 
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("x11")
+
 /* Bitmap Class */
 
 void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
@@ -147,7 +150,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 		if (status < 0)
 		{
-			DEBUG_WARN("xf_Bitmap_Decompress: Bitmap Decompression Failed\n");
+			WLog_ERR(TAG, "Bitmap Decompression Failed");
 			return;
 		}
 	}

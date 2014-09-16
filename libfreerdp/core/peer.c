@@ -26,9 +26,12 @@
 #include "info.h"
 #include "certificate.h"
 
+#include <freerdp/log.h>
 #include <freerdp/utils/tcp.h>
 
 #include "peer.h"
+
+#define TAG FREERDP_TAG("core.peer")
 
 #ifdef WITH_DEBUG_RDP
 extern const char* DATA_PDU_TYPE_STRINGS[80];
@@ -50,14 +53,14 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 
 		if (!settings->RdpServerRsaKey)
 		{
-			DEBUG_WARN( "%s: inavlid RDP key file %s\n", __FUNCTION__, settings->RdpKeyFile);
+			WLog_ERR(TAG, "inavlid RDP key file %s", settings->RdpKeyFile);
 			return FALSE;
 		}
 
 		if (settings->RdpServerRsaKey->ModulusLength > 256)
 		{
-			DEBUG_WARN( "%s: Key sizes > 2048 are currently not supported for RDP security.\n", __FUNCTION__);
-			DEBUG_WARN( "%s: Set a different key file than %s\n", __FUNCTION__, settings->RdpKeyFile);
+			WLog_ERR(TAG, "Key sizes > 2048 are currently not supported for RDP security.");
+			WLog_ERR(TAG, "Set a different key file than %s", settings->RdpKeyFile);
 			exit(1);
 		}
 	}
@@ -105,8 +108,8 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 		return FALSE;
 
 #ifdef WITH_DEBUG_RDP
-	DEBUG_MSG("recv %s Data PDU (0x%02X), length: %d\n",
-		type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
+	WLog_DBG(TAG, "recv %s Data PDU (0x%02X), length: %d",
+			 type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
 #endif
 
 	switch (type)
@@ -159,7 +162,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			break;
 
 		default:
-			DEBUG_WARN( "Data PDU type %d\n", type);
+			WLog_ERR(TAG,  "Data PDU type %d", type);
 			break;
 	}
 
@@ -180,7 +183,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
-		DEBUG_WARN( "Incorrect RDP header.\n");
+		WLog_ERR(TAG,  "Incorrect RDP header.");
 		return -1;
 	}
 
@@ -196,7 +199,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				DEBUG_WARN( "rdp_decrypt failed\n");
+				WLog_ERR(TAG,  "rdp_decrypt failed");
 				return -1;
 			}
 		}
@@ -227,7 +230,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 				break;
 
 			default:
-				DEBUG_WARN( "Client sent pduType %d\n", pduType);
+				WLog_ERR(TAG,  "Client sent pduType %d", pduType);
 				return -1;
 		}
 	}
@@ -248,7 +251,7 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 
 	if ((length == 0) || (length > Stream_GetRemainingLength(s)))
 	{
-		DEBUG_WARN( "incorrect FastPath PDU header length %d\n", length);
+		WLog_ERR(TAG,  "incorrect FastPath PDU header length %d", length);
 		return -1;
 	}
 
@@ -387,7 +390,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		default:
-			DEBUG_WARN( "Invalid state %d\n", rdp->state);
+			WLog_ERR(TAG,  "Invalid state %d", rdp->state);
 			return -1;
 	}
 

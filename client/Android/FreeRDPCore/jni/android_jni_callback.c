@@ -18,7 +18,10 @@
 #include "android_debug.h"
 #include "android_freerdp_jni.h"
 
-JavaVM *jVM;
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("android")
+
+JavaVM* jVM;
 jobject jLibFreeRDPObject;
 
 const char *jLibFreeRDPPath = JAVA_LIBFREERDP_CLASS;
@@ -35,7 +38,7 @@ void jni_load_class(JNIEnv *env, const char *path, jobject *objptr)
 
 	if (!class)
 	{
-		DEBUG_WARN("jni_load_class: failed to find class %s", path);
+		WLog_ERR(TAG, "jni_load_class: failed to find class %s", path);
 		goto finish;
 	}
 
@@ -43,7 +46,7 @@ void jni_load_class(JNIEnv *env, const char *path, jobject *objptr)
 
 	if (!method)
 	{
-		DEBUG_WARN("jni_load_class: failed to find class constructor of %s", path);
+		WLog_ERR(TAG, "jni_load_class: failed to find class constructor of %s", path);
 		goto finish;
 	}
 
@@ -51,7 +54,7 @@ void jni_load_class(JNIEnv *env, const char *path, jobject *objptr)
 
 	if (!object)
 	{
-		DEBUG_WARN("jni_load_class: failed create new object of %s", path);
+		WLog_ERR(TAG, "jni_load_class: failed create new object of %s", path);
 		goto finish;
 	}
 
@@ -66,7 +69,7 @@ jint init_callback_environment(JavaVM* vm)
 	JNIEnv* env;
 	if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_4) != JNI_OK)
 	{
-		DEBUG_WARN("JNI_OnLoad: failed to obtain current JNI environment");
+		WLog_ERR(TAG, "JNI_OnLoad: failed to obtain current JNI environment");
 		return -1;
 	}
 
@@ -88,7 +91,7 @@ jboolean jni_attach_thread(JNIEnv** env)
 
 		if ((*jVM)->GetEnv(jVM, (void**) env, JNI_VERSION_1_4) != JNI_OK)
 		{
-			DEBUG_WARN("android_java_callback: failed to obtain current JNI environment");
+			WLog_ERR(TAG, "android_java_callback: failed to obtain current JNI environment");
 		}
 
 		return JNI_TRUE;
@@ -117,15 +120,17 @@ void java_callback_void(jobject obj, const char * callback, const char* signatur
 	
 	jObjClass = (*env)->GetObjectClass(env, obj);
 
-	if (!jObjClass) {
-		DEBUG_WARN("android_java_callback: failed to get class reference");
+	if (!jObjClass)
+	{
+		WLog_ERR(TAG, "android_java_callback: failed to get class reference");
 		goto finish;
 	}
 
 	jCallback = (*env)->GetStaticMethodID(env, jObjClass, callback, signature);
 
-	if (!jCallback) {
-		DEBUG_WARN("android_java_callback: failed to get method id");
+	if (!jCallback)
+	{
+		WLog_ERR(TAG, "android_java_callback: failed to get method id");
 		goto finish;
 	}
 
@@ -151,15 +156,17 @@ jboolean java_callback_bool(jobject obj, const char * callback, const char* sign
 	
 	jObjClass = (*env)->GetObjectClass(env, obj);
 
-	if (!jObjClass) {
-		DEBUG_WARN("android_java_callback: failed to get class reference");
+	if (!jObjClass)
+	{
+		WLog_ERR(TAG, "android_java_callback: failed to get class reference");
 		goto finish;
 	}
 
 	jCallback = (*env)->GetStaticMethodID(env, jObjClass, callback, signature);
 
-	if (!jCallback) {
-		DEBUG_WARN("android_java_callback: failed to get method id");
+	if (!jCallback)
+	{
+		WLog_ERR(TAG, "android_java_callback: failed to get method id");
 		goto finish;
 	}
 

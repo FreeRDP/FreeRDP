@@ -523,7 +523,7 @@ BOOL rail_order_recv(railPlugin* rail, wStream* s)
 		}
 
 		default:
-			CLOG_ERR( "Unknown RAIL PDU order reveived.");
+			WLog_ERR(TAG,  "Unknown RAIL PDU order reveived.");
 			break;
 	}
 

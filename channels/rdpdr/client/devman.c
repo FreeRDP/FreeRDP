@@ -123,7 +123,7 @@ BOOL devman_load_device_service(DEVMAN* devman, RDPDR_DEVICE* device)
 	if (!ServiceName)
 		return FALSE;
 
-	CLOG_ERR( "Loading device service %s (static)\n", ServiceName);
+	WLog_INFO(TAG,  "Loading device service %s (static)", ServiceName);
 	entry = (PDEVICE_SERVICE_ENTRY) freerdp_load_channel_addin_entry(ServiceName, NULL, "DeviceServiceEntry", 0);
 
 	if (!entry)

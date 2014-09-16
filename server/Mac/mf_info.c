@@ -29,6 +29,9 @@
 #include "mf_mountain_lion.h"
 //#include "mf_update.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
+
 static mfInfo* mfInfoInstance = NULL;
 //static int _IDcount = 0;
 
@@ -43,7 +46,7 @@ int mf_info_lock(mfInfo* mfi)
 			break;
 			
 		default:
-			DEBUG_MSG("mf_info_lock failed with %#X\n", status);
+			WLog_ERR(TAG, "mf_info_lock failed with %#X", status);
 			return -1;
 			break;
 	}
@@ -65,7 +68,7 @@ int mf_info_try_lock(mfInfo* mfi, UINT32 ms)
 			break;
 			
 		default:
-			DEBUG_MSG("mf_info_try_lock failed with %#X\n", status);
+			WLog_ERR(TAG, "mf_info_try_lock failed with %#X", status);
 			return -1;
 			break;
 	}
@@ -82,7 +85,7 @@ int mf_info_unlock(mfInfo* mfi)
 			break;
 			
 		default:
-			DEBUG_MSG("mf_info_unlock failed with %#X\n", status);
+			WLog_ERR(TAG, "mf_info_unlock failed with %#X", status);
 			return -1;
 			break;
 	}
@@ -110,7 +113,7 @@ mfInfo* mf_info_init()
 		
 		if (mutexInitStatus != 0)
 		{
-			DEBUG_MSG(_T("CreateMutex error: %#X\n"), mutexInitStatus);
+			WLog_ERR(TAG, _T("CreateMutex error: %#X"), mutexInitStatus);
 		}
 		
 		mfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * MF_INFO_MAXPEERS);
@@ -163,7 +166,7 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 		int peerId;
 		if (mfi->peerCount == MF_INFO_MAXPEERS)
 		{
-			DEBUG_MSG("TODO: socketClose on OS X\n");
+			WLog_ERR(TAG, "TODO: socketClose on OS X");
 			//context->socketClose = TRUE;
 			mf_info_unlock(mfi);
 			return;
@@ -198,7 +201,7 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 		mfi->peers[peerId] = ((rdpContext*) context)->peer;
 		mfi->peers[peerId]->pId = peerId;
 		mfi->peerCount++;
-		//printf("Registering Peer: id=%d #=%d\n", peerId, mfi->peerCount);
+		//WLog_DBG(TAG, "Registering Peer: id=%d #=%d\n", peerId, mfi->peerCount);
 		
 		mf_info_unlock(mfi);
 		
@@ -216,7 +219,7 @@ void mf_info_peer_unregister(mfInfo* mfi, mfPeerContext* context)
 		mfi->peers[peerId] = NULL;
 		mfi->peerCount--;
 		
-		//printf("Unregistering Peer: id=%d, #=%d\n", peerId, mfi->peerCount);
+		//WLog_DBG(TAG, "Unregistering Peer: id=%d, #=%d\n", peerId, mfi->peerCount);
 		
 		//screen capture cleanup
 		if (mfi->peerCount == 0)

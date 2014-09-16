@@ -81,23 +81,23 @@ int bulk_compress_validate(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE**
 
 	if (status < 0)
 	{
-		DEBUG_MSG("compression/decompression failure\n");
+		WLog_DBG(TAG, "compression/decompression failure");
 		return status;
 	}
 
 	if (_DstSize != SrcSize)
 	{
-		DEBUG_MSG("compression/decompression size mismatch: Actual: %d, Expected: %d\n", _DstSize, SrcSize);
+		WLog_DBG(TAG, "compression/decompression size mismatch: Actual: %d, Expected: %d", _DstSize, SrcSize);
 		return -1;
 	}
 
 	if (memcmp(_pDstData, pSrcData, SrcSize) != 0)
 	{
-		DEBUG_MSG("compression/decompression input/output mismatch! flags: 0x%04X\n", _Flags);
+		WLog_DBG(TAG, "compression/decompression input/output mismatch! flags: 0x%04X", _Flags);
 #if 1
-		DEBUG_MSG("Actual:\n");
+		WLog_DBG(TAG, "Actual:");
 		winpr_HexDump(TAG, WLOG_DEBUG, _pDstData, SrcSize);
-		DEBUG_MSG("Expected:\n");
+		WLog_DBG(TAG, "Expected:");
 		winpr_HexDump(TAG, WLOG_DEBUG, pSrcData, SrcSize);
 #endif
 		return -1;
@@ -159,17 +159,17 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 		CompressionRatio = metrics_write_bytes(metrics, UncompressedBytes, CompressedBytes);
 #ifdef WITH_BULK_DEBUG
 		{
-			DEBUG_MSG("Decompress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)\n",
-					  type, bulk_get_compression_flags_string(flags), flags,
-					  CompressionRatio, CompressedBytes, UncompressedBytes,
-					  metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,
-					  (UINT32) metrics->TotalUncompressedBytes);
+			WLog_DBG(TAG, "Decompress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)",
+					 type, bulk_get_compression_flags_string(flags), flags,
+					 CompressionRatio, CompressedBytes, UncompressedBytes,
+					 metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,
+					 (UINT32) metrics->TotalUncompressedBytes);
 		}
 #endif
 	}
 	else
 	{
-		DEBUG_WARN("Decompression failure!\n");
+		WLog_ERR(TAG, "Decompression failure!");
 	}
 
 	return status;
@@ -222,11 +222,11 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 		CompressionRatio = metrics_write_bytes(metrics, UncompressedBytes, CompressedBytes);
 #ifdef WITH_BULK_DEBUG
 		{
-			DEBUG_MSG("Compress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)\n",
-					  bulk->CompressionLevel, bulk_get_compression_flags_string(*pFlags), *pFlags,
-					  CompressionRatio, CompressedBytes, UncompressedBytes,
-					  metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,
-					  (UINT32) metrics->TotalUncompressedBytes);
+			WLog_DBG(TAG, "Compress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)",
+					 bulk->CompressionLevel, bulk_get_compression_flags_string(*pFlags), *pFlags,
+					 CompressionRatio, CompressedBytes, UncompressedBytes,
+					 metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,
+					 (UINT32) metrics->TotalUncompressedBytes);
 		}
 #endif
 	}

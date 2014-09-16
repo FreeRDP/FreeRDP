@@ -36,10 +36,11 @@
 
 #include <winpr/stream.h>
 
+#define TAG CHANNELS_TAG("urbdrc.client")
 #ifdef WITH_DEBUG_DVC
-#define DEBUG_DVC(fmt, ...) CLOG_CLASS(DVC, fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_DVC(fmt, ...) CLOG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) do { } while (0)
 #endif
 
 #define CAPABILITIES_NEGOTIATOR				0x00000000
@@ -316,10 +317,6 @@ enum device_descriptor_table
 #define MAX_URB_REQUSET_NUM					0x80
 
 #define LOG_LEVEL 1
-#define LLOG(_level, args) \
-  do { if (_level < LOG_LEVEL) { CLOG_DBG args ; } } while (0)
-#define LLOGLN(_level, args) \
-  do { if (_level < LOG_LEVEL) { CLOG_DBG args ; } } while (0)
 
 #define dummy_wait_obj(void) do{ sleep(5); } while(0)  
 #define dummy_wait_s_obj(_s) do{ sleep(_s); } while(0)  
@@ -332,7 +329,5 @@ enum device_descriptor_table
 	gettimeofday(&_tp, 0); \
 	_t = (_tp.tv_sec * 1000) + (_tp.tv_usec / 1000); \
 } while (0)
-
-extern int urbdrc_debug;
 
 #endif /* __URBDRC_TYPES_H */

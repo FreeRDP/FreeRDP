@@ -452,7 +452,7 @@ static void* drive_hotplug_thread_func(void* arg)
 
 	if (mfd < 0)
 	{
-		CLOG_ERR( "ERROR: Unable to open /proc/mounts.");
+		WLog_ERR(TAG,  "ERROR: Unable to open /proc/mounts.");
 		return NULL;
 	}
 
@@ -662,9 +662,8 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 				Stream_Write(s, Stream_Buffer(device->data), data_len);
 
 			count++;
-
-			CLOG_ERR( "registered device #%d: %s (type=%d id=%d)\n",
-				count, device->name, device->type, device->id);
+			WLog_INFO(TAG,  "registered device #%d: %s (type=%d id=%d)\n",
+					  count, device->name, device->type, device->id);
 		}
 	}
 
@@ -846,7 +845,7 @@ int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		CLOG_ERR( "rdpdr_send: VirtualChannelWrite failed %d\n", status);
+		WLog_ERR(TAG,  "rdpdr_send: VirtualChannelWrite failed %d\n", status);
 	}
 
 	return status;
@@ -884,7 +883,7 @@ static void rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 	{
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
-			CLOG_ERR( "svc_plugin_process_received: read error\n");
+			WLog_ERR(TAG,  "svc_plugin_process_received: read error\n");
 		}
 
 		rdpdr->data_in = NULL;
@@ -904,7 +903,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle, UINT ev
 
 	if (!rdpdr)
 	{
-		CLOG_ERR( "rdpdr_virtual_channel_open_event: error no match\n");
+		WLog_ERR(TAG,  "rdpdr_virtual_channel_open_event: error no match\n");
 		return;
 	}
 
@@ -964,7 +963,7 @@ static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 
 	if (status != CHANNEL_RC_OK)
 	{
-		CLOG_ERR( "rdpdr_virtual_channel_event_connected: open failed: status: %d\n", status);
+		WLog_ERR(TAG,  "rdpdr_virtual_channel_event_connected: open failed: status: %d\n", status);
 		return;
 	}
 
@@ -1010,7 +1009,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT 
 
 	if (!rdpdr)
 	{
-		CLOG_ERR( "rdpdr_virtual_channel_init_event: error no match\n");
+		WLog_ERR(TAG,  "rdpdr_virtual_channel_init_event: error no match\n");
 		return;
 	}
 

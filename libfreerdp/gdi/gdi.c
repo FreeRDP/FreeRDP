@@ -29,6 +29,7 @@
 #include <winpr/image.h>
 
 #include <freerdp/api.h>
+#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/codec/color.h>
@@ -50,6 +51,8 @@
 #include <freerdp/gdi/gdi.h>
 
 #include "gdi.h"
+
+#define TAG FREERDP_TAG("gdi")
 
 /* Ternary Raster Operation Table */
 static const UINT32 rop3_code_table[] =
@@ -372,7 +375,8 @@ INLINE BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 	}
 	else
 	{
-		DEBUG_WARN( "gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d\n", x, y, hBmp->width, hBmp->height);
+		WLog_ERR(TAG,  "gdi_get_bitmap_pointer: requesting invalid pointer: (%d,%d) in %dx%d",
+			x, y, hBmp->width, hBmp->height);
 		return 0;
 	}
 }
@@ -559,7 +563,7 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 			if (status < 0)
 			{
-				DEBUG_WARN("gdi_bitmap_update: bitmap decompression failure\n");
+				WLog_ERR(TAG, "bitmap decompression failure");
 				return;
 			}
 
@@ -684,7 +688,7 @@ void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	}
 	else
 	{
-		DEBUG_WARN( "unimplemented brush style:%d\n", brush->style);
+		WLog_ERR(TAG,  "unimplemented brush style:%d", brush->style);
 	}
 
 	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
@@ -865,7 +869,7 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	}
 	else
 	{
-		DEBUG_WARN( "Mem3Blt unimplemented brush style:%d\n", brush->style);
+		WLog_ERR(TAG,  "Mem3Blt unimplemented brush style:%d", brush->style);
 	}
 
 	gdi_SetTextColor(gdi->drawing->hdc, originalColor);
@@ -873,27 +877,27 @@ void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 void gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 {
-	DEBUG_WARN( "PolygonSC\n");
+	WLog_ERR(TAG,  "PolygonSC");
 }
 
 void gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
-	DEBUG_WARN( "PolygonCB\n");
+	WLog_ERR(TAG,  "PolygonCB");
 }
 
 void gdi_ellipse_sc(rdpContext* context, ELLIPSE_SC_ORDER* ellipse_sc)
 {
-	DEBUG_WARN( "EllipseSC\n");
+	WLog_ERR(TAG,  "EllipseSC");
 }
 
 void gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 {
-	DEBUG_WARN( "EllipseCB\n");
+	WLog_ERR(TAG,  "EllipseCB");
 }
 
 void gdi_frame_marker(rdpContext* context, FRAME_MARKER_ORDER* frameMarker)
 {
-
+		WLog_ERR(TAG,  "");
 }
 
 void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
@@ -1024,7 +1028,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 	}
 	else
 	{
-		DEBUG_WARN( "Unsupported codecID %d\n", cmd->codecID);
+		WLog_ERR(TAG,  "Unsupported codecID %d", cmd->codecID);
 	}
 
 	if (tile_bitmap)

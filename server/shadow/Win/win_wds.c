@@ -22,6 +22,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <freerdp/log.h>
 
 #include "win_rdp.h"
 
@@ -45,6 +46,8 @@
 #define INITGUID
 
 #include <initguid.h>
+
+#define TAG SERVER_TAG("shadow.win")
 
 DEFINE_GUID(CLSID_RDPSession,0x9B78F0E6,0x3E05,0x4A5B,0xB2,0xE8,0xE7,0x43,0xA8,0x95,0x6B,0x65);
 DEFINE_GUID(DIID__IRDPSessionEvents,0x98a97042,0x6698,0x40e9,0x8e,0xfd,0xb3,0x20,0x09,0x90,0x00,0x4b);
@@ -213,7 +216,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_GetTypeInfoCount(
             __RPC__in _IRDPSessionEvents * This,
             /* [out] */ __RPC__out UINT *pctinfo)
 {
-	printf("Shadow_IRDPSessionEvents_GetTypeInfoCount\n");
+	WLog_INFO(TAG, "Shadow_IRDPSessionEvents_GetTypeInfoCount");
 	*pctinfo = 1;
 	return S_OK;
 }
@@ -224,7 +227,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_GetTypeInfo(
             /* [in] */ LCID lcid,
             /* [out] */ __RPC__deref_out_opt ITypeInfo **ppTInfo)
 {
-	printf("Shadow_IRDPSessionEvents_GetTypeInfo\n");
+	WLog_INFO(TAG, "Shadow_IRDPSessionEvents_GetTypeInfo");
 	return E_NOTIMPL;
 }
         
@@ -236,7 +239,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_GetIDsOfNames(
             /* [in] */ LCID lcid,
             /* [size_is][out] */ __RPC__out_ecount_full(cNames) DISPID *rgDispId)
 {
-	printf("Shadow_IRDPSessionEvents_GetIDsOfNames\n");
+	WLog_INFO(TAG, "Shadow_IRDPSessionEvents_GetIDsOfNames");
 	return E_NOTIMPL;
 }
         
@@ -263,7 +266,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 	VARIANT vr;
 	UINT uArgErr;
 
-	printf("%s (%d)\n", GetRDPSessionEventString(dispIdMember), dispIdMember);
+	WLog_INFO(TAG, "%s (%d)", GetRDPSessionEventString(dispIdMember), dispIdMember);
 
 	switch (dispIdMember)
 	{
@@ -280,7 +283,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 
 				if (FAILED(hr))
 				{
-					printf("%s DispGetParam(0, VT_DISPATCH) failure: 0x%08X\n",
+					WLog_ERR(TAG, "%s DispGetParam(0, VT_DISPATCH) failure: 0x%08X",
 						GetRDPSessionEventString(dispIdMember), hr);
 					return hr;
 				}
@@ -291,7 +294,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 
 				if (FAILED(hr))
 				{
-					printf("%s IDispatch::QueryInterface(IRDPSRAPIAttendee) failure: 0x%08X\n",
+					WLog_INFO(TAG, "%s IDispatch::QueryInterface(IRDPSRAPIAttendee) failure: 0x%08X",
 						GetRDPSessionEventString(dispIdMember), hr);
 					return hr;
 				}
@@ -303,7 +306,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 
 				if (FAILED(hr))
 				{
-					printf("%s IRDPSRAPIAttendee::put_ControlLevel() failure: 0x%08X\n",
+					WLog_INFO(TAG, "%s IRDPSRAPIAttendee::put_ControlLevel() failure: 0x%08X",
 						GetRDPSessionEventString(dispIdMember), hr);
 					return hr;
 				}
@@ -346,7 +349,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 
 				if (FAILED(hr))
 				{
-					printf("%s DispGetParam(1, VT_INT) failure: 0x%08X\n",
+					WLog_INFO(TAG, "%s DispGetParam(1, VT_INT) failure: 0x%08X",
 						GetRDPSessionEventString(dispIdMember), hr);
 					return hr;
 				}
@@ -360,7 +363,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 
 				if (FAILED(hr))
 				{
-					printf("%s DispGetParam(0, VT_DISPATCH) failure: 0x%08X\n",
+					WLog_ERR(TAG, "%s DispGetParam(0, VT_DISPATCH) failure: 0x%08X",
 						GetRDPSessionEventString(dispIdMember), hr);
 					return hr;
 				}
@@ -371,7 +374,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 
 				if (FAILED(hr))
 				{
-					printf("%s IDispatch::QueryInterface(IRDPSRAPIAttendee) failure: 0x%08X\n",
+					WLog_INFO(TAG, "%s IDispatch::QueryInterface(IRDPSRAPIAttendee) failure: 0x%08X",
 						GetRDPSessionEventString(dispIdMember), hr);
 					return hr;
 				}
@@ -380,7 +383,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 
 				if (FAILED(hr))
 				{
-					printf("%s IRDPSRAPIAttendee::put_ControlLevel() failure: 0x%08X\n",
+					WLog_INFO(TAG, "%s IRDPSRAPIAttendee::put_ControlLevel() failure: 0x%08X",
 						GetRDPSessionEventString(dispIdMember), hr);
 					return hr;
 				}
@@ -507,7 +510,7 @@ int win_shadow_wds_wnd_init(winShadowSubsystem* subsystem)
 
 	if (!RegisterClassEx(&wndClassEx))
 	{
-		printf("RegisterClassEx failure\n");
+		WLog_ERR(TAG, "RegisterClassEx failure");
 		return -1;
 	}
 
@@ -518,7 +521,7 @@ int win_shadow_wds_wnd_init(winShadowSubsystem* subsystem)
 
 	if (!subsystem->hWnd)
 	{
-		printf("CreateWindowEx failure\n");
+		WLog_INFO(TAG, "CreateWindowEx failure");
 		return -1;
 	}
 
@@ -551,7 +554,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "OleInitialize() failure\n");
+		WLog_ERR(TAG, "OleInitialize() failure");
 		return -1;
 	}
 
@@ -559,7 +562,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "CoInitialize() failure\n");
+		WLog_ERR(TAG, "CoInitialize() failure");
 		return -1;
 	}
 
@@ -568,7 +571,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "CoCreateInstance(IRDPSRAPISharingSession) failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "CoCreateInstance(IRDPSRAPISharingSession) failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -577,7 +580,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "QueryInterface(IID_IConnectionPointContainer) failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "QueryInterface(IID_IConnectionPointContainer) failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -585,7 +588,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IConnectionPointContainer::FindConnectionPoint(_IRDPSessionEvents) failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IConnectionPointContainer::FindConnectionPoint(_IRDPSessionEvents) failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -597,7 +600,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IConnectionPoint::Advise(Shadow_IRDPSessionEvents) failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IConnectionPoint::Advise(Shadow_IRDPSessionEvents) failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -605,7 +608,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPISharingSession::put_ColorDepth() failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPISharingSession::put_ColorDepth() failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -614,14 +617,14 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPISharingSession::GetDesktopSharedRect() failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPISharingSession::GetDesktopSharedRect() failure: 0x%08X", hr);
 		return -1;
 	}
 
 	width = right - left;
 	height = bottom - top;
 
-	printf("GetDesktopSharedRect(): left: %d top: %d right: %d bottom: %d width: %d height: %d\n",
+	WLog_INFO(TAG, "GetDesktopSharedRect(): left: %d top: %d right: %d bottom: %d width: %d height: %d",
 		left, top, right, bottom, width, height);
 
 	hr = subsystem->pSharingSession->lpVtbl->get_VirtualChannelManager(subsystem->pSharingSession,
@@ -629,7 +632,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPISharingSession::get_VirtualChannelManager() failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPISharingSession::get_VirtualChannelManager() failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -638,7 +641,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPISharingSession::get_ApplicationFilter() failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPISharingSession::get_ApplicationFilter() failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -647,7 +650,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPISharingSession::get_Attendees() failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPISharingSession::get_Attendees() failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -655,7 +658,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPISharingSession::get_Properties() failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPISharingSession::get_Properties() failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -670,7 +673,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPISessionProperties::put_Property(PortId) failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPISessionProperties::put_Property(PortId) failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -685,7 +688,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPISessionProperties::put_Property(DrvConAttach) failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPISessionProperties::put_Property(DrvConAttach) failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -703,7 +706,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPISessionProperties::put_Property(PortProtocol) failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPISessionProperties::put_Property(PortProtocol) failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -711,7 +714,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPISharingSession::Open() failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPISharingSession::Open() failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -720,7 +723,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPISharingSession::get_Invitations() failure\n");
+		WLog_ERR(TAG, "IRDPSRAPISharingSession::get_Invitations() failure");
 		return -1;
 	}
 
@@ -737,7 +740,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPIInvitationManager::CreateInvitation() failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPIInvitationManager::CreateInvitation() failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -745,7 +748,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (FAILED(hr))
 	{
-		fprintf(stderr, "IRDPSRAPIInvitation::get_ConnectionString() failure: 0x%08X\n", hr);
+		WLog_ERR(TAG, "IRDPSRAPIInvitation::get_ConnectionString() failure: 0x%08X", hr);
 		return -1;
 	}
 
@@ -759,7 +762,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 	if (status < 0)
 		return -1;
 
-	printf("ConnectionString: %s\n", file->ConnectionString2);
+	WLog_INFO(TAG, "ConnectionString: %s", file->ConnectionString2);
 
 	if (0)
 	{
@@ -781,7 +784,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (status < 0)
 	{
-		printf("win_shadow_rdp_init() failure: %d\n", status);
+		WLog_ERR(TAG, "win_shadow_rdp_init() failure: %d", status);
 		return status;
 	}
 
@@ -808,7 +811,7 @@ int win_shadow_wds_init(winShadowSubsystem* subsystem)
 
 	if (status < 0)
 	{
-		printf("win_shadow_rdp_start() failure: %d\n", status);
+		WLog_ERR(TAG, "win_shadow_rdp_start() failure: %d", status);
 		return status;
 	}
 

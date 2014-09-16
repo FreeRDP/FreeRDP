@@ -23,56 +23,57 @@
 
 #include <winpr/crt.h>
 #include <freerdp/log.h>
+
 #include "connection.h"
 
 #include "redirection.h"
 
-#define TAG FREERDP_TAG("core")
+#define TAG FREERDP_TAG("core.redirection")
 
 void rdp_print_redirection_flags(UINT32 flags)
 {
-	DEBUG_WARN("redirectionFlags = {\n");
+	WLog_INFO(TAG,  "redirectionFlags = {");
 
 	if (flags & LB_TARGET_NET_ADDRESS)
-		DEBUG_WARN("\tLB_TARGET_NET_ADDRESS\n");
+		WLog_INFO(TAG,  "\tLB_TARGET_NET_ADDRESS");
 
 	if (flags & LB_LOAD_BALANCE_INFO)
-		DEBUG_WARN("\tLB_LOAD_BALANCE_INFO\n");
+		WLog_INFO(TAG,  "\tLB_LOAD_BALANCE_INFO");
 
 	if (flags & LB_USERNAME)
-		DEBUG_WARN("\tLB_USERNAME\n");
+		WLog_INFO(TAG,  "\tLB_USERNAME");
 
 	if (flags & LB_DOMAIN)
-		DEBUG_WARN("\tLB_DOMAIN\n");
+		WLog_INFO(TAG,  "\tLB_DOMAIN");
 
 	if (flags & LB_PASSWORD)
-		DEBUG_WARN("\tLB_PASSWORD\n");
+		WLog_INFO(TAG,  "\tLB_PASSWORD");
 
 	if (flags & LB_DONTSTOREUSERNAME)
-		DEBUG_WARN("\tLB_DONTSTOREUSERNAME\n");
+		WLog_INFO(TAG,  "\tLB_DONTSTOREUSERNAME");
 
 	if (flags & LB_SMARTCARD_LOGON)
-		DEBUG_WARN("\tLB_SMARTCARD_LOGON\n");
+		WLog_INFO(TAG,  "\tLB_SMARTCARD_LOGON");
 
 	if (flags & LB_NOREDIRECT)
-		DEBUG_WARN("\tLB_NOREDIRECT\n");
+		WLog_INFO(TAG,  "\tLB_NOREDIRECT");
 
 	if (flags & LB_TARGET_FQDN)
-		DEBUG_WARN("\tLB_TARGET_FQDN\n");
+		WLog_INFO(TAG,  "\tLB_TARGET_FQDN");
 
 	if (flags & LB_TARGET_NETBIOS_NAME)
-		DEBUG_WARN("\tLB_TARGET_NETBIOS_NAME\n");
+		WLog_INFO(TAG,  "\tLB_TARGET_NETBIOS_NAME");
 
 	if (flags & LB_TARGET_NET_ADDRESSES)
-		DEBUG_WARN("\tLB_TARGET_NET_ADDRESSES\n");
+		WLog_INFO(TAG,  "\tLB_TARGET_NET_ADDRESSES");
 
 	if (flags & LB_CLIENT_TSV_URL)
-		DEBUG_WARN("\tLB_CLIENT_TSV_URL\n");
+		WLog_INFO(TAG,  "\tLB_CLIENT_TSV_URL");
 
 	if (flags & LB_SERVER_TSV_CAPABLE)
-		DEBUG_WARN("\tLB_SERVER_TSV_CAPABLE\n");
+		WLog_INFO(TAG,  "\tLB_SERVER_TSV_CAPABLE");
 
-	DEBUG_WARN("}\n");
+	WLog_INFO(TAG,  "}");
 }
 
 BOOL rdp_redirection_read_string(wStream* s, char** str)
@@ -81,7 +82,7 @@ BOOL rdp_redirection_read_string(wStream* s, char** str)
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		DEBUG_WARN("rdp_redirection_read_string failure: cannot read length\n");
+		WLog_ERR(TAG,  "rdp_redirection_read_string failure: cannot read length");
 		return FALSE;
 	}
 
@@ -89,7 +90,7 @@ BOOL rdp_redirection_read_string(wStream* s, char** str)
 
 	if (Stream_GetRemainingLength(s) < length)
 	{
-		DEBUG_WARN("rdp_redirection_read_string failure: incorrect length %d\n", length);
+		WLog_ERR(TAG,  "rdp_redirection_read_string failure: incorrect length %d", length);
 		return FALSE;
 	}
 

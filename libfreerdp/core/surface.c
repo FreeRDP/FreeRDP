@@ -22,8 +22,11 @@
 #endif
 
 #include <freerdp/utils/pcap.h>
+#include <freerdp/log.h>
 
 #include "surface.h"
+
+#define TAG FREERDP_TAG("core.surface")
 
 static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT32* length)
 {
@@ -40,7 +43,7 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT3
 	Stream_Read_UINT8(s, cmd->bpp);
 	if ((cmd->bpp < 1) || (cmd->bpp > 32))
 	{
-		DEBUG_WARN( "%s: invalid bpp value %d", __FUNCTION__, cmd->bpp);
+		WLog_ERR(TAG, "invalid bpp value %d", cmd->bpp);
 		return FALSE;
 	}
 
@@ -60,11 +63,10 @@ static int update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT3
 	*length = 20 + cmd->bitmapDataLength;
 
 	WLog_Print(update->log, WLOG_DEBUG,
-			"SurfaceBits: destLeft: %d destTop: %d destRight: %d destBottom: %d "
-			"bpp: %d codecId: %d width: %d height: %d bitmapDataLength: %d",
-			cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
-			cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
-
+			   "SurfaceBits: destLeft: %d destTop: %d destRight: %d destBottom: %d "
+			   "bpp: %d codecId: %d width: %d height: %d bitmapDataLength: %d",
+			   cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
+			   cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
 	IFCALL(update->SurfaceBits, update->context, cmd);
 
 	return 0;
@@ -118,7 +120,7 @@ int update_recv_surfcmds(rdpUpdate* update, UINT32 size, wStream* s)
 				break;
 
 			default:
-				DEBUG_WARN("unknown cmdType 0x%X", cmdType);
+				WLog_ERR(TAG, "unknown cmdType 0x%X", cmdType);
 				return -1;
 		}
 

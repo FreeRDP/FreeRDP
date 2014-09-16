@@ -28,6 +28,8 @@
 
 #include <freerdp/codec/mppc.h>
 
+#define TAG FREERDP_TAG("codec.mppc")
+
 #define MPPC_MATCH_INDEX(_sym1, _sym2, _sym3) \
 	((((MPPC_MATCH_TABLE[_sym3] << 16) + (MPPC_MATCH_TABLE[_sym2] << 8) + MPPC_MATCH_TABLE[_sym1]) & 0x07FFF000) >> 12)
 
@@ -413,7 +415,7 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		}
 
 #ifdef DEBUG_MPPC
-		DEBUG_MSG("<%d,%d>\n", (int) CopyOffset, (int) LengthOfMatch);
+		WLog_DBG(TAG, "<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
 #endif
 
 		SrcPtr = HistoryPtr - CopyOffset;
@@ -555,7 +557,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 			accumulator = Sym1;
 
 #ifdef DEBUG_MPPC
-			DEBUG_MSG("%c", accumulator);
+			WLog_DBG(TAG, "%c", accumulator);
 #endif
 
 			if (accumulator < 0x80)
@@ -589,7 +591,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 			}
 
 #ifdef DEBUG_MPPC
-			DEBUG_MSG("<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
+			WLog_DBG(TAG, "<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
 #endif
 
 			/* Encode CopyOffset */
@@ -764,7 +766,7 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 		accumulator = *pSrcPtr;
 
 #ifdef DEBUG_MPPC
-		DEBUG_MSG("%c", accumulator);
+		WLog_DBG(TAG, "%c", accumulator);
 #endif
 
 		if (accumulator < 0x80)
@@ -797,10 +799,6 @@ int mppc_compress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppD
 
 	mppc->HistoryPtr = HistoryPtr;
 	mppc->HistoryOffset = HistoryPtr - HistoryBuffer;
-
-#ifdef DEBUG_MPPC
-	DEBUG_MSG("\n");
-#endif
 
 	return 1;
 }

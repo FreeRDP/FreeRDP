@@ -21,7 +21,10 @@
 #ifndef __RAIL_ORDERS_H
 #define	__RAIL_ORDERS_H
 
+#include <freerdp/channels/log.h>
 #include "rail_main.h"
+
+#define TAG CHANNELS_TAG("rail.client")
 
 BOOL rail_read_server_exec_result_order(wStream* s, RAIL_EXEC_RESULT_ORDER* exec_result);
 BOOL rail_read_server_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam);

@@ -33,21 +33,23 @@
 #include <winpr/stream.h>
 
 #include <freerdp/utils/event.h>
+#include <freerdp/log.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/channels/channels.h>
 
 #include "xf_cliprdr.h"
 
+#define TAG CLIENT_TAG("x11")
 #ifdef WITH_DEBUG_X11
-#define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)
+#define DEBUG_X11(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_X11(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_X11(fmt, ...) do { } while (0)
 #endif
 
 #ifdef WITH_DEBUG_X11_CLIPRDR
-#define DEBUG_X11_CLIPRDR(fmt, ...) DEBUG_CLASS(X11_CLIPRDR, fmt, ## __VA_ARGS__)
+#define DEBUG_X11_CLIPRDR(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_X11_CLIPRDR(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_X11_CLIPRDR(fmt, ...) do { } while (0)
 #endif
 
 typedef struct clipboard_format_mapping clipboardFormatMapping;
@@ -118,7 +120,7 @@ void xf_cliprdr_init(xfContext* xfc, rdpChannels* channels)
 
 	if (cb->clipboard_atom == None)
 	{
-		DEBUG_WARN("unable to get CLIPBOARD atom");
+		WLog_ERR(TAG, "unable to get CLIPBOARD atom");
 	}
 
 	id = 1;
@@ -143,15 +145,15 @@ void xf_cliprdr_init(xfContext* xfc, rdpChannels* channels)
 		}
 		else
 		{
-			DEBUG_WARN( "%s: Error querying X Fixes extension version\n", __FUNCTION__);
+			WLog_ERR(TAG, "Error querying X Fixes extension version");
 		}
 	}
 	else
 	{
-		DEBUG_WARN( "%s: Error loading X Fixes extension\n", __FUNCTION__);
+		WLog_ERR(TAG, "Error loading X Fixes extension");
 	}
 #else
-	DEBUG_WARN( "Warning: Using clipboard redirection without XFIXES extension is strongly discouraged!\n");
+	WLog_ERR(TAG, "Warning: Using clipboard redirection without XFIXES extension is strongly discouraged!");
 #endif
 
 	n = 0;
@@ -370,7 +372,7 @@ static void xf_cliprdr_send_raw_format_list(xfContext* xfc)
 
 	if (result != Success)
 	{
-		DEBUG_WARN("XGetWindowProperty failed");
+		WLog_ERR(TAG, "XGetWindowProperty failed");
 		return;
 	}
 	DEBUG_X11_CLIPRDR("format=%d len=%d bytes_left=%d", format, (int) length, (int) bytes_left);
@@ -970,7 +972,7 @@ static BOOL xf_cliprdr_process_dib(clipboardContext* cb, BYTE* data, int size)
 	Stream_Read_UINT16(s, bpp);
 	if ((bpp < 1) || (bpp > 32))
 	{
-		DEBUG_WARN( "%s: invalid bpp value %d", __FUNCTION__, bpp);
+		WLog_ERR(TAG, "invalid bpp value %d", bpp);
 		return FALSE;
 	}
 

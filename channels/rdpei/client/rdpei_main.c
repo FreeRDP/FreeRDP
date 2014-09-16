@@ -201,8 +201,8 @@ int rdpei_send_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s, UINT16 eventId,
 	status = callback->channel->Write(callback->channel, (UINT32) Stream_Length(s), Stream_Buffer(s), NULL);
 
 #ifdef WITH_DEBUG_RDPEI
-	CLOG_ERR( "rdpei_send_pdu: eventId: %d (%s) length: %d status: %d\n",
-			eventId, RDPEI_EVENTID_STRINGS[eventId], pduLength, status);
+	WLog_DBG(TAG,  "rdpei_send_pdu: eventId: %d (%s) length: %d status: %d",
+			 eventId, RDPEI_EVENTID_STRINGS[eventId], pduLength, status);
 #endif
 
 	return status;
@@ -239,17 +239,22 @@ int rdpei_send_cs_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback)
 void rdpei_print_contact_flags(UINT32 contactFlags)
 {
 	if (contactFlags & CONTACT_FLAG_DOWN)
-		CLOG_DBG(" CONTACT_FLAG_DOWN");
+		WLog_DBG(TAG, " CONTACT_FLAG_DOWN");
+
 	if (contactFlags & CONTACT_FLAG_UPDATE)
-		CLOG_DBG(" CONTACT_FLAG_UPDATE");
+		WLog_DBG(TAG, " CONTACT_FLAG_UPDATE");
+
 	if (contactFlags & CONTACT_FLAG_UP)
-		CLOG_DBG(" CONTACT_FLAG_UP");
+		WLog_DBG(TAG, " CONTACT_FLAG_UP");
+
 	if (contactFlags & CONTACT_FLAG_INRANGE)
-		CLOG_DBG(" CONTACT_FLAG_INRANGE");
+		WLog_DBG(TAG, " CONTACT_FLAG_INRANGE");
+
 	if (contactFlags & CONTACT_FLAG_INCONTACT)
-		CLOG_DBG(" CONTACT_FLAG_INCONTACT");
+		WLog_DBG(TAG, " CONTACT_FLAG_INCONTACT");
+
 	if (contactFlags & CONTACT_FLAG_CANCELED)
-		CLOG_DBG(" CONTACT_FLAG_CANCELED");
+		WLog_DBG(TAG, " CONTACT_FLAG_CANCELED");
 }
 
 int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
@@ -259,8 +264,8 @@ int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 	RDPINPUT_CONTACT_DATA* contact;
 
 #ifdef WITH_DEBUG_RDPEI
-	CLOG_DBG("contactCount: %d\n", frame->contactCount);
-	CLOG_DBG("frameOffset: 0x%08X\n", (UINT32) frame->frameOffset);
+	WLog_DBG(TAG, "contactCount: %d", frame->contactCount);
+	WLog_DBG(TAG, "frameOffset: 0x%08X", (UINT32) frame->frameOffset);
 #endif
 
 	rdpei_write_2byte_unsigned(s, frame->contactCount); /* contactCount (TWO_BYTE_UNSIGNED_INTEGER) */
@@ -284,13 +289,12 @@ int rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 		contact->contactRectBottom = contact->y + rectSize;
 
 #ifdef WITH_DEBUG_RDPEI
-		CLOG_DBG("contact[%d].contactId: %d\n", index, contact->contactId);
-		CLOG_DBG("contact[%d].fieldsPresent: %d\n", index, contact->fieldsPresent);
-		CLOG_DBG("contact[%d].x: %d\n", index, contact->x);
-		CLOG_DBG("contact[%d].y: %d\n", index, contact->y);
-		CLOG_DBG("contact[%d].contactFlags: 0x%04X", index, contact->contactFlags);
+		WLog_DBG(TAG, "contact[%d].contactId: %d", index, contact->contactId);
+		WLog_DBG(TAG, "contact[%d].fieldsPresent: %d", index, contact->fieldsPresent);
+		WLog_DBG(TAG, "contact[%d].x: %d", index, contact->x);
+		WLog_DBG(TAG, "contact[%d].y: %d", index, contact->y);
+		WLog_DBG(TAG, "contact[%d].contactFlags: 0x%04X", index, contact->contactFlags);
 		rdpei_print_contact_flags(contact->contactFlags);
-		CLOG_DBG("\n");
 #endif
 
 		Stream_Write_UINT8(s, contact->contactId); /* contactId (1 byte) */
@@ -371,7 +375,7 @@ int rdpei_recv_sc_ready_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 #if 0
 	if (protocolVersion != RDPINPUT_PROTOCOL_V10)
 	{
-		CLOG_ERR( "Unknown [MS-RDPEI] protocolVersion: 0x%08X\n", protocolVersion);
+		WLog_ERR(TAG,  "Unknown [MS-RDPEI] protocolVersion: 0x%08X", protocolVersion);
 		return -1;
 	}
 #endif
@@ -408,8 +412,8 @@ int rdpei_recv_pdu(RDPEI_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, pduLength); /* pduLength (4 bytes) */
 
 #ifdef WITH_DEBUG_RDPEI
-	CLOG_ERR( "rdpei_recv_pdu: eventId: %d (%s) length: %d\n",
-			eventId, RDPEI_EVENTID_STRINGS[eventId], pduLength);
+	WLog_DBG(TAG,  "rdpei_recv_pdu: eventId: %d (%s) length: %d",
+			 eventId, RDPEI_EVENTID_STRINGS[eventId], pduLength);
 #endif
 
 	switch (eventId)

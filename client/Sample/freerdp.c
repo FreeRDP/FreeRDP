@@ -46,6 +46,9 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <freerdp/log.h>
+
+#define TAG CLIENT_TAG("sample")
 
 struct tf_info
 {
@@ -127,7 +130,7 @@ void tf_process_channel_event(rdpChannels* channels, freerdp* instance)
 				break;
 
 			default:
-				printf("tf_process_channel_event: unknown event type %d\n", GetMessageType(event->id));
+				WLog_ERR(TAG, "unknown event type %d", GetMessageType(event->id));
 				break;
 		}
 
@@ -219,12 +222,12 @@ int tfreerdp_run(freerdp* instance)
 		ZeroMemory(wfds, sizeof(wfds));
 		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 		{
-			printf("Failed to get channel manager file descriptor\n");
+			WLog_ERR(TAG, "Failed to get channel manager file descriptor");
 			break;
 		}
 
@@ -253,19 +256,19 @@ int tfreerdp_run(freerdp* instance)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("tfreerdp_run: select failed\n");
+				WLog_ERR(TAG, "tfreerdp_run: select failed");
 				break;
 			}
 		}
 
 		if (freerdp_check_fds(instance) != TRUE)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
 		if (freerdp_channels_check_fds(channels, instance) != TRUE)
 		{
-			printf("Failed to check channel manager file descriptor\n");
+			WLog_ERR(TAG, "Failed to check channel manager file descriptor");
 			break;
 		}
 		tf_process_channel_event(channels, instance);

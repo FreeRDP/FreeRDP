@@ -43,6 +43,9 @@
 #include "mfreerdp.h"
 #include "mf_peer.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
+
 static void mf_server_main_loop(freerdp_listener* instance)
 {
 	int i;
@@ -60,7 +63,7 @@ static void mf_server_main_loop(freerdp_listener* instance)
 
 		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
-			DEBUG_WARN( "Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG,  "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
@@ -88,14 +91,14 @@ static void mf_server_main_loop(freerdp_listener* instance)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				DEBUG_WARN( "select failed\n");
+				WLog_ERR(TAG,  "select failed");
 				break;
 			}
 		}
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)
 		{
-			DEBUG_WARN( "Failed to check FreeRDP file descriptor\n");
+			WLog_ERR(TAG,  "Failed to check FreeRDP file descriptor");
 			break;
 		}
 	}

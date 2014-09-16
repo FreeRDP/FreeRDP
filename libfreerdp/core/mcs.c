@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <freerdp/log.h>
 
 #include "gcc.h"
 
@@ -29,6 +30,8 @@
 #include "tpdu.h"
 #include "tpkt.h"
 #include "client.h"
+
+#define TAG FREERDP_TAG("core")
 
 /**
  * T.125 MCS is defined in:
@@ -328,16 +331,16 @@ void mcs_write_domain_parameters(wStream* s, DomainParameters* domainParameters)
 
 void mcs_print_domain_parameters(DomainParameters* domainParameters)
 {
-	DEBUG_WARN( "DomainParameters {\n");
-	DEBUG_WARN( "\tmaxChannelIds:%d\n", domainParameters->maxChannelIds);
-	DEBUG_WARN( "\tmaxUserIds:%d\n", domainParameters->maxUserIds);
-	DEBUG_WARN( "\tmaxTokenIds:%d\n", domainParameters->maxTokenIds);
-	DEBUG_WARN( "\tnumPriorities:%d\n", domainParameters->numPriorities);
-	DEBUG_WARN( "\tminThroughput:%d\n", domainParameters->minThroughput);
-	DEBUG_WARN( "\tmaxHeight:%d\n", domainParameters->maxHeight);
-	DEBUG_WARN( "\tmaxMCSPDUsize:%d\n", domainParameters->maxMCSPDUsize);
-	DEBUG_WARN( "\tprotocolVersion:%d\n", domainParameters->protocolVersion);
-	DEBUG_WARN( "}\n");
+	WLog_INFO(TAG,  "DomainParameters {");
+	WLog_INFO(TAG,  "\tmaxChannelIds:%d", domainParameters->maxChannelIds);
+	WLog_INFO(TAG,  "\tmaxUserIds:%d", domainParameters->maxUserIds);
+	WLog_INFO(TAG,  "\tmaxTokenIds:%d", domainParameters->maxTokenIds);
+	WLog_INFO(TAG,  "\tnumPriorities:%d", domainParameters->numPriorities);
+	WLog_INFO(TAG,  "\tminThroughput:%d", domainParameters->minThroughput);
+	WLog_INFO(TAG,  "\tmaxHeight:%d", domainParameters->maxHeight);
+	WLog_INFO(TAG,  "\tmaxMCSPDUsize:%d", domainParameters->maxMCSPDUsize);
+	WLog_INFO(TAG,  "\tprotocolVersion:%d", domainParameters->protocolVersion);
+	WLog_INFO(TAG,  "}");
 }
 
 /**
@@ -661,7 +664,7 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 
 	if (!gcc_read_conference_create_response(s, mcs))
 	{
-		DEBUG_WARN( "mcs_recv_connect_response: gcc_read_conference_create_response failed\n");
+		WLog_ERR(TAG,  "gcc_read_conference_create_response failed");
 		return FALSE;
 	}
 

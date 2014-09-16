@@ -29,6 +29,10 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
+
+#define TAG CLIENT_TAG("x11")
+
 #ifdef WITH_XINERAMA
 #include <X11/extensions/Xinerama.h>
 #endif
@@ -55,10 +59,10 @@ int xf_list_monitors(xfContext* xfc)
 
 			for (i = 0; i < nmonitors; i++)
 			{
-				printf("      %s [%d] %dx%d\t+%d+%d\n",
-				       (i == 0) ? "*" : " ", i,
-				       screen[i].width, screen[i].height,
-				       screen[i].x_org, screen[i].y_org);
+				WLog_DBG(TAG, "      %s [%d] %dx%d\t+%d+%d",
+						 (i == 0) ? "*" : " ", i,
+						 screen[i].width, screen[i].height,
+						 screen[i].x_org, screen[i].y_org);
 			}
 
 			XFree(screen);
@@ -73,8 +77,7 @@ int xf_list_monitors(xfContext* xfc)
 	display = XOpenDisplay(NULL);
 
 	screen = ScreenOfDisplay(display, DefaultScreen(display));
-	printf("      * [0] %dx%d\t+%d+%d\n", WidthOfScreen(screen), HeightOfScreen(screen), 0, 0);
-
+	WLog_DBG(TAG, "      * [0] %dx%d\t+%d+%d", WidthOfScreen(screen), HeightOfScreen(screen), 0, 0);
 	XCloseDisplay(display);
 #endif
 

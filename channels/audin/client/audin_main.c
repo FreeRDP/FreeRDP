@@ -133,7 +133,7 @@ static int audin_process_formats(IWTSVirtualChannelCallback* pChannelCallback, w
 	DEBUG_DVC("NumFormats %d", NumFormats);
 	if ((NumFormats < 1) || (NumFormats > 1000))
 	{
-		CLOG_ERR("bad NumFormats %d", NumFormats);
+		WLog_ERR(TAG, "bad NumFormats %d", NumFormats);
 		return 1;
 	}
 	Stream_Seek_UINT32(s); /* cbSizeFormatsPacket */
@@ -262,8 +262,8 @@ static int audin_process_open(IWTSVirtualChannelCallback* pChannelCallback, wStr
 
 	if (initialFormat >= (UINT32) callback->formats_count)
 	{
-		CLOG_ERR("invalid format index %d (total %d)",
-			initialFormat, callback->formats_count);
+		WLog_ERR(TAG, "invalid format index %d (total %d)",
+				 initialFormat, callback->formats_count);
 		return 1;
 	}
 
@@ -293,8 +293,8 @@ static int audin_process_format_change(IWTSVirtualChannelCallback* pChannelCallb
 
 	if (NewFormat >= (UINT32) callback->formats_count)
 	{
-		CLOG_ERR("invalid format index %d (total %d)",
-			NewFormat, callback->formats_count);
+		WLog_ERR(TAG, "invalid format index %d (total %d)",
+				 NewFormat, callback->formats_count);
 		return 1;
 	}
 
@@ -340,7 +340,7 @@ static int audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 			break;
 
 		default:
-			CLOG_ERR("unknown MessageId=0x%x", MessageId);
+			WLog_ERR(TAG, "unknown MessageId=0x%x", MessageId);
 			error = 1;
 			break;
 	}
@@ -429,7 +429,7 @@ static void audin_register_device_plugin(IWTSPlugin* pPlugin, IAudinDevice* devi
 
 	if (audin->device)
 	{
-		CLOG_ERR("existing device, abort.");
+		WLog_ERR(TAG, "existing device, abort.");
 		return;
 	}
 
@@ -454,7 +454,7 @@ static BOOL audin_load_device_plugin(IWTSPlugin* pPlugin, const char* name, ADDI
 
 	if (entry(&entryPoints) != 0)
 	{
-		CLOG_ERR("%s entry returns error.", name);
+		WLog_ERR(TAG, "%s entry returns error.", name);
 		return FALSE;
 	}
 
@@ -613,7 +613,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	if (audin->device == NULL)
 	{
-		CLOG_ERR("no sound device.");
+		WLog_ERR(TAG, "no sound device.");
 	}
 
 	return error;

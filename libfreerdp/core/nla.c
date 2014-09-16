@@ -186,8 +186,8 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	}
 #endif
 #ifdef WITH_DEBUG_NLA
-	DEBUG_MSG("User: %s Domain: %s Password: %s\n",
-			  (char*) credssp->identity.User, (char*) credssp->identity.Domain, (char*) credssp->identity.Password);
+	WLog_DBG(TAG, "User: %s Domain: %s Password: %s",
+			 (char*) credssp->identity.User, (char*) credssp->identity.Domain, (char*) credssp->identity.Password);
 #endif
 
 	if (credssp->transport->layer == TRANSPORT_LAYER_TLS)
@@ -200,7 +200,7 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 	}
 	else
 	{
-		DEBUG_WARN("Unknown NLA transport layer\n");
+		WLog_ERR(TAG, "Unknown NLA transport layer");
 		return 0;
 	}
 
@@ -261,7 +261,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN("QuerySecurityPackageInfo status: 0x%08X\n", status);
+		WLog_ERR(TAG, "QuerySecurityPackageInfo status: 0x%08X", status);
 		return 0;
 	}
 
@@ -271,7 +271,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN("AcquireCredentialsHandle status: 0x%08X\n", status);
+		WLog_ERR(TAG, "AcquireCredentialsHandle status: 0x%08X", status);
 		return 0;
 	}
 
@@ -327,7 +327,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
 			{
-				DEBUG_WARN("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
 				return 0;
 			}
 
@@ -341,7 +341,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			credssp->negoToken.pvBuffer = output_buffer.pvBuffer;
 			credssp->negoToken.cbBuffer = output_buffer.cbBuffer;
 #ifdef WITH_DEBUG_CREDSSP
-			DEBUG_WARN("Sending Authentication Token\n");
+			WLog_DBG(TAG, "Sending Authentication Token");
 			winpr_HexDump(TAG, WLOG_DEBUG, credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 			credssp_send(credssp);
@@ -361,7 +361,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 			return -1;
 
 #ifdef WITH_DEBUG_CREDSSP
-		DEBUG_WARN("Receiving Authentication Token (%d)\n", (int) credssp->negoToken.cbBuffer);
+		WLog_DBG(TAG, "Receiving Authentication Token (%d)", (int) credssp->negoToken.cbBuffer);
 		winpr_HexDump(TAG, WLOG_DEBUG, credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 #endif
 		input_buffer.pvBuffer = credssp->negoToken.pvBuffer;
@@ -380,7 +380,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN("Could not verify public key echo!\n");
+		WLog_ERR(TAG, "Could not verify public key echo!");
 		return -1;
 	}
 
@@ -389,7 +389,7 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN("credssp_encrypt_ts_credentials status: 0x%08X\n", status);
+		WLog_ERR(TAG, "credssp_encrypt_ts_credentials status: 0x%08X", status);
 		return 0;
 	}
 
@@ -436,7 +436,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		if (!hSSPI)
 		{
-			DEBUG_WARN("Failed to load SSPI module: %s\n", credssp->SspiModule);
+			WLog_ERR(TAG, "Failed to load SSPI module: %s", credssp->SspiModule);
 			return 0;
 		}
 
@@ -456,7 +456,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN("QuerySecurityPackageInfo status: 0x%08X\n", status);
+		WLog_ERR(TAG, "QuerySecurityPackageInfo status: 0x%08X", status);
 		return 0;
 	}
 
@@ -466,7 +466,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN("AcquireCredentialsHandle status: 0x%08X\n", status);
+		WLog_ERR(TAG, "AcquireCredentialsHandle status: 0x%08X", status);
 		return 0;
 	}
 
@@ -509,7 +509,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 			return -1;
 
 #ifdef WITH_DEBUG_CREDSSP
-		DEBUG_WARN("Receiving Authentication Token\n");
+		WLog_DBG(TAG, "Receiving Authentication Token");
 		credssp_buffer_print(credssp);
 #endif
 		input_buffer.pvBuffer = credssp->negoToken.pvBuffer;
@@ -517,7 +517,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		if (credssp->negoToken.cbBuffer < 1)
 		{
-			DEBUG_WARN("CredSSP: invalid negoToken!\n");
+			WLog_ERR(TAG, "CredSSP: invalid negoToken!");
 			return -1;
 		}
 
@@ -551,13 +551,13 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
 			{
-				DEBUG_WARN("QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
 				return 0;
 			}
 
 			if (credssp_decrypt_public_key_echo(credssp) != SEC_E_OK)
 			{
-				DEBUG_WARN("Error: could not verify client's public key echo\n");
+				WLog_ERR(TAG, "Error: could not verify client's public key echo");
 				return -1;
 			}
 
@@ -569,13 +569,13 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED))
 		{
-			DEBUG_WARN("AcceptSecurityContext status: 0x%08X\n", status);
+			WLog_ERR(TAG, "AcceptSecurityContext status: 0x%08X", status);
 			return -1; /* Access Denied */
 		}
 
 		/* send authentication token */
 #ifdef WITH_DEBUG_CREDSSP
-		DEBUG_WARN("Sending Authentication Token\n");
+		WLog_DBG(TAG, "Sending Authentication Token");
 		credssp_buffer_print(credssp);
 #endif
 		credssp_send(credssp);
@@ -594,13 +594,13 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 	if (credssp_decrypt_ts_credentials(credssp) != SEC_E_OK)
 	{
-		DEBUG_WARN("Could not decrypt TSCredentials status: 0x%08X\n", status);
+		WLog_ERR(TAG, "Could not decrypt TSCredentials status: 0x%08X", status);
 		return 0;
 	}
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN("AcceptSecurityContext status: 0x%08X\n", status);
+		WLog_ERR(TAG, "AcceptSecurityContext status: 0x%08X", status);
 		return 0;
 	}
 
@@ -608,7 +608,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN("ImpersonateSecurityContext status: 0x%08X\n", status);
+		WLog_ERR(TAG, "ImpersonateSecurityContext status: 0x%08X", status);
 		return 0;
 	}
 	else
@@ -617,7 +617,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		if (status != SEC_E_OK)
 		{
-			DEBUG_WARN("RevertSecurityContext status: 0x%08X\n", status);
+			WLog_ERR(TAG, "RevertSecurityContext status: 0x%08X", status);
 			return 0;
 		}
 	}
@@ -707,7 +707,7 @@ SECURITY_STATUS credssp_encrypt_public_key_echo(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN("EncryptMessage status: 0x%08X\n", status);
+		WLog_ERR(TAG, "EncryptMessage status: 0x%08X", status);
 		return status;
 	}
 
@@ -728,7 +728,7 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 
 	if (credssp->PublicKey.cbBuffer + credssp->ContextSizes.cbMaxSignature != credssp->pubKeyAuth.cbBuffer)
 	{
-		DEBUG_WARN("unexpected pubKeyAuth buffer size:%d\n", (int) credssp->pubKeyAuth.cbBuffer);
+		WLog_ERR(TAG, "unexpected pubKeyAuth buffer size:%d", (int) credssp->pubKeyAuth.cbBuffer);
 		return SEC_E_INVALID_TOKEN;
 	}
 
@@ -749,7 +749,7 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 
 	if (status != SEC_E_OK)
 	{
-		DEBUG_WARN("DecryptMessage failure: 0x%08X\n", status);
+		WLog_ERR(TAG, "DecryptMessage failure: 0x%08X", status);
 		return status;
 	}
 
@@ -764,10 +764,10 @@ SECURITY_STATUS credssp_decrypt_public_key_echo(rdpCredssp* credssp)
 
 	if (memcmp(public_key1, public_key2, public_key_length) != 0)
 	{
-		DEBUG_WARN("Could not verify server's public key echo\n");
-		DEBUG_WARN("Expected (length = %d):\n", public_key_length);
+		WLog_ERR(TAG, "Could not verify server's public key echo");
+		WLog_ERR(TAG, "Expected (length = %d):", public_key_length);
 		winpr_HexDump(TAG, WLOG_ERROR, public_key1, public_key_length);
-		DEBUG_WARN("Actual (length = %d):\n", public_key_length);
+		WLog_ERR(TAG, "Actual (length = %d):", public_key_length);
 		winpr_HexDump(TAG, WLOG_ERROR, public_key2, public_key_length);
 		return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
 	}
@@ -954,7 +954,7 @@ SECURITY_STATUS credssp_decrypt_ts_credentials(rdpCredssp* credssp)
 
 	if (credssp->authInfo.cbBuffer < 1)
 	{
-		DEBUG_WARN("credssp_decrypt_ts_credentials missing authInfo buffer\n");
+		WLog_ERR(TAG, "credssp_decrypt_ts_credentials missing authInfo buffer");
 		return SEC_E_INVALID_TOKEN;
 	}
 
@@ -1089,7 +1089,7 @@ int credssp_recv(rdpCredssp* credssp)
 
 	if (status < 0)
 	{
-		DEBUG_WARN("credssp_recv() error: %d\n", status);
+		WLog_ERR(TAG, "credssp_recv() error: %d", status);
 		Stream_Free(s, TRUE);
 		return -1;
 	}
@@ -1159,21 +1159,21 @@ void credssp_buffer_print(rdpCredssp* credssp)
 {
 	if (credssp->negoToken.cbBuffer > 0)
 	{
-		DEBUG_WARN("CredSSP.negoToken (length = %d):\n", (int) credssp->negoToken.cbBuffer);
+		WLog_ERR(TAG, "CredSSP.negoToken (length = %d):", (int) credssp->negoToken.cbBuffer);
 		winpr_HexDump(TAG, WLOG_ERROR, credssp->negoToken.pvBuffer,
 					  credssp->negoToken.cbBuffer);
 	}
 
 	if (credssp->pubKeyAuth.cbBuffer > 0)
 	{
-		DEBUG_WARN("CredSSP.pubKeyAuth (length = %d):\n", (int) credssp->pubKeyAuth.cbBuffer);
+		WLog_ERR(TAG, "CredSSP.pubKeyAuth (length = %d):", (int) credssp->pubKeyAuth.cbBuffer);
 		winpr_HexDump(TAG, WLOG_ERROR, credssp->pubKeyAuth.pvBuffer,
 					  credssp->pubKeyAuth.cbBuffer);
 	}
 
 	if (credssp->authInfo.cbBuffer > 0)
 	{
-		DEBUG_WARN("CredSSP.authInfo (length = %d):\n", (int) credssp->authInfo.cbBuffer);
+		WLog_ERR(TAG, "CredSSP.authInfo (length = %d):", (int) credssp->authInfo.cbBuffer);
 		winpr_HexDump(TAG, WLOG_ERROR, credssp->authInfo.pvBuffer,
 					  credssp->authInfo.cbBuffer);
 	}
@@ -1284,7 +1284,7 @@ rdpCredssp* credssp_new(freerdp* instance, rdpTransport* transport, rdpSettings*
 
 					if (status == ERROR_SUCCESS)
 					{
-						DEBUG_WARN("Using SSPI Module: %s\n", credssp->SspiModule);
+						WLog_INFO(TAG, "Using SSPI Module: %s", credssp->SspiModule);
 						RegCloseKey(hKey);
 					}
 				}

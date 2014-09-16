@@ -24,10 +24,13 @@
 #include <winpr/crt.h>
 
 #include <freerdp/input.h>
+#include <freerdp/log.h>
 
 #include "message.h"
 
 #include "input.h"
+
+#define TAG FREERDP_TAG("core")
 
 void rdp_write_client_input_pdu_header(wStream* s, UINT16 number)
 {
@@ -434,7 +437,7 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 			break;
 
 		default:
-			DEBUG_WARN( "Unknown messageType %u\n", messageType);
+			WLog_ERR(TAG,  "Unknown messageType %u", messageType);
 			/* Each input event uses 6 bytes. */
 			Stream_Seek(s, 6);
 			break;

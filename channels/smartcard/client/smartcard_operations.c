@@ -38,8 +38,6 @@
 
 #include "smartcard_main.h"
 
-#define TAG "smartcard.client"
-
 const char* smartcard_get_ioctl_string(UINT32 ioControlCode, BOOL funcName)
 {
 	switch (ioControlCode)
@@ -1070,7 +1068,7 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCAR
 	WLog_Print(smartcard->log, WLOG_DEBUG, "%s (0x%08X) FileId: %d CompletionId: %d",
 			   smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 #if 0
-	CLOG_DBG("%s (0x%08X) FileId: %d CompletionId: %d\n",
+	WLog_DBG(TAG, "%s (0x%08X) FileId: %d CompletionId: %d\n",
 			 smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 #endif
 
