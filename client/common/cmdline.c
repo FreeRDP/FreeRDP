@@ -1090,6 +1090,9 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 	*flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	*flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
 
+	if (posix_cli_status <= COMMAND_LINE_STATUS_PRINT)
+		return compatibility;
+
 	if (windows_cli_count >= posix_cli_count)
 	{
 		*flags = COMMAND_LINE_SEPARATOR_COLON;
