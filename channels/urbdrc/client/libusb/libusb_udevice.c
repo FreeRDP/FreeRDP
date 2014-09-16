@@ -510,7 +510,7 @@ static int udev_get_hub_handle(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_numb
 
 	if (!udev)
 	{
-		WLog_DBG(TAG, "Can't create udev");
+		WLog_ERR(TAG, "Can't create udev");
 		return -1;
 	}
 
