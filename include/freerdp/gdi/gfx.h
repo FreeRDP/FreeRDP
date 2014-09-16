@@ -31,6 +31,7 @@ struct gdi_gfx_surface
 	BOOL alpha;
 	BYTE* data;
 	int scanline;
+	UINT32 format;
 };
 typedef struct gdi_gfx_surface gdiGfxSurface;
 
@@ -42,6 +43,7 @@ struct gdi_gfx_cache_entry
 	BOOL alpha;
 	BYTE* data;
 	int scanline;
+	UINT32 format;
 };
 typedef struct gdi_gfx_cache_entry gdiGfxCacheEntry;
 
