@@ -71,7 +71,7 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	}
 	else
 	{
-		WLog_ERR(TAG, "Maximum DVC listener number reached.");
+		WLog_WARN(TAG, "Maximum DVC listener number reached.");
 		return 1;
 	}
 }
@@ -108,7 +108,7 @@ static int dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const cha
 	}
 	else
 	{
-		WLog_ERR(TAG, "Maximum DVC plugin number reached.");
+		WLog_WARN(TAG, "Maximum DVC plugin number reached.");
 		return 1;
 	}
 }
@@ -217,7 +217,7 @@ int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args, 
 {
 	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
-	WLog_ERR(TAG,  "Loading Dynamic Virtual Channel %s", args->argv[0]);
+	WLog_INFO(TAG,  "Loading Dynamic Virtual Channel %s", args->argv[0]);
 	pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_channel_addin_entry(args->argv[0],
 			NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
 
