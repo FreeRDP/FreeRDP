@@ -363,7 +363,7 @@ static HRESULT STDMETHODCALLTYPE Shadow_IRDPSessionEvents_Invoke(
 
 				if (FAILED(hr))
 				{
-					WLog_INFO(TAG, "%s DispGetParam(0, VT_DISPATCH) failure: 0x%08X",
+					WLog_ERR(TAG, "%s DispGetParam(0, VT_DISPATCH) failure: 0x%08X",
 						GetRDPSessionEventString(dispIdMember), hr);
 					return hr;
 				}
