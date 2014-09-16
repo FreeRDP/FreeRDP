@@ -320,7 +320,7 @@ TSMF_PRESENTATION *tsmf_presentation_find_by_id(const BYTE *guid)
 	ArrayList_Unlock(presentation_list);
 
 	if (!found)
-		WLog_ERR(TAG, "presentation id %s not found", guid_to_string(guid, guid_str, sizeof(guid_str)));
+		WLog_WARN(TAG, "presentation id %s not found", guid_to_string(guid, guid_str, sizeof(guid_str)));
 
 	return (found) ? presentation : NULL;
 }
