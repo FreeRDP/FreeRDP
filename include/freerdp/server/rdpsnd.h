@@ -120,7 +120,6 @@ FREERDP_API RdpsndServerContext* rdpsnd_server_context_new(HANDLE vcm);
 FREERDP_API void rdpsnd_server_context_reset(RdpsndServerContext *);
 FREERDP_API void rdpsnd_server_context_free(RdpsndServerContext* context);
 FREERDP_API HANDLE rdpsnd_server_get_event_handle(RdpsndServerContext *context);
-FREERDP_API BOOL rdpsnd_server_handle_messages(RdpsndServerContext *context);
 FREERDP_API int rdpsnd_server_handle_messages(RdpsndServerContext *context);
 FREERDP_API BOOL rdpsnd_server_send_formats(RdpsndServerContext* context, wStream* s);
 
