@@ -1935,7 +1935,7 @@ int freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings*
 	{
 		if (freerdp_channels_client_load(channels, settings, entry, data) == 0)
 		{
-			WLog_ERR(TAG,  "loading channel %s", name);
+			WLog_INFO(TAG,  "loading channel %s", name);
 			return 0;
 		}
 	}
