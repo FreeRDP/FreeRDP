@@ -172,7 +172,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 
 int freerdp_client_print_version()
 {
-	WLog_INFO(TAG, "This is FreeRDP version %s (git %s)", FREERDP_VERSION_FULL, GIT_REVISION);
+	printf("This is FreeRDP version %s (git %s)\n", FREERDP_VERSION_FULL, GIT_REVISION);
 	return 1;
 }
 
@@ -181,84 +181,98 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 	char* str;
 	int length;
 	COMMAND_LINE_ARGUMENT_A* arg;
-	WLog_INFO(TAG, "");
-	WLog_INFO(TAG, "FreeRDP - A Free Remote Desktop Protocol Implementation");
-	WLog_INFO(TAG, "See www.freerdp.com for more information");
-	WLog_INFO(TAG, "");
-	WLog_INFO(TAG, "Usage: %s [file] [options] [/v:<server>[:port]]", argv[0]);
-	WLog_INFO(TAG, "");
-	WLog_INFO(TAG, "Syntax:");
-	WLog_INFO(TAG, "    /flag (enables flag)");
-	WLog_INFO(TAG, "    /option:<value> (specifies option with value)");
-	WLog_INFO(TAG, "    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')");
-	WLog_INFO(TAG, "");
+
+	printf("\n");
+	printf("FreeRDP - A Free Remote Desktop Protocol Implementation\n");
+	printf("See www.freerdp.com for more information\n");
+	printf("\n");
+
+	printf("Usage: %s [file] [options] [/v:<server>[:port]]\n", argv[0]);
+	printf("\n");
+
+	printf("Syntax:\n");
+	printf("    /flag (enables flag)\n");
+	printf("    /option:<value> (specifies option with value)\n");
+	printf("    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')\n");
+	printf("\n");
+
 	arg = args;
 
 	do
 	{
 		if (arg->Flags & COMMAND_LINE_VALUE_FLAG)
 		{
-			WLog_INFO(TAG, "    %s", "/");
-			WLog_INFO(TAG, "%-20s", arg->Name);
-			WLog_INFO(TAG, "\t%s", arg->Text);
+			printf("    %s", "/");
+			printf("%-20s", arg->Name);
+			printf("\t%s\n", arg->Text);
 		}
 		else if ((arg->Flags & COMMAND_LINE_VALUE_REQUIRED) || (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 		{
-			WLog_INFO(TAG, "    %s", "/");
+			printf("    %s", "/");
 
 			if (arg->Format)
 			{
 				length = (int)(strlen(arg->Name) + strlen(arg->Format) + 2);
 				str = (char*) malloc(length + 1);
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
-				WLog_INFO(TAG, "%-20s", str);
+				printf("%-20s", str);
 				free(str);
 			}
 			else
 			{
-				WLog_INFO(TAG, "%-20s", arg->Name);
+				printf("%-20s", arg->Name);
 			}
 
-			WLog_INFO(TAG, "\t%s", arg->Text);
+			printf("\t%s\n", arg->Text);
 		}
 		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
 		{
 			length = (int) strlen(arg->Name) + 32;
 			str = (char*) malloc(length + 1);
 			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name,
-					  arg->Default ? "on" : "off");
-			WLog_INFO(TAG, "    %s", arg->Default ? "-" : "+");
-			WLog_INFO(TAG, "%-20s", str);
+					arg->Default ? "on" : "off");
+
+			printf("    %s", arg->Default ? "-" : "+");
+
+			printf("%-20s", str);
 			free(str);
-			WLog_INFO(TAG, "\t%s", arg->Text);
+
+			printf("\t%s\n", arg->Text);
 		}
 	}
 	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
-	WLog_INFO(TAG, "");
-	WLog_INFO(TAG, "Examples:");
-	WLog_INFO(TAG, "    xfreerdp connection.rdp /p:Pwd123! /f");
-	WLog_INFO(TAG, "    xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com");
-	WLog_INFO(TAG, "    xfreerdp /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489");
-	WLog_INFO(TAG, "    xfreerdp /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168.1.100");
-	WLog_INFO(TAG, "");
-	WLog_INFO(TAG, "Clipboard Redirection: +clipboard");
-	WLog_INFO(TAG, "");
-	WLog_INFO(TAG, "Drive Redirection: /drive:home,/home/user");
-	WLog_INFO(TAG, "Smartcard Redirection: /smartcard:<device>");
-	WLog_INFO(TAG, "Printer Redirection: /printer:<device>,<driver>");
-	WLog_INFO(TAG, "Serial Port Redirection: /serial:<device>");
-	WLog_INFO(TAG, "Parallel Port Redirection: /parallel:<device>");
-	WLog_INFO(TAG, "Printer Redirection: /printer:<device>,<driver>");
-	WLog_INFO(TAG, "");
-	WLog_INFO(TAG, "Audio Output Redirection: /sound:sys:alsa");
-	WLog_INFO(TAG, "Audio Input Redirection: /microphone:sys:alsa");
-	WLog_INFO(TAG, "");
-	WLog_INFO(TAG, "Multimedia Redirection: /multimedia:sys:alsa");
-	WLog_INFO(TAG, "USB Device Redirection: /usb:id,dev:054c:0268");
-	WLog_INFO(TAG, "");
-	WLog_INFO(TAG, "More documentation is coming, in the meantime consult source files");
-	WLog_INFO(TAG, "");
+	printf("\n");
+
+	printf("Examples:\n");
+	printf("    xfreerdp connection.rdp /p:Pwd123! /f\n");
+	printf("    xfreerdp /u:CONTOSO\\JohnDoe /p:Pwd123! /v:rdp.contoso.com\n");
+	printf("    xfreerdp /u:JohnDoe /p:Pwd123! /w:1366 /h:768 /v:192.168.1.100:4489\n");
+	printf("    xfreerdp /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 /v:192.168.1.100\n");
+	printf("\n");
+
+	printf("Clipboard Redirection: +clipboard\n");
+	printf("\n");
+
+	printf("Drive Redirection: /drive:home,/home/user\n");
+	printf("Smartcard Redirection: /smartcard:<device>\n");
+	printf("Printer Redirection: /printer:<device>,<driver>\n");
+	printf("Serial Port Redirection: /serial:<device>\n");
+	printf("Parallel Port Redirection: /parallel:<device>\n");
+	printf("Printer Redirection: /printer:<device>,<driver>\n");
+	printf("\n");
+
+	printf("Audio Output Redirection: /sound:sys:alsa\n");
+	printf("Audio Input Redirection: /microphone:sys:alsa\n");
+	printf("\n");
+
+	printf("Multimedia Redirection: /multimedia:sys:alsa\n");
+	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
+	printf("\n");
+
+	printf("More documentation is coming, in the meantime consult source files\n");
+	printf("\n");
+
 	return 1;
 }
 
@@ -675,7 +689,7 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	}
 	CommandLineSwitchCase(arg, "gestures")
 	{
-		WLog_INFO(TAG, "gestures");
+		printf("gestures\n");
 		settings->MultiTouchGestures = TRUE;
 	}
 	CommandLineSwitchCase(arg, "echo")
@@ -1094,8 +1108,8 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 		}
 	}
 
-	//WLog_INFO(TAG, "windows: %d/%d posix: %d/%d compat: %d/%d", windows_cli_status, windows_cli_count,
-	//		posix_cli_status, posix_cli_count, old_cli_status, old_cli_count);
+	WLog_DBG(TAG, "windows: %d/%d posix: %d/%d compat: %d/%d", windows_cli_status, windows_cli_count,
+		posix_cli_status, posix_cli_count, old_cli_status, old_cli_count);
 
 	return compatibility;
 }
@@ -1119,26 +1133,24 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 			RDP_KEYBOARD_LAYOUT* layouts;
 
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
-			WLog_INFO(TAG, "Keyboard Layouts");
-
+			printf("\nKeyboard Layouts\n");
 			for (i = 0; layouts[i].code; i++)
-				WLog_INFO(TAG, "0x%08X\t%s", (int) layouts[i].code, layouts[i].name);
-
+				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
+
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
-			WLog_INFO(TAG, "Keyboard Layout Variants");
-
+			printf("\nKeyboard Layout Variants\n");
 			for (i = 0; layouts[i].code; i++)
-				WLog_INFO(TAG, "0x%08X\t%s", (int) layouts[i].code, layouts[i].name);
-
+				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
+
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
-			WLog_INFO(TAG, "Keyboard Input Method Editors (IMEs)");
-
+			printf("\nKeyboard Input Method Editors (IMEs)\n");
 			for (i = 0; layouts[i].code; i++)
-				WLog_INFO(TAG, "0x%08X\t%s", (int) layouts[i].code, layouts[i].name);
-
+				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
+
+			printf("\n");
 		}
 
 		arg = CommandLineFindArgumentA(args, "monitor-list");
@@ -1870,8 +1882,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 			else
 			{
-				WLog_ERR(TAG,  "reconnect-cookie:  invalid base64 '%s'",
-						 arg->Value);
+				WLog_ERR(TAG,  "reconnect-cookie:  invalid base64 '%s'", arg->Value);
 			}
 		}
 		CommandLineSwitchCase(arg, "print-reconnect-cookie")
