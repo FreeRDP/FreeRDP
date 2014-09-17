@@ -1789,6 +1789,8 @@ int freerdp_image15_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 					}
 				}
 			}
+
+			return 1;
 		}
 	}
 	else if (dstBytesPerPixel == 2)
@@ -2936,18 +2938,24 @@ int freerdp_image_move(BYTE* pData, DWORD Format, int nStep, int nXDst, int nYDs
 	BOOL overlap;
 	BYTE* pSrcPixel;
 	BYTE* pDstPixel;
+	int bytesPerPixel;
+
+	bytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(Format) / 8);
+
+	if (nStep < 0)
+		nStep = nWidth * bytesPerPixel;
 
 	overlap = (((nXDst + nWidth) > nXSrc) && (nXDst < (nXSrc + nWidth)) &&
 		((nYDst + nHeight) > nYSrc) && (nYDst < (nYSrc + nHeight))) ? TRUE : FALSE;
 
 	if (!overlap)
 	{
-		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * 4)];
-		pDstPixel = &pData[(nYDst * nStep) + (nXDst * 4)];
+		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * bytesPerPixel)];
+		pDstPixel = &pData[(nYDst * nStep) + (nXDst * bytesPerPixel)];
 
 		for (y = 0; y < nHeight; y++)
 		{
-			CopyMemory(pDstPixel, pSrcPixel, nWidth * 4);
+			CopyMemory(pDstPixel, pSrcPixel, nWidth * bytesPerPixel);
 			pSrcPixel += nStep;
 			pDstPixel += nStep;
 		}
@@ -2959,12 +2967,12 @@ int freerdp_image_move(BYTE* pData, DWORD Format, int nStep, int nXDst, int nYDs
 	{
 		/* copy down */
 
-		pSrcPixel = &pData[((nYSrc + nHeight - 1) * nStep) + (nXSrc * 4)];
-		pDstPixel = &pData[((nYDst + nHeight - 1) * nStep) + (nXDst * 4)];
+		pSrcPixel = &pData[((nYSrc + nHeight - 1) * nStep) + (nXSrc * bytesPerPixel)];
+		pDstPixel = &pData[((nYDst + nHeight - 1) * nStep) + (nXDst * bytesPerPixel)];
 
 		for (y = 0; y < nHeight; y++)
 		{
-			CopyMemory(pDstPixel, pSrcPixel, nWidth * 4);
+			CopyMemory(pDstPixel, pSrcPixel, nWidth * bytesPerPixel);
 			pSrcPixel -= nStep;
 			pDstPixel -= nStep;
 		}
@@ -2973,12 +2981,12 @@ int freerdp_image_move(BYTE* pData, DWORD Format, int nStep, int nXDst, int nYDs
 	{
 		/* copy up */
 
-		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * 4)];
-		pDstPixel = &pData[(nYDst * nStep) + (nXDst * 4)];
+		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * bytesPerPixel)];
+		pDstPixel = &pData[(nYDst * nStep) + (nXDst * bytesPerPixel)];
 
 		for (y = 0; y < nHeight; y++)
 		{
-			CopyMemory(pDstPixel, pSrcPixel, nWidth * 4);
+			CopyMemory(pDstPixel, pSrcPixel, nWidth * bytesPerPixel);
 			pSrcPixel += nStep;
 			pDstPixel += nStep;
 		}
@@ -2987,12 +2995,12 @@ int freerdp_image_move(BYTE* pData, DWORD Format, int nStep, int nXDst, int nYDs
 	{
 		/* copy left */
 
-		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * 4)];
-		pDstPixel = &pData[(nYDst * nStep) + (nXDst * 4)];
+		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * bytesPerPixel)];
+		pDstPixel = &pData[(nYDst * nStep) + (nXDst * bytesPerPixel)];
 
 		for (y = 0; y < nHeight; y++)
 		{
-			MoveMemory(pDstPixel, pSrcPixel, nWidth * 4);
+			MoveMemory(pDstPixel, pSrcPixel, nWidth * bytesPerPixel);
 			pSrcPixel += nStep;
 			pDstPixel += nStep;
 		}
@@ -3001,12 +3009,12 @@ int freerdp_image_move(BYTE* pData, DWORD Format, int nStep, int nXDst, int nYDs
 	{
 		/* copy right */
 
-		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * 4)];
-		pDstPixel = &pData[(nYDst * nStep) + (nXDst * 4)];
+		pSrcPixel = &pData[(nYSrc * nStep) + (nXSrc * bytesPerPixel)];
+		pDstPixel = &pData[(nYDst * nStep) + (nXDst * bytesPerPixel)];
 
 		for (y = 0; y < nHeight; y++)
 		{
-			MoveMemory(pDstPixel, pSrcPixel, nWidth * 4);
+			MoveMemory(pDstPixel, pSrcPixel, nWidth * bytesPerPixel);
 			pSrcPixel += nStep;
 			pDstPixel += nStep;
 		}
