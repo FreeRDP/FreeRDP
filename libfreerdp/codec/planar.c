@@ -603,6 +603,8 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 
 	if (useTempBuffer)
 	{
+		pDstData = *ppDstData;
+
 		status = freerdp_image_copy(pDstData, DstFormat, -1, 0, 0, nWidth, nHeight,
 				planar->TempBuffer, PIXEL_FORMAT_XRGB32, -1, 0, 0);
 	}

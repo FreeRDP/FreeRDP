@@ -155,8 +155,6 @@ struct xf_context
 	XSetWindowAttributes attribs;
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
-	BYTE* bmp_codec_none;
-	BYTE* bmp_codec_nsc;
 	void* xv_context;
 	void* clipboard_context;
 

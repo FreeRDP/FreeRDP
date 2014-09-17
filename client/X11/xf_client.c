@@ -946,9 +946,9 @@ BOOL xf_post_connect(freerdp *instance)
 	XSetForeground(xfc->display, xfc->gc, BlackPixelOfScreen(xfc->screen));
 	XFillRectangle(xfc->display, xfc->primary, xfc->gc, 0, 0, xfc->width, xfc->height);
 	XFlush(xfc->display);
+
 	xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 			(char*) xfc->primary_buffer, xfc->width, xfc->height, xfc->scanline_pad, 0);
-	xfc->bmp_codec_none = (BYTE *) malloc(64 * 64 * 4);
 
 	if (settings->SoftwareGdi)
 	{
@@ -1640,9 +1640,6 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 	if (context)
 	{
 		xf_window_free(xfc);
-
-		if (xfc->bmp_codec_none)
-			free(xfc->bmp_codec_none);
 
 		if (xfc->bitmap_buffer)
 			_aligned_free(xfc->bitmap_buffer);

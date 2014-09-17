@@ -1139,6 +1139,8 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 {
 	int i, tx, ty;
 	XImage* image;
+	BYTE* pSrcData;
+	BYTE* pDstData;
 	RFX_MESSAGE* message;
 	xfContext* xfc = (xfContext*) context;
 
@@ -1148,21 +1150,39 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 	{
 		freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_REMOTEFX);
 
-		message = rfx_process_message(xfc->codecs->rfx,
-				cmd->bitmapData, cmd->bitmapDataLength);
+		message = rfx_process_message(xfc->codecs->rfx, cmd->bitmapData, cmd->bitmapDataLength);
 
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 
-		XSetClipRectangles(xfc->display, xfc->gc,
-				cmd->destLeft, cmd->destTop,
+		XSetClipRectangles(xfc->display, xfc->gc, cmd->destLeft, cmd->destTop,
 				(XRectangle*) message->rects, message->numRects, YXBanded);
+
+		if (xfc->bitmap_size < (64 * 64 * 4))
+		{
+			xfc->bitmap_size = 64 * 64 * 4;
+			xfc->bitmap_buffer = (BYTE*) _aligned_realloc(xfc->bitmap_buffer, xfc->bitmap_size, 16);
+
+			if (!xfc->bitmap_buffer)
+				return;
+		}
 
 		/* Draw the tiles to primary surface, each is 64x64. */
 		for (i = 0; i < message->numTiles; i++)
 		{
-			image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
-				(char*) message->tiles[i]->data, 64, 64, 32, 0);
+			pSrcData = message->tiles[i]->data;
+			pDstData = pSrcData;
+
+			if ((xfc->depth != 24) || (xfc->depth != 32))
+			{
+				pDstData = xfc->bitmap_buffer;
+
+				freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
+						64, 64, pSrcData, PIXEL_FORMAT_XRGB32, -1, 0, 0);
+			}
+
+			image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+				(char*) pDstData, 64, 64, xfc->scanline_pad, 0);
 
 			tx = message->tiles[i]->x + cmd->destLeft;
 			ty = message->tiles[i]->y + cmd->destTop;
@@ -1176,9 +1196,11 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 		{
 			tx = message->rects[i].x + cmd->destLeft;
 			ty = message->rects[i].y + cmd->destTop;
+
 			if (!xfc->remote_app)
 			{
-				XCopyArea(xfc->display, xfc->primary, xfc->drawable, xfc->gc, tx, ty, message->rects[i].width, message->rects[i].height, tx, ty);
+				XCopyArea(xfc->display, xfc->primary, xfc->drawable, xfc->gc,
+						tx, ty, message->rects[i].width, message->rects[i].height, tx, ty);
 			}
 
 			xf_gdi_surface_update_frame(xfc, tx, ty, message->rects[i].width, message->rects[i].height);
@@ -1191,39 +1213,42 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 	{
 		freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_NSCODEC);
 
-		nsc_process_message(xfc->codecs->nsc, cmd->bpp, cmd->width, cmd->height,
-			cmd->bitmapData, cmd->bitmapDataLength);
+		nsc_process_message(xfc->codecs->nsc, cmd->bpp, cmd->width, cmd->height, cmd->bitmapData, cmd->bitmapDataLength);
 
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 
-		xfc->bmp_codec_nsc = (BYTE*) realloc(xfc->bmp_codec_nsc,
-				cmd->width * cmd->height * 4);
+		if (xfc->bitmap_size < (cmd->width * cmd->height * 4))
+		{
+			xfc->bitmap_size = cmd->width * cmd->height * 4;
+			xfc->bitmap_buffer = (BYTE*) _aligned_realloc(xfc->bitmap_buffer, xfc->bitmap_size, 16);
 
-		freerdp_image_flip(xfc->codecs->nsc->BitmapData, xfc->bmp_codec_nsc,
-				cmd->width, cmd->height, 32);
+			if (!xfc->bitmap_buffer)
+				return;
+		}
 
-		image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
-			(char*) xfc->bmp_codec_nsc, cmd->width, cmd->height, 32, 0);
+		pSrcData = xfc->codecs->nsc->BitmapData;
+		pDstData = xfc->bitmap_buffer;
+
+		freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
+					cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0);
+
+		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+				(char*) pDstData, cmd->width, cmd->height, xfc->scanline_pad, 0);
 
 		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
-				cmd->destLeft, cmd->destTop,
-				cmd->width, cmd->height);
+				cmd->destLeft, cmd->destTop, cmd->width, cmd->height);
+
 		XFree(image);
-		free(xfc->bmp_codec_nsc);
-		xfc->bmp_codec_nsc = NULL;
 
 		if (!xfc->remote_app)
 		{
 			XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, 
-					cmd->destLeft, cmd->destTop,
-					cmd->width, cmd->height,
+					cmd->destLeft, cmd->destTop, cmd->width, cmd->height,
 					cmd->destLeft, cmd->destTop);
 		}
 
-		xf_gdi_surface_update_frame(xfc,
-			cmd->destLeft, cmd->destTop,
-			cmd->width, cmd->height);
+		xf_gdi_surface_update_frame(xfc, cmd->destLeft, cmd->destTop, cmd->width, cmd->height);
 
 		XSetClipMask(xfc->display, xfc->gc, None);
 	}
@@ -1232,43 +1257,39 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 
-		/* Validate that the data received is large enough */
-		if ((cmd->width * cmd->height * cmd->bpp / 8) <= (cmd->bitmapDataLength))
+		if (xfc->bitmap_size < (cmd->width * cmd->height * 4))
 		{
-			xfc->bmp_codec_none = (BYTE*) realloc(xfc->bmp_codec_none,
-					cmd->width * cmd->height * 4);
+			xfc->bitmap_size = cmd->width * cmd->height * 4;
+			xfc->bitmap_buffer = (BYTE*) _aligned_realloc(xfc->bitmap_buffer, xfc->bitmap_size, 16);
 
-			freerdp_image_flip(cmd->bitmapData, xfc->bmp_codec_none,
-					cmd->width, cmd->height, 32);
+			if (!xfc->bitmap_buffer)
+				return;
+		}
 
-			image = XCreateImage(xfc->display, xfc->visual, 24, ZPixmap, 0,
-				(char*) xfc->bmp_codec_none, cmd->width, cmd->height, 32, 0);
+		pSrcData = cmd->bitmapData;
+		pDstData = xfc->bitmap_buffer;
 
-			XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
-					cmd->destLeft, cmd->destTop,
-					cmd->width, cmd->height);
-			XFree(image);
-			free(xfc->bmp_codec_none);
-			xfc->bmp_codec_none = NULL;
+		freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
+				cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0);
 
-			if (!xfc->remote_app)
-			{
-				XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, 
-						cmd->destLeft, cmd->destTop,
-						cmd->width, cmd->height,
-						cmd->destLeft, cmd->destTop);
-			}
-			xf_gdi_surface_update_frame(xfc,
+		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+			(char*) pDstData, cmd->width, cmd->height, xfc->scanline_pad, 0);
+
+		XPutImage(xfc->display, xfc->primary, xfc->gc, image, 0, 0,
 				cmd->destLeft, cmd->destTop,
 				cmd->width, cmd->height);
+		XFree(image);
 
-			XSetClipMask(xfc->display, xfc->gc, None);
-		}
-		else
+		if (!xfc->remote_app)
 		{
-			DEBUG_WARN("Invalid bitmap size - data is %d bytes for %dx%d\n update",
-					cmd->bitmapDataLength, cmd->width, cmd->height);
+			XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc,
+					cmd->destLeft, cmd->destTop,
+					cmd->width, cmd->height, cmd->destLeft, cmd->destTop);
 		}
+
+		xf_gdi_surface_update_frame(xfc, cmd->destLeft, cmd->destTop, cmd->width, cmd->height);
+
+		XSetClipMask(xfc->display, xfc->gc, None);
 	}
 	else
 	{
