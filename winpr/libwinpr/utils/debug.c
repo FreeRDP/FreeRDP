@@ -349,8 +349,6 @@ char **winpr_backtrace_symbols(void *buffer, size_t *used)
 	{
 		HANDLE process = GetCurrentProcess();
 		t_win_stack *data = (t_win_stack *)buffer;
-		assert(data);
-
 		size_t line_len = (data->max > 1024) ? data->max : 1024;
 		size_t i;
 		char *lines = calloc(data->used + 1, sizeof(char *) * line_len);
