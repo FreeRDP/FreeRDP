@@ -191,10 +191,10 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 	{
 		case TSMF_SUB_TYPE_WVC1:
 			mdecoder->gst_caps = gst_caps_new_simple("video/x-wmv",
-								 "bitrate", G_TYPE_UINT, media_type->BitRate,
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 3,
+								 "format", G_TYPE_STRING, "WVC1",
 								 NULL);
 			break;
 		case TSMF_SUB_TYPE_MP4S:
