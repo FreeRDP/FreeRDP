@@ -118,9 +118,9 @@ void* freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszE
 	}
 	else
 	{
-		cchAddinFile = cchFileName + cchExt + 2;
+		cchAddinFile = cchFileName + cchExt + 2 + sizeof(CMAKE_SHARED_LIBRARY_PREFIX);
 		pszAddinFile = (LPSTR) malloc(cchAddinFile + 1);
-		sprintf_s(pszAddinFile, cchAddinFile, "%s%s", pszFileName, pszExt);
+		sprintf_s(pszAddinFile, cchAddinFile, CMAKE_SHARED_LIBRARY_PREFIX"%s%s", pszFileName, pszExt);
 		cchAddinFile = strlen(pszAddinFile);
 	}
 
@@ -151,30 +151,31 @@ void* freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LPSTR pszSubsyste
 {
 	void* entry;
 	LPSTR pszFileName;
-	size_t cchFileName;
+	size_t cchFileName = sizeof(CMAKE_SHARED_LIBRARY_PREFIX) + 32;
 	LPCSTR pszExtension;
+	LPCSTR pszPrefix = CMAKE_SHARED_LIBRARY_PREFIX;
 
 	pszExtension = PathGetSharedLibraryExtensionA(0);
 
 	if (pszName && pszSubsystem && pszType)
 	{
-		cchFileName = strlen(pszName) + strlen(pszSubsystem) + strlen(pszType) + strlen(pszExtension) + 32;
+		cchFileName += strlen(pszName) + strlen(pszSubsystem) + strlen(pszType) + strlen(pszExtension);
 		pszFileName = (LPSTR) malloc(cchFileName);
-		sprintf_s(pszFileName, cchFileName, "%s-client-%s-%s.%s", pszName, pszSubsystem, pszType, pszExtension);
+		sprintf_s(pszFileName, cchFileName, "%s%s-client-%s-%s.%s", pszPrefix, pszName, pszSubsystem, pszType, pszExtension);
 		cchFileName = strlen(pszFileName);
 	}
 	else if (pszName && pszSubsystem)
 	{
-		cchFileName = strlen(pszName) + strlen(pszSubsystem) + strlen(pszExtension) + 32;
+		cchFileName += strlen(pszName) + strlen(pszSubsystem) + strlen(pszExtension);
 		pszFileName = (LPSTR) malloc(cchFileName);
-		sprintf_s(pszFileName, cchFileName, "%s-client-%s.%s", pszName, pszSubsystem, pszExtension);
+		sprintf_s(pszFileName, cchFileName, "%s%s-client-%s.%s", pszPrefix, pszName, pszSubsystem, pszExtension);
 		cchFileName = strlen(pszFileName);
 	}
 	else if (pszName)
 	{
-		cchFileName = strlen(pszName) + strlen(pszExtension) + 32;
+		cchFileName += strlen(pszName) + strlen(pszExtension);
 		pszFileName = (LPSTR) malloc(cchFileName);
-		sprintf_s(pszFileName, cchFileName, "%s-client.%s", pszName, pszExtension);
+		sprintf_s(pszFileName, cchFileName, "%s%s-client.%s", pszPrefix, pszName, pszExtension);
 		cchFileName = strlen(pszFileName);
 	}
 	else
