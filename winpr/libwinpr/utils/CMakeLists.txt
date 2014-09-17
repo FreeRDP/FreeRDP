@@ -111,6 +111,10 @@ if(UNIX)
 	winpr_library_add(m)
 endif()
 
+if(WIN32)
+	winpr_library_add(Dbghelp)
+endif()
+
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
