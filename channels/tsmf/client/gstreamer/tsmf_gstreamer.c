@@ -748,10 +748,10 @@ BOOL tsmf_gstreamer_sync(ITSMFDecoder *decoder, void (*cb)(void *), void *stream
 }
 
 #ifdef STATIC_CHANNELS
-#define freerdp_tsmf_client_decoder_subsystem_entry	gstreamer_freerdp_tsmf_client_decoder_subsystem_entry
+#define freerdp_tsmf_client_subsystem_entry	gstreamer_freerdp_tsmf_client_subsystem_entry
 #endif
 
-ITSMFDecoder *freerdp_tsmf_client_decoder_subsystem_entry(void)
+ITSMFDecoder *freerdp_tsmf_client_subsystem_entry(void)
 {
 	TSMFGstreamerDecoder *decoder;
 
