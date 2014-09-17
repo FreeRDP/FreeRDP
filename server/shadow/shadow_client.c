@@ -489,7 +489,7 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 					buffer = encoder->grid[k];
 
 					freerdp_image_copy(buffer, dstFormat, -1, 0, 0, nWidth, nHeight,
-							data, srcFormat, nSrcStep, 0, 0);
+							data, srcFormat, nSrcStep, 0, 0, NULL);
 
 					lines = freerdp_bitmap_compress((char*) buffer, nWidth, nHeight, s,
 							settings->ColorDepth, 64 * 64 * 4, nHeight - 1, ts, e);

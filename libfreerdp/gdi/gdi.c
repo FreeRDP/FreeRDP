@@ -591,7 +591,6 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 void gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 {
 	int index;
-	BYTE r, g, b;
 	PALETTE_ENTRY* pe;
 	UINT32* palette32;
 	rdpGdi* gdi = context->gdi;
