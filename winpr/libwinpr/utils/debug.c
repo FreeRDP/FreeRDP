@@ -418,15 +418,17 @@ void winpr_backtrace_symbols_fd(void *buffer, int fd)
 	assert(data);
 	backtrace_symbols_fd(data->buffer, data->used, fd);
 #elif defined(_WIN32) || defined(_WIN64) || defined(ANDROID)
-	size_t used;
-	char **lines = winpr_backtrace_symbols(buffer, &used);
+    {
+        size_t used;
+        char **lines = winpr_backtrace_symbols(buffer, &used);
 
-	if (lines)
-	{
-		DWORD i;
-		for (i=0; i<used; i++)
-			write(fd, lines[i], strlen(lines[i]));
-	}
+        if (lines)
+        {
+            DWORD i;
+            for (i=0; i<used; i++)
+                write(fd, lines[i], strlen(lines[i]));
+        }
+    }
 #else
 	LOGF(support_msg);
 #endif
