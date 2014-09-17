@@ -910,7 +910,7 @@ int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE f
 
 			freerdp_image_copy(g_DstData, PIXEL_FORMAT_XRGB32, g_DstStep,
 					nXDst, nYDst, nWidth, nHeight, tile->data,
-					PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc);
+					PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc, NULL);
 		}
 
 		size = bitmaps[pass].size;

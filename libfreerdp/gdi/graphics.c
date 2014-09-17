@@ -96,7 +96,7 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int nWidth, int nHeight, int bpp, BYT
 	nSrcStep = nWidth * bytesPerPixel;
 
 	freerdp_image_copy(pDstData, gdi->format, nDstStep, 0, 0,
-			nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, 0, 0);
+			nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, 0, 0, gdi->palette);
 
 	bitmap = gdi_CreateBitmap(nWidth, nHeight, gdi->dstBpp, pDstData);
 
@@ -173,7 +173,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_INTERLEAVED);
 
 			status = interleaved_decompress(gdi->codecs->interleaved, pSrcData, SrcSize, bpp,
-					&pDstData, gdi->format, -1, 0, 0, width, height);
+					&pDstData, gdi->format, -1, 0, 0, width, height, gdi->palette);
 		}
 		else
 		{
@@ -194,7 +194,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 
 		status = freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
-				width, height, pSrcData, SrcFormat, -1, 0, 0);
+				width, height, pSrcData, SrcFormat, -1, 0, 0, gdi->palette);
 	}
 
 	bitmap->compressed = FALSE;
@@ -265,8 +265,8 @@ void gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int heigh
 	HGDI_BRUSH brush;
 	rdpGdi* gdi = context->gdi;
 
-	bgcolor = freerdp_convert_gdi_order_color(bgcolor, gdi->srcBpp, gdi->format);
-	fgcolor = freerdp_convert_gdi_order_color(fgcolor, gdi->srcBpp, gdi->format);
+	bgcolor = freerdp_convert_gdi_order_color(bgcolor, gdi->srcBpp, gdi->format, gdi->palette);
+	fgcolor = freerdp_convert_gdi_order_color(fgcolor, gdi->srcBpp, gdi->format, gdi->palette);
 
 	gdi_CRgnToRect(x, y, width, height, &rect);
 
@@ -281,7 +281,7 @@ void gdi_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height,
 {
 	rdpGdi* gdi = context->gdi;
 
-	bgcolor = freerdp_convert_gdi_order_color(bgcolor, gdi->srcBpp, gdi->format);
+	bgcolor = freerdp_convert_gdi_order_color(bgcolor, gdi->srcBpp, gdi->format, gdi->palette);
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 }
 

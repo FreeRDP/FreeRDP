@@ -68,7 +68,7 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 			SrcFormat = gdi_get_pixel_format(bitmap->bpp, TRUE);
 
 			freerdp_image_copy(data, xfc->format, -1, 0, 0,
-				bitmap->width, bitmap->height, bitmap->data, SrcFormat, -1, 0, 0);
+				bitmap->width, bitmap->height, bitmap->data, SrcFormat, -1, 0, 0, xfc->palette);
 
 			_aligned_free(bitmap->data);
 			bitmap->data = data;
@@ -156,7 +156,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			freerdp_client_codecs_prepare(xfc->codecs, FREERDP_CODEC_INTERLEAVED);
 
 			status = interleaved_decompress(xfc->codecs->interleaved, pSrcData, SrcSize, bpp,
-					&pDstData, xfc->format, -1, 0, 0, width, height);
+					&pDstData, xfc->format, -1, 0, 0, width, height, xfc->palette);
 		}
 		else
 		{
@@ -177,7 +177,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 
 		status = freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
-				width, height, pSrcData, SrcFormat, -1, 0, 0);
+				width, height, pSrcData, SrcFormat, -1, 0, 0, xfc->palette);
 	}
 
 	bitmap->compressed = FALSE;
@@ -377,8 +377,8 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 {
 	xfContext* xfc = (xfContext*) context;
 
-	bgcolor = freerdp_convert_gdi_order_color(bgcolor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
-	fgcolor = freerdp_convert_gdi_order_color(fgcolor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	bgcolor = freerdp_convert_gdi_order_color(bgcolor, context->settings->ColorDepth, xfc->format, xfc->palette);
+	fgcolor = freerdp_convert_gdi_order_color(fgcolor, context->settings->ColorDepth, xfc->format, xfc->palette);
 
 	xf_lock_x11(xfc, FALSE);
 

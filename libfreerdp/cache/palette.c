@@ -87,15 +87,13 @@ rdpPaletteCache* palette_cache_new(rdpSettings* settings)
 {
 	rdpPaletteCache* paletteCache;
 
-	paletteCache = (rdpPaletteCache*) malloc(sizeof(rdpPaletteCache));
-	ZeroMemory(paletteCache, sizeof(rdpPaletteCache));
+	paletteCache = (rdpPaletteCache*) calloc(1, sizeof(rdpPaletteCache));
 
 	if (paletteCache)
 	{
 		paletteCache->settings = settings;
 		paletteCache->maxEntries = 6;
-		paletteCache->entries = (PALETTE_TABLE_ENTRY*) malloc(sizeof(PALETTE_TABLE_ENTRY) * paletteCache->maxEntries);
-		ZeroMemory(paletteCache->entries, sizeof(PALETTE_TABLE_ENTRY) * paletteCache->maxEntries);
+		paletteCache->entries = (PALETTE_TABLE_ENTRY*) calloc(paletteCache->maxEntries, sizeof(PALETTE_TABLE_ENTRY));
 	}
 
 	return paletteCache;

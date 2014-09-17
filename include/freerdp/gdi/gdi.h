@@ -294,6 +294,7 @@ struct rdp_gdi
 	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	GDI_COLOR textColor;
+	BYTE palette[256 * 4];
 	gdiBitmap* tile;
 	gdiBitmap* image;
 

@@ -83,7 +83,7 @@ int gdi_OutputUpdate(rdpGdi* gdi)
 		update->BeginPaint(gdi->context);
 
 		freerdp_image_copy(pDstData, gdi->format, nDstStep, nXDst, nYDst, nWidth, nHeight,
-				surface->data, surface->format, surface->scanline, nXSrc, nYSrc);
+				surface->data, surface->format, surface->scanline, nXSrc, nYSrc, NULL);
 
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
 
@@ -142,7 +142,7 @@ int gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* context, R
 		return -1;
 
 	freerdp_image_copy(surface->data, surface->format, surface->scanline, cmd->left, cmd->top,
-			cmd->width, cmd->height, cmd->data, PIXEL_FORMAT_XRGB32, cmd->width * 4, 0, 0);
+			cmd->width, cmd->height, cmd->data, PIXEL_FORMAT_XRGB32, cmd->width * 4, 0, 0, NULL);
 
 	invalidRect.left = cmd->left;
 	invalidRect.top = cmd->top;
@@ -222,7 +222,7 @@ int gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* context, RDPGF
 
 			freerdp_image_copy(surface->data, surface->format, surface->scanline,
 					nXDst, nYDst, nWidth, nHeight,
-					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, 0, 0);
+					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, 0, 0, NULL);
 
 			region16_union_rect(&(gdi->invalidRegion), &(gdi->invalidRegion), &updateRects[j]);
 		}
@@ -470,7 +470,7 @@ int gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* context, RD
 
 			freerdp_image_copy(surface->data, surface->format,
 					surface->scanline, nXDst, nYDst, nWidth, nHeight,
-					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc);
+					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc, NULL);
 
 			region16_union_rect(&(gdi->invalidRegion), &(gdi->invalidRegion), &updateRects[j]);
 		}
@@ -673,7 +673,7 @@ int gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE
 		{
 			freerdp_image_copy(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
 					destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data, surfaceSrc->format,
-					surfaceSrc->scanline, rectSrc->left, rectSrc->top);
+					surfaceSrc->scanline, rectSrc->left, rectSrc->top, NULL);
 		}
 
 		invalidRect.left = destPt->x;
@@ -723,7 +723,7 @@ int gdi_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU
 
 	freerdp_image_copy(cacheEntry->data, cacheEntry->format, cacheEntry->scanline,
 			0, 0, cacheEntry->width, cacheEntry->height, surface->data,
-			surface->format, surface->scanline, rect->left, rect->top);
+			surface->format, surface->scanline, rect->left, rect->top, NULL);
 
 	context->SetCacheSlotData(context, surfaceToCache->cacheSlot, (void*) cacheEntry);
 
@@ -751,7 +751,7 @@ int gdi_CacheToSurface(RdpgfxClientContext* context, RDPGFX_CACHE_TO_SURFACE_PDU
 
 		freerdp_image_copy(surface->data, surface->format, surface->scanline,
 				destPt->x, destPt->y, cacheEntry->width, cacheEntry->height,
-				cacheEntry->data, cacheEntry->format, cacheEntry->scanline, 0, 0);
+				cacheEntry->data, cacheEntry->format, cacheEntry->scanline, 0, 0, NULL);
 
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;

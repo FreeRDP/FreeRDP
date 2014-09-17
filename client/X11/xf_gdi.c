@@ -347,7 +347,7 @@ void xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
 
 				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
-						&pDstData, xfc->format, -1, 0, 0, nWidth, nHeight);
+						&pDstData, xfc->format, -1, 0, 0, nWidth, nHeight, xfc->palette);
 			}
 			else
 			{
@@ -370,7 +370,7 @@ void xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 			pDstData = xfc->bitmap_buffer;
 
 			status = freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
-						nWidth, nHeight, pSrcData, SrcFormat, -1, 0, 0);
+						nWidth, nHeight, pSrcData, SrcFormat, -1, 0, 0, xfc->palette);
 
 			pSrcData = xfc->bitmap_buffer;
 		}
@@ -398,11 +398,22 @@ void xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 void xf_gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 {
+	int index;
+	PALETTE_ENTRY* pe;
+	UINT32* palette32;
 	xfContext* xfc = (xfContext*) context;
 
 	xf_lock_x11(xfc, FALSE);
 
 	CopyMemory(xfc->clrconv->palette, palette, sizeof(rdpPalette));
+
+	palette32 = (UINT32*) xfc->palette;
+
+	for (index = 0; index < palette->number; index++)
+	{
+		pe = &(palette->entries[index]);
+		palette32[index] = RGB32(pe->red, pe->green, pe->blue);
+	}
 
 	xf_unlock_x11(xfc, FALSE);
 }
@@ -470,9 +481,9 @@ void xf_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	brush = &patblt->brush;
 	xf_set_rop3(xfc, gdi_rop3_code(patblt->bRop));
 
-	foreColor = freerdp_convert_gdi_order_color(patblt->foreColor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	foreColor = freerdp_convert_gdi_order_color(patblt->foreColor, context->settings->ColorDepth, xfc->format, xfc->palette);
 	foreColor = xf_gdi_get_color(xfc, foreColor);
-	backColor = freerdp_convert_gdi_order_color(patblt->backColor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	backColor = freerdp_convert_gdi_order_color(patblt->backColor, context->settings->ColorDepth, xfc->format, xfc->palette);
 	backColor = xf_gdi_get_color(xfc, backColor);
 
 	if (brush->style == GDI_BS_SOLID)
@@ -592,7 +603,7 @@ void xf_gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 
 	xf_lock_x11(xfc, FALSE);
 
-	color = freerdp_convert_gdi_order_color(opaque_rect->color, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	color = freerdp_convert_gdi_order_color(opaque_rect->color, context->settings->ColorDepth, xfc->format, xfc->palette);
 	color = xf_gdi_get_color(xfc, color);
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
@@ -628,7 +639,7 @@ void xf_gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* mult
 
 	xf_lock_x11(xfc, FALSE);
 
-	color = freerdp_convert_gdi_order_color(multi_opaque_rect->color, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	color = freerdp_convert_gdi_order_color(multi_opaque_rect->color, context->settings->ColorDepth, xfc->format, xfc->palette);
 	color = xf_gdi_get_color(xfc, color);
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
@@ -671,7 +682,7 @@ void xf_gdi_line_to(rdpContext* context, LINE_TO_ORDER* line_to)
 	xf_lock_x11(xfc, FALSE);
 
 	xf_set_rop2(xfc, line_to->bRop2);
-	color = freerdp_convert_gdi_order_color(line_to->penColor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	color = freerdp_convert_gdi_order_color(line_to->penColor, context->settings->ColorDepth, xfc->format, xfc->palette);
 	color = xf_gdi_get_color(xfc, color);
 
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
@@ -722,7 +733,7 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	xf_lock_x11(xfc, FALSE);
 
 	xf_set_rop2(xfc, polyline->bRop2);
-	color = freerdp_convert_gdi_order_color(polyline->penColor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	color = freerdp_convert_gdi_order_color(polyline->penColor, context->settings->ColorDepth, xfc->format, xfc->palette);
 	color = xf_gdi_get_color(xfc, color);
 
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
@@ -820,9 +831,9 @@ void xf_gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	brush = &mem3blt->brush;
 	bitmap = (xfBitmap*) mem3blt->bitmap;
 	xf_set_rop3(xfc, gdi_rop3_code(mem3blt->bRop));
-	foreColor = freerdp_convert_gdi_order_color(mem3blt->foreColor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	foreColor = freerdp_convert_gdi_order_color(mem3blt->foreColor, context->settings->ColorDepth, xfc->format, xfc->palette);
 	foreColor = xf_gdi_get_color(xfc, foreColor);
-	backColor = freerdp_convert_gdi_order_color(mem3blt->backColor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	backColor = freerdp_convert_gdi_order_color(mem3blt->backColor, context->settings->ColorDepth, xfc->format, xfc->palette);
 	backColor = xf_gdi_get_color(xfc, backColor);
 
 	if (brush->style == GDI_BS_PATTERN)
@@ -895,7 +906,7 @@ void xf_gdi_polygon_sc(rdpContext* context, POLYGON_SC_ORDER* polygon_sc)
 	xf_lock_x11(xfc, FALSE);
 
 	xf_set_rop2(xfc, polygon_sc->bRop2);
-	brush_color = freerdp_convert_gdi_order_color(polygon_sc->brushColor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	brush_color = freerdp_convert_gdi_order_color(polygon_sc->brushColor, context->settings->ColorDepth, xfc->format, xfc->palette);
 	brush_color = xf_gdi_get_color(xfc, brush_color);
 
 	npoints = polygon_sc->numPoints + 1;
@@ -957,9 +968,9 @@ void xf_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 
 	brush = &(polygon_cb->brush);
 	xf_set_rop2(xfc, polygon_cb->bRop2);
-	foreColor = freerdp_convert_gdi_order_color(polygon_cb->foreColor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	foreColor = freerdp_convert_gdi_order_color(polygon_cb->foreColor, context->settings->ColorDepth, xfc->format, xfc->palette);
 	foreColor = xf_gdi_get_color(xfc, foreColor);
-	backColor = freerdp_convert_gdi_order_color(polygon_cb->backColor, context->settings->ColorDepth, PIXEL_FORMAT_XRGB32);
+	backColor = freerdp_convert_gdi_order_color(polygon_cb->backColor, context->settings->ColorDepth, xfc->format, xfc->palette);
 	backColor = xf_gdi_get_color(xfc, backColor);
 
 	npoints = polygon_cb->numPoints + 1;
@@ -1178,7 +1189,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 				pDstData = xfc->bitmap_buffer;
 
 				freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
-						64, 64, pSrcData, PIXEL_FORMAT_XRGB32, -1, 0, 0);
+						64, 64, pSrcData, PIXEL_FORMAT_XRGB32, -1, 0, 0, xfc->palette);
 			}
 
 			image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
@@ -1231,7 +1242,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 		pDstData = xfc->bitmap_buffer;
 
 		freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
-					cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0);
+					cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0, xfc->palette);
 
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 				(char*) pDstData, cmd->width, cmd->height, xfc->scanline_pad, 0);
@@ -1270,7 +1281,7 @@ void xf_gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 		pDstData = xfc->bitmap_buffer;
 
 		freerdp_image_copy(pDstData, xfc->format, -1, 0, 0,
-				cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0);
+				cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0, xfc->palette);
 
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 			(char*) pDstData, cmd->width, cmd->height, xfc->scanline_pad, 0);
