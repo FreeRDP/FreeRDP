@@ -521,7 +521,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 		}
 		else
 		{
-			log->Level = WLOG_WARN;
+			log->Level = WLOG_INFO;
 			nSize = GetEnvironmentVariableA("WLOG_LEVEL", NULL, 0);
 
 			if (nSize)
