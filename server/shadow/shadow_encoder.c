@@ -84,7 +84,7 @@ int shadow_encoder_init_grid(rdpShadowEncoder* encoder)
 	{
 		for (j = 0; j < encoder->gridWidth; j++)
 		{
-			k = (i * encoder->gridHeight) + j;
+			k = (i * encoder->gridWidth) + j;
 			encoder->grid[k] = &(encoder->gridBuffer[k * tileSize]);
 		}
 	}
