@@ -32,8 +32,11 @@ struct xf_gfx_surface
 	UINT32 height;
 	BOOL alpha;
 	BYTE* data;
+	BYTE* stage;
 	XImage* image;
 	int scanline;
+	int stageStep;
+	UINT32 format;
 };
 typedef struct xf_gfx_surface xfGfxSurface;
 
@@ -45,6 +48,7 @@ struct xf_gfx_cache_entry
 	BOOL alpha;
 	BYTE* data;
 	int scanline;
+	UINT32 format;
 };
 typedef struct xf_gfx_cache_entry xfGfxCacheEntry;
 

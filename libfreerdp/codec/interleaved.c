@@ -255,6 +255,9 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 	if (!interleaved)
 		return -1;
 
+	if (nDstStep < 0)
+		nDstStep = nWidth * dstBytesPerPixel;
+
 	if (bpp == 24)
 	{
 		scanline = nWidth * 3;

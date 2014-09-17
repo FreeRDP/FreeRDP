@@ -26,8 +26,8 @@
 #define FREERDP_PIXEL_FORMAT_TYPE_A		0
 #define FREERDP_PIXEL_FORMAT_TYPE_ARGB		1
 #define FREERDP_PIXEL_FORMAT_TYPE_ABGR		2
-#define FREERDP_PIXEL_FORMAT_TYPE_BGRA		3
-#define FREERDP_PIXEL_FORMAT_TYPE_RGBA		4
+
+#define FREERDP_PIXEL_FORMAT_IS_ABGR(_format)	(FREERDP_PIXEL_FORMAT_TYPE(_format) == FREERDP_PIXEL_FORMAT_TYPE_ABGR)
 
 #define FREERDP_PIXEL_FLIP_NONE			0
 #define FREERDP_PIXEL_FLIP_VERTICAL		1
@@ -404,6 +404,8 @@ extern "C" {
 #define	CLRBUF_24BPP		16
 #define	CLRBUF_32BPP		32
 
+#define	CLRBUF_ABGR		64 /* ABGR order (as opposed to ARGB) */
+
 struct _CLRCONV
 {
 	int alpha;
@@ -445,14 +447,16 @@ FREERDP_API UINT32 freerdp_color_convert_rgb_bgr(UINT32 srcColor, int srcBpp, in
 FREERDP_API UINT32 freerdp_color_convert_bgr_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API UINT32 freerdp_color_convert_var_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
-FREERDP_API UINT32 freerdp_color_convert_drawing_order_color_to_gdi_color(UINT32 color, int bpp, HCLRCONV clrconv);
+FREERDP_API UINT32 freerdp_convert_gdi_order_color(UINT32 color, int bpp, UINT32 format);
 
 FREERDP_API HCLRCONV freerdp_clrconv_new(UINT32 flags);
 FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);
 
-FREERDP_API int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDst, int nYDst,
-		int nWidth, int nHeight, BYTE* pSrcData, DWORD dwSrcFormat, int nSrcStep, int nXSrc, int nYSrc);
-FREERDP_API int freerdp_image_fill(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDst, int nYDst,
+FREERDP_API int freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc);
+FREERDP_API int freerdp_image_move(BYTE* pData, DWORD Format, int nStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, int nXSrc, int nYSrc);
+FREERDP_API int freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, UINT32 color);
 	
 FREERDP_API int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,

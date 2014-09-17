@@ -178,7 +178,7 @@ void wf_Bitmap_Decompress(wfContext* wfc, rdpBitmap* bitmap,
 			freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_PLANAR);
 
 			status = planar_decompress(wfc->codecs->planar, pSrcData, SrcSize, &pDstData,
-					PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
+					PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, TRUE);
 		}
 
 		if (status < 0)

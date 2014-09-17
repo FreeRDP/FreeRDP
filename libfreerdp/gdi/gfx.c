@@ -52,8 +52,8 @@ int gdi_OutputUpdate(rdpGdi* gdi)
 	if (!gdi->graphicsReset)
 		return 1;
 
-	nDstStep = gdi->width * 4;
 	pDstData = gdi->primary_buffer;
+	nDstStep = gdi->bytesPerPixel * gdi->width;
 
 	surface = (gdiGfxSurface*) gdi->gfx->GetSurfaceData(gdi->gfx, gdi->outputSurfaceId);
 
@@ -82,8 +82,8 @@ int gdi_OutputUpdate(rdpGdi* gdi)
 
 		update->BeginPaint(gdi->context);
 
-		freerdp_image_copy(pDstData, PIXEL_FORMAT_XRGB32, nDstStep, nXDst, nYDst, nWidth, nHeight,
-				surface->data, PIXEL_FORMAT_XRGB32, surface->scanline, nXSrc, nYSrc);
+		freerdp_image_copy(pDstData, gdi->format, nDstStep, nXDst, nYDst, nWidth, nHeight,
+				surface->data, surface->format, surface->scanline, nXSrc, nYSrc);
 
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
 
@@ -141,7 +141,7 @@ int gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* context, R
 	if (!surface)
 		return -1;
 
-	freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top,
+	freerdp_image_copy(surface->data, surface->format, surface->scanline, cmd->left, cmd->top,
 			cmd->width, cmd->height, cmd->data, PIXEL_FORMAT_XRGB32, cmd->width * 4, 0, 0);
 
 	invalidRect.left = cmd->left;
@@ -220,7 +220,7 @@ int gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* context, RDPGF
 			nWidth = updateRects[j].right - updateRects[j].left;
 			nHeight = updateRects[j].bottom - updateRects[j].top;
 
-			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
+			freerdp_image_copy(surface->data, surface->format, surface->scanline,
 					nXDst, nYDst, nWidth, nHeight,
 					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, 0, 0);
 
@@ -255,7 +255,7 @@ int gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi, RdpgfxClientContext* context, RDP
 	DstData = surface->data;
 
 	status = clear_decompress(gdi->codecs->clear, cmd->data, cmd->length, &DstData,
-			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
+			surface->format, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
 
 	if (status < 0)
 	{
@@ -294,7 +294,7 @@ int gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_
 	DstData = surface->data;
 
 	status = planar_decompress(gdi->codecs->planar, cmd->data, cmd->length, &DstData,
-			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height);
+			PIXEL_FORMAT_XRGB32, surface->scanline, cmd->left, cmd->top, cmd->width, cmd->height, FALSE);
 
 	invalidRect.left = cmd->left;
 	invalidRect.top = cmd->top;
@@ -468,7 +468,7 @@ int gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* context, RD
 			nXSrc = nXDst - (cmd->left + tile->x);
 			nYSrc = nYDst - (cmd->top + tile->y);
 
-			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
+			freerdp_image_copy(surface->data, surface->format,
 					surface->scanline, nXDst, nYDst, nWidth, nHeight,
 					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc);
 
@@ -534,6 +534,7 @@ int gdi_DeleteEncodingContext(RdpgfxClientContext* context, RDPGFX_DELETE_ENCODI
 int gdi_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
 	gdiGfxSurface* surface;
+	rdpGdi* gdi = (rdpGdi*) context->custom;
 
 	surface = (gdiGfxSurface*) calloc(1, sizeof(gdiGfxSurface));
 
@@ -544,6 +545,8 @@ int gdi_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* c
 	surface->width = (UINT32) createSurface->width;
 	surface->height = (UINT32) createSurface->height;
 	surface->alpha = (createSurface->pixelFormat == PIXEL_FORMAT_ARGB_8888) ? TRUE : FALSE;
+
+	surface->format = (!gdi->abgr) ? PIXEL_FORMAT_XRGB32 : PIXEL_FORMAT_XBGR32;
 
 	surface->scanline = (surface->width + (surface->width % 4)) * 4;
 	surface->data = (BYTE*) calloc(1, surface->scanline * surface->height);
@@ -558,7 +561,7 @@ int gdi_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* c
 
 int gdi_DeleteSurface(RdpgfxClientContext* context, RDPGFX_DELETE_SURFACE_PDU* deleteSurface)
 {
-	gdiGfxSurface* surface = NULL;
+	gdiGfxSurface* surface;
 	rdpGdi* gdi = (rdpGdi*) context->custom;
 
 	surface = (gdiGfxSurface*) context->GetSurfaceData(context, deleteSurface->surfaceId);
@@ -598,7 +601,10 @@ int gdi_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill
 	r = solidFill->fillPixel.R;
 	a = solidFill->fillPixel.XA;
 
-	color = ARGB32(a, r, g, b);
+	if (!gdi->abgr)
+		color = ARGB32(a, r, g, b);
+	else
+		color = ABGR32(a, r, g, b);
 
 	for (index = 0; index < solidFill->fillRectCount; index++)
 	{
@@ -612,7 +618,7 @@ int gdi_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill
 		invalidRect.right = rect->right;
 		invalidRect.bottom = rect->bottom;
 
-		freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
+		freerdp_image_fill(surface->data, surface->format, surface->scanline,
 				rect->left, rect->top, nWidth, nHeight, color);
 
 		region16_union_rect(&(gdi->invalidRegion), &(gdi->invalidRegion), &invalidRect);
@@ -627,6 +633,7 @@ int gdi_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill
 int gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface)
 {
 	UINT16 index;
+	BOOL sameSurface;
 	int nWidth, nHeight;
 	RDPGFX_RECT16* rectSrc;
 	RDPGFX_POINT16* destPt;
@@ -640,7 +647,9 @@ int gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE
 
 	surfaceSrc = (gdiGfxSurface*) context->GetSurfaceData(context, surfaceToSurface->surfaceIdSrc);
 
-	if (surfaceToSurface->surfaceIdSrc != surfaceToSurface->surfaceIdDest)
+	sameSurface = (surfaceToSurface->surfaceIdSrc == surfaceToSurface->surfaceIdDest) ? TRUE : FALSE;
+
+	if (!sameSurface)
 		surfaceDst = (gdiGfxSurface*) context->GetSurfaceData(context, surfaceToSurface->surfaceIdDest);
 	else
 		surfaceDst = surfaceSrc;
@@ -655,9 +664,17 @@ int gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE
 	{
 		destPt = &surfaceToSurface->destPts[index];
 
-		freerdp_image_copy(surfaceDst->data, PIXEL_FORMAT_XRGB32, surfaceDst->scanline,
-				destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data, PIXEL_FORMAT_XRGB32,
-				surfaceSrc->scanline, rectSrc->left, rectSrc->top);
+		if (sameSurface)
+		{
+			freerdp_image_move(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
+					destPt->x, destPt->y, nWidth, nHeight, rectSrc->left, rectSrc->top);
+		}
+		else
+		{
+			freerdp_image_copy(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
+					destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data, surfaceSrc->format,
+					surfaceSrc->scanline, rectSrc->left, rectSrc->top);
+		}
 
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;
@@ -678,6 +695,7 @@ int gdi_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU
 	RDPGFX_RECT16* rect;
 	gdiGfxSurface* surface;
 	gdiGfxCacheEntry* cacheEntry;
+	rdpGdi* gdi = (rdpGdi*) context->custom;
 
 	rect = &(surfaceToCache->rectSrc);
 
@@ -695,15 +713,17 @@ int gdi_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU
 	cacheEntry->height = (UINT32) (rect->bottom - rect->top);
 	cacheEntry->alpha = surface->alpha;
 
+	cacheEntry->format = (!gdi->abgr) ? PIXEL_FORMAT_XRGB32 : PIXEL_FORMAT_XBGR32;
+
 	cacheEntry->scanline = (cacheEntry->width + (cacheEntry->width % 4)) * 4;
 	cacheEntry->data = (BYTE*) calloc(1, cacheEntry->scanline * cacheEntry->height);
 
 	if (!cacheEntry->data)
 		return -1;
 
-	freerdp_image_copy(cacheEntry->data, PIXEL_FORMAT_XRGB32, cacheEntry->scanline,
+	freerdp_image_copy(cacheEntry->data, cacheEntry->format, cacheEntry->scanline,
 			0, 0, cacheEntry->width, cacheEntry->height, surface->data,
-			PIXEL_FORMAT_XRGB32, surface->scanline, rect->left, rect->top);
+			surface->format, surface->scanline, rect->left, rect->top);
 
 	context->SetCacheSlotData(context, surfaceToCache->cacheSlot, (void*) cacheEntry);
 
@@ -729,9 +749,9 @@ int gdi_CacheToSurface(RdpgfxClientContext* context, RDPGFX_CACHE_TO_SURFACE_PDU
 	{
 		destPt = &cacheToSurface->destPts[index];
 
-		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
+		freerdp_image_copy(surface->data, surface->format, surface->scanline,
 				destPt->x, destPt->y, cacheEntry->width, cacheEntry->height,
-				cacheEntry->data, PIXEL_FORMAT_XRGB32, cacheEntry->scanline, 0, 0);
+				cacheEntry->data, cacheEntry->format, cacheEntry->scanline, 0, 0);
 
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;

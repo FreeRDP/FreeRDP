@@ -275,7 +275,7 @@ static int planar_decompress_planes_raw(const BYTE* pSrcData[4], int nSrcStep, B
 }
 
 int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, BOOL vFlip)
 {
 	BOOL cs;
 	BOOL rle;
@@ -283,7 +283,6 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 	BOOL alpha;
 	int status;
 	BYTE* srcp;
-	BOOL vFlip;
 	int subSize;
 	int subWidth;
 	int subHeight;
@@ -294,14 +293,21 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 	int rawWidths[4];
 	int rawHeights[4];
 	BYTE FormatHeader;
+	BOOL useTempBuffer;
+	int dstBitsPerPixel;
+	int dstBytesPerPixel;
 	const BYTE* planes[4];
 	UINT32 UncompressedSize;
 	const primitives_t* prims = primitives_get();
 
-	if ((nWidth * nHeight) <= 0)
+	if ((nWidth < 0) || (nHeight < 0))
 		return -1;
 
-	vFlip = FREERDP_PIXEL_FORMAT_FLIP(DstFormat) ? TRUE : FALSE;
+	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(DstFormat);
+	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(DstFormat) / 8);
+
+	if (nDstStep < 0)
+		nDstStep = nWidth * 4;
 
 	srcp = pSrcData;
 	UncompressedSize = nWidth * nHeight * 4;
@@ -310,12 +316,28 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 
 	if (!pDstData)
 	{
-		pDstData = (BYTE*) malloc(UncompressedSize);
+		pDstData = (BYTE*) _aligned_malloc(UncompressedSize, 16);
 
 		if (!pDstData)
 			return -1;
 
 		*ppDstData = pDstData;
+	}
+
+	useTempBuffer = (dstBytesPerPixel != 4) ? TRUE : FALSE;
+
+	if (useTempBuffer)
+	{
+		if (UncompressedSize > planar->TempSize)
+		{
+			planar->TempBuffer = _aligned_realloc(planar->TempBuffer, UncompressedSize, 16);
+			planar->TempSize = UncompressedSize;
+		}
+
+		if (!planar->TempBuffer)
+			return -1;
+
+		pDstData = planar->TempBuffer;
 	}
 
 	FormatHeader = *srcp++;
@@ -575,6 +597,17 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 	}
 
 	status = (SrcSize == (srcp - pSrcData)) ? 1 : -1;
+
+	if (status < 0)
+		return status;
+
+	if (useTempBuffer)
+	{
+		pDstData = *ppDstData;
+
+		status = freerdp_image_copy(pDstData, DstFormat, -1, 0, 0, nWidth, nHeight,
+				planar->TempBuffer, PIXEL_FORMAT_XRGB32, -1, 0, 0);
+	}
 
 	return status;
 }
