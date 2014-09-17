@@ -962,7 +962,7 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 			pSrcData = message->tiles[i]->data;
 			pDstData = gdi->tile->bitmap->data;
 
-			if (!gdi->abgr && (gdi->dstBpp == 32))
+			if (!gdi->invert && (gdi->dstBpp == 32))
 			{
 				gdi->tile->bitmap->data = pSrcData;
 			}
@@ -1147,6 +1147,7 @@ void gdi_resize(rdpGdi* gdi, int width, int height)
 
 int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 {
+	BOOL rgb555;
 	rdpGdi* gdi;
 	rdpCache* cache;
 
@@ -1168,11 +1169,12 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	/* default internal buffer format */
 	gdi->dstBpp = 32;
 	gdi->bytesPerPixel = 4;
-
 	gdi->format = PIXEL_FORMAT_XRGB32;
 
-	if (flags & CLRBUF_ABGR)
-		gdi->abgr = TRUE;
+	if (flags & CLRCONV_INVERT)
+		gdi->invert = TRUE;
+
+	rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
 
 	if (gdi->srcBpp > 16)
 	{
@@ -1181,14 +1183,9 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 			gdi->dstBpp = 32;
 			gdi->bytesPerPixel = 4;
 		}
-		else if (flags & CLRBUF_24BPP)
-		{
-			gdi->dstBpp = 24;
-			gdi->bytesPerPixel = 3;
-		}
 		else if (flags & CLRBUF_16BPP)
 		{
-			gdi->dstBpp = 16;
+			gdi->dstBpp = rgb555 ? 15 : 16;
 			gdi->bytesPerPixel = 2;
 		}
 	}
@@ -1196,7 +1193,7 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	{
 		if (flags & CLRBUF_16BPP)
 		{
-			gdi->dstBpp = 16;
+			gdi->dstBpp = rgb555 ? 15 : 16;
 			gdi->bytesPerPixel = 2;
 		}
 		else if (flags & CLRBUF_32BPP)
@@ -1206,12 +1203,10 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 		}
 	}
 
-	if (!gdi->abgr)
+	if (!gdi->invert)
 	{
 		if (gdi->bytesPerPixel == 4)
 			gdi->format = PIXEL_FORMAT_XRGB32;
-		else if (gdi->bytesPerPixel == 3)
-			gdi->format = PIXEL_FORMAT_RGB24;
 		else if ((gdi->bytesPerPixel == 2) && (gdi->dstBpp == 16))
 			gdi->format = PIXEL_FORMAT_RGB565;
 		else if ((gdi->bytesPerPixel == 2) && (gdi->dstBpp == 15))
@@ -1221,8 +1216,6 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	{
 		if (gdi->bytesPerPixel == 4)
 			gdi->format = PIXEL_FORMAT_XBGR32;
-		else if (gdi->bytesPerPixel == 3)
-			gdi->format = PIXEL_FORMAT_BGR24;
 		else if ((gdi->bytesPerPixel == 2) && (gdi->dstBpp == 16))
 			gdi->format = PIXEL_FORMAT_BGR565;
 		else if ((gdi->bytesPerPixel == 2) && (gdi->dstBpp == 15))
@@ -1238,9 +1231,9 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	if (!gdi->clrconv)
 		return -1;
 
-	gdi->clrconv->alpha = (flags & CLRCONV_ALPHA) ? 1 : 0;
-	gdi->clrconv->invert = (flags & CLRCONV_INVERT) ? 1 : 0;
-	gdi->clrconv->rgb555 = (flags & CLRCONV_RGB555) ? 1 : 0;
+	gdi->clrconv->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
+	gdi->clrconv->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
+	gdi->clrconv->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
 	gdi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
 
 	if (!gdi->clrconv->palette)

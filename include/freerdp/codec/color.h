@@ -401,10 +401,7 @@ extern "C" {
 
 /* Supported Internal Buffer Formats */
 #define CLRBUF_16BPP		8
-#define	CLRBUF_24BPP		16
 #define	CLRBUF_32BPP		32
-
-#define	CLRBUF_ABGR		64 /* ABGR order (as opposed to ARGB) */
 
 struct _CLRCONV
 {

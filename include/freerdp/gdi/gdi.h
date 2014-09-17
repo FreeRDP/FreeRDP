@@ -284,7 +284,7 @@ struct rdp_gdi
 	int bytesPerPixel;
 	rdpCodecs* codecs;
 
-	BOOL abgr;
+	BOOL invert;
 	HGDI_DC hdc;
 	UINT32 format;
 	HCLRCONV clrconv;

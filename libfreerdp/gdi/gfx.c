@@ -549,7 +549,7 @@ int gdi_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* c
 	surface->height = (UINT32) createSurface->height;
 	surface->alpha = (createSurface->pixelFormat == PIXEL_FORMAT_ARGB_8888) ? TRUE : FALSE;
 
-	surface->format = (!gdi->abgr) ? PIXEL_FORMAT_XRGB32 : PIXEL_FORMAT_XBGR32;
+	surface->format = (!gdi->invert) ? PIXEL_FORMAT_XRGB32 : PIXEL_FORMAT_XBGR32;
 
 	surface->scanline = (surface->width + (surface->width % 4)) * 4;
 	surface->data = (BYTE*) calloc(1, surface->scanline * surface->height);
@@ -604,7 +604,7 @@ int gdi_SolidFill(RdpgfxClientContext* context, RDPGFX_SOLID_FILL_PDU* solidFill
 	r = solidFill->fillPixel.R;
 	a = solidFill->fillPixel.XA;
 
-	if (!gdi->abgr)
+	if (!gdi->invert)
 		color = ARGB32(a, r, g, b);
 	else
 		color = ABGR32(a, r, g, b);
@@ -716,7 +716,7 @@ int gdi_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU
 	cacheEntry->height = (UINT32) (rect->bottom - rect->top);
 	cacheEntry->alpha = surface->alpha;
 
-	cacheEntry->format = (!gdi->abgr) ? PIXEL_FORMAT_XRGB32 : PIXEL_FORMAT_XBGR32;
+	cacheEntry->format = (!gdi->invert) ? PIXEL_FORMAT_XRGB32 : PIXEL_FORMAT_XBGR32;
 
 	cacheEntry->scanline = (cacheEntry->width + (cacheEntry->width % 4)) * 4;
 	cacheEntry->data = (BYTE*) calloc(1, cacheEntry->scanline * cacheEntry->height);
