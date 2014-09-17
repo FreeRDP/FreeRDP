@@ -497,6 +497,7 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 	int nYSrc;
 	int nWidth;
 	int nHeight;
+	int nSrcStep;
 	int nDstStep;
 	UINT32 index;
 	BYTE* pSrcData;
@@ -575,6 +576,8 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 			pSrcData = gdi->bitmap_buffer;
 		}
 
+		nSrcStep = nWidth * 4;
+
 		pDstData = gdi->primary_buffer;
 		nDstStep = gdi->width * gdi->bytesPerPixel;
 
@@ -582,7 +585,7 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 		nHeight = bitmap->destBottom - bitmap->destTop + 1; /* clip height */
 
 		status = freerdp_image_copy(pDstData, gdi->format, nDstStep, nXDst, nYDst,
-				nWidth, nHeight, pSrcData, gdi->format, -1, nXSrc, nYSrc, gdi->palette);
+				nWidth, nHeight, pSrcData, gdi->format, nSrcStep, nXSrc, nYSrc, gdi->palette);
 
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
 	}
