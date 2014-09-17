@@ -26,10 +26,13 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <freerdp/log.h>
 
 #include "rpc_client.h"
 
 #include "rpc_bind.h"
+
+#define TAG FREERDP_TAG("core.gateway.rpc_bind")
 
 /**
  * Connection-Oriented RPC Protocol Client Details:
@@ -391,7 +394,7 @@ int rpc_secure_bind(rdpRpc* rpc)
 
 			if (status <= 0)
 			{
-				DEBUG_WARN( "rpc_secure_bind: error sending bind pdu!\n");
+				WLog_ERR(TAG,  "rpc_secure_bind: error sending bind pdu!");
 				return -1;
 			}
 
@@ -403,13 +406,13 @@ int rpc_secure_bind(rdpRpc* rpc)
 
 			if (!pdu)
 			{
-				DEBUG_WARN( "rpc_secure_bind: error receiving bind ack pdu!\n");
+				WLog_ERR(TAG,  "rpc_secure_bind: error receiving bind ack pdu!");
 				return -1;
 			}
 
 			if (rpc_recv_bind_ack_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s)) <= 0)
 			{
-				DEBUG_WARN( "rpc_secure_bind: error receiving bind ack pdu!\n");
+				WLog_ERR(TAG,  "rpc_secure_bind: error receiving bind ack pdu!");
 				return -1;
 			}
 
@@ -417,7 +420,7 @@ int rpc_secure_bind(rdpRpc* rpc)
 
 			if (rpc_send_rpc_auth_3_pdu(rpc) <= 0)
 			{
-				DEBUG_WARN( "rpc_secure_bind: error sending rpc_auth_3 pdu!\n");
+				WLog_ERR(TAG,  "rpc_secure_bind: error sending rpc_auth_3 pdu!");
 				return -1;
 			}
 
@@ -425,7 +428,7 @@ int rpc_secure_bind(rdpRpc* rpc)
 		}
 		else
 		{
-			DEBUG_WARN( "rpc_secure_bind: invalid state: %d\n", rpc->State);
+			WLog_ERR(TAG,  "rpc_secure_bind: invalid state: %d", rpc->State);
 			return -1;
 		}
 	}

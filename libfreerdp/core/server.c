@@ -29,6 +29,7 @@
 #include <winpr/synch.h>
 #include <winpr/stream.h>
 
+#include <freerdp/log.h>
 #include <freerdp/constants.h>
 #include <freerdp/server/channels.h>
 
@@ -36,10 +37,11 @@
 
 #include "server.h"
 
+#define TAG FREERDP_TAG("core.server")
 #ifdef WITH_DEBUG_DVC
-#define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) do { } while (0)
 #endif
 
 struct _wtsChannelMessage
@@ -195,7 +197,7 @@ static void wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s, UINT32 le
 		if (Stream_GetPosition(channel->receiveData) + length > channel->dvc_total_length)
 		{
 			channel->dvc_total_length = 0;
-			DEBUG_WARN( "wts_read_drdynvc_data: incorrect fragment data, discarded.\n");
+			WLog_ERR(TAG,  "incorrect fragment data, discarded.");
 			return;
 		}
 
@@ -279,7 +281,7 @@ static void wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 					break;
 
 				default:
-					DEBUG_WARN( "wts_read_drdynvc_pdu: Cmd %d not recognized.\n", Cmd);
+					WLog_ERR(TAG,  "Cmd %d not recognized.", Cmd);
 					break;
 			}
 		}
@@ -290,7 +292,7 @@ static void wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 	}
 	else
 	{
-		DEBUG_WARN( "wts_read_drdynvc_pdu: received Cmd %d but channel is not ready.\n", Cmd);
+		WLog_ERR(TAG,  "received Cmd %d but channel is not ready.", Cmd);
 	}
 }
 
@@ -352,7 +354,7 @@ static void WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, BYT
 	{
 		if (Stream_GetPosition(channel->receiveData) != totalSize)
 		{
-			DEBUG_WARN( "WTSProcessChannelData: read error\n");
+			WLog_ERR(TAG,  "read error");
 		}
 		if (channel == channel->vcm->drdynvc_channel)
 		{

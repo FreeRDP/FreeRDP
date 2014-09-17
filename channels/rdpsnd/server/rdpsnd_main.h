@@ -27,7 +27,10 @@
 
 #include <freerdp/codec/dsp.h>
 #include <freerdp/channels/wtsvc.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/server/rdpsnd.h>
+
+#define TAG CHANNELS_TAG("rdpsnd.server")
 
 struct _rdpsnd_server_private
 {

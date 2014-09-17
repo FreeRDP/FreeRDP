@@ -21,8 +21,11 @@
 #include "config.h"
 #endif
 
+#include <freerdp/log.h>
 #include <freerdp/gdi/gfx.h>
 #include <freerdp/gdi/region.h>
+
+#define TAG FREERDP_TAG("gdi")
 
 int gdi_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
@@ -259,7 +262,7 @@ int gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi, RdpgfxClientContext* context, RDP
 
 	if (status < 0)
 	{
-		printf("clear_decompress failure: %d\n", status);
+		WLog_ERR(TAG, "clear_decompress failure: %d", status);
 		return -1;
 	}
 
@@ -342,7 +345,7 @@ int gdi_SurfaceCommand_H264(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_SU
 
 	if (status < 0)
 	{
-		printf("h264_decompress failure: %d\n",status);
+		WLog_ERR(TAG, "h264_decompress failure: %d",status);
 		return -1;
 	}
 
@@ -370,7 +373,7 @@ int gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_S
 	if (!surface)
 		return -1;
 
-	printf("gdi_SurfaceCommand_Alpha: status: %d\n", status);
+	WLog_DBG(TAG, "gdi_SurfaceCommand_Alpha: status: %d", status);
 
 	/* fill with green for now to distinguish from the rest */
 
@@ -425,7 +428,7 @@ int gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* context, RD
 
 	if (status < 0)
 	{
-		printf("progressive_decompress failure: %d\n", status);
+		WLog_ERR(TAG, "progressive_decompress failure: %d", status);
 		return -1;
 	}
 

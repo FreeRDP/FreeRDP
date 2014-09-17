@@ -30,14 +30,11 @@
 #include <winpr/print.h>
 
 #include <freerdp/types.h>
-#include <freerdp/channels/log.h>
 #include <freerdp/constants.h>
 #include <freerdp/client/cliprdr.h>
 
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
-
-#define TAG CHANNELS_TAG("cliprdr.client")
 
 #ifdef WITH_DEBUG_CLIPRDR
 static const char* const CB_MSG_TYPE_STRINGS[] =
@@ -86,7 +83,7 @@ void cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 	Stream_Write_UINT32(s, dataLen);
 	Stream_SetPosition(s, pos);
 #ifdef WITH_DEBUG_CLIPRDR
-	CLOG_DBG("Cliprdr Sending (%d bytes)\n", dataLen + 8);
+	WLog_DBG(TAG, "Cliprdr Sending (%d bytes)", dataLen + 8);
 	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), dataLen + 8);
 #endif
 	svc_plugin_send((rdpSvcPlugin*) cliprdr, s);
@@ -99,21 +96,21 @@ static void cliprdr_process_connect(rdpSvcPlugin* plugin)
 
 void cliprdr_print_general_capability_flags(UINT32 flags)
 {
-	CLOG_ERR("generalFlags (0x%08X) {\n", flags);
+	WLog_INFO(TAG,  "generalFlags (0x%08X) {", flags);
 
 	if (flags & CB_USE_LONG_FORMAT_NAMES)
-		CLOG_ERR("\tCB_USE_LONG_FORMAT_NAMES\n");
+		WLog_INFO(TAG,  "\tCB_USE_LONG_FORMAT_NAMES");
 
 	if (flags & CB_STREAM_FILECLIP_ENABLED)
-		CLOG_ERR("\tCB_STREAM_FILECLIP_ENABLED\n");
+		WLog_INFO(TAG,  "\tCB_STREAM_FILECLIP_ENABLED");
 
 	if (flags & CB_FILECLIP_NO_FILE_PATHS)
-		CLOG_ERR("\tCB_FILECLIP_NO_FILE_PATHS\n");
+		WLog_INFO(TAG,  "\tCB_FILECLIP_NO_FILE_PATHS");
 
 	if (flags & CB_CAN_LOCK_CLIPDATA)
-		CLOG_ERR("\tCB_CAN_LOCK_CLIPDATA\n");
+		WLog_INFO(TAG,  "\tCB_CAN_LOCK_CLIPDATA");
 
-	CLOG_ERR("}\n");
+	WLog_INFO(TAG,  "}");
 }
 
 static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* s)
@@ -187,7 +184,7 @@ static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT16
 				cliprdr_process_general_capability(cliprdr, s);
 				break;
 			default:
-				CLOG_ERR("unknown cliprdr capability set: %d", capabilitySetType);
+				WLog_ERR(TAG, "unknown cliprdr capability set: %d", capabilitySetType);
 				break;
 		}
 	}
@@ -338,7 +335,7 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 			cliprdr_process_unlock_clipdata(cliprdr, s, dataLen, msgFlags);
 			break;
 		default:
-			CLOG_ERR("unknown msgType %d", msgType);
+			WLog_ERR(TAG, "unknown msgType %d", msgType);
 			break;
 	}
 }
@@ -433,7 +430,7 @@ static void cliprdr_process_event(rdpSvcPlugin* plugin, wMessage* event)
 			cliprdr_process_tempdir_event((cliprdrPlugin*) plugin, (RDP_CB_TEMPDIR_EVENT*) event);
 			break;
 		default:
-			CLOG_ERR("unknown event type %d", GetMessageType(event->id));
+			WLog_ERR(TAG, "unknown event type %d", GetMessageType(event->id));
 			break;
 	}
 

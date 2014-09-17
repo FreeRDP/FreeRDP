@@ -28,7 +28,7 @@ typedef struct rdp_license rdpLicense;
 #include <freerdp/crypto/certificate.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
 #include <winpr/stream.h>
 
@@ -240,10 +240,11 @@ BOOL license_send_valid_client_error_packet(rdpLicense* license);
 rdpLicense* license_new(rdpRdp* rdp);
 void license_free(rdpLicense* license);
 
+#define LICENSE_TAG FREERDP_TAG("core.license")
 #ifdef WITH_DEBUG_LICENSE
-#define DEBUG_LICENSE(fmt, ...) DEBUG_CLASS(LICENSE, fmt, ## __VA_ARGS__)
+#define DEBUG_LICENSE(fmt, ...) WLog_DBG(LICENSE_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_LICENSE(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_LICENSE(fmt, ...) do { } while (0)
 #endif
 
 #endif /* __LICENSE_H */

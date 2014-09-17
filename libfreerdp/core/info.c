@@ -23,11 +23,14 @@
 
 #include <winpr/crt.h>
 #include <freerdp/crypto/crypto.h>
+#include <freerdp/log.h>
 #include <stdio.h>
 
 #include "timezone.h"
 
 #include "info.h"
+
+#define TAG FREERDP_TAG("core")
 
 #define INFO_TYPE_LOGON			0x00000000
 #define INFO_TYPE_LOGON_LONG		0x00000001
@@ -67,7 +70,7 @@ BOOL rdp_read_server_auto_reconnect_cookie(wStream* s, rdpSettings* settings)
 		char *base64;
 		base64 = crypto_base64_encode((BYTE *) autoReconnectCookie,
 			sizeof(ARC_SC_PRIVATE_PACKET));
-		DEBUG_WARN( "Reconnect-cookie: %s\n", base64);
+		WLog_INFO(TAG,  "Reconnect-cookie: %s", base64);
 		free(base64);
 	}
 	return TRUE;
@@ -256,8 +259,7 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 		CryptoHmac hmac;
 		ARC_SC_PRIVATE_PACKET* serverCookie;
 		ARC_CS_PRIVATE_PACKET* clientCookie;
-
-		DEBUG_MSG("Sending auto reconnect\n");
+		WLog_DBG(TAG, "Sending auto reconnect");
 		serverCookie = settings->ServerAutoReconnectCookie;
 		clientCookie = settings->ClientAutoReconnectCookie;
 
@@ -268,7 +270,7 @@ void rdp_write_extended_info_packet(wStream* s, rdpSettings* settings)
 		hmac = crypto_hmac_new();
 		if (!hmac)
 		{
-			DEBUG_WARN( "%s: unable to allocate hmac\n", __FUNCTION__);
+			WLog_ERR(TAG,  "unable to allocate hmac");
 			goto out_free;
 		}
 
@@ -592,7 +594,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 	{
 		if (securityFlags & SEC_REDIRECTION_PKT)
 		{
-			DEBUG_WARN( "Error: SEC_REDIRECTION_PKT unsupported\n");
+			WLog_ERR(TAG,  "Error: SEC_REDIRECTION_PKT unsupported");
 			return FALSE;
 		}
 
@@ -600,7 +602,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				DEBUG_WARN( "rdp_decrypt failed\n");
+				WLog_ERR(TAG,  "rdp_decrypt failed");
 				return FALSE;
 			}
 		}
@@ -753,7 +755,7 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	Stream_Read_UINT32(s, infoType); /* infoType (4 bytes) */
 
-	//DEBUG_WARN( "%s\n", INFO_TYPE_LOGON_STRINGS[infoType]);
+	//WLog_ERR(TAG,  "%s\n", INFO_TYPE_LOGON_STRINGS[infoType]);
 
 	switch (infoType)
 	{

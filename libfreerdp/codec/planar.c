@@ -25,9 +25,11 @@
 #include <winpr/print.h>
 
 #include <freerdp/primitives.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/planar.h>
+
+#define TAG FREERDP_TAG("codec")
 
 static int planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize, int nWidth, int nHeight)
 {
@@ -124,7 +126,7 @@ static int planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 SrcSize, BYT
 
 			if ((srcp - pSrcData) > SrcSize)
 			{
-				DEBUG_WARN( "planar_decompress_plane_rle: error reading input buffer\n");
+				WLog_ERR(TAG,  "error reading input buffer");
 				return -1;
 			}
 
@@ -144,7 +146,7 @@ static int planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 SrcSize, BYT
 
 			if (((dstp + (cRawBytes + nRunLength)) - currentScanline) > nWidth * 4)
 			{
-				DEBUG_WARN( "planar_decompress_plane_rle: too many pixels in scanline\n");
+				WLog_ERR(TAG,  "too many pixels in scanline");
 				return -1;
 			}
 
@@ -347,7 +349,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 	rle = (FormatHeader & PLANAR_FORMAT_HEADER_RLE) ? TRUE : FALSE;
 	alpha = (FormatHeader & PLANAR_FORMAT_HEADER_NA) ? FALSE : TRUE;
 
-	//printf("CLL: %d CS: %d RLE: %d ALPHA: %d\n", cll, cs, rle, alpha);
+	//WLog_INFO(TAG, "CLL: %d CS: %d RLE: %d ALPHA: %d", cll, cs, rle, alpha);
 
 	if (!cll && cs)
 		return -1; /* Chroma subsampling requires YCoCg */
@@ -536,7 +538,7 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 	{
 		if (cs)
 		{
-			fprintf(stderr, "Chroma subsampling unimplemented\n");
+			WLog_ERR(TAG, "Chroma subsampling unimplemented");
 			return -1;
 		}
 
@@ -1036,8 +1038,7 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data,
 
 			context->rlePlanes[3] = &context->rlePlanesBuffer[offset];
 			offset += dstSizes[3];
-
-			//DEBUG_MSG("R: [%d/%d] G: [%d/%d] B: [%d/%d]\n",
+			//WLog_DBG(TAG, "R: [%d/%d] G: [%d/%d] B: [%d/%d]\n",
 			//		dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3], planeSize);
 		}
 	}

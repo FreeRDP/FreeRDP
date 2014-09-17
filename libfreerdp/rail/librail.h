@@ -24,12 +24,13 @@
 #include "config.h"
 #endif
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
+#define RAIL_TAG FREERDP_TAG("rail")
 #ifdef WITH_DEBUG_RAIL
-#define DEBUG_RAIL(fmt, ...) DEBUG_CLASS(RAIL, fmt, ## __VA_ARGS__)
+#define DEBUG_RAIL(fmt, ...) WLog_DBG(RAIL_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_RAIL(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_RAIL(fmt, ...) do { } while (0)
 #endif
 
 #endif /* __LIBRAIL_H */

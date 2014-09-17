@@ -20,9 +20,12 @@
 #include "config.h"
 #endif
 
+#include <freerdp/log.h>
 #include "shadow.h"
 
 #include "shadow_encomsp.h"
+
+#define TAG SERVER_TAG("shadow")
 
 static int encomsp_change_participant_control_level(EncomspServerContext* context,
 		ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
@@ -32,7 +35,7 @@ static int encomsp_change_participant_control_level(EncomspServerContext* contex
 	BOOL mayInteract;
 	rdpShadowClient* client = (rdpShadowClient*) context->custom;
 
-	printf("ChangeParticipantControlLevel: ParticipantId: %d Flags: 0x%04X\n",
+	WLog_INFO(TAG, "ChangeParticipantControlLevel: ParticipantId: %d Flags: 0x%04X",
 			pdu->ParticipantId, pdu->Flags);
 
 	mayView = (pdu->Flags & ENCOMSP_MAY_VIEW) ? TRUE : FALSE;

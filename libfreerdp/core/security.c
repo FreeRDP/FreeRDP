@@ -24,6 +24,10 @@
 
 #include "security.h"
 
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("core")
+
 /* 0x36 repeated 40 times */
 static const BYTE pad1[40] =
 {
@@ -132,7 +136,7 @@ static void security_salted_hash(const BYTE* salt, const BYTE* input, int length
 	sha1 = crypto_sha1_init();
 	if (!sha1)
 	{
-		DEBUG_WARN( "%s: unable to allocate a sha1\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a sha1");
 		return;
 	}
 	crypto_sha1_update(sha1, input, length); /* Input */
@@ -145,7 +149,7 @@ static void security_salted_hash(const BYTE* salt, const BYTE* input, int length
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		DEBUG_WARN( "%s: unable to allocate a md5\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a md5");
 		return;
 	}
 	crypto_md5_update(md5, salt, 48); /* Salt (48 bytes) */
@@ -198,7 +202,7 @@ void security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* in2, BY
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		DEBUG_WARN( "%s: unable to allocate a md5\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a md5");
 		return;
 	}
 	crypto_md5_update(md5, in0, 16);
@@ -238,7 +242,7 @@ void security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	sha1 = crypto_sha1_init();
 	if (!sha1)
 	{
-		DEBUG_WARN( "%s: unable to allocate a sha1\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a sha1");
 		return;
 	}
 	crypto_sha1_update(sha1, mac_salt_key, 16); /* MacSaltKey */
@@ -251,7 +255,7 @@ void security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		DEBUG_WARN( "%s: unable to allocate a md5\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a md5");
 		return;
 	}
 	crypto_md5_update(md5, mac_salt_key, 16); /* MacSaltKey */
@@ -274,7 +278,7 @@ void security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 	sha1 = crypto_sha1_init();
 	if (!sha1)
 	{
-		DEBUG_WARN( "%s: unable to allocate a sha1\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a sha1");
 		return;
 	}
 	crypto_sha1_update(sha1, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
@@ -287,7 +291,7 @@ void security_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length, BYTE* 
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		DEBUG_WARN( "%s: unable to allocate a md5\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a md5");
 		return;
 	}
 	crypto_md5_update(md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
@@ -327,7 +331,7 @@ void security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 	sha1 = crypto_sha1_init();
 	if (!sha1)
 	{
-		DEBUG_WARN( "%s: unable to allocate a sha1\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a sha1");
 		return;
 	}
 	crypto_sha1_update(sha1, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
@@ -341,7 +345,7 @@ void security_salted_mac_signature(rdpRdp *rdp, const BYTE* data, UINT32 length,
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		DEBUG_WARN( "%s: unable to allocate a md5\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a md5");
 		return;
 	}
 	crypto_md5_update(md5, rdp->sign_key, rdp->rc4_key_len); /* MacKeyN */
@@ -418,13 +422,11 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 		CryptoSha1 sha1;
 		BYTE client_encrypt_key_t[CRYPTO_SHA1_DIGEST_LENGTH + 1];
 		BYTE client_decrypt_key_t[CRYPTO_SHA1_DIGEST_LENGTH + 1];
-
-		DEBUG_WARN( "FIPS Compliant encryption level.\n");
-
+		WLog_INFO(TAG,  "FIPS Compliant encryption level.");
 		sha1 = crypto_sha1_init();
 		if (!sha1)
 		{
-			DEBUG_WARN( "%s: unable to allocate a sha1\n", __FUNCTION__);
+			WLog_ERR(TAG,  "unable to allocate a sha1");
 			return FALSE;
 		}
 		crypto_sha1_update(sha1, client_random + 16, 16);
@@ -435,7 +437,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 		sha1 = crypto_sha1_init();
 		if (!sha1)
 		{
-			DEBUG_WARN( "%s: unable to allocate a sha1\n", __FUNCTION__);
+			WLog_ERR(TAG,  "unable to allocate a sha1");
 			return FALSE;
 		}
 		crypto_sha1_update(sha1, client_random, 16);
@@ -446,7 +448,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 		sha1 = crypto_sha1_init();
 		if (!sha1)
 		{
-			DEBUG_WARN( "%s: unable to allocate a sha1\n", __FUNCTION__);
+			WLog_ERR(TAG,  "unable to allocate a sha1");
 			return FALSE;
 		}
 		crypto_sha1_update(sha1, client_decrypt_key_t, 20);
@@ -528,7 +530,7 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	sha1 = crypto_sha1_init();
 	if (!sha1)
 	{
-		DEBUG_WARN( "%s: unable to allocate a sha1\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a sha1");
 		return FALSE;
 	}
 	crypto_sha1_update(sha1, update_key, key_len);
@@ -539,7 +541,7 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		DEBUG_WARN( "%s: unable to allocate a md5\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a md5");
 		return FALSE;
 	}
 	crypto_md5_update(md5, update_key, key_len);
@@ -550,7 +552,7 @@ BOOL security_key_update(BYTE* key, BYTE* update_key, int key_len, rdpRdp* rdp)
 	rc4 = crypto_rc4_init(key, key_len);
 	if (!rc4)
 	{
-		DEBUG_WARN( "%s: unable to allocate a rc4\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a rc4");
 		return FALSE;
 	}
 	crypto_rc4(rc4, key_len, key, key);
@@ -573,7 +575,7 @@ BOOL security_encrypt(BYTE* data, int length, rdpRdp* rdp)
 		rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
 		if (!rdp->rc4_encrypt_key)
 		{
-			DEBUG_WARN( "%s: unable to allocate rc4 encrypt key\n", __FUNCTION__);
+			WLog_ERR(TAG,  "unable to allocate rc4 encrypt key");
 			return FALSE;
 		}
 		rdp->encrypt_use_count = 0;
@@ -595,7 +597,7 @@ BOOL security_decrypt(BYTE* data, int length, rdpRdp* rdp)
 		rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
 		if (!rdp->rc4_decrypt_key)
 		{
-			DEBUG_WARN( "%s: unable to allocate rc4 decrypt key\n", __FUNCTION__);
+			WLog_ERR(TAG,  "unable to allocate rc4 decrypt key");
 			return FALSE;
 		}
 

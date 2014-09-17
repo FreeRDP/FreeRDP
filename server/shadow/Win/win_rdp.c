@@ -22,21 +22,24 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <freerdp/log.h>
 
 #include "win_rdp.h"
+
+#define TAG SERVER_TAG("shadow.win")
 
 void shw_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
 {
 	shwContext* shw = (shwContext*) context;
 
-	printf("OnChannelConnected: %s\n", e->name);
+	WLog_INFO(TAG, "OnChannelConnected: %s", e->name);
 }
 
 void shw_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
 {
 	shwContext* shw = (shwContext*) context;
 
-	printf("OnChannelDisconnected: %s\n", e->name);
+	WLog_INFO(TAG, "OnChannelDisconnected: %s", e->name);
 }
 
 void shw_begin_paint(rdpContext* context)
@@ -106,7 +109,7 @@ int shw_verify_x509_certificate(freerdp* instance, BYTE* data, int length, const
 void shw_OnConnectionResultEventHandler(rdpContext* context, ConnectionResultEventArgs* e)
 {
 	shwContext* shw = (shwContext*) context;
-	printf("OnConnectionResult: %d\n", e->result);
+	WLog_INFO(TAG, "OnConnectionResult: %d", e->result);
 }
 
 BOOL shw_pre_connect(freerdp* instance)
@@ -177,7 +180,7 @@ void* shw_client_thread(void* arg)
 
 	bSuccess = freerdp_connect(instance);
 
-	printf("freerdp_connect: %d\n", bSuccess);
+	WLog_INFO(TAG, "freerdp_connect: %d", bSuccess);
 
 	if (!bSuccess)
 	{
@@ -194,13 +197,13 @@ void* shw_client_thread(void* arg)
 
 		if (!freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount))
 		{
-			fprintf(stderr, "Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
 		if (!freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount))
 		{
-			fprintf(stderr, "Failed to get channels file descriptor\n");
+			WLog_ERR(TAG, "Failed to get channels file descriptor");
 			break;
 		}
 
@@ -214,13 +217,13 @@ void* shw_client_thread(void* arg)
 
 		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
 		{
-			fprintf(stderr, "MsgWaitForMultipleObjects failure: 0x%08X", GetLastError());
+			WLog_ERR(TAG, "MsgWaitForMultipleObjects failure: 0x%08X", GetLastError());
 			break;
 		}
 
 		if (!freerdp_check_fds(instance))
 		{
-			fprintf(stderr, "Failed to check FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
 
@@ -231,7 +234,7 @@ void* shw_client_thread(void* arg)
 
 		if (!freerdp_channels_check_fds(channels, instance))
 		{
-			fprintf(stderr, "Failed to check channels file descriptor\n");
+			WLog_ERR(TAG, "Failed to check channels file descriptor");
 			break;
 		}
 	}

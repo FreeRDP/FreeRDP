@@ -26,6 +26,7 @@
 #include "config.h"
 #endif
 
+#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/locale/timezone.h>
 
@@ -37,10 +38,11 @@ void rdp_get_client_time_zone(wStream* s, rdpSettings* settings);
 BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings);
 void rdp_write_client_time_zone(wStream* s, rdpSettings* settings);
 
+#define TIMEZONE_TAG FREERDP_TAG("core.timezone")
 #ifdef WITH_DEBUG_TIMEZONE
-#define DEBUG_TIMEZONE(fmt, ...) DEBUG_CLASS(TIMEZONE, fmt, ## __VA_ARGS__)
+#define DEBUG_TIMEZONE(fmt, ...) WLog_DBG(TIMEZONE_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_TIMEZONE(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_TIMEZONE(fmt, ...) do { } while (0)
 #endif
 
 #endif /* __TIMEZONE_H */

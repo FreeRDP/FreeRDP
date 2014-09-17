@@ -28,6 +28,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/windows.h>
+#include <freerdp/log.h>
 
 #ifndef _WIN32
 #include <netdb.h>
@@ -43,6 +44,8 @@
 #endif
 
 #include "listener.h"
+
+#define TAG FREERDP_TAG("core.listener")
 
 #ifdef _WIN32
 #if _WIN32_WINNT < 0x0600
@@ -102,9 +105,9 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 	if (status != 0)
 	{
 #ifdef _WIN32
-		_tprintf(_T("getaddrinfo error: %s\n"), gai_strerror(status));
+		WLog_ERR(_T("getaddrinfo error: %s"), gai_strerror(status));
 #else
-		DEBUG_WARN("getaddrinfo");
+		WLog_ERR(TAG, "getaddrinfo");
 #endif
 		return FALSE;
 	}
@@ -118,14 +121,14 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 
 		if (sockfd == -1)
 		{
-			DEBUG_WARN("socket");
+			WLog_ERR(TAG, "socket");
 			continue;
 		}
 
 		option_value = 1;
 
 		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void*) &option_value, sizeof(option_value)) == -1)
-			DEBUG_WARN("setsockopt");
+			WLog_ERR(TAG, "setsockopt");
 
 #ifndef _WIN32
 		fcntl(sockfd, F_SETFL, O_NONBLOCK);
@@ -139,10 +142,10 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		if (status != 0)
 		{
 #ifdef _WIN32
-			_tprintf(L"bind() failed with error: %u\n", WSAGetLastError());
+			WLog_ERR("bind() failed with error: %u", WSAGetLastError());
 			WSACleanup();
 #else
-			DEBUG_WARN("bind");
+			WLog_ERR(TAG, "bind");
 			close(sockfd);
 #endif
 			continue;
@@ -152,7 +155,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 
 		if (status != 0)
 		{
-			DEBUG_WARN("listen");
+			WLog_ERR(TAG, "listen");
 			close(sockfd);
 			continue;
 		}
@@ -168,7 +171,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		else
 			sin_addr = &(((struct sockaddr_in6*) ai->ai_addr)->sin6_addr);
 
-		DEBUG_WARN( "Listening on %s port %s.\n", inet_ntop(ai->ai_family, sin_addr, buf, sizeof(buf)), servname);
+		WLog_ERR(TAG,  "Listening on %s port %s.\n", inet_ntop(ai->ai_family, sin_addr, buf, sizeof(buf)), servname);
 	}
 
 	freeaddrinfo(res);
@@ -188,7 +191,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 
 	if (sockfd == -1)
 	{
-		DEBUG_WARN("socket");
+		WLog_ERR(TAG, "socket");
 		return FALSE;
 	}
 
@@ -202,7 +205,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 
 	if (status != 0)
 	{
-		DEBUG_WARN("bind");
+		WLog_ERR(TAG, "bind");
 		close(sockfd);
 		return FALSE;
 	}
@@ -211,7 +214,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 
 	if (status != 0)
 	{
-		DEBUG_WARN("listen");
+		WLog_ERR(TAG, "listen");
 		close(sockfd);
 		return FALSE;
 	}
@@ -219,9 +222,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 	listener->sockfds[listener->num_sockfds] = sockfd;
 	listener->events[listener->num_sockfds] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd);
 	listener->num_sockfds++;
-
-	DEBUG_WARN( "Listening on socket %s.\n", addr.sun_path);
-
+	WLog_INFO(TAG,  "Listening on socket %s.", addr.sun_path);
 	return TRUE;
 #else
 	return TRUE;
@@ -308,7 +309,8 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
 				continue;
 #endif
-			DEBUG_WARN("accept");
+			WLog_DBG(TAG, "accept");
+
 			if (client)
 				free(client);
 			return FALSE;

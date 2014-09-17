@@ -39,6 +39,9 @@
 
 #include "xf_keyboard.h"
 
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("x11")
+
 int xf_keyboard_action_script_init(xfContext* xfc)
 {
 	int exitCode;
@@ -191,7 +194,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BYTE keycode)
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 	{
-		DEBUG_WARN( "Unknown key with X keycode 0x%02x\n", keycode);
+		WLog_ERR(TAG,  "Unknown key with X keycode 0x%02x", keycode);
 	}
 	else if (rdp_scancode == RDP_SCANCODE_PAUSE &&
 			!xf_keyboard_key_pressed(xfc, XK_Control_L) && !xf_keyboard_key_pressed(xfc, XK_Control_R))

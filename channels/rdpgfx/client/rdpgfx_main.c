@@ -816,8 +816,8 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	if (status < 0)
 	{
-		CLOG_ERR( "Error while parsing GFX cmdId: %s (0x%04X)\n",
-				rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId);
+		WLog_ERR(TAG,  "Error while parsing GFX cmdId: %s (0x%04X)",
+				 rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId);
 		return -1;
 	}
 
@@ -825,9 +825,8 @@ int rdpgfx_recv_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	if (end != (beg + header.pduLength))
 	{
-		CLOG_ERR( "Unexpected gfx pdu end: Actual: %d, Expected: %d\n",
-				end, (beg + header.pduLength));
-
+		WLog_ERR(TAG,  "Unexpected gfx pdu end: Actual: %d, Expected: %d",
+				 end, (beg + header.pduLength));
 		Stream_SetPosition(s, (beg + header.pduLength));
 	}
 
@@ -847,7 +846,7 @@ static int rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 
 	if (status < 0)
 	{
-		CLOG_DBG("zgfx_decompress failure! status: %d\n", status);
+		WLog_DBG(TAG, "zgfx_decompress failure! status: %d", status);
 		return 0;
 	}
 
@@ -1065,11 +1064,7 @@ int rdpgfx_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		if (!gfx)
 			return -1;
 
-		gfx->log = WLog_Get("com.freerdp.gfx.client");
-#if 0
-		WLog_SetLogLevel(gfx->log, WLOG_DEBUG);
-#endif
-
+		gfx->log = WLog_Get(TAG);
 		gfx->settings = (rdpSettings*) pEntryPoints->GetRdpSettings(pEntryPoints);
 
 		gfx->iface.Initialize = rdpgfx_plugin_initialize;

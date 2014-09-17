@@ -25,12 +25,15 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
 #include <freerdp/update.h>
 #include <freerdp/freerdp.h>
 #include <winpr/stream.h>
 
-#include <freerdp/utils/debug.h>
+
 #include <freerdp/cache/nine_grid.h>
+
+#define TAG FREERDP_TAG("cache.nine_grid")
 
 void update_gdi_draw_nine_grid(rdpContext* context, DRAW_NINE_GRID_ORDER* draw_nine_grid)
 {
@@ -61,7 +64,7 @@ void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
 
 	if (index >= nine_grid->maxEntries)
 	{
-		DEBUG_WARN( "invalid NineGrid index: 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid NineGrid index: 0x%04X", index);
 		return NULL;
 	}
 
@@ -69,7 +72,7 @@ void* nine_grid_cache_get(rdpNineGridCache* nine_grid, UINT32 index)
 
 	if (entry == NULL)
 	{
-		DEBUG_WARN( "invalid NineGrid at index: 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid NineGrid at index: 0x%04X", index);
 		return NULL;
 	}
 
@@ -82,7 +85,7 @@ void nine_grid_cache_put(rdpNineGridCache* nine_grid, UINT32 index, void* entry)
 
 	if (index >= nine_grid->maxEntries)
 	{
-		DEBUG_WARN( "invalid NineGrid index: 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid NineGrid index: 0x%04X", index);
 		return;
 	}
 

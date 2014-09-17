@@ -46,7 +46,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
 #include <winpr/stream.h>
 
@@ -211,10 +211,11 @@ rdpRdp* rdp_new(rdpContext* context);
 void rdp_reset(rdpRdp* rdp);
 void rdp_free(rdpRdp* rdp);
 
+#define RDP_TAG FREERDP_TAG("core.rdp")
 #ifdef WITH_DEBUG_RDP
-#define DEBUG_RDP(fmt, ...) DEBUG_CLASS(RDP, fmt, ## __VA_ARGS__)
+#define DEBUG_RDP(fmt, ...) WLog_DBG(RDP_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_RDP(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_RDP(fmt, ...) do { } while (0)
 #endif
 
 BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags);

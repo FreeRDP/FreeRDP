@@ -28,10 +28,11 @@
 #include <freerdp/types.h>
 #include <freerdp/channels/log.h>
 
+#define TAG CHANNELS_TAG("dvcman.client")
 #ifdef WITH_DEBUG_DVC
-#define DEBUG_DVC(fmt, ...) CLOG_CLASS(DVC, fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_DVC(fmt, ...) CLOG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) do { } while (0)
 #endif
 
 #endif

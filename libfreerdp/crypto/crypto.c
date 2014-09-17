@@ -23,8 +23,10 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/crypto/crypto.h>
+
+#define TAG FREERDP_TAG("crypto")
 
 CryptoSha1 crypto_sha1_init(void)
 {
@@ -203,7 +205,7 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 	pkey = X509_get_pubkey(cert->px509);
 	if (!pkey)
 	{
-		DEBUG_WARN( "%s: X509_get_pubkey() failed\n", __FUNCTION__);
+		WLog_ERR(TAG,  "X509_get_pubkey() failed");
 		status = FALSE;
 		goto exit;
 	}
@@ -211,7 +213,7 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 	length = i2d_PublicKey(pkey, NULL);
 	if (length < 1)
 	{
-		DEBUG_WARN( "%s: i2d_PublicKey() failed\n", __FUNCTION__);
+		WLog_ERR(TAG,  "i2d_PublicKey() failed");
 		status = FALSE;
 		goto exit;
 	}
@@ -276,7 +278,7 @@ static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, c
 	BN_free(&mod);
 	BN_CTX_free(ctx);
 
-out_free_input_reverse:
+out_free_input_reverse: 
 	free(input_reverse);
 
 	return output_length;
@@ -570,18 +572,17 @@ void crypto_cert_print_info(X509* xcert)
 	fp = crypto_cert_fingerprint(xcert);
 	if (!fp)
 	{
-		DEBUG_WARN( "%s: error computing fingerprint\n", __FUNCTION__);
+		WLog_ERR(TAG,  "error computing fingerprint");
 		goto out_free_issuer;
 	}
 
-	DEBUG_WARN( "Certificate details:\n");
-	DEBUG_WARN( "\tSubject: %s\n", subject);
-	DEBUG_WARN( "\tIssuer: %s\n", issuer);
-	DEBUG_WARN( "\tThumbprint: %s\n", fp);
-	DEBUG_WARN( "The above X.509 certificate could not be verified, possibly because you do not have "
-			"the CA certificate in your certificate store, or the certificate has expired. "
-			"Please look at the documentation on how to create local certificate store for a private CA.\n");
-
+	WLog_INFO(TAG,  "Certificate details:");
+	WLog_INFO(TAG,  "\tSubject: %s", subject);
+	WLog_INFO(TAG,  "\tIssuer: %s", issuer);
+	WLog_INFO(TAG,  "\tThumbprint: %s", fp);
+	WLog_INFO(TAG,  "The above X.509 certificate could not be verified, possibly because you do not have "
+			  "the CA certificate in your certificate store, or the certificate has expired. "
+			  "Please look at the documentation on how to create local certificate store for a private CA.");
 	free(fp);
 out_free_issuer:
 	free(issuer);

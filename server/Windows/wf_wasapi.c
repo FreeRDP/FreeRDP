@@ -41,12 +41,11 @@ int wf_wasapi_activate(RdpsndServerContext* context)
 
 	if (devStr == NULL)
 	{
-		_tprintf(_T("Failed to match for output device! Disabling rdpsnd.\n"));
+		WLog_ERR(TAG, "Failed to match for output device! Disabling rdpsnd.");
 		return 1;
 	}
 
-	DEBUG_WARN("RDPSND (WASAPI) Activated\n");
-
+	WLog_DBG(TAG, "RDPSND (WASAPI) Activated");
 	CreateThread(NULL, 0, wf_rdpsnd_wasapi_thread, latestPeer, 0, NULL);
 
 	return 0;
@@ -66,23 +65,23 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr)
 	hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, &IID_IMMDeviceEnumerator, (void **) &pEnumerator);
 	if (FAILED(hr))
 	{
-		_tprintf(_T("Failed to cocreate device enumerator\n"));
+		WLog_ERR(TAG, "Failed to cocreate device enumerator");
 		exit(1);
 	}
 
 	hr = pEnumerator->lpVtbl->EnumAudioEndpoints(pEnumerator, eCapture, DEVICE_STATE_ACTIVE, &pCollection);
 	if ( FAILED(hr) )
 	{
-		_tprintf(_T("Failed to create endpoint collection\n"));
+		WLog_ERR(TAG, "Failed to create endpoint collection");
 		exit(1);
 	}
 
 	pCollection->lpVtbl->GetCount(pCollection, &count);
-	_tprintf(_T("Num endpoints: %d\n"), count);
+	WLog_INFO(TAG, "Num endpoints: %d", count);
 
 	if (count == 0)
 	{
-		_tprintf(_T("No endpoints!\n"));
+		WLog_ERR(TAG, "No endpoints!");
 		exit(1);
 	}
 
@@ -94,28 +93,28 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr)
 		hr = pCollection->lpVtbl->Item(pCollection, i, &pEndpoint);
 		if ( FAILED(hr) )
 		{
-			_tprintf(_T("Failed to get endpoint %d\n"), i);
+			WLog_ERR(TAG, "Failed to get endpoint %d", i);
 			exit(1);
 		}
 
 		hr = pEndpoint->lpVtbl->GetId(pEndpoint, &pwszID);
 		if ( FAILED(hr) )
 		{
-			_tprintf(_T("Failed to get endpoint ID\n"));
+			WLog_ERR(TAG, "Failed to get endpoint ID");
 			exit(1);
 		}
 
 		hr = pEndpoint->lpVtbl->OpenPropertyStore(pEndpoint, STGM_READ, &pProps);
 		if ( FAILED(hr) )
 		{
-			_tprintf(_T("Failed to open property store\n"));
+			WLog_ERR(TAG, "Failed to open property store");
 			exit(1);
 		}
 
 		hr = pProps->lpVtbl->GetValue(pProps, &PKEY_Device_FriendlyName, &nameVar);
 		if ( FAILED(hr) )
 		{
-			_tprintf(_T("Failed to get device friendly name\n"));
+			WLog_ERR(TAG, "Failed to get device friendly name");
 			exit(1);
 		}
 
@@ -123,9 +122,8 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR * deviceStr)
 		if (wcscmp(pattern, nameVar.pwszVal) < 0)
 		{
 			unsigned int devStrLen;
-			_tprintf(_T("Using sound ouput endpoint: [%s] (%s)\n"), nameVar.pwszVal, pwszID);
-			//_tprintf(_T("matched %d characters\n"), wcscmp(pattern, nameVar.pwszVal));
-
+			WLog_INFO(TAG, "Using sound ouput endpoint: [%s] (%s)", nameVar.pwszVal, pwszID);
+			//WLog_INFO(TAG, "matched %d characters", wcscmp(pattern, nameVar.pwszVal);
 			devStrLen = wcslen(pwszID);
 			*deviceStr = (LPWSTR) malloc((devStrLen * 2) + 2);
 			ZeroMemory(*deviceStr, (devStrLen * 2) + 2);
@@ -179,28 +177,28 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 	hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, &IID_IMMDeviceEnumerator, (void **) &pEnumerator);
 	if (FAILED(hr))
 	{
-		_tprintf(_T("Failed to cocreate device enumerator\n"));
+		WLog_ERR(TAG, "Failed to cocreate device enumerator");
 		exit(1);
 	}
 
 	hr = pEnumerator->lpVtbl->GetDevice(pEnumerator, devStr, &pDevice);
 	if (FAILED(hr))
 	{
-		_tprintf(_T("Failed to cocreate get device\n"));
+		WLog_ERR(TAG, "Failed to cocreate get device");
 		exit(1);
 	}
 
 	hr = pDevice->lpVtbl->Activate(pDevice, &IID_IAudioClient, CLSCTX_ALL, NULL, (void **)&pAudioClient);
 	if (FAILED(hr))
 	{
-		_tprintf(_T("Failed to activate audio client\n"));
+		WLog_ERR(TAG, "Failed to activate audio client");
 		exit(1);
 	}
 
 	hr = pAudioClient->lpVtbl->GetMixFormat(pAudioClient, &pwfx);
 	if (FAILED(hr))
 	{
-		_tprintf(_T("Failed to get mix format\n"));
+		WLog_ERR(TAG, "Failed to get mix format");
 		exit(1);
 	}
 
@@ -218,21 +216,21 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 
 	if (FAILED(hr))
 	{
-		_tprintf(_T("Failed to initialize the audio client\n"));
+		WLog_ERR(TAG, "Failed to initialize the audio client");
 		exit(1);
 	}
 
 	hr = pAudioClient->lpVtbl->GetBufferSize(pAudioClient, &bufferFrameCount);
 	if (FAILED(hr))
 	{
-		_tprintf(_T("Failed to get buffer size\n"));
+		WLog_ERR(TAG, "Failed to get buffer size");
 		exit(1);
 	}
 
 	hr = pAudioClient->lpVtbl->GetService(pAudioClient, &IID_IAudioCaptureClient, (void **) &pCaptureClient);
 	if (FAILED(hr))
 	{
-		_tprintf(_T("Failed to get the capture client\n"));
+		WLog_ERR(TAG, "Failed to get the capture client");
 		exit(1);
 	}
 
@@ -241,12 +239,13 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 	hr = pAudioClient->lpVtbl->Start(pAudioClient);
 	if (FAILED(hr))
 	{
-		_tprintf(_T("Failed to start capture\n"));
+		WLog_ERR(TAG, "Failed to start capture");
 		exit(1);
 	}
 
 	dCount = 0;
-	while(wfi->snd_stop == FALSE)
+
+	while (wfi->snd_stop == FALSE)
 	{
 		DWORD flags;
 
@@ -255,7 +254,7 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 		hr = pCaptureClient->lpVtbl->GetNextPacketSize(pCaptureClient, &packetLength);
 		if (FAILED(hr))
 		{
-			_tprintf(_T("Failed to get packet length\n"));
+			WLog_ERR(TAG, "Failed to get packet length");
 			exit(1);
 		}
 
@@ -264,7 +263,7 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 			hr = pCaptureClient->lpVtbl->GetBuffer(pCaptureClient, &pData, &numFramesAvailable, &flags, NULL, NULL);
 			if (FAILED(hr))
 			{
-				_tprintf(_T("Failed to get buffer\n"));
+				WLog_ERR(TAG, "Failed to get buffer");
 				exit(1);
 			}
 
@@ -276,14 +275,14 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 			hr = pCaptureClient->lpVtbl->ReleaseBuffer(pCaptureClient, numFramesAvailable);
 			if (FAILED(hr))
 			{
-				_tprintf(_T("Failed to release buffer\n"));
+				WLog_ERR(TAG, "Failed to release buffer");
 				exit(1);
 			}
 
 			hr = pCaptureClient->lpVtbl->GetNextPacketSize(pCaptureClient, &packetLength);
 			if (FAILED(hr))
 			{
-				_tprintf(_T("Failed to get packet length\n"));
+				WLog_ERR(TAG, "Failed to get packet length");
 				exit(1);
 			}
 		}
@@ -292,7 +291,7 @@ DWORD WINAPI wf_rdpsnd_wasapi_thread(LPVOID lpParam)
 	pAudioClient->lpVtbl->Stop(pAudioClient);
 	if (FAILED(hr))
 	{
-		_tprintf(_T("Failed to stop audio client\n"));
+		WLog_ERR(TAG, "Failed to stop audio client");
 		exit(1);
 	}
 

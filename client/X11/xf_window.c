@@ -39,6 +39,7 @@
 
 #include <freerdp/rail.h>
 #include <freerdp/utils/rail.h>
+#include <freerdp/log.h>
 
 #ifdef WITH_XEXT
 #include <X11/extensions/shape.h>
@@ -51,16 +52,18 @@
 
 #include "xf_input.h"
 
+#define TAG CLIENT_TAG("x11")
+
 #ifdef WITH_DEBUG_X11
-#define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)
+#define DEBUG_X11(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_X11(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_X11(fmt, ...) do { } while (0)
 #endif
 
 #ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
-#define DEBUG_X11_LMS(fmt, ...) DEBUG_CLASS(X11_LMS, fmt, ## __VA_ARGS__)
+#define DEBUG_X11_LMS(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_X11_LMS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_X11_LMS(fmt, ...) do { } while (0)
 #endif
 
 #include "FreeRDP_Icon_256px.h"
@@ -163,7 +166,7 @@ BOOL xf_GetWindowProperty(xfContext *xfc, Window window, Atom property, int leng
 		return FALSE;
 	if(actual_type == None)
 	{
-		DEBUG_WARN("Property %lu does not exist", property);
+		WLog_ERR(TAG, "Property %lu does not exist", property);
 		return FALSE;
 	}
 	return TRUE;
@@ -258,24 +261,19 @@ void xf_SetWindowStyle(xfContext *xfc, xfWindow *window, UINT32 style, UINT32 ex
 	 * TOPMOST window that is not a toolwindow is treated like a regular window(ie. task manager).
 	 * Want to do this here, since the window may have type WS_POPUP
 	 */
+	else if (ex_style & WS_EX_TOPMOST)
+	{
+		window_type = xfc->_NET_WM_WINDOW_TYPE_NORMAL;
+	}
+	else if (style & WS_POPUP)
+	{
+		/* this includes dialogs, popups, etc, that need to be full-fledged windows */
+		window->is_transient = TRUE;
+		window_type = xfc->_NET_WM_WINDOW_TYPE_DIALOG;
+		xf_SetWindowUnlisted(xfc, window);
+	}
 	else
-		if(ex_style & WS_EX_TOPMOST)
-		{
-			window_type = xfc->_NET_WM_WINDOW_TYPE_NORMAL;
-		}
-		else
-			if(style & WS_POPUP)
-			{
-				/* this includes dialogs, popups, etc, that need to be full-fledged windows */
-				window->is_transient = TRUE;
-				window_type = xfc->_NET_WM_WINDOW_TYPE_DIALOG;
-				xf_SetWindowUnlisted(xfc, window);
-			}
-			else
-			{
-				window_type = xfc->_NET_WM_WINDOW_TYPE_NORMAL;
-			}
-	XChangeProperty(xfc->display, window->handle, xfc->_NET_WM_WINDOW_TYPE,
+		XChangeProperty(xfc->display, window->handle, xfc->_NET_WM_WINDOW_TYPE,
 					XA_ATOM, 32, PropModeReplace, (BYTE *) &window_type, 1);
 }
 

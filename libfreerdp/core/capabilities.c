@@ -27,6 +27,10 @@
 #include <winpr/crt.h>
 #include <winpr/rpc.h>
 
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("core.capabilities")
+
 #ifdef WITH_DEBUG_CAPABILITIES
 
 const char* const CAPSET_TYPE_STRINGS[] =
@@ -262,8 +266,7 @@ BOOL rdp_print_general_capability_set(wStream* s, UINT16 length)
 	if (length < 24)
 		return FALSE;
 
-	DEBUG_WARN( "GeneralCapabilitySet (length %d):\n", length);
-
+	WLog_INFO(TAG,  "GeneralCapabilitySet (length %d):", length);
 	Stream_Read_UINT16(s, osMajorType); /* osMajorType (2 bytes) */
 	Stream_Read_UINT16(s, osMinorType); /* osMinorType (2 bytes) */
 	Stream_Read_UINT16(s, protocolVersion); /* protocolVersion (2 bytes) */
@@ -275,19 +278,17 @@ BOOL rdp_print_general_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, generalCompressionLevel); /* generalCompressionLevel (2 bytes) */
 	Stream_Read_UINT8(s, refreshRectSupport); /* refreshRectSupport (1 byte) */
 	Stream_Read_UINT8(s, suppressOutputSupport); /* suppressOutputSupport (1 byte) */
-
-	DEBUG_WARN( "\tosMajorType: 0x%04X\n", osMajorType);
-	DEBUG_WARN( "\tosMinorType: 0x%04X\n", osMinorType);
-	DEBUG_WARN( "\tprotocolVersion: 0x%04X\n", protocolVersion);
-	DEBUG_WARN( "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
-	DEBUG_WARN( "\tgeneralCompressionTypes: 0x%04X\n", generalCompressionTypes);
-	DEBUG_WARN( "\textraFlags: 0x%04X\n", extraFlags);
-	DEBUG_WARN( "\tupdateCapabilityFlag: 0x%04X\n", updateCapabilityFlag);
-	DEBUG_WARN( "\tremoteUnshareFlag: 0x%04X\n", remoteUnshareFlag);
-	DEBUG_WARN( "\tgeneralCompressionLevel: 0x%04X\n", generalCompressionLevel);
-	DEBUG_WARN( "\trefreshRectSupport: 0x%02X\n", refreshRectSupport);
-	DEBUG_WARN( "\tsuppressOutputSupport: 0x%02X\n", suppressOutputSupport);
-
+	WLog_INFO(TAG,  "\tosMajorType: 0x%04X", osMajorType);
+	WLog_INFO(TAG,  "\tosMinorType: 0x%04X", osMinorType);
+	WLog_INFO(TAG,  "\tprotocolVersion: 0x%04X", protocolVersion);
+	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04X", pad2OctetsA);
+	WLog_INFO(TAG,  "\tgeneralCompressionTypes: 0x%04X", generalCompressionTypes);
+	WLog_INFO(TAG,  "\textraFlags: 0x%04X", extraFlags);
+	WLog_INFO(TAG,  "\tupdateCapabilityFlag: 0x%04X", updateCapabilityFlag);
+	WLog_INFO(TAG,  "\tremoteUnshareFlag: 0x%04X", remoteUnshareFlag);
+	WLog_INFO(TAG,  "\tgeneralCompressionLevel: 0x%04X", generalCompressionLevel);
+	WLog_INFO(TAG,  "\trefreshRectSupport: 0x%02X", refreshRectSupport);
+	WLog_INFO(TAG,  "\tsuppressOutputSupport: 0x%02X", suppressOutputSupport);
 	return TRUE;
 }
 
@@ -418,8 +419,7 @@ BOOL rdp_print_bitmap_capability_set(wStream* s, UINT16 length)
 	BYTE drawingFlags;
 	UINT16 multipleRectangleSupport;
 	UINT16 pad2OctetsB;
-
-	DEBUG_WARN( "BitmapCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "BitmapCapabilitySet (length %d):", length);
 
 	if (length < 28)
 		return FALSE;
@@ -437,21 +437,19 @@ BOOL rdp_print_bitmap_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT8(s, drawingFlags); /* drawingFlags (1 byte) */
 	Stream_Read_UINT16(s, multipleRectangleSupport); /* multipleRectangleSupport (2 bytes) */
 	Stream_Read_UINT16(s, pad2OctetsB); /* pad2OctetsB (2 bytes) */
-
-	DEBUG_WARN( "\tpreferredBitsPerPixel: 0x%04X\n", preferredBitsPerPixel);
-	DEBUG_WARN( "\treceive1BitPerPixel: 0x%04X\n", receive1BitPerPixel);
-	DEBUG_WARN( "\treceive4BitsPerPixel: 0x%04X\n", receive4BitsPerPixel);
-	DEBUG_WARN( "\treceive8BitsPerPixel: 0x%04X\n", receive8BitsPerPixel);
-	DEBUG_WARN( "\tdesktopWidth: 0x%04X\n", desktopWidth);
-	DEBUG_WARN( "\tdesktopHeight: 0x%04X\n", desktopHeight);
-	DEBUG_WARN( "\tpad2Octets: 0x%04X\n", pad2Octets);
-	DEBUG_WARN( "\tdesktopResizeFlag: 0x%04X\n", desktopResizeFlag);
-	DEBUG_WARN( "\tbitmapCompressionFlag: 0x%04X\n", bitmapCompressionFlag);
-	DEBUG_WARN( "\thighColorFlags: 0x%02X\n", highColorFlags);
-	DEBUG_WARN( "\tdrawingFlags: 0x%02X\n", drawingFlags);
-	DEBUG_WARN( "\tmultipleRectangleSupport: 0x%04X\n", multipleRectangleSupport);
-	DEBUG_WARN( "\tpad2OctetsB: 0x%04X\n", pad2OctetsB);
-
+	WLog_INFO(TAG,  "\tpreferredBitsPerPixel: 0x%04X", preferredBitsPerPixel);
+	WLog_INFO(TAG,  "\treceive1BitPerPixel: 0x%04X", receive1BitPerPixel);
+	WLog_INFO(TAG,  "\treceive4BitsPerPixel: 0x%04X", receive4BitsPerPixel);
+	WLog_INFO(TAG,  "\treceive8BitsPerPixel: 0x%04X", receive8BitsPerPixel);
+	WLog_INFO(TAG,  "\tdesktopWidth: 0x%04X", desktopWidth);
+	WLog_INFO(TAG,  "\tdesktopHeight: 0x%04X", desktopHeight);
+	WLog_INFO(TAG,  "\tpad2Octets: 0x%04X", pad2Octets);
+	WLog_INFO(TAG,  "\tdesktopResizeFlag: 0x%04X", desktopResizeFlag);
+	WLog_INFO(TAG,  "\tbitmapCompressionFlag: 0x%04X", bitmapCompressionFlag);
+	WLog_INFO(TAG,  "\thighColorFlags: 0x%02X", highColorFlags);
+	WLog_INFO(TAG,  "\tdrawingFlags: 0x%02X", drawingFlags);
+	WLog_INFO(TAG,  "\tmultipleRectangleSupport: 0x%04X", multipleRectangleSupport);
+	WLog_INFO(TAG,  "\tpad2OctetsB: 0x%04X", pad2OctetsB);
 	return TRUE;
 }
 
@@ -595,8 +593,7 @@ BOOL rdp_print_order_capability_set(wStream* s, UINT16 length)
 	UINT16 pad2OctetsD;
 	UINT16 textANSICodePage;
 	UINT16 pad2OctetsE;
-
-	DEBUG_WARN( "OrderCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "OrderCapabilitySet (length %d):", length);
 
 	if (length < 88)
 		return FALSE;
@@ -618,58 +615,54 @@ BOOL rdp_print_order_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, pad2OctetsD); /* pad2OctetsD (2 bytes) */
 	Stream_Read_UINT16(s, textANSICodePage); /* textANSICodePage (2 bytes) */
 	Stream_Read_UINT16(s, pad2OctetsE); /* pad2OctetsE (2 bytes) */
-
-	DEBUG_WARN( "\tpad4OctetsA: 0x%08X\n", pad4OctetsA);
-	DEBUG_WARN( "\tdesktopSaveXGranularity: 0x%04X\n", desktopSaveXGranularity);
-	DEBUG_WARN( "\tdesktopSaveYGranularity: 0x%04X\n", desktopSaveYGranularity);
-	DEBUG_WARN( "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
-	DEBUG_WARN( "\tmaximumOrderLevel: 0x%04X\n", maximumOrderLevel);
-	DEBUG_WARN( "\tnumberFonts: 0x%04X\n", numberFonts);
-	DEBUG_WARN( "\torderFlags: 0x%04X\n", orderFlags);
-
-	DEBUG_WARN( "\torderSupport:\n");
-	DEBUG_WARN( "\t\tDSTBLT: %d\n", orderSupport[NEG_DSTBLT_INDEX]);
-	DEBUG_WARN( "\t\tPATBLT: %d\n", orderSupport[NEG_PATBLT_INDEX]);
-	DEBUG_WARN( "\t\tSCRBLT: %d\n", orderSupport[NEG_SCRBLT_INDEX]);
-	DEBUG_WARN( "\t\tMEMBLT: %d\n", orderSupport[NEG_MEMBLT_INDEX]);
-	DEBUG_WARN( "\t\tMEM3BLT: %d\n", orderSupport[NEG_MEM3BLT_INDEX]);
-	DEBUG_WARN( "\t\tATEXTOUT: %d\n", orderSupport[NEG_ATEXTOUT_INDEX]);
-	DEBUG_WARN( "\t\tAEXTTEXTOUT: %d\n", orderSupport[NEG_AEXTTEXTOUT_INDEX]);
-	DEBUG_WARN( "\t\tDRAWNINEGRID: %d\n", orderSupport[NEG_DRAWNINEGRID_INDEX]);
-	DEBUG_WARN( "\t\tLINETO: %d\n", orderSupport[NEG_LINETO_INDEX]);
-	DEBUG_WARN( "\t\tMULTI_DRAWNINEGRID: %d\n", orderSupport[NEG_MULTI_DRAWNINEGRID_INDEX]);
-	DEBUG_WARN( "\t\tOPAQUE_RECT: %d\n", orderSupport[NEG_OPAQUE_RECT_INDEX]);
-	DEBUG_WARN( "\t\tSAVEBITMAP: %d\n", orderSupport[NEG_SAVEBITMAP_INDEX]);
-	DEBUG_WARN( "\t\tWTEXTOUT: %d\n", orderSupport[NEG_WTEXTOUT_INDEX]);
-	DEBUG_WARN( "\t\tMEMBLT_V2: %d\n", orderSupport[NEG_MEMBLT_V2_INDEX]);
-	DEBUG_WARN( "\t\tMEM3BLT_V2: %d\n", orderSupport[NEG_MEM3BLT_V2_INDEX]);
-	DEBUG_WARN( "\t\tMULTIDSTBLT: %d\n", orderSupport[NEG_MULTIDSTBLT_INDEX]);
-	DEBUG_WARN( "\t\tMULTIPATBLT: %d\n", orderSupport[NEG_MULTIPATBLT_INDEX]);
-	DEBUG_WARN( "\t\tMULTISCRBLT: %d\n", orderSupport[NEG_MULTISCRBLT_INDEX]);
-	DEBUG_WARN( "\t\tMULTIOPAQUERECT: %d\n", orderSupport[NEG_MULTIOPAQUERECT_INDEX]);
-	DEBUG_WARN( "\t\tFAST_INDEX: %d\n", orderSupport[NEG_FAST_INDEX_INDEX]);
-	DEBUG_WARN( "\t\tPOLYGON_SC: %d\n", orderSupport[NEG_POLYGON_SC_INDEX]);
-	DEBUG_WARN( "\t\tPOLYGON_CB: %d\n", orderSupport[NEG_POLYGON_CB_INDEX]);
-	DEBUG_WARN( "\t\tPOLYLINE: %d\n", orderSupport[NEG_POLYLINE_INDEX]);
-	DEBUG_WARN( "\t\tUNUSED23: %d\n", orderSupport[NEG_UNUSED23_INDEX]);
-	DEBUG_WARN( "\t\tFAST_GLYPH: %d\n", orderSupport[NEG_FAST_GLYPH_INDEX]);
-	DEBUG_WARN( "\t\tELLIPSE_SC: %d\n", orderSupport[NEG_ELLIPSE_SC_INDEX]);
-	DEBUG_WARN( "\t\tELLIPSE_CB: %d\n", orderSupport[NEG_ELLIPSE_CB_INDEX]);
-	DEBUG_WARN( "\t\tGLYPH_INDEX: %d\n", orderSupport[NEG_GLYPH_INDEX_INDEX]);
-	DEBUG_WARN( "\t\tGLYPH_WEXTTEXTOUT: %d\n", orderSupport[NEG_GLYPH_WEXTTEXTOUT_INDEX]);
-	DEBUG_WARN( "\t\tGLYPH_WLONGTEXTOUT: %d\n", orderSupport[NEG_GLYPH_WLONGTEXTOUT_INDEX]);
-	DEBUG_WARN( "\t\tGLYPH_WLONGEXTTEXTOUT: %d\n", orderSupport[NEG_GLYPH_WLONGEXTTEXTOUT_INDEX]);
-	DEBUG_WARN( "\t\tUNUSED31: %d\n", orderSupport[NEG_UNUSED31_INDEX]);
-
-	DEBUG_WARN( "\ttextFlags: 0x%04X\n", textFlags);
-	DEBUG_WARN( "\torderSupportExFlags: 0x%04X\n", orderSupportExFlags);
-	DEBUG_WARN( "\tpad4OctetsB: 0x%08X\n", pad4OctetsB);
-	DEBUG_WARN( "\tdesktopSaveSize: 0x%08X\n", desktopSaveSize);
-	DEBUG_WARN( "\tpad2OctetsC: 0x%04X\n", pad2OctetsC);
-	DEBUG_WARN( "\tpad2OctetsD: 0x%04X\n", pad2OctetsD);
-	DEBUG_WARN( "\ttextANSICodePage: 0x%04X\n", textANSICodePage);
-	DEBUG_WARN( "\tpad2OctetsE: 0x%04X\n", pad2OctetsE);
-
+	WLog_INFO(TAG,  "\tpad4OctetsA: 0x%08X", pad4OctetsA);
+	WLog_INFO(TAG,  "\tdesktopSaveXGranularity: 0x%04X", desktopSaveXGranularity);
+	WLog_INFO(TAG,  "\tdesktopSaveYGranularity: 0x%04X", desktopSaveYGranularity);
+	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04X", pad2OctetsA);
+	WLog_INFO(TAG,  "\tmaximumOrderLevel: 0x%04X", maximumOrderLevel);
+	WLog_INFO(TAG,  "\tnumberFonts: 0x%04X", numberFonts);
+	WLog_INFO(TAG,  "\torderFlags: 0x%04X", orderFlags);
+	WLog_INFO(TAG,  "\torderSupport:");
+	WLog_INFO(TAG,  "\t\tDSTBLT: %d", orderSupport[NEG_DSTBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tPATBLT: %d", orderSupport[NEG_PATBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tSCRBLT: %d", orderSupport[NEG_SCRBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMEMBLT: %d", orderSupport[NEG_MEMBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMEM3BLT: %d", orderSupport[NEG_MEM3BLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tATEXTOUT: %d", orderSupport[NEG_ATEXTOUT_INDEX]);
+	WLog_INFO(TAG,  "\t\tAEXTTEXTOUT: %d", orderSupport[NEG_AEXTTEXTOUT_INDEX]);
+	WLog_INFO(TAG,  "\t\tDRAWNINEGRID: %d", orderSupport[NEG_DRAWNINEGRID_INDEX]);
+	WLog_INFO(TAG,  "\t\tLINETO: %d", orderSupport[NEG_LINETO_INDEX]);
+	WLog_INFO(TAG,  "\t\tMULTI_DRAWNINEGRID: %d", orderSupport[NEG_MULTI_DRAWNINEGRID_INDEX]);
+	WLog_INFO(TAG,  "\t\tOPAQUE_RECT: %d", orderSupport[NEG_OPAQUE_RECT_INDEX]);
+	WLog_INFO(TAG,  "\t\tSAVEBITMAP: %d", orderSupport[NEG_SAVEBITMAP_INDEX]);
+	WLog_INFO(TAG,  "\t\tWTEXTOUT: %d", orderSupport[NEG_WTEXTOUT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMEMBLT_V2: %d", orderSupport[NEG_MEMBLT_V2_INDEX]);
+	WLog_INFO(TAG,  "\t\tMEM3BLT_V2: %d", orderSupport[NEG_MEM3BLT_V2_INDEX]);
+	WLog_INFO(TAG,  "\t\tMULTIDSTBLT: %d", orderSupport[NEG_MULTIDSTBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMULTIPATBLT: %d", orderSupport[NEG_MULTIPATBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMULTISCRBLT: %d", orderSupport[NEG_MULTISCRBLT_INDEX]);
+	WLog_INFO(TAG,  "\t\tMULTIOPAQUERECT: %d", orderSupport[NEG_MULTIOPAQUERECT_INDEX]);
+	WLog_INFO(TAG,  "\t\tFAST_INDEX: %d", orderSupport[NEG_FAST_INDEX_INDEX]);
+	WLog_INFO(TAG,  "\t\tPOLYGON_SC: %d", orderSupport[NEG_POLYGON_SC_INDEX]);
+	WLog_INFO(TAG,  "\t\tPOLYGON_CB: %d", orderSupport[NEG_POLYGON_CB_INDEX]);
+	WLog_INFO(TAG,  "\t\tPOLYLINE: %d", orderSupport[NEG_POLYLINE_INDEX]);
+	WLog_INFO(TAG,  "\t\tUNUSED23: %d", orderSupport[NEG_UNUSED23_INDEX]);
+	WLog_INFO(TAG,  "\t\tFAST_GLYPH: %d", orderSupport[NEG_FAST_GLYPH_INDEX]);
+	WLog_INFO(TAG,  "\t\tELLIPSE_SC: %d", orderSupport[NEG_ELLIPSE_SC_INDEX]);
+	WLog_INFO(TAG,  "\t\tELLIPSE_CB: %d", orderSupport[NEG_ELLIPSE_CB_INDEX]);
+	WLog_INFO(TAG,  "\t\tGLYPH_INDEX: %d", orderSupport[NEG_GLYPH_INDEX_INDEX]);
+	WLog_INFO(TAG,  "\t\tGLYPH_WEXTTEXTOUT: %d", orderSupport[NEG_GLYPH_WEXTTEXTOUT_INDEX]);
+	WLog_INFO(TAG,  "\t\tGLYPH_WLONGTEXTOUT: %d", orderSupport[NEG_GLYPH_WLONGTEXTOUT_INDEX]);
+	WLog_INFO(TAG,  "\t\tGLYPH_WLONGEXTTEXTOUT: %d", orderSupport[NEG_GLYPH_WLONGEXTTEXTOUT_INDEX]);
+	WLog_INFO(TAG,  "\t\tUNUSED31: %d", orderSupport[NEG_UNUSED31_INDEX]);
+	WLog_INFO(TAG,  "\ttextFlags: 0x%04X", textFlags);
+	WLog_INFO(TAG,  "\torderSupportExFlags: 0x%04X", orderSupportExFlags);
+	WLog_INFO(TAG,  "\tpad4OctetsB: 0x%08X", pad4OctetsB);
+	WLog_INFO(TAG,  "\tdesktopSaveSize: 0x%08X", desktopSaveSize);
+	WLog_INFO(TAG,  "\tpad2OctetsC: 0x%04X", pad2OctetsC);
+	WLog_INFO(TAG,  "\tpad2OctetsD: 0x%04X", pad2OctetsD);
+	WLog_INFO(TAG,  "\ttextANSICodePage: 0x%04X", textANSICodePage);
+	WLog_INFO(TAG,  "\tpad2OctetsE: 0x%04X", pad2OctetsE);
 	return TRUE;
 }
 
@@ -753,8 +746,7 @@ BOOL rdp_print_bitmap_cache_capability_set(wStream* s, UINT16 length)
 	UINT16 Cache1MaximumCellSize;
 	UINT16 Cache2Entries;
 	UINT16 Cache2MaximumCellSize;
-
-	DEBUG_WARN( "BitmapCacheCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "BitmapCacheCapabilitySet (length %d):", length);
 
 	if (length < 40)
 		return FALSE;
@@ -771,20 +763,18 @@ BOOL rdp_print_bitmap_cache_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, Cache1MaximumCellSize); /* Cache1MaximumCellSize (2 bytes) */
 	Stream_Read_UINT16(s, Cache2Entries); /* Cache2Entries (2 bytes) */
 	Stream_Read_UINT16(s, Cache2MaximumCellSize); /* Cache2MaximumCellSize (2 bytes) */
-
-	DEBUG_WARN( "\tpad1: 0x%08X\n", pad1);
-	DEBUG_WARN( "\tpad2: 0x%08X\n", pad2);
-	DEBUG_WARN( "\tpad3: 0x%08X\n", pad3);
-	DEBUG_WARN( "\tpad4: 0x%08X\n", pad4);
-	DEBUG_WARN( "\tpad5: 0x%08X\n", pad5);
-	DEBUG_WARN( "\tpad6: 0x%08X\n", pad6);
-	DEBUG_WARN( "\tCache0Entries: 0x%04X\n", Cache0Entries);
-	DEBUG_WARN( "\tCache0MaximumCellSize: 0x%04X\n", Cache0MaximumCellSize);
-	DEBUG_WARN( "\tCache1Entries: 0x%04X\n", Cache1Entries);
-	DEBUG_WARN( "\tCache1MaximumCellSize: 0x%04X\n", Cache1MaximumCellSize);
-	DEBUG_WARN( "\tCache2Entries: 0x%04X\n", Cache2Entries);
-	DEBUG_WARN( "\tCache2MaximumCellSize: 0x%04X\n", Cache2MaximumCellSize);
-
+	WLog_INFO(TAG,  "\tpad1: 0x%08X", pad1);
+	WLog_INFO(TAG,  "\tpad2: 0x%08X", pad2);
+	WLog_INFO(TAG,  "\tpad3: 0x%08X", pad3);
+	WLog_INFO(TAG,  "\tpad4: 0x%08X", pad4);
+	WLog_INFO(TAG,  "\tpad5: 0x%08X", pad5);
+	WLog_INFO(TAG,  "\tpad6: 0x%08X", pad6);
+	WLog_INFO(TAG,  "\tCache0Entries: 0x%04X", Cache0Entries);
+	WLog_INFO(TAG,  "\tCache0MaximumCellSize: 0x%04X", Cache0MaximumCellSize);
+	WLog_INFO(TAG,  "\tCache1Entries: 0x%04X", Cache1Entries);
+	WLog_INFO(TAG,  "\tCache1MaximumCellSize: 0x%04X", Cache1MaximumCellSize);
+	WLog_INFO(TAG,  "\tCache2Entries: 0x%04X", Cache2Entries);
+	WLog_INFO(TAG,  "\tCache2MaximumCellSize: 0x%04X", Cache2MaximumCellSize);
 	return TRUE;
 }
 
@@ -838,8 +828,7 @@ BOOL rdp_print_control_capability_set(wStream* s, UINT16 length)
 	UINT16 remoteDetachFlag;
 	UINT16 controlInterest;
 	UINT16 detachInterest;
-
-	DEBUG_WARN( "ControlCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "ControlCapabilitySet (length %d):", length);
 
 	if (length < 12)
 		return FALSE;
@@ -848,12 +837,10 @@ BOOL rdp_print_control_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, remoteDetachFlag); /* remoteDetachFlag (2 bytes) */
 	Stream_Read_UINT16(s, controlInterest); /* controlInterest (2 bytes) */
 	Stream_Read_UINT16(s, detachInterest); /* detachInterest (2 bytes) */
-
-	DEBUG_WARN( "\tcontrolFlags: 0x%04X\n", controlFlags);
-	DEBUG_WARN( "\tremoteDetachFlag: 0x%04X\n", remoteDetachFlag);
-	DEBUG_WARN( "\tcontrolInterest: 0x%04X\n", controlInterest);
-	DEBUG_WARN( "\tdetachInterest: 0x%04X\n", detachInterest);
-
+	WLog_INFO(TAG,  "\tcontrolFlags: 0x%04X", controlFlags);
+	WLog_INFO(TAG,  "\tremoteDetachFlag: 0x%04X", remoteDetachFlag);
+	WLog_INFO(TAG,  "\tcontrolInterest: 0x%04X", controlInterest);
+	WLog_INFO(TAG,  "\tdetachInterest: 0x%04X", detachInterest);
 	return TRUE;
 }
 
@@ -907,8 +894,7 @@ BOOL rdp_print_window_activation_capability_set(wStream* s, UINT16 length)
 	UINT16 helpKeyIndexFlag;
 	UINT16 helpExtendedKeyFlag;
 	UINT16 windowManagerKeyFlag;
-
-	DEBUG_WARN( "WindowActivationCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "WindowActivationCapabilitySet (length %d):", length);
 
 	if (length < 12)
 		return FALSE;
@@ -917,12 +903,10 @@ BOOL rdp_print_window_activation_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT16(s, helpKeyIndexFlag); /* helpKeyIndexFlag (2 bytes) */
 	Stream_Read_UINT16(s, helpExtendedKeyFlag); /* helpExtendedKeyFlag (2 bytes) */
 	Stream_Read_UINT16(s, windowManagerKeyFlag); /* windowManagerKeyFlag (2 bytes) */
-
-	DEBUG_WARN( "\thelpKeyFlag: 0x%04X\n", helpKeyFlag);
-	DEBUG_WARN( "\thelpKeyIndexFlag: 0x%04X\n", helpKeyIndexFlag);
-	DEBUG_WARN( "\thelpExtendedKeyFlag: 0x%04X\n", helpExtendedKeyFlag);
-	DEBUG_WARN( "\twindowManagerKeyFlag: 0x%04X\n", windowManagerKeyFlag);
-
+	WLog_INFO(TAG,  "\thelpKeyFlag: 0x%04X", helpKeyFlag);
+	WLog_INFO(TAG,  "\thelpKeyIndexFlag: 0x%04X", helpKeyIndexFlag);
+	WLog_INFO(TAG,  "\thelpExtendedKeyFlag: 0x%04X", helpExtendedKeyFlag);
+	WLog_INFO(TAG,  "\twindowManagerKeyFlag: 0x%04X", windowManagerKeyFlag);
 	return TRUE;
 }
 
@@ -995,16 +979,13 @@ BOOL rdp_print_pointer_capability_set(wStream* s, UINT16 length)
 	if (length < 10)
 		return FALSE;
 
-	DEBUG_WARN( "PointerCapabilitySet (length %d):\n", length);
-
+	WLog_INFO(TAG,  "PointerCapabilitySet (length %d):", length);
 	Stream_Read_UINT16(s, colorPointerFlag); /* colorPointerFlag (2 bytes) */
 	Stream_Read_UINT16(s, colorPointerCacheSize); /* colorPointerCacheSize (2 bytes) */
 	Stream_Read_UINT16(s, pointerCacheSize); /* pointerCacheSize (2 bytes) */
-
-	DEBUG_WARN( "\tcolorPointerFlag: 0x%04X\n", colorPointerFlag);
-	DEBUG_WARN( "\tcolorPointerCacheSize: 0x%04X\n", colorPointerCacheSize);
-	DEBUG_WARN( "\tpointerCacheSize: 0x%04X\n", pointerCacheSize);
-
+	WLog_INFO(TAG,  "\tcolorPointerFlag: 0x%04X", colorPointerFlag);
+	WLog_INFO(TAG,  "\tcolorPointerCacheSize: 0x%04X", colorPointerCacheSize);
+	WLog_INFO(TAG,  "\tpointerCacheSize: 0x%04X", pointerCacheSize);
 	return TRUE;
 }
 
@@ -1055,18 +1036,15 @@ BOOL rdp_print_share_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 nodeId;
 	UINT16 pad2Octets;
-
-	DEBUG_WARN( "ShareCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "ShareCapabilitySet (length %d):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT16(s, nodeId); /* nodeId (2 bytes) */
 	Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
-
-	DEBUG_WARN( "\tnodeId: 0x%04X\n", nodeId);
-	DEBUG_WARN( "\tpad2Octets: 0x%04X\n", pad2Octets);
-
+	WLog_INFO(TAG,  "\tnodeId: 0x%04X", nodeId);
+	WLog_INFO(TAG,  "\tpad2Octets: 0x%04X", pad2Octets);
 	return TRUE;
 }
 
@@ -1114,18 +1092,15 @@ BOOL rdp_print_color_cache_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 colorTableCacheSize;
 	UINT16 pad2Octets;
-
-	DEBUG_WARN( "ColorCacheCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "ColorCacheCapabilitySet (length %d):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT16(s, colorTableCacheSize); /* colorTableCacheSize (2 bytes) */
 	Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
-
-	DEBUG_WARN( "\tcolorTableCacheSize: 0x%04X\n", colorTableCacheSize);
-	DEBUG_WARN( "\tpad2Octets: 0x%04X\n", pad2Octets);
-
+	WLog_INFO(TAG,  "\tcolorTableCacheSize: 0x%04X", colorTableCacheSize);
+	WLog_INFO(TAG,  "\tpad2Octets: 0x%04X", pad2Octets);
 	return TRUE;
 }
 
@@ -1180,18 +1155,15 @@ BOOL rdp_print_sound_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 soundFlags;
 	UINT16 pad2OctetsA;
-
-	DEBUG_WARN( "SoundCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "SoundCapabilitySet (length %d):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT16(s, soundFlags); /* soundFlags (2 bytes) */
 	Stream_Read_UINT16(s, pad2OctetsA); /* pad2OctetsA (2 bytes) */
-
-	DEBUG_WARN( "\tsoundFlags: 0x%04X\n", soundFlags);
-	DEBUG_WARN( "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
-
+	WLog_INFO(TAG,  "\tsoundFlags: 0x%04X", soundFlags);
+	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04X", pad2OctetsA);
 	return TRUE;
 }
 
@@ -1292,8 +1264,7 @@ BOOL rdp_print_input_capability_set(wStream* s, UINT16 length)
 	UINT32 keyboardType;
 	UINT32 keyboardSubType;
 	UINT32 keyboardFunctionKey;
-
-	DEBUG_WARN( "InputCapabilitySet (length %d)\n", length);
+	WLog_INFO(TAG,  "InputCapabilitySet (length %d)", length);
 
 	if (length < 88)
 		return FALSE;
@@ -1305,14 +1276,12 @@ BOOL rdp_print_input_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT32(s, keyboardSubType); /* keyboardSubType (4 bytes) */
 	Stream_Read_UINT32(s, keyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
 	Stream_Seek(s, 64); /* imeFileName (64 bytes) */
-
-	DEBUG_WARN( "\tinputFlags: 0x%04X\n", inputFlags);
-	DEBUG_WARN( "\tpad2OctetsA: 0x%04X\n", pad2OctetsA);
-	DEBUG_WARN( "\tkeyboardLayout: 0x%08X\n", keyboardLayout);
-	DEBUG_WARN( "\tkeyboardType: 0x%08X\n", keyboardType);
-	DEBUG_WARN( "\tkeyboardSubType: 0x%08X\n", keyboardSubType);
-	DEBUG_WARN( "\tkeyboardFunctionKey: 0x%08X\n", keyboardFunctionKey);
-
+	WLog_INFO(TAG,  "\tinputFlags: 0x%04X", inputFlags);
+	WLog_INFO(TAG,  "\tpad2OctetsA: 0x%04X", pad2OctetsA);
+	WLog_INFO(TAG,  "\tkeyboardLayout: 0x%08X", keyboardLayout);
+	WLog_INFO(TAG,  "\tkeyboardType: 0x%08X", keyboardType);
+	WLog_INFO(TAG,  "\tkeyboardSubType: 0x%08X", keyboardSubType);
+	WLog_INFO(TAG,  "\tkeyboardFunctionKey: 0x%08X", keyboardFunctionKey);
 	return TRUE;
 }
 
@@ -1360,8 +1329,7 @@ BOOL rdp_print_font_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 fontSupportFlags = 0;
 	UINT16 pad2Octets = 0;
-
-	DEBUG_WARN( "FontCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "FontCapabilitySet (length %d):", length);
 
 	if (length > 4)
 		Stream_Read_UINT16(s, fontSupportFlags); /* fontSupportFlags (2 bytes) */
@@ -1369,14 +1337,13 @@ BOOL rdp_print_font_capability_set(wStream* s, UINT16 length)
 	if (length > 6)
 		Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
 
-	DEBUG_WARN( "\tfontSupportFlags: 0x%04X\n", fontSupportFlags);
-	DEBUG_WARN( "\tpad2Octets: 0x%04X\n", pad2Octets);
-
+	WLog_INFO(TAG,  "\tfontSupportFlags: 0x%04X", fontSupportFlags);
+	WLog_INFO(TAG,  "\tpad2Octets: 0x%04X", pad2Octets);
 	return TRUE;
 }
 
 /**
- * Read brush capability set.\n
+ * Read brush capability set.
  * @msdn{cc240564}
  * @param s stream
  * @param settings settings
@@ -1416,16 +1383,13 @@ void rdp_write_brush_capability_set(wStream* s, rdpSettings* settings)
 BOOL rdp_print_brush_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 brushSupportLevel;
-
-	DEBUG_WARN( "BrushCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "BrushCapabilitySet (length %d):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, brushSupportLevel); /* brushSupportLevel (4 bytes) */
-
-	DEBUG_WARN( "\tbrushSupportLevel: 0x%08X\n", brushSupportLevel);
-
+	WLog_INFO(TAG,  "\tbrushSupportLevel: 0x%08X", brushSupportLevel);
 	return TRUE;
 }
 
@@ -1525,8 +1489,7 @@ BOOL rdp_print_glyph_cache_capability_set(wStream* s, UINT16 length)
 	GLYPH_CACHE_DEFINITION fragCache;
 	UINT16 glyphSupportLevel;
 	UINT16 pad2Octets;
-
-	DEBUG_WARN( "GlyphCacheCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "GlyphCacheCapabilitySet (length %d):", length);
 
 	if (length < 52)
 		return FALSE;
@@ -1546,21 +1509,19 @@ BOOL rdp_print_glyph_cache_capability_set(wStream* s, UINT16 length)
 
 	Stream_Read_UINT16(s, glyphSupportLevel); /* glyphSupportLevel (2 bytes) */
 	Stream_Read_UINT16(s, pad2Octets); /* pad2Octets (2 bytes) */
-
-	DEBUG_WARN( "\tglyphCache0: Entries: %d MaximumCellSize: %d\n", glyphCache[0].cacheEntries, glyphCache[0].cacheMaximumCellSize);
-	DEBUG_WARN( "\tglyphCache1: Entries: %d MaximumCellSize: %d\n", glyphCache[1].cacheEntries, glyphCache[1].cacheMaximumCellSize);
-	DEBUG_WARN( "\tglyphCache2: Entries: %d MaximumCellSize: %d\n", glyphCache[2].cacheEntries, glyphCache[2].cacheMaximumCellSize);
-	DEBUG_WARN( "\tglyphCache3: Entries: %d MaximumCellSize: %d\n", glyphCache[3].cacheEntries, glyphCache[3].cacheMaximumCellSize);
-	DEBUG_WARN( "\tglyphCache4: Entries: %d MaximumCellSize: %d\n", glyphCache[4].cacheEntries, glyphCache[4].cacheMaximumCellSize);
-	DEBUG_WARN( "\tglyphCache5: Entries: %d MaximumCellSize: %d\n", glyphCache[5].cacheEntries, glyphCache[5].cacheMaximumCellSize);
-	DEBUG_WARN( "\tglyphCache6: Entries: %d MaximumCellSize: %d\n", glyphCache[6].cacheEntries, glyphCache[6].cacheMaximumCellSize);
-	DEBUG_WARN( "\tglyphCache7: Entries: %d MaximumCellSize: %d\n", glyphCache[7].cacheEntries, glyphCache[7].cacheMaximumCellSize);
-	DEBUG_WARN( "\tglyphCache8: Entries: %d MaximumCellSize: %d\n", glyphCache[8].cacheEntries, glyphCache[8].cacheMaximumCellSize);
-	DEBUG_WARN( "\tglyphCache9: Entries: %d MaximumCellSize: %d\n", glyphCache[9].cacheEntries, glyphCache[9].cacheMaximumCellSize);
-	DEBUG_WARN( "\tfragCache: Entries: %d MaximumCellSize: %d\n", fragCache.cacheEntries, fragCache.cacheMaximumCellSize);
-	DEBUG_WARN( "\tglyphSupportLevel: 0x%04X\n", glyphSupportLevel);
-	DEBUG_WARN( "\tpad2Octets: 0x%04X\n", pad2Octets);
-
+	WLog_INFO(TAG,  "\tglyphCache0: Entries: %d MaximumCellSize: %d", glyphCache[0].cacheEntries, glyphCache[0].cacheMaximumCellSize);
+	WLog_INFO(TAG,  "\tglyphCache1: Entries: %d MaximumCellSize: %d", glyphCache[1].cacheEntries, glyphCache[1].cacheMaximumCellSize);
+	WLog_INFO(TAG,  "\tglyphCache2: Entries: %d MaximumCellSize: %d", glyphCache[2].cacheEntries, glyphCache[2].cacheMaximumCellSize);
+	WLog_INFO(TAG,  "\tglyphCache3: Entries: %d MaximumCellSize: %d", glyphCache[3].cacheEntries, glyphCache[3].cacheMaximumCellSize);
+	WLog_INFO(TAG,  "\tglyphCache4: Entries: %d MaximumCellSize: %d", glyphCache[4].cacheEntries, glyphCache[4].cacheMaximumCellSize);
+	WLog_INFO(TAG,  "\tglyphCache5: Entries: %d MaximumCellSize: %d", glyphCache[5].cacheEntries, glyphCache[5].cacheMaximumCellSize);
+	WLog_INFO(TAG,  "\tglyphCache6: Entries: %d MaximumCellSize: %d", glyphCache[6].cacheEntries, glyphCache[6].cacheMaximumCellSize);
+	WLog_INFO(TAG,  "\tglyphCache7: Entries: %d MaximumCellSize: %d", glyphCache[7].cacheEntries, glyphCache[7].cacheMaximumCellSize);
+	WLog_INFO(TAG,  "\tglyphCache8: Entries: %d MaximumCellSize: %d", glyphCache[8].cacheEntries, glyphCache[8].cacheMaximumCellSize);
+	WLog_INFO(TAG,  "\tglyphCache9: Entries: %d MaximumCellSize: %d", glyphCache[9].cacheEntries, glyphCache[9].cacheMaximumCellSize);
+	WLog_INFO(TAG,  "\tfragCache: Entries: %d MaximumCellSize: %d", fragCache.cacheEntries, fragCache.cacheMaximumCellSize);
+	WLog_INFO(TAG,  "\tglyphSupportLevel: 0x%04X", glyphSupportLevel);
+	WLog_INFO(TAG,  "\tpad2Octets: 0x%04X", pad2Octets);
 	return TRUE;
 }
 
@@ -1620,8 +1581,7 @@ BOOL rdp_print_offscreen_bitmap_cache_capability_set(wStream* s, UINT16 length)
 	UINT32 offscreenSupportLevel;
 	UINT16 offscreenCacheSize;
 	UINT16 offscreenCacheEntries;
-
-	DEBUG_WARN( "OffscreenBitmapCacheCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "OffscreenBitmapCacheCapabilitySet (length %d):", length);
 
 	if (length < 12)
 		return FALSE;
@@ -1629,11 +1589,9 @@ BOOL rdp_print_offscreen_bitmap_cache_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT32(s, offscreenSupportLevel); /* offscreenSupportLevel (4 bytes) */
 	Stream_Read_UINT16(s, offscreenCacheSize); /* offscreenCacheSize (2 bytes) */
 	Stream_Read_UINT16(s, offscreenCacheEntries); /* offscreenCacheEntries (2 bytes) */
-
-	DEBUG_WARN( "\toffscreenSupportLevel: 0x%08X\n", offscreenSupportLevel);
-	DEBUG_WARN( "\toffscreenCacheSize: 0x%04X\n", offscreenCacheSize);
-	DEBUG_WARN( "\toffscreenCacheEntries: 0x%04X\n", offscreenCacheEntries);
-
+	WLog_INFO(TAG,  "\toffscreenSupportLevel: 0x%08X", offscreenSupportLevel);
+	WLog_INFO(TAG,  "\toffscreenCacheSize: 0x%04X", offscreenCacheSize);
+	WLog_INFO(TAG,  "\toffscreenCacheEntries: 0x%04X", offscreenCacheEntries);
 	return TRUE;
 }
 
@@ -1689,8 +1647,7 @@ BOOL rdp_print_bitmap_cache_host_support_capability_set(wStream* s, UINT16 lengt
 	BYTE cacheVersion;
 	BYTE pad1;
 	UINT16 pad2;
-
-	DEBUG_WARN( "BitmapCacheHostSupportCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "BitmapCacheHostSupportCapabilitySet (length %d):", length);
 
 	if (length < 8)
 		return FALSE;
@@ -1698,11 +1655,9 @@ BOOL rdp_print_bitmap_cache_host_support_capability_set(wStream* s, UINT16 lengt
 	Stream_Read_UINT8(s, cacheVersion); /* cacheVersion (1 byte) */
 	Stream_Read_UINT8(s, pad1); /* pad1 (1 byte) */
 	Stream_Read_UINT16(s, pad2); /* pad2 (2 bytes) */
-
-	DEBUG_WARN( "\tcacheVersion: 0x%02X\n", cacheVersion);
-	DEBUG_WARN( "\tpad1: 0x%02X\n", pad1);
-	DEBUG_WARN( "\tpad2: 0x%04X\n", pad2);
-
+	WLog_INFO(TAG,  "\tcacheVersion: 0x%02X", cacheVersion);
+	WLog_INFO(TAG,  "\tpad1: 0x%02X", pad1);
+	WLog_INFO(TAG,  "\tpad2: 0x%04X", pad2);
 	return TRUE;
 }
 
@@ -1800,8 +1755,7 @@ BOOL rdp_print_bitmap_cache_v2_capability_set(wStream* s, UINT16 length)
 	BYTE pad2;
 	BYTE numCellCaches;
 	BITMAP_CACHE_V2_CELL_INFO bitmapCacheV2CellInfo[5];
-
-	DEBUG_WARN( "BitmapCacheV2CapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "BitmapCacheV2CapabilitySet (length %d):", length);
 
 	if (length < 40)
 		return FALSE;
@@ -1815,16 +1769,14 @@ BOOL rdp_print_bitmap_cache_v2_capability_set(wStream* s, UINT16 length)
 	rdp_read_bitmap_cache_cell_info(s, &bitmapCacheV2CellInfo[3]); /* bitmapCache3CellInfo (4 bytes) */
 	rdp_read_bitmap_cache_cell_info(s, &bitmapCacheV2CellInfo[4]); /* bitmapCache4CellInfo (4 bytes) */
 	Stream_Seek(s, 12); /* pad3 (12 bytes) */
-
-	DEBUG_WARN( "\tcacheFlags: 0x%04X\n", cacheFlags);
-	DEBUG_WARN( "\tpad2: 0x%02X\n", pad2);
-	DEBUG_WARN( "\tnumCellCaches: 0x%02X\n", numCellCaches);
-	DEBUG_WARN( "\tbitmapCache0CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[0].numEntries, bitmapCacheV2CellInfo[0].persistent);
-	DEBUG_WARN( "\tbitmapCache1CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[1].numEntries, bitmapCacheV2CellInfo[1].persistent);
-	DEBUG_WARN( "\tbitmapCache2CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[2].numEntries, bitmapCacheV2CellInfo[2].persistent);
-	DEBUG_WARN( "\tbitmapCache3CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[3].numEntries, bitmapCacheV2CellInfo[3].persistent);
-	DEBUG_WARN( "\tbitmapCache4CellInfo: numEntries: %d persistent: %d\n", bitmapCacheV2CellInfo[4].numEntries, bitmapCacheV2CellInfo[4].persistent);
-
+	WLog_INFO(TAG,  "\tcacheFlags: 0x%04X", cacheFlags);
+	WLog_INFO(TAG,  "\tpad2: 0x%02X", pad2);
+	WLog_INFO(TAG,  "\tnumCellCaches: 0x%02X", numCellCaches);
+	WLog_INFO(TAG,  "\tbitmapCache0CellInfo: numEntries: %d persistent: %d", bitmapCacheV2CellInfo[0].numEntries, bitmapCacheV2CellInfo[0].persistent);
+	WLog_INFO(TAG,  "\tbitmapCache1CellInfo: numEntries: %d persistent: %d", bitmapCacheV2CellInfo[1].numEntries, bitmapCacheV2CellInfo[1].persistent);
+	WLog_INFO(TAG,  "\tbitmapCache2CellInfo: numEntries: %d persistent: %d", bitmapCacheV2CellInfo[2].numEntries, bitmapCacheV2CellInfo[2].persistent);
+	WLog_INFO(TAG,  "\tbitmapCache3CellInfo: numEntries: %d persistent: %d", bitmapCacheV2CellInfo[3].numEntries, bitmapCacheV2CellInfo[3].persistent);
+	WLog_INFO(TAG,  "\tbitmapCache4CellInfo: numEntries: %d persistent: %d", bitmapCacheV2CellInfo[4].numEntries, bitmapCacheV2CellInfo[4].persistent);
 	return TRUE;
 }
 
@@ -1885,8 +1837,7 @@ BOOL rdp_print_virtual_channel_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 flags;
 	UINT32 VCChunkSize;
-
-	DEBUG_WARN( "VirtualChannelCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "VirtualChannelCapabilitySet (length %d):", length);
 
 	if (length < 8)
 		return FALSE;
@@ -1898,9 +1849,8 @@ BOOL rdp_print_virtual_channel_capability_set(wStream* s, UINT16 length)
 	else
 		VCChunkSize = 1600;
 
-	DEBUG_WARN( "\tflags: 0x%08X\n", flags);
-	DEBUG_WARN( "\tVCChunkSize: 0x%08X\n", VCChunkSize);
-
+	WLog_INFO(TAG,  "\tflags: 0x%08X", flags);
+	WLog_INFO(TAG,  "\tVCChunkSize: 0x%08X", VCChunkSize);
 	return TRUE;
 }
 
@@ -1984,8 +1934,7 @@ BOOL rdp_print_draw_nine_grid_cache_capability_set(wStream* s, UINT16 length)
 	UINT32 drawNineGridSupportLevel;
 	UINT16 DrawNineGridCacheSize;
 	UINT16 DrawNineGridCacheEntries;
-
-	DEBUG_WARN( "DrawNineGridCacheCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "DrawNineGridCacheCapabilitySet (length %d):", length);
 
 	if (length < 12)
 		return FALSE;
@@ -2064,8 +2013,7 @@ BOOL rdp_print_draw_gdiplus_cache_capability_set(wStream* s, UINT16 length)
 	UINT32 drawGdiPlusSupportLevel;
 	UINT32 GdipVersion;
 	UINT32 drawGdiplusCacheLevel;
-
-	DEBUG_WARN( "DrawGdiPlusCacheCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "DrawGdiPlusCacheCapabilitySet (length %d):", length);
 
 	if (length < 40)
 		return FALSE;
@@ -2137,16 +2085,13 @@ void rdp_write_remote_programs_capability_set(wStream* s, rdpSettings* settings)
 BOOL rdp_print_remote_programs_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 railSupportLevel;
-
-	DEBUG_WARN( "RemoteProgramsCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "RemoteProgramsCapabilitySet (length %d):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, railSupportLevel); /* railSupportLevel (4 bytes) */
-
-	DEBUG_WARN( "\trailSupportLevel: 0x%08X\n", railSupportLevel);
-
+	WLog_INFO(TAG,  "\trailSupportLevel: 0x%08X", railSupportLevel);
 	return TRUE;
 }
 
@@ -2200,8 +2145,7 @@ BOOL rdp_print_window_list_capability_set(wStream* s, UINT16 length)
 	UINT32 wndSupportLevel;
 	BYTE numIconCaches;
 	UINT16 numIconCacheEntries;
-
-	DEBUG_WARN( "WindowListCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "WindowListCapabilitySet (length %d):", length);
 
 	if (length < 11)
 		return FALSE;
@@ -2209,11 +2153,9 @@ BOOL rdp_print_window_list_capability_set(wStream* s, UINT16 length)
 	Stream_Read_UINT32(s, wndSupportLevel); /* wndSupportLevel (4 bytes) */
 	Stream_Read_UINT8(s, numIconCaches); /* numIconCaches (1 byte) */
 	Stream_Read_UINT16(s, numIconCacheEntries); /* numIconCacheEntries (2 bytes) */
-
-	DEBUG_WARN( "\twndSupportLevel: 0x%08X\n", wndSupportLevel);
-	DEBUG_WARN( "\tnumIconCaches: 0x%02X\n", numIconCaches);
-	DEBUG_WARN( "\tnumIconCacheEntries: 0x%04X\n", numIconCacheEntries);
-
+	WLog_INFO(TAG,  "\twndSupportLevel: 0x%08X", wndSupportLevel);
+	WLog_INFO(TAG,  "\tnumIconCaches: 0x%02X", numIconCaches);
+	WLog_INFO(TAG,  "\tnumIconCacheEntries: 0x%04X", numIconCacheEntries);
 	return TRUE;
 }
 
@@ -2261,16 +2203,13 @@ void rdp_write_desktop_composition_capability_set(wStream* s, rdpSettings* setti
 BOOL rdp_print_desktop_composition_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 compDeskSupportLevel;
-
-	DEBUG_WARN( "DesktopCompositionCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "DesktopCompositionCapabilitySet (length %d):", length);
 
 	if (length < 6)
 		return FALSE;
 
 	Stream_Read_UINT16(s, compDeskSupportLevel); /* compDeskSupportLevel (2 bytes) */
-
-	DEBUG_WARN( "\tcompDeskSupportLevel: 0x%04X\n", compDeskSupportLevel);
-
+	WLog_INFO(TAG,  "\tcompDeskSupportLevel: 0x%04X", compDeskSupportLevel);
 	return TRUE;
 }
 
@@ -2390,16 +2329,13 @@ void rdp_write_multifragment_update_capability_set(wStream* s, rdpSettings* sett
 BOOL rdp_print_multifragment_update_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 maxRequestSize;
-
-	DEBUG_WARN( "MultifragmentUpdateCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "MultifragmentUpdateCapabilitySet (length %d):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, maxRequestSize); /* maxRequestSize (4 bytes) */
-
-	DEBUG_WARN( "\tmaxRequestSize: 0x%04X\n", maxRequestSize);
-
+	WLog_INFO(TAG,  "\tmaxRequestSize: 0x%04X", maxRequestSize);
 	return TRUE;
 }
 
@@ -2451,16 +2387,13 @@ void rdp_write_large_pointer_capability_set(wStream* s, rdpSettings* settings)
 BOOL rdp_print_large_pointer_capability_set(wStream* s, UINT16 length)
 {
 	UINT16 largePointerSupportFlags;
-
-	DEBUG_WARN( "LargePointerCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "LargePointerCapabilitySet (length %d):", length);
 
 	if (length < 6)
 		return FALSE;
 
 	Stream_Read_UINT16(s, largePointerSupportFlags); /* largePointerSupportFlags (2 bytes) */
-
-	DEBUG_WARN( "\tlargePointerSupportFlags: 0x%04X\n", largePointerSupportFlags);
-
+	WLog_INFO(TAG,  "\tlargePointerSupportFlags: 0x%04X", largePointerSupportFlags);
 	return TRUE;
 }
 
@@ -2518,18 +2451,15 @@ BOOL rdp_print_surface_commands_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 cmdFlags;
 	UINT32 reserved;
-
-	DEBUG_WARN( "SurfaceCommandsCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "SurfaceCommandsCapabilitySet (length %d):", length);
 
 	if (length < 12)
 		return FALSE;
 
 	Stream_Read_UINT32(s, cmdFlags); /* cmdFlags (4 bytes) */
 	Stream_Read_UINT32(s, reserved); /* reserved (4 bytes) */
-
-	DEBUG_WARN( "\tcmdFlags: 0x%08X\n", cmdFlags);
-	DEBUG_WARN( "\treserved: 0x%08X\n", reserved);
-
+	WLog_INFO(TAG,  "\tcmdFlags: 0x%08X", cmdFlags);
+	WLog_INFO(TAG,  "\treserved: 0x%08X", reserved);
 	return TRUE;
 }
 
@@ -2578,10 +2508,10 @@ void rdp_write_bitmap_codec_guid(wStream* s, GUID* guid)
 
 void rdp_print_bitmap_codec_guid(GUID* guid)
 {
-	DEBUG_WARN( "%08X%04X%04X%02X%02X%02X%02X%02X%02X%02X%02X",
-		guid->Data1, guid->Data2, guid->Data3,
-		guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-		guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+	WLog_INFO(TAG,  "%08X%04X%04X%02X%02X%02X%02X%02X%02X%02X%02X",
+			  guid->Data1, guid->Data2, guid->Data3,
+			  guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+			  guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 }
 
 char* rdp_get_bitmap_codec_guid_name(GUID* guid)
@@ -2910,16 +2840,14 @@ BOOL rdp_print_bitmap_codecs_capability_set(wStream* s, UINT16 length)
 	BYTE codecId;
 	UINT16 codecPropertiesLength;
 	UINT16 remainingLength;
-
-	DEBUG_WARN( "BitmapCodecsCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "BitmapCodecsCapabilitySet (length %d):", length);
 
 	if (length < 5)
 		return FALSE;
 
 	Stream_Read_UINT8(s, bitmapCodecCount); /* bitmapCodecCount (1 byte) */
 	remainingLength = length - 5;
-
-	DEBUG_WARN( "\tbitmapCodecCount: %d\n", bitmapCodecCount);
+	WLog_INFO(TAG,  "\tbitmapCodecCount: %d", bitmapCodecCount);
 
 	while (bitmapCodecCount > 0)
 	{
@@ -2928,16 +2856,12 @@ BOOL rdp_print_bitmap_codecs_capability_set(wStream* s, UINT16 length)
 
 		rdp_read_bitmap_codec_guid(s, &codecGuid); /* codecGuid (16 bytes) */
 		Stream_Read_UINT8(s, codecId); /* codecId (1 byte) */
-
-		DEBUG_WARN( "\tcodecGuid: 0x");
+		WLog_INFO(TAG,  "\tcodecGuid: 0x");
 		rdp_print_bitmap_codec_guid(&codecGuid);
-		DEBUG_WARN( " (%s)\n", rdp_get_bitmap_codec_guid_name(&codecGuid));
-
-		DEBUG_WARN( "\tcodecId: %d\n", codecId);
-
+		WLog_INFO(TAG,  " (%s)", rdp_get_bitmap_codec_guid_name(&codecGuid));
+		WLog_INFO(TAG,  "\tcodecId: %d", codecId);
 		Stream_Read_UINT16(s, codecPropertiesLength); /* codecPropertiesLength (2 bytes) */
-		DEBUG_WARN( "\tcodecPropertiesLength: %d\n", codecPropertiesLength);
-
+		WLog_INFO(TAG,  "\tcodecPropertiesLength: %d", codecPropertiesLength);
 		remainingLength -= 19;
 
 		if (remainingLength < codecPropertiesLength)
@@ -2998,16 +2922,13 @@ void rdp_write_frame_acknowledge_capability_set(wStream* s, rdpSettings* setting
 BOOL rdp_print_frame_acknowledge_capability_set(wStream* s, UINT16 length)
 {
 	UINT32 frameAcknowledge;
-
-	DEBUG_WARN( "FrameAcknowledgeCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "FrameAcknowledgeCapabilitySet (length %d):", length);
 
 	if (length < 8)
 		return FALSE;
 
 	Stream_Read_UINT32(s, frameAcknowledge); /* frameAcknowledge (4 bytes) */
-
-	DEBUG_WARN( "\tframeAcknowledge: 0x%08X\n", frameAcknowledge);
-
+	WLog_INFO(TAG,  "\tframeAcknowledge: 0x%08X", frameAcknowledge);
 	return TRUE;
 }
 
@@ -3038,16 +2959,13 @@ void rdp_write_bitmap_cache_v3_codec_id_capability_set(wStream* s, rdpSettings* 
 BOOL rdp_print_bitmap_cache_v3_codec_id_capability_set(wStream* s, UINT16 length)
 {
 	BYTE bitmapCacheV3CodecId;
-
-	DEBUG_WARN( "BitmapCacheV3CodecIdCapabilitySet (length %d):\n", length);
+	WLog_INFO(TAG,  "BitmapCacheV3CodecIdCapabilitySet (length %d):", length);
 
 	if (length < 5)
 		return FALSE;
 
 	Stream_Read_UINT8(s, bitmapCacheV3CodecId); /* bitmapCacheV3CodecId (1 byte) */
-
-	DEBUG_WARN( "\tbitmapCacheV3CodecId: 0x%02X\n", bitmapCacheV3CodecId);
-
+	WLog_INFO(TAG,  "\tbitmapCacheV3CodecId: 0x%02X", bitmapCacheV3CodecId);
 	return TRUE;
 }
 
@@ -3062,14 +2980,12 @@ BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOOL recei
 		Stream_GetPointer(s, bm);
 
 		rdp_read_capability_set_header(s, &length, &type);
-
-		DEBUG_WARN( "%s ", receiving ? "Receiving" : "Sending");
-
+		WLog_INFO(TAG,  "%s ", receiving ? "Receiving" : "Sending");
 		em = bm + length;
 
 		if (Stream_GetRemainingLength(s) < (size_t) (length - 4))
 		{
-			DEBUG_WARN( "error processing stream\n");
+			WLog_ERR(TAG,  "error processing stream");
 			return FALSE;
 		}
 
@@ -3221,14 +3137,14 @@ BOOL rdp_print_capability_sets(wStream* s, UINT16 numberCapabilities, BOOL recei
 				break;
 
 			default:
-				DEBUG_WARN( "unknown capability type %d\n", type);
+				WLog_ERR(TAG,  "unknown capability type %d", type);
 				break;
 		}
 
 		if (s->pointer != em)
 		{
-			DEBUG_WARN( "incorrect offset, type:0x%02X actual:%d expected:%d\n",
-				type, (int) (s->pointer - bm), (int) (em - bm));
+			WLog_ERR(TAG,  "incorrect offset, type:0x%02X actual:%d expected:%d",
+					 type, (int)(s->pointer - bm), (int)(em - bm));
 		}
 
 		Stream_SetPointer(s, em);
@@ -3261,14 +3177,14 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 		}
 		else
 		{
-			DEBUG_WARN( "%s: not handling capability type %d yet\n", __FUNCTION__, type);
+			WLog_WARN(TAG,  "not handling capability type %d yet", type);
 		}
 
 		em = bm + length;
 
 		if (Stream_GetRemainingLength(s) < ((size_t) length - 4))
 		{
-			DEBUG_WARN( "error processing stream\n");
+			WLog_ERR(TAG,  "error processing stream");
 			return FALSE;
 		}
 
@@ -3420,14 +3336,14 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 				break;
 
 			default:
-				DEBUG_WARN( "unknown capability type %d\n", type);
+				WLog_ERR(TAG,  "unknown capability type %d", type);
 				break;
 		}
 
 		if (s->pointer != em)
 		{
-			DEBUG_WARN( "incorrect offset, type:0x%02X actual:%d expected:%d\n",
-				type, (int) (s->pointer - bm), (int) (em - bm));
+			WLog_ERR(TAG,  "incorrect offset, type:0x%02X actual:%d expected:%d",
+					 type, (int)(s->pointer - bm), (int)(em - bm));
 		}
 
 		Stream_SetPointer(s, em);
@@ -3436,8 +3352,8 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 
 	if (numberCapabilities)
 	{
-		DEBUG_WARN( "%s: strange we haven't read the number of announced capacity sets, read=%d expected=%d\n",
-				__FUNCTION__, count-numberCapabilities, count);
+		WLog_ERR(TAG,  "strange we haven't read the number of announced capacity sets, read=%d expected=%d",
+				 count-numberCapabilities, count);
 	}
 
 #ifdef WITH_DEBUG_CAPABILITIES
@@ -3471,7 +3387,7 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				DEBUG_WARN( "rdp_decrypt failed\n");
+				WLog_ERR(TAG,  "rdp_decrypt failed");
 				return FALSE;
 			}
 		}
@@ -3483,7 +3399,7 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 
 		if ((mcsMessageChannelId == 0) || (*pChannelId != mcsMessageChannelId))
 		{
-			DEBUG_WARN( "unexpected MCS channel id %04x received\n", *pChannelId);
+			WLog_ERR(TAG,  "unexpected MCS channel id %04x received", *pChannelId);
 			return FALSE;
 		}
 	}
@@ -3509,14 +3425,14 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 	{
-		DEBUG_WARN( "rdp_read_share_control_header failed\n");
+		WLog_ERR(TAG,  "rdp_read_share_control_header failed");
 		return FALSE;
 	}
 
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 	{
 		if (pduType != PDU_TYPE_SERVER_REDIRECTION)
-			DEBUG_WARN( "expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x\n", PDU_TYPE_DEMAND_ACTIVE, pduType);
+			WLog_ERR(TAG,  "expected PDU_TYPE_DEMAND_ACTIVE %04x, got %04x", PDU_TYPE_DEMAND_ACTIVE, pduType);
 
 		return FALSE;
 	}
@@ -3539,7 +3455,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	/* capabilitySets */
 	if (!rdp_read_capability_sets(s, rdp->settings, numberCapabilities))
 	{
-		DEBUG_WARN( "rdp_read_capability_sets failed\n");
+		WLog_ERR(TAG,  "rdp_read_capability_sets failed");
 		return FALSE;
 	}
 

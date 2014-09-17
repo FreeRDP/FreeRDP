@@ -26,7 +26,9 @@
 #include <string.h>
 
 #include <winpr/crt.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("utils")
 
 #ifndef _WIN32
 #include <sys/time.h>
@@ -163,7 +165,7 @@ rdpPcap* pcap_open(char* name, BOOL write)
 
 	if (pcap_fp == NULL)
 	{
-		DEBUG_WARN("opening pcap dump");
+		WLog_ERR(TAG, "opening pcap dump");
 		return NULL;
 	}
 

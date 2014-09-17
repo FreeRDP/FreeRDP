@@ -24,7 +24,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
 #include <winpr/stream.h>
 
@@ -157,10 +157,11 @@ void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL send_pcpdu);
 void nego_set_preconnection_id(rdpNego* nego, UINT32 id);
 void nego_set_preconnection_blob(rdpNego* nego, char* blob);
 
+#define NEGO_TAG FREERDP_TAG("core.nego")
 #ifdef WITH_DEBUG_NEGO
-#define DEBUG_NEGO(fmt, ...) DEBUG_CLASS(NEGO, fmt, ## __VA_ARGS__)
+#define DEBUG_NEGO(fmt, ...) WLog_DBG(NEGO_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_NEGO(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_NEGO(fmt, ...) do { } while (0)
 #endif
 
 #endif /* __NEGO_H */

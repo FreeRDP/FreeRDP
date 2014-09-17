@@ -372,9 +372,8 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	}
 	else
 	{
-		CLOG_ERR( "Unexpected SmartCard IRP: MajorFunction 0x%08X MinorFunction: 0x%08X",
-				irp->MajorFunction, irp->MinorFunction);
-
+		WLog_ERR(TAG,  "Unexpected SmartCard IRP: MajorFunction 0x%08X MinorFunction: 0x%08X",
+				 irp->MajorFunction, irp->MinorFunction);
 		irp->IoStatus = STATUS_NOT_SUPPORTED;
 
 		Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);

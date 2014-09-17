@@ -28,10 +28,16 @@
 
 #include <freerdp/utils/event.h>
 #include <freerdp/client/cliprdr.h>
+#include <freerdp/log.h>
+#include <freerdp/utils/event.h>
+#include <winpr/stream.h>
+#include <freerdp/client/cliprdr.h>
 
 #include <Strsafe.h>
 
 #include "wf_cliprdr.h"
+
+#define TAG CLIENT_TAG("windows")
 
 extern BOOL WINAPI AddClipboardFormatListener(_In_ HWND hwnd);
 extern BOOL WINAPI RemoveClipboardFormatListener(_In_  HWND hwnd);
@@ -572,7 +578,7 @@ void wf_cliprdr_init(wfContext* wfc, rdpChannels* channels)
 	if (!wfc->instance->settings->RedirectClipboard)
 	{
 		wfc->cliprdr_context = NULL;
-		DEBUG_WARN( "clipboard is not redirected.\n");
+		WLog_ERR(TAG,  "clipboard is not redirected.");
 		return;
 	}
 
@@ -665,7 +671,7 @@ static BOOL wf_cliprdr_get_file_contents(wchar_t *file_name, BYTE *buffer, int p
 
 	if (file_name == NULL || buffer == NULL || puSize == NULL)
 	{
-		DEBUG_WARN( "get file contents Invalid Arguments.\n");
+		WLog_ERR(TAG,  "get file contents Invalid Arguments.");
 		return FALSE;
 	}
 	hFile = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS, NULL);
@@ -1182,7 +1188,7 @@ static void wf_cliprdr_process_cb_filecontents_request_event(wfContext *wfc, RDP
 	hRet = OleGetClipboard(&pDataObj);
 	if (!SUCCEEDED(hRet))
 	{
-		DEBUG_WARN( "filecontents: get ole clipboard failed.\n");
+		WLog_ERR(TAG,  "filecontents: get ole clipboard failed.");
 		goto error;
 	}
 	
@@ -1280,7 +1286,7 @@ static void wf_cliprdr_process_cb_filecontents_request_event(wfContext *wfc, RDP
 				event->nPositionLow, event->nPositionHigh, event->cbRequested, &uSize);
 			if (bRet == FALSE)
 			{
-				DEBUG_WARN( "get file contents failed.\n");
+				WLog_ERR(TAG,  "get file contents failed.");
 				uSize = 0;
 				goto error;
 			}
@@ -1311,7 +1317,7 @@ error:
 		IDataObject_Release(pDataObj);
 		pDataObj = NULL;
 	}
-	DEBUG_WARN( "filecontents: send failed response.\n");
+	WLog_ERR(TAG,  "filecontents: send failed response.");
 	cliprdr_send_response_filecontents(cliprdr, event->streamId, 0, NULL);
 	return;
 }

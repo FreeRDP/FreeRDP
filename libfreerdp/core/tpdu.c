@@ -24,9 +24,11 @@
 #include <stdio.h>
 #include <winpr/print.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
 #include "tpdu.h"
+
+#define TAG FREERDP_TAG("core")
 
 /**
  * TPDUs are defined in:
@@ -132,7 +134,7 @@ BOOL tpdu_read_connection_request(wStream* s, BYTE* li)
 
 	if (code != X224_TPDU_CONNECTION_REQUEST)
 	{
-		DEBUG_WARN( "Error: expected X224_TPDU_CONNECTION_REQUEST\n");
+		WLog_ERR(TAG,  "Error: expected X224_TPDU_CONNECTION_REQUEST");
 		return FALSE;
 	}
 
@@ -170,7 +172,7 @@ BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)
 	{
-		DEBUG_WARN( "Error: expected X224_TPDU_CONNECTION_CONFIRM: 0x%02X\n", code);
+		WLog_ERR(TAG,  "Error: expected X224_TPDU_CONNECTION_CONFIRM");
 		return FALSE;
 	}
 	/*

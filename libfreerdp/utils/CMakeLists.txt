@@ -36,41 +36,18 @@ if(NOT WIN32)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} msusb.c)
 endif()
 
-add_complex_library(MODULE ${MODULE_NAME} TYPE "OBJECT"
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	SOURCES ${${MODULE_PREFIX}_SRCS}
-	EXPORT)
+freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
-if (WITH_LIBRARY_VERSIONING)
-  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
-endif()
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
-
-set(${MODULE_PREFIX}_LIBS
-	${CMAKE_THREAD_LIBS_INIT}
-	${CMAKE_DL_LIBS})
+freerdp_library_add(${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
 
 if(WIN32)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ws2_32)
+	freerdp_library_add(ws2_32)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} rt)
+	freerdp_library_add(rt)
 endif()
-
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
-
-if(MONOLITHIC_BUILD)
-	set(FREERDP_LIBS ${FREERDP_LIBS} ${${MODULE_PREFIX}_LIBS} PARENT_SCOPE)
-else()
-	target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT FreeRDPTargets)
-endif()
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
-
 
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
-

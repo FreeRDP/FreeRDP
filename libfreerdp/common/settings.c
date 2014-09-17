@@ -29,7 +29,9 @@
 
 #include <freerdp/settings.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("common")
 
 int freerdp_addin_set_argument(ADDIN_ARGV* args, char* argument)
 {
@@ -340,7 +342,7 @@ out_parallel_name_error:
 
 	}
 
-	DEBUG_WARN( "%s: unknown device type %d\n", __FUNCTION__, device->Type);
+	WLog_ERR(TAG, "unknown device type %d", device->Type);
 	return NULL;
 }
 
@@ -1029,7 +1031,7 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->RedirectClipboard;
 
 		default:
-			DEBUG_WARN( "freerdp_get_param_bool: unknown id: %d\n", id);
+			WLog_ERR(TAG,  "freerdp_get_param_bool: unknown id: %d", id);
 			return -1;
 	}
 }
@@ -1535,7 +1537,7 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			break;
 
 		default:
-			DEBUG_WARN( "freerdp_set_param_bool: unknown id %d (param = %d)\n", id, param);
+			WLog_ERR(TAG,  "freerdp_set_param_bool: unknown id %d (param = %d)", id, param);
 			return -1;
 	}
 
@@ -1556,7 +1558,7 @@ int freerdp_get_param_int(rdpSettings* settings, int id)
 			return settings->YPan;
 
 		default:
-			DEBUG_WARN( "freerdp_get_param_int: unknown id: %d\n", id);
+			WLog_ERR(TAG,  "freerdp_get_param_int: unknown id: %d", id);
 			return 0;
 	}
 }
@@ -1574,7 +1576,7 @@ int freerdp_set_param_int(rdpSettings* settings, int id, int param)
 			break;
 
 		default:
-			DEBUG_WARN( "freerdp_set_param_int: unknown id %d (param = %d)\n", id, param);
+			WLog_ERR(TAG,  "freerdp_set_param_int: unknown id %d (param = %d)", id, param);
 			return -1;
 	}
 
@@ -1820,7 +1822,7 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 			return settings->DynamicChannelArraySize;
 
 		default:
-			DEBUG_WARN( "freerdp_get_param_uint32: unknown id: %d\n", id);
+			WLog_ERR(TAG,  "freerdp_get_param_uint32: unknown id: %d", id);
 			return 0;
 	}
 }
@@ -2138,7 +2140,7 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			break;
 
 		default:
-			DEBUG_WARN( "freerdp_set_param_uint32: unknown id %d (param = %u)\n", id, param);
+			WLog_ERR(TAG, "freerdp_set_param_uint32: unknown id %d (param = %u)", id, param);
 			return -1;
 	}
 
@@ -2156,7 +2158,7 @@ UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id)
 			return settings->ParentWindowId;
 
 		default:
-			DEBUG_WARN( "freerdp_get_param_uint64: unknown id: %d\n", id);
+			WLog_ERR(TAG, "freerdp_get_param_uint64: unknown id: %d", id);
 			return -1;
 	}
 }
@@ -2170,7 +2172,7 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 			break;
 
 		default:
-			DEBUG_WARN( "freerdp_set_param_uint64: unknown id %d (param = %u)\n", id, (UINT32) param);
+			WLog_ERR(TAG,  "freerdp_set_param_uint64: unknown id %d (param = %u)", id, (UINT32) param);
 			return -1;
 	}
 
@@ -2320,7 +2322,7 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 			return settings->DrivesToRedirect;
 
 		default:
-			DEBUG_WARN( "freerdp_get_param_string: unknown id: %d\n", id);
+			WLog_ERR(TAG, "freerdp_get_param_string: unknown id: %d", id);
 			return NULL;
 	}
 }
@@ -2555,7 +2557,7 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 			break;
 
 		default:
-			DEBUG_WARN( "freerdp_set_param_string: unknown id %d (param = %s)\n", id, param);
+			WLog_ERR(TAG, "unknown id %d (param = %s)", id, param);
 			return -1;
 	}
 
@@ -2573,7 +2575,7 @@ double freerdp_get_param_double(rdpSettings* settings, int id)
 			return settings->ScalingFactor;
 
 		default:
-			DEBUG_WARN( "freerdp_get_param_double: unknown id: %d\n", id);
+			WLog_ERR(TAG, "unknown id: %d", id);
 			return 0;
 	}
 }

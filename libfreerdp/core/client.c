@@ -21,9 +21,13 @@
 #include "config.h"
 #endif
 
+#include <freerdp/log.h>
+
 #include "rdp.h"
 
 #include "client.h"
+
+#define TAG FREERDP_TAG("core.client")
 
 static void* g_pInterface;
 static CHANNEL_INIT_DATA g_ChannelInitData;
@@ -715,7 +719,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 
 	if (channels->clientDataCount + 1 >= CHANNEL_MAX_COUNT)
 	{
-		DEBUG_WARN( "error: too many channels\n");
+		WLog_ERR(TAG,  "error: too many channels");
 		return 1;
 	}
 
@@ -754,7 +758,7 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 
 	if (!status)
 	{
-		DEBUG_WARN( "error: channel export function call failed\n");
+		WLog_ERR(TAG,  "error: channel export function call failed");
 		return 1;
 	}
 

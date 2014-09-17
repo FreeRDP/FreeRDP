@@ -25,7 +25,9 @@
 #include <stdlib.h>
 
 #include <freerdp/utils/profiler.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("utils")
 
 PROFILER* profiler_create(char* name)
 {
@@ -58,24 +60,22 @@ void profiler_exit(PROFILER* profiler)
 
 void profiler_print_header()
 {
-	DEBUG_WARN( "\n");
-	DEBUG_WARN( "                                             |-----------------------|\n" );
-	DEBUG_WARN( "                PROFILER                     |    elapsed seconds    |\n" );
-	DEBUG_WARN( "|--------------------------------------------|-----------------------|\n" );
-	DEBUG_WARN( "| code section                  | iterations |     total |      avg. |\n" );
-	DEBUG_WARN( "|-------------------------------|------------|-----------|-----------|\n" );
+	WLog_INFO(TAG,  "                                             |-----------------------|");
+	WLog_INFO(TAG,  "                PROFILER                     |    elapsed seconds    |");
+	WLog_INFO(TAG,  "|--------------------------------------------|-----------------------|");
+	WLog_INFO(TAG,  "| code section                  | iterations |     total |      avg. |");
+	WLog_INFO(TAG,  "|-------------------------------|------------|-----------|-----------|");
 }
 
 void profiler_print(PROFILER* profiler)
 {
 	double elapsed_sec = stopwatch_get_elapsed_time_in_seconds(profiler->stopwatch);
 	double avg_sec = elapsed_sec / (double) profiler->stopwatch->count;
-	
-	DEBUG_WARN( "| %-30.30s| %10du | %9f | %9f |\n",
-			profiler->name, profiler->stopwatch->count, elapsed_sec, avg_sec);
+	WLog_INFO(TAG,  "| %-30.30s| %10du | %9f | %9f |",
+			  profiler->name, profiler->stopwatch->count, elapsed_sec, avg_sec);
 }
 
 void profiler_print_footer()
 {
-	DEBUG_WARN( "|--------------------------------------------------------------------|\n" );
+	WLog_INFO(TAG,  "|--------------------------------------------------------------------|");
 }

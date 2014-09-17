@@ -27,6 +27,9 @@
 
 #include <freerdp/primitives.h>
 #include <freerdp/codec/h264.h>
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("codec")
 
 /**
  * Dummy subsystem
@@ -74,7 +77,7 @@ static BOOL g_openh264_trace_enabled = FALSE;
 
 static void openh264_trace_callback(H264_CONTEXT* h264, int level, const char* message)
 {
-	printf("%d - %s\n", level, message);
+	WLog_INFO(TAG, "%d - %s", level, message);
 }
 
 static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize)
@@ -117,7 +120,7 @@ static int openh264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSiz
 	pSystemBuffer = &sBufferInfo.UsrData.sSystemBuffer;
 
 #if 0
-	printf("h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]\n",
+	WLog_INFO(TAG, "h264_decompress: state=%u, pYUVData=[%p,%p,%p], bufferStatus=%d, width=%d, height=%d, format=%d, stride=[%d,%d]",
 		state, h264->pYUVData[0], h264->pYUVData[1], h264->pYUVData[2], sBufferInfo.iBufferStatus,
 		pSystemBuffer->iWidth, pSystemBuffer->iHeight, pSystemBuffer->iFormat,
 		pSystemBuffer->iStride[0], pSystemBuffer->iStride[1]);
@@ -185,7 +188,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 	if (!sys->pDecoder)
 	{
-		printf("Failed to create OpenH264 decoder\n");
+		WLog_ERR(TAG, "Failed to create OpenH264 decoder");
 		goto EXCEPTION;
 	}
 
@@ -198,7 +201,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 	if (status != 0)
 	{
-		printf("Failed to initialize OpenH264 decoder (status=%ld)\n", status);
+		WLog_ERR(TAG, "Failed to initialize OpenH264 decoder (status=%ld)", status);
 		goto EXCEPTION;
 	}
 
@@ -206,7 +209,7 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 	if (status != 0)
 	{
-		printf("Failed to set data format option on OpenH264 decoder (status=%ld)\n", status);
+		WLog_ERR(TAG, "Failed to set data format option on OpenH264 decoder (status=%ld)", status);
 	}
 
 	if (g_openh264_trace_enabled)
@@ -215,21 +218,21 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 
 		if (status != 0)
 		{
-			printf("Failed to set trace level option on OpenH264 decoder (status=%ld)\n", status);
+			WLog_ERR(TAG, "Failed to set trace level option on OpenH264 decoder (status=%ld)", status);
 		}
 
 		status = (*sys->pDecoder)->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK, &traceCallback);
 
 		if (status != 0)
 		{
-			printf("Failed to set trace callback option on OpenH264 decoder (status=%ld)\n", status);
+			WLog_ERR(TAG, "Failed to set trace callback option on OpenH264 decoder (status=%ld)", status);
 		}
 
 		status = (*sys->pDecoder)->SetOption(sys->pDecoder, DECODER_OPTION_TRACE_CALLBACK_CONTEXT, &h264);
 
 		if (status != 0)
 		{
-			printf("Failed to set trace callback context option on OpenH264 decoder (status=%ld)\n", status);
+			WLog_ERR(TAG, "Failed to set trace callback context option on OpenH264 decoder (status=%ld)", status);
 		}
 	}
 
@@ -285,12 +288,12 @@ static int libavcodec_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcS
 
 	if (status < 0)
 	{
-		printf("Failed to decode video frame (status=%d)\n", status);
+		WLog_ERR(TAG, "Failed to decode video frame (status=%d)", status);
 		return -1;
 	}
 
 #if 0
-	printf("libavcodec_decompress: frame decoded (status=%d, gotFrame=%d, width=%d, height=%d, Y=[%p,%d], U=[%p,%d], V=[%p,%d])\n",
+	WLog_INFO(TAG, "libavcodec_decompress: frame decoded (status=%d, gotFrame=%d, width=%d, height=%d, Y=[%p,%d], U=[%p,%d], V=[%p,%d])",
 		status, gotFrame, sys->videoFrame->width, sys->videoFrame->height,
 		sys->videoFrame->data[0], sys->videoFrame->linesize[0],
 		sys->videoFrame->data[1], sys->videoFrame->linesize[1],
@@ -362,7 +365,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 	if (!sys->codec)
 	{
-		printf("Failed to find libav H.264 codec\n");
+		WLog_ERR(TAG, "Failed to find libav H.264 codec");
 		goto EXCEPTION;
 	}
 
@@ -370,7 +373,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 	if (!sys->codecContext)
 	{
-		printf("Failed to allocate libav codec context\n");
+		WLog_ERR(TAG, "Failed to allocate libav codec context");
 		goto EXCEPTION;
 	}
 
@@ -381,7 +384,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 	if (avcodec_open2(sys->codecContext, sys->codec, NULL) < 0)
 	{
-		printf("Failed to open libav codec\n");
+		WLog_ERR(TAG, "Failed to open libav codec");
 		goto EXCEPTION;
 	}
 
@@ -389,7 +392,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 	if (!sys->codecParser)
 	{
-		printf("Failed to initialize libav parser\n");
+		WLog_ERR(TAG, "Failed to initialize libav parser");
 		goto EXCEPTION;
 	}
 
@@ -397,7 +400,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 
 	if (!sys->videoFrame)
 	{
-		printf("Failed to allocate libav frame\n");
+		WLog_ERR(TAG, "Failed to allocate libav frame");
 		goto EXCEPTION;
 	}
 
@@ -439,7 +442,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 		return -1;
 
 #if 0
-	printf("h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, nDstStep=%d, nDstHeight=%d, numRegionRects=%d\n",
+	WLog_INFO(TAG, "h264_decompress: pSrcData=%p, SrcSize=%u, pDstData=%p, nDstStep=%d, nDstHeight=%d, numRegionRects=%d",
 		pSrcData, SrcSize, *ppDstData, nDstStep, nDstHeight, numRegionRects);
 #endif
 
@@ -471,7 +474,7 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 		pYUVPoint[2] = pYUVData[2] + rect->top/2 * iStride[2] + rect->left/2;
 
 #if 0
-		printf("regionRect: x: %d y: %d width: %d height: %d\n",
+		WLog_INFO(TAG, "regionRect: x: %d y: %d width: %d height: %d",
 		       rect->left, rect->top, width, height);
 #endif
 

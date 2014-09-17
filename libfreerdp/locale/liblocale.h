@@ -24,18 +24,20 @@
 #include "config.h"
 #endif
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
+#define KBD_TAG FREERDP_TAG("locale")
 #ifdef WITH_DEBUG_KBD
-#define DEBUG_KBD(fmt, ...) DEBUG_CLASS(KBD, fmt, ## __VA_ARGS__)
+#define DEBUG_KBD(fmt, ...) WLog_DBG(KBD_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_KBD(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_KBD(fmt, ...) do { } while (0)
 #endif
 
+#define TIMEZONE_TAG FREERDP_TAG("timezone")
 #ifdef WITH_DEBUG_TIMEZONE
-#define DEBUG_TIMEZONE(fmt, ...) DEBUG_CLASS(TIMEZONE, fmt, ## __VA_ARGS__)
+#define DEBUG_TIMEZONE(fmt, ...) WLog_DBG(TIMEZONE_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_TIMEZONE(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_TIMEZONE(fmt, ...) do { } while (0)
 #endif
 
 #endif /* __LIBLOCALE_H */

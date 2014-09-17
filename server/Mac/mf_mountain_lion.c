@@ -25,6 +25,9 @@
 
 #include "mf_mountain_lion.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
+
 dispatch_semaphore_t region_sem;
 dispatch_semaphore_t data_sem;
 dispatch_queue_t screen_update_q;
@@ -86,21 +89,20 @@ void (^streamHandler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfaceRef, CGDisp
 		switch(status)
 		{
 			case kCGDisplayStreamFrameStatusFrameIdle:
-				DEBUG_MSG("kCGDisplayStreamFrameStatusFrameIdle\n");
+				WLog_DBG(TAG, "kCGDisplayStreamFrameStatusFrameIdle");
 				break;
 				
 			case kCGDisplayStreamFrameStatusStopped:
 				//we dont need to clean up
-				//printf("kCGDisplayStreamFrameStatusStopped\n");
+				//WLog_DBG(TAG, "kCGDisplayStreamFrameStatusStopped");
 				break;
 				
 			case kCGDisplayStreamFrameStatusFrameBlank:
-				DEBUG_MSG("kCGDisplayStreamFrameStatusFrameBlank\n");
+				WLog_DBG(TAG, "kCGDisplayStreamFrameStatusFrameBlank");
 				break;
 				
 			default:
-				DEBUG_MSG("Unhandled Frame Status!!!\n");
-				
+				WLog_WARN(TAG, "Unhandled Frame Status!!!");
 		}
 	}
 	else if (lastUpdate == NULL)
@@ -193,7 +195,7 @@ int mf_mlion_start_getting_screen_updates()
 	err = CGDisplayStreamStart(stream);
 	if(err != kCGErrorSuccess)
 	{
-		DEBUG_MSG("Failed to start displaystream!! err = %d\n", err);
+		WLog_WARN(TAG, "Failed to start displaystream!! err = %d", err);
 		return 1;
 	}
 	
@@ -207,11 +209,9 @@ int mf_mlion_stop_getting_screen_updates()
 	err = CGDisplayStreamStop(stream);
 	if(err != kCGErrorSuccess)
 	{
-		DEBUG_MSG("Failed to stop displaystream!! err = %d\n", err);
+		WLog_WARN(TAG, "Failed to stop displaystream!! err = %d", err);
 		return 1;
 	}
-	
-	return 0;
 	
 	return 0;
 }

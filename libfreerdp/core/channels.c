@@ -32,11 +32,12 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 
+#include <freerdp/log.h>
 #include <freerdp/svc.h>
 #include <freerdp/peer.h>
 #include <freerdp/addin.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/debug.h>
+
 #include <freerdp/client/channels.h>
 #include <freerdp/client/drdynvc.h>
 #include <freerdp/channels/channels.h>
@@ -45,6 +46,8 @@
 #include "client.h"
 #include "server.h"
 #include "channels.h"
+
+#define TAG FREERDP_TAG("core.channels")
 
 BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 {
@@ -67,7 +70,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 
 	if (!channel)
 	{
-		DEBUG_WARN( "freerdp_channel_send: unknown channelId %d\n", channelId);
+		WLog_ERR(TAG,  "freerdp_channel_send: unknown channelId %d", channelId);
 		return FALSE;
 	}
 

@@ -34,11 +34,13 @@
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
 #include <freerdp/assistance.h>
+
+#define TAG FREERDP_TAG("common")
 
 /**
  * Password encryption in establishing a remote assistance session of type 1:
@@ -479,7 +481,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	int EncryptedSize;
 	BYTE PasswordHash[16];
 	EVP_CIPHER_CTX rc4Ctx;
-	BYTE *pbIn, *pbOut;
+	BYTE* pbIn, *pbOut;
 	int cbOut, cbIn, cbFinal;
 	WCHAR* PasswordW = NULL;
 	WCHAR* PassStubW = NULL;
@@ -522,7 +524,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		DEBUG_WARN( "EVP_CipherInit_ex failure\n");
+		WLog_ERR(TAG,  "EVP_CipherInit_ex failure");
 		return NULL;
 	}
 
@@ -530,7 +532,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		DEBUG_WARN( "EVP_CipherInit_ex failure\n");
+		WLog_ERR(TAG,  "EVP_CipherInit_ex failure");
 		return NULL;
 	}
 
@@ -541,7 +543,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		DEBUG_WARN( "EVP_CipherUpdate failure\n");
+		WLog_ERR(TAG,  "EVP_CipherUpdate failure");
 		return NULL;
 	}
 
@@ -549,7 +551,7 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 
 	if (!status)
 	{
-		DEBUG_WARN( "EVP_CipherFinal_ex failure\n");
+		WLog_ERR(TAG,  "EVP_CipherFinal_ex failure");
 		return NULL;
 	}
 
@@ -573,7 +575,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 	WCHAR* pbOutW = NULL;
 	EVP_CIPHER_CTX aesDec;
 	WCHAR* PasswordW = NULL;
-	BYTE *pbIn, *pbOut;
+	BYTE* pbIn, *pbOut;
 	int cbOut, cbIn, cbFinal;
 	BYTE DerivedKey[AES_BLOCK_SIZE];
 	BYTE InitializationVector[AES_BLOCK_SIZE];
@@ -591,7 +593,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 	SHA1_Final((void*) PasswordHash, &shaCtx);
 
 	status = freerdp_assistance_crypt_derive_key_sha1(PasswordHash, sizeof(PasswordHash),
-			DerivedKey, sizeof(DerivedKey));
+			 DerivedKey, sizeof(DerivedKey));
 
 	if (status < 0)
 		return -1;
@@ -630,7 +632,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 
 	if (status != 1)
 	{
-		DEBUG_WARN( "EVP_DecryptFinal_ex failure\n");
+		WLog_ERR(TAG,  "EVP_DecryptFinal_ex failure");
 		return -1;
 	}
 
@@ -652,9 +654,7 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 	free(pbOut);
 
 	status = freerdp_assistance_parse_connection_string2(file);
-
-	DEBUG_MSG("freerdp_assistance_parse_connection_string2: %d\n", status);
-
+	WLog_DBG(TAG, "freerdp_assistance_parse_connection_string2: %d", status);
 	return 1;
 }
 
@@ -663,7 +663,7 @@ int freerdp_assistance_decrypt(rdpAssistanceFile* file, const char* password)
 	int status = 1;
 
 	file->EncryptedPassStub = freerdp_assistance_encrypt_pass_stub(password,
-			file->PassStub, &file->EncryptedPassStubLength);
+							  file->PassStub, &file->EncryptedPassStubLength);
 
 	if (!file->EncryptedPassStub)
 		return -1;
@@ -969,7 +969,7 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* bu
 
 	if (status < 0)
 	{
-		DEBUG_WARN( "freerdp_assistance_parse_connection_string1 failure: %d\n", status);
+		WLog_ERR(TAG,  "freerdp_assistance_parse_connection_string1 failure: %d", status);
 		return -1;
 	}
 

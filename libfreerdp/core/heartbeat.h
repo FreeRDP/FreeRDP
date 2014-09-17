@@ -25,6 +25,7 @@ typedef struct rdp_heartbeat rdpHeartbeat;
 #include "rdp.h"
 
 #include <freerdp/freerdp.h>
+#include <freerdp/log.h>
 
 #include <winpr/stream.h>
 
@@ -38,10 +39,11 @@ int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s);
 rdpHeartbeat* heartbeat_new(void);
 void heartbeat_free(rdpHeartbeat* heartbeat);
 
+#define HEARTBEAT_TAG FREERDP_TAG("core.heartbeat")
 #ifdef WITH_DEBUG_HEARTBEAT
-#define DEBUG_HEARTBEAT(fmt, ...) DEBUG_CLASS(HEARTBEAT, fmt, ## __VA_ARGS__)
+#define DEBUG_HEARTBEAT(fmt, ...) WLog_DBG(HEARTBEAT_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_HEARTBEAT(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_HEARTBEAT(fmt, ...) do { } while (0)
 #endif
 
 #endif /* __HEARTBEAT_H */

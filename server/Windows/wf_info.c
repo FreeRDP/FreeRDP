@@ -31,6 +31,9 @@
 #include "wf_mirage.h"
 #include "wf_dxgi.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("windows")
+
 static wfInfo* wfInfoInstance = NULL;
 static int _IDcount = 0;
 
@@ -52,7 +55,7 @@ int wf_info_lock(wfInfo* wfi)
 		break;
 
 	case WAIT_FAILED:
-		DEBUG_WARN("wf_info_lock failed with 0x%08X\n", GetLastError());
+		WLog_ERR(TAG, "wf_info_lock failed with 0x%08X", GetLastError());
 		return -1;
 		break;
 	}
@@ -78,7 +81,7 @@ int wf_info_try_lock(wfInfo* wfi, DWORD dwMilliseconds)
 		break;
 
 	case WAIT_FAILED:
-		DEBUG_WARN("wf_info_try_lock failed with 0x%08X\n", GetLastError());
+		WLog_ERR(TAG, "wf_info_try_lock failed with 0x%08X", GetLastError());
 		return -1;
 		break;
 	}
@@ -90,7 +93,7 @@ int wf_info_unlock(wfInfo* wfi)
 {
 	if (ReleaseMutex(wfi->mutex) == 0)
 	{
-		DEBUG_WARN("wf_info_unlock failed with 0x%08X\n", GetLastError());
+		WLog_ERR(TAG, "wf_info_unlock failed with 0x%08X", GetLastError());
 		return -1;
 	}
 
@@ -116,7 +119,7 @@ wfInfo* wf_info_init()
 
 		if (wfi->mutex == NULL) 
 		{
-			_tprintf(_T("CreateMutex error: %d\n"), GetLastError());
+			WLog_ERR(TAG, "CreateMutex error: %d", GetLastError());
 		}
 
 		wfi->updateSemaphore = CreateSemaphore(NULL, 0, 32, NULL);
@@ -125,7 +128,7 @@ wfInfo* wf_info_init()
 
 		if (!wfi->updateThread)
 		{
-			_tprintf(_T("Failed to create update thread\n"));
+			WLog_ERR(TAG, "Failed to create update thread");
 		}
 
 		wfi->peers = (freerdp_peer**) malloc(sizeof(freerdp_peer*) * WF_INFO_MAXPEERS);
@@ -213,8 +216,7 @@ void wf_info_peer_register(wfInfo* wfi, wfPeerContext* context)
 		wfi->peers[peerId] = ((rdpContext*) context)->peer;
 		wfi->peers[peerId]->pId = peerId;
 		wfi->peerCount++;
-		DEBUG_WARN("Registering Peer: id=%d #=%d\n", peerId, wfi->peerCount);
-
+		WLog_INFO(TAG, "Registering Peer: id=%d #=%d", peerId, wfi->peerCount);
 		wf_info_unlock(wfi);
 
 		wfreerdp_server_peer_callback_event(peerId, WF_SRV_CALLBACK_EVENT_CONNECT);
@@ -231,8 +233,7 @@ void wf_info_peer_unregister(wfInfo* wfi, wfPeerContext* context)
 		wfi->peers[peerId] = NULL;
 		wfi->peerCount--;
 		CloseHandle(context->updateEvent);
-
-		DEBUG_WARN("Unregistering Peer: id=%d, #=%d\n", peerId, wfi->peerCount);
+		WLog_INFO(TAG, "Unregistering Peer: id=%d, #=%d", peerId, wfi->peerCount);
 
 #ifdef WITH_DXGI_1_2
 		if (wfi->peerCount == 0)
@@ -310,7 +311,7 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 	if (wfi->invalid.bottom >= wfi->servscreen_height)
 		wfi->invalid.bottom = wfi->servscreen_height - 1;
 
-	//printf("invalid region: (%d, %d), (%d, %d)\n", wfi->invalid.left, wfi->invalid.top, wfi->invalid.right, wfi->invalid.bottom);
+	//WLog_DBG(TAG, "invalid region: (%d, %d), (%d, %d)", wfi->invalid.left, wfi->invalid.top, wfi->invalid.right, wfi->invalid.bottom);
 }
 
 void wf_info_clear_invalid_region(wfInfo* wfi)

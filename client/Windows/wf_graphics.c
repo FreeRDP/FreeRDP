@@ -24,9 +24,12 @@
 #include <winpr/crt.h>
 
 #include <freerdp/codecs.h>
+#include <freerdp/log.h>
 
 #include "wf_gdi.h"
 #include "wf_graphics.h"
+
+#define TAG CLIENT_TAG("windows")
 
 HBITMAP wf_create_dib(wfContext* wfc, int width, int height, int bpp, BYTE* data, BYTE** pdata)
 {
@@ -183,7 +186,7 @@ void wf_Bitmap_Decompress(wfContext* wfc, rdpBitmap* bitmap,
 
 		if (status < 0)
 		{
-			DEBUG_WARN("wf_Bitmap_Decompress: Bitmap Decompression Failed\n");
+			WLog_ERR(TAG, "Bitmap Decompression Failed");
 			return;
 		}
 	}
