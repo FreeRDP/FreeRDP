@@ -198,7 +198,9 @@ BOOL per_read_integer(wStream* s, UINT32* integer)
 	if (Stream_GetRemainingLength(s) < length)
 		return FALSE;
 
-	if (length == 1)
+	if (length == 0)
+		*integer = 0;
+	else if (length == 1)
 		Stream_Read_UINT8(s, *integer);
 	else if (length == 2)
 		Stream_Read_UINT16_BE(s, *integer);
