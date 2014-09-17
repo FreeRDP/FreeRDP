@@ -24,6 +24,9 @@
 
 #include <assert.h>
 
+#include <stdio.h>
+#include <fcntl.h>
+
 #if defined(HAVE_EXECINFO_H)
 #include <execinfo.h>
 #endif
@@ -33,7 +36,7 @@
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
-#include <WinBase.h>
+#include <Windows.h>
 #include <Dbghelp.h>
 #endif
 
@@ -65,7 +68,7 @@ typedef struct
 {
     PVOID* stack;
     ULONG used;
-    ULONG size;
+    ULONG max;
 } t_win_stack;
 #endif
 
@@ -256,8 +259,8 @@ void *winpr_backtrace(DWORD size)
     if (!data)
         return NULL;
 
-    data->size = size;
-    data->stack = calloc(data->size, sizeof(PVOID));
+    data->max = size;
+    data->stack = calloc(data->max, sizeof(PVOID));
     if (!data->stack)
     {
         free(data);
@@ -350,8 +353,9 @@ char **winpr_backtrace_symbols(void *buffer, size_t *used)
     char *lines = calloc(data->used + 1, sizeof(char *) * line_len);
     char **vlines = (char **)lines;
 	SYMBOL_INFO* symbol = calloc(sizeof(SYMBOL_INFO) + line_len * sizeof(char), 1);
-
-    if (!lines || !symbol)
+	IMAGEHLP_LINE64 *line = (IMAGEHLP_LINE64 *)calloc(1, sizeof(IMAGEHLP_LINE64));
+	
+    if (!lines || !symbol || !line)
     {
         if (lines)
             free(lines);
@@ -359,8 +363,13 @@ char **winpr_backtrace_symbols(void *buffer, size_t *used)
         if (symbol)
             free(symbol);
 
+		if (line)
+			free(line);
         return NULL;
     }
+	line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+	symbol->MaxNameLen = line_len;
+	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
     /* To allow a char** malloced array to be returned, allocate n+1 lines
     * and fill in the first lines[i] char with the address of lines[(i+1) * 1024] */
@@ -369,14 +378,23 @@ char **winpr_backtrace_symbols(void *buffer, size_t *used)
 
     for (i=0; i<data->used; i++)
     {
-        SymFromAddr(process, (DWORD64)(data->stack[i]), 0, &symbol);
-        _snprintf(vlines[i], line_len, "%08lX: %s", symbol->Address, symbol->Name);
+		DWORD64 address = (DWORD64)(data->stack[i]);
+		DWORD displacement;
+
+        SymFromAddr(process, address, 0, symbol);
+		if (SymGetLineFromAddr64(process, address, &displacement, line))
+		{
+			_snprintf(vlines[i], line_len, "%08lX: %s in %s:%lu", symbol->Address, symbol->Name, line->FileName, line->LineNumber);
+		}
+		else
+			_snprintf(vlines[i], line_len, "%08lX: %s", symbol->Address, symbol->Name);
     }
 
     if (used)
         *used = data->used;
 
 	free(symbol);
+	free(line);
 
     return (char **)lines;
 #else
