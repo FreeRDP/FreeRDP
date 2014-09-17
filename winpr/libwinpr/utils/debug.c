@@ -66,9 +66,9 @@ typedef struct
 #if defined(_WIN32) || defined(_WIN64)
 typedef struct
 {
-    PVOID* stack;
-    ULONG used;
-    ULONG max;
+		PVOID* stack;
+		ULONG used;
+		ULONG max;
 } t_win_stack;
 #endif
 
@@ -209,10 +209,12 @@ void winpr_backtrace_free(void *buffer)
 
 	free(data);
 #elif defined(_WIN32) || defined(_WIN64)
-    t_win_stack *data = (t_win_stack*)buffer;
-    if (data->stack)
-        free(data->stack);
-    free(data);
+	{
+		t_win_stack *data = (t_win_stack*)buffer;
+		if (data->stack)
+			free(data->stack);
+		free(data);
+	}
 #else
 	LOGF(support_msg);
 #endif
@@ -253,24 +255,24 @@ void *winpr_backtrace(DWORD size)
 	data->used = fkt->unwind_backtrace(data->buffer, 0, size);
 	return data;
 #elif defined(_WIN32) || defined(_WIN64)
-    HANDLE process = GetCurrentProcess();
-    t_win_stack *data = calloc(1, sizeof(t_win_stack));
+	HANDLE process = GetCurrentProcess();
+	t_win_stack *data = calloc(1, sizeof(t_win_stack));
 
-    if (!data)
-        return NULL;
+	if (!data)
+		return NULL;
 
-    data->max = size;
-    data->stack = calloc(data->max, sizeof(PVOID));
-    if (!data->stack)
-    {
-        free(data);
-        return NULL;
-    }
+	data->max = size;
+	data->stack = calloc(data->max, sizeof(PVOID));
+	if (!data->stack)
+	{
+		free(data);
+		return NULL;
+	}
 
-    SymInitialize( process, NULL, TRUE );
-    data->used = CaptureStackBackTrace(2, size, data->stack, NULL);
+	SymInitialize( process, NULL, TRUE );
+	data->used = CaptureStackBackTrace(2, size, data->stack, NULL);
 
-    return data;
+	return data;
 #else
 	LOGF(support_msg);
 	return NULL;
@@ -312,7 +314,7 @@ char **winpr_backtrace_symbols(void *buffer, size_t *used)
 		size_t i;
 		char *lines = calloc(data->used + 1, sizeof(char *) * line_len);
 		char **vlines = (char **)lines;
-        backtrace_symbol_t *symbols = calloc(data->used, sizeof(backtrace_symbol_t));
+				backtrace_symbol_t *symbols = calloc(data->used, sizeof(backtrace_symbol_t));
 
 		if (!lines || !symbols)
 		{
@@ -344,59 +346,61 @@ char **winpr_backtrace_symbols(void *buffer, size_t *used)
 		return (char **)lines;
 	}
 #elif defined(_WIN32) || defined(_WIN64)
-    HANDLE process = GetCurrentProcess();
-    t_win_stack *data = (t_win_stack *)buffer;
-    assert(data);
-	
-    size_t line_len = (data->max > 1024) ? data->max : 1024;
-    size_t i;
-    char *lines = calloc(data->used + 1, sizeof(char *) * line_len);
-    char **vlines = (char **)lines;
-	SYMBOL_INFO* symbol = calloc(sizeof(SYMBOL_INFO) + line_len * sizeof(char), 1);
-	IMAGEHLP_LINE64 *line = (IMAGEHLP_LINE64 *)calloc(1, sizeof(IMAGEHLP_LINE64));
-	
-    if (!lines || !symbol || !line)
-    {
-        if (lines)
-            free(lines);
+	{
+		HANDLE process = GetCurrentProcess();
+		t_win_stack *data = (t_win_stack *)buffer;
+		assert(data);
 
-        if (symbol)
-            free(symbol);
+		size_t line_len = (data->max > 1024) ? data->max : 1024;
+		size_t i;
+		char *lines = calloc(data->used + 1, sizeof(char *) * line_len);
+		char **vlines = (char **)lines;
+		SYMBOL_INFO* symbol = calloc(sizeof(SYMBOL_INFO) + line_len * sizeof(char), 1);
+		IMAGEHLP_LINE64 *line = (IMAGEHLP_LINE64 *)calloc(1, sizeof(IMAGEHLP_LINE64));
+
+		if (!lines || !symbol || !line)
+		{
+				if (lines)
+						free(lines);
+
+				if (symbol)
+						free(symbol);
 
 		if (line)
 			free(line);
-        return NULL;
-    }
-	line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-	symbol->MaxNameLen = line_len;
-	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+				return NULL;
+		}
+		line->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+		symbol->MaxNameLen = line_len;
+		symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-    /* To allow a char** malloced array to be returned, allocate n+1 lines
-    * and fill in the first lines[i] char with the address of lines[(i+1) * 1024] */
-    for (i=0; i<data->used; i++)
-        vlines[i] = &lines[(i + 1) * line_len];
+		/* To allow a char** malloced array to be returned, allocate n+1 lines
+		* and fill in the first lines[i] char with the address of lines[(i+1) * 1024] */
+		for (i=0; i<data->used; i++)
+				vlines[i] = &lines[(i + 1) * line_len];
 
-    for (i=0; i<data->used; i++)
-    {
+		for (i=0; i<data->used; i++)
+		{
 		DWORD64 address = (DWORD64)(data->stack[i]);
 		DWORD displacement;
 
-        SymFromAddr(process, address, 0, symbol);
+				SymFromAddr(process, address, 0, symbol);
 		if (SymGetLineFromAddr64(process, address, &displacement, line))
 		{
 			_snprintf(vlines[i], line_len, "%08lX: %s in %s:%lu", symbol->Address, symbol->Name, line->FileName, line->LineNumber);
 		}
 		else
 			_snprintf(vlines[i], line_len, "%08lX: %s", symbol->Address, symbol->Name);
-    }
+		}
 
-    if (used)
-        *used = data->used;
+		if (used)
+				*used = data->used;
 
-	free(symbol);
-	free(line);
+		free(symbol);
+		free(line);
 
-    return (char **)lines;
+		return (char **)lines;
+	}
 #else
 	LOGF(support_msg);
 	return NULL;
@@ -416,16 +420,15 @@ void winpr_backtrace_symbols_fd(void *buffer, int fd)
 	assert(data);
 	backtrace_symbols_fd(data->buffer, data->used, fd);
 #elif defined(_WIN32) || defined(_WIN64) || defined(ANDROID)
-    size_t used;
-    char **lines = winpr_backtrace_symbols(buffer, &used);
+	size_t used;
+	char **lines = winpr_backtrace_symbols(buffer, &used);
 
-    if (lines)
-    {
-        DWORD i;
-
-        for (i=0; i<used; i++)
-            write(fd, lines[i], strlen(lines[i]));
-    }
+	if (lines)
+	{
+		DWORD i;
+		for (i=0; i<used; i++)
+			write(fd, lines[i], strlen(lines[i]));
+	}
 #else
 	LOGF(support_msg);
 #endif
