@@ -114,7 +114,7 @@ void gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (!bitmap->data)
 		gdi_bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, bitmap->width, bitmap->height);
 	else
-		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, gdi->dstBpp, bitmap->data);
+		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, bitmap->bpp, bitmap->data);
 
 	gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->bitmap);
 	gdi_bitmap->org_bitmap = NULL;
@@ -160,10 +160,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	bytesPerPixel = (bpp + 7) / 8;
 	size = width * height * 4;
 
-	if (!bitmap->data)
-		bitmap->data = (BYTE*) _aligned_malloc(size, 16);
-	else
-		bitmap->data = (BYTE*) _aligned_realloc(bitmap->data, size, 16);
+	bitmap->data = (BYTE*) _aligned_malloc(size, 16);
 
 	pSrcData = data;
 	SrcSize = (UINT32) length;
@@ -176,14 +173,14 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_INTERLEAVED);
 
 			status = interleaved_decompress(gdi->codecs->interleaved, pSrcData, SrcSize, bpp,
-					&pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height);
+					&pDstData, gdi->format, -1, 0, 0, width, height);
 		}
 		else
 		{
 			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_PLANAR);
 
 			status = planar_decompress(gdi->codecs->planar, pSrcData, SrcSize, &pDstData,
-					PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, FALSE);
+					gdi->format, -1, 0, 0, width, height, TRUE);
 		}
 
 		if (status < 0)
@@ -196,13 +193,13 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 
-		status = freerdp_image_copy(pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0,
-				width, height, pSrcData, SrcFormat, width * bytesPerPixel, 0, 0);
+		status = freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
+				width, height, pSrcData, SrcFormat, -1, 0, 0);
 	}
 
 	bitmap->compressed = FALSE;
 	bitmap->length = size;
-	bitmap->bpp = 32;
+	bitmap->bpp = gdi->dstBpp;
 }
 
 void gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)

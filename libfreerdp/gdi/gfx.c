@@ -52,8 +52,8 @@ int gdi_OutputUpdate(rdpGdi* gdi)
 	if (!gdi->graphicsReset)
 		return 1;
 
-	nDstStep = gdi->width * 4;
 	pDstData = gdi->primary_buffer;
+	nDstStep = gdi->bytesPerPixel * gdi->width;
 
 	surface = (gdiGfxSurface*) gdi->gfx->GetSurfaceData(gdi->gfx, gdi->outputSurfaceId);
 

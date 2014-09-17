@@ -493,7 +493,6 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 	int nYSrc;
 	int nWidth;
 	int nHeight;
-	int nSrcStep;
 	int nDstStep;
 	UINT32 index;
 	BYTE* pSrcData;
@@ -502,7 +501,6 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 	BOOL compressed;
 	UINT32 SrcFormat;
 	UINT32 bitsPerPixel;
-	UINT32 bytesPerPixel;
 	BITMAP_DATA* bitmap;
 	rdpGdi* gdi = context->gdi;
 	rdpCodecs* codecs = context->codecs;
@@ -525,9 +523,6 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 		compressed = bitmap->compressed;
 		bitsPerPixel = bitmap->bitsPerPixel;
-		bytesPerPixel = (bitsPerPixel + 7) / 8;
-
-		SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
 
 		if (gdi->bitmap_size < (nWidth * nHeight * 4))
 		{
@@ -547,14 +542,14 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
 
 				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
-						&pDstData, SrcFormat, nWidth * bytesPerPixel, 0, 0, nWidth, nHeight);
+						&pDstData, gdi->format, -1, 0, 0, nWidth, nHeight);
 			}
 			else
 			{
 				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
 
 				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
-						gdi->format, nWidth * 4, 0, 0, nWidth, nHeight, TRUE);
+						gdi->format, -1, 0, 0, nWidth, nHeight, TRUE);
 			}
 
 			if (status < 0)
@@ -565,17 +560,25 @@ void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 			pSrcData = gdi->bitmap_buffer;
 		}
+		else
+		{
+			pDstData = gdi->bitmap_buffer;
+			SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
 
-		nSrcStep = nWidth * bytesPerPixel;
+			status = freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
+						nWidth, nHeight, pSrcData, SrcFormat, -1, 0, 0);
+
+			pSrcData = gdi->bitmap_buffer;
+		}
 
 		pDstData = gdi->primary_buffer;
-		nDstStep = gdi->width * 4;
+		nDstStep = gdi->width * gdi->bytesPerPixel;
 
 		nWidth = bitmap->destRight - bitmap->destLeft + 1; /* clip width */
 		nHeight = bitmap->destBottom - bitmap->destTop + 1; /* clip height */
 
 		status = freerdp_image_copy(pDstData, gdi->format, nDstStep, nXDst, nYDst,
-				nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc);
+				nWidth, nHeight, pSrcData, gdi->format, -1, nXSrc, nYSrc);
 
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
 	}
@@ -925,11 +928,8 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 
 	DEBUG_GDI("destLeft %d destTop %d destRight %d destBottom %d "
 		"bpp %d codecID %d width %d height %d length %d",
-		cmd->destLeft, cmd->destTop,
-		cmd->destRight, cmd->destBottom,
-		cmd->bpp, cmd->codecID,
-		cmd->width, cmd->height,
-		cmd->bitmapDataLength);
+		cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom,
+		cmd->bpp, cmd->codecID, cmd->width, cmd->height, cmd->bitmapDataLength);
 
 	if (cmd->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
@@ -946,14 +946,14 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 			pSrcData = message->tiles[i]->data;
 			pDstData = gdi->tile->bitmap->data;
 
-			if (!gdi->abgr)
+			if (!gdi->abgr && (gdi->dstBpp == 32))
 			{
 				gdi->tile->bitmap->data = pSrcData;
 			}
 			else
 			{
-				freerdp_image_copy(pDstData, gdi->format, 64 * 4, 0, 0,
-						64, 64, pSrcData, PIXEL_FORMAT_XRGB32, 64 * 4, 0, 0);
+				freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
+						64, 64, pSrcData, PIXEL_FORMAT_XRGB32, -1, 0, 0);
 			}
 
 			for (j = 0; j < message->numRects; j++)
@@ -990,8 +990,8 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 		pDstData = gdi->bitmap_buffer;
 		pSrcData = gdi->codecs->nsc->BitmapData;
 
-		freerdp_image_copy(pDstData, gdi->format, cmd->width * gdi->bytesPerPixel, 0, 0,
-				cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, cmd->width * 4, 0, 0);
+		freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
+				cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0);
 
 		gdi->image->bitmap->width = cmd->width;
 		gdi->image->bitmap->height = cmd->height;
@@ -1015,8 +1015,8 @@ void gdi_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd)
 		pDstData = gdi->bitmap_buffer;
 		pSrcData = cmd->bitmapData;
 
-		freerdp_image_copy(pDstData, gdi->format, cmd->width * gdi->bytesPerPixel, 0, 0,
-				cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, cmd->width * 4, 0, 0);
+		freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
+				cmd->width, cmd->height, pSrcData, PIXEL_FORMAT_XRGB32_VF, -1, 0, 0);
 
 		gdi->image->bitmap->width = cmd->width;
 		gdi->image->bitmap->height = cmd->height;
