@@ -92,6 +92,9 @@ struct _BITMAP_PLANAR_CONTEXT
 
 	BYTE* rlePlanes[4];
 	BYTE* rlePlanesBuffer;
+
+	UINT32 TempSize;
+	BYTE* TempBuffer;
 };
 
 FREERDP_API int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height, int scanline, BYTE* planes[4]);

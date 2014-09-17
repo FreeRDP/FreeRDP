@@ -40,17 +40,41 @@
 
 void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 {
+	int depth;
+	BYTE* data;
 	Pixmap pixmap;
 	XImage* image;
+	UINT32 SrcFormat;
 	xfContext* xfc = (xfContext*) context;
 
 	xf_lock_x11(xfc, FALSE);
+
+	data = bitmap->data;
+	depth = (bitmap->bpp >= 24) ? 24 : bitmap->bpp;
 
 	pixmap = XCreatePixmap(xfc->display, xfc->drawable, bitmap->width, bitmap->height, xfc->depth);
 
 	if (bitmap->data)
 	{
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
+
+		if (depth != xfc->depth)
+		{
+			data = _aligned_malloc(bitmap->width * bitmap->height * 4, 16);
+
+			if (!data)
+				return;
+
+			SrcFormat = gdi_get_pixel_format(bitmap->bpp, TRUE);
+
+			freerdp_image_copy(data, xfc->format, -1, 0, 0,
+				bitmap->width, bitmap->height, bitmap->data, SrcFormat, -1, 0, 0);
+
+			_aligned_free(bitmap->data);
+			bitmap->data = data;
+
+			bitmap->bpp = (xfc->depth >= 24) ? 32 : xfc->depth;
+		}
 
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
 			ZPixmap, 0, (char*) bitmap->data, bitmap->width, bitmap->height, xfc->scanline_pad, 0);
@@ -119,10 +143,7 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	bytesPerPixel = (bpp + 7) / 8;
 	size = width * height * 4;
 
-	if (!bitmap->data)
-		bitmap->data = (BYTE*) _aligned_malloc(size, 16);
-	else
-		bitmap->data = (BYTE*) _aligned_realloc(bitmap->data, size, 16);
+	bitmap->data = (BYTE*) _aligned_malloc(size, 16);
 
 	pSrcData = data;
 	SrcSize = (UINT32) length;
