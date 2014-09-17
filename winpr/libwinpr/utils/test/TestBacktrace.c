@@ -1,4 +1,4 @@
-// #include <stdio.h>
+#include <stdio.h>
 #include <winpr/debug.h>
 
 int TestBacktrace(int argc, char* argv[])
