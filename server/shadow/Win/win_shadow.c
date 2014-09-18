@@ -399,6 +399,45 @@ void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
 
 #endif
 
+int win_shadow_enum_monitors(winShadowSubsystem* subsystem, MONITOR_DEF* monitors, int maxMonitors)
+{
+	HDC hdc;
+	int index;
+	int desktopWidth;
+	int desktopHeight;
+	DWORD iDevNum = 0;
+	int numMonitors = 0;
+	MONITOR_DEF* monitor;
+	MONITOR_DEF* virtualScreen;
+	DISPLAY_DEVICE displayDevice;
+
+	ZeroMemory(&displayDevice, sizeof(DISPLAY_DEVICE));
+	displayDevice.cb = sizeof(DISPLAY_DEVICE);
+
+	if (EnumDisplayDevices(NULL, iDevNum, &displayDevice, 0))
+	{
+		hdc = CreateDC(displayDevice.DeviceName, NULL, NULL, NULL);
+
+		desktopWidth = GetDeviceCaps(hdc, HORZRES);
+		desktopHeight = GetDeviceCaps(hdc, VERTRES);
+
+		index = 0;
+		numMonitors = 1;
+
+		monitor = &monitors[index];
+
+		monitor->left = 0;
+		monitor->top = 0;
+		monitor->right = desktopWidth;
+		monitor->bottom = desktopHeight;
+		monitor->flags = 1;
+
+		DeleteDC(hdc);
+	}
+
+	return numMonitors;
+}
+
 int win_shadow_subsystem_init(winShadowSubsystem* subsystem)
 {
 	HDC hdc;
@@ -511,7 +550,7 @@ winShadowSubsystem* win_shadow_subsystem_new(rdpShadowServer* server)
 	subsystem->Stop = (pfnShadowSubsystemStop) win_shadow_subsystem_stop;
 	subsystem->Free = (pfnShadowSubsystemFree) win_shadow_subsystem_free;
 
-	subsystem->SurfaceCopy = (pfnShadowSurfaceCopy) win_shadow_surface_copy;
+	subsystem->EnumMonitors = (pfnShadowEnumMonitors) win_shadow_enum_monitors;
 
 	subsystem->SynchronizeEvent = (pfnShadowSynchronizeEvent) win_shadow_input_synchronize_event;
 	subsystem->KeyboardEvent = (pfnShadowKeyboardEvent) win_shadow_input_keyboard_event;

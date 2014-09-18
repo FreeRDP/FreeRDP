@@ -538,6 +538,36 @@ void* mac_shadow_subsystem_thread(macShadowSubsystem* subsystem)
 	return NULL;
 }
 
+int mac_shadow_enum_monitors(macShadowSubsystem* subsystem, MONITOR_DEF* monitors, int maxMonitors)
+{
+	int index;
+	size_t wide, high;
+	int numMonitors = 0;
+	MONITOR_DEF* monitor;
+	CGDirectDisplayID displayId;
+
+	displayId = CGMainDisplayID();
+	CGDisplayModeRef mode = CGDisplayCopyDisplayMode(displayId);
+
+	wide = CGDisplayPixelsWide(displayId);
+	high = CGDisplayPixelsHigh(displayId);
+
+	CGDisplayModeRelease(mode);
+
+	index = 0;
+	numMonitors = 1;
+
+	monitor = &monitors[index];
+
+	monitor->left = 0;
+	monitor->top = 0;
+	monitor->right = (int) wide;
+	monitor->bottom = (int) high;
+	monitor->flags = 1;
+
+	return numMonitors;
+}
+
 int mac_shadow_subsystem_init(macShadowSubsystem* subsystem)
 {
 	g_Subsystem = subsystem;
@@ -605,6 +635,8 @@ macShadowSubsystem* mac_shadow_subsystem_new(rdpShadowServer* server)
 	subsystem->Start = (pfnShadowSubsystemStart) mac_shadow_subsystem_start;
 	subsystem->Stop = (pfnShadowSubsystemStop) mac_shadow_subsystem_stop;
 	subsystem->Free = (pfnShadowSubsystemFree) mac_shadow_subsystem_free;
+
+	subsystem->EnumMonitors = (pfnShadowEnumMonitors) mac_shadow_enum_monitors;
 
 	subsystem->SynchronizeEvent = (pfnShadowSynchronizeEvent) mac_shadow_input_synchronize_event;
 	subsystem->KeyboardEvent = (pfnShadowKeyboardEvent) mac_shadow_input_keyboard_event;
