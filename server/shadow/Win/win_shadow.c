@@ -399,7 +399,7 @@ void* win_shadow_subsystem_thread(winShadowSubsystem* subsystem)
 
 #endif
 
-int win_shadow_enum_monitors(winShadowSubsystem* subsystem, MONITOR_DEF* monitors, int maxMonitors)
+int win_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
 {
 	HDC hdc;
 	int index;
@@ -440,25 +440,10 @@ int win_shadow_enum_monitors(winShadowSubsystem* subsystem, MONITOR_DEF* monitor
 
 int win_shadow_subsystem_init(winShadowSubsystem* subsystem)
 {
-	HDC hdc;
 	int status;
-	DWORD iDevNum = 0;
 	MONITOR_DEF* virtualScreen;
-	DISPLAY_DEVICE DisplayDevice;
 
-	ZeroMemory(&DisplayDevice, sizeof(DISPLAY_DEVICE));
-	DisplayDevice.cb = sizeof(DISPLAY_DEVICE);
-
-	if (!EnumDisplayDevices(NULL, iDevNum, &DisplayDevice, 0))
-		return -1;
-
-	hdc = CreateDC(DisplayDevice.DeviceName, NULL, NULL, NULL);
-
-	subsystem->width = GetDeviceCaps(hdc, HORZRES);
-	subsystem->height = GetDeviceCaps(hdc, VERTRES);
-	subsystem->bpp = GetDeviceCaps(hdc, BITSPIXEL);
-
-	DeleteDC(hdc);
+	subsystem->numMonitors = win_shadow_enum_monitors(subsystem->monitors, 16);
 
 #if defined(WITH_WDS_API)
 	status = win_shadow_wds_init(subsystem);
@@ -473,16 +458,6 @@ int win_shadow_subsystem_init(winShadowSubsystem* subsystem)
 	virtualScreen->right = subsystem->width;
 	virtualScreen->bottom = subsystem->height;
 	virtualScreen->flags = 1;
-
-	if (subsystem->numMonitors < 1)
-	{
-		subsystem->numMonitors = 1;
-		subsystem->monitors[0].left = virtualScreen->left;
-		subsystem->monitors[0].top = virtualScreen->top;
-		subsystem->monitors[0].right = virtualScreen->right;
-		subsystem->monitors[0].bottom = virtualScreen->bottom;
-		subsystem->monitors[0].flags = 1;
-	}
 
 	WLog_INFO(TAG, "width: %d height: %d", subsystem->width, subsystem->height);
 
@@ -535,7 +510,7 @@ void win_shadow_subsystem_free(winShadowSubsystem* subsystem)
 	free(subsystem);
 }
 
-winShadowSubsystem* win_shadow_subsystem_new(rdpShadowServer* server)
+winShadowSubsystem* win_shadow_subsystem_new()
 {
 	winShadowSubsystem* subsystem;
 
@@ -543,14 +518,6 @@ winShadowSubsystem* win_shadow_subsystem_new(rdpShadowServer* server)
 
 	if (!subsystem)
 		return NULL;
-
-	subsystem->Init = (pfnShadowSubsystemInit) win_shadow_subsystem_init;
-	subsystem->Uninit = (pfnShadowSubsystemInit) win_shadow_subsystem_uninit;
-	subsystem->Start = (pfnShadowSubsystemStart) win_shadow_subsystem_start;
-	subsystem->Stop = (pfnShadowSubsystemStop) win_shadow_subsystem_stop;
-	subsystem->Free = (pfnShadowSubsystemFree) win_shadow_subsystem_free;
-
-	subsystem->EnumMonitors = (pfnShadowEnumMonitors) win_shadow_enum_monitors;
 
 	subsystem->SynchronizeEvent = (pfnShadowSynchronizeEvent) win_shadow_input_synchronize_event;
 	subsystem->KeyboardEvent = (pfnShadowKeyboardEvent) win_shadow_input_keyboard_event;
@@ -561,7 +528,18 @@ winShadowSubsystem* win_shadow_subsystem_new(rdpShadowServer* server)
 	return subsystem;
 }
 
-rdpShadowSubsystem* Win_ShadowCreateSubsystem(rdpShadowServer* server)
+int Win_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
-	return (rdpShadowSubsystem*) win_shadow_subsystem_new(server);
+	pEntryPoints->New = (pfnShadowSubsystemNew) win_shadow_subsystem_new;
+	pEntryPoints->Free = (pfnShadowSubsystemFree) win_shadow_subsystem_free;
+
+	pEntryPoints->Init = (pfnShadowSubsystemInit) win_shadow_subsystem_init;
+	pEntryPoints->Uninit = (pfnShadowSubsystemInit) win_shadow_subsystem_uninit;
+
+	pEntryPoints->Start = (pfnShadowSubsystemStart) win_shadow_subsystem_start;
+	pEntryPoints->Stop = (pfnShadowSubsystemStop) win_shadow_subsystem_stop;
+
+	pEntryPoints->EnumMonitors = (pfnShadowEnumMonitors) win_shadow_enum_monitors;
+
+	return 1;
 }

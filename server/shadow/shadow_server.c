@@ -304,10 +304,7 @@ void* shadow_server_thread(rdpShadowServer* server)
 	StopEvent = server->StopEvent;
 	subsystem = server->subsystem;
 
-	if (subsystem->Start)
-	{
-		subsystem->Start(subsystem);
-	}
+	shadow_subsystem_start(server->subsystem);
 
 	while (1)
 	{
@@ -341,10 +338,7 @@ void* shadow_server_thread(rdpShadowServer* server)
 
 	listener->Close(listener);
 
-	if (subsystem->Stop)
-	{
-		subsystem->Stop(subsystem);
-	}
+	shadow_subsystem_stop(server->subsystem);
 
 	ExitThread(0);
 
@@ -560,7 +554,7 @@ int shadow_server_init(rdpShadowServer* server)
 	server->listener->info = (void*) server;
 	server->listener->PeerAccepted = shadow_client_accepted;
 
-	server->subsystem = shadow_subsystem_new(0);
+	server->subsystem = shadow_subsystem_new(NULL);
 
 	if (!server->subsystem)
 		return -1;
@@ -578,12 +572,6 @@ int shadow_server_uninit(rdpShadowServer* server)
 	{
 		freerdp_listener_free(server->listener);
 		server->listener = NULL;
-	}
-
-	if (server->subsystem)
-	{
-		server->subsystem->Free(server->subsystem);
-		server->subsystem = NULL;
 	}
 
 	if (server->CertificateFile)
@@ -607,26 +595,6 @@ int shadow_server_uninit(rdpShadowServer* server)
 	shadow_subsystem_uninit(server->subsystem);
 
 	return 1;
-}
-
-int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors, UINT32 flags)
-{
-	int numMonitors = 0;
-	rdpShadowSubsystem* subsystem;
-
-	subsystem = shadow_subsystem_new(flags);
-
-	if (!subsystem)
-		return -1;
-
-	if (!subsystem->EnumMonitors)
-		return -1;
-
-	numMonitors = subsystem->EnumMonitors(subsystem, monitors, maxMonitors);
-
-	shadow_subsystem_free(subsystem);
-
-	return numMonitors;
 }
 
 rdpShadowServer* shadow_server_new()
@@ -658,7 +626,7 @@ void shadow_server_free(rdpShadowServer* server)
 		server->clients = NULL;
 	}
 
-	shadow_server_uninit(server);
+	shadow_subsystem_free(server->subsystem);
 
 	free(server);
 }

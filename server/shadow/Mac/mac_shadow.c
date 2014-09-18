@@ -538,7 +538,7 @@ void* mac_shadow_subsystem_thread(macShadowSubsystem* subsystem)
 	return NULL;
 }
 
-int mac_shadow_enum_monitors(macShadowSubsystem* subsystem, MONITOR_DEF* monitors, int maxMonitors)
+int mac_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
 {
 	int index;
 	size_t wide, high;
@@ -621,7 +621,7 @@ void mac_shadow_subsystem_free(macShadowSubsystem* subsystem)
 	free(subsystem);
 }
 
-macShadowSubsystem* mac_shadow_subsystem_new(rdpShadowServer* server)
+macShadowSubsystem* mac_shadow_subsystem_new()
 {
 	macShadowSubsystem* subsystem;
 
@@ -629,14 +629,6 @@ macShadowSubsystem* mac_shadow_subsystem_new(rdpShadowServer* server)
 
 	if (!subsystem)
 		return NULL;
-
-	subsystem->Init = (pfnShadowSubsystemInit) mac_shadow_subsystem_init;
-	subsystem->Uninit = (pfnShadowSubsystemInit) mac_shadow_subsystem_uninit;
-	subsystem->Start = (pfnShadowSubsystemStart) mac_shadow_subsystem_start;
-	subsystem->Stop = (pfnShadowSubsystemStop) mac_shadow_subsystem_stop;
-	subsystem->Free = (pfnShadowSubsystemFree) mac_shadow_subsystem_free;
-
-	subsystem->EnumMonitors = (pfnShadowEnumMonitors) mac_shadow_enum_monitors;
 
 	subsystem->SynchronizeEvent = (pfnShadowSynchronizeEvent) mac_shadow_input_synchronize_event;
 	subsystem->KeyboardEvent = (pfnShadowKeyboardEvent) mac_shadow_input_keyboard_event;
@@ -647,7 +639,18 @@ macShadowSubsystem* mac_shadow_subsystem_new(rdpShadowServer* server)
 	return subsystem;
 }
 
-rdpShadowSubsystem* Mac_ShadowCreateSubsystem(rdpShadowServer* server)
+int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
-	return (rdpShadowSubsystem*) mac_shadow_subsystem_new(server);
+	pEntryPoints->New = (pfnShadowSubsystemNew) mac_shadow_subsystem_new;
+	pEntryPoints->Free = (pfnShadowSubsystemFree) mac_shadow_subsystem_free;
+
+	pEntryPoints->Init = (pfnShadowSubsystemInit) mac_shadow_subsystem_init;
+	pEntryPoints->Uninit = (pfnShadowSubsystemInit) mac_shadow_subsystem_uninit;
+
+	pEntryPoints->Start = (pfnShadowSubsystemStart) mac_shadow_subsystem_start;
+	pEntryPoints->Stop = (pfnShadowSubsystemStop) mac_shadow_subsystem_stop;
+
+	pEntryPoints->EnumMonitors = (pfnShadowEnumMonitors) mac_shadow_enum_monitors;
+
+	return 1;
 }

@@ -47,15 +47,19 @@ typedef struct rdp_shadow_encoder rdpShadowEncoder;
 typedef struct rdp_shadow_capture rdpShadowCapture;
 typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
 
-typedef rdpShadowSubsystem* (*pfnShadowCreateSubsystem)(rdpShadowServer* server);
+typedef struct _RDP_SHADOW_ENTRY_POINTS RDP_SHADOW_ENTRY_POINTS;
+typedef int (*pfnShadowSubsystemEntry)(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
+
+typedef rdpShadowSubsystem* (*pfnShadowSubsystemNew)();
+typedef void (*pfnShadowSubsystemFree)(rdpShadowSubsystem* subsystem);
 
 typedef int (*pfnShadowSubsystemInit)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSubsystemUninit)(rdpShadowSubsystem* subsystem);
+
 typedef int (*pfnShadowSubsystemStart)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSubsystemStop)(rdpShadowSubsystem* subsystem);
-typedef void (*pfnShadowSubsystemFree)(rdpShadowSubsystem* subsystem);
 
-typedef int (*pfnShadowEnumMonitors)(rdpShadowSubsystem* subsystem, MONITOR_DEF* monitors, int maxMonitors);
+typedef int (*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, int maxMonitors);
 
 typedef int (*pfnShadowSurfaceCopy)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSurfaceUpdate)(rdpShadowSubsystem* subsystem, REGION16* subRect);
@@ -112,7 +116,22 @@ struct rdp_shadow_server
 	freerdp_listener* listener;
 };
 
+struct _RDP_SHADOW_ENTRY_POINTS
+{
+	pfnShadowSubsystemNew New;
+	pfnShadowSubsystemFree Free;
+
+	pfnShadowSubsystemInit Init;
+	pfnShadowSubsystemUninit Uninit;
+
+	pfnShadowSubsystemStart Start;
+	pfnShadowSubsystemStop Stop;
+
+	pfnShadowEnumMonitors EnumMonitors;
+};
+
 #define RDP_SHADOW_SUBSYSTEM_COMMON() \
+	RDP_SHADOW_ENTRY_POINTS ep; \
 	HANDLE event; \
 	int numMonitors; \
 	int selectedMonitor; \
@@ -122,16 +141,6 @@ struct rdp_shadow_server
 	REGION16 invalidRegion; \
 	wMessagePipe* MsgPipe; \
 	SYNCHRONIZATION_BARRIER barrier; \
-	\
-	pfnShadowSubsystemInit Init; \
-	pfnShadowSubsystemUninit Uninit; \
-	pfnShadowSubsystemStart Start; \
-	pfnShadowSubsystemStop Stop; \
-	pfnShadowSubsystemFree Free; \
-	\
-	pfnShadowEnumMonitors EnumMonitors; \
-	pfnShadowSurfaceCopy SurfaceCopy; \
-	pfnShadowSurfaceUpdate SurfaceUpdate; \
 	\
 	pfnShadowSynchronizeEvent SynchronizeEvent; \
 	pfnShadowKeyboardEvent KeyboardEvent; \
@@ -159,7 +168,7 @@ FREERDP_API int shadow_server_stop(rdpShadowServer* server);
 FREERDP_API int shadow_server_init(rdpShadowServer* server);
 FREERDP_API int shadow_server_uninit(rdpShadowServer* server);
 
-FREERDP_API int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors, UINT32 flags);
+FREERDP_API int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors, const char* name);
 
 FREERDP_API rdpShadowServer* shadow_server_new();
 FREERDP_API void shadow_server_free(rdpShadowServer* server);
