@@ -40,6 +40,7 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 
 	server = (rdpShadowServer*) peer->ContextExtra;
 	client->server = server;
+	client->subsystem = server->subsystem;
 
 	settings = peer->settings;
 
@@ -165,6 +166,24 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	return TRUE;
 }
 
+void shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_16* areas)
+{
+	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
+
+	printf("RefreshRect: %d\n", count);
+
+	MessageQueue_Post(MsgPipe->In, (void*) client, 1, NULL, NULL);
+}
+
+void shadow_client_suppress_output(rdpShadowClient* client, BYTE allow, RECTANGLE_16* area)
+{
+	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
+
+	printf("SuppressOutput: %d\n", allow);
+
+	MessageQueue_Post(MsgPipe->In, (void*) client, 2, NULL, NULL);
+}
+
 BOOL shadow_client_activate(freerdp_peer* peer)
 {
 	rdpShadowClient* client;
@@ -175,6 +194,8 @@ BOOL shadow_client_activate(freerdp_peer* peer)
 	client->inLobby = client->mayView ? FALSE : TRUE;
 
 	shadow_encoder_reset(client->encoder);
+
+	shadow_client_refresh_rect(client, 0, NULL);
 
 	return TRUE;
 }
@@ -192,16 +213,6 @@ void shadow_client_surface_frame_acknowledge(rdpShadowClient* client, UINT32 fra
 		ListDictionary_Remove(frameList, (void*) (size_t) frameId);
 		free(frame);
 	}
-}
-
-void shadow_client_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
-{
-
-}
-
-void shadow_client_suppress_output(rdpShadowClient* client, BYTE allow, RECTANGLE_16* area)
-{
-
 }
 
 int shadow_client_send_surface_frame_marker(rdpShadowClient* client, UINT32 action, UINT32 id)
@@ -663,6 +674,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 	HANDLE ChannelEvent;
 	HANDLE UpdateEvent;
 	freerdp_peer* peer;
+	rdpContext* context;
 	rdpSettings* settings;
 	rdpShadowServer* server;
 	rdpShadowScreen* screen;
@@ -674,7 +686,8 @@ void* shadow_client_thread(rdpShadowClient* client)
 	encoder = client->encoder;
 	subsystem = server->subsystem;
 
-	peer = ((rdpContext*) client)->peer;
+	context = (rdpContext*) client;
+	peer = context->peer;
 	settings = peer->settings;
 
 	peer->Capabilities = shadow_client_capabilities;
@@ -685,11 +698,9 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 	peer->Initialize(peer);
 
-	peer->update->SurfaceFrameAcknowledge = (pSurfaceFrameAcknowledge)
-			shadow_client_surface_frame_acknowledge;
-
 	peer->update->RefreshRect = (pRefreshRect) shadow_client_refresh_rect;
 	peer->update->SuppressOutput = (pSuppressOutput) shadow_client_suppress_output;
+	peer->update->SurfaceFrameAcknowledge = (pSurfaceFrameAcknowledge) shadow_client_surface_frame_acknowledge;
 
 	StopEvent = client->StopEvent;
 	UpdateEvent = subsystem->updateEvent;

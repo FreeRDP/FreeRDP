@@ -85,6 +85,7 @@ struct rdp_shadow_client
 	rdpShadowServer* server;
 	rdpShadowSurface* lobby;
 	rdpShadowEncoder* encoder;
+	rdpShadowSubsystem* subsystem;
 
 	HANDLE vcm;
 	EncomspServerContext* encomsp;
