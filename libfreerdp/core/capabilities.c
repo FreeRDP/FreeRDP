@@ -190,6 +190,9 @@ BOOL rdp_read_general_capability_set(wStream* s, UINT16 length, rdpSettings* set
 	if (!(extraFlags & FASTPATH_OUTPUT_SUPPORTED))
 		settings->FastPathOutput = FALSE;
 
+	if (!(extraFlags & ENC_SALTED_CHECKSUM))
+		settings->SaltedChecksum = FALSE;
+
 	if (refreshRectSupport == FALSE)
 		settings->RefreshRect = FALSE;
 
@@ -338,6 +341,8 @@ BOOL rdp_read_bitmap_capability_set(wStream* s, UINT16 length, rdpSettings* sett
 		settings->DesktopWidth = desktopWidth;
 		settings->DesktopHeight = desktopHeight;
 	}
+
+	settings->DrawAllowSkipAlpha = (drawingFlags & DRAW_ALLOW_SKIP_ALPHA) ? TRUE : FALSE;
 
 	return TRUE;
 }
