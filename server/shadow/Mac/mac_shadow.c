@@ -224,7 +224,7 @@ int mac_shadow_detect_monitors(macShadowSubsystem* subsystem)
 		subsystem->height = subsystem->pixelHeight;
 	}
 	
-	subsystem->monitorCount = 1;
+	subsystem->numMonitors = 1;
 	
 	monitor = &(subsystem->monitors[0]);
 	
@@ -588,8 +588,6 @@ void mac_shadow_subsystem_free(macShadowSubsystem* subsystem)
 
 	mac_shadow_subsystem_uninit(subsystem);
 
-	shadow_subsystem_common_free((rdpShadowSubsystem*) subsystem);
-
 	free(subsystem);
 }
 
@@ -601,9 +599,6 @@ macShadowSubsystem* mac_shadow_subsystem_new(rdpShadowServer* server)
 
 	if (!subsystem)
 		return NULL;
-
-	subsystem->server = server;
-	shadow_subsystem_common_new((rdpShadowSubsystem*) subsystem);
 
 	subsystem->Init = (pfnShadowSubsystemInit) mac_shadow_subsystem_init;
 	subsystem->Uninit = (pfnShadowSubsystemInit) mac_shadow_subsystem_uninit;

@@ -24,22 +24,86 @@
 
 #include "shadow_subsystem.h"
 
-int shadow_subsystem_common_new(rdpShadowSubsystem* subsystem)
+#ifdef WITH_SHADOW_X11
+extern rdpShadowSubsystem* X11_ShadowCreateSubsystem(rdpShadowServer* server);
+#endif
+
+#ifdef WITH_SHADOW_MAC
+extern rdpShadowSubsystem* Mac_ShadowCreateSubsystem(rdpShadowServer* server);
+#endif
+
+#ifdef WITH_SHADOW_WIN
+extern rdpShadowSubsystem* Win_ShadowCreateSubsystem(rdpShadowServer* server);
+#endif
+
+rdpShadowSubsystem* shadow_subsystem_new(UINT32 flags)
 {
-	subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	rdpShadowSubsystem* subsystem = NULL;
+	pfnShadowCreateSubsystem CreateSubsystem = NULL;
 
-	subsystem->MsgPipe = MessagePipe_New();
+#ifdef WITH_SHADOW_X11
+	CreateSubsystem = X11_ShadowCreateSubsystem;
+#endif
 
-	region16_init(&(subsystem->invalidRegion));
+#ifdef WITH_SHADOW_MAC
+	CreateSubsystem = Mac_ShadowCreateSubsystem;
+#endif
 
-	return 1;
+#ifdef WITH_SHADOW_WIN
+	CreateSubsystem = Win_ShadowCreateSubsystem;
+#endif
+
+	if (CreateSubsystem)
+		subsystem = CreateSubsystem(NULL);
+
+	return subsystem;
 }
 
-void shadow_subsystem_common_free(rdpShadowSubsystem* subsystem)
+void shadow_subsystem_free(rdpShadowSubsystem* subsystem)
 {
-	CloseHandle(subsystem->updateEvent);
+	if (subsystem->Free)
+		subsystem->Free(subsystem);
+}
 
-	MessagePipe_Free(subsystem->MsgPipe);
+int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server)
+{
+	int status;
 
-	region16_uninit(&(subsystem->invalidRegion));
+	subsystem->server = server;
+	subsystem->selectedMonitor = server->selectedMonitor;
+
+	subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	subsystem->MsgPipe = MessagePipe_New();
+	region16_init(&(subsystem->invalidRegion));
+
+	if (!subsystem->Init)
+		return -1;
+
+	if (subsystem->Init)
+		status = subsystem->Init(subsystem);
+
+	return status;
+}
+
+void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
+{
+	if (subsystem->Uninit)
+		subsystem->Uninit(subsystem);
+
+	if (subsystem->updateEvent)
+	{
+		CloseHandle(subsystem->updateEvent);
+		subsystem->updateEvent = NULL;
+	}
+
+	if (subsystem->MsgPipe)
+	{
+		MessagePipe_Free(subsystem->MsgPipe);
+		subsystem->MsgPipe = NULL;
+	}
+
+	if (subsystem->invalidRegion.data)
+	{
+		region16_uninit(&(subsystem->invalidRegion));
+	}
 }

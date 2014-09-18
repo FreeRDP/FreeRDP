@@ -41,18 +41,6 @@
 
 #define TAG SERVER_TAG("shadow")
 
-#ifdef WITH_SHADOW_X11
-extern rdpShadowSubsystem* X11_ShadowCreateSubsystem(rdpShadowServer* server);
-#endif
-
-#ifdef WITH_SHADOW_MAC
-extern rdpShadowSubsystem* Mac_ShadowCreateSubsystem(rdpShadowServer* server);
-#endif
-
-#ifdef WITH_SHADOW_WIN
-extern rdpShadowSubsystem* Win_ShadowCreateSubsystem(rdpShadowServer* server);
-#endif
-
 static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
@@ -258,7 +246,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{
 		int index;
-		rdpShadowSubsystem* subsystem = server->subsystem;
+		int numMonitors;
+		MONITOR_DEF monitors[16];
+
+		numMonitors = shadow_enum_monitors(monitors, 16, 0);
 
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
@@ -269,10 +260,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			if (index < 0)
 				index = 0;
 
-			if (index >= subsystem->monitorCount)
+			if (index >= numMonitors)
 				index = 0;
 
-			subsystem->selectedMonitor = index;
+			server->selectedMonitor = index;
 		}
 		else
 		{
@@ -281,9 +272,9 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 			/* List monitors */
 
-			for (index = 0; index < subsystem->monitorCount; index++)
+			for (index = 0; index < numMonitors; index++)
 			{
-				monitor = &(subsystem->monitors[index]);
+				monitor = &monitors[index];
 
 				width = monitor->right - monitor->left;
 				height = monitor->bottom - monitor->top;
@@ -298,32 +289,6 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	}
 
 	return status;
-}
-
-int shadow_server_surface_update(rdpShadowSubsystem* subsystem, REGION16* region)
-{
-	int index;
-	int count;
-	wArrayList* clients;
-	rdpShadowServer* server;
-	rdpShadowClient* client;
-
-	server = subsystem->server;
-	clients = server->clients;
-
-	ArrayList_Lock(clients);
-
-	count = ArrayList_Count(clients);
-
-	for (index = 0; index < count; index++)
-	{
-		client = ArrayList_GetItem(clients, index);
-		shadow_client_surface_update(client, region);
-	}
-
-	ArrayList_Unlock(clients);
-
-	return 1;
 }
 
 void* shadow_server_thread(rdpShadowServer* server)
@@ -571,7 +536,16 @@ int shadow_server_init(rdpShadowServer* server)
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 
+	server->clients = ArrayList_New(TRUE);
+
 	server->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	InitializeCriticalSectionAndSpinCount(&(server->lock), 4000);
+
+	status = shadow_server_init_config_path(server);
+
+	if (status < 0)
+		return -1;
 
 	status = shadow_server_init_certificate(server);
 
@@ -586,35 +560,14 @@ int shadow_server_init(rdpShadowServer* server)
 	server->listener->info = (void*) server;
 	server->listener->PeerAccepted = shadow_client_accepted;
 
-#ifdef WITH_SHADOW_X11
-	server->CreateSubsystem = X11_ShadowCreateSubsystem;
-#endif
-
-#ifdef WITH_SHADOW_MAC
-	server->CreateSubsystem = Mac_ShadowCreateSubsystem;
-#endif
-
-#ifdef WITH_SHADOW_WIN
-	server->CreateSubsystem = Win_ShadowCreateSubsystem;
-#endif
-	
-	if (server->CreateSubsystem)
-		server->subsystem = server->CreateSubsystem(server);
+	server->subsystem = shadow_subsystem_new(0);
 
 	if (!server->subsystem)
 		return -1;
 
-	server->subsystem->SurfaceUpdate = shadow_server_surface_update;
+	status = shadow_subsystem_init(server->subsystem, server);
 
-	if (server->subsystem->Init)
-	{
-		status = server->subsystem->Init(server->subsystem);
-
-		if (status < 0)
-			WLog_ERR(TAG, "subsystem init failure: %d", status);
-	}
-
-	return 1;
+	return status;
 }
 
 int shadow_server_uninit(rdpShadowServer* server)
@@ -651,7 +604,29 @@ int shadow_server_uninit(rdpShadowServer* server)
 		server->ipcSocket = NULL;
 	}
 
+	shadow_subsystem_uninit(server->subsystem);
+
 	return 1;
+}
+
+int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors, UINT32 flags)
+{
+	int numMonitors = 0;
+	rdpShadowSubsystem* subsystem;
+
+	subsystem = shadow_subsystem_new(flags);
+
+	if (!subsystem)
+		return -1;
+
+	if (!subsystem->EnumMonitors)
+		return -1;
+
+	numMonitors = subsystem->EnumMonitors(subsystem, monitors, maxMonitors);
+
+	shadow_subsystem_free(subsystem);
+
+	return numMonitors;
 }
 
 rdpShadowServer* shadow_server_new()
@@ -666,12 +641,6 @@ rdpShadowServer* shadow_server_new()
 	server->port = 3389;
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
-
-	shadow_server_init_config_path(server);
-
-	InitializeCriticalSectionAndSpinCount(&(server->lock), 4000);
-
-	server->clients = ArrayList_New(TRUE);
 
 	return server;
 }

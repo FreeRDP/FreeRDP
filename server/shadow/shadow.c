@@ -53,14 +53,14 @@ int main(int argc, char** argv)
 	if (!server)
 		return 0;
 
-	if (shadow_server_init(server) < 0)
-		return 0;
-
 	status = shadow_server_parse_command_line(server, argc, argv);
 
 	status = shadow_server_command_line_status_print(server, argc, argv, status);
 
 	if (status < 0)
+		return 0;
+
+	if (shadow_server_init(server) < 0)
 		return 0;
 
 	if (shadow_server_start(server) < 0)

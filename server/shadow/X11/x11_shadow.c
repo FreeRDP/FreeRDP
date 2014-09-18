@@ -592,6 +592,36 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 	return NULL;
 }
 
+int x11_shadow_subsystem_base_init(x11ShadowSubsystem* subsystem)
+{
+	if (subsystem->display)
+		return 1; /* initialize once */
+
+	if (!getenv("DISPLAY"))
+		setenv("DISPLAY", ":0", 1);
+
+	if (!XInitThreads())
+		return -1;
+
+	subsystem->display = XOpenDisplay(NULL);
+
+	if (!subsystem->display)
+	{
+		WLog_ERR(TAG, "failed to open display: %s", XDisplayName(NULL));
+		return -1;
+	}
+
+	subsystem->xfds = ConnectionNumber(subsystem->display);
+	subsystem->number = DefaultScreen(subsystem->display);
+	subsystem->screen = ScreenOfDisplay(subsystem->display, subsystem->number);
+	subsystem->depth = DefaultDepthOfScreen(subsystem->screen);
+	subsystem->width = WidthOfScreen(subsystem->screen);
+	subsystem->height = HeightOfScreen(subsystem->screen);
+	subsystem->root_window = DefaultRootWindow(subsystem->display);
+
+	return 1;
+}
+
 int x11_shadow_xfixes_init(x11ShadowSubsystem* subsystem)
 {
 #ifdef WITH_XFIXES
@@ -618,14 +648,11 @@ int x11_shadow_xfixes_init(x11ShadowSubsystem* subsystem)
 int x11_shadow_xinerama_init(x11ShadowSubsystem* subsystem)
 {
 #ifdef WITH_XINERAMA
-	int index;
-	int numMonitors;
 	int major, minor;
 	int xinerama_event;
 	int xinerama_error;
-	MONITOR_DEF* monitor;
-	XineramaScreenInfo* screen;
-	XineramaScreenInfo* screens;
+
+	x11_shadow_subsystem_base_init(subsystem);
 
 	if (!XineramaQueryExtension(subsystem->display, &xinerama_event, &xinerama_error))
 		return -1;
@@ -636,32 +663,10 @@ int x11_shadow_xinerama_init(x11ShadowSubsystem* subsystem)
 	if (!XineramaIsActive(subsystem->display))
 		return -1;
 
-	screens = XineramaQueryScreens(subsystem->display, &numMonitors);
-
-	if (numMonitors > 16)
-		numMonitors = 16;
-
-	if (!screens || (numMonitors < 1))
-		return -1;
-
-	subsystem->monitorCount = numMonitors;
-
-	for (index = 0; index < numMonitors; index++)
-	{
-		screen = &screens[index];
-		monitor = &(subsystem->monitors[index]);
-
-		monitor->left = screen->x_org;
-		monitor->top = screen->y_org;
-		monitor->right = monitor->left + screen->width;
-		monitor->bottom = monitor->top + screen->height;
-		monitor->flags = (index == 0) ? 1 : 0;
-	}
-
-	XFree(screens);
-#endif
-
 	return 1;
+#else
+	return -1;
+#endif
 }
 
 int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
@@ -776,6 +781,61 @@ int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 	return 1;
 }
 
+int x11_shadow_enum_monitors(x11ShadowSubsystem* subsystem, MONITOR_DEF* monitors, int maxMonitors)
+{
+	int index;
+	int numMonitors = 0;
+	MONITOR_DEF* monitor;
+
+#ifdef WITH_XINERAMA
+	if (x11_shadow_xinerama_init(subsystem) > 0)
+	{
+		XineramaScreenInfo* screen;
+		XineramaScreenInfo* screens;
+
+		screens = XineramaQueryScreens(subsystem->display, &numMonitors);
+
+		if (numMonitors > maxMonitors)
+			numMonitors = maxMonitors;
+
+		if (screens && (numMonitors > 0))
+		{
+			for (index = 0; index < numMonitors; index++)
+			{
+				screen = &screens[index];
+				monitor = &monitors[index];
+
+				monitor->left = screen->x_org;
+				monitor->top = screen->y_org;
+				monitor->right = monitor->left + screen->width;
+				monitor->bottom = monitor->top + screen->height;
+				monitor->flags = (index == 0) ? 1 : 0;
+			}
+		}
+
+		XFree(screens);
+	}
+#endif
+
+	if (numMonitors < 1)
+	{
+		index = 0;
+		numMonitors = 1;
+
+		x11_shadow_subsystem_base_init(subsystem);
+
+		monitor = &monitors[index];
+
+		monitor->left = 0;
+		monitor->top = 0;
+		monitor->right = subsystem->width;
+		monitor->bottom = subsystem->height;
+		monitor->flags = 1;
+	}
+
+	return numMonitors;
+}
+
 int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 {
 	int i;
@@ -790,27 +850,9 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	XPixmapFormatValues* pfs;
 	MONITOR_DEF* virtualScreen;
 
-	/**
-	 * To see if your X11 server supports shared pixmaps, use:
-	 * xdpyinfo -ext MIT-SHM | grep "shared pixmaps"
-	 */
+	x11_shadow_subsystem_base_init(subsystem);
 
-	if (!getenv("DISPLAY"))
-	{
-		/* Set DISPLAY variable if not already set */
-		setenv("DISPLAY", ":0", 1);
-	}
-
-	if (!XInitThreads())
-		return -1;
-
-	subsystem->display = XOpenDisplay(NULL);
-
-	if (!subsystem->display)
-	{
-		WLog_ERR(TAG, "failed to open display: %s", XDisplayName(NULL));
-		return -1;
-	}
+	subsystem->numMonitors = x11_shadow_enum_monitors(subsystem, subsystem->monitors, 16);
 
 	extensions = XListExtensions(subsystem->display, &nextensions);
 
@@ -827,14 +869,6 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 
 	if (subsystem->composite)
 		subsystem->use_xdamage = FALSE;
-
-	subsystem->xfds = ConnectionNumber(subsystem->display);
-	subsystem->number = DefaultScreen(subsystem->display);
-	subsystem->screen = ScreenOfDisplay(subsystem->display, subsystem->number);
-	subsystem->depth = DefaultDepthOfScreen(subsystem->screen);
-	subsystem->width = WidthOfScreen(subsystem->screen);
-	subsystem->height = HeightOfScreen(subsystem->screen);
-	subsystem->root_window = DefaultRootWindow(subsystem->display);
 
 	pfs = XListPixmapFormats(subsystem->display, &pf_count);
 
@@ -926,9 +960,9 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	virtualScreen->bottom = subsystem->height;
 	virtualScreen->flags = 1;
 
-	if (subsystem->monitorCount < 1)
+	if (subsystem->numMonitors < 1)
 	{
-		subsystem->monitorCount = 1;
+		subsystem->numMonitors = 1;
 		subsystem->monitors[0].left = virtualScreen->left;
 		subsystem->monitors[0].top = virtualScreen->top;
 		subsystem->monitors[0].right = virtualScreen->right;
@@ -997,8 +1031,6 @@ void x11_shadow_subsystem_free(x11ShadowSubsystem* subsystem)
 
 	x11_shadow_subsystem_uninit(subsystem);
 
-	shadow_subsystem_common_free((rdpShadowSubsystem*) subsystem);
-
 	free(subsystem);
 }
 
@@ -1011,14 +1043,13 @@ x11ShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
 	if (!subsystem)
 		return NULL;
 
-	subsystem->server = server;
-	shadow_subsystem_common_new((rdpShadowSubsystem*) subsystem);
-
 	subsystem->Init = (pfnShadowSubsystemInit) x11_shadow_subsystem_init;
 	subsystem->Uninit = (pfnShadowSubsystemInit) x11_shadow_subsystem_uninit;
 	subsystem->Start = (pfnShadowSubsystemStart) x11_shadow_subsystem_start;
 	subsystem->Stop = (pfnShadowSubsystemStop) x11_shadow_subsystem_stop;
 	subsystem->Free = (pfnShadowSubsystemFree) x11_shadow_subsystem_free;
+
+	subsystem->EnumMonitors = (pfnShadowEnumMonitors) x11_shadow_enum_monitors;
 
 	subsystem->SynchronizeEvent = (pfnShadowSynchronizeEvent) x11_shadow_input_synchronize_event;
 	subsystem->KeyboardEvent = (pfnShadowKeyboardEvent) x11_shadow_input_keyboard_event;

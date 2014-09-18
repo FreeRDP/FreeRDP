@@ -30,8 +30,11 @@
 extern "C" {
 #endif
 
-int shadow_subsystem_common_new(rdpShadowSubsystem* subsystem);
-void shadow_subsystem_common_free(rdpShadowSubsystem* subsystem);
+rdpShadowSubsystem* shadow_subsystem_new(UINT32 flags);
+void shadow_subsystem_free(rdpShadowSubsystem* subsystem);
+
+int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server);
+void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem);
 
 #ifdef __cplusplus
 }

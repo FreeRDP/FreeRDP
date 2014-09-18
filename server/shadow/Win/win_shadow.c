@@ -435,9 +435,9 @@ int win_shadow_subsystem_init(winShadowSubsystem* subsystem)
 	virtualScreen->bottom = subsystem->height;
 	virtualScreen->flags = 1;
 
-	if (subsystem->monitorCount < 1)
+	if (subsystem->numMonitors < 1)
 	{
-		subsystem->monitorCount = 1;
+		subsystem->numMonitors = 1;
 		subsystem->monitors[0].left = virtualScreen->left;
 		subsystem->monitors[0].top = virtualScreen->top;
 		subsystem->monitors[0].right = virtualScreen->right;
@@ -493,8 +493,6 @@ void win_shadow_subsystem_free(winShadowSubsystem* subsystem)
 
 	win_shadow_subsystem_uninit(subsystem);
 
-	shadow_subsystem_common_free((rdpShadowSubsystem*) subsystem);
-
 	free(subsystem);
 }
 
@@ -506,9 +504,6 @@ winShadowSubsystem* win_shadow_subsystem_new(rdpShadowServer* server)
 
 	if (!subsystem)
 		return NULL;
-
-	subsystem->server = server;
-	shadow_subsystem_common_new((rdpShadowSubsystem*) subsystem);
 
 	subsystem->Init = (pfnShadowSubsystemInit) win_shadow_subsystem_init;
 	subsystem->Uninit = (pfnShadowSubsystemInit) win_shadow_subsystem_uninit;
