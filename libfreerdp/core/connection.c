@@ -528,6 +528,8 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
+	rdp->do_crypt_license = (sec_flags & SEC_LICENSE_ENCRYPT_SC) != 0 ? TRUE : FALSE;
+
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
@@ -564,9 +566,6 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 
 	rdp->do_crypt = TRUE;
-
-	if (rdp->settings->SaltedChecksum)
-		rdp->do_secure_checksum = TRUE;
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
@@ -1110,6 +1109,9 @@ BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_recv_confirm_active(rdp, s))
 		return FALSE;
+
+	if (rdp->settings->SaltedChecksum)
+		rdp->do_secure_checksum = TRUE;
 
 	rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);
 
