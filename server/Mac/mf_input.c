@@ -29,7 +29,11 @@
 #include "mf_input.h"
 #include "mf_info.h"
 
-static const CGKeyCode keymap[256] = {
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
+
+static const CGKeyCode keymap[256] =
+{
 	0xFF, //0x0
 	kVK_Escape, //0x1
 	kVK_ANSI_1, //0x2

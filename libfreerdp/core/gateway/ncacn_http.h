@@ -26,7 +26,7 @@
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
 
-#include <freerdp/utils/debug.h>
+
 
 #include <winpr/stream.h>
 

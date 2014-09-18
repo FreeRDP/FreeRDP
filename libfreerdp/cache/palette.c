@@ -25,8 +25,10 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/cache/palette.h>
+
+#define TAG FREERDP_TAG("cache.palette")
 
 static void update_gdi_cache_color_table(rdpContext* context, CACHE_COLOR_TABLE_ORDER* cacheColorTable)
 {
@@ -45,7 +47,7 @@ void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 
 	if (index >= paletteCache->maxEntries)
 	{
-		DEBUG_WARN( "invalid color table index: 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid color table index: 0x%04X", index);
 		return NULL;
 	}
 
@@ -53,7 +55,7 @@ void* palette_cache_get(rdpPaletteCache* paletteCache, UINT32 index)
 
 	if (!entry)
 	{
-		DEBUG_WARN( "invalid color table at index: 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid color table at index: 0x%04X", index);
 		return NULL;
 	}
 
@@ -64,7 +66,7 @@ void palette_cache_put(rdpPaletteCache* paletteCache, UINT32 index, void* entry)
 {
 	if (index >= paletteCache->maxEntries)
 	{
-		DEBUG_WARN( "invalid color table index: 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid color table index: 0x%04X", index);
 
 		if (entry)
 			free(entry);
@@ -87,15 +89,13 @@ rdpPaletteCache* palette_cache_new(rdpSettings* settings)
 {
 	rdpPaletteCache* paletteCache;
 
-	paletteCache = (rdpPaletteCache*) malloc(sizeof(rdpPaletteCache));
-	ZeroMemory(paletteCache, sizeof(rdpPaletteCache));
+	paletteCache = (rdpPaletteCache*) calloc(1, sizeof(rdpPaletteCache));
 
 	if (paletteCache)
 	{
 		paletteCache->settings = settings;
 		paletteCache->maxEntries = 6;
-		paletteCache->entries = (PALETTE_TABLE_ENTRY*) malloc(sizeof(PALETTE_TABLE_ENTRY) * paletteCache->maxEntries);
-		ZeroMemory(paletteCache->entries, sizeof(PALETTE_TABLE_ENTRY) * paletteCache->maxEntries);
+		paletteCache->entries = (PALETTE_TABLE_ENTRY*) calloc(paletteCache->maxEntries, sizeof(PALETTE_TABLE_ENTRY));
 	}
 
 	return paletteCache;

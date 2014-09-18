@@ -24,9 +24,12 @@
 #include <winpr/crt.h>
 
 #include <freerdp/codecs.h>
+#include <freerdp/log.h>
 
 #include "wf_gdi.h"
 #include "wf_graphics.h"
+
+#define TAG CLIENT_TAG("windows")
 
 HBITMAP wf_create_dib(wfContext* wfc, int width, int height, int bpp, BYTE* data, BYTE** pdata)
 {
@@ -171,7 +174,7 @@ void wf_Bitmap_Decompress(wfContext* wfc, rdpBitmap* bitmap,
 			freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_INTERLEAVED);
 
 			status = interleaved_decompress(wfc->codecs->interleaved, pSrcData, SrcSize, bpp,
-					&pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height);
+					&pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height, NULL);
 		}
 		else
 		{
@@ -183,7 +186,7 @@ void wf_Bitmap_Decompress(wfContext* wfc, rdpBitmap* bitmap,
 
 		if (status < 0)
 		{
-			DEBUG_WARN("wf_Bitmap_Decompress: Bitmap Decompression Failed\n");
+			WLog_ERR(TAG, "Bitmap Decompression Failed");
 			return;
 		}
 	}
@@ -192,7 +195,7 @@ void wf_Bitmap_Decompress(wfContext* wfc, rdpBitmap* bitmap,
 		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 
 		status = freerdp_image_copy(pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0,
-				width, height, pSrcData, SrcFormat, width * bytesPerPixel, 0, 0);
+				width, height, pSrcData, SrcFormat, width * bytesPerPixel, 0, 0, NULL);
 	}
 
 	bitmap->compressed = FALSE;

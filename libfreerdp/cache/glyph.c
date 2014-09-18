@@ -28,8 +28,10 @@
 #include <freerdp/freerdp.h>
 #include <winpr/stream.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/cache/glyph.h>
+
+#define TAG FREERDP_TAG("cache.glyph")
 
 void update_process_glyph(rdpContext* context, BYTE* data, int* index,
 		int* x, int* y, UINT32 cacheId, UINT32 ulCharInc, UINT32 flAccel)
@@ -368,20 +370,20 @@ rdpGlyph* glyph_cache_get(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index)
 
 	if (id > 9)
 	{
-		DEBUG_WARN( "invalid glyph cache id: %d\n", id);
+		WLog_ERR(TAG,  "invalid glyph cache id: %d", id);
 		return NULL;
 	}
 
 	if (index > glyphCache->glyphCache[id].number)
 	{
-		DEBUG_WARN( "index %d out of range for cache id: %d\n", index, id);
+		WLog_ERR(TAG,  "index %d out of range for cache id: %d", index, id);
 		return NULL;
 	}
 
 	glyph = glyphCache->glyphCache[id].entries[index];
 
 	if (!glyph)
-		DEBUG_WARN( "no glyph found at cache index: %d in cache id: %d\n", index, id);
+		WLog_ERR(TAG,  "no glyph found at cache index: %d in cache id: %d", index, id);
 
 	return glyph;
 }
@@ -392,13 +394,13 @@ void glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyp
 
 	if (id > 9)
 	{
-		DEBUG_WARN( "invalid glyph cache id: %d\n", id);
+		WLog_ERR(TAG,  "invalid glyph cache id: %d", id);
 		return;
 	}
 
 	if (index > glyphCache->glyphCache[id].number)
 	{
-		DEBUG_WARN( "invalid glyph cache index: %d in cache id: %d\n", index, id);
+		WLog_ERR(TAG,  "invalid glyph cache index: %d in cache id: %d", index, id);
 		return;
 	}
 
@@ -424,7 +426,7 @@ void* glyph_cache_fragment_get(rdpGlyphCache* glyphCache, UINT32 index, UINT32* 
 
 	if (index > 255)
 	{
-		DEBUG_WARN( "invalid glyph cache fragment index: %d\n", index);
+		WLog_ERR(TAG,  "invalid glyph cache fragment index: %d", index);
 		return NULL;
 	}
 
@@ -434,7 +436,7 @@ void* glyph_cache_fragment_get(rdpGlyphCache* glyphCache, UINT32 index, UINT32* 
 	WLog_Print(glyphCache->log, WLOG_DEBUG, "GlyphCacheFragmentGet: index: %d size: %d", index, *size);
 
 	if (!fragment)
-		DEBUG_WARN( "invalid glyph fragment at index:%d\n", index);
+		WLog_ERR(TAG,  "invalid glyph fragment at index:%d", index);
 
 	return fragment;
 }
@@ -445,7 +447,7 @@ void glyph_cache_fragment_put(rdpGlyphCache* glyphCache, UINT32 index, UINT32 si
 
 	if (index > 255)
 	{
-		DEBUG_WARN( "invalid glyph cache fragment index: %d\n", index);
+		WLog_ERR(TAG,  "invalid glyph cache fragment index: %d", index);
 		return;
 	}
 

@@ -25,19 +25,4 @@
 
 #define CHANNELS_TAG(tag) FREERDP_TAG("channels.") tag
 
-/* NOTE: Do not use these defines, they will be removed soon! */
-#define CLOG_NULL(fmt, ...) do { } while (0)
-#define CLOG_CLASS(_dbg_class, fmt, ...) WLog_LVL(CHANNELS_TAG("legacy." #_dbg_class), \
-		WLOG_ERROR, fmt, ## __VA_ARGS__)
-#define CLOG_DBG(fmt, ...) WLog_LVL(CHANNELS_TAG("legacy"), \
-									WLOG_DEBUG, fmt, ## __VA_ARGS__)
-#define CLOG_INFO(fmt, ...) WLog_LVL(CHANNELS_TAG("legacy"), \
-									 WLOG_INFO, fmt, ## __VA_ARGS__)
-#define CLOG_WARN(fmt, ...) WLog_LVL(CHANNELS_TAG("legacy"), \
-									 WLOG_WARN, fmt, ## __VA_ARGS__)
-#define CLOG_ERR(fmt, ...) WLog_LVL(CHANNELS_TAG("legacy"), \
-									WLOG_ERROR, fmt, ## __VA_ARGS__)
-#define CLOG_FATAL(fmt, ...) WLog_LVL(CHANNELS_TAG("legacy"), \
-									  WLOG_FATAL, fmt, ## __VA_ARGS__)
-
 #endif /* FREERDP_UTILS_DEBUG_H */

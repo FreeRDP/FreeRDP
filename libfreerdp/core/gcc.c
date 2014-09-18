@@ -23,8 +23,12 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
+
 #include "gcc.h"
 #include "certificate.h"
+
+#define TAG FREERDP_TAG("core")
 
 /**
  * T.124 GCC is defined in:
@@ -274,7 +278,7 @@ BOOL gcc_read_conference_create_response(wStream* s, rdpMcs* mcs)
 
 	if (!gcc_read_server_data_blocks(s, mcs, length))
 	{
-		DEBUG_WARN( "gcc_read_conference_create_response: gcc_read_server_data_blocks failed\n");
+		WLog_ERR(TAG,  "gcc_read_conference_create_response: gcc_read_server_data_blocks failed");
 		return FALSE;
 	}
 
@@ -374,7 +378,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
 				break;
 
 			default:
-				DEBUG_WARN( "Unknown GCC client data block: 0x%04X\n", type);
+				WLog_ERR(TAG,  "Unknown GCC client data block: 0x%04X", type);
 				Stream_Seek(s, blockLength - 4);
 				break;
 		}
@@ -383,8 +387,8 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
 
 		if (endPos != (begPos + blockLength))
 		{
-			DEBUG_WARN( "Error parsing GCC client data block 0x%04X: Actual Offset: %d Expected Offset: %d\n",
-					type, endPos, begPos + blockLength);
+			WLog_ERR(TAG,  "Error parsing GCC client data block 0x%04X: Actual Offset: %d Expected Offset: %d",
+					 type, endPos, begPos + blockLength);
 		}
 
 		length -= blockLength;
@@ -419,16 +423,16 @@ void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 	{
 		if (settings->UseMultimon && !settings->SpanMonitors)
 		{
-			DEBUG_WARN( "WARNING: true multi monitor support was not advertised by server!\n");
+			WLog_ERR(TAG,  "WARNING: true multi monitor support was not advertised by server!");
 
 			if (settings->ForceMultimon)
 			{
-				DEBUG_WARN( "Sending multi monitor information anyway (may break connectivity!)\n");
+				WLog_ERR(TAG,  "Sending multi monitor information anyway (may break connectivity!)");
 				gcc_write_client_monitor_data(s, mcs);
 			}
 			else
 			{
-				DEBUG_WARN( "Use /multimon:force to force sending multi monitor information\n");
+				WLog_ERR(TAG,  "Use /multimon:force to force sending multi monitor information");
 			}
 		}
 	}
@@ -447,7 +451,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 
 		if (!gcc_read_user_data_header(s, &type, &blockLength))
 		{
-			DEBUG_WARN( "gcc_read_server_data_blocks: gcc_read_user_data_header failed\n");
+			WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_user_data_header failed");
 			return FALSE;
 		}
 
@@ -456,7 +460,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 			case SC_CORE:
 				if (!gcc_read_server_core_data(s, mcs))
 				{
-					DEBUG_WARN( "gcc_read_server_data_blocks: gcc_read_server_core_data failed\n");
+					WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_server_core_data failed");
 					return FALSE;
 				}
 				break;
@@ -464,7 +468,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 			case SC_SECURITY:
 				if (!gcc_read_server_security_data(s, mcs))
 				{
-					DEBUG_WARN( "gcc_read_server_data_blocks: gcc_read_server_security_data failed\n");
+					WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_server_security_data failed");
 					return FALSE;
 				}
 				break;
@@ -472,7 +476,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 			case SC_NET:
 				if (!gcc_read_server_network_data(s, mcs))
 				{
-					DEBUG_WARN( "gcc_read_server_data_blocks: gcc_read_server_network_data failed\n");
+					WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_server_network_data failed");
 					return FALSE;
 				}
 				break;
@@ -480,7 +484,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 			case SC_MCS_MSGCHANNEL:
 				if (!gcc_read_server_message_channel_data(s, mcs))
 				{
-					DEBUG_WARN( "gcc_read_server_data_blocks: gcc_read_server_message_channel_data failed\n");
+					WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_server_message_channel_data failed");
 					return FALSE;
 				}
 				break;
@@ -488,13 +492,13 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 			case SC_MULTITRANSPORT:
 				if (!gcc_read_server_multitransport_channel_data(s, mcs))
 				{
-					DEBUG_WARN( "gcc_read_server_data_blocks: gcc_read_server_multitransport_channel_data failed\n");
+					WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_server_multitransport_channel_data failed");
 					return FALSE;
 				}
 				break;
 
 			default:
-				DEBUG_WARN( "gcc_read_server_data_blocks: ignoring type=%hu\n", type);
+				WLog_ERR(TAG,  "gcc_read_server_data_blocks: ignoring type=%hu", type);
 				break;
 		}
 		offset += blockLength;
@@ -1174,7 +1178,7 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		DEBUG_WARN( "%s: unable to allocate a md5\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a md5");
 		return;
 	}
 
@@ -1269,8 +1273,8 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 
 	if (channelCount != mcs->channelCount)
 	{
-		DEBUG_WARN( "requested %d channels, got %d instead\n",
-				mcs->channelCount, channelCount);
+		WLog_ERR(TAG,  "requested %d channels, got %d instead",
+				 mcs->channelCount, channelCount);
 
 		/* we ensure that the response is not bigger than the request */
 

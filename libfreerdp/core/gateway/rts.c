@@ -24,10 +24,14 @@
 #include <winpr/crt.h>
 #include <winpr/winhttp.h>
 
+#include <freerdp/log.h>
+
 #include "ncacn_http.h"
 #include "rpc_client.h"
 
 #include "rts.h"
+
+#define TAG FREERDP_TAG("core.gateway.rts")
 
 /**
  * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
@@ -93,25 +97,25 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (!rpc_ntlm_http_out_connect(rpc))
 	{
-		DEBUG_WARN( "%s: rpc_out_connect_http error!\n", __FUNCTION__);
+		WLog_ERR(TAG, "rpc_out_connect_http error!");
 		return FALSE;
 	}
 
 	if (rts_send_CONN_A1_pdu(rpc) != 0)
 	{
-		DEBUG_WARN( "%s: rpc_send_CONN_A1_pdu error!\n", __FUNCTION__);
+		WLog_ERR(TAG, "rpc_send_CONN_A1_pdu error!");
 		return FALSE;
 	}
 
 	if (!rpc_ntlm_http_in_connect(rpc))
 	{
-		DEBUG_WARN( "%s: rpc_in_connect_http error!\n", __FUNCTION__);
+		WLog_ERR(TAG, "rpc_in_connect_http error!");
 		return FALSE;
 	}
 
 	if (rts_send_CONN_B1_pdu(rpc) < 0)
 	{
-		DEBUG_WARN( "%s: rpc_send_CONN_B1_pdu error!\n", __FUNCTION__);
+		WLog_ERR(TAG, "rpc_send_CONN_B1_pdu error!");
 		return FALSE;
 	}
 
@@ -149,13 +153,13 @@ BOOL rts_connect(rdpRpc* rpc)
 	http_response = http_response_recv(rpc->TlsOut);
 	if (!http_response)
 	{
-		DEBUG_WARN( "%s: unable to retrieve OUT Channel Response!\n", __FUNCTION__);
+		WLog_ERR(TAG, "unable to retrieve OUT Channel Response!");
 		return FALSE;
 	}
 
 	if (http_response->StatusCode != HTTP_STATUS_OK)
 	{
-		DEBUG_WARN( "%s: error! Status Code: %d\n", __FUNCTION__, http_response->StatusCode);
+		WLog_ERR(TAG, "error! Status Code: %d", http_response->StatusCode);
 		http_response_print(http_response);
 		http_response_free(http_response);
 
@@ -215,7 +219,7 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_A3_SIGNATURE, rts))
 	{
-		DEBUG_WARN( "%s: unexpected RTS PDU: Expected CONN/A3\n", __FUNCTION__);
+		WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/A3");
 		return FALSE;
 	}
 
@@ -255,7 +259,7 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
 	{
-		DEBUG_WARN( "%s: unexpected RTS PDU: Expected CONN/C2\n", __FUNCTION__);
+		WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/C2");
 		return FALSE;
 	}
 
@@ -880,9 +884,9 @@ int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	DEBUG_WARN( "BytesReceived: %d AvailableWindow: %d\n",
-			BytesReceived, AvailableWindow);
-	DEBUG_WARN( "ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	WLog_ERR(TAG,  "BytesReceived: %d AvailableWindow: %d",
+			 BytesReceived, AvailableWindow);
+	WLog_ERR(TAG,  "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -921,9 +925,9 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	DEBUG_WARN( "Destination: %d BytesReceived: %d AvailableWindow: %d\n",
-			Destination, BytesReceived, AvailableWindow);
-	DEBUG_WARN( "ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	WLog_ERR(TAG,  "Destination: %d BytesReceived: %d AvailableWindow: %d",
+			 Destination, BytesReceived, AvailableWindow);
+	WLog_ERR(TAG,  "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -1027,7 +1031,7 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 			break;
 
 		default:
-			DEBUG_WARN( "Error: Unknown RTS Command Type: 0x%x\n", CommandType);
+			WLog_ERR(TAG,  "Error: Unknown RTS Command Type: 0x%x", CommandType);
 			return -1;
 			break;
 	}
@@ -1055,7 +1059,7 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 		case RTS_PDU_PING:
 			return rts_send_ping_pdu(rpc);
 		default:
-			DEBUG_WARN( "%s: unimplemented signature id: 0x%08X\n", __FUNCTION__, SignatureId);
+			WLog_ERR(TAG, "unimplemented signature id: 0x%08X", SignatureId);
 			rts_print_pdu_signature(rpc, &signature);
 			break;
 	}

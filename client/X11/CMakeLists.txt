@@ -89,14 +89,7 @@ if(WITH_MANPAGES)
 		add_executable(generate_argument_docbook generate_argument_docbook.c)
 	
 		set(GAD_LIBS freerdp-client)
-
-		set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
-
-		set_complex_link_libraries(VARIABLE GAD_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
-			MODULE freerdp
-			MODULES freerdp-core freerdp-utils)
-
-		target_link_libraries(generate_argument_docbook ${GAD_LIBS})
+		target_link_libraries(generate_argument_docbook ${GAD_LIBS} freerdp winpr)
 
 		add_custom_command(OUTPUT xfreerdp.1
 					COMMAND generate_argument_docbook
@@ -206,12 +199,7 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-core freerdp-gdi freerdp-locale freerdp-primitives freerdp-rail freerdp-utils)
-
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp freerdp-client)
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_IPP)

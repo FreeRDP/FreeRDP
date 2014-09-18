@@ -29,8 +29,8 @@
 
 #include "librail.h"
 
-#include <freerdp/log.h>
 #include <freerdp/rail/window.h>
+#include <freerdp/log.h>
 
 #define TAG FREERDP_TAG("rail")
 
@@ -102,7 +102,7 @@ static const WINDOW_STYLE EXTENDED_WINDOW_STYLES[] =
 void print_window_styles(UINT32 style)
 {
 	int i;
-	DEBUG_WARN("Window Styles:\n{\n");
+	WLog_INFO(TAG, "Window Styles:{");
 
 	for (i = 0; i < ARRAYSIZE(WINDOW_STYLES); i++)
 	{
@@ -114,17 +114,17 @@ void print_window_styles(UINT32 style)
 					continue;
 			}
 
-			DEBUG_WARN("\t%s\n", WINDOW_STYLES[i].name);
+			WLog_INFO(TAG, "\t%s", WINDOW_STYLES[i].name);
 		}
 	}
 
-	DEBUG_WARN("}\n");
+	WLog_INFO(TAG, "}");
 }
 
 void print_extended_window_styles(UINT32 style)
 {
 	int i;
-	DEBUG_WARN("Extended Window Styles:\n{\n");
+	WLog_INFO(TAG, "Extended Window Styles:{");
 
 	for (i = 0; i < ARRAYSIZE(EXTENDED_WINDOW_STYLES); i++)
 	{
@@ -136,11 +136,11 @@ void print_extended_window_styles(UINT32 style)
 					continue;
 			}
 
-			DEBUG_WARN("\t%s\n", EXTENDED_WINDOW_STYLES[i].name);
+			WLog_INFO(TAG, "\t%s", EXTENDED_WINDOW_STYLES[i].name);
 		}
 	}
 
-	DEBUG_WARN("}\n");
+	WLog_INFO(TAG, "}");
 }
 
 void window_state_update(rdpWindow* window, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* window_state)

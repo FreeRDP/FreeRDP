@@ -87,7 +87,7 @@ int tsmf_platform_create(TSMFGstreamerDecoder *decoder)
 
 	if (!hdl)
 	{
-		CLOG_ERR("%s: Could not allocate handle.", __func__);
+		WLog_ERR(TAG, "Could not allocate handle.");
 		return -1;
 	}
 
@@ -97,8 +97,7 @@ int tsmf_platform_create(TSMFGstreamerDecoder *decoder)
 
 	if (hdl->shmid < 0)
 	{
-		CLOG_ERR("%s: failed to get access to shared memory - shmget()",
-				   __func__);
+		WLog_ERR(TAG, "failed to get access to shared memory - shmget()");
 		return -2;
 	}
 	else
@@ -106,7 +105,7 @@ int tsmf_platform_create(TSMFGstreamerDecoder *decoder)
 
 	if (hdl->xfwin == (int *)-1)
 	{
-		CLOG_ERR("%s: shmat failed!", __func__);
+		WLog_ERR(TAG, "shmat failed!");
 		return -3;
 	}
 
@@ -114,7 +113,7 @@ int tsmf_platform_create(TSMFGstreamerDecoder *decoder)
 
 	if (!hdl->disp)
 	{
-		CLOG_ERR("Failed to open display");
+		WLog_ERR(TAG, "Failed to open display");
 		return -4;
 	}
 
@@ -140,7 +139,7 @@ int tsmf_platform_register_handler(TSMFGstreamerDecoder *decoder)
 
 	if (!bus)
 	{
-		CLOG_ERR("gst_pipeline_get_bus failed!");
+		WLog_ERR(TAG, "gst_pipeline_get_bus failed!");
 		return 1;
 	}
 
@@ -193,7 +192,7 @@ int tsmf_window_create(TSMFGstreamerDecoder *decoder)
 
 			if (!hdl->subwin)
 			{
-				CLOG_ERR("Could not create subwindow!");
+				WLog_ERR(TAG, "Could not create subwindow!");
 			}
 
 			XMapWindow(hdl->disp, hdl->subwin);
@@ -238,14 +237,14 @@ int tsmf_window_resize(TSMFGstreamerDecoder *decoder, int x, int y, int width,
 
 		if (!gst_video_overlay_set_render_rectangle(overlay, 0, 0, width, height))
 		{
-			CLOG_ERR("Could not resize overlay!");
+			WLog_ERR(TAG, "Could not resize overlay!");
 		}
 
 		gst_video_overlay_expose(overlay);
 #else
 		if (!gst_x_overlay_set_render_rectangle(overlay, 0, 0, width, height))
 		{
-			CLOG_ERR("Could not resize overlay!");
+			WLog_ERR(TAG, "Could not resize overlay!");
 		}
 
 		gst_x_overlay_expose(overlay);

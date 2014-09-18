@@ -32,11 +32,14 @@
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/locale/keyboard.h>
 
-#include <freerdp/utils/debug.h>
+
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
 
 #include "compatibility.h"
+
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("common.cmdline")
 
 COMMAND_LINE_ARGUMENT_A args[] =
 {
@@ -209,7 +212,7 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 
 			if (arg->Format)
 			{
-				length = (int) (strlen(arg->Name) + strlen(arg->Format) + 2);
+				length = (int)(strlen(arg->Name) + strlen(arg->Format) + 2);
 				str = (char*) malloc(length + 1);
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
 				printf("%-20s", str);
@@ -1087,6 +1090,9 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 	*flags |= COMMAND_LINE_SIGIL_DASH | COMMAND_LINE_SIGIL_DOUBLE_DASH;
 	*flags |= COMMAND_LINE_SIGIL_ENABLE_DISABLE;
 
+	if (posix_cli_status <= COMMAND_LINE_STATUS_PRINT)
+		return compatibility;
+
 	if (windows_cli_count >= posix_cli_count)
 	{
 		*flags = COMMAND_LINE_SEPARATOR_COLON;
@@ -1105,8 +1111,8 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 		}
 	}
 
-	//printf("windows: %d/%d posix: %d/%d compat: %d/%d\n", windows_cli_status, windows_cli_count,
-	//		posix_cli_status, posix_cli_count, old_cli_status, old_cli_count);
+	WLog_DBG(TAG, "windows: %d/%d posix: %d/%d compat: %d/%d", windows_cli_status, windows_cli_count,
+		posix_cli_status, posix_cli_count, old_cli_status, old_cli_count);
 
 	return compatibility;
 }
@@ -1182,7 +1188,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 	if (compatibility)
 	{
-		DEBUG_WARN( "WARNING: Using deprecated command-line interface!\n");
+		WLog_WARN(TAG,  "Using deprecated command-line interface!");
 		return freerdp_client_parse_old_command_line_arguments(argc, argv, settings);
 	}
 	else
@@ -1374,7 +1380,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 				if (!id)
 				{
-					DEBUG_WARN( "Could not identify keyboard layout: %s\n", arg->Value);
+					WLog_ERR(TAG,  "Could not identify keyboard layout: %s", arg->Value);
 				}
 			}
 
@@ -1733,7 +1739,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 			else
 			{
-				DEBUG_WARN( "unknown protocol security: %s\n", arg->Value);
+				WLog_ERR(TAG,  "unknown protocol security: %s", arg->Value);
 			}
 		}
 		CommandLineSwitchCase(arg, "sec-rdp")
@@ -1879,8 +1885,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			}
 			else
 			{
-				DEBUG_WARN( "reconnect-cookie:  invalid base64 '%s'\n",
-					arg->Value);
+				WLog_ERR(TAG,  "reconnect-cookie:  invalid base64 '%s'", arg->Value);
 			}
 		}
 		CommandLineSwitchCase(arg, "print-reconnect-cookie")
@@ -1944,7 +1949,7 @@ int freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings*
 	{
 		if (freerdp_channels_client_load(channels, settings, entry, data) == 0)
 		{
-			DEBUG_WARN( "loading channel %s\n", name);
+			WLog_INFO(TAG,  "loading channel %s", name);
 			return 0;
 		}
 	}

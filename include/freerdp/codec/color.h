@@ -401,10 +401,7 @@ extern "C" {
 
 /* Supported Internal Buffer Formats */
 #define CLRBUF_16BPP		8
-#define	CLRBUF_24BPP		16
 #define	CLRBUF_32BPP		32
-
-#define	CLRBUF_ABGR		64 /* ABGR order (as opposed to ARGB) */
 
 struct _CLRCONV
 {
@@ -447,13 +444,24 @@ FREERDP_API UINT32 freerdp_color_convert_rgb_bgr(UINT32 srcColor, int srcBpp, in
 FREERDP_API UINT32 freerdp_color_convert_bgr_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API UINT32 freerdp_color_convert_var_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
-FREERDP_API UINT32 freerdp_convert_gdi_order_color(UINT32 color, int bpp, UINT32 format);
+FREERDP_API UINT32 freerdp_convert_gdi_order_color(UINT32 color, int bpp, UINT32 format, BYTE* palette);
 
 FREERDP_API HCLRCONV freerdp_clrconv_new(UINT32 flags);
 FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);
 
+FREERDP_API int freerdp_image8_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
+FREERDP_API int freerdp_image15_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
+FREERDP_API int freerdp_image16_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
+FREERDP_API int freerdp_image24_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
+FREERDP_API int freerdp_image32_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
+
 FREERDP_API int freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
-		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc);
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
 FREERDP_API int freerdp_image_move(BYTE* pData, DWORD Format, int nStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, int nXSrc, int nYSrc);
 FREERDP_API int freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,

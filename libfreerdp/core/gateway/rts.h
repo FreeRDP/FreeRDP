@@ -28,7 +28,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
 #define RTS_FLAG_NONE					0x0000
 #define RTS_FLAG_PING					0x0001
@@ -147,10 +147,11 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
 #define WITH_DEBUG_RTS
 #endif
 
+#define RTS_TAG FREERDP_TAG("core.gateway.rts")
 #ifdef WITH_DEBUG_RTS
-#define DEBUG_RTS(fmt, ...) DEBUG_CLASS(RTS, fmt, ## __VA_ARGS__)
+#define DEBUG_RTS(fmt, ...) WLog_DBG(RTS_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_RTS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_RTS(fmt, ...) do { } while (0)
 #endif
 
 #endif /* FREERDP_CORE_RTS_H */

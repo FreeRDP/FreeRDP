@@ -211,7 +211,6 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	if (!((message->NegotiateFlags & NTLMSSP_REQUEST_TARGET) &&
 			(message->NegotiateFlags & NTLMSSP_NEGOTIATE_NTLM) &&
-			(message->NegotiateFlags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN) &&
 			(message->NegotiateFlags & NTLMSSP_NEGOTIATE_UNICODE)))
 	{
 		Stream_Free(s, FALSE);
@@ -432,7 +431,7 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	if (context->ChallengeTargetInfo.cbBuffer > 0)
 	{
-		WLog_ERR(TAG, "ChallengeTargetInfo (%d):", (int) context->ChallengeTargetInfo.cbBuffer);
+		WLog_DBG(TAG, "ChallengeTargetInfo (%d):", (int) context->ChallengeTargetInfo.cbBuffer);
 		ntlm_print_av_pair_list(context->ChallengeTargetInfo.pvBuffer);
 	}
 
@@ -917,7 +916,7 @@ SECURITY_STATUS ntlm_write_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer
 
 	if (context->AuthenticateTargetInfo.cbBuffer > 0)
 	{
-		WLog_ERR(TAG, "AuthenticateTargetInfo (%d):", (int) context->AuthenticateTargetInfo.cbBuffer);
+		WLog_DBG(TAG, "AuthenticateTargetInfo (%d):", (int) context->AuthenticateTargetInfo.cbBuffer);
 		ntlm_print_av_pair_list(context->AuthenticateTargetInfo.pvBuffer);
 	}
 

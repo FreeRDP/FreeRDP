@@ -26,8 +26,10 @@
 
 #include <winpr/stream.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/rail/icon.h>
+
+#define TAG FREERDP_TAG("rail")
 
 ICON_INFO* icon_cache_get(rdpIconCache* cache, BYTE id, UINT16 index, void** extra)
 {
@@ -35,13 +37,13 @@ ICON_INFO* icon_cache_get(rdpIconCache* cache, BYTE id, UINT16 index, void** ext
 
 	if (id >= cache->numCaches)
 	{
-		DEBUG_WARN( "invalid window icon cache id:%d\n", id);
+		WLog_ERR(TAG,  "invalid window icon cache id:%d", id);
 		return (ICON_INFO*) NULL;
 	}
 
 	if (index >= cache->numCacheEntries)
 	{
-		DEBUG_WARN( "invalid window icon cache index:%d in cache id:%d\n", index, id);
+		WLog_ERR(TAG,  "invalid window icon cache index:%d in cache id:%d", index, id);
 		return (ICON_INFO*) NULL;
 	}
 
@@ -57,13 +59,13 @@ void icon_cache_put(rdpIconCache* cache, BYTE id, UINT16 index, ICON_INFO* entry
 {
 	if (id >= cache->numCaches)
 	{
-		DEBUG_WARN( "invalid window icon cache id:%d\n", id);
+		WLog_ERR(TAG,  "invalid window icon cache id:%d", id);
 		return;
 	}
 
 	if (index >= cache->numCacheEntries)
 	{
-		DEBUG_WARN( "invalid window icon cache index:%d in cache id:%d\n", index, id);
+		WLog_ERR(TAG,  "invalid window icon cache index:%d in cache id:%d", index, id);
 		return;
 	}
 

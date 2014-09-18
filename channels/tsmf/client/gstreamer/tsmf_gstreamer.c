@@ -120,10 +120,10 @@ int tsmf_gstreamer_pipeline_set_state(TSMFGstreamerDecoder *mdecoder, GstState d
 	state_change = gst_element_set_state(mdecoder->pipe, desired_state);
 
 	if (state_change == GST_STATE_CHANGE_FAILURE)
-		CLOG_ERR("%s: (%s) GST_STATE_CHANGE_FAILURE.", sname, name);
+		WLog_ERR(TAG, "%s: (%s) GST_STATE_CHANGE_FAILURE.", sname, name);
 	else if (state_change == GST_STATE_CHANGE_ASYNC)
 	{
-		CLOG_ERR("%s: (%s) GST_STATE_CHANGE_ASYNC.", sname, name);
+		WLog_ERR(TAG, "%s: (%s) GST_STATE_CHANGE_ASYNC.", sname, name);
 		mdecoder->state = desired_state;
 	}
 	else
@@ -142,7 +142,7 @@ static GstBuffer *tsmf_get_buffer_from_data(const void *raw_data, gsize size)
 
 	if (!data)
 	{
-		CLOG_ERR("Could not allocate %"G_GSIZE_FORMAT" bytes of data.", size);
+		WLog_ERR(TAG, "Could not allocate %"G_GSIZE_FORMAT" bytes of data.", size);
 		return NULL;
 	}
 
@@ -154,7 +154,7 @@ static GstBuffer *tsmf_get_buffer_from_data(const void *raw_data, gsize size)
 
 	if (!buffer)
 	{
-		CLOG_ERR("Could not create GstBuffer");
+		WLog_ERR(TAG, "Could not create GstBuffer");
 		free(data);
 		return NULL;
 	}
@@ -191,10 +191,10 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 	{
 		case TSMF_SUB_TYPE_WVC1:
 			mdecoder->gst_caps = gst_caps_new_simple("video/x-wmv",
-								 "bitrate", G_TYPE_UINT, media_type->BitRate,
 								 "width", G_TYPE_INT, media_type->Width,
 								 "height", G_TYPE_INT, media_type->Height,
 								 "wmvversion", G_TYPE_INT, 3,
+								 "format", G_TYPE_STRING, "WVC1",
 								 NULL);
 			break;
 		case TSMF_SUB_TYPE_MP4S:
@@ -346,7 +346,7 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 								  NULL);
 			break;
 		default:
-			CLOG_ERR("unknown format:(%d).", media_type->SubType);
+			WLog_ERR(TAG, "unknown format:(%d).", media_type->SubType);
 			return FALSE;
 	}
 
@@ -358,7 +358,7 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 
 		if (!buffer)
 		{
-			CLOG_ERR("could not allocate GstBuffer!");
+			WLog_ERR(TAG, "could not allocate GstBuffer!");
 			return FALSE;
 		}
 
@@ -375,7 +375,7 @@ static BOOL tsmf_gstreamer_set_format(ITSMFDecoder *decoder, TS_AM_MEDIA_TYPE *m
 	return TRUE;
 }
 
-void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder *mdecoder)
+void tsmf_gstreamer_clean_up(TSMFGstreamerDecoder* mdecoder)
 {
 	//Cleaning up elements
 	if (!mdecoder || !mdecoder->pipe)
@@ -416,7 +416,7 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 
 	if (!mdecoder->pipe)
 	{
-		CLOG_ERR("Failed to create new pipe");
+		WLog_ERR(TAG, "Failed to create new pipe");
 		return FALSE;
 	}
 
@@ -424,7 +424,7 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 
 	if (!mdecoder->src)
 	{
-		CLOG_ERR("Failed to get appsrc");
+		WLog_ERR(TAG, "Failed to get appsrc");
 		return FALSE;
 	}
 
@@ -432,7 +432,7 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 
 	if (!mdecoder->outsink)
 	{
-		CLOG_ERR("Failed to get sink");
+		WLog_ERR(TAG, "Failed to get sink");
 		return FALSE;
 	}
 
@@ -442,7 +442,7 @@ BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder *mdecoder)
 
 		if (!mdecoder->volume)
 		{
-			CLOG_ERR("Failed to get volume");
+			WLog_ERR(TAG, "Failed to get volume");
 			return FALSE;
 		}
 	}
@@ -482,7 +482,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder *decoder, const BYTE *data, UIN
 
 	if (!mdecoder)
 	{
-		CLOG_ERR("Decoder not initialized!");
+		WLog_ERR(TAG, "Decoder not initialized!");
 		return FALSE;
 	}
 
@@ -498,13 +498,13 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder *decoder, const BYTE *data, UIN
 
 	if (mdecoder->gst_caps == NULL)
 	{
-		CLOG_ERR("tsmf_gstreamer_set_format not called or invalid format.");
+		WLog_ERR(TAG, "tsmf_gstreamer_set_format not called or invalid format.");
 		return FALSE;
 	}
 
 	if (!mdecoder->src)
 	{
-		CLOG_ERR("failed to construct pipeline correctly. Unable to push buffer to source element.");
+		WLog_ERR(TAG, "failed to construct pipeline correctly. Unable to push buffer to source element.");
 		return FALSE;
 	}
 
@@ -512,7 +512,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder *decoder, const BYTE *data, UIN
 
 	if (gst_buf == NULL)
 	{
-		CLOG_ERR("tsmf_get_buffer_from_data(%p, %d) failed.", data, data_size);
+		WLog_ERR(TAG, "tsmf_get_buffer_from_data(%p, %d) failed.", data, data_size);
 		return FALSE;
 	}
 
@@ -534,7 +534,7 @@ static BOOL tsmf_gstreamer_decodeEx(ITSMFDecoder *decoder, const BYTE *data, UIN
 								  GST_SEEK_TYPE_SET, sample_time,
 								  GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE))
 			{
-				CLOG_ERR("seek failed");
+				WLog_ERR(TAG, "seek failed");
 			}
 
 			mdecoder->pipeline_start_time_valid = 0;
@@ -608,7 +608,7 @@ static void tsmf_gstreamer_control(ITSMFDecoder *decoder, ITSMFControlMsg contro
 
 		if (mdecoder->paused)
 		{
-			CLOG_ERR("%s: Ignoring control PAUSE, already received!", get_type(mdecoder));
+			WLog_ERR(TAG, "%s: Ignoring control PAUSE, already received!", get_type(mdecoder));
 			return;
 		}
 
@@ -624,7 +624,7 @@ static void tsmf_gstreamer_control(ITSMFDecoder *decoder, ITSMFControlMsg contro
 
 		if (!mdecoder->paused && !mdecoder->shutdown)
 		{
-			CLOG_ERR("%s: Ignoring control RESUME, already received!", get_type(mdecoder));
+			WLog_ERR(TAG, "%s: Ignoring control RESUME, already received!", get_type(mdecoder));
 			return;
 		}
 
@@ -642,7 +642,7 @@ static void tsmf_gstreamer_control(ITSMFDecoder *decoder, ITSMFControlMsg contro
 
 		if (mdecoder->shutdown)
 		{
-			CLOG_ERR("%s: Ignoring control STOP, already received!", get_type(mdecoder));
+			WLog_ERR(TAG, "%s: Ignoring control STOP, already received!", get_type(mdecoder));
 			return;
 		}
 
@@ -656,7 +656,7 @@ static void tsmf_gstreamer_control(ITSMFDecoder *decoder, ITSMFControlMsg contro
 		gst_app_src_end_of_stream((GstAppSrc *)mdecoder->src);
 	}
 	else
-		CLOG_ERR("Unknown control message %08x", control_msg);
+		WLog_ERR(TAG, "Unknown control message %08x", control_msg);
 }
 
 static BOOL tsmf_gstreamer_buffer_filled(ITSMFDecoder *decoder)
@@ -748,10 +748,10 @@ BOOL tsmf_gstreamer_sync(ITSMFDecoder *decoder, void (*cb)(void *), void *stream
 }
 
 #ifdef STATIC_CHANNELS
-#define freerdp_tsmf_client_decoder_subsystem_entry	gstreamer_freerdp_tsmf_client_decoder_subsystem_entry
+#define freerdp_tsmf_client_subsystem_entry	gstreamer_freerdp_tsmf_client_decoder_subsystem_entry
 #endif
 
-ITSMFDecoder *freerdp_tsmf_client_decoder_subsystem_entry(void)
+ITSMFDecoder *freerdp_tsmf_client_subsystem_entry(void)
 {
 	TSMFGstreamerDecoder *decoder;
 

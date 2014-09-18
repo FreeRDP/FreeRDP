@@ -37,12 +37,15 @@
 
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/log.h>
 
 #include "../shadow_screen.h"
 #include "../shadow_capture.h"
 #include "../shadow_surface.h"
 
 #include "x11_shadow.h"
+
+#define TAG SERVER_TAG("shadow.x11")
 
 void x11_shadow_input_synchronize_event(x11ShadowSubsystem* subsystem, UINT32 flags)
 {
@@ -462,7 +465,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 					surface->scanline, x - surface->x, y - surface->y, width, height,
 					(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
-					image->bytes_per_line, x, y);
+					image->bytes_per_line, x, y, NULL);
 
 			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
 
@@ -505,7 +508,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 					surface->scanline, x, y, width, height,
 					(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
-					image->bytes_per_line, x, y);
+					image->bytes_per_line, x, y, NULL);
 
 			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
 
@@ -721,7 +724,7 @@ int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 
 	if (!subsystem->fb_image)
 	{
-		fprintf(stderr, "XShmCreateImage failed\n");
+		WLog_ERR(TAG, "XShmCreateImage failed");
 		return -1;
 	}
 
@@ -730,7 +733,7 @@ int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 
 	if (subsystem->fb_shm_info.shmid == -1)
 	{
-		fprintf(stderr, "shmget failed\n");
+		WLog_ERR(TAG, "shmget failed");
 		return -1;
 	}
 
@@ -739,7 +742,7 @@ int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 
 	if (subsystem->fb_shm_info.shmaddr == ((char*) -1))
 	{
-		fprintf(stderr, "shmat failed\n");
+		WLog_ERR(TAG, "shmat failed");
 		return -1;
 	}
 
@@ -803,7 +806,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 
 	if (!subsystem->display)
 	{
-		fprintf(stderr, "failed to open display: %s\n", XDisplayName(NULL));
+		WLog_ERR(TAG, "failed to open display: %s", XDisplayName(NULL));
 		return -1;
 	}
 
@@ -835,7 +838,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 
 	if (!pfs)
 	{
-		fprintf(stderr, "XListPixmapFormats failed\n");
+		WLog_ERR(TAG, "XListPixmapFormats failed");
 		return -1;
 	}
 
@@ -860,7 +863,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 
 	if (!vis)
 	{
-		fprintf(stderr, "XGetVisualInfo failed\n");
+		WLog_ERR(TAG, "XGetVisualInfo failed");
 		return -1;
 	}
 
@@ -931,7 +934,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 		subsystem->monitors[0].flags = 1;
 	}
 
-	printf("X11 Extensions: XFixes: %d Xinerama: %d XDamage: %d XShm: %d\n",
+	WLog_INFO(TAG, "X11 Extensions: XFixes: %d Xinerama: %d XDamage: %d XShm: %d",
 			subsystem->use_xfixes, subsystem->use_xinerama, subsystem->use_xdamage, subsystem->use_xshm);
 
 	return 1;

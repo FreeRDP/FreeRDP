@@ -21,13 +21,13 @@
 #include "config.h"
 #endif
 
-#include <winpr/crt.h>
-#include <winpr/sysinfo.h>
-
 #include <freerdp/server/rdpsnd.h>
 
 #include "mf_info.h"
 #include "mf_rdpsnd.h"
+
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
 
 AQRecorderState recorderState;
 
@@ -46,7 +46,12 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	//we should actually loop through the list of client formats here
 	//and see if we can send the client something that it supports...
+<<<<<<< HEAD
 	
+=======
+	WLog_DBG(TAG, "Client supports the following %d formats: ", context->num_client_formats);
+
+>>>>>>> f7d21655fa2552c8813be9d2d5bac4bbaa5abf6a
 	for (i = 0; i < context->num_client_formats; i++)
 	{
 		/* TODO: improve the way we agree on a format */
@@ -56,6 +61,10 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
 			    (context->client_formats[i].nSamplesPerSec == context->server_formats[j].nSamplesPerSec))
 			{
+<<<<<<< HEAD
+=======
+				WLog_DBG(TAG, "agreed on format!");
+>>>>>>> f7d21655fa2552c8813be9d2d5bac4bbaa5abf6a
 				formatAgreed = TRUE;
 				agreedFormat = (AUDIO_FORMAT*)&context->server_formats[j];
 				break;
@@ -68,9 +77,13 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	if (formatAgreed == FALSE)
 	{
+<<<<<<< HEAD
+=======
+		WLog_DBG(TAG, "Could not agree on a audio format with the server");
+>>>>>>> f7d21655fa2552c8813be9d2d5bac4bbaa5abf6a
 		return;
 	}
-	
+
 	context->SelectFormat(context, i);
 	context->SetVolume(context, 0x7FFF, 0x7FFF);
 	
@@ -110,7 +123,11 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	
 	if (status != noErr)
 	{
+<<<<<<< HEAD
 
+=======
+		WLog_DBG(TAG, "Failed to create a new Audio Queue. Status code: %d", status);
+>>>>>>> f7d21655fa2552c8813be9d2d5bac4bbaa5abf6a
 	}
 	
 	UInt32 dataFormatSize = sizeof (recorderState.dataFormat);
@@ -206,7 +223,11 @@ void mf_peer_rdpsnd_input_callback (void                                *inUserD
 	
 	if (status != noErr)
 	{
+<<<<<<< HEAD
 
+=======
+		WLog_DBG(TAG, "AudioQueueEnqueueBuffer() returned status = %d", status);
+>>>>>>> f7d21655fa2552c8813be9d2d5bac4bbaa5abf6a
 	}
 	
 }

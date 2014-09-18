@@ -98,6 +98,8 @@
 #include "xf_input.h"
 #include "xf_channels.h"
 #include "xfreerdp.h"
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("x11")
 
 static long xv_port = 0;
 static const size_t password_size = 512;
@@ -547,7 +549,7 @@ int xf_encomsp_participant_created(EncomspClientContext* context, ENCOMSP_PARTIC
 #if 0
 	xfContext* xfc = (xfContext*) context->custom;
 
-	printf("ParticipantCreated: ParticipantId: %d GroupId: %d Flags: 0x%04X xfc: %p\n",
+	WLog_INFO(TAG, "ParticipantCreated: ParticipantId: %d GroupId: %d Flags: 0x%04X xfc: %p",
 			(int) participantCreated->ParticipantId, (int) participantCreated->GroupId,
 			(int) participantCreated->Flags, xfc);
 #endif
@@ -608,7 +610,7 @@ BOOL xf_get_pixmap_info(xfContext *xfc)
 	pfs = XListPixmapFormats(xfc->display, &pf_count);
 	if(pfs == NULL)
 	{
-		DEBUG_WARN( "xf_get_pixmap_info: XListPixmapFormats failed\n");
+		WLog_ERR(TAG,  "XListPixmapFormats failed");
 		return 1;
 	}
 	for(i = 0; i < pf_count; i++)
@@ -627,13 +629,13 @@ BOOL xf_get_pixmap_info(xfContext *xfc)
 	template.screen = xfc->screen_number;
 	if(XGetWindowAttributes(xfc->display, RootWindowOfScreen(xfc->screen), &window_attributes) == 0)
 	{
-		DEBUG_WARN( "xf_get_pixmap_info: XGetWindowAttributes failed\n");
+		WLog_ERR(TAG,  "XGetWindowAttributes failed");
 		return FALSE;
 	}
 	vis = XGetVisualInfo(xfc->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
 	if(vis == NULL)
 	{
-		DEBUG_WARN( "xf_get_pixmap_info: XGetVisualInfo failed\n");
+		WLog_ERR(TAG,  "XGetVisualInfo failed");
 		return FALSE;
 	}
 	vi = NULL;
@@ -672,7 +674,7 @@ int xf_error_handler(Display *d, XErrorEvent *ev)
 	char buf[256];
 	int do_abort = TRUE;
 	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
-	DEBUG_WARN( "%s", buf);
+	WLog_ERR(TAG,  "%s", buf);
 	if(do_abort)
 		abort();
 	_def_error_handler(d, ev);
@@ -763,7 +765,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	{
 		if(!XInitThreads())
 		{
-			DEBUG_WARN( "warning: XInitThreads() failure\n");
+			WLog_WARN(TAG,  "XInitThreads() failure");
 			xfc->UseXThreads = FALSE;
 		}
 	}
@@ -772,14 +774,14 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	if (!xfc->display)
 	{
-		DEBUG_WARN( "xf_pre_connect: failed to open display: %s\n", XDisplayName(NULL));
-		DEBUG_WARN( "Please check that the $DISPLAY environment variable is properly set.\n");
+		WLog_ERR(TAG,  "failed to open display: %s", XDisplayName(NULL));
+		WLog_ERR(TAG,  "Please check that the $DISPLAY environment variable is properly set.");
 		return FALSE;
 	}
 
 	if (xfc->debug)
 	{
-		DEBUG_WARN( "Enabling X11 debug mode.\n");
+		WLog_INFO(TAG,  "Enabling X11 debug mode.");
 		XSynchronize(xfc->display, TRUE);
 		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
@@ -799,19 +801,17 @@ BOOL xf_pre_connect(freerdp* instance)
 		/* Check --authonly has a username and password. */
 		if (!settings->Username)
 		{
-			DEBUG_WARN( "--authonly, but no -u username. Please provide one.\n");
+			WLog_INFO(TAG, "--authonly, but no -u username. Please provide one.");
 			return FALSE;
 		}
 
 		if (!settings->Password)
 		{
-			DEBUG_WARN( "--authonly, but no -p password. Please provide one.\n");
+			WLog_INFO(TAG, "--authonly, but no -p password. Please provide one.");
 			return FALSE;
 		}
 
-		DEBUG_WARN("Authentication only. Don't connect to X.\n");
-		/* Avoid XWindows initialization and configuration below. */
-		return TRUE;
+		WLog_INFO(TAG, "Authentication only. Don't connect to X.");
 	}
 
 	xfc->_NET_WM_ICON = XInternAtom(xfc->display, "_NET_WM_ICON", False);
@@ -1025,23 +1025,23 @@ BOOL xf_authenticate(freerdp *instance, char **username, char **password, char *
 BOOL xf_verify_certificate(freerdp *instance, char *subject, char *issuer, char *fingerprint)
 {
 	char answer;
-	printf("Certificate details:\n");
-	printf("\tSubject: %s\n", subject);
-	printf("\tIssuer: %s\n", issuer);
-	printf("\tThumbprint: %s\n", fingerprint);
-	printf("The above X.509 certificate could not be verified, possibly because you do not have "
+	WLog_INFO(TAG, "Certificate details:");
+	WLog_INFO(TAG, "\tSubject: %s", subject);
+	WLog_INFO(TAG, "\tIssuer: %s", issuer);
+	WLog_INFO(TAG, "\tThumbprint: %s", fingerprint);
+	WLog_INFO(TAG, "The above X.509 certificate could not be verified, possibly because you do not have "
 		   "the CA certificate in your certificate store, or the certificate has expired. "
-		   "Please look at the documentation on how to create local certificate store for a private CA.\n");
+		   "Please look at the documentation on how to create local certificate store for a private CA.");
 	while(1)
 	{
-		printf("Do you trust the above certificate? (Y/N) ");
+		WLog_INFO(TAG, "Do you trust the above certificate? (Y/N) ");
 		answer = fgetc(stdin);
 		if(feof(stdin))
 		{
-			printf("\nError: Could not read answer from stdin.");
+			WLog_INFO(TAG, "Error: Could not read answer from stdin.");
 			if(instance->settings->CredentialsFromStdin)
-				printf(" - Run without parameter \"--from-stdin\" to set trust.");
-			printf("\n");
+				WLog_INFO(TAG, " - Run without parameter \"--from-stdin\" to set trust.");
+			WLog_INFO(TAG, "");
 			return FALSE;
 		}
 		if(answer == 'y' || answer == 'Y')
@@ -1053,7 +1053,7 @@ BOOL xf_verify_certificate(freerdp *instance, char *subject, char *issuer, char 
 			{
 				break;
 			}
-		printf("\n");
+		WLog_INFO(TAG, "");
 	}
 	return FALSE;
 }
@@ -1246,7 +1246,7 @@ BOOL xf_auto_reconnect(freerdp *instance)
 	if(freerdp_error_info(instance) != 0)
 		return FALSE;
 	/* A network disconnect was detected */
-	DEBUG_WARN( "Network disconnect!\n");
+	WLog_INFO(TAG,  "Network disconnect!");
 	if(!instance->settings->AutoReconnectionEnabled)
 	{
 		/* No auto-reconnect - just quit */
@@ -1261,7 +1261,7 @@ BOOL xf_auto_reconnect(freerdp *instance)
 			return FALSE;
 		}
 		/* Attempt the next reconnect */
-		DEBUG_WARN( "Attempting reconnect (%u of %u)\n", num_retries, max_retries);
+		WLog_INFO(TAG,  "Attempting reconnect (%u of %u)", num_retries, max_retries);
 		if(freerdp_reconnect(instance))
 		{
 			xfc->disconnect = FALSE;
@@ -1269,7 +1269,7 @@ BOOL xf_auto_reconnect(freerdp *instance)
 		}
 		sleep(5);
 	}
-	DEBUG_WARN( "Maximum reconnect retries exceeded\n");
+	WLog_ERR(TAG,  "Maximum reconnect retries exceeded");
 	return FALSE;
 }
 
@@ -1320,7 +1320,7 @@ void *xf_thread(void *param)
 	if(instance->settings->AuthenticationOnly)
 	{
 		freerdp_disconnect(instance);
-		DEBUG_WARN( "Authentication only, exit status %d\n", !status);
+		WLog_ERR(TAG,  "Authentication only, exit status %d", !status);
 		ExitThread(exit_code);
 	}
 	if(!status)
@@ -1367,7 +1367,7 @@ void *xf_thread(void *param)
 		{
 			if(freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
-				DEBUG_WARN( "Failed to get FreeRDP file descriptor\n");
+				WLog_ERR(TAG,  "Failed to get FreeRDP file descriptor");
 				exit_code = XF_EXIT_CONN_FAILED;
 				break;
 			}
@@ -1376,7 +1376,7 @@ void *xf_thread(void *param)
 		{
 			if(freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
-				DEBUG_WARN( "Failed to get channel manager file descriptor\n");
+				WLog_ERR(TAG,  "Failed to get channel manager file descriptor");
 				exit_code = XF_EXIT_CONN_FAILED;
 				break;
 			}
@@ -1385,7 +1385,7 @@ void *xf_thread(void *param)
 		{
 			if(xf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
 			{
-				DEBUG_WARN( "Failed to get xfreerdp file descriptor\n");
+				WLog_ERR(TAG,  "Failed to get xfreerdp file descriptor");
 				exit_code = XF_EXIT_CONN_FAILED;
 				break;
 			}
@@ -1422,7 +1422,7 @@ void *xf_thread(void *param)
 				if(!((errno == EAGAIN) || (errno == EWOULDBLOCK) ||
 						(errno == EINPROGRESS) || (errno == EINTR))) /* signal occurred */
 				{
-					DEBUG_WARN( "xfreerdp_run: select failed\n");
+					WLog_ERR(TAG,  "xfreerdp_run: select failed");
 					break;
 				}
 			}
@@ -1432,7 +1432,7 @@ void *xf_thread(void *param)
 			{
 				if(xf_auto_reconnect(instance))
 					continue;
-				DEBUG_WARN( "Failed to check FreeRDP file descriptor\n");
+				WLog_ERR(TAG,  "Failed to check FreeRDP file descriptor");
 				break;
 			}
 		}
@@ -1440,7 +1440,7 @@ void *xf_thread(void *param)
 		{
 			if(freerdp_channels_check_fds(channels, instance) != TRUE)
 			{
-				DEBUG_WARN( "Failed to check channel manager file descriptor\n");
+				WLog_ERR(TAG,  "Failed to check channel manager file descriptor");
 				break;
 			}
 			xf_process_channel_event(channels, instance);
@@ -1449,7 +1449,7 @@ void *xf_thread(void *param)
 		{
 			if(xf_process_x_events(instance) != TRUE)
 			{
-				DEBUG_WARN( "Closed from X11\n");
+				WLog_INFO(TAG,  "Closed from X11");
 				break;
 			}
 		}
@@ -1459,7 +1459,7 @@ void *xf_thread(void *param)
 			{
 				if(!freerdp_message_queue_process_pending_messages(instance, FREERDP_INPUT_MESSAGE_QUEUE))
 				{
-					DEBUG_WARN( "User Disconnect\n");
+					WLog_INFO(TAG,  "User Disconnect");
 					xfc->disconnect = TRUE;
 					break;
 				}
@@ -1576,7 +1576,7 @@ static int xfreerdp_client_start(rdpContext *context)
 
 	if (!settings->ServerHostname)
 	{
-		DEBUG_WARN( "error: server hostname was not specified with /v:<server>[:port]\n");
+		WLog_ERR(TAG,  "error: server hostname was not specified with /v:<server>[:port]");
 		return -1;
 	}
 	xfc->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread,

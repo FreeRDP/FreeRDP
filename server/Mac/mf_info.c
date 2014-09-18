@@ -27,10 +27,8 @@
 
 #include "mf_info.h"
 #include "mf_mountain_lion.h"
-//#include "mf_update.h"
 
 static mfInfo* mfInfoInstance = NULL;
-//static int _IDcount = 0;
 
 int mf_info_lock(mfInfo* mfi)
 {
@@ -47,11 +45,11 @@ int mf_info_lock(mfInfo* mfi)
 			break;
 	}
 	
+	return 1;
 }
 
 int mf_info_try_lock(mfInfo* mfi, UINT32 ms)
 {
-	
 	int status = pthread_mutex_trylock(&mfi->mutex);
 	
 	switch (status)
@@ -69,6 +67,7 @@ int mf_info_try_lock(mfInfo* mfi, UINT32 ms)
 			break;
 	}
 	
+	return 1;
 }
 
 int mf_info_unlock(mfInfo* mfi)
@@ -86,6 +85,7 @@ int mf_info_unlock(mfInfo* mfi)
 			break;
 	}
 	
+	return 1;
 }
 
 mfInfo* mf_info_init()
@@ -127,14 +127,12 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 		
 		if (mfi->peerCount == MF_INFO_MAXPEERS)
 		{
-			//context->socketClose = TRUE;
 			mf_info_unlock(mfi);
 			return;
 		}
 		
 		context->info = mfi;
 		
-		//initialize screen capture
 		if (mfi->peerCount == 0)
 		{
 			mf_mlion_display_info(&mfi->servscreen_width, &mfi->servscreen_height, &mfi->scale);
@@ -142,8 +140,8 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 			mf_mlion_start_getting_screen_updates();
 		}
 		
-		//look trhough the array of peers until an empty slot
 		peerId = NULL;
+
 		for(i=0; i<MF_INFO_MAXPEERS; ++i)
 		{
 			//empty index will be our peer id
@@ -157,7 +155,6 @@ void mf_info_peer_register(mfInfo* mfi, mfPeerContext* context)
 		mfi->peers[peerId] = ((rdpContext*) context)->peer;
 		mfi->peers[peerId]->pId = peerId;
 		mfi->peerCount++;
-		//printf("Registering Peer: id=%d #=%d\n", peerId, mfi->peerCount);
 		
 		mf_info_unlock(mfi);
 	}
@@ -173,11 +170,9 @@ void mf_info_peer_unregister(mfInfo* mfi, mfPeerContext* context)
 		mfi->peers[peerId] = NULL;
 		mfi->peerCount--;
 		
-		//screen capture cleanup
 		if (mfi->peerCount == 0)
-		{
 			mf_mlion_stop_getting_screen_updates();
-		}
+
 		mf_info_unlock(mfi);
 	}
 }
@@ -217,9 +212,9 @@ void mf_info_invalidate_full_screen(mfInfo* mfi)
 
 BOOL mf_info_have_invalid_region(mfInfo* mfi)
 {
-	if (mfi->invalid.width * mfi->invalid.height == 0) {
+	if (mfi->invalid.width * mfi->invalid.height == 0)
 		return FALSE;
-	}
+
 	return TRUE;
 }
 
@@ -234,4 +229,3 @@ void mf_info_getScreenData(mfInfo* mfi, long* width, long* height, BYTE** pBits,
 	*pBits = *pBits + (mfi->invalid.x * 4) + (*pitch * mfi->invalid.y);
 	
 }
-

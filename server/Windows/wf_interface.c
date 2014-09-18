@@ -102,7 +102,7 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 
 		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
-			DEBUG_WARN("Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
@@ -127,13 +127,12 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)
 		{
-			DEBUG_WARN("Failed to check FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
 	}
 
-	DEBUG_WARN("wf_server_main_loop terminating\n");
-
+	WLog_INFO(TAG, "wf_server_main_loop terminating");
 	instance->Close(instance);
 
 	return 0;
@@ -163,8 +162,7 @@ BOOL wfreerdp_server_stop(wfServer* server)
 	wfInfo* wfi;
 
 	wfi = wf_info_get_instance();
-
-	DEBUG_WARN("Stopping server\n");
+	WLog_INFO(TAG, "Stopping server");
 	wfi->force_all_disconnect = TRUE;
 	server->instance->Close(server->instance);
 	return TRUE;
@@ -210,7 +208,7 @@ FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server)
 	bRet = GetExitCodeThread(server->thread, &tStatus);
 	if (bRet == 0)
 	{
-		DEBUG_WARN("Error in call to GetExitCodeThread\n");
+		WLog_ERR(TAG, "Error in call to GetExitCodeThread");
 		return FALSE;
 	}
 
@@ -245,7 +243,7 @@ FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr)
 	}
 	else
 	{
-		DEBUG_WARN("nonexistent peer id=%d\n", pId);
+		WLog_WARN(TAG, "nonexistent peer id=%d", pId);
 		return 0;
 	}
 }

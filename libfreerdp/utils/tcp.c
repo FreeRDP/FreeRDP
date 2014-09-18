@@ -26,7 +26,7 @@
 #include <winpr/crt.h>
 #include <winpr/winsock.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/utils/tcp.h>
 
 #include <stdio.h>
@@ -74,6 +74,8 @@
 
 #endif
 
+#define TAG FREERDP_TAG("utils")
+
 int freerdp_tcp_connect(const char* hostname, int port)
 {
 	int status;
@@ -97,7 +99,7 @@ int freerdp_tcp_connect(const char* hostname, int port)
 
 	if (status != 0)
 	{
-		//DEBUG_WARN( "tcp_connect: getaddrinfo (%s)\n", gai_strerror(status));
+		//WLog_ERR(TAG,  "tcp_connect: getaddrinfo (%s)", gai_strerror(status));
 		return -1;
 	}
 
@@ -112,7 +114,7 @@ int freerdp_tcp_connect(const char* hostname, int port)
 
 		if (connect(sockfd, ai->ai_addr, ai->ai_addrlen) == 0)
 		{
-			DEBUG_WARN( "connected to %s:%s\n", hostname, servname);
+			WLog_ERR(TAG,  "connected to %s:%s", hostname, servname);
 			break;
 		}
 
@@ -124,7 +126,7 @@ int freerdp_tcp_connect(const char* hostname, int port)
 
 	if (sockfd == -1)
 	{
-		DEBUG_WARN( "unable to connect to %s:%s\n", hostname, servname);
+		WLog_ERR(TAG,  "unable to connect to %s:%s", hostname, servname);
 		return -1;
 	}
 
@@ -150,13 +152,13 @@ int freerdp_tcp_read(int sockfd, BYTE* data, int length)
 		if (wsa_error == WSAEWOULDBLOCK)
 			return 0;
 
-		DEBUG_WARN( "recv() error: %d\n", wsa_error);
+		WLog_ERR(TAG,  "recv() error: %d", wsa_error);
 #else
 		/* No data available */
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return 0;
 
-		DEBUG_WARN("recv");
+		WLog_ERR(TAG, "recv");
 #endif
 		return -1;
 	}
@@ -179,12 +181,14 @@ int freerdp_tcp_write(int sockfd, BYTE* data, int length)
 		if (wsa_error == WSAEWOULDBLOCK)
 			status = 0;
 		else
-			DEBUG_WARN("send");
+			WLog_ERR(TAG, "send");
+
 #else
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			status = 0;
 		else
-			DEBUG_WARN("send");
+			WLog_ERR(TAG, "send");
+
 #endif
 	}
 
@@ -204,7 +208,7 @@ int freerdp_tcp_wait_read(int sockfd)
 
 	if (sockfd < 1)
 	{
-		DEBUG_WARN( "Invalid socket to watch: %d\n", sockfd);
+		WLog_ERR(TAG,  "Invalid socket to watch: %d", sockfd);
 		return 0 ;
 	}
 
@@ -241,7 +245,7 @@ int freerdp_tcp_wait_write(int sockfd)
 
 	if (sockfd < 1)
 	{
-		DEBUG_WARN( "Invalid socket to watch: %d\n", sockfd);
+		WLog_ERR(TAG,  "Invalid socket to watch: %d", sockfd);
 		return 0 ;
 	}
 

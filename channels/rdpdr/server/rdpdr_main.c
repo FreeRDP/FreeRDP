@@ -38,7 +38,7 @@ static int rdpdr_server_send_announce_request(RdpdrServerContext* context)
 	BOOL status;
 	RDPDR_HEADER header;
 	ULONG written;
-	CLOG_DBG("RdpdrServerSendAnnounceRequest\n");
+	WLog_DBG(TAG, "RdpdrServerSendAnnounceRequest");
 	header.Component = RDPDR_CTYP_CORE;
 	header.PacketId = PAKID_CORE_SERVER_ANNOUNCE;
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH + 8);
@@ -61,7 +61,7 @@ static int rdpdr_server_receive_announce_response(RdpdrServerContext* context, w
 	Stream_Read_UINT16(s, VersionMajor); /* VersionMajor (2 bytes) */
 	Stream_Read_UINT16(s, VersionMinor); /* VersionMinor (2 bytes) */
 	Stream_Read_UINT32(s, ClientId); /* ClientId (4 bytes) */
-	CLOG_DBG("Client Announce Response: VersionMajor: 0x%04X VersionMinor: 0x%04X ClientId: 0x%04X\n",
+	WLog_DBG(TAG, "Client Announce Response: VersionMajor: 0x%04X VersionMinor: 0x%04X ClientId: 0x%04X",
 			 VersionMajor, VersionMinor, ClientId);
 	context->priv->ClientId = ClientId;
 	return 0;
@@ -97,7 +97,7 @@ static int rdpdr_server_receive_client_name_request(RdpdrServerContext* context,
 	}
 
 	Stream_Seek(s, ComputerNameLen);
-	CLOG_DBG("ClientComputerName: %s\n", context->priv->ClientComputerName);
+	WLog_DBG(TAG, "ClientComputerName: %s", context->priv->ClientComputerName);
 	return 0;
 }
 
@@ -262,7 +262,7 @@ static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context
 	RDPDR_HEADER header;
 	UINT16 numCapabilities;
 	ULONG written;
-	CLOG_DBG("RdpdrServerSendCoreCapabilityRequest\n");
+	WLog_DBG(TAG, "RdpdrServerSendCoreCapabilityRequest");
 	header.Component = RDPDR_CTYP_CORE;
 	header.PacketId = PAKID_CORE_SERVER_CAPABILITY;
 	numCapabilities = 5;
@@ -317,7 +317,7 @@ static int rdpdr_server_receive_core_capability_response(RdpdrServerContext* con
 				break;
 
 			default:
-				CLOG_DBG("Unknown capabilityType %d\n", capabilityHeader.CapabilityType);
+				WLog_DBG(TAG, "Unknown capabilityType %d", capabilityHeader.CapabilityType);
 				Stream_Seek(s, capabilityHeader.CapabilityLength - RDPDR_CAPABILITY_HEADER_LENGTH);
 				break;
 		}
@@ -332,7 +332,7 @@ static int rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 	BOOL status;
 	RDPDR_HEADER header;
 	ULONG written;
-	CLOG_DBG("RdpdrServerSendClientIdConfirm\n");
+	WLog_DBG(TAG, "RdpdrServerSendClientIdConfirm");
 	header.Component = RDPDR_CTYP_CORE;
 	header.PacketId = PAKID_CORE_CLIENTID_CONFIRM;
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH + 8);
@@ -357,7 +357,7 @@ static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext*
 	UINT32 DeviceDataLength;
 	PreferredDosName[8] = 0;
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
-	CLOG_DBG("%s: DeviceCount: %d\n", __FUNCTION__, DeviceCount);
+	WLog_DBG(TAG, "DeviceCount: %d", DeviceCount);
 
 	for (i = 0; i < DeviceCount; i++)
 	{
@@ -365,7 +365,7 @@ static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext*
 		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
 		Stream_Read(s, PreferredDosName, 8); /* PreferredDosName (8 bytes) */
 		Stream_Read_UINT32(s, DeviceDataLength); /* DeviceDataLength (4 bytes) */
-		CLOG_DBG("Device %d Name: %s Id: 0x%04X DataLength: %d\n",
+		WLog_DBG(TAG, "Device %d Name: %s Id: 0x%04X DataLength: %d",
 				 i, PreferredDosName, DeviceId, DeviceDataLength);
 
 		switch (DeviceId)
@@ -401,7 +401,7 @@ static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 	BOOL status;
 	RDPDR_HEADER header;
 	ULONG written;
-	CLOG_DBG("%s\n", __FUNCTION__);
+	WLog_DBG(TAG, "%s");
 	header.Component = RDPDR_CTYP_CORE;
 	header.PacketId = PAKID_CORE_USER_LOGGEDON;
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH);
@@ -415,7 +415,7 @@ static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 
 static int rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
-	CLOG_DBG("RdpdrServerReceivePdu: Component: 0x%04X PacketId: 0x%04X\n",
+	WLog_DBG(TAG, "RdpdrServerReceivePdu: Component: 0x%04X PacketId: 0x%04X",
 			 header->Component, header->PacketId);
 	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
 
@@ -477,7 +477,7 @@ static int rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDP
 	}
 	else
 	{
-		CLOG_DBG("Unknown RDPDR_HEADER.Component: 0x%04X\n", header->Component);
+		WLog_WARN(TAG, "Unknown RDPDR_HEADER.Component: 0x%04X", header->Component);
 		return -1;
 	}
 

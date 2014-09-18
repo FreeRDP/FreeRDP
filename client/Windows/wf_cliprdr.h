@@ -26,11 +26,13 @@
 #include <ShlObj.h>
 
 #include "wf_client.h"
+#include <freerdp/log.h>
 
+#define TAG CLIENT_TAG(WIN_CLIPRDR_TAG)
 #ifdef WITH_DEBUG_CLIPRDR
-#define DEBUG_CLIPRDR(fmt, ...) DEBUG_CLASS(WIN_CLIPRDR, fmt, ## __VA_ARGS__)
+#define DEBUG_CLIPRDR(fmt, ...) WLog_DBG(WIN_CLIPRDR_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_CLIPRDR(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_CLIPRDR(fmt, ...) do { } while (0)
 #endif
 
 typedef struct format_mapping formatMapping;

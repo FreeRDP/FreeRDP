@@ -21,7 +21,7 @@
 #define FREERDP_CORE_SERVER_H
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/debug.h>
+
 #include <freerdp/channels/wtsvc.h>
 
 #include <winpr/synch.h>

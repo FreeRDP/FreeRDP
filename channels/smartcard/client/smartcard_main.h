@@ -30,6 +30,8 @@
 #include <winpr/smartcard.h>
 #include <winpr/collections.h>
 
+#define TAG CHANNELS_TAG("smartcard.client")
+
 #define RDP_SCARD_CTL_CODE(code)	CTL_CODE(FILE_DEVICE_FILE_SYSTEM, (code), METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 #define SCARD_IOCTL_ESTABLISHCONTEXT		RDP_SCARD_CTL_CODE(5)	/* SCardEstablishContext */

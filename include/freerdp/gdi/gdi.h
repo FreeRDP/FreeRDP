@@ -21,9 +21,9 @@
 #define FREERDP_GDI_H
 
 #include <freerdp/api.h>
+#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/cache/cache.h>
-#include <freerdp/utils/debug.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
 
@@ -284,7 +284,7 @@ struct rdp_gdi
 	int bytesPerPixel;
 	rdpCodecs* codecs;
 
-	BOOL abgr;
+	BOOL invert;
 	HGDI_DC hdc;
 	UINT32 format;
 	HCLRCONV clrconv;
@@ -294,6 +294,7 @@ struct rdp_gdi
 	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	GDI_COLOR textColor;
+	BYTE palette[256 * 4];
 	gdiBitmap* tile;
 	gdiBitmap* image;
 
@@ -322,10 +323,11 @@ FREERDP_API void gdi_free(freerdp* instance);
 }
 #endif
 
+#define GDI_TAG FREERDP_TAG("gdi")
 #ifdef WITH_DEBUG_GDI
-#define DEBUG_GDI(fmt, ...) DEBUG_CLASS(GDI, fmt, ## __VA_ARGS__)
+#define DEBUG_GDI(fmt, ...) WLog_DBG(GDI_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_GDI(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_GDI(fmt, ...)
 #endif
 
 #endif /* FREERDP_GDI_H */

@@ -143,7 +143,7 @@ void* rail_clone_order(UINT32 event_type, void* order)
 	new_order = malloc(order_size);
 	CopyMemory(new_order, order, order_size);
 
-	//DEBUG_WARN( "rail_clone_order: type=%d order=%p\n", event_type, new_order);
+	//WLog_ERR(TAG,  "rail_clone_order: type=%d order=%p\n", event_type, new_order);
 
 	// Create copy of variable data for some orders
 	if ((event_type == RailChannel_GetSystemParam) ||
@@ -183,7 +183,7 @@ void* rail_clone_order(UINT32 event_type, void* order)
 
 void rail_free_cloned_order(UINT32 event_type, void* order)
 {
-	//DEBUG_WARN( "rail_free_cloned_order: type=%d order=%p\n", event_type, order);
+	//WLog_ERR(TAG,  "rail_free_cloned_order: type=%d order=%p\n", event_type, order);
 	if ((event_type == RailChannel_GetSystemParam) ||
 		(event_type == RailChannel_ClientSystemParam))
 	{

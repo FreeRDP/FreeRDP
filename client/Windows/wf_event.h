@@ -23,14 +23,16 @@
 #define __WF_EVENT_H
 
 #include "wf_client.h"
+#include <freerdp/log.h>
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 
+#define KBD_TAG CLIENT_TAG("windows")
 #ifdef WITH_DEBUG_KBD
-#define DEBUG_KBD(fmt, ...) DEBUG_CLASS(KBD, fmt, ## __VA_ARGS__)
+#define DEBUG_KBD(fmt, ...) WLog_DBG(KBD_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_KBD(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_KBD(fmt, ...) do { } while (0)
 #endif
 
 #endif /* __WF_EVENT_H */

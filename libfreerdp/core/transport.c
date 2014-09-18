@@ -55,7 +55,7 @@
 #include "transport.h"
 #include "rdp.h"
 
-#define TAG FREERDP_TAG("core")
+#define TAG FREERDP_TAG("core.transport")
 
 #define BUFFER_SIZE 16384
 
@@ -276,7 +276,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 	if (!transport->frontBio)
 	{
-		DEBUG_WARN("%s: unable to prepend a filtering TLS bio", __FUNCTION__);
+		WLog_ERR(TAG, "unable to prepend a filtering TLS bio");
 		return FALSE;
 	}
 
@@ -330,8 +330,8 @@ BOOL transport_connect_nla(rdpTransport* transport)
 			freerdp_set_last_error(instance->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 		}
 
-		DEBUG_WARN("Authentication failure, check credentials.\n"
-				   "If credentials are valid, the NTLMSSP implementation may be to blame.\n");
+		WLog_ERR(TAG,  "Authentication failure, check credentials."
+				 "If credentials are valid, the NTLMSSP implementation may be to blame.");
 		transport_set_nla_mode(transport, FALSE);
 		credssp_free(credSsp);
 		transport->credssp = NULL;
@@ -532,7 +532,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
-		DEBUG_WARN("client authentication failure\n");
+		WLog_ERR(TAG,  "client authentication failure");
 		transport_set_nla_mode(transport, FALSE);
 		credssp_free(transport->credssp);
 		transport->credssp = NULL;
@@ -612,7 +612,7 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 			 * requested bytes */
 			if (transport_wait_for_read(transport) < 0)
 			{
-				DEBUG_WARN("%s: error when selecting for read\n", __FUNCTION__);
+				WLog_ERR(TAG, "error when selecting for read");
 				return -1;
 			}
 
@@ -726,7 +726,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 				}
 				else
 				{
-					DEBUG_WARN("Error reading TSRequest!\n");
+					WLog_ERR(TAG,  "Error reading TSRequest!");
 					return -1;
 				}
 			}
@@ -750,7 +750,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 			/* min and max values according to ITU-T Rec. T.123 (01/2007) section 8 */
 			if (pduLength < 7 || pduLength > 0xFFFF)
 			{
-				DEBUG_WARN("%s: tpkt - invalid pduLength: %d\n", __FUNCTION__, pduLength);
+				WLog_ERR(TAG, "tpkt - invalid pduLength: %d", pduLength);
 				return -1;
 			}
 		}
@@ -774,7 +774,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 			 */
 			if (pduLength < 3 || pduLength > 0x8000)
 			{
-				DEBUG_WARN("%s: fast path - invalid pduLength: %d\n", __FUNCTION__, pduLength);
+				WLog_ERR(TAG, "fast path - invalid pduLength: %d", pduLength);
 				return -1;
 			}
 		}
@@ -791,7 +791,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	/* dump when whole PDU is read */
 	if (Stream_GetPosition(s) >= pduLength)
 	{
-		DEBUG_WARN("Local < Remote\n");
+		WLog_DBG(TAG,  "Local < Remote");
 		winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), pduLength);
 	}
 
@@ -818,7 +818,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 	if (length > 0)
 	{
-		DEBUG_WARN("Local > Remote\n");
+		WLog_DBG(TAG,  "Local > Remote");
 		winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), length);
 	}
 
@@ -848,7 +848,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 			if (transport_wait_for_write(transport) < 0)
 			{
-				DEBUG_WARN("%s: error when selecting for write\n", __FUNCTION__);
+				WLog_ERR(TAG, "error when selecting for write");
 				return -1;
 			}
 
@@ -864,13 +864,13 @@ int transport_write(rdpTransport* transport, wStream* s)
 			{
 				if (transport_wait_for_write(transport) < 0)
 				{
-					DEBUG_WARN("%s: error when selecting for write\n", __FUNCTION__);
+					WLog_ERR(TAG, "error when selecting for write");
 					return -1;
 				}
 
 				if (!transport_bio_buffered_drain(out->bufferedBio))
 				{
-					DEBUG_WARN("%s: error when draining outputBuffer\n", __FUNCTION__);
+					WLog_ERR(TAG, "error when draining outputBuffer");
 					return -1;
 				}
 			}
@@ -1158,7 +1158,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 		return NULL;
 
 	WLog_Init();
-	transport->log = WLog_Get("com.freerdp.core.transport");
+	transport->log = WLog_Get(TAG);
 
 	if (!transport->log)
 		goto out_free;

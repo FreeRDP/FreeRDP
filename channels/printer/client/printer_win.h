@@ -20,17 +20,20 @@
 #ifndef __PRINTER_WIN_H
 #define __PRINTER_WIN_H
 
+#include <freerdp/channels/log.h>
+
 rdpPrinterDriver* printer_win_get_driver(void);
 
+#define PRINTER_TAG CHANNELS_TAG("printer.client")
 #ifdef WITH_DEBUG_WINPR
-#define DEBUG_WINPR(fmt, ...) CLOG_CLASS(WINPR, fmt, ## __VA_ARGS__)
+#define DEBUG_WINPR(fmt, ...) WLog_DBG(PRINTER_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_WINPR(fmt, ...) CLOG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_WINPR(fmt, ...) do { } while (0)
 #endif
 
 #endif
 
 #ifdef WIN32
 #define snprintf _snprintf
-#endif 
+#endif
 

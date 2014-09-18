@@ -37,6 +37,9 @@
 #include "xf_event.h"
 #include "xf_input.h"
 
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("x11")
+
 #ifdef WITH_XI
 
 #define MAX_CONTACTS 2
@@ -113,7 +116,7 @@ int xf_input_init(xfContext* xfc, Window window)
 	
 	if (!XQueryExtension(xfc->display, "XInputExtension", &opcode, &event, &error))
 	{
-		printf("XInput extension not available.\n");
+		WLog_WARN(TAG, "XInput extension not available.");
 		return -1;
 	}
 	
@@ -123,7 +126,7 @@ int xf_input_init(xfContext* xfc, Window window)
 	
 	if (major * 1000 + minor < 2002)
 	{
-		printf("Server does not support XI 2.2\n");
+		WLog_WARN(TAG, "Server does not support XI 2.2");
 		return -1;
 	}
 	
@@ -156,9 +159,9 @@ int xf_input_init(xfContext* xfc, Window window)
 			
 			if (xfc->settings->MultiTouchInput)
 			{
-				printf("%s (%d) \"%s\" id: %d\n",
-				       xf_input_get_class_string(class->type),
-				       class->type, dev->name, dev->deviceid);
+				WLog_INFO(TAG, "%s (%d) \"%s\" id: %d",
+						  xf_input_get_class_string(class->type),
+						  class->type, dev->name, dev->deviceid);
 			}
 			
 			evmasks[nmasks].mask = masks[nmasks];
@@ -171,9 +174,9 @@ int xf_input_init(xfContext* xfc, Window window)
 			{
 				if (xfc->settings->MultiTouchInput)
 				{
-					printf("%s %s touch device (id: %d, mode: %d), supporting %d touches.\n",
-					       dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
-					       dev->deviceid, t->mode, t->num_touches);
+					WLog_INFO(TAG, "%s %s touch device (id: %d, mode: %d), supporting %d touches.",
+							  dev->name, (t->mode == XIDirectTouch) ? "direct" : "dependent",
+							  dev->deviceid, t->mode, t->num_touches);
 				}
 				
 				XISetMask(masks[nmasks], XI_TouchBegin);
@@ -186,9 +189,9 @@ int xf_input_init(xfContext* xfc, Window window)
 			{
 				if (!touch && (class->type == XIButtonClass) && strcmp(dev->name, "Virtual core pointer"))
 				{
-					printf("%s button device (id: %d, mode: %d)\n",
-					       dev->name,
-					       dev->deviceid, t->mode);
+					WLog_INFO(TAG, "%s button device (id: %d, mode: %d)",
+							  dev->name,
+							  dev->deviceid, t->mode);
 					XISetMask(masks[nmasks], XI_ButtonPress);
 					XISetMask(masks[nmasks], XI_ButtonRelease);
 					XISetMask(masks[nmasks], XI_Motion);
@@ -494,7 +497,7 @@ void xf_input_touch_end(xfContext* xfc, XIDeviceEvent* event)
 			contacts[i].count = 0;
 			
 			active_contacts--;
-			break;printf("TouchBegin\n");
+			break;
 		}
 	}
 }
@@ -528,7 +531,7 @@ int xf_input_handle_event_local(xfContext* xfc, XEvent* event)
 				break;
 				
 			default:
-				printf("unhandled xi type= %d\n", cookie->evtype);
+				WLog_ERR(TAG, "unhandled xi type= %d", cookie->evtype);
 				break;
 		}
 	}
@@ -619,17 +622,17 @@ int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 	
 	if (evtype == XI_TouchBegin)
 	{
-		printf("TouchBegin: %d\n", touchId);
+		WLog_DBG(TAG, "TouchBegin: %d", touchId);
 		contactId = rdpei->TouchBegin(rdpei, touchId, x, y);
 	}
 	else if (evtype == XI_TouchUpdate)
 	{
-	        DEBUG_MSG("TouchUpdate: %d\n", touchId);
+		WLog_DBG(TAG, "TouchUpdate: %d", touchId);
 		contactId = rdpei->TouchUpdate(rdpei, touchId, x, y);
 	}
 	else if (evtype == XI_TouchEnd)
 	{
-		printf("TouchEnd: %d\n", touchId);
+		WLog_DBG(TAG, "TouchEnd: %d", touchId);
 		contactId = rdpei->TouchEnd(rdpei, touchId, x, y);
 	}
 	
@@ -734,6 +737,6 @@ int xf_input_handle_event(xfContext* xfc, XEvent* event)
 		return xf_input_handle_event_local(xfc, event);
 	}
 #endif
-	
+
 	return 0;
 }

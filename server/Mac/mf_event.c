@@ -29,6 +29,9 @@
 
 #include "mf_event.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
+
 int mf_is_event_set(mfEventQueue* event_queue)
 {
 	fd_set rfds;
@@ -48,6 +51,9 @@ void mf_signal_event(mfEventQueue* event_queue)
 	int length;
 	
 	length = write(event_queue->pipe_fd[1], "sig", 4);
+	
+	if (length != 4)
+		WLog_ERR(TAG,  "mf_signal_event: error");
 }
 
 void mf_set_event(mfEventQueue* event_queue)
@@ -55,6 +61,9 @@ void mf_set_event(mfEventQueue* event_queue)
 	int length;
 	
 	length = write(event_queue->pipe_fd[1], "sig", 4);
+	
+	if (length != 4)
+		WLog_ERR(TAG,  "mf_set_event: error");
 }
 
 void mf_clear_events(mfEventQueue* event_queue)
@@ -64,6 +73,9 @@ void mf_clear_events(mfEventQueue* event_queue)
 	while (mf_is_event_set(event_queue))
 	{
 		length = read(event_queue->pipe_fd[0], &length, 4);
+		
+		if (length != 4)
+			WLog_ERR(TAG,  "mf_clear_event: error");
 	}
 }
 
@@ -72,6 +84,9 @@ void mf_clear_event(mfEventQueue* event_queue)
 	int length;
 	
 	length = read(event_queue->pipe_fd[0], &length, 4);
+	
+	if (length != 4)
+		WLog_ERR(TAG,  "mf_clear_event: error");
 }
 
 void mf_event_push(mfEventQueue* event_queue, mfEvent* event)

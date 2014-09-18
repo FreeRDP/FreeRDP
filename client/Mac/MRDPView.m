@@ -43,6 +43,9 @@
 #import "freerdp/client/cliprdr.h"
 #import "freerdp/client/file.h"
 #import "freerdp/client/cmdline.h"
+#import "freerdp/log.h"
+
+#define TAG CLIENT_TAG("mac")
 
 void mf_Pointer_New(rdpContext* context, rdpPointer* pointer);
 void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer);
@@ -617,7 +620,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	vkcode &= 0xFF;
 	
 #if 0
-	DEBUG_WARN( "keyDown: keyCode: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
+	WLog_ERR(TAG,  "keyDown: keyCode: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s",
 	       keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
 	
@@ -654,7 +657,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	vkcode &= 0xFF;
 
 #if 0
-	DEBUG_WARN( "keyUp: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
+	WLog_DBG(TAG,  "keyUp: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s",
 	       keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
 
@@ -683,29 +686,29 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	vkcode &= 0xFF;
 
 #if 0
-	DEBUG_WARN( "flagsChanged: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X extended: %d name: %s modFlags: 0x%04X\n",
+	WLog_DBG(TAG,  "flagsChanged: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X extended: %d name: %s modFlags: 0x%04X",
 	       key - 8, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode), modFlags);
 
 	if (modFlags & NSAlphaShiftKeyMask)
-		DEBUG_WARN( "NSAlphaShiftKeyMask\n");
+		WLog_DBG(TAG,  "NSAlphaShiftKeyMask");
 
 	if (modFlags & NSShiftKeyMask)
-		DEBUG_WARN( "NSShiftKeyMask\n");
+		WLog_DBG(TAG,  "NSShiftKeyMask");
 
 	if (modFlags & NSControlKeyMask)
-		DEBUG_WARN( "NSControlKeyMask\n");
+		WLog_DBG(TAG,  "NSControlKeyMask");
 
 	if (modFlags & NSAlternateKeyMask)
-		DEBUG_WARN( "NSAlternateKeyMask\n");
+		WLog_DBG(TAG,  "NSAlternateKeyMask");
 
 	if (modFlags & NSCommandKeyMask)
-		DEBUG_WARN( "NSCommandKeyMask\n");
+		WLog_DBG(TAG,  "NSCommandKeyMask");
 
 	if (modFlags & NSNumericPadKeyMask)
-		DEBUG_WARN( "NSNumericPadKeyMask\n");
+		WLog_DBG(TAG,  "NSNumericPadKeyMask");
 
 	if (modFlags & NSHelpKeyMask)
-		DEBUG_WARN( "NSHelpKeyMask\n");
+		WLog_DBG(TAG,  "NSHelpKeyMask");
 #endif
 
 	if ((modFlags & NSAlphaShiftKeyMask) && !(kbdModFlags & NSAlphaShiftKeyMask))
@@ -870,7 +873,7 @@ BOOL mac_pre_connect(freerdp* instance)
 
 	if (!settings->ServerHostname)
 	{
-		DEBUG_WARN( "error: server hostname was not specified with /v:<server>[:port]\n");
+		WLog_ERR(TAG,  "error: server hostname was not specified with /v:<server>[:port]");
 		[NSApp terminate:nil];
 		return -1;
 	}
@@ -1244,7 +1247,7 @@ static void update_activity_cb(freerdp* instance)
 	}
 	else
 	{
-		DEBUG_WARN( "update_activity_cb: No queue!\n");
+		WLog_ERR(TAG,  "update_activity_cb: No queue!");
 	}
 }
 
@@ -1269,7 +1272,7 @@ static void input_activity_cb(freerdp* instance)
 	}
 	else
 	{
-		DEBUG_WARN( "input_activity_cb: No queue!\n");
+		WLog_ERR(TAG,  "input_activity_cb: No queue!");
 	}
 }
 
@@ -1282,7 +1285,7 @@ static void channel_activity_cb(freerdp* instance)
 
 	if (event)
 	{
-		DEBUG_WARN( "channel_activity_cb: message %d\n", event->id);
+		WLog_DBG(TAG,  "channel_activity_cb: message %d", event->id);
 
 		switch (GetMessageClass(event->id))
 		{
@@ -1406,7 +1409,7 @@ void cliprdr_process_cb_format_list_event(freerdp* instance, RDP_CB_FORMAT_LIST_
 		switch (event->formats[i])
 		{
 		case CB_FORMAT_RAW:
-			printf("CB_FORMAT_RAW: not yet supported\n");
+			WLog_ERR(TAG, "CB_FORMAT_RAW: not yet supported");
 			break;
 
 		case CB_FORMAT_TEXT:
@@ -1417,23 +1420,23 @@ void cliprdr_process_cb_format_list_event(freerdp* instance, RDP_CB_FORMAT_LIST_
 			break;
 
 		case CB_FORMAT_DIB:
-			printf("CB_FORMAT_DIB: not yet supported\n");
+			WLog_ERR(TAG, "CB_FORMAT_DIB: not yet supported");
 			break;
 
 		case CB_FORMAT_HTML:
-			printf("CB_FORMAT_HTML\n");
+			WLog_ERR(TAG, "CB_FORMAT_HTML");
 			break;
 
 		case CB_FORMAT_PNG:
-			printf("CB_FORMAT_PNG: not yet supported\n");
+			WLog_ERR(TAG, "CB_FORMAT_PNG: not yet supported");
 			break;
 
 		case CB_FORMAT_JPEG:
-			printf("CB_FORMAT_JPEG: not yet supported\n");
+			WLog_ERR(TAG, "CB_FORMAT_JPEG: not yet supported");
 			break;
 
 		case CB_FORMAT_GIF:
-			printf("CB_FORMAT_GIF: not yet supported\n");
+			WLog_ERR(TAG, "CB_FORMAT_GIF: not yet supported");
 			break;
 		}
 	}
@@ -1484,7 +1487,7 @@ void process_cliprdr_event(freerdp* instance, wMessage* event)
 			break;
 
 		default:
-			printf("process_cliprdr_event: unknown event type %d\n", GetMessageType(event->id));
+			WLog_ERR(TAG, "process_cliprdr_event: unknown event type %d", GetMessageType(event->id));
 			break;
 		}
 	}

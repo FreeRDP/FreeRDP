@@ -30,36 +30,39 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
 #include <freerdp/error.h>
 #include <freerdp/listener.h>
 
+#define TAG FREERDP_TAG("core.connection")
+
 /**
- *                                      Connection Sequence\n
- *     client                                                                    server\n
- *        |                                                                         |\n
- *        |-----------------------X.224 Connection Request PDU--------------------->|\n
- *        |<----------------------X.224 Connection Confirm PDU----------------------|\n
- *        |-------MCS Connect-Initial PDU with GCC Conference Create Request------->|\n
- *        |<-----MCS Connect-Response PDU with GCC Conference Create Response-------|\n
- *        |------------------------MCS Erect Domain Request PDU-------------------->|\n
- *        |------------------------MCS Attach User Request PDU--------------------->|\n
- *        |<-----------------------MCS Attach User Confirm PDU----------------------|\n
- *        |------------------------MCS Channel Join Request PDU-------------------->|\n
- *        |<-----------------------MCS Channel Join Confirm PDU---------------------|\n
- *        |----------------------------Security Exchange PDU----------------------->|\n
- *        |-------------------------------Client Info PDU-------------------------->|\n
- *        |<---------------------License Error PDU - Valid Client-------------------|\n
- *        |<-----------------------------Demand Active PDU--------------------------|\n
- *        |------------------------------Confirm Active PDU------------------------>|\n
- *        |-------------------------------Synchronize PDU-------------------------->|\n
- *        |---------------------------Control PDU - Cooperate---------------------->|\n
- *        |------------------------Control PDU - Request Control------------------->|\n
- *        |--------------------------Persistent Key List PDU(s)-------------------->|\n
- *        |--------------------------------Font List PDU--------------------------->|\n
- *        |<------------------------------Synchronize PDU---------------------------|\n
- *        |<--------------------------Control PDU - Cooperate-----------------------|\n
- *        |<-----------------------Control PDU - Granted Control--------------------|\n
- *        |<-------------------------------Font Map PDU-----------------------------|\n
+ *                                      Connection Sequence
+ *     client                                                                    server
+ *        |                                                                         |
+ *        |-----------------------X.224 Connection Request PDU--------------------->|
+ *        |<----------------------X.224 Connection Confirm PDU----------------------|
+ *        |-------MCS Connect-Initial PDU with GCC Conference Create Request------->|
+ *        |<-----MCS Connect-Response PDU with GCC Conference Create Response-------|
+ *        |------------------------MCS Erect Domain Request PDU-------------------->|
+ *        |------------------------MCS Attach User Request PDU--------------------->|
+ *        |<-----------------------MCS Attach User Confirm PDU----------------------|
+ *        |------------------------MCS Channel Join Request PDU-------------------->|
+ *        |<-----------------------MCS Channel Join Confirm PDU---------------------|
+ *        |----------------------------Security Exchange PDU----------------------->|
+ *        |-------------------------------Client Info PDU-------------------------->|
+ *        |<---------------------License Error PDU - Valid Client-------------------|
+ *        |<-----------------------------Demand Active PDU--------------------------|
+ *        |------------------------------Confirm Active PDU------------------------>|
+ *        |-------------------------------Synchronize PDU-------------------------->|
+ *        |---------------------------Control PDU - Cooperate---------------------->|
+ *        |------------------------Control PDU - Request Control------------------->|
+ *        |--------------------------Persistent Key List PDU(s)-------------------->|
+ *        |--------------------------------Font List PDU--------------------------->|
+ *        |<------------------------------Synchronize PDU---------------------------|
+ *        |<--------------------------Control PDU - Cooperate-----------------------|
+ *        |<-----------------------Control PDU - Granted Control--------------------|
+ *        |<-------------------------------Font Map PDU-----------------------------|
  *
  */
 
@@ -266,7 +269,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			freerdp_set_last_error(rdp->context, FREERDP_ERROR_SECURITY_NEGO_CONNECT_FAILED);
 		}
 
-		DEBUG_WARN( "Error: protocol security negotiation or connection failure\n");
+		WLog_ERR(TAG,  "Error: protocol security negotiation or connection failure");
 		return FALSE;
 	}
 
@@ -294,7 +297,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			freerdp_set_last_error(rdp->context, FREERDP_ERROR_MCS_CONNECT_INITIAL_ERROR);
 		}
 
-		DEBUG_WARN( "Error: unable to send MCS Connect Initial\n");
+		WLog_ERR(TAG,  "Error: unable to send MCS Connect Initial");
 		return FALSE;
 	}
 
@@ -460,20 +463,20 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
 		if (!rdp->fips_encrypt)
 		{
-			DEBUG_WARN( "%s: unable to allocate des3 encrypt key\n", __FUNCTION__);
+			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
 			goto end;
 		}
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
 		if (!rdp->fips_decrypt)
 		{
-			DEBUG_WARN( "%s: unable to allocate des3 decrypt key\n", __FUNCTION__);
+			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
 			goto end;
 		}
 
 		rdp->fips_hmac = crypto_hmac_new();
 		if (!rdp->fips_hmac)
 		{
-			DEBUG_WARN( "%s: unable to allocate fips hmac\n", __FUNCTION__);
+			WLog_ERR(TAG, "unable to allocate fips hmac");
 			goto end;
 		}
 		ret = TRUE;
@@ -483,14 +486,14 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
 	if (!rdp->rc4_decrypt_key)
 	{
-		DEBUG_WARN( "%s: unable to allocate rc4 decrypt key\n", __FUNCTION__);
+		WLog_ERR(TAG, "unable to allocate rc4 decrypt key");
 		goto end;
 	}
 
 	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
 	if (!rdp->rc4_encrypt_key)
 	{
-		DEBUG_WARN( "%s: unable to allocate rc4 encrypt key\n", __FUNCTION__);
+		WLog_ERR(TAG, "unable to allocate rc4 encrypt key");
 		goto end;
 	}
 	ret = TRUE;
@@ -518,19 +521,19 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channel_id))
 	{
-		DEBUG_WARN( "%s: invalid RDP header\n", __FUNCTION__);
+		WLog_ERR(TAG, "invalid RDP header");
 		return FALSE;
 	}
 
 	if (!rdp_read_security_header(s, &sec_flags))
 	{
-		DEBUG_WARN( "%s: invalid security header\n", __FUNCTION__);
+		WLog_ERR(TAG, "invalid security header");
 		return FALSE;
 	}
 
 	if ((sec_flags & SEC_EXCHANGE_PKT) == 0)
 	{
-		DEBUG_WARN( "%s: missing SEC_EXCHANGE_PKT in security header\n", __FUNCTION__);
+		WLog_ERR(TAG, "missing SEC_EXCHANGE_PKT in security header");
 		return FALSE;
 	}
 
@@ -550,7 +553,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	if (rand_len != key_len + 8)
 	{
-		DEBUG_WARN( "%s: invalid encrypted client random length\n", __FUNCTION__);
+		WLog_ERR(TAG, "invalid encrypted client random length");
 		goto end2;
 	}
 
@@ -579,21 +582,21 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
 		if (!rdp->fips_encrypt)
 		{
-			DEBUG_WARN( "%s: unable to allocate des3 encrypt key\n", __FUNCTION__);
+			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
 			goto end;
 		}
 
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
 		if (!rdp->fips_decrypt)
 		{
-			DEBUG_WARN( "%s: unable to allocate des3 decrypt key\n", __FUNCTION__);
+			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
 			goto end;
 		}
 
 		rdp->fips_hmac = crypto_hmac_new();
 		if (!rdp->fips_hmac)
 		{
-			DEBUG_WARN( "%s: unable to allocate fips hmac\n", __FUNCTION__);
+			WLog_ERR(TAG, "unable to allocate fips hmac");
 			goto end;
 		}
 		ret = TRUE;
@@ -603,14 +606,14 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
 	if (!rdp->rc4_decrypt_key)
 	{
-		DEBUG_WARN( "%s: unable to allocate rc4 decrypt key\n", __FUNCTION__);
+		WLog_ERR(TAG, "unable to allocate rc4 decrypt key");
 		goto end;
 	}
 
 	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
 	if (!rdp->rc4_encrypt_key)
 	{
-		DEBUG_WARN( "%s: unable to allocate rc4 encrypt key\n", __FUNCTION__);
+		WLog_ERR(TAG, "unable to allocate rc4 encrypt key");
 		goto end;
 	}
 	ret = TRUE;
@@ -628,7 +631,7 @@ BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, wStream* s)
 {
 	if (!mcs_recv_connect_response(rdp->mcs, s))
 	{
-		DEBUG_WARN( "rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed\n");
+		WLog_ERR(TAG,  "rdp_client_connect_mcs_connect_response: mcs_recv_connect_response failed");
 		return FALSE;
 	}
 
@@ -792,7 +795,7 @@ int rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 
 	if (rdp->license->state == LICENSE_STATE_ABORTED)
 	{
-		DEBUG_WARN( "license connection sequence aborted.\n");
+		WLog_ERR(TAG,  "license connection sequence aborted.");
 		return -1;
 	}
 
@@ -971,15 +974,13 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	nego->selected_protocol = 0;
-
-	DEBUG_WARN( "Client Security: NLA:%d TLS:%d RDP:%d\n",
-			(nego->requested_protocols & PROTOCOL_NLA) ? 1 : 0,
-			(nego->requested_protocols & PROTOCOL_TLS) ? 1 : 0,
-			(nego->requested_protocols == PROTOCOL_RDP) ? 1 : 0
-	);
-
-	DEBUG_WARN( "Server Security: NLA:%d TLS:%d RDP:%d\n",
-			settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
+	WLog_INFO(TAG,  "Client Security: NLA:%d TLS:%d RDP:%d",
+			 (nego->requested_protocols & PROTOCOL_NLA) ? 1 : 0,
+			 (nego->requested_protocols & PROTOCOL_TLS) ? 1 : 0,
+			 (nego->requested_protocols == PROTOCOL_RDP) ? 1 : 0
+			);
+	WLog_INFO(TAG,  "Server Security: NLA:%d TLS:%d RDP:%d",
+			 settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
 
 	if ((settings->NlaSecurity) && (nego->requested_protocols & PROTOCOL_NLA))
 	{
@@ -995,14 +996,14 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	}
 	else
 	{
-		DEBUG_WARN( "Protocol security negotiation failure\n");
+		WLog_ERR(TAG,  "Protocol security negotiation failure");
 	}
 
-	DEBUG_WARN( "Negotiated Security: NLA:%d TLS:%d RDP:%d\n",
-			(nego->selected_protocol & PROTOCOL_NLA) ? 1 : 0,
-			(nego->selected_protocol & PROTOCOL_TLS) ? 1 : 0,
-			(nego->selected_protocol == PROTOCOL_RDP) ? 1: 0
-	);
+	WLog_INFO(TAG,  "Negotiated Security: NLA:%d TLS:%d RDP:%d",
+			 (nego->selected_protocol & PROTOCOL_NLA) ? 1 : 0,
+			 (nego->selected_protocol & PROTOCOL_TLS) ? 1 : 0,
+			 (nego->selected_protocol == PROTOCOL_RDP) ? 1: 0
+			);
 
 	if (!nego_send_negotiation_response(nego))
 		return FALSE;
@@ -1034,14 +1035,13 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 	if (!mcs_recv_connect_initial(mcs, s))
 		return FALSE;
 
-	DEBUG_WARN( "Accepted client: %s\n", rdp->settings->ClientHostname);
-	DEBUG_WARN( "Accepted channels:");
+	WLog_INFO(TAG,  "Accepted client: %s", rdp->settings->ClientHostname);
+	WLog_INFO(TAG,  "Accepted channels:");
 
 	for (i = 0; i < mcs->channelCount; i++)
 	{
-		DEBUG_WARN( " %s", mcs->channels[i].Name);
+		WLog_INFO(TAG,  " %s", mcs->channels[i].Name);
 	}
-	DEBUG_WARN( "\n");
 
 	if (!mcs_send_connect_response(mcs))
 		return FALSE;

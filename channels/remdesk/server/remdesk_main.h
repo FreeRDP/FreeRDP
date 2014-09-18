@@ -25,6 +25,9 @@
 #include <winpr/thread.h>
 
 #include <freerdp/server/remdesk.h>
+#include <freerdp/channels/log.h>
+
+#define TAG CHANNELS_TAG("remdesk.server")
 
 struct _remdesk_server_private
 {

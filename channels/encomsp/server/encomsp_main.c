@@ -25,7 +25,11 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
+#include <freerdp/channels/log.h>
+
 #include "encomsp_main.h"
+
+#define TAG CHANNELS_TAG("encomsp.server")
 
 static int encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
@@ -116,7 +120,7 @@ static int encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s)
 		if (encomsp_read_header(s, &header) < 0)
 			return -1;
 
-		printf("EncomspReceive: Type: %d Length: %d\n", header.Type, header.Length);
+		WLog_INFO(TAG, "EncomspReceive: Type: %d Length: %d", header.Type, header.Length);
 
 		switch (header.Type)
 		{

@@ -35,7 +35,7 @@
 #include "rpc_client.h"
 #include "tsg.h"
 
-#define TAG FREERDP_TAG("core")
+#define TAG FREERDP_TAG("core.gateway.tsg")
 
 /**
  * RPC Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa378623/
@@ -132,7 +132,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 
 	if (status <= 0)
 	{
-		DEBUG_WARN("rpc_write failed!\n");
+		WLog_ERR(TAG,  "rpc_write failed!");
 		return -1;
 	}
 
@@ -289,8 +289,8 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 		if (versionCaps->tsgHeader.ComponentId != TS_GATEWAY_TRANSPORT)
 		{
-			DEBUG_WARN("Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
-					   versionCaps->tsgHeader.ComponentId);
+			WLog_ERR(TAG,  "Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT",
+					 versionCaps->tsgHeader.ComponentId);
 			free(packetCapsResponse);
 			free(versionCaps);
 			free(packet);
@@ -318,8 +318,8 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 		if ((SwitchValue != TSG_CAPABILITY_TYPE_NAP) || (tsgCaps->capabilityType != TSG_CAPABILITY_TYPE_NAP))
 		{
-			DEBUG_WARN("Unexpected CapabilityType: 0x%08X, Expected TSG_CAPABILITY_TYPE_NAP\n",
-					   tsgCaps->capabilityType);
+			WLog_ERR(TAG,  "Unexpected CapabilityType: 0x%08X, Expected TSG_CAPABILITY_TYPE_NAP",
+					 tsgCaps->capabilityType);
 			free(tsgCaps);
 			free(versionCaps);
 			free(packetCapsResponse);
@@ -349,7 +349,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 				if (MsgBytes > TSG_MESSAGING_MAX_MESSAGE_LENGTH)
 				{
-					DEBUG_WARN("Out of Spec Message Length %d", MsgBytes);
+					WLog_ERR(TAG,  "Out of Spec Message Length %d", MsgBytes);
 					free(tsgCaps);
 					free(versionCaps);
 					free(packetCapsResponse);
@@ -365,7 +365,7 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 				// the ContextHandle TunnelContext below.
 				break;
 			default:
-				DEBUG_WARN("Unexpected Message Type: 0x%X\n", (int) MessageSwitchValue);
+				WLog_ERR(TAG,  "Unexpected Message Type: 0x%X", (int) MessageSwitchValue);
 				free(tsgCaps);
 				free(versionCaps);
 				free(packetCapsResponse);
@@ -381,9 +381,8 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		// UINT32 TunnelId
 		// HRESULT ReturnValue
 #ifdef WITH_DEBUG_TSG
-		DEBUG_WARN("TSG TunnelContext:\n");
+		WLog_DBG(TAG,  "TSG TunnelContext:");
 		winpr_HexDump(TAG, WLOG_DEBUG, (void*) &tsg->TunnelContext, 20);
-		DEBUG_WARN("\n");
 #endif
 		free(tsgCaps);
 		free(versionCaps);
@@ -439,8 +438,8 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 		if (versionCaps->tsgHeader.ComponentId != TS_GATEWAY_TRANSPORT)
 		{
-			DEBUG_WARN("Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT\n",
-					   versionCaps->tsgHeader.ComponentId);
+			WLog_ERR(TAG,  "Unexpected ComponentId: 0x%04X, Expected TS_GATEWAY_TRANSPORT",
+					 versionCaps->tsgHeader.ComponentId);
 			free(versionCaps);
 			free(packetQuarEncResponse);
 			free(packet);
@@ -465,17 +464,16 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		CopyMemory(tsg->TunnelContext.ContextUuid, &buffer[offset + 4], 16); /* ContextUuid */
 		offset += 20;
 #ifdef WITH_DEBUG_TSG
-		DEBUG_WARN("TSG TunnelContext:\n");
+		WLog_DBG(TAG,  "TSG TunnelContext:");
 		winpr_HexDump(TAG, WLOG_DEBUG, (void*) &tsg->TunnelContext, 20);
-		DEBUG_WARN("\n");
 #endif
 		free(versionCaps);
 		free(packetQuarEncResponse);
 	}
 	else
 	{
-		DEBUG_WARN("Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_CAPS_RESPONSE "
-				   "or TSG_PACKET_TYPE_QUARENC_RESPONSE\n", packet->packetId);
+		WLog_ERR(TAG,  "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_CAPS_RESPONSE "
+				 "or TSG_PACKET_TYPE_QUARENC_RESPONSE", packet->packetId);
 		free(packet);
 		return FALSE;
 	}
@@ -498,11 +496,11 @@ BOOL TsProxyCreateTunnel(rdpTsg* tsg, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPac
 	 * [out] unsigned long* tunnelId
 	 * );
 	 */
-	DEBUG_TSG("TsProxyCreateTunnel");
+	DEBUG_TSG("");
 
 	if (!TsProxyCreateTunnelWriteRequest(tsg))
 	{
-		DEBUG_WARN("TsProxyCreateTunnel: error writing request\n");
+		WLog_ERR(TAG,  "error writing request");
 		return FALSE;
 	}
 
@@ -587,16 +585,16 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if (packet->packetId == E_PROXY_NAP_ACCESSDENIED)
 	{
-		DEBUG_WARN("status: E_PROXY_NAP_ACCESSDENIED (0x%08X)\n", E_PROXY_NAP_ACCESSDENIED);
-		DEBUG_WARN("Ensure that the Gateway Connection Authorization Policy is correct\n");
+		WLog_ERR(TAG,  "status: E_PROXY_NAP_ACCESSDENIED (0x%08X)", E_PROXY_NAP_ACCESSDENIED);
+		WLog_ERR(TAG,  "Ensure that the Gateway Connection Authorization Policy is correct");
 		free(packet);
 		return FALSE;
 	}
 
 	if ((packet->packetId != TSG_PACKET_TYPE_RESPONSE) || (SwitchValue != TSG_PACKET_TYPE_RESPONSE))
 	{
-		DEBUG_WARN("Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_RESPONSE\n",
-				   packet->packetId);
+		WLog_ERR(TAG,  "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_RESPONSE",
+				 packet->packetId);
 		free(packet);
 		return FALSE;
 	}
@@ -609,8 +607,8 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if (packetResponse->flags != TSG_PACKET_TYPE_QUARREQUEST)
 	{
-		DEBUG_WARN("Unexpected Packet Response Flags: 0x%08X, Expected TSG_PACKET_TYPE_QUARREQUEST\n",
-				   packetResponse->flags);
+		WLog_ERR(TAG,  "Unexpected Packet Response Flags: 0x%08X, Expected TSG_PACKET_TYPE_QUARREQUEST",
+				 packetResponse->flags);
 		free(packet);
 		free(packetResponse);
 		return FALSE;
@@ -633,8 +631,8 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if (SizeValue != packetResponse->responseDataLen)
 	{
-		DEBUG_WARN("Unexpected size value: %d, expected: %d\n",
-				   SizeValue, packetResponse->responseDataLen);
+		WLog_ERR(TAG,  "Unexpected size value: %d, expected: %d",
+				 SizeValue, packetResponse->responseDataLen);
 		free(packetResponse);
 		free(packet);
 		return FALSE;
@@ -660,11 +658,11 @@ BOOL TsProxyAuthorizeTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunn
 	 * );
 	 *
 	 */
-	DEBUG_TSG("TsProxyAuthorizeTunnel");
+	DEBUG_TSG("");
 
 	if (!TsProxyAuthorizeTunnelWriteRequest(tsg, tunnelContext))
 	{
-		DEBUG_WARN("TsProxyAuthorizeTunnel: error writing request\n");
+		WLog_ERR(TAG,  "error writing request");
 		return FALSE;
 	}
 
@@ -737,8 +735,8 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	if ((packet->packetId != TSG_PACKET_TYPE_MESSAGE_PACKET) || (SwitchValue != TSG_PACKET_TYPE_MESSAGE_PACKET))
 	{
-		DEBUG_WARN("Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_MESSAGE_PACKET\n",
-				   packet->packetId);
+		WLog_ERR(TAG,  "Unexpected PacketId: 0x%08X, Expected TSG_PACKET_TYPE_MESSAGE_PACKET",
+				 packet->packetId);
 		free(packet);
 		return FALSE;
 	}
@@ -767,7 +765,7 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			/* Offset */
 			ActualCount = *((UINT32*) &buffer[offset + 56]); /* ActualCount */
 			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) &buffer[offset + 60], ActualCount, &messageText, 0, NULL, NULL);
-			DEBUG_WARN("Consent Message: %s\n", messageText);
+			WLog_ERR(TAG,  "Consent Message: %s", messageText);
 			free(messageText);
 			break;
 		case TSG_ASYNC_MESSAGE_SERVICE_MESSAGE:
@@ -783,7 +781,7 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			/* Offset */
 			ActualCount = *((UINT32*) &buffer[offset + 56]); /* ActualCount */
 			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) &buffer[offset + 60], ActualCount, &messageText, 0, NULL, NULL);
-			DEBUG_WARN("Service Message: %s\n", messageText);
+			WLog_ERR(TAG,  "Service Message: %s", messageText);
 			free(messageText);
 			break;
 		case TSG_ASYNC_MESSAGE_REAUTH:
@@ -793,8 +791,8 @@ BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 			Pointer = *((UINT32*) &buffer[offset + 28]); /* ReauthMessagePtr */
 			break;
 		default:
-			DEBUG_WARN("TsProxyMakeTunnelCallReadResponse: unexpected message type: %d\n",
-					   SwitchValue);
+			WLog_ERR(TAG,  "unexpected message type: %d",
+					 SwitchValue);
 			rc = FALSE;
 			break;
 	}
@@ -828,11 +826,11 @@ BOOL TsProxyMakeTunnelCall(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunne
 	 * [out, ref] PTSG_PACKET* tsgPacketResponse
 	 * );
 	 */
-	DEBUG_TSG("TsProxyMakeTunnelCall");
+	DEBUG_TSG("");
 
 	if (!TsProxyMakeTunnelCallWriteRequest(tsg, tunnelContext, procId))
 	{
-		DEBUG_WARN("TsProxyMakeTunnelCall: error writing request\n");
+		WLog_ERR(TAG,  "error writing request");
 		return FALSE;
 	}
 
@@ -849,9 +847,8 @@ BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERI
 	rdpRpc* rpc = tsg->rpc;
 	count = _wcslen(tsg->Hostname) + 1;
 #ifdef WITH_DEBUG_TSG
-	DEBUG_WARN("ResourceName:\n");
+	WLog_DBG(TAG,  "ResourceName:");
 	winpr_HexDump(TAG, WLOG_DEBUG, (BYTE*) tsg->Hostname, (count - 1) * 2);
-	DEBUG_WARN("\n");
 #endif
 	length = 60 + (count * 2);
 	buffer = (BYTE*) malloc(length);
@@ -908,9 +905,8 @@ BOOL TsProxyCreateChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	CopyMemory(&tsg->ChannelContext.ContextType, &buffer[offset], 4); /* ContextType (4 bytes) */
 	CopyMemory(tsg->ChannelContext.ContextUuid, &buffer[offset + 4], 16); /* ContextUuid (16 bytes) */
 #ifdef WITH_DEBUG_TSG
-	DEBUG_WARN("ChannelContext:\n");
+	WLog_DBG(TAG,  "ChannelContext:");
 	winpr_HexDump(TAG, WLOG_DEBUG, (void*) &tsg->ChannelContext, 20);
-	DEBUG_WARN("\n");
 #endif
 	rpc_client_receive_pool_return(rpc, pdu);
 	return TRUE;
@@ -929,11 +925,11 @@ BOOL TsProxyCreateChannel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE tunnel
 	 * [out] unsigned long* channelId
 	 * );
 	 */
-	DEBUG_TSG("TsProxyCreateChannel");
+	DEBUG_TSG("");
 
 	if (!TsProxyCreateChannelWriteRequest(tsg, tunnelContext))
 	{
-		DEBUG_WARN("TsProxyCreateChannel: error writing request\n");
+		WLog_ERR(TAG,  "error writing request");
 		return FALSE;
 	}
 
@@ -990,17 +986,17 @@ HRESULT TsProxyCloseChannel(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* co
 	 * [in, out] PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* context
 	 * );
 	 */
-	DEBUG_TSG("TsProxyCloseChannel");
+	DEBUG_TSG("");
 
 	if (!TsProxyCloseChannelWriteRequest(tsg, context))
 	{
-		DEBUG_WARN("TsProxyCloseChannel: error writing request\n");
+		WLog_ERR(TAG,  "error writing request");
 		return FALSE;
 	}
 
 	if (!TsProxyCloseChannelReadResponse(tsg, pdu))
 	{
-		DEBUG_WARN("TsProxyCloseChannel: error reading response\n");
+		WLog_ERR(TAG,  "error reading response");
 		return FALSE;
 	}
 
@@ -1057,17 +1053,17 @@ HRESULT TsProxyCloseTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZE* contex
 	 * [in, out] PTUNNEL_CONTEXT_HANDLE_SERIALIZE* context
 	 * );
 	 */
-	DEBUG_TSG("TsProxyCloseTunnel");
+	DEBUG_TSG("");
 
 	if (!TsProxyCloseTunnelWriteRequest(tsg, context))
 	{
-		DEBUG_WARN("TsProxyCloseTunnel: error writing request\n");
+		WLog_ERR(TAG,  "error writing request");
 		return FALSE;
 	}
 
 	if (!TsProxyCloseTunnelReadResponse(tsg, pdu))
 	{
-		DEBUG_WARN("TsProxyCloseTunnel: error reading response\n");
+		WLog_ERR(TAG,  "error reading response");
 		return FALSE;
 	}
 
@@ -1110,11 +1106,11 @@ BOOL TsProxySetupReceivePipe(handle_t IDL_handle, BYTE* pRpcMessage)
 	 * );
 	 */
 	tsg = (rdpTsg*) IDL_handle;
-	DEBUG_TSG("TsProxySetupReceivePipe");
+	DEBUG_TSG("");
 
 	if (!TsProxySetupReceivePipeWriteRequest(tsg))
 	{
-		DEBUG_WARN("TsProxySetupReceivePipe: error writing request\n");
+		WLog_ERR(TAG,  "error writing request");
 		return FALSE;
 	}
 
@@ -1133,7 +1129,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	if (!rpc_connect(rpc))
 	{
-		DEBUG_WARN("rpc_connect failed!\n");
+		WLog_ERR(TAG,  "rpc_connect failed!");
 		return FALSE;
 	}
 
@@ -1194,7 +1190,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	if (!TsProxyCreateTunnelReadResponse(tsg, pdu))
 	{
-		DEBUG_WARN("TsProxyCreateTunnel: error reading response\n");
+		WLog_ERR(TAG,  "error reading response");
 		return FALSE;
 	}
 
@@ -1240,7 +1236,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
 	{
-		DEBUG_WARN("TsProxyAuthorizeTunnel: error reading response\n");
+		WLog_ERR(TAG,  "error reading response");
 		return FALSE;
 	}
 
@@ -1280,7 +1276,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	if (!pdu)
 	{
-		DEBUG_WARN("TsProxyCreateChannel: error reading response\n");
+		WLog_ERR(TAG,  "error reading response");
 		return FALSE;
 	}
 
@@ -1290,7 +1286,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	{
 		if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
 		{
-			DEBUG_WARN("TsProxyMakeTunnelCall: error reading response\n");
+			WLog_ERR(TAG,  "error reading response");
 			return FALSE;
 		}
 
@@ -1299,7 +1295,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	if (!TsProxyCreateChannelReadResponse(tsg, pdu))
 	{
-		DEBUG_WARN("TsProxyCreateChannel: error reading response\n");
+		WLog_ERR(TAG,  "error reading response");
 		return FALSE;
 	}
 
@@ -1331,14 +1327,14 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 
 	if (!TsProxySetupReceivePipeReadResponse(tsg, pdu))
 	{
-		DEBUG_WARN("TsProxySetupReceivePipe: error reading response\n");
+		WLog_ERR(TAG,  "error reading response");
 		return FALSE;
 	}
 
 #endif
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
-	DEBUG_WARN("TS Gateway Connection Success\n");
+	WLog_INFO(TAG,  "TS Gateway Connection Success");
 	return TRUE;
 }
 
@@ -1398,7 +1394,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 	if (rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
 	{
-		DEBUG_WARN("tsg_read error: connection lost\n");
+		WLog_ERR(TAG,  "tsg_read error: connection lost");
 		return -1;
 	}
 
@@ -1454,7 +1450,7 @@ int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 	if (tsg->rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
 	{
-		DEBUG_WARN("%s: error, connection lost\n", __FUNCTION__);
+		WLog_ERR(TAG,  "error, connection lost");
 		return -1;
 	}
 

@@ -41,7 +41,7 @@ static ITSMFAudioDevice* tsmf_load_audio_device_by_name(const char* name, const 
 
 	if (audio == NULL)
 	{
-		CLOG_ERR("failed to call export function in %s", name);
+		WLog_ERR(TAG, "failed to call export function in %s", name);
 		return NULL;
 	}
 

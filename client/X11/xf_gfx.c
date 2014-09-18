@@ -21,7 +21,10 @@
 #include "config.h"
 #endif
 
+#include <freerdp/log.h>
 #include "xf_gfx.h"
+
+#define TAG CLIENT_TAG("x11")
 
 int xf_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
@@ -78,10 +81,7 @@ int xf_OutputUpdate(xfContext* xfc)
 		if (surface->stage)
 		{
 			freerdp_image_copy(surface->stage, xfc->format, surface->stageStep, 0, 0,
-				surface->width, surface->height, surface->data, surface->format, surface->scanline, 0, 0);
-
-			//freerdp_image_copy(surface->stage, xfc->format, surface->stageStep, extents->left, extents->top,
-			//	width, height, surface->data, surface->format, surface->scanline, extents->left, extents->top);
+				surface->width, surface->height, surface->data, surface->format, surface->scanline, 0, 0, NULL);
 		}
 
 		XPutImage(xfc->display, xfc->drawable, xfc->gc, surface->image,
@@ -143,7 +143,7 @@ int xf_SurfaceCommand_Uncompressed(xfContext* xfc, RdpgfxClientContext* context,
 		return -1;
 
 	freerdp_image_copy(surface->data, surface->format, surface->scanline, cmd->left, cmd->top,
-			cmd->width, cmd->height, cmd->data, PIXEL_FORMAT_XRGB32, cmd->width * 4, 0, 0);
+			cmd->width, cmd->height, cmd->data, PIXEL_FORMAT_XRGB32, -1, 0, 0, NULL);
 
 	invalidRect.left = cmd->left;
 	invalidRect.top = cmd->top;
@@ -223,7 +223,7 @@ int xf_SurfaceCommand_RemoteFX(xfContext* xfc, RdpgfxClientContext* context, RDP
 
 			freerdp_image_copy(surface->data, surface->format, surface->scanline,
 					nXDst, nYDst, nWidth, nHeight,
-					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, 0, 0);
+					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, 0, 0, NULL);
 
 			region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &updateRects[j]);
 		}
@@ -260,7 +260,7 @@ int xf_SurfaceCommand_ClearCodec(xfContext* xfc, RdpgfxClientContext* context, R
 
 	if (status < 0)
 	{
-		printf("clear_decompress failure: %d\n", status);
+		WLog_ERR(TAG, "clear_decompress failure: %d\n", status);
 		return -1;
 	}
 
@@ -342,7 +342,7 @@ int xf_SurfaceCommand_H264(xfContext* xfc, RdpgfxClientContext* context, RDPGFX_
 
 	if (status < 0)
 	{
-		printf("h264_decompress failure: %d\n",status);
+		WLog_ERR(TAG, "h264_decompress failure: %d",status);
 		return -1;
 	}
 
@@ -370,8 +370,7 @@ int xf_SurfaceCommand_Alpha(xfContext* xfc, RdpgfxClientContext* context, RDPGFX
 	if (!surface)
 		return -1;
 
-	printf("xf_SurfaceCommand_Alpha: status: %d\n", status);
-
+	WLog_DBG(TAG, "xf_SurfaceCommand_Alpha: status: %d\n", status);
 	/* fill with green for now to distinguish from the rest */
 
 	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
@@ -425,7 +424,7 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 
 	if (status < 0)
 	{
-		printf("progressive_decompress failure: %d\n", status);
+		WLog_ERR(TAG, "progressive_decompress failure: %d", status);
 		return -1;
 	}
 
@@ -470,7 +469,7 @@ int xf_SurfaceCommand_Progressive(xfContext* xfc, RdpgfxClientContext* context, 
 
 			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 					surface->scanline, nXDst, nYDst, nWidth, nHeight,
-					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc);
+					tile->data, PIXEL_FORMAT_XRGB32, 64 * 4, nXSrc, nYSrc, NULL);
 
 			region16_union_rect(&(xfc->invalidRegion), &(xfc->invalidRegion), &updateRects[j]);
 		}
@@ -701,7 +700,7 @@ int xf_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE_
 		{
 			freerdp_image_copy(surfaceDst->data, surfaceDst->format, surfaceDst->scanline,
 					destPt->x, destPt->y, nWidth, nHeight, surfaceSrc->data, surfaceSrc->format,
-					surfaceSrc->scanline, rectSrc->left, rectSrc->top);
+					surfaceSrc->scanline, rectSrc->left, rectSrc->top, NULL);
 		}
 
 		invalidRect.left = destPt->x;
@@ -756,7 +755,7 @@ int xf_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU*
 
 	freerdp_image_copy(cacheEntry->data, cacheEntry->format, cacheEntry->scanline,
 			0, 0, cacheEntry->width, cacheEntry->height, surface->data,
-			surface->format, surface->scanline, rect->left, rect->top);
+			surface->format, surface->scanline, rect->left, rect->top, NULL);
 
 	context->SetCacheSlotData(context, surfaceToCache->cacheSlot, (void*) cacheEntry);
 
@@ -784,7 +783,7 @@ int xf_CacheToSurface(RdpgfxClientContext* context, RDPGFX_CACHE_TO_SURFACE_PDU*
 
 		freerdp_image_copy(surface->data, surface->format, surface->scanline,
 				destPt->x, destPt->y, cacheEntry->width, cacheEntry->height,
-				cacheEntry->data, cacheEntry->format, cacheEntry->scanline, 0, 0);
+				cacheEntry->data, cacheEntry->format, cacheEntry->scanline, 0, 0, NULL);
 
 		invalidRect.left = destPt->x;
 		invalidRect.top = destPt->y;

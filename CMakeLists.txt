@@ -649,7 +649,9 @@ if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
 	set(FREERDP_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/FreeRDP")
 
 	set(FREERDP_INCLUDE_DIR "include")
-	set(FREERDP_MONOLITHIC_BUILD ${MONOLITHIC_BUILD})
+
+	# keep for legacy builds
+	set(FREERDP_MONOLITHIC_BUILD OFF)
 
 	configure_package_config_file(FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
 		INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR}
@@ -681,28 +683,11 @@ endif()
 
 include(${CMAKE_CPACK_INCLUDE_FILE})
 
-if(MONOLITHIC_BUILD)
-	set(FREERDP_PC_LIBS "-lfreerdp -lfreerdp-client")
-	set(WINPR_PC_LIBS "-lwinpr")
-	if (WITH_SERVER)
-		set(FREERDP_PC_LIBS "${FREERDP_PC_LIBS} -lfreerdp-server")
-	endif()
-else(MONOLITHIC_BUILD)
-	# freerdp exports
-	get_property(MEXPORTS GLOBAL PROPERTY "freerdp_EXPORTS")
-	foreach(EXPORT_MODULE ${MEXPORTS})
-			list(APPEND FREERDP_PC_LIBS "-lfreerdp-${EXPORT_MODULE}")
-	endforeach()
-	string(REPLACE ";" " " FREERDP_PC_LIBS "${FREERDP_PC_LIBS}")
-
-	# winpr exports
-	get_property(MEXPORTS GLOBAL PROPERTY "winpr_EXPORTS")
-	foreach(EXPORT_MODULE ${MEXPORTS})
-			list(APPEND WINPR_PC_LIBS "-lwinpr-${EXPORT_MODULE}")
-	endforeach()
-	list(APPEND WINPR_PC_LIBS "-lwinpr")
-	string(REPLACE ";" " " WINPR_PC_LIBS "${WINPR_PC_LIBS}")
-endif(MONOLITHIC_BUILD)
+set(FREERDP_PC_LIBS "-lfreerdp -lfreerdp-client")
+set(WINPR_PC_LIBS "-lwinpr")
+if (WITH_SERVER)
+	set(FREERDP_PC_LIBS "${FREERDP_PC_LIBS} -lfreerdp-server")
+endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc @ONLY)

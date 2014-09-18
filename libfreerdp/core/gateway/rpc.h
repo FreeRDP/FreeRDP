@@ -26,6 +26,7 @@
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 #include <winpr/interlocked.h>
+#include <freerdp/log.h>
 
 typedef struct rdp_rpc rdpRpc;
 
@@ -76,7 +77,7 @@ typedef struct _RPC_PDU
 #include <freerdp/settings.h>
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
-#include <freerdp/utils/debug.h>
+
 #include <winpr/print.h>
 
 /**
@@ -786,10 +787,11 @@ void rpc_free(rdpRpc* rpc);
 #define WITH_DEBUG_RPC
 #endif
 
+#define RPC_TAG FREERDP_TAG("core.gateway.rpc")
 #ifdef WITH_DEBUG_RPC
-#define DEBUG_RPC(fmt, ...) DEBUG_CLASS(RPC, fmt, ## __VA_ARGS__)
+#define DEBUG_RPC(fmt, ...) WLog_DBG(RPC_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_RPC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_RPC(fmt, ...) do { } while (0)
 #endif
 
 #endif /* FREERDP_CORE_RPC_H */

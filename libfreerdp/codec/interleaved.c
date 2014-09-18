@@ -236,7 +236,7 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, BYTE* pbOrderHdr, UINT32* adv
 #include "include/bitmap.c"
 
 int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcData, UINT32 SrcSize, int bpp,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight)
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, BYTE* palette)
 {
 	int status;
 	BOOL vFlip;
@@ -283,7 +283,7 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		RleDecompress24to24(pSrcData, SrcSize, interleaved->TempBuffer, scanline, nWidth, nHeight);
 
 		status = freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
-				nWidth, nHeight, interleaved->TempBuffer, SrcFormat, scanline, 0, 0);
+				nWidth, nHeight, interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette);
 	}
 	else if ((bpp == 16) || (bpp == 15))
 	{
@@ -310,7 +310,7 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		RleDecompress16to16(pSrcData, SrcSize, interleaved->TempBuffer, scanline, nWidth, nHeight);
 
 		status = freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
-				nWidth, nHeight, interleaved->TempBuffer, SrcFormat, scanline, 0, 0);
+				nWidth, nHeight, interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette);
 	}
 	else if (bpp == 8)
 	{
@@ -337,7 +337,7 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		RleDecompress8to8(pSrcData, SrcSize, interleaved->TempBuffer, scanline, nWidth, nHeight);
 
 		status = freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst,
-				nWidth, nHeight, interleaved->TempBuffer, SrcFormat, scanline, 0, 0);
+				nWidth, nHeight, interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette);
 	}
 	else
 	{

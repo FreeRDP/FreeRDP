@@ -396,7 +396,7 @@ void (^mac_capture_stream_handler)(CGDisplayStreamFrameStatus, uint64_t, IOSurfa
 	else
 	{
 		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32, surface->scanline,
-					x, y, width, height, pSrcData, PIXEL_FORMAT_XRGB32, nSrcStep, x, y);
+					x, y, width, height, pSrcData, PIXEL_FORMAT_XRGB32, nSrcStep, x, y, NULL);
 	}
 	
 	IOSurfaceUnlock(frameSurface, kIOSurfaceLockReadOnly, NULL);

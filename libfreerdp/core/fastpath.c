@@ -30,6 +30,7 @@
 #include <winpr/stream.h>
 
 #include <freerdp/api.h>
+#include <freerdp/log.h>
 #include <freerdp/crypto/per.h>
 
 #include "orders.h"
@@ -37,6 +38,8 @@
 #include "surface.h"
 #include "fastpath.h"
 #include "rdp.h"
+
+#define TAG FREERDP_TAG("core.fastpath")
 
 /**
  * Fast-Path packet format is defined in [MS-RDPBCGR] 2.2.9.1.2, which revises
@@ -271,7 +274,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
 			if (!fastpath_recv_update_synchronize(fastpath, s))
-				DEBUG_WARN( "fastpath_recv_update_synchronize failure but we continue\n");
+				WLog_ERR(TAG,  "fastpath_recv_update_synchronize failure but we continue");
 			else
 				IFCALL(update->Synchronize, context);			
 			break;
@@ -316,7 +319,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 			break;
 
 		default:
-			DEBUG_WARN("unknown updateCode 0x%X", updateCode);
+			WLog_ERR(TAG, "unknown updateCode 0x%X", updateCode);
 			break;
 	}
 
@@ -377,7 +380,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 	if (bulkStatus < 0)
 	{
-		DEBUG_WARN( "bulk_decompress() failed\n");
+		WLog_ERR(TAG,  "bulk_decompress() failed");
 		return -1;
 	}
 
@@ -398,7 +401,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	{
 		if (fastpath->fragmentation != -1)
 		{
-			DEBUG_WARN( "Unexpected FASTPATH_FRAGMENT_SINGLE\n");
+			WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_SINGLE");
 			return -1;
 		}
 
@@ -414,7 +417,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		{
 			if (fastpath->fragmentation != -1)
 			{
-				DEBUG_WARN( "Unexpected FASTPATH_FRAGMENT_FIRST\n");
+				WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_FIRST");
 				return -1;
 			}
 
@@ -424,8 +427,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				DEBUG_WARN( "Total size (%d) exceeds MultifragMaxRequestSize (%d)\n",
-						totalSize, transport->settings->MultifragMaxRequestSize);
+				WLog_ERR(TAG,  "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+						 totalSize, transport->settings->MultifragMaxRequestSize);
 				return -1;
 			}
 
@@ -439,7 +442,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			if ((fastpath->fragmentation != FASTPATH_FRAGMENT_FIRST) &&
 					(fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
 			{
-				DEBUG_WARN( "Unexpected FASTPATH_FRAGMENT_NEXT\n");
+				WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_NEXT");
 				return -1;
 			}
 
@@ -449,8 +452,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				DEBUG_WARN( "Total size (%d) exceeds MultifragMaxRequestSize (%d)\n",
-						totalSize, transport->settings->MultifragMaxRequestSize);
+				WLog_ERR(TAG,  "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+						 totalSize, transport->settings->MultifragMaxRequestSize);
 				return -1;
 			}
 
@@ -463,7 +466,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			if ((fastpath->fragmentation != FASTPATH_FRAGMENT_FIRST) &&
 					(fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
 			{
-				DEBUG_WARN( "Unexpected FASTPATH_FRAGMENT_LAST\n");
+				WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_LAST");
 				return -1;
 			}
 
@@ -473,8 +476,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				DEBUG_WARN( "Total size (%d) exceeds MultifragMaxRequestSize (%d)\n",
-						totalSize, transport->settings->MultifragMaxRequestSize);
+				WLog_ERR(TAG,  "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+						 totalSize, transport->settings->MultifragMaxRequestSize);
 				return -1;
 			}
 
@@ -661,7 +664,7 @@ static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, wStream* s)
 			break;
 
 		default:
-			DEBUG_WARN( "Unknown eventCode %d\n", eventCode);
+			WLog_ERR(TAG,  "Unknown eventCode %d", eventCode);
 			break;
 	}
 
@@ -768,7 +771,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 
 	if (length >= (2 << 14))
 	{
-		DEBUG_WARN( "Maximum FastPath PDU length is 32767\n");
+		WLog_ERR(TAG,  "Maximum FastPath PDU length is 32767");
 		return FALSE;
 	}
 

@@ -85,7 +85,7 @@ int test_YCoCgRToRGB_8u_AC4R_func(void)
 
 /* ------------------------------------------------------------------------- */
 STD_SPEED_TEST(
-	ycocg_to_rgb_speed, const BYTE, BYTE, PRIM_NOP,
+	ycocg_to_rgb_speed, BYTE, BYTE, PRIM_NOP,
 	TRUE, general_YCoCgToRGB_8u_AC4R(src1, 64*4, dst, 64*4, 64, 64, 2, FALSE, FALSE),
 #ifdef WITH_SSE2
 	TRUE, ssse3_YCoCgRToRGB_8u_AC4R(src1, 64*4, dst, 64*4, 64, 64, 2, FALSE, FALSE),

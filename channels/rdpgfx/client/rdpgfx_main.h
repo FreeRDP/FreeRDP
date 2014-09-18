@@ -28,8 +28,10 @@
 #include <winpr/collections.h>
 
 #include <freerdp/client/rdpgfx.h>
-
+#include <freerdp/channels/log.h>
 #include <freerdp/codec/zgfx.h>
+
+#define TAG CHANNELS_TAG("rdpgfx.client")
 
 struct _RDPGFX_CHANNEL_CALLBACK
 {

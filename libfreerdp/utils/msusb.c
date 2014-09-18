@@ -22,13 +22,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/utils/msusb.h>
 
+#define TAG FREERDP_TAG("utils")
+
 #ifdef WITH_DEBUG_MSUSB
-#define DEBUG_MSUSB(fmt, ...) DEBUG_CLASS(MSUSB, fmt, ## __VA_ARGS__)
+#define DEBUG_MSUSB(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_MSUSB(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_MSUSB(fmt, ...) do { } while (0)
 #endif
 
 
@@ -321,42 +323,41 @@ void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 	MSUSB_PIPE_DESCRIPTOR ** MsPipes;
 	MSUSB_PIPE_DESCRIPTOR * MsPipe;
 	int inum = 0, pnum = 0;
-
-	DEBUG_WARN( "=================MsConfig:========================\n");
-	DEBUG_WARN( "wTotalLength:%d\n", MsConfig->wTotalLength);
-	DEBUG_WARN( "bConfigurationValue:%d\n", MsConfig->bConfigurationValue);
-	DEBUG_WARN( "ConfigurationHandle:0x%x\n", MsConfig->ConfigurationHandle);
-	DEBUG_WARN( "InitCompleted:%d\n", MsConfig->InitCompleted);
-	DEBUG_WARN( "MsOutSize:%d\n", MsConfig->MsOutSize);
-	DEBUG_WARN( "NumInterfaces:%d\n\n", MsConfig->NumInterfaces);
+	WLog_INFO(TAG,  "=================MsConfig:========================");
+	WLog_INFO(TAG,  "wTotalLength:%d", MsConfig->wTotalLength);
+	WLog_INFO(TAG,  "bConfigurationValue:%d", MsConfig->bConfigurationValue);
+	WLog_INFO(TAG,  "ConfigurationHandle:0x%x", MsConfig->ConfigurationHandle);
+	WLog_INFO(TAG,  "InitCompleted:%d", MsConfig->InitCompleted);
+	WLog_INFO(TAG,  "MsOutSize:%d", MsConfig->MsOutSize);
+	WLog_INFO(TAG,  "NumInterfaces:%d", MsConfig->NumInterfaces);
 	MsInterfaces = MsConfig->MsInterfaces;
 	for(inum = 0; inum < MsConfig->NumInterfaces; inum++)
 	{
 		MsInterface = MsInterfaces[inum];
-		DEBUG_WARN( "	Interfase: %d\n", MsInterface->InterfaceNumber);
-		DEBUG_WARN( "	Length: %d\n", MsInterface->Length);
-		DEBUG_WARN( "	NumberOfPipesExpected: %d\n", MsInterface->NumberOfPipesExpected);
-		DEBUG_WARN( "	AlternateSetting: %d\n", MsInterface->AlternateSetting);
-		DEBUG_WARN( "	NumberOfPipes: %d\n", MsInterface->NumberOfPipes);
-		DEBUG_WARN( "	InterfaceHandle: 0x%x\n", MsInterface->InterfaceHandle);
-		DEBUG_WARN( "	bInterfaceClass: 0x%x\n", MsInterface->bInterfaceClass);
-		DEBUG_WARN( "	bInterfaceSubClass: 0x%x\n", MsInterface->bInterfaceSubClass);
-		DEBUG_WARN( "	bInterfaceProtocol: 0x%x\n", MsInterface->bInterfaceProtocol);
-		DEBUG_WARN( "	InitCompleted: %d\n\n", MsInterface->InitCompleted);
+		WLog_INFO(TAG,  "	Interfase: %d", MsInterface->InterfaceNumber);
+		WLog_INFO(TAG,  "	Length: %d", MsInterface->Length);
+		WLog_INFO(TAG,  "	NumberOfPipesExpected: %d", MsInterface->NumberOfPipesExpected);
+		WLog_INFO(TAG,  "	AlternateSetting: %d", MsInterface->AlternateSetting);
+		WLog_INFO(TAG,  "	NumberOfPipes: %d", MsInterface->NumberOfPipes);
+		WLog_INFO(TAG,  "	InterfaceHandle: 0x%x", MsInterface->InterfaceHandle);
+		WLog_INFO(TAG,  "	bInterfaceClass: 0x%x", MsInterface->bInterfaceClass);
+		WLog_INFO(TAG,  "	bInterfaceSubClass: 0x%x", MsInterface->bInterfaceSubClass);
+		WLog_INFO(TAG,  "	bInterfaceProtocol: 0x%x", MsInterface->bInterfaceProtocol);
+		WLog_INFO(TAG,  "	InitCompleted: %d", MsInterface->InitCompleted);
 		MsPipes = MsInterface->MsPipes;
 		for (pnum = 0; pnum < MsInterface->NumberOfPipes; pnum++)
 		{
 			MsPipe = MsPipes[pnum];
-			DEBUG_WARN( "		Pipe: %d\n", pnum);
-			DEBUG_WARN( "		MaximumPacketSize: 0x%x\n", MsPipe->MaximumPacketSize);
-			DEBUG_WARN( "		MaximumTransferSize: 0x%x\n", MsPipe->MaximumTransferSize);
-			DEBUG_WARN( "		PipeFlags: 0x%x\n", MsPipe->PipeFlags);
-			DEBUG_WARN( "		PipeHandle: 0x%x\n", MsPipe->PipeHandle);
-			DEBUG_WARN( "		bEndpointAddress: 0x%x\n", MsPipe->bEndpointAddress);
-			DEBUG_WARN( "		bInterval: %d\n", MsPipe->bInterval);
-			DEBUG_WARN( "		PipeType: 0x%x\n", MsPipe->PipeType);
-			DEBUG_WARN( "		InitCompleted: %d\n\n", MsPipe->InitCompleted);
+			WLog_INFO(TAG,  "		Pipe: %d", pnum);
+			WLog_INFO(TAG,  "		MaximumPacketSize: 0x%x", MsPipe->MaximumPacketSize);
+			WLog_INFO(TAG,  "		MaximumTransferSize: 0x%x", MsPipe->MaximumTransferSize);
+			WLog_INFO(TAG,  "		PipeFlags: 0x%x", MsPipe->PipeFlags);
+			WLog_INFO(TAG,  "		PipeHandle: 0x%x", MsPipe->PipeHandle);
+			WLog_INFO(TAG,  "		bEndpointAddress: 0x%x", MsPipe->bEndpointAddress);
+			WLog_INFO(TAG,  "		bInterval: %d", MsPipe->bInterval);
+			WLog_INFO(TAG,  "		PipeType: 0x%x", MsPipe->PipeType);
+			WLog_INFO(TAG,  "		InitCompleted: %d", MsPipe->InitCompleted);
 		}
 	}
-	DEBUG_WARN( "==================================================\n");
+	WLog_INFO(TAG,  "==================================================");
 }

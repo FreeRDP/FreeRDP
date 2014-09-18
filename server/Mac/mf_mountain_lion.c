@@ -207,7 +207,7 @@ int mf_mlion_stop_getting_screen_updates()
 	}
 	
 	return 0;
-	
+
 	return 0;
 }
 
@@ -277,4 +277,3 @@ int mf_mlion_get_pixelData(long x, long y, long width, long height, BYTE** pxDat
 	
 	return 0;
 }
-
