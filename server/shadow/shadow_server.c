@@ -449,6 +449,67 @@ int shadow_server_stop(rdpShadowServer* server)
 	return 0;
 }
 
+int shadow_server_init_config_path(rdpShadowServer* server)
+{
+#ifdef _WIN32
+	if (!server->ConfigPath)
+	{
+		server->ConfigPath = GetEnvironmentSubPath("LOCALAPPDATA", "freerdp");
+	}
+#endif
+
+#ifdef __APPLE__
+	if (!server->ConfigPath)
+	{
+		char* userLibraryPath;
+		char* userApplicationSupportPath;
+
+		userLibraryPath = GetKnownSubPath(KNOWN_PATH_HOME, "Library");
+
+		if (userLibraryPath)
+		{
+			if (!PathFileExistsA(userLibraryPath))
+				CreateDirectoryA(userLibraryPath, 0);
+
+			userApplicationSupportPath = GetCombinedPath(userLibraryPath, "Application Support");
+
+			if (userApplicationSupportPath)
+			{
+				if (!PathFileExistsA(userApplicationSupportPath))
+					CreateDirectoryA(userApplicationSupportPath, 0);
+
+				server->ConfigPath = GetCombinedPath(userApplicationSupportPath, "freerdp");
+			}
+
+			free(userLibraryPath);
+			free(userApplicationSupportPath);
+		}
+	}
+#endif
+
+	if (!server->ConfigPath)
+	{
+		char* configHome;
+
+		configHome = GetKnownPath(KNOWN_PATH_XDG_CONFIG_HOME);
+
+		if (configHome)
+		{
+			if (!PathFileExistsA(configHome))
+				CreateDirectoryA(configHome, 0);
+
+			server->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
+
+			free(configHome);
+		}
+	}
+
+	if (!server->ConfigPath)
+		return -1; /* no usable config path */
+
+	return 1;
+}
+
 int shadow_server_init_certificate(rdpShadowServer* server)
 {
 	char* filepath;
@@ -606,12 +667,7 @@ rdpShadowServer* shadow_server_new()
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
 
-#ifdef _WIN32
-	server->ConfigPath = GetEnvironmentSubPath("LOCALAPPDATA", "freerdp");
-#endif
-
-	if (!server->ConfigPath)
-		server->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
+	shadow_server_init_config_path(server);
 
 	InitializeCriticalSectionAndSpinCount(&(server->lock), 4000);
 
