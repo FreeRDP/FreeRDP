@@ -20,13 +20,14 @@
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
 
+#include <freerdp/log.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
-#include <freerdp/log.h>
 
 #include "../shadow_screen.h"
 #include "../shadow_surface.h"
 #include "../shadow_capture.h"
+#include "../shadow_subsystem.h"
 
 #include "win_shadow.h"
 
@@ -492,9 +493,7 @@ void win_shadow_subsystem_free(winShadowSubsystem* subsystem)
 
 	win_shadow_subsystem_uninit(subsystem);
 
-	region16_uninit(&(subsystem->invalidRegion));
-
-	CloseHandle(subsystem->updateEvent);
+	shadow_subsystem_common_free((rdpShadowSubsystem*) subsystem);
 
 	free(subsystem);
 }
@@ -509,10 +508,7 @@ winShadowSubsystem* win_shadow_subsystem_new(rdpShadowServer* server)
 		return NULL;
 
 	subsystem->server = server;
-
-	subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	region16_init(&(subsystem->invalidRegion));
+	shadow_subsystem_common_new((rdpShadowSubsystem*) subsystem);
 
 	subsystem->Init = (pfnShadowSubsystemInit) win_shadow_subsystem_init;
 	subsystem->Uninit = (pfnShadowSubsystemInit) win_shadow_subsystem_uninit;

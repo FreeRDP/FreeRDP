@@ -194,6 +194,11 @@ void shadow_client_surface_frame_acknowledge(rdpShadowClient* client, UINT32 fra
 	}
 }
 
+void shadow_client_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
+{
+
+}
+
 void shadow_client_suppress_output(rdpShadowClient* client, BYTE allow, RECTANGLE_16* area)
 {
 
@@ -682,6 +687,8 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 	peer->update->SurfaceFrameAcknowledge = (pSurfaceFrameAcknowledge)
 			shadow_client_surface_frame_acknowledge;
+
+	peer->update->RefreshRect = (pRefreshRect) shadow_client_refresh_rect;
 	peer->update->SuppressOutput = (pSuppressOutput) shadow_client_suppress_output;
 
 	StopEvent = client->StopEvent;

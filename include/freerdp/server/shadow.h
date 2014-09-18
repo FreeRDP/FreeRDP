@@ -118,6 +118,7 @@ struct rdp_shadow_server
 	MONITOR_DEF virtualScreen; \
 	HANDLE updateEvent; \
 	REGION16 invalidRegion; \
+	wMessagePipe* MsgPipe; \
 	SYNCHRONIZATION_BARRIER barrier; \
 	\
 	pfnShadowSubsystemInit Init; \

@@ -26,6 +26,8 @@
 
 #include "../shadow_screen.h"
 #include "../shadow_surface.h"
+#include "../shadow_capture.h"
+#include "../shadow_subsystem.h"
 
 #include "mac_shadow.h"
 
@@ -586,6 +588,8 @@ void mac_shadow_subsystem_free(macShadowSubsystem* subsystem)
 
 	mac_shadow_subsystem_uninit(subsystem);
 
+	shadow_subsystem_common_free((rdpShadowSubsystem*) subsystem);
+
 	free(subsystem);
 }
 
@@ -599,10 +603,7 @@ macShadowSubsystem* mac_shadow_subsystem_new(rdpShadowServer* server)
 		return NULL;
 
 	subsystem->server = server;
-	
-	subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	
-	region16_init(&(subsystem->invalidRegion));
+	shadow_subsystem_common_new((rdpShadowSubsystem*) subsystem);
 
 	subsystem->Init = (pfnShadowSubsystemInit) mac_shadow_subsystem_init;
 	subsystem->Uninit = (pfnShadowSubsystemInit) mac_shadow_subsystem_uninit;

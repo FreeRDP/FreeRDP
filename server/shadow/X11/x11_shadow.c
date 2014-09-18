@@ -42,6 +42,7 @@
 #include "../shadow_screen.h"
 #include "../shadow_capture.h"
 #include "../shadow_surface.h"
+#include "../shadow_subsystem.h"
 
 #include "x11_shadow.h"
 
@@ -136,7 +137,7 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, U
 		if (flags & PTR_FLAGS_DOWN)
 			down = TRUE;
 
-		if (button != 0)
+		if (button)
 			XTestFakeButtonEvent(subsystem->display, button, down, 0);
 	}
 
@@ -165,6 +166,7 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 	}
 
 	XTestGrabControl(subsystem->display, True);
+
 	XTestFakeMotionEvent(subsystem->display, 0, x, y, CurrentTime);
 
 	if (flags & PTR_XFLAGS_BUTTON1)
@@ -175,7 +177,7 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 	if (flags & PTR_XFLAGS_DOWN)
 		down = TRUE;
 
-	if (button != 0)
+	if (button)
 		XTestFakeButtonEvent(subsystem->display, button, down, 0);
 
 	XTestGrabControl(subsystem->display, False);
@@ -995,9 +997,7 @@ void x11_shadow_subsystem_free(x11ShadowSubsystem* subsystem)
 
 	x11_shadow_subsystem_uninit(subsystem);
 
-	region16_uninit(&(subsystem->invalidRegion));
-
-	CloseHandle(subsystem->updateEvent);
+	shadow_subsystem_common_free((rdpShadowSubsystem*) subsystem);
 
 	free(subsystem);
 }
@@ -1012,10 +1012,7 @@ x11ShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
 		return NULL;
 
 	subsystem->server = server;
-
-	subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	region16_init(&(subsystem->invalidRegion));
+	shadow_subsystem_common_new((rdpShadowSubsystem*) subsystem);
 
 	subsystem->Init = (pfnShadowSubsystemInit) x11_shadow_subsystem_init;
 	subsystem->Uninit = (pfnShadowSubsystemInit) x11_shadow_subsystem_uninit;
