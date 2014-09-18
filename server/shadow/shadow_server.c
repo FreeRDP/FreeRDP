@@ -27,14 +27,10 @@
 #include <winpr/cmdline.h>
 #include <winpr/winsock.h>
 
-#include <freerdp/version.h>
 #include <freerdp/log.h>
+#include <freerdp/version.h>
 
 #include <winpr/tools/makecert.h>
-
-#ifdef _WIN32
-#include <openssl/applink.c>
-#endif
 
 #ifndef _WIN32
 #include <sys/select.h>
@@ -44,12 +40,6 @@
 #include "shadow.h"
 
 #define TAG SERVER_TAG("shadow")
-
-#ifdef _WIN32
-static BOOL g_MessagePump = TRUE;
-#else
-static BOOL g_MessagePump = FALSE;
-#endif
 
 #ifdef WITH_SHADOW_X11
 extern rdpShadowSubsystem* X11_ShadowCreateSubsystem(rdpShadowServer* server);
@@ -648,45 +638,3 @@ void shadow_server_free(rdpShadowServer* server)
 	free(server);
 }
 
-int main(int argc, char** argv)
-{
-	MSG msg;
-	int status;
-	DWORD dwExitCode;
-	rdpShadowServer* server;
-
-	server = shadow_server_new();
-
-	if (!server)
-		return 0;
-
-	if (shadow_server_init(server) < 0)
-		return 0;
-
-	status = shadow_server_parse_command_line(server, argc, argv);
-
-	status = shadow_server_command_line_status_print(server, argc, argv, status);
-
-	if (status < 0)
-		return 0;
-
-	if (shadow_server_start(server) < 0)
-		return 0;
-
-	if (g_MessagePump)
-	{
-		while (GetMessage(&msg, 0, 0, 0))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-	}
-
-	WaitForSingleObject(server->thread, INFINITE);
-
-	GetExitCodeThread(server->thread, &dwExitCode);
-
-	shadow_server_free(server);
-
-	return 0;
-}
