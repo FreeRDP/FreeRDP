@@ -21,12 +21,12 @@
 #include "config.h"
 #endif
 
-#include <freerdp/utils/event.h>
 #include <winpr/print.h>
+
+#include <freerdp/utils/event.h>
 #include <freerdp/utils/rail.h>
 #include <freerdp/rail/rail.h>
 
-#include "wf_window.h"
 #include "wf_rail.h"
 
 void wf_rail_paint(wfContext* wfc, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom)

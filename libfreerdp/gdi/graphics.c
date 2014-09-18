@@ -44,13 +44,63 @@
 #define TAG FREERDP_TAG("gdi")
 /* Bitmap Class */
 
-HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, BYTE* data)
+HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int nWidth, int nHeight, int bpp, BYTE* data)
 {
-	BYTE* bmpData;
+	int nSrcStep;
+	int nDstStep;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	UINT32 SrcFormat;
+	int bytesPerPixel;
 	HGDI_BITMAP bitmap;
 
-	bmpData = freerdp_image_convert(data, NULL, width, height, 32, 32, gdi->clrconv);
-	bitmap = gdi_CreateBitmap(width, height, gdi->dstBpp, bmpData);
+	nDstStep = nWidth * gdi->bytesPerPixel;
+	pDstData = _aligned_malloc(nHeight * nDstStep, 16);
+
+	if (!pDstData)
+		return NULL;
+
+	pSrcData = data;
+
+	switch (bpp)
+	{
+		case 32:
+			bytesPerPixel = 4;
+			SrcFormat = PIXEL_FORMAT_XRGB32;
+			break;
+
+		case 24:
+			bytesPerPixel = 3;
+			SrcFormat = PIXEL_FORMAT_RGB24;
+			break;
+
+		case 16:
+			bytesPerPixel = 2;
+			SrcFormat = PIXEL_FORMAT_RGB565;
+			break;
+
+		case 15:
+			bytesPerPixel = 2;
+			SrcFormat = PIXEL_FORMAT_RGB555;
+			break;
+
+		case 8:
+			bytesPerPixel = 1;
+			SrcFormat = PIXEL_FORMAT_RGB8;
+			break;
+
+		default:
+			SrcFormat = PIXEL_FORMAT_RGB565;
+			bytesPerPixel = 2;
+			break;
+	}
+
+	nSrcStep = nWidth * bytesPerPixel;
+
+	freerdp_image_copy(pDstData, gdi->format, nDstStep, 0, 0,
+			nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, 0, 0, gdi->palette);
+
+	bitmap = gdi_CreateBitmap(nWidth, nHeight, gdi->dstBpp, pDstData);
 
 	return bitmap;
 }
@@ -66,7 +116,7 @@ void gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (!bitmap->data)
 		gdi_bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, bitmap->width, bitmap->height);
 	else
-		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, gdi->dstBpp, bitmap->data);
+		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, bitmap->bpp, bitmap->data);
 
 	gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->bitmap);
 	gdi_bitmap->org_bitmap = NULL;
@@ -112,10 +162,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	bytesPerPixel = (bpp + 7) / 8;
 	size = width * height * 4;
 
-	if (!bitmap->data)
-		bitmap->data = (BYTE*) _aligned_malloc(size, 16);
-	else
-		bitmap->data = (BYTE*) _aligned_realloc(bitmap->data, size, 16);
+	bitmap->data = (BYTE*) _aligned_malloc(size, 16);
 
 	pSrcData = data;
 	SrcSize = (UINT32) length;
@@ -128,14 +175,14 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_INTERLEAVED);
 
 			status = interleaved_decompress(gdi->codecs->interleaved, pSrcData, SrcSize, bpp,
-					&pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0, width, height);
+					&pDstData, gdi->format, -1, 0, 0, width, height, gdi->palette);
 		}
 		else
 		{
 			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_PLANAR);
 
 			status = planar_decompress(gdi->codecs->planar, pSrcData, SrcSize, &pDstData,
-					PIXEL_FORMAT_XRGB32_VF, width * 4, 0, 0, width, height);
+					gdi->format, -1, 0, 0, width, height, TRUE);
 		}
 
 		if (status < 0)
@@ -148,13 +195,13 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	{
 		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
 
-		status = freerdp_image_copy(pDstData, PIXEL_FORMAT_XRGB32, width * 4, 0, 0,
-				width, height, pSrcData, SrcFormat, width * bytesPerPixel, 0, 0);
+		status = freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
+				width, height, pSrcData, SrcFormat, -1, 0, 0, gdi->palette);
 	}
 
 	bitmap->compressed = FALSE;
 	bitmap->length = size;
-	bitmap->bpp = 32;
+	bitmap->bpp = gdi->dstBpp;
 }
 
 void gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
@@ -220,10 +267,8 @@ void gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int heigh
 	HGDI_BRUSH brush;
 	rdpGdi* gdi = context->gdi;
 
-	bgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(
-			bgcolor, gdi->srcBpp, gdi->clrconv);
-	fgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(
-			fgcolor, gdi->srcBpp, gdi->clrconv);
+	bgcolor = freerdp_convert_gdi_order_color(bgcolor, gdi->srcBpp, gdi->format, gdi->palette);
+	fgcolor = freerdp_convert_gdi_order_color(fgcolor, gdi->srcBpp, gdi->format, gdi->palette);
 
 	gdi_CRgnToRect(x, y, width, height, &rect);
 
@@ -238,8 +283,7 @@ void gdi_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height,
 {
 	rdpGdi* gdi = context->gdi;
 
-	bgcolor = freerdp_color_convert_drawing_order_color_to_gdi_color(
-			bgcolor, gdi->srcBpp, gdi->clrconv);
+	bgcolor = freerdp_convert_gdi_order_color(bgcolor, gdi->srcBpp, gdi->format, gdi->palette);
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 }
 

@@ -1,8 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Windows RAIL
  *
- * Copyright 2012 Jason Champion <jchampion@zetacentauri.com>
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +16,18 @@
  * limitations under the License.
  */
 
-#ifndef __WF_WINDOW_H
-#define __WF_WINDOW_H
+#ifndef __WF_CHANNELS_H
+#define __WF_CHANNELS_H
 
 #include <freerdp/freerdp.h>
+#include <freerdp/client/channels.h>
+#include <freerdp/client/rdpei.h>
+#include <freerdp/client/rdpgfx.h>
+#include <freerdp/client/encomsp.h>
 
-#include "wf_interface.h"
+#include "wf_client.h"
+
+void wf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e);
+void wf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e);
 
 #endif

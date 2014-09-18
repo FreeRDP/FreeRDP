@@ -815,8 +815,10 @@ int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progressive, RFX_PROG
 	progressive_rfx_decode_component(progressive, &shiftCb, tile->cbData, tile->cbLen, pSrcDst[1], pCurrent[1], pSign[1], diff); /* Cb */
 	progressive_rfx_decode_component(progressive, &shiftCr, tile->crData, tile->crLen, pSrcDst[2], pCurrent[2], pSign[2], diff); /* Cr */
 
-	prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-			tile->data, 64 * 4, &roi_64x64);
+	if (!progressive->invert)
+		prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2, tile->data, 64 * 4, &roi_64x64);
+	else
+		prims->yCbCrToBGR_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2, tile->data, 64 * 4, &roi_64x64);
 
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 
@@ -1234,8 +1236,10 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 	if (status < 0)
 		return -1;
 
-	prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2,
-			tile->data, 64 * 4, &roi_64x64);
+	if (!progressive->invert)
+		prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2, tile->data, 64 * 4, &roi_64x64);
+	else
+		prims->yCbCrToBGR_16s8u_P3AC4R((const INT16**) pSrcDst, 64 * 2, tile->data, 64 * 4, &roi_64x64);
 
 	BufferPool_Return(progressive->bufferPool, pBuffer);
 
@@ -1545,6 +1549,8 @@ int progressive_decompress(PROGRESSIVE_CONTEXT* progressive, BYTE* pSrcData, UIN
 	PROGRESSIVE_SURFACE_CONTEXT* surface;
 	RFX_COMPONENT_CODEC_QUANT* quantVal;
 	RFX_PROGRESSIVE_CODEC_QUANT* quantProgVal;
+
+	progressive->invert = FREERDP_PIXEL_FORMAT_IS_ABGR(DstFormat) ? TRUE : FALSE;
 
 	surface = (PROGRESSIVE_SURFACE_CONTEXT*) progressive_get_surface_data(progressive, surfaceId);
 

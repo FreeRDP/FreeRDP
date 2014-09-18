@@ -24,7 +24,8 @@
 
 #include <Ole2.h>
 #include <ShlObj.h>
-#include "wf_interface.h"
+
+#include "wf_client.h"
 #include <freerdp/log.h>
 
 #define TAG CLIENT_TAG(WIN_CLIPRDR_TAG)

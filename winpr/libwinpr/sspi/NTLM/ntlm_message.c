@@ -211,7 +211,6 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 
 	if (!((message->NegotiateFlags & NTLMSSP_REQUEST_TARGET) &&
 			(message->NegotiateFlags & NTLMSSP_NEGOTIATE_NTLM) &&
-			(message->NegotiateFlags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN) &&
 			(message->NegotiateFlags & NTLMSSP_NEGOTIATE_UNICODE)))
 	{
 		Stream_Free(s, FALSE);

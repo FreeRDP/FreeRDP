@@ -36,7 +36,7 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 
-#include "wf_interface.h"
+#include "wf_client.h"
 #include "wf_graphics.h"
 #include "wf_gdi.h"
 
@@ -407,14 +407,14 @@ void wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
 
 				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
-						&pDstData, PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight);
+						&pDstData, PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight, NULL);
 			}
 			else
 			{
 				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
 
 				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
-						PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight);
+						PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight, TRUE);
 			}
 
 			if (status < 0)

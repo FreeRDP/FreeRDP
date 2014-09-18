@@ -230,7 +230,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 					surface->scanline, x - surface->x, y - surface->y, width, height,
 					(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
-					image->bytes_per_line, x, y);
+					image->bytes_per_line, x, y, NULL);
 
 			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
 
@@ -271,7 +271,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 					surface->scanline, x - surface->x, y - surface->y, width, height,
 					(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
-					image->bytes_per_line, x, y);
+					image->bytes_per_line, x, y, NULL);
 
 			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
 
