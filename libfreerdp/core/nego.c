@@ -951,15 +951,9 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 			if (!settings->LocalConnection)
 			{
-				settings->DisableEncryption = FALSE;
+				settings->DisableEncryption = TRUE;
 				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
-			}
-
-			if (settings->DisableEncryption)
-			{
-				fprintf(stderr, "Encryption is disabled.\n");
-				return FALSE;
 			}
 
 			if (!settings->RdpServerRsaKey && !settings->RdpKeyFile)
