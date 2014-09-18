@@ -68,6 +68,7 @@ static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL, "Server IPC socket" },
 	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL, "Select or list monitors" },
+	{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL, "Select rectangle within monitor to share" },
 	{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may view without prompt" },
 	{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may interact without prompt" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "Print version" },
@@ -203,6 +204,56 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			server->mayInteract = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "rect")
+		{
+			char* p;
+			char* tok[4];
+			int x, y, w, h;
+			char* str = _strdup(arg->Value);
+
+			if (!str)
+				return -1;
+
+			tok[0] = p = str;
+
+			p = strchr(p + 1, ',');
+
+			if (!p)
+				return -1;
+
+			*p++ = '\0';
+			tok[1] = p;
+
+			p = strchr(p + 1, ',');
+
+			if (!p)
+				return -1;
+
+			*p++ = '\0';
+			tok[2] = p;
+
+			p = strchr(p + 1, ',');
+
+			if (!p)
+				return -1;
+
+			*p++ = '\0';
+			tok[3] = p;
+
+			x = atoi(tok[0]);
+			y = atoi(tok[1]);
+			w = atoi(tok[2]);
+			h = atoi(tok[3]);
+
+			if ((x < 0) || (y < 0) || (w < 1) || (h < 1))
+				return -1;
+
+			server->subRect.left = x;
+			server->subRect.top = y;
+			server->subRect.right = x + w;
+			server->subRect.bottom = y + h;
+			server->shareSubRect = TRUE;
+		}
 		CommandLineSwitchDefault(arg)
 		{
 
@@ -216,16 +267,27 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{
+		int index;
+		rdpShadowSubsystem* subsystem = server->subsystem;
+
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
 			/* Select monitors */
+
+			index = atoi(arg->Value);
+
+			if (index < 0)
+				index = 0;
+
+			if (index >= subsystem->monitorCount)
+				index = 0;
+
+			subsystem->selectedMonitor = index;
 		}
 		else
 		{
-			int index;
 			int width, height;
 			MONITOR_DEF* monitor;
-			rdpShadowSubsystem* subsystem = server->subsystem;
 
 			/* List monitors */
 
@@ -346,6 +408,16 @@ int shadow_server_start(rdpShadowServer* server)
 	signal(SIGPIPE, SIG_IGN);
 #endif
 
+	server->screen = shadow_screen_new(server);
+
+	if (!server->screen)
+		return -1;
+
+	server->capture = shadow_capture_new(server);
+
+	if (!server->capture)
+		return -1;
+
 	if (!server->ipcSocket)
 		status = server->listener->Open(server->listener, NULL, (UINT16) server->port);
 	else
@@ -370,6 +442,18 @@ int shadow_server_stop(rdpShadowServer* server)
 		server->thread = NULL;
 
 		server->listener->Close(server->listener);
+	}
+
+	if (server->screen)
+	{
+		shadow_screen_free(server->screen);
+		server->screen = NULL;
+	}
+
+	if (server->capture)
+	{
+		shadow_capture_free(server->capture);
+		server->capture = NULL;
 	}
 
 	return 0;
@@ -478,16 +562,6 @@ int shadow_server_init(rdpShadowServer* server)
 		if (status < 0)
 			WLog_ERR(TAG, "subsystem init failure: %d", status);
 	}
-
-	server->screen = shadow_screen_new(server);
-
-	if (!server->screen)
-		return -1;
-
-	server->capture = shadow_capture_new(server);
-
-	if (!server->capture)
-		return -1;
 
 	return 1;
 }

@@ -114,13 +114,26 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	rdpSettings* settings;
 	rdpShadowClient* client;
 	rdpShadowSurface* lobby;
+	rdpShadowServer* server;
 	RECTANGLE_16 invalidRect;
 
 	client = (rdpShadowClient*) peer->context;
 	settings = peer->settings;
+	server = client->server;
 
-	settings->DesktopWidth = client->server->screen->width;
-	settings->DesktopHeight = client->server->screen->height;
+	if (!server->shareSubRect)
+	{
+		width = server->screen->width;
+		height = server->screen->height;
+	}
+	else
+	{
+		width = server->subRect.right - server->subRect.left;
+		height = server->subRect.bottom - server->subRect.top;
+	}
+
+	settings->DesktopWidth = width;
+	settings->DesktopHeight = height;
 
 	if (settings->ColorDepth == 24)
 		settings->ColorDepth = 16; /* disable 24bpp */
@@ -131,9 +144,6 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	peer->update->DesktopResize(peer->update->context);
 
 	shadow_client_channels_post_connect(client);
-
-	width = settings->DesktopWidth;
-	height = settings->DesktopHeight;
 
 	invalidRect.left = 0;
 	invalidRect.top = 0;
@@ -227,6 +237,21 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 
 	pSrcData = surface->data;
 	nSrcStep = surface->scanline;
+
+	if (server->shareSubRect)
+	{
+		int subX, subY;
+		int subWidth, subHeight;
+
+		subX = server->subRect.left;
+		subY = server->subRect.top;
+		subWidth = server->subRect.right - server->subRect.left;
+		subHeight = server->subRect.bottom - server->subRect.top;
+
+		nXSrc -= subX;
+		nYSrc -= subY;
+		pSrcData = &pSrcData[(subY * nSrcStep) + (subX * 4)];
+	}
 
 	if (encoder->frameAck)
 	{
@@ -554,12 +579,17 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 
 	LeaveCriticalSection(&(client->lock));
 
-	surfaceRect.left = surface->x;
-	surfaceRect.top = surface->y;
-	surfaceRect.right = surface->x + surface->width;
-	surfaceRect.bottom = surface->y + surface->height;
+	surfaceRect.left = 0;
+	surfaceRect.top = 0;
+	surfaceRect.right = surface->width;
+	surfaceRect.bottom = surface->height;
 
 	region16_intersect_rect(&invalidRegion, &invalidRegion, &surfaceRect);
+
+	if (server->shareSubRect)
+	{
+		region16_intersect_rect(&invalidRegion, &invalidRegion, &(server->subRect));
+	}
 
 	if (region16_is_empty(&invalidRegion))
 	{
@@ -569,8 +599,8 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 
 	extents = region16_extents(&invalidRegion);
 
-	nXSrc = extents->left - surface->x;
-	nYSrc = extents->top - surface->y;
+	nXSrc = extents->left - 0;
+	nYSrc = extents->top - 0;
 	nWidth = extents->right - extents->left;
 	nHeight = extents->bottom - extents->top;
 

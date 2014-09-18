@@ -280,7 +280,7 @@ int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 
 	freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
 			surface->scanline, x - surface->x, y - surface->y, width, height,
-			pDstData, PIXEL_FORMAT_XRGB32, nDstStep, 0, 0);
+			pDstData, PIXEL_FORMAT_XRGB32, nDstStep, 0, 0, NULL);
 
 	ArrayList_Lock(server->clients);
 

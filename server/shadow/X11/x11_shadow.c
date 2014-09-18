@@ -32,6 +32,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/image.h>
 #include <winpr/sysinfo.h>
 
 #include <freerdp/codec/color.h>
@@ -91,6 +92,20 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, U
 #ifdef WITH_XTEST
 	int button = 0;
 	BOOL down = FALSE;
+	rdpShadowServer* server;
+	rdpShadowSurface* surface;
+
+	server = subsystem->server;
+	surface = server->surface;
+
+	x += surface->x;
+	y += surface->y;
+
+	if (server->shareSubRect)
+	{
+		x += server->subRect.left;
+		y += server->subRect.top;
+	}
 
 	XTestGrabControl(subsystem->display, True);
 
@@ -134,6 +149,20 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 #ifdef WITH_XTEST
 	int button = 0;
 	BOOL down = FALSE;
+	rdpShadowServer* server;
+	rdpShadowSurface* surface;
+
+	server = subsystem->server;
+	surface = server->surface;
+
+	x += surface->x;
+	y += surface->y;
+
+	if (server->shareSubRect)
+	{
+		x += server->subRect.left;
+		y += server->subRect.top;
+	}
 
 	XTestGrabControl(subsystem->display, True);
 	XTestFakeMotionEvent(subsystem->display, 0, x, y, CurrentTime);
@@ -151,6 +180,92 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 
 	XTestGrabControl(subsystem->display, False);
 #endif
+}
+
+int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
+{
+	int x, y, n, k;
+	rdpShadowServer* server;
+	rdpShadowSurface* surface;
+
+	server = subsystem->server;
+	surface = server->surface;
+
+	if (getImage)
+	{
+#ifdef WITH_XFIXES
+		UINT32* pDstPixel;
+		XFixesCursorImage* ci;
+
+		ci = XFixesGetCursorImage(subsystem->display);
+
+		x = ci->x;
+		y = ci->y;
+
+		if (ci->width > subsystem->cursorMaxWidth)
+			return -1;
+
+		if (ci->height > subsystem->cursorMaxHeight)
+			return -1;
+
+		subsystem->cursorHotX = ci->xhot;
+		subsystem->cursorHotY = ci->yhot;
+
+		subsystem->cursorWidth = ci->width;
+		subsystem->cursorHeight = ci->height;
+
+		subsystem->cursorId = ci->cursor_serial;
+
+		n = ci->width * ci->height;
+		pDstPixel = (UINT32*) subsystem->cursorPixels;
+
+		for (k = 0; k < n; k++)
+		{
+			/* XFixesCursorImage.pixels is in *unsigned long*, which may be 8 bytes */
+			*pDstPixel++ = (UINT32) ci->pixels[k];
+		}
+
+		XFree(ci);
+#endif
+	}
+	else
+	{
+		UINT32 mask;
+		int win_x, win_y;
+		int root_x, root_y;
+		Window root, child;
+
+		if (!XQueryPointer(subsystem->display, subsystem->root_window,
+				&root, &child, &root_x, &root_y, &win_x, &win_y, &mask))
+		{
+			return -1;
+		}
+
+		x = root_x;
+		y = root_y;
+	}
+
+	subsystem->cursorX = x;
+	subsystem->cursorY = y;
+
+	return 1;
+}
+
+int x11_shadow_handle_xevent(x11ShadowSubsystem* subsystem, XEvent* xevent)
+{
+	if (xevent->type == MotionNotify)
+	{
+
+	}
+
+#ifdef WITH_XFIXES
+	if (xevent->type == subsystem->xfixes_cursor_notify_event)
+	{
+		x11_shadow_query_cursor(subsystem, TRUE);
+	}
+#endif
+
+	return 1;
 }
 
 void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
@@ -188,6 +303,121 @@ int x11_shadow_invalidate_region(x11ShadowSubsystem* subsystem, int x, int y, in
 	return 1;
 }
 
+int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
+{
+	int x, y;
+	int nXSrc;
+	int nYSrc;
+	int nXDst;
+	int nYDst;
+	int nWidth;
+	int nHeight;
+	int nSrcStep;
+	int nDstStep;
+	int nSrcPad;
+	int nDstPad;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	BYTE* pSrcPixel;
+	BYTE* pDstPixel;
+	BYTE A, R, G, B;
+	rdpShadowSurface* surface;
+
+	surface = subsystem->server->surface;
+
+	nXSrc = 0;
+	nYSrc = 0;
+
+	nWidth = subsystem->cursorWidth;
+	nHeight = subsystem->cursorHeight;
+
+	nXDst = subsystem->cursorX - surface->x - subsystem->cursorHotX;
+	nYDst = subsystem->cursorY - surface->y - subsystem->cursorHotY;
+
+	if (nXDst >= surface->width)
+		return 1;
+
+	if (nXDst < 0)
+	{
+		nXDst *= -1;
+
+		if (nXDst >= nWidth)
+			return 1;
+
+		nXSrc = nXDst;
+		nWidth -= nXDst;
+		nXDst = 0;
+	}
+
+	if (nYDst >= surface->height)
+		return 1;
+
+	if (nYDst < 0)
+	{
+		nYDst *= -1;
+
+		if (nYDst >= nHeight)
+			return 1;
+
+		nYSrc = nYDst;
+		nHeight -= nYDst;
+		nYDst = 0;
+	}
+
+	if ((nXDst + nWidth) > surface->width)
+		nWidth = surface->width - nXDst;
+
+	if ((nYDst + nHeight) > surface->height)
+		nHeight = surface->height - nYDst;
+
+	pSrcData = subsystem->cursorPixels;
+	nSrcStep = subsystem->cursorWidth * 4;
+
+	pDstData = surface->data;
+	nDstStep = surface->scanline;
+
+	nSrcPad = (nSrcStep - (nWidth * 4));
+	nDstPad = (nDstStep - (nWidth * 4));
+
+	pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
+	pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
+
+	for (y = 0; y < nHeight; y++)
+	{
+		pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
+		pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+
+		for (x = 0; x < nWidth; x++)
+		{
+			B = *pSrcPixel++;
+			G = *pSrcPixel++;
+			R = *pSrcPixel++;
+			A = *pSrcPixel++;
+
+			if (A == 0xFF)
+			{
+				pDstPixel[0] = B;
+				pDstPixel[1] = G;
+				pDstPixel[2] = R;
+			}
+			else
+			{
+				pDstPixel[0] = B + (pDstPixel[0] * (0xFF - A) + (0xFF / 2)) / 0xFF;
+				pDstPixel[1] = G + (pDstPixel[1] * (0xFF - A) + (0xFF / 2)) / 0xFF;
+				pDstPixel[2] = R + (pDstPixel[2] * (0xFF - A) + (0xFF / 2)) / 0xFF;
+			}
+
+			pDstPixel[3] = 0xFF;
+			pDstPixel += 4;
+		}
+
+		pSrcPixel += nSrcPad;
+		pDstPixel += nDstPad;
+	}
+
+	return 1;
+}
+
 int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 {
 	int count;
@@ -204,6 +434,11 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	surface = server->surface;
 	screen = server->screen;
 
+	count = ArrayList_Count(server->clients);
+
+	if (count < 1)
+		return 1;
+
 	if (subsystem->use_xshm)
 	{
 		XLockDisplay(subsystem->display);
@@ -218,7 +453,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		image = subsystem->fb_image;
 
 		status = shadow_capture_compare(surface->data, surface->scanline, surface->width, surface->height,
-				(BYTE*) image->data, image->bytes_per_line, &invalidRect);
+				(BYTE*) &(image->data[surface->width * 4]), image->bytes_per_line, &invalidRect);
 
 		if (status > 0)
 		{
@@ -233,6 +468,8 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 					image->bytes_per_line, x, y, NULL);
 
 			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
+
+			x11_shadow_blend_cursor(subsystem);
 
 			count = ArrayList_Count(server->clients);
 
@@ -254,7 +491,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		XLockDisplay(subsystem->display);
 
 		image = XGetImage(subsystem->display, subsystem->root_window,
-				0, 0, subsystem->width, subsystem->height, AllPlanes, ZPixmap);
+				surface->x, surface->y, surface->width, surface->height, AllPlanes, ZPixmap);
 
 		XUnlockDisplay(subsystem->display);
 
@@ -269,11 +506,13 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			height = invalidRect.bottom - invalidRect.top;
 
 			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
-					surface->scanline, x - surface->x, y - surface->y, width, height,
+					surface->scanline, x, y, width, height,
 					(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
 					image->bytes_per_line, x, y, NULL);
 
 			region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
+
+			x11_shadow_blend_cursor(subsystem);
 
 			count = ArrayList_Count(server->clients);
 
@@ -299,6 +538,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 {
 	int fps;
+	XEvent xevent;
 	DWORD status;
 	DWORD nCount;
 	UINT64 cTime;
@@ -330,8 +570,15 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 			break;
 		}
 
+		if (WaitForSingleObject(subsystem->event, 0) == WAIT_OBJECT_0)
+		{
+			XNextEvent(subsystem->display, &xevent);
+			x11_shadow_handle_xevent(subsystem, &xevent);
+		}
+
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
+			x11_shadow_query_cursor(subsystem, FALSE);
 			x11_shadow_screen_grab(subsystem);
 
 			dwInterval = 1000 / fps;
@@ -356,7 +603,7 @@ int x11_shadow_xfixes_init(x11ShadowSubsystem* subsystem)
 	if (!XFixesQueryVersion(subsystem->display, &major, &minor))
 		return -1;
 
-	subsystem->xfixes_notify_event = xfixes_event + XFixesCursorNotify;
+	subsystem->xfixes_cursor_notify_event = xfixes_event + XFixesCursorNotify;
 
 	XFixesSelectCursorInput(subsystem->display, DefaultRootWindow(subsystem->display), XFixesDisplayCursorNotifyMask);
 
@@ -579,9 +826,6 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	if (subsystem->composite)
 		subsystem->use_xdamage = FALSE;
 
-	if (!subsystem->use_xdamage)
-		subsystem->use_xfixes = FALSE;
-
 	subsystem->xfds = ConnectionNumber(subsystem->display);
 	subsystem->number = DefaultScreen(subsystem->display);
 	subsystem->screen = ScreenOfDisplay(subsystem->display, subsystem->number);
@@ -636,6 +880,15 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 	XFree(vis);
 
 	XSelectInput(subsystem->display, subsystem->root_window, SubstructureNotifyMask);
+
+	subsystem->cursorMaxWidth = 256;
+	subsystem->cursorMaxHeight = 256;
+	subsystem->cursorPixels = _aligned_malloc(subsystem->cursorMaxWidth * subsystem->cursorMaxHeight * 4, 16);
+
+	if (!subsystem->cursorPixels)
+		return -1;
+
+	x11_shadow_query_cursor(subsystem, TRUE);
 
 	if (subsystem->use_xfixes)
 	{
@@ -702,6 +955,12 @@ int x11_shadow_subsystem_uninit(x11ShadowSubsystem* subsystem)
 	{
 		CloseHandle(subsystem->event);
 		subsystem->event = NULL;
+	}
+
+	if (subsystem->cursorPixels)
+	{
+		_aligned_free(subsystem->cursorPixels);
+		subsystem->cursorPixels = NULL;
 	}
 
 	return 1;
@@ -771,7 +1030,7 @@ x11ShadowSubsystem* x11_shadow_subsystem_new(rdpShadowServer* server)
 	subsystem->ExtendedMouseEvent = (pfnShadowExtendedMouseEvent) x11_shadow_input_extended_mouse_event;
 
 	subsystem->composite = FALSE;
-	subsystem->use_xshm = TRUE;
+	subsystem->use_xshm = FALSE; /* temporarily disabled */
 	subsystem->use_xfixes = TRUE;
 	subsystem->use_xdamage = FALSE;
 	subsystem->use_xinerama = TRUE;
