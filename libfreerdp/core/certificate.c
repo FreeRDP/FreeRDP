@@ -162,6 +162,7 @@ BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 	int modulus_length;
 	int exponent_length;
 	int error = 0;
+
 	s = Stream_New(cert->data, cert->length);
 
 	if (!s)
@@ -312,13 +313,14 @@ error1:
 rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count)
 {
 	rdpX509CertChain* x509_cert_chain;
-	x509_cert_chain = (rdpX509CertChain*)malloc(sizeof(rdpX509CertChain));
+
+	x509_cert_chain = (rdpX509CertChain*) malloc(sizeof(rdpX509CertChain));
 
 	if (!x509_cert_chain)
 		return NULL;
 
 	x509_cert_chain->count = count;
-	x509_cert_chain->array = (rdpCertBlob*)calloc(count, sizeof(rdpCertBlob));
+	x509_cert_chain->array = (rdpCertBlob*) calloc(count, sizeof(rdpCertBlob));
 
 	if (!x509_cert_chain->array)
 	{
@@ -386,8 +388,8 @@ static BOOL certificate_process_server_public_key(rdpCertificate* certificate, w
 		return FALSE;
 
 	Stream_Read(s, certificate->cert_info.Modulus, certificate->cert_info.ModulusLength);
-	/* 8 bytes of zero padding */
-	Stream_Seek(s, 8);
+	Stream_Seek(s, 8); /* 8 bytes of zero padding */
+
 	return TRUE;
 }
 
@@ -399,6 +401,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	BYTE sig[TSSK_KEY_LENGTH];
 	BYTE encsig[TSSK_KEY_LENGTH + 8];
 	BYTE md5hash[CRYPTO_MD5_DIGEST_LENGTH];
+
 	md5ctx = crypto_md5_init();
 
 	if (!md5ctx)
@@ -474,7 +477,7 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 	Stream_Read_UINT32(s, dwSigAlgId);
 	Stream_Read_UINT32(s, dwKeyAlgId);
 
-	if (!(dwSigAlgId == SIGNATURE_ALG_RSA && dwKeyAlgId == KEY_EXCHANGE_ALG_RSA))
+	if (!((dwSigAlgId == SIGNATURE_ALG_RSA) && (dwKeyAlgId == KEY_EXCHANGE_ALG_RSA)))
 	{
 		WLog_ERR(TAG, "unsupported signature or key algorithm, dwSigAlgId=%d dwKeyAlgId=%d",
 				 dwSigAlgId, dwKeyAlgId);
@@ -544,9 +547,10 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, wStream* s)
 {
 	int i;
+	BOOL ret;
 	UINT32 certLength;
 	UINT32 numCertBlobs;
-	BOOL ret;
+
 	DEBUG_CERTIFICATE("Server X.509 Certificate Chain");
 
 	if (Stream_GetRemainingLength(s) < 4)
@@ -577,11 +581,14 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 		Stream_Read(s, certificate->x509_cert_chain->array[i].data, certLength);
 		certificate->x509_cert_chain->array[i].length = certLength;
 
-		if (numCertBlobs - i == 2)
+		if ((numCertBlobs - i) == 2)
 		{
 			rdpCertInfo cert_info;
+
 			DEBUG_CERTIFICATE("License Server Certificate");
+			
 			ret = certificate_read_x509_certificate(&certificate->x509_cert_chain->array[i], &cert_info);
+			
 			DEBUG_LICENSE("modulus length:%d", (int) cert_info.ModulusLength);
 
 			if (cert_info.Modulus)
@@ -617,9 +624,9 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 
 BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length)
 {
+	BOOL ret;
 	wStream* s;
 	UINT32 dwVersion;
-	BOOL ret;
 
 	if (length < 4)  /* NULL certificate is not an error see #1795 */
 		return TRUE;
@@ -644,38 +651,59 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 	}
 
 	Stream_Free(s, FALSE);
+
 	return ret;
 }
 
 rdpRsaKey* key_new(const char* keyfile)
 {
+	BIO* bio;
 	FILE* fp;
 	RSA* rsa;
+	int length;
+	BYTE* buffer;
 	rdpRsaKey* key;
-	key = (rdpRsaKey*)calloc(1, sizeof(rdpRsaKey));
+
+	key = (rdpRsaKey*) calloc(1, sizeof(rdpRsaKey));
 
 	if (!key)
 		return NULL;
 
-	fp = fopen(keyfile, "r");
+	fp = fopen(keyfile, "r+b");
 
-	if (fp == NULL)
+	if (!fp)
 	{
 		WLog_ERR(TAG, "unable to open RSA key file %s: %s.", keyfile, strerror(errno));
 		goto out_free;
 	}
 
-	rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL);
+	fseek(fp, 0, SEEK_END);
+	length = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
 
-	if (rsa == NULL)
+	buffer = (BYTE*) malloc(length);
+
+	if (!buffer)
+		goto out_free;
+
+	fread((void*) buffer, length, 1, fp);
+	fclose(fp);
+
+	bio = BIO_new_mem_buf((void*) buffer, length);
+
+	if (!bio)
+		goto out_free;
+
+	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
+
+	BIO_free(bio);
+	free(buffer);
+
+	if (!rsa)
 	{
 		WLog_ERR(TAG, "unable to load RSA key from %s: %s.", keyfile, strerror(errno));
-		ERR_print_errors_fp(stderr);
-		fclose(fp);
 		goto out_free;
 	}
-
-	fclose(fp);
 
 	switch (RSA_check_key(rsa))
 	{
@@ -689,7 +717,6 @@ rdpRsaKey* key_new(const char* keyfile)
 
 		default:
 			WLog_ERR(TAG, "unexpected error when checking RSA key from %s: %s.", keyfile, strerror(errno));
-			ERR_print_errors_fp(stderr);
 			goto out_free_rsa;
 	}
 
@@ -700,7 +727,7 @@ rdpRsaKey* key_new(const char* keyfile)
 	}
 
 	key->ModulusLength = BN_num_bytes(rsa->n);
-	key->Modulus = (BYTE*)malloc(key->ModulusLength);
+	key->Modulus = (BYTE*) malloc(key->ModulusLength);
 
 	if (!key->Modulus)
 		goto out_free_rsa;
@@ -708,7 +735,7 @@ rdpRsaKey* key_new(const char* keyfile)
 	BN_bn2bin(rsa->n, key->Modulus);
 	crypto_reverse(key->Modulus, key->ModulusLength);
 	key->PrivateExponentLength = BN_num_bytes(rsa->d);
-	key->PrivateExponent = (BYTE*)malloc(key->PrivateExponentLength);
+	key->PrivateExponent = (BYTE*) malloc(key->PrivateExponentLength);
 
 	if (!key->PrivateExponent)
 		goto out_free_modulus;

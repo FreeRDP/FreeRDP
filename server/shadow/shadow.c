@@ -30,10 +30,6 @@
 #include <winpr/tools/makecert.h>
 
 #ifdef _WIN32
-#include <openssl/applink.c>
-#endif
-
-#ifdef _WIN32
 static BOOL g_MessagePump = TRUE;
 #else
 static BOOL g_MessagePump = FALSE;

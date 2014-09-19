@@ -48,7 +48,6 @@ char* openssl_get_ssl_error_string(int ssl_error)
 			return "SSL_ERROR_SYSCALL";
 
 		case SSL_ERROR_SSL:
-			ERR_print_errors_fp(stdout);
 			return "SSL_ERROR_SSL";
 	}
 
