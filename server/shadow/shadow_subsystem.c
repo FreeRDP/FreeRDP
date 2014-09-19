@@ -137,8 +137,9 @@ int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server
 	subsystem->server = server;
 	subsystem->selectedMonitor = server->selectedMonitor;
 
-	subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	subsystem->MsgPipe = MessagePipe_New();
+	subsystem->updateEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
 	region16_init(&(subsystem->invalidRegion));
 
 	if (!subsystem->ep.Init)
@@ -155,22 +156,20 @@ void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 	if (subsystem->ep.Uninit)
 		subsystem->ep.Uninit(subsystem);
 
-	if (subsystem->updateEvent)
-	{
-		CloseHandle(subsystem->updateEvent);
-		subsystem->updateEvent = NULL;
-	}
-
 	if (subsystem->MsgPipe)
 	{
 		MessagePipe_Free(subsystem->MsgPipe);
 		subsystem->MsgPipe = NULL;
 	}
 
-	if (subsystem->invalidRegion.data)
+	if (subsystem->updateEvent)
 	{
-		region16_uninit(&(subsystem->invalidRegion));
+		CloseHandle(subsystem->updateEvent);
+		subsystem->updateEvent = NULL;
 	}
+
+	if (subsystem->invalidRegion.data)
+		region16_uninit(&(subsystem->invalidRegion));
 }
 
 int shadow_subsystem_start(rdpShadowSubsystem* subsystem)

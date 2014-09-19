@@ -50,7 +50,7 @@ typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
 typedef struct _RDP_SHADOW_ENTRY_POINTS RDP_SHADOW_ENTRY_POINTS;
 typedef int (*pfnShadowSubsystemEntry)(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
 
-typedef rdpShadowSubsystem* (*pfnShadowSubsystemNew)();
+typedef rdpShadowSubsystem* (*pfnShadowSubsystemNew)(void);
 typedef void (*pfnShadowSubsystemFree)(rdpShadowSubsystem* subsystem);
 
 typedef int (*pfnShadowSubsystemInit)(rdpShadowSubsystem* subsystem);
@@ -60,9 +60,6 @@ typedef int (*pfnShadowSubsystemStart)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSubsystemStop)(rdpShadowSubsystem* subsystem);
 
 typedef int (*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, int maxMonitors);
-
-typedef int (*pfnShadowSurfaceCopy)(rdpShadowSubsystem* subsystem);
-typedef int (*pfnShadowSurfaceUpdate)(rdpShadowSubsystem* subsystem, REGION16* subRect);
 
 typedef int (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem, UINT32 flags);
 typedef int (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
@@ -139,6 +136,7 @@ struct _RDP_SHADOW_ENTRY_POINTS
 	MONITOR_DEF monitors[16]; \
 	MONITOR_DEF virtualScreen; \
 	HANDLE updateEvent; \
+	BOOL suppressOutput; \
 	REGION16 invalidRegion; \
 	wMessagePipe* MsgPipe; \
 	SYNCHRONIZATION_BARRIER barrier; \

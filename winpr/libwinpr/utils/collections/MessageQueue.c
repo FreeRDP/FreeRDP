@@ -111,6 +111,7 @@ void MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* w
 	message.id = type;
 	message.wParam = wParam;
 	message.lParam = lParam;
+	message.Free = NULL;
 
 	MessageQueue_Dispatch(queue, &message);
 }

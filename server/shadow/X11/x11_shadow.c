@@ -288,23 +288,6 @@ void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int y, int
 #endif
 }
 
-int x11_shadow_invalidate_region(x11ShadowSubsystem* subsystem, int x, int y, int width, int height)
-{
-	rdpShadowServer* server;
-	RECTANGLE_16 invalidRect;
-
-	server = subsystem->server;
-
-	invalidRect.left = x;
-	invalidRect.top = y;
-	invalidRect.right = x + width;
-	invalidRect.bottom = y + height;
-
-	region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
-
-	return 1;
-}
-
 int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 {
 	int x, y;
@@ -443,109 +426,122 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	if (count < 1)
 		return 1;
 
+	if ((count == 1) && subsystem->suppressOutput)
+		return 1;
+
 	surfaceRect.left = 0;
 	surfaceRect.top = 0;
 	surfaceRect.right = surface->width;
 	surfaceRect.bottom = surface->height;
 
+	XLockDisplay(subsystem->display);
+
 	if (subsystem->use_xshm)
 	{
-		XLockDisplay(subsystem->display);
+		image = subsystem->fb_image;
 
 		XCopyArea(subsystem->display, subsystem->root_window, subsystem->fb_pixmap,
 				subsystem->xshm_gc, 0, 0, subsystem->width, subsystem->height, 0, 0);
 
-		XSync(subsystem->display, False);
-
-		XUnlockDisplay(subsystem->display);
-
-		image = subsystem->fb_image;
-
 		status = shadow_capture_compare(surface->data, surface->scanline, surface->width, surface->height,
 				(BYTE*) &(image->data[surface->width * 4]), image->bytes_per_line, &invalidRect);
-
-		region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
-		region16_intersect_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &surfaceRect);
-
-		if (!region16_is_empty(&(subsystem->invalidRegion)))
-		{
-			extents = region16_extents(&(subsystem->invalidRegion));
-
-			x = extents->left;
-			y = extents->top;
-			width = extents->right - extents->left;
-			height = extents->bottom - extents->top;
-
-			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
-					surface->scanline, x - surface->x, y - surface->y, width, height,
-					(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
-					image->bytes_per_line, x, y, NULL);
-
-			x11_shadow_blend_cursor(subsystem);
-
-			count = ArrayList_Count(server->clients);
-
-			InitializeSynchronizationBarrier(&(subsystem->barrier), count + 1, -1);
-
-			SetEvent(subsystem->updateEvent);
-
-			EnterSynchronizationBarrier(&(subsystem->barrier), 0);
-
-			DeleteSynchronizationBarrier(&(subsystem->barrier));
-
-			ResetEvent(subsystem->updateEvent);
-
-			region16_clear(&(subsystem->invalidRegion));
-		}
 	}
 	else
 	{
-		XLockDisplay(subsystem->display);
-
 		image = XGetImage(subsystem->display, subsystem->root_window,
-				surface->x, surface->y, surface->width, surface->height, AllPlanes, ZPixmap);
-
-		XUnlockDisplay(subsystem->display);
+					surface->x, surface->y, surface->width, surface->height, AllPlanes, ZPixmap);
 
 		status = shadow_capture_compare(surface->data, surface->scanline, surface->width, surface->height,
 				(BYTE*) image->data, image->bytes_per_line, &invalidRect);
-
-		region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
-		region16_intersect_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &surfaceRect);
-
-		if (!region16_is_empty(&(subsystem->invalidRegion)))
-		{
-			extents = region16_extents(&(subsystem->invalidRegion));
-
-			x = extents->left;
-			y = extents->top;
-			width = extents->right - extents->left;
-			height = extents->bottom - extents->top;
-
-			freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
-					surface->scanline, x, y, width, height,
-					(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
-					image->bytes_per_line, x, y, NULL);
-
-			x11_shadow_blend_cursor(subsystem);
-
-			count = ArrayList_Count(server->clients);
-
-			InitializeSynchronizationBarrier(&(subsystem->barrier), count + 1, -1);
-
-			SetEvent(subsystem->updateEvent);
-
-			EnterSynchronizationBarrier(&(subsystem->barrier), 0);
-
-			DeleteSynchronizationBarrier(&(subsystem->barrier));
-
-			ResetEvent(subsystem->updateEvent);
-
-			region16_clear(&(subsystem->invalidRegion));
-		}
-
-		XDestroyImage(image);
 	}
+
+	XSync(subsystem->display, False);
+
+	XUnlockDisplay(subsystem->display);
+
+	region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &invalidRect);
+	region16_intersect_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &surfaceRect);
+
+	if (!region16_is_empty(&(subsystem->invalidRegion)))
+	{
+		extents = region16_extents(&(subsystem->invalidRegion));
+
+		x = extents->left;
+		y = extents->top;
+		width = extents->right - extents->left;
+		height = extents->bottom - extents->top;
+
+		freerdp_image_copy(surface->data, PIXEL_FORMAT_XRGB32,
+				surface->scanline, x, y, width, height,
+				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
+				image->bytes_per_line, x, y, NULL);
+
+		x11_shadow_blend_cursor(subsystem);
+
+		count = ArrayList_Count(server->clients);
+
+		InitializeSynchronizationBarrier(&(subsystem->barrier), count + 1, -1);
+
+		SetEvent(subsystem->updateEvent);
+
+		EnterSynchronizationBarrier(&(subsystem->barrier), 0);
+
+		DeleteSynchronizationBarrier(&(subsystem->barrier));
+
+		ResetEvent(subsystem->updateEvent);
+
+		region16_clear(&(subsystem->invalidRegion));
+	}
+
+	if (!subsystem->use_xshm)
+		XDestroyImage(image);
+
+	return 1;
+}
+
+int x11_shadow_subsystem_process_message(x11ShadowSubsystem* subsystem, wMessage* message)
+{
+	if (message->id == SHADOW_MSG_IN_REFRESH_OUTPUT_ID)
+	{
+		UINT32 index;
+		SHADOW_MSG_IN_REFRESH_OUTPUT* msg = (SHADOW_MSG_IN_REFRESH_OUTPUT*) message->wParam;
+
+		if (msg->numRects)
+		{
+			for (index = 0; index < msg->numRects; index++)
+			{
+				region16_union_rect(&(subsystem->invalidRegion),
+						&(subsystem->invalidRegion), &msg->rects[index]);
+			}
+		}
+		else
+		{
+			RECTANGLE_16 refreshRect;
+
+			refreshRect.left = 0;
+			refreshRect.top = 0;
+			refreshRect.right = subsystem->width;
+			refreshRect.bottom = subsystem->height;
+
+			region16_union_rect(&(subsystem->invalidRegion),
+						&(subsystem->invalidRegion), &refreshRect);
+		}
+	}
+	else if (message->id == SHADOW_MSG_IN_SUPPRESS_OUTPUT_ID)
+	{
+		SHADOW_MSG_IN_SUPPRESS_OUTPUT* msg = (SHADOW_MSG_IN_SUPPRESS_OUTPUT*) message->wParam;
+
+		subsystem->suppressOutput = (msg->allow) ? FALSE : TRUE;
+
+		if (msg->allow)
+		{
+			region16_union_rect(&(subsystem->invalidRegion),
+						&(subsystem->invalidRegion), &(msg->rect));
+		}
+	}
+
+	if (message->Free)
+		message->Free(message);
 
 	return 1;
 }
@@ -588,24 +584,17 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 				if (message.id == WMQ_QUIT)
 					break;
 
-				if (message.id == 1)
-				{
-					RECTANGLE_16 refreshRect;
-
-					refreshRect.left = 0;
-					refreshRect.top = 0;
-					refreshRect.right = subsystem->width;
-					refreshRect.bottom = subsystem->height;
-
-					region16_union_rect(&(subsystem->invalidRegion), &(subsystem->invalidRegion), &refreshRect);
-				}
+				x11_shadow_subsystem_process_message(subsystem, &message);
 			}
 		}
 
 		if (WaitForSingleObject(subsystem->event, 0) == WAIT_OBJECT_0)
 		{
-			XNextEvent(subsystem->display, &xevent);
-			x11_shadow_handle_xevent(subsystem, &xevent);
+			if (XEventsQueued(subsystem->display, QueuedAlready))
+			{
+				XNextEvent(subsystem->display, &xevent);
+				x11_shadow_handle_xevent(subsystem, &xevent);
+			}
 		}
 
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))

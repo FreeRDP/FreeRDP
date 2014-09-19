@@ -104,6 +104,22 @@ void shadow_client_context_free(freerdp_peer* peer, rdpShadowClient* client)
 	}
 }
 
+void shadow_client_message_free(wMessage* message)
+{
+	if (message->id == SHADOW_MSG_IN_REFRESH_OUTPUT_ID)
+	{
+		SHADOW_MSG_IN_REFRESH_OUTPUT* wParam = (SHADOW_MSG_IN_REFRESH_OUTPUT*) message->wParam;
+
+		free(wParam->rects);
+		free(wParam);
+	}
+	else if (message->id == SHADOW_MSG_IN_SUPPRESS_OUTPUT_ID)
+	{
+		SHADOW_MSG_IN_SUPPRESS_OUTPUT* wParam = (SHADOW_MSG_IN_SUPPRESS_OUTPUT*) message->wParam;
+		free(wParam);
+	}
+}
+
 BOOL shadow_client_capabilities(freerdp_peer* peer)
 {
 	return TRUE;
@@ -168,20 +184,59 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 
 void shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_16* areas)
 {
+	wMessage message = { 0 };
+	SHADOW_MSG_IN_REFRESH_OUTPUT* wParam;
 	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
 
-	printf("RefreshRect: %d\n", count);
+	wParam = (SHADOW_MSG_IN_REFRESH_OUTPUT*) calloc(1, sizeof(SHADOW_MSG_IN_REFRESH_OUTPUT));
 
-	MessageQueue_Post(MsgPipe->In, (void*) client, 1, NULL, NULL);
+	if (!wParam)
+		return;
+
+	wParam->numRects = (UINT32) count;
+
+	if (wParam->numRects)
+	{
+		wParam->rects = (RECTANGLE_16*) calloc(wParam->numRects, sizeof(RECTANGLE_16));
+
+		if (!wParam->rects)
+			return;
+	}
+
+	CopyMemory(wParam->rects, areas, wParam->numRects * sizeof(RECTANGLE_16));
+
+	message.id = SHADOW_MSG_IN_REFRESH_OUTPUT_ID;
+	message.wParam = (void*) wParam;
+	message.lParam = NULL;
+	message.context = (void*) client;
+	message.Free = shadow_client_message_free;
+
+	MessageQueue_Dispatch(MsgPipe->In, &message);
 }
 
 void shadow_client_suppress_output(rdpShadowClient* client, BYTE allow, RECTANGLE_16* area)
 {
+	wMessage message = { 0 };
+	SHADOW_MSG_IN_SUPPRESS_OUTPUT* wParam;
 	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
 
-	printf("SuppressOutput: %d\n", allow);
+	wParam = (SHADOW_MSG_IN_SUPPRESS_OUTPUT*) calloc(1, sizeof(SHADOW_MSG_IN_SUPPRESS_OUTPUT));
 
-	MessageQueue_Post(MsgPipe->In, (void*) client, 2, NULL, NULL);
+	if (!wParam)
+		return;
+
+	wParam->allow = (UINT32) allow;
+
+	if (area)
+		CopyMemory(&(wParam->rect), area, sizeof(RECTANGLE_16));
+
+	message.id = SHADOW_MSG_IN_SUPPRESS_OUTPUT_ID;
+	message.wParam = (void*) wParam;
+	message.lParam = NULL;
+	message.context = (void*) client;
+	message.Free = shadow_client_message_free;
+
+	MessageQueue_Dispatch(MsgPipe->In, &message);
 }
 
 BOOL shadow_client_activate(freerdp_peer* peer)

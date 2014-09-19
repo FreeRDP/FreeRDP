@@ -24,7 +24,22 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 
-#include "shadow_subsystem.h"
+#define SHADOW_MSG_IN_REFRESH_OUTPUT_ID			1001
+#define SHADOW_MSG_IN_SUPPRESS_OUTPUT_ID		1002
+
+struct _SHADOW_MSG_IN_REFRESH_OUTPUT
+{
+	UINT32 numRects;
+	RECTANGLE_16* rects;
+};
+typedef struct _SHADOW_MSG_IN_REFRESH_OUTPUT SHADOW_MSG_IN_REFRESH_OUTPUT;
+
+struct _SHADOW_MSG_IN_SUPPRESS_OUTPUT
+{
+	BOOL allow;
+	RECTANGLE_16 rect;
+};
+typedef struct _SHADOW_MSG_IN_SUPPRESS_OUTPUT SHADOW_MSG_IN_SUPPRESS_OUTPUT;
 
 #ifdef __cplusplus
 extern "C" {
