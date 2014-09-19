@@ -43,7 +43,7 @@ void shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 	if (!client->mayInteract)
 		return;
-
+	
 	if (subsystem->KeyboardEvent)
 	{
 		subsystem->KeyboardEvent(subsystem, flags, code);

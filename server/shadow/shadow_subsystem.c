@@ -145,8 +145,7 @@ int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server
 	if (!subsystem->ep.Init)
 		return -1;
 
-	if (subsystem->ep.Init)
-		status = subsystem->ep.Init(subsystem);
+	status = subsystem->ep.Init(subsystem);
 
 	return status;
 }
