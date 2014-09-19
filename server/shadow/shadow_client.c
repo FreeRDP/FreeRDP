@@ -287,6 +287,8 @@ int shadow_client_send_surface_frame_marker(rdpShadowClient* client, UINT32 acti
 int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* surface, int nXSrc, int nYSrc, int nWidth, int nHeight)
 {
 	int i;
+	BOOL first;
+	BOOL last;
 	wStream* s;
 	int nSrcStep;
 	BYTE* pSrcData;
@@ -325,10 +327,7 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 	}
 
 	if (encoder->frameAck)
-	{
 		frameId = (UINT32) shadow_encoder_create_frame_id(encoder);
-		shadow_client_send_surface_frame_marker(client, SURFACECMD_FRAMEACTION_BEGIN, frameId);
-	}
 
 	if (settings->RemoteFxCodec)
 	{
@@ -366,7 +365,13 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 			cmd.bitmapDataLength = Stream_GetPosition(s);
 			cmd.bitmapData = Stream_Buffer(s);
 
-			IFCALL(update->SurfaceBits, update->context, &cmd);
+			first = (i == 0) ? TRUE : FALSE;
+			last = ((i + 1) == numMessages) ? TRUE : FALSE;
+
+			if (!encoder->frameAck)
+				IFCALL(update->SurfaceBits, update->context, &cmd);
+			else
+				IFCALL(update->SurfaceFrameBits, update->context, &cmd, first, last, frameId);
 		}
 
 		free(messages);
@@ -401,15 +406,16 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 			cmd.bitmapDataLength = Stream_GetPosition(s);
 			cmd.bitmapData = Stream_Buffer(s);
 
-			IFCALL(update->SurfaceBits, update->context, &cmd);
+			first = (i == 0) ? TRUE : FALSE;
+			last = ((i + 1) == numMessages) ? TRUE : FALSE;
+
+			if (!encoder->frameAck)
+				IFCALL(update->SurfaceBits, update->context, &cmd);
+			else
+				IFCALL(update->SurfaceFrameBits, update->context, &cmd, first, last, frameId);
 		}
 
 		free(messages);
-	}
-
-	if (encoder->frameAck)
-	{
-		shadow_client_send_surface_frame_marker(client, SURFACECMD_FRAMEACTION_END, frameId);
 	}
 
 	return 1;
