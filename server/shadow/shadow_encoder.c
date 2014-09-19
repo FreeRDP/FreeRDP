@@ -166,9 +166,13 @@ int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 
 int shadow_encoder_init_bitmap(rdpShadowEncoder* encoder)
 {
-	DWORD planarFlags;
+	DWORD planarFlags = 0;
+	rdpContext* context = (rdpContext*) encoder->client;
+	rdpSettings* settings = context->settings;
 
-	planarFlags = PLANAR_FORMAT_HEADER_NA;
+	if (settings->DrawAllowSkipAlpha)
+		planarFlags |= PLANAR_FORMAT_HEADER_NA;
+
 	planarFlags |= PLANAR_FORMAT_HEADER_RLE;
 
 	if (!encoder->planar)
@@ -346,15 +350,17 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 	return 1;
 }
 
-rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server)
+rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client)
 {
 	rdpShadowEncoder* encoder;
+	rdpShadowServer* server = client->server;
 
 	encoder = (rdpShadowEncoder*) calloc(1, sizeof(rdpShadowEncoder));
 
 	if (!encoder)
 		return NULL;
 
+	encoder->client = client;
 	encoder->server = server;
 
 	encoder->fps = 16;

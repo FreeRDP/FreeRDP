@@ -35,11 +35,13 @@
 #include <winpr/image.h>
 #include <winpr/sysinfo.h>
 
+#include <freerdp/log.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
-#include <freerdp/log.h>
 
 #include "../shadow_screen.h"
+#include "../shadow_client.h"
+#include "../shadow_encoder.h"
 #include "../shadow_capture.h"
 #include "../shadow_surface.h"
 #include "../shadow_subsystem.h"
@@ -488,6 +490,18 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 		DeleteSynchronizationBarrier(&(subsystem->barrier));
 
+		if (count == 1)
+		{
+			rdpShadowClient* client;
+
+			client = (rdpShadowClient*) ArrayList_GetItem(server->clients, 0);
+
+			if (client)
+			{
+				subsystem->captureFrameRate = client->encoder->fps;
+			}
+		}
+
 		ResetEvent(subsystem->updateEvent);
 
 		region16_clear(&(subsystem->invalidRegion));
@@ -548,7 +562,6 @@ int x11_shadow_subsystem_process_message(x11ShadowSubsystem* subsystem, wMessage
 
 void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 {
-	int fps;
 	XEvent xevent;
 	DWORD status;
 	DWORD nCount;
@@ -566,8 +579,8 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 	events[nCount++] = subsystem->event;
 	events[nCount++] = MessageQueue_Event(MsgPipe->In);
 
-	fps = 16;
-	dwInterval = 1000 / fps;
+	subsystem->captureFrameRate = 16;
+	dwInterval = 1000 / subsystem->captureFrameRate;
 	frameTime = GetTickCount64() + dwInterval;
 
 	while (1)
@@ -602,7 +615,7 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 			x11_shadow_query_cursor(subsystem, FALSE);
 			x11_shadow_screen_grab(subsystem);
 
-			dwInterval = 1000 / fps;
+			dwInterval = 1000 / subsystem->captureFrameRate;
 			frameTime += dwInterval;
 		}
 	}

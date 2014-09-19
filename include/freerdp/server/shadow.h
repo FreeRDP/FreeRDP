@@ -132,6 +132,7 @@ struct _RDP_SHADOW_ENTRY_POINTS
 	RDP_SHADOW_ENTRY_POINTS ep; \
 	HANDLE event; \
 	int numMonitors; \
+	int captureFrameRate; \
 	int selectedMonitor; \
 	MONITOR_DEF monitors[16]; \
 	MONITOR_DEF virtualScreen; \

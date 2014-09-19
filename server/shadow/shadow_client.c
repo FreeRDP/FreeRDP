@@ -72,7 +72,7 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 
 	client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-	client->encoder = shadow_encoder_new(server);
+	client->encoder = shadow_encoder_new(client);
 
 	ArrayList_Add(server->clients, (void*) client);
 }
