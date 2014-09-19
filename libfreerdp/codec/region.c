@@ -130,12 +130,23 @@ static RECTANGLE_16 *region16_extents_noconst(REGION16 *region)
 	return &region->extents;
 }
 
+BOOL rectangle_is_empty(const RECTANGLE_16 *rect)
+{
+	return (rect->left + rect->top + rect->right + rect->bottom) ? TRUE : FALSE;
+}
+
 BOOL region16_is_empty(const REGION16 *region)
 {
 	assert(region);
 	assert(region->data);
 
 	return (region->data->nbRects == 0);
+}
+
+BOOL rectangles_equal(const RECTANGLE_16 *r1, const RECTANGLE_16 *r2)
+{
+	return ((r1->left == r2->left) && (r1->top == r2->top) &&
+			(r1->right == r2->right) && (r1->bottom == r2->bottom)) ? TRUE : FALSE;
 }
 
 BOOL rectangles_intersects(const RECTANGLE_16 *r1, const RECTANGLE_16 *r2)

@@ -27,14 +27,10 @@
 #include <winpr/cmdline.h>
 #include <winpr/winsock.h>
 
-#include <freerdp/version.h>
 #include <freerdp/log.h>
+#include <freerdp/version.h>
 
 #include <winpr/tools/makecert.h>
-
-#ifdef _WIN32
-#include <openssl/applink.c>
-#endif
 
 #ifndef _WIN32
 #include <sys/select.h>
@@ -45,29 +41,12 @@
 
 #define TAG SERVER_TAG("shadow")
 
-#ifdef _WIN32
-static BOOL g_MessagePump = TRUE;
-#else
-static BOOL g_MessagePump = FALSE;
-#endif
-
-#ifdef WITH_SHADOW_X11
-extern rdpShadowSubsystem* X11_ShadowCreateSubsystem(rdpShadowServer* server);
-#endif
-
-#ifdef WITH_SHADOW_MAC
-extern rdpShadowSubsystem* Mac_ShadowCreateSubsystem(rdpShadowServer* server);
-#endif
-
-#ifdef WITH_SHADOW_WIN
-extern rdpShadowSubsystem* Win_ShadowCreateSubsystem(rdpShadowServer* server);
-#endif
-
 static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
 	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL, "Server IPC socket" },
 	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL, "Select or list monitors" },
+	{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL, "Select rectangle within monitor to share" },
 	{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may view without prompt" },
 	{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may interact without prompt" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "Print version" },
@@ -203,6 +182,56 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			server->mayInteract = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "rect")
+		{
+			char* p;
+			char* tok[4];
+			int x, y, w, h;
+			char* str = _strdup(arg->Value);
+
+			if (!str)
+				return -1;
+
+			tok[0] = p = str;
+
+			p = strchr(p + 1, ',');
+
+			if (!p)
+				return -1;
+
+			*p++ = '\0';
+			tok[1] = p;
+
+			p = strchr(p + 1, ',');
+
+			if (!p)
+				return -1;
+
+			*p++ = '\0';
+			tok[2] = p;
+
+			p = strchr(p + 1, ',');
+
+			if (!p)
+				return -1;
+
+			*p++ = '\0';
+			tok[3] = p;
+
+			x = atoi(tok[0]);
+			y = atoi(tok[1]);
+			w = atoi(tok[2]);
+			h = atoi(tok[3]);
+
+			if ((x < 0) || (y < 0) || (w < 1) || (h < 1))
+				return -1;
+
+			server->subRect.left = x;
+			server->subRect.top = y;
+			server->subRect.right = x + w;
+			server->subRect.bottom = y + h;
+			server->shareSubRect = TRUE;
+		}
 		CommandLineSwitchDefault(arg)
 		{
 
@@ -216,22 +245,36 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{
+		int index;
+		int numMonitors;
+		MONITOR_DEF monitors[16];
+
+		numMonitors = shadow_enum_monitors(monitors, 16, 0);
+
 		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		{
 			/* Select monitors */
+
+			index = atoi(arg->Value);
+
+			if (index < 0)
+				index = 0;
+
+			if (index >= numMonitors)
+				index = 0;
+
+			server->selectedMonitor = index;
 		}
 		else
 		{
-			int index;
 			int width, height;
 			MONITOR_DEF* monitor;
-			rdpShadowSubsystem* subsystem = server->subsystem;
 
 			/* List monitors */
 
-			for (index = 0; index < subsystem->monitorCount; index++)
+			for (index = 0; index < numMonitors; index++)
 			{
-				monitor = &(subsystem->monitors[index]);
+				monitor = &monitors[index];
 
 				width = monitor->right - monitor->left;
 				height = monitor->bottom - monitor->top;
@@ -248,32 +291,6 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	return status;
 }
 
-int shadow_server_surface_update(rdpShadowSubsystem* subsystem, REGION16* region)
-{
-	int index;
-	int count;
-	wArrayList* clients;
-	rdpShadowServer* server;
-	rdpShadowClient* client;
-
-	server = subsystem->server;
-	clients = server->clients;
-
-	ArrayList_Lock(clients);
-
-	count = ArrayList_Count(clients);
-
-	for (index = 0; index < count; index++)
-	{
-		client = ArrayList_GetItem(clients, index);
-		shadow_client_surface_update(client, region);
-	}
-
-	ArrayList_Unlock(clients);
-
-	return 1;
-}
-
 void* shadow_server_thread(rdpShadowServer* server)
 {
 	DWORD status;
@@ -287,10 +304,7 @@ void* shadow_server_thread(rdpShadowServer* server)
 	StopEvent = server->StopEvent;
 	subsystem = server->subsystem;
 
-	if (subsystem->Start)
-	{
-		subsystem->Start(subsystem);
-	}
+	shadow_subsystem_start(server->subsystem);
 
 	while (1)
 	{
@@ -324,10 +338,7 @@ void* shadow_server_thread(rdpShadowServer* server)
 
 	listener->Close(listener);
 
-	if (subsystem->Stop)
-	{
-		subsystem->Stop(subsystem);
-	}
+	shadow_subsystem_stop(server->subsystem);
 
 	ExitThread(0);
 
@@ -345,6 +356,16 @@ int shadow_server_start(rdpShadowServer* server)
 #ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
 #endif
+
+	server->screen = shadow_screen_new(server);
+
+	if (!server->screen)
+		return -1;
+
+	server->capture = shadow_capture_new(server);
+
+	if (!server->capture)
+		return -1;
 
 	if (!server->ipcSocket)
 		status = server->listener->Open(server->listener, NULL, (UINT16) server->port);
@@ -372,7 +393,80 @@ int shadow_server_stop(rdpShadowServer* server)
 		server->listener->Close(server->listener);
 	}
 
+	if (server->screen)
+	{
+		shadow_screen_free(server->screen);
+		server->screen = NULL;
+	}
+
+	if (server->capture)
+	{
+		shadow_capture_free(server->capture);
+		server->capture = NULL;
+	}
+
 	return 0;
+}
+
+int shadow_server_init_config_path(rdpShadowServer* server)
+{
+#ifdef _WIN32
+	if (!server->ConfigPath)
+	{
+		server->ConfigPath = GetEnvironmentSubPath("LOCALAPPDATA", "freerdp");
+	}
+#endif
+
+#ifdef __APPLE__
+	if (!server->ConfigPath)
+	{
+		char* userLibraryPath;
+		char* userApplicationSupportPath;
+
+		userLibraryPath = GetKnownSubPath(KNOWN_PATH_HOME, "Library");
+
+		if (userLibraryPath)
+		{
+			if (!PathFileExistsA(userLibraryPath))
+				CreateDirectoryA(userLibraryPath, 0);
+
+			userApplicationSupportPath = GetCombinedPath(userLibraryPath, "Application Support");
+
+			if (userApplicationSupportPath)
+			{
+				if (!PathFileExistsA(userApplicationSupportPath))
+					CreateDirectoryA(userApplicationSupportPath, 0);
+
+				server->ConfigPath = GetCombinedPath(userApplicationSupportPath, "freerdp");
+			}
+
+			free(userLibraryPath);
+			free(userApplicationSupportPath);
+		}
+	}
+#endif
+
+	if (!server->ConfigPath)
+	{
+		char* configHome;
+
+		configHome = GetKnownPath(KNOWN_PATH_XDG_CONFIG_HOME);
+
+		if (configHome)
+		{
+			if (!PathFileExistsA(configHome))
+				CreateDirectoryA(configHome, 0);
+
+			server->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
+
+			free(configHome);
+		}
+	}
+
+	if (!server->ConfigPath)
+		return -1; /* no usable config path */
+
+	return 1;
 }
 
 int shadow_server_init_certificate(rdpShadowServer* server)
@@ -436,7 +530,16 @@ int shadow_server_init(rdpShadowServer* server)
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 
+	server->clients = ArrayList_New(TRUE);
+
 	server->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	InitializeCriticalSectionAndSpinCount(&(server->lock), 4000);
+
+	status = shadow_server_init_config_path(server);
+
+	if (status < 0)
+		return -1;
 
 	status = shadow_server_init_certificate(server);
 
@@ -451,45 +554,14 @@ int shadow_server_init(rdpShadowServer* server)
 	server->listener->info = (void*) server;
 	server->listener->PeerAccepted = shadow_client_accepted;
 
-#ifdef WITH_SHADOW_X11
-	server->CreateSubsystem = X11_ShadowCreateSubsystem;
-#endif
-
-#ifdef WITH_SHADOW_MAC
-	server->CreateSubsystem = Mac_ShadowCreateSubsystem;
-#endif
-
-#ifdef WITH_SHADOW_WIN
-	server->CreateSubsystem = Win_ShadowCreateSubsystem;
-#endif
-	
-	if (server->CreateSubsystem)
-		server->subsystem = server->CreateSubsystem(server);
+	server->subsystem = shadow_subsystem_new(NULL);
 
 	if (!server->subsystem)
 		return -1;
 
-	server->subsystem->SurfaceUpdate = shadow_server_surface_update;
+	status = shadow_subsystem_init(server->subsystem, server);
 
-	if (server->subsystem->Init)
-	{
-		status = server->subsystem->Init(server->subsystem);
-
-		if (status < 0)
-			WLog_ERR(TAG, "subsystem init failure: %d", status);
-	}
-
-	server->screen = shadow_screen_new(server);
-
-	if (!server->screen)
-		return -1;
-
-	server->capture = shadow_capture_new(server);
-
-	if (!server->capture)
-		return -1;
-
-	return 1;
+	return status;
 }
 
 int shadow_server_uninit(rdpShadowServer* server)
@@ -500,12 +572,6 @@ int shadow_server_uninit(rdpShadowServer* server)
 	{
 		freerdp_listener_free(server->listener);
 		server->listener = NULL;
-	}
-
-	if (server->subsystem)
-	{
-		server->subsystem->Free(server->subsystem);
-		server->subsystem = NULL;
 	}
 
 	if (server->CertificateFile)
@@ -526,6 +592,8 @@ int shadow_server_uninit(rdpShadowServer* server)
 		server->ipcSocket = NULL;
 	}
 
+	shadow_subsystem_uninit(server->subsystem);
+
 	return 1;
 }
 
@@ -541,17 +609,6 @@ rdpShadowServer* shadow_server_new()
 	server->port = 3389;
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
-
-#ifdef _WIN32
-	server->ConfigPath = GetEnvironmentSubPath("LOCALAPPDATA", "freerdp");
-#endif
-
-	if (!server->ConfigPath)
-		server->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
-
-	InitializeCriticalSectionAndSpinCount(&(server->lock), 4000);
-
-	server->clients = ArrayList_New(TRUE);
 
 	return server;
 }
@@ -569,50 +626,8 @@ void shadow_server_free(rdpShadowServer* server)
 		server->clients = NULL;
 	}
 
-	shadow_server_uninit(server);
+	shadow_subsystem_free(server->subsystem);
 
 	free(server);
 }
 
-int main(int argc, char** argv)
-{
-	MSG msg;
-	int status;
-	DWORD dwExitCode;
-	rdpShadowServer* server;
-
-	server = shadow_server_new();
-
-	if (!server)
-		return 0;
-
-	if (shadow_server_init(server) < 0)
-		return 0;
-
-	status = shadow_server_parse_command_line(server, argc, argv);
-
-	status = shadow_server_command_line_status_print(server, argc, argv, status);
-
-	if (status < 0)
-		return 0;
-
-	if (shadow_server_start(server) < 0)
-		return 0;
-
-	if (g_MessagePump)
-	{
-		while (GetMessage(&msg, 0, 0, 0))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-	}
-
-	WaitForSingleObject(server->thread, INFINITE);
-
-	GetExitCodeThread(server->thread, &dwExitCode);
-
-	shadow_server_free(server);
-
-	return 0;
-}

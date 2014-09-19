@@ -3075,3 +3075,62 @@ int freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst,
 	return 0;
 }
 
+int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+				   int nWidth, int nHeight, BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc)
+{
+	int x, y;
+	int nSrcPad;
+	int nDstPad;
+	int srcBitsPerPixel;
+	int srcBytesPerPixel;
+	int dstBitsPerPixel;
+	int dstBytesPerPixel;
+	
+	srcBitsPerPixel = 24;
+	srcBytesPerPixel = 8;
+	
+	if (nSrcStep < 0)
+		nSrcStep = srcBytesPerPixel * nWidth;
+	
+	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(DstFormat);
+	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(DstFormat) / 8);
+	
+	if (nDstStep < 0)
+		nDstStep = dstBytesPerPixel * nWidth;
+	
+	nSrcPad = (nSrcStep - (nWidth * srcBytesPerPixel));
+	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
+	
+	if (dstBytesPerPixel == 4)
+	{
+		UINT32 R, G, B;
+		BYTE* pSrcPixel;
+		BYTE* pDstPixel;
+		
+		pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
+		pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
+		
+		for (y = 0; y < nHeight; y++)
+		{
+			for (x = 0; x < nWidth; x++)
+			{
+				/* simple box filter scaling, could be improved with better algorithm */
+				
+				B = pSrcPixel[0] + pSrcPixel[4] + pSrcPixel[nSrcStep + 0] + pSrcPixel[nSrcStep + 4];
+				G = pSrcPixel[1] + pSrcPixel[5] + pSrcPixel[nSrcStep + 1] + pSrcPixel[nSrcStep + 5];
+				R = pSrcPixel[2] + pSrcPixel[6] + pSrcPixel[nSrcStep + 2] + pSrcPixel[nSrcStep + 6];
+				pSrcPixel += 8;
+				
+				*pDstPixel++ = (BYTE) (B >> 2);
+				*pDstPixel++ = (BYTE) (G >> 2);
+				*pDstPixel++ = (BYTE) (R >> 2);
+				*pDstPixel++ = 0xFF;
+			}
+			
+			pSrcPixel = &pSrcPixel[nSrcPad + nSrcStep];
+			pDstPixel = &pDstPixel[nDstPad];
+		}
+	}
+	
+	return 1;
+}

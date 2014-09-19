@@ -79,16 +79,16 @@ static const char* inet_ntop(int af, const void* src, char* dst, size_t cnt)
 
 static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_address, UINT16 port)
 {
-	rdpListener* listener = (rdpListener*) instance->listener;
 	int status;
 	int sockfd;
-	char servname[10];
-	struct addrinfo hints = { 0 };
-	struct addrinfo* res;
-	struct addrinfo* ai;
-	int option_value;
+	char addr[64];
 	void* sin_addr;
-	char buf[50];
+	int option_value;
+	char servname[16];
+	struct addrinfo* ai;
+	struct addrinfo* res;
+	struct addrinfo hints = { 0 };
+	rdpListener* listener = (rdpListener*) instance->listener;
 #ifdef _WIN32
 	u_long arg;
 #endif
@@ -96,7 +96,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if (bind_address == NULL)
+	if (!bind_address)
 		hints.ai_flags = AI_PASSIVE;
 
 	sprintf_s(servname, sizeof(servname), "%d", port);
@@ -112,9 +112,9 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		return FALSE;
 	}
 
-	for (ai = res; ai && listener->num_sockfds < 5; ai = ai->ai_next)
+	for (ai = res; ai && (listener->num_sockfds < 5); ai = ai->ai_next)
 	{
-		if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
+		if ((ai->ai_family != AF_INET) && (ai->ai_family != AF_INET6))
 			continue;
 
 		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
@@ -124,6 +124,16 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 			WLog_ERR(TAG, "socket");
 			continue;
 		}
+
+		if (ai->ai_family == AF_INET)
+			sin_addr = &(((struct sockaddr_in*) ai->ai_addr)->sin_addr);
+		else
+			sin_addr = &(((struct sockaddr_in6*) ai->ai_addr)->sin6_addr);
+
+		inet_ntop(ai->ai_family, sin_addr, addr, sizeof(addr));
+
+		if (strcmp(addr, "::") == 0)
+			continue;
 
 		option_value = 1;
 
@@ -166,12 +176,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		listener->events[listener->num_sockfds] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, sockfd);
 		listener->num_sockfds++;
 
-		if (ai->ai_family == AF_INET)
-			sin_addr = &(((struct sockaddr_in*) ai->ai_addr)->sin_addr);
-		else
-			sin_addr = &(((struct sockaddr_in6*) ai->ai_addr)->sin6_addr);
-
-		WLog_ERR(TAG,  "Listening on %s port %s.\n", inet_ntop(ai->ai_family, sin_addr, buf, sizeof(buf)), servname);
+		WLog_INFO(TAG, "Listening on %s:%s", addr, servname);
 	}
 
 	freeaddrinfo(res);

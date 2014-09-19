@@ -30,26 +30,23 @@
 
 static const AUDIO_FORMAT supported_audio_formats[] =
 {
-	
 	{ WAVE_FORMAT_PCM, 2, 44100, 176400, 4, 16, NULL },
 	{ WAVE_FORMAT_ALAW, 2, 22050, 44100, 2, 8, NULL }
 };
 
 static void mf_peer_audin_opening(audin_server_context* context)
 {
-	WLog_INFO(TAG,  "AUDIN opening.");
-	/* Simply choose the first format supported by the client. */
 	context->SelectFormat(context, 0);
 }
 
 static void mf_peer_audin_open_result(audin_server_context* context, UINT32 result)
 {
-	WLog_INFO(TAG,  "AUDIN open result %d.", result);
+
 }
 
 static void mf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
 {
-	WLog_INFO(TAG,  "AUDIN receive %d frames.", nframes);
+
 }
 
 void mf_peer_audin_init(mfPeerContext* context)

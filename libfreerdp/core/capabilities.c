@@ -344,7 +344,14 @@ BOOL rdp_read_bitmap_capability_set(wStream* s, UINT16 length, rdpSettings* sett
 		settings->DesktopHeight = desktopHeight;
 	}
 
-	settings->DrawAllowSkipAlpha = (drawingFlags & DRAW_ALLOW_SKIP_ALPHA) ? TRUE : FALSE;
+	if (settings->DrawAllowSkipAlpha)
+		settings->DrawAllowSkipAlpha = (drawingFlags & DRAW_ALLOW_SKIP_ALPHA) ? TRUE : FALSE;
+
+	if (settings->DrawAllowDynamicColorFidelity)
+		settings->DrawAllowDynamicColorFidelity = (drawingFlags & DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY) ? TRUE : FALSE;
+
+	if (settings->DrawAllowColorSubsampling)
+		settings->DrawAllowColorSubsampling = (drawingFlags & DRAW_ALLOW_COLOR_SUBSAMPLING) ? TRUE : FALSE;
 
 	return TRUE;
 }
@@ -370,10 +377,10 @@ void rdp_write_bitmap_capability_set(wStream* s, rdpSettings* settings)
 	if (settings->DrawAllowSkipAlpha)
 		drawingFlags |= DRAW_ALLOW_SKIP_ALPHA;
 
-	if (settings->DrawAllowColorSubsampling)
+	if (settings->DrawAllowDynamicColorFidelity)
 		drawingFlags |= DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY;
 
-	if (settings->DrawAllowDynamicColorFidelity)
+	if (settings->DrawAllowColorSubsampling)
 		drawingFlags |= DRAW_ALLOW_COLOR_SUBSAMPLING; /* currently unimplemented */
 
 	/* While bitmap_decode.c now implements YCoCg, in turning it

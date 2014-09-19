@@ -47,16 +47,19 @@ typedef struct rdp_shadow_encoder rdpShadowEncoder;
 typedef struct rdp_shadow_capture rdpShadowCapture;
 typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
 
-typedef rdpShadowSubsystem* (*pfnShadowCreateSubsystem)(rdpShadowServer* server);
+typedef struct _RDP_SHADOW_ENTRY_POINTS RDP_SHADOW_ENTRY_POINTS;
+typedef int (*pfnShadowSubsystemEntry)(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
+
+typedef rdpShadowSubsystem* (*pfnShadowSubsystemNew)(void);
+typedef void (*pfnShadowSubsystemFree)(rdpShadowSubsystem* subsystem);
 
 typedef int (*pfnShadowSubsystemInit)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSubsystemUninit)(rdpShadowSubsystem* subsystem);
+
 typedef int (*pfnShadowSubsystemStart)(rdpShadowSubsystem* subsystem);
 typedef int (*pfnShadowSubsystemStop)(rdpShadowSubsystem* subsystem);
-typedef void (*pfnShadowSubsystemFree)(rdpShadowSubsystem* subsystem);
 
-typedef int (*pfnShadowSurfaceCopy)(rdpShadowSubsystem* subsystem);
-typedef int (*pfnShadowSurfaceUpdate)(rdpShadowSubsystem* subsystem, REGION16* region);
+typedef int (*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, int maxMonitors);
 
 typedef int (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem, UINT32 flags);
 typedef int (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
@@ -79,6 +82,7 @@ struct rdp_shadow_client
 	rdpShadowServer* server;
 	rdpShadowSurface* lobby;
 	rdpShadowEncoder* encoder;
+	rdpShadowSubsystem* subsystem;
 
 	HANDLE vcm;
 	EncomspServerContext* encomsp;
@@ -99,32 +103,44 @@ struct rdp_shadow_server
 	DWORD port;
 	BOOL mayView;
 	BOOL mayInteract;
+	BOOL shareSubRect;
+	int selectedMonitor;
+	RECTANGLE_16 subRect;
 	char* ipcSocket;
 	char* ConfigPath;
 	char* CertificateFile;
 	char* PrivateKeyFile;
 	CRITICAL_SECTION lock;
 	freerdp_listener* listener;
-	pfnShadowCreateSubsystem CreateSubsystem;
+};
+
+struct _RDP_SHADOW_ENTRY_POINTS
+{
+	pfnShadowSubsystemNew New;
+	pfnShadowSubsystemFree Free;
+
+	pfnShadowSubsystemInit Init;
+	pfnShadowSubsystemUninit Uninit;
+
+	pfnShadowSubsystemStart Start;
+	pfnShadowSubsystemStop Stop;
+
+	pfnShadowEnumMonitors EnumMonitors;
 };
 
 #define RDP_SHADOW_SUBSYSTEM_COMMON() \
+	RDP_SHADOW_ENTRY_POINTS ep; \
 	HANDLE event; \
-	int monitorCount; \
+	int numMonitors; \
+	int captureFrameRate; \
+	int selectedMonitor; \
 	MONITOR_DEF monitors[16]; \
 	MONITOR_DEF virtualScreen; \
 	HANDLE updateEvent; \
+	BOOL suppressOutput; \
 	REGION16 invalidRegion; \
+	wMessagePipe* MsgPipe; \
 	SYNCHRONIZATION_BARRIER barrier; \
-	\
-	pfnShadowSubsystemInit Init; \
-	pfnShadowSubsystemUninit Uninit; \
-	pfnShadowSubsystemStart Start; \
-	pfnShadowSubsystemStop Stop; \
-	pfnShadowSubsystemFree Free; \
-	\
-	pfnShadowSurfaceCopy SurfaceCopy; \
-	pfnShadowSurfaceUpdate SurfaceUpdate; \
 	\
 	pfnShadowSynchronizeEvent SynchronizeEvent; \
 	pfnShadowKeyboardEvent KeyboardEvent; \
@@ -138,6 +154,28 @@ struct rdp_shadow_subsystem
 {
 	RDP_SHADOW_SUBSYSTEM_COMMON();
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+FREERDP_API int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** argv);
+FREERDP_API int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, char** argv, int status);
+
+FREERDP_API int shadow_server_start(rdpShadowServer* server);
+FREERDP_API int shadow_server_stop(rdpShadowServer* server);
+
+FREERDP_API int shadow_server_init(rdpShadowServer* server);
+FREERDP_API int shadow_server_uninit(rdpShadowServer* server);
+
+FREERDP_API int shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors, const char* name);
+
+FREERDP_API rdpShadowServer* shadow_server_new();
+FREERDP_API void shadow_server_free(rdpShadowServer* server);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_SERVER_SHADOW_H */
 

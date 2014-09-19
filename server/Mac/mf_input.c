@@ -396,34 +396,6 @@ void mf_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 		CFRelease(scroll);
 		CFRelease(source);
 	}
-	/*
-	 ///////////////////////////////////////////////
-	 // We dont support horizontal scrolling yet...
-	 ///////////////////////////////////////////////
-	else if (flags & PTR_FLAGS_)
-	{
-		scroll_y = flags & WheelRotationMask;
-		
-		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
-		{
-			scroll_y = -(flags & WheelRotationMask) / 392;
-		}
-		else
-		{
-			scroll_y = (flags & WheelRotationMask) / 120;
-		}
-		
-		CGEventSourceRef source = CGEventSourceCreate (kCGEventSourceStateCombinedSessionState);
-		CGEventRef scroll = CGEventCreateScrollWheelEvent(source,
-								  kCGScrollEventUnitLine,
-								  wheelCount,
-								  scroll_y,
-								  scroll_x);
-		CGEventPost(kCGHIDEventTap, scroll);
-		
-		CFRelease(scroll);
-		CFRelease(source);
-	} */
 	else
 	{
 		

@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-//#include <util.h>
 
 #include "mf_event.h"
 
@@ -191,8 +190,8 @@ mfEventQueue* mf_event_queue_new()
 		event_queue->events = (mfEvent**) malloc(sizeof(mfEvent*) * event_queue->size);
 		
 		if (pipe(event_queue->pipe_fd) < 0)
-			WLog_ERR(TAG,  "mf_event_queue_new: pipe failed");
-
+			return NULL;
+		
 		pthread_mutex_init(&(event_queue->mutex), NULL);
 	}
 	

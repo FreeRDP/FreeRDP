@@ -35,6 +35,7 @@
 
 struct rdp_shadow_encoder
 {
+	rdpShadowClient* client;
 	rdpShadowServer* server;
 
 	int width;
@@ -70,7 +71,7 @@ int shadow_encoder_reset(rdpShadowEncoder* encoder);
 int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs);
 int shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
 
-rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server);
+rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client);
 void shadow_encoder_free(rdpShadowEncoder* encoder);
 
 #ifdef __cplusplus

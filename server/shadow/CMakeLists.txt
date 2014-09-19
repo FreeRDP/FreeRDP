@@ -18,7 +18,15 @@
 set(MODULE_NAME "freerdp-shadow")
 set(MODULE_PREFIX "FREERDP_SERVER_SHADOW")
 
-if(WITH_X11)
+if(WIN32)
+	set(WITH_SHADOW_WIN 1)
+elseif(X11_FOUND AND NOT APPLE)
+	set(WITH_SHADOW_X11 1)
+elseif(APPLE AND NOT IOS)
+	set(WITH_SHADOW_MAC 1)
+endif()
+
+if(WITH_SHADOW_X11)
 	set(XEXT_FEATURE_TYPE "RECOMMENDED")
 	set(XEXT_FEATURE_PURPOSE "X11 extension")
 	set(XEXT_FEATURE_DESCRIPTION "X11 core extensions")
@@ -115,6 +123,13 @@ if(WITH_X11)
 	endif()
 endif()
 
+if(WITH_SHADOW_MAC)
+	find_library(IOKIT IOKit)
+	find_library(IOSURFACE IOSurface)
+	find_library(CARBON Carbon)
+	list(APPEND ${MODULE_PREFIX}_MAC_LIBS ${IOKIT} ${IOSURFACE} ${CARBON})
+endif()
+
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 set(${MODULE_PREFIX}_SRCS
@@ -136,6 +151,8 @@ set(${MODULE_PREFIX}_SRCS
 	shadow_encomsp.h
 	shadow_remdesk.c
 	shadow_remdesk.h
+	shadow_subsystem.c
+	shadow_subsystem.h
 	shadow_server.c
 	shadow.h)
 
@@ -157,14 +174,6 @@ set(${MODULE_PREFIX}_MAC_SRCS
 	Mac/mac_shadow.c
 	Mac/mac_shadow.h)
 
-if(WIN32)
-	set(WITH_SHADOW_WIN 1)
-elseif(X11_FOUND AND NOT APPLE)
-	set(WITH_SHADOW_X11 1)
-elseif(APPLE AND NOT IOS)
-	set(WITH_SHADOW_MAC 1)
-endif()
-
 if(WITH_SHADOW_WIN)
 	add_definitions(-DWITH_SHADOW_WIN)
 	list(APPEND ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_WIN_SRCS})
@@ -179,18 +188,36 @@ elseif(WITH_SHADOW_MAC)
 	list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_MAC_LIBS})
 endif()
 
-add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "freerdp-shadow")
-
+list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp-server)
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp-client)
-list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool winpr)
-list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
+
+list(APPEND ${MODULE_PREFIX}_LIBS winpr)
+list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT server)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 
+# command-line executable
+
+set(MODULE_NAME "freerdp-shadow-cli")
+set(MODULE_PREFIX "FREERDP_SERVER_SHADOW_CLI")
+
+set(${MODULE_PREFIX}_SRCS
+	shadow.c)
+
+add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "freerdp-shadow")
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-shadow)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+install(TARGETS ${MODULE_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")

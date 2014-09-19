@@ -388,7 +388,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
 		if (endPos != (begPos + blockLength))
 		{
 			WLog_ERR(TAG,  "Error parsing GCC client data block 0x%04X: Actual Offset: %d Expected Offset: %d",
-					 type, endPos, begPos + blockLength);
+					type, endPos, begPos + blockLength);
 		}
 
 		length -= blockLength;
@@ -1336,6 +1336,15 @@ BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	if (flags & REDIRECTED_SESSIONID_FIELD_VALID)
 		settings->RedirectedSessionId = redirectedSessionId;
+
+	if (blockLength != 8)
+	{
+		if (Stream_GetRemainingLength(s) >= (blockLength - 8))
+		{
+			/* The old Microsoft Mac RDP client can send a pad here */
+			Stream_Seek(s, (blockLength - 8));
+		}
+	}
 
 	return TRUE;
 }
