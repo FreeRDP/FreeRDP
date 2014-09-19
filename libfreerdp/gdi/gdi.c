@@ -911,26 +911,24 @@ void gdi_ellipse_cb(rdpContext* context, ELLIPSE_CB_ORDER* ellipse_cb)
 
 void gdi_frame_marker(rdpContext* context, FRAME_MARKER_ORDER* frameMarker)
 {
-		WLog_ERR(TAG,  "");
+
 }
 
-void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
+void gdi_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
 	DEBUG_GDI("frameId %d frameAction %d",
-		surface_frame_marker->frameId,
-		surface_frame_marker->frameAction);
+		surfaceFrameMarker->frameId,
+		surfaceFrameMarker->frameAction);
 
-	/* TODO: Implement frame marker completely */
-
-	switch (surface_frame_marker->frameAction)
+	switch (surfaceFrameMarker->frameAction)
 	{
 		case SURFACECMD_FRAMEACTION_BEGIN:
 			break;
 
 		case SURFACECMD_FRAMEACTION_END:
-			if (context->instance->settings->FrameAcknowledge > 0)
+			if (context->settings->FrameAcknowledge > 0)
 			{
-				IFCALL(context->instance->update->SurfaceFrameAcknowledge, context, surface_frame_marker->frameId);
+				IFCALL(context->update->SurfaceFrameAcknowledge, context, surfaceFrameMarker->frameId);
 			}
 			break;
 	}
