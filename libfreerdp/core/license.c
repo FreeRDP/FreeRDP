@@ -167,6 +167,10 @@ wStream* license_send_stream_init(rdpLicense* license)
 
 	s = transport_send_stream_init(license->rdp->transport, 4096);
 	rdp_init_stream(license->rdp, s);
+
+	if (!license->rdp->do_crypt_license)
+			license->rdp->sec_flags &= ~SEC_ENCRYPT;
+
 	license->PacketHeaderLength = Stream_GetPosition(s);
 	Stream_Seek(s, LICENSE_PREAMBLE_LENGTH);
 	return s;
