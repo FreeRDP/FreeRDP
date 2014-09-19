@@ -139,20 +139,24 @@ void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL
 	{
 		case FC_RP: /* Reference Pointer */
 			break;
+
 		case FC_UP: /* Unique Pointer */
 		case FC_OP: /* Unique Pointer in an object interface */
-
 			if (!pMemory)
 				return;
 
 			break;
+
 		case FC_FP: /* Full Pointer */
 			WLog_ERR(TAG, "warning: FC_FP unimplemented");
 			break;
 	}
 
-	if (attributes & FC_POINTER_DEREF)
-		pMemory = *(unsigned char**) pMemory;
+	if (pMemory)
+	{
+		if (attributes & FC_POINTER_DEREF)
+			pMemory = *(unsigned char**) pMemory;
+	}
 
 	pfnSizeRoutine = pfnSizeRoutines[*pNextFormat];
 

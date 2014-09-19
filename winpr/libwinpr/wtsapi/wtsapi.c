@@ -589,7 +589,7 @@ void InitializeWtsApiStubs_Env()
 	}
 
 	env = (LPSTR) malloc(nSize);
-	nSize = GetEnvironmentVariableA("WTSAPI_LIBRARY", env, nSize);
+	GetEnvironmentVariableA("WTSAPI_LIBRARY", env, nSize);
 
 	if (env)
 		LoadAndInitialize(env);

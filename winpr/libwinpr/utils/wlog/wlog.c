@@ -255,13 +255,14 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 	return status;
 }
 
-void WLog_PrintMessage(wLog* log, wLogMessage* message, ...)
+int WLog_PrintMessage(wLog* log, wLogMessage* message, ...)
 {
 	int status;
 	va_list args;
 	va_start(args, message);
 	status = WLog_PrintMessageVA(log, message, args);
 	va_end(args);
+	return status;
 }
 
 DWORD WLog_GetLogLevel(wLog* log)
@@ -360,12 +361,13 @@ int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 
 int WLog_ParseFilters()
 {
+	int rc = -1;
 	char* p;
-	char* env;
+	char* env = NULL;
 	DWORD count;
 	DWORD nSize;
 	int status;
-	char** strs;
+	char** strs = NULL;
 	nSize = GetEnvironmentVariableA("WLOG_FILTER", NULL, 0);
 
 	if (nSize < 1)
@@ -374,9 +376,9 @@ int WLog_ParseFilters()
 	env = (LPSTR) malloc(nSize);
 
 	if (!env)
-		return -1;
+		goto fail;
 
-	nSize = GetEnvironmentVariableA("WLOG_FILTER", env, nSize);
+	GetEnvironmentVariableA("WLOG_FILTER", env, nSize);
 	count = 1;
 	p = env;
 
@@ -390,6 +392,10 @@ int WLog_ParseFilters()
 	p = env;
 	count = 0;
 	strs = (char**) calloc(g_FilterCount, sizeof(char*));
+
+	if (!strs)
+		goto fail;
+
 	strs[count++] = p;
 
 	while ((p = strchr(p, ',')) != NULL)
@@ -402,18 +408,26 @@ int WLog_ParseFilters()
 	g_Filters = calloc(g_FilterCount, sizeof(wLogFilter));
 
 	if (!g_Filters)
-		return -1;
+		goto fail;
 
 	for (count = 0; count < g_FilterCount; count++)
 	{
 		status = WLog_ParseFilter(&g_Filters[count], strs[count]);
 
 		if (status < 0)
-			return -1;
+			goto fail;
 	}
 
-	free(strs);
-	return 0;
+	rc = 0;
+fail:
+
+	if (strs)
+		free(strs);
+
+	if (env)
+		free(env);
+
+	return rc;
 }
 
 int WLog_GetFilterLogLevel(wLog* log)
@@ -527,7 +541,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 			if (nSize)
 			{
 				env = (LPSTR) malloc(nSize);
-				nSize = GetEnvironmentVariableA("WLOG_LEVEL", env, nSize);
+				GetEnvironmentVariableA("WLOG_LEVEL", env, nSize);
 				iLevel = WLog_ParseLogLevel(env);
 
 				if (iLevel >= 0)
@@ -583,7 +597,7 @@ wLog* WLog_GetRoot()
 		if (nSize)
 		{
 			env = (LPSTR) malloc(nSize);
-			nSize = GetEnvironmentVariableA("WLOG_APPENDER", env, nSize);
+			GetEnvironmentVariableA("WLOG_APPENDER", env, nSize);
 
 			if (env)
 			{

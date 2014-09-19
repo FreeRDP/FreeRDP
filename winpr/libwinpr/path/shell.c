@@ -47,7 +47,6 @@ char* GetEnvAlloc(LPCSTR lpName)
 {
 	DWORD length;
 	char* env = NULL;
-
 	length = GetEnvironmentVariableA(lpName, NULL, 0);
 
 	if (length > 0)
@@ -63,7 +62,6 @@ char* GetEnvAlloc(LPCSTR lpName)
 char* GetPath_HOME()
 {
 	char* path = NULL;
-
 #ifdef _WIN32
 	path = GetEnvAlloc("UserProfile");
 #elif defined(ANDROID)
@@ -72,14 +70,12 @@ char* GetPath_HOME()
 #else
 	path = GetEnvAlloc("HOME");
 #endif
-
 	return path;
 }
 
 char* GetPath_TEMP()
 {
 	char* path = NULL;
-
 #ifdef _WIN32
 	path = GetEnvAlloc("TEMP");
 #else
@@ -87,8 +83,8 @@ char* GetPath_TEMP()
 
 	if (!path)
 		path = _strdup("/tmp");
-#endif
 
+#endif
 	return path;
 }
 
@@ -96,7 +92,6 @@ char* GetPath_XDG_DATA_HOME()
 {
 	char* path = NULL;
 	char* home = NULL;
-
 	/**
 	 * There is a single base directory relative to which user-specific data files should be written.
 	 * This directory is defined by the environment variable $XDG_DATA_HOME.
@@ -104,19 +99,15 @@ char* GetPath_XDG_DATA_HOME()
 	 * $XDG_DATA_HOME defines the base directory relative to which user specific data files should be stored.
 	 * If $XDG_DATA_HOME is either not set or empty, a default equal to $HOME/.local/share should be used.
 	 */
-
 	path = GetEnvAlloc("XDG_DATA_HOME");
 
 	if (path)
 		return path;
 
 	home = GetPath_HOME();
-
 	path = (char*) malloc(strlen(home) + strlen("/.local/share") + 1);
 	sprintf(path, "%s%s", home, "/.local/share");
-
 	free(home);
-
 	return path;
 }
 
@@ -124,7 +115,6 @@ char* GetPath_XDG_CONFIG_HOME()
 {
 	char* path = NULL;
 	char* home = NULL;
-
 	/**
 	 * There is a single base directory relative to which user-specific configuration files should be written.
 	 * This directory is defined by the environment variable $XDG_CONFIG_HOME.
@@ -132,7 +122,6 @@ char* GetPath_XDG_CONFIG_HOME()
 	 * $XDG_CONFIG_HOME defines the base directory relative to which user specific configuration files should be stored.
 	 * If $XDG_CONFIG_HOME is either not set or empty, a default equal to $HOME/.config should be used.
 	 */
-
 	path = GetEnvAlloc("XDG_CONFIG_HOME");
 
 	if (path)
@@ -145,9 +134,7 @@ char* GetPath_XDG_CONFIG_HOME()
 
 	path = (char*) malloc(strlen(home) + strlen("/.config") + 1);
 	sprintf(path, "%s%s", home, "/.config");
-
 	free(home);
-
 	return path;
 }
 
@@ -155,7 +142,6 @@ char* GetPath_XDG_CACHE_HOME()
 {
 	char* path = NULL;
 	char* home = NULL;
-
 	/**
 	 * There is a single base directory relative to which user-specific non-essential (cached) data should be written.
 	 * This directory is defined by the environment variable $XDG_CACHE_HOME.
@@ -163,26 +149,21 @@ char* GetPath_XDG_CACHE_HOME()
 	 * $XDG_CACHE_HOME defines the base directory relative to which user specific non-essential data files should be stored.
 	 * If $XDG_CACHE_HOME is either not set or empty, a default equal to $HOME/.cache should be used.
 	 */
-
 	path = GetEnvAlloc("XDG_CACHE_HOME");
 
 	if (path)
 		return path;
 
 	home = GetPath_HOME();
-
 	path = (char*) malloc(strlen(home) + strlen("/.cache") + 1);
 	sprintf(path, "%s%s", home, "/.cache");
-
 	free(home);
-
 	return path;
 }
 
 char* GetPath_XDG_RUNTIME_DIR()
 {
 	char* path = NULL;
-
 	/**
 	 * There is a single base directory relative to which user-specific runtime files and other file objects should be placed.
 	 * This directory is defined by the environment variable $XDG_RUNTIME_DIR.
@@ -209,14 +190,12 @@ char* GetPath_XDG_RUNTIME_DIR()
 	 * print a warning message. Applications should use this directory for communication and synchronization purposes and
 	 * should not place larger files in it, since it might reside in runtime memory and cannot necessarily be swapped out to disk.
 	 */
-
 	path = GetEnvAlloc("XDG_RUNTIME_DIR");
 
 	if (path)
 		return path;
 
 	path = GetPath_TEMP();
-
 	return path;
 }
 
@@ -262,12 +241,9 @@ char* GetKnownSubPath(int id, const char* path)
 {
 	char* subPath;
 	char* knownPath;
-
 	knownPath = GetKnownPath(id);
 	subPath = GetCombinedPath(knownPath, path);
-
 	free(knownPath);
-
 	return subPath;
 }
 
@@ -275,7 +251,6 @@ char* GetEnvironmentPath(char* name)
 {
 	char* env = NULL;
 	DWORD nSize;
-
 	nSize = GetEnvironmentVariableA(name, NULL, 0);
 
 	if (nSize)
@@ -291,16 +266,13 @@ char* GetEnvironmentSubPath(char* name, const char* path)
 {
 	char* env;
 	char* subpath;
-
 	env = GetEnvironmentPath(name);
 
 	if (!env)
 		return NULL;
 
 	subpath = GetCombinedPath(env, path);
-
 	free(env);
-
 	return subpath;
 }
 
@@ -315,18 +287,20 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 
 	if (basePath)
 		basePathLength = strlen(basePath);
+
 	if (subPath)
 		subPathLength = strlen(subPath);
 
 	length = basePathLength + subPathLength + 1;
 	path = (char*) malloc(length + 1);
+
 	if (!path)
 		return NULL;
 
 	if (basePath)
 		CopyMemory(path, basePath, basePathLength);
-	path[basePathLength] = '\0';
 
+	path[basePathLength] = '\0';
 	PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE);
 
 	if (!subPath)
@@ -334,11 +308,8 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 
 	subPathCpy = _strdup(subPath);
 	PathCchConvertStyleA(subPathCpy, subPathLength, PATH_STYLE_NATIVE);
-
 	status = NativePathCchAppendA(path, length + 1, subPathCpy);
-
 	free(subPathCpy);
-
 	return path;
 }
 
