@@ -347,6 +347,57 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 	return 1;
 }
 
+int interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData, UINT32* pDstSize,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette, int bpp)
+{
+	int status;
+	wStream* s;
+	UINT32 DstFormat = 0;
+	int maxSize = 64 * 64 * 4;
+
+	if (nWidth % 4)
+	{
+		fprintf(stderr, "interleaved_compress: width is not a multiple of 4\n");
+		return -1;
+	}
+
+	if ((nWidth > 64) || (nHeight > 64))
+	{
+		fprintf(stderr, "interleaved_compress: width (%d) or height (%d) is greater than 64\n", nWidth, nHeight);
+		return -1;
+	}
+
+	if (bpp == 24)
+		DstFormat = PIXEL_FORMAT_RGB24;
+	else if (bpp == 16)
+		DstFormat = PIXEL_FORMAT_RGB16;
+	else if (bpp == 15)
+		DstFormat = PIXEL_FORMAT_RGB15;
+	else if (bpp == 8)
+		DstFormat = PIXEL_FORMAT_RGB8;
+
+	if (!DstFormat)
+		return -1;
+
+	status = freerdp_image_copy(interleaved->TempBuffer, DstFormat, -1, 0, 0, nWidth, nHeight,
+					pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, palette);
+
+	s = Stream_New(pDstData, maxSize);
+
+	if (!s)
+		return -1;
+
+	status = freerdp_bitmap_compress((char*) interleaved->TempBuffer, nWidth, nHeight,
+					s, bpp, maxSize, nHeight - 1, interleaved->bts, 0);
+
+	Stream_SealLength(s);
+	*pDstSize = (UINT32) Stream_Length(s);
+
+	Stream_Free(s, FALSE);
+
+	return status;
+}
+
 int bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved)
 {
 	return 1;
@@ -360,8 +411,9 @@ BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 
 	if (interleaved)
 	{
-		interleaved->TempSize = 64 * 64 * 3;
+		interleaved->TempSize = 64 * 64 * 4;
 		interleaved->TempBuffer = _aligned_malloc(interleaved->TempSize, 16);
+		interleaved->bts = Stream_New(NULL, interleaved->TempSize);
 	}
 
 	return interleaved;
@@ -373,6 +425,7 @@ void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved)
 		return;
 
 	_aligned_free(interleaved->TempBuffer);
+	Stream_Free(interleaved->bts, TRUE);
 
 	free(interleaved);
 }

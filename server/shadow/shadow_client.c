@@ -51,6 +51,10 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	settings->FrameMarkerCommandEnabled = TRUE;
 	settings->SurfaceFrameMarkerEnabled = TRUE;
 
+	settings->DrawAllowSkipAlpha = TRUE;
+	settings->DrawAllowColorSubsampling = TRUE;
+	settings->DrawAllowDynamicColorFidelity = TRUE;
+
 	settings->RdpSecurity = TRUE;
 	settings->TlsSecurity = TRUE;
 	settings->NlaSecurity = FALSE;
@@ -329,10 +333,12 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 	if (encoder->frameAck)
 		frameId = (UINT32) shadow_encoder_create_frame_id(encoder);
 
-	if (settings->RemoteFxCodec)
+	if (settings->RemoteFxCodec && 0)
 	{
 		RFX_RECT rect;
 		RFX_MESSAGE* messages;
+
+		shadow_encoder_prepare(encoder, FREERDP_CODEC_REMOTEFX);
 
 		s = encoder->bs;
 
@@ -380,6 +386,8 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 	{
 		NSC_MESSAGE* messages;
 
+		shadow_encoder_prepare(encoder, FREERDP_CODEC_NSCODEC);
+
 		s = encoder->bs;
 
 		messages = nsc_encode_messages(encoder->nsc, pSrcData,
@@ -426,12 +434,10 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 	BYTE* data;
 	BYTE* buffer;
 	int i, j, k;
-	wStream* s;
-	wStream* ts;
-	int e, lines;
 	int rows, cols;
 	int nSrcStep;
 	BYTE* pSrcData;
+	UINT32 DstSize;
 	rdpUpdate* update;
 	rdpContext* context;
 	rdpSettings* settings;
@@ -448,6 +454,11 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 
 	server = client->server;
 	encoder = client->encoder;
+
+	if (settings->ColorDepth < 32)
+		shadow_encoder_prepare(encoder, FREERDP_CODEC_INTERLEAVED);
+	else
+		shadow_encoder_prepare(encoder, FREERDP_CODEC_PLANAR);
 
 	pSrcData = surface->data;
 	nSrcStep = surface->scanline;
@@ -537,33 +548,41 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 
 			if (((nWidth * nHeight) > 0) && (nWidth >= 4) && (nHeight >= 4))
 			{
-				UINT32 srcFormat = PIXEL_FORMAT_RGB32;
+				int nXSubSrc;
+				int nYSubSrc;
+				UINT32 SrcFormat;
 
-				e = nWidth % 4;
+				nXSubSrc = bitmapData[k].destLeft;
+				nYSubSrc = bitmapData[k].destTop;
 
-				if (e != 0)
-					e = 4 - e;
+				SrcFormat = PIXEL_FORMAT_RGB32;
 
-				s = encoder->bs;
-				ts = encoder->bts;
+				if (settings->ColorDepth < 32)
+				{
+					int bitsPerPixel = settings->ColorDepth;
+					int bytesPerPixel = (bitsPerPixel + 7) / 8;
 
-				Stream_SetPosition(s, 0);
-				Stream_SetPosition(ts, 0);
+					DstSize = 64 * 64 * 4;
+					buffer = encoder->grid[k];
 
-				data = surface->data;
-				data = &data[(bitmapData[k].destTop * nSrcStep) +
-				             (bitmapData[k].destLeft * 4)];
+					interleaved_compress(encoder->interleaved, buffer, &DstSize, nWidth, nHeight,
+							pSrcData, SrcFormat, nSrcStep, nXSubSrc, nYSubSrc, NULL, bitsPerPixel);
 
-				srcFormat = PIXEL_FORMAT_RGB32;
-
-				if (settings->ColorDepth > 24)
+					bitmapData[k].bitmapDataStream = buffer;
+					bitmapData[k].bitmapLength = DstSize;
+					bitmapData[k].bitsPerPixel = bitsPerPixel;
+					bitmapData[k].cbScanWidth = nWidth * bytesPerPixel;
+					bitmapData[k].cbUncompressedSize = nWidth * nHeight * bytesPerPixel;
+				}
+				else
 				{
 					int dstSize;
 
 					buffer = encoder->grid[k];
+					data = &pSrcData[(bitmapData[k].destTop * nSrcStep) + (bitmapData[k].destLeft * 4)];
 
 					buffer = freerdp_bitmap_compress_planar(encoder->planar,
-							data, srcFormat, nWidth, nHeight, nSrcStep, buffer, &dstSize);
+							data, SrcFormat, nWidth, nHeight, nSrcStep, buffer, &dstSize);
 
 					bitmapData[k].bitmapDataStream = buffer;
 					bitmapData[k].bitmapLength = dstSize;
@@ -571,43 +590,6 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 					bitmapData[k].bitsPerPixel = 32;
 					bitmapData[k].cbScanWidth = nWidth * 4;
 					bitmapData[k].cbUncompressedSize = nWidth * nHeight * 4;
-				}
-				else
-				{
-					int bytesPerPixel = 2;
-					UINT32 dstFormat = PIXEL_FORMAT_RGB16;
-
-					if (settings->ColorDepth == 15)
-					{
-						bytesPerPixel = 2;
-						dstFormat = PIXEL_FORMAT_RGB15;
-					}
-					else if (settings->ColorDepth == 24)
-					{
-						bytesPerPixel = 3;
-						dstFormat = PIXEL_FORMAT_XRGB32;
-					}
-
-					buffer = encoder->grid[k];
-
-					freerdp_image_copy(buffer, dstFormat, -1, 0, 0, nWidth, nHeight,
-							data, srcFormat, nSrcStep, 0, 0, NULL);
-
-					lines = freerdp_bitmap_compress((char*) buffer, nWidth, nHeight, s,
-							settings->ColorDepth, 64 * 64 * 4, nHeight - 1, ts, e);
-
-					Stream_SealLength(s);
-
-					bitmapData[k].bitmapDataStream = Stream_Buffer(s);
-					bitmapData[k].bitmapLength = Stream_Length(s);
-
-					buffer = encoder->grid[k];
-					CopyMemory(buffer, bitmapData[k].bitmapDataStream, bitmapData[k].bitmapLength);
-					bitmapData[k].bitmapDataStream = buffer;
-
-					bitmapData[k].bitsPerPixel = settings->ColorDepth;
-					bitmapData[k].cbScanWidth = nWidth * bytesPerPixel;
-					bitmapData[k].cbUncompressedSize = nWidth * nHeight * bytesPerPixel;
 				}
 
 				bitmapData[k].cbCompFirstRowSize = 0;
@@ -684,19 +666,13 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 	//WLog_INFO(TAG, "shadow_client_send_surface_update: x: %d y: %d width: %d height: %d right: %d bottom: %d",
 	//	nXSrc, nYSrc, nWidth, nHeight, nXSrc + nWidth, nYSrc + nHeight);
 
-	if (settings->RemoteFxCodec || settings->NSCodec)
+	//if (settings->RemoteFxCodec || settings->NSCodec)
+	if (0)
 	{
-		if (settings->RemoteFxCodec)
-			shadow_encoder_prepare(encoder, SHADOW_CODEC_REMOTEFX);
-		else if (settings->NSCodec)
-			shadow_encoder_prepare(encoder, SHADOW_CODEC_NSCODEC);
-
 		status = shadow_client_send_surface_bits(client, surface, nXSrc, nYSrc, nWidth, nHeight);
 	}
 	else
 	{
-		shadow_encoder_prepare(encoder, SHADOW_CODEC_BITMAP);
-
 		status = shadow_client_send_bitmap_update(client, surface, nXSrc, nYSrc, nWidth, nHeight);
 	}
 

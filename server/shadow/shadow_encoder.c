@@ -135,7 +135,7 @@ int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 		encoder->frameList = ListDictionary_New(TRUE);
 	}
 
-	encoder->codecs |= SHADOW_CODEC_REMOTEFX;
+	encoder->codecs |= FREERDP_CODEC_REMOTEFX;
 
 	return 1;
 }
@@ -159,12 +159,12 @@ int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 		encoder->frameList = ListDictionary_New(TRUE);
 	}
 
-	encoder->codecs |= SHADOW_CODEC_NSCODEC;
+	encoder->codecs |= FREERDP_CODEC_NSCODEC;
 
 	return 1;
 }
 
-int shadow_encoder_init_bitmap(rdpShadowEncoder* encoder)
+int shadow_encoder_init_planar(rdpShadowEncoder* encoder)
 {
 	DWORD planarFlags = 0;
 	rdpContext* context = (rdpContext*) encoder->client;
@@ -184,13 +184,20 @@ int shadow_encoder_init_bitmap(rdpShadowEncoder* encoder)
 	if (!encoder->planar)
 		return -1;
 
-	if (!encoder->bts)
-		encoder->bts = Stream_New(NULL, encoder->maxTileWidth * encoder->maxTileHeight * 4);
+	encoder->codecs |= FREERDP_CODEC_PLANAR;
 
-	if (!encoder->bts)
+	return 1;
+}
+
+int shadow_encoder_init_interleaved(rdpShadowEncoder* encoder)
+{
+	if (!encoder->interleaved)
+		encoder->interleaved = bitmap_interleaved_context_new(TRUE);
+
+	if (!encoder->interleaved)
 		return -1;
 
-	encoder->codecs |= SHADOW_CODEC_BITMAP;
+	encoder->codecs |= FREERDP_CODEC_INTERLEAVED;
 
 	return 1;
 }
@@ -225,7 +232,7 @@ int shadow_encoder_uninit_rfx(rdpShadowEncoder* encoder)
 		encoder->frameList = NULL;
 	}
 
-	encoder->codecs &= ~SHADOW_CODEC_REMOTEFX;
+	encoder->codecs &= ~FREERDP_CODEC_REMOTEFX;
 
 	return 1;
 }
@@ -244,12 +251,12 @@ int shadow_encoder_uninit_nsc(rdpShadowEncoder* encoder)
 		encoder->frameList = NULL;
 	}
 
-	encoder->codecs &= ~SHADOW_CODEC_NSCODEC;
+	encoder->codecs &= ~FREERDP_CODEC_NSCODEC;
 
 	return 1;
 }
 
-int shadow_encoder_uninit_bitmap(rdpShadowEncoder* encoder)
+int shadow_encoder_uninit_planar(rdpShadowEncoder* encoder)
 {
 	if (encoder->planar)
 	{
@@ -257,13 +264,20 @@ int shadow_encoder_uninit_bitmap(rdpShadowEncoder* encoder)
 		encoder->planar = NULL;
 	}
 
-	if (encoder->bts)
+	encoder->codecs &= ~FREERDP_CODEC_PLANAR;
+
+	return 1;
+}
+
+int shadow_encoder_uninit_interleaved(rdpShadowEncoder* encoder)
+{
+	if (encoder->interleaved)
 	{
-		Stream_Free(encoder->bts, TRUE);
-		encoder->bts = NULL;
+		bitmap_interleaved_context_free(encoder->interleaved);
+		encoder->interleaved = NULL;
 	}
 
-	encoder->codecs &= ~SHADOW_CODEC_BITMAP;
+	encoder->codecs &= ~FREERDP_CODEC_INTERLEAVED;
 
 	return 1;
 }
@@ -278,19 +292,24 @@ int shadow_encoder_uninit(rdpShadowEncoder* encoder)
 		encoder->bs = NULL;
 	}
 
-	if (encoder->codecs & SHADOW_CODEC_REMOTEFX)
+	if (encoder->codecs & FREERDP_CODEC_REMOTEFX)
 	{
 		shadow_encoder_uninit_rfx(encoder);
 	}
 
-	if (encoder->codecs & SHADOW_CODEC_NSCODEC)
+	if (encoder->codecs & FREERDP_CODEC_NSCODEC)
 	{
 		shadow_encoder_uninit_nsc(encoder);
 	}
 
-	if (encoder->codecs & SHADOW_CODEC_BITMAP)
+	if (encoder->codecs & FREERDP_CODEC_PLANAR)
 	{
-		shadow_encoder_uninit_bitmap(encoder);
+		shadow_encoder_uninit_planar(encoder);
+	}
+
+	if (encoder->codecs & FREERDP_CODEC_INTERLEAVED)
+	{
+		shadow_encoder_uninit_interleaved(encoder);
 	}
 
 	return 1;
@@ -323,7 +342,7 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 {
 	int status;
 
-	if ((codecs & SHADOW_CODEC_REMOTEFX) && !(encoder->codecs & SHADOW_CODEC_REMOTEFX))
+	if ((codecs & FREERDP_CODEC_REMOTEFX) && !(encoder->codecs & FREERDP_CODEC_REMOTEFX))
 	{
 		status = shadow_encoder_init_rfx(encoder);
 
@@ -331,7 +350,7 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 			return -1;
 	}
 
-	if ((codecs & SHADOW_CODEC_NSCODEC) && !(encoder->codecs & SHADOW_CODEC_NSCODEC))
+	if ((codecs & FREERDP_CODEC_NSCODEC) && !(encoder->codecs & FREERDP_CODEC_NSCODEC))
 	{
 		status = shadow_encoder_init_nsc(encoder);
 
@@ -339,9 +358,17 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 			return -1;
 	}
 
-	if ((codecs & SHADOW_CODEC_BITMAP) && !(encoder->codecs & SHADOW_CODEC_BITMAP))
+	if ((codecs & FREERDP_CODEC_PLANAR) && !(encoder->codecs & FREERDP_CODEC_PLANAR))
 	{
-		status = shadow_encoder_init_bitmap(encoder);
+		status = shadow_encoder_init_planar(encoder);
+
+		if (status < 0)
+			return -1;
+	}
+
+	if ((codecs & FREERDP_CODEC_INTERLEAVED) && !(encoder->codecs & FREERDP_CODEC_INTERLEAVED))
+	{
+		status = shadow_encoder_init_interleaved(encoder);
 
 		if (status < 0)
 			return -1;
