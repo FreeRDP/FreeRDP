@@ -333,7 +333,7 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 	if (encoder->frameAck)
 		frameId = (UINT32) shadow_encoder_create_frame_id(encoder);
 
-	if (settings->RemoteFxCodec && 0)
+	if (settings->RemoteFxCodec)
 	{
 		RFX_RECT rect;
 		RFX_MESSAGE* messages;
@@ -441,8 +441,9 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 	rdpUpdate* update;
 	rdpContext* context;
 	rdpSettings* settings;
-	int MaxRegionWidth;
-	int MaxRegionHeight;
+	UINT32 maxUpdateSize;
+	UINT32 totalBitmapSize;
+	UINT32 updateSizeEstimate;
 	BITMAP_DATA* bitmapData;
 	BITMAP_UPDATE bitmapUpdate;
 	rdpShadowServer* server;
@@ -455,6 +456,8 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 	server = client->server;
 	encoder = client->encoder;
 
+	maxUpdateSize = settings->MultifragMaxRequestSize;
+
 	if (settings->ColorDepth < 32)
 		shadow_encoder_prepare(encoder, FREERDP_CODEC_INTERLEAVED);
 	else
@@ -462,9 +465,6 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 
 	pSrcData = surface->data;
 	nSrcStep = surface->scanline;
-
-	MaxRegionWidth = 64 * 4;
-	MaxRegionHeight = 64 * 1;
 
 	if ((nXSrc % 4) != 0)
 	{
@@ -478,39 +478,12 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 		nYSrc -= (nYSrc % 4);
 	}
 
-	if ((nWidth * nHeight) > (MaxRegionWidth * MaxRegionHeight))
-	{
-		int nXSrcSub;
-		int nYSrcSub;
-		int nWidthSub;
-		int nHeightSub;
-		rows = (nWidth + (MaxRegionWidth - (nWidth % MaxRegionWidth))) / MaxRegionWidth;
-		cols = (nHeight + (MaxRegionHeight - (nHeight % MaxRegionHeight))) / MaxRegionHeight;
-
-		for (i = 0; i < rows; i++)
-		{
-			for (j = 0; j < cols; j++)
-			{
-				nXSrcSub = nXSrc + (i * MaxRegionWidth);
-				nYSrcSub = nYSrc + (j * MaxRegionHeight);
-
-				nWidthSub = (i < (rows - 1)) ? MaxRegionWidth : nWidth - (i * MaxRegionWidth);
-				nHeightSub = (j < (cols - 1)) ? MaxRegionHeight : nHeight - (j * MaxRegionHeight);
-
-				if ((nWidthSub * nHeightSub) > 0)
-				{
-					shadow_client_send_bitmap_update(client, surface, nXSrcSub, nYSrcSub, nWidthSub, nHeightSub);
-				}
-			}
-		}
-
-		return 1;
-	}
-
 	rows = (nWidth + (64 - (nWidth % 64))) / 64;
 	cols = (nHeight + (64 - (nHeight % 64))) / 64;
 
 	k = 0;
+	totalBitmapSize = 0;
+
 	bitmapUpdate.count = bitmapUpdate.number = rows * cols;
 	bitmapData = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * bitmapUpdate.number);
 	bitmapUpdate.rectangles = bitmapData;
@@ -537,7 +510,6 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 			nWidth = (i < (rows - 1)) ? 64 : nWidth - (i * 64);
 			nHeight = (j < (cols - 1)) ? 64 : nHeight - (j * 64);
 
-			bitmapData[k].bitsPerPixel = 16;
 			bitmapData[k].width = nWidth;
 			bitmapData[k].height = nHeight;
 			bitmapData[k].destLeft = nXSrc + (i * 64);
@@ -586,7 +558,6 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 
 					bitmapData[k].bitmapDataStream = buffer;
 					bitmapData[k].bitmapLength = dstSize;
-
 					bitmapData[k].bitsPerPixel = 32;
 					bitmapData[k].cbScanWidth = nWidth * 4;
 					bitmapData[k].cbUncompressedSize = nWidth * nHeight * 4;
@@ -595,12 +566,20 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 				bitmapData[k].cbCompFirstRowSize = 0;
 				bitmapData[k].cbCompMainBodySize = bitmapData[k].bitmapLength;
 
+				totalBitmapSize += bitmapData[k].bitmapLength;
 				k++;
 			}
 		}
 	}
 
 	bitmapUpdate.count = bitmapUpdate.number = k;
+
+	updateSizeEstimate = totalBitmapSize + (k * bitmapUpdate.count) + 16;
+
+	if (updateSizeEstimate > maxUpdateSize)
+	{
+		fprintf(stderr, "update size estimate larger than maximum update size\n");
+	}
 
 	IFCALL(update->BitmapUpdate, context, &bitmapUpdate);
 
@@ -666,8 +645,7 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 	//WLog_INFO(TAG, "shadow_client_send_surface_update: x: %d y: %d width: %d height: %d right: %d bottom: %d",
 	//	nXSrc, nYSrc, nWidth, nHeight, nXSrc + nWidth, nYSrc + nHeight);
 
-	//if (settings->RemoteFxCodec || settings->NSCodec)
-	if (0)
+	if (settings->RemoteFxCodec || settings->NSCodec)
 	{
 		status = shadow_client_send_surface_bits(client, surface, nXSrc, nYSrc, nWidth, nHeight);
 	}

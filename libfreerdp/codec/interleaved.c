@@ -368,7 +368,7 @@ int interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData
 	}
 
 	if (bpp == 24)
-		DstFormat = PIXEL_FORMAT_RGB24;
+		DstFormat = PIXEL_FORMAT_XRGB32;
 	else if (bpp == 16)
 		DstFormat = PIXEL_FORMAT_RGB16;
 	else if (bpp == 15)
