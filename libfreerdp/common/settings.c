@@ -976,8 +976,11 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 		case FreeRDP_NSCodec:
 			return settings->NSCodec;
 
-		case FreeRDP_FrameAcknowledge:
-			return settings->FrameAcknowledge;
+		case FreeRDP_NSCodecAllowSubsampling:
+			return settings->NSCodecAllowSubsampling;
+
+		case FreeRDP_NSCodecAllowDynamicColorFidelity:
+			return settings->NSCodecAllowDynamicColorFidelity;
 
 		case FreeRDP_JpegCodec:
 			return settings->JpegCodec;
@@ -1464,8 +1467,12 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->NSCodec = param;
 			break;
 
-		case FreeRDP_FrameAcknowledge:
-			settings->FrameAcknowledge = param;
+		case FreeRDP_NSCodecAllowSubsampling:
+			settings->NSCodecAllowSubsampling = param;
+			break;
+
+		case FreeRDP_NSCodecAllowDynamicColorFidelity:
+			settings->NSCodecAllowDynamicColorFidelity = param;
 			break;
 
 		case FreeRDP_JpegCodec:
@@ -1788,6 +1795,12 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 		case FreeRDP_NSCodecId:
 			return settings->NSCodecId;
 
+		case FreeRDP_FrameAcknowledge:
+			return settings->FrameAcknowledge;
+
+		case FreeRDP_NSCodecColorLossLevel:
+			return settings->NSCodecColorLossLevel;
+
 		case FreeRDP_JpegCodecId:
 			return settings->JpegCodecId;
 
@@ -2093,6 +2106,14 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_NSCodecId:
 			settings->NSCodecId = param;
+			break;
+
+		case FreeRDP_FrameAcknowledge:
+			settings->FrameAcknowledge = param;
+			break;
+
+		case FreeRDP_NSCodecColorLossLevel:
+			settings->NSCodecColorLossLevel = param;
 			break;
 
 		case FreeRDP_JpegCodecId:

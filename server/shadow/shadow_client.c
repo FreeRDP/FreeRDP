@@ -159,6 +159,12 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	if (settings->ColorDepth == 24)
 		settings->ColorDepth = 16; /* disable 24bpp */
 
+	if (settings->ColorDepth < 32)
+	{
+		settings->NSCodec = FALSE;
+		settings->RemoteFxCodec = FALSE;
+	}
+
 	WLog_ERR(TAG, "Client from %s is activated (%dx%d@%d)",
 			peer->hostname, settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
 
