@@ -72,9 +72,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
-#ifdef WITH_HTTP_PROXY
 	{ "http-proxy", COMMAND_LINE_VALUE_REQUIRED, "<host>:<port>", NULL, NULL, -1, NULL, "HTTP Proxy" },
-#endif
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info string>", NULL, NULL, -1, NULL, "Load balance info" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "<executable path> or <||alias>", NULL, NULL, -1, NULL, "Remote application program" },
 	{ "app-name", COMMAND_LINE_VALUE_REQUIRED, "<app name>", NULL, NULL, -1, NULL, "Remote application name for user interface" },
@@ -260,7 +258,6 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 	printf("USB Device Redirection: /usb:id,dev:054c:0268\n");
 	printf("\n");
 
-#ifdef WITH_HTTP_PROXY
 	printf("For Gateways, the https_proxy environment variable is respected:\n");
 #ifdef _WIN32
 	printf("    set HTTPS_PROXY=http://proxy.contoso.com:3128/\n");
@@ -269,7 +266,6 @@ int freerdp_client_print_command_line_help(int argc, char** argv)
 #endif
 	printf("    xfreerdp /g:rdp.contoso.com ...\n");
 	printf("\n");
-#endif
 
 	printf("More documentation is coming, in the meantime consult source files\n");
 	printf("\n");
@@ -1363,7 +1359,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			settings->GatewayUseSameCredentials = TRUE;
 			settings->GatewayEnabled = TRUE;
 		}
-#ifdef WITH_HTTP_PROXY
 		CommandLineSwitchCase(arg, "http-proxy")
 		{
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
@@ -1387,7 +1382,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				}
 			}
 		}
-#endif
 		CommandLineSwitchCase(arg, "gu")
 		{
 			char* user;

@@ -746,11 +746,9 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->GatewayEnabled;
 			break;
 
-#ifdef WITH_HTTP_PROXY
 		case FreeRDP_HTTPProxyEnabled:
 			return settings->HTTPProxyEnabled;
 			break;
-#endif
 
 		case FreeRDP_RemoteApplicationMode:
 			return settings->RemoteApplicationMode;
@@ -1224,11 +1222,9 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->GatewayEnabled = param;
 			break;
 
-#ifdef WITH_HTTP_PROXY
 		case FreeRDP_HTTPProxyEnabled:
 			settings->HTTPProxyEnabled = param;
 			break;
-#endif
 
 		case FreeRDP_RemoteApplicationMode:
 			settings->RemoteApplicationMode = param;
@@ -1615,11 +1611,9 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 			return settings->GatewayCredentialsSource;
 			break;
 
-#ifdef WITH_HTTP_PROXY
 		case FreeRDP_HTTPProxyPort:
 			return settings->HTTPProxyPort;
 			break;
-#endif
 
 		case FreeRDP_RemoteAppNumIconCaches:
 			return settings->RemoteAppNumIconCaches;
@@ -1929,11 +1923,9 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			settings->GatewayCredentialsSource = param;
 			break;
 
-#ifdef WITH_HTTP_PROXY
 		case FreeRDP_HTTPProxyPort:
 			settings->HTTPProxyPort = param;
 			break;
-#endif
 
 		case FreeRDP_RemoteAppNumIconCaches:
 			settings->RemoteAppNumIconCaches = param;
@@ -2257,11 +2249,9 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 			return settings->GatewayDomain;
 			break;
 
-#ifdef WITH_HTTP_PROXY
 		case FreeRDP_HTTPProxyHostname:
 			return settings->HTTPProxyHostname;
 			break;
-#endif
 
 		case FreeRDP_RemoteApplicationName:
 			return settings->RemoteApplicationName;
@@ -2467,12 +2457,10 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 			settings->GatewayDomain = _strdup(param);
 			break;
 
-#ifdef WITH_HTTP_PROXY
 		case FreeRDP_HTTPProxyHostname:
 			free(settings->HTTPProxyHostname);
 			settings->HTTPProxyHostname = _strdup(param);
 			break;
-#endif
 
 		case FreeRDP_RemoteApplicationName:
 			free(settings->RemoteApplicationName);

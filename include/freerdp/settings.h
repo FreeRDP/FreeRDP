@@ -669,11 +669,9 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_GatewayCredentialsSource			1990
 #define FreeRDP_GatewayUseSameCredentials			1991
 #define FreeRDP_GatewayEnabled					1992
-#ifdef WITH_HTTP_PROXY
 #define FreeRDP_HTTPProxyEnabled				2995
 #define FreeRDP_HTTPProxyHostname				2996
 #define FreeRDP_HTTPProxyPort   				2997
-#endif
 #define FreeRDP_RemoteApplicationMode				2112
 #define FreeRDP_RemoteApplicationName				2113
 #define FreeRDP_RemoteApplicationIcon				2114
@@ -1081,12 +1079,10 @@ struct rdp_settings
 	UINT64 padding2048[2048 - 1993]; /* 1993 */
 	UINT64 padding2112[2112 - 2048]; /* 2048 */
 
-#ifdef WITH_HTTP_PROXY
 	/* HTTP Proxy */
 	ALIGN64 BOOL HTTPProxyEnabled;	/* 1995 */
 	ALIGN64 char* HTTPProxyHostname;	/* 1996 */
 	ALIGN64 UINT32 HTTPProxyPort;	/* 1997 */
-#endif
 
 	/**
 	 * RemoteApp
