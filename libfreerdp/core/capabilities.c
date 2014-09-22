@@ -2420,6 +2420,7 @@ BOOL rdp_print_large_pointer_capability_set(wStream* s, UINT16 length)
 BOOL rdp_read_surface_commands_capability_set(wStream* s, UINT16 length, rdpSettings* settings)
 {
 	UINT32 cmdFlags;
+
 	if (length < 12)
 		return FALSE;
 
@@ -2448,8 +2449,8 @@ void rdp_write_surface_commands_capability_set(wStream* s, rdpSettings* settings
 
 	header = rdp_capability_set_start(s);
 
-	cmdFlags = SURFCMDS_SET_SURFACE_BITS |
-			SURFCMDS_STREAM_SURFACE_BITS;
+	cmdFlags = SURFCMDS_SET_SURFACE_BITS | SURFCMDS_STREAM_SURFACE_BITS;
+
 	if (settings->SurfaceFrameMarkerEnabled)
 		cmdFlags |= SURFCMDS_FRAME_MARKER;
 
@@ -2686,6 +2687,8 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 			}
 			else if (UuidEqual(&codecGuid, &CODEC_GUID_IMAGE_REMOTEFX, &rpc_status))
 			{
+				/* Microsoft RDP servers ignore CODEC_GUID_IMAGE_REMOTEFX codec properties */
+
 				guidRemoteFxImage = TRUE;
 				Stream_Seek(s, codecPropertiesLength); /* codecProperties */
 			}
@@ -2724,7 +2727,7 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 			if (Stream_GetPosition(s) != end)
 			{
 				fprintf(stderr, "error while reading codec properties: actual offset: %d expected offset: %d\n",
-						Stream_GetPosition(s), end);
+						(int) Stream_GetPosition(s), end);
 				Stream_SetPosition(s, end);
 			}
 

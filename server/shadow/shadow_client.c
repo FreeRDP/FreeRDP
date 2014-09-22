@@ -50,6 +50,7 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	settings->BitmapCacheV3Enabled = TRUE;
 	settings->FrameMarkerCommandEnabled = TRUE;
 	settings->SurfaceFrameMarkerEnabled = TRUE;
+	settings->SupportGraphicsPipeline = FALSE;
 
 	settings->DrawAllowSkipAlpha = TRUE;
 	settings->DrawAllowColorSubsampling = TRUE;

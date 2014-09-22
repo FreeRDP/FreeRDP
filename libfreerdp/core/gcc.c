@@ -558,7 +558,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 {
 	char* str = NULL;
 	UINT32 version;
-	UINT32 color_depth;
+	UINT32 clientColorDepth;
 	UINT16 colorDepth = 0;
 	UINT16 postBeta2ColorDepth = 0;
 	UINT16 highColorDepth = 0;
@@ -569,6 +569,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	UINT16 desktopOrientation = 0;
 	UINT32 desktopScaleFactor = 0;
 	UINT32 deviceScaleFactor = 0;
+	UINT16 earlyCapabilityFlags = 0;
 	rdpSettings* settings = mcs->settings;
 
 	/* Length of all required fields, until imeFileName */
@@ -637,7 +638,8 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 		if (blockLength < 2)
 			break;
-		Stream_Read_UINT16(s, settings->EarlyCapabilityFlags); /* earlyCapabilityFlags (2 bytes) */
+		Stream_Read_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags (2 bytes) */
+		settings->EarlyCapabilityFlags = (UINT32) earlyCapabilityFlags;
 		blockLength -= 2;
 
 		if (blockLength < 64)
@@ -695,29 +697,29 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	if (highColorDepth > 0)
 	{
-		if (settings->EarlyCapabilityFlags & RNS_UD_CS_WANT_32BPP_SESSION)
-			color_depth = 32;
+		if (earlyCapabilityFlags & RNS_UD_CS_WANT_32BPP_SESSION)
+			clientColorDepth = 32;
 		else
-			color_depth = highColorDepth;
+			clientColorDepth = highColorDepth;
 	}
 	else if (postBeta2ColorDepth > 0)
 	{
 		switch (postBeta2ColorDepth)
 		{
 			case RNS_UD_COLOR_4BPP:
-				color_depth = 4;
+				clientColorDepth = 4;
 				break;
 			case RNS_UD_COLOR_8BPP:
-				color_depth = 8;
+				clientColorDepth = 8;
 				break;
 			case RNS_UD_COLOR_16BPP_555:
-				color_depth = 15;
+				clientColorDepth = 15;
 				break;
 			case RNS_UD_COLOR_16BPP_565:
-				color_depth = 16;
+				clientColorDepth = 16;
 				break;
 			case RNS_UD_COLOR_24BPP:
-				color_depth = 24;
+				clientColorDepth = 24;
 				break;
 			default:
 				return FALSE;
@@ -728,10 +730,10 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		switch (colorDepth)
 		{
 			case RNS_UD_COLOR_4BPP:
-				color_depth = 4;
+				clientColorDepth = 4;
 				break;
 			case RNS_UD_COLOR_8BPP:
-				color_depth = 8;
+				clientColorDepth = 8;
 				break;
 			default:
 				return FALSE;
@@ -742,8 +744,20 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	 * If we are in server mode, accept client's color depth only if
 	 * it is smaller than ours. This is what Windows server does.
 	 */
-	if ((color_depth < settings->ColorDepth) || !settings->ServerMode)
-		settings->ColorDepth = color_depth;
+	if ((clientColorDepth < settings->ColorDepth) || !settings->ServerMode)
+		settings->ColorDepth = clientColorDepth;
+
+	if (settings->NetworkAutoDetect)
+		settings->NetworkAutoDetect = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT) ? TRUE : FALSE;
+
+	if (settings->SupportHeartbeatPdu)
+		settings->SupportHeartbeatPdu = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_HEARTBEAT_PDU) ? TRUE : FALSE;
+
+	if (settings->SupportGraphicsPipeline)
+		settings->SupportGraphicsPipeline = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL) ? TRUE : FALSE;
+
+	if (settings->SupportDynamicTimeZone)
+		settings->SupportDynamicTimeZone = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE) ? TRUE : FALSE;
 
 	return TRUE;
 }
@@ -788,7 +802,7 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 	if (clientNameLength >= 16)
 	{
 		clientNameLength = 16;
-		clientName[clientNameLength-1] = 0;
+		clientName[clientNameLength - 1] = 0;
 	}
 
 	Stream_Write(s, clientName, (clientNameLength * 2));
@@ -818,7 +832,7 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 	if (settings->RemoteFxCodec)
 		connectionType = CONNECTION_TYPE_LAN;
 
-	if (connectionType != 0)
+	if (connectionType)
 		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;
 
 	if (settings->ColorDepth == 32)
@@ -848,7 +862,7 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 	if (clientDigProductIdLength >= 32)
 	{
 		clientDigProductIdLength = 32;
-		clientDigProductId[clientDigProductIdLength-1] = 0;
+		clientDigProductId[clientDigProductIdLength - 1] = 0;
 	}
 	Stream_Write(s, clientDigProductId, (clientDigProductIdLength * 2) );
 	Stream_Zero(s, 64 - (clientDigProductIdLength * 2) );
@@ -892,13 +906,20 @@ BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs)
 
 void gcc_write_server_core_data(wStream* s, rdpMcs* mcs)
 {
+	UINT32 version;
+	UINT32 earlyCapabilityFlags = 0;
 	rdpSettings* settings = mcs->settings;
 
 	gcc_write_user_data_header(s, SC_CORE, 16);
 
-	Stream_Write_UINT32(s, settings->RdpVersion == 4 ? RDP_VERSION_4 : RDP_VERSION_5_PLUS);
-	Stream_Write_UINT32(s, settings->RequestedProtocols); /* clientRequestedProtocols */
-	Stream_Write_UINT32(s, settings->EarlyCapabilityFlags); /* earlyCapabilityFlags */
+	version = settings->RdpVersion == 4 ? RDP_VERSION_4 : RDP_VERSION_5_PLUS;
+
+	if (settings->SupportDynamicTimeZone)
+		earlyCapabilityFlags |= RNS_UD_SC_DYNAMIC_DST_SUPPORTED;
+
+	Stream_Write_UINT32(s, version); /* version (4 bytes) */
+	Stream_Write_UINT32(s, settings->RequestedProtocols); /* clientRequestedProtocols (4 bytes) */
+	Stream_Write_UINT32(s, earlyCapabilityFlags); /* earlyCapabilityFlags (4 bytes) */
 }
 
 /**
