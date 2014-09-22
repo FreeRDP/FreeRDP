@@ -907,7 +907,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 
 	x11_shadow_subsystem_base_init(subsystem);
 
-	if ((subsystem->depth != 24) || (subsystem->depth != 32))
+	if ((subsystem->depth != 24) && (subsystem->depth != 32))
 	{
 		fprintf(stderr, "x11_shadow_subsystem_init: unsupported X11 server color depth: %d\n", subsystem->depth);
 		return -1;
