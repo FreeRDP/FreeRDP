@@ -47,6 +47,7 @@
 #include "fastpath.h"
 #include "transport.h"
 #include "rdp.h"
+#include "proxy.h"
 
 #define BUFFER_SIZE 16384
 
@@ -327,127 +328,6 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	return TRUE;
 }
 
-/* For GetEnvironmentVariableA */
-#include "winpr/environment.h"
-
-/* TODO move into core/tcp.c? */
-void transport_http_proxy_read_environment(rdpSettings *settings, char *envname)
-{
-	char env[256];
-	DWORD envlen;
-	char *hostname, *pport;
-
-	envlen = GetEnvironmentVariableA(envname, env, sizeof(env));
-	if(!envlen)
-		return;
-
-	if (strncmp(env, "http://", 7)) {
-		fprintf(stderr, "Proxy url must have scheme http. Ignoring.\n");
-		return;
-	}
-
-	settings->HTTPProxyEnabled = TRUE;
-
-	hostname = env + 7;
-	pport = strchr(hostname, ':');
-	if (pport) {
-		*pport = '\0';
-		settings->HTTPProxyPort = atoi(pport+1);
-	}
-	else {
-		/* The default is 80. Also for Proxys. */
-		settings->HTTPProxyPort = 80;
-
-		pport = strchr(hostname, '/');
-		if(pport)
-			*pport = '\0';
-	}
-
-	freerdp_set_param_string(settings, FreeRDP_HTTPProxyHostname, hostname);
-}
-
-BOOL transport_http_proxy_connect(rdpTransport* transport, const char* hostname, UINT16 port)
-{
-	int status;
-	wStream* s;
-	char str[256], *eol;
-	rdpTcp *tcp;
-	int resultsize;
-
-	if (transport->layer == TRANSPORT_LAYER_HTTP_PROXY_IN)
-		tcp = transport->TcpIn;
-	else
-		tcp = transport->TcpOut;
-
-	_itoa_s(port, str, sizeof(str), 10);
-
-	s = Stream_New(NULL, 200);
-	Stream_Write(s, "CONNECT ", 8);
-	Stream_Write(s, hostname, strlen(hostname));
-	Stream_Write_UINT8(s, ':');
-	Stream_Write(s, str, strlen(str));
-	Stream_Write(s, " HTTP/1.1\r\n\r\nHost: ", 19);
-	Stream_Write(s, hostname, strlen(hostname));
-	Stream_Write_UINT8(s, ':');
-	Stream_Write(s, str, strlen(str));
-	Stream_Write(s, "\r\n\r\n", 4);
-
-	status = transport_write(transport, s);
-
-	Stream_Free(s, TRUE);
-	s = NULL;
-
-	if (status < 0) {
-		fprintf(stderr, "Error writing: status=%d\n", status);
-		return status;
-	}
-
-	/* Read result until CR-LF-CR-LF.
-	 * Keep str a null-terminated string. */
-
-	memset(str, '\0', sizeof(str));
-	resultsize = 0;
-	while ( strstr(str, "\r\n\r\n") == NULL ) {
-		if (resultsize >= sizeof(str)-1) {
-			fprintf(stderr, "HTTP Reply headers too long.\n");
-			return FALSE;
-		}
-
-		status = tcp_read(tcp, (BYTE*)str + resultsize, sizeof(str)-resultsize-1);
-		if (status < 0) {
-			/* Error? */
-			return FALSE;
-		}
-		else if (status == 0) {
-			/* Error? */
-			fprintf(stderr, "tcp_read() returned zero\n");
-			return FALSE;
-		}
-		resultsize += status;
-	}
-
-	/* Extract HTTP status line */
-	eol = strchr(str, '\r');
-	if (!eol) {
-		/* should never happen */
-		return FALSE;
-	}
-
-	*eol = '\0';
-
-	fprintf(stderr, "HTTP proxy: %s\n", str);
-
-	if (strlen(str) < 12) {
-		return FALSE;
-	}
-
-	str[7] = 'X';
-	if (strncmp(str, "HTTP/1.X 200", 12))
-		return FALSE;
-	
-	return TRUE;
-}
-
 BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16 port)
 {
 	rdpTsg* tsg = tsg_new(transport);
@@ -498,63 +378,31 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	/* For TSGateway, find the system HTTPS proxy automatically */
 	if (settings->GatewayEnabled) {
 		if (!transport->settings->HTTPProxyEnabled)
-			transport_http_proxy_read_environment(settings, "https_proxy");
+			http_proxy_read_environment(settings, "https_proxy");
 
 		if (!transport->settings->HTTPProxyEnabled)
-			transport_http_proxy_read_environment(settings, "HTTPS_PROXY");
+			http_proxy_read_environment(settings, "HTTPS_PROXY");
 	}
 
 	if (transport->settings->GatewayEnabled)
 	{
+		transport->layer = TRANSPORT_LAYER_TSG;
 		transport->TcpOut = tcp_new(settings);
 
-		if (settings->HTTPProxyEnabled) {
-			status = tcp_connect(transport->TcpIn, settings->HTTPProxyHostname, settings->HTTPProxyPort);
-
-			transport->layer = TRANSPORT_LAYER_HTTP_PROXY_IN;
-			status = transport_http_proxy_connect(transport, settings->GatewayHostname, settings->GatewayPort);
-		}
-		else {
-			status = tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort);
-		}
+		status = tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort);
 
 		if (status)
 		{
 			/* Connect second channel */
-			if (settings->HTTPProxyEnabled)
-			{
-				transport->TcpOut = tcp_new(settings);
-				status = tcp_connect(transport->TcpOut, settings->HTTPProxyHostname, settings->HTTPProxyPort);
-
-				if (status) {
-					transport->layer = TRANSPORT_LAYER_HTTP_PROXY_OUT;
-					status = transport_http_proxy_connect(transport, settings->GatewayHostname, settings->GatewayPort);
-				}
-			}
-			else {
-				status = tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort);
-			}
+			status = tcp_connect(transport->TcpOut, settings->GatewayHostname, settings->GatewayPort);
 		}
-
-		transport->layer = TRANSPORT_LAYER_TSG;
 
 		if (status)
 			status = transport_tsg_connect(transport, hostname, port);
 	}
 	else
 	{
-		if (settings->HTTPProxyEnabled) {
-			status = tcp_connect(transport->TcpIn, settings->HTTPProxyHostname, settings->HTTPProxyPort);
-			transport->layer = TRANSPORT_LAYER_HTTP_PROXY_IN;
-
-			if (status) {
-				status = transport_http_proxy_connect(transport, hostname, port);
-				transport->layer = TRANSPORT_LAYER_TCP;
-			}
-		}
-		else {
-			status = tcp_connect(transport->TcpIn, hostname, port);
-		}
+		status = tcp_connect(transport->TcpIn, hostname, port);
 
 		transport->SplitInputOutput = FALSE;
 		transport->TcpOut = transport->TcpIn;
@@ -719,10 +567,6 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 			status = tsg_read(transport->tsg, data + read, bytes - read);
 		else if (transport->layer == TRANSPORT_LAYER_TSG_TLS)
 			status = tls_read(transport->TsgTls, data + read, bytes - read);
-		else if (transport->layer == TRANSPORT_LAYER_HTTP_PROXY_IN)
-			status = tcp_read(transport->TcpIn, data + read, bytes - read);
-		else if (transport->layer == TRANSPORT_LAYER_HTTP_PROXY_OUT)
-			status = tcp_read(transport->TcpOut, data + read, bytes - read);
 
 		/* blocking means that we can't continue until this is read */
 
@@ -905,10 +749,6 @@ int transport_write(rdpTransport* transport, wStream* s)
 			status = tsg_write(transport->tsg, Stream_Pointer(s), length);
 		else if (transport->layer == TRANSPORT_LAYER_TSG_TLS)
 			status = tls_write(transport->TsgTls, Stream_Pointer(s), length);
-		else if (transport->layer == TRANSPORT_LAYER_HTTP_PROXY_IN)
-			status = tcp_write(transport->TcpIn, Stream_Pointer(s), length);
-		else if (transport->layer == TRANSPORT_LAYER_HTTP_PROXY_OUT)
-			status = tcp_write(transport->TcpOut, Stream_Pointer(s), length);
 
 		if (status < 0)
 			break; /* error occurred */
@@ -929,10 +769,6 @@ int transport_write(rdpTransport* transport, wStream* s)
 				tcp_wait_write(transport->TcpOut);
 			else if (transport->layer == TRANSPORT_LAYER_TSG_TLS)
 				tls_wait_write(transport->TsgTls);
-			else if (transport->layer == TRANSPORT_LAYER_HTTP_PROXY_IN)
-				tcp_wait_write(transport->TcpIn);
-			else if (transport->layer == TRANSPORT_LAYER_HTTP_PROXY_OUT)
-				tcp_wait_write(transport->TcpOut);
 			else
 				USleep(transport->SleepInterval);
 		}

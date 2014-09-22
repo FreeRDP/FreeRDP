@@ -59,6 +59,7 @@
 #include <winpr/stream.h>
 
 #include "tcp.h"
+#include "proxy.h"
 
 void tcp_get_ip_address(rdpTcp* tcp)
 {
@@ -136,7 +137,15 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 	}
 	else
 	{
-		tcp->sockfd = freerdp_tcp_connect(hostname, port);
+		if (tcp->settings->HTTPProxyEnabled) {
+			printf("HTTP Proxy enabled: %s:%d!\n", tcp->settings->HTTPProxyHostname, tcp->settings->HTTPProxyPort);
+			tcp->sockfd = freerdp_tcp_connect(tcp->settings->HTTPProxyHostname, tcp->settings->HTTPProxyPort);
+			if (!http_proxy_connect(tcp, hostname, port))
+				return FALSE;
+		} else {
+			printf("HTTP Proxy disabled\n");
+			tcp->sockfd = freerdp_tcp_connect(hostname, port);
+		}
 
 		if (tcp->sockfd < 0)
 			return FALSE;
