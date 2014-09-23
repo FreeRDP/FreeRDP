@@ -166,6 +166,11 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 		settings->RemoteFxCodec = FALSE;
 	}
 
+	if (settings->ConnectionType != CONNECTION_TYPE_LAN)
+	{
+		settings->RemoteFxCodec = FALSE;
+	}
+
 	WLog_ERR(TAG, "Client from %s is activated (%dx%d@%d)",
 			peer->hostname, settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
 
