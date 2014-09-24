@@ -142,6 +142,9 @@ int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 
 int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 {
+	rdpContext* context = (rdpContext*) encoder->client;
+	rdpSettings* settings = context->settings;
+
 	if (!encoder->nsc)
 		encoder->nsc = nsc_context_new();
 
@@ -158,6 +161,10 @@ int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 		encoder->frameAck = TRUE;
 		encoder->frameList = ListDictionary_New(TRUE);
 	}
+
+	encoder->nsc->ColorLossLevel = settings->NSCodecColorLossLevel;
+	encoder->nsc->ChromaSubsamplingLevel = settings->NSCodecAllowSubsampling ? 1 : 0;
+	encoder->nsc->DynamicColorFidelity = settings->NSCodecAllowDynamicColorFidelity;
 
 	encoder->codecs |= FREERDP_CODEC_NSCODEC;
 
