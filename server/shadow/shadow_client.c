@@ -45,7 +45,7 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	settings = peer->settings;
 
 	settings->ColorDepth = 32;
-	settings->NSCodec = TRUE;
+	settings->NSCodec = FALSE;
 	settings->RemoteFxCodec = TRUE;
 	settings->BitmapCacheV3Enabled = TRUE;
 	settings->FrameMarkerCommandEnabled = TRUE;
@@ -166,11 +166,6 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 		settings->RemoteFxCodec = FALSE;
 	}
 
-	if (settings->ConnectionType != CONNECTION_TYPE_LAN)
-	{
-		settings->RemoteFxCodec = FALSE;
-	}
-
 	WLog_ERR(TAG, "Client from %s is activated (%dx%d@%d)",
 			peer->hostname, settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
 
@@ -257,9 +252,15 @@ void shadow_client_suppress_output(rdpShadowClient* client, BYTE allow, RECTANGL
 
 BOOL shadow_client_activate(freerdp_peer* peer)
 {
-	rdpShadowClient* client;
+	rdpSettings* settings = peer->settings;
+	rdpShadowClient* client = (rdpShadowClient*) peer->context;
 
-	client = (rdpShadowClient*) peer->context;
+	if (strcmp(settings->ClientDir, "librdp") == 0)
+	{
+		/* Hack for Mac/iOS/Android Microsoft RDP clients */
+		settings->RemoteFxCodec = FALSE;
+		settings->NSCodecAllowSubsampling = FALSE;
+	}
 
 	client->activated = TRUE;
 	client->inLobby = client->mayView ? FALSE : TRUE;
