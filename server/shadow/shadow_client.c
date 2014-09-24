@@ -160,12 +160,6 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	if (settings->ColorDepth == 24)
 		settings->ColorDepth = 16; /* disable 24bpp */
 
-	if (settings->ColorDepth < 32)
-	{
-		settings->NSCodec = FALSE;
-		settings->RemoteFxCodec = FALSE;
-	}
-
 	WLog_ERR(TAG, "Client from %s is activated (%dx%d@%d)",
 			peer->hostname, settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
 
@@ -439,11 +433,13 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 {
 	BYTE* data;
 	BYTE* buffer;
-	int i, j, k;
+	int yIdx, xIdx, k;
 	int rows, cols;
 	int nSrcStep;
 	BYTE* pSrcData;
 	UINT32 DstSize;
+	UINT32 SrcFormat;
+	BITMAP_DATA* bitmap;
 	rdpUpdate* update;
 	rdpContext* context;
 	rdpSettings* settings;
@@ -471,6 +467,7 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 
 	pSrcData = surface->data;
 	nSrcStep = surface->scanline;
+	SrcFormat = PIXEL_FORMAT_RGB32;
 
 	if ((nXSrc % 4) != 0)
 	{
@@ -484,8 +481,8 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 		nYSrc -= (nYSrc % 4);
 	}
 
-	rows = (nWidth + (64 - (nWidth % 64))) / 64;
-	cols = (nHeight + (64 - (nHeight % 64))) / 64;
+	rows = (nHeight / 64) + ((nHeight % 64) ? 1 : 0);
+	cols = (nWidth / 64) + ((nWidth % 64) ? 1 : 0);
 
 	k = 0;
 	totalBitmapSize = 0;
@@ -509,72 +506,69 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 		nHeight += (nHeight % 4);
 	}
 
-	for (i = 0; i < rows; i++)
+	for (yIdx = 0; yIdx < rows; yIdx++)
 	{
-		for (j = 0; j < cols; j++)
+		for (xIdx = 0; xIdx < cols; xIdx++)
 		{
-			nWidth = (i < (rows - 1)) ? 64 : nWidth - (i * 64);
-			nHeight = (j < (cols - 1)) ? 64 : nHeight - (j * 64);
+			bitmap = &bitmapData[k];
 
-			bitmapData[k].width = nWidth;
-			bitmapData[k].height = nHeight;
-			bitmapData[k].destLeft = nXSrc + (i * 64);
-			bitmapData[k].destTop = nYSrc + (j * 64);
-			bitmapData[k].destRight = bitmapData[k].destLeft + nWidth - 1;
-			bitmapData[k].destBottom = bitmapData[k].destTop + nHeight - 1;
-			bitmapData[k].compressed = TRUE;
+			bitmap->width = 64;
+			bitmap->height = 64;
+			bitmap->destLeft = nXSrc + (xIdx * 64);
+			bitmap->destTop = nYSrc + (yIdx * 64);
 
-			if (((nWidth * nHeight) > 0) && (nWidth >= 4) && (nHeight >= 4))
+			if ((bitmap->destLeft + bitmap->width) > (nXSrc + nWidth))
+				bitmap->width = (nXSrc + nWidth) - bitmap->destLeft;
+
+			if ((bitmap->destTop + bitmap->height) > (nYSrc + nHeight))
+				bitmap->height = (nYSrc + nHeight) - bitmap->destTop;
+
+			bitmap->destRight = bitmap->destLeft + bitmap->width - 1;
+			bitmap->destBottom = bitmap->destTop + bitmap->height - 1;
+			bitmap->compressed = TRUE;
+
+			if ((bitmap->width < 4) || (bitmap->height < 4))
+				continue;
+
+			if (settings->ColorDepth < 32)
 			{
-				int nXSubSrc;
-				int nYSubSrc;
-				UINT32 SrcFormat;
+				int bitsPerPixel = settings->ColorDepth;
+				int bytesPerPixel = (bitsPerPixel + 7) / 8;
 
-				nXSubSrc = bitmapData[k].destLeft;
-				nYSubSrc = bitmapData[k].destTop;
+				DstSize = 64 * 64 * 4;
+				buffer = encoder->grid[k];
 
-				SrcFormat = PIXEL_FORMAT_RGB32;
+				interleaved_compress(encoder->interleaved, buffer, &DstSize, bitmap->width, bitmap->height,
+						pSrcData, SrcFormat, nSrcStep, bitmap->destLeft, bitmap->destTop, NULL, bitsPerPixel);
 
-				if (settings->ColorDepth < 32)
-				{
-					int bitsPerPixel = settings->ColorDepth;
-					int bytesPerPixel = (bitsPerPixel + 7) / 8;
-
-					DstSize = 64 * 64 * 4;
-					buffer = encoder->grid[k];
-
-					interleaved_compress(encoder->interleaved, buffer, &DstSize, nWidth, nHeight,
-							pSrcData, SrcFormat, nSrcStep, nXSubSrc, nYSubSrc, NULL, bitsPerPixel);
-
-					bitmapData[k].bitmapDataStream = buffer;
-					bitmapData[k].bitmapLength = DstSize;
-					bitmapData[k].bitsPerPixel = bitsPerPixel;
-					bitmapData[k].cbScanWidth = nWidth * bytesPerPixel;
-					bitmapData[k].cbUncompressedSize = nWidth * nHeight * bytesPerPixel;
-				}
-				else
-				{
-					int dstSize;
-
-					buffer = encoder->grid[k];
-					data = &pSrcData[(bitmapData[k].destTop * nSrcStep) + (bitmapData[k].destLeft * 4)];
-
-					buffer = freerdp_bitmap_compress_planar(encoder->planar,
-							data, SrcFormat, nWidth, nHeight, nSrcStep, buffer, &dstSize);
-
-					bitmapData[k].bitmapDataStream = buffer;
-					bitmapData[k].bitmapLength = dstSize;
-					bitmapData[k].bitsPerPixel = 32;
-					bitmapData[k].cbScanWidth = nWidth * 4;
-					bitmapData[k].cbUncompressedSize = nWidth * nHeight * 4;
-				}
-
-				bitmapData[k].cbCompFirstRowSize = 0;
-				bitmapData[k].cbCompMainBodySize = bitmapData[k].bitmapLength;
-
-				totalBitmapSize += bitmapData[k].bitmapLength;
-				k++;
+				bitmap->bitmapDataStream = buffer;
+				bitmap->bitmapLength = DstSize;
+				bitmap->bitsPerPixel = bitsPerPixel;
+				bitmap->cbScanWidth = bitmap->width * bytesPerPixel;
+				bitmap->cbUncompressedSize = bitmap->width * bitmap->height * bytesPerPixel;
 			}
+			else
+			{
+				int dstSize;
+
+				buffer = encoder->grid[k];
+				data = &pSrcData[(bitmap->destTop * nSrcStep) + (bitmap->destLeft * 4)];
+
+				buffer = freerdp_bitmap_compress_planar(encoder->planar, data, SrcFormat,
+						bitmap->width, bitmap->height, nSrcStep, buffer, &dstSize);
+
+				bitmap->bitmapDataStream = buffer;
+				bitmap->bitmapLength = dstSize;
+				bitmap->bitsPerPixel = 32;
+				bitmap->cbScanWidth = bitmap->width * 4;
+				bitmap->cbUncompressedSize = bitmap->width * bitmap->height * 4;
+			}
+
+			bitmap->cbCompFirstRowSize = 0;
+			bitmap->cbCompMainBodySize = bitmap->bitmapLength;
+
+			totalBitmapSize += bitmap->bitmapLength;
+			k++;
 		}
 	}
 
