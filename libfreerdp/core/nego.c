@@ -72,6 +72,8 @@ BOOL nego_security_connect(rdpNego* nego);
 
 BOOL nego_connect(rdpNego* nego)
 {
+	rdpSettings* settings = nego->transport->settings;
+
 	if (nego->state == NEGO_STATE_INITIAL)
 	{
 		if (nego->enabled_protocols[PROTOCOL_EXT])
@@ -156,15 +158,15 @@ BOOL nego_connect(rdpNego* nego)
 	DEBUG_NEGO("Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 
 	/* update settings with negotiated protocol security */
-	nego->transport->settings->RequestedProtocols = nego->requested_protocols;
-	nego->transport->settings->SelectedProtocol = nego->selected_protocol;
-	nego->transport->settings->NegotiationFlags = nego->flags;
+	settings->RequestedProtocols = nego->requested_protocols;
+	settings->SelectedProtocol = nego->selected_protocol;
+	settings->NegotiationFlags = nego->flags;
 
 	if (nego->selected_protocol == PROTOCOL_RDP)
 	{
-		nego->transport->settings->DisableEncryption = TRUE;
-		nego->transport->settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-		nego->transport->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+		settings->DisableEncryption = TRUE;
+		settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+		settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	}
 
 	/* finally connect security layer (if not already done) */
@@ -173,6 +175,9 @@ BOOL nego_connect(rdpNego* nego)
 		DEBUG_NEGO("Failed to connect with %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 		return FALSE;
 	}
+
+	if (!(nego->flags & DYNVC_GFX_PROTOCOL_SUPPORTED))
+		settings->NetworkAutoDetect = FALSE;
 
 	return TRUE;
 }
@@ -506,10 +511,12 @@ BOOL nego_recv_response(rdpNego* nego)
 	wStream* s;
 
 	s = Stream_New(NULL, 1024);
+
 	if (!s)
 		return FALSE;
 
 	status = transport_read_pdu(nego->transport, s);
+
 	if (status < 0)
 	{
 		Stream_Free(s, TRUE);

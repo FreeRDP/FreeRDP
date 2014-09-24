@@ -51,10 +51,5 @@ rdpAutoDetect* autodetect_new(void);
 void autodetect_free(rdpAutoDetect* autodetect);
 
 #define AUTODETECT_TAG FREERDP_TAG("core.autodetect")
-#ifdef WITH_DEBUG_AUTODETECT
-#define DEBUG_AUTODETECT(fmt, ...) WLog_DBG(AUTODETECT_TAG, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_AUTODETECT(fmt, ...) do { } while (0)
-#endif
 
 #endif /* __AUTODETECT_H */

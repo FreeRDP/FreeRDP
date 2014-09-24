@@ -832,11 +832,15 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 			RNS_UD_16BPP_SUPPORT |
 			RNS_UD_15BPP_SUPPORT;
 
-	connectionType = settings->ConnectionType;
 	earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU;
 
-	if (settings->RemoteFxCodec)
-		connectionType = CONNECTION_TYPE_LAN;
+	if (settings->NetworkAutoDetect)
+		settings->ConnectionType = CONNECTION_TYPE_AUTODETECT;
+
+	if (settings->RemoteFxCodec && !settings->NetworkAutoDetect)
+		settings->ConnectionType = CONNECTION_TYPE_LAN;
+
+	connectionType = settings->ConnectionType;
 
 	if (connectionType)
 		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;

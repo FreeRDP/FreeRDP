@@ -865,6 +865,7 @@ int freerdp_parse_hostname(char* hostname, char** host, int* port)
 int freerdp_set_connection_type(rdpSettings* settings, int type)
 {
 	settings->ConnectionType = type;
+
 	if (type == CONNECTION_TYPE_MODEM)
 	{
 		settings->DisableWallpaper = TRUE;
@@ -1592,8 +1593,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					type = CONNECTION_TYPE_WAN;
 				else if (_stricmp(arg->Value, "lan") == 0)
 					type = CONNECTION_TYPE_LAN;
-				else if (_stricmp(arg->Value, "auto") == 0)
+				else if ((_stricmp(arg->Value, "autodetect") == 0) ||
+						(_stricmp(arg->Value, "auto") == 0) ||
+						(_stricmp(arg->Value, "detect") == 0))
+				{
 					type = CONNECTION_TYPE_AUTODETECT;
+				}
 			}
 
 			freerdp_set_connection_type(settings, type);
