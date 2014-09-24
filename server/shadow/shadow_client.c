@@ -45,7 +45,7 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	settings = peer->settings;
 
 	settings->ColorDepth = 32;
-	settings->NSCodec = FALSE;
+	settings->NSCodec = TRUE;
 	settings->RemoteFxCodec = TRUE;
 	settings->BitmapCacheV3Enabled = TRUE;
 	settings->FrameMarkerCommandEnabled = TRUE;
@@ -258,8 +258,13 @@ BOOL shadow_client_activate(freerdp_peer* peer)
 	if (strcmp(settings->ClientDir, "librdp") == 0)
 	{
 		/* Hack for Mac/iOS/Android Microsoft RDP clients */
+
 		settings->RemoteFxCodec = FALSE;
+
+		settings->NSCodec = FALSE;
 		settings->NSCodecAllowSubsampling = FALSE;
+
+		settings->SurfaceFrameMarkerEnabled = FALSE;
 	}
 
 	client->activated = TRUE;
@@ -397,46 +402,34 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 	}
 	else if (settings->NSCodec)
 	{
-		NSC_MESSAGE* messages;
-
 		shadow_encoder_prepare(encoder, FREERDP_CODEC_NSCODEC);
 
 		s = encoder->bs;
+		Stream_SetPosition(s, 0);
 
-		messages = nsc_encode_messages(encoder->nsc, pSrcData,
-				nXSrc, nYSrc, nWidth, nHeight, nSrcStep,
-				&numMessages, settings->MultifragMaxRequestSize);
+		pSrcData = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
+
+		nsc_compose_message(encoder->nsc, s, pSrcData, nWidth, nHeight, nSrcStep);
 
 		cmd.bpp = 32;
 		cmd.codecID = settings->NSCodecId;
+		cmd.destLeft = nXSrc;
+		cmd.destTop = nYSrc;
+		cmd.destRight = cmd.destLeft + nWidth;
+		cmd.destBottom = cmd.destTop + nHeight;
+		cmd.width = nWidth;
+		cmd.height = nHeight;
 
-		for (i = 0; i < numMessages; i++)
-		{
-			Stream_SetPosition(s, 0);
+		cmd.bitmapDataLength = Stream_GetPosition(s);
+		cmd.bitmapData = Stream_Buffer(s);
 
-			nsc_write_message(encoder->nsc, s, &messages[i]);
-			nsc_message_free(encoder->nsc, &messages[i]);
+		first = TRUE;
+		last = TRUE;
 
-			cmd.destLeft = messages[i].x;
-			cmd.destTop = messages[i].y;
-			cmd.destRight = messages[i].x + messages[i].width;
-			cmd.destBottom = messages[i].y + messages[i].height;
-			cmd.width = messages[i].width;
-			cmd.height = messages[i].height;
-
-			cmd.bitmapDataLength = Stream_GetPosition(s);
-			cmd.bitmapData = Stream_Buffer(s);
-
-			first = (i == 0) ? TRUE : FALSE;
-			last = ((i + 1) == numMessages) ? TRUE : FALSE;
-
-			if (!encoder->frameAck)
-				IFCALL(update->SurfaceBits, update->context, &cmd);
-			else
-				IFCALL(update->SurfaceFrameBits, update->context, &cmd, first, last, frameId);
-		}
-
-		free(messages);
+		if (!encoder->frameAck)
+			IFCALL(update->SurfaceBits, update->context, &cmd);
+		else
+			IFCALL(update->SurfaceFrameBits, update->context, &cmd, first, last, frameId);
 	}
 
 	return 1;

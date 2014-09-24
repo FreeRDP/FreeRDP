@@ -114,6 +114,9 @@ int shadow_encoder_uninit_grid(rdpShadowEncoder* encoder)
 
 int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 {
+	rdpContext* context = (rdpContext*) encoder->client;
+	rdpSettings* settings = context->settings;
+
 	if (!encoder->rfx)
 		encoder->rfx = rfx_context_new(TRUE);
 
@@ -131,8 +134,8 @@ int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 		encoder->fps = 16;
 		encoder->maxFps = 32;
 		encoder->frameId = 0;
-		encoder->frameAck = TRUE;
 		encoder->frameList = ListDictionary_New(TRUE);
+		encoder->frameAck = settings->SurfaceFrameMarkerEnabled;
 	}
 
 	encoder->codecs |= FREERDP_CODEC_REMOTEFX;
@@ -158,8 +161,8 @@ int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 		encoder->fps = 16;
 		encoder->maxFps = 32;
 		encoder->frameId = 0;
-		encoder->frameAck = TRUE;
 		encoder->frameList = ListDictionary_New(TRUE);
+		encoder->frameAck = settings->SurfaceFrameMarkerEnabled;
 	}
 
 	encoder->nsc->ColorLossLevel = settings->NSCodecColorLossLevel;
