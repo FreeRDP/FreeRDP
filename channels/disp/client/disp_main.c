@@ -110,8 +110,17 @@ int disp_send_display_control_monitor_layout_pdu(DISP_CHANNEL_CALLBACK* callback
 		if (Monitors[index].Width < 200)
 			Monitors[index].Width = 200;
 
+		if (Monitors[index].Width > 8192)
+			Monitors[index].Width = 8192;
+
+		if (Monitors[index].Width % 2)
+			Monitors[index].Width++;
+
 		if (Monitors[index].Height < 200)
 			Monitors[index].Height = 200;
+
+		if (Monitors[index].Height > 8192)
+			Monitors[index].Height = 8192;
 
 		Stream_Write_UINT32(s, Monitors[index].Flags); /* Flags (4 bytes) */
 		Stream_Write_UINT32(s, Monitors[index].Left); /* Left (4 bytes) */

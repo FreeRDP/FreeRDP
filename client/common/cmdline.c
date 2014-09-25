@@ -682,38 +682,19 @@ int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_ARGUMENT
 	}
 	CommandLineSwitchCase(arg, "multitouch")
 	{
-		char* p[1];
-		int count = 1;
-
 		settings->MultiTouchInput = TRUE;
-
-		p[0] = "rdpei";
-		freerdp_client_add_dynamic_channel(settings, count, p);
 	}
 	CommandLineSwitchCase(arg, "gestures")
 	{
-		printf("gestures\n");
 		settings->MultiTouchGestures = TRUE;
 	}
 	CommandLineSwitchCase(arg, "echo")
 	{
-		char* p[1];
-		int count;
-
-		count = 1;
-		p[0] = "echo";
-
-		freerdp_client_add_dynamic_channel(settings, count, p);
+		settings->SupportEchoChannel = TRUE;
 	}
 	CommandLineSwitchCase(arg, "disp")
 	{
-		char* p[1];
-		int count;
-
-		count = 1;
-		p[0] = "disp";
-
-		freerdp_client_add_dynamic_channel(settings, count, p);
+		settings->SupportDisplayControl = TRUE;
 	}
 	CommandLineSwitchCase(arg, "sound")
 	{
@@ -2093,6 +2074,17 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		freerdp_client_load_static_channel_addin(channels, settings, "rail", settings);
 	}
 
+	if (settings->MultiTouchInput)
+	{
+		char* p[1];
+		int count;
+
+		count = 1;
+		p[0] = "rdpei";
+
+		freerdp_client_add_dynamic_channel(settings, count, p);
+	}
+
 	if (settings->SupportGraphicsPipeline)
 	{
 		char* p[1];
@@ -2100,6 +2092,28 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 		count = 1;
 		p[0] = "rdpgfx";
+
+		freerdp_client_add_dynamic_channel(settings, count, p);
+	}
+
+	if (settings->SupportEchoChannel)
+	{
+		char* p[1];
+		int count;
+
+		count = 1;
+		p[0] = "echo";
+
+		freerdp_client_add_dynamic_channel(settings, count, p);
+	}
+
+	if (settings->SupportDisplayControl)
+	{
+		char* p[1];
+		int count;
+
+		count = 1;
+		p[0] = "disp";
 
 		freerdp_client_add_dynamic_channel(settings, count, p);
 	}
