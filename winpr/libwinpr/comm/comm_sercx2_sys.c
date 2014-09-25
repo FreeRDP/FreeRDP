@@ -163,10 +163,10 @@ SERIAL_DRIVER* SerCx2Sys_s()
 	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 	SERIAL_DRIVER* pSerCxSys = SerCxSys_s();
 
-	_SerCx2Sys.set_baud_rate    = pSerCxSys->set_baud_rate;
-	_SerCx2Sys.get_baud_rate    = pSerCxSys->get_baud_rate;
+	_SerCx2Sys.set_baud_rate    = pSerialSys->set_baud_rate;
+	_SerCx2Sys.get_baud_rate    = pSerialSys->get_baud_rate;
 
-	_SerCx2Sys.get_properties   = pSerCxSys->get_properties;
+	_SerCx2Sys.get_properties   = pSerialSys->get_properties;
 
 	_SerCx2Sys.set_line_control = pSerCxSys->set_line_control;
 	_SerCx2Sys.get_line_control = pSerCxSys->get_line_control;

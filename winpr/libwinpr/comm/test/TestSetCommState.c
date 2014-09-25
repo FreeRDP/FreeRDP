@@ -133,76 +133,6 @@ static BOOL test_SerialSys(HANDLE hComm)
 	}
 
 	/* Test 1 */
-	dcb.BaudRate = SERIAL_BAUD_115200;
-	result = SetCommState(hComm, &dcb);
-	if (!result)
-	{
-		fprintf(stderr, "SetCommState failure: 0x%08x\n", GetLastError());
-		return FALSE;
-	}
-
-	init_empty_dcb(&dcb);
-	result = GetCommState(hComm, &dcb);
-	if (!result)
-	{
-		fprintf(stderr, "GetCommState failure: 0x%x\n", GetLastError());
-		return FALSE;
-	}
-	if (dcb.BaudRate != SERIAL_BAUD_115200)
-	{
-		fprintf(stderr, "SetCommState failure: could not set BaudRate=%d (SERIAL_BAUD_115200)\n", SERIAL_BAUD_115200);
-		return FALSE;
-	}
-
-	/* Test 2 using a defferent baud rate */
-
-	dcb.BaudRate = SERIAL_BAUD_57600;
-	result = SetCommState(hComm, &dcb);
-	if (!result)
-	{
-		fprintf(stderr, "SetCommState failure: 0x%x\n", GetLastError());
-		return FALSE;
-	}
-
-	init_empty_dcb(&dcb);
-	result = GetCommState(hComm, &dcb);
-	if (!result)
-	{
-		fprintf(stderr, "GetCommState failure: 0x%x\n", GetLastError());
-		return FALSE;
-	}
-	if (dcb.BaudRate != SERIAL_BAUD_57600)
-	{
-		fprintf(stderr, "SetCommState failure: could not set BaudRate=%d (SERIAL_BAUD_57600)\n", SERIAL_BAUD_57600);
-		return FALSE;
-	}
-
-	/* Test 3 using an unsupported baud rate  on Linux */
-	dcb.BaudRate = SERIAL_BAUD_128K;
-	result = SetCommState(hComm, &dcb);
-	if (result)
-	{
-		fprintf(stderr, "SetCommState failure: unexpected support of BaudRate=%d (SERIAL_BAUD_128K)\n", SERIAL_BAUD_128K);
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-static BOOL test_SerCxSys(HANDLE hComm)
-{
-	DCB dcb;
-	BOOL result;
-
-	init_empty_dcb(&dcb);
-	result = GetCommState(hComm, &dcb);
-	if (!result)
-	{
-		fprintf(stderr, "GetCommState failure: 0x%x\n", GetLastError());
-		return FALSE;
-	}
-
-	/* Test 1 */
 	dcb.BaudRate = CBR_115200;
 	result = SetCommState(hComm, &dcb);
 	if (!result)
@@ -259,11 +189,16 @@ static BOOL test_SerCxSys(HANDLE hComm)
 	return TRUE;
 }
 
+static BOOL test_SerCxSys(HANDLE hComm)
+{
+	/* as of today there is no difference */
+	return test_SerialSys(hComm);
+}
 
 static BOOL test_SerCx2Sys(HANDLE hComm)
 {
 	/* as of today there is no difference */
-	return test_SerCxSys(hComm);
+	return test_SerialSys(hComm);
 }
 
 static BOOL test_generic(HANDLE hComm)
