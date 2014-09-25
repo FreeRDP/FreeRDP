@@ -1001,7 +1001,7 @@ int freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[4], int width, int 
 }
 
 BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data, UINT32 format,
-		int width, int height, int scanline, BYTE* dstData, int* dstSize)
+		int width, int height, int scanline, BYTE* dstData, int* pDstSize)
 {
 	int size;
 	BYTE* dstp;
@@ -1064,7 +1064,7 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data,
 			size++;
 
 		dstData = malloc(size);
-		*dstSize = size;
+		*pDstSize = size;
 	}
 
 	dstp = dstData;
@@ -1136,7 +1136,7 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data,
 	}
 
 	size = (dstp - dstData);
-	*dstSize = size;
+	*pDstSize = size;
 
 	return dstData;
 }

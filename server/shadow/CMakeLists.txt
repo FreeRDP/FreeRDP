@@ -151,6 +151,8 @@ set(${MODULE_PREFIX}_SRCS
 	shadow_encomsp.h
 	shadow_remdesk.c
 	shadow_remdesk.h
+	shadow_subsystem.c
+	shadow_subsystem.h
 	shadow_server.c
 	shadow.h)
 
@@ -186,9 +188,7 @@ elseif(WITH_SHADOW_MAC)
 	list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_MAC_LIBS})
 endif()
 
-add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-
-set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "freerdp-shadow")
+add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp-server)
@@ -199,7 +199,25 @@ list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
-install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT server)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 
+# command-line executable
+
+set(MODULE_NAME "freerdp-shadow-cli")
+set(MODULE_PREFIX "FREERDP_SERVER_SHADOW_CLI")
+
+set(${MODULE_PREFIX}_SRCS
+	shadow.c)
+
+add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "freerdp-shadow")
+
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-shadow)
+
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+
+install(TARGETS ${MODULE_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
+
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")

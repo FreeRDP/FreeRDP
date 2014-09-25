@@ -40,10 +40,5 @@ rdpHeartbeat* heartbeat_new(void);
 void heartbeat_free(rdpHeartbeat* heartbeat);
 
 #define HEARTBEAT_TAG FREERDP_TAG("core.heartbeat")
-#ifdef WITH_DEBUG_HEARTBEAT
-#define DEBUG_HEARTBEAT(fmt, ...) WLog_DBG(HEARTBEAT_TAG, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_HEARTBEAT(fmt, ...) do { } while (0)
-#endif
 
 #endif /* __HEARTBEAT_H */

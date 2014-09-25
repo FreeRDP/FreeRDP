@@ -23,18 +23,13 @@
 #include <winpr/stream.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/codec/nsc.h>
-#include <freerdp/codec/bitmap.h>
+#include <freerdp/codecs.h>
 
 #include <freerdp/server/shadow.h>
 
-#define SHADOW_CODEC_REMOTEFX		1
-#define SHADOW_CODEC_NSCODEC		2
-#define SHADOW_CODEC_BITMAP		4
-
 struct rdp_shadow_encoder
 {
+	rdpShadowClient* client;
 	rdpShadowServer* server;
 
 	int width;
@@ -49,11 +44,11 @@ struct rdp_shadow_encoder
 	int maxTileHeight;
 
 	wStream* bs;
-	wStream* bts;
 
 	RFX_CONTEXT* rfx;
 	NSC_CONTEXT* nsc;
 	BITMAP_PLANAR_CONTEXT* planar;
+	BITMAP_INTERLEAVED_CONTEXT* interleaved;
 
 	int fps;
 	int maxFps;
@@ -70,7 +65,7 @@ int shadow_encoder_reset(rdpShadowEncoder* encoder);
 int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs);
 int shadow_encoder_create_frame_id(rdpShadowEncoder* encoder);
 
-rdpShadowEncoder* shadow_encoder_new(rdpShadowServer* server);
+rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client);
 void shadow_encoder_free(rdpShadowEncoder* encoder);
 
 #ifdef __cplusplus

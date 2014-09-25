@@ -300,6 +300,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		int status;
 		WINPR_EVENT* event;
 		event = (WINPR_EVENT*) Object;
+
 		status = waitOnFd(event->pipe_fd[0], dwMilliseconds);
 
 		if (status < 0)

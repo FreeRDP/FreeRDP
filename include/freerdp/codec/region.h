@@ -43,6 +43,13 @@ struct _REGION16 {
 };
 typedef struct _REGION16 REGION16;
 
+/** computes if two rectangles are equal
+ * @param r1 first rectangle
+ * @param r2 second rectangle
+ * @return if the two rectangles are equal
+ */
+FREERDP_API BOOL rectangles_equal(const RECTANGLE_16 *r1, const RECTANGLE_16 *r2);
+
 /** computes if two rectangles intersect
  * @param r1 first rectangle
  * @param r2 second rectangle

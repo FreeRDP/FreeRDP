@@ -56,8 +56,8 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* data, int
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
-	rw = (context->nsc_stream.ChromaSubSamplingLevel > 0 ? tempWidth : context->width);
-	ccl = context->nsc_stream.ColorLossLevel;
+	rw = (context->ChromaSubsamplingLevel > 0 ? tempWidth : context->width);
+	ccl = context->ColorLossLevel;
 	yplane = context->priv->PlaneBuffers[0];
 	coplane = context->priv->PlaneBuffers[1];
 	cgplane = context->priv->PlaneBuffers[2];
@@ -278,7 +278,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* data, int
 			aplane += 8;
 		}
 
-		if (context->nsc_stream.ChromaSubSamplingLevel > 0 && (context->width % 2) == 1)
+		if (context->ChromaSubsamplingLevel > 0 && (context->width % 2) == 1)
 		{
 			context->priv->PlaneBuffers[0][y * rw + context->width] = context->priv->PlaneBuffers[0][y * rw + context->width - 1];
 			context->priv->PlaneBuffers[1][y * rw + context->width] = context->priv->PlaneBuffers[1][y * rw + context->width - 1];
@@ -286,7 +286,7 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* data, int
 		}
 	}
 
-	if (context->nsc_stream.ChromaSubSamplingLevel > 0 && (y % 2) == 1)
+	if (context->ChromaSubsamplingLevel > 0 && (y % 2) == 1)
 	{
 		CopyMemory(yplane + rw, yplane, rw);
 		CopyMemory(coplane + rw, coplane, rw);
@@ -351,7 +351,7 @@ static void nsc_encode_sse2(NSC_CONTEXT* context, BYTE* data, int scanline)
 {
 	nsc_encode_argb_to_aycocg_sse2(context, data, scanline);
 
-	if (context->nsc_stream.ChromaSubSamplingLevel > 0)
+	if (context->ChromaSubsamplingLevel > 0)
 	{
 		nsc_encode_subsampling_sse2(context);
 	}

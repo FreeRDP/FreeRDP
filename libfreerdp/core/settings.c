@@ -402,6 +402,10 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->FrameAcknowledge = 2;
 		settings->MouseMotion = TRUE;
 
+		settings->NSCodecColorLossLevel = 3;
+		settings->NSCodecAllowSubsampling = TRUE;
+		settings->NSCodecAllowDynamicColorFidelity = TRUE;
+
 		settings->AutoReconnectionEnabled = FALSE;
 		settings->AutoReconnectMaxRetries = 20;
 
@@ -584,6 +588,7 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->RemoteFxCaptureFlags = settings->RemoteFxCaptureFlags; /* 3653 */
 		_settings->NSCodecId = settings->NSCodecId; /* 3713 */
 		_settings->FrameAcknowledge = settings->FrameAcknowledge; /* 3714 */
+		_settings->NSCodecColorLossLevel = settings->NSCodecColorLossLevel; /* 3715 */
 		_settings->JpegCodecId = settings->JpegCodecId; /* 3777 */
 		_settings->JpegQuality = settings->JpegQuality; /* 3778 */
 		_settings->BitmapCacheV3CodecId = settings->BitmapCacheV3CodecId; /* 3904 */
@@ -708,6 +713,8 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		_settings->RemoteFxCodec = settings->RemoteFxCodec; /* 3649 */
 		_settings->RemoteFxImageCodec = settings->RemoteFxImageCodec; /* 3652 */
 		_settings->NSCodec = settings->NSCodec; /* 3712 */
+		_settings->NSCodecAllowSubsampling = settings->NSCodecAllowSubsampling; /* 3716 */
+		_settings->NSCodecAllowDynamicColorFidelity = settings->NSCodecAllowDynamicColorFidelity; /* 3717 */
 		_settings->JpegCodec = settings->JpegCodec; /* 3776 */
 		_settings->GfxThinClient = settings->GfxThinClient; /* 3840 */
 		_settings->GfxSmallCache = settings->GfxSmallCache; /* 3841 */

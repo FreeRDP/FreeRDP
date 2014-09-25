@@ -760,6 +760,9 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_NSCodec						3712
 #define FreeRDP_NSCodecId					3713
 #define FreeRDP_FrameAcknowledge				3714
+#define FreeRDP_NSCodecColorLossLevel				3715
+#define FreeRDP_NSCodecAllowSubsampling				3716
+#define FreeRDP_NSCodecAllowDynamicColorFidelity		3717
 #define FreeRDP_JpegCodec					3776
 #define FreeRDP_JpegCodecId					3777
 #define FreeRDP_JpegQuality					3778
@@ -1272,7 +1275,10 @@ struct rdp_settings
 	ALIGN64 BOOL NSCodec; /* 3712 */
 	ALIGN64 UINT32 NSCodecId; /* 3713 */
 	ALIGN64 UINT32 FrameAcknowledge; /* 3714 */
-	UINT64 padding3776[3776 - 3715]; /* 3715 */
+	ALIGN64 UINT32 NSCodecColorLossLevel; /* 3715 */
+	ALIGN64 BOOL NSCodecAllowSubsampling; /* 3716 */
+	ALIGN64 BOOL NSCodecAllowDynamicColorFidelity; /* 3717 */
+	UINT64 padding3776[3776 - 3718]; /* 3718 */
 
 	/* JPEG */
 	ALIGN64 BOOL JpegCodec; /* 3776 */
