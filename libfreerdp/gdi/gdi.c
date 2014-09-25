@@ -405,54 +405,6 @@ INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y)
 	return p;
 }
 
-INLINE int gdi_is_mono_pixel_set(BYTE* data, int x, int y, int width)
-{
-	int byte;
-	int shift;
-
-	width = (width + 7) / 8;
-	byte = (y * width) + (x / 8);
-	shift = x % 8;
-
-	return (data[byte] & (0x80 >> shift)) != 0;
-}
-
-static gdiBitmap* gdi_glyph_new(rdpGdi* gdi, GLYPH_DATA* glyph)
-{
-	BYTE* extra;
-	gdiBitmap* gdi_bmp;
-
-	gdi_bmp = (gdiBitmap*) malloc(sizeof(gdiBitmap));
-
-	if (!gdi_bmp)
-		return NULL;
-
-	gdi_bmp->hdc = gdi_GetDC();
-	gdi_bmp->hdc->bytesPerPixel = 1;
-	gdi_bmp->hdc->bitsPerPixel = 1;
-
-	extra = freerdp_glyph_convert(glyph->cx, glyph->cy, glyph->aj);
-	gdi_bmp->bitmap = gdi_CreateBitmap(glyph->cx, glyph->cy, 1, extra);
-	gdi_bmp->bitmap->bytesPerPixel = 1;
-	gdi_bmp->bitmap->bitsPerPixel = 1;
-
-	gdi_SelectObject(gdi_bmp->hdc, (HGDIOBJECT) gdi_bmp->bitmap);
-	gdi_bmp->org_bitmap = NULL;
-
-	return gdi_bmp;
-}
-
-static void gdi_glyph_free(gdiBitmap* gdi_bmp)
-{
-	if (gdi_bmp)
-	{
-		gdi_SelectObject(gdi_bmp->hdc, (HGDIOBJECT) gdi_bmp->org_bitmap);
-		gdi_DeleteObject((HGDIOBJECT) gdi_bmp->bitmap);
-		gdi_DeleteDC(gdi_bmp->hdc);
-		free(gdi_bmp);
-	}
-}
-
 gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, BYTE* data)
 {
 	gdiBitmap* bitmap;
