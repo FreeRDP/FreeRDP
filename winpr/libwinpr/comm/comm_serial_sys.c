@@ -43,75 +43,113 @@
 #define N_TTY_BUF_SIZE			4096
 
 
+#define _BAUD_TABLE_END	0010020	/* __MAX_BAUD + 1 */
 
-/*
- * Linux, Windows speeds
- *
+/* 0: B* (Linux termios)
+ * 1: CBR_* or actual baud rate
+ * 2: BAUD_* (identical to SERIAL_BAUD_*)
  */
-static const speed_t _SERIAL_SYS_BAUD_TABLE[][2] = {
+static const speed_t _BAUD_TABLE[][3] = {
 #ifdef B0
-	{B0, 0},	/* hang up */
+	{B0, 0, 0},	/* hang up */
 #endif
-/* #ifdef B50 */
-/* 	{B50, },	/\* undefined by serial.sys *\/  */
-/* #endif */
+#ifdef B50
+	{B50, 50, 0},
+#endif
 #ifdef B75
-	{B75, SERIAL_BAUD_075},
+	{B75, 75, BAUD_075},
 #endif
 #ifdef B110
-	{B110, SERIAL_BAUD_110},
+	{B110, CBR_110, BAUD_110},
 #endif
-/* #ifdef  B134 */
-/* 	{B134, SERIAL_BAUD_134_5}, /\* TODO: might be the same? *\/ */
-/* #endif */
+#ifdef  B134
+	{B134, 134, 0 /*BAUD_134_5*/},
+#endif
 #ifdef  B150
-	{B150, SERIAL_BAUD_150},
+	{B150, 150, BAUD_150},
 #endif
-/* #ifdef B200 */
-/* 	{B200, },	/\* undefined by serial.sys *\/ */
-/* #endif */
+#ifdef B200
+	{B200, 200, 0},
+#endif
 #ifdef B300
-	{B300, SERIAL_BAUD_300},
+	{B300, CBR_300, BAUD_300},
 #endif
 #ifdef B600
-	{B600, SERIAL_BAUD_600},
+	{B600, CBR_600, BAUD_600},
 #endif
 #ifdef B1200
-	{B1200, SERIAL_BAUD_1200},
+	{B1200, CBR_1200, BAUD_1200},
 #endif
 #ifdef B1800
-	{B1800, SERIAL_BAUD_1800},
+	{B1800, 1800, BAUD_1800},
 #endif
 #ifdef B2400
-	{B2400, SERIAL_BAUD_2400},
+	{B2400, CBR_2400, BAUD_2400},
 #endif
 #ifdef B4800
-	{B4800, SERIAL_BAUD_4800},
+	{B4800, CBR_4800, BAUD_4800},
 #endif
-	/* {, SERIAL_BAUD_7200} /\* undefined on Linux *\/ */
+	/* {, ,BAUD_7200} */
 #ifdef B9600
-	{B9600, SERIAL_BAUD_9600},
+	{B9600, CBR_9600, BAUD_9600},
 #endif
-	/* {, SERIAL_BAUD_14400} /\* undefined on Linux *\/ */
+	/* {, CBR_14400, BAUD_14400},	/\* unsupported on Linux *\/ */
 #ifdef B19200
-	{B19200, SERIAL_BAUD_19200},
+	{B19200, CBR_19200, BAUD_19200},
 #endif
 #ifdef B38400
-	{B38400, SERIAL_BAUD_38400},
+	{B38400, CBR_38400, BAUD_38400},
 #endif
-/* 	{, SERIAL_BAUD_56K},	/\* undefined on Linux *\/ */
+	/* {, CBR_56000, BAUD_56K},	/\* unsupported on Linux *\/ */
 #ifdef  B57600
-	{B57600, SERIAL_BAUD_57600},
+	{B57600, CBR_57600, BAUD_57600},
 #endif
-	/* {, SERIAL_BAUD_128K} /\* undefined on Linux *\/ */
 #ifdef B115200
-	{B115200, SERIAL_BAUD_115200},	/* _SERIAL_MAX_BAUD */
+	{B115200, CBR_115200, BAUD_115200},
 #endif
-
-	/* no greater speed defined by serial.sys */
+	/* {, CBR_128000, BAUD_128K},	/\* unsupported on Linux *\/ */
+	/* {, CBR_256000, BAUD_USER},	/\* unsupported on Linux *\/ */
+#ifdef B230400
+	{B230400, 230400, BAUD_USER},
+#endif
+#ifdef B460800
+	{B460800, 460800, BAUD_USER},
+#endif
+#ifdef B500000
+	{B500000, 500000, BAUD_USER},
+#endif
+#ifdef  B576000
+	{B576000, 576000, BAUD_USER},
+#endif
+#ifdef B921600
+	{B921600, 921600, BAUD_USER},
+#endif
+#ifdef B1000000
+	{B1000000, 1000000, BAUD_USER},
+#endif
+#ifdef B1152000
+	{B1152000, 1152000, BAUD_USER},
+#endif
+#ifdef B1500000
+	{B1500000, 1500000, BAUD_USER},
+#endif
+#ifdef B2000000
+	{B2000000, 2000000, BAUD_USER},
+#endif
+#ifdef B2500000
+	{B2500000, 2500000, BAUD_USER},
+#endif
+#ifdef B3000000
+	{B3000000, 3000000, BAUD_USER},
+#endif
+#ifdef B3500000
+	{B3500000, 3500000, BAUD_USER},
+#endif
+#ifdef B4000000
+	{B4000000, 4000000, BAUD_USER},	/* __MAX_BAUD */
+#endif
+	{_BAUD_TABLE_END, 0, 0}
 };
-
-#define _SERIAL_MAX_BAUD  B115200
 
 
 static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
@@ -142,7 +180,8 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 	pProperties->dwMaxTxQueue = N_TTY_BUF_SIZE;
 	pProperties->dwMaxRxQueue = N_TTY_BUF_SIZE;
 
-	pProperties->dwMaxBaud = SERIAL_BAUD_115200; /* _SERIAL_MAX_BAUD */
+	/* FIXME: to be probe on the device? */
+	pProperties->dwMaxBaud = BAUD_USER; 
 
 	/* FIXME: what about PST_RS232? see also: serial_struct */
 	pProperties->dwProvSubType = PST_UNSPECIFIED;
@@ -156,9 +195,9 @@ static BOOL _get_properties(WINPR_COMM *pComm, COMMPROP *pProperties)
 	pProperties->dwSettableParams = SP_BAUD | SP_DATABITS | SP_HANDSHAKING | SP_PARITY | SP_PARITY_CHECK | /*SP_RLSD |*/ SP_STOPBITS;
 
 	pProperties->dwSettableBaud = 0;
-	for (i=0; _SERIAL_SYS_BAUD_TABLE[i][0]<=_SERIAL_MAX_BAUD; i++)
+	for (i=0; _BAUD_TABLE[i][0]<_BAUD_TABLE_END; i++)
 	{
-		pProperties->dwSettableBaud |= _SERIAL_SYS_BAUD_TABLE[i][1];
+		pProperties->dwSettableBaud |= _BAUD_TABLE[i][2];
 	}
 
 	pProperties->wSettableData = DATABITS_5 | DATABITS_6 | DATABITS_7 | DATABITS_8 /*| DATABITS_16 | DATABITS_16X*/;
@@ -180,27 +219,29 @@ static BOOL _set_baud_rate(WINPR_COMM *pComm, const SERIAL_BAUD_RATE *pBaudRate)
 {
 	int i;
 	speed_t newSpeed;
-	struct termios upcomingTermios;
+	struct termios futureState;
 
-	ZeroMemory(&upcomingTermios, sizeof(struct termios));
-	if (tcgetattr(pComm->fd, &upcomingTermios) < 0)
+	ZeroMemory(&futureState, sizeof(struct termios));
+	if (tcgetattr(pComm->fd, &futureState) < 0) /* NB: preserves current settings not directly handled by the Communication Functions */
 	{
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
 
-	for (i=0; _SERIAL_SYS_BAUD_TABLE[i][0]<=_SERIAL_MAX_BAUD; i++)
+	for (i=0; _BAUD_TABLE[i][0]<_BAUD_TABLE_END; i++)
 	{
-		if (_SERIAL_SYS_BAUD_TABLE[i][1] == pBaudRate->BaudRate)
+		if (_BAUD_TABLE[i][1] == pBaudRate->BaudRate)
 		{
-			newSpeed = _SERIAL_SYS_BAUD_TABLE[i][0];
-			if (cfsetspeed(&upcomingTermios, newSpeed) < 0)
+			newSpeed = _BAUD_TABLE[i][0];
+			if (cfsetspeed(&futureState, newSpeed) < 0)
 			{
-				CommLog_Print(WLOG_WARN, "failed to set speed %u (%lu)", newSpeed, pBaudRate->BaudRate);
+				CommLog_Print(WLOG_WARN, "failed to set speed 0x%x (%lu)", newSpeed, pBaudRate->BaudRate);
 				return FALSE;
 			}
 
-			if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &upcomingTermios) < 0)
+			assert(cfgetispeed(&futureState) == newSpeed);
+
+			if (_comm_ioctl_tcsetattr(pComm->fd, TCSANOW, &futureState) < 0)
 			{
 				CommLog_Print(WLOG_WARN, "_comm_ioctl_tcsetattr failure: last-error: 0x%lX", GetLastError());
 				return FALSE;
@@ -231,11 +272,11 @@ static BOOL _get_baud_rate(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate)
 
 	currentSpeed = cfgetispeed(&currentState);
 
-	for (i=0; _SERIAL_SYS_BAUD_TABLE[i][0]<=_SERIAL_MAX_BAUD; i++)
+	for (i=0; _BAUD_TABLE[i][0]<_BAUD_TABLE_END; i++)
 	{
-		if (_SERIAL_SYS_BAUD_TABLE[i][0] == currentSpeed)
+		if (_BAUD_TABLE[i][0] == currentSpeed)
 		{
-			pBaudRate->BaudRate = _SERIAL_SYS_BAUD_TABLE[i][1];
+			pBaudRate->BaudRate = _BAUD_TABLE[i][1];
 			return TRUE;
 		}
 	}
@@ -244,6 +285,7 @@ static BOOL _get_baud_rate(WINPR_COMM *pComm, SERIAL_BAUD_RATE *pBaudRate)
 	SetLastError(ERROR_INVALID_DATA);
 	return FALSE;
 }
+
 
 /**
  * NOTE: Only XonChar and XoffChar are plenty supported with the Linux

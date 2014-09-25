@@ -306,7 +306,7 @@ BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list)
 {
 	if (list->initial)
 		list->initial = 0;
-	else
+	else if (list->current)
 		list->current = list->current->next;
 
 	if (!list->current)
