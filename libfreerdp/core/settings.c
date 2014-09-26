@@ -517,6 +517,16 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 		  * Manual Code
 		  */
 
+		_settings->LoadBalanceInfo = NULL;
+		_settings->LoadBalanceInfoLength = 0;
+
+		if (settings->LoadBalanceInfo && settings->LoadBalanceInfoLength)
+		{
+			_settings->LoadBalanceInfo = (BYTE*) calloc(1, settings->LoadBalanceInfoLength + 2);
+			CopyMemory(_settings->LoadBalanceInfo, settings->LoadBalanceInfo, settings->LoadBalanceInfoLength);
+			_settings->LoadBalanceInfoLength = settings->LoadBalanceInfoLength;
+		}
+
 		if (_settings->ServerRandomLength)
 		{
 			_settings->ServerRandom = (BYTE*) malloc(_settings->ServerRandomLength);
