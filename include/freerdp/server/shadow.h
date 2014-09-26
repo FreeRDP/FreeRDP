@@ -61,6 +61,9 @@ typedef int (*pfnShadowSubsystemStop)(rdpShadowSubsystem* subsystem);
 
 typedef int (*pfnShadowEnumMonitors)(MONITOR_DEF* monitors, int maxMonitors);
 
+typedef int (*pfnShadowAuthenticate)(rdpShadowSubsystem* subsystem,
+		const char* user, const char* domain, const char* password);
+
 typedef int (*pfnShadowSynchronizeEvent)(rdpShadowSubsystem* subsystem, UINT32 flags);
 typedef int (*pfnShadowKeyboardEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
 typedef int (*pfnShadowUnicodeKeyboardEvent)(rdpShadowSubsystem* subsystem, UINT16 flags, UINT16 code);
@@ -104,6 +107,7 @@ struct rdp_shadow_server
 	BOOL mayView;
 	BOOL mayInteract;
 	BOOL shareSubRect;
+	BOOL authentication;
 	int selectedMonitor;
 	RECTANGLE_16 subRect;
 	char* ipcSocket;
@@ -147,6 +151,8 @@ struct _RDP_SHADOW_ENTRY_POINTS
 	pfnShadowUnicodeKeyboardEvent UnicodeKeyboardEvent; \
 	pfnShadowMouseEvent MouseEvent; \
 	pfnShadowExtendedMouseEvent ExtendedMouseEvent; \
+	\
+	pfnShadowAuthenticate Authenticate; \
 	\
 	rdpShadowServer* server
 

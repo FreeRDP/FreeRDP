@@ -132,16 +132,19 @@ BOOL shadow_client_capabilities(freerdp_peer* peer)
 
 BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
+	int authStatus;
 	int width, height;
 	rdpSettings* settings;
 	rdpShadowClient* client;
 	rdpShadowSurface* lobby;
 	rdpShadowServer* server;
 	RECTANGLE_16 invalidRect;
+	rdpShadowSubsystem* subsystem;
 
 	client = (rdpShadowClient*) peer->context;
 	settings = peer->settings;
 	server = client->server;
+	subsystem = server->subsystem;
 
 	if (!server->shareSubRect)
 	{
@@ -183,6 +186,29 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 			0, 0, lobby->width, lobby->height, 0x3BB9FF);
 
 	region16_union_rect(&(lobby->invalidRegion), &(lobby->invalidRegion), &invalidRect);
+
+	authStatus = -1;
+
+	if (settings->Username && settings->Password)
+		settings->AutoLogonEnabled = TRUE;
+
+	if (settings->AutoLogonEnabled && server->authentication)
+	{
+		if (subsystem->Authenticate)
+		{
+			authStatus = subsystem->Authenticate(subsystem,
+					settings->Username, settings->Domain, settings->Password);
+		}
+	}
+
+	if (server->authentication)
+	{
+		if (authStatus < 0)
+		{
+			WLog_ERR(TAG, "client authentication failure: %d", authStatus);
+			return FALSE;
+		}
+	}
 
 	return TRUE;
 }
