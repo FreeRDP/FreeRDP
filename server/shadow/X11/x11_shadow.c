@@ -69,6 +69,10 @@ void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags
 		code |= KBDEXT;
 
 	vkcode = GetVirtualKeyCodeFromVirtualScanCode(code, 4);
+
+	if (extended)
+		vkcode |= KBDEXT;
+
 	keycode = GetKeycodeFromVirtualKeyCode(vkcode, KEYCODE_TYPE_EVDEV);
 
 	if (keycode != 0)
