@@ -118,7 +118,7 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 	if (hgdiobject == NULL)
 		return NULL;
 
-	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
+	if (hgdiobject->objectType == GDIOBJECT_BITMAP || hgdiobject->objectType == GDIOBJECT_BITMAP_INDEPENDENT_DATA)
 	{
 		hdc->selectedObject = hgdiobject;
 	}
@@ -161,7 +161,12 @@ int gdi_DeleteObject(HGDIOBJECT hgdiobject)
 	if (hgdiobject == NULL)
 		return 0;
 
-	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
+	if (hgdiobject->objectType == GDIOBJECT_BITMAP_INDEPENDENT_DATA)
+	{
+		HGDI_BITMAP hBitmap = (HGDI_BITMAP) hgdiobject;
+		free(hBitmap);
+	}
+	else if (hgdiobject->objectType == GDIOBJECT_BITMAP)
 	{
 		HGDI_BITMAP hBitmap = (HGDI_BITMAP) hgdiobject;
 

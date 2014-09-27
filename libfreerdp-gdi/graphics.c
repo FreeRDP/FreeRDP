@@ -34,13 +34,21 @@
 
 /* Bitmap Class */
 
-HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, uint8* data)
+HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, uint8* data, boolean data_linked)
 {
-	uint8* bmpData;
 	HGDI_BITMAP bitmap;
 
-	bmpData = freerdp_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, gdi->clrconv);
-	bitmap = gdi_CreateBitmap(width, height, gdi->dstBpp, bmpData);
+	if (data_linked && gdi->srcBpp == bpp && data)
+	{
+		bitmap = gdi_CreateBitmapWithIndependentData(width, height, gdi->dstBpp, data);
+//		printf("Independent!\n");
+	}
+	else
+	{
+		uint8* bmpData;
+		bmpData = freerdp_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, gdi->clrconv);
+		bitmap = gdi_CreateBitmap(width, height, gdi->dstBpp, bmpData);
+	}
 
 	return bitmap;
 }
@@ -56,7 +64,7 @@ void gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	if (bitmap->data == NULL)
 		gdi_bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, bitmap->width, bitmap->height);
 	else
-		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, gdi->dstBpp, bitmap->data);
+		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, gdi->dstBpp, bitmap->data, true);
 
 	gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->bitmap);
 	gdi_bitmap->org_bitmap = NULL;
