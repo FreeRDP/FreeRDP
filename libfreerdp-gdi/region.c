@@ -425,6 +425,7 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 	}
 	else
 	{
+#if 0
 		//check if specified region completely included into any existing
 		//full decomposition would take too much CPU to be used per each invalidation
 		for (i = hdc->hwnd->ninvalid; i; --i, ++cinvalid)
@@ -436,6 +437,7 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 				return 0;
 			}
 		}
+#endif
 		cinvalid = hdc->hwnd->cinvalid;
 
 		if (invalid->x > x) invalid->x = x;
