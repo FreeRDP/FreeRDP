@@ -185,6 +185,8 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #define UNROLL_COUNT 4
 #define UNROLL(_exp) do { _exp _exp _exp _exp } while (0)
 
+#define COMMON_DESTNEXTPIXEL(BPP, _buf, _peol, _row) {_buf += BPP; if (_buf>=*(_peol)) {*(_peol) = *(_peol) - _row; _buf = *(_peol) - _row;} }
+
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
 #undef SRCREADPIXEL
@@ -197,7 +199,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #define DESTWRITEPIXEL(_buf, _pix) (_buf)[0] = (uint8)(_pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0]
-#define DESTNEXTPIXEL(_buf) _buf += 1
+#define DESTNEXTPIXEL(_buf, _peol, _row) COMMON_DESTNEXTPIXEL(1, _buf, _peol, _row)
 #define SRCNEXTPIXEL(_buf) _buf += 1
 #define WRITEFGBGIMAGE WriteFgBgImage8to8
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage8to8
@@ -217,7 +219,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #define DESTWRITEPIXEL(_buf, _pix) ((uint16*)(_buf))[0] = (uint16)(_pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((uint16*)(_buf))[0]
 #define SRCREADPIXEL(_pix, _buf) _pix = ((uint16*)(_buf))[0]
-#define DESTNEXTPIXEL(_buf) _buf += 2
+#define DESTNEXTPIXEL(_buf, _peol, _row) COMMON_DESTNEXTPIXEL(2, _buf, _peol, _row)
 #define SRCNEXTPIXEL(_buf) _buf += 2
 #define WRITEFGBGIMAGE WriteFgBgImage16to16
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage16to16
@@ -240,7 +242,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
   ((_buf)[2] << 16)
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
   ((_buf)[2] << 16)
-#define DESTNEXTPIXEL(_buf) _buf += 3
+#define DESTNEXTPIXEL(_buf, _peol, _row) COMMON_DESTNEXTPIXEL(3, _buf, _peol, _row)
 #define SRCNEXTPIXEL(_buf) _buf += 3
 #define WRITEFGBGIMAGE WriteFgBgImage24to24
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage24to24
@@ -437,14 +439,9 @@ static boolean bitmap_decompress4(uint8* srcData, uint8* dstData, int width, int
  */
 boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height, int size, int srcBpp, int dstBpp)
 {
-        uint8 * TmpBfr;
-
 	if (srcBpp == 16 && dstBpp == 16)
 	{
-	        TmpBfr = (uint8*) xmalloc(width * height * 2);
-	        RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
-	        freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
-	        xfree(TmpBfr);
+	        RleDecompress16to16(srcData, size, dstData, width * 2, width, height);
 	}
 	else if (srcBpp == 32 && dstBpp == 32)
 	{
@@ -453,24 +450,15 @@ boolean bitmap_decompress(uint8* srcData, uint8* dstData, int width, int height,
 	}
 	else if (srcBpp == 15 && dstBpp == 15)
 	{
-                TmpBfr = (uint8*) xmalloc(width * height * 2);
-                RleDecompress16to16(srcData, size, TmpBfr, width * 2, width, height);
-                freerdp_bitmap_flip(TmpBfr, dstData, width * 2, height);
-                xfree(TmpBfr);
+                RleDecompress16to16(srcData, size, dstData, width * 2, width, height);
 	}
 	else if (srcBpp == 8 && dstBpp == 8)
 	{
-                TmpBfr = (uint8*) xmalloc(width * height);
-                RleDecompress8to8(srcData, size, TmpBfr, width, width, height);
-                freerdp_bitmap_flip(TmpBfr, dstData, width, height);
-                xfree(TmpBfr);
+                RleDecompress8to8(srcData, size, dstData, width, width, height);
 	}
 	else if (srcBpp == 24 && dstBpp == 24)
 	{
-                TmpBfr = (uint8*) xmalloc(width * height * 3);
-                RleDecompress24to24(srcData, size, TmpBfr, width * 3, width, height);
-                freerdp_bitmap_flip(TmpBfr, dstData, width * 3, height);
-                xfree(TmpBfr);
+                RleDecompress24to24(srcData, size, dstData, width * 3, width, height);
 	}
 	else
 	{

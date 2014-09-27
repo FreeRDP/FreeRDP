@@ -86,7 +86,7 @@ void freerdp_set_pixel(uint8* data, int x, int y, int width, int height, int bpp
 	}
 }
 
-static INLINE void freerdp_color_split_rgb(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+INLINE void freerdp_color_split_rgb(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
 {
 	*red = *green = *blue = 0;
 	*alpha = (clrconv->alpha) ? 0xFF : 0x00;
@@ -137,7 +137,7 @@ static INLINE void freerdp_color_split_rgb(uint32* color, int bpp, uint8* red, u
 	}
 }
 
-static INLINE void freerdp_color_split_bgr(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+INLINE void freerdp_color_split_bgr(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
 {
 	*red = *green = *blue = 0;
 	*alpha = (clrconv->alpha) ? 0xFF : 0x00;
@@ -188,7 +188,7 @@ static INLINE void freerdp_color_split_bgr(uint32* color, int bpp, uint8* red, u
 	}
 }
 
-static INLINE void freerdp_color_make_rgb(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+INLINE void freerdp_color_make_rgb(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
 {
 	switch (bpp)
 	{
@@ -229,7 +229,7 @@ static INLINE void freerdp_color_make_rgb(uint32* color, int bpp, uint8* red, ui
 	}
 }
 
-static INLINE void freerdp_color_make_bgr(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
+INLINE void freerdp_color_make_bgr(uint32* color, int bpp, uint8* red, uint8* green, uint8* blue, uint8* alpha, HCLRCONV clrconv)
 {
 	switch (bpp)
 	{
@@ -740,7 +740,7 @@ void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height)
 		 * fixed size buffers (of max scanline size (or adaptative?) )
 		 * -- would be much faster).
 		 */
-		uint8 * tmpBfr = xmalloc(scanLineSz);
+		uint8 * tmpBfr = (scanLineSz>0xf00) ? xmalloc(scanLineSz) : alloca(scanLineSz);
 		int half = height / 2;
 		/* Flip buffer in place by line permutations through the temp
 		 * scan line buffer.
@@ -760,7 +760,7 @@ void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height)
 			bottomLine -= scanLineSz;
 			height--;
 		}
-		xfree(tmpBfr);
+		if (scanLineSz>0xf00) xfree(tmpBfr);
 	}
 	/* Flip from source buffer to destination buffer. */
 	else

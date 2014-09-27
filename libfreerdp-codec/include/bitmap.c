@@ -22,12 +22,12 @@
 /**
  * Write a foreground/background image to a destination buffer.
  */
-static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint32 rowDelta,
+static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint8** ppbDestEndOfLine, uint32 rowDelta,
 	uint8 bitmask, PIXEL fgPel, uint32 cBits)
 {
 	PIXEL xorPixel;
 
-	DESTREADPIXEL(xorPixel, pbDest - rowDelta);
+	DESTREADPIXEL(xorPixel, pbDest + rowDelta);
 	if (bitmask & g_MaskBit0)
 	{
 		DESTWRITEPIXEL(pbDest, xorPixel ^ fgPel);
@@ -36,11 +36,11 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint32 rowDelta,
 	{
 		DESTWRITEPIXEL(pbDest, xorPixel);
 	}
-	DESTNEXTPIXEL(pbDest);
+	DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 	cBits = cBits - 1;
 	if (cBits > 0)
 	{
-		DESTREADPIXEL(xorPixel, pbDest - rowDelta);
+		DESTREADPIXEL(xorPixel, pbDest + rowDelta);
 		if (bitmask & g_MaskBit1)
 		{
 			DESTWRITEPIXEL(pbDest, xorPixel ^ fgPel);
@@ -49,11 +49,11 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint32 rowDelta,
 		{
 			DESTWRITEPIXEL(pbDest, xorPixel);
 		}
-		DESTNEXTPIXEL(pbDest);
+		DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 		cBits = cBits - 1;
 		if (cBits > 0)
 		{
-			DESTREADPIXEL(xorPixel, pbDest - rowDelta);
+			DESTREADPIXEL(xorPixel, pbDest + rowDelta);
 			if (bitmask & g_MaskBit2)
 			{
 				DESTWRITEPIXEL(pbDest, xorPixel ^ fgPel);
@@ -62,11 +62,11 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint32 rowDelta,
 			{
 				DESTWRITEPIXEL(pbDest, xorPixel);
 			}
-			DESTNEXTPIXEL(pbDest);
+			DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 			cBits = cBits - 1;
 			if (cBits > 0)
 			{
-				DESTREADPIXEL(xorPixel, pbDest - rowDelta);
+				DESTREADPIXEL(xorPixel, pbDest + rowDelta);
 				if (bitmask & g_MaskBit3)
 				{
 					DESTWRITEPIXEL(pbDest, xorPixel ^ fgPel);
@@ -75,11 +75,11 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint32 rowDelta,
 				{
 					DESTWRITEPIXEL(pbDest, xorPixel);
 				}
-				DESTNEXTPIXEL(pbDest);
+				DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 				cBits = cBits - 1;
 				if (cBits > 0)
 				{
-					DESTREADPIXEL(xorPixel, pbDest - rowDelta);
+					DESTREADPIXEL(xorPixel, pbDest + rowDelta);
 					if (bitmask & g_MaskBit4)
 					{
 						DESTWRITEPIXEL(pbDest, xorPixel ^ fgPel);
@@ -88,11 +88,11 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint32 rowDelta,
 					{
 						DESTWRITEPIXEL(pbDest, xorPixel);
 					}
-					DESTNEXTPIXEL(pbDest);
+					DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 					cBits = cBits - 1;
 					if (cBits > 0)
 					{
-						DESTREADPIXEL(xorPixel, pbDest - rowDelta);
+						DESTREADPIXEL(xorPixel, pbDest + rowDelta);
 						if (bitmask & g_MaskBit5)
 						{
 							DESTWRITEPIXEL(pbDest, xorPixel ^ fgPel);
@@ -101,11 +101,11 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint32 rowDelta,
 						{
 							DESTWRITEPIXEL(pbDest, xorPixel);
 						}
-						DESTNEXTPIXEL(pbDest);
+						DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 						cBits = cBits - 1;
 						if (cBits > 0)
 						{
-							DESTREADPIXEL(xorPixel, pbDest - rowDelta);
+							DESTREADPIXEL(xorPixel, pbDest + rowDelta);
 							if (bitmask & g_MaskBit6)
 							{
 								DESTWRITEPIXEL(pbDest, xorPixel ^ fgPel);
@@ -114,11 +114,11 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint32 rowDelta,
 							{
 								DESTWRITEPIXEL(pbDest, xorPixel);
 							}
-							DESTNEXTPIXEL(pbDest);
+							DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 							cBits = cBits - 1;
 							if (cBits > 0)
 							{
-								DESTREADPIXEL(xorPixel, pbDest - rowDelta);
+								DESTREADPIXEL(xorPixel, pbDest + rowDelta);
 								if (bitmask & g_MaskBit7)
 								{
 									DESTWRITEPIXEL(pbDest, xorPixel ^ fgPel);
@@ -127,7 +127,7 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint32 rowDelta,
 								{
 									DESTWRITEPIXEL(pbDest, xorPixel);
 								}
-								DESTNEXTPIXEL(pbDest);
+								DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 							}
 						}
 					}
@@ -142,8 +142,8 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint32 rowDelta,
  * Write a foreground/background image to a destination buffer
  * for the first line of compressed data.
  */
-static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8 bitmask,
-	PIXEL fgPel, uint32 cBits)
+static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8** ppbDestEndOfLine, uint32 rowDelta,
+	uint8 bitmask, PIXEL fgPel, uint32 cBits)
 {
 	if (bitmask & g_MaskBit0)
 	{
@@ -153,7 +153,7 @@ static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8 bitmask,
 	{
 		DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 	}
-	DESTNEXTPIXEL(pbDest);
+	DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 	cBits = cBits - 1;
 	if (cBits > 0)
 	{
@@ -165,7 +165,7 @@ static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8 bitmask,
 		{
 			DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 		}
-		DESTNEXTPIXEL(pbDest);
+		DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 		cBits = cBits - 1;
 		if (cBits > 0)
 		{
@@ -177,7 +177,7 @@ static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8 bitmask,
 			{
 				DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 			}
-			DESTNEXTPIXEL(pbDest);
+			DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 			cBits = cBits - 1;
 			if (cBits > 0)
 			{
@@ -189,7 +189,7 @@ static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8 bitmask,
 				{
 					DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 				}
-				DESTNEXTPIXEL(pbDest);
+				DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 				cBits = cBits - 1;
 				if (cBits > 0)
 				{
@@ -201,7 +201,7 @@ static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8 bitmask,
 					{
 						DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 					}
-					DESTNEXTPIXEL(pbDest);
+					DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 					cBits = cBits - 1;
 					if (cBits > 0)
 					{
@@ -213,7 +213,7 @@ static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8 bitmask,
 						{
 							DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 						}
-						DESTNEXTPIXEL(pbDest);
+						DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 						cBits = cBits - 1;
 						if (cBits > 0)
 						{
@@ -225,7 +225,7 @@ static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8 bitmask,
 							{
 								DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 							}
-							DESTNEXTPIXEL(pbDest);
+							DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 							cBits = cBits - 1;
 							if (cBits > 0)
 							{
@@ -237,7 +237,7 @@ static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8 bitmask,
 								{
 									DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
 								}
-								DESTNEXTPIXEL(pbDest);
+								DESTNEXTPIXEL(pbDest, ppbDestEndOfLine, rowDelta);
 							}
 						}
 					}
@@ -251,12 +251,14 @@ static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8 bitmask,
 /**
  * Decompress an RLE compressed bitmap.
  */
-void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
+void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 	uint32 rowDelta, uint32 width, uint32 height)
 {
 	uint8* pbSrc = pbSrcBuffer;
 	uint8* pbEnd = pbSrcBuffer + cbSrcBuffer;
-	uint8* pbDest = pbDestBuffer;
+	uint8* pbDestEndOfLine = pbDest + rowDelta * height;
+	uint8* pbDestLastLine = pbDestEndOfLine - rowDelta;
+	pbDest = pbDestLastLine;
 
 	PIXEL temp;
 	PIXEL fgPel = WHITE_PIXEL;
@@ -276,13 +278,10 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 	while (pbSrc < pbEnd)
 	{
 		/* Watch out for the end of the first scanline. */
-		if (fFirstLine)
+		if (fFirstLine && pbDest < pbDestLastLine)
 		{
-			if ((uint32)(pbDest - pbDestBuffer) >= rowDelta)
-			{
-				fFirstLine = false;
-				fInsertFgPel = false;
-			}
+			fFirstLine = false;
+			fInsertFgPel = false;
 		}
 
 		/*
@@ -301,20 +300,20 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 				if (fInsertFgPel)
 				{
 					DESTWRITEPIXEL(pbDest, fgPel);
-					DESTNEXTPIXEL(pbDest);
+					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					runLength = runLength - 1;
 				}
 				while (runLength >= UNROLL_COUNT)
 				{
 					UNROLL(
 						DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
-						DESTNEXTPIXEL(pbDest); );
+						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
 					runLength = runLength - UNROLL_COUNT;
 				}
 				while (runLength > 0)
 				{
 					DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
-					DESTNEXTPIXEL(pbDest);
+					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					runLength = runLength - 1;
 				}
 			}
@@ -322,24 +321,24 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 			{
 				if (fInsertFgPel)
 				{
-					DESTREADPIXEL(temp, pbDest - rowDelta);
+					DESTREADPIXEL(temp, pbDest + rowDelta);
 					DESTWRITEPIXEL(pbDest, temp ^ fgPel);
-					DESTNEXTPIXEL(pbDest);
+					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					runLength = runLength - 1;
 				}
 				while (runLength >= UNROLL_COUNT)
 				{
 					UNROLL(
-						DESTREADPIXEL(temp, pbDest - rowDelta);
+						DESTREADPIXEL(temp, pbDest + rowDelta);
 						DESTWRITEPIXEL(pbDest, temp);
-						DESTNEXTPIXEL(pbDest); );
+						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
 					runLength = runLength - UNROLL_COUNT;
 				}
 				while (runLength > 0)
 				{
-					DESTREADPIXEL(temp, pbDest - rowDelta);
+					DESTREADPIXEL(temp, pbDest + rowDelta);
 					DESTWRITEPIXEL(pbDest, temp);
-					DESTNEXTPIXEL(pbDest);
+					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					runLength = runLength - 1;
 				}
 			}
@@ -372,13 +371,13 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 					{
 						UNROLL(
 							DESTWRITEPIXEL(pbDest, fgPel);
-							DESTNEXTPIXEL(pbDest); );
+							DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
 						runLength = runLength - UNROLL_COUNT;
 					}
 					while (runLength > 0)
 					{
 						DESTWRITEPIXEL(pbDest, fgPel);
-						DESTNEXTPIXEL(pbDest);
+						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 						runLength = runLength - 1;
 					}
 				}
@@ -387,16 +386,16 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 					while (runLength >= UNROLL_COUNT)
 					{
 						UNROLL(
-							DESTREADPIXEL(temp, pbDest - rowDelta);
+							DESTREADPIXEL(temp, pbDest + rowDelta);
 							DESTWRITEPIXEL(pbDest, temp ^ fgPel);
-							DESTNEXTPIXEL(pbDest); );
+							DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
 						runLength = runLength - UNROLL_COUNT;
 					}
 					while (runLength > 0)
 					{
-						DESTREADPIXEL(temp, pbDest - rowDelta);
+						DESTREADPIXEL(temp, pbDest + rowDelta);
 						DESTWRITEPIXEL(pbDest, temp ^ fgPel);
-						DESTNEXTPIXEL(pbDest);
+						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 						runLength = runLength - 1;
 					}
 				}
@@ -415,17 +414,17 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 				{
 					UNROLL(
 						DESTWRITEPIXEL(pbDest, pixelA);
-						DESTNEXTPIXEL(pbDest);
+						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 						DESTWRITEPIXEL(pbDest, pixelB);
-						DESTNEXTPIXEL(pbDest); );
+						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
 					runLength = runLength - UNROLL_COUNT;
 				}
 				while (runLength > 0)
 				{
 					DESTWRITEPIXEL(pbDest, pixelA);
-					DESTNEXTPIXEL(pbDest);
+					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					DESTWRITEPIXEL(pbDest, pixelB);
-					DESTNEXTPIXEL(pbDest);
+					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					runLength = runLength - 1;
 				}
 				break;
@@ -441,13 +440,13 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 				{
 					UNROLL(
 						DESTWRITEPIXEL(pbDest, pixelA);
-						DESTNEXTPIXEL(pbDest); );
+						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
 					runLength = runLength - UNROLL_COUNT;
 				}
 				while (runLength > 0)
 				{
 					DESTWRITEPIXEL(pbDest, pixelA);
-					DESTNEXTPIXEL(pbDest);
+					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					runLength = runLength - 1;
 				}
 				break;
@@ -470,7 +469,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 					{
 						bitmask = *pbSrc;
 						pbSrc = pbSrc + 1;
-						pbDest = WRITEFIRSTLINEFGBGIMAGE(pbDest, bitmask, fgPel, 8);
+						pbDest = WRITEFIRSTLINEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, bitmask, fgPel, 8);
 						runLength = runLength - 8;
 					}
 				}
@@ -480,7 +479,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 					{
 						bitmask = *pbSrc;
 						pbSrc = pbSrc + 1;
-						pbDest = WRITEFGBGIMAGE(pbDest, rowDelta, bitmask, fgPel, 8);
+						pbDest = WRITEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, bitmask, fgPel, 8);
 						runLength = runLength - 8;
 					}
 				}
@@ -490,11 +489,11 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 					pbSrc = pbSrc + 1;
 					if (fFirstLine)
 					{
-						pbDest = WRITEFIRSTLINEFGBGIMAGE(pbDest, bitmask, fgPel, runLength);
+						pbDest = WRITEFIRSTLINEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, bitmask, fgPel, runLength);
 					}
 					else
 					{
-						pbDest = WRITEFGBGIMAGE(pbDest, rowDelta, bitmask, fgPel, runLength);
+						pbDest = WRITEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, bitmask, fgPel, runLength);
 					}
 				}
 				break;
@@ -510,7 +509,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 						SRCREADPIXEL(temp, pbSrc);
 						SRCNEXTPIXEL(pbSrc);
 						DESTWRITEPIXEL(pbDest, temp);
-						DESTNEXTPIXEL(pbDest); );
+						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
 					runLength = runLength - UNROLL_COUNT;
 				}
 				while (runLength > 0)
@@ -518,7 +517,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 					SRCREADPIXEL(temp, pbSrc);
 					SRCNEXTPIXEL(pbSrc);
 					DESTWRITEPIXEL(pbDest, temp);
-					DESTNEXTPIXEL(pbDest);
+					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					runLength = runLength - 1;
 				}
 				break;
@@ -528,11 +527,11 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 				pbSrc = pbSrc + 1;
 				if (fFirstLine)
 				{
-					pbDest = WRITEFIRSTLINEFGBGIMAGE(pbDest, g_MaskSpecialFgBg1, fgPel, 8);
+					pbDest = WRITEFIRSTLINEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, g_MaskSpecialFgBg1, fgPel, 8);
 				}
 				else
 				{
-					pbDest = WRITEFGBGIMAGE(pbDest, rowDelta, g_MaskSpecialFgBg1, fgPel, 8);
+					pbDest = WRITEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, g_MaskSpecialFgBg1, fgPel, 8);
 				}
 				break;
 
@@ -541,11 +540,11 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 				pbSrc = pbSrc + 1;
 				if (fFirstLine)
 				{
-					pbDest = WRITEFIRSTLINEFGBGIMAGE(pbDest, g_MaskSpecialFgBg2, fgPel, 8);
+					pbDest = WRITEFIRSTLINEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, g_MaskSpecialFgBg2, fgPel, 8);
 				}
 				else
 				{
-					pbDest = WRITEFGBGIMAGE(pbDest, rowDelta, g_MaskSpecialFgBg2, fgPel, 8);
+					pbDest = WRITEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, g_MaskSpecialFgBg2, fgPel, 8);
 				}
 				break;
 
@@ -553,14 +552,14 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDestBuffer,
 			case SPECIAL_WHITE:
 				pbSrc = pbSrc + 1;
 				DESTWRITEPIXEL(pbDest, WHITE_PIXEL);
-				DESTNEXTPIXEL(pbDest);
+				DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 				break;
 
 			/* Handle Black Order. */
 			case SPECIAL_BLACK:
 				pbSrc = pbSrc + 1;
 				DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
-				DESTNEXTPIXEL(pbDest);
+				DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 				break;
 		}
 	}
