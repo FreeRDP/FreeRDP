@@ -533,7 +533,7 @@ void gdi_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* opaque_rect)
 	gdi_CRgnToRect(opaque_rect->nLeftRect, opaque_rect->nTopRect,
 			opaque_rect->nWidth, opaque_rect->nHeight, &rect);
 
-	brush_color = freerdp_color_convert_var_bgr(opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+	brush_color = freerdp_color_convert_var_rgb(opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
 
 	hBrush = gdi_CreateSolidBrush(brush_color);
 	gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
@@ -557,7 +557,7 @@ void gdi_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* multi_o
 		gdi_CRgnToRect(rectangle->left, rectangle->top,
 				rectangle->width, rectangle->height, &rect);
 
-		brush_color = freerdp_color_convert_var_bgr(multi_opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
+		brush_color = freerdp_color_convert_var_rgb(multi_opaque_rect->color, gdi->srcBpp, 32, gdi->clrconv);
 
 		hBrush = gdi_CreateSolidBrush(brush_color);
 		gdi_FillRect(gdi->drawing->hdc, &rect, hBrush);
