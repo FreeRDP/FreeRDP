@@ -82,7 +82,7 @@ uint16 fastpath_read_header(rdpFastPath* fastpath, STREAM* s)
 	return length;
 }
 
-static INLINE void fastpath_read_update_header(STREAM* s, uint8* updateCode, uint8* fragmentation, uint8* compression)
+INLINE void fastpath_read_update_header(STREAM* s, uint8* updateCode, uint8* fragmentation, uint8* compression)
 {
 	uint8 updateHeader;
 
@@ -92,7 +92,7 @@ static INLINE void fastpath_read_update_header(STREAM* s, uint8* updateCode, uin
 	*compression = (updateHeader >> 6) & 0x03;
 }
 
-static INLINE void fastpath_write_update_header(STREAM* s, uint8 updateCode, uint8 fragmentation, uint8 compression)
+INLINE void fastpath_write_update_header(STREAM* s, uint8 updateCode, uint8 fragmentation, uint8 compression)
 {
 	uint8 updateHeader = 0;
 
@@ -309,7 +309,7 @@ boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 	{
 		fastpath_recv_update_data(fastpath, s);
 	}
-
+	gdi_DecomposeInvalidArea(update->context->gdi->primary->hdc);
 	IFCALL(update->EndPaint, update->context);
 
 	return true;

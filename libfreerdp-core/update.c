@@ -287,6 +287,7 @@ void update_recv(rdpUpdate* update, STREAM* s)
 			break;
 	}
 
+	gdi_DecomposeInvalidArea(context->gdi->primary->hdc);
 	IFCALL(update->EndPaint, context);
 
 	if (stream_get_left(s) > RDP_SHARE_DATA_HEADER_LENGTH)
@@ -336,6 +337,7 @@ void update_reset_state(rdpUpdate* update)
 	primary->order_info.orderType = ORDER_TYPE_PATBLT;
 	altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 	IFCALL(altsec->SwitchSurface, update->context, &(altsec->switch_surface));
+	printf("Reset state\n");
 }
 
 static void update_begin_paint(rdpContext* context)

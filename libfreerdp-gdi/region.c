@@ -349,6 +349,30 @@ INLINE int gdi_PtInRect(HGDI_RECT rc, int x, int y)
 	return 0;
 }
 
+
+INLINE static boolean add_cinvalid(GDI_WND *hwnd, int x, int y, int w, int h)
+{
+	int count;
+	GDI_RGN *cinvalid = hdc->hwnd->cinvalid;
+
+	if (hwnd->ninvalid >= hwnd->count)
+	{
+		count = (hwnd->count + 1) * 2;
+		cinvalid = (HGDI_RGN) realloc(cinvalid, sizeof(GDI_RGN) * count);
+		if (!cinvalid)
+		{
+			fprintf(stderr, "add_cinvalid: no memory for %u entries\n", count);
+			return false;
+		}
+
+		hwnd->cinvalid = cinvalid;
+		hwnd->count = count;
+	}
+
+	gdi_SetRgn(&cinvalid[hwnd->ninvalid++], x, y, w, h);
+	return true;
+}
+
 /**
  * Invalidate a given region, such that it is redrawn on the next region update.\n
  * @msdn{dd145003}
@@ -362,10 +386,9 @@ INLINE int gdi_PtInRect(HGDI_RECT rc, int x, int y)
 
 INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 {
-	GDI_RECT inv;
-	GDI_RECT rgn;
 	HGDI_RGN invalid;
 	HGDI_RGN cinvalid;
+	int i;
 
 	if (hdc->hwnd == NULL)
 		return 0;
@@ -373,17 +396,22 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 	if (hdc->hwnd->invalid == NULL)
 		return 0;
 
-	cinvalid = hdc->hwnd->cinvalid;
-
-	if (hdc->hwnd->ninvalid + 1 > hdc->hwnd->count)
+	if (x<0)
 	{
-		hdc->hwnd->count *= 2;
-		cinvalid = (HGDI_RGN) realloc(cinvalid, sizeof(GDI_RGN) * (hdc->hwnd->count));
+		w+= x;
+		x = 0;
 	}
 
-	gdi_SetRgn(&cinvalid[hdc->hwnd->ninvalid++], x, y, w, h);
-	hdc->hwnd->cinvalid = cinvalid;
+	if (y<0)
+	{
+		h+= x;
+		y = 0;
+	}
 
+	if (w<=0 || h<=0)
+		return 0;
+
+	cinvalid = hdc->hwnd->cinvalid;
 	invalid = hdc->hwnd->invalid;
 
 	if (invalid->null)
@@ -393,31 +421,394 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 		invalid->w = w;
 		invalid->h = h;
 		invalid->null = 0;
-		return 0;
+		hdc->hwnd->ninvalid = 0;
+	}
+	else
+	{
+		//check if specified region completely included into any existing
+		//full decomposition would take too much CPU to be used per each invalidation
+		for (i = hdc->hwnd->ninvalid; i; --i, ++cinvalid)
+		{
+			if (cinvalid->x <= x && cinvalid->y <= y &&
+				cinvalid->x + cinvalid->w >= x + w &&
+				cinvalid->y + cinvalid->h >= y + h)
+			{
+				return 0;
+			}
+		}
+		cinvalid = hdc->hwnd->cinvalid;
+
+		if (invalid->x > x) invalid->x = x;
+		if (invalid->y > y) invalid->y = y;
+
+		if (invalid->x + invalid->w < x + w) invalid->w = (x + w) - invalid->x;
+		if (invalid->y + invalid->h < y + h) invalid->h = (y + h) - invalid->y;
+	}
+	
+	add_cinvalid(hdc->hwnd, x, y, w, h);
+	return 0;
+}
+
+
+INLINE static boolean region_contains_point(const GDI_RGN *r, int x, int y)
+{
+	return (x >= r->x && x < r->x + r->w && y >= r->y && y < r->y + r->h);
+}
+
+/**
+ * Substracts partially overlapper regions, creating addition region if result can't fit in two regions
+ * This function only works if any vertex of 'expendable' region is inside of 'invariant' region
+ * It splits 'expendable' to lesser part(s) puting addition part into 'fragment' parameter if neccessary
+ * !!!: Be aware that this function will behave incorrectly if 'expendable' completely inside 'invariant' :!!!
+ * @param invariant - 'subtrahend' region
+ * @param expendable - 'minuend' region
+ * @param fragment - place to put addition resulted region if neccessary
+ * @return 0 - if no expendable's vertex inside invariant, 1 - if result fit into 2 regions, 2 - if substraction put addition result part into fragment parameter
+ */
+static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RGN *expendable, GDI_RGN *fragment)
+{
+	if (region_contains_point(invariant, expendable->x, expendable->y))
+	{//left-top  of exp inside of inv, subcases:
+		if (region_contains_point(invariant, expendable->x + expendable->w - 1, expendable->y))
+		{   //        ________
+			//       |   __   |
+			//       |  |  |  |
+			//       |__|__|__|		
+			//          |__|
+
+			expendable->h = (expendable->y + expendable->h) - (invariant->y + invariant->h);
+			expendable->y = invariant->y + invariant->h;
+			return 1;
+		}
+
+		if (region_contains_point(invariant, expendable->x, expendable->y + expendable->h - 1))
+		{   //        ________
+			//       |      __|___
+			//       |     |  |   |
+			//       |     |__|___|
+			//       |________|
+
+			expendable->w = (expendable->x + expendable->w) - (invariant->x + invariant->w);
+			expendable->x = invariant->x + invariant->w;
+			return 1;
+		}
+
+		//        ________
+		//       |        |  
+		//       |      __|__ 
+		//       |     |  |  |
+		//       |_____|__|~~|
+		//             |_____|
+
+
+		fragment->x = invariant->x + invariant->w;
+		fragment->y = expendable->y;
+		fragment->w = expendable->x + expendable->w - fragment->x;
+		fragment->h = (invariant->y + invariant->h) - fragment->y;
+
+		expendable->h = (expendable->y + expendable->h) - (invariant->y + invariant->h);
+		expendable->y = invariant->y + invariant->h;
+		return 2;
 	}
 
-	gdi_CRgnToRect(x, y, w, h, &rgn);
-	gdi_RgnToRect(invalid, &inv);
 
-	if (rgn.left < 0)
-		rgn.left = 0;
 
-	if (rgn.top < 0)
-		rgn.top = 0;
+	if (region_contains_point(invariant, expendable->x + expendable->w - 1, expendable->y + expendable->h - 1))
+	{//right-bottom of exp inside of inv, subcases:
+		if (region_contains_point(invariant, expendable->x, expendable->y + expendable->h - 1))
+		{   //           __
+			//          |  |
+			//        __|__|__
+			//       |  |__|  |
+			//       |        |
+			//       |________|		
 
-	if (rgn.left < inv.left)
-		inv.left = rgn.left;
+			expendable->h = invariant->y - expendable->y;
+			return 1;
+		}
 
-	if (rgn.top < inv.top)
-		inv.top = rgn.top;
+		if (region_contains_point(invariant, expendable->x + expendable->w - 1, expendable->y))
+		{   //        ________
+			//    ___|_       |
+			//   |   | |      |
+			//   |___|_|      |
+			//       |________|
 
-	if (rgn.right > inv.right)
-		inv.right = rgn.right;
+			expendable->w = invariant->x - expendable->x;
+			return 1;
+		}
 
-	if (rgn.bottom > inv.bottom)
-		inv.bottom = rgn.bottom;
+		//     _____
+		//    |   __|_____
+		//    |~~|  |     |
+		//    |__|__|     |
+		//       |        |
+		//       |________|
 
-	gdi_RectToRgn(&inv, invalid);
+		fragment->x = expendable->x;
+		fragment->y = invariant->y;
+		fragment->w = invariant->x - fragment->x;
+		fragment->h = expendable->y + expendable->h - fragment->y;
+
+		expendable->h = invariant->y - expendable->y;
+		return 2;
+	}
+
+
+	if (region_contains_point(invariant, expendable->x + expendable->w - 1, expendable->y))
+	{   //        ________
+		//       |        |
+		//     __|__      |
+		//    |  |  |     |
+		//    |~~|__|_____|
+		//    |_____|
+
+		fragment->x = expendable->x;
+		fragment->y = expendable->y;
+		fragment->w = invariant->x - expendable->x;
+		fragment->h = invariant->y + invariant->h - expendable->y;
+
+		expendable->h = expendable->y + expendable->h  - (invariant->y + invariant->h);
+		expendable->y = invariant->y + invariant->h;
+		return 2;
+	}
+
+	if (region_contains_point(invariant, expendable->x, expendable->y + expendable->h - 1))
+	{   //              _____
+		//             |     |
+		//        -----|-- ~~|
+		//       |     |__|__|
+		//       |        |
+		//       |        |
+		//       |________|	
+
+		fragment->x = invariant->x + invariant->w;
+		fragment->y = invariant->y;
+		fragment->w = expendable->x + expendable->w - fragment->x;
+		fragment->h = expendable->y + expendable->h - fragment->y;
+
+		expendable->h = invariant->y - expendable->y;
+		return 2;
+	}
 
 	return 0;
 }
+
+/**
+ * Substracts partially overlapping regions, creating addition region if result can't fit in two regions
+ * This function automatically selects subtrahend / minuend region, so any may be changed as result
+ * !!!: Be aware that this function will behave incorrectly if one of regions completely inside another :!!!
+ * @param first - 1st region to substract
+ * @param second - 2nd region to substract 
+ * @param fragment - place to put addition resulted region if neccessary
+ * @return 0 - if regions are not partially overlapped, 1 - if substraction result fit into 2 regions, 2 - if substraction put addition result part into fragment parameter
+ */
+static unsigned char substract_partial_overlap_regions(GDI_RGN *first, GDI_RGN *second, GDI_RGN *fragment)
+{
+	uint8 rv;
+
+	if (second->w>first->w) //prefer wider region as invariant
+	{
+		GDI_RGN *t = second;
+		second = first;
+		first = t;
+	}
+
+	rv = substract_regions_if_vertex_inside(first, second, fragment);
+	if (!rv)
+	{
+		rv = substract_regions_if_vertex_inside(second, first, fragment);
+		if (!rv &&
+			first->x < second->x && first->x + first->w > second->x + second->w &&
+			first->y > second->y && first->y + first->h < second->y + second->h)
+		{   //        ___2nd__    
+			//     __|________|__ 
+			//    |  |        |  |
+			//    |__|________|__|1st
+			//       |________|	
+
+			fragment->x = second->x;
+			fragment->w = second->w;
+			fragment->y = first->y + first->h;
+			fragment->h = second->y + second->h - fragment->y;
+
+			second->h = first->y - second->y;
+			rv = 2;
+		}
+	}
+
+	return rv;
+}
+
+static void decompose_sidebyside_regions(GDI_RGN *cinvalid, GDI_RGN *ce)
+{
+	uint8 flag;
+	int tmp;
+	GDI_RGN *ci, *cj;
+
+	for (;;)
+	{
+		for (ci = cinvalid; ci!=ce; ++ci)
+		{
+			if (ci->w<0) continue;
+
+			for (cj = ci + 1; cj!=ce; ++cj)
+			{
+				if (cj->w<0) continue;
+
+				if (ci->h==cj->h && ci->y==cj->y)
+				{
+					if (ci->x <= cj->x && ci->x + ci->w >= cj->x)
+					{//[i] horizontally combines or consumes [j] 
+						tmp = cj->x + cj->w - ci->x;
+						if (ci->w < tmp)
+							ci->w = tmp;
+						cj->w = -1; 
+					}
+					else if (cj->x <= ci->x && cj->x + cj->w >= ci->x)
+					{//[j] horizontally combines or consumes [i] 
+						tmp = ci->x + ci->w - cj->x;
+						ci->w = (cj->w < tmp) ? tmp : cj->w;
+						ci->x = cj->x;
+						cj->w = -1; 
+					}
+				}
+			}
+		}
+
+		flag = 0;		 
+		for (ci = cinvalid; ci!=ce; ++ci)
+		{
+			if (ci->w<0) continue;
+
+			for (cj = ci + 1; cj!=ce; ++cj)
+			{
+				if (cj->w<0) continue;
+
+				if (ci->w==cj->w && ci->x==cj->x)
+				{
+					if (ci->y <= cj->y && ci->y + ci->h >= cj->y)
+					{//[i] vertically combines or consumes [j] 
+						tmp = cj->y + cj->h - ci->y;
+						if (ci->h < tmp)
+							ci->h = tmp;
+						cj->w = -1; 
+						flag = 1;
+					}
+					else if (cj->y <= ci->y && cj->y + cj->h >= ci->y)
+					{//[j] vertically combines or consumes [i] 
+						tmp = ci->y + ci->h - cj->y;
+						ci->h = (cj->h < tmp) ? tmp : cj->h;
+						ci->y = cj->y;
+						cj->w = -1; 
+						flag = 1;
+					}
+				}
+			}
+		}
+		if (!flag) break;
+	}
+}
+
+static void decompose_invalid_regions(GDI_WND *hwnd)
+{
+	uint8 flag;
+	boolean need_final_sidebyside_decomposition = false;
+	int tmp, ninvalid = hwnd->ninvalid;
+	GDI_RGN *cinvalid = hwnd->cinvalid;
+	GDI_RGN ctmp, *cf, *ci, *cj, *ce = cinvalid + ninvalid;
+
+	decompose_sidebyside_regions(cinvalid, ce);
+
+	for (;;)
+	{
+		flag = 0;
+		cf = &ctmp;
+		for (ci = cinvalid; ci!=ce; ++ci)
+		{
+			if (ci->w<0)
+			{
+				cf = ci;
+				continue;
+			}
+
+			for (cj = ci + 1; cj!=ce; ++cj)
+			{
+				if (cj->w<0) continue;
+
+				if (ci->x < cj->x + cj->w && 
+					cj->x < ci->x + ci->w &&
+					ci->y < cj->y + cj->h && 
+					cj->y < ci->y + ci->h)
+				{
+					if (ci->x<=cj->x && ci->y<=cj->y &&
+						ci->x + ci->w>=cj->x + cj->w &&
+						ci->y + ci->h>=cj->y + cj->h)
+					{ //[i] consumes [j]
+						cj->w = -1; 
+					}
+					else if (cj->x<=ci->x && cj->y<=ci->y &&
+						cj->x + cj->w>=ci->x + ci->w &&
+						cj->y + cj->h>=ci->y + ci->h)
+					{ //[j] consumes [i]
+						ci->w = -1; 
+						cf = ci;
+						break;//no need no check anything more against this [i]
+					}
+					else
+						flag = 1;
+				}
+			}
+		}
+
+		if (!flag)
+		{
+			if (need_final_sidebyside_decomposition)
+				decompose_sidebyside_regions(cinvalid, ce);
+			break;
+		}
+
+		flag = 0;
+		need_final_sidebyside_decomposition = true;
+		for (ci = cinvalid; ci!=ce; ++ci)
+		{
+			if (ci->w<0) continue;
+
+			for (cj = ci + 1; cj!=ce; ++cj)
+			{
+				if (cj->w<0) continue;
+
+				flag = substract_partial_overlap_regions(ci, cj, cf);
+
+				if (flag)
+				{
+					if (flag>1 && cf==&ctmp)
+					{
+						if (!add_cinvalid(hwnd, ctmp.x, ctmp.y, ctmp.w, ctmp.h))
+							return;
+
+						cinvalid = hwnd->cinvalid;
+						ninvalid = hwnd->ninvalid;
+						ce = cinvalid + ninvalid;
+					}
+					break;
+				}
+			}
+			if (flag) break;
+		}
+	}
+}
+
+
+/**
+ * Decomposes invalid regions array of specific hdc, so it will contain
+ * minimal non-overlapping rectangles set
+ * @param hdc device context
+ * @return
+ */
+INLINE int gdi_DecomposeInvalidArea(HGDI_DC hdc)
+{
+	decompose_invalid_regions(hdc->hwnd);
+	return 0;
+}
+

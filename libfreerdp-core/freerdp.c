@@ -92,6 +92,7 @@ boolean freerdp_connect(freerdp* instance)
 
 				update->BeginPaint(update->context);
 				update_recv_surfcmds(update, s->size, s);
+				gdi_DecomposeInvalidArea(update->context->gdi->primary->hdc);
 				update->EndPaint(update->context);
 			}
 
