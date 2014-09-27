@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <locale.h>
+#include <time.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
@@ -50,16 +51,34 @@ void df_context_free(freerdp* instance, rdpContext* context)
 
 }
 
-void df_begin_paint(rdpContext* context)
+static uint64 get_ticks(void)
 {
-	rdpGdi* gdi = context->gdi;
-	gdi->primary->hdc->hwnd->invalid->null = 1;
+	uint64 rv;
+	struct timeval tv ;
+	struct timezone tz;
+	gettimeofday(&tv, &tz);
+	rv = tv.tv_sec;
+	rv*= 1000;
+	rv+= (uint64)(tv.tv_usec / 1000);
+	return rv;
 }
 
-void df_end_paint(rdpContext* context)
+void df_begin_paint(rdpContext* context)
+{
+	if (!((dfContext*) context)->endpaint_defer_ts)
+	{
+		rdpGdi* gdi = context->gdi;
+		gdi->primary->hdc->hwnd->invalid->null = 1;
+		gdi->primary->hdc->hwnd->ninvalid = 0;
+	}
+}
+
+static void df_end_paint_inner(rdpContext* context)
 {
 	rdpGdi* gdi;
 	dfInfo* dfi;
+	int ninvalid;
+	HGDI_RGN cinvalid;
 
 	gdi = context->gdi;
 	dfi = ((dfContext*) context)->dfi;
@@ -67,19 +86,48 @@ void df_end_paint(rdpContext* context)
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return;
 
-#if 1
-	dfi->update_rect.x = gdi->primary->hdc->hwnd->invalid->x;
-	dfi->update_rect.y = gdi->primary->hdc->hwnd->invalid->y;
-	dfi->update_rect.w = gdi->primary->hdc->hwnd->invalid->w;
-	dfi->update_rect.h = gdi->primary->hdc->hwnd->invalid->h;
-#else
-	dfi->update_rect.x = 0;
-	dfi->update_rect.y = 0;
-	dfi->update_rect.w = gdi->width;
-	dfi->update_rect.h = gdi->height;
-#endif
+	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 
-	dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
+	for (; ninvalid>0; --ninvalid, ++cinvalid)
+	{
+		if (cinvalid->w>0 && cinvalid->h>0)
+		{
+			dfi->update_rect.x = cinvalid->x;
+			dfi->update_rect.y = cinvalid->y;
+			dfi->update_rect.w = cinvalid->w;
+			dfi->update_rect.h = cinvalid->h;
+			dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
+		}
+	}
+
+	gdi->primary->hdc->hwnd->ninvalid = 0;
+}
+
+void df_end_paint(rdpContext* context)
+{
+	const uint64 now = get_ticks();
+	if (((dfContext*) context)->endpaint_defer_ts)
+	{
+		if ((now - ((dfContext*) context)->endpaint_defer_ts)<200)
+			return;
+
+		((dfContext*) context)->endpaint_defer_ts = 0;
+	}
+	else if (((dfContext*) context)->busy_ts)
+	{
+		if ((now - ((dfContext*) context)->busy_ts)>500)
+		{
+			((dfContext*) context)->endpaint_defer_ts = now;
+			return;
+		}
+	}
+	else if (context->gdi->primary->hdc->hwnd->invalid->null)
+		return;
+	else
+		((dfContext*) context)->busy_ts = now;
+
+	df_end_paint_inner(context);
 }
 
 boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -368,7 +416,20 @@ int dfreerdp_run(freerdp* instance)
 		if (max_fds == 0)
 			break;
 
-		if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
+		if (context->busy_ts)
+		{
+			struct timeval tv = {0};
+			if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, &tv) <= 0 )
+			{
+				context->busy_ts = 0;
+				if (context->endpaint_defer_ts)
+				{
+					context->endpaint_defer_ts = 0;
+					df_end_paint_inner((rdpContext*)context);
+				}
+			}
+		}
+		else if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
 		{
 			/* these are not really errors */
 			if (!((errno == EAGAIN) ||

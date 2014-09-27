@@ -39,7 +39,11 @@ struct df_context
 
 	dfInfo* dfi;
 	rdpSettings* settings;
+
+	uint64 endpaint_defer_ts; 
+	uint64 busy_ts;
 };
+
 typedef struct df_context dfContext;
 
 struct df_pointer
