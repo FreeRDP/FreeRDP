@@ -23,8 +23,12 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
+#define WINPR_IMAGE_BITMAP		0
+#define WINPR_IMAGE_PNG			1
+
 struct _wImage
 {
+	int type;
 	int width;
 	int height;
 	BYTE* data;

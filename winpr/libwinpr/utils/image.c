@@ -25,6 +25,8 @@
 
 #include <winpr/image.h>
 
+#include "lodepng/lodepng.h"
+
 #include "../log.h"
 #define TAG WINPR_TAG("utils.image")
 
@@ -124,30 +126,76 @@ int winpr_bitmap_write(const char* filename, BYTE* data, int width, int height, 
 
 int winpr_image_write(wImage* image, const char* filename)
 {
-	return winpr_bitmap_write(filename, image->data, image->width, image->height, image->bitsPerPixel);
+	int status = -1;
+
+	if (image->type == WINPR_IMAGE_BITMAP)
+	{
+		status = winpr_bitmap_write(filename, image->data, image->width, image->height, image->bitsPerPixel);
+	}
+	else
+	{
+		int lodepng_status;
+
+		lodepng_status = lodepng_encode32_file(filename, image->data, image->width, image->height);
+
+		status = (lodepng_status) ? -1 : 1;
+	}
+
+	return status;
 }
 
-int winpr_image_read(wImage* image, const char* filename)
+int winpr_image_png_read_fp(wImage* image, FILE* fp)
 {
-	FILE* fp;
+	int size;
+	BYTE* data;
+	UINT32 width;
+	UINT32 height;
+	int lodepng_status;
+
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	data = (BYTE*) malloc(size);
+
+	if (!data)
+		return -1;
+
+	fread((void*) data, size, 1, fp);
+
+	fclose(fp);
+
+	lodepng_status = lodepng_decode32(&(image->data), &width, &height, data, size);
+
+	free(data);
+
+	if (lodepng_status)
+		return -1;
+
+	image->width = width;
+	image->height = height;
+
+	image->bitsPerPixel = 32;
+	image->bytesPerPixel = 4;
+	image->scanline = image->bytesPerPixel * image->width;
+
+	return 1;
+}
+
+int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
+{
 	int index;
 	BOOL vFlip;
 	BYTE* pDstData;
 	WINPR_BITMAP_FILE_HEADER bf;
 	WINPR_BITMAP_INFO_HEADER bi;
 
-	fp = fopen(filename, "r+b");
-
-	if (!fp)
-	{
-		WLog_ERR(TAG, "failed to open file %s", filename);
-		return -1;
-	}
-
 	fread((void*) &bf, sizeof(WINPR_BITMAP_FILE_HEADER), 1, fp);
 
 	if ((bf.bfType[0] != 'B') || (bf.bfType[1] != 'M'))
 		return -1;
+
+	image->type = WINPR_IMAGE_BITMAP;
 
 	fread((void*) &bi, sizeof(WINPR_BITMAP_INFO_HEADER), 1, fp);
 
@@ -196,6 +244,42 @@ int winpr_image_read(wImage* image, const char* filename)
 	fclose(fp);
 
 	return 1;
+}
+
+int winpr_image_read(wImage* image, const char* filename)
+{
+	FILE* fp;
+	BYTE sig[8];
+	int status = -1;
+
+	fp = fopen(filename, "r+b");
+
+	if (!fp)
+	{
+		WLog_ERR(TAG, "failed to open file %s", filename);
+		return -1;
+	}
+
+	fread((void*) &sig, sizeof(sig), 1, fp);
+	fseek(fp, 0, SEEK_SET);
+
+	if ((sig[0] == 'B') && (sig[1] == 'M'))
+	{
+		image->type = WINPR_IMAGE_BITMAP;
+		status = winpr_image_bitmap_read_fp(image, fp);
+	}
+	else if ((sig[0] == 0x89) && (sig[1] == 'P') && (sig[2] == 'N') && (sig[3] == 'G') &&
+			(sig[4] == '\r') && (sig[5] == '\n') && (sig[6] == 0x1A) && (sig[7] == '\n'))
+	{
+		image->type = WINPR_IMAGE_PNG;
+		status = winpr_image_png_read_fp(image, fp);
+	}
+	else
+	{
+		fclose(fp);
+	}
+
+	return status;
 }
 
 wImage* winpr_image_new()
