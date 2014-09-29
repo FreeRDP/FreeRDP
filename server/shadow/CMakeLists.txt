@@ -167,6 +167,8 @@ set(${MODULE_PREFIX}_SRCS
 	shadow_encomsp.h
 	shadow_remdesk.c
 	shadow_remdesk.h
+	shadow_font.c
+	shadow_font.h
 	shadow_subsystem.c
 	shadow_subsystem.h
 	shadow_server.c

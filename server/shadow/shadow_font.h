@@ -16,30 +16,48 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_H
-#define FREERDP_SHADOW_SERVER_H
+#ifndef FREERDP_SHADOW_SERVER_FONT_H
+#define FREERDP_SHADOW_SERVER_FONT_H
 
 #include <freerdp/server/shadow.h>
 
-#include "shadow_client.h"
-#include "shadow_input.h"
-#include "shadow_screen.h"
-#include "shadow_surface.h"
-#include "shadow_encoder.h"
-#include "shadow_capture.h"
-#include "shadow_channels.h"
-#include "shadow_subsystem.h"
-#include "shadow_font.h"
+#include <winpr/crt.h>
+#include <winpr/synch.h>
+#include <winpr/image.h>
+
+struct rdp_shadow_glyph
+{
+	int width;
+	int offsetX;
+	int offsetY;
+	int rectX;
+	int rectY;
+	int rectWidth;
+	int rectHeight;
+	BYTE code[4];
+};
+typedef struct rdp_shadow_glyph rdpShadowGlyph;
+
+struct rdp_shadow_font
+{
+	int size;
+	int height;
+	char* family;
+	char* style;
+	wImage* image;
+	int glyphCount;
+	rdpShadowGlyph* glyphs;
+};
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
+rdpShadowFont* shadow_font_new(const char* filename);
+void shadow_font_free(rdpShadowFont* font);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_H */
-
+#endif /* FREERDP_SHADOW_SERVER_FONT_H */

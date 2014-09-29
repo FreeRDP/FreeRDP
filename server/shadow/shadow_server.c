@@ -527,6 +527,17 @@ int shadow_server_init_certificate(rdpShadowServer* server)
 	return 1;
 }
 
+int shadow_server_init_fonts(rdpShadowServer* server)
+{
+	rdpShadowFont* font;
+
+	font = shadow_font_new("source_serif_pro_regular_12");
+
+	shadow_font_free(font);
+
+	return 1;
+}
+
 int shadow_server_init(rdpShadowServer* server)
 {
 	int status;
@@ -550,6 +561,8 @@ int shadow_server_init(rdpShadowServer* server)
 
 	if (status < 0)
 		return -1;
+
+	//shadow_server_init_fonts(server);
 
 	server->listener = freerdp_listener_new();
 
