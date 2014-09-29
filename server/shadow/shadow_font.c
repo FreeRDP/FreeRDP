@@ -20,12 +20,117 @@
 #include "config.h"
 #endif
 
+#include <winpr/crt.h>
+#include <winpr/path.h>
+
 #include "shadow.h"
 
 #include "shadow_font.h"
 
-#define TEST_FONT_IMAGE		"source_serif_pro_regular_12.png"
-#define TEST_FONT_DESCRIPTOR	"source_serif_pro_regular_12.xml"
+int shadow_font_draw_glyph(rdpShadowSurface* surface, int nXDst, int nYDst, rdpShadowFont* font, rdpShadowGlyph* glyph)
+{
+	int x, y;
+	int nXSrc;
+	int nYSrc;
+	int nWidth;
+	int nHeight;
+	int nSrcStep;
+	int nDstStep;
+	int nSrcPad;
+	int nDstPad;
+	BYTE* pSrcData;
+	BYTE* pSrcPixel;
+	BYTE* pDstData;
+	BYTE* pDstPixel;
+	BYTE A, R, G, B;
+
+	nXDst += glyph->offsetX;
+	nYDst += glyph->offsetY;
+
+	nXSrc = glyph->rectX;
+	nYSrc = glyph->rectY;
+
+	nWidth = glyph->rectWidth;
+	nHeight = glyph->rectHeight;
+
+	nSrcStep = font->image->scanline;
+	pSrcData = font->image->data;
+
+	pDstData = surface->data;
+	nDstStep = surface->scanline;
+
+	nSrcPad = (nSrcStep - (nWidth * 4));
+	nDstPad = (nDstStep - (nWidth * 4));
+
+	pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
+	pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
+
+	for (y = 0; y < nHeight; y++)
+	{
+		pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
+		pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+
+		for (x = 0; x < nWidth; x++)
+		{
+			B = pSrcPixel[0];
+			G = pSrcPixel[1];
+			R = pSrcPixel[2];
+			A = pSrcPixel[3];
+			pSrcPixel += 4;
+
+			if (1)
+			{
+				/* tint black */
+				R = 255 - R;
+				G = 255 - G;
+				B = 255 - B;
+			}
+
+			if (A == 255)
+			{
+				pDstPixel[0] = B;
+				pDstPixel[1] = G;
+				pDstPixel[2] = R;
+			}
+			else
+			{
+				R = (R * A) / 255;
+				G = (G * A) / 255;
+				B = (B * A) / 255;
+
+				pDstPixel[0] = B + (pDstPixel[0] * (255 - A) + (255 / 2)) / 255;
+				pDstPixel[1] = G + (pDstPixel[1] * (255 - A) + (255 / 2)) / 255;
+				pDstPixel[2] = R + (pDstPixel[2] * (255 - A) + (255 / 2)) / 255;
+			}
+
+			pDstPixel[3] = 0xFF;
+			pDstPixel += 4;
+		}
+
+		pSrcPixel += nSrcPad;
+		pDstPixel += nDstPad;
+	}
+
+	return 1;
+}
+
+int shadow_font_draw_text(rdpShadowSurface* surface, int nXDst, int nYDst, rdpShadowFont* font, const char* text)
+{
+	int index;
+	int length;
+	rdpShadowGlyph* glyph;
+
+	length = strlen(text);
+
+	for (index = 0; index < length; index++)
+	{
+		glyph = &font->glyphs[text[index] - 32];
+		shadow_font_draw_glyph(surface, nXDst, nYDst, font, glyph);
+		nXDst += (glyph->width + 1);
+	}
+
+	return 1;
+}
 
 char* shadow_font_load_descriptor_file(const char* filename, int* pSize)
 {
@@ -86,11 +191,30 @@ int shadow_font_convert_descriptor_code_to_utf8(const char* str, BYTE* utf8)
 
 	*((UINT32*) utf8) = 0;
 
+	if (len < 1)
+		return 1;
+
 	if (len == 1)
 	{
 		if ((str[0] > 31) && (str[0] < 127))
 		{
 			utf8[0] = str[0];
+		}
+	}
+	else
+	{
+		if (str[0] == '&')
+		{
+			const char* acc = &str[1];
+
+			if (strcmp(acc, "quot;") == 0)
+				utf8[0] = '"';
+			else if (strcmp(acc, "amp;") == 0)
+				utf8[0] = '&';
+			else if (strcmp(acc, "lt;") == 0)
+				utf8[0] = '<';
+			else if (strcmp(acc, "gt;") == 0)
+				utf8[0] = '>';
 		}
 	}
 
@@ -416,10 +540,45 @@ int shadow_font_load_descriptor(rdpShadowFont* font, const char* filename)
 	return 1;
 }
 
-rdpShadowFont* shadow_font_new(const char* filename)
+rdpShadowFont* shadow_font_new(const char* path, const char* file)
 {
 	int status;
+	int length;
 	rdpShadowFont* font;
+	char* fontBaseFile;
+	char* fontImageFile;
+	char* fontDescriptorFile;
+
+	fontBaseFile = GetCombinedPath(path, file);
+
+	if (!fontBaseFile)
+		return NULL;
+
+	length = strlen(fontBaseFile);
+
+	fontImageFile = (char*) malloc(length + 8);
+
+	if (!fontImageFile)
+		return NULL;
+
+	strcpy(fontImageFile, fontBaseFile);
+	strcpy(&fontImageFile[length], ".png");
+
+	fontDescriptorFile = (char*) malloc(length + 8);
+
+	if (!fontImageFile)
+		return NULL;
+
+	strcpy(fontDescriptorFile, fontBaseFile);
+	strcpy(&fontDescriptorFile[length], ".xml");
+
+	free(fontBaseFile);
+
+	if (!PathFileExistsA(fontImageFile))
+		return NULL;
+
+	if (!PathFileExistsA(fontDescriptorFile))
+		return NULL;
 
 	font = (rdpShadowFont*) calloc(1, sizeof(rdpShadowFont));
 
@@ -431,12 +590,15 @@ rdpShadowFont* shadow_font_new(const char* filename)
 	if (!font->image)
 		return NULL;
 
-	status = winpr_image_read(font->image, TEST_FONT_IMAGE);
+	status = winpr_image_read(font->image, fontImageFile);
 
 	if (status < 0)
 		return NULL;
 
-	status = shadow_font_load_descriptor(font, TEST_FONT_DESCRIPTOR);
+	status = shadow_font_load_descriptor(font, fontDescriptorFile);
+
+	free(fontImageFile);
+	free(fontDescriptorFile);
 
 	return font;
 }

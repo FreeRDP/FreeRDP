@@ -53,7 +53,10 @@ struct rdp_shadow_font
 extern "C" {
 #endif
 
-rdpShadowFont* shadow_font_new(const char* filename);
+int shadow_font_draw_text(rdpShadowSurface* surface, int nXDst, int nYDst, rdpShadowFont* font, const char* text);
+int shadow_font_draw_glyph(rdpShadowSurface* surface, int nXDst, int nYDst, rdpShadowFont* font, rdpShadowGlyph* glyph);
+
+rdpShadowFont* shadow_font_new(const char* path, const char* file);
 void shadow_font_free(rdpShadowFont* font);
 
 #ifdef __cplusplus
