@@ -27,6 +27,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/memory.h>
+#include <freerdp/gdi/region.h>
 
 boolean freerdp_connect(freerdp* instance)
 {

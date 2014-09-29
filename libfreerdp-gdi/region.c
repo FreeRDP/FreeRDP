@@ -353,7 +353,7 @@ INLINE int gdi_PtInRect(HGDI_RECT rc, int x, int y)
 INLINE static boolean add_cinvalid(GDI_WND *hwnd, int x, int y, int w, int h)
 {
 	int count;
-	GDI_RGN *cinvalid = hdc->hwnd->cinvalid;
+	GDI_RGN *cinvalid = hwnd->cinvalid;
 
 	if (hwnd->ninvalid >= hwnd->count)
 	{
@@ -388,7 +388,6 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 {
 	HGDI_RGN invalid;
 	HGDI_RGN cinvalid;
-	int i;
 
 	if (hdc->hwnd == NULL)
 		return 0;
@@ -716,7 +715,7 @@ static void decompose_invalid_regions(GDI_WND *hwnd)
 {
 	uint8 flag;
 	boolean need_final_sidebyside_decomposition = false;
-	int tmp, ninvalid = hwnd->ninvalid;
+	int ninvalid = hwnd->ninvalid;
 	GDI_RGN *cinvalid = hwnd->cinvalid;
 	GDI_RGN ctmp, *cf, *ci, *cj, *ce = cinvalid + ninvalid;
 

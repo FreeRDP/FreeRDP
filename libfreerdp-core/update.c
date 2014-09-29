@@ -21,6 +21,7 @@
 #include "surface.h"
 #include <freerdp/utils/rect.h>
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/gdi/region.h>
 
 /*
 static const char* const UPDATE_TYPE_STRINGS[] =

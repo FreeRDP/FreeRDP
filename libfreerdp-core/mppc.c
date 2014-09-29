@@ -172,6 +172,23 @@ uint16 getLOMindex(uint16 huff)
 		return HuffIndexLOM[LOMHTab[miniLOMhash(huff)]];
 }
 
+#define HISTORY_MEMMOVE(dst, src, n) if (n) { \
+        if ( src >= dst+n || dst >= src+n) { \
+                memcpy(dst, src, n); \
+                dst+= n; \
+                src+= n; \
+                n  = 0; \
+        } else if (src<dst) {   \
+                for (;n; --n, ++src, ++dst) *dst = *src;  \
+        } else { \
+                if (src>dst) memmove(dst, src, n); \
+                src+= n; \
+                dst+= n; \
+                n = 0; \
+        } \
+}
+
+
 int decompress_rdp(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
 {
 	int type = ctype & 0x0f;
@@ -539,32 +556,24 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		/* now that we have copy_offset and LoM, process them */
 
 		src_ptr = history_ptr - copy_offset;
-		if (src_ptr >= rdp->mppc->history_buf)
+		if (src_ptr < rdp->mppc->history_buf)
 		{
-			/* data does not wrap around */
-			while (lom > 0)
-			{
-				*history_ptr++ = *src_ptr++;
-				lom--;
-			}
-		}
-		else
-		{
+			uint16 part;
 			src_ptr = rdp->mppc->history_buf_end - (copy_offset - (history_ptr - rdp->mppc->history_buf));
+			part = rdp->mppc->history_buf_end - src_ptr;
 			src_ptr++;
-			while (lom && (src_ptr <= rdp->mppc->history_buf_end))
-			{
-				*history_ptr++ = *src_ptr++;
-				lom--;
-			}
+			if (part>lom)
+                        {
+                                part = lom;
+                                lom = 0;
+                        }
+                        else
+                                lom-= part;
 
+			 HISTORY_MEMMOVE(history_ptr, src_ptr, part);
 			src_ptr = rdp->mppc->history_buf;
-			while (lom > 0)
-			{
-				*history_ptr++ = *src_ptr++;
-				lom--;
-			}
 		}
+		HISTORY_MEMMOVE(history_ptr, src_ptr, lom);
 
 		/*
 		** get more bits before we restart the loop
@@ -1002,32 +1011,25 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		/* now that we have copy_offset and LoM, process them */
 
 		src_ptr = history_ptr - copy_offset;
-		if (src_ptr >= rdp->mppc->history_buf)
-		{
-			/* data does not wrap around */
-			while (lom > 0)
-			{
-				*history_ptr++ = *src_ptr++;
-				lom--;
-			}
-		}
-		else
-		{
-			src_ptr = rdp->mppc->history_buf_end - (copy_offset - (history_ptr - rdp->mppc->history_buf));
-			src_ptr++;
-			while (lom && (src_ptr <= rdp->mppc->history_buf_end))
-			{
-				*history_ptr++ = *src_ptr++;
-				lom--;
-			}
+                if (src_ptr < rdp->mppc->history_buf)
+                {
+                        uint16 part;
+                        src_ptr = rdp->mppc->history_buf_end - (copy_offset - (history_ptr - rdp->mppc->history_buf));
+                        part = rdp->mppc->history_buf_end - src_ptr;
+                        src_ptr++;
+                        if (part>lom)
+                        {
+                                part = lom;
+                                lom = 0;
+                        }
+                        else
+                                lom-= part;
 
-			src_ptr = rdp->mppc->history_buf;
-			while (lom > 0)
-			{
-				*history_ptr++ = *src_ptr++;
-				lom--;
-			}
-		}
+                         HISTORY_MEMMOVE(history_ptr, src_ptr, part);
+                        src_ptr = rdp->mppc->history_buf;
+                }
+                HISTORY_MEMMOVE(history_ptr, src_ptr, lom);
+
 
 		/*
 		** get more bits before we restart the loop
