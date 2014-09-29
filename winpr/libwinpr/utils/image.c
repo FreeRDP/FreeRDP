@@ -182,6 +182,27 @@ int winpr_image_png_read_fp(wImage* image, FILE* fp)
 	return 1;
 }
 
+int winpr_image_png_read_buffer(wImage* image, BYTE* buffer, int size)
+{
+	UINT32 width;
+	UINT32 height;
+	int lodepng_status;
+
+	lodepng_status = lodepng_decode32(&(image->data), &width, &height, buffer, size);
+
+	if (lodepng_status)
+		return -1;
+
+	image->width = width;
+	image->height = height;
+
+	image->bitsPerPixel = 32;
+	image->bytesPerPixel = 4;
+	image->scanline = image->bytesPerPixel * image->width;
+
+	return 1;
+}
+
 int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 {
 	int index;
@@ -246,6 +267,75 @@ int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 	return 1;
 }
 
+int winpr_image_bitmap_read_buffer(wImage* image, BYTE* buffer, int size)
+{
+	int index;
+	BOOL vFlip;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	WINPR_BITMAP_FILE_HEADER bf;
+	WINPR_BITMAP_INFO_HEADER bi;
+
+	pSrcData = buffer;
+
+	CopyMemory(&bf, pSrcData, sizeof(WINPR_BITMAP_FILE_HEADER));
+	pSrcData += sizeof(WINPR_BITMAP_FILE_HEADER);
+
+	if ((bf.bfType[0] != 'B') || (bf.bfType[1] != 'M'))
+		return -1;
+
+	image->type = WINPR_IMAGE_BITMAP;
+
+	CopyMemory(&bi, pSrcData, sizeof(WINPR_BITMAP_INFO_HEADER));
+	pSrcData += sizeof(WINPR_BITMAP_INFO_HEADER);
+
+	if ((pSrcData - buffer) != bf.bfOffBits)
+	{
+		pSrcData = &buffer[bf.bfOffBits];
+	}
+
+	image->width = bi.biWidth;
+
+	if (bi.biHeight < 0)
+	{
+		vFlip = FALSE;
+		image->height = -1 * bi.biHeight;
+	}
+	else
+	{
+		vFlip = TRUE;
+		image->height = bi.biHeight;
+	}
+
+	image->bitsPerPixel = bi.biBitCount;
+	image->bytesPerPixel = (image->bitsPerPixel / 8);
+	image->scanline = (bi.biSizeImage / bi.biHeight);
+
+	image->data = (BYTE*) malloc(bi.biSizeImage);
+
+	if (!image->data)
+		return -1;
+
+	if (!vFlip)
+	{
+		CopyMemory(image->data, pSrcData, bi.biSizeImage);
+		pSrcData += bi.biSizeImage;
+	}
+	else
+	{
+		pDstData = &(image->data[(image->height - 1) * image->scanline]);
+
+		for (index = 0; index < image->height; index++)
+		{
+			CopyMemory(pDstData, pSrcData, image->scanline);
+			pSrcData += image->scanline;
+			pDstData -= image->scanline;
+		}
+	}
+
+	return 1;
+}
+
 int winpr_image_read(wImage* image, const char* filename)
 {
 	FILE* fp;
@@ -277,6 +367,31 @@ int winpr_image_read(wImage* image, const char* filename)
 	else
 	{
 		fclose(fp);
+	}
+
+	return status;
+}
+
+int winpr_image_read_buffer(wImage* image, BYTE* buffer, int size)
+{
+	BYTE sig[8];
+	int status = -1;
+
+	if (size < 8)
+		return -1;
+
+	CopyMemory(sig, buffer, 8);
+
+	if ((sig[0] == 'B') && (sig[1] == 'M'))
+	{
+		image->type = WINPR_IMAGE_BITMAP;
+		status = winpr_image_bitmap_read_buffer(image, buffer, size);
+	}
+	else if ((sig[0] == 0x89) && (sig[1] == 'P') && (sig[2] == 'N') && (sig[3] == 'G') &&
+			(sig[4] == '\r') && (sig[5] == '\n') && (sig[6] == 0x1A) && (sig[7] == '\n'))
+	{
+		image->type = WINPR_IMAGE_PNG;
+		status = winpr_image_png_read_buffer(image, buffer, size);
 	}
 
 	return status;

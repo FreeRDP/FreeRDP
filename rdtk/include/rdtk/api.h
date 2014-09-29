@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * RdTk: Remote Desktop Toolkit
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -16,30 +16,31 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_H
-#define FREERDP_SHADOW_SERVER_H
+#ifndef RDTK_API_H
+#define RDTK_API_H
 
-#include <freerdp/server/shadow.h>
+#include <winpr/spec.h>
 
-#include "shadow_client.h"
-#include "shadow_input.h"
-#include "shadow_screen.h"
-#include "shadow_surface.h"
-#include "shadow_encoder.h"
-#include "shadow_capture.h"
-#include "shadow_channels.h"
-#include "shadow_subsystem.h"
-#include "shadow_lobby.h"
-
-#ifdef __cplusplus
-extern "C" {
+#if defined _WIN32 || defined __CYGWIN__
+	#ifdef RDTK_EXPORTS
+		#ifdef __GNUC__
+			#define RDTK_EXPORT __attribute__((dllexport))
+		#else
+			#define RDTK_EXPORT __declspec(dllexport)
+		#endif
+	#else
+		#ifdef __GNUC__
+			#define RDTK_EXPORT __attribute__((dllimport))
+		#else
+			#define RDTK_EXPORT __declspec(dllimport)
+		#endif
+	#endif
+#else
+	#if __GNUC__ >= 4
+		#define RDTK_EXPORT   __attribute__ ((visibility("default")))
+	#else
+		#define RDTK_EXPORT
+	#endif
 #endif
 
-
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* FREERDP_SHADOW_SERVER_H */
-
+#endif /* RDTK_API_H */

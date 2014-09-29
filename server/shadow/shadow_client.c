@@ -33,8 +33,6 @@
 
 #define TAG CLIENT_TAG("shadow")
 
-extern rdpShadowFont* g_Font;
-
 void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 {
 	rdpSettings* settings;
@@ -130,41 +128,6 @@ void shadow_client_message_free(wMessage* message)
 BOOL shadow_client_capabilities(freerdp_peer* peer)
 {
 	return TRUE;
-}
-
-int shadow_client_init_lobby(rdpShadowClient* client)
-{
-	int width;
-	int height;
-	RECTANGLE_16 invalidRect;
-	rdpShadowSurface* lobby;
-	rdpContext* context = (rdpContext*) client;
-	rdpSettings* settings = context->settings;
-
-	width = settings->DesktopWidth;
-	height = settings->DesktopHeight;
-
-	lobby = client->lobby = shadow_surface_new(client->server, 0, 0, width, height);
-
-	if (!client->lobby)
-		return -1;
-
-	freerdp_image_fill(lobby->data, PIXEL_FORMAT_XRGB32, lobby->scanline,
-			0, 0, lobby->width, lobby->height, 0x3BB9FF);
-
-	if (g_Font)
-	{
-		shadow_font_draw_text(lobby, 16, 16, g_Font, "Welcome to the shadow server!");
-	}
-
-	invalidRect.left = 0;
-	invalidRect.top = 0;
-	invalidRect.right = width;
-	invalidRect.bottom = height;
-
-	region16_union_rect(&(lobby->invalidRegion), &(lobby->invalidRegion), &invalidRect);
-
-	return 1;
 }
 
 BOOL shadow_client_post_connect(freerdp_peer* peer)

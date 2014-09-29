@@ -46,7 +46,6 @@ typedef struct rdp_shadow_surface rdpShadowSurface;
 typedef struct rdp_shadow_encoder rdpShadowEncoder;
 typedef struct rdp_shadow_capture rdpShadowCapture;
 typedef struct rdp_shadow_subsystem rdpShadowSubsystem;
-typedef struct rdp_shadow_font rdpShadowFont;
 
 typedef struct _RDP_SHADOW_ENTRY_POINTS RDP_SHADOW_ENTRY_POINTS;
 typedef int (*pfnShadowSubsystemEntry)(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);

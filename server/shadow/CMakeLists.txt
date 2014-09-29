@@ -151,6 +151,8 @@ include_directories(${OPENSSL_INCLUDE_DIR})
 set(${MODULE_PREFIX}_SRCS
 	shadow_client.c
 	shadow_client.h
+	shadow_lobby.c
+	shadow_lobby.h
 	shadow_input.c
 	shadow_input.h
 	shadow_screen.c
@@ -167,8 +169,6 @@ set(${MODULE_PREFIX}_SRCS
 	shadow_encomsp.h
 	shadow_remdesk.c
 	shadow_remdesk.h
-	shadow_font.c
-	shadow_font.h
 	shadow_subsystem.c
 	shadow_subsystem.h
 	shadow_server.c
@@ -216,6 +216,8 @@ list(APPEND ${MODULE_PREFIX}_LIBS freerdp-client)
 
 list(APPEND ${MODULE_PREFIX}_LIBS winpr)
 list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool)
+
+list(APPEND ${MODULE_PREFIX}_LIBS rdtk)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

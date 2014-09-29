@@ -47,6 +47,8 @@ WINPR_API int winpr_bitmap_write(const char* filename, BYTE* data, int width, in
 WINPR_API int winpr_image_write(wImage* image, const char* filename);
 WINPR_API int winpr_image_read(wImage* image, const char* filename);
 
+WINPR_API int winpr_image_read_buffer(wImage* image, BYTE* buffer, int size);
+
 WINPR_API wImage* winpr_image_new();
 WINPR_API void winpr_image_free(wImage* image, BOOL bFreeBuffer);
 

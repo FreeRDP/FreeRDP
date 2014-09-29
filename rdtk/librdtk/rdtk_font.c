@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * RdTk: Remote Desktop Toolkit
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -22,12 +22,16 @@
 
 #include <winpr/crt.h>
 #include <winpr/path.h>
+#include <winpr/print.h>
 
-#include "shadow.h"
+#include "rdtk_resources.h"
+#include "rdtk_surface.h"
 
-#include "shadow_font.h"
+#include "rdtk_font.h"
 
-int shadow_font_draw_glyph(rdpShadowSurface* surface, int nXDst, int nYDst, rdpShadowFont* font, rdpShadowGlyph* glyph)
+static rdtkFont* g_Font = NULL;
+
+int rdtk_font_draw_glyph(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* font, rdtkGlyph* glyph)
 {
 	int x, y;
 	int nXSrc;
@@ -114,25 +118,31 @@ int shadow_font_draw_glyph(rdpShadowSurface* surface, int nXDst, int nYDst, rdpS
 	return 1;
 }
 
-int shadow_font_draw_text(rdpShadowSurface* surface, int nXDst, int nYDst, rdpShadowFont* font, const char* text)
+int rdtk_font_draw_text(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* font, const char* text)
 {
 	int index;
 	int length;
-	rdpShadowGlyph* glyph;
+	rdtkGlyph* glyph;
+
+	if (!font)
+	{
+		rdtk_load_embedded_fonts();
+		font = g_Font;
+	}
 
 	length = strlen(text);
 
 	for (index = 0; index < length; index++)
 	{
 		glyph = &font->glyphs[text[index] - 32];
-		shadow_font_draw_glyph(surface, nXDst, nYDst, font, glyph);
+		rdtk_font_draw_glyph(surface, nXDst, nYDst, font, glyph);
 		nXDst += (glyph->width + 1);
 	}
 
 	return 1;
 }
 
-char* shadow_font_load_descriptor_file(const char* filename, int* pSize)
+char* rdtk_font_load_descriptor_file(const char* filename, int* pSize)
 {
 	BYTE* buffer;
 	FILE* fp = NULL;
@@ -185,7 +195,7 @@ char* shadow_font_load_descriptor_file(const char* filename, int* pSize)
 	return (char*) buffer;
 }
 
-int shadow_font_convert_descriptor_code_to_utf8(const char* str, BYTE* utf8)
+int rdtk_font_convert_descriptor_code_to_utf8(const char* str, BYTE* utf8)
 {
 	int len = strlen(str);
 
@@ -221,7 +231,7 @@ int shadow_font_convert_descriptor_code_to_utf8(const char* str, BYTE* utf8)
 	return 1;
 }
 
-int shadow_font_load_descriptor(rdpShadowFont* font, const char* filename)
+int rdtk_font_parse_descriptor_buffer(rdtkFont* font, BYTE* buffer, int size)
 {
 	char* p;
 	char* q;
@@ -231,16 +241,9 @@ int shadow_font_load_descriptor(rdpShadowFont* font, const char* filename)
 	char* tok[4];
 	int index;
 	int count;
-	int size;
-	char* buffer;
-	rdpShadowGlyph* glyph;
+	rdtkGlyph* glyph;
 
-	buffer = shadow_font_load_descriptor_file(filename, &size);
-
-	if (!buffer)
-		return -1;
-
-	p = strstr(buffer, "<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+	p = strstr((char*) buffer, "<?xml version=\"1.0\" encoding=\"utf-8\"?>");
 
 	if (!p)
 		return -1;
@@ -349,8 +352,8 @@ int shadow_font_load_descriptor(rdpShadowFont* font, const char* filename)
 
 	p = q + 1;
 
-	printf("size: %d family: %s height: %d style: %s\n",
-			font->size, font->family, font->height, font->style);
+	//printf("size: %d family: %s height: %d style: %s\n",
+	//		font->size, font->family, font->height, font->style);
 
 	beg = p;
 	count = 0;
@@ -378,7 +381,7 @@ int shadow_font_load_descriptor(rdpShadowFont* font, const char* filename)
 	}
 
 	font->glyphCount = count;
-	font->glyphs = (rdpShadowGlyph*) calloc(font->glyphCount, sizeof(rdpShadowGlyph));
+	font->glyphs = (rdtkGlyph*) calloc(font->glyphCount, sizeof(rdtkGlyph));
 
 	if (!font->glyphs)
 		return -1;
@@ -524,7 +527,7 @@ int shadow_font_load_descriptor(rdpShadowFont* font, const char* filename)
 			return -1;
 
 		*q = '\0';
-		shadow_font_convert_descriptor_code_to_utf8(p, glyph->code);
+		rdtk_font_convert_descriptor_code_to_utf8(p, glyph->code);
 		*q = '"';
 
 		p = q + 1;
@@ -540,11 +543,24 @@ int shadow_font_load_descriptor(rdpShadowFont* font, const char* filename)
 	return 1;
 }
 
-rdpShadowFont* shadow_font_new(const char* path, const char* file)
+int rdtk_font_load_descriptor(rdtkFont* font, const char* filename)
+{
+	int size;
+	char* buffer;
+
+	buffer = rdtk_font_load_descriptor_file(filename, &size);
+
+	if (!buffer)
+		return -1;
+
+	return rdtk_font_parse_descriptor_buffer(font, (BYTE*) buffer, size);
+}
+
+rdtkFont* rdtk_font_new(const char* path, const char* file)
 {
 	int status;
 	int length;
-	rdpShadowFont* font;
+	rdtkFont* font;
 	char* fontBaseFile;
 	char* fontImageFile;
 	char* fontDescriptorFile;
@@ -580,7 +596,7 @@ rdpShadowFont* shadow_font_new(const char* path, const char* file)
 	if (!PathFileExistsA(fontDescriptorFile))
 		return NULL;
 
-	font = (rdpShadowFont*) calloc(1, sizeof(rdpShadowFont));
+	font = (rdtkFont*) calloc(1, sizeof(rdtkFont));
 
 	if (!font)
 		return NULL;
@@ -595,7 +611,7 @@ rdpShadowFont* shadow_font_new(const char* path, const char* file)
 	if (status < 0)
 		return NULL;
 
-	status = shadow_font_load_descriptor(font, fontDescriptorFile);
+	status = rdtk_font_load_descriptor(font, fontDescriptorFile);
 
 	free(fontImageFile);
 	free(fontDescriptorFile);
@@ -603,10 +619,56 @@ rdpShadowFont* shadow_font_new(const char* path, const char* file)
 	return font;
 }
 
-void shadow_font_free(rdpShadowFont* font)
+rdtkFont* rdtk_embedded_font_new(BYTE* imageData, int imageSize, BYTE* descriptorData, int descriptorSize)
+{
+	int status;
+	rdtkFont* font;
+
+	font = (rdtkFont*) calloc(1, sizeof(rdtkFont));
+
+	if (!font)
+		return NULL;
+
+	font->image = winpr_image_new();
+
+	if (!font->image)
+		return NULL;
+
+	status = winpr_image_read_buffer(font->image, imageData, imageSize);
+
+	if (status < 0)
+		return NULL;
+
+	status = rdtk_font_parse_descriptor_buffer(font, descriptorData, descriptorSize);
+
+	return font;
+}
+
+void rdtk_font_free(rdtkFont* font)
 {
 	if (!font)
 		return;
 
 	free(font);
+}
+
+int rdtk_load_embedded_fonts()
+{
+	if (!g_Font)
+	{
+		int imageSize;
+		int descriptorSize;
+		BYTE* imageData = NULL;
+		BYTE* descriptorData = NULL;
+
+		imageSize = rdtk_get_embedded_resource_file("source_serif_pro_regular_12.png", &imageData);
+		descriptorSize = rdtk_get_embedded_resource_file("source_serif_pro_regular_12.xml", &descriptorData);
+
+		if ((imageSize < 0) || (descriptorSize < 0))
+			return -1;
+
+		g_Font = rdtk_embedded_font_new(imageData, imageSize, descriptorData, descriptorSize);
+	}
+
+	return 1;
 }

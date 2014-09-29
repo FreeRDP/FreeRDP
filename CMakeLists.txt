@@ -632,6 +632,12 @@ if (IOS)
 	endif()
 endif()
 
+# RdTk
+include_directories("${CMAKE_SOURCE_DIR}/rdtk/include")
+include_directories("${CMAKE_BINARY_DIR}/rdtk/include")
+
+add_subdirectory(rdtk)
+
 if(WITH_CLIENT)
 	add_subdirectory(client)
 endif()

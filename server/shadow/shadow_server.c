@@ -41,8 +41,6 @@
 
 #define TAG SERVER_TAG("shadow")
 
-rdpShadowFont* g_Font = NULL;
-
 static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 {
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
@@ -529,22 +527,6 @@ int shadow_server_init_certificate(rdpShadowServer* server)
 	return 1;
 }
 
-int shadow_server_init_fonts(rdpShadowServer* server)
-{
-	char* fontPath;
-	rdpShadowFont* font;
-
-	fontPath = GetCombinedPath(server->ConfigPath, "shadow/fonts");
-
-	font = shadow_font_new(fontPath, "source_serif_pro_regular_12");
-
-	g_Font = font;
-
-	free(fontPath);
-
-	return 1;
-}
-
 int shadow_server_init(rdpShadowServer* server)
 {
 	int status;
@@ -568,8 +550,6 @@ int shadow_server_init(rdpShadowServer* server)
 
 	if (status < 0)
 		return -1;
-
-	shadow_server_init_fonts(server);
 
 	server->listener = freerdp_listener_new();
 

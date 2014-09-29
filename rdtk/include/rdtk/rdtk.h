@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * RdTk: Remote Desktop Toolkit
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -16,30 +16,37 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_H
-#define FREERDP_SHADOW_SERVER_H
+#ifndef RDTK_H
+#define RDTK_H
 
-#include <freerdp/server/shadow.h>
+#include <rdtk/api.h>
 
-#include "shadow_client.h"
-#include "shadow_input.h"
-#include "shadow_screen.h"
-#include "shadow_surface.h"
-#include "shadow_encoder.h"
-#include "shadow_capture.h"
-#include "shadow_channels.h"
-#include "shadow_subsystem.h"
-#include "shadow_lobby.h"
+#include <winpr/crt.h>
+#include <winpr/windows.h>
+
+typedef struct rdtk_font rdtkFont;
+typedef struct rdtk_glyph rdtkGlyph;
+typedef struct rdtk_surface rdtkSurface;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* Surface */
 
+RDTK_EXPORT rdtkSurface* rdtk_surface_new(BYTE* data, int width, int height, int scanline);
+RDTK_EXPORT void rdtk_surface_free(rdtkSurface* surface);
+
+/* Font */
+
+RDTK_EXPORT int rdtk_font_draw_text(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* font, const char* text);
+
+RDTK_EXPORT rdtkFont* rdtk_font_new(const char* path, const char* file);
+RDTK_EXPORT void rdtk_font_free(rdtkFont* font);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_H */
+#endif /* RDTK_H */
 
