@@ -22,6 +22,7 @@
 #include <string.h>
 #include <freerdp/api.h>
 #include <freerdp/utils/stream.h>
+#include <freerdp/gdi/region.h>
 
 #include "orders.h"
 #include "per.h"

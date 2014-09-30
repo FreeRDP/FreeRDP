@@ -313,6 +313,24 @@ INLINE uint32 gdi_rop3_code(uint8 code)
 	return rop3_code_table[code];
 }
 
+INLINE uint8* gdi_get_bitmap_pointer_ex(HGDI_DC hdcBmp, int x, int y, uint8 **end, uint *width)
+{
+	HGDI_BITMAP hBmp = (HGDI_BITMAP) hdcBmp->selectedObject;
+	
+	if (x >= 0 && x < hBmp->width && y >= 0 && y < hBmp->height)
+	{
+		*end = hBmp->data + (hBmp->height * hBmp->width * hdcBmp->bytesPerPixel);
+		*width = hBmp->width;
+		return hBmp->data + (y * hBmp->width * hdcBmp->bytesPerPixel) + (x * hdcBmp->bytesPerPixel);
+	}
+	else
+	{
+		printf("gdi_get_bitmap_pointer_ex: requesting invalid pointer: (%d,%d) in %dx%d\n", x, y, hBmp->width, hBmp->height);
+		return 0;
+	}
+}
+
+
 INLINE uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y)
 {
 	uint8* p;

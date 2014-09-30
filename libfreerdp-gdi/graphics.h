@@ -24,6 +24,7 @@
 #include <freerdp/graphics.h>
 
 HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, uint8* data);
+HGDI_BITMAP gdi_create_bitmap_with_independent_data(rdpGdi* gdi, int width, int height, uint8* data);
 
 void gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap);
 void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap);

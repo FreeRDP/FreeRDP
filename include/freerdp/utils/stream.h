@@ -30,6 +30,7 @@ struct _STREAM
 	int size;
 	uint8* p;
 	uint8* data;
+	uint8* allocated;
 };
 typedef struct _STREAM STREAM;
 
@@ -38,7 +39,7 @@ FREERDP_API void stream_free(STREAM* stream);
 
 #define stream_attach(_s, _buf, _size) do { \
 	_s->size = _size; \
-	_s->data = _buf; \
+	_s->allocated = _s->data = _buf; \
 	_s->p = _buf; } while (0)
 #define stream_detach(_s) memset(_s, 0, sizeof(STREAM))
 #define stream_clear(_s) memset(_s->data, 0, _s->size)
@@ -171,6 +172,28 @@ FREERDP_API void stream_extend(STREAM* stream, int request_size);
 	_dst->p += _n; \
 	_src->p += _n; \
 	} while (0)
+
+#define stream_shift(_s, _offset) do { \
+	_s->data += _offset; \
+	_s->size -= _offset; \
+	} while (0)
+
+#define stream_shifted_size(_s) (_s->allocated ? _s->data - _s->allocated : 0)
+
+#define stream_shadow(_shadow, _s) do { \
+	memcpy(&_shadow, (_s), sizeof(_shadow)); \
+	(_s)->allocated = NULL; \
+	} while (0)
+
+#define stream_unshadow(_shadow, _s) do { \
+	if (!(_s) || (_s)->allocated != NULL) { \
+		if (_shadow.allocated) xfree(_shadow.allocated); \
+	} else \
+		(_s)->allocated = _shadow.allocated; \
+	} while (0)
+
+
+
 
 #endif /* __STREAM_UTILS_H */
 

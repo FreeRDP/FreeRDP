@@ -21,6 +21,7 @@
 #include "surface.h"
 #include <freerdp/utils/rect.h>
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/gdi/region.h>
 
 /*
 static const char* const UPDATE_TYPE_STRINGS[] =
@@ -337,7 +338,6 @@ void update_reset_state(rdpUpdate* update)
 	primary->order_info.orderType = ORDER_TYPE_PATBLT;
 	altsec->switch_surface.bitmapId = SCREEN_BITMAP_SURFACE;
 	IFCALL(altsec->SwitchSurface, update->context, &(altsec->switch_surface));
-	printf("Reset state\n");
 }
 
 static void update_begin_paint(rdpContext* context)

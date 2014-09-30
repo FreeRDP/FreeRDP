@@ -270,6 +270,7 @@ struct rdp_gdi
 FREERDP_API uint32 gdi_rop3_code(uint8 code);
 FREERDP_API uint8* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 FREERDP_API uint8* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
+FREERDP_API uint8* gdi_get_bitmap_pointer_ex(HGDI_DC hdcBmp, int x, int y, uint8 **end, uint *width);
 FREERDP_API int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width);
 FREERDP_API void gdi_resize(rdpGdi* gdi, int width, int height);
 

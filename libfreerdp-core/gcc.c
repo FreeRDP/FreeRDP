@@ -787,6 +787,8 @@ boolean gcc_read_server_security_data(STREAM* s, rdpSettings* settings)
 
 	stream_read_uint32(s, settings->encryption_method); /* encryptionMethod */
 	stream_read_uint32(s, settings->encryption_level); /* encryptionLevel */
+	printf("Negotiated encryption: level=0x%x method=0x%x\n",
+		settings->encryption_level, settings->encryption_method);
 
 	if (settings->encryption_method == 0 && settings->encryption_level == 0)
 	{
@@ -872,7 +874,9 @@ void gcc_write_server_security_data(STREAM* s, rdpSettings* settings)
 	}
 
 	if (settings->encryption_method != ENCRYPTION_METHOD_NONE)
+	{
 		settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+	}
 
 	headerLen = 12;
 	keyLen = 0;

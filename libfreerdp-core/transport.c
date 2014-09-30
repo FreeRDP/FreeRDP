@@ -285,6 +285,7 @@ int transport_check_fds(rdpTransport** ptransport)
 	int status;
 	uint16 length;
 	STREAM* received;
+	STREAM shadow_of_received;
 	rdpTransport* transport = *ptransport;
 
 	wait_obj_clear(transport->recv_event);
@@ -342,24 +343,46 @@ int transport_check_fds(rdpTransport** ptransport)
 		 * A complete packet has been received. In case there are trailing data
 		 * for the next packet, we copy it to the new receive buffer.
 		 */
-		received = transport->recv_buffer;
-		transport->recv_buffer = stream_new(BUFFER_SIZE);
-
-		if (pos > length)
+		if (stream_shifted_size(transport->recv_buffer)>0x100000)
 		{
-			stream_set_pos(received, length);
-			stream_check_size(transport->recv_buffer, pos - length);
-			stream_copy(transport->recv_buffer, received, pos - length);
-		}
+			received = transport->recv_buffer;
+			transport->recv_buffer = stream_new(BUFFER_SIZE);
 
-		stream_set_pos(received, length);
-		stream_seal(received);
-		stream_set_pos(received, 0);
+			if (pos > length)
+			{
+				stream_set_pos(received, length);
+				stream_check_size(transport->recv_buffer, pos - length);
+				stream_copy(transport->recv_buffer, received, pos - length);
+			}
+
+			stream_set_pos(received, length);
+			stream_seal(received);
+			stream_set_pos(received, 0);
 		
-		if (transport->recv_callback(transport, received, transport->recv_extra) == false)
-			status = -1;
+			if (transport->recv_callback(transport, received, transport->recv_extra) == false)
+				status = -1;
 	
-		stream_free(received);
+			stream_free(received);
+		}
+		else
+		{
+			stream_shadow(shadow_of_received, transport->recv_buffer);
+
+			stream_shift(transport->recv_buffer, length);
+			stream_set_pos(transport->recv_buffer, pos - length);
+
+
+			stream_set_pos((&shadow_of_received), length);
+			stream_seal((&shadow_of_received));
+			stream_set_pos((&shadow_of_received), 0);
+
+			if (transport->recv_callback(transport, &shadow_of_received, transport->recv_extra) == false)
+				status = -1;
+
+			received = (transport==*ptransport) ? transport->recv_buffer : NULL;
+			stream_unshadow(shadow_of_received, received);
+
+		}
 
 		if (status < 0)
 			return status;
