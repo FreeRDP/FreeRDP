@@ -179,6 +179,8 @@ uint16 getLOMindex(uint16 huff)
                 src+= n; \
                 n  = 0; \
         } else if (src<dst) {   \
+				PREFETCH_READ(src); \
+				PREFETCH_WRITE(dst); \
                 for (;n; --n, ++src, ++dst) *dst = *src;  \
         } else { \
                 if (src>dst) memmove(dst, src, n); \
@@ -192,7 +194,7 @@ uint16 getLOMindex(uint16 huff)
 int decompress_rdp(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
 {
 	int type = ctype & 0x0f;
-
+	PREFETCH_READ(cbuf);
 	switch (type)
 	{
 		case PACKET_COMPR_TYPE_8K:

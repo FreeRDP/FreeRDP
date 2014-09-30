@@ -185,7 +185,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #define UNROLL_COUNT 4
 #define UNROLL(_exp) do { _exp _exp _exp _exp } while (0)
 
-#define COMMON_DESTNEXTPIXEL(BPP, _buf, _peol, _row) {_buf += BPP; if (_buf>=*(_peol)) {*(_peol) = *(_peol) - _row; _buf = *(_peol) - _row;} }
+#define COMMON_DESTNEXTPIXEL(BPP, _buf, _peol, _row) {_buf += BPP; if (_buf>=*(_peol)) {*(_peol) = *(_peol) - _row; _buf = *(_peol) - _row; PREFETCH_WRITE(_buf); } }
 
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL

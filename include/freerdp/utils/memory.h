@@ -33,4 +33,31 @@ FREERDP_API char* xstrdup(const char* str);
 
 #define ARRAY_SIZE(_x) (sizeof(_x)/sizeof(*(_x)))
 
+
+#if __GNUC__ >= 3
+
+# define EXPECT(x)              __builtin_expect(!!(x), 1)
+# define UNEXPECT(x)            __builtin_expect(!!(x), 0)
+
+#else
+
+# define EXPECT(x)              
+# define UNEXPECT(x)            
+
+#endif /* __GNUC__ */
+
+
+
+#if ( __GNUC__ > 3 ) || ( __GNUC__ == 3 && __GNUC_MINOR__ >= 1 )
+
+# define PREFETCH_READ(p)            __builtin_prefetch((p))
+# define PREFETCH_WRITE(p)          __builtin_prefetch((p), 1)
+
+#else
+
+# define PREFETCH_READ(p) 
+# define PREFETCH_WRITE(p)  
+
+#endif 
+
 #endif /* __MEMORY_UTILS_H */

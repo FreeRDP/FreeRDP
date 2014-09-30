@@ -27,6 +27,9 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint8** ppbDestEndOfLine, uint32 row
 {
 	PIXEL xorPixel;
 
+	PREFETCH_WRITE(pbDest);
+	PREFETCH_READ(pbDest + rowDelta);
+
 	DESTREADPIXEL(xorPixel, pbDest + rowDelta);
 	if (bitmask & g_MaskBit0)
 	{
@@ -274,6 +277,9 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 	uint32 advance;
 
 	RLEEXTRA
+
+	PREFETCH_READ(pbSrcBuffer);
+	PREFETCH_WRITE(pbDest);
 
 	while (pbSrc < pbEnd)
 	{
