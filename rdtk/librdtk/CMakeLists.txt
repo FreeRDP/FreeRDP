@@ -46,3 +46,6 @@ install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} EXPORT RdTkTa
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "RdTk")
 
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()

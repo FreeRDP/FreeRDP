@@ -32,12 +32,32 @@ struct rdtk_nine_patch
 	rdtkEngine* engine;
 
 	wImage* image;
+
+	int width;
+	int height;
+	int scanline;
+	BYTE* data;
+
+	int scaleLeft;
+	int scaleRight;
+	int scaleWidth;
+	int scaleTop;
+	int scaleBottom;
+	int scaleHeight;
+
+	int fillLeft;
+	int fillRight;
+	int fillWidth;
+	int fillTop;
+	int fillBottom;
+	int fillHeight;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image);
 int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight, rdtkNinePatch* ninePatch);
 
 int rdtk_nine_patch_engine_init(rdtkEngine* engine);
