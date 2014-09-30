@@ -471,7 +471,8 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 	if (region_contains_point(invariant, expendable->x, expendable->y))
 	{//left-top  of exp inside of inv, subcases:
 		if (region_contains_point(invariant, expendable->x + expendable->w - 1, expendable->y))
-		{   //        ________
+		{
+			//        ________
 			//       |   __   |
 			//       |  |  |  |
 			//       |__|__|__|		
@@ -518,7 +519,8 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 	if (region_contains_point(invariant, expendable->x + expendable->w - 1, expendable->y + expendable->h - 1))
 	{//right-bottom of exp inside of inv, subcases:
 		if (region_contains_point(invariant, expendable->x, expendable->y + expendable->h - 1))
-		{   //           __
+		{
+			//           __
 			//          |  |
 			//        __|__|__
 			//       |  |__|  |
