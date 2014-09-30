@@ -21,8 +21,12 @@
 
 #include <rdtk/rdtk.h>
 
+#include "rdtk_engine.h"
+
 struct rdtk_surface
 {
+	rdtkEngine* engine;
+
 	int width;
 	int height;
 	int scanline;
@@ -34,7 +38,7 @@ struct rdtk_surface
 extern "C" {
 #endif
 
-rdtkSurface* rdtk_surface_new(BYTE* data, int width, int height, int scanline);
+rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int height, int scanline);
 void rdtk_surface_free(rdtkSurface* surface);
 
 #ifdef __cplusplus

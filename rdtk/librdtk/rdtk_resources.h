@@ -21,6 +21,8 @@
 
 #include <rdtk/rdtk.h>
 
+#include "rdtk_engine.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

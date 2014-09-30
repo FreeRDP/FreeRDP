@@ -24,12 +24,11 @@
 #include <winpr/path.h>
 #include <winpr/print.h>
 
+#include "rdtk_engine.h"
 #include "rdtk_resources.h"
 #include "rdtk_surface.h"
 
 #include "rdtk_font.h"
-
-static rdtkFont* g_Font = NULL;
 
 int rdtk_font_draw_glyph(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* font, rdtkGlyph* glyph)
 {
@@ -124,11 +123,7 @@ int rdtk_font_draw_text(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* fo
 	int length;
 	rdtkGlyph* glyph;
 
-	if (!font)
-	{
-		rdtk_load_embedded_fonts();
-		font = g_Font;
-	}
+	font = surface->engine->font;
 
 	length = strlen(text);
 
@@ -556,7 +551,7 @@ int rdtk_font_load_descriptor(rdtkFont* font, const char* filename)
 	return rdtk_font_parse_descriptor_buffer(font, (BYTE*) buffer, size);
 }
 
-rdtkFont* rdtk_font_new(const char* path, const char* file)
+rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 {
 	int status;
 	int length;
@@ -601,6 +596,8 @@ rdtkFont* rdtk_font_new(const char* path, const char* file)
 	if (!font)
 		return NULL;
 
+	font->engine = engine;
+
 	font->image = winpr_image_new();
 
 	if (!font->image)
@@ -619,7 +616,7 @@ rdtkFont* rdtk_font_new(const char* path, const char* file)
 	return font;
 }
 
-rdtkFont* rdtk_embedded_font_new(BYTE* imageData, int imageSize, BYTE* descriptorData, int descriptorSize)
+rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, BYTE* imageData, int imageSize, BYTE* descriptorData, int descriptorSize)
 {
 	int status;
 	rdtkFont* font;
@@ -628,6 +625,8 @@ rdtkFont* rdtk_embedded_font_new(BYTE* imageData, int imageSize, BYTE* descripto
 
 	if (!font)
 		return NULL;
+
+	font->engine = engine;
 
 	font->image = winpr_image_new();
 
@@ -652,9 +651,9 @@ void rdtk_font_free(rdtkFont* font)
 	free(font);
 }
 
-int rdtk_load_embedded_fonts()
+int rdtk_font_engine_init(rdtkEngine* engine)
 {
-	if (!g_Font)
+	if (!engine->font)
 	{
 		int imageSize;
 		int descriptorSize;
@@ -667,7 +666,7 @@ int rdtk_load_embedded_fonts()
 		if ((imageSize < 0) || (descriptorSize < 0))
 			return -1;
 
-		g_Font = rdtk_embedded_font_new(imageData, imageSize, descriptorData, descriptorSize);
+		engine->font = rdtk_embedded_font_new(engine, imageData, imageSize, descriptorData, descriptorSize);
 	}
 
 	return 1;

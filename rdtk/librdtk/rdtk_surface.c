@@ -22,7 +22,15 @@
 
 #include "rdtk_surface.h"
 
-rdtkSurface* rdtk_surface_new(BYTE* data, int width, int height, int scanline)
+int rdtk_surface_fill(rdtkSurface* surface, int x, int y, int width, int height, UINT32 color)
+{
+	freerdp_image_fill(surface->data, PIXEL_FORMAT_XRGB32,
+			surface->scanline, x, y, width, height, color);
+
+	return 1;
+}
+
+rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int height, int scanline)
 {
 	rdtkSurface* surface;
 
@@ -30,6 +38,8 @@ rdtkSurface* rdtk_surface_new(BYTE* data, int width, int height, int scanline)
 
 	if (!surface)
 		return NULL;
+
+	surface->engine = engine;
 
 	surface->width = width;
 	surface->height = height;

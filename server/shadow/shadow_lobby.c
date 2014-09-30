@@ -30,6 +30,7 @@ int shadow_client_init_lobby(rdpShadowClient* client)
 {
 	int width;
 	int height;
+	rdtkEngine* engine;
 	rdtkSurface* surface;
 	RECTANGLE_16 invalidRect;
 	rdpShadowSurface* lobby;
@@ -44,14 +45,19 @@ int shadow_client_init_lobby(rdpShadowClient* client)
 	if (!client->lobby)
 		return -1;
 
-	freerdp_image_fill(lobby->data, PIXEL_FORMAT_XRGB32, lobby->scanline,
-			0, 0, lobby->width, lobby->height, 0x3BB9FF);
+	engine = rdtk_engine_new();
 
-	surface = rdtk_surface_new(lobby->data, lobby->width, lobby->height, lobby->scanline);
+	surface = rdtk_surface_new(engine, lobby->data, lobby->width, lobby->height, lobby->scanline);
 
-	rdtk_font_draw_text(surface, 16, 16, NULL, "Welcome to the shadow server!");
+	rdtk_surface_fill(surface, 0, 0, width, height, 0x3BB9FF);
+
+	//rdtk_font_draw_text(surface, 16, 16, NULL, "Welcome to the shadow server!");
+	//rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button");
+	//rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field");
 
 	rdtk_surface_free(surface);
+
+	rdtk_engine_free(engine);
 
 	invalidRect.left = 0;
 	invalidRect.top = 0;

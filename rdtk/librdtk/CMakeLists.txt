@@ -25,7 +25,15 @@ set(${MODULE_PREFIX}_SRCS
 	rdtk_surface.c
 	rdtk_surface.h
 	rdtk_font.c
-	rdtk_font.h)
+	rdtk_font.h
+	rdtk_button.c
+	rdtk_button.h
+	rdtk_nine_patch.c
+	rdtk_nine_patch.h
+	rdtk_text_field.c
+	rdtk_text_field.h
+	rdtk_engine.c
+	rdtk_engine.h)
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 

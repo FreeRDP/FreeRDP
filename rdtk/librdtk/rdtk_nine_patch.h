@@ -16,54 +16,38 @@
  * limitations under the License.
  */
 
-#ifndef RDTK_FONT_PRIVATE_H
-#define RDTK_FONT_PRIVATE_H
+#ifndef RDTK_NINE_PATCH_PRIVATE_H
+#define RDTK_NINE_PATCH_PRIVATE_H
 
 #include <rdtk/rdtk.h>
 
-#include <winpr/crt.h>
-#include <winpr/synch.h>
 #include <winpr/image.h>
+
+#include "rdtk_surface.h"
 
 #include "rdtk_engine.h"
 
-struct rdtk_glyph
-{
-	int width;
-	int offsetX;
-	int offsetY;
-	int rectX;
-	int rectY;
-	int rectWidth;
-	int rectHeight;
-	BYTE code[4];
-};
-
-struct rdtk_font
+struct rdtk_nine_patch
 {
 	rdtkEngine* engine;
 
-	int size;
-	int height;
-	char* family;
-	char* style;
 	wImage* image;
-	int glyphCount;
-	rdtkGlyph* glyphs;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int rdtk_font_engine_init(rdtkEngine* engine);
+int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight, rdtkNinePatch* ninePatch);
 
-rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file);
-void rdtk_font_free(rdtkFont* font);
+int rdtk_nine_patch_engine_init(rdtkEngine* engine);
+
+rdtkNinePatch* rdtk_nine_patch_new(rdtkEngine* engine);
+void rdtk_nine_patch_free(rdtkNinePatch* ninePatch);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* RDTK_FONT_PRIVATE_H */
+#endif /* RDTK_NINE_PATCH_PRIVATE_H */
 

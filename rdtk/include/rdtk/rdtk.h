@@ -24,25 +24,46 @@
 #include <winpr/crt.h>
 #include <winpr/windows.h>
 
+#include <freerdp/codec/color.h>
+#include <freerdp/codec/region.h>
+
+typedef struct rdtk_engine rdtkEngine;
 typedef struct rdtk_font rdtkFont;
 typedef struct rdtk_glyph rdtkGlyph;
 typedef struct rdtk_surface rdtkSurface;
+typedef struct rdtk_button rdtkButton;
+typedef struct rdtk_text_field rdtkTextField;
+typedef struct rdtk_nine_patch rdtkNinePatch;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* Engine */
+
+rdtkEngine* rdtk_engine_new();
+void rdtk_engine_free(rdtkEngine* engine);
+
 /* Surface */
 
-RDTK_EXPORT rdtkSurface* rdtk_surface_new(BYTE* data, int width, int height, int scanline);
+RDTK_EXPORT int rdtk_surface_fill(rdtkSurface* surface, int x, int y, int width, int height, UINT32 color);
+
+RDTK_EXPORT rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int height, int scanline);
 RDTK_EXPORT void rdtk_surface_free(rdtkSurface* surface);
 
 /* Font */
 
 RDTK_EXPORT int rdtk_font_draw_text(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* font, const char* text);
 
-RDTK_EXPORT rdtkFont* rdtk_font_new(const char* path, const char* file);
-RDTK_EXPORT void rdtk_font_free(rdtkFont* font);
+/* Button */
+
+RDTK_EXPORT int rdtk_button_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
+		rdtkButton* button, const char* text);
+
+/* TextField */
+
+RDTK_EXPORT int rdtk_text_field_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
+		rdtkTextField* textField, const char* text);
 
 #ifdef __cplusplus
 }

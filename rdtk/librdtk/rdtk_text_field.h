@@ -16,54 +16,34 @@
  * limitations under the License.
  */
 
-#ifndef RDTK_FONT_PRIVATE_H
-#define RDTK_FONT_PRIVATE_H
+#ifndef RDTK_TEXT_FIELD_PRIVATE_H
+#define RDTK_TEXT_FIELD_PRIVATE_H
 
 #include <rdtk/rdtk.h>
 
-#include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/image.h>
+#include "rdtk_surface.h"
+#include "rdtk_nine_patch.h"
 
 #include "rdtk_engine.h"
 
-struct rdtk_glyph
-{
-	int width;
-	int offsetX;
-	int offsetY;
-	int rectX;
-	int rectY;
-	int rectWidth;
-	int rectHeight;
-	BYTE code[4];
-};
-
-struct rdtk_font
+struct rdtk_text_field
 {
 	rdtkEngine* engine;
-
-	int size;
-	int height;
-	char* family;
-	char* style;
-	wImage* image;
-	int glyphCount;
-	rdtkGlyph* glyphs;
+	rdtkNinePatch* ninePatch;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int rdtk_font_engine_init(rdtkEngine* engine);
+int rdtk_text_field_engine_init(rdtkEngine* engine);
 
-rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file);
-void rdtk_font_free(rdtkFont* font);
+rdtkTextField* rdtk_text_field_new(rdtkEngine* engine, rdtkNinePatch* ninePatch);
+void rdtk_text_field_free(rdtkTextField* textField);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* RDTK_FONT_PRIVATE_H */
+#endif /* RDTK_TEXT_FIELD_PRIVATE_H */
 
