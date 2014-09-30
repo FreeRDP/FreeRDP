@@ -484,7 +484,8 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 		}
 
 		if (region_contains_point(invariant, expendable->x, expendable->y + expendable->h - 1))
-		{   //        ________
+		{   
+			//        ________
 			//       |      __|___
 			//       |     |  |   |
 			//       |     |__|___|
@@ -530,7 +531,8 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 		}
 
 		if (region_contains_point(invariant, expendable->x + expendable->w - 1, expendable->y))
-		{   //        ________
+		{   
+			//        ________
 			//    ___|_       |
 			//   |   | |      |
 			//   |___|_|      |
@@ -558,7 +560,8 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 
 
 	if (region_contains_point(invariant, expendable->x + expendable->w - 1, expendable->y))
-	{   //        ________
+	{   
+		//        ________
 		//       |        |
 		//     __|__      |
 		//    |  |  |     |
@@ -576,7 +579,8 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 	}
 
 	if (region_contains_point(invariant, expendable->x, expendable->y + expendable->h - 1))
-	{   //              _____
+	{
+		//              _____
 		//             |     |
 		//        -----|-- ~~|
 		//       |     |__|__|
@@ -623,7 +627,8 @@ static unsigned char substract_partial_overlap_regions(GDI_RGN *first, GDI_RGN *
 		if (!rv &&
 			first->x < second->x && first->x + first->w > second->x + second->w &&
 			first->y > second->y && first->y + first->h < second->y + second->h)
-		{   //        ___2nd__    
+		{   
+			//        ___2nd__    
 			//     __|________|__ 
 			//    |  |        |  |
 			//    |__|________|__|1st
@@ -652,11 +657,11 @@ static void decompose_sidebyside_regions(GDI_RGN *cinvalid, GDI_RGN *ce)
 	{
 		for (ci = cinvalid; ci!=ce; ++ci)
 		{
-			if (ci->w<0) continue;
+			if (ci->w<=0) continue;
 
 			for (cj = ci + 1; cj!=ce; ++cj)
 			{
-				if (cj->w<0) continue;
+				if (cj->w<=0) continue;
 
 				if (ci->h==cj->h && ci->y==cj->y)
 				{
@@ -665,14 +670,14 @@ static void decompose_sidebyside_regions(GDI_RGN *cinvalid, GDI_RGN *ce)
 						tmp = cj->x + cj->w - ci->x;
 						if (ci->w < tmp)
 							ci->w = tmp;
-						cj->w = -1; 
+						cj->w = 0; 
 					}
 					else if (cj->x <= ci->x && cj->x + cj->w >= ci->x)
 					{//[j] horizontally combines or consumes [i] 
 						tmp = ci->x + ci->w - cj->x;
 						ci->w = (cj->w < tmp) ? tmp : cj->w;
 						ci->x = cj->x;
-						cj->w = -1; 
+						cj->w = 0; 
 					}
 				}
 			}
@@ -681,11 +686,11 @@ static void decompose_sidebyside_regions(GDI_RGN *cinvalid, GDI_RGN *ce)
 		flag = 0;		 
 		for (ci = cinvalid; ci!=ce; ++ci)
 		{
-			if (ci->w<0) continue;
+			if (ci->w<=0) continue;
 
 			for (cj = ci + 1; cj!=ce; ++cj)
 			{
-				if (cj->w<0) continue;
+				if (cj->w<=0) continue;
 
 				if (ci->w==cj->w && ci->x==cj->x)
 				{
@@ -694,7 +699,7 @@ static void decompose_sidebyside_regions(GDI_RGN *cinvalid, GDI_RGN *ce)
 						tmp = cj->y + cj->h - ci->y;
 						if (ci->h < tmp)
 							ci->h = tmp;
-						cj->w = -1; 
+						cj->w = 0; 
 						flag = 1;
 					}
 					else if (cj->y <= ci->y && cj->y + cj->h >= ci->y)
@@ -702,7 +707,7 @@ static void decompose_sidebyside_regions(GDI_RGN *cinvalid, GDI_RGN *ce)
 						tmp = ci->y + ci->h - cj->y;
 						ci->h = (cj->h < tmp) ? tmp : cj->h;
 						ci->y = cj->y;
-						cj->w = -1; 
+						cj->w = 0; 
 						flag = 1;
 					}
 				}
@@ -728,7 +733,7 @@ static void decompose_invalid_regions(GDI_WND *hwnd)
 		cf = &ctmp;
 		for (ci = cinvalid; ci!=ce; ++ci)
 		{
-			if (ci->w<0)
+			if (ci->w<=0)
 			{
 				cf = ci;
 				continue;
@@ -736,7 +741,7 @@ static void decompose_invalid_regions(GDI_WND *hwnd)
 
 			for (cj = ci + 1; cj!=ce; ++cj)
 			{
-				if (cj->w<0) continue;
+				if (cj->w<=0) continue;
 
 				if (ci->x < cj->x + cj->w && 
 					cj->x < ci->x + ci->w &&
@@ -747,13 +752,13 @@ static void decompose_invalid_regions(GDI_WND *hwnd)
 						ci->x + ci->w>=cj->x + cj->w &&
 						ci->y + ci->h>=cj->y + cj->h)
 					{ //[i] consumes [j]
-						cj->w = -1; 
+						cj->w = 0; 
 					}
 					else if (cj->x<=ci->x && cj->y<=ci->y &&
 						cj->x + cj->w>=ci->x + ci->w &&
 						cj->y + cj->h>=ci->y + ci->h)
 					{ //[j] consumes [i]
-						ci->w = -1; 
+						ci->w = 0; 
 						cf = ci;
 						break;//no need no check anything more against this [i]
 					}
@@ -774,11 +779,11 @@ static void decompose_invalid_regions(GDI_WND *hwnd)
 		need_final_sidebyside_decomposition = true;
 		for (ci = cinvalid; ci!=ce; ++ci)
 		{
-			if (ci->w<0) continue;
+			if (ci->w<=0) continue;
 
 			for (cj = ci + 1; cj!=ce; ++cj)
 			{
-				if (cj->w<0) continue;
+				if (cj->w<=0) continue;
 
 				flag = substract_partial_overlap_regions(ci, cj, cf);
 

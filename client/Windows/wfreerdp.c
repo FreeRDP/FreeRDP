@@ -108,12 +108,15 @@ void wf_sw_end_paint(rdpContext* context)
 		w = cinvalid[i].w;
 		h = cinvalid[i].h;
 
-		update_rect.left = x;
-		update_rect.top = y;
-		update_rect.right = x + w - 1;
-		update_rect.bottom = y + h - 1;
+		if (w>0 && h>0)
+		{
+			update_rect.left = x;
+			update_rect.top = y;
+			update_rect.right = x + w - 1;
+			update_rect.bottom = y + h - 1;
 
-		InvalidateRect(wfi->hwnd, &update_rect, FALSE);
+			InvalidateRect(wfi->hwnd, &update_rect, FALSE);
+		}
 	}
 }
 
