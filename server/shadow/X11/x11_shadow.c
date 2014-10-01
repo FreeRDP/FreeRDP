@@ -31,6 +31,7 @@
 #include <X11/Xutil.h>
 
 #include <winpr/crt.h>
+#include <winpr/path.h>
 #include <winpr/synch.h>
 #include <winpr/image.h>
 #include <winpr/sysinfo.h>
@@ -49,6 +50,156 @@
 #include "x11_shadow.h"
 
 #define TAG SERVER_TAG("shadow.x11")
+
+#ifdef WITH_PAM
+
+#include <security/pam_appl.h>
+
+struct _SHADOW_PAM_AUTH_DATA
+{
+	const char* user;
+	const char* domain;
+	const char* password;
+};
+typedef struct _SHADOW_PAM_AUTH_DATA SHADOW_PAM_AUTH_DATA;
+
+struct _SHADOW_PAM_AUTH_INFO
+{
+	char* service_name;
+	pam_handle_t* handle;
+	struct pam_conv pamc;
+	SHADOW_PAM_AUTH_DATA appdata;
+};
+typedef struct _SHADOW_PAM_AUTH_INFO SHADOW_PAM_AUTH_INFO;
+
+int x11_shadow_pam_conv(int num_msg, const struct pam_message** msg, struct pam_response** resp, void* appdata_ptr)
+{
+	int index;
+	int pam_status = PAM_SUCCESS;
+	SHADOW_PAM_AUTH_DATA* appdata;
+	struct pam_response* response;
+
+	appdata = (SHADOW_PAM_AUTH_DATA*) appdata_ptr;
+
+	response = (struct pam_response*) calloc(num_msg, sizeof(struct pam_response));
+
+	if (!response)
+		return PAM_CONV_ERR;
+
+	for (index = 0; index < num_msg; index++)
+	{
+		switch (msg[index]->msg_style)
+		{
+			case PAM_PROMPT_ECHO_ON:
+				response[index].resp = _strdup(appdata->user);
+				response[index].resp_retcode = PAM_SUCCESS;
+				break;
+
+			case PAM_PROMPT_ECHO_OFF:
+				response[index].resp = _strdup(appdata->password);
+				response[index].resp_retcode = PAM_SUCCESS;
+				break;
+
+			default:
+				pam_status = PAM_CONV_ERR;
+				break;
+		}
+	}
+
+	if (pam_status != PAM_SUCCESS)
+	{
+		free(response);
+		return pam_status;
+	}
+
+	*resp = response;
+
+	return pam_status;
+}
+
+int x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
+{
+	if (PathFileExistsA("/etc/pam.d/lightdm"))
+	{
+		info->service_name = _strdup("lightdm");
+	}
+	else if (PathFileExistsA("/etc/pam.d/gdm"))
+	{
+		info->service_name = _strdup("gdm");
+	}
+	else if (PathFileExistsA("/etc/pam.d/xdm"))
+	{
+		info->service_name = _strdup("xdm");
+	}
+	else if (PathFileExistsA("/etc/pam.d/login"))
+	{
+		info->service_name = _strdup("login");
+	}
+	else if (PathFileExistsA("/etc/pam.d/sshd"))
+	{
+		info->service_name = _strdup("sshd");
+	}
+	else
+	{
+		return -1;
+	}
+
+	return 1;
+}
+
+int x11_shadow_pam_authenticate(x11ShadowSubsystem* subsystem, const char* user, const char* domain, const char* password)
+{
+	int pam_status;
+	SHADOW_PAM_AUTH_INFO* info;
+
+	info = calloc(1, sizeof(SHADOW_PAM_AUTH_INFO));
+
+	if (!info)
+		return PAM_CONV_ERR;
+
+	if (x11_shadow_pam_get_service_name(info) < 0)
+		return -1;
+
+	info->appdata.user = user;
+	info->appdata.domain = domain;
+	info->appdata.password = password;
+
+	info->pamc.conv = &x11_shadow_pam_conv;
+	info->pamc.appdata_ptr = &(info->appdata);
+
+	pam_status = pam_start(info->service_name, 0, &(info->pamc), &(info->handle));
+
+	if (pam_status != PAM_SUCCESS)
+	{
+		fprintf(stderr, "pam_start failure: %s\n", pam_strerror(info->handle, pam_status));
+		free(info);
+		return -1;
+	}
+
+	pam_status = pam_authenticate(info->handle, 0);
+
+	if (pam_status != PAM_SUCCESS)
+	{
+		fprintf(stderr, "pam_authenticate failure: %s\n", pam_strerror(info->handle, pam_status));
+		free(info);
+		return -1;
+	}
+
+	pam_status = pam_acct_mgmt(info->handle, 0);
+
+	if (pam_status != PAM_SUCCESS)
+	{
+		fprintf(stderr, "pam_acct_mgmt failure: %s\n", pam_strerror(info->handle, pam_status));
+		free(info);
+		return -1;
+	}
+
+	free(info);
+
+	return 1;
+}
+
+#endif
 
 void x11_shadow_input_synchronize_event(x11ShadowSubsystem* subsystem, UINT32 flags)
 {
@@ -69,6 +220,10 @@ void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags
 		code |= KBDEXT;
 
 	vkcode = GetVirtualKeyCodeFromVirtualScanCode(code, 4);
+
+	if (extended)
+		vkcode |= KBDEXT;
+
 	keycode = GetKeycodeFromVirtualKeyCode(vkcode, KEYCODE_TYPE_EVDEV);
 
 	if (keycode != 0)
@@ -1087,6 +1242,10 @@ x11ShadowSubsystem* x11_shadow_subsystem_new()
 
 	if (!subsystem)
 		return NULL;
+
+#ifdef WITH_PAM
+	subsystem->Authenticate = (pfnShadowAuthenticate) x11_shadow_pam_authenticate;
+#endif
 
 	subsystem->SynchronizeEvent = (pfnShadowSynchronizeEvent) x11_shadow_input_synchronize_event;
 	subsystem->KeyboardEvent = (pfnShadowKeyboardEvent) x11_shadow_input_keyboard_event;

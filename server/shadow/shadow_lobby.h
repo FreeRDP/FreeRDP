@@ -1,6 +1,5 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * GDI Graphics Pipeline
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,46 +16,24 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_GDI_GFX_H
-#define FREERDP_GDI_GFX_H
+#ifndef FREERDP_SHADOW_SERVER_LOBBY_H
+#define FREERDP_SHADOW_SERVER_LOBBY_H
 
-#include <freerdp/api.h>
-#include <freerdp/gdi/gdi.h>
+#include <freerdp/server/shadow.h>
 
-struct gdi_gfx_surface
-{
-	UINT16 surfaceId;
-	UINT32 width;
-	UINT32 height;
-	BOOL alpha;
-	BYTE* data;
-	int scanline;
-	UINT32 format;
-};
-typedef struct gdi_gfx_surface gdiGfxSurface;
+#include <winpr/crt.h>
+#include <winpr/synch.h>
 
-struct gdi_gfx_cache_entry
-{
-	UINT64 cacheKey;
-	UINT32 width;
-	UINT32 height;
-	BOOL alpha;
-	BYTE* data;
-	int scanline;
-	UINT32 format;
-};
-typedef struct gdi_gfx_cache_entry gdiGfxCacheEntry;
+#include <rdtk/rdtk.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-FREERDP_API void gdi_graphics_pipeline_init(rdpGdi* gdi, RdpgfxClientContext* gfx);
-FREERDP_API void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx);
+int shadow_client_init_lobby(rdpShadowClient* client);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FREERDP_GDI_GFX_H */
-
+#endif /* FREERDP_SHADOW_SERVER_LOBBY_H */

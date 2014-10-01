@@ -446,6 +446,7 @@ int makecert_context_parse_arguments(MAKECERT_CONTEXT* context, int argc, char**
 
 int makecert_context_set_output_file_name(MAKECERT_CONTEXT* context, char* name)
 {
+	free(context->output_file);
 	context->output_file = _strdup(name);
 	return 1;
 }
@@ -967,6 +968,7 @@ void makecert_context_free(MAKECERT_CONTEXT* context)
 		EVP_PKEY_free(context->pkey);
 
 		free(context->default_name);
+		free(context->common_name);
 
 		CRYPTO_cleanup_all_ex_data();
 

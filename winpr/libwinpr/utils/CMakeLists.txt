@@ -35,6 +35,10 @@ set(${MODULE_PREFIX}_COLLECTIONS_SRCS
 	collections/StreamPool.c
 	collections/MessageQueue.c
 	collections/MessagePipe.c)
+	
+set(${MODULE_PREFIX}_LODEPNG_SRCS
+	lodepng/lodepng.c
+	lodepng/lodepng.h)
 
 set(${MODULE_PREFIX}_TRIO_SRCS
 	trio/strio.h
@@ -83,15 +87,17 @@ set(${MODULE_PREFIX}_SRCS
 	ssl.c)
 
 if (ANDROID)
-		include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 winpr_module_add(${${MODULE_PREFIX}_SRCS}
 	${${MODULE_PREFIX}_COLLECTIONS_SRCS}
+	${${MODULE_PREFIX}_LODEPNG_SRCS}
 	${${MODULE_PREFIX}_TRIO_SRCS}
 	${${MODULE_PREFIX}_WLOG_SRCS})
 
 winpr_include_directory_add(
+	"lodepng"
 	"trio"
 	"."
 	${ZLIB_INCLUDE_DIRS}

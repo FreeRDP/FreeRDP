@@ -102,6 +102,9 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	seqNumber = pSrcData[1];
 	offset += 2;
 
+	if (!clear->seqNumber && seqNumber)
+		clear->seqNumber = seqNumber;
+
 	if (seqNumber != clear->seqNumber)
 		return -1005;
 

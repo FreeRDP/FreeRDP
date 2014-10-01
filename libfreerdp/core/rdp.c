@@ -668,8 +668,10 @@ BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 	if (Stream_GetRemainingLength(s) < (monitorCount * 20))
 		return FALSE;
 
-	monitorDefArray = (MONITOR_DEF*) malloc(sizeof(MONITOR_DEF) * monitorCount);
-	ZeroMemory(monitorDefArray, sizeof(MONITOR_DEF) * monitorCount);
+	monitorDefArray = (MONITOR_DEF*) calloc(monitorCount, sizeof(MONITOR_DEF));
+
+	if (!monitorDefArray)
+		return FALSE;
 
 	for (index = 0; index < monitorCount; index++)
 	{
@@ -682,6 +684,7 @@ BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 	}
 
 	free(monitorDefArray);
+
 	return TRUE;
 }
 

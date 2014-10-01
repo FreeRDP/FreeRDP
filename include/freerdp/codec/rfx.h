@@ -20,7 +20,6 @@
 #ifndef FREERDP_CODEC_REMOTEFX_H
 #define FREERDP_CODEC_REMOTEFX_H
 
-typedef enum _RLGR_MODE RLGR_MODE;
 typedef struct _RFX_RECT RFX_RECT;
 typedef struct _RFX_TILE RFX_TILE;
 typedef struct _RFX_MESSAGE RFX_MESSAGE;
@@ -42,6 +41,7 @@ enum _RLGR_MODE
 	RLGR1,
 	RLGR3
 };
+typedef enum _RLGR_MODE RLGR_MODE;
 
 struct _RFX_RECT
 {

@@ -29,11 +29,26 @@
 
 int gdi_ResetGraphics(RdpgfxClientContext* context, RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
+	UINT32 DesktopWidth;
+	UINT32 DesktopHeight;
 	rdpGdi* gdi = (rdpGdi*) context->custom;
+	rdpUpdate* update = gdi->context->update;
+	rdpSettings* settings = gdi->context->settings;
 
-	freerdp_client_codecs_reset(gdi->codecs, FREERDP_CODEC_ALL);
+	DesktopWidth = resetGraphics->width;
+	DesktopHeight = resetGraphics->height;
 
 	region16_init(&(gdi->invalidRegion));
+
+	if ((DesktopWidth != settings->DesktopWidth) ||
+			(DesktopHeight != settings->DesktopHeight))
+	{
+		settings->DesktopWidth = DesktopWidth;
+		settings->DesktopHeight = DesktopHeight;
+
+		if (update)
+			update->DesktopResize(gdi->context);
+	}
 
 	gdi->graphicsReset = TRUE;
 

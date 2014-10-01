@@ -1,5 +1,5 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
+ * RdTk: Remote Desktop Toolkit
  *
  * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -16,30 +16,22 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SHADOW_SERVER_H
-#define FREERDP_SHADOW_SERVER_H
+#ifndef RDTK_RESOURCES_PRIVATE_H
+#define RDTK_RESOURCES_PRIVATE_H
 
-#include <freerdp/server/shadow.h>
+#include <rdtk/rdtk.h>
 
-#include "shadow_client.h"
-#include "shadow_input.h"
-#include "shadow_screen.h"
-#include "shadow_surface.h"
-#include "shadow_encoder.h"
-#include "shadow_capture.h"
-#include "shadow_channels.h"
-#include "shadow_subsystem.h"
-#include "shadow_lobby.h"
+#include "rdtk_engine.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
+int rdtk_get_embedded_resource_file(const char* filename, BYTE** pData);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FREERDP_SHADOW_SERVER_H */
+#endif /* RDTK_RESOURCES_PRIVATE_H */
 

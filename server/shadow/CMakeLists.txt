@@ -26,6 +26,22 @@ elseif(APPLE AND NOT IOS)
 	set(WITH_SHADOW_MAC 1)
 endif()
 
+# Authentication
+
+if(WITH_SHADOW_X11 OR WITH_SHADOW_MAC)
+	set(PAM_FEATURE_TYPE "RECOMMENDED")
+	set(PAM_FEATURE_PURPOSE "authentication")
+	set(PAM_FEATURE_DESCRIPTION "user authentication")
+
+	find_feature(PAM ${PAM_FEATURE_TYPE} ${PAM_FEATURE_PURPOSE} ${PAM_FEATURE_DESCRIPTION})
+
+	if(PAM_FOUND)
+		add_definitions(-DWITH_PAM)
+		include_directories(${PAM_INCLUDE_DIR})
+		list(APPEND ${MODULE_PREFIX}_AUTH_LIBS ${PAM_LIBRARY})
+	endif()
+endif()
+
 if(WITH_SHADOW_X11)
 	set(XEXT_FEATURE_TYPE "RECOMMENDED")
 	set(XEXT_FEATURE_PURPOSE "X11 extension")
@@ -135,6 +151,8 @@ include_directories(${OPENSSL_INCLUDE_DIR})
 set(${MODULE_PREFIX}_SRCS
 	shadow_client.c
 	shadow_client.h
+	shadow_lobby.c
+	shadow_lobby.h
 	shadow_input.c
 	shadow_input.h
 	shadow_screen.c
@@ -188,6 +206,8 @@ elseif(WITH_SHADOW_MAC)
 	list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_MAC_LIBS})
 endif()
 
+list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_AUTH_LIBS})
+
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
@@ -196,6 +216,8 @@ list(APPEND ${MODULE_PREFIX}_LIBS freerdp-client)
 
 list(APPEND ${MODULE_PREFIX}_LIBS winpr)
 list(APPEND ${MODULE_PREFIX}_LIBS winpr-makecert-tool)
+
+list(APPEND ${MODULE_PREFIX}_LIBS rdtk)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

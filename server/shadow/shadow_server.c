@@ -47,6 +47,7 @@ static COMMAND_LINE_ARGUMENT_A shadow_args[] =
 	{ "ipc-socket", COMMAND_LINE_VALUE_REQUIRED, "<ipc-socket>", NULL, NULL, -1, NULL, "Server IPC socket" },
 	{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL, "Select or list monitors" },
 	{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL, "Select rectangle within monitor to share" },
+	{ "auth", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Clients must authenticate" },
 	{ "may-view", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may view without prompt" },
 	{ "may-interact", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "Clients may interact without prompt" },
 	{ "version", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT_VERSION, NULL, NULL, NULL, -1, NULL, "Print version" },
@@ -231,6 +232,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			server->subRect.right = x + w;
 			server->subRect.bottom = y + h;
 			server->shareSubRect = TRUE;
+		}
+		CommandLineSwitchCase(arg, "auth")
+		{
+			server->authentication = arg->Value ? TRUE : FALSE;
 		}
 		CommandLineSwitchDefault(arg)
 		{
@@ -609,6 +614,12 @@ rdpShadowServer* shadow_server_new()
 	server->port = 3389;
 	server->mayView = TRUE;
 	server->mayInteract = TRUE;
+
+#ifdef WITH_SHADOW_X11
+	server->authentication = TRUE;
+#else
+	server->authentication = FALSE;
+#endif
 
 	return server;
 }

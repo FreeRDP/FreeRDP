@@ -795,6 +795,10 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_DynamicChannelCount				5056
 #define FreeRDP_DynamicChannelArraySize				5057
 #define FreeRDP_DynamicChannelArray				5058
+#define FreeRDP_SupportDynamicChannels				5059
+#define FreeRDP_SupportEchoChannel				5184
+#define FreeRDP_SupportDisplayControl				5185
+#define FreeRDP_SupportGeometryTracking				5186
 
 /**
  * FreeRDP Settings Data Structure
@@ -1368,6 +1372,11 @@ struct rdp_settings
 	ALIGN64 ADDIN_ARGV** DynamicChannelArray; /* 5058 */
 	ALIGN64 BOOL SupportDynamicChannels; /* 5059 */
 	UINT64 padding5184[5184 - 5060]; /* 5060 */
+
+	ALIGN64 BOOL SupportEchoChannel; /* 5184 */
+	ALIGN64 BOOL SupportDisplayControl; /* 5185 */
+	ALIGN64 BOOL SupportGeometryTracking; /* 5186 */
+	UINT64 padding5312[5312 - 5187]; /* 5187 */
 
 	/**
 	 * WARNING: End of ABI stable zone!
