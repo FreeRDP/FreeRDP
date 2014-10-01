@@ -256,7 +256,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 {
 	uint8* pbSrc = pbSrcBuffer;
 #ifdef PREFETCH_LENGTH
-	uint8* pbSrcPrefetch = pbSrcBuffer + PREFETCH_LENGTH;
+	uint8* pbSrcPrefetch = pbSrcBuffer;
 #endif
 	uint8* pbEnd = pbSrcBuffer + cbSrcBuffer;
 	uint8* pbDestEndOfLine = pbDest + rowDelta * height;
@@ -279,11 +279,11 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 	RLEEXTRA
 
 	PREFETCH_WRITE(pbDest + PREFETCH_LENGTH);
-	PREFETCH_READ(pbSrcPrefetch);
+
 	while (pbSrc < pbEnd)
 	{
 #ifdef PREFETCH_LENGTH
-		if (pbSrc>=pbSrcPrefetch)
+		if (pbSrc>=pbSrcPrefetch && pbSrc + PREFETCH_LENGTH <= pbEnd)
 		{
 			pbSrcPrefetch = pbSrc + PREFETCH_LENGTH;
 			PREFETCH_READ(pbSrcPrefetch);
