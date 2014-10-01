@@ -494,3 +494,20 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 
 	return 1;
 }
+
+int rdtk_nine_patch_engine_uninit(rdtkEngine* engine)
+{
+	if (engine->button9patch)
+	{
+		rdtk_nine_patch_free(engine->button9patch);
+		engine->button9patch = NULL;
+	}
+
+	if (engine->textField9patch)
+	{
+		rdtk_nine_patch_free(engine->textField9patch);
+		engine->textField9patch = NULL;
+	}
+
+	return 1;
+}

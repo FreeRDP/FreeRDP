@@ -50,8 +50,7 @@ int shadow_client_init_lobby(rdpShadowClient* client)
 	surface = rdtk_surface_new(engine, lobby->data, lobby->width, lobby->height, lobby->scanline);
 
 	rdtk_surface_fill(surface, 0, 0, width, height, 0x3BB9FF);
-
-	//rdtk_font_draw_text(surface, 16, 16, NULL, "Welcome to the shadow server!");
+	//rdtk_label_draw(surface, 16, 16, 128, 32, NULL, "label", 0, 0);
 	//rdtk_button_draw(surface, 16, 64, 128, 32, NULL, "button");
 	//rdtk_text_field_draw(surface, 16, 128, 128, 32, NULL, "text field");
 

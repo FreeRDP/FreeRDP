@@ -28,6 +28,8 @@ set(${MODULE_PREFIX}_SRCS
 	rdtk_font.h
 	rdtk_button.c
 	rdtk_button.h
+	rdtk_label.c
+	rdtk_label.h
 	rdtk_nine_patch.c
 	rdtk_nine_patch.h
 	rdtk_text_field.c

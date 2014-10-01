@@ -49,5 +49,10 @@ void rdtk_engine_free(rdtkEngine* engine)
 	if (!engine)
 		return;
 
+	rdtk_font_engine_uninit(engine);
+	rdtk_nine_patch_engine_uninit(engine);
+	rdtk_button_engine_uninit(engine);
+	rdtk_text_field_engine_uninit(engine);
+
 	free(engine);
 }

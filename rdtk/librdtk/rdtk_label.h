@@ -16,59 +16,33 @@
  * limitations under the License.
  */
 
-#ifndef RDTK_NINE_PATCH_PRIVATE_H
-#define RDTK_NINE_PATCH_PRIVATE_H
+#ifndef RDTK_LABEL_PRIVATE_H
+#define RDTK_LABEL_PRIVATE_H
 
 #include <rdtk/rdtk.h>
-
-#include <winpr/image.h>
 
 #include "rdtk_surface.h"
 
 #include "rdtk_engine.h"
 
-struct rdtk_nine_patch
+struct rdtk_label
 {
 	rdtkEngine* engine;
-
-	wImage* image;
-
-	int width;
-	int height;
-	int scanline;
-	BYTE* data;
-
-	int scaleLeft;
-	int scaleRight;
-	int scaleWidth;
-	int scaleTop;
-	int scaleBottom;
-	int scaleHeight;
-
-	int fillLeft;
-	int fillRight;
-	int fillWidth;
-	int fillTop;
-	int fillBottom;
-	int fillHeight;
 };
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image);
-int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight, rdtkNinePatch* ninePatch);
+int rdtk_label_engine_init(rdtkEngine* engine);
+int rdtk_label_engine_uninit(rdtkEngine* engine);
 
-int rdtk_nine_patch_engine_init(rdtkEngine* engine);
-int rdtk_nine_patch_engine_uninit(rdtkEngine* engine);
-
-rdtkNinePatch* rdtk_nine_patch_new(rdtkEngine* engine);
-void rdtk_nine_patch_free(rdtkNinePatch* ninePatch);
+rdtkLabel* rdtk_label_new(rdtkEngine* engine);
+void rdtk_label_free(rdtkLabel* label);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* RDTK_NINE_PATCH_PRIVATE_H */
+#endif /* RDTK_LABEL_PRIVATE_H */
 

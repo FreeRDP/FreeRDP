@@ -20,14 +20,52 @@
 #include "config.h"
 #endif
 
+#include "rdtk_font.h"
+
 #include "rdtk_button.h"
 
 int rdtk_button_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
 		rdtkButton* button, const char* text)
 {
-	button = surface->engine->button;
+	int offsetX;
+	int offsetY;
+	int textWidth;
+	int textHeight;
+	int fillWidth;
+	int fillHeight;
+	rdtkFont* font;
+	rdtkEngine* engine;
+	rdtkNinePatch* ninePatch;
 
-	rdtk_nine_patch_draw(surface, nXDst, nYDst, nWidth, nHeight, button->ninePatch);
+	engine = surface->engine;
+	font = engine->font;
+	button = engine->button;
+	ninePatch = button->ninePatch;
+
+	rdtk_font_text_draw_size(font, &textWidth, &textHeight, text);
+
+	rdtk_nine_patch_draw(surface, nXDst, nYDst, nWidth, nHeight, ninePatch);
+
+	if ((textWidth > 0) && (textHeight > 0))
+	{
+		fillWidth = nWidth - (ninePatch->width - ninePatch->fillWidth);
+		fillHeight = nHeight - (ninePatch->height - ninePatch->fillHeight);
+
+		offsetX = ninePatch->fillLeft;
+		offsetY = ninePatch->fillTop;
+
+		if (textWidth < fillWidth)
+			offsetX = ((fillWidth - textWidth) / 2) + ninePatch->fillLeft;
+		else if (textWidth < ninePatch->width)
+			offsetX = ((ninePatch->width - textWidth) / 2);
+
+		if (textHeight < fillHeight)
+			offsetY = ((fillHeight - textHeight) / 2) + ninePatch->fillTop;
+		else if (textHeight < ninePatch->height)
+			offsetY = ((ninePatch->height - textHeight) / 2);
+
+		rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
+	}
 
 	return 1;
 }
@@ -64,3 +102,15 @@ int rdtk_button_engine_init(rdtkEngine* engine)
 
 	return 1;
 }
+
+int rdtk_button_engine_uninit(rdtkEngine* engine)
+{
+	if (engine->button)
+	{
+		rdtk_button_free(engine->button);
+		engine->button = NULL;
+	}
+
+	return 1;
+}
+

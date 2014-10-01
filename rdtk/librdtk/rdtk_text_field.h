@@ -37,6 +37,7 @@ extern "C" {
 #endif
 
 int rdtk_text_field_engine_init(rdtkEngine* engine);
+int rdtk_text_field_engine_uninit(rdtkEngine* engine);
 
 rdtkTextField* rdtk_text_field_new(rdtkEngine* engine, rdtkNinePatch* ninePatch);
 void rdtk_text_field_free(rdtkTextField* textField);

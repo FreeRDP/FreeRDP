@@ -37,6 +37,7 @@ extern "C" {
 #endif
 
 int rdtk_button_engine_init(rdtkEngine* engine);
+int rdtk_button_engine_uninit(rdtkEngine* engine);
 
 rdtkButton* rdtk_button_new(rdtkEngine* engine, rdtkNinePatch* ninePatch);
 void rdtk_button_free(rdtkButton* button);

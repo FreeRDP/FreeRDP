@@ -32,6 +32,7 @@ typedef struct rdtk_font rdtkFont;
 typedef struct rdtk_glyph rdtkGlyph;
 typedef struct rdtk_surface rdtkSurface;
 typedef struct rdtk_button rdtkButton;
+typedef struct rdtk_label rdtkLabel;
 typedef struct rdtk_text_field rdtkTextField;
 typedef struct rdtk_nine_patch rdtkNinePatch;
 
@@ -59,6 +60,11 @@ RDTK_EXPORT int rdtk_font_draw_text(rdtkSurface* surface, int nXDst, int nYDst, 
 
 RDTK_EXPORT int rdtk_button_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
 		rdtkButton* button, const char* text);
+
+/* Label */
+
+RDTK_EXPORT int rdtk_label_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
+		rdtkLabel* label, const char* text, int hAlign, int vAlign);
 
 /* TextField */
 

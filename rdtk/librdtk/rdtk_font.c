@@ -137,6 +137,34 @@ int rdtk_font_draw_text(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* fo
 	return 1;
 }
 
+int rdtk_font_text_draw_size(rdtkFont* font, int* width, int* height, const char* text)
+{
+	int index;
+	int length;
+	int glyphIndex;
+	rdtkGlyph* glyph;
+
+	*width = 0;
+	*height = 0;
+
+	length = strlen(text);
+
+	for (index = 0; index < length; index++)
+	{
+		glyphIndex = text[index] - 32;
+
+		if (glyphIndex < font->glyphCount)
+		{
+			glyph = &font->glyphs[glyphIndex];
+			*width += (glyph->width + 1);
+		}
+	}
+
+	*height = font->height + 2;
+
+	return 1;
+}
+
 char* rdtk_font_load_descriptor_file(const char* filename, int* pSize)
 {
 	BYTE* buffer;
@@ -618,7 +646,9 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 
 rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, BYTE* imageData, int imageSize, BYTE* descriptorData, int descriptorSize)
 {
+	int size;
 	int status;
+	BYTE* buffer;
 	rdtkFont* font;
 
 	font = (rdtkFont*) calloc(1, sizeof(rdtkFont));
@@ -638,7 +668,17 @@ rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, BYTE* imageData, int imageS
 	if (status < 0)
 		return NULL;
 
-	status = rdtk_font_parse_descriptor_buffer(font, descriptorData, descriptorSize);
+	size = descriptorSize;
+	buffer = (BYTE*) malloc(size);
+
+	if (!buffer)
+		return NULL;
+
+	CopyMemory(buffer, descriptorData, size);
+
+	status = rdtk_font_parse_descriptor_buffer(font, buffer, size);
+
+	free(buffer);
 
 	return font;
 }
@@ -667,6 +707,17 @@ int rdtk_font_engine_init(rdtkEngine* engine)
 			return -1;
 
 		engine->font = rdtk_embedded_font_new(engine, imageData, imageSize, descriptorData, descriptorSize);
+	}
+
+	return 1;
+}
+
+int rdtk_font_engine_uninit(rdtkEngine* engine)
+{
+	if (engine->font)
+	{
+		rdtk_font_free(engine->font);
+		engine->font = NULL;
 	}
 
 	return 1;

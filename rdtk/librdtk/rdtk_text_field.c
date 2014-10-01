@@ -20,14 +20,52 @@
 #include "config.h"
 #endif
 
+#include "rdtk_font.h"
+
 #include "rdtk_text_field.h"
 
 int rdtk_text_field_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
 		rdtkTextField* textField, const char* text)
 {
-	textField = surface->engine->textField;
+	int offsetX;
+	int offsetY;
+	int textWidth;
+	int textHeight;
+	int fillWidth;
+	int fillHeight;
+	rdtkFont* font;
+	rdtkEngine* engine;
+	rdtkNinePatch* ninePatch;
 
-	rdtk_nine_patch_draw(surface, nXDst, nYDst, nWidth, nHeight, textField->ninePatch);
+	engine = surface->engine;
+	font = engine->font;
+	textField = surface->engine->textField;
+	ninePatch = textField->ninePatch;
+
+	rdtk_font_text_draw_size(font, &textWidth, &textHeight, text);
+
+	rdtk_nine_patch_draw(surface, nXDst, nYDst, nWidth, nHeight, ninePatch);
+
+	if ((textWidth > 0) && (textHeight > 0))
+	{
+		fillWidth = nWidth - (ninePatch->width - ninePatch->fillWidth);
+		fillHeight = nHeight - (ninePatch->height - ninePatch->fillHeight);
+
+		offsetX = ninePatch->fillLeft;
+		offsetY = ninePatch->fillTop;
+
+		if (textWidth < fillWidth)
+			offsetX = ((fillWidth - textWidth) / 2) + ninePatch->fillLeft;
+		else if (textWidth < ninePatch->width)
+			offsetX = ((ninePatch->width - textWidth) / 2);
+
+		if (textHeight < fillHeight)
+			offsetY = ((fillHeight - textHeight) / 2) + ninePatch->fillTop;
+		else if (textHeight < ninePatch->height)
+			offsetY = ((ninePatch->height - textHeight) / 2);
+
+		rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
+	}
 
 	return 1;
 }
@@ -60,6 +98,17 @@ int rdtk_text_field_engine_init(rdtkEngine* engine)
 	if (!engine->textField)
 	{
 		engine->textField = rdtk_text_field_new(engine, engine->textField9patch);
+	}
+
+	return 1;
+}
+
+int rdtk_text_field_engine_uninit(rdtkEngine* engine)
+{
+	if (engine->textField)
+	{
+		rdtk_text_field_free(engine->textField);
+		engine->textField = NULL;
 	}
 
 	return 1;

@@ -25,6 +25,8 @@ struct rdtk_engine
 {
 	rdtkFont* font;
 
+	rdtkLabel* label;
+
 	rdtkButton* button;
 	rdtkNinePatch* button9patch;
 
