@@ -283,7 +283,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 	while (pbSrc < pbEnd)
 	{
 #ifdef PREFETCH_LENGTH
-		if (pbSrc>=pbSrcPrefetch && pbSrc + PREFETCH_LENGTH <= pbEnd)
+		if (pbSrc>=pbSrcPrefetch)
 		{
 			pbSrcPrefetch = pbSrc + PREFETCH_LENGTH;
 			PREFETCH_READ(pbSrcPrefetch);

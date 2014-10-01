@@ -126,9 +126,10 @@ static int MAKEFN(BitBlt_SRCCOPY, BITBLT_PIXELBYTES, BITBLT_ALIGN)
 
 		for ( ;i>1; --i)
 		{
-			dstp-= dstw;
 			srcp-= srcw;
+			dstp-= dstw;
 			PREFETCH_READ(srcp - srcw);
+			PREFETCH_WRITE(dstp - dstw);
 			memcpy((BITBLT_ALIGN *)dstp, (BITBLT_ALIGN *)srcp, BytesPerLine);
 		}
 		memcpy((BITBLT_ALIGN *)dstp, (BITBLT_ALIGN *)srcp, BytesPerLine);
@@ -142,6 +143,7 @@ static int MAKEFN(BitBlt_SRCCOPY, BITBLT_PIXELBYTES, BITBLT_ALIGN)
 		for (--nHeight; nHeight; --nHeight)
 		{
 			PREFETCH_READ(srcp + srcw);
+			PREFETCH_WRITE(dstp + dstw);
 			memcpy(dstp, srcp, BytesPerLine);
 			if (UNLIKELY((dstp+= dstw)>=dste || (srcp+= srcw)>=srce))
 				return 0;
