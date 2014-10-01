@@ -188,7 +188,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #ifdef PREFETCH_LENGTH
 
 # define COMMON_DESTNEXTPIXEL(BPP, _buf, _peol, _row) {_buf += BPP; \
-	if (_buf>=*(_peol)) {*(_peol) = *(_peol) - _row; _buf = *(_peol) - _row; if (_row>=PREFETCH_LENGTH) { PREFETCH_WRITE(_buf + PREFETCH_LENGTH); } } }
+	if (_buf>=*(_peol)) {*(_peol) = *(_peol) - _row; _buf = *(_peol) - _row; PREFETCH_WRITE(_buf + PREFETCH_LENGTH); } }
 
 #else
 # define COMMON_DESTNEXTPIXEL(BPP, _buf, _peol, _row) {_buf += BPP; if (_buf>=*(_peol)) {*(_peol) = *(_peol) - _row; _buf = *(_peol) - _row; } }

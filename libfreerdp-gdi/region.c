@@ -816,7 +816,8 @@ static void decompose_invalid_regions(GDI_WND *hwnd)
  */
 INLINE int gdi_DecomposeInvalidArea(HGDI_DC hdc)
 {
-	decompose_invalid_regions(hdc->hwnd);
+	if (hdc->hwnd)
+		decompose_invalid_regions(hdc->hwnd);
 	return 0;
 }
 

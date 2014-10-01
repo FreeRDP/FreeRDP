@@ -310,7 +310,8 @@ boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 	{
 		fastpath_recv_update_data(fastpath, s);
 	}
-	gdi_DecomposeInvalidArea(update->context->gdi->primary->hdc);
+	if (update->context->gdi)
+		gdi_DecomposeInvalidArea(update->context->gdi->primary->hdc);
 	IFCALL(update->EndPaint, update->context);
 
 	return true;

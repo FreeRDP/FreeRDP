@@ -220,11 +220,28 @@ boolean df_post_connect(freerdp* instance)
 	gdi = instance->context->gdi;
 
 	dfi->err = DirectFBCreate(&(dfi->dfb));
+	if (dfi->err!=DFB_OK)
+	{
+		printf("DirectFB init failed! err=0x%x\n",  dfi->err);
+		return false;
+	}
 
 	dfi->dsc.flags = DSDESC_CAPS;
 	dfi->dsc.caps = DSCAPS_PRIMARY;
 	dfi->err = dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->primary));
+	if (dfi->err!=DFB_OK)
+	{
+		printf("DirectFB surface failed! err=0x%x\n",  dfi->err);
+		return false;
+	}
+
 	dfi->err = dfi->primary->GetSize(dfi->primary, &(gdi->width), &(gdi->height));
+	if (dfi->err!=DFB_OK)
+	{
+		printf("DirectFB query surface size failed! err=0x%x\n",  dfi->err);
+		return false;
+	}
+
 	dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
 	dfi->dfb->CreateInputEventBuffer(dfi->dfb, DICAPS_ALL, DFB_TRUE, &(dfi->event_buffer));
 	dfi->event_buffer->CreateFileDescriptor(dfi->event_buffer, &(dfi->read_fds));
