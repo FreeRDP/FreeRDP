@@ -27,9 +27,6 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint8** ppbDestEndOfLine, uint32 row
 {
 	PIXEL xorPixel;
 
-	PREFETCH_WRITE(pbDest);
-	PREFETCH_READ(pbDest + rowDelta);
-
 	DESTREADPIXEL(xorPixel, pbDest + rowDelta);
 	if (bitmask & g_MaskBit0)
 	{
@@ -258,6 +255,9 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 	uint32 rowDelta, uint32 width, uint32 height)
 {
 	uint8* pbSrc = pbSrcBuffer;
+#ifdef PREFETCH_LENGTH
+	uint8* pbSrcPrefetch = pbSrcBuffer + PREFETCH_LENGTH;
+#endif
 	uint8* pbEnd = pbSrcBuffer + cbSrcBuffer;
 	uint8* pbDestEndOfLine = pbDest + rowDelta * height;
 	uint8* pbDestLastLine = pbDestEndOfLine - rowDelta;
@@ -278,11 +278,17 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 
 	RLEEXTRA
 
-	PREFETCH_READ(pbSrcBuffer);
-	PREFETCH_WRITE(pbDest);
-
+	PREFETCH_WRITE(pbDest + PREFETCH_LENGTH);
+	PREFETCH_READ(pbSrcPrefetch);
 	while (pbSrc < pbEnd)
 	{
+#ifdef PREFETCH_LENGTH
+		if (pbSrc>=pbSrcPrefetch)
+		{
+			pbSrcPrefetch = pbSrc + PREFETCH_LENGTH;
+			PREFETCH_READ(pbSrcPrefetch);
+		}
+#endif
 		/* Watch out for the end of the first scanline. */
 		if (fFirstLine && pbDest < pbDestLastLine)
 		{

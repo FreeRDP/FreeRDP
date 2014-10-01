@@ -24,7 +24,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/codec/color.h>
-
+#include <freerdp/utils/memory.h>
 #include <freerdp/gdi/pen.h>
 #include <freerdp/gdi/bitmap.h>
 #include <freerdp/gdi/region.h>

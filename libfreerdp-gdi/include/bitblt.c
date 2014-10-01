@@ -38,17 +38,21 @@ static int MAKEFN(BitBlt_BLACKNESS, BITBLT_PIXELBYTES, BITBLT_ALIGN)
 	uint w;
 	BITBLT_ALIGN* dstp, *end;
 	const size_t BytesPerLine = nWidth * BITBLT_PIXELBYTES;// * hdcDest->bytesPerPixel	
+	if (!nHeight)
+		return 0;
 
 	dstp = (BITBLT_ALIGN *)gdi_get_bitmap_pointer_ex(hdcDest, nXDest, nYDest, (uint8**)&end, &w);
 	if (!dstp)
 		return 0;
 
-	for (; nHeight; --nHeight)
+	for (--nHeight; nHeight; --nHeight)
 	{
-		memset((BITBLT_ALIGN *)dstp, 0, BytesPerLine);
+		PREFETCH_WRITE(dstp + w);
+		memset(dstp, 0, BytesPerLine);
 
-		if ((dstp+=w)>=end) break;
+		if ((dstp+=w)>=end) return 0;
 	}
+	memset(dstp, 0, BytesPerLine);
 
 	return 0;
 }
@@ -59,17 +63,21 @@ static int MAKEFN(BitBlt_WHITENESS, BITBLT_PIXELBYTES, BITBLT_ALIGN)
 	uint w;
 	BITBLT_ALIGN* dstp, *end;
 	const size_t BytesPerLine = nWidth * BITBLT_PIXELBYTES;// * hdcDest->bytesPerPixel	
+	if (!nHeight)
+		return 0;
 
 	dstp = (BITBLT_ALIGN *)gdi_get_bitmap_pointer_ex(hdcDest, nXDest, nYDest, (uint8**)&end, &w);
 	if (!dstp)
 		return 0;
 
-	for (; nHeight; --nHeight)
+	for (--nHeight; nHeight; --nHeight)
 	{
-		memset((BITBLT_ALIGN *)dstp, 0xff, BytesPerLine);
+		PREFETCH_WRITE(dstp + w);
+		memset(dstp, 0xff, BytesPerLine);
 
-		if ((dstp+=w)>=end) break;
+		if (UNLIKELY((dstp+=w)>=end)) return 0;
 	}
+	memset(dstp, 0xff, BytesPerLine);
 
 	return 0;
 }
@@ -81,6 +89,8 @@ static int MAKEFN(BitBlt_SRCCOPY, BITBLT_PIXELBYTES, BITBLT_ALIGN)
 	BITBLT_ALIGN *srcp, *srce;
 	BITBLT_ALIGN *dstp, *dste;
 	const int BytesPerLine = nWidth * BITBLT_PIXELBYTES;// * hdcDest->bytesPerPixel
+	if (!nHeight)
+		return 0;
 
 	srcp = (BITBLT_ALIGN*)gdi_get_bitmap_pointer_ex(hdcSrc, nXSrc, nYSrc, (uint8**)&srce, &srcw);
 	if (!srcp)
@@ -94,46 +104,65 @@ static int MAKEFN(BitBlt_SRCCOPY, BITBLT_PIXELBYTES, BITBLT_ALIGN)
 	if ((hdcDest->selectedObject != hdcSrc->selectedObject) ||
 	    gdi_CopyOverlap(nXDest, nYDest, nWidth, nHeight, nXSrc, nYSrc) == 0)
 	{
-		for (; nHeight; --nHeight)
+		for (--nHeight; nHeight; --nHeight)
 		{
+			PREFETCH_READ(srcp + srcw);
+			PREFETCH_WRITE(dstp + dstw);
 			memcpy(dstp, srcp, BytesPerLine);
-			if ((dstp+= dstw)>=dste || (srcp+= srcw)>=srce) break;
+			if (UNLIKELY((dstp+= dstw)>=dste || (srcp+= srcw)>=srce))
+				return 0;
 		}
+		memcpy(dstp, srcp, BytesPerLine);
+		return 0;
 	}
-	else if (nYSrc < nYDest)
+	
+	if (nYSrc < nYDest)
 	{
 		/* copy down */
 		for (i = 0; i<nHeight; ++i)
 		{
-			if ((dstp+= dstw)>=dste || (srcp+= srcw)>=srce) break;
+			if (UNLIKELY((dstp+= dstw)>=dste || (srcp+= srcw)>=srce)) break;
 		}
 
-		for ( ; i; --i)
+		for ( ;i>1; --i)
 		{
 			dstp-= dstw;
 			srcp-= srcw;
+			PREFETCH_READ(srcp - srcw);
 			memcpy((BITBLT_ALIGN *)dstp, (BITBLT_ALIGN *)srcp, BytesPerLine);
 		}
+		memcpy((BITBLT_ALIGN *)dstp, (BITBLT_ALIGN *)srcp, BytesPerLine);
+		return 0;
 	}
-	else if (nYSrc > nYDest)
+	
+	if (nYSrc > nYDest)
 	{
 		/* copy up */
 
-		for (; nHeight; --nHeight)
+		for (--nHeight; nHeight; --nHeight)
 		{
+			PREFETCH_READ(srcp + srcw);
 			memcpy(dstp, srcp, BytesPerLine);
-			if ((dstp+= dstw)>=dste || (srcp+= srcw)>=srce) break;
+			if (UNLIKELY((dstp+= dstw)>=dste || (srcp+= srcw)>=srce))
+				return 0;
 		}
+		memcpy(dstp, srcp, BytesPerLine);
+		return 0;
 	}
-	else if (nXDest!=nXSrc)
+
+	if (nXDest!=nXSrc)
 	{
 		/* horizontal shift*/
 
-		for (; nHeight; --nHeight)
+		for (--nHeight; nHeight; --nHeight)
 		{
+			PREFETCH_READ(srcp + srcw);
 			memmove(dstp, srcp, BytesPerLine);
-			if ((dstp+= dstw)>=dste || (srcp+= srcw)>=srce) break;
+			if (UNLIKELY((dstp+= dstw)>=dste || (srcp+= srcw)>=srce))
+				return 0;
 		}
+		memmove(dstp, srcp, BytesPerLine);
+		return 0;
 	}
 	
 	return 0;
