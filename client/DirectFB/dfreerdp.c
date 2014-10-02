@@ -33,6 +33,10 @@
 
 #include "dfreerdp.h"
 
+#define BUSY_FRAMEDROP_THRESHOLD		500 //milliseconds
+#define BUSY_FRAMEDROP_INTERVAL			150 //milliseconds
+#define BUSY_INPUT_DEFER_INTERVAL		300 //milliseconds
+
 static freerdp_sem g_sem;
 static int g_thread_count = 0;
 
@@ -55,8 +59,7 @@ static uint64 get_ticks(void)
 {
 	uint64 rv;
 	struct timeval tv ;
-	struct timezone tz;
-	gettimeofday(&tv, &tz);
+	gettimeofday(&tv, NULL);
 	rv = tv.tv_sec;
 	rv*= 1000;
 	rv+= (uint64)(tv.tv_usec / 1000);
@@ -109,14 +112,14 @@ void df_end_paint(rdpContext* context)
 	const uint64 now = get_ticks();
 	if (((dfContext*) context)->endpaint_defer_ts)
 	{
-		if ((now - ((dfContext*) context)->endpaint_defer_ts)<200)
+		if ((now - ((dfContext*) context)->endpaint_defer_ts)<BUSY_FRAMEDROP_INTERVAL)
 			return;
 
 		((dfContext*) context)->endpaint_defer_ts = 0;
 	}
 	else if (((dfContext*) context)->busy_ts)
 	{
-		if ((now - ((dfContext*) context)->busy_ts)>500)
+		if ((now - ((dfContext*) context)->busy_ts)>BUSY_FRAMEDROP_THRESHOLD)
 		{
 			((dfContext*) context)->endpaint_defer_ts = now;
 			return;
@@ -380,6 +383,7 @@ int dfreerdp_run(freerdp* instance)
 	void* wfds[32];
 	fd_set rfds_set;
 	fd_set wfds_set;
+	struct timeval tv;
 	dfInfo* dfi;
 	dfContext* context;
 	rdpChannels* channels;
@@ -410,6 +414,25 @@ int dfreerdp_run(freerdp* instance)
 			printf("Failed to get channel manager file descriptor\n");
 			break;
 		}
+
+		if (context->input_defer_ts)
+		{
+			if (!context->busy_ts)
+			{
+				df_events_commit(instance);
+				context->input_defer_ts = 0;
+			}
+			else if (get_ticks()-context->input_defer_ts>=BUSY_INPUT_DEFER_INTERVAL)
+			{
+				df_events_commit(instance);
+				context->input_defer_ts = get_ticks();
+			}
+		}
+		else if (context->busy_ts && context->endpaint_defer_ts)
+		{
+			context->input_defer_ts = context->busy_ts;
+		}
+
 		if (df_get_fds(instance, rfds, &rcount, wfds, &wcount) != true)
 		{
 			printf("Failed to get dfreerdp file descriptor\n");
@@ -435,8 +458,10 @@ int dfreerdp_run(freerdp* instance)
 
 		if (context->busy_ts)
 		{
-			struct timeval tv = {0};
-			if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, &tv) <= 0 )
+			tv.tv_sec = 0;
+			tv.tv_usec = 0;
+			i = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &tv);
+			if ( i == 0 )
 			{
 				context->busy_ts = 0;
 				if (context->endpaint_defer_ts)
@@ -446,7 +471,11 @@ int dfreerdp_run(freerdp* instance)
 				}
 			}
 		}
-		else if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
+		else
+			i = select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL);
+
+
+		if (i == -1)
 		{
 			/* these are not really errors */
 			if (!((errno == EAGAIN) ||
@@ -464,11 +493,16 @@ int dfreerdp_run(freerdp* instance)
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
+
 		if (df_check_fds(instance, &rfds_set) != true)
 		{
 			printf("Failed to check dfreerdp file descriptor\n");
 			break;
 		}
+		if (!context->input_defer_ts)
+			df_events_commit(instance);
+
+
 		if (freerdp_channels_check_fds(channels, instance) != true)
 		{
 			printf("Failed to check channel manager file descriptor\n");

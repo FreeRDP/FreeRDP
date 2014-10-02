@@ -24,5 +24,6 @@
 
 void df_keyboard_init(void);
 boolean df_event_process(freerdp* instance, DFBEvent* event);
+void df_events_commit(freerdp* instance);
 
 #endif /* __DF_EVENT_H */

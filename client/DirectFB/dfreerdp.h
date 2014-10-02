@@ -40,8 +40,9 @@ struct df_context
 	dfInfo* dfi;
 	rdpSettings* settings;
 
-	uint64 endpaint_defer_ts; 
 	uint64 busy_ts;
+	uint64 endpaint_defer_ts;
+	uint64 input_defer_ts;
 };
 
 typedef struct df_context dfContext;
@@ -68,6 +69,12 @@ struct df_info
 	IDirectFBSurface* surface;
 	IDirectFBDisplayLayer* layer;
 	IDirectFBEventBuffer* event_buffer;
+	boolean pointer_pending;
+	int pointer_x;
+	int pointer_y;
+
+	boolean wheel_pending;
+	int wheel;
 };
 
 #endif /* __DFREERDP_H */

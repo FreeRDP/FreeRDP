@@ -38,7 +38,7 @@ void df_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	dsc.width = pointer->width;
 	dsc.height = pointer->height;
 	dsc.pixelformat = DSPF_ARGB;
-
+	printf("df_Pointer_New (%ux%u)\n", dsc.width, dsc.height);
 	result = dfi->dfb->CreateSurface(dfi->dfb, &dsc, &(df_pointer->surface));
 
 	if (result == DFB_OK)
