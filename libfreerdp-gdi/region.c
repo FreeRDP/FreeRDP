@@ -475,7 +475,7 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 			//        ________
 			//       |   __   |
 			//       |  |  |  |
-			//       |__|__|__|		
+			//       |__|__|__|
 			//          |__|
 
 			expendable->h = (expendable->y + expendable->h) - (invariant->y + invariant->h);
@@ -484,7 +484,7 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 		}
 
 		if (region_contains_point(invariant, expendable->x, expendable->y + expendable->h - 1))
-		{   
+		{
 			//        ________
 			//       |      __|___
 			//       |     |  |   |
@@ -497,8 +497,8 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 		}
 
 		//        ________
-		//       |        |  
-		//       |      __|__ 
+		//       |        |
+		//       |      __|__
 		//       |     |  |  |
 		//       |_____|__|~~|
 		//             |_____|
@@ -525,14 +525,14 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 			//        __|__|__
 			//       |  |__|  |
 			//       |        |
-			//       |________|		
+			//       |________|
 
 			expendable->h = invariant->y - expendable->y;
 			return 1;
 		}
 
 		if (region_contains_point(invariant, expendable->x + expendable->w - 1, expendable->y))
-		{   
+		{
 			//        ________
 			//    ___|_       |
 			//   |   | |      |
@@ -561,7 +561,7 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 
 
 	if (region_contains_point(invariant, expendable->x + expendable->w - 1, expendable->y))
-	{   
+	{
 		//        ________
 		//       |        |
 		//     __|__      |
@@ -587,7 +587,7 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 		//       |     |__|__|
 		//       |        |
 		//       |        |
-		//       |________|	
+		//       |________|
 
 		fragment->x = invariant->x + invariant->w;
 		fragment->y = invariant->y;
@@ -601,18 +601,49 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 	return 0;
 }
 
-/**
- * Substracts partially overlapping regions, creating addition region if result can't fit in two regions
- * This function automatically selects subtrahend / minuend region, so any may be changed as result
- * !!!: Be aware that this function will behave incorrectly if one of regions completely inside another :!!!
- * @param first - 1st region to substract
- * @param second - 2nd region to substract 
- * @param fragment - place to put addition resulted region if neccessary
- * @return 0 - if regions are not partially overlapped, 1 - if substraction result fit into 2 regions, 2 - if substraction put addition result part into fragment parameter
- */
-static unsigned char substract_partial_overlap_regions(GDI_RGN *first, GDI_RGN *second, GDI_RGN *fragment)
+
+INLINE static boolean is_region_inside_other(const GDI_RGN *r, const GDI_RGN *other)
+{
+	return (other->x<=r->x && other->x + other->w>=r->x + r->w &&
+			other->y<=r->y && other->y + other->h>=r->y + r->h);
+}
+
+static boolean is_region_inside_any_other(const GDI_RGN *r, const GDI_RGN *begin, const GDI_RGN *end)
+{
+	const GDI_RGN *ci;
+
+	for (ci = begin; ci != end; ++ci)
+	{
+		if (r!=ci && is_region_inside_other(r, ci))
+			return true;
+	}
+
+	return false;
+}
+
+
+typedef struct EmptyRegions_
+{
+	GDI_RGN tmp;
+	GDI_RGN *cache[0x20];
+	uint8 count;
+} EmptyRegions;
+
+INLINE static boolean clear_region_if_inside_any_other(GDI_RGN *r, const GDI_RGN *begin, const GDI_RGN *end)
+{
+	if (!is_region_inside_any_other(r, begin, end))
+		return false;
+
+	r->w = 0;
+	r->h = 0;
+	return true;
+}
+
+static unsigned char decompose_partial_overlap_region_pair(GDI_RGN *first, GDI_RGN *second, EmptyRegions *empties, GDI_RGN *others_begin, GDI_RGN *others_end)
 {
 	uint8 rv;
+	const uint8 empties_count = empties->count;
+	GDI_RGN *fragment = empties_count ? empties->cache[empties->count - 1] : &empties->tmp, *cleared = NULL;
 
 	if (second->w>first->w) //prefer wider region as invariant
 	{
@@ -622,18 +653,32 @@ static unsigned char substract_partial_overlap_regions(GDI_RGN *first, GDI_RGN *
 	}
 
 	rv = substract_regions_if_vertex_inside(first, second, fragment);
-	if (!rv)
+	if (rv)
+	{
+		if (second->w==0 || second->h==0 || clear_region_if_inside_any_other(second, others_begin, others_end))
+			cleared = second;
+		if (rv==2 && clear_region_if_inside_any_other(fragment, others_begin, others_end))
+			rv = 1;
+	}
+	else
 	{
 		rv = substract_regions_if_vertex_inside(second, first, fragment);
-		if (!rv &&
-			first->x < second->x && first->x + first->w > second->x + second->w &&
-			first->y > second->y && first->y + first->h < second->y + second->h)
-		{   
-			//        ___2nd__    
-			//     __|________|__ 
+		if (rv)
+		{
+			if (first->w==0 || first->h==0 || clear_region_if_inside_any_other(first, others_begin, others_end))
+				cleared = first;
+
+			if (rv==2 && clear_region_if_inside_any_other(fragment, others_begin, others_end))
+				rv = 1;
+		}
+		else if ( first->x < second->x && first->x + first->w > second->x + second->w &&
+				first->y > second->y && first->y + first->h < second->y + second->h)
+		{
+			//        ___2nd__
+			//     __|________|__
 			//    |  |        |  |
 			//    |__|________|__|1st
-			//       |________|	
+			//       |________|
 
 			fragment->x = second->x;
 			fragment->w = second->w;
@@ -641,14 +686,37 @@ static unsigned char substract_partial_overlap_regions(GDI_RGN *first, GDI_RGN *
 			fragment->h = second->y + second->h - fragment->y;
 
 			second->h = first->y - second->y;
-			rv = 2;
+
+			if (second->w==0 || second->h==0 || clear_region_if_inside_any_other(second, others_begin, others_end))
+				cleared = second;
+
+			if (clear_region_if_inside_any_other(fragment, others_begin, others_end))
+				rv = 1;
+			else
+				rv = 2;
+		}
+	}
+
+	if (cleared)
+	{
+		if (rv==2)
+		{
+			*cleared = *fragment;
+			fragment->w = 0;
+			return 1;
+		}
+
+		if (empties_count < (sizeof(empties->cache)/sizeof(empties->cache[0])) )
+		{
+			empties->cache[empties_count] = cleared;
+			empties->count = empties_count + 1;
 		}
 	}
 
 	return rv;
 }
 
-static void decompose_sidebyside_regions(GDI_RGN *cinvalid, GDI_RGN *ce)
+static void decompose_sidebyside_regions(GDI_RGN *begin, GDI_RGN *end)
 {
 	uint8 flag;
 	int tmp;
@@ -656,60 +724,61 @@ static void decompose_sidebyside_regions(GDI_RGN *cinvalid, GDI_RGN *ce)
 
 	for (;;)
 	{
-		for (ci = cinvalid; ci!=ce; ++ci)
+		for (ci = begin; ci!=end; ++ci)
 		{
 			if (ci->w<=0) continue;
 
-			for (cj = ci + 1; cj!=ce; ++cj)
+			for (cj = ci + 1; cj!=end; ++cj)
 			{
 				if (cj->w<=0) continue;
 
 				if (ci->h==cj->h && ci->y==cj->y)
 				{
 					if (ci->x <= cj->x && ci->x + ci->w >= cj->x)
-					{//[i] horizontally combines or consumes [j] 
+					{//[i] horizontally combines or consumes [j]
 						tmp = cj->x + cj->w - ci->x;
 						if (ci->w < tmp)
 							ci->w = tmp;
-						cj->w = 0; 
+						cj->w = 0;
 					}
 					else if (cj->x <= ci->x && cj->x + cj->w >= ci->x)
-					{//[j] horizontally combines or consumes [i] 
+					{//[j] horizontally combines or consumes [i]
 						tmp = ci->x + ci->w - cj->x;
-						ci->w = (cj->w < tmp) ? tmp : cj->w;
-						ci->x = cj->x;
-						cj->w = 0; 
+						if (cj->w < tmp)
+							cj->w = tmp;
+						ci->w = 0;
+						break;
 					}
 				}
 			}
 		}
 
-		flag = 0;		 
-		for (ci = cinvalid; ci!=ce; ++ci)
+		flag = 0;
+		for (ci = begin; ci!=end; ++ci)
 		{
 			if (ci->w<=0) continue;
 
-			for (cj = ci + 1; cj!=ce; ++cj)
+			for (cj = ci + 1; cj!=end; ++cj)
 			{
 				if (cj->w<=0) continue;
 
 				if (ci->w==cj->w && ci->x==cj->x)
 				{
 					if (ci->y <= cj->y && ci->y + ci->h >= cj->y)
-					{//[i] vertically combines or consumes [j] 
+					{//[i] vertically combines or consumes [j]
 						tmp = cj->y + cj->h - ci->y;
 						if (ci->h < tmp)
 							ci->h = tmp;
-						cj->w = 0; 
+						cj->w = 0;
 						flag = 1;
 					}
 					else if (cj->y <= ci->y && cj->y + cj->h >= ci->y)
-					{//[j] vertically combines or consumes [i] 
+					{//[j] vertically combines or consumes [i]
 						tmp = ci->y + ci->h - cj->y;
-						ci->h = (cj->h < tmp) ? tmp : cj->h;
-						ci->y = cj->y;
-						cj->w = 0; 
-						flag = 1;
+						if (cj->h < tmp)
+							cj->h = tmp;
+						ci->w = 0;
+						break;
 					}
 				}
 			}
@@ -718,93 +787,123 @@ static void decompose_sidebyside_regions(GDI_RGN *cinvalid, GDI_RGN *ce)
 	}
 }
 
-static void decompose_invalid_regions(GDI_WND *hwnd)
+
+INLINE static void put_to_empties(EmptyRegions *empties, GDI_RGN *r)
 {
-	uint8 flag;
-	boolean need_final_sidebyside_decomposition = false;
-	int ninvalid = hwnd->ninvalid;
-	GDI_RGN *cinvalid = hwnd->cinvalid;
-	GDI_RGN ctmp, *cf, *ci, *cj, *ce = cinvalid + ninvalid;
-
-	decompose_sidebyside_regions(cinvalid, ce);
-
-	for (;;)
+	uint8 count = empties->count;
+	if (count < sizeof(empties->cache) / sizeof(empties->cache[0]))
 	{
-		flag = 0;
-		cf = &ctmp;
-		for (ci = cinvalid; ci!=ce; ++ci)
+		empties->cache[count] = r;
+		empties->count = count + 1;
+	}
+}
+
+
+static boolean decompose_regions_inside_regions(GDI_RGN *begin, GDI_RGN *end, EmptyRegions *empties)
+{
+	boolean rv = false;
+	GDI_RGN *ci, *cj;
+
+	for (ci = begin; ci!=end; ++ci)
+	{
+		if (ci->w<=0)
 		{
-			if (ci->w<=0)
-			{
-				cf = ci;
-				continue;
-			}
-
-			for (cj = ci + 1; cj!=ce; ++cj)
-			{
-				if (cj->w<=0) continue;
-
-				if (ci->x < cj->x + cj->w && 
-					cj->x < ci->x + ci->w &&
-					ci->y < cj->y + cj->h && 
-					cj->y < ci->y + ci->h)
-				{
-					if (ci->x<=cj->x && ci->y<=cj->y &&
-						ci->x + ci->w>=cj->x + cj->w &&
-						ci->y + ci->h>=cj->y + cj->h)
-					{ //[i] consumes [j]
-						cj->w = 0; 
-					}
-					else if (cj->x<=ci->x && cj->y<=ci->y &&
-						cj->x + cj->w>=ci->x + ci->w &&
-						cj->y + cj->h>=ci->y + ci->h)
-					{ //[j] consumes [i]
-						ci->w = 0; 
-						cf = ci;
-						break;//no need no check anything more against this [i]
-					}
-					else
-						flag = 1;
-				}
-			}
+			put_to_empties(empties, ci);
+			continue;
 		}
 
-		if (!flag)
+		for (cj = ci + 1; cj!=end; ++cj)
 		{
-			if (need_final_sidebyside_decomposition)
-				decompose_sidebyside_regions(cinvalid, ce);
-			break;
-		}
+			if (cj->w<=0) continue;
 
-		flag = 0;
-		need_final_sidebyside_decomposition = true;
-		for (ci = cinvalid; ci!=ce; ++ci)
-		{
-			if (ci->w<=0) continue;
-
-			for (cj = ci + 1; cj!=ce; ++cj)
+			if (ci->x < cj->x + cj->w && 
+				cj->x < ci->x + ci->w &&
+				ci->y < cj->y + cj->h && 
+				cj->y < ci->y + ci->h)
 			{
-				if (cj->w<=0) continue;
-
-				flag = substract_partial_overlap_regions(ci, cj, cf);
-
-				if (flag)
-				{
-					if (flag>1 && cf==&ctmp)
-					{
-						if (!add_cinvalid(hwnd, ctmp.x, ctmp.y, ctmp.w, ctmp.h))
-							return;
-
-						cinvalid = hwnd->cinvalid;
-						ninvalid = hwnd->ninvalid;
-						ce = cinvalid + ninvalid;
-					}
-					break;
+				if (ci->x<=cj->x && ci->y<=cj->y &&
+					ci->x + ci->w>=cj->x + cj->w &&
+					ci->y + ci->h>=cj->y + cj->h)
+				{ //[i] consumes [j]
+					cj->w = 0; 
 				}
+				else if (cj->x<=ci->x && cj->y<=ci->y &&
+					cj->x + cj->w>=ci->x + ci->w &&
+					cj->y + cj->h>=ci->y + ci->h)
+				{ //[j] consumes [i]
+					ci->w = 0; 
+					put_to_empties(empties, ci);
+					break;//no need no check anything more against this [i]
+				}
+				else
+					rv = true;
 			}
-			if (flag) break;
 		}
 	}
+
+	return rv;
+}
+
+static void decompose_invalid_regions(GDI_WND *hwnd)
+{
+	uint8 r;
+	boolean need_decompose_sidebyside_regions;
+	boolean loop_flag;
+	GDI_RGN *ci, *cj;
+	GDI_RGN *begin = hwnd->cinvalid;
+	GDI_RGN *end = begin + hwnd->ninvalid;
+	EmptyRegions empties;
+	empties.count = 0;
+
+	decompose_sidebyside_regions(begin, end);
+
+	if (!decompose_regions_inside_regions(begin, end, &empties))
+		return;
+
+	need_decompose_sidebyside_regions = false;
+	for (;;)
+	{
+		loop_flag = false;
+		for (ci = begin; ci!=end; ++ci)
+		{
+			if (ci->w<=0)
+				continue;
+
+			for (cj = ci + 1; cj!=end; ++cj)
+			{
+				if (cj->w<=0)
+					continue;
+
+				r = decompose_partial_overlap_region_pair(ci, cj, &empties, begin, end);
+				if (r)
+				{
+					if (r>1)
+					{
+						if (empties.count==0)
+						{
+							if (!add_cinvalid(hwnd, empties.tmp.x, empties.tmp.y, empties.tmp.w, empties.tmp.h))
+								return;
+
+							ci = hwnd->cinvalid + (ci - begin);
+							cj = hwnd->cinvalid + (cj - begin);
+
+							begin = hwnd->cinvalid;
+							end = begin + hwnd->ninvalid;
+						}
+						else
+							empties.count--;
+					}
+					loop_flag = true;
+					if (cj->w<=0) break;
+				}
+			}
+		}
+		if (!loop_flag) break;
+		need_decompose_sidebyside_regions = true;
+	}
+	if (need_decompose_sidebyside_regions)
+		decompose_sidebyside_regions(begin, end);
+
 }
 
 
