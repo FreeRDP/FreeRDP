@@ -599,16 +599,16 @@ void InitializeWtsApiStubs_Env()
 
 void InitializeWtsApiStubs_FreeRDS()
 {
-	char* prefix;
-	char* libdir;
 	wIniFile* ini;
+	const char* prefix;
+	const char* libdir;
 
 	if (g_WtsApi)
 		return;
 
 	ini = IniFile_New();
 
-	if (IniFile_Parse(ini, "/var/run/freerds.instance") < 0)
+	if (IniFile_ReadFile(ini, "/var/run/freerds.instance") < 0)
 	{
 		IniFile_Free(ini);
 		WLog_ERR(TAG, "failed to parse freerds.instance");
