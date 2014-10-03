@@ -43,6 +43,10 @@ int IniFile_Load_String(wIniFile* ini, const char* iniString)
 		return -1;
 
 	ini->buffer = (char*) malloc(fileSize + 2);
+
+	if (!ini->buffer)
+		return -1;
+
 	CopyMemory(ini->buffer, iniString, fileSize);
 	
 	ini->buffer[fileSize] = '\n';
@@ -53,23 +57,24 @@ int IniFile_Load_String(wIniFile* ini, const char* iniString)
 	return 1;
 }
 
-int IniFile_Load_File(wIniFile* ini, const char* filename)
+int IniFile_Open_File(wIniFile* ini, const char* filename)
 {
-	long int fileSize;
-	
 	if (ini->readOnly)
-	{
 		ini->fp = fopen(filename, "r");
-	}
 	else
-	{
-		ini->fp = fopen(filename, "r+");
-
-		if (!ini->fp)
-			ini->fp = fopen(filename, "w+");
-	}
+		ini->fp = fopen(filename, "w+");
 
 	if (!ini->fp)
+		return -1;
+
+	return 1;
+}
+
+int IniFile_Load_File(wIniFile* ini, const char* filename)
+{
+	int fileSize;
+
+	if (IniFile_Open_File(ini, filename) < 0)
 		return -1;
 
 	fseek(ini->fp, 0, SEEK_END);
@@ -85,12 +90,18 @@ int IniFile_Load_File(wIniFile* ini, const char* filename)
 
 	ini->buffer = (char*) malloc(fileSize + 2);
 
+	if (!ini->buffer)
+		return -1;
+
 	if (fread(ini->buffer, fileSize, 1, ini->fp) != 1)
 	{
 		free(ini->buffer);
 		ini->buffer = NULL;
 		return -1;
 	}
+
+	fclose(ini->fp);
+	ini->fp = NULL;
 
 	ini->buffer[fileSize] = '\n';
 	ini->buffer[fileSize + 1] = '\0';
@@ -368,9 +379,11 @@ int IniFile_ReadFile(wIniFile* ini, const char* filename)
 	int status;
 	
 	ini->readOnly = TRUE;
+
+	free(ini->filename);
 	ini->filename = _strdup(filename);
 
-	status = IniFile_Load_File(ini, ini->filename);
+	status = IniFile_Load_File(ini, filename);
 	
 	if (status < 0)
 		return status;
@@ -549,14 +562,86 @@ int IniFile_SetKeyValueInt(wIniFile* ini, const char* section, const char* key, 
 
 char* IniFile_WriteBuffer(wIniFile* ini)
 {
-	/* TODO: write to buffer */
+	int i, j;
+	int offset;
+	int size;
+	char* buffer;
+	wIniFileKey* key;
+	wIniFileSection* section;
 
-	return NULL;
+	size = 0;
+
+	for (i = 0; i < ini->nSections; i++)
+	{
+		section = ini->sections[i];
+		size += strlen(section->name) + 3;
+
+		for (j = 0; j < section->nKeys; j++)
+		{
+			key = section->keys[j];
+			size += strlen(key->name) + strlen(key->value) + 2;
+		}
+
+		size += 1;
+	}
+
+	size += 1;
+
+	buffer = malloc(size + 1);
+
+	if (!buffer)
+		return NULL;
+
+	offset = 0;
+
+	for (i = 0; i < ini->nSections; i++)
+	{
+		section = ini->sections[i];
+		sprintf_s(&buffer[offset], size - offset, "[%s]\n", section->name);
+		offset += strlen(section->name) + 3;
+
+		for (j = 0; j < section->nKeys; j++)
+		{
+			key = section->keys[j];
+			sprintf_s(&buffer[offset], size - offset, "%s=%s\n", key->name, key->value);
+			offset += strlen(key->name) + strlen(key->value) + 2;
+		}
+
+		sprintf_s(&buffer[offset], size - offset, "\n");
+		offset += 1;
+	}
+
+	buffer[offset] = '\0';
+	size += 1;
+
+	return buffer;
 }
 
 int IniFile_WriteFile(wIniFile* ini, const char* filename)
 {
-	/* TODO: write to file */
+	int length;
+	char* buffer;
+
+	buffer = IniFile_WriteBuffer(ini);
+
+	if (!buffer)
+		return -1;
+
+	length = strlen(buffer);
+
+	ini->readOnly = FALSE;
+
+	if (!filename)
+		filename = ini->filename;
+
+	if (IniFile_Open_File(ini, filename) < 0)
+		return -1;
+
+	fwrite((void*) buffer, length, 1, ini->fp);
+
+	fclose(ini->fp);
+
+	free(buffer);
 
 	return 1;
 }
