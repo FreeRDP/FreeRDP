@@ -236,6 +236,11 @@ if(WIN32)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWIN32_LEAN_AND_MEAN")
 
+  # Set product and vendor for dll and exe version information.
+  set(RC_VERSION_VENDOR "FreeRDP")
+  set(RC_VERSION_PRODUCT "FreeRDP")
+  string(TIMESTAMP RC_VERSION_YEAR "%Y")
+
 	if(NOT DEFINED CMAKE_WINDOWS_VERSION)
 		set(CMAKE_WINDOWS_VERSION "WINXP")
 	endif()

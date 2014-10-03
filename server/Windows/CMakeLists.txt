@@ -58,6 +58,21 @@ if(CHANNEL_RDPSND AND WITH_RDPSND_DSOUND)
 		)
 endif()
 
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
+set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
+set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
+set (RC_VERSION_PATCH 0)
+set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+
+configure_file(
+  ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+  @ONLY)
+
+set (${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+
 if(WITH_SERVER_INTERFACE)
 	add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
   if (WITH_LIBRARY_VERSIONING)
