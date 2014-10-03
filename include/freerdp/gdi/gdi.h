@@ -197,6 +197,7 @@ struct _GDI_WND
 {
 	int count;
 	int ninvalid;
+	int binvalid;
 	HGDI_RGN invalid;
 	HGDI_RGN cinvalid;
 };

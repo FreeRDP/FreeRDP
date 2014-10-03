@@ -77,6 +77,7 @@ HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp)
 	hDC->hwnd->count = 32;
 	hDC->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * hDC->hwnd->count);
 	hDC->hwnd->ninvalid = 0;
+	hDC->hwnd->binvalid = 0;
 
 	return hDC;
 }
