@@ -59,6 +59,7 @@ typedef struct df_pointer dfPointer;
 struct df_info
 {
 	int read_fds;
+	int read_len_pending;
 	DFBResult err;
 	IDirectFB* dfb;
 	DFBEvent event;

@@ -21,6 +21,8 @@
 #include <pthread.h>
 #include <locale.h>
 #include <time.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
@@ -33,9 +35,9 @@
 
 #include "dfreerdp.h"
 
-#define BUSY_FRAMEDROP_THRESHOLD		500 //milliseconds
+#define BUSY_THRESHOLD					500 //milliseconds
 #define BUSY_FRAMEDROP_INTERVAL			150 //milliseconds
-#define BUSY_INPUT_DEFER_INTERVAL		300 //milliseconds
+#define BUSY_INPUT_DEFER_INTERVAL		500 //milliseconds
 
 static freerdp_sem g_sem;
 static int g_thread_count = 0;
@@ -119,7 +121,7 @@ void df_end_paint(rdpContext* context)
 	}
 	else if (((dfContext*) context)->busy_ts)
 	{
-		if ((now - ((dfContext*) context)->busy_ts)>BUSY_FRAMEDROP_THRESHOLD)
+		if ((now - ((dfContext*) context)->busy_ts)>BUSY_THRESHOLD)
 		{
 			((dfContext*) context)->endpaint_defer_ts = now;
 			return;
@@ -148,14 +150,26 @@ boolean df_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int
 boolean df_check_fds(freerdp* instance, fd_set* set)
 {
 	dfInfo* dfi;
+	int r;
 
 	dfi = ((dfContext*) instance->context)->dfi;
 
 	if (!FD_ISSET(dfi->read_fds, set))
 		return true;
 
-	if (read(dfi->read_fds, &(dfi->event), sizeof(dfi->event)) > 0)
-		df_event_process(instance, &(dfi->event));
+	for (;;)
+	{
+		r = read(dfi->read_fds, 
+			((char *)&(dfi->event)) + dfi->read_len_pending, 
+			sizeof(dfi->event) - dfi->read_len_pending);
+		if (r<=0) break;
+		dfi->read_len_pending+= r;
+		if (dfi->read_len_pending>=sizeof(dfi->event))
+		{
+			df_event_process(instance, &(dfi->event));
+			dfi->read_len_pending = 0;
+		}
+	}
 
 	return true;
 }
@@ -215,6 +229,7 @@ boolean df_post_connect(freerdp* instance)
 	rdpGdi* gdi;
 	dfInfo* dfi;
 	dfContext* context;
+	int flags;
 
 	context = ((dfContext*) instance->context);
 	dfi = context->dfi;
@@ -248,6 +263,14 @@ boolean df_post_connect(freerdp* instance)
 	dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
 	dfi->dfb->CreateInputEventBuffer(dfi->dfb, DICAPS_ALL, DFB_TRUE, &(dfi->event_buffer));
 	dfi->event_buffer->CreateFileDescriptor(dfi->event_buffer, &(dfi->read_fds));
+
+	flags = fcntl(dfi->read_fds, F_GETFL, 0);
+    if ( flags == -1 || fcntl(dfi->read_fds, F_SETFL, flags | O_NONBLOCK) == -1 )
+    {
+        perror("DirectFB non-blocking mode");
+        return false;
+    }
+	dfi->read_len_pending = 0;
 
 	dfi->dfb->GetDisplayLayer(dfi->dfb, 0, &(dfi->layer));
 	dfi->layer->EnableCursor(dfi->layer, 1);
