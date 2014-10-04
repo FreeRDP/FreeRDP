@@ -350,7 +350,7 @@ INLINE int gdi_PtInRect(HGDI_RECT rc, int x, int y)
 }
 
 
-INLINE static boolean add_cinvalid(GDI_WND *hwnd, int x, int y, int w, int h)
+INLINE static boolean add_cinvalid(GDI_WND *hwnd, const GDI_RGN *r)
 {
 	int count;
 	GDI_RGN *cinvalid = hwnd->cinvalid;
@@ -369,87 +369,9 @@ INLINE static boolean add_cinvalid(GDI_WND *hwnd, int x, int y, int w, int h)
 		hwnd->count = count;
 	}
 
-	gdi_SetRgn(&cinvalid[hwnd->ninvalid++], x, y, w, h);
+	gdi_SetRgn(&cinvalid[hwnd->ninvalid++], r->x, r->y, r->w, r->h);
 	return true;
 }
-
-/**
- * Invalidate a given region, such that it is redrawn on the next region update.\n
- * @msdn{dd145003}
- * @param hdc device context
- * @param x x1
- * @param y y1
- * @param w width
- * @param h height
- * @return
- */
-
-INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
-{
-	HGDI_RGN invalid;
-	HGDI_RGN cinvalid;
-
-	if (hdc->hwnd == NULL)
-		return 0;
-
-	if (hdc->hwnd->invalid == NULL)
-		return 0;
-
-	if (x<0)
-	{
-		w+= x;
-		x = 0;
-	}
-
-	if (y<0)
-	{
-		h+= x;
-		y = 0;
-	}
-
-	if (w<=0 || h<=0)
-		return 0;
-
-	cinvalid = hdc->hwnd->cinvalid;
-	invalid = hdc->hwnd->invalid;
-
-	if (invalid->null)
-	{
-		invalid->x = x;
-		invalid->y = y;
-		invalid->w = w;
-		invalid->h = h;
-		invalid->null = 0;
-		hdc->hwnd->ninvalid = 0;
-	}
-	else
-	{
-#if 0
-		//check if specified region completely included into any existing
-		//full decomposition would take too much CPU to be used per each invalidation
-		for (i = hdc->hwnd->ninvalid; i; --i, ++cinvalid)
-		{
-			if (cinvalid->x <= x && cinvalid->y <= y &&
-				cinvalid->x + cinvalid->w >= x + w &&
-				cinvalid->y + cinvalid->h >= y + h)
-			{
-				return 0;
-			}
-		}
-#endif
-		cinvalid = hdc->hwnd->cinvalid;
-
-		if (invalid->x > x) invalid->x = x;
-		if (invalid->y > y) invalid->y = y;
-
-		if (invalid->x + invalid->w < x + w) invalid->w = (x + w) - invalid->x;
-		if (invalid->y + invalid->h < y + h) invalid->h = (y + h) - invalid->y;
-	}
-	
-	add_cinvalid(hdc->hwnd, x, y, w, h);
-	return 0;
-}
-
 
 INLINE static boolean region_contains_point(const GDI_RGN *r, int x, int y)
 {
@@ -602,26 +524,6 @@ static uint8 substract_regions_if_vertex_inside(const GDI_RGN *invariant, GDI_RG
 }
 
 
-INLINE static boolean is_region_inside_other(const GDI_RGN *r, const GDI_RGN *other)
-{
-	return (other->x<=r->x && other->x + other->w>=r->x + r->w &&
-			other->y<=r->y && other->y + other->h>=r->y + r->h);
-}
-
-static boolean is_region_inside_any_other(const GDI_RGN *r, const GDI_RGN *begin, const GDI_RGN *end)
-{
-	const GDI_RGN *ci;
-
-	for (ci = begin; ci != end; ++ci)
-	{
-		if (r!=ci && is_region_inside_other(r, ci))
-			return true;
-	}
-
-	return false;
-}
-
-
 typedef struct EmptyRegions_
 {
 	GDI_RGN tmp;
@@ -629,28 +531,39 @@ typedef struct EmptyRegions_
 	uint8 count;
 } EmptyRegions;
 
-INLINE static boolean clear_region_if_inside_any_other(GDI_RGN *r, const GDI_RGN *begin, const GDI_RGN *end)
+static boolean clear_region_if_inside_any_other(GDI_RGN *r, const GDI_RGN *begin, const GDI_RGN *end)
 {
-	if (!is_region_inside_any_other(r, begin, end))
-		return false;
+	const GDI_RGN *ci;
+	const int r_right = r->x + r->w;
+	const int r_bottom = r->y + r->h;
 
-	r->w = 0;
-	r->h = 0;
-	return true;
+	for (ci = begin; ci != end; ++ci)
+	{
+		if (r != ci && ci->x <= r->x && ci->y <= r->y && 
+			ci->x + ci->w >= r_right && ci->y + ci->h >= r_bottom)
+		{
+			r->w = 0;
+			r->h = 0;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 static unsigned char decompose_partial_overlap_region_pair(GDI_RGN *first, GDI_RGN *second, EmptyRegions *empties, GDI_RGN *others_begin, GDI_RGN *others_end)
 {
 	uint8 rv;
-	const uint8 empties_count = empties->count;
-	GDI_RGN *fragment = empties_count ? empties->cache[empties->count - 1] : &empties->tmp, *cleared = NULL;
+	GDI_RGN *fragment = empties->count ? empties->cache[empties->count - 1] : &empties->tmp;
+	GDI_RGN *cleared;
 
 	if (second->w>first->w) //prefer wider region as invariant
 	{
-		GDI_RGN *t = second;
+		cleared = second;
 		second = first;
-		first = t;
+		first = cleared;
 	}
+	cleared =NULL;
 
 	rv = substract_regions_if_vertex_inside(first, second, fragment);
 	if (rv)
@@ -701,96 +614,143 @@ static unsigned char decompose_partial_overlap_region_pair(GDI_RGN *first, GDI_R
 	{
 		if (rv==2)
 		{
-			*cleared = *fragment;
+			memcpy(cleared, fragment, sizeof(*cleared));
 			fragment->w = 0;
-			return 1;
+			rv = 1;
 		}
-
-		if (empties_count < (sizeof(empties->cache)/sizeof(empties->cache[0])) )
+		else if (empties->count < (sizeof(empties->cache)/sizeof(empties->cache[0])) )
 		{
-			empties->cache[empties_count] = cleared;
-			empties->count = empties_count + 1;
+			empties->cache[empties->count] = cleared;
+			empties->count++;
 		}
 	}
 
 	return rv;
 }
 
-static void decompose_sidebyside_regions(GDI_RGN *begin, GDI_RGN *end)
+INLINE static uint8 combine_regions_if_sidebyside_horizontally(GDI_RGN *ci, GDI_RGN *cj)
 {
-	uint8 flag;
 	int tmp;
-	GDI_RGN *ci, *cj;
-
-	for (;;)
+	if (ci->h==cj->h && ci->y==cj->y)
 	{
-		for (ci = begin; ci!=end; ++ci)
-		{
-			if (ci->w<=0) continue;
-
-			for (cj = ci + 1; cj!=end; ++cj)
-			{
-				if (cj->w<=0) continue;
-
-				if (ci->h==cj->h && ci->y==cj->y)
-				{
-					if (ci->x <= cj->x && ci->x + ci->w >= cj->x)
-					{//[i] horizontally combines or consumes [j]
-						tmp = cj->x + cj->w - ci->x;
-						if (ci->w < tmp)
-							ci->w = tmp;
-						cj->w = 0;
-					}
-					else if (cj->x <= ci->x && cj->x + cj->w >= ci->x)
-					{//[j] horizontally combines or consumes [i]
-						tmp = ci->x + ci->w - cj->x;
-						if (cj->w < tmp)
-							cj->w = tmp;
-						ci->w = 0;
-						break;
-					}
-				}
-			}
+		if (ci->x <= cj->x && ci->x + ci->w >= cj->x)
+		{//ci horizontally combines or consumes cj
+			tmp = cj->x + cj->w - ci->x;
+			if (ci->w < tmp)
+				ci->w = tmp;
+			cj->w = 0;
+			return 2;
 		}
 
-		flag = 0;
-		for (ci = begin; ci!=end; ++ci)
-		{
-			if (ci->w<=0) continue;
-
-			for (cj = ci + 1; cj!=end; ++cj)
-			{
-				if (cj->w<=0) continue;
-
-				if (ci->w==cj->w && ci->x==cj->x)
-				{
-					if (ci->y <= cj->y && ci->y + ci->h >= cj->y)
-					{//[i] vertically combines or consumes [j]
-						tmp = cj->y + cj->h - ci->y;
-						if (ci->h < tmp)
-							ci->h = tmp;
-						cj->w = 0;
-						flag = 1;
-					}
-					else if (cj->y <= ci->y && cj->y + cj->h >= ci->y)
-					{//[j] vertically combines or consumes [i]
-						tmp = ci->y + ci->h - cj->y;
-						if (cj->h < tmp)
-							cj->h = tmp;
-						ci->w = 0;
-						break;
-					}
-				}
-			}
+		if (cj->x <= ci->x && cj->x + cj->w >= ci->x)
+		{//cj horizontally combines or consumes ci
+			tmp = ci->x + ci->w - cj->x;
+			if (cj->w < tmp)
+				cj->w = tmp;
+			ci->w = 0;
+			return 1;
 		}
-		if (!flag) break;
 	}
+
+	return 0;
+}
+
+INLINE static uint8 combine_regions_if_sidebyside_vertically(GDI_RGN *ci, GDI_RGN *cj)
+{
+	int tmp;
+	if (ci->w==cj->w && ci->x==cj->x)
+	{
+		if (ci->y <= cj->y && ci->y + ci->h >= cj->y)
+		{//ci vertically combines or consumes cj
+			tmp = cj->y + cj->h - ci->y;
+			if (ci->h < tmp)
+				ci->h = tmp;
+			cj->w = 0;
+			return 2;
+		}
+
+		if (cj->y <= ci->y && cj->y + cj->h >= ci->y)
+		{//cj vertically combines or consumes ci
+			tmp = ci->y + ci->h - cj->y;
+			if (cj->h < tmp)
+				cj->h = tmp;
+			ci->w = 0;
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+static void decompose_sidebyside_regions(GDI_RGN *begin, GDI_RGN *end, const GDI_RGN *invalid)
+{
+	GDI_RGN *ci, *cj;
+	uint8 r;
+	boolean loop_flag;
+	int n = 0;
+
+	do
+	{
+		loop_flag = false;
+		for (ci = begin; ci != end; ++ci)
+		{
+			if (ci->w<=0) continue;
+
+			//first check ci for horizontal merge against subsequent entries
+			for (cj = ci + 1; cj != end; ++cj)
+			{
+				if (cj->w > 0)
+				{
+					r = combine_regions_if_sidebyside_horizontally(ci, cj);
+					if (r)
+					{
+						++n;
+						if (r==1)
+							break;//ci was 'eaten' by cj, so no sence in continuing this loop
+					}
+				}
+			}
+
+			if (cj != end || //ci was eaten -> dot check its for vertical merge
+				(invalid && ci->h >= invalid->h) ) //ci already has maximum possible height
+			{
+				continue;
+			}
+		}
+
+		for (ci = begin; ci != end; ++ci)
+		{
+			if (ci->w<=0) continue;
+
+			//ci not emptied yet, check it for vertical merge against preceedings 
+			for (cj = ci+1; cj != end; ++cj)
+			{
+				r = combine_regions_if_sidebyside_vertically(ci, cj);
+				if (r==2)
+				{
+					++n;
+					if (!invalid || ci->w < invalid->w)//otherwise no sense in horizontal merge of this region
+						loop_flag = true;
+				}
+				else if (r==1)
+				{
+					++n;
+					if (!invalid || cj->w < invalid->w)//otherwise no sense in horizontal merge of this region
+						loop_flag = true;
+					break;
+				}
+			}
+		}
+	} while (loop_flag);
+
+//	if (n > 50 || (n > 1 && n * 2 >= end - begin))
+//		end = begin + purge_empty_regions(begin, end);
 }
 
 
 INLINE static void put_to_empties(EmptyRegions *empties, GDI_RGN *r)
 {
-	uint8 count = empties->count;
+	const uint8 count = empties->count;
 	if (count < sizeof(empties->cache) / sizeof(empties->cache[0]))
 	{
 		empties->cache[count] = r;
@@ -800,9 +760,11 @@ INLINE static void put_to_empties(EmptyRegions *empties, GDI_RGN *r)
 
 
 static boolean decompose_regions_inside_regions(GDI_RGN *begin, GDI_RGN *end, EmptyRegions *empties)
-{
+{//returns true if there're any other intersections remain
 	boolean rv = false;
 	GDI_RGN *ci, *cj;
+	int ci_right, ci_bottom;
+	int cj_right, cj_bottom;
 
 	for (ci = begin; ci!=end; ++ci)
 	{
@@ -812,28 +774,29 @@ static boolean decompose_regions_inside_regions(GDI_RGN *begin, GDI_RGN *end, Em
 			continue;
 		}
 
+		ci_right = ci->x + ci->w;
+		ci_bottom = ci->y + ci->h;
+
 		for (cj = ci + 1; cj!=end; ++cj)
 		{
 			if (cj->w<=0) continue;
 
-			if (ci->x < cj->x + cj->w && 
-				cj->x < ci->x + ci->w &&
-				ci->y < cj->y + cj->h && 
-				cj->y < ci->y + ci->h)
+			cj_right = cj->x + cj->w;
+			cj_bottom = cj->y + cj->h;
+			if (ci->x < cj_right &&  cj->x < ci_right &&
+				ci->y < cj_bottom && cj->y < ci_bottom)
 			{
-				if (ci->x<=cj->x && ci->y<=cj->y &&
-					ci->x + ci->w>=cj->x + cj->w &&
-					ci->y + ci->h>=cj->y + cj->h)
-				{ //[i] consumes [j]
+				if (ci->x <= cj->x && ci->y <= cj->y &&
+					ci_right >= cj_right && ci_bottom >= cj_bottom)
+				{ //ci consumes cj
 					cj->w = 0; 
 				}
-				else if (cj->x<=ci->x && cj->y<=ci->y &&
-					cj->x + cj->w>=ci->x + ci->w &&
-					cj->y + cj->h>=ci->y + ci->h)
-				{ //[j] consumes [i]
+				else if (cj->x <= ci->x && cj->y <= ci->y &&
+					cj_right >= ci_right && cj_bottom >= ci_bottom)
+				{ //cj consumes ci
 					ci->w = 0; 
 					put_to_empties(empties, ci);
-					break;//no need no check anything more against this [i]
+					break;//no need no check anything more against this ci
 				}
 				else
 					rv = true;
@@ -855,7 +818,7 @@ static void decompose_invalid_regions(GDI_WND *hwnd)
 	EmptyRegions empties;
 	empties.count = 0;
 
-	decompose_sidebyside_regions(begin, end);
+	decompose_sidebyside_regions(begin, end, hwnd->invalid);
 
 	if (!decompose_regions_inside_regions(begin, end, &empties))
 		return;
@@ -881,7 +844,7 @@ static void decompose_invalid_regions(GDI_WND *hwnd)
 					{
 						if (empties.count==0)
 						{
-							if (!add_cinvalid(hwnd, empties.tmp.x, empties.tmp.y, empties.tmp.w, empties.tmp.h))
+							if (!add_cinvalid(hwnd, &empties.tmp))
 								return;
 
 							ci = hwnd->cinvalid + (ci - begin);
@@ -901,8 +864,12 @@ static void decompose_invalid_regions(GDI_WND *hwnd)
 		if (!loop_flag) break;
 		need_decompose_sidebyside_regions = true;
 	}
+
+
 	if (need_decompose_sidebyside_regions)
-		decompose_sidebyside_regions(begin, end);
+	{//do full sidebyside decomposition cuz this time there will be no 'inside' decomposition
+		decompose_sidebyside_regions(begin, end, NULL);
+	}
 
 }
 
@@ -915,8 +882,137 @@ static void decompose_invalid_regions(GDI_WND *hwnd)
  */
 INLINE int gdi_DecomposeInvalidArea(HGDI_DC hdc)
 {
-	if (hdc->hwnd)
+	if (hdc->hwnd && hdc->hwnd->invalid && hdc->hwnd->invalid->w && hdc->hwnd->invalid->h)
 		decompose_invalid_regions(hdc->hwnd);
 	return 0;
 }
+
+
+/**
+ * Invalidate a given region, such that it is redrawn on the next region update.\n
+ * @msdn{dd145003}
+ * @param hdc device context
+ * @param x x1
+ * @param y y1
+ * @param w width
+ * @param h height
+ * @return
+ */
+
+INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
+{
+	HGDI_RGN invalid;
+	HGDI_RGN cinvalid;
+	int ninvalid;
+	int binvalid;
+	uint8 r;
+	GDI_RGN arg;
+	if (hdc->hwnd == NULL)
+		return 0;
+
+	if (hdc->hwnd->invalid == NULL)
+		return 0;
+
+	gdi_SetRgn(&arg, x, y, w, h);
+
+	if (arg.x < 0)
+	{
+		arg.w+= arg.x;
+		arg.x = 0;
+	}
+
+	if (arg.y < 0)
+	{
+		arg.h+= arg.x;
+		arg.y = 0;
+	}
+
+	if (arg.w <= 0 || arg.h <= 0)
+		return 0;
+
+	cinvalid = hdc->hwnd->cinvalid;
+	invalid = hdc->hwnd->invalid;
+	if (invalid->null)
+	{
+		gdi_SetRgn(invalid, arg.x, arg.y, arg.w, arg.h);
+		hdc->hwnd->ninvalid = 0;
+		hdc->hwnd->binvalid = 0;
+	}
+	else
+	{
+		ninvalid = hdc->hwnd->ninvalid;
+		binvalid = hdc->hwnd->binvalid;
+
+		if (binvalid>=ninvalid)
+			hdc->hwnd->binvalid = binvalid = 0;
+
+		if (invalid->x > arg.x)
+		{
+			invalid->w += invalid->x - arg.x;
+			invalid->x = arg.x;
+		}
+		if (invalid->y > arg.y)
+		{
+			invalid->h += invalid->y - arg.y;
+			invalid->y = arg.y;
+		}
+
+		if (invalid->x + invalid->w < arg.x + arg.w)
+			invalid->w = (arg.x + arg.w) - invalid->x;
+
+		if (invalid->y + invalid->h < arg.y + arg.h)
+			invalid->h = (arg.y + arg.h) - invalid->y;
+# if 1
+		if (ninvalid)
+		{
+			//first check if this region is subpart of existing biggest region
+			if (cinvalid[binvalid].x <= arg.x && cinvalid[binvalid].y <= arg.y && 
+				cinvalid[binvalid].x + cinvalid[binvalid].w >= arg.x + arg.w &&
+				cinvalid[binvalid].y + cinvalid[binvalid].h >= arg.y + arg.h)
+			{//yes, its completely subpart of biggest region - do not add it to array
+				return 0;
+			}
+
+			//then may be it will even increase biggest ever region?
+			r = combine_regions_if_sidebyside_horizontally(&cinvalid[binvalid], &arg);
+			if (!r) r = combine_regions_if_sidebyside_vertically(&cinvalid[binvalid], &arg);
+			if (r)
+			{
+				if (r==1)
+					gdi_SetRgn(&cinvalid[binvalid], arg.x, arg.y, arg.w, arg.h);
+				return 0;
+			}
+
+			//check if this region can be combined with last in array - its quite frequent case
+			if (ninvalid>1)
+			{
+				r = combine_regions_if_sidebyside_horizontally(&cinvalid[ninvalid-1], &arg);
+				if (!r) r = combine_regions_if_sidebyside_vertically(&cinvalid[ninvalid-1], &arg);
+				if (r)
+				{
+					if (r==1) //first arg was 'eaten' by second, so copy result back to cinvalid
+						gdi_SetRgn(&cinvalid[ninvalid-1], arg.x, arg.y, arg.w, arg.h);
+
+					if (cinvalid[ninvalid-1].w >= cinvalid[binvalid].w &&
+						cinvalid[ninvalid-1].h >= cinvalid[binvalid].h)
+					{//we have new champion
+						binvalid = ninvalid - 1;
+					}
+					return 0;
+				}
+			}
+
+			if (arg.w >= cinvalid[binvalid].w && arg.h >= cinvalid[binvalid].h)
+			{//we will have new champion
+				binvalid = ninvalid;
+			}
+		}
+# endif
+	}
+
+	add_cinvalid(hdc->hwnd, &arg);
+	return 0;
+}
+
+
 

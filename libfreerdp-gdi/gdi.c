@@ -837,6 +837,7 @@ void gdi_init_primary(rdpGdi* gdi)
 	gdi->primary->hdc->hwnd->count = 32;
 	gdi->primary->hdc->hwnd->cinvalid = (HGDI_RGN) malloc(sizeof(GDI_RGN) * gdi->primary->hdc->hwnd->count);
 	gdi->primary->hdc->hwnd->ninvalid = 0;
+	gdi->primary->hdc->hwnd->binvalid = 0;
 }
 
 void gdi_resize(rdpGdi* gdi, int width, int height)
