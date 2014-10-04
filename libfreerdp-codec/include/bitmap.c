@@ -19,14 +19,185 @@
 
 /* do not compile the file directly */
 
+#undef SRCNEXTPIXEL
+#define SRCNEXTPIXEL(_src) _src += BYTESPERPIXEL
+
+#undef DESTNEXTPIXEL
+#define DESTNEXTPIXEL(_dst, _peol, _row) {_dst += BYTESPERPIXEL; \
+	if (_dst >= *(_peol)) {*(_peol) = *(_peol) - _row; _dst = *(_peol) - _row; PREFETCH_WRITE(_dst + PREFETCH_LENGTH); } }
+
+
+#define DEREMENTING_LOOP(_value, _dec, _exp) \
+	for (; (_value >= 8 * _dec); _value -= 8 * _dec) { _exp _exp _exp _exp _exp _exp _exp _exp }; \
+	switch (_value) { \
+	case 7 * _dec: _exp; \
+	case 6 * _dec: _exp; \
+	case 5 * _dec: _exp; \
+	case 4 * _dec: _exp; \
+	case 3 * _dec: _exp; \
+	case 2 * _dec: _exp; \
+	case 1 * _dec: _exp; \
+	} 
+
+//	for (; (_value != 0); _value -= _dec) { _exp };
+
+//Line-by-line filling of _count pixels with specified color
+//On return:
+// _dst adjusted by _count * BYTESPERLPIXEL with respect of vertical flipping
+// _count is undefined
+// _peol adjusted to next line if necessary
+#undef DESTWRITENEXTPIXELS
+#define DESTWRITENEXTPIXELS(_count, _pix, _dst, _peol, _row) { _count*= BYTESPERPIXEL; \
+		for (;;) { \
+			uint32 til_eol = *(_peol) - _dst; \
+			if ( _count < til_eol ) { \
+				DEREMENTING_LOOP(_count, BYTESPERPIXEL, \
+					DESTWRITEPIXEL(_dst, _pix); _dst += BYTESPERPIXEL; ); \
+				break; \
+			} else if (_count) { \
+				*(_peol) = *(_peol) - _row;  \
+				PREFETCH_WRITE(*(_peol) - _row); \
+				_count-= til_eol; \
+				DEREMENTING_LOOP(til_eol, BYTESPERPIXEL, \
+					DESTWRITEPIXEL(_dst, _pix); _dst += BYTESPERPIXEL; ); \
+				_dst = *(_peol) - _row; \
+			} else break; \
+		} }
+
+
+
+//Line-by-line filling of _count pixel pairs with specified color
+//On return:
+// _dst adjusted by 2 * _count * BYTESPERLPIXEL with respect of vertical flipping
+// _count is undefined
+// _peol adjusted to next line if necessary
+#undef DESTDOUBLEWRITENEXTPIXELS
+#define DESTDOUBLEWRITENEXTPIXELS(_count, _pixA, _pixB, _dst, _peol, _row) { _count*= 2 * BYTESPERPIXEL; \
+		for (;;) { \
+			uint32 til_eol = *(_peol) - _dst; \
+			if ( _count < til_eol ) { \
+				DEREMENTING_LOOP(_count, 2 * BYTESPERPIXEL, \
+					DESTWRITEPIXEL(_dst, _pixA); _dst+= BYTESPERPIXEL; \
+					DESTWRITEPIXEL(_dst, _pixB); _dst+= BYTESPERPIXEL; ); \
+				break; \
+			} else if (_count) { \
+				*(_peol) = *(_peol) - _row;  \
+				PREFETCH_WRITE(*(_peol) - _row); \
+				_count-= til_eol; \
+				DEREMENTING_LOOP(til_eol, 2 * BYTESPERPIXEL, \
+					DESTWRITEPIXEL(_dst, _pixA); _dst+= BYTESPERPIXEL; \
+					DESTWRITEPIXEL(_dst, _pixB); _dst+= BYTESPERPIXEL; ); \
+				_dst = *(_peol) - _row; \
+			} else break; \
+		} }
+
+
+
+//Line-by-line copy of _count pixels from _src to _dst
+//On return:
+// _dst adjusted by _count * BYTESPERLPIXEL with respect of vertical flipping
+// _src incremented by _count * BYTESPERLPIXEL
+// _count is undefined
+// _peol adjusted to next line if necessary
+#undef SRCREADNEXTDESTWRITENEXTPIXELS
+#define SRCREADNEXTDESTWRITENEXTPIXELS(_count, _src, _dst, _peol, _row) { _count*= BYTESPERPIXEL; \
+		for (;;) { \
+			const uint32 til_eol = *(_peol) - _dst; \
+			if ( _count < til_eol ) { \
+				memcpy(_dst, _src, _count); \
+				_dst+= _count; _src+= _count; \
+				break; \
+			} else if (_count) { \
+				*(_peol) = *(_peol) - _row; \
+				PREFETCH_READ(_src + til_eol); \
+				PREFETCH_WRITE(*(_peol) - _row); \
+				_count -= til_eol; \
+				memcpy(_dst, _src, til_eol); \
+				_src += til_eol; \
+				_dst = *(_peol) - _row; \
+			} else break; \
+		} }
+
+
+#undef DESTWRITENEXTPIXELSBLACKORWHITE
+#define DESTWRITENEXTPIXELSBLACKORWHITE(_count, _bw, _dst, _peol, _row) { _count*= BYTESPERPIXEL; \
+		for (;;) { \
+			const uint32 til_eol = *(_peol) - _dst; \
+			if ( _count < til_eol ) { \
+				memset(_dst, _bw, _count); \
+				_dst+= _count; \
+				break; \
+			} else if (_count) { \
+				*(_peol) = *(_peol) - _row; \
+				PREFETCH_WRITE(*(_peol) - _row); \
+				_count -= til_eol; \
+				memset(_dst, _bw, til_eol); \
+				_dst = *(_peol) - _row; \
+			} else break; \
+		} }
+
+
+
+//Line-by-line copy of _count pixels from _dst + _row to _dst
+//On return:
+// _dst adjusted by _count * BYTESPERLPIXEL with respect of vertical flipping
+// _count is undefined
+// _peol adjusted to next line if necessary
+#undef DESTWRITENEXTPIXELSFROMPREVROW
+#define DESTWRITENEXTPIXELSFROMPREVROW(_count, _dst, _peol, _row) { _count*= BYTESPERPIXEL; \
+		for (;;) { \
+			const uint32 til_eol = *(_peol) - _dst; \
+			if ( _count < til_eol ) { \
+				memcpy(_dst, _dst + _row, _count); \
+				_dst+= _count; \
+				break; \
+			} else if (_count) { \
+				*(_peol) = *(_peol) - _row; \
+				PREFETCH_WRITE(*(_peol) - _row); \
+				_count -= til_eol; \
+				memcpy(_dst, _dst + _row, til_eol); \
+				_dst = *(_peol) - _row; \
+			} else break; \
+		} }
+
+
+
+//Line-by-line copy of _count pixels from _dst + _row to _dst with xorig by __pel 
+//On return:
+// _dst adjusted by _count * BYTESPERLPIXEL with respect of vertical flipping
+// _count is undefined
+// _peol adjusted to next line if necessary
+#define XOREDDESTWRITENEXTPIXELSFROMPREVROW(_count, _pel, _dst, _peol, _row) { _count*= BYTESPERPIXEL; \
+		for (;;) { \
+			uint32 til_eol = *(_peol) - _dst; \
+			if ( _count < til_eol ) { \
+				DEREMENTING_LOOP(_count, BYTESPERPIXEL, \
+						DESTREADPIXEL(temp, _dst + _row); \
+						DESTWRITEPIXEL(_dst, temp ^ _pel); \
+						_dst+= BYTESPERPIXEL; ); \
+				break; \
+			} else if (_count) { \
+				*(_peol) = *(_peol) - _row; \
+				PREFETCH_WRITE(*(_peol) - _row); \
+				_count-= til_eol; \
+				DEREMENTING_LOOP(til_eol, BYTESPERPIXEL, \
+						DESTREADPIXEL(temp, _dst + _row); \
+						DESTWRITEPIXEL(_dst, temp ^ _pel); \
+						_dst+= BYTESPERPIXEL; ); \
+				_dst = *(_peol) - _row; \
+			} else break; \
+		} }
+
+
+
+
 /**
  * Write a foreground/background image to a destination buffer.
  */
 static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint8** ppbDestEndOfLine, uint32 rowDelta,
-	uint8 bitmask, PIXEL fgPel, uint32 cBits)
+	uint8 bitmask, PIXEL fgPel, uint8 cBits)
 {
 	PIXEL xorPixel;
-
 	DESTREADPIXEL(xorPixel, pbDest + rowDelta);
 	if (bitmask & g_MaskBit0)
 	{
@@ -143,8 +314,14 @@ static uint8* WRITEFGBGIMAGE(uint8* pbDest, uint8** ppbDestEndOfLine, uint32 row
  * for the first line of compressed data.
  */
 static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8** ppbDestEndOfLine, uint32 rowDelta,
-	uint8 bitmask, PIXEL fgPel, uint32 cBits)
+	uint8 bitmask, PIXEL fgPel, uint8 cBits)
 {
+	if (!bitmask)
+	{
+		DESTWRITENEXTPIXELSBLACKORWHITE(cBits, 0, pbDest, ppbDestEndOfLine, rowDelta);
+		return pbDest;
+	}
+
 	if (bitmask & g_MaskBit0)
 	{
 		DESTWRITEPIXEL(pbDest, fgPel);
@@ -267,7 +444,6 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 	PIXEL fgPel = WHITE_PIXEL;
 	boolean fInsertFgPel = false;
 	boolean fFirstLine = true;
-
 	uint8 bitmask;
 	PIXEL pixelA, pixelB;
 
@@ -315,19 +491,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					runLength = runLength - 1;
 				}
-				while (runLength >= UNROLL_COUNT)
-				{
-					UNROLL(
-						DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
-						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
-					runLength = runLength - UNROLL_COUNT;
-				}
-				while (runLength > 0)
-				{
-					DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
-					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
-					runLength = runLength - 1;
-				}
+				DESTWRITENEXTPIXELS(runLength, BLACK_PIXEL, pbDest, &pbDestEndOfLine, rowDelta);
 			}
 			else
 			{
@@ -338,21 +502,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					runLength = runLength - 1;
 				}
-				while (runLength >= UNROLL_COUNT)
-				{
-					UNROLL(
-						DESTREADPIXEL(temp, pbDest + rowDelta);
-						DESTWRITEPIXEL(pbDest, temp);
-						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
-					runLength = runLength - UNROLL_COUNT;
-				}
-				while (runLength > 0)
-				{
-					DESTREADPIXEL(temp, pbDest + rowDelta);
-					DESTWRITEPIXEL(pbDest, temp);
-					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
-					runLength = runLength - 1;
-				}
+				DESTWRITENEXTPIXELSFROMPREVROW(runLength, pbDest, &pbDestEndOfLine, rowDelta);
 			}
 			/* A follow-on background run order will need a foreground pel inserted. */
 			fInsertFgPel = true;
@@ -379,37 +529,11 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 				}
 				if (fFirstLine)
 				{
-					while (runLength >= UNROLL_COUNT)
-					{
-						UNROLL(
-							DESTWRITEPIXEL(pbDest, fgPel);
-							DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
-						runLength = runLength - UNROLL_COUNT;
-					}
-					while (runLength > 0)
-					{
-						DESTWRITEPIXEL(pbDest, fgPel);
-						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
-						runLength = runLength - 1;
-					}
+					DESTWRITENEXTPIXELS(runLength, fgPel, pbDest, &pbDestEndOfLine, rowDelta);
 				}
 				else
 				{
-					while (runLength >= UNROLL_COUNT)
-					{
-						UNROLL(
-							DESTREADPIXEL(temp, pbDest + rowDelta);
-							DESTWRITEPIXEL(pbDest, temp ^ fgPel);
-							DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
-						runLength = runLength - UNROLL_COUNT;
-					}
-					while (runLength > 0)
-					{
-						DESTREADPIXEL(temp, pbDest + rowDelta);
-						DESTWRITEPIXEL(pbDest, temp ^ fgPel);
-						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
-						runLength = runLength - 1;
-					}
+					XOREDDESTWRITENEXTPIXELSFROMPREVROW(runLength, fgPel, pbDest, &pbDestEndOfLine, rowDelta);
 				}
 				break;
 
@@ -422,23 +546,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 				SRCNEXTPIXEL(pbSrc);
 				SRCREADPIXEL(pixelB, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
-				while (runLength >= UNROLL_COUNT)
-				{
-					UNROLL(
-						DESTWRITEPIXEL(pbDest, pixelA);
-						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
-						DESTWRITEPIXEL(pbDest, pixelB);
-						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
-					runLength = runLength - UNROLL_COUNT;
-				}
-				while (runLength > 0)
-				{
-					DESTWRITEPIXEL(pbDest, pixelA);
-					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
-					DESTWRITEPIXEL(pbDest, pixelB);
-					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
-					runLength = runLength - 1;
-				}
+				DESTDOUBLEWRITENEXTPIXELS(runLength, pixelA, pixelB, pbDest, &pbDestEndOfLine, rowDelta);
 				break;
 
 			/* Handle Color Run Orders. */
@@ -448,19 +556,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 				pbSrc = pbSrc + advance;
 				SRCREADPIXEL(pixelA, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
-				while (runLength >= UNROLL_COUNT)
-				{
-					UNROLL(
-						DESTWRITEPIXEL(pbDest, pixelA);
-						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
-					runLength = runLength - UNROLL_COUNT;
-				}
-				while (runLength > 0)
-				{
-					DESTWRITEPIXEL(pbDest, pixelA);
-					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
-					runLength = runLength - 1;
-				}
+				DESTWRITENEXTPIXELS(runLength, pixelA, pbDest, &pbDestEndOfLine, rowDelta);
 				break;
 
 			/* Handle Foreground/Background Image Orders. */
@@ -501,11 +597,11 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 					pbSrc = pbSrc + 1;
 					if (fFirstLine)
 					{
-						pbDest = WRITEFIRSTLINEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, bitmask, fgPel, runLength);
+						pbDest = WRITEFIRSTLINEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, bitmask, fgPel, (uint8)runLength);
 					}
 					else
 					{
-						pbDest = WRITEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, bitmask, fgPel, runLength);
+						pbDest = WRITEFGBGIMAGE(pbDest, &pbDestEndOfLine, rowDelta, bitmask, fgPel, (uint8)runLength);
 					}
 				}
 				break;
@@ -515,23 +611,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 			case MEGA_MEGA_COLOR_IMAGE:
 				runLength = ExtractRunLength(code, pbSrc, &advance);
 				pbSrc = pbSrc + advance;
-				while (runLength >= UNROLL_COUNT)
-				{
-					UNROLL(
-						SRCREADPIXEL(temp, pbSrc);
-						SRCNEXTPIXEL(pbSrc);
-						DESTWRITEPIXEL(pbDest, temp);
-						DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta); );
-					runLength = runLength - UNROLL_COUNT;
-				}
-				while (runLength > 0)
-				{
-					SRCREADPIXEL(temp, pbSrc);
-					SRCNEXTPIXEL(pbSrc);
-					DESTWRITEPIXEL(pbDest, temp);
-					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
-					runLength = runLength - 1;
-				}
+				SRCREADNEXTDESTWRITENEXTPIXELS(runLength, pbSrc, pbDest, &pbDestEndOfLine, rowDelta);
 				break;
 
 			/* Handle Special Order 1. */

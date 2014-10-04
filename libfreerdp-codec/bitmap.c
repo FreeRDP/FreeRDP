@@ -182,19 +182,7 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 	return runLength;
 }
 
-#define UNROLL_COUNT 4
-#define UNROLL(_exp) do { _exp _exp _exp _exp } while (0)
-
-#ifdef PREFETCH_LENGTH
-
-# define COMMON_DESTNEXTPIXEL(BPP, _buf, _peol, _row) {_buf += BPP; \
-	if (_buf>=*(_peol)) {*(_peol) = *(_peol) - _row; _buf = *(_peol) - _row; PREFETCH_WRITE(_buf + PREFETCH_LENGTH); } }
-
-#else
-# define COMMON_DESTNEXTPIXEL(BPP, _buf, _peol, _row) {_buf += BPP; if (_buf>=*(_peol)) {*(_peol) = *(_peol) - _row; _buf = *(_peol) - _row; } }
-
-#endif
-
+#undef BYTESPERPIXEL
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
 #undef SRCREADPIXEL
@@ -204,17 +192,17 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
+#define BYTESPERPIXEL 1
 #define DESTWRITEPIXEL(_buf, _pix) (_buf)[0] = (uint8)(_pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0]
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0]
-#define DESTNEXTPIXEL(_buf, _peol, _row) COMMON_DESTNEXTPIXEL(1, _buf, _peol, _row)
-#define SRCNEXTPIXEL(_buf) _buf += 1
 #define WRITEFGBGIMAGE WriteFgBgImage8to8
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage8to8
 #define RLEDECOMPRESS RleDecompress8to8
 #define RLEEXTRA
 #include "include/bitmap.c"
 
+#undef BYTESPERPIXEL
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
 #undef SRCREADPIXEL
@@ -224,17 +212,17 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
+#define BYTESPERPIXEL 2
 #define DESTWRITEPIXEL(_buf, _pix) ((uint16*)(_buf))[0] = (uint16)(_pix)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((uint16*)(_buf))[0]
 #define SRCREADPIXEL(_pix, _buf) _pix = ((uint16*)(_buf))[0]
-#define DESTNEXTPIXEL(_buf, _peol, _row) COMMON_DESTNEXTPIXEL(2, _buf, _peol, _row)
-#define SRCNEXTPIXEL(_buf) _buf += 2
 #define WRITEFGBGIMAGE WriteFgBgImage16to16
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage16to16
 #define RLEDECOMPRESS RleDecompress16to16
 #define RLEEXTRA
 #include "include/bitmap.c"
 
+#undef BYTESPERPIXEL
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
 #undef SRCREADPIXEL
@@ -244,14 +232,13 @@ static uint32 ExtractRunLength(uint32 code, uint8* pbOrderHdr, uint32* advance)
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
+#define BYTESPERPIXEL 3
 #define DESTWRITEPIXEL(_buf, _pix) do { (_buf)[0] = (uint8)(_pix);  \
   (_buf)[1] = (uint8)((_pix) >> 8); (_buf)[2] = (uint8)((_pix) >> 16); } while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
   ((_buf)[2] << 16)
 #define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | \
   ((_buf)[2] << 16)
-#define DESTNEXTPIXEL(_buf, _peol, _row) COMMON_DESTNEXTPIXEL(3, _buf, _peol, _row)
-#define SRCNEXTPIXEL(_buf) _buf += 3
 #define WRITEFGBGIMAGE WriteFgBgImage24to24
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage24to24
 #define RLEDECOMPRESS RleDecompress24to24
