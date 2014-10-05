@@ -165,46 +165,57 @@ uint16 getLOMindex(uint16 huff)
 {
 	uint16 h = HuffIndexLOM[LOMhash(huff)];
 	if((h ^ huff) >> 5)
-	{	
+	{
 		return h & 0x1f;
-	}	
+	}
 	else
 		return HuffIndexLOM[LOMHTab[miniLOMhash(huff)]];
 }
 
-#ifdef __GNUC__
-typedef struct _UNALIGNED_UINT32 { uint32 value __attribute__((__packed__)); } UNALIGNED_UINT32;
 
-# define HISTORY_BYTECOPY_UP(dst, src, n) if ( (dst - src)>=4) { \
-					for (; n>=4; n-=4, src+= 4, dst+= 4) ((UNALIGNED_UINT32 *)dst)->value = ((UNALIGNED_UINT32 *)src)->value; \
-					switch (n) { \
-						case 3: *dst = *src; ++dst; ++src; \
-						case 2: *(uint16 *)dst = *(uint16 *)src; dst+= 2; src+= 2; n = 0; break; \
-						case 1: *dst = *src; ++dst; ++src; n = 0; break; \
-					} \
-				} else { for (;n; --n, ++src, ++dst) *dst = *src; }
-#else
+# define HISTORY_COPY_LOM(dst, src, n) PREFETCH_READ(src); PREFETCH_WRITE(dst); for (; n >= 32; n -= 32 ) { PREFETCH_WRITE(dst + 32); \
+	*dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; \
+	*dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; \
+	*dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; \
+	*dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; \
+	*dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; \
+	*dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; \
+	*dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; \
+	*dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; } \
+	switch (n) { \
+		case 31: *dst = *src; ++dst; ++src; \
+		case 30: *dst = *src; ++dst; ++src; \
+		case 29: *dst = *src; ++dst; ++src; \
+		case 28: *dst = *src; ++dst; ++src; \
+		case 27: *dst = *src; ++dst; ++src; \
+		case 26: *dst = *src; ++dst; ++src; \
+		case 25: *dst = *src; ++dst; ++src; \
+		case 24: *dst = *src; ++dst; ++src; \
+		case 23: *dst = *src; ++dst; ++src; \
+		case 22: *dst = *src; ++dst; ++src; \
+		case 21: *dst = *src; ++dst; ++src; \
+		case 20: *dst = *src; ++dst; ++src; \
+		case 19: *dst = *src; ++dst; ++src; \
+		case 18: *dst = *src; ++dst; ++src; \
+		case 17: *dst = *src; ++dst; ++src; \
+		case 16: *dst = *src; ++dst; ++src; \
+		case 15: *dst = *src; ++dst; ++src; \
+		case 14: *dst = *src; ++dst; ++src; \
+		case 13: *dst = *src; ++dst; ++src; \
+		case 12: *dst = *src; ++dst; ++src; \
+		case 11: *dst = *src; ++dst; ++src; \
+		case 10: *dst = *src; ++dst; ++src; \
+		case 9: *dst = *src; ++dst; ++src; \
+		case 8: *dst = *src; ++dst; ++src; \
+		case 7: *dst = *src; ++dst; ++src; \
+		case 6: *dst = *src; ++dst; ++src; \
+		case 5: *dst = *src; ++dst; ++src; \
+		case 4: *dst = *src; ++dst; ++src; \
+		case 3: *dst = *src; ++dst; ++src; \
+		case 2: *dst = *src; ++dst; ++src; \
+		case 1: *dst = *src; ++dst; ++src; n = 0; \
+	}
 
-# define HISTORY_BYTECOPY_UP(dst, src, n) for (;n; --n, ++src, ++dst) *dst = *src;
-
-#endif
-
-
-# define HISTORY_COPY(dst, src, n) if (n) { \
-        if ( src >= dst+n || dst >= src+n) { \
-                memcpy(dst, src, n); \
-                dst+= n; \
-                src+= n; \
-                n  = 0; \
-        } else if (src<dst) { \
-		HISTORY_BYTECOPY_UP(dst, src, n); \
-        } else { \
-                if (src>dst) memmove(dst, src, n); \
-                src+= n; \
-                dst+= n; \
-                n = 0; \
-        } \
-}
 
 int decompress_rdp(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff, uint32* rlen)
 {
@@ -575,22 +586,17 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		src_ptr = history_ptr - copy_offset;
 		if (src_ptr < rdp->mppc->history_buf)
 		{
-			uint16 part;
 			src_ptr = rdp->mppc->history_buf_end - (copy_offset - (history_ptr - rdp->mppc->history_buf));
-			part = rdp->mppc->history_buf_end - src_ptr;
 			src_ptr++;
-			if (part>lom)
-                        {
-                                part = lom;
-                                lom = 0;
-                        }
-                        else
-                                lom-= part;
+			while (lom && (src_ptr <= rdp->mppc->history_buf_end))
+			{
+				*history_ptr++ = *src_ptr++;
+				lom--;
+			}
 
-			 HISTORY_COPY(history_ptr, src_ptr, part);
 			src_ptr = rdp->mppc->history_buf;
 		}
-		HISTORY_COPY(history_ptr, src_ptr, lom);
+		HISTORY_COPY_LOM(history_ptr, src_ptr, lom);
 
 		/*
 		** get more bits before we restart the loop
@@ -1030,23 +1036,17 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		src_ptr = history_ptr - copy_offset;
 		if (src_ptr < rdp->mppc->history_buf)
 		{
-			uint16 part;
 			src_ptr = rdp->mppc->history_buf_end - (copy_offset - (history_ptr - rdp->mppc->history_buf));
-			part = rdp->mppc->history_buf_end - src_ptr;
 			src_ptr++;
-			if (part>lom)
+			while (lom && (src_ptr <= rdp->mppc->history_buf_end))
 			{
-				part = lom;
-				lom = 0;
+				*history_ptr++ = *src_ptr++;
+				lom--;
 			}
-			else
-				lom-= part;
 
-			HISTORY_COPY(history_ptr, src_ptr, part);
 			src_ptr = rdp->mppc->history_buf;
 		}
-		HISTORY_COPY(history_ptr, src_ptr, lom);
-
+		HISTORY_COPY_LOM(history_ptr, src_ptr, lom);
 
 		/*
 		** get more bits before we restart the loop
@@ -1054,7 +1054,6 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 
 		/* how may bits do we need to get? */
 		tmp = 32 - bits_left;
-
 		while (tmp)
 		{
 			if (cur_bits_left < tmp)
