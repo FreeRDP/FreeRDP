@@ -346,7 +346,7 @@ int transport_check_fds(rdpTransport** ptransport)
 		if (stream_shifted_size(transport->recv_buffer)>0x100000)
 		{
 			received = transport->recv_buffer;
-			transport->recv_buffer = stream_new(BUFFER_SIZE);
+			transport->recv_buffer = stream_new_dirty(BUFFER_SIZE);
 
 			if (pos > length)
 			{
@@ -415,7 +415,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->usleep_interval = 100;
 
 		/* receive buffer for non-blocking read. */
-		transport->recv_buffer = stream_new(BUFFER_SIZE);
+		transport->recv_buffer = stream_new_dirty(BUFFER_SIZE);
 		transport->recv_event = wait_obj_new();
 
 		/* buffers for blocking read/write */

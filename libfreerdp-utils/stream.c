@@ -24,7 +24,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/stream.h>
 
-STREAM* stream_new(int size)
+static STREAM* stream_new_inner(int size, boolean dirty)
 {
 	STREAM* stream;
 
@@ -32,16 +32,28 @@ STREAM* stream_new(int size)
 
 	if (stream != NULL)
 	{
+		stream->dirty = dirty;
 		if (size != 0)
 		{
 			size = size > 0 ? size : 0x400;
 			stream->p = stream->data = stream->allocated = 
-				(uint8*) xzalloc(size);
+				dirty ? (uint8*) xmalloc(size) : (uint8*) xzalloc(size);
 			stream->size = size;
 		}
 	}
 
 	return stream;
+}
+
+
+STREAM* stream_new(int size)
+{
+	return stream_new_inner(size, false);
+}
+
+FREERDP_API STREAM* stream_new_dirty(int size)
+{
+	return stream_new_inner(size, true);
 }
 
 void stream_free(STREAM* stream)
@@ -100,6 +112,7 @@ void stream_extend(STREAM* stream, int request_size)
 			(uint8*) xrealloc(stream->allocated, stream->size);
 	}
 
-	memset(stream->data + original_size, 0, increased_size);
+	if (!stream->dirty)
+		memset(stream->data + original_size, 0, increased_size);
 	stream_set_pos(stream, pos);
 }

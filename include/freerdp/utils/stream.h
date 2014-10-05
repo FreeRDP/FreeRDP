@@ -31,15 +31,18 @@ struct _STREAM
 	uint8* p;
 	uint8* data;
 	uint8* allocated;
+	boolean dirty;
 };
 typedef struct _STREAM STREAM;
 
 FREERDP_API STREAM* stream_new(int size);
+FREERDP_API STREAM* stream_new_dirty(int size);
 FREERDP_API void stream_free(STREAM* stream);
 
 #define stream_attach(_s, _buf, _size) do { \
 	_s->size = _size; \
 	_s->allocated = _s->data = _buf; \
+	_s->dirty = false; \
 	_s->p = _buf; } while (0)
 #define stream_detach(_s) memset(_s, 0, sizeof(STREAM))
 #define stream_clear(_s) memset(_s->data, 0, _s->size)
