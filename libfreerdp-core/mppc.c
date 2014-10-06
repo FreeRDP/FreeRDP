@@ -173,7 +173,7 @@ uint16 getLOMindex(uint16 huff)
 }
 
 
-# define HISTORY_COPY_LOM(dst, src, n) PREFETCH_READ(src); PREFETCH_WRITE(dst); for (; n >= 32; n -= 32 ) { PREFETCH_WRITE(dst + 32); \
+# define HISTORY_COPY_LOM(dst, src, n) PREFETCH_READ(src); for (; n >= 32; n -= 32 ) { PREFETCH_WRITE(dst + 32); \
 	*dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; \
 	*dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; \
 	*dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; *dst = *src; ++dst; ++src; \
@@ -496,6 +496,7 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		   4096...8191     111111111110 + 12 lower bits of L-o-M
 		*/
 
+		PREFETCH_WRITE(history_ptr);
 		if ((d32 & 0x80000000) == 0)
 		{
 			/* lom is fixed to 3 */
@@ -586,14 +587,18 @@ int decompress_rdp_4(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		src_ptr = history_ptr - copy_offset;
 		if (src_ptr < rdp->mppc->history_buf)
 		{
-			src_ptr = rdp->mppc->history_buf_end - (copy_offset - (history_ptr - rdp->mppc->history_buf));
-			src_ptr++;
-			while (lom && (src_ptr <= rdp->mppc->history_buf_end))
+			copy_offset -= (uint16)(history_ptr - rdp->mppc->history_buf) + 1;
+			src_ptr = rdp->mppc->history_buf_end - copy_offset;
+			if (copy_offset<lom)
 			{
-				*history_ptr++ = *src_ptr++;
-				lom--;
+				lom-= copy_offset;
+				HISTORY_COPY_LOM(history_ptr, src_ptr, copy_offset);
 			}
-
+			else
+			{
+				HISTORY_COPY_LOM(history_ptr, src_ptr, lom);
+			}
+			PREFETCH_WRITE(history_ptr);
 			src_ptr = rdp->mppc->history_buf;
 		}
 		HISTORY_COPY_LOM(history_ptr, src_ptr, lom);
@@ -925,6 +930,7 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 		   32768..65535    1111-1111-1111-110 + 15 lower bits of LoM
 		*/
 
+		PREFETCH_WRITE(history_ptr);
 		if ((d32 & 0x80000000) == 0)
 		{
 			/* lom is fixed to 3 */
@@ -1030,20 +1036,23 @@ int decompress_rdp_5(rdpRdp* rdp, uint8* cbuf, int len, int ctype, uint32* roff,
 			d32 <<= 30;
 			bits_left -= 30;
 		}
-
 		/* now that we have copy_offset and LoM, process them */
 
 		src_ptr = history_ptr - copy_offset;
 		if (src_ptr < rdp->mppc->history_buf)
 		{
-			src_ptr = rdp->mppc->history_buf_end - (copy_offset - (history_ptr - rdp->mppc->history_buf));
-			src_ptr++;
-			while (lom && (src_ptr <= rdp->mppc->history_buf_end))
+			copy_offset -= (uint16)(history_ptr - rdp->mppc->history_buf) + 1;
+			src_ptr = rdp->mppc->history_buf_end - copy_offset;
+			if (copy_offset<lom)
 			{
-				*history_ptr++ = *src_ptr++;
-				lom--;
+				lom-= copy_offset;
+				HISTORY_COPY_LOM(history_ptr, src_ptr, copy_offset);
 			}
-
+			else
+			{
+				HISTORY_COPY_LOM(history_ptr, src_ptr, lom);
+			}
+			PREFETCH_WRITE(history_ptr);
 			src_ptr = rdp->mppc->history_buf;
 		}
 		HISTORY_COPY_LOM(history_ptr, src_ptr, lom);
