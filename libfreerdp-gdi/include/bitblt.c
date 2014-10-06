@@ -132,6 +132,8 @@ static int MAKEFN(BitBlt_SRCCOPY, BITBLT_PIXELBYTES, BITBLT_ALIGN)
 			PREFETCH_WRITE(dstp - dstw);
 			memcpy((BITBLT_ALIGN *)dstp, (BITBLT_ALIGN *)srcp, BytesPerLine);
 		}
+		srcp-= srcw;
+		dstp-= dstw;
 		memcpy((BITBLT_ALIGN *)dstp, (BITBLT_ALIGN *)srcp, BytesPerLine);
 		return 0;
 	}
