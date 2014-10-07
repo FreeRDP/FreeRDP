@@ -51,6 +51,8 @@
 #include <X11/extensions/Xrender.h>
 #endif
 
+#include <X11/XKBlib.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,6 +87,7 @@
 #include <winpr/synch.h>
 #include <winpr/file.h>
 #include <winpr/print.h>
+#include <X11/XKBlib.h>
 
 #include "xf_gdi.h"
 #include "xf_rail.h"
@@ -707,6 +710,24 @@ static void xf_post_disconnect(freerdp *instance)
 	xf_monitors_free(xfc, instance->settings);
 }
 
+static void xf_play_sound(rdpContext* context, PLAY_SOUND_UPDATE* play_sound)
+{
+	xfContext* xfc = (xfContext*) context;
+	XkbBell(xfc->display, None, 100, 0);
+}
+
+void xf_check_extensions(xfContext *context)
+{
+	int xkb_opcode, xkb_event, xkb_error;
+	int xkb_major = XkbMajorVersion;
+	int xkb_minor = XkbMinorVersion;
+	if (XkbLibraryVersion( &xkb_major, &xkb_minor ) && XkbQueryExtension(context->display, &xkb_opcode, &xkb_event,
+	    &xkb_error, &xkb_major, &xkb_minor))
+	{
+		context->xkbAvailable = TRUE;
+	}
+}
+
 /**
  * Callback given to freerdp_connect() to process the pre-connect operations.
  * It will fill the rdp_freerdp structure (instance) with the appropriate options to use for the connection.
@@ -785,6 +806,8 @@ BOOL xf_pre_connect(freerdp* instance)
 		XSynchronize(xfc->display, TRUE);
 		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
+
+	xf_check_extensions(xfc);
 
 	xfc->mutex = CreateMutex(NULL, FALSE, NULL);
 
@@ -974,6 +997,8 @@ BOOL xf_post_connect(freerdp *instance)
 		palette_cache_register_callbacks(instance->update);
 		instance->update->BitmapUpdate = xf_gdi_bitmap_update;
 	}
+	instance->update->PlaySound = xf_play_sound;
+	instance->update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 
 	instance->context->rail = rail_new(instance->settings);
 	rail_register_update_callbacks(instance->context->rail, instance->update);

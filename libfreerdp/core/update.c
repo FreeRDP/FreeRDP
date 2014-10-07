@@ -1612,6 +1612,18 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 	return TRUE;
 }
 
+static void update_send_set_keyboard_indicators(rdpContext* context, UINT16 led_flags)
+{
+ wStream* s;
+ rdpRdp* rdp = context->rdp;
+
+ s = rdp_data_pdu_init(rdp);
+ Stream_Write_UINT16(s, 0); /* unitId should be 0 according to MS-RDPBCGR 2.2.8.2.1.1 */
+ Stream_Write_UINT16(s, led_flags); /* ledFlags (2 bytes) */
+ rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS, rdp->mcs->userId);
+ Stream_Release(s);
+}
+
 void update_register_server_callbacks(rdpUpdate* update)
 {
 	update->BeginPaint = update_begin_paint;
@@ -1625,6 +1637,7 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SurfaceCommand = update_send_surface_command;
 	update->SurfaceFrameBits = update_send_surface_frame_bits;
 	update->PlaySound = update_send_play_sound;
+	update->SetKeyboardIndicators = update_send_set_keyboard_indicators;
 	update->primary->DstBlt = update_send_dstblt;
 	update->primary->PatBlt = update_send_patblt;
 	update->primary->ScrBlt = update_send_scrblt;

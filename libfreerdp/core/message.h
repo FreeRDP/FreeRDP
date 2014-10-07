@@ -43,6 +43,7 @@ struct rdp_update_proxy
 	pBitmapUpdate BitmapUpdate;
 	pPalette Palette;
 	pPlaySound PlaySound;
+	pSetKeyboardIndicators SetKeyboardIndicators;
 	pRefreshRect RefreshRect;
 	pSuppressOutput SuppressOutput;
 	pSurfaceCommand SurfaceCommand;
