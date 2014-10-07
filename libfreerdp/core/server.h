@@ -28,6 +28,7 @@
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
+typedef struct rdp_peer_channel rdpPeerChannel;
 typedef struct WTSVirtualChannelManager WTSVirtualChannelManager;
 
 #include "rdp.h"
@@ -58,8 +59,6 @@ enum
 	DVC_OPEN_STATE_FAILED = 2,
 	DVC_OPEN_STATE_CLOSED = 3
 };
-
-typedef struct rdp_peer_channel rdpPeerChannel;
 
 struct rdp_peer_channel
 {
