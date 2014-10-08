@@ -21,7 +21,6 @@
 #include "surface.h"
 #include <freerdp/utils/rect.h>
 #include <freerdp/codec/bitmap.h>
-#include <freerdp/gdi/region.h>
 
 /*
 static const char* const UPDATE_TYPE_STRINGS[] =
@@ -288,8 +287,6 @@ void update_recv(rdpUpdate* update, STREAM* s)
 			break;
 	}
 
-	if (context->gdi)
-		gdi_DecomposeInvalidArea(context->gdi->primary->hdc);
 	IFCALL(update->EndPaint, context);
 
 	if (stream_get_left(s) > RDP_SHARE_DATA_HEADER_LENGTH)

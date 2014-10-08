@@ -35,6 +35,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/gdi/region.h>
 
 #include "wf_gdi.h"
 #include "wf_graphics.h"
@@ -98,6 +99,7 @@ void wf_sw_end_paint(rdpContext* context)
 	if (gdi->primary->hdc->hwnd->ninvalid < 1)
 		return;
 
+	gdi_DecomposeInvalidArea(gdi->primary->hdc);
 	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 

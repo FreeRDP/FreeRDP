@@ -22,7 +22,6 @@
 #include <string.h>
 #include <freerdp/api.h>
 #include <freerdp/utils/stream.h>
-#include <freerdp/gdi/region.h>
 
 #include "orders.h"
 #include "per.h"
@@ -310,8 +309,6 @@ boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 	{
 		fastpath_recv_update_data(fastpath, s);
 	}
-	if (update->context->gdi)
-		gdi_DecomposeInvalidArea(update->context->gdi->primary->hdc);
 	IFCALL(update->EndPaint, update->context);
 
 	return true;

@@ -27,7 +27,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/memory.h>
-#include <freerdp/gdi/region.h>
 
 boolean freerdp_connect(freerdp* instance)
 {
@@ -93,8 +92,6 @@ boolean freerdp_connect(freerdp* instance)
 
 				update->BeginPaint(update->context);
 				update_recv_surfcmds(update, s->size, s);
-				if (update->context->gdi)
-					gdi_DecomposeInvalidArea(update->context->gdi->primary->hdc);
 				update->EndPaint(update->context);
 			}
 

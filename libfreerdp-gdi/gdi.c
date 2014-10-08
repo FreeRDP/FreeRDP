@@ -429,7 +429,7 @@ gdiBitmap* gdi_bitmap_new_ex(rdpGdi* gdi, int width, int height, int bpp, uint8*
 	if (data == NULL)
 		bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, width, height);
 	else
-		bitmap->bitmap = gdi_create_bitmap(gdi, width, height, bpp, data);
+		bitmap->bitmap = gdi_create_bitmap_with_independent_data(gdi, width, height, data);
 
 	gdi_SelectObject(bitmap->hdc, (HGDIOBJECT) bitmap->bitmap);
 	bitmap->org_bitmap = NULL;
@@ -974,3 +974,13 @@ void gdi_free(freerdp* instance)
 	instance->context->gdi = (rdpGdi*) NULL;
 }
 
+int gdi_reinit(freerdp* instance, uint8* buffer)
+{
+	rdpGdi* gdi = instance->context->gdi;
+	if (!gdi)
+		return -1;
+
+	gdi->primary_buffer = buffer;
+	gdi->primary->bitmap->data = buffer;
+	return 0;
+}

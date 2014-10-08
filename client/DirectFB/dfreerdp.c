@@ -29,6 +29,7 @@
 #include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
 #include <freerdp/plugins/cliprdr.h>
+#include <freerdp/gdi/region.h>
 
 #include "df_event.h"
 #include "df_graphics.h"
@@ -57,6 +58,37 @@ void df_context_free(freerdp* instance, rdpContext* context)
 
 }
 
+boolean df_lock_fb(dfInfo *dfi)
+{
+	if (++dfi->primary_locks > 1)
+		return true;
+
+	dfi->err = dfi->primary->Lock(dfi->primary, DSLF_WRITE | DSLF_READ, (void **)&dfi->primary_data, &dfi->primary_pitch);
+	if (dfi->err!=DFB_OK)
+	{
+		printf("DirectFB init failed! err=0x%x\n",  dfi->err);
+		return false;
+	}
+
+	return true;
+}
+
+void df_unlock_fb(dfInfo *dfi)
+{
+	if (!dfi->primary_locks)
+	{
+		fprintf(stderr, "Too many unlocks!\n");
+		abort();
+	}
+	if (!--dfi->primary_locks)
+	{
+		dfi->primary_data = 0;
+		dfi->primary_pitch = 0;
+		dfi->primary->Unlock(dfi->primary);
+	}
+}
+
+
 static uint64 get_ticks(void)
 {
 	uint64 rv;
@@ -70,12 +102,29 @@ static uint64 get_ticks(void)
 
 void df_begin_paint(rdpContext* context)
 {
+	rdpGdi* gdi = context->gdi;
+	dfInfo* dfi = ((dfContext*) context)->dfi;
+
 	if (!((dfContext*) context)->endpaint_defer_ts)
 	{
-		rdpGdi* gdi = context->gdi;
+		if (((dfContext*) context)->single_surface)
+		{
+			if (!dfi->paint_pending)
+			{
+				if (!df_lock_fb(dfi))
+				{
+					printf("df_begin_paint - failed to lock surface\n");
+					abort();//will die anyway
+				}
+				dfi->paint_pending = true;
+			}
+			gdi_reinit(dfi->instance, dfi->primary_data);
+		}
+
 		gdi->primary->hdc->hwnd->invalid->null = 1;
 		gdi->primary->hdc->hwnd->ninvalid = 0;
 	}
+
 }
 
 static void df_end_paint_inner(rdpContext* context)
@@ -88,21 +137,38 @@ static void df_end_paint_inner(rdpContext* context)
 	gdi = context->gdi;
 	dfi = ((dfContext*) context)->dfi;
 
-	if (gdi->primary->hdc->hwnd->invalid->null)
-		return;
-
-	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
-	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
-
-	for (; ninvalid>0; --ninvalid, ++cinvalid)
+	if (((dfContext*) context)->single_surface)
 	{
-		if (cinvalid->w>0 && cinvalid->h>0)
+		if (dfi->paint_pending)
 		{
-			dfi->update_rect.x = cinvalid->x;
-			dfi->update_rect.y = cinvalid->y;
-			dfi->update_rect.w = cinvalid->w;
-			dfi->update_rect.h = cinvalid->h;
-			dfi->primary->Blit(dfi->primary, dfi->surface, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
+			dfi->paint_pending = false;
+			df_unlock_fb(dfi);
+
+			if (!gdi->primary->hdc->hwnd->invalid->null)
+			{
+				DFBRegion fdbr = {gdi->primary->hdc->hwnd->invalid->x, gdi->primary->hdc->hwnd->invalid->y,
+					gdi->primary->hdc->hwnd->invalid->x + gdi->primary->hdc->hwnd->invalid->w - 1,
+					gdi->primary->hdc->hwnd->invalid->y + gdi->primary->hdc->hwnd->invalid->h - 1};
+				dfi->primary->Flip (dfi->primary, &fdbr, DSFLIP_NONE);
+			}
+		}
+	}
+	else if (!gdi->primary->hdc->hwnd->invalid->null)
+	{ 
+		gdi_DecomposeInvalidArea(gdi->primary->hdc);
+		cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+		ninvalid = gdi->primary->hdc->hwnd->ninvalid;
+
+		for (; ninvalid>0; --ninvalid, ++cinvalid)
+		{
+			if (cinvalid->w>0 && cinvalid->h>0)
+			{
+				dfi->update_rect.x = cinvalid->x;
+				dfi->update_rect.y = cinvalid->y;
+				dfi->update_rect.w = cinvalid->w;
+				dfi->update_rect.h = cinvalid->h;
+				dfi->primary->Blit(dfi->primary, dfi->secondary, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
+			}
 		}
 	}
 
@@ -224,6 +290,8 @@ boolean df_pre_connect(freerdp* instance)
 	return true;
 }
 
+
+
 boolean df_post_connect(freerdp* instance)
 {
 	rdpGdi* gdi;
@@ -233,10 +301,7 @@ boolean df_post_connect(freerdp* instance)
 
 	context = ((dfContext*) instance->context);
 	dfi = context->dfi;
-
-	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
-	gdi = instance->context->gdi;
-
+	dfi->instance = instance;
 	dfi->err = DirectFBCreate(&(dfi->dfb));
 	if (dfi->err!=DFB_OK)
 	{
@@ -252,6 +317,60 @@ boolean df_post_connect(freerdp* instance)
 		printf("DirectFB surface failed! err=0x%x\n",  dfi->err);
 		return false;
 	}
+
+	if (context->single_surface)
+	{
+		if (!df_lock_fb(dfi))
+		{
+			printf("DirectFB surface lock failed!\n");
+			return false;
+		}
+		gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, dfi->primary_data);
+		gdi = instance->context->gdi;
+
+		dfi->err = dfi->primary->GetSize(dfi->primary, &(gdi->width), &(gdi->height));
+		if (dfi->err!=DFB_OK)
+		{
+			printf("DirectFB query surface size failed! err=0x%x\n",  dfi->err);
+			return false;
+		}
+		df_unlock_fb(dfi);
+
+		dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
+
+
+		dfi->dfb->CreateInputEventBuffer(dfi->dfb, DICAPS_ALL, DFB_TRUE, &(dfi->event_buffer));
+		dfi->event_buffer->CreateFileDescriptor(dfi->event_buffer, &(dfi->read_fds));
+
+		flags = fcntl(dfi->read_fds, F_GETFL, 0);
+    	if ( flags == -1 || fcntl(dfi->read_fds, F_SETFL, flags | O_NONBLOCK) == -1 )
+	    {
+    	    perror("DirectFB non-blocking mode");
+	        return false;
+	    }
+		dfi->read_len_pending = 0;
+
+		dfi->dfb->GetDisplayLayer(dfi->dfb, 0, &(dfi->layer));
+		dfi->layer->EnableCursor(dfi->layer, 1);
+		if (!df_lock_fb(dfi))
+			return false;
+
+		instance->update->BeginPaint = df_begin_paint;
+		instance->update->EndPaint = df_end_paint;
+
+		df_keyboard_init();
+
+		pointer_cache_register_callbacks(instance->update);
+		df_register_graphics(instance->context->graphics);
+
+		freerdp_channels_post_connect(instance->context->channels, instance);
+		df_unlock_fb(dfi);
+		printf("DirectFB client initialized in experimental single-surface mode!\n");
+		return true;
+	}
+
+	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
+	gdi = instance->context->gdi;
 
 	dfi->err = dfi->primary->GetSize(dfi->primary, &(gdi->width), &(gdi->height));
 	if (dfi->err!=DFB_OK)
@@ -291,7 +410,7 @@ boolean df_post_connect(freerdp* instance)
 
 	dfi->dsc.preallocated[0].data = gdi->primary_buffer;
 	dfi->dsc.preallocated[0].pitch = gdi->width * gdi->bytesPerPixel;
-	dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->surface));
+	dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->secondary));
 
 	instance->update->BeginPaint = df_begin_paint;
 	instance->update->EndPaint = df_end_paint;
@@ -565,6 +684,7 @@ void* thread_func(void* param)
 
 int main(int argc, char* argv[])
 {
+	int i;
 	pthread_t thread;
 	freerdp* instance;
 	dfContext* context;
@@ -590,10 +710,20 @@ int main(int argc, char* argv[])
 
 	context = (dfContext*) instance->context;
 	channels = instance->context->channels;
-
+	
 	DirectFBInit(&argc, &argv);
-	freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL);
+	if (freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL)==FREERDP_ARGS_PARSE_HELP)
+	{
+		printf("  --single-surface: use only single DirectFB surface (fast, experimental)\n");
+		printf("\n");
+		return 1;
+	}
 
+	for (i = 0; i<argc; ++i)
+	{
+		if (strcmp(argv[i], "--single-surface")==0)
+			context->single_surface = true;
+	}
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
 

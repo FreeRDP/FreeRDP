@@ -43,6 +43,7 @@ struct df_context
 	uint64 busy_ts;
 	uint64 endpaint_defer_ts;
 	uint64 input_defer_ts;
+	boolean single_surface;
 };
 
 typedef struct df_context dfContext;
@@ -61,13 +62,18 @@ struct df_info
 	int read_fds;
 	int read_len_pending;
 	DFBResult err;
+	freerdp* instance;
 	IDirectFB* dfb;
+	uint8 *primary_data;
+	int primary_pitch;
+	int primary_locks;
+	boolean paint_pending;
 	DFBEvent event;
 	HCLRCONV clrconv;
 	DFBRectangle update_rect;
 	DFBSurfaceDescription dsc;
 	IDirectFBSurface* primary;
-	IDirectFBSurface* surface;
+	IDirectFBSurface* secondary;
 	IDirectFBDisplayLayer* layer;
 	IDirectFBEventBuffer* event_buffer;
 	boolean pointer_pending;
