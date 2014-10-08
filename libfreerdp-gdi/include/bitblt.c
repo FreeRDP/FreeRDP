@@ -121,7 +121,11 @@ static int MAKEFN(BitBlt_SRCCOPY, BITBLT_PIXELBYTES, BITBLT_ALIGN)
 		/* copy down */
 		for (i = 0; i<nHeight; ++i)
 		{
-			if (UNLIKELY((dstp+= dstw)>=dste || (srcp+= srcw)>=srce)) break;
+			if (UNLIKELY((dstp+= dstw)>dste || (srcp+= srcw)>srce))
+			{
+				if (!i) return 0;
+				break;
+			}
 		}
 
 		for ( ;i>1; --i)
