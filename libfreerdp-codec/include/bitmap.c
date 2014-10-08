@@ -19,6 +19,13 @@
 
 /* do not compile the file directly */
 
+#undef PIXEL_ALIGN
+#if BYTESPERPIXEL==2
+# define PIXEL_ALIGN uint16
+#else
+# define PIXEL_ALIGN uint8
+#endif
+
 #undef SRCNEXTPIXEL
 #define SRCNEXTPIXEL(_src) _src += BYTESPERPIXEL
 
@@ -29,15 +36,15 @@
 
 #undef DECREMENTING_LOOP
 #define DEREMENTING_LOOP(_value, _dec, _exp) \
-	for (; (_value >= 8 * _dec); _value -= 8 * _dec) { _exp _exp _exp _exp _exp _exp _exp _exp }; \
+	for (; (_value >= 8 * (_dec)); _value -= 8 * (_dec)) { _exp _exp _exp _exp _exp _exp _exp _exp }; \
 	switch (_value) { \
-	case 7 * _dec: _exp; \
-	case 6 * _dec: _exp; \
-	case 5 * _dec: _exp; \
-	case 4 * _dec: _exp; \
-	case 3 * _dec: _exp; \
-	case 2 * _dec: _exp; \
-	case 1 * _dec: _exp; \
+	case 7 * (_dec): _exp; \
+	case 6 * (_dec): _exp; \
+	case 5 * (_dec): _exp; \
+	case 4 * (_dec): _exp; \
+	case 3 * (_dec): _exp; \
+	case 2 * (_dec): _exp; \
+	case 1 * (_dec): _exp; \
 	}
 
 //	for (; (_value != 0); _value -= _dec) { _exp };
@@ -47,8 +54,8 @@
 // _dst adjusted by _count * BYTESPERLPIXEL with respect of vertical flipping
 // _count is undefined
 // _peol adjusted to next line if necessary
-#undef DESTWRITENEXTPIXELS
-#define DESTWRITENEXTPIXELS(_count, _pix, _dst, _peol, _row) { _count*= BYTESPERPIXEL; \
+#undef DESTWRITENEXTPIXELS_ANYCOLOR
+#define DESTWRITENEXTPIXELS_ANYCOLOR(_count, _pix, _dst, _peol, _row) { _count*= BYTESPERPIXEL; \
 		for (;;) { \
 			uint32 til_eol = *(_peol) - _dst; \
 			if ( _count < til_eol ) { \
@@ -65,6 +72,38 @@
 			} else break; \
 		} }
 
+
+
+//same as DESTWRITENEXTPIXELS_ANYCOLOR but only for black or white color that allows using of memset that is much faster
+#undef DESTWRITENEXTPIXELSBLACKORWHITE
+#define DESTWRITENEXTPIXELSBLACKORWHITE(_count, _bw, _dst, _peol, _row) { _count*= BYTESPERPIXEL; \
+		for (;;) { \
+			const uint32 til_eol = *(_peol) - _dst; \
+			if ( _count < til_eol ) { \
+				memset((PIXEL_ALIGN*)_dst, _bw, _count); \
+				_dst+= _count; \
+				break; \
+			} else if (_count) { \
+				*(_peol) = *(_peol) - _row; \
+				PREFETCH_WRITE(*(_peol) - _row); \
+				_count -= til_eol; \
+				memset((PIXEL_ALIGN*)_dst, _bw, til_eol); \
+				_dst = *(_peol) - _row; \
+			} else break; \
+		} }
+
+
+#undef DESTWRITENEXTPIXELS
+#define DESTWRITENEXTPIXELS(_count, _pix, _dst, _peol, _row) switch (_pix) { \
+			case BLACK_PIXEL: \
+				DESTWRITENEXTPIXELSBLACKORWHITE(runLength, 0, pbDest, &pbDestEndOfLine, rowDelta); \
+				break; \
+			case WHITE_PIXEL: \
+				DESTWRITENEXTPIXELSBLACKORWHITE(runLength, 0xff, pbDest, &pbDestEndOfLine, rowDelta); \
+				break; \
+			default: \
+				DESTWRITENEXTPIXELS_ANYCOLOR(_count, _pix, _dst, _peol, _row); \
+		}
 
 
 //Line-by-line filling of _count pixel pairs with specified color
@@ -84,11 +123,21 @@
 			} else if (_count) { \
 				*(_peol) = *(_peol) - _row;  \
 				PREFETCH_WRITE(*(_peol) - _row); \
-				_count-= til_eol; \
-				DEREMENTING_LOOP(til_eol, 2 * BYTESPERPIXEL, \
-					DESTWRITEPIXEL(_dst, _pixA); _dst+= BYTESPERPIXEL; \
-					DESTWRITEPIXEL(_dst, _pixB); _dst+= BYTESPERPIXEL; ); \
-				_dst = *(_peol) - _row; \
+				if (til_eol % (2 * BYTESPERPIXEL) ) { \
+					_count -= til_eol + BYTESPERPIXEL; \
+					til_eol -= BYTESPERPIXEL; \
+					DEREMENTING_LOOP(til_eol, 2 * BYTESPERPIXEL, \
+						DESTWRITEPIXEL(_dst, _pixA); _dst+= BYTESPERPIXEL; \
+						DESTWRITEPIXEL(_dst, _pixB); _dst+= BYTESPERPIXEL; ); \
+					DESTWRITEPIXEL(_dst, _pixA); _dst = *(_peol) - _row; \
+					DESTWRITEPIXEL(_dst, _pixB); _dst+= BYTESPERPIXEL; \
+				} else {\
+					_count-= til_eol; \
+					DEREMENTING_LOOP(til_eol, 2 * BYTESPERPIXEL, \
+						DESTWRITEPIXEL(_dst, _pixA); _dst+= BYTESPERPIXEL; \
+						DESTWRITEPIXEL(_dst, _pixB); _dst+= BYTESPERPIXEL; ); \
+					_dst = *(_peol) - _row; \
+				} \
 			} else break; \
 		} }
 
@@ -105,7 +154,7 @@
 		for (;;) { \
 			const uint32 til_eol = *(_peol) - _dst; \
 			if ( _count < til_eol ) { \
-				memcpy(_dst, _src, _count); \
+				memcpy((PIXEL_ALIGN*)_dst, (const PIXEL_ALIGN*)_src, _count); \
 				_dst+= _count; _src+= _count; \
 				break; \
 			} else if (_count) { \
@@ -113,36 +162,11 @@
 				PREFETCH_READ(_src + til_eol); \
 				PREFETCH_WRITE(*(_peol) - _row); \
 				_count -= til_eol; \
-				memcpy(_dst, _src, til_eol); \
+				memcpy((PIXEL_ALIGN*)_dst, (const PIXEL_ALIGN*)_src, til_eol); \
 				_src += til_eol; \
 				_dst = *(_peol) - _row; \
 			} else break; \
 		} }
-
-
-#undef DESTWRITENEXTPIXELSBLACKORWHITE
-#define DESTWRITENEXTPIXELSBLACKORWHITE(_count, _bw, _dst, _peol, _row) { _count*= BYTESPERPIXEL; \
-		for (;;) { \
-			const uint32 til_eol = *(_peol) - _dst; \
-			if ( _count < til_eol ) { \
-				memset(_dst, _bw, _count); \
-				_dst+= _count; \
-				break; \
-			} else if (_count) { \
-				*(_peol) = *(_peol) - _row; \
-				PREFETCH_WRITE(*(_peol) - _row); \
-				_count -= til_eol; \
-				memset(_dst, _bw, til_eol); \
-				_dst = *(_peol) - _row; \
-			} else break; \
-		} }
-
-
-//same as DESTWRITENEXTPIXELS but only for black or white color that allows using of memset that is much faster
-#undef DESTWRITENEXTPIXELSBLACK 
-#undef DESTWRITENEXTPIXELSWHITE
-#define DESTWRITENEXTPIXELSBLACK(_count, _dst, _peol, _row)  DESTWRITENEXTPIXELSBLACKORWHITE(_count, 0x00, _dst, _peol, _row) 
-#define DESTWRITENEXTPIXELSWHITE(_count, _dst, _peol, _row)  DESTWRITENEXTPIXELSBLACKORWHITE(_count, 0xff, _dst, _peol, _row) 
 
 
 //Line-by-line copy of _count pixels from _dst + _row to _dst
@@ -155,14 +179,14 @@
 		for (;;) { \
 			const uint32 til_eol = *(_peol) - _dst; \
 			if ( _count < til_eol ) { \
-				memcpy(_dst, _dst + _row, _count); \
+				memcpy((PIXEL_ALIGN*)_dst, (const PIXEL_ALIGN*)(_dst + _row), _count); \
 				_dst+= _count; \
 				break; \
 			} else if (_count) { \
 				*(_peol) = *(_peol) - _row; \
 				PREFETCH_WRITE(*(_peol) - _row); \
 				_count -= til_eol; \
-				memcpy(_dst, _dst + _row, til_eol); \
+				memcpy((PIXEL_ALIGN*)_dst, (const PIXEL_ALIGN*)(_dst + _row), til_eol); \
 				_dst = *(_peol) - _row; \
 			} else break; \
 		} }
@@ -325,7 +349,7 @@ static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8** ppbDestEndOfLine, u
 {
 	if (!bitmask)
 	{
-		DESTWRITENEXTPIXELSBLACK(cBits, pbDest, ppbDestEndOfLine, rowDelta);
+		DESTWRITENEXTPIXELSBLACKORWHITE(cBits, 0x00, pbDest, ppbDestEndOfLine, rowDelta);
 		return pbDest;
 	}
 
@@ -498,7 +522,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					runLength = runLength - 1;
 				}
-				DESTWRITENEXTPIXELSBLACK(runLength, pbDest, &pbDestEndOfLine, rowDelta);
+				DESTWRITENEXTPIXELSBLACKORWHITE(runLength, 0x00, pbDest, &pbDestEndOfLine, rowDelta);
 			}
 			else
 			{
@@ -536,19 +560,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 				}
 				if (fFirstLine)
 				{
-					switch (fgPel)
-					{
-						case BLACK_PIXEL:
-							DESTWRITENEXTPIXELSBLACK(runLength, pbDest, &pbDestEndOfLine, rowDelta);
-							break;
-
-						case WHITE_PIXEL:
-							DESTWRITENEXTPIXELSWHITE(runLength, pbDest, &pbDestEndOfLine, rowDelta);
-							break;
-
-						default:
-							DESTWRITENEXTPIXELS(runLength, fgPel, pbDest, &pbDestEndOfLine, rowDelta);
-					}
+					DESTWRITENEXTPIXELS(runLength, fgPel, pbDest, &pbDestEndOfLine, rowDelta);
 				}
 				else
 				{
