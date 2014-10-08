@@ -27,6 +27,7 @@
 	if (_dst >= *(_peol)) {*(_peol) = *(_peol) - _row; _dst = *(_peol) - _row; PREFETCH_WRITE(_dst + PREFETCH_LENGTH); } }
 
 
+#undef DECREMENTING_LOOP
 #define DEREMENTING_LOOP(_value, _dec, _exp) \
 	for (; (_value >= 8 * _dec); _value -= 8 * _dec) { _exp _exp _exp _exp _exp _exp _exp _exp }; \
 	switch (_value) { \
@@ -37,7 +38,7 @@
 	case 3 * _dec: _exp; \
 	case 2 * _dec: _exp; \
 	case 1 * _dec: _exp; \
-	} 
+	}
 
 //	for (; (_value != 0); _value -= _dec) { _exp };
 
@@ -136,6 +137,12 @@
 			} else break; \
 		} }
 
+
+//same as DESTWRITENEXTPIXELS but only for black or white color that allows using of memset that is much faster
+#undef DESTWRITENEXTPIXELSBLACK 
+#undef DESTWRITENEXTPIXELSWHITE
+#define DESTWRITENEXTPIXELSBLACK(_count, _dst, _peol, _row)  DESTWRITENEXTPIXELSBLACKORWHITE(_count, 0x00, _dst, _peol, _row) 
+#define DESTWRITENEXTPIXELSWHITE(_count, _dst, _peol, _row)  DESTWRITENEXTPIXELSBLACKORWHITE(_count, 0xff, _dst, _peol, _row) 
 
 
 //Line-by-line copy of _count pixels from _dst + _row to _dst
@@ -318,7 +325,7 @@ static uint8* WRITEFIRSTLINEFGBGIMAGE(uint8* pbDest, uint8** ppbDestEndOfLine, u
 {
 	if (!bitmask)
 	{
-		DESTWRITENEXTPIXELSBLACKORWHITE(cBits, 0, pbDest, ppbDestEndOfLine, rowDelta);
+		DESTWRITENEXTPIXELSBLACK(cBits, pbDest, ppbDestEndOfLine, rowDelta);
 		return pbDest;
 	}
 
@@ -491,7 +498,7 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 					DESTNEXTPIXEL(pbDest, &pbDestEndOfLine, rowDelta);
 					runLength = runLength - 1;
 				}
-				DESTWRITENEXTPIXELS(runLength, BLACK_PIXEL, pbDest, &pbDestEndOfLine, rowDelta);
+				DESTWRITENEXTPIXELSBLACK(runLength, pbDest, &pbDestEndOfLine, rowDelta);
 			}
 			else
 			{
@@ -529,7 +536,19 @@ void RLEDECOMPRESS(uint8* pbSrcBuffer, uint32 cbSrcBuffer, uint8* pbDest,
 				}
 				if (fFirstLine)
 				{
-					DESTWRITENEXTPIXELS(runLength, fgPel, pbDest, &pbDestEndOfLine, rowDelta);
+					switch (fgPel)
+					{
+						case BLACK_PIXEL:
+							DESTWRITENEXTPIXELSBLACK(runLength, pbDest, &pbDestEndOfLine, rowDelta);
+							break;
+
+						case WHITE_PIXEL:
+							DESTWRITENEXTPIXELSWHITE(runLength, pbDest, &pbDestEndOfLine, rowDelta);
+							break;
+
+						default:
+							DESTWRITENEXTPIXELS(runLength, fgPel, pbDest, &pbDestEndOfLine, rowDelta);
+					}
 				}
 				else
 				{
