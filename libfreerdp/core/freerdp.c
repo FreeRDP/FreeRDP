@@ -358,6 +358,14 @@ FREERDP_API BOOL freerdp_focus_required(freerdp* instance)
 	return bRetCode;
 }
 
+void freerdp_set_focus(freerdp* instance)
+{
+	rdpRdp* rdp;
+
+	rdp = instance->context->rdp;
+	rdp->resendFocus = TRUE;
+}
+
 void freerdp_get_version(int* major, int* minor, int* revision)
 {
 	if (major != NULL)
