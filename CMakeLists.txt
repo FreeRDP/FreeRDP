@@ -59,6 +59,10 @@ include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 
 # Soname versioning
+set(BUILD_NUMBER 0)
+if ($ENV{BUILD_NUMBER})
+  set(BUILD_NUMBER $ENV{BUILD_NUMBER})
+endif()
 set(WITH_LIBRARY_VERSIONING "ON")
 set(FREERDP_VERSION_MAJOR "1")
 set(FREERDP_VERSION_MINOR "2")
