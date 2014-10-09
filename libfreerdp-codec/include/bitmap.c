@@ -129,8 +129,13 @@
 					DEREMENTING_LOOP(til_eol, 2 * BYTESPERPIXEL, \
 						DESTWRITEPIXEL(_dst, _pixA); _dst+= BYTESPERPIXEL; \
 						DESTWRITEPIXEL(_dst, _pixB); _dst+= BYTESPERPIXEL; ); \
-					DESTWRITEPIXEL(_dst, _pixA); _dst = *(_peol) - _row; \
-					DESTWRITEPIXEL(_dst, _pixB); _dst+= BYTESPERPIXEL; \
+					DESTWRITEPIXEL(_dst, _pixA); \
+					_dst = *(_peol) - _row; \
+					DESTWRITEPIXEL(_dst, _pixB); \
+					if (_row==BYTESPERPIXEL) { \
+						*(_peol) = *(_peol) - _row; \
+						_dst = *(_peol) - _row; \
+					} else { _dst+= BYTESPERPIXEL; } \
 				} else {\
 					_count-= til_eol; \
 					DEREMENTING_LOOP(til_eol, 2 * BYTESPERPIXEL, \
