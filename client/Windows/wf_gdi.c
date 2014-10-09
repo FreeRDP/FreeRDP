@@ -608,8 +608,6 @@ void wf_gdi_line_to(wfContext* wfc, LINE_TO_ORDER* line_to)
 
 void wf_gdi_polyline(wfContext* wfc, POLYLINE_ORDER* polyline)
 {
-	int i;
-	POINT* pts;
 	int org_rop2;
 	HPEN hpen;
 	HPEN org_hpen;
@@ -621,26 +619,28 @@ void wf_gdi_polyline(wfContext* wfc, POLYLINE_ORDER* polyline)
 	org_rop2 = wf_set_rop2(wfc->drawing->hdc, polyline->bRop2);
 	org_hpen = (HPEN) SelectObject(wfc->drawing->hdc, hpen);
 
-	if (polyline->numPoints > 0)
+	if (polyline->numDeltaEntries > 0)
 	{
-		POINT temp;
+		POINT  *pts;
+		POINT  temp;
+		int    numPoints;
+		int    i;
 
-		temp.x = polyline->xStart;
-		temp.y = polyline->yStart;
-		pts = (POINT*) malloc(sizeof(POINT) * polyline->numPoints);
+		numPoints = polyline->numDeltaEntries + 1;
+		pts = (POINT*) malloc(sizeof(POINT) * numPoints);
+		pts[0].x = temp.x = polyline->xStart;
+		pts[0].y = temp.y = polyline->yStart;
 
-		for (i = 0; i < (int) polyline->numPoints; i++)
+		for (i = 0; i < (int) polyline->numDeltaEntries; i++)
 		{
 			temp.x += polyline->points[i].x;
 			temp.y += polyline->points[i].y;
-			pts[i].x = temp.x;
-			pts[i].y = temp.y;
-
-			if (wfc->drawing == wfc->primary)
-				wf_invalidate_region(wfc, pts[i].x, pts[i].y, pts[i].x + 1, pts[i].y + 1);
+			pts[i + 1].x = temp.x;
+			pts[i + 1].y = temp.y;
 		}
-
-		Polyline(wfc->drawing->hdc, pts, polyline->numPoints);
+		if (wfc->drawing == wfc->primary)
+			wf_invalidate_region(wfc, wfc->client_x, wfc->client_y, wfc->client_width, wfc->client_height);
+		Polyline(wfc->drawing->hdc, pts, numPoints);
 		free(pts);
 	}
 

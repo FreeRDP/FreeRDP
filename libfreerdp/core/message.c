@@ -343,8 +343,8 @@ static void update_message_Polyline(rdpContext* context, POLYLINE_ORDER* polylin
 	wParam = (POLYLINE_ORDER*) malloc(sizeof(POLYLINE_ORDER));
 	CopyMemory(wParam, polyline, sizeof(POLYLINE_ORDER));
 
-	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numPoints);
-	CopyMemory(wParam->points, polyline->points, sizeof(DELTA_POINT) * wParam->numPoints);
+	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numDeltaEntries);
+	CopyMemory(wParam->points, polyline->points, sizeof(DELTA_POINT) * wParam->numDeltaEntries);
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(PrimaryUpdate, Polyline), (void*) wParam, NULL);
