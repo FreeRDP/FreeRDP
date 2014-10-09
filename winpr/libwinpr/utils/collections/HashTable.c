@@ -33,9 +33,50 @@
  * http://www.pomakis.com/hashtable/hashtable.h
  */
 
-static int isProbablePrime(long oddNumber)
+BOOL HashTable_PointerCompare(void* pointer1, void* pointer2)
 {
-	long i;
+	return (pointer1 == pointer2);
+}
+
+UINT32 HashTable_PointerHash(void* pointer)
+{
+	return ((UINT32) (UINT_PTR) pointer) >> 4;
+}
+
+BOOL HashTable_StringCompare(void* string1, void* string2)
+{
+	if (!string1 || !string2)
+		return (string1 == string2);
+
+	return (strcmp((char*) string1, (char*) string2) == 0);
+}
+
+UINT32 HashTable_StringHash(void* key)
+{
+	UINT32 c;
+	UINT32 hash = 5381;
+	BYTE* str = (BYTE*) key;
+
+	/* djb2 algorithm */
+	while ((c = *str++) != '\0')
+		hash = (hash * 33) + c;
+
+	return hash;
+}
+
+void* HashTable_StringClone(void* str)
+{
+	return _strdup((char*) str);
+}
+
+void HashTable_StringFree(void* str)
+{
+	free(str);
+}
+
+static int HashTable_IsProbablePrime(int oddNumber)
+{
+	int i;
 
 	for (i = 3; i < 51; i += 2)
 	{
@@ -48,55 +89,54 @@ static int isProbablePrime(long oddNumber)
 	return 1; /* maybe */
 }
 
-static long calculateIdealNumOfBuckets(wHashTable* table)
+static long HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 {
-	long idealNumOfBuckets = table->numOfElements / ((long) table->idealRatio);
+	int idealNumOfBuckets = table->numOfElements / ((int) table->idealRatio);
 
 	if (idealNumOfBuckets < 5)
 		idealNumOfBuckets = 5;
 	else
 		idealNumOfBuckets |= 0x01;
 
-	while (!isProbablePrime(idealNumOfBuckets))
+	while (!HashTable_IsProbablePrime(idealNumOfBuckets))
 		idealNumOfBuckets += 2;
 
 	return idealNumOfBuckets;
 }
 
-void HashTable_Rehash(wHashTable* table, long numOfBuckets)
+void HashTable_Rehash(wHashTable* table, int numOfBuckets)
 {
 	int index;
-	long hashValue;
+	UINT32 hashValue;
 	wKeyValuePair* pair;
 	wKeyValuePair* nextPair;
 	wKeyValuePair** newBucketArray;
 
 	if (numOfBuckets == 0)
-		numOfBuckets = calculateIdealNumOfBuckets(table);
+		numOfBuckets = HashTable_CalculateIdealNumOfBuckets(table);
 
 	if (numOfBuckets == table->numOfBuckets)
 		return; /* already the right size! */
 
-	newBucketArray = (wKeyValuePair**) malloc(numOfBuckets * sizeof(wKeyValuePair*));
+	newBucketArray = (wKeyValuePair**) calloc(numOfBuckets, sizeof(wKeyValuePair*));
 
-	if (newBucketArray == NULL)
+	if (!newBucketArray)
 	{
-		/* Couldn't allocate memory for the new array.  This isn't a fatal
-		 * error; we just can't perform the rehash. */
+		/*
+		 * Couldn't allocate memory for the new array.
+		 * This isn't a fatal error; we just can't perform the rehash.
+		 */
 		return;
 	}
-
-	for (index = 0; index < numOfBuckets; index++)
-		newBucketArray[index] = NULL;
 
 	for (index = 0; index < table->numOfBuckets; index++)
 	{
 		pair = table->bucketArray[index];
 
-		while (pair != NULL)
+		while (pair)
 		{
 			nextPair = pair->next;
-			hashValue = table->hashFunction(pair->key) % numOfBuckets;
+			hashValue = table->hash(pair->key) % numOfBuckets;
 			pair->next = newBucketArray[hashValue];
 			newBucketArray[hashValue] = pair;
 			pair = nextPair;
@@ -116,38 +156,19 @@ void HashTable_SetIdealRatio(wHashTable* table, float idealRatio,
 	table->upperRehashThreshold = upperRehashThreshold;
 }
 
-unsigned long HashTable_StringHashFunction(void* key)
-{
-	int c;
-	unsigned long hash = 5381;
-	unsigned char* str = (unsigned char*) key;
-
-	/* djb2 algorithm */
-	while ((c = *str++) != '\0')
-		hash = (hash * 33) + c;
-
-	return hash;
-}
-
 wKeyValuePair* HashTable_Get(wHashTable* table, void* key)
 {
-	long hashValue = table->hashFunction(key) % table->numOfBuckets;
-	wKeyValuePair* pair = table->bucketArray[hashValue];
+	UINT32 hashValue;
+	wKeyValuePair* pair;
 
-	while (pair != NULL && table->keycmp(key, pair->key) != 0)
+	hashValue = table->hash(key) % table->numOfBuckets;
+
+	pair = table->bucketArray[hashValue];
+
+	while (pair && !table->keyCompare(key, pair->key))
 		pair = pair->next;
 
 	return pair;
-}
-
-static int pointercmp(void* pointer1, void* pointer2)
-{
-	return (pointer1 != pointer2);
-}
-
-static unsigned long pointerHashFunction(void* pointer)
-{
-	return ((unsigned long) pointer) >> 4;
 }
 
 /**
@@ -179,35 +200,51 @@ int HashTable_Count(wHashTable* table)
 int HashTable_Add(wHashTable* table, void* key, void* value)
 {
 	int status = 0;
-	long hashValue;
+	UINT32 hashValue;
 	wKeyValuePair* pair;
 	wKeyValuePair* newPair;
 
 	if (!key || !value)
 		return -1;
 
+	if (table->keyClone)
+	{
+		key = table->keyClone(key);
+
+		if (!key)
+			return -1;
+	}
+
+	if (table->valueClone)
+	{
+		value = table->valueClone(value);
+
+		if (!value)
+			return -1;
+	}
+
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
 
-	hashValue = table->hashFunction(key) % table->numOfBuckets;
+	hashValue = table->hash(key) % table->numOfBuckets;
 	pair = table->bucketArray[hashValue];
 
-	while (pair != NULL && table->keycmp(key, pair->key) != 0)
+	while (pair && !table->keyCompare(key, pair->key))
 		pair = pair->next;
 
 	if (pair)
 	{
 		if (pair->key != key)
 		{
-			if (table->keyDeallocator)
-				table->keyDeallocator((void*) pair->key);
+			if (table->keyFree)
+				table->keyFree(pair->key);
 			pair->key = key;
 		}
 
 		if (pair->value != value)
 		{
-			if (table->valueDeallocator)
-				table->valueDeallocator(pair->value);
+			if (table->valueFree)
+				table->valueFree(pair->value);
 			pair->value = value;
 		}
 	}
@@ -249,15 +286,19 @@ int HashTable_Add(wHashTable* table, void* key, void* value)
 
 BOOL HashTable_Remove(wHashTable* table, void* key)
 {
+	UINT32 hashValue;
 	BOOL status = TRUE;
-	long hashValue = table->hashFunction(key) % table->numOfBuckets;
-	wKeyValuePair* pair = table->bucketArray[hashValue];
+	wKeyValuePair* pair = NULL;
 	wKeyValuePair* previousPair = NULL;
 
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
 
-	while (pair && table->keycmp(key, pair->key) != 0)
+	hashValue = table->hash(key) % table->numOfBuckets;
+
+	pair = table->bucketArray[hashValue];
+
+	while (pair && !table->keyCompare(key, pair->key))
 	{
 		previousPair = pair;
 		pair = pair->next;
@@ -269,11 +310,11 @@ BOOL HashTable_Remove(wHashTable* table, void* key)
 	}
 	else
 	{
-		if (table->keyDeallocator)
-			table->keyDeallocator((void*) pair->key);
+		if (table->keyFree)
+			table->keyFree(pair->key);
 
-		if (table->valueDeallocator)
-			table->valueDeallocator(pair->value);
+		if (table->valueFree)
+			table->valueFree(pair->value);
 
 		if (previousPair)
 			previousPair->next = pair->next;
@@ -331,6 +372,14 @@ BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value)
 	BOOL status = TRUE;
 	wKeyValuePair* pair;
 
+	if (table->valueClone && value)
+	{
+		value = table->valueClone(value);
+
+		if (!value)
+			return FALSE;
+	}
+
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
 
@@ -368,14 +417,11 @@ void HashTable_Clear(wHashTable* table)
 		{
 			nextPair = pair->next;
 
-			if (table->pfnKeyValueFree)
-				table->pfnKeyValueFree(table->context, pair->key, pair->value);
+			if (table->keyFree)
+				table->keyFree(pair->key);
 
-			if (table->keyDeallocator)
-				table->keyDeallocator((void*) pair->key);
-
-			if (table->valueDeallocator)
-				table->valueDeallocator(pair->value);
+			if (table->valueFree)
+				table->valueFree(pair->value);
 
 			free(pair);
 
@@ -410,7 +456,16 @@ int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 
 	iKey = 0;
 	count = table->numOfElements;
+
 	pKeys = (ULONG_PTR*) calloc(count, sizeof(ULONG_PTR));
+
+	if (!pKeys)
+	{
+		if (table->synchronized)
+			LeaveCriticalSection(&table->lock);
+
+		return -1;
+	}
 
 	for (index = 0; index < table->numOfBuckets; index++)
 	{
@@ -491,7 +546,7 @@ BOOL HashTable_ContainsValue(wHashTable* table, void* value)
 
 		while (pair)
 		{
-			if (table->valuecmp(value, pair->value) == 0)
+			if (table->valueCompare(value, pair->value))
 			{
 				status = TRUE;
 				break;
@@ -510,19 +565,12 @@ BOOL HashTable_ContainsValue(wHashTable* table, void* value)
 	return status;
 }
 
-void HashTable_SetFreeFunction(wHashTable* table, void* context, KEY_VALUE_FREE_FN pfnKeyValueFree)
-{
-	table->context = context;
-	table->pfnKeyValueFree = pfnKeyValueFree;
-}
-
 /**
  * Construction, Destruction
  */
 
 wHashTable* HashTable_New(BOOL synchronized)
 {
-	int index;
 	wHashTable* table;
 
 	table = (wHashTable*) calloc(1, sizeof(wHashTable));
@@ -530,12 +578,13 @@ wHashTable* HashTable_New(BOOL synchronized)
 	if (table)
 	{
 		table->synchronized = synchronized;
+
 		InitializeCriticalSectionAndSpinCount(&(table->lock), 4000);
 
 		table->numOfBuckets = 64;
 		table->numOfElements = 0;
 
-		table->bucketArray = (wKeyValuePair**) malloc(table->numOfBuckets * sizeof(wKeyValuePair*));
+		table->bucketArray = (wKeyValuePair**) calloc(table->numOfBuckets, sizeof(wKeyValuePair*));
 
 		if (!table->bucketArray)
 		{
@@ -543,18 +592,17 @@ wHashTable* HashTable_New(BOOL synchronized)
 			return NULL;
 		}
 
-		for (index = 0; index < table->numOfBuckets; index++)
-			table->bucketArray[index] = NULL;
-
 		table->idealRatio = 3.0;
 		table->lowerRehashThreshold = 0.0;
 		table->upperRehashThreshold = 15.0;
 
-		table->keycmp = pointercmp;
-		table->valuecmp = pointercmp;
-		table->hashFunction = pointerHashFunction;
-		table->keyDeallocator = NULL;
-		table->valueDeallocator = NULL;
+		table->hash = HashTable_PointerHash;
+		table->keyCompare = HashTable_PointerCompare;
+		table->valueCompare = HashTable_PointerCompare;
+		table->keyClone = NULL;
+		table->valueClone = NULL;
+		table->keyFree = NULL;
+		table->valueFree = NULL;
 	}
 
 	return table;
@@ -576,11 +624,11 @@ void HashTable_Free(wHashTable* table)
 			{
 				nextPair = pair->next;
 
-				if (table->keyDeallocator)
-					table->keyDeallocator((void*) pair->key);
+				if (table->keyFree)
+					table->keyFree(pair->key);
 
-				if (table->valueDeallocator)
-					table->valueDeallocator(pair->value);
+				if (table->valueFree)
+					table->valueFree(pair->value);
 
 				free(pair);
 
