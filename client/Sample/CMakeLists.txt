@@ -21,6 +21,23 @@ set(MODULE_PREFIX "FREERDP_CLIENT_SAMPLE")
 set(${MODULE_PREFIX}_SRCS
 	freerdp.c)
 
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+if (WIN32)
+  set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
+  set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
+  set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
+  set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
+
+  configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+    @ONLY)
+
+  set (WINPR_SRCS ${WINPR_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+endif()
+
+
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${CMAKE_DL_LIBS})
