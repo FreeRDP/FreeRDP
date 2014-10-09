@@ -40,6 +40,10 @@
 #define BUSY_FRAMEDROP_INTERVAL			150 //milliseconds
 #define BUSY_INPUT_DEFER_INTERVAL		500 //milliseconds
 
+
+#define DF_LOCK_BIT_INIT		1
+#define DF_LOCK_BIT_PAINT		2
+
 static freerdp_sem g_sem;
 static int g_thread_count = 0;
 
@@ -58,34 +62,39 @@ void df_context_free(freerdp* instance, rdpContext* context)
 
 }
 
-boolean df_lock_fb(dfInfo *dfi)
-{
-	if (++dfi->primary_locks > 1)
-		return true;
-
-	dfi->err = dfi->primary->Lock(dfi->primary, DSLF_WRITE | DSLF_READ, (void **)&dfi->primary_data, &dfi->primary_pitch);
-	if (dfi->err!=DFB_OK)
-	{
-		printf("DirectFB init failed! err=0x%x\n",  dfi->err);
-		return false;
-	}
-
-	return true;
-}
-
-void df_unlock_fb(dfInfo *dfi)
+static boolean df_lock_fb(dfInfo *dfi, uint8 mask)
 {
 	if (!dfi->primary_locks)
 	{
-		fprintf(stderr, "Too many unlocks!\n");
-		abort();
+		dfi->err = dfi->primary->Lock(dfi->primary, DSLF_WRITE | DSLF_READ, (void **)&dfi->primary_data, &dfi->primary_pitch);
+		if (dfi->err!=DFB_OK)
+		{
+			printf("DirectFB Lock failed! mask=0x%x err=0x%x\n",  mask, dfi->err);
+			return false;
+		}
 	}
-	if (!--dfi->primary_locks)
+
+	dfi->primary_locks |= mask;
+	return true;
+}
+
+static boolean df_unlock_fb(dfInfo *dfi, uint8 mask)
+{
+	if ((dfi->primary_locks&mask)==0)
+	{
+//		fprintf(stderr, "Mismatching df_uloock_fb, mask=0x%x locks=0x%x\n", mask, dfi->primary_locks);
+		return false;
+	}
+
+	dfi->primary_locks &= ~mask;
+
+	if (!dfi->primary_locks)
 	{
 		dfi->primary_data = 0;
 		dfi->primary_pitch = 0;
 		dfi->primary->Unlock(dfi->primary);
 	}
+	return true;
 }
 
 
@@ -109,15 +118,8 @@ void df_begin_paint(rdpContext* context)
 	{
 		if (((dfContext*) context)->single_surface)
 		{
-			if (!dfi->paint_pending)
-			{
-				if (!df_lock_fb(dfi))
-				{
-					printf("df_begin_paint - failed to lock surface\n");
-					abort();//will die anyway
-				}
-				dfi->paint_pending = true;
-			}
+			if (!df_lock_fb(dfi, DF_LOCK_BIT_PAINT))
+				abort();//will die anyway
 			gdi_reinit(dfi->instance, dfi->primary_data);
 		}
 
@@ -139,17 +141,15 @@ static void df_end_paint_inner(rdpContext* context)
 
 	if (((dfContext*) context)->single_surface)
 	{
-		if (dfi->paint_pending)
+		if (df_unlock_fb(dfi, DF_LOCK_BIT_PAINT))
 		{
-			dfi->paint_pending = false;
-			df_unlock_fb(dfi);
 
 			if (!gdi->primary->hdc->hwnd->invalid->null)
 			{
 				DFBRegion fdbr = {gdi->primary->hdc->hwnd->invalid->x, gdi->primary->hdc->hwnd->invalid->y,
 					gdi->primary->hdc->hwnd->invalid->x + gdi->primary->hdc->hwnd->invalid->w - 1,
 					gdi->primary->hdc->hwnd->invalid->y + gdi->primary->hdc->hwnd->invalid->h - 1};
-				dfi->primary->Flip (dfi->primary, &fdbr, DSFLIP_NONE);
+				dfi->primary->Flip(dfi->primary, &fdbr, DSFLIP_NONE);
 			}
 		}
 	}
@@ -320,11 +320,9 @@ boolean df_post_connect(freerdp* instance)
 
 	if (context->single_surface)
 	{
-		if (!df_lock_fb(dfi))
-		{
-			printf("DirectFB surface lock failed!\n");
+		if (!df_lock_fb(dfi, DF_LOCK_BIT_INIT))
 			return false;
-		}
+
 		gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, dfi->primary_data);
 		gdi = instance->context->gdi;
 
@@ -334,7 +332,7 @@ boolean df_post_connect(freerdp* instance)
 			printf("DirectFB query surface size failed! err=0x%x\n",  dfi->err);
 			return false;
 		}
-		df_unlock_fb(dfi);
+		df_unlock_fb(dfi, DF_LOCK_BIT_INIT);
 
 		dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
 
@@ -352,7 +350,7 @@ boolean df_post_connect(freerdp* instance)
 
 		dfi->dfb->GetDisplayLayer(dfi->dfb, 0, &(dfi->layer));
 		dfi->layer->EnableCursor(dfi->layer, 1);
-		if (!df_lock_fb(dfi))
+		if (!df_lock_fb(dfi, DF_LOCK_BIT_INIT))
 			return false;
 
 		instance->update->BeginPaint = df_begin_paint;
@@ -364,7 +362,7 @@ boolean df_post_connect(freerdp* instance)
 		df_register_graphics(instance->context->graphics);
 
 		freerdp_channels_post_connect(instance->context->channels, instance);
-		df_unlock_fb(dfi);
+		df_unlock_fb(dfi, DF_LOCK_BIT_INIT);
 		printf("DirectFB client initialized in experimental single-surface mode!\n");
 		return true;
 	}

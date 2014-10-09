@@ -66,8 +66,7 @@ struct df_info
 	IDirectFB* dfb;
 	uint8 *primary_data;
 	int primary_pitch;
-	int primary_locks;
-	boolean paint_pending;
+	uint8 primary_locks;
 	DFBEvent event;
 	HCLRCONV clrconv;
 	DFBRectangle update_rect;
