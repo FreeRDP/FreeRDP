@@ -82,7 +82,6 @@ WINPR_API BOOL SetEnvironmentVariableEBA(LPSTR * envBlock,LPCSTR lpName, LPCSTR 
 }
 #endif
 
-
 #ifdef UNICODE
 #define GetCurrentDirectory		GetCurrentDirectoryW
 #define SetCurrentDirectory		SetCurrentDirectoryW

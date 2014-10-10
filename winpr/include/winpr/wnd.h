@@ -410,8 +410,6 @@ typedef struct tagWTSSESSION_NOTIFICATION
 #define WTS_SESSION_LOCK			0x7
 #define WTS_SESSION_UNLOCK			0x8
 #define WTS_SESSION_REMOTE_CONTROL		0x9
-#define WTS_SESSION_CREATE			0xA
-#define WTS_SESSION_TERMINATE			0xB
 
 #ifdef __cplusplus
 extern "C" {
@@ -565,6 +563,14 @@ WINPR_API LRESULT WINAPI DefWindowProcW(HWND hWnd, UINT Msg, WPARAM wParam, LPAR
 }
 #endif
 
+#endif
+
+#ifndef WTS_SESSION_CREATE
+#define WTS_SESSION_CREATE			0xA
+#endif
+
+#ifndef WTS_SESSION_TERMINATE
+#define WTS_SESSION_TERMINATE			0xB
 #endif
 
 #endif /* WINPR_WND_H */
