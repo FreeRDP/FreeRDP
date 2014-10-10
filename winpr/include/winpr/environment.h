@@ -73,11 +73,6 @@ WINPR_API DWORD ExpandEnvironmentStringsW(LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSi
 WINPR_API BOOL FreeEnvironmentStringsA(LPCH lpszEnvironmentBlock);
 WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
 
-WINPR_API LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge);
-
-WINPR_API DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
-WINPR_API BOOL SetEnvironmentVariableEBA(LPSTR * envBlock,LPCSTR lpName, LPCSTR lpValue);
-
 #ifdef __cplusplus
 }
 #endif
@@ -108,6 +103,19 @@ WINPR_API BOOL SetEnvironmentVariableEBA(LPSTR * envBlock,LPCSTR lpName, LPCSTR 
 #define FreeEnvironmentStrings		FreeEnvironmentStringsA
 #endif
 
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WINPR_API LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge);
+
+WINPR_API DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
+WINPR_API BOOL SetEnvironmentVariableEBA(LPSTR* envBlock, LPCSTR lpName, LPCSTR lpValue);
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* WINPR_ENVIRONMENT_H */
