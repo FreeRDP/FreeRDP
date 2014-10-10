@@ -482,6 +482,9 @@ int _bind(SOCKET s, const struct sockaddr* addr, int namelen)
 
 	status = bind(fd, addr, (socklen_t) namelen);
 
+	if (status < 0)
+		return SOCKET_ERROR;
+
 	return status;
 }
 
@@ -501,6 +504,9 @@ int _connect(SOCKET s, const struct sockaddr* name, int namelen)
 	int fd = (int) s;
 
 	status = connect(fd, name, (socklen_t) namelen);
+
+	if (status < 0)
+		return SOCKET_ERROR;
 
 	return status;
 }
@@ -684,9 +690,15 @@ int _shutdown(SOCKET s, int how)
 
 SOCKET _socket(int af, int type, int protocol)
 {
+	int fd;
 	SOCKET s;
 
-	s = (SOCKET) socket(af, type, protocol);
+	fd = socket(af, type, protocol);
+
+	if (fd < 1)
+		return INVALID_SOCKET;
+
+	s = (SOCKET) fd;
 
 	return s;
 }
