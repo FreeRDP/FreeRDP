@@ -143,8 +143,36 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 	Stream_Read_UINT32(s, flags);
 	chunkLength = Stream_GetRemainingLength(s);
 
-	IFCALL(client->ReceiveChannelData, client,
-		channelId, Stream_Pointer(s), chunkLength, flags, length);
+	if (client->VirtualChannelRead)
+	{
+		UINT32 index;
+		BOOL found = FALSE;
+		HANDLE hChannel = 0;
+		rdpContext* context = client->context;
+		rdpMcs* mcs = context->rdp->mcs;
+		rdpMcsChannel* mcsChannel = NULL;
+
+		for (index = 0; index < mcs->channelCount; index++)
+		{
+			mcsChannel = &(mcs->channels[index]);
+
+			if (mcsChannel->ChannelId == channelId)
+			{
+				hChannel = (HANDLE) mcsChannel->handle;
+				found = TRUE;
+				break;
+			}
+		}
+
+		if (!found)
+			return FALSE;
+
+		client->VirtualChannelRead(client, hChannel, Stream_Pointer(s), Stream_GetRemainingLength(s));
+	}
+	else if (client->ReceiveChannelData)
+	{
+		client->ReceiveChannelData(client, channelId, Stream_Pointer(s), chunkLength, flags, length);
+	}
 
 	return TRUE;
 }

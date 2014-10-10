@@ -52,6 +52,8 @@ typedef HANDLE (*psPeerVirtualChannelOpen)(freerdp_peer* client, const char* nam
 typedef BOOL (*psPeerVirtualChannelClose)(freerdp_peer* client, HANDLE hChannel);
 typedef int (*psPeerVirtualChannelRead)(freerdp_peer* client, HANDLE hChannel, BYTE* buffer, UINT32 length);
 typedef int (*psPeerVirtualChannelWrite)(freerdp_peer* client, HANDLE hChannel, BYTE* buffer, UINT32 length);
+typedef void* (*psPeerVirtualChannelGetData)(freerdp_peer* client, HANDLE hChannel);
+typedef int (*psPeerVirtualChannelSetData)(freerdp_peer* client, HANDLE hChannel, void* data);
 
 struct rdp_freerdp_peer
 {
@@ -89,6 +91,8 @@ struct rdp_freerdp_peer
 	psPeerVirtualChannelClose VirtualChannelClose;
 	psPeerVirtualChannelRead VirtualChannelRead;
 	psPeerVirtualChannelWrite VirtualChannelWrite;
+	psPeerVirtualChannelGetData VirtualChannelGetData;
+	psPeerVirtualChannelSetData VirtualChannelSetData;
 
 	int pId;
 	UINT32 ack_frame_id;

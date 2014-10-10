@@ -66,6 +66,7 @@ struct rdp_peer_channel
 	WTSVirtualChannelManager* vcm;
 	freerdp_peer* client;
 
+	void* extra;
 	UINT16 index;
 	UINT32 channelId;
 	UINT16 channelType;
