@@ -138,6 +138,7 @@ typedef struct _wArrayList wArrayList;
 
 WINPR_API int ArrayList_Capacity(wArrayList* arrayList);
 WINPR_API int ArrayList_Count(wArrayList* arrayList);
+WINPR_API int ArrayList_Items(wArrayList* arrayList, ULONG_PTR** ppItems);
 WINPR_API BOOL ArrayList_IsFixedSized(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsReadOnly(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsSynchronized(wArrayList* arrayList);
