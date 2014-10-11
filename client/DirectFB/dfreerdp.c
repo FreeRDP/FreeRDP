@@ -160,7 +160,7 @@ static void df_background(dfContext* context)
 	rect.bottom = gdi->height - 1;
 	dfi->server_update.SuppressOutput((rdpContext *)context, false, &rect);
 
-	if (context->direct_fullscreen && context->direct_surface)
+	if (((rdpContext *)context)->instance->settings->fullscreen && context->direct_surface)
 	{
 		dfi->dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PIXELFORMAT;
 		dfi->dsc.caps = DSCAPS_SYSTEMONLY;
@@ -396,7 +396,7 @@ boolean df_post_connect(freerdp* instance)
 		return false;
 	}
 
-	if (context->direct_fullscreen)
+	if (((rdpContext *)context)->instance->settings->fullscreen)
 	{
 		dfi->dfb->SetCooperativeLevel(dfi->dfb, DFSCL_FULLSCREEN);
 		for (i = 0; i<12; ++i)
@@ -853,7 +853,6 @@ int main(int argc, char* argv[])
 	if (freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL)==FREERDP_ARGS_PARSE_HELP)
 	{
 		printf("  --direct-surface: use only single DirectFB surface (faster, but repaints more 'visible')\n");
-		printf("  --direct-fullscreen: set FULLSCREEN cooperative level (fast - primary surface is a screen, may cuase glitches on VT switch)\n");
 		printf("\n");
 		return 1;
 	}
@@ -862,8 +861,6 @@ int main(int argc, char* argv[])
 	{
 		if (strcmp(argv[i], "--direct-surface")==0)
 			context->direct_surface= true;
-		else if (strcmp(argv[i], "--direct-fullscreen")==0)
-			context->direct_fullscreen = true;
 	}
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
