@@ -44,6 +44,7 @@ struct df_context
 	uint64 endpaint_defer_ts;
 	uint64 input_defer_ts;
 	boolean single_surface;
+	boolean fullscreen;
 };
 
 typedef struct df_context dfContext;

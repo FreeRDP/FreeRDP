@@ -309,6 +309,9 @@ boolean df_post_connect(freerdp* instance)
 		return false;
 	}
 
+	if (context->fullscreen)
+		dfi->dfb->SetCooperativeLevel(dfi->dfb, DFSCL_FULLSCREEN);
+
 	dfi->dsc.flags = DSDESC_CAPS;
 	dfi->dsc.caps = DSCAPS_PRIMARY;
 	dfi->err = dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->primary));
@@ -334,7 +337,8 @@ boolean df_post_connect(freerdp* instance)
 		}
 		df_unlock_fb(dfi, DF_LOCK_BIT_INIT);
 
-		dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
+		dfi->err = dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
+		printf("SetVideoMode %dx%dx%d 0x%x\n", gdi->width, gdi->height, gdi->dstBpp, dfi->err);
 
 
 		dfi->dfb->CreateInputEventBuffer(dfi->dfb, DICAPS_ALL, DFB_TRUE, &(dfi->event_buffer));
@@ -377,7 +381,10 @@ boolean df_post_connect(freerdp* instance)
 		return false;
 	}
 
-	dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
+	dfi->err = dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
+
+	printf("SetVideoMode %dx%dx%d 0x%x\n", gdi->width, gdi->height, gdi->dstBpp, dfi->err);
+
 	dfi->dfb->CreateInputEventBuffer(dfi->dfb, DICAPS_ALL, DFB_TRUE, &(dfi->event_buffer));
 	dfi->event_buffer->CreateFileDescriptor(dfi->event_buffer, &(dfi->read_fds));
 
@@ -419,7 +426,6 @@ boolean df_post_connect(freerdp* instance)
 	df_register_graphics(instance->context->graphics);
 
 	freerdp_channels_post_connect(instance->context->channels, instance);
-
 	return true;
 }
 
@@ -713,6 +719,7 @@ int main(int argc, char* argv[])
 	if (freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL)==FREERDP_ARGS_PARSE_HELP)
 	{
 		printf("  --single-surface: use only single DirectFB surface (fast, experimental)\n");
+		printf("  --fullscreen: set FULLSCREEN cooperative level (fast, but renders everywhere)\n");
 		printf("\n");
 		return 1;
 	}
@@ -721,6 +728,8 @@ int main(int argc, char* argv[])
 	{
 		if (strcmp(argv[i], "--single-surface")==0)
 			context->single_surface = true;
+		else if (strcmp(argv[i], "--fullscreen")==0)
+			context->fullscreen = true;
 	}
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
