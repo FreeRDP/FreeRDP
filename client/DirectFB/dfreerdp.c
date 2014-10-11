@@ -23,6 +23,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <linux/vt.h>
+#include <sys/ioctl.h>
 #include <freerdp/utils/args.h>
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
@@ -66,7 +68,10 @@ static boolean df_lock_fb(dfInfo *dfi, uint8 mask)
 {
 	if (!dfi->primary_locks)
 	{
-		dfi->err = dfi->primary->Lock(dfi->primary, DSLF_WRITE | DSLF_READ, (void **)&dfi->primary_data, &dfi->primary_pitch);
+		dfi->err = dfi->secondary ? 
+			dfi->secondary->Lock(dfi->secondary, DSLF_WRITE | DSLF_READ, (void **)&dfi->primary_data, &dfi->primary_pitch) : 
+			dfi->primary->Lock(dfi->primary, DSLF_WRITE | DSLF_READ, (void **)&dfi->primary_data, &dfi->primary_pitch);
+
 		if (dfi->err!=DFB_OK)
 		{
 			printf("DirectFB Lock failed! mask=0x%x err=0x%x\n",  mask, dfi->err);
@@ -92,7 +97,10 @@ static boolean df_unlock_fb(dfInfo *dfi, uint8 mask)
 	{
 		dfi->primary_data = 0;
 		dfi->primary_pitch = 0;
-		dfi->primary->Unlock(dfi->primary);
+		if (dfi->secondary)
+			dfi->secondary->Unlock(dfi->secondary);
+		else
+			dfi->primary->Unlock(dfi->primary);
 	}
 	return true;
 }
@@ -109,18 +117,92 @@ static uint64 get_ticks(void)
 	return rv;
 }
 
+INLINE static int get_active_tty(int fd)
+{
+	struct vt_stat vts;
+	if (ioctl (fd, VT_GETSTATE, &vts)==-1)
+		return -1;
+	return vts.v_active;
+}
+
 void df_begin_paint(rdpContext* context)
 {
+	int ninvalid;
+	HGDI_RGN cinvalid;
 	rdpGdi* gdi = context->gdi;
 	dfInfo* dfi = ((dfContext*) context)->dfi;
 
 	if (!((dfContext*) context)->endpaint_defer_ts)
 	{
-		if (((dfContext*) context)->single_surface)
+		if (dfi->tty_fd!=-1)
+		{
+			if (dfi->tty_background)
+			{
+				if (dfi->tty_mine==get_active_tty(dfi->tty_fd))
+				{
+					dfi->tty_background = false;
+					printf("Entered foreground\n");
+					if (dfi->secondary && ((dfContext*) context)->direct_fullscreen && ((dfContext*) context)->direct_surface)
+					{
+						cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+						ninvalid = gdi->primary->hdc->hwnd->ninvalid;
+
+						for (; ninvalid>0; --ninvalid, ++cinvalid)
+						{
+							if (cinvalid->w>0 && cinvalid->h>0)
+							{
+								dfi->update_rect.x = cinvalid->x;
+								dfi->update_rect.y = cinvalid->y;
+								dfi->update_rect.w = cinvalid->w;
+								dfi->update_rect.h = cinvalid->h;
+								dfi->primary->Blit(dfi->primary, dfi->secondary, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
+							}
+						}
+
+						dfi->secondary->Release(dfi->secondary);
+						dfi->secondary = 0;
+					}
+				}
+				else
+					usleep(1000000);
+			}
+			else
+			{
+				if (dfi->tty_mine!=get_active_tty(dfi->tty_fd))
+				{
+					dfi->tty_background = true;
+					printf("Entered background\n");
+					if (((dfContext*) context)->direct_fullscreen && ((dfContext*) context)->direct_surface)
+					{
+						dfi->dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PIXELFORMAT;
+						dfi->dsc.caps = DSCAPS_SYSTEMONLY;
+						dfi->dsc.width = gdi->width;
+						dfi->dsc.height = gdi->height;
+
+						if (gdi->dstBpp == 32 || gdi->dstBpp == 24)
+							dfi->dsc.pixelformat = DSPF_AiRGB;
+						else if (gdi->dstBpp == 16 || gdi->dstBpp == 15)
+							dfi->dsc.pixelformat = DSPF_RGB16;
+						else if (gdi->dstBpp == 8)
+							dfi->dsc.pixelformat = DSPF_RGB332;
+						else
+							dfi->dsc.pixelformat = DSPF_AiRGB;
+
+						dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->secondary));
+						dfi->secondary->Blit(dfi->secondary, dfi->primary, NULL, 0, 0);
+					}
+				}
+			}
+		}
+
+		if (((dfContext*) context)->direct_surface)
 		{
 			if (!df_lock_fb(dfi, DF_LOCK_BIT_PAINT))
 				abort();//will die anyway
-			gdi_reinit(dfi->instance, dfi->primary_data);
+
+			gdi->primary_buffer = dfi->primary_data;
+			gdi->primary->bitmap->data = dfi->primary_data;
+//			gdi_reinit(dfi->instance, dfi->primary_data);
 		}
 
 		gdi->primary->hdc->hwnd->invalid->null = 1;
@@ -138,26 +220,36 @@ static void df_end_paint_inner(rdpContext* context)
 
 	gdi = context->gdi;
 	dfi = ((dfContext*) context)->dfi;
+	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 
-	if (((dfContext*) context)->single_surface)
+	if (((dfContext*) context)->direct_surface)
 	{
+		gdi_DecomposeInvalidArea(gdi->primary->hdc);
 		if (df_unlock_fb(dfi, DF_LOCK_BIT_PAINT))
-		{
-
+		{			
 			if (!gdi->primary->hdc->hwnd->invalid->null)
 			{
-				DFBRegion fdbr = {gdi->primary->hdc->hwnd->invalid->x, gdi->primary->hdc->hwnd->invalid->y,
-					gdi->primary->hdc->hwnd->invalid->x + gdi->primary->hdc->hwnd->invalid->w - 1,
-					gdi->primary->hdc->hwnd->invalid->y + gdi->primary->hdc->hwnd->invalid->h - 1};
-				dfi->primary->Flip(dfi->primary, &fdbr, DSFLIP_NONE);
+				for (; ninvalid>0; --ninvalid, ++cinvalid)
+				{
+					if (cinvalid->w>0 && cinvalid->h>0)
+					{
+						DFBRegion fdbr = {cinvalid->x, cinvalid->y,
+							cinvalid->x + cinvalid->w - 1,
+							cinvalid->y + cinvalid->h - 1};
+						dfi->primary->Flip(dfi->primary, &fdbr, DSFLIP_ONSYNC | DSFLIP_PIPELINE);
+					}
+				}
 			}
 		}
+		if (dfi->tty_background)
+			return;
 	}
 	else if (!gdi->primary->hdc->hwnd->invalid->null)
 	{ 
 		gdi_DecomposeInvalidArea(gdi->primary->hdc);
-		cinvalid = gdi->primary->hdc->hwnd->cinvalid;
-		ninvalid = gdi->primary->hdc->hwnd->ninvalid;
+		if (dfi->tty_background)
+			return;
 
 		for (; ninvalid>0; --ninvalid, ++cinvalid)
 		{
@@ -297,7 +389,8 @@ boolean df_post_connect(freerdp* instance)
 	rdpGdi* gdi;
 	dfInfo* dfi;
 	dfContext* context;
-	int flags;
+	int flags, i;
+	char sz[32];
 
 	context = ((dfContext*) instance->context);
 	dfi = context->dfi;
@@ -309,8 +402,28 @@ boolean df_post_connect(freerdp* instance)
 		return false;
 	}
 
-	if (context->fullscreen)
+	if (context->direct_fullscreen)
+	{
 		dfi->dfb->SetCooperativeLevel(dfi->dfb, DFSCL_FULLSCREEN);
+		for (i = 0; i<12; ++i)
+		{
+			sprintf(sz, "/dev/tty%d", i);
+			dfi->tty_fd = open(sz, O_RDWR);
+			if (dfi->tty_fd!=-1)
+			{
+				dfi->tty_mine = get_active_tty(dfi->tty_fd);
+				if (dfi->tty_mine!=-1)
+				{
+					printf("Current TTY is %d\n", dfi->tty_mine);
+					break;
+				}
+				close(dfi->tty_fd);
+				dfi->tty_fd = -1;
+			}
+		}
+	}
+	else	
+		dfi->tty_fd = -1;
 
 	dfi->dsc.flags = DSDESC_CAPS;
 	dfi->dsc.caps = DSCAPS_PRIMARY;
@@ -321,7 +434,7 @@ boolean df_post_connect(freerdp* instance)
 		return false;
 	}
 
-	if (context->single_surface)
+	if (context->direct_surface)
 	{
 		if (!df_lock_fb(dfi, DF_LOCK_BIT_INIT))
 			return false;
@@ -718,18 +831,18 @@ int main(int argc, char* argv[])
 	DirectFBInit(&argc, &argv);
 	if (freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL)==FREERDP_ARGS_PARSE_HELP)
 	{
-		printf("  --single-surface: use only single DirectFB surface (fast, experimental)\n");
-		printf("  --fullscreen: set FULLSCREEN cooperative level (fast, but renders everywhere)\n");
+		printf("  --direct-surface: use only single DirectFB surface (faster, but repaints more 'visible')\n");
+		printf("  --direct-fullscreen: set FULLSCREEN cooperative level (fast - primary surface is a screen, may cuase glitches on VT switch)\n");
 		printf("\n");
 		return 1;
 	}
 
 	for (i = 0; i<argc; ++i)
 	{
-		if (strcmp(argv[i], "--single-surface")==0)
-			context->single_surface = true;
-		else if (strcmp(argv[i], "--fullscreen")==0)
-			context->fullscreen = true;
+		if (strcmp(argv[i], "--direct-surface")==0)
+			context->direct_surface= true;
+		else if (strcmp(argv[i], "--direct-fullscreen")==0)
+			context->direct_fullscreen = true;
 	}
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;

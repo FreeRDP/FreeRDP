@@ -43,8 +43,8 @@ struct df_context
 	uint64 busy_ts;
 	uint64 endpaint_defer_ts;
 	uint64 input_defer_ts;
-	boolean single_surface;
-	boolean fullscreen;
+	boolean direct_surface;
+	boolean direct_fullscreen;
 };
 
 typedef struct df_context dfContext;
@@ -82,6 +82,10 @@ struct df_info
 
 	boolean wheel_pending;
 	int wheel;
+
+	int tty_fd;
+	int tty_mine;
+	boolean tty_background;
 };
 
 #endif /* __DFREERDP_H */

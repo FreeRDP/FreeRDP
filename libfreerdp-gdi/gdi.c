@@ -973,14 +973,3 @@ void gdi_free(freerdp* instance)
 	
 	instance->context->gdi = (rdpGdi*) NULL;
 }
-
-int gdi_reinit(freerdp* instance, uint8* buffer)
-{
-	rdpGdi* gdi = instance->context->gdi;
-	if (!gdi)
-		return -1;
-
-	gdi->primary_buffer = buffer;
-	gdi->primary->bitmap->data = buffer;
-	return 0;
-}

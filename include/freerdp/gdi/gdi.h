@@ -276,7 +276,6 @@ FREERDP_API int gdi_is_mono_pixel_set(uint8* data, int x, int y, int width);
 FREERDP_API void gdi_resize(rdpGdi* gdi, int width, int height);
 
 FREERDP_API int gdi_init(freerdp* instance, uint32 flags, uint8* buffer);
-FREERDP_API int gdi_reinit(freerdp* instance, uint8* buffer);
 FREERDP_API void gdi_free(freerdp* instance);
 
 #ifdef WITH_DEBUG_GDI
