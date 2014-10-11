@@ -276,8 +276,9 @@ BOOL CloseHandle(HANDLE hObject)
 }
 
 BOOL DuplicateHandle(HANDLE hSourceProcessHandle, HANDLE hSourceHandle, HANDLE hTargetProcessHandle,
-					 LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions)
+		LPHANDLE lpTargetHandle, DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwOptions)
 {
+	*((ULONG_PTR*) lpTargetHandle) = hSourceHandle;
 	return TRUE;
 }
 
