@@ -29,6 +29,7 @@
 #include <freerdp/utils/memory.h>
 #include <freerdp/utils/semaphore.h>
 #include <freerdp/utils/event.h>
+#include <freerdp/peer.h>
 #include <freerdp/constants.h>
 #include <freerdp/plugins/cliprdr.h>
 #include <freerdp/gdi/region.h>
@@ -117,6 +118,7 @@ static uint64 get_ticks(void)
 	return rv;
 }
 
+
 INLINE static int get_active_tty(int fd)
 {
 	struct vt_stat vts;
@@ -125,74 +127,72 @@ INLINE static int get_active_tty(int fd)
 	return vts.v_active;
 }
 
+static void df_foreground(dfContext* context)
+{
+	RECTANGLE_16 rect;
+	rdpGdi* gdi = ((rdpContext *)context)->gdi;
+	dfInfo* dfi = context->dfi;
+	printf("Enter foreground\n");
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = gdi->width - 1;
+	rect.bottom = gdi->height - 1;
+
+	dfi->server_update.SuppressOutput((rdpContext *)context, true, &rect);
+	dfi->server_update.RefreshRect((rdpContext *)context, 1, &rect);
+
+	if (dfi->secondary && context->direct_surface)
+	{
+		dfi->secondary->Release(dfi->secondary);
+		dfi->secondary = 0;
+	}
+}
+
+static void df_background(dfContext* context)
+{
+	RECTANGLE_16 rect;
+	rdpGdi* gdi = ((rdpContext *)context)->gdi;
+	dfInfo* dfi = context->dfi;
+	printf("Entered background\n");
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = gdi->width - 1;
+	rect.bottom = gdi->height - 1;
+	dfi->server_update.SuppressOutput((rdpContext *)context, false, &rect);
+
+	if (context->direct_fullscreen && context->direct_surface)
+	{
+		dfi->dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PIXELFORMAT;
+		dfi->dsc.caps = DSCAPS_SYSTEMONLY;
+		dfi->dsc.width = gdi->width;
+		dfi->dsc.height = gdi->height;
+
+		if (gdi->dstBpp == 32 || gdi->dstBpp == 24)
+			dfi->dsc.pixelformat = DSPF_AiRGB;
+		else if (gdi->dstBpp == 16 || gdi->dstBpp == 15)
+			dfi->dsc.pixelformat = DSPF_RGB16;
+		else if (gdi->dstBpp == 8)
+			dfi->dsc.pixelformat = DSPF_RGB332;
+		else
+			dfi->dsc.pixelformat = DSPF_AiRGB;
+
+		dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->secondary));
+		dfi->secondary->Blit(dfi->secondary, dfi->primary, NULL, 0, 0);
+	}
+}
+
+
 void df_begin_paint(rdpContext* context)
 {
-	int ninvalid;
-	HGDI_RGN cinvalid;
 	rdpGdi* gdi = context->gdi;
 	dfInfo* dfi = ((dfContext*) context)->dfi;
 
 	if (!((dfContext*) context)->endpaint_defer_ts)
 	{
-		if (dfi->tty_fd!=-1)
+		if (!dfi->tty_background && dfi->tty_fd!=-1 && dfi->tty_mine!=get_active_tty(dfi->tty_fd))
 		{
-			if (dfi->tty_background)
-			{
-				if (dfi->tty_mine==get_active_tty(dfi->tty_fd))
-				{
-					dfi->tty_background = false;
-					printf("Entered foreground\n");
-					if (dfi->secondary && ((dfContext*) context)->direct_fullscreen && ((dfContext*) context)->direct_surface)
-					{
-						cinvalid = gdi->primary->hdc->hwnd->cinvalid;
-						ninvalid = gdi->primary->hdc->hwnd->ninvalid;
-
-						for (; ninvalid>0; --ninvalid, ++cinvalid)
-						{
-							if (cinvalid->w>0 && cinvalid->h>0)
-							{
-								dfi->update_rect.x = cinvalid->x;
-								dfi->update_rect.y = cinvalid->y;
-								dfi->update_rect.w = cinvalid->w;
-								dfi->update_rect.h = cinvalid->h;
-								dfi->primary->Blit(dfi->primary, dfi->secondary, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
-							}
-						}
-
-						dfi->secondary->Release(dfi->secondary);
-						dfi->secondary = 0;
-					}
-				}
-				else
-					usleep(1000000);
-			}
-			else
-			{
-				if (dfi->tty_mine!=get_active_tty(dfi->tty_fd))
-				{
-					dfi->tty_background = true;
-					printf("Entered background\n");
-					if (((dfContext*) context)->direct_fullscreen && ((dfContext*) context)->direct_surface)
-					{
-						dfi->dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PIXELFORMAT;
-						dfi->dsc.caps = DSCAPS_SYSTEMONLY;
-						dfi->dsc.width = gdi->width;
-						dfi->dsc.height = gdi->height;
-
-						if (gdi->dstBpp == 32 || gdi->dstBpp == 24)
-							dfi->dsc.pixelformat = DSPF_AiRGB;
-						else if (gdi->dstBpp == 16 || gdi->dstBpp == 15)
-							dfi->dsc.pixelformat = DSPF_RGB16;
-						else if (gdi->dstBpp == 8)
-							dfi->dsc.pixelformat = DSPF_RGB332;
-						else
-							dfi->dsc.pixelformat = DSPF_AiRGB;
-
-						dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->secondary));
-						dfi->secondary->Blit(dfi->secondary, dfi->primary, NULL, 0, 0);
-					}
-				}
-			}
+			dfi->tty_background = true;
+			df_background((dfContext *)context);
 		}
 
 		if (((dfContext*) context)->direct_surface)
@@ -202,7 +202,6 @@ void df_begin_paint(rdpContext* context)
 
 			gdi->primary_buffer = dfi->primary_data;
 			gdi->primary->bitmap->data = dfi->primary_data;
-//			gdi_reinit(dfi->instance, dfi->primary_data);
 		}
 
 		gdi->primary->hdc->hwnd->invalid->null = 1;
@@ -225,9 +224,9 @@ static void df_end_paint_inner(rdpContext* context)
 
 	if (((dfContext*) context)->direct_surface)
 	{
-		gdi_DecomposeInvalidArea(gdi->primary->hdc);
 		if (df_unlock_fb(dfi, DF_LOCK_BIT_PAINT))
 		{			
+			gdi_DecomposeInvalidArea(gdi->primary->hdc);
 			if (!gdi->primary->hdc->hwnd->invalid->null)
 			{
 				for (; ninvalid>0; --ninvalid, ++cinvalid)
@@ -242,14 +241,10 @@ static void df_end_paint_inner(rdpContext* context)
 				}
 			}
 		}
-		if (dfi->tty_background)
-			return;
 	}
 	else if (!gdi->primary->hdc->hwnd->invalid->null)
 	{ 
 		gdi_DecomposeInvalidArea(gdi->primary->hdc);
-		if (dfi->tty_background)
-			return;
 
 		for (; ninvalid>0; --ninvalid, ++cinvalid)
 		{
@@ -394,7 +389,6 @@ boolean df_post_connect(freerdp* instance)
 
 	context = ((dfContext*) instance->context);
 	dfi = context->dfi;
-	dfi->instance = instance;
 	dfi->err = DirectFBCreate(&(dfi->dfb));
 	if (dfi->err!=DFB_OK)
 	{
@@ -421,9 +415,18 @@ boolean df_post_connect(freerdp* instance)
 				dfi->tty_fd = -1;
 			}
 		}
+
+		memset(&dfi->server_update, 0, sizeof(dfi->server_update));
+		memset(&dfi->server_primary, 0, sizeof(dfi->server_primary));
+		memset(&dfi->server_pointer, 0, sizeof(dfi->server_pointer));
+		dfi->server_update.primary = &dfi->server_primary;
+		dfi->server_update.pointer = &dfi->server_pointer;
+		update_register_server_callbacks(&dfi->server_update);
 	}
 	else	
 		dfi->tty_fd = -1;
+
+
 
 	dfi->dsc.flags = DSDESC_CAPS;
 	dfi->dsc.caps = DSCAPS_PRIMARY;
@@ -729,9 +732,26 @@ int dfreerdp_run(freerdp* instance)
 					df_end_paint_inner((rdpContext*)context);
 				}
 			}
+
+			if (context->dfi->tty_background && dfi->tty_mine==get_active_tty(dfi->tty_fd))
+			{
+				dfi->tty_background = false;
+				df_foreground(context);
+			}
+		}
+		else if (context->dfi->tty_background)
+		{
+			tv.tv_sec = 1;
+			tv.tv_usec = 0;
+			i = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &tv);
+			if (dfi->tty_mine==get_active_tty(dfi->tty_fd))
+			{
+				dfi->tty_background = false;
+				df_foreground(context);
+			}
 		}
 		else
-			i = select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL);
+			i = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &tv);
 
 
 		if (i == -1)
@@ -798,6 +818,7 @@ void* thread_func(void* param)
 
 	return NULL;
 }
+
 
 int main(int argc, char* argv[])
 {

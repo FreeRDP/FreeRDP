@@ -63,7 +63,6 @@ struct df_info
 	int read_fds;
 	int read_len_pending;
 	DFBResult err;
-	freerdp* instance;
 	IDirectFB* dfb;
 	uint8 *primary_data;
 	int primary_pitch;
@@ -86,6 +85,11 @@ struct df_info
 	int tty_fd;
 	int tty_mine;
 	boolean tty_background;
+
+
+	rdpPointerUpdate server_pointer;
+	rdpPrimaryUpdate server_primary;
+	rdpUpdate server_update;
 };
 
 #endif /* __DFREERDP_H */
