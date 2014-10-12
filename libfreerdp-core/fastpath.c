@@ -309,6 +309,7 @@ boolean fastpath_recv_updates(rdpFastPath* fastpath, STREAM* s)
 	{
 		fastpath_recv_update_data(fastpath, s);
 	}
+
 	IFCALL(update->EndPaint, update->context);
 
 	return true;
