@@ -623,7 +623,27 @@ df_process_channel_event(rdpChannels* channels, freerdp* instance)
 
 static void df_free(dfInfo* dfi)
 {
-	dfi->dfb->Release(dfi->dfb);
+	if (dfi->tty_fd!=-1)
+		close(dfi->tty_fd);
+
+	if (dfi->read_fds!=-1)
+		close(dfi->read_fds);
+	
+	if (dfi->event_buffer)
+		dfi->event_buffer->Release(dfi->event_buffer);
+
+	if (dfi->layer)
+		dfi->layer->Release(dfi->layer);
+
+	if (dfi->secondary)
+		dfi->secondary->Release(dfi->secondary);
+
+	if (dfi->primary)
+		dfi->primary->Release(dfi->primary);
+
+	if (dfi->dfb)
+		dfi->dfb->Release(dfi->dfb);
+
 	xfree(dfi);
 }
 
@@ -785,10 +805,13 @@ int dfreerdp_run(freerdp* instance)
 
 	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(channels);
-	df_free(dfi);
 	gdi_free(instance);
 	freerdp_disconnect(instance);
+	if (context->_p.cache) cache_free(context->_p.cache);
 	freerdp_free(instance);
+	df_unlock_fb(dfi, 0xff);
+	df_free(dfi);
+	printf("freeing\n");
 
 	return 0;
 }
