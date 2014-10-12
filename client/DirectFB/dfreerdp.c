@@ -132,14 +132,14 @@ static void df_foreground(dfContext* context)
 	RECTANGLE_16 rect;
 	rdpGdi* gdi = ((rdpContext *)context)->gdi;
 	dfInfo* dfi = context->dfi;
-	printf("Enter foreground\n");
+	printf("Entered foreground\n");
 	rect.left = 0;
 	rect.top = 0;
 	rect.right = gdi->width - 1;
 	rect.bottom = gdi->height - 1;
 
-	dfi->server_update.SuppressOutput((rdpContext *)context, true, &rect);
-	dfi->server_update.RefreshRect((rdpContext *)context, 1, &rect);
+	((rdpContext *)context)->instance->update->SuppressOutput((rdpContext *)context, true, &rect);
+	((rdpContext *)context)->instance->update->RefreshRect((rdpContext *)context, 1, &rect);
 
 	if (dfi->secondary && context->direct_surface)
 	{
@@ -158,7 +158,7 @@ static void df_background(dfContext* context)
 	rect.top = 0;
 	rect.right = gdi->width - 1;
 	rect.bottom = gdi->height - 1;
-	dfi->server_update.SuppressOutput((rdpContext *)context, false, &rect);
+	((rdpContext *)context)->instance->update->SuppressOutput((rdpContext *)context, false, &rect);
 
 	if (((rdpContext *)context)->instance->settings->fullscreen && context->direct_surface)
 	{
@@ -415,13 +415,6 @@ boolean df_post_connect(freerdp* instance)
 				dfi->tty_fd = -1;
 			}
 		}
-
-		memset(&dfi->server_update, 0, sizeof(dfi->server_update));
-		memset(&dfi->server_primary, 0, sizeof(dfi->server_primary));
-		memset(&dfi->server_pointer, 0, sizeof(dfi->server_pointer));
-		dfi->server_update.primary = &dfi->server_primary;
-		dfi->server_update.pointer = &dfi->server_pointer;
-		update_register_server_callbacks(&dfi->server_update);
 	}
 	else	
 		dfi->tty_fd = -1;

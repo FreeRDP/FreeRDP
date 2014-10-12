@@ -84,11 +84,6 @@ struct df_info
 	int tty_fd;
 	int tty_mine;
 	boolean tty_background;
-
-
-	rdpPointerUpdate server_pointer;
-	rdpPrimaryUpdate server_primary;
-	rdpUpdate server_update;
 };
 
 #endif /* __DFREERDP_H */

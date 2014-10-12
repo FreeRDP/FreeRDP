@@ -187,7 +187,5 @@ struct rdp_update
 	SURFACE_FRAME_MARKER surface_frame_marker;
 };
 
-FREERDP_API void update_register_server_callbacks(rdpUpdate* update);
-
 #endif /* __UPDATE_API_H */
 
