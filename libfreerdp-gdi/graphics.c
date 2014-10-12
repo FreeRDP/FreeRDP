@@ -104,7 +104,7 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 	if (bitmap->data == NULL)
 		bitmap->data = (uint8*) xmalloc(size);
-	else
+	else if (size!=bitmap->length)
 		bitmap->data = (uint8*) xrealloc(bitmap->data, size);
 
 	if (compressed)
@@ -121,7 +121,6 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	else
 	{
 		freerdp_image_flip(data, bitmap->data, width, height, bpp);
-
 	}
 
 	bitmap->width = width;
