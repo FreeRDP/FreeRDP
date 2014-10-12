@@ -756,7 +756,7 @@ void   freerdp_bitmap_flip(uint8 * src, uint8 * dst, int scanLineSz, int height)
 			memcpy(tmpBfr, topLine, scanLineSz);
 			PREFETCH_WRITE(topLine + scanLineSz);
 			memcpy(topLine, bottomLine, scanLineSz);
-			PREFETCH_WRITE(bottomLine + scanLineSz);
+			PREFETCH_WRITE(bottomLine - scanLineSz);
 			memcpy(bottomLine, tmpBfr, scanLineSz);
 			topLine += scanLineSz;
 			bottomLine -= scanLineSz;
