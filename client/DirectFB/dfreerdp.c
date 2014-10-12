@@ -807,11 +807,14 @@ int dfreerdp_run(freerdp* instance)
 	freerdp_channels_free(channels);
 	gdi_free(instance);
 	freerdp_disconnect(instance);
-	if (context->_p.cache) cache_free(context->_p.cache);
+	if (context->_p.cache)
+	{
+		cache_free(context->_p.cache);
+		context->_p.cache = 0;
+	}
 	freerdp_free(instance);
 	df_unlock_fb(dfi, 0xff);
 	df_free(dfi);
-	printf("freeing\n");
 
 	return 0;
 }
