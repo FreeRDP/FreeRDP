@@ -240,7 +240,14 @@ static void df_fullscreen_cursor_paint(dfContext *context)
 	}
 }
 
-
+static void df_check_for_background(dfContext *context)
+{
+	if (!context->dfi->tty_background && context->dfi->tty_fd!=-1 && context->dfi->tty_mine!=get_active_tty(context->dfi->tty_fd))
+	{
+		context->dfi->tty_background = true;
+		df_background(context);
+	}
+}
 
 void df_begin_paint(rdpContext* context)
 {
@@ -249,11 +256,7 @@ void df_begin_paint(rdpContext* context)
 
 	if (!((dfContext*) context)->endpaint_defer_ts)
 	{
-		if (!dfi->tty_background && dfi->tty_fd!=-1 && dfi->tty_mine!=get_active_tty(dfi->tty_fd))
-		{
-			dfi->tty_background = true;
-			df_background((dfContext *)context);
-		}
+		df_check_for_background((dfContext*)context);
 
 		if (context->instance->settings->fullscreen)
 			df_fullscreen_cursor_unpaint((dfContext *)context);
@@ -712,6 +715,12 @@ static void df_free(dfInfo* dfi)
 	if (dfi->primary)
 		dfi->primary->Release(dfi->primary);
 
+	if (dfi->contents_of_cursor)
+		dfi->contents_of_cursor->Release(dfi->contents_of_cursor);
+
+	if (dfi->contents_under_cursor)
+		dfi->contents_under_cursor->Release(dfi->contents_under_cursor);
+
 	if (dfi->dfb)
 		dfi->dfb->Release(dfi->dfb);
 
@@ -823,19 +832,18 @@ int dfreerdp_run(freerdp* instance)
 				df_foreground(context);
 			}
 		}
-		else if (context->dfi->tty_background)
+		else
 		{
 			tv.tv_sec = 1;
 			tv.tv_usec = 0;
 			i = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &tv);
-			if (dfi->tty_mine==get_active_tty(dfi->tty_fd))
+			if (dfi->tty_background && dfi->tty_mine==get_active_tty(dfi->tty_fd))
 			{
 				dfi->tty_background = false;
 				df_foreground(context);
-			}
+			} else if (i==0)
+				df_check_for_background(context);
 		}
-		else
-			i = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &tv);
 
 
 		if (i == -1)

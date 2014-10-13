@@ -82,8 +82,6 @@ void df_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	dfi = ((dfContext*) context)->dfi;
 	dfPointer* df_pointer = (dfPointer*) pointer;
 	df_pointer->surface->Release(df_pointer->surface);
-	if (dfi->contents_of_cursor == df_pointer->surface)
-		dfi->contents_of_cursor = 0;
 }
 
 void df_Pointer_Set(rdpContext* context, rdpPointer* pointer)
@@ -95,19 +93,38 @@ void df_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	dfi = ((dfContext*) context)->dfi;
 	df_pointer = (dfPointer*) pointer;
 
-	dfi->layer->SetCooperativeLevel(dfi->layer, DLSCL_ADMINISTRATIVE);
+	if (context->instance->settings->fullscreen)
+	{
+		DFBSurfaceDescription dsc;
+		dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PIXELFORMAT;
+		dsc.caps = 0;
+		dsc.width = dfi->cursor_new_w;
+		dsc.height = dfi->cursor_new_h;
+		dsc.pixelformat = DSPF_ARGB;
+		if (dfi->contents_of_cursor)
+			dfi->contents_of_cursor->Release(dfi->contents_of_cursor);
+		result = dfi->dfb->CreateSurface(dfi->dfb, &dsc, &(dfi->contents_of_cursor));
+		if (result==DFB_OK)
+		{
+			dfi->contents_of_cursor->Blit(dfi->contents_of_cursor, df_pointer->surface, 0, 0, 0);
+		}
+		else
+			dfi->contents_of_cursor = 0;
+	}
+	else
+	{
+		dfi->layer->SetCooperativeLevel(dfi->layer, DLSCL_ADMINISTRATIVE);
 
-	result = dfi->layer->SetCursorShape(dfi->layer,
-			df_pointer->surface, df_pointer->xhot, df_pointer->yhot);
+		result = dfi->layer->SetCursorShape(dfi->layer,
+				df_pointer->surface, df_pointer->xhot, df_pointer->yhot);
 
+		dfi->layer->SetCooperativeLevel(dfi->layer, DLSCL_SHARED);
+	}
 	if (result != DFB_OK)
 	{
 		DirectFBErrorFatal("SetCursorShape Error", result);
 		return;
 	}
-
-	dfi->layer->SetCooperativeLevel(dfi->layer, DLSCL_SHARED);
-	dfi->contents_of_cursor = df_pointer->surface;
 }
 
 /* Graphics Module */
