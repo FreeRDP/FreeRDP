@@ -46,8 +46,10 @@ void df_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		int pitch;
 		uint8* point = NULL;
 
-		df_pointer->xhot = pointer->xPos;
-		df_pointer->yhot = pointer->yPos;
+		dfi->cursor_new_w = dsc.width;
+		dfi->cursor_new_h = dsc.height;
+		df_pointer->xhot = dfi->cursor_new_hot_x = pointer->xPos;
+		df_pointer->yhot = dfi->cursor_new_hot_y = pointer->yPos;
 
 		result = df_pointer->surface->Lock(df_pointer->surface,
 				DSLF_WRITE, (void**) &point, &pitch);
@@ -75,8 +77,13 @@ void df_Pointer_New(rdpContext* context, rdpPointer* pointer)
 
 void df_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
+	dfInfo* dfi;
+
+	dfi = ((dfContext*) context)->dfi;
 	dfPointer* df_pointer = (dfPointer*) pointer;
 	df_pointer->surface->Release(df_pointer->surface);
+	if (dfi->contents_of_cursor == df_pointer->surface)
+		dfi->contents_of_cursor = 0;
 }
 
 void df_Pointer_Set(rdpContext* context, rdpPointer* pointer)
@@ -100,6 +107,7 @@ void df_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	}
 
 	dfi->layer->SetCooperativeLevel(dfi->layer, DLSCL_SHARED);
+	dfi->contents_of_cursor = df_pointer->surface;
 }
 
 /* Graphics Module */

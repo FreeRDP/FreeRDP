@@ -72,6 +72,15 @@ struct df_info
 	DFBSurfaceDescription dsc;
 	IDirectFBSurface* primary;
 	IDirectFBSurface* secondary;
+
+	IDirectFBSurface* contents_under_cursor;
+	IDirectFBSurface* contents_of_cursor;
+	int cursor_x, cursor_y;
+	int cursor_w, cursor_h;
+	int cursor_hot_x, cursor_hot_y;
+	int cursor_new_w, cursor_new_h;
+	int cursor_new_hot_x, cursor_new_hot_y;
+	
 	IDirectFBDisplayLayer* layer;
 	IDirectFBEventBuffer* event_buffer;
 	boolean pointer_pending;

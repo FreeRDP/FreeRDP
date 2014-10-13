@@ -249,7 +249,16 @@ boolean df_event_process(freerdp* instance, DFBEvent* event)
 		switch (input_event->type)
 		{
 			case DIET_AXISMOTION:
-				dfi->layer->GetCursorPosition(dfi->layer, &dfi->pointer_x, &dfi->pointer_y);
+				if (instance->settings->fullscreen)
+				{
+					if (input_event->axis == DIAI_X)
+						dfi->pointer_x+= input_event->axisrel;
+					else if (input_event->axis == DIAI_Y)
+						dfi->pointer_y+= input_event->axisrel;
+				}
+				else
+					dfi->layer->GetCursorPosition(dfi->layer, &dfi->pointer_x, &dfi->pointer_y);
+
 				if (dfi->pointer_x > (gdi->width - 1))
 					dfi->pointer_x = gdi->width - 1;
 
@@ -269,13 +278,25 @@ boolean df_event_process(freerdp* instance, DFBEvent* event)
 
 			case DIET_BUTTONPRESS:
 				df_events_commit(instance);
-				dfi->layer->GetCursorPosition(dfi->layer, &x, &y);
+				if (instance->settings->fullscreen)
+				{
+					x = dfi->pointer_x;
+					y = dfi->pointer_y;
+				}
+				else
+					dfi->layer->GetCursorPosition(dfi->layer, &x, &y);
 				df_send_mouse_button_event(instance->input, true, input_event->button, x, y);
 				break;
 
 			case DIET_BUTTONRELEASE:
 				df_events_commit(instance);
-				dfi->layer->GetCursorPosition(dfi->layer, &x, &y);
+				if (instance->settings->fullscreen)
+				{
+					x = dfi->pointer_x;
+					y = dfi->pointer_y;
+				}
+				else
+					dfi->layer->GetCursorPosition(dfi->layer, &x, &y);
 				df_send_mouse_button_event(instance->input, false, input_event->button, x, y);
 				break;
 

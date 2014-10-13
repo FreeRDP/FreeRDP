@@ -148,6 +148,25 @@ static void df_foreground(dfContext* context)
 	}
 }
 
+static void CreateSystemSurface(dfInfo *dfi, int width, int height, int bpp, IDirectFBSurface **ppsurf)
+{
+	dfi->dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PIXELFORMAT;
+	dfi->dsc.caps = 0;//DSCAPS_SYSTEMONLY;
+	dfi->dsc.width = width;
+	dfi->dsc.height = height;
+
+	if (bpp == 32 || bpp == 24)
+		dfi->dsc.pixelformat = DSPF_AiRGB;
+	else if (bpp == 16 || bpp == 15)
+		dfi->dsc.pixelformat = DSPF_RGB16;
+	else if (bpp == 8)
+		dfi->dsc.pixelformat = DSPF_RGB332;
+	else
+		dfi->dsc.pixelformat = DSPF_AiRGB;
+
+	dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), ppsurf);
+}
+
 static void df_background(dfContext* context)
 {
 	RECTANGLE_16 rect;
@@ -162,24 +181,65 @@ static void df_background(dfContext* context)
 
 	if (((rdpContext *)context)->instance->settings->fullscreen && context->direct_surface)
 	{
-		dfi->dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PIXELFORMAT;
-		dfi->dsc.caps = DSCAPS_SYSTEMONLY;
-		dfi->dsc.width = gdi->width;
-		dfi->dsc.height = gdi->height;
-
-		if (gdi->dstBpp == 32 || gdi->dstBpp == 24)
-			dfi->dsc.pixelformat = DSPF_AiRGB;
-		else if (gdi->dstBpp == 16 || gdi->dstBpp == 15)
-			dfi->dsc.pixelformat = DSPF_RGB16;
-		else if (gdi->dstBpp == 8)
-			dfi->dsc.pixelformat = DSPF_RGB332;
-		else
-			dfi->dsc.pixelformat = DSPF_AiRGB;
-
-		dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), &(dfi->secondary));
+		CreateSystemSurface(dfi, gdi->width, gdi->height, gdi->dstBpp, &(dfi->secondary));
 		dfi->secondary->Blit(dfi->secondary, dfi->primary, NULL, 0, 0);
 	}
 }
+
+static void df_fullscreen_cursor_unpaint(dfContext *context)
+{
+	dfInfo* dfi = context->dfi;
+	DFBRectangle rect = {0, 0, dfi->cursor_w, dfi->cursor_h};
+
+	if (dfi->contents_under_cursor)
+	{
+		if (dfi->primary_data)
+		{//todo
+		}
+		else
+			dfi->primary->Blit(dfi->primary, dfi->contents_under_cursor, &rect, dfi->cursor_x - dfi->cursor_hot_x, dfi->cursor_y - dfi->cursor_hot_y);
+	}
+}
+
+static void df_fullscreen_cursor_paint(dfContext *context)
+{
+	DFBRectangle rect;
+	rdpGdi* gdi;
+	dfInfo* dfi;
+	gdi = context->_p.gdi;
+	dfi = context->dfi;
+
+	dfi->cursor_x = dfi->pointer_x;
+	dfi->cursor_y = dfi->pointer_y;
+	if (dfi->contents_of_cursor)
+	{
+		if (dfi->contents_under_cursor && (dfi->cursor_w != dfi->cursor_new_w || dfi->cursor_h != dfi->cursor_new_h))
+		{
+			dfi->contents_under_cursor->Release(dfi->contents_under_cursor);
+			dfi->contents_under_cursor = 0;
+		}
+		if (!dfi->contents_under_cursor)
+		{
+			dfi->cursor_w = dfi->cursor_new_w;
+			dfi->cursor_h = dfi->cursor_new_h;
+			CreateSystemSurface(dfi, dfi->cursor_w, dfi->cursor_h, gdi->dstBpp, &(dfi->contents_under_cursor));
+		}
+		dfi->cursor_hot_x = dfi->cursor_new_hot_x;
+		dfi->cursor_hot_y = dfi->cursor_new_hot_y;
+
+		rect.x = dfi->cursor_x - dfi->cursor_hot_x;
+		rect.y = dfi->cursor_y - dfi->cursor_hot_y;
+		rect.w = dfi->cursor_w;
+		rect.h = dfi->cursor_h;
+		dfi->contents_under_cursor->Blit(dfi->contents_under_cursor, dfi->primary, &rect, 0, 0);
+		rect.x = 0;
+		rect.y = 0;
+		dfi->primary->SetBlittingFlags(dfi->primary, DSBLIT_BLEND_ALPHACHANNEL);
+		dfi->primary->Blit(dfi->primary, dfi->contents_of_cursor, &rect, dfi->cursor_x - dfi->cursor_hot_x, dfi->cursor_y - dfi->cursor_hot_y);
+		dfi->primary->SetBlittingFlags(dfi->primary, DSBLIT_NOFX);
+	}
+}
+
 
 
 void df_begin_paint(rdpContext* context)
@@ -195,6 +255,9 @@ void df_begin_paint(rdpContext* context)
 			df_background((dfContext *)context);
 		}
 
+		if (context->instance->settings->fullscreen)
+			df_fullscreen_cursor_unpaint((dfContext *)context);
+
 		if (((dfContext*) context)->direct_surface)
 		{
 			if (!df_lock_fb(dfi, DF_LOCK_BIT_PAINT))
@@ -206,9 +269,11 @@ void df_begin_paint(rdpContext* context)
 
 		gdi->primary->hdc->hwnd->invalid->null = 1;
 		gdi->primary->hdc->hwnd->ninvalid = 0;
+
 	}
 
 }
+
 
 static void df_end_paint_inner(rdpContext* context)
 {
@@ -225,8 +290,11 @@ static void df_end_paint_inner(rdpContext* context)
 	if (((dfContext*) context)->direct_surface)
 	{
 		if (df_unlock_fb(dfi, DF_LOCK_BIT_PAINT))
-		{			
+		{
+			if (context->instance->settings->fullscreen)
+				df_fullscreen_cursor_paint((dfContext *)context);
 			gdi_DecomposeInvalidArea(gdi->primary->hdc);
+
 			if (!gdi->primary->hdc->hwnd->invalid->null)
 			{
 				for (; ninvalid>0; --ninvalid, ++cinvalid)
@@ -257,7 +325,10 @@ static void df_end_paint_inner(rdpContext* context)
 				dfi->primary->Blit(dfi->primary, dfi->secondary, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
 			}
 		}
+		if (context->instance->settings->fullscreen)
+			df_fullscreen_cursor_paint((dfContext *)context);
 	}
+
 
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
@@ -780,20 +851,26 @@ int dfreerdp_run(freerdp* instance)
 			}
 		}
 
+		if (df_check_fds(instance, &rfds_set) != true)
+		{
+			printf("Failed to check dfreerdp file descriptor\n");
+			break;
+		}
+
 		if (freerdp_check_fds(instance) != true)
 		{
 			printf("Failed to check FreeRDP file descriptor\n");
 			break;
 		}
 
-		if (df_check_fds(instance, &rfds_set) != true)
-		{
-			printf("Failed to check dfreerdp file descriptor\n");
-			break;
-		}
 		if (!context->input_defer_ts)
 			df_events_commit(instance);
 
+		if (instance->settings->fullscreen && (dfi->cursor_x != dfi->pointer_x || dfi->cursor_y != dfi->pointer_y))
+		{
+			df_fullscreen_cursor_unpaint(context);
+			df_fullscreen_cursor_paint(context);
+		}
 
 		if (freerdp_channels_check_fds(channels, instance) != true)
 		{
