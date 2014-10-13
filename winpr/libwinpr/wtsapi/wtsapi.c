@@ -32,6 +32,10 @@
 
 #include "wtsapi.h"
 
+#ifdef _WIN32
+#include "wtsapi_win32.h"
+#endif
+
 #include "../log.h"
 #define TAG WINPR_TAG("wtsapi")
 
@@ -193,8 +197,10 @@ int WtsApi32_InitializeWtsApi(void)
 	WTSAPI32_LOAD_PROC(IsChildSessionsEnabled, WTS_IS_CHILD_SESSIONS_ENABLED_FN);
 	WTSAPI32_LOAD_PROC(GetChildSessionId, WTS_GET_CHILD_SESSION_ID_FN);
 	WTSAPI32_LOAD_PROC(GetActiveConsoleSessionId, WTS_GET_ACTIVE_CONSOLE_SESSION_ID_FN);
-#endif
 	g_WtsApi = &WtsApi32_WtsApiFunctionTable;
+	Win32_InitializeWinSta(g_WtsApi);
+#endif
+
 	return 1;
 }
 
@@ -646,6 +652,7 @@ void InitializeWtsApiStubs(void)
 
 	g_Initialized = TRUE;
 	InitializeWtsApiStubs_Env();
+
 #ifdef _WIN32
 	WtsApi32_InitializeWtsApi();
 #endif
