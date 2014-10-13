@@ -261,9 +261,13 @@ boolean df_event_process(freerdp* instance, DFBEvent* event)
 
 				if (dfi->pointer_x > (gdi->width - 1))
 					dfi->pointer_x = gdi->width - 1;
+				else if (dfi->pointer_x < 0)
+					dfi->pointer_x = 0;
 
 				if (dfi->pointer_y > (gdi->height - 1))
 					dfi->pointer_y = gdi->height - 1;
+				else if (dfi->pointer_y < 0)
+					dfi->pointer_y = 0;
 
 				if (input_event->axis == DIAI_Z)
 				{
