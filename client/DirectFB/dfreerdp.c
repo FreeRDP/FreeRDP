@@ -258,11 +258,11 @@ void df_begin_paint(rdpContext* context)
 	{
 		df_check_for_background((dfContext*)context);
 
-		if (context->instance->settings->fullscreen)
-			df_fullscreen_cursor_unpaint((dfContext *)context);
-
 		if (((dfContext*) context)->direct_surface)
 		{
+			if (context->instance->settings->fullscreen)
+				df_fullscreen_cursor_unpaint((dfContext *)context);
+
 			if (!df_lock_fb(dfi, DF_LOCK_BIT_PAINT))
 				abort();//will die anyway
 
@@ -284,6 +284,9 @@ static void df_end_paint_inner(rdpContext* context)
 	dfInfo* dfi;
 	int ninvalid;
 	HGDI_RGN cinvalid;
+	boolean cursor_unpainted;
+	int cursor_left, cursor_top;
+	int cursor_right, cursor_bottom;
 
 	gdi = context->gdi;
 	dfi = ((dfContext*) context)->dfi;
@@ -296,6 +299,7 @@ static void df_end_paint_inner(rdpContext* context)
 		{
 			if (context->instance->settings->fullscreen)
 				df_fullscreen_cursor_paint((dfContext *)context);
+
 			gdi_DecomposeInvalidArea(gdi->primary->hdc);
 
 			if (!gdi->primary->hdc->hwnd->invalid->null)
@@ -314,13 +318,35 @@ static void df_end_paint_inner(rdpContext* context)
 		}
 	}
 	else if (!gdi->primary->hdc->hwnd->invalid->null)
-	{ 
+	{
 		gdi_DecomposeInvalidArea(gdi->primary->hdc);
+
+		cursor_left = dfi->cursor_x - dfi->cursor_hot_x;
+		cursor_top = dfi->cursor_y - dfi->cursor_hot_y;
+		cursor_right = cursor_left + dfi->cursor_w;
+		cursor_bottom = cursor_top + dfi->cursor_h;
+
+		if (context->instance->settings->fullscreen &&
+			(dfi->cursor_x != dfi->pointer_x || dfi->cursor_y != dfi->pointer_y) )
+		{
+			df_fullscreen_cursor_unpaint((dfContext *)context);
+			cursor_unpainted = true;
+		}
+		else
+			cursor_unpainted = false;
 
 		for (; ninvalid>0; --ninvalid, ++cinvalid)
 		{
 			if (cinvalid->w>0 && cinvalid->h>0)
 			{
+				if (cinvalid->x < cursor_right && cursor_left < cinvalid->x + cinvalid->w &&
+					cinvalid->y < cursor_bottom && cursor_top < cinvalid->y + cinvalid->h &&
+					!cursor_unpainted && context->instance->settings->fullscreen)
+				{
+					cursor_unpainted = true;
+					df_fullscreen_cursor_unpaint((dfContext *)context);
+				}
+
 				dfi->update_rect.x = cinvalid->x;
 				dfi->update_rect.y = cinvalid->y;
 				dfi->update_rect.w = cinvalid->w;
@@ -328,10 +354,10 @@ static void df_end_paint_inner(rdpContext* context)
 				dfi->primary->Blit(dfi->primary, dfi->secondary, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
 			}
 		}
-		if (context->instance->settings->fullscreen)
+
+		if (cursor_unpainted)
 			df_fullscreen_cursor_paint((dfContext *)context);
 	}
-
 
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
