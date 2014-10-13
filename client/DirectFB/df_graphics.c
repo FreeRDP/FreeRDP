@@ -46,10 +46,8 @@ void df_Pointer_New(rdpContext* context, rdpPointer* pointer)
 		int pitch;
 		uint8* point = NULL;
 
-		dfi->cursor_new_w = dsc.width;
-		dfi->cursor_new_h = dsc.height;
-		df_pointer->xhot = dfi->cursor_new_hot_x = pointer->xPos;
-		df_pointer->yhot = dfi->cursor_new_hot_y = pointer->yPos;
+		df_pointer->xhot = pointer->xPos;
+		df_pointer->yhot = pointer->yPos;
 
 		result = df_pointer->surface->Lock(df_pointer->surface,
 				DSLF_WRITE, (void**) &point, &pitch);
@@ -98,8 +96,8 @@ void df_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 		DFBSurfaceDescription dsc;
 		dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PIXELFORMAT;
 		dsc.caps = 0;
-		dsc.width = dfi->cursor_new_w;
-		dsc.height = dfi->cursor_new_h;
+		dsc.width = pointer->width;
+		dsc.height = pointer->height;
 		dsc.pixelformat = DSPF_ARGB;
 		if (dfi->contents_of_cursor)
 			dfi->contents_of_cursor->Release(dfi->contents_of_cursor);
@@ -107,6 +105,10 @@ void df_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 		if (result==DFB_OK)
 		{
 			dfi->contents_of_cursor->Blit(dfi->contents_of_cursor, df_pointer->surface, 0, 0, 0);
+			dfi->cursor_new_w = pointer->width;
+			dfi->cursor_new_h = pointer->height;
+			dfi->cursor_new_hot_x = df_pointer->xhot;
+			dfi->cursor_new_hot_y = df_pointer->yhot;
 		}
 		else
 			dfi->contents_of_cursor = 0;
