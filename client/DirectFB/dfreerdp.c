@@ -176,7 +176,6 @@ static void df_check_for_background(dfContext *context)
 
 void df_begin_paint(rdpContext* context)
 {
-	int cursor_left, cursor_top, cursor_right, cursor_bottom;
 	rdpGdi* gdi = context->gdi;
 	dfInfo* dfi = ((dfContext*) context)->dfi;
 
@@ -196,12 +195,7 @@ void df_begin_paint(rdpContext* context)
 			gdi->primary->bitmap->data = dfi->primary_data;
 
 			if (context->instance->settings->fullscreen)
-			{
-				df_fullscreen_cursor_bounds(gdi, dfi, &cursor_left, &cursor_top, &cursor_right, &cursor_bottom);
 				df_fullscreen_cursor_unpaint((dfContext *)context);
-				if (cursor_right > cursor_left && cursor_bottom > cursor_top)
-					gdi_InvalidateRegion(gdi->primary->hdc, cursor_left, cursor_top, cursor_right - cursor_left, cursor_bottom - cursor_top);
-			}
 		}
 
 	}
@@ -221,7 +215,6 @@ static void df_end_paint_inner(rdpContext* context)
 	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 
-
 	if (((dfContext*) context)->direct_surface)
 	{
 		if (context->instance->settings->fullscreen)
@@ -229,29 +222,24 @@ static void df_end_paint_inner(rdpContext* context)
 
 		if (df_unlock_fb(dfi, DF_LOCK_BIT_PAINT))
 		{
-			if (context->instance->settings->fullscreen)
+			if (((dfContext*) context)->direct_flip)
 			{
-				df_fullscreen_cursor_bounds(gdi, dfi, &cursor_left, &cursor_top, &cursor_right, &cursor_bottom);
-				if (cursor_right > cursor_left && cursor_bottom > cursor_top)
-					gdi_InvalidateRegion(gdi->primary->hdc, cursor_left, cursor_top, cursor_right - cursor_left, cursor_bottom - cursor_top);
-			}
+				gdi_DecomposeInvalidArea(gdi->primary->hdc);
 
-			gdi_DecomposeInvalidArea(gdi->primary->hdc);
-
-			if (!gdi->primary->hdc->hwnd->invalid->null)
-			{
-				for (; ninvalid>0; --ninvalid, ++cinvalid)
+				if (!gdi->primary->hdc->hwnd->invalid->null)
 				{
-					if (cinvalid->w>0 && cinvalid->h>0)
+					for (; ninvalid>0; --ninvalid, ++cinvalid)
 					{
-						DFBRegion fdbr = {cinvalid->x, cinvalid->y,
-							cinvalid->x + cinvalid->w - 1,
-							cinvalid->y + cinvalid->h - 1};
-						dfi->primary->Flip(dfi->primary, &fdbr, DSFLIP_ONSYNC | DSFLIP_PIPELINE);
+						if (cinvalid->w>0 && cinvalid->h>0)
+						{
+							DFBRegion fdbr = {cinvalid->x, cinvalid->y,
+								cinvalid->x + cinvalid->w - 1,
+								cinvalid->y + cinvalid->h - 1};
+							dfi->primary->Flip(dfi->primary, &fdbr, DSFLIP_ONSYNC | DSFLIP_PIPELINE);
+						}
 					}
 				}
 			}
-
 			gdi->primary_buffer = 0;
 			gdi->primary->bitmap->data = 0;
 		}
@@ -288,6 +276,13 @@ static void df_end_paint_inner(rdpContext* context)
 				dfi->update_rect.w = cinvalid->w;
 				dfi->update_rect.h = cinvalid->h;
 				dfi->primary->Blit(dfi->primary, dfi->secondary, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
+				if (((dfContext*) context)->direct_flip)
+				{
+					DFBRegion fdbr = {cinvalid->x, cinvalid->y,
+						cinvalid->x + cinvalid->w - 1,
+						cinvalid->y + cinvalid->h - 1};
+					dfi->primary->Flip(dfi->primary, &fdbr, DSFLIP_ONSYNC | DSFLIP_PIPELINE);
+				}
 			}
 		}
 		if (cursor_unpainted)
@@ -525,7 +520,7 @@ boolean df_post_connect(freerdp* instance)
 
 		freerdp_channels_post_connect(instance->context->channels, instance);
 		df_unlock_fb(dfi, DF_LOCK_BIT_INIT);
-		printf("DirectFB client initialized in experimental single-surface mode!\n");
+		printf("DirectFB client initialized in experimental --direct-surface option!\n");
 		return true;
 	}
 
@@ -931,7 +926,8 @@ int main(int argc, char* argv[])
 	DirectFBInit(&argc, &argv);
 	if (freerdp_parse_args(instance->settings, argc, argv, df_process_plugin_args, channels, NULL, NULL)==FREERDP_ARGS_PARSE_HELP)
 	{
-		printf("  --direct-surface: use only single DirectFB surface (faster, but repaints more 'visible')\n");
+		printf("  --direct-surface: Use only single DirectFB surface (faster, but repaints more 'visible').\n");
+		printf("  --direct-flip: Can be neccessary with non-fullscreen mode if DirectFB setting 'autoflip-window' is not enabled. Don't use it if all works without it.\n");
 		printf("\n");
 		return 1;
 	}
@@ -939,7 +935,13 @@ int main(int argc, char* argv[])
 	for (i = 0; i<argc; ++i)
 	{
 		if (strcmp(argv[i], "--direct-surface")==0)
-			context->direct_surface= true;
+			context->direct_surface = true;
+		if (strcmp(argv[i], "--direct-flip")==0)
+		{
+			context->direct_flip = true;
+			if (instance->settings->fullscreen)
+				printf("WARNING: --direct-flip not recommended to be used with fullscreen mode. This probably will only defeat performance without any profit.\n");
+		}
 	}
 	data = (struct thread_data*) xzalloc(sizeof(struct thread_data));
 	data->instance = instance;
