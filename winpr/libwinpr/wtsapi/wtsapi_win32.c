@@ -48,6 +48,7 @@ struct _WTSAPI_CHANNEL
 	BOOL dynamic;
 	BOOL readSync;
 	BOOL readAsync;
+	BOOL readDone;
 	UINT32 readSize;
 	UINT32 readOffset;
 	BYTE* readBuffer;
@@ -77,6 +78,8 @@ BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
 	if (pChannel->readAsync)
 		return TRUE;
 
+	ZeroMemory(&(pChannel->overlapped), sizeof(OVERLAPPED));
+	pChannel->overlapped.hEvent = pChannel->hEvent;
 	ResetEvent(pChannel->hEvent);
 
 	if (pChannel->showProtocol)
@@ -90,11 +93,22 @@ BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
 	{
 		status = ReadFile(pChannel->hFile, pChannel->chunk,
 			CHANNEL_CHUNK_LENGTH, &numBytes, &(pChannel->overlapped));
+
+		if (status)
+		{
+			pChannel->readOffset = 0;
+			pChannel->header->length = numBytes;
+
+			pChannel->readDone = TRUE;
+			SetEvent(pChannel->hEvent);
+
+			return TRUE;
+		}
 	}
 
 	if (status)
 	{
-		fprintf(stderr, "Unexpected ReadFile status: %d\n", status);
+		fprintf(stderr, "Unexpected ReadFile status: %d numBytes: %d\n", status, numBytes);
 		return FALSE; /* ReadFile should return FALSE and set ERROR_IO_PENDING */
 	}
 
@@ -225,7 +239,36 @@ BOOL WINAPI Win32_WTSVirtualChannelClose(HANDLE hChannel)
 
 BOOL WINAPI Win32_WTSVirtualChannelRead_Static(WTSAPI_CHANNEL* pChannel, DWORD dwMilliseconds, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesTransferred)
 {
-	if (pChannel->readSync)
+	if (pChannel->readDone)
+	{
+		DWORD numBytesRead = 0;
+		DWORD numBytesToRead = 0;
+	
+		*lpNumberOfBytesTransferred = 0;
+
+		numBytesToRead = nNumberOfBytesToRead;
+
+		if (numBytesToRead > (pChannel->header->length - pChannel->readOffset))
+			numBytesToRead = (pChannel->header->length - pChannel->readOffset);
+
+		CopyMemory(lpBuffer, &(pChannel->chunk[pChannel->readOffset]), numBytesToRead);
+		*lpNumberOfBytesTransferred += numBytesToRead;
+		pChannel->readOffset += numBytesToRead;
+
+		if (pChannel->readOffset != pChannel->header->length)
+		{
+			SetLastError(ERROR_MORE_DATA);
+			return FALSE;
+		}
+		else
+		{
+			pChannel->readDone = FALSE;
+			Win32_WTSVirtualChannelReadAsync(pChannel);
+		}
+
+		return TRUE;
+	}
+	else if (pChannel->readSync)
 	{
 		BOOL bSuccess;
 		OVERLAPPED overlapped;
@@ -401,27 +444,27 @@ BOOL WINAPI Win32_WTSVirtualChannelRead_Dynamic(WTSAPI_CHANNEL* pChannel, DWORD 
 	else if (pChannel->readAsync)
 	{
 		BOOL bSuccess;
-		DWORD numBytes = 0;
+		DWORD numBytesRead = 0;
 
 		*lpNumberOfBytesTransferred = 0;
 
 		if (WaitForSingleObject(pChannel->hEvent, dwMilliseconds) != WAIT_TIMEOUT)
 		{
 			bSuccess = GetOverlappedResult(pChannel->hFile,
-					&(pChannel->overlapped), &numBytes, TRUE);
+					&(pChannel->overlapped), &numBytesRead, TRUE);
 
 			if (pChannel->showProtocol)
 			{
-				if (numBytes != sizeof(CHANNEL_PDU_HEADER))
+				if (numBytesRead != sizeof(CHANNEL_PDU_HEADER))
 					return FALSE;
 
 				if (!bSuccess && (GetLastError() != ERROR_MORE_DATA))
 					return FALSE;
 
-				CopyMemory(lpBuffer, pChannel->header, numBytes);
-				*lpNumberOfBytesTransferred += numBytes;
-				((BYTE*) lpBuffer) += numBytes;
-				nNumberOfBytesToRead -= numBytes;
+				CopyMemory(lpBuffer, pChannel->header, numBytesRead);
+				*lpNumberOfBytesTransferred += numBytesRead;
+				((BYTE*) lpBuffer) += numBytesRead;
+				nNumberOfBytesToRead -= numBytesRead;
 			}
 
 			pChannel->readAsync = FALSE;
@@ -435,12 +478,18 @@ BOOL WINAPI Win32_WTSVirtualChannelRead_Dynamic(WTSAPI_CHANNEL* pChannel, DWORD 
 			pChannel->readSync = TRUE;
 			pChannel->readOffset = 0;
 
-			numBytes = 0;
+			if (!nNumberOfBytesToRead)
+			{
+				SetLastError(ERROR_MORE_DATA);
+				return FALSE;
+			}
+
+			numBytesRead = 0;
 
 			bSuccess = Win32_WTSVirtualChannelRead_Dynamic(pChannel, dwMilliseconds,
-						lpBuffer, nNumberOfBytesToRead, &numBytes);
+						lpBuffer, nNumberOfBytesToRead, &numBytesRead);
 
-			*lpNumberOfBytesTransferred += numBytes;
+			*lpNumberOfBytesTransferred += numBytesRead;
 			return bSuccess;
 		}
 		else
