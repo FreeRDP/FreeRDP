@@ -88,7 +88,6 @@ static boolean df_unlock_fb(dfInfo *dfi, uint8 mask)
 {
 	if ((dfi->primary_locks&mask)==0)
 	{
-//		fprintf(stderr, "Mismatching df_uloock_fb, mask=0x%x locks=0x%x\n", mask, dfi->primary_locks);
 		return false;
 	}
 
@@ -148,25 +147,6 @@ static void df_foreground(dfContext* context)
 	}
 }
 
-static void CreateSystemSurface(dfInfo *dfi, int width, int height, int bpp, IDirectFBSurface **ppsurf)
-{
-	dfi->dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PIXELFORMAT;
-	dfi->dsc.caps = 0;//DSCAPS_SYSTEMONLY;
-	dfi->dsc.width = width;
-	dfi->dsc.height = height;
-
-	if (bpp == 32 || bpp == 24)
-		dfi->dsc.pixelformat = DSPF_AiRGB;
-	else if (bpp == 16 || bpp == 15)
-		dfi->dsc.pixelformat = DSPF_RGB16;
-	else if (bpp == 8)
-		dfi->dsc.pixelformat = DSPF_RGB332;
-	else
-		dfi->dsc.pixelformat = DSPF_AiRGB;
-
-	dfi->dfb->CreateSurface(dfi->dfb, &(dfi->dsc), ppsurf);
-}
-
 static void df_background(dfContext* context)
 {
 	RECTANGLE_16 rect;
@@ -181,65 +161,10 @@ static void df_background(dfContext* context)
 
 	if (((rdpContext *)context)->instance->settings->fullscreen && context->direct_surface)
 	{
-		CreateSystemSurface(dfi, gdi->width, gdi->height, gdi->dstBpp, &(dfi->secondary));
+		df_create_temp_surface(dfi, gdi->width, gdi->height, gdi->dstBpp, &(dfi->secondary));
 		dfi->secondary->Blit(dfi->secondary, dfi->primary, NULL, 0, 0);
 	}
 }
-
-static void df_fullscreen_cursor_unpaint(dfContext *context)
-{
-	dfInfo* dfi = context->dfi;
-	DFBRectangle rect = {0, 0, dfi->cursor_w, dfi->cursor_h};
-
-	if (dfi->contents_under_cursor)
-	{
-		if (dfi->primary_data)
-		{//todo
-		}
-		else
-			dfi->primary->Blit(dfi->primary, dfi->contents_under_cursor, &rect, dfi->cursor_x - dfi->cursor_hot_x, dfi->cursor_y - dfi->cursor_hot_y);
-	}
-}
-
-static void df_fullscreen_cursor_paint(dfContext *context)
-{
-	DFBRectangle rect;
-	rdpGdi* gdi;
-	dfInfo* dfi;
-	gdi = context->_p.gdi;
-	dfi = context->dfi;
-
-	dfi->cursor_x = dfi->pointer_x;
-	dfi->cursor_y = dfi->pointer_y;
-	if (dfi->contents_of_cursor)
-	{
-		if (dfi->contents_under_cursor && (dfi->cursor_w != dfi->cursor_new_w || dfi->cursor_h != dfi->cursor_new_h))
-		{
-			dfi->contents_under_cursor->Release(dfi->contents_under_cursor);
-			dfi->contents_under_cursor = 0;
-		}
-		if (!dfi->contents_under_cursor)
-		{
-			dfi->cursor_w = dfi->cursor_new_w;
-			dfi->cursor_h = dfi->cursor_new_h;
-			CreateSystemSurface(dfi, dfi->cursor_w, dfi->cursor_h, gdi->dstBpp, &(dfi->contents_under_cursor));
-		}
-		dfi->cursor_hot_x = dfi->cursor_new_hot_x;
-		dfi->cursor_hot_y = dfi->cursor_new_hot_y;
-
-		rect.x = dfi->cursor_x - dfi->cursor_hot_x;
-		rect.y = dfi->cursor_y - dfi->cursor_hot_y;
-		rect.w = dfi->cursor_w;
-		rect.h = dfi->cursor_h;
-		dfi->contents_under_cursor->Blit(dfi->contents_under_cursor, dfi->primary, &rect, 0, 0);
-		rect.x = 0;
-		rect.y = 0;
-		dfi->primary->SetBlittingFlags(dfi->primary, DSBLIT_BLEND_ALPHACHANNEL);
-		dfi->primary->Blit(dfi->primary, dfi->contents_of_cursor, &rect, dfi->cursor_x - dfi->cursor_hot_x, dfi->cursor_y - dfi->cursor_hot_y);
-		dfi->primary->SetBlittingFlags(dfi->primary, DSBLIT_NOFX);
-	}
-}
-
 static void df_check_for_background(dfContext *context)
 {
 	if (!context->dfi->tty_background && context->dfi->tty_fd!=-1 && context->dfi->tty_mine!=get_active_tty(context->dfi->tty_fd))
@@ -251,6 +176,7 @@ static void df_check_for_background(dfContext *context)
 
 void df_begin_paint(rdpContext* context)
 {
+	int cursor_left, cursor_top, cursor_right, cursor_bottom;
 	rdpGdi* gdi = context->gdi;
 	dfInfo* dfi = ((dfContext*) context)->dfi;
 
@@ -258,25 +184,28 @@ void df_begin_paint(rdpContext* context)
 	{
 		df_check_for_background((dfContext*)context);
 
+		gdi->primary->hdc->hwnd->invalid->null = 1;
+		gdi->primary->hdc->hwnd->ninvalid = 0;
+
 		if (((dfContext*) context)->direct_surface)
 		{
-			if (context->instance->settings->fullscreen)
-				df_fullscreen_cursor_unpaint((dfContext *)context);
-
 			if (!df_lock_fb(dfi, DF_LOCK_BIT_PAINT))
 				abort();//will die anyway
 
 			gdi->primary_buffer = dfi->primary_data;
 			gdi->primary->bitmap->data = dfi->primary_data;
+
+			if (context->instance->settings->fullscreen)
+			{
+				df_fullscreen_cursor_bounds(gdi, dfi, &cursor_left, &cursor_top, &cursor_right, &cursor_bottom);
+				df_fullscreen_cursor_unpaint((dfContext *)context);
+				if (cursor_right > cursor_left && cursor_bottom > cursor_top)
+					gdi_InvalidateRegion(gdi->primary->hdc, cursor_left, cursor_top, cursor_right - cursor_left, cursor_bottom - cursor_top);
+			}
 		}
 
-		gdi->primary->hdc->hwnd->invalid->null = 1;
-		gdi->primary->hdc->hwnd->ninvalid = 0;
-
 	}
-
 }
-
 
 static void df_end_paint_inner(rdpContext* context)
 {
@@ -284,21 +213,28 @@ static void df_end_paint_inner(rdpContext* context)
 	dfInfo* dfi;
 	int ninvalid;
 	HGDI_RGN cinvalid;
-	boolean cursor_unpainted;
-	int cursor_left, cursor_top;
-	int cursor_right, cursor_bottom;
+	int cursor_left, cursor_top, cursor_right, cursor_bottom;
+	boolean cursor_unpainted = false;
 
 	gdi = context->gdi;
 	dfi = ((dfContext*) context)->dfi;
 	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 
+
 	if (((dfContext*) context)->direct_surface)
 	{
+		if (context->instance->settings->fullscreen)
+			df_fullscreen_cursor_paint((dfContext *)context);
+
 		if (df_unlock_fb(dfi, DF_LOCK_BIT_PAINT))
 		{
 			if (context->instance->settings->fullscreen)
-				df_fullscreen_cursor_paint((dfContext *)context);
+			{
+				df_fullscreen_cursor_bounds(gdi, dfi, &cursor_left, &cursor_top, &cursor_right, &cursor_bottom);
+				if (cursor_right > cursor_left && cursor_bottom > cursor_top)
+					gdi_InvalidateRegion(gdi->primary->hdc, cursor_left, cursor_top, cursor_right - cursor_left, cursor_bottom - cursor_top);
+			}
 
 			gdi_DecomposeInvalidArea(gdi->primary->hdc);
 
@@ -315,33 +251,33 @@ static void df_end_paint_inner(rdpContext* context)
 					}
 				}
 			}
+
+			gdi->primary_buffer = 0;
+			gdi->primary->bitmap->data = 0;
 		}
 	}
 	else if (!gdi->primary->hdc->hwnd->invalid->null)
 	{
-		gdi_DecomposeInvalidArea(gdi->primary->hdc);
-
-		cursor_left = dfi->cursor_x - dfi->cursor_hot_x;
-		cursor_top = dfi->cursor_y - dfi->cursor_hot_y;
-		cursor_right = cursor_left + dfi->cursor_w;
-		cursor_bottom = cursor_top + dfi->cursor_h;
-
-		if (context->instance->settings->fullscreen &&
-			(dfi->cursor_x != dfi->pointer_x || dfi->cursor_y != dfi->pointer_y) )
+		if (context->instance->settings->fullscreen)
 		{
-			df_fullscreen_cursor_unpaint((dfContext *)context);
-			cursor_unpainted = true;
+			if (dfi->cursor_x != dfi->pointer_x || dfi->cursor_y != dfi->pointer_y)
+			{
+				df_fullscreen_cursor_unpaint((dfContext *)context);
+				cursor_unpainted = true;
+			}
+			else
+				df_fullscreen_cursor_bounds(gdi, dfi, &cursor_left, &cursor_top, &cursor_right, &cursor_bottom);
 		}
-		else
-			cursor_unpainted = false;
+
+		gdi_DecomposeInvalidArea(gdi->primary->hdc);
 
 		for (; ninvalid>0; --ninvalid, ++cinvalid)
 		{
 			if (cinvalid->w>0 && cinvalid->h>0)
 			{
-				if (cinvalid->x < cursor_right && cursor_left < cinvalid->x + cinvalid->w &&
-					cinvalid->y < cursor_bottom && cursor_top < cinvalid->y + cinvalid->h &&
-					!cursor_unpainted && context->instance->settings->fullscreen)
+				if (context->instance->settings->fullscreen && !cursor_unpainted &&
+					cinvalid->x < cursor_right && cursor_left < cinvalid->x + cinvalid->w &&
+					cinvalid->y < cursor_bottom && cursor_top < cinvalid->y + cinvalid->h )
 				{
 					cursor_unpainted = true;
 					df_fullscreen_cursor_unpaint((dfContext *)context);
@@ -354,7 +290,6 @@ static void df_end_paint_inner(rdpContext* context)
 				dfi->primary->Blit(dfi->primary, dfi->secondary, &(dfi->update_rect), dfi->update_rect.x, dfi->update_rect.y);
 			}
 		}
-
 		if (cursor_unpainted)
 			df_fullscreen_cursor_paint((dfContext *)context);
 	}
@@ -477,7 +412,19 @@ boolean df_pre_connect(freerdp* instance)
 	return true;
 }
 
-
+static void df_init_cursor(dfContext* context)
+{
+	if (((rdpContext *)context)->instance->settings->fullscreen)
+	{
+		context->dfi->pointer_x = context->_p.gdi->width / 2;
+		context->dfi->pointer_y = context->_p.gdi->height / 2;
+	}
+	else
+	{
+		context->dfi->dfb->GetDisplayLayer(context->dfi->dfb, 0, &(context->dfi->layer));
+		context->dfi->layer->EnableCursor(context->dfi->layer, 1);
+	}
+}
 
 boolean df_post_connect(freerdp* instance)
 {
@@ -546,6 +493,9 @@ boolean df_post_connect(freerdp* instance)
 		}
 		df_unlock_fb(dfi, DF_LOCK_BIT_INIT);
 
+		gdi->primary_buffer = 0;
+		gdi->primary->bitmap->data = 0;
+
 		dfi->err = dfi->dfb->SetVideoMode(dfi->dfb, gdi->width, gdi->height, gdi->dstBpp);
 		printf("SetVideoMode %dx%dx%d 0x%x\n", gdi->width, gdi->height, gdi->dstBpp, dfi->err);
 
@@ -561,8 +511,7 @@ boolean df_post_connect(freerdp* instance)
 	    }
 		dfi->read_len_pending = 0;
 
-		dfi->dfb->GetDisplayLayer(dfi->dfb, 0, &(dfi->layer));
-		dfi->layer->EnableCursor(dfi->layer, 1);
+		df_init_cursor(context);
 		if (!df_lock_fb(dfi, DF_LOCK_BIT_INIT))
 			return false;
 
@@ -605,8 +554,7 @@ boolean df_post_connect(freerdp* instance)
     }
 	dfi->read_len_pending = 0;
 
-	dfi->dfb->GetDisplayLayer(dfi->dfb, 0, &(dfi->layer));
-	dfi->layer->EnableCursor(dfi->layer, 1);
+	df_init_cursor(context);
 
 	dfi->dsc.flags = DSDESC_CAPS | DSDESC_WIDTH | DSDESC_HEIGHT | DSDESC_PREALLOCATED | DSDESC_PIXELFORMAT;
 	dfi->dsc.caps = DSCAPS_SYSTEMONLY;
@@ -900,18 +848,19 @@ int dfreerdp_run(freerdp* instance)
 		if (!context->input_defer_ts)
 			df_events_commit(instance);
 
-		if (instance->settings->fullscreen && (dfi->cursor_x != dfi->pointer_x || dfi->cursor_y != dfi->pointer_y))
-		{
-			df_fullscreen_cursor_unpaint(context);
-			df_fullscreen_cursor_paint(context);
-		}
-
 		if (freerdp_channels_check_fds(channels, instance) != true)
 		{
 			printf("Failed to check channel manager file descriptor\n");
 			break;
 		}
+
 		df_process_channel_event(channels, instance);
+
+		if (instance->settings->fullscreen && (dfi->cursor_x != dfi->pointer_x || dfi->cursor_y != dfi->pointer_y))
+		{
+			df_fullscreen_cursor_unpaint(context);
+			df_fullscreen_cursor_paint(context);
+		}
 	}
 
 	freerdp_channels_close(channels, instance);
