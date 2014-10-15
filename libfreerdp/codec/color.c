@@ -2332,14 +2332,14 @@ int freerdp_image24_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 	dstFlip = FREERDP_PIXEL_FORMAT_FLIP(DstFormat);
 	dstType = FREERDP_PIXEL_FORMAT_TYPE(DstFormat);
 
-	nSrcPad = (nSrcStep - (nWidth * srcBytesPerPixel));
-	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
-
 	if (nSrcStep < 0)
 		nSrcStep = srcBytesPerPixel * nWidth;
 
 	if (nDstStep < 0)
 		nDstStep = dstBytesPerPixel * nWidth;
+
+	nSrcPad = (nSrcStep - (nWidth * srcBytesPerPixel));
+	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
 
 	if (srcFlip != dstFlip)
 		vFlip = TRUE;
@@ -2448,7 +2448,83 @@ int freerdp_image24_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 	}
 	else if (dstBytesPerPixel == 3)
 	{
+		BYTE* pSrcPixel;
+		BYTE* pDstPixel;
 
+		if (!invert)
+		{
+			if (!vFlip)
+			{
+				pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 3)];
+				pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 3)];
+
+				for (y = 0; y < nHeight; y++)
+				{
+					CopyMemory(pDstPixel, pSrcPixel, nWidth * 3);
+					pSrcPixel = &pSrcPixel[nSrcStep];
+					pDstPixel = &pDstPixel[nDstStep];
+				}
+			}
+			else
+			{
+				pSrcPixel = &pSrcData[((nYSrc + nHeight - 1) * nSrcStep) + (nXSrc * 3)];
+				pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 3)];
+
+				for (y = 0; y < nHeight; y++)
+				{
+					CopyMemory(pDstPixel, pSrcPixel, nWidth * 3);
+					pSrcPixel = &pSrcPixel[-nSrcStep];
+					pDstPixel = &pDstPixel[nDstStep];
+				}
+			}
+		}
+		else
+		{
+			if (!vFlip)
+			{
+				pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 3)];
+				pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 3)];
+
+				for (y = 0; y < nHeight; y++)
+				{
+					for (x = 0; x < nWidth; x++)
+					{
+						pDstPixel[0] = pSrcPixel[2];
+						pDstPixel[1] = pSrcPixel[1];
+						pDstPixel[2] = pSrcPixel[0];
+
+						pSrcPixel += 3;
+						pDstPixel += 3;
+					}
+
+					pSrcPixel = &pSrcPixel[nSrcPad];
+					pDstPixel = &pDstPixel[nDstPad];
+				}
+			}
+			else
+			{
+				pSrcPixel = &pSrcData[((nYSrc + nHeight - 1) * nSrcStep) + (nXSrc * 3)];
+				pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 3)];
+
+				for (y = 0; y < nHeight; y++)
+				{
+					for (x = 0; x < nWidth; x++)
+					{
+						pDstPixel[0] = pSrcPixel[2];
+						pDstPixel[1] = pSrcPixel[1];
+						pDstPixel[2] = pSrcPixel[0];
+
+						pSrcPixel += 3;
+						pDstPixel += 3;
+					}
+
+					pSrcPixel = &pSrcPixel[-((nSrcStep - nSrcPad) + nSrcStep)];
+					pDstPixel = &pDstPixel[nDstPad];
+				}
+			}
+		}
+
+		return 1;
 	}
 	else if (dstBytesPerPixel == 2)
 	{

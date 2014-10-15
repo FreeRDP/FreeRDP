@@ -138,6 +138,7 @@ typedef struct _wArrayList wArrayList;
 
 WINPR_API int ArrayList_Capacity(wArrayList* arrayList);
 WINPR_API int ArrayList_Count(wArrayList* arrayList);
+WINPR_API int ArrayList_Items(wArrayList* arrayList, ULONG_PTR** ppItems);
 WINPR_API BOOL ArrayList_IsFixedSized(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsReadOnly(wArrayList* arrayList);
 WINPR_API BOOL ArrayList_IsSynchronized(wArrayList* arrayList);
@@ -326,27 +327,33 @@ WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
 
 /* Hash Table */
 
-typedef void (*KEY_VALUE_FREE_FN)(void* context, void* key, void* value);
+typedef UINT32 (*HASH_TABLE_HASH_FN)(void* key);
+typedef BOOL (*HASH_TABLE_KEY_COMPARE_FN)(void* key1, void* key2);
+typedef BOOL (*HASH_TABLE_VALUE_COMPARE_FN)(void* value1, void* value2);
+typedef void* (*HASH_TABLE_KEY_CLONE_FN)(void* key);
+typedef void* (*HASH_TABLE_VALUE_CLONE_FN)(void* value);
+typedef void (*HASH_TABLE_KEY_FREE_FN)(void* key);
+typedef void (*HASH_TABLE_VALUE_FREE_FN)(void* value);
 
 struct _wHashTable
 {
 	BOOL synchronized;
 	CRITICAL_SECTION lock;
 
-	long numOfBuckets;
-	long numOfElements;
+	int numOfBuckets;
+	int numOfElements;
 	float idealRatio;
 	float lowerRehashThreshold;
 	float upperRehashThreshold;
 	wKeyValuePair** bucketArray;
-	int (*keycmp)(void* key1, void* key2);
-	int (*valuecmp)(void* value1, void* value2);
-	unsigned long (*hashFunction)(void* key);
-	void (*keyDeallocator)(void* key);
-	void (*valueDeallocator)(void* value);
 
-	void* context;
-	KEY_VALUE_FREE_FN pfnKeyValueFree;
+	HASH_TABLE_HASH_FN hash;
+	HASH_TABLE_KEY_COMPARE_FN keyCompare;
+	HASH_TABLE_VALUE_COMPARE_FN valueCompare;
+	HASH_TABLE_KEY_CLONE_FN keyClone;
+	HASH_TABLE_VALUE_CLONE_FN valueClone;
+	HASH_TABLE_KEY_FREE_FN keyFree;
+	HASH_TABLE_VALUE_FREE_FN valueFree;
 };
 typedef struct _wHashTable wHashTable;
 
@@ -359,8 +366,15 @@ WINPR_API BOOL HashTable_ContainsKey(wHashTable* table, void* key);
 WINPR_API BOOL HashTable_ContainsValue(wHashTable* table, void* value);
 WINPR_API void* HashTable_GetItemValue(wHashTable* table, void* key);
 WINPR_API BOOL HashTable_SetItemValue(wHashTable* table, void* key, void* value);
-WINPR_API void HashTable_SetFreeFunction(wHashTable* table, void* context, KEY_VALUE_FREE_FN pfnKeyValueFree);
 WINPR_API int HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys);
+
+WINPR_API UINT32 HashTable_PointerHash(void* pointer);
+WINPR_API BOOL HashTable_PointerCompare(void* pointer1, void* pointer2);
+
+WINPR_API UINT32 HashTable_StringHash(void* key);
+WINPR_API BOOL HashTable_StringCompare(void* string1, void* string2);
+WINPR_API void* HashTable_StringClone(void* str);
+WINPR_API void HashTable_StringFree(void* str);
 
 WINPR_API wHashTable* HashTable_New(BOOL synchronized);
 WINPR_API void HashTable_Free(wHashTable* table);

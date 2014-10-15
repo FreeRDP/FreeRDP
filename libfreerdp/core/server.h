@@ -28,9 +28,11 @@
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
+typedef struct rdp_peer_channel rdpPeerChannel;
 typedef struct WTSVirtualChannelManager WTSVirtualChannelManager;
 
 #include "rdp.h"
+#include "mcs.h"
 
 #define CREATE_REQUEST_PDU			0x01
 #define DATA_FIRST_PDU				0x02
@@ -59,22 +61,23 @@ enum
 	DVC_OPEN_STATE_CLOSED = 3
 };
 
-typedef struct rdp_peer_channel rdpPeerChannel;
-
 struct rdp_peer_channel
 {
 	WTSVirtualChannelManager* vcm;
 	freerdp_peer* client;
 
+	void* extra;
+	UINT16 index;
 	UINT32 channelId;
 	UINT16 channelType;
-	UINT16 index;
+	UINT32 channelFlags;
 
 	wStream* receiveData;
 	wMessageQueue* queue;
 
 	BYTE dvc_open_state;
 	UINT32 dvc_total_length;
+	rdpMcsChannel* mcsChannel;
 };
 
 struct WTSVirtualChannelManager

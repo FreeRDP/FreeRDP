@@ -18,6 +18,10 @@
 winpr_module_add(wtsapi.c
 	wtsapi.h)
 
+if(WIN32)
+	winpr_module_add(wtsapi_win32.c wtsapi_win32.h)
+endif()
+
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()

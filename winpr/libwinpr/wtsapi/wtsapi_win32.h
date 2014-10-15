@@ -1,8 +1,8 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * RDP Server Peer
+ * WinPR: Windows Portable Runtime
+ * Windows Terminal Services API
  *
- * Copyright 2011 Vic Lee
+ * Copyright 2013-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,11 @@
  * limitations under the License.
  */
 
-#ifndef __PEER
-#define __PEER
+#ifndef WINPR_WTSAPI_WIN32_PRIVATE_H
+#define WINPR_WTSAPI_WIN32_PRIVATE_H
 
-#include "rdp.h"
-#include "mcs.h"
-#include "server.h"
+#include <winpr/wtsapi.h>
 
-#include <freerdp/peer.h>
+int Win32_InitializeWinSta(PWtsApiFunctionTable pWtsApi);
 
-#endif /* __PEER */
-
+#endif /* WINPR_WTSAPI_WIN32_PRIVATE_H */

@@ -42,8 +42,8 @@ extern "C" {
 
 /* Engine */
 
-rdtkEngine* rdtk_engine_new();
-void rdtk_engine_free(rdtkEngine* engine);
+RDTK_EXPORT rdtkEngine* rdtk_engine_new();
+RDTK_EXPORT void rdtk_engine_free(rdtkEngine* engine);
 
 /* Surface */
 

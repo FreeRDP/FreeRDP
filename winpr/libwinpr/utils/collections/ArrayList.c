@@ -53,6 +53,16 @@ int ArrayList_Count(wArrayList *arrayList)
 }
 
 /**
+ * Gets the internal list of items contained in the ArrayList.
+ */
+
+int ArrayList_Items(wArrayList* arrayList, ULONG_PTR** ppItems)
+{
+	*ppItems = (ULONG_PTR*) arrayList->array;
+	return arrayList->size;
+}
+
+/**
  * Gets a value indicating whether the ArrayList has a fixed size.
  */
 

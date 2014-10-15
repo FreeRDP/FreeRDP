@@ -58,14 +58,20 @@ typedef struct _wIniFile wIniFile;
 extern "C" {
 #endif
 
-WINPR_API int IniFile_Parse(wIniFile* ini, const char* filename);
-WINPR_API int IniFile_ParseString(wIniFile* ini, const char* iniString);
+WINPR_API int IniFile_ReadBuffer(wIniFile* ini, const char* buffer);
+WINPR_API int IniFile_ReadFile(wIniFile* ini, const char* filename);
+
+WINPR_API char* IniFile_WriteBuffer(wIniFile* ini);
+WINPR_API int IniFile_WriteFile(wIniFile* ini, const char* filename);
 
 WINPR_API char** IniFile_GetSectionNames(wIniFile* ini, int* count);
 WINPR_API char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, int* count);
 
-WINPR_API char* IniFile_GetKeyValueString(wIniFile* ini, const char* section, const char* key);
-WINPR_API UINT32 IniFile_GetKeyValueInt(wIniFile* ini, const char* section, const char* key);
+WINPR_API const char* IniFile_GetKeyValueString(wIniFile* ini, const char* section, const char* key);
+WINPR_API int IniFile_GetKeyValueInt(wIniFile* ini, const char* section, const char* key);
+
+WINPR_API int IniFile_SetKeyValueString(wIniFile* ini, const char* section, const char* key, const char* value);
+WINPR_API int IniFile_SetKeyValueInt(wIniFile* ini, const char* section, const char* key, int value);
 
 WINPR_API wIniFile* IniFile_New();
 WINPR_API void IniFile_Free(wIniFile* ini);

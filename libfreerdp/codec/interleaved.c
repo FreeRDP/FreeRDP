@@ -265,11 +265,13 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 
 		SrcFormat = PIXEL_FORMAT_RGB24_VF;
 
+#if 0
 		if ((SrcFormat == DstFormat) && !nXDst && !nYDst && (scanline == nDstStep))
 		{
 			RleDecompress24to24(pSrcData, SrcSize, pDstData, scanline, nWidth, nHeight);
 			return 1;
 		}
+#endif
 
 		if (BufferSize > interleaved->TempSize)
 		{
@@ -292,11 +294,13 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 
 		SrcFormat = (bpp == 16) ? PIXEL_FORMAT_RGB16_VF : PIXEL_FORMAT_RGB15_VF;
 
+#if 0
 		if ((SrcFormat == DstFormat) && !nXDst && !nYDst && (scanline == nDstStep))
 		{
 			RleDecompress16to16(pSrcData, SrcSize, pDstData, scanline, nWidth, nHeight);
 			return 1;
 		}
+#endif
 
 		if (BufferSize > interleaved->TempSize)
 		{
@@ -319,11 +323,13 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 
 		SrcFormat = PIXEL_FORMAT_RGB8_VF;
 
+#if 0
 		if ((SrcFormat == DstFormat) && !nXDst && !nYDst && (scanline == nDstStep))
 		{
 			RleDecompress8to8(pSrcData, SrcSize, pDstData, scanline, nWidth, nHeight);
 			return 1;
 		}
+#endif
 
 		if (BufferSize > interleaved->TempSize)
 		{

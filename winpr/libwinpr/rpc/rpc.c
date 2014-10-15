@@ -147,15 +147,17 @@ RPC_STATUS RpcStringBindingParseW(RPC_WSTR StringBinding, RPC_WSTR* ObjUuid, RPC
 
 RPC_STATUS RpcStringFreeA(RPC_CSTR* String)
 {
-	WLog_ERR(TAG, "Not implemented");
-	free(String);
+	if (String)
+		free(*String);
+
 	return RPC_S_OK;
 }
 
 RPC_STATUS RpcStringFreeW(RPC_WSTR* String)
 {
-	WLog_ERR(TAG, "Not implemented");
-	free(String);
+	if (String)
+		free(*String);
+
 	return RPC_S_OK;
 }
 
