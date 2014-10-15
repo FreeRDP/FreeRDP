@@ -2332,14 +2332,14 @@ int freerdp_image24_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 	dstFlip = FREERDP_PIXEL_FORMAT_FLIP(DstFormat);
 	dstType = FREERDP_PIXEL_FORMAT_TYPE(DstFormat);
 
-	nSrcPad = (nSrcStep - (nWidth * srcBytesPerPixel));
-	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
-
 	if (nSrcStep < 0)
 		nSrcStep = srcBytesPerPixel * nWidth;
 
 	if (nDstStep < 0)
 		nDstStep = dstBytesPerPixel * nWidth;
+
+	nSrcPad = (nSrcStep - (nWidth * srcBytesPerPixel));
+	nDstPad = (nDstStep - (nWidth * dstBytesPerPixel));
 
 	if (srcFlip != dstFlip)
 		vFlip = TRUE;
