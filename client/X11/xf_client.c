@@ -1003,9 +1003,10 @@ BOOL xf_post_connect(freerdp *instance)
 	instance->context->rail = rail_new(instance->settings);
 	rail_register_update_callbacks(instance->context->rail, instance->update);
 	xf_rail_register_callbacks(xfc, instance->context->rail);
+
+	xfc->clipboard = xf_clipboard_new(xfc);
 	freerdp_channels_post_connect(channels, instance);
 	xf_tsmf_init(xfc, xv_port);
-	xfc->clipboard = xf_clipboard_new(xfc);
 
 	EventArgsInit(&e, "xfreerdp");
 	e.width = settings->DesktopWidth;

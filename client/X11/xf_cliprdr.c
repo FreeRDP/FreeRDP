@@ -63,6 +63,10 @@ struct xf_clipboard
 {
 	xfContext* xfc;
 	rdpChannels* channels;
+	CliprdrClientContext* context;
+
+	UINT32 requestedFormatId;
+
 	Window root_window;
 	Atom clipboard_atom;
 	Atom property_atom;
@@ -1243,47 +1247,193 @@ void xf_cliprdr_handle_xevent(xfContext* xfc, XEvent* event)
 	}
 }
 
-static int xf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
+int xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
 {
-	//xfClipboard* clipboard = (xfClipboard*) context->custom;
+	CLIPRDR_CAPABILITIES capabilities;
+	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet;
+
+	capabilities.cCapabilitiesSets = 1;
+	capabilities.capabilitySets = (CLIPRDR_CAPABILITY_SET*) &(generalCapabilitySet);
+
+	generalCapabilitySet.capabilitySetType = CB_CAPSTYPE_GENERAL;
+	generalCapabilitySet.capabilitySetLength = 12;
+
+	generalCapabilitySet.version = CB_CAPS_VERSION_2;
+	generalCapabilitySet.generalFlags = CB_USE_LONG_FORMAT_NAMES;
+
+	clipboard->context->ClientCapabilities(clipboard->context, &capabilities);
+
+	return 1;
+}
+
+int xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
+{
+	int index;
+	CLIPRDR_FORMAT* formats;
+	CLIPRDR_FORMAT_LIST formatList;
+
+	formatList.cFormats = 3;
+
+	formats = (CLIPRDR_FORMAT*) calloc(formatList.cFormats, sizeof(CLIPRDR_FORMAT));
+	formatList.formats = formats;
+
+	index = 0;
+
+	formats[index].formatId = CLIPRDR_FORMAT_UNICODETEXT;
+	formats[index].formatName = NULL;
+	index++;
+
+	formats[index].formatId = CLIPRDR_FORMAT_TEXT;
+	formats[index].formatName = NULL;
+	index++;
+
+	formats[index].formatId = CLIPRDR_FORMAT_OEMTEXT;
+	formats[index].formatName = NULL;
+	index++;
+
+	clipboard->context->ClientFormatList(clipboard->context, &formatList);
+
+	for (index = 0; index < formatList.cFormats; index++)
+		free(formats[index].formatName);
+
+	free(formats);
+
+	return 1;
+}
+
+int xf_cliprdr_send_client_format_list_response(xfClipboard* clipboard, BOOL status)
+{
+	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse;
+
+	formatListResponse.msgType = CB_FORMAT_LIST_RESPONSE;
+	formatListResponse.msgFlags = status ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
+	formatListResponse.dataLen = 0;
+
+	clipboard->context->ClientFormatListResponse(clipboard->context, &formatListResponse);
+
+	return 1;
+}
+
+int xf_cliprdr_send_client_format_data_request(xfClipboard* clipboard, UINT32 formatId)
+{
+	CLIPRDR_FORMAT_DATA_REQUEST formatDataRequest;
+
+	formatDataRequest.msgType = CB_FORMAT_DATA_REQUEST;
+	formatDataRequest.msgFlags = CB_RESPONSE_OK;
+
+	formatDataRequest.requestedFormatId = formatId;
+	clipboard->requestedFormatId = formatId;
+
+	clipboard->context->ClientFormatDataRequest(clipboard->context, &formatDataRequest);
+
+	return 1;
+}
+
+int xf_cliprdr_recv_server_format_data_response(xfClipboard* clipboard, UINT32 formatId, BYTE* data, UINT32 length)
+{
+	if (formatId == CLIPRDR_FORMAT_UNICODETEXT)
+	{
+
+	}
+
+	return 1;
+}
+
+int xf_cliprdr_send_client_format_data_response(xfClipboard* clipboard, UINT32 formatId)
+{
+	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse;
+
+	formatDataResponse.msgType = CB_FORMAT_DATA_RESPONSE;
+	formatDataResponse.msgFlags = CB_RESPONSE_FAIL;
+	formatDataResponse.dataLen = 0;
+
+	if (formatId == CLIPRDR_FORMAT_UNICODETEXT)
+	{
+		WCHAR* unicodeText = NULL;
+
+		if (!unicodeText)
+		{
+			clipboard->context->ClientFormatDataResponse(clipboard->context, &formatDataResponse);
+		}
+		else
+		{
+			formatDataResponse.dataLen = (_wcslen(unicodeText) + 1) * 2;
+			formatDataResponse.requestedFormatData = (BYTE*) unicodeText;
+
+			formatDataResponse.msgFlags = CB_RESPONSE_OK;
+			clipboard->context->ClientFormatDataResponse(clipboard->context, &formatDataResponse);
+		}
+	}
+	else
+	{
+		clipboard->context->ClientFormatDataResponse(clipboard->context, &formatDataResponse);
+	}
 
 	return 0;
+}
+
+static int xf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
+{
+	xfClipboard* clipboard = (xfClipboard*) context->custom;
+
+	xf_cliprdr_send_client_capabilities(clipboard);
+	xf_cliprdr_send_client_format_list(clipboard);
+
+	return 1;
 }
 
 static int xf_cliprdr_server_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILITIES* capabilities)
 {
 	//xfClipboard* clipboard = (xfClipboard*) context->custom;
 
-	return 0;
+	return 1;
 }
 
 static int xf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList)
 {
-	//CLIPRDR_FORMAT* formats = formatList->formats;
-	//xfClipboard* clipboard = (xfClipboard*) context->custom;
+	UINT32 index;
+	CLIPRDR_FORMAT* format;
+	xfClipboard* clipboard = (xfClipboard*) context->custom;
 
-	return 0;
+	xf_cliprdr_send_client_format_list_response(clipboard, TRUE);
+
+	for (index = 0; index < formatList->cFormats; index++)
+	{
+		format = &formatList->formats[index];
+
+		if (format->formatId == CLIPRDR_FORMAT_UNICODETEXT)
+		{
+			xf_cliprdr_send_client_format_data_request(clipboard, format->formatId);
+		}
+	}
+
+	return 1;
 }
 
 static int xf_cliprdr_server_format_list_response(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
 {
 	//xfClipboard* clipboard = (xfClipboard*) context->custom;
 
-	return 0;
+	return 1;
 }
 
 static int xf_cliprdr_server_format_data_request(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
-	//xfClipboard* clipboard = (xfClipboard*) context->custom;
+	xfClipboard* clipboard = (xfClipboard*) context->custom;
 
-	return 0;
+	xf_cliprdr_send_client_format_data_response(clipboard, formatDataRequest->requestedFormatId);
+
+	return 1;
 }
 
 static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
 {
-	//xfClipboard* clipboard = (xfClipboard*) context->custom;
+	xfClipboard* clipboard = (xfClipboard*) context->custom;
 
-	return 0;
+	xf_cliprdr_recv_server_format_data_response(clipboard, clipboard->requestedFormatId,
+			formatDataResponse->requestedFormatData, formatDataResponse->dataLen);
+
+	return 1;
 }
 
 xfClipboard* xf_clipboard_new(xfContext* xfc)
@@ -1404,6 +1554,7 @@ void xf_cliprdr_init(xfContext* xfc, CliprdrClientContext* cliprdr)
 	return;
 
 	xfc->cliprdr = cliprdr;
+	xfc->clipboard->context = cliprdr;
 	cliprdr->custom = (void*) xfc->clipboard;
 
 	cliprdr->MonitorReady = xf_cliprdr_monitor_ready;
