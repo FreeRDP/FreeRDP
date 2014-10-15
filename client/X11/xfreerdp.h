@@ -68,6 +68,8 @@ struct xf_glyph
 };
 typedef struct xf_glyph xfGlyph;
 
+typedef struct xf_clipboard xfClipboard;
+
 struct xf_context
 {
 	rdpContext context;
@@ -157,7 +159,8 @@ struct xf_context
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
 	void* xv_context;
-	void* clipboard_context;
+	xfClipboard* clipboard;
+	CliprdrClientContext* cliprdr;
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;

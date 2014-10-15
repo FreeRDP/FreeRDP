@@ -1005,7 +1005,7 @@ BOOL xf_post_connect(freerdp *instance)
 	xf_rail_register_callbacks(xfc, instance->context->rail);
 	freerdp_channels_post_connect(channels, instance);
 	xf_tsmf_init(xfc, xv_port);
-	xf_cliprdr_init(xfc, channels);
+	xfc->clipboard = xf_clipboard_new(xfc);
 
 	EventArgsInit(&e, "xfreerdp");
 	e.width = settings->DesktopWidth;
@@ -1109,9 +1109,6 @@ void xf_process_channel_event(rdpChannels *channels, freerdp *instance)
 			case CliprdrChannel_Class:
 				xf_process_cliprdr_event(xfc, event);
 				break;
-			case RdpeiChannel_Class:
-				xf_process_rdpei_event(xfc, event);
-				break;
 			default:
 				break;
 		}
@@ -1191,14 +1188,14 @@ void xf_window_free(xfContext *xfc)
 		xfc->xv_context = NULL;
 	}
 
-	if (xfc->clipboard_context)
+	if (xfc->clipboard)
 	{
-		xf_cliprdr_uninit(xfc);
-		xfc->clipboard_context = NULL;
+		xf_clipboard_free(xfc->clipboard);
+		xfc->clipboard = NULL;
 	}
 }
 
-void *xf_input_thread(void *arg)
+void* xf_input_thread(void *arg)
 {
 	xfContext *xfc;
 	HANDLE event;
@@ -1212,34 +1209,39 @@ void *xf_input_thread(void *arg)
 	assert(NULL != xfc);
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
 	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
-	while(WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+
+	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
 		do
 		{
 			xf_lock_x11(xfc, FALSE);
 			pending_status = XPending(xfc->display);
 			xf_unlock_x11(xfc, FALSE);
-			if(pending_status)
+
+			if (pending_status)
 			{
 				xf_lock_x11(xfc, FALSE);
 				ZeroMemory(&xevent, sizeof(xevent));
 				XNextEvent(xfc->display, &xevent);
 				process_status = xf_event_process(instance, &xevent);
 				xf_unlock_x11(xfc, FALSE);
+
 				if(!process_status)
 					break;
 			}
 		}
-		while(pending_status);
-		if(!process_status)
+		while (pending_status);
+
+		if (!process_status)
 			break;
 	}
+
 	MessageQueue_PostQuit(queue, 0);
 	ExitThread(0);
 	return NULL;
 }
 
-void *xf_channels_thread(void *arg)
+void* xf_channels_thread(void *arg)
 {
 	int status;
 	xfContext *xfc;
@@ -1251,13 +1253,17 @@ void *xf_channels_thread(void *arg)
 	assert(NULL != xfc);
 	channels = instance->context->channels;
 	event = freerdp_channels_get_event_handle(instance);
-	while(WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+
+	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
 		status = freerdp_channels_process_pending_messages(instance);
-		if(!status)
+
+		if (!status)
 			break;
+
 		xf_process_channel_event(channels, instance);
 	}
+
 	ExitThread(0);
 	return NULL;
 }
@@ -1305,7 +1311,7 @@ BOOL xf_auto_reconnect(freerdp *instance)
  *  @param instance - pointer to the rdp_freerdp structure that contains the session's settings
  *  @return A code from the enum XF_EXIT_CODE (0 if successful)
  */
-void *xf_thread(void *param)
+void* xf_thread(void *param)
 {
 	int i;
 	int fds;
