@@ -25,6 +25,8 @@ add_executable(dfreerdp
 	df_event.h
 	df_graphics.c
 	df_graphics.h
+	df_run.c
+	df_run.h
 	dfreerdp.c
 	dfreerdp.h)
 

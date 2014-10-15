@@ -3,6 +3,7 @@
  * DirectFB Graphical Objects
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Killer{R} <support@killprog.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,220 +63,155 @@ void df_fullscreen_cursor_bounds(rdpGdi* gdi, dfInfo* dfi, int *cursor_left, int
 		*cursor_bottom = gdi->height;
 }
 
+#define DF_FULLSCREEN_CURSOR_RECT(gdi_, dfi_, left_, top_, width_, height_) \
+	df_fullscreen_cursor_bounds(gdi_, dfi_, &(left_), &(top_), &(width_), &(height_)); \
+	width_ -= left_; \
+	height_ -= top_; 
+
+#define BPP2PIXELSIZE(bpp_, pixel_length_) \
+	if (bpp_ == 16 || bpp_ == 15) pixel_length_ = 2; \
+	else if (bpp_ != 8) pixel_length_ = 4; \
+	else pixel_length_ = 1;
 
 
-void df_fullscreen_cursor_unpaint(dfContext *context)
+void df_fullscreen_cursor_unpaint(uint8 *surface, int pitch, dfContext *context, boolean update_pos)
 {
 	rdpGdi* gdi = context->_p.gdi;
 	dfInfo* dfi = context->dfi;
 	int src_left = 0, src_top = 0;
-	int left, top, length, count, src_pitch;
+	int left, top, length, count, src_pitch, pixel_length;
 	uint8 *dst, *src;
-	DFBRectangle rect;
 
 	if (dfi->contents_under_cursor)
 	{
-		if (dfi->primary_data)
-		{//Blit doesn't work on locked surface so just restore image by direct memory copy
-			df_fullscreen_cursor_bounds(gdi, dfi, &left, &top, &length, &count);
-			length-= left;
-			count-= top;
+		DF_FULLSCREEN_CURSOR_RECT(gdi, dfi, left, top, length, count);
 
-			if (count > 0 && length > 0 &&
-				dfi->contents_under_cursor->Lock(dfi->contents_under_cursor, DSLF_READ, (void **)&src, &src_pitch)==DFB_OK)
-			{
-				src_left = left - (dfi->cursor_x - dfi->cursor_hot_x);
-				src_top = top - (dfi->cursor_y - dfi->cursor_hot_y);
-
-				src += src_pitch * src_top;
-				dst = dfi->primary_data + (top * dfi->primary_pitch);
-				if (gdi->dstBpp == 16 || gdi->dstBpp == 15)
-				{
-					src += src_left * 2;
-					dst += left * 2;
-					length *= 2;
-				}
-				else if (gdi->dstBpp != 8)
-				{
-					src += src_left * 4;
-					dst += left * 4;
-					length *= 4;
-				}
-				else
-				{
-					src += src_left;
-					dst += left;
-				}
-
-				for (; count; --count, dst += dfi->primary_pitch, src += src_pitch)
-				{
-					PREFETCH_WRITE(dst + dfi->primary_pitch);
-					memcpy(dst, src, length);
-				}
-
-				dfi->contents_under_cursor->Unlock(dfi->contents_under_cursor);
-			}
-		}
-		else
+		if (count > 0 && length > 0)
 		{
-			rect.x = rect.y = 0;
-			rect.w = dfi->cursor_w;
-			rect.h = dfi->cursor_h;
+			BPP2PIXELSIZE(gdi->dstBpp, pixel_length);
+			if (!pitch) pitch = gdi->width * pixel_length;
 
-			dfi->primary->Blit(dfi->primary, dfi->contents_under_cursor, &rect, 
-				dfi->cursor_x - dfi->cursor_hot_x, dfi->cursor_y - dfi->cursor_hot_y);			
+			src_left = left - (dfi->cursor_x - dfi->cursor_hot_x);
+			src_top = top - (dfi->cursor_y - dfi->cursor_hot_y);
+			src = dfi->contents_under_cursor + (src_top * dfi->cursor_w + src_left) * pixel_length;
+			dst = surface + (top * pitch) + left * pixel_length;
+			src_pitch = dfi->cursor_w * pixel_length;
+			length *= pixel_length;
+
+			for (--count; count; --count, dst += pitch, src += src_pitch)
+			{
+				PREFETCH_WRITE(dst + pitch);
+				memcpy(dst, src, length);
+			}
+			memcpy(dst, src, length);
 		}
 	}
-
-	dfi->cursor_hot_x = dfi->cursor_new_hot_x;
-	dfi->cursor_hot_y = dfi->cursor_new_hot_y;
-	dfi->cursor_x = dfi->pointer_x;
-	dfi->cursor_y = dfi->pointer_y;
+	if (update_pos)
+	{
+		dfi->cursor_hot_x = dfi->cursor_new_hot_x;
+		dfi->cursor_hot_y = dfi->cursor_new_hot_y;
+		dfi->cursor_x = dfi->pointer_x;
+		dfi->cursor_y = dfi->pointer_y;
+	}
 }
 
 
-static void df_save_locked_image_under_cursor(dfContext *context)
+void df_fullscreen_cursor_save_image_under(uint8 *surface, int pitch, dfContext *context)
 {
 	rdpGdi* gdi = context->_p.gdi;
 	dfInfo* dfi = context->dfi;
 	int dst_left = 0, dst_top = 0;
-	int length, count, left, top, dst_pitch;
+	int length, count, left, top, dst_pitch, pixel_length;
 	uint8 *src, *dst;
 
-	df_fullscreen_cursor_bounds(gdi, dfi, &left, &top, &length, &count);
-	length-= left;
-	count-= top;
-	
-	if (count > 0 && length > 0 &&
-		dfi->contents_under_cursor->Lock(dfi->contents_under_cursor, DSLF_WRITE, (void **)&dst, &dst_pitch)==DFB_OK)
+	if (dfi->contents_under_cursor && (dfi->cursor_w != dfi->cursor_new_w || dfi->cursor_h != dfi->cursor_new_h))
 	{
+		xfree(dfi->contents_under_cursor);
+		dfi->contents_under_cursor = 0;
+	}
+
+	dfi->cursor_w = dfi->cursor_new_w;
+	dfi->cursor_h = dfi->cursor_new_h;
+
+	if (!dfi->cursor_w || !dfi->cursor_h)
+		return;
+
+	DF_FULLSCREEN_CURSOR_RECT(gdi, dfi, left, top, length, count);
+
+	if (count > 0 && length > 0)
+	{
+		if (!dfi->contents_under_cursor)
+		{
+			dfi->contents_under_cursor = (uint8*)xmalloc(dfi->cursor_w * dfi->cursor_h * sizeof(uint32));
+			if (!dfi->contents_under_cursor)
+				return;
+		}	
+
+		BPP2PIXELSIZE(gdi->dstBpp, pixel_length);
+		if (!pitch) pitch = gdi->width * pixel_length;
+
 		dst_left = left - (dfi->cursor_x - dfi->cursor_hot_x);
 		dst_top = top - (dfi->cursor_y - dfi->cursor_hot_y);
-		dst += dst_pitch * dst_top;
-		src = dfi->primary_data + (top * dfi->primary_pitch);
+		src = surface + top * pitch + left * pixel_length;
+		dst = dfi->contents_under_cursor + (dst_top * dfi->cursor_w + dst_left) * pixel_length;
+		dst_pitch = dfi->cursor_w * pixel_length;
+		length *= pixel_length;
 
-		if (gdi->dstBpp == 16 || gdi->dstBpp == 15)
-		{
-			dst += dst_left * 2;
-			src += left * 2;
-			length *= 2;
-		}
-		else if (gdi->dstBpp != 8)
-		{
-			dst += dst_left * 4;
-			src += left * 4;
-			length *= 4;
-		}
-		else
-		{
-			dst += dst_left;
-			src += left;
-		}
-
-		for (; count; --count, src += dfi->primary_pitch, dst += dst_pitch)
+		for (--count; count; --count, src += pitch, dst += dst_pitch)
 		{
 			PREFETCH_WRITE(dst + dst_pitch);
 			memcpy(dst, src, length);
 		}
-
-		dfi->contents_under_cursor->Unlock(dfi->contents_under_cursor);
+		memcpy(dst, src, length);
 	}
 }
 
-void df_fullscreen_cursor_paint(dfContext *context)
+INLINE static void cursor_linecpy(uint8 *dst, uint8 *src, uint8 pixel_length, int pixels_count, int bpp, HCLRCONV clrconv)
+{
+	uint32 pixel;
+	for (; pixels_count; --pixels_count, dst += pixel_length, src += sizeof(uint32))
+	{
+		pixel = *(uint32 *)src;
+		if ( ( pixel & 0xff000000) > 0x10000000)
+		{
+			pixel = freerdp_color_convert_rgb( pixel | 0xff000000, 32, bpp, clrconv);
+			memcpy(dst, &pixel, pixel_length);
+		}
+	}
+}
+
+void df_fullscreen_cursor_paint(uint8 *surface, int pitch, dfContext *context)
 {
 	rdpGdi* gdi = context->_p.gdi;
 	dfInfo* dfi = context->dfi;
 	int src_left = 0, src_top = 0;
-	int length, count, left, top, src_pitch, i, j;
-	uint32 pixel;
-	uint8 pixel_size, *src, *dst;
-	DFBRectangle rect;
+	int line_pixels, line_count, left, top, src_pitch;
+	uint8 pixel_length, *src, *dst;
 
-	if (dfi->contents_under_cursor && (dfi->cursor_w != dfi->cursor_new_w || dfi->cursor_h != dfi->cursor_new_h))
-	{
-		dfi->contents_under_cursor->Release(dfi->contents_under_cursor);
-		dfi->contents_under_cursor = 0;
-	}
-
-	if (!dfi->contents_under_cursor)
-	{
-		dfi->cursor_w = dfi->cursor_new_w;
-		dfi->cursor_h = dfi->cursor_new_h;
-		if (!dfi->cursor_w || !dfi->cursor_h)
-			return;
-
-		df_create_temp_surface(dfi, dfi->cursor_w, dfi->cursor_h, gdi->dstBpp, &(dfi->contents_under_cursor));
-	}
-
-	if (dfi->primary_data)
-	{
-		df_save_locked_image_under_cursor(context);
-	}
-	else
-	{
-		rect.x = dfi->cursor_x - dfi->cursor_hot_x;
-		rect.y = dfi->cursor_y - dfi->cursor_hot_y;
-		rect.w = dfi->cursor_w;
-		rect.h = dfi->cursor_h;
-		dfi->contents_under_cursor->Blit(dfi->contents_under_cursor, dfi->primary, &rect, 0, 0);
-	}
+	dfi->cursor_id = dfi->cursor_new_id;
 
 	if (!dfi->contents_of_cursor)
 		return;
 
-	if (dfi->primary_data)
-	{
-		df_fullscreen_cursor_bounds(gdi, dfi, &left, &top, &length, &count);
-		length-= left;
-		count-= top;
+	DF_FULLSCREEN_CURSOR_RECT(gdi, dfi, left, top, line_pixels, line_count);
 
-		if (count > 0 && length > 0 &&
-			dfi->contents_of_cursor->Lock(dfi->contents_of_cursor, DSLF_READ, (void **)&src, &src_pitch)==DFB_OK)
+	if (line_count > 0 && line_pixels > 0)
+	{
+		BPP2PIXELSIZE(gdi->dstBpp, pixel_length);
+		if (!pitch) pitch = gdi->width * pixel_length;
+
+		src_left = left - (dfi->cursor_x - dfi->cursor_hot_x);
+		src_top = top - (dfi->cursor_y - dfi->cursor_hot_y);
+		src_pitch = dfi->cursor_w * sizeof(uint32);
+		src = dfi->contents_of_cursor + src_pitch * src_top + src_left * sizeof(uint32);
+		dst = surface + (top * pitch) + left * pixel_length;
+
+		for (--line_count; line_count; --line_count, dst += pitch, src += src_pitch)
 		{
-			src_left = left - (dfi->cursor_x - dfi->cursor_hot_x);
-			src_top = top - (dfi->cursor_y - dfi->cursor_hot_y);
-
-			src += src_pitch * src_top;
-			dst = dfi->primary_data + (top * dfi->primary_pitch);
-
-			src += src_left * 4;
-
-			if (gdi->dstBpp == 16 || gdi->dstBpp == 15)
-				pixel_size = 2;
-			else if (gdi->dstBpp != 8)
-				pixel_size = 4;
-			else
-				pixel_size = 1;
-
-			length *= pixel_size;
-			dst += left * pixel_size;
-
-			for (; count; --count, dst += dfi->primary_pitch, src += src_pitch)
-			{
-				PREFETCH_WRITE(dst + dfi->primary_pitch);
-				for (i = 0, j = 0; i < length; i += pixel_size, j += 4)
-				{
-					pixel = *(uint32 *)(&src[j]);
-					if ( ( pixel & 0xff000000) > 0x10000000)
-					{
-						pixel = freerdp_color_convert_rgb( pixel | 0xff000000, 32, gdi->dstBpp, dfi->clrconv);
-						memcpy(&dst[i], &pixel, pixel_size);
-					}
-				}
-			}
-			dfi->contents_of_cursor->Unlock(dfi->contents_of_cursor);
+			PREFETCH_WRITE(dst + pitch);
+			cursor_linecpy(dst, src, pixel_length, line_pixels, gdi->dstBpp, dfi->clrconv);
 		}
-	}
-	else
-	{
-		rect.x = 0;
-		rect.y = 0;
-		rect.w = dfi->cursor_w;
-		rect.h = dfi->cursor_h;
-		dfi->primary->SetBlittingFlags(dfi->primary, DSBLIT_BLEND_ALPHACHANNEL);
-		dfi->primary->Blit(dfi->primary, dfi->contents_of_cursor, &rect, dfi->cursor_x - dfi->cursor_hot_x, dfi->cursor_y - dfi->cursor_hot_y);
-		dfi->primary->SetBlittingFlags(dfi->primary, DSBLIT_NOFX);
+		cursor_linecpy(dst, src, pixel_length, line_pixels, gdi->dstBpp, dfi->clrconv);
 	}
 }
 
@@ -346,6 +282,8 @@ void df_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	dfInfo* dfi;
 	DFBResult result;
 	dfPointer* df_pointer;
+	int i, pitch;
+	uint8* src, *dst;
 
 	dfi = ((dfContext*) context)->dfi;
 	df_pointer = (dfPointer*) pointer;
@@ -359,18 +297,30 @@ void df_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 		dsc.height = pointer->height;
 		dsc.pixelformat = DSPF_ARGB;
 		if (dfi->contents_of_cursor)
-			dfi->contents_of_cursor->Release(dfi->contents_of_cursor);
-		result = dfi->dfb->CreateSurface(dfi->dfb, &dsc, &(dfi->contents_of_cursor));
-		if (result==DFB_OK)
+			free(dfi->contents_of_cursor);
+
+		dfi->contents_of_cursor = (uint8 *)xmalloc(pointer->width * pointer->height * sizeof(uint32));
+		if (dfi->contents_of_cursor)
 		{
-			dfi->contents_of_cursor->Blit(dfi->contents_of_cursor, df_pointer->surface, 0, 0, 0);
+//			dfi->contents_of_cursor->Blit(dfi->contents_of_cursor, df_pointer->surface, 0, 0, 0);
 			dfi->cursor_new_w = pointer->width;
 			dfi->cursor_new_h = pointer->height;
 			dfi->cursor_new_hot_x = df_pointer->xhot;
 			dfi->cursor_new_hot_y = df_pointer->yhot;
+			dfi->cursor_new_id++;
+
+			result = df_pointer->surface->Lock(df_pointer->surface,
+					DSLF_READ, (void**) &src, &pitch);
+			if (result == DFB_OK)
+			{
+				dst = dfi->contents_of_cursor;
+				for (i = 0; i<pointer->height; ++i, dst += pointer->width * sizeof(uint32), src += pitch )
+					memcpy(dst, src, pointer->width * sizeof(uint32));
+				df_pointer->surface->Unlock(df_pointer->surface);
+			}
 		}
 		else
-			dfi->contents_of_cursor = 0;
+			result = -1;
 	}
 	else
 	{
@@ -384,7 +334,6 @@ void df_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	if (result != DFB_OK)
 	{
 		DirectFBErrorFatal("SetCursorShape Error", result);
-		return;
 	}
 }
 

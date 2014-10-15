@@ -74,19 +74,26 @@ struct df_info
 	IDirectFBSurface* primary;
 	IDirectFBSurface* secondary;
 
-	IDirectFBSurface* contents_under_cursor;
-	IDirectFBSurface* contents_of_cursor;
+	uint8* contents_under_cursor;
+	uint8* contents_of_cursor;
 	int cursor_x, cursor_y;
 	int cursor_w, cursor_h;
 	int cursor_hot_x, cursor_hot_y;
 	int cursor_new_w, cursor_new_h;
 	int cursor_new_hot_x, cursor_new_hot_y;
+	uint16 cursor_id, cursor_new_id;
+
+	boolean cursor_unpainted;
+	DFBRegion cursor_region;
 	
 	IDirectFBDisplayLayer* layer;
 	IDirectFBEventBuffer* event_buffer;
 	boolean pointer_pending;
 	int pointer_x;
 	int pointer_y;
+	rdpPrimaryUpdate lower_primary_update;
+	pSurfaceBits lower_surface_bits;
+	pBitmapUpdate lower_bitmap_update;
 
 	boolean wheel_pending;
 	int wheel;

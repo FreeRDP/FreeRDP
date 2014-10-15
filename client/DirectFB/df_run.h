@@ -17,18 +17,18 @@
  * limitations under the License.
  */
 
-#ifndef __DF_GRAPHICS_H
-#define __DF_GRAPHICS_H
+#ifndef __DF_UPDATE_H
+#define __DF_UPDATE_H
 
 #include "dfreerdp.h"
 
-void df_create_temp_surface(dfInfo *dfi, int width, int height, int bpp, IDirectFBSurface **ppsurf);
+#define DF_LOCK_BIT_INIT		1
+#define DF_LOCK_BIT_PAINT		2
 
-void df_fullscreen_cursor_bounds(rdpGdi* gdi, dfInfo* dfi, int *cursor_left, int *cursor_top, int *cursor_right, int *cursor_bottom);
-void df_fullscreen_cursor_unpaint(uint8 *surface, int pitch, dfContext *context, boolean update_pos);
-void df_fullscreen_cursor_save_image_under(uint8 *surface, int pitch, dfContext *context);
-void df_fullscreen_cursor_paint(uint8 *surface, int pitch, dfContext *context);
+boolean df_lock_fb(dfInfo *dfi, uint8 mask);
+boolean df_unlock_fb(dfInfo *dfi, uint8 mask);
 
-void df_register_graphics(rdpGraphics* graphics);
+void df_run_register(freerdp* instance);
+void df_run(freerdp* instance);
 
-#endif /* __DF_GRAPHICS_H */
+#endif /* __DF_UPDATE_H */
