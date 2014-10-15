@@ -142,6 +142,7 @@ typedef void (*pDesktopResize)(rdpContext* context);
 typedef void (*pBitmapUpdate)(rdpContext* context, BITMAP_UPDATE* bitmap);
 typedef void (*pPalette)(rdpContext* context, PALETTE_UPDATE* palette);
 typedef void (*pPlaySound)(rdpContext* context, PLAY_SOUND_UPDATE* play_sound);
+typedef void (*pSetKeyboardIndicators)(rdpContext* context, UINT16 led_flags);
 
 typedef void (*pRefreshRect)(rdpContext* context, BYTE count, RECTANGLE_16* areas);
 typedef void (*pSuppressOutput)(rdpContext* context, BYTE allow, RECTANGLE_16* area);
@@ -165,7 +166,8 @@ struct rdp_update
 	pBitmapUpdate BitmapUpdate; /* 21 */
 	pPalette Palette; /* 22 */
 	pPlaySound PlaySound; /* 23 */
-	UINT32 paddingB[32 - 24]; /* 24 */
+	pSetKeyboardIndicators SetKeyboardIndicators; /* 24 */
+	UINT32 paddingB[32 - 25]; /* 25 */
 
 	rdpPointerUpdate* pointer; /* 32 */
 	rdpPrimaryUpdate* primary; /* 33 */

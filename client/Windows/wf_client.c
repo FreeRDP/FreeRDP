@@ -738,6 +738,12 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		rcount = 0;
 		wcount = 0;
 
+		if (freerdp_focus_required(instance))
+		{
+			wf_event_focus_in(wfc);
+			wf_event_focus_in(wfc);
+		}
+
 		if (!async_transport)
 		{
 			if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)

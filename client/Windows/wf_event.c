@@ -132,8 +132,8 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				freerdp_input_send_keyboard_event_ex(input, !(p->flags & LLKHF_UP), rdp_scancode);
 
-				if (p->vkCode == VK_CAPITAL)
-					DEBUG_KBD("caps lock is processed on client side too to toggle caps lock indicator");
+				if (p->vkCode == VK_NUMLOCK || p->vkCode == VK_CAPITAL || p->vkCode == VK_SCROLL || p->vkCode == VK_KANA)
+					DEBUG_KBD("lock keys are processed on client side too to toggle their indicators");
 				else
 					return 1;
 
@@ -151,6 +151,34 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	}
 
 	return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
+
+void wf_event_focus_in(wfContext* wfc)
+{
+	UINT16 syncFlags;
+	rdpInput* input;
+	UINT16 mouseX, mouseY;
+
+	input = wfc->instance->input;
+
+	syncFlags = 0;
+
+	if (GetKeyState(VK_NUMLOCK))
+		syncFlags |= KBD_SYNC_NUM_LOCK;
+
+	if (GetKeyState(VK_CAPITAL))
+		syncFlags |= KBD_SYNC_CAPS_LOCK;
+
+	if (GetKeyState(VK_SCROLL))
+		syncFlags |= KBD_SYNC_SCROLL_LOCK;
+
+	if (GetKeyState(VK_KANA))
+		syncFlags |= KBD_SYNC_KANA_LOCK;
+
+	mouseX = 0;
+	mouseY = 0;
+
+	input->FocusInEvent(input, syncFlags, mouseX, mouseY);
 }
 
 static int wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -229,6 +257,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	processed = TRUE;
 	ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	wfc = (wfContext*) ptr;
+
 
 	if (wfc != NULL)
 	{
@@ -540,6 +569,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			if (alt_ctrl_down())
 				g_flipping_in = TRUE;
 			g_focus_hWnd = hWnd;
+			freerdp_set_focus(wfc->instance);
 			break;
 
 		case WM_KILLFOCUS:

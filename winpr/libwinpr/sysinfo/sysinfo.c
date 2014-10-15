@@ -401,7 +401,7 @@ ULONGLONG GetTickCount64(void)
 #define D_BIT_3DN       (1<<30)
 #define C_BIT_SSE3      (1<<0)
 #define C_BIT_PCLMULQDQ (1<<1)
-#define C_BIT_LZCNT     (1<<5)
+#define C81_BIT_LZCNT   (1<<5)
 #define C_BIT_3DNP      (1<<8)
 #define C_BIT_3DNP      (1<<8)
 #define C_BIT_SSSE3     (1<<9)
@@ -699,9 +699,12 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 	switch (ProcessorFeature)
 	{
 		case PF_EX_LZCNT:
-			if (c & C_BIT_LZCNT)
-				ret = TRUE;
-
+			{
+				unsigned a81, b81, c81, d81;
+				cpuid(0x80000001, &a81, &b81, &c81, &d81);
+				if (c81 & C81_BIT_LZCNT)
+					ret = TRUE;
+			}
 			break;
 
 		case PF_EX_3DNOW_PREFETCH:

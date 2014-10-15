@@ -595,12 +595,16 @@ BOOL rdp_recv_server_set_keyboard_indicators_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT16 unitId;
 	UINT16 ledFlags;
+	rdpContext* context = rdp->instance->context;
 
 	if (Stream_GetRemainingLength(s) < 4)
 		return FALSE;
 
 	Stream_Read_UINT16(s, unitId); /* unitId (2 bytes) */
 	Stream_Read_UINT16(s, ledFlags); /* ledFlags (2 bytes) */
+
+	IFCALL(context->update->SetKeyboardIndicators, context, ledFlags);
+
 	return TRUE;
 }
 

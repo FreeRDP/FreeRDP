@@ -187,6 +187,8 @@ struct xf_context
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
+
+	BOOL xkbAvailable;
 };
 
 void xf_create_window(xfContext* xfc);
