@@ -297,7 +297,7 @@ void df_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 		dsc.height = pointer->height;
 		dsc.pixelformat = DSPF_ARGB;
 		if (dfi->contents_of_cursor)
-			free(dfi->contents_of_cursor);
+			xfree(dfi->contents_of_cursor);
 
 		dfi->contents_of_cursor = (uint8 *)xmalloc(pointer->width * pointer->height * sizeof(uint32));
 		if (dfi->contents_of_cursor)

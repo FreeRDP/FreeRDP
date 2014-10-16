@@ -644,10 +644,10 @@ static void df_free(dfInfo* dfi)
 		dfi->primary->Release(dfi->primary);
 
 	if (dfi->contents_of_cursor)
-		free(dfi->contents_of_cursor);
+		xfree(dfi->contents_of_cursor);
 
 	if (dfi->contents_under_cursor)
-		free(dfi->contents_under_cursor);
+		xfree(dfi->contents_under_cursor);
 
 	if (dfi->dfb)
 		dfi->dfb->Release(dfi->dfb);
