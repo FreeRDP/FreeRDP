@@ -39,17 +39,6 @@
 #include "xf_cliprdr.h"
 
 #define TAG CLIENT_TAG("x11")
-#ifdef WITH_DEBUG_X11
-#define DEBUG_X11(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_X11(fmt, ...) do { } while (0)
-#endif
-
-#ifdef WITH_DEBUG_X11_CLIPRDR
-#define DEBUG_X11_CLIPRDR(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_X11_CLIPRDR(fmt, ...) do { } while (0)
-#endif
 
 struct xf_cliprdr_format
 {
@@ -101,6 +90,8 @@ struct xf_clipboard
 	int xfixes_error_base;
 	BOOL xfixes_supported;
 };
+
+int xf_cliprdr_send_client_format_list(xfClipboard* clipboard);
 
 static BYTE* lf2crlf(BYTE* data, int* size)
 {
@@ -272,43 +263,8 @@ static void xf_cliprdr_send_supported_format_list(xfClipboard* clipboard)
 	}
 
 	clipboard->context->ClientFormatList(clipboard->context, &formatList);
-}
 
-static void xf_cliprdr_send_format_list(xfClipboard* clipboard)
-{
-	CLIPRDR_FORMAT_LIST formatList;
-	xfContext* xfc = clipboard->xfc;
-
-	ZeroMemory(&formatList, sizeof(CLIPRDR_FORMAT_LIST));
-
-	if (xf_cliprdr_is_self_owned(clipboard))
-	{
-		/**
-		* TODO: handle (raw?) format data
-		* The original code appears to be sending back the original,
-		* unmodified server format list here.
-		*/
-
-		formatList.msgFlags = CB_RESPONSE_OK;
-		formatList.cFormats = clipboard->numServerFormats;
-		formatList.formats = clipboard->serverFormats;
-
-		clipboard->context->ClientFormatList(clipboard->context, &formatList);
-	}
-	else if (clipboard->owner == None)
-	{
-		formatList.msgFlags = CB_RESPONSE_OK;
-		formatList.cFormats = 0;
-		formatList.formats = NULL;
-
-		clipboard->context->ClientFormatList(clipboard->context, &formatList);
-	}
-	else if (clipboard->owner != xfc->drawable)
-	{
-		/* Request the owner for TARGETS, and wait for SelectionNotify event */
-		XConvertSelection(xfc->display, clipboard->clipboard_atom,
-			clipboard->targets[1], clipboard->property_atom, xfc->drawable, CurrentTime);
-	}
+	free(formats);
 }
 
 static void xf_cliprdr_send_data_request(xfClipboard* clipboard, UINT32 formatId)
@@ -419,10 +375,7 @@ static BYTE* xf_cliprdr_process_requested_dib(BYTE* data, int* size)
 	/* length should be at least BMP header (14) + sizeof(BITMAPINFOHEADER) */
 
 	if (*size < 54)
-	{
-		DEBUG_X11_CLIPRDR("bmp length %d too short", *size);
 		return NULL;
-	}
 
 	*size -= 14;
 	outbuf = (BYTE*) calloc(1, *size);
@@ -559,7 +512,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL has_d
 	if (!clipboard->xfixes_supported)
 	{
 		/* Resend the format list, otherwise the server won't request again for the next paste */
-		xf_cliprdr_send_format_list(clipboard);
+		xf_cliprdr_send_client_format_list(clipboard);
 	}
 }
 
@@ -716,25 +669,18 @@ static BOOL xf_cliprdr_process_dib(xfClipboard* clipboard, BYTE* data, int size)
 	/* size should be at least sizeof(BITMAPINFOHEADER) */
 
 	if (size < 40)
-	{
-		DEBUG_X11_CLIPRDR("dib size %d too short", size);
 		return FALSE;
-	}
 
 	s = Stream_New(data, size);
 	Stream_Seek(s, 14);
 	Stream_Read_UINT16(s, bpp);
+
 	if ((bpp < 1) || (bpp > 32))
-	{
-		WLog_ERR(TAG, "invalid bpp value %d", bpp);
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, ncolors);
 	offset = 14 + 40 + (bpp <= 8 ? (ncolors == 0 ? (1 << bpp) : ncolors) * 4 : 0);
 	Stream_Free(s, FALSE);
-
-	DEBUG_X11_CLIPRDR("offset=%d bpp=%d ncolors=%d", offset, bpp, ncolors);
 
 	s = Stream_New(NULL, 14 + size);
 	Stream_Write_UINT8(s, 'B');
@@ -747,6 +693,7 @@ static BOOL xf_cliprdr_process_dib(xfClipboard* clipboard, BYTE* data, int size)
 	clipboard->data = Stream_Buffer(s);
 	clipboard->data_length = Stream_GetPosition(s);
 	Stream_Free(s, FALSE);
+
 	return TRUE;
 }
 
@@ -761,19 +708,13 @@ static void xf_cliprdr_process_html(xfClipboard* clipboard, BYTE* data, int size
 	end_str = strstr((char*) data, "EndHTML:");
 
 	if (!start_str || !end_str)
-	{
-		DEBUG_X11_CLIPRDR("invalid HTML clipboard format");
 		return;
-	}
 
 	start = atoi(start_str + 10);
 	end = atoi(end_str + 8);
 
 	if ((start > size) || (end > size) || (start >= end))
-	{
-		DEBUG_X11_CLIPRDR("invalid HTML offset");
 		return;
-	}
 
 	clipboard->data = (BYTE*) malloc(size - start + 1);
 	CopyMemory(clipboard->data, data + start, end - start);
@@ -856,8 +797,9 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard, XEvent*
 					clipboard->property_atom, 0, 4, 0, XA_INTEGER,
 					&type, &fmt, &length, &bytes_left, &data) != Success)
 				{
-					DEBUG_X11_CLIPRDR("XGetWindowProperty failed");
+
 				}
+
 				if (data)
 				{
 					CopyMemory(&altFormatId, data, 4);
@@ -873,7 +815,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard, XEvent*
 			}
 			else if (clipboard->respond)
 			{
-				DEBUG_X11_CLIPRDR("duplicated request");
+				/* duplicate request */
 			}
 			else
 			{
@@ -933,7 +875,7 @@ static BOOL xf_cliprdr_process_property_notify(xfClipboard* clipboard, XEvent* x
 
 	if (xevent->xproperty.window == clipboard->root_window)
 	{
-		xf_cliprdr_send_format_list(clipboard);
+		xf_cliprdr_send_client_format_list(clipboard);
 	}
 	else if ((xevent->xproperty.window == xfc->drawable) &&
 		(xevent->xproperty.state == PropertyNewValue) && clipboard->incr_starts)
@@ -959,7 +901,7 @@ static void xf_cliprdr_check_owner(xfClipboard* clipboard)
 		if (clipboard->owner != owner)
 		{
 			clipboard->owner = owner;
-			xf_cliprdr_send_format_list(clipboard);
+			xf_cliprdr_send_client_format_list(clipboard);
 		}
 	}
 }
@@ -1045,7 +987,64 @@ int xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
 
 int xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
 {
-	xf_cliprdr_send_format_list(clipboard);
+	CLIPRDR_FORMAT_LIST formatList;
+	xfContext* xfc = clipboard->xfc;
+
+	ZeroMemory(&formatList, sizeof(CLIPRDR_FORMAT_LIST));
+
+	if (!clipboard->sync)
+	{
+		UINT32 i, numFormats;
+		CLIPRDR_FORMAT* formats;
+
+		numFormats = clipboard->numClientFormats;
+		formats = (CLIPRDR_FORMAT*) calloc(numFormats, sizeof(CLIPRDR_FORMAT));
+
+		for (i = 0; i < numFormats; i++)
+		{
+			formats[i].formatId = clipboard->clientFormats[i].formatId;
+			formats[i].formatName = clipboard->clientFormats[i].formatName;
+		}
+
+		formatList.msgFlags = CB_RESPONSE_OK;
+		formatList.cFormats = numFormats;
+		formatList.formats = formats;
+
+		clipboard->context->ClientFormatList(clipboard->context, &formatList);
+
+		free(formats);
+
+		return 1;
+	}
+
+	if (xf_cliprdr_is_self_owned(clipboard))
+	{
+		/**
+		* TODO: handle (raw?) format data
+		* The original code appears to be sending back the original,
+		* unmodified server format list here.
+		*/
+
+		formatList.msgFlags = CB_RESPONSE_OK;
+		formatList.cFormats = clipboard->numServerFormats;
+		formatList.formats = clipboard->serverFormats;
+
+		clipboard->context->ClientFormatList(clipboard->context, &formatList);
+	}
+	else if (clipboard->owner == None)
+	{
+		formatList.msgFlags = CB_RESPONSE_OK;
+		formatList.cFormats = 0;
+		formatList.formats = NULL;
+
+		clipboard->context->ClientFormatList(clipboard->context, &formatList);
+	}
+	else if (clipboard->owner != xfc->drawable)
+	{
+		/* Request the owner for TARGETS, and wait for SelectionNotify event */
+		XConvertSelection(xfc->display, clipboard->clipboard_atom,
+			clipboard->targets[1], clipboard->property_atom, xfc->drawable, CurrentTime);
+	}
 
 	return 1;
 }
@@ -1154,6 +1153,9 @@ static int xf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_
 
 	if (clipboard->serverFormats)
 	{
+		for (i = 0; i < clipboard->numServerFormats; i++)
+			free(clipboard->serverFormats[i].formatName);
+
 		free(clipboard->serverFormats);
 		clipboard->serverFormats = NULL;
 	}
@@ -1186,23 +1188,11 @@ static int xf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_
 		}
 	}
 
+	xf_cliprdr_send_client_format_list_response(clipboard, TRUE);
+
 	XSetSelectionOwner(xfc->display, clipboard->clipboard_atom, xfc->drawable, CurrentTime);
 
 	XFlush(xfc->display);
-
-	return 1;
-
-	xf_cliprdr_send_client_format_list_response(clipboard, TRUE);
-
-	for (i = 0; i < formatList->cFormats; i++)
-	{
-		format = &formatList->formats[i];
-
-		if (format->formatId == CLIPRDR_FORMAT_UNICODETEXT)
-		{
-			xf_cliprdr_send_client_format_data_request(clipboard, format->formatId);
-		}
-	}
 
 	return 1;
 }
@@ -1362,9 +1352,9 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	if (XFixesQueryExtension(xfc->display, &clipboard->xfixes_event_base, &clipboard->xfixes_error_base))
 	{
 		int xfmajor, xfminor;
+
 		if (XFixesQueryVersion(xfc->display, &xfmajor, &xfminor))
 		{
-			DEBUG_X11_CLIPRDR("Found X Fixes extension version %d.%d", xfmajor, xfminor);
 			XFixesSelectSelectionInput(xfc->display, clipboard->root_window,
 				clipboard->clipboard_atom, XFixesSetSelectionOwnerNotifyMask);
 			clipboard->xfixes_supported = TRUE;

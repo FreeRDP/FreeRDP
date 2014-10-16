@@ -214,6 +214,8 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 {
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList");
+
 	if (context->custom)
 	{
 		UINT32 index;
@@ -376,6 +378,8 @@ void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 {
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatListResponse");
+
 	/* http://msdn.microsoft.com/en-us/library/hh872154.aspx */
 
 	if (context->custom)
@@ -405,6 +409,8 @@ void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 void cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)
 {
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataRequest");
 
 	if (context->custom)
 	{
@@ -465,6 +471,8 @@ void cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 {
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatDataResponse");
+
 	if (context->custom)
 	{
 		CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse;
