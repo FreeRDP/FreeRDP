@@ -1077,49 +1077,6 @@ int xf_cliprdr_send_client_format_data_request(xfClipboard* clipboard, UINT32 fo
 	return 1;
 }
 
-int xf_cliprdr_recv_server_format_data_response(xfClipboard* clipboard, UINT32 formatId, BYTE* data, UINT32 length)
-{
-	if (formatId == CLIPRDR_FORMAT_UNICODETEXT)
-	{
-
-	}
-
-	return 1;
-}
-
-int xf_cliprdr_send_client_format_data_response(xfClipboard* clipboard, UINT32 formatId)
-{
-	CLIPRDR_FORMAT_DATA_RESPONSE formatDataResponse;
-
-	formatDataResponse.msgType = CB_FORMAT_DATA_RESPONSE;
-	formatDataResponse.msgFlags = CB_RESPONSE_FAIL;
-	formatDataResponse.dataLen = 0;
-
-	if (formatId == CLIPRDR_FORMAT_UNICODETEXT)
-	{
-		WCHAR* unicodeText = NULL;
-
-		if (!unicodeText)
-		{
-			clipboard->context->ClientFormatDataResponse(clipboard->context, &formatDataResponse);
-		}
-		else
-		{
-			formatDataResponse.dataLen = (_wcslen(unicodeText) + 1) * 2;
-			formatDataResponse.requestedFormatData = (BYTE*) unicodeText;
-
-			formatDataResponse.msgFlags = CB_RESPONSE_OK;
-			clipboard->context->ClientFormatDataResponse(clipboard->context, &formatDataResponse);
-		}
-	}
-	else
-	{
-		clipboard->context->ClientFormatDataResponse(clipboard->context, &formatDataResponse);
-	}
-
-	return 0;
-}
-
 static int xf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
 {
 	xfClipboard* clipboard = (xfClipboard*) context->custom;
@@ -1306,11 +1263,6 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	clipboard->respond = NULL;
 
 	return 1;
-
-	xf_cliprdr_recv_server_format_data_response(clipboard, clipboard->requestedFormatId,
-			formatDataResponse->requestedFormatData, formatDataResponse->dataLen);
-
-	return 1;
 }
 
 xfClipboard* xf_clipboard_new(xfContext* xfc)
@@ -1337,6 +1289,8 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	if (clipboard->clipboard_atom == None)
 	{
 		WLog_ERR(TAG, "unable to get CLIPBOARD atom");
+		free(clipboard);
+		return NULL;
 	}
 
 	id = 1;
@@ -1420,10 +1374,20 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 
 void xf_clipboard_free(xfClipboard* clipboard)
 {
+	int i;
+
 	if (!clipboard)
 		return;
 
-	free(clipboard->serverFormats);
+	if (clipboard->serverFormats)
+	{
+		for (i = 0; i < clipboard->numServerFormats; i++)
+			free(clipboard->serverFormats[i].formatName);
+
+		free(clipboard->serverFormats);
+		clipboard->serverFormats = NULL;
+	}
+
 	free(clipboard->data);
 	free(clipboard->respond);
 	free(clipboard->incr_data);
