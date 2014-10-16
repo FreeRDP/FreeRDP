@@ -555,17 +555,22 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	cliprdrPlugin* cliprdr;
 	CliprdrClientContext* context;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
+
 	cliprdr = (cliprdrPlugin*) calloc(1, sizeof(cliprdrPlugin));
+
 	cliprdr->plugin.channel_def.options =
 		CHANNEL_OPTION_INITIALIZED |
 		CHANNEL_OPTION_ENCRYPT_RDP |
 		CHANNEL_OPTION_COMPRESS_RDP |
 		CHANNEL_OPTION_SHOW_PROTOCOL;
+
 	strcpy(cliprdr->plugin.channel_def.name, "cliprdr");
+
 	cliprdr->plugin.connect_callback = cliprdr_process_connect;
 	cliprdr->plugin.receive_callback = cliprdr_process_receive;
 	cliprdr->plugin.event_callback = cliprdr_process_event;
 	cliprdr->plugin.terminate_callback = cliprdr_process_terminate;
+
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&

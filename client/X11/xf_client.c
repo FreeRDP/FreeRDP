@@ -1091,28 +1091,30 @@ int xf_logon_error_info(freerdp *instance, UINT32 data, UINT32 type)
 	return 1;
 }
 
-void xf_process_channel_event(rdpChannels *channels, freerdp *instance)
+void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
-	xfContext *xfc;
-	wMessage *event;
-	xfc = (xfContext *) instance->context;
+	xfContext* xfc;
+	wMessage* event;
+	xfc = (xfContext*) instance->context;
+
 	event = freerdp_channels_pop_event(channels);
-	if(event)
+
+	if (event)
 	{
 		switch(GetMessageClass(event->id))
 		{
 			case RailChannel_Class:
 				xf_process_rail_event(xfc, channels, event);
 				break;
+
 			case TsmfChannel_Class:
 				xf_process_tsmf_event(xfc, event);
 				break;
-			case CliprdrChannel_Class:
-				xf_process_cliprdr_event(xfc, event);
-				break;
+
 			default:
 				break;
 		}
+
 		freerdp_event_free(event);
 	}
 }
