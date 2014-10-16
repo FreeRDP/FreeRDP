@@ -93,79 +93,6 @@ struct xf_clipboard
 
 int xf_cliprdr_send_client_format_list(xfClipboard* clipboard);
 
-static BYTE* ConvertLineEndingToCRLF(BYTE* str, int* size)
-{
-	BYTE c;
-	BYTE* outbuf;
-	BYTE* out;
-	BYTE* in_end;
-	BYTE* in;
-	int out_size;
-
-	out_size = (*size) * 2 + 1;
-	outbuf = (BYTE*) malloc(out_size);
-
-	out = outbuf;
-	in = str;
-	in_end = str + (*size);
-
-	while (in < in_end)
-	{
-		c = *in++;
-
-		if (c == '\n')
-		{
-			*out++ = '\r';
-			*out++ = '\n';
-		}
-		else
-		{
-			*out++ = c;
-		}
-	}
-
-	*out++ = 0;
-	*size = out - outbuf;
-
-	return outbuf;
-}
-
-static int ConvertLineEndingToLF(BYTE* str, int length)
-{
-	BYTE c;
-	BYTE* out;
-	BYTE* in;
-	BYTE* in_end;
-	int status = -1;
-
-	out = str;
-	in = str;
-	in_end = &str[length];
-
-	while (in < in_end)
-	{
-		c = *in++;
-
-		if (c != '\r')
-			*out++ = c;
-	}
-
-	status = out - str;
-
-	return status;
-}
-
-static void ByteSwapUnicode(WCHAR* wstr, int length)
-{
-	WCHAR* end = &wstr[length];
-
-	while (wstr < end)
-	{
-		*wstr = _byteswap_ushort(*wstr);
-		wstr++;
-	}
-}
-
 static BOOL xf_cliprdr_is_self_owned(xfClipboard* clipboard)
 {
 	Atom type;
@@ -327,7 +254,7 @@ static BYTE* xf_cliprdr_process_requested_unicodetext(BYTE* data, int* size)
 	WCHAR* outbuf = NULL;
 	int out_size;
 
-	inbuf = (char*) ConvertLineEndingToCRLF(data, size);
+	inbuf = ConvertLineEndingToCRLF((char*) data, size);
 	out_size = ConvertToUnicode(CP_UTF8, 0, inbuf, -1, &outbuf, 0);
 	free(inbuf);
 
@@ -338,11 +265,11 @@ static BYTE* xf_cliprdr_process_requested_unicodetext(BYTE* data, int* size)
 
 static BYTE* xf_cliprdr_process_requested_text(BYTE* data, int* size)
 {
-	BYTE* outbuf;
+	char* outbuf;
 
-	outbuf = ConvertLineEndingToCRLF(data, size);
+	outbuf = ConvertLineEndingToCRLF((char*) data, size);
 
-	return outbuf;
+	return (BYTE*) outbuf;
 }
 
 static BYTE* xf_cliprdr_process_requested_dib(BYTE* data, int* size)
@@ -632,9 +559,7 @@ static int xf_cliprdr_process_text(BYTE* pSrcData, int SrcSize, BYTE** ppDstData
 
 	pDstData = (BYTE*) malloc(SrcSize);
 	CopyMemory(pDstData, pSrcData, SrcSize);
-
-	DstSize = SrcSize;
-	DstSize = ConvertLineEndingToLF(pDstData, DstSize);
+	DstSize = ConvertLineEndingToLF((char*) pDstData, SrcSize);
 
 	*ppDstData = pDstData;
 
@@ -649,7 +574,7 @@ static int xf_cliprdr_process_unicodetext(BYTE* pSrcData, int SrcSize, BYTE** pp
 	DstSize = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) pSrcData,
 			SrcSize / 2, (CHAR**) &pDstData, 0, NULL, NULL);
 
-	DstSize = ConvertLineEndingToLF(pDstData, DstSize);
+	DstSize = ConvertLineEndingToLF((char*) pDstData, DstSize);
 
 	*ppDstData = pDstData;
 
@@ -720,10 +645,9 @@ static int xf_cliprdr_process_html(BYTE* pSrcData, int SrcSize, BYTE** ppDstData
 		return -1;
 
 	DstSize = end - start;
-
 	pDstData = (BYTE*) malloc(SrcSize - start + 1);
-	CopyMemory(pDstData, pSrcData + start, DstSize);
-	DstSize = ConvertLineEndingToLF(pDstData, DstSize);
+	CopyMemory(pDstData, &pSrcData[start], DstSize);
+	DstSize = ConvertLineEndingToLF((char*) pDstData, DstSize);
 
 	*ppDstData = pDstData;
 

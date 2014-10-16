@@ -197,9 +197,11 @@ int WtsApi32_InitializeWtsApi(void)
 	WTSAPI32_LOAD_PROC(IsChildSessionsEnabled, WTS_IS_CHILD_SESSIONS_ENABLED_FN);
 	WTSAPI32_LOAD_PROC(GetChildSessionId, WTS_GET_CHILD_SESSION_ID_FN);
 	WTSAPI32_LOAD_PROC(GetActiveConsoleSessionId, WTS_GET_ACTIVE_CONSOLE_SESSION_ID_FN);
-	g_WtsApi = &WtsApi32_WtsApiFunctionTable;
-	Win32_InitializeWinSta(g_WtsApi);
+
+	Win32_InitializeWinSta(&WtsApi32_WtsApiFunctionTable);
 #endif
+
+	g_WtsApi = &WtsApi32_WtsApiFunctionTable;
 
 	return 1;
 }
