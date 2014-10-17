@@ -377,7 +377,7 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity, SEC_WINNT_AUTH_IDEN
 {
 	int status;
 
-	if (identity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
+	if (srcIdentity->Flags == SEC_WINNT_AUTH_IDENTITY_ANSI)
 	{
 		status = sspi_SetAuthIdentity(identity, (char*) srcIdentity->User,
 				(char*) srcIdentity->Domain, (char*) srcIdentity->Password);
