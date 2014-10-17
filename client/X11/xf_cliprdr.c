@@ -173,7 +173,7 @@ static xfCliprdrFormat* xf_cliprdr_get_format_by_atom(xfClipboard* clipboard, At
 		if (format->atom != atom)
 			continue;
 
-		if (format->formatId == CLIPRDR_FORMAT_RAW)
+		if (format->formatId == 0)
 			return format;
 
 		for (j = 0; j < clipboard->numServerFormats; j++)
@@ -505,22 +505,22 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL has_d
 
 	switch (format->formatId)
 	{
-		case CLIPRDR_FORMAT_RAW:
+		case 0:
 		case CB_FORMAT_PNG:
 		case CB_FORMAT_JPEG:
 		case CB_FORMAT_GIF:
 			outbuf = xf_cliprdr_format_raw_to_wire(data, &size);
 			break;
 
-		case CLIPRDR_FORMAT_TEXT:
+		case CF_TEXT:
 			outbuf = xf_cliprdr_format_text_to_wire(data, &size);
 			break;
 
-		case CLIPRDR_FORMAT_UNICODETEXT:
+		case CF_UNICODETEXT:
 			outbuf = xf_cliprdr_format_unicode_text_to_wire(data, &size);
 			break;
 
-		case CB_FORMAT_DIB:
+		case CF_DIB:
 			outbuf = xf_cliprdr_format_dib_to_wire(data, &size);
 			break;
 
@@ -743,7 +743,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard, XEvent*
 			formatId = format->formatId;
 			altFormatId = formatId;
 
-			if (formatId == CLIPRDR_FORMAT_RAW)
+			if (formatId == 0)
 			{
 				if (XGetWindowProperty(xfc->display, xevent->xselectionrequest.requestor,
 					clipboard->property_atom, 0, 4, 0, XA_INTEGER,
@@ -1079,7 +1079,7 @@ static int xf_cliprdr_server_format_data_request(CliprdrClientContext* context, 
 
 	if (xf_cliprdr_is_self_owned(clipboard))
 	{
-		format = xf_cliprdr_get_format_by_id(clipboard, CLIPRDR_FORMAT_RAW);
+		format = xf_cliprdr_get_format_by_id(clipboard, 0);
 
 		XChangeProperty(xfc->display, xfc->drawable, clipboard->property_atom,
 			XA_INTEGER, 32, PropModeReplace, (BYTE*) &formatId, 1);
@@ -1136,7 +1136,7 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 		switch (clipboard->data_format)
 		{
-			case CLIPRDR_FORMAT_RAW:
+			case 0:
 			case CB_FORMAT_PNG:
 			case CB_FORMAT_JPEG:
 			case CB_FORMAT_GIF:
@@ -1147,15 +1147,15 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 				size = 0;
 				break;
 
-			case CLIPRDR_FORMAT_TEXT:
+			case CF_TEXT:
 				status = xf_cliprdr_format_text_from_wire(data, size, &pDstData);
 				break;
 
-			case CLIPRDR_FORMAT_UNICODETEXT:
+			case CF_UNICODETEXT:
 				status = xf_cliprdr_format_unicode_text_from_wire(data, size, &pDstData);
 				break;
 
-			case CLIPRDR_FORMAT_DIB:
+			case CF_DIB:
 				status = xf_cliprdr_format_dib_from_wire(data, size, &pDstData);
 				break;
 
@@ -1254,35 +1254,35 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 
 	n = 0;
 
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "_FREERDP_RAW", FALSE);
-	clipboard->clientFormats[n].formatId = CLIPRDR_FORMAT_RAW;
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "_FREERDP_RAW", False);
+	clipboard->clientFormats[n].formatId = 0;
 	n++;
 
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
-	clipboard->clientFormats[n].formatId = CLIPRDR_FORMAT_UNICODETEXT;
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "UTF8_STRING", False);
+	clipboard->clientFormats[n].formatId = CF_UNICODETEXT;
 	n++;
 
 	clipboard->clientFormats[n].atom = XA_STRING;
-	clipboard->clientFormats[n].formatId = CLIPRDR_FORMAT_TEXT;
+	clipboard->clientFormats[n].formatId = CF_TEXT;
 	n++;
 
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/png", FALSE);
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/png", False);
 	clipboard->clientFormats[n].formatId = CB_FORMAT_PNG;
 	n++;
 
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/jpeg", FALSE);
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/jpeg", False);
 	clipboard->clientFormats[n].formatId = CB_FORMAT_JPEG;
 	n++;
 
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/gif", FALSE);
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/gif", False);
 	clipboard->clientFormats[n].formatId = CB_FORMAT_GIF;
 	n++;
 
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/bmp", FALSE);
-	clipboard->clientFormats[n].formatId = CLIPRDR_FORMAT_DIB;
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "image/bmp", False);
+	clipboard->clientFormats[n].formatId = CF_DIB;
 	n++;
 
-	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "text/html", FALSE);
+	clipboard->clientFormats[n].atom = XInternAtom(xfc->display, "text/html", False);
 	clipboard->clientFormats[n].formatId = CB_FORMAT_HTML;
 	clipboard->clientFormats[n].formatName = _strdup("HTML Format");
 	n++;

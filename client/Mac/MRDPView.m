@@ -1353,8 +1353,8 @@ void cliprdr_send_data_request(freerdp* instance, UINT32 format)
 
 /**
  * at the moment, only the following formats are supported
- *    CB_FORMAT_TEXT
- *    CB_FORMAT_UNICODETEXT
+ *    CF_TEXT
+ *    CF_UNICODETEXT
  */
 
 void cliprdr_process_cb_data_response_event(freerdp* instance, RDP_CB_DATA_RESPONSE_EVENT* event)
@@ -1367,7 +1367,7 @@ void cliprdr_process_cb_data_response_event(freerdp* instance, RDP_CB_DATA_RESPO
 	if (event->size == 0)
 		return;
 	
-	if (view->pasteboard_format == CB_FORMAT_TEXT || view->pasteboard_format == CB_FORMAT_UNICODETEXT)
+	if (view->pasteboard_format == CF_TEXT || view->pasteboard_format == CF_UNICODETEXT)
 	{
 		str = [[NSString alloc] initWithCharacters:(unichar *) event->data length:event->size / 2];
 		types = [[NSArray alloc] initWithObjects:NSStringPboardType, nil];
@@ -1391,8 +1391,8 @@ void cliprdr_process_cb_monitor_ready_event(freerdp* instance)
 
 /**
  * list of supported clipboard formats; currently only the following are supported
- *    CB_FORMAT_TEXT
- *    CB_FORMAT_UNICODETEXT
+ *    CF_TEXT
+ *    CF_UNICODETEXT
  */
 
 void cliprdr_process_cb_format_list_event(freerdp* instance, RDP_CB_FORMAT_LIST_EVENT* event)
@@ -1408,35 +1408,11 @@ void cliprdr_process_cb_format_list_event(freerdp* instance, RDP_CB_FORMAT_LIST_
 	{
 		switch (event->formats[i])
 		{
-		case CB_FORMAT_RAW:
-			WLog_ERR(TAG, "CB_FORMAT_RAW: not yet supported");
-			break;
-
-		case CB_FORMAT_TEXT:
-		case CB_FORMAT_UNICODETEXT:
-			view->pasteboard_format = CB_FORMAT_UNICODETEXT;
-			cliprdr_send_data_request(instance, CB_FORMAT_UNICODETEXT);
+		case CF_TEXT:
+		case CF_UNICODETEXT:
+			view->pasteboard_format = CF_UNICODETEXT;
+			cliprdr_send_data_request(instance, CF_UNICODETEXT);
 			return;
-			break;
-
-		case CB_FORMAT_DIB:
-			WLog_ERR(TAG, "CB_FORMAT_DIB: not yet supported");
-			break;
-
-		case CB_FORMAT_HTML:
-			WLog_ERR(TAG, "CB_FORMAT_HTML");
-			break;
-
-		case CB_FORMAT_PNG:
-			WLog_ERR(TAG, "CB_FORMAT_PNG: not yet supported");
-			break;
-
-		case CB_FORMAT_JPEG:
-			WLog_ERR(TAG, "CB_FORMAT_JPEG: not yet supported");
-			break;
-
-		case CB_FORMAT_GIF:
-			WLog_ERR(TAG, "CB_FORMAT_GIF: not yet supported");
 			break;
 		}
 	}
@@ -1501,7 +1477,7 @@ void cliprdr_send_supported_format_list(freerdp* instance)
 	
 	event->formats = (UINT32*) malloc(sizeof(UINT32) * 1);
 	event->num_formats = 1;
-	event->formats[0] = CB_FORMAT_UNICODETEXT;
+	event->formats[0] = CF_UNICODETEXT;
 	
 	freerdp_channels_send_event(instance->context->channels, (wMessage*) event);
 }

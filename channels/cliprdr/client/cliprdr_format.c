@@ -318,9 +318,9 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 			switch (format)
 			{
-				case CB_FORMAT_TEXT:
-				case CB_FORMAT_DIB:
-				case CB_FORMAT_UNICODETEXT:
+				case CF_TEXT:
+				case CF_DIB:
+				case CF_UNICODETEXT:
 					break;
 
 				default:
