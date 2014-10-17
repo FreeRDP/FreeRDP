@@ -176,6 +176,34 @@ static int MAKEFN(BitBlt_SRCCOPY, BITBLT_PIXELBYTES, BITBLT_ALIGN)
 	return 0;
 }
 
+INLINE static void MAKEFN(pixset, BITBLT_PIXELBYTES, BITBLT_ALIGN) 
+			(BITBLT_ALIGN *dst, BITBLT_ALIGN color, int count)
+{
+	for (; count>=8; count-= 8)
+	{
+		*dst = color; ++dst;
+		*dst = color; ++dst;
+		*dst = color; ++dst;
+		*dst = color; ++dst;
+		*dst = color; ++dst;
+		*dst = color; ++dst;
+		*dst = color; ++dst;
+		*dst = color; ++dst;
+	}
+	switch (count)
+	{
+		case 7: *dst = color; ++dst;
+		case 6:	*dst = color; ++dst;
+		case 5:	*dst = color; ++dst;
+		case 4:	*dst = color; ++dst;
+		case 3:	*dst = color; ++dst;
+		case 2:	*dst = color; ++dst;
+		case 1:	*dst = color;
+	}
+
+//	for (x = 0; x < nWidth; ++x) dstp[x] = color;
+}
+
 static int MAKEFN(FillRect, BITBLT_PIXELBYTES, BITBLT_ALIGN) 
 			(HGDI_DC hdc, HGDI_RECT rect, BITBLT_ALIGN color)
 {
@@ -199,27 +227,28 @@ static int MAKEFN(FillRect, BITBLT_PIXELBYTES, BITBLT_ALIGN)
 	PREFETCH_WRITE(dstp);
 	gdi_InvalidateRegion(hdc, nXDest, nYDest, nWidth, nHeight);
 
-	if (!color)
+	if (color == 0 || color == ~(BITBLT_ALIGN)0)
 	{
 		x = nWidth * BITBLT_PIXELBYTES;
+		color &= 0xff;
 		for (--nHeight; nHeight; --nHeight)
 		{
 			PREFETCH_WRITE(dstp + w);
-			memset(dstp, 0, x);
+			memset(dstp, (unsigned char)color, x);
 
 			if (UNLIKELY((dstp+=w)>=end)) return 0;
 		}
-		memset(dstp, 0, x);
+		memset(dstp, (unsigned char)color, x);
 	}
 	else
 	{
 		for (--nHeight; nHeight; --nHeight)
 		{
 			PREFETCH_WRITE(dstp + w);
-			for (x = 0; x < nWidth; ++x) dstp[x] = color;
+			MAKEFN(pixset, BITBLT_PIXELBYTES, BITBLT_ALIGN) (dstp, color, nWidth);
 			if (UNLIKELY((dstp+=w)>=end)) return 0;
 		}
-		for (x = 0; x < nWidth; ++x) dstp[x] = color;
+		MAKEFN(pixset, BITBLT_PIXELBYTES, BITBLT_ALIGN) (dstp, color, nWidth);
 	}
 
 	return 0;
