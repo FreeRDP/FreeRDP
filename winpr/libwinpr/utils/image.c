@@ -34,54 +34,6 @@
  * Refer to "Compressed Image File Formats: JPEG, PNG, GIF, XBM, BMP" book
  */
 
-#if defined(__APPLE__)
-#pragma pack(1)
-#else
-#pragma pack(push, 1)
-#endif
-
-struct _WINPR_BITMAP_FILE_HEADER
-{
-	BYTE bfType[2];
-	UINT32 bfSize;
-	UINT16 bfReserved1;
-	UINT16 bfReserved2;
-	UINT32 bfOffBits;
-};
-typedef struct _WINPR_BITMAP_FILE_HEADER WINPR_BITMAP_FILE_HEADER;
-
-struct _WINPR_BITMAP_INFO_HEADER
-{
-	UINT32 biSize;
-	INT32 biWidth;
-	INT32 biHeight;
-	UINT16 biPlanes;
-	UINT16 biBitCount;
-	UINT32 biCompression;
-	UINT32 biSizeImage;
-	INT32 biXPelsPerMeter;
-	INT32 biYPelsPerMeter;
-	UINT32 biClrUsed;
-	UINT32 biClrImportant;
-};
-typedef struct _WINPR_BITMAP_INFO_HEADER WINPR_BITMAP_INFO_HEADER;
-
-struct _WINPR_BITMAP_CORE_HEADER
-{
-	UINT32 bcSize;
-	UINT16 bcWidth;
-	UINT16 bcHeight;
-	UINT16 bcPlanes;
-	UINT16 bcBitCount;
-};
-typedef struct _WINPR_BITMAP_CORE_HEADER WINPR_BITMAP_CORE_HEADER;
-
-#if defined(__APPLE__)
-#pragma pack()
-#else
-#pragma pack(pop)
-#endif
-
 int winpr_bitmap_write(const char* filename, BYTE* data, int width, int height, int bpp)
 {
 	FILE* fp;

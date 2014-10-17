@@ -227,11 +227,8 @@
 #define SCARD_NEGOTIABLE		5
 #define SCARD_SPECIFIC			6
 
-#if defined(__APPLE__) | defined(sun)
-#pragma pack(1)
-#else
-#pragma pack(push, 1)
-#endif
+#define WINPR_PACK_PUSH
+#include <winpr/pack.h>
 
 typedef struct _SCARD_IO_REQUEST
 {
@@ -557,11 +554,8 @@ typedef struct
 	SCARDHANDLE hCardHandle;
 } OPENCARDNAMEW, *POPENCARDNAMEW, *LPOPENCARDNAMEW;
 
-#if defined(__APPLE__) | defined(sun)
-#pragma pack()
-#else
-#pragma pack(pop)
-#endif
+#define WINPR_PACK_POP
+#include <winpr/pack.h>
 
 #ifdef UNICODE
 #define LPOCNCONNPROC			LPOCNCONNPROCW

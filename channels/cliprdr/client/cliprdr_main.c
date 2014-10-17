@@ -499,7 +499,7 @@ int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIS
 	CLIPRDR_FORMAT* format;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
 
-	for (index = 0; index < formatList->cFormats; index++)
+	for (index = 0; index < formatList->numFormats; index++)
 	{
 		format = (CLIPRDR_FORMAT*) &(formatList->formats[index]);
 		length += 4;
@@ -513,7 +513,7 @@ int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIS
 
 	s = cliprdr_packet_new(CB_FORMAT_LIST, 0, length);
 
-	for (index = 0; index < formatList->cFormats; index++)
+	for (index = 0; index < formatList->numFormats; index++)
 	{
 		format = (CLIPRDR_FORMAT*) &(formatList->formats[index]);
 		Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
@@ -535,7 +535,7 @@ int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIS
 	}
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatList: numFormats: %d",
-			formatList->cFormats);
+			formatList->numFormats);
 	cliprdr_packet_send(cliprdr, s);
 
 	return 0;

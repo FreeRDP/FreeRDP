@@ -214,8 +214,6 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 {
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 
-	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList");
-
 	if (context->custom)
 	{
 		UINT32 index;
@@ -227,7 +225,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 		formatList.msgFlags = msgFlags;
 		formatList.dataLen = dataLen;
 
-		formatList.cFormats = 0;
+		formatList.numFormats = 0;
 
 		while (dataLen)
 		{
@@ -237,14 +235,14 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 			formatNameLength = _wcslen((WCHAR*) Stream_Pointer(s));
 			Stream_Seek(s, (formatNameLength + 1) * 2);
 			dataLen -= ((formatNameLength + 1) * 2);
-			formatList.cFormats++;
+			formatList.numFormats++;
 		}
 
 		index = 0;
 		dataLen = formatList.dataLen;
 		Stream_Rewind(s, dataLen);
 
-		formats = (CLIPRDR_FORMAT*) malloc(sizeof(CLIPRDR_FORMAT) * formatList.cFormats);
+		formats = (CLIPRDR_FORMAT*) malloc(sizeof(CLIPRDR_FORMAT) * formatList.numFormats);
 		formatList.formats = formats;
 
 		while (dataLen)
@@ -272,10 +270,13 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 			index++;
 		}
 
+		WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList: numFormats: %d",
+				formatList.numFormats);
+
 		if (context->ServerFormatList)
 			context->ServerFormatList(context, &formatList);
 
-		for (index = 0; index < formatList.cFormats; index++)
+		for (index = 0; index < formatList.numFormats; index++)
 			free(formats[index].formatName);
 
 		free(formats);
@@ -368,6 +369,9 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 		cliprdr->format_names = NULL;
 
 		cliprdr->num_format_names = 0;
+
+		WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList: numFormats: %d",
+				cb_event->num_formats);
 
 		cliprdr_send_format_list_response(cliprdr);
 		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
