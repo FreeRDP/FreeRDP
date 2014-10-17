@@ -22,10 +22,23 @@
 
 #include <winpr/clipboard.h>
 
+typedef struct _wClipboardFormat wClipboardFormat;
+typedef struct _wClipboardSynthesizer wClipboardSynthesizer;
+
 struct _wClipboardFormat
 {
 	UINT32 formatId;
 	const char* formatName;
+
+	UINT32 numSynthesizers;
+	wClipboardSynthesizer* synthesizers;
+};
+
+struct _wClipboardSynthesizer
+{
+	void* context;
+	UINT32 syntheticId;
+	CLIPBOARD_SYNTHESIZE_FN pfnSynthesize;
 };
 
 struct _wClipboard

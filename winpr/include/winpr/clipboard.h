@@ -24,7 +24,8 @@
 #include <winpr/wtypes.h>
 
 typedef struct _wClipboard wClipboard;
-typedef struct _wClipboardFormat wClipboardFormat;
+
+typedef void* (*CLIPBOARD_SYNTHESIZE_FN)(void* context, UINT32 formatId, const void* data, UINT32* pSize);
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,10 +37,17 @@ WINPR_API void ClipboardUnlock(wClipboard* clipboard);
 WINPR_API BOOL ClipboardEmpty(wClipboard* clipboard);
 WINPR_API UINT32 ClipboardCountFormats(wClipboard* clipboard);
 WINPR_API UINT32 ClipboardGetFormatIds(wClipboard* clipboard, UINT32** ppFormatIds);
+
+WINPR_API UINT32 ClipboardCountRegisteredFormats(wClipboard* clipboard);
+WINPR_API UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard, UINT32** ppFormatIds);
 WINPR_API UINT32 ClipboardRegisterFormat(wClipboard* clipboard, const char* name);
 
+WINPR_API BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId,
+		UINT32 syntheticId, CLIPBOARD_SYNTHESIZE_FN pfnSynthesize, void* context);
+
+WINPR_API UINT32 ClipboardGetFormatId(wClipboard* clipboard, const char* name);
 WINPR_API const char* ClipboardGetFormatName(wClipboard* clipboard, UINT32 formatId);
-WINPR_API const void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize);
+WINPR_API void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize);
 WINPR_API BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, UINT32 size);
 
 WINPR_API UINT64 ClipboardGetOwner(wClipboard* clipboard);
