@@ -22,6 +22,8 @@
 
 #include <winpr/clipboard.h>
 
+#include <winpr/collections.h>
+
 typedef struct _wClipboardFormat wClipboardFormat;
 typedef struct _wClipboardSynthesizer wClipboardSynthesizer;
 
@@ -36,7 +38,6 @@ struct _wClipboardFormat
 
 struct _wClipboardSynthesizer
 {
-	void* context;
 	UINT32 syntheticId;
 	CLIPBOARD_SYNTHESIZE_FN pfnSynthesize;
 };
@@ -61,5 +62,7 @@ struct _wClipboard
 
 	CRITICAL_SECTION lock;
 };
+
+BOOL ClipboardInitSynthesizers(wClipboard* clipboard);
 
 #endif /* WINPR_CLIPBOARD_PRIVATE_H */

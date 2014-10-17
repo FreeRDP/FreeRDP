@@ -16,7 +16,9 @@
 # limitations under the License.
 
 winpr_module_add(
-	clipboard.c)
+	synthetic.c
+	clipboard.c
+	clipboard.h)
 
 if(BUILD_TESTING)
 	add_subdirectory(test)

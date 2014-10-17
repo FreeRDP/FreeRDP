@@ -3,30 +3,6 @@
 #include <winpr/print.h>
 #include <winpr/clipboard.h>
 
-void* synthesize_utf8_string_to_cf_unicodetext(void* context, UINT32 formatId, const void* data, UINT32* pSize)
-{
-	int size;
-	int status;
-	char* crlfStr = NULL;
-	WCHAR* pDstData = NULL;
-
-	size = (int) *pSize;
-	crlfStr = ConvertLineEndingToCRLF((char*) data, &size);
-
-	if (!crlfStr)
-		return NULL;
-
-	status = ConvertToUnicode(CP_UTF8, 0, crlfStr, size, &pDstData, 0);
-	free(crlfStr);
-
-	if (status <= 0)
-		return NULL;
-
-	*pSize = ((status + 1) * 2);
-
-	return (void*) pDstData;
-}
-
 int TestClipboardFormats(int argc, char* argv[])
 {
 	UINT32 index;
@@ -42,7 +18,7 @@ int TestClipboardFormats(int argc, char* argv[])
 	formatId = ClipboardRegisterFormat(clipboard, "text/html");
 	formatId = ClipboardRegisterFormat(clipboard, "image/bmp");
 	formatId = ClipboardRegisterFormat(clipboard, "image/png");
-	utf8StringFormatId = ClipboardRegisterFormat(clipboard, "UFT8_STRING");
+	utf8StringFormatId = ClipboardRegisterFormat(clipboard, "UTF8_STRING");
 
 	pFormatIds = NULL;
 	count = ClipboardGetRegisteredFormatIds(clipboard, &pFormatIds);
@@ -82,15 +58,9 @@ int TestClipboardFormats(int argc, char* argv[])
 
 	if (1)
 	{
-		BOOL bSuccess;
 		UINT32 DstSize;
 		char* pSrcData;
 		WCHAR* pDstData;
-
-		bSuccess = ClipboardRegisterSynthesizer(clipboard, utf8StringFormatId,
-				CF_UNICODETEXT, synthesize_utf8_string_to_cf_unicodetext, NULL);
-
-		fprintf(stderr, "ClipboardRegisterSynthesizer: %d\n", bSuccess);
 
 		DstSize = 0;
 		pDstData = (WCHAR*) ClipboardGetData(clipboard, CF_UNICODETEXT, &DstSize);

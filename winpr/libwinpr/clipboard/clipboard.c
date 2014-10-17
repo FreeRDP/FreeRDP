@@ -36,29 +36,6 @@
  * http://www.w3.org/TR/clipboard-apis/
  */
 
-/**
- * Synthesized Clipboard Formats
- *
- * Clipboard Format		Conversion Format
- *
- * CF_BITMAP			CF_DIB
- * CF_BITMAP			CF_DIBV5
- * CF_DIB			CF_BITMAP
- * CF_DIB			CF_PALETTE
- * CF_DIB			CF_DIBV5
- * CF_DIBV5			CF_BITMAP
- * CF_DIBV5			CF_DIB
- * CF_DIBV5			CF_PALETTE
- * CF_ENHMETAFILE		CF_METAFILEPICT
- * CF_METAFILEPICT		CF_ENHMETAFILE
- * CF_OEMTEXT			CF_TEXT
- * CF_OEMTEXT			CF_UNICODETEXT
- * CF_TEXT			CF_OEMTEXT
- * CF_TEXT			CF_UNICODETEXT
- * CF_UNICODETEXT		CF_OEMTEXT
- * CF_UNICODETEXT		CF_TEXT
- */
-
 const char* CF_STANDARD_STRINGS[CF_MAX] =
 {
 	"CF_RAW",		/* 0 */
@@ -246,7 +223,7 @@ UINT32 ClipboardRegisterFormat(wClipboard* clipboard, const char* name)
 }
 
 BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId,
-		UINT32 syntheticId, CLIPBOARD_SYNTHESIZE_FN pfnSynthesize, void* context)
+		UINT32 syntheticId, CLIPBOARD_SYNTHESIZE_FN pfnSynthesize)
 {
 	UINT32 index;
 	wClipboardFormat* format;
@@ -279,7 +256,6 @@ BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId,
 
 	synthesizer->syntheticId = syntheticId;
 	synthesizer->pfnSynthesize = pfnSynthesize;
-	synthesizer->context = context;
 
 	return TRUE;
 }
@@ -357,6 +333,8 @@ BOOL ClipboardInitFormats(wClipboard* clipboard)
 			return FALSE;
 	}
 
+	ClipboardInitSynthesizers(clipboard);
+
 	return TRUE;
 }
 
@@ -425,7 +403,7 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 
 		DstSize = SrcSize;
 
-		pDstData = synthesizer->pfnSynthesize(synthesizer->context, formatId, pSrcData, &DstSize);
+		pDstData = synthesizer->pfnSynthesize(clipboard, format->formatId, pSrcData, &DstSize);
 	}
 
 	return pDstData;

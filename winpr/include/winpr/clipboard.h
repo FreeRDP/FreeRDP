@@ -25,7 +25,7 @@
 
 typedef struct _wClipboard wClipboard;
 
-typedef void* (*CLIPBOARD_SYNTHESIZE_FN)(void* context, UINT32 formatId, const void* data, UINT32* pSize);
+typedef void* (*CLIPBOARD_SYNTHESIZE_FN)(wClipboard* clipboard, UINT32 formatId, const void* data, UINT32* pSize);
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,7 +43,7 @@ WINPR_API UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard, UINT32**
 WINPR_API UINT32 ClipboardRegisterFormat(wClipboard* clipboard, const char* name);
 
 WINPR_API BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId,
-		UINT32 syntheticId, CLIPBOARD_SYNTHESIZE_FN pfnSynthesize, void* context);
+		UINT32 syntheticId, CLIPBOARD_SYNTHESIZE_FN pfnSynthesize);
 
 WINPR_API UINT32 ClipboardGetFormatId(wClipboard* clipboard, const char* name);
 WINPR_API const char* ClipboardGetFormatName(wClipboard* clipboard, UINT32 formatId);
