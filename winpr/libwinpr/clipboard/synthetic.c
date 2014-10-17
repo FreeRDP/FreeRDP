@@ -223,7 +223,41 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 
 static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId, const void* data, UINT32* pSize)
 {
-	/* TODO */
+	UINT32 SrcSize;
+	UINT32 DstSize;
+	BYTE* pDstData;
+
+	SrcSize = *pSize;
+
+	if (formatId == CF_DIBV5)
+	{
+
+	}
+	else if (formatId == ClipboardGetFormatId(clipboard, "image/bmp"))
+	{
+		BITMAPFILEHEADER* pFileHeader;
+
+		if (SrcSize < (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER)))
+			return NULL;
+
+		pFileHeader = (BITMAPFILEHEADER*) data;
+
+		if (pFileHeader->bfType != 0x4D42)
+			return NULL;
+
+		DstSize = SrcSize - sizeof(BITMAPFILEHEADER);
+		pDstData = (BYTE*) malloc(DstSize);
+
+		if (!pDstData)
+			return NULL;
+
+		data = (void*) &((BYTE*) data)[sizeof(BITMAPFILEHEADER)];
+
+		CopyMemory(pDstData, data, DstSize);
+		*pSize = DstSize;
+
+		return pDstData;
+	}
 
 	return NULL;
 }
@@ -236,7 +270,14 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 
 static void* clipboard_synthesize_cf_dibv5(wClipboard* clipboard, UINT32 formatId, const void* data, UINT32* pSize)
 {
-	/* TODO */
+	if (formatId == CF_DIB)
+	{
+
+	}
+	else if (formatId == ClipboardGetFormatId(clipboard, "image/bmp"))
+	{
+
+	}
 
 	return NULL;
 }
@@ -249,7 +290,46 @@ static void* clipboard_synthesize_cf_dibv5(wClipboard* clipboard, UINT32 formatI
 
 static void* clipboard_synthesize_image_bmp(wClipboard* clipboard, UINT32 formatId, const void* data, UINT32* pSize)
 {
-	/* TODO */
+	UINT32 SrcSize;
+	UINT32 DstSize;
+	BYTE* pDstData;
+
+	SrcSize = *pSize;
+
+	if (formatId == CF_DIB)
+	{
+		BYTE* pDst;
+		BITMAPINFOHEADER* pInfoHeader;
+		BITMAPFILEHEADER* pFileHeader;
+
+		pInfoHeader = (BITMAPINFOHEADER*) data;
+
+		if ((pInfoHeader->biBitCount < 1) || (pInfoHeader->biBitCount > 32))
+			return NULL;
+
+		DstSize = sizeof(BITMAPFILEHEADER) + SrcSize;
+		pDstData = (BYTE*) malloc(DstSize);
+
+		if (!pDstData)
+			return NULL;
+
+		pFileHeader = (BITMAPFILEHEADER*) pDstData;
+		pFileHeader->bfType = 0x4D42;
+		pFileHeader->bfSize = DstSize;
+		pFileHeader->bfReserved1 = 0;
+		pFileHeader->bfReserved2 = 0;
+		pFileHeader->bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+		pDst = &pDstData[sizeof(BITMAPFILEHEADER)];
+		CopyMemory(pDst, data, SrcSize);
+		*pSize = DstSize;
+
+		return pDstData;
+	}
+	else if (formatId == CF_DIBV5)
+	{
+
+	}
 
 	return NULL;
 }
@@ -262,9 +342,83 @@ static void* clipboard_synthesize_image_bmp(wClipboard* clipboard, UINT32 format
 
 static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 formatId, const void* data, UINT32* pSize)
 {
-	/* TODO */
+	char* pSrcData = NULL;
+	char* pDstData = NULL;
+	int SrcSize = (int) *pSize;
 
-	return NULL;
+	if (formatId == ClipboardGetFormatId(clipboard, "text/html"))
+	{
+		char* body;
+		BYTE bom[2];
+		char num[11];
+
+		if (SrcSize > 2)
+		{
+			CopyMemory(bom, data, 2);
+
+			if ((bom[0] == 0xFE) && (bom[1] == 0xFF))
+			{
+				ByteSwapUnicode((WCHAR*) data, SrcSize / 2);
+			}
+
+			if ((bom[0] == 0xFF) && (bom[1] == 0xFE))
+			{
+				ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) (data + 2),
+						(SrcSize - 2) / 2, &pSrcData, 0, NULL, NULL);
+			}
+		}
+
+		if (!pSrcData)
+		{
+			pSrcData = (char*) calloc(1, SrcSize + 1);
+			CopyMemory(pSrcData, data, SrcSize);
+		}
+
+		pDstData = (char*) calloc(1, SrcSize + 200);
+
+		strcpy(pDstData,
+			"Version:0.9\r\n"
+			"StartHTML:0000000000\r\n"
+			"EndHTML:0000000000\r\n"
+			"StartFragment:0000000000\r\n"
+			"EndFragment:0000000000\r\n");
+
+		body = strstr(pSrcData, "<body");
+
+		if (!body)
+			body = strstr(pSrcData, "<BODY");
+
+		/* StartHTML */
+		sprintf_s(num, sizeof(num), "%010lu", strlen(pDstData));
+		CopyMemory(&pDstData[23], num, 10);
+
+		if (!body)
+			strcat(pDstData, "<HTML><BODY>");
+
+		strcat(pDstData, "<!--StartFragment-->");
+
+		/* StartFragment */
+		sprintf_s(num, sizeof(num), "%010lu", strlen(pDstData));
+		CopyMemory(&pDstData[69], num, 10);
+		strcat(pDstData, pSrcData);
+
+		/* EndFragment */
+		sprintf_s(num, sizeof(num), "%010lu", strlen(pDstData));
+		CopyMemory(&pDstData[93], num, 10);
+		strcat(pDstData, "<!--EndFragment-->");
+
+		if (!body)
+			strcat(pDstData, "</BODY></HTML>");
+
+		/* EndHTML */
+		sprintf_s(num, sizeof(num), "%010lu", strlen(pDstData));
+		CopyMemory(&pDstData[43], num, 10);
+
+		*pSize = (UINT32) strlen(pDstData) + 1;
+		free(pSrcData);
+	}
+
+	return pDstData;
 }
 
 /**
@@ -275,9 +429,44 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 
 static void* clipboard_synthesize_text_html(wClipboard* clipboard, UINT32 formatId, const void* data, UINT32* pSize)
 {
-	/* TODO */
+	int beg;
+	int end;
+	char* str;
+	char* begStr;
+	char* endStr;
+	int SrcSize;
+	int DstSize = -1;
+	BYTE* pDstData = NULL;
 
-	return NULL;
+	if (formatId == ClipboardGetFormatId(clipboard, "HTML Format"))
+	{
+		str = (char*) data;
+		SrcSize = (int) *pSize;
+
+		begStr = strstr(str, "StartHTML:");
+		endStr = strstr(str, "EndHTML:");
+
+		if (!begStr || !endStr)
+			return NULL;
+
+		beg = atoi(&begStr[10]);
+		end = atoi(&endStr[8]);
+
+		if ((beg > SrcSize) || (end > SrcSize) || (beg >= end))
+			return NULL;
+
+		DstSize = end - beg;
+		pDstData = (BYTE*) malloc(SrcSize - beg + 1);
+
+		if (!pDstData)
+			return NULL;
+
+		CopyMemory(pDstData, &str[beg], DstSize);
+		DstSize = ConvertLineEndingToLF((char*) pDstData, DstSize);
+		*pSize = (UINT32) DstSize;
+	}
+
+	return (void*) pDstData;
 }
 
 BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
@@ -442,7 +631,7 @@ BOOL ClipboardInitSynthesizers(wClipboard* clipboard)
 	 * CF_DIBV5
 	 */
 
-	if (formatId)
+	if (formatId && 0)
 	{
 		ClipboardRegisterSynthesizer(clipboard, CF_DIBV5, CF_DIB,
 				clipboard_synthesize_cf_dib);
