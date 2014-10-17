@@ -66,44 +66,16 @@ uint16 gdi_get_color_16bpp(HGDI_DC hdc, GDI_COLOR color)
 	return color16;
 }
 
-int FillRect_16bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
-{
-	int x, y;
-	uint16 *dstp;
-	int nXDest, nYDest;
-	int nWidth, nHeight;
-
-	uint16 color16;
-	
-	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
-	
-	if (gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL) == 0)
-		return 0;
-
-	color16 = gdi_get_color_16bpp(hdc, hbr->color);
-
-	for (y = 0; y < nHeight; y++)
-	{
-		dstp = (uint16*) gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
-
-		if (dstp != 0)
-		{
-			for (x = 0; x < nWidth; x++)
-			{
-				*dstp = color16;
-				dstp++;
-			}
-		}
-	}
-
-	gdi_InvalidateRegion(hdc, nXDest, nYDest, nWidth, nHeight);
-	return 0;
-}
-
-
 #define BITBLT_PIXELBYTES 2
 #define BITBLT_ALIGN uint16
 #include "include/bitblt.c"
+
+
+int FillRect_16bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
+{
+	return FillRect_2_uint16(hdc, rect, gdi_get_color_16bpp(hdc, hbr->color));
+}
+
 
 INLINE static int BitBlt_BLACKNESS_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {

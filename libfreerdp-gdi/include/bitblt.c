@@ -175,3 +175,53 @@ static int MAKEFN(BitBlt_SRCCOPY, BITBLT_PIXELBYTES, BITBLT_ALIGN)
 	
 	return 0;
 }
+
+static int MAKEFN(FillRect, BITBLT_PIXELBYTES, BITBLT_ALIGN) 
+			(HGDI_DC hdc, HGDI_RECT rect, BITBLT_ALIGN color)
+{
+	uint w, x;
+	BITBLT_ALIGN* dstp, *end;
+	int nXDest, nYDest;
+	int nWidth, nHeight;
+
+	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
+	
+	if (gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL) == 0)
+		return 0;
+
+	if (!nHeight)
+		return 0;
+
+	dstp = (BITBLT_ALIGN *)gdi_get_bitmap_pointer_ex(hdc, nXDest, nYDest, (uint8**)&end, &w);
+	if (!dstp)
+		return 0;
+
+	PREFETCH_WRITE(dstp);
+	gdi_InvalidateRegion(hdc, nXDest, nYDest, nWidth, nHeight);
+
+	if (!color)
+	{
+		x = nWidth * BITBLT_PIXELBYTES;
+		for (--nHeight; nHeight; --nHeight)
+		{
+			PREFETCH_WRITE(dstp + w);
+			memset(dstp, 0, x);
+
+			if (UNLIKELY((dstp+=w)>=end)) return 0;
+		}
+		memset(dstp, 0, x);
+	}
+	else
+	{
+		for (--nHeight; nHeight; --nHeight)
+		{
+			PREFETCH_WRITE(dstp + w);
+			for (x = 0; x < nWidth; ++x) dstp[x] = color;
+			if (UNLIKELY((dstp+=w)>=end)) return 0;
+		}
+		for (x = 0; x < nWidth; ++x) dstp[x] = color;
+	}
+
+	return 0;
+}
+

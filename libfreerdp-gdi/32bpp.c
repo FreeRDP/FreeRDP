@@ -53,44 +53,16 @@ uint32 gdi_get_color_32bpp(HGDI_DC hdc, GDI_COLOR color)
 	return color32;
 }
 
-int FillRect_32bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
-{
-	int x, y;
-	uint32 *dstp;
-	uint32 color32;
-	int nXDest, nYDest;
-	int nWidth, nHeight;
-
-	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
-	
-	if (gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL) == 0)
-		return 0;
-
-	color32 = gdi_get_color_32bpp(hdc, hbr->color);
-
-	for (y = 0; y < nHeight; y++)
-	{
-		dstp = (uint32*) gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
-
-		if (dstp != 0)
-		{
-			for (x = 0; x < nWidth; x++)
-			{
-				*dstp = color32;
-				dstp++;
-			}
-		}
-	}
-
-	gdi_InvalidateRegion(hdc, nXDest, nYDest, nWidth, nHeight);
-	return 0;
-}
-
 #define BITBLT_PIXELBYTES 4
 
 #undef BITBLT_ALIGN
 #define BITBLT_ALIGN uint32
 #include "include/bitblt.c"
+
+int FillRect_32bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr)
+{
+	return FillRect_4_uint32(hdc, rect, gdi_get_color_32bpp(hdc, hbr->color));
+}
 
 INLINE static int BitBlt_BLACKNESS_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight)
 {
