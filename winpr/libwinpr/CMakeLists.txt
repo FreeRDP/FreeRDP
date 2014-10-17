@@ -83,7 +83,7 @@ foreach(DIR ${WINPR_CORE})
 endforeach()
 
 set(WINPR_LEVEL2 winsock sspi winhttp asn1 sspicli crt bcrypt rpc credui 
-	wtsapi dsparse wnd smartcard nt)
+	wtsapi dsparse wnd smartcard nt clipboard)
 
 foreach(DIR ${WINPR_LEVEL2})
 	add_subdirectory(${DIR})
