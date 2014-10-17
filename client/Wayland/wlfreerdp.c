@@ -394,8 +394,6 @@ int main(int argc, char* argv[])
 	int status;
 	freerdp* instance;
 
-	freerdp_channels_global_init();
-
 	instance = freerdp_new();
 	instance->PreConnect = wl_pre_connect;
 	instance->PostConnect = wl_post_connect;
@@ -405,16 +403,16 @@ int main(int argc, char* argv[])
 	instance->ContextFree = wl_context_free;
 	freerdp_context_new(instance);
 
-	status = freerdp_client_parse_command_line_arguments(argc, argv, instance->settings);
+	status = freerdp_client_settings_parse_command_line_arguments(instance->settings, argc, argv);
 
-	if (status < 0)
+	status = freerdp_client_settings_command_line_status_print(instance->settings, status, argc, argv);
+
+	if (status)
 		exit(0);
 
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
 	wlfreerdp_run(instance);
-
-	freerdp_channels_global_uninit();
 
 	return 0;
 }
