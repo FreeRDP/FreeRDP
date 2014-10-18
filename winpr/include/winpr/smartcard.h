@@ -227,8 +227,7 @@
 #define SCARD_NEGOTIABLE		5
 #define SCARD_SPECIFIC			6
 
-#define WINPR_PACK_PUSH
-#include <winpr/pack.h>
+#pragma pack(push, 1)
 
 typedef struct _SCARD_IO_REQUEST
 {
@@ -554,8 +553,7 @@ typedef struct
 	SCARDHANDLE hCardHandle;
 } OPENCARDNAMEW, *POPENCARDNAMEW, *LPOPENCARDNAMEW;
 
-#define WINPR_PACK_POP
-#include <winpr/pack.h>
+#pragma pack(pop)
 
 #ifdef UNICODE
 #define LPOCNCONNPROC			LPOCNCONNPROCW

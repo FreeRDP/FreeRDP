@@ -25,8 +25,7 @@
 
 #include <freerdp/codec/mppc.h>
 
-#define WINPR_PACK_PUSH
-#include <winpr/pack.h>
+#pragma pack(push, 1)
 
 struct _XCRUSH_MATCH_INFO
 {
@@ -68,8 +67,7 @@ struct _RDP61_COMPRESSED_DATA
 };
 typedef struct _RDP61_COMPRESSED_DATA RDP61_COMPRESSED_DATA;
 
-#define WINPR_PACK_POP
-#include <winpr/pack.h>
+#pragma pack(pop)
 
 struct _XCRUSH_CONTEXT
 {

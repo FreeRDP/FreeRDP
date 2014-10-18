@@ -68,8 +68,7 @@
 
 #ifndef _WIN32
 
-#define WINPR_PACK_PUSH
-#include <winpr/pack.h>
+#pragma pack(push, 1)
 
 typedef LONG FXPT16DOT16, FAR *LPFXPT16DOT16;
 typedef LONG FXPT2DOT30, FAR *LPFXPT2DOT30;
@@ -227,8 +226,7 @@ typedef struct tagBITMAPFILEHEADER
 	DWORD bfOffBits;
 } BITMAPFILEHEADER, FAR *LPBITMAPFILEHEADER, *PBITMAPFILEHEADER;
 
-#define WINPR_PACK_POP
-#include <winpr/pack.h>
+#pragma pack(pop)
 
 #endif
 

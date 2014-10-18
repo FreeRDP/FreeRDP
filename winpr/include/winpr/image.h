@@ -23,8 +23,7 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#define WINPR_PACK_PUSH
-#include <winpr/pack.h>
+#pragma pack(push, 1)
 
 struct _WINPR_BITMAP_FILE_HEADER
 {
@@ -62,8 +61,7 @@ struct _WINPR_BITMAP_CORE_HEADER
 };
 typedef struct _WINPR_BITMAP_CORE_HEADER WINPR_BITMAP_CORE_HEADER;
 
-#define WINPR_PACK_POP
-#include <winpr/pack.h>
+#pragma pack(pop)
 
 #define WINPR_IMAGE_BITMAP		0
 #define WINPR_IMAGE_PNG			1

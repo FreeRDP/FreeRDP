@@ -31,29 +31,6 @@
  */
 
 /**
- * Synthesized Clipboard Formats
- *
- * Clipboard Format		Conversion Format
- *
- * CF_BITMAP			CF_DIB
- * CF_BITMAP			CF_DIBV5
- * CF_DIB			CF_BITMAP
- * CF_DIB			CF_PALETTE
- * CF_DIB			CF_DIBV5
- * CF_DIBV5			CF_BITMAP
- * CF_DIBV5			CF_DIB
- * CF_DIBV5			CF_PALETTE
- * CF_ENHMETAFILE		CF_METAFILEPICT
- * CF_METAFILEPICT		CF_ENHMETAFILE
- * CF_OEMTEXT			CF_TEXT
- * CF_OEMTEXT			CF_UNICODETEXT
- * CF_TEXT			CF_OEMTEXT
- * CF_TEXT			CF_UNICODETEXT
- * CF_UNICODETEXT		CF_OEMTEXT
- * CF_UNICODETEXT		CF_TEXT
- */
-
-/**
  * "CF_TEXT":
  *
  * Null-terminated ANSI text with CR/LF line endings.
@@ -301,6 +278,9 @@ static void* clipboard_synthesize_image_bmp(wClipboard* clipboard, UINT32 format
 		BYTE* pDst;
 		BITMAPINFOHEADER* pInfoHeader;
 		BITMAPFILEHEADER* pFileHeader;
+
+		if (SrcSize < sizeof(BITMAPINFOHEADER))
+			return NULL;
 
 		pInfoHeader = (BITMAPINFOHEADER*) data;
 

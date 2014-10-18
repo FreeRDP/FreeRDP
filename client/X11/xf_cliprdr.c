@@ -32,6 +32,7 @@
 #include <winpr/crt.h>
 #include <winpr/image.h>
 #include <winpr/stream.h>
+#include <winpr/clipboard.h>
 
 #include <freerdp/log.h>
 #include <freerdp/client/cliprdr.h>
@@ -54,6 +55,8 @@ struct xf_clipboard
 	xfContext* xfc;
 	rdpChannels* channels;
 	CliprdrClientContext* context;
+
+	wClipboard* system;
 
 	Window root_window;
 	Atom clipboard_atom;
@@ -186,14 +189,6 @@ static xfCliprdrFormat* xf_cliprdr_get_format_by_atom(xfClipboard* clipboard, At
 	return NULL;
 }
 
-static BYTE* xf_cliprdr_format_raw_to_wire(BYTE* data, int* size)
-{
-	BYTE* outbuf;
-	outbuf = (BYTE*) malloc(*size);
-	CopyMemory(outbuf, data, *size);
-	return outbuf;
-}
-
 static int xf_cliprdr_format_text_from_wire(BYTE* pSrcData, int SrcSize, BYTE** ppDstData)
 {
 	int DstSize = -1;
@@ -206,15 +201,6 @@ static int xf_cliprdr_format_text_from_wire(BYTE* pSrcData, int SrcSize, BYTE** 
 	*ppDstData = pDstData;
 
 	return DstSize;
-}
-
-static BYTE* xf_cliprdr_format_text_to_wire(BYTE* data, int* size)
-{
-	char* outbuf;
-
-	outbuf = ConvertLineEndingToCRLF((char*) data, size);
-
-	return (BYTE*) outbuf;
 }
 
 static int xf_cliprdr_format_unicode_text_from_wire(BYTE* pSrcData, int SrcSize, BYTE** ppDstData)
@@ -230,21 +216,6 @@ static int xf_cliprdr_format_unicode_text_from_wire(BYTE* pSrcData, int SrcSize,
 	*ppDstData = pDstData;
 
 	return DstSize;
-}
-
-static BYTE* xf_cliprdr_format_unicode_text_to_wire(BYTE* data, int* size)
-{
-	char* inbuf;
-	WCHAR* outbuf = NULL;
-	int out_size;
-
-	inbuf = ConvertLineEndingToCRLF((char*) data, size);
-	out_size = ConvertToUnicode(CP_UTF8, 0, inbuf, -1, &outbuf, 0);
-	free(inbuf);
-
-	*size = (int) ((out_size + 1) * 2);
-
-	return (BYTE*) outbuf;
 }
 
 static int xf_cliprdr_format_dib_from_wire(BYTE* pSrcData, int SrcSize, BYTE** ppDstData)
@@ -289,22 +260,6 @@ static int xf_cliprdr_format_dib_from_wire(BYTE* pSrcData, int SrcSize, BYTE** p
 	return DstSize;
 }
 
-static BYTE* xf_cliprdr_format_dib_to_wire(BYTE* data, int* size)
-{
-	BYTE* outbuf;
-
-	/* length should be at least BMP header (14) + sizeof(BITMAPINFOHEADER) */
-
-	if (*size < 54)
-		return NULL;
-
-	*size -= 14;
-	outbuf = (BYTE*) calloc(1, *size);
-	CopyMemory(outbuf, data + 14, *size);
-
-	return outbuf;
-}
-
 static int xf_cliprdr_format_html_from_wire(BYTE* pSrcData, int SrcSize, BYTE** ppDstData)
 {
 	int start;
@@ -334,83 +289,6 @@ static int xf_cliprdr_format_html_from_wire(BYTE* pSrcData, int SrcSize, BYTE** 
 	*ppDstData = pDstData;
 
 	return DstSize;
-}
-
-static BYTE* xf_cliprdr_format_html_to_wire(BYTE* data, int* size)
-{
-	char* inbuf;
-	BYTE* in;
-	BYTE* outbuf;
-	char num[11];
-
-	inbuf = NULL;
-
-	if (*size > 2)
-	{
-		BYTE bom[2];
-
-		CopyMemory(bom, data, 2);
-
-		if ((bom[0] == 0xFE) && (bom[1] == 0xFF))
-		{
-			ByteSwapUnicode((WCHAR*) data, *size / 2);
-		}
-
-		if ((bom[0] == 0xFF) && (bom[1] == 0xFE))
-		{
-			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) (data + 2),
-					(*size - 2) / 2, &inbuf, 0, NULL, NULL);
-		}
-	}
-
-	if (!inbuf)
-	{
-		inbuf = calloc(1, *size + 1);
-		CopyMemory(inbuf, data, *size);
-	}
-
-	outbuf = (BYTE*) calloc(1, *size + 200);
-
-	strcpy((char*) outbuf,
-		"Version:0.9\r\n"
-		"StartHTML:0000000000\r\n"
-		"EndHTML:0000000000\r\n"
-		"StartFragment:0000000000\r\n"
-		"EndFragment:0000000000\r\n");
-
-	in = (BYTE*) strstr((char*) inbuf, "<body");
-
-	if (!in)
-		in = (BYTE*) strstr((char*) inbuf, "<BODY");
-
-	/* StartHTML */
-	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	CopyMemory(outbuf + 23, num, 10);
-
-	if (!in)
-		strcat((char*) outbuf, "<HTML><BODY>");
-
-	strcat((char*) outbuf, "<!--StartFragment-->");
-	/* StartFragment */
-	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	CopyMemory(outbuf + 69, num, 10);
-	strcat((char*) outbuf, (char*) inbuf);
-	/* EndFragment */
-	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	CopyMemory(outbuf + 93, num, 10);
-	strcat((char*) outbuf, "<!--EndFragment-->");
-
-	if (!in)
-		strcat((char*) outbuf, "</BODY></HTML>");
-
-	/* EndHTML */
-	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	CopyMemory(outbuf + 43, num, 10);
-
-	*size = strlen((char*) outbuf) + 1;
-	free(inbuf);
-
-	return outbuf;
 }
 
 static void xf_cliprdr_send_data_request(xfClipboard* clipboard, UINT32 formatId)
@@ -487,62 +365,108 @@ static void xf_cliprdr_get_requested_targets(xfClipboard* clipboard)
 	free(formats);
 }
 
-static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL has_data, BYTE* data, int size)
+static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasData, BYTE* data, int size)
 {
-	BYTE* outbuf;
+	UINT32 index;
+	UINT32 count;
+	BOOL bSuccess;
+	UINT32 SrcSize;
+	UINT32 DstSize;
+	UINT32 formatId;
+	UINT32 altFormatId;
+	UINT32* pFormatIds;
+	const char* formatName;
+	BYTE* pSrcData = NULL;
+	BYTE* pDstData = NULL;
 	xfCliprdrFormat* format;
 
-	if (clipboard->incr_starts && has_data)
+	if (clipboard->incr_starts && hasData)
 		return;
 
 	format = xf_cliprdr_get_format_by_id(clipboard, clipboard->requestedFormatId);
 
-	if (!has_data || !data || !format)
+	if (!hasData || !data || !format)
 	{
 		xf_cliprdr_send_data_response(clipboard, NULL, 0);
 		return;
 	}
 
+	formatId = 0;
+	altFormatId = 0;
+
 	switch (format->formatId)
 	{
-		case 0:
-		case CB_FORMAT_PNG:
-		case CB_FORMAT_JPEG:
-		case CB_FORMAT_GIF:
-			outbuf = xf_cliprdr_format_raw_to_wire(data, &size);
-			break;
-
 		case CF_TEXT:
-			outbuf = xf_cliprdr_format_text_to_wire(data, &size);
-			break;
-
 		case CF_UNICODETEXT:
-			outbuf = xf_cliprdr_format_unicode_text_to_wire(data, &size);
+			formatId = ClipboardGetFormatId(clipboard->system, "UTF8_STRING");
 			break;
 
 		case CF_DIB:
-			outbuf = xf_cliprdr_format_dib_to_wire(data, &size);
+			formatId = ClipboardGetFormatId(clipboard->system, "image/bmp");
 			break;
 
 		case CB_FORMAT_HTML:
-			outbuf = xf_cliprdr_format_html_to_wire(data, &size);
-			break;
-
-		default:
-			outbuf = NULL;
+			formatId = ClipboardGetFormatId(clipboard->system, "text/html");
 			break;
 	}
 
-	if (outbuf)
-		xf_cliprdr_send_data_response(clipboard, outbuf, size);
-	else
-		xf_cliprdr_send_data_response(clipboard, NULL, 0);
+	SrcSize = (UINT32) size;
+	pSrcData = (BYTE*) malloc(SrcSize);
 
-	if (!clipboard->xfixes_supported)
+	if (!pSrcData)
+		return;
+
+	CopyMemory(pSrcData, data, SrcSize);
+
+	bSuccess = ClipboardSetData(clipboard->system, formatId, (void*) pSrcData, SrcSize);
+
+	pFormatIds = NULL;
+	count = ClipboardGetFormatIds(clipboard->system, &pFormatIds);
+
+	for (index = 0; index < count; index++)
 	{
-		/* Resend the format list, otherwise the server won't request again for the next paste */
-		xf_cliprdr_send_client_format_list(clipboard);
+		formatId = pFormatIds[index];
+		formatName = ClipboardGetFormatName(clipboard->system, formatId);
+
+		if (formatId < CF_MAX)
+		{
+			switch (formatId)
+			{
+				case CF_TEXT:
+					altFormatId = CF_TEXT;
+					break;
+
+				case CF_UNICODETEXT:
+					altFormatId = CF_UNICODETEXT;
+					break;
+
+				case CF_DIB:
+					altFormatId = CF_DIB;
+					break;
+			}
+		}
+		else if (strcmp(formatName, "HTML Format") == 0)
+		{
+			altFormatId = formatId;
+			break;
+		}
 	}
+
+	free(pFormatIds);
+
+	if (bSuccess && altFormatId)
+	{
+		DstSize = 0;
+		pDstData = (BYTE*) ClipboardGetData(clipboard->system, altFormatId, &DstSize);
+	}
+
+	if (!pDstData)
+	{
+		xf_cliprdr_send_data_response(clipboard, NULL, 0);
+		return;
+	}
+
+	xf_cliprdr_send_data_response(clipboard, pDstData, (int) DstSize);
 }
 
 static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
@@ -1207,6 +1131,8 @@ xfClipboard* xf_clipboard_new(xfContext* xfc)
 	channels = ((rdpContext*) xfc)->channels;
 	clipboard->channels = channels;
 
+	clipboard->system = ClipboardCreate();
+
 	clipboard->requestedFormatId = -1;
 
 	clipboard->root_window = DefaultRootWindow(xfc->display);
@@ -1313,6 +1239,8 @@ void xf_clipboard_free(xfClipboard* clipboard)
 		free(clipboard->serverFormats);
 		clipboard->serverFormats = NULL;
 	}
+
+	ClipboardDestroy(clipboard->system);
 
 	free(clipboard->data);
 	free(clipboard->respond);

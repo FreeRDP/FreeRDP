@@ -78,8 +78,7 @@ typedef long PCSC_LONG;
 #define PCSC_SCARD_CTL_CODE(code)		(0x42000000 + (code))
 #define PCSC_CM_IOCTL_GET_FEATURE_REQUEST	SCARD_CTL_CODE(3400)
 
-#define WINPR_PACK_PUSH
-#include <winpr/pack.h>
+#pragma pack(push, 1)
 
 typedef struct
 {
@@ -105,8 +104,7 @@ typedef struct
 	UINT32 value;
 } PCSC_TLV_STRUCTURE;
 
-#define WINPR_PACK_POP
-#include <winpr/pack.h>
+#pragma pack(pop)
 
 struct _PCSCFunctionTable
 {
