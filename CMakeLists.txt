@@ -52,7 +52,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # build shared libs
-if(NOT BUILD_SHARED_LIBS)
+if(NOT DEFINED BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS ON)
 endif()
 
