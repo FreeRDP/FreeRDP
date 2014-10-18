@@ -96,10 +96,10 @@
 #undef DESTWRITENEXTPIXELS
 #define DESTWRITENEXTPIXELS(_count, _pix, _dst, _peol, _row) switch (_pix) { \
 			case BLACK_PIXEL: \
-				DESTWRITENEXTPIXELSBLACKORWHITE(runLength, 0, pbDest, &pbDestEndOfLine, rowDelta); \
+				DESTWRITENEXTPIXELSBLACKORWHITE(runLength, 0, _dst, _peol, _row); \
 				break; \
 			case WHITE_PIXEL: \
-				DESTWRITENEXTPIXELSBLACKORWHITE(runLength, 0xff, pbDest, &pbDestEndOfLine, rowDelta); \
+				DESTWRITENEXTPIXELSBLACKORWHITE(runLength, 0xff, _dst, _peol, _row); \
 				break; \
 			default: \
 				DESTWRITENEXTPIXELS_ANYCOLOR(_count, _pix, _dst, _peol, _row); \
