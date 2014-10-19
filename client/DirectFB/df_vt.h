@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Client
  * DirectFB Graphical Objects
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Killer{R} <support@killpprog.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,15 @@
  * limitations under the License.
  */
 
-#ifndef __DF_RUN_H
-#define __DF_RUN_H
+#ifndef __DF_VT_H
+#define __DF_VT_H
 
 #include "dfreerdp.h"
 
-#define DF_LOCK_BIT_INIT		1
-#define DF_LOCK_BIT_PAINT		2
+void df_vt_register();
+void df_vt_deregister();
 
-boolean df_lock_fb(dfInfo *dfi, uint8 mask);
-boolean df_unlock_fb(dfInfo *dfi, uint8 mask);
+boolean df_vt_is_disactivated_slow();
+boolean df_vt_is_disactivated_fast_unreliable();
 
-void df_run_register(freerdp* instance);
-void df_run(freerdp* instance);
-
-#endif /* __DF_RUN_H */
+#endif // __DF_VT_H

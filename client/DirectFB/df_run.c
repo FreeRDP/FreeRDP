@@ -19,8 +19,6 @@
  */
 
 #include <freerdp/utils/memory.h>
-#include <linux/vt.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <freerdp/gdi/region.h>
@@ -37,6 +35,7 @@
 #include "df_event.h"
 #include "df_run.h"
 #include "df_graphics.h"
+#include "df_vt.h"
 
 #define BUSY_THRESHOLD					500 //milliseconds
 #define BUSY_FRAMEDROP_INTERVAL			150 //milliseconds
@@ -174,20 +173,12 @@ static uint64 get_ticks(void)
 }
 
 
-INLINE static int get_active_tty(int fd)
-{
-	struct vt_stat vts;
-	if (ioctl (fd, VT_GETSTATE, &vts)==-1)
-		return -1;
-	return vts.v_active;
-}
-
 static void df_foreground(dfContext* context)
 {
 	RECTANGLE_16 rect;
+	uint8 primary_locks;
 	rdpGdi* gdi = ((rdpContext *)context)->gdi;
 	dfInfo* dfi = context->dfi;
-	printf("Entered foreground\n");
 	rect.left = 0;
 	rect.top = 0;
 	rect.right = gdi->width - 1;
@@ -198,17 +189,26 @@ static void df_foreground(dfContext* context)
 
 	if (dfi->secondary && context->direct_surface)
 	{
+		primary_locks = dfi->primary_locks;
+		if (primary_locks)
+			df_unlock_fb(dfi, primary_locks);
+
+		dfi->primary->Blit(dfi->primary, dfi->secondary, NULL, 0, 0);
 		dfi->secondary->Release(dfi->secondary);
 		dfi->secondary = 0;
+
+		if (primary_locks)
+			df_lock_fb(dfi, primary_locks);
 	}
+	printf("Entered foreground\n");
 }
 
 static void df_background(dfContext* context)
 {
 	RECTANGLE_16 rect;
+	uint8 primary_locks;
 	rdpGdi* gdi = ((rdpContext *)context)->gdi;
 	dfInfo* dfi = context->dfi;
-	printf("Entered background\n");
 	rect.left = 0;
 	rect.top = 0;
 	rect.right = gdi->width - 1;
@@ -217,14 +217,32 @@ static void df_background(dfContext* context)
 
 	if (((rdpContext *)context)->instance->settings->fullscreen && context->direct_surface)
 	{
+		primary_locks = dfi->primary_locks;
+		if (primary_locks)
+			df_unlock_fb(dfi, primary_locks);
+
 		df_create_temp_surface(dfi, gdi->width, gdi->height, gdi->dstBpp, &(dfi->secondary));
 		dfi->secondary->Blit(dfi->secondary, dfi->primary, NULL, 0, 0);
+
+		if (primary_locks)
+			df_lock_fb(dfi, primary_locks);
+	}
+	printf("Entered background\n");
+}
+
+
+INLINE static void df_check_for_background(dfContext *context)
+{
+	if (!context->dfi->tty_background && df_vt_is_disactivated_slow())
+	{
+		context->dfi->tty_background = true;
+		df_background(context);
 	}
 }
 
-static void df_check_for_background(dfContext *context)
+INLINE static void df_check_for_background_while_locked(dfContext *context)
 {
-	if (!context->dfi->tty_background && context->dfi->tty_fd!=-1 && context->dfi->tty_mine!=get_active_tty(context->dfi->tty_fd))
+	if (!context->dfi->tty_background && df_vt_is_disactivated_fast_unreliable())
 	{
 		context->dfi->tty_background = true;
 		df_background(context);
@@ -407,35 +425,8 @@ void df_end_paint(rdpContext* context)
 
 void df_run_register(freerdp* instance)
 {
-	int i;
-	char sz[32];
-	dfContext* context = ((dfContext*) instance->context);
-	dfInfo* dfi = context->dfi;
-	if (((rdpContext *)context)->instance->settings->fullscreen)
-	{
-		for (i = 0; i<12; ++i)
-		{
-			sprintf(sz, "/dev/tty%d", i);
-			dfi->tty_fd = open(sz, O_RDWR);
-			if (dfi->tty_fd!=-1)
-			{
-				dfi->tty_mine = get_active_tty(dfi->tty_fd);
-				if (dfi->tty_mine!=-1)
-				{
-					printf("Mine TTY is %d\n", dfi->tty_mine);
-					break;
-				}
-				close(dfi->tty_fd);
-				dfi->tty_fd = -1;
-			}
-		}
-	}
-	else	
-		dfi->tty_fd = -1;
-
 	instance->update->BeginPaint = df_begin_paint;
 	instance->update->EndPaint = df_end_paint;
-
 }
 
 INLINE static boolean IsDrawingPrimary(rdpContext* context)
@@ -482,6 +473,7 @@ static boolean df_check_for_cursor_unpaint(rdpContext* context, int x1, int y1, 
 void df_flt_dstblt(rdpContext* context, DSTBLT_ORDER* order)
 {
 	dfInfo* dfi = ((dfContext*) context)->dfi;
+	df_check_for_background_while_locked((dfContext *)context);
 //	printf("df_flt_dstblt\n");
 	if (IsDrawingPrimary(context))
 	{
@@ -494,6 +486,7 @@ void df_flt_dstblt(rdpContext* context, DSTBLT_ORDER* order)
 void df_flt_patblt(rdpContext* context, PATBLT_ORDER* order)
 {
 	dfInfo* dfi = ((dfContext*) context)->dfi;
+	df_check_for_background_while_locked((dfContext *)context);
 //	printf("df_flt_patblt\n");
 	if (IsDrawingPrimary(context))
 	{
@@ -506,6 +499,7 @@ void df_flt_patblt(rdpContext* context, PATBLT_ORDER* order)
 void df_flt_scrblt(rdpContext* context, SCRBLT_ORDER* order)
 {
 	dfInfo* dfi = ((dfContext*) context)->dfi;
+	df_check_for_background_while_locked((dfContext *)context);
 //	printf("df_flt_scrblt\n");
 	if (!df_check_for_cursor_unpaint(context, order->nXSrc, order->nYSrc, 
 			order->nXSrc + order->nWidth, order->nYSrc + order->nHeight))
@@ -523,6 +517,7 @@ void df_flt_scrblt(rdpContext* context, SCRBLT_ORDER* order)
 void df_flt_memblt(rdpContext* context, MEMBLT_ORDER* order)
 {
 	dfInfo* dfi = ((dfContext*) context)->dfi;
+	df_check_for_background_while_locked((dfContext *)context);
 	if (IsDrawingPrimary(context))
 	{
 		df_check_for_cursor_unpaint(context, order->nLeftRect, order->nTopRect, 
@@ -534,6 +529,7 @@ void df_flt_memblt(rdpContext* context, MEMBLT_ORDER* order)
 void df_flt_mem3blt(rdpContext* context, MEM3BLT_ORDER* order)
 {
 	dfInfo* dfi = ((dfContext*) context)->dfi;
+	df_check_for_background_while_locked((dfContext *)context);
 	if (IsDrawingPrimary(context))
 	{
 		df_check_for_cursor_unpaint(context, order->nLeftRect, order->nTopRect, 
@@ -545,6 +541,7 @@ void df_flt_mem3blt(rdpContext* context, MEM3BLT_ORDER* order)
 void df_flt_opaque_rect(rdpContext* context, OPAQUE_RECT_ORDER* order)
 {
 	dfInfo* dfi = ((dfContext*) context)->dfi;
+	df_check_for_background_while_locked((dfContext *)context);
 //	printf("df_flt_opaque_rect\n");
 	if (IsDrawingPrimary(context))
 	{
@@ -558,7 +555,8 @@ void df_flt_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* orde
 {
 	dfInfo* dfi = ((dfContext*) context)->dfi;
 	int i;
-//	printf("df_flt_multi_opaque_rect\n");
+	df_check_for_background_while_locked((dfContext *)context);
+
 	if (IsDrawingPrimary(context))
 	{
 		DELTA_RECT* rectangle;
@@ -575,7 +573,7 @@ void df_flt_multi_opaque_rect(rdpContext* context, MULTI_OPAQUE_RECT_ORDER* orde
 void df_flt_line_to(rdpContext* context, LINE_TO_ORDER* order)
 {
 	dfInfo* dfi = ((dfContext*) context)->dfi;
-//	printf("df_flt_line_to\n");
+	df_check_for_background_while_locked((dfContext *)context);
 	if (IsDrawingPrimary(context))
 		df_check_for_cursor_unpaint(context, order->nXStart, order->nYStart, order->nXEnd, order->nYEnd);
 	dfi->lower_primary_update.LineTo(context, order);
@@ -585,8 +583,7 @@ void df_flt_polyline(rdpContext* context, POLYLINE_ORDER* order)
 {
 	int i;
 	dfInfo* dfi = ((dfContext*) context)->dfi;
-//	printf("df_flt_polyline\n");
-
+	df_check_for_background_while_locked((dfContext *)context);
 	if (IsDrawingPrimary(context))
 	{
 		for (i = 1; i < (int) order->numPoints; i++)
@@ -601,6 +598,7 @@ void df_flt_polyline(rdpContext* context, POLYLINE_ORDER* order)
 void df_flt_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* command)
 {
 	dfInfo* dfi = ((dfContext*) context)->dfi;
+	df_check_for_background_while_locked((dfContext *)context);
 	df_check_for_cursor_unpaint(context, command->destLeft, command->destTop, command->destRight + 1, command->destBottom + 1);
 	dfi->lower_surface_bits(context, command);
 }
@@ -610,6 +608,7 @@ void df_flt_bitmap_update(rdpContext* context, BITMAP_UPDATE* command)
 	uint32 i;
 	BITMAP_DATA* bitmap_data;
 	dfInfo* dfi = ((dfContext*) context)->dfi;
+	df_check_for_background_while_locked((dfContext *)context);
 
 	for (i = 0; i < command->number; i++)
 	{
@@ -625,9 +624,6 @@ void df_flt_bitmap_update(rdpContext* context, BITMAP_UPDATE* command)
 
 static void df_free(dfInfo* dfi)
 {
-	if (dfi->tty_fd!=-1)
-		close(dfi->tty_fd);
-
 	if (dfi->read_fds!=-1)
 		close(dfi->read_fds);
 	
@@ -654,6 +650,10 @@ static void df_free(dfInfo* dfi)
 
 	xfree(dfi);
 }
+
+
+
+
 
 void df_run(freerdp* instance)
 {
@@ -682,9 +682,9 @@ void df_run(freerdp* instance)
 	dfi = context->dfi;
 	channels = instance->context->channels;
 
-
 	if (((rdpContext *)context)->instance->settings->fullscreen)
 	{
+		df_vt_register();
 		dfi->lower_surface_bits = instance->update->SurfaceBits;
 		dfi->lower_bitmap_update = instance->update->BitmapUpdate;
 
@@ -778,7 +778,7 @@ void df_run(freerdp* instance)
 				}
 			}
 
-			if (context->dfi->tty_background && dfi->tty_mine==get_active_tty(dfi->tty_fd))
+			if (context->dfi->tty_background && !df_vt_is_disactivated_slow())
 			{
 				dfi->tty_background = false;
 				df_foreground(context);
@@ -789,7 +789,7 @@ void df_run(freerdp* instance)
 			tv.tv_sec = 1;
 			tv.tv_usec = 0;
 			i = select(max_fds + 1, &rfds_set, &wfds_set, NULL, &tv);
-			if (dfi->tty_background && dfi->tty_mine==get_active_tty(dfi->tty_fd))
+			if (dfi->tty_background && !df_vt_is_disactivated_slow())
 			{
 				dfi->tty_background = false;
 				df_foreground(context);
@@ -864,6 +864,9 @@ void df_run(freerdp* instance)
 			printf("skipping cursor repaint, unpained=%x defer=%x\n",dfi->cursor_unpainted, (uint32)context->endpaint_defer_ts);
 		}*/
 	}
+
+	if (((rdpContext *)context)->instance->settings->fullscreen)
+		df_vt_deregister();
 
 	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(channels);

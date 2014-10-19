@@ -98,8 +98,6 @@ struct df_info
 	boolean wheel_pending;
 	int wheel;
 
-	int tty_fd;
-	int tty_mine;
 	boolean tty_background;
 };
 
