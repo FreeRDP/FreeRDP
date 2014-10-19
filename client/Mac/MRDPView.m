@@ -944,10 +944,10 @@ BOOL mac_post_connect(freerdp* instance)
 	
 	flags = CLRCONV_ALPHA | CLRCONV_RGB555;
 	
-	if (settings->ColorDepth > 16)
+	//if (settings->ColorDepth > 16)
 		flags |= CLRBUF_32BPP;
-	else
-		flags |= CLRBUF_16BPP;
+	//else
+	//	flags |= CLRBUF_16BPP;
 	
 	gdi_init(instance, flags, NULL);
 	gdi = instance->context->gdi;
@@ -1120,17 +1120,17 @@ CGContextRef mac_create_bitmap_context(rdpContext* context)
 	
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 	
-	if (gdi->dstBpp == 16)
+	if (gdi->bytesPerPixel == 2)
 	{
 		bitmap_context = CGBitmapContextCreate(gdi->primary_buffer,
-						       gdi->width, gdi->height, 5, gdi->width * 2, colorSpace,
-						       kCGBitmapByteOrder16Little | kCGImageAlphaNoneSkipFirst);
+						       gdi->width, gdi->height, 5, gdi->width * gdi->bytesPerPixel,
+						       colorSpace, kCGBitmapByteOrder16Little | kCGImageAlphaNoneSkipFirst);
 	}
 	else
 	{
 		bitmap_context = CGBitmapContextCreate(gdi->primary_buffer,
-						       gdi->width, gdi->height, 8, gdi->width * 4, colorSpace,
-						       kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
+						       gdi->width, gdi->height, 8, gdi->width * gdi->bytesPerPixel,
+						       colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
 	}
 	
 	CGColorSpaceRelease(colorSpace);
