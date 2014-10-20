@@ -59,6 +59,7 @@ include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 
 # Soname versioning
+set(WITH_LIBRARY_VERSIONING "ON")
 set(FREERDP_VERSION_MAJOR "1")
 set(FREERDP_VERSION_MINOR "2")
 set(FREERDP_VERSION_REVISION "0")
@@ -232,9 +233,23 @@ endif()
 
 if(WIN32)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUNICODE -D_UNICODE")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_WIN32_WINNT=0x0501")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_CRT_SECURE_NO_WARNINGS")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWIN32_LEAN_AND_MEAN")
+
+	if(NOT DEFINED CMAKE_WINDOWS_VERSION)
+		set(CMAKE_WINDOWS_VERSION "WINXP")
+	endif()
+
+	if(CMAKE_WINDOWS_VERSION STREQUAL "WINXP")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINVER=0x0501 -DWIN32_WINNT=0x0501")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWINVER=0x0501 -DWIN32_WINNT=0x0501")
+	elseif(CMAKE_WINDOWS_VERSION STREQUAL "WIN7")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINVER=0x0601 -DWIN32_WINNT=0x0601")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWINVER=0x0601 -DWIN32_WINNT=0x0601")
+	elseif(CMAKE_WINDOWS_VERSION STREQUAL "WIN8")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINVER=0x0602 -DWIN32_WINNT=0x0602")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWINVER=0x0602 -DWIN32_WINNT=0x0602")
+	endif()
 endif()
 
 if(IOS)
@@ -248,6 +263,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWINPR_EXPORTS -DFREERDP_EXPORTS")
 if(NOT IOS)
 	check_include_files(fcntl.h HAVE_FCNTL_H)
 	check_include_files(unistd.h HAVE_UNISTD_H)
+	check_include_files(execinfo.h HAVE_EXECINFO_H)
 	check_include_files(stdint.h HAVE_STDINT_H)
 	check_include_files(inttypes.h HAVE_INTTYPES_H)
 	check_include_files(sys/modem.h HAVE_SYS_MODEM_H)
@@ -301,6 +317,8 @@ endif(APPLE)
 
 # Android
 if(ANDROID)
+  set(WITH_LIBRARY_VERSIONING "OFF")
+
 	if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 		add_definitions(-DNDK_DEBUG=1)
 
@@ -369,9 +387,12 @@ if(UNIX OR CYGWIN)
 	check_include_files(sys/eventfd.h HAVE_AIO_H)
 	check_include_files(sys/eventfd.h HAVE_EVENTFD_H)
 	check_include_files(sys/timerfd.h HAVE_TIMERFD_H)
+	check_include_files(poll.h HAVE_POLL_H)
 	set(X11_FEATURE_TYPE "RECOMMENDED")
+	set(WAYLAND_FEATURE_TYPE "RECOMMENDED")
 else()
 	set(X11_FEATURE_TYPE "DISABLED")
+	set(WAYLAND_FEATURE_TYPE "DISABLED")
 endif()
 
 if(WITH_PCSC_WINPR)
@@ -380,6 +401,9 @@ endif()
 
 set(X11_FEATURE_PURPOSE "X11")
 set(X11_FEATURE_DESCRIPTION "X11 client and server")
+
+set(WAYLAND_FEATURE_PURPOSE "Wayland")
+set(WAYLAND_FEATURE_DESCRIPTION "Wayland client")
 
 set(DIRECTFB_FEATURE_TYPE "OPTIONAL")
 set(DIRECTFB_FEATURE_PURPOSE "DirectFB")
@@ -433,12 +457,17 @@ set(JPEG_FEATURE_TYPE "OPTIONAL")
 set(JPEG_FEATURE_PURPOSE "codec")
 set(JPEG_FEATURE_DESCRIPTION "use JPEG library")
 
+set(OPENH264_FEATURE_TYPE "OPTIONAL")
+set(OPENH264_FEATURE_PURPOSE "codec")
+set(OPENH264_FEATURE_DESCRIPTION "use OpenH264 library")
+
 set(GSM_FEATURE_TYPE "OPTIONAL")
 set(GSM_FEATURE_PURPOSE "codec")
 set(GSM_FEATURE_DESCRIPTION "GSM audio codec library")
 
 if(WIN32)
 	set(X11_FEATURE_TYPE "DISABLED")
+	set(WAYLAND_FEATURE_TYPE "DISABLED")
 	set(ZLIB_FEATURE_TYPE "DISABLED")
 	set(DIRECTFB_FEATURE_TYPE "DISABLED")
 	set(ALSA_FEATURE_TYPE "DISABLED")
@@ -456,6 +485,7 @@ if(APPLE)
 	set(FFMPEG_FEATURE_TYPE "OPTIONAL")
 	set(GSTREAMER_1_0_FEATURE_TYPE "OPTIONAL")
 	set(X11_FEATURE_TYPE "OPTIONAL")
+	set(WAYLAND_FEATURE_TYPE "DISABLED")
 	if(IOS)
 		set(X11_FEATURE_TYPE "DISABLED")
 		set(ALSA_FEATURE_TYPE "DISABLED")
@@ -470,6 +500,7 @@ endif()
 
 if(ANDROID)
 	set(X11_FEATURE_TYPE "DISABLED")
+	set(WAYLAND_FEATURE_TYPE "DISABLED")
 	set(DIRECTFB_FEATURE_TYPE "DISABLED")
 	set(ALSA_FEATURE_TYPE "DISABLED")
 	set(PULSE_FEATURE_TYPE "DISABLED")
@@ -483,6 +514,7 @@ endif()
 
 
 find_feature(X11 ${X11_FEATURE_TYPE} ${X11_FEATURE_PURPOSE} ${X11_FEATURE_DESCRIPTION})
+find_feature(Wayland ${WAYLAND_FEATURE_TYPE} ${WAYLAND_FEATURE_PURPOSE} ${WAYLAND_FEATURE_DESCRIPTION})
 find_feature(DirectFB ${DIRECTFB_FEATURE_TYPE} ${DIRECTFB_FEATURE_PURPOSE} ${DIRECTFB_FEATURE_DESCRIPTION})
 if (${WITH_DIRECTFB})
 	message(WARNING "DIRECTFB is orphaned and not maintained see docs/README.directfb for details")
@@ -504,6 +536,7 @@ find_feature(GStreamer_0_10 ${GSTREAMER_0_10_FEATURE_TYPE} ${GSTREAMER_0_10_FEAT
 find_feature(GStreamer_1_0 ${GSTREAMER_1_0_FEATURE_TYPE} ${GSTREAMER_1_0_FEATURE_PURPOSE} ${GSTREAMER_1_0_FEATURE_DESCRIPTION})
 
 find_feature(JPEG ${JPEG_FEATURE_TYPE} ${JPEG_FEATURE_PURPOSE} ${JPEG_FEATURE_DESCRIPTION})
+find_feature(OpenH264 ${OPENH264_FEATURE_TYPE} ${OPENH264_FEATURE_PURPOSE} ${OPENH264_FEATURE_DESCRIPTION})
 find_feature(GSM ${GSM_FEATURE_TYPE} ${GSM_FEATURE_PURPOSE} ${GSM_FEATURE_DESCRIPTION})
 
 if(TARGET_ARCH MATCHES "x86|x64")
@@ -608,6 +641,12 @@ if (IOS)
 	endif()
 endif()
 
+# RdTk
+include_directories("${CMAKE_SOURCE_DIR}/rdtk/include")
+include_directories("${CMAKE_BINARY_DIR}/rdtk/include")
+
+add_subdirectory(rdtk)
+
 if(WITH_CLIENT)
 	add_subdirectory(client)
 endif()
@@ -625,7 +664,9 @@ if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
 	set(FREERDP_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/FreeRDP")
 
 	set(FREERDP_INCLUDE_DIR "include")
-	set(FREERDP_MONOLITHIC_BUILD ${MONOLITHIC_BUILD})
+
+	# keep for legacy builds
+	set(FREERDP_MONOLITHIC_BUILD OFF)
 
 	configure_package_config_file(FreeRDPConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/FreeRDPConfig.cmake
 		INSTALL_DESTINATION ${FREERDP_CMAKE_INSTALL_DIR}
@@ -657,27 +698,11 @@ endif()
 
 include(${CMAKE_CPACK_INCLUDE_FILE})
 
-if(MONOLITHIC_BUILD)
-	set(FREERDP_PC_LIBS "-lfreerdp -lfreerdp-client")
-	set(WINPR_PC_LIBS "-lwinpr")
-	if (WITH_SERVER)
-		set(FREERDP_PC_LIBS "${FREERDP_PC_LIBS} -lfreerdp-server")
-	endif()
-else(MONOLITHIC_BUILD)
-	# freerdp exports
-	get_property(MEXPORTS GLOBAL PROPERTY "freerdp_EXPORTS")
-	foreach(EXPORT_MODULE ${MEXPORTS})
-			list(APPEND FREERDP_PC_LIBS "-lfreerdp-${EXPORT_MODULE}")
-	endforeach()
-	string(REPLACE ";" " " FREERDP_PC_LIBS "${FREERDP_PC_LIBS}")
-
-	# winpr exports
-	get_property(MEXPORTS GLOBAL PROPERTY "winpr_EXPORTS")
-	foreach(EXPORT_MODULE ${MEXPORTS})
-			list(APPEND WINPR_PC_LIBS "-lwinpr-${EXPORT_MODULE}")
-	endforeach()
-	string(REPLACE ";" " " WINPR_PC_LIBS "${WINPR_PC_LIBS}")
-endif(MONOLITHIC_BUILD)
+set(FREERDP_PC_LIBS "-lfreerdp -lfreerdp-client")
+set(WINPR_PC_LIBS "-lwinpr")
+if (WITH_SERVER)
+	set(FREERDP_PC_LIBS "${FREERDP_PC_LIBS} -lfreerdp-server")
+endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp.pc @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr.pc @ONLY)

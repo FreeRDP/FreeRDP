@@ -21,6 +21,9 @@
 #define __PEER
 
 #include "rdp.h"
+#include "mcs.h"
+#include "server.h"
+
 #include <freerdp/peer.h>
 
 #endif /* __PEER */

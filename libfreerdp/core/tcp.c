@@ -41,6 +41,13 @@
 #include <netinet/tcp.h>
 #include <net/if.h>
 
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#else
+#include <time.h>
+#include <sys/select.h>
+#endif
+
 #ifdef __FreeBSD__
 #ifndef SOL_TCP
 #define SOL_TCP	IPPROTO_TCP
@@ -58,11 +65,14 @@
 
 #endif
 
+#include <freerdp/log.h>
 #include <freerdp/utils/tcp.h>
 #include <freerdp/utils/uds.h>
 #include <winpr/stream.h>
 
 #include "tcp.h"
+
+#define TAG FREERDP_TAG("core")
 
 /* Simple Socket BIO */
 
@@ -115,23 +125,28 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
 	status = _recv((SOCKET) bio->num, buf, size, 0);
+	if (status > 0)
+		return status;
 
-	if (status <= 0)
+	if (status == 0)
 	{
-		error = WSAGetLastError();
-
-		if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
-			(error == WSAEINPROGRESS) || (error == WSAEALREADY))
-		{
-			BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
-		}
-		else
-		{
-			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-		}
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		return 0;
 	}
 
-	return status;
+	error = WSAGetLastError();
+
+	if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
+		(error == WSAEINPROGRESS) || (error == WSAEALREADY))
+	{
+		BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
+	}
+	else
+	{
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	}
+
+	return -1;
 }
 
 static int transport_bio_simple_puts(BIO* bio, const char* str)
@@ -264,7 +279,7 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	 */
 	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE*) buf, num))
 	{
-		fprintf(stderr, "%s: an error occured when writing(toWrite=%d)\n", __FUNCTION__, num);
+		WLog_ERR(TAG,  "an error occured when writing(toWrite=%d)", num);
 		return -1;
 	}
 
@@ -320,7 +335,6 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 		if (!BIO_should_retry(bio->next_bio))
 		{
 			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-			status = -1;
 			goto out;
 		}
 
@@ -464,14 +478,13 @@ void tcp_get_mac_address(rdpTcp* tcp)
 
 	if (ioctl(tcp->sockfd, SIOCGIFHWADDR, &if_req) != 0)
 	{
-		fprintf(stderr, "failed to obtain MAC address\n");
+		WLog_ERR(TAG,  "failed to obtain MAC address");
 		return;
 	}
 
 	memmove((void*) mac, (void*) &if_req.ifr_ifru.ifru_hwaddr.sa_data[0], 6);
 #endif
-
-	/* fprintf(stderr, "MAC: %02X:%02X:%02X:%02X:%02X:%02X\n",
+	/* WLog_ERR(TAG,  "MAC: %02X:%02X:%02X:%02X:%02X:%02X",
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
@@ -485,21 +498,30 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 		return FALSE;
 
 	if (hostname[0] == '/')
+		tcp->ipcSocket = TRUE;
+
+	if (tcp->ipcSocket)
 	{
 		tcp->sockfd = freerdp_uds_connect(hostname);
 
 		if (tcp->sockfd < 0)
 			return FALSE;
 
-		tcp->socketBio = BIO_new_fd(tcp->sockfd, 1);
+		tcp->socketBio = BIO_new(BIO_s_simple_socket());
 
 		if (!tcp->socketBio)
 			return FALSE;
+
+		BIO_set_fd(tcp->socketBio, tcp->sockfd, BIO_CLOSE);
 	}
 	else
 	{
+#ifdef HAVE_POLL_H
+		struct pollfd pollfds;
+#else
 		fd_set cfds;
 		struct timeval tv;
+#endif
 
 		tcp->socketBio = BIO_new(BIO_s_connect());
 
@@ -523,27 +545,37 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 
 		if (status <= 0)
 		{
+#ifdef HAVE_POLL_H
+			pollfds.fd = tcp->sockfd;
+			pollfds.events = POLLOUT;
+			pollfds.revents = 0;
+			do
+			{
+				status = poll(&pollfds, 1, timeout * 1000);
+			}
+			while ((status < 0) && (errno == EINTR));
+#else
 			FD_ZERO(&cfds);
 			FD_SET(tcp->sockfd, &cfds);
 
 			tv.tv_sec = timeout;
 			tv.tv_usec = 0;
 
-			status = select(tcp->sockfd + 1, NULL, &cfds, NULL, &tv);
-
+			status = _select(tcp->sockfd + 1, NULL, &cfds, NULL, &tv);
+#endif
 			if (status == 0)
 			{
 				return FALSE; /* timeout */
 			}
 		}
 
-		BIO_set_close(tcp->socketBio, BIO_NOCLOSE);
+		(void)BIO_set_close(tcp->socketBio, BIO_NOCLOSE);
 		BIO_free(tcp->socketBio);
 
 		tcp->socketBio = BIO_new(BIO_s_simple_socket());
 
 		if (!tcp->socketBio)
-			return -1;
+			return FALSE;
 
 		BIO_set_fd(tcp->socketBio, tcp->sockfd, BIO_CLOSE);
 	}
@@ -556,8 +588,11 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 	option_value = 1;
 	option_len = sizeof(option_value);
 
-	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
-		fprintf(stderr, "%s: unable to set TCP_NODELAY\n", __FUNCTION__);
+	if (!tcp->ipcSocket)
+	{
+		if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len) < 0)
+			WLog_ERR(TAG,  "unable to set TCP_NODELAY");
+	}
 
 	/* receive buffer must be a least 32 K */
 	if (getsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, &option_len) == 0)
@@ -569,14 +604,17 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 
 			if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_RCVBUF, (void*) &option_value, option_len) < 0)
 			{
-				fprintf(stderr, "%s: unable to set receive buffer len\n", __FUNCTION__);
+				WLog_ERR(TAG,  "unable to set receive buffer len");
 				return FALSE;
 			}
 		}
 	}
 
-	if (!tcp_set_keep_alive_mode(tcp))
-		return FALSE;
+	if (!tcp->ipcSocket)
+	{
+		if (!tcp_set_keep_alive_mode(tcp))
+			return FALSE;
+	}
 
 	tcp->bufferedBio = BIO_new(BIO_s_buffered_socket());
 
@@ -606,7 +644,7 @@ BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 
 	if (flags == -1)
 	{
-		fprintf(stderr, "%s: fcntl failed, %s.\n", __FUNCTION__, strerror(errno));
+		WLog_ERR(TAG,  "fcntl failed, %s.", strerror(errno));
 		return FALSE;
 	}
 
@@ -615,16 +653,31 @@ BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 	else
 		fcntl(tcp->sockfd, F_SETFL, flags | O_NONBLOCK);
 #else
-	int status;
-	u_long arg = blocking;
+	/**
+	 * ioctlsocket function:
+	 * msdn.microsoft.com/en-ca/library/windows/desktop/ms738573/
+	 * 
+	 * The WSAAsyncSelect and WSAEventSelect functions automatically set a socket to nonblocking mode.
+	 * If WSAAsyncSelect or WSAEventSelect has been issued on a socket, then any attempt to use
+	 * ioctlsocket to set the socket back to blocking mode will fail with WSAEINVAL.
+	 * 
+	 * To set the socket back to blocking mode, an application must first disable WSAAsyncSelect
+	 * by calling WSAAsyncSelect with the lEvent parameter equal to zero, or disable WSAEventSelect
+	 * by calling WSAEventSelect with the lNetworkEvents parameter equal to zero.
+	 */
 
-	status = ioctlsocket(tcp->sockfd, FIONBIO, &arg);
+	if (blocking == TRUE)
+	{
+		if (tcp->event)
+			WSAEventSelect(tcp->sockfd, tcp->event, 0);
+	}
+	else
+	{
+		if (!tcp->event)
+			tcp->event = WSACreateEvent();
 
-	if (status != NO_ERROR)
-		fprintf(stderr, "ioctlsocket() failed with error: %ld\n", status);
-
-	tcp->wsa_event = WSACreateEvent();
-	WSAEventSelect(tcp->sockfd, tcp->wsa_event, FD_READ);
+		WSAEventSelect(tcp->sockfd, tcp->event, FD_READ);
+	}
 #endif
 
 	return TRUE;
@@ -641,7 +694,7 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*) &option_value, option_len) < 0)
 	{
-		perror("setsockopt() SOL_SOCKET, SO_KEEPALIVE:");
+		WLog_ERR(TAG, "setsockopt() SOL_SOCKET, SO_KEEPALIVE:");
 		return FALSE;
 	}
 
@@ -651,7 +704,7 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
 	{
-		perror("setsockopt() IPPROTO_TCP, TCP_KEEPIDLE:");
+		WLog_ERR(TAG, "setsockopt() IPPROTO_TCP, TCP_KEEPIDLE:");
 		return FALSE;
 	}
 #endif
@@ -662,7 +715,7 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPCNT, (void *) &option_value, option_len) < 0)
 	{
-		perror("setsockopt() SOL_TCP, TCP_KEEPCNT:");
+		WLog_ERR(TAG, "setsockopt() SOL_TCP, TCP_KEEPCNT:");
 		return FALSE;
 	}
 #endif
@@ -673,7 +726,7 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPINTVL, (void *) &option_value, option_len) < 0)
 	{
-		perror("setsockopt() SOL_TCP, TCP_KEEPINTVL:");
+		WLog_ERR(TAG, "setsockopt() SOL_TCP, TCP_KEEPINTVL:");
 		return FALSE;
 	}
 #endif
@@ -684,7 +737,7 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 	option_len = sizeof(option_value);
 	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void *) &option_value, option_len) < 0)
 	{
-		perror("setsockopt() SOL_SOCKET, SO_NOSIGPIPE:");
+		WLog_ERR(TAG, "setsockopt() SOL_SOCKET, SO_NOSIGPIPE:");
 	}
 #endif
 	return TRUE;
@@ -732,11 +785,83 @@ HANDLE tcp_get_event_handle(rdpTcp* tcp)
 	if (!tcp)
 		return NULL;
 	
-#ifndef _WIN32
 	return tcp->event;
+}
+
+int tcp_wait_read(rdpTcp* tcp, DWORD dwMilliSeconds)
+{
+	int status;
+
+#ifdef HAVE_POLL_H
+	struct pollfd pollset;
+
+	pollset.fd = tcp->sockfd;
+	pollset.events = POLLIN;
+	pollset.revents = 0;
+
+	do
+	{
+		status = poll(&pollset, 1, dwMilliSeconds);
+	}
+	while ((status < 0) && (errno == EINTR));
 #else
-	return (HANDLE) tcp->wsa_event;
+	struct timeval tv;
+	fd_set rset;
+
+	FD_ZERO(&rset);
+	FD_SET(tcp->sockfd, &rset);
+
+	if (dwMilliSeconds)
+	{
+		tv.tv_sec = dwMilliSeconds / 1000;
+		tv.tv_usec = (dwMilliSeconds % 1000) * 1000;
+	}
+
+	do
+	{
+		status = select(tcp->sockfd + 1, &rset, NULL, NULL, dwMilliSeconds ? &tv : NULL);
+	}
+	while ((status < 0) && (errno == EINTR));
 #endif
+	return status;
+}
+
+int tcp_wait_write(rdpTcp* tcp, DWORD dwMilliSeconds)
+{
+	int status;
+
+#ifdef HAVE_POLL_H
+	struct pollfd pollset;
+
+	pollset.fd = tcp->sockfd;
+	pollset.events = POLLOUT;
+	pollset.revents = 0;
+
+	do
+	{
+		status = poll(&pollset, 1, dwMilliSeconds);
+	}
+	while ((status < 0) && (errno == EINTR));
+#else
+	struct timeval tv;
+	fd_set rset;
+
+	FD_ZERO(&rset);
+	FD_SET(tcp->sockfd, &rset);
+
+	if (dwMilliSeconds)
+	{
+		tv.tv_sec = dwMilliSeconds / 1000;
+		tv.tv_usec = (dwMilliSeconds % 1000) * 1000;
+	}
+
+	do
+	{
+		status = select(tcp->sockfd + 1, NULL, &rset, NULL, dwMilliSeconds ? &tv : NULL);
+	}
+	while ((status < 0) && (errno == EINTR));
+#endif
+	return status;
 }
 
 rdpTcp* tcp_new(rdpSettings* settings)

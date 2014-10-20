@@ -43,6 +43,7 @@ struct rdp_update_proxy
 	pBitmapUpdate BitmapUpdate;
 	pPalette Palette;
 	pPlaySound PlaySound;
+	pSetKeyboardIndicators SetKeyboardIndicators;
 	pRefreshRect RefreshRect;
 	pSuppressOutput SuppressOutput;
 	pSurfaceCommand SurfaceCommand;
@@ -120,6 +121,8 @@ struct rdp_update_proxy
 	pPointerColor PointerColor;
 	pPointerNew PointerNew;
 	pPointerCached PointerCached;
+
+	HANDLE thread;
 };
 
 int update_message_queue_process_message(rdpUpdate* update, wMessage* message);

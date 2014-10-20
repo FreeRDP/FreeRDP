@@ -24,10 +24,13 @@
 #include <winpr/crt.h>
 
 #include <freerdp/input.h>
+#include <freerdp/log.h>
 
 #include "message.h"
 
 #include "input.h"
+
+#define TAG FREERDP_TAG("core")
 
 void rdp_write_client_input_pdu_header(wStream* s, UINT16 number)
 {
@@ -166,6 +169,27 @@ void input_send_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, U
 	input_send_mouse_event(input, PTR_FLAGS_MOVE, x, y);
 }
 
+static void input_send_keyboard_pause_event(rdpInput* input)
+{
+	/* In ancient days, pause-down without control sent E1 1D 45 E1 9D C5,
+	 * and pause-up sent nothing.  However, reverse engineering mstsc shows
+	 * it sending the following sequence:
+	 */
+
+	/* Control down (0x1D) */
+	input_send_keyboard_event(input, 0,
+		RDP_SCANCODE_CODE(RDP_SCANCODE_LCONTROL));
+	/* Numlock down (0x45) */
+	input_send_keyboard_event(input, 0,
+		RDP_SCANCODE_CODE(RDP_SCANCODE_NUMLOCK));
+	/* Control up (0x1D) */
+	input_send_keyboard_event(input, KBD_FLAGS_RELEASE,
+		RDP_SCANCODE_CODE(RDP_SCANCODE_LCONTROL));
+	/* Numlock up (0x45) */
+	input_send_keyboard_event(input, KBD_FLAGS_RELEASE,
+		RDP_SCANCODE_CODE(RDP_SCANCODE_NUMLOCK));
+}
+
 void input_send_fastpath_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	wStream* s;
@@ -246,6 +270,39 @@ void input_send_fastpath_focus_in_event(rdpInput* input, UINT16 toggleStates, UI
 	eventFlags = 0 | FASTPATH_INPUT_EVENT_MOUSE << 5;
 	Stream_Write_UINT8(s, eventFlags); /* Mouse Pointer event (1 byte) */
 	input_write_extended_mouse_event(s, PTR_FLAGS_MOVE, x, y);
+
+	fastpath_send_multiple_input_pdu(rdp->fastpath, s, 4);
+}
+
+static void input_send_fastpath_keyboard_pause_event(rdpInput* input)
+{
+	/* In ancient days, pause-down without control sent E1 1D 45 E1 9D C5,
+	 * and pause-up sent nothing.  However, reverse engineering mstsc shows
+	 * it sending the following sequence:
+	 */
+	wStream* s;
+	rdpRdp* rdp = input->context->rdp;
+	const BYTE keyDownEvent = FASTPATH_INPUT_EVENT_SCANCODE << 5;
+	const BYTE keyUpEvent = (FASTPATH_INPUT_EVENT_SCANCODE << 5)
+		| FASTPATH_INPUT_KBDFLAGS_RELEASE;
+
+	s = fastpath_input_pdu_init_header(rdp->fastpath);
+
+	/* Control down (0x1D) */
+	Stream_Write_UINT8(s, keyDownEvent | FASTPATH_INPUT_KBDFLAGS_PREFIX_E1);
+	Stream_Write_UINT8(s, RDP_SCANCODE_CODE(RDP_SCANCODE_LCONTROL));
+
+	/* Numlock down (0x45) */
+	Stream_Write_UINT8(s, keyDownEvent);
+	Stream_Write_UINT8(s, RDP_SCANCODE_CODE(RDP_SCANCODE_NUMLOCK));
+
+	/* Control up (0x1D) */
+	Stream_Write_UINT8(s, keyUpEvent | FASTPATH_INPUT_KBDFLAGS_PREFIX_E1);
+	Stream_Write_UINT8(s, RDP_SCANCODE_CODE(RDP_SCANCODE_LCONTROL));
+
+	/* Numlock down (0x45) */
+	Stream_Write_UINT8(s, keyUpEvent);
+	Stream_Write_UINT8(s, RDP_SCANCODE_CODE(RDP_SCANCODE_NUMLOCK));
 
 	fastpath_send_multiple_input_pdu(rdp->fastpath, s, 4);
 }
@@ -380,7 +437,7 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 			break;
 
 		default:
-			fprintf(stderr, "Unknown messageType %u\n", messageType);
+			WLog_ERR(TAG,  "Unknown messageType %u", messageType);
 			/* Each input event uses 6 bytes. */
 			Stream_Seek(s, 6);
 			break;
@@ -420,6 +477,7 @@ void input_register_client_callbacks(rdpInput* input)
 	{
 		input->SynchronizeEvent = input_send_fastpath_synchronize_event;
 		input->KeyboardEvent = input_send_fastpath_keyboard_event;
+		input->KeyboardPauseEvent = input_send_fastpath_keyboard_pause_event;
 		input->UnicodeKeyboardEvent = input_send_fastpath_unicode_keyboard_event;
 		input->MouseEvent = input_send_fastpath_mouse_event;
 		input->ExtendedMouseEvent = input_send_fastpath_extended_mouse_event;
@@ -429,6 +487,7 @@ void input_register_client_callbacks(rdpInput* input)
 	{
 		input->SynchronizeEvent = input_send_synchronize_event;
 		input->KeyboardEvent = input_send_keyboard_event;
+		input->KeyboardPauseEvent = input_send_keyboard_pause_event;
 		input->UnicodeKeyboardEvent = input_send_unicode_keyboard_event;
 		input->MouseEvent = input_send_mouse_event;
 		input->ExtendedMouseEvent = input_send_extended_mouse_event;
@@ -479,6 +538,11 @@ void freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT
 void freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y)
 {
 	IFCALL(input->FocusInEvent, input, toggleStates, x, y);
+}
+
+void freerdp_input_send_keyboard_pause_event(rdpInput* input)
+{
+	IFCALL(input->KeyboardPauseEvent, input);
 }
 
 int input_process_events(rdpInput* input)

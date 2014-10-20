@@ -1,5 +1,5 @@
 
-if((CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686|x86") AND (CMAKE_SIZEOF_VOID_P EQUAL 4))
+if((CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686|x86|AMD64") AND (CMAKE_SIZEOF_VOID_P EQUAL 4))
 	set(TARGET_ARCH "x86")
 elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64") AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
 	set(TARGET_ARCH "x64")
@@ -58,14 +58,6 @@ option(WITH_SMARTCARD_INSPECT "Enable SmartCard API Inspector" OFF)
 
 option(BUILD_TESTING "Build unit tests" OFF)
 option(WITH_SAMPLE "Build sample code" OFF)
-
-if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
-	if(ANDROID)
-		option(MONOLITHIC_BUILD "Use monolithic build" ON)
-	else()
-		option(MONOLITHIC_BUILD "Use monolithic build" OFF)
-	endif()
-endif()
 
 option(WITH_CLIENT "Build client binaries" ON)
 option(WITH_SERVER "Build server binaries" OFF)

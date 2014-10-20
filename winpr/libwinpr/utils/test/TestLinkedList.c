@@ -109,6 +109,33 @@ int TestLinkedList(int argc, char* argv[])
 
 	LinkedList_Free(list);
 
+	/* Test enumerator robustness */
+
+	/* enumerator on an empty list */
+	list = LinkedList_New();
+	LinkedList_Enumerator_Reset(list);
+	while (LinkedList_Enumerator_MoveNext(list))
+	{
+		number = (int) (size_t) LinkedList_Enumerator_Current(list);
+		printf("\t%d\n", number);
+	}
+	printf("\n");
+	LinkedList_Free(list);
+
+	/* Use an enumerator without reset */
+	list = LinkedList_New();
+	LinkedList_AddFirst(list, (void*) (size_t) 4);
+	LinkedList_AddLast(list, (void*) (size_t) 5);
+	LinkedList_AddLast(list, (void*) (size_t) 6);
+	while (LinkedList_Enumerator_MoveNext(list))
+	{
+		number = (int) (size_t) LinkedList_Enumerator_Current(list);
+		printf("\t%d\n", number);
+	}
+	printf("\n");
+	LinkedList_Free(list);
+
+
 	return 0;
 }
 

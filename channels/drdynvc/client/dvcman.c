@@ -71,7 +71,7 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	}
 	else
 	{
-		DEBUG_WARN("Maximum DVC listener number reached.");
+		WLog_WARN(TAG, "Maximum DVC listener number reached.");
 		return 1;
 	}
 }
@@ -89,7 +89,7 @@ static int dvcman_push_event(IWTSVirtualChannelManager* pChannelMgr, wMessage* p
 	}
 	else
 	{
-		DEBUG_WARN("event_type %d push failed.", GetMessageType(pEvent->id));
+		WLog_ERR(TAG, "event_type %d push failed.", GetMessageType(pEvent->id));
 	}
 
 	return status;
@@ -108,7 +108,7 @@ static int dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const cha
 	}
 	else
 	{
-		DEBUG_WARN("Maximum DVC plugin number reached.");
+		WLog_WARN(TAG, "Maximum DVC plugin number reached.");
 		return 1;
 	}
 }
@@ -133,6 +133,11 @@ IWTSPlugin* dvcman_get_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* n
 ADDIN_ARGV* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	return ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->args;
+}
+
+void* dvcman_get_rdp_settings(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+{
+	return (void*) ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->settings;
 }
 
 UINT32 dvcman_get_channel_id(IWTSVirtualChannel * channel)
@@ -208,13 +213,11 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	return (IWTSVirtualChannelManager*) dvcman;
 }
 
-int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args)
+int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args, rdpSettings* settings)
 {
 	DVCMAN_ENTRY_POINTS entryPoints;
 	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
-
-	fprintf(stderr, "Loading Dynamic Virtual Channel %s\n", args->argv[0]);
-
+	WLog_INFO(TAG,  "Loading Dynamic Virtual Channel %s", args->argv[0]);
 	pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_channel_addin_entry(args->argv[0],
 			NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
 
@@ -223,8 +226,10 @@ int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args)
 		entryPoints.iface.RegisterPlugin = dvcman_register_plugin;
 		entryPoints.iface.GetPlugin = dvcman_get_plugin;
 		entryPoints.iface.GetPluginData = dvcman_get_plugin_data;
+		entryPoints.iface.GetRdpSettings = dvcman_get_rdp_settings;
 		entryPoints.dvcman = (DVCMAN*) pChannelMgr;
 		entryPoints.args = args;
+		entryPoints.settings = settings;
 
 		pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
 	}
@@ -381,8 +386,7 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 			}
 			else
 			{
-				DEBUG_WARN("channel rejected by plugin");
-
+				WLog_ERR(TAG, "channel rejected by plugin");
 				free(channel);
 				return 1;
 			}
@@ -402,14 +406,15 @@ int dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId
 
 	if (!channel)
 	{
-		DEBUG_WARN("ChannelId %d not found!", ChannelId);
+		WLog_ERR(TAG, "ChannelId %d not found!", ChannelId);
 		return 1;
 	}
 
 	if (channel->status == 0)
 	{
 		pCallback = channel->channel_callback;
-		pCallback->OnOpen(pCallback);
+		if (pCallback->OnOpen)
+			pCallback->OnOpen(pCallback);
 	}
 
 	return 0;
@@ -426,7 +431,7 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 
 	if (!channel)
 	{
-		DEBUG_WARN("ChannelId %d not found!", ChannelId);
+		WLog_ERR(TAG, "ChannelId %d not found!", ChannelId);
 		return 1;
 	}
 
@@ -460,7 +465,7 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UI
 
 	if (!channel)
 	{
-		DEBUG_WARN("ChannelId %d not found!", ChannelId);
+		WLog_ERR(TAG, "ChannelId %d not found!", ChannelId);
 		return 1;
 	}
 
@@ -468,7 +473,7 @@ int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UI
 		Stream_Release(channel->dvc_data);
 
 	channel->dvc_data = StreamPool_Take(channel->dvcman->pool, length);
-	Stream_AddRef(channel->dvc_data);
+	channel->dvc_data_length = length;
 
 	return 0;
 }
@@ -483,7 +488,7 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 
 	if (!channel)
 	{
-		DEBUG_WARN("ChannelId %d not found!", ChannelId);
+		WLog_ERR(TAG, "ChannelId %d not found!", ChannelId);
 		return 1;
 	}
 
@@ -492,7 +497,7 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 		/* Fragmented data */
 		if (Stream_GetPosition(channel->dvc_data) + dataSize > (UINT32) Stream_Capacity(channel->dvc_data))
 		{
-			DEBUG_WARN("data exceeding declared length!");
+			WLog_ERR(TAG, "data exceeding declared length!");
 			Stream_Release(channel->dvc_data);
 			channel->dvc_data = NULL;
 			return 1;
@@ -500,7 +505,7 @@ int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 C
 
 		Stream_Write(channel->dvc_data, Stream_Pointer(data), dataSize);
 
-		if (((size_t) Stream_GetPosition(channel->dvc_data)) >= Stream_Capacity(channel->dvc_data))
+		if (((size_t) Stream_GetPosition(channel->dvc_data)) >= channel->dvc_data_length)
 		{
 			Stream_SealLength(channel->dvc_data);
 			Stream_SetPosition(channel->dvc_data, 0);

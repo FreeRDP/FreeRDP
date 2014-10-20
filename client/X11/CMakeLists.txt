@@ -59,7 +59,10 @@ if(WITH_CLIENT_INTERFACE)
 	else()
 		add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 	endif()
-	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+  if (WITH_LIBRARY_VERSIONING)
+	  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+  endif()
+  set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
 else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/xfreerdp.c cli/xfreerdp.h)
 	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
@@ -86,16 +89,7 @@ if(WITH_MANPAGES)
 		add_executable(generate_argument_docbook generate_argument_docbook.c)
 	
 		set(GAD_LIBS freerdp-client)
-
-		set_complex_link_libraries(VARIABLE GAD_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
-			MODULE winpr
-			MODULES winpr-utils)
-
-		set_complex_link_libraries(VARIABLE GAD_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
-			MODULE freerdp
-			MODULES freerdp-core freerdp-utils)
-
-		target_link_libraries(generate_argument_docbook ${GAD_LIBS})
+		target_link_libraries(generate_argument_docbook ${GAD_LIBS} freerdp winpr)
 
 		add_custom_command(OUTPUT xfreerdp.1
 					COMMAND generate_argument_docbook
@@ -148,6 +142,10 @@ set(XRENDER_FEATURE_TYPE "RECOMMENDED")
 set(XRENDER_FEATURE_PURPOSE "rendering")
 set(XRENDER_FEATURE_DESCRIPTION "X11 render extension") 
 
+set(XFIXES_FEATURE_TYPE "RECOMMENDED")
+set(XFIXES_FEATURE_PURPOSE "X11 xfixes extension")
+set(XFIXES_FEATURE_DESCRIPTION "Useful additions to the X11 core protocol")
+
 find_feature(XShm ${XSHM_FEATURE_TYPE} ${XSHM_FEATURE_PURPOSE} ${XSHM_FEATURE_DESCRIPTION})
 find_feature(Xinerama ${XINERAMA_FEATURE_TYPE} ${XINERAMA_FEATURE_PURPOSE} ${XINERAMA_FEATURE_DESCRIPTION})
 find_feature(Xext ${XEXT_FEATURE_TYPE} ${XEXT_FEATURE_PURPOSE} ${XEXT_FEATURE_DESCRIPTION})
@@ -155,6 +153,7 @@ find_feature(Xcursor ${XCURSOR_FEATURE_TYPE} ${XCURSOR_FEATURE_PURPOSE} ${XCURSO
 find_feature(Xv ${XV_FEATURE_TYPE} ${XV_FEATURE_PURPOSE} ${XV_FEATURE_DESCRIPTION})
 find_feature(Xi ${XI_FEATURE_TYPE} ${XI_FEATURE_PURPOSE} ${XI_FEATURE_DESCRIPTION})
 find_feature(Xrender ${XRENDER_FEATURE_TYPE} ${XRENDER_FEATURE_PURPOSE} ${XRENDER_FEATURE_DESCRIPTION})
+find_feature(Xfixes ${XFIXES_FEATURE_TYPE} ${XFIXES_FEATURE_PURPOSE} ${XFIXES_FEATURE_DESCRIPTION})
 
 if(WITH_XINERAMA)
 	add_definitions(-DWITH_XINERAMA)
@@ -192,14 +191,15 @@ if(WITH_XRENDER)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XRENDER_LIBRARIES})
 endif()
 
+if(WITH_XFIXES)
+	add_definitions(-DWITH_XFIXES)
+	include_directories(${XFIXES_INCLUDE_DIRS})
+	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XFIXES_LIBRARIES})
+endif()
+
 include_directories(${CMAKE_SOURCE_DIR}/resources)
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-core freerdp-gdi freerdp-locale freerdp-primitives freerdp-rail freerdp-utils)
-
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp freerdp-client)
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_IPP)

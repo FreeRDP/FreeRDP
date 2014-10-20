@@ -43,6 +43,9 @@
 #import "freerdp/client/cliprdr.h"
 #import "freerdp/client/file.h"
 #import "freerdp/client/cmdline.h"
+#import "freerdp/log.h"
+
+#define TAG CLIENT_TAG("mac")
 
 void mf_Pointer_New(rdpContext* context, rdpPointer* pointer);
 void mf_Pointer_Free(rdpContext* context, rdpPointer* pointer);
@@ -617,7 +620,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	vkcode &= 0xFF;
 	
 #if 0
-	fprintf(stderr, "keyDown: keyCode: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
+	WLog_ERR(TAG,  "keyDown: keyCode: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s",
 	       keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
 	
@@ -654,7 +657,7 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	vkcode &= 0xFF;
 
 #if 0
-	fprintf(stderr, "keyUp: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s\n",
+	WLog_DBG(TAG,  "keyUp: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X keyFlags: %d name: %s",
 	       keyCode, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode));
 #endif
 
@@ -683,29 +686,29 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	vkcode &= 0xFF;
 
 #if 0
-	fprintf(stderr, "flagsChanged: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X extended: %d name: %s modFlags: 0x%04X\n",
+	WLog_DBG(TAG,  "flagsChanged: key: 0x%04X scancode: 0x%04X vkcode: 0x%04X extended: %d name: %s modFlags: 0x%04X",
 	       key - 8, scancode, vkcode, keyFlags, GetVirtualKeyName(vkcode), modFlags);
 
 	if (modFlags & NSAlphaShiftKeyMask)
-		fprintf(stderr, "NSAlphaShiftKeyMask\n");
+		WLog_DBG(TAG,  "NSAlphaShiftKeyMask");
 
 	if (modFlags & NSShiftKeyMask)
-		fprintf(stderr, "NSShiftKeyMask\n");
+		WLog_DBG(TAG,  "NSShiftKeyMask");
 
 	if (modFlags & NSControlKeyMask)
-		fprintf(stderr, "NSControlKeyMask\n");
+		WLog_DBG(TAG,  "NSControlKeyMask");
 
 	if (modFlags & NSAlternateKeyMask)
-		fprintf(stderr, "NSAlternateKeyMask\n");
+		WLog_DBG(TAG,  "NSAlternateKeyMask");
 
 	if (modFlags & NSCommandKeyMask)
-		fprintf(stderr, "NSCommandKeyMask\n");
+		WLog_DBG(TAG,  "NSCommandKeyMask");
 
 	if (modFlags & NSNumericPadKeyMask)
-		fprintf(stderr, "NSNumericPadKeyMask\n");
+		WLog_DBG(TAG,  "NSNumericPadKeyMask");
 
 	if (modFlags & NSHelpKeyMask)
-		fprintf(stderr, "NSHelpKeyMask\n");
+		WLog_DBG(TAG,  "NSHelpKeyMask");
 #endif
 
 	if ((modFlags & NSAlphaShiftKeyMask) && !(kbdModFlags & NSAlphaShiftKeyMask))
@@ -820,6 +823,44 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 	mfc->client_width = width;
 }
 
+void mac_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
+{
+	rdpSettings* settings = context->settings;
+	
+	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		
+	}
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		if (settings->SoftwareGdi)
+			gdi_graphics_pipeline_init(context->gdi, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
+	{
+		
+	}
+}
+
+void mac_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
+{
+	rdpSettings* settings = context->settings;
+	
+	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+		
+	}
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		if (settings->SoftwareGdi)
+			gdi_graphics_pipeline_uninit(context->gdi, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
+	{
+		
+	}
+}
+
 BOOL mac_pre_connect(freerdp* instance)
 {
 	rdpSettings* settings;
@@ -832,7 +873,7 @@ BOOL mac_pre_connect(freerdp* instance)
 
 	if (!settings->ServerHostname)
 	{
-		fprintf(stderr, "error: server hostname was not specified with /v:<server>[:port]\n");
+		WLog_ERR(TAG,  "error: server hostname was not specified with /v:<server>[:port]");
 		[NSApp terminate:nil];
 		return -1;
 	}
@@ -867,6 +908,12 @@ BOOL mac_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_POLYGON_CB_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_SC_INDEX] = FALSE;
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
+	
+	PubSub_SubscribeChannelConnected(instance->context->pubSub,
+					 (pChannelConnectedEventHandler) mac_OnChannelConnectedEventHandler);
+	
+	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
+					    (pChannelDisconnectedEventHandler) mac_OnChannelDisconnectedEventHandler);
 
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
@@ -897,10 +944,10 @@ BOOL mac_post_connect(freerdp* instance)
 	
 	flags = CLRCONV_ALPHA | CLRCONV_RGB555;
 	
-	if (settings->ColorDepth > 16)
+	//if (settings->ColorDepth > 16)
 		flags |= CLRBUF_32BPP;
-	else
-		flags |= CLRBUF_16BPP;
+	//else
+	//	flags |= CLRBUF_16BPP;
 	
 	gdi_init(instance, flags, NULL);
 	gdi = instance->context->gdi;
@@ -1073,17 +1120,17 @@ CGContextRef mac_create_bitmap_context(rdpContext* context)
 	
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
 	
-	if (gdi->dstBpp == 16)
+	if (gdi->bytesPerPixel == 2)
 	{
 		bitmap_context = CGBitmapContextCreate(gdi->primary_buffer,
-						       gdi->width, gdi->height, 5, gdi->width * 2, colorSpace,
-						       kCGBitmapByteOrder16Little | kCGImageAlphaNoneSkipFirst);
+						       gdi->width, gdi->height, 5, gdi->width * gdi->bytesPerPixel,
+						       colorSpace, kCGBitmapByteOrder16Little | kCGImageAlphaNoneSkipFirst);
 	}
 	else
 	{
 		bitmap_context = CGBitmapContextCreate(gdi->primary_buffer,
-						       gdi->width, gdi->height, 8, gdi->width * 4, colorSpace,
-						       kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
+						       gdi->width, gdi->height, 8, gdi->width * gdi->bytesPerPixel,
+						       colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst);
 	}
 	
 	CGColorSpaceRelease(colorSpace);
@@ -1200,7 +1247,7 @@ static void update_activity_cb(freerdp* instance)
 	}
 	else
 	{
-		fprintf(stderr, "update_activity_cb: No queue!\n");
+		WLog_ERR(TAG,  "update_activity_cb: No queue!");
 	}
 }
 
@@ -1225,7 +1272,7 @@ static void input_activity_cb(freerdp* instance)
 	}
 	else
 	{
-		fprintf(stderr, "input_activity_cb: No queue!\n");
+		WLog_ERR(TAG,  "input_activity_cb: No queue!");
 	}
 }
 
@@ -1238,7 +1285,7 @@ static void channel_activity_cb(freerdp* instance)
 
 	if (event)
 	{
-		fprintf(stderr, "channel_activity_cb: message %d\n", event->id);
+		WLog_DBG(TAG,  "channel_activity_cb: message %d", event->id);
 
 		switch (GetMessageClass(event->id))
 		{
@@ -1306,8 +1353,8 @@ void cliprdr_send_data_request(freerdp* instance, UINT32 format)
 
 /**
  * at the moment, only the following formats are supported
- *    CB_FORMAT_TEXT
- *    CB_FORMAT_UNICODETEXT
+ *    CF_TEXT
+ *    CF_UNICODETEXT
  */
 
 void cliprdr_process_cb_data_response_event(freerdp* instance, RDP_CB_DATA_RESPONSE_EVENT* event)
@@ -1320,7 +1367,7 @@ void cliprdr_process_cb_data_response_event(freerdp* instance, RDP_CB_DATA_RESPO
 	if (event->size == 0)
 		return;
 	
-	if (view->pasteboard_format == CB_FORMAT_TEXT || view->pasteboard_format == CB_FORMAT_UNICODETEXT)
+	if (view->pasteboard_format == CF_TEXT || view->pasteboard_format == CF_UNICODETEXT)
 	{
 		str = [[NSString alloc] initWithCharacters:(unichar *) event->data length:event->size / 2];
 		types = [[NSArray alloc] initWithObjects:NSStringPboardType, nil];
@@ -1344,8 +1391,8 @@ void cliprdr_process_cb_monitor_ready_event(freerdp* instance)
 
 /**
  * list of supported clipboard formats; currently only the following are supported
- *    CB_FORMAT_TEXT
- *    CB_FORMAT_UNICODETEXT
+ *    CF_TEXT
+ *    CF_UNICODETEXT
  */
 
 void cliprdr_process_cb_format_list_event(freerdp* instance, RDP_CB_FORMAT_LIST_EVENT* event)
@@ -1361,35 +1408,11 @@ void cliprdr_process_cb_format_list_event(freerdp* instance, RDP_CB_FORMAT_LIST_
 	{
 		switch (event->formats[i])
 		{
-		case CB_FORMAT_RAW:
-			printf("CB_FORMAT_RAW: not yet supported\n");
-			break;
-
-		case CB_FORMAT_TEXT:
-		case CB_FORMAT_UNICODETEXT:
-			view->pasteboard_format = CB_FORMAT_UNICODETEXT;
-			cliprdr_send_data_request(instance, CB_FORMAT_UNICODETEXT);
+		case CF_TEXT:
+		case CF_UNICODETEXT:
+			view->pasteboard_format = CF_UNICODETEXT;
+			cliprdr_send_data_request(instance, CF_UNICODETEXT);
 			return;
-			break;
-
-		case CB_FORMAT_DIB:
-			printf("CB_FORMAT_DIB: not yet supported\n");
-			break;
-
-		case CB_FORMAT_HTML:
-			printf("CB_FORMAT_HTML\n");
-			break;
-
-		case CB_FORMAT_PNG:
-			printf("CB_FORMAT_PNG: not yet supported\n");
-			break;
-
-		case CB_FORMAT_JPEG:
-			printf("CB_FORMAT_JPEG: not yet supported\n");
-			break;
-
-		case CB_FORMAT_GIF:
-			printf("CB_FORMAT_GIF: not yet supported\n");
 			break;
 		}
 	}
@@ -1440,7 +1463,7 @@ void process_cliprdr_event(freerdp* instance, wMessage* event)
 			break;
 
 		default:
-			printf("process_cliprdr_event: unknown event type %d\n", GetMessageType(event->id));
+			WLog_ERR(TAG, "process_cliprdr_event: unknown event type %d", GetMessageType(event->id));
 			break;
 		}
 	}
@@ -1454,7 +1477,7 @@ void cliprdr_send_supported_format_list(freerdp* instance)
 	
 	event->formats = (UINT32*) malloc(sizeof(UINT32) * 1);
 	event->num_formats = 1;
-	event->formats[0] = CB_FORMAT_UNICODETEXT;
+	event->formats[0] = CF_UNICODETEXT;
 	
 	freerdp_channels_send_event(instance->context->channels, (wMessage*) event);
 }

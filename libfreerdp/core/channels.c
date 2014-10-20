@@ -32,11 +32,12 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 
+#include <freerdp/log.h>
 #include <freerdp/svc.h>
 #include <freerdp/peer.h>
 #include <freerdp/addin.h>
 #include <freerdp/utils/event.h>
-#include <freerdp/utils/debug.h>
+
 #include <freerdp/client/channels.h>
 #include <freerdp/client/drdynvc.h>
 #include <freerdp/channels/channels.h>
@@ -45,6 +46,8 @@
 #include "client.h"
 #include "server.h"
 #include "channels.h"
+
+#define TAG FREERDP_TAG("core.channels")
 
 BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 {
@@ -67,7 +70,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 
 	if (!channel)
 	{
-		fprintf(stderr, "freerdp_channel_send: unknown channelId %d\n", channelId);
+		WLog_ERR(TAG,  "freerdp_channel_send: unknown channelId %d", channelId);
 		return FALSE;
 	}
 
@@ -140,8 +143,36 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 	Stream_Read_UINT32(s, flags);
 	chunkLength = Stream_GetRemainingLength(s);
 
-	IFCALL(client->ReceiveChannelData, client,
-		channelId, Stream_Pointer(s), chunkLength, flags, length);
+	if (client->VirtualChannelRead)
+	{
+		UINT32 index;
+		BOOL found = FALSE;
+		HANDLE hChannel = 0;
+		rdpContext* context = client->context;
+		rdpMcs* mcs = context->rdp->mcs;
+		rdpMcsChannel* mcsChannel = NULL;
+
+		for (index = 0; index < mcs->channelCount; index++)
+		{
+			mcsChannel = &(mcs->channels[index]);
+
+			if (mcsChannel->ChannelId == channelId)
+			{
+				hChannel = (HANDLE) mcsChannel->handle;
+				found = TRUE;
+				break;
+			}
+		}
+
+		if (!found)
+			return FALSE;
+
+		client->VirtualChannelRead(client, hChannel, Stream_Pointer(s), Stream_GetRemainingLength(s));
+	}
+	else if (client->ReceiveChannelData)
+	{
+		client->ReceiveChannelData(client, channelId, Stream_Pointer(s), chunkLength, flags, length);
+	}
 
 	return TRUE;
 }

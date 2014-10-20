@@ -28,6 +28,7 @@
 #include <string.h>
 #include <conio.h>
 
+#include <freerdp/log.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/constants.h>
 #include <freerdp/codec/color.h>
@@ -35,9 +36,11 @@
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 
-#include "wf_interface.h"
+#include "wf_client.h"
 #include "wf_graphics.h"
 #include "wf_gdi.h"
+
+#define TAG CLIENT_TAG("windows.gdi")
 
 const BYTE wf_rop2_table[] =
 {
@@ -63,7 +66,7 @@ BOOL wf_set_rop2(HDC hdc, int rop2)
 {
 	if ((rop2 < 0x01) || (rop2 > 0x10))
 	{
-		fprintf(stderr, "Unsupported ROP2: %d\n", rop2);
+		WLog_ERR(TAG,  "Unsupported ROP2: %d", rop2);
 		return FALSE;
 	}
 
@@ -339,6 +342,106 @@ void wf_toggle_fullscreen(wfContext* wfc)
 	}
 }
 
+void wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
+{
+	HDC hdc;
+	int status;
+	int nXDst;
+	int nYDst;
+	int nXSrc;
+	int nYSrc;
+	int nWidth;
+	int nHeight;
+	HBITMAP dib;
+	UINT32 index;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	UINT32 SrcSize;
+	BOOL compressed;
+	UINT32 SrcFormat;
+	UINT32 bitsPerPixel;
+	UINT32 bytesPerPixel;
+	BITMAP_DATA* bitmap;
+	rdpCodecs* codecs = context->codecs;
+	wfContext* wfc = (wfContext*) context;
+
+	hdc = CreateCompatibleDC(GetDC(NULL));
+
+	for (index = 0; index < bitmapUpdate->number; index++)
+	{
+		bitmap = &(bitmapUpdate->rectangles[index]);
+
+		nXSrc = 0;
+		nYSrc = 0;
+
+		nXDst = bitmap->destLeft;
+		nYDst = bitmap->destTop;
+
+		nWidth = bitmap->width;
+		nHeight = bitmap->height;
+
+		pSrcData = bitmap->bitmapDataStream;
+		SrcSize = bitmap->bitmapLength;
+
+		compressed = bitmap->compressed;
+		bitsPerPixel = bitmap->bitsPerPixel;
+		bytesPerPixel = (bitsPerPixel + 7) / 8;
+
+		SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
+
+		if (wfc->bitmap_size < (nWidth * nHeight * 4))
+		{
+			wfc->bitmap_size = nWidth * nHeight * 4;
+			wfc->bitmap_buffer = (BYTE*) _aligned_realloc(wfc->bitmap_buffer, wfc->bitmap_size, 16);
+
+			if (!wfc->bitmap_buffer)
+				return;
+		}
+
+		if (compressed)
+		{
+			pDstData = wfc->bitmap_buffer;
+
+			if (bitsPerPixel < 32)
+			{
+				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_INTERLEAVED);
+
+				status = interleaved_decompress(codecs->interleaved, pSrcData, SrcSize, bitsPerPixel,
+						&pDstData, PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight, NULL);
+			}
+			else
+			{
+				freerdp_client_codecs_prepare(codecs, FREERDP_CODEC_PLANAR);
+
+				status = planar_decompress(codecs->planar, pSrcData, SrcSize, &pDstData,
+						PIXEL_FORMAT_XRGB32, nWidth * 4, 0, 0, nWidth, nHeight, TRUE);
+			}
+
+			if (status < 0)
+			{
+				WLog_ERR(TAG, "bitmap decompression failure");
+				return;
+			}
+
+			pSrcData = wfc->bitmap_buffer;
+		}
+
+		dib = wf_create_dib(wfc, nWidth, nHeight, 32, pSrcData, NULL);
+		SelectObject(hdc, dib);
+
+		nWidth = bitmap->destRight - bitmap->destLeft + 1; /* clip width */
+		nHeight = bitmap->destBottom - bitmap->destTop + 1; /* clip height */
+
+		BitBlt(wfc->primary->hdc, nXDst, nYDst, nWidth, nHeight, hdc, 0, 0, SRCCOPY);
+
+		gdi_InvalidateRegion(wfc->hdc, nXDst, nYDst, nWidth, nHeight);
+
+		DeleteObject(dib);
+	}
+
+	ReleaseDC(NULL, hdc);
+}
+
 void wf_gdi_palette_update(wfContext* wfc, PALETTE_UPDATE* palette)
 {
 
@@ -453,11 +556,11 @@ void wf_gdi_multi_opaque_rect(wfContext* wfc, MULTI_OPAQUE_RECT_ORDER* multi_opa
 	UINT32 brush_color;
 	DELTA_RECT* rectangle;
 
+	brush_color = freerdp_color_convert_var_rgb(multi_opaque_rect->color, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
+
 	for (i = 1; i < (int) multi_opaque_rect->numRectangles + 1; i++)
 	{
 		rectangle = &multi_opaque_rect->rectangles[i];
-
-		brush_color = freerdp_color_convert_var_bgr(multi_opaque_rect->color, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
 
 		rect.left = rectangle->left;
 		rect.top = rectangle->top;
@@ -568,15 +671,13 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 	RFX_MESSAGE* message;
 	BITMAPINFO bitmap_info;
 
-	RFX_CONTEXT* rfx_context = (RFX_CONTEXT*) wfc->rfx_context;
-	NSC_CONTEXT* nsc_context = (NSC_CONTEXT*) wfc->nsc_context;
-
 	tile_bitmap = (char*) malloc(32);
 	ZeroMemory(tile_bitmap, 32);
 
 	if (surface_bits_command->codecID == RDP_CODEC_ID_REMOTEFX)
 	{
-		message = rfx_process_message(rfx_context, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+		freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_REMOTEFX);
+		message = rfx_process_message(wfc->codecs->rfx, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 
 		/* blit each tile */
 		for (i = 0; i < message->numTiles; i++)
@@ -607,11 +708,12 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 			wf_invalidate_region(wfc, tx, ty, message->rects[i].width, message->rects[i].height);
 		}
 
-		rfx_message_free(rfx_context, message);
+		rfx_message_free(wfc->codecs->rfx, message);
 	}
 	else if (surface_bits_command->codecID == RDP_CODEC_ID_NSCODEC)
 	{
-		nsc_process_message(nsc_context, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
+		freerdp_client_codecs_prepare(wfc->codecs, FREERDP_CODEC_NSCODEC);
+		nsc_process_message(wfc->codecs->nsc, surface_bits_command->bpp, surface_bits_command->width, surface_bits_command->height,
 			surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
 		ZeroMemory(&bitmap_info, sizeof(bitmap_info));
 		bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -622,7 +724,7 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 		bitmap_info.bmiHeader.biCompression = BI_RGB;
 		SetDIBitsToDevice(wfc->primary->hdc, surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height, 0, 0, 0, surface_bits_command->height,
-			nsc_context->BitmapData, &bitmap_info, DIB_RGB_COLORS);
+			wfc->codecs->nsc->BitmapData, &bitmap_info, DIB_RGB_COLORS);
 		wf_invalidate_region(wfc, surface_bits_command->destLeft, surface_bits_command->destTop,
 			surface_bits_command->width, surface_bits_command->height);
 	}
@@ -643,7 +745,7 @@ void wf_gdi_surface_bits(wfContext* wfc, SURFACE_BITS_COMMAND* surface_bits_comm
 	}
 	else
 	{
-		fprintf(stderr, "Unsupported codecID %d\n", surface_bits_command->codecID);
+		WLog_ERR(TAG,  "Unsupported codecID %d", surface_bits_command->codecID);
 	}
 
 	if (tile_bitmap != NULL)

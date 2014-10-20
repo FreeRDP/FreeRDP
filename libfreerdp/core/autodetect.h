@@ -25,6 +25,7 @@ typedef struct rdp_autodetect rdpAutoDetect;
 #include "rdp.h"
 
 #include <freerdp/freerdp.h>
+#include <freerdp/log.h>
 
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>
@@ -49,10 +50,6 @@ int rdp_recv_autodetect_packet(rdpRdp* rdp, wStream* s);
 rdpAutoDetect* autodetect_new(void);
 void autodetect_free(rdpAutoDetect* autodetect);
 
-#ifdef WITH_DEBUG_AUTODETECT
-#define DEBUG_AUTODETECT(fmt, ...) DEBUG_CLASS(AUTODETECT, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_AUTODETECT(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
+#define AUTODETECT_TAG FREERDP_TAG("core.autodetect")
 
 #endif /* __AUTODETECT_H */

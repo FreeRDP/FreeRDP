@@ -13,38 +13,29 @@
  * this code may be covered by patents by HP, Microsoft, or other parties.
  */
 
-#ifdef __GNUC__
-# pragma once
-#endif
-
 #ifndef __PRIMTEST_H_INCLUDED__
 #define __PRIMTEST_H_INCLUDED__
 
-#include <config.h>
-#include <stdint.h>
+#include <winpr/crt.h>
+#include <winpr/spec.h>
 #include <winpr/wtypes.h>
-
-#include <measure.h>
-#include <string.h>
-#include <stdio.h>
+#include <winpr/platform.h>
 
 #include <freerdp/primitives.h>
-#include <winpr/platform.h>
+
+#include "measure.h"
 
 #ifdef WITH_IPP
 #include <ipps.h>
 #include <ippi.h>
 #endif
 
-#define BLOCK_ALIGNMENT 16
-#ifdef __GNUC__
-#define ALIGN(x) x __attribute((aligned(BLOCK_ALIGNMENT)))
-#define POSSIBLY_UNUSED(x)	x __attribute((unused))
-#else
-/* TODO: Someone needs to finish this for non-GNU C */
+#ifdef _WIN32
 #define ALIGN(x) x
-#define POSSIBLY_UNUSED(x)	x
+#else
+#define ALIGN(x) x DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT)
 #endif
+
 #define ABS(_x_) ((_x_) < 0 ? (-(_x_)) : (_x_))
 #define MAX_TEST_SIZE 4096
 
@@ -89,6 +80,11 @@ extern int test_RGBToRGB_16s8u_P3AC4R_func(void);
 extern int test_RGBToRGB_16s8u_P3AC4R_speed(void);
 extern int test_yCbCrToRGB_16s16s_P3P3_func(void);
 extern int test_yCbCrToRGB_16s16s_P3P3_speed(void);
+extern int test_YCoCgRToRGB_8u_AC4R_func(void);
+extern int test_YCoCgRToRGB_8u_AC4R_speed(void);
+
+extern int test_RGB565ToARGB_16u32u_C3C4_func(void);
+extern int test_RGB565ToARGB_16u32u_C3C4_speed(void);
 
 extern int test_alphaComp_func(void);
 extern int test_alphaComp_speed(void);
@@ -162,6 +158,14 @@ extern int test_or_32u_speed(void);
 
 #define PRIM_NOP do {} while (0)
 /* ------------------------------------------------------------------------- */
+
+#ifdef _WIN32
+#define STD_SPEED_TEST( \
+	_name_, _srctype_, _dsttype_, _prework_, \
+	_doNormal_, _funcNormal_, \
+	_doOpt_,    _funcOpt_,  _flagOpt_, _flagExt_, \
+	_doIPP_,    _funcIPP_)
+#else
 #define STD_SPEED_TEST( \
 	_name_, _srctype_, _dsttype_, _prework_, \
 	_doNormal_, _funcNormal_, \
@@ -232,5 +236,6 @@ static void _name_( \
 	} \
 	free(resultNormal); free(resultOpt);  free(resultIPP); \
 }
+#endif
 
 #endif // !__PRIMTEST_H_INCLUDED__

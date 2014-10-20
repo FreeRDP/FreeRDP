@@ -71,7 +71,7 @@ target_link_libraries(test_freerdp freerdp-utils)
 target_link_libraries(test_freerdp freerdp-codec)
 target_link_libraries(test_freerdp freerdp-crypto)
 
-target_link_libraries(test_freerdp winpr-sspi)
+target_link_libraries(test_freerdp winpr)
 
 add_test(CUnitTests ${CMAKE_SOURCE_DIR}/cunit/test_freerdp)
 

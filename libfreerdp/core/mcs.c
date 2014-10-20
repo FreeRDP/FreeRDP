@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <freerdp/log.h>
 
 #include "gcc.h"
 
@@ -29,6 +30,8 @@
 #include "tpdu.h"
 #include "tpkt.h"
 #include "client.h"
+
+#define TAG FREERDP_TAG("core")
 
 /**
  * T.125 MCS is defined in:
@@ -328,16 +331,16 @@ void mcs_write_domain_parameters(wStream* s, DomainParameters* domainParameters)
 
 void mcs_print_domain_parameters(DomainParameters* domainParameters)
 {
-	fprintf(stderr, "DomainParameters {\n");
-	fprintf(stderr, "\tmaxChannelIds:%d\n", domainParameters->maxChannelIds);
-	fprintf(stderr, "\tmaxUserIds:%d\n", domainParameters->maxUserIds);
-	fprintf(stderr, "\tmaxTokenIds:%d\n", domainParameters->maxTokenIds);
-	fprintf(stderr, "\tnumPriorities:%d\n", domainParameters->numPriorities);
-	fprintf(stderr, "\tminThroughput:%d\n", domainParameters->minThroughput);
-	fprintf(stderr, "\tmaxHeight:%d\n", domainParameters->maxHeight);
-	fprintf(stderr, "\tmaxMCSPDUsize:%d\n", domainParameters->maxMCSPDUsize);
-	fprintf(stderr, "\tprotocolVersion:%d\n", domainParameters->protocolVersion);
-	fprintf(stderr, "}\n");
+	WLog_INFO(TAG,  "DomainParameters {");
+	WLog_INFO(TAG,  "\tmaxChannelIds:%d", domainParameters->maxChannelIds);
+	WLog_INFO(TAG,  "\tmaxUserIds:%d", domainParameters->maxUserIds);
+	WLog_INFO(TAG,  "\tmaxTokenIds:%d", domainParameters->maxTokenIds);
+	WLog_INFO(TAG,  "\tnumPriorities:%d", domainParameters->numPriorities);
+	WLog_INFO(TAG,  "\tminThroughput:%d", domainParameters->minThroughput);
+	WLog_INFO(TAG,  "\tmaxHeight:%d", domainParameters->maxHeight);
+	WLog_INFO(TAG,  "\tmaxMCSPDUsize:%d", domainParameters->maxMCSPDUsize);
+	WLog_INFO(TAG,  "\tprotocolVersion:%d", domainParameters->protocolVersion);
+	WLog_INFO(TAG,  "}");
 }
 
 /**
@@ -661,7 +664,7 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 
 	if (!gcc_read_conference_create_response(s, mcs))
 	{
-		fprintf(stderr, "mcs_recv_connect_response: gcc_read_conference_create_response failed\n");
+		WLog_ERR(TAG,  "gcc_read_conference_create_response failed");
 		return FALSE;
 	}
 
@@ -1056,7 +1059,8 @@ rdpMcs* mcs_new(rdpTransport* transport)
 {
 	rdpMcs* mcs;
 
-	mcs = (rdpMcs *)calloc(1, sizeof(rdpMcs));
+	mcs = (rdpMcs*) calloc(1, sizeof(rdpMcs));
+
 	if (!mcs)
 		return NULL;
 
@@ -1070,7 +1074,11 @@ rdpMcs* mcs_new(rdpTransport* transport)
 
 	mcs->channelCount = 0;
 	mcs->channelMaxCount = CHANNEL_MAX_COUNT;
-	mcs->channels = (rdpMcsChannel *)calloc(mcs->channelMaxCount, sizeof(rdpMcsChannel));
+
+	mcs->baseChannelId = MCS_GLOBAL_CHANNEL_ID + 1;
+
+	mcs->channels = (rdpMcsChannel*) calloc(mcs->channelMaxCount, sizeof(rdpMcsChannel));
+
 	if (!mcs->channels)
 		goto out_free;
 

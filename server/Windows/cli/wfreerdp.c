@@ -32,14 +32,16 @@
 
 #include "wfreerdp.h"
 
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("windows")
+
 int IDcount = 0;
 
 BOOL CALLBACK moncb(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
-	printf("%d\t(%d, %d), (%d, %d)\n",
-		IDcount, lprcMonitor->left, lprcMonitor->top,
-		lprcMonitor->right, lprcMonitor->bottom);
-
+	WLog_DBG(TAG, "%d\t(%d, %d), (%d, %d)",
+			 IDcount, lprcMonitor->left, lprcMonitor->top,
+			 lprcMonitor->right, lprcMonitor->bottom);
 	IDcount++;
 
 	return TRUE;
@@ -67,10 +69,9 @@ int main(int argc, char* argv[])
 			int height;
 			int bpp;
 			int i;
+			WLog_INFO(TAG, "Detecting screens...");
+			WLog_INFO(TAG, "ID\tResolution\t\tName (Interface)");
 
-			_tprintf(_T("Detecting screens...\n"));
-			_tprintf(_T("\nID\tResolution\t\tName (Interface)\n\n"));
-		
 			for (i=0; ; i++)
 			{
 				if (get_screen_info(i, name, &width, &height, &bpp) != 0)
@@ -78,8 +79,8 @@ int main(int argc, char* argv[])
 					if ( (width * height * bpp) == 0 )
 						continue;
 
-					_tprintf(_T("%d\t%dx%dx%d\t"), i, width, height, bpp);
-					_tprintf(_T("%s\n"), name);
+					WLog_INFO(TAG, "%d\t%dx%dx%d\t", i, width, height, bpp);
+					WLog_INFO(TAG, "%s", name);
 				}
 				else
 				{
@@ -92,11 +93,10 @@ int main(int argc, char* argv[])
 				int vscreen_h;
 				vscreen_w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 				vscreen_h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-
-				printf("\n");
+				WLog_INFO(TAG, "");
 				EnumDisplayMonitors(NULL, NULL, moncb, 0);
 				IDcount = 0;
-				printf("\nVirtual Screen = %dx%d\n", vscreen_w, vscreen_h);
+				WLog_INFO(TAG, "Virtual Screen = %dx%d", vscreen_w, vscreen_h);
 			}
 
 			return 0;
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 			index++;
 			if (index == argc)
 			{
-				printf("missing screen id parameter\n");
+				WLog_INFO(TAG, "missing screen id parameter");
 				return 0;
 			}
 
@@ -130,10 +130,9 @@ int main(int argc, char* argv[])
 		int height;
 		int bpp;
 		int i;
-
-		_tprintf(_T("screen id not provided. attempting to detect...\n"));
-		_tprintf(_T("Detecting screens...\n"));
-		_tprintf(_T("\nID\tResolution\t\tName (Interface)\n\n"));
+		WLog_INFO(TAG, "screen id not provided. attempting to detect...");
+		WLog_INFO(TAG, "Detecting screens...");
+		WLog_INFO(TAG, "ID\tResolution\t\tName (Interface)");
 
 		for (i=0; ; i++)
 		{
@@ -142,8 +141,8 @@ int main(int argc, char* argv[])
 				if ( (width * height * bpp) == 0 )
 					continue;
 
-				_tprintf(_T("%d\t%dx%dx%d\t"), i, width, height, bpp);
-				_tprintf(_T("%s\n"), name);
+				WLog_INFO(TAG, "%d\t%dx%dx%d\t", i, width, height, bpp);
+				WLog_INFO(TAG, "%s", name);
 				set_screen_id(i);
 				break;
 			}
@@ -154,14 +153,11 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	printf("Starting server\n");
-
+	WLog_INFO(TAG, "Starting server");
 	wfreerdp_server_start(server);
 
 	WaitForSingleObject(server->thread, INFINITE);
-
-	printf("Stopping server\n");
-
+	WLog_INFO(TAG, "Stopping server");
 	wfreerdp_server_stop(server);
 	wfreerdp_server_free(server);
 

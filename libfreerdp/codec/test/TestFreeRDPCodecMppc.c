@@ -4,6 +4,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/mppc.h>
+#include <freerdp/log.h>
 
 static BYTE TEST_RDP5_COMPRESSED_DATA[] =
 {
@@ -747,18 +748,13 @@ int test_MppcCompressBellsRdp5()
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
 	BYTE OutputBuffer[65536];
-
 	mppc = mppc_context_new(1, TRUE);
-
 	SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
 	pSrcData = (BYTE*) TEST_MPPC_BELLS;
 	expectedSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
-
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
-
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-
 	printf("Flags: 0x%04X DstSize: %d\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
@@ -770,18 +766,14 @@ int test_MppcCompressBellsRdp5()
 	if (memcmp(pDstData, TEST_MPPC_BELLS_RDP5, DstSize) != 0)
 	{
 		printf("MppcCompressBellsRdp5: output mismatch\n");
-
 		printf("Actual\n");
-		BitDump(pDstData, DstSize * 8, 0);
-
+		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(TEST_MPPC_BELLS_RDP5, DstSize * 8, 0);
-
+		BitDump(__FUNCTION__, WLOG_INFO, TEST_MPPC_BELLS_RDP5, DstSize * 8, 0);
 		return -1;
 	}
 
 	mppc_context_free(mppc);
-
 	return 0;
 }
 
@@ -796,18 +788,13 @@ int test_MppcCompressBellsRdp4()
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
 	BYTE OutputBuffer[65536];
-
 	mppc = mppc_context_new(0, TRUE);
-
 	SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
 	pSrcData = (BYTE*) TEST_MPPC_BELLS;
 	expectedSize = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
-
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
-
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
@@ -819,18 +806,14 @@ int test_MppcCompressBellsRdp4()
 	if (memcmp(pDstData, TEST_MPPC_BELLS_RDP4, DstSize) != 0)
 	{
 		printf("MppcCompressBellsRdp4: output mismatch\n");
-
 		printf("Actual\n");
-		BitDump(pDstData, DstSize * 8, 0);
-
+		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(TEST_MPPC_BELLS_RDP4, DstSize * 8, 0);
-
+		BitDump(__FUNCTION__, WLOG_INFO, TEST_MPPC_BELLS_RDP4, DstSize * 8, 0);
 		return -1;
 	}
 
 	mppc_context_free(mppc);
-
 	return 0;
 }
 
@@ -844,14 +827,11 @@ int test_MppcDecompressBellsRdp5()
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
 	BYTE* pDstData = NULL;
-
 	mppc = mppc_context_new(1, FALSE);
-
 	SrcSize = sizeof(TEST_MPPC_BELLS_RDP5) - 1;
 	pSrcData = (BYTE*) TEST_MPPC_BELLS_RDP5;
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
 	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
-
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
@@ -868,7 +848,6 @@ int test_MppcDecompressBellsRdp5()
 	}
 
 	mppc_context_free(mppc);
-
 	return 0;
 }
 
@@ -882,14 +861,11 @@ int test_MppcDecompressBellsRdp4()
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
 	BYTE* pDstData = NULL;
-
 	mppc = mppc_context_new(0, FALSE);
-
 	SrcSize = sizeof(TEST_MPPC_BELLS_RDP4) - 1;
 	pSrcData = (BYTE*) TEST_MPPC_BELLS_RDP4;
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 0;
 	expectedSize = sizeof(TEST_MPPC_BELLS) - 1;
-
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
@@ -906,7 +882,6 @@ int test_MppcDecompressBellsRdp4()
 	}
 
 	mppc_context_free(mppc);
-
 	return 0;
 }
 
@@ -921,18 +896,13 @@ int test_MppcCompressIslandRdp5()
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
 	BYTE OutputBuffer[65536];
-
 	mppc = mppc_context_new(1, TRUE);
-
 	SrcSize = sizeof(TEST_ISLAND_DATA) - 1;
 	pSrcData = (BYTE*) TEST_ISLAND_DATA;
 	expectedSize = sizeof(TEST_ISLAND_DATA_RDP5) - 1;
-
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
-
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-
 	printf("Flags: 0x%04X DstSize: %d\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
@@ -944,18 +914,14 @@ int test_MppcCompressIslandRdp5()
 	if (memcmp(pDstData, TEST_ISLAND_DATA_RDP5, DstSize) != 0)
 	{
 		printf("MppcCompressIslandRdp5: output mismatch\n");
-
 		printf("Actual\n");
-		BitDump(pDstData, DstSize * 8, 0);
-
+		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(TEST_ISLAND_DATA_RDP5, DstSize * 8, 0);
-
+		BitDump(__FUNCTION__, WLOG_INFO, TEST_ISLAND_DATA_RDP5, DstSize * 8, 0);
 		return -1;
 	}
 
 	mppc_context_free(mppc);
-
 	return 0;
 }
 
@@ -970,18 +936,13 @@ int test_MppcCompressBufferRdp5()
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
 	BYTE OutputBuffer[65536];
-
 	mppc = mppc_context_new(1, TRUE);
-
 	SrcSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
 	pSrcData = (BYTE*) TEST_RDP5_UNCOMPRESSED_DATA;
 	expectedSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
-
 	DstSize = sizeof(OutputBuffer);
 	pDstData = OutputBuffer;
-
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
-
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
 	if (DstSize != expectedSize)
@@ -997,7 +958,6 @@ int test_MppcCompressBufferRdp5()
 	}
 
 	mppc_context_free(mppc);
-
 	return 0;
 }
 
@@ -1011,14 +971,11 @@ int test_MppcDecompressBufferRdp5()
 	MPPC_CONTEXT* mppc;
 	UINT32 expectedSize;
 	BYTE* pDstData = NULL;
-
 	mppc = mppc_context_new(1, FALSE);
-
 	SrcSize = sizeof(TEST_RDP5_COMPRESSED_DATA);
 	pSrcData = (BYTE*) TEST_RDP5_COMPRESSED_DATA;
 	Flags = PACKET_AT_FRONT | PACKET_COMPRESSED | 1;
 	expectedSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
-
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
@@ -1035,7 +992,6 @@ int test_MppcDecompressBufferRdp5()
 	}
 
 	mppc_context_free(mppc);
-
 	return 0;
 }
 

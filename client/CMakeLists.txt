@@ -36,6 +36,10 @@ if(FREERDP_VENDOR)
 		add_subdirectory(X11)
 	endif()
 
+	if(WITH_WAYLAND)
+		add_subdirectory(Wayland)
+	endif()
+
 	if(APPLE)
 		if(IOS)
 			if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/iOS")

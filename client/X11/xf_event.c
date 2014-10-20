@@ -25,6 +25,7 @@
 #include <X11/Xutil.h>
 
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/log.h>
 
 #include "xf_rail.h"
 #include "xf_window.h"
@@ -34,6 +35,8 @@
 
 #include "xf_event.h"
 #include "xf_input.h"
+
+#define TAG CLIENT_TAG("x11")
 
 #define CLAMP_COORDINATES(x, y) if (x < 0) x = 0; if (y < 0) y = 0
 
@@ -77,15 +80,15 @@ const char* const X11_EVENT_STRINGS[] =
 };
 
 #ifdef WITH_DEBUG_X11
-#define DEBUG_X11(fmt, ...) DEBUG_CLASS(X11, fmt, ## __VA_ARGS__)
+#define DEBUG_X11(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_X11(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_X11(fmt, ...) do { } while (0)
 #endif
 
 #ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
-#define DEBUG_X11_LMS(fmt, ...) DEBUG_CLASS(X11_LMS, fmt, ## __VA_ARGS__)
+#define DEBUG_X11_LMS(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_X11_LMS(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_X11_LMS(fmt, ...) do { } while (0)
 #endif
 
 int xf_event_action_script_init(xfContext* xfc)
@@ -545,9 +548,6 @@ static BOOL xf_event_FocusIn(xfContext* xfc, XEvent* event, BOOL app)
 
 	xf_keyboard_focus_in(xfc);
 
-	if (!app)
-		xf_cliprdr_check_owner(xfc);
-
 	return TRUE;
 }
 
@@ -793,39 +793,6 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, XEvent* event, BOOL app)
 	return TRUE;
 }
 
-static BOOL xf_event_SelectionNotify(xfContext* xfc, XEvent* event, BOOL app)
-{
-	if (!app)
-	{
-		if (xf_cliprdr_process_selection_notify(xfc, event))
-			return TRUE;
-	}
-
-	return TRUE;
-}
-
-static BOOL xf_event_SelectionRequest(xfContext* xfc, XEvent* event, BOOL app)
-{
-	if (!app)
-	{
-		if (xf_cliprdr_process_selection_request(xfc, event))
-			return TRUE;
-	}
-
-	return TRUE;
-}
-
-static BOOL xf_event_SelectionClear(xfContext* xfc, XEvent* event, BOOL app)
-{
-	if (!app)
-	{
-		if (xf_cliprdr_process_selection_clear(xfc, event))
-			return TRUE;
-	}
-
-	return TRUE;
-}
-
 static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	/*
@@ -922,11 +889,6 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 	                }
                }       
         }
-	else
-	{
-		if (xf_cliprdr_process_property_notify(xfc, event))
-			return TRUE;
-	}
 
 	return TRUE;
 }
@@ -1112,22 +1074,15 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 			status = xf_event_ClientMessage(xfc, event, xfc->remote_app);
 			break;
 
-		case SelectionNotify:
-			status = xf_event_SelectionNotify(xfc, event, xfc->remote_app);
-			break;
-
-		case SelectionRequest:
-			status = xf_event_SelectionRequest(xfc, event, xfc->remote_app);
-			break;
-
-		case SelectionClear:
-			status = xf_event_SelectionClear(xfc, event, xfc->remote_app);
-			break;
-
 		case PropertyNotify:
 			status = xf_event_PropertyNotify(xfc, event, xfc->remote_app);
 			break;
 
+	}
+
+	if (!xfc->remote_app)
+	{
+		xf_cliprdr_handle_xevent(xfc, event);
 	}
 
 	xf_input_handle_event(xfc, event);

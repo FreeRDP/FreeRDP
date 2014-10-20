@@ -22,7 +22,7 @@
 #ifndef __WF_GDI_H
 #define __WF_GDI_H
 
-#include "wf_interface.h"
+#include "wf_client.h"
 
 void wf_invalidate_region(wfContext* wfc, int x, int y, int width, int height);
 wfBitmap* wf_image_new(wfContext* wfc, int width, int height, int bpp, BYTE* data);
@@ -31,6 +31,7 @@ void wf_update_offset(wfContext* wfc);
 void wf_resize_window(wfContext* wfc);
 void wf_toggle_fullscreen(wfContext* wfc);
 
+void wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate);
 void wf_gdi_register_update_callbacks(rdpUpdate* update);
 
 void wf_update_canvas_diff(wfContext* wfc);

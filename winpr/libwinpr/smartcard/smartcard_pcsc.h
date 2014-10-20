@@ -78,9 +78,7 @@ typedef long PCSC_LONG;
 #define PCSC_SCARD_CTL_CODE(code)		(0x42000000 + (code))
 #define PCSC_CM_IOCTL_GET_FEATURE_REQUEST	SCARD_CTL_CODE(3400)
 
-#ifdef __APPLE__
-#pragma pack(1)
-#endif
+#pragma pack(push, 1)
 
 typedef struct
 {
@@ -99,16 +97,6 @@ typedef struct
 	PCSC_DWORD cbPciLength;
 } PCSC_SCARD_IO_REQUEST;
 
-#ifdef __APPLE__
-#pragma pack()
-#endif
-
-#if defined(__APPLE__) | defined(sun)
-#pragma pack(1)
-#else
-#pragma pack(push, 1)
-#endif
-
 typedef struct
 {
 	BYTE tag;
@@ -116,11 +104,7 @@ typedef struct
 	UINT32 value;
 } PCSC_TLV_STRUCTURE;
 
-#if defined(__APPLE__) | defined(sun)
-#pragma pack()
-#else
 #pragma pack(pop)
-#endif
 
 struct _PCSCFunctionTable
 {

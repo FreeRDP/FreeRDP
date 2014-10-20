@@ -27,9 +27,11 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 
 #include <freerdp/client/rdpei.h>
+
+#define TAG CHANNELS_TAG("rdpei.client")
 
 #define RDPINPUT_HEADER_LENGTH				6
 
@@ -100,9 +102,9 @@ struct _RDPINPUT_CONTACT_POINT
 typedef struct _RDPINPUT_CONTACT_POINT RDPINPUT_CONTACT_POINT;
 
 #ifdef WITH_DEBUG_DVC
-#define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) do { } while (0)
 #endif
 
 #endif /* FREERDP_CHANNEL_RDPEI_CLIENT_MAIN_H */

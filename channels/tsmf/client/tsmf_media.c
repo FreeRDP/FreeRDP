@@ -271,7 +271,7 @@ TSMF_PRESENTATION *tsmf_presentation_new(const BYTE *guid, IWTSVirtualChannelCal
 
 	if (!presentation)
 	{
-		DEBUG_WARN("calloc failed");
+		WLog_ERR(TAG, "calloc failed");
 		return NULL;
 	}
 
@@ -320,7 +320,7 @@ TSMF_PRESENTATION *tsmf_presentation_find_by_id(const BYTE *guid)
 	ArrayList_Unlock(presentation_list);
 
 	if (!found)
-		DEBUG_WARN("presentation id %s not found", guid_to_string(guid, guid_str, sizeof(guid_str)));
+		WLog_WARN(TAG, "presentation id %s not found", guid_to_string(guid, guid_str, sizeof(guid_str)));
 
 	return (found) ? presentation : NULL;
 }
@@ -902,7 +902,7 @@ TSMF_STREAM *tsmf_stream_new(TSMF_PRESENTATION *presentation, UINT32 stream_id)
 
 	if (stream)
 	{
-		DEBUG_WARN("duplicated stream id %d!", stream_id);
+		WLog_ERR(TAG, "duplicated stream id %d!", stream_id);
 		return NULL;
 	}
 
@@ -910,7 +910,7 @@ TSMF_STREAM *tsmf_stream_new(TSMF_PRESENTATION *presentation, UINT32 stream_id)
 
 	if (!stream)
 	{
-		DEBUG_WARN("Calloc failed");
+		WLog_ERR(TAG, "Calloc failed");
 		return NULL;
 	}
 
@@ -966,7 +966,7 @@ void tsmf_stream_set_format(TSMF_STREAM *stream, const char *name, wStream *s)
 
 	if (stream->decoder)
 	{
-		DEBUG_WARN("duplicated call");
+		WLog_ERR(TAG, "duplicated call");
 		return;
 	}
 
@@ -1071,7 +1071,7 @@ void tsmf_stream_push_sample(TSMF_STREAM *stream, IWTSVirtualChannelCallback *pC
 
 	if (!sample)
 	{
-		DEBUG_WARN("calloc failed!");
+		WLog_ERR(TAG, "calloc failed!");
 		return;
 	}
 
@@ -1087,7 +1087,7 @@ void tsmf_stream_push_sample(TSMF_STREAM *stream, IWTSVirtualChannelCallback *pC
 
 	if (!sample->data)
 	{
-		DEBUG_WARN("calloc failed!");
+		WLog_ERR(TAG, "calloc failed!");
 		free(sample);
 		return;
 	}

@@ -410,8 +410,6 @@ typedef struct tagWTSSESSION_NOTIFICATION
 #define WTS_SESSION_LOCK			0x7
 #define WTS_SESSION_UNLOCK			0x8
 #define WTS_SESSION_REMOTE_CONTROL		0x9
-#define WTS_SESSION_CREATE			0xA
-#define WTS_SESSION_TERMINATE			0xB
 
 #ifdef __cplusplus
 extern "C" {
@@ -453,10 +451,12 @@ WINPR_API HWND WINAPI CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName,
 		LPCWSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight,
 		HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 
+#ifndef WINPR_NO_CREATE_WINDOW
 #define CreateWindowA(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam) \
 		CreateWindowExA(0L, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam)
 #define CreateWindowW(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam) \
 		CreateWindowExW(0L, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam)
+#endif
 
 WINPR_API HWND WINAPI FindWindowA(LPCSTR lpClassName, LPCSTR lpWindowName);
 WINPR_API HWND WINAPI FindWindowW(LPCWSTR lpClassName, LPCWSTR lpWindowName);
@@ -519,7 +519,9 @@ WINPR_API LRESULT WINAPI DefWindowProcW(HWND hWnd, UINT Msg, WPARAM wParam, LPAR
 #define RegisterClass		RegisterClassW
 #define RegisterClassEx		RegisterClassExW
 #define UnregisterClass		UnregisterClassW
+#ifndef WINPR_NO_CREATE_WINDOW
 #define CreateWindow		CreateWindowW
+#endif
 #define CreateWindowEx		CreateWindowExW
 #define FindWindow		FindWindowW
 #define FindWindowEx		FindWindowExW
@@ -540,7 +542,9 @@ WINPR_API LRESULT WINAPI DefWindowProcW(HWND hWnd, UINT Msg, WPARAM wParam, LPAR
 #define RegisterClass		RegisterClassA
 #define RegisterClassEx		RegisterClassExA
 #define UnregisterClass		UnregisterClassA
+#ifndef WINPR_NO_CREATE_WINDOW
 #define CreateWindow		CreateWindowA
+#endif
 #define CreateWindowEx		CreateWindowExA
 #define FindWindow		FindWindowA
 #define FindWindowEx		FindWindowExA
@@ -559,6 +563,14 @@ WINPR_API LRESULT WINAPI DefWindowProcW(HWND hWnd, UINT Msg, WPARAM wParam, LPAR
 }
 #endif
 
+#endif
+
+#ifndef WTS_SESSION_CREATE
+#define WTS_SESSION_CREATE			0xA
+#endif
+
+#ifndef WTS_SESSION_TERMINATE
+#define WTS_SESSION_TERMINATE			0xB
 #endif
 
 #endif /* WINPR_WND_H */

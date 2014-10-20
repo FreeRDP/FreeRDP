@@ -41,6 +41,9 @@
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/version.h>
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("core")
 
 /* connectErrorCode is 'extern' in error.h. See comment there.*/
 
@@ -90,8 +93,7 @@ BOOL freerdp_connect(freerdp* instance)
 			freerdp_set_last_error(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
 		}
 
-		fprintf(stderr, "freerdp_pre_connect failed\n");
-
+		WLog_ERR(TAG,  "freerdp_pre_connect failed");
 		goto freerdp_connect_finally;
 	}
 
@@ -100,7 +102,7 @@ BOOL freerdp_connect(freerdp* instance)
 	/* --authonly tests the connection without a UI */
 	if (instance->settings->AuthenticationOnly)
 	{
-		fprintf(stderr, "Authentication only, exit status %d\n", !status);
+		WLog_ERR(TAG,  "Authentication only, exit status %d", !status);
 		goto freerdp_connect_finally;
 	}
 
@@ -118,7 +120,7 @@ BOOL freerdp_connect(freerdp* instance)
 
 		if (!status)
 		{
-			fprintf(stderr, "freerdp_post_connect failed\n");
+			WLog_ERR(TAG,  "freerdp_post_connect failed");
 
 			if (!connectErrorCode)
 			{
@@ -317,6 +319,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 	rdp = instance->context->rdp;
 	transport_disconnect(rdp->transport);
 
+	update_post_disconnect(instance->update);
 	IFCALL(instance->PostDisconnect, instance);
 
 	if (instance->update->pcap_rfx)
@@ -353,6 +356,14 @@ FREERDP_API BOOL freerdp_focus_required(freerdp* instance)
 	}
 
 	return bRetCode;
+}
+
+void freerdp_set_focus(freerdp* instance)
+{
+	rdpRdp* rdp;
+
+	rdp = instance->context->rdp;
+	rdp->resendFocus = TRUE;
 }
 
 void freerdp_get_version(int* major, int* minor, int* revision)
@@ -409,6 +420,7 @@ int freerdp_context_new(freerdp* instance)
 	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEventType));
 
 	context->metrics = metrics_new(context);
+	context->codecs = codecs_new(context);
 
 	rdp = rdp_new(context);
 	instance->input = rdp->input;
@@ -464,6 +476,7 @@ void freerdp_context_free(freerdp* instance)
 	PubSub_Free(instance->context->pubSub);
 
 	metrics_free(instance->context->metrics);
+	codecs_free(instance->context->codecs);
 
 	free(instance->context);
 	instance->context = NULL;
@@ -482,7 +495,7 @@ UINT32 freerdp_get_last_error(rdpContext* context)
 void freerdp_set_last_error(rdpContext* context, UINT32 lastError)
 {
 	if (lastError)
-		fprintf(stderr, "freerdp_set_last_error 0x%04X\n", lastError);
+		WLog_ERR(TAG,  "freerdp_set_last_error 0x%04X", lastError);
 
 	context->LastError = lastError;
 }

@@ -141,8 +141,8 @@ void android_cliprdr_init(freerdp* inst)
 	cb->channels = inst->context->channels;
 	
 	cb->android_formats = (UINT32*)malloc(sizeof(UINT32) * 3);
-	cb->android_formats[0] = CB_FORMAT_TEXT;
-	cb->android_formats[1] = CB_FORMAT_UNICODETEXT;
+	cb->android_formats[0] = CF_TEXT;
+	cb->android_formats[1] = CF_UNICODETEXT;
 	cb->android_formats[2] = CB_FORMAT_HTML;
 	cb->android_num_formats = 3;
 
@@ -381,21 +381,18 @@ static void android_cliprdr_process_cb_data_request_event(clipboardContext* cb, 
 
 		switch (event->format)
 		{
-			case CB_FORMAT_RAW:
-			case CB_FORMAT_PNG:
-			case CB_FORMAT_JPEG:
-			case CB_FORMAT_GIF:
-			case CB_FORMAT_DIB:
+			case 0:
+			case CF_DIB:
 			default:
 				DEBUG_ANDROID("unsupported format %x\n", event->format);
 				outbuf = NULL;
 				break;
 
-			case CB_FORMAT_UNICODETEXT:
+			case CF_UNICODETEXT:
 				outbuf = android_cliprdr_process_requested_unicodetext(cb->android_data, &size);
 				break;
 
-			case CB_FORMAT_TEXT:
+			case CF_TEXT:
 				outbuf = android_cliprdr_process_requested_text(cb->android_data, &size);
 				break;
 
@@ -436,21 +433,21 @@ static void android_cliprdr_process_cb_format_list_event(clipboardContext* cb, R
 	if (cb->formats)
 		free(cb->formats);
 
-	cb->data_format = CB_FORMAT_RAW;
+	cb->data_format = 0;
 	cb->formats = event->formats;
 	cb->num_formats = event->num_formats;
 	event->formats = NULL;
 	event->num_formats = 0;
 
-	if (android_cliprdr_has_format(cb->formats, cb->num_formats, CB_FORMAT_TEXT))
+	if (android_cliprdr_has_format(cb->formats, cb->num_formats, CF_TEXT))
 	{
-		cb->data_format = CB_FORMAT_TEXT;
-		android_cliprdr_send_data_request(cb, CB_FORMAT_TEXT);		
+		cb->data_format = CF_TEXT;
+		android_cliprdr_send_data_request(cb, CF_TEXT);
 	}
-	else if (android_cliprdr_has_format(cb->formats, cb->num_formats, CB_FORMAT_UNICODETEXT))
+	else if (android_cliprdr_has_format(cb->formats, cb->num_formats, CF_UNICODETEXT))
 	{
-		cb->data_format = CB_FORMAT_UNICODETEXT;
-		android_cliprdr_send_data_request(cb, CB_FORMAT_UNICODETEXT);
+		cb->data_format = CF_UNICODETEXT;
+		android_cliprdr_send_data_request(cb, CF_UNICODETEXT);
 	}
 	else if (android_cliprdr_has_format(cb->formats, cb->num_formats, CB_FORMAT_HTML))
 	{
@@ -518,20 +515,17 @@ static void android_cliprdr_process_cb_data_response_event(clipboardContext* cb,
 		}
 		switch (cb->data_format)
 		{
-			case CB_FORMAT_RAW:
-			case CB_FORMAT_PNG:
-			case CB_FORMAT_JPEG:
-			case CB_FORMAT_GIF:
-			case CB_FORMAT_DIB:
+			case 0:
+			case CF_DIB:
 			default:
 				DEBUG_ANDROID("unsupported format\n");
 				break;
 
-			case CB_FORMAT_TEXT:
+			case CF_TEXT:
 				android_cliprdr_process_text(cb, event->data, event->size - 1);
 				break;
 
-			case CB_FORMAT_UNICODETEXT:
+			case CF_UNICODETEXT:
 				android_cliprdr_process_unicodetext(cb, event->data, event->size - 2);
 				break;
 

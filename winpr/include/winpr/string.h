@@ -181,6 +181,11 @@ WINPR_API int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteS
 WINPR_API int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
 		LPSTR* lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar);
 
+WINPR_API void ByteSwapUnicode(WCHAR* wstr, int length);
+
+WINPR_API int ConvertLineEndingToLF(char* str, int size);
+WINPR_API char* ConvertLineEndingToCRLF(const char* str, int* size);
+
 #ifdef __cplusplus
 }
 #endif

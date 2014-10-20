@@ -32,9 +32,9 @@ int TestIni(int argc, char* argv[])
 	int i, j;
 	int nKeys;
 	int nSections;
-	char* sValue;
 	UINT32 iValue;
 	wIniFile* ini;
+	const char* sValue;
 	char** keyNames;
 	char** sectionNames;
 
@@ -42,7 +42,7 @@ int TestIni(int argc, char* argv[])
 	
 	ini = IniFile_New();
 
-	IniFile_ParseString(ini, TEST_INI_01);
+	IniFile_ReadBuffer(ini, TEST_INI_01);
 	
 	sectionNames = IniFile_GetSectionNames(ini, &nSections);
 	
@@ -109,7 +109,7 @@ int TestIni(int argc, char* argv[])
 
 	ini = IniFile_New();
 
-	IniFile_ParseString(ini, TEST_INI_02);
+	IniFile_ReadBuffer(ini, TEST_INI_02);
 	
 	sectionNames = IniFile_GetSectionNames(ini, &nSections);
 	

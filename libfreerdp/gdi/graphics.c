@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/brush.h>
 #include <freerdp/gdi/shape.h>
@@ -40,15 +41,66 @@
 
 #include "graphics.h"
 
+#define TAG FREERDP_TAG("gdi")
 /* Bitmap Class */
 
-HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int width, int height, int bpp, BYTE* data)
+HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, int nWidth, int nHeight, int bpp, BYTE* data)
 {
-	BYTE* bmpData;
+	int nSrcStep;
+	int nDstStep;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	UINT32 SrcFormat;
+	int bytesPerPixel;
 	HGDI_BITMAP bitmap;
 
-	bmpData = freerdp_image_convert(data, NULL, width, height, gdi->srcBpp, bpp, gdi->clrconv);
-	bitmap = gdi_CreateBitmap(width, height, gdi->dstBpp, bmpData);
+	nDstStep = nWidth * gdi->bytesPerPixel;
+	pDstData = _aligned_malloc(nHeight * nDstStep, 16);
+
+	if (!pDstData)
+		return NULL;
+
+	pSrcData = data;
+
+	switch (bpp)
+	{
+		case 32:
+			bytesPerPixel = 4;
+			SrcFormat = PIXEL_FORMAT_XRGB32;
+			break;
+
+		case 24:
+			bytesPerPixel = 3;
+			SrcFormat = PIXEL_FORMAT_RGB24;
+			break;
+
+		case 16:
+			bytesPerPixel = 2;
+			SrcFormat = PIXEL_FORMAT_RGB565;
+			break;
+
+		case 15:
+			bytesPerPixel = 2;
+			SrcFormat = PIXEL_FORMAT_RGB555;
+			break;
+
+		case 8:
+			bytesPerPixel = 1;
+			SrcFormat = PIXEL_FORMAT_RGB8;
+			break;
+
+		default:
+			SrcFormat = PIXEL_FORMAT_RGB565;
+			bytesPerPixel = 2;
+			break;
+	}
+
+	nSrcStep = nWidth * bytesPerPixel;
+
+	freerdp_image_copy(pDstData, gdi->format, nDstStep, 0, 0,
+			nWidth, nHeight, pSrcData, SrcFormat, nSrcStep, 0, 0, gdi->palette);
+
+	bitmap = gdi_CreateBitmap(nWidth, nHeight, gdi->dstBpp, pDstData);
 
 	return bitmap;
 }
@@ -61,10 +113,10 @@ void gdi_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	gdi_bitmap = (gdiBitmap*) bitmap;
 	gdi_bitmap->hdc = gdi_CreateCompatibleDC(gdi->hdc);
 
-	if (bitmap->data == NULL)
+	if (!bitmap->data)
 		gdi_bitmap->bitmap = gdi_CreateCompatibleBitmap(gdi->hdc, bitmap->width, bitmap->height);
 	else
-		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, gdi->dstBpp, bitmap->data);
+		gdi_bitmap->bitmap = gdi_create_bitmap(gdi, bitmap->width, bitmap->height, bitmap->bpp, bitmap->data);
 
 	gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->bitmap);
 	gdi_bitmap->org_bitmap = NULL;
@@ -74,7 +126,7 @@ void gdi_Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	gdiBitmap* gdi_bitmap = (gdiBitmap*) bitmap;
 
-	if (gdi_bitmap != NULL)
+	if (gdi_bitmap)
 	{
 		gdi_SelectObject(gdi_bitmap->hdc, (HGDIOBJECT) gdi_bitmap->org_bitmap);
 		gdi_DeleteObject((HGDIOBJECT) gdi_bitmap->bitmap);
@@ -98,85 +150,58 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 		BYTE* data, int width, int height, int bpp, int length,
 		BOOL compressed, int codecId)
 {
-	BOOL status;
+	int status;
 	UINT16 size;
-	BYTE* src;
-	BYTE* dst;
-	int yindex;
-	int xindex;
-	rdpGdi* gdi;
-	RFX_MESSAGE* msg;
+	BYTE* pSrcData;
+	BYTE* pDstData;
+	UINT32 SrcSize;
+	UINT32 SrcFormat;
+	UINT32 bytesPerPixel;
+	rdpGdi* gdi = context->gdi;
 
-	size = width * height * ((bpp + 7) / 8);
+	bytesPerPixel = (bpp + 7) / 8;
+	size = width * height * 4;
 
-	if (!bitmap->data)
-		bitmap->data = (BYTE*) malloc(size);
-	else
-		bitmap->data = (BYTE*) realloc(bitmap->data, size);
+	bitmap->data = (BYTE*) _aligned_malloc(size, 16);
 
-	switch (codecId)
+	pSrcData = data;
+	SrcSize = (UINT32) length;
+	pDstData = bitmap->data;
+
+	if (compressed)
 	{
-		case RDP_CODEC_ID_NSCODEC:
-			gdi = context->gdi;
-			nsc_process_message(gdi->nsc_context, bpp, width, height, data, length);
-			freerdp_image_flip(((NSC_CONTEXT*) gdi->nsc_context)->BitmapData, bitmap->data, width, height, bpp);
-			break;
+		if (bpp < 32)
+		{
+			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_INTERLEAVED);
 
-		case RDP_CODEC_ID_REMOTEFX:
-			gdi = context->gdi;
-			rfx_context_set_pixel_format(gdi->rfx_context, RDP_PIXEL_FORMAT_B8G8R8A8);
-			msg = rfx_process_message(gdi->rfx_context, data, length);
-			if (!msg)
-			{
-				fprintf(stderr, "gdi_Bitmap_Decompress: rfx Decompression Failed\n");
-			}
-			else
-			{
-				for (yindex = 0; yindex < height; yindex++)
-				{
-					src = msg->tiles[0]->data + yindex * 64 * 4;
-					dst = bitmap->data + yindex * width * 3;
-					for (xindex = 0; xindex < width; xindex++)
-					{
-						*(dst++) = *(src++);
-						*(dst++) = *(src++);
-						*(dst++) = *(src++);
-						src++;
-					}
-				}
-				rfx_message_free(gdi->rfx_context, msg);
-			}
-			break;
-		case RDP_CODEC_ID_JPEG:
-#ifdef WITH_JPEG
-			if (!jpeg_decompress(data, bitmap->data, width, height, length, bpp))
-			{
-				fprintf(stderr, "gdi_Bitmap_Decompress: jpeg Decompression Failed\n");
-			}
-#endif
-			break;
-		default:
-			if (compressed)
-			{
-				status = bitmap_decompress(data, bitmap->data, width, height, length, bpp, bpp);
+			status = interleaved_decompress(gdi->codecs->interleaved, pSrcData, SrcSize, bpp,
+					&pDstData, gdi->format, -1, 0, 0, width, height, gdi->palette);
+		}
+		else
+		{
+			freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_PLANAR);
 
-				if (!status)
-				{
-					fprintf(stderr, "gdi_Bitmap_Decompress: Bitmap Decompression Failed\n");
-				}
-			}
-			else
-			{
-				freerdp_image_flip(data, bitmap->data, width, height, bpp);
-			}
-			break;
+			status = planar_decompress(gdi->codecs->planar, pSrcData, SrcSize, &pDstData,
+					gdi->format, -1, 0, 0, width, height, TRUE);
+		}
+
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "Bitmap Decompression Failed");
+			return;
+		}
+	}
+	else
+	{
+		SrcFormat = gdi_get_pixel_format(bpp, TRUE);
+
+		status = freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
+				width, height, pSrcData, SrcFormat, -1, 0, 0, gdi->palette);
 	}
 
-	bitmap->width = width;
-	bitmap->height = height;
 	bitmap->compressed = FALSE;
 	bitmap->length = size;
-	bitmap->bpp = bpp;
+	bitmap->bpp = gdi->dstBpp;
 }
 
 void gdi_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL primary)
@@ -217,7 +242,7 @@ void gdi_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
 
 	gdi_glyph = (gdiGlyph*) glyph;
 
-	if (gdi_glyph != 0)
+	if (gdi_glyph)
 	{
 		gdi_SelectObject(gdi_glyph->hdc, (HGDIOBJECT) gdi_glyph->org_bitmap);
 		gdi_DeleteObject((HGDIOBJECT) gdi_glyph->bitmap);
@@ -242,8 +267,8 @@ void gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int heigh
 	HGDI_BRUSH brush;
 	rdpGdi* gdi = context->gdi;
 
-	bgcolor = freerdp_color_convert_var_bgr(bgcolor, gdi->srcBpp, 32, gdi->clrconv);
-	fgcolor = freerdp_color_convert_var_bgr(fgcolor, gdi->srcBpp, 32, gdi->clrconv);
+	bgcolor = freerdp_convert_gdi_order_color(bgcolor, gdi->srcBpp, gdi->format, gdi->palette);
+	fgcolor = freerdp_convert_gdi_order_color(fgcolor, gdi->srcBpp, gdi->format, gdi->palette);
 
 	gdi_CRgnToRect(x, y, width, height, &rect);
 
@@ -258,7 +283,7 @@ void gdi_Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height,
 {
 	rdpGdi* gdi = context->gdi;
 
-	bgcolor = freerdp_color_convert_var_bgr(bgcolor, gdi->srcBpp, 32, gdi->clrconv);
+	bgcolor = freerdp_convert_gdi_order_color(bgcolor, gdi->srcBpp, gdi->format, gdi->palette);
 	gdi->textColor = gdi_SetTextColor(gdi->drawing->hdc, bgcolor);
 }
 

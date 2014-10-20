@@ -47,20 +47,18 @@ add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIRS})
 
-set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+if (WITH_LIBRARY_VERSIONING)
+  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+endif()
+set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
 	${FREERDP_CHANNELS_CLIENT_LIBS})
 	
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-core)
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-utils)
-
-
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS}
+	${OPENSSL_LIBRARIES} ${ZLIB_LIBRARIES})
+	
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
@@ -71,4 +69,5 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Common")
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
+
 export_complex_library(LIBNAME ${MODULE_NAME})

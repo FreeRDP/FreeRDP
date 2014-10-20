@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
@@ -41,6 +42,8 @@
 #endif
 
 #include <winpr/crt.h>
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("common")
 
 //#define DEBUG_CLIENT_FILE	1
 
@@ -54,7 +57,7 @@ BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, int va
 	BOOL bStandard = TRUE;
 
 #ifdef DEBUG_CLIENT_FILE
-	fprintf(stderr, "%s:i:%d\n", name, value);
+	WLog_DBG(TAG,  "%s:i:%d", name, value);
 #endif
 
 	if (_stricmp(name, "use multimon") == 0)
@@ -240,7 +243,7 @@ BOOL freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, const c
 	BOOL bStandard = TRUE;
 
 #ifdef DEBUG_CLIENT_FILE
-	fprintf(stderr, "%s:s:%s\n", name, value);
+	WLog_DBG(TAG,  "%s:s:%s", name, value);
 #endif
 
 	if (_stricmp(name, "username") == 0)
@@ -665,7 +668,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 
 	if (length < 0)
 	{
-		fprintf(stderr, "freerdp_client_write_rdp_file: error determining buffer size.\n");
+		WLog_ERR(TAG,  "freerdp_client_write_rdp_file: error determining buffer size.");
 		return FALSE;
 	}
 
@@ -673,7 +676,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 
 	if (freerdp_client_write_rdp_file_buffer(file, buffer, length + 1) != length)
 	{
-		fprintf(stderr, "freerdp_client_write_rdp_file: error writing to output buffer\n");
+		WLog_ERR(TAG,  "freerdp_client_write_rdp_file: error writing to output buffer");
 		free(buffer);
 		return FALSE;
 	}
@@ -1011,6 +1014,11 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 */
 
 		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, TRUE);
+	}
+
+	if (~file->KeyboardHook)
+	{
+		freerdp_set_param_uint32(settings, FreeRDP_KeyboardHook, file->KeyboardHook);
 	}
 
 	if (file->argc > 1)

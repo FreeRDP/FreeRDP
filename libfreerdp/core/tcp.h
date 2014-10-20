@@ -46,12 +46,10 @@ typedef struct rdp_tcp rdpTcp;
 struct rdp_tcp
 {
 	int sockfd;
+	BOOL ipcSocket;
 	char ip_address[32];
 	BYTE mac_address[6];
 	rdpSettings* settings;
-#ifdef _WIN32
-	WSAEVENT wsa_event;
-#endif
 	BIO* socketBio;
 	BIO* bufferedBio;
 	RingBuffer xmitBuffer;
@@ -64,8 +62,8 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout);
 BOOL tcp_disconnect(rdpTcp* tcp);
 int tcp_read(rdpTcp* tcp, BYTE* data, int length);
 int tcp_write(rdpTcp* tcp, BYTE* data, int length);
-int tcp_wait_read(rdpTcp* tcp);
-int tcp_wait_write(rdpTcp* tcp);
+int tcp_wait_read(rdpTcp* tcp, DWORD dwMilliSeconds);
+int tcp_wait_write(rdpTcp* tcp, DWORD dwMilliSeconds);
 BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking);
 BOOL tcp_set_keep_alive_mode(rdpTcp* tcp);
 int tcp_attach(rdpTcp* tcp, int sockfd);

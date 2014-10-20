@@ -21,10 +21,13 @@
 #define FREERDP_GDI_H
 
 #include <freerdp/api.h>
+#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/cache/cache.h>
-#include <freerdp/utils/debug.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/codec/region.h>
+
+#include <freerdp/client/rdpgfx.h>
 
 /* For more information, see [MS-RDPEGDI] */
 
@@ -279,17 +282,27 @@ struct rdp_gdi
 	int cursor_x;
 	int cursor_y;
 	int bytesPerPixel;
+	rdpCodecs* codecs;
 
+	BOOL invert;
 	HGDI_DC hdc;
+	UINT32 format;
 	HCLRCONV clrconv;
 	gdiBitmap* primary;
 	gdiBitmap* drawing;
+	UINT32 bitmap_size;
+	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	GDI_COLOR textColor;
-	void* rfx_context;
-	void* nsc_context;
+	BYTE palette[256 * 4];
 	gdiBitmap* tile;
 	gdiBitmap* image;
+
+	BOOL inGfxFrame;
+	BOOL graphicsReset;
+	UINT16 outputSurfaceId;
+	REGION16 invalidRegion;
+	RdpgfxClientContext* gfx;
 };
 
 #ifdef __cplusplus
@@ -297,9 +310,9 @@ extern "C" {
 #endif
 
 FREERDP_API UINT32 gdi_rop3_code(BYTE code);
+FREERDP_API UINT32 gdi_get_pixel_format(UINT32 bitsPerPixel, BOOL vFlip);
 FREERDP_API BYTE* gdi_get_bitmap_pointer(HGDI_DC hdcBmp, int x, int y);
 FREERDP_API BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, int x, int y);
-FREERDP_API int gdi_is_mono_pixel_set(BYTE* data, int x, int y, int width);
 FREERDP_API void gdi_resize(rdpGdi* gdi, int width, int height);
 
 FREERDP_API int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer);
@@ -309,10 +322,11 @@ FREERDP_API void gdi_free(freerdp* instance);
 }
 #endif
 
+#define GDI_TAG FREERDP_TAG("gdi")
 #ifdef WITH_DEBUG_GDI
-#define DEBUG_GDI(fmt, ...) DEBUG_CLASS(GDI, fmt, ## __VA_ARGS__)
+#define DEBUG_GDI(fmt, ...) WLog_DBG(GDI_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_GDI(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_GDI(fmt, ...)
 #endif
 
 #endif /* FREERDP_GDI_H */

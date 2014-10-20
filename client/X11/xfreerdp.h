@@ -34,6 +34,8 @@ typedef struct xf_context xfContext;
 #include <freerdp/codec/clear.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/h264.h>
+#include <freerdp/codec/progressive.h>
 #include <freerdp/codec/region.h>
 
 struct xf_WorkArea
@@ -66,6 +68,8 @@ struct xf_glyph
 };
 typedef struct xf_glyph xfGlyph;
 
+typedef struct xf_clipboard xfClipboard;
+
 struct xf_context
 {
 	rdpContext context;
@@ -73,6 +77,7 @@ struct xf_context
 
 	freerdp* instance;
 	rdpSettings* settings;
+	rdpCodecs* codecs;
 
 	GC gc;
 	int bpp;
@@ -82,6 +87,8 @@ struct xf_context
 	int height;
 	int srcBpp;
 	GC gc_mono;
+	BOOL invert;
+	UINT32 format;
 	Screen* screen;
 	XImage* image;
 	Pixmap primary;
@@ -108,8 +115,11 @@ struct xf_context
 	HANDLE mutex;
 	BOOL UseXThreads;
 	BOOL cursorHidden;
+	BYTE palette[256 * 4];
 
 	HGDI_DC hdc;
+	UINT32 bitmap_size;
+	BYTE* bitmap_buffer;
 	BYTE* primary_buffer;
 	REGION16 invalidRegion;
 	BOOL inGfxFrame;
@@ -137,6 +147,7 @@ struct xf_context
 	BOOL mouse_active;
 	BOOL suppress_output;
 	BOOL fullscreen_toggle;
+	BOOL controlToggle;
 	UINT32 KeyboardLayout;
 	BOOL KeyboardState[256];
 	XModifierKeymap* modifierMap;
@@ -147,13 +158,9 @@ struct xf_context
 	XSetWindowAttributes attribs;
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
-	BYTE* bmp_codec_none;
-	BYTE* bmp_codec_nsc;
-	RFX_CONTEXT* rfx;
-	NSC_CONTEXT* nsc;
-	CLEAR_CONTEXT* clear;
 	void* xv_context;
-	void* clipboard_context;
+	xfClipboard* clipboard;
+	CliprdrClientContext* cliprdr;
 
 	Atom _NET_WM_ICON;
 	Atom _MOTIF_WM_HINTS;
@@ -182,11 +189,18 @@ struct xf_context
 	/* Channels */
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
+	EncomspClientContext* encomsp;
+
+	BOOL xkbAvailable;
 };
 
 void xf_create_window(xfContext* xfc);
 void xf_toggle_fullscreen(xfContext* xfc);
+void xf_toggle_control(xfContext* xfc);
 BOOL xf_post_connect(freerdp* instance);
+
+void xf_encomsp_init(xfContext* xfc, EncomspClientContext* encomsp);
+void xf_encomsp_uninit(xfContext* xfc, EncomspClientContext* encomsp);
 
 enum XF_EXIT_CODE
 {
@@ -234,6 +248,8 @@ void xf_unlock_x11(xfContext* xfc, BOOL display);
 
 void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scale);
 void xf_transform_window(xfContext* xfc);
+
+unsigned long xf_gdi_get_color(xfContext* xfc, GDI_COLOR color);
 
 FREERDP_API DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 

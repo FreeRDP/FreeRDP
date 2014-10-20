@@ -27,7 +27,10 @@
 
 #include <winpr/stream.h>
 
+#include <freerdp/log.h>
 #include <freerdp/cache/offscreen.h>
+
+#define TAG FREERDP_TAG("cache.offscreen")
 
 void update_gdi_create_offscreen_bitmap(rdpContext* context, CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
 {
@@ -80,7 +83,7 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index)
 
 	if (index >= offscreenCache->maxEntries)
 	{
-		fprintf(stderr, "invalid offscreen bitmap index: 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid offscreen bitmap index: 0x%04X", index);
 		return NULL;
 	}
 
@@ -88,7 +91,7 @@ rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index)
 
 	if (!bitmap)
 	{
-		fprintf(stderr, "invalid offscreen bitmap at index: 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid offscreen bitmap at index: 0x%04X", index);
 		return NULL;
 	}
 
@@ -99,7 +102,7 @@ void offscreen_cache_put(rdpOffscreenCache* offscreenCache, UINT32 index, rdpBit
 {
 	if (index >= offscreenCache->maxEntries)
 	{
-		fprintf(stderr, "invalid offscreen bitmap index: 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid offscreen bitmap index: 0x%04X", index);
 		return;
 	}
 
@@ -113,7 +116,7 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 
 	if (index >= offscreenCache->maxEntries)
 	{
-		fprintf(stderr, "invalid offscreen bitmap index (delete): 0x%04X\n", index);
+		WLog_ERR(TAG,  "invalid offscreen bitmap index (delete): 0x%04X", index);
 		return;
 	}
 

@@ -26,12 +26,14 @@
 
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
+
+#define TAG CHANNELS_TAG("tsmf.client")
 
 #ifdef WITH_DEBUG_TSMF
-#define DEBUG_TSMF(fmt, ...) DEBUG_CLASS(TSMF, fmt, ## __VA_ARGS__)
+#define DEBUG_TSMF(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_TSMF(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_TSMF(fmt, ...) do { } while (0)
 #endif
 
 typedef struct _TS_AM_MEDIA_TYPE

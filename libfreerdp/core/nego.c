@@ -26,12 +26,17 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
+
 #include "tpkt.h"
 
 #include "nego.h"
 
 #include "transport.h"
 
+#define TAG FREERDP_TAG("core.nego")
+
+#ifdef WITH_DEBUG_NEGO
 static const char* const NEGO_STATE_STRINGS[] =
 {
 	"NEGO_STATE_INITIAL",
@@ -55,6 +60,7 @@ static const char PROTOCOL_SECURITY_STRINGS[9][4] =
 	"UNK",
 	"EXT"
 };
+#endif /* WITH_DEBUG_NEGO */
 
 BOOL nego_security_connect(rdpNego* nego);
 
@@ -66,6 +72,8 @@ BOOL nego_security_connect(rdpNego* nego);
 
 BOOL nego_connect(rdpNego* nego)
 {
+	rdpSettings* settings = nego->transport->settings;
+
 	if (nego->state == NEGO_STATE_INITIAL)
 	{
 		if (nego->enabled_protocols[PROTOCOL_EXT])
@@ -150,15 +158,15 @@ BOOL nego_connect(rdpNego* nego)
 	DEBUG_NEGO("Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 
 	/* update settings with negotiated protocol security */
-	nego->transport->settings->RequestedProtocols = nego->requested_protocols;
-	nego->transport->settings->SelectedProtocol = nego->selected_protocol;
-	nego->transport->settings->NegotiationFlags = nego->flags;
+	settings->RequestedProtocols = nego->requested_protocols;
+	settings->SelectedProtocol = nego->selected_protocol;
+	settings->NegotiationFlags = nego->flags;
 
 	if (nego->selected_protocol == PROTOCOL_RDP)
 	{
-		nego->transport->settings->DisableEncryption = TRUE;
-		nego->transport->settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-		nego->transport->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+		settings->DisableEncryption = TRUE;
+		settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+		settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	}
 
 	/* finally connect security layer (if not already done) */
@@ -167,6 +175,9 @@ BOOL nego_connect(rdpNego* nego)
 		DEBUG_NEGO("Failed to connect with %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 		return FALSE;
 	}
+
+	if (!(nego->flags & DYNVC_GFX_PROTOCOL_SUPPORTED))
+		settings->NetworkAutoDetect = FALSE;
 
 	return TRUE;
 }
@@ -500,10 +511,12 @@ BOOL nego_recv_response(rdpNego* nego)
 	wStream* s;
 
 	s = Stream_New(NULL, 1024);
+
 	if (!s)
 		return FALSE;
 
-	status = transport_read(nego->transport, s);
+	status = transport_read_pdu(nego->transport, s);
+
 	if (status < 0)
 	{
 		Stream_Free(s, TRUE);
@@ -593,7 +606,7 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 	}
 	else
 	{
-		fprintf(stderr, "invalid negotiation response\n");
+		WLog_ERR(TAG,  "invalid negotiation response");
 		nego->state = NEGO_STATE_FAIL;
 	}
 
@@ -619,7 +632,7 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 
 	if (li != Stream_GetRemainingLength(s) + 6)
 	{
-		fprintf(stderr, "Incorrect TPDU length indicator.\n");
+		WLog_ERR(TAG,  "Incorrect TPDU length indicator.");
 		return FALSE;
 	}
 
@@ -651,7 +664,7 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 
 		if (type != TYPE_RDP_NEG_REQ)
 		{
-			fprintf(stderr, "Incorrect negotiation request type %d\n", type);
+			WLog_ERR(TAG,  "Incorrect negotiation request type %d", type);
 			return FALSE;
 		}
 
@@ -897,11 +910,12 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_FAILURE);
 		Stream_Write_UINT8(s, flags); /* flags */
 		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
+
 		/*
-	 	* TODO: Check for other possibilities,
-	 	*       like SSL_NOT_ALLOWED_BY_SERVER.
-	 	*/
-		fprintf(stderr, "%s: client supports only Standard RDP Security\n", __FUNCTION__);
+		 * TODO: Check for other possibilities,
+		 *       like SSL_NOT_ALLOWED_BY_SERVER.
+		 */
+		WLog_ERR(TAG,  "client supports only Standard RDP Security");
 		Stream_Write_UINT32(s, SSL_REQUIRED_BY_SERVER);
 		length += 8;
 		status = FALSE;
@@ -958,7 +972,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 			if (!settings->RdpServerRsaKey && !settings->RdpKeyFile)
 			{
-				fprintf(stderr, "Missing server certificate\n");
+				WLog_ERR(TAG, "Missing server certificate");
 				return FALSE;
 			}
 		}

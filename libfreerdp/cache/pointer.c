@@ -27,7 +27,11 @@
 
 #include <winpr/stream.h>
 
+#include <freerdp/log.h>
 #include <freerdp/cache/pointer.h>
+
+
+#define TAG FREERDP_TAG("cache.pointer")
 
 void update_pointer_position(rdpContext* context, POINTER_POSITION_UPDATE* pointer_position)
 {
@@ -47,7 +51,7 @@ void update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_s
 			break;
 
 		default:
-			fprintf(stderr, "Unknown system pointer type (0x%08X)\n", pointer_system->type);
+			WLog_ERR(TAG,  "Unknown system pointer type (0x%08X)", pointer_system->type);
 			break;
 	}
 }
@@ -140,7 +144,7 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 
 	if (index >= pointer_cache->cacheSize)
 	{
-		fprintf(stderr, "invalid pointer index:%d\n", index);
+		WLog_ERR(TAG,  "invalid pointer index:%d", index);
 		return NULL;
 	}
 
@@ -155,7 +159,7 @@ void pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer*
 
 	if (index >= pointer_cache->cacheSize)
 	{
-		fprintf(stderr, "invalid pointer index:%d\n", index);
+		WLog_ERR(TAG,  "invalid pointer index:%d", index);
 		return;
 	}
 

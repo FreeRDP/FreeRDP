@@ -32,12 +32,16 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
+#include <X11/XKBlib.h>
 
 #include <freerdp/locale/keyboard.h>
 
 #include "xf_event.h"
 
 #include "xf_keyboard.h"
+
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("x11")
 
 int xf_keyboard_action_script_init(xfContext* xfc)
 {
@@ -191,18 +195,18 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BYTE keycode)
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 	{
-		fprintf(stderr, "Unknown key with X keycode 0x%02x\n", keycode);
+		WLog_ERR(TAG,  "Unknown key with X keycode 0x%02x", keycode);
 	}
 	else if (rdp_scancode == RDP_SCANCODE_PAUSE &&
 			!xf_keyboard_key_pressed(xfc, XK_Control_L) && !xf_keyboard_key_pressed(xfc, XK_Control_R))
 	{
-		/* Pause without Ctrl has to be sent as Ctrl + NumLock. */
+		/* Pause without Ctrl has to be sent as a series of keycodes
+		 * in a single input PDU.  Pause only happens on "press";
+		 * no code is sent on "release".
+		 */
 		if (down)
 		{
-			freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_LCONTROL);
-			freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_NUMLOCK);
-			freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_LCONTROL);
-			freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_NUMLOCK);
+			freerdp_input_send_keyboard_pause_event(input);
 		}
 	}
 	else
@@ -238,18 +242,17 @@ int xf_keyboard_read_keyboard_state(xfContext* xfc)
 	return state;
 }
 
-BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, int keysym)
+static int xf_keyboard_get_keymask(xfContext* xfc, int keysym)
 {
-	int offset;
 	int modifierpos, key, keysymMask = 0;
 	KeyCode keycode = XKeysymToKeycode(xfc->display, keysym);
 
 	if (keycode == NoSymbol)
-		return FALSE;
+		return 0;
 
 	for (modifierpos = 0; modifierpos < 8; modifierpos++)
 	{
-		offset = xfc->modifierMap->max_keypermod * modifierpos;
+		int offset = xfc->modifierMap->max_keypermod * modifierpos;
 
 		for (key = 0; key < xfc->modifierMap->max_keypermod; key++)
 		{
@@ -259,8 +262,32 @@ BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, int keysym)
 			}
 		}
 	}
+	return keysymMask;
+}
+
+BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, int keysym)
+{
+	int keysymMask = xf_keyboard_get_keymask(xfc, keysym);
+
+	if (!keysymMask)
+		return FALSE;
 
 	return (state & keysymMask) ? TRUE : FALSE;
+}
+
+static BOOL xf_keyboard_set_key_state(xfContext* xfc, BOOL on, int keysym)
+{
+	int keysymMask;
+
+	if (!xfc->xkbAvailable)
+		return FALSE;
+
+	keysymMask = xf_keyboard_get_keymask(xfc, keysym);
+	if (!keysymMask)
+	{
+		return FALSE;
+	}
+	return XkbLockModifiers(xfc->display, XkbUseCoreKbd, keysymMask, on ? keysymMask : 0);
 }
 
 UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc)
@@ -405,12 +432,25 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		return TRUE;
 	}
 
-	if (keysym == XK_Return)
+	if(xfc->fullscreen_toggle)
+	{
+            if (keysym == XK_Return)
+            {
+                    if (mod.Ctrl && mod.Alt)
+                    {
+                            /* Ctrl-Alt-Enter: toggle full screen */
+                            xf_toggle_fullscreen(xfc);
+                            return TRUE;
+                    }
+            }
+	}
+
+	if ((keysym == XK_c) || (keysym == XK_C))
 	{
 		if (mod.Ctrl && mod.Alt)
 		{
-			/* Ctrl-Alt-Enter: toggle full screen */
-			xf_toggle_fullscreen(xfc);
+			/* Ctrl-Alt-C: toggle control */
+			xf_toggle_control(xfc);
 			return TRUE;
 		}
 	}
@@ -552,3 +592,12 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	return FALSE;
 }
 
+void xf_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
+{
+	xfContext* xfc = (xfContext*) context;
+
+	xf_keyboard_set_key_state(xfc, led_flags & KBD_SYNC_SCROLL_LOCK, XK_Scroll_Lock);
+	xf_keyboard_set_key_state(xfc, led_flags & KBD_SYNC_NUM_LOCK, XK_Num_Lock);
+	xf_keyboard_set_key_state(xfc, led_flags & KBD_SYNC_CAPS_LOCK, XK_Caps_Lock);
+	xf_keyboard_set_key_state(xfc, led_flags & KBD_SYNC_KANA_LOCK, XK_Kana_Lock);
+}

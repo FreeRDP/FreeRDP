@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+
 #include "wf_cliprdr_EnumFORMATETC.h"
 
 static void cliprdr_format_deep_copy(FORMATETC *dest, FORMATETC *source)

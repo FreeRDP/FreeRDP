@@ -89,14 +89,14 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 	Stream_Write_UINT64(s, data_size); /* cbData */
 	DEBUG_TSMF("response size %d", (int) Stream_GetPosition(s));
 	if(!callback || !callback->channel || !callback->channel->Write)
-		DEBUG_WARN("callback=%p, channel=%p, write=%p", callback,
+		WLog_ERR(TAG, "callback=%p, channel=%p, write=%p", callback,
 				   callback->channel, callback->channel->Write);
 	else
 		status = callback->channel->Write(callback->channel,
 										  Stream_GetPosition(s), Stream_Buffer(s), NULL);
 	if(status)
 	{
-		DEBUG_WARN("response error %d", status);
+		WLog_ERR(TAG, "response error %d", status);
 	}
 	Stream_Free(s, TRUE);
 }
@@ -108,7 +108,7 @@ BOOL tsmf_push_event(IWTSVirtualChannelCallback *pChannelCallback, wMessage *eve
 	status = callback->channel_mgr->PushEvent(callback->channel_mgr, event);
 	if(status)
 	{
-		DEBUG_WARN("response error %d", status);
+		WLog_ERR(TAG, "response error %d", status);
 		return FALSE;
 	}
 	return TRUE;
@@ -130,7 +130,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, w
 	/* 2.2.1 Shared Message Header (SHARED_MSG_HEADER) */
 	if(cbSize < 12)
 	{
-		DEBUG_WARN("invalid size. cbSize=%d", cbSize);
+		WLog_ERR(TAG, "invalid size. cbSize=%d", cbSize);
 		return 1;
 	}
 
@@ -272,7 +272,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, w
 		}
 		if(status == -1)
 		{
-			DEBUG_WARN("InterfaceId 0x%X FunctionId 0x%X not processed.",
+			WLog_ERR(TAG, "InterfaceId 0x%X FunctionId 0x%X not processed.",
 					   InterfaceId, FunctionId);
 			/* When a request is not implemented we return empty response indicating error */
 		}
@@ -289,7 +289,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, w
 		status = callback->channel->Write(callback->channel, length, Stream_Buffer(output), NULL);
 		if(status)
 		{
-			DEBUG_WARN("response error %d", status);
+			WLog_ERR(TAG, "response error %d", status);
 		}
 	}
 	Stream_Free(output, TRUE);
@@ -329,6 +329,7 @@ static int tsmf_on_new_channel_connection(IWTSListenerCallback *pListenerCallbac
 	ZeroMemory(callback, sizeof(TSMF_CHANNEL_CALLBACK));
 	callback->iface.OnDataReceived = tsmf_on_data_received;
 	callback->iface.OnClose = tsmf_on_close;
+	callback->iface.OnOpen = NULL;
 	callback->plugin = listener_callback->plugin;
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = pChannel;

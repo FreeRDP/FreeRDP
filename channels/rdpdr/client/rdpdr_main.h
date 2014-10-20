@@ -32,6 +32,9 @@
 #include <freerdp/addin.h>
 
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/channels/log.h>
+
+#define TAG CHANNELS_TAG("rdprd.client")
 
 typedef struct rdpdr_plugin rdpdrPlugin;
 

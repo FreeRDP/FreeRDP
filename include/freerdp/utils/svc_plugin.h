@@ -34,7 +34,7 @@
 #include <winpr/collections.h>
 
 #include <freerdp/svc.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/utils/event.h>
 
 typedef struct rdp_svc_plugin rdpSvcPlugin;
@@ -72,10 +72,11 @@ FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event);
 }
 #endif
 
+#define SVC_TAG FREERDP_TAG("svc")
 #ifdef WITH_DEBUG_SVC
-#define DEBUG_SVC(fmt, ...) DEBUG_CLASS(SVC, fmt, ## __VA_ARGS__)
+#define DEBUG_SVC(fmt, ...) WLog_DBG(SVC_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_SVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_SVC(fmt, ...)
 #endif
 
 #endif /* FREERDP_UTILS_SVC_PLUGIN_H */

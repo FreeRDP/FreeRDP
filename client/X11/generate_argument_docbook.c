@@ -26,7 +26,7 @@ LPSTR tr_esc_str(LPCSTR arg)
 		tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 	if(NULL == tmp)
 	{
-		fprintf(stderr, "Could not allocate string buffer.");
+		WLog_ERR(TAG,  "Could not allocate string buffer.");
 		exit(-2);
 	}
 	/* Copy character for character and check, if it is necessary to escape. */
@@ -40,7 +40,7 @@ LPSTR tr_esc_str(LPCSTR arg)
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
-					fprintf(stderr, "Could not reallocate string buffer.");
+					WLog_ERR(TAG,  "Could not reallocate string buffer.");
 					exit(-3);
 				}
 				tmp[cs++] = '&';
@@ -53,7 +53,7 @@ LPSTR tr_esc_str(LPCSTR arg)
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
-					fprintf(stderr, "Could not reallocate string buffer.");
+					WLog_ERR(TAG,  "Could not reallocate string buffer.");
 					exit(-4);
 				}
 				tmp[cs++] = '&';
@@ -66,7 +66,7 @@ LPSTR tr_esc_str(LPCSTR arg)
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
-					fprintf(stderr, "Could not reallocate string buffer.");
+					WLog_ERR(TAG,  "Could not reallocate string buffer.");
 					exit(-5);
 				}
 				tmp[cs++] = '&';
@@ -81,7 +81,7 @@ LPSTR tr_esc_str(LPCSTR arg)
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
-					fprintf(stderr, "Could not reallocate string buffer.");
+					WLog_ERR(TAG,  "Could not reallocate string buffer.");
 					exit(-6);
 				}
 				tmp[cs++] = '&';
@@ -96,7 +96,7 @@ LPSTR tr_esc_str(LPCSTR arg)
 				tmp = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
 				if(NULL == tmp)
 				{
-					fprintf(stderr, "Could not reallocate string buffer.");
+					WLog_ERR(TAG,  "Could not reallocate string buffer.");
 					exit(-7);
 				}
 				tmp[cs++] = '&';
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 	fp = fopen(fname, "w");
 	if(NULL == fp)
 	{
-		fprintf(stderr, "Could not open '%s' for writing.", fname);
+		WLog_ERR(TAG,  "Could not open '%s' for writing.", fname);
 		return -1;
 	}
 	/* The tag used as header in the manpage */
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 	 * compatible XML */
 	if(elements < 2)
 	{
-		fprintf(stderr, "The argument array 'args' is empty, writing an empty file.");
+		WLog_ERR(TAG,  "The argument array 'args' is empty, writing an empty file.");
 		elements = 1;
 	}
 	for(x=0; x<elements - 1; x++)

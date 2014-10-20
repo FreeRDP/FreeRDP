@@ -31,8 +31,11 @@
 #include "surface.h"
 #include "message.h"
 
+#include <freerdp/log.h>
 #include <freerdp/peer.h>
 #include <freerdp/codec/bitmap.h>
+
+#define TAG FREERDP_TAG("core.update")
 
 const char* const UPDATE_TYPE_STRINGS[] =
 {
@@ -164,6 +167,8 @@ BOOL update_read_bitmap_update(rdpUpdate* update, wStream* s, BITMAP_UPDATE* bit
 
 	Stream_Read_UINT16(s, bitmapUpdate->number); /* numberRectangles (2 bytes) */
 
+	WLog_Print(update->log, WLOG_DEBUG, "BitmapUpdate: %d", bitmapUpdate->number);
+
 	if (bitmapUpdate->number > bitmapUpdate->count)
 	{
 		UINT16 count;
@@ -230,9 +235,9 @@ BOOL update_read_palette(rdpUpdate* update, wStream* s, PALETTE_UPDATE* palette_
 	{
 		entry = &palette_update->entries[i];
 
-		Stream_Read_UINT8(s, entry->blue);
-		Stream_Read_UINT8(s, entry->green);
 		Stream_Read_UINT8(s, entry->red);
+		Stream_Read_UINT8(s, entry->green);
+		Stream_Read_UINT8(s, entry->blue);
 	}
 	return TRUE;
 }
@@ -346,9 +351,9 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, 
 		scanlineSize = ((scanlineSize + 1) / 2) * 2;
 		if (scanlineSize * pointer_color->height != pointer_color->lengthXorMask)
 		{
-			fprintf(stderr, "%s: invalid lengthXorMask: width=%d height=%d, %d instead of %d\n", __FUNCTION__,
-					pointer_color->width, pointer_color->height,
-					pointer_color->lengthXorMask, scanlineSize * pointer_color->height);
+			WLog_ERR(TAG,  "invalid lengthXorMask: width=%d height=%d, %d instead of %d",
+					 pointer_color->width, pointer_color->height,
+					 pointer_color->lengthXorMask, scanlineSize * pointer_color->height);
 			return FALSE;
 		}
 
@@ -377,8 +382,8 @@ BOOL update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer_color, 
 		scanlineSize = ((1 + scanlineSize) / 2) * 2;
 		if (scanlineSize * pointer_color->height != pointer_color->lengthAndMask)
 		{
-			fprintf(stderr, "%s: invalid lengthAndMask: %d instead of %d\n", __FUNCTION__,
-					pointer_color->lengthAndMask, scanlineSize * pointer_color->height);
+			WLog_ERR(TAG,  "invalid lengthAndMask: %d instead of %d",
+					 pointer_color->lengthAndMask, scanlineSize * pointer_color->height);
 			return FALSE;
 		}
 
@@ -405,7 +410,7 @@ BOOL update_read_pointer_new(wStream* s, POINTER_NEW_UPDATE* pointer_new)
 	Stream_Read_UINT16(s, pointer_new->xorBpp); /* xorBpp (2 bytes) */
 	if ((pointer_new->xorBpp < 1) || (pointer_new->xorBpp > 32))
 	{
-		fprintf(stderr, "%s: invalid xorBpp %d\n", __FUNCTION__, pointer_new->xorBpp);
+		WLog_ERR(TAG,  "invalid xorBpp %d", pointer_new->xorBpp);
 		return FALSE;
 	}
 	return update_read_pointer_color(s, &pointer_new->colorPtrAttr, pointer_new->xorBpp); /* colorPtrAttr */
@@ -479,8 +484,7 @@ BOOL update_recv(rdpUpdate* update, wStream* s)
 		return FALSE;
 
 	Stream_Read_UINT16(s, updateType); /* updateType (2 bytes) */
-
-	//printf("%s Update Data PDU\n", UPDATE_TYPE_STRINGS[updateType]);
+	//WLog_DBG(TAG, "%s Update Data PDU", UPDATE_TYPE_STRINGS[updateType]);
 
 	IFCALL(update->BeginPaint, context);
 
@@ -568,6 +572,14 @@ void update_post_connect(rdpUpdate* update)
 	update->initialState = FALSE;
 }
 
+void update_post_disconnect(rdpUpdate* update)
+{
+	update->asynchronous = update->context->settings->AsyncUpdate;
+
+	if (update->asynchronous)
+		update_message_proxy_free(update->proxy);
+}
+
 static void update_begin_paint(rdpContext* context)
 {
 	wStream* s;
@@ -604,7 +616,7 @@ static void update_end_paint(rdpContext* context)
 
 	if (update->numberOrders > 0)
 	{
-		fprintf(stderr, "%s: sending %d orders\n", __FUNCTION__, update->numberOrders);
+		WLog_ERR(TAG,  "sending %d orders", update->numberOrders);
 		fastpath_send_update_pdu(context->rdp->fastpath, FASTPATH_UPDATETYPE_ORDERS, s);
 	}
 
@@ -855,7 +867,7 @@ static void update_send_surface_command(rdpContext* context, wStream* s)
 	Stream_Release(update);
 }
 
-static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surface_bits_command)
+static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* surfaceBitsCommand)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
@@ -863,9 +875,9 @@ static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* 
 	update_force_flush(context);
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
-	Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) surface_bits_command->bitmapDataLength);
-	update_write_surfcmd_surface_bits_header(s, surface_bits_command);
-	Stream_Write(s, surface_bits_command->bitmapData, surface_bits_command->bitmapDataLength);
+	Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) surfaceBitsCommand->bitmapDataLength);
+	update_write_surfcmd_surface_bits_header(s, surfaceBitsCommand);
+	Stream_Write(s, surfaceBitsCommand->bitmapData, surfaceBitsCommand->bitmapDataLength);
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
 
 	update_force_flush(context);
@@ -873,7 +885,7 @@ static void update_send_surface_bits(rdpContext* context, SURFACE_BITS_COMMAND* 
 	Stream_Release(s);
 }
 
-static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surface_frame_marker)
+static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
 	wStream* s;
 	rdpRdp* rdp = context->rdp;
@@ -881,7 +893,34 @@ static void update_send_surface_frame_marker(rdpContext* context, SURFACE_FRAME_
 	update_force_flush(context);
 
 	s = fastpath_update_pdu_init(rdp->fastpath);
-	update_write_surfcmd_frame_marker(s, surface_frame_marker->frameAction, surface_frame_marker->frameId);
+	update_write_surfcmd_frame_marker(s, surfaceFrameMarker->frameAction, surfaceFrameMarker->frameId);
+	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
+
+	update_force_flush(context);
+
+	Stream_Release(s);
+}
+
+static void update_send_surface_frame_bits(rdpContext* context, SURFACE_BITS_COMMAND* cmd, BOOL first, BOOL last, UINT32 frameId)
+{
+	wStream* s;
+	rdpRdp* rdp = context->rdp;
+
+	update_force_flush(context);
+
+	s = fastpath_update_pdu_init(rdp->fastpath);
+	Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH + (int) cmd->bitmapDataLength + 16);
+
+	if (first)
+		update_write_surfcmd_frame_marker(s, SURFACECMD_FRAMEACTION_BEGIN, frameId);
+
+	update_write_surfcmd_surface_bits_header(s, cmd);
+	Stream_Write(s, cmd->bitmapData, cmd->bitmapDataLength);
+
+
+	if (last)
+		update_write_surfcmd_frame_marker(s, SURFACECMD_FRAMEACTION_END, frameId);
+
 	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_SURFCMDS, s);
 
 	update_force_flush(context);
@@ -936,6 +975,20 @@ static void update_send_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmap
 	Stream_Release(s);
 }
 
+static void update_send_play_sound(rdpContext* context, PLAY_SOUND_UPDATE* play_sound)
+{
+	wStream* s;
+	rdpRdp* rdp = context->rdp;
+
+	if (!rdp->settings->ReceivedCapabilities[CAPSET_TYPE_SOUND]) {
+		return;
+	}
+	s = rdp_data_pdu_init(rdp);
+	Stream_Write_UINT32(s, play_sound->duration);
+	Stream_Write_UINT32(s, play_sound->frequency);
+	rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_PLAY_SOUND, rdp->mcs->userId);
+	Stream_Release(s);
+}
 /**
  * Primary Drawing Orders
  */
@@ -1448,7 +1501,7 @@ static void update_send_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDAT
 		updateCode = FASTPATH_UPDATETYPE_PTR_NULL;
 	else
 		updateCode = FASTPATH_UPDATETYPE_PTR_DEFAULT;
-	
+
 	fastpath_send_update_pdu(rdp->fastpath, updateCode, s);
 	Stream_Release(s);
 }
@@ -1467,10 +1520,10 @@ static void update_write_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer
 
 	if (pointer_color->lengthXorMask > 0)
 		Stream_Write(s, pointer_color->xorMaskData, pointer_color->lengthXorMask);
-	
+
 	if (pointer_color->lengthAndMask > 0)
 		Stream_Write(s, pointer_color->andMaskData, pointer_color->lengthAndMask);
-	
+
 	Stream_Write_UINT8(s, 0); /* pad (1 byte) */
 }
 
@@ -1559,6 +1612,18 @@ BOOL update_read_suppress_output(rdpUpdate* update, wStream* s)
 	return TRUE;
 }
 
+static void update_send_set_keyboard_indicators(rdpContext* context, UINT16 led_flags)
+{
+ wStream* s;
+ rdpRdp* rdp = context->rdp;
+
+ s = rdp_data_pdu_init(rdp);
+ Stream_Write_UINT16(s, 0); /* unitId should be 0 according to MS-RDPBCGR 2.2.8.2.1.1 */
+ Stream_Write_UINT16(s, led_flags); /* ledFlags (2 bytes) */
+ rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_KEYBOARD_INDICATORS, rdp->mcs->userId);
+ Stream_Release(s);
+}
+
 void update_register_server_callbacks(rdpUpdate* update)
 {
 	update->BeginPaint = update_begin_paint;
@@ -1570,6 +1635,9 @@ void update_register_server_callbacks(rdpUpdate* update)
 	update->SurfaceBits = update_send_surface_bits;
 	update->SurfaceFrameMarker = update_send_surface_frame_marker;
 	update->SurfaceCommand = update_send_surface_command;
+	update->SurfaceFrameBits = update_send_surface_frame_bits;
+	update->PlaySound = update_send_play_sound;
+	update->SetKeyboardIndicators = update_send_set_keyboard_indicators;
 	update->primary->DstBlt = update_send_dstblt;
 	update->primary->PatBlt = update_send_patblt;
 	update->primary->ScrBlt = update_send_scrblt;
@@ -1687,9 +1755,6 @@ void update_free(rdpUpdate* update)
 		free(update->secondary);
 		free(update->altsec);
 		free(update->window);
-
-		if (update->asynchronous)
-			update_message_proxy_free(update->proxy);
 
 		MessageQueue_Free(update->queue);
 

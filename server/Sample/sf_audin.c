@@ -21,9 +21,14 @@
 #include "config.h"
 #endif
 
+
+
 #include "sfreerdp.h"
 
 #include "sf_audin.h"
+
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("sample")
 
 static const AUDIO_FORMAT test_audio_formats[] =
 {
@@ -33,19 +38,19 @@ static const AUDIO_FORMAT test_audio_formats[] =
 
 static void sf_peer_audin_opening(audin_server_context* context)
 {
-	printf("AUDIN opening.\n");
+	WLog_DBG(TAG, "AUDIN opening.");
 	/* Simply choose the first format supported by the client. */
 	context->SelectFormat(context, 0);
 }
 
 static void sf_peer_audin_open_result(audin_server_context* context, UINT32 result)
 {
-	printf("AUDIN open result %d.\n", result);
+	WLog_DBG(TAG, "AUDIN open result %d.", result);
 }
 
 static void sf_peer_audin_receive_samples(audin_server_context* context, const void* buf, int nframes)
 {
-	printf("AUDIN receive %d frames.\n", nframes);
+	WLog_DBG(TAG, "AUDIN receive %d frames.", nframes);
 }
 
 void sf_peer_audin_init(testPeerContext* context)

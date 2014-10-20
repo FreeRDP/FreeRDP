@@ -27,12 +27,13 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 
+#define DVC_TAG CHANNELS_TAG("echo.client")
 #ifdef WITH_DEBUG_DVC
-#define DEBUG_DVC(fmt, ...) DEBUG_CLASS(DVC, fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) WLog_DBG(DVC_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_DVC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_DVC(fmt, ...) do { } while (0)
 #endif
 
 #endif /* __ECHO_MAIN_H */

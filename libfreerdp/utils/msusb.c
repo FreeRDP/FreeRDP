@@ -22,13 +22,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/utils/msusb.h>
 
+#define TAG FREERDP_TAG("utils")
+
 #ifdef WITH_DEBUG_MSUSB
-#define DEBUG_MSUSB(fmt, ...) DEBUG_CLASS(MSUSB, fmt, ## __VA_ARGS__)
+#define DEBUG_MSUSB(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_MSUSB(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_MSUSB(fmt, ...) do { } while (0)
 #endif
 
 
@@ -321,42 +323,41 @@ void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 	MSUSB_PIPE_DESCRIPTOR ** MsPipes;
 	MSUSB_PIPE_DESCRIPTOR * MsPipe;
 	int inum = 0, pnum = 0;
-
-	fprintf(stderr, "=================MsConfig:========================\n");
-	fprintf(stderr, "wTotalLength:%d\n", MsConfig->wTotalLength);
-	fprintf(stderr, "bConfigurationValue:%d\n", MsConfig->bConfigurationValue);
-	fprintf(stderr, "ConfigurationHandle:0x%x\n", MsConfig->ConfigurationHandle);
-	fprintf(stderr, "InitCompleted:%d\n", MsConfig->InitCompleted);
-	fprintf(stderr, "MsOutSize:%d\n", MsConfig->MsOutSize);
-	fprintf(stderr, "NumInterfaces:%d\n\n", MsConfig->NumInterfaces);
+	WLog_INFO(TAG,  "=================MsConfig:========================");
+	WLog_INFO(TAG,  "wTotalLength:%d", MsConfig->wTotalLength);
+	WLog_INFO(TAG,  "bConfigurationValue:%d", MsConfig->bConfigurationValue);
+	WLog_INFO(TAG,  "ConfigurationHandle:0x%x", MsConfig->ConfigurationHandle);
+	WLog_INFO(TAG,  "InitCompleted:%d", MsConfig->InitCompleted);
+	WLog_INFO(TAG,  "MsOutSize:%d", MsConfig->MsOutSize);
+	WLog_INFO(TAG,  "NumInterfaces:%d", MsConfig->NumInterfaces);
 	MsInterfaces = MsConfig->MsInterfaces;
 	for(inum = 0; inum < MsConfig->NumInterfaces; inum++)
 	{
 		MsInterface = MsInterfaces[inum];
-		fprintf(stderr, "	Interfase: %d\n", MsInterface->InterfaceNumber);
-		fprintf(stderr, "	Length: %d\n", MsInterface->Length);
-		fprintf(stderr, "	NumberOfPipesExpected: %d\n", MsInterface->NumberOfPipesExpected);
-		fprintf(stderr, "	AlternateSetting: %d\n", MsInterface->AlternateSetting);
-		fprintf(stderr, "	NumberOfPipes: %d\n", MsInterface->NumberOfPipes);
-		fprintf(stderr, "	InterfaceHandle: 0x%x\n", MsInterface->InterfaceHandle);
-		fprintf(stderr, "	bInterfaceClass: 0x%x\n", MsInterface->bInterfaceClass);
-		fprintf(stderr, "	bInterfaceSubClass: 0x%x\n", MsInterface->bInterfaceSubClass);
-		fprintf(stderr, "	bInterfaceProtocol: 0x%x\n", MsInterface->bInterfaceProtocol);
-		fprintf(stderr, "	InitCompleted: %d\n\n", MsInterface->InitCompleted);
+		WLog_INFO(TAG,  "	Interfase: %d", MsInterface->InterfaceNumber);
+		WLog_INFO(TAG,  "	Length: %d", MsInterface->Length);
+		WLog_INFO(TAG,  "	NumberOfPipesExpected: %d", MsInterface->NumberOfPipesExpected);
+		WLog_INFO(TAG,  "	AlternateSetting: %d", MsInterface->AlternateSetting);
+		WLog_INFO(TAG,  "	NumberOfPipes: %d", MsInterface->NumberOfPipes);
+		WLog_INFO(TAG,  "	InterfaceHandle: 0x%x", MsInterface->InterfaceHandle);
+		WLog_INFO(TAG,  "	bInterfaceClass: 0x%x", MsInterface->bInterfaceClass);
+		WLog_INFO(TAG,  "	bInterfaceSubClass: 0x%x", MsInterface->bInterfaceSubClass);
+		WLog_INFO(TAG,  "	bInterfaceProtocol: 0x%x", MsInterface->bInterfaceProtocol);
+		WLog_INFO(TAG,  "	InitCompleted: %d", MsInterface->InitCompleted);
 		MsPipes = MsInterface->MsPipes;
 		for (pnum = 0; pnum < MsInterface->NumberOfPipes; pnum++)
 		{
 			MsPipe = MsPipes[pnum];
-			fprintf(stderr, "		Pipe: %d\n", pnum);
-			fprintf(stderr, "		MaximumPacketSize: 0x%x\n", MsPipe->MaximumPacketSize);
-			fprintf(stderr, "		MaximumTransferSize: 0x%x\n", MsPipe->MaximumTransferSize);
-			fprintf(stderr, "		PipeFlags: 0x%x\n", MsPipe->PipeFlags);
-			fprintf(stderr, "		PipeHandle: 0x%x\n", MsPipe->PipeHandle);
-			fprintf(stderr, "		bEndpointAddress: 0x%x\n", MsPipe->bEndpointAddress);
-			fprintf(stderr, "		bInterval: %d\n", MsPipe->bInterval);
-			fprintf(stderr, "		PipeType: 0x%x\n", MsPipe->PipeType);
-			fprintf(stderr, "		InitCompleted: %d\n\n", MsPipe->InitCompleted);
+			WLog_INFO(TAG,  "		Pipe: %d", pnum);
+			WLog_INFO(TAG,  "		MaximumPacketSize: 0x%x", MsPipe->MaximumPacketSize);
+			WLog_INFO(TAG,  "		MaximumTransferSize: 0x%x", MsPipe->MaximumTransferSize);
+			WLog_INFO(TAG,  "		PipeFlags: 0x%x", MsPipe->PipeFlags);
+			WLog_INFO(TAG,  "		PipeHandle: 0x%x", MsPipe->PipeHandle);
+			WLog_INFO(TAG,  "		bEndpointAddress: 0x%x", MsPipe->bEndpointAddress);
+			WLog_INFO(TAG,  "		bInterval: %d", MsPipe->bInterval);
+			WLog_INFO(TAG,  "		PipeType: 0x%x", MsPipe->PipeType);
+			WLog_INFO(TAG,  "		InitCompleted: %d", MsPipe->InitCompleted);
 		}
 	}
-	fprintf(stderr, "==================================================\n");
+	WLog_INFO(TAG,  "==================================================");
 }

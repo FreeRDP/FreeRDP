@@ -29,16 +29,16 @@ set(${MODULE_PREFIX}_SRCS
 	wf_gdi.h
 	wf_event.c
 	wf_event.h
+	wf_channels.c
+	wf_channels.h
 	wf_graphics.c
 	wf_graphics.h
 	wf_cliprdr.c
 	wf_cliprdr.h
-	wf_window.c
-	wf_window.h
 	wf_rail.c
 	wf_rail.h
-	wf_interface.c
-	wf_interface.h
+	wf_client.c
+	wf_client.h
 	wf_floatbar.c
 	wf_floatbar.h
 	wfreerdp.rc
@@ -50,24 +50,17 @@ if(WITH_CLIENT_INTERFACE)
 	else()
 		add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 	endif()
-	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION} PREFIX "lib")
+	if (WITH_LIBRARY_VERSIONING)
+  	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+  endif()
+  set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
 else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
 	add_executable(${MODULE_NAME} WIN32 ${${MODULE_PREFIX}_SRCS})
 endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-crt winpr-credui winpr-utils)
-
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-core freerdp-gdi freerdp-codec freerdp-primitives freerdp-utils)
-
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 if(WITH_CLIENT_INTERFACE)

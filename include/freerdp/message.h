@@ -54,6 +54,7 @@
 #define Update_SurfaceBits					12
 #define Update_SurfaceFrameMarker				13
 #define Update_SurfaceFrameAcknowledge				14
+#define Update_SetKeyboardIndicators				15
 
 #define FREERDP_UPDATE_BEGIN_PAINT				MakeMessageId(Update, BeginPaint)
 #define FREERDP_UPDATE_	END_PAINT				MakeMessageId(Update, EndPaint)
@@ -69,6 +70,7 @@
 #define FREERDP_UPDATE_SURFACE_BITS				MakeMessageId(Update, SurfaceBits)
 #define FREERDP_UPDATE_SURFACE_FRAME_MARKER			MakeMessageId(Update, SurfaceFrameMarker)
 #define FREERDP_UPDATE_SURFACE_FRAME_ACKNOWLEDGE		MakeMessageId(Update, SurfaceFrameAcknowledge)
+#define FREERDP_UPDATE_SET_KEYBOARD_INDICATORS			MakeMessageId(Update, SetKeyboardIndicators)
 
 /* Primary Update */
 

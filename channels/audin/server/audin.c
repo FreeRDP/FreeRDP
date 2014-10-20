@@ -34,7 +34,9 @@
 #include <freerdp/codec/audio.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/audin.h>
+#include <freerdp/channels/log.h>
 
+#define TAG CHANNELS_TAG("audin.server")
 #define MSG_SNDIN_VERSION		0x01
 #define MSG_SNDIN_FORMATS		0x02
 #define MSG_SNDIN_OPEN			0x03
@@ -345,23 +347,15 @@ static void* audin_server_thread_func(void* arg)
 
 		Stream_SetPosition(s, 0);
 
+		WTSVirtualChannelRead(audin->audin_channel, 0, NULL, 0, &BytesReturned);
+		if (BytesReturned < 1)
+			continue;
+		Stream_EnsureRemainingCapacity(s, BytesReturned);
 		if (WTSVirtualChannelRead(audin->audin_channel, 0, (PCHAR) Stream_Buffer(s),
 			Stream_Capacity(s), &BytesReturned) == FALSE)
 		{
-			if (BytesReturned == 0)
-				break;
-			
-			Stream_EnsureRemainingCapacity(s, BytesReturned);
-
-			if (WTSVirtualChannelRead(audin->audin_channel, 0, (PCHAR) Stream_Buffer(s),
-				Stream_Capacity(s), &BytesReturned) == FALSE)
-			{
-				break;
-			}
+			break;
 		}
-
-		if (BytesReturned < 1)
-			continue;
 
 		Stream_Read_UINT8(s, MessageId);
 		BytesReturned--;
@@ -393,7 +387,7 @@ static void* audin_server_thread_func(void* arg)
 				break;
 
 			default:
-				fprintf(stderr, "audin_server_thread_func: unknown MessageId %d\n", MessageId);
+				WLog_ERR(TAG,  "audin_server_thread_func: unknown MessageId %d\n", MessageId);
 				break;
 		}
 	}

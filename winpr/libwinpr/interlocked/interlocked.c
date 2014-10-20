@@ -234,13 +234,22 @@ LONG InterlockedCompareExchange(LONG volatile *Destination, LONG Exchange, LONG 
 #endif
 }
 
+PVOID InterlockedCompareExchangePointer(PVOID volatile *Destination, PVOID Exchange, PVOID Comperand)
+{
+#ifdef __GNUC__
+	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
+#else
+	return 0;
+#endif
+}
+
 #endif /* _WIN32 */
 
-#if defined(_WIN64)
+#if defined(_WIN32) && !defined(WINPR_INTERLOCKED_COMPARE_EXCHANGE64)
 
 /* InterlockedCompareExchange64 already defined */
 
-#elif (_WIN32 && (_WIN32_WINNT < 0x0502))
+#elif defined(_WIN32) && defined(WINPR_INTERLOCKED_COMPARE_EXCHANGE64)
 
 static volatile HANDLE mutex = NULL;
 
@@ -249,15 +258,13 @@ int static_mutex_lock(volatile HANDLE* static_mutex)
 	if (*static_mutex == NULL)
 	{
 		HANDLE handle = CreateMutex(NULL, FALSE, NULL);
-		
+
 		if (InterlockedCompareExchangePointer((PVOID*) static_mutex, (PVOID) handle, NULL) != NULL)
 			CloseHandle(handle);
 	}
 
 	return (WaitForSingleObject(*static_mutex, INFINITE) == WAIT_FAILED);
 }
-
-/* Not available in XP */
 
 LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG Exchange, LONGLONG Comperand)
 {
@@ -275,7 +282,7 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile *Destination, LONGLONG E
 	return previousValue;
 }
 
-#elif ANDROID || (defined(__GNUC__) && !defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8))
+#elif (defined(ANDROID) && ANDROID) || (defined(__GNUC__) && !defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8))
 
 #include <pthread.h>
 

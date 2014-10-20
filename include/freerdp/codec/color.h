@@ -26,8 +26,8 @@
 #define FREERDP_PIXEL_FORMAT_TYPE_A		0
 #define FREERDP_PIXEL_FORMAT_TYPE_ARGB		1
 #define FREERDP_PIXEL_FORMAT_TYPE_ABGR		2
-#define FREERDP_PIXEL_FORMAT_TYPE_BGRA		3
-#define FREERDP_PIXEL_FORMAT_TYPE_RGBA		4
+
+#define FREERDP_PIXEL_FORMAT_IS_ABGR(_format)	(FREERDP_PIXEL_FORMAT_TYPE(_format) == FREERDP_PIXEL_FORMAT_TYPE_ABGR)
 
 #define FREERDP_PIXEL_FLIP_NONE			0
 #define FREERDP_PIXEL_FLIP_VERTICAL		1
@@ -108,56 +108,101 @@
 
 /* 24bpp formats */
 
-#define PIXEL_FORMAT_R8G8B8		FREERDP_PIXEL_FORMAT(0, 24, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 0, 8, 8, 8)
+#define PIXEL_FORMAT_R8G8B8_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 24, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 0, 8, 8, 8)
+#define PIXEL_FORMAT_R8G8B8		PIXEL_FORMAT_R8G8B8_F(0)
 #define PIXEL_FORMAT_RGB24		PIXEL_FORMAT_R8G8B8
+#define PIXEL_FORMAT_R8G8B8_VF		PIXEL_FORMAT_R8G8B8_F(1)
+#define PIXEL_FORMAT_RGB24_VF		PIXEL_FORMAT_R8G8B8_VF
 
-#define PIXEL_FORMAT_B8G8R8		FREERDP_PIXEL_FORMAT(0, 24, FREERDP_PIXEL_FORMAT_TYPE_ABGR, 0, 8, 8, 8)
+#define PIXEL_FORMAT_B8G8R8_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 24, FREERDP_PIXEL_FORMAT_TYPE_ABGR, 0, 8, 8, 8)
+#define PIXEL_FORMAT_B8G8R8		PIXEL_FORMAT_B8G8R8_F(0)
 #define PIXEL_FORMAT_BGR24		PIXEL_FORMAT_B8G8R8
+#define PIXEL_FORMAT_B8G8R8_VF		PIXEL_FORMAT_B8G8R8_F(1)
+#define PIXEL_FORMAT_BGR24_VF		PIXEL_FORMAT_B8G8R8_VF
 
 /* 16bpp formats */
 
-#define PIXEL_FORMAT_R5G6B5		FREERDP_PIXEL_FORMAT(0, 16, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 0, 5, 6, 5)
+#define PIXEL_FORMAT_R5G6B5_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 16, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 0, 5, 6, 5)
+#define PIXEL_FORMAT_R5G6B5		PIXEL_FORMAT_R5G6B5_F(0)
 #define PIXEL_FORMAT_RGB565		PIXEL_FORMAT_R5G6B5
 #define PIXEL_FORMAT_RGB16		PIXEL_FORMAT_R5G6B5
+#define PIXEL_FORMAT_R5G6B5_VF		PIXEL_FORMAT_R5G6B5_F(1)
+#define PIXEL_FORMAT_RGB565_VF		PIXEL_FORMAT_R5G6B5_VF
+#define PIXEL_FORMAT_RGB16_VF		PIXEL_FORMAT_R5G6B5_VF
 
-#define PIXEL_FORMAT_B5G6R5		FREERDP_PIXEL_FORMAT(0, 16, FREERDP_PIXEL_FORMAT_TYPE_ABGR, 0, 5, 6, 5)
+#define PIXEL_FORMAT_B5G6R5_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 16, FREERDP_PIXEL_FORMAT_TYPE_ABGR, 0, 5, 6, 5)
+#define PIXEL_FORMAT_B5G6R5		PIXEL_FORMAT_B5G6R5_F(0)
 #define PIXEL_FORMAT_BGR565		PIXEL_FORMAT_B5G6R5
 #define PIXEL_FORMAT_BGR16		PIXEL_FORMAT_B5G6R5
+#define PIXEL_FORMAT_B5G6R5_VF		PIXEL_FORMAT_B5G6R5_F(1)
+#define PIXEL_FORMAT_BGR565_VF		PIXEL_FORMAT_B5G6R5_VF
+#define PIXEL_FORMAT_BGR16_VF		PIXEL_FORMAT_B5G6R5_VF
 
-#define PIXEL_FORMAT_A1R5G5B5		FREERDP_PIXEL_FORMAT(0, 16, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 1, 5, 5, 5)
+#define PIXEL_FORMAT_A1R5G5B5_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 16, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 1, 5, 5, 5)
+#define PIXEL_FORMAT_A1R5G5B5		PIXEL_FORMAT_A1R5G5B5_F(0)
 #define PIXEL_FORMAT_ARGB555		PIXEL_FORMAT_A1R5G5B5
 #define PIXEL_FORMAT_ARGB15		PIXEL_FORMAT_A1R5G5B5
+#define PIXEL_FORMAT_A1R5G5B5_VF	PIXEL_FORMAT_A1R5G5B5_F(1)
+#define PIXEL_FORMAT_ARGB555_VF		PIXEL_FORMAT_A1R5G5B5_VF
+#define PIXEL_FORMAT_ARGB15_VF		PIXEL_FORMAT_A1R5G5B5_VF
 
-#define PIXEL_FORMAT_X1R5G5B5		FREERDP_PIXEL_FORMAT(0, 16, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 0, 5, 5, 5)
+#define PIXEL_FORMAT_X1R5G5B5_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 16, FREERDP_PIXEL_FORMAT_TYPE_ARGB, 0, 5, 5, 5)
+#define PIXEL_FORMAT_X1R5G5B5		PIXEL_FORMAT_X1R5G5B5_F(0)
 #define PIXEL_FORMAT_XRGB555		PIXEL_FORMAT_X1R5G5B5
 #define PIXEL_FORMAT_RGB555		PIXEL_FORMAT_X1R5G5B5
 #define PIXEL_FORMAT_RGB15		PIXEL_FORMAT_X1R5G5B5
+#define PIXEL_FORMAT_X1R5G5B5_VF	PIXEL_FORMAT_X1R5G5B5_F(1)
+#define PIXEL_FORMAT_XRGB555_VF		PIXEL_FORMAT_X1R5G5B5_VF
+#define PIXEL_FORMAT_RGB555_VF		PIXEL_FORMAT_X1R5G5B5_VF
+#define PIXEL_FORMAT_RGB15_VF		PIXEL_FORMAT_X1R5G5B5_VF
 
-#define PIXEL_FORMAT_A1B5G5R5		FREERDP_PIXEL_FORMAT(0, 16, FREERDP_PIXEL_FORMAT_TYPE_ABGR, 1, 5, 5, 5)
+#define PIXEL_FORMAT_A1B5G5R5_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 16, FREERDP_PIXEL_FORMAT_TYPE_ABGR, 1, 5, 5, 5)
+#define PIXEL_FORMAT_A1B5G5R5		PIXEL_FORMAT_A1B5G5R5_F(0)
 #define PIXEL_FORMAT_ABGR555		PIXEL_FORMAT_A1B5G5R5
 #define PIXEL_FORMAT_ABGR15		PIXEL_FORMAT_A1B5G5R5
+#define PIXEL_FORMAT_A1B5G5R5_VF	PIXEL_FORMAT_A1B5G5R5_F(1)
+#define PIXEL_FORMAT_ABGR555_VF		PIXEL_FORMAT_A1B5G5R5_VF
+#define PIXEL_FORMAT_ABGR15_VF		PIXEL_FORMAT_A1B5G5R5_VF
 
-#define PIXEL_FORMAT_X1B5G5R5		FREERDP_PIXEL_FORMAT(0, 16, FREERDP_PIXEL_FORMAT_TYPE_ABGR, 0, 5, 5, 5)
+#define PIXEL_FORMAT_X1B5G5R5_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 16, FREERDP_PIXEL_FORMAT_TYPE_ABGR, 0, 5, 5, 5)
+#define PIXEL_FORMAT_X1B5G5R5		PIXEL_FORMAT_X1B5G5R5_F(0)
 #define PIXEL_FORMAT_XBGR555		PIXEL_FORMAT_X1B5G5R5
 #define PIXEL_FORMAT_BGR555		PIXEL_FORMAT_X1B5G5R5
 #define PIXEL_FORMAT_BGR15		PIXEL_FORMAT_X1B5G5R5
+#define PIXEL_FORMAT_X1B5G5R5_VF	PIXEL_FORMAT_X1B5G5R5_F(1)
+#define PIXEL_FORMAT_XBGR555_VF		PIXEL_FORMAT_X1B5G5R5_VF
+#define PIXEL_FORMAT_BGR555_VF		PIXEL_FORMAT_X1B5G5R5_VF
+#define PIXEL_FORMAT_BGR15_VF		PIXEL_FORMAT_X1B5G5R5_VF
 
 /* 8bpp formats */
 
-#define PIXEL_FORMAT_A8			FREERDP_PIXEL_FORMAT(0, 8, FREERDP_PIXEL_FORMAT_TYPE_A, 8, 0, 0, 0)
+#define PIXEL_FORMAT_A8_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 8, FREERDP_PIXEL_FORMAT_TYPE_A, 8, 0, 0, 0)
+#define PIXEL_FORMAT_A8			PIXEL_FORMAT_A8_F(0)
 #define PIXEL_FORMAT_8BPP		PIXEL_FORMAT_A8
 #define PIXEL_FORMAT_256		PIXEL_FORMAT_A8
+#define PIXEL_FORMAT_RGB8		PIXEL_FORMAT_A8
+#define PIXEL_FORMAT_A8_VF		PIXEL_FORMAT_A8_F(1)
+#define PIXEL_FORMAT_8BPP_VF		PIXEL_FORMAT_A8_VF
+#define PIXEL_FORMAT_256_VF		PIXEL_FORMAT_A8_VF
+#define PIXEL_FORMAT_RGB8_VF		PIXEL_FORMAT_A8_VF
 
 /* 4 bpp formats */
 
-#define PIXEL_FORMAT_A4			FREERDP_PIXEL_FORMAT(0, 4, FREERDP_PIXEL_FORMAT_TYPE_A, 4, 0, 0, 0)
+#define PIXEL_FORMAT_A4_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 4, FREERDP_PIXEL_FORMAT_TYPE_A, 4, 0, 0, 0)
+#define PIXEL_FORMAT_A4			PIXEL_FORMAT_A4_F(0)
 #define PIXEL_FORMAT_4BPP		PIXEL_FORMAT_A4
+#define PIXEL_FORMAT_A4_VF		PIXEL_FORMAT_A4_F(1)
+#define PIXEL_FORMAT_4BPP_VF		PIXEL_FORMAT_A4_VF
 
 /* 1bpp formats */
 
-#define PIXEL_FORMAT_A1			FREERDP_PIXEL_FORMAT(0, 1, FREERDP_PIXEL_FORMAT_TYPE_A, 1, 0, 0, 0)
+#define PIXEL_FORMAT_A1_F(_flip)	FREERDP_PIXEL_FORMAT(_flip, 1, FREERDP_PIXEL_FORMAT_TYPE_A, 1, 0, 0, 0)
+#define PIXEL_FORMAT_A1			PIXEL_FORMAT_A1_F(0)
 #define PIXEL_FORMAT_1BPP		PIXEL_FORMAT_A1
 #define PIXEL_FORMAT_MONO		PIXEL_FORMAT_A1
+#define PIXEL_FORMAT_A1_VF		PIXEL_FORMAT_A1_F(1)
+#define PIXEL_FORMAT_1BPP_VF		PIXEL_FORMAT_A1_VF
+#define PIXEL_FORMAT_MONO_VF		PIXEL_FORMAT_A1_VF
 
 #ifdef __cplusplus
 extern "C" {
@@ -356,7 +401,6 @@ extern "C" {
 
 /* Supported Internal Buffer Formats */
 #define CLRBUF_16BPP		8
-#define	CLRBUF_24BPP		16
 #define	CLRBUF_32BPP		32
 
 struct _CLRCONV
@@ -372,6 +416,14 @@ typedef CLRCONV* HCLRCONV;
 #define IBPP(_bpp) (((_bpp + 1)/ 8) % 5)
 
 typedef BYTE* (*p_freerdp_image_convert)(BYTE* srcData, BYTE* dstData, int width, int height, int srcBpp, int dstBpp, HCLRCONV clrconv);
+
+static INLINE UINT32 RGB32_to_BGR32(UINT32 pixel)
+{
+	UINT32 temp;
+
+	temp = (pixel ^ (pixel >> 16)) & ((1 << 8) - 1);
+	return (pixel ^ (temp | (temp << 16)));
+}
 
 FREERDP_API int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp);
 FREERDP_API void freerdp_set_pixel(BYTE* data, int x, int y, int width, int height, int bpp, int pixel);
@@ -392,14 +444,31 @@ FREERDP_API UINT32 freerdp_color_convert_rgb_bgr(UINT32 srcColor, int srcBpp, in
 FREERDP_API UINT32 freerdp_color_convert_bgr_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API UINT32 freerdp_color_convert_var_rgb(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
 FREERDP_API UINT32 freerdp_color_convert_var_bgr(UINT32 srcColor, int srcBpp, int dstBpp, HCLRCONV clrconv);
+FREERDP_API UINT32 freerdp_convert_gdi_order_color(UINT32 color, int bpp, UINT32 format, BYTE* palette);
 
 FREERDP_API HCLRCONV freerdp_clrconv_new(UINT32 flags);
 FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);
 
-FREERDP_API int freerdp_image_copy(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDst, int nYDst,
-		int nWidth, int nHeight, BYTE* pSrcData, DWORD dwSrcFormat, int nSrcStep, int nXSrc, int nYSrc);
-FREERDP_API int freerdp_image_fill(BYTE* pDstData, DWORD dwDstFormat, int nDstStep, int nXDst, int nYDst,
+FREERDP_API int freerdp_image8_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
+FREERDP_API int freerdp_image15_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
+FREERDP_API int freerdp_image16_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
+FREERDP_API int freerdp_image24_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
+FREERDP_API int freerdp_image32_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
+
+FREERDP_API int freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
+FREERDP_API int freerdp_image_move(BYTE* pData, DWORD Format, int nStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, int nXSrc, int nYSrc);
+FREERDP_API int freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, UINT32 color);
+	
+FREERDP_API int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc);
 
 #ifdef __cplusplus
 }

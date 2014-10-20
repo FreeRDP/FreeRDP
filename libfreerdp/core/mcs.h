@@ -139,6 +139,7 @@ struct rdp_mcs
 	rdpSettings* settings;
 
 	UINT16 userId;
+	UINT16 baseChannelId;
 	UINT16 messageChannelId;
 
 	DomainParameters domainParameters;

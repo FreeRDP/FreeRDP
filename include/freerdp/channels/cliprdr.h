@@ -29,30 +29,6 @@
  * Clipboard Formats
  */
 
-#define CLIPRDR_FORMAT_RAW		0
-#define CLIPRDR_FORMAT_TEXT		1 /* "Plain Text" */
-#define CLIPRDR_FORMAT_BITMAP		2 /* "Bitmap" */
-#define CLIPRDR_FORMAT_METAFILEPICT	3 /* "Windows Metafile" */
-#define CLIPRDR_FORMAT_SYLK		4
-#define CLIPRDR_FORMAT_DIF		5
-#define CLIPRDR_FORMAT_TIFF		6
-#define CLIPRDR_FORMAT_OEMTEXT		7 /* "OEM Text" */
-#define CLIPRDR_FORMAT_DIB		8 /* "Device Independent Bitmap (DIB)" */
-#define CLIPRDR_FORMAT_PALETTE		9
-#define CLIPRDR_FORMAT_PENDATA		10
-#define CLIPRDR_FORMAT_RIFF		11
-#define CLIPRDR_FORMAT_WAVE		12
-#define CLIPRDR_FORMAT_UNICODETEXT	13 /* "Unicode Text" */
-#define CLIPRDR_FORMAT_ENHMETAFILE	14 /* "Enhanced Metafile" */
-#define CLIPRDR_FORMAT_HDROP		15 /* "File List" */
-#define CLIPRDR_FORMAT_LOCALE		16 /* "Locale Identifier" */
-#define CLIPRDR_FORMAT_DIBV5		17
-#define CLIPRDR_FORMAT_MAX		18
-
-#define CB_FORMAT_RAW			0x0000
-#define CB_FORMAT_TEXT			0x0001
-#define CB_FORMAT_DIB			0x0008
-#define CB_FORMAT_UNICODETEXT		0x000D
 #define CB_FORMAT_HTML			0xD010
 #define CB_FORMAT_PNG			0xD011
 #define CB_FORMAT_JPEG			0xD012
@@ -149,7 +125,7 @@ struct _CLIPRDR_FORMAT_LIST
 {
 	DEFINE_CLIPRDR_HEADER_COMMON();
 
-	UINT32 cFormats;
+	UINT32 numFormats;
 	CLIPRDR_FORMAT* formats;
 };
 typedef struct _CLIPRDR_FORMAT_LIST CLIPRDR_FORMAT_LIST;

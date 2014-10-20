@@ -22,6 +22,7 @@
 
 #include <freerdp/dvc.h>
 #include <freerdp/addin.h>
+#include <freerdp/settings.h>
 
 #include <winpr/synch.h>
 #include <winpr/collections.h>
@@ -65,6 +66,7 @@ struct _DVCMAN_ENTRY_POINTS
 
 	DVCMAN* dvcman;
 	ADDIN_ARGV* args;
+	rdpSettings* settings;
 };
 typedef struct _DVCMAN_ENTRY_POINTS DVCMAN_ENTRY_POINTS;
 
@@ -80,12 +82,13 @@ struct _DVCMAN_CHANNEL
 	IWTSVirtualChannelCallback* channel_callback;
 
 	wStream* dvc_data;
+	UINT32 dvc_data_length;
 	CRITICAL_SECTION lock;
 };
 typedef struct _DVCMAN_CHANNEL DVCMAN_CHANNEL;
 
 IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin);
-int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args);
+int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args, rdpSettings* settings);
 void dvcman_free(IWTSVirtualChannelManager* pChannelMgr);
 int dvcman_init(IWTSVirtualChannelManager* pChannelMgr);
 int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, const char* ChannelName);

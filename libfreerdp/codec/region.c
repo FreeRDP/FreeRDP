@@ -19,7 +19,10 @@
 
 #include <assert.h>
 #include <winpr/memory.h>
+#include <freerdp/log.h>
 #include <freerdp/codec/region.h>
+
+#define TAG FREERDP_TAG("codec")
 
 /*
  * The functions in this file implement the Region abstraction largely inspired from
@@ -127,12 +130,23 @@ static RECTANGLE_16 *region16_extents_noconst(REGION16 *region)
 	return &region->extents;
 }
 
+BOOL rectangle_is_empty(const RECTANGLE_16 *rect)
+{
+	return (rect->left + rect->top + rect->right + rect->bottom) ? TRUE : FALSE;
+}
+
 BOOL region16_is_empty(const REGION16 *region)
 {
 	assert(region);
 	assert(region->data);
 
 	return (region->data->nbRects == 0);
+}
+
+BOOL rectangles_equal(const RECTANGLE_16 *r1, const RECTANGLE_16 *r2)
+{
+	return ((r1->left == r2->left) && (r1->top == r2->top) &&
+			(r1->right == r2->right) && (r1->bottom == r2->bottom)) ? TRUE : FALSE;
 }
 
 BOOL rectangles_intersects(const RECTANGLE_16 *r1, const RECTANGLE_16 *r2)
@@ -219,20 +233,18 @@ void region16_print(const REGION16 *region)
 	int currentBandY = -1;
 
 	rects = region16_rects(region, &nbRects);
-	fprintf(stderr, "nrects=%d", nbRects);
+	WLog_DBG(TAG,  "nrects=%d", nbRects);
 
 	for (i = 0; i < nbRects; i++, rects++)
 	{
 		if (rects->top != currentBandY)
 		{
 			currentBandY = rects->top;
-			fprintf(stderr, "\nband %d: ", currentBandY);
+			WLog_DBG(TAG,  "\nband %d: ", currentBandY);
 		}
 
-		fprintf(stderr, "(%d,%d-%d,%d)", rects->left, rects->top, rects->right, rects->bottom);
+		WLog_DBG(TAG,  "(%d,%d-%d,%d)", rects->left, rects->top, rects->right, rects->bottom);
 	}
-
-	fprintf(stderr, "\n");
 }
 
 void region16_copy_band_with_union(RECTANGLE_16 *dst,
