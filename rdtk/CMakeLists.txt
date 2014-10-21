@@ -66,6 +66,10 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 add_subdirectory(include)
 add_subdirectory(librdtk)
 
+if(WITH_X11)
+	add_subdirectory(sample)
+endif()
+
 # Exporting
 
 if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
