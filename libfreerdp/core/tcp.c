@@ -558,7 +558,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 		 * FIXME: the following is a nasty workaround. Find a cleaner way:
 		 * Either set port manually afterwards or get it passed as string?
 		 */
-		snprintf(port_str, 11, "%u", port);
+		sprintf_s(port_str, 11, "%u", port);
 
 		status = getaddrinfo(hostname, port_str, &hints, &result);
 		if (status) {
