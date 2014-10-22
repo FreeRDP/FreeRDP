@@ -413,8 +413,6 @@ void xf_gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 
 	xf_lock_x11(xfc, FALSE);
 
-	CopyMemory(xfc->clrconv->palette, palette, sizeof(rdpPalette));
-
 	palette32 = (UINT32*) xfc->palette;
 
 	for (index = 0; index < palette->number; index++)

@@ -111,7 +111,6 @@ struct xf_context
 	int current_desktop;
 	BOOL remote_app;
 	BOOL disconnect;
-	HCLRCONV clrconv;
 	HANDLE mutex;
 	BOOL UseXThreads;
 	BOOL cursorHidden;

@@ -611,38 +611,48 @@ BOOL xf_get_pixmap_info(xfContext *xfc)
 	XPixmapFormatValues *pfs;
 	XWindowAttributes window_attributes;
 	pfs = XListPixmapFormats(xfc->display, &pf_count);
-	if(pfs == NULL)
+
+	if (pfs == NULL)
 	{
 		WLog_ERR(TAG,  "XListPixmapFormats failed");
 		return 1;
 	}
-	for(i = 0; i < pf_count; i++)
+
+	for (i = 0; i < pf_count; i++)
 	{
 		pf = pfs + i;
-		if(pf->depth == xfc->depth)
+
+		if (pf->depth == xfc->depth)
 		{
 			xfc->bpp = pf->bits_per_pixel;
 			xfc->scanline_pad = pf->scanline_pad;
 			break;
 		}
 	}
+
 	XFree(pfs);
+
 	ZeroMemory(&template, sizeof(template));
 	template.class = TrueColor;
 	template.screen = xfc->screen_number;
-	if(XGetWindowAttributes(xfc->display, RootWindowOfScreen(xfc->screen), &window_attributes) == 0)
+
+	if (XGetWindowAttributes(xfc->display, RootWindowOfScreen(xfc->screen), &window_attributes) == 0)
 	{
 		WLog_ERR(TAG,  "XGetWindowAttributes failed");
 		return FALSE;
 	}
+
 	vis = XGetVisualInfo(xfc->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
-	if(vis == NULL)
+
+	if (vis == NULL)
 	{
 		WLog_ERR(TAG,  "XGetVisualInfo failed");
 		return FALSE;
 	}
+
 	vi = NULL;
-	for(i = 0; i < vi_count; i++)
+
+	for (i = 0; i < vi_count; i++)
 	{
 		vi = vis + i;
 		if(vi->visual == window_attributes.visual)
@@ -651,22 +661,26 @@ BOOL xf_get_pixmap_info(xfContext *xfc)
 			break;
 		}
 	}
-	if(vi)
+
+	if (vi)
 	{
 		/*
 		 * Detect if the server visual has an inverted colormap
 		 * (BGR vs RGB, or red being the least significant byte)
 		 */
-		if(vi->red_mask & 0xFF)
+		if (vi->red_mask & 0xFF)
 		{
-			xfc->clrconv->invert = TRUE;
+			xfc->invert = TRUE;
 		}
 	}
+
 	XFree(vis);
-	if((xfc->visual == NULL) || (xfc->scanline_pad == 0))
+
+	if ((xfc->visual == NULL) || (xfc->scanline_pad == 0))
 	{
 		return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -859,7 +873,6 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	xf_keyboard_init(xfc);
 
-	xfc->clrconv = freerdp_clrconv_new(CLRCONV_ALPHA);
 	instance->context->cache = cache_new(instance->settings);
 
 	xfc->xfds = ConnectionNumber(xfc->display);
@@ -899,6 +912,7 @@ BOOL xf_pre_connect(freerdp* instance)
  */
 BOOL xf_post_connect(freerdp *instance)
 {
+	UINT32 flags;
 	XGCValues gcv;
 	rdpCache* cache;
 	rdpChannels* channels;
@@ -915,16 +929,16 @@ BOOL xf_post_connect(freerdp *instance)
 
 	xf_register_graphics(instance->context->graphics);
 
+	flags = CLRCONV_ALPHA;
+
+	if (xfc->bpp > 16)
+		flags |= CLRBUF_32BPP;
+	else
+		flags |= CLRBUF_16BPP;
+
 	if (settings->SoftwareGdi)
 	{
 		rdpGdi* gdi;
-		UINT32 flags;
-		flags = CLRCONV_ALPHA;
-
-		if (xfc->bpp > 16)
-			flags |= CLRBUF_32BPP;
-		else
-			flags |= CLRBUF_16BPP;
 
 		gdi_init(instance, flags, NULL);
 
@@ -935,7 +949,7 @@ BOOL xf_post_connect(freerdp *instance)
 	{
 		xfc->srcBpp = settings->ColorDepth;
 		xf_gdi_register_update_callbacks(instance->update);
-		xfc->hdc = gdi_CreateDC(xfc->clrconv, xfc->bpp);
+		xfc->hdc = gdi_CreateDC(flags, xfc->bpp);
 	}
 
 	xfc->originalWidth = settings->DesktopWidth;
@@ -1172,12 +1186,6 @@ void xf_window_free(xfContext *xfc)
 	{
 		rail_free(context->rail);
 		context->rail = NULL;
-	}
-
-	if (xfc->clrconv)
-	{
-		freerdp_clrconv_free(xfc->clrconv);
-		xfc->clrconv = NULL;
 	}
 
 	if (xfc->hdc)

@@ -550,8 +550,6 @@ static void gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 	UINT32* palette32;
 	rdpGdi* gdi = context->gdi;
 
-	CopyMemory(gdi->clrconv->palette, palette, sizeof(rdpPalette));
-
 	palette32 = (UINT32*) gdi->palette;
 
 	for (index = 0; index < palette->number; index++)
@@ -1201,22 +1199,9 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	gdi->hdc->bitsPerPixel = gdi->dstBpp;
 	gdi->hdc->bytesPerPixel = gdi->bytesPerPixel;
 
-	gdi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
-
-	if (!gdi->clrconv)
-		return -1;
-
-	gdi->clrconv->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
-	gdi->clrconv->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
-	gdi->clrconv->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
-	gdi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
-
-	if (!gdi->clrconv->palette)
-		return -1;
-
-	gdi->hdc->alpha = gdi->clrconv->alpha;
-	gdi->hdc->invert = gdi->clrconv->invert;
-	gdi->hdc->rgb555 = gdi->clrconv->rgb555;
+	gdi->hdc->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
+	gdi->hdc->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
+	gdi->hdc->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
 
 	gdi_init_primary(gdi);
 
@@ -1255,8 +1240,6 @@ void gdi_free(freerdp* instance)
 		gdi_bitmap_free_ex(gdi->image);
 		gdi_DeleteDC(gdi->hdc);
 		_aligned_free(gdi->bitmap_buffer);
-		free(gdi->clrconv->palette);
-		free(gdi->clrconv);
 		free(gdi);
 	}
 	
