@@ -21,20 +21,20 @@
 
 #include "wf_cliprdr_EnumFORMATETC.h"
 
-static void cliprdr_format_deep_copy(FORMATETC *dest, FORMATETC *source)
+static void cliprdr_format_deep_copy(FORMATETC* dest, FORMATETC* source)
 {
 	*dest = *source;
 
 	if (source->ptd)
 	{
-		dest->ptd = (DVTARGETDEVICE *)CoTaskMemAlloc(sizeof(DVTARGETDEVICE));
+		dest->ptd = (DVTARGETDEVICE*) CoTaskMemAlloc(sizeof(DVTARGETDEVICE));
 		*(dest->ptd) = *(source->ptd);
 	}
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_QueryInterface(IEnumFORMATETC *This, REFIID riid, void **ppvObject)
+HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_QueryInterface(IEnumFORMATETC* This, REFIID riid, void** ppvObject)
 {
-	CliprdrEnumFORMATETC *instance = (CliprdrEnumFORMATETC *)This;
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
 
 	if (IsEqualIID(riid, &IID_IEnumFORMATETC) || IsEqualIID(riid, &IID_IUnknown))
 	{
@@ -49,17 +49,17 @@ HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_QueryInterface(IEnumFORMATETC *Th
 	}
 }
 
-ULONG STDMETHODCALLTYPE CliprdrEnumFORMATETC_AddRef(IEnumFORMATETC *This)
+ULONG STDMETHODCALLTYPE CliprdrEnumFORMATETC_AddRef(IEnumFORMATETC* This)
 {
-	CliprdrEnumFORMATETC *instance = (CliprdrEnumFORMATETC *)This;
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
 
 	return InterlockedIncrement(&instance->m_lRefCount);
 }
 
-ULONG STDMETHODCALLTYPE CliprdrEnumFORMATETC_Release(IEnumFORMATETC *This)
+ULONG STDMETHODCALLTYPE CliprdrEnumFORMATETC_Release(IEnumFORMATETC* This)
 {
-	CliprdrEnumFORMATETC *instance = (CliprdrEnumFORMATETC *)This;
 	LONG count;
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
 
 	count = InterlockedDecrement(&instance->m_lRefCount);
 
@@ -74,16 +74,18 @@ ULONG STDMETHODCALLTYPE CliprdrEnumFORMATETC_Release(IEnumFORMATETC *This)
 	}
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Next(IEnumFORMATETC *This, ULONG celt, FORMATETC *rgelt, ULONG *pceltFetched)
+HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Next(IEnumFORMATETC* This, ULONG celt, FORMATETC *rgelt, ULONG *pceltFetched)
 {
-	CliprdrEnumFORMATETC *instance = (CliprdrEnumFORMATETC *)This;
 	ULONG copied  = 0;
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
 
 	if (celt == 0 || !rgelt)
 		return E_INVALIDARG;
 
 	while (instance->m_nIndex < instance->m_nNumFormats && copied < celt)
+	{
 		cliprdr_format_deep_copy(&rgelt[copied++], &instance->m_pFormatEtc[instance->m_nIndex++]);
+	}
 
 	if (pceltFetched != 0)
 		*pceltFetched = copied;
@@ -91,9 +93,9 @@ HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Next(IEnumFORMATETC *This, ULONG 
 	return (copied == celt) ? S_OK : S_FALSE;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Skip(IEnumFORMATETC *This, ULONG celt)
+HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Skip(IEnumFORMATETC* This, ULONG celt)
 {
-	CliprdrEnumFORMATETC *instance = (CliprdrEnumFORMATETC *)This;
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
 
 	if (instance->m_nIndex + (LONG) celt > instance->m_nNumFormats)
 		return S_FALSE;
@@ -103,18 +105,18 @@ HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Skip(IEnumFORMATETC *This, ULONG 
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Reset(IEnumFORMATETC *This)
+HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Reset(IEnumFORMATETC* This)
 {
-	CliprdrEnumFORMATETC *instance = (CliprdrEnumFORMATETC *)This;
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
 
 	instance->m_nIndex = 0;
 
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Clone(IEnumFORMATETC *This, IEnumFORMATETC **ppEnum)
+HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Clone(IEnumFORMATETC* This, IEnumFORMATETC **ppEnum)
 {
-	CliprdrEnumFORMATETC *instance = (CliprdrEnumFORMATETC *)This;
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
 
 	if (!ppEnum)
 		return E_INVALIDARG;

@@ -331,6 +331,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		char* body;
 		BYTE bom[2];
 		char num[11];
+		WCHAR* wstr;
 
 		if (SrcSize > 2)
 		{
@@ -343,7 +344,9 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 
 			if ((bom[0] == 0xFF) && (bom[1] == 0xFE))
 			{
-				ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) (data + 2),
+				wstr = (WCHAR*) &((BYTE*) data)[2];
+
+				ConvertFromUnicode(CP_UTF8, 0, wstr,
 						(SrcSize - 2) / 2, &pSrcData, 0, NULL, NULL);
 			}
 		}

@@ -20,9 +20,9 @@
 #include "wf_cliprdr.h"
 #include "wf_cliprdr_Stream.h"
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_QueryInterface(IStream *This, REFIID riid, void **ppvObject)
+HRESULT STDMETHODCALLTYPE CliprdrStream_QueryInterface(IStream* This, REFIID riid, void** ppvObject)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	if (IsEqualIID(riid, &IID_IStream) || IsEqualIID(riid, &IID_IUnknown))
 	{
@@ -37,17 +37,17 @@ HRESULT STDMETHODCALLTYPE CliprdrStream_QueryInterface(IStream *This, REFIID rii
 	}
 }
 
-ULONG STDMETHODCALLTYPE CliprdrStream_AddRef(IStream *This)
+ULONG STDMETHODCALLTYPE CliprdrStream_AddRef(IStream* This)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	return InterlockedIncrement(&instance->m_lRefCount);
 }
 
-ULONG STDMETHODCALLTYPE CliprdrStream_Release(IStream * This)
+ULONG STDMETHODCALLTYPE CliprdrStream_Release(IStream* This)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
 	LONG count;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	count = InterlockedDecrement(&instance->m_lRefCount);
 
@@ -65,9 +65,9 @@ ULONG STDMETHODCALLTYPE CliprdrStream_Release(IStream * This)
 #define FILECONTENTS_SIZE     0x00000001
 #define FILECONTENTS_RANGE    0x00000002
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_Read(IStream *This, void *pv, ULONG cb, ULONG *pcbRead)
+HRESULT STDMETHODCALLTYPE CliprdrStream_Read(IStream* This, void *pv, ULONG cb, ULONG *pcbRead)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 	cliprdrContext *cliprdr = (cliprdrContext *)instance->m_pData;
 	int ret;
 
@@ -100,16 +100,16 @@ HRESULT STDMETHODCALLTYPE CliprdrStream_Read(IStream *This, void *pv, ULONG cb, 
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_Write(IStream *This, const void *pv, ULONG cb, ULONG *pcbWritten)
+HRESULT STDMETHODCALLTYPE CliprdrStream_Write(IStream* This, const void *pv, ULONG cb, ULONG *pcbWritten)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	return STG_E_ACCESSDENIED;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_Seek(IStream *This, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
+HRESULT STDMETHODCALLTYPE CliprdrStream_Seek(IStream* This, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 	ULONGLONG newoffset;
 
 	newoffset = instance->m_lOffset.QuadPart;
@@ -139,51 +139,51 @@ HRESULT STDMETHODCALLTYPE CliprdrStream_Seek(IStream *This, LARGE_INTEGER dlibMo
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_SetSize(IStream *This, ULARGE_INTEGER libNewSize)
+HRESULT STDMETHODCALLTYPE CliprdrStream_SetSize(IStream* This, ULARGE_INTEGER libNewSize)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	return STG_E_INSUFFICIENTMEMORY;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_CopyTo(IStream *This, IStream *pstm, ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten)
+HRESULT STDMETHODCALLTYPE CliprdrStream_CopyTo(IStream* This, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER *pcbWritten)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_Commit(IStream *This, DWORD grfCommitFlags)
+HRESULT STDMETHODCALLTYPE CliprdrStream_Commit(IStream* This, DWORD grfCommitFlags)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	return STG_E_MEDIUMFULL;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_Revert(IStream *This)
+HRESULT STDMETHODCALLTYPE CliprdrStream_Revert(IStream* This)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	return STG_E_INSUFFICIENTMEMORY;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_LockRegion(IStream *This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+HRESULT STDMETHODCALLTYPE CliprdrStream_LockRegion(IStream* This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	return STG_E_INSUFFICIENTMEMORY;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_UnlockRegion(IStream *This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+HRESULT STDMETHODCALLTYPE CliprdrStream_UnlockRegion(IStream* This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	return STG_E_INSUFFICIENTMEMORY;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_Stat(IStream *This, STATSTG *pstatstg, DWORD grfStatFlag)
+HRESULT STDMETHODCALLTYPE CliprdrStream_Stat(IStream* This, STATSTG* pstatstg, DWORD grfStatFlag)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	if (pstatstg == NULL)
 		return STG_E_INVALIDPOINTER;
@@ -196,11 +196,11 @@ HRESULT STDMETHODCALLTYPE CliprdrStream_Stat(IStream *This, STATSTG *pstatstg, D
 			return STG_E_INSUFFICIENTMEMORY;
 
 		case STATFLAG_NONAME:
-			pstatstg->cbSize.QuadPart   = instance->m_lSize.QuadPart;
+			pstatstg->cbSize.QuadPart = instance->m_lSize.QuadPart;
 			pstatstg->grfLocksSupported = LOCK_EXCLUSIVE;
-			pstatstg->grfMode           = GENERIC_READ;
-			pstatstg->grfStateBits      = 0;
-			pstatstg->type              = STGTY_STREAM;
+			pstatstg->grfMode = GENERIC_READ;
+			pstatstg->grfStateBits = 0;
+			pstatstg->type = STGTY_STREAM;
 			break;
 
 		case STATFLAG_NOOPEN:
@@ -213,51 +213,52 @@ HRESULT STDMETHODCALLTYPE CliprdrStream_Stat(IStream *This, STATSTG *pstatstg, D
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CliprdrStream_Clone(IStream *This, IStream **ppstm)
+HRESULT STDMETHODCALLTYPE CliprdrStream_Clone(IStream* This, IStream** ppstm)
 {
-	CliprdrStream *instance = (CliprdrStream *)This;
+	CliprdrStream* instance = (CliprdrStream*) This;
 
 	return STG_E_INSUFFICIENTMEMORY;
 }
 
-CliprdrStream *CliprdrStream_New(LONG index, void *pData)
+CliprdrStream *CliprdrStream_New(LONG index, void* pData)
 {
-	cliprdrContext *cliprdr = (cliprdrContext *)pData;
-	CliprdrStream *instance;
-	IStream *iStream;
+	cliprdrContext* cliprdr = (cliprdrContext*) pData;
+	CliprdrStream* instance;
+	IStream* iStream;
 
-	instance = (CliprdrStream *)calloc(1, sizeof(CliprdrStream));
+	instance = (CliprdrStream*) calloc(1, sizeof(CliprdrStream));
 
 	if (instance)
 	{
 		iStream = &instance->iStream;
 
-		iStream->lpVtbl = (IStreamVtbl *)calloc(1, sizeof(IStreamVtbl));
+		iStream->lpVtbl = (IStreamVtbl*) calloc(1, sizeof(IStreamVtbl));
+
 		if (iStream->lpVtbl)
 		{
 			iStream->lpVtbl->QueryInterface = CliprdrStream_QueryInterface;
-			iStream->lpVtbl->AddRef         = CliprdrStream_AddRef;
-			iStream->lpVtbl->Release        = CliprdrStream_Release;
-			iStream->lpVtbl->Read           = CliprdrStream_Read;
-			iStream->lpVtbl->Write          = CliprdrStream_Write;
-			iStream->lpVtbl->Seek           = CliprdrStream_Seek;
-			iStream->lpVtbl->SetSize        = CliprdrStream_SetSize;
-			iStream->lpVtbl->CopyTo         = CliprdrStream_CopyTo;
-			iStream->lpVtbl->Commit         = CliprdrStream_Commit;
-			iStream->lpVtbl->Revert         = CliprdrStream_Revert;
-			iStream->lpVtbl->LockRegion     = CliprdrStream_LockRegion;
-			iStream->lpVtbl->UnlockRegion   = CliprdrStream_UnlockRegion;
-			iStream->lpVtbl->Stat           = CliprdrStream_Stat;
-			iStream->lpVtbl->Clone          = CliprdrStream_Clone;
+			iStream->lpVtbl->AddRef = CliprdrStream_AddRef;
+			iStream->lpVtbl->Release = CliprdrStream_Release;
+			iStream->lpVtbl->Read = CliprdrStream_Read;
+			iStream->lpVtbl->Write = CliprdrStream_Write;
+			iStream->lpVtbl->Seek = CliprdrStream_Seek;
+			iStream->lpVtbl->SetSize = CliprdrStream_SetSize;
+			iStream->lpVtbl->CopyTo = CliprdrStream_CopyTo;
+			iStream->lpVtbl->Commit = CliprdrStream_Commit;
+			iStream->lpVtbl->Revert = CliprdrStream_Revert;
+			iStream->lpVtbl->LockRegion = CliprdrStream_LockRegion;
+			iStream->lpVtbl->UnlockRegion = CliprdrStream_UnlockRegion;
+			iStream->lpVtbl->Stat = CliprdrStream_Stat;
+			iStream->lpVtbl->Clone = CliprdrStream_Clone;
 
-			instance->m_lRefCount        = 1;
-			instance->m_lIndex           = index;
-			instance->m_pData            = pData;
+			instance->m_lRefCount = 1;
+			instance->m_lIndex = index;
+			instance->m_pData = pData;
 			instance->m_lOffset.QuadPart = 0;
 
 			/* get content size of this stream */
-			cliprdr_send_request_filecontents(cliprdr, (void *)instance, instance->m_lIndex, FILECONTENTS_SIZE, 0, 0, 8);
-			instance->m_lSize.QuadPart = *(LONGLONG *)cliprdr->req_fdata;
+			cliprdr_send_request_filecontents(cliprdr, (void*) instance, instance->m_lIndex, FILECONTENTS_SIZE, 0, 0, 8);
+			instance->m_lSize.QuadPart = *(LONGLONG*)cliprdr->req_fdata;
 			free(cliprdr->req_fdata);
 		}
 		else
@@ -270,12 +271,13 @@ CliprdrStream *CliprdrStream_New(LONG index, void *pData)
 	return instance;
 }
 
-void CliprdrStream_Delete(CliprdrStream *instance)
+void CliprdrStream_Delete(CliprdrStream* instance)
 {
 	if (instance)
 	{
 		if (instance->iStream.lpVtbl)
 			free(instance->iStream.lpVtbl);
+
 		free(instance);
 	}
 }

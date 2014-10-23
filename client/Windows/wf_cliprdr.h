@@ -35,22 +35,24 @@
 #define DEBUG_CLIPRDR(fmt, ...) do { } while (0)
 #endif
 
-typedef struct format_mapping formatMapping;
-struct format_mapping {
+struct format_mapping
+{
 	UINT32 remote_format_id;
 	UINT32 local_format_id;
-	void *name;					/* Unicode or ASCII characters with NULL terminate */
+	void *name; /* Unicode or ASCII characters with NULL terminator */
 };
+typedef struct format_mapping formatMapping;
 
 typedef struct cliprdr_context cliprdrContext;
-struct cliprdr_context {
-	rdpChannels *channels;
+struct cliprdr_context
+{
+	rdpChannels* channels;
 
 	UINT32 capabilities;
 
-	formatMapping *format_mappings;
-	int map_capacity;
 	int map_size;
+	int map_capacity;
+	formatMapping* format_mappings;
 
 	UINT32 request_format;
 	BOOL channel_initialized;
@@ -68,13 +70,13 @@ struct cliprdr_context {
 
 	LPDATAOBJECT data_obj;
 	ULONG req_fsize;
-	char *req_fdata;
+	char* req_fdata;
 	HANDLE req_fevent;
 
 	int nFiles;
 	int file_array_size;
-	wchar_t **file_names;
-	FILEDESCRIPTORW **fileDescriptor;
+	WCHAR** file_names;
+	FILEDESCRIPTORW** fileDescriptor;
 };
 
 void wf_cliprdr_init(wfContext* wfc, rdpChannels* channels);
@@ -86,11 +88,10 @@ BOOL wf_cliprdr_process_selection_clear(wfContext* wfc, HWND hWnd, UINT Msg, WPA
 BOOL wf_cliprdr_process_property_notify(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 void wf_cliprdr_check_owner(wfContext* wfc);
 
-int cliprdr_send_data_request(cliprdrContext *cliprdr, UINT32 format);
-int cliprdr_send_lock(cliprdrContext *cliprdr);
-int cliprdr_send_unlock(cliprdrContext *cliprdr);
-int cliprdr_send_request_filecontents(cliprdrContext *cliprdr, void *streamid,
-										int index, int flag, DWORD positionhigh,
-										DWORD positionlow, ULONG request);
+int cliprdr_send_data_request(cliprdrContext* cliprdr, UINT32 format);
+int cliprdr_send_lock(cliprdrContext* cliprdr);
+int cliprdr_send_unlock(cliprdrContext* cliprdr);
+int cliprdr_send_request_filecontents(cliprdrContext* cliprdr, void* streamid,
+		int index, int flag, DWORD positionhigh, DWORD positionlow, ULONG request);
 
 #endif /* __WF_CLIPRDR_H */
