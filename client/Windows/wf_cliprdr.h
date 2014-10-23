@@ -95,7 +95,9 @@ struct wf_clipboard
 {
 	wfContext* wfc;
 	rdpChannels* channels;
+	CliprdrClientContext* context;
 
+	BOOL sync;
 	UINT32 capabilities;
 
 	int map_size;
@@ -103,7 +105,6 @@ struct wf_clipboard
 	formatMapping* format_mappings;
 
 	UINT32 request_format;
-	BOOL channel_initialized;
 
 	HWND hwnd;
 	HANDLE hmem;

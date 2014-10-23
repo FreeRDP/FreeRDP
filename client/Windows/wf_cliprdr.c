@@ -107,9 +107,6 @@ ULONG STDMETHODCALLTYPE CliprdrStream_Release(IStream* This)
 	}
 }
 
-#define FILECONTENTS_SIZE     0x00000001
-#define FILECONTENTS_RANGE    0x00000002
-
 HRESULT STDMETHODCALLTYPE CliprdrStream_Read(IStream* This, void *pv, ULONG cb, ULONG *pcbRead)
 {
 	int ret;
@@ -1215,7 +1212,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 
 		case WM_CLIPBOARDUPDATE:
 			DEBUG_CLIPRDR("info: %s - WM_CLIPBOARDUPDATE", __FUNCTION__);
-			if (clipboard->channel_initialized)
+			if (clipboard->sync)
 			{
 				if ((GetClipboardOwner() != clipboard->hwnd) &&
 					(S_FALSE == OleIsCurrentClipboard(clipboard->data_obj)))
@@ -1407,14 +1404,7 @@ static void wf_cliprdr_process_cb_clip_caps_event(wfClipboard* clipboard, RDP_CB
 
 static void wf_cliprdr_process_cb_monitor_ready_event(wfClipboard* clipboard, RDP_CB_MONITOR_READY_EVENT* ready_event)
 {
-#if 0
-	/*Disabled since the current function only sends the temp directory which is not 
-	  guaranteed to be accessible to the server
-	*/
-	cliprdr_send_tempdir(clipboard);
-#endif	
-	clipboard->channel_initialized = TRUE;
-
+	clipboard->sync = TRUE;
 	cliprdr_send_format_list(clipboard);
 }
 
@@ -2143,18 +2133,88 @@ void wf_process_cliprdr_event(wfContext* wfc, wMessage* event)
 static int wf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
 {
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
+
+	clipboard->sync = TRUE;
+	cliprdr_send_format_list(clipboard);
+
 	return 1;
 }
 
 static int wf_cliprdr_server_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILITIES* capabilities)
 {
+	UINT32 index;
+	CLIPRDR_CAPABILITY_SET* capabilitySet;
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
+
+	for (index = 0; index < capabilities->cCapabilitiesSets; index++)
+	{
+		capabilitySet = &(capabilities->capabilitySets[index]);
+
+		if ((capabilitySet->capabilitySetType == CB_CAPSTYPE_GENERAL) &&
+			(capabilitySet->capabilitySetLength >= CB_CAPSTYPE_GENERAL_LEN))
+		{
+			CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet
+				= (CLIPRDR_GENERAL_CAPABILITY_SET*) capabilitySet;
+
+			clipboard->capabilities = generalCapabilitySet->generalFlags;
+			break;
+		}
+	}
+	
 	return 1;
 }
 
 static int wf_cliprdr_server_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList)
 {
+	UINT32 i, j;
+	formatMapping* mapping;
+	CLIPRDR_FORMAT* format;
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
+
+	clear_format_map(clipboard);
+
+	for (i = j = 0; i < formatList->numFormats; i++)
+	{
+		format = &(formatList->formats[i]);
+		mapping = &(clipboard->format_mappings[j++]);
+
+		mapping->remote_format_id = format->formatId;
+
+		if (format->formatName)
+		{
+			mapping->name = _strdup(format->formatName);
+			mapping->local_format_id = RegisterClipboardFormatA((LPCSTR) mapping->name);
+		}
+		else
+		{
+			mapping->name = NULL;
+			mapping->local_format_id = mapping->remote_format_id;
+		}
+
+		clipboard->map_size++;
+		map_ensure_capacity(clipboard);
+	}
+
+	if (file_transferring(clipboard))
+	{
+		PostMessage(clipboard->hwnd, WM_CLIPRDR_MESSAGE, OLE_SETCLIPBOARD, 0);
+	}
+	else
+	{
+		if (!OpenClipboard(clipboard->hwnd))
+			return -1;
+
+		if (EmptyClipboard())
+		{
+			for (i = 0; i < (UINT32) clipboard->map_size; i++)
+			{
+				SetClipboardData(clipboard->format_mappings[i].local_format_id, NULL);
+			}
+		}
+
+		CloseClipboard();
+	}
+
 	return 1;
 }
 
@@ -2164,13 +2224,238 @@ static int wf_cliprdr_server_format_list_response(CliprdrClientContext* context,
 	return 1;
 }
 
-static int wf_cliprdr_server_format_data_request(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+int wf_cliprdr_server_lock_clipboard_data(CliprdrClientContext* context, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
 	return 1;
 }
 
+int wf_cliprdr_server_unlock_clipboard_data(CliprdrClientContext* context, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+{
+	wfClipboard* clipboard = (wfClipboard*) context->custom;
+	return 1;
+}
+
+static int wf_cliprdr_server_format_data_request(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+{
+	int size = 0;
+	char* buff = NULL;
+	char* globlemem = NULL;
+	HANDLE hClipdata = NULL;
+	UINT32 requestedFormatId;
+	CLIPRDR_FORMAT_DATA_RESPONSE response;
+	wfClipboard* clipboard = (wfClipboard*) context->custom;
+
+	requestedFormatId = formatDataRequest->requestedFormatId;
+
+	if (requestedFormatId == RegisterClipboardFormatW(_T("FileGroupDescriptorW")))
+	{
+		int len;
+		int i;
+		WCHAR* wFileName;
+		unsigned int uSize;
+		HRESULT result;
+		LPDATAOBJECT dataObj;
+		FORMATETC format_etc;
+		STGMEDIUM stg_medium;
+		DROPFILES* dropFiles;
+
+		result = OleGetClipboard(&dataObj);
+
+		if (!SUCCEEDED(result))
+			return -1;
+
+		ZeroMemory(&format_etc, sizeof(FORMATETC));
+		ZeroMemory(&stg_medium, sizeof(STGMEDIUM));
+
+		/* try to get FileGroupDescriptorW struct from OLE */
+		format_etc.cfFormat = requestedFormatId;
+		format_etc.tymed = TYMED_HGLOBAL;
+		format_etc.dwAspect = 1;
+		format_etc.lindex = -1;
+		format_etc.ptd = 0;
+
+		result = IDataObject_GetData(dataObj, &format_etc, &stg_medium);
+
+		if (SUCCEEDED(result))
+		{
+			DEBUG_CLIPRDR("Got FileGroupDescriptorW.");
+			globlemem = (char*) GlobalLock(stg_medium.hGlobal);
+			uSize = GlobalSize(stg_medium.hGlobal);
+			size = uSize;
+			buff = (char*) malloc(uSize);
+			CopyMemory(buff, globlemem, uSize);
+			GlobalUnlock(stg_medium.hGlobal);
+
+			ReleaseStgMedium(&stg_medium);
+
+			clear_file_array(clipboard);
+		}
+		else
+		{
+			/* get DROPFILES struct from OLE */
+			format_etc.cfFormat = CF_HDROP;
+			format_etc.tymed = TYMED_HGLOBAL;
+			format_etc.dwAspect = 1;
+			format_etc.lindex = -1;
+
+			result = IDataObject_GetData(dataObj, &format_etc, &stg_medium);
+
+			if (!SUCCEEDED(result)) {
+				DEBUG_CLIPRDR("dataObj->GetData failed.");
+			}
+
+			globlemem = (char*) GlobalLock(stg_medium.hGlobal);
+
+			if (!globlemem)
+			{
+				GlobalUnlock(stg_medium.hGlobal);
+
+				ReleaseStgMedium(&stg_medium);
+				clipboard->nFiles = 0;
+
+				goto exit;
+			}
+			uSize = GlobalSize(stg_medium.hGlobal);
+
+			dropFiles = (DROPFILES*) malloc(uSize);
+			memcpy(dropFiles, globlemem, uSize);
+
+			GlobalUnlock(stg_medium.hGlobal);
+
+			ReleaseStgMedium(&stg_medium);
+
+			clear_file_array(clipboard);
+
+			if (dropFiles->fWide)
+			{
+				WCHAR* p;
+				int str_len;
+				int offset;
+				int pathLen;
+
+				/* dropFiles contains file names */
+				for (wFileName = (WCHAR*)((char*)dropFiles + dropFiles->pFiles); (len = wcslen(wFileName)) > 0; wFileName += len + 1)
+				{
+					/* get path name */
+					str_len = wcslen(wFileName);
+					offset = str_len;
+					/* find the last '\' in full file name */
+					for (p = wFileName + offset; *p != L'\\'; p--)
+					{
+						;
+					}
+					p += 1;
+					pathLen = wcslen(wFileName) - wcslen(p);
+
+					wf_cliprdr_add_to_file_arrays(clipboard, wFileName, pathLen);
+
+					if ((clipboard->fileDescriptor[clipboard->nFiles - 1]->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+					{
+						/* this is a directory */
+						wf_cliprdr_traverse_directory(clipboard, wFileName, pathLen);
+					}
+				}
+			}
+			else
+			{
+				char* p;
+
+				for (p = (char*)((char*)dropFiles + dropFiles->pFiles); (len = strlen(p)) > 0; p += len + 1, clipboard->nFiles++)
+				{
+					int cchWideChar;
+
+					cchWideChar = MultiByteToWideChar(CP_ACP, MB_COMPOSITE, p, len, NULL, 0);
+					clipboard->file_names[clipboard->nFiles] = (LPWSTR) malloc(cchWideChar * 2);
+					MultiByteToWideChar(CP_ACP, MB_COMPOSITE, p, len, clipboard->file_names[clipboard->nFiles], cchWideChar);
+
+					if (clipboard->nFiles == clipboard->file_array_size)
+					{
+						clipboard->file_array_size *= 2;
+						clipboard->fileDescriptor = (FILEDESCRIPTORW**) realloc(clipboard->fileDescriptor, clipboard->file_array_size * sizeof(FILEDESCRIPTORW*));
+						clipboard->file_names = (WCHAR**) realloc(clipboard->file_names, clipboard->file_array_size * sizeof(WCHAR*));
+					}
+				}
+			}
+
+exit:
+			size = 4 + clipboard->nFiles * sizeof(FILEDESCRIPTORW);
+			buff = (char*) malloc(size);
+
+			*((UINT32*) buff) = clipboard->nFiles;
+
+			for (i = 0; i < clipboard->nFiles; i++)
+			{
+				if (clipboard->fileDescriptor[i])
+				{
+					memcpy(buff + 4 + i * sizeof(FILEDESCRIPTORW), clipboard->fileDescriptor[i], sizeof(FILEDESCRIPTORW));
+				}
+			}
+		}
+
+		IDataObject_Release(dataObj);
+	}
+	else
+	{
+		if (!OpenClipboard(clipboard->hwnd))
+			return -1;
+
+		hClipdata = GetClipboardData(requestedFormatId);
+
+		if (!hClipdata)
+		{
+			CloseClipboard();
+			return -1;
+		}
+
+		globlemem = (char*) GlobalLock(hClipdata);
+		size = (int) GlobalSize(hClipdata);
+
+		buff = (char*) malloc(size);
+		CopyMemory(buff, globlemem, size);
+
+		GlobalUnlock(hClipdata);
+
+		CloseClipboard();
+	}
+
+	ZeroMemory(&response, sizeof(CLIPRDR_FORMAT_DATA_RESPONSE));
+
+	response.msgFlags = CB_RESPONSE_OK;
+	response.dataLen = size;
+	response.requestedFormatData = (BYTE*) buff;
+
+	clipboard->context->ClientFormatDataResponse(clipboard->context, &response);
+
+	free(buff);
+
+	return 1;
+}
+
 static int wf_cliprdr_server_format_data_response(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
+{
+	BYTE* data;
+	HANDLE hMem;
+	wfClipboard* clipboard = (wfClipboard*) context->custom;
+
+	hMem = GlobalAlloc(GMEM_FIXED, formatDataResponse->dataLen);
+	data = (BYTE*) GlobalLock(hMem);
+	CopyMemory(data, formatDataResponse->requestedFormatData, formatDataResponse->dataLen);
+	GlobalUnlock(hMem);
+
+	clipboard->hmem = hMem;
+	SetEvent(clipboard->response_data_event);
+
+	return 1;
+}
+
+int wf_cliprdr_server_file_contents_request(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+{
+	wfClipboard* clipboard = (wfClipboard*) context->custom;
+	return 1;
+}
+
+int wf_cliprdr_server_file_contents_response(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
 	return 1;
@@ -2188,6 +2473,7 @@ void wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr)
 
 	clipboard = wfc->clipboard;
 	clipboard->wfc = wfc;
+	clipboard->context = cliprdr;
 
 	if (0)
 	{
@@ -2197,12 +2483,16 @@ void wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr)
 		cliprdr->ServerCapabilities = wf_cliprdr_server_capabilities;
 		cliprdr->ServerFormatList = wf_cliprdr_server_format_list;
 		cliprdr->ServerFormatListResponse = wf_cliprdr_server_format_list_response;
+		cliprdr->ServerLockClipboardData = wf_cliprdr_server_lock_clipboard_data;
+		cliprdr->ServerUnlockClipboardData = wf_cliprdr_server_unlock_clipboard_data;
 		cliprdr->ServerFormatDataRequest = wf_cliprdr_server_format_data_request;
 		cliprdr->ServerFormatDataResponse = wf_cliprdr_server_format_data_response;
+		cliprdr->ServerFileContentsRequest = wf_cliprdr_server_file_contents_request;
+		cliprdr->ServerFileContentsResponse = wf_cliprdr_server_file_contents_response;
 	}
 
 	clipboard->channels = context->channels;
-	clipboard->channel_initialized = FALSE;
+	clipboard->sync = FALSE;
 
 	clipboard->map_capacity = 32;
 	clipboard->map_size = 0;

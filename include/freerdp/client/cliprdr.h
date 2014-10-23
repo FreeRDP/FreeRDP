@@ -34,14 +34,23 @@ typedef struct _cliprdr_client_context CliprdrClientContext;
 typedef int (*pcCliprdrServerCapabilities)(CliprdrClientContext* context, CLIPRDR_CAPABILITIES* capabilities);
 typedef int (*pcCliprdrClientCapabilities)(CliprdrClientContext* context, CLIPRDR_CAPABILITIES* capabilities);
 typedef int (*pcCliprdrMonitorReady)(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady);
+typedef int (*pcCliprdrTempDirectory)(CliprdrClientContext* context, CLIPRDR_TEMP_DIRECTORY* tempDirectory);
 typedef int (*pcCliprdrClientFormatList)(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList);
 typedef int (*pcCliprdrServerFormatList)(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList);
 typedef int (*pcCliprdrClientFormatListResponse)(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse);
 typedef int (*pcCliprdrServerFormatListResponse)(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse);
+typedef int (*pcCliprdrClientLockClipboardData)(CliprdrClientContext* context, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData);
+typedef int (*pcCliprdrServerLockClipboardData)(CliprdrClientContext* context, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData);
+typedef int (*pcCliprdrClientUnlockClipboardData)(CliprdrClientContext* context, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData);
+typedef int (*pcCliprdrServerUnlockClipboardData)(CliprdrClientContext* context, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData);
 typedef int (*pcCliprdrClientFormatDataRequest)(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest);
 typedef int (*pcCliprdrServerFormatDataRequest)(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest);
 typedef int (*pcCliprdrClientFormatDataResponse)(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse);
 typedef int (*pcCliprdrServerFormatDataResponse)(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse);
+typedef int (*pcCliprdrClientFileContentsRequest)(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest);
+typedef int (*pcCliprdrServerFileContentsRequest)(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest);
+typedef int (*pcCliprdrClientFileContentsResponse)(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse);
+typedef int (*pcCliprdrServerFileContentsResponse)(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse);
 
 struct _cliprdr_client_context
 {
@@ -51,14 +60,23 @@ struct _cliprdr_client_context
 	pcCliprdrServerCapabilities ServerCapabilities;
 	pcCliprdrClientCapabilities ClientCapabilities;
 	pcCliprdrMonitorReady MonitorReady;
+	pcCliprdrTempDirectory TempDirectory;
 	pcCliprdrClientFormatList ClientFormatList;
 	pcCliprdrServerFormatList ServerFormatList;
 	pcCliprdrClientFormatListResponse ClientFormatListResponse;
 	pcCliprdrServerFormatListResponse ServerFormatListResponse;
+	pcCliprdrClientLockClipboardData ClientLockClipboardData;
+	pcCliprdrServerLockClipboardData ServerLockClipboardData;
+	pcCliprdrClientUnlockClipboardData ClientUnlockClipboardData;
+	pcCliprdrServerUnlockClipboardData ServerUnlockClipboardData;
 	pcCliprdrClientFormatDataRequest ClientFormatDataRequest;
 	pcCliprdrServerFormatDataRequest ServerFormatDataRequest;
 	pcCliprdrClientFormatDataResponse ClientFormatDataResponse;
 	pcCliprdrServerFormatDataResponse ServerFormatDataResponse;
+	pcCliprdrClientFileContentsRequest ClientFileContentsRequest;
+	pcCliprdrServerFileContentsRequest ServerFileContentsRequest;
+	pcCliprdrClientFileContentsResponse ClientFileContentsResponse;
+	pcCliprdrServerFileContentsResponse ServerFileContentsResponse;
 };
 
 struct _CLIPRDR_FORMAT_NAME
