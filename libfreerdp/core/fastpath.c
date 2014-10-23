@@ -893,6 +893,34 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		maxLength -= 20;
 	}
 
+	totalLength = Stream_GetPosition(s);
+	Stream_SetPosition(s, 0);
+
+	/**
+	 * TEMPORARY FIX
+	 *
+	 * FreeRDP always sends updates using fast-path without regard to the client settings
+	 * for 1) FASTPATH_OUTPUT_SUPPORTED in the extraFlags field of the general capability
+	 * set or 2) the MaxRequestSize field in the Multifragment Update capability set.
+	 *
+	 * As a temporary workaround to clients that do not support fragmentation, this code
+	 * determines if fragmentation is needed and/or exceeds the size advertised maximum
+	 * request size from the client.  In this case, slow-path is utilized.
+	 *
+	 */
+
+	if ((totalLength > maxLength) && (totalLength > settings->MultifragMaxRequestSize))
+	{
+		wStream* sps;
+
+		/* Use slow-path to send the PDU */
+		sps = transport_send_stream_init(rdp->transport, totalLength + 50);
+		rdp_init_stream_data_pdu(rdp, sps);
+		Stream_Copy(sps, s, totalLength);
+
+		return rdp_send_data_pdu(rdp, sps, DATA_PDU_TYPE_UPDATE, MCS_GLOBAL_CHANNEL_ID);
+	}
+
 	if (rdp->do_crypt)
 	{
 		rdp->sec_flags |= SEC_ENCRYPT;
@@ -900,9 +928,6 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		if (rdp->do_secure_checksum)
 			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
 	}
-
-	totalLength = Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
 
 	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
