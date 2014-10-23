@@ -60,7 +60,814 @@ extern BOOL WINAPI RemoveClipboardFormatListener(_In_  HWND hwnd);
 BOOL wf_create_file_obj(cliprdrContext* cliprdr, IDataObject** ppDataObject);
 void wf_destroy_file_obj(IDataObject* instance);
 
-static UINT32 get_local_format_id_by_name(cliprdrContext* cliprdr, void *format_name)
+/**
+ * IStream
+ */
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_QueryInterface(IStream* This, REFIID riid, void** ppvObject)
+{
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	if (IsEqualIID(riid, &IID_IStream) || IsEqualIID(riid, &IID_IUnknown))
+	{
+		IStream_AddRef(This);
+		*ppvObject = This;
+		return S_OK;
+	}
+	else
+	{
+		*ppvObject = 0;
+		return E_NOINTERFACE;
+	}
+}
+
+ULONG STDMETHODCALLTYPE CliprdrStream_AddRef(IStream* This)
+{
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	return InterlockedIncrement(&instance->m_lRefCount);
+}
+
+ULONG STDMETHODCALLTYPE CliprdrStream_Release(IStream* This)
+{
+	LONG count;
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	count = InterlockedDecrement(&instance->m_lRefCount);
+
+	if (count == 0)
+	{
+		CliprdrStream_Delete(instance);
+		return 0;
+	}
+	else
+	{
+		return count;
+	}
+}
+
+#define FILECONTENTS_SIZE     0x00000001
+#define FILECONTENTS_RANGE    0x00000002
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_Read(IStream* This, void *pv, ULONG cb, ULONG *pcbRead)
+{
+	int ret;
+	CliprdrStream* instance = (CliprdrStream*) This;
+	cliprdrContext* cliprdr = (cliprdrContext*) instance->m_pData;
+
+	if (pv == NULL || pcbRead == NULL)
+		return E_INVALIDARG;
+
+	*pcbRead = 0;
+
+	if (instance->m_lOffset.QuadPart >= instance->m_lSize.QuadPart)
+		return S_FALSE;
+
+	ret = cliprdr_send_request_filecontents(cliprdr, (void*) This,
+			instance->m_lIndex, FILECONTENTS_RANGE,
+			instance->m_lOffset.HighPart, instance->m_lOffset.LowPart, cb);
+
+	if (ret < 0)
+		return S_FALSE;
+
+	if (cliprdr->req_fdata)
+	{
+		memcpy(pv, cliprdr->req_fdata, cliprdr->req_fsize);
+		free(cliprdr->req_fdata);
+	}
+
+	*pcbRead = cliprdr->req_fsize;
+	instance->m_lOffset.QuadPart += cliprdr->req_fsize;
+
+	if (cliprdr->req_fsize < cb)
+		return S_FALSE;
+
+	return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_Write(IStream* This, const void *pv, ULONG cb, ULONG *pcbWritten)
+{
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	return STG_E_ACCESSDENIED;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_Seek(IStream* This, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
+{
+	ULONGLONG newoffset;
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	newoffset = instance->m_lOffset.QuadPart;
+
+	switch (dwOrigin)
+	{
+		case STREAM_SEEK_SET:
+			newoffset = dlibMove.QuadPart;
+			break;
+		case STREAM_SEEK_CUR:
+			newoffset += dlibMove.QuadPart;
+			break;
+		case STREAM_SEEK_END:
+			newoffset = instance->m_lSize.QuadPart + dlibMove.QuadPart;
+			break;
+		default:
+			return S_FALSE;
+	}
+
+	if (newoffset < 0 || newoffset >= instance->m_lSize.QuadPart)
+		return FALSE;
+
+	instance->m_lOffset.QuadPart = newoffset;
+	if (plibNewPosition)
+		plibNewPosition->QuadPart = instance->m_lOffset.QuadPart;
+
+	return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_SetSize(IStream* This, ULARGE_INTEGER libNewSize)
+{
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	return STG_E_INSUFFICIENTMEMORY;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_CopyTo(IStream* This, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER *pcbWritten)
+{
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_Commit(IStream* This, DWORD grfCommitFlags)
+{
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	return STG_E_MEDIUMFULL;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_Revert(IStream* This)
+{
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	return STG_E_INSUFFICIENTMEMORY;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_LockRegion(IStream* This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	return STG_E_INSUFFICIENTMEMORY;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_UnlockRegion(IStream* This, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	return STG_E_INSUFFICIENTMEMORY;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_Stat(IStream* This, STATSTG* pstatstg, DWORD grfStatFlag)
+{
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	if (pstatstg == NULL)
+		return STG_E_INVALIDPOINTER;
+
+	ZeroMemory(pstatstg, sizeof(STATSTG));
+
+	switch (grfStatFlag)
+	{
+		case STATFLAG_DEFAULT:
+			return STG_E_INSUFFICIENTMEMORY;
+
+		case STATFLAG_NONAME:
+			pstatstg->cbSize.QuadPart = instance->m_lSize.QuadPart;
+			pstatstg->grfLocksSupported = LOCK_EXCLUSIVE;
+			pstatstg->grfMode = GENERIC_READ;
+			pstatstg->grfStateBits = 0;
+			pstatstg->type = STGTY_STREAM;
+			break;
+
+		case STATFLAG_NOOPEN:
+			return STG_E_INVALIDFLAG;
+
+		default:
+			return STG_E_INVALIDFLAG;
+	}
+
+	return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrStream_Clone(IStream* This, IStream** ppstm)
+{
+	CliprdrStream* instance = (CliprdrStream*) This;
+
+	return STG_E_INSUFFICIENTMEMORY;
+}
+
+CliprdrStream *CliprdrStream_New(LONG index, void* pData)
+{
+	IStream* iStream;
+	CliprdrStream* instance;
+	cliprdrContext* cliprdr = (cliprdrContext*) pData;
+
+	instance = (CliprdrStream*) calloc(1, sizeof(CliprdrStream));
+
+	if (instance)
+	{
+		iStream = &instance->iStream;
+
+		iStream->lpVtbl = (IStreamVtbl*) calloc(1, sizeof(IStreamVtbl));
+
+		if (iStream->lpVtbl)
+		{
+			iStream->lpVtbl->QueryInterface = CliprdrStream_QueryInterface;
+			iStream->lpVtbl->AddRef = CliprdrStream_AddRef;
+			iStream->lpVtbl->Release = CliprdrStream_Release;
+			iStream->lpVtbl->Read = CliprdrStream_Read;
+			iStream->lpVtbl->Write = CliprdrStream_Write;
+			iStream->lpVtbl->Seek = CliprdrStream_Seek;
+			iStream->lpVtbl->SetSize = CliprdrStream_SetSize;
+			iStream->lpVtbl->CopyTo = CliprdrStream_CopyTo;
+			iStream->lpVtbl->Commit = CliprdrStream_Commit;
+			iStream->lpVtbl->Revert = CliprdrStream_Revert;
+			iStream->lpVtbl->LockRegion = CliprdrStream_LockRegion;
+			iStream->lpVtbl->UnlockRegion = CliprdrStream_UnlockRegion;
+			iStream->lpVtbl->Stat = CliprdrStream_Stat;
+			iStream->lpVtbl->Clone = CliprdrStream_Clone;
+
+			instance->m_lRefCount = 1;
+			instance->m_lIndex = index;
+			instance->m_pData = pData;
+			instance->m_lOffset.QuadPart = 0;
+
+			/* get content size of this stream */
+			cliprdr_send_request_filecontents(cliprdr, (void*) instance,
+				instance->m_lIndex, FILECONTENTS_SIZE, 0, 0, 8);
+			instance->m_lSize.QuadPart = *(LONGLONG*)cliprdr->req_fdata;
+			free(cliprdr->req_fdata);
+		}
+		else
+		{
+			free(instance);
+			instance = NULL;
+		}
+	}
+
+	return instance;
+}
+
+void CliprdrStream_Delete(CliprdrStream* instance)
+{
+	if (instance)
+	{
+		if (instance->iStream.lpVtbl)
+			free(instance->iStream.lpVtbl);
+
+		free(instance);
+	}
+}
+
+/**
+ * IDataObject
+ */
+
+static int cliprdr_lookup_format(CliprdrDataObject* instance, FORMATETC* pFormatEtc)
+{
+	int i;
+
+	for (i = 0; i < instance->m_nNumFormats; i++)
+	{
+		if ((pFormatEtc->tymed & instance->m_pFormatEtc[i].tymed) &&
+			pFormatEtc->cfFormat == instance->m_pFormatEtc[i].cfFormat &&
+			pFormatEtc->dwAspect == instance->m_pFormatEtc[i].dwAspect)
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrDataObject_QueryInterface(IDataObject* This, REFIID riid, void** ppvObject)
+{
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+
+	if (IsEqualIID(riid, &IID_IDataObject) || IsEqualIID(riid, &IID_IUnknown))
+	{
+		IDataObject_AddRef(This);
+		*ppvObject = This;
+		return S_OK;
+	}
+	else
+	{
+		*ppvObject = 0;
+		return E_NOINTERFACE;
+	}
+}
+
+ULONG STDMETHODCALLTYPE CliprdrDataObject_AddRef(IDataObject* This)
+{
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+
+	return InterlockedIncrement(&instance->m_lRefCount);
+}
+
+ULONG STDMETHODCALLTYPE CliprdrDataObject_Release(IDataObject* This)
+{
+	LONG count;
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+
+	count = InterlockedDecrement(&instance->m_lRefCount);
+
+	if (count == 0)
+	{
+		CliprdrDataObject_Delete(instance);
+		return 0;
+	}
+	else
+	{
+		return count;
+	}
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetData(IDataObject* This, FORMATETC* pFormatEtc, STGMEDIUM* pMedium)
+{
+	int i, idx;
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+	cliprdrContext* cliprdr = (cliprdrContext*) instance->m_pData;
+
+	if (!pFormatEtc || !pMedium)
+	{
+		return E_INVALIDARG;
+	}
+
+	if ((idx = cliprdr_lookup_format(instance, pFormatEtc)) == -1)
+	{
+		return DV_E_FORMATETC;
+	}
+
+	pMedium->tymed = instance->m_pFormatEtc[idx].tymed;
+	pMedium->pUnkForRelease = 0;
+
+	if (instance->m_pFormatEtc[idx].cfFormat == cliprdr->ID_FILEDESCRIPTORW)
+	{
+		if (cliprdr_send_data_request(cliprdr, instance->m_pFormatEtc[idx].cfFormat) != 0)
+			return E_UNEXPECTED;
+
+		pMedium->hGlobal = cliprdr->hmem;   /* points to a FILEGROUPDESCRIPTOR structure */
+
+		/* GlobalLock returns a pointer to the first byte of the memory block,
+		* in which is a FILEGROUPDESCRIPTOR structure, whose first UINT member
+		* is the number of FILEDESCRIPTOR's */
+		instance->m_nStreams = *(PUINT)GlobalLock(cliprdr->hmem);
+		GlobalUnlock(cliprdr->hmem);
+
+		if (instance->m_nStreams > 0)
+		{
+			if (!instance->m_pStream)
+			{
+				instance->m_pStream = (LPSTREAM*) calloc(instance->m_nStreams, sizeof(LPSTREAM));
+
+				if (instance->m_pStream)
+				{
+					for (i = 0; i < instance->m_nStreams; i++)
+					{
+						instance->m_pStream[i] = (IStream*) CliprdrStream_New(i, cliprdr);
+					}
+				}
+			}
+		}
+
+		if (!instance->m_pStream)
+		{
+			cliprdr->hmem = GlobalFree(cliprdr->hmem);
+			pMedium->hGlobal = cliprdr->hmem;
+			return E_OUTOFMEMORY;
+		}
+	}
+	else if (instance->m_pFormatEtc[idx].cfFormat == cliprdr->ID_FILECONTENTS)
+	{
+		if (pFormatEtc->lindex < instance->m_nStreams)
+		{
+			pMedium->pstm = instance->m_pStream[pFormatEtc->lindex];
+			IDataObject_AddRef(instance->m_pStream[pFormatEtc->lindex]);
+		}
+		else
+		{
+			return E_INVALIDARG;
+		}
+	}
+	else if (instance->m_pFormatEtc[idx].cfFormat == cliprdr->ID_PREFERREDDROPEFFECT)
+	{
+		if (cliprdr_send_data_request(cliprdr, instance->m_pFormatEtc[idx].cfFormat) != 0)
+			return E_UNEXPECTED;
+
+		pMedium->hGlobal = cliprdr->hmem;
+	}
+	else
+	{
+		return E_UNEXPECTED;
+	}
+
+	return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetDataHere(IDataObject* This, FORMATETC *pformatetc, STGMEDIUM *pmedium)
+{
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+
+	return DATA_E_FORMATETC;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrDataObject_QueryGetData(IDataObject* This, FORMATETC *pformatetc)
+{
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+
+	if (!pformatetc)
+		return E_INVALIDARG;
+
+	return (cliprdr_lookup_format(instance, pformatetc) == -1) ? DV_E_FORMATETC : S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrDataObject_GetCanonicalFormatEtc(IDataObject* This, FORMATETC *pformatectIn, FORMATETC *pformatetcOut)
+{
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+
+	if (!pformatetcOut)
+		return E_INVALIDARG;
+
+	pformatetcOut->ptd = NULL;
+
+	return E_NOTIMPL;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrDataObject_SetData(IDataObject* This, FORMATETC *pformatetc, STGMEDIUM *pmedium, BOOL fRelease)
+{
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+
+	return E_NOTIMPL;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrDataObject_EnumFormatEtc(IDataObject* This, DWORD dwDirection, IEnumFORMATETC** ppenumFormatEtc)
+{
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+
+	if (!ppenumFormatEtc)
+		return E_INVALIDARG;
+
+	if (dwDirection == DATADIR_GET)
+	{
+		*ppenumFormatEtc = (IEnumFORMATETC*) CliprdrEnumFORMATETC_New(instance->m_nNumFormats, instance->m_pFormatEtc);
+		return (*ppenumFormatEtc) ? S_OK : E_OUTOFMEMORY;
+	}
+	else
+	{
+		return E_NOTIMPL;
+	}
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrDataObject_DAdvise(IDataObject* This, FORMATETC* pformatetc, DWORD advf, IAdviseSink* pAdvSink, DWORD *pdwConnection)
+{
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+
+	return OLE_E_ADVISENOTSUPPORTED;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrDataObject_DUnadvise(IDataObject* This, DWORD dwConnection)
+{
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+
+	return OLE_E_ADVISENOTSUPPORTED;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrDataObject_EnumDAdvise(IDataObject* This, IEnumSTATDATA** ppenumAdvise)
+{
+	CliprdrDataObject* instance = (CliprdrDataObject*) This;
+
+	return OLE_E_ADVISENOTSUPPORTED;
+}
+
+CliprdrDataObject* CliprdrDataObject_New(FORMATETC* fmtetc, STGMEDIUM* stgmed, int count, void* data)
+{
+	int i;
+	CliprdrDataObject* instance;
+	IDataObject* iDataObject;
+
+	instance = (CliprdrDataObject*) calloc(1, sizeof(CliprdrDataObject));
+
+	if (instance)
+	{
+		iDataObject = &instance->iDataObject;
+
+		iDataObject->lpVtbl = (IDataObjectVtbl*) calloc(1, sizeof(IDataObjectVtbl));
+
+		if (iDataObject->lpVtbl)
+		{
+			iDataObject->lpVtbl->QueryInterface = CliprdrDataObject_QueryInterface;
+			iDataObject->lpVtbl->AddRef = CliprdrDataObject_AddRef;
+			iDataObject->lpVtbl->Release = CliprdrDataObject_Release;
+			iDataObject->lpVtbl->GetData = CliprdrDataObject_GetData;
+			iDataObject->lpVtbl->GetDataHere = CliprdrDataObject_GetDataHere;
+			iDataObject->lpVtbl->QueryGetData = CliprdrDataObject_QueryGetData;
+			iDataObject->lpVtbl->GetCanonicalFormatEtc = CliprdrDataObject_GetCanonicalFormatEtc;
+			iDataObject->lpVtbl->SetData = CliprdrDataObject_SetData;
+			iDataObject->lpVtbl->EnumFormatEtc = CliprdrDataObject_EnumFormatEtc;
+			iDataObject->lpVtbl->DAdvise = CliprdrDataObject_DAdvise;
+			iDataObject->lpVtbl->DUnadvise = CliprdrDataObject_DUnadvise;
+			iDataObject->lpVtbl->EnumDAdvise = CliprdrDataObject_EnumDAdvise;
+
+			instance->m_lRefCount = 1;
+			instance->m_nNumFormats = count;
+			instance->m_pData = data;
+			instance->m_nStreams = 0;
+			instance->m_pStream = NULL;
+
+			instance->m_pFormatEtc = (FORMATETC*) calloc(count, sizeof(FORMATETC));
+			instance->m_pStgMedium = (STGMEDIUM*) calloc(count, sizeof(STGMEDIUM));
+
+			for (i = 0; i < count; i++)
+			{
+				instance->m_pFormatEtc[i] = fmtetc[i];
+				instance->m_pStgMedium[i] = stgmed[i];
+			}
+		}
+		else
+		{
+			free(instance);
+			instance = NULL;
+		}
+	}
+
+	return instance;
+}
+
+void CliprdrDataObject_Delete(CliprdrDataObject* instance)
+{
+	if (instance)
+	{
+		if (instance->iDataObject.lpVtbl)
+			free(instance->iDataObject.lpVtbl);
+
+		if (instance->m_pFormatEtc)
+			free(instance->m_pFormatEtc);
+
+		if (instance->m_pStgMedium)
+			free(instance->m_pStgMedium);
+
+		if (instance->m_pStream)
+		{
+			int i;
+
+			for (i = 0; i < instance->m_nStreams; i++)
+			{
+				CliprdrStream_Release(instance->m_pStream[i]);
+			}
+
+			free(instance->m_pStream);
+		}
+
+		free(instance);
+	}
+}
+
+BOOL wf_create_file_obj(cliprdrContext* cliprdr, IDataObject** ppDataObject)
+{
+	FORMATETC fmtetc[3];
+	STGMEDIUM stgmeds[3];
+
+	if (!ppDataObject)
+		return FALSE;
+
+	fmtetc[0].cfFormat = RegisterClipboardFormatW(CFSTR_FILEDESCRIPTORW);
+	fmtetc[0].dwAspect = DVASPECT_CONTENT;
+	fmtetc[0].lindex = 0;
+	fmtetc[0].ptd = NULL;
+	fmtetc[0].tymed = TYMED_HGLOBAL;
+
+	stgmeds[0].tymed = TYMED_HGLOBAL;
+	stgmeds[0].hGlobal = NULL;
+	stgmeds[0].pUnkForRelease = NULL;
+
+	fmtetc[1].cfFormat = RegisterClipboardFormatW(CFSTR_FILECONTENTS);
+	fmtetc[1].dwAspect = DVASPECT_CONTENT;
+	fmtetc[1].lindex = 0;
+	fmtetc[1].ptd = NULL;
+	fmtetc[1].tymed = TYMED_ISTREAM;
+
+	stgmeds[1].tymed = TYMED_ISTREAM;
+	stgmeds[1].pstm = NULL;
+	stgmeds[1].pUnkForRelease = NULL;
+
+	fmtetc[2].cfFormat = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECT);
+	fmtetc[2].dwAspect = DVASPECT_CONTENT;
+	fmtetc[2].lindex = 0;
+	fmtetc[2].ptd = NULL;
+	fmtetc[2].tymed = TYMED_HGLOBAL;
+
+	stgmeds[2].tymed = TYMED_HGLOBAL;
+	stgmeds[2].hGlobal = NULL;
+	stgmeds[2].pUnkForRelease = NULL;
+
+	*ppDataObject = (IDataObject*) CliprdrDataObject_New(fmtetc, stgmeds, 3, cliprdr);
+
+	return (*ppDataObject) ? TRUE : FALSE;
+}
+
+void wf_destroy_file_obj(IDataObject* instance)
+{
+	if (instance)
+		IDataObject_Release(instance);
+}
+
+/**
+ * IEnumFORMATETC
+ */
+
+static void cliprdr_format_deep_copy(FORMATETC* dest, FORMATETC* source)
+{
+	*dest = *source;
+
+	if (source->ptd)
+	{
+		dest->ptd = (DVTARGETDEVICE*) CoTaskMemAlloc(sizeof(DVTARGETDEVICE));
+		*(dest->ptd) = *(source->ptd);
+	}
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_QueryInterface(IEnumFORMATETC* This, REFIID riid, void** ppvObject)
+{
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
+
+	if (IsEqualIID(riid, &IID_IEnumFORMATETC) || IsEqualIID(riid, &IID_IUnknown))
+	{
+		IEnumFORMATETC_AddRef(This);
+		*ppvObject = This;
+		return S_OK;
+	}
+	else
+	{
+		*ppvObject = 0;
+		return E_NOINTERFACE;
+	}
+}
+
+ULONG STDMETHODCALLTYPE CliprdrEnumFORMATETC_AddRef(IEnumFORMATETC* This)
+{
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
+
+	return InterlockedIncrement(&instance->m_lRefCount);
+}
+
+ULONG STDMETHODCALLTYPE CliprdrEnumFORMATETC_Release(IEnumFORMATETC* This)
+{
+	LONG count;
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
+
+	count = InterlockedDecrement(&instance->m_lRefCount);
+
+	if (count == 0)
+	{
+		CliprdrEnumFORMATETC_Delete(instance);
+		return 0;
+	}
+	else
+	{
+		return count;
+	}
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Next(IEnumFORMATETC* This, ULONG celt, FORMATETC *rgelt, ULONG *pceltFetched)
+{
+	ULONG copied  = 0;
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
+
+	if (celt == 0 || !rgelt)
+		return E_INVALIDARG;
+
+	while (instance->m_nIndex < instance->m_nNumFormats && copied < celt)
+	{
+		cliprdr_format_deep_copy(&rgelt[copied++], &instance->m_pFormatEtc[instance->m_nIndex++]);
+	}
+
+	if (pceltFetched != 0)
+		*pceltFetched = copied;
+
+	return (copied == celt) ? S_OK : S_FALSE;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Skip(IEnumFORMATETC* This, ULONG celt)
+{
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
+
+	if (instance->m_nIndex + (LONG) celt > instance->m_nNumFormats)
+		return S_FALSE;
+
+	instance->m_nIndex += celt;
+
+	return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Reset(IEnumFORMATETC* This)
+{
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
+
+	instance->m_nIndex = 0;
+
+	return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CliprdrEnumFORMATETC_Clone(IEnumFORMATETC* This, IEnumFORMATETC **ppEnum)
+{
+	CliprdrEnumFORMATETC* instance = (CliprdrEnumFORMATETC*) This;
+
+	if (!ppEnum)
+		return E_INVALIDARG;
+
+	*ppEnum = (IEnumFORMATETC*) CliprdrEnumFORMATETC_New(instance->m_nNumFormats, instance->m_pFormatEtc);
+
+	if (!*ppEnum)
+		return E_OUTOFMEMORY;
+
+	((CliprdrEnumFORMATETC*) *ppEnum)->m_nIndex = instance->m_nIndex;
+
+	return S_OK;
+}
+
+CliprdrEnumFORMATETC* CliprdrEnumFORMATETC_New(int nFormats, FORMATETC* pFormatEtc)
+{
+	int i;
+	CliprdrEnumFORMATETC* instance;
+	IEnumFORMATETC* iEnumFORMATETC;
+
+	if (!pFormatEtc)
+		return NULL;
+
+	instance = (CliprdrEnumFORMATETC*) calloc(1, sizeof(CliprdrEnumFORMATETC));
+
+	if (instance)
+	{
+		iEnumFORMATETC = &instance->iEnumFORMATETC;
+
+		iEnumFORMATETC->lpVtbl = (IEnumFORMATETCVtbl*) calloc(1, sizeof(IEnumFORMATETCVtbl));
+
+		if (iEnumFORMATETC->lpVtbl)
+		{
+			iEnumFORMATETC->lpVtbl->QueryInterface = CliprdrEnumFORMATETC_QueryInterface;
+			iEnumFORMATETC->lpVtbl->AddRef = CliprdrEnumFORMATETC_AddRef;
+			iEnumFORMATETC->lpVtbl->Release = CliprdrEnumFORMATETC_Release;
+			iEnumFORMATETC->lpVtbl->Next = CliprdrEnumFORMATETC_Next;
+			iEnumFORMATETC->lpVtbl->Skip = CliprdrEnumFORMATETC_Skip;
+			iEnumFORMATETC->lpVtbl->Reset = CliprdrEnumFORMATETC_Reset;
+			iEnumFORMATETC->lpVtbl->Clone = CliprdrEnumFORMATETC_Clone;
+
+			instance->m_lRefCount = 0;
+			instance->m_nIndex = 0;
+			instance->m_nNumFormats = nFormats;
+			instance->m_pFormatEtc = (FORMATETC*) calloc(nFormats, sizeof(FORMATETC));
+
+			for (i = 0; i < nFormats; i++)
+			{
+				cliprdr_format_deep_copy(&instance->m_pFormatEtc[i], &pFormatEtc[i]);
+			}
+		}
+		else
+		{
+			free(instance);
+			instance = NULL;
+		}
+	}
+
+	return instance;
+}
+
+void CliprdrEnumFORMATETC_Delete(CliprdrEnumFORMATETC* instance)
+{
+	int i;
+
+	if (instance)
+	{
+		if (instance->iEnumFORMATETC.lpVtbl)
+			free(instance->iEnumFORMATETC.lpVtbl);
+
+		if (instance->m_pFormatEtc)
+		{
+			for (i = 0; i < instance->m_nNumFormats; i++)
+			{
+				if (instance->m_pFormatEtc[i].ptd)
+					CoTaskMemFree(instance->m_pFormatEtc[i].ptd);
+			}
+
+			free(instance->m_pFormatEtc);
+		}
+
+		free(instance);
+	}
+}
+
+/***********************************************************************************/
+
+static UINT32 get_local_format_id_by_name(cliprdrContext* cliprdr, void* format_name)
 {
 	int i;
 	formatMapping* map;
@@ -109,9 +916,9 @@ static void map_ensure_capacity(cliprdrContext* cliprdr)
 {
 	if (cliprdr->map_size >= cliprdr->map_capacity)
 	{
-		cliprdr->format_mappings = (formatMapping *)realloc(cliprdr->format_mappings,
-			sizeof(formatMapping) * cliprdr->map_capacity * 2);
 		cliprdr->map_capacity *= 2;
+		cliprdr->format_mappings = (formatMapping*) realloc(cliprdr->format_mappings,
+			sizeof(formatMapping) * cliprdr->map_capacity);
 	}
 }
 
@@ -159,7 +966,7 @@ int cliprdr_send_tempdir(cliprdrContext* cliprdr)
 	/* Sending the TEMP path would only be valid iff the path is accessible from the server.
 		 This should perhaps to change to a command line parameter value
 	*/
-	GetEnvironmentVariableW(L"TEMP", (LPWSTR) cliprdr_event->dirname, 260);
+	GetEnvironmentVariableW(L"TEMP", (LPWSTR) cliprdr_event->dirname, MAX_PATH);
 
 	return freerdp_channels_send_event(cliprdr->channels, (wMessage*) cliprdr_event);
 }
@@ -191,6 +998,7 @@ static void cliprdr_send_format_list(cliprdrContext* cliprdr)
 	{
 		Write_UINT32(format_data + len, format);
 		len += 4;
+
 		if ((cliprdr->capabilities & CB_USE_LONG_FORMAT_NAMES) != 0)
 		{
 			if (format >= CF_MAX)
@@ -391,7 +1199,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 	{
 		case WM_CREATE:
 			DEBUG_CLIPRDR("info: %s - WM_CREATE", __FUNCTION__);
-			cliprdr = (cliprdrContext *)((CREATESTRUCT *)lParam)->lpCreateParams;
+			cliprdr = (cliprdrContext*)((CREATESTRUCT*) lParam)->lpCreateParams;
 			if (!AddClipboardFormatListener(hWnd)) {
 				DEBUG_CLIPRDR("error: AddClipboardFormatListener failed with %#x.", GetLastError());
 			}
@@ -453,8 +1261,13 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 				case OLE_SETCLIPBOARD:
 					DEBUG_CLIPRDR("info: %s - OLE_SETCLIPBOARD", __FUNCTION__);
 					if (wf_create_file_obj(cliprdr, &cliprdr->data_obj))
+					{
 						if (OleSetClipboard(cliprdr->data_obj) != S_OK)
+						{
 							wf_destroy_file_obj(cliprdr->data_obj);
+							cliprdr->data_obj = NULL;
+						}
+					}
 					break;
 
 				default:
@@ -474,23 +1287,25 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 
 	return 0;
 }
+
 static int create_cliprdr_window(cliprdrContext* cliprdr)
 {
 	WNDCLASSEX wnd_cls;
 
 	ZeroMemory(&wnd_cls, sizeof(WNDCLASSEX));
-	wnd_cls.cbSize        = sizeof(WNDCLASSEX);
-	wnd_cls.style         = CS_OWNDC;
-	wnd_cls.lpfnWndProc   = cliprdr_proc;
-	wnd_cls.cbClsExtra    = 0;
-	wnd_cls.cbWndExtra    = 0;
-	wnd_cls.hIcon         = NULL;
-	wnd_cls.hCursor       = NULL;
+	wnd_cls.cbSize = sizeof(WNDCLASSEX);
+	wnd_cls.style = CS_OWNDC;
+	wnd_cls.lpfnWndProc = cliprdr_proc;
+	wnd_cls.cbClsExtra = 0;
+	wnd_cls.cbWndExtra = 0;
+	wnd_cls.hIcon = NULL;
+	wnd_cls.hCursor = NULL;
 	wnd_cls.hbrBackground = NULL;
-	wnd_cls.lpszMenuName  = NULL;
+	wnd_cls.lpszMenuName = NULL;
 	wnd_cls.lpszClassName = L"ClipboardHiddenMessageProcessor";
-	wnd_cls.hInstance     = GetModuleHandle(NULL);
-	wnd_cls.hIconSm       = NULL;
+	wnd_cls.hInstance = GetModuleHandle(NULL);
+	wnd_cls.hIconSm = NULL;
+
 	RegisterClassEx(&wnd_cls);
 
 	cliprdr->hwndClipboard = CreateWindowEx(WS_EX_LEFT,
@@ -610,7 +1425,7 @@ void wf_cliprdr_init(wfContext* wfc, rdpChannels* channels)
 	cliprdr->ID_FILECONTENTS = RegisterClipboardFormatW(CFSTR_FILECONTENTS);
 	cliprdr->ID_PREFERREDDROPEFFECT = RegisterClipboardFormatW(CFSTR_PREFERREDDROPEFFECT);
 
-	cliprdr->cliprdr_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)cliprdr_thread_func, cliprdr, 0, NULL);
+	cliprdr->cliprdr_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) cliprdr_thread_func, cliprdr, 0, NULL);
 	assert(cliprdr->cliprdr_thread != NULL);
 }
 
@@ -749,10 +1564,10 @@ static void wf_cliprdr_array_ensure_capacity(cliprdrContext* cliprdr)
 	}
 }
 
-static void wf_cliprdr_add_to_file_arrays(cliprdrContext* cliprdr, WCHAR *full_file_name, int pathLen)
+static void wf_cliprdr_add_to_file_arrays(cliprdrContext* cliprdr, WCHAR* full_file_name, int pathLen)
 {
 	/* add to name array */
-	cliprdr->file_names[cliprdr->nFiles] = (LPWSTR) malloc(MAX_PATH);
+	cliprdr->file_names[cliprdr->nFiles] = (LPWSTR) malloc(MAX_PATH * 2);
 	wcscpy_s(cliprdr->file_names[cliprdr->nFiles], MAX_PATH, full_file_name);
 
 	/* add to descriptor array */
@@ -769,8 +1584,8 @@ static void wf_cliprdr_traverse_directory(cliprdrContext* cliprdr, WCHAR* Dir, i
 	WCHAR DirSpec[MAX_PATH];
 	WIN32_FIND_DATA FindFileData;
 
-	StringCchCopy(DirSpec,MAX_PATH,Dir);
-	StringCchCat(DirSpec,MAX_PATH,TEXT("\\*"));
+	StringCchCopy(DirSpec, MAX_PATH, Dir);
+	StringCchCat(DirSpec, MAX_PATH, TEXT("\\*"));
 
 	hFind = FindFirstFile(DirSpec, &FindFileData);
 
@@ -782,20 +1597,20 @@ static void wf_cliprdr_traverse_directory(cliprdrContext* cliprdr, WCHAR* Dir, i
 
 	while (FindNextFile(hFind, &FindFileData))
 	{
-		if((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
+		if ((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
 			&& wcscmp(FindFileData.cFileName,L".") == 0
 			|| wcscmp(FindFileData.cFileName,L"..") == 0)
 		{
 			continue;
 		}
 
-		if((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) !=0 )
+		if ((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) !=0)
 		{
 			WCHAR DirAdd[MAX_PATH];
 
-			StringCchCopy(DirAdd,MAX_PATH,Dir);
-			StringCchCat(DirAdd,MAX_PATH,TEXT("\\"));
-			StringCchCat(DirAdd,MAX_PATH,FindFileData.cFileName);
+			StringCchCopy(DirAdd, MAX_PATH, Dir);
+			StringCchCat(DirAdd, MAX_PATH, TEXT("\\"));
+			StringCchCat(DirAdd, MAX_PATH, FindFileData.cFileName);
 			wf_cliprdr_add_to_file_arrays(cliprdr, DirAdd, pathLen);
 			wf_cliprdr_traverse_directory(cliprdr, DirAdd, pathLen);
 		}
@@ -803,9 +1618,9 @@ static void wf_cliprdr_traverse_directory(cliprdrContext* cliprdr, WCHAR* Dir, i
 		{
 			WCHAR fileName[MAX_PATH];
 
-			StringCchCopy(fileName,MAX_PATH,Dir);
-			StringCchCat(fileName,MAX_PATH,TEXT("\\"));
-			StringCchCat(fileName,MAX_PATH,FindFileData.cFileName);
+			StringCchCopy(fileName, MAX_PATH, Dir);
+			StringCchCat(fileName, MAX_PATH, TEXT("\\"));
+			StringCchCat(fileName, MAX_PATH, FindFileData.cFileName);
 
 			wf_cliprdr_add_to_file_arrays(cliprdr, fileName, pathLen);
 		}
@@ -892,13 +1707,14 @@ static void wf_cliprdr_process_cb_data_request_event(wfContext* wfc, RDP_CB_DATA
 			format_etc.lindex = -1;
 
 			result = IDataObject_GetData(dataObj, &format_etc, &stg_medium);
+
 			if (!SUCCEEDED(result)) {
 				DEBUG_CLIPRDR("dataObj->GetData failed.");
 			}
 
-			globlemem = (char *)GlobalLock(stg_medium.hGlobal);
+			globlemem = (char*) GlobalLock(stg_medium.hGlobal);
 
-			if (globlemem == NULL)
+			if (!globlemem)
 			{
 				GlobalUnlock(stg_medium.hGlobal);
 
@@ -909,7 +1725,7 @@ static void wf_cliprdr_process_cb_data_request_event(wfContext* wfc, RDP_CB_DATA
 			}
 			uSize = GlobalSize(stg_medium.hGlobal);
 
-			dropFiles = (DROPFILES *)malloc(uSize);
+			dropFiles = (DROPFILES*) malloc(uSize);
 			memcpy(dropFiles, globlemem, uSize);
 
 			GlobalUnlock(stg_medium.hGlobal);
@@ -926,7 +1742,7 @@ static void wf_cliprdr_process_cb_data_request_event(wfContext* wfc, RDP_CB_DATA
 				int pathLen;
 
 				/* dropFiles contains file names */
-				for (wFileName = (WCHAR*)((char *)dropFiles + dropFiles->pFiles); (len = wcslen(wFileName)) > 0; wFileName += len + 1)
+				for (wFileName = (WCHAR*)((char*)dropFiles + dropFiles->pFiles); (len = wcslen(wFileName)) > 0; wFileName += len + 1)
 				{
 					/* get path name */
 					str_len = wcslen(wFileName);
@@ -951,12 +1767,13 @@ static void wf_cliprdr_process_cb_data_request_event(wfContext* wfc, RDP_CB_DATA
 			else
 			{
 				char *p;
-				for (p = (char *)((char *)dropFiles + dropFiles->pFiles); (len = strlen(p)) > 0; p += len + 1, cliprdr->nFiles++)
+
+				for (p = (char*)((char*)dropFiles + dropFiles->pFiles); (len = strlen(p)) > 0; p += len + 1, cliprdr->nFiles++)
 				{
 					int cchWideChar;
 
 					cchWideChar = MultiByteToWideChar(CP_ACP, MB_COMPOSITE, p, len, NULL, 0);
-					cliprdr->file_names[cliprdr->nFiles] = (LPWSTR) malloc(cchWideChar);
+					cliprdr->file_names[cliprdr->nFiles] = (LPWSTR) malloc(cchWideChar * 2);
 					MultiByteToWideChar(CP_ACP, MB_COMPOSITE, p, len, cliprdr->file_names[cliprdr->nFiles], cchWideChar);
 
 					if (cliprdr->nFiles == cliprdr->file_array_size)
@@ -1026,12 +1843,12 @@ exit:
 
 static void wf_cliprdr_process_cb_format_list_event(wfContext* wfc, RDP_CB_FORMAT_LIST_EVENT* event)
 {
-	cliprdrContext* cliprdr = (cliprdrContext *)wfc->cliprdr_context;
-	UINT32 left_size = event->raw_format_data_size;
 	int i = 0;
-	BYTE *p;
+	BYTE* p;
 	BYTE* end_mark;
 	BOOL format_forbidden = FALSE;
+	cliprdrContext* cliprdr = (cliprdrContext*) wfc->cliprdr_context;
+	UINT32 left_size = event->raw_format_data_size;
 
 	/* ignore the formats member in event struct, only parsing raw_format_data */
 
@@ -1044,9 +1861,9 @@ static void wf_cliprdr_process_cb_format_list_event(wfContext* wfc, RDP_CB_FORMA
 	{
 		while (left_size >= 6)
 		{
-			formatMapping *map;
 			BYTE* tmp;
 			int name_len;
+			formatMapping* map;
 
 			map = &cliprdr->format_mappings[i++];
 
@@ -1065,7 +1882,7 @@ static void wf_cliprdr_process_cb_format_list_event(wfContext* wfc, RDP_CB_FORMA
 				map->name = malloc(name_len + 2);
 				memcpy(map->name, p, name_len + 2);
 
-				map->local_format_id = RegisterClipboardFormatW((LPCWSTR)map->name);
+				map->local_format_id = RegisterClipboardFormatW((LPCWSTR) map->name);
 			}
 			else
 			{
@@ -1219,7 +2036,8 @@ static void wf_cliprdr_process_cb_filecontents_request_event(wfContext* wfc, RDP
 		ULONG CeltFetched;
 
 		FORMATETC vFormatEtc2;
-		if (pStreamStc != NULL)
+
+		if (pStreamStc)
 		{
 			IStream_Release(pStreamStc);
 			pStreamStc = NULL;
@@ -1228,15 +2046,19 @@ static void wf_cliprdr_process_cb_filecontents_request_event(wfContext* wfc, RDP
 		bIsStreamFile = FALSE;
 
 		hRet = IDataObject_EnumFormatEtc(pDataObj, DATADIR_GET, &pEnumFormatEtc);
+
 		if (hRet == S_OK)
 		{
-			do {
+			do
+			{
 				hRet = IEnumFORMATETC_Next(pEnumFormatEtc, 1, &vFormatEtc2, &CeltFetched);
+
 				if (hRet == S_OK)
 				{
 					if (vFormatEtc2.cfFormat == cliprdr->ID_FILECONTENTS)
 					{
 						hRet = IDataObject_GetData(pDataObj, &vFormatEtc, &vStgMedium);
+
 						if (hRet == S_OK)
 						{
 							pStreamStc = vStgMedium.pstm;
@@ -1246,7 +2068,8 @@ static void wf_cliprdr_process_cb_filecontents_request_event(wfContext* wfc, RDP
 						break;
 					}
 				}
-			} while (hRet == S_OK);
+			}
+			while (hRet == S_OK);
 		}
 	}
 
@@ -1259,6 +2082,7 @@ static void wf_cliprdr_process_cb_filecontents_request_event(wfContext* wfc, RDP
 			ZeroMemory(&vStatStg, sizeof(STATSTG));
 
 			hRet = IStream_Stat(pStreamStc, &vStatStg, STATFLAG_NONAME);
+
 			if (hRet == S_OK)
 			{
 				Write_UINT32(pData, vStatStg.cbSize.LowPart);
@@ -1275,6 +2099,7 @@ static void wf_cliprdr_process_cb_filecontents_request_event(wfContext* wfc, RDP
 			dlibMove.LowPart = event->nPositionLow;
 
 			hRet = IStream_Seek(pStreamStc, dlibMove, STREAM_SEEK_SET, &dlibNewPosition);
+
 			if (SUCCEEDED(hRet))
 			{
 				hRet = IStream_Read(pStreamStc, pData, event->cbRequested, (PULONG)&uSize);
@@ -1296,6 +2121,7 @@ static void wf_cliprdr_process_cb_filecontents_request_event(wfContext* wfc, RDP
 
 			bRet = wf_cliprdr_get_file_contents(cliprdr->file_names[event->lindex], pData,
 				event->nPositionLow, event->nPositionHigh, event->cbRequested, &uSize);
+
 			if (bRet == FALSE)
 			{
 				WLog_ERR(TAG,  "get file contents failed.");
@@ -1398,29 +2224,4 @@ void wf_process_cliprdr_event(wfContext* wfc, wMessage* event)
 		default:
 			break;
 	}
-}
-
-BOOL wf_cliprdr_process_selection_notify(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	return TRUE;
-}
-
-BOOL wf_cliprdr_process_selection_request(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	return TRUE;
-}
-
-BOOL wf_cliprdr_process_selection_clear(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	return TRUE;
-}
-
-BOOL wf_cliprdr_process_property_notify(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	return TRUE;
-}
-
-void wf_cliprdr_check_owner(wfContext* wfc)
-{
-
 }

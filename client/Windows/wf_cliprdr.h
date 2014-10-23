@@ -28,18 +28,63 @@
 #include "wf_client.h"
 #include <freerdp/log.h>
 
-#define TAG CLIENT_TAG(WIN_CLIPRDR_TAG)
 #ifdef WITH_DEBUG_CLIPRDR
 #define DEBUG_CLIPRDR(fmt, ...) WLog_DBG(WIN_CLIPRDR_TAG, fmt, ## __VA_ARGS__)
 #else
 #define DEBUG_CLIPRDR(fmt, ...) do { } while (0)
 #endif
 
+struct _CliprdrStream
+{
+	IStream iStream;
+
+	LONG m_lRefCount;
+	LONG m_lIndex;
+	ULARGE_INTEGER m_lSize;
+	ULARGE_INTEGER m_lOffset;
+	void* m_pData;
+};
+typedef struct _CliprdrStream CliprdrStream;
+
+CliprdrStream* CliprdrStream_New(LONG index, void* pData);
+void CliprdrStream_Delete(CliprdrStream* instance);
+
+struct _CliprdrDataObject
+{
+	IDataObject iDataObject;
+
+	LONG m_lRefCount;
+	FORMATETC* m_pFormatEtc;
+	STGMEDIUM* m_pStgMedium;
+	LONG m_nNumFormats;
+	LONG m_nStreams;
+	IStream** m_pStream;
+	void* m_pData;
+};
+typedef struct _CliprdrDataObject CliprdrDataObject;
+
+CliprdrDataObject* CliprdrDataObject_New(FORMATETC* fmtetc, STGMEDIUM* stgmed, int count, void* data);
+void CliprdrDataObject_Delete(CliprdrDataObject* instance);
+
+struct _CliprdrEnumFORMATETC
+{
+	IEnumFORMATETC iEnumFORMATETC;
+
+	LONG m_lRefCount;
+	LONG m_nIndex;
+	LONG m_nNumFormats;
+	FORMATETC* m_pFormatEtc;
+};
+typedef struct _CliprdrEnumFORMATETC CliprdrEnumFORMATETC;
+
+CliprdrEnumFORMATETC* CliprdrEnumFORMATETC_New(int nFormats, FORMATETC* pFormatEtc);
+void CliprdrEnumFORMATETC_Delete(CliprdrEnumFORMATETC* This);
+
 struct format_mapping
 {
 	UINT32 remote_format_id;
 	UINT32 local_format_id;
-	void *name; /* Unicode or ASCII characters with NULL terminator */
+	void* name; /* Unicode or ASCII characters with NULL terminator */
 };
 typedef struct format_mapping formatMapping;
 
