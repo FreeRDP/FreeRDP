@@ -2719,7 +2719,7 @@ int freerdp_image24_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 							pDstPixel[2] = pSrcPixel[0];
 							pDstPixel[3] = 0xFF;
 
-							pSrcPixel += 4;
+							pSrcPixel += 3;
 							pDstPixel += 4;
 						}
 
@@ -2741,7 +2741,7 @@ int freerdp_image24_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 							pDstPixel[2] = pSrcPixel[0];
 							pDstPixel[3] = 0xFF;
 
-							pSrcPixel += 4;
+							pSrcPixel += 3;
 							pDstPixel += 4;
 						}
 
