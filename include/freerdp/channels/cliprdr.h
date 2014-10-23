@@ -72,6 +72,40 @@
 #define FILECONTENTS_SIZE		0x00000001
 #define FILECONTENTS_RANGE		0x00000002
 
+/* Special Clipboard Response Formats */
+
+struct _CLIPRDR_MFPICT
+{
+	UINT32 mappingMode;
+	UINT32 xExt;
+	UINT32 yExt;
+	UINT32 metaFileSize;
+	BYTE* metaFileData;
+};
+typedef struct _CLIPRDR_MFPICT CLIPRDR_MFPICT;
+
+struct _CLIPRDR_FILEDESCRIPTOR
+{
+	UINT32 flags;
+	BYTE reserved1[32];
+	UINT32 fileAttributes;
+	BYTE reserved2[16];
+	UINT64 lastWriteTime;
+	UINT32 fileSizeHigh;
+	UINT32 fileSizeLow;
+	char fileName[520];
+};
+typedef struct _CLIPRDR_FILEDESCRIPTOR CLIPRDR_FILEDESCRIPTOR;
+
+struct _CLIPRDR_FILELIST
+{
+	UINT32 cItems;
+	CLIPRDR_FILEDESCRIPTOR* fileDescriptorArray;
+};
+typedef struct _CLIPRDR_FILELIST CLIPRDR_FILELIST;
+
+/* Clipboard Messages */
+
 #define DEFINE_CLIPRDR_HEADER_COMMON() \
 	UINT16 msgType; \
 	UINT16 msgFlags; \

@@ -60,6 +60,21 @@
 #define CF_GDIOBJFIRST		0x0300
 #define CF_GDIOBJLAST		0x03FF
 
+/* Windows Metafile Picture Format */
+
+#define MM_TEXT			1
+#define MM_LOMETRIC		2
+#define MM_HIMETRIC		3
+#define MM_LOENGLISH		4
+#define MM_HIENGLISH		5
+#define MM_TWIPS		6
+#define MM_ISOTROPIC		7
+#define MM_ANISOTROPIC		8
+
+#define MM_MIN			MM_TEXT
+#define MM_MAX			MM_ANISOTROPIC
+#define MM_MAX_FIXEDSCALE	MM_TWIPS
+
 #endif
 
 /**
