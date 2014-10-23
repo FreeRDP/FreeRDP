@@ -451,8 +451,6 @@ BOOL wf_post_connect(freerdp* instance)
 
 	freerdp_channels_post_connect(context->channels, instance);
 
-	wf_cliprdr_init(wfc, context->channels);
-
 	if (wfc->fullscreen)
 		floatbar_window_create(wfc);
 

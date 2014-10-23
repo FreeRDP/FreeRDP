@@ -37,12 +37,15 @@
 #include <freerdp/codec/nsc.h>
 #include <freerdp/client/file.h>
 
+#include "wf_channels.h"
 #include "wf_floatbar.h"
 #include "wf_event.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "wf_cliprdr.h"
 
 // System menu constants
 #define SYSCOMMAND_ID_SMARTSIZING 1000
@@ -64,7 +67,6 @@ struct wf_pointer
 };
 typedef struct wf_pointer wfPointer;
 
-typedef struct cliprdr_context cliprdrContext;
 struct wf_context
 {
 	rdpContext context;
@@ -114,26 +116,24 @@ struct wf_context
 	DWORD mainThreadId;
 	DWORD keyboardThreadId;
 
-	//BOOL sw_gdi;
-
 	rdpFile* connectionRdpFile;
 
-	// Keep track of window size and position, disable when in fullscreen mode.
 	BOOL disablewindowtracking;
 
-	// These variables are required for horizontal scrolling.
 	BOOL updating_scrollbars;
 	BOOL xScrollVisible;
-	int xMinScroll;       // minimum horizontal scroll value
-	int xCurrentScroll;   // current horizontal scroll value
-	int xMaxScroll;       // maximum horizontal scroll value
+	int xMinScroll;
+	int xCurrentScroll;
+	int xMaxScroll;
 
-	// These variables are required for vertical scrolling.
 	BOOL yScrollVisible;
-	int yMinScroll;       // minimum vertical scroll value
-	int yCurrentScroll;   // current vertical scroll value
-	int yMaxScroll;       // maximum vertical scroll value
-	cliprdrContext *cliprdr_context;
+	int yMinScroll;
+	int yCurrentScroll;
+	int yMaxScroll;
+
+	wfClipboard* clipboard;
+	CliprdrClientContext* cliprdr;
+
 	FloatBar* floatbar;
 };
 typedef struct wf_context wfContext;

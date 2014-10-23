@@ -24,6 +24,7 @@
 #include <freerdp/client/rdpei.h>
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/encomsp.h>
+#include <freerdp/client/cliprdr.h>
 
 #include "wf_client.h"
 

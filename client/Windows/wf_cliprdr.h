@@ -25,11 +25,14 @@
 #include <Ole2.h>
 #include <ShlObj.h>
 
+typedef struct wf_clipboard wfClipboard;
+
 #include "wf_client.h"
+
 #include <freerdp/log.h>
 
 #ifdef WITH_DEBUG_CLIPRDR
-#define DEBUG_CLIPRDR(fmt, ...) WLog_DBG(WIN_CLIPRDR_TAG, fmt, ## __VA_ARGS__)
+#define DEBUG_CLIPRDR(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
 #else
 #define DEBUG_CLIPRDR(fmt, ...) do { } while (0)
 #endif
@@ -88,9 +91,9 @@ struct format_mapping
 };
 typedef struct format_mapping formatMapping;
 
-typedef struct cliprdr_context cliprdrContext;
-struct cliprdr_context
+struct wf_clipboard
 {
+	wfContext* wfc;
 	rdpChannels* channels;
 
 	UINT32 capabilities;
@@ -102,10 +105,9 @@ struct cliprdr_context
 	UINT32 request_format;
 	BOOL channel_initialized;
 
-	HWND hwndClipboard;
-
-	HANDLE cliprdr_thread;
+	HWND hwnd;
 	HANDLE hmem;
+	HANDLE thread;
 	HANDLE response_data_event;
 
 	/* file clipping */
@@ -124,19 +126,15 @@ struct cliprdr_context
 	FILEDESCRIPTORW** fileDescriptor;
 };
 
-void wf_cliprdr_init(wfContext* wfc, rdpChannels* channels);
-void wf_cliprdr_uninit(wfContext* wfc);
-void wf_process_cliprdr_event(wfContext* wfc, wMessage* event);
-BOOL wf_cliprdr_process_selection_notify(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL wf_cliprdr_process_selection_request(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL wf_cliprdr_process_selection_clear(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-BOOL wf_cliprdr_process_property_notify(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
-void wf_cliprdr_check_owner(wfContext* wfc);
+void wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr);
+void wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr);
 
-int cliprdr_send_data_request(cliprdrContext* cliprdr, UINT32 format);
-int cliprdr_send_lock(cliprdrContext* cliprdr);
-int cliprdr_send_unlock(cliprdrContext* cliprdr);
-int cliprdr_send_request_filecontents(cliprdrContext* cliprdr, void* streamid,
+void wf_process_cliprdr_event(wfContext* wfc, wMessage* event);
+
+int cliprdr_send_data_request(wfClipboard* clipboard, UINT32 format);
+int cliprdr_send_lock(wfClipboard* clipboard);
+int cliprdr_send_unlock(wfClipboard* clipboard);
+int cliprdr_send_request_filecontents(wfClipboard* clipboard, void* streamid,
 		int index, int flag, DWORD positionhigh, DWORD positionlow, ULONG request);
 
 #endif /* __WF_CLIPRDR_H */

@@ -389,7 +389,7 @@ void wf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 		SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
 
-		if (wfc->bitmap_size < (nWidth * nHeight * 4))
+		if (wfc->bitmap_size < (UINT32) (nWidth * nHeight * 4))
 		{
 			wfc->bitmap_size = nWidth * nHeight * 4;
 			wfc->bitmap_buffer = (BYTE*) _aligned_realloc(wfc->bitmap_buffer, wfc->bitmap_size, 16);
