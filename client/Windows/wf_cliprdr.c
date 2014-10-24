@@ -1028,7 +1028,7 @@ static int cliprdr_send_format_list(wfClipboard* clipboard)
 
 		CloseClipboard();
 
-		formatList.msgFlags = CB_RESPONSE_OK;
+		formatList.msgFlags = 0;
 		formatList.numFormats = numFormats;
 		formatList.formats = formats;
 
@@ -2208,11 +2208,31 @@ void wf_process_cliprdr_event(wfContext* wfc, wMessage* event)
 	}
 }
 
+int wf_cliprdr_send_client_capabilities(wfClipboard* clipboard)
+{
+	CLIPRDR_CAPABILITIES capabilities;
+	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet;
+
+	capabilities.cCapabilitiesSets = 1;
+	capabilities.capabilitySets = (CLIPRDR_CAPABILITY_SET*) &(generalCapabilitySet);
+
+	generalCapabilitySet.capabilitySetType = CB_CAPSTYPE_GENERAL;
+	generalCapabilitySet.capabilitySetLength = 12;
+
+	generalCapabilitySet.version = CB_CAPS_VERSION_2;
+	generalCapabilitySet.generalFlags = CB_USE_LONG_FORMAT_NAMES;
+
+	clipboard->context->ClientCapabilities(clipboard->context, &capabilities);
+
+	return 1;
+}
+
 static int wf_cliprdr_monitor_ready(CliprdrClientContext* context, CLIPRDR_MONITOR_READY* monitorReady)
 {
 	wfClipboard* clipboard = (wfClipboard*) context->custom;
 
 	clipboard->sync = TRUE;
+	wf_cliprdr_send_client_capabilities(clipboard);
 	cliprdr_send_format_list(clipboard);
 
 	return 1;
@@ -2723,7 +2743,7 @@ void wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr)
 	clipboard->wfc = wfc;
 	clipboard->context = cliprdr;
 
-	if (0)
+	if (1)
 	{
 		cliprdr->custom = (void*) wfc->clipboard;
 		clipboard->context = cliprdr;
