@@ -104,7 +104,7 @@ struct wf_clipboard
 	int map_capacity;
 	formatMapping* format_mappings;
 
-	UINT32 request_format;
+	UINT32 requestedFormatId;
 
 	HWND hwnd;
 	HANDLE hmem;
