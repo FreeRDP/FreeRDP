@@ -25,6 +25,9 @@
 
 #include "wf_rail.h"
 
+#define GET_X_LPARAM(lParam) ((UINT16) (lParam & 0xFFFF))
+#define GET_Y_LPARAM(lParam) ((UINT16) ((lParam >> 16) & 0xFFFF))
+
 /* RemoteApp Core Protocol Extension */
 
 struct _WINDOW_STYLE
@@ -283,14 +286,25 @@ LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	int x, y;
 	int width;
 	int height;
+	UINT32 xPos;
+	UINT32 yPos;
 	PAINTSTRUCT ps;
+	UINT32 inputFlags;
 	wfContext* wfc = NULL;
+	rdpInput* input = NULL;
+	rdpContext* context = NULL;
 	wfRailWindow* railWindow;
 
 	railWindow = (wfRailWindow*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	if (railWindow)
 		wfc = railWindow->wfc;
+
+	if (wfc)
+		context = (rdpContext*) wfc;
+
+	if (context)
+		input = context->input;
 
 	switch (msg)
 	{
@@ -313,6 +327,79 @@ LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 			}
 			break;
 
+		case WM_LBUTTONDOWN:
+			{
+				if (!railWindow || !input)
+					return 0;
+
+				xPos = GET_X_LPARAM(lParam) + railWindow->x;
+				yPos = GET_Y_LPARAM(lParam) + railWindow->y;
+				inputFlags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON1;
+
+				if (input)
+					input->MouseEvent(input, inputFlags, xPos, yPos);
+			}
+			break;
+
+		case WM_LBUTTONUP:
+			{
+				if (!railWindow || !input)
+					return 0;
+
+				xPos = GET_X_LPARAM(lParam) + railWindow->x;
+				yPos = GET_Y_LPARAM(lParam) + railWindow->y;
+				inputFlags = PTR_FLAGS_BUTTON1;
+
+				if (input)
+					input->MouseEvent(input, inputFlags, xPos, yPos);
+			}
+			break;
+
+		case WM_RBUTTONDOWN:
+			{
+				if (!railWindow || !input)
+					return 0;
+
+				xPos = GET_X_LPARAM(lParam) + railWindow->x;
+				yPos = GET_Y_LPARAM(lParam) + railWindow->y;
+				inputFlags = PTR_FLAGS_DOWN | PTR_FLAGS_BUTTON2;
+
+				if (input)
+					input->MouseEvent(input, inputFlags, xPos, yPos);
+			}
+			break;
+
+		case WM_RBUTTONUP:
+			{
+				if (!railWindow || !input)
+					return 0;
+
+				xPos = GET_X_LPARAM(lParam) + railWindow->x;
+				yPos = GET_Y_LPARAM(lParam) + railWindow->y;
+				inputFlags = PTR_FLAGS_BUTTON2;
+
+				if (input)
+					input->MouseEvent(input, inputFlags, xPos, yPos);
+			}
+			break;
+
+		case WM_MOUSEMOVE:
+			{
+				if (!railWindow || !input)
+					return 0;
+
+				xPos = GET_X_LPARAM(lParam) + railWindow->x;
+				yPos = GET_Y_LPARAM(lParam) + railWindow->y;
+				inputFlags = PTR_FLAGS_MOVE;
+
+				if (input)
+					input->MouseEvent(input, inputFlags, xPos, yPos);
+			}
+			break;
+
+		case WM_MOUSEWHEEL:
+			break;
+
 		case WM_CLOSE:
 			DestroyWindow(hWnd);
 			break;
@@ -328,8 +415,9 @@ LRESULT CALLBACK wf_RailWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	return 0;
 }
 
-#define RAIL_DISABLED_WINDOW_STYLES (WS_BORDER | WS_THICKFRAME | WS_DLGFRAME | WS_CAPTION | WS_OVERLAPPED)
-#define RAIL_DISABLED_EXTENDED_WINDOW_STYLES (WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE)
+#define RAIL_DISABLED_WINDOW_STYLES (WS_BORDER | WS_THICKFRAME | WS_DLGFRAME | WS_CAPTION | \
+	WS_OVERLAPPED | WS_VSCROLL | WS_HSCROLL | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
+#define RAIL_DISABLED_EXTENDED_WINDOW_STYLES (WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE | WS_EX_WINDOWEDGE)
 
 static void wf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
 {
@@ -861,6 +949,52 @@ static int wf_rail_server_language_bar_info(RailClientContext* context, RAIL_LAN
 static int wf_rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
 {
 	return 1;
+}
+
+void wf_rail_invalidate_region(wfContext* wfc, REGION16* invalidRegion)
+{
+	int index;
+	int count;
+	RECT updateRect;
+	RECTANGLE_16 windowRect;
+	ULONG_PTR* pKeys = NULL;
+	wfRailWindow* railWindow;
+	const RECTANGLE_16* extents;
+	REGION16 windowInvalidRegion;
+
+	region16_init(&windowInvalidRegion);
+
+	count = HashTable_GetKeys(wfc->railWindows, &pKeys);
+
+	for (index = 0; index < count; index++)
+	{
+		railWindow = (wfRailWindow*) HashTable_GetItemValue(wfc->railWindows, (void*) pKeys[index]);
+
+		if (railWindow)
+		{
+			windowRect.left = railWindow->x;
+			windowRect.top = railWindow->y;
+			windowRect.right = railWindow->x + railWindow->width;
+			windowRect.bottom = railWindow->y + railWindow->height;
+
+			region16_clear(&windowInvalidRegion);
+			region16_intersect_rect(&windowInvalidRegion, invalidRegion, &windowRect);
+
+			if (!region16_is_empty(&windowInvalidRegion))
+			{
+				extents = region16_extents(&windowInvalidRegion);
+
+				updateRect.left = extents->left - railWindow->x;
+				updateRect.top = extents->top - railWindow->y;
+				updateRect.right = extents->right - railWindow->x;
+				updateRect.bottom = extents->bottom - railWindow->y;
+
+				InvalidateRect(railWindow->hWnd, &updateRect, FALSE);
+			}
+		}
+	}
+
+	region16_uninit(&windowInvalidRegion);
 }
 
 void wf_rail_init(wfContext* wfc, RailClientContext* rail)
