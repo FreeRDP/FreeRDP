@@ -102,7 +102,7 @@ static int audin_process_version(IWTSVirtualChannelCallback* pChannelCallback, w
 	out = Stream_New(NULL, 5);
 	Stream_Write_UINT8(out, MSG_SNDIN_VERSION);
 	Stream_Write_UINT32(out, Version);
-	error = callback->channel->Write(callback->channel, (UINT32) Stream_GetPosition(s), Stream_Buffer(s), NULL);
+	error = callback->channel->Write(callback->channel, (UINT32) Stream_GetPosition(out), Stream_Buffer(out), NULL);
 	Stream_Free(out, TRUE);
 
 	return error;
