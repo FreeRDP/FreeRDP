@@ -130,8 +130,6 @@ struct wf_clipboard
 void wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr);
 void wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr);
 
-void wf_process_cliprdr_event(wfContext* wfc, wMessage* event);
-
 int cliprdr_send_data_request(wfClipboard* clipboard, UINT32 format);
 int cliprdr_send_lock(wfClipboard* clipboard);
 int cliprdr_send_unlock(wfClipboard* clipboard);

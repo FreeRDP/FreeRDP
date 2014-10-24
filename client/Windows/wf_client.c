@@ -37,14 +37,13 @@
 #include <sys/types.h>
 
 #include <freerdp/log.h>
+#include <freerdp/event.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/event.h>
 
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
-#include <freerdp/event.h>
 
 #include "wf_gdi.h"
 #include "wf_channels.h"
@@ -542,30 +541,6 @@ int wf_receive_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
 
-void wf_process_channel_event(rdpChannels* channels, freerdp* instance)
-{
-	wfContext* wfc;
-	wMessage* event;
-
-	wfc = (wfContext*) instance->context;
-	event = freerdp_channels_pop_event(channels);
-
-	if (event)
-	{
-		switch (GetMessageClass(event->id))
-		{
-			case CliprdrChannel_Class:
-				wf_process_cliprdr_event(wfc, event);
-				break;
-
-			default:
-				break;
-		}
-
-		freerdp_event_free(event);
-	}
-}
-
 BOOL wf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
 {
 	return TRUE;
@@ -657,7 +632,6 @@ void* wf_channels_thread(void* arg)
 	HANDLE event;
 	rdpChannels* channels;
 	freerdp* instance = (freerdp*) arg;
-	assert(NULL != instance);
 
 	channels = instance->context->channels;
 	event = freerdp_channels_get_event_handle(instance);
@@ -665,10 +639,9 @@ void* wf_channels_thread(void* arg)
 	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
 		status = freerdp_channels_process_pending_messages(instance);
+
 		if (!status)
 			break;
-
-		wf_process_channel_event(channels, instance);
 	}
 
 	ExitThread(0);
@@ -817,8 +790,6 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 				WLog_ERR(TAG,  "Failed to check channel manager file descriptor");
 				break;
 			}
-
-			wf_process_channel_event(channels, instance);
 		}
 
 		quit_msg = FALSE;

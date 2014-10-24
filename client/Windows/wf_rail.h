@@ -21,12 +21,6 @@
 
 #include "wf_client.h"
 
-void wf_rail_paint(wfContext* wfc, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom);
-void wf_rail_register_callbacks(wfContext* wfc, rdpRail* rail);
-void wf_rail_send_client_system_command(wfContext* wfc, UINT32 windowId, UINT16 command);
-void wf_rail_send_activate(wfContext* wfc, HWND window, BOOL enabled);
-void wf_process_rail_event(wfContext* wfc, rdpChannels* channels, wMessage* event);
-void wf_rail_adjust_position(wfContext* wfc, rdpWindow* window);
-void wf_rail_end_local_move(wfContext* wfc, rdpWindow* window);
+
 
 #endif
