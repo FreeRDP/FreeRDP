@@ -19,9 +19,27 @@
 #ifndef __WF_RAIL_H
 #define __WF_RAIL_H
 
+typedef struct wf_rail_window wfRailWindow;
+
 #include "wf_client.h"
 
 #include <freerdp/client/rail.h>
+
+struct wf_rail_window
+{
+	wfContext* wfc;
+
+	HWND hWnd;
+
+	DWORD dwStyle;
+	DWORD dwExStyle;
+
+	int x;
+	int y;
+	int width;
+	int height;
+	char* title;
+};
 
 void wf_rail_init(wfContext* wfc, RailClientContext* rail);
 void wf_rail_uninit(wfContext* wfc, RailClientContext* rail);

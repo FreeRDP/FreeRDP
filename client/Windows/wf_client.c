@@ -405,7 +405,7 @@ BOOL wf_post_connect(freerdp* instance)
 		wfc->hwnd = CreateWindowEx((DWORD) NULL, wfc->wndClassName, lpWindowName, dwStyle,
 			0, 0, 0, 0, wfc->hWndParent, NULL, wfc->hInstance, NULL);
 
-		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR) wfc);	   
+		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR) wfc);
 	}
 
 	wf_resize_window(wfc);

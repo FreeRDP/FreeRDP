@@ -24,6 +24,8 @@
 
 #include <winpr/windows.h>
 
+#include <winpr/collections.h>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
@@ -38,15 +40,16 @@
 #include <freerdp/codec/nsc.h>
 #include <freerdp/client/file.h>
 
+typedef struct wf_context wfContext;
+
 #include "wf_channels.h"
 #include "wf_floatbar.h"
 #include "wf_event.h"
+#include "wf_cliprdr.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "wf_cliprdr.h"
 
 // System menu constants
 #define SYSCOMMAND_ID_SMARTSIZING 1000
@@ -140,8 +143,8 @@ struct wf_context
 	FloatBar* floatbar;
 
 	RailClientContext* rail;
+	wHashTable* railWindows;
 };
-typedef struct wf_context wfContext;
 
 /**
  * Client Interface
