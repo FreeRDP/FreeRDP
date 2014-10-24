@@ -1,8 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Windows RAIL
  *
- * Copyright 2012 Jason Champion <jchampion@zetacentauri.com>
+ * Copyright 2013-2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef __WF_RAIL_H
 #define __WF_RAIL_H
 
 #include "wf_client.h"
 
+#include <freerdp/client/rail.h>
 
+void wf_rail_init(wfContext* wfc, RailClientContext* rail);
+void wf_rail_uninit(wfContext* wfc, RailClientContext* rail);
 
 #endif

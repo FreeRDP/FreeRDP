@@ -1108,6 +1108,7 @@ int wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->ReceiveChannelData = wf_receive_channel_data;
 
 	wfc->instance = instance;
+	wfc->settings = instance->settings;
 	context->channels = freerdp_channels_new();
 	
 	return 0;

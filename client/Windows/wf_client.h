@@ -32,6 +32,7 @@
 #include <freerdp/cache/cache.h>
 #include <freerdp/codec/color.h>
 
+#include <freerdp/client/rail.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
@@ -71,6 +72,8 @@ struct wf_context
 {
 	rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
+
+	rdpSettings* settings;
 
 	int width;
 	int height;
@@ -135,6 +138,8 @@ struct wf_context
 	CliprdrClientContext* cliprdr;
 
 	FloatBar* floatbar;
+
+	RailClientContext* rail;
 };
 typedef struct wf_context wfContext;
 
