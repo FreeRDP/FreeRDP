@@ -40,6 +40,8 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
 
 #ifdef HAVE_POLL_H
 #include <poll.h>
@@ -523,6 +525,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 		struct timeval tv;
 #endif
 
+#ifdef NO_IPV6
 		tcp->socketBio = BIO_new(BIO_s_connect());
 
 		if (!tcp->socketBio)
@@ -542,6 +545,58 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 
 		if (tcp->sockfd < 0)
 			return FALSE;
+#else /* NO_IPV6 */
+		struct addrinfo hints = {0};
+		struct addrinfo *result;
+		struct addrinfo *tmp;
+		char port_str[11];
+
+		//ZeroMemory(&hints, sizeof(struct addrinfo));
+		hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+		hints.ai_socktype = SOCK_STREAM;
+		/*
+		 * FIXME: the following is a nasty workaround. Find a cleaner way:
+		 * Either set port manually afterwards or get it passed as string?
+		 */
+		sprintf_s(port_str, 11, "%u", port);
+
+		status = getaddrinfo(hostname, port_str, &hints, &result);
+		if (status) {
+			fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+			return FALSE;
+		}
+
+		/* For now prefer IPv4 over IPv6. */
+		tmp = result;
+		if (tmp->ai_family == AF_INET6 && tmp->ai_next != 0)
+		{
+			while ((tmp = tmp->ai_next))
+			{
+				if (tmp->ai_family == AF_INET)
+					break;
+			}
+			if (!tmp)
+				tmp = result;
+		}
+		tcp->sockfd = socket(tmp->ai_family, tmp->ai_socktype, tmp->ai_protocol);
+
+		if (tcp->sockfd  < 0) {
+			freeaddrinfo(result);
+			return FALSE;
+		}
+
+		if (connect(tcp->sockfd, tmp->ai_addr, tmp->ai_addrlen) < 0) {
+			fprintf(stderr, "connect: %s\n", strerror(errno));
+			freeaddrinfo(result);
+			return FALSE;
+		}
+		freeaddrinfo(result);
+		tcp->socketBio = BIO_new_socket(tcp->sockfd, BIO_NOCLOSE);
+
+		/* TODO: make sure the handshake is done by querying the bio */
+		//		if (BIO_should_retry(tcp->socketBio))
+		//          return FALSE;
+#endif /* NO_IPV6 */
 
 		if (status <= 0)
 		{

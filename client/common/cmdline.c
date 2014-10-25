@@ -1200,19 +1200,39 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 		CommandLineSwitchCase(arg, "v")
 		{
-			p = strchr(arg->Value, ':');
-
-			if (p)
+			p = strchr(arg->Value, '[');
+			/* ipv4 */
+			if (!p)
 			{
-				length = (int) (p - arg->Value);
-				settings->ServerPort = atoi(&p[1]);
-				settings->ServerHostname = (char*) malloc(length + 1);
-				strncpy(settings->ServerHostname, arg->Value, length);
-				settings->ServerHostname[length] = '\0';
+				p = strchr(arg->Value, ':');
+				if (p)
+				{
+					length = (int) (p - arg->Value);
+					settings->ServerPort = atoi(&p[1]);
+					settings->ServerHostname = (char*) malloc(length + 1);
+					strncpy(settings->ServerHostname, arg->Value, length);
+					settings->ServerHostname[length] = '\0';
+				}
+				else
+				{
+					settings->ServerHostname = _strdup(arg->Value);
+				}
 			}
-			else
+			else /* ipv6 */
 			{
-				settings->ServerHostname = _strdup(arg->Value);
+				char *p2 = strchr(arg->Value, ']');
+				/* not a valid [] ipv6 addr found */
+				if (!p2)
+					continue;
+
+				length = p2 - p;
+				settings->ServerHostname = (char*) malloc(length);
+				strncpy(settings->ServerHostname, p+1, length-1);
+				if (*(p2 + 1) == ':')
+				{
+					settings->ServerPort = atoi(&p2[2]);
+				}
+				printf("hostname %s port %d\n", settings->ServerHostname, settings->ServerPort);
 			}
 		}
 		CommandLineSwitchCase(arg, "spn-class")

@@ -333,6 +333,25 @@ static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
 	Stream_Read_UINT16(s, keyCode); /* keyCode (2 bytes) */
 	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
+	/**
+	 * Note: A lot of code in FreeRDP and in dependent projects checks the
+	 * KBDFLAGS_DOWN flag in order to detect a key press.
+	 * According to the specs only the absence of the slow-path
+	 * KBDFLAGS_RELEASE flag indicates a key-down event.
+	 * The slow-path KBDFLAGS_DOWN flag merely indicates that the key was
+	 * down prior to this event.
+	 * The checks for KBDFLAGS_DOWN only work successfully because the code
+	 * handling the fast-path keyboard input sets the KBDFLAGS_DOWN flag if
+	 * the FASTPATH_INPUT_KBDFLAGS_RELEASE flag is missing.
+	 * Since the same input callback is used for slow- and fast-path events
+	 * we have to follow that "convention" here.
+	 */
+
+	if (keyboardFlags & KBD_FLAGS_RELEASE)
+		keyboardFlags &= ~KBD_FLAGS_DOWN;
+	else
+		keyboardFlags |= KBD_FLAGS_DOWN;
+
 	IFCALL(input->KeyboardEvent, input, keyboardFlags, keyCode);
 
 	return TRUE;
@@ -349,17 +368,11 @@ static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
 	Stream_Read_UINT16(s, unicodeCode); /* unicodeCode (2 bytes) */
 	Stream_Seek(s, 2); /* pad2Octets (2 bytes) */
 
-	/*
-	 * According to the specification, the slow path Unicode Keyboard Event
-	 * (TS_UNICODE_KEYBOARD_EVENT) contains KBD_FLAGS_RELEASE flag when key
-	 * is released, but contains no flags when it is pressed.
-	 * This is different from the slow path Keyboard Event
-	 * (TS_KEYBOARD_EVENT) which does contain KBD_FLAGS_DOWN flag when the
-	 * key is pressed.
-	 * Set the KBD_FLAGS_DOWN flag if the KBD_FLAGS_RELEASE flag is missing.
-	 */
+	/* "fix" keyboardFlags - see comment in input_recv_keyboard_event() */
 
-	if ((keyboardFlags & KBD_FLAGS_RELEASE) == 0)
+	if (keyboardFlags & KBD_FLAGS_RELEASE)
+		keyboardFlags &= ~KBD_FLAGS_DOWN;
+	else
 		keyboardFlags |= KBD_FLAGS_DOWN;
 
 	IFCALL(input->UnicodeKeyboardEvent, input, keyboardFlags, unicodeCode);
