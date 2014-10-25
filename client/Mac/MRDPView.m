@@ -1021,13 +1021,9 @@ void mf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	cursor_data = (BYTE*) malloc(rect.size.width * rect.size.height * 4);
 	mrdpCursor->cursor_data = cursor_data;
 	
-	if (pointer->xorBpp > 24)
-	{
-		freerdp_image_swap_color_order(pointer->xorMaskData, pointer->width, pointer->height);
-	}
-
-	freerdp_alpha_cursor_convert(cursor_data, pointer->xorMaskData, pointer->andMaskData,
-				     pointer->width, pointer->height, pointer->xorBpp, context->gdi->clrconv);
+	freerdp_image_copy_from_pointer_data(cursor_data, PIXEL_FORMAT_ARGB32,
+					     pointer->width * 4, 0, 0, pointer->width, pointer->height,
+					     pointer->xorMaskData, pointer->andMaskData, pointer->xorBpp, NULL);
 	
 	/* store cursor bitmap image in representation - required by NSImage */
 	bmiRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:(unsigned char **) &cursor_data
