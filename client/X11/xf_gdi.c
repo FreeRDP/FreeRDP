@@ -241,20 +241,25 @@ unsigned long xf_gdi_get_color(xfContext* xfc, GDI_COLOR color)
 
 Pixmap xf_brush_new(xfContext* xfc, int width, int height, int bpp, BYTE* data)
 {
+	GC gc;
 	Pixmap bitmap;
 	BYTE* cdata;
 	XImage* image;
+	UINT32 brushFormat;
 
 	bitmap = XCreatePixmap(xfc->display, xfc->drawable, width, height, xfc->depth);
 
 	if (data)
 	{
-		GC gc;
+		brushFormat = gdi_get_pixel_format(bpp, FALSE);
 
-		cdata = freerdp_image_convert(data, NULL, width, height, bpp, xfc->bpp, xfc->clrconv);
+		cdata = (BYTE*) _aligned_malloc(width * height * 4, 16);
+
+		freerdp_image_copy(cdata, xfc->format, -1, 0, 0,
+				width, height, data, brushFormat, -1, 0, 0, xfc->palette);
 
 		image = XCreateImage(xfc->display, xfc->visual, xfc->depth,
-						ZPixmap, 0, (char*) cdata, width, height, xfc->scanline_pad, 0);
+				ZPixmap, 0, (char*) cdata, width, height, xfc->scanline_pad, 0);
 
 		gc = XCreateGC(xfc->display, xfc->drawable, 0, NULL);
 		XPutImage(xfc->display, bitmap, gc, image, 0, 0, 0, 0, width, height);
@@ -407,8 +412,6 @@ void xf_gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 	xfContext* xfc = (xfContext*) context;
 
 	xf_lock_x11(xfc, FALSE);
-
-	CopyMemory(xfc->clrconv->palette, palette, sizeof(rdpPalette));
 
 	palette32 = (UINT32*) xfc->palette;
 

@@ -25,7 +25,7 @@
 
 #include <freerdp/codec/mppc.h>
 
-#pragma pack(push,1)
+#pragma pack(push, 1)
 
 struct _XCRUSH_MATCH_INFO
 {

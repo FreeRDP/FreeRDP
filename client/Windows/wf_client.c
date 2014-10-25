@@ -37,16 +37,17 @@
 #include <sys/types.h>
 
 #include <freerdp/log.h>
+#include <freerdp/event.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/event.h>
 
+#include <freerdp/codec/region.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
-#include <freerdp/event.h>
 
 #include "wf_gdi.h"
+#include "wf_rail.h"
 #include "wf_channels.h"
 #include "wf_graphics.h"
 #include "wf_cliprdr.h"
@@ -79,34 +80,50 @@ void wf_sw_end_paint(wfContext* wfc)
 {
 	int i;
 	rdpGdi* gdi;
-	INT32 x, y;
-	UINT32 w, h;
 	int ninvalid;
-	RECT update_rect;
+	RECT updateRect;
 	HGDI_RGN cinvalid;
+	REGION16 invalidRegion;
+	RECTANGLE_16 invalidRect;
+	const RECTANGLE_16* extents;
+	rdpContext* context = (rdpContext*) wfc;
 
-	gdi = ((rdpContext*) wfc)->gdi;
-
-	if (gdi->primary->hdc->hwnd->ninvalid < 1)
-		return;
+	gdi = context->gdi;
 
 	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 
+	if (ninvalid < 1)
+		return;
+
+	region16_init(&invalidRegion);
+
 	for (i = 0; i < ninvalid; i++)
 	{
-		x = cinvalid[i].x;
-		y = cinvalid[i].y;
-		w = cinvalid[i].w;
-		h = cinvalid[i].h;
+		invalidRect.left = cinvalid[i].x;
+		invalidRect.top = cinvalid[i].y;
+		invalidRect.right = cinvalid[i].x + cinvalid[i].w;
+		invalidRect.bottom = cinvalid[i].y + cinvalid[i].h;
 
-		update_rect.left = x;
-		update_rect.top = y;
-		update_rect.right = x + w;
-		update_rect.bottom = y + h;
-
-		InvalidateRect(wfc->hwnd, &update_rect, FALSE);
+		region16_union_rect(&invalidRegion, &invalidRegion, &invalidRect);
 	}
+
+	if (!region16_is_empty(&invalidRegion))
+	{
+		extents = region16_extents(&invalidRegion);
+
+		updateRect.left = extents->left;
+		updateRect.top = extents->top;
+		updateRect.right = extents->right;
+		updateRect.bottom = extents->bottom;
+
+		InvalidateRect(wfc->hwnd, &updateRect, FALSE);
+
+		if (wfc->rail)
+			wf_rail_invalidate_region(wfc, &invalidRegion);
+	}
+
+	region16_uninit(&invalidRegion);
 }
 
 void wf_sw_desktop_resize(wfContext* wfc)
@@ -406,7 +423,7 @@ BOOL wf_post_connect(freerdp* instance)
 		wfc->hwnd = CreateWindowEx((DWORD) NULL, wfc->wndClassName, lpWindowName, dwStyle,
 			0, 0, 0, 0, wfc->hWndParent, NULL, wfc->hInstance, NULL);
 
-		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR) wfc);	   
+		SetWindowLongPtr(wfc->hwnd, GWLP_USERDATA, (LONG_PTR) wfc);
 	}
 
 	wf_resize_window(wfc);
@@ -450,8 +467,6 @@ BOOL wf_post_connect(freerdp* instance)
 	}
 
 	freerdp_channels_post_connect(context->channels, instance);
-
-	wf_cliprdr_init(wfc, context->channels);
 
 	if (wfc->fullscreen)
 		floatbar_window_create(wfc);
@@ -542,30 +557,6 @@ BOOL wf_verify_certificate(freerdp* instance, char* subject, char* issuer, char*
 int wf_receive_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int size, int flags, int total_size)
 {
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
-}
-
-void wf_process_channel_event(rdpChannels* channels, freerdp* instance)
-{
-	wfContext* wfc;
-	wMessage* event;
-
-	wfc = (wfContext*) instance->context;
-	event = freerdp_channels_pop_event(channels);
-
-	if (event)
-	{
-		switch (GetMessageClass(event->id))
-		{
-			case CliprdrChannel_Class:
-				wf_process_cliprdr_event(wfc, event);
-				break;
-
-			default:
-				break;
-		}
-
-		freerdp_event_free(event);
-	}
 }
 
 BOOL wf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
@@ -659,7 +650,6 @@ void* wf_channels_thread(void* arg)
 	HANDLE event;
 	rdpChannels* channels;
 	freerdp* instance = (freerdp*) arg;
-	assert(NULL != instance);
 
 	channels = instance->context->channels;
 	event = freerdp_channels_get_event_handle(instance);
@@ -667,10 +657,9 @@ void* wf_channels_thread(void* arg)
 	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
 		status = freerdp_channels_process_pending_messages(instance);
+
 		if (!status)
 			break;
-
-		wf_process_channel_event(channels, instance);
 	}
 
 	ExitThread(0);
@@ -819,8 +808,6 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 				WLog_ERR(TAG,  "Failed to check channel manager file descriptor");
 				break;
 			}
-
-			wf_process_channel_event(channels, instance);
 		}
 
 		quit_msg = FALSE;
@@ -1139,8 +1126,9 @@ int wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->ReceiveChannelData = wf_receive_channel_data;
 
 	wfc->instance = instance;
+	wfc->settings = instance->settings;
 	context->channels = freerdp_channels_new();
-	
+
 	return 0;
 }
 

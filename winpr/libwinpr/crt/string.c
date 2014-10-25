@@ -387,3 +387,81 @@ int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2)
 }
 
 #endif
+
+int ConvertLineEndingToLF(char* str, int size)
+{
+	int status;
+	char* end;
+	char* pInput;
+	char* pOutput;
+
+	end = &str[size];
+	pInput = pOutput = str;
+
+	while (pInput < end)
+	{
+		if ((pInput[0] == '\r') && (pInput[1] == '\n'))
+		{
+			*pOutput++ = '\n';
+			pInput += 2;
+		}
+		else
+		{
+			*pOutput++ = *pInput++;
+		}
+	}
+
+	status = pOutput - str;
+
+	return status;
+}
+
+char* ConvertLineEndingToCRLF(const char* str, int* size)
+{
+	int count;
+	char* newStr;
+	char* pOutput;
+	const char* end;
+	const char* pInput;
+
+	end = &str[*size];
+
+	count = 0;
+	pInput = str;
+
+	while (pInput < end)
+	{
+		if (*pInput == '\n')
+			count++;
+
+		pInput++;
+	}
+
+	newStr = (char*) malloc(*size + (count * 2) + 1);
+
+	if (!newStr)
+		return NULL;
+
+	pInput = str;
+	pOutput = newStr;
+
+	while (pInput < end)
+	{
+		if ((*pInput == '\n') && ((pInput > str) && (pInput[-1] != '\r')))
+		{
+			*pOutput++ = '\r';
+			*pOutput++ = '\n';
+		}
+		else
+		{
+			*pOutput++ = *pInput;
+		}
+
+		pInput++;
+	}
+
+	*size = pOutput - newStr;
+
+	return newStr;
+}
+

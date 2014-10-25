@@ -30,7 +30,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/event.h>
 
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>

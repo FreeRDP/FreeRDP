@@ -227,8 +227,9 @@ void xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 
 	if ((pointer->andMaskData != 0) && (pointer->xorMaskData != 0))
 	{
-		freerdp_alpha_cursor_convert((BYTE*) (ci.pixels), pointer->xorMaskData, pointer->andMaskData,
-				pointer->width, pointer->height, pointer->xorBpp, xfc->clrconv);
+		freerdp_image_copy_from_pointer_data((BYTE*) ci.pixels, PIXEL_FORMAT_ARGB32,
+				pointer->width * 4, 0, 0, pointer->width, pointer->height,
+				pointer->xorMaskData, pointer->andMaskData, pointer->xorBpp, xfc->palette);
 	}
 
 	((xfPointer*) pointer)->cursor = XcursorImageLoadCursor(xfc->display, &ci);

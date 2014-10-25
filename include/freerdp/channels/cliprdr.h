@@ -29,30 +29,6 @@
  * Clipboard Formats
  */
 
-#define CLIPRDR_FORMAT_RAW		0
-#define CLIPRDR_FORMAT_TEXT		1 /* "Plain Text" */
-#define CLIPRDR_FORMAT_BITMAP		2 /* "Bitmap" */
-#define CLIPRDR_FORMAT_METAFILEPICT	3 /* "Windows Metafile" */
-#define CLIPRDR_FORMAT_SYLK		4
-#define CLIPRDR_FORMAT_DIF		5
-#define CLIPRDR_FORMAT_TIFF		6
-#define CLIPRDR_FORMAT_OEMTEXT		7 /* "OEM Text" */
-#define CLIPRDR_FORMAT_DIB		8 /* "Device Independent Bitmap (DIB)" */
-#define CLIPRDR_FORMAT_PALETTE		9
-#define CLIPRDR_FORMAT_PENDATA		10
-#define CLIPRDR_FORMAT_RIFF		11
-#define CLIPRDR_FORMAT_WAVE		12
-#define CLIPRDR_FORMAT_UNICODETEXT	13 /* "Unicode Text" */
-#define CLIPRDR_FORMAT_ENHMETAFILE	14 /* "Enhanced Metafile" */
-#define CLIPRDR_FORMAT_HDROP		15 /* "File List" */
-#define CLIPRDR_FORMAT_LOCALE		16 /* "Locale Identifier" */
-#define CLIPRDR_FORMAT_DIBV5		17
-#define CLIPRDR_FORMAT_MAX		18
-
-#define CB_FORMAT_RAW			0x0000
-#define CB_FORMAT_TEXT			0x0001
-#define CB_FORMAT_DIB			0x0008
-#define CB_FORMAT_UNICODETEXT		0x000D
 #define CB_FORMAT_HTML			0xD010
 #define CB_FORMAT_PNG			0xD011
 #define CB_FORMAT_JPEG			0xD012
@@ -92,8 +68,43 @@
 #define CB_FILECLIP_NO_FILE_PATHS	0x00000008
 #define CB_CAN_LOCK_CLIPDATA		0x00000010
 
-#define FORMAT_ID_PALETTE           9
-#define FORMAT_ID_METAFILE          3
+/* File Contents Request Flags */
+#define FILECONTENTS_SIZE		0x00000001
+#define FILECONTENTS_RANGE		0x00000002
+
+/* Special Clipboard Response Formats */
+
+struct _CLIPRDR_MFPICT
+{
+	UINT32 mappingMode;
+	UINT32 xExt;
+	UINT32 yExt;
+	UINT32 metaFileSize;
+	BYTE* metaFileData;
+};
+typedef struct _CLIPRDR_MFPICT CLIPRDR_MFPICT;
+
+struct _CLIPRDR_FILEDESCRIPTOR
+{
+	UINT32 flags;
+	BYTE reserved1[32];
+	UINT32 fileAttributes;
+	BYTE reserved2[16];
+	UINT64 lastWriteTime;
+	UINT32 fileSizeHigh;
+	UINT32 fileSizeLow;
+	char fileName[520];
+};
+typedef struct _CLIPRDR_FILEDESCRIPTOR CLIPRDR_FILEDESCRIPTOR;
+
+struct _CLIPRDR_FILELIST
+{
+	UINT32 cItems;
+	CLIPRDR_FILEDESCRIPTOR* fileDescriptorArray;
+};
+typedef struct _CLIPRDR_FILELIST CLIPRDR_FILELIST;
+
+/* Clipboard Messages */
 
 #define DEFINE_CLIPRDR_HEADER_COMMON() \
 	UINT16 msgType; \
@@ -138,6 +149,14 @@ struct _CLIPRDR_MONITOR_READY
 };
 typedef struct _CLIPRDR_MONITOR_READY CLIPRDR_MONITOR_READY;
 
+struct _CLIPRDR_TEMP_DIRECTORY
+{
+	DEFINE_CLIPRDR_HEADER_COMMON();
+
+	char szTempDir[520];
+};
+typedef struct _CLIPRDR_TEMP_DIRECTORY CLIPRDR_TEMP_DIRECTORY;
+
 struct _CLIPRDR_FORMAT
 {
 	UINT32 formatId;
@@ -149,7 +168,7 @@ struct _CLIPRDR_FORMAT_LIST
 {
 	DEFINE_CLIPRDR_HEADER_COMMON();
 
-	UINT32 cFormats;
+	UINT32 numFormats;
 	CLIPRDR_FORMAT* formats;
 };
 typedef struct _CLIPRDR_FORMAT_LIST CLIPRDR_FORMAT_LIST;
@@ -159,6 +178,22 @@ struct _CLIPRDR_FORMAT_LIST_RESPONSE
 	DEFINE_CLIPRDR_HEADER_COMMON();
 };
 typedef struct _CLIPRDR_FORMAT_LIST_RESPONSE CLIPRDR_FORMAT_LIST_RESPONSE;
+
+struct _CLIPRDR_LOCK_CLIPBOARD_DATA
+{
+	DEFINE_CLIPRDR_HEADER_COMMON();
+
+	UINT32 clipDataId;
+};
+typedef struct _CLIPRDR_LOCK_CLIPBOARD_DATA CLIPRDR_LOCK_CLIPBOARD_DATA;
+
+struct _CLIPRDR_UNLOCK_CLIPBOARD_DATA
+{
+	DEFINE_CLIPRDR_HEADER_COMMON();
+
+	UINT32 clipDataId;
+};
+typedef struct _CLIPRDR_UNLOCK_CLIPBOARD_DATA CLIPRDR_UNLOCK_CLIPBOARD_DATA;
 
 struct _CLIPRDR_FORMAT_DATA_REQUEST
 {
@@ -175,6 +210,31 @@ struct _CLIPRDR_FORMAT_DATA_RESPONSE
 	BYTE* requestedFormatData;
 };
 typedef struct _CLIPRDR_FORMAT_DATA_RESPONSE CLIPRDR_FORMAT_DATA_RESPONSE;
+
+struct _CLIPRDR_FILE_CONTENTS_REQUEST
+{
+	DEFINE_CLIPRDR_HEADER_COMMON();
+
+	UINT32 streamId;
+	UINT32 listIndex;
+	UINT32 dwFlags;
+	UINT32 nPositionLow;
+	UINT32 nPositionHigh;
+	UINT32 cbRequested;
+	UINT32 clipDataId;
+};
+typedef struct _CLIPRDR_FILE_CONTENTS_REQUEST CLIPRDR_FILE_CONTENTS_REQUEST;
+
+struct _CLIPRDR_FILE_CONTENTS_RESPONSE
+{
+	DEFINE_CLIPRDR_HEADER_COMMON();
+
+	UINT32 streamId;
+	UINT32 dwFlags;
+	UINT32 cbRequested;
+	BYTE* requestedData;
+};
+typedef struct _CLIPRDR_FILE_CONTENTS_RESPONSE CLIPRDR_FILE_CONTENTS_RESPONSE;
 
 #endif /* FREERDP_CHANNEL_CLIPRDR_H */
 

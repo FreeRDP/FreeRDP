@@ -376,3 +376,18 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
 
 	return status;
 }
+
+/**
+ * Swap Unicode byte order (UTF16LE <-> UTF16BE)
+ */
+
+void ByteSwapUnicode(WCHAR* wstr, int length)
+{
+	WCHAR* end = &wstr[length];
+
+	while (wstr < end)
+	{
+		*wstr = _byteswap_ushort(*wstr);
+		wstr++;
+	}
+}

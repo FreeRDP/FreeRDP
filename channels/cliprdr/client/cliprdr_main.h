@@ -31,6 +31,8 @@
 struct cliprdr_plugin
 {
 	rdpSvcPlugin plugin;
+
+	wLog* log;
 	BOOL received_caps;
 	BOOL use_long_format_names;
 	BOOL stream_fileclip_enabled;

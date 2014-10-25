@@ -23,8 +23,14 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
-void xf_cliprdr_init(xfContext* xfc, rdpChannels* channels);
-void xf_cliprdr_uninit(xfContext* xfc);
-void xf_process_cliprdr_event(xfContext* xfc, wMessage* event);
+#include <freerdp/client/cliprdr.h>
+
+xfClipboard* xf_clipboard_new(xfContext* xfc);
+void xf_clipboard_free(xfClipboard* clipboard);
+
+void xf_cliprdr_init(xfContext* xfc, CliprdrClientContext* cliprdr);
+void xf_cliprdr_uninit(xfContext* xfc, CliprdrClientContext* cliprdr);
+
 void xf_cliprdr_handle_xevent(xfContext* xfc, XEvent* event);
+
 #endif /* __XF_CLIPRDR_H */

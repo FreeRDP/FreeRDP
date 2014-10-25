@@ -449,6 +449,12 @@ FREERDP_API UINT32 freerdp_convert_gdi_order_color(UINT32 color, int bpp, UINT32
 FREERDP_API HCLRCONV freerdp_clrconv_new(UINT32 flags);
 FREERDP_API void freerdp_clrconv_free(HCLRCONV clrconv);
 
+FREERDP_API int freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* pSrcData, UINT32 backColor, UINT32 foreColor, BYTE* palette);
+
+FREERDP_API int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int nDstStep, int nXDst, int nYDst,
+		int nWidth, int nHeight, BYTE* xorMask, BYTE* andMask, UINT32 xorBpp, BYTE* palette);
+
 FREERDP_API int freerdp_image8_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,
 		int nWidth, int nHeight, BYTE* pSrcData, DWORD SrcFormat, int nSrcStep, int nXSrc, int nYSrc, BYTE* palette);
 FREERDP_API int freerdp_image15_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst,

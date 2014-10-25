@@ -291,9 +291,9 @@ void gcc_write_conference_create_response(wStream* s, wStream* userData)
 	per_write_choice(s, 0);
 	per_write_object_identifier(s, t124_02_98_oid);
 
-	/* ConnectPDULength */
+	/* ConnectData::connectPDU (OCTET_STRING) */
 	/* This length MUST be ignored by the client according to [MS-RDPBCGR] */
-	per_write_length(s, 0);
+	per_write_length(s, 0x2A);
 
 	/* ConnectGCCPDU */
 	per_write_choice(s, 0x14);

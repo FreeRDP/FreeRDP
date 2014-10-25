@@ -27,6 +27,7 @@
 #include "xfreerdp.h"
 
 #include "xf_gfx.h"
+#include "xf_cliprdr.h"
 
 void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
 {
@@ -43,6 +44,10 @@ void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 			gdi_graphics_pipeline_init(context->gdi, (RdpgfxClientContext*) e->pInterface);
 		else
 			xf_graphics_pipeline_init(xfc, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_cliprdr_init(xfc, (CliprdrClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
@@ -65,6 +70,10 @@ void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnect
 			gdi_graphics_pipeline_uninit(context->gdi, (RdpgfxClientContext*) e->pInterface);
 		else
 			xf_graphics_pipeline_uninit(xfc, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_cliprdr_uninit(xfc, (CliprdrClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{

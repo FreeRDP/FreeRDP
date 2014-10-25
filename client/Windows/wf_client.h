@@ -24,6 +24,8 @@
 
 #include <winpr/windows.h>
 
+#include <winpr/collections.h>
+
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
@@ -32,13 +34,18 @@
 #include <freerdp/cache/cache.h>
 #include <freerdp/codec/color.h>
 
+#include <freerdp/client/rail.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/client/file.h>
 
+typedef struct wf_context wfContext;
+
+#include "wf_channels.h"
 #include "wf_floatbar.h"
 #include "wf_event.h"
+#include "wf_cliprdr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -64,11 +71,12 @@ struct wf_pointer
 };
 typedef struct wf_pointer wfPointer;
 
-typedef struct cliprdr_context cliprdrContext;
 struct wf_context
 {
 	rdpContext context;
 	DEFINE_RDP_CLIENT_COMMON();
+
+	rdpSettings* settings;
 
 	int width;
 	int height;
@@ -114,29 +122,29 @@ struct wf_context
 	DWORD mainThreadId;
 	DWORD keyboardThreadId;
 
-	//BOOL sw_gdi;
-
 	rdpFile* connectionRdpFile;
 
-	// Keep track of window size and position, disable when in fullscreen mode.
 	BOOL disablewindowtracking;
 
-	// These variables are required for horizontal scrolling.
 	BOOL updating_scrollbars;
 	BOOL xScrollVisible;
-	int xMinScroll;       // minimum horizontal scroll value
-	int xCurrentScroll;   // current horizontal scroll value
-	int xMaxScroll;       // maximum horizontal scroll value
+	int xMinScroll;
+	int xCurrentScroll;
+	int xMaxScroll;
 
-	// These variables are required for vertical scrolling.
 	BOOL yScrollVisible;
-	int yMinScroll;       // minimum vertical scroll value
-	int yCurrentScroll;   // current vertical scroll value
-	int yMaxScroll;       // maximum vertical scroll value
-	cliprdrContext *cliprdr_context;
+	int yMinScroll;
+	int yCurrentScroll;
+	int yMaxScroll;
+
+	wfClipboard* clipboard;
+	CliprdrClientContext* cliprdr;
+
 	FloatBar* floatbar;
+
+	RailClientContext* rail;
+	wHashTable* railWindows;
 };
-typedef struct wf_context wfContext;
 
 /**
  * Client Interface

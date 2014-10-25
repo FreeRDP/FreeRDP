@@ -709,21 +709,6 @@ int xf_input_init(xfContext* xfc, Window window)
 
 #endif
 
-void xf_process_rdpei_event(xfContext* xfc, wMessage* event)
-{
-	switch (GetMessageType(event->id))
-	{
-		case RdpeiChannel_ServerReady:
-			break;
-			
-		case RdpeiChannel_SuspendTouch:
-			break;
-			
-		case RdpeiChannel_ResumeTouch:
-			break;
-	}
-}
-
 int xf_input_handle_event(xfContext* xfc, XEvent* event)
 {
 #ifdef WITH_XI

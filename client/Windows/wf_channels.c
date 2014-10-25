@@ -22,6 +22,9 @@
 
 #include "wf_channels.h"
 
+#include "wf_rail.h"
+#include "wf_cliprdr.h"
+
 #include <freerdp/gdi/gfx.h>
 
 void wf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
@@ -37,6 +40,14 @@ void wf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 	{
 		if (settings->SoftwareGdi)
 			gdi_graphics_pipeline_init(context->gdi, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		wf_rail_init(wfc, (RailClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	{
+		wf_cliprdr_init(wfc, (CliprdrClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{
@@ -57,6 +68,14 @@ void wf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnect
 	{
 		if (settings->SoftwareGdi)
 			gdi_graphics_pipeline_uninit(context->gdi, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		wf_rail_uninit(wfc, (RailClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	{
+		wf_cliprdr_uninit(wfc, (CliprdrClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, ENCOMSP_SVC_CHANNEL_NAME) == 0)
 	{

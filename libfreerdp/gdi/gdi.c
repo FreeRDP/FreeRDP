@@ -550,8 +550,6 @@ static void gdi_palette_update(rdpContext* context, PALETTE_UPDATE* palette)
 	UINT32* palette32;
 	rdpGdi* gdi = context->gdi;
 
-	CopyMemory(gdi->clrconv->palette, palette, sizeof(rdpPalette));
-
 	palette32 = (UINT32*) gdi->palette;
 
 	for (index = 0; index < palette->number; index++)
@@ -615,10 +613,15 @@ static void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	}
 	else if (brush->style == GDI_BS_HATCHED)
 	{
+		BYTE* hatched;
 		HGDI_BITMAP hBmp;
 
-		data = freerdp_mono_image_convert(GDI_BS_HATCHED_PATTERNS + 8 * brush->hatch, 8, 8, 1,
-		gdi->dstBpp, backColor, foreColor, gdi->clrconv);
+		data = (BYTE*) _aligned_malloc(8 * 8 * gdi->bytesPerPixel, 16);
+
+		hatched = GDI_BS_HATCHED_PATTERNS + (8 * brush->hatch);
+
+		freerdp_image_copy_from_monochrome(data, gdi->format, -1, 0, 0, 8, 8,
+				hatched, backColor, foreColor, gdi->palette);
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
 
@@ -634,15 +637,23 @@ static void gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	else if (brush->style == GDI_BS_PATTERN)
 	{
 		HGDI_BITMAP hBmp;
+		UINT32 brushFormat;
 
 		if (brush->bpp > 1)
 		{
-			data = freerdp_image_convert(brush->data, NULL, 8, 8, gdi->srcBpp, gdi->dstBpp, gdi->clrconv);
+			brushFormat = gdi_get_pixel_format(brush->bpp, FALSE);
+
+			data = (BYTE*) _aligned_malloc(8 * 8 * gdi->bytesPerPixel, 16);
+
+			freerdp_image_copy(data, gdi->format, -1, 0, 0,
+					8, 8, brush->data, brushFormat, -1, 0, 0, gdi->palette);
 		}
 		else
 		{
-			data = freerdp_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dstBpp,
-				backColor, foreColor, gdi->clrconv);
+			data = (BYTE*) _aligned_malloc(8 * 8 * gdi->bytesPerPixel, 16);
+
+			freerdp_image_copy_from_monochrome(data, gdi->format, -1, 0, 0, 8, 8,
+					brush->data, backColor, foreColor, gdi->palette);
 		}
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
@@ -810,15 +821,23 @@ static void gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 	else if (brush->style == GDI_BS_PATTERN)
 	{
 		HGDI_BITMAP hBmp;
+		UINT32 brushFormat;
 
 		if (brush->bpp > 1)
 		{
-			data = freerdp_image_convert(brush->data, NULL, 8, 8, gdi->srcBpp, gdi->dstBpp, gdi->clrconv);
+			brushFormat = gdi_get_pixel_format(brush->bpp, FALSE);
+
+			data = (BYTE*) _aligned_malloc(8 * 8 * gdi->bytesPerPixel, 16);
+
+			freerdp_image_copy(data, gdi->format, -1, 0, 0,
+					8, 8, brush->data, brushFormat, -1, 0, 0, gdi->palette);
 		}
 		else
 		{
-			data = freerdp_mono_image_convert(brush->data, 8, 8, gdi->srcBpp, gdi->dstBpp,
-					backColor, foreColor, gdi->clrconv);
+			data = (BYTE*) _aligned_malloc(8 * 8 * gdi->bytesPerPixel, 16);
+
+			freerdp_image_copy_from_monochrome(data, gdi->format, -1, 0, 0, 8, 8,
+					brush->data, backColor, foreColor, gdi->palette);
 		}
 
 		hBmp = gdi_CreateBitmap(8, 8, gdi->drawing->hdc->bitsPerPixel, data);
@@ -1180,22 +1199,9 @@ int gdi_init(freerdp* instance, UINT32 flags, BYTE* buffer)
 	gdi->hdc->bitsPerPixel = gdi->dstBpp;
 	gdi->hdc->bytesPerPixel = gdi->bytesPerPixel;
 
-	gdi->clrconv = (HCLRCONV) malloc(sizeof(CLRCONV));
-
-	if (!gdi->clrconv)
-		return -1;
-
-	gdi->clrconv->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
-	gdi->clrconv->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
-	gdi->clrconv->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
-	gdi->clrconv->palette = (rdpPalette*) malloc(sizeof(rdpPalette));
-
-	if (!gdi->clrconv->palette)
-		return -1;
-
-	gdi->hdc->alpha = gdi->clrconv->alpha;
-	gdi->hdc->invert = gdi->clrconv->invert;
-	gdi->hdc->rgb555 = gdi->clrconv->rgb555;
+	gdi->hdc->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
+	gdi->hdc->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
+	gdi->hdc->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
 
 	gdi_init_primary(gdi);
 
@@ -1234,8 +1240,6 @@ void gdi_free(freerdp* instance)
 		gdi_bitmap_free_ex(gdi->image);
 		gdi_DeleteDC(gdi->hdc);
 		_aligned_free(gdi->bitmap_buffer);
-		free(gdi->clrconv->palette);
-		free(gdi->clrconv);
 		free(gdi);
 	}
 	

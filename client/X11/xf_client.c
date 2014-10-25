@@ -611,38 +611,48 @@ BOOL xf_get_pixmap_info(xfContext *xfc)
 	XPixmapFormatValues *pfs;
 	XWindowAttributes window_attributes;
 	pfs = XListPixmapFormats(xfc->display, &pf_count);
-	if(pfs == NULL)
+
+	if (pfs == NULL)
 	{
 		WLog_ERR(TAG,  "XListPixmapFormats failed");
 		return 1;
 	}
-	for(i = 0; i < pf_count; i++)
+
+	for (i = 0; i < pf_count; i++)
 	{
 		pf = pfs + i;
-		if(pf->depth == xfc->depth)
+
+		if (pf->depth == xfc->depth)
 		{
 			xfc->bpp = pf->bits_per_pixel;
 			xfc->scanline_pad = pf->scanline_pad;
 			break;
 		}
 	}
+
 	XFree(pfs);
+
 	ZeroMemory(&template, sizeof(template));
 	template.class = TrueColor;
 	template.screen = xfc->screen_number;
-	if(XGetWindowAttributes(xfc->display, RootWindowOfScreen(xfc->screen), &window_attributes) == 0)
+
+	if (XGetWindowAttributes(xfc->display, RootWindowOfScreen(xfc->screen), &window_attributes) == 0)
 	{
 		WLog_ERR(TAG,  "XGetWindowAttributes failed");
 		return FALSE;
 	}
+
 	vis = XGetVisualInfo(xfc->display, VisualClassMask | VisualScreenMask, &template, &vi_count);
-	if(vis == NULL)
+
+	if (vis == NULL)
 	{
 		WLog_ERR(TAG,  "XGetVisualInfo failed");
 		return FALSE;
 	}
+
 	vi = NULL;
-	for(i = 0; i < vi_count; i++)
+
+	for (i = 0; i < vi_count; i++)
 	{
 		vi = vis + i;
 		if(vi->visual == window_attributes.visual)
@@ -651,22 +661,26 @@ BOOL xf_get_pixmap_info(xfContext *xfc)
 			break;
 		}
 	}
-	if(vi)
+
+	if (vi)
 	{
 		/*
 		 * Detect if the server visual has an inverted colormap
 		 * (BGR vs RGB, or red being the least significant byte)
 		 */
-		if(vi->red_mask & 0xFF)
+		if (vi->red_mask & 0xFF)
 		{
-			xfc->clrconv->invert = TRUE;
+			xfc->invert = TRUE;
 		}
 	}
+
 	XFree(vis);
-	if((xfc->visual == NULL) || (xfc->scanline_pad == 0))
+
+	if ((xfc->visual == NULL) || (xfc->scanline_pad == 0))
 	{
 		return FALSE;
 	}
+
 	return TRUE;
 }
 
@@ -859,7 +873,6 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	xf_keyboard_init(xfc);
 
-	xfc->clrconv = freerdp_clrconv_new(CLRCONV_ALPHA);
 	instance->context->cache = cache_new(instance->settings);
 
 	xfc->xfds = ConnectionNumber(xfc->display);
@@ -899,6 +912,7 @@ BOOL xf_pre_connect(freerdp* instance)
  */
 BOOL xf_post_connect(freerdp *instance)
 {
+	UINT32 flags;
 	XGCValues gcv;
 	rdpCache* cache;
 	rdpChannels* channels;
@@ -915,16 +929,16 @@ BOOL xf_post_connect(freerdp *instance)
 
 	xf_register_graphics(instance->context->graphics);
 
+	flags = CLRCONV_ALPHA;
+
+	if (xfc->bpp > 16)
+		flags |= CLRBUF_32BPP;
+	else
+		flags |= CLRBUF_16BPP;
+
 	if (settings->SoftwareGdi)
 	{
 		rdpGdi* gdi;
-		UINT32 flags;
-		flags = CLRCONV_ALPHA;
-
-		if (xfc->bpp > 16)
-			flags |= CLRBUF_32BPP;
-		else
-			flags |= CLRBUF_16BPP;
 
 		gdi_init(instance, flags, NULL);
 
@@ -935,7 +949,7 @@ BOOL xf_post_connect(freerdp *instance)
 	{
 		xfc->srcBpp = settings->ColorDepth;
 		xf_gdi_register_update_callbacks(instance->update);
-		xfc->hdc = gdi_CreateDC(xfc->clrconv, xfc->bpp);
+		xfc->hdc = gdi_CreateDC(flags, xfc->bpp);
 	}
 
 	xfc->originalWidth = settings->DesktopWidth;
@@ -1003,9 +1017,10 @@ BOOL xf_post_connect(freerdp *instance)
 	instance->context->rail = rail_new(instance->settings);
 	rail_register_update_callbacks(instance->context->rail, instance->update);
 	xf_rail_register_callbacks(xfc, instance->context->rail);
+
+	xfc->clipboard = xf_clipboard_new(xfc);
 	freerdp_channels_post_connect(channels, instance);
 	xf_tsmf_init(xfc, xv_port);
-	xf_cliprdr_init(xfc, channels);
 
 	EventArgsInit(&e, "xfreerdp");
 	e.width = settings->DesktopWidth;
@@ -1090,31 +1105,30 @@ int xf_logon_error_info(freerdp *instance, UINT32 data, UINT32 type)
 	return 1;
 }
 
-void xf_process_channel_event(rdpChannels *channels, freerdp *instance)
+void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 {
-	xfContext *xfc;
-	wMessage *event;
-	xfc = (xfContext *) instance->context;
+	xfContext* xfc;
+	wMessage* event;
+	xfc = (xfContext*) instance->context;
+
 	event = freerdp_channels_pop_event(channels);
-	if(event)
+
+	if (event)
 	{
 		switch(GetMessageClass(event->id))
 		{
 			case RailChannel_Class:
 				xf_process_rail_event(xfc, channels, event);
 				break;
+
 			case TsmfChannel_Class:
 				xf_process_tsmf_event(xfc, event);
 				break;
-			case CliprdrChannel_Class:
-				xf_process_cliprdr_event(xfc, event);
-				break;
-			case RdpeiChannel_Class:
-				xf_process_rdpei_event(xfc, event);
-				break;
+
 			default:
 				break;
 		}
+
 		freerdp_event_free(event);
 	}
 }
@@ -1174,12 +1188,6 @@ void xf_window_free(xfContext *xfc)
 		context->rail = NULL;
 	}
 
-	if (xfc->clrconv)
-	{
-		freerdp_clrconv_free(xfc->clrconv);
-		xfc->clrconv = NULL;
-	}
-
 	if (xfc->hdc)
 	{
 		gdi_DeleteDC(xfc->hdc);
@@ -1191,14 +1199,14 @@ void xf_window_free(xfContext *xfc)
 		xfc->xv_context = NULL;
 	}
 
-	if (xfc->clipboard_context)
+	if (xfc->clipboard)
 	{
-		xf_cliprdr_uninit(xfc);
-		xfc->clipboard_context = NULL;
+		xf_clipboard_free(xfc->clipboard);
+		xfc->clipboard = NULL;
 	}
 }
 
-void *xf_input_thread(void *arg)
+void* xf_input_thread(void *arg)
 {
 	xfContext *xfc;
 	HANDLE event;
@@ -1212,34 +1220,39 @@ void *xf_input_thread(void *arg)
 	assert(NULL != xfc);
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
 	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
-	while(WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+
+	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
 		do
 		{
 			xf_lock_x11(xfc, FALSE);
 			pending_status = XPending(xfc->display);
 			xf_unlock_x11(xfc, FALSE);
-			if(pending_status)
+
+			if (pending_status)
 			{
 				xf_lock_x11(xfc, FALSE);
 				ZeroMemory(&xevent, sizeof(xevent));
 				XNextEvent(xfc->display, &xevent);
 				process_status = xf_event_process(instance, &xevent);
 				xf_unlock_x11(xfc, FALSE);
+
 				if(!process_status)
 					break;
 			}
 		}
-		while(pending_status);
-		if(!process_status)
+		while (pending_status);
+
+		if (!process_status)
 			break;
 	}
+
 	MessageQueue_PostQuit(queue, 0);
 	ExitThread(0);
 	return NULL;
 }
 
-void *xf_channels_thread(void *arg)
+void* xf_channels_thread(void *arg)
 {
 	int status;
 	xfContext *xfc;
@@ -1251,13 +1264,17 @@ void *xf_channels_thread(void *arg)
 	assert(NULL != xfc);
 	channels = instance->context->channels;
 	event = freerdp_channels_get_event_handle(instance);
-	while(WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+
+	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
 		status = freerdp_channels_process_pending_messages(instance);
-		if(!status)
+
+		if (!status)
 			break;
+
 		xf_process_channel_event(channels, instance);
 	}
+
 	ExitThread(0);
 	return NULL;
 }
@@ -1305,7 +1322,7 @@ BOOL xf_auto_reconnect(freerdp *instance)
  *  @param instance - pointer to the rdp_freerdp structure that contains the session's settings
  *  @return A code from the enum XF_EXIT_CODE (0 if successful)
  */
-void *xf_thread(void *param)
+void* xf_thread(void *param)
 {
 	int i;
 	int fds;

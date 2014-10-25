@@ -287,7 +287,6 @@ struct rdp_gdi
 	BOOL invert;
 	HGDI_DC hdc;
 	UINT32 format;
-	HCLRCONV clrconv;
 	gdiBitmap* primary;
 	gdiBitmap* drawing;
 	UINT32 bitmap_size;

@@ -36,7 +36,6 @@
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
 
-#ifdef WITH_DEBUG_CLIPRDR
 static const char* const CB_MSG_TYPE_STRINGS[] =
 {
 	"",
@@ -52,7 +51,6 @@ static const char* const CB_MSG_TYPE_STRINGS[] =
 	"CB_LOCK_CLIPDATA"
 	"CB_UNLOCK_CLIPDATA"
 };
-#endif
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr)
 {
@@ -113,7 +111,7 @@ void cliprdr_print_general_capability_flags(UINT32 flags)
 	WLog_INFO(TAG,  "}");
 }
 
-static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* s)
+static int cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* s)
 {
 	UINT32 version;
 	UINT32 generalFlags;
@@ -161,9 +159,11 @@ static void cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 		caps_event->capabilities = generalFlags;
 		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) caps_event);
 	}
+
+	return 1;
 }
 
-static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT16 length, UINT16 flags)
+static int cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT16 length, UINT16 flags)
 {
 	int i;
 	UINT16 lengthCapability;
@@ -171,7 +171,8 @@ static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT16
 	UINT16 capabilitySetType;
 	Stream_Read_UINT16(s, cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
 	Stream_Seek_UINT16(s); /* pad1 (2 bytes) */
-	DEBUG_CLIPRDR("cCapabilitiesSets %d", cCapabilitiesSets);
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerCapabilities");
 
 	for (i = 0; i < cCapabilitiesSets; i++)
 	{
@@ -188,6 +189,8 @@ static void cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT16
 				break;
 		}
 	}
+
+	return 1;
 }
 
 static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
@@ -211,9 +214,11 @@ static void cliprdr_send_clip_caps(cliprdrPlugin* cliprdr)
 	cliprdr_packet_send(cliprdr, s);
 }
 
-static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UINT16 length, UINT16 flags)
+static int cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UINT16 length, UINT16 flags)
 {
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "MonitorReady");
 
 	if (context->custom)
 	{
@@ -235,56 +240,178 @@ static void cliprdr_process_monitor_ready(cliprdrPlugin* cliprdr, wStream* s, UI
 		event = (RDP_CB_MONITOR_READY_EVENT*) freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_MonitorReady, NULL, NULL);
 		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) event);
 	}
+
+	return 1;
 }
 
-static void cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+static int cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
 {
-	RDP_CB_FILECONTENTS_REQUEST_EVENT* cb_event;
-	cb_event = (RDP_CB_FILECONTENTS_REQUEST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
-			   CliprdrChannel_FilecontentsRequest, NULL, NULL);
-	Stream_Read_UINT32(s, cb_event->streamId);
-	Stream_Read_UINT32(s, cb_event->lindex);
-	Stream_Read_UINT32(s, cb_event->dwFlags);
-	Stream_Read_UINT32(s, cb_event->nPositionLow);
-	Stream_Read_UINT32(s, cb_event->nPositionHigh);
-	Stream_Read_UINT32(s, cb_event->cbRequested);
-	//Stream_Read_UINT32(s, cb_event->clipDataId);
-	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
-}
+	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 
-static void cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
-{
-	RDP_CB_FILECONTENTS_RESPONSE_EVENT* cb_event;
-	cb_event = (RDP_CB_FILECONTENTS_RESPONSE_EVENT*) freerdp_event_new(CliprdrChannel_Class,
-			   CliprdrChannel_FilecontentsResponse, NULL, NULL);
-	Stream_Read_UINT32(s, cb_event->streamId);
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "FileContentsRequest");
 
-	if (length > 0)
+	if (context->custom)
 	{
-		cb_event->size = length - 4;
-		cb_event->data = (BYTE*) malloc(cb_event->size);
-		CopyMemory(cb_event->data, Stream_Pointer(s), cb_event->size);
+		CLIPRDR_FILE_CONTENTS_REQUEST request;
+
+		if (Stream_GetRemainingLength(s) < 28)
+			return -1;
+
+		request.msgType = CB_FILECONTENTS_REQUEST;
+		request.msgFlags = flags;
+		request.dataLen = length;
+
+		Stream_Read_UINT32(s, request.streamId); /* streamId (4 bytes) */
+		Stream_Read_UINT32(s, request.listIndex); /* listIndex (4 bytes) */
+		Stream_Read_UINT32(s, request.dwFlags); /* dwFlags (4 bytes) */
+		Stream_Read_UINT32(s, request.nPositionLow); /* nPositionLow (4 bytes) */
+		Stream_Read_UINT32(s, request.nPositionHigh); /* nPositionHigh (4 bytes) */
+		Stream_Read_UINT32(s, request.cbRequested); /* cbRequested (4 bytes) */
+		Stream_Read_UINT32(s, request.clipDataId); /* clipDataId (4 bytes) */
+
+		if (context->ServerFileContentsRequest)
+			context->ServerFileContentsRequest(context, &request);
+	}
+	else
+	{
+		RDP_CB_FILECONTENTS_REQUEST_EVENT* cb_event;
+
+		cb_event = (RDP_CB_FILECONTENTS_REQUEST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+				   CliprdrChannel_FilecontentsRequest, NULL, NULL);
+
+		Stream_Read_UINT32(s, cb_event->streamId);
+		Stream_Read_UINT32(s, cb_event->lindex);
+		Stream_Read_UINT32(s, cb_event->dwFlags);
+		Stream_Read_UINT32(s, cb_event->nPositionLow);
+		Stream_Read_UINT32(s, cb_event->nPositionHigh);
+		Stream_Read_UINT32(s, cb_event->cbRequested);
+		//Stream_Read_UINT32(s, cb_event->clipDataId);
+
+		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
 	}
 
-	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+	return 1;
 }
 
-static void cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+static int cliprdr_process_filecontents_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
 {
-	RDP_CB_LOCK_CLIPDATA_EVENT* cb_event;
-	cb_event = (RDP_CB_LOCK_CLIPDATA_EVENT*) freerdp_event_new(CliprdrChannel_Class,
-			   CliprdrChannel_LockClipdata, NULL, NULL);
-	Stream_Read_UINT32(s, cb_event->clipDataId);
-	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "FileContentsResponse");
+
+	if (context->custom)
+	{
+		CLIPRDR_FILE_CONTENTS_RESPONSE response;
+
+		if (Stream_GetRemainingLength(s) < 4)
+			return -1;
+
+		response.msgType = CB_FILECONTENTS_RESPONSE;
+		response.msgFlags = flags;
+		response.dataLen = length;
+
+		Stream_Read_UINT32(s, response.streamId); /* streamId (4 bytes) */
+		
+		response.cbRequested = length - 4;
+		response.requestedData = Stream_Pointer(s); /* requestedFileContentsData */
+
+		if (context->ServerFileContentsResponse)
+			context->ServerFileContentsResponse(context, &response);
+	}
+	else
+	{
+		RDP_CB_FILECONTENTS_RESPONSE_EVENT* cb_event;
+
+		cb_event = (RDP_CB_FILECONTENTS_RESPONSE_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+				   CliprdrChannel_FilecontentsResponse, NULL, NULL);
+
+		Stream_Read_UINT32(s, cb_event->streamId);
+
+		if (length > 0)
+		{
+			cb_event->size = length - 4;
+			cb_event->data = (BYTE*) malloc(cb_event->size);
+			CopyMemory(cb_event->data, Stream_Pointer(s), cb_event->size);
+		}
+
+		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+	}
+
+	return 1;
 }
 
-static void cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+static int cliprdr_process_lock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
 {
-	RDP_CB_UNLOCK_CLIPDATA_EVENT* cb_event;
-	cb_event = (RDP_CB_UNLOCK_CLIPDATA_EVENT*) freerdp_event_new(CliprdrChannel_Class,
-			   CliprdrChannel_UnLockClipdata, NULL, NULL);
-	Stream_Read_UINT32(s, cb_event->clipDataId);
-	svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "LockClipData");
+
+	if (context->custom)
+	{
+		CLIPRDR_LOCK_CLIPBOARD_DATA lockClipboardData;
+
+		if (Stream_GetRemainingLength(s) < 4)
+			return -1;
+
+		lockClipboardData.msgType = CB_LOCK_CLIPDATA;
+		lockClipboardData.msgFlags = flags;
+		lockClipboardData.dataLen = length;
+
+		Stream_Read_UINT32(s, lockClipboardData.clipDataId); /* clipDataId (4 bytes) */
+
+		if (context->ServerLockClipboardData)
+			context->ServerLockClipboardData(context, &lockClipboardData);
+	}
+	else
+	{
+		RDP_CB_LOCK_CLIPDATA_EVENT* cb_event;
+
+		cb_event = (RDP_CB_LOCK_CLIPDATA_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+				   CliprdrChannel_LockClipdata, NULL, NULL);
+
+		Stream_Read_UINT32(s, cb_event->clipDataId);
+
+		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+	}
+
+	return 1;
+}
+
+static int cliprdr_process_unlock_clipdata(cliprdrPlugin* cliprdr, wStream* s, UINT32 length, UINT16 flags)
+{
+	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "UnlockClipData");
+
+	if (context->custom)
+	{
+		CLIPRDR_UNLOCK_CLIPBOARD_DATA unlockClipboardData;
+
+		if (Stream_GetRemainingLength(s) < 4)
+			return -1;
+
+		unlockClipboardData.msgType = CB_UNLOCK_CLIPDATA;
+		unlockClipboardData.msgFlags = flags;
+		unlockClipboardData.dataLen = length;
+
+		Stream_Read_UINT32(s, unlockClipboardData.clipDataId); /* clipDataId (4 bytes) */
+
+		if (context->ServerUnlockClipboardData)
+			context->ServerUnlockClipboardData(context, &unlockClipboardData);
+	}
+	else
+	{
+		RDP_CB_UNLOCK_CLIPDATA_EVENT* cb_event;
+
+		cb_event = (RDP_CB_UNLOCK_CLIPDATA_EVENT*) freerdp_event_new(CliprdrChannel_Class,
+				   CliprdrChannel_UnLockClipdata, NULL, NULL);
+
+		Stream_Read_UINT32(s, cb_event->clipDataId);
+
+		svc_plugin_send_event((rdpSvcPlugin*) cliprdr, (wMessage*) cb_event);
+	}
+
+	return 1;
 }
 
 static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
@@ -296,6 +423,7 @@ static void cliprdr_process_receive(rdpSvcPlugin* plugin, wStream* s)
 	Stream_Read_UINT16(s, msgType);
 	Stream_Read_UINT16(s, msgFlags);
 	Stream_Read_UINT32(s, dataLen);
+
 	DEBUG_CLIPRDR("msgType: %s (%d), msgFlags: %d dataLen: %d",
 				  CB_MSG_TYPE_STRINGS[msgType], msgType, msgFlags, dataLen);
 #ifdef WITH_DEBUG_CLIPRDR
@@ -452,16 +580,52 @@ int cliprdr_client_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILIT
 	wStream* s;
 	CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
 	s = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
+
 	Stream_Write_UINT16(s, 1); /* cCapabilitiesSets */
 	Stream_Write_UINT16(s, 0); /* pad1 */
+
 	generalCapabilitySet = (CLIPRDR_GENERAL_CAPABILITY_SET*) capabilities->capabilitySets;
 	Stream_Write_UINT16(s, generalCapabilitySet->capabilitySetType); /* capabilitySetType */
 	Stream_Write_UINT16(s, generalCapabilitySet->capabilitySetLength); /* lengthCapability */
 	Stream_Write_UINT32(s, generalCapabilitySet->version); /* version */
 	Stream_Write_UINT32(s, generalCapabilitySet->generalFlags); /* generalFlags */
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientCapabilities");
 	cliprdr_packet_send(cliprdr, s);
+
 	return 0;
+}
+
+int cliprdr_temp_directory(CliprdrClientContext* context, CLIPRDR_TEMP_DIRECTORY* tempDirectory)
+{
+	int length;
+	wStream* s;
+	WCHAR* wszTempDir = NULL;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
+	s = cliprdr_packet_new(CB_TEMP_DIRECTORY, 0, 520 * 2);
+
+	length = ConvertToUnicode(CP_UTF8, 0, tempDirectory->szTempDir, -1, &wszTempDir, 0);
+
+	if (length < 0)
+		return -1;
+
+	if (length > 520)
+		length = 520;
+
+	Stream_Write(s, tempDirectory->szTempDir, length * 2);
+	Stream_Zero(s, (520 - length) * 2);
+
+	free(wszTempDir);
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "TempDirectory: %s",
+			tempDirectory->szTempDir);
+
+	cliprdr_packet_send(cliprdr, s);
+
+	return 1;
 }
 
 int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIST* formatList)
@@ -473,7 +637,7 @@ int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIS
 	CLIPRDR_FORMAT* format;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
 
-	for (index = 0; index < formatList->cFormats; index++)
+	for (index = 0; index < formatList->numFormats; index++)
 	{
 		format = (CLIPRDR_FORMAT*) &(formatList->formats[index]);
 		length += 4;
@@ -487,7 +651,7 @@ int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIS
 
 	s = cliprdr_packet_new(CB_FORMAT_LIST, 0, length);
 
-	for (index = 0; index < formatList->cFormats; index++)
+	for (index = 0; index < formatList->numFormats; index++)
 	{
 		format = (CLIPRDR_FORMAT*) &(formatList->formats[index]);
 		Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
@@ -499,7 +663,7 @@ int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIS
 			lpWideCharStr = (LPWSTR) Stream_Pointer(s);
 			cchWideChar = (Stream_Capacity(s) - Stream_GetPosition(s)) / 2;
 			formatNameSize = MultiByteToWideChar(CP_UTF8, 0,
-												 format->formatName, -1, lpWideCharStr, cchWideChar) * 2;
+				format->formatName, -1, lpWideCharStr, cchWideChar) * 2;
 			Stream_Seek(s, formatNameSize);
 		}
 		else
@@ -508,7 +672,10 @@ int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIS
 		}
 	}
 
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatList: numFormats: %d",
+			formatList->numFormats);
 	cliprdr_packet_send(cliprdr, s);
+
 	return 0;
 }
 
@@ -516,23 +683,67 @@ int cliprdr_client_format_list_response(CliprdrClientContext* context, CLIPRDR_F
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
 	formatListResponse->msgType = CB_FORMAT_LIST_RESPONSE;
 	formatListResponse->dataLen = 0;
+
 	s = cliprdr_packet_new(formatListResponse->msgType, formatListResponse->msgFlags, formatListResponse->dataLen);
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatListResponse");
 	cliprdr_packet_send(cliprdr, s);
+
 	return 0;
+}
+
+int cliprdr_client_lock_clipboard_data(CliprdrClientContext* context, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
+{
+	wStream* s;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
+	s = cliprdr_packet_new(CB_LOCK_CLIPDATA, 0, 4);
+
+	Stream_Write_UINT32(s, lockClipboardData->clipDataId); /* clipDataId (4 bytes) */
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientLockClipboardData: clipDataId: 0x%04X",
+			lockClipboardData->clipDataId);
+
+	cliprdr_packet_send(cliprdr, s);
+
+	return 1;
+}
+
+int cliprdr_client_unlock_clipboard_data(CliprdrClientContext* context, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+{
+	wStream* s;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
+	s = cliprdr_packet_new(CB_UNLOCK_CLIPDATA, 0, 4);
+
+	Stream_Write_UINT32(s, unlockClipboardData->clipDataId); /* clipDataId (4 bytes) */
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientUnlockClipboardData: clipDataId: 0x%04X",
+			unlockClipboardData->clipDataId);
+
+	cliprdr_packet_send(cliprdr, s);
+
+	return 1;
 }
 
 int cliprdr_client_format_data_request(CliprdrClientContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
 	formatDataRequest->msgType = CB_FORMAT_DATA_REQUEST;
 	formatDataRequest->msgFlags = 0;
 	formatDataRequest->dataLen = 4;
+
 	s = cliprdr_packet_new(formatDataRequest->msgType, formatDataRequest->msgFlags, formatDataRequest->dataLen);
 	Stream_Write_UINT32(s, formatDataRequest->requestedFormatId); /* requestedFormatId (4 bytes) */
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatDataRequest");
 	cliprdr_packet_send(cliprdr, s);
+
 	return 0;
 }
 
@@ -540,11 +751,69 @@ int cliprdr_client_format_data_response(CliprdrClientContext* context, CLIPRDR_F
 {
 	wStream* s;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
 	formatDataResponse->msgType = CB_FORMAT_DATA_RESPONSE;
+
 	s = cliprdr_packet_new(formatDataResponse->msgType, formatDataResponse->msgFlags, formatDataResponse->dataLen);
+
 	Stream_Write(s, formatDataResponse->requestedFormatData, formatDataResponse->dataLen);
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFormatDataResponse");
 	cliprdr_packet_send(cliprdr, s);
+
 	return 0;
+}
+
+int cliprdr_client_file_contents_request(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+{
+	wStream* s;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
+	s = cliprdr_packet_new(CB_FILECONTENTS_REQUEST, 0, 28);
+
+	Stream_Write_UINT32(s, fileContentsRequest->streamId); /* streamId (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->listIndex); /* listIndex (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->dwFlags); /* dwFlags (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->nPositionLow); /* nPositionLow (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->nPositionHigh); /* nPositionHigh (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->cbRequested); /* cbRequested (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->clipDataId); /* clipDataId (4 bytes) */
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFileContentsRequest: streamId: 0x%04X",
+		fileContentsRequest->streamId);
+
+	cliprdr_packet_send(cliprdr, s);
+
+	return 1;
+}
+
+int cliprdr_client_file_contents_response(CliprdrClientContext* context, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
+{
+	wStream* s;
+	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
+
+	if (fileContentsResponse->dwFlags & FILECONTENTS_SIZE)
+		fileContentsResponse->cbRequested = sizeof(UINT64);
+
+	s = cliprdr_packet_new(CB_FILECONTENTS_REQUEST, 0,
+			4 + fileContentsResponse->cbRequested);
+
+	Stream_Write_UINT32(s, fileContentsResponse->streamId); /* streamId (4 bytes) */
+
+	/**
+	 * requestedFileContentsData:
+	 * FILECONTENTS_SIZE: file size as UINT64
+	 * FILECONTENTS_RANGE: file data from requested range
+	 */
+
+	Stream_Write(s, fileContentsResponse->requestedData, fileContentsResponse->cbRequested);
+
+	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientFileContentsResponse: streamId: 0x%04X",
+		fileContentsResponse->streamId);
+
+	cliprdr_packet_send(cliprdr, s);
+
+	return 1;
 }
 
 /* cliprdr is always built-in */
@@ -555,17 +824,24 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	cliprdrPlugin* cliprdr;
 	CliprdrClientContext* context;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
+
 	cliprdr = (cliprdrPlugin*) calloc(1, sizeof(cliprdrPlugin));
+
 	cliprdr->plugin.channel_def.options =
 		CHANNEL_OPTION_INITIALIZED |
 		CHANNEL_OPTION_ENCRYPT_RDP |
 		CHANNEL_OPTION_COMPRESS_RDP |
 		CHANNEL_OPTION_SHOW_PROTOCOL;
+
 	strcpy(cliprdr->plugin.channel_def.name, "cliprdr");
+
+	cliprdr->log = WLog_Get("com.freerdp.channels.cliprdr.client");
+
 	cliprdr->plugin.connect_callback = cliprdr_process_connect;
 	cliprdr->plugin.receive_callback = cliprdr_process_receive;
 	cliprdr->plugin.event_callback = cliprdr_process_event;
 	cliprdr->plugin.terminate_callback = cliprdr_process_terminate;
+
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
@@ -574,10 +850,15 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		context = (CliprdrClientContext*) calloc(1, sizeof(CliprdrClientContext));
 		context->handle = (void*) cliprdr;
 		context->ClientCapabilities = cliprdr_client_capabilities;
+		context->TempDirectory = cliprdr_temp_directory;
 		context->ClientFormatList = cliprdr_client_format_list;
 		context->ClientFormatListResponse = cliprdr_client_format_list_response;
+		context->ClientLockClipboardData = cliprdr_client_lock_clipboard_data;
+		context->ClientUnlockClipboardData = cliprdr_client_unlock_clipboard_data;
 		context->ClientFormatDataRequest = cliprdr_client_format_data_request;
 		context->ClientFormatDataResponse = cliprdr_client_format_data_response;
+		context->ClientFileContentsRequest = cliprdr_client_file_contents_request;
+		context->ClientFileContentsResponse = cliprdr_client_file_contents_response;
 		*(pEntryPointsEx->ppInterface) = (void*) context;
 	}
 

@@ -1,21 +1,19 @@
 
-set(MODULE_NAME "TestFreeRDPCrypto")
-set(MODULE_PREFIX "TEST_FREERDP_CRYPTO")
+set(MODULE_NAME "TestClipboard")
+set(MODULE_PREFIX "TEST_CLIPBOARD")
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestBase64.c)
+	TestClipboardFormats.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
 	${${MODULE_PREFIX}_TESTS})
 
-include_directories(${OPENSSL_INCLUDE_DIR})
-
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-target_link_libraries(${MODULE_NAME} freerdp)
+target_link_libraries(${MODULE_NAME} winpr)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
@@ -24,5 +22,4 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 	add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
 endforeach()
 
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Test")
-
+set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Test")
