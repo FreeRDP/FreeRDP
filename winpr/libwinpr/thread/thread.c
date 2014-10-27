@@ -80,9 +80,7 @@
 #include <sys/eventfd.h>
 #endif
 
-#ifdef HAVE_EXECINFO_H
-#include <execinfo.h>
-#endif
+#include <winpr/debug.h>
 
 #include <errno.h>
 
@@ -121,23 +119,41 @@ static void ThreadInitialize(void)
 	RegisterHandleCloseCb(&_ThreadHandleCloseCb);
 }
 
-static void dump_thread(WINPR_THREAD *thread)
+static void dump_thread(WINPR_THREAD* thread)
 {
-#if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
-	void *stack[20];
-	fprintf(stderr, "[%s]: Called from:\n", __FUNCTION__);
-	backtrace_symbols_fd(stack, 20, STDERR_FILENO);
-	fprintf(stderr, "[%s]: Thread handle created still not closed!\n", __FUNCTION__);
-	backtrace_symbols_fd(thread->create_stack, 20, STDERR_FILENO);
+#if defined(WITH_DEBUG_THREADS)
+	void* stack = winpr_backtrace(20);
+	char** msg;
+	size_t used, i;
+	WLog_DBG(TAG, "Called from:");
+	msg = winpr_backtrace_symbols(stack, &used);
+
+	for (i=0; i<used; i++)
+		WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+
+	free(msg);
+	winpr_backtrace_free(stack);
+	WLog_DBG(TAG, "Thread handle created still not closed!");
+	msg = winpr_backtrace_symbols(thread->create_stack, &used);
+
+	for (i=0; i<used; i++)
+		WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+
+	free(msg);
 
 	if (thread->started)
-		fprintf(stderr, "[%s]: Thread still running!\n", __FUNCTION__);
+		WLog_DBG(TAG, "Thread still running!");
 	else if (!thread->exit_stack)
-		fprintf(stderr, "[%s]: Thread suspended.\n", __FUNCTION__);
+		WLog_DBG(TAG, "Thread suspended.");
 	else
 	{
-		fprintf(stderr, "[%s]: Thread exited at:\n", __FUNCTION__);
-		backtrace_symbols_fd(thread->exit_stack, 20, STDERR_FILENO);
+		WLog_DBG(TAG, "Thread exited at:");
+		msg = winpr_backtrace_symbols(thread->exit_stack, &used);
+
+		for (i=0; i<used; i++)
+			WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+
+		free(msg);
 	}
 
 #endif
@@ -223,7 +239,7 @@ static void *thread_launcher(void *arg)
 
 	if (!thread)
 	{
-		fprintf(stderr, "[%s]: Called with invalid argument %p\n", __FUNCTION__, arg);
+		WLog_ERR(TAG, "Called with invalid argument %p", arg);
 		goto exit;
 	}
 	else
@@ -232,7 +248,7 @@ static void *thread_launcher(void *arg)
 
 		if (!fkt)
 		{
-			fprintf(stderr, "[%s]: Thread function argument is %p\n", fkt);
+			WLog_ERR(TAG, "Thread function argument is %p\n", fkt);
 			goto exit;
 		}
 
@@ -285,8 +301,8 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	thread->lpParameter = lpParameter;
 	thread->lpStartAddress = lpStartAddress;
 	thread->lpThreadAttributes = lpThreadAttributes;
-#if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
-	backtrace(thread->create_stack, 20);
+#if defined(WITH_DEBUG_THREADS)
+	thread->create_stack = winpr_backtrace(20);
 	dump_thread(thread);
 #endif
 #ifdef HAVE_EVENTFD_H
@@ -294,7 +310,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 
 	if (thread->pipe_fd[0] < 0)
 	{
-		fprintf(stderr, "[%s]: failed to create thread\n", __FUNCTION__);
+		WLog_ERR(TAG, "failed to create thread");
 		free(thread);
 		return NULL;
 	}
@@ -303,7 +319,7 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 
 	if (pipe(thread->pipe_fd) < 0)
 	{
-		fprintf(stderr, "[%s]: failed to create thread\n", __FUNCTION__);
+		WLog_ERR(TAG, "failed to create thread");
 		free(thread);
 		return NULL;
 	}
@@ -333,8 +349,8 @@ void cleanup_handle(void *obj)
 	int rc = pthread_mutex_destroy(&thread->mutex);
 
 	if (rc)
-		fprintf(stderr, "[%s]: failed to destroy mutex [%d] %s (%d)\n",
-				__FUNCTION__,  rc, strerror(errno), errno);
+		WLog_ERR(TAG, "failed to destroy mutex [%d] %s (%d)",
+				rc, strerror(errno), errno);
 
 	if (thread->pipe_fd[0])
 		close(thread->pipe_fd[0]);
@@ -345,6 +361,15 @@ void cleanup_handle(void *obj)
 	if (thread_list && ListDictionary_Contains(thread_list, &thread->thread))
 		ListDictionary_Remove(thread_list, &thread->thread);
 
+#if defined(WITH_DEBUG_THREADS)
+
+	if (thread->create_stack)
+		winpr_backtrace_free(thread->create_stack);
+
+	if (thread->exit_stack)
+		winpr_backtrace_free(thread->exit_stack);
+
+#endif
 	free(thread);
 }
 
@@ -354,12 +379,12 @@ BOOL ThreadCloseHandle(HANDLE handle)
 
 	if (!thread_list)
 	{
-		fprintf(stderr, "[%s]: Thread list does not exist, check call!\n", __FUNCTION__);
+		WLog_ERR(TAG, "Thread list does not exist, check call!");
 		dump_thread(thread);
 	}
 	else if (!ListDictionary_Contains(thread_list, &thread->thread))
 	{
-		fprintf(stderr, "[%s]: Thread list does not contain this thread! check call!\n", __FUNCTION__);
+		WLog_ERR(TAG, "Thread list does not contain this thread! check call!");
 		dump_thread(thread);
 	}
 	else
@@ -369,7 +394,7 @@ BOOL ThreadCloseHandle(HANDLE handle)
 
 		if ((thread->started) && (WaitForSingleObject(thread, 0) != WAIT_OBJECT_0))
 		{
-			fprintf(stderr, "[%s]: Thread running, setting to detached state!\n", __FUNCTION__);
+			WLog_ERR(TAG, "Thread running, setting to detached state!");
 			thread->detached = TRUE;
 			pthread_detach(thread->thread);
 		}
@@ -391,7 +416,7 @@ BOOL ThreadCloseHandle(HANDLE handle)
 HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 						  LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
-	fprintf(stderr, "[%s]: not implemented\n", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	return NULL;
 }
 
@@ -401,14 +426,14 @@ VOID ExitThread(DWORD dwExitCode)
 
 	if (NULL == thread_list)
 	{
-		fprintf(stderr, "[%s]: function called without existing thread list!\n", __FUNCTION__);
+		WLog_ERR(TAG, "function called without existing thread list!");
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
 	}
 	else if (!ListDictionary_Contains(thread_list, &tid))
 	{
-		fprintf(stderr, "[%s]: function called, but no matching entry in thread list!\n", __FUNCTION__);
+		WLog_ERR(TAG, "function called, but no matching entry in thread list!");
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
@@ -421,8 +446,8 @@ VOID ExitThread(DWORD dwExitCode)
 		assert(thread);
 		thread->exited = TRUE;
 		thread->dwExitCode = dwExitCode;
-#if defined(WITH_DEBUG_THREADS) && defined(HAVE_EXECINFO_H)
-		backtrace(thread->exit_stack, 20);
+#if defined(WITH_DEBUG_THREADS)
+		thread->exit_stack = winpr_backtrace(20);
 #endif
 		ListDictionary_Unlock(thread_list);
 		set_event(thread);
@@ -455,14 +480,14 @@ HANDLE _GetCurrentThread(VOID)
 
 	if (NULL == thread_list)
 	{
-		fprintf(stderr, "[%s]: function called without existing thread list!\n", __FUNCTION__);
+		WLog_ERR(TAG, "function called without existing thread list!");
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
 	}
 	else if (!ListDictionary_Contains(thread_list, &tid))
 	{
-		fprintf(stderr, "[%s]: function called, but no matching entry in thread list!\n", __FUNCTION__);
+		WLog_ERR(TAG, "function called, but no matching entry in thread list!");
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
@@ -497,7 +522,7 @@ DWORD ResumeThread(HANDLE hThread)
 	if (!thread->started)
 		winpr_StartThread(thread);
 	else
-		fprintf(stderr, "[%s]: Thread already started!\n", __FUNCTION__);
+		WLog_WARN(TAG, "Thread already started!");
 
 	pthread_mutex_unlock(&thread->mutex);
 	return 0;
@@ -505,7 +530,7 @@ DWORD ResumeThread(HANDLE hThread)
 
 DWORD SuspendThread(HANDLE hThread)
 {
-	fprintf(stderr, "[%s]: Function not implemented!\n", __FUNCTION__);
+	WLog_ERR(TAG, "Function not implemented!");
 	return 0;
 }
 
@@ -530,7 +555,7 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 #ifndef ANDROID
 	pthread_cancel(thread->thread);
 #else
-	fprintf(stderr, "[%s]: Function not supported on this platform!\n", __FUNCTION__);
+	WLog_ERR(TAG, "Function not supported on this platform!");
 #endif
 	pthread_mutex_unlock(&thread->mutex);
 	return TRUE;
@@ -539,42 +564,50 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 #if defined(WITH_DEBUG_THREADS)
 VOID DumpThreadHandles(void)
 {
-	void *stack[20];
-#if defined(HAVE_EXECINFO_H)
-	backtrace(stack, 20);
-#endif
-	fprintf(stderr, "---------------- %s ----------------------\n", __FUNCTION);
-	fprintf(stderr, "---------------- Called from ----------------------------\n");
-#if defined(HAVE_EXECINFO_H)
-	backtrace_symbols_fd(stack, 20, STDERR_FILENO);
-#endif
-	fprintf(stderr, "---------------- Start Dumping thread handles -----------\n");
+	char** msg;
+	size_t used, i;
+	void* stack = winpr_backtrace(20);
+	WLog_DBG(TAG, "---------------- Called from ----------------------------");
+	msg = winpr_backtrace_symbols(stack, &used);
+
+	for (i=0; i<used; i++)
+		WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+
+	free(msg);
+	winpr_backtrace_free(stack);
+	WLog_DBG(TAG, "---------------- Start Dumping thread handles -----------");
 
 	if (!thread_list)
-		fprintf(stderr, "All threads properly shut down and disposed of.\n");
+		WLog_DBG(TAG, "All threads properly shut down and disposed of.");
 	else
 	{
 		ULONG_PTR *keys = NULL;
 		ListDictionary_Lock(thread_list);
 		int x, count = ListDictionary_GetKeys(thread_list, &keys);
-		fprintf(stderr, "Dumping %d elements\n", count);
+		WLog_DBG(TAG, "Dumping %d elements\n", count);
 
 		for (x=0; x<count; x++)
 		{
-			WINPR_THREAD *thread = ListDictionary_GetItemValue(thread_list, (void *)keys[x]);
-			fprintf(stderr, "Thread [%d] handle created still not closed!\n", x);
-#if defined(HAVE_EXECINFO_H)
-			backtrace_symbols_fd(thread->create_stack, 20, STDERR_FILENO);
-#endif
+			WINPR_THREAD* thread = ListDictionary_GetItemValue(thread_list, (void*)keys[x]);
+			WLog_DBG(TAG, "Thread [%d] handle created still not closed!", x);
+			msg = winpr_backtrace_symbols(thread->create_stack, &used);
+
+			for (i=0; i<used; i++)
+				WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+
+			free(msg);
 
 			if (thread->started)
-				fprintf(stderr, "Thread [%d] still running!\n",	x);
+				WLog_DBG(TAG, "Thread [%d] still running!",	x);
 			else
 			{
-				fprintf(stderr, "Thread [%d] exited at:\n", x);
-#if defined(HAVE_EXECINFO_H)
-				backtrace_symbols_fd(thread->exit_stack, 20, STDERR_FILENO);
-#endif
+				WLog_DBG(TAG, "Thread [%d] exited at:", x);
+				msg = winpr_backtrace_symbols(thread->exit_stack, &used);
+
+				for (i=0; i<used; i++)
+					WLog_DBG(TAG, "[%d]: %s", i, msg[i]);
+
+				free(msg);
 			}
 		}
 
@@ -584,7 +617,7 @@ VOID DumpThreadHandles(void)
 		ListDictionary_Unlock(thread_list);
 	}
 
-	fprintf(stderr, "---------------- End Dumping thread handles -------------\n");
+	WLog_DBG(TAG, "---------------- End Dumping thread handles -------------");
 }
 #endif
 #endif

@@ -215,13 +215,11 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 
 		if (!thread->joined)
 		{
-			WLog_ERR(TAG, "pthread_join failure: [%d] %s",
-					status, strerror(status));
-		}
+			status = pthread_join(thread->thread, NULL);
 
 			if (status != 0)
 			{
-				fprintf(stderr, "%s: pthread_join failure: [%d] %s\n", __FUNCTION__,
+				WLog_ERR(TAG, "pthread_join failure: [%d] %s",
 						status, strerror(status));
 			}
 			else
@@ -461,7 +459,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 		FD_ZERO(&fds);
 		ZeroMemory(&timeout, sizeof(timeout));
 #endif
-		polled = (bWaitAll) ? 0 : nCount;
+		polled = 0;
 
 		for (index = 0; index < nCount; index++)
 		{
@@ -470,7 +468,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 				if (signalled_idx[index])
 					continue;
 
-				poll_map[polled++] = index;
+				poll_map[polled] = index;
 			}
 
 			if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
@@ -485,7 +483,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 				if (fd == -1)
 				{
-					fprintf(stderr, "%s: invalid event file descriptor\n", __FUNCTION__);
+					WLog_ERR(TAG, "invalid event file descriptor");
 					return WAIT_FAILED;
 				}
 			}
@@ -505,7 +503,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 				if (fd == -1)
 				{
-					fprintf(stderr, "%s: invalid timer file descriptor\n", __FUNCTION__);
+					WLog_ERR(TAG, "invalid timer file descriptor");
 					return WAIT_FAILED;
 				}
 			}
@@ -516,7 +514,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 				if (fd == -1)
 				{
-					fprintf(stderr, "%s: invalid thread file descriptor\n", __FUNCTION__);
+					WLog_ERR(TAG, "invalid thread file descriptor");
 					return WAIT_FAILED;
 				}
 			}
@@ -527,26 +525,26 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 				if (fd == -1)
 				{
-					fprintf(stderr, "%s: invalid timer file descriptor\n", __FUNCTION__);
+					WLog_ERR(TAG, "invalid timer file descriptor");
 					return WAIT_FAILED;
 				}
 			}
 			else
 			{
-				fprintf(stderr, "%s: unknown handle type %d\n", __FUNCTION__, (int) Type);
+				WLog_ERR(TAG, "unknown handle type %d", (int) Type);
 				return WAIT_FAILED;
 			}
 
 			if (fd == -1)
 			{
-				fprintf(stderr, "%s: invalid file descriptor\n", __FUNCTION__);
+				WLog_ERR(TAG, "invalid file descriptor");
 				return WAIT_FAILED;
 			}
 
 #ifdef HAVE_POLL_H
-			pollfds[index].fd = fd;
-			pollfds[index].events = POLLIN;
-			pollfds[index].revents = 0;
+			pollfds[polled].fd = fd;
+			pollfds[polled].events = POLLIN;
+			pollfds[polled].revents = 0;
 #else
 			FD_SET(fd, &fds);
 
@@ -554,13 +552,14 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 				maxfd = fd;
 
 #endif
+			polled++;
 		}
 
 #ifdef HAVE_POLL_H
 
 		do
 		{
-			status = poll(pollfds, nCount, dwMilliseconds);
+			status = poll(pollfds, polled, dwMilliseconds);
 		}
 		while (status < 0 && errno == EINTR);
 
@@ -584,10 +583,10 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 		if (status < 0)
 		{
 #ifdef HAVE_POLL_H
-			fprintf(stderr, "%s: poll() failure [%d] %s\n", __FUNCTION__, errno,
+			WLog_ERR(TAG, "poll() failure [%d] %s", errno,
 					strerror(errno));
 #else
-			fprintf(stderr, "%s: select() failure [%d] %s\n", __FUNCTION__, errno,
+			WLog_ERR(TAG, "select() failure [%d] %s", errno,
 					strerror(errno));
 #endif
 			return WAIT_FAILED;
@@ -656,7 +655,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 					if (length != 1)
 					{
-						fprintf(stderr, "%s: semaphore read() failure [%d] %s\n", __FUNCTION__, errno, strerror(errno));
+						WLog_ERR(TAG, "semaphore read() failure [%d] %s", errno, strerror(errno));
 						return WAIT_FAILED;
 					}
 				}
@@ -673,11 +672,11 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 							if (errno == ETIMEDOUT)
 								return WAIT_TIMEOUT;
 
-							fprintf(stderr, "%s: timer read() failure [%d] %s\n", __FUNCTION__, errno, strerror(errno));
+							WLog_ERR(TAG, "timer read() failure [%d] %s", errno, strerror(errno));
 						}
 						else
 						{
-							fprintf(stderr, "%s: timer read() failure - incorrect number of bytes read", __FUNCTION__);
+							WLog_ERR(TAG, "timer read() failure - incorrect number of bytes read");
 						}
 
 						return WAIT_FAILED;
@@ -691,10 +690,11 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 					{
 						int status;
 						status = pthread_join(thread->thread, NULL);
+
 						if (status != 0)
 						{
-							fprintf(stderr, "%s: pthread_join failure: [%d] %s\n",
-									__FUNCTION__, status, strerror(status));
+							WLog_ERR(TAG, "pthread_join failure: [%d] %s",
+									status, strerror(status));
 							return WAIT_FAILED;
 						}
 						else
