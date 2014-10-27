@@ -89,6 +89,8 @@
 #include "thread.h"
 
 #include "../handle/handle.h"
+#include "../log.h"
+#define TAG WINPR_TAG("thread")
 
 static pthread_once_t thread_initialized = PTHREAD_ONCE_INIT;
 

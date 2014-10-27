@@ -209,7 +209,7 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			WLog_ERR(TAG, "waitOnFd() failure [%d] %s", errno, strerror(errno));
 			return WAIT_FAILED;
 		}
->
+
 		if (status != 1)
 			return WAIT_TIMEOUT;
 
