@@ -51,6 +51,7 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <freerdp/input.h>
 #include <freerdp/update.h>
 #include <freerdp/message.h>
+#include <freerdp/autodetect.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,7 +124,8 @@ struct rdp_context
 	ALIGN64 rdpSettings* settings; /* 40 */
 	ALIGN64 rdpMetrics* metrics; /* 41 */
 	ALIGN64 rdpCodecs* codecs; /* 42 */
-	UINT64 paddingC[64 - 43]; /* 43 */
+	ALIGN64 rdpAutoDetect* autodetect; /* 43 */
+	UINT64 paddingC[64 - 44]; /* 44 */
 
 	UINT64 paddingD[96 - 64]; /* 64 */
 	UINT64 paddingE[128 - 96]; /* 96 */
@@ -161,7 +163,10 @@ struct rdp_freerdp
 	ALIGN64 rdpSettings* settings; /**< (offset 18)
 								Pointer to a rdpSettings structure. Will be used to maintain the required RDP settings.
 								Will be initialized by a call to freerdp_context_new() */
-	UINT64 paddingB[32 - 19]; /* 19 */
+	ALIGN64 rdpAutoDetect* autodetect; /* (offset 19)
+									Auto-Detect handle for the connection.
+									Will be initialized by a call to freerdp_context_new() */
+	UINT64 paddingB[32 - 20]; /* 20 */
 
 	ALIGN64 size_t ContextSize; /* (offset 32)
 							Specifies the size of the 'context' field. freerdp_context_new() will use this size to allocate the context buffer.

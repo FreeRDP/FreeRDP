@@ -606,17 +606,21 @@ void freerdp_peer_context_new(freerdp_peer* client)
 	client->input = rdp->input;
 	client->update = rdp->update;
 	client->settings = rdp->settings;
+	client->autodetect = rdp->autodetect;
 
 	client->context->rdp = rdp;
 	client->context->peer = client;
 	client->context->input = client->input;
 	client->context->update = client->update;
 	client->context->settings = client->settings;
+	client->context->autodetect = client->autodetect;
 
 	client->update->context = client->context;
 	client->input->context = client->context;
+	client->autodetect->context = client->context;
 
 	update_register_server_callbacks(client->update);
+	autodetect_register_server_callbacks(client->autodetect);
 
 	transport_attach(rdp->transport, client->sockfd);
 

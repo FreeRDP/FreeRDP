@@ -25,6 +25,7 @@
 #include <freerdp/settings.h>
 #include <freerdp/input.h>
 #include <freerdp/update.h>
+#include <freerdp/autodetect.h>
 
 #include <winpr/sspi.h>
 
@@ -65,6 +66,7 @@ struct rdp_freerdp_peer
 	rdpInput* input;
 	rdpUpdate* update;
 	rdpSettings* settings;
+	rdpAutoDetect* autodetect;
 
 	void* ContextExtra;
 	size_t ContextSize;
