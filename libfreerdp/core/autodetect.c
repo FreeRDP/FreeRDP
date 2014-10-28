@@ -33,6 +33,14 @@ typedef struct
 	UINT16 requestType;
 } AUTODETECT_REQ_PDU;
 
+typedef struct
+{
+	UINT8 headerLength;
+	UINT8 headerTypeId;
+	UINT16 sequenceNumber;
+	UINT16 responseType;
+} AUTODETECT_RSP_PDU;
+
 static BOOL autodetect_send_rtt_measure_response(rdpRdp* rdp, UINT16 sequenceNumber)
 {
 	wStream* s;
@@ -218,7 +226,7 @@ static BOOL autodetect_recv_netchar_result(rdpRdp* rdp, wStream* s, AUTODETECT_R
 	return TRUE;
 }
 
-int rdp_recv_autodetect_packet(rdpRdp* rdp, wStream* s)
+int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s)
 {
 	AUTODETECT_REQ_PDU autodetectReqPdu;
 	BOOL success = FALSE;
@@ -232,7 +240,7 @@ int rdp_recv_autodetect_packet(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, autodetectReqPdu.requestType); /* requestType (2 bytes) */
 
 	WLog_DBG(AUTODETECT_TAG,
-		"rdp_recv_autodetect_packet: headerLength=%u, headerTypeId=%u, sequenceNumber=%u, requestType=%04x",
+		"rdp_recv_autodetect_request_packet: headerLength=%u, headerTypeId=%u, sequenceNumber=%u, requestType=%04x",
 		autodetectReqPdu.headerLength, autodetectReqPdu.headerTypeId,
 		autodetectReqPdu.sequenceNumber, autodetectReqPdu.requestType);
 
@@ -276,6 +284,30 @@ int rdp_recv_autodetect_packet(rdpRdp* rdp, wStream* s)
 	default:
 		break;
 	}
+
+	return success ? 0 : -1;
+}
+
+int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s)
+{
+	AUTODETECT_RSP_PDU autodetectRspPdu;
+	BOOL success = FALSE;
+
+	if (Stream_GetRemainingLength(s) < 6)
+		return -1;
+
+	Stream_Read_UINT8(s, autodetectRspPdu.headerLength); /* headerLength (1 byte) */
+	Stream_Read_UINT8(s, autodetectRspPdu.headerTypeId); /* headerTypeId (1 byte) */
+	Stream_Read_UINT16(s, autodetectRspPdu.sequenceNumber); /* sequenceNumber (2 bytes) */
+	Stream_Read_UINT16(s, autodetectRspPdu.responseType); /* responseType (2 bytes) */
+
+	WLog_DBG(AUTODETECT_TAG,
+		"rdp_recv_autodetect_response_packet: headerLength=%u, headerTypeId=%u, sequenceNumber=%u, requestType=%04x",
+		autodetectRspPdu.headerLength, autodetectRspPdu.headerTypeId,
+		autodetectRspPdu.sequenceNumber, autodetectRspPdu.responseType);
+
+	if (autodetectRspPdu.headerTypeId != TYPE_ID_AUTODETECT_RESPONSE)
+		return -1;
 
 	return success ? 0 : -1;
 }

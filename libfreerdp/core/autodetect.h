@@ -45,7 +45,8 @@ struct rdp_autodetect
 	UINT32 netCharAverageRTT;
 };
 
-int rdp_recv_autodetect_packet(rdpRdp* rdp, wStream* s);
+int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s);
+int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s);
 
 rdpAutoDetect* autodetect_new(void);
 void autodetect_free(rdpAutoDetect* autodetect);

@@ -1090,6 +1090,8 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 		mcs->userChannelJoined = TRUE;
 	else if (channelId == MCS_GLOBAL_CHANNEL_ID)
 		mcs->globalChannelJoined = TRUE;
+	else if (channelId == mcs->messageChannelId)
+		mcs->messageChannelJoined = TRUE;
 
 	for (i = 0; i < mcs->channelCount; i++)
 	{
@@ -1100,7 +1102,7 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 			allJoined = FALSE;
 	}
 
-	if ((mcs->userChannelJoined) && (mcs->globalChannelJoined) && allJoined)
+	if ((mcs->userChannelJoined) && (mcs->globalChannelJoined) && (mcs->messageChannelId == 0 || mcs->messageChannelJoined) && allJoined)
 	{
 		rdp_server_transition_to_state(rdp, CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT);
 	}

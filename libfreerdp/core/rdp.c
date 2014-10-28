@@ -170,7 +170,7 @@ void rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 sh
 	Stream_Write_UINT16(s, 0); /* compressedLength (2 bytes) */
 }
 
-static int rdp_security_stream_init(rdpRdp* rdp, wStream* s)
+static int rdp_security_stream_init(rdpRdp* rdp, wStream* s, BOOL sec_header)
 {
 	if (rdp->do_crypt)
 	{
@@ -184,7 +184,7 @@ static int rdp_security_stream_init(rdpRdp* rdp, wStream* s)
 		if (rdp->do_secure_checksum)
 			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
 	}
-	else if (rdp->sec_flags != 0)
+	else if (rdp->sec_flags != 0 || sec_header)
 	{
 		Stream_Seek(s, 4);
 	}
@@ -195,7 +195,7 @@ static int rdp_security_stream_init(rdpRdp* rdp, wStream* s)
 int rdp_init_stream(rdpRdp* rdp, wStream* s)
 {
 	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
-	rdp_security_stream_init(rdp, s);
+	rdp_security_stream_init(rdp, s, FALSE);
 	return 0;
 }
 
@@ -210,7 +210,7 @@ wStream* rdp_send_stream_init(rdpRdp* rdp)
 int rdp_init_stream_pdu(rdpRdp* rdp, wStream* s)
 {
 	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
-	rdp_security_stream_init(rdp, s);
+	rdp_security_stream_init(rdp, s, FALSE);
 	Stream_Seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
 	return 0;
 }
@@ -218,7 +218,7 @@ int rdp_init_stream_pdu(rdpRdp* rdp, wStream* s)
 int rdp_init_stream_data_pdu(rdpRdp* rdp, wStream* s)
 {
 	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
-	rdp_security_stream_init(rdp, s);
+	rdp_security_stream_init(rdp, s, FALSE);
 	Stream_Seek(s, RDP_SHARE_CONTROL_HEADER_LENGTH);
 	Stream_Seek(s, RDP_SHARE_DATA_HEADER_LENGTH);
 	return 0;
@@ -261,7 +261,7 @@ wStream* rdp_message_channel_pdu_init(rdpRdp* rdp)
 	wStream* s;
 	s = transport_send_stream_init(rdp->transport, 2048);
 	Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
-	rdp_security_stream_init(rdp, s);
+	rdp_security_stream_init(rdp, s, TRUE);
 	return s;
 }
 
@@ -471,7 +471,7 @@ static UINT32 rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT3
 	return pad;
 }
 
-static UINT32 rdp_get_sec_bytes(rdpRdp* rdp)
+static UINT32 rdp_get_sec_bytes(rdpRdp* rdp, UINT16 sec_flags)
 {
 	UINT32 sec_bytes;
 
@@ -482,7 +482,7 @@ static UINT32 rdp_get_sec_bytes(rdpRdp* rdp)
 		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			sec_bytes += 4;
 	}
-	else if (rdp->sec_flags != 0)
+	else if (rdp->sec_flags != 0 || sec_flags != 0)
 	{
 		sec_bytes = 4;
 	}
@@ -525,7 +525,7 @@ BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id)
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
-	sec_bytes = rdp_get_sec_bytes(rdp);
+	sec_bytes = rdp_get_sec_bytes(rdp, 0);
 	sec_hold = Stream_GetPosition(s);
 	Stream_Seek(s, sec_bytes);
 	rdp_write_share_control_header(s, length - sec_bytes, type, channel_id);
@@ -548,7 +548,7 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
-	sec_bytes = rdp_get_sec_bytes(rdp);
+	sec_bytes = rdp_get_sec_bytes(rdp, 0);
 	sec_hold = Stream_GetPosition(s);
 	Stream_Seek(s, sec_bytes);
 	rdp_write_share_control_header(s, length - sec_bytes, PDU_TYPE_DATA, channel_id);
@@ -572,7 +572,7 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags)
 	length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 	rdp_write_header(rdp, s, length, rdp->mcs->messageChannelId);
-	sec_bytes = rdp_get_sec_bytes(rdp);
+	sec_bytes = rdp_get_sec_bytes(rdp, sec_flags);
 	sec_hold = Stream_GetPosition(s);
 	Stream_Seek(s, sec_bytes);
 	Stream_SetPosition(s, sec_hold);
@@ -853,7 +853,13 @@ int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s)
 	if (securityFlags & SEC_AUTODETECT_REQ)
 	{
 		/* Server Auto-Detect Request PDU */
-		return rdp_recv_autodetect_packet(rdp, s);
+		return rdp_recv_autodetect_request_packet(rdp, s);
+	}
+
+	if (securityFlags & SEC_AUTODETECT_RSP)
+	{
+		/* Client Auto-Detect Response PDU */
+		return rdp_recv_autodetect_response_packet(rdp, s);
 	}
 
 	if (securityFlags & SEC_HEARTBEAT)
