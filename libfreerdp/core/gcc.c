@@ -514,9 +514,9 @@ void gcc_write_server_data_blocks(wStream* s, rdpMcs* mcs)
 	gcc_write_server_core_data(s, mcs); /* serverCoreData */
 	gcc_write_server_network_data(s, mcs); /* serverNetworkData */
 	gcc_write_server_security_data(s, mcs); /* serverSecurityData */
+	gcc_write_server_message_channel_data(s, mcs); /* serverMessageChannelData */
 
 	/* TODO: Send these GCC data blocks only when the client sent them */
-	//gcc_write_server_message_channel_data(s, settings); /* serverMessageChannelData */
 	//gcc_write_server_multitransport_channel_data(s, settings); /* serverMultitransportChannelData */
 }
 
@@ -1252,7 +1252,7 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		/* CHANNEL_DEF */
 		Stream_Read(s, mcs->channels[i].Name, 8); /* name (8 bytes) */
 		Stream_Read_UINT32(s, mcs->channels[i].options); /* options (4 bytes) */
-		mcs->channels[i].ChannelId = MCS_GLOBAL_CHANNEL_ID + 1 + i;
+		mcs->channels[i].ChannelId = mcs->baseChannelId++;
 	}
 
 	return TRUE;
@@ -1542,6 +1542,8 @@ BOOL gcc_read_client_message_channel_data(wStream* s, rdpMcs* mcs, UINT16 blockL
 
 	Stream_Read_UINT32(s, flags);
 
+	mcs->messageChannelId = mcs->baseChannelId++;
+
 	return TRUE;
 }
 
@@ -1583,11 +1585,12 @@ BOOL gcc_read_server_message_channel_data(wStream* s, rdpMcs* mcs)
 
 void gcc_write_server_message_channel_data(wStream* s, rdpMcs* mcs)
 {
-	UINT16 mcsChannelId = 0;
+	if (mcs->messageChannelId == 0)
+		return;
 
 	gcc_write_user_data_header(s, SC_MCS_MSGCHANNEL, 6);
 
-	Stream_Write_UINT16(s, mcsChannelId); /* mcsChannelId (2 bytes) */
+	Stream_Write_UINT16(s, mcs->messageChannelId); /* mcsChannelId (2 bytes) */
 }
 
 /**

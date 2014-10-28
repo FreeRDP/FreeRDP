@@ -426,6 +426,7 @@ int freerdp_context_new(freerdp* instance)
 	instance->input = rdp->input;
 	instance->update = rdp->update;
 	instance->settings = rdp->settings;
+	instance->autodetect = rdp->autodetect;
 
 	context->graphics = graphics_new(context);
 	context->rdp = rdp;
@@ -433,6 +434,7 @@ int freerdp_context_new(freerdp* instance)
 	context->input = instance->input;
 	context->update = instance->update;
 	context->settings = instance->settings;
+	context->autodetect = instance->autodetect;
 
 	instance->update->context = instance->context;
 	instance->update->pointer->context = instance->context;
@@ -441,6 +443,8 @@ int freerdp_context_new(freerdp* instance)
 	instance->update->altsec->context = instance->context;
 
 	instance->input->context = context;
+
+	instance->autodetect->context = context;
 
 	update_register_client_callbacks(rdp->update);
 

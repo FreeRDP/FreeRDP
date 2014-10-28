@@ -853,7 +853,7 @@ BOOL mcs_send_attach_user_confirm(rdpMcs* mcs)
 	s = Stream_New(NULL, length);
 	settings = mcs->transport->settings;
 
-	mcs->userId = MCS_GLOBAL_CHANNEL_ID + 1 + mcs->channelCount;
+	mcs->userId = mcs->baseChannelId++;
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_AttachUserConfirm, length, 2);
 

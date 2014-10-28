@@ -360,12 +360,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		}
 	}
 
-	if (channelId != MCS_GLOBAL_CHANNEL_ID)
-	{
-		if (!freerdp_channel_peer_process(client, s, channelId))
-			return -1;
-	}
-	else
+	if (channelId == MCS_GLOBAL_CHANNEL_ID)
 	{
 		if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 			return -1;
@@ -388,6 +383,15 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 				WLog_ERR(TAG,  "Client sent pduType %d", pduType);
 				return -1;
 		}
+	}
+	else if (rdp->mcs->messageChannelId && channelId == rdp->mcs->messageChannelId)
+	{
+		return rdp_recv_message_channel_pdu(rdp, s);
+	}
+	else
+	{
+		if (!freerdp_channel_peer_process(client, s, channelId))
+			return -1;
 	}
 
 	return 0;
@@ -602,17 +606,21 @@ void freerdp_peer_context_new(freerdp_peer* client)
 	client->input = rdp->input;
 	client->update = rdp->update;
 	client->settings = rdp->settings;
+	client->autodetect = rdp->autodetect;
 
 	client->context->rdp = rdp;
 	client->context->peer = client;
 	client->context->input = client->input;
 	client->context->update = client->update;
 	client->context->settings = client->settings;
+	client->context->autodetect = client->autodetect;
 
 	client->update->context = client->context;
 	client->input->context = client->context;
+	client->autodetect->context = client->context;
 
 	update_register_server_callbacks(client->update);
+	autodetect_register_server_callbacks(client->autodetect);
 
 	transport_attach(rdp->transport, client->sockfd);
 
