@@ -269,7 +269,7 @@ BOOL shadow_client_activate(freerdp_peer* peer)
 	rdpSettings* settings = peer->settings;
 	rdpShadowClient* client = (rdpShadowClient*) peer->context;
 
-	if (strcmp(settings->ClientDir, "librdp") == 0)
+	if (settings->ClientDir && (strcmp(settings->ClientDir, "librdp") == 0))
 	{
 		/* Hack for Mac/iOS/Android Microsoft RDP clients */
 
