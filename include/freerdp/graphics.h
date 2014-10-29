@@ -123,7 +123,7 @@ FREERDP_API void Pointer_SetDefault(rdpContext* context);
 typedef void (*pGlyph_New)(rdpContext* context, rdpGlyph* glyph);
 typedef void (*pGlyph_Free)(rdpContext* context, rdpGlyph* glyph);
 typedef void (*pGlyph_Draw)(rdpContext* context, rdpGlyph* glyph, int x, int y);
-typedef void (*pGlyph_BeginDraw)(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor);
+typedef void (*pGlyph_BeginDraw)(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant);
 typedef void (*pGlyph_EndDraw)(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor);
 
 struct rdp_glyph
@@ -149,7 +149,7 @@ FREERDP_API rdpGlyph* Glyph_Alloc(rdpContext* context);
 FREERDP_API void Glyph_New(rdpContext* context, rdpGlyph* glyph);
 FREERDP_API void Glyph_Free(rdpContext* context, rdpGlyph* glyph);
 FREERDP_API void Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y);
-FREERDP_API void Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor);
+FREERDP_API void Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant);
 FREERDP_API void Glyph_EndDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor);
 
 /* Graphics Module */

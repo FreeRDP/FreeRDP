@@ -261,11 +261,13 @@ void gdi_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 			gdi_glyph->bitmap->height, gdi_glyph->hdc, 0, 0, GDI_DSPDxax);
 }
 
-void gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
+void gdi_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
 	GDI_RECT rect;
 	HGDI_BRUSH brush;
 	rdpGdi* gdi = context->gdi;
+
+	/* TODO: handle fOpRedundant! See xf_Glyph_BeginDraw() */
 
 	bgcolor = freerdp_convert_gdi_order_color(bgcolor, gdi->srcBpp, gdi->format, gdi->palette);
 	fgcolor = freerdp_convert_gdi_order_color(fgcolor, gdi->srcBpp, gdi->format, gdi->palette);

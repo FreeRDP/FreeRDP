@@ -79,7 +79,7 @@ void update_process_glyph(rdpContext* context, BYTE* data, int* index,
 
 void update_process_glyph_fragments(rdpContext* context, BYTE* data, UINT32 length,
 		UINT32 cacheId, UINT32 ulCharInc, UINT32 flAccel, UINT32 bgcolor, UINT32 fgcolor, int x, int y,
-		int bkX, int bkY, int bkWidth, int bkHeight, int opX, int opY, int opWidth, int opHeight)
+		int bkX, int bkY, int bkWidth, int bkHeight, int opX, int opY, int opWidth, int opHeight, BOOL fOpRedundant)
 {
 	int n;
 	UINT32 id;
@@ -93,9 +93,9 @@ void update_process_glyph_fragments(rdpContext* context, BYTE* data, UINT32 leng
 	glyph_cache = context->cache->glyph;
 
 	if (opWidth > 0 && opHeight > 0)
-		Glyph_BeginDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor);
+		Glyph_BeginDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor, fOpRedundant);
 	else
-		Glyph_BeginDraw(context, 0, 0, 0, 0, bgcolor, fgcolor);
+		Glyph_BeginDraw(context, 0, 0, 0, 0, bgcolor, fgcolor, fOpRedundant);
 
 	while (index < (int) length)
 	{
@@ -176,16 +176,33 @@ void update_process_glyph_fragments(rdpContext* context, BYTE* data, UINT32 leng
 void update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyphIndex)
 {
 	rdpGlyphCache* glyph_cache;
+	int bkWidth, bkHeight, opWidth, opHeight;
 
 	glyph_cache = context->cache->glyph;
+
+	bkWidth = glyphIndex->bkRight - glyphIndex->bkLeft;
+	opWidth = glyphIndex->opRight - glyphIndex->opLeft;
+	bkHeight = glyphIndex->bkBottom - glyphIndex->bkTop;
+	opHeight = glyphIndex->opBottom - glyphIndex->opTop;
+
+	if (glyphIndex->opRight > context->settings->DesktopWidth)
+	{
+		/**
+		 * Some Microsoft servers send erroneous high values close to the
+		 * sint16 maximum in the OpRight field of this drawing order.
+		 * (One example where this can be seen is in notepad when connected to
+		 * Windows XP with disabled fast index and fast glyph capabilities.)
+		 * This workaround prevents resulting problems in the UI callbacks.
+		 */
+		opWidth = context->settings->DesktopWidth - glyphIndex->opLeft;
+	}
 
 	update_process_glyph_fragments(context, glyphIndex->data, glyphIndex->cbData,
 			glyphIndex->cacheId, glyphIndex->ulCharInc, glyphIndex->flAccel,
 			glyphIndex->backColor, glyphIndex->foreColor, glyphIndex->x, glyphIndex->y,
-			glyphIndex->bkLeft, glyphIndex->bkTop,
-			glyphIndex->bkRight - glyphIndex->bkLeft, glyphIndex->bkBottom - glyphIndex->bkTop,
-			glyphIndex->opLeft, glyphIndex->opTop,
-			glyphIndex->opRight - glyphIndex->opLeft, glyphIndex->opBottom - glyphIndex->opTop);
+			glyphIndex->bkLeft, glyphIndex->bkTop, bkWidth, bkHeight,
+			glyphIndex->opLeft, glyphIndex->opTop, opWidth, opHeight,
+			glyphIndex->fOpRedundant);
 }
 
 void update_gdi_fast_index(rdpContext* context, FAST_INDEX_ORDER* fastIndex)
@@ -236,7 +253,8 @@ void update_gdi_fast_index(rdpContext* context, FAST_INDEX_ORDER* fastIndex)
 			fastIndex->bkLeft, fastIndex->bkTop,
 			fastIndex->bkRight - fastIndex->bkLeft, fastIndex->bkBottom - fastIndex->bkTop,
 			opLeft, opTop,
-			opRight - opLeft, opBottom - opTop);
+			opRight - opLeft, opBottom - opTop,
+			FALSE);
 }
 
 void update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fastGlyph)
@@ -309,7 +327,8 @@ void update_gdi_fast_glyph(rdpContext* context, FAST_GLYPH_ORDER* fastGlyph)
 			fastGlyph->bkLeft, fastGlyph->bkTop,
 			fastGlyph->bkRight - fastGlyph->bkLeft, fastGlyph->bkBottom - fastGlyph->bkTop,
 			opLeft, opTop,
-			opRight - opLeft, opBottom - opTop);
+			opRight - opLeft, opBottom - opTop,
+			FALSE);
 }
 
 void update_gdi_cache_glyph(rdpContext* context, CACHE_GLYPH_ORDER* cacheGlyph)
