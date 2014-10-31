@@ -377,7 +377,7 @@ void xf_Glyph_Draw(rdpContext* context, rdpGlyph* glyph, int x, int y)
 	xf_unlock_x11(xfc, FALSE);
 }
 
-void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor)
+void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height, UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
 	xfContext* xfc = (xfContext*) context;
 
@@ -390,13 +390,18 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 	bgcolor = xf_gdi_get_color(xfc, bgcolor);
 
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
-	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-	XSetForeground(xfc->display, xfc->gc, fgcolor);
-	XFillRectangle(xfc->display, xfc->drawing, xfc->gc, x, y, width, height);
+
+	if (width && height)
+	{
+		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
+		XSetForeground(xfc->display, xfc->gc, fgcolor);
+		XFillRectangle(xfc->display, xfc->drawing, xfc->gc, x, y, width, height);
+	}
 
 	XSetForeground(xfc->display, xfc->gc, bgcolor);
 	XSetBackground(xfc->display, xfc->gc, fgcolor);
-	XSetFillStyle(xfc->display, xfc->gc, FillStippled);
+
+	XSetFillStyle(xfc->display, xfc->gc, fOpRedundant ? FillOpaqueStippled : FillStippled);
 
 	xf_unlock_x11(xfc, FALSE);
 }
