@@ -25,7 +25,7 @@ include_directories(${ALSA_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
 	

@@ -81,7 +81,7 @@ if(WITH_SERVER_INTERFACE)
   if (WITH_LIBRARY_VERSIONING)
   	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
   endif()
-  set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "lib")
+  
 else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
 	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})

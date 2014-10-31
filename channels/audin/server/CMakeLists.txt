@@ -22,7 +22,7 @@ set(${MODULE_PREFIX}_SRCS
 
 add_channel_server_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "DVCPluginEntry")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+
 
 target_link_libraries(${MODULE_NAME} freerdp)
 

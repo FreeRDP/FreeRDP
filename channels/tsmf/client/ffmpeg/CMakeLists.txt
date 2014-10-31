@@ -25,7 +25,7 @@ include_directories(${FFMPEG_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
+
 
 if(APPLE)
     # For this to work on apple, we need to add some frameworks
