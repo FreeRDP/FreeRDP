@@ -94,6 +94,23 @@ list(REMOVE_DUPLICATES WINPR_DEFINITIONS)
 list(REMOVE_DUPLICATES WINPR_LIBS)
 list(REMOVE_DUPLICATES WINPR_INCLUDES)
 include_directories(${WINPR_INCLUDES})
+
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+if (WIN32)
+  set (RC_VERSION_MAJOR ${WINPR_VERSION_MAJOR})
+  set (RC_VERSION_MINOR ${WINPR_VERSION_MINOR})
+  set (RC_VERSION_BUILD ${WINPR_VERSION_REVISION})
+  set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+
+  configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+    @ONLY)
+
+  set (WINPR_SRCS ${WINPR_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+endif()
+
 add_library(${MODULE_NAME} ${WINPR_SRCS})
 set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
 if (WITH_LIBRARY_VERSIONING)

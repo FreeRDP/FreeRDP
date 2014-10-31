@@ -21,13 +21,24 @@ set(MODULE_PREFIX "FREERDP_SERVER")
 set(${MODULE_PREFIX}_SRCS
 	server.c)
 
-set(FREERDP_CHANNELS_SERVER_PATH "../../channels/server")
-foreach(FREERDP_CHANNELS_SERVER_SRC ${FREERDP_CHANNELS_SERVER_SRCS})
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} "${FREERDP_CHANNELS_SERVER_PATH}/${FREERDP_CHANNELS_SERVER_SRC}")
-endforeach()
-
 if(MSVC)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
+endif()
+
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+if (WIN32)
+  set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
+  set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
+  set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
+  set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+
+  configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+    @ONLY)
+
+  set (${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})

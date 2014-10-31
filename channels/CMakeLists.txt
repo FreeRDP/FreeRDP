@@ -158,7 +158,25 @@ macro(add_channel_client_library _module_prefix _module_name _channel_name _dyna
 	if(${_dynamic} AND MSVC AND (NOT STATIC_CHANNELS))
 		set(${_module_prefix}_SRCS ${${_module_prefix}_SRCS} module.def)
 	endif()
+
 	if(${_dynamic} AND (NOT STATIC_CHANNELS))
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+    if (WIN32)
+      set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
+      set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
+      set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
+      set (RC_VERSION_PATCH 0)
+      set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${_module_name}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+
+      configure_file(
+        ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+        ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+        @ONLY)
+
+      set ( ${_module_prefix}_SRCS ${${_module_prefix}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+    endif()
+
 		add_library(${_module_name} ${${_module_prefix}_SRCS})
 	else()
 		set(${_module_prefix}_STATIC ON PARENT_SCOPE)
@@ -174,6 +192,23 @@ macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_
 		set(${_module_prefix}_SRCS ${${_module_prefix}_SRCS} module.def)
 	endif()
 	if(${_dynamic} AND (NOT STATIC_CHANNELS))
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+    if (WIN32)
+      set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
+      set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
+      set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
+      set (RC_VERSION_PATCH 0)
+      set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${_module_name}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+
+      configure_file(
+        ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+        ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+        @ONLY)
+
+      set ( ${_module_prefix}_SRCS ${${_module_prefix}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+    endif()
+
 		add_library(${_module_name} ${${_module_prefix}_SRCS})
 	else()
 		set(${_module_prefix}_STATIC ON PARENT_SCOPE)
@@ -188,6 +223,22 @@ macro(add_channel_server_library _module_prefix _module_name _channel_name _dyna
 		set(${_module_prefix}_SRCS ${${_module_prefix}_SRCS} module.def)
 	endif()
 	if(${_dynamic} AND (NOT STATIC_CHANNELS))
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+    if (WIN32)
+      set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
+      set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
+      set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
+      set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${_module_name}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+
+      configure_file(
+        ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+        ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+        @ONLY)
+
+      set ( ${_module_prefix}_SRCS ${${_module_prefix}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+    endif()
+
 		add_library(${_module_name} ${${_module_prefix}_SRCS})
 	else()
 		set(${_module_prefix}_STATIC ON PARENT_SCOPE)

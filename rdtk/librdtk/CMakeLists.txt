@@ -37,6 +37,22 @@ set(${MODULE_PREFIX}_SRCS
 	rdtk_engine.c
 	rdtk_engine.h)
 
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+if (WIN32)
+  set (RC_VERSION_MAJOR ${RDTK_VERSION_MAJOR})
+  set (RC_VERSION_MINOR ${RDTK_VERSION_MINOR})
+  set (RC_VERSION_BUILD ${RDTK_VERSION_REVISION})
+  set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+
+  configure_file(
+    ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+    @ONLY)
+
+  set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+endif()
+
 add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 list(APPEND ${MODULE_PREFIX}_LIBS winpr)
