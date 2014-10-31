@@ -1049,7 +1049,11 @@ void* rdpgfx_get_cache_slot_data(RdpgfxClientContext* context, UINT16 cacheSlot)
 	return pData;
 }
 
-int rdpgfx_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+#ifdef STATIC_CHANNELS
+#define DVCPluginEntry		rdpgfx_DVCPluginEntry
+#endif
+
+int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	int status = 0;
 	RDPGFX_PLUGIN* gfx;

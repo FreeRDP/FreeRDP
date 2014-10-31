@@ -292,7 +292,11 @@ int disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors, DIS
 	return 1;
 }
 
-int disp_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+#ifdef STATIC_CHANNELS
+#define DVCPluginEntry		disp_DVCPluginEntry
+#endif
+
+int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	int error = 0;
 	DISP_PLUGIN* disp;

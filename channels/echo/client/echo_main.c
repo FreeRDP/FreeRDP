@@ -134,7 +134,11 @@ static int echo_plugin_terminated(IWTSPlugin* pPlugin)
 	return 0;
 }
 
-int echo_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+#ifdef STATIC_CHANNELS
+#define DVCPluginEntry		echo_DVCPluginEntry
+#endif
+
+int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	int status = 0;
 	ECHO_PLUGIN* echo;
