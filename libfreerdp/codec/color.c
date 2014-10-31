@@ -1508,9 +1508,10 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 
 			return 1;
 		}
-		else if (xorBpp == 32)
+		else if (xorBpp == 24 || xorBpp == 32)
 		{
-			xorStep = nWidth * 4;
+			int xorBytesPerPixel = xorBpp >> 3;
+			xorStep = nWidth * xorBytesPerPixel;
 			pDstPixel = (UINT32*) &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
 
 			for (y = 0; y < nHeight; y++)
@@ -1530,19 +1531,21 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 
 				for (x = 0; x < nWidth; x++)
 				{
-					xorPixel = *((UINT32*) xorBits);
-					xorBits += 4;
+					if (xorBpp == 32)
+						xorPixel = *((UINT32*) xorBits);
+					else
+						xorPixel = xorBits[0] | xorBits[1] << 8 | xorBits[2] << 16 | 0xFF << 24;
+
+					xorBits += xorBytesPerPixel;
 
 					andPixel = (*andBits & andBit) ? 1 : 0;
 					if (!(andBit >>= 1)) { andBits++; andBit = 0x80; }
 
-					xorPixel |= 0xFF000000;
-
 					if (andPixel)
 					{
-						if ((~xorPixel) & 0xFFFFFF) /* black */
+						if (xorPixel == 0xFF000000) /* black */
 							*pDstPixel++ = 0x00000000; /* transparent */
-						else if (xorPixel & 0xFFFFFF) /* white */
+						else if (xorPixel == 0xFFFFFFFF) /* white */
 							*pDstPixel++ = 0xFF000000; /* inverted (set as black) */
 						else
 							*pDstPixel++ = xorPixel;
