@@ -244,7 +244,7 @@ struct _POLYLINE_ORDER
 	INT32 yStart;
 	UINT32 bRop2;
 	UINT32 penColor;
-	UINT32 numPoints;
+	UINT32 numDeltaEntries;
 	UINT32 cbData;
 	DELTA_POINT* points;
 };

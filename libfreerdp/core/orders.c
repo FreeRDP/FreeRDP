@@ -1320,7 +1320,7 @@ BOOL update_read_polyline_order(wStream* s, ORDER_INFO* orderInfo, POLYLINE_ORDE
 	ORDER_FIELD_BYTE(3, polyline->bRop2);
 	ORDER_FIELD_UINT16(4, word);
 	ORDER_FIELD_COLOR(5, polyline->penColor);
-	ORDER_FIELD_BYTE(6, polyline->numPoints);
+	ORDER_FIELD_BYTE(6, polyline->numDeltaEntries);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 	{
@@ -1329,11 +1329,11 @@ BOOL update_read_polyline_order(wStream* s, ORDER_INFO* orderInfo, POLYLINE_ORDE
 		Stream_Read_UINT8(s, polyline->cbData);
 
 		if (polyline->points == NULL)
-			polyline->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * polyline->numPoints);
+			polyline->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * polyline->numDeltaEntries);
 		else
-			polyline->points = (DELTA_POINT*) realloc(polyline->points, sizeof(DELTA_POINT) * polyline->numPoints);
+			polyline->points = (DELTA_POINT*) realloc(polyline->points, sizeof(DELTA_POINT) * polyline->numDeltaEntries);
 
-		return update_read_delta_points(s, polyline->points, polyline->numPoints, polyline->xStart, polyline->yStart);
+		return update_read_delta_points(s, polyline->points, polyline->numDeltaEntries, polyline->xStart, polyline->yStart);
 	}
 
 	return TRUE;

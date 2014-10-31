@@ -764,7 +764,7 @@ static void gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 
 	points = polyline->points;
-	for (i = 0; i < (int) polyline->numPoints; i++)
+	for (i = 0; i < (int) polyline->numDeltaEntries; i++)
 	{
 		x += points[i].x;
 		y += points[i].y;

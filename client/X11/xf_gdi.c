@@ -733,6 +733,7 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	int npoints;
 	UINT32 color;
 	XPoint* points;
+	XPoint tmp;
 	int width, height;
 	xfContext* xfc = (xfContext*) context;
 
@@ -745,16 +746,18 @@ void xf_gdi_polyline(rdpContext* context, POLYLINE_ORDER* polyline)
 	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 	XSetForeground(xfc->display, xfc->gc, color);
 
-	npoints = polyline->numPoints + 1;
+	npoints = polyline->numDeltaEntries + 1;
 	points = malloc(sizeof(XPoint) * npoints);
 
-	points[0].x = polyline->xStart;
-	points[0].y = polyline->yStart;
+	points[0].x = tmp.x = polyline->xStart;
+	points[0].y = tmp.y = polyline->yStart;
 
-	for (i = 0; i < polyline->numPoints; i++)
+	for (i = 0; i < polyline->numDeltaEntries; i++)
 	{
-		points[i + 1].x = polyline->points[i].x;
-		points[i + 1].y = polyline->points[i].y;
+		tmp.x += polyline->points[i].x;
+		tmp.y += polyline->points[i].y;
+		points[i + 1].x = tmp.x;
+		points[i + 1].y = tmp.y;
 	}
 
 	XDrawLines(xfc->display, xfc->drawing, xfc->gc, points, npoints, CoordModePrevious);
