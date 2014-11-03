@@ -76,7 +76,7 @@
 #define CLOCK_REALTIME 0
 #define CLOCK_MONOTONIC 0
 
-int clock_gettime(int clk_id, struct timespec* t)
+int clock_gettime(int clk_id, struct timespec *t)
 {
 	UINT64 time;
 	double seconds;
@@ -141,7 +141,7 @@ static int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec
 }
 #endif
 
-static void ts_add_ms(struct timespec* ts, DWORD dwMilliseconds)
+static void ts_add_ms(struct timespec *ts, DWORD dwMilliseconds)
 {
 	ts->tv_sec += dwMilliseconds / 1000L;
 	ts->tv_nsec += (dwMilliseconds % 1000L) * 1000000L;
@@ -213,6 +213,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 		if (status != 1)
 			return WAIT_TIMEOUT;
 
+		pthread_mutex_lock(&thread->mutex);
+
 		if (!thread->joined)
 		{
 			status = pthread_join(thread->thread, NULL);
@@ -220,11 +222,13 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			if (status != 0)
 			{
 				WLog_ERR(TAG, "pthread_join failure: [%d] %s",
-						status, strerror(status));
+						 status, strerror(status));
 			}
 			else
 				thread->joined = TRUE;
 		}
+
+		pthread_mutex_unlock(&thread->mutex);
 	}
 	else if (Type == HANDLE_TYPE_PROCESS)
 	{
@@ -423,7 +427,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 	ULONG Type;
 	PVOID Object;
 #ifdef HAVE_POLL_H
-	struct pollfd* pollfds;
+	struct pollfd *pollfds;
 #else
 	int maxfd;
 	fd_set fds;
@@ -449,7 +453,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 #endif
 	signalled = 0;
 
-  do
+	do
 	{
 		if (bWaitAll && (dwMilliseconds != INFINITE))
 			clock_gettime(CLOCK_MONOTONIC, &starttime);
@@ -492,8 +496,8 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 #ifdef WINPR_PIPE_SEMAPHORE
 				fd = ((WINPR_SEMAPHORE *) Object)->pipe_fd[0];
 #else
-			WLog_ERR(TAG, "semaphore not supported");
-			return WAIT_FAILED;
+				WLog_ERR(TAG, "semaphore not supported");
+				return WAIT_FAILED;
 #endif
 			}
 			else if (Type == HANDLE_TYPE_TIMER)
@@ -584,10 +588,10 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 		{
 #ifdef HAVE_POLL_H
 			WLog_ERR(TAG, "poll() failure [%d] %s", errno,
-					strerror(errno));
+					 strerror(errno));
 #else
 			WLog_ERR(TAG, "select() failure [%d] %s", errno,
-					strerror(errno));
+					 strerror(errno));
 #endif
 			return WAIT_FAILED;
 		}
@@ -685,6 +689,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 				else if (Type == HANDLE_TYPE_THREAD)
 				{
 					WINPR_THREAD *thread = (WINPR_THREAD *)Object;
+					pthread_mutex_lock(&thread->mutex);
 
 					if (!thread->joined)
 					{
@@ -694,12 +699,14 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 						if (status != 0)
 						{
 							WLog_ERR(TAG, "pthread_join failure: [%d] %s",
-									status, strerror(status));
+									 status, strerror(status));
 							return WAIT_FAILED;
 						}
 						else
 							thread->joined = TRUE;
 					}
+
+					pthread_mutex_unlock(&thread->mutex);
 				}
 
 				if (bWaitAll)
