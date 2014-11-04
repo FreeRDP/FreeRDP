@@ -689,7 +689,6 @@ BOOL WINAPI Win32_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CLAS
 VOID WINAPI Win32_WTSFreeMemory(PVOID pMemory)
 {
 	LocalFree(pMemory);
-	return TRUE;
 }
 
 BOOL WINAPI Win32_WTSFreeMemoryExW(WTS_TYPE_CLASS WTSTypeClass, PVOID pMemory, ULONG NumberOfEntries)

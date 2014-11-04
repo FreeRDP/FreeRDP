@@ -23,8 +23,10 @@
 #include "config.h"
 #endif
 
-#include <winpr/environment.h>
+#include <winpr/crt.h>
 #include <winpr/error.h>
+
+#include <winpr/environment.h>
 
 #ifndef _WIN32
 
@@ -326,7 +328,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 		if (mergeStringLength == mergeArraySize)
 		{
 			mergeArraySize += 128;
-			mergeStrings = (LPCSTR*) realloc(mergeStrings, mergeArraySize * sizeof(char*));
+			mergeStrings = (const char**) realloc((void*) mergeStrings, mergeArraySize * sizeof(char*));
 
 			if (!mergeStrings)
 				return NULL;
@@ -441,7 +443,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 	lpszEnvironmentBlock[offset] = '\0';
 
-	free(mergeStrings);
+	free((void*) mergeStrings);
 
 	return lpszEnvironmentBlock;
 }
