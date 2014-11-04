@@ -68,6 +68,7 @@ struct _BITMAP_UPDATE
 	UINT32 count;
 	UINT32 number;
 	BITMAP_DATA* rectangles;
+	BOOL skipCompression;
 };
 typedef struct _BITMAP_UPDATE BITMAP_UPDATE;
 
@@ -104,6 +105,7 @@ struct _SURFACE_BITS_COMMAND
 	UINT32 height;
 	UINT32 bitmapDataLength;
 	BYTE* bitmapData;
+	BOOL skipCompression;
 };
 typedef struct _SURFACE_BITS_COMMAND SURFACE_BITS_COMMAND;
 
