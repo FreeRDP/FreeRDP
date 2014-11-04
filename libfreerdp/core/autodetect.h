@@ -39,6 +39,10 @@ rdpAutoDetect* autodetect_new(void);
 void autodetect_free(rdpAutoDetect* autodetect);
 
 void autodetect_register_server_callbacks(rdpAutoDetect* autodetect);
+BOOL autodetect_send_connecttime_rtt_measure_request(rdpContext* context, UINT16 sequenceNumber);
+BOOL autodetect_send_connecttime_bandwidth_measure_start(rdpContext* context, UINT16 sequenceNumber);
+BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 payloadLength, UINT16 sequenceNumber);
+BOOL autodetect_send_connecttime_bandwidth_measure_stop(rdpContext* context, UINT16 payloadLength, UINT16 sequenceNumber);
 
 #define AUTODETECT_TAG FREERDP_TAG("core.autodetect")
 
