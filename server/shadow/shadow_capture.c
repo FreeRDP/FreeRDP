@@ -94,10 +94,10 @@ int shadow_capture_compare(BYTE* pData1, int nStep1, int nWidth, int nHeight, BY
 	BOOL grid[1024][1024];
 
 	allEqual = TRUE;
+	ZeroMemory(rect, sizeof(RECTANGLE_16));
 	FillMemory(rows, sizeof(rows), 0xFF);
 	FillMemory(cols, sizeof(cols), 0xFF);
 	FillMemory(grid, sizeof(grid), 0xFF);
-	ZeroMemory(rect, sizeof(RECTANGLE_16));
 
 	nrow = (nHeight + 15) / 16;
 	ncol = (nWidth + 15) / 16;

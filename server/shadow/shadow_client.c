@@ -162,6 +162,9 @@ BOOL shadow_client_post_connect(freerdp_peer* peer)
 	if (settings->ColorDepth == 24)
 		settings->ColorDepth = 16; /* disable 24bpp */
 
+	if (settings->MultifragMaxRequestSize < 0x3F0000)
+		settings->NSCodec = FALSE; /* NSCodec compressor does not support fragmentation yet */
+
 	WLog_ERR(TAG, "Client from %s is activated (%dx%d@%d)",
 			peer->hostname, settings->DesktopWidth, settings->DesktopHeight, settings->ColorDepth);
 
@@ -266,7 +269,7 @@ BOOL shadow_client_activate(freerdp_peer* peer)
 	rdpSettings* settings = peer->settings;
 	rdpShadowClient* client = (rdpShadowClient*) peer->context;
 
-	if (strcmp(settings->ClientDir, "librdp") == 0)
+	if (settings->ClientDir && (strcmp(settings->ClientDir, "librdp") == 0))
 	{
 		/* Hack for Mac/iOS/Android Microsoft RDP clients */
 
@@ -595,10 +598,47 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 
 	if (updateSizeEstimate > maxUpdateSize)
 	{
-		fprintf(stderr, "update size estimate larger than maximum update size\n");
-	}
+		UINT32 i, j;
+		UINT32 updateSize;
+		UINT32 newUpdateSize;
+		BITMAP_DATA* fragBitmapData;
 
-	IFCALL(update->BitmapUpdate, context, &bitmapUpdate);
+		fragBitmapData = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * k);
+		bitmapUpdate.rectangles = fragBitmapData;
+
+		i = j = 0;
+		updateSize = 1024;
+
+		while (i < k)
+		{
+			newUpdateSize = updateSize + (bitmapData[i].bitmapLength + 16);
+
+			if ((newUpdateSize < maxUpdateSize) && ((i + 1) < k))
+			{
+				CopyMemory(&fragBitmapData[j++], &bitmapData[i++], sizeof(BITMAP_DATA));
+				updateSize = newUpdateSize;
+			}
+			else
+			{
+				if ((i + 1) >= k)
+				{
+					CopyMemory(&fragBitmapData[j++], &bitmapData[i++], sizeof(BITMAP_DATA));
+					updateSize = newUpdateSize;
+				}
+				
+				bitmapUpdate.count = bitmapUpdate.number = j;
+				IFCALL(update->BitmapUpdate, context, &bitmapUpdate);
+				updateSize = 1024;
+				j = 0;
+			}
+		}
+
+		free(fragBitmapData);
+	}
+	else
+	{
+		IFCALL(update->BitmapUpdate, context, &bitmapUpdate);
+	}
 
 	free(bitmapData);
 
