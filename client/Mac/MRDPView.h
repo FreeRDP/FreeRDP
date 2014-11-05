@@ -51,8 +51,8 @@
 	BOOL skipMoveWindowOnce;
 	
 @public
-	NSPasteboard* pasteboard_rd; /* for reading from clipboard */
-	NSPasteboard* pasteboard_wr; /* for writing to clipboard */
+	NSPasteboard* pasteboard_rd;
+	NSPasteboard* pasteboard_wr;
 	int pasteboard_changecount;
 	int pasteboard_format;
 	int is_connected;
@@ -63,6 +63,8 @@
 - (void) setScrollOffset:(int)xOffset y:(int)yOffset w:(int)width h:(int)height;
 
 - (void) onPasteboardTimerFired :(NSTimer *) timer;
+- (void) pause;
+- (void) resume;
 - (void) releaseResources;
 
 @property (assign) int is_connected;
