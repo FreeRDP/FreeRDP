@@ -83,6 +83,10 @@
 #define PDU_TYPE_DATA						0x7
 #define PDU_TYPE_SERVER_REDIRECTION				0xA
 
+#define PDU_TYPE_FLOW_TEST					0x41
+#define PDU_TYPE_FLOW_STOP					0x42
+#define PDU_TYPE_FLOW_RESPONSE					0x43
+
 #define FINALIZE_SC_SYNCHRONIZE_PDU				0x01
 #define FINALIZE_SC_CONTROL_COOPERATE_PDU			0x02
 #define FINALIZE_SC_CONTROL_GRANTED_PDU				0x04
@@ -205,6 +209,8 @@ BOOL rdp_send_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 sec_flags);
 int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s);
 
 int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
+
+void rdp_read_flow_control_pdu(wStream* s, UINT16* type);
 
 void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking);
 int rdp_check_fds(rdpRdp* rdp);
