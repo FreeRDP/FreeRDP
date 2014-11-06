@@ -736,10 +736,144 @@ int shadow_client_surface_update(rdpShadowClient* client, REGION16* region)
 	return 1;
 }
 
+int shadow_client_convert_alpha_pointer_data(BYTE* pixels, BOOL premultiplied,
+		UINT32 width, UINT32 height, POINTER_COLOR_UPDATE* pointerColor)
+{
+	UINT32 x, y;
+	BYTE* pSrc8;
+	BYTE* pDst8;
+	int xorStep;
+	int andStep;
+	UINT32 andBit;
+	BYTE* andBits;
+	UINT32 andPixel;
+	BYTE A, R, G, B;
+
+	xorStep = (width * 3);
+	xorStep += (xorStep % 2);
+
+	andStep = ((width + 7) / 8);
+	andStep += (andStep % 2);
+
+	pointerColor->lengthXorMask = height * xorStep;
+	pointerColor->xorMaskData = (BYTE*) calloc(1, pointerColor->lengthXorMask);
+
+	if (!pointerColor->xorMaskData)
+		return -1;
+
+	pointerColor->lengthAndMask = height * andStep;
+	pointerColor->andMaskData = (BYTE*) calloc(1, pointerColor->lengthAndMask);
+
+	if (!pointerColor->andMaskData)
+		return -1;
+
+	for (y = 0; y < height; y++)
+	{
+		pSrc8 = &pixels[(width * 4) * (height - 1 - y)];
+		pDst8 = &(pointerColor->xorMaskData[y * xorStep]);
+
+		andBit = 0x80;
+		andBits = &(pointerColor->andMaskData[andStep * y]);
+
+		for (x = 0; x < width; x++)
+		{
+			B = *pSrc8++;
+			G = *pSrc8++;
+			R = *pSrc8++;
+			A = *pSrc8++;
+
+			andPixel = 0;
+
+			if (A < 64)
+				A = 0; /* pixel cannot be partially transparent */
+
+			if (!A)
+			{
+				/* transparent pixel: XOR = black, AND = 1 */
+				andPixel = 1;
+				B = G = R = 0;
+			}
+			else
+			{
+				if (premultiplied)
+				{
+					B = (B * 0xFF ) / A;
+					G = (G * 0xFF ) / A;
+					R = (R * 0xFF ) / A;
+				}
+			}
+
+			*pDst8++ = B;
+			*pDst8++ = G;
+			*pDst8++ = R;
+
+			if (andPixel) *andBits |= andBit;
+			if (!(andBit >>= 1)) { andBits++; andBit = 0x80; }
+		}
+	}
+
+	return 1;
+}
+
+int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* message)
+{
+	rdpContext* context = (rdpContext*) client;
+	rdpUpdate* update = context->update;
+
+	/* FIXME: the pointer updates appear to be broken when used with bulk compression and mstsc */
+
+	if (message->id == SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID)
+	{
+		POINTER_POSITION_UPDATE pointerPosition;
+		SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg = (SHADOW_MSG_OUT_POINTER_POSITION_UPDATE*) message->wParam;
+
+		pointerPosition.xPos = msg->xPos;
+		pointerPosition.yPos = msg->yPos;
+
+		if (0)
+		{
+			IFCALL(update->pointer->PointerPosition, context, &pointerPosition);
+		}
+
+		free(msg);
+	}
+	else if (message->id == SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID)
+	{
+		POINTER_NEW_UPDATE pointerNew;
+		POINTER_COLOR_UPDATE* pointerColor;
+		SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* msg = (SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*) message->wParam;
+
+		ZeroMemory(&pointerNew, sizeof(POINTER_NEW_UPDATE));
+
+		pointerNew.xorBpp = 24;
+		pointerColor = &(pointerNew.colorPtrAttr);
+
+		pointerColor->cacheIndex = 0;
+		pointerColor->xPos = msg->xHot;
+		pointerColor->yPos = msg->yHot;
+		pointerColor->width = msg->width;
+		pointerColor->height = msg->height;
+
+		shadow_client_convert_alpha_pointer_data(msg->pixels, msg->premultiplied,
+				msg->width, msg->height, pointerColor);
+
+		if (0)
+		{
+			IFCALL(update->pointer->PointerNew, context, &pointerNew);
+		}
+
+		free(msg->pixels);
+		free(msg);
+	}
+
+	return 1;
+}
+
 void* shadow_client_thread(rdpShadowClient* client)
 {
 	DWORD status;
 	DWORD nCount;
+	wMessage message;
 	HANDLE events[32];
 	HANDLE StopEvent;
 	HANDLE ClientEvent;
@@ -752,6 +886,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 	rdpShadowScreen* screen;
 	rdpShadowEncoder* encoder;
 	rdpShadowSubsystem* subsystem;
+	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
 
 	server = client->server;
 	screen = server->screen;
@@ -786,6 +921,7 @@ void* shadow_client_thread(rdpShadowClient* client)
 		events[nCount++] = UpdateEvent;
 		events[nCount++] = ClientEvent;
 		events[nCount++] = ChannelEvent;
+		events[nCount++] = MessageQueue_Event(MsgPipe->Out);
 
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
@@ -833,10 +969,21 @@ void* shadow_client_thread(rdpShadowClient* client)
 
 		if (WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0)
 		{
-			if (WTSVirtualChannelManagerCheckFileDescriptor(client->vcm) != TRUE)
+			if (!WTSVirtualChannelManagerCheckFileDescriptor(client->vcm))
 			{
 				WLog_ERR(TAG, "WTSVirtualChannelManagerCheckFileDescriptor failure");
 				break;
+			}
+		}
+
+		if (WaitForSingleObject(MessageQueue_Event(MsgPipe->Out), 0) == WAIT_OBJECT_0)
+		{
+			if (MessageQueue_Peek(MsgPipe->Out, &message, TRUE))
+			{
+				if (message.id == WMQ_QUIT)
+					break;
+
+				shadow_client_subsystem_process_message(client, &message);
 			}
 		}
 	}

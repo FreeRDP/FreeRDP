@@ -341,6 +341,55 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 #endif
 }
 
+int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
+{
+	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg;
+	UINT32 msgId = SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID;
+	wMessagePipe* MsgPipe = subsystem->MsgPipe;
+
+	msg = (SHADOW_MSG_OUT_POINTER_POSITION_UPDATE*) calloc(1, sizeof(SHADOW_MSG_OUT_POINTER_POSITION_UPDATE));
+
+	if (!msg)
+		return -1;
+
+	msg->xPos = subsystem->cursorX;
+	msg->yPos = subsystem->cursorY;
+
+	MessageQueue_Post(MsgPipe->Out, NULL, msgId, (void*) msg, NULL);
+
+	return 1;
+}
+
+int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
+{
+	SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* msg;
+	UINT32 msgId = SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID;
+	wMessagePipe* MsgPipe = subsystem->MsgPipe;
+
+	msg = (SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*) calloc(1, sizeof(SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE));
+
+	if (!msg)
+		return -1;
+
+	msg->xHot = subsystem->cursorHotX;
+	msg->yHot = subsystem->cursorHotY;
+	msg->width = subsystem->cursorWidth;
+	msg->height = subsystem->cursorHeight;
+	msg->scanline = msg->width * 4;
+
+	msg->pixels = (BYTE*) malloc(msg->scanline * msg->height);
+
+	if (!msg->pixels)
+		return -1;
+
+	CopyMemory(msg->pixels, subsystem->cursorPixels, msg->scanline * msg->height);
+	msg->premultiplied = TRUE;
+
+	MessageQueue_Post(MsgPipe->Out, NULL, msgId, (void*) msg, NULL);
+
+	return 1;
+}
+
 int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 {
 	int x, y, n, k;
@@ -385,6 +434,8 @@ int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 		}
 
 		XFree(ci);
+
+		x11_shadow_pointer_alpha_update(subsystem);
 #endif
 	}
 	else
@@ -406,6 +457,8 @@ int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 
 	subsystem->cursorX = x;
 	subsystem->cursorY = y;
+
+	x11_shadow_pointer_position_update(subsystem);
 
 	return 1;
 }
@@ -633,7 +686,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
 				image->bytes_per_line, x, y, NULL);
 
-		x11_shadow_blend_cursor(subsystem);
+		//x11_shadow_blend_cursor(subsystem);
 
 		count = ArrayList_Count(server->clients);
 
