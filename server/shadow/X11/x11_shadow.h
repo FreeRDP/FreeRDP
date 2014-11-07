@@ -80,8 +80,6 @@ struct x11_shadow_subsystem
 	Window root_window;
 	XShmSegmentInfo fb_shm_info;
 
-	int cursorX;
-	int cursorY;
 	int cursorHotX;
 	int cursorHotY;
 	int cursorWidth;

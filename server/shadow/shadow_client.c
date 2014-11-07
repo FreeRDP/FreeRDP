@@ -56,6 +56,8 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 	settings->DrawAllowColorSubsampling = TRUE;
 	settings->DrawAllowDynamicColorFidelity = TRUE;
 
+	settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
+
 	settings->RdpSecurity = TRUE;
 	settings->TlsSecurity = TRUE;
 	settings->NlaSecurity = FALSE;
@@ -830,9 +832,12 @@ int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* m
 		pointerPosition.xPos = msg->xPos;
 		pointerPosition.yPos = msg->yPos;
 
-		if (0)
+		if ((msg->xPos != client->pointerX) || (msg->yPos != client->pointerY))
 		{
 			IFCALL(update->pointer->PointerPosition, context, &pointerPosition);
+
+			client->pointerX = msg->xPos;
+			client->pointerY = msg->yPos;
 		}
 
 		free(msg);
@@ -841,6 +846,7 @@ int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* m
 	{
 		POINTER_NEW_UPDATE pointerNew;
 		POINTER_COLOR_UPDATE* pointerColor;
+		POINTER_CACHED_UPDATE pointerCached;
 		SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* msg = (SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*) message->wParam;
 
 		ZeroMemory(&pointerNew, sizeof(POINTER_NEW_UPDATE));
@@ -854,13 +860,16 @@ int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* m
 		pointerColor->width = msg->width;
 		pointerColor->height = msg->height;
 
+		pointerCached.cacheIndex = pointerColor->cacheIndex;
+
 		shadow_client_convert_alpha_pointer_data(msg->pixels, msg->premultiplied,
 				msg->width, msg->height, pointerColor);
 
-		if (0)
-		{
-			IFCALL(update->pointer->PointerNew, context, &pointerNew);
-		}
+		IFCALL(update->pointer->PointerNew, context, &pointerNew);
+		IFCALL(update->pointer->PointerCached, context, &pointerCached);
+
+		free(pointerColor->xorMaskData);
+		free(pointerColor->andMaskData);
 
 		free(msg->pixels);
 		free(msg);
