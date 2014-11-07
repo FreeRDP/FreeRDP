@@ -123,12 +123,15 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 	UINT32 chunkSize;
 	UINT32 maxChunkSize;
 	UINT32 totalLength;
+	rdpPeerChannel* peerChannel;
+	rdpMcsChannel* mcsChannel;
 	rdpRdp* rdp = client->context->rdp;
-	rdpPeerChannel* peerChannel = (rdpPeerChannel*) hChannel;
-	rdpMcsChannel* mcsChannel = peerChannel->mcsChannel;
 
 	if (!hChannel)
 		return -1;
+
+	peerChannel = (rdpPeerChannel*) hChannel;
+	mcsChannel = peerChannel->mcsChannel;
 
 	if (peerChannel->channelFlags & WTS_CHANNEL_OPTION_DYNAMIC)
 		return -1; /* not yet supported */
