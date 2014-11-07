@@ -20,6 +20,15 @@
 #ifndef FREERDP_CHANNEL_CLIENT_TSMF_H
 #define FREERDP_CHANNEL_CLIENT_TSMF_H
 
+#include <freerdp/codec/region.h>
+
+#include <freerdp/channels/tsmf.h>
+
+/* RDP_VIDEO_FRAME_EVENT.frame_pixfmt */
+/* http://www.fourcc.org/yuv.php */
+#define RDP_PIXFMT_I420		0x30323449
+#define RDP_PIXFMT_YV12		0x32315659
+
 struct _RDP_VIDEO_FRAME_EVENT
 {
 	wMessage event;
@@ -37,19 +46,36 @@ struct _RDP_VIDEO_FRAME_EVENT
 };
 typedef struct _RDP_VIDEO_FRAME_EVENT RDP_VIDEO_FRAME_EVENT;
 
-struct _RDP_REDRAW_EVENT
+struct _TSMF_VIDEO_FRAME_EVENT
 {
-	wMessage event;
+	BYTE* frameData;
+	UINT32 frameSize;
+	UINT32 framePixFmt;
+	INT16 frameWidth;
+	INT16 frameHeight;
 	INT16 x;
 	INT16 y;
 	INT16 width;
 	INT16 height;
+	UINT16 numVisibleRects;
+	RECTANGLE_16* visibleRects;
 };
-typedef struct _RDP_REDRAW_EVENT RDP_REDRAW_EVENT;
+typedef struct _TSMF_VIDEO_FRAME_EVENT TSMF_VIDEO_FRAME_EVENT;
 
-/* RDP_VIDEO_FRAME_EVENT.frame_pixfmt */
-/* http://www.fourcc.org/yuv.php */
-#define RDP_PIXFMT_I420		0x30323449
-#define RDP_PIXFMT_YV12		0x32315659
+/**
+ * Client Interface
+ */
+
+typedef struct _tsmf_client_context TsmfClientContext;
+
+typedef int (*pcTsmfFrameEvent)(TsmfClientContext* context, TSMF_VIDEO_FRAME_EVENT* event);
+
+struct _tsmf_client_context
+{
+	void* handle;
+	void* custom;
+
+	pcTsmfFrameEvent FrameEvent;
+};
 
 #endif /* FREERDP_CHANNEL_CLIENT_TSMF_H */

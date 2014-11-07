@@ -65,127 +65,7 @@ struct xf_xv_context
 #define DEBUG_XV(fmt, ...) do { } while (0)
 #endif
 
-void xf_tsmf_init(xfContext* xfc, long xv_port)
-{
-	int ret;
-	unsigned int i;
-	unsigned int version;
-	unsigned int release;
-	unsigned int event_base;
-	unsigned int error_base;
-	unsigned int request_base;
-	unsigned int num_adaptors;
-	xfXvContext* xv;
-	XvAdaptorInfo* ai;
-	XvAttribute* attr;
-	XvImageFormatValues* fo;
-
-	xv = (xfXvContext*) malloc(sizeof(xfXvContext));
-	ZeroMemory(xv, sizeof(xfXvContext));
-
-	xfc->xv_context = xv;
-
-	xv->xv_colorkey_atom = None;
-	xv->xv_image_size = 0;
-	xv->xv_port = xv_port;
-
-	if (!XShmQueryExtension(xfc->display))
-	{
-		DEBUG_XV("no shmem available.");
-		return;
-	}
-
-	ret = XvQueryExtension(xfc->display, &version, &release, &request_base, &event_base, &error_base);
-	if (ret != Success)
-	{
-		DEBUG_XV("XvQueryExtension failed %d.", ret);
-		return;
-	}
-	DEBUG_XV("version %u release %u", version, release);
-
-	ret = XvQueryAdaptors(xfc->display, DefaultRootWindow(xfc->display),
-		&num_adaptors, &ai);
-	if (ret != Success)
-	{
-		DEBUG_XV("XvQueryAdaptors failed %d.", ret);
-		return;
-	}
-
-	for (i = 0; i < num_adaptors; i++)
-	{
-		DEBUG_XV("adapter port %ld-%ld (%s)", ai[i].base_id,
-			ai[i].base_id + ai[i].num_ports - 1, ai[i].name);
-		if (xv->xv_port == 0 && i == num_adaptors - 1)
-			xv->xv_port = ai[i].base_id;
-	}
-
-	if (num_adaptors > 0)
-		XvFreeAdaptorInfo(ai);
-
-	if (xv->xv_port == 0)
-	{
-		DEBUG_XV("no adapter selected, video frames will not be processed.");
-		return;
-	}
-	DEBUG_XV("selected %ld", xv->xv_port);
-
-	attr = XvQueryPortAttributes(xfc->display, xv->xv_port, &ret);
-	for (i = 0; i < (unsigned int)ret; i++)
-	{
-		if (strcmp(attr[i].name, "XV_COLORKEY") == 0)
-		{
-			xv->xv_colorkey_atom = XInternAtom(xfc->display, "XV_COLORKEY", FALSE);
-			XvSetPortAttribute(xfc->display, xv->xv_port, xv->xv_colorkey_atom, attr[i].min_value + 1);
-			break;
-		}
-	}
-	XFree(attr);
-
-#ifdef WITH_DEBUG_XV
-	WLog_DBG(TAG, "xf_tsmf_init: pixel format ");
-#endif
-	fo = XvListImageFormats(xfc->display, xv->xv_port, &ret);
-	if (ret > 0)
-	{
-		xv->xv_pixfmts = (UINT32*) malloc((ret + 1) * sizeof(UINT32));
-		ZeroMemory(xv->xv_pixfmts, (ret + 1) * sizeof(UINT32));
-
-		for (i = 0; i < ret; i++)
-		{
-			xv->xv_pixfmts[i] = fo[i].id;
-#ifdef WITH_DEBUG_XV
-			WLog_DBG(TAG, "%c%c%c%c ", ((char*)(xv->xv_pixfmts + i))[0], ((char*)(xv->xv_pixfmts + i))[1],
-					 ((char*)(xv->xv_pixfmts + i))[2], ((char*)(xv->xv_pixfmts + i))[3]);
-#endif
-		}
-		xv->xv_pixfmts[i] = 0;
-	}
-	XFree(fo);
-}
-
-void xf_tsmf_uninit(xfContext* xfc)
-{
-	xfXvContext* xv = (xfXvContext*) xfc->xv_context;
-
-	if (xv)
-	{
-		if (xv->xv_image_size > 0)
-		{
-			shmdt(xv->xv_shmaddr);
-			shmctl(xv->xv_shmid, IPC_RMID, NULL);
-		}
-		if (xv->xv_pixfmts)
-		{
-			free(xv->xv_pixfmts);
-			xv->xv_pixfmts = NULL;
-		}
-		free(xv);
-		xfc->xv_context = NULL;
-	}
-}
-
-static BOOL
-xf_tsmf_is_format_supported(xfXvContext* xv, UINT32 pixfmt)
+static BOOL xf_tsmf_is_format_supported(xfXvContext* xv, UINT32 pixfmt)
 {
 	int i;
 
@@ -367,12 +247,12 @@ static void xf_process_tsmf_video_frame_event(xfContext* xfc, RDP_VIDEO_FRAME_EV
 	XFree(image);
 }
 
-static void xf_process_tsmf_redraw_event(xfContext* xfc, RDP_REDRAW_EVENT* revent)
+int xf_tsmf_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT* event)
 {
-	XSetFunction(xfc->display, xfc->gc, GXcopy);
-	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-	XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc,
-		revent->x, revent->y, revent->width, revent->height, revent->x, revent->y);
+	//xfContext* xfc = (xfContext*) tsmf->custom;
+	//xfXvContext* xv = (xfXvContext*) xfc->xv_context;
+
+	return 1;
 }
 
 void xf_process_tsmf_event(xfContext* xfc, wMessage* event)
@@ -380,13 +260,134 @@ void xf_process_tsmf_event(xfContext* xfc, wMessage* event)
 	switch (GetMessageType(event->id))
 	{
 		case TsmfChannel_VideoFrame:
+			fprintf(stderr, "TsmfVideoFrame\n");
 			xf_process_tsmf_video_frame_event(xfc, (RDP_VIDEO_FRAME_EVENT*) event);
 			break;
+	}
+}
 
-		case TsmfChannel_Redraw:
-			xf_process_tsmf_redraw_event(xfc, (RDP_REDRAW_EVENT*) event);
+void xf_tsmf_init(xfContext* xfc, long xv_port)
+{
+	int ret;
+	unsigned int i;
+	unsigned int version;
+	unsigned int release;
+	unsigned int event_base;
+	unsigned int error_base;
+	unsigned int request_base;
+	unsigned int num_adaptors;
+	xfXvContext* xv;
+	XvAdaptorInfo* ai;
+	XvAttribute* attr;
+	XvImageFormatValues* fo;
+
+	xv = (xfXvContext*) calloc(1, sizeof(xfXvContext));
+
+	if (!xv)
+		return;
+
+	xfc->xv_context = xv;
+
+	xv->xv_colorkey_atom = None;
+	xv->xv_image_size = 0;
+	xv->xv_port = xv_port;
+
+	if (!XShmQueryExtension(xfc->display))
+	{
+		DEBUG_XV("no xshm available.");
+		return;
+	}
+
+	ret = XvQueryExtension(xfc->display, &version, &release, &request_base, &event_base, &error_base);
+
+	if (ret != Success)
+	{
+		DEBUG_XV("XvQueryExtension failed %d.", ret);
+		return;
+	}
+
+	DEBUG_XV("version %u release %u", version, release);
+
+	ret = XvQueryAdaptors(xfc->display, DefaultRootWindow(xfc->display),
+		&num_adaptors, &ai);
+
+	if (ret != Success)
+	{
+		DEBUG_XV("XvQueryAdaptors failed %d.", ret);
+		return;
+	}
+
+	for (i = 0; i < num_adaptors; i++)
+	{
+		DEBUG_XV("adapter port %ld-%ld (%s)", ai[i].base_id,
+			ai[i].base_id + ai[i].num_ports - 1, ai[i].name);
+		if (xv->xv_port == 0 && i == num_adaptors - 1)
+			xv->xv_port = ai[i].base_id;
+	}
+
+	if (num_adaptors > 0)
+		XvFreeAdaptorInfo(ai);
+
+	if (xv->xv_port == 0)
+	{
+		DEBUG_XV("no adapter selected, video frames will not be processed.");
+		return;
+	}
+	DEBUG_XV("selected %ld", xv->xv_port);
+
+	attr = XvQueryPortAttributes(xfc->display, xv->xv_port, &ret);
+
+	for (i = 0; i < (unsigned int)ret; i++)
+	{
+		if (strcmp(attr[i].name, "XV_COLORKEY") == 0)
+		{
+			xv->xv_colorkey_atom = XInternAtom(xfc->display, "XV_COLORKEY", FALSE);
+			XvSetPortAttribute(xfc->display, xv->xv_port, xv->xv_colorkey_atom, attr[i].min_value + 1);
 			break;
+		}
+	}
+	XFree(attr);
 
+#ifdef WITH_DEBUG_XV
+	WLog_DBG(TAG, "xf_tsmf_init: pixel format ");
+#endif
+	fo = XvListImageFormats(xfc->display, xv->xv_port, &ret);
+	if (ret > 0)
+	{
+		xv->xv_pixfmts = (UINT32*) malloc((ret + 1) * sizeof(UINT32));
+		ZeroMemory(xv->xv_pixfmts, (ret + 1) * sizeof(UINT32));
+
+		for (i = 0; i < ret; i++)
+		{
+			xv->xv_pixfmts[i] = fo[i].id;
+#ifdef WITH_DEBUG_XV
+			WLog_DBG(TAG, "%c%c%c%c ", ((char*)(xv->xv_pixfmts + i))[0], ((char*)(xv->xv_pixfmts + i))[1],
+					 ((char*)(xv->xv_pixfmts + i))[2], ((char*)(xv->xv_pixfmts + i))[3]);
+#endif
+		}
+		xv->xv_pixfmts[i] = 0;
+	}
+	XFree(fo);
+}
+
+void xf_tsmf_uninit(xfContext* xfc)
+{
+	xfXvContext* xv = (xfXvContext*) xfc->xv_context;
+
+	if (xv)
+	{
+		if (xv->xv_image_size > 0)
+		{
+			shmdt(xv->xv_shmaddr);
+			shmctl(xv->xv_shmid, IPC_RMID, NULL);
+		}
+		if (xv->xv_pixfmts)
+		{
+			free(xv->xv_pixfmts);
+			xv->xv_pixfmts = NULL;
+		}
+		free(xv);
+		xfc->xv_context = NULL;
 	}
 }
 

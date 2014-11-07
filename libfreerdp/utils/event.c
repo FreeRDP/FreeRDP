@@ -118,18 +118,13 @@ static wMessage* freerdp_tsmf_event_new(UINT16 event_type)
 	} event;
 
 	event.m = NULL;
+
 	switch (event_type)
 	{
 		case TsmfChannel_VideoFrame:
 			event.v = malloc(sizeof(RDP_VIDEO_FRAME_EVENT));
 			ZeroMemory(event.v, sizeof(RDP_VIDEO_FRAME_EVENT));
 			event.m->id = MakeMessageId(TsmfChannel, VideoFrame);
-			break;
-
-		case TsmfChannel_Redraw:
-			event.v = malloc(sizeof(RDP_REDRAW_EVENT));
-			ZeroMemory(event.v, sizeof(RDP_REDRAW_EVENT));
-			event.m->id = MakeMessageId(TsmfChannel, Redraw);
 			break;
 	}
 

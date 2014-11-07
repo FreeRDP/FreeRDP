@@ -220,13 +220,13 @@ static void tsmf_sample_free(void *arg)
 	free(sample);
 }
 
-static void tsmf_sample_ack(TSMF_SAMPLE *sample)
+static void tsmf_sample_ack(TSMF_SAMPLE* sample)
 {
 	assert(sample);
 	tsmf_playback_ack(sample->channel_callback, sample->sample_id, sample->duration, sample->data_size);
 }
 
-static void tsmf_sample_queue_ack(TSMF_SAMPLE *sample)
+static void tsmf_sample_queue_ack(TSMF_SAMPLE* sample)
 {
 	assert(sample);
 	assert(sample->stream);
@@ -262,7 +262,7 @@ finally:
 	return rc;
 }
 
-TSMF_PRESENTATION *tsmf_presentation_new(const BYTE *guid, IWTSVirtualChannelCallback *pChannelCallback)
+TSMF_PRESENTATION* tsmf_presentation_new(const BYTE *guid, IWTSVirtualChannelCallback *pChannelCallback)
 {
 	TSMF_PRESENTATION *presentation;
 	assert(guid);
@@ -325,12 +325,14 @@ TSMF_PRESENTATION *tsmf_presentation_find_by_id(const BYTE *guid)
 	return (found) ? presentation : NULL;
 }
 
-static void tsmf_sample_playback_video(TSMF_SAMPLE *sample)
+static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 {
 	UINT64 t;
-	RDP_VIDEO_FRAME_EVENT *vevent;
-	TSMF_STREAM *stream = sample->stream;
-	TSMF_PRESENTATION *presentation = stream->presentation;
+	TSMF_STREAM* stream = sample->stream;
+	TSMF_PRESENTATION* presentation = stream->presentation;
+	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) sample->channel_callback;
+	TsmfClientContext* tsmf = (TsmfClientContext*) callback->plugin->pInterface;
+
 	DEBUG_TSMF("MessageId %d EndTime %d data_size %d consumed.",
 			   sample->sample_id, (int)sample->end_time, sample->data_size);
 
@@ -346,20 +348,46 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE *sample)
 		}
 
 		stream->next_start_time = t + sample->duration - 50000;
-		vevent = (RDP_VIDEO_FRAME_EVENT *) freerdp_event_new(TsmfChannel_Class, TsmfChannel_VideoFrame,
-				 NULL, NULL);
-		vevent->frame_data = sample->data;
-		vevent->frame_size = sample->decoded_size;
-		vevent->frame_pixfmt = sample->pixfmt;
-		vevent->frame_width = sample->stream->width;
-		vevent->frame_height = sample->stream->height;
-		/* The frame data ownership is passed to the event object, and is freed after the event is processed. */
-		sample->data = NULL;
-		sample->decoded_size = 0;
 
-		if (!tsmf_push_event(sample->channel_callback, (wMessage *) vevent))
+		if (!tsmf->custom)
 		{
-			freerdp_event_free((wMessage *) vevent);
+			RDP_VIDEO_FRAME_EVENT* vevent;
+
+			vevent = (RDP_VIDEO_FRAME_EVENT*) freerdp_event_new(TsmfChannel_Class,
+					TsmfChannel_VideoFrame, NULL, NULL);
+
+			vevent->frame_data = sample->data;
+			vevent->frame_size = sample->decoded_size;
+			vevent->frame_pixfmt = sample->pixfmt;
+			vevent->frame_width = sample->stream->width;
+			vevent->frame_height = sample->stream->height;
+			/* The frame data ownership is passed to the event object, and is freed after the event is processed. */
+			sample->data = NULL;
+			sample->decoded_size = 0;
+
+			if (!tsmf_push_event(sample->channel_callback, (wMessage*) vevent))
+			{
+				freerdp_event_free((wMessage*) vevent);
+			}
+		}
+		else
+		{
+			TSMF_VIDEO_FRAME_EVENT event;
+
+			ZeroMemory(&event, sizeof(TSMF_VIDEO_FRAME_EVENT));
+
+			event.frameData = sample->data;
+			event.frameSize = sample->decoded_size;
+			event.framePixFmt = sample->pixfmt;
+			event.frameWidth = sample->stream->width;
+			event.frameHeight = sample->stream->height;
+
+			/* The frame data ownership is passed to the event object, and is freed after the event is processed. */
+			sample->data = NULL;
+			sample->decoded_size = 0;
+
+			if (tsmf->FrameEvent)
+				tsmf->FrameEvent(tsmf, &event);
 		}
 
 #if 0
@@ -396,8 +424,7 @@ static void tsmf_sample_playback_audio(TSMF_SAMPLE *sample)
 
 	if (sample->stream->audio && sample->data)
 	{
-		sample->stream->audio->Play(sample->stream->audio,
-									sample->data, sample->decoded_size);
+		sample->stream->audio->Play(sample->stream->audio, sample->data, sample->decoded_size);
 		sample->data = NULL;
 		sample->decoded_size = 0;
 
