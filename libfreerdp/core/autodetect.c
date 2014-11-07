@@ -322,6 +322,12 @@ static BOOL autodetect_recv_bandwidth_measure_start(rdpRdp* rdp, wStream* s, AUT
 	rdp->autodetect->bandwidthMeasureStartTime = GetTickCount();
 	rdp->autodetect->bandwidthMeasureByteCount = 0;
 
+	/* Continuous Auto-Detection: mark the start of the measurement */
+	if (autodetectReqPdu->requestType == 0x0014)
+	{
+		rdp->autodetect->bandwidthMeasureStarted = TRUE;
+	}
+
 	return TRUE;
 }
 
@@ -372,6 +378,12 @@ static BOOL autodetect_recv_bandwidth_measure_stop(rdpRdp* rdp, wStream* s, AUTO
 
 	/* Add the payload length to the bandwidth measurement parameters */
 	rdp->autodetect->bandwidthMeasureByteCount += payloadLength;
+
+	/* Continuous Auto-Detection: mark the stop of the measurement */
+	if (autodetectReqPdu->requestType == 0x0429)
+	{
+		rdp->autodetect->bandwidthMeasureStarted = FALSE;
+	}
 
 	/* Send a response the server */
 	responseType = autodetectReqPdu->requestType == 0x002B ? 0x0003 : 0x000B;
