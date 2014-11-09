@@ -532,4 +532,8 @@ void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, Transmit_Call* c
 UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Transmit_Return* ret);
 void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, Transmit_Return* ret);
 
+UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, LocateCardsByATRA_Call* call);
+void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, LocateCardsByATRA_Call* call);
+
+
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_PACK_H */

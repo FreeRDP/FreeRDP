@@ -1382,9 +1382,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 {
 	int i, j;
 	int* map;
-	DWORD dwEventState;
 	PCSC_DWORD cMappedReaders;
-	BOOL stateChanged = FALSE;
 	PCSC_SCARD_READERSTATE* states;
 	LONG status = SCARD_S_SUCCESS;
 	PCSC_DWORD pcsc_dwTimeout = (PCSC_DWORD) dwTimeout;
@@ -1437,6 +1435,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 			states[j].szReader = rgReaderStates[i].szReader;
 
 		states[j].dwCurrentState = rgReaderStates[i].dwCurrentState;
+		states[j].pvUserData = rgReaderStates[i].pvUserData;
 		states[j].dwEventState = rgReaderStates[i].dwEventState;
 		states[j].cbAtr = rgReaderStates[i].cbAtr;
 		CopyMemory(&(states[j].rgbAtr), &(rgReaderStates[i].rgbAtr), PCSC_MAX_ATR_SIZE);
@@ -1470,35 +1469,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		rgReaderStates[i].dwCurrentState = states[j].dwCurrentState;
 		rgReaderStates[i].cbAtr = states[j].cbAtr;
 		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
-		/* pcsc-lite puts an event count in the higher bits of dwEventState */
-		states[j].dwEventState &= 0xFFFF;
-		dwEventState = states[j].dwEventState & ~SCARD_STATE_CHANGED;
-
-		if (dwEventState != rgReaderStates[i].dwCurrentState)
-		{
-			rgReaderStates[i].dwEventState = states[j].dwEventState;
-
-			if (dwEventState & SCARD_STATE_PRESENT)
-			{
-				if (!(dwEventState & SCARD_STATE_EXCLUSIVE))
-					rgReaderStates[i].dwEventState |= SCARD_STATE_INUSE;
-			}
-
-			stateChanged = TRUE;
-		}
-		else
-		{
-			rgReaderStates[i].dwEventState = dwEventState;
-		}
-
-		if (rgReaderStates[i].dwCurrentState & SCARD_STATE_IGNORE)
-			rgReaderStates[i].dwEventState = SCARD_STATE_IGNORE;
+		rgReaderStates[i].dwEventState = states[j].dwEventState;
+		/*if (rgReaderStates[i].dwCurrentState & SCARD_STATE_ATRMATCH)
+			rgReaderStates[i].dwEventState |= SCARD_STATE_ATRMATCH;*/
 	}
-
-	if ((status == SCARD_S_SUCCESS) && !stateChanged)
-		status = SCARD_E_TIMEOUT;
-	else if ((status == SCARD_E_TIMEOUT) && stateChanged)
-		return SCARD_S_SUCCESS;
 
 	free(states);
 	free(map);
@@ -1610,7 +1584,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnect_Internal(SCARDCONTEXT hContext,
 	if (!szReaderPCSC)
 		szReaderPCSC = (char*) szReader;
 
-	pcsc_dwPreferredProtocols = (PCSC_DWORD) PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
+	if (pcsc_dwShareMode == SCARD_SHARE_DIRECT && dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED)
+		pcsc_dwPreferredProtocols = SCARD_PROTOCOL_UNDEFINED;
+	else
+		pcsc_dwPreferredProtocols = (PCSC_DWORD) PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
 	status = (LONG) g_PCSC.pfnSCardConnect(hPrivateContext, szReaderPCSC,
 										   pcsc_dwShareMode, pcsc_dwPreferredProtocols, phCard, &pcsc_dwActiveProtocol);
 	status = PCSC_MapErrorCodeToWinSCard(status);

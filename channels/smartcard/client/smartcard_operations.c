@@ -1032,6 +1032,108 @@ static UINT32 smartcard_AccessStartedEvent_Call(SMARTCARD_DEVICE* smartcard, SMA
 	return status;
 }
 
+static UINT32 smartcard_LocateCardsByATRA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, LocateCardsByATRA_Call* call)
+{
+	LONG status;
+	IRP* irp = operation->irp;
+
+	if (!call)
+		return STATUS_NO_MEMORY;
+
+	status = smartcard_unpack_locate_cards_by_atr_a_call(smartcard, irp->input, call);
+	smartcard_trace_locate_cards_by_atr_a_call(smartcard, call);
+	operation->hContext = smartcard_scard_context_native_from_redir(smartcard, &(call->hContext));
+	return status;
+}
+
+static UINT32 smartcard_LocateCardsByATRA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, LocateCardsByATRA_Call* call)
+{
+	LONG status;
+	DWORD index, index2, index3;
+	BOOL equal;
+	GetStatusChange_Return ret;
+	LPSCARD_READERSTATEA rgReaderState2 = NULL;
+	LPSCARD_READERSTATEA states = NULL;
+	IRP* irp = operation->irp;
+
+	states = calloc(call->cReaders, sizeof(SCARD_READERSTATEA));
+	for (index = 0; index < call->cReaders; index++)
+	{
+		states[index].szReader = (LPCSTR) call->rgReaderStates[index].szReader;
+		states[index].dwCurrentState = call->rgReaderStates[index].Common.dwCurrentState;
+		states[index].dwEventState = call->rgReaderStates[index].Common.dwEventState;
+		states[index].cbAtr = call->rgReaderStates[index].Common.cbAtr;
+		CopyMemory(&(states[index].rgbAtr), &(call->rgReaderStates[index].Common.rgbAtr), 36);
+	}
+
+
+	status = ret.ReturnCode = SCardGetStatusChangeA(operation->hContext, 0x000001F4, states, call->cReaders);
+
+	if (status && (status != SCARD_E_TIMEOUT) && (status != SCARD_E_CANCELLED))
+	{
+		call->cReaders=0;
+	}
+
+	for (index = 0; index < call->cAtrs; index++)
+	{
+		for (index2 = 0; index2 < call->cReaders; index2++)
+		{
+			equal = TRUE;
+			for (index3 = 0; index3 < call->rgAtrMasks[index].cbAtr; index3++)
+			{
+				if ((call->rgAtrMasks[index].rgbAtr[index3] & call->rgAtrMasks[index].rgbMask[index3]) !=
+				    (states[index2].rgbAtr[index3] & call->rgAtrMasks[index].rgbMask[index3]))
+				{
+					equal = FALSE;
+					break;
+				}
+				if (equal)
+				{
+					states[index2].dwEventState |= SCARD_STATE_ATRMATCH;
+				}
+			}
+		}
+	}
+
+	ret.cReaders = call->cReaders;
+	ret.rgReaderStates = (ReaderState_Return*) calloc(ret.cReaders, sizeof(ReaderState_Return));
+
+	for (index = 0; index < ret.cReaders; index++)
+	{
+		rgReaderState2 = &states[index];
+		ret.rgReaderStates[index].dwCurrentState = rgReaderState2->dwCurrentState;
+		ret.rgReaderStates[index].dwEventState = rgReaderState2->dwEventState;
+		ret.rgReaderStates[index].cbAtr = rgReaderState2->cbAtr;
+		CopyMemory(&(ret.rgReaderStates[index].rgbAtr), &(rgReaderState2->rgbAtr), 32);
+	}
+	free(states);
+
+	smartcard_trace_get_status_change_return(smartcard, &ret, FALSE);
+	status = smartcard_pack_get_status_change_return(smartcard, irp->output, &ret);
+
+	if (status)
+		return status;
+
+	if (call->rgReaderStates)
+	{
+		for (index = 0; index < call->cReaders; index++)
+		{
+			rgReaderState2 = (LPSCARD_READERSTATEA) &call->rgReaderStates[index];
+
+			if (rgReaderState2->szReader) {
+				free((void*) rgReaderState2->szReader);
+				rgReaderState2->szReader = NULL;
+			}
+		}
+
+		free(call->rgReaderStates);
+		call->rgReaderStates = NULL;
+	}
+
+	free(ret.rgReaderStates);
+	return ret.ReturnCode;
+}
+
 UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation)
 {
 	UINT32 status;
@@ -1264,7 +1366,8 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCAR
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSBYATRA:
-			status = SCARD_F_INTERNAL_ERROR;
+			call = calloc(1, sizeof(LocateCardsByATRA_Call));
+			status = smartcard_LocateCardsByATRA_Decode(smartcard, operation, (LocateCardsByATRA_Call*) call);
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSBYATRW:
@@ -1530,7 +1633,7 @@ UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSBYATRA:
-			result = SCARD_F_INTERNAL_ERROR;
+			result = smartcard_LocateCardsByATRA_Call(smartcard, operation, (LocateCardsByATRA_Call*) call);
 			break;
 
 		case SCARD_IOCTL_LOCATECARDSBYATRW:
