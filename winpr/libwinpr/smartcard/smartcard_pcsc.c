@@ -1474,26 +1474,25 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		 * Should not we just act as a pass-through between the client and the remote smartcard subsystem ?
 		 */
 #if 0
-
-		 /* pcsc-lite puts an event count in the higher bits of dwEventState */
+		/* pcsc-lite puts an event count in the higher bits of dwEventState */
 		states[j].dwEventState &= 0xFFFF;
 		dwEventState = states[j].dwEventState & ~SCARD_STATE_CHANGED;
 
 		if (dwEventState != rgReaderStates[i].dwCurrentState)
 		{
-				rgReaderStates[i].dwEventState = states[j].dwEventState;
+			rgReaderStates[i].dwEventState = states[j].dwEventState;
 
-				if (dwEventState & SCARD_STATE_PRESENT)
-				{
-						if (!(dwEventState & SCARD_STATE_EXCLUSIVE))
-							rgReaderStates[i].dwEventState |= SCARD_STATE_INUSE;
-				}
+			if (dwEventState & SCARD_STATE_PRESENT)
+			{
+				if (!(dwEventState & SCARD_STATE_EXCLUSIVE))
+					rgReaderStates[i].dwEventState |= SCARD_STATE_INUSE;
+			}
 
-				stateChanged = TRUE;
+			stateChanged = TRUE;
 		}
 		else
 		{
-				rgReaderStates[i].dwEventState = dwEventState;
+			rgReaderStates[i].dwEventState = dwEventState;
 		}
 
 		if (rgReaderStates[i].dwCurrentState & SCARD_STATE_IGNORE)
