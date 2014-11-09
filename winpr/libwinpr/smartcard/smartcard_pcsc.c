@@ -1469,9 +1469,37 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		rgReaderStates[i].dwCurrentState = states[j].dwCurrentState;
 		rgReaderStates[i].cbAtr = states[j].cbAtr;
 		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
+		/**
+		 * Why we should interpret the results of pcsc-lite ScardGetStatusChange ?
+		 * Should not we just act as a pass-through between the client and the remote smartcard subsystem ?
+		 */
+#if 0
+
+		 /* pcsc-lite puts an event count in the higher bits of dwEventState */
+		states[j].dwEventState &= 0xFFFF;
+		dwEventState = states[j].dwEventState & ~SCARD_STATE_CHANGED;
+
+		if (dwEventState != rgReaderStates[i].dwCurrentState)
+		{
+				rgReaderStates[i].dwEventState = states[j].dwEventState;
+
+				if (dwEventState & SCARD_STATE_PRESENT)
+				{
+						if (!(dwEventState & SCARD_STATE_EXCLUSIVE))
+							rgReaderStates[i].dwEventState |= SCARD_STATE_INUSE;
+				}
+
+				stateChanged = TRUE;
+		}
+		else
+		{
+				rgReaderStates[i].dwEventState = dwEventState;
+		}
+
+		if (rgReaderStates[i].dwCurrentState & SCARD_STATE_IGNORE)
+			rgReaderStates[i].dwEventState = SCARD_STATE_IGNORE;
+#endif
 		rgReaderStates[i].dwEventState = states[j].dwEventState;
-		/*if (rgReaderStates[i].dwCurrentState & SCARD_STATE_ATRMATCH)
-			rgReaderStates[i].dwEventState |= SCARD_STATE_ATRMATCH;*/
 	}
 
 	free(states);
@@ -1584,6 +1612,11 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnect_Internal(SCARDCONTEXT hContext,
 	if (!szReaderPCSC)
 		szReaderPCSC = (char*) szReader;
 
+	/**
+	 * As stated here : https://pcsclite.alioth.debian.org/api/group__API.html#ga4e515829752e0a8dbc4d630696a8d6a5
+	 * SCARD_PROTOCOL_UNDEFINED is valid for dwPreferredProtocols (only) if dwShareMode == SCARD_SHARE_DIRECT
+	 * and allows to send control commands to the reader (with SCardControl()) even if a card is not present in the reader
+	 */
 	if (pcsc_dwShareMode == SCARD_SHARE_DIRECT && dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED)
 		pcsc_dwPreferredProtocols = SCARD_PROTOCOL_UNDEFINED;
 	else
