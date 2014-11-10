@@ -223,6 +223,8 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 			{
 				WLog_ERR(TAG, "pthread_join failure: [%d] %s",
 						 status, strerror(status));
+				pthread_mutex_unlock(&thread->mutex);
+				return WAIT_FAILED;
 			}
 			else
 				thread->joined = TRUE;
@@ -700,6 +702,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 						{
 							WLog_ERR(TAG, "pthread_join failure: [%d] %s",
 									 status, strerror(status));
+							pthread_mutex_unlock(&thread->mutex);
 							return WAIT_FAILED;
 						}
 						else
