@@ -2103,9 +2103,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard,
 	IoCtlAccess = ACCESS_FROM_CTL_CODE(dwControlCode);
 	IoCtlDeviceType = DEVICE_TYPE_FROM_CTL_CODE(dwControlCode);
 
-	if (dwControlCode == PCSC_CM_IOCTL_GET_FEATURE_REQUEST) {
+	if (dwControlCode == PCSC_CM_IOCTL_GET_FEATURE_REQUEST)
 		getFeatureRequest = TRUE;
-	}
 
 	if (IoCtlDeviceType == FILE_DEVICE_SMARTCARD)
 		dwControlCode = PCSC_SCARD_CTL_CODE(IoCtlFunction);
