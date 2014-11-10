@@ -787,7 +787,7 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 #endif
 #endif
 
-#ifdef __MACOSX__
+#if defined(__MACOSX__) || defined(__IOS__)
 	option_value = 1;
 	option_len = sizeof(option_value);
 	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void *) &option_value, option_len) < 0)
