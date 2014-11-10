@@ -379,6 +379,11 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 					return -1;
 				break;
 
+			case PDU_TYPE_FLOW_RESPONSE:
+			case PDU_TYPE_FLOW_STOP:
+			case PDU_TYPE_FLOW_TEST:
+				break;
+
 			default:
 				WLog_ERR(TAG,  "Client sent pduType %d", pduType);
 				return -1;
