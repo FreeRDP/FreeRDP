@@ -34,12 +34,12 @@ static ITSMFAudioDevice* tsmf_load_audio_device_by_name(const char* name, const 
 
 	entry = (TSMF_AUDIO_DEVICE_ENTRY) freerdp_load_channel_addin_entry("tsmf", (LPSTR) name, "audio", 0);
 
-	if (entry == NULL)
+	if (!entry)
 		return NULL;
 
 	audio = entry();
 
-	if (audio == NULL)
+	if (!audio)
 	{
 		WLog_ERR(TAG, "failed to call export function in %s", name);
 		return NULL;

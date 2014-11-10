@@ -21,9 +21,7 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <winpr/crt.h>
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -32,8 +30,6 @@
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/XShm.h>
-
-#include <winpr/crt.h>
 
 #include <freerdp/utils/event.h>
 #include <freerdp/log.h>
@@ -179,7 +175,7 @@ static void xf_process_tsmf_video_frame_event(xfContext* xfc, RDP_VIDEO_FRAME_EV
 			/* Y */
 			if (image->pitches[0] == vevent->frame_width)
 			{
-				memcpy(image->data + image->offsets[0],
+				CopyMemory(image->data + image->offsets[0],
 					vevent->frame_data,
 					vevent->frame_width * vevent->frame_height);
 			}
@@ -187,7 +183,7 @@ static void xf_process_tsmf_video_frame_event(xfContext* xfc, RDP_VIDEO_FRAME_EV
 			{
 				for (i = 0; i < vevent->frame_height; i++)
 				{
-					memcpy(image->data + image->offsets[0] + i * image->pitches[0],
+					CopyMemory(image->data + image->offsets[0] + i * image->pitches[0],
 						vevent->frame_data + i * vevent->frame_width,
 						vevent->frame_width);
 				}
@@ -209,10 +205,10 @@ static void xf_process_tsmf_video_frame_event(xfContext* xfc, RDP_VIDEO_FRAME_EV
 			}
 			if (image->pitches[1] * 2 == vevent->frame_width)
 			{
-				memcpy(image->data + image->offsets[1],
+				CopyMemory(image->data + image->offsets[1],
 					data1,
 					vevent->frame_width * vevent->frame_height / 4);
-				memcpy(image->data + image->offsets[2],
+				CopyMemory(image->data + image->offsets[2],
 					data2,
 					vevent->frame_width * vevent->frame_height / 4);
 			}
@@ -220,10 +216,10 @@ static void xf_process_tsmf_video_frame_event(xfContext* xfc, RDP_VIDEO_FRAME_EV
 			{
 				for (i = 0; i < vevent->frame_height / 2; i++)
 				{
-					memcpy(image->data + image->offsets[1] + i * image->pitches[1],
+					CopyMemory(image->data + image->offsets[1] + i * image->pitches[1],
 						data1 + i * vevent->frame_width / 2,
 						vevent->frame_width / 2);
-					memcpy(image->data + image->offsets[2] + i * image->pitches[2],
+					CopyMemory(image->data + image->offsets[2] + i * image->pitches[2],
 						data2 + i * vevent->frame_width / 2,
 						vevent->frame_width / 2);
 				}
@@ -231,7 +227,7 @@ static void xf_process_tsmf_video_frame_event(xfContext* xfc, RDP_VIDEO_FRAME_EV
 			break;
 
 		default:
-			memcpy(image->data, vevent->frame_data, image->data_size <= vevent->frame_size ?
+			CopyMemory(image->data, vevent->frame_data, image->data_size <= vevent->frame_size ?
 				image->data_size : vevent->frame_size);
 			break;
 	}
@@ -260,7 +256,6 @@ void xf_process_tsmf_event(xfContext* xfc, wMessage* event)
 	switch (GetMessageType(event->id))
 	{
 		case TsmfChannel_VideoFrame:
-			fprintf(stderr, "TsmfVideoFrame\n");
 			xf_process_tsmf_video_frame_event(xfc, (RDP_VIDEO_FRAME_EVENT*) event);
 			break;
 	}
@@ -352,10 +347,10 @@ void xf_tsmf_init(xfContext* xfc, long xv_port)
 	WLog_DBG(TAG, "xf_tsmf_init: pixel format ");
 #endif
 	fo = XvListImageFormats(xfc->display, xv->xv_port, &ret);
+
 	if (ret > 0)
 	{
-		xv->xv_pixfmts = (UINT32*) malloc((ret + 1) * sizeof(UINT32));
-		ZeroMemory(xv->xv_pixfmts, (ret + 1) * sizeof(UINT32));
+		xv->xv_pixfmts = (UINT32*) calloc((ret + 1), sizeof(UINT32));
 
 		for (i = 0; i < ret; i++)
 		{

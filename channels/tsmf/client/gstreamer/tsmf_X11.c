@@ -18,8 +18,6 @@
  * limitations under the License.
 */
 
-#include <assert.h>
-
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -61,29 +59,34 @@ struct X11Handle
 	Window subwin;
 };
 
-static const char *get_shm_id()
+static const char* get_shm_id()
 {
 	static char shm_id[64];
 	snprintf(shm_id, sizeof(shm_id), "com.freerdp.xfreerpd.tsmf_%016X", GetCurrentProcessId());
 	return shm_id;
 }
 
-const char *tsmf_platform_get_video_sink(void)
+const char* tsmf_platform_get_video_sink(void)
 {
 	return "xvimagesink";
 }
 
-const char *tsmf_platform_get_audio_sink(void)
+const char* tsmf_platform_get_audio_sink(void)
 {
 	return "autoaudiosink";
 }
 
-int tsmf_platform_create(TSMFGstreamerDecoder *decoder)
+int tsmf_platform_create(TSMFGstreamerDecoder* decoder)
 {
-	struct X11Handle *hdl;
-	assert(decoder);
-	assert(!decoder->platform);
-	hdl = malloc(sizeof(struct X11Handle));
+	struct X11Handle* hdl;
+
+	if (!decoder)
+		return -1;
+
+	if (decoder->platform)
+		return -1;
+
+	hdl = calloc(1, sizeof(struct X11Handle));
 
 	if (!hdl)
 	{
@@ -91,7 +94,6 @@ int tsmf_platform_create(TSMFGstreamerDecoder *decoder)
 		return -1;
 	}
 
-	memset(hdl, 0, sizeof(struct X11Handle));
 	decoder->platform = hdl;
 	hdl->shmid = shm_open(get_shm_id(), O_RDWR, PROT_READ | PROT_WRITE);;
 
@@ -101,9 +103,11 @@ int tsmf_platform_create(TSMFGstreamerDecoder *decoder)
 		return -2;
 	}
 	else
+	{
 		hdl->xfwin = mmap(0, sizeof(void *), PROT_READ | PROT_WRITE, MAP_SHARED, hdl->shmid, 0);
+	}
 
-	if (hdl->xfwin == (int *)-1)
+	if (hdl->xfwin == (int*)-1)
 	{
 		WLog_ERR(TAG, "shmat failed!");
 		return -3;
@@ -120,22 +124,30 @@ int tsmf_platform_create(TSMFGstreamerDecoder *decoder)
 	return 0;
 }
 
-int tsmf_platform_set_format(TSMFGstreamerDecoder *decoder)
+int tsmf_platform_set_format(TSMFGstreamerDecoder* decoder)
 {
-	assert(decoder);
+	if (!decoder)
+		return -1;
 
 	if (decoder->media_type == TSMF_MAJOR_TYPE_VIDEO)
 	{
+
 	}
 
 	return 0;
 }
 
-int tsmf_platform_register_handler(TSMFGstreamerDecoder *decoder)
+int tsmf_platform_register_handler(TSMFGstreamerDecoder* decoder)
 {
-	assert(decoder);
-	assert(decoder->pipe);
-	GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(decoder->pipe));
+	GstBus* bus;
+
+	if (!decoder)
+		return -1;
+
+	if (!decoder->pipe)
+		return -1;
+
+	bus = gst_pipeline_get_bus(GST_PIPELINE(decoder->pipe));
 
 	if (!bus)
 	{
@@ -146,9 +158,9 @@ int tsmf_platform_register_handler(TSMFGstreamerDecoder *decoder)
 	return 0;
 }
 
-int tsmf_platform_free(TSMFGstreamerDecoder *decoder)
+int tsmf_platform_free(TSMFGstreamerDecoder* decoder)
 {
-	struct X11Handle *hdl = decoder->platform;
+	struct X11Handle* hdl = decoder->platform;
 
 	if (!hdl)
 		return -1;
@@ -157,18 +169,21 @@ int tsmf_platform_free(TSMFGstreamerDecoder *decoder)
 		XCloseDisplay(hdl->disp);
 
 	if (hdl->xfwin)
-		munmap(0, sizeof(void *));
+		munmap(0, sizeof(void*));
 
 	if (hdl->shmid >= 0)
 		close(hdl->shmid);
 
 	free(hdl);
 	decoder->platform = NULL;
+
 	return 0;
 }
 
-int tsmf_window_create(TSMFGstreamerDecoder *decoder)
+int tsmf_window_create(TSMFGstreamerDecoder* decoder)
 {
+	struct X11Handle* hdl;
+
 	if (decoder->media_type != TSMF_MAJOR_TYPE_VIDEO)
 	{
 		decoder->ready = TRUE;
@@ -181,9 +196,14 @@ int tsmf_window_create(TSMFGstreamerDecoder *decoder)
 #else
 		GstXOverlay *overlay = GST_X_OVERLAY(decoder->outsink);
 #endif
-		struct X11Handle *hdl = (struct X11Handle *)decoder->platform;
-		assert(decoder);
-		assert(hdl);
+
+		if (!decoder)
+			return -1;
+
+		if (!decoder->platform)
+			return -1;
+
+		hdl = (struct X11Handle*) decoder->platform;
 
 		if (!hdl->subwin)
 		{
@@ -217,11 +237,15 @@ int tsmf_window_create(TSMFGstreamerDecoder *decoder)
 	}
 }
 
-int tsmf_window_resize(TSMFGstreamerDecoder *decoder, int x, int y, int width,
+int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width,
 					   int height, int nr_rects, RDP_RECT *rects)
 {
+	struct X11Handle* hdl;
+
 	if (decoder->media_type != TSMF_MAJOR_TYPE_VIDEO)
+	{
 		return -3;
+	}
 	else
 	{
 #if GST_VERSION_MAJOR > 0
@@ -229,10 +253,15 @@ int tsmf_window_resize(TSMFGstreamerDecoder *decoder, int x, int y, int width,
 #else
 		GstXOverlay *overlay = GST_X_OVERLAY(decoder->outsink);
 #endif
-		struct X11Handle *hdl = (struct X11Handle *)decoder->platform;
+		if (!decoder)
+			return -1;
+
+		if (!decoder->platform)
+			return -1;
+
+		hdl = (struct X11Handle*) decoder->platform;
 		DEBUG_TSMF("resize: x=%d, y=%d, w=%d, h=%d", x, y, width, height);
-		assert(decoder);
-		assert(hdl);
+
 #if GST_VERSION_MAJOR > 0
 
 		if (!gst_video_overlay_set_render_rectangle(overlay, 0, 0, width, height))
@@ -280,28 +309,37 @@ int tsmf_window_resize(TSMFGstreamerDecoder *decoder, int x, int y, int width,
 	}
 }
 
-int tsmf_window_pause(TSMFGstreamerDecoder *decoder)
+int tsmf_window_pause(TSMFGstreamerDecoder* decoder)
 {
-	assert(decoder);
+	if (!decoder)
+		return -1;
+
 	return 0;
 }
 
-int tsmf_window_resume(TSMFGstreamerDecoder *decoder)
+int tsmf_window_resume(TSMFGstreamerDecoder* decoder)
 {
-	assert(decoder);
+	if (!decoder)
+		return -1;
+
 	return 0;
 }
 
-int tsmf_window_destroy(TSMFGstreamerDecoder *decoder)
+int tsmf_window_destroy(TSMFGstreamerDecoder* decoder)
 {
-	struct X11Handle *hdl = (struct X11Handle *)decoder->platform;
+	struct X11Handle* hdl;
 	decoder->ready = FALSE;
 
 	if (decoder->media_type != TSMF_MAJOR_TYPE_VIDEO)
 		return -3;
 
-	assert(decoder);
-	assert(hdl);
+	if (!decoder)
+		return -1;
+
+	if (!decoder->platform)
+		return -1;
+
+	hdl = (struct X11Handle*) decoder->platform;
 
 	if (hdl->subwin)
 	{
