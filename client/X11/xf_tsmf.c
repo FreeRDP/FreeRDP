@@ -73,198 +73,6 @@ static BOOL xf_tsmf_is_format_supported(xfXvContext* xv, UINT32 pixfmt)
 	return FALSE;
 }
 
-static int xf_process_tsmf_video_frame_event(xfContext* xfc, RDP_VIDEO_FRAME_EVENT* vevent)
-{
-	int i;
-	BYTE* data1;
-	BYTE* data2;
-	UINT32 pixfmt;
-	UINT32 xvpixfmt;
-	BOOL converti420yv12 = FALSE;
-	XvImage * image;
-	int colorkey = 0;
-	XShmSegmentInfo shminfo;
-	xfXvContext* xv = (xfXvContext*) xfc->xv_context;
-
-	if (xv->xv_port == 0)
-		return -1001;
-
-	/* In case the player is minimized */
-	if (vevent->x < -2048 || vevent->y < -2048 || vevent->num_visible_rects < 0)
-	{
-		return -1002;
-	}
-
-	if (xv->xv_colorkey_atom != None)
-	{
-		XvGetPortAttribute(xfc->display, xv->xv_port, xv->xv_colorkey_atom, &colorkey);
-		XSetFunction(xfc->display, xfc->gc, GXcopy);
-		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-		XSetForeground(xfc->display, xfc->gc, colorkey);
-
-		if (vevent->num_visible_rects < 1)
-		{
-			XSetClipMask(xfc->display, xfc->gc, None);
-		}
-		else
-		{
-			for (i = 0; i < vevent->num_visible_rects; i++)
-			{
-				XFillRectangle(xfc->display, xfc->window->handle, xfc->gc,
-					vevent->x + vevent->visible_rects[i].x,
-					vevent->y + vevent->visible_rects[i].y,
-					vevent->visible_rects[i].width,
-					vevent->visible_rects[i].height);
-			}
-		}
-	}
-	else
-	{
-		XSetFunction(xfc->display, xfc->gc, GXcopy);
-		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-
-		if (vevent->num_visible_rects < 1)
-		{
-			XSetClipMask(xfc->display, xfc->gc, None);
-		}
-		else
-		{
-			XSetClipRectangles(xfc->display, xfc->gc, vevent->x, vevent->y,
-					(XRectangle*) vevent->visible_rects, vevent->num_visible_rects, YXBanded);
-		}
-	}
-
-	pixfmt = vevent->frame_pixfmt;
-
-	if (xf_tsmf_is_format_supported(xv, pixfmt))
-	{
-		xvpixfmt = pixfmt;
-	}
-	else if (pixfmt == RDP_PIXFMT_I420 && xf_tsmf_is_format_supported(xv, RDP_PIXFMT_YV12))
-	{
-		xvpixfmt = RDP_PIXFMT_YV12;
-		converti420yv12 = TRUE;
-	}
-	else if (pixfmt == RDP_PIXFMT_YV12 && xf_tsmf_is_format_supported(xv, RDP_PIXFMT_I420))
-	{
-		xvpixfmt = RDP_PIXFMT_I420;
-		converti420yv12 = TRUE;
-	}
-	else
-	{
-		WLog_DBG(TAG, "pixel format 0x%X not supported by hardware.", pixfmt);
-		return -1003;
-	}
-
-	image = XvShmCreateImage(xfc->display, xv->xv_port,
-		xvpixfmt, 0, vevent->frame_width, vevent->frame_height, &shminfo);
-
-	if (xv->xv_image_size != image->data_size)
-	{
-		if (xv->xv_image_size > 0)
-		{
-			shmdt(xv->xv_shmaddr);
-			shmctl(xv->xv_shmid, IPC_RMID, NULL);
-		}
-
-		xv->xv_image_size = image->data_size;
-		xv->xv_shmid = shmget(IPC_PRIVATE, image->data_size, IPC_CREAT | 0777);
-		xv->xv_shmaddr = shmat(xv->xv_shmid, 0, 0);
-	}
-
-	shminfo.shmid = xv->xv_shmid;
-	shminfo.shmaddr = image->data = xv->xv_shmaddr;
-	shminfo.readOnly = FALSE;
-
-	if (!XShmAttach(xfc->display, &shminfo))
-	{
-		XFree(image);
-		WLog_DBG(TAG, "XShmAttach failed.");
-		return -1004;
-	}
-
-	/* The video driver may align each line to a different size
-	   and we need to convert our original image data. */
-	switch (pixfmt)
-	{
-		case RDP_PIXFMT_I420:
-		case RDP_PIXFMT_YV12:
-			/* Y */
-			if (image->pitches[0] == vevent->frame_width)
-			{
-				CopyMemory(image->data + image->offsets[0],
-					vevent->frame_data,
-					vevent->frame_width * vevent->frame_height);
-			}
-			else
-			{
-				for (i = 0; i < vevent->frame_height; i++)
-				{
-					CopyMemory(image->data + image->offsets[0] + i * image->pitches[0],
-						vevent->frame_data + i * vevent->frame_width,
-						vevent->frame_width);
-				}
-			}
-			/* UV */
-			/* Conversion between I420 and YV12 is to simply swap U and V */
-			if (!converti420yv12)
-			{
-				data1 = vevent->frame_data + vevent->frame_width * vevent->frame_height;
-				data2 = vevent->frame_data + vevent->frame_width * vevent->frame_height +
-					vevent->frame_width * vevent->frame_height / 4;
-			}
-			else
-			{
-				data2 = vevent->frame_data + vevent->frame_width * vevent->frame_height;
-				data1 = vevent->frame_data + vevent->frame_width * vevent->frame_height +
-					vevent->frame_width * vevent->frame_height / 4;
-				image->id = pixfmt == RDP_PIXFMT_I420 ? RDP_PIXFMT_YV12 : RDP_PIXFMT_I420;
-			}
-
-			if (image->pitches[1] * 2 == vevent->frame_width)
-			{
-				CopyMemory(image->data + image->offsets[1],
-					data1,
-					vevent->frame_width * vevent->frame_height / 4);
-				CopyMemory(image->data + image->offsets[2],
-					data2,
-					vevent->frame_width * vevent->frame_height / 4);
-			}
-			else
-			{
-				for (i = 0; i < vevent->frame_height / 2; i++)
-				{
-					CopyMemory(image->data + image->offsets[1] + i * image->pitches[1],
-						data1 + i * vevent->frame_width / 2,
-						vevent->frame_width / 2);
-					CopyMemory(image->data + image->offsets[2] + i * image->pitches[2],
-						data2 + i * vevent->frame_width / 2,
-						vevent->frame_width / 2);
-				}
-			}
-			break;
-
-		default:
-			CopyMemory(image->data, vevent->frame_data, image->data_size <= vevent->frame_size ?
-				image->data_size : vevent->frame_size);
-			break;
-	}
-
-	XvShmPutImage(xfc->display, xv->xv_port, xfc->window->handle, xfc->gc,
-			image, 0, 0, image->width, image->height,
-			vevent->x, vevent->y, vevent->width, vevent->height, FALSE);
-
-	if (xv->xv_colorkey_atom == None)
-		XSetClipMask(xfc->display, xfc->gc, None);
-
-	XSync(xfc->display, FALSE);
-
-	XShmDetach(xfc->display, &shminfo);
-	XFree(image);
-
-	return 1;
-}
-
 int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT* event)
 {
 	int i;
@@ -275,14 +83,27 @@ int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT
 	BYTE* data2;
 	UINT32 pixfmt;
 	UINT32 xvpixfmt;
-	XvImage * image;
+	XvImage* image;
 	int colorkey = 0;
 	int numRects = 0;
+	xfContext* xfc;
+	xfXvContext* xv;
 	XRectangle* xrects;
 	XShmSegmentInfo shminfo;
 	BOOL converti420yv12 = FALSE;
-	xfContext* xfc = (xfContext*) tsmf->custom;
-	xfXvContext* xv = (xfXvContext*) xfc->xv_context;
+
+	if (!tsmf)
+		return -1;
+
+	xfc = (xfContext*) tsmf->custom;
+
+	if (!xfc)
+		return -1;
+
+	xv = (xfXvContext*) xfc->xv_context;
+
+	if (!xv)
+		return -1;
 
 	if (xv->xv_port == 0)
 		return -1001;
@@ -481,18 +302,6 @@ int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT
 	return 1;
 }
 
-void xf_tsmf_xv_process_event(xfContext* xfc, wMessage* event)
-{
-	int status = -1;
-
-	switch (GetMessageType(event->id))
-	{
-		case TsmfChannel_VideoFrame:
-			status = xf_process_tsmf_video_frame_event(xfc, (RDP_VIDEO_FRAME_EVENT*) event);
-			break;
-	}
-}
-
 int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 {
 	int ret;
@@ -655,12 +464,5 @@ int xf_tsmf_uninit(xfContext* xfc, TsmfClientContext* tsmf)
 #endif
 
 	return 1;
-}
-
-void xf_process_tsmf_event(xfContext* xfc, wMessage* event)
-{
-#ifdef WITH_XV
-	return xf_tsmf_xv_process_event(xfc, event);
-#endif
 }
 

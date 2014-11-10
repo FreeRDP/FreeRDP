@@ -71,22 +71,6 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 	Stream_Free(s, TRUE);
 }
 
-BOOL tsmf_push_event(IWTSVirtualChannelCallback* pChannelCallback, wMessage* event)
-{
-	int status;
-	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
-
-	status = callback->channel_mgr->PushEvent(callback->channel_mgr, event);
-
-	if (status)
-	{
-		WLog_ERR(TAG, "response error %d", status);
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
 static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
 {
 	int length;

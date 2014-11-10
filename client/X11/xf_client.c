@@ -1119,10 +1119,6 @@ void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 				xf_process_rail_event(xfc, channels, event);
 				break;
 
-			case TsmfChannel_Class:
-				xf_process_tsmf_event(xfc, event);
-				break;
-
 			default:
 				break;
 		}

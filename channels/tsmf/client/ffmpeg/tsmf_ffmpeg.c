@@ -28,7 +28,6 @@
 #include <winpr/crt.h>
 
 #include <freerdp/channels/log.h>
-#include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
 
 #include <libavcodec/avcodec.h>

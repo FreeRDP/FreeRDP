@@ -41,7 +41,6 @@
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
-#include <freerdp/utils/event.h>
 #include <freerdp/client/tsmf.h>
 
 #include "tsmf_constants.h"
@@ -346,6 +345,7 @@ TSMF_PRESENTATION* tsmf_presentation_find_by_id(const BYTE *guid)
 static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 {
 	UINT64 t;
+	TSMF_VIDEO_FRAME_EVENT event;
 	TSMF_STREAM* stream = sample->stream;
 	TSMF_PRESENTATION* presentation = stream->presentation;
 	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) sample->channel_callback;
@@ -367,46 +367,20 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 
 		stream->next_start_time = t + sample->duration - 50000;
 
-		if (!tsmf->custom)
-		{
-			RDP_VIDEO_FRAME_EVENT* vevent;
+		ZeroMemory(&event, sizeof(TSMF_VIDEO_FRAME_EVENT));
 
-			vevent = (RDP_VIDEO_FRAME_EVENT*) freerdp_event_new(TsmfChannel_Class,
-					TsmfChannel_VideoFrame, NULL, NULL);
+		event.frameData = sample->data;
+		event.frameSize = sample->decoded_size;
+		event.framePixFmt = sample->pixfmt;
+		event.frameWidth = sample->stream->width;
+		event.frameHeight = sample->stream->height;
 
-			vevent->frame_data = sample->data;
-			vevent->frame_size = sample->decoded_size;
-			vevent->frame_pixfmt = sample->pixfmt;
-			vevent->frame_width = sample->stream->width;
-			vevent->frame_height = sample->stream->height;
-			/* The frame data ownership is passed to the event object, and is freed after the event is processed. */
-			sample->data = NULL;
-			sample->decoded_size = 0;
+		/* The frame data ownership is passed to the event object, and is freed after the event is processed. */
+		sample->data = NULL;
+		sample->decoded_size = 0;
 
-			if (!tsmf_push_event(sample->channel_callback, (wMessage*) vevent))
-			{
-				freerdp_event_free((wMessage*) vevent);
-			}
-		}
-		else
-		{
-			TSMF_VIDEO_FRAME_EVENT event;
-
-			ZeroMemory(&event, sizeof(TSMF_VIDEO_FRAME_EVENT));
-
-			event.frameData = sample->data;
-			event.frameSize = sample->decoded_size;
-			event.framePixFmt = sample->pixfmt;
-			event.frameWidth = sample->stream->width;
-			event.frameHeight = sample->stream->height;
-
-			/* The frame data ownership is passed to the event object, and is freed after the event is processed. */
-			sample->data = NULL;
-			sample->decoded_size = 0;
-
-			if (tsmf->FrameEvent)
-				tsmf->FrameEvent(tsmf, &event);
-		}
+		if (tsmf->FrameEvent)
+			tsmf->FrameEvent(tsmf, &event);
 
 #if 0
 		/* Dump a .ppm image for every 30 frames. Assuming the frame is in YUV format, we

@@ -26,6 +26,4 @@
 int xf_tsmf_init(xfContext* xfc, TsmfClientContext* tsmf);
 int xf_tsmf_uninit(xfContext* xfc, TsmfClientContext* tsmf);
 
-void xf_process_tsmf_event(xfContext* xfc, wMessage* event);
-
 #endif /* __XF_TSMF_H */

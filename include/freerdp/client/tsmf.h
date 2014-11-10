@@ -29,23 +29,6 @@
 #define RDP_PIXFMT_I420		0x30323449
 #define RDP_PIXFMT_YV12		0x32315659
 
-struct _RDP_VIDEO_FRAME_EVENT
-{
-	wMessage event;
-	BYTE* frame_data;
-	UINT32 frame_size;
-	UINT32 frame_pixfmt;
-	INT16 frame_width;
-	INT16 frame_height;
-	INT16 x;
-	INT16 y;
-	INT16 width;
-	INT16 height;
-	UINT16 num_visible_rects;
-	RDP_RECT* visible_rects;
-};
-typedef struct _RDP_VIDEO_FRAME_EVENT RDP_VIDEO_FRAME_EVENT;
-
 struct _TSMF_VIDEO_FRAME_EVENT
 {
 	BYTE* frameData;
