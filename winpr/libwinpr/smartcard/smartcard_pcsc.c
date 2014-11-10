@@ -1470,7 +1470,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		rgReaderStates[i].cbAtr = states[j].cbAtr;
 		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
 		/**
-		 * Why we should interpret the results of pcsc-lite ScardGetStatusChange ?
+		 * Why we should interpret and modify the results of pcsc-lite ScardGetStatusChange ?
 		 * Should not we just act as a pass-through between the client and the remote smartcard subsystem ?
 		 */
 #if 0
@@ -1500,6 +1500,16 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 #endif
 		rgReaderStates[i].dwEventState = states[j].dwEventState;
 	}
+	/**
+	 * Why we should interpret and modify the results of pcsc-lite ScardGetStatusChange ?
+	 * Should not we just act as a pass-through between the client and the remote smartcard subsystem ?
+	 */
+#if 0
+	if ((status == SCARD_S_SUCCESS) && !stateChanged)
+		status = SCARD_E_TIMEOUT;
+	else if ((status == SCARD_E_TIMEOUT) && stateChanged)
+		return SCARD_S_SUCCESS;
+#endif
 
 	free(states);
 	free(map);
@@ -2093,8 +2103,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard,
 	IoCtlAccess = ACCESS_FROM_CTL_CODE(dwControlCode);
 	IoCtlDeviceType = DEVICE_TYPE_FROM_CTL_CODE(dwControlCode);
 
-	if (dwControlCode == PCSC_CM_IOCTL_GET_FEATURE_REQUEST)
+	if (dwControlCode == PCSC_CM_IOCTL_GET_FEATURE_REQUEST) {
 		getFeatureRequest = TRUE;
+	}
 
 	if (IoCtlDeviceType == FILE_DEVICE_SMARTCARD)
 		dwControlCode = PCSC_SCARD_CTL_CODE(IoCtlFunction);
@@ -2116,11 +2127,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard,
 		{
 			ioCtlValue = _byteswap_ulong(tlv->value);
 			ioCtlValue -= 0x42000000; /* inverse of PCSC_SCARD_CTL_CODE() */
-			IoCtlMethod = METHOD_FROM_CTL_CODE(ioCtlValue);
-			IoCtlFunction = FUNCTION_FROM_CTL_CODE(ioCtlValue);
-			IoCtlAccess = ACCESS_FROM_CTL_CODE(ioCtlValue);
-			IoCtlDeviceType = DEVICE_TYPE_FROM_CTL_CODE(ioCtlValue);
-			ioCtlValue = SCARD_CTL_CODE(IoCtlFunction);
+			ioCtlValue = SCARD_CTL_CODE(ioCtlValue);
 			tlv->value = _byteswap_ulong(ioCtlValue);
 		}
 	}

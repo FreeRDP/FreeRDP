@@ -1938,6 +1938,12 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	Stream_Read_UINT32(s, call->fpvOutBufferIsNULL); /* fpvOutBufferIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbOutBufferSize); /* cbOutBufferSize (4 bytes) */
 
+	/*if (call->dwControlCode == 0x00310D4C)
+	{
+		printf("Why ?\n");
+		call->dwControlCode = 0x00313538;
+	}*/
+
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
 
 	if (status)
