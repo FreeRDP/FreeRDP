@@ -50,6 +50,7 @@ struct _TSMF_PLUGIN
 {
 	IWTSPlugin iface;
 
+	IWTSListener* listener;
 	TSMF_LISTENER_CALLBACK* listener_callback;
 
 	const char* decoder_name;

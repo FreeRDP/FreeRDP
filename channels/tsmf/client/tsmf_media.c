@@ -352,7 +352,7 @@ static void tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 	TsmfClientContext* tsmf = (TsmfClientContext*) callback->plugin->pInterface;
 
 	DEBUG_TSMF("MessageId %d EndTime %d data_size %d consumed.",
-			   sample->sample_id, (int)sample->end_time, sample->data_size);
+			   sample->sample_id, (int) sample->end_time, sample->data_size);
 
 	if (sample->data)
 	{

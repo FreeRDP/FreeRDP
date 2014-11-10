@@ -341,6 +341,7 @@ static int tsmf_on_new_channel_connection(IWTSListenerCallback *pListenerCallbac
 
 static int tsmf_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
+	int status;
 	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*) pPlugin;
 
 	DEBUG_TSMF("");
@@ -354,8 +355,12 @@ static int tsmf_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager
 	tsmf->listener_callback->plugin = pPlugin;
 	tsmf->listener_callback->channel_mgr = pChannelMgr;
 
-	return pChannelMgr->CreateListener(pChannelMgr, "TSMF", 0,
-			(IWTSListenerCallback*) tsmf->listener_callback, NULL);
+	status = pChannelMgr->CreateListener(pChannelMgr, "TSMF", 0,
+			(IWTSListenerCallback*) tsmf->listener_callback, &(tsmf->listener));
+
+	tsmf->listener->pInterface = tsmf->iface.pInterface;
+
+	return status;
 }
 
 static int tsmf_plugin_terminated(IWTSPlugin* pPlugin)
@@ -442,15 +447,17 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		tsmf->iface.Disconnected = NULL;
 		tsmf->iface.Terminated = tsmf_plugin_terminated;
 
-		status = pEntryPoints->RegisterPlugin(pEntryPoints, "tsmf", (IWTSPlugin*) tsmf);
-
 		context = (TsmfClientContext*) calloc(1, sizeof(TsmfClientContext));
 
-		context->handle = (void*) context;
+		if (!context)
+			return -1;
 
+		context->handle = (void*) tsmf;
 		tsmf->iface.pInterface = (void*) context;
 
 		tsmf_media_init();
+
+		status = pEntryPoints->RegisterPlugin(pEntryPoints, "tsmf", (IWTSPlugin*) tsmf);
 	}
 
 	if (status == 0)

@@ -158,6 +158,7 @@ struct xf_context
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
 	void* xv_context;
+	TsmfClientContext* tsmf;
 	xfClipboard* clipboard;
 	CliprdrClientContext* cliprdr;
 
