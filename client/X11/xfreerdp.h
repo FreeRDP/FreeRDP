@@ -248,8 +248,6 @@ void xf_unlock_x11(xfContext* xfc, BOOL display);
 void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scale);
 void xf_transform_window(xfContext* xfc);
 
-unsigned long xf_gdi_get_color(xfContext* xfc, GDI_COLOR color);
-
 FREERDP_API DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 
 #endif /* __XFREERDP_H */

@@ -386,9 +386,6 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 
 	xf_lock_x11(xfc, FALSE);
 
-	fgcolor = xf_gdi_get_color(xfc, fgcolor);
-	bgcolor = xf_gdi_get_color(xfc, bgcolor);
-
 	XSetFunction(xfc->display, xfc->gc, GXcopy);
 
 	if (width && height)
