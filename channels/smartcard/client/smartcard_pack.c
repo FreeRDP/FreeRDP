@@ -2706,6 +2706,5 @@ void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, Loc
 		free(szEventState);
 		free(rgbAtr);
 	}
-
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }
