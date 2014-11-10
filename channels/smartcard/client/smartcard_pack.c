@@ -1326,7 +1326,6 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 	UINT32 szReaderNdrPtr;
 	UINT32 rgReaderStatesNdrPtr;
 	LPSCARD_READERSTATEW readerState;
-	char *szReader = NULL;
 
 	call->rgReaderStates = NULL;
 
@@ -1429,13 +1428,6 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call null reader name");
 				return STATUS_INVALID_PARAMETER;
 			}
-
-			ConvertFromUnicode(CP_UTF8, 0, readerState->szReader, -1,
-									   (char**) &(szReader), 0, NULL, NULL);
-			if (strcmp(szReader, "\\\\?PnP?\\Notification") == 0) {
-				readerState->dwCurrentState |= SCARD_STATE_IGNORE;
-			}
-			free(szReader);
 		}
 	}
 
@@ -1937,12 +1929,6 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	Stream_Seek_UINT32(s); /* pvInBufferNdrPtr (4 bytes) */
 	Stream_Read_UINT32(s, call->fpvOutBufferIsNULL); /* fpvOutBufferIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbOutBufferSize); /* cbOutBufferSize (4 bytes) */
-
-	/*if (call->dwControlCode == 0x00310D4C)
-	{
-		printf("Why ?\n");
-		call->dwControlCode = 0x00313538;
-	}*/
 
 	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
 
