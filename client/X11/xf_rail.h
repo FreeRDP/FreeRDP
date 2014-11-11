@@ -23,6 +23,23 @@
 #include "xf_client.h"
 #include "xfreerdp.h"
 
+struct xf_rail_window
+{
+	xfContext* wfc;
+
+	HWND hWnd;
+
+	DWORD dwStyle;
+	DWORD dwExStyle;
+
+	int x;
+	int y;
+	int width;
+	int height;
+	char* title;
+};
+typedef struct xf_rail_window xfRailWindow;
+
 #include <freerdp/client/rail.h>
 
 void xf_rail_paint(xfContext* xfc, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom);
@@ -32,8 +49,6 @@ void xf_rail_adjust_position(xfContext* xfc, rdpWindow* window);
 void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window);
 void xf_rail_enable_remoteapp_mode(xfContext* xfc);
 void xf_rail_disable_remoteapp_mode(xfContext* xfc);
-
-void xf_process_rail_event(xfContext* xfc, rdpChannels* channels, wMessage* event);
 
 int xf_rail_init(xfContext* xfc, RailClientContext* rail);
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail);

@@ -36,12 +36,6 @@
 
 #define TAG CLIENT_TAG("x11")
 
-#ifdef WITH_DEBUG_X11_LOCAL_MOVESIZE
-#define DEBUG_X11_LMS(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_X11_LMS(fmt, ...) do { } while (0)
-#endif
-
 const char* error_code_names[] =
 {
 	"RAIL_EXEC_S_OK",
@@ -185,9 +179,8 @@ static void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 		return;
 	}
 
-	xf_MoveWindow(xfc, xfw,
-				  window->visibleOffsetX, window->visibleOffsetY,
-				  window->windowWidth, window->windowHeight);
+	xf_MoveWindow(xfc, xfw, window->visibleOffsetX, window->visibleOffsetY,
+			window->windowWidth, window->windowHeight);
 }
 
 static void xf_rail_ShowWindow(rdpRail* rail, rdpWindow* window, BYTE state)
@@ -362,14 +355,6 @@ void xf_rail_adjust_position(xfContext* xfc, rdpWindow* window)
 		window_move.right = window_move.left + xfw->width;
 		window_move.bottom = window_move.top + xfw->height;
 
-		DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
-					  "  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
-					  (UINT32) xfw->handle, window_move.left, window_move.top,
-					  window_move.right, window_move.bottom, xfw->width, xfw->height,
-					  window->windowId,
-					  window->windowOffsetX, window->windowOffsetY,
-					  window->windowWidth, window->windowHeight);
-
 		xf_send_rail_client_event(channels, RailChannel_ClientWindowMove, &window_move);
 	}
 }
@@ -389,10 +374,6 @@ void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
 	xfw = (xfWindow*) window->extra;
 	channels = ((rdpContext*) xfc)->channels;
 
-	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
-				  (UINT32) xfw->handle,
-				  xfw->left, xfw->top, xfw->right, xfw->bottom,
-				  xfw->width, xfw->height);
 	/*
 	 * Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
 	 * we can only send unsigned integers to the rail server. Therefore, we always bring negative coordinates up to 0 when
@@ -433,7 +414,6 @@ void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
 			(xfw->local_move.direction != _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
 	{
 		input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
-		DEBUG_X11_LMS("Mouse coordinates.  x= %i, y= %i", x, y);
 	}
 
 	/*
@@ -448,236 +428,285 @@ void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
 	xfw->local_move.state = LMS_TERMINATING;
 }
 
-void xf_process_rail_get_sysparams_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
+void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 {
-	RAIL_SYSPARAM_ORDER* sysparam;
-	sysparam = (RAIL_SYSPARAM_ORDER*) event->wParam;
-	sysparam->workArea.left = xfc->workArea.x;
-	sysparam->workArea.top = xfc->workArea.y;
-	sysparam->workArea.right = xfc->workArea.x + xfc->workArea.width;
-	sysparam->workArea.bottom = xfc->workArea.y + xfc->workArea.height;
-	sysparam->taskbarPos.left = 0;
-	sysparam->taskbarPos.top = 0;
-	sysparam->taskbarPos.right = 0;
-	sysparam->taskbarPos.bottom = 0;
-	sysparam->dragFullWindows = FALSE;
-	xf_send_rail_client_event(channels, RailChannel_ClientSystemParam, sysparam);
+	int index;
+	int count;
+	RECTANGLE_16 updateRect;
+	RECTANGLE_16 windowRect;
+	ULONG_PTR* pKeys = NULL;
+	xfRailWindow* railWindow;
+	const RECTANGLE_16* extents;
+	REGION16 windowInvalidRegion;
+
+	region16_init(&windowInvalidRegion);
+
+	count = HashTable_GetKeys(xfc->railWindows, &pKeys);
+
+	for (index = 0; index < count; index++)
+	{
+		railWindow = (xfRailWindow*) HashTable_GetItemValue(xfc->railWindows, (void*) pKeys[index]);
+
+		if (railWindow)
+		{
+			windowRect.left = railWindow->x;
+			windowRect.top = railWindow->y;
+			windowRect.right = railWindow->x + railWindow->width;
+			windowRect.bottom = railWindow->y + railWindow->height;
+
+			region16_clear(&windowInvalidRegion);
+			region16_intersect_rect(&windowInvalidRegion, invalidRegion, &windowRect);
+
+			if (!region16_is_empty(&windowInvalidRegion))
+			{
+				extents = region16_extents(&windowInvalidRegion);
+
+				updateRect.left = extents->left - railWindow->x;
+				updateRect.top = extents->top - railWindow->y;
+				updateRect.right = extents->right - railWindow->x;
+				updateRect.bottom = extents->bottom - railWindow->y;
+
+				//InvalidateRect(railWindow->hWnd, &updateRect, FALSE);
+			}
+		}
+	}
+
+	region16_uninit(&windowInvalidRegion);
 }
 
-void xf_process_rail_exec_result_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
-{
-	RAIL_EXEC_RESULT_ORDER* exec_result;
-	exec_result = (RAIL_EXEC_RESULT_ORDER*) event->wParam;
+/* RemoteApp Virtual Channel Extension */
 
-	if (exec_result->execResult != RAIL_EXEC_S_OK)
+static int xf_rail_server_execute_result(RailClientContext* context, RAIL_EXEC_RESULT_ORDER* execResult)
+{
+	xfContext* xfc = (xfContext*) context->custom;
+
+	if (execResult->execResult != RAIL_EXEC_S_OK)
 	{
 		WLog_ERR(TAG, "RAIL exec error: execResult=%s NtError=0x%X\n",
-				 error_code_names[exec_result->execResult], exec_result->rawResult);
-		xfc->disconnect = True;
+				 error_code_names[execResult->execResult], execResult->rawResult);
+		xfc->disconnect = TRUE;
 	}
 	else
 	{
 		xf_rail_enable_remoteapp_mode(xfc);
 	}
+
+	return 1;
 }
 
-void xf_process_rail_server_sysparam_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
+static int xf_rail_server_system_param(RailClientContext* context, RAIL_SYSPARAM_ORDER* sysparam)
 {
-	RAIL_SYSPARAM_ORDER* sysparam = (RAIL_SYSPARAM_ORDER*) event->wParam;
-
-	switch (sysparam->param)
-	{
-		case SPI_SET_SCREEN_SAVE_ACTIVE:
-			break;
-
-		case SPI_SET_SCREEN_SAVE_SECURE:
-			break;
-	}
+	return 1;
 }
 
-void xf_process_rail_server_minmaxinfo_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
+static int xf_rail_server_handshake(RailClientContext* context, RAIL_HANDSHAKE_ORDER* handshake)
+{
+	RAIL_EXEC_ORDER exec;
+	RAIL_SYSPARAM_ORDER sysparam;
+	RAIL_HANDSHAKE_ORDER clientHandshake;
+	RAIL_CLIENT_STATUS_ORDER clientStatus;
+	xfContext* xfc = (xfContext*) context->custom;
+	rdpSettings* settings = xfc->settings;
+
+	clientHandshake.buildNumber = 0x00001DB0;
+	context->ClientHandshake(context, &clientHandshake);
+
+	ZeroMemory(&clientStatus, sizeof(RAIL_CLIENT_STATUS_ORDER));
+	clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
+	context->ClientInformation(context, &clientStatus);
+
+	if (settings->RemoteAppLanguageBarSupported)
+	{
+		RAIL_LANGBAR_INFO_ORDER langBarInfo;
+		langBarInfo.languageBarStatus = 0x00000008; /* TF_SFT_HIDDEN */
+		context->ClientLanguageBarInfo(context, &langBarInfo);
+	}
+
+	ZeroMemory(&sysparam, sizeof(RAIL_SYSPARAM_ORDER));
+
+	sysparam.params = 0;
+
+	sysparam.params |= SPI_MASK_SET_HIGH_CONTRAST;
+	sysparam.highContrast.colorScheme.string = NULL;
+	sysparam.highContrast.colorScheme.length = 0;
+	sysparam.highContrast.flags = 0x7E;
+
+	sysparam.params |= SPI_MASK_SET_MOUSE_BUTTON_SWAP;
+	sysparam.mouseButtonSwap = FALSE;
+
+	sysparam.params |= SPI_MASK_SET_KEYBOARD_PREF;
+	sysparam.keyboardPref = FALSE;
+
+	sysparam.params |= SPI_MASK_SET_DRAG_FULL_WINDOWS;
+	sysparam.dragFullWindows = FALSE;
+
+	sysparam.params |= SPI_MASK_SET_KEYBOARD_CUES;
+	sysparam.keyboardCues = FALSE;
+
+	sysparam.params |= SPI_MASK_SET_WORK_AREA;
+	sysparam.workArea.left = 0;
+	sysparam.workArea.top = 0;
+	sysparam.workArea.right = settings->DesktopWidth;
+	sysparam.workArea.bottom = settings->DesktopHeight;
+
+	sysparam.dragFullWindows = FALSE;
+
+	context->ClientSystemParam(context, &sysparam);
+
+	ZeroMemory(&exec, sizeof(RAIL_EXEC_ORDER));
+
+	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
+	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
+	exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
+
+	context->ClientExecute(context, &exec);
+
+	return 1;
+}
+
+static int xf_rail_server_handshake_ex(RailClientContext* context, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
+{
+	return 1;
+}
+
+static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
 	rdpRail* rail;
-	rdpWindow* rail_window = NULL;
-	RAIL_MINMAXINFO_ORDER* minmax = (RAIL_MINMAXINFO_ORDER*) event->wParam;
-	rail = ((rdpContext*) xfc)->rail;
-	rail_window = window_list_get_by_id(rail->list, minmax->windowId);
-
-	if (rail_window)
-	{
-		xfWindow* window = NULL;
-		window = (xfWindow*) rail_window->extra;
-
-		DEBUG_X11_LMS("windowId=0x%X maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
-					  "minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d",
-					  minmax->windowId, minmax->maxWidth, minmax->maxHeight,
-					  (INT16)minmax->maxPosX, (INT16)minmax->maxPosY,
-					  minmax->minTrackWidth, minmax->minTrackHeight,
-					  minmax->maxTrackWidth, minmax->maxTrackHeight);
-
-		xf_SetWindowMinMaxInfo(xfc, window, minmax->maxWidth, minmax->maxHeight, minmax->maxPosX, minmax->maxPosY,
-				minmax->minTrackWidth, minmax->minTrackHeight, minmax->maxTrackWidth, minmax->maxTrackHeight);
-	}
-}
-
-void xf_process_rail_server_localmovesize_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
-{
+	xfWindow* window;
 	int x = 0, y = 0;
-	rdpRail* rail;
 	int direction = 0;
 	Window child_window;
-	rdpWindow* rail_window = NULL;
-	RAIL_LOCALMOVESIZE_ORDER* movesize = (RAIL_LOCALMOVESIZE_ORDER*) event->wParam;
+	rdpWindow* rail_window;
+	xfContext* xfc = (xfContext*) context->custom;
+
 	rail = ((rdpContext*) xfc)->rail;
-	rail_window = window_list_get_by_id(rail->list, movesize->windowId);
 
-	if (rail_window)
+	rail_window = window_list_get_by_id(rail->list, localMoveSize->windowId);
+
+	if (!rail_window)
+		return -1;
+
+	window = (xfWindow*) rail_window->extra;
+
+	switch (localMoveSize->moveSizeType)
 	{
-		xfWindow* xfw = NULL;
-		xfw = (xfWindow*) rail_window->extra;
-
-		DEBUG_X11_LMS("windowId=0x%X isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d",
-					  movesize->windowId, movesize->isMoveSizeStart,
-					  movetype_names[movesize->moveSizeType], (INT16) movesize->posX, (INT16) movesize->posY);
-
-		switch (movesize->moveSizeType)
-		{
-			case RAIL_WMSZ_LEFT:
-				direction = _NET_WM_MOVERESIZE_SIZE_LEFT;
-				x = movesize->posX;
-				y = movesize->posY;
-				break;
-
-			case RAIL_WMSZ_RIGHT:
-				direction = _NET_WM_MOVERESIZE_SIZE_RIGHT;
-				x = movesize->posX;
-				y = movesize->posY;
-				break;
-
-			case RAIL_WMSZ_TOP:
-				direction = _NET_WM_MOVERESIZE_SIZE_TOP;
-				x = movesize->posX;
-				y = movesize->posY;
-				break;
-
-			case RAIL_WMSZ_TOPLEFT:
-				direction = _NET_WM_MOVERESIZE_SIZE_TOPLEFT;
-				x = movesize->posX;
-				y = movesize->posY;
-				break;
-
-			case RAIL_WMSZ_TOPRIGHT:
-				direction = _NET_WM_MOVERESIZE_SIZE_TOPRIGHT;
-				x = movesize->posX;
-				y = movesize->posY;
-				break;
-
-			case RAIL_WMSZ_BOTTOM:
-				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOM;
-				x = movesize->posX;
-				y = movesize->posY;
-				break;
-
-			case RAIL_WMSZ_BOTTOMLEFT:
-				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT;
-				x = movesize->posX;
-				y = movesize->posY;
-				break;
-
-			case RAIL_WMSZ_BOTTOMRIGHT:
-				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT;
-				x = movesize->posX;
-				y = movesize->posY;
-				break;
-
-			case RAIL_WMSZ_MOVE:
-				direction = _NET_WM_MOVERESIZE_MOVE;
-				XTranslateCoordinates(xfc->display, xfw->handle,
-						RootWindowOfScreen(xfc->screen),
-						movesize->posX, movesize->posY, &x, &y, &child_window);
-				break;
-
-			case RAIL_WMSZ_KEYMOVE:
-				direction = _NET_WM_MOVERESIZE_MOVE_KEYBOARD;
-				x = movesize->posX;
-				y = movesize->posY;
-				/* FIXME: local keyboard moves not working */
-				return;
-
-			case RAIL_WMSZ_KEYSIZE:
-				direction = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
-				x = movesize->posX;
-				y = movesize->posY;
-				/* FIXME: local keyboard moves not working */
-				return;
-		}
-
-		if (movesize->isMoveSizeStart)
-		{
-			xf_StartLocalMoveSize(xfc, xfw, direction, x, y);
-		}
-		else
-		{
-			xf_EndLocalMoveSize(xfc, xfw);
-		}
-	}
-}
-
-void xf_process_rail_appid_resp_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
-{
-	RAIL_GET_APPID_RESP_ORDER* appid_resp =
-		(RAIL_GET_APPID_RESP_ORDER*) event->wParam;
-
-	WLog_ERR(TAG, "Server Application ID Response PDU: windowId=0x%X "
-			 "applicationId=(length=%d dump)\n",
-			 appid_resp->windowId, 512);
-
-	winpr_HexDump(TAG, WLOG_ERROR, (BYTE*) &appid_resp->applicationId, 512);
-}
-
-void xf_process_rail_langbarinfo_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
-{
-	RAIL_LANGBAR_INFO_ORDER* langbar = (RAIL_LANGBAR_INFO_ORDER*) event->wParam;
-
-	WLog_ERR(TAG, "Language Bar Information PDU: languageBarStatus=0x%X\n",
-			 langbar->languageBarStatus);
-}
-
-void xf_process_rail_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
-{
-	switch (GetMessageType(event->id))
-	{
-		case RailChannel_GetSystemParam:
-			xf_process_rail_get_sysparams_event(xfc, channels, event);
+		case RAIL_WMSZ_LEFT:
+			direction = _NET_WM_MOVERESIZE_SIZE_LEFT;
+			x = localMoveSize->posX;
+			y = localMoveSize->posY;
 			break;
 
-		case RailChannel_ServerExecuteResult:
-			xf_process_rail_exec_result_event(xfc, channels, event);
+		case RAIL_WMSZ_RIGHT:
+			direction = _NET_WM_MOVERESIZE_SIZE_RIGHT;
+			x = localMoveSize->posX;
+			y = localMoveSize->posY;
 			break;
 
-		case RailChannel_ServerSystemParam:
-			xf_process_rail_server_sysparam_event(xfc, channels, event);
+		case RAIL_WMSZ_TOP:
+			direction = _NET_WM_MOVERESIZE_SIZE_TOP;
+			x = localMoveSize->posX;
+			y = localMoveSize->posY;
 			break;
 
-		case RailChannel_ServerMinMaxInfo:
-			xf_process_rail_server_minmaxinfo_event(xfc, channels, event);
+		case RAIL_WMSZ_TOPLEFT:
+			direction = _NET_WM_MOVERESIZE_SIZE_TOPLEFT;
+			x = localMoveSize->posX;
+			y = localMoveSize->posY;
 			break;
 
-		case RailChannel_ServerLocalMoveSize:
-			xf_process_rail_server_localmovesize_event(xfc, channels, event);
+		case RAIL_WMSZ_TOPRIGHT:
+			direction = _NET_WM_MOVERESIZE_SIZE_TOPRIGHT;
+			x = localMoveSize->posX;
+			y = localMoveSize->posY;
 			break;
 
-		case RailChannel_ServerGetAppIdResponse:
-			xf_process_rail_appid_resp_event(xfc, channels, event);
+		case RAIL_WMSZ_BOTTOM:
+			direction = _NET_WM_MOVERESIZE_SIZE_BOTTOM;
+			x = localMoveSize->posX;
+			y = localMoveSize->posY;
 			break;
 
-		case RailChannel_ServerLanguageBarInfo:
-			xf_process_rail_langbarinfo_event(xfc, channels, event);
+		case RAIL_WMSZ_BOTTOMLEFT:
+			direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT;
+			x = localMoveSize->posX;
+			y = localMoveSize->posY;
 			break;
 
-		default:
+		case RAIL_WMSZ_BOTTOMRIGHT:
+			direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT;
+			x = localMoveSize->posX;
+			y = localMoveSize->posY;
+			break;
+
+		case RAIL_WMSZ_MOVE:
+			direction = _NET_WM_MOVERESIZE_MOVE;
+			XTranslateCoordinates(xfc->display, window->handle,
+					RootWindowOfScreen(xfc->screen),
+					localMoveSize->posX, localMoveSize->posY, &x, &y, &child_window);
+			break;
+
+		case RAIL_WMSZ_KEYMOVE:
+			direction = _NET_WM_MOVERESIZE_MOVE_KEYBOARD;
+			x = localMoveSize->posX;
+			y = localMoveSize->posY;
+			/* FIXME: local keyboard moves not working */
+			return 1;
+			break;
+
+		case RAIL_WMSZ_KEYSIZE:
+			direction = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
+			x = localMoveSize->posX;
+			y = localMoveSize->posY;
+			/* FIXME: local keyboard moves not working */
+			return 1;
 			break;
 	}
+
+	if (localMoveSize->isMoveSizeStart)
+	{
+		xf_StartLocalMoveSize(xfc, window, direction, x, y);
+	}
+	else
+	{
+		xf_EndLocalMoveSize(xfc, window);
+	}
+
+	return 1;
+}
+
+static int xf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXINFO_ORDER* minMaxInfo)
+{
+	rdpRail* rail;
+	xfWindow* window;
+	rdpWindow* rail_window;
+	xfContext* xfc = (xfContext*) context->custom;
+
+	rail = ((rdpContext*) xfc)->rail;
+
+	rail_window = window_list_get_by_id(rail->list, minMaxInfo->windowId);
+
+	if (!rail_window)
+		return -1;
+
+	window = (xfWindow*) rail_window->extra;
+
+	xf_SetWindowMinMaxInfo(xfc, window,
+			minMaxInfo->maxWidth, minMaxInfo->maxHeight,
+			minMaxInfo->maxPosX, minMaxInfo->maxPosY,
+			minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight,
+			minMaxInfo->maxTrackWidth, minMaxInfo->maxTrackHeight);
+
+	return 1;
+}
+
+static int xf_rail_server_language_bar_info(RailClientContext* context, RAIL_LANGBAR_INFO_ORDER* langBarInfo)
+{
+	return 1;
+}
+
+static int xf_rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RESP_ORDER* getAppIdResp)
+{
+	return 1;
 }
 
 int xf_rail_init(xfContext* xfc, RailClientContext* rail)
@@ -691,9 +720,18 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 
 	xf_rail_register_callbacks(xfc, context->rail);
 
-	if (0)
+	if (1)
 	{
 		rail->custom = (void*) xfc;
+
+		rail->ServerExecuteResult = xf_rail_server_execute_result;
+		rail->ServerSystemParam = xf_rail_server_system_param;
+		rail->ServerHandshake = xf_rail_server_handshake;
+		rail->ServerHandshakeEx = xf_rail_server_handshake_ex;
+		rail->ServerLocalMoveSize = xf_rail_server_local_move_size;
+		rail->ServerMinMaxInfo = xf_rail_server_min_max_info;
+		rail->ServerLanguageBarInfo = xf_rail_server_language_bar_info;
+		rail->ServerGetAppIdResponse = xf_rail_server_get_appid_response;
 	}
 
 	return 1;
