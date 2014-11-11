@@ -1487,7 +1487,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		}
 		else
 		{
-			rgReaderStates[i].dwEventState = states[j].dwEventState;
+			rgReaderStates[i].dwEventState = dwEventState;
 		}
 
 		if (rgReaderStates[i].dwCurrentState & SCARD_STATE_IGNORE) {
