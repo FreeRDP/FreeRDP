@@ -2471,3 +2471,240 @@ void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, Transmit_Retur
 
 	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
 }
+
+UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, LocateCardsByATRA_Call* call)
+{
+	UINT32 index;
+	UINT32 count;
+	UINT32 status;
+	UINT32 offset;
+	UINT32 maxCount;
+	UINT32 szReaderNdrPtr;
+	UINT32 rgReaderStatesNdrPtr;
+	UINT32 rgAtrMasksNdrPtr;
+	LPSCARD_READERSTATEA readerState;
+
+	call->rgReaderStates = NULL;
+
+	status = smartcard_unpack_redir_scard_context(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(s) < 16)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call is too short: %d",
+				(int) Stream_GetRemainingLength(s));
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+
+	Stream_Read_UINT32(s, call->cAtrs);
+	Stream_Read_UINT32(s, rgAtrMasksNdrPtr);
+	Stream_Read_UINT32(s, call->cReaders); /* cReaders (4 bytes) */
+	Stream_Read_UINT32(s, rgReaderStatesNdrPtr); /* rgReaderStatesNdrPtr (4 bytes) */
+
+	status = smartcard_unpack_redir_scard_context_ref(smartcard, s, &(call->hContext));
+
+	if (status)
+		return status;
+
+	if (Stream_GetRemainingLength(s) < 4)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call is too short: %d",
+				(int) Stream_GetRemainingLength(s));
+		return STATUS_BUFFER_TOO_SMALL;
+	}
+
+	if ((rgAtrMasksNdrPtr && !call->cAtrs) || (!rgAtrMasksNdrPtr && call->cAtrs))
+	{
+		WLog_Print(smartcard->log, WLOG_WARN,
+				"LocateCardsByATRA_Call rgAtrMasksNdrPtr (0x%08X) and cAtrs (0x%08X) inconsistency",
+				(int) rgAtrMasksNdrPtr, (int) call->cAtrs);
+		return STATUS_INVALID_PARAMETER;
+	}
+
+	if (rgAtrMasksNdrPtr)
+	{
+		Stream_Read_UINT32(s, count);
+
+		if (count != call->cAtrs)
+		{
+			WLog_Print(smartcard->log, WLOG_WARN,
+					"LocateCardsByATRA_Call NdrCount (0x%08X) and cAtrs (0x%08X) inconsistency",
+					(int) count, (int) call->cAtrs);
+			return STATUS_INVALID_PARAMETER;
+		}
+
+		if (Stream_GetRemainingLength(s) < call->cAtrs)
+		{
+			WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call is too short: Actual: %d, Expected: %d",
+					(int) Stream_GetRemainingLength(s), call->cAtrs);
+			return STATUS_BUFFER_TOO_SMALL;
+		}
+
+		call->rgAtrMasks = calloc(call->cAtrs, sizeof(SCARD_ATRMASK));
+		if (!call->rgAtrMasks)
+		{
+			WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call out of memory error (call->rgAtrMasks)");
+			return STATUS_NO_MEMORY;
+		}
+
+		for (index = 0; index < call->cAtrs; index++)
+		{
+			Stream_Read_UINT32(s, call->rgAtrMasks[index].cbAtr);
+			Stream_Read(s, call->rgAtrMasks[index].rgbAtr, 36);
+			Stream_Read(s, call->rgAtrMasks[index].rgbMask, 36);
+		}
+	}
+
+	Stream_Read_UINT32(s, count);
+
+	if (count != call->cReaders)
+	{
+		WLog_Print(smartcard->log, WLOG_WARN,
+				"GetStatusChangeA_Call unexpected reader count: Actual: %d, Expected: %d",
+				(int) count, call->cReaders);
+		return STATUS_INVALID_PARAMETER;
+	}
+
+	if (call->cReaders > 0)
+	{
+		call->rgReaderStates = calloc(call->cReaders, sizeof(SCARD_READERSTATEA));
+
+		if (!call->rgReaderStates)
+		{
+			WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call out of memory error (call->rgReaderStates)");
+			return STATUS_NO_MEMORY;
+		}
+
+		for (index = 0; index < call->cReaders; index++)
+		{
+			readerState = (LPSCARD_READERSTATEA) &call->rgReaderStates[index];
+
+			if (Stream_GetRemainingLength(s) < 52)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call is too short: %d",
+						(int) Stream_GetRemainingLength(s));
+				return STATUS_BUFFER_TOO_SMALL;
+			}
+
+			Stream_Read_UINT32(s, szReaderNdrPtr); /* szReaderNdrPtr (4 bytes) */
+			Stream_Read_UINT32(s, readerState->dwCurrentState); /* dwCurrentState (4 bytes) */
+			Stream_Read_UINT32(s, readerState->dwEventState); /* dwEventState (4 bytes) */
+			Stream_Read_UINT32(s, readerState->cbAtr); /* cbAtr (4 bytes) */
+			Stream_Read(s, readerState->rgbAtr, 32); /* rgbAtr [0..32] (32 bytes) */
+			Stream_Seek(s, 4); /* rgbAtr [32..36] (4 bytes) */
+		}
+
+		for (index = 0; index < call->cReaders; index++)
+		{
+			readerState = (LPSCARD_READERSTATEA)  &call->rgReaderStates[index];
+
+			if (Stream_GetRemainingLength(s) < 12)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+						(int) Stream_GetRemainingLength(s));
+				return STATUS_BUFFER_TOO_SMALL;
+			}
+
+			Stream_Read_UINT32(s, maxCount); /* NdrMaxCount (4 bytes) */
+			Stream_Read_UINT32(s, offset); /* NdrOffset (4 bytes) */
+			Stream_Read_UINT32(s, count); /* NdrActualCount (4 bytes) */
+
+			if (Stream_GetRemainingLength(s) < count)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+						(int) Stream_GetRemainingLength(s));
+				return STATUS_BUFFER_TOO_SMALL;
+			}
+
+			readerState->szReader = (LPCSTR) malloc(count + 1);
+
+			if (!readerState->szReader)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN,
+						"GetStatusChangeA_Call out of memory error (readerState->szReader)");
+				return STATUS_NO_MEMORY;
+			}
+
+			Stream_Read(s, (void*) readerState->szReader, count);
+			smartcard_unpack_read_size_align(smartcard, s, count, 4);
+			((char*) readerState->szReader)[count] = '\0';
+
+			if (!readerState->szReader)
+			{
+				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call null reader name");
+				return STATUS_INVALID_PARAMETER;
+			}
+		}
+	}
+
+	return SCARD_S_SUCCESS;
+}
+
+void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, LocateCardsByATRA_Call* call)
+{
+	BYTE* pb;
+	UINT32 index;
+	char* szEventState;
+	char* szCurrentState;
+	char* rgbAtr;
+	LPSCARD_READERSTATEA readerState;
+
+	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+		return;
+
+	WLog_Print(smartcard->log, WLOG_DEBUG, "LocateCardsByATRA_Call {");
+
+	pb = (BYTE*) &(call->hContext.pbContext);
+
+	if (call->hContext.cbContext > 4)
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
+	}
+	else
+	{
+		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
+	}
+
+	for (index = 0; index < call->cReaders; index++)
+	{
+		readerState = (LPSCARD_READERSTATEA) &call->rgReaderStates[index];
+
+		WLog_Print(smartcard->log, WLOG_DEBUG,
+			"\t[%d]: szReader: %s cbAtr: %d",
+			index, readerState->szReader, readerState->cbAtr);
+
+		szCurrentState = SCardGetReaderStateString(readerState->dwCurrentState);
+		szEventState = SCardGetReaderStateString(readerState->dwEventState);
+		rgbAtr = winpr_BinToHexString((BYTE*) &(readerState->rgbAtr), readerState->cbAtr, FALSE);
+
+		WLog_Print(smartcard->log, WLOG_DEBUG,
+			"\t[%d]: dwCurrentState: %s (0x%08X)",
+			index, szCurrentState, readerState->dwCurrentState);
+
+		WLog_Print(smartcard->log, WLOG_DEBUG,
+			"\t[%d]: dwEventState: %s (0x%08X)",
+			index, szEventState, readerState->dwEventState);
+
+		if (rgbAtr)
+		{
+			WLog_Print(smartcard->log, WLOG_DEBUG,
+						"\t[%d]: cbAtr: %d rgbAtr: %s",
+						index, readerState->cbAtr, rgbAtr);
+		}
+		else
+		{
+			WLog_Print(smartcard->log, WLOG_DEBUG,
+									"\t[%d]: cbAtr: %d rgbAtr: %s",
+									index, 0, "");
+		}
+
+		free(szCurrentState);
+		free(szEventState);
+		free(rgbAtr);
+	}
+	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+}

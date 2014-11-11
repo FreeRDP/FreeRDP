@@ -78,7 +78,14 @@ typedef long PCSC_LONG;
 #define PCSC_SCARD_CTL_CODE(code)		(0x42000000 + (code))
 #define PCSC_CM_IOCTL_GET_FEATURE_REQUEST	SCARD_CTL_CODE(3400)
 
+/**
+ * pcsc-lite defines SCARD_READERSTATE, SCARD_IO_REQUEST as packed
+ * on Mac OS X only and uses default packing everywhere else.
+ */
+
+#ifdef __APPLE__
 #pragma pack(push, 1)
+#endif
 
 typedef struct
 {
@@ -96,6 +103,12 @@ typedef struct
 	PCSC_DWORD dwProtocol;
 	PCSC_DWORD cbPciLength;
 } PCSC_SCARD_IO_REQUEST;
+
+#ifdef __APPLE__
+#pragma pack(pop)
+#endif
+
+#pragma pack(push, 1)
 
 typedef struct
 {
