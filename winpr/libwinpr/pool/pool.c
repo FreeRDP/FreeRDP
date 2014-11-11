@@ -181,9 +181,6 @@ VOID CloseThreadpool(PTP_POOL ptpp)
 	if (pCloseThreadpool)
 		pCloseThreadpool(ptpp);
 #else
-	int index;
-	HANDLE thread;
-
 	SetEvent(ptpp->TerminateEvent);
 
 	ArrayList_Free(ptpp->Threads);

@@ -1518,7 +1518,7 @@ static void update_send_pointer_position(rdpContext* context, POINTER_POSITION_U
 	Stream_Write_UINT16(s, pointerPosition->xPos); /* xPos (2 bytes) */
 	Stream_Write_UINT16(s, pointerPosition->yPos); /* yPos (2 bytes) */
 
-	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_PTR_POSITION, s);
+	fastpath_send_update_pdu(rdp->fastpath, FASTPATH_UPDATETYPE_PTR_POSITION, s, FALSE);
 	Stream_Release(s);
 }
 

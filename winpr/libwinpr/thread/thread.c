@@ -267,7 +267,7 @@ exit:
 	if (thread->detached || !thread->started)
 		cleanup_handle(thread);
 
-	pthread_exit(thread->dwExitCode);
+	pthread_exit((void*) (size_t) thread->dwExitCode);
 	return rc;
 }
 
@@ -426,12 +426,13 @@ VOID ExitThread(DWORD dwExitCode)
 {
 	pthread_t tid = pthread_self();
 
-	if (NULL == thread_list)
+	if (!thread_list)
 	{
 		WLog_ERR(TAG, "function called without existing thread list!");
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
+		pthread_exit(0);
 	}
 	else if (!ListDictionary_Contains(thread_list, &tid))
 	{
@@ -439,12 +440,15 @@ VOID ExitThread(DWORD dwExitCode)
 #if defined(WITH_DEBUG_THREADS)
 		DumpThreadHandles();
 #endif
+		pthread_exit(0);
 	}
 	else
 	{
-		WINPR_THREAD *thread;
+		WINPR_THREAD* thread;
+
 		ListDictionary_Lock(thread_list);
 		thread = ListDictionary_GetItemValue(thread_list, &tid);
+
 		assert(thread);
 		thread->exited = TRUE;
 		thread->dwExitCode = dwExitCode;
@@ -457,7 +461,7 @@ VOID ExitThread(DWORD dwExitCode)
 		if (thread->detached || !thread->started)
 			cleanup_handle(thread);
 
-		pthread_exit(thread->dwExitCode);
+		pthread_exit((void*) (size_t) thread->dwExitCode);
 	}
 }
 
