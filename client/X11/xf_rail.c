@@ -25,9 +25,8 @@
 #include <X11/Xutil.h>
 
 #include <winpr/wlog.h>
-#include <freerdp/utils/event.h>
-
 #include <winpr/print.h>
+
 #include <freerdp/utils/rail.h>
 #include <freerdp/rail/rail.h>
 
@@ -83,8 +82,55 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 	}
 }
 
-void xf_rail_paint(xfContext* xfc, rdpRail* rail, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom)
+void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 {
+	int index;
+	int count;
+	RECTANGLE_16 updateRect;
+	RECTANGLE_16 windowRect;
+	ULONG_PTR* pKeys = NULL;
+	xfRailWindow* railWindow;
+	const RECTANGLE_16* extents;
+	REGION16 windowInvalidRegion;
+
+	region16_init(&windowInvalidRegion);
+
+	count = HashTable_GetKeys(xfc->railWindows, &pKeys);
+
+	for (index = 0; index < count; index++)
+	{
+		railWindow = (xfRailWindow*) HashTable_GetItemValue(xfc->railWindows, (void*) pKeys[index]);
+
+		if (railWindow)
+		{
+			windowRect.left = railWindow->x;
+			windowRect.top = railWindow->y;
+			windowRect.right = railWindow->x + railWindow->width;
+			windowRect.bottom = railWindow->y + railWindow->height;
+
+			region16_clear(&windowInvalidRegion);
+			region16_intersect_rect(&windowInvalidRegion, invalidRegion, &windowRect);
+
+			if (!region16_is_empty(&windowInvalidRegion))
+			{
+				extents = region16_extents(&windowInvalidRegion);
+
+				updateRect.left = extents->left - railWindow->x;
+				updateRect.top = extents->top - railWindow->y;
+				updateRect.right = extents->right - railWindow->x;
+				updateRect.bottom = extents->bottom - railWindow->y;
+
+				//InvalidateRect(railWindow->hWnd, &updateRect, FALSE);
+			}
+		}
+	}
+
+	region16_uninit(&windowInvalidRegion);
+}
+
+void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom)
+{
+	rdpRail* rail;
 	xfWindow* xfw;
 	rdpWindow* window;
 	BOOL intersect;
@@ -93,6 +139,9 @@ void xf_rail_paint(xfContext* xfc, rdpRail* rail, INT32 uleft, INT32 utop, UINT3
 	UINT32 iright, ibottom;
 	INT32 wleft, wtop;
 	UINT32 wright, wbottom;
+
+	rail = ((rdpContext*) xfc)->rail;
+
 	window_list_rewind(rail->list);
 
 	while (window_list_has_next(rail->list))
@@ -256,33 +305,13 @@ void xf_rail_register_callbacks(xfContext* xfc, rdpRail* rail)
 	rail->rail_DesktopNonMonitored = xf_rail_DesktopNonMonitored;
 }
 
-static void xf_on_free_rail_client_event(wMessage* event)
-{
-	rail_free_cloned_order(GetMessageType(event->id), event->wParam);
-}
-
-static void xf_send_rail_client_event(rdpChannels* channels, UINT16 event_type, void* param)
-{
-	wMessage* out_event = NULL;
-	void* payload = NULL;
-	payload = rail_clone_order(event_type, param);
-
-	if (payload != NULL)
-	{
-		out_event = freerdp_event_new(RailChannel_Class, event_type,
-				xf_on_free_rail_client_event, payload);
-		freerdp_channels_send_event(channels, out_event);
-	}
-}
-
 void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 {
 	rdpRail* rail;
-	rdpChannels* channels;
 	rdpWindow* rail_window;
 	RAIL_ACTIVATE_ORDER activate;
+
 	rail = ((rdpContext*) xfc)->rail;
-	channels = ((rdpContext*) xfc)->channels;
 	rail_window = window_list_get_by_extra_id(rail->list, (void*) xwindow);
 
 	if (!rail_window)
@@ -290,17 +319,18 @@ void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 
 	activate.windowId = rail_window->windowId;
 	activate.enabled = enabled;
-	xf_send_rail_client_event(channels, RailChannel_ClientActivate, &activate);
+
+	xfc->rail->ClientActivate(xfc->rail, &activate);
 }
 
 void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 command)
 {
-	rdpChannels* channels;
 	RAIL_SYSCOMMAND_ORDER syscommand;
-	channels = ((rdpContext*) xfc)->channels;
+
 	syscommand.windowId = windowId;
 	syscommand.command = command;
-	xf_send_rail_client_event(channels, RailChannel_ClientSystemCommand, &syscommand);
+
+	xfc->rail->ClientSystemCommand(xfc->rail, &syscommand);
 }
 
 /**
@@ -312,10 +342,9 @@ void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 
 void xf_rail_adjust_position(xfContext* xfc, rdpWindow* window)
 {
 	xfWindow* xfw;
-	rdpChannels* channels;
 	RAIL_WINDOW_MOVE_ORDER window_move;
+
 	xfw = (xfWindow*) window->extra;
-	channels = ((rdpContext*) xfc)->channels;
 
 	if (! xfw->is_mapped || xfw->local_move.state != LMS_NOT_ACTIVE)
 		return;
@@ -355,24 +384,23 @@ void xf_rail_adjust_position(xfContext* xfc, rdpWindow* window)
 		window_move.right = window_move.left + xfw->width;
 		window_move.bottom = window_move.top + xfw->height;
 
-		xf_send_rail_client_event(channels, RailChannel_ClientWindowMove, &window_move);
+		xfc->rail->ClientWindowMove(xfc->rail, &window_move);
 	}
 }
 
 void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
 {
-	xfWindow* xfw;
-	rdpChannels* channels;
-	RAIL_WINDOW_MOVE_ORDER window_move;
-	rdpInput* input = xfc->instance->input;
-	int x,y;
-	Window root_window;
-	Window child_window;
-	unsigned int mask;
+	int x, y;
 	int child_x;
 	int child_y;
+	xfWindow* xfw;
+	unsigned int mask;
+	Window root_window;
+	Window child_window;
+	RAIL_WINDOW_MOVE_ORDER window_move;
+	rdpInput* input = xfc->instance->input;
+
 	xfw = (xfWindow*) window->extra;
-	channels = ((rdpContext*) xfc)->channels;
 
 	/*
 	 * Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
@@ -392,6 +420,7 @@ void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
 	 * For keyboard moves send and explicit update to RDP server
 	 */
 	window_move.windowId = window->windowId;
+
 	/*
 	 * Calculate new offsets for the rail server window
 	 * Negative offset correction + rail server window offset + (difference in visibleOffset and new window local offset)
@@ -400,13 +429,16 @@ void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
 	window_move.top = offsetY + window->windowOffsetY + (xfw->top - window->visibleOffsetY);
 	window_move.right = window_move.left + xfw->width; /* In the update to RDP the position is one past the window */
 	window_move.bottom = window_move.top + xfw->height;
-	xf_send_rail_client_event(channels, RailChannel_ClientWindowMove, &window_move);
+
+	xfc->rail->ClientWindowMove(xfc->rail, &window_move);
+
 	/*
 	 * Simulate button up at new position to end the local move (per RDP spec)
 	 */
 	XQueryPointer(xfc->display, xfw->handle,
 				  &root_window, &child_window,
 				  &x, &y, &child_x, &child_y, &mask);
+
 	input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
 
 	/* only send the mouse coordinates if not a keyboard move or size */
@@ -426,52 +458,6 @@ void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
 	window->windowWidth = xfw->width;
 	window->windowHeight = xfw->height;
 	xfw->local_move.state = LMS_TERMINATING;
-}
-
-void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
-{
-	int index;
-	int count;
-	RECTANGLE_16 updateRect;
-	RECTANGLE_16 windowRect;
-	ULONG_PTR* pKeys = NULL;
-	xfRailWindow* railWindow;
-	const RECTANGLE_16* extents;
-	REGION16 windowInvalidRegion;
-
-	region16_init(&windowInvalidRegion);
-
-	count = HashTable_GetKeys(xfc->railWindows, &pKeys);
-
-	for (index = 0; index < count; index++)
-	{
-		railWindow = (xfRailWindow*) HashTable_GetItemValue(xfc->railWindows, (void*) pKeys[index]);
-
-		if (railWindow)
-		{
-			windowRect.left = railWindow->x;
-			windowRect.top = railWindow->y;
-			windowRect.right = railWindow->x + railWindow->width;
-			windowRect.bottom = railWindow->y + railWindow->height;
-
-			region16_clear(&windowInvalidRegion);
-			region16_intersect_rect(&windowInvalidRegion, invalidRegion, &windowRect);
-
-			if (!region16_is_empty(&windowInvalidRegion))
-			{
-				extents = region16_extents(&windowInvalidRegion);
-
-				updateRect.left = extents->left - railWindow->x;
-				updateRect.top = extents->top - railWindow->y;
-				updateRect.right = extents->right - railWindow->x;
-				updateRect.bottom = extents->bottom - railWindow->y;
-
-				//InvalidateRect(railWindow->hWnd, &updateRect, FALSE);
-			}
-		}
-	}
-
-	region16_uninit(&windowInvalidRegion);
 }
 
 /* RemoteApp Virtual Channel Extension */

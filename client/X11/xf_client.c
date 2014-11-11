@@ -72,13 +72,10 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 
-#include <freerdp/utils/event.h>
 #include <freerdp/utils/signal.h>
 #include <freerdp/utils/passphrase.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/channels.h>
-
-#include <freerdp/rail.h>
 
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
@@ -101,6 +98,7 @@
 #include "xf_input.h"
 #include "xf_channels.h"
 #include "xfreerdp.h"
+
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
@@ -267,7 +265,7 @@ void xf_sw_end_paint(rdpContext *context)
 
 		xf_lock_x11(xfc, FALSE);
 
-		xf_rail_paint(xfc, context->rail, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfc, x, y, x + w - 1, y + h - 1);
 
 		xf_unlock_x11(xfc, FALSE);
 	}
@@ -383,7 +381,7 @@ void xf_hw_end_paint(rdpContext *context)
 
 		xf_lock_x11(xfc, FALSE);
 
-		xf_rail_paint(xfc, context->rail, x, y, x + w - 1, y + h - 1);
+		xf_rail_paint(xfc, x, y, x + w - 1, y + h - 1);
 
 		xf_unlock_x11(xfc, FALSE);
 	}
