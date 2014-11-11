@@ -43,7 +43,8 @@ struct rdp_autodetect
 	ALIGN64 UINT32 netCharBandwidth; /* 5 */
 	ALIGN64 UINT32 netCharBaseRTT; /* 6 */
 	ALIGN64 UINT32 netCharAverageRTT; /* 7 */
-	UINT64 paddingA[16 - 8]; /* 8 */
+	ALIGN64 BOOL bandwidthMeasureStarted; /* 8 */
+	UINT64 paddingA[16 - 9]; /* 9 */
 
 	ALIGN64 pRTTMeasureRequest RTTMeasureRequest; /* 16 */
 	ALIGN64 pRTTMeasureResponse RTTMeasureResponse; /* 17 */
