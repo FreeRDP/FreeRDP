@@ -231,11 +231,13 @@ void x11_shadow_input_keyboard_event(x11ShadowSubsystem* subsystem, UINT16 flags
 		XTestGrabControl(subsystem->display, True);
 
 		if (flags & KBD_FLAGS_DOWN)
-			XTestFakeKeyEvent(subsystem->display, keycode, True, 0);
+			XTestFakeKeyEvent(subsystem->display, keycode, True, CurrentTime);
 		else if (flags & KBD_FLAGS_RELEASE)
-			XTestFakeKeyEvent(subsystem->display, keycode, False, 0);
+			XTestFakeKeyEvent(subsystem->display, keycode, False, CurrentTime);
 
 		XTestGrabControl(subsystem->display, False);
+
+		XFlush(subsystem->display);
 	}
 #endif
 }
@@ -276,13 +278,13 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, U
 
 		button = (negative) ? 5 : 4;
 
-		XTestFakeButtonEvent(subsystem->display, button, True, 0);
-		XTestFakeButtonEvent(subsystem->display, button, False, 0);
+		XTestFakeButtonEvent(subsystem->display, button, True, CurrentTime);
+		XTestFakeButtonEvent(subsystem->display, button, False, CurrentTime);
 	}
 	else
 	{
 		if (flags & PTR_FLAGS_MOVE)
-			XTestFakeMotionEvent(subsystem->display, 0, x, y, 0);
+			XTestFakeMotionEvent(subsystem->display, 0, x, y, CurrentTime);
 
 		if (flags & PTR_FLAGS_BUTTON1)
 			button = 1;
@@ -295,10 +297,12 @@ void x11_shadow_input_mouse_event(x11ShadowSubsystem* subsystem, UINT16 flags, U
 			down = TRUE;
 
 		if (button)
-			XTestFakeButtonEvent(subsystem->display, button, down, 0);
+			XTestFakeButtonEvent(subsystem->display, button, down, CurrentTime);
 	}
 
 	XTestGrabControl(subsystem->display, False);
+
+	XFlush(subsystem->display);
 #endif
 }
 
@@ -335,10 +339,61 @@ void x11_shadow_input_extended_mouse_event(x11ShadowSubsystem* subsystem, UINT16
 		down = TRUE;
 
 	if (button)
-		XTestFakeButtonEvent(subsystem->display, button, down, 0);
+		XTestFakeButtonEvent(subsystem->display, button, down, CurrentTime);
 
 	XTestGrabControl(subsystem->display, False);
+
+	XFlush(subsystem->display);
 #endif
+}
+
+int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
+{
+	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg;
+	UINT32 msgId = SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID;
+	wMessagePipe* MsgPipe = subsystem->MsgPipe;
+
+	msg = (SHADOW_MSG_OUT_POINTER_POSITION_UPDATE*) calloc(1, sizeof(SHADOW_MSG_OUT_POINTER_POSITION_UPDATE));
+
+	if (!msg)
+		return -1;
+
+	msg->xPos = subsystem->pointerX;
+	msg->yPos = subsystem->pointerY;
+
+	MessageQueue_Post(MsgPipe->Out, NULL, msgId, (void*) msg, NULL);
+
+	return 1;
+}
+
+int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
+{
+	SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* msg;
+	UINT32 msgId = SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID;
+	wMessagePipe* MsgPipe = subsystem->MsgPipe;
+
+	msg = (SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE*) calloc(1, sizeof(SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE));
+
+	if (!msg)
+		return -1;
+
+	msg->xHot = subsystem->cursorHotX;
+	msg->yHot = subsystem->cursorHotY;
+	msg->width = subsystem->cursorWidth;
+	msg->height = subsystem->cursorHeight;
+	msg->scanline = msg->width * 4;
+
+	msg->pixels = (BYTE*) malloc(msg->scanline * msg->height);
+
+	if (!msg->pixels)
+		return -1;
+
+	CopyMemory(msg->pixels, subsystem->cursorPixels, msg->scanline * msg->height);
+	msg->premultiplied = TRUE;
+
+	MessageQueue_Post(MsgPipe->Out, NULL, msgId, (void*) msg, NULL);
+
+	return 1;
 }
 
 int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
@@ -357,6 +412,9 @@ int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 		XFixesCursorImage* ci;
 
 		ci = XFixesGetCursorImage(subsystem->display);
+
+		if (!ci)
+			return -1;
 
 		x = ci->x;
 		y = ci->y;
@@ -385,6 +443,8 @@ int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 		}
 
 		XFree(ci);
+
+		x11_shadow_pointer_alpha_update(subsystem);
 #endif
 	}
 	else
@@ -404,8 +464,13 @@ int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 		y = root_y;
 	}
 
-	subsystem->cursorX = x;
-	subsystem->cursorY = y;
+	if ((x != subsystem->pointerX) || (y != subsystem->pointerY))
+	{
+		subsystem->pointerX = x;
+		subsystem->pointerY = y;
+
+		x11_shadow_pointer_position_update(subsystem);
+	}
 
 	return 1;
 }
@@ -416,13 +481,16 @@ int x11_shadow_handle_xevent(x11ShadowSubsystem* subsystem, XEvent* xevent)
 	{
 
 	}
-
 #ifdef WITH_XFIXES
-	if (xevent->type == subsystem->xfixes_cursor_notify_event)
+	else if (xevent->type == subsystem->xfixes_cursor_notify_event)
 	{
 		x11_shadow_query_cursor(subsystem, TRUE);
 	}
 #endif
+	else
+	{
+
+	}
 
 	return 1;
 }
@@ -473,8 +541,8 @@ int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	nWidth = subsystem->cursorWidth;
 	nHeight = subsystem->cursorHeight;
 
-	nXDst = subsystem->cursorX - surface->x - subsystem->cursorHotX;
-	nYDst = subsystem->cursorY - surface->y - subsystem->cursorHotY;
+	nXDst = subsystem->pointerX - surface->x - subsystem->cursorHotX;
+	nYDst = subsystem->pointerY - surface->y - subsystem->cursorHotY;
 
 	if (nXDst >= surface->width)
 		return 1;
@@ -633,7 +701,7 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 				(BYTE*) image->data, PIXEL_FORMAT_XRGB32,
 				image->bytes_per_line, x, y, NULL);
 
-		x11_shadow_blend_cursor(subsystem);
+		//x11_shadow_blend_cursor(subsystem);
 
 		count = ArrayList_Count(server->clients);
 
@@ -767,8 +835,8 @@ void* x11_shadow_subsystem_thread(x11ShadowSubsystem* subsystem)
 
 		if ((status == WAIT_TIMEOUT) || (GetTickCount64() > frameTime))
 		{
-			x11_shadow_query_cursor(subsystem, FALSE);
 			x11_shadow_screen_grab(subsystem);
+			x11_shadow_query_cursor(subsystem, FALSE);
 
 			dwInterval = 1000 / subsystem->captureFrameRate;
 			frameTime += dwInterval;
@@ -804,7 +872,7 @@ int x11_shadow_subsystem_base_init(x11ShadowSubsystem* subsystem)
 	subsystem->depth = DefaultDepthOfScreen(subsystem->screen);
 	subsystem->width = WidthOfScreen(subsystem->screen);
 	subsystem->height = HeightOfScreen(subsystem->screen);
-	subsystem->root_window = DefaultRootWindow(subsystem->display);
+	subsystem->root_window = RootWindow(subsystem->display, subsystem->number);
 
 	return 1;
 }
@@ -824,7 +892,8 @@ int x11_shadow_xfixes_init(x11ShadowSubsystem* subsystem)
 
 	subsystem->xfixes_cursor_notify_event = xfixes_event + XFixesCursorNotify;
 
-	XFixesSelectCursorInput(subsystem->display, DefaultRootWindow(subsystem->display), XFixesDisplayCursorNotifyMask);
+	XFixesSelectCursorInput(subsystem->display, subsystem->root_window,
+			XFixesDisplayCursorNotifyMask);
 
 	return 1;
 #else

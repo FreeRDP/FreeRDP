@@ -528,7 +528,7 @@ static void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 			pSrcData = gdi->bitmap_buffer;
 		}
 
-		nSrcStep = nWidth * 4;
+		nSrcStep = nWidth * gdi->bytesPerPixel;
 
 		pDstData = gdi->primary_buffer;
 		nDstStep = gdi->width * gdi->bytesPerPixel;

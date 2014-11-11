@@ -21,14 +21,11 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/cmdline.h>
 
-#include <winpr/stream.h>
+#include <freerdp/client/tsmf.h>
 
 #include "tsmf_types.h"
 #include "tsmf_constants.h"
@@ -37,81 +34,41 @@
 
 #include "tsmf_main.h"
 
-typedef struct _TSMF_LISTENER_CALLBACK TSMF_LISTENER_CALLBACK;
-
-typedef struct _TSMF_CHANNEL_CALLBACK TSMF_CHANNEL_CALLBACK;
-
-typedef struct _TSMF_PLUGIN TSMF_PLUGIN;
-
-struct _TSMF_LISTENER_CALLBACK
-{
-	IWTSListenerCallback iface;
-
-	IWTSPlugin *plugin;
-	IWTSVirtualChannelManager *channel_mgr;
-};
-
-struct _TSMF_CHANNEL_CALLBACK
-{
-	IWTSVirtualChannelCallback iface;
-
-	IWTSPlugin *plugin;
-	IWTSVirtualChannelManager *channel_mgr;
-	IWTSVirtualChannel *channel;
-
-	BYTE presentation_id[GUID_SIZE];
-	UINT32 stream_id;
-};
-
-struct _TSMF_PLUGIN
-{
-	IWTSPlugin iface;
-
-	TSMF_LISTENER_CALLBACK *listener_callback;
-
-	const char *decoder_name;
-	const char *audio_name;
-	const char *audio_device;
-};
-
 void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
-					   UINT32 message_id, UINT64 duration, UINT32 data_size)
+			UINT32 message_id, UINT64 duration, UINT32 data_size)
 {
 	wStream *s;
 	int status = -1;
 	TSMF_CHANNEL_CALLBACK *callback = (TSMF_CHANNEL_CALLBACK *) pChannelCallback;
+
 	s = Stream_New(NULL, 32);
+
 	Stream_Write_UINT32(s, TSMF_INTERFACE_CLIENT_NOTIFICATIONS | STREAM_ID_PROXY);
 	Stream_Write_UINT32(s, message_id);
 	Stream_Write_UINT32(s, PLAYBACK_ACK); /* FunctionId */
 	Stream_Write_UINT32(s, callback->stream_id); /* StreamId */
 	Stream_Write_UINT64(s, duration); /* DataDuration */
 	Stream_Write_UINT64(s, data_size); /* cbData */
+
 	DEBUG_TSMF("response size %d", (int) Stream_GetPosition(s));
-	if(!callback || !callback->channel || !callback->channel->Write)
+
+	if (!callback || !callback->channel || !callback->channel->Write)
+	{
 		WLog_ERR(TAG, "callback=%p, channel=%p, write=%p", callback,
 				   callback->channel, callback->channel->Write);
+	}
 	else
+	{
 		status = callback->channel->Write(callback->channel,
-										  Stream_GetPosition(s), Stream_Buffer(s), NULL);
-	if(status)
-	{
-		WLog_ERR(TAG, "response error %d", status);
+				Stream_GetPosition(s), Stream_Buffer(s), NULL);
 	}
-	Stream_Free(s, TRUE);
-}
 
-BOOL tsmf_push_event(IWTSVirtualChannelCallback *pChannelCallback, wMessage *event)
-{
-	int status;
-	TSMF_CHANNEL_CALLBACK *callback = (TSMF_CHANNEL_CALLBACK *) pChannelCallback;
-	status = callback->channel_mgr->PushEvent(callback->channel_mgr, event);
-	if(status)
+	if (status)
 	{
 		WLog_ERR(TAG, "response error %d", status);
-		return FALSE;
 	}
-	return TRUE;
+
+	Stream_Free(s, TRUE);
 }
 
 static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream *data)
@@ -128,7 +85,7 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, w
 	UINT32 cbSize = Stream_GetRemainingLength(data);
 
 	/* 2.2.1 Shared Message Header (SHARED_MSG_HEADER) */
-	if(cbSize < 12)
+	if (cbSize < 12)
 	{
 		WLog_ERR(TAG, "invalid size. cbSize=%d", cbSize);
 		return 1;
@@ -137,17 +94,19 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, w
 	input = data;
 	output = Stream_New(NULL, 256);
 	Stream_Seek(output, 8);
-	Stream_Read_UINT32(input, InterfaceId);
-	Stream_Read_UINT32(input, MessageId);
-	Stream_Read_UINT32(input, FunctionId);
+	Stream_Read_UINT32(input, InterfaceId); /* InterfaceId (4 bytes) */
+	Stream_Read_UINT32(input, MessageId); /* MessageId (4 bytes) */
+	Stream_Read_UINT32(input, FunctionId); /* FunctionId (4 bytes) */
+
 	DEBUG_TSMF("cbSize=%d InterfaceId=0x%X MessageId=0x%X FunctionId=0x%X",
 			   cbSize, InterfaceId, MessageId, FunctionId);
-	memset(&ifman, 0, sizeof(TSMF_IFMAN));
+
+	ZeroMemory(&ifman, sizeof(TSMF_IFMAN));
 	ifman.channel_callback = pChannelCallback;
-	ifman.decoder_name = ((TSMF_PLUGIN *) callback->plugin)->decoder_name;
-	ifman.audio_name = ((TSMF_PLUGIN *) callback->plugin)->audio_name;
-	ifman.audio_device = ((TSMF_PLUGIN *) callback->plugin)->audio_device;
-	memcpy(ifman.presentation_id, callback->presentation_id, GUID_SIZE);
+	ifman.decoder_name = ((TSMF_PLUGIN*) callback->plugin)->decoder_name;
+	ifman.audio_name = ((TSMF_PLUGIN*) callback->plugin)->audio_name;
+	ifman.audio_device = ((TSMF_PLUGIN*) callback->plugin)->audio_device;
+	CopyMemory(ifman.presentation_id, callback->presentation_id, GUID_SIZE);
 	ifman.stream_id = callback->stream_id;
 	ifman.message_id = MessageId;
 	ifman.input = input;
@@ -155,23 +114,30 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, w
 	ifman.output = output;
 	ifman.output_pending = FALSE;
 	ifman.output_interface_id = InterfaceId;
-	switch(InterfaceId)
+
+	//fprintf(stderr, "InterfaceId: 0x%04X MessageId: 0x%04X FunctionId: 0x%04X\n", InterfaceId, MessageId, FunctionId);
+
+	switch (InterfaceId)
 	{
 		case TSMF_INTERFACE_CAPABILITIES | STREAM_ID_NONE:
-			switch(FunctionId)
+			switch (FunctionId)
 			{
 				case RIM_EXCHANGE_CAPABILITY_REQUEST:
 					status = tsmf_ifman_rim_exchange_capability_request(&ifman);
+					break;
+				case RIMCALL_RELEASE:
+				case RIMCALL_QUERYINTERFACE:
 					break;
 				default:
 					break;
 			}
 			break;
+
 		case TSMF_INTERFACE_DEFAULT | STREAM_ID_PROXY:
-			switch(FunctionId)
+			switch (FunctionId)
 			{
 				case SET_CHANNEL_PARAMS:
-					memcpy(callback->presentation_id, Stream_Pointer(input), GUID_SIZE);
+					CopyMemory(callback->presentation_id, Stream_Pointer(input), GUID_SIZE);
 					Stream_Seek(input, GUID_SIZE);
 					Stream_Read_UINT32(input, callback->stream_id);
 					DEBUG_TSMF("SET_CHANNEL_PARAMS StreamId=%d", callback->stream_id);
@@ -244,19 +210,24 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, w
 				case ON_PLAYBACK_RATE_CHANGED:
 					status = tsmf_ifman_on_playback_rate_changed(&ifman);
 					break;
+				case RIMCALL_RELEASE:
+				case RIMCALL_QUERYINTERFACE:
+					break;
 				default:
 					break;
 			}
 			break;
+
 		default:
 			break;
 	}
 
 	input = NULL;
 	ifman.input = NULL;
-	if(status == -1)
+
+	if (status == -1)
 	{
-		switch(FunctionId)
+		switch (FunctionId)
 		{
 			case RIMCALL_RELEASE:
 				/* [MS-RDPEXPS] 2.2.2.2 Interface Release (IFACE_RELEASE)
@@ -270,15 +241,17 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, w
 				status = 0;
 				break;
 		}
-		if(status == -1)
+
+		if (status == -1)
 		{
-			WLog_ERR(TAG, "InterfaceId 0x%X FunctionId 0x%X not processed.",
-					   InterfaceId, FunctionId);
+			WLog_ERR(TAG, "Unknown InterfaceId: 0x%04X MessageId: 0x%04X FunctionId: 0x%04X\n", InterfaceId, MessageId, FunctionId);
 			/* When a request is not implemented we return empty response indicating error */
 		}
+
 		status = 0;
 	}
-	if(status == 0 && !ifman.output_pending)
+
+	if (status == 0 && !ifman.output_pending)
 	{
 		/* Response packet does not have FunctionId */
 		length = Stream_GetPosition(output);
@@ -287,31 +260,37 @@ static int tsmf_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, w
 		Stream_Write_UINT32(output, MessageId);
 		DEBUG_TSMF("response size %d", length);
 		status = callback->channel->Write(callback->channel, length, Stream_Buffer(output), NULL);
-		if(status)
+
+		if (status)
 		{
 			WLog_ERR(TAG, "response error %d", status);
 		}
 	}
+
 	Stream_Free(output, TRUE);
 	return status;
 }
 
 static int tsmf_on_close(IWTSVirtualChannelCallback *pChannelCallback)
 {
-	TSMF_STREAM *stream;
-	TSMF_PRESENTATION *presentation;
-	TSMF_CHANNEL_CALLBACK *callback = (TSMF_CHANNEL_CALLBACK *) pChannelCallback;
+	TSMF_STREAM* stream;
+	TSMF_PRESENTATION* presentation;
+	TSMF_CHANNEL_CALLBACK* callback = (TSMF_CHANNEL_CALLBACK*) pChannelCallback;
+
 	DEBUG_TSMF("");
-	if(callback->stream_id)
+
+	if (callback->stream_id)
 	{
 		presentation = tsmf_presentation_find_by_id(callback->presentation_id);
-		if(presentation)
+
+		if (presentation)
 		{
 			stream = tsmf_stream_find_by_id(presentation, callback->stream_id);
-			if(stream)
+			if (stream)
 				tsmf_stream_free(stream);
 		}
 	}
+
 	free(pChannelCallback);
 	return 0;
 }
@@ -322,41 +301,63 @@ static int tsmf_on_new_channel_connection(IWTSListenerCallback *pListenerCallbac
 		int *pbAccept,
 		IWTSVirtualChannelCallback **ppCallback)
 {
-	TSMF_CHANNEL_CALLBACK *callback;
-	TSMF_LISTENER_CALLBACK *listener_callback = (TSMF_LISTENER_CALLBACK *) pListenerCallback;
+	TSMF_CHANNEL_CALLBACK* callback;
+	TSMF_LISTENER_CALLBACK* listener_callback = (TSMF_LISTENER_CALLBACK*) pListenerCallback;
+
 	DEBUG_TSMF("");
-	callback = (TSMF_CHANNEL_CALLBACK *) malloc(sizeof(TSMF_CHANNEL_CALLBACK));
-	ZeroMemory(callback, sizeof(TSMF_CHANNEL_CALLBACK));
+
+	callback = (TSMF_CHANNEL_CALLBACK*) calloc(1, sizeof(TSMF_CHANNEL_CALLBACK));
+
+	if (!callback)
+		return -1;
+
 	callback->iface.OnDataReceived = tsmf_on_data_received;
 	callback->iface.OnClose = tsmf_on_close;
 	callback->iface.OnOpen = NULL;
 	callback->plugin = listener_callback->plugin;
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = pChannel;
-	*ppCallback = (IWTSVirtualChannelCallback *) callback;
+
+	*ppCallback = (IWTSVirtualChannelCallback*) callback;
+
 	return 0;
 }
 
-static int tsmf_plugin_initialize(IWTSPlugin *pPlugin, IWTSVirtualChannelManager *pChannelMgr)
+static int tsmf_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
-	TSMF_PLUGIN *tsmf = (TSMF_PLUGIN *) pPlugin;
+	int status;
+	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*) pPlugin;
+
 	DEBUG_TSMF("");
-	tsmf->listener_callback = (TSMF_LISTENER_CALLBACK *) malloc(sizeof(TSMF_LISTENER_CALLBACK));
-	ZeroMemory(tsmf->listener_callback, sizeof(TSMF_LISTENER_CALLBACK));
+
+	tsmf->listener_callback = (TSMF_LISTENER_CALLBACK*) calloc(1, sizeof(TSMF_LISTENER_CALLBACK));
+
+	if (!tsmf->listener_callback)
+		return -1;
+
 	tsmf->listener_callback->iface.OnNewChannelConnection = tsmf_on_new_channel_connection;
 	tsmf->listener_callback->plugin = pPlugin;
 	tsmf->listener_callback->channel_mgr = pChannelMgr;
-	return pChannelMgr->CreateListener(pChannelMgr, "TSMF", 0,
-									   (IWTSListenerCallback *) tsmf->listener_callback, NULL);
+
+	status = pChannelMgr->CreateListener(pChannelMgr, "TSMF", 0,
+			(IWTSListenerCallback*) tsmf->listener_callback, &(tsmf->listener));
+
+	tsmf->listener->pInterface = tsmf->iface.pInterface;
+
+	return status;
 }
 
-static int tsmf_plugin_terminated(IWTSPlugin *pPlugin)
+static int tsmf_plugin_terminated(IWTSPlugin* pPlugin)
 {
-	TSMF_PLUGIN *tsmf = (TSMF_PLUGIN *) pPlugin;
+	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*) pPlugin;
+
 	DEBUG_TSMF("");
-	if(tsmf->listener_callback)
+
+	if (tsmf->listener_callback)
 		free(tsmf->listener_callback);
+
 	free(tsmf);
+
 	return 0;
 }
 
@@ -372,15 +373,18 @@ static void tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
 {
 	int status;
 	DWORD flags;
-	COMMAND_LINE_ARGUMENT_A *arg;
-	TSMF_PLUGIN *tsmf = (TSMF_PLUGIN *) pPlugin;
+	COMMAND_LINE_ARGUMENT_A* arg;
+	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*) pPlugin;
+
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
-	status = CommandLineParseArgumentsA(args->argc, (const char **) args->argv,
-										tsmf_args, flags, tsmf, NULL, NULL);
+
+	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+						tsmf_args, flags, tsmf, NULL, NULL);
 	arg = tsmf_args;
+
 	do
 	{
-		if(!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
 			continue;
 		CommandLineSwitchStart(arg)
 		CommandLineSwitchCase(arg, "audio")
@@ -400,32 +404,50 @@ static void tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
 		}
 		CommandLineSwitchEnd(arg)
 	}
-	while((arg = CommandLineFindNextArgumentA(arg)) != NULL);
+	while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 }
 
 #ifdef STATIC_CHANNELS
 #define DVCPluginEntry	tsmf_DVCPluginEntry
 #endif
 
-int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS *pEntryPoints)
+int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	int status = 0;
-	TSMF_PLUGIN *tsmf;
-	tsmf = (TSMF_PLUGIN *) pEntryPoints->GetPlugin(pEntryPoints, "tsmf");
-	if(tsmf == NULL)
+	TSMF_PLUGIN* tsmf;
+	TsmfClientContext* context;
+
+	tsmf = (TSMF_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "tsmf");
+
+	if (!tsmf)
 	{
-		tsmf = (TSMF_PLUGIN *) malloc(sizeof(TSMF_PLUGIN));
-		ZeroMemory(tsmf, sizeof(TSMF_PLUGIN));
+		tsmf = (TSMF_PLUGIN*) calloc(1, sizeof(TSMF_PLUGIN));
+
+		if (!tsmf)
+			return -1;
+
 		tsmf->iface.Initialize = tsmf_plugin_initialize;
 		tsmf->iface.Connected = NULL;
 		tsmf->iface.Disconnected = NULL;
 		tsmf->iface.Terminated = tsmf_plugin_terminated;
-		status = pEntryPoints->RegisterPlugin(pEntryPoints, "tsmf", (IWTSPlugin *) tsmf);
+
+		context = (TsmfClientContext*) calloc(1, sizeof(TsmfClientContext));
+
+		if (!context)
+			return -1;
+
+		context->handle = (void*) tsmf;
+		tsmf->iface.pInterface = (void*) context;
+
 		tsmf_media_init();
+
+		status = pEntryPoints->RegisterPlugin(pEntryPoints, "tsmf", (IWTSPlugin*) tsmf);
 	}
-	if(status == 0)
+
+	if (status == 0)
 	{
-		tsmf_process_addin_args((IWTSPlugin *) tsmf, pEntryPoints->GetPluginData(pEntryPoints));
+		tsmf_process_addin_args((IWTSPlugin*) tsmf, pEntryPoints->GetPluginData(pEntryPoints));
 	}
+
 	return status;
 }

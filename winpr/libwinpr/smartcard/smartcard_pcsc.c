@@ -1382,6 +1382,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 {
 	int i, j;
 	int* map;
+	DWORD dwEventState;
+	BOOL stateChanged = FALSE;
 	PCSC_DWORD cMappedReaders;
 	PCSC_SCARD_READERSTATE* states;
 	LONG status = SCARD_S_SUCCESS;
@@ -1469,11 +1471,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		rgReaderStates[i].dwCurrentState = states[j].dwCurrentState;
 		rgReaderStates[i].cbAtr = states[j].cbAtr;
 		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
-		/**
-		 * Why we should interpret and modify the results of pcsc-lite ScardGetStatusChange ?
-		 * Should not we just act as a pass-through between the client and the remote smartcard subsystem ?
-		 */
-#if 0
+
 		/* pcsc-lite puts an event count in the higher bits of dwEventState */
 		states[j].dwEventState &= 0xFFFF;
 		dwEventState = states[j].dwEventState & ~SCARD_STATE_CHANGED;
@@ -1497,19 +1495,14 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 
 		if (rgReaderStates[i].dwCurrentState & SCARD_STATE_IGNORE)
 			rgReaderStates[i].dwEventState = SCARD_STATE_IGNORE;
-#endif
+
 		rgReaderStates[i].dwEventState = states[j].dwEventState;
 	}
-	/**
-	 * Why we should interpret and modify the results of pcsc-lite ScardGetStatusChange ?
-	 * Should not we just act as a pass-through between the client and the remote smartcard subsystem ?
-	 */
-#if 0
+
 	if ((status == SCARD_S_SUCCESS) && !stateChanged)
 		status = SCARD_E_TIMEOUT;
 	else if ((status == SCARD_E_TIMEOUT) && stateChanged)
 		return SCARD_S_SUCCESS;
-#endif
 
 	free(states);
 	free(map);

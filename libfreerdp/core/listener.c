@@ -105,7 +105,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 	if (status != 0)
 	{
 #ifdef _WIN32
-		WLog_ERR(_T("getaddrinfo error: %s"), gai_strerror(status));
+		WLog_ERR("getaddrinfo error: %s", gai_strerrorA(status));
 #else
 		WLog_ERR(TAG, "getaddrinfo");
 #endif

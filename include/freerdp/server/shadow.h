@@ -87,6 +87,9 @@ struct rdp_shadow_client
 	rdpShadowEncoder* encoder;
 	rdpShadowSubsystem* subsystem;
 
+	UINT32 pointerX;
+	UINT32 pointerY;
+
 	HANDLE vcm;
 	EncomspServerContext* encomsp;
 	RemdeskServerContext* remdesk;
@@ -145,6 +148,8 @@ struct _RDP_SHADOW_ENTRY_POINTS
 	REGION16 invalidRegion; \
 	wMessagePipe* MsgPipe; \
 	SYNCHRONIZATION_BARRIER barrier; \
+	UINT32 pointerX; \
+	UINT32 pointerY; \
 	\
 	pfnShadowSynchronizeEvent SynchronizeEvent; \
 	pfnShadowKeyboardEvent KeyboardEvent; \

@@ -1,8 +1,7 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * X11 Video Redirection
  *
- * Copyright 2010-2011 Vic Lee
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +16,14 @@
  * limitations under the License.
  */
 
-#ifndef __XF_TSMF_H
-#define __XF_TSMF_H
+#import "mfreerdp.h"
+#import "mf_client.h"
 
-#include "xf_client.h"
-#include "xfreerdp.h"
+#import "freerdp/freerdp.h"
+#import "freerdp/channels/channels.h"
+#import "freerdp/client/cliprdr.h"
 
-int xf_tsmf_init(xfContext* xfc, TsmfClientContext* tsmf);
-int xf_tsmf_uninit(xfContext* xfc, TsmfClientContext* tsmf);
+int mac_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr);
 
-#endif /* __XF_TSMF_H */
+void mac_cliprdr_init(mfContext* mfc, CliprdrClientContext* cliprdr);
+void mac_cliprdr_uninit(mfContext* mfc, CliprdrClientContext* cliprdr);

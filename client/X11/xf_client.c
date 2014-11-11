@@ -104,7 +104,6 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
-static long xv_port = 0;
 static const size_t password_size = 512;
 
 void xf_transform_window(xfContext *xfc)
@@ -1020,7 +1019,6 @@ BOOL xf_post_connect(freerdp *instance)
 
 	xfc->clipboard = xf_clipboard_new(xfc);
 	freerdp_channels_post_connect(channels, instance);
-	xf_tsmf_init(xfc, xv_port);
 
 	EventArgsInit(&e, "xfreerdp");
 	e.width = settings->DesktopWidth;
@@ -1121,10 +1119,6 @@ void xf_process_channel_event(rdpChannels* channels, freerdp* instance)
 				xf_process_rail_event(xfc, channels, event);
 				break;
 
-			case TsmfChannel_Class:
-				xf_process_tsmf_event(xfc, event);
-				break;
-
 			default:
 				break;
 		}
@@ -1195,7 +1189,7 @@ void xf_window_free(xfContext *xfc)
 
 	if (xfc->xv_context)
 	{
-		xf_tsmf_uninit(xfc);
+		xf_tsmf_uninit(xfc, NULL);
 		xfc->xv_context = NULL;
 	}
 

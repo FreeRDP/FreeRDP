@@ -27,6 +27,7 @@
 #include "xfreerdp.h"
 
 #include "xf_gfx.h"
+#include "xf_tsmf.h"
 #include "xf_cliprdr.h"
 
 void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
@@ -37,6 +38,10 @@ void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		xfc->rdpei = (RdpeiClientContext*) e->pInterface;
+	}
+	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_tsmf_init(xfc, (TsmfClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
@@ -63,6 +68,10 @@ void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnect
 	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
 	{
 		xfc->rdpei = NULL;
+	}
+	else if (strcmp(e->name, TSMF_DVC_CHANNEL_NAME) == 0)
+	{
+		xf_tsmf_uninit(xfc, (TsmfClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{

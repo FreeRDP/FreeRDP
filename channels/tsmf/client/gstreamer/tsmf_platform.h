@@ -59,25 +59,25 @@ typedef struct _TSMFGstreamerDecoder
 
 } TSMFGstreamerDecoder;
 
-const char *get_type(TSMFGstreamerDecoder *mdecoder);
+const char* get_type(TSMFGstreamerDecoder* mdecoder);
 
-const char *tsmf_platform_get_video_sink(void);
-const char *tsmf_platform_get_audio_sink(void);
+const char* tsmf_platform_get_video_sink(void);
+const char* tsmf_platform_get_audio_sink(void);
 
-int tsmf_platform_create(TSMFGstreamerDecoder *decoder);
-int tsmf_platform_set_format(TSMFGstreamerDecoder *decoder);
-int tsmf_platform_register_handler(TSMFGstreamerDecoder *decoder);
-int tsmf_platform_free(TSMFGstreamerDecoder *decoder);
+int tsmf_platform_create(TSMFGstreamerDecoder* decoder);
+int tsmf_platform_set_format(TSMFGstreamerDecoder* decoder);
+int tsmf_platform_register_handler(TSMFGstreamerDecoder* decoder);
+int tsmf_platform_free(TSMFGstreamerDecoder* decoder);
 
-int tsmf_window_create(TSMFGstreamerDecoder *decoder);
-int tsmf_window_resize(TSMFGstreamerDecoder *decoder, int x, int y,
+int tsmf_window_create(TSMFGstreamerDecoder* decoder);
+int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y,
 					   int width, int height, int nr_rect, RDP_RECT *visible);
-int tsmf_window_destroy(TSMFGstreamerDecoder *decoder);
+int tsmf_window_destroy(TSMFGstreamerDecoder* decoder);
 
-int tsmf_window_pause(TSMFGstreamerDecoder *decoder);
-int tsmf_window_resume(TSMFGstreamerDecoder *decoder);
+int tsmf_window_pause(TSMFGstreamerDecoder* decoder);
+int tsmf_window_resume(TSMFGstreamerDecoder* decoder);
 
-BOOL tsmf_gstreamer_add_pad(TSMFGstreamerDecoder *mdecoder);
-void tsmf_gstreamer_remove_pad(TSMFGstreamerDecoder *mdecoder);
+BOOL tsmf_gstreamer_add_pad(TSMFGstreamerDecoder* mdecoder);
+void tsmf_gstreamer_remove_pad(TSMFGstreamerDecoder* mdecoder);
 
 #endif

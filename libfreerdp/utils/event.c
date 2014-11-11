@@ -21,16 +21,11 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <winpr/crt.h>
 
 #include <freerdp/message.h>
 #include <freerdp/utils/event.h>
 #include <freerdp/client/cliprdr.h>
-#include <freerdp/client/tsmf.h>
 #include <freerdp/rail.h>
 
 static wMessage* freerdp_cliprdr_event_new(UINT16 event_type)
@@ -109,33 +104,6 @@ static wMessage* freerdp_cliprdr_event_new(UINT16 event_type)
 	return event.m;
 }
 
-static wMessage* freerdp_tsmf_event_new(UINT16 event_type)
-{
-	union
-	{
-		void *v;
-		wMessage* m;
-	} event;
-
-	event.m = NULL;
-	switch (event_type)
-	{
-		case TsmfChannel_VideoFrame:
-			event.v = malloc(sizeof(RDP_VIDEO_FRAME_EVENT));
-			ZeroMemory(event.v, sizeof(RDP_VIDEO_FRAME_EVENT));
-			event.m->id = MakeMessageId(TsmfChannel, VideoFrame);
-			break;
-
-		case TsmfChannel_Redraw:
-			event.v = malloc(sizeof(RDP_REDRAW_EVENT));
-			ZeroMemory(event.v, sizeof(RDP_REDRAW_EVENT));
-			event.m->id = MakeMessageId(TsmfChannel, Redraw);
-			break;
-	}
-
-	return event.v;
-}
-
 static wMessage* freerdp_rail_event_new(UINT16 event_type)
 {
 	wMessage* event = NULL;
@@ -153,17 +121,8 @@ wMessage* freerdp_event_new(UINT16 event_class, UINT16 event_type,
 
 	switch (event_class)
 	{
-		case DebugChannel_Class:
-			event = (wMessage*) malloc(sizeof(wMessage));
-			ZeroMemory(event, sizeof(wMessage));
-			break;
-
 		case CliprdrChannel_Class:
 			event = freerdp_cliprdr_event_new(event_type);
-			break;
-
-		case TsmfChannel_Class:
-			event = freerdp_tsmf_event_new(event_type);
 			break;
 
 		case RailChannel_Class:
@@ -202,20 +161,6 @@ static void freerdp_cliprdr_event_free(wMessage* event)
 	}
 }
 
-static void freerdp_tsmf_event_free(wMessage* event)
-{
-	switch (GetMessageType(event->id))
-	{
-		case TsmfChannel_VideoFrame:
-			{
-				RDP_VIDEO_FRAME_EVENT* vevent = (RDP_VIDEO_FRAME_EVENT*)event;
-				free(vevent->frame_data);
-				free(vevent->visible_rects);
-			}
-			break;
-	}
-}
-
 static void freerdp_rail_event_free(wMessage* event)
 {
 
@@ -232,10 +177,6 @@ void freerdp_event_free(wMessage* event)
 		{
 			case CliprdrChannel_Class:
 				freerdp_cliprdr_event_free(event);
-				break;
-
-			case TsmfChannel_Class:
-				freerdp_tsmf_event_free(event);
 				break;
 
 			case RailChannel_Class:
