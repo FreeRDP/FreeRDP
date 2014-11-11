@@ -25,6 +25,11 @@ if(MSVC)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} module.def)
 endif()
 
+foreach(FREERDP_CHANNELS_SERVER_SRC ${FREERDP_CHANNELS_SERVER_SRCS})
+	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS}
+				"${FREERDP_CHANNELS_SERVER_SRC}")
+endforeach()
+
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
 if (WIN32)
