@@ -23,10 +23,6 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <winpr/crt.h>
 
 #include <freerdp/types.h>
@@ -526,9 +522,10 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
 			(pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
-		context = (RailClientContext*) malloc(sizeof(RailClientContext));
+		context = (RailClientContext*) calloc(1, sizeof(RailClientContext));
 
 		context->handle = (void*) rail;
+		context->custom = NULL;
 
 		context->ClientExecute = rail_client_execute;
 		context->ClientActivate = rail_client_activate;

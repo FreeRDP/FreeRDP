@@ -42,6 +42,33 @@
 #define DEBUG_X11_LMS(fmt, ...) do { } while (0)
 #endif
 
+const char* error_code_names[] =
+{
+	"RAIL_EXEC_S_OK",
+	"RAIL_EXEC_E_HOOK_NOT_LOADED",
+	"RAIL_EXEC_E_DECODE_FAILED",
+	"RAIL_EXEC_E_NOT_IN_ALLOWLIST",
+	"RAIL_EXEC_E_FILE_NOT_FOUND",
+	"RAIL_EXEC_E_FAIL",
+	"RAIL_EXEC_E_SESSION_LOCKED"
+};
+
+const char* movetype_names[] =
+{
+	"(invalid)",
+	"RAIL_WMSZ_LEFT",
+	"RAIL_WMSZ_RIGHT",
+	"RAIL_WMSZ_TOP",
+	"RAIL_WMSZ_TOPLEFT",
+	"RAIL_WMSZ_TOPRIGHT",
+	"RAIL_WMSZ_BOTTOM",
+	"RAIL_WMSZ_BOTTOMLEFT",
+	"RAIL_WMSZ_BOTTOMRIGHT",
+	"RAIL_WMSZ_MOVE",
+	"RAIL_WMSZ_KEYMOVE",
+	"RAIL_WMSZ_KEYSIZE"
+};
+
 void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 {
 	if (!xfc->remote_app)
@@ -117,10 +144,12 @@ static void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 	xfContext* xfc;
 	xfWindow* xfw;
 	xfc = (xfContext*) rail->extra;
+
 	xf_rail_enable_remoteapp_mode(xfc);
-	xfw = xf_CreateWindow(xfc, window,
-						  window->windowOffsetX, window->windowOffsetY,
-						  window->windowWidth, window->windowHeight, window->windowId);
+
+	xfw = xf_CreateWindow(xfc, window, window->windowOffsetX, window->windowOffsetY,
+			window->windowWidth, window->windowHeight, window->windowId);
+
 	xf_SetWindowStyle(xfc, xfw, window->style, window->extendedStyle);
 	xf_SetWindowText(xfc, xfw, window->title);
 	window->extra = (void*) xfw;
@@ -185,8 +214,10 @@ static void xf_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* ico
 	xfWindow* xfw;
 	xfc = (xfContext*) rail->extra;
 	xfw = (xfWindow*) window->extra;
+
 	icon->extra = freerdp_icon_convert(icon->entry->bitsColor, NULL, icon->entry->bitsMask,
 			icon->entry->width, icon->entry->height, icon->entry->bpp, rail->clrconv);
+
 	xf_SetWindowIcon(xfc, xfw, icon);
 }
 
@@ -196,6 +227,7 @@ static void xf_rail_SetWindowRects(rdpRail* rail, rdpWindow* window)
 	xfWindow* xfw;
 	xfc = (xfContext*) rail->extra;
 	xfw = (xfWindow*) window->extra;
+
 	xf_SetWindowRects(xfc, xfw, window->windowRects, window->numWindowRects);
 }
 
@@ -245,7 +277,7 @@ static void xf_send_rail_client_event(rdpChannels* channels, UINT16 event_type, 
 	if (payload != NULL)
 	{
 		out_event = freerdp_event_new(RailChannel_Class, event_type,
-									  xf_on_free_rail_client_event, payload);
+				xf_on_free_rail_client_event, payload);
 		freerdp_channels_send_event(channels, out_event);
 	}
 }
@@ -260,7 +292,7 @@ void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 	channels = ((rdpContext*) xfc)->channels;
 	rail_window = window_list_get_by_extra_id(rail->list, (void*) xwindow);
 
-	if (rail_window == NULL)
+	if (!rail_window)
 		return;
 
 	activate.windowId = rail_window->windowId;
@@ -329,6 +361,7 @@ void xf_rail_adjust_position(xfContext* xfc, rdpWindow* window)
 		window_move.top = offsetY + window->windowOffsetY + (xfw->top - window->visibleOffsetY);
 		window_move.right = window_move.left + xfw->width;
 		window_move.bottom = window_move.top + xfw->height;
+
 		DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%u h=%u"
 					  "  RDP=0x%X rc={l=%d t=%d} w=%d h=%d",
 					  (UINT32) xfw->handle, window_move.left, window_move.top,
@@ -336,6 +369,7 @@ void xf_rail_adjust_position(xfContext* xfc, rdpWindow* window)
 					  window->windowId,
 					  window->windowOffsetX, window->windowOffsetY,
 					  window->windowWidth, window->windowHeight);
+
 		xf_send_rail_client_event(channels, RailChannel_ClientWindowMove, &window_move);
 	}
 }
@@ -354,6 +388,7 @@ void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
 	int child_y;
 	xfw = (xfWindow*) window->extra;
 	channels = ((rdpContext*) xfc)->channels;
+
 	DEBUG_X11_LMS("window=0x%X rc={l=%d t=%d r=%d b=%d} w=%d h=%d",
 				  (UINT32) xfw->handle,
 				  xfw->left, xfw->top, xfw->right, xfw->bottom,
@@ -429,17 +464,6 @@ void xf_process_rail_get_sysparams_event(xfContext* xfc, rdpChannels* channels, 
 	xf_send_rail_client_event(channels, RailChannel_ClientSystemParam, sysparam);
 }
 
-const char* error_code_names[] =
-{
-	"RAIL_EXEC_S_OK",
-	"RAIL_EXEC_E_HOOK_NOT_LOADED",
-	"RAIL_EXEC_E_DECODE_FAILED",
-	"RAIL_EXEC_E_NOT_IN_ALLOWLIST",
-	"RAIL_EXEC_E_FILE_NOT_FOUND",
-	"RAIL_EXEC_E_FAIL",
-	"RAIL_EXEC_E_SESSION_LOCKED"
-};
-
 void xf_process_rail_exec_result_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
 	RAIL_EXEC_RESULT_ORDER* exec_result;
@@ -479,36 +503,22 @@ void xf_process_rail_server_minmaxinfo_event(xfContext* xfc, rdpChannels* channe
 	rail = ((rdpContext*) xfc)->rail;
 	rail_window = window_list_get_by_id(rail->list, minmax->windowId);
 
-	if (rail_window != NULL)
+	if (rail_window)
 	{
 		xfWindow* window = NULL;
 		window = (xfWindow*) rail_window->extra;
+
 		DEBUG_X11_LMS("windowId=0x%X maxWidth=%d maxHeight=%d maxPosX=%d maxPosY=%d "
 					  "minTrackWidth=%d minTrackHeight=%d maxTrackWidth=%d maxTrackHeight=%d",
 					  minmax->windowId, minmax->maxWidth, minmax->maxHeight,
 					  (INT16)minmax->maxPosX, (INT16)minmax->maxPosY,
 					  minmax->minTrackWidth, minmax->minTrackHeight,
 					  minmax->maxTrackWidth, minmax->maxTrackHeight);
+
 		xf_SetWindowMinMaxInfo(xfc, window, minmax->maxWidth, minmax->maxHeight, minmax->maxPosX, minmax->maxPosY,
-							   minmax->minTrackWidth, minmax->minTrackHeight, minmax->maxTrackWidth, minmax->maxTrackHeight);
+				minmax->minTrackWidth, minmax->minTrackHeight, minmax->maxTrackWidth, minmax->maxTrackHeight);
 	}
 }
-
-const char* movetype_names[] =
-{
-	"(invalid)",
-	"RAIL_WMSZ_LEFT",
-	"RAIL_WMSZ_RIGHT",
-	"RAIL_WMSZ_TOP",
-	"RAIL_WMSZ_TOPLEFT",
-	"RAIL_WMSZ_TOPRIGHT",
-	"RAIL_WMSZ_BOTTOM",
-	"RAIL_WMSZ_BOTTOMLEFT",
-	"RAIL_WMSZ_BOTTOMRIGHT",
-	"RAIL_WMSZ_MOVE",
-	"RAIL_WMSZ_KEYMOVE",
-	"RAIL_WMSZ_KEYSIZE"
-};
 
 void xf_process_rail_server_localmovesize_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
@@ -521,79 +531,80 @@ void xf_process_rail_server_localmovesize_event(xfContext* xfc, rdpChannels* cha
 	rail = ((rdpContext*) xfc)->rail;
 	rail_window = window_list_get_by_id(rail->list, movesize->windowId);
 
-	if (rail_window != NULL)
+	if (rail_window)
 	{
 		xfWindow* xfw = NULL;
 		xfw = (xfWindow*) rail_window->extra;
+
 		DEBUG_X11_LMS("windowId=0x%X isMoveSizeStart=%d moveSizeType=%s PosX=%d PosY=%d",
 					  movesize->windowId, movesize->isMoveSizeStart,
 					  movetype_names[movesize->moveSizeType], (INT16) movesize->posX, (INT16) movesize->posY);
 
 		switch (movesize->moveSizeType)
 		{
-			case RAIL_WMSZ_LEFT: //0x1
+			case RAIL_WMSZ_LEFT:
 				direction = _NET_WM_MOVERESIZE_SIZE_LEFT;
 				x = movesize->posX;
 				y = movesize->posY;
 				break;
 
-			case RAIL_WMSZ_RIGHT: //0x2
+			case RAIL_WMSZ_RIGHT:
 				direction = _NET_WM_MOVERESIZE_SIZE_RIGHT;
 				x = movesize->posX;
 				y = movesize->posY;
 				break;
 
-			case RAIL_WMSZ_TOP: //0x3
+			case RAIL_WMSZ_TOP:
 				direction = _NET_WM_MOVERESIZE_SIZE_TOP;
 				x = movesize->posX;
 				y = movesize->posY;
 				break;
 
-			case RAIL_WMSZ_TOPLEFT: //0x4
+			case RAIL_WMSZ_TOPLEFT:
 				direction = _NET_WM_MOVERESIZE_SIZE_TOPLEFT;
 				x = movesize->posX;
 				y = movesize->posY;
 				break;
 
-			case RAIL_WMSZ_TOPRIGHT: //0x5
+			case RAIL_WMSZ_TOPRIGHT:
 				direction = _NET_WM_MOVERESIZE_SIZE_TOPRIGHT;
 				x = movesize->posX;
 				y = movesize->posY;
 				break;
 
-			case RAIL_WMSZ_BOTTOM: //0x6
+			case RAIL_WMSZ_BOTTOM:
 				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOM;
 				x = movesize->posX;
 				y = movesize->posY;
 				break;
 
-			case RAIL_WMSZ_BOTTOMLEFT: //0x7
+			case RAIL_WMSZ_BOTTOMLEFT:
 				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMLEFT;
 				x = movesize->posX;
 				y = movesize->posY;
 				break;
 
-			case RAIL_WMSZ_BOTTOMRIGHT: //0x8
+			case RAIL_WMSZ_BOTTOMRIGHT:
 				direction = _NET_WM_MOVERESIZE_SIZE_BOTTOMRIGHT;
 				x = movesize->posX;
 				y = movesize->posY;
 				break;
 
-			case RAIL_WMSZ_MOVE: //0x9
+			case RAIL_WMSZ_MOVE:
 				direction = _NET_WM_MOVERESIZE_MOVE;
 				XTranslateCoordinates(xfc->display, xfw->handle,
-									  RootWindowOfScreen(xfc->screen),
-									  movesize->posX, movesize->posY, &x, &y, &child_window);
+						RootWindowOfScreen(xfc->screen),
+						movesize->posX, movesize->posY, &x, &y, &child_window);
 				break;
 
-			case RAIL_WMSZ_KEYMOVE: //0xA
+			case RAIL_WMSZ_KEYMOVE:
 				direction = _NET_WM_MOVERESIZE_MOVE_KEYBOARD;
 				x = movesize->posX;
 				y = movesize->posY;
 				/* FIXME: local keyboard moves not working */
 				return;
 
-			case RAIL_WMSZ_KEYSIZE: //0xB
+			case RAIL_WMSZ_KEYSIZE:
 				direction = _NET_WM_MOVERESIZE_SIZE_KEYBOARD;
 				x = movesize->posX;
 				y = movesize->posY;
@@ -616,16 +627,18 @@ void xf_process_rail_appid_resp_event(xfContext* xfc, rdpChannels* channels, wMe
 {
 	RAIL_GET_APPID_RESP_ORDER* appid_resp =
 		(RAIL_GET_APPID_RESP_ORDER*) event->wParam;
+
 	WLog_ERR(TAG, "Server Application ID Response PDU: windowId=0x%X "
 			 "applicationId=(length=%d dump)\n",
 			 appid_resp->windowId, 512);
+
 	winpr_HexDump(TAG, WLOG_ERROR, (BYTE*) &appid_resp->applicationId, 512);
 }
 
 void xf_process_rail_langbarinfo_event(xfContext* xfc, rdpChannels* channels, wMessage* event)
 {
-	RAIL_LANGBAR_INFO_ORDER* langbar =
-		(RAIL_LANGBAR_INFO_ORDER*) event->wParam;
+	RAIL_LANGBAR_INFO_ORDER* langbar = (RAIL_LANGBAR_INFO_ORDER*) event->wParam;
+
 	WLog_ERR(TAG, "Language Bar Information PDU: languageBarStatus=0x%X\n",
 			 langbar->languageBarStatus);
 }
@@ -665,4 +678,42 @@ void xf_process_rail_event(xfContext* xfc, rdpChannels* channels, wMessage* even
 		default:
 			break;
 	}
+}
+
+int xf_rail_init(xfContext* xfc, RailClientContext* rail)
+{
+	rdpContext* context = (rdpContext*) xfc;
+
+	xfc->rail = rail;
+
+	context->rail = rail_new(context->settings);
+	rail_register_update_callbacks(context->rail, context->update);
+
+	xf_rail_register_callbacks(xfc, context->rail);
+
+	if (0)
+	{
+		rail->custom = (void*) xfc;
+	}
+
+	return 1;
+}
+
+int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
+{
+	rdpContext* context = (rdpContext*) xfc;
+
+	if (xfc->rail)
+	{
+		xfc->rail->custom = NULL;
+		xfc->rail = NULL;
+	}
+
+	if (context->rail)
+	{
+		rail_free(context->rail);
+		context->rail = NULL;
+	}
+
+	return 1;
 }

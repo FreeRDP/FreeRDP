@@ -1013,10 +1013,6 @@ BOOL xf_post_connect(freerdp *instance)
 	instance->update->PlaySound = xf_play_sound;
 	instance->update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 
-	instance->context->rail = rail_new(instance->settings);
-	rail_register_update_callbacks(instance->context->rail, instance->update);
-	xf_rail_register_callbacks(xfc, instance->context->rail);
-
 	xfc->clipboard = xf_clipboard_new(xfc);
 	freerdp_channels_post_connect(channels, instance);
 

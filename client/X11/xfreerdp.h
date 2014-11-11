@@ -190,6 +190,7 @@ struct xf_context
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
+	RailClientContext* rail;
 
 	BOOL xkbAvailable;
 };
