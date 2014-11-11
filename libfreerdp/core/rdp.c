@@ -1034,6 +1034,11 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 	if (rdp->disconnect)
 		return 0;
  
+	if (rdp->autodetect->bandwidthMeasureStarted)
+	{
+		rdp->autodetect->bandwidthMeasureByteCount += length;
+	}
+
 	if (rdp->settings->DisableEncryption)
 	{
 		if (!rdp_read_security_header(s, &securityFlags))
@@ -1132,6 +1137,11 @@ static int rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 	{
 		WLog_ERR(TAG,  "incorrect FastPath PDU header length %d", length);
 		return -1;
+	}
+
+	if (rdp->autodetect->bandwidthMeasureStarted)
+	{
+		rdp->autodetect->bandwidthMeasureByteCount += length;
 	}
 
 	if (fastpath->encryptionFlags & FASTPATH_OUTPUT_ENCRYPTED)
