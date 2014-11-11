@@ -83,6 +83,7 @@
 #cmakedefine WITH_DEBUG_SVC
 #cmakedefine WITH_DEBUG_RDPEI
 #cmakedefine WITH_DEBUG_TIMEZONE
+#cmakedefine WITH_DEBUG_THREADS
 #cmakedefine WITH_DEBUG_TRANSPORT
 #cmakedefine WITH_DEBUG_WND
 #cmakedefine WITH_DEBUG_X11
