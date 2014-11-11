@@ -44,7 +44,6 @@ include(CheckCmakeCompat)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(CheckStructHasMember)
-include(CMakeDetermineSystem)
 include(FindPkgConfig)
 include(TestBigEndian)
 
