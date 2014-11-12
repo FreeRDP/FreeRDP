@@ -68,7 +68,7 @@ void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 	{
 		xfc->remote_app = TRUE;
 		xfc->drawable = DefaultRootWindow(xfc->display);
-		xf_DestroyWindow(xfc, xfc->window);
+		xf_DestroyDesktopWindow(xfc, xfc->window);
 		xfc->window = NULL;
 	}
 }
@@ -86,11 +86,10 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 {
 	int index;
 	int count;
-	xfWindow* xfw = NULL;
 	RECTANGLE_16 updateRect;
 	RECTANGLE_16 windowRect;
 	ULONG_PTR* pKeys = NULL;
-	xfRailWindow* railWindow;
+	xfAppWindow* appWindow;
 	const RECTANGLE_16* extents;
 	REGION16 windowInvalidRegion;
 
@@ -100,14 +99,14 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 
 	for (index = 0; index < count; index++)
 	{
-		railWindow = (xfRailWindow*) HashTable_GetItemValue(xfc->railWindows, (void*) pKeys[index]);
+		appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows, (void*) pKeys[index]);
 
-		if (railWindow)
+		if (appWindow)
 		{
-			windowRect.left = railWindow->x;
-			windowRect.top = railWindow->y;
-			windowRect.right = railWindow->x + railWindow->width;
-			windowRect.bottom = railWindow->y + railWindow->height;
+			windowRect.left = appWindow->x;
+			windowRect.top = appWindow->y;
+			windowRect.right = appWindow->x + appWindow->width;
+			windowRect.bottom = appWindow->y + appWindow->height;
 
 			region16_clear(&windowInvalidRegion);
 			region16_intersect_rect(&windowInvalidRegion, invalidRegion, &windowRect);
@@ -116,14 +115,14 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 			{
 				extents = region16_extents(&windowInvalidRegion);
 
-				updateRect.left = extents->left - railWindow->x;
-				updateRect.top = extents->top - railWindow->y;
-				updateRect.right = extents->right - railWindow->x;
-				updateRect.bottom = extents->bottom - railWindow->y;
+				updateRect.left = extents->left - appWindow->x;
+				updateRect.top = extents->top - appWindow->y;
+				updateRect.right = extents->right - appWindow->x;
+				updateRect.bottom = extents->bottom - appWindow->y;
 
-				if (xfw)
+				if (appWindow)
 				{
-					xf_UpdateWindowArea(xfc, xfw, updateRect.left, updateRect.top,
+					xf_UpdateWindowArea(xfc, appWindow, updateRect.left, updateRect.top,
 							updateRect.right - updateRect.left,
 							updateRect.bottom - updateRect.top);
 				}
@@ -137,8 +136,8 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom)
 {
 	rdpRail* rail;
-	xfWindow* xfw;
 	rdpWindow* window;
+	xfAppWindow* appWindow;
 	BOOL intersect;
 	UINT32 iwidth, iheight;
 	INT32 ileft, itop;
@@ -173,7 +172,7 @@ void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright, UINT3
 	while (window_list_has_next(rail->list))
 	{
 		window = window_list_get_next(rail->list);
-		xfw = (xfWindow*) window->extra;
+		appWindow = (xfAppWindow*) window->extra;
 
 		/* RDP can have zero width or height windows. X cannot, so we ignore these. */
 
@@ -196,7 +195,7 @@ void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright, UINT3
 
 		if (intersect)
 		{
-			xf_UpdateWindowArea(xfc, xfw, ileft - wleft, itop - wtop, iwidth, iheight);
+			xf_UpdateWindowArea(xfc, appWindow, ileft - wleft, itop - wtop, iwidth, iheight);
 		}
 	}
 }
@@ -206,116 +205,128 @@ void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright, UINT3
 static void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
 {
 	xfContext* xfc;
-	xfWindow* xfw;
+	xfAppWindow* appWindow;
+
 	xfc = (xfContext*) rail->extra;
 
 	xf_rail_enable_remoteapp_mode(xfc);
 
-	xfw = xf_CreateWindow(xfc, window, window->windowOffsetX, window->windowOffsetY,
+	appWindow = xf_CreateWindow(xfc, window, window->windowOffsetX, window->windowOffsetY,
 			window->windowWidth, window->windowHeight, window->windowId);
 
-	xf_SetWindowStyle(xfc, xfw, window->style, window->extendedStyle);
-	xf_SetWindowText(xfc, xfw, window->title);
-	window->extra = (void*) xfw;
-	window->extraId = (void*) xfw->handle;
+	xf_SetWindowStyle(xfc, appWindow, window->style, window->extendedStyle);
+	xf_SetWindowText(xfc, appWindow, window->title);
+
+	window->extra = (void*) appWindow;
+	window->extraId = (void*) appWindow->handle;
 }
 
 static void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
 {
 	xfContext* xfc;
-	xfWindow* xfw;
+	xfAppWindow* appWindow;
+
 	xfc = (xfContext*) rail->extra;
-	xfw = (xfWindow*) window->extra;
+	appWindow = (xfAppWindow*) window->extra;
 
 	/*
 	 * The rail server like to set the window to a small size when it is minimized even though it is hidden
 	 * in some cases this can cause the window not to restore back to its original size. Therefore we don't
 	 * update our local window when that rail window state is minimized
 	 */
-	if (xfw->rail_state == WINDOW_SHOW_MINIMIZED)
+	if (appWindow->rail_state == WINDOW_SHOW_MINIMIZED)
 		return;
 
 	/* Do nothing if window is already in the correct position */
-	if (xfw->left == window->visibleOffsetX &&
-			xfw->top == window->visibleOffsetY &&
-			xfw->width == window->windowWidth &&
-			xfw->height == window->windowHeight)
+	if (appWindow->x == window->visibleOffsetX &&
+			appWindow->y == window->visibleOffsetY &&
+			appWindow->width == window->windowWidth &&
+			appWindow->height == window->windowHeight)
 	{
 		/*
 		 * Just ensure entire window area is updated to handle cases where we
 		 * have drawn locally before getting new bitmap from the server
 		 */
-		xf_UpdateWindowArea(xfc, xfw, 0, 0, window->windowWidth, window->windowHeight);
+		xf_UpdateWindowArea(xfc, appWindow, 0, 0, window->windowWidth, window->windowHeight);
 		return;
 	}
 
-	xf_MoveWindow(xfc, xfw, window->visibleOffsetX, window->visibleOffsetY,
+	xf_MoveWindow(xfc, appWindow, window->visibleOffsetX, window->visibleOffsetY,
 			window->windowWidth, window->windowHeight);
 }
 
 static void xf_rail_ShowWindow(rdpRail* rail, rdpWindow* window, BYTE state)
 {
 	xfContext* xfc;
-	xfWindow* xfw;
+	xfAppWindow* appWindow;
+
 	xfc = (xfContext*) rail->extra;
-	xfw = (xfWindow*) window->extra;
-	xf_ShowWindow(xfc, xfw, state);
+	appWindow = (xfAppWindow*) window->extra;
+
+	xf_ShowWindow(xfc, appWindow, state);
 }
 
 static void xf_rail_SetWindowText(rdpRail* rail, rdpWindow* window)
 {
 	xfContext* xfc;
-	xfWindow* xfw;
+	xfAppWindow* appWindow;
+
 	xfc = (xfContext*) rail->extra;
-	xfw = (xfWindow*) window->extra;
-	xf_SetWindowText(xfc, xfw, window->title);
+	appWindow = (xfAppWindow*) window->extra;
+
+	xf_SetWindowText(xfc, appWindow, window->title);
 }
 
 static void xf_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* icon)
 {
 	xfContext* xfc;
-	xfWindow* xfw;
+	xfAppWindow* appWindow;
+
 	xfc = (xfContext*) rail->extra;
-	xfw = (xfWindow*) window->extra;
+	appWindow = (xfAppWindow*) window->extra;
 
 	icon->extra = freerdp_icon_convert(icon->entry->bitsColor, NULL, icon->entry->bitsMask,
 			icon->entry->width, icon->entry->height, icon->entry->bpp, rail->clrconv);
 
-	xf_SetWindowIcon(xfc, xfw, icon);
+	xf_SetWindowIcon(xfc, appWindow, icon);
 }
 
 static void xf_rail_SetWindowRects(rdpRail* rail, rdpWindow* window)
 {
 	xfContext* xfc;
-	xfWindow* xfw;
-	xfc = (xfContext*) rail->extra;
-	xfw = (xfWindow*) window->extra;
+	xfAppWindow* appWindow;
 
-	xf_SetWindowRects(xfc, xfw, window->windowRects, window->numWindowRects);
+	xfc = (xfContext*) rail->extra;
+	appWindow = (xfAppWindow*) window->extra;
+
+	xf_SetWindowRects(xfc, appWindow, window->windowRects, window->numWindowRects);
 }
 
 static void xf_rail_SetWindowVisibilityRects(rdpRail* rail, rdpWindow* window)
 {
-	xfWindow* xfw;
 	xfContext* xfc;
+	xfAppWindow* appWindow;
+
 	xfc = (xfContext*) rail->extra;
-	xfw = (xfWindow*) window->extra;
-	xf_SetWindowVisibilityRects(xfc, xfw, window->windowRects, window->numWindowRects);
+	appWindow = (xfAppWindow*) window->extra;
+
+	xf_SetWindowVisibilityRects(xfc, appWindow, window->windowRects, window->numWindowRects);
 }
 
 static void xf_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
 {
-	xfWindow* xfw;
 	xfContext* xfc;
+	xfAppWindow* appWindow;
+
 	xfc = (xfContext*) rail->extra;
-	xfw = (xfWindow*) window->extra;
-	xf_DestroyWindow(xfc, xfw);
+	appWindow = (xfAppWindow*) window->extra;
+
+	xf_DestroyWindow(xfc, appWindow);
 }
 
 void xf_rail_DesktopNonMonitored(rdpRail* rail, rdpWindow* window)
 {
-	xfContext* xfc;
-	xfc = (xfContext*) rail->extra;
+	xfContext* xfc = (xfContext*) rail->extra;
 	xf_rail_disable_remoteapp_mode(xfc);
 }
 
@@ -369,21 +380,21 @@ void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 
  * send an update to the RDP server informing it of the new window position
  * and size.
  */
-void xf_rail_adjust_position(xfContext* xfc, rdpWindow* window)
+void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 {
-	xfWindow* xfw;
+	rdpWindow* window;
 	RAIL_WINDOW_MOVE_ORDER windowMove;
 
-	xfw = (xfWindow*) window->extra;
+	window = appWindow->window;
 
-	if (! xfw->is_mapped || xfw->local_move.state != LMS_NOT_ACTIVE)
+	if (!appWindow->is_mapped || appWindow->local_move.state != LMS_NOT_ACTIVE)
 		return;
 
 	/* If current window position disagrees with RDP window position, send update to RDP server */
-	if (xfw->left != window->visibleOffsetX ||
-			xfw->top != window->visibleOffsetY ||
-			xfw->width != window->windowWidth ||
-			xfw->height != window->windowHeight)
+	if (appWindow->x != window->visibleOffsetX ||
+			appWindow->y != window->visibleOffsetY ||
+			appWindow->width != window->windowWidth ||
+			appWindow->height != window->windowHeight)
 	{
 		/*
 		 * Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
@@ -409,28 +420,28 @@ void xf_rail_adjust_position(xfContext* xfc, rdpWindow* window)
 		 * Calculate new offsets for the rail server window
 		 * Negative offset correction + rail server window offset + (difference in visibleOffset and new window local offset)
 		 */
-		windowMove.left = offsetX + window->windowOffsetX + (xfw->left - window->visibleOffsetX);
-		windowMove.top = offsetY + window->windowOffsetY + (xfw->top - window->visibleOffsetY);
-		windowMove.right = windowMove.left + xfw->width;
-		windowMove.bottom = windowMove.top + xfw->height;
+		windowMove.left = offsetX + window->windowOffsetX + (appWindow->x - window->visibleOffsetX);
+		windowMove.top = offsetY + window->windowOffsetY + (appWindow->y - window->visibleOffsetY);
+		windowMove.right = windowMove.left + appWindow->width;
+		windowMove.bottom = windowMove.top + appWindow->height;
 
 		xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
 	}
 }
 
-void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
+void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 {
 	int x, y;
 	int child_x;
 	int child_y;
-	xfWindow* xfw;
+	rdpWindow* window;
 	unsigned int mask;
 	Window root_window;
 	Window child_window;
-	RAIL_WINDOW_MOVE_ORDER window_move;
+	RAIL_WINDOW_MOVE_ORDER windowMove;
 	rdpInput* input = xfc->instance->input;
 
-	xfw = (xfWindow*) window->extra;
+	window = appWindow->window;
 
 	/*
 	 * Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
@@ -449,31 +460,30 @@ void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
 	/*
 	 * For keyboard moves send and explicit update to RDP server
 	 */
-	window_move.windowId = window->windowId;
+	windowMove.windowId = window->windowId;
 
 	/*
 	 * Calculate new offsets for the rail server window
 	 * Negative offset correction + rail server window offset + (difference in visibleOffset and new window local offset)
 	 */
-	window_move.left = offsetX + window->windowOffsetX + (xfw->left - window->visibleOffsetX);
-	window_move.top = offsetY + window->windowOffsetY + (xfw->top - window->visibleOffsetY);
-	window_move.right = window_move.left + xfw->width; /* In the update to RDP the position is one past the window */
-	window_move.bottom = window_move.top + xfw->height;
+	windowMove.left = offsetX + window->windowOffsetX + (appWindow->x - window->visibleOffsetX);
+	windowMove.top = offsetY + window->windowOffsetY + (appWindow->y - window->visibleOffsetY);
+	windowMove.right = windowMove.left + appWindow->width; /* In the update to RDP the position is one past the window */
+	windowMove.bottom = windowMove.top + appWindow->height;
 
-	xfc->rail->ClientWindowMove(xfc->rail, &window_move);
+	xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
 
 	/*
 	 * Simulate button up at new position to end the local move (per RDP spec)
 	 */
-	XQueryPointer(xfc->display, xfw->handle,
-				  &root_window, &child_window,
-				  &x, &y, &child_x, &child_y, &mask);
+	XQueryPointer(xfc->display, appWindow->handle,
+			&root_window, &child_window, &x, &y, &child_x, &child_y, &mask);
 
 	input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
 
 	/* only send the mouse coordinates if not a keyboard move or size */
-	if ((xfw->local_move.direction != _NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
-			(xfw->local_move.direction != _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
+	if ((appWindow->local_move.direction != _NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
+			(appWindow->local_move.direction != _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
 	{
 		input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
 	}
@@ -483,11 +493,11 @@ void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
 	 * we can start to receive GDI orders for the new window dimensions before we
 	 * receive the RAIL ORDER for the new window size.  This avoids that race condition.
 	 */
-	window->windowOffsetX = offsetX + window->windowOffsetX + (xfw->left - window->visibleOffsetX);
-	window->windowOffsetY = offsetY + window->windowOffsetY + (xfw->top - window->visibleOffsetY);
-	window->windowWidth = xfw->width;
-	window->windowHeight = xfw->height;
-	xfw->local_move.state = LMS_TERMINATING;
+	window->windowOffsetX = offsetX + window->windowOffsetX + (appWindow->x - window->visibleOffsetX);
+	window->windowOffsetY = offsetY + window->windowOffsetY + (appWindow->y - window->visibleOffsetY);
+	window->windowWidth = appWindow->width;
+	window->windowHeight = appWindow->height;
+	appWindow->local_move.state = LMS_TERMINATING;
 }
 
 #if 0
@@ -496,13 +506,13 @@ void xf_rail_end_local_move(xfContext* xfc, rdpWindow* window)
 
 static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_STATE_ORDER* windowState)
 {
-	xfRailWindow* railWindow = NULL;
+	xfAppWindow* railWindow = NULL;
 	xfContext* xfc = (xfContext*) context;
 	UINT32 fieldFlags = orderInfo->fieldFlags;
 
 	if (fieldFlags & WINDOW_ORDER_STATE_NEW)
 	{
-		railWindow = (xfRailWindow*) calloc(1, sizeof(xfRailWindow));
+		railWindow = (xfAppWindow*) calloc(1, sizeof(xfAppWindow));
 
 		if (!railWindow)
 			return;
@@ -541,7 +551,7 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 	}
 	else
 	{
-		railWindow = (xfRailWindow*) HashTable_GetItemValue(xfc->railWindows,
+		railWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
 			(void*) (UINT_PTR) orderInfo->windowId);
 	}
 
@@ -634,10 +644,10 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 
 static void xf_rail_window_delete(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
-	xfRailWindow* railWindow = NULL;
+	xfAppWindow* railWindow = NULL;
 	xfContext* xfc = (xfContext*) context;
 
-	railWindow = (xfRailWindow*) HashTable_GetItemValue(xfc->railWindows,
+	railWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
 			(void*) (UINT_PTR) orderInfo->windowId);
 
 	if (!railWindow)
@@ -651,10 +661,10 @@ static void xf_rail_window_delete(rdpContext* context, WINDOW_ORDER_INFO* orderI
 static void xf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
 {
 	BOOL bigIcon;
-	xfRailWindow* railWindow;
+	xfAppWindow* railWindow;
 	xfContext* xfc = (xfContext*) context;
 
-	railWindow = (xfRailWindow*) HashTable_GetItemValue(xfc->railWindows,
+	railWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
 			(void*) (UINT_PTR) orderInfo->windowId);
 
 	if (!railWindow)
@@ -842,11 +852,11 @@ static int xf_rail_server_handshake_ex(RailClientContext* context, RAIL_HANDSHAK
 static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
 	rdpRail* rail;
-	xfWindow* window;
 	int x = 0, y = 0;
 	int direction = 0;
 	Window child_window;
 	rdpWindow* rail_window;
+	xfAppWindow* appWindow;
 	xfContext* xfc = (xfContext*) context->custom;
 
 	rail = ((rdpContext*) xfc)->rail;
@@ -856,7 +866,7 @@ static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCAL
 	if (!rail_window)
 		return -1;
 
-	window = (xfWindow*) rail_window->extra;
+	appWindow = (xfAppWindow*) rail_window->extra;
 
 	switch (localMoveSize->moveSizeType)
 	{
@@ -910,7 +920,7 @@ static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCAL
 
 		case RAIL_WMSZ_MOVE:
 			direction = _NET_WM_MOVERESIZE_MOVE;
-			XTranslateCoordinates(xfc->display, window->handle,
+			XTranslateCoordinates(xfc->display, appWindow->handle,
 					RootWindowOfScreen(xfc->screen),
 					localMoveSize->posX, localMoveSize->posY, &x, &y, &child_window);
 			break;
@@ -934,11 +944,11 @@ static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCAL
 
 	if (localMoveSize->isMoveSizeStart)
 	{
-		xf_StartLocalMoveSize(xfc, window, direction, x, y);
+		xf_StartLocalMoveSize(xfc, appWindow, direction, x, y);
 	}
 	else
 	{
-		xf_EndLocalMoveSize(xfc, window);
+		xf_EndLocalMoveSize(xfc, appWindow);
 	}
 
 	return 1;
@@ -947,7 +957,7 @@ static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCAL
 static int xf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXINFO_ORDER* minMaxInfo)
 {
 	rdpRail* rail;
-	xfWindow* window;
+	xfAppWindow* appWindow;
 	rdpWindow* rail_window;
 	xfContext* xfc = (xfContext*) context->custom;
 
@@ -958,9 +968,9 @@ static int xf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXIN
 	if (!rail_window)
 		return -1;
 
-	window = (xfWindow*) rail_window->extra;
+	appWindow = (xfAppWindow*) rail_window->extra;
 
-	xf_SetWindowMinMaxInfo(xfc, window,
+	xf_SetWindowMinMaxInfo(xfc, appWindow,
 			minMaxInfo->maxWidth, minMaxInfo->maxHeight,
 			minMaxInfo->maxPosX, minMaxInfo->maxPosY,
 			minMaxInfo->minTrackWidth, minMaxInfo->minTrackHeight,

@@ -283,10 +283,12 @@ static BOOL xf_keyboard_set_key_state(xfContext* xfc, BOOL on, int keysym)
 		return FALSE;
 
 	keysymMask = xf_keyboard_get_keymask(xfc, keysym);
+
 	if (!keysymMask)
 	{
 		return FALSE;
 	}
+
 	return XkbLockModifiers(xfc->display, XkbUseCoreKbd, keysymMask, on ? keysymMask : 0);
 }
 
@@ -321,7 +323,18 @@ void xf_keyboard_focus_in(xfContext* xfc)
 	{
 		input = xfc->instance->input;
 		syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
-		XQueryPointer(xfc->display, xfc->window->handle, &wdummy, &wdummy, &mouseX, &mouseY, &dummy, &dummy, &state);
+
+		if (!xfc->remote_app)
+		{
+			XQueryPointer(xfc->display, xfc->window->handle, &wdummy, &wdummy,
+					&mouseX, &mouseY, &dummy, &dummy, &state);
+		}
+		else
+		{
+			XQueryPointer(xfc->display, DefaultRootWindow(xfc->display),
+				&wdummy, &wdummy, &dummy, &dummy, &dummy, &dummy, &state);
+		}
+
 		input->FocusInEvent(input, syncFlags, mouseX, mouseY);
 	}
 }

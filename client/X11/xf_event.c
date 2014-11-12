@@ -24,8 +24,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include <freerdp/locale/keyboard.h>
 #include <freerdp/log.h>
+#include <freerdp/locale/keyboard.h>
 
 #include "xf_rail.h"
 #include "xf_window.h"
@@ -208,16 +208,16 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 	}
 	else
 	{
-		xfWindow* xfw;
 		rdpWindow* window;
+		xfAppWindow* appWindow;
 		rdpRail* rail = ((rdpContext*) xfc)->rail;
 		
 		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
 		
 		if (window)
 		{
-			xfw = (xfWindow*) window->extra;
-			xf_UpdateWindowArea(xfc, xfw, x, y, w, h);
+			appWindow = (xfAppWindow*) window->extra;
+			xf_UpdateWindowArea(xfc, appWindow, x, y, w, h);
 		}
 	}
 	
@@ -265,7 +265,7 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 
-	if (xfc->fullscreen)
+	if (xfc->fullscreen && !app)
 	{
 		XSetInputFocus(xfc->display, xfc->window->handle, RevertToPointerRoot, CurrentTime);
 	}
@@ -518,21 +518,25 @@ static BOOL xf_event_FocusIn(xfContext* xfc, XEvent* event, BOOL app)
 
 	xfc->focused = TRUE;
 
-	if (xfc->mouse_active && (!app))
+	if (xfc->mouse_active && !app)
 		XGrabKeyboard(xfc->display, xfc->window->handle, TRUE, GrabModeAsync, GrabModeAsync, CurrentTime);
 
 	if (app)
 	{
-	       xf_rail_send_activate(xfc, event->xany.window, TRUE);
-		
-       	       rdpWindow* window;
-               rdpRail* rail = ((rdpContext*) xfc)->rail;
-               
-               window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
-       
-               /* Update the server with any window changes that occurred while the window was not focused. */
-               if (window)
-                       xf_rail_adjust_position(xfc, window);
+		rdpWindow* window;
+		xfAppWindow* appWindow;
+		rdpRail* rail = ((rdpContext*) xfc)->rail;
+
+		xf_rail_send_activate(xfc, event->xany.window, TRUE);
+
+		window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
+
+		/* Update the server with any window changes that occurred while the window was not focused. */
+		if (window)
+		{
+			appWindow = (xfAppWindow*) window->extra;
+			xf_rail_adjust_position(xfc, appWindow);
+		}
 	}
 
 	xf_keyboard_focus_in(xfc);
@@ -617,15 +621,16 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, XEvent* event, BOOL app)
 	{
 		/* keep track of which window has focus so that we can apply pointer updates */
 
-		xfWindow* xfw;
 		rdpWindow* window;
+		xfAppWindow* appWindow;
 		rdpRail* rail = ((rdpContext*) xfc)->rail;
+
 		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
 
 		if (window)
 		{
-			xfw = (xfWindow*) window->extra;
-			xfc->window = xfw;
+			appWindow = (xfAppWindow*) window->extra;
+			xfc->appWindow = appWindow;
 		}
 	}
 
@@ -645,61 +650,62 @@ static BOOL xf_event_LeaveNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
-        rdpWindow* window;
-        rdpRail* rail = ((rdpContext*) xfc)->rail;
+	rdpWindow* window;
+	rdpRail* rail = ((rdpContext*) xfc)->rail;
 
-        if (!xfc->remote_app || !rail)
-        	return TRUE;
+	if (!app || !rail)
+		return TRUE;
 
-        window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
+	window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
 
-        if (window)
-        {
-                xfWindow* xfw;
-                Window childWindow;
-                xfw = (xfWindow*) window->extra;
+	if (window)
+	{
+		Window childWindow;
+		xfAppWindow* appWindow;
 
-                /*
-                 * ConfigureNotify coordinates are expressed relative to the window parent.
-                 * Translate these to root window coordinates.
-                 */
-
-                XTranslateCoordinates(xfc->display, xfw->handle, 
-			RootWindowOfScreen(xfc->screen),
-                        0, 0, &xfw->left, &xfw->top, &childWindow);
-
-                xfw->width = event->xconfigure.width;
-                xfw->height = event->xconfigure.height;
-                xfw->right = xfw->left + xfw->width - 1;
-                xfw->bottom = xfw->top + xfw->height - 1;
+		appWindow = (xfAppWindow*) window->extra;
 
 		/*
-		 * Additonal checks for not in a local move and not ignoring configure to send
+		 * ConfigureNotify coordinates are expressed relative to the window parent.
+		 * Translate these to root window coordinates.
+		 */
+
+		XTranslateCoordinates(xfc->display, appWindow->handle,
+				RootWindowOfScreen(xfc->screen),
+				0, 0, &appWindow->x, &appWindow->y, &childWindow);
+
+		appWindow->width = event->xconfigure.width;
+		appWindow->height = event->xconfigure.height;
+
+		/*
+		 * Additional checks for not in a local move and not ignoring configure to send
 		 * position update to server, also should the window not be focused then do not
-		 * send to server yet(ie. resizing using window decoration).
+		 * send to server yet (i.e. resizing using window decoration).
 		 * The server will be updated when the window gets refocused.
 		 */
-		if (app && xfw->decorations)
+		if (appWindow->decorations)
 		{
 			/* moving resizing using window decoration */
-			xf_rail_adjust_position(xfc, window);
-			window->windowOffsetX = xfw->left;
+
+			xf_rail_adjust_position(xfc, appWindow);
+
+			window->windowOffsetX = appWindow->x;
 			window->visibleOffsetX = window->windowOffsetX;
-			window->windowOffsetY = xfw->top;
+			window->windowOffsetY = appWindow->y;
 			window->visibleOffsetY = window->windowOffsetY;
-			window->windowWidth = xfw->width;
-			window->windowHeight = xfw->height;
+			window->windowWidth = appWindow->width;
+			window->windowHeight = appWindow->height;
 		}
 		else
 		{
-			if (app && (!event->xconfigure.send_event || xfc->window->local_move.state == LMS_NOT_ACTIVE) 
-				&& !xfw->rail_ignore_configure && xfc->focused)
-				xf_rail_adjust_position(xfc, window);
+			if ((!event->xconfigure.send_event || appWindow->local_move.state == LMS_NOT_ACTIVE)
+					&& !appWindow->rail_ignore_configure && xfc->focused)
+				xf_rail_adjust_position(xfc, appWindow);
 		}
 
-        }
+	}
 
-        return TRUE;
+	return TRUE;
 }
 
 static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
@@ -732,8 +738,8 @@ static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 			 */
 
 			//xf_rail_send_client_system_command(xfc, window->windowId, SC_RESTORE);
-			xfWindow* xfw = (xfWindow*) window->extra;
-			xfw->is_mapped = TRUE;
+			xfAppWindow* appWindow = (xfAppWindow*) window->extra;
+			appWindow->is_mapped = TRUE;
 		}
 	}
 
@@ -758,8 +764,8 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 		if (window)
 		{
-			xfWindow* xfw = (xfWindow*) window->extra;
-			xfw->is_mapped = FALSE;
+			xfAppWindow* appWindow = (xfAppWindow*) window->extra;
+			appWindow->is_mapped = FALSE;
 		}
 	}
 
@@ -777,11 +783,14 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 	if (app)
 	{
 	        rdpWindow* window;
+	        xfAppWindow* appWindow;
 		
 		window = xf_rdpWindowFromWindow(xfc, event->xproperty.window);
 
 		if (!window)
 			return TRUE;
+
+		appWindow = (xfAppWindow*) window->extra;
 	
 	        if ((((Atom) event->xproperty.atom == xfc->_NET_WM_STATE) && (event->xproperty.state != PropertyDelete)) ||
 	            (((Atom) event->xproperty.atom == xfc->WM_STATE) && (event->xproperty.state != PropertyDelete)))
@@ -836,19 +845,19 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 	                }
 	
 
-	                if (maxVert && maxHorz && !minimized && (xfc->window->rail_state != WINDOW_SHOW_MAXIMIZED))
+	                if (maxVert && maxHorz && !minimized && (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED))
 	                {
-	                	xfc->window->rail_state = WINDOW_SHOW_MAXIMIZED;
+	                	appWindow->rail_state = WINDOW_SHOW_MAXIMIZED;
 	                	xf_rail_send_client_system_command(xfc, window->windowId, SC_MAXIMIZE);
 	                }
-	                else if (minimized && (xfc->window->rail_state != WINDOW_SHOW_MINIMIZED))
+	                else if (minimized && (appWindow->rail_state != WINDOW_SHOW_MINIMIZED))
 	                {
-	                	xfc->window->rail_state = WINDOW_SHOW_MINIMIZED;
+	                	appWindow->rail_state = WINDOW_SHOW_MINIMIZED;
 	                	xf_rail_send_client_system_command(xfc, window->windowId, SC_MINIMIZE);
 	                }
-	                else if (!minimized && !maxVert && !maxHorz && (xfc->window->rail_state != WINDOW_SHOW))
+	                else if (!minimized && !maxVert && !maxHorz && (appWindow->rail_state != WINDOW_SHOW))
 	                {
-	                	xfc->window->rail_state = WINDOW_SHOW;
+	                	appWindow->rail_state = WINDOW_SHOW;
 	                	xf_rail_send_client_system_command(xfc, window->windowId, SC_RESTORE);
 	                }
                }       
@@ -857,21 +866,21 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 	return TRUE;
 }
 
-static BOOL xf_event_suppress_events(xfContext* xfc, rdpWindow* window, XEvent*event)
+static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, XEvent* event)
 {
 	if (!xfc->remote_app)
 		return FALSE;
 
-	switch (xfc->window->local_move.state)
+	switch (appWindow->local_move.state)
 	{
 		case LMS_NOT_ACTIVE:
 			/* No local move in progress, nothing to do */
 
 			/* Prevent Configure from happening during indeterminant state of Horz or Vert Max only */
 
-		        if ( (event->type == ConfigureNotify) && xfc->window->rail_ignore_configure)
+		        if ((event->type == ConfigureNotify) && appWindow->rail_ignore_configure)
                         {
-                               xfc->window->rail_ignore_configure = FALSE;
+                               appWindow->rail_ignore_configure = FALSE;
                                return TRUE;
                         }
 
@@ -879,11 +888,11 @@ static BOOL xf_event_suppress_events(xfContext* xfc, rdpWindow* window, XEvent*e
 
 		case LMS_STARTING:
 			/* Local move initiated by RDP server, but we have not yet seen any updates from the X server */
-			switch(event->type)
+			switch (event->type)
 			{
 				case ConfigureNotify:
 					/* Starting to see move events from the X server. Local move is now in progress. */
-					xfc->window->local_move.state = LMS_ACTIVE;
+					appWindow->local_move.state = LMS_ACTIVE;
 
 					/* Allow these events to be processed during move to keep our state up to date. */
 					break;
@@ -911,7 +920,7 @@ static BOOL xf_event_suppress_events(xfContext* xfc, rdpWindow* window, XEvent*e
 
 		case LMS_ACTIVE:
 			/* Local move is in progress */
-			switch(event->type)
+			switch (event->type)
 			{
 				case ConfigureNotify:
 				case VisibilityNotify:
@@ -922,7 +931,7 @@ static BOOL xf_event_suppress_events(xfContext* xfc, rdpWindow* window, XEvent*e
 					break;
 				default:
 					/* Any other event terminates move */
-					xf_rail_end_local_move(xfc, window);
+					xf_rail_end_local_move(xfc, appWindow);
 					break;
 			}
 			break;
@@ -950,9 +959,9 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		if (window)
 		{
 			/* Update "current" window for cursor change orders */
-			xfc->window = (xfWindow*) window->extra;
+			xfc->appWindow = (xfAppWindow*) window->extra;
 
-			if (xf_event_suppress_events(xfc, window, event))
+			if (xf_event_suppress_events(xfc, xfc->appWindow, event))
 				return TRUE;
 		}
 	}
@@ -975,6 +984,7 @@ BOOL xf_event_process(freerdp* instance, XEvent* event)
 		case MotionNotify:
 			status = xf_event_MotionNotify(xfc, event, xfc->remote_app);
 			break;
+
 		case ButtonPress:
 			status = xf_event_ButtonPress(xfc, event, xfc->remote_app);
 			break;

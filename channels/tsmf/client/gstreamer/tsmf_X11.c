@@ -62,7 +62,7 @@ struct X11Handle
 static const char* get_shm_id()
 {
 	static char shm_id[64];
-	snprintf(shm_id, sizeof(shm_id), "com.freerdp.xfreerpd.tsmf_%016X", GetCurrentProcessId());
+	snprintf(shm_id, sizeof(shm_id), "com.freerdp.xfreerdp.tsmf_%016X", GetCurrentProcessId());
 	return shm_id;
 }
 
