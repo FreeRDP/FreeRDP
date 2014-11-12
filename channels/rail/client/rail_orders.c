@@ -24,10 +24,45 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/rail.h>
 #include <freerdp/channels/log.h>
 
 #include "rail_orders.h"
+
+static BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
+{
+	if (Stream_GetRemainingLength(s) < 2)
+		return FALSE;
+
+	Stream_Read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+
+	if (Stream_GetRemainingLength(s) < unicode_string->length)
+		return FALSE;
+
+	if (!unicode_string->string)
+		unicode_string->string = (BYTE*) malloc(unicode_string->length);
+	else
+		unicode_string->string = (BYTE*) realloc(unicode_string->string, unicode_string->length);
+
+	Stream_Read(s, unicode_string->string, unicode_string->length);
+
+	return TRUE;
+}
+
+static void rail_write_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
+{
+	Stream_EnsureRemainingCapacity(s, 2 + unicode_string->length);
+	Stream_Write_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+	Stream_Write(s, unicode_string->string, unicode_string->length); /* string */
+}
+
+static void rail_write_unicode_string_value(wStream* s, RAIL_UNICODE_STRING* unicode_string)
+{
+	if (unicode_string->length > 0)
+	{
+		Stream_EnsureRemainingCapacity(s, unicode_string->length);
+		Stream_Write(s, unicode_string->string, unicode_string->length); /* string */
+	}
+}
 
 void rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType)
 {

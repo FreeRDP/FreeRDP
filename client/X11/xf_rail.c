@@ -27,7 +27,6 @@
 #include <winpr/wlog.h>
 #include <winpr/print.h>
 
-#include <freerdp/utils/rail.h>
 #include <freerdp/rail/rail.h>
 
 #include "xf_window.h"

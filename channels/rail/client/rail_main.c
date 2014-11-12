@@ -27,7 +27,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/rail.h>
 
 #include "rail_orders.h"
 #include "rail_main.h"

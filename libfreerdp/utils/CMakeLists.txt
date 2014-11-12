@@ -23,7 +23,6 @@ set(${MODULE_PREFIX}_SRCS
 	passphrase.c
 	pcap.c
 	profiler.c
-	rail.c
 	ringbuffer.c
 	signal.c
 	stopwatch.c

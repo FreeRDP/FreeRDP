@@ -38,7 +38,6 @@
 #include <winpr/crt.h>
 
 #include <freerdp/rail.h>
-#include <freerdp/utils/rail.h>
 #include <freerdp/log.h>
 
 #ifdef WITH_XEXT

@@ -25,11 +25,30 @@
 #include <winpr/crt.h>
 
 #include <freerdp/log.h>
-#include <freerdp/utils/rail.h>
 
 #include "window.h"
 
 #define TAG FREERDP_TAG("core.window")
+
+static BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
+{
+	if (Stream_GetRemainingLength(s) < 2)
+		return FALSE;
+
+	Stream_Read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+
+	if (Stream_GetRemainingLength(s) < unicode_string->length)
+		return FALSE;
+
+	if (!unicode_string->string)
+		unicode_string->string = (BYTE*) malloc(unicode_string->length);
+	else
+		unicode_string->string = (BYTE*) realloc(unicode_string->string, unicode_string->length);
+
+	Stream_Read(s, unicode_string->string, unicode_string->length);
+
+	return TRUE;
+}
 
 BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 {
