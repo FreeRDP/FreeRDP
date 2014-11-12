@@ -25,7 +25,6 @@ set(${MODULE_PREFIX}_SRCS
 	ringbuffer.c
 	signal.c
 	stopwatch.c
-	svc_plugin.c
 	tcp.c
 	time.c
 	uds.c)
