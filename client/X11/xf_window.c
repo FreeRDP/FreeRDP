@@ -978,6 +978,10 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->xfwin = (Window*) -1;
 	appWindow->shmid = -1;
 
+	free(appWindow->title);
+	free(appWindow->windowRects);
+	free(appWindow->visibilityRects);
+
 	free(appWindow);
 }
 

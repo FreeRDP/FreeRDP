@@ -83,6 +83,7 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 
 void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 {
+#ifdef OLD_X11_RAIL
 	rdpRail* rail;
 	rdpWindow* rail_window;
 	RAIL_ACTIVATE_ORDER activate;
@@ -97,6 +98,20 @@ void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 	activate.enabled = enabled;
 
 	xfc->rail->ClientActivate(xfc->rail, &activate);
+#else
+	xfAppWindow* appWindow;
+	RAIL_ACTIVATE_ORDER activate;
+
+	appWindow = xf_AppWindowFromX11Window(xfc, xwindow);
+
+	if (!appWindow)
+		return;
+
+	activate.windowId = appWindow->windowId;
+	activate.enabled = enabled;
+
+	xfc->rail->ClientActivate(xfc->rail, &activate);
+#endif
 }
 
 void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 command)
@@ -648,9 +663,9 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 			appWindow->title = _strdup("RdpRailWindow");
 		}
 
-		xf_AppWindowInit(xfc, appWindow);
-
 		HashTable_Add(xfc->railWindows, (void*) (UINT_PTR) orderInfo->windowId, (void*) appWindow);
+
+		xf_AppWindowInit(xfc, appWindow);
 
 		return;
 	}
@@ -670,14 +685,14 @@ static void xf_rail_window_common(rdpContext* context, WINDOW_ORDER_INFO* orderI
 	{
 		if (fieldFlags & WINDOW_ORDER_FIELD_WND_OFFSET)
 		{
-			appWindow->x = appWindow->windowOffsetX = windowState->windowOffsetX;
-			appWindow->y = appWindow->windowOffsetY = windowState->windowOffsetY;
+			appWindow->windowOffsetX = windowState->windowOffsetX;
+			appWindow->windowOffsetY = windowState->windowOffsetY;
 		}
 
 		if (fieldFlags & WINDOW_ORDER_FIELD_WND_SIZE)
 		{
-			appWindow->width = appWindow->windowWidth = windowState->windowWidth;
-			appWindow->height = appWindow->windowHeight = windowState->windowHeight;
+			appWindow->windowWidth = windowState->windowWidth;
+			appWindow->windowHeight = windowState->windowHeight;
 		}
 	}
 
@@ -847,12 +862,6 @@ static void xf_rail_window_delete(rdpContext* context, WINDOW_ORDER_INFO* orderI
 	HashTable_Remove(xfc->railWindows, (void*) (UINT_PTR) orderInfo->windowId);
 
 	xf_DestroyWindow(xfc, appWindow);
-
-	free(appWindow->title);
-	free(appWindow->windowRects);
-	free(appWindow->visibilityRects);
-
-	free(appWindow);
 }
 
 static void xf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
@@ -930,7 +939,8 @@ static void xf_rail_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* or
 
 static void xf_rail_non_monitored_desktop(rdpContext* context, WINDOW_ORDER_INFO* orderInfo)
 {
-
+	xfContext* xfc = (xfContext*) context;
+	xf_rail_disable_remoteapp_mode(xfc);
 }
 
 void xf_rail_register_update_callbacks(rdpUpdate* update)
@@ -1048,13 +1058,15 @@ static int xf_rail_server_handshake_ex(RailClientContext* context, RAIL_HANDSHAK
 
 static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
-	rdpRail* rail;
 	int x = 0, y = 0;
 	int direction = 0;
 	Window child_window;
-	rdpWindow* rail_window;
-	xfAppWindow* appWindow;
+	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context->custom;
+
+#ifdef OLD_X11_RAIL
+	rdpRail* rail;
+	rdpWindow* rail_window;
 
 	rail = ((rdpContext*) xfc)->rail;
 
@@ -1064,6 +1076,13 @@ static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCAL
 		return -1;
 
 	appWindow = (xfAppWindow*) rail_window->extra;
+#else
+	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
+			(void*) (UINT_PTR) localMoveSize->windowId);
+#endif
+
+	if (!appWindow)
+		return -1;
 
 	switch (localMoveSize->moveSizeType)
 	{
@@ -1153,10 +1172,12 @@ static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCAL
 
 static int xf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXINFO_ORDER* minMaxInfo)
 {
-	rdpRail* rail;
-	xfAppWindow* appWindow;
-	rdpWindow* rail_window;
+	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context->custom;
+
+#ifdef OLD_X11_RAIL
+	rdpRail* rail;
+	rdpWindow* rail_window;
 
 	rail = ((rdpContext*) xfc)->rail;
 
@@ -1166,6 +1187,13 @@ static int xf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXIN
 		return -1;
 
 	appWindow = (xfAppWindow*) rail_window->extra;
+#else
+	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
+			(void*) (UINT_PTR) minMaxInfo->windowId);
+#endif
+
+	if (!appWindow)
+		return -1;
 
 	xf_SetWindowMinMaxInfo(xfc, appWindow,
 			minMaxInfo->maxWidth, minMaxInfo->maxHeight,
