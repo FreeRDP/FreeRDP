@@ -83,22 +83,6 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 
 void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 {
-#ifdef OLD_X11_RAIL
-	rdpRail* rail;
-	rdpWindow* rail_window;
-	RAIL_ACTIVATE_ORDER activate;
-
-	rail = ((rdpContext*) xfc)->rail;
-	rail_window = window_list_get_by_extra_id(rail->list, (void*) xwindow);
-
-	if (!rail_window)
-		return;
-
-	activate.windowId = rail_window->windowId;
-	activate.enabled = enabled;
-
-	xfc->rail->ClientActivate(xfc->rail, &activate);
-#else
 	xfAppWindow* appWindow;
 	RAIL_ACTIVATE_ORDER activate;
 
@@ -111,7 +95,6 @@ void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 	activate.enabled = enabled;
 
 	xfc->rail->ClientActivate(xfc->rail, &activate);
-#endif
 }
 
 void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 command)
@@ -132,53 +115,6 @@ void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 
  */
 void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 {
-#ifdef OLD_X11_RAIL
-	rdpWindow* window;
-	RAIL_WINDOW_MOVE_ORDER windowMove;
-
-	window = appWindow->window;
-
-	if (!appWindow->is_mapped || appWindow->local_move.state != LMS_NOT_ACTIVE)
-		return;
-
-	/* If current window position disagrees with RDP window position, send update to RDP server */
-	if (appWindow->x != window->visibleOffsetX ||
-			appWindow->y != window->visibleOffsetY ||
-			appWindow->width != window->windowWidth ||
-			appWindow->height != window->windowHeight)
-	{
-		/*
-		 * Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
-		 * we can only send unsigned integers to the rail server. Therefore, we always bring negative coordinates up to 0
-		 * when attempting to adjust the rail window.
-		 */
-		UINT32 offsetX = 0;
-		UINT32 offsetY = 0;
-
-		if (window->windowOffsetX < 0)
-			offsetX = offsetX - window->windowOffsetX;
-
-		if (window->windowOffsetY < 0)
-			offsetY = offsetY - window->windowOffsetY;
-
-		/*
-		 * windowOffset corresponds to the window location on the rail server
-		 * but our local window is based on the visibleOffset since using the windowOffset
-		 * can result in blank areas for a maximized window
-		 */
-		windowMove.windowId = window->windowId;
-		/*
-		 * Calculate new offsets for the rail server window
-		 * Negative offset correction + rail server window offset + (difference in visibleOffset and new window local offset)
-		 */
-		windowMove.left = offsetX + window->windowOffsetX + (appWindow->x - window->visibleOffsetX);
-		windowMove.top = offsetY + window->windowOffsetY + (appWindow->y - window->visibleOffsetY);
-		windowMove.right = windowMove.left + appWindow->width;
-		windowMove.bottom = windowMove.top + appWindow->height;
-
-		xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
-	}
-#else
 	UINT32 offsetX = 0;
 	UINT32 offsetY = 0;
 	RAIL_WINDOW_MOVE_ORDER windowMove;
@@ -221,80 +157,10 @@ void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 
 		xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
 	}
-#endif
 }
 
 void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 {
-#ifdef OLD_X11_RAIL
-	int x, y;
-	int child_x;
-	int child_y;
-	rdpWindow* window;
-	unsigned int mask;
-	Window root_window;
-	Window child_window;
-	RAIL_WINDOW_MOVE_ORDER windowMove;
-	rdpInput* input = xfc->instance->input;
-
-	window = appWindow->window;
-
-	/*
-	 * Although the rail server can give negative window coordinates when updating windowOffsetX and windowOffsetY,
-	 * we can only send unsigned integers to the rail server. Therefore, we always bring negative coordinates up to 0 when
-	 * attempting to adjust the rail window.
-	 */
-	UINT32 offsetX = 0;
-	UINT32 offsetY = 0;
-
-	if (window->windowOffsetX < 0)
-		offsetX = offsetX - window->windowOffsetX;
-
-	if (window->windowOffsetY < 0)
-		offsetY = offsetY - window->windowOffsetY;
-
-	/*
-	 * For keyboard moves send and explicit update to RDP server
-	 */
-	windowMove.windowId = window->windowId;
-
-	/*
-	 * Calculate new offsets for the rail server window
-	 * Negative offset correction + rail server window offset + (difference in visibleOffset and new window local offset)
-	 */
-	windowMove.left = offsetX + window->windowOffsetX + (appWindow->x - window->visibleOffsetX);
-	windowMove.top = offsetY + window->windowOffsetY + (appWindow->y - window->visibleOffsetY);
-	windowMove.right = windowMove.left + appWindow->width; /* In the update to RDP the position is one past the window */
-	windowMove.bottom = windowMove.top + appWindow->height;
-
-	xfc->rail->ClientWindowMove(xfc->rail, &windowMove);
-
-	/*
-	 * Simulate button up at new position to end the local move (per RDP spec)
-	 */
-	XQueryPointer(xfc->display, appWindow->handle,
-			&root_window, &child_window, &x, &y, &child_x, &child_y, &mask);
-
-	input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
-
-	/* only send the mouse coordinates if not a keyboard move or size */
-	if ((appWindow->local_move.direction != _NET_WM_MOVERESIZE_MOVE_KEYBOARD) &&
-			(appWindow->local_move.direction != _NET_WM_MOVERESIZE_SIZE_KEYBOARD))
-	{
-		input->MouseEvent(input, PTR_FLAGS_BUTTON1, x, y);
-	}
-
-	/*
-	 * Proactively update the RAIL window dimensions.  There is a race condition where
-	 * we can start to receive GDI orders for the new window dimensions before we
-	 * receive the RAIL ORDER for the new window size.  This avoids that race condition.
-	 */
-	window->windowOffsetX = offsetX + window->windowOffsetX + (appWindow->x - window->visibleOffsetX);
-	window->windowOffsetY = offsetY + window->windowOffsetY + (appWindow->y - window->visibleOffsetY);
-	window->windowWidth = appWindow->width;
-	window->windowHeight = appWindow->height;
-	appWindow->local_move.state = LMS_TERMINATING;
-#else
 	int x, y;
 	int child_x;
 	int child_y;
@@ -359,7 +225,6 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->windowWidth = appWindow->width;
 	appWindow->windowHeight = appWindow->height;
 	appWindow->local_move.state = LMS_TERMINATING;
-#endif
 }
 
 void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
@@ -415,7 +280,6 @@ void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
 
 void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom)
 {
-#ifndef OLD_X11_RAIL
 	REGION16 invalidRegion;
 	RECTANGLE_16 invalidRect;
 
@@ -430,198 +294,7 @@ void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright, UINT3
 	xf_rail_invalidate_region(xfc, &invalidRegion);
 
 	region16_uninit(&invalidRegion);
-#else
-	rdpRail* rail;
-	rdpWindow* window;
-	xfAppWindow* appWindow;
-	BOOL intersect;
-	UINT32 iwidth, iheight;
-	INT32 ileft, itop;
-	UINT32 iright, ibottom;
-	INT32 wleft, wtop;
-	UINT32 wright, wbottom;
-
-	rail = ((rdpContext*) xfc)->rail;
-
-	window_list_rewind(rail->list);
-
-	while (window_list_has_next(rail->list))
-	{
-		window = window_list_get_next(rail->list);
-		appWindow = (xfAppWindow*) window->extra;
-
-		/* RDP can have zero width or height windows. X cannot, so we ignore these. */
-
-		if ((window->windowWidth == 0) || (window->windowHeight == 0))
-		{
-			continue;
-		}
-
-		wleft = window->visibleOffsetX;
-		wtop = window->visibleOffsetY;
-		wright = window->visibleOffsetX + window->windowWidth - 1;
-		wbottom = window->visibleOffsetY + window->windowHeight - 1;
-		ileft = MAX(uleft, wleft);
-		itop = MAX(utop, wtop);
-		iright = MIN(uright, wright);
-		ibottom = MIN(ubottom, wbottom);
-		iwidth = iright - ileft + 1;
-		iheight = ibottom - itop + 1;
-		intersect = ((iright > ileft) && (ibottom > itop)) ? TRUE : FALSE;
-
-		if (intersect)
-		{
-			xf_UpdateWindowArea(xfc, appWindow, ileft - wleft, itop - wtop, iwidth, iheight);
-		}
-	}
-#endif
 }
-
-#ifdef OLD_X11_RAIL
-
-static void xf_rail_CreateWindow(rdpRail* rail, rdpWindow* window)
-{
-	xfContext* xfc;
-	xfAppWindow* appWindow;
-
-	xfc = (xfContext*) rail->extra;
-
-	xf_rail_enable_remoteapp_mode(xfc);
-
-	appWindow = xf_CreateWindow(xfc, window, window->windowOffsetX, window->windowOffsetY,
-			window->windowWidth, window->windowHeight, window->windowId);
-
-	xf_SetWindowStyle(xfc, appWindow, window->style, window->extendedStyle);
-	xf_SetWindowText(xfc, appWindow, window->title);
-
-	window->extra = (void*) appWindow;
-	window->extraId = (void*) appWindow->handle;
-}
-
-static void xf_rail_MoveWindow(rdpRail* rail, rdpWindow* window)
-{
-	xfContext* xfc;
-	xfAppWindow* appWindow;
-
-	xfc = (xfContext*) rail->extra;
-	appWindow = (xfAppWindow*) window->extra;
-
-	/*
-	 * The rail server like to set the window to a small size when it is minimized even though it is hidden
-	 * in some cases this can cause the window not to restore back to its original size. Therefore we don't
-	 * update our local window when that rail window state is minimized
-	 */
-	if (appWindow->rail_state == WINDOW_SHOW_MINIMIZED)
-		return;
-
-	/* Do nothing if window is already in the correct position */
-	if (appWindow->x == window->visibleOffsetX &&
-			appWindow->y == window->visibleOffsetY &&
-			appWindow->width == window->windowWidth &&
-			appWindow->height == window->windowHeight)
-	{
-		/*
-		 * Just ensure entire window area is updated to handle cases where we
-		 * have drawn locally before getting new bitmap from the server
-		 */
-		xf_UpdateWindowArea(xfc, appWindow, 0, 0, window->windowWidth, window->windowHeight);
-		return;
-	}
-
-	xf_MoveWindow(xfc, appWindow, window->visibleOffsetX, window->visibleOffsetY,
-			window->windowWidth, window->windowHeight);
-}
-
-static void xf_rail_ShowWindow(rdpRail* rail, rdpWindow* window, BYTE state)
-{
-	xfContext* xfc;
-	xfAppWindow* appWindow;
-
-	xfc = (xfContext*) rail->extra;
-	appWindow = (xfAppWindow*) window->extra;
-
-	xf_ShowWindow(xfc, appWindow, state);
-}
-
-static void xf_rail_SetWindowText(rdpRail* rail, rdpWindow* window)
-{
-	xfContext* xfc;
-	xfAppWindow* appWindow;
-
-	xfc = (xfContext*) rail->extra;
-	appWindow = (xfAppWindow*) window->extra;
-
-	xf_SetWindowText(xfc, appWindow, window->title);
-}
-
-static void xf_rail_SetWindowIcon(rdpRail* rail, rdpWindow* window, rdpIcon* icon)
-{
-	xfContext* xfc;
-	xfAppWindow* appWindow;
-
-	xfc = (xfContext*) rail->extra;
-	appWindow = (xfAppWindow*) window->extra;
-
-	icon->extra = freerdp_icon_convert(icon->entry->bitsColor, NULL, icon->entry->bitsMask,
-			icon->entry->width, icon->entry->height, icon->entry->bpp, rail->clrconv);
-
-	xf_SetWindowIcon(xfc, appWindow, icon);
-}
-
-static void xf_rail_SetWindowRects(rdpRail* rail, rdpWindow* window)
-{
-	xfContext* xfc;
-	xfAppWindow* appWindow;
-
-	xfc = (xfContext*) rail->extra;
-	appWindow = (xfAppWindow*) window->extra;
-
-	xf_SetWindowRects(xfc, appWindow, window->windowRects, window->numWindowRects);
-}
-
-static void xf_rail_SetWindowVisibilityRects(rdpRail* rail, rdpWindow* window)
-{
-	xfContext* xfc;
-	xfAppWindow* appWindow;
-
-	xfc = (xfContext*) rail->extra;
-	appWindow = (xfAppWindow*) window->extra;
-
-	xf_SetWindowVisibilityRects(xfc, appWindow, window->windowRects, window->numWindowRects);
-}
-
-static void xf_rail_DestroyWindow(rdpRail* rail, rdpWindow* window)
-{
-	xfContext* xfc;
-	xfAppWindow* appWindow;
-
-	xfc = (xfContext*) rail->extra;
-	appWindow = (xfAppWindow*) window->extra;
-
-	xf_DestroyWindow(xfc, appWindow);
-}
-
-void xf_rail_DesktopNonMonitored(rdpRail* rail, rdpWindow* window)
-{
-	xfContext* xfc = (xfContext*) rail->extra;
-	xf_rail_disable_remoteapp_mode(xfc);
-}
-
-void xf_rail_register_callbacks(xfContext* xfc, rdpRail* rail)
-{
-	rail->extra = (void*) xfc;
-	rail->rail_CreateWindow = xf_rail_CreateWindow;
-	rail->rail_MoveWindow = xf_rail_MoveWindow;
-	rail->rail_ShowWindow = xf_rail_ShowWindow;
-	rail->rail_SetWindowText = xf_rail_SetWindowText;
-	rail->rail_SetWindowIcon = xf_rail_SetWindowIcon;
-	rail->rail_SetWindowRects = xf_rail_SetWindowRects;
-	rail->rail_SetWindowVisibilityRects = xf_rail_SetWindowVisibilityRects;
-	rail->rail_DestroyWindow = xf_rail_DestroyWindow;
-	rail->rail_DesktopNonMonitored = xf_rail_DesktopNonMonitored;
-}
-
-#else
 
 /* RemoteApp Core Protocol Extension */
 
@@ -959,8 +632,6 @@ void xf_rail_register_update_callbacks(rdpUpdate* update)
 	window->NonMonitoredDesktop = xf_rail_non_monitored_desktop;
 }
 
-#endif
-
 /* RemoteApp Virtual Channel Extension */
 
 static int xf_rail_server_execute_result(RailClientContext* context, RAIL_EXEC_RESULT_ORDER* execResult)
@@ -1064,22 +735,8 @@ static int xf_rail_server_local_move_size(RailClientContext* context, RAIL_LOCAL
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context->custom;
 
-#ifdef OLD_X11_RAIL
-	rdpRail* rail;
-	rdpWindow* rail_window;
-
-	rail = ((rdpContext*) xfc)->rail;
-
-	rail_window = window_list_get_by_id(rail->list, localMoveSize->windowId);
-
-	if (!rail_window)
-		return -1;
-
-	appWindow = (xfAppWindow*) rail_window->extra;
-#else
 	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
 			(void*) (UINT_PTR) localMoveSize->windowId);
-#endif
 
 	if (!appWindow)
 		return -1;
@@ -1175,22 +832,8 @@ static int xf_rail_server_min_max_info(RailClientContext* context, RAIL_MINMAXIN
 	xfAppWindow* appWindow = NULL;
 	xfContext* xfc = (xfContext*) context->custom;
 
-#ifdef OLD_X11_RAIL
-	rdpRail* rail;
-	rdpWindow* rail_window;
-
-	rail = ((rdpContext*) xfc)->rail;
-
-	rail_window = window_list_get_by_id(rail->list, minMaxInfo->windowId);
-
-	if (!rail_window)
-		return -1;
-
-	appWindow = (xfAppWindow*) rail_window->extra;
-#else
 	appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows,
 			(void*) (UINT_PTR) minMaxInfo->windowId);
-#endif
 
 	if (!appWindow)
 		return -1;
@@ -1223,11 +866,7 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 	context->rail = rail_new(context->settings);
 	rail_register_update_callbacks(context->rail, context->update);
 
-#ifdef OLD_X11_RAIL
-	xf_rail_register_callbacks(xfc, context->rail);
-#else
 	xf_rail_register_update_callbacks(context->update);
-#endif
 
 	rail->custom = (void*) xfc;
 

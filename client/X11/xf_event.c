@@ -669,21 +669,7 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 		if (appWindow->decorations)
 		{
 			/* moving resizing using window decoration */
-
 			xf_rail_adjust_position(xfc, appWindow);
-
-#ifdef OLD_X11_RAIL
-			{
-				rdpWindow* window = appWindow->window;
-
-				window->windowOffsetX = appWindow->x;
-				window->visibleOffsetX = window->windowOffsetX;
-				window->windowOffsetY = appWindow->y;
-				window->visibleOffsetY = window->windowOffsetY;
-				window->windowWidth = appWindow->width;
-				window->windowHeight = appWindow->height;
-			}
-#endif
 		}
 		else
 		{

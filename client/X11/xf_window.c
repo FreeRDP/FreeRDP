@@ -624,34 +624,6 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 	return 1;
 }
 
-xfAppWindow* xf_CreateWindow(xfContext* xfc, rdpWindow* wnd, int x, int y, int width, int height, UINT32 id)
-{
-	xfAppWindow* appWindow;
-
-	appWindow = (xfAppWindow*) calloc(1, sizeof(xfAppWindow));
-
-	if (!appWindow)
-		return NULL;
-
-#ifdef OLD_X11_RAIL
-	appWindow->window = wnd;
-#endif
-
-	appWindow->windowId = id;
-
-	appWindow->dwStyle = wnd->style;
-	appWindow->dwExStyle = wnd->extendedStyle;
-
-	appWindow->x = x;
-	appWindow->y = y;
-	appWindow->width = width;
-	appWindow->height = height;
-
-	xf_AppWindowInit(xfc, appWindow);
-
-	return appWindow;
-}
-
 void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow,
 		int maxWidth, int maxHeight, int maxPosX, int maxPosY,
 		int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight)
@@ -777,11 +749,7 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 			 */
 			if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
 			{
-#ifdef OLD_X11_RAIL
-				xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->window->windowWidth, appWindow->window->windowHeight);
-#else
-				xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->width, appWindow->height);
-#endif
+				xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->windowWidth, appWindow->windowHeight);
 			}
 			break;
 
@@ -897,35 +865,6 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANG
 
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
 {
-#ifdef OLD_X11_RAIL
-	int ax, ay;
-	rdpWindow* wnd;
-
-	wnd = appWindow->window;
-
-	ax = x + wnd->visibleOffsetX;
-	ay = y + wnd->visibleOffsetY;
-
-	if (ax + width > wnd->visibleOffsetX + wnd->windowWidth)
-		width = (wnd->visibleOffsetX + wnd->windowWidth - 1) - ax;
-	if (ay + height > wnd->visibleOffsetY + wnd->windowHeight)
-		height = (wnd->visibleOffsetY + wnd->windowHeight - 1) - ay;
-
-	xf_lock_x11(xfc, TRUE);
-
-	if (xfc->settings->SoftwareGdi)
-	{
-		XPutImage(xfc->display, xfc->primary, appWindow->gc, xfc->image,
-			ax, ay, ax, ay, width, height);
-	}
-
-	XCopyArea(xfc->display, xfc->primary, appWindow->handle, appWindow->gc,
-			ax, ay, width, height, x, y);
-
-	XFlush(xfc->display);
-
-	xf_unlock_x11(xfc, TRUE);
-#else
 	int ax, ay;
 
 	ax = x + appWindow->visibleOffsetX;
@@ -950,7 +889,6 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	XFlush(xfc->display);
 
 	xf_unlock_x11(xfc, TRUE);
-#endif
 }
 
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
@@ -987,29 +925,6 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 
 xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 {
-#ifdef OLD_X11_RAIL
-	rdpRail* rail;
-
-	if (xfc)
-	{
-		if (wnd)
-		{
-			rail = ((rdpContext*) xfc)->rail;
-
-			if (rail)
-			{
-				rdpWindow* window;
-
-				window = (rdpWindow*) window_list_get_by_extra_id(rail->list, (void*) (long) wnd);
-
-				if (!window)
-					return NULL;
-
-				return (xfAppWindow*) window->extra;
-			}
-		}
-	}
-#else
 	int index;
 	int count;
 	ULONG_PTR* pKeys = NULL;
@@ -1029,7 +944,6 @@ xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 	}
 
 	free(pKeys);
-#endif
 
 	return NULL;
 }

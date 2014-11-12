@@ -24,8 +24,6 @@ typedef struct xf_context xfContext;
 
 #include <freerdp/api.h>
 
-#define OLD_X11_RAIL	1
-
 #include "xf_window.h"
 #include "xf_monitor.h"
 #include "xf_channels.h"

@@ -87,10 +87,6 @@ struct xf_app_window
 {
 	xfContext* xfc;
 
-#ifdef OLD_X11_RAIL
-	rdpWindow* window;
-#endif
-
 	int x;
 	int y;
 	int width;
@@ -154,7 +150,6 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...);
 
 int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow);
-xfAppWindow* xf_CreateWindow(xfContext* xfc, rdpWindow* wnd, int x, int y, int width, int height, UINT32 id);
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name);
 void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height);
 void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state);
