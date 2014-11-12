@@ -23,23 +23,32 @@
 
 #include <winpr/stream.h>
 
+#include <freerdp/svc.h>
+#include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #define TAG CHANNELS_TAG("cliprdr.client")
 
 struct cliprdr_plugin
 {
-	rdpSvcPlugin plugin;
+	CHANNEL_DEF channelDef;
+	CHANNEL_ENTRY_POINTS_FREERDP channelEntryPoints;
 
 	wLog* log;
+	HANDLE thread;
+	wStream* data_in;
+	void* InitHandle;
+	DWORD OpenHandle;
+	wMessagePipe* MsgPipe;
+
+	int num_format_names;
+	CLIPRDR_FORMAT_NAME* format_names;
+
 	BOOL received_caps;
 	BOOL use_long_format_names;
 	BOOL stream_fileclip_enabled;
 	BOOL fileclip_no_file_paths;
 	BOOL can_lock_clipdata;
-	CLIPRDR_FORMAT_NAME* format_names;
-	int num_format_names;
 };
 typedef struct cliprdr_plugin cliprdrPlugin;
 
