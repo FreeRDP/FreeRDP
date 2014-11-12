@@ -259,55 +259,6 @@ int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data, int d
 }
 
 /**
- * Send a plugin-defined event to the plugin.
- * called only from main thread
- * @param channels the channel manager instance
- * @param event an event object created by freerdp_event_new()
- */
-FREERDP_API int freerdp_channels_send_event(rdpChannels* channels, wMessage* event)
-{
-	const char* name = NULL;
-	CHANNEL_OPEN_DATA* pChannelOpenData;
-
-	switch (GetMessageClass(event->id))
-	{
-		case CliprdrChannel_Class:
-			name = "cliprdr";
-			break;
-
-		case TsmfChannel_Class:
-			name = "tsmf";
-			break;
-
-		case RailChannel_Class:
-			name = "rail";
-			break;
-	}
-
-	if (!name)
-	{
-		freerdp_event_free(event);
-		return 1;
-	}
-
-	pChannelOpenData = freerdp_channels_find_channel_open_data_by_name(channels, name);
-
-	if (!pChannelOpenData)
-	{
-		freerdp_event_free(event);
-		return 1;
-	}
-
-	if (pChannelOpenData->pChannelOpenEventProc)
-	{
-		pChannelOpenData->pChannelOpenEventProc(pChannelOpenData->OpenHandle, CHANNEL_EVENT_USER,
-			event, sizeof(wMessage), sizeof(wMessage), 0);
-	}
-
-	return 0;
-}
-
-/**
  * called only from main thread
  */
 static int freerdp_channels_process_sync(rdpChannels* channels, freerdp* instance)
@@ -675,42 +626,6 @@ UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData, ULONG
 	return CHANNEL_RC_OK;
 }
 
-UINT FreeRDP_VirtualChannelEventPush(DWORD openHandle, wMessage* event)
-{
-	rdpChannels* channels;
-	CHANNEL_OPEN_DATA* pChannelOpenData;
-
-	pChannelOpenData = HashTable_GetItemValue(g_OpenHandles, (void*) (UINT_PTR) openHandle);
-
-	if (!pChannelOpenData)
-		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
-
-	channels = pChannelOpenData->channels;
-
-	if (!channels)
-		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
-
-	if (!channels->is_connected)
-		return CHANNEL_RC_NOT_CONNECTED;
-
-	if (!event)
-		return CHANNEL_RC_NULL_DATA;
-
-	if (pChannelOpenData->flags != 2)
-		return CHANNEL_RC_NOT_OPEN;
-
-	/**
-	 * We really intend to use the In queue for events, but we're pushing on both
-	 * to wake up threads waiting on the out queue. Doing this cleanly would require
-	 * breaking freerdp_pop_event() a bit too early in this refactoring.
-	 */
-
-	MessageQueue_Post(channels->MsgPipe->In, (void*) channels, 1, (void*) event, NULL);
-	MessageQueue_Post(channels->MsgPipe->Out, (void*) channels, 1, (void*) event, NULL);
-
-	return CHANNEL_RC_OK;
-}
-
 int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, void* entry, void* data)
 {
 	int status;
@@ -739,7 +654,6 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, v
 	EntryPoints.MagicNumber = FREERDP_CHANNEL_MAGIC_NUMBER;
 	EntryPoints.ppInterface = &g_pInterface;
 	EntryPoints.pExtendedData = data;
-	EntryPoints.pVirtualChannelEventPush = FreeRDP_VirtualChannelEventPush;
 
 	/* enable VirtualChannelInit */
 	channels->can_call_init = TRUE;

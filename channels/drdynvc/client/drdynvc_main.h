@@ -63,6 +63,5 @@ struct drdynvc_plugin
 };
 
 int drdynvc_write_data(drdynvcPlugin* plugin, UINT32 ChannelId, BYTE* data, UINT32 data_size);
-int drdynvc_push_event(drdynvcPlugin* plugin, wMessage* event);
 
 #endif

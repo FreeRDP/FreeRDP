@@ -35,7 +35,6 @@
 
 #include <freerdp/svc.h>
 #include <freerdp/log.h>
-#include <freerdp/utils/event.h>
 
 typedef struct rdp_svc_plugin rdpSvcPlugin;
 
@@ -46,7 +45,6 @@ struct rdp_svc_plugin
 
 	void (*connect_callback)(rdpSvcPlugin* plugin);
 	void (*receive_callback)(rdpSvcPlugin* plugin, wStream* data_in);
-	void (*event_callback)(rdpSvcPlugin* plugin, wMessage* event);
 	void (*terminate_callback)(rdpSvcPlugin* plugin);
 
 	HANDLE thread;
@@ -66,7 +64,6 @@ FREERDP_API void svc_plugin_init(rdpSvcPlugin* plugin, CHANNEL_ENTRY_POINTS* pEn
 FREERDP_API void svc_plugin_terminate(rdpSvcPlugin* plugin);
 
 FREERDP_API int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out);
-FREERDP_API int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event);
 
 #ifdef __cplusplus
 }

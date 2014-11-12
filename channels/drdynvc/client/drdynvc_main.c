@@ -137,21 +137,6 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 	return 0;
 }
 
-int drdynvc_push_event(drdynvcPlugin* drdynvc, wMessage* event)
-{
-	int status;
-
-	status = svc_plugin_send_event((rdpSvcPlugin*) drdynvc, event);
-
-	if (status != CHANNEL_RC_OK)
-	{
-		WLog_ERR(TAG, "pVirtualChannelEventPush failed %d", status);
-		return 1;
-	}
-
-	return 0;
-}
-
 static int drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 {
 	int status;
@@ -406,11 +391,6 @@ static void drdynvc_process_connect(rdpSvcPlugin* plugin)
 	drdynvc->state = DRDYNVC_STATE_CAPABILITIES;
 }
 
-static void drdynvc_process_event(rdpSvcPlugin* plugin, wMessage* event)
-{
-	freerdp_event_free(event);
-}
-
 static void drdynvc_process_terminate(rdpSvcPlugin* plugin)
 {
 	drdynvcPlugin* drdynvc = (drdynvcPlugin*) plugin;
@@ -466,7 +446,6 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	_p->plugin.connect_callback = drdynvc_process_connect;
 	_p->plugin.receive_callback = drdynvc_process_receive;
-	_p->plugin.event_callback = drdynvc_process_event;
 	_p->plugin.terminate_callback = drdynvc_process_terminate;
 
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;

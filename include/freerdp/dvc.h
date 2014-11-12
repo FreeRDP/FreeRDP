@@ -91,10 +91,6 @@ struct _IWTSVirtualChannelManager
 						  UINT32 ulFlags,
 						  IWTSListenerCallback *pListenerCallback,
 						  IWTSListener **ppListener);
-	/* Push a virtual channel event.
-	   This is a FreeRDP extension to standard MS API. */
-	int (*PushEvent)(IWTSVirtualChannelManager *pChannelMgr,
-					 wMessage *pEvent);
 	/* Find the channel or ID to send data to a specific endpoint. */
 	UINT32(*GetChannelId)(IWTSVirtualChannel *channel);
 	IWTSVirtualChannel *(*FindChannelById)(IWTSVirtualChannelManager *pChannelMgr,

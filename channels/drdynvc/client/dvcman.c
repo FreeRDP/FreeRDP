@@ -76,25 +76,6 @@ static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 	}
 }
 
-static int dvcman_push_event(IWTSVirtualChannelManager* pChannelMgr, wMessage* pEvent)
-{
-	int status;
-	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
-
-	status = drdynvc_push_event(dvcman->drdynvc, pEvent);
-
-	if (status == 0)
-	{
-		DEBUG_DVC("event_type %d pushed.", GetMessageType(pEvent->id));
-	}
-	else
-	{
-		WLog_ERR(TAG, "event_type %d push failed.", GetMessageType(pEvent->id));
-	}
-
-	return status;
-}
-
 static int dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name, IWTSPlugin* pPlugin)
 {
 	DVCMAN* dvcman = ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->dvcman;
@@ -203,7 +184,6 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	dvcman = (DVCMAN*) calloc(1, sizeof(DVCMAN));
 
 	dvcman->iface.CreateListener = dvcman_create_listener;
-	dvcman->iface.PushEvent = dvcman_push_event;
 	dvcman->iface.FindChannelById = dvcman_find_channel_by_id;
 	dvcman->iface.GetChannelId = dvcman_get_channel_id;
 	dvcman->drdynvc = plugin;

@@ -23,18 +23,14 @@
 #endif
 
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
-#include <freerdp/constants.h>
 #include <freerdp/log.h>
-#include <freerdp/utils/event.h>
+#include <freerdp/constants.h>
 #include <freerdp/utils/svc_plugin.h>
 
 #define TAG FREERDP_TAG("utils")
@@ -124,11 +120,6 @@ static void svc_plugin_process_received(rdpSvcPlugin* plugin, void* pData, UINT3
 	}
 }
 
-static void svc_plugin_process_event(rdpSvcPlugin* plugin, wMessage* event_in)
-{
-	MessageQueue_Post(plugin->MsgPipe->In, NULL, 1, (void*) event_in, NULL);
-}
-
 static VOID VCAPITYPE svc_plugin_open_event(DWORD openHandle, UINT event, LPVOID pData, UINT32 dataLength,
 	UINT32 totalLength, UINT32 dataFlags)
 {
@@ -154,17 +145,12 @@ static VOID VCAPITYPE svc_plugin_open_event(DWORD openHandle, UINT event, LPVOID
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			Stream_Free((wStream*) pData, TRUE);
 			break;
-
-		case CHANNEL_EVENT_USER:
-			svc_plugin_process_event(plugin, (wMessage*) pData);
-			break;
 	}
 }
 
 static void* svc_plugin_thread_func(void* arg)
 {
 	wStream* data;
-	wMessage* event;
 	wMessage message;
 	rdpSvcPlugin* plugin = (rdpSvcPlugin*) arg;
 
@@ -191,11 +177,6 @@ static void* svc_plugin_thread_func(void* arg)
 				data = (wStream*) message.wParam;
 				IFCALL(plugin->receive_callback, plugin, data);
 				Stream_Release(data);
-			}
-			else if (message.id == 1)
-			{
-				event = (wMessage*) message.wParam;
-				IFCALL(plugin->event_callback, plugin, event);
 			}
 		}
 	}
@@ -337,21 +318,6 @@ int svc_plugin_send(rdpSvcPlugin* plugin, wStream* data_out)
 		Stream_Free(data_out, TRUE);
 		WLog_ERR(TAG,  "svc_plugin_send: VirtualChannelWrite failed %d", status);
 	}
-
-	return status;
-}
-
-int svc_plugin_send_event(rdpSvcPlugin* plugin, wMessage* event)
-{
-	UINT32 status = 0;
-
-	DEBUG_SVC("event class: %d type: %d",
-			GetMessageClass(event->id), GetMessageType(event->id));
-
-	status = plugin->channel_entry_points.pVirtualChannelEventPush(plugin->OpenHandle, event);
-
-	if (status != CHANNEL_RC_OK)
-		WLog_ERR(TAG,  "svc_plugin_send_event: VirtualChannelEventPush failed %d", status);
 
 	return status;
 }
