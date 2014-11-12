@@ -24,9 +24,7 @@ set(${MODULE_PREFIX}_SRCS
 	profiler.c
 	ringbuffer.c
 	signal.c
-	stopwatch.c
-	tcp.c
-	uds.c)
+	stopwatch.c)
 
 if(NOT WIN32)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} msusb.c)

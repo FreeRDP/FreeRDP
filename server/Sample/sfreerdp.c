@@ -22,21 +22,17 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <signal.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/winsock.h>
 
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
 
-
 #include <freerdp/constants.h>
-#include <freerdp/utils/tcp.h>
 #include <freerdp/server/rdpsnd.h>
 
 #include "sf_audin.h"
@@ -838,6 +834,7 @@ static void test_server_mainloop(freerdp_listener* instance)
 
 int main(int argc, char* argv[])
 {
+	WSADATA wsaData;
 	freerdp_listener* instance;
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
@@ -851,17 +848,21 @@ int main(int argc, char* argv[])
 	if (argc > 2 && !strcmp(argv[2], "--fast"))
 		test_dump_rfx_realtime = FALSE;
 
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		return 0;
+
 	/* Open the server socket and start listening. */
-	freerdp_wsa_startup();
+
 	if (instance->Open(instance, NULL, 3389) &&
 		instance->OpenLocal(instance, "/tmp/tfreerdp-server.0"))
 	{
 		/* Entering the server main loop. In a real server the listener can be run in its own thread. */
 		test_server_mainloop(instance);
 	}
-	freerdp_wsa_cleanup();
 
 	freerdp_listener_free(instance);
+
+	WSACleanup();
 
 	return 0;
 }
