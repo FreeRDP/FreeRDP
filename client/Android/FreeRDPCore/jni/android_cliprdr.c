@@ -36,7 +36,6 @@
 #include "android_jni_utils.h"
 #include "android_jni_callback.h"
 
-typedef struct clipboard_context clipboardContext;
 struct clipboard_context
 {
 	freerdp* instance;
@@ -55,6 +54,7 @@ struct clipboard_context
 	BYTE* android_data;
 	int android_data_length;
 };
+typedef struct clipboard_context clipboardContext;
 
 static BYTE* lf2crlf(BYTE* data, int* size)
 {
@@ -115,41 +115,20 @@ static void crlf2lf(BYTE* data, int* size)
 	*size = out - data;
 }
 
-static void be2le(BYTE* data, int size)
-{
-	BYTE c;
-
-	while (size >= 2)
-	{
-		c = data[0];
-		data[0] = data[1];
-		data[1] = c;
-
-		data += 2;
-		size -= 2;
-	}
-}
-
 void android_cliprdr_init(freerdp* inst)
 {
-	androidContext* ctx = (androidContext*)inst->context;
 	clipboardContext* cb;
+	androidContext* ctx = (androidContext*) inst->context;
 
-	cb = (clipboardContext*)malloc(sizeof(clipboardContext));
-	ZeroMemory(cb, sizeof(clipboardContext));
+	cb = (clipboardContext*) calloc(1, sizeof(clipboardContext));
+
 	cb->instance = inst;
 	cb->channels = inst->context->channels;
 	
-	cb->android_formats = (UINT32*)malloc(sizeof(UINT32) * 3);
+	cb->android_num_formats = 2;
+	cb->android_formats = (UINT32*) calloc(cb->android_num_formats, sizeof(UINT32));
 	cb->android_formats[0] = CF_TEXT;
 	cb->android_formats[1] = CF_UNICODETEXT;
-	cb->android_formats[2] = CB_FORMAT_HTML;
-	cb->android_num_formats = 3;
-
-#if 0	
-	cb->android_data = strdup("ANDROID_CLIPBOARD_TEST");
-	cb->android_data_length = strlen(cb->android_data);
-#endif
 	
 	ctx->clipboard_context = cb;
 }
@@ -194,7 +173,7 @@ static void android_cliprdr_send_supported_format_list(clipboardContext* cb)
 	event = (RDP_CB_FORMAT_LIST_EVENT*) freerdp_event_new(CliprdrChannel_Class,
 		CliprdrChannel_FormatList, NULL, NULL);
 
-	event->formats = (UINT32*) malloc(sizeof(UINT32) * cb->android_num_formats);
+	event->formats = (UINT32*) calloc(cb->android_num_formats, sizeof(UINT32));
 	event->num_formats = cb->android_num_formats;
 
 	for (i = 0; i < cb->android_num_formats; i++)
@@ -276,89 +255,13 @@ static BYTE* android_cliprdr_process_requested_text(BYTE* data, int* size)
 	return outbuf;
 }
 
-static BYTE* android_cliprdr_process_requested_html(BYTE* data, int* size)
-{
-	char* inbuf;
-	BYTE* in;
-	BYTE* outbuf;
-	char num[11];
-
-	inbuf = NULL;
-
-	if (*size > 2)
-	{
-		if ((BYTE) data[0] == 0xFE && (BYTE) data[1] == 0xFF)
-		{
-			be2le(data, *size);
-		}
-
-		if ((BYTE) data[0] == 0xFF && (BYTE) data[1] == 0xFE)
-		{
-			ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) (data + 2), (*size - 2) / 2, &inbuf, 0, NULL, NULL);
-		}
-	}
-
-	if (inbuf == NULL)
-	{
-		inbuf = malloc(*size + 1);
-		ZeroMemory(inbuf, *size + 1);
-
-		memcpy(inbuf, data, *size);
-	}
-
-	outbuf = (BYTE*) malloc(*size + 200);
-	ZeroMemory(outbuf, *size + 200);
-
-	strcpy((char*) outbuf,
-		"Version:0.9\r\n"
-		"StartHTML:0000000000\r\n"
-		"EndHTML:0000000000\r\n"
-		"StartFragment:0000000000\r\n"
-		"EndFragment:0000000000\r\n");
-
-	in = (BYTE*) strstr((char*) inbuf, "<body");
-
-	if (in == NULL)
-	{
-		in = (BYTE*) strstr((char*) inbuf, "<BODY");
-	}
-	/* StartHTML */
-	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	memcpy(outbuf + 23, num, 10);
-	if (in == NULL)
-	{
-		strcat((char*) outbuf, "<HTML><BODY>");
-	}
-	strcat((char*) outbuf, "<!--StartFragment-->");
-	/* StartFragment */
-	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	memcpy(outbuf + 69, num, 10);
-	strcat((char*) outbuf, (char*) inbuf);
-	/* EndFragment */
-	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	memcpy(outbuf + 93, num, 10);
-	strcat((char*) outbuf, "<!--EndFragment-->");
-	if (in == NULL)
-	{
-		strcat((char*) outbuf, "</BODY></HTML>");
-	}
-	/* EndHTML */
-	snprintf(num, sizeof(num), "%010lu", (unsigned long) strlen((char*) outbuf));
-	memcpy(outbuf + 43, num, 10);
-
-	*size = strlen((char*) outbuf) + 1;
-	free(inbuf);
-
-	return outbuf;
-}
-
 static void android_cliprdr_process_cb_data_request_event(clipboardContext* cb, RDP_CB_DATA_REQUEST_EVENT* event)
 {
 	int i;
 
 	DEBUG_ANDROID("format %d", event->format);
 
-	for(i = 0; i < cb->android_num_formats; i++)
+	for (i = 0; i < cb->android_num_formats; i++)
 	{
 		if (event->format == cb->android_formats[i])
 			break;
@@ -376,18 +279,11 @@ static void android_cliprdr_process_cb_data_request_event(clipboardContext* cb, 
 	}
 	else
 	{
-		BYTE* outbuf;
+		BYTE* outbuf = NULL;
 		int size = cb->android_data_length;
 
 		switch (event->format)
 		{
-			case 0:
-			case CF_DIB:
-			default:
-				DEBUG_ANDROID("unsupported format %x\n", event->format);
-				outbuf = NULL;
-				break;
-
 			case CF_UNICODETEXT:
 				outbuf = android_cliprdr_process_requested_unicodetext(cb->android_data, &size);
 				break;
@@ -395,11 +291,8 @@ static void android_cliprdr_process_cb_data_request_event(clipboardContext* cb, 
 			case CF_TEXT:
 				outbuf = android_cliprdr_process_requested_text(cb->android_data, &size);
 				break;
-
-			case CB_FORMAT_HTML:
-				outbuf = android_cliprdr_process_requested_html(cb->android_data, &size);
-				break;
 		}
+
 		if (outbuf)
 			android_cliprdr_send_data_response(cb, outbuf, size);
 		else
@@ -413,11 +306,13 @@ static void android_cliprdr_process_cb_data_request_event(clipboardContext* cb, 
 static BOOL android_cliprdr_has_format(UINT32* formats, int num_formats, UINT32 format)
 {
 	int i;
-	for(i = 0; i < num_formats; i++)
+
+	for (i = 0; i < num_formats; i++)
 	{
 		if (formats[i] == format)
 			return TRUE;
 	}
+
 	return FALSE;
 }
 
@@ -473,34 +368,6 @@ static void android_cliprdr_process_unicodetext(clipboardContext* cb, BYTE* data
 	crlf2lf(cb->data, &cb->data_length);
 }
 
-static void android_cliprdr_process_html(clipboardContext* cb, BYTE* data, int size)
-{
-	char* start_str;
-	char* end_str;
-	int start;
-	int end;
-
-	start_str = strstr((char*) data, "StartHTML:");
-	end_str = strstr((char*) data, "EndHTML:");
-	if (start_str == NULL || end_str == NULL)
-	{
-		DEBUG_ANDROID("invalid HTML clipboard format");
-		return;
-	}
-	start = atoi(start_str + 10);
-	end = atoi(end_str + 8);
-	if (start > size || end > size || start >= end)
-	{
-		DEBUG_ANDROID("invalid HTML offset");
-		return;
-	}
-
-	cb->data = (BYTE*) malloc(end - start + 1);
-	memcpy(cb->data, data + start, end - start);
-	cb->data[end - start] = 0;
-	cb->data_length = end - start;
-}
-
 static void android_cliprdr_process_cb_data_response_event(clipboardContext* cb, RDP_CB_DATA_RESPONSE_EVENT* event)
 {
 	DEBUG_ANDROID("size=%d", event->size);	
@@ -513,14 +380,9 @@ static void android_cliprdr_process_cb_data_response_event(clipboardContext* cb,
 			cb->data = NULL;
 			cb->data_length = 0;
 		}
+
 		switch (cb->data_format)
 		{
-			case 0:
-			case CF_DIB:
-			default:
-				DEBUG_ANDROID("unsupported format\n");
-				break;
-
 			case CF_TEXT:
 				android_cliprdr_process_text(cb, event->data, event->size - 1);
 				break;
@@ -528,14 +390,12 @@ static void android_cliprdr_process_cb_data_response_event(clipboardContext* cb,
 			case CF_UNICODETEXT:
 				android_cliprdr_process_unicodetext(cb, event->data, event->size - 2);
 				break;
-
-			case CB_FORMAT_HTML:
-				android_cliprdr_process_html(cb, event->data, event->size);
-				break;
 		}
+
 		DEBUG_ANDROID("computer_clipboard_data %s ", (char*)cb->data);		
+
 		if (cb->data)
-		{   //CALLBACK
+		{
 			JNIEnv* env;
 			jboolean attached = jni_attach_thread(&env);
 			jstring jdata = jniNewStringUTF(env, cb->data, cb->data_length);
@@ -557,9 +417,7 @@ void android_process_cliprdr_event(freerdp* inst, wMessage* event)
 	clipboardContext* cb = (clipboardContext*) ctx->clipboard_context;
 	
 	if (!cb)
-	{
 		return;
-	}
 	
 	switch (GetMessageType(event->id))
 	{
@@ -592,7 +450,8 @@ void android_process_cliprdr_send_clipboard_data(freerdp* inst, void* data, int 
 
 	DEBUG_ANDROID("android_clipboard_data %s ", (char*)data);
 		
-	if (cb && (data == NULL || cb->android_data == NULL || len != cb->android_data_length || memcmp(data, cb->android_data, len)))
+	if (cb && (data == NULL || cb->android_data == NULL ||
+			len != cb->android_data_length || memcmp(data, cb->android_data, len)))
 	{
 		if (cb->android_data)
 		{
@@ -602,12 +461,12 @@ void android_process_cliprdr_send_clipboard_data(freerdp* inst, void* data, int 
 		}
 		if (data)
 		{
-			cb->android_data = (BYTE*)malloc(len + 1);
+			cb->android_data = (BYTE*) malloc(len + 1);
 			memcpy(cb->android_data, data, len);
 			cb->android_data[len] = 0;
 			cb->android_data_length = len;
 		}
+
 		android_cliprdr_send_format_list(cb);
 	}
 }
-
