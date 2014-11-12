@@ -28,7 +28,6 @@
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/rail.h>
-#include <freerdp/rail.h>
 
 #include "rail_orders.h"
 #include "rail_main.h"
@@ -52,35 +51,9 @@ void rail_send_channel_data(void* railObject, void* data, size_t length)
 	svc_plugin_send((rdpSvcPlugin*) plugin, s);
 }
 
-static void on_free_rail_channel_event(wMessage* event)
-{
-	rail_free_cloned_order(GetMessageType(event->id), event->wParam);
-}
-
-void rail_send_channel_event(void* railObject, UINT16 eventType, void* param)
-{
-	void* payload = NULL;
-	wMessage* out_event = NULL;
-	railPlugin* plugin = (railPlugin*) railObject;
-
-	payload = rail_clone_order(eventType, param);
-
-	if (payload)
-	{
-		out_event = freerdp_event_new(RailChannel_Class, eventType,
-			on_free_rail_channel_event, payload);
-
-		svc_plugin_send_event((rdpSvcPlugin*) plugin, out_event);
-	}
-}
-
 static void rail_process_connect(rdpSvcPlugin* plugin)
 {
 	railPlugin* rail = (railPlugin*) plugin;
-
-	rail->rail_order = rail_order_new();
-	rail->rail_order->settings = (rdpSettings*) plugin->channel_entry_points.pExtendedData;
-	rail->rail_order->plugin = rail;
 
 	WLog_Print(rail->log, WLOG_DEBUG, "Connect");
 }
@@ -90,7 +63,7 @@ static void rail_process_terminate(rdpSvcPlugin* plugin)
 	railPlugin* rail = (railPlugin*) plugin;
 
 	WLog_Print(rail->log, WLOG_DEBUG, "Terminate");
-  svc_plugin_terminate(plugin);
+	svc_plugin_terminate(plugin);
 }
 
 static void rail_process_receive(rdpSvcPlugin* plugin, wStream* s)
@@ -99,168 +72,14 @@ static void rail_process_receive(rdpSvcPlugin* plugin, wStream* s)
 	rail_order_recv(rail, s);
 }
 
-static void rail_process_addin_args(rdpRailOrder* railOrder, rdpSettings* settings)
-{
-	char* exeOrFile;
-
-	exeOrFile = settings->RemoteApplicationProgram;
-
-	if (strlen(exeOrFile) >= 2)
-	{
-		if (strncmp(exeOrFile, "||", 2) != 0)
-			railOrder->exec.flags |= RAIL_EXEC_FLAG_FILE;
-	}
-
-	rail_string_to_unicode_string(settings->RemoteApplicationProgram, &railOrder->exec.exeOrFile);
-	rail_string_to_unicode_string(settings->ShellWorkingDirectory, &railOrder->exec.workingDir);
-	rail_string_to_unicode_string(settings->RemoteApplicationCmdLine, &railOrder->exec.arguments);
-
-	rail_send_client_exec_order((railPlugin*) railOrder->plugin, &railOrder->exec);
-}
-
-static void rail_recv_set_sysparams_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_SYSPARAM_ORDER* sysparam;
-
-	/* Send System Parameters */
-
-	sysparam = (RAIL_SYSPARAM_ORDER*) event->wParam;
-	memmove(&railOrder->sysparam, sysparam, sizeof(RAIL_SYSPARAM_ORDER));
-
-	rail_send_client_sysparams_order((railPlugin*) railOrder->plugin, &railOrder->sysparam);
-
-	/* execute */
-
-	railOrder->exec.flags = RAIL_EXEC_FLAG_EXPAND_ARGUMENTS;
-
-	rail_process_addin_args(railOrder, railOrder->settings);
-}
-
-static void rail_recv_exec_remote_app_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	/**
-	 * TODO: replace event system by an API to allow the execution
-	 * of multiple remote apps over the same connection. RAIL is
-	 * always built-in, so clients can safely link to it.
-	 */
-
-	//rail_process_addin_args((railPlugin*) railOrder->plugin, data);
-}
-
-static void rail_recv_activate_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_ACTIVATE_ORDER* activate = (RAIL_ACTIVATE_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->activate, activate, sizeof(RAIL_ACTIVATE_ORDER));
-	rail_send_client_activate_order((railPlugin*) railOrder->plugin, &railOrder->activate);
-}
-
-static void rail_recv_sysmenu_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_SYSMENU_ORDER* sysmenu = (RAIL_SYSMENU_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->sysmenu, sysmenu, sizeof(RAIL_SYSMENU_ORDER));
-	rail_send_client_sysmenu_order((railPlugin*) railOrder->plugin, &railOrder->sysmenu);
-}
-
-static void rail_recv_syscommand_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_SYSCOMMAND_ORDER* syscommand = (RAIL_SYSCOMMAND_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->syscommand, syscommand, sizeof(RAIL_SYSCOMMAND_ORDER));
-	rail_send_client_syscommand_order((railPlugin*) railOrder->plugin, &railOrder->syscommand);
-}
-
-static void rail_recv_notify_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_NOTIFY_EVENT_ORDER* notify = (RAIL_NOTIFY_EVENT_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->notify_event, notify, sizeof(RAIL_NOTIFY_EVENT_ORDER));
-	rail_send_client_notify_event_order((railPlugin*) railOrder->plugin, &railOrder->notify_event);
-}
-
-static void rail_recv_window_move_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_WINDOW_MOVE_ORDER* window_move = (RAIL_WINDOW_MOVE_ORDER*) event->wParam;
-	CopyMemory(&railOrder->window_move, window_move, sizeof(RAIL_WINDOW_MOVE_ORDER));
-	rail_send_client_window_move_order((railPlugin*) railOrder->plugin, &railOrder->window_move);
-}
-
-static void rail_recv_app_req_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_GET_APPID_REQ_ORDER* get_appid_req = (RAIL_GET_APPID_REQ_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->get_appid_req, get_appid_req, sizeof(RAIL_GET_APPID_REQ_ORDER));
-	rail_send_client_get_appid_req_order((railPlugin*) railOrder->plugin, &railOrder->get_appid_req);
-}
-
-static void rail_recv_langbarinfo_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_LANGBAR_INFO_ORDER* langbar_info = (RAIL_LANGBAR_INFO_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->langbar_info, langbar_info, sizeof(RAIL_LANGBAR_INFO_ORDER));
-	rail_send_client_langbar_info_order((railPlugin*) railOrder->plugin, &railOrder->langbar_info);
-}
-
-static void rail_process_event(rdpSvcPlugin* plugin, wMessage* event)
-{
-	railPlugin* rail = NULL;
-	rail = (railPlugin*) plugin;
-
-	switch (GetMessageType(event->id))
-	{
-		case RailChannel_ClientSystemParam:
-			rail_recv_set_sysparams_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientExecute:
-			rail_recv_exec_remote_app_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientActivate:
-			rail_recv_activate_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientSystemMenu:
-			rail_recv_sysmenu_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientSystemCommand:
-			rail_recv_syscommand_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientNotifyEvent:
-			rail_recv_notify_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientWindowMove:
-			rail_recv_window_move_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientGetAppIdRequest:
-			rail_recv_app_req_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientLanguageBarInfo:
-			rail_recv_langbarinfo_event(rail->rail_order, event);
-			break;
-
-		default:
-			break;
-	}
-
-	freerdp_event_free(event);
-}
-
 /**
  * Callback Interface
  */
 
 int rail_client_execute(RailClientContext* context, RAIL_EXEC_ORDER* exec)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
-
 	char* exeOrFile;
+	railPlugin* rail = (railPlugin*) context->handle;
 
 	exeOrFile = exec->RemoteApplicationProgram;
 
@@ -514,7 +333,6 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	rail->plugin.connect_callback = rail_process_connect;
 	rail->plugin.receive_callback = rail_process_receive;
-	rail->plugin.event_callback = rail_process_event;
 	rail->plugin.terminate_callback = rail_process_terminate;
 
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;

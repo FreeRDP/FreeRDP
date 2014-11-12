@@ -22,9 +22,6 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <winpr/crt.h>
 
 #include <freerdp/utils/rail.h>
@@ -276,8 +273,6 @@ void rail_write_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbarI
 
 BOOL rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake, wStream* s)
 {
-	RAIL_SYSPARAM_ORDER sysparam;
-	RAIL_CLIENT_STATUS_ORDER clientStatus;
 	RailClientContext* context = rail_get_client_interface(rail);
 
 	if (!rail_read_handshake_order(s, handshake))
@@ -288,44 +283,6 @@ BOOL rail_recv_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake
 		IFCALL(context->ServerHandshake, context, handshake);
 		return TRUE;
 	}
-
-	handshake->buildNumber = 0x00001DB0;
-	rail_send_handshake_order(rail, handshake);
-
-	ZeroMemory(&clientStatus, sizeof(RAIL_CLIENT_STATUS_ORDER));
-	clientStatus.flags = RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
-	rail_send_client_status_order(rail, &clientStatus);
-
-	/* sysparam update */
-
-	ZeroMemory(&sysparam, sizeof(RAIL_SYSPARAM_ORDER));
-
-	sysparam.params = 0;
-
-	sysparam.params |= SPI_MASK_SET_HIGH_CONTRAST;
-	sysparam.highContrast.colorScheme.string = NULL;
-	sysparam.highContrast.colorScheme.length = 0;
-	sysparam.highContrast.flags = 0x7E;
-
-	sysparam.params |= SPI_MASK_SET_MOUSE_BUTTON_SWAP;
-	sysparam.mouseButtonSwap = FALSE;
-
-	sysparam.params |= SPI_MASK_SET_KEYBOARD_PREF;
-	sysparam.keyboardPref = FALSE;
-
-	sysparam.params |= SPI_MASK_SET_DRAG_FULL_WINDOWS;
-	sysparam.dragFullWindows = FALSE;
-
-	sysparam.params |= SPI_MASK_SET_KEYBOARD_CUES;
-	sysparam.keyboardCues = FALSE;
-
-	sysparam.params |= SPI_MASK_SET_WORK_AREA;
-	sysparam.workArea.left = 0;
-	sysparam.workArea.top = 0;
-	sysparam.workArea.right = 1024;
-	sysparam.workArea.bottom = 768;
-
-	rail_send_channel_event(rail, RailChannel_GetSystemParam, &sysparam);
 
 	return TRUE;
 }
@@ -358,10 +315,6 @@ BOOL rail_recv_exec_result_order(railPlugin* rail, RAIL_EXEC_RESULT_ORDER* execR
 	{
 		IFCALL(context->ServerExecuteResult, context, execResult);
 	}
-	else
-	{
-		rail_send_channel_event(rail, RailChannel_ServerExecuteResult, execResult);
-	}
 
 	return TRUE;
 }
@@ -376,10 +329,6 @@ BOOL rail_recv_server_sysparam_order(railPlugin* rail, RAIL_SYSPARAM_ORDER* sysp
 	if (context->custom)
 	{
 		IFCALL(context->ServerSystemParam, context, sysparam);
-	}
-	else
-	{
-		rail_send_channel_event(rail, RailChannel_ServerSystemParam, sysparam);
 	}
 
 	return TRUE;
@@ -396,10 +345,6 @@ BOOL rail_recv_server_minmaxinfo_order(railPlugin* rail, RAIL_MINMAXINFO_ORDER* 
 	{
 		IFCALL(context->ServerMinMaxInfo, context, minMaxInfo);
 	}
-	else
-	{
-		rail_send_channel_event(rail, RailChannel_ServerMinMaxInfo, minMaxInfo);
-	}
 
 	return TRUE;
 }
@@ -414,10 +359,6 @@ BOOL rail_recv_server_localmovesize_order(railPlugin* rail, RAIL_LOCALMOVESIZE_O
 	if (context->custom)
 	{
 		IFCALL(context->ServerLocalMoveSize, context, localMoveSize);
-	}
-	else
-	{
-		rail_send_channel_event(rail, RailChannel_ServerLocalMoveSize, localMoveSize);
 	}
 
 	return TRUE;
@@ -434,10 +375,6 @@ BOOL rail_recv_server_get_appid_resp_order(railPlugin* rail, RAIL_GET_APPID_RESP
 	{
 		IFCALL(context->ServerGetAppIdResponse, context, getAppIdResp);
 	}
-	else
-	{
-		rail_send_channel_event(rail, RailChannel_ServerGetAppIdResponse, getAppIdResp);
-	}
 
 	return TRUE;
 }
@@ -452,10 +389,6 @@ BOOL rail_recv_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* lan
 	if (context->custom)
 	{
 		IFCALL(context->ServerLanguageBarInfo, context, langBarInfo);
-	}
-	else
-	{
-		rail_send_channel_event(rail, RailChannel_ServerLanguageBarInfo, langBarInfo);
 	}
 
 	return TRUE;
@@ -712,26 +645,4 @@ void rail_send_client_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORD
 	rail_write_langbar_info_order(s, langBarInfo);
 	rail_send_pdu(rail, s, RDP_RAIL_ORDER_LANGBARINFO);
 	Stream_Free(s, TRUE);
-}
-
-rdpRailOrder* rail_order_new()
-{
-	rdpRailOrder* railOrder;
-
-	railOrder = (rdpRailOrder*) malloc(sizeof(rdpRailOrder));
-
-	if (railOrder)
-	{
-		ZeroMemory(railOrder, sizeof(rdpRailOrder));
-	}
-
-	return railOrder;
-}
-
-void rail_order_free(rdpRailOrder* railOrder)
-{
-	if (railOrder)
-	{
-		free(railOrder);
-	}
 }
