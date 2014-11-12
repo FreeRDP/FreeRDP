@@ -31,44 +31,44 @@
 #include "rail_orders.h"
 #include "rail_main.h"
 
-RailClientContext* rail_get_client_interface(void* railObject)
+RailClientContext* rail_get_client_interface(railPlugin* rail)
 {
 	RailClientContext* pInterface;
-	rdpSvcPlugin* plugin = (rdpSvcPlugin*) railObject;
-	pInterface = (RailClientContext*) plugin->channel_entry_points.pInterface;
+	pInterface = (RailClientContext*) rail->channelEntryPoints.pInterface;
 	return pInterface;
 }
 
-void rail_send_channel_data(void* railObject, void* data, size_t length)
+int rail_send(railPlugin* rail, wStream* s)
+{
+	UINT32 status = 0;
+
+	if (!rail)
+	{
+		status = CHANNEL_RC_BAD_INIT_HANDLE;
+	}
+	else
+	{
+		status = rail->channelEntryPoints.pVirtualChannelWrite(rail->OpenHandle,
+			Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
+	}
+
+	if (status != CHANNEL_RC_OK)
+	{
+		Stream_Free(s, TRUE);
+		WLog_ERR(TAG,  "rail_send: VirtualChannelWrite failed %d", status);
+	}
+
+	return status;
+}
+
+void rail_send_channel_data(railPlugin* rail, void* data, size_t length)
 {
 	wStream* s = NULL;
-	railPlugin* plugin = (railPlugin*) railObject;
 
 	s = Stream_New(NULL, length);
 	Stream_Write(s, data, length);
 
-	svc_plugin_send((rdpSvcPlugin*) plugin, s);
-}
-
-static void rail_process_connect(rdpSvcPlugin* plugin)
-{
-	railPlugin* rail = (railPlugin*) plugin;
-
-	WLog_Print(rail->log, WLOG_DEBUG, "Connect");
-}
-
-static void rail_process_terminate(rdpSvcPlugin* plugin)
-{
-	railPlugin* rail = (railPlugin*) plugin;
-
-	WLog_Print(rail->log, WLOG_DEBUG, "Terminate");
-	svc_plugin_terminate(plugin);
-}
-
-static void rail_process_receive(rdpSvcPlugin* plugin, wStream* s)
-{
-	railPlugin* rail = (railPlugin*) plugin;
-	rail_order_recv(rail, s);
+	rail_send(rail, s);
 }
 
 /**
@@ -311,6 +311,216 @@ int rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RE
 	return 0; /* stub - should be registered by client */
 }
 
+/****************************************************************************************/
+
+static wListDictionary* g_InitHandles;
+static wListDictionary* g_OpenHandles;
+
+void rail_add_init_handle_data(void* pInitHandle, void* pUserData)
+{
+	if (!g_InitHandles)
+		g_InitHandles = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
+}
+
+void* rail_get_init_handle_data(void* pInitHandle)
+{
+	void* pUserData = NULL;
+	pUserData = ListDictionary_GetItemValue(g_InitHandles, pInitHandle);
+	return pUserData;
+}
+
+void rail_remove_init_handle_data(void* pInitHandle)
+{
+	ListDictionary_Remove(g_InitHandles, pInitHandle);
+}
+
+void rail_add_open_handle_data(DWORD openHandle, void* pUserData)
+{
+	void* pOpenHandle = (void*) (size_t) openHandle;
+
+	if (!g_OpenHandles)
+		g_OpenHandles = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+}
+
+void* rail_get_open_handle_data(DWORD openHandle)
+{
+	void* pUserData = NULL;
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	pUserData = ListDictionary_GetItemValue(g_OpenHandles, pOpenHandle);
+	return pUserData;
+}
+
+void rail_remove_open_handle_data(DWORD openHandle)
+{
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+}
+
+static void rail_virtual_channel_event_data_received(railPlugin* rail,
+		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+{
+	wStream* data_in;
+
+	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
+	{
+		return;
+	}
+
+	if (dataFlags & CHANNEL_FLAG_FIRST)
+	{
+		if (rail->data_in)
+			Stream_Free(rail->data_in, TRUE);
+
+		rail->data_in = Stream_New(NULL, totalLength);
+	}
+
+	data_in = rail->data_in;
+	Stream_EnsureRemainingCapacity(data_in, (int) dataLength);
+	Stream_Write(data_in, pData, dataLength);
+
+	if (dataFlags & CHANNEL_FLAG_LAST)
+	{
+		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
+		{
+			WLog_ERR(TAG,  "rail_plugin_process_received: read error");
+		}
+
+		rail->data_in = NULL;
+		Stream_SealLength(data_in);
+		Stream_SetPosition(data_in, 0);
+
+		MessageQueue_Post(rail->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
+	}
+}
+
+static VOID VCAPITYPE rail_virtual_channel_open_event(DWORD openHandle, UINT event,
+		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+{
+	railPlugin* rail;
+
+	rail = (railPlugin*) rail_get_open_handle_data(openHandle);
+
+	if (!rail)
+	{
+		WLog_ERR(TAG,  "rail_virtual_channel_open_event: error no match");
+		return;
+	}
+
+	switch (event)
+	{
+		case CHANNEL_EVENT_DATA_RECEIVED:
+			rail_virtual_channel_event_data_received(rail, pData, dataLength, totalLength, dataFlags);
+			break;
+
+		case CHANNEL_EVENT_WRITE_COMPLETE:
+			Stream_Free((wStream*) pData, TRUE);
+			break;
+
+		case CHANNEL_EVENT_USER:
+			break;
+	}
+}
+
+static void* rail_virtual_channel_client_thread(void* arg)
+{
+	wStream* data;
+	wMessage message;
+	railPlugin* rail = (railPlugin*) arg;
+
+	while (1)
+	{
+		if (!MessageQueue_Wait(rail->MsgPipe->In))
+			break;
+
+		if (MessageQueue_Peek(rail->MsgPipe->In, &message, TRUE))
+		{
+			if (message.id == WMQ_QUIT)
+				break;
+
+			if (message.id == 0)
+			{
+				data = (wStream*) message.wParam;
+				rail_order_recv(rail, data);
+			}
+		}
+	}
+
+	ExitThread(0);
+	return NULL;
+}
+
+static void rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData, UINT32 dataLength)
+{
+	UINT32 status;
+
+	status = rail->channelEntryPoints.pVirtualChannelOpen(rail->InitHandle,
+		&rail->OpenHandle, rail->channelDef.name, rail_virtual_channel_open_event);
+
+	rail_add_open_handle_data(rail->OpenHandle, rail);
+
+	if (status != CHANNEL_RC_OK)
+	{
+		WLog_ERR(TAG,  "rail_virtual_channel_event_connected: open failed: status: %d", status);
+		return;
+	}
+
+	rail->MsgPipe = MessagePipe_New();
+
+	rail->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) rail_virtual_channel_client_thread, (void*) rail, 0, NULL);
+}
+
+static void rail_virtual_channel_event_terminated(railPlugin* rail)
+{
+	MessagePipe_PostQuit(rail->MsgPipe, 0);
+	WaitForSingleObject(rail->thread, INFINITE);
+
+	MessagePipe_Free(rail->MsgPipe);
+	CloseHandle(rail->thread);
+
+	rail->channelEntryPoints.pVirtualChannelClose(rail->OpenHandle);
+
+	if (rail->data_in)
+	{
+		Stream_Free(rail->data_in, TRUE);
+		rail->data_in = NULL;
+	}
+
+	rail_remove_open_handle_data(rail->OpenHandle);
+	rail_remove_init_handle_data(rail->InitHandle);
+}
+
+static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
+{
+	railPlugin* rail;
+
+	rail = (railPlugin*) rail_get_init_handle_data(pInitHandle);
+
+	if (!rail)
+	{
+		WLog_ERR(TAG,  "rail_virtual_channel_init_event: error no match");
+		return;
+	}
+
+	switch (event)
+	{
+		case CHANNEL_EVENT_CONNECTED:
+			rail_virtual_channel_event_connected(rail, pData, dataLength);
+			break;
+
+		case CHANNEL_EVENT_DISCONNECTED:
+			break;
+
+		case CHANNEL_EVENT_TERMINATED:
+			rail_virtual_channel_event_terminated(rail);
+			break;
+	}
+}
+
 /* rail is always built-in */
 #define VirtualChannelEntry	rail_VirtualChannelEntry
 
@@ -322,17 +532,13 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	rail = (railPlugin*) calloc(1, sizeof(railPlugin));
 
-	rail->plugin.channel_def.options =
+	rail->channelDef.options =
 			CHANNEL_OPTION_INITIALIZED |
 			CHANNEL_OPTION_ENCRYPT_RDP |
 			CHANNEL_OPTION_COMPRESS_RDP |
 			CHANNEL_OPTION_SHOW_PROTOCOL;
 
-	strcpy(rail->plugin.channel_def.name, "rail");
-
-	rail->plugin.connect_callback = rail_process_connect;
-	rail->plugin.receive_callback = rail_process_receive;
-	rail->plugin.terminate_callback = rail_process_terminate;
+	strcpy(rail->channelDef.name, "rail");
 
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
 
@@ -373,7 +579,15 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	WLog_Print(rail->log, WLOG_DEBUG, "VirtualChannelEntry");
 
-	svc_plugin_init((rdpSvcPlugin*) rail, pEntryPoints);
+	CopyMemory(&(rail->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
+
+	rail->channelEntryPoints.pVirtualChannelInit(&rail->InitHandle,
+		&rail->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rail_virtual_channel_init_event);
+
+	rail->channelEntryPoints.pInterface = *(rail->channelEntryPoints.ppInterface);
+	rail->channelEntryPoints.ppInterface = &(rail->channelEntryPoints.pInterface);
+
+	rail_add_init_handle_data(rail->InitHandle, (void*) rail);
 
 	return 1;
 }
