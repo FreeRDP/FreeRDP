@@ -21,17 +21,18 @@
 #include "config.h"
 #endif
 
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <winpr/crt.h>
+
+#define __USE_XOPEN
+#include <time.h>
+
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 #include "liblocale.h"
 
 #include <freerdp/log.h>
-#include <freerdp/utils/time.h>
 #include <freerdp/locale/timezone.h>
 
 #define TAG FREERDP_TAG("locale")
@@ -1490,6 +1491,17 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "West Pacific Standard Time", "Pacific/Truk" },
 	{ "Yakutsk Standard Time", "Asia/Yakutsk" }
 };
+
+static UINT64 freerdp_windows_gmtime()
+{
+	time_t unix_time;
+	UINT64 windows_time;
+
+	time(&unix_time);
+	windows_time = ((UINT64) unix_time * 10000000) + 621355968000000000ULL;
+
+	return windows_time;
+}
 
 char* freerdp_get_unix_timezone_identifier()
 {

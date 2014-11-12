@@ -26,7 +26,6 @@ set(${MODULE_PREFIX}_SRCS
 	signal.c
 	stopwatch.c
 	tcp.c
-	time.c
 	uds.c)
 
 if(NOT WIN32)
