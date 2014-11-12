@@ -25,10 +25,9 @@
 
 struct xf_rail_window
 {
-	xfContext* wfc;
+	xfContext* xfc;
 
-	HWND hWnd;
-
+	UINT32 id;
 	DWORD dwStyle;
 	DWORD dwExStyle;
 
@@ -37,6 +36,18 @@ struct xf_rail_window
 	int width;
 	int height;
 	char* title;
+
+	GC gc;
+	int shmid;
+	Window handle;
+	Window* xfwin;
+	BOOL fullscreen;
+	BOOL decorations;
+	BOOL is_mapped;
+	BOOL is_transient;
+	xfLocalMove local_move;
+	BYTE rail_state;
+	BOOL rail_ignore_configure;
 };
 typedef struct xf_rail_window xfRailWindow;
 
