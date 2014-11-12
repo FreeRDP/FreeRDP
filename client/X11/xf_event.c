@@ -208,15 +208,12 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 	}
 	else
 	{
-		rdpWindow* window;
 		xfAppWindow* appWindow;
-		rdpRail* rail = ((rdpContext*) xfc)->rail;
 		
-		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
+		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
 		
-		if (window)
+		if (appWindow)
 		{
-			appWindow = (xfAppWindow*) window->extra;
 			xf_UpdateWindowArea(xfc, appWindow, x, y, w, h);
 		}
 	}
@@ -246,7 +243,7 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 	if (app)
 	{
 		/* make sure window exists */
-		if (!xf_rdpWindowFromWindow(xfc, window))
+		if (!xf_AppWindowFromX11Window(xfc, window))
 			return TRUE;
 
 		/* Translate to desktop coordinates */
@@ -351,7 +348,7 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 			if (app)
 			{
 				/* make sure window exists */
-				if (!xf_rdpWindowFromWindow(xfc, window))
+				if (!xf_AppWindowFromX11Window(xfc, window))
 					return TRUE;
 
 				/* Translate to desktop coordinates */
@@ -398,7 +395,6 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 	rdpInput* input;
 	Window childWindow;
 
-
 	flags = 0;
 	wheel = FALSE;
 	extended = FALSE;
@@ -442,7 +438,7 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 		if (app)
 		{
 			/* make sure window exists */
-			if (!xf_rdpWindowFromWindow(xfc, window))
+			if (!xf_AppWindowFromX11Window(xfc, window))
 				return TRUE;
 
 			/* Translate to desktop coordinates */
@@ -523,18 +519,15 @@ static BOOL xf_event_FocusIn(xfContext* xfc, XEvent* event, BOOL app)
 
 	if (app)
 	{
-		rdpWindow* window;
 		xfAppWindow* appWindow;
-		rdpRail* rail = ((rdpContext*) xfc)->rail;
 
 		xf_rail_send_activate(xfc, event->xany.window, TRUE);
 
-		window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
+		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
 
 		/* Update the server with any window changes that occurred while the window was not focused. */
-		if (window)
+		if (appWindow)
 		{
-			appWindow = (xfAppWindow*) window->extra;
 			xf_rail_adjust_position(xfc, appWindow);
 		}
 	}
@@ -582,15 +575,13 @@ static BOOL xf_event_ClientMessage(xfContext* xfc, XEvent* event, BOOL app)
 	{
 		if (app)
 		{
-			DEBUG_X11("RAIL window closed");
-			rdpWindow* window;
-			rdpRail* rail = ((rdpContext*) xfc)->rail;
+			xfAppWindow* appWindow;
 
-			window = window_list_get_by_extra_id(rail->list, (void*) event->xclient.window);
+			appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
 
-			if (window)
+			if (appWindow)
 			{
-				xf_rail_send_client_system_command(xfc, window->windowId, SC_CLOSE);
+				xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_CLOSE);
 			}
 
 			return TRUE;
@@ -619,17 +610,14 @@ static BOOL xf_event_EnterNotify(xfContext* xfc, XEvent* event, BOOL app)
 	}
 	else
 	{
+		xfAppWindow* appWindow;
+
+		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
+
 		/* keep track of which window has focus so that we can apply pointer updates */
 
-		rdpWindow* window;
-		xfAppWindow* appWindow;
-		rdpRail* rail = ((rdpContext*) xfc)->rail;
-
-		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
-
-		if (window)
+		if (appWindow)
 		{
-			appWindow = (xfAppWindow*) window->extra;
 			xfc->appWindow = appWindow;
 		}
 	}
@@ -650,21 +638,16 @@ static BOOL xf_event_LeaveNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
-	rdpWindow* window;
-	rdpRail* rail = ((rdpContext*) xfc)->rail;
+	Window childWindow;
+	xfAppWindow* appWindow;
 
-	if (!app || !rail)
+	if (!app)
 		return TRUE;
 
-	window = window_list_get_by_extra_id(rail->list, (void*) event->xconfigure.window);
+	appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
 
-	if (window)
+	if (appWindow)
 	{
-		Window childWindow;
-		xfAppWindow* appWindow;
-
-		appWindow = (xfAppWindow*) window->extra;
-
 		/*
 		 * ConfigureNotify coordinates are expressed relative to the window parent.
 		 * Translate these to root window coordinates.
@@ -689,12 +672,18 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 			xf_rail_adjust_position(xfc, appWindow);
 
-			window->windowOffsetX = appWindow->x;
-			window->visibleOffsetX = window->windowOffsetX;
-			window->windowOffsetY = appWindow->y;
-			window->visibleOffsetY = window->windowOffsetY;
-			window->windowWidth = appWindow->width;
-			window->windowHeight = appWindow->height;
+#ifdef OLD_X11_RAIL
+			{
+				rdpWindow* window = appWindow->window;
+
+				window->windowOffsetX = appWindow->x;
+				window->visibleOffsetX = window->windowOffsetX;
+				window->windowOffsetY = appWindow->y;
+				window->visibleOffsetY = window->windowOffsetY;
+				window->windowWidth = appWindow->width;
+				window->windowHeight = appWindow->height;
+			}
+#endif
 		}
 		else
 		{
@@ -711,9 +700,8 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
 	RECTANGLE_16 rect;
-	rdpWindow* window;
+	xfAppWindow* appWindow;
 	rdpUpdate* update = xfc->instance->update;
-	rdpRail* rail = ((rdpContext*) xfc)->rail;
 
 	if (!app)
 	{
@@ -726,9 +714,9 @@ static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 	}
 	else
 	{
-		window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
+		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
 
-		if (window)
+		if (appWindow)
 		{
 			/* local restore event */
 
@@ -737,8 +725,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 			 * that is minimized back to the maximized state
 			 */
 
-			//xf_rail_send_client_system_command(xfc, window->windowId, SC_RESTORE);
-			xfAppWindow* appWindow = (xfAppWindow*) window->extra;
+			//xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
 			appWindow->is_mapped = TRUE;
 		}
 	}
@@ -748,9 +735,8 @@ static BOOL xf_event_MapNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 static BOOL xf_event_UnmapNotify(xfContext* xfc, XEvent* event, BOOL app)
 {
-	rdpWindow* window;
+	xfAppWindow* appWindow;
 	rdpUpdate* update = xfc->instance->update;
-	rdpRail* rail = ((rdpContext*) xfc)->rail;
 
 	xf_keyboard_release_all_keypress(xfc);
 
@@ -760,11 +746,10 @@ static BOOL xf_event_UnmapNotify(xfContext* xfc, XEvent* event, BOOL app)
 	}
 	else
 	{
-		window = window_list_get_by_extra_id(rail->list, (void*) event->xany.window);
+		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
 
-		if (window)
+		if (appWindow)
 		{
-			xfAppWindow* appWindow = (xfAppWindow*) window->extra;
 			appWindow->is_mapped = FALSE;
 		}
 	}
@@ -782,15 +767,12 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 	if (app)
 	{
-	        rdpWindow* window;
 	        xfAppWindow* appWindow;
 		
-		window = xf_rdpWindowFromWindow(xfc, event->xproperty.window);
+		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
 
-		if (!window)
+		if (!appWindow)
 			return TRUE;
-
-		appWindow = (xfAppWindow*) window->extra;
 	
 	        if ((((Atom) event->xproperty.atom == xfc->_NET_WM_STATE) && (event->xproperty.state != PropertyDelete)) ||
 	            (((Atom) event->xproperty.atom == xfc->WM_STATE) && (event->xproperty.state != PropertyDelete)))
@@ -830,7 +812,8 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 	
 	                if ((Atom) event->xproperty.atom == xfc->WM_STATE)
 	                {
-				status = xf_GetWindowProperty(xfc, event->xproperty.window, xfc->WM_STATE, 1, &nitems, &bytes, &prop);
+				status = xf_GetWindowProperty(xfc, event->xproperty.window,
+						xfc->WM_STATE, 1, &nitems, &bytes, &prop);
 
 				if (status)
 				{
@@ -843,22 +826,21 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 					XFree(prop);
 				}
 	                }
-	
 
 	                if (maxVert && maxHorz && !minimized && (appWindow->rail_state != WINDOW_SHOW_MAXIMIZED))
 	                {
 	                	appWindow->rail_state = WINDOW_SHOW_MAXIMIZED;
-	                	xf_rail_send_client_system_command(xfc, window->windowId, SC_MAXIMIZE);
+	                	xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MAXIMIZE);
 	                }
 	                else if (minimized && (appWindow->rail_state != WINDOW_SHOW_MINIMIZED))
 	                {
 	                	appWindow->rail_state = WINDOW_SHOW_MINIMIZED;
-	                	xf_rail_send_client_system_command(xfc, window->windowId, SC_MINIMIZE);
+	                	xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_MINIMIZE);
 	                }
 	                else if (!minimized && !maxVert && !maxHorz && (appWindow->rail_state != WINDOW_SHOW))
 	                {
 	                	appWindow->rail_state = WINDOW_SHOW;
-	                	xf_rail_send_client_system_command(xfc, window->windowId, SC_RESTORE);
+	                	xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
 	                }
                }       
         }
@@ -948,20 +930,19 @@ static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, XEv
 BOOL xf_event_process(freerdp* instance, XEvent* event)
 {
 	BOOL status = TRUE;
-	rdpWindow* window;
+	xfAppWindow* appWindow;
 	xfContext* xfc = (xfContext*) instance->context;
-	rdpRail* rail = ((rdpContext*) xfc)->rail;
 
 	if (xfc->remote_app)
 	{
-		window = window_list_get_by_extra_id(rail->list, (void*) event->xexpose.window);
+		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
 
-		if (window)
+		if (appWindow)
 		{
 			/* Update "current" window for cursor change orders */
-			xfc->appWindow = (xfAppWindow*) window->extra;
+			xfc->appWindow = appWindow;
 
-			if (xf_event_suppress_events(xfc, xfc->appWindow, event))
+			if (xf_event_suppress_events(xfc, appWindow, event))
 				return TRUE;
 		}
 	}

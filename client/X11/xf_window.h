@@ -86,12 +86,42 @@ struct xf_window
 struct xf_app_window
 {
 	xfContext* xfc;
+
+#ifdef OLD_X11_RAIL
 	rdpWindow* window;
+#endif
 
 	int x;
 	int y;
 	int width;
 	int height;
+	char* title;
+
+	UINT32 windowId;
+	UINT32 ownerWindowId;
+
+	UINT32 dwStyle;
+	UINT32 dwExStyle;
+	UINT32 showState;
+
+	UINT32 clientOffsetX;
+	UINT32 clientOffsetY;
+	UINT32 clientAreaWidth;
+	UINT32 clientAreaHeight;
+
+	UINT32 windowOffsetX;
+	UINT32 windowOffsetY;
+	UINT32 windowClientDeltaX;
+	UINT32 windowClientDeltaY;
+	UINT32 windowWidth;
+	UINT32 windowHeight;
+	UINT32 numWindowRects;
+	RECTANGLE_16* windowRects;
+
+	UINT32 visibleOffsetX;
+	UINT32 visibleOffsetY;
+	UINT32 numVisibilityRects;
+	RECTANGLE_16* visibilityRects;
 
 	GC gc;
 	int shmid;
@@ -123,6 +153,7 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
 		unsigned long* nitems, unsigned long* bytes, BYTE** prop);
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...);
 
+int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow);
 xfAppWindow* xf_CreateWindow(xfContext* xfc, rdpWindow* wnd, int x, int y, int width, int height, UINT32 id);
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name);
 void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height);
@@ -138,6 +169,6 @@ void xf_SetWindowMinMaxInfo(xfContext* xfc, xfAppWindow* appWindow,
 		int minTrackWidth, int minTrackHeight, int maxTrackWidth, int maxTrackHeight);
 void xf_StartLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow, int direction, int x, int y);
 void xf_EndLocalMoveSize(xfContext* xfc, xfAppWindow* appWindow);
-rdpWindow* xf_rdpWindowFromWindow(xfContext* xfc, Window wnd);
+xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd);
 
 #endif /* __XF_WINDOW_H */

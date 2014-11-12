@@ -49,6 +49,7 @@
 #include "xf_input.h"
 #endif
 
+#include "xf_rail.h"
 #include "xf_input.h"
 
 #define TAG CLIENT_TAG("x11")
@@ -536,33 +537,17 @@ void xf_FixWindowCoordinates(xfContext* xfc, int* x, int* y, int* width, int* he
 	}
 }
 
-xfAppWindow* xf_CreateWindow(xfContext* xfc, rdpWindow* wnd, int x, int y, int width, int height, UINT32 id)
+int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow)
 {
 	XGCValues gcv;
 	int input_mask;
-	xfAppWindow* appWindow;
 	XWMHints* InputModeHint;
 	XClassHint* class_hints;
 
-	appWindow = (xfAppWindow*) calloc(1, sizeof(xfAppWindow));
+	xf_FixWindowCoordinates(xfc, &appWindow->x, &appWindow->y, &appWindow->width, &appWindow->height);
 
-	if (!appWindow)
-		return NULL;
-
-	xf_FixWindowCoordinates(xfc, &x, &y, &width, &height);
-
-	appWindow->x = x;
-	appWindow->y = y;
-	appWindow->width = width;
-	appWindow->height = height;
-
-	/*
-	 * WS_EX_DECORATIONS is used by XRDP and instructs
-	 * the client to use local window decorations
-	 */
-	appWindow->decorations = (wnd->extendedStyle & WS_EX_DECORATIONS) ? TRUE : FALSE;
+	appWindow->decorations = FALSE;
 	appWindow->fullscreen = FALSE;
-	appWindow->window = wnd;
 	appWindow->local_move.state = LMS_NOT_ACTIVE;
 	appWindow->is_mapped = FALSE;
 	appWindow->is_transient = FALSE;
@@ -570,11 +555,11 @@ xfAppWindow* xf_CreateWindow(xfContext* xfc, rdpWindow* wnd, int x, int y, int w
 	appWindow->rail_ignore_configure = FALSE;
 
 	appWindow->handle = XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen),
-			x, y, appWindow->width, appWindow->height, 0, xfc->depth,
-			InputOutput, xfc->visual, 0, &xfc->attribs);
+			appWindow->x, appWindow->y, appWindow->width, appWindow->height,
+			0, xfc->depth, InputOutput, xfc->visual, 0, &xfc->attribs);
 
 	if (!appWindow->handle)
-		return NULL;
+		return -1;
 
 	ZeroMemory(&gcv, sizeof(gcv));
 	appWindow->gc = XCreateGC(xfc->display, appWindow->handle, GCGraphicsExposures, &gcv);
@@ -592,7 +577,7 @@ xfAppWindow* xf_CreateWindow(xfContext* xfc, rdpWindow* wnd, int x, int y, int w
 		else
 		{
 			class = malloc(sizeof("RAIL:00000000"));
-			snprintf(class, sizeof("RAIL:00000000"), "RAIL:%08X", id);
+			snprintf(class, sizeof("RAIL:00000000"), "RAIL:%08X", appWindow->windowId);
 			class_hints->res_class = class;
 		}
 
@@ -626,7 +611,7 @@ xfAppWindow* xf_CreateWindow(xfContext* xfc, rdpWindow* wnd, int x, int y, int w
 	XSelectInput(xfc->display, appWindow->handle, input_mask);
 
 	xf_SetWindowDecorations(xfc, appWindow->handle, appWindow->decorations);
-	xf_SetWindowStyle(xfc, appWindow, wnd->style, wnd->extendedStyle);
+	xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
 	xf_SetWindowPID(xfc, appWindow->handle, 0);
 	xf_ShowWindow(xfc, appWindow, WINDOW_SHOW);
 
@@ -634,7 +619,35 @@ xfAppWindow* xf_CreateWindow(xfContext* xfc, rdpWindow* wnd, int x, int y, int w
 	XMapWindow(xfc->display, appWindow->handle);
 
 	/* Move doesn't seem to work until window is mapped. */
-	xf_MoveWindow(xfc, appWindow, x, y, width, height);
+	xf_MoveWindow(xfc, appWindow, appWindow->x, appWindow->y, appWindow->width, appWindow->height);
+
+	return 1;
+}
+
+xfAppWindow* xf_CreateWindow(xfContext* xfc, rdpWindow* wnd, int x, int y, int width, int height, UINT32 id)
+{
+	xfAppWindow* appWindow;
+
+	appWindow = (xfAppWindow*) calloc(1, sizeof(xfAppWindow));
+
+	if (!appWindow)
+		return NULL;
+
+#ifdef OLD_X11_RAIL
+	appWindow->window = wnd;
+#endif
+
+	appWindow->windowId = id;
+
+	appWindow->dwStyle = wnd->style;
+	appWindow->dwExStyle = wnd->extendedStyle;
+
+	appWindow->x = x;
+	appWindow->y = y;
+	appWindow->width = width;
+	appWindow->height = height;
+
+	xf_AppWindowInit(xfc, appWindow);
 
 	return appWindow;
 }
@@ -763,7 +776,13 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 			 * the entire window once the rail server notifies us that the window is now maximized.
 			 */
 			if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
+			{
+#ifdef OLD_X11_RAIL
 				xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->window->windowWidth, appWindow->window->windowHeight);
+#else
+				xf_UpdateWindowArea(xfc, appWindow, 0, 0, appWindow->width, appWindow->height);
+#endif
+			}
 			break;
 
 		case WINDOW_SHOW:
@@ -878,6 +897,7 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANG
 
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height)
 {
+#ifdef OLD_X11_RAIL
 	int ax, ay;
 	rdpWindow* wnd;
 
@@ -905,6 +925,32 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 	XFlush(xfc->display);
 
 	xf_unlock_x11(xfc, TRUE);
+#else
+	int ax, ay;
+
+	ax = x + appWindow->visibleOffsetX;
+	ay = y + appWindow->visibleOffsetY;
+
+	if (ax + width > appWindow->visibleOffsetX + appWindow->width)
+		width = (appWindow->visibleOffsetX + appWindow->width - 1) - ax;
+	if (ay + height > appWindow->visibleOffsetY + appWindow->height)
+		height = (appWindow->visibleOffsetY + appWindow->height - 1) - ay;
+
+	xf_lock_x11(xfc, TRUE);
+
+	if (xfc->settings->SoftwareGdi)
+	{
+		XPutImage(xfc->display, xfc->primary, appWindow->gc, xfc->image,
+			ax, ay, ax, ay, width, height);
+	}
+
+	XCopyArea(xfc->display, xfc->primary, appWindow->handle, appWindow->gc,
+			ax, ay, width, height, x, y);
+
+	XFlush(xfc->display);
+
+	xf_unlock_x11(xfc, TRUE);
+#endif
 }
 
 void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
@@ -935,8 +981,9 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 	free(appWindow);
 }
 
-rdpWindow* xf_rdpWindowFromWindow(xfContext* xfc, Window wnd)
+xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 {
+#ifdef OLD_X11_RAIL
 	rdpRail* rail;
 
 	if (xfc)
@@ -946,9 +993,39 @@ rdpWindow* xf_rdpWindowFromWindow(xfContext* xfc, Window wnd)
 			rail = ((rdpContext*) xfc)->rail;
 
 			if (rail)
-				return window_list_get_by_extra_id(rail->list, (void*) (long) wnd);
+			{
+				rdpWindow* window;
+
+				window = (rdpWindow*) window_list_get_by_extra_id(rail->list, (void*) (long) wnd);
+
+				if (!window)
+					return NULL;
+
+				return (xfAppWindow*) window->extra;
+			}
 		}
 	}
+#else
+	int index;
+	int count;
+	ULONG_PTR* pKeys = NULL;
+	xfAppWindow* appWindow;
+
+	count = HashTable_GetKeys(xfc->railWindows, &pKeys);
+
+	for (index = 0; index < count; index++)
+	{
+		appWindow = (xfAppWindow*) HashTable_GetItemValue(xfc->railWindows, (void*) pKeys[index]);
+
+		if (appWindow->handle == wnd)
+		{
+			free(pKeys);
+			return appWindow;
+		}
+	}
+
+	free(pKeys);
+#endif
 
 	return NULL;
 }
