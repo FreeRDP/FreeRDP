@@ -2683,7 +2683,7 @@ int PCSC_InitializeSCardApi(void)
 	 * Detect if we're are into a ThinLinc session runs from a windows client
 	 */
 	FILE *tl = NULL;
-	if ((tl = popen("tl-session-param /client_params/capabilities/client_platform", "r")) != NULL)
+	if ((tl = popen("tl-session-param /client_params/capabilities/client_platform > /dev/null 2>&1", "r")) != NULL)
 	{
 		char tldata[512];
 		fgets(tldata, sizeof(tldata), tl);
