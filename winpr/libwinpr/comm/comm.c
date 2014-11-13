@@ -1373,9 +1373,17 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 	if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
-		SetLastError(ERROR_IO_DEVICE);
-		goto error_handle;
+		CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s.", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "could not read counters.");
+
+		/* could not initialize counters but keep on. 
+		 *
+		 * Not all drivers, especially for USB to serial
+		 * adapters (e.g. those based on pl2303), does support
+		 * this call.
+		 */
+
+		ZeroMemory(&(pComm->counters), sizeof(struct serial_icounter_struct));
 	}
 
 
