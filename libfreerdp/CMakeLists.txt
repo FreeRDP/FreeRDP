@@ -83,7 +83,6 @@ set(${MODULE_PREFIX}_SUBMODULES
 	utils
 	common
 	gdi
-	rail
 	cache
 	crypto
 	locale
