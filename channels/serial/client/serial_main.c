@@ -175,7 +175,7 @@ static void serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 
 	if (!serial->hComm || (serial->hComm == INVALID_HANDLE_VALUE))
 	{
-		WLog_Print(serial->log, WLOG_WARN, "CreateFile failure: %s last-error: Ox%lX\n", serial->device.name, GetLastError());
+		WLog_Print(serial->log, WLOG_WARN, "CreateFile failure: %s last-error: 0x%lX\n", serial->device.name, GetLastError());
 
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 		goto error_handle;

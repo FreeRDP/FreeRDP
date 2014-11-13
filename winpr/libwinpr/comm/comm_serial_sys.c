@@ -1042,11 +1042,19 @@ static BOOL _set_wait_mask(WINPR_COMM *pComm, const ULONG *pWaitMask)
 
 		if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
 		{
-			CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
-			SetLastError(ERROR_IO_DEVICE);
-
-			LeaveCriticalSection(&pComm->EventsLock);
-			return FALSE;
+			CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s.", errno, strerror(errno));
+			
+			if (pComm->permissive)
+			{
+				/* counters could not be reset but keep on */
+				ZeroMemory(&(pComm->counters), sizeof(struct serial_icounter_struct));
+			}
+			else
+			{
+				SetLastError(ERROR_IO_DEVICE);
+				LeaveCriticalSection(&pComm->EventsLock);
+				return FALSE;
+			}
 		}
 
 		pComm->PendingEvents = 0;
@@ -1188,11 +1196,22 @@ static BOOL _get_commstatus(WINPR_COMM *pComm, SERIAL_STATUS *pCommstatus)
 	ZeroMemory(&currentCounters, sizeof(struct serial_icounter_struct));
 	if (ioctl(pComm->fd, TIOCGICOUNT, &currentCounters) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s", errno, strerror(errno));
-		SetLastError(ERROR_IO_DEVICE);
-
-		LeaveCriticalSection(&pComm->EventsLock);
-		return FALSE;
+		CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s.", errno, strerror(errno));
+		CommLog_Print(WLOG_WARN, "  coult not read counters.");
+		
+		if (pComm->permissive)
+		{
+			/* Errors and events based on counters could not be
+			 * detected but keep on.
+			 */
+			ZeroMemory(&currentCounters, sizeof(struct serial_icounter_struct));
+		}
+		else
+		{
+			SetLastError(ERROR_IO_DEVICE);
+			LeaveCriticalSection(&pComm->EventsLock);
+			return FALSE;
+		}
 	}
 
 	/* NB: preferred below (currentCounters.* != pComm->counters.*) over (currentCounters.* > pComm->counters.*) thinking the counters can loop */
