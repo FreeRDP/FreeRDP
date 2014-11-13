@@ -27,8 +27,6 @@
 #include <winpr/wlog.h>
 #include <winpr/print.h>
 
-#include <freerdp/rail/rail.h>
-
 #include "xf_window.h"
 #include "xf_rail.h"
 
@@ -863,9 +861,6 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 
 	xfc->rail = rail;
 
-	context->rail = rail_new(context->settings);
-	rail_register_update_callbacks(context->rail, context->update);
-
 	xf_rail_register_update_callbacks(context->update);
 
 	rail->custom = (void*) xfc;
@@ -886,18 +881,10 @@ int xf_rail_init(xfContext* xfc, RailClientContext* rail)
 
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail)
 {
-	rdpContext* context = (rdpContext*) xfc;
-
 	if (xfc->rail)
 	{
 		xfc->rail->custom = NULL;
 		xfc->rail = NULL;
-	}
-
-	if (context->rail)
-	{
-		rail_free(context->rail);
-		context->rail = NULL;
 	}
 
 	if (xfc->railWindows)

@@ -76,7 +76,6 @@ struct xf_window
 	int shmid;
 	Window handle;
 	Window* xfwin;
-	rdpWindow* window;
 	BOOL fullscreen;
 	BOOL decorations;
 	BOOL is_mapped;
@@ -153,7 +152,7 @@ int xf_AppWindowInit(xfContext* xfc, xfAppWindow* appWindow);
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name);
 void xf_MoveWindow(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width, int height);
 void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state);
-void xf_SetWindowIcon(xfContext* xfc, xfAppWindow* appWindow, rdpIcon* icon);
+//void xf_SetWindowIcon(xfContext* xfc, xfAppWindow* appWindow, rdpIcon* icon);
 void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects);
 void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects);
 void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UINT32 ex_style);

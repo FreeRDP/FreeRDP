@@ -22,7 +22,6 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/rail/rail.h>
 
 struct _MONITOR_INFO
 {
