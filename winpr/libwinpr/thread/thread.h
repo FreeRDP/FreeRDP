@@ -48,8 +48,8 @@ struct winpr_thread
 	LPTHREAD_START_ROUTINE lpStartAddress;
 	LPSECURITY_ATTRIBUTES lpThreadAttributes;
 #if defined(WITH_DEBUG_THREADS)
-	void *create_stack[20];
-	void *exit_stack[20];
+	void *create_stack;
+	void *exit_stack;
 #endif
 };
 typedef struct winpr_thread WINPR_THREAD;
