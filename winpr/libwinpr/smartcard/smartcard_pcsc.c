@@ -137,6 +137,8 @@ static int g_StartedEventRefCount = 0;
 static BOOL g_SCardAutoAllocate = FALSE;
 static BOOL g_PnP_Notification = TRUE;
 
+static BOOL g_IsThinLincWindowsClient = FALSE;
+
 /**
  * g_LockTransactions: enable pcsc-lite SCardBeginTransaction/SCardEndTransaction.
  *
@@ -1472,7 +1474,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		rgReaderStates[i].cbAtr = states[j].cbAtr;
 		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
 		/* pcsc-lite puts an event count in the higher bits of dwEventState */
-		states[j].dwEventState &= 0xFFFF; 
+		if (!g_IsThinLincWindowsClient)
+			states[j].dwEventState &= 0xFFFF;
 		dwEventState = states[j].dwEventState & ~SCARD_STATE_CHANGED;
 
 		if (dwEventState != rgReaderStates[i].dwCurrentState)
@@ -2675,6 +2678,22 @@ int PCSC_InitializeSCardApi(void)
 
 	if (!g_PCSCModule)
 		g_PCSCModule = LoadLibraryA("libpcsclite.so");
+
+	/*
+	 * Detect if we're are into a ThinLinc session runs from a windows client
+	 */
+	FILE *tl = NULL;
+	if ((tl = popen("tl-session-param /client_params/capabilities/client_platform", "r")) != NULL)
+	{
+		char tldata[512];
+		fgets(tldata, sizeof(tldata), tl);
+		int lgt = strlen(tldata) - 1;
+		if (lgt > 0 && tldata[lgt] == '\n')
+			tldata[lgt] = '\0';
+		if (strcmp(tldata, "win32") == 0)
+			g_IsThinLincWindowsClient = TRUE;
+		pclose(tl);
+	}
 
 #endif
 
