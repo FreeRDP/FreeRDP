@@ -26,6 +26,7 @@
 #include <winpr/stream.h>
 #include <winpr/bitstream.h>
 
+#include <freerdp/log.h>
 #include <freerdp/codec/mppc.h>
 
 #define TAG FREERDP_TAG("codec.mppc")
@@ -124,6 +125,12 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		/**
 		 * Literal Encoding
 		 */
+
+		if (HistoryPtr > HistoryBufferEnd)
+		{
+			WLog_ERR(TAG,  "history buffer index out of range");
+			return -1004;
+		}
 
 		if ((accumulator & 0x80000000) == 0x00000000)
 		{
@@ -418,39 +425,17 @@ int mppc_decompress(MPPC_CONTEXT* mppc, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 		WLog_DBG(TAG, "<%d,%d>", (int) CopyOffset, (int) LengthOfMatch);
 #endif
 
-		SrcPtr = HistoryPtr - CopyOffset;
-
-		if (SrcPtr >= HistoryBuffer)
+		if ((HistoryPtr + LengthOfMatch - 1) > HistoryBufferEnd)
 		{
-			while (LengthOfMatch > 0)
-			{
-				*(HistoryPtr) = *SrcPtr;
-
-				HistoryPtr++;
-				SrcPtr++;
-
-				LengthOfMatch--;
-			}
+			WLog_ERR(TAG,  "history buffer overflow");
+			return -1005;
 		}
-		else
-		{
-			SrcPtr = HistoryBufferEnd - (CopyOffset - (HistoryPtr - HistoryBuffer));
-			SrcPtr++;
 
-			while (LengthOfMatch && (SrcPtr <= HistoryBufferEnd))
-			{
-				*HistoryPtr++ = *SrcPtr++;
-				LengthOfMatch--;
-			}
+		SrcPtr = &HistoryBuffer[(HistoryPtr - HistoryBuffer - CopyOffset) & (CompressionLevel ? 0xFFFF : 0x1FFF)];
 
-			SrcPtr = HistoryBuffer;
-
-			while (LengthOfMatch > 0)
-			{
-				*HistoryPtr++ = *SrcPtr++;
-				LengthOfMatch--;
-			}
-		}
+		do {
+			*HistoryPtr++ = *SrcPtr++;
+		} while (--LengthOfMatch);
 	}
 
 	*pDstSize = (UINT32) (HistoryPtr - mppc->HistoryPtr);
