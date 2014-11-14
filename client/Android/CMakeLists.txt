@@ -67,12 +67,12 @@ set(compatibilitydir "${ANDROID_SDK}/extras/android/compatibility/v7/appcompat")
 if(EXISTS "${supportdir}" AND IS_DIRECTORY "${supportdir}")
        add_custom_target(copy_appcompat ALL
                COMMAND ${CMAKE_COMMAND} -E copy_directory "${supportdir}" ${APPCOMPAT_DIR}
-               COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR}
+               COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR} -t android-${ANDROID_APP_TARGET_SDK}
        )
 elseif(EXISTS "${compatibilitydir}" AND IS_DIRECTORY "${compatibilitydir}")
        add_custom_target(copy_appcompat ALL
                COMMAND ${CMAKE_COMMAND} -E copy_directory "${compatibilitydir}" ${APPCOMPAT_DIR}
-               COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR}
+               COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR} -t android-${ANDROID_APP_TARGET_SDK}
        )
 else()
 	message( FATAL_ERROR "${ANDROID_SDK}/extras/android/{support|compatibility}/v7/appcompat directory not found.  Please install a recent version of Android Support Library, CMake will now exit." )
