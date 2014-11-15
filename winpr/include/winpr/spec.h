@@ -25,6 +25,9 @@
 #ifdef _WIN32
 
 #include <specstrings.h>
+#ifndef _COM_Outptr_
+#define _COM_Outptr_
+#endif
 
 #else
 
