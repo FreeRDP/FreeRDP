@@ -19,18 +19,12 @@ set(MODULE_NAME "freerdp-utils")
 set(MODULE_PREFIX "FREERDP_UTILS")
 
 set(${MODULE_PREFIX}_SRCS
-	event.c
 	passphrase.c
 	pcap.c
 	profiler.c
-	rail.c
 	ringbuffer.c
 	signal.c
-	stopwatch.c
-	svc_plugin.c
-	tcp.c
-	time.c
-	uds.c)
+	stopwatch.c)
 
 if(NOT WIN32)
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} msusb.c)

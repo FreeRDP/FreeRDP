@@ -22,6 +22,7 @@
 #define	__RAIL_ORDERS_H
 
 #include <freerdp/channels/log.h>
+
 #include "rail_main.h"
 
 #define TAG CHANNELS_TAG("rail.client")
@@ -45,7 +46,6 @@ void rail_write_client_get_appid_req_order(wStream* s, RAIL_GET_APPID_REQ_ORDER*
 void rail_write_langbar_info_order(wStream* s, RAIL_LANGBAR_INFO_ORDER* langbar_info);
 
 BOOL rail_order_recv(railPlugin* rail, wStream* s);
-
 void rail_send_pdu(railPlugin* rail, wStream* s, UINT16 orderType);
 
 void rail_send_handshake_order(railPlugin* rail, RAIL_HANDSHAKE_ORDER* handshake);
@@ -61,8 +61,5 @@ void rail_send_client_notify_event_order(railPlugin* rail, RAIL_NOTIFY_EVENT_ORD
 void rail_send_client_window_move_order(railPlugin* rail, RAIL_WINDOW_MOVE_ORDER* windowMove);
 void rail_send_client_get_appid_req_order(railPlugin* rail, RAIL_GET_APPID_REQ_ORDER* getAppIdReq);
 void rail_send_client_langbar_info_order(railPlugin* rail, RAIL_LANGBAR_INFO_ORDER* langBarInfo);
-
-rdpRailOrder* rail_order_new(void);
-void rail_order_free(rdpRailOrder* railOrder);
 
 #endif /* __RAIL_ORDERS_H */

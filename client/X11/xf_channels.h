@@ -24,6 +24,7 @@
 #include <freerdp/client/channels.h>
 #include <freerdp/client/rdpei.h>
 #include <freerdp/client/tsmf.h>
+#include <freerdp/client/rail.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/encomsp.h>

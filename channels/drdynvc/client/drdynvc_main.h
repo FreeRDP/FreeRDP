@@ -20,11 +20,12 @@
 #ifndef __DRDYNVC_MAIN_H
 #define __DRDYNVC_MAIN_H
 
+#include <winpr/wlog.h>
+
 #include <freerdp/api.h>
 #include <freerdp/svc.h>
 #include <freerdp/addin.h>
 #include <freerdp/client/drdynvc.h>
-#include <freerdp/utils/svc_plugin.h>
 
 enum _DRDYNVC_STATE
 {
@@ -43,11 +44,17 @@ typedef enum _DRDYNVC_STATE DRDYNVC_STATE;
 #define CLOSE_REQUEST_PDU		0x04
 #define CAPABILITY_REQUEST_PDU		0x05
 
-typedef struct drdynvc_plugin drdynvcPlugin;
-
 struct drdynvc_plugin
 {
-	rdpSvcPlugin plugin;
+	CHANNEL_DEF channelDef;
+	CHANNEL_ENTRY_POINTS_FREERDP channelEntryPoints;
+
+	wLog* log;
+	HANDLE thread;
+	wStream* data_in;
+	void* InitHandle;
+	DWORD OpenHandle;
+	wMessagePipe* MsgPipe;
 
 	DRDYNVC_STATE state;
 	DrdynvcClientContext* context;
@@ -61,8 +68,8 @@ struct drdynvc_plugin
 
 	IWTSVirtualChannelManager* channel_mgr;
 };
+typedef struct drdynvc_plugin drdynvcPlugin;
 
 int drdynvc_write_data(drdynvcPlugin* plugin, UINT32 ChannelId, BYTE* data, UINT32 data_size);
-int drdynvc_push_event(drdynvcPlugin* plugin, wMessage* event);
 
 #endif

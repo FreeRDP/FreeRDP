@@ -32,7 +32,8 @@
 #include <winpr/crt.h>
 #include <winpr/winsock.h>
 
-#ifndef _WIN32
+#if !defined(_WIN32)
+
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -65,11 +66,19 @@
 #endif
 #endif
 
+#else
+
+#include <winpr/windows.h>
+
+#include <winpr/crt.h>
+
+#define SHUT_RDWR SD_BOTH
+#define close(_fd) closesocket(_fd)
+
 #endif
 
 #include <freerdp/log.h>
-#include <freerdp/utils/tcp.h>
-#include <freerdp/utils/uds.h>
+
 #include <winpr/stream.h>
 
 #include "tcp.h"
@@ -490,6 +499,38 @@ void tcp_get_mac_address(rdpTcp* tcp)
 		mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]); */
 }
 
+int uds_connect(const char* path)
+{
+#ifndef _WIN32
+	int status;
+	int sockfd;
+	struct sockaddr_un addr;
+
+	sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+
+	if (sockfd == -1)
+	{
+		WLog_ERR(TAG, "socket");
+		return -1;
+	}
+
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, path, sizeof(addr.sun_path));
+	status = connect(sockfd, (struct sockaddr *) &addr, sizeof(addr));
+
+	if (status < 0)
+	{
+		WLog_ERR(TAG, "connect");
+		close(sockfd);
+		return -1;
+	}
+
+	return sockfd;
+#else /* ifndef _WIN32 */
+	return -1;
+#endif
+}
+
 BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 {
 	int status;
@@ -504,7 +545,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 
 	if (tcp->ipcSocket)
 	{
-		tcp->sockfd = freerdp_uds_connect(hostname);
+		tcp->sockfd = uds_connect(hostname);
 
 		if (tcp->sockfd < 0)
 			return FALSE;
@@ -685,8 +726,13 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 
 BOOL tcp_disconnect(rdpTcp* tcp)
 {
-	freerdp_tcp_disconnect(tcp->sockfd);
-	tcp->sockfd = -1;
+	if (tcp->sockfd != -1)
+	{
+		shutdown(tcp->sockfd, SHUT_RDWR);
+		close(tcp->sockfd);
+
+		tcp->sockfd = -1;
+	}
 
 	return TRUE;
 }

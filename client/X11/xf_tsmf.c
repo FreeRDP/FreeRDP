@@ -31,7 +31,6 @@
 #include <X11/Xatom.h>
 #include <X11/extensions/XShm.h>
 
-#include <freerdp/utils/event.h>
 #include <freerdp/log.h>
 #include <freerdp/client/tsmf.h>
 

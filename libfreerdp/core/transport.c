@@ -33,7 +33,6 @@
 
 #include <freerdp/log.h>
 #include <freerdp/error.h>
-#include <freerdp/utils/tcp.h>
 #include <freerdp/utils/ringbuffer.h>
 
 #include <openssl/bio.h>

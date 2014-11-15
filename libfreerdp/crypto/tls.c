@@ -28,7 +28,6 @@
 #include <winpr/ssl.h>
 
 #include <winpr/stream.h>
-#include <freerdp/utils/tcp.h>
 #include <freerdp/utils/ringbuffer.h>
 
 #include <freerdp/log.h>

@@ -28,7 +28,6 @@ install(DIRECTORY freerdp/codec DESTINATION include/freerdp COMPONENT headers FI
 install(DIRECTORY freerdp/crypto DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/gdi DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/locale DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY freerdp/rail DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/utils DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/client DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY freerdp/server DESTINATION include/freerdp COMPONENT headers FILES_MATCHING PATTERN "*.h")

@@ -20,12 +20,17 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/select.h>
+
+#include <freerdp/graphics.h>
 #include <freerdp/codec/rfx.h>
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/gfx.h>
+#include <freerdp/client/rdpei.h>
+#include <freerdp/client/rdpgfx.h>
+#include <freerdp/client/cliprdr.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/cmdline.h>
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/utils/event.h>
 #include <freerdp/constants.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/primitives.h>
@@ -38,7 +43,6 @@
 #include "android_jni_utils.h"
 #include "android_debug.h"
 #include "android_cliprdr.h"
-
 
 #if defined(WITH_GPROF)
 #include "jni/prof.h"
@@ -57,6 +61,45 @@ void android_context_free(freerdp* instance, rdpContext* context)
 	android_event_queue_uninit(instance);
 }
 
+void android_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
+{
+	rdpSettings* settings = context->settings;
+	androidContext* afc = (androidContext*) context;
+
+	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+
+	}
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		if (settings->SoftwareGdi)
+			gdi_graphics_pipeline_init(context->gdi, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	{
+		android_cliprdr_init(afc, (CliprdrClientContext*) e->pInterface);
+	}
+}
+
+void android_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnectedEventArgs* e)
+{
+	rdpSettings* settings = context->settings;
+	androidContext* afc = (androidContext*) context;
+
+	if (strcmp(e->name, RDPEI_DVC_CHANNEL_NAME) == 0)
+	{
+
+	}
+	else if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
+	{
+		if (settings->SoftwareGdi)
+			gdi_graphics_pipeline_uninit(context->gdi, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
+	{
+		android_cliprdr_uninit(afc, (CliprdrClientContext*) e->pInterface);
+	}
+}
 
 void android_begin_paint(rdpContext* context)
 {
@@ -64,7 +107,6 @@ void android_begin_paint(rdpContext* context)
 	gdi->primary->hdc->hwnd->invalid->null = 1;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
 }
-
 
 void android_end_paint(rdpContext* context)
 {
@@ -96,7 +138,6 @@ void android_desktop_resize(rdpContext* context)
 			context->instance, context->settings->DesktopWidth,
 			context->settings->DesktopHeight, context->settings->ColorDepth);
 }
-
 
 BOOL android_pre_connect(freerdp* instance)
 {
@@ -130,6 +171,12 @@ BOOL android_pre_connect(freerdp* instance)
 	settings->OrderSupport[NEG_ELLIPSE_CB_INDEX] = FALSE;
 
 	settings->FrameAcknowledge = 10;
+
+	PubSub_SubscribeChannelConnected(instance->context->pubSub,
+			(pChannelConnectedEventHandler) android_OnChannelConnectedEventHandler);
+
+	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
+			(pChannelDisconnectedEventHandler) android_OnChannelDisconnectedEventHandler);
 
 	freerdp_register_addin_provider(freerdp_channels_load_static_addin_entry, 0);
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
@@ -166,11 +213,8 @@ static BOOL android_post_connect(freerdp* instance)
 	instance->update->EndPaint = android_end_paint;
 	instance->update->DesktopResize = android_desktop_resize;
 
-	android_cliprdr_init(instance);
-
 	freerdp_channels_post_connect(instance->context->channels, instance);
 
-	// send notifications 
 	freerdp_callback("OnConnectionSuccess", "(I)V", instance);
 
 	return TRUE;
@@ -180,7 +224,6 @@ static void android_post_disconnect(freerdp* instance)
 {
 	gdi_free(instance);
 	cache_free(instance->context->cache);
-	android_cliprdr_uninit(instance);
 }
 
 BOOL android_authenticate(freerdp* instance, char** username, char** password, char** domain)
@@ -196,26 +239,27 @@ BOOL android_authenticate(freerdp* instance, char** username, char** password, c
 	jobject jstr3 = create_string_builder(env, *password);
 
 	jboolean res = freerdp_callback_bool_result("OnAuthenticate", "(ILjava/lang/StringBuilder;Ljava/lang/StringBuilder;Ljava/lang/StringBuilder;)Z", instance, jstr1, jstr2, jstr3);
-	if(res == JNI_TRUE)
+
+	if (res == JNI_TRUE)
 	{
 		// read back string values
-		if(*username != NULL)
+		if (*username != NULL)
 			free(*username);
 
 		*username = get_string_from_string_builder(env, jstr1);
 
-		if(*domain != NULL)
+		if (*domain != NULL)
 			free(*domain);
 
 		*domain = get_string_from_string_builder(env, jstr2);
 
-		if(*password == NULL)
+		if (*password == NULL)
 			free(*password);
 		
 		*password = get_string_from_string_builder(env, jstr3);
 	}
 
-	if(attached == JNI_TRUE)
+	if (attached == JNI_TRUE)
 		jni_detach_thread();
 
 	return ((res == JNI_TRUE) ? TRUE : FALSE);
@@ -239,7 +283,7 @@ BOOL android_verify_certificate(freerdp* instance, char* subject, char* issuer, 
 
 	jboolean res = freerdp_callback_bool_result("OnVerifyCertificate", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z", instance, jstr1, jstr2, jstr3);
 
-	if(attached == JNI_TRUE)
+	if (attached == JNI_TRUE)
 		jni_detach_thread();
 
 	return ((res == JNI_TRUE) ? TRUE : FALSE);
@@ -248,30 +292,6 @@ BOOL android_verify_certificate(freerdp* instance, char* subject, char* issuer, 
 BOOL android_verify_changed_certificate(freerdp* instance, char* subject, char* issuer, char* new_fingerprint, char* old_fingerprint)
 {
 	return android_verify_certificate(instance, subject, issuer, new_fingerprint);
-}
-
-static void android_process_channel_event(rdpChannels* channels, freerdp* instance)
-{
-	wMessage* event;
-
-	event = freerdp_channels_pop_event(channels);
-
-	if (event)
-	{
-		int ev = GetMessageClass(event->id);
-		switch(ev)
-		{
-			case CliprdrChannel_Class:
-				android_process_cliprdr_event(instance, event);
-				break;
-
-			default:
-				DEBUG_ANDROID("Unsupported channel event %08X", ev);
-				break;
-		}
-
-		freerdp_event_free(event);
-	}
 }
 
 static void* jni_input_thread(void* arg)
@@ -330,14 +350,13 @@ static void* jni_channels_thread(void* arg)
 
 	channels = instance->context->channels;
 	event = freerdp_channels_get_event_handle(instance);
-																	    
+
 	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
 	{
 		status = freerdp_channels_process_pending_messages(instance);
+
 		if (!status)
-			break; 
-		
-		android_process_channel_event(channels, instance);
+			break;
 	}
 	
 	DEBUG_ANDROID("Quit.");
@@ -513,14 +532,12 @@ static int android_freerdp_run(freerdp* instance)
 				DEBUG_ANDROID("Failed to check channel manager file descriptor\n");
 				break;
 			}
-		
-			android_process_channel_event(instance->context->channels, instance);
 		}
 	}
 
 	DEBUG_ANDROID("Prepare shutdown...");
 
-	// issue another OnDisconnecting here in case the disconnect was initiated by the sever and not our client
+	// issue another OnDisconnecting here in case the disconnect was initiated by the server and not our client
 	freerdp_callback("OnDisconnecting", "(I)V", instance);
 	
 	DEBUG_ANDROID("Close channels...");
@@ -701,10 +718,10 @@ JNIEXPORT void JNICALL jni_freerdp_set_connection_info(JNIEnv *env, jclass cls, 
 
 	settings->ServerHostname = strdup(hostname);
 
-	if(username && strlen(username) > 0)
+	if (username && strlen(username) > 0)
 		settings->Username = strdup(username);
 
-	if(password && strlen(password) > 0)
+	if (password && strlen(password) > 0)
 	{
 		settings->Password = strdup(password);
 		settings->AutoLogonEnabled = TRUE;
@@ -712,7 +729,7 @@ JNIEXPORT void JNICALL jni_freerdp_set_connection_info(JNIEnv *env, jclass cls, 
 
 	settings->Domain = strdup(domain);
 
-	if(certname && strlen(certname) > 0)
+	if (certname && strlen(certname) > 0)
 		settings->CertificateName = strdup(certname);
 
 	settings->ConsoleSession = (console == JNI_TRUE) ? TRUE : FALSE;
@@ -823,10 +840,10 @@ JNIEXPORT void JNICALL jni_freerdp_set_advanced_settings(JNIEnv *env, jclass cls
 	settings->AsyncTransport = async_transport;
 	settings->AsyncInput = async_input;
 
-	if(remote_program && strlen(remote_program) > 0)
+	if (remote_program && strlen(remote_program) > 0)
 		settings->AlternateShell = strdup(remote_program);
 
-	if(work_dir && strlen(work_dir) > 0)
+	if (work_dir && strlen(work_dir) > 0)
 		settings->ShellWorkingDirectory = strdup(work_dir);
 
 	(*env)->ReleaseStringUTFChars(env, jRemoteProgram, remote_program);

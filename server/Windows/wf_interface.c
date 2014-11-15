@@ -24,11 +24,11 @@
 
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
+#include <winpr/winsock.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/tcp.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
 
@@ -170,12 +170,13 @@ BOOL wfreerdp_server_stop(wfServer* server)
 
 wfServer* wfreerdp_server_new()
 {
+	WSADATA wsaData;
 	wfServer* server;
 
-	server = (wfServer*) malloc(sizeof(wfServer));
-	ZeroMemory(server, sizeof(wfServer));
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		return NULL;
 
-	freerdp_wsa_startup();
+	server = (wfServer*) calloc(1, sizeof(wfServer));
 
 	if (server)
 	{
@@ -196,9 +197,8 @@ void wfreerdp_server_free(wfServer* server)
 		free(server);
 	}
 
-	freerdp_wsa_cleanup();
+	WSACleanup();
 }
-
 
 FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server)
 {

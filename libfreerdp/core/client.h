@@ -29,7 +29,6 @@
 #include <freerdp/svc.h>
 #include <freerdp/peer.h>
 #include <freerdp/addin.h>
-#include <freerdp/utils/event.h>
 
 #include <freerdp/client/channels.h>
 #include <freerdp/client/drdynvc.h>

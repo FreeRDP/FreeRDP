@@ -12,7 +12,6 @@ typedef struct mf_context mfContext;
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/gfx.h>
 #include <freerdp/gdi/region.h>
-#include <freerdp/rail/rail.h>
 #include <freerdp/cache/cache.h>
 #include <freerdp/channels/channels.h>
 

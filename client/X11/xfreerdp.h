@@ -106,6 +106,7 @@ struct xf_context
 	BOOL unobscured;
 	BOOL debug;
 	xfWindow* window;
+	xfAppWindow* appWindow;
 	xfPointer* pointer;
 	xfWorkArea workArea;
 	int current_desktop;
@@ -190,6 +191,9 @@ struct xf_context
 	RdpeiClientContext* rdpei;
 	RdpgfxClientContext* gfx;
 	EncomspClientContext* encomsp;
+
+	RailClientContext* rail;
+	wHashTable* railWindows;
 
 	BOOL xkbAvailable;
 };

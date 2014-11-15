@@ -11,7 +11,12 @@
 #define __ANDROID_FREERDP_H
 
 #include <jni.h>
+
+#include <winpr/crt.h>
+#include <winpr/clipboard.h>
+
 #include <freerdp/freerdp.h>
+#include <freerdp/client/cliprdr.h>
 
 #include "android_event.h"
 
@@ -24,7 +29,14 @@ struct android_context
 
 	BOOL is_connected;
 
-	void* clipboard_context;
+	BOOL clipboardSync;
+	wClipboard* clipboard;
+	UINT32 numServerFormats;
+	UINT32 requestedFormatId;
+	HANDLE clipboardRequestEvent;
+	CLIPRDR_FORMAT* serverFormats;
+	CliprdrClientContext* cliprdr;
+	UINT32 clipboardCapabilities;
 };
 typedef struct android_context androidContext;
 

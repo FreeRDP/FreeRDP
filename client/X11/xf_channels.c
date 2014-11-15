@@ -28,6 +28,7 @@
 
 #include "xf_gfx.h"
 #include "xf_tsmf.h"
+#include "xf_rail.h"
 #include "xf_cliprdr.h"
 
 void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEventArgs* e)
@@ -49,6 +50,10 @@ void xf_OnChannelConnectedEventHandler(rdpContext* context, ChannelConnectedEven
 			gdi_graphics_pipeline_init(context->gdi, (RdpgfxClientContext*) e->pInterface);
 		else
 			xf_graphics_pipeline_init(xfc, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_rail_init(xfc, (RailClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -79,6 +84,10 @@ void xf_OnChannelDisconnectedEventHandler(rdpContext* context, ChannelDisconnect
 			gdi_graphics_pipeline_uninit(context->gdi, (RdpgfxClientContext*) e->pInterface);
 		else
 			xf_graphics_pipeline_uninit(xfc, (RdpgfxClientContext*) e->pInterface);
+	}
+	else if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
+	{
+		xf_rail_uninit(xfc, (RailClientContext*) e->pInterface);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{

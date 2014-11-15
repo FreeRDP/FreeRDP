@@ -23,237 +23,52 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <winpr/crt.h>
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/rail.h>
-#include <freerdp/rail.h>
 
 #include "rail_orders.h"
 #include "rail_main.h"
 
-RailClientContext* rail_get_client_interface(void* railObject)
+RailClientContext* rail_get_client_interface(railPlugin* rail)
 {
 	RailClientContext* pInterface;
-	rdpSvcPlugin* plugin = (rdpSvcPlugin*) railObject;
-	pInterface = (RailClientContext*) plugin->channel_entry_points.pInterface;
+	pInterface = (RailClientContext*) rail->channelEntryPoints.pInterface;
 	return pInterface;
 }
 
-void rail_send_channel_data(void* railObject, void* data, size_t length)
+int rail_send(railPlugin* rail, wStream* s)
+{
+	UINT32 status = 0;
+
+	if (!rail)
+	{
+		status = CHANNEL_RC_BAD_INIT_HANDLE;
+	}
+	else
+	{
+		status = rail->channelEntryPoints.pVirtualChannelWrite(rail->OpenHandle,
+			Stream_Buffer(s), (UINT32) Stream_GetPosition(s), s);
+	}
+
+	if (status != CHANNEL_RC_OK)
+	{
+		Stream_Free(s, TRUE);
+		WLog_ERR(TAG,  "rail_send: VirtualChannelWrite failed %d", status);
+	}
+
+	return status;
+}
+
+void rail_send_channel_data(railPlugin* rail, void* data, size_t length)
 {
 	wStream* s = NULL;
-	railPlugin* plugin = (railPlugin*) railObject;
 
 	s = Stream_New(NULL, length);
 	Stream_Write(s, data, length);
 
-	svc_plugin_send((rdpSvcPlugin*) plugin, s);
-}
-
-static void on_free_rail_channel_event(wMessage* event)
-{
-	rail_free_cloned_order(GetMessageType(event->id), event->wParam);
-}
-
-void rail_send_channel_event(void* railObject, UINT16 eventType, void* param)
-{
-	void* payload = NULL;
-	wMessage* out_event = NULL;
-	railPlugin* plugin = (railPlugin*) railObject;
-
-	payload = rail_clone_order(eventType, param);
-
-	if (payload)
-	{
-		out_event = freerdp_event_new(RailChannel_Class, eventType,
-			on_free_rail_channel_event, payload);
-
-		svc_plugin_send_event((rdpSvcPlugin*) plugin, out_event);
-	}
-}
-
-static void rail_process_connect(rdpSvcPlugin* plugin)
-{
-	railPlugin* rail = (railPlugin*) plugin;
-
-	rail->rail_order = rail_order_new();
-	rail->rail_order->settings = (rdpSettings*) plugin->channel_entry_points.pExtendedData;
-	rail->rail_order->plugin = rail;
-
-	WLog_Print(rail->log, WLOG_DEBUG, "Connect");
-}
-
-static void rail_process_terminate(rdpSvcPlugin* plugin)
-{
-	railPlugin* rail = (railPlugin*) plugin;
-
-	WLog_Print(rail->log, WLOG_DEBUG, "Terminate");
-  svc_plugin_terminate(plugin);
-}
-
-static void rail_process_receive(rdpSvcPlugin* plugin, wStream* s)
-{
-	railPlugin* rail = (railPlugin*) plugin;
-	rail_order_recv(rail, s);
-}
-
-static void rail_process_addin_args(rdpRailOrder* railOrder, rdpSettings* settings)
-{
-	char* exeOrFile;
-
-	exeOrFile = settings->RemoteApplicationProgram;
-
-	if (strlen(exeOrFile) >= 2)
-	{
-		if (strncmp(exeOrFile, "||", 2) != 0)
-			railOrder->exec.flags |= RAIL_EXEC_FLAG_FILE;
-	}
-
-	rail_string_to_unicode_string(settings->RemoteApplicationProgram, &railOrder->exec.exeOrFile);
-	rail_string_to_unicode_string(settings->ShellWorkingDirectory, &railOrder->exec.workingDir);
-	rail_string_to_unicode_string(settings->RemoteApplicationCmdLine, &railOrder->exec.arguments);
-
-	rail_send_client_exec_order((railPlugin*) railOrder->plugin, &railOrder->exec);
-}
-
-static void rail_recv_set_sysparams_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_SYSPARAM_ORDER* sysparam;
-
-	/* Send System Parameters */
-
-	sysparam = (RAIL_SYSPARAM_ORDER*) event->wParam;
-	memmove(&railOrder->sysparam, sysparam, sizeof(RAIL_SYSPARAM_ORDER));
-
-	rail_send_client_sysparams_order((railPlugin*) railOrder->plugin, &railOrder->sysparam);
-
-	/* execute */
-
-	railOrder->exec.flags = RAIL_EXEC_FLAG_EXPAND_ARGUMENTS;
-
-	rail_process_addin_args(railOrder, railOrder->settings);
-}
-
-static void rail_recv_exec_remote_app_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	/**
-	 * TODO: replace event system by an API to allow the execution
-	 * of multiple remote apps over the same connection. RAIL is
-	 * always built-in, so clients can safely link to it.
-	 */
-
-	//rail_process_addin_args((railPlugin*) railOrder->plugin, data);
-}
-
-static void rail_recv_activate_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_ACTIVATE_ORDER* activate = (RAIL_ACTIVATE_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->activate, activate, sizeof(RAIL_ACTIVATE_ORDER));
-	rail_send_client_activate_order((railPlugin*) railOrder->plugin, &railOrder->activate);
-}
-
-static void rail_recv_sysmenu_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_SYSMENU_ORDER* sysmenu = (RAIL_SYSMENU_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->sysmenu, sysmenu, sizeof(RAIL_SYSMENU_ORDER));
-	rail_send_client_sysmenu_order((railPlugin*) railOrder->plugin, &railOrder->sysmenu);
-}
-
-static void rail_recv_syscommand_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_SYSCOMMAND_ORDER* syscommand = (RAIL_SYSCOMMAND_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->syscommand, syscommand, sizeof(RAIL_SYSCOMMAND_ORDER));
-	rail_send_client_syscommand_order((railPlugin*) railOrder->plugin, &railOrder->syscommand);
-}
-
-static void rail_recv_notify_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_NOTIFY_EVENT_ORDER* notify = (RAIL_NOTIFY_EVENT_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->notify_event, notify, sizeof(RAIL_NOTIFY_EVENT_ORDER));
-	rail_send_client_notify_event_order((railPlugin*) railOrder->plugin, &railOrder->notify_event);
-}
-
-static void rail_recv_window_move_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_WINDOW_MOVE_ORDER* window_move = (RAIL_WINDOW_MOVE_ORDER*) event->wParam;
-	CopyMemory(&railOrder->window_move, window_move, sizeof(RAIL_WINDOW_MOVE_ORDER));
-	rail_send_client_window_move_order((railPlugin*) railOrder->plugin, &railOrder->window_move);
-}
-
-static void rail_recv_app_req_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_GET_APPID_REQ_ORDER* get_appid_req = (RAIL_GET_APPID_REQ_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->get_appid_req, get_appid_req, sizeof(RAIL_GET_APPID_REQ_ORDER));
-	rail_send_client_get_appid_req_order((railPlugin*) railOrder->plugin, &railOrder->get_appid_req);
-}
-
-static void rail_recv_langbarinfo_event(rdpRailOrder* railOrder, wMessage* event)
-{
-	RAIL_LANGBAR_INFO_ORDER* langbar_info = (RAIL_LANGBAR_INFO_ORDER*) event->wParam;
-
-	CopyMemory(&railOrder->langbar_info, langbar_info, sizeof(RAIL_LANGBAR_INFO_ORDER));
-	rail_send_client_langbar_info_order((railPlugin*) railOrder->plugin, &railOrder->langbar_info);
-}
-
-static void rail_process_event(rdpSvcPlugin* plugin, wMessage* event)
-{
-	railPlugin* rail = NULL;
-	rail = (railPlugin*) plugin;
-
-	switch (GetMessageType(event->id))
-	{
-		case RailChannel_ClientSystemParam:
-			rail_recv_set_sysparams_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientExecute:
-			rail_recv_exec_remote_app_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientActivate:
-			rail_recv_activate_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientSystemMenu:
-			rail_recv_sysmenu_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientSystemCommand:
-			rail_recv_syscommand_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientNotifyEvent:
-			rail_recv_notify_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientWindowMove:
-			rail_recv_window_move_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientGetAppIdRequest:
-			rail_recv_app_req_event(rail->rail_order, event);
-			break;
-
-		case RailChannel_ClientLanguageBarInfo:
-			rail_recv_langbarinfo_event(rail->rail_order, event);
-			break;
-
-		default:
-			break;
-	}
-
-	freerdp_event_free(event);
+	rail_send(rail, s);
 }
 
 /**
@@ -262,9 +77,8 @@ static void rail_process_event(rdpSvcPlugin* plugin, wMessage* event)
 
 int rail_client_execute(RailClientContext* context, RAIL_EXEC_ORDER* exec)
 {
-	railPlugin* rail = (railPlugin*) context->handle;
-
 	char* exeOrFile;
+	railPlugin* rail = (railPlugin*) context->handle;
 
 	exeOrFile = exec->RemoteApplicationProgram;
 
@@ -497,6 +311,216 @@ int rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RE
 	return 0; /* stub - should be registered by client */
 }
 
+/****************************************************************************************/
+
+static wListDictionary* g_InitHandles;
+static wListDictionary* g_OpenHandles;
+
+void rail_add_init_handle_data(void* pInitHandle, void* pUserData)
+{
+	if (!g_InitHandles)
+		g_InitHandles = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_InitHandles, pInitHandle, pUserData);
+}
+
+void* rail_get_init_handle_data(void* pInitHandle)
+{
+	void* pUserData = NULL;
+	pUserData = ListDictionary_GetItemValue(g_InitHandles, pInitHandle);
+	return pUserData;
+}
+
+void rail_remove_init_handle_data(void* pInitHandle)
+{
+	ListDictionary_Remove(g_InitHandles, pInitHandle);
+}
+
+void rail_add_open_handle_data(DWORD openHandle, void* pUserData)
+{
+	void* pOpenHandle = (void*) (size_t) openHandle;
+
+	if (!g_OpenHandles)
+		g_OpenHandles = ListDictionary_New(TRUE);
+
+	ListDictionary_Add(g_OpenHandles, pOpenHandle, pUserData);
+}
+
+void* rail_get_open_handle_data(DWORD openHandle)
+{
+	void* pUserData = NULL;
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	pUserData = ListDictionary_GetItemValue(g_OpenHandles, pOpenHandle);
+	return pUserData;
+}
+
+void rail_remove_open_handle_data(DWORD openHandle)
+{
+	void* pOpenHandle = (void*) (size_t) openHandle;
+	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+}
+
+static void rail_virtual_channel_event_data_received(railPlugin* rail,
+		void* pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+{
+	wStream* data_in;
+
+	if ((dataFlags & CHANNEL_FLAG_SUSPEND) || (dataFlags & CHANNEL_FLAG_RESUME))
+	{
+		return;
+	}
+
+	if (dataFlags & CHANNEL_FLAG_FIRST)
+	{
+		if (rail->data_in)
+			Stream_Free(rail->data_in, TRUE);
+
+		rail->data_in = Stream_New(NULL, totalLength);
+	}
+
+	data_in = rail->data_in;
+	Stream_EnsureRemainingCapacity(data_in, (int) dataLength);
+	Stream_Write(data_in, pData, dataLength);
+
+	if (dataFlags & CHANNEL_FLAG_LAST)
+	{
+		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
+		{
+			WLog_ERR(TAG,  "rail_plugin_process_received: read error");
+		}
+
+		rail->data_in = NULL;
+		Stream_SealLength(data_in);
+		Stream_SetPosition(data_in, 0);
+
+		MessageQueue_Post(rail->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
+	}
+}
+
+static VOID VCAPITYPE rail_virtual_channel_open_event(DWORD openHandle, UINT event,
+		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
+{
+	railPlugin* rail;
+
+	rail = (railPlugin*) rail_get_open_handle_data(openHandle);
+
+	if (!rail)
+	{
+		WLog_ERR(TAG,  "rail_virtual_channel_open_event: error no match");
+		return;
+	}
+
+	switch (event)
+	{
+		case CHANNEL_EVENT_DATA_RECEIVED:
+			rail_virtual_channel_event_data_received(rail, pData, dataLength, totalLength, dataFlags);
+			break;
+
+		case CHANNEL_EVENT_WRITE_COMPLETE:
+			Stream_Free((wStream*) pData, TRUE);
+			break;
+
+		case CHANNEL_EVENT_USER:
+			break;
+	}
+}
+
+static void* rail_virtual_channel_client_thread(void* arg)
+{
+	wStream* data;
+	wMessage message;
+	railPlugin* rail = (railPlugin*) arg;
+
+	while (1)
+	{
+		if (!MessageQueue_Wait(rail->MsgPipe->In))
+			break;
+
+		if (MessageQueue_Peek(rail->MsgPipe->In, &message, TRUE))
+		{
+			if (message.id == WMQ_QUIT)
+				break;
+
+			if (message.id == 0)
+			{
+				data = (wStream*) message.wParam;
+				rail_order_recv(rail, data);
+			}
+		}
+	}
+
+	ExitThread(0);
+	return NULL;
+}
+
+static void rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData, UINT32 dataLength)
+{
+	UINT32 status;
+
+	status = rail->channelEntryPoints.pVirtualChannelOpen(rail->InitHandle,
+		&rail->OpenHandle, rail->channelDef.name, rail_virtual_channel_open_event);
+
+	rail_add_open_handle_data(rail->OpenHandle, rail);
+
+	if (status != CHANNEL_RC_OK)
+	{
+		WLog_ERR(TAG,  "rail_virtual_channel_event_connected: open failed: status: %d", status);
+		return;
+	}
+
+	rail->MsgPipe = MessagePipe_New();
+
+	rail->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) rail_virtual_channel_client_thread, (void*) rail, 0, NULL);
+}
+
+static void rail_virtual_channel_event_terminated(railPlugin* rail)
+{
+	MessagePipe_PostQuit(rail->MsgPipe, 0);
+	WaitForSingleObject(rail->thread, INFINITE);
+
+	MessagePipe_Free(rail->MsgPipe);
+	CloseHandle(rail->thread);
+
+	rail->channelEntryPoints.pVirtualChannelClose(rail->OpenHandle);
+
+	if (rail->data_in)
+	{
+		Stream_Free(rail->data_in, TRUE);
+		rail->data_in = NULL;
+	}
+
+	rail_remove_open_handle_data(rail->OpenHandle);
+	rail_remove_init_handle_data(rail->InitHandle);
+}
+
+static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
+{
+	railPlugin* rail;
+
+	rail = (railPlugin*) rail_get_init_handle_data(pInitHandle);
+
+	if (!rail)
+	{
+		WLog_ERR(TAG,  "rail_virtual_channel_init_event: error no match");
+		return;
+	}
+
+	switch (event)
+	{
+		case CHANNEL_EVENT_CONNECTED:
+			rail_virtual_channel_event_connected(rail, pData, dataLength);
+			break;
+
+		case CHANNEL_EVENT_DISCONNECTED:
+			break;
+
+		case CHANNEL_EVENT_TERMINATED:
+			rail_virtual_channel_event_terminated(rail);
+			break;
+	}
+}
+
 /* rail is always built-in */
 #define VirtualChannelEntry	rail_VirtualChannelEntry
 
@@ -508,27 +532,23 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	rail = (railPlugin*) calloc(1, sizeof(railPlugin));
 
-	rail->plugin.channel_def.options =
+	rail->channelDef.options =
 			CHANNEL_OPTION_INITIALIZED |
 			CHANNEL_OPTION_ENCRYPT_RDP |
 			CHANNEL_OPTION_COMPRESS_RDP |
 			CHANNEL_OPTION_SHOW_PROTOCOL;
 
-	strcpy(rail->plugin.channel_def.name, "rail");
-
-	rail->plugin.connect_callback = rail_process_connect;
-	rail->plugin.receive_callback = rail_process_receive;
-	rail->plugin.event_callback = rail_process_event;
-	rail->plugin.terminate_callback = rail_process_terminate;
+	strcpy(rail->channelDef.name, "rail");
 
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP*) pEntryPoints;
 
 	if ((pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP)) &&
 			(pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
-		context = (RailClientContext*) malloc(sizeof(RailClientContext));
+		context = (RailClientContext*) calloc(1, sizeof(RailClientContext));
 
 		context->handle = (void*) rail;
+		context->custom = NULL;
 
 		context->ClientExecute = rail_client_execute;
 		context->ClientActivate = rail_client_activate;
@@ -559,7 +579,15 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	WLog_Print(rail->log, WLOG_DEBUG, "VirtualChannelEntry");
 
-	svc_plugin_init((rdpSvcPlugin*) rail, pEntryPoints);
+	CopyMemory(&(rail->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
+
+	rail->channelEntryPoints.pVirtualChannelInit(&rail->InitHandle,
+		&rail->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rail_virtual_channel_init_event);
+
+	rail->channelEntryPoints.pInterface = *(rail->channelEntryPoints.ppInterface);
+	rail->channelEntryPoints.ppInterface = &(rail->channelEntryPoints.pInterface);
+
+	rail_add_init_handle_data(rail->InitHandle, (void*) rail);
 
 	return 1;
 }

@@ -37,12 +37,12 @@ struct _DVCMAN
 
 	drdynvcPlugin* drdynvc;
 
+	int num_plugins;
 	const char* plugin_names[MAX_PLUGINS];
 	IWTSPlugin* plugins[MAX_PLUGINS];
-	int num_plugins;
 
-	IWTSListener* listeners[MAX_PLUGINS];
 	int num_listeners;
+	IWTSListener* listeners[MAX_PLUGINS];
 
 	wArrayList* channels;
 	wStreamPool* pool;

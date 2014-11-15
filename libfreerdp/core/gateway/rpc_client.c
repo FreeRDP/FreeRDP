@@ -21,11 +21,6 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <freerdp/utils/tcp.h>
 #include <freerdp/log.h>
 
 #include <winpr/crt.h>
