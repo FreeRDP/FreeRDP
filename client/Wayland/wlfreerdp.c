@@ -288,6 +288,46 @@ BOOL wl_post_connect(freerdp* instance)
 	return TRUE;
 }
 
+BOOL wl_verify_certificate(freerdp* instance, char* subject, char* issuer, char* fingerprint)
+{
+	char answer;
+
+	printf("Certificate details:\n");
+	printf("\tSubject: %s\n", subject);
+	printf("\tIssuer: %s\n", issuer);
+	printf("\tThumbprint: %s\n", fingerprint);
+	printf("The above X.509 certificate could not be verified, possibly because you do not have "
+		"the CA certificate in your certificate store, or the certificate has expired. "
+		"Please look at the documentation on how to create local certificate store for a private CA.\n");
+
+	while (1)
+	{
+		printf("Do you trust the above certificate? (Y/N) ");
+		answer = fgetc(stdin);
+
+		if (feof(stdin))
+		{
+			printf("\nError: Could not read answer from stdin.");
+			if (instance->settings->CredentialsFromStdin)
+				printf(" - Run without parameter \"--from-stdin\" to set trust.");
+			printf("\n");
+			return FALSE;
+		}
+
+		if (answer == 'y' || answer == 'Y')
+		{
+			return TRUE;
+		}
+		else if (answer == 'n' || answer == 'N')
+		{
+			break;
+		}
+		printf("\n");
+	}
+
+	return FALSE;
+}
+
 int wlfreerdp_run(freerdp* instance)
 {
 	int i;
@@ -397,6 +437,7 @@ int main(int argc, char* argv[])
 	instance = freerdp_new();
 	instance->PreConnect = wl_pre_connect;
 	instance->PostConnect = wl_post_connect;
+	instance->VerifyCertificate = wl_verify_certificate;
 
 	instance->ContextSize = sizeof(struct wl_context);
 	instance->ContextNew = wl_context_new;

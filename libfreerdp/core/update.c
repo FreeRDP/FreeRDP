@@ -829,7 +829,8 @@ static void update_send_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_
 static void update_write_suppress_output(wStream* s, BYTE allow, RECTANGLE_16* area)
 {
 	Stream_Write_UINT8(s, allow); /* allowDisplayUpdates (1 byte) */
-	Stream_Seek(s, 3); /* pad3Octets (3 bytes) */
+	/* Use zeros for padding (like mstsc) for compatibility with legacy servers */
+	Stream_Zero(s, 3); /* pad3Octets (3 bytes) */
 
 	if (allow > 0)
 	{

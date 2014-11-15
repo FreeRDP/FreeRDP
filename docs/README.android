@@ -23,7 +23,9 @@ For the Android port some additional dependencies need to be fulfilled:
 
 * for the Java GUI (if build with ant)
 - ant
-- Android SDK - version >= 21
+- Android SDK Tools - version >= 21
+- Android Support Library (note: make sure ANDROID_APP_TARGET_SDK is set to be at
+	least the API level required by the support library)
 
 FreeRDP requires openssl libraries for building but they are not part of the 
 Android NDK and therefore they need to be prebuild manually.
