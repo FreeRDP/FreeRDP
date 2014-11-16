@@ -151,7 +151,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 		dataLen = formatList.dataLen;
 		Stream_Rewind(s, dataLen);
 
-		formats = (CLIPRDR_FORMAT*) malloc(sizeof(CLIPRDR_FORMAT) * formatList.numFormats);
+		formats = (CLIPRDR_FORMAT*) calloc(formatList.numFormats, sizeof(CLIPRDR_FORMAT));
 		if (!formats)
 			return;
 
@@ -175,6 +175,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 			}
 			else
 			{
+				formats[index].formatName = NULL;
 				Stream_Seek(s, 2);
 				dataLen -= 2;
 			}
