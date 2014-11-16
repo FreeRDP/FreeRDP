@@ -203,8 +203,19 @@ void wl_end_paint(rdpContext* context)
 	display = context_w->display;
 	window = context_w->window;
 
-	realloc(window->data, gdi->width * gdi->height * 4);
-	memcpy(window->data, (void*) gdi->primary_buffer, gdi->width * gdi->height * 4);
+	data = realloc(window->data, gdi->width * gdi->height * 4));
+
+	if (!data)
+	{
+		if (window->data)
+			free(window->data);
+		window->data = NULL;
+	}
+	else
+	{
+		window->data = data;
+		memcpy(window->data, (void*) gdi->primary_buffer, gdi->width * gdi->height * 4);
+	}
 	wl_display_dispatch(display->display);
 }
 
