@@ -217,7 +217,7 @@ void shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_1
 
 	wParam = (SHADOW_MSG_IN_REFRESH_OUTPUT*) calloc(1, sizeof(SHADOW_MSG_IN_REFRESH_OUTPUT));
 
-	if (!wParam)
+	if (!wParam || !areas)
 		return;
 
 	wParam->numRects = (UINT32) count;
@@ -227,7 +227,10 @@ void shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_1
 		wParam->rects = (RECTANGLE_16*) calloc(wParam->numRects, sizeof(RECTANGLE_16));
 
 		if (!wParam->rects)
+		{
+			free (wParam);
 			return;
+		}
 	}
 
 	CopyMemory(wParam->rects, areas, wParam->numRects * sizeof(RECTANGLE_16));
