@@ -218,7 +218,11 @@ void shadow_client_refresh_rect(rdpShadowClient* client, BYTE count, RECTANGLE_1
 	wParam = (SHADOW_MSG_IN_REFRESH_OUTPUT*) calloc(1, sizeof(SHADOW_MSG_IN_REFRESH_OUTPUT));
 
 	if (!wParam || !areas)
+	{
+		if (wParam)
+			free (wParam);
 		return;
+	}
 
 	wParam->numRects = (UINT32) count;
 
