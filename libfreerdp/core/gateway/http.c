@@ -330,10 +330,12 @@ void http_request_free(HttpRequest* http_request)
 
 BOOL http_response_parse_header_status_line(HttpResponse* http_response, char* status_line)
 {
-	char* separator;
+	char* separator = NULL;
 	char* status_code;
 	char* reason_phrase;
-	separator = strchr(status_line, ' ');
+
+	if (status_line)
+		separator = strchr(status_line, ' ');
 
 	if (!separator)
 		return FALSE;
@@ -433,7 +435,10 @@ BOOL http_response_parse_header(HttpResponse* http_response)
 		 *                 |     |
 		 *         colon_pos     value
 		 */
-		colon_pos = strchr(line, ':');
+		if (line)
+			colon_pos = strchr(line, ':');
+		else
+			colon_pos = NULL;
 
 		if ((colon_pos == NULL) || (colon_pos == line))
 			return FALSE;
