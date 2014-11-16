@@ -297,7 +297,10 @@ rdpBitmapCache* bitmap_cache_new(rdpSettings* settings)
 		bitmapCache->cells = (BITMAP_V2_CELL*) calloc(bitmapCache->maxCells, sizeof(BITMAP_V2_CELL));
 
 		if (!bitmapCache->cells)
+		{
+			free(bitmapCache);
 			return NULL;
+		}
 
 		for (i = 0; i < (int) bitmapCache->maxCells; i++)
 		{
