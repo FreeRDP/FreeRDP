@@ -47,6 +47,7 @@ WINPR_API void WLog_CallbackAppender_SetCallbacks(wLog* log, wLogCallbackAppende
 	appender->message = msg;
 	appender->image = img;
 	appender->package = pkg;
+	appender->data = data;
 }
 
 int WLog_CallbackAppender_Open(wLog* log, wLogCallbackAppender* appender)
@@ -130,7 +131,7 @@ wLogCallbackAppender* WLog_CallbackAppender_New(wLog* log)
 	{
 		ZeroMemory(CallbackAppender, sizeof(wLogCallbackAppender));
 
-		CallbackAppender->Type = WLOG_APPENDER_CONSOLE;
+		CallbackAppender->Type = WLOG_APPENDER_CALLBACK;
 
 		CallbackAppender->Open = (WLOG_APPENDER_OPEN_FN) WLog_CallbackAppender_Open;
 		CallbackAppender->Close = (WLOG_APPENDER_OPEN_FN) WLog_CallbackAppender_Close;
@@ -147,6 +148,7 @@ wLogCallbackAppender* WLog_CallbackAppender_New(wLog* log)
 		CallbackAppender->message = NULL;
 		CallbackAppender->image = NULL;
 		CallbackAppender->package = NULL;
+		CallbackAppender->data = NULL;
 	}
 
 	return CallbackAppender;
