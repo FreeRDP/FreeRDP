@@ -1822,25 +1822,25 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 		progressive->rects = (RFX_RECT*) malloc(progressive->cRects * sizeof(RFX_RECT));
 
 		if (!progressive->rects)
-			return NULL;
+			goto cleanup;
 
 		progressive->cTiles = 64;
 		progressive->tiles = (RFX_PROGRESSIVE_TILE**) malloc(progressive->cTiles * sizeof(RFX_PROGRESSIVE_TILE*));
 
 		if (!progressive->tiles)
-			return NULL;
+			goto cleanup;
 
 		progressive->cQuant = 8;
 		progressive->quantVals = (RFX_COMPONENT_CODEC_QUANT*) malloc(progressive->cQuant * sizeof(RFX_COMPONENT_CODEC_QUANT));
 
 		if (!progressive->quantVals)
-			return NULL;
+			goto cleanup;
 
 		progressive->cProgQuant = 8;
 		progressive->quantProgVals = (RFX_PROGRESSIVE_CODEC_QUANT*) malloc(progressive->cProgQuant * sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
 
 		if (!progressive->quantProgVals)
-			return NULL;
+			goto cleanup;
 
 		ZeroMemory(&(progressive->quantProgValFull), sizeof(RFX_PROGRESSIVE_CODEC_QUANT));
 		progressive->quantProgValFull.quality = 100;
@@ -1851,6 +1851,19 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 	}
 
 	return progressive;
+
+cleanup:
+	if (progressive->rects)
+		free(progressive->rects);
+	if (progressive->tiles)
+		free(progressive->tiles);
+	if (progressive->quantVals)
+		free(progressive->quantVals);
+	if (progressive->quantProgVals)
+		free(progressive->quantProgVals);
+	if (progressive)
+		free(progressive);
+	return NULL;
 }
 
 void progressive_context_free(PROGRESSIVE_CONTEXT* progressive)
