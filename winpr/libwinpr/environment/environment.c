@@ -345,7 +345,10 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 	lpszEnvironmentBlock = (LPCH) malloc(cchEnvironmentBlock * sizeof(CHAR));
 
 	if (!lpszEnvironmentBlock)
+	{
+		free (mergeStrings);
 		return NULL;
+	}
 
 	envp  = original;
 
@@ -361,8 +364,8 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 			if (!tmp)
 			{
-				if (lpszEnvironmentBlock)
-					free (lpszEnvironmentBlock);	
+				free (lpszEnvironmentBlock);
+				free (mergeStrings);
 				return NULL;
 			}
 			lpszEnvironmentBlock = tmp;
@@ -404,6 +407,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 						{
 							if (lpszEnvironmentBlock)
 								free(lpszEnvironmentBlock);
+							free (mergeStrings);
 							return NULL;
 						}
 						lpszEnvironmentBlock = tmp;
@@ -447,6 +451,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 			{
 				if (lpszEnvironmentBlock)
 					free(lpszEnvironmentBlock);
+				free (mergeStrings);
 				return NULL;
 			}
 
