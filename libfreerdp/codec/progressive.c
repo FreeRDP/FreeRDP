@@ -1250,7 +1250,7 @@ int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progressive, RFX_PR
 
 int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, BYTE* blocks, UINT32 blocksLen, PROGRESSIVE_SURFACE_CONTEXT* surface)
 {
-	int status;
+	int status = -1;
 	BYTE* block;
 	UINT16 xIdx;
 	UINT16 yIdx;
