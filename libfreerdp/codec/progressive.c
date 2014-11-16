@@ -269,7 +269,10 @@ PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfaceId, U
 	surface->tiles = (RFX_PROGRESSIVE_TILE*) calloc(surface->gridSize, sizeof(RFX_PROGRESSIVE_TILE));
 
 	if (!surface->tiles)
+	{
+		free (surface);
 		return NULL;
+	}
 
 	return surface;
 }
