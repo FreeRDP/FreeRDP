@@ -217,7 +217,7 @@ out_free:
 
 void Stack_Free(wStack* stack)
 {
-	if (!stack)
+	if (stack)
 	{
 		if (stack->synchronized)
 			DeleteCriticalSection(&stack->lock);
