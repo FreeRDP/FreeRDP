@@ -963,7 +963,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext,
 	/* FIXME: unicode conversion */
 	status = (LONG) g_PCSC.pfnSCardListReaderGroups(hContext, (LPSTR) mszGroups, &pcsc_cchGroups);
 	status = PCSC_MapErrorCodeToWinSCard(status);
-	*pcchGroups = (DWORD) pcsc_cchGroups;
+	if (pcchGroups)
+		*pcchGroups = (DWORD) pcsc_cchGroups;
 
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
