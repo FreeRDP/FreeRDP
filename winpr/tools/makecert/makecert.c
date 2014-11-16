@@ -508,7 +508,12 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 			bio = BIO_new(BIO_s_mem());
 
 			if (!bio)
+			{
+				free(filename);
+				free(fullpath);
+				fclose (fp);
 				return -1;
+			}
 
 			status = i2d_PKCS12_bio(bio, context->pkcs12);
 
@@ -516,10 +521,24 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 			length = 2048;
 			x509_str = (BYTE*) malloc(length);
 
+			if (!x509_str)
+			{
+				free(filename);
+				free(fullpath);
+				fclose (fp);
+				return -1;
+			}
+
 			status = BIO_read(bio, x509_str, length);
 		
 			if (status < 0)
+			{
+				free(x509_str);
+				free(filename);
+				free(fullpath);
+				fclose (fp);
 				return -1;
+			}
 		
 			offset += status;
 
@@ -537,8 +556,13 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 			}
 
 			if (status < 0)
+			{
+			free(x509_str);
+				free(filename);
+				free(fullpath);
+				fclose (fp);
 				return -1;
-		
+			}
 			length = offset;
 
 			fwrite((void*) x509_str, length, 1, fp);
