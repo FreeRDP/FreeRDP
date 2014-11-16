@@ -657,7 +657,7 @@ wIniFile* IniFile_New()
 	{
 		ini->nSections = 0;
 		ini->cSections = 64;
-		ini->sections = (wIniFileSection**) malloc(sizeof(wIniFileSection) * ini->cSections);
+		ini->sections = (wIniFileSection**) calloc(ini->cSections, sizeof(wIniFileSection*));
 	}
 
 	return ini;
