@@ -647,6 +647,9 @@ int WLog_AddChild(wLog* parent, wLog* child)
 		}
 	}
 
+	if (!parent->Children)
+		return -1;
+
 	parent->Children[parent->ChildrenCount++] = child;
 	child->Parent = parent;
 	return 0;
