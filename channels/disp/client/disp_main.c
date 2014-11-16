@@ -319,7 +319,10 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context = (DispClientContext*) calloc(1, sizeof(DispClientContext));
 
 		if (!context)
+		{
+			free(disp);
 			return -1;
+		}
 
 		context->handle = (void*) disp;
 
