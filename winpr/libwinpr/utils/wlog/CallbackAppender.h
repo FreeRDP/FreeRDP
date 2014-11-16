@@ -2,7 +2,7 @@
  * WinPR: Windows Portable Runtime
  * WinPR Logger
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Armin Novak <armin.novak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_WLOG_APPENDER_PRIVATE_H
-#define WINPR_WLOG_APPENDER_PRIVATE_H
+#ifndef WINPR_WLOG_CALLBACK_APPENDER_PRIVATE_H
+#define WINPR_WLOG_CALLBACK_APPENDER_PRIVATE_H
 
 #include <winpr/wlog.h>
 
-#include "wlog/FileAppender.h"
-#include "wlog/BinaryAppender.h"
-#include "wlog/ConsoleAppender.h"
-#include "wlog/CallbackAppender.h"
-
-void WLog_Appender_Free(wLog* log, wLogAppender* appender);
-
 #include "wlog/wlog.h"
 
-#endif /* WINPR_WLOG_APPENDER_PRIVATE_H */
- 
+WINPR_API wLogCallbackAppender* WLog_CallbackAppender_New(wLog* log);
+WINPR_API void WLog_CallbackAppender_Free(wLog* log, wLogCallbackAppender* appender);
+
+#endif /* WINPR_WLOG_CALLBACK_APPENDER_PRIVATE_H */
