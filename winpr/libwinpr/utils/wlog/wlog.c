@@ -511,7 +511,10 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 		log->Name = _strdup(name);
 
 		if (!log->Name)
+		{
+			free (log);
 			return NULL;
+		}
 
 		WLog_ParseName(log, name);
 		log->Parent = rootLogger;
@@ -520,7 +523,11 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 		log->Children = (wLog**) calloc(log->ChildrenSize, sizeof(wLog*));
 
 		if (!log->Children)
+		{
+			free (log->Name);
+			free (log);
 			return NULL;
+		}
 
 		log->Appender = NULL;
 
