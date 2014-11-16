@@ -22,6 +22,9 @@
 #endif
 
 #include <freerdp/codec/interleaved.h>
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("codec")
 
 /*
    RLE Compressed Bitmap Stream (RLE_BITMAP_STREAM)
@@ -363,13 +366,13 @@ int interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData
 
 	if (nWidth % 4)
 	{
-		fprintf(stderr, "interleaved_compress: width is not a multiple of 4\n");
+		WLog_ERR(TAG, "interleaved_compress: width is not a multiple of 4");
 		return -1;
 	}
 
 	if ((nWidth > 64) || (nHeight > 64))
 	{
-		fprintf(stderr, "interleaved_compress: width (%d) or height (%d) is greater than 64\n", nWidth, nHeight);
+		WLog_ERR(TAG, "interleaved_compress: width (%d) or height (%d) is greater than 64", nWidth, nHeight);
 		return -1;
 	}
 

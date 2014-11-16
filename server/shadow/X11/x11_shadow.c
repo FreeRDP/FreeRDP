@@ -171,7 +171,7 @@ int x11_shadow_pam_authenticate(x11ShadowSubsystem* subsystem, const char* user,
 
 	if (pam_status != PAM_SUCCESS)
 	{
-		fprintf(stderr, "pam_start failure: %s\n", pam_strerror(info->handle, pam_status));
+		WLog_ERR(TAG, "pam_start failure: %s", pam_strerror(info->handle, pam_status));
 		free(info);
 		return -1;
 	}
@@ -180,7 +180,7 @@ int x11_shadow_pam_authenticate(x11ShadowSubsystem* subsystem, const char* user,
 
 	if (pam_status != PAM_SUCCESS)
 	{
-		fprintf(stderr, "pam_authenticate failure: %s\n", pam_strerror(info->handle, pam_status));
+		WLog_ERR(TAG, "pam_authenticate failure: %s", pam_strerror(info->handle, pam_status));
 		free(info);
 		return -1;
 	}
@@ -189,7 +189,7 @@ int x11_shadow_pam_authenticate(x11ShadowSubsystem* subsystem, const char* user,
 
 	if (pam_status != PAM_SUCCESS)
 	{
-		fprintf(stderr, "pam_acct_mgmt failure: %s\n", pam_strerror(info->handle, pam_status));
+		WLog_ERR(TAG, "pam_acct_mgmt failure: %s", pam_strerror(info->handle, pam_status));
 		free(info);
 		return -1;
 	}
@@ -1133,7 +1133,7 @@ int x11_shadow_subsystem_init(x11ShadowSubsystem* subsystem)
 
 	if ((subsystem->depth != 24) && (subsystem->depth != 32))
 	{
-		fprintf(stderr, "x11_shadow_subsystem_init: unsupported X11 server color depth: %d\n", subsystem->depth);
+		WLog_ERR(TAG, "unsupported X11 server color depth: %d", subsystem->depth);
 		return -1;
 	}
 

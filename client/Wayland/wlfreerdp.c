@@ -23,12 +23,15 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/gdi/gdi.h>
 
 #include <wayland-client.h>
+
+#define TAG CLIENT_TAG("wayland")
 
 struct display
 {
@@ -101,7 +104,7 @@ static void window_redraw(void* data, struct wl_callback* callback, uint32_t tim
 	fdt = ftruncate(fd, window->width * window->height * 4);
 	if (fdt != 0)
 	{
-		fprintf(stderr, "window_redraw: could not allocate memory\n");
+		WLog_ERR(TAG, "window_redraw: could not allocate memory");
 		close(fd);
 		return;
 	}
@@ -109,7 +112,7 @@ static void window_redraw(void* data, struct wl_callback* callback, uint32_t tim
 	buffer->shm_data = mmap(0, window->width * window->height * 4, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (buffer->shm_data == MAP_FAILED)
 	{
-		fprintf(stderr, "window_redraw: failed to memory map buffer\n");
+		WLog_ERR(TAG, "window_redraw: failed to memory map buffer");
 		close(fd);
 		return;
 	}
@@ -220,8 +223,8 @@ BOOL wl_pre_connect(freerdp* instance)
 
 	if (!display->display)
 	{
-		fprintf(stderr, "wl_pre_connect: failed to connect to Wayland compositor\n");
-		fprintf(stderr, "Please check that the XDG_RUNTIME_DIR environment variable is properly set.\n");
+		WLog_ERR(TAG, "wl_pre_connect: failed to connect to Wayland compositor");
+		WLog_ERR(TAG, "Please check that the XDG_RUNTIME_DIR environment variable is properly set.");
 		free(display);
 		return FALSE;
 	}
@@ -232,7 +235,7 @@ BOOL wl_pre_connect(freerdp* instance)
 
 	if (!display->compositor || !display->shell || !display->shm)
 	{
-		fprintf(stderr, "wl_pre_connect: failed to find needed compositor interfaces\n");
+		WLog_ERR(TAG, "wl_pre_connect: failed to find needed compositor interfaces");
 		free(display);
 		return FALSE;
 	}
