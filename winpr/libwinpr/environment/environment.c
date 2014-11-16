@@ -366,7 +366,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 		// check if this value is in the mergeStrings
 		foundMerge = 0;
-
+		ULONG old_offset = offset;
 		for (run = 0; run < mergeStringLength; run ++)
 		{
 			if (!mergeStrings[run])
@@ -401,6 +401,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 							return NULL;
 						}
 						lpszEnvironmentBlock = tmp;
+						p = &(lpszEnvironmentBlock[old_offset]);
 					}
 
 					foundMerge = 1;
