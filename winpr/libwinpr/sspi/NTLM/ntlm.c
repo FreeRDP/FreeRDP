@@ -59,21 +59,22 @@ int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 			return -1;
 
 		if (!GetComputerNameExA(ComputerNameNetBIOS, ws, &nSize))
+		{
+			free(ws);
 			return 0;
+		}
 	}
 
 	context->Workstation.Buffer = NULL;
 	status = ConvertToUnicode(CP_UTF8, 0, ws, -1, &context->Workstation.Buffer, 0);
-	free(ws);
+	if (!Workstation)
+		free(ws);
 
 	if (status <= 0)
 		return -1;
 
 	context->Workstation.Length = (USHORT)(status - 1);
 	context->Workstation.Length *= 2;
-
-	if (!Workstation)
-		free(Workstation);
 
 	return 1;
 }
@@ -127,7 +128,10 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 			return -1;
 
 		if (!GetComputerNameExA(ComputerNameDnsHostname, name, &nSize))
+		{
+			free(name);
 			return -1;
+		}
 
 		CharUpperA(TargetName);
 	}
@@ -136,7 +140,11 @@ int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 	status = ConvertToUnicode(CP_UTF8, 0, name, -1, (LPWSTR*) &context->TargetName.pvBuffer, 0);
 
 	if (status <= 0)
+	{
+		if (TargetName)
+			free(TargetName);
 		return -1;
+	}
 
 	context->TargetName.cbBuffer = (USHORT)((status - 1) * 2);
 
@@ -196,7 +204,10 @@ NTLM_CONTEXT* ntlm_ContextNew()
 			workstation[dwSize] = '\0';
 
 			if (ntlm_SetContextWorkstation(context, workstation) < 0)
+			{
+				free(workstation);
 				return NULL;
+			}
 
 			free(workstation);
 		}
