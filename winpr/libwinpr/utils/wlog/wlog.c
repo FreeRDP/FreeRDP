@@ -321,10 +321,13 @@ int WLog_ParseFilter(wLogFilter* filter, LPCSTR name)
 	count = 1;
 	p = (char*) name;
 
-	while ((p = strchr(p, '.')) != NULL)
+	if (p)
 	{
-		count++;
-		p++;
+		while ((p = strchr(p, '.')) != NULL)
+		{
+			count++;
+			p++;
+		}
 	}
 
 	names = _strdup(name);
