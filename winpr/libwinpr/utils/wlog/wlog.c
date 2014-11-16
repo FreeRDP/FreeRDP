@@ -402,14 +402,20 @@ int WLog_ParseFilters()
 	g_Filters = calloc(g_FilterCount, sizeof(wLogFilter));
 
 	if (!g_Filters)
+	{
+		free(strs);
 		return -1;
+	}
 
 	for (count = 0; count < g_FilterCount; count++)
 	{
 		status = WLog_ParseFilter(&g_Filters[count], strs[count]);
 
 		if (status < 0)
+		{
+			free(strs);
 			return -1;
+		}
 	}
 
 	free(strs);
