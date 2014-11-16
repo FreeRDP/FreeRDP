@@ -325,7 +325,10 @@ int freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 		p += length;
 	}
 
-	p = strstr(p, "ID=\"");
+	if (p)
+		p = strstr(p, "ID=\"");
+	else
+		p = _strdup("ID=\"");
 
 	if (p)
 	{
@@ -348,7 +351,10 @@ int freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 		p += length;
 	}
 
-	p = strstr(p, "<L P=\"");
+	if (p)
+		p = strstr(p, "<L P=\"");
+	else
+		p = _strdup("<L P=\"");
 
 	while (p)
 	{
