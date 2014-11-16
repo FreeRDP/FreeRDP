@@ -570,7 +570,10 @@ int gdi_CreateSurface(RdpgfxClientContext* context, RDPGFX_CREATE_SURFACE_PDU* c
 	surface->data = (BYTE*) calloc(1, surface->scanline * surface->height);
 
 	if (!surface->data)
+	{
+		free (surface);
 		return -1;
+	}
 
 	context->SetSurfaceData(context, surface->surfaceId, (void*) surface);
 
@@ -737,7 +740,10 @@ int gdi_SurfaceToCache(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_CACHE_PDU
 	cacheEntry->data = (BYTE*) calloc(1, cacheEntry->scanline * cacheEntry->height);
 
 	if (!cacheEntry->data)
+	{
+		free (cacheEntry);
 		return -1;
+	}
 
 	freerdp_image_copy(cacheEntry->data, cacheEntry->format, cacheEntry->scanline,
 			0, 0, cacheEntry->width, cacheEntry->height, surface->data,
