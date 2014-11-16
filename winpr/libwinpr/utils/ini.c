@@ -635,7 +635,10 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 		filename = ini->filename;
 
 	if (IniFile_Open_File(ini, filename) < 0)
+	{
+		free(buffer);
 		return -1;
+	}
 
 	fwrite((void*) buffer, length, 1, ini->fp);
 
