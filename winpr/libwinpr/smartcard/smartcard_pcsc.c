@@ -1418,7 +1418,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 	states = (PCSC_SCARD_READERSTATE*) calloc(pcsc_cReaders, sizeof(PCSC_SCARD_READERSTATE));
 
 	if (!states)
+	{
+		free (map);
 		return SCARD_E_NO_MEMORY;
+	}
 
 	for (i = j = 0; i < pcsc_cReaders; i++)
 	{
@@ -1498,13 +1501,13 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 			rgReaderStates[i].dwEventState = SCARD_STATE_IGNORE;
 	}
 
+	free(map);
+	free(states);
 	if ((status == SCARD_S_SUCCESS) && !stateChanged)
 		status = SCARD_E_TIMEOUT;
 	else if ((status == SCARD_E_TIMEOUT) && stateChanged)
 		return SCARD_S_SUCCESS;
 
-	free(states);
-	free(map);
 	return status;
 }
 
@@ -2044,7 +2047,11 @@ WINSCARDAPI LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard,
 		pcsc_pioRecvPci = (PCSC_SCARD_IO_REQUEST*) malloc(sizeof(PCSC_SCARD_IO_REQUEST) + cbExtraBytes);
 
 		if (!pcsc_pioRecvPci)
+		{
+			if (pioSendPci)
+				free (pcsc_pioSendPci);
 			return SCARD_E_NO_MEMORY;
+		}
 
 		pcsc_pioRecvPci->dwProtocol = (PCSC_DWORD) pioRecvPci->dwProtocol;
 		pcsc_pioRecvPci->cbPciLength = sizeof(PCSC_SCARD_IO_REQUEST) + cbExtraBytes;
