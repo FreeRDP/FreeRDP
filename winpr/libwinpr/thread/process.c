@@ -245,8 +245,14 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		{
 			if (token->GroupId)
 			{
-				setgid((gid_t) token->GroupId);
-				initgroups(token->Username, (gid_t) token->GroupId);
+				int rc = setgid((gid_t) token->GroupId);
+				if (rc < 0)
+				{
+				}
+				else
+				{
+					initgroups(token->Username, (gid_t) token->GroupId);
+				}
 			}
 
 			if (token->UserId)
