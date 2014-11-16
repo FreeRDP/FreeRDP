@@ -614,8 +614,27 @@ int WLog_AddChild(wLog* parent, wLog* child)
 {
 	if (parent->ChildrenCount >= parent->ChildrenSize)
 	{
+		wLog **tmp;
 		parent->ChildrenSize *= 2;
-		parent->Children = (wLog**) realloc(parent->Children, sizeof(wLog*) * parent->ChildrenSize);
+		if (!parent->ChildrenSize)
+		{
+			if (parent->Children)
+				free (parent->Children);
+			parent->Children = NULL;
+			
+		}
+		else
+		{
+			tmp = (wLog**) realloc(parent->Children, sizeof(wLog*) * parent->ChildrenSize);
+			if (!tmp)
+			{
+				if (parent->Children)
+					free (parent->Children);
+				parent->Children = NULL;
+				return -1;
+			}
+		parent->Children = tmp
+		}
 	}
 
 	parent->Children[parent->ChildrenCount++] = child;
