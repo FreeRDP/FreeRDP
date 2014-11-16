@@ -651,7 +651,7 @@ cleanup:
 	if (font)
 	{
 		if (font->image)
-			winpr_image_free(font->image);
+			winpr_image_free(font->image, TRUE);
 		free (font);
 	}
 
