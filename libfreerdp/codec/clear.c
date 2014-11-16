@@ -59,7 +59,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	UINT32 i;
 	BOOL invert;
 	UINT32 x, y;
-	UINT32 count;
+	UINT32 count = 0;
 	UINT32 color;
 	int nXDstRel;
 	int nYDstRel;
@@ -848,7 +848,10 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 		clear->nsc = nsc_context_new();
 
 		if (!clear->nsc)
+		{
+			free (clear);
 			return NULL;
+		}
 
 		nsc_context_set_pixel_format(clear->nsc, RDP_PIXEL_FORMAT_R8G8B8);
 
