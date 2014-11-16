@@ -675,18 +675,29 @@ rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, BYTE* imageData, int imageS
 	font->image = winpr_image_new();
 
 	if (!font->image)
+	{
+		free(font);
 		return NULL;
+	}
 
 	status = winpr_image_read_buffer(font->image, imageData, imageSize);
 
 	if (status < 0)
+	{
+		winpr_image_free(font->image, TRUE);
+		free(font);
 		return NULL;
+	}
 
 	size = descriptorSize;
 	buffer = (BYTE*) malloc(size);
 
 	if (!buffer)
+	{
+		winpr_image_free(font->image, TRUE);
+		free(font);
 		return NULL;
+	}
 
 	CopyMemory(buffer, descriptorData, size);
 
