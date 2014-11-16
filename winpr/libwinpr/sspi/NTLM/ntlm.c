@@ -198,7 +198,10 @@ NTLM_CONTEXT* ntlm_ContextNew()
 			char* workstation = (char*) malloc(dwSize + 1);
 
 			if (!workstation)
+			{
+				free (context);
 				return NULL;
+			}
 
 			status = RegQueryValueExA(hKey, "WorkstationName", NULL, &dwType, (BYTE*) workstation, &dwSize);
 			workstation[dwSize] = '\0';
@@ -206,8 +209,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 			if (ntlm_SetContextWorkstation(context, workstation) < 0)
 			{
 				free(workstation);
-				if (context)
-					free(context);
+				free(context);
 				return NULL;
 			}
 
