@@ -633,7 +633,7 @@ int WLog_AddChild(wLog* parent, wLog* child)
 				parent->Children = NULL;
 				return -1;
 			}
-		parent->Children = tmp
+			parent->Children = tmp;
 		}
 	}
 
