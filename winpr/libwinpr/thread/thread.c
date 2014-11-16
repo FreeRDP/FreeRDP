@@ -426,6 +426,7 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
 
 VOID ExitThread(DWORD dwExitCode)
 {
+	DWORD rc;
 	pthread_t tid = pthread_self();
 
 	if (!thread_list)
@@ -460,10 +461,11 @@ VOID ExitThread(DWORD dwExitCode)
 		ListDictionary_Unlock(thread_list);
 		set_event(thread);
 
+		rc = thread->dwExitCode;
 		if (thread->detached || !thread->started)
 			cleanup_handle(thread);
 
-		pthread_exit((void*) (size_t) thread->dwExitCode);
+		pthread_exit((void*) (size_t) rc);
 	}
 }
 
