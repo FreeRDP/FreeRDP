@@ -206,6 +206,8 @@ NTLM_CONTEXT* ntlm_ContextNew()
 			if (ntlm_SetContextWorkstation(context, workstation) < 0)
 			{
 				free(workstation);
+				if (context)
+					free(context);
 				return NULL;
 			}
 
