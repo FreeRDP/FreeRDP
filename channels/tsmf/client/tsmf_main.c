@@ -434,7 +434,10 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context = (TsmfClientContext*) calloc(1, sizeof(TsmfClientContext));
 
 		if (!context)
+		{
+			free (tsmf);
 			return -1;
+		}
 
 		context->handle = (void*) tsmf;
 		tsmf->iface.pInterface = (void*) context;
