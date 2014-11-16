@@ -386,7 +386,10 @@ int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 	msg->pixels = (BYTE*) malloc(msg->scanline * msg->height);
 
 	if (!msg->pixels)
+	{
+		free (msg);
 		return -1;
+	}
 
 	CopyMemory(msg->pixels, subsystem->cursorPixels, msg->scanline * msg->height);
 	msg->premultiplied = TRUE;
