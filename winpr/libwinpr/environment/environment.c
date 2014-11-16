@@ -355,11 +355,17 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 		while ((offset + length + 8) > cchEnvironmentBlock)
 		{
+			LPCH tmp;
 			cchEnvironmentBlock *= 2;
-			lpszEnvironmentBlock = (LPCH) realloc(lpszEnvironmentBlock, cchEnvironmentBlock * sizeof(CHAR));
+			tmp = (LPCH) realloc(lpszEnvironmentBlock, cchEnvironmentBlock * sizeof(CHAR));
 
-			if (!lpszEnvironmentBlock)
+			if (!tmp)
+			{
+				if (lpszEnvironmentBlock)
+					free (lpszEnvironmentBlock);	
 				return NULL;
+			}
+			lpszEnvironmentBlock = tmp;
 		}
 
 		p = &(lpszEnvironmentBlock[offset]);
