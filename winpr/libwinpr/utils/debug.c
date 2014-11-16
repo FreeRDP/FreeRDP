@@ -207,7 +207,10 @@ void *winpr_backtrace(DWORD size)
 	data->buffer = calloc(size, sizeof(void *));
 
 	if (!data->buffer)
+	{
+		free(data);
 		return NULL;
+	}
 
 	data->max = size;
 	data->used = backtrace(data->buffer, size);
