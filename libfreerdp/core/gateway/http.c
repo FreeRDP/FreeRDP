@@ -573,7 +573,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			count = 0;
 			line = strtok((char*) buffer, "\r\n");
 
-			while (line != NULL)
+			while ((line != NULL) && http_response->lines)
 			{
 				http_response->lines[count] = _strdup(line);
 
@@ -658,7 +658,10 @@ void http_response_free(HttpResponse* http_response)
 		return;
 
 	for (i = 0; i < http_response->count; i++)
-		free(http_response->lines[i]);
+	{
+		if (http_response->lines && http_response->lines[i])
+			free(http_response->lines[i]);
+	}
 
 	free(http_response->lines);
 	free(http_response->ReasonPhrase);
