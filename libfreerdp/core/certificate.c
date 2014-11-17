@@ -698,6 +698,7 @@ rdpRsaKey* key_new(const char* keyfile)
 
 	BIO_free(bio);
 	free(buffer);
+	buffer = NULL;
 
 	if (!rsa)
 	{
