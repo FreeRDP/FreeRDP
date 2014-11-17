@@ -22,7 +22,6 @@
 #endif
 
 #include <winpr/crt.h>
-#include <winpr/log.h>
 #include <winpr/io.h>
 #include <winpr/nt.h>
 #include <winpr/library.h>
@@ -32,6 +31,7 @@
 #include "wtsapi_win32.h"
 
 #include "wtsapi.h"
+#include "../log.h"
 
 #define WTSAPI_CHANNEL_MAGIC	0x44484356
 #define TAG WINPR_TAG("wtsapi")
