@@ -117,6 +117,7 @@ BOOL rdp_read_share_control_header(wStream* s, UINT16* length, UINT16* type, UIN
 	if (*length == 0x8000)
 	{
 		rdp_read_flow_control_pdu(s, type);
+		*channel_id = 0;
 		*length = 8;	/* Flow control PDU is 8 bytes */
 		return TRUE;
 	}

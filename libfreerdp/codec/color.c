@@ -1604,7 +1604,10 @@ HCLRCONV freerdp_clrconv_new(UINT32 flags)
 	clrconv->palette = (rdpPalette*) calloc(1, sizeof(rdpPalette));
 
 	if (!clrconv->palette)
+	{
+		free (clrconv);
 		return NULL;
+	}
 
 	return clrconv;
 }

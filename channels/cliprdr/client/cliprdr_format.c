@@ -127,7 +127,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	{
 		UINT32 index;
 		int formatNameLength;
-		CLIPRDR_FORMAT* formats;
+		CLIPRDR_FORMAT* formats = NULL;
 		CLIPRDR_FORMAT_LIST formatList;
 
 		formatList.msgType = CB_FORMAT_LIST;
@@ -151,7 +151,11 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 		dataLen = formatList.dataLen;
 		Stream_Rewind(s, dataLen);
 
-		formats = (CLIPRDR_FORMAT*) malloc(sizeof(CLIPRDR_FORMAT) * formatList.numFormats);
+		if (formatList.numFormats)
+			formats = (CLIPRDR_FORMAT*) calloc(formatList.numFormats, sizeof(CLIPRDR_FORMAT));
+		if (!formats)
+			return;
+
 		formatList.formats = formats;
 
 		while (dataLen)
@@ -172,6 +176,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 			}
 			else
 			{
+				formats[index].formatName = NULL;
 				Stream_Seek(s, 2);
 				dataLen -= 2;
 			}
@@ -186,7 +191,10 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 			context->ServerFormatList(context, &formatList);
 
 		for (index = 0; index < formatList.numFormats; index++)
-			free(formats[index].formatName);
+		{
+			if (formats[index].formatName)
+				free(formats[index].formatName);
+		}
 
 		free(formats);
 	}

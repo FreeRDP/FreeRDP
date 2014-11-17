@@ -407,7 +407,10 @@ rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client)
 	encoder->height = server->screen->height;
 
 	if (shadow_encoder_init(encoder) < 0)
+	{
+		free (encoder);
 		return NULL;
+	}
 
 	return encoder;
 }

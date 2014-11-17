@@ -55,7 +55,8 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 	if (!callback || !callback->channel || !callback->channel->Write)
 	{
 		WLog_ERR(TAG, "callback=%p, channel=%p, write=%p", callback,
-				   callback->channel, callback->channel->Write);
+				   callback ? callback->channel : NULL,
+				   (callback && callback->channel) ? callback->channel->Write : NULL);
 	}
 	else
 	{
@@ -434,7 +435,10 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		context = (TsmfClientContext*) calloc(1, sizeof(TsmfClientContext));
 
 		if (!context)
+		{
+			free (tsmf);
 			return -1;
+		}
 
 		context->handle = (void*) tsmf;
 		tsmf->iface.pInterface = (void*) context;

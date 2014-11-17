@@ -346,7 +346,7 @@ static void drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 
 	}
 
-	if (file->is_dir && !dir_empty(file->fullpath))
+	if (file && file->is_dir && !dir_empty(file->fullpath))
 		irp->IoStatus = STATUS_DIRECTORY_NOT_EMPTY;
 
 	Stream_Write_UINT32(irp->output, Length);

@@ -119,7 +119,13 @@ int rdpgfx_decode_h264(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 	status = rdpgfx_read_h264_metablock(gfx, s, &(h264.meta));
 
 	if (status < 0)
+	{
+		if (h264.meta.regionRects)
+			free(h264.meta.regionRects);
+		if (h264.meta.quantQualityVals)
+			free(h264.meta.quantQualityVals);
 		return -1;
+	}
 
 	h264.data = Stream_Pointer(s);
 	h264.length = (UINT32) Stream_GetRemainingLength(s);

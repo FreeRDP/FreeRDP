@@ -370,7 +370,10 @@ freerdp_listener* freerdp_listener_new(void)
 	listener = (rdpListener*) calloc(1, sizeof(rdpListener));
 
 	if (!listener)
+	{
+		free (instance);
 		return NULL;
+	}
 
 	listener->instance = instance;
 

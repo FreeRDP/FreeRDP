@@ -181,6 +181,9 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	InitWinPRPipeModule();
 	pNamedPipe = (WINPR_NAMED_PIPE*) calloc(1, sizeof(WINPR_NAMED_PIPE));
+	if (!pNamedPipe)
+		return INVALID_HANDLE_VALUE;
+
 	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
 
 	if (!(pNamedPipe->name = _strdup(lpName)))

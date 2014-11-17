@@ -672,7 +672,10 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		context = (DrdynvcClientContext*) calloc(1, sizeof(DrdynvcClientContext));
 
 		if (!context)
+		{
+			free(drdynvc);
 			return -1;
+		}
 
 		context->handle = (void*) drdynvc;
 		context->custom = NULL;
