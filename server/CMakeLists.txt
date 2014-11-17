@@ -33,7 +33,11 @@ if(FREERDP_VENDOR)
 		#add_subdirectory(Windows)
 	endif()
 
-	if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/FreeRDS")
+	if(NOT DEFINED WITH_FREERDS)
+		set(WITH_FREERDS 1)
+	endif()
+
+	if(WITH_FREERDS AND (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/FreeRDS"))
 		add_subdirectory("FreeRDS")
 	endif()
 endif()
