@@ -657,12 +657,12 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* serv
 
 rdpRsaKey* key_new(const char* keyfile)
 {
-	BIO* bio;
-	FILE* fp;
-	RSA* rsa;
+	BIO* bio = NULL;
+	FILE* fp = NULL;
+	RSA* rsa = NULL;
 	int length;
-	BYTE* buffer;
-	rdpRsaKey* key;
+	BYTE* buffer = NULL;
+	rdpRsaKey* key = NULL;
 
 	key = (rdpRsaKey*) calloc(1, sizeof(rdpRsaKey));
 
@@ -752,6 +752,10 @@ out_free_modulus:
 out_free_rsa:
 	RSA_free(rsa);
 out_free:
+	if (fp)
+		fclose(fp);
+	if (buffer)
+		free(buffer);
 	free(key);
 	return NULL;
 }
