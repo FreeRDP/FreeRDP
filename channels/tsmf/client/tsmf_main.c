@@ -55,7 +55,8 @@ void tsmf_playback_ack(IWTSVirtualChannelCallback *pChannelCallback,
 	if (!callback || !callback->channel || !callback->channel->Write)
 	{
 		WLog_ERR(TAG, "callback=%p, channel=%p, write=%p", callback,
-				   callback->channel, callback->channel->Write);
+				   callback ? callback->channel : NULL,
+				   (callback && callback->channel) ? callback->channel->Write : NULL);
 	}
 	else
 	{
