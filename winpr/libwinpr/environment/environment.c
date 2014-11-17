@@ -354,6 +354,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 	while ((original != NULL) && (*envp && *(envp+1)))
 	{
+		ULONG old_offset = offset;
 		length = strlen(envp);
 
 		while ((offset + length + 8) > cchEnvironmentBlock)
@@ -375,7 +376,6 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 		// check if this value is in the mergeStrings
 		foundMerge = 0;
-		ULONG old_offset = offset;
 		for (run = 0; run < mergeStringLength; run ++)
 		{
 			if (!mergeStrings[run])
