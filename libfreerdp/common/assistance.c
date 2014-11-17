@@ -168,7 +168,10 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 		q = strchr(p, ':');
 
 		if (!q)
+		{
+			free(tokens);
 			return -1;
+		}
 
 		q[0] = '\0';
 		q++;
