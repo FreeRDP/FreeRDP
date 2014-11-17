@@ -178,7 +178,8 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 
 		break;
 	}
-
+	if (tokens)
+		free(tokens);
 	return 1;
 }
 
