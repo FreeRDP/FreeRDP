@@ -405,7 +405,10 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		packetQuarEncResponse = (PTSG_PACKET_QUARENC_RESPONSE) calloc(1, sizeof(TSG_PACKET_QUARENC_RESPONSE));
 
 		if (!packetQuarEncResponse) // TODO: handle cleanup
+		{
+			free(packet);
 			return FALSE;
+		}
 
 		packet->tsgPacket.packetQuarEncResponse = packetQuarEncResponse;
 		/* PacketQuarResponsePtr (4 bytes) */
@@ -441,7 +444,11 @@ BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		versionCaps = (PTSG_PACKET_VERSIONCAPS) calloc(1, sizeof(TSG_PACKET_VERSIONCAPS));
 
 		if (!versionCaps) // TODO: handle cleanup
+		{
+			free(packetQuarEncResponse);
+			free(packet);
 			return FALSE;
+		}
 
 		packetQuarEncResponse->versionCaps = versionCaps;
 		versionCaps->tsgHeader.ComponentId = *((UINT16*) &buffer[offset]); /* ComponentId */
