@@ -112,6 +112,7 @@ struct _wLogLayout
 #define WLOG_APPENDER_CONSOLE	0
 #define WLOG_APPENDER_FILE	1
 #define WLOG_APPENDER_BINARY	2
+#define WLOG_APPENDER_CALLBACK	3
 
 #define WLOG_PACKET_INBOUND	1
 #define WLOG_PACKET_OUTBOUND	2
@@ -178,6 +179,22 @@ struct _wLogBinaryAppender
 	FILE* FileDescriptor;
 };
 typedef struct _wLogBinaryAppender wLogBinaryAppender;
+
+typedef void (*CallbackAppenderMessage_t)(const wLogMessage *msg);
+typedef void (*CallbackAppenderData_t)(const wLogMessage *msg);
+typedef void (*CallbackAppenderImage_t)(const wLogMessage *msg);
+typedef void (*CallbackAppenderPackage_t)(const wLogMessage *msg);
+
+struct _wLogCallbackAppender
+{
+	WLOG_APPENDER_COMMON();
+
+	CallbackAppenderMessage_t message;
+	CallbackAppenderData_t data;
+	CallbackAppenderImage_t image;
+	CallbackAppenderPackage_t package;
+};
+typedef struct _wLogCallbackAppender wLogCallbackAppender;
 
 /**
  * Filter
@@ -308,6 +325,10 @@ WINPR_API void WLog_ConsoleAppender_SetOutputStream(wLog* log, wLogConsoleAppend
 
 WINPR_API void WLog_FileAppender_SetOutputFileName(wLog* log, wLogFileAppender* appender, const char* filename);
 WINPR_API void WLog_FileAppender_SetOutputFilePath(wLog* log, wLogFileAppender* appender, const char* filepath);
+
+WINPR_API void WLog_CallbackAppender_SetCallbacks(wLog* log, wLogCallbackAppender* appender,
+	CallbackAppenderMessage_t msg, CallbackAppenderImage_t img, CallbackAppenderPackage_t pkg,
+	CallbackAppenderData_t data);
 
 WINPR_API wLogLayout* WLog_GetLogLayout(wLog* log);
 WINPR_API void WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* format);
