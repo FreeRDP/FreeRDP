@@ -341,14 +341,21 @@ wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize)
 		pool->aArray = (wStream**) calloc(pool->aCapacity, sizeof(wStream*));
 
 		if (!pool->aArray)
+		{
+			free(pool);
 			return NULL;
+		}
 
 		pool->uSize = 0;
 		pool->uCapacity = 32;
 		pool->uArray = (wStream**) calloc(pool->uCapacity, sizeof(wStream*));
 
 		if (!pool->uArray)
+		{
+			free(pool->aArray);
+			free(pool);
 			return NULL;
+		}
 
 		InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 	}

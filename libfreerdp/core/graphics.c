@@ -216,7 +216,10 @@ rdpGraphics* graphics_new(rdpContext* context)
 		graphics->Bitmap_Prototype = (rdpBitmap*) calloc(1, sizeof(rdpBitmap));
 
 		if (!graphics->Bitmap_Prototype)
+		{
+			free (graphics);
 			return NULL;
+		}
 
 		graphics->Bitmap_Prototype->size = sizeof(rdpBitmap);
 		graphics->Bitmap_Prototype->New = Bitmap_New;
@@ -225,7 +228,11 @@ rdpGraphics* graphics_new(rdpContext* context)
 		graphics->Pointer_Prototype = (rdpPointer*) calloc(1, sizeof(rdpPointer));
 
 		if (!graphics->Pointer_Prototype)
+		{
+			free (graphics->Bitmap_Prototype);
+			free (graphics);
 			return NULL;
+		}
 
 		graphics->Pointer_Prototype->size = sizeof(rdpPointer);
 		graphics->Pointer_Prototype->New = Pointer_New;
@@ -234,7 +241,12 @@ rdpGraphics* graphics_new(rdpContext* context)
 		graphics->Glyph_Prototype = (rdpGlyph*) calloc(1, sizeof(rdpGlyph));
 
 		if (!graphics->Glyph_Prototype)
+		{
+			free (graphics->Pointer_Prototype);
+			free (graphics->Bitmap_Prototype);
+			free (graphics);
 			return NULL;
+		}
 
 		graphics->Glyph_Prototype->size = sizeof(rdpGlyph);
 		graphics->Glyph_Prototype->New = Glyph_New;

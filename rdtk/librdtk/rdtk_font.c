@@ -583,30 +583,30 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 {
 	int status;
 	int length;
-	rdtkFont* font;
-	char* fontBaseFile;
-	char* fontImageFile;
-	char* fontDescriptorFile;
+	rdtkFont* font = NULL;
+	char* fontBaseFile = NULL;
+	char* fontImageFile = NULL;
+	char* fontDescriptorFile = NULL;
 
 	fontBaseFile = GetCombinedPath(path, file);
 
 	if (!fontBaseFile)
-		return NULL;
+		goto cleanup;
 
 	length = strlen(fontBaseFile);
 
 	fontImageFile = (char*) malloc(length + 8);
 
 	if (!fontImageFile)
-		return NULL;
+		goto cleanup;
 
 	strcpy(fontImageFile, fontBaseFile);
 	strcpy(&fontImageFile[length], ".png");
 
 	fontDescriptorFile = (char*) malloc(length + 8);
 
-	if (!fontImageFile)
-		return NULL;
+	if (!fontDescriptorFile)
+		goto cleanup;
 
 	strcpy(fontDescriptorFile, fontBaseFile);
 	strcpy(&fontDescriptorFile[length], ".xml");
@@ -614,27 +614,27 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 	free(fontBaseFile);
 
 	if (!PathFileExistsA(fontImageFile))
-		return NULL;
+		goto cleanup;
 
 	if (!PathFileExistsA(fontDescriptorFile))
-		return NULL;
+		goto cleanup;
 
 	font = (rdtkFont*) calloc(1, sizeof(rdtkFont));
 
 	if (!font)
-		return NULL;
+		goto cleanup;
 
 	font->engine = engine;
 
 	font->image = winpr_image_new();
 
 	if (!font->image)
-		return NULL;
+		goto cleanup;
 
 	status = winpr_image_read(font->image, fontImageFile);
 
 	if (status < 0)
-		return NULL;
+		goto cleanup;
 
 	status = rdtk_font_load_descriptor(font, fontDescriptorFile);
 
@@ -642,6 +642,20 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 	free(fontDescriptorFile);
 
 	return font;
+
+cleanup:
+	if (fontImageFile)
+		free (fontImageFile);
+	if (fontDescriptorFile)
+		free (fontDescriptorFile);
+	if (font)
+	{
+		if (font->image)
+			winpr_image_free(font->image, TRUE);
+		free (font);
+	}
+
+	return NULL;
 }
 
 rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, BYTE* imageData, int imageSize, BYTE* descriptorData, int descriptorSize)
@@ -661,18 +675,29 @@ rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, BYTE* imageData, int imageS
 	font->image = winpr_image_new();
 
 	if (!font->image)
+	{
+		free(font);
 		return NULL;
+	}
 
 	status = winpr_image_read_buffer(font->image, imageData, imageSize);
 
 	if (status < 0)
+	{
+		winpr_image_free(font->image, TRUE);
+		free(font);
 		return NULL;
+	}
 
 	size = descriptorSize;
 	buffer = (BYTE*) malloc(size);
 
 	if (!buffer)
+	{
+		winpr_image_free(font->image, TRUE);
+		free(font);
 		return NULL;
+	}
 
 	CopyMemory(buffer, descriptorData, size);
 

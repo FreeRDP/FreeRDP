@@ -2731,7 +2731,7 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 
 			if (Stream_GetPosition(s) != end)
 			{
-				fprintf(stderr, "error while reading codec properties: actual offset: %d expected offset: %d\n",
+				WLog_ERR(TAG, "error while reading codec properties: actual offset: %d expected offset: %d",
 						(int) Stream_GetPosition(s), end);
 				Stream_SetPosition(s, end);
 			}

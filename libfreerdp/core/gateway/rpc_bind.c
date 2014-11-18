@@ -229,9 +229,15 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	clientCall = rpc_client_call_new(bind_pdu->call_id, 0);
 	if (!clientCall)
+	{
+		free(buffer);
 		return -1;
+	}
 	if (ArrayList_Add(rpc->client->ClientCallList, clientCall) < 0)
+	{
+		free(buffer);
 		return -1;
+	}
 
 	if (rpc_send_enqueue_pdu(rpc, buffer, length) != 0)
 		length = -1;

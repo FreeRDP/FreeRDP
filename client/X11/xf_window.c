@@ -397,9 +397,9 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char *name, int width, int heig
 		{
 			XMoveWindow(xfc->display, window->handle, settings->DesktopPosX, settings->DesktopPosY);
 		}
+	
+		XStoreName(xfc->display, window->handle, name);
 	}
-
-	XStoreName(xfc->display, window->handle, name);
 
 	return window;
 }

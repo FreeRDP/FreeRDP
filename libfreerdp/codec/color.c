@@ -28,9 +28,12 @@
 #include <winpr/crt.h>
 
 #include <freerdp/api.h>
+#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/primitives.h>
 #include <freerdp/codec/color.h>
+
+#define TAG FREERDP_TAG("color")
 
 int freerdp_get_pixel(BYTE* data, int x, int y, int width, int height, int bpp)
 {
@@ -1372,7 +1375,7 @@ int freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat, int nDs
 		return 1;
 	}
 
-	fprintf(stderr, "freerdp_image_copy_from_monochrome failure: dstBytesPerPixel: %d dstBitsPerPixel: %d\n",
+	WLog_ERR(TAG, "failure: dstBytesPerPixel: %d dstBitsPerPixel: %d",
 			dstBytesPerPixel, dstBitsPerPixel);
 
 	return -1;
@@ -1563,7 +1566,7 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 		}
 	}
 
-	fprintf(stderr, "freerdp_image_copy_from_pointer_data: failed to convert from %d bpp to %d bpp\n",
+	WLog_ERR(TAG, "failed to convert from %d bpp to %d bpp",
 			xorBpp, dstBitsPerPixel);
 
 	return -1;
@@ -1604,7 +1607,10 @@ HCLRCONV freerdp_clrconv_new(UINT32 flags)
 	clrconv->palette = (rdpPalette*) calloc(1, sizeof(rdpPalette));
 
 	if (!clrconv->palette)
+	{
+		free (clrconv);
 		return NULL;
+	}
 
 	return clrconv;
 }
@@ -3312,7 +3318,7 @@ int freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst,
 		dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(DstFormat);
 		dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(DstFormat) / 8);
 
-		fprintf(stderr, "freerdp_image_copy failure: src: %d/%d dst: %d/%d\n",
+		WLog_ERR(TAG, "failure: src: %d/%d dst: %d/%d",
 				srcBitsPerPixel, srcBytesPerPixel, dstBitsPerPixel, dstBytesPerPixel);
 	}
 

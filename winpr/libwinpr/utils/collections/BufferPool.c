@@ -222,7 +222,9 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 
 		if (!found)
 		{
-			if (pool->alignment)
+			if (!size)
+				buffer = NULL;
+			else if (pool->alignment)
 				buffer = _aligned_malloc(size, pool->alignment);
 			else
 				buffer = malloc(size);

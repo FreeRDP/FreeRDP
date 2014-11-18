@@ -44,12 +44,19 @@ rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, int x, int y, int 
 	surface->data = (BYTE*) malloc(surface->scanline * surface->height);
 
 	if (!surface->data)
+	{
+		free (surface);
 		return NULL;
+	}
 
 	ZeroMemory(surface->data, surface->scanline * surface->height);
 
 	if (!InitializeCriticalSectionAndSpinCount(&(surface->lock), 4000))
+	{
+		free (surface->data);
+		free (surface);
 		return NULL;
+	}
 
 	region16_init(&(surface->invalidRegion));
 

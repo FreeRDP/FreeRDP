@@ -21,7 +21,14 @@ set(MODULE_PREFIX "FREERDP_CLIENT_WAYLAND")
 include_directories(${WAYLAND_INCLUDE_DIRS})
 
 set(${MODULE_PREFIX}_SRCS
-	wlfreerdp.c)
+	wlf_display.c
+	wlf_display.h
+	wlf_window.c
+	wlf_window.h
+	wlf_input.c
+	wlf_input.h
+	wlfreerdp.c
+	wlfreerdp.h)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 

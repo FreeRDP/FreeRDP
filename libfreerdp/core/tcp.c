@@ -603,7 +603,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 
 		status = getaddrinfo(hostname, port_str, &hints, &result);
 		if (status) {
-			fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+			WLog_ERR(TAG, "getaddrinfo: %s", gai_strerror(status));
 			return FALSE;
 		}
 
@@ -627,7 +627,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 		}
 
 		if (connect(tcp->sockfd, tmp->ai_addr, tmp->ai_addrlen) < 0) {
-			fprintf(stderr, "connect: %s\n", strerror(errno));
+			WLog_ERR(TAG, "connect: %s", strerror(errno));
 			freeaddrinfo(result);
 			return FALSE;
 		}

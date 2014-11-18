@@ -31,8 +31,10 @@
 #include "wtsapi_win32.h"
 
 #include "wtsapi.h"
+#include "../log.h"
 
 #define WTSAPI_CHANNEL_MAGIC	0x44484356
+#define TAG WINPR_TAG("wtsapi")
 
 struct _WTSAPI_CHANNEL
 {
@@ -108,13 +110,13 @@ BOOL Win32_WTSVirtualChannelReadAsync(WTSAPI_CHANNEL* pChannel)
 
 	if (status)
 	{
-		fprintf(stderr, "Unexpected ReadFile status: %d numBytes: %d\n", status, numBytes);
+		WLog_ERR(TAG, "Unexpected ReadFile status: %d numBytes: %d", status, numBytes);
 		return FALSE; /* ReadFile should return FALSE and set ERROR_IO_PENDING */
 	}
 
 	if (GetLastError() != ERROR_IO_PENDING)
 	{
-		fprintf(stderr, "ReadFile: GetLastError() = %d\n", GetLastError());
+		WLog_ERR(TAG, "ReadFile: GetLastError() = %d", GetLastError());
 		return FALSE;
 	}
 

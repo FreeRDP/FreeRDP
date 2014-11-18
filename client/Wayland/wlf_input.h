@@ -1,8 +1,8 @@
 /**
- * WinPR: Windows Portable Runtime
- * WinPR Logger
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Wayland Input
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Manuel Bachmann <tarnyko@tarnyko.net>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,24 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_WLOG_APPENDER_PRIVATE_H
-#define WINPR_WLOG_APPENDER_PRIVATE_H
+#ifndef __WLF_INPUT_H
+#define __WLF_INPUT_H
 
-#include <winpr/wlog.h>
+#include <wayland-client.h>
 
-#include "wlog/FileAppender.h"
-#include "wlog/BinaryAppender.h"
-#include "wlog/ConsoleAppender.h"
-#include "wlog/CallbackAppender.h"
+typedef struct wlf_input wlfInput;
 
-void WLog_Appender_Free(wLog* log, wLogAppender* appender);
+#include "wlfreerdp.h"
 
-#include "wlog/wlog.h"
+struct wlf_input
+{
+	rdpInput *input;
 
-#endif /* WINPR_WLOG_APPENDER_PRIVATE_H */
- 
+	struct wl_pointer *pointer;
+	struct wl_keyboard *keyboard;
+};
+
+wlfInput* wlf_CreateInput(wlfContext* wlfc);
+void wlf_DestroyInput(wlfContext* wlfc, wlfInput* input);
+
+#endif /* __WLF_INPUT_H */

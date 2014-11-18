@@ -317,6 +317,8 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	CopyMemory(pSrcData, data, SrcSize);
 
 	bSuccess = ClipboardSetData(clipboard->system, formatId, (void*) pSrcData, SrcSize);
+	if (!bSuccess)
+		free (pSrcData);
 
 	pFormatIds = NULL;
 	count = ClipboardGetFormatIds(clipboard->system, &pFormatIds);
@@ -992,6 +994,8 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	CopyMemory(pSrcData, data, SrcSize);
 
 	bSuccess = ClipboardSetData(clipboard->system, formatId, (void*) pSrcData, SrcSize);
+	if (!bSuccess)
+		free (pSrcData);
 
 	if (bSuccess && altFormatId)
 	{

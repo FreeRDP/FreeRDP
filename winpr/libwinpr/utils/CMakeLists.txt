@@ -72,6 +72,8 @@ set(${MODULE_PREFIX}_WLOG_SRCS
 	wlog/FileAppender.h
 	wlog/BinaryAppender.c
 	wlog/BinaryAppender.h
+	wlog/CallbackAppender.c
+	wlog/CallbackAppender.h
 	wlog/ConsoleAppender.c
 	wlog/ConsoleAppender.h)
 

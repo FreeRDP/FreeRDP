@@ -655,6 +655,10 @@ int freerdp_split_color_planes(BYTE* data, UINT32 format, int width, int height,
 			}
 		}
 	}
+	else
+	{
+		return -1;
+	}
 
 	return 0;
 }
@@ -1014,7 +1018,10 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data,
 
 	planeSize = width * height;
 
-	freerdp_split_color_planes(data, format, width, height, scanline, context->planes);
+	if (freerdp_split_color_planes(data, format, width, height, scanline, context->planes) < 0)
+	{
+		return NULL;
+	}
 
 	if (context->AllowRunLengthEncoding)
 	{
