@@ -1134,6 +1134,14 @@ BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_reactivate(rdpRdp* rdp)
 {
+	freerdp_peer* client = NULL;
+
+	if (rdp->context && rdp->context->peer)
+		client = rdp->context->peer;
+
+	if (client)
+		client->activated = FALSE;
+
 	if (!rdp_send_deactivate_all(rdp))
 		return FALSE;
 
@@ -1236,10 +1244,13 @@ int rdp_server_transition_to_state(rdpRdp* rdp, int state)
 						return -1;
 				}
 
-				IFCALLRET(client->Activate, client->activated, client);
+				if (rdp->state >= CONNECTION_STATE_ACTIVE)
+				{
+					IFCALLRET(client->Activate, client->activated, client);
 
-				if (!client->activated)
-					return -1;
+					if (!client->activated)
+						return -1;
+				}
 			}
 
 			break;
