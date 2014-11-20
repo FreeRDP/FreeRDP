@@ -20,9 +20,12 @@
 #include "config.h"
 #endif
 
+#include <freerdp/log.h>
 #include <rdtk/rdtk.h>
 
 #include <X11/Xlib.h>
+
+#define TAG "rdtk.sample"
 
 int main(int argc, char** argv)
 {
@@ -56,7 +59,7 @@ int main(int argc, char** argv)
 
 	if (!display)
 	{
-		fprintf(stderr, "Cannot open display\n");
+		WLog_ERR(TAG, "Cannot open display");
 		exit(1);
 	}
 

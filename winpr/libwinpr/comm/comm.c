@@ -471,6 +471,7 @@ BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 
 
 	memcpy(lpDCB, lpLocalDcb, lpDCB->DCBlength);
+	free(lpLocalDcb);
 	return TRUE;
 
 

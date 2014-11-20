@@ -237,6 +237,7 @@ static BOOL thread_compare(void* a, void* b)
  * in thread function. */
 static void* thread_launcher(void* arg)
 {
+	DWORD res = -1;
 	void* rc = NULL;
 	WINPR_THREAD* thread = (WINPR_THREAD*) arg;
 
@@ -260,15 +261,18 @@ static void* thread_launcher(void* arg)
 
 exit:
 
-	if (!thread->exited)
-		thread->dwExitCode = (DWORD)(size_t)rc;
+	if (thread)
+	{
+		if (!thread->exited)
+			thread->dwExitCode = (DWORD)(size_t)rc;
 
-	set_event(thread);
+		set_event(thread);
 
-	if (thread->detached || !thread->started)
-		cleanup_handle(thread);
-
-	pthread_exit((void*) (size_t) thread->dwExitCode);
+		res = thread->dwExitCode;
+		if (thread->detached || !thread->started)
+			cleanup_handle(thread);
+	}
+	pthread_exit((void*) (size_t) res);
 	return rc;
 }
 
@@ -431,6 +435,7 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
 
 VOID ExitThread(DWORD dwExitCode)
 {
+	DWORD rc;
 	pthread_t tid = pthread_self();
 
 	if (!thread_list)
@@ -465,10 +470,11 @@ VOID ExitThread(DWORD dwExitCode)
 		ListDictionary_Unlock(thread_list);
 		set_event(thread);
 
+		rc = thread->dwExitCode;
 		if (thread->detached || !thread->started)
 			cleanup_handle(thread);
 
-		pthread_exit((void*) (size_t) thread->dwExitCode);
+		pthread_exit((void*) (size_t) rc);
 	}
 }
 

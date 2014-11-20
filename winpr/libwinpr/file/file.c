@@ -484,7 +484,8 @@ BOOL ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 				}
 			}
 
-			*lpNumberOfBytesRead = io_status;
+			if (lpNumberOfBytesRead)
+				*lpNumberOfBytesRead = io_status;
 		}
 		else
 		{

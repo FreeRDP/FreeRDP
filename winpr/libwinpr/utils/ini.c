@@ -635,7 +635,10 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 		filename = ini->filename;
 
 	if (IniFile_Open_File(ini, filename) < 0)
+	{
+		free(buffer);
 		return -1;
+	}
 
 	fwrite((void*) buffer, length, 1, ini->fp);
 
@@ -654,7 +657,7 @@ wIniFile* IniFile_New()
 	{
 		ini->nSections = 0;
 		ini->cSections = 64;
-		ini->sections = (wIniFileSection**) malloc(sizeof(wIniFileSection) * ini->cSections);
+		ini->sections = (wIniFileSection**) calloc(ini->cSections, sizeof(wIniFileSection*));
 	}
 
 	return ini;

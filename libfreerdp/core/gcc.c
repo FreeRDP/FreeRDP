@@ -373,6 +373,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
 					return FALSE;
 				break;
 
+			case 0xC009:
 			case CS_MULTITRANSPORT:
 				if (!gcc_read_client_multitransport_channel_data(s, mcs, blockLength - 4))
 					return FALSE;

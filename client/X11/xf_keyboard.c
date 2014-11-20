@@ -314,8 +314,8 @@ UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc)
 void xf_keyboard_focus_in(xfContext* xfc)
 {
 	rdpInput* input;
-	UINT32 syncFlags;
-	int dummy, mouseX, mouseY;
+	UINT32 syncFlags = 0;
+	int dummy, mouseX = 0, mouseY = 0;
 	Window wdummy;
 	UINT32 state = 0;
 

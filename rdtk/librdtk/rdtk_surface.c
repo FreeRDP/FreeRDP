@@ -59,7 +59,10 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, BYTE* data, int width, int hei
 		surface->data = (BYTE*) malloc(surface->scanline * surface->height);
 
 		if (!surface->data)
+		{
+			free(surface);
 			return NULL;
+		}
 
 		ZeroMemory(surface->data, surface->scanline * surface->height);
 

@@ -2731,7 +2731,7 @@ BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, UINT16 length, rdpSetting
 
 			if (Stream_GetPosition(s) != end)
 			{
-				fprintf(stderr, "error while reading codec properties: actual offset: %d expected offset: %d\n",
+				WLog_ERR(TAG, "error while reading codec properties: actual offset: %d expected offset: %d",
 						(int) Stream_GetPosition(s), end);
 				Stream_SetPosition(s, end);
 			}
@@ -2818,14 +2818,28 @@ void rdp_write_rfx_client_capability_container(wStream* s, rdpSettings* settings
  */
 void rdp_write_nsc_client_capability_container(wStream* s, rdpSettings* settings)
 {
+	BYTE colorLossLevel;
+	BYTE fAllowSubsampling;
+	BYTE fAllowDynamicFidelity;
+
+	fAllowDynamicFidelity = settings->NSCodecAllowDynamicColorFidelity;
+	fAllowSubsampling = settings->NSCodecAllowSubsampling;
+	colorLossLevel = settings->NSCodecColorLossLevel;
+
+	if (colorLossLevel < 1)
+		colorLossLevel = 1;
+
+	if (colorLossLevel > 7)
+		colorLossLevel = 7;
+
 	Stream_EnsureRemainingCapacity(s, 8);
 
 	Stream_Write_UINT16(s, 3); /* codecPropertiesLength */
 
 	/* TS_NSCODEC_CAPABILITYSET */
-	Stream_Write_UINT8(s, settings->NSCodecAllowDynamicColorFidelity);  /* fAllowDynamicFidelity */
-	Stream_Write_UINT8(s, settings->NSCodecAllowSubsampling);  /* fAllowSubsampling */
-	Stream_Write_UINT8(s, settings->NSCodecColorLossLevel);  /* colorLossLevel */
+	Stream_Write_UINT8(s, fAllowDynamicFidelity);  /* fAllowDynamicFidelity (1 byte) */
+	Stream_Write_UINT8(s, fAllowSubsampling);  /* fAllowSubsampling (1 byte) */
+	Stream_Write_UINT8(s, colorLossLevel);  /* colorLossLevel (1 byte) */
 }
 
 void rdp_write_jpeg_client_capability_container(wStream* s, rdpSettings* settings)

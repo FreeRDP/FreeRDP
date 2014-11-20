@@ -824,7 +824,10 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc)
 	length = header.frag_length;
 
 	if (rpc_in_write(rpc, buffer, length) < 0)
+	{
+		free (buffer);
 		return -1;
+	}
 	free(buffer);
 
 	return length;
@@ -866,7 +869,10 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	length = header.frag_length;
 
 	if (rpc_in_write(rpc, buffer, length) < 0)
+	{
+		free (buffer);
 		return -1;
+	}
 	free(buffer);
 
 	return 0;
@@ -958,7 +964,10 @@ int rts_send_ping_pdu(rdpRpc* rpc)
 	length = header.frag_length;
 
 	if (rpc_in_write(rpc, buffer, length) < 0)
+	{
+		free (buffer);
 		return -1;
+	}
 	free(buffer);
 
 	return length;

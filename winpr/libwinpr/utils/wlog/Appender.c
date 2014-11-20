@@ -43,6 +43,10 @@ wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 	{
 		appender = (wLogAppender*) WLog_BinaryAppender_New(log);
 	}
+	else if (logAppenderType == WLOG_APPENDER_CALLBACK)
+	{
+		appender = (wLogAppender*) WLog_CallbackAppender_New(log);
+	}
 
 	if (!appender)
 		appender = (wLogAppender*) WLog_ConsoleAppender_New(log);
@@ -77,6 +81,10 @@ void WLog_Appender_Free(wLog* log, wLogAppender* appender)
 		else if (appender->Type == WLOG_APPENDER_BINARY)
 		{
 			WLog_BinaryAppender_Free(log, (wLogBinaryAppender*) appender);
+		}
+		else if (appender->Type == WLOG_APPENDER_CALLBACK)
+		{
+			WLog_CallbackAppender_Free(log, (wLogCallbackAppender*) appender);
 		}
 	}
 }

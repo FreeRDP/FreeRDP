@@ -151,7 +151,7 @@ void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL
 			break;
 	}
 
-	if (attributes & FC_POINTER_DEREF)
+	if ((attributes & FC_POINTER_DEREF) && pMemory)
 		pMemory = *(unsigned char**) pMemory;
 
 	pfnSizeRoutine = pfnSizeRoutines[*pNextFormat];

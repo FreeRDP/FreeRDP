@@ -99,7 +99,7 @@ char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
 	index = 0;
 	p = (char*) lpszEnvironmentBlock;
 
-	envp = (char**) malloc(sizeof(char*) * (count + 1));
+	envp = (char**) calloc(count + 1, sizeof(char*));
 	envp[count] = NULL;
 
 	while (p[0] && p[1])
@@ -190,7 +190,6 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	BOOL ret = FALSE;
 
 	pid = 0;
-	envp = NULL;
 	numArgs = 0;
 	lpszEnvironmentBlock = NULL;
 
@@ -245,8 +244,14 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		{
 			if (token->GroupId)
 			{
-				setgid((gid_t) token->GroupId);
-				initgroups(token->Username, (gid_t) token->GroupId);
+				int rc = setgid((gid_t) token->GroupId);
+				if (rc < 0)
+				{
+				}
+				else
+				{
+					initgroups(token->Username, (gid_t) token->GroupId);
+				}
 			}
 
 			if (token->UserId)

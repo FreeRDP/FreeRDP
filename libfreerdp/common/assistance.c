@@ -168,7 +168,10 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 		q = strchr(p, ':');
 
 		if (!q)
+		{
+			free(tokens);
 			return -1;
+		}
 
 		q[0] = '\0';
 		q++;
@@ -178,7 +181,8 @@ int freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
 
 		break;
 	}
-
+	if (tokens)
+		free(tokens);
 	return 1;
 }
 
@@ -325,7 +329,10 @@ int freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 		p += length;
 	}
 
-	p = strstr(p, "ID=\"");
+	if (p)
+		p = strstr(p, "ID=\"");
+	else
+		p = _strdup("ID=\"");
 
 	if (p)
 	{
@@ -348,7 +355,10 @@ int freerdp_assistance_parse_connection_string2(rdpAssistanceFile* file)
 		p += length;
 	}
 
-	p = strstr(p, "<L P=\"");
+	if (p)
+		p = strstr(p, "<L P=\"");
+	else
+		p = _strdup("<L P=\"");
 
 	while (p)
 	{
@@ -509,14 +519,31 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	pbIn = (BYTE*) calloc(1, EncryptedSize);
 	pbOut = (BYTE*) calloc(1, EncryptedSize);
 
-	if (!pbIn)
+	if (!pbIn || !pbOut)
+	{
+		free(PasswordW);
+		free(PassStubW);
+		if (pbIn)
+			free (pbIn);
+		if (pbOut)
+			free (pbOut);
 		return NULL;
+	}
 
 	if (!EncryptedSize)
+	{
+		free(PasswordW);
+		free(PassStubW);
+		free (pbIn);
+		free (pbOut);
 		return NULL;
+	}
 
 	*((UINT32*) pbIn) = cbPassStubW;
 	CopyMemory(&pbIn[4], PassStubW, cbPassStubW);
+
+	free(PasswordW);
+	free(PassStubW);
 
 	EVP_CIPHER_CTX_init(&rc4Ctx);
 
@@ -525,6 +552,8 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	if (!status)
 	{
 		WLog_ERR(TAG,  "EVP_CipherInit_ex failure");
+		free (pbOut);
+		free (pbIn);
 		return NULL;
 	}
 
@@ -533,6 +562,8 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	if (!status)
 	{
 		WLog_ERR(TAG,  "EVP_CipherInit_ex failure");
+		free (pbOut);
+		free (pbIn);
 		return NULL;
 	}
 
@@ -540,10 +571,12 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	cbIn = EncryptedSize;
 
 	status = EVP_EncryptUpdate(&rc4Ctx, pbOut, &cbOut, pbIn, cbIn);
+	free(pbIn);
 
 	if (!status)
 	{
 		WLog_ERR(TAG,  "EVP_CipherUpdate failure");
+		free (pbOut);
 		return NULL;
 	}
 
@@ -552,14 +585,11 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	if (!status)
 	{
 		WLog_ERR(TAG,  "EVP_CipherFinal_ex failure");
+		free (pbOut);
 		return NULL;
 	}
 
 	EVP_CIPHER_CTX_cleanup(&rc4Ctx);
-
-	free(pbIn);
-	free(PasswordW);
-	free(PassStubW);
 
 	*pEncryptedSize = EncryptedSize;
 
@@ -596,7 +626,11 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 			 DerivedKey, sizeof(DerivedKey));
 
 	if (status < 0)
+	{
+		if (PasswordW)
+			free (PasswordW);
 		return -1;
+	}
 
 	ZeroMemory(InitializationVector, sizeof(InitializationVector));
 
@@ -605,7 +639,11 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 	status = EVP_DecryptInit_ex(&aesDec, EVP_aes_128_cbc(), NULL, NULL, NULL);
 
 	if (status != 1)
+	{
+		if (PasswordW)
+			free (PasswordW);
 		return -1;
+	}
 
 	EVP_CIPHER_CTX_set_key_length(&aesDec, (128 / 8));
 	EVP_CIPHER_CTX_set_padding(&aesDec, 0);
@@ -613,7 +651,11 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 	status = EVP_DecryptInit_ex(&aesDec, EVP_aes_128_cbc(), NULL, DerivedKey, InitializationVector);
 
 	if (status != 1)
+	{
+		if (PasswordW)
+			free (PasswordW);
 		return -1;
+	}
 
 	cbOut = cbFinal = 0;
 	cbIn = file->EncryptedLHTicketLength;
@@ -621,18 +663,30 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 	pbOut = (BYTE*) calloc(1, cbIn + AES_BLOCK_SIZE + 2);
 
 	if (!pbOut)
+	{
+		if (PasswordW)
+			free (PasswordW);
 		return -1;
+	}
 
 	status = EVP_DecryptUpdate(&aesDec, pbOut, &cbOut, pbIn, cbIn);
 
 	if (status != 1)
+	{
+		if (PasswordW)
+			free (PasswordW);
+		free (pbOut);
 		return -1;
+	}
 
 	status = EVP_DecryptFinal_ex(&aesDec, pbOut + cbOut, &cbFinal);
 
 	if (status != 1)
 	{
 		WLog_ERR(TAG,  "EVP_DecryptFinal_ex failure");
+		if (PasswordW)
+			free (PasswordW);
+		free (pbOut);
 		return -1;
 	}
 
@@ -647,11 +701,13 @@ int freerdp_assistance_decrypt2(rdpAssistanceFile* file, const char* password)
 	file->ConnectionString2 = NULL;
 	status = ConvertFromUnicode(CP_UTF8, 0, pbOutW, cchOutW, &file->ConnectionString2, 0, NULL, NULL);
 
-	if (status <= 0)
-		return -1;
-
 	free(PasswordW);
 	free(pbOut);
+
+	if (status <= 0)
+	{
+		return -1;
+	}
 
 	status = freerdp_assistance_parse_connection_string2(file);
 	WLog_DBG(TAG, "freerdp_assistance_parse_connection_string2: %d", status);

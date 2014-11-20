@@ -1,8 +1,8 @@
 /**
- * WinPR: Windows Portable Runtime
- * WinPR Logger
+ * FreeRDP: A Remote Desktop Protocol Implementation
+ * Wayland Client
  *
- * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Manuel Bachmann <tarnyko@tarnyko.net>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,29 @@
  * limitations under the License.
  */
 
-#ifndef WINPR_WLOG_APPENDER_PRIVATE_H
-#define WINPR_WLOG_APPENDER_PRIVATE_H
+#ifndef __WLFREERDP_H
+#define __WLFREERDP_H
 
-#include <winpr/wlog.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/log.h>
+#include <winpr/wtypes.h>
 
-#include "wlog/FileAppender.h"
-#include "wlog/BinaryAppender.h"
-#include "wlog/ConsoleAppender.h"
-#include "wlog/CallbackAppender.h"
+#define TAG CLIENT_TAG("wayland")
 
-void WLog_Appender_Free(wLog* log, wLogAppender* appender);
+typedef struct wlf_context wlfContext;
 
-#include "wlog/wlog.h"
+#include "wlf_display.h"
+#include "wlf_window.h"
+#include "wlf_input.h"
 
-#endif /* WINPR_WLOG_APPENDER_PRIVATE_H */
- 
+struct wlf_context
+{
+	rdpContext context;
+
+	wlfDisplay* display;
+	wlfWindow* window;
+	wlfInput* input;
+};
+
+#endif /* __WLFREERDP_H */
+

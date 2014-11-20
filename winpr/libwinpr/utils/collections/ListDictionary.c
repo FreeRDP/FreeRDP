@@ -122,7 +122,7 @@ int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
 {
 	int index;
 	int count;
-	ULONG_PTR* pKeys;
+	ULONG_PTR* pKeys = NULL;
 	wListDictionaryItem* item;
 
 	if (!ppKeys)
@@ -144,7 +144,8 @@ int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
 		}
 	}
 
-	pKeys = (ULONG_PTR*) calloc(count, sizeof(ULONG_PTR));
+	if (count)
+		pKeys = (ULONG_PTR*) calloc(count, sizeof(ULONG_PTR));
 
 	index = 0;
 

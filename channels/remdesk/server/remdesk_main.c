@@ -375,7 +375,8 @@ static int remdesk_server_receive_pdu(RemdeskServerContext* context, wStream* s)
 	winpr_HexDump(Stream_Pointer(s), Stream_GetRemainingLength(s));
 #endif
 
-	remdesk_read_channel_header(s, &header);
+	if (remdesk_read_channel_header(s, &header) < 0)
+		return -1;
 
 	if (strcmp(header.ChannelName, "RC_CTL") == 0)
 	{
