@@ -57,8 +57,26 @@ int mac_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr)
 	
 	mfc->cliprdr->ClientFormatList(mfc->cliprdr, &formatList);
 	
+	for (index = 0; index < numFormats; index++)
+	{
+		free(formats[index].formatName);
+	}
+	
 	free(pFormatIds);
 	free(formats);
+	
+	return 1;
+}
+
+int mac_cliprdr_send_client_format_list_response(CliprdrClientContext* cliprdr, BOOL status)
+{
+	CLIPRDR_FORMAT_LIST_RESPONSE formatListResponse;
+	
+	formatListResponse.msgType = CB_FORMAT_LIST_RESPONSE;
+	formatListResponse.msgFlags = status ? CB_RESPONSE_OK : CB_RESPONSE_FAIL;
+	formatListResponse.dataLen = 0;
+	
+	cliprdr->ClientFormatListResponse(cliprdr, &formatListResponse);
 	
 	return 1;
 }
@@ -172,6 +190,8 @@ int mac_cliprdr_server_format_list(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT
 			mfc->serverFormats[index].formatName = _strdup(formatList->formats[index].formatName);
 	}
 	
+	mac_cliprdr_send_client_format_list_response(cliprdr, TRUE);
+	
 	for (index = 0; index < mfc->numServerFormats; index++)
 	{
 		format = &(mfc->serverFormats[index]);
@@ -247,6 +267,12 @@ int mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIPR
 	mfContext* mfc = (mfContext*) cliprdr->custom;
 	MRDPView* view = (MRDPView*) mfc->view;
 	
+	if (formatDataResponse->msgFlags & CB_RESPONSE_FAIL)
+	{
+		SetEvent(mfc->clipboardRequestEvent);
+		return -1;
+	}
+	
 	for (index = 0; index < mfc->numServerFormats; index++)
 	{
 		if (mfc->requestedFormatId == mfc->serverFormats[index].formatId)
@@ -266,6 +292,13 @@ int mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIPR
 	
 	size = formatDataResponse->dataLen;
 	data = (BYTE*) malloc(size);
+	
+	if (!data)
+	{
+		SetEvent(mfc->clipboardRequestEvent);
+		return -1;
+	}
+	
 	CopyMemory(data, formatDataResponse->requestedFormatData, size);
 	
 	ClipboardSetData(mfc->clipboard, formatId, data, size);

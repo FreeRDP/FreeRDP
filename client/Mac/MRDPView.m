@@ -146,6 +146,9 @@ DWORD mac_client_input_thread(void* param)
 			if (!status)
 				break;
 		}
+		
+		if (!status)
+			break;
 	}
 	
 	ExitThread(0);

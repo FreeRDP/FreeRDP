@@ -41,14 +41,11 @@ struct cliprdr_plugin
 	DWORD OpenHandle;
 	wMessagePipe* MsgPipe;
 
-	int num_format_names;
-	CLIPRDR_FORMAT_NAME* format_names;
-
-	BOOL received_caps;
-	BOOL use_long_format_names;
-	BOOL stream_fileclip_enabled;
-	BOOL fileclip_no_file_paths;
-	BOOL can_lock_clipdata;
+	BOOL capabilitiesReceived;
+	BOOL useLongFormatNames;
+	BOOL streamFileClipEnabled;
+	BOOL fileClipNoFilePaths;
+	BOOL canLockClipData;
 };
 typedef struct cliprdr_plugin cliprdrPlugin;
 
