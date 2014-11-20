@@ -63,6 +63,9 @@ wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId, co
 	UINT32 index;
 	wClipboardFormat* format = NULL;
 
+	if (!clipboard)
+		return NULL;
+	
 	if (formatId)
 	{
 		for (index = 0; index < clipboard->numFormats; index++)
@@ -128,16 +131,25 @@ wClipboardSynthesizer* ClipboardFindSynthesizer(wClipboardFormat* format, UINT32
 
 void ClipboardLock(wClipboard* clipboard)
 {
+	if (!clipboard)
+		return;
+	
 	EnterCriticalSection(&(clipboard->lock));
 }
 
 void ClipboardUnlock(wClipboard* clipboard)
 {
+	if (!clipboard)
+		return;
+	
 	LeaveCriticalSection(&(clipboard->lock));
 }
 
 BOOL ClipboardEmpty(wClipboard* clipboard)
 {
+	if (!clipboard)
+		return NULL;
+	
 	if (clipboard->data)
 	{
 		free((void*) clipboard->data);
@@ -152,6 +164,9 @@ BOOL ClipboardEmpty(wClipboard* clipboard)
 
 UINT32 ClipboardCountRegisteredFormats(wClipboard* clipboard)
 {
+	if (!clipboard)
+		return 0;
+	
 	return clipboard->numFormats;
 }
 
@@ -160,6 +175,9 @@ UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard, UINT32** ppFormatI
 	UINT32 index;
 	UINT32* pFormatIds;
 	wClipboardFormat* format;
+	
+	if (!clipboard)
+		return 0;
 
 	if (!ppFormatIds)
 		return 0;
@@ -188,6 +206,9 @@ UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard, UINT32** ppFormatI
 UINT32 ClipboardRegisterFormat(wClipboard* clipboard, const char* name)
 {
 	wClipboardFormat* format;
+	
+	if (!clipboard)
+		return 0;
 
 	format = ClipboardFindFormat(clipboard, 0, name);
 
@@ -228,6 +249,9 @@ BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId,
 	UINT32 index;
 	wClipboardFormat* format;
 	wClipboardSynthesizer* synthesizer;
+	
+	if (!clipboard)
+		return FALSE;
 
 	format = ClipboardFindFormat(clipboard, formatId, NULL);
 
@@ -264,6 +288,9 @@ UINT32 ClipboardCountFormats(wClipboard* clipboard)
 {
 	UINT32 count;
 	wClipboardFormat* format;
+	
+	if (!clipboard)
+		return 0;
 
 	format = ClipboardFindFormat(clipboard, clipboard->formatId, NULL);
 
@@ -282,6 +309,9 @@ UINT32 ClipboardGetFormatIds(wClipboard* clipboard, UINT32** ppFormatIds)
 	UINT32* pFormatIds;
 	wClipboardFormat* format;
 	wClipboardSynthesizer* synthesizer;
+	
+	if (!clipboard)
+		return 0;
 
 	format = ClipboardFindFormat(clipboard, clipboard->formatId, NULL);
 
@@ -320,6 +350,9 @@ BOOL ClipboardInitFormats(wClipboard* clipboard)
 {
 	UINT32 formatId = 0;
 	wClipboardFormat* format;
+	
+	if (!clipboard)
+		return FALSE;
 
 	for (formatId = 0; formatId < CF_MAX; formatId++)
 	{
@@ -342,6 +375,9 @@ UINT32 ClipboardGetFormatId(wClipboard* clipboard, const char* name)
 {
 	wClipboardFormat* format;
 
+	if (!clipboard)
+		return 0;
+	
 	format = ClipboardFindFormat(clipboard, 0, name);
 
 	if (!format)
@@ -353,6 +389,9 @@ UINT32 ClipboardGetFormatId(wClipboard* clipboard, const char* name)
 const char* ClipboardGetFormatName(wClipboard* clipboard, UINT32 formatId)
 {
 	wClipboardFormat* format;
+	
+	if (!clipboard)
+		return NULL;
 
 	format = ClipboardFindFormat(clipboard, formatId, NULL);
 
@@ -370,6 +409,9 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 	void* pDstData = NULL;
 	wClipboardFormat* format;
 	wClipboardSynthesizer* synthesizer;
+	
+	if (!clipboard)
+		return NULL;
 
 	if (!pSize)
 		return NULL;
@@ -413,6 +455,9 @@ void* ClipboardGetData(wClipboard* clipboard, UINT32 formatId, UINT32* pSize)
 BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, UINT32 size)
 {
 	wClipboardFormat* format;
+	
+	if (!clipboard)
+		return FALSE;
 
 	format = ClipboardFindFormat(clipboard, formatId, NULL);
 
@@ -431,11 +476,17 @@ BOOL ClipboardSetData(wClipboard* clipboard, UINT32 formatId, const void* data, 
 
 UINT64 ClipboardGetOwner(wClipboard* clipboard)
 {
+	if (!clipboard)
+		return 0;
+	
 	return clipboard->ownerId;
 }
 
 void ClipboardSetOwner(wClipboard* clipboard, UINT64 ownerId)
 {
+	if (!clipboard)
+		return;
+	
 	clipboard->ownerId = ownerId;
 }
 
