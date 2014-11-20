@@ -86,29 +86,21 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 			{
 				szFormatName = (char*) Stream_Pointer(s);
 				
-				if (!szFormatName[0])
-					formatNameLength = 0;
-				else
-					formatNameLength = strlen(szFormatName);
-				
-				if (formatNameLength)
+				if (szFormatName[0])
 				{
-					formats[index].formatName = _strdup(szFormatName);
+					formats[index].formatName = (char*) malloc(32 + 1);
+					CopyMemory(formats[index].formatName, szFormatName, 32);
+					formats[index].formatName[32] = '\0';
 				}
 			}
 			else
 			{
 				wszFormatName = (WCHAR*) Stream_Pointer(s);
 				
-				if (!wszFormatName[0])
-					formatNameLength = 0;
-				else
-					formatNameLength = _wcslen(wszFormatName);
-				
-				if (formatNameLength)
+				if (wszFormatName[0])
 				{
 					ConvertFromUnicode(CP_UTF8, 0, wszFormatName,
-						-1, &(formats[index].formatName), 0, NULL, NULL);
+						16, &(formats[index].formatName), 0, NULL, NULL);
 				}
 			}
 			
@@ -183,9 +175,6 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 	for (index = 0; index < formatList.numFormats; index++)
 	{
-		fprintf(stderr, "[%02d] Format: 0x%04X %s\n",
-			index, formats[index].formatId, formats[index].formatName);
-		
 		if (formats[index].formatName)
 			free(formats[index].formatName);
 	}

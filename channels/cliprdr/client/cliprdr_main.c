@@ -420,7 +420,7 @@ int cliprdr_client_capabilities(CliprdrClientContext* context, CLIPRDR_CAPABILIT
 	wStream* s;
 	CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*) context->handle;
-
+	
 	s = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
 
 	Stream_Write_UINT16(s, 1); /* cCapabilitiesSets */
@@ -523,6 +523,8 @@ int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIS
 				
 				Stream_Write(s, wszFormatName, formatNameSize * 2);
 				Stream_Zero(s, 32 - (formatNameSize * 2));
+				
+				free(wszFormatName);
 			}
 		}
 	}
