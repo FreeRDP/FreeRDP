@@ -3,6 +3,7 @@
  * Input Virtual Channel Extension
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 David Fort <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -586,4 +587,24 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 	}
 
 	return TRUE;
+}
+
+void touch_event_reset(RDPINPUT_TOUCH_EVENT *event)
+{
+	int i;
+
+	for (i = 0; i < event->frameCount; i++)
+		touch_frame_reset(&event->frames[i]);
+
+	free(event->frames);
+	event->frames = NULL;
+	event->frameCount = 0;
+}
+
+
+void touch_frame_reset(RDPINPUT_TOUCH_FRAME *frame)
+{
+	free(frame->contacts);
+	frame->contacts = NULL;
+	frame->contactCount = 0;
 }

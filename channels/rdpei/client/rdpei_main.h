@@ -29,30 +29,10 @@
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
 
+#include <freerdp/channels/rdpei.h>
 #include <freerdp/client/rdpei.h>
 
 #define TAG CHANNELS_TAG("rdpei.client")
-
-#define RDPINPUT_HEADER_LENGTH				6
-
-/* Protocol Version */
-
-#define RDPINPUT_PROTOCOL_V10				0x00010000
-#define RDPINPUT_PROTOCOL_V101				0x00010001
-
-/* Client Ready Flags */
-
-#define READY_FLAGS_SHOW_TOUCH_VISUALS			0x00000001
-#define READY_FLAGS_DISABLE_TIMESTAMP_INJECTION		0x00000002
-
-/* Input Event Ids */
-
-#define EVENTID_SC_READY				0x0001
-#define EVENTID_CS_READY				0x0002
-#define EVENTID_TOUCH					0x0003
-#define EVENTID_SUSPEND_TOUCH				0x0004
-#define EVENTID_RESUME_TOUCH				0x0005
-#define EVENTID_DISMISS_HOVERING_CONTACT		0x0006
 
 #define RDPINPUT_CONTACT_STATE_INITIAL			0x0000
 #define RDPINPUT_CONTACT_STATE_ENGAGED			0x0001
