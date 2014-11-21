@@ -148,7 +148,7 @@ void ClipboardUnlock(wClipboard* clipboard)
 BOOL ClipboardEmpty(wClipboard* clipboard)
 {
 	if (!clipboard)
-		return NULL;
+		return FALSE;
 	
 	if (clipboard->data)
 	{
