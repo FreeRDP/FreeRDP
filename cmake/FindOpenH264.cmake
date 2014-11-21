@@ -1,6 +1,8 @@
 # - Try to find the OpenH264 library
 # Once done this will define
 #
+#  OPENH264_ROOT - A list of search hints
+#
 #  OPENH264_FOUND - system has OpenH264
 #  OPENH264_INCLUDE_DIR - the OpenH264 include directory
 #  OPENH264_LIBRARIES - libopenh264 library
@@ -9,8 +11,11 @@ if (OPENH264_INCLUDE_DIR AND OPENH264_LIBRARY)
 	set(OPENH264_FIND_QUIETLY TRUE)
 endif (OPENH264_INCLUDE_DIR AND OPENH264_LIBRARY)
 
-find_path(OPENH264_INCLUDE_DIR NAMES wels/codec_api.h wels/codec_app_def.h wels/codec_def.h)
-find_library(OPENH264_LIBRARY openh264)
+find_path(OPENH264_INCLUDE_DIR NAMES wels/codec_api.h wels/codec_app_def.h wels/codec_def.h HINTS ${OPENH264_ROOT})
+find_library(OPENH264_LIBRARY NAMES openh264 welsdec PATH_SUFFIXES lib HINTS ${OPENH264_ROOT})
+
+include(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(OpenH264 DEFAULT_MSG OPENH264_LIBRARY OPENH264_INCLUDE_DIR)
 
 if (OPENH264_INCLUDE_DIR AND OPENH264_LIBRARY)
 	set(OPENH264_FOUND TRUE)
