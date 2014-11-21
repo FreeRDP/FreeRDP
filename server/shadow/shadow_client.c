@@ -67,6 +67,12 @@ void shadow_client_context_new(freerdp_peer* peer, rdpShadowClient* client)
 
 	settings->RdpKeyFile = _strdup(settings->PrivateKeyFile);
 
+	if (server->ipcSocket)
+	{
+		settings->LyncRdpMode = TRUE;
+		settings->CompressionEnabled = FALSE;
+	}
+
 	client->inLobby = TRUE;
 	client->mayView = server->mayView;
 	client->mayInteract = server->mayInteract;
@@ -839,12 +845,15 @@ int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* m
 		pointerPosition.xPos = msg->xPos;
 		pointerPosition.yPos = msg->yPos;
 
-		if ((msg->xPos != client->pointerX) || (msg->yPos != client->pointerY))
+		if (client->activated)
 		{
-			IFCALL(update->pointer->PointerPosition, context, &pointerPosition);
+			if ((msg->xPos != client->pointerX) || (msg->yPos != client->pointerY))
+			{
+				IFCALL(update->pointer->PointerPosition, context, &pointerPosition);
 
-			client->pointerX = msg->xPos;
-			client->pointerY = msg->yPos;
+				client->pointerX = msg->xPos;
+				client->pointerY = msg->yPos;
+			}
 		}
 
 		free(msg);
@@ -869,14 +878,17 @@ int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* m
 
 		pointerCached.cacheIndex = pointerColor->cacheIndex;
 
-		shadow_client_convert_alpha_pointer_data(msg->pixels, msg->premultiplied,
-				msg->width, msg->height, pointerColor);
+		if (client->activated)
+		{
+			shadow_client_convert_alpha_pointer_data(msg->pixels, msg->premultiplied,
+					msg->width, msg->height, pointerColor);
 
-		IFCALL(update->pointer->PointerNew, context, &pointerNew);
-		IFCALL(update->pointer->PointerCached, context, &pointerCached);
+			IFCALL(update->pointer->PointerNew, context, &pointerNew);
+			IFCALL(update->pointer->PointerCached, context, &pointerCached);
 
-		free(pointerColor->xorMaskData);
-		free(pointerColor->andMaskData);
+			free(pointerColor->xorMaskData);
+			free(pointerColor->andMaskData);
+		}
 
 		free(msg->pixels);
 		free(msg);

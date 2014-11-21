@@ -2077,11 +2077,24 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		}
 	}
 
+	if (settings->LyncRdpMode)
+	{
+		settings->EncomspVirtualChannel = TRUE;
+		settings->RemdeskVirtualChannel = TRUE;
+		settings->CompressionEnabled = FALSE;
+	}
+
 	if (settings->RemoteAssistanceMode)
 	{
-		freerdp_client_load_static_channel_addin(channels, settings, "encomsp", settings);
-		freerdp_client_load_static_channel_addin(channels, settings, "remdesk", settings);
+		settings->EncomspVirtualChannel = TRUE;
+		settings->RemdeskVirtualChannel = TRUE;
 	}
+
+	if (settings->EncomspVirtualChannel)
+		freerdp_client_load_static_channel_addin(channels, settings, "encomsp", settings);
+
+	if (settings->RemdeskVirtualChannel)
+		freerdp_client_load_static_channel_addin(channels, settings, "remdesk", settings);
 
 	for (index = 0; index < settings->StaticChannelCount; index++)
 	{
