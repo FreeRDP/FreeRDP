@@ -64,6 +64,8 @@ static void wl_callback_done(void* data, struct wl_callback* callback, uint32_t 
 	wlfWindow* window = data;
 	wlfBuffer* buffer;
 	struct wl_shm_pool* shm_pool;
+	void* shm_data;
+	void* free_data;
 	int fd;
 	int fdt;
 
@@ -74,7 +76,7 @@ static void wl_callback_done(void* data, struct wl_callback* callback, uint32_t 
 	else
 		return;
 
-	fd = shm_open("wlfreerdp_shm", O_CREAT | O_TRUNC | O_RDWR, 0666);
+	fd = shm_open("wlfreerdp_shm", O_CREAT | O_RDWR, 0666);
 	fdt = ftruncate(fd, window->width * window->height * 4);
 	if (fdt != 0)
 	{
@@ -83,8 +85,8 @@ static void wl_callback_done(void* data, struct wl_callback* callback, uint32_t 
 		return;
 	}
 
-	buffer->shm_data = mmap(0, window->width * window->height * 4, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	if (buffer->shm_data == MAP_FAILED)
+	shm_data = mmap(NULL, window->width * window->height * 4, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (shm_data == MAP_FAILED)
 	{
 		WLog_ERR(TAG, "window_redraw: failed to memory map buffer");
 		close(fd);
@@ -98,6 +100,10 @@ static void wl_callback_done(void* data, struct wl_callback* callback, uint32_t 
 	shm_unlink("wlfreerdp_shm");
 	close(fd);
 
+	free_data = buffer->shm_data;
+	buffer->shm_data = shm_data;
+	munmap(free_data, window->width * window->height * 4);
+
 	 /* this is the real surface data */
 	memcpy(buffer->shm_data, (void*) window->data, window->width * window->height * 4);
 	wl_surface_attach(window->surface, buffer->buffer, 0, 0);
@@ -109,7 +115,6 @@ static void wl_callback_done(void* data, struct wl_callback* callback, uint32_t 
 	wl_surface_commit(window->surface);
 
 	buffer->busy = TRUE;
-	munmap(buffer->shm_data, window->width * window->height * 4);
 }
 
 static const struct wl_callback_listener wl_callback_listener =

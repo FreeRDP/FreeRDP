@@ -48,11 +48,11 @@ void wl_begin_paint(rdpContext* context)
 
 void wl_end_paint(rdpContext* context)
 {
-	char *data;
 	rdpGdi* gdi;
 	wlfDisplay* display;
 	wlfWindow* window;
 	wlfContext* context_w;
+	void* data;
 
 	gdi = context->gdi;
 	if (gdi->primary->hdc->hwnd->invalid->null)
