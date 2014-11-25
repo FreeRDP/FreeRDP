@@ -1401,6 +1401,16 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 	return TRUE;
 }
 
+/**
+ * @brief
+ *
+ * @param[in] tsg
+ * @param[in] data
+ * @param[in] length
+ * @return < 0 on error; 0 if not enough data is available (non blocking mode); > 0 bytes to read
+ */
+
+
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int CopyLength;
