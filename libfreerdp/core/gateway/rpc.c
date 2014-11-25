@@ -459,19 +459,15 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	if (rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length) < 0)
 		length = -1;
 
-	free (buffer);
 	free(request_pdu);
 	return length;
 
 out_free_clientCall:
 	rpc_client_call_free(clientCall);
 out_free_pdu:
-	if (buffer)
-		free (buffer);
-	if (Buffers[1].pvBuffer)
-		free (Buffers[1].pvBuffer);
-	if (request_pdu)
-		free(request_pdu);
+	free (buffer);
+	free (Buffers[1].pvBuffer);
+	free(request_pdu);
 	return -1;
 }
 
