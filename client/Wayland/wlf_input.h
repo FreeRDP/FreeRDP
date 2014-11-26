@@ -28,10 +28,12 @@ typedef struct wlf_input wlfInput;
 
 struct wlf_input
 {
-	rdpInput *input;
+	rdpInput* input;
+	UINT16 last_x;
+	UINT16 last_y;
 
-	struct wl_pointer *pointer;
-	struct wl_keyboard *keyboard;
+	struct wl_pointer* pointer;
+	struct wl_keyboard* keyboard;
 };
 
 wlfInput* wlf_CreateInput(wlfContext* wlfc);
