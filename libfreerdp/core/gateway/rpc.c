@@ -379,6 +379,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
 		return -1;
 	}
+	ZeroMemory(&Buffers, sizeof(Buffers));
 
 	request_pdu = (rpcconn_request_hdr_t*) calloc(1, sizeof(rpcconn_request_hdr_t));
 
