@@ -43,22 +43,29 @@ static void wl_pointer_motion(void* data, struct wl_pointer* pointer, uint32_t t
 
 	input = input_w->input;
 
-	x = wl_fixed_to_int(sx_w);
-	y = wl_fixed_to_int(sy_w);
+	x = (UINT16) wl_fixed_to_int(sx_w);
+	y = (UINT16) wl_fixed_to_int(sy_w);
 
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
+
+	input_w->last_x = x;
+	input_w->last_y = y;
 }
 
 static void wl_pointer_button(void* data, struct wl_pointer* pointer, uint32_t serial, uint32_t time, uint32_t button, uint32_t state)
 {
 	wlfInput* input_w = data;
 	rdpInput* input;
-	int flags;
+	UINT16 x;
+	UINT16 y;
+	UINT16 flags;
 
 	input = input_w->input;
 
 	if (state == WL_POINTER_BUTTON_STATE_PRESSED)
 		flags = PTR_FLAGS_DOWN;
+	else
+		flags = 0;
 
 	switch (button)
 	{
@@ -72,7 +79,33 @@ static void wl_pointer_button(void* data, struct wl_pointer* pointer, uint32_t s
 			flags |= PTR_FLAGS_BUTTON3;
 			break;
 		default:
-			break;
+			return;
+	}
+
+	x = input_w->last_x;
+	y = input_w->last_y;
+
+	input->MouseEvent(input, flags, x, y);
+}
+
+static void wl_pointer_axis(void* data, struct wl_pointer* pointer, uint32_t time, uint32_t axis, wl_fixed_t value)
+{
+	wlfInput* input_w = data;
+	rdpInput* input;
+	UINT16 flags;
+	int direction;
+
+	input = input_w->input;
+
+	flags = PTR_FLAGS_WHEEL;
+
+	if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL)
+	{
+		direction = wl_fixed_to_int(value);
+		if (direction < 0)
+			flags |= 0x0078;
+		else
+			flags |= PTR_FLAGS_WHEEL_NEGATIVE | 0x0088;
 	}
 
 	input->MouseEvent(input, flags, 0, 0);
@@ -84,7 +117,7 @@ static const struct wl_pointer_listener wl_pointer_listener =
 	wl_pointer_leave,
 	wl_pointer_motion,
 	wl_pointer_button,
-	NULL
+	wl_pointer_axis
 };
 
 static void wl_keyboard_keymap(void* data, struct wl_keyboard* keyboard, uint32_t format, int fd, uint32_t size)
@@ -94,7 +127,17 @@ static void wl_keyboard_keymap(void* data, struct wl_keyboard* keyboard, uint32_
 
 static void wl_keyboard_enter(void* data, struct wl_keyboard* keyboard, uint32_t serial, struct wl_surface* surface, struct wl_array* keys)
 {
+	wlfInput* input_w = data;
+	rdpInput* input;
+	UINT16 x;
+	UINT16 y;
 
+	input = input_w->input;
+
+	x = input_w->last_x;
+	y = input_w->last_y;
+
+	input->FocusInEvent(input, 0, x, y);
 }
 
 static void wl_keyboard_leave(void* data, struct wl_keyboard* keyboard, uint32_t serial, struct wl_surface* surface)
@@ -116,7 +159,7 @@ static void wl_keyboard_key(void* data, struct wl_keyboard* keyboard, uint32_t s
 	else
 		key_down = FALSE;
 
-	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(key);
+	rdp_scancode = (DWORD) key;
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 		return;
@@ -183,6 +226,8 @@ wlfInput* wlf_CreateInput(wlfContext* wlfc)
 	if (input)
 	{
 		input->input = wlfc->context.input;
+		input->last_x = 0;
+		input->last_y = 0;
 
 		wl_seat_add_listener(seat, &wl_seat_listener, input);
 	}

@@ -1401,6 +1401,16 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 	return TRUE;
 }
 
+/**
+ * @brief
+ *
+ * @param[in] tsg
+ * @param[in] data
+ * @param[in] length
+ * @return < 0 on error; 0 if not enough data is available (non blocking mode); > 0 bytes to read
+ */
+
+
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
 	int CopyLength;
@@ -1434,16 +1444,32 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		return CopyLength;
 	}
 
-	tsg->pdu = rpc_recv_peek_pdu(rpc);
 
-	if (!tsg->pdu)
+	do
 	{
+		tsg->pdu = rpc_recv_peek_pdu(rpc);
+
+		/* there is a pdu to process - move on*/
+		if (tsg->pdu)
+			break;
+
+		/*
+		 * no pdu available and synchronous is not required
+		 * return 0 to indicate that there is no data
+		 * available at the moment
+		 */
 		if (!tsg->rpc->client->SynchronousReceive)
 			return 0;
 
-		// weird !!!!
-		return tsg_read(tsg, data, length);
-	}
+		/* ensure that the transport wasn't already closed - in case of a retry */
+		if (rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
+		{
+			WLog_ERR(TAG,  "tsg_read error: connection lost");
+			return -1;
+		}
+
+	/* retry in case synchronous receive is required */
+	} while (tsg->rpc->client->SynchronousReceive);
 
 	tsg->PendingPdu = TRUE;
 	tsg->BytesAvailable = Stream_Length(tsg->pdu->s);

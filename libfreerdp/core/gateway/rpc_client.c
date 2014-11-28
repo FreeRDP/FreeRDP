@@ -354,7 +354,10 @@ int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
 
 	if (!pdu)
+	{
+		free(buffer);
 		return -1;
+	}
 
 	pdu->s = Stream_New(buffer, length);
 

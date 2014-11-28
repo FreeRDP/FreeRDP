@@ -149,12 +149,16 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 	{
 		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	}
+	else if (status == 0)
+	{
+		BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	}
 	else
 	{
 		BIO_set_flags(bio, BIO_FLAGS_READ);
 	}
 
-	return status >= 0 ? status : -1;
+	return status > 0 ? status : -1;
 }
 
 static int transport_bio_tsg_puts(BIO* bio, const char* str)

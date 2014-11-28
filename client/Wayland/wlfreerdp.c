@@ -48,33 +48,32 @@ void wl_begin_paint(rdpContext* context)
 
 void wl_end_paint(rdpContext* context)
 {
-	char *data;
 	rdpGdi* gdi;
 	wlfDisplay* display;
 	wlfWindow* window;
 	wlfContext* context_w;
+	void* data;
+	INT32 x, y;
+	UINT32 w, h;
+	int i;
 
 	gdi = context->gdi;
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return;
 
+	x = gdi->primary->hdc->hwnd->invalid->x;
+	y = gdi->primary->hdc->hwnd->invalid->y;
+	w = gdi->primary->hdc->hwnd->invalid->w;
+	h = gdi->primary->hdc->hwnd->invalid->h;
+
 	context_w = (wlfContext*) context;
 	display = context_w->display;
 	window = context_w->window;
 
-	data = realloc(window->data, gdi->width * gdi->height * 4);
-
-	if (!data)
-	{
-		if (window->data)
-			free(window->data);
-		window->data = NULL;
-	}
-	else
-	{
-		window->data = data;
-		memcpy(window->data, (void*) gdi->primary_buffer, gdi->width * gdi->height * 4);
-	}
+	for (i = 0; i < h; i++)
+		memcpy(window->data + ((i+y)*(gdi->width*4)) + x*4,
+		       gdi->primary_buffer + ((i+y)*(gdi->width*4)) + x*4,
+		       w*4);
 
 	wlf_RefreshDisplay(display);
 }
