@@ -193,8 +193,8 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 	}
 
 	ZeroMemory(&sDecParam, sizeof(sDecParam));
-	sDecParam.iOutputColorFormat  = videoFormatI420;
-	sDecParam.uiEcActiveFlag = 1;
+	sDecParam.eOutputColorFormat  = videoFormatI420;
+	sDecParam.eEcActiveIdc = ERROR_CON_FRAME_COPY;
 	sDecParam.sVideoProperty.eVideoBsType = VIDEO_BITSTREAM_DEFAULT;
 
 	status = (*sys->pDecoder)->Initialize(sys->pDecoder, &sDecParam);
