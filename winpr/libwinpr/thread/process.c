@@ -3,6 +3,7 @@
  * Process Thread Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,16 +289,12 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	process->status = 0;
 	process->dwExitCode = 0;
 
-	thread = (WINPR_THREAD*) malloc(sizeof(WINPR_THREAD));
-
-	ZeroMemory(thread, sizeof(WINPR_THREAD));
+	thread = CreateThread(NULL, 0, NULL, NULL, CREATE_SUSPENDED, NULL);
 
 	if (!thread)
 	{
 		goto finish;
 	}
-
-	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
 
 	thread->mainProcess = TRUE;
 
