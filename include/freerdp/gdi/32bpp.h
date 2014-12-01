@@ -26,11 +26,19 @@
 
 typedef int (*pLineTo_32bpp)(HGDI_DC hdc, int nXEnd, int nYEnd);
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API UINT32 gdi_get_color_32bpp(HGDI_DC hdc, GDI_COLOR color);
 
 FREERDP_API int FillRect_32bpp(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
 FREERDP_API int BitBlt_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
 FREERDP_API int PatBlt_32bpp(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight, int rop);
 FREERDP_API int LineTo_32bpp(HGDI_DC hdc, int nXEnd, int nYEnd);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_GDI_32BPP_H */

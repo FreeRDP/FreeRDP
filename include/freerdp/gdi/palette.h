@@ -23,7 +23,15 @@
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API HGDI_PALETTE gdi_CreatePalette(HGDI_PALETTE palette);
 FREERDP_API HGDI_PALETTE gdi_GetSystemPalette(void);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_GDI_PALETTE_H */
