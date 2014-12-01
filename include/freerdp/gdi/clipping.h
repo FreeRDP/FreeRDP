@@ -23,9 +23,17 @@
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API int gdi_SetClipRgn(HGDI_DC hdc, int nXLeft, int nYLeft, int nWidth, int nHeight);
 FREERDP_API HGDI_RGN gdi_GetClipRgn(HGDI_DC hdc);
 FREERDP_API int gdi_SetNullClipRgn(HGDI_DC hdc);
 FREERDP_API int gdi_ClipCoords(HGDI_DC hdc, int *x, int *y, int *w, int *h, int *srcx, int *srcy);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_GDI_CLIPPING_H */

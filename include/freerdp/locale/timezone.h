@@ -24,6 +24,14 @@
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_LOCALE_TIMEZONE_H */

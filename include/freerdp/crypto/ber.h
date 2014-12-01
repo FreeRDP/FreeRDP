@@ -52,6 +52,10 @@
 
 #define BER_PC(_pc)	(_pc ? BER_CONSTRUCT : BER_PRIMITIVE)
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API BOOL ber_read_length(wStream* s, int* length);
 FREERDP_API int ber_write_length(wStream* s, int length);
 FREERDP_API int _ber_sizeof_length(int length);
@@ -80,5 +84,9 @@ FREERDP_API BOOL ber_read_integer(wStream* s, UINT32* value);
 FREERDP_API int ber_write_integer(wStream* s, UINT32 value);
 FREERDP_API BOOL ber_read_integer_length(wStream* s, int* length);
 FREERDP_API int ber_sizeof_integer(UINT32 value);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_CRYPTO_BER_H */

@@ -74,6 +74,10 @@ struct crypto_cert_struct
 	X509 * px509;
 };
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #define	CRYPTO_SHA1_DIGEST_LENGTH	SHA_DIGEST_LENGTH
 typedef struct crypto_sha1_struct* CryptoSha1;
 
@@ -145,5 +149,9 @@ FREERDP_API void crypto_nonce(BYTE* nonce, int size);
 
 FREERDP_API char* crypto_base64_encode(const BYTE* data, int length);
 FREERDP_API void crypto_base64_decode(const char* enc_data, int length, BYTE** dec_data, int* res_length);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_CRYPTO_H */
