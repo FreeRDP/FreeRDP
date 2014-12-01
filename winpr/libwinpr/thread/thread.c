@@ -3,6 +3,7 @@
  * Process Thread Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,7 +289,6 @@ static void winpr_StartThread(WINPR_THREAD *thread)
 	pthread_create(&thread->thread, &attr, thread_launcher, thread);
 	pthread_attr_destroy(&attr);
 	reset_event(thread);
-	ListDictionary_Add(thread_list, &thread->thread, thread);
 	dump_thread(thread);
 	thread->started = TRUE;
 }
@@ -345,6 +345,8 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 		thread_list = ListDictionary_New(TRUE);
 		thread_list->objectKey.fnObjectEquals = thread_compare;
 	}
+
+	ListDictionary_Add(thread_list, &thread->thread, thread);
 
 	if (!(dwCreationFlags & CREATE_SUSPENDED))
 		winpr_StartThread(thread);
