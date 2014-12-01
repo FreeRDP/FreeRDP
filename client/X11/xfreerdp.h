@@ -250,7 +250,7 @@ enum XF_EXIT_CODE
 void xf_lock_x11(xfContext* xfc, BOOL display);
 void xf_unlock_x11(xfContext* xfc, BOOL display);
 
-void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scale);
+void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h);
 void xf_transform_window(xfContext* xfc);
 
 FREERDP_API DWORD xf_exit_code_from_disconnect_reason(DWORD reason);

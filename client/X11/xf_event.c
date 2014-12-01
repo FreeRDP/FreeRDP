@@ -198,8 +198,7 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 	{
 		if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 		{
-			xf_draw_screen_scaled(xfc, x - xfc->offset_x,
-					      y - xfc->offset_y, w, h, FALSE);
+			xf_draw_screen_scaled(xfc, x - xfc->offset_x, y - xfc->offset_y, w, h);
 		}
 		else
 		{

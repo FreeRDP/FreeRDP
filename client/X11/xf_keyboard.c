@@ -496,7 +496,8 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 				e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
 				PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
 			}
-			xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
+
+			xf_draw_screen_scaled(xfc, 0, 0, xfc->originalWidth, xfc->originalHeight);
 			return TRUE;
 		}
 	}
@@ -529,8 +530,8 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 				e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
 				PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
 			}
-			
-			xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
+
+			xf_draw_screen_scaled(xfc, 0, 0, xfc->originalWidth, xfc->originalHeight);
 			return TRUE;
 		}
 	}

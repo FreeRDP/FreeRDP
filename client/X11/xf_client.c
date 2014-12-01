@@ -4,6 +4,8 @@
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2013 Corey Clayton <can.of.tuna@gmail.com>
+ * Copyright 2014 Thincast Technologies GmbH
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +51,7 @@
 
 #ifdef WITH_XRENDER
 #include <X11/extensions/Xrender.h>
+#include <math.h>
 #endif
 
 #include <X11/XKBlib.h>
@@ -133,7 +136,7 @@ void xf_transform_window(xfContext* xfc)
 	}
 }
 
-void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scale)
+void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 {
 #ifdef WITH_XRENDER
 	XTransform transform;
@@ -141,7 +144,21 @@ void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scal
 	Picture primaryPicture;
 	XRenderPictureAttributes pa;
 	XRenderPictFormat *picFormat;
-	XRectangle xr;
+	double xScalingFactor;
+	double yScalingFactor;
+
+	if (xfc->currentWidth <= 0 || xfc->currentHeight <= 0) {
+		WLog_ERR(TAG,  "the current window dimensions are invalid");
+		return;
+	}
+
+	if (xfc->originalWidth <= 0 || xfc->originalHeight <= 0) {
+		WLog_ERR(TAG,  "the original window dimensions are invalid");
+		return;
+	}
+
+	xScalingFactor = xfc->originalWidth / (double)xfc->currentWidth;
+	yScalingFactor = xfc->originalHeight / (double)xfc->currentHeight;
 
 	picFormat = XRenderFindStandardFormat(xfc->display, PictStandardRGB24);
 
@@ -149,38 +166,31 @@ void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scal
 	primaryPicture = XRenderCreatePicture(xfc->display, xfc->primary, picFormat, CPSubwindowMode, &pa);
 	windowPicture = XRenderCreatePicture(xfc->display, xfc->window->handle, picFormat, CPSubwindowMode, &pa);
 
-	transform.matrix[0][0] = XDoubleToFixed(1);
-	transform.matrix[0][1] = XDoubleToFixed(0);
-	transform.matrix[0][2] = XDoubleToFixed(0);
-	transform.matrix[1][0] = XDoubleToFixed(0);
-	transform.matrix[1][1] = XDoubleToFixed(1);
-	transform.matrix[1][2] = XDoubleToFixed(0);
-	transform.matrix[2][0] = XDoubleToFixed(0);
-	transform.matrix[2][1] = XDoubleToFixed(0);
-	transform.matrix[2][2] = XDoubleToFixed(xfc->settings->ScalingFactor);
+	XRenderSetPictureFilter(xfc->display, primaryPicture, FilterBilinear, 0, 0);
+
+	transform.matrix[0][0] = XDoubleToFixed(xScalingFactor);
+	transform.matrix[0][1] = XDoubleToFixed(0.0);
+	transform.matrix[0][2] = XDoubleToFixed(0.0);
+	transform.matrix[1][0] = XDoubleToFixed(0.0);
+	transform.matrix[1][1] = XDoubleToFixed(yScalingFactor);
+	transform.matrix[1][2] = XDoubleToFixed(0.0);
+	transform.matrix[2][0] = XDoubleToFixed(0.0);
+	transform.matrix[2][1] = XDoubleToFixed(0.0);
+	transform.matrix[2][2] = XDoubleToFixed(1.0);
 
 	if ((w != 0) && (h != 0))
 	{
-		if (scale)
-		{
-			xr.x = x * xfc->settings->ScalingFactor;
-			xr.y = y * xfc->settings->ScalingFactor;
-			xr.width = (w+1) * xfc->settings->ScalingFactor;
-			xr.height = (h+1) * xfc->settings->ScalingFactor;
-		}
-		else
-		{
-			xr.x = x;
-			xr.y = y;
-			xr.width = w;
-			xr.height = h;
-		}
+		int x2 = x + w;
+		int y2 = y + h;
 
-		XRenderSetPictureClipRectangles(xfc->display, primaryPicture, 0, 0, &xr, 1);
+		x = floor(x / xScalingFactor) - 1;
+		y = floor(y / yScalingFactor) - 1;
+		w = ceil(x2 / xScalingFactor) + 1 - x;
+		h = ceil(y2 / yScalingFactor) + 1 - y;
 	}
 
 	XRenderSetPictureTransform(xfc->display, primaryPicture, &transform);
-	XRenderComposite(xfc->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, xfc->offset_x, xfc->offset_y, xfc->currentWidth, xfc->currentHeight);
+	XRenderComposite(xfc->display, PictOpSrc, primaryPicture, 0, windowPicture, x, y, 0, 0, xfc->offset_x + x, xfc->offset_y + y, w, h);
 	XRenderFreePicture(xfc->display, primaryPicture);
 	XRenderFreePicture(xfc->display, windowPicture);
 #endif
@@ -224,7 +234,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 			if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 			{
-				xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
+				xf_draw_screen_scaled(xfc, x, y, w, h);
 			}
 			else
 			{
@@ -251,7 +261,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 				if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 				{
-					xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
+					xf_draw_screen_scaled(xfc, x, y, w, h);
 				}
 				else
 				{
@@ -330,7 +340,7 @@ void xf_hw_end_paint(rdpContext* context)
 
 			if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 			{
-				xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
+				xf_draw_screen_scaled(xfc, x, y, w, h);
 			}
 			else
 			{
@@ -362,7 +372,7 @@ void xf_hw_end_paint(rdpContext* context)
 
 				if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
 				{
-					xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
+					xf_draw_screen_scaled(xfc, x, y, w, h);
 				}
 				else
 				{
@@ -981,7 +991,7 @@ BOOL xf_post_connect(freerdp *instance)
 	xfc->originalWidth = settings->DesktopWidth;
 	xfc->originalHeight = settings->DesktopHeight;
 	xfc->currentWidth = xfc->originalWidth;
-	xfc->currentHeight = xfc->originalWidth;
+	xfc->currentHeight = xfc->originalHeight;
 	xfc->settings->ScalingFactor = 1.0;
 	xfc->offset_x = 0;
 	xfc->offset_y = 0;
@@ -1618,7 +1628,7 @@ static void xf_ScalingFactorChangeEventHandler(rdpContext* context, ScalingFacto
 		PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &ev);
 	}
 
-	xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
+	xf_draw_screen_scaled(xfc, 0, 0, xfc->originalWidth, xfc->originalHeight);
 }
 
 /**
