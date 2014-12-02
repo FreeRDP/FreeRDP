@@ -4,6 +4,8 @@
  *
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2013 Corey Clayton <can.of.tuna@gmail.com>
+ * Copyright 2014 Thincast Technologies GmbH
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +31,7 @@
 
 #ifdef WITH_XRENDER
 #include <X11/extensions/Xrender.h>
+#include <math.h>
 #endif
 
 #ifdef WITH_XI
@@ -45,10 +48,6 @@
 
 #ifdef WITH_XI
 #include <X11/extensions/XInput2.h>
-#endif
-
-#ifdef WITH_XRENDER
-#include <X11/extensions/Xrender.h>
 #endif
 
 #include <X11/XKBlib.h>
@@ -104,44 +103,63 @@
 
 static const size_t password_size = 512;
 
-void xf_transform_window(xfContext* xfc)
-{
-	int ret;
-	int w;
-	int h;
-	long supplied;
-	Atom hints_atom;
-	XSizeHints *size_hints = NULL;
-	hints_atom = XInternAtom(xfc->display, "WM_SIZE_HINTS", 1);
-	ret = XGetWMSizeHints(xfc->display, xfc->window->handle, size_hints, &supplied, hints_atom);
-	if (ret == 0)
-		size_hints = XAllocSizeHints();
-	w = (xfc->originalWidth * xfc->settings->ScalingFactor) + xfc->offset_x;
-	h = (xfc->originalHeight * xfc->settings->ScalingFactor) + xfc->offset_y;
-	if (w < 1)
-		w = 1;
-	if (h < 1)
-		h = 1;
-	if (size_hints)
-	{
-		size_hints->flags |= PMinSize | PMaxSize;
-		size_hints->min_width = size_hints->max_width = w;
-		size_hints->min_height = size_hints->max_height = h;
-		XSetWMNormalHints(xfc->display, xfc->window->handle, size_hints);
-		XResizeWindow(xfc->display, xfc->window->handle, w, h);
-		XFree(size_hints);
-	}
-}
-
-void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scale)
-{
 #ifdef WITH_XRENDER
+static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
+{
 	XTransform transform;
 	Picture windowPicture;
 	Picture primaryPicture;
 	XRenderPictureAttributes pa;
 	XRenderPictFormat *picFormat;
-	XRectangle xr;
+	double xScalingFactor;
+	double yScalingFactor;
+	int x2;
+	int y2;
+
+	if (xfc->scaledWidth <= 0 || xfc->scaledHeight <= 0)
+	{
+		WLog_ERR(TAG,  "the current window dimensions are invalid");
+		return;
+	}
+
+	if (xfc->width <= 0 || xfc->height <= 0)
+	{
+		WLog_ERR(TAG,  "the window dimensions are invalid");
+		return;
+	}
+
+	if (!w || !h)
+	{
+		WLog_ERR(TAG,  "invalid width and/or height specified");
+		return;
+	}
+
+	xScalingFactor = xfc->width / (double)xfc->scaledWidth;
+	yScalingFactor = xfc->height / (double)xfc->scaledHeight;
+
+	XSetFillStyle(xfc->display, xfc->gc, FillSolid);
+	XSetForeground(xfc->display, xfc->gc, 0);
+
+	/* Black out possible space between desktop and window borders */
+	{
+		XRectangle box1 = { 0, 0, xfc->window->width, xfc->window->height };
+		XRectangle box2 = { xfc->offset_x, xfc->offset_y, xfc->scaledWidth, xfc->scaledHeight };
+		Region reg1 = XCreateRegion();
+		Region reg2 = XCreateRegion();
+
+		XUnionRectWithRegion( &box1, reg1, reg1);
+		XUnionRectWithRegion( &box2, reg2, reg2);
+
+		if (XSubtractRegion(reg1, reg2, reg1) && !XEmptyRegion(reg1))
+		{
+			XSetRegion( xfc->display, xfc->gc, reg1);
+			XFillRectangle(xfc->display, xfc->window->handle, xfc->gc, 0, 0, xfc->window->width, xfc->window->height);
+			XSetClipMask(xfc->display, xfc->gc, None);
+		}
+
+		XDestroyRegion(reg1);
+		XDestroyRegion(reg2);
+	}
 
 	picFormat = XRenderFindStandardFormat(xfc->display, PictStandardRGB24);
 
@@ -149,41 +167,55 @@ void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h, BOOL scal
 	primaryPicture = XRenderCreatePicture(xfc->display, xfc->primary, picFormat, CPSubwindowMode, &pa);
 	windowPicture = XRenderCreatePicture(xfc->display, xfc->window->handle, picFormat, CPSubwindowMode, &pa);
 
-	transform.matrix[0][0] = XDoubleToFixed(1);
-	transform.matrix[0][1] = XDoubleToFixed(0);
-	transform.matrix[0][2] = XDoubleToFixed(0);
-	transform.matrix[1][0] = XDoubleToFixed(0);
-	transform.matrix[1][1] = XDoubleToFixed(1);
-	transform.matrix[1][2] = XDoubleToFixed(0);
-	transform.matrix[2][0] = XDoubleToFixed(0);
-	transform.matrix[2][1] = XDoubleToFixed(0);
-	transform.matrix[2][2] = XDoubleToFixed(xfc->settings->ScalingFactor);
+	XRenderSetPictureFilter(xfc->display, primaryPicture, FilterBilinear, 0, 0);
 
-	if ((w != 0) && (h != 0))
-	{
-		if (scale)
-		{
-			xr.x = x * xfc->settings->ScalingFactor;
-			xr.y = y * xfc->settings->ScalingFactor;
-			xr.width = (w+1) * xfc->settings->ScalingFactor;
-			xr.height = (h+1) * xfc->settings->ScalingFactor;
-		}
-		else
-		{
-			xr.x = x;
-			xr.y = y;
-			xr.width = w;
-			xr.height = h;
-		}
+	transform.matrix[0][0] = XDoubleToFixed(xScalingFactor);
+	transform.matrix[0][1] = XDoubleToFixed(0.0);
+	transform.matrix[0][2] = XDoubleToFixed(0.0);
+	transform.matrix[1][0] = XDoubleToFixed(0.0);
+	transform.matrix[1][1] = XDoubleToFixed(yScalingFactor);
+	transform.matrix[1][2] = XDoubleToFixed(0.0);
+	transform.matrix[2][0] = XDoubleToFixed(0.0);
+	transform.matrix[2][1] = XDoubleToFixed(0.0);
+	transform.matrix[2][2] = XDoubleToFixed(1.0);
 
-		XRenderSetPictureClipRectangles(xfc->display, primaryPicture, 0, 0, &xr, 1);
-	}
+	/* calculate and fix up scaled coordinates */
+	x2 = x + w;
+	y2 = y + h;
+	x = floor(x / xScalingFactor) - 1;
+	y = floor(y / yScalingFactor) - 1;
+	w = ceil(x2 / xScalingFactor) + 1 - x;
+	h = ceil(y2 / yScalingFactor) + 1 - y;
 
 	XRenderSetPictureTransform(xfc->display, primaryPicture, &transform);
-	XRenderComposite(xfc->display, PictOpSrc, primaryPicture, 0, windowPicture, 0, 0, 0, 0, xfc->offset_x, xfc->offset_y, xfc->currentWidth, xfc->currentHeight);
+	XRenderComposite(xfc->display, PictOpSrc, primaryPicture, 0, windowPicture, x, y, 0, 0, xfc->offset_x + x, xfc->offset_y + y, w, h);
 	XRenderFreePicture(xfc->display, primaryPicture);
 	XRenderFreePicture(xfc->display, windowPicture);
+}
+
+BOOL xf_picture_transform_required(xfContext* xfc)
+{
+	if (xfc->offset_x || xfc->offset_y ||
+	    xfc->scaledWidth != xfc->width ||
+	    xfc->scaledHeight != xfc->height)
+	{
+		return TRUE;
+	}
+	return FALSE;
+}
+
 #endif
+
+
+void xf_draw_screen(xfContext* xfc, int x, int y, int w, int h)
+{
+#ifdef WITH_XRENDER
+	if (xf_picture_transform_required(xfc)) {
+		xf_draw_screen_scaled(xfc, x, y, w, h);
+		return;
+	}
+#endif
+	XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
 }
 
 void xf_sw_begin_paint(rdpContext* context)
@@ -222,14 +254,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 			XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
 
-			if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
-			{
-				xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
-			}
-			else
-			{
-				XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
-			}
+			xf_draw_screen(xfc, x, y, w, h);
 
 			xf_unlock_x11(xfc, FALSE);
 		}
@@ -249,14 +274,7 @@ void xf_sw_end_paint(rdpContext* context)
 
 				XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
 
-				if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
-				{
-					xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
-				}
-				else
-				{
-					XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
-				}
+				xf_draw_screen(xfc, x, y, w, h);
 			}
 
 			XFlush(xfc->display);
@@ -328,14 +346,7 @@ void xf_hw_end_paint(rdpContext* context)
 
 			xf_lock_x11(xfc, FALSE);
 
-			if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
-			{
-				xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
-			}
-			else
-			{
-				XCopyArea(xfc->display, xfc->primary, xfc->drawable, xfc->gc, x, y, w, h, x, y);
-			}
+			xf_draw_screen(xfc, x, y, w, h);
 
 			xf_unlock_x11(xfc, FALSE);
 		}
@@ -360,14 +371,7 @@ void xf_hw_end_paint(rdpContext* context)
 				w = cinvalid[i].w;
 				h = cinvalid[i].h;
 
-				if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
-				{
-					xf_draw_screen_scaled(xfc, x, y, w, h, TRUE);
-				}
-				else
-				{
-					XCopyArea(xfc->display, xfc->primary, xfc->drawable, xfc->gc, x, y, w, h, x, y);
-				}
+				xf_draw_screen(xfc, x, y, w, h);
 			}
 
 			XFlush(xfc->display);
@@ -490,6 +494,10 @@ void xf_create_window(xfContext* xfc)
 		xfc->attribs.colormap = xfc->colormap;
 		xfc->attribs.bit_gravity = NorthWestGravity;
 		xfc->attribs.win_gravity = NorthWestGravity;
+#ifdef WITH_XRENDER
+		xfc->offset_x = 0;
+		xfc->offset_y = 0;
+#endif
 
 		if (xfc->settings->WindowTitle)
 		{
@@ -506,6 +514,30 @@ void xf_create_window(xfContext* xfc)
 			sprintf(windowTitle, "FreeRDP: %s:%i", xfc->settings->ServerHostname, xfc->settings->ServerPort);
 		}
 
+#ifdef WITH_XRENDER
+		if (xfc->settings->SmartSizing)
+		{
+			if(xfc->fullscreen)
+			{
+				if (xfc->window)
+				{
+					xfc->settings->SmartSizingWidth = xfc->window->width;
+					xfc->settings->SmartSizingHeight = xfc->window->height;
+				}
+				width = WidthOfScreen(xfc->screen);
+				height = HeightOfScreen(xfc->screen);
+			}
+			else
+			{
+				if (xfc->settings->SmartSizingWidth)
+					width = xfc->settings->SmartSizingWidth;
+				if (xfc->settings->SmartSizingHeight)
+					height = xfc->settings->SmartSizingHeight;
+			}
+			xfc->scaledWidth = width;
+			xfc->scaledHeight = height;
+		}
+#endif
 		xfc->window = xf_CreateDesktopWindow(xfc, windowTitle, width, height, xfc->settings->Decorations);
 
 		free(windowTitle);
@@ -525,22 +557,15 @@ void xf_create_window(xfContext* xfc)
 
 void xf_toggle_fullscreen(xfContext* xfc)
 {
-	Pixmap contents = 0;
 	WindowStateChangeEventArgs e;
 
 	xf_lock_x11(xfc, TRUE);
 
-	contents = XCreatePixmap(xfc->display, xfc->window->handle, xfc->width, xfc->height, xfc->depth);
-
-	XCopyArea(xfc->display, xfc->primary, contents, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
 	XDestroyWindow(xfc->display, xfc->window->handle);
 
 	xfc->fullscreen = (xfc->fullscreen) ? FALSE : TRUE;
 
 	xf_create_window(xfc);
-
-	XCopyArea(xfc->display, contents, xfc->primary, xfc->gc, 0, 0, xfc->width, xfc->height, 0, 0);
-	XFreePixmap(xfc->display, contents);
 
 	xf_unlock_x11(xfc, TRUE);
 
@@ -978,15 +1003,15 @@ BOOL xf_post_connect(freerdp *instance)
 		xfc->hdc = gdi_CreateDC(flags, xfc->bpp);
 	}
 
-	xfc->originalWidth = settings->DesktopWidth;
-	xfc->originalHeight = settings->DesktopHeight;
-	xfc->currentWidth = xfc->originalWidth;
-	xfc->currentHeight = xfc->originalWidth;
-	xfc->settings->ScalingFactor = 1.0;
-	xfc->offset_x = 0;
-	xfc->offset_y = 0;
 	xfc->width = settings->DesktopWidth;
 	xfc->height = settings->DesktopHeight;
+
+#ifdef WITH_XRENDER
+	xfc->scaledWidth = xfc->width;
+	xfc->scaledHeight = xfc->height;
+	xfc->offset_x = 0;
+	xfc->offset_y = 0;
+#endif
 
 	if (settings->RemoteApplicationMode)
 		xfc->remote_app = TRUE;
@@ -1593,32 +1618,41 @@ void xf_TerminateEventHandler(rdpContext* context, TerminateEventArgs* e)
 	}
 }
 
-static void xf_ScalingFactorChangeEventHandler(rdpContext* context, ScalingFactorChangeEventArgs* e)
+static void xf_ZoomingChangeEventHandler(rdpContext* context, ZoomingChangeEventArgs* e)
+{
+	xfContext* xfc = (xfContext*) context;
+	int w = xfc->scaledWidth + e->dx;
+	int h = xfc->scaledHeight + e->dy;
+
+	if (e->dx == 0 && e->dy == 0)
+		return;
+
+	if (w < 10)
+		w = 10;
+
+	if (h < 10)
+		h = 10;
+
+	if (w == xfc->scaledWidth && h == xfc->scaledHeight)
+		return;
+
+	xfc->scaledWidth = w;
+	xfc->scaledHeight = h;
+
+	xf_draw_screen(xfc, 0, 0, xfc->width, xfc->height);
+}
+
+static void xf_PanningChangeEventHandler(rdpContext* context, PanningChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
 
-	xfc->settings->ScalingFactor += e->ScalingFactor;
+	if (e->dx == 0 && e->dy == 0)
+		return;
 
-	if (xfc->settings->ScalingFactor > 1.2)
-		xfc->settings->ScalingFactor = 1.2;
+	xfc->offset_x += e->dx;
+	xfc->offset_y += e->dy;
 
-	if (xfc->settings->ScalingFactor < 0.8)
-		xfc->settings->ScalingFactor = 0.8;
-
-	xfc->currentWidth = xfc->originalWidth * xfc->settings->ScalingFactor;
-	xfc->currentHeight = xfc->originalHeight * xfc->settings->ScalingFactor;
-
-	xf_transform_window(xfc);
-
-	{
-		ResizeWindowEventArgs ev;
-		EventArgsInit(&ev, "xfreerdp");
-		ev.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
-		ev.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
-		PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &ev);
-	}
-
-	xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
+	xf_draw_screen(xfc, 0, 0, xfc->width, xfc->height);
 }
 
 /**
@@ -1695,7 +1729,8 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->settings = instance->context->settings;
 
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
-	PubSub_SubscribeScalingFactorChange(context->pubSub, (pScalingFactorChangeEventHandler) xf_ScalingFactorChangeEventHandler);
+	PubSub_SubscribeZoomingChange(context->pubSub, (pZoomingChangeEventHandler) xf_ZoomingChangeEventHandler);
+	PubSub_SubscribePanningChange(context->pubSub, (pPanningChangeEventHandler) xf_PanningChangeEventHandler);
 
 	return 0;
 }
