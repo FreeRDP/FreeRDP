@@ -23,9 +23,10 @@
 #endif
 
 #include "nonehandle.h"
-#include <pthread.h>
 
 #ifndef _WIN32
+
+#include <pthread.h>
 
 static HANDLE_CLOSE_CB _NoneHandleCloseCb;
 static pthread_once_t none_initialized = PTHREAD_ONCE_INIT;
