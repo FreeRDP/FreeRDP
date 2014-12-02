@@ -2,6 +2,7 @@
 # libwinpr-handle cmake build script
 #
 # Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+# Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-winpr_module_add(handle.c handle.h)
+winpr_module_add(handle.c handle.h nonehandle.c nonehandle.h)
 	
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
 	winpr_library_add(rt)

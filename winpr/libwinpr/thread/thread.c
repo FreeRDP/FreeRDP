@@ -296,7 +296,9 @@ static void winpr_StartThread(WINPR_THREAD *thread)
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 					LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
+	#ifndef HAVE_EVENTFD_H
 	int flags;
+	#endif
 	HANDLE handle;
 	WINPR_THREAD* thread;
 	thread = (WINPR_THREAD*) calloc(1, sizeof(WINPR_THREAD));
