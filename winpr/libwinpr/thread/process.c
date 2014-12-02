@@ -3,6 +3,7 @@
  * Process Thread Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +23,7 @@
 #endif
 
 #include <winpr/handle.h>
+#include "../handle/nonehandle.h"
 
 #include <winpr/thread.h>
 #include <fcntl.h>
@@ -183,7 +185,7 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	LPSTR* pArgs = NULL;
 	char** envp = NULL;
 	char* filename = NULL;
-	WINPR_THREAD* thread;
+	HANDLE thread;
 	WINPR_PROCESS* process;
 	WINPR_ACCESS_TOKEN* token;
 	LPTCH lpszEnvironmentBlock;
@@ -288,21 +290,15 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	process->status = 0;
 	process->dwExitCode = 0;
 
-	thread = (WINPR_THREAD*) malloc(sizeof(WINPR_THREAD));
-
-	ZeroMemory(thread, sizeof(WINPR_THREAD));
+	thread = CreateNoneHandle();
 
 	if (!thread)
 	{
 		goto finish;
 	}
 
-	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
-
-	thread->mainProcess = TRUE;
-
 	lpProcessInformation->hProcess = (HANDLE) process;
-	lpProcessInformation->hThread = (HANDLE) thread;
+	lpProcessInformation->hThread = thread;
 	lpProcessInformation->dwProcessId = (DWORD) pid;
 	lpProcessInformation->dwThreadId = (DWORD) pid;
 
