@@ -232,11 +232,11 @@ static void xf_desktop_resize(rdpContext* context)
 	}
 
 #ifdef WITH_XRENDER
-		if (!xfc->settings->SmartSizing)
-		{
-			xfc->scaledWidth = xfc->width;
-			xfc->scaledHeight = xfc->height;
-		}
+	if (!xfc->settings->SmartSizing)
+	{
+		xfc->scaledWidth = xfc->width;
+		xfc->scaledHeight = xfc->height;
+	}
 #endif
 
 	if (!xfc->fullscreen)
