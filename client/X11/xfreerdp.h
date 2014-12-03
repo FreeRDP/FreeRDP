@@ -195,6 +195,7 @@ struct xf_context
 	wHashTable* railWindows;
 
 	BOOL xkbAvailable;
+	BOOL xrenderAvailable;
 };
 
 void xf_create_window(xfContext* xfc);

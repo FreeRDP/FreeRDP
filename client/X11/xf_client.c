@@ -203,9 +203,7 @@ BOOL xf_picture_transform_required(xfContext* xfc)
 	}
 	return FALSE;
 }
-
-#endif
-
+#endif /* WITH_XRENDER defined */
 
 void xf_draw_screen(xfContext* xfc, int x, int y, int w, int h)
 {
@@ -216,6 +214,42 @@ void xf_draw_screen(xfContext* xfc, int x, int y, int w, int h)
 	}
 #endif
 	XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
+}
+
+static void xf_desktop_resize(rdpContext* context)
+{
+	rdpSettings* settings;
+	xfContext* xfc = (xfContext*) context;
+	settings = xfc->settings;
+
+	if (xfc->primary)
+	{
+		BOOL same = (xfc->primary == xfc->drawing) ? TRUE : FALSE;
+		XFreePixmap(xfc->display, xfc->primary);
+		xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->width, xfc->height, xfc->depth);
+		if (same)
+				xfc->drawing = xfc->primary;
+	}
+
+	if (!xfc->fullscreen)
+	{
+		if (xfc->window)
+			xf_ResizeDesktopWindow(xfc, xfc->window, settings->DesktopWidth, settings->DesktopHeight);
+	}
+	else
+	{
+#ifdef WITH_XRENDER
+		if (!xfc->settings->SmartSizing)
+		{
+			xfc->scaledWidth = xfc->width;
+			xfc->scaledHeight = xfc->height;
+		}
+#endif
+		XSetFunction(xfc->display, xfc->gc, GXcopy);
+		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
+		XSetForeground(xfc->display, xfc->gc, 0);
+		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, 0, 0, xfc->window->width, xfc->window->height);
+	}
 }
 
 void xf_sw_begin_paint(rdpContext* context)
@@ -302,19 +336,21 @@ void xf_sw_desktop_resize(rdpContext* context)
 
 	xf_lock_x11(xfc, TRUE);
 
-	if (!xfc->fullscreen)
+	xfc->width = context->settings->DesktopWidth;
+	xfc->height = context->settings->DesktopHeight;
+
+	gdi_resize(gdi, xfc->width, xfc->height);
+
+	if (xfc->image)
 	{
-		gdi_resize(gdi, xfc->width, xfc->height);
+		xfc->image->data = NULL;
+		XDestroyImage(xfc->image);
 
-		if (xfc->image)
-		{
-			xfc->image->data = NULL;
-			XDestroyImage(xfc->image);
-
-			xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
-					(char*) gdi->primary_buffer, gdi->width, gdi->height, xfc->scanline_pad, 0);
-		}
+		xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+				(char*) gdi->primary_buffer, gdi->width, gdi->height, xfc->scanline_pad, 0);
 	}
+
+	xf_desktop_resize(context);
 
 	xf_unlock_x11(xfc, TRUE);
 }
@@ -399,39 +435,15 @@ void xf_hw_end_paint(rdpContext* context)
 
 void xf_hw_desktop_resize(rdpContext* context)
 {
-	BOOL same;
-	rdpSettings* settings;
 	xfContext* xfc = (xfContext*) context;
-	settings = xfc->settings;
+	rdpSettings* settings = xfc->settings;
 
 	xf_lock_x11(xfc, TRUE);
 
-	if (!xfc->fullscreen)
-	{
-		xfc->width = settings->DesktopWidth;
-		xfc->height = settings->DesktopHeight;
+	xfc->width = settings->DesktopWidth;
+	xfc->height = settings->DesktopHeight;
 
-		if (xfc->window)
-			xf_ResizeDesktopWindow(xfc, xfc->window, settings->DesktopWidth, settings->DesktopHeight);
-
-		if (xfc->primary)
-		{
-			same = (xfc->primary == xfc->drawing) ? TRUE : FALSE;
-			XFreePixmap(xfc->display, xfc->primary);
-
-			xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, xfc->width, xfc->height, xfc->depth);
-
-			if (same)
-				xfc->drawing = xfc->primary;
-		}
-	}
-	else
-	{
-		XSetFunction(xfc->display, xfc->gc, GXcopy);
-		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
-		XSetForeground(xfc->display, xfc->gc, 0);
-		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, 0, 0, xfc->width, xfc->height);
-	}
+	xf_desktop_resize(context);
 
 	xf_unlock_x11(xfc, TRUE);
 }
@@ -514,18 +526,22 @@ void xf_create_window(xfContext* xfc)
 			sprintf(windowTitle, "FreeRDP: %s:%i", xfc->settings->ServerHostname, xfc->settings->ServerPort);
 		}
 
+		if (xfc->fullscreen)
+		{
+			width = WidthOfScreen(xfc->screen);
+			height = HeightOfScreen(xfc->screen);
+		}
+
 #ifdef WITH_XRENDER
 		if (xfc->settings->SmartSizing)
 		{
-			if(xfc->fullscreen)
+			if (xfc->fullscreen)
 			{
 				if (xfc->window)
 				{
 					xfc->settings->SmartSizingWidth = xfc->window->width;
 					xfc->settings->SmartSizingHeight = xfc->window->height;
 				}
-				width = WidthOfScreen(xfc->screen);
-				height = HeightOfScreen(xfc->screen);
 			}
 			else
 			{
@@ -791,6 +807,18 @@ void xf_check_extensions(xfContext* context)
 	{
 		context->xkbAvailable = TRUE;
 	}
+
+#ifdef WITH_XRENDER
+	{
+		int xrender_event_base;
+		int xrender_error_base;
+		if (XRenderQueryExtension (context->display, &xrender_event_base,
+			&xrender_error_base))
+		{
+			context->xrenderAvailable = TRUE;
+		}
+	}
+#endif
 }
 
 /**
@@ -1012,6 +1040,21 @@ BOOL xf_post_connect(freerdp *instance)
 	xfc->offset_x = 0;
 	xfc->offset_y = 0;
 #endif
+
+	if (!xfc->xrenderAvailable)
+	{
+		if (settings->SmartSizing)
+		{
+			WLog_ERR(TAG, "XRender not available: disabling smart-sizing");
+			settings->SmartSizing = FALSE;
+		}
+
+		if (settings->MultiTouchGestures)
+		{
+			WLog_ERR(TAG, "XRender not available: disabling local multi-touch gestures");
+			settings->MultiTouchGestures = FALSE;
+		}
+	}
 
 	if (settings->RemoteApplicationMode)
 		xfc->remote_app = TRUE;
@@ -1618,6 +1661,7 @@ void xf_TerminateEventHandler(rdpContext* context, TerminateEventArgs* e)
 	}
 }
 
+#ifdef WITH_XRENDER
 static void xf_ZoomingChangeEventHandler(rdpContext* context, ZoomingChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*) context;
@@ -1654,6 +1698,7 @@ static void xf_PanningChangeEventHandler(rdpContext* context, PanningChangeEvent
 
 	xf_draw_screen(xfc, 0, 0, xfc->width, xfc->height);
 }
+#endif
 
 /**
  * Client Interface
@@ -1729,8 +1774,11 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	xfc->settings = instance->context->settings;
 
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
+
+#ifdef WITH_XRENDER
 	PubSub_SubscribeZoomingChange(context->pubSub, (pZoomingChangeEventHandler) xf_ZoomingChangeEventHandler);
 	PubSub_SubscribePanningChange(context->pubSub, (pPanningChangeEventHandler) xf_PanningChangeEventHandler);
+#endif
 
 	return 0;
 }
