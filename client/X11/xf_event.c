@@ -641,25 +641,30 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 
 	if (!app)
 	{
-#ifdef WITH_XRENDER
-		if (xfc->settings->SmartSizing && event->xconfigure.window == xfc->window->handle)
+		if (xfc->window->width != event->xconfigure.width ||
+		     xfc->window->height != event->xconfigure.height)
 		{
-			if (xfc->window->width != event->xconfigure.width ||
-			    xfc->window->height != event->xconfigure.height)
+			xfc->window->width = event->xconfigure.width;
+			xfc->window->height = event->xconfigure.height;
+#ifdef WITH_XRENDER
+			xfc->offset_x = 0;
+			xfc->offset_y = 0;
+			if (xfc->settings->SmartSizing || xfc->settings->MultiTouchGestures)
 			{
-				xfc->window->width = event->xconfigure.width;
-				xfc->window->height = event->xconfigure.height;
 				if (!xfc->fullscreen)
 				{
 					xfc->scaledWidth = xfc->window->width;
 					xfc->scaledHeight = xfc->window->height;
 				}
-				xfc->offset_x = 0;
-				xfc->offset_y = 0;
 				xf_draw_screen(xfc, 0, 0, xfc->width, xfc->height);
 			}
-		}
+			else
+			{
+				xfc->scaledWidth = xfc->width;
+				xfc->scaledHeight = xfc->height;
+			}
 #endif
+		}
 		return TRUE;
 	}
 
