@@ -23,6 +23,10 @@
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API int gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 FREERDP_API int gdi_FillRect(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
 FREERDP_API int gdi_Polygon(HGDI_DC hdc, GDI_POINT *lpPoints, int nCount);
@@ -30,5 +34,9 @@ FREERDP_API int gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT *lpPoints, int *lpPolyCou
 FREERDP_API int gdi_Rectangle(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 
 typedef int (*p_FillRect)(HGDI_DC hdc, HGDI_RECT rect, HGDI_BRUSH hbr);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_GDI_SHAPE_H */

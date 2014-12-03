@@ -84,8 +84,20 @@ int xf_OutputUpdate(xfContext* xfc)
 				surface->width, surface->height, surface->data, surface->format, surface->scanline, 0, 0, NULL);
 		}
 
-		XPutImage(xfc->display, xfc->drawable, xfc->gc, surface->image,
+#ifdef WITH_XRENDER
+		if (xfc->settings->SmartSizing || xfc->settings->MultiTouchGestures)
+		{
+			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image,
 				extents->left, extents->top, extents->left, extents->top, width, height);
+
+			xf_draw_screen(xfc, extents->left, extents->top, width, height);
+		}
+		else
+#endif
+		{
+			XPutImage(xfc->display, xfc->drawable, xfc->gc, surface->image,
+				extents->left, extents->top, extents->left, extents->top, width, height);
+		}
 	}
 
 	region16_clear(&(xfc->invalidRegion));

@@ -449,6 +449,8 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (status < 0)
 		goto end;
 
+	rdp->do_crypt_license = TRUE;
+
 	/* now calculate encrypt / decrypt and update keys */
 	if (!security_establish_keys(settings->ClientRandom, rdp))
 		goto end;

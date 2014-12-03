@@ -447,15 +447,15 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 	if(xfc->fullscreen_toggle)
 	{
-            if (keysym == XK_Return)
-            {
-                    if (mod.Ctrl && mod.Alt)
-                    {
-                            /* Ctrl-Alt-Enter: toggle full screen */
-                            xf_toggle_fullscreen(xfc);
-                            return TRUE;
-                    }
-            }
+		if (keysym == XK_Return)
+		{
+			if (mod.Ctrl && mod.Alt)
+			{
+				/* Ctrl-Alt-Enter: toggle full screen */
+				xf_toggle_fullscreen(xfc);
+				return TRUE;
+			}
+		}
 	}
 
 	if ((keysym == XK_c) || (keysym == XK_C))
@@ -468,140 +468,81 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 		}
 	}
 
-	if (keysym == XK_period)
+#if 0 /* set to 1 to enable multi touch gesture simulation via keyboard */
+#ifdef WITH_XRENDER
+	if (!xfc->remote_app && xfc->settings->MultiTouchGestures)
 	{
 		if (mod.Ctrl && mod.Alt)
 		{
-			/* Zoom In (scale larger) */
+			int pdx = 0;
+			int pdy = 0;
+			int zdx = 0;
+			int zdy = 0;
 
-			double s = xfc->settings->ScalingFactor;
-
-			s += 0.1;
-
-			if (s > 2.0)
-				s = 2.0;
-			
-			xfc->settings->ScalingFactor = s;
-			
-			xfc->currentWidth = xfc->originalWidth * s;
-			xfc->currentHeight = xfc->originalHeight * s;
-			
-			xf_transform_window(xfc);
-			
+			switch(keysym)
 			{
-				ResizeWindowEventArgs e;
-				
-				EventArgsInit(&e, "xfreerdp");
-				e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
-				e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
-				PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
+				case XK_0:	/* Ctrl-Alt-0: Reset scaling and panning */
+					xfc->scaledWidth = xfc->width;
+					xfc->scaledHeight = xfc->height;
+					xfc->offset_x = 0;
+					xfc->offset_y = 0;
+					if (!xfc->fullscreen && (xfc->width != xfc->window->width ||
+						 xfc->height != xfc->window->height))
+					{
+						xf_ResizeDesktopWindow(xfc, xfc->window, xfc->width, xfc->height);
+					}
+					xf_draw_screen(xfc, 0, 0, xfc->width, xfc->height);
+					return TRUE;
+
+				case XK_1:	/* Ctrl-Alt-1: Zoom in */
+					zdx = zdy = 10;
+					break;
+
+				case XK_2:	/* Ctrl-Alt-2: Zoom out */
+					zdx = zdy = -10;
+					break;
+
+				case XK_3:	/* Ctrl-Alt-3: Pan left */
+					pdx = -10;
+					break;
+
+				case XK_4:	/* Ctrl-Alt-4: Pan right */
+					pdx = 10;
+					break;
+
+				case XK_5:	/* Ctrl-Alt-5: Pan up */
+					pdy = -10;
+					break;
+
+				case XK_6:	/* Ctrl-Alt-6: Pan up */
+					pdy = 10;
+					break;
 			}
-			xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
-			return TRUE;
-		}
-	}
-	
-	if (keysym == XK_comma)
-	{
-		if (mod.Ctrl && mod.Alt)
-		{
-			/* Zoom Out (scale smaller) */
 
-			double s = xfc->settings->ScalingFactor;
-
-			s -= 0.1;
-
-			if (s < 0.5)
-				s = 0.5;
-			
-			xfc->settings->ScalingFactor = s;
-			
-			xfc->currentWidth = xfc->originalWidth * s;
-			xfc->currentHeight = xfc->originalHeight * s;
-			
-			xf_transform_window(xfc);
-			
-			{
-				ResizeWindowEventArgs e;
-				
-				EventArgsInit(&e, "xfreerdp");
-				e.width = (int) xfc->originalWidth * xfc->settings->ScalingFactor;
-				e.height = (int) xfc->originalHeight * xfc->settings->ScalingFactor;
-				PubSub_OnResizeWindow(((rdpContext*) xfc)->pubSub, xfc, &e);
-			}
-			
-			xf_draw_screen_scaled(xfc, 0, 0, 0, 0, FALSE);
-			return TRUE;
-		}
-	}
-	
-	if (keysym == XK_KP_4)
-	{
-		if (mod.Ctrl && mod.Alt)
-		{
-			
+			if (pdx != 0 || pdy != 0)
 			{
 				PanningChangeEventArgs e;
-				
 				EventArgsInit(&e, "xfreerdp");
-				e.XPan = -5;
-				e.YPan = 0;
+				e.dx = pdx;
+				e.dy = pdy;
 				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
+				return TRUE;
 			}
-			
-			return TRUE;
-		}
-	}
-	
-	if (keysym == XK_KP_6)
-	{
-		if (mod.Ctrl && mod.Alt)
-		{
-			
+
+			if (zdx != 0 || zdy != 0)
 			{
-				PanningChangeEventArgs e;
-				
+				ZoomingChangeEventArgs e;
 				EventArgsInit(&e, "xfreerdp");
-				e.XPan = 5;
-				e.YPan = 0;
-				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
+				e.dx = zdx;
+				e.dy = zdy;
+				PubSub_OnZoomingChange(((rdpContext*) xfc)->pubSub, xfc, &e);
+				return TRUE;
 			}
-			return TRUE;
 		}
 	}
-	
-	if (keysym == XK_KP_8)
-	{
-		if (mod.Ctrl && mod.Alt)
-		{
-			{
-				PanningChangeEventArgs e;
-				
-				EventArgsInit(&e, "xfreerdp");
-				e.XPan = 0;
-				e.YPan = -5;
-				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
-			}
-			return TRUE;
-		}
-	}
-	
-	if (keysym == XK_KP_2)
-	{
-		if (mod.Ctrl && mod.Alt)
-		{
-			{
-				PanningChangeEventArgs e;
-				
-				EventArgsInit(&e, "xfreerdp");
-				e.XPan = 0;
-				e.YPan = 5;
-				PubSub_OnPanningChange(((rdpContext*) xfc)->pubSub, xfc, &e);
-			}
-			return TRUE;
-		}
-	}
-	
+#endif /* WITH_XRENDER defined */
+#endif /* pinch/zoom/pan simulation */
+
 	return FALSE;
 }
 

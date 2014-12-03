@@ -1,8 +1,9 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * Compressed Bitmap
+ * WinPR: Windows Portable Runtime
+ * NoneHandle a.k.a. brathandle should be used where a handle is needed, but
+ * functionality is not implemented yet or not implementable.
  *
- * Copyright 2012 Jay Sorg <jay.sorg@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +18,23 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CODEC_JPEG_H
-#define FREERDP_CODEC_JPEG_H
+#ifndef WINPR_NONE_HANDLE_PRIVATE_H
+#define WINPR_NONE_HANDLE_PRIVATE_H
 
-#include <freerdp/api.h>
-#include <freerdp/types.h>
+#ifndef _WIN32
 
-#ifdef __cplusplus
- extern "C" {
-#endif
+#include <winpr/handle.h>
+#include "handle.h"
 
-FREERDP_API BOOL jpeg_decompress(BYTE* input, BYTE* output, int width, int height, int size, int bpp);
+struct winpr_none_handle
+{
+	WINPR_HANDLE_DEF();
+};
 
-#ifdef __cplusplus
- }
-#endif
+typedef struct winpr_none_handle WINPR_NONE_HANDLE;
 
-#endif /* FREERDP_CODEC_JPEG_H */
+HANDLE CreateNoneHandle();
+
+#endif /*_WIN32*/
+
+#endif /* WINPR_NONE_HANDLE_PRIVATE_H */

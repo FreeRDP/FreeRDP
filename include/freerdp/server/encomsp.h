@@ -71,7 +71,15 @@ struct _encomsp_server_context
 	EncomspServerPrivate* priv;
 };
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API EncomspServerContext* encomsp_server_context_new(HANDLE vcm);
 FREERDP_API void encomsp_server_context_free(EncomspServerContext* context);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_CHANNEL_SERVER_ENCOMSP_H */

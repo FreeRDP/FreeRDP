@@ -178,15 +178,42 @@ int xf_event_execute_action_script(xfContext* xfc, XEvent* event)
 	return 1;
 }
 
+void xf_event_adjust_coordinates(xfContext* xfc, int* x, int *y)
+{
+	if (!xfc->remote_app)
+	{
+#ifdef WITH_XRENDER
+		if (xf_picture_transform_required(xfc))
+		{
+			double xScalingFactor = xfc->width / (double)xfc->scaledWidth;
+			double yScalingFactor = xfc->height / (double)xfc->scaledHeight;
+			*x = (int)((*x - xfc->offset_x) * xScalingFactor);
+			*y = (int)((*y - xfc->offset_y) * yScalingFactor);
+		}
+#endif
+	}
+	CLAMP_COORDINATES(*x, *y);
+}
+
 static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 {
 	int x, y;
 	int w, h;
-	
-	x = event->xexpose.x;
-	y = event->xexpose.y;
-	w = event->xexpose.width;
-	h = event->xexpose.height;
+
+	if (!app && (xfc->settings->SmartSizing || xfc->settings->MultiTouchGestures))
+	{
+		x = 0;
+		y = 0;
+		w = xfc->width;
+		h = xfc->height;
+	}
+	else
+	{
+		x = event->xexpose.x;
+		y = event->xexpose.y;
+		w = event->xexpose.width;
+		h = event->xexpose.height;
+	}
 
 	if (xfc->gfx)
 	{
@@ -196,28 +223,20 @@ static BOOL xf_event_Expose(xfContext* xfc, XEvent* event, BOOL app)
 
 	if (!app)
 	{
-		if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
-		{
-			xf_draw_screen_scaled(xfc, x - xfc->offset_x,
-					      y - xfc->offset_y, w, h, FALSE);
-		}
-		else
-		{
-			XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
-		}
+		xf_draw_screen(xfc, x, y, w, h);
 	}
 	else
 	{
 		xfAppWindow* appWindow;
-		
+
 		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
-		
+
 		if (appWindow)
 		{
 			xf_UpdateWindowArea(xfc, appWindow, x, y, w, h);
 		}
 	}
-	
+
 	return TRUE;
 }
 
@@ -251,14 +270,8 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 			RootWindowOfScreen(xfc->screen),
 			x, y, &x, &y, &childWindow);
 	}
-	
-	/* Take scaling in to consideration */
-	if ( (xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y) )
-	{
-		x = (int)((x - xfc->offset_x) * (1.0 / xfc->settings->ScalingFactor) );
-		y = (int)((y - xfc->offset_y) * (1.0 / xfc->settings->ScalingFactor) );
-	}
-	CLAMP_COORDINATES(x,y);
+
+	xf_event_adjust_coordinates(xfc, &x, &y);
 
 	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 
@@ -358,16 +371,8 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 
 			}
 
-			if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x)
-			    || (xfc->offset_y))
-			{
-				x = (int) ((x - xfc->offset_x)
-					   * (1.0 / xfc->settings->ScalingFactor));
-				y = (int) ((y - xfc->offset_y)
-					   * (1.0 / xfc->settings->ScalingFactor));
-			}
+			xf_event_adjust_coordinates(xfc, &x, &y);
 
-			CLAMP_COORDINATES(x,y);
 			if (extended)
 				input->ExtendedMouseEvent(input, flags, x, y);
 			else
@@ -447,14 +452,7 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 				x, y, &x, &y, &childWindow);
 		}
 
-		
-		if ((xfc->settings->ScalingFactor != 1.0) || (xfc->offset_x) || (xfc->offset_y))
-		{
-			x = (int) ((x - xfc->offset_x) * (1.0 / xfc->settings->ScalingFactor));
-			y = (int) ((y - xfc->offset_y) * (1.0 / xfc->settings->ScalingFactor));
-		}
-
-		CLAMP_COORDINATES(x,y);
+		xf_event_adjust_coordinates(xfc, &x, &y);
 
 		if (extended)
 			input->ExtendedMouseEvent(input, flags, x, y);
@@ -642,7 +640,33 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, XEvent* event, BOOL app)
 	xfAppWindow* appWindow;
 
 	if (!app)
+	{
+		if (xfc->window->width != event->xconfigure.width ||
+		     xfc->window->height != event->xconfigure.height)
+		{
+			xfc->window->width = event->xconfigure.width;
+			xfc->window->height = event->xconfigure.height;
+#ifdef WITH_XRENDER
+			xfc->offset_x = 0;
+			xfc->offset_y = 0;
+			if (xfc->settings->SmartSizing || xfc->settings->MultiTouchGestures)
+			{
+				if (!xfc->fullscreen)
+				{
+					xfc->scaledWidth = xfc->window->width;
+					xfc->scaledHeight = xfc->window->height;
+				}
+				xf_draw_screen(xfc, 0, 0, xfc->width, xfc->height);
+			}
+			else
+			{
+				xfc->scaledWidth = xfc->width;
+				xfc->scaledHeight = xfc->height;
+			}
+#endif
+		}
 		return TRUE;
+	}
 
 	appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
 
@@ -754,12 +778,12 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 	if (app)
 	{
 	        xfAppWindow* appWindow;
-		
+
 		appWindow = xf_AppWindowFromX11Window(xfc, event->xany.window);
 
 		if (!appWindow)
 			return TRUE;
-	
+
 	        if ((((Atom) event->xproperty.atom == xfc->_NET_WM_STATE) && (event->xproperty.state != PropertyDelete)) ||
 	            (((Atom) event->xproperty.atom == xfc->WM_STATE) && (event->xproperty.state != PropertyDelete)))
 	        {
@@ -771,7 +795,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 	                unsigned long nitems;
 	                unsigned long bytes;
 	                unsigned char* prop;
-	
+
 	                if ((Atom) event->xproperty.atom == xfc->_NET_WM_STATE)
 	                {
 				status = xf_GetWindowProperty(xfc, event->xproperty.window,
@@ -795,7 +819,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 					XFree(prop);
 				}
 	                }
-	
+
 	                if ((Atom) event->xproperty.atom == xfc->WM_STATE)
 	                {
 				status = xf_GetWindowProperty(xfc, event->xproperty.window,
@@ -828,7 +852,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, XEvent* event, BOOL app)
 	                	appWindow->rail_state = WINDOW_SHOW;
 	                	xf_rail_send_client_system_command(xfc, appWindow->windowId, SC_RESTORE);
 	                }
-               }       
+               }
         }
 
 	return TRUE;
@@ -907,7 +931,7 @@ static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, XEv
 		case LMS_TERMINATING:
 			/* Already sent RDP end move to server. Allow events to pass. */
 			break;
-	}	
+	}
 
 	return FALSE;
 }

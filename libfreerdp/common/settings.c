@@ -1281,7 +1281,7 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_SmartSizing:
 			settings->SmartSizing = param;
-			break;		
+			break;
 
 		case FreeRDP_MouseMotion:
 			settings->MouseMotion = param;
@@ -1834,6 +1834,12 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 		case FreeRDP_DynamicChannelArraySize:
 			return settings->DynamicChannelArraySize;
 
+		case FreeRDP_SmartSizingWidth:
+			return settings->SmartSizingWidth;
+
+		case FreeRDP_SmartSizingHeight:
+			return settings->SmartSizingHeight;
+
 		default:
 			WLog_ERR(TAG,  "freerdp_get_param_uint32: unknown id: %d", id);
 			return 0;
@@ -2167,7 +2173,7 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 	/* Mark field as modified */
 	settings->SettingsModified[id] = 1;
-	
+
 	return 0;
 }
 
@@ -2199,7 +2205,7 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 
 	/* Mark field as modified */
 	settings->SettingsModified[id] = 1;
-	
+
 	return 0;
 }
 
@@ -2587,35 +2593,3 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 
 	return 0;
 }
-
-double freerdp_get_param_double(rdpSettings* settings, int id)
-{
-	switch (id)
-	{
-		case FreeRDP_ScalingFactor:
-			return settings->ScalingFactor;
-
-		default:
-			WLog_ERR(TAG, "unknown id: %d", id);
-			return 0;
-	}
-}
-
-int freerdp_set_param_double(rdpSettings* settings, int id, double param)
-{
-	switch (id)
-	{
-		case FreeRDP_ScalingFactor:
-			settings->ScalingFactor = param;
-			break;
-
-		default:
-			return -1;
-	}
-
-	/* Mark field as modified */
-	settings->SettingsModified[id] = 1;
-
-	return 0;
-}
-

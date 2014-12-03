@@ -397,7 +397,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char *name, int width, int heig
 		{
 			XMoveWindow(xfc->display, window->handle, settings->DesktopPosX, settings->DesktopPosY);
 		}
-	
+
 		XStoreName(xfc->display, window->handle, name);
 	}
 
@@ -412,11 +412,20 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int hei
 	if (size_hints)
 	{
 		size_hints->flags = PMinSize | PMaxSize;
-		size_hints->min_width = size_hints->max_width = xfc->width;
-		size_hints->min_height = size_hints->max_height = xfc->height;
+
+		size_hints->min_width = size_hints->max_width = width;
+		size_hints->min_height = size_hints->max_height = height;
+
+#ifdef WITH_XRENDER
+		if (xfc->settings->SmartSizing)
+		{
+			size_hints->min_width = size_hints->min_height = 1;
+			size_hints->max_width = size_hints->max_height = 16384;
+		}
+#endif
 
 		XSetWMNormalHints(xfc->display, window->handle, size_hints);
-		XResizeWindow(xfc->display, window->handle, xfc->width, xfc->height);
+		XResizeWindow(xfc->display, window->handle, width, height);
 		XFree(size_hints);
 	}
 }

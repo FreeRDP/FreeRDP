@@ -83,6 +83,10 @@ struct rdp_tls
 	BOOL isGatewayTransport;
 };
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API int tls_connect(rdpTls* tls, BIO *underlying);
 FREERDP_API BOOL tls_accept(rdpTls* tls, BIO *underlying, const char* cert_file, const char* privatekey_file);
 FREERDP_API BOOL tls_disconnect(rdpTls* tls);
@@ -100,5 +104,9 @@ FREERDP_API BOOL tls_print_error(char* func, SSL* connection, int value);
 
 FREERDP_API rdpTls* tls_new(rdpSettings* settings);
 FREERDP_API void tls_free(rdpTls* tls);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_CRYPTO_TLS_H */

@@ -3,6 +3,7 @@
  * Process Thread Functions
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +23,7 @@
 #endif
 
 #include <winpr/handle.h>
+#include "../handle/nonehandle.h"
 
 #include <winpr/thread.h>
 #include <fcntl.h>
@@ -77,6 +79,9 @@
 
 #include "../handle/handle.h"
 #include "../security/security.h"
+
+static HANDLE_CLOSE_CB _ProcessHandleCloseCb;
+static pthread_once_t process_initialized = PTHREAD_ONCE_INIT;
 
 char** EnvironmentBlockToEnvpA(LPCH lpszEnvironmentBlock)
 {
@@ -172,6 +177,8 @@ char* FindApplicationPath(char* application)
 	return filename;
 }
 
+HANDLE CreateProcessHandle(pid_t pid);
+
 BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
 		LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
@@ -183,8 +190,8 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	LPSTR* pArgs = NULL;
 	char** envp = NULL;
 	char* filename = NULL;
-	WINPR_THREAD* thread;
-	WINPR_PROCESS* process;
+	HANDLE thread;
+	HANDLE process;
 	WINPR_ACCESS_TOKEN* token;
 	LPTCH lpszEnvironmentBlock;
 	BOOL ret = FALSE;
@@ -273,36 +280,22 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		/* parent process */
 	}
 
-	process = (WINPR_PROCESS*) malloc(sizeof(WINPR_PROCESS));
+	process = CreateProcessHandle(pid);
 
 	if (!process)
 	{
 		goto finish;
 	}
 
-	ZeroMemory(process, sizeof(WINPR_PROCESS));
-
-	WINPR_HANDLE_SET_TYPE(process, HANDLE_TYPE_PROCESS);
-
-	process->pid = pid;
-	process->status = 0;
-	process->dwExitCode = 0;
-
-	thread = (WINPR_THREAD*) malloc(sizeof(WINPR_THREAD));
-
-	ZeroMemory(thread, sizeof(WINPR_THREAD));
+	thread = CreateNoneHandle();
 
 	if (!thread)
 	{
 		goto finish;
 	}
 
-	WINPR_HANDLE_SET_TYPE(thread, HANDLE_TYPE_THREAD);
-
-	thread->mainProcess = TRUE;
-
-	lpProcessInformation->hProcess = (HANDLE) process;
-	lpProcessInformation->hThread = (HANDLE) thread;
+	lpProcessInformation->hProcess = process;
+	lpProcessInformation->hThread = thread;
 	lpProcessInformation->dwProcessId = (DWORD) pid;
 	lpProcessInformation->dwThreadId = (DWORD) pid;
 
@@ -461,6 +454,50 @@ BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
 
 	return TRUE;
 }
+
+
+static BOOL ProcessHandleCloseHandle(HANDLE handle)
+{
+	WINPR_PROCESS* process = (WINPR_PROCESS*) handle;
+	free(process);
+	return TRUE;
+}
+
+static BOOL ProcessHandleIsHandle(HANDLE handle)
+{
+	WINPR_PROCESS* process = (WINPR_PROCESS*) handle;
+
+	if (!process || process->Type != HANDLE_TYPE_PROCESS)
+	{
+		SetLastError(ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void ProcessHandleInitialize(void)
+{
+	_ProcessHandleCloseCb.IsHandled = ProcessHandleIsHandle;
+	_ProcessHandleCloseCb.CloseHandle = ProcessHandleCloseHandle;
+	RegisterHandleCloseCb(&_ProcessHandleCloseCb);
+}
+
+HANDLE CreateProcessHandle(pid_t pid)
+{
+	WINPR_PROCESS* process;
+	process = (WINPR_PROCESS*) calloc(1, sizeof(WINPR_PROCESS));
+
+	if (!process)
+		return NULL;
+
+	pthread_once(&process_initialized, ProcessHandleInitialize);
+	process->pid = pid;
+	process->Type = HANDLE_TYPE_PROCESS;
+
+	return (HANDLE)process;
+}
+
 
 #endif
 

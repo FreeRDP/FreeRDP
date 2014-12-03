@@ -47,7 +47,15 @@ struct _cliprdr_server_context
 	CliprdrServerPrivate* priv;
 };
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm);
 FREERDP_API void cliprdr_server_context_free(CliprdrServerContext* context);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_CHANNEL_SERVER_CLIPRDR_H */
