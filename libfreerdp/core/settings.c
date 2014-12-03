@@ -519,6 +519,17 @@ rdpSettings* freerdp_settings_clone(rdpSettings* settings)
 
 		_settings->LoadBalanceInfo = NULL;
 		_settings->LoadBalanceInfoLength = 0;
+		_settings->TargetNetAddress = NULL;
+		_settings->RedirectionTargetFQDN = NULL;
+		_settings->RedirectionTargetNetBiosName = NULL;
+		_settings->RedirectionUsername = NULL;
+		_settings->RedirectionDomain = NULL;
+		_settings->RedirectionPassword = NULL;
+		_settings->RedirectionPasswordLength = 0;
+		_settings->RedirectionTsvUrl = NULL;
+		_settings->RedirectionTsvUrlLength = 0;
+		_settings->TargetNetAddressCount = 0;
+		_settings->TargetNetAddresses = NULL;
 
 		if (settings->LoadBalanceInfo && settings->LoadBalanceInfoLength)
 		{
