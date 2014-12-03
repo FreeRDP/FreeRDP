@@ -409,6 +409,8 @@ static void cliprdr_order_recv(cliprdrPlugin* cliprdr, wStream* s)
 			WLog_ERR(TAG, "unknown msgType %d", msgType);
 			break;
 	}
+
+	Stream_Free(s, TRUE);
 }
 
 /**
@@ -890,6 +892,8 @@ static void cliprdr_virtual_channel_event_terminated(cliprdrPlugin* cliprdr)
 
 	cliprdr_remove_open_handle_data(cliprdr->OpenHandle);
 	cliprdr_remove_init_handle_data(cliprdr->InitHandle);
+
+	free(cliprdr);
 }
 
 static VOID VCAPITYPE cliprdr_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)

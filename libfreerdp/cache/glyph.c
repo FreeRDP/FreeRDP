@@ -150,7 +150,7 @@ void update_process_glyph_fragments(rdpContext* context, BYTE* data, UINT32 leng
 				size = data[index + 2];
 
 				fragments = (BYTE*) malloc(size);
-				memcpy(fragments, data, size);
+				CopyMemory(fragments, data, size);
 				glyph_cache_fragment_put(glyph_cache, id, size, fragments);
 
 				index += 3;
@@ -494,13 +494,11 @@ rdpGlyphCache* glyph_cache_new(rdpSettings* settings)
 {
 	rdpGlyphCache* glyphCache;
 
-	glyphCache = (rdpGlyphCache*) malloc(sizeof(rdpGlyphCache));
+	glyphCache = (rdpGlyphCache*) calloc(1, sizeof(rdpGlyphCache));
 
 	if (glyphCache)
 	{
 		int i;
-
-		ZeroMemory(glyphCache, sizeof(rdpGlyphCache));
 
 		WLog_Init();
 		glyphCache->log = WLog_Get("com.freerdp.cache.glyph");
@@ -512,12 +510,10 @@ rdpGlyphCache* glyph_cache_new(rdpSettings* settings)
 		{
 			glyphCache->glyphCache[i].number = settings->GlyphCache[i].cacheEntries;
 			glyphCache->glyphCache[i].maxCellSize = settings->GlyphCache[i].cacheMaximumCellSize;
-			glyphCache->glyphCache[i].entries = (rdpGlyph**) malloc(sizeof(rdpGlyph*) * glyphCache->glyphCache[i].number);
-			ZeroMemory(glyphCache->glyphCache[i].entries, sizeof(rdpGlyph*) * glyphCache->glyphCache[i].number);
+			glyphCache->glyphCache[i].entries = (rdpGlyph**) calloc(glyphCache->glyphCache[i].number, sizeof(rdpGlyph*));
 		}
 
-		glyphCache->fragCache.entries = malloc(sizeof(FRAGMENT_CACHE_ENTRY) * 256);
-		ZeroMemory(glyphCache->fragCache.entries, sizeof(FRAGMENT_CACHE_ENTRY) * 256);
+		glyphCache->fragCache.entries = calloc(256, sizeof(FRAGMENT_CACHE_ENTRY));
 	}
 
 	return glyphCache;
@@ -555,10 +551,9 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 			glyphCache->glyphCache[i].entries = NULL;
 		}
 
-		for (i = 0; i < 255; i++)
+		for (i = 0; i < 256; i++)
 		{
-			fragment = glyphCache->fragCache.entries[i].fragment;
-			free(fragment);
+			free(glyphCache->fragCache.entries[i].fragment);
 			glyphCache->fragCache.entries[i].fragment = NULL;
 		}
 

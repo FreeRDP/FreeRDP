@@ -526,6 +526,12 @@ void update_reset_state(rdpUpdate* update)
 	rdpPrimaryUpdate* primary = update->primary;
 	rdpAltSecUpdate* altsec = update->altsec;
 
+	if (primary->fast_glyph.glyphData.aj)
+	{
+		free(primary->fast_glyph.glyphData.aj);
+		primary->fast_glyph.glyphData.aj = NULL;
+	}
+
 	ZeroMemory(&primary->order_info, sizeof(ORDER_INFO));
 	ZeroMemory(&primary->dstblt, sizeof(DSTBLT_ORDER));
 	ZeroMemory(&primary->patblt, sizeof(PATBLT_ORDER));
@@ -1707,35 +1713,27 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	const wObject cb = { NULL, NULL, NULL,  update_free_queued_message, NULL };
 	rdpUpdate* update;
 
-	update = (rdpUpdate*) malloc(sizeof(rdpUpdate));
+	update = (rdpUpdate*) calloc(1, sizeof(rdpUpdate));
 
 	if (update)
 	{
 		OFFSCREEN_DELETE_LIST* deleteList;
 
-		ZeroMemory(update, sizeof(rdpUpdate));
-
 		WLog_Init();
 		update->log = WLog_Get("com.freerdp.core.update");
 
 		update->bitmap_update.count = 64;
-		update->bitmap_update.rectangles = (BITMAP_DATA*) malloc(sizeof(BITMAP_DATA) * update->bitmap_update.count);
-		ZeroMemory(update->bitmap_update.rectangles, sizeof(BITMAP_DATA) * update->bitmap_update.count);
+		update->bitmap_update.rectangles = (BITMAP_DATA*) calloc(update->bitmap_update.count, sizeof(BITMAP_DATA));
 
-		update->pointer = (rdpPointerUpdate*) malloc(sizeof(rdpPointerUpdate));
-		ZeroMemory(update->pointer, sizeof(rdpPointerUpdate));
+		update->pointer = (rdpPointerUpdate*) calloc(1, sizeof(rdpPointerUpdate));
 
-		update->primary = (rdpPrimaryUpdate*) malloc(sizeof(rdpPrimaryUpdate));
-		ZeroMemory(update->primary, sizeof(rdpPrimaryUpdate));
+		update->primary = (rdpPrimaryUpdate*) calloc(1, sizeof(rdpPrimaryUpdate));
 
-		update->secondary = (rdpSecondaryUpdate*) malloc(sizeof(rdpSecondaryUpdate));
-		ZeroMemory(update->secondary, sizeof(rdpSecondaryUpdate));
+		update->secondary = (rdpSecondaryUpdate*) calloc(1, sizeof(rdpSecondaryUpdate));
 
-		update->altsec = (rdpAltSecUpdate*) malloc(sizeof(rdpAltSecUpdate));
-		ZeroMemory(update->altsec, sizeof(rdpAltSecUpdate));
+		update->altsec = (rdpAltSecUpdate*) calloc(1, sizeof(rdpAltSecUpdate));
 
-		update->window = (rdpWindowUpdate*) malloc(sizeof(rdpWindowUpdate));
-		ZeroMemory(update->window, sizeof(rdpWindowUpdate));
+		update->window = (rdpWindowUpdate*) calloc(1, sizeof(rdpWindowUpdate));
 
 		deleteList = &(update->altsec->create_offscreen_bitmap.deleteList);
 		deleteList->sIndices = 64;

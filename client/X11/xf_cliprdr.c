@@ -1142,6 +1142,12 @@ void xf_clipboard_free(xfClipboard* clipboard)
 		clipboard->serverFormats = NULL;
 	}
 
+	if (clipboard->numClientFormats)
+	{
+		for (i = 0; i < clipboard->numClientFormats; i++)
+			free(clipboard->clientFormats[i].formatName);
+	}
+
 	ClipboardDestroy(clipboard->system);
 
 	free(clipboard->data);

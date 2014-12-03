@@ -999,6 +999,8 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 
 	rdpdr_remove_open_handle_data(rdpdr->OpenHandle);
 	rdpdr_remove_init_handle_data(rdpdr->InitHandle);
+
+	free(rdpdr);
 }
 
 static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
