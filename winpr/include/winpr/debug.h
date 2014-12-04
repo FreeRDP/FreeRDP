@@ -27,10 +27,10 @@ extern "C" {
 
 #include <winpr/wtypes.h>
 
-void *winpr_backtrace(DWORD size);
-void winpr_backtrace_free(void *buffer);
-char **winpr_backtrace_symbols(void *buffer, size_t *used);
-void winpr_backtrace_symbols_fd(void *buffer, int fd);
+WINPR_API void *winpr_backtrace(DWORD size);
+WINPR_API void winpr_backtrace_free(void *buffer);
+WINPR_API char **winpr_backtrace_symbols(void *buffer, size_t *used);
+WINPR_API void winpr_backtrace_symbols_fd(void *buffer, int fd);
 
 #ifdef __cplusplus
 }
