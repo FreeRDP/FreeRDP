@@ -770,7 +770,7 @@ int xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
 
 	free(formats);
 
-	if (clipboard->owner != xfc->drawable)
+	if (clipboard->owner && clipboard->owner != xfc->drawable)
 	{
 		/* Request the owner for TARGETS, and wait for SelectionNotify event */
 		XConvertSelection(xfc->display, clipboard->clipboard_atom,
