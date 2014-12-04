@@ -156,7 +156,7 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 			if (formatNameLength)
 			{
-				formatNameLength = ConvertFromUnicode(CP_UTF8, 0, wszFormatName,
+				ConvertFromUnicode(CP_UTF8, 0, wszFormatName,
 					-1, &(formats[index].formatName), 0, NULL, NULL);
 			}
 			
