@@ -231,6 +231,14 @@ static void xf_desktop_resize(rdpContext* context)
 				xfc->drawing = xfc->primary;
 	}
 
+#ifdef WITH_XRENDER
+	if (!xfc->settings->SmartSizing)
+	{
+		xfc->scaledWidth = xfc->width;
+		xfc->scaledHeight = xfc->height;
+	}
+#endif
+
 	if (!xfc->fullscreen)
 	{
 		if (xfc->window)
@@ -238,13 +246,6 @@ static void xf_desktop_resize(rdpContext* context)
 	}
 	else
 	{
-#ifdef WITH_XRENDER
-		if (!xfc->settings->SmartSizing)
-		{
-			xfc->scaledWidth = xfc->width;
-			xfc->scaledHeight = xfc->height;
-		}
-#endif
 		XSetFunction(xfc->display, xfc->gc, GXcopy);
 		XSetFillStyle(xfc->display, xfc->gc, FillSolid);
 		XSetForeground(xfc->display, xfc->gc, 0);
