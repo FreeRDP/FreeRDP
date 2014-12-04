@@ -156,6 +156,8 @@ static int remdesk_send_ctl_version_info_pdu(RemdeskServerContext* context)
 
 	remdesk_virtual_channel_write(context, s);
 
+	Stream_Free(s, TRUE);
+
 	return 1;
 }
 

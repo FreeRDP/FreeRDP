@@ -620,6 +620,9 @@ static void drive_free(DEVICE* device)
 	CloseHandle(drive->thread);
 
 	ListDictionary_Free(drive->files);
+	MessageQueue_Free(drive->IrpQueue);
+
+	Stream_Free(drive->device.data, TRUE);
 
 	free(drive);
 }

@@ -1618,7 +1618,6 @@ void* xf_thread(void *param)
 	if (!exit_code)
 		exit_code = freerdp_error_info(instance);
 
-	freerdp_channels_free(channels);
 	freerdp_disconnect(instance);
 	gdi_free(instance);
 
@@ -1797,6 +1796,12 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 
 		if (xfc->display)
 			XCloseDisplay(xfc->display);
+
+		if (context->channels)
+		{
+			freerdp_channels_free(context->channels);
+			context->channels = NULL;
+		}
 	}
 }
 

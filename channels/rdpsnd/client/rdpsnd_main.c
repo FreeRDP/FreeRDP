@@ -1010,6 +1010,8 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 		rdpsnd->data_in = NULL;
 	}
 
+	MessagePipe_Free(rdpsnd->MsgPipe);
+
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->Free, rdpsnd->device);
 
@@ -1029,6 +1031,8 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 
 	rdpsnd_remove_open_handle_data(rdpsnd->OpenHandle);
 	rdpsnd_remove_init_handle_data(rdpsnd->InitHandle);
+
+	free(rdpsnd);
 }
 
 static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
@@ -1065,12 +1069,10 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndPlugin* rdpsnd;
 
-	rdpsnd = (rdpsndPlugin*) malloc(sizeof(rdpsndPlugin));
+	rdpsnd = (rdpsndPlugin*) calloc(1, sizeof(rdpsndPlugin));
 
 	if (rdpsnd)
 	{
-		ZeroMemory(rdpsnd, sizeof(rdpsndPlugin));
-
 #if !defined(_WIN32) && !defined(ANDROID)
 		{
 			sigset_t mask;

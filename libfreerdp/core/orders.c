@@ -1623,47 +1623,46 @@ BOOL update_write_fast_index_order(wStream* s, ORDER_INFO* orderInfo, FAST_INDEX
 	return TRUE;
 }
 
-BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fast_glyph)
+BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fastGlyph)
 {
 	BYTE* phold;
-	GLYPH_DATA_V2* glyph;
+	GLYPH_DATA_V2* glyph = &fastGlyph->glyphData;
 
-	ORDER_FIELD_BYTE(1, fast_glyph->cacheId);
-	ORDER_FIELD_2BYTE(2, fast_glyph->ulCharInc, fast_glyph->flAccel);
-	ORDER_FIELD_COLOR(3, fast_glyph->backColor);
-	ORDER_FIELD_COLOR(4, fast_glyph->foreColor);
-	ORDER_FIELD_COORD(5, fast_glyph->bkLeft);
-	ORDER_FIELD_COORD(6, fast_glyph->bkTop);
-	ORDER_FIELD_COORD(7, fast_glyph->bkRight);
-	ORDER_FIELD_COORD(8, fast_glyph->bkBottom);
-	ORDER_FIELD_COORD(9, fast_glyph->opLeft);
-	ORDER_FIELD_COORD(10, fast_glyph->opTop);
-	ORDER_FIELD_COORD(11, fast_glyph->opRight);
-	ORDER_FIELD_COORD(12, fast_glyph->opBottom);
-	ORDER_FIELD_COORD(13, fast_glyph->x);
-	ORDER_FIELD_COORD(14, fast_glyph->y);
+	ORDER_FIELD_BYTE(1, fastGlyph->cacheId);
+	ORDER_FIELD_2BYTE(2, fastGlyph->ulCharInc, fastGlyph->flAccel);
+	ORDER_FIELD_COLOR(3, fastGlyph->backColor);
+	ORDER_FIELD_COLOR(4, fastGlyph->foreColor);
+	ORDER_FIELD_COORD(5, fastGlyph->bkLeft);
+	ORDER_FIELD_COORD(6, fastGlyph->bkTop);
+	ORDER_FIELD_COORD(7, fastGlyph->bkRight);
+	ORDER_FIELD_COORD(8, fastGlyph->bkBottom);
+	ORDER_FIELD_COORD(9, fastGlyph->opLeft);
+	ORDER_FIELD_COORD(10, fastGlyph->opTop);
+	ORDER_FIELD_COORD(11, fastGlyph->opRight);
+	ORDER_FIELD_COORD(12, fastGlyph->opBottom);
+	ORDER_FIELD_COORD(13, fastGlyph->x);
+	ORDER_FIELD_COORD(14, fastGlyph->y);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_15)
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 
-		Stream_Read_UINT8(s, fast_glyph->cbData);
+		Stream_Read_UINT8(s, fastGlyph->cbData);
 
-		if (Stream_GetRemainingLength(s) < fast_glyph->cbData)
+		if (Stream_GetRemainingLength(s) < fastGlyph->cbData)
 			return FALSE;
 
-		CopyMemory(fast_glyph->data, Stream_Pointer(s), fast_glyph->cbData);
+		CopyMemory(fastGlyph->data, Stream_Pointer(s), fastGlyph->cbData);
 		phold = Stream_Pointer(s);
 
 		if (!Stream_SafeSeek(s, 1))
 			return FALSE;
 
-		if (fast_glyph->cbData > 1)
+		if (fastGlyph->cbData > 1)
 		{
 			/* parse optional glyph data */
-			glyph = &fast_glyph->glyphData;
-			glyph->cacheIndex = fast_glyph->data[0];
+			glyph->cacheIndex = fastGlyph->data[0];
 
 			if (!update_read_2byte_signed(s, &glyph->x) ||
 				!update_read_2byte_signed(s, &glyph->y) ||
@@ -1677,17 +1676,14 @@ BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_
 			if (Stream_GetRemainingLength(s) < glyph->cb)
 				return FALSE;
 
-			if (glyph->aj)
+			if (glyph->cb)
 			{
-				free(glyph->aj);
-				glyph->aj = NULL;
+				glyph->aj = (BYTE*) realloc(glyph->aj, glyph->cb);
+				Stream_Read(s, glyph->aj, glyph->cb);
 			}
-
-			glyph->aj = (BYTE*) malloc(glyph->cb);
-			Stream_Read(s, glyph->aj, glyph->cb);
 		}
 
-		Stream_Pointer(s) = phold + fast_glyph->cbData;
+		Stream_Pointer(s) = phold + fastGlyph->cbData;
 	}
 
 	return TRUE;

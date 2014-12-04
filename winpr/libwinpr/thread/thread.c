@@ -296,11 +296,9 @@ static void winpr_StartThread(WINPR_THREAD *thread)
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
 					LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
-	#ifndef HAVE_EVENTFD_H
-	int flags;
-	#endif
 	HANDLE handle;
 	WINPR_THREAD* thread;
+
 	thread = (WINPR_THREAD*) calloc(1, sizeof(WINPR_THREAD));
 
 	if (!thread)
@@ -334,8 +332,10 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 		return NULL;
 	}
 	
-	flags = fcntl(thread->pipe_fd[0], F_GETFL);
-	fcntl(thread->pipe_fd[0], F_SETFL, flags | O_NONBLOCK);
+	{
+		int flags = fcntl(thread->pipe_fd[0], F_GETFL);
+		fcntl(thread->pipe_fd[0], F_SETFL, flags | O_NONBLOCK);
+	}
 #endif
 	
 	pthread_mutex_init(&thread->mutex, 0);
