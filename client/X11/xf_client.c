@@ -161,7 +161,7 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 		XDestroyRegion(reg2);
 	}
 
-	picFormat = XRenderFindStandardFormat(xfc->display, PictStandardRGB24);
+	picFormat = XRenderFindVisualFormat(xfc->display, xfc->visual);
 
 	pa.subwindow_mode = IncludeInferiors;
 	primaryPicture = XRenderCreatePicture(xfc->display, xfc->primary, picFormat, CPSubwindowMode, &pa);
