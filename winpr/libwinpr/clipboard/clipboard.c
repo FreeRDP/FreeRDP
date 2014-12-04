@@ -540,6 +540,10 @@ void ClipboardDestroy(wClipboard* clipboard)
 		}
 	}
 
+	free((void*) clipboard->data);
+	clipboard->data = NULL;
+	clipboard->size = 0;
+
 	clipboard->numFormats = 0;
 	free(clipboard->formats);
 
