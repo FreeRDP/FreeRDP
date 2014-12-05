@@ -377,6 +377,9 @@ INLINE int gdi_InvalidateRegion(HGDI_DC hdc, int x, int y, int w, int h)
 	if (!hdc->hwnd->invalid)
 		return 0;
 
+	if (w == 0 || h == 0)
+		return 0;
+
 	cinvalid = hdc->hwnd->cinvalid;
 
 	if ((hdc->hwnd->ninvalid + 1) > hdc->hwnd->count)
