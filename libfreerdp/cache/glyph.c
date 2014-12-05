@@ -92,10 +92,35 @@ void update_process_glyph_fragments(rdpContext* context, BYTE* data, UINT32 leng
 	graphics = context->graphics;
 	glyph_cache = context->cache->glyph;
 
+	if (opX + opWidth > context->settings->DesktopWidth)
+	{
+		/**
+		 * Some Microsoft servers send erroneous high values close to the
+		 * sint16 maximum in the OpRight field of the GlyphIndex, FastIndex and
+		 * FastGlyph drawing orders, probably a result of applications trying to
+		 * clear the text line to the very right end.
+		 * One example where this can be seen is typing in notepad.exe within
+		 * a RDP session to Windows XP Professional SP3.
+		 * This workaround prevents resulting problems in the UI callbacks.
+		 */
+		opWidth = context->settings->DesktopWidth - opX;
+	}
+
 	if (opWidth > 0 && opHeight > 0)
+	{
 		Glyph_BeginDraw(context, opX, opY, opWidth, opHeight, bgcolor, fgcolor, fOpRedundant);
+	}
 	else
-		Glyph_BeginDraw(context, 0, 0, 0, 0, bgcolor, fgcolor, fOpRedundant);
+	{
+		if (fOpRedundant)
+		{
+			Glyph_BeginDraw(context, bkX, bkY, bkWidth, bkHeight, bgcolor, fgcolor, fOpRedundant);
+		}
+		else
+		{
+			Glyph_BeginDraw(context, 0, 0, 0, 0, bgcolor, fgcolor, fOpRedundant);
+		}
+	}
 
 	while (index < (int) length)
 	{
@@ -184,18 +209,6 @@ void update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyphIndex)
 	opWidth = glyphIndex->opRight - glyphIndex->opLeft;
 	bkHeight = glyphIndex->bkBottom - glyphIndex->bkTop;
 	opHeight = glyphIndex->opBottom - glyphIndex->opTop;
-
-	if (glyphIndex->opRight > context->settings->DesktopWidth)
-	{
-		/**
-		 * Some Microsoft servers send erroneous high values close to the
-		 * sint16 maximum in the OpRight field of this drawing order.
-		 * (One example where this can be seen is in notepad when connected to
-		 * Windows XP with disabled fast index and fast glyph capabilities.)
-		 * This workaround prevents resulting problems in the UI callbacks.
-		 */
-		opWidth = context->settings->DesktopWidth - glyphIndex->opLeft;
-	}
 
 	update_process_glyph_fragments(context, glyphIndex->data, glyphIndex->cbData,
 			glyphIndex->cacheId, glyphIndex->ulCharInc, glyphIndex->flAccel,
@@ -524,7 +537,6 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 	if (glyphCache)
 	{
 		int i;
-		void* fragment;
 
 		for (i = 0; i < 10; i++)
 		{
