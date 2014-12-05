@@ -128,12 +128,6 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 		return;
 	}
 
-	if (!w || !h)
-	{
-		WLog_ERR(TAG,  "invalid width and/or height specified");
-		return;
-	}
-
 	xScalingFactor = xfc->width / (double)xfc->scaledWidth;
 	yScalingFactor = xfc->height / (double)xfc->scaledHeight;
 
@@ -207,6 +201,12 @@ BOOL xf_picture_transform_required(xfContext* xfc)
 
 void xf_draw_screen(xfContext* xfc, int x, int y, int w, int h)
 {
+	if (w == 0 || h == 0)
+	{
+		WLog_WARN(TAG,  "invalid width and/or height specified: w=%d h=%d", w, h);
+		return;
+	}
+
 #ifdef WITH_XRENDER
 	if (xf_picture_transform_required(xfc)) {
 		xf_draw_screen_scaled(xfc, x, y, w, h);
