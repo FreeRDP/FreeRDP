@@ -1272,9 +1272,11 @@ void xf_window_free(xfContext* xfc)
 void* xf_input_thread(void *arg)
 {
 	xfContext* xfc;
-	HANDLE event;
+	DWORD status;
+	HANDLE event[2];
 	XEvent xevent;
 	wMessageQueue *queue;
+	wMessage msg;
 	int pending_status = 1;
 	int process_status = 1;
 	freerdp *instance = (freerdp*) arg;
@@ -1282,34 +1284,51 @@ void* xf_input_thread(void *arg)
 	xfc = (xfContext *) instance->context;
 	assert(NULL != xfc);
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-	event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
+	event[0] = MessageQueue_Event(queue);
+	event[1] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
 
-	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
+	while(1)
 	{
-		do
+		status = WaitForMultipleObjects(2, event, FALSE, INFINITE);
+		
+		if(status == WAIT_OBJECT_0 + 1)
 		{
-			xf_lock_x11(xfc, FALSE);
-			pending_status = XPending(xfc->display);
-			xf_unlock_x11(xfc, FALSE);
-
-			if (pending_status)
+			do
 			{
 				xf_lock_x11(xfc, FALSE);
-
-				ZeroMemory(&xevent, sizeof(xevent));
-				XNextEvent(xfc->display, &xevent);
-
-				process_status = xf_event_process(instance, &xevent);
-
+				pending_status = XPending(xfc->display);
 				xf_unlock_x11(xfc, FALSE);
 
-				if (!process_status)
+				if (pending_status)
+				{
+					xf_lock_x11(xfc, FALSE);
+
+					ZeroMemory(&xevent, sizeof(xevent));
+					XNextEvent(xfc->display, &xevent);
+
+					process_status = xf_event_process(instance, &xevent);
+
+					xf_unlock_x11(xfc, FALSE);
+
+					if (!process_status)
+						break;
+				}
+			}
+			while (pending_status);
+
+			if (!process_status)
+				break;
+
+		}
+		else if(status == WAIT_OBJECT_0)
+		{
+			if(MessageQueue_Peek(queue, &msg, FALSE))
+			{
+				if(msg.id == WMQ_QUIT)
 					break;
 			}
 		}
-		while (pending_status);
-
-		if (!process_status)
+		else
 			break;
 	}
 
