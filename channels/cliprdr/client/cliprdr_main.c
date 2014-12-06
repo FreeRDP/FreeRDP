@@ -522,8 +522,10 @@ int cliprdr_client_format_list(CliprdrClientContext* context, CLIPRDR_FORMAT_LIS
 				
 				if (formatNameSize > 15)
 					formatNameSize = 15;
-				
-				Stream_Write(s, wszFormatName, formatNameSize * 2);
+			
+				if (wszFormatName)	
+					Stream_Write(s, wszFormatName, formatNameSize * 2);
+
 				Stream_Zero(s, 32 - (formatNameSize * 2));
 				
 				free(wszFormatName);
