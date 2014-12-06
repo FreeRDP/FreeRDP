@@ -109,7 +109,7 @@ int WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogCallbackAppender* app
 
 int WLog_CallbackAppender_WritePacketMessage(wLog* log, wLogCallbackAppender* appender, wLogMessage* message)
 {
-	if (!appender->package)
+	if (appender->package)
 	{
 		appender->package(message);
 	}
