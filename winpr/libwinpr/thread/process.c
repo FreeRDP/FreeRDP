@@ -291,6 +291,7 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 
 	if (!thread)
 	{
+		ProcessHandleCloseHandle(process);
 		goto finish;
 	}
 
