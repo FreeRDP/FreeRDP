@@ -177,7 +177,8 @@ char* FindApplicationPath(char* application)
 	return filename;
 }
 
-HANDLE CreateProcessHandle(pid_t pid);
+static HANDLE CreateProcessHandle(pid_t pid);
+static BOOL ProcessHandleCloseHandle(HANDLE handle);
 
 BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
@@ -457,7 +458,7 @@ BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
 }
 
 
-static BOOL ProcessHandleCloseHandle(HANDLE handle)
+BOOL ProcessHandleCloseHandle(HANDLE handle)
 {
 	WINPR_PROCESS* process = (WINPR_PROCESS*) handle;
 	free(process);
