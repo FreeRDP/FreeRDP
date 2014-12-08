@@ -230,6 +230,8 @@ BOOL nego_tcp_connect(rdpNego* nego)
 			if (nego->GatewayBypassLocal)
 			{
 				/* Attempt a direct connection first, and then fallback to using the gateway */
+				WLog_INFO(TAG, "Detecting if host can be reached locally. - This might take some time.");
+				WLog_INFO(TAG, "To disable auto detection use /gateway-usage-method:direct");
 				transport_set_gateway_enabled(nego->transport, FALSE);
 				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port, 1);
 			}
