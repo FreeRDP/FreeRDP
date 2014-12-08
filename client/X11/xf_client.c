@@ -913,6 +913,16 @@ BOOL xf_pre_connect(freerdp* instance)
 	freerdp_client_load_addins(channels, instance->settings);
 	freerdp_channels_pre_connect(channels, instance);
 
+	if (!settings->Username)
+	{
+		char *login_name = getlogin();
+		if (login_name)
+		{
+			settings->Username = _strdup(login_name);
+			WLog_INFO(TAG, "No user name set. - Using login name: %s", settings->Username);
+		}
+	}
+
 	if (settings->AuthenticationOnly)
 	{
 		/* Check --authonly has a username and password. */
