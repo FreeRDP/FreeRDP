@@ -908,6 +908,8 @@ static int urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCallb
 	URBDRC_CHANNEL_CALLBACK* callback;
 	WLog_VRB(TAG, "");
 	callback = (URBDRC_CHANNEL_CALLBACK*) malloc(sizeof(URBDRC_CHANNEL_CALLBACK));
+	memset(callback, 0, sizeof(URBDRC_CHANNEL_CALLBACK));
+
 	callback->iface.OnDataReceived = urbdrc_on_data_received;
 	callback->iface.OnClose = urbdrc_on_close;
 	callback->plugin = listener_callback->plugin;
