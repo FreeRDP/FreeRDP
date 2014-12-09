@@ -644,6 +644,9 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	 * the index is a two digit zero-padded integer
 	 * the slot is a two digit zero-padded integer
 	 */
+	if (!name)
+		return NULL;
+		
 	length = strlen(name);
 
 	if (length < 10)
@@ -1476,8 +1479,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		rgReaderStates[i].cbAtr = states[j].cbAtr;
 		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
 
-		/* pcsc-lite puts an event count in the higher bits of dwEventState */
-		states[j].dwEventState &= 0xFFFF;
 		dwEventState = states[j].dwEventState & ~SCARD_STATE_CHANGED;
 
 		if (dwEventState != rgReaderStates[i].dwCurrentState)
@@ -1876,6 +1877,12 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 		{
 			if (pcchReaderLenAlloc)
 			{
+				/**
+				* Workaround for SCardStatus Bug in MAC OS X Yosemite
+				*/
+#if defined (__APPLE__) && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED == 1010
+				pcsc_cchReaderLen++;
+#endif
 				*pMszReaderNames = (LPSTR) calloc(1, pcsc_cchReaderLen);
 
 				if (!*pMszReaderNames)
@@ -2702,7 +2709,11 @@ int PCSC_InitializeSCardApi(void)
 	g_PCSC.pfnSCardEndTransaction = (void*) GetProcAddress(g_PCSCModule, "SCardEndTransaction");
 	g_PCSC.pfnSCardStatus = (void*) GetProcAddress(g_PCSCModule, "SCardStatus");
 	g_PCSC.pfnSCardGetStatusChange = (void*) GetProcAddress(g_PCSCModule, "SCardGetStatusChange");
+#if defined (__APPLE__) && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1056
+	g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl132");	
+#else
 	g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl");
+#endif
 	g_PCSC.pfnSCardTransmit = (void*) GetProcAddress(g_PCSCModule, "SCardTransmit");
 	g_PCSC.pfnSCardListReaderGroups = (void*) GetProcAddress(g_PCSCModule, "SCardListReaderGroups");
 	g_PCSC.pfnSCardListReaders = (void*) GetProcAddress(g_PCSCModule, "SCardListReaders");
