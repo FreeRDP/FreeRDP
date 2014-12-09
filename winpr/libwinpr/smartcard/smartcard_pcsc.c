@@ -1880,7 +1880,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 				/**
 				* Workaround for SCardStatus Bug in MAC OS X Yosemite
 				*/
-#if defined (__APPLE__) && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED == 1010
+#if defined (__APPLE__) && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED == 101000
 				pcsc_cchReaderLen++;
 #endif
 				*pMszReaderNames = (LPSTR) calloc(1, pcsc_cchReaderLen);
