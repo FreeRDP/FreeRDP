@@ -143,15 +143,4 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
 
 #include "rts_signature.h"
 
-#ifdef WITH_DEBUG_TSG
-#define WITH_DEBUG_RTS
-#endif
-
-#define RTS_TAG FREERDP_TAG("core.gateway.rts")
-#ifdef WITH_DEBUG_RTS
-#define DEBUG_RTS(fmt, ...) WLog_DBG(RTS_TAG, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_RTS(fmt, ...) do { } while (0)
-#endif
-
 #endif /* FREERDP_CORE_RTS_H */

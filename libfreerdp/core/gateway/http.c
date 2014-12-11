@@ -402,8 +402,6 @@ BOOL http_response_parse_header_field(HttpResponse* http_response, char* name, c
 		}
 
 		status = ListDictionary_Add(http_response->Authenticates, authScheme, authValue);
-
-		free(authScheme);
 	}
 
 	return status;
@@ -571,7 +569,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 			if (count)
 			{
-				http_response->lines = (char**)calloc(http_response->count, sizeof(char*));
+				http_response->lines = (char**) calloc(http_response->count, sizeof(char*));
 
 				if (!http_response->lines)
 					goto out_error;
@@ -598,7 +596,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 			if (http_response->bodyLen > 0)
 			{
-				http_response->BodyContent = (BYTE*)malloc(http_response->bodyLen);
+				http_response->BodyContent = (BYTE*) malloc(http_response->bodyLen);
 
 				if (!http_response->BodyContent)
 					goto out_error;
