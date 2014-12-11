@@ -81,3 +81,47 @@
   fun:ssl3_write_pending
   fun:ssl3_write_bytes
 }
+
+{
+   g_type_init
+   Memcheck:Leak
+   ...
+   fun:g_type_init_with_debug_flags
+}
+{
+   gobject_init_ctor
+   Memcheck:Leak
+   ...
+   fun:gobject_init_ctor
+}
+{
+   g_type_register_static
+   Memcheck:Leak
+   ...
+   fun:g_type_register_static
+}
+{
+   g_type_register_fundamental
+   Memcheck:Leak
+   ...
+   fun:g_type_register_fundamental
+}
+{
+   g_type_add_interface_static
+   Memcheck:Leak
+   ...
+   fun:g_type_add_interface_static
+}
+{
+   g_type_class_ref
+   Memcheck:Leak
+   ...
+   fun:g_type_class_ref
+}
+
+{
+  XGetDefault
+  Memcheck:Leak
+  ...
+  fun:XGetDefault
+}

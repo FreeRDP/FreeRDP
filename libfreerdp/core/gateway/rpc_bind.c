@@ -105,7 +105,14 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	DEBUG_RPC("Sending bind PDU");
 
+	if (rpc->ntlm)
+	{
+		ntlm_free(rpc->ntlm);
+		rpc->ntlm = NULL;
+	}
+
 	rpc->ntlm = ntlm_new();
+
 	if (!rpc->ntlm)
 		return -1;
 

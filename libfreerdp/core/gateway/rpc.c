@@ -519,12 +519,12 @@ RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 		return NULL;
 
 	connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
-	connection->DefaultInChannel = (RpcInChannel*)calloc(1, sizeof(RpcInChannel));
+	connection->DefaultInChannel = (RpcInChannel*) calloc(1, sizeof(RpcInChannel));
 
 	if (!connection->DefaultInChannel)
 		goto out_free;
 
-	connection->DefaultOutChannel = (RpcOutChannel*)calloc(1, sizeof(RpcOutChannel));
+	connection->DefaultOutChannel = (RpcOutChannel*) calloc(1, sizeof(RpcOutChannel));
 
 	if (!connection->DefaultOutChannel)
 		goto out_default_in;
@@ -538,13 +538,15 @@ out_free:
 	return NULL;
 }
 
-void rpc_client_virtual_connection_free(RpcVirtualConnection* virtual_connection)
+void rpc_client_virtual_connection_free(RpcVirtualConnection* virtualConnection)
 {
-	if (virtual_connection != NULL)
+	if (virtualConnection)
 	{
-		free(virtual_connection->DefaultInChannel);
-		free(virtual_connection->DefaultOutChannel);
-		free(virtual_connection);
+		CloseHandle(virtualConnection->DefaultInChannel->Mutex);
+		CloseHandle(virtualConnection->DefaultOutChannel->Mutex);
+		free(virtualConnection->DefaultInChannel);
+		free(virtualConnection->DefaultOutChannel);
+		free(virtualConnection);
 	}
 }
 
@@ -559,6 +561,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 	rpc->transport = transport;
 	rpc->settings = transport->settings;
 	rpc->SendSeqNum = 0;
+
 	rpc->ntlm = ntlm_new();
 
 	if (!rpc->ntlm)
@@ -576,6 +579,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 	rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpIn, TSG_CHANNEL_IN);
 	rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpOut, TSG_CHANNEL_OUT);
+
 	rpc->PipeCallId = 0;
 	rpc->StubCallId = 0;
 	rpc->StubFragCount = 0;
@@ -594,6 +598,7 @@ rdpRpc* rpc_new(rdpTransport* transport)
 	rpc->KeepAliveInterval = 300000;
 	rpc->CurrentKeepAliveInterval = rpc->KeepAliveInterval;
 	rpc->CurrentKeepAliveTime = 0;
+
 	rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
 
 	if (!rpc->VirtualConnection)
@@ -630,19 +635,33 @@ out_free:
 
 void rpc_free(rdpRpc* rpc)
 {
-	if (rpc != NULL)
+	if (rpc)
 	{
 		rpc_client_stop(rpc);
 
-		if (rpc->State >= RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
+		if (rpc->ntlm)
 		{
 			ntlm_client_uninit(rpc->ntlm);
 			ntlm_free(rpc->ntlm);
+			rpc->ntlm = NULL;
+		}
+
+		if (rpc->NtlmHttpIn)
+		{
+			ntlm_http_free(rpc->NtlmHttpIn);
+			rpc->NtlmHttpIn = NULL;
+		}
+
+		if (rpc->NtlmHttpOut)
+		{
+			ntlm_http_free(rpc->NtlmHttpOut);
+			rpc->NtlmHttpOut = NULL;
 		}
 
 		rpc_client_virtual_connection_free(rpc->VirtualConnection);
 		ArrayList_Clear(rpc->VirtualConnectionCookieTable);
 		ArrayList_Free(rpc->VirtualConnectionCookieTable);
+
 		free(rpc);
 	}
 }

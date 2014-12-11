@@ -181,6 +181,7 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value)
 		EnterCriticalSection(&listDictionary->lock);
 
 	item = (wListDictionaryItem*) malloc(sizeof(wListDictionaryItem));
+
 	if (!item)
 		return FALSE;
 
@@ -205,6 +206,7 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value)
 
 	if (listDictionary->synchronized)
 		LeaveCriticalSection(&listDictionary->lock);
+
 	return TRUE;
 }
 

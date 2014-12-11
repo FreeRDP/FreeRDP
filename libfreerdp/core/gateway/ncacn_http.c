@@ -222,18 +222,20 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 {
 	int ntlm_token_length = 0;
-	BYTE* ntlm_token_data;
+	BYTE* ntlm_token_data = NULL;
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
 
 	http_response = http_response_recv(rpc->TlsOut);
 
 	ntlm_token_data = NULL;
+
 	if (http_response && ListDictionary_Contains(http_response->Authenticates, "NTLM"))
 	{
-		char *token64 = ListDictionary_GetItemValue(http_response->Authenticates, "NTLM");
+		char* token64 = ListDictionary_GetItemValue(http_response->Authenticates, "NTLM");
 		crypto_base64_decode(token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
 	}
+
 	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
 	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
 	
@@ -298,16 +300,18 @@ rdpNtlmHttp* ntlm_http_new()
 {
 	rdpNtlmHttp* ntlm_http;
 
-	ntlm_http = (rdpNtlmHttp *)calloc(1, sizeof(rdpNtlmHttp));
+	ntlm_http = (rdpNtlmHttp*) calloc(1, sizeof(rdpNtlmHttp));
 
 	if (!ntlm_http)
 		return NULL;
 
 	ntlm_http->ntlm = ntlm_new();
+
 	if (!ntlm_http->ntlm)
 		goto out_free;
 
 	ntlm_http->context = http_context_new();
+
 	if (!ntlm_http->context)
 		goto out_free_ntlm;
 

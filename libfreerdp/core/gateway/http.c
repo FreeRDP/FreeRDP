@@ -360,17 +360,21 @@ BOOL http_response_parse_header_status_line(HttpResponse* http_response, char* s
 
 BOOL http_response_parse_header_field(HttpResponse* http_response, char* name, char* value)
 {
+	BOOL status = TRUE;
+
 	if (_stricmp(name, "Content-Length") == 0)
 	{
 		http_response->ContentLength = atoi(value);
 	}
 	else if (_stricmp(name, "WWW-Authenticate") == 0)
 	{
-		char* separator;
-		char* authScheme, *authValue;
+		char* separator = NULL;
+		char* authScheme = NULL;
+		char* authValue = NULL;
+
 		separator = strchr(value, ' ');
 
-		if (separator != NULL)
+		if (separator)
 		{
 			/* WWW-Authenticate: Basic realm=""
 			 * WWW-Authenticate: NTLM base64token
@@ -397,10 +401,12 @@ BOOL http_response_parse_header_field(HttpResponse* http_response, char* name, c
 			authValue = NULL;
 		}
 
-		return ListDictionary_Add(http_response->Authenticates, authScheme, authValue);
+		status = ListDictionary_Add(http_response->Authenticates, authScheme, authValue);
+
+		free(authScheme);
 	}
 
-	return TRUE;
+	return status;
 }
 
 BOOL http_response_parse_header(HttpResponse* http_response)
@@ -498,6 +504,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	nbytes = 0;
 	length = 10000;
 	content = NULL;
+
 	buffer = calloc(length, 1);
 
 	if (!buffer)
@@ -637,16 +644,19 @@ static void string_free(void* obj1)
 
 HttpResponse* http_response_new()
 {
-	HttpResponse* ret = (HttpResponse*)calloc(1, sizeof(HttpResponse));
+	HttpResponse* ret = (HttpResponse*) calloc(1, sizeof(HttpResponse));
 
 	if (!ret)
 		return NULL;
 
 	ret->Authenticates = ListDictionary_New(FALSE);
+
 	ListDictionary_KeyObject(ret->Authenticates)->fnObjectEquals = strings_equals_nocase;
 	ListDictionary_KeyObject(ret->Authenticates)->fnObjectFree = string_free;
+
 	ListDictionary_ValueObject(ret->Authenticates)->fnObjectEquals = strings_equals_nocase;
 	ListDictionary_ValueObject(ret->Authenticates)->fnObjectFree = string_free;
+
 	return ret;
 }
 
@@ -665,6 +675,7 @@ void http_response_free(HttpResponse* http_response)
 
 	free(http_response->lines);
 	free(http_response->ReasonPhrase);
+
 	ListDictionary_Free(http_response->Authenticates);
 
 	if (http_response->ContentLength > 0)

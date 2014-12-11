@@ -212,6 +212,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc_client_start(rpc);
 
 	pdu = rpc_recv_dequeue_pdu(rpc);
+
 	if (!pdu)
 		return FALSE;
 

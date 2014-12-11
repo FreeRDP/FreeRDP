@@ -356,6 +356,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	rdpSettings* settings = transport->settings;
 	instance = (freerdp*) transport->settings->instance;
 	context = instance->context;
+
 	tsg = tsg_new(transport);
 
 	if (!tsg)
@@ -1254,9 +1255,21 @@ void transport_free(rdpTransport* transport)
 
 	transport->TcpIn = NULL;
 	transport->TcpOut = NULL;
-	tsg_free(transport->tsg);
-	transport->tsg = NULL;
+
+	if (transport->tsg)
+	{
+		tsg_free(transport->tsg);
+		transport->tsg = NULL;
+	}
+
+	if (transport->TsgTls)
+	{
+		tls_free(transport->TsgTls);
+		transport->TsgTls = NULL;
+	}
+
 	DeleteCriticalSection(&(transport->ReadLock));
 	DeleteCriticalSection(&(transport->WriteLock));
+
 	free(transport);
 }
