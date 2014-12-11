@@ -1226,7 +1226,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					continue;
 
 				length = p2 - p;
-				settings->ServerHostname = (char*) malloc(length);
+				settings->ServerHostname = (char*) calloc(length, sizeof(char));
 				strncpy(settings->ServerHostname, p+1, length-1);
 				if (*(p2 + 1) == ':')
 				{
