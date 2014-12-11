@@ -126,6 +126,7 @@ void rdpei_server_context_reset(RdpeiServerContext *context)
 {
 	RdpeiServerPrivate *priv = context->priv;
 
+	priv->channelHandle = INVALID_HANDLE_VALUE;
 	priv->expectedBytes = RDPINPUT_HEADER_LENGTH;
 	priv->waitingHeaders = TRUE;
 	priv->automataState = STATE_INITIAL;
@@ -134,8 +135,11 @@ void rdpei_server_context_reset(RdpeiServerContext *context)
 
 void rdpei_server_context_free(RdpeiServerContext* context)
 {
-	Stream_Free(context->priv->inputStream, TRUE);
-	free(context->priv);
+	RdpeiServerPrivate *priv = context->priv;
+	if (priv->channelHandle != INVALID_HANDLE_VALUE)
+		WTSVirtualChannelClose(priv->channelHandle);
+	Stream_Free(priv->inputStream, TRUE);
+	free(priv);
 	free(context);
 }
 
