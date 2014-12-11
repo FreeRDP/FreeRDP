@@ -93,10 +93,10 @@ int shadow_subsystem_load_entry_points(RDP_SHADOW_ENTRY_POINTS* pEntryPoints, co
 
 	entry = shadow_subsystem_load_static_entry(name);
 
+	ZeroMemory(pEntryPoints, sizeof(RDP_SHADOW_ENTRY_POINTS));
+
 	if (!entry)
 		return -1;
-
-	ZeroMemory(pEntryPoints, sizeof(RDP_SHADOW_ENTRY_POINTS));
 
 	if (entry(pEntryPoints) < 0)
 		return -1;

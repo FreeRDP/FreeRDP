@@ -57,6 +57,9 @@ int rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_METAB
 	RDPGFX_RECT16* regionRect;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal;
 
+	meta->regionRects = NULL;
+	meta->quantQualityVals = NULL;
+
 	if (Stream_GetRemainingLength(s) < 4)
 		return -1;
 

@@ -963,6 +963,7 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	}
 
 	pDstData = NULL;
+	DstSize = 0;
 
 	formatId = 0;
 	altFormatId = 0;

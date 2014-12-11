@@ -996,10 +996,10 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(BYTE* inPlane, int width, int hei
 
 int freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[4], int width, int height, BYTE* outPlanes[4])
 {
-	freerdp_bitmap_planar_delta_encode_plane(inPlanes[0], width, height, outPlanes[0]);
-	freerdp_bitmap_planar_delta_encode_plane(inPlanes[1], width, height, outPlanes[1]);
-	freerdp_bitmap_planar_delta_encode_plane(inPlanes[2], width, height, outPlanes[2]);
-	freerdp_bitmap_planar_delta_encode_plane(inPlanes[3], width, height, outPlanes[3]);
+	outPlanes[0] = freerdp_bitmap_planar_delta_encode_plane(inPlanes[0], width, height, outPlanes[0]);
+	outPlanes[1] = freerdp_bitmap_planar_delta_encode_plane(inPlanes[1], width, height, outPlanes[1]);
+	outPlanes[2] = freerdp_bitmap_planar_delta_encode_plane(inPlanes[2], width, height, outPlanes[2]);
+	outPlanes[3] = freerdp_bitmap_planar_delta_encode_plane(inPlanes[3], width, height, outPlanes[3]);
 
 	return 0;
 }
