@@ -66,8 +66,10 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 add_subdirectory(include)
 add_subdirectory(librdtk)
 
-if(WITH_X11)
-	add_subdirectory(sample)
+if(WITH_SAMPLE)
+	if(WITH_X11)
+		add_subdirectory(sample)
+	endif()
 endif()
 
 # Exporting
