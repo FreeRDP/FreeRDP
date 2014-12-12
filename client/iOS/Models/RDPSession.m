@@ -158,9 +158,7 @@ NSString* TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect"
             settings->TlsSecurity = FALSE;
             settings->NlaSecurity = FALSE;
             settings->ExtSecurity = FALSE;
-            settings->DisableEncryption = TRUE;
-            settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-            settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+            settings->UseRdpSecurityLayer = TRUE;
             break;
 
         default:

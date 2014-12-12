@@ -590,7 +590,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 	if ((securityFlags & SEC_INFO_PKT) == 0)
 		return FALSE;
 
-	if (rdp->settings->DisableEncryption)
+	if (rdp->settings->UseRdpSecurityLayer)
 	{
 		if (securityFlags & SEC_REDIRECTION_PKT)
 		{

@@ -1040,7 +1040,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		rdp->autodetect->bandwidthMeasureByteCount += length;
 	}
 
-	if (rdp->settings->DisableEncryption)
+	if (rdp->settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(s, &securityFlags))
 			return -1;

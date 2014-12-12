@@ -3,6 +3,7 @@
  * T.124 Generic Conference Control (GCC)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +29,7 @@
 #include "gcc.h"
 #include "certificate.h"
 
-#define TAG FREERDP_TAG("core")
+#define TAG FREERDP_TAG("core.gcc")
 
 /**
  * T.124 GCC is defined in:
@@ -948,7 +949,7 @@ BOOL gcc_read_client_security_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	if (blockLength < 8)
 		return FALSE;
 
-	if (settings->DisableEncryption)
+	if (settings->UseRdpSecurityLayer)
 	{
 		Stream_Read_UINT32(s, settings->EncryptionMethods); /* encryptionMethods */
 		if (settings->EncryptionMethods == 0)
@@ -976,7 +977,7 @@ void gcc_write_client_security_data(wStream* s, rdpMcs* mcs)
 
 	gcc_write_user_data_header(s, CS_SECURITY, 12);
 
-	if (settings->DisableEncryption)
+	if (settings->UseRdpSecurityLayer)
 	{
 		Stream_Write_UINT32(s, settings->EncryptionMethods); /* encryptionMethods */
 		Stream_Write_UINT32(s, 0); /* extEncryptionMethods */
@@ -994,19 +995,87 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	BYTE* data;
 	UINT32 length;
 	rdpSettings* settings = mcs->settings;
+	BOOL validCryptoConfig = FALSE;
+	UINT32 serverEncryptionMethod;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Read_UINT32(s, settings->EncryptionMethods); /* encryptionMethod */
+	Stream_Read_UINT32(s, serverEncryptionMethod); /* encryptionMethod */
 	Stream_Read_UINT32(s, settings->EncryptionLevel); /* encryptionLevel */
 
-	if (settings->EncryptionMethods == 0 && settings->EncryptionLevel == 0)
+	/* Only accept valid/known encryption methods */
+	switch (serverEncryptionMethod)
 	{
-		/* serverRandom and serverRandom must not be present */
-		settings->DisableEncryption = FALSE;
-		settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
-		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
+		case ENCRYPTION_METHOD_NONE:
+			WLog_DBG(TAG, "Server rdp encryption method: NONE");
+			break;
+		case ENCRYPTION_METHOD_40BIT:
+			WLog_DBG(TAG, "Server rdp encryption method: 40BIT");
+			break;
+		case ENCRYPTION_METHOD_56BIT:
+			WLog_DBG(TAG, "Server rdp encryption method: 56BIT");
+			break;
+		case ENCRYPTION_METHOD_128BIT:
+			WLog_DBG(TAG, "Server rdp encryption method: 128BIT");
+			break;
+		case ENCRYPTION_METHOD_FIPS:
+			WLog_DBG(TAG, "Server rdp encryption method: FIPS");
+			break;
+		default:
+			WLog_ERR(TAG, "Received unknown encryption method %08X", serverEncryptionMethod);
+			return FALSE;
+	}
+
+	if (settings->UseRdpSecurityLayer && !(settings->EncryptionMethods & serverEncryptionMethod))
+	{
+		WLog_WARN(TAG, "Server uses non-advertised encryption method 0x%08X", serverEncryptionMethod);
+		/* FIXME: Should we return FALSE; in this case ?? */
+	}
+
+	settings->EncryptionMethods = serverEncryptionMethod;
+
+	/* Verify encryption level/method combinations according to MS-RDPBCGR Section 5.3.2 */
+	switch (settings->EncryptionLevel)
+	{
+		case ENCRYPTION_LEVEL_NONE:
+			if (settings->EncryptionMethods == ENCRYPTION_METHOD_NONE)
+			{
+				validCryptoConfig = TRUE;
+			}
+			break;
+		case ENCRYPTION_LEVEL_FIPS:
+			if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			{
+				validCryptoConfig = TRUE;
+			}
+			break;
+		case ENCRYPTION_LEVEL_LOW:
+		case ENCRYPTION_LEVEL_HIGH:
+		case ENCRYPTION_LEVEL_CLIENT_COMPATIBLE:
+			if (settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT ||
+			    settings->EncryptionMethods == ENCRYPTION_METHOD_56BIT ||
+			    settings->EncryptionMethods == ENCRYPTION_METHOD_128BIT ||
+			    settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			{
+				validCryptoConfig = TRUE;
+			}
+			break;
+		default:
+			WLog_ERR(TAG, "Received unknown encryption level %08X", settings->EncryptionLevel);
+	}
+
+	if (!validCryptoConfig)
+	{
+		WLog_ERR(TAG, "Received invalid cryptographic configuration (level=0x%08X method=0x%08X)",
+			settings->EncryptionLevel, settings->EncryptionMethods);
+		return FALSE;
+	}
+
+	if (settings->EncryptionLevel == ENCRYPTION_LEVEL_NONE)
+	{
+		/* serverRandomLen and serverCertLen must not be present */
+		settings->UseRdpSecurityLayer = FALSE;
 		return TRUE;
 	}
 
@@ -1102,30 +1171,111 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	UINT32 headerLen, serverRandomLen, serverCertLen, wPublicKeyBlobLen;
 	rdpSettings* settings = mcs->settings;
 
-	if (!settings->DisableEncryption)
+	/**
+	 * Re: settings->EncryptionLevel:
+	 * This is configured/set by the server implementation and serves the same
+	 * purpose as the "Encryption Level" setting in the RDP-Tcp configuration
+	 * dialog of Microsoft's Remote Desktop Session Host Configuration.
+	 * Re: settings->EncryptionMethods:
+	 * at this point this setting contains the client's supported encryption
+	 * methods we've received in gcc_read_client_security_data()
+	 */
+
+	if (!settings->UseRdpSecurityLayer)
 	{
-		settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
+		/* TLS/NLA is used: disable rdp style encryption */
 		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 	}
-	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_FIPS) != 0)
+
+	/* verify server encryption level value */
+	switch (settings->EncryptionLevel)
 	{
-		settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
-	}
-	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_128BIT) != 0)
-	{
-		settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
-	}
-	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_56BIT) != 0)
-	{
-		settings->EncryptionMethods = ENCRYPTION_METHOD_56BIT;
-	}
-	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_40BIT) != 0)
-	{
-		settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT;
+		case ENCRYPTION_LEVEL_NONE:
+			WLog_INFO(TAG, "Active rdp encryption level: NONE");
+			break;
+		case ENCRYPTION_LEVEL_FIPS:
+			WLog_INFO(TAG, "Active rdp encryption level: FIPS Compliant");
+			break;
+		case ENCRYPTION_LEVEL_HIGH:
+			WLog_INFO(TAG, "Active rdp encryption level: HIGH");
+			break;
+		case ENCRYPTION_LEVEL_LOW:
+			WLog_INFO(TAG, "Active rdp encryption level: LOW");
+			break;
+		case ENCRYPTION_LEVEL_CLIENT_COMPATIBLE:
+			WLog_INFO(TAG, "Active rdp encryption level: CLIENT-COMPATIBLE");
+			break;
+		default:
+			WLog_ERR(TAG, "Invalid server encryption level 0x%08X", settings->EncryptionLevel);
+			WLog_ERR(TAG, "Switching to encryption level CLIENT-COMPATIBLE");
+			settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	}
 
-	if (settings->EncryptionMethods != ENCRYPTION_METHOD_NONE)
-		settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+	/* choose rdp encryption method based on server level and client methods */
+	switch (settings->EncryptionLevel)
+	{
+		case ENCRYPTION_LEVEL_NONE:
+			/* The only valid method is NONE in this case */
+			settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
+			break;
+		case ENCRYPTION_LEVEL_FIPS:
+			/* The only valid method is FIPS in this case */
+			if (!(settings->EncryptionMethods & ENCRYPTION_METHOD_FIPS))
+			{
+				WLog_WARN(TAG, "client does not support FIPS as required by server configuration");
+			}
+			settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
+			break;
+		case ENCRYPTION_LEVEL_HIGH:
+			/* Maximum key strength supported by the server must be used (128 bit)*/
+			if (!(settings->EncryptionMethods & ENCRYPTION_METHOD_128BIT))
+			{
+				WLog_WARN(TAG, "client does not support 128 bit encryption method as required by server configuration");
+			}
+			settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
+			break;
+		case ENCRYPTION_LEVEL_LOW:
+		case ENCRYPTION_LEVEL_CLIENT_COMPATIBLE:
+			/* Maximum key strength supported by the client must be used */
+			if (settings->EncryptionMethods & ENCRYPTION_METHOD_128BIT)
+				settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
+			else if (settings->EncryptionMethods & ENCRYPTION_METHOD_56BIT)
+				settings->EncryptionMethods = ENCRYPTION_METHOD_56BIT;
+			else if (settings->EncryptionMethods & ENCRYPTION_METHOD_40BIT)
+				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT;
+			else if (settings->EncryptionMethods & ENCRYPTION_METHOD_FIPS)
+				settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
+			else
+			{
+				WLog_WARN(TAG, "client has not announced any supported encryption methods");
+				settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
+			}
+			break;
+		default:
+			WLog_ERR(TAG, "internal error: unknown encryption level");
+	}
+
+	/* log selected encryption method */
+	switch (settings->EncryptionMethods)
+	{
+		case ENCRYPTION_METHOD_NONE:
+			WLog_INFO(TAG, "Selected rdp encryption method: NONE");
+			break;
+		case ENCRYPTION_METHOD_40BIT:
+			WLog_INFO(TAG, "Selected rdp encryption method: 40BIT");
+			break;
+		case ENCRYPTION_METHOD_56BIT:
+			WLog_INFO(TAG, "Selected rdp encryption method: 56BIT");
+			break;
+		case ENCRYPTION_METHOD_128BIT:
+			WLog_INFO(TAG, "Selected rdp encryption method: 128BIT");
+			break;
+		case ENCRYPTION_METHOD_FIPS:
+			WLog_INFO(TAG, "Selected rdp encryption method: FIPS");
+			break;
+		default:
+			WLog_ERR(TAG, "internal error: unknown encryption method");
+	}
 
 	headerLen = 12;
 	keyLen = 0;
@@ -1133,8 +1283,7 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	serverRandomLen = 0;
 	serverCertLen = 0;
 
-	if (settings->EncryptionMethods != ENCRYPTION_METHOD_NONE ||
-	    settings->EncryptionLevel != ENCRYPTION_LEVEL_NONE)
+	if (settings->EncryptionMethods != ENCRYPTION_METHOD_NONE)
 	{
 		serverRandomLen = 32;
 
@@ -1170,8 +1319,7 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	Stream_Write_UINT32(s, settings->EncryptionMethods); /* encryptionMethod */
 	Stream_Write_UINT32(s, settings->EncryptionLevel); /* encryptionLevel */
 
-	if (settings->EncryptionMethods == ENCRYPTION_METHOD_NONE &&
-	    settings->EncryptionLevel == ENCRYPTION_LEVEL_NONE)
+	if (settings->EncryptionMethods == ENCRYPTION_METHOD_NONE)
 	{
 		return;
 	}
@@ -1243,7 +1391,7 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	if (blockLength < 4 + mcs->channelCount * 12)
 		return FALSE;
-	
+
 	if (mcs->channelCount > 16)
 		return FALSE;
 

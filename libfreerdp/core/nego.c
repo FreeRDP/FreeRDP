@@ -3,6 +3,7 @@
  * RDP Protocol Security Negotiation
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,9 +165,16 @@ BOOL nego_connect(rdpNego* nego)
 
 	if (nego->selected_protocol == PROTOCOL_RDP)
 	{
-		settings->DisableEncryption = TRUE;
-		settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-		settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+		settings->UseRdpSecurityLayer = TRUE;
+
+		if (!settings->EncryptionMethods)
+		{
+			/**
+			 * Advertise all supported encryption methods if the client
+			 * implementation did not set any security methods
+			 */
+			settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+		}
 	}
 
 	/* finally connect security layer (if not already done) */
@@ -964,12 +972,28 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			settings->TlsSecurity = FALSE;
 			settings->NlaSecurity = FALSE;
 			settings->RdpSecurity = TRUE;
+			settings->UseRdpSecurityLayer = TRUE;
 
-			if (!settings->LocalConnection)
+			if (settings->EncryptionLevel == ENCRYPTION_LEVEL_NONE)
 			{
-				settings->DisableEncryption = TRUE;
-				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+				/**
+				 * If the server implementation did not explicitely set a
+				 * encryption level we default to client compatible
+				 */
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+			}
+
+			if (settings->LocalConnection)
+			{
+				/**
+				 * Note: This hack was firstly introduced in commit 95f5e115 to
+				 * disable the unnecessary encryption with peers connecting to
+				 * 127.0.0.1 or local unix sockets.
+				 * This also affects connections via port tunnels! (e.g. ssh -L)
+				 */
+				WLog_INFO(TAG, "Turning off encryption for local peer with standard rdp security");
+				settings->UseRdpSecurityLayer = FALSE;
+				settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 			}
 
 			if (!settings->RdpServerRsaKey && !settings->RdpKeyFile)
@@ -983,8 +1007,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			settings->TlsSecurity = TRUE;
 			settings->NlaSecurity = FALSE;
 			settings->RdpSecurity = FALSE;
-			settings->DisableEncryption = FALSE;
-			settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
+			settings->UseRdpSecurityLayer = FALSE;
 			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		}
 		else if (settings->SelectedProtocol == PROTOCOL_NLA)
@@ -992,8 +1015,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			settings->TlsSecurity = TRUE;
 			settings->NlaSecurity = TRUE;
 			settings->RdpSecurity = FALSE;
-			settings->DisableEncryption = FALSE;
-			settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
+			settings->UseRdpSecurityLayer = FALSE;
 			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		}
 	}

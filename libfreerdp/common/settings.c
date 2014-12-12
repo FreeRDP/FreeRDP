@@ -682,8 +682,8 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 		case FreeRDP_SupportDynamicTimeZone:
 			return settings->SupportDynamicTimeZone;
 
-		case FreeRDP_DisableEncryption:
-			return settings->DisableEncryption;
+		case FreeRDP_UseRdpSecurityLayer:
+			return settings->UseRdpSecurityLayer;
 
 		case FreeRDP_ConsoleSession:
 			return settings->ConsoleSession;
@@ -1075,8 +1075,8 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->SupportDynamicTimeZone = param;
 			break;
 
-		case FreeRDP_DisableEncryption:
-			settings->DisableEncryption = param;
+		case FreeRDP_UseRdpSecurityLayer:
+			settings->UseRdpSecurityLayer = param;
 			break;
 
 		case FreeRDP_ConsoleSession:
