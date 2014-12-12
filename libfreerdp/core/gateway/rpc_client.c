@@ -131,7 +131,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 				return 0;
 			}
 
-			WLog_ERR(TAG, "Receiving Out-of-Sequence RTS PDU");
+			WLog_DBG(TAG, "Receiving Out-of-Sequence RTS PDU");
 			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
 			rpc_client_fragment_pool_return(rpc, fragment);
 			return 0;
