@@ -65,6 +65,8 @@ BOOL rts_connect(rdpRpc* rpc)
 	RPC_PDU* pdu;
 	rpcconn_rts_hdr_t* rts;
 	HttpResponse* http_response;
+	freerdp* instance = (freerdp*) rpc->settings->instance;
+	rdpContext* context = instance->context;
 
 	/**
 	 * Connection Opening
@@ -90,7 +92,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	 */
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
-	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_INITIAL");
+	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_INITIAL");
 
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
@@ -120,7 +122,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	}
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT;
-	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT");
+	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT");
 
 	/**
 	 * Receive OUT Channel Response
@@ -170,9 +172,9 @@ BOOL rts_connect(rdpRpc* rpc)
 				connectErrorCode = AUTHENTICATIONERROR;
 			}
 
-			if (!freerdp_get_last_error(((freerdp*)(rpc->settings->instance))->context))
+			if (!freerdp_get_last_error(context))
 			{
-				freerdp_set_last_error(((freerdp*)(rpc->settings->instance))->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+				freerdp_set_last_error(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 			}
 		}
 
@@ -191,7 +193,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	http_response_free(http_response);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_A3W;
-	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_WAIT_A3W");
+	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_A3W");
 
 	/**
 	 * Receive CONN_A3 RTS PDU
@@ -212,6 +214,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc_client_start(rpc);
 
 	pdu = rpc_recv_dequeue_pdu(rpc);
+
 	if (!pdu)
 		return FALSE;
 
@@ -228,7 +231,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc_client_receive_pool_return(rpc, pdu);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_C2;
-	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_WAIT_C2");
+	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_C2");
 
 	/**
 	 * Receive CONN_C2 RTS PDU
@@ -268,7 +271,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc_client_receive_pool_return(rpc, pdu);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
-	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OPENED");
+	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_OPENED");
 
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
@@ -719,7 +722,7 @@ int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	rts_connection_timeout_command_read(rpc, &buffer[24], length - 24, &ConnectionTimeout);
 
-	DEBUG_RTS("ConnectionTimeout: %d", ConnectionTimeout);
+	WLog_DBG(TAG, "ConnectionTimeout: %d", ConnectionTimeout);
 
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
 
@@ -786,8 +789,8 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	offset += rts_receive_window_size_command_read(rpc, &buffer[offset], length - offset, &ReceiveWindowSize) + 4;
 	offset += rts_connection_timeout_command_read(rpc, &buffer[offset], length - offset, &ConnectionTimeout) + 4;
 
-	DEBUG_RTS("ConnectionTimeout: %d", ConnectionTimeout);
-	DEBUG_RTS("ReceiveWindowSize: %d", ReceiveWindowSize);
+	WLog_DBG(TAG, "ConnectionTimeout: %d", ConnectionTimeout);
+	WLog_DBG(TAG, "ReceiveWindowSize: %d", ReceiveWindowSize);
 
 	/* TODO: verify if this is the correct protocol variable */
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;

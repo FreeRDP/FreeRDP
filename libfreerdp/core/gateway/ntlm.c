@@ -217,6 +217,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 	ntlm->outputBuffer[0].BufferType = SECBUFFER_TOKEN;
 	ntlm->outputBuffer[0].cbBuffer = ntlm->cbMaxToken;
 	ntlm->outputBuffer[0].pvBuffer = malloc(ntlm->outputBuffer[0].cbBuffer);
+
 	if (!ntlm->outputBuffer[0].pvBuffer)
 		return FALSE;
 
@@ -295,13 +296,19 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 
 rdpNtlm* ntlm_new()
 {
-	return (rdpNtlm *)calloc(1, sizeof(rdpNtlm));
+	return (rdpNtlm*) calloc(1, sizeof(rdpNtlm));
 }
 
 void ntlm_free(rdpNtlm* ntlm)
 {
-	if (ntlm != NULL)
+	if (ntlm)
 	{
+		if (ntlm->outputBuffer[0].pvBuffer)
+		{
+			free(ntlm->outputBuffer[0].pvBuffer);
+			ntlm->outputBuffer[0].pvBuffer = NULL;
+		}
+
 		free(ntlm);
 	}
 }

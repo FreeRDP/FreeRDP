@@ -131,7 +131,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 				return 0;
 			}
 
-			WLog_ERR(TAG, "Receiving Out-of-Sequence RTS PDU");
+			WLog_DBG(TAG, "Receiving Out-of-Sequence RTS PDU");
 			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
 			rpc_client_fragment_pool_return(rpc, fragment);
 			return 0;
@@ -547,18 +547,13 @@ static void rpc_fragment_free(wStream* fragment)
 
 int rpc_client_new(rdpRpc* rpc)
 {
-	RpcClient* client = NULL;
-	client = (RpcClient*)calloc(1, sizeof(RpcClient));
+	RpcClient* client;
+
+	client = (RpcClient*) calloc(1, sizeof(RpcClient));
+
 	rpc->client = client;
 
 	if (!client)
-		return -1;
-
-	client->Thread = CreateThread(NULL, 0,
-								  (LPTHREAD_START_ROUTINE) rpc_client_thread,
-								  rpc, CREATE_SUSPENDED, NULL);
-
-	if (!client->Thread)
 		return -1;
 
 	client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -615,8 +610,8 @@ int rpc_client_new(rdpRpc* rpc)
 int rpc_client_start(rdpRpc* rpc)
 {
 	rpc->client->Thread = CreateThread(NULL, 0,
-									   (LPTHREAD_START_ROUTINE) rpc_client_thread,
-									   rpc, 0, NULL);
+		(LPTHREAD_START_ROUTINE) rpc_client_thread, rpc, 0, NULL);
+
 	return 0;
 }
 

@@ -1142,13 +1142,20 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	RpcClientCall* call;
 	rdpRpc* rpc = tsg->rpc;
 	rdpSettings* settings = rpc->settings;
+
 	tsg->Port = port;
+
+	free(tsg->Hostname);
+	tsg->Hostname = NULL;
 	ConvertToUnicode(CP_UTF8, 0, hostname, -1, &tsg->Hostname, 0);
+
+	free(tsg->MachineName);
+	tsg->MachineName = NULL;
 	ConvertToUnicode(CP_UTF8, 0, settings->ComputerName, -1, &tsg->MachineName, 0);
 
 	if (!rpc_connect(rpc))
 	{
-		WLog_ERR(TAG,  "rpc_connect failed!");
+		WLog_ERR(TAG, "rpc_connect failed!");
 		return FALSE;
 	}
 
@@ -1518,6 +1525,7 @@ BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking)
 rdpTsg* tsg_new(rdpTransport* transport)
 {
 	rdpTsg* tsg;
+
 	tsg = (rdpTsg*) calloc(1, sizeof(rdpTsg));
 
 	if (!tsg)
@@ -1541,6 +1549,7 @@ void tsg_free(rdpTsg* tsg)
 {
 	if (tsg)
 	{
+		free(tsg->Hostname);
 		free(tsg->MachineName);
 		rpc_free(tsg->rpc);
 		free(tsg);
