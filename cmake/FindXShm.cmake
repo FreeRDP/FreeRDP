@@ -30,10 +30,12 @@
 
 find_path(XSHM_INCLUDE_DIR NAMES X11/extensions/XShm.h
           PATH_SUFFIXES X11/extensions
+          PATHS /opt/X11/include
           DOC "The XShm include directory"
 )
 
 find_library(XSHM_LIBRARY NAMES Xext
+          PATHS /opt/X11/lib
           DOC "The XShm library"
 )
 
