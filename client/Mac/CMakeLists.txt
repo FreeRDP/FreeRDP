@@ -1,6 +1,12 @@
 
 project(MacFreeRDP-library)
 
+
+if(${CMAKE_VERSION} GREATER 2.8.12)
+	cmake_policy(SET CMP0026 OLD)
+	cmake_policy(SET CMP0045 OLD)
+endif()
+
 set(MODULE_NAME "MacFreeRDP-library")
 set(MODULE_OUTPUT_NAME "MacFreeRDP")
 set(MODULE_PREFIX "FREERDP_CLIENT_MAC_LIBRARY")
