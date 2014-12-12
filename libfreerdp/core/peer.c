@@ -348,7 +348,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	if (rdp->disconnect)
 		return 0;
  
-	if (rdp->settings->DisableEncryption)
+	if (rdp->settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(s, &securityFlags))
 			return -1;
@@ -485,7 +485,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT:
-			if (rdp->settings->DisableEncryption)
+			if (rdp->settings->UseRdpSecurityLayer)
 			{
 				if (!rdp_server_establish_keys(rdp, s))
 					return -1;

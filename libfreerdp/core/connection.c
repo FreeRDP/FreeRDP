@@ -398,7 +398,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	settings = rdp->settings;
 
-	if (!settings->DisableEncryption)
+	if (!settings->UseRdpSecurityLayer)
 	{
 		/* no RDP encryption */
 		return TRUE;
@@ -515,7 +515,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	BYTE* priv_exp;
 	BOOL ret = FALSE;
 
-	if (!rdp->settings->DisableEncryption)
+	if (!rdp->settings->UseRdpSecurityLayer)
 	{
 		/* No RDP Security. */
 		return TRUE;

@@ -422,7 +422,6 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 		CryptoSha1 sha1;
 		BYTE client_encrypt_key_t[CRYPTO_SHA1_DIGEST_LENGTH + 1];
 		BYTE client_decrypt_key_t[CRYPTO_SHA1_DIGEST_LENGTH + 1];
-		WLog_INFO(TAG,  "FIPS Compliant encryption level.");
 		sha1 = crypto_sha1_init();
 		if (!sha1)
 		{

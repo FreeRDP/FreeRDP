@@ -4,6 +4,7 @@
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2011 Vic Lee
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -347,19 +348,19 @@ static BOOL test_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec,
 
 	*old_sec = new_sec;
 	*old_usec = new_usec;
-	
-	while (usec < 0) 
+
+	while (usec < 0)
 	{
 		usec += 1000000;
 		sec--;
 	}
-	
+
 	if (sec > 0)
 		Sleep(sec * 1000);
-	
+
 	if (usec > 0)
 		USleep(usec);
-	
+
 	return TRUE;
 }
 
@@ -669,7 +670,15 @@ static void* test_peer_mainloop(void* arg)
 	/* Initialize the real server settings here */
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
+	client->settings->RdpKeyFile = _strdup("server.key");
+	client->settings->RdpSecurity = TRUE;
+	client->settings->TlsSecurity = TRUE;
 	client->settings->NlaSecurity = FALSE;
+	client->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_HIGH; */
+	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_LOW; */
+	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_FIPS; */
+
 	client->settings->RemoteFxCodec = TRUE;
 	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
@@ -844,7 +853,7 @@ int main(int argc, char* argv[])
 
 	if (argc > 1)
 		test_pcap_file = argv[1];
-	
+
 	if (argc > 2 && !strcmp(argv[2], "--fast"))
 		test_dump_rfx_realtime = FALSE;
 

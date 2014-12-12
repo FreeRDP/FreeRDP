@@ -529,7 +529,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_SupportGraphicsPipeline				142
 #define FreeRDP_SupportDynamicTimeZone				143
 #define FreeRDP_SupportHeartbeatPdu				144
-#define FreeRDP_DisableEncryption				192
+#define FreeRDP_UseRdpSecurityLayer				192
 #define FreeRDP_EncryptionMethods				193
 #define FreeRDP_ExtEncryptionMethods				194
 #define FreeRDP_EncryptionLevel					195
@@ -860,7 +860,7 @@ struct rdp_settings
 	UINT64 padding0192[192 - 145]; /* 145 */
 
 	/* Client/Server Security Data */
-	ALIGN64 BOOL DisableEncryption; /* 192 */
+	ALIGN64 BOOL UseRdpSecurityLayer; /* 192 */
 	ALIGN64 UINT32 EncryptionMethods; /* 193 */
 	ALIGN64 UINT32 ExtEncryptionMethods; /* 194 */
 	ALIGN64 UINT32 EncryptionLevel; /* 195 */

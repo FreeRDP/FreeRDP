@@ -3,6 +3,7 @@
  * FreeRDP Client Command-Line Interface
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,6 +168,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "heartbeat", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support heartbeat PDUs" },
 	{ "multitransport", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support multitransport protocol" },
 	{ "assistance", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Remote assistance password" },
+	{ "encryption-methods", COMMAND_LINE_VALUE_REQUIRED, "<40,56,128,FIPS>", NULL, NULL, -1, NULL, "RDP standard security encryption methods" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -1733,9 +1735,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				settings->TlsSecurity = FALSE;
 				settings->NlaSecurity = FALSE;
 				settings->ExtSecurity = FALSE;
-				settings->DisableEncryption = TRUE;
-				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT| ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+				settings->UseRdpSecurityLayer = TRUE;
 			}
 			else if (strcmp("tls", arg->Value) == 0) /* TLS */
 			{
@@ -1761,6 +1761,33 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			else
 			{
 				WLog_ERR(TAG,  "unknown protocol security: %s", arg->Value);
+			}
+		}
+		CommandLineSwitchCase(arg, "encryption-methods")
+		{
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				UINT32 i;
+				char** p;
+				int count = 0;
+
+				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+
+				for (i = 0; i < count; i++)
+				{
+					if (!strcmp(p[i], "40"))
+						settings->EncryptionMethods |= ENCRYPTION_METHOD_40BIT;
+					else if (!strcmp(p[i], "56"))
+						settings->EncryptionMethods |= ENCRYPTION_METHOD_56BIT;
+					else if (!strcmp(p[i], "128"))
+						settings->EncryptionMethods |= ENCRYPTION_METHOD_128BIT;
+					else if (!strcmp(p[i], "FIPS"))
+						settings->EncryptionMethods |= ENCRYPTION_METHOD_FIPS;
+					else
+						WLog_ERR(TAG,  "unknown encryption method '%s'", p[i]);
+				}
+
+				free(p);
 			}
 		}
 		CommandLineSwitchCase(arg, "sec-rdp")
@@ -1801,7 +1828,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "encryption")
 		{
-			settings->DisableEncryption = arg->Value ? FALSE : TRUE;
+			settings->UseRdpSecurityLayer = arg->Value ? FALSE : TRUE;
 		}
 		CommandLineSwitchCase(arg, "grab-keyboard")
 		{

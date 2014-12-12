@@ -232,7 +232,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		settings->KeyboardSubType = 0;
 		settings->KeyboardFunctionKey = 12;
 		settings->KeyboardLayout = 0;
-		settings->DisableEncryption = FALSE;
+		settings->UseRdpSecurityLayer = FALSE;
 		settings->SaltedChecksum = TRUE;
 		settings->ServerPort = 3389;
 		settings->GatewayPort = 443;

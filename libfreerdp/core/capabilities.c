@@ -3537,7 +3537,7 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 	if (rdp->disconnect)
 		return TRUE;
 
-	if (rdp->settings->DisableEncryption)
+	if (rdp->settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(s, &securityFlags))
 			return FALSE;
