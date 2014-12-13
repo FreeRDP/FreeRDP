@@ -23,6 +23,13 @@
 
 #ifndef _WIN32
 
+#ifdef __APPLE__
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <string.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -136,6 +143,7 @@ static int g_StartedEventRefCount = 0;
 
 static BOOL g_SCardAutoAllocate = FALSE;
 static BOOL g_PnP_Notification = TRUE;
+static unsigned int OSXVersion = 0;
 
 /**
  * g_LockTransactions: enable pcsc-lite SCardBeginTransaction/SCardEndTransaction.
@@ -1880,9 +1888,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 				/**
 				* Workaround for SCardStatus Bug in MAC OS X Yosemite
 				*/
-#if defined (__APPLE__) && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED == 101000
-				pcsc_cchReaderLen++;
-#endif
+				if (OSXVersion == 0x10100000)
+					pcsc_cchReaderLen++;
+
 				*pMszReaderNames = (LPSTR) calloc(1, pcsc_cchReaderLen);
 
 				if (!*pMszReaderNames)
@@ -2565,6 +2573,97 @@ WINSCARDAPI LONG WINAPI PCSC_SCardAudit(SCARDCONTEXT hContext, DWORD dwEvent)
 	return 0;
 }
 
+#ifdef __MACOSX__
+unsigned int determineMacOSXVersion()
+{
+    int mib[2];
+    size_t len = 0;
+    char *kernelVersion = NULL;
+    char *tok = NULL;
+    unsigned int version = 0;
+    int majorVersion = 0;
+    int minorVersion = 0;
+    int patchVersion = 0;
+    int count = 0;
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_OSRELEASE;
+    sysctl(mib, 2, NULL, &len, NULL, 0);
+    kernelVersion = calloc(len, sizeof(char));
+    sysctl(mib, 2, kernelVersion, &len, NULL, 0);
+
+    tok = strtok(kernelVersion,".");
+    while (tok)
+    {
+        switch(count)
+        {
+            case 0:
+                majorVersion = atoi(tok);
+                break;
+            case 1:
+                minorVersion = atoi(tok);
+                break;
+            case 2:
+                patchVersion = atoi(tok);
+                break;
+        }
+        tok = strtok(NULL, ".");
+        count++;
+    }
+
+    /**
+     * Source : http://en.wikipedia.org/wiki/Darwin_(operating_system)
+     **/
+    if (majorVersion < 5)
+    {
+        if (minorVersion < 4)
+            version = 0x10000000;
+        else
+            version = 0x10010000;
+    }
+    else
+    {
+        switch (majorVersion)
+        {
+            case 5:
+                version = 0x10010000;
+                break;
+            case 6:
+                version = 0x10020000;
+                break;
+            case 7:
+                version = 0x10030000;
+                break;
+            case 8:
+                version = 0x10040000;
+                break;
+            case 9:
+                version = 0x10050000;
+                break;
+            case 10:
+                version = 0x10060000;
+                break;
+            case 11:
+                version = 0x10070000;
+                break;
+            case 12:
+                version = 0x10080000;
+                break;
+            case 13:
+                version = 0x10090000;
+                break;
+            default:
+                version = 0x10100000;
+                break;
+        }
+        version |= (minorVersion << 8) | (patchVersion);
+    }
+
+    free(kernelVersion);
+    return version;
+}
+#endif
+
 SCardApiFunctionTable PCSC_SCardApiFunctionTable =
 {
 	0, /* dwVersion */
@@ -2688,6 +2787,7 @@ int PCSC_InitializeSCardApi(void)
 #endif
 #ifdef __MACOSX__
 	g_PCSCModule = LoadLibraryA("/System/Library/Frameworks/PCSC.framework/PCSC");
+    OSXVersion = determineMacOSXVersion();
 #else
 	g_PCSCModule = LoadLibraryA("libpcsclite.so.1");
 
@@ -2709,11 +2809,10 @@ int PCSC_InitializeSCardApi(void)
 	g_PCSC.pfnSCardEndTransaction = (void*) GetProcAddress(g_PCSCModule, "SCardEndTransaction");
 	g_PCSC.pfnSCardStatus = (void*) GetProcAddress(g_PCSCModule, "SCardStatus");
 	g_PCSC.pfnSCardGetStatusChange = (void*) GetProcAddress(g_PCSCModule, "SCardGetStatusChange");
-#if defined (__APPLE__) && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1056
-	g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl132");	
-#else
-	g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl");
-#endif
+	if (OSXVersion >= 0x10050600)
+		g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl132");
+	else
+		g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl");
 	g_PCSC.pfnSCardTransmit = (void*) GetProcAddress(g_PCSCModule, "SCardTransmit");
 	g_PCSC.pfnSCardListReaderGroups = (void*) GetProcAddress(g_PCSCModule, "SCardListReaderGroups");
 	g_PCSC.pfnSCardListReaders = (void*) GetProcAddress(g_PCSCModule, "SCardListReaders");
@@ -2737,5 +2836,6 @@ int PCSC_InitializeSCardApi(void)
 #endif
 	return 1;
 }
+
 
 #endif
