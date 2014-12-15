@@ -28,23 +28,23 @@
 #include <freerdp/channels/log.h>
 
 #define TAG CHANNELS_TAG("cliprdr.server")
+
 #define CLIPRDR_HEADER_LENGTH	8
 
 struct _cliprdr_server_private
 {
+	HANDLE vcm;
 	HANDLE Thread;
 	HANDLE StopEvent;
 	void* ChannelHandle;
 
-	BOOL UseLongFormatNames;
-	BOOL StreamFileClipEnabled;
-	BOOL FileClipNoFilePaths;
-	BOOL CanLockClipData;
+	BOOL useLongFormatNames;
+	BOOL streamFileClipEnabled;
+	BOOL fileClipNoFilePaths;
+	BOOL canLockClipData;
 
-	UINT32 ClientFormatNameCount;
-	CLIPRDR_FORMAT_NAME* ClientFormatNames;
-
-	char* ClientTemporaryDirectory;
+	char* temporaryDirectory;
 };
+typedef struct _cliprdr_server_private CliprdrServerPrivate;
 
 #endif /* FREERDP_CHANNEL_SERVER_CLIPRDR_MAIN_H */
