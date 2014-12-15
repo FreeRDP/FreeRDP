@@ -35,6 +35,7 @@
 #include <freerdp/codec/jpeg.h>
 
 #include "xf_graphics.h"
+#include "xf_gdi.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
@@ -381,8 +382,8 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 {
 	xfContext* xfc = (xfContext*) context;
 
-	bgcolor = freerdp_convert_gdi_order_color(bgcolor, context->settings->ColorDepth, xfc->format, xfc->palette);
-	fgcolor = freerdp_convert_gdi_order_color(fgcolor, context->settings->ColorDepth, xfc->format, xfc->palette);
+	bgcolor = xf_convert_rdp_order_color(xfc, bgcolor);
+	fgcolor = xf_convert_rdp_order_color(xfc, fgcolor);
 
 	xf_lock_x11(xfc, FALSE);
 
