@@ -231,12 +231,16 @@
 #define Input_UnicodeKeyboardEvent				3
 #define Input_MouseEvent					4
 #define Input_ExtendedMouseEvent				5
+#define Input_FocusInEvent					6
+#define Input_KeyboardPauseEvent				7
 
 #define FREERDP_INPUT_SYNCHRONIZE_EVENT				MakeMessageId(Input, SynchronizeEvent)
 #define FREERDP_INPUT_KEYBOARD_EVENT				MakeMessageId(Input, KeyboardEvent)
 #define FREERDP_INPUT_UNICODE_KEYBOARD_EVENT			MakeMessageId(Input, UnicodeKeyboardEvent)
 #define FREERDP_INPUT_MOUSE_EVENT				MakeMessageId(Input, MouseEvent)
 #define FREERDP_INPUT_EXTENDED_MOUSE_EVENT			MakeMessageId(Input, ExtendedMouseEvent)
+#define FREERDP_INPUT_FOCUS_IN_EVENT				MakeMessageId(Input, FocusInEvent)
+#define FREERDP_INPUT_KEYBOARD_PAUSE_EVENT			MakeMessageId(Input, KeyboardPauseEvent)
 
 /**
  * Static Channel Message Queues

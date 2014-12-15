@@ -150,6 +150,8 @@ struct rdp_input_proxy
 	pUnicodeKeyboardEvent UnicodeKeyboardEvent;
 	pMouseEvent MouseEvent;
 	pExtendedMouseEvent ExtendedMouseEvent;
+	pFocusInEvent FocusInEvent;
+	pKeyboardPauseEvent KeyboardPauseEvent;
 };
 
 int input_message_queue_process_message(rdpInput* input, wMessage* message);

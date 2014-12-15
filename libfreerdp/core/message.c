@@ -2265,6 +2265,20 @@ static void input_message_ExtendedMouseEvent(rdpInput* input, UINT16 flags, UINT
 			MakeMessageId(Input, ExtendedMouseEvent), (void*) (size_t) flags, (void*) (size_t) pos);
 }
 
+static void input_message_FocusInEvent(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y)
+{
+	UINT32 pos = (x << 16) | y;
+
+	MessageQueue_Post(input->queue, (void*) input,
+			MakeMessageId(Input, FocusInEvent), (void*) (size_t) toggleStates, (void*) (size_t) pos);
+}
+
+static void input_message_KeyboardPauseEvent(rdpInput* input)
+{
+	MessageQueue_Post(input->queue, (void*) input,
+			MakeMessageId(Input, KeyboardPauseEvent), NULL, NULL);
+}
+
 /* Event Queue */
 static int input_message_free_input_class(wMessage* msg, int type)
 {
@@ -2285,6 +2299,12 @@ static int input_message_free_input_class(wMessage* msg, int type)
 			break;
 
 		case Input_ExtendedMouseEvent:
+			break;
+
+		case Input_FocusInEvent:
+			break;
+
+		case Input_KeyboardPauseEvent:
 			break;
 
 		default:
@@ -2337,6 +2357,23 @@ static int input_message_process_input_class(rdpInputProxy* proxy, wMessage* msg
 
 				IFCALL(proxy->ExtendedMouseEvent, msg->context, (UINT16) (size_t) msg->wParam, x, y);
 			}
+			break;
+
+		case Input_FocusInEvent:
+			{
+				UINT32 pos;
+				UINT16 x, y;
+
+				pos = (UINT32) (size_t) msg->lParam;
+				x = ((pos & 0xFFFF0000) >> 16);
+				y = (pos & 0x0000FFFF);
+
+				IFCALL(proxy->FocusInEvent, msg->context, (UINT16) (size_t) msg->wParam, x, y);
+			}
+			break;
+
+		case Input_KeyboardPauseEvent:
+			IFCALL(proxy->KeyboardPauseEvent, msg->context);
 			break;
 
 		default:
@@ -2463,12 +2500,16 @@ void input_message_proxy_register(rdpInputProxy* proxy, rdpInput* input)
 	proxy->UnicodeKeyboardEvent = input->UnicodeKeyboardEvent;
 	proxy->MouseEvent = input->MouseEvent;
 	proxy->ExtendedMouseEvent = input->ExtendedMouseEvent;
+	proxy->FocusInEvent = input->FocusInEvent;
+	proxy->KeyboardPauseEvent = input->KeyboardPauseEvent;
 
 	input->SynchronizeEvent = input_message_SynchronizeEvent;
 	input->KeyboardEvent = input_message_KeyboardEvent;
 	input->UnicodeKeyboardEvent = input_message_UnicodeKeyboardEvent;
 	input->MouseEvent = input_message_MouseEvent;
 	input->ExtendedMouseEvent = input_message_ExtendedMouseEvent;
+	input->FocusInEvent = input_message_FocusInEvent;
+	input->KeyboardPauseEvent = input_message_KeyboardPauseEvent;
 }
 
 rdpInputProxy* input_message_proxy_new(rdpInput* input)

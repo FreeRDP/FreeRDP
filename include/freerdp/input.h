@@ -64,11 +64,11 @@ typedef struct rdp_input_proxy rdpInputProxy;
 
 typedef void (*pSynchronizeEvent)(rdpInput* input, UINT32 flags);
 typedef void (*pKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
-typedef void (*pKeyboardPauseEvent)(rdpInput* input);
 typedef void (*pUnicodeKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
 typedef void (*pMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 typedef void (*pExtendedMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 typedef void (*pFocusInEvent)(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y);
+typedef void (*pKeyboardPauseEvent)(rdpInput* input);
 
 struct rdp_input
 {
