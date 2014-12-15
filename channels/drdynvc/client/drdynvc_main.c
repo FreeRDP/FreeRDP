@@ -531,6 +531,7 @@ static void* drdynvc_virtual_channel_client_thread(void* arg)
 			{
 				data = (wStream*) message.wParam;
 				drdynvc_order_recv(drdynvc, data);
+				Stream_Free(data, TRUE);
 			}
 		}
 	}

@@ -44,8 +44,9 @@ include(CMakePackageConfigHelpers)
 set(RDTK_VERSION_MAJOR "1")
 set(RDTK_VERSION_MINOR "1")
 set(RDTK_VERSION_REVISION "0")
-set(RDTK_VERSION "${RDTK_VERSION_MAJOR}.${RDTK_VERSION_MINOR}")
-set(RDTK_VERSION_FULL "${RDTK_VERSION}.${RDTK_VERSION_REVISION}")
+set(RDTK_API_VERSION "${RDTK_VERSION_MAJOR}.${RDTK_VERSION_MINOR}")
+set(RDTK_VERSION "${RDTK_API_VERSION}.${RDTK_VERSION_REVISION}")
+set(RDTK_VERSION_FULL "${RDTK_VERSION}")
 set(RDTK_VERSION_FULL ${RDTK_VERSION_FULL} PARENT_SCOPE)
 
 # Default to release build type
@@ -66,8 +67,10 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 add_subdirectory(include)
 add_subdirectory(librdtk)
 
-if(WITH_X11)
-	add_subdirectory(sample)
+if(WITH_SAMPLE)
+	if(WITH_X11)
+		add_subdirectory(sample)
+	endif()
 endif()
 
 # Exporting

@@ -656,6 +656,14 @@ void xf_unlock_x11(xfContext* xfc, BOOL display)
 	}
 }
 
+static void xf_calculate_color_shifts(UINT32 mask, UINT8* rsh, UINT8* lsh)
+{
+    for (*lsh = 0; !(mask & 1); mask >>= 1)
+        (*lsh)++;
+    for (*rsh = 8; mask; mask >>= 1)
+        (*rsh)--;
+}
+
 BOOL xf_get_pixmap_info(xfContext* xfc)
 {
 	int i;
@@ -720,7 +728,7 @@ BOOL xf_get_pixmap_info(xfContext* xfc)
 		}
 	}
 
-	if (vi)
+	if (xfc->visual)
 	{
 		/*
 		 * Detect if the server visual has an inverted colormap
@@ -730,6 +738,11 @@ BOOL xf_get_pixmap_info(xfContext* xfc)
 		{
 			xfc->invert = TRUE;
 		}
+
+		/* calculate color shifts required for rdp order color conversion */
+		xf_calculate_color_shifts(vi->red_mask, &xfc->red_shift_r, &xfc->red_shift_l);
+		xf_calculate_color_shifts(vi->green_mask, &xfc->green_shift_r, &xfc->green_shift_l);
+		xf_calculate_color_shifts(vi->blue_mask, &xfc->blue_shift_r, &xfc->blue_shift_l);
 	}
 
 	XFree(vis);
