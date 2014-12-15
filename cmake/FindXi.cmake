@@ -32,9 +32,11 @@
 include(CheckSymbolExists)
 
 find_path(XI_INCLUDE_DIR NAMES X11/extensions/XInput2.h
+          PATHS /opt/X11/include
           DOC "The Xi include directory")
 
 find_library(XI_LIBRARY NAMES Xi
+          PATHS /opt/X11/lib
           DOC "The Xi library")
 
 include(FindPackageHandleStandardArgs)
