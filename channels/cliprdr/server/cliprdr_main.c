@@ -63,6 +63,43 @@
  *
  */
 
+wStream* cliprdr_server_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
+{
+	wStream* s;
+
+	s = Stream_New(NULL, dataLen + 8);
+
+	Stream_Write_UINT16(s, msgType);
+	Stream_Write_UINT16(s, msgFlags);
+
+	/* Write actual length after the entire packet has been constructed. */
+	Stream_Seek(s, 4);
+
+	return s;
+}
+
+int cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s)
+{
+	int pos;
+	BOOL status;
+	UINT32 dataLen;
+	UINT32 written;
+
+	pos = Stream_GetPosition(s);
+
+	dataLen = pos - 8;
+
+	Stream_SetPosition(s, 4);
+	Stream_Write_UINT32(s, dataLen);
+	Stream_SetPosition(s, pos);
+
+	status = WTSVirtualChannelWrite(cliprdr->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
+
+	Stream_Free(s, TRUE);
+
+	return 1;
+}
+
 static int cliprdr_server_send_capabilities(CliprdrServerContext* context)
 {
 	wStream* s;
@@ -135,31 +172,246 @@ static int cliprdr_server_send_monitor_ready(CliprdrServerContext* context)
 	return 1;
 }
 
-int cliprdr_server_send_format_list_response(CliprdrServerContext* context)
+static int cliprdr_server_format_list(CliprdrServerContext* context, CLIPRDR_FORMAT_LIST* formatList)
 {
 	wStream* s;
-	BOOL status;
-	ULONG written;
-	CLIPRDR_HEADER header;
+	UINT32 index;
+	int length = 0;
+	int cchWideChar;
+	LPWSTR lpWideCharStr;
+	int formatNameSize;
+	int formatNameLength;
+	char* szFormatName;
+	WCHAR* wszFormatName;
+	BOOL asciiNames = FALSE;
+	CLIPRDR_FORMAT* format;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
-	WLog_DBG(TAG, "CliprdrServerFormatListResponse");
+	if (!cliprdr->useLongFormatNames)
+	{
+		length = formatList->numFormats * 36;
 
-	header.msgType = CB_FORMAT_LIST_RESPONSE;
-	header.msgFlags = CB_RESPONSE_OK;
-	header.dataLen = 0;
+		s = cliprdr_server_packet_new(CB_FORMAT_LIST, 0, length);
 
-	s = Stream_New(NULL, header.dataLen + CLIPRDR_HEADER_LENGTH);
+		for (index = 0; index < formatList->numFormats; index++)
+		{
+			format = (CLIPRDR_FORMAT*) &(formatList->formats[index]);
 
-	Stream_Write_UINT16(s, header.msgType); /* msgType (2 bytes) */
-	Stream_Write_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
-	Stream_Write_UINT32(s, header.dataLen); /* dataLen (4 bytes) */
+			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
 
-	Stream_SealLength(s);
+			formatNameSize = 0;
+			formatNameLength = 0;
 
-	status = WTSVirtualChannelWrite(cliprdr->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
+			szFormatName = format->formatName;
 
-	Stream_Free(s, TRUE);
+			if (asciiNames)
+			{
+				if (szFormatName)
+					formatNameLength = strlen(szFormatName);
+
+				if (formatNameLength > 31)
+					formatNameLength = 31;
+
+				Stream_Write(s, szFormatName, formatNameLength);
+				Stream_Zero(s, 32 - formatNameLength);
+			}
+			else
+			{
+				wszFormatName = NULL;
+
+				if (szFormatName)
+					formatNameSize = ConvertToUnicode(CP_UTF8, 0, szFormatName, -1, &wszFormatName, 0);
+
+				if (formatNameSize > 15)
+					formatNameSize = 15;
+
+				if (wszFormatName)
+					Stream_Write(s, wszFormatName, formatNameSize * 2);
+
+				Stream_Zero(s, 32 - (formatNameSize * 2));
+
+				free(wszFormatName);
+			}
+		}
+	}
+	else
+	{
+		for (index = 0; index < formatList->numFormats; index++)
+		{
+			format = (CLIPRDR_FORMAT*) &(formatList->formats[index]);
+			length += 4;
+			formatNameSize = 2;
+
+			if (format->formatName)
+				formatNameSize = MultiByteToWideChar(CP_UTF8, 0, format->formatName, -1, NULL, 0) * 2;
+
+			length += formatNameSize;
+		}
+
+		s = cliprdr_server_packet_new(CB_FORMAT_LIST, 0, length);
+
+		for (index = 0; index < formatList->numFormats; index++)
+		{
+			format = (CLIPRDR_FORMAT*) &(formatList->formats[index]);
+			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
+
+			if (format->formatName)
+			{
+				lpWideCharStr = (LPWSTR) Stream_Pointer(s);
+				cchWideChar = (Stream_Capacity(s) - Stream_GetPosition(s)) / 2;
+				formatNameSize = MultiByteToWideChar(CP_UTF8, 0,
+					format->formatName, -1, lpWideCharStr, cchWideChar) * 2;
+				Stream_Seek(s, formatNameSize);
+			}
+			else
+			{
+				Stream_Write_UINT16(s, 0);
+			}
+		}
+	}
+
+	WLog_DBG(TAG, "ServerFormatList: numFormats: %d",
+			formatList->numFormats);
+
+	cliprdr_server_packet_send(cliprdr, s);
+
+	return 1;
+}
+
+static int cliprdr_server_format_list_response(CliprdrServerContext* context, CLIPRDR_FORMAT_LIST_RESPONSE* formatListResponse)
+{
+	wStream* s;
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+
+	formatListResponse->msgType = CB_FORMAT_LIST_RESPONSE;
+	formatListResponse->dataLen = 0;
+
+	s = cliprdr_server_packet_new(formatListResponse->msgType,
+			formatListResponse->msgFlags, formatListResponse->dataLen);
+
+	WLog_DBG(TAG, "ClientFormatListResponse");
+	cliprdr_server_packet_send(cliprdr, s);
+
+	return 0;
+}
+
+static int cliprdr_server_lock_clipboard_data(CliprdrServerContext* context, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
+{
+	wStream* s;
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+
+	s = cliprdr_server_packet_new(CB_LOCK_CLIPDATA, 0, 4);
+
+	Stream_Write_UINT32(s, lockClipboardData->clipDataId); /* clipDataId (4 bytes) */
+
+	WLog_DBG(TAG, "ServerLockClipboardData: clipDataId: 0x%04X",
+			lockClipboardData->clipDataId);
+
+	cliprdr_server_packet_send(cliprdr, s);
+
+	return 1;
+}
+
+static int cliprdr_server_unlock_clipboard_data(CliprdrServerContext* context, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
+{
+	wStream* s;
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+
+	s = cliprdr_server_packet_new(CB_UNLOCK_CLIPDATA, 0, 4);
+
+	Stream_Write_UINT32(s, unlockClipboardData->clipDataId); /* clipDataId (4 bytes) */
+
+	WLog_DBG(TAG, "ServerUnlockClipboardData: clipDataId: 0x%04X",
+			unlockClipboardData->clipDataId);
+
+	cliprdr_server_packet_send(cliprdr, s);
+
+	return 1;
+}
+
+static int cliprdr_server_format_data_request(CliprdrServerContext* context, CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
+{
+	wStream* s;
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+
+	formatDataRequest->msgType = CB_FORMAT_DATA_REQUEST;
+	formatDataRequest->msgFlags = 0;
+	formatDataRequest->dataLen = 4;
+
+	s = cliprdr_server_packet_new(formatDataRequest->msgType, formatDataRequest->msgFlags, formatDataRequest->dataLen);
+	Stream_Write_UINT32(s, formatDataRequest->requestedFormatId); /* requestedFormatId (4 bytes) */
+
+	WLog_DBG(TAG, "ClientFormatDataRequest");
+	cliprdr_server_packet_send(cliprdr, s);
+
+	return 0;
+}
+
+static int cliprdr_server_format_data_response(CliprdrServerContext* context, CLIPRDR_FORMAT_DATA_RESPONSE* formatDataResponse)
+{
+	wStream* s;
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+
+	formatDataResponse->msgType = CB_FORMAT_DATA_RESPONSE;
+
+	s = cliprdr_server_packet_new(formatDataResponse->msgType, formatDataResponse->msgFlags, formatDataResponse->dataLen);
+
+	Stream_Write(s, formatDataResponse->requestedFormatData, formatDataResponse->dataLen);
+
+	WLog_DBG(TAG, "ClientFormatDataResponse");
+	cliprdr_server_packet_send(cliprdr, s);
+
+	return 0;
+}
+
+static int cliprdr_server_file_contents_request(CliprdrServerContext* context, CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+{
+	wStream* s;
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+
+	s = cliprdr_server_packet_new(CB_FILECONTENTS_REQUEST, 0, 28);
+
+	Stream_Write_UINT32(s, fileContentsRequest->streamId); /* streamId (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->listIndex); /* listIndex (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->dwFlags); /* dwFlags (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->nPositionLow); /* nPositionLow (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->nPositionHigh); /* nPositionHigh (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->cbRequested); /* cbRequested (4 bytes) */
+	Stream_Write_UINT32(s, fileContentsRequest->clipDataId); /* clipDataId (4 bytes) */
+
+	WLog_DBG(TAG, "ServerFileContentsRequest: streamId: 0x%04X",
+		fileContentsRequest->streamId);
+
+	cliprdr_server_packet_send(cliprdr, s);
+
+	return 1;
+}
+
+static int cliprdr_server_file_contents_response(CliprdrServerContext* context, CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
+{
+	wStream* s;
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+
+	if (fileContentsResponse->dwFlags & FILECONTENTS_SIZE)
+		fileContentsResponse->cbRequested = sizeof(UINT64);
+
+	s = cliprdr_server_packet_new(CB_FILECONTENTS_REQUEST, 0,
+			4 + fileContentsResponse->cbRequested);
+
+	Stream_Write_UINT32(s, fileContentsResponse->streamId); /* streamId (4 bytes) */
+
+	/**
+	 * requestedFileContentsData:
+	 * FILECONTENTS_SIZE: file size as UINT64
+	 * FILECONTENTS_RANGE: file data from requested range
+	 */
+
+	Stream_Write(s, fileContentsResponse->requestedData, fileContentsResponse->cbRequested);
+
+	WLog_DBG(TAG, "ServerFileContentsResponse: streamId: 0x%04X",
+		fileContentsResponse->streamId);
+
+	cliprdr_server_packet_send(cliprdr, s);
 
 	return 1;
 }
@@ -799,6 +1051,17 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 	{
 		context->Start = cliprdr_server_start;
 		context->Stop = cliprdr_server_stop;
+
+		//context->ServerCapabilities = cliprdr_server_capabilities;
+		//context->MonitorReady = cliprdr_server_monitor_ready;
+		context->ServerFormatList = cliprdr_server_format_list;
+		context->ServerFormatListResponse = cliprdr_server_format_list_response;
+		context->ServerLockClipboardData = cliprdr_server_lock_clipboard_data;
+		context->ServerUnlockClipboardData = cliprdr_server_unlock_clipboard_data;
+		context->ServerFormatDataRequest = cliprdr_server_format_data_request;
+		context->ServerFormatDataResponse = cliprdr_server_format_data_response;
+		context->ServerFileContentsRequest = cliprdr_server_file_contents_request;
+		context->ServerFileContentsResponse = cliprdr_server_file_contents_response;
 
 		cliprdr = context->handle = (CliprdrServerPrivate*) calloc(1, sizeof(CliprdrServerPrivate));
 
