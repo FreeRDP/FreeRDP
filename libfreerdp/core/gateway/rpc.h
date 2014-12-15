@@ -733,6 +733,7 @@ struct rdp_rpc
 	rdpNtlmHttp* NtlmHttpIn;
 	rdpNtlmHttp* NtlmHttpOut;
 
+	rdpContext* context;
 	rdpSettings* settings;
 	rdpTransport* transport;
 

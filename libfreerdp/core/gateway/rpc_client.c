@@ -97,8 +97,6 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	UINT32 StubLength;
 	wStream* fragment;
 	rpcconn_hdr_t* header;
-	freerdp* instance;
-	instance = (freerdp*)rpc->transport->settings->instance;
 
 	if (!rpc->client->pdu)
 		rpc->client->pdu = rpc_client_receive_pool_take(rpc);
@@ -166,11 +164,11 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 		if ((header->common.call_id == rpc->PipeCallId) && (header->common.pfc_flags & PFC_LAST_FRAG))
 		{
 			TerminateEventArgs e;
-			instance->context->rdp->disconnect = TRUE;
+			rpc->context->rdp->disconnect = TRUE;
 			rpc->transport->tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
 			EventArgsInit(&e, "freerdp");
 			e.code = 0;
-			PubSub_OnTerminate(instance->context->pubSub, instance->context, &e);
+			PubSub_OnTerminate(rpc->context->pubSub, rpc->context, &e);
 		}
 
 		rpc_client_fragment_pool_return(rpc, fragment);
@@ -237,7 +235,7 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 		while (Stream_GetPosition(rpc->client->RecvFrag) < RPC_COMMON_FIELDS_LENGTH)
 		{
 			status = rpc_out_read(rpc, Stream_Pointer(rpc->client->RecvFrag),
-								  RPC_COMMON_FIELDS_LENGTH - Stream_GetPosition(rpc->client->RecvFrag));
+					RPC_COMMON_FIELDS_LENGTH - Stream_GetPosition(rpc->client->RecvFrag));
 
 			if (status < 0)
 			{
@@ -267,7 +265,7 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 		while (Stream_GetPosition(rpc->client->RecvFrag) < header->frag_length)
 		{
 			status = rpc_out_read(rpc, Stream_Pointer(rpc->client->RecvFrag),
-								  header->frag_length - Stream_GetPosition(rpc->client->RecvFrag));
+					header->frag_length - Stream_GetPosition(rpc->client->RecvFrag));
 
 			if (status < 0)
 			{
@@ -297,6 +295,9 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 			if (rpc_client_on_fragment_received_event(rpc) < 0)
 				return -1;
 		}
+
+		if (WaitForSingleObject(Queue_Event(rpc->client->SendQueue), 0) == WAIT_OBJECT_0)
+			break;
 	}
 
 	return 0;
@@ -395,6 +396,7 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 	RpcClientCall* clientCall;
 	rpcconn_common_hdr_t* header;
 	RpcInChannel* inChannel;
+
 	pdu = (RPC_PDU*) Queue_Dequeue(rpc->client->SendQueue);
 
 	if (!pdu)
@@ -479,15 +481,16 @@ RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc)
 
 static void* rpc_client_thread(void* arg)
 {
-	rdpRpc* rpc;
+	int fd;
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[3];
 	HANDLE ReadEvent;
-	int fd;
-	rpc = (rdpRpc*) arg;
+	rdpRpc* rpc = (rdpRpc*) arg;
+
 	fd = BIO_get_fd(rpc->TlsOut->bio, NULL);
 	ReadEvent = CreateFileDescriptorEvent(NULL, TRUE, FALSE, fd);
+
 	nCount = 0;
 	events[nCount++] = rpc->client->StopEvent;
 	events[nCount++] = Queue_Event(rpc->client->SendQueue);
@@ -500,7 +503,7 @@ static void* rpc_client_thread(void* arg)
 	 */
 	if (rpc_client_on_read_event(rpc) < 0)
 	{
-		WLog_ERR(TAG, "an error occured when treating first packet");
+		WLog_ERR(TAG, "an error occurred when treating first packet");
 		goto out;
 	}
 
@@ -624,16 +627,17 @@ int rpc_client_stop(rdpRpc* rpc)
 		rpc->client->Thread = NULL;
 	}
 
-	return rpc_client_free(rpc);
+	return 0;
 }
 
 int rpc_client_free(rdpRpc* rpc)
 {
-	RpcClient* client;
-	client = rpc->client;
+	RpcClient* client = rpc->client;
 
 	if (!client)
 		return 0;
+
+	rpc_client_stop(rpc);
 
 	if (client->SendQueue)
 		Queue_Free(client->SendQueue);
@@ -669,5 +673,7 @@ int rpc_client_free(rdpRpc* rpc)
 		CloseHandle(client->Thread);
 
 	free(client);
+	rpc->client = NULL;
+
 	return 0;
 }
