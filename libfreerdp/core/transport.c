@@ -1158,7 +1158,7 @@ static void* transport_client_thread(void* arg)
 	return NULL;
 }
 
-rdpTransport* transport_new(rdpSettings* settings)
+rdpTransport* transport_new(rdpContext* context)
 {
 	rdpTransport* transport;
 
@@ -1167,19 +1167,19 @@ rdpTransport* transport_new(rdpSettings* settings)
 	if (!transport)
 		return NULL;
 
+	transport->context = context;
+	transport->settings = context->settings;
+
 	WLog_Init();
 	transport->log = WLog_Get(TAG);
 
 	if (!transport->log)
 		goto out_free;
 
-	transport->TcpIn = freerdp_tcp_new(settings);
+	transport->TcpIn = freerdp_tcp_new(context->settings);
 
 	if (!transport->TcpIn)
 		goto out_free;
-
-	transport->settings = settings;
-	transport->context = ((freerdp*) settings->instance)->context;
 
 	/* a small 0.1ms delay when transport is blocking. */
 	transport->SleepInterval = 100;

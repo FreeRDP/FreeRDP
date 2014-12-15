@@ -111,7 +111,7 @@ int tranport_drain_output_buffer(rdpTransport* transport);
 wStream* transport_receive_pool_take(rdpTransport* transport);
 int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);
 
-rdpTransport* transport_new(rdpSettings* settings);
+rdpTransport* transport_new(rdpContext* context);
 void transport_free(rdpTransport* transport);
 
 #endif
