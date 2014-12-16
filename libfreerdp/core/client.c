@@ -242,8 +242,6 @@ int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data, int d
 
 	for (index = 0; index < mcs->channelCount; index++)
 	{
-		channel = &mcs->channels[index];
-
 		if (mcs->channels[index].ChannelId == channelId)
 		{
 			channel = &mcs->channels[index];
