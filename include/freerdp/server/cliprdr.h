@@ -33,6 +33,8 @@
 
 typedef struct _cliprdr_server_context CliprdrServerContext;
 
+typedef int (*psCliprdrOpen)(CliprdrServerContext* context);
+typedef int (*psCliprdrClose)(CliprdrServerContext* context);
 typedef int (*psCliprdrStart)(CliprdrServerContext* context);
 typedef int (*psCliprdrStop)(CliprdrServerContext* context);
 
@@ -62,6 +64,8 @@ struct _cliprdr_server_context
 	void* handle;
 	void* custom;
 
+	psCliprdrOpen Open;
+	psCliprdrClose Close;
 	psCliprdrStart Start;
 	psCliprdrStop Stop;
 

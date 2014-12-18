@@ -38,6 +38,7 @@ struct _cliprdr_server_private
 	HANDLE Thread;
 	HANDLE StopEvent;
 	void* ChannelHandle;
+	HANDLE ChannelEvent;
 
 	BOOL useLongFormatNames;
 	BOOL streamFileClipEnabled;

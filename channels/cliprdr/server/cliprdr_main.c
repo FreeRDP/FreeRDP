@@ -100,74 +100,46 @@ int cliprdr_server_packet_send(CliprdrServerPrivate* cliprdr, wStream* s)
 	return 1;
 }
 
-static int cliprdr_server_send_capabilities(CliprdrServerContext* context)
+static int cliprdr_server_capabilities(CliprdrServerContext* context, CLIPRDR_CAPABILITIES* capabilities)
 {
 	wStream* s;
-	BOOL status;
-	ULONG written;
-	UINT32 generalFlags;
-	CLIPRDR_HEADER header;
+	CLIPRDR_GENERAL_CAPABILITY_SET* generalCapabilitySet;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
-	WLog_DBG(TAG, "CliprdrServerCapabilities");
+	capabilities->msgType = CB_CLIP_CAPS;
+	capabilities->msgFlags = 0;
 
-	header.msgType = CB_CLIP_CAPS;
-	header.msgFlags = 0;
-	header.dataLen = 16;
-
-	generalFlags = 0;
-
-	if (cliprdr->useLongFormatNames)
-		generalFlags |= CB_USE_LONG_FORMAT_NAMES;
-
-	s = Stream_New(NULL, header.dataLen + CLIPRDR_HEADER_LENGTH);
-
-	Stream_Write_UINT16(s, header.msgType); /* msgType (2 bytes) */
-	Stream_Write_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
-	Stream_Write_UINT32(s, header.dataLen); /* dataLen (4 bytes) */
+	s = cliprdr_server_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
 
 	Stream_Write_UINT16(s, 1); /* cCapabilitiesSets (2 bytes) */
 	Stream_Write_UINT16(s, 0); /* pad1 (2 bytes) */
 
-	Stream_Write_UINT16(s, CB_CAPSTYPE_GENERAL); /* capabilitySetType (2 bytes) */
-	Stream_Write_UINT16(s, CB_CAPSTYPE_GENERAL_LEN); /* lengthCapability (2 bytes) */
-	Stream_Write_UINT32(s, CB_CAPS_VERSION_2); /* version (4 bytes) */
-	Stream_Write_UINT32(s, generalFlags); /* generalFlags (4 bytes) */
+	generalCapabilitySet = (CLIPRDR_GENERAL_CAPABILITY_SET*) capabilities->capabilitySets;
+	Stream_Write_UINT16(s, generalCapabilitySet->capabilitySetType); /* capabilitySetType (2 bytes) */
+	Stream_Write_UINT16(s, generalCapabilitySet->capabilitySetLength); /* lengthCapability (2 bytes) */
+	Stream_Write_UINT32(s, generalCapabilitySet->version); /* version (4 bytes) */
+	Stream_Write_UINT32(s, generalCapabilitySet->generalFlags); /* generalFlags (4 bytes) */
 
-	Stream_SealLength(s);
-
-	status = WTSVirtualChannelWrite(cliprdr->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
-
-	Stream_Free(s, TRUE);
+	WLog_DBG(TAG, "ServerCapabilities");
+	cliprdr_server_packet_send(cliprdr, s);
 
 	return 1;
 }
 
-static int cliprdr_server_send_monitor_ready(CliprdrServerContext* context)
+static int cliprdr_server_monitor_ready(CliprdrServerContext* context, CLIPRDR_MONITOR_READY* monitorReady)
 {
 	wStream* s;
-	BOOL status;
-	ULONG written;
-	CLIPRDR_HEADER header;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
-	WLog_DBG(TAG, "CliprdrServerMonitorReady");
+	monitorReady->msgType = CB_MONITOR_READY;
+	monitorReady->msgFlags = 0;
+	monitorReady->dataLen = 0;
 
-	header.msgType = CB_MONITOR_READY;
-	header.msgFlags = 0;
-	header.dataLen = 0;
+	s = cliprdr_server_packet_new(monitorReady->msgType,
+			monitorReady->msgFlags, monitorReady->dataLen);
 
-	s = Stream_New(NULL, header.dataLen + CLIPRDR_HEADER_LENGTH);
-
-	Stream_Write_UINT16(s, header.msgType); /* msgType (2 bytes) */
-	Stream_Write_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
-	Stream_Write_UINT32(s, header.dataLen); /* dataLen (4 bytes) */
-
-	Stream_SealLength(s);
-
-	status = WTSVirtualChannelWrite(cliprdr->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
-
-	Stream_Free(s, TRUE);
+	WLog_DBG(TAG, "ServerMonitorReady");
+	cliprdr_server_packet_send(cliprdr, s);
 
 	return 1;
 }
@@ -289,10 +261,10 @@ static int cliprdr_server_format_list_response(CliprdrServerContext* context, CL
 	s = cliprdr_server_packet_new(formatListResponse->msgType,
 			formatListResponse->msgFlags, formatListResponse->dataLen);
 
-	WLog_DBG(TAG, "ClientFormatListResponse");
+	WLog_DBG(TAG, "ServerFormatListResponse");
 	cliprdr_server_packet_send(cliprdr, s);
 
-	return 0;
+	return 1;
 }
 
 static int cliprdr_server_lock_clipboard_data(CliprdrServerContext* context, CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
@@ -873,6 +845,40 @@ static int cliprdr_server_receive_pdu(CliprdrServerContext* context, wStream* s,
 	return 0;
 }
 
+static int cliprdr_server_init(CliprdrServerContext* context)
+{
+	UINT32 generalFlags;
+	CLIPRDR_CAPABILITIES capabilities;
+	CLIPRDR_MONITOR_READY monitorReady;
+	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet;
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+
+	ZeroMemory(&capabilities, sizeof(capabilities));
+	ZeroMemory(&monitorReady, sizeof(monitorReady));
+
+	generalFlags = 0;
+
+	if (cliprdr->useLongFormatNames)
+		generalFlags |= CB_USE_LONG_FORMAT_NAMES;
+
+	capabilities.msgType = CB_CLIP_CAPS;
+	capabilities.msgFlags = 0;
+	capabilities.dataLen = 4 + CB_CAPSTYPE_GENERAL_LEN;
+
+	capabilities.cCapabilitiesSets = 1;
+	capabilities.capabilitySets = (CLIPRDR_CAPABILITY_SET*) &generalCapabilitySet;
+
+	generalCapabilitySet.capabilitySetType = CB_CAPSTYPE_GENERAL;
+	generalCapabilitySet.capabilitySetLength = CB_CAPSTYPE_GENERAL_LEN;
+	generalCapabilitySet.version = CB_CAPS_VERSION_2;
+	generalCapabilitySet.generalFlags = generalFlags;
+
+	context->ServerCapabilities(context, &capabilities);
+	context->MonitorReady(context, &monitorReady);
+
+	return 1;
+}
+
 int cliprdr_server_read(CliprdrServerContext* context)
 {
 	wStream* s;
@@ -979,31 +985,15 @@ static void* cliprdr_server_thread(void* arg)
 {
 	DWORD status;
 	DWORD nCount;
-	void* buffer;
 	HANDLE events[8];
-	HANDLE ChannelEvent;
-	DWORD BytesReturned;
 	CliprdrServerContext* context = (CliprdrServerContext*) arg;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
-	buffer = NULL;
-	BytesReturned = 0;
-	ChannelEvent = NULL;
-
-	if (WTSVirtualChannelQuery(cliprdr->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
-	{
-		if (BytesReturned == sizeof(HANDLE))
-			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
-
-		WTSFreeMemory(buffer);
-	}
-
 	nCount = 0;
-	events[nCount++] = ChannelEvent;
 	events[nCount++] = cliprdr->StopEvent;
+	events[nCount++] = cliprdr->ChannelEvent;
 
-	cliprdr_server_send_capabilities(context);
-	cliprdr_server_send_monitor_ready(context);
+	cliprdr_server_init(context);
 
 	while (1)
 	{
@@ -1023,14 +1013,61 @@ static void* cliprdr_server_thread(void* arg)
 	return NULL;
 }
 
-static int cliprdr_server_start(CliprdrServerContext* context)
+static int cliprdr_server_open(CliprdrServerContext* context)
 {
+	void* buffer = NULL;
+	DWORD BytesReturned = 0;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
 	cliprdr->ChannelHandle = WTSVirtualChannelOpen(cliprdr->vcm, WTS_CURRENT_SESSION, "cliprdr");
 
 	if (!cliprdr->ChannelHandle)
 		return -1;
+
+	cliprdr->ChannelEvent = NULL;
+
+	if (WTSVirtualChannelQuery(cliprdr->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned))
+	{
+		if (BytesReturned == sizeof(HANDLE))
+			CopyMemory(&(cliprdr->ChannelEvent), buffer, sizeof(HANDLE));
+
+		WTSFreeMemory(buffer);
+	}
+
+	if (!cliprdr->ChannelEvent)
+		return -1;
+
+	return 1;
+}
+
+static int cliprdr_server_close(CliprdrServerContext* context)
+{
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+
+	if (cliprdr->ChannelHandle)
+	{
+		WTSVirtualChannelClose(cliprdr->ChannelHandle);
+		cliprdr->ChannelHandle = NULL;
+	}
+
+	if (cliprdr->ChannelEvent)
+	{
+		CloseHandle(cliprdr->ChannelEvent);
+		cliprdr->ChannelEvent = NULL;
+	}
+
+	return 1;
+}
+
+static int cliprdr_server_start(CliprdrServerContext* context)
+{
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+
+	if (!cliprdr->ChannelHandle)
+	{
+		if (context->Open(context) < 0)
+			return -1;
+	}
 
 	cliprdr->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
@@ -1052,6 +1089,12 @@ static int cliprdr_server_stop(CliprdrServerContext* context)
 		CloseHandle(cliprdr->StopEvent);
 	}
 
+	if (cliprdr->ChannelHandle)
+	{
+		if (context->Close(context) < 0)
+			return -1;
+	}
+
 	return 0;
 }
 
@@ -1064,11 +1107,13 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 
 	if (context)
 	{
+		context->Open = cliprdr_server_open;
+		context->Close = cliprdr_server_close;
 		context->Start = cliprdr_server_start;
 		context->Stop = cliprdr_server_stop;
 
-		//context->ServerCapabilities = cliprdr_server_capabilities;
-		//context->MonitorReady = cliprdr_server_monitor_ready;
+		context->ServerCapabilities = cliprdr_server_capabilities;
+		context->MonitorReady = cliprdr_server_monitor_ready;
 		context->ServerFormatList = cliprdr_server_format_list;
 		context->ServerFormatListResponse = cliprdr_server_format_list_response;
 		context->ServerLockClipboardData = cliprdr_server_lock_clipboard_data;
