@@ -986,12 +986,15 @@ static void* cliprdr_server_thread(void* arg)
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[8];
+	HANDLE ChannelEvent;
 	CliprdrServerContext* context = (CliprdrServerContext*) arg;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
+	ChannelEvent = context->GetEventHandle(context);
+
 	nCount = 0;
 	events[nCount++] = cliprdr->StopEvent;
-	events[nCount++] = cliprdr->ChannelEvent;
+	events[nCount++] = ChannelEvent;
 
 	cliprdr_server_init(context);
 
@@ -1004,9 +1007,10 @@ static void* cliprdr_server_thread(void* arg)
 			break;
 		}
 
-		if (cliprdr_server_read(context) < 0)
+		if (WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0)
 		{
-			break;
+			if (context->CheckEventHandle(context) < 0)
+				break;
 		}
 	}
 
@@ -1098,6 +1102,17 @@ static int cliprdr_server_stop(CliprdrServerContext* context)
 	return 0;
 }
 
+static HANDLE cliprdr_server_get_event_handle(CliprdrServerContext* context)
+{
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+	return cliprdr->ChannelEvent;
+}
+
+static int cliprdr_server_check_event_handle(CliprdrServerContext* context)
+{
+	return cliprdr_server_read(context);
+}
+
 CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 {
 	CliprdrServerContext* context;
@@ -1111,6 +1126,8 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 		context->Close = cliprdr_server_close;
 		context->Start = cliprdr_server_start;
 		context->Stop = cliprdr_server_stop;
+		context->GetEventHandle = cliprdr_server_get_event_handle;
+		context->CheckEventHandle = cliprdr_server_check_event_handle;
 
 		context->ServerCapabilities = cliprdr_server_capabilities;
 		context->MonitorReady = cliprdr_server_monitor_ready;

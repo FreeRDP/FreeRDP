@@ -37,6 +37,8 @@ typedef int (*psCliprdrOpen)(CliprdrServerContext* context);
 typedef int (*psCliprdrClose)(CliprdrServerContext* context);
 typedef int (*psCliprdrStart)(CliprdrServerContext* context);
 typedef int (*psCliprdrStop)(CliprdrServerContext* context);
+typedef HANDLE (*psCliprdrGetEventHandle)(CliprdrServerContext* context);
+typedef int (*psCliprdrCheckEventHandle)(CliprdrServerContext* context);
 
 typedef int (*psCliprdrServerCapabilities)(CliprdrServerContext* context, CLIPRDR_CAPABILITIES* capabilities);
 typedef int (*psCliprdrClientCapabilities)(CliprdrServerContext* context, CLIPRDR_CAPABILITIES* capabilities);
@@ -68,6 +70,8 @@ struct _cliprdr_server_context
 	psCliprdrClose Close;
 	psCliprdrStart Start;
 	psCliprdrStop Stop;
+	psCliprdrGetEventHandle GetEventHandle;
+	psCliprdrCheckEventHandle CheckEventHandle;
 
 	psCliprdrServerCapabilities ServerCapabilities;
 	psCliprdrClientCapabilities ClientCapabilities;
