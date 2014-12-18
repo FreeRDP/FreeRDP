@@ -873,26 +873,122 @@ static int cliprdr_server_receive_pdu(CliprdrServerContext* context, wStream* s,
 	return 0;
 }
 
-static void* cliprdr_server_thread(void* arg)
+int cliprdr_server_read(CliprdrServerContext* context)
 {
 	wStream* s;
+	int position;
+	DWORD BytesToRead;
+	DWORD BytesReturned;
+	CLIPRDR_HEADER header;
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
+
+	s = cliprdr->s;
+
+	if (Stream_GetPosition(s) < CLIPRDR_HEADER_LENGTH)
+	{
+		BytesReturned = 0;
+		BytesToRead = CLIPRDR_HEADER_LENGTH - Stream_GetPosition(s);
+
+		if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
+			(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
+		{
+			return -1;
+		}
+
+		if (BytesReturned < 0)
+			return -1;
+
+		Stream_Seek(s, BytesReturned);
+	}
+
+	if (Stream_GetPosition(s) >= CLIPRDR_HEADER_LENGTH)
+	{
+		position = Stream_GetPosition(s);
+		Stream_SetPosition(s, 0);
+
+		Stream_Read_UINT16(s, header.msgType); /* msgType (2 bytes) */
+		Stream_Read_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
+		Stream_Read_UINT32(s, header.dataLen); /* dataLen (4 bytes) */
+
+		Stream_EnsureCapacity(s, (header.dataLen + CLIPRDR_HEADER_LENGTH));
+		Stream_SetPosition(s, position);
+
+		if (Stream_GetPosition(s) < (header.dataLen + CLIPRDR_HEADER_LENGTH))
+		{
+			BytesReturned = 0;
+			BytesToRead = (header.dataLen + CLIPRDR_HEADER_LENGTH) - Stream_GetPosition(s);
+
+			if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
+				(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
+			{
+				return -1;
+			}
+
+			if (BytesReturned < 0)
+				return -1;
+
+			Stream_Seek(s, BytesReturned);
+		}
+
+		if (Stream_GetPosition(s) >= (header.dataLen + CLIPRDR_HEADER_LENGTH))
+		{
+			Stream_SetPosition(s, (header.dataLen + CLIPRDR_HEADER_LENGTH));
+			Stream_SealLength(s);
+			Stream_SetPosition(s, CLIPRDR_HEADER_LENGTH);
+
+			cliprdr_server_receive_pdu(context, s, &header);
+
+			/* check for trailing zero bytes */
+
+			Stream_SetPosition(s, 0);
+
+			BytesReturned = 0;
+			BytesToRead = 4;
+
+			if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
+				(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
+			{
+				return -1;
+			}
+
+			if (BytesReturned < 0)
+				return -1;
+
+			if (BytesReturned == 4)
+			{
+				Stream_Read_UINT16(s, header.msgType); /* msgType (2 bytes) */
+				Stream_Read_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
+
+				if (!header.msgType)
+				{
+					/* ignore trailing bytes */
+					Stream_SetPosition(s, 0);
+				}
+			}
+			else
+			{
+				Stream_Seek(s, BytesReturned);
+			}
+		}
+	}
+
+	return 1;
+}
+
+static void* cliprdr_server_thread(void* arg)
+{
 	DWORD status;
 	DWORD nCount;
 	void* buffer;
-	int position;
 	HANDLE events[8];
 	HANDLE ChannelEvent;
 	DWORD BytesReturned;
-	DWORD BytesToRead;
-	CLIPRDR_HEADER header;
 	CliprdrServerContext* context = (CliprdrServerContext*) arg;
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
 	buffer = NULL;
 	BytesReturned = 0;
 	ChannelEvent = NULL;
-
-	s = Stream_New(NULL, 4096);
 
 	if (WTSVirtualChannelQuery(cliprdr->ChannelHandle, WTSVirtualEventHandle, &buffer, &BytesReturned) == TRUE)
 	{
@@ -918,96 +1014,11 @@ static void* cliprdr_server_thread(void* arg)
 			break;
 		}
 
-		if (Stream_GetPosition(s) < CLIPRDR_HEADER_LENGTH)
+		if (cliprdr_server_read(context) < 0)
 		{
-			BytesReturned = 0;
-			BytesToRead = CLIPRDR_HEADER_LENGTH - Stream_GetPosition(s);
-
-			if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
-				(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
-			{
-				break;
-			}
-
-			if (BytesReturned < 0)
-				break;
-
-			Stream_Seek(s, BytesReturned);
-		}
-
-		if (Stream_GetPosition(s) >= CLIPRDR_HEADER_LENGTH)
-		{
-			position = Stream_GetPosition(s);
-			Stream_SetPosition(s, 0);
-
-			Stream_Read_UINT16(s, header.msgType); /* msgType (2 bytes) */
-			Stream_Read_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
-			Stream_Read_UINT32(s, header.dataLen); /* dataLen (4 bytes) */
-
-			Stream_EnsureCapacity(s, (header.dataLen + CLIPRDR_HEADER_LENGTH));
-			Stream_SetPosition(s, position);
-
-			if (Stream_GetPosition(s) < (header.dataLen + CLIPRDR_HEADER_LENGTH))
-			{
-				BytesReturned = 0;
-				BytesToRead = (header.dataLen + CLIPRDR_HEADER_LENGTH) - Stream_GetPosition(s);
-
-				if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
-					(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
-				{
-					break;
-				}
-
-				if (BytesReturned < 0)
-					break;
-
-				Stream_Seek(s, BytesReturned);
-			}
-
-			if (Stream_GetPosition(s) >= (header.dataLen + CLIPRDR_HEADER_LENGTH))
-			{
-				Stream_SetPosition(s, (header.dataLen + CLIPRDR_HEADER_LENGTH));
-				Stream_SealLength(s);
-				Stream_SetPosition(s, CLIPRDR_HEADER_LENGTH);
-
-				cliprdr_server_receive_pdu(context, s, &header);
-
-				/* check for trailing zero bytes */
-
-				Stream_SetPosition(s, 0);
-
-				BytesReturned = 0;
-				BytesToRead = 4;
-
-				if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
-					(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
-				{
-					break;
-				}
-
-				if (BytesReturned < 0)
-					break;
-
-				if (BytesReturned == 4)
-				{
-					Stream_Read_UINT16(s, header.msgType); /* msgType (2 bytes) */
-					Stream_Read_UINT16(s, header.msgFlags); /* msgFlags (2 bytes) */
-
-					if (!header.msgType)
-					{
-						/* ignore trailing bytes */
-						Stream_SetPosition(s, 0);
-					}
-				}
-				else
-				{
-					Stream_Seek(s, BytesReturned);
-				}
-			}
+			break;
 		}
 	}
-
-	Stream_Free(s, TRUE);
 
 	return NULL;
 }
@@ -1033,9 +1044,13 @@ static int cliprdr_server_stop(CliprdrServerContext* context)
 {
 	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*) context->handle;
 
-	SetEvent(cliprdr->StopEvent);
-	WaitForSingleObject(cliprdr->Thread, INFINITE);
-	CloseHandle(cliprdr->Thread);
+	if (cliprdr->StopEvent)
+	{
+		SetEvent(cliprdr->StopEvent);
+		WaitForSingleObject(cliprdr->Thread, INFINITE);
+		CloseHandle(cliprdr->Thread);
+		CloseHandle(cliprdr->StopEvent);
+	}
 
 	return 0;
 }
@@ -1068,10 +1083,13 @@ CliprdrServerContext* cliprdr_server_context_new(HANDLE vcm)
 		if (cliprdr)
 		{
 			cliprdr->vcm = vcm;
+
 			cliprdr->useLongFormatNames = TRUE;
 			cliprdr->streamFileClipEnabled = TRUE;
 			cliprdr->fileClipNoFilePaths = TRUE;
 			cliprdr->canLockClipData = TRUE;
+
+			cliprdr->s = Stream_New(NULL, 4096);
 		}
 	}
 
@@ -1089,6 +1107,7 @@ void cliprdr_server_context_free(CliprdrServerContext* context)
 
 	if (cliprdr)
 	{
+		Stream_Free(cliprdr->s, TRUE);
 		free(cliprdr->temporaryDirectory);
 	}
 

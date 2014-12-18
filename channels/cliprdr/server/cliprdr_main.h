@@ -22,6 +22,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/stream.h>
 #include <winpr/thread.h>
 
 #include <freerdp/server/cliprdr.h>
@@ -43,6 +44,7 @@ struct _cliprdr_server_private
 	BOOL fileClipNoFilePaths;
 	BOOL canLockClipData;
 
+	wStream* s;
 	char* temporaryDirectory;
 };
 typedef struct _cliprdr_server_private CliprdrServerPrivate;
