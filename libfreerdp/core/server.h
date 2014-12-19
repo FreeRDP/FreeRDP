@@ -90,7 +90,7 @@ struct WTSVirtualChannelManager
 
 	rdpPeerChannel* drdynvc_channel;
 	BYTE drdynvc_state;
-	UINT32 dvc_channel_id_seq;
+	LONG dvc_channel_id_seq;
 
 	wArrayList* dynamicVirtualChannels;
 };
