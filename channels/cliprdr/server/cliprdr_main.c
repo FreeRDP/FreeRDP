@@ -330,7 +330,7 @@ static int cliprdr_server_format_data_response(CliprdrServerContext* context, CL
 
 	Stream_Write(s, formatDataResponse->requestedFormatData, formatDataResponse->dataLen);
 
-	WLog_DBG(TAG, "ClientFormatDataResponse");
+	WLog_DBG(TAG, "ServerFormatDataResponse");
 	cliprdr_server_packet_send(cliprdr, s);
 
 	return 0;
@@ -505,7 +505,13 @@ static int cliprdr_server_receive_format_list(CliprdrServerContext* context, wSt
 	formatList.numFormats = 0;
 	position = Stream_GetPosition(s);
 
-	if (!cliprdr->useLongFormatNames)
+	if (!header->dataLen)
+	{
+		/* empty format list */
+		formatList.formats = NULL;
+		formatList.numFormats = 0;
+	}
+	else if (!cliprdr->useLongFormatNames)
 	{
 		formatList.numFormats = (dataLen / 36);
 
@@ -895,6 +901,9 @@ int cliprdr_server_read(CliprdrServerContext* context)
 		BytesReturned = 0;
 		BytesToRead = CLIPRDR_HEADER_LENGTH - Stream_GetPosition(s);
 
+		if (WaitForSingleObject(cliprdr->ChannelEvent, 0) != WAIT_OBJECT_0)
+			return 1;
+
 		if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
 			(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
 		{
@@ -924,6 +933,9 @@ int cliprdr_server_read(CliprdrServerContext* context)
 			BytesReturned = 0;
 			BytesToRead = (header.dataLen + CLIPRDR_HEADER_LENGTH) - Stream_GetPosition(s);
 
+			if (WaitForSingleObject(cliprdr->ChannelEvent, 0) != WAIT_OBJECT_0)
+				return 1;
+
 			if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0,
 				(PCHAR) Stream_Pointer(s), BytesToRead, &BytesReturned))
 			{
@@ -944,9 +956,12 @@ int cliprdr_server_read(CliprdrServerContext* context)
 
 			cliprdr_server_receive_pdu(context, s, &header);
 
+			Stream_SetPosition(s, 0);
+
 			/* check for trailing zero bytes */
 
-			Stream_SetPosition(s, 0);
+			if (WaitForSingleObject(cliprdr->ChannelEvent, 0) != WAIT_OBJECT_0)
+				return 1;
 
 			BytesReturned = 0;
 			BytesToRead = 4;

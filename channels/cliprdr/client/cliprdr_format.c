@@ -57,7 +57,13 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	formatList.numFormats = 0;
 	position = Stream_GetPosition(s);
 	
-	if (!cliprdr->useLongFormatNames)
+	if (!formatList.dataLen)
+	{
+		/* empty format list */
+		formatList.formats = NULL;
+		formatList.numFormats = 0;
+	}
+	else if (!cliprdr->useLongFormatNames)
 	{
 		formatList.numFormats = (dataLen / 36);
 		

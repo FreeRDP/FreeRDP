@@ -157,6 +157,8 @@ BOOL ClipboardEmpty(wClipboard* clipboard)
 	}
 
 	clipboard->size = 0;
+
+	clipboard->formatId = 0;
 	clipboard->sequenceNumber++;
 
 	return TRUE;
