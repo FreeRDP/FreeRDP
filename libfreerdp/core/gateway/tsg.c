@@ -1549,9 +1549,9 @@ void tsg_free(rdpTsg* tsg)
 {
 	if (tsg)
 	{
+		rpc_free(tsg->rpc);
 		free(tsg->Hostname);
 		free(tsg->MachineName);
-		rpc_free(tsg->rpc);
 		free(tsg);
 	}
 }

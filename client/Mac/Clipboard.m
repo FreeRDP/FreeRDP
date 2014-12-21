@@ -201,6 +201,11 @@ int mac_cliprdr_server_format_list(CliprdrClientContext* cliprdr, CLIPRDR_FORMAT
 			mac_cliprdr_send_client_format_data_request(cliprdr, CF_UNICODETEXT);
 			break;
 		}
+		else if (format->formatId == CF_OEMTEXT)
+		{
+			mac_cliprdr_send_client_format_data_request(cliprdr, CF_OEMTEXT);
+			break;
+		}
 		else if (format->formatId == CF_TEXT)
 		{
 			mac_cliprdr_send_client_format_data_request(cliprdr, CF_TEXT);
@@ -305,11 +310,15 @@ int mac_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr, CLIPR
 	
 	SetEvent(mfc->clipboardRequestEvent);
 	
-	if ((formatId == CF_TEXT) || (formatId == CF_UNICODETEXT))
+	if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) || (formatId == CF_UNICODETEXT))
 	{
 		formatId = ClipboardRegisterFormat(mfc->clipboard, "UTF8_STRING");
 		
 		data = (void*) ClipboardGetData(mfc->clipboard, formatId, &size);
+		
+		if (size > 1)
+			size--; /* we need the size without the null terminator */
+		
 		NSString* str = [[NSString alloc] initWithBytes: (void*) data length:size encoding:NSUTF8StringEncoding];
 		free(data);
 		

@@ -320,6 +320,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 int rpc_out_read(rdpRpc* rpc, BYTE* data, int length)
 {
 	int status;
+
 	status = BIO_read(rpc->TlsOut->bio, data, length);
 
 	if (status > 0)
@@ -558,8 +559,11 @@ rdpRpc* rpc_new(rdpTransport* transport)
 		return NULL;
 
 	rpc->State = RPC_CLIENT_STATE_INITIAL;
+
 	rpc->transport = transport;
 	rpc->settings = transport->settings;
+	rpc->context = transport->context;
+
 	rpc->SendSeqNum = 0;
 
 	rpc->ntlm = ntlm_new();
@@ -637,7 +641,7 @@ void rpc_free(rdpRpc* rpc)
 {
 	if (rpc)
 	{
-		rpc_client_stop(rpc);
+		rpc_client_free(rpc);
 
 		if (rpc->ntlm)
 		{

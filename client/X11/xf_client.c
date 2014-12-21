@@ -1288,27 +1288,37 @@ void xf_window_free(xfContext* xfc)
 
 void* xf_input_thread(void *arg)
 {
-	xfContext* xfc;
 	DWORD status;
-	HANDLE event[2];
+	DWORD nCount;
+	HANDLE events[2];
 	XEvent xevent;
-	wMessageQueue *queue;
 	wMessage msg;
+	wMessageQueue *queue;
 	int pending_status = 1;
 	int process_status = 1;
-	freerdp *instance = (freerdp*) arg;
-	assert(NULL != instance);
-	xfc = (xfContext *) instance->context;
-	assert(NULL != xfc);
+	freerdp* instance = (freerdp*) arg;
+	xfContext* xfc = (xfContext*) instance->context;
+
 	queue = freerdp_get_message_queue(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-	event[0] = MessageQueue_Event(queue);
-	event[1] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
+
+	nCount = 0;
+	events[nCount++] = MessageQueue_Event(queue);
+	events[nCount++] = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds);
 
 	while(1)
 	{
-		status = WaitForMultipleObjects(2, event, FALSE, INFINITE);
+		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		
+		if (WaitForSingleObject(events[0], 0) == WAIT_OBJECT_0)
+		{
+			if (MessageQueue_Peek(queue, &msg, FALSE))
+			{
+				if (msg.id == WMQ_QUIT)
+					break;
+			}
+		}
 
-		if(status == WAIT_OBJECT_0 + 1)
+		if (WaitForSingleObject(events[1], 0) == WAIT_OBJECT_0)
 		{
 			do
 			{
@@ -1337,17 +1347,9 @@ void* xf_input_thread(void *arg)
 				break;
 
 		}
-		else if(status == WAIT_OBJECT_0)
-		{
-			if(MessageQueue_Peek(queue, &msg, FALSE))
-			{
-				if(msg.id == WMQ_QUIT)
-					break;
-			}
-		}
-		else
-			break;
 	}
+
+	CloseHandle(events[1]);
 
 	MessageQueue_PostQuit(queue, 0);
 	ExitThread(0);
