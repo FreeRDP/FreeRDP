@@ -946,6 +946,7 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	UINT32 formatId;
 	UINT32 altFormatId;
 	xfCliprdrFormat* format;
+	BOOL nullTerminated = FALSE;
 	UINT32 size = formatDataResponse->dataLen;
 	BYTE* data = formatDataResponse->requestedFormatData;
 	xfClipboard* clipboard = (xfClipboard*) context->custom;
@@ -973,11 +974,19 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 		case CF_TEXT:
 			formatId = CF_TEXT;
 			altFormatId = ClipboardGetFormatId(clipboard->system, "UTF8_STRING");
+			nullTerminated = TRUE;
+			break;
+
+		case CF_OEMTEXT:
+			formatId = CF_OEMTEXT;
+			altFormatId = ClipboardGetFormatId(clipboard->system, "UTF8_STRING");
+			nullTerminated = TRUE;
 			break;
 
 		case CF_UNICODETEXT:
 			formatId = CF_UNICODETEXT;
 			altFormatId = ClipboardGetFormatId(clipboard->system, "UTF8_STRING");
+			nullTerminated = TRUE;
 			break;
 
 		case CF_DIB:
@@ -988,6 +997,7 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 		case CB_FORMAT_HTML:
 			formatId = ClipboardGetFormatId(clipboard->system, "HTML Format");
 			altFormatId = ClipboardGetFormatId(clipboard->system, "text/html");
+			nullTerminated = TRUE;
 			break;
 	}
 
@@ -1008,6 +1018,9 @@ static int xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	{
 		DstSize = 0;
 		pDstData = (BYTE*) ClipboardGetData(clipboard->system, altFormatId, &DstSize);
+
+		if ((DstSize > 1) && nullTerminated)
+			DstSize--;
 	}
 
 	clipboard->data = pDstData;
