@@ -508,8 +508,6 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	smartcard->log = WLog_Get("com.freerdp.channel.smartcard.client");
 
-	//WLog_SetLogLevel(smartcard->log, WLOG_DEBUG);
-
 	smartcard->IrpQueue = MessageQueue_New(NULL);
 	smartcard->rgSCardContextList = ListDictionary_New(TRUE);
 	smartcard->rgOutstandingMessages = ListDictionary_New(TRUE);
