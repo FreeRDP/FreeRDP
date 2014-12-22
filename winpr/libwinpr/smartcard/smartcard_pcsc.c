@@ -2333,18 +2333,24 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 	BOOL pcbAttrLenAlloc = FALSE;
 	LONG status = SCARD_S_SUCCESS;
 	LPBYTE* pPbAttr = (LPBYTE*) pbAttr;
+
 	cbAttrLen = *pcbAttrLen;
 
 	if (*pcbAttrLen == SCARD_AUTOALLOCATE)
+	{
 		pcbAttrLenAlloc = TRUE;
+		*pPbAttr = NULL;
+	}
+	else
+	{
+		/**
+		 * pcsc-lite returns SCARD_E_INSUFFICIENT_BUFFER if the given
+		 * buffer size is larger than PCSC_MAX_BUFFER_SIZE (264)
+		 */
 
-	/**
-	 * pcsc-lite returns SCARD_E_INSUFFICIENT_BUFFER if the given
-	 * buffer size is larger than PCSC_MAX_BUFFER_SIZE (264)
-	 */
-
-	if (*pcbAttrLen > PCSC_MAX_BUFFER_SIZE)
-		*pcbAttrLen = PCSC_MAX_BUFFER_SIZE;
+		if (*pcbAttrLen > PCSC_MAX_BUFFER_SIZE)
+			*pcbAttrLen = PCSC_MAX_BUFFER_SIZE;
+	}
 
 	hContext = PCSC_GetCardContextFromHandle(hCard);
 
@@ -2363,14 +2369,22 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 	{
 		if (dwAttrId == SCARD_ATTR_VENDOR_NAME)
 		{
+			const char* vendorName;
+
 			/**
 			 * pcsc-lite adds a null terminator to the vendor name,
 			 * while WinSCard doesn't. Strip the null terminator.
 			 */
+
 			if (pcbAttrLenAlloc)
-				*pcbAttrLen = strlen((char*) *pPbAttr);
+				vendorName = (char*) *pPbAttr;
 			else
-				*pcbAttrLen = strlen((char*) pbAttr);
+				vendorName = (char*) pbAttr;
+
+			if (vendorName)
+				*pcbAttrLen = strlen(vendorName);
+			else
+				*pcbAttrLen = 0;
 		}
 	}
 	else

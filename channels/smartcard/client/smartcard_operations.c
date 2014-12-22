@@ -781,8 +781,9 @@ static DWORD smartcard_StatusA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	ret.cbAtrLen = call->cbAtrLen;
 	ZeroMemory(ret.pbAtr, 32);
 	cchReaderLen = SCARD_AUTOALLOCATE;
+
 	status = ret.ReturnCode = SCardStatusA(operation->hCard, (LPSTR) &mszReaderNames, &cchReaderLen,
-										   &ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &ret.cbAtrLen);
+					&ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &ret.cbAtrLen);
 
 	if (status == SCARD_S_SUCCESS)
 	{
@@ -831,8 +832,10 @@ static DWORD smartcard_StatusW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERA
 	ret.cbAtrLen = call->cbAtrLen;
 	ZeroMemory(ret.pbAtr, 32);
 	cchReaderLen = SCARD_AUTOALLOCATE;
+
 	status = ret.ReturnCode = SCardStatusW(operation->hCard, (LPWSTR) &mszReaderNames, &cchReaderLen,
-										   &ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &ret.cbAtrLen);
+						&ret.dwState, &ret.dwProtocol, (BYTE*) &ret.pbAtr, &ret.cbAtrLen);
+
 	ret.mszReaderNames = (BYTE*) mszReaderNames;
 	ret.cBytes = cchReaderLen * 2;
 	smartcard_trace_status_return(smartcard, &ret, TRUE);
@@ -930,8 +933,9 @@ static UINT32 smartcard_Control_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPER
 		return SCARD_E_NO_MEMORY;
 
 	status = ret.ReturnCode = SCardControl(operation->hCard,
-										   call->dwControlCode, call->pvInBuffer, call->cbInBufferSize,
-										   ret.pvOutBuffer, call->cbOutBufferSize, &ret.cbOutBufferSize);
+			call->dwControlCode, call->pvInBuffer, call->cbInBufferSize,
+			ret.pvOutBuffer, call->cbOutBufferSize, &ret.cbOutBufferSize);
+
 	smartcard_trace_control_return(smartcard, &ret);
 	status = smartcard_pack_control_return(smartcard, irp->output, &ret);
 
@@ -966,19 +970,32 @@ static UINT32 smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 {
 	LONG status;
 	DWORD cbAttrLen;
+	BOOL autoAllocate;
 	GetAttrib_Return ret;
 	IRP* irp = operation->irp;
+
 	ret.pbAttr = NULL;
 
 	if (call->fpbAttrIsNULL)
 		call->cbAttrLen = 0;
 
-	if (call->cbAttrLen)
+	autoAllocate = (call->cbAttrLen == SCARD_AUTOALLOCATE) ? TRUE : FALSE;
+
+	if (call->cbAttrLen && !autoAllocate)
+	{
 		ret.pbAttr = (BYTE*) malloc(call->cbAttrLen);
 
+		if (!ret.pbAttr)
+			return SCARD_E_NO_MEMORY;
+	}
+
 	cbAttrLen = call->cbAttrLen;
-	status = ret.ReturnCode = SCardGetAttrib(operation->hCard, call->dwAttrId, ret.pbAttr, &cbAttrLen);
+
+	status = ret.ReturnCode = SCardGetAttrib(operation->hCard, call->dwAttrId,
+			autoAllocate ? (LPBYTE) &(ret.pbAttr) : ret.pbAttr, &cbAttrLen);
+
 	ret.cbAttrLen = cbAttrLen;
+
 	smartcard_trace_get_attrib_return(smartcard, &ret, call->dwAttrId);
 
 	if (ret.ReturnCode)
