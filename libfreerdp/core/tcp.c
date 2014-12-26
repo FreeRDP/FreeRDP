@@ -531,11 +531,32 @@ int uds_connect(const char* path)
 #endif
 }
 
+BOOL freerdp_tcp_resolve_hostname(const char* hostname)
+{
+	int status;
+	struct addrinfo hints;
+	struct addrinfo* result = NULL;
+
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+
+	status = getaddrinfo(hostname, NULL, &hints, &result);
+
+	if (status)
+		return FALSE;
+
+	freeaddrinfo(result);
+
+	return TRUE;
+}
+
 BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 {
 	int status;
 	UINT32 option_value;
 	socklen_t option_len;
+	rdpSettings* settings = tcp->settings;
 
 	if (!hostname)
 		return FALSE;
@@ -587,14 +608,26 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 		if (tcp->sockfd < 0)
 			return FALSE;
 #else /* NO_IPV6 */
-		struct addrinfo hints = {0};
+		struct addrinfo hints;
 		struct addrinfo *result;
 		struct addrinfo *tmp;
 		char port_str[11];
 
-		//ZeroMemory(&hints, sizeof(struct addrinfo));
+		if (!settings->GatewayEnabled)
+		{
+			if (!freerdp_tcp_resolve_hostname(hostname))
+			{
+				if (settings->TargetNetAddressCount > 0)
+				{
+					hostname = settings->TargetNetAddresses[0];
+				}
+			}
+		}
+
+		ZeroMemory(&hints, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
 		hints.ai_socktype = SOCK_STREAM;
+
 		/*
 		 * FIXME: the following is a nasty workaround. Find a cleaner way:
 		 * Either set port manually afterwards or get it passed as string?
