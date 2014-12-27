@@ -396,7 +396,10 @@ int WLog_ParseFilters()
 	strs = (char**) calloc(g_FilterCount, sizeof(char*));
 
 	if (!strs)
+	{
+		free(env);
 		return -1;
+	}
 
 	strs[count++] = p;
 
@@ -412,6 +415,7 @@ int WLog_ParseFilters()
 	if (!g_Filters)
 	{
 		free(strs);
+		free(env);
 		return -1;
 	}
 
@@ -422,11 +426,14 @@ int WLog_ParseFilters()
 		if (status < 0)
 		{
 			free(strs);
+			free(env);
 			return -1;
 		}
 	}
 
 	free(strs);
+	free(env);
+
 	return 0;
 }
 

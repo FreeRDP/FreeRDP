@@ -176,6 +176,7 @@ void update_process_glyph_fragments(rdpContext* context, BYTE* data, UINT32 leng
 
 				fragments = (BYTE*) malloc(size);
 				CopyMemory(fragments, data, size);
+
 				glyph_cache_fragment_put(glyph_cache, id, size, fragments);
 
 				index += 3;
@@ -398,24 +399,24 @@ rdpGlyph* glyph_cache_get(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index)
 {
 	rdpGlyph* glyph;
 
-	WLog_Print(glyphCache->log, WLOG_DEBUG, "GlyphCacheGet: id: %d index: %d", id, index);
+	WLog_DBG(TAG, "GlyphCacheGet: id: %d index: %d", id, index);
 
 	if (id > 9)
 	{
-		WLog_ERR(TAG,  "invalid glyph cache id: %d", id);
+		WLog_ERR(TAG, "invalid glyph cache id: %d", id);
 		return NULL;
 	}
 
 	if (index > glyphCache->glyphCache[id].number)
 	{
-		WLog_ERR(TAG,  "index %d out of range for cache id: %d", index, id);
+		WLog_ERR(TAG, "index %d out of range for cache id: %d", index, id);
 		return NULL;
 	}
 
 	glyph = glyphCache->glyphCache[id].entries[index];
 
 	if (!glyph)
-		WLog_ERR(TAG,  "no glyph found at cache index: %d in cache id: %d", index, id);
+		WLog_ERR(TAG, "no glyph found at cache index: %d in cache id: %d", index, id);
 
 	return glyph;
 }
@@ -426,17 +427,17 @@ void glyph_cache_put(rdpGlyphCache* glyphCache, UINT32 id, UINT32 index, rdpGlyp
 
 	if (id > 9)
 	{
-		WLog_ERR(TAG,  "invalid glyph cache id: %d", id);
+		WLog_ERR(TAG, "invalid glyph cache id: %d", id);
 		return;
 	}
 
 	if (index > glyphCache->glyphCache[id].number)
 	{
-		WLog_ERR(TAG,  "invalid glyph cache index: %d in cache id: %d", index, id);
+		WLog_ERR(TAG, "invalid glyph cache index: %d in cache id: %d", index, id);
 		return;
 	}
 
-	WLog_Print(glyphCache->log, WLOG_DEBUG, "GlyphCachePut: id: %d index: %d", id, index);
+	WLog_DBG(TAG, "GlyphCachePut: id: %d index: %d", id, index);
 
 	prevGlyph = glyphCache->glyphCache[id].entries[index];
 
@@ -458,17 +459,17 @@ void* glyph_cache_fragment_get(rdpGlyphCache* glyphCache, UINT32 index, UINT32* 
 
 	if (index > 255)
 	{
-		WLog_ERR(TAG,  "invalid glyph cache fragment index: %d", index);
+		WLog_ERR(TAG, "invalid glyph cache fragment index: %d", index);
 		return NULL;
 	}
 
 	fragment = glyphCache->fragCache.entries[index].fragment;
 	*size = (BYTE) glyphCache->fragCache.entries[index].size;
 
-	WLog_Print(glyphCache->log, WLOG_DEBUG, "GlyphCacheFragmentGet: index: %d size: %d", index, *size);
+	WLog_DBG(TAG, "GlyphCacheFragmentGet: index: %d size: %d", index, *size);
 
 	if (!fragment)
-		WLog_ERR(TAG,  "invalid glyph fragment at index:%d", index);
+		WLog_ERR(TAG, "invalid glyph fragment at index:%d", index);
 
 	return fragment;
 }
@@ -479,18 +480,18 @@ void glyph_cache_fragment_put(rdpGlyphCache* glyphCache, UINT32 index, UINT32 si
 
 	if (index > 255)
 	{
-		WLog_ERR(TAG,  "invalid glyph cache fragment index: %d", index);
+		WLog_ERR(TAG, "invalid glyph cache fragment index: %d", index);
 		return;
 	}
 
-	WLog_Print(glyphCache->log, WLOG_DEBUG, "GlyphCacheFragmentPut: index: %d size: %d", index, size);
+	WLog_DBG(TAG, "GlyphCacheFragmentPut: index: %d size: %d", index, size);
 
 	prevFragment = glyphCache->fragCache.entries[index].fragment;
 
 	glyphCache->fragCache.entries[index].fragment = fragment;
 	glyphCache->fragCache.entries[index].size = size;
 
-	if (!prevFragment)
+	if (prevFragment)
 		free(prevFragment);
 }
 
