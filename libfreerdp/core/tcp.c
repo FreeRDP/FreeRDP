@@ -534,10 +534,9 @@ int uds_connect(const char* path)
 BOOL freerdp_tcp_resolve_hostname(const char* hostname)
 {
 	int status;
-	struct addrinfo hints;
+	struct addrinfo hints = { 0 };
 	struct addrinfo* result = NULL;
 
-	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 

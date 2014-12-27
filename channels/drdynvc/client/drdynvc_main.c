@@ -581,11 +581,17 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 static void drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 {
-	MessagePipe_PostQuit(drdynvc->MsgPipe, 0);
-	WaitForSingleObject(drdynvc->thread, INFINITE);
+	if (drdynvc->MsgPipe)
+	{
+		MessagePipe_PostQuit(drdynvc->MsgPipe, 0);
+		WaitForSingleObject(drdynvc->thread, INFINITE);
 
-	MessagePipe_Free(drdynvc->MsgPipe);
-	CloseHandle(drdynvc->thread);
+		MessagePipe_Free(drdynvc->MsgPipe);
+		drdynvc->MsgPipe = NULL;
+
+		CloseHandle(drdynvc->thread);
+		drdynvc->thread = NULL;
+	}
 
 	drdynvc->channelEntryPoints.pVirtualChannelClose(drdynvc->OpenHandle);
 

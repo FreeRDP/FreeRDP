@@ -417,6 +417,12 @@ static int audin_plugin_terminated(IWTSPlugin* pPlugin)
 		audin->device = NULL;
 	}
 
+	free(audin->subsystem);
+	audin->subsystem = NULL;
+
+	free(audin->device_name);
+	audin->device_name = NULL;
+
 	free(audin->listener_callback);
 	free(audin);
 

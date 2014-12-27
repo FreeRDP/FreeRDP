@@ -920,20 +920,20 @@ static void rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT event,
 		LPVOID pData, UINT32 dataLength, UINT32 totalLength, UINT32 dataFlags)
 {
-	rdpsndPlugin* plugin;
+	rdpsndPlugin* rdpsnd;
 
-	plugin = (rdpsndPlugin*) rdpsnd_get_open_handle_data(openHandle);
+	rdpsnd = (rdpsndPlugin*) rdpsnd_get_open_handle_data(openHandle);
 
-	if (!plugin)
+	if (!rdpsnd)
 	{
-		WLog_ERR(TAG,  "rdpsnd_virtual_channel_open_event: error no match\n");
+		WLog_ERR(TAG, "rdpsnd_virtual_channel_open_event: error no match");
 		return;
 	}
 
 	switch (event)
 	{
 		case CHANNEL_EVENT_DATA_RECEIVED:
-			rdpsnd_virtual_channel_event_data_received(plugin, pData, dataLength, totalLength, dataFlags);
+			rdpsnd_virtual_channel_event_data_received(rdpsnd, pData, dataLength, totalLength, dataFlags);
 			break;
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
@@ -949,16 +949,16 @@ static void* rdpsnd_virtual_channel_client_thread(void* arg)
 {
 	wStream* data;
 	wMessage message;
-	rdpsndPlugin* plugin = (rdpsndPlugin*) arg;
+	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) arg;
 
-	rdpsnd_process_connect(plugin);
+	rdpsnd_process_connect(rdpsnd);
 
 	while (1)
 	{
-		if (!MessageQueue_Wait(plugin->MsgPipe->In))
+		if (!MessageQueue_Wait(rdpsnd->MsgPipe->In))
 			break;
 
-		if (MessageQueue_Peek(plugin->MsgPipe->In, &message, TRUE))
+		if (MessageQueue_Peek(rdpsnd->MsgPipe->In, &message, TRUE))
 		{
 			if (message.id == WMQ_QUIT)
 				break;
@@ -966,9 +966,16 @@ static void* rdpsnd_virtual_channel_client_thread(void* arg)
 			if (message.id == 0)
 			{
 				data = (wStream*) message.wParam;
-				rdpsnd_recv_pdu(plugin, data);
+				rdpsnd_recv_pdu(rdpsnd, data);
 			}
 		}
+	}
+
+	if (rdpsnd->ScheduleThread)
+	{
+		WaitForSingleObject(rdpsnd->ScheduleThread, INFINITE);
+		CloseHandle(rdpsnd->ScheduleThread);
+		rdpsnd->ScheduleThread = NULL;
 	}
 
 	ExitThread(0);
@@ -998,9 +1005,17 @@ static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID 
 
 static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 {
-	MessagePipe_PostQuit(rdpsnd->MsgPipe, 0);
-	WaitForSingleObject(rdpsnd->thread, INFINITE);
-	CloseHandle(rdpsnd->thread);
+	if (rdpsnd->MsgPipe)
+	{
+		MessagePipe_PostQuit(rdpsnd->MsgPipe, 0);
+		WaitForSingleObject(rdpsnd->thread, INFINITE);
+
+		MessagePipe_Free(rdpsnd->MsgPipe);
+		rdpsnd->MsgPipe = NULL;
+
+		CloseHandle(rdpsnd->thread);
+		rdpsnd->thread = NULL;
+	}
 
 	rdpsnd->channelEntryPoints.pVirtualChannelClose(rdpsnd->OpenHandle);
 
@@ -1010,16 +1025,14 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 		rdpsnd->data_in = NULL;
 	}
 
-	MessagePipe_Free(rdpsnd->MsgPipe);
-
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->Free, rdpsnd->device);
 
-	if (rdpsnd->subsystem)
-		free(rdpsnd->subsystem);
+	free(rdpsnd->subsystem);
+	rdpsnd->subsystem = NULL;
 
-	if (rdpsnd->device_name)
-		free(rdpsnd->device_name);
+	free(rdpsnd->device_name);
+	rdpsnd->device_name = NULL;
 
 	rdpsnd_free_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
 	rdpsnd->NumberOfServerFormats = 0;
