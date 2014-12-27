@@ -10,11 +10,6 @@
    fun:_nss_dns_gethostbyname4_r
    fun:gaih_inet
    fun:getaddrinfo
-   fun:freerdp_tcp_connect
-   fun:tcp_connect
-   fun:transport_connect
-   fun:nego_tcp_connect
-   fun:nego_transport_connect
 }
 
 {

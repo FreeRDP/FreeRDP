@@ -550,6 +550,76 @@ BOOL freerdp_tcp_resolve_hostname(const char* hostname)
 	return TRUE;
 }
 
+BOOL freerdp_tcp_connect_timeout(int sockfd, struct sockaddr* addr, socklen_t addrlen, int timeout)
+{
+	int status;
+
+#ifndef _WIN32
+	int flags;
+	fd_set cfds;
+	socklen_t optlen;
+	struct timeval tv;
+
+	/* set socket in non-blocking mode */
+
+	flags = fcntl(sockfd, F_GETFL);
+
+	if (flags < 0)
+		return FALSE;
+
+	fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+	/* non-blocking tcp connect */
+
+	status = connect(sockfd, addr, addrlen);
+
+	if (status >= 0)
+		return TRUE; /* connection success */
+
+	if (errno != EINPROGRESS)
+		return FALSE;
+
+	FD_ZERO(&cfds);
+	FD_SET(sockfd, &cfds);
+
+	tv.tv_sec = timeout;
+	tv.tv_usec = 0;
+
+	status = _select(sockfd + 1, NULL, &cfds, NULL, &tv);
+
+	if (status != 1)
+		return FALSE; /* connection timeout or error */
+
+	status = 0;
+	optlen = sizeof(status);
+
+	if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*) &status, &optlen) < 0)
+		return FALSE;
+
+	if (status != 0)
+		return FALSE;
+
+	/* set socket in blocking mode */
+
+	flags = fcntl(sockfd, F_GETFL);
+
+	if (flags < 0)
+		return FALSE;
+
+	fcntl(sockfd, F_SETFL, flags & ~O_NONBLOCK);
+
+#else
+	status = connect(sockfd, addr, addrlen);
+
+	if (status >= 0)
+		return TRUE;
+
+	return FALSE;
+#endif
+
+	return TRUE;
+}
+
 BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 {
 	int status;
@@ -607,10 +677,10 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 		if (tcp->sockfd < 0)
 			return FALSE;
 #else /* NO_IPV6 */
+		char port_str[16];
 		struct addrinfo hints;
-		struct addrinfo *result;
-		struct addrinfo *tmp;
-		char port_str[11];
+		struct addrinfo* result;
+		struct addrinfo* addr;
 
 		if (!settings->GatewayEnabled)
 		{
@@ -624,46 +694,47 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 		}
 
 		ZeroMemory(&hints, sizeof(hints));
-		hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 
-		/*
-		 * FIXME: the following is a nasty workaround. Find a cleaner way:
-		 * Either set port manually afterwards or get it passed as string?
-		 */
-		sprintf_s(port_str, 11, "%u", port);
+		sprintf_s(port_str, sizeof(port_str) - 1, "%u", port);
 
 		status = getaddrinfo(hostname, port_str, &hints, &result);
+
 		if (status) {
 			WLog_ERR(TAG, "getaddrinfo: %s", gai_strerror(status));
 			return FALSE;
 		}
 
-		/* For now prefer IPv4 over IPv6. */
-		tmp = result;
-		if (tmp->ai_family == AF_INET6 && tmp->ai_next != 0)
+		/* Prefer IPv4 over IPv6 */
+		addr = result;
+		if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0))
 		{
-			while ((tmp = tmp->ai_next))
+			while ((addr = addr->ai_next))
 			{
-				if (tmp->ai_family == AF_INET)
+				if (addr->ai_family == AF_INET)
 					break;
 			}
-			if (!tmp)
-				tmp = result;
+			if (!addr)
+				addr = result;
 		}
-		tcp->sockfd = socket(tmp->ai_family, tmp->ai_socktype, tmp->ai_protocol);
+
+		tcp->sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 
 		if (tcp->sockfd  < 0) {
 			freeaddrinfo(result);
 			return FALSE;
 		}
 
-		if (connect(tcp->sockfd, tmp->ai_addr, tmp->ai_addrlen) < 0) {
-			WLog_ERR(TAG, "connect: %s", strerror(errno));
+		if (!freerdp_tcp_connect_timeout(tcp->sockfd, addr->ai_addr, addr->ai_addrlen, timeout))
+		{
+			fprintf(stderr, "failed to connect to %s\n", hostname);
 			freeaddrinfo(result);
 			return FALSE;
 		}
+
 		freeaddrinfo(result);
+
 		tcp->socketBio = BIO_new_socket(tcp->sockfd, BIO_NOCLOSE);
 
 		/* TODO: make sure the handshake is done by querying the bio */
