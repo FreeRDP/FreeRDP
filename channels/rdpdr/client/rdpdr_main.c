@@ -845,7 +845,7 @@ int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "rdpdr_send: VirtualChannelWrite failed %d\n", status);
+		WLog_ERR(TAG,  "rdpdr_send: VirtualChannelWrite failed %d", status);
 	}
 
 	return status;

@@ -620,6 +620,186 @@ BOOL freerdp_tcp_connect_timeout(int sockfd, struct sockaddr* addr, socklen_t ad
 	return TRUE;
 }
 
+#ifndef _WIN32
+
+int freerdp_tcp_connect_multi(char** hostnames, int count, int port, int timeout)
+{
+	int index;
+	int sindex;
+	int status;
+	int flags;
+	int maxfds;
+	fd_set cfds;
+	int sockfd;
+	int* sockfds;
+	char port_str[16];
+	socklen_t optlen;
+	struct timeval tv;
+	struct addrinfo hints;
+	struct addrinfo* addr;
+	struct addrinfo* result;
+	struct addrinfo** addrs;
+	struct addrinfo** results;
+
+	sindex = -1;
+
+	sprintf_s(port_str, sizeof(port_str) - 1, "%u", port);
+
+	sockfds = (int*) calloc(count, sizeof(int));
+	addrs = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
+	results = (struct addrinfo**) calloc(count, sizeof(struct addrinfo*));
+
+	for (index = 0; index < count; index++)
+	{
+		ZeroMemory(&hints, sizeof(hints));
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+
+		status = getaddrinfo(hostnames[index], port_str, &hints, &result);
+
+		if (status)
+		{
+			continue;
+		}
+
+		addr = result;
+
+		if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0))
+		{
+			while ((addr = addr->ai_next))
+			{
+				if (addr->ai_family == AF_INET)
+					break;
+			}
+
+			if (!addr)
+				addr = result;
+		}
+
+		sockfds[index] = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+
+		if (sockfds[index] < 0)
+		{
+			freeaddrinfo(result);
+			sockfds[index] = 0;
+			continue;
+		}
+
+		addrs[index] = addr;
+		results[index] = result;
+	}
+
+	maxfds = 0;
+	FD_ZERO(&cfds);
+
+	for (index = 0; index < count; index++)
+	{
+		if (!sockfds[index])
+			continue;
+
+		sockfd = sockfds[index];
+		addr = addrs[index];
+
+		/* set socket in non-blocking mode */
+
+		flags = fcntl(sockfd, F_GETFL);
+
+		if (flags < 0)
+		{
+			sockfds[index] = 0;
+			continue;
+		}
+
+		fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+		/* non-blocking tcp connect */
+
+		status = connect(sockfd, addr->ai_addr, addr->ai_addrlen);
+
+		if (status >= 0)
+		{
+			/* connection success */
+			break;
+		}
+
+		if (errno != EINPROGRESS)
+		{
+			sockfds[index] = 0;
+			continue;
+		}
+
+		FD_SET(sockfd, &cfds);
+
+		if (sockfd > maxfds)
+			maxfds = sockfd;
+	}
+
+	tv.tv_sec = timeout;
+	tv.tv_usec = 0;
+
+	status = _select(maxfds + 1, NULL, &cfds, NULL, &tv);
+
+	for (index = 0; index < count; index++)
+	{
+		if (!sockfds[index])
+			continue;
+
+		sockfd = sockfds[index];
+
+		if (FD_ISSET(sockfd, &cfds))
+		{
+			status = 0;
+			optlen = sizeof(status);
+
+			if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*) &status, &optlen) < 0)
+			{
+				sockfds[index] = 0;
+				continue;
+			}
+
+			if (status != 0)
+			{
+				sockfds[index] = 0;
+				continue;
+			}
+
+			/* set socket in blocking mode */
+
+			flags = fcntl(sockfd, F_GETFL);
+
+			if (flags < 0)
+			{
+				sockfds[index] = 0;
+				continue;
+			}
+
+			fcntl(sockfd, F_SETFL, flags & ~O_NONBLOCK);
+
+			sindex = index;
+			break;
+		}
+	}
+
+	if (sindex >= 0)
+	{
+		sockfd = sockfds[sindex];
+	}
+
+	for (index = 0; index < count; index++)
+	{
+		if (results[index])
+			freeaddrinfo(results[index]);
+	}
+
+	free(addrs);
+	free(results);
+	free(sockfds);
+
+	return sockfd;
+}
+
+#endif
+
 BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout)
 {
 	int status;
@@ -649,13 +829,6 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 	}
 	else
 	{
-#ifdef HAVE_POLL_H
-		struct pollfd pollfds;
-#else
-		fd_set cfds;
-		struct timeval tv;
-#endif
-
 #ifdef NO_IPV6
 		tcp->socketBio = BIO_new(BIO_s_connect());
 
@@ -677,10 +850,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 		if (tcp->sockfd < 0)
 			return FALSE;
 #else /* NO_IPV6 */
-		char port_str[16];
-		struct addrinfo hints;
-		struct addrinfo* result;
-		struct addrinfo* addr;
+		tcp->sockfd = -1;
 
 		if (!settings->GatewayEnabled)
 		{
@@ -688,87 +858,69 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 			{
 				if (settings->TargetNetAddressCount > 0)
 				{
+#ifndef _WIN32
+					tcp->sockfd = freerdp_tcp_connect_multi(settings->TargetNetAddresses,
+							settings->TargetNetAddressCount, port, timeout);
+#else
 					hostname = settings->TargetNetAddresses[0];
+#endif
 				}
 			}
 		}
 
-		ZeroMemory(&hints, sizeof(hints));
-		hints.ai_family = AF_UNSPEC;
-		hints.ai_socktype = SOCK_STREAM;
-
-		sprintf_s(port_str, sizeof(port_str) - 1, "%u", port);
-
-		status = getaddrinfo(hostname, port_str, &hints, &result);
-
-		if (status) {
-			WLog_ERR(TAG, "getaddrinfo: %s", gai_strerror(status));
-			return FALSE;
-		}
-
-		/* Prefer IPv4 over IPv6 */
-		addr = result;
-		if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0))
+		if (tcp->sockfd <= 0)
 		{
-			while ((addr = addr->ai_next))
-			{
-				if (addr->ai_family == AF_INET)
-					break;
+			char port_str[16];
+			struct addrinfo hints;
+			struct addrinfo* addr;
+			struct addrinfo* result;
+
+			ZeroMemory(&hints, sizeof(hints));
+			hints.ai_family = AF_UNSPEC;
+			hints.ai_socktype = SOCK_STREAM;
+
+			sprintf_s(port_str, sizeof(port_str) - 1, "%u", port);
+
+			status = getaddrinfo(hostname, port_str, &hints, &result);
+
+			if (status) {
+				WLog_ERR(TAG, "getaddrinfo: %s", gai_strerror(status));
+				return FALSE;
 			}
-			if (!addr)
-				addr = result;
-		}
 
-		tcp->sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+			addr = result;
+			if ((addr->ai_family == AF_INET6) && (addr->ai_next != 0))
+			{
+				while ((addr = addr->ai_next))
+				{
+					if (addr->ai_family == AF_INET)
+						break;
+				}
+				if (!addr)
+					addr = result;
+			}
 
-		if (tcp->sockfd  < 0) {
+			tcp->sockfd = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+
+			if (tcp->sockfd  < 0) {
+				freeaddrinfo(result);
+				return FALSE;
+			}
+
+			if (!freerdp_tcp_connect_timeout(tcp->sockfd, addr->ai_addr, addr->ai_addrlen, timeout))
+			{
+				fprintf(stderr, "failed to connect to %s\n", hostname);
+				freeaddrinfo(result);
+				return FALSE;
+			}
+
 			freeaddrinfo(result);
-			return FALSE;
 		}
-
-		if (!freerdp_tcp_connect_timeout(tcp->sockfd, addr->ai_addr, addr->ai_addrlen, timeout))
-		{
-			fprintf(stderr, "failed to connect to %s\n", hostname);
-			freeaddrinfo(result);
-			return FALSE;
-		}
-
-		freeaddrinfo(result);
 
 		tcp->socketBio = BIO_new_socket(tcp->sockfd, BIO_NOCLOSE);
-
-		/* TODO: make sure the handshake is done by querying the bio */
-		//		if (BIO_should_retry(tcp->socketBio))
-		//          return FALSE;
 #endif /* NO_IPV6 */
 
-		if (status <= 0)
-		{
-#ifdef HAVE_POLL_H
-			pollfds.fd = tcp->sockfd;
-			pollfds.events = POLLOUT;
-			pollfds.revents = 0;
-			do
-			{
-				status = poll(&pollfds, 1, timeout * 1000);
-			}
-			while ((status < 0) && (errno == EINTR));
-#else
-			FD_ZERO(&cfds);
-			FD_SET(tcp->sockfd, &cfds);
-
-			tv.tv_sec = timeout;
-			tv.tv_usec = 0;
-
-			status = _select(tcp->sockfd + 1, NULL, &cfds, NULL, &tv);
-#endif
-			if (status == 0)
-			{
-				return FALSE; /* timeout */
-			}
-		}
-
-		(void)BIO_set_close(tcp->socketBio, BIO_NOCLOSE);
+		(void) BIO_set_close(tcp->socketBio, BIO_NOCLOSE);
 		BIO_free(tcp->socketBio);
 
 		tcp->socketBio = BIO_new(BIO_s_simple_socket());
