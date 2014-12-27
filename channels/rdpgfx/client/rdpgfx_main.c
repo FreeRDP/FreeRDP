@@ -994,6 +994,8 @@ static int rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 		}
 	}
 
+	free(context);
+
 	free(gfx);
 
 	return 0;
@@ -1105,7 +1107,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 		if (!context)
 		{
-			free (gfx);
+			free(gfx);
 			return -1;
 		}
 

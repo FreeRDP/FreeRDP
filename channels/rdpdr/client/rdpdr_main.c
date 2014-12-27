@@ -916,9 +916,6 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle, UINT ev
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			Stream_Free((wStream*) pData, TRUE);
 			break;
-
-		case CHANNEL_EVENT_USER:
-			break;
 	}
 }
 
@@ -975,11 +972,17 @@ static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 
 static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 {
-	MessagePipe_PostQuit(rdpdr->MsgPipe, 0);
-	WaitForSingleObject(rdpdr->thread, INFINITE);
+	if (rdpdr->MsgPipe)
+	{
+		MessagePipe_PostQuit(rdpdr->MsgPipe, 0);
+		WaitForSingleObject(rdpdr->thread, INFINITE);
 
-	MessagePipe_Free(rdpdr->MsgPipe);
-	CloseHandle(rdpdr->thread);
+		MessagePipe_Free(rdpdr->MsgPipe);
+		rdpdr->MsgPipe = NULL;
+
+		CloseHandle(rdpdr->thread);
+		rdpdr->thread = NULL;
+	}
 
 	drive_hotplug_thread_terminate(rdpdr);
 
@@ -1011,7 +1014,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT 
 
 	if (!rdpdr)
 	{
-		WLog_ERR(TAG,  "rdpdr_virtual_channel_init_event: error no match\n");
+		WLog_ERR(TAG, "rdpdr_virtual_channel_init_event: error no match");
 		return;
 	}
 

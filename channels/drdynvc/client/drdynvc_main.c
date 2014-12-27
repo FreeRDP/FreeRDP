@@ -24,11 +24,488 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-#include <freerdp/constants.h>
-
-#include "dvcman.h"
-#include "drdynvc_types.h"
 #include "drdynvc_main.h"
+
+#define TAG CHANNELS_TAG("drdynvc.client")
+
+static int dvcman_get_configuration(IWTSListener* pListener, void** ppPropertyBag)
+{
+	*ppPropertyBag = NULL;
+	return 1;
+}
+
+static int dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
+	const char* pszChannelName, UINT32 ulFlags,
+	IWTSListenerCallback* pListenerCallback, IWTSListener** ppListener)
+{
+	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+	DVCMAN_LISTENER* listener;
+
+	if (dvcman->num_listeners < MAX_PLUGINS)
+	{
+		WLog_DBG(TAG, "%d.%s.", dvcman->num_listeners, pszChannelName);
+
+		listener = (DVCMAN_LISTENER*) malloc(sizeof(DVCMAN_LISTENER));
+		ZeroMemory(listener, sizeof(DVCMAN_LISTENER));
+
+		listener->iface.GetConfiguration = dvcman_get_configuration;
+		listener->iface.pInterface = NULL;
+
+		listener->dvcman = dvcman;
+		listener->channel_name = _strdup(pszChannelName);
+		listener->flags = ulFlags;
+		listener->listener_callback = pListenerCallback;
+
+		if (ppListener)
+			*ppListener = (IWTSListener*) listener;
+
+		dvcman->listeners[dvcman->num_listeners++] = (IWTSListener*) listener;
+
+		return 0;
+	}
+	else
+	{
+		WLog_WARN(TAG, "Maximum DVC listener number reached.");
+		return 1;
+	}
+}
+
+static int dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name, IWTSPlugin* pPlugin)
+{
+	DVCMAN* dvcman = ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->dvcman;
+
+	if (dvcman->num_plugins < MAX_PLUGINS)
+	{
+		WLog_DBG(TAG, "num_plugins %d", dvcman->num_plugins);
+		dvcman->plugin_names[dvcman->num_plugins] = name;
+		dvcman->plugins[dvcman->num_plugins++] = pPlugin;
+		return 0;
+	}
+	else
+	{
+		WLog_WARN(TAG, "Maximum DVC plugin number reached.");
+		return 1;
+	}
+}
+
+IWTSPlugin* dvcman_get_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name)
+{
+	int i;
+	DVCMAN* dvcman = ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->dvcman;
+
+	for (i = 0; i < dvcman->num_plugins; i++)
+	{
+		if (dvcman->plugin_names[i] == name ||
+			strcmp(dvcman->plugin_names[i], name) == 0)
+		{
+			return dvcman->plugins[i];
+		}
+	}
+
+	return NULL;
+}
+
+ADDIN_ARGV* dvcman_get_plugin_data(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+{
+	return ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->args;
+}
+
+void* dvcman_get_rdp_settings(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+{
+	return (void*) ((DVCMAN_ENTRY_POINTS*) pEntryPoints)->settings;
+}
+
+UINT32 dvcman_get_channel_id(IWTSVirtualChannel * channel)
+{
+	return ((DVCMAN_CHANNEL*) channel)->channel_id;
+}
+
+IWTSVirtualChannel* dvcman_find_channel_by_id(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
+{
+	int index;
+	BOOL found = FALSE;
+	DVCMAN_CHANNEL* channel;
+	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+
+	ArrayList_Lock(dvcman->channels);
+
+	index = 0;
+	channel = (DVCMAN_CHANNEL*) ArrayList_GetItem(dvcman->channels, index++);
+
+	while (channel)
+	{
+		if (channel->channel_id == ChannelId)
+		{
+			found = TRUE;
+			break;
+		}
+
+		channel = (DVCMAN_CHANNEL*) ArrayList_GetItem(dvcman->channels, index++);
+	}
+
+	ArrayList_Unlock(dvcman->channels);
+
+	return (found) ? ((IWTSVirtualChannel*) channel) : NULL;
+}
+
+void* dvcman_get_channel_interface_by_name(IWTSVirtualChannelManager* pChannelMgr, const char* ChannelName)
+{
+	int i;
+	BOOL found = FALSE;
+	void* pInterface = NULL;
+	DVCMAN_LISTENER* listener;
+	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+
+	for (i = 0; i < dvcman->num_listeners; i++)
+	{
+		listener = (DVCMAN_LISTENER*) dvcman->listeners[i];
+
+		if (strcmp(listener->channel_name, ChannelName) == 0)
+		{
+			pInterface = listener->iface.pInterface;
+			found = TRUE;
+			break;
+		}
+	}
+
+	return (found) ? pInterface : NULL;
+}
+
+IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
+{
+	DVCMAN* dvcman;
+
+	dvcman = (DVCMAN*) calloc(1, sizeof(DVCMAN));
+
+	dvcman->iface.CreateListener = dvcman_create_listener;
+	dvcman->iface.FindChannelById = dvcman_find_channel_by_id;
+	dvcman->iface.GetChannelId = dvcman_get_channel_id;
+	dvcman->drdynvc = plugin;
+	dvcman->channels = ArrayList_New(TRUE);
+	dvcman->pool = StreamPool_New(TRUE, 10);
+
+	return (IWTSVirtualChannelManager*) dvcman;
+}
+
+int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args, rdpSettings* settings)
+{
+	DVCMAN_ENTRY_POINTS entryPoints;
+	PDVC_PLUGIN_ENTRY pDVCPluginEntry = NULL;
+
+	WLog_INFO(TAG, "Loading Dynamic Virtual Channel %s", args->argv[0]);
+
+	pDVCPluginEntry = (PDVC_PLUGIN_ENTRY) freerdp_load_channel_addin_entry(args->argv[0],
+			NULL, NULL, FREERDP_ADDIN_CHANNEL_DYNAMIC);
+
+	if (pDVCPluginEntry)
+	{
+		entryPoints.iface.RegisterPlugin = dvcman_register_plugin;
+		entryPoints.iface.GetPlugin = dvcman_get_plugin;
+		entryPoints.iface.GetPluginData = dvcman_get_plugin_data;
+		entryPoints.iface.GetRdpSettings = dvcman_get_rdp_settings;
+		entryPoints.dvcman = (DVCMAN*) pChannelMgr;
+		entryPoints.args = args;
+		entryPoints.settings = settings;
+
+		pDVCPluginEntry((IDRDYNVC_ENTRY_POINTS*) &entryPoints);
+	}
+
+	return 0;
+}
+
+static void dvcman_channel_free(DVCMAN_CHANNEL* channel)
+{
+	if (channel->channel_callback)
+		channel->channel_callback->OnClose(channel->channel_callback);
+
+	DeleteCriticalSection(&(channel->lock));
+
+	if (channel->channel_name)
+	{
+		free(channel->channel_name);
+		channel->channel_name = NULL;
+	}
+
+	free(channel);
+}
+
+void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
+{
+	int i;
+	int count;
+	IWTSPlugin* pPlugin;
+	DVCMAN_LISTENER* listener;
+	DVCMAN_CHANNEL* channel;
+	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+
+	ArrayList_Lock(dvcman->channels);
+
+	count = ArrayList_Count(dvcman->channels);
+
+	for (i = 0; i < count; i++)
+	{
+		channel = (DVCMAN_CHANNEL*) ArrayList_GetItem(dvcman->channels, i);
+		dvcman_channel_free(channel);
+	}
+
+	ArrayList_Unlock(dvcman->channels);
+
+	ArrayList_Free(dvcman->channels);
+
+	for (i = 0; i < dvcman->num_listeners; i++)
+	{
+		listener = (DVCMAN_LISTENER*) dvcman->listeners[i];
+		free(listener->channel_name);
+		free(listener);
+	}
+
+	for (i = 0; i < dvcman->num_plugins; i++)
+	{
+		pPlugin = dvcman->plugins[i];
+
+		if (pPlugin->Terminated)
+			pPlugin->Terminated(pPlugin);
+	}
+
+	StreamPool_Free(dvcman->pool);
+	free(dvcman);
+}
+
+int dvcman_init(IWTSVirtualChannelManager* pChannelMgr)
+{
+	int i;
+	IWTSPlugin* pPlugin;
+	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+
+	for (i = 0; i < dvcman->num_plugins; i++)
+	{
+		pPlugin = dvcman->plugins[i];
+
+		if (pPlugin->Initialize)
+			pPlugin->Initialize(pPlugin, pChannelMgr);
+	}
+
+	return 0;
+}
+
+static int dvcman_write_channel(IWTSVirtualChannel* pChannel, UINT32 cbSize, BYTE* pBuffer, void* pReserved)
+{
+	int status;
+	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
+
+	EnterCriticalSection(&(channel->lock));
+
+	status = drdynvc_write_data(channel->dvcman->drdynvc, channel->channel_id, pBuffer, cbSize);
+
+	LeaveCriticalSection(&(channel->lock));
+
+	return status;
+}
+
+static int dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
+{
+	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
+	DVCMAN* dvcman = channel->dvcman;
+
+	WLog_DBG(TAG, "id=%d", channel->channel_id);
+
+	ArrayList_Remove(dvcman->channels, channel);
+
+	dvcman_channel_free(channel);
+
+	return 1;
+}
+
+int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, const char* ChannelName)
+{
+	int i;
+	int bAccept;
+	DVCMAN_LISTENER* listener;
+	DVCMAN_CHANNEL* channel;
+	DrdynvcClientContext* context;
+	IWTSVirtualChannelCallback* pCallback;
+	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+
+	channel = (DVCMAN_CHANNEL*) calloc(1, sizeof(DVCMAN_CHANNEL));
+
+	if (!channel)
+		return -1;
+
+	channel->dvcman = dvcman;
+	channel->channel_id = ChannelId;
+	channel->channel_name = _strdup(ChannelName);
+
+	for (i = 0; i < dvcman->num_listeners; i++)
+	{
+		listener = (DVCMAN_LISTENER*) dvcman->listeners[i];
+
+		if (strcmp(listener->channel_name, ChannelName) == 0)
+		{
+			channel->iface.Write = dvcman_write_channel;
+			channel->iface.Close = dvcman_close_channel_iface;
+
+			InitializeCriticalSection(&(channel->lock));
+
+			bAccept = 1;
+			pCallback = NULL;
+
+			if (listener->listener_callback->OnNewChannelConnection(listener->listener_callback,
+				(IWTSVirtualChannel*) channel, NULL, &bAccept, &pCallback) == 0 && bAccept == 1)
+			{
+				WLog_DBG(TAG, "listener %s created new channel %d",
+					  listener->channel_name, channel->channel_id);
+
+				channel->status = 0;
+				channel->channel_callback = pCallback;
+				channel->pInterface = listener->iface.pInterface;
+
+				ArrayList_Add(dvcman->channels, channel);
+
+				context = dvcman->drdynvc->context;
+				IFCALL(context->OnChannelConnected, context, ChannelName, listener->iface.pInterface);
+
+				return 0;
+			}
+			else
+			{
+				WLog_ERR(TAG, "channel rejected by plugin");
+				free(channel->channel_name);
+				free(channel);
+				return 1;
+			}
+		}
+	}
+
+	free(channel->channel_name);
+	free(channel);
+	return 1;
+}
+
+int dvcman_open_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
+{
+	DVCMAN_CHANNEL* channel;
+	IWTSVirtualChannelCallback* pCallback;
+
+	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+
+	if (!channel)
+	{
+		WLog_ERR(TAG, "ChannelId %d not found!", ChannelId);
+		return 1;
+	}
+
+	if (channel->status == 0)
+	{
+		pCallback = channel->channel_callback;
+		if (pCallback->OnOpen)
+			pCallback->OnOpen(pCallback);
+	}
+
+	return 0;
+}
+
+int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId)
+{
+	DVCMAN_CHANNEL* channel;
+	IWTSVirtualChannel* ichannel;
+	DrdynvcClientContext* context;
+	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
+
+	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+
+	if (!channel)
+	{
+		WLog_ERR(TAG, "ChannelId %d not found!", ChannelId);
+		return 1;
+	}
+
+	if (channel->dvc_data)
+	{
+		Stream_Release(channel->dvc_data);
+		channel->dvc_data = NULL;
+	}
+
+	if (channel->status == 0)
+	{
+		context = dvcman->drdynvc->context;
+
+		IFCALL(context->OnChannelDisconnected, context, channel->channel_name, channel->pInterface);
+
+		free(channel->channel_name);
+		channel->channel_name = NULL;
+
+		WLog_DBG(TAG, "dvcman_close_channel: channel %d closed", ChannelId);
+		ichannel = (IWTSVirtualChannel*) channel;
+		ichannel->Close(ichannel);
+	}
+
+	return 0;
+}
+
+int dvcman_receive_channel_data_first(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, UINT32 length)
+{
+	DVCMAN_CHANNEL* channel;
+
+	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+
+	if (!channel)
+	{
+		WLog_ERR(TAG, "ChannelId %d not found!", ChannelId);
+		return 1;
+	}
+
+	if (channel->dvc_data)
+		Stream_Release(channel->dvc_data);
+
+	channel->dvc_data = StreamPool_Take(channel->dvcman->pool, length);
+	channel->dvc_data_length = length;
+
+	return 0;
+}
+
+int dvcman_receive_channel_data(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, wStream* data)
+{
+	int status = 0;
+	DVCMAN_CHANNEL* channel;
+	UINT32 dataSize = Stream_GetRemainingLength(data);
+
+	channel = (DVCMAN_CHANNEL*) dvcman_find_channel_by_id(pChannelMgr, ChannelId);
+
+	if (!channel)
+	{
+		WLog_ERR(TAG, "ChannelId %d not found!", ChannelId);
+		return 1;
+	}
+
+	if (channel->dvc_data)
+	{
+		/* Fragmented data */
+		if (Stream_GetPosition(channel->dvc_data) + dataSize > (UINT32) Stream_Capacity(channel->dvc_data))
+		{
+			WLog_ERR(TAG, "data exceeding declared length!");
+			Stream_Release(channel->dvc_data);
+			channel->dvc_data = NULL;
+			return 1;
+		}
+
+		Stream_Write(channel->dvc_data, Stream_Pointer(data), dataSize);
+
+		if (((size_t) Stream_GetPosition(channel->dvc_data)) >= channel->dvc_data_length)
+		{
+			Stream_SealLength(channel->dvc_data);
+			Stream_SetPosition(channel->dvc_data, 0);
+			status = channel->channel_callback->OnDataReceived(channel->channel_callback, channel->dvc_data);
+			Stream_Release(channel->dvc_data);
+			channel->dvc_data = NULL;
+		}
+	}
+	else
+	{
+		status = channel->channel_callback->OnDataReceived(channel->channel_callback, data);
+	}
+
+	return status;
+}
 
 static int drdynvc_write_variable_uint(wStream* s, UINT32 val)
 {
@@ -85,7 +562,7 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 	UINT32 chunkLength;
 	int status;
 
-	DEBUG_DVC("ChannelId=%d size=%d", ChannelId, dataSize);
+	WLog_DBG(TAG, "ChannelId=%d size=%d", ChannelId, dataSize);
 
 	if (drdynvc->channel_error != CHANNEL_RC_OK)
 		return 1;
@@ -190,7 +667,7 @@ static int drdynvc_process_capability_request(drdynvcPlugin* drdynvc, int Sp, in
 {
 	int status;
 
-	DEBUG_DVC("Sp=%d cbChId=%d", Sp, cbChId);
+	WLog_DBG(TAG, "Sp=%d cbChId=%d", Sp, cbChId);
 
 	Stream_Seek(s, 1); /* pad */
 	Stream_Read_UINT16(s, drdynvc->version);
@@ -260,7 +737,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	pos = Stream_GetPosition(s);
-	DEBUG_DVC("ChannelId=%d ChannelName=%s", ChannelId, Stream_Pointer(s));
+	WLog_DBG(TAG, "ChannelId=%d ChannelName=%s", ChannelId, Stream_Pointer(s));
 
 	channel_status = dvcman_create_channel(drdynvc->channel_mgr, ChannelId, (char*) Stream_Pointer(s));
 
@@ -271,12 +748,12 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	
 	if (channel_status == 0)
 	{
-		DEBUG_DVC("channel created");
+		WLog_DBG(TAG, "channel created");
 		Stream_Write_UINT32(data_out, 0);
 	}
 	else
 	{
-		DEBUG_DVC("no listener");
+		WLog_DBG(TAG, "no listener");
 		Stream_Write_UINT32(data_out, (UINT32)(-1));
 	}
 
@@ -304,7 +781,7 @@ static int drdynvc_process_data_first(drdynvcPlugin* drdynvc, int Sp, int cbChId
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
 	Length = drdynvc_read_variable_uint(s, Sp);
-	DEBUG_DVC("ChannelId=%d Length=%d", ChannelId, Length);
+	WLog_DBG(TAG, "ChannelId=%d Length=%d", ChannelId, Length);
 
 	status = dvcman_receive_channel_data_first(drdynvc->channel_mgr, ChannelId, Length);
 
@@ -319,7 +796,7 @@ static int drdynvc_process_data(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStr
 	UINT32 ChannelId;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
-	DEBUG_DVC("ChannelId=%d", ChannelId);
+	WLog_DBG(TAG, "ChannelId=%d", ChannelId);
 
 	return dvcman_receive_channel_data(drdynvc->channel_mgr, ChannelId, s);
 }
@@ -332,7 +809,7 @@ static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbC
 	wStream* data_out;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
-	DEBUG_DVC("ChannelId=%d", ChannelId);
+	WLog_DBG(TAG, "ChannelId=%d", ChannelId);
 	dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
 	
 	data_out = Stream_New(NULL, 4);
@@ -367,7 +844,7 @@ static void drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s)
 	Sp = (value & 0x0c) >> 2;
 	cbChId = (value & 0x03) >> 0;
 
-	DEBUG_DVC("Cmd=0x%x", Cmd);
+	WLog_DBG(TAG, "Cmd=0x%x", Cmd);
 
 	switch (Cmd)
 	{
@@ -479,7 +956,7 @@ static void drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc,
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		MessageQueue_Post(drdynvc->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
+		MessageQueue_Post(drdynvc->queue, NULL, 0, (void*) data_in, NULL);
 	}
 }
 
@@ -505,9 +982,6 @@ static VOID VCAPITYPE drdynvc_virtual_channel_open_event(DWORD openHandle, UINT 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			Stream_Free((wStream*) pData, TRUE);
 			break;
-
-		case CHANNEL_EVENT_USER:
-			break;
 	}
 }
 
@@ -519,10 +993,10 @@ static void* drdynvc_virtual_channel_client_thread(void* arg)
 
 	while (1)
 	{
-		if (!MessageQueue_Wait(drdynvc->MsgPipe->In))
+		if (!MessageQueue_Wait(drdynvc->queue))
 			break;
 
-		if (MessageQueue_Peek(drdynvc->MsgPipe->In, &message, TRUE))
+		if (MessageQueue_Peek(drdynvc->queue, &message, TRUE))
 		{
 			if (message.id == WMQ_QUIT)
 				break;
@@ -558,7 +1032,7 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 		return;
 	}
 
-	drdynvc->MsgPipe = MessagePipe_New();
+	drdynvc->queue = MessageQueue_New(NULL);
 
 	drdynvc->channel_mgr = dvcman_new(drdynvc);
 	drdynvc->channel_error = 0;
@@ -581,13 +1055,13 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 static void drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 {
-	if (drdynvc->MsgPipe)
+	if (drdynvc->queue)
 	{
-		MessagePipe_PostQuit(drdynvc->MsgPipe, 0);
+		MessageQueue_PostQuit(drdynvc->queue, 0);
 		WaitForSingleObject(drdynvc->thread, INFINITE);
 
-		MessagePipe_Free(drdynvc->MsgPipe);
-		drdynvc->MsgPipe = NULL;
+		MessageQueue_Free(drdynvc->queue);
+		drdynvc->queue = NULL;
 
 		CloseHandle(drdynvc->thread);
 		drdynvc->thread = NULL;
@@ -609,6 +1083,8 @@ static void drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 
 	drdynvc_remove_open_handle_data(drdynvc->OpenHandle);
 	drdynvc_remove_init_handle_data(drdynvc->InitHandle);
+
+	free(drdynvc);
 }
 
 static VOID VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)

@@ -762,7 +762,7 @@ static void encomsp_virtual_channel_event_data_received(encomspPlugin* encomsp,
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		MessageQueue_Post(encomsp->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
+		MessageQueue_Post(encomsp->queue, NULL, 0, (void*) data_in, NULL);
 	}
 }
 
@@ -788,9 +788,6 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle, UINT 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			Stream_Free((wStream*) pData, TRUE);
 			break;
-
-		case CHANNEL_EVENT_USER:
-			break;
 	}
 }
 
@@ -804,10 +801,10 @@ static void* encomsp_virtual_channel_client_thread(void* arg)
 
 	while (1)
 	{
-		if (!MessageQueue_Wait(encomsp->MsgPipe->In))
+		if (!MessageQueue_Wait(encomsp->queue))
 			break;
 
-		if (MessageQueue_Peek(encomsp->MsgPipe->In, &message, TRUE))
+		if (MessageQueue_Peek(encomsp->queue, &message, TRUE))
 		{
 			if (message.id == WMQ_QUIT)
 				break;
@@ -839,7 +836,7 @@ static void encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 		return;
 	}
 
-	encomsp->MsgPipe = MessagePipe_New();
+	encomsp->queue = MessageQueue_New(NULL);
 
 	encomsp->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) encomsp_virtual_channel_client_thread, (void*) encomsp, 0, NULL);
@@ -847,11 +844,17 @@ static void encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 
 static void encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
 {
-	MessagePipe_PostQuit(encomsp->MsgPipe, 0);
-	WaitForSingleObject(encomsp->thread, INFINITE);
+	if (encomsp->queue)
+	{
+		MessageQueue_PostQuit(encomsp->queue, 0);
+		WaitForSingleObject(encomsp->thread, INFINITE);
 
-	MessagePipe_Free(encomsp->MsgPipe);
-	CloseHandle(encomsp->thread);
+		MessageQueue_Free(encomsp->queue);
+		encomsp->queue = NULL;
+
+		CloseHandle(encomsp->thread);
+		encomsp->thread = NULL;
+	}
 
 	encomsp->channelEntryPoints.pVirtualChannelClose(encomsp->OpenHandle);
 
@@ -863,6 +866,10 @@ static void encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
 
 	encomsp_remove_open_handle_data(encomsp->OpenHandle);
 	encomsp_remove_init_handle_data(encomsp->InitHandle);
+
+	free(encomsp->context);
+
+	free(encomsp);
 }
 
 static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
@@ -933,6 +940,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		context->GraphicsStreamResumed = NULL;
 
 		*(pEntryPointsEx->ppInterface) = (void*) context;
+		encomsp->context = context;
 	}
 
 	CopyMemory(&(encomsp->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));

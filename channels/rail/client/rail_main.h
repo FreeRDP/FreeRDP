@@ -39,12 +39,14 @@ struct rail_plugin
 	CHANNEL_DEF channelDef;
 	CHANNEL_ENTRY_POINTS_FREERDP channelEntryPoints;
 
+	RailClientContext* context;
+
 	wLog* log;
 	HANDLE thread;
 	wStream* data_in;
 	void* InitHandle;
 	DWORD OpenHandle;
-	wMessagePipe* MsgPipe;
+	wMessageQueue* queue;
 };
 typedef struct rail_plugin railPlugin;
 

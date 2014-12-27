@@ -88,6 +88,8 @@ struct _RDPEI_PLUGIN
 	IWTSListener* listener;
 	RDPEI_LISTENER_CALLBACK* listener_callback;
 
+	RdpeiClientContext* context;
+
 	int version;
 	UINT16 maxTouchContacts;
 	UINT64 currentFrameTime;
@@ -534,6 +536,8 @@ static int rdpei_plugin_terminated(IWTSPlugin* pPlugin)
 	if (rdpei->listener_callback)
 		free(rdpei->listener_callback);
 
+	free(rdpei->context);
+
 	free(rdpei);
 
 	return 0;
@@ -743,7 +747,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 	rdpei = (RDPEI_PLUGIN*) pEntryPoints->GetPlugin(pEntryPoints, "rdpei");
 
-	if (rdpei == NULL)
+	if (!rdpei)
 	{
 		size_t size;
 
@@ -778,6 +782,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 		rdpei->iface.pInterface = (void*) context;
 
 		error = pEntryPoints->RegisterPlugin(pEntryPoints, "rdpei", (IWTSPlugin*) rdpei);
+		rdpei->context = context;
 	}
 
 	return error;
