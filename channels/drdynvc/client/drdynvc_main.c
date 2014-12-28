@@ -213,18 +213,39 @@ int dvcman_load_addin(IWTSVirtualChannelManager* pChannelMgr, ADDIN_ARGV* args, 
 	return 0;
 }
 
+static DVCMAN_CHANNEL* dvcman_channel_new(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelId, const char* ChannelName)
+{
+	DVCMAN_CHANNEL* channel;
+
+	channel = (DVCMAN_CHANNEL*) calloc(1, sizeof(DVCMAN_CHANNEL));
+
+	if (!channel)
+		return NULL;
+
+	channel->dvcman = (DVCMAN*) pChannelMgr;
+	channel->channel_id = ChannelId;
+	channel->channel_name = _strdup(ChannelName);
+
+	InitializeCriticalSection(&(channel->lock));
+
+	return channel;
+}
+
 static void dvcman_channel_free(DVCMAN_CHANNEL* channel)
 {
 	if (channel->channel_callback)
 		channel->channel_callback->OnClose(channel->channel_callback);
 
+	if (channel->dvc_data)
+	{
+		Stream_Release(channel->dvc_data);
+		channel->dvc_data = NULL;
+	}
+
 	DeleteCriticalSection(&(channel->lock));
 
-	if (channel->channel_name)
-	{
-		free(channel->channel_name);
-		channel->channel_name = NULL;
-	}
+	free(channel->channel_name);
+	channel->channel_name = NULL;
 
 	free(channel);
 }
@@ -310,7 +331,6 @@ static int dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
 	WLog_DBG(TAG, "id=%d", channel->channel_id);
 
 	ArrayList_Remove(dvcman->channels, channel);
-
 	dvcman_channel_free(channel);
 
 	return 1;
@@ -326,14 +346,10 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 	IWTSVirtualChannelCallback* pCallback;
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
 
-	channel = (DVCMAN_CHANNEL*) calloc(1, sizeof(DVCMAN_CHANNEL));
+	channel = dvcman_channel_new(pChannelMgr, ChannelId, ChannelName);
 
-	if (!channel)
-		return -1;
-
-	channel->dvcman = dvcman;
-	channel->channel_id = ChannelId;
-	channel->channel_name = _strdup(ChannelName);
+	channel->status = 1;
+	ArrayList_Add(dvcman->channels, channel);
 
 	for (i = 0; i < dvcman->num_listeners; i++)
 	{
@@ -343,8 +359,6 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 		{
 			channel->iface.Write = dvcman_write_channel;
 			channel->iface.Close = dvcman_close_channel_iface;
-
-			InitializeCriticalSection(&(channel->lock));
 
 			bAccept = 1;
 			pCallback = NULL;
@@ -359,25 +373,14 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 				channel->channel_callback = pCallback;
 				channel->pInterface = listener->iface.pInterface;
 
-				ArrayList_Add(dvcman->channels, channel);
-
 				context = dvcman->drdynvc->context;
 				IFCALL(context->OnChannelConnected, context, ChannelName, listener->iface.pInterface);
 
 				return 0;
 			}
-			else
-			{
-				WLog_ERR(TAG, "channel rejected by plugin");
-				free(channel->channel_name);
-				free(channel);
-				return 1;
-			}
 		}
 	}
 
-	free(channel->channel_name);
-	free(channel);
 	return 1;
 }
 
@@ -419,25 +422,22 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 		return 1;
 	}
 
-	if (channel->dvc_data)
-	{
-		Stream_Release(channel->dvc_data);
-		channel->dvc_data = NULL;
-	}
-
 	if (channel->status == 0)
 	{
 		context = dvcman->drdynvc->context;
 
 		IFCALL(context->OnChannelDisconnected, context, channel->channel_name, channel->pInterface);
 
-		free(channel->channel_name);
-		channel->channel_name = NULL;
-
 		WLog_DBG(TAG, "dvcman_close_channel: channel %d closed", ChannelId);
+
 		ichannel = (IWTSVirtualChannel*) channel;
-		ichannel->Close(ichannel);
+
+		if (ichannel->Close)
+			ichannel->Close(ichannel);
 	}
+
+	ArrayList_Remove(dvcman->channels, channel);
+	dvcman_channel_free(channel);
 
 	return 0;
 }
@@ -809,7 +809,9 @@ static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbC
 	wStream* data_out;
 
 	ChannelId = drdynvc_read_variable_uint(s, cbChId);
+
 	WLog_DBG(TAG, "ChannelId=%d", ChannelId);
+
 	dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
 	
 	data_out = Stream_New(NULL, 4);
