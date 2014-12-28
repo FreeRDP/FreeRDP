@@ -32,48 +32,48 @@
 
 void rdp_print_redirection_flags(UINT32 flags)
 {
-	WLog_INFO(TAG,  "redirectionFlags = {");
+	WLog_INFO(TAG, "redirectionFlags = {");
 
 	if (flags & LB_TARGET_NET_ADDRESS)
-		WLog_INFO(TAG,  "\tLB_TARGET_NET_ADDRESS");
+		WLog_INFO(TAG, "\tLB_TARGET_NET_ADDRESS");
 
 	if (flags & LB_LOAD_BALANCE_INFO)
-		WLog_INFO(TAG,  "\tLB_LOAD_BALANCE_INFO");
+		WLog_INFO(TAG, "\tLB_LOAD_BALANCE_INFO");
 
 	if (flags & LB_USERNAME)
-		WLog_INFO(TAG,  "\tLB_USERNAME");
+		WLog_INFO(TAG, "\tLB_USERNAME");
 
 	if (flags & LB_DOMAIN)
-		WLog_INFO(TAG,  "\tLB_DOMAIN");
+		WLog_INFO(TAG, "\tLB_DOMAIN");
 
 	if (flags & LB_PASSWORD)
-		WLog_INFO(TAG,  "\tLB_PASSWORD");
+		WLog_INFO(TAG, "\tLB_PASSWORD");
 
 	if (flags & LB_DONTSTOREUSERNAME)
-		WLog_INFO(TAG,  "\tLB_DONTSTOREUSERNAME");
+		WLog_INFO(TAG, "\tLB_DONTSTOREUSERNAME");
 
 	if (flags & LB_SMARTCARD_LOGON)
-		WLog_INFO(TAG,  "\tLB_SMARTCARD_LOGON");
+		WLog_INFO(TAG, "\tLB_SMARTCARD_LOGON");
 
 	if (flags & LB_NOREDIRECT)
-		WLog_INFO(TAG,  "\tLB_NOREDIRECT");
+		WLog_INFO(TAG, "\tLB_NOREDIRECT");
 
 	if (flags & LB_TARGET_FQDN)
-		WLog_INFO(TAG,  "\tLB_TARGET_FQDN");
+		WLog_INFO(TAG, "\tLB_TARGET_FQDN");
 
 	if (flags & LB_TARGET_NETBIOS_NAME)
-		WLog_INFO(TAG,  "\tLB_TARGET_NETBIOS_NAME");
+		WLog_INFO(TAG, "\tLB_TARGET_NETBIOS_NAME");
 
 	if (flags & LB_TARGET_NET_ADDRESSES)
-		WLog_INFO(TAG,  "\tLB_TARGET_NET_ADDRESSES");
+		WLog_INFO(TAG, "\tLB_TARGET_NET_ADDRESSES");
 
 	if (flags & LB_CLIENT_TSV_URL)
-		WLog_INFO(TAG,  "\tLB_CLIENT_TSV_URL");
+		WLog_INFO(TAG, "\tLB_CLIENT_TSV_URL");
 
 	if (flags & LB_SERVER_TSV_CAPABLE)
-		WLog_INFO(TAG,  "\tLB_SERVER_TSV_CAPABLE");
+		WLog_INFO(TAG, "\tLB_SERVER_TSV_CAPABLE");
 
-	WLog_INFO(TAG,  "}");
+	WLog_INFO(TAG, "}");
 }
 
 BOOL rdp_redirection_read_string(wStream* s, char** str)
@@ -200,6 +200,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, length); /* length (2 bytes) */
 	Stream_Read_UINT32(s, redirection->sessionID); /* sessionID (4 bytes) */
 	Stream_Read_UINT32(s, redirection->flags); /* redirFlags (4 bytes) */
+
 	WLog_Print(redirection->log, WLOG_DEBUG, "flags: 0x%04X, redirFlags: 0x%04X length: %d, sessionID: 0x%08X",
 			   flags, redirection->flags, length, redirection->sessionID);
 #ifdef WITH_DEBUG_REDIR

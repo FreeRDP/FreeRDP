@@ -452,7 +452,7 @@ static void* drive_hotplug_thread_func(void* arg)
 
 	if (mfd < 0)
 	{
-		WLog_ERR(TAG,  "ERROR: Unable to open /proc/mounts.");
+		WLog_ERR(TAG, "ERROR: Unable to open /proc/mounts.");
 		return NULL;
 	}
 
@@ -539,8 +539,8 @@ static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 
 	s = Stream_New(NULL, 12);
 
-	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);
-	Stream_Write_UINT16(s, PAKID_CORE_CLIENTID_CONFIRM);
+	Stream_Write_UINT16(s, RDPDR_CTYP_CORE); /* Component (2 bytes) */
+	Stream_Write_UINT16(s, PAKID_CORE_CLIENTID_CONFIRM); /* PacketId (2 bytes) */
 
 	Stream_Write_UINT16(s, rdpdr->versionMajor);
 	Stream_Write_UINT16(s, rdpdr->versionMinor);
@@ -562,8 +562,8 @@ static void rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 
 	s = Stream_New(NULL, 16 + computerNameLenW + 2);
 
-	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);
-	Stream_Write_UINT16(s, PAKID_CORE_CLIENT_NAME);
+	Stream_Write_UINT16(s, RDPDR_CTYP_CORE); /* Component (2 bytes) */
+	Stream_Write_UINT16(s, PAKID_CORE_CLIENT_NAME); /* PacketId (2 bytes) */
 
 	Stream_Write_UINT32(s, 1); /* unicodeFlag, 0 for ASCII and 1 for Unicode */
 	Stream_Write_UINT32(s, 0); /* codePage, must be set to zero */
@@ -614,8 +614,8 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 
 	s = Stream_New(NULL, 256);
 
-	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);
-	Stream_Write_UINT16(s, PAKID_CORE_DEVICELIST_ANNOUNCE);
+	Stream_Write_UINT16(s, RDPDR_CTYP_CORE); /* Component (2 bytes) */
+	Stream_Write_UINT16(s, PAKID_CORE_DEVICELIST_ANNOUNCE); /* PacketId (2 bytes) */
 
 	count_pos = (int) Stream_GetPosition(s);
 	count = 0;
@@ -662,7 +662,7 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 				Stream_Write(s, Stream_Buffer(device->data), data_len);
 
 			count++;
-			WLog_INFO(TAG,  "registered device #%d: %s (type=%d id=%d)",
+			WLog_INFO(TAG, "registered device #%d: %s (type=%d id=%d)",
 					  count, device->name, device->type, device->id);
 		}
 	}
@@ -716,16 +716,16 @@ static void rdpdr_process_init(rdpdrPlugin* rdpdr)
 static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 component;
-	UINT16 packetID;
-	UINT32 deviceID;
+	UINT16 packetId;
+	UINT32 deviceId;
 	UINT32 status;
 
-	Stream_Read_UINT16(s, component);
-	Stream_Read_UINT16(s, packetID);
+	Stream_Read_UINT16(s, component); /* Component (2 bytes) */
+	Stream_Read_UINT16(s, packetId); /* PacketId (2 bytes) */
 
 	if (component == RDPDR_CTYP_CORE)
 	{
-		switch (packetID)
+		switch (packetId)
 		{
 			case PAKID_CORE_SERVER_ANNOUNCE:
 				rdpdr_process_server_announce_request(rdpdr, s);
@@ -750,7 +750,7 @@ static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 
 			case PAKID_CORE_DEVICE_REPLY:
 				/* connect to a specific resource */
-				Stream_Read_UINT32(s, deviceID);
+				Stream_Read_UINT32(s, deviceId);
 				Stream_Read_UINT32(s, status);
 				break;
 
@@ -760,17 +760,19 @@ static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 				break;
 
 			default:
+				WLog_ERR(TAG, "rdpdr_process_receive: RDPDR_CTYP_CORE unknown PacketId: 0x%04X", packetId);
 				break;
 
 		}
 	}
 	else if (component == RDPDR_CTYP_PRN)
 	{
-
+		WLog_ERR(TAG, "rdpdr_process_receive: RDPDR_CTYP_PRN unknown PacketId: 0x%04X", packetId);
 	}
 	else
 	{
-
+		WLog_ERR(TAG, "rdpdr_process_receive: unknown message: Component: 0x%04X PacketId: 0x%04X",
+				component, packetId);
 	}
 
 	Stream_Free(s, TRUE);
@@ -845,7 +847,7 @@ int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "rdpdr_send: VirtualChannelWrite failed %d", status);
+		WLog_ERR(TAG, "rdpdr_send: VirtualChannelWrite failed %d", status);
 	}
 
 	return status;
@@ -869,7 +871,7 @@ static void rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
-		if (rdpdr->data_in != NULL)
+		if (rdpdr->data_in)
 			Stream_Free(rdpdr->data_in, TRUE);
 
 		rdpdr->data_in = Stream_New(NULL, totalLength);
@@ -883,14 +885,14 @@ static void rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 	{
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
-			WLog_ERR(TAG,  "svc_plugin_process_received: read error\n");
+			WLog_ERR(TAG, "rdpdr_virtual_channel_event_data_received: read error\n");
 		}
 
 		rdpdr->data_in = NULL;
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		MessageQueue_Post(rdpdr->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
+		MessageQueue_Post(rdpdr->queue, NULL, 0, (void*) data_in, NULL);
 	}
 }
 
@@ -903,7 +905,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle, UINT ev
 
 	if (!rdpdr)
 	{
-		WLog_ERR(TAG,  "rdpdr_virtual_channel_open_event: error no match\n");
+		WLog_ERR(TAG, "rdpdr_virtual_channel_open_event: error no match\n");
 		return;
 	}
 
@@ -929,10 +931,10 @@ static void* rdpdr_virtual_channel_client_thread(void* arg)
 
 	while (1)
 	{
-		if (!MessageQueue_Wait(rdpdr->MsgPipe->In))
+		if (!MessageQueue_Wait(rdpdr->queue))
 			break;
 
-		if (MessageQueue_Peek(rdpdr->MsgPipe->In, &message, TRUE))
+		if (MessageQueue_Peek(rdpdr->queue, &message, TRUE))
 		{
 			if (message.id == WMQ_QUIT)
 				break;
@@ -960,11 +962,11 @@ static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "rdpdr_virtual_channel_event_connected: open failed: status: %d\n", status);
+		WLog_ERR(TAG, "rdpdr_virtual_channel_event_connected: open failed: status: %d\n", status);
 		return;
 	}
 
-	rdpdr->MsgPipe = MessagePipe_New();
+	rdpdr->queue = MessageQueue_New(NULL);
 
 	rdpdr->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) rdpdr_virtual_channel_client_thread, (void*) rdpdr, 0, NULL);
@@ -972,13 +974,13 @@ static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 
 static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 {
-	if (rdpdr->MsgPipe)
+	if (rdpdr->queue)
 	{
-		MessagePipe_PostQuit(rdpdr->MsgPipe, 0);
+		MessageQueue_PostQuit(rdpdr->queue, 0);
 		WaitForSingleObject(rdpdr->thread, INFINITE);
 
-		MessagePipe_Free(rdpdr->MsgPipe);
-		rdpdr->MsgPipe = NULL;
+		MessageQueue_Free(rdpdr->queue);
+		rdpdr->queue = NULL;
 
 		CloseHandle(rdpdr->thread);
 		rdpdr->thread = NULL;

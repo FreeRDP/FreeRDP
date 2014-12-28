@@ -105,6 +105,9 @@ void smartcard_context_free(SMARTCARD_CONTEXT* pContext)
 	if (!pContext)
 		return;
 
+	/* cancel blocking calls like SCardGetStatusChange */
+	SCardCancel(pContext->hContext);
+
 	MessageQueue_PostQuit(pContext->IrpQueue, 0);
 	WaitForSingleObject(pContext->thread, INFINITE);
 	CloseHandle(pContext->thread);
@@ -118,14 +121,24 @@ static void smartcard_free(DEVICE* device)
 {
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 
-	MessageQueue_PostQuit(smartcard->IrpQueue, 0);
-	WaitForSingleObject(smartcard->thread, INFINITE);
+	if (smartcard->IrpQueue)
+	{
+		MessageQueue_PostQuit(smartcard->IrpQueue, 0);
+		WaitForSingleObject(smartcard->thread, INFINITE);
 
-	CloseHandle(smartcard->thread);
+		MessageQueue_Free(smartcard->IrpQueue);
+		smartcard->IrpQueue = NULL;
 
-	Stream_Free(smartcard->device.data, TRUE);
+		CloseHandle(smartcard->thread);
+		smartcard->thread = NULL;
+	}
 
-	MessageQueue_Free(smartcard->IrpQueue);
+	if (smartcard->device.data)
+	{
+		Stream_Free(smartcard->device.data, TRUE);
+		smartcard->device.data = NULL;
+	}
+
 	ListDictionary_Free(smartcard->rgSCardContextList);
 	ListDictionary_Free(smartcard->rgOutstandingMessages);
 	Queue_Free(smartcard->CompletedIrpQueue);
@@ -414,6 +427,7 @@ static void* smartcard_thread_func(void* arg)
 						{
 							WaitForSingleObject(irp->thread, INFINITE);
 							CloseHandle(irp->thread);
+							irp->thread = NULL;
 						}
 
 						smartcard_complete_irp(smartcard, irp);
@@ -441,6 +455,7 @@ static void* smartcard_thread_func(void* arg)
 				{
 					WaitForSingleObject(irp->thread, INFINITE);
 					CloseHandle(irp->thread);
+					irp->thread = NULL;
 				}
 
 				smartcard_complete_irp(smartcard, irp);
@@ -509,9 +524,15 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	smartcard->log = WLog_Get("com.freerdp.channel.smartcard.client");
 
 	smartcard->IrpQueue = MessageQueue_New(NULL);
-	smartcard->rgSCardContextList = ListDictionary_New(TRUE);
-	smartcard->rgOutstandingMessages = ListDictionary_New(TRUE);
+
 	smartcard->CompletedIrpQueue = Queue_New(TRUE, -1, -1);
+
+	smartcard->rgSCardContextList = ListDictionary_New(TRUE);
+
+	ListDictionary_ValueObject(smartcard->rgSCardContextList)->fnObjectFree =
+			(OBJECT_FREE_FN) smartcard_context_free;
+
+	smartcard->rgOutstandingMessages = ListDictionary_New(TRUE);
 
 	smartcard->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) smartcard_thread_func,
 			smartcard, CREATE_SUSPENDED, NULL);

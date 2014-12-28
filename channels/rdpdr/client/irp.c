@@ -75,6 +75,10 @@ IRP* irp_new(DEVMAN* devman, wStream* s)
 		return NULL;
 
 	irp = (IRP*) _aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
+
+	if (!irp)
+		return NULL;
+
 	ZeroMemory(irp, sizeof(IRP));
 
 	irp->input = s;

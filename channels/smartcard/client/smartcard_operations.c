@@ -555,8 +555,8 @@ static UINT32 smartcard_ConnectA_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 static UINT32 smartcard_ConnectA_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, ConnectA_Call* call)
 {
 	LONG status;
-	SCARDHANDLE hCard;
-	Connect_Return ret;
+	SCARDHANDLE hCard = 0;
+	Connect_Return ret = { 0 };
 	IRP* irp = operation->irp;
 
 	if ((call->Common.dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED) &&
@@ -604,8 +604,8 @@ static UINT32 smartcard_ConnectW_Decode(SMARTCARD_DEVICE* smartcard, SMARTCARD_O
 static UINT32 smartcard_ConnectW_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OPERATION* operation, ConnectW_Call* call)
 {
 	LONG status;
-	SCARDHANDLE hCard;
-	Connect_Return ret;
+	SCARDHANDLE hCard = 0;
+	Connect_Return ret = { 0 };
 	IRP* irp = operation->irp;
 
 	if ((call->Common.dwPreferredProtocols == SCARD_PROTOCOL_UNDEFINED) &&
@@ -1020,9 +1020,11 @@ static UINT32 smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 	if (ret.ReturnCode)
 	{
 		WLog_Print(smartcard->log, WLOG_WARN,
-				   "SCardGetAttrib: %s (0x%08X) cbAttrLen: %d\n",
+				   "SCardGetAttrib: %s (0x%08X) cbAttrLen: %d",
 				   SCardGetAttributeString(call->dwAttrId), call->dwAttrId, call->cbAttrLen);
 		Stream_Zero(irp->output, 256);
+
+		free(ret.pbAttr);
 		return ret.ReturnCode;
 	}
 
@@ -1198,7 +1200,7 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCAR
 	if (Stream_Length(irp->input) != (Stream_GetPosition(irp->input) + inputBufferLength))
 	{
 		WLog_Print(smartcard->log, WLOG_WARN,
-				   "InputBufferLength mismatch: Actual: %d Expected: %d\n",
+				   "InputBufferLength mismatch: Actual: %d Expected: %d",
 				   Stream_Length(irp->input), Stream_GetPosition(irp->input) + inputBufferLength);
 		return SCARD_F_INTERNAL_ERROR;
 	}
@@ -1206,7 +1208,7 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCAR
 	WLog_Print(smartcard->log, WLOG_DEBUG, "%s (0x%08X) FileId: %d CompletionId: %d",
 			   smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 #if 0
-	WLog_DBG(TAG, "%s (0x%08X) FileId: %d CompletionId: %d\n",
+	WLog_DBG(TAG, "%s (0x%08X) FileId: %d CompletionId: %d",
 			 smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
 #endif
 
@@ -1727,8 +1729,7 @@ UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_
 			(ioControlCode != SCARD_IOCTL_RELEASESTARTEDEVENT))
 	{
 		offset = (RDPDR_DEVICE_IO_RESPONSE_LENGTH + RDPDR_DEVICE_IO_CONTROL_RSP_HDR_LENGTH);
-		smartcard_pack_write_size_align(smartcard, irp->output,
-										Stream_GetPosition(irp->output) - offset, 8);
+		smartcard_pack_write_size_align(smartcard, irp->output, Stream_GetPosition(irp->output) - offset, 8);
 	}
 
 	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT) &&
@@ -1756,12 +1757,14 @@ UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_
 	outputBufferLength = Stream_Length(irp->output) - RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4;
 	objectBufferLength = outputBufferLength - RDPDR_DEVICE_IO_RESPONSE_LENGTH;
 	Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH);
+
 	/* Device Control Response */
 	Stream_Write_UINT32(irp->output, outputBufferLength); /* OutputBufferLength (4 bytes) */
 	smartcard_pack_common_type_header(smartcard, irp->output); /* CommonTypeHeader (8 bytes) */
 	smartcard_pack_private_type_header(smartcard, irp->output, objectBufferLength); /* PrivateTypeHeader (8 bytes) */
 	Stream_Write_UINT32(irp->output, result); /* Result (4 bytes) */
 	Stream_SetPosition(irp->output, Stream_Length(irp->output));
+
 	return SCARD_S_SUCCESS;
 }
 

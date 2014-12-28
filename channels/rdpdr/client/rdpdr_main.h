@@ -47,7 +47,7 @@ struct rdpdr_plugin
 	wStream* data_in;
 	void* InitHandle;
 	DWORD OpenHandle;
-	wMessagePipe* MsgPipe;
+	wMessageQueue* queue;
 
 	DEVMAN* devman;
 

@@ -1410,6 +1410,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 	if (!cReaders)
 		return SCARD_S_SUCCESS;
 
+	/* pcsc-lite interprets value 0 as INFINITE, work around the problem by using value 1 */
+	pcsc_dwTimeout = pcsc_dwTimeout ? pcsc_dwTimeout : 1;
+
 	/**
 	 * Apple's SmartCard Services (not vanilla pcsc-lite) appears to have trouble with the
 	 * "\\\\?PnP?\\Notification" reader name. I am always getting EXC_BAD_ACCESS with it.
@@ -1463,15 +1466,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 
 	cMappedReaders = j;
 
-	/**
-	 * pcsc-lite interprets dwTimeout value 0 as INFINITE, use value 1 as a workaround
-	 */
-
 	if (cMappedReaders > 0)
 	{
 		status = (LONG) g_PCSC.pfnSCardGetStatusChange(hContext,
-				 pcsc_dwTimeout ? pcsc_dwTimeout : 1,
-				 states, cMappedReaders);
+				 pcsc_dwTimeout, states, cMappedReaders);
 		status = PCSC_MapErrorCodeToWinSCard(status);
 	}
 	else
@@ -2244,21 +2242,18 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 
 	cbAttrLen = *pcbAttrLen;
 	*pcbAttrLen = SCARD_AUTOALLOCATE;
-	status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A,
-										  (LPBYTE) &pbAttrA, pcbAttrLen);
+	status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A, (LPBYTE) &pbAttrA, pcbAttrLen);
 
 	if (status != SCARD_S_SUCCESS)
 	{
 		pbAttrA = NULL;
 		*pcbAttrLen = SCARD_AUTOALLOCATE;
-		status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_W,
-											  (LPBYTE) &pbAttrW, pcbAttrLen);
+		status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_W, (LPBYTE) &pbAttrW, pcbAttrLen);
 
 		if (status != SCARD_S_SUCCESS)
 			return status;
 
-		length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) pbAttrW,
-									*pcbAttrLen, (char**) &pbAttrA, 0, NULL, NULL);
+		length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) pbAttrW, *pcbAttrLen, (char**) &pbAttrA, 0, NULL, NULL);
 		namePCSC = pbAttrA;
 		PCSC_SCardFreeMemory_Internal(hContext, pbAttrW);
 	}
@@ -2290,6 +2285,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 
 	if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W)
 	{
+		/* length here includes null terminator */
 		length = ConvertToUnicode(CP_UTF8, 0, (char*) friendlyNameA, -1, &friendlyNameW, 0);
 		free(friendlyNameA);
 
@@ -2304,14 +2300,14 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 		}
 		else
 		{
-			if (((length + 1) * 2) > cbAttrLen)
+			if ((length * 2) > cbAttrLen)
 			{
 				free(friendlyNameW);
 				return SCARD_E_INSUFFICIENT_BUFFER;
 			}
 			else
 			{
-				CopyMemory(pbAttr, (BYTE*) friendlyNameW, ((length + 1) * 2));
+				CopyMemory(pbAttr, (BYTE*) friendlyNameW, (length * 2));
 				*pcbAttrLen = length * 2;
 				free(friendlyNameW);
 			}
@@ -2340,6 +2336,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 			}
 		}
 	}
+
+	free(namePCSC);
 
 	return status;
 }

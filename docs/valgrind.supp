@@ -13,6 +13,16 @@
 }
 
 {
+   ignore pcsc-lite SCardConnect
+   Memcheck:Param
+   socketcall.sendto(msg)
+   fun:send
+   fun:MessageSend
+   fun:MessageSendWithHeader
+   fun:SCardConnect
+}
+
+{
   ignore openssl malloc
   Memcheck:Leak
   fun:malloc
