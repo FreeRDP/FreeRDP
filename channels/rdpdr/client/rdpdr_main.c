@@ -506,8 +506,10 @@ static void rdpdr_process_connect(rdpdrPlugin* rdpdr)
 
 	rdpdr->devman = devman_new(rdpdr);
 	settings = (rdpSettings*) rdpdr->channelEntryPoints.pExtendedData;
-
-	strncpy(rdpdr->computerName, settings->ComputerName, sizeof(rdpdr->computerName) - 1);
+	if (settings->ClientHostname)
+		strncpy(rdpdr->computerName, settings->ClientHostname, sizeof(rdpdr->computerName) - 1);
+	else
+		strncpy(rdpdr->computerName, settings->ComputerName, sizeof(rdpdr->computerName) - 1);
 
 	for (index = 0; index < settings->DeviceCount; index++)
 	{
