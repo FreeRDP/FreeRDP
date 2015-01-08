@@ -180,9 +180,8 @@ static wListDictionary* g_MemoryBlocks = NULL;
 
 char SMARTCARD_PNP_NOTIFICATION_A[] = "\\\\?PnP?\\Notification";
 
-WCHAR SMARTCARD_PNP_NOTIFICATION_W[] = { '\\','\\','?','P','n','P','?',
-									   '\\','N','o','t','i','f','i','c','a','t','i','o','n','\0'
-									   };
+WCHAR SMARTCARD_PNP_NOTIFICATION_W[] =
+{ '\\','\\','?','P','n','P','?','\\','N','o','t','i','f','i','c','a','t','i','o','n','\0' };
 
 const PCSC_SCARD_IO_REQUEST g_PCSC_rgSCardT0Pci = { SCARD_PROTOCOL_T0, sizeof(PCSC_SCARD_IO_REQUEST) };
 const PCSC_SCARD_IO_REQUEST g_PCSC_rgSCardT1Pci = { SCARD_PROTOCOL_T1, sizeof(PCSC_SCARD_IO_REQUEST) };
@@ -745,7 +744,8 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 
 char* PCSC_GetReaderAliasFromName(char* namePCSC)
 {
-	char* nameWinSCard;
+	char* nameWinSCard = NULL;
+
 	nameWinSCard = PCSC_ConvertReaderNameToWinSCard(namePCSC);
 
 	if (nameWinSCard)
@@ -1410,6 +1410,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 	if (!cReaders)
 		return SCARD_S_SUCCESS;
 
+	/* pcsc-lite interprets value 0 as INFINITE, work around the problem by using value 1 */
+	pcsc_dwTimeout = pcsc_dwTimeout ? pcsc_dwTimeout : 1;
+
 	/**
 	 * Apple's SmartCard Services (not vanilla pcsc-lite) appears to have trouble with the
 	 * "\\\\?PnP?\\Notification" reader name. I am always getting EXC_BAD_ACCESS with it.
@@ -1463,15 +1466,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 
 	cMappedReaders = j;
 
-	/**
-	 * pcsc-lite interprets dwTimeout value 0 as INFINITE, use value 1 as a workaround
-	 */
-
 	if (cMappedReaders > 0)
 	{
 		status = (LONG) g_PCSC.pfnSCardGetStatusChange(hContext,
-				 pcsc_dwTimeout ? pcsc_dwTimeout : 1,
-				 states, cMappedReaders);
+				 pcsc_dwTimeout, states, cMappedReaders);
 		status = PCSC_MapErrorCodeToWinSCard(status);
 	}
 	else
@@ -1636,8 +1634,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnect_Internal(SCARDCONTEXT hContext,
 		pcsc_dwPreferredProtocols = SCARD_PROTOCOL_UNDEFINED;
 	else
 		pcsc_dwPreferredProtocols = (PCSC_DWORD) PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
+
 	status = (LONG) g_PCSC.pfnSCardConnect(hPrivateContext, szReaderPCSC,
-										   pcsc_dwShareMode, pcsc_dwPreferredProtocols, phCard, &pcsc_dwActiveProtocol);
+				pcsc_dwShareMode, pcsc_dwPreferredProtocols, phCard, &pcsc_dwActiveProtocol);
+
 	status = PCSC_MapErrorCodeToWinSCard(status);
 
 	if (status == SCARD_S_SUCCESS)
@@ -1663,7 +1663,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectA(SCARDCONTEXT hContext,
 		return SCARD_E_INVALID_HANDLE;
 
 	status = PCSC_SCardConnect_Internal(hContext, szReader, dwShareMode,
-										dwPreferredProtocols, phCard, pdwActiveProtocol);
+					dwPreferredProtocols, phCard, pdwActiveProtocol);
 
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
@@ -1685,7 +1685,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext,
 		ConvertFromUnicode(CP_UTF8, 0, szReader, -1, &szReaderA, 0, NULL, NULL);
 
 	status = PCSC_SCardConnect_Internal(hContext, szReaderA, dwShareMode,
-										dwPreferredProtocols, phCard, pdwActiveProtocol);
+					dwPreferredProtocols, phCard, pdwActiveProtocol);
 	free(szReaderA);
 
 	if (!PCSC_UnlockCardContext(hContext))
@@ -2115,36 +2115,52 @@ WINSCARDAPI LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard,
 	if (!g_PCSC.pfnSCardControl)
 		return SCARD_E_NO_SERVICE;
 
+	/**
+	 * PCSCv2 Part 10:
+	 * http://www.pcscworkgroup.com/specifications/files/pcsc10_v2.02.09.pdf
+	 *
+	 * Smart Card Driver IOCTLs:
+	 * http://msdn.microsoft.com/en-us/library/windows/hardware/ff548988/
+	 *
+	 * Converting Windows Feature Request IOCTL code to the pcsc-lite control code:
+	 * http://musclecard.996296.n3.nabble.com/Converting-Windows-Feature-Request-IOCTL-code-to-the-pcsc-lite-control-code-td4906.html
+	 */
+
 	IoCtlMethod = METHOD_FROM_CTL_CODE(dwControlCode);
 	IoCtlFunction = FUNCTION_FROM_CTL_CODE(dwControlCode);
 	IoCtlAccess = ACCESS_FROM_CTL_CODE(dwControlCode);
 	IoCtlDeviceType = DEVICE_TYPE_FROM_CTL_CODE(dwControlCode);
 
-	if (dwControlCode == PCSC_CM_IOCTL_GET_FEATURE_REQUEST)
+	if (dwControlCode == IOCTL_SMARTCARD_GET_FEATURE_REQUEST)
 		getFeatureRequest = TRUE;
 
 	if (IoCtlDeviceType == FILE_DEVICE_SMARTCARD)
 		dwControlCode = PCSC_SCARD_CTL_CODE(IoCtlFunction);
 
 	pcsc_dwControlCode = (PCSC_DWORD) dwControlCode;
+
 	status = (LONG) g_PCSC.pfnSCardControl(hCard,
-										   pcsc_dwControlCode, lpInBuffer, pcsc_cbInBufferSize,
-										   lpOutBuffer, pcsc_cbOutBufferSize, &pcsc_BytesReturned);
+				pcsc_dwControlCode, lpInBuffer, pcsc_cbInBufferSize,
+				lpOutBuffer, pcsc_cbOutBufferSize, &pcsc_BytesReturned);
+
 	status = PCSC_MapErrorCodeToWinSCard(status);
 	*lpBytesReturned = (DWORD) pcsc_BytesReturned;
 
 	if (getFeatureRequest)
 	{
-		UINT32 ioCtlValue;
+		UINT32 index;
+		UINT32 count;
 		PCSC_TLV_STRUCTURE* tlv = (PCSC_TLV_STRUCTURE*) lpOutBuffer;
-		void* lpOutBufferEnd = (void*) &((BYTE*) lpOutBuffer)[*lpBytesReturned];
 
-		for (; ((void*) tlv) < lpOutBufferEnd; tlv++)
+		if ((*lpBytesReturned % sizeof(PCSC_TLV_STRUCTURE)) != 0)
+			return SCARD_E_UNEXPECTED;
+
+		count = *lpBytesReturned / sizeof(PCSC_TLV_STRUCTURE);
+
+		for (index = 0; index < count; index++)
 		{
-			ioCtlValue = _byteswap_ulong(tlv->value);
-			ioCtlValue -= 0x42000000; /* inverse of PCSC_SCARD_CTL_CODE() */
-			ioCtlValue = SCARD_CTL_CODE(ioCtlValue);
-			tlv->value = _byteswap_ulong(ioCtlValue);
+			if (tlv[index].length != 4)
+				return SCARD_E_UNEXPECTED;
 		}
 	}
 
@@ -2226,21 +2242,18 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 
 	cbAttrLen = *pcbAttrLen;
 	*pcbAttrLen = SCARD_AUTOALLOCATE;
-	status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A,
-										  (LPBYTE) &pbAttrA, pcbAttrLen);
+	status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_A, (LPBYTE) &pbAttrA, pcbAttrLen);
 
 	if (status != SCARD_S_SUCCESS)
 	{
 		pbAttrA = NULL;
 		*pcbAttrLen = SCARD_AUTOALLOCATE;
-		status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_W,
-											  (LPBYTE) &pbAttrW, pcbAttrLen);
+		status = PCSC_SCardGetAttrib_Internal(hCard, SCARD_ATTR_DEVICE_FRIENDLY_NAME_W, (LPBYTE) &pbAttrW, pcbAttrLen);
 
 		if (status != SCARD_S_SUCCESS)
 			return status;
 
-		length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) pbAttrW,
-									*pcbAttrLen, (char**) &pbAttrA, 0, NULL, NULL);
+		length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) pbAttrW, *pcbAttrLen, (char**) &pbAttrA, 0, NULL, NULL);
 		namePCSC = pbAttrA;
 		PCSC_SCardFreeMemory_Internal(hContext, pbAttrW);
 	}
@@ -2272,6 +2285,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 
 	if (dwAttrId == SCARD_ATTR_DEVICE_FRIENDLY_NAME_W)
 	{
+		/* length here includes null terminator */
 		length = ConvertToUnicode(CP_UTF8, 0, (char*) friendlyNameA, -1, &friendlyNameW, 0);
 		free(friendlyNameA);
 
@@ -2286,14 +2300,14 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 		}
 		else
 		{
-			if (((length + 1) * 2) > cbAttrLen)
+			if ((length * 2) > cbAttrLen)
 			{
 				free(friendlyNameW);
 				return SCARD_E_INSUFFICIENT_BUFFER;
 			}
 			else
 			{
-				CopyMemory(pbAttr, (BYTE*) friendlyNameW, ((length + 1) * 2));
+				CopyMemory(pbAttr, (BYTE*) friendlyNameW, (length * 2));
 				*pcbAttrLen = length * 2;
 				free(friendlyNameW);
 			}
@@ -2323,6 +2337,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 		}
 	}
 
+	free(namePCSC);
+
 	return status;
 }
 
@@ -2333,18 +2349,24 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 	BOOL pcbAttrLenAlloc = FALSE;
 	LONG status = SCARD_S_SUCCESS;
 	LPBYTE* pPbAttr = (LPBYTE*) pbAttr;
+
 	cbAttrLen = *pcbAttrLen;
 
 	if (*pcbAttrLen == SCARD_AUTOALLOCATE)
+	{
 		pcbAttrLenAlloc = TRUE;
+		*pPbAttr = NULL;
+	}
+	else
+	{
+		/**
+		 * pcsc-lite returns SCARD_E_INSUFFICIENT_BUFFER if the given
+		 * buffer size is larger than PCSC_MAX_BUFFER_SIZE (264)
+		 */
 
-	/**
-	 * pcsc-lite returns SCARD_E_INSUFFICIENT_BUFFER if the given
-	 * buffer size is larger than PCSC_MAX_BUFFER_SIZE (264)
-	 */
-
-	if (*pcbAttrLen > PCSC_MAX_BUFFER_SIZE)
-		*pcbAttrLen = PCSC_MAX_BUFFER_SIZE;
+		if (*pcbAttrLen > PCSC_MAX_BUFFER_SIZE)
+			*pcbAttrLen = PCSC_MAX_BUFFER_SIZE;
+	}
 
 	hContext = PCSC_GetCardContextFromHandle(hCard);
 
@@ -2363,14 +2385,22 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 	{
 		if (dwAttrId == SCARD_ATTR_VENDOR_NAME)
 		{
+			const char* vendorName;
+
 			/**
 			 * pcsc-lite adds a null terminator to the vendor name,
 			 * while WinSCard doesn't. Strip the null terminator.
 			 */
+
 			if (pcbAttrLenAlloc)
-				*pcbAttrLen = strlen((char*) *pPbAttr);
+				vendorName = (char*) *pPbAttr;
 			else
-				*pcbAttrLen = strlen((char*) pbAttr);
+				vendorName = (char*) pbAttr;
+
+			if (vendorName)
+				*pcbAttrLen = strlen(vendorName);
+			else
+				*pcbAttrLen = 0;
 		}
 	}
 	else

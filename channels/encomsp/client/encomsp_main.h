@@ -40,11 +40,13 @@ struct encomsp_plugin
 	CHANNEL_DEF channelDef;
 	CHANNEL_ENTRY_POINTS_FREERDP channelEntryPoints;
 
+	EncomspClientContext* context;
+
 	HANDLE thread;
 	wStream* data_in;
 	void* InitHandle;
 	DWORD OpenHandle;
-	wMessagePipe* MsgPipe;
+	wMessageQueue* queue;
 };
 typedef struct encomsp_plugin encomspPlugin;
 

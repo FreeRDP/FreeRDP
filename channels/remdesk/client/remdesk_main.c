@@ -623,7 +623,7 @@ static void remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk,
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		MessageQueue_Post(remdesk->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
+		MessageQueue_Post(remdesk->queue, NULL, 0, (void*) data_in, NULL);
 	}
 }
 
@@ -649,9 +649,6 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event(DWORD openHandle, UINT 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			Stream_Free((wStream*) pData, TRUE);
 			break;
-
-		case CHANNEL_EVENT_USER:
-			break;
 	}
 }
 
@@ -665,10 +662,10 @@ static void* remdesk_virtual_channel_client_thread(void* arg)
 
 	while (1)
 	{
-		if (!MessageQueue_Wait(remdesk->MsgPipe->In))
+		if (!MessageQueue_Wait(remdesk->queue))
 			break;
 
-		if (MessageQueue_Peek(remdesk->MsgPipe->In, &message, TRUE))
+		if (MessageQueue_Peek(remdesk->queue, &message, TRUE))
 		{
 			if (message.id == WMQ_QUIT)
 				break;
@@ -700,7 +697,7 @@ static void remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVO
 		return;
 	}
 
-	remdesk->MsgPipe = MessagePipe_New();
+	remdesk->queue = MessageQueue_New(NULL);
 
 	remdesk->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) remdesk_virtual_channel_client_thread, (void*) remdesk, 0, NULL);
@@ -708,11 +705,17 @@ static void remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVO
 
 static void remdesk_virtual_channel_event_terminated(remdeskPlugin* remdesk)
 {
-	MessagePipe_PostQuit(remdesk->MsgPipe, 0);
-	WaitForSingleObject(remdesk->thread, INFINITE);
+	if (remdesk->queue)
+	{
+		MessageQueue_PostQuit(remdesk->queue, 0);
+		WaitForSingleObject(remdesk->thread, INFINITE);
 
-	MessagePipe_Free(remdesk->MsgPipe);
-	CloseHandle(remdesk->thread);
+		MessageQueue_Free(remdesk->queue);
+		remdesk->queue = NULL;
+
+		CloseHandle(remdesk->thread);
+		remdesk->thread = NULL;
+	}
 
 	remdesk->channelEntryPoints.pVirtualChannelClose(remdesk->OpenHandle);
 
@@ -724,6 +727,10 @@ static void remdesk_virtual_channel_event_terminated(remdeskPlugin* remdesk)
 
 	remdesk_remove_open_handle_data(remdesk->OpenHandle);
 	remdesk_remove_init_handle_data(remdesk->InitHandle);
+
+	free(remdesk->context);
+
+	free(remdesk);
 }
 
 static VOID VCAPITYPE remdesk_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
@@ -787,6 +794,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		context->handle = (void*) remdesk;
 
 		*(pEntryPointsEx->ppInterface) = (void*) context;
+		remdesk->context = context;
 	}
 
 	CopyMemory(&(remdesk->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));

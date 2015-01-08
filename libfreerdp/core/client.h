@@ -101,7 +101,7 @@ struct rdp_channels
 	/* used for locating the channels for a given instance */
 	freerdp* instance;
 
-	wMessagePipe* MsgPipe;
+	wMessageQueue* queue;
 
 	DrdynvcClientContext* drdynvc;
 };

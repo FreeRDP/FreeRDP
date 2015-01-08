@@ -265,15 +265,11 @@ static void xf_cliprdr_get_requested_targets(xfClipboard* clipboard)
 
 static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasData, BYTE* data, int size)
 {
-	UINT32 index;
-	UINT32 count;
 	BOOL bSuccess;
 	UINT32 SrcSize;
 	UINT32 DstSize;
 	UINT32 formatId;
 	UINT32 altFormatId;
-	UINT32* pFormatIds;
-	const char* formatName;
 	BYTE* pSrcData = NULL;
 	BYTE* pDstData = NULL;
 	xfCliprdrFormat* format;
@@ -295,6 +291,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	switch (format->formatId)
 	{
 		case CF_TEXT:
+		case CF_OEMTEXT:
 		case CF_UNICODETEXT:
 			size = strlen((char*) data) + 1;
 			formatId = ClipboardGetFormatId(clipboard->system, "UTF8_STRING");
@@ -323,39 +320,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	if (!bSuccess)
 		free(pSrcData);
 
-	pFormatIds = NULL;
-	count = ClipboardGetFormatIds(clipboard->system, &pFormatIds);
-
-	for (index = 0; index < count; index++)
-	{
-		formatId = pFormatIds[index];
-		formatName = ClipboardGetFormatName(clipboard->system, formatId);
-
-		if (formatId < CF_MAX)
-		{
-			switch (formatId)
-			{
-				case CF_TEXT:
-					altFormatId = CF_TEXT;
-					break;
-
-				case CF_UNICODETEXT:
-					altFormatId = CF_UNICODETEXT;
-					break;
-
-				case CF_DIB:
-					altFormatId = CF_DIB;
-					break;
-			}
-		}
-		else if (strcmp(formatName, "HTML Format") == 0)
-		{
-			altFormatId = formatId;
-			break;
-		}
-	}
-
-	free(pFormatIds);
+	altFormatId = clipboard->requestedFormatId;
 
 	if (bSuccess && altFormatId)
 	{

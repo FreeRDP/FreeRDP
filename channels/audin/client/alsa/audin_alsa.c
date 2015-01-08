@@ -354,17 +354,22 @@ static void audin_alsa_close(IAudinDevice* device)
 
 	DEBUG_DVC("");
 
-	SetEvent(alsa->stopEvent);
-	WaitForSingleObject(alsa->thread, INFINITE);
-	CloseHandle(alsa->stopEvent);
-	CloseHandle(alsa->thread);
+	if (alsa->stopEvent)
+	{
+		SetEvent(alsa->stopEvent);
+		WaitForSingleObject(alsa->thread, INFINITE);
+
+		CloseHandle(alsa->stopEvent);
+		alsa->stopEvent = NULL;
+
+		CloseHandle(alsa->thread);
+		alsa->thread = NULL;
+	}
 
 	if (alsa->buffer)
 		free(alsa->buffer);
 	alsa->buffer = NULL;
 
-	alsa->stopEvent = NULL;
-	alsa->thread = NULL;
 	alsa->receive = NULL;
 	alsa->user_data = NULL;
 }

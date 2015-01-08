@@ -393,7 +393,7 @@ static void rail_virtual_channel_event_data_received(railPlugin* rail,
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		MessageQueue_Post(rail->MsgPipe->In, NULL, 0, (void*) data_in, NULL);
+		MessageQueue_Post(rail->queue, NULL, 0, (void*) data_in, NULL);
 	}
 }
 
@@ -419,9 +419,6 @@ static VOID VCAPITYPE rail_virtual_channel_open_event(DWORD openHandle, UINT eve
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			Stream_Free((wStream*) pData, TRUE);
 			break;
-
-		case CHANNEL_EVENT_USER:
-			break;
 	}
 }
 
@@ -433,10 +430,10 @@ static void* rail_virtual_channel_client_thread(void* arg)
 
 	while (1)
 	{
-		if (!MessageQueue_Wait(rail->MsgPipe->In))
+		if (!MessageQueue_Wait(rail->queue))
 			break;
 
-		if (MessageQueue_Peek(rail->MsgPipe->In, &message, TRUE))
+		if (MessageQueue_Peek(rail->queue, &message, TRUE))
 		{
 			if (message.id == WMQ_QUIT)
 				break;
@@ -468,7 +465,7 @@ static void rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 		return;
 	}
 
-	rail->MsgPipe = MessagePipe_New();
+	rail->queue = MessageQueue_New(NULL);
 
 	rail->thread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) rail_virtual_channel_client_thread, (void*) rail, 0, NULL);
@@ -476,11 +473,17 @@ static void rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 
 static void rail_virtual_channel_event_terminated(railPlugin* rail)
 {
-	MessagePipe_PostQuit(rail->MsgPipe, 0);
-	WaitForSingleObject(rail->thread, INFINITE);
+	if (rail->queue)
+	{
+		MessageQueue_PostQuit(rail->queue, 0);
+		WaitForSingleObject(rail->thread, INFINITE);
 
-	MessagePipe_Free(rail->MsgPipe);
-	CloseHandle(rail->thread);
+		MessageQueue_Free(rail->queue);
+		rail->queue = NULL;
+
+		CloseHandle(rail->thread);
+		rail->thread = NULL;
+	}
 
 	rail->channelEntryPoints.pVirtualChannelClose(rail->OpenHandle);
 
@@ -492,6 +495,10 @@ static void rail_virtual_channel_event_terminated(railPlugin* rail)
 
 	rail_remove_open_handle_data(rail->OpenHandle);
 	rail_remove_init_handle_data(rail->InitHandle);
+
+	free(rail->context);
+
+	free(rail);
 }
 
 static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT event, LPVOID pData, UINT dataLength)
@@ -572,6 +579,7 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 		context->ServerGetAppIdResponse = rail_server_get_appid_response;
 
 		*(pEntryPointsEx->ppInterface) = (void*) context;
+		rail->context = context;
 	}
 
 	WLog_Init();
