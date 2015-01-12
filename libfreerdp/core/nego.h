@@ -118,6 +118,7 @@ struct rdp_nego
 typedef struct rdp_nego rdpNego;
 
 BOOL nego_connect(rdpNego* nego);
+BOOL nego_disconnect(rdpNego* nego);
 
 BOOL nego_send_preconnection_pdu(rdpNego* nego);
 
@@ -137,7 +138,7 @@ void nego_process_negotiation_response(rdpNego* nego, wStream* s);
 void nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 BOOL nego_send_negotiation_response(rdpNego* nego);
 
-rdpNego* nego_new(struct rdp_transport * transport);
+rdpNego* nego_new(struct rdp_transport* transport);
 void nego_free(rdpNego* nego);
 
 void nego_init(rdpNego* nego);
