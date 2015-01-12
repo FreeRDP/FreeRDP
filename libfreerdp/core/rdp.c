@@ -1421,6 +1421,10 @@ void rdp_reset(rdpRdp* rdp)
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);
 	rdp->transport->layer = TRANSPORT_LAYER_TCP;
+	rdp->disconnect = FALSE;
+	rdp->errorInfo = 0;
+	rdp->deactivation_reactivation = 0;
+	rdp->finalize_sc_pdus = 0;
 }
 
 /**
