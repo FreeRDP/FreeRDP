@@ -381,12 +381,6 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	return status;
 }
 
-BOOL rdp_client_reconnect(rdpRdp* rdp)
-{
-	rdp_client_disconnect(rdp);
-	return rdp_client_connect(rdp);
-}
-
 static BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF };
 
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
