@@ -317,8 +317,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 	rdpRdp* rdp;
 
 	rdp = instance->context->rdp;
-	transport_disconnect(rdp->transport);
-
+	rdp_client_disconnect(rdp);
 	update_post_disconnect(instance->update);
 	IFCALL(instance->PostDisconnect, instance);
 
@@ -334,7 +333,8 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 BOOL freerdp_reconnect(freerdp* instance)
 {
-	return rdp_client_reconnect(instance->context->rdp);
+  BOOL rc = rdp_disconnect(instance);
+  return rc && rdp_connect(instance);
 }
 
 BOOL freerdp_shall_disconnect(freerdp* instance)
