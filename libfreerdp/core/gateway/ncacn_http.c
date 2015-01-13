@@ -31,6 +31,8 @@
 
 #include <openssl/rand.h>
 
+#define TAG FREERDP_TAG("core.gateway")
+
 wStream* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_length, TSG_CHANNEL channel)
 {
 	wStream* s;
@@ -83,7 +85,7 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 
 	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], content_length, TSG_CHANNEL_IN);
 
-	DEBUG_RPC("\n%s", Stream_Buffer(s));
+	WLog_DBG(TAG, "\n%s", Stream_Buffer(s));
 	rpc_in_write(rpc, Stream_Buffer(s), Stream_Length(s));
 	Stream_Free(s, TRUE);
 
@@ -215,7 +217,7 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 
 	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], content_length, TSG_CHANNEL_OUT);
 
-	DEBUG_RPC("\n%s", Stream_Buffer(s));
+	WLog_DBG(TAG, "\n%s", Stream_Buffer(s));
 	rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
 	Stream_Free(s, TRUE);
 

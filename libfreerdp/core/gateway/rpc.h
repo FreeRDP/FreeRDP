@@ -784,15 +784,4 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
 rdpRpc* rpc_new(rdpTransport* transport);
 void rpc_free(rdpRpc* rpc);
 
-#ifdef WITH_DEBUG_TSG
-#define WITH_DEBUG_RPC
-#endif
-
-#define RPC_TAG FREERDP_TAG("core.gateway.rpc")
-#ifdef WITH_DEBUG_RPC
-#define DEBUG_RPC(fmt, ...) WLog_DBG(RPC_TAG, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_RPC(fmt, ...) do { } while (0)
-#endif
-
 #endif /* FREERDP_CORE_RPC_H */

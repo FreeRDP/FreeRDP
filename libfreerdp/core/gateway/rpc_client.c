@@ -133,12 +133,15 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
 			rpc_client_fragment_pool_return(rpc, fragment);
 			return 0;
+
 		case PTYPE_FAULT:
 			rpc_recv_fault_pdu(header);
 			Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
 			return -1;
+
 		case PTYPE_RESPONSE:
 			break;
+
 		default:
 			WLog_ERR(TAG, "unexpected RPC PDU type %d", header->common.ptype);
 			Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
@@ -194,7 +197,6 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
 	{
-		//WLog_ERR(TAG,  "Sending Flow Control Ack PDU");
 		rts_send_flow_control_ack_pdu(rpc);
 	}
 
@@ -437,6 +439,7 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 	RPC_PDU* pdu;
 	DWORD dwMilliseconds;
 	DWORD result;
+
 	dwMilliseconds = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT * 4 : 0;
 	result = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
 
@@ -449,20 +452,8 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 	if (result != WAIT_OBJECT_0)
 		return NULL;
 
-	pdu = (RPC_PDU*)Queue_Dequeue(rpc->client->ReceiveQueue);
-#ifdef WITH_DEBUG_TSG
+	pdu = (RPC_PDU*) Queue_Dequeue(rpc->client->ReceiveQueue);
 
-	if (pdu)
-	{
-		WLog_DBG(TAG, "Receiving PDU (length: %d, CallId: %d)", pdu->s->length, pdu->CallId);
-		winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
-	}
-	else
-	{
-		WLog_DBG(TAG, "Receiving a NULL PDU");
-	}
-
-#endif
 	return pdu;
 }
 
@@ -470,6 +461,7 @@ RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc)
 {
 	DWORD dwMilliseconds;
 	DWORD result;
+
 	dwMilliseconds = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT : 0;
 	result = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
 

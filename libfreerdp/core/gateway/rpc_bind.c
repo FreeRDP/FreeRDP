@@ -32,7 +32,7 @@
 
 #include "rpc_bind.h"
 
-#define TAG FREERDP_TAG("core.gateway.rpc_bind")
+#define TAG FREERDP_TAG("core.gateway")
 
 /**
  * Connection-Oriented RPC Protocol Client Details:
@@ -103,7 +103,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	BOOL promptPassword = FALSE;
 	freerdp* instance = (freerdp*) settings->instance;
 
-	DEBUG_RPC("Sending bind PDU");
+	WLog_DBG(TAG, "Sending bind PDU");
 
 	if (rpc->ntlm)
 	{
@@ -316,10 +316,12 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	RpcClientCall* clientCall;
 	rpcconn_rpc_auth_3_hdr_t* auth_3_pdu;
 
-	DEBUG_RPC("Sending rpc_auth_3 PDU");
+	WLog_DBG(TAG, "Sending rpc_auth_3 PDU");
 
-	auth_3_pdu = (rpcconn_rpc_auth_3_hdr_t*) malloc(sizeof(rpcconn_rpc_auth_3_hdr_t));
-	ZeroMemory(auth_3_pdu, sizeof(rpcconn_rpc_auth_3_hdr_t));
+	auth_3_pdu = (rpcconn_rpc_auth_3_hdr_t*) calloc(1, sizeof(rpcconn_rpc_auth_3_hdr_t));
+
+	if (!auth_3_pdu)
+		return -1;
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) auth_3_pdu);
 
@@ -345,6 +347,9 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	auth_3_pdu->frag_length = offset;
 
 	buffer = (BYTE*) malloc(auth_3_pdu->frag_length);
+
+	if (!buffer)
+		return -1;
 
 	CopyMemory(buffer, auth_3_pdu, 20);
 

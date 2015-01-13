@@ -31,7 +31,7 @@
 
 #include "rts.h"
 
-#define TAG FREERDP_TAG("core.gateway.rts")
+#define TAG FREERDP_TAG("core.gateway")
 
 /**
  * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
@@ -279,9 +279,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	return TRUE;
 }
 
-#ifdef WITH_DEBUG_RTS
-
-static const char* const RTS_CMD_STRINGS[] =
+const char* const RTS_CMD_STRINGS[] =
 {
 	"ReceiveWindowSize",
 	"FlowControlAck",
@@ -299,8 +297,6 @@ static const char* const RTS_CMD_STRINGS[] =
 	"Destination",
 	"PingTrafficSentNotify"
 };
-
-#endif
 
 /**
  * RTS PDU Header
@@ -690,7 +686,7 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_NONE;
 	header.NumberOfCommands = 4;
 
-	DEBUG_RPC("Sending CONN_A1 RTS PDU");
+	WLog_DBG(TAG, "Sending CONN_A1 RTS PDU");
 
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->Cookie));
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
@@ -746,7 +742,7 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_NONE;
 	header.NumberOfCommands = 6;
 
-	DEBUG_RPC("Sending CONN_B1 RTS PDU");
+	WLog_DBG(TAG, "Sending CONN_B1 RTS PDU");
 
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie));
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->AssociationGroupId));
@@ -816,7 +812,7 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_OTHER_CMD;
 	header.NumberOfCommands = 1;
 
-	DEBUG_RPC("Sending Keep-Alive RTS PDU");
+	WLog_DBG(TAG, "Sending Keep-Alive RTS PDU");
 
 	buffer = (BYTE*) malloc(header.frag_length);
 	if (!buffer)
@@ -850,7 +846,7 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_OTHER_CMD;
 	header.NumberOfCommands = 2;
 
-	DEBUG_RPC("Sending FlowControlAck RTS PDU");
+	WLog_DBG(TAG, "Sending FlowControlAck RTS PDU");
 
 	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->BytesReceived;
 	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
@@ -860,6 +856,7 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 			rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
 
 	buffer = (BYTE*) malloc(header.frag_length);
+
 	if (!buffer)
 		return -1;
 
@@ -873,9 +870,10 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	if (rpc_in_write(rpc, buffer, length) < 0)
 	{
-		free (buffer);
+		free(buffer);
 		return -1;
 	}
+
 	free(buffer);
 
 	return 0;
@@ -956,9 +954,10 @@ int rts_send_ping_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_PING;
 	header.NumberOfCommands = 0;
 
-	DEBUG_RPC("Sending Ping RTS PDU");
+	WLog_DBG(TAG, "Sending Ping RTS PDU");
 
 	buffer = (BYTE*) malloc(header.frag_length);
+
 	if (!buffer)
 		return -1;
 
