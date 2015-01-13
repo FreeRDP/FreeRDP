@@ -716,7 +716,7 @@ BOOL xf_get_pixmap_info(xfContext* xfc)
 		return FALSE;
 	}
 
-	vi = NULL;
+	vi = vis;
 
 	for (i = 0; i < vi_count; i++)
 	{
@@ -1763,6 +1763,7 @@ static int xfreerdp_client_start(rdpContext* context)
 		WLog_ERR(TAG,  "error: server hostname was not specified with /v:<server>[:port]");
 		return -1;
 	}
+	xfc->disconnect = FALSE;
 	xfc->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_thread,
 							   context->instance, 0, NULL);
 	return 0;
