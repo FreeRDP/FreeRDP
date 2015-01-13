@@ -148,6 +148,11 @@ void Pointer_SetDefault(rdpContext* context)
 	context->graphics->Pointer_Prototype->SetDefault(context);
 }
 
+void Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
+{
+	IFCALL(context->graphics->Pointer_Prototype->SetPosition, context, x, y);
+}
+
 void graphics_register_pointer(rdpGraphics* graphics, rdpPointer* pointer)
 {
 	CopyMemory(graphics->Pointer_Prototype, pointer, sizeof(rdpPointer));
