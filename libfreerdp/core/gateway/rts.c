@@ -1050,6 +1050,21 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 	return CommandLength;
 }
 
+int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+{
+	UINT32 offset;
+	UINT32 Destination = 0;
+
+	offset = 24;
+	offset += rts_destination_command_read(rpc, &buffer[offset], length - offset, &Destination) + 4;
+
+	WLog_DBG(TAG, "Destination: %d", Destination);
+
+	WLog_ERR(TAG, "Unimplemented OUT_R1/A2 RTS PDU (channel recycling)");
+
+	return 0;
+}
+
 int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	UINT32 SignatureId;
@@ -1065,10 +1080,16 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	{
 		case RTS_PDU_FLOW_CONTROL_ACK:
 			return rts_recv_flow_control_ack_pdu(rpc, buffer, length);
+
 		case RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION:
 			return rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
+
 		case RTS_PDU_PING:
 			return rts_send_ping_pdu(rpc);
+
+		case RTS_PDU_OUT_R1_A2:
+			return rts_recv_OUT_R1_A2_pdu(rpc, buffer, length);
+
 		default:
 			WLog_ERR(TAG, "unimplemented signature id: 0x%08X", SignatureId);
 			rts_print_pdu_signature(rpc, &signature);
