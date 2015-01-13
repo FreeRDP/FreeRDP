@@ -802,6 +802,7 @@ static void xf_post_disconnect(freerdp* instance)
 	}
 
 	xf_monitors_free(xfc, instance->settings);
+	gdi_free(instance);
 }
 
 static void xf_play_sound(rdpContext* context, PLAY_SOUND_UPDATE* play_sound)
@@ -1657,7 +1658,6 @@ void* xf_thread(void *param)
 		exit_code = freerdp_error_info(instance);
 
 	freerdp_disconnect(instance);
-	gdi_free(instance);
 
 	ExitThread(exit_code);
 	return NULL;

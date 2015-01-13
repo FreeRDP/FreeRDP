@@ -333,8 +333,8 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 BOOL freerdp_reconnect(freerdp* instance)
 {
-  BOOL rc = rdp_disconnect(instance);
-  return rc && rdp_connect(instance);
+	freerdp_disconnect(instance);
+	return freerdp_connect(instance);
 }
 
 BOOL freerdp_shall_disconnect(freerdp* instance)
