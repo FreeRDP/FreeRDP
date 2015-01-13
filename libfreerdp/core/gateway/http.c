@@ -229,41 +229,46 @@ wStream* http_request_write(HttpContext* http_context, HttpRequest* http_request
 	char** lines;
 	wStream* s;
 	int length = 0;
-	count = 9;
-	lines = (char**)calloc(count, sizeof(char*));
+
+	count = 0;
+	lines = (char**) calloc(32, sizeof(char*));
 
 	if (!lines)
 		return NULL;
 
-	lines[0] = http_encode_header_line(http_request->Method, http_request->URI);
-	lines[1] = http_encode_body_line("Cache-Control", http_context->CacheControl);
-	lines[2] = http_encode_body_line("Connection", http_context->Connection);
-	lines[3] = http_encode_body_line("Pragma", http_context->Pragma);
-	lines[4] = http_encode_body_line("Accept", http_context->Accept);
-	lines[5] = http_encode_body_line("User-Agent", http_context->UserAgent);
-	lines[6] = http_encode_content_length_line(http_request->ContentLength);
-	lines[7] = http_encode_body_line("Host", http_context->Host);
+	lines[count++] = http_encode_header_line(http_request->Method, http_request->URI);
+	lines[count++] = http_encode_body_line("Cache-Control", http_context->CacheControl);
+	lines[count++] = http_encode_body_line("Connection", http_context->Connection);
+	lines[count++] = http_encode_body_line("Pragma", http_context->Pragma);
+	lines[count++] = http_encode_body_line("Accept", http_context->Accept);
+	lines[count++] = http_encode_body_line("User-Agent", http_context->UserAgent);
+	lines[count++] = http_encode_content_length_line(http_request->ContentLength);
+	lines[count++] = http_encode_body_line("Host", http_context->Host);
 
 	/* check that everything went well */
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < count; i++)
 	{
 		if (!lines[i])
 			goto out_free;
 	}
 
-	if (http_request->Authorization != NULL)
+	if (http_request->Authorization)
 	{
-		lines[8] = http_encode_body_line("Authorization", http_request->Authorization);
+		lines[count] = http_encode_body_line("Authorization", http_request->Authorization);
 
-		if (!lines[8])
+		if (!lines[count])
 			goto out_free;
+
+		count++;
 	}
-	else if ((http_request->AuthScheme != NULL) && (http_request->AuthParam != NULL))
+	else if (http_request->AuthScheme && http_request->AuthParam)
 	{
-		lines[8] = http_encode_authorization_line(http_request->AuthScheme, http_request->AuthParam);
+		lines[count] = http_encode_authorization_line(http_request->AuthScheme, http_request->AuthParam);
 
-		if (!lines[8])
+		if (!lines[count])
 			goto out_free;
+
+		count++;
 	}
 
 	for (i = 0; i < count; i++)

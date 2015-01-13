@@ -498,6 +498,7 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 	connection->DefaultInChannel->PingOriginator.ConnectionTimeout = 30;
 	connection->DefaultInChannel->PingOriginator.KeepAliveInterval = 0;
 	connection->DefaultInChannel->Mutex = CreateMutex(NULL, FALSE, NULL);
+
 	connection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_INITIAL;
 	connection->DefaultOutChannel->BytesReceived = 0;
 	connection->DefaultOutChannel->ReceiverAvailableWindow = rpc->ReceiveWindow;

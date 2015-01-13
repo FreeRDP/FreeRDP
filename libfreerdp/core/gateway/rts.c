@@ -932,9 +932,9 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	WLog_ERR(TAG,  "Destination: %d BytesReceived: %d AvailableWindow: %d",
+	WLog_ERR(TAG, "Destination: %d BytesReceived: %d AvailableWindow: %d",
 			 Destination, BytesReceived, AvailableWindow);
-	WLog_ERR(TAG,  "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	WLog_ERR(TAG, "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -1050,6 +1050,48 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 	return CommandLength;
 }
 
+int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
+{
+	BYTE* buffer;
+	rpcconn_rts_hdr_t header;
+	UINT32 ReceiveWindowSize;
+	BYTE* VirtualConnectionCookie;
+	BYTE* PredecessorChannelCookie;
+	BYTE* SuccessorChannelCookie;
+
+	rts_pdu_header_init(&header);
+	header.frag_length = 96;
+	header.Flags = RTS_FLAG_RECYCLE_CHANNEL;
+	header.NumberOfCommands = 5;
+
+	WLog_DBG(TAG, "Sending OUT R1/A3 RTS PDU");
+
+	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->NonDefaultOutChannelCookie));
+
+	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
+	PredecessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
+	SuccessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->NonDefaultOutChannelCookie);
+	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
+
+	buffer = (BYTE*) malloc(header.frag_length);
+
+	if (!buffer)
+		return -1;
+
+	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
+	rts_version_command_write(&buffer[20]); /* Version (8 bytes) */
+	rts_cookie_command_write(&buffer[28], VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
+	rts_cookie_command_write(&buffer[48], PredecessorChannelCookie); /* PredecessorChannelCookie (20 bytes) */
+	rts_cookie_command_write(&buffer[68], SuccessorChannelCookie); /* SuccessorChannelCookie (20 bytes) */
+	rts_receive_window_size_command_write(&buffer[88], ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
+
+	rpc_out_write(rpc, buffer, header.frag_length);
+
+	free(buffer);
+
+	return 0;
+}
+
 int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	UINT32 offset;
@@ -1060,7 +1102,11 @@ int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	WLog_DBG(TAG, "Destination: %d", Destination);
 
-	WLog_ERR(TAG, "Unimplemented OUT_R1/A2 RTS PDU (channel recycling)");
+	WLog_ERR(TAG, "TS Gateway channel recycling is incomplete");
+
+	rpc_http_send_replacement_out_channel_request(rpc);
+
+	rts_send_OUT_R1_A3_pdu(rpc);
 
 	return 0;
 }
