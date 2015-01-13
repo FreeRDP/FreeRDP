@@ -134,6 +134,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 		tls_free(transport->TsgTls);
 		transport->TsgTls = NULL;
 	}
+	transport->layer = TRANSPORT_LAYER_TCP;
 
 	return status;
 }
@@ -474,9 +475,6 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	BOOL status = FALSE;
 	rdpSettings* settings = transport->settings;
 	transport->async = settings->AsyncTransport;
-	transport->blocking = TRUE;
-	transport->GatewayEnabled = FALSE;
-	transport->layer = TRANSPORT_LAYER_TCP;
 
 	if (transport->GatewayEnabled)
 	{
@@ -1227,6 +1225,10 @@ rdpTransport* transport_new(rdpContext* context)
 
 	if (!transport->connectedEvent || transport->connectedEvent == INVALID_HANDLE_VALUE)
 		goto out_free_receiveEvent;
+
+	transport->blocking = TRUE;
+	transport->GatewayEnabled = FALSE;
+	transport->layer = TRANSPORT_LAYER_TCP;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(transport->ReadLock), 4000))
 		goto out_free_connectedEvent;
