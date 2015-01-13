@@ -3,6 +3,7 @@
  * RDP Server Peer
  *
  * Copyright 2011 Vic Lee
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -573,6 +574,10 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 	 */
 	if (!rdp_send_deactivate_all(client->context->rdp))
 		return FALSE;
+
+	if (freerdp_get_param_bool(client->settings, FreeRDP_SupportErrorInfoPdu) ) {
+		rdp_send_error_info(client->context->rdp);
+	}
 
 	return mcs_send_disconnect_provider_ultimatum(client->context->rdp->mcs);
 }
