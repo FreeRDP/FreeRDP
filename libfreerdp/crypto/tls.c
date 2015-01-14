@@ -876,7 +876,8 @@ BIO *findBufferedBio(BIO *front)
 
 int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 {
-	int status, nchunks, commitedBytes;
+	int status, nchunks;
+	int committedBytes;
 	rdpTcp *tcp;
 #ifdef HAVE_POLL_H
 	struct pollfd pollfds;
@@ -892,7 +893,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 
 	if (!bufferedBio)
 	{
-		WLog_ERR(TAG,  "error unable to retrieve the bufferedBio in the BIO chain");
+		WLog_ERR(TAG, "error unable to retrieve the bufferedBio in the BIO chain");
 		return -1;
 	}
 
@@ -907,6 +908,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 
 		if (!BIO_should_retry(bio))
 			return -1;
+		
 #ifdef HAVE_POLL_H
 		pollfds.fd = tcp->sockfd;
 		pollfds.revents = 0;
@@ -922,7 +924,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 		}
 		else
 		{
-			WLog_ERR(TAG,  "weird we're blocked but the underlying is not read or write blocked !");
+			WLog_ERR(TAG, "weird we're blocked but the underlying is not read or write blocked !");
 			USleep(10);
 			continue;
 		}
@@ -950,7 +952,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 		}
 		else
 		{
-			WLog_ERR(TAG,  "weird we're blocked but the underlying is not read or write blocked !");
+			WLog_ERR(TAG, "weird we're blocked but the underlying is not read or write blocked !");
 			USleep(10);
 			continue;
 		}
@@ -966,7 +968,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 	while (TRUE);
 
 	/* make sure the output buffer is empty */
-	commitedBytes = 0;
+	committedBytes = 0;
 	while ((nchunks = ringbuffer_peek(&tcp->xmitBuffer, chunks, ringbuffer_used(&tcp->xmitBuffer))))
 	{
 		int i;
@@ -981,7 +983,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 				{
 					chunks[i].size -= status;
 					chunks[i].data += status;
-					commitedBytes += status;
+					committedBytes += status;
 					continue;
 				}
 
@@ -1013,11 +1015,11 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 		}
 	}
 
-	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, commitedBytes);
+	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
 	return length;
 
 out_fail:
-	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, commitedBytes);
+	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
 	return -1;
 }
 
