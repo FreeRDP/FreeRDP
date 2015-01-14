@@ -184,7 +184,7 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg)
 	 * However, reduced capabilities may break connectivity with servers enforcing features, such as
 	 * "Only allow connections from Remote Desktop Services clients that support RD Gateway messaging"
 	 */
-	//NapCapabilities = TSG_NAP_CAPABILITY_IDLE_TIMEOUT;
+
 	*((UINT32*) &buffer[44]) = NapCapabilities; /* capabilities */
 	CopyMemory(&buffer[48], TsProxyCreateTunnelUnknownTrailerBytes, 60);
 	status = rpc_write(rpc, buffer, length, TsProxyCreateTunnelOpnum);
@@ -591,6 +591,7 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	UINT32 Pointer;
 	UINT32 SizeValue;
 	UINT32 SwitchValue;
+	UINT32 idleTimeout;
 	PTSG_PACKET packet;
 	rdpRpc* rpc = tsg->rpc;
 	PTSG_PACKET_RESPONSE packetResponse;
@@ -670,11 +671,22 @@ BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 		free(packet);
 		return FALSE;
 	}
-
-	offset += SizeValue; /* ResponseData */
+	
+	if (SizeValue == 4)
+	{
+		idleTimeout = *((UINT32*) &buffer[offset]);
+		offset += 4;
+	}
+	else
+	{
+		offset += SizeValue; /* ResponseData */
+	}
+	
 	rpc_client_receive_pool_return(rpc, pdu);
+	
 	free(packetResponse);
 	free(packet);
+	
 	return TRUE;
 }
 
