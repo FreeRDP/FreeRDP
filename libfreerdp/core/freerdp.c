@@ -1,8 +1,9 @@
-/*
+/**
  * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Core
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -489,6 +490,10 @@ void freerdp_context_free(freerdp* instance)
 UINT32 freerdp_error_info(freerdp* instance)
 {
 	return instance->context->rdp->errorInfo;
+}
+
+void freerdp_set_error_info(rdpRdp* rdp, UINT32 error) {
+	rdp->errorInfo = error;
 }
 
 UINT32 freerdp_get_last_error(rdpContext* context)
