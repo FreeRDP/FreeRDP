@@ -160,17 +160,28 @@ void license_write_preamble(wStream* s, BYTE bMsgType, BYTE flags, UINT16 wMsgSi
 wStream* license_send_stream_init(rdpLicense* license)
 {
 	wStream* s;
+	BOOL do_crypt = license->rdp->do_crypt;
+
 	license->rdp->sec_flags = SEC_LICENSE_PKT;
 
-	if (license->rdp->do_crypt)
+	/**
+	 * Encryption of licensing packets is optional even if the rdp security
+	 * layer is used. If the peer has not indicated that it is capable of
+	 * processing encrypted licensing packets (rdp->do_crypt_license) we turn
+	 * off encryption (via rdp->do_crypt) before initializing the rdp stream
+	 * and reenable it afterwards.
+	 */
+
+	if (do_crypt)
+	{
 		license->rdp->sec_flags |= SEC_LICENSE_ENCRYPT_CS;
+		license->rdp->do_crypt = license->rdp->do_crypt_license;
+	}
 
 	s = transport_send_stream_init(license->rdp->transport, 4096);
 	rdp_init_stream(license->rdp, s);
 
-	if (!license->rdp->do_crypt_license)
-			license->rdp->sec_flags &= ~SEC_ENCRYPT;
-
+	license->rdp->do_crypt = do_crypt;
 	license->PacketHeaderLength = Stream_GetPosition(s);
 	Stream_Seek(s, LICENSE_PREAMBLE_LENGTH);
 	return s;

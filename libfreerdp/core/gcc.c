@@ -4,6 +4,7 @@
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -765,6 +766,8 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	if (!(earlyCapabilityFlags & RNS_UD_CS_VALID_CONNECTION_TYPE))
 		connectionType = 0;
+
+	settings->SupportErrorInfoPdu = earlyCapabilityFlags & RNS_UD_CS_SUPPORT_ERRINFO_PDU;
 
 	settings->ConnectionType = connectionType;
 

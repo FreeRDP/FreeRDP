@@ -102,8 +102,40 @@ BOOL transport_disconnect(rdpTransport* transport)
 		return FALSE;
 
 	transport_stop(transport);
-	BIO_free_all(transport->frontBio);
-	transport->frontBio = 0;
+
+	if (transport->frontBio)
+	{
+		BIO_free_all(transport->frontBio);
+		transport->frontBio = NULL;
+	}
+
+	if (transport->TlsIn)
+		tls_free(transport->TlsIn);
+
+	if (transport->TlsOut != transport->TlsIn)
+		tls_free(transport->TlsOut);
+
+	transport->TlsIn = NULL;
+	transport->TlsOut = NULL;
+
+	if (transport->tsg)
+	{
+		tsg_free(transport->tsg);
+		transport->tsg = NULL;
+	}
+
+	if (transport->TcpOut != transport->TcpIn)
+		freerdp_tcp_free(transport->TcpOut);
+
+	transport->TcpOut = NULL;
+
+	if (transport->TsgTls)
+	{
+		tls_free(transport->TsgTls);
+		transport->TsgTls = NULL;
+	}
+	transport->layer = TRANSPORT_LAYER_TCP;
+
 	return status;
 }
 
@@ -122,9 +154,7 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 {
 	int status;
 	rdpTsg* tsg = (rdpTsg*) bio->ptr;
-
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
-
 	status = tsg_write(tsg, (BYTE*) buf, num);
 
 	if (status < 0)
@@ -148,9 +178,7 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 {
 	int status;
 	rdpTsg* tsg = (rdpTsg*) bio->ptr;
-
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
-
 	status = tsg_read(tsg, (BYTE*) buf, size);
 
 	if (status < 0)
@@ -365,7 +393,6 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	rdpSettings* settings = transport->settings;
 	instance = (freerdp*) transport->settings->instance;
 	context = instance->context;
-
 	tsg = tsg_new(transport);
 
 	if (!tsg)
@@ -1111,13 +1138,10 @@ static void* transport_client_thread(void* arg)
 	rdpTransport* transport = (rdpTransport*) arg;
 	rdpContext* context = transport->context;
 	freerdp* instance = context->instance;
-
 	WLog_Print(transport->log, WLOG_DEBUG, "Starting transport thread");
-
 	nCount = 0;
 	handles[nCount++] = transport->stopEvent;
 	handles[nCount++] = transport->connectedEvent;
-
 	status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 	if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
@@ -1161,7 +1185,6 @@ static void* transport_client_thread(void* arg)
 rdpTransport* transport_new(rdpContext* context)
 {
 	rdpTransport* transport;
-
 	transport = (rdpTransport*) calloc(1, sizeof(rdpTransport));
 
 	if (!transport)
@@ -1169,7 +1192,6 @@ rdpTransport* transport_new(rdpContext* context)
 
 	transport->context = context;
 	transport->settings = context->settings;
-
 	WLog_Init();
 	transport->log = WLog_Get(TAG);
 
@@ -1237,13 +1259,10 @@ void transport_free(rdpTransport* transport)
 	if (!transport)
 		return;
 
-	transport_stop(transport);
+	transport_disconnect(transport);
 
-	if (transport->tsg)
-	{
-		tsg_free(transport->tsg);
-		transport->tsg = NULL;
-	}
+	if (transport->TcpIn)
+		freerdp_tcp_free(transport->TcpIn);
 
 	if (transport->ReceiveBuffer)
 		Stream_Release(transport->ReceiveBuffer);
@@ -1251,33 +1270,7 @@ void transport_free(rdpTransport* transport)
 	StreamPool_Free(transport->ReceivePool);
 	CloseHandle(transport->ReceiveEvent);
 	CloseHandle(transport->connectedEvent);
-
-	if (transport->TlsIn)
-		tls_free(transport->TlsIn);
-
-	if (transport->TlsOut != transport->TlsIn)
-		tls_free(transport->TlsOut);
-
-	transport->TlsIn = NULL;
-	transport->TlsOut = NULL;
-
-	if (transport->TcpIn)
-		freerdp_tcp_free(transport->TcpIn);
-
-	if (transport->TcpOut != transport->TcpIn)
-		freerdp_tcp_free(transport->TcpOut);
-
-	transport->TcpIn = NULL;
-	transport->TcpOut = NULL;
-
-	if (transport->TsgTls)
-	{
-		tls_free(transport->TsgTls);
-		transport->TsgTls = NULL;
-	}
-
 	DeleteCriticalSection(&(transport->ReadLock));
 	DeleteCriticalSection(&(transport->WriteLock));
-
 	free(transport);
 }

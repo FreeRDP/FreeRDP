@@ -3,6 +3,7 @@
  * RDP Core
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1235,6 +1236,23 @@ int rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 	return freerdp_channel_send(rdp, channelId, data, size);
 }
 
+BOOL rdp_send_error_info(rdpRdp* rdp)
+{
+	wStream* s;
+	BOOL status;
+
+	if (rdp->errorInfo == ERRINFO_SUCCESS)
+		return TRUE;
+
+	s = rdp_data_pdu_init(rdp);
+
+	Stream_Write_UINT32(s, rdp->errorInfo); /* error id (4 bytes) */
+
+	status = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_ERROR_INFO, 0);
+
+	return status;
+}
+
 /**
  * Set non-blocking mode information.
  * @param rdp RDP module
@@ -1421,6 +1439,10 @@ void rdp_reset(rdpRdp* rdp)
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);
 	rdp->transport->layer = TRANSPORT_LAYER_TCP;
+	rdp->disconnect = FALSE;
+	rdp->errorInfo = 0;
+	rdp->deactivation_reactivation = 0;
+	rdp->finalize_sc_pdus = 0;
 }
 
 /**
