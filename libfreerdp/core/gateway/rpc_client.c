@@ -512,7 +512,10 @@ static void* rpc_client_thread(void* arg)
 		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
 		{
 			if (rpc_client_on_read_event(rpc) < 0)
+			{
+				rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
 				break;
+			}
 		}
 
 		if (WaitForSingleObject(Queue_Event(rpc->client->SendQueue), 0) == WAIT_OBJECT_0)
