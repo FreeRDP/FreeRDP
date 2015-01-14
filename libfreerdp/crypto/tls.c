@@ -876,7 +876,9 @@ BIO *findBufferedBio(BIO *front)
 
 int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 {
-	int status, nchunks;
+	int i;
+	int status;
+	int nchunks;
 	int committedBytes;
 	rdpTcp *tcp;
 #ifdef HAVE_POLL_H
@@ -968,11 +970,19 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 	while (TRUE);
 
 	/* make sure the output buffer is empty */
-	committedBytes = 0;
-	while ((nchunks = ringbuffer_peek(&tcp->xmitBuffer, chunks, ringbuffer_used(&tcp->xmitBuffer))))
+	
+	do
 	{
-		int i;
-
+		committedBytes = 0;
+		
+		if (ringbuffer_used(&tcp->xmitBuffer) < 1)
+			break;
+		
+		nchunks = ringbuffer_peek(&tcp->xmitBuffer, chunks, ringbuffer_used(&tcp->xmitBuffer));
+		
+		if (nchunks < 1)
+			break;
+		
 		for (i = 0; i < nchunks; i++)
 		{
 			while (chunks[i].size)
@@ -1013,14 +1023,17 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 			}
 
 		}
-	}
-
-	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
-	return length;
-
+		
+		ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
+		continue;
+		
 out_fail:
-	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
-	return -1;
+		ringbuffer_commit_read_bytes(&tcp->xmitBuffer, committedBytes);
+		return -1;
+	}
+	while (TRUE);
+
+	return length;
 }
 
 int tls_set_alert_code(rdpTls* tls, int level, int description)
