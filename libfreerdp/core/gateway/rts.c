@@ -31,7 +31,7 @@
 
 #include "rts.h"
 
-#define TAG FREERDP_TAG("core.gateway.rts")
+#define TAG FREERDP_TAG("core.gateway")
 
 /**
  * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
@@ -279,9 +279,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	return TRUE;
 }
 
-#ifdef WITH_DEBUG_RTS
-
-static const char* const RTS_CMD_STRINGS[] =
+const char* const RTS_CMD_STRINGS[] =
 {
 	"ReceiveWindowSize",
 	"FlowControlAck",
@@ -299,8 +297,6 @@ static const char* const RTS_CMD_STRINGS[] =
 	"Destination",
 	"PingTrafficSentNotify"
 };
-
-#endif
 
 /**
  * RTS PDU Header
@@ -690,7 +686,7 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_NONE;
 	header.NumberOfCommands = 4;
 
-	DEBUG_RPC("Sending CONN_A1 RTS PDU");
+	WLog_DBG(TAG, "Sending CONN_A1 RTS PDU");
 
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->Cookie));
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
@@ -746,7 +742,7 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_NONE;
 	header.NumberOfCommands = 6;
 
-	DEBUG_RPC("Sending CONN_B1 RTS PDU");
+	WLog_DBG(TAG, "Sending CONN_B1 RTS PDU");
 
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie));
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->AssociationGroupId));
@@ -816,7 +812,7 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_OTHER_CMD;
 	header.NumberOfCommands = 1;
 
-	DEBUG_RPC("Sending Keep-Alive RTS PDU");
+	WLog_DBG(TAG, "Sending Keep-Alive RTS PDU");
 
 	buffer = (BYTE*) malloc(header.frag_length);
 	if (!buffer)
@@ -850,7 +846,7 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_OTHER_CMD;
 	header.NumberOfCommands = 2;
 
-	DEBUG_RPC("Sending FlowControlAck RTS PDU");
+	WLog_DBG(TAG, "Sending FlowControlAck RTS PDU");
 
 	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->BytesReceived;
 	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
@@ -860,6 +856,7 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 			rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
 
 	buffer = (BYTE*) malloc(header.frag_length);
+
 	if (!buffer)
 		return -1;
 
@@ -873,9 +870,10 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	if (rpc_in_write(rpc, buffer, length) < 0)
 	{
-		free (buffer);
+		free(buffer);
 		return -1;
 	}
+
 	free(buffer);
 
 	return 0;
@@ -934,9 +932,9 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	WLog_ERR(TAG,  "Destination: %d BytesReceived: %d AvailableWindow: %d",
+	WLog_ERR(TAG, "Destination: %d BytesReceived: %d AvailableWindow: %d",
 			 Destination, BytesReceived, AvailableWindow);
-	WLog_ERR(TAG,  "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	WLog_ERR(TAG, "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -956,9 +954,10 @@ int rts_send_ping_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_PING;
 	header.NumberOfCommands = 0;
 
-	DEBUG_RPC("Sending Ping RTS PDU");
+	WLog_DBG(TAG, "Sending Ping RTS PDU");
 
 	buffer = (BYTE*) malloc(header.frag_length);
+
 	if (!buffer)
 		return -1;
 
@@ -1051,6 +1050,67 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 	return CommandLength;
 }
 
+int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
+{
+	BYTE* buffer;
+	rpcconn_rts_hdr_t header;
+	UINT32 ReceiveWindowSize;
+	BYTE* VirtualConnectionCookie;
+	BYTE* PredecessorChannelCookie;
+	BYTE* SuccessorChannelCookie;
+
+	rts_pdu_header_init(&header);
+	header.frag_length = 96;
+	header.Flags = RTS_FLAG_RECYCLE_CHANNEL;
+	header.NumberOfCommands = 5;
+
+	WLog_DBG(TAG, "Sending OUT R1/A3 RTS PDU");
+
+	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->NonDefaultOutChannelCookie));
+
+	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
+	PredecessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
+	SuccessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->NonDefaultOutChannelCookie);
+	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
+
+	buffer = (BYTE*) malloc(header.frag_length);
+
+	if (!buffer)
+		return -1;
+
+	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
+	rts_version_command_write(&buffer[20]); /* Version (8 bytes) */
+	rts_cookie_command_write(&buffer[28], VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
+	rts_cookie_command_write(&buffer[48], PredecessorChannelCookie); /* PredecessorChannelCookie (20 bytes) */
+	rts_cookie_command_write(&buffer[68], SuccessorChannelCookie); /* SuccessorChannelCookie (20 bytes) */
+	rts_receive_window_size_command_write(&buffer[88], ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
+
+	rpc_out_write(rpc, buffer, header.frag_length);
+
+	free(buffer);
+
+	return 0;
+}
+
+int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+{
+	UINT32 offset;
+	UINT32 Destination = 0;
+
+	offset = 24;
+	offset += rts_destination_command_read(rpc, &buffer[offset], length - offset, &Destination) + 4;
+
+	WLog_DBG(TAG, "Destination: %d", Destination);
+
+	WLog_ERR(TAG, "TS Gateway channel recycling is incomplete");
+
+	rpc_http_send_replacement_out_channel_request(rpc);
+
+	rts_send_OUT_R1_A3_pdu(rpc);
+
+	return 0;
+}
+
 int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
 	UINT32 SignatureId;
@@ -1066,10 +1126,16 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	{
 		case RTS_PDU_FLOW_CONTROL_ACK:
 			return rts_recv_flow_control_ack_pdu(rpc, buffer, length);
+
 		case RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION:
 			return rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
+
 		case RTS_PDU_PING:
 			return rts_send_ping_pdu(rpc);
+
+		case RTS_PDU_OUT_R1_A2:
+			return rts_recv_OUT_R1_A2_pdu(rpc, buffer, length);
+
 		default:
 			WLog_ERR(TAG, "unimplemented signature id: 0x%08X", SignatureId);
 			rts_print_pdu_signature(rpc, &signature);

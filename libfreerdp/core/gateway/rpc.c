@@ -50,7 +50,7 @@
 
 #include "rpc.h"
 
-#define TAG FREERDP_TAG("core.gateway.rpc")
+#define TAG FREERDP_TAG("core.gateway")
 
 /* Security Verification Trailer Signature */
 
@@ -347,11 +347,6 @@ int rpc_out_write(rdpRpc* rpc, const BYTE* data, int length)
 int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length)
 {
 	int status;
-#ifdef WITH_DEBUG_TSG
-	WLog_DBG(TAG,  "Sending PDU (length: %d)", length);
-	rpc_pdu_header_print((rpcconn_hdr_t*) data);
-	winpr_HexDump(TAG, WLOG_DEBUG, data, length);
-#endif
 	status = tls_write_all(rpc->TlsIn, data, length);
 	return status;
 }
@@ -503,6 +498,7 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 	connection->DefaultInChannel->PingOriginator.ConnectionTimeout = 30;
 	connection->DefaultInChannel->PingOriginator.KeepAliveInterval = 0;
 	connection->DefaultInChannel->Mutex = CreateMutex(NULL, FALSE, NULL);
+
 	connection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_INITIAL;
 	connection->DefaultOutChannel->BytesReceived = 0;
 	connection->DefaultOutChannel->ReceiverAvailableWindow = rpc->ReceiveWindow;

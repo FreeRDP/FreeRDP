@@ -133,12 +133,15 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
 			rpc_client_fragment_pool_return(rpc, fragment);
 			return 0;
+
 		case PTYPE_FAULT:
 			rpc_recv_fault_pdu(header);
 			Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
 			return -1;
+
 		case PTYPE_RESPONSE:
 			break;
+
 		default:
 			WLog_ERR(TAG, "unexpected RPC PDU type %d", header->common.ptype);
 			Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
@@ -157,13 +160,13 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (StubLength == 4)
 	{
-		//WLog_ERR(TAG,  "Ignoring TsProxySendToServer Response");
-		//WLog_DBG(TAG, "Got stub length 4 with flags %d and callid %d", header->common.pfc_flags, header->common.call_id);
-
 		/* received a disconnect request from the server? */
 		if ((header->common.call_id == rpc->PipeCallId) && (header->common.pfc_flags & PFC_LAST_FRAG))
 		{
 			TerminateEventArgs e;
+			
+			rpc->result = *((UINT32*) &buffer[StubOffset]);
+			
 			rpc->context->rdp->disconnect = TRUE;
 			rpc->transport->tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
 			EventArgsInit(&e, "freerdp");
@@ -194,7 +197,6 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
 	{
-		//WLog_ERR(TAG,  "Sending Flow Control Ack PDU");
 		rts_send_flow_control_ack_pdu(rpc);
 	}
 
@@ -238,10 +240,7 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 					RPC_COMMON_FIELDS_LENGTH - Stream_GetPosition(rpc->client->RecvFrag));
 
 			if (status < 0)
-			{
-				WLog_ERR(TAG, "rpc_client_frag_read: error reading header");
 				return -1;
-			}
 
 			if (!status)
 				return 0;
@@ -437,6 +436,7 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 	RPC_PDU* pdu;
 	DWORD dwMilliseconds;
 	DWORD result;
+
 	dwMilliseconds = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT * 4 : 0;
 	result = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
 
@@ -449,20 +449,8 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 	if (result != WAIT_OBJECT_0)
 		return NULL;
 
-	pdu = (RPC_PDU*)Queue_Dequeue(rpc->client->ReceiveQueue);
-#ifdef WITH_DEBUG_TSG
+	pdu = (RPC_PDU*) Queue_Dequeue(rpc->client->ReceiveQueue);
 
-	if (pdu)
-	{
-		WLog_DBG(TAG, "Receiving PDU (length: %d, CallId: %d)", pdu->s->length, pdu->CallId);
-		winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
-	}
-	else
-	{
-		WLog_DBG(TAG, "Receiving a NULL PDU");
-	}
-
-#endif
 	return pdu;
 }
 
@@ -470,6 +458,7 @@ RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc)
 {
 	DWORD dwMilliseconds;
 	DWORD result;
+
 	dwMilliseconds = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT : 0;
 	result = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
 
@@ -520,7 +509,10 @@ static void* rpc_client_thread(void* arg)
 		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
 		{
 			if (rpc_client_on_read_event(rpc) < 0)
+			{
+				rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
 				break;
+			}
 		}
 
 		if (WaitForSingleObject(Queue_Event(rpc->client->SendQueue), 0) == WAIT_OBJECT_0)

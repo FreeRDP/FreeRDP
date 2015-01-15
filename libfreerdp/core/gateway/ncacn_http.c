@@ -31,15 +31,19 @@
 
 #include <openssl/rand.h>
 
+#define TAG FREERDP_TAG("core.gateway")
+
 wStream* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_length, TSG_CHANNEL channel)
 {
 	wStream* s;
-	char* base64_ntlm_token;
 	HttpContext* http_context;
 	HttpRequest* http_request;
+	char* base64_ntlm_token = NULL;
 
 	http_request = http_request_new();
-	base64_ntlm_token = crypto_base64_encode(ntlm_token->pvBuffer, ntlm_token->cbBuffer);
+
+	if (ntlm_token)
+		base64_ntlm_token = crypto_base64_encode(ntlm_token->pvBuffer, ntlm_token->cbBuffer);
 
 	if (channel == TSG_CHANNEL_IN)
 	{
@@ -59,8 +63,11 @@ wStream* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_l
 	http_request->ContentLength = content_length;
 	http_request_set_uri(http_request, http_context->URI);
 
-	http_request_set_auth_scheme(http_request, "NTLM");
-	http_request_set_auth_param(http_request, base64_ntlm_token);
+	if (base64_ntlm_token)
+	{
+		http_request_set_auth_scheme(http_request, "NTLM");
+		http_request_set_auth_param(http_request, base64_ntlm_token);
+	}
 
 	s = http_request_write(http_context, http_request);
 	http_request_free(http_request);
@@ -83,7 +90,7 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 
 	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], content_length, TSG_CHANNEL_IN);
 
-	DEBUG_RPC("\n%s", Stream_Buffer(s));
+	WLog_DBG(TAG, "\n%s", Stream_Buffer(s));
 	rpc_in_write(rpc, Stream_Buffer(s), Stream_Length(s));
 	Stream_Free(s, TRUE);
 
@@ -215,7 +222,7 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 
 	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], content_length, TSG_CHANNEL_OUT);
 
-	DEBUG_RPC("\n%s", Stream_Buffer(s));
+	WLog_DBG(TAG, "\n%s", Stream_Buffer(s));
 	rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
 	Stream_Free(s, TRUE);
 
@@ -245,6 +252,22 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
 	
 	http_response_free(http_response);
+
+	return 0;
+}
+
+int rpc_http_send_replacement_out_channel_request(rdpRpc* rpc)
+{
+	wStream* s;
+	int content_length;
+
+	content_length = 120;
+
+	s = rpc_ntlm_http_request(rpc, NULL, content_length, TSG_CHANNEL_OUT);
+
+	WLog_DBG(TAG, "\n%s", Stream_Buffer(s));
+	rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
+	Stream_Free(s, TRUE);
 
 	return 0;
 }

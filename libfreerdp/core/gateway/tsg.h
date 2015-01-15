@@ -317,11 +317,4 @@ BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking);
 rdpTsg* tsg_new(rdpTransport* transport);
 void tsg_free(rdpTsg* tsg);
 
-#define TSG_TAG FREERDP_TAG("core.gateway.tsg")
-#ifdef WITH_DEBUG_TSG
-#define DEBUG_TSG(fmt, ...) WLog_DBG(TSG_TAG, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_TSG(fmt, ...) do { } while (0)
-#endif
-
 #endif /* FREERDP_CORE_TSG_H */
