@@ -81,7 +81,7 @@ struct xf_context
 
 	GC gc;
 	int bpp;
-	int xfds;
+	HANDLE xev;
 	int depth;
 	int width;
 	int height;
