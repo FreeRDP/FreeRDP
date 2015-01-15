@@ -201,7 +201,7 @@ BYTE* ringbuffer_ensure_linear_write(RingBuffer* rb, size_t sz)
 
 	if (rb->writePtr == rb->readPtr)
 	{
-		rb->writePtr = rb->readPtr = NULL;
+		rb->writePtr = rb->readPtr = 0;
 	}
 
 	if (rb->writePtr + sz < rb->size)
