@@ -510,12 +510,12 @@ void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name)
 {
 	XStoreName(xfc->display, appWindow->handle, name);
 	const size_t i = strlen(name);
-	XStoreName(xfc->display, window->handle, name);
+	XStoreName(xfc->display, appWindow->handle, name);
 
 	Atom wm_Name = XInternAtom(xfc->display, "_NET_WM_NAME", FALSE);
 	Atom utf8Str = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
 
-	XChangeProperty(xfc->display, window->handle, wm_Name, utf8Str, 8,
+	XChangeProperty(xfc->display, appWindow->handle, wm_Name, utf8Str, 8,
 	                PropModeReplace, (unsigned char *)name, i);
 }
 
