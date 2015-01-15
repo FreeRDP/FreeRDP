@@ -509,6 +509,14 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, char* name)
 {
 	XStoreName(xfc->display, appWindow->handle, name);
+	const size_t i = strlen(name);
+	XStoreName(xfc->display, appWindow->handle, name);
+
+	Atom wm_Name = XInternAtom(xfc->display, "_NET_WM_NAME", FALSE);
+	Atom utf8Str = XInternAtom(xfc->display, "UTF8_STRING", FALSE);
+
+	XChangeProperty(xfc->display, appWindow->handle, wm_Name, utf8Str, 8,
+	                PropModeReplace, (unsigned char *)name, i);
 }
 
 void xf_FixWindowCoordinates(xfContext* xfc, int* x, int* y, int* width, int* height)
