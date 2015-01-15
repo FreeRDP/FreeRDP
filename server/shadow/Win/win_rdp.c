@@ -191,37 +191,16 @@ void* shw_client_thread(void* arg)
 	channels = instance->context->channels;
 
 	while (1)
-	{
-		rcount = 0;
-		wcount = 0;
+	{	
+		DWORD ev = freerdp_wait_for_event(instance, INFINITE);
 
-		if (!freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount))
-		{
-			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
-			break;
-		}
-
-		if (!freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount))
-		{
-			WLog_ERR(TAG, "Failed to get channels file descriptor");
-			break;
-		}
-
-		fds_count = 0;
-		
-		for (index = 0; index < rcount; index++)
-			fds[fds_count++] = rfds[index];
-
-		for (index = 0; index < wcount; index++)
-			fds[fds_count++] = wfds[index];
-
-		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
+		if (WAIT_FAILED == ev)
 		{
 			WLog_ERR(TAG, "MsgWaitForMultipleObjects failure: 0x%08X", GetLastError());
 			break;
 		}
 
-		if (!freerdp_check_fds(instance))
+		if (!freerdp_check_handles(instance))
 		{
 			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
@@ -229,12 +208,6 @@ void* shw_client_thread(void* arg)
 
 		if (freerdp_shall_disconnect(instance))	
 		{
-			break;
-		}
-
-		if (!freerdp_channels_check_fds(channels, instance))
-		{
-			WLog_ERR(TAG, "Failed to check channels file descriptor");
 			break;
 		}
 	}
