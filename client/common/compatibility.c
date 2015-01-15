@@ -204,11 +204,10 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 				return -1;
 			}
 
-			if (settings)
-			{
-				freerdp_client_old_parse_hostname((char*) argv[index],
-						&settings->ServerHostname, &settings->ServerPort);
-			}
+			freerdp_client_old_parse_hostname((char*) argv[index],
+					&settings->ServerHostname, &settings->ServerPort);
+
+			return 2;
 		}
 		else
 		{
