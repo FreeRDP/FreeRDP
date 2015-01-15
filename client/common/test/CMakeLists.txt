@@ -6,7 +6,8 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
 	TestClientRdpFile.c
-	TestClientChannels.c)
+	TestClientChannels.c
+	TestClientCmdLine.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
@@ -14,7 +15,7 @@ create_test_sourcelist(${MODULE_PREFIX}_SRCS
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client)
+set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} freerdp-client freerdp)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
