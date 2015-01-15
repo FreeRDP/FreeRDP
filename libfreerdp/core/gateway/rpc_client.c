@@ -163,9 +163,10 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 		/* received a disconnect request from the server? */
 		if ((header->common.call_id == rpc->PipeCallId) && (header->common.pfc_flags & PFC_LAST_FRAG))
 		{
+			TerminateEventArgs e;
+			
 			rpc->result = *((UINT32*) &buffer[StubOffset]);
 			
-			TerminateEventArgs e;
 			rpc->context->rdp->disconnect = TRUE;
 			rpc->transport->tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
 			EventArgsInit(&e, "freerdp");
