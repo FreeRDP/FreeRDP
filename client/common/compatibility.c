@@ -266,6 +266,9 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 					if (p != NULL)
 					{
 						p = strchr(p, ':');
+					}
+					if (p != NULL)
+					{
 						length = (int) (p - a);
 						args->argv[j + 1] = (char*) malloc(length + 1);
 						CopyMemory(args->argv[j + 1], a, length);
