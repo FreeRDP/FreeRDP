@@ -150,7 +150,7 @@ DWORD mac_client_thread(void* param)
 
 		while (1)
 		{
-			status = freerdp_wait_for_events(instance, INFINITE);
+			status = freerdp_wait_for_event(instance, INFINITE);
 
 			if (WaitForSingleObject(mfc->stopEvent, 0) == WAIT_OBJECT_0)
 			{
