@@ -17,7 +17,7 @@
 BOOL ios_events_send(mfInfo* mfi, NSDictionary * event_description);
 
 // For connection runloop: use to poll for queued input events
-BOOL ios_events_check_handles(mfInfo* mfi, fd_set* rfds);
+BOOL ios_events_check_handles(mfInfo* mfi);
 BOOL ios_events_create_pipe(mfInfo* mfi);
 void ios_events_free_pipe(mfInfo* mfi);
 
