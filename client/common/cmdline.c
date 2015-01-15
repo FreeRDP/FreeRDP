@@ -919,8 +919,9 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 		return compatibility;
 
 	/* Check, if this may be windows style syntax... */
-	if (windows_cli_count && (windows_cli_count >= posix_cli_count))
+	if (windows_cli_count && (windows_cli_count >= posix_cli_count) || (windows_cli_status <= COMMAND_LINE_STATUS_PRINT))
 	{
+		windows_cli_count = 1;
 		*flags = COMMAND_LINE_SEPARATOR_COLON;
 		*flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
 	}
