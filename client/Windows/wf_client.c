@@ -559,16 +559,6 @@ int wf_receive_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int
 	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
 }
 
-BOOL wf_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount)
-{
-	return TRUE;
-}
-
-BOOL wf_check_fds(freerdp* instance)
-{
-	return TRUE;
-}
-
 static BOOL wf_auto_reconnect(freerdp* instance)
 {
 	wfContext* wfc = (wfContext *)instance->context;
@@ -644,61 +634,27 @@ void* wf_input_thread(void* arg)
 	return NULL;
 }
 
-void* wf_channels_thread(void* arg)
-{
-	int status;
-	HANDLE event;
-	rdpChannels* channels;
-	freerdp* instance = (freerdp*) arg;
-
-	channels = instance->context->channels;
-	event = freerdp_channels_get_event_handle(instance);
-
-	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
-	{
-		status = freerdp_channels_process_pending_messages(instance);
-
-		if (!status)
-			break;
-	}
-
-	ExitThread(0);
-	return NULL;
-}
-
 DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
 	MSG msg;
-	int index;
-	int rcount;
-	int wcount;
 	int width;
 	int height;
 	BOOL msg_ret;
 	int quit_msg;
-	void* rfds[32];
-	void* wfds[32];
-	int fds_count;
-	HANDLE fds[64];
 	wfContext* wfc;
 	freerdp* instance;
 	rdpChannels* channels;
 	rdpSettings* settings;
 
 	BOOL async_input;
-	BOOL async_channels;
 	BOOL async_transport;
 	HANDLE input_thread;
-	HANDLE channels_thread;
 
 	instance = (freerdp*) lpParam;
 	assert(NULL != instance);
 
 	wfc = (wfContext*) instance->context;
 	assert(NULL != wfc);
-
-	ZeroMemory(rfds, sizeof(rfds));
-	ZeroMemory(wfds, sizeof(wfds));
 
 	if (freerdp_connect(instance) != TRUE)
 		return 0;
@@ -707,7 +663,6 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	settings = instance->context->settings;
 
 	async_input = settings->AsyncInput;
-	async_channels = settings->AsyncChannels;
 	async_transport = settings->AsyncTransport;
 
 	if (async_input)
@@ -717,15 +672,9 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 				instance, 0, NULL);
 	}
 
-	if (async_channels)
-	{
-		channels_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) wf_channels_thread, instance, 0, NULL);
-	}
-
 	while (1)
 	{
-		rcount = 0;
-		wcount = 0;
+		DWORD ev;
 
 		if (freerdp_focus_required(instance))
 		{
@@ -733,56 +682,11 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 			wf_event_focus_in(wfc);
 		}
 
-		if (!async_transport)
-		{
-			if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
-			{
-				WLog_ERR(TAG,  "Failed to get FreeRDP file descriptor");
-				break;
-			}
-		}
-		if (wf_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
-		{
-			WLog_ERR(TAG,  "Failed to get wfreerdp file descriptor");
-			break;
-		}
-
-		if (!async_channels)
-		{
-			if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
-			{
-				WLog_ERR(TAG,  "Failed to get channel manager file descriptor");
-				break;
-			}
-		}
-		fds_count = 0;
-		/* setup read fds */
-		for (index = 0; index < rcount; index++)
-		{
-			fds[fds_count++] = rfds[index];
-		}
-		/* setup write fds */
-		for (index = 0; index < wcount; index++)
-		{
-			fds[fds_count++] = wfds[index];
-		}
-		/* exit if nothing to do */
-		if (fds_count == 0)
-		{
-			WLog_ERR(TAG,  "wfreerdp_run: fds_count is zero");
-			//break;
-		}
-
-		/* do the wait */
-		if (MsgWaitForMultipleObjects(fds_count, fds, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
-		{
-			WLog_ERR(TAG,  "wfreerdp_run: WaitForMultipleObjects failed: 0x%04X", GetLastError());
-			break;
-		}
+		ev = freerdp_wait_for_event(instance, INFINITE);
 
 		if (!async_transport)
 		{
-			if (freerdp_check_fds(instance) != TRUE)
+			if (freerdp_check_handles(instance) != TRUE)
 			{
 				if (wf_auto_reconnect(instance))
 					continue;
@@ -794,20 +698,6 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		if (freerdp_shall_disconnect(instance))	
 		{
 			break;
-		}
-		if (wf_check_fds(instance) != TRUE)
-		{
-			WLog_ERR(TAG,  "Failed to check wfreerdp file descriptor");
-			break;
-		}
-
-		if (!async_channels)
-		{
-			if (freerdp_channels_check_fds(channels, instance) != TRUE)
-			{
-				WLog_ERR(TAG,  "Failed to check channel manager file descriptor");
-				break;
-			}
 		}
 
 		quit_msg = FALSE;
@@ -865,12 +755,6 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 		MessageQueue_PostQuit(input_queue, 0);
 		WaitForSingleObject(input_thread, INFINITE);
 		CloseHandle(input_thread);
-	}
-
-	if (async_channels)
-	{
-		WaitForSingleObject(channels_thread, INFINITE);
-		CloseHandle(channels_thread);
 	}
 
 	freerdp_disconnect(instance);
