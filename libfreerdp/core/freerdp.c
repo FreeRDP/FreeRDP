@@ -211,7 +211,7 @@ BOOL freerdp_add_handle(freerdp* instance, HANDLE handle)
 
 BOOL freerdp_remove_handle(freerdp* instance, HANDLE handle)
 {
-	BOOL rc;;
+	BOOL rc;
 	rdpContext* ctx = (rdpContext*)instance->context;
 	SetEvent(ctx->insertHandle);
 	ArrayList_Lock(ctx->eventHandles);
