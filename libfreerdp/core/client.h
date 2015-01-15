@@ -104,6 +104,9 @@ struct rdp_channels
 	wMessageQueue* queue;
 
 	DrdynvcClientContext* drdynvc;
+
+	HANDLE* thread;
+	HANDLE* stopEvent;
 };
 
 #endif /* FREERDP_CORE_CLIENT_H */
