@@ -509,7 +509,7 @@ static char** freerdp_command_line_parse_comma_separated_values(char* list, int*
 	int index;
 	int nCommas;
 
-	nArgs = nCommas = 0;
+	nCommas = 0;
 
 	assert(NULL != count);
 
@@ -1080,8 +1080,10 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 	if (posix_cli_status <= COMMAND_LINE_STATUS_PRINT)
 		return compatibility;
 
-	if (windows_cli_count >= posix_cli_count)
+	/* Check, if this may be windows style syntax... */
+	if (windows_cli_count && (windows_cli_count >= posix_cli_count) || (windows_cli_status <= COMMAND_LINE_STATUS_PRINT))
 	{
+		windows_cli_count = 1;
 		*flags = COMMAND_LINE_SEPARATOR_COLON;
 		*flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
 	}
@@ -1189,7 +1191,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			return status;
 	}
 
-	arg = CommandLineFindArgumentA(args, "v");
+	CommandLineFindArgumentA(args, "v");
 
 	arg = args;
 
