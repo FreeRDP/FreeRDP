@@ -54,6 +54,7 @@ typedef struct df_pointer dfPointer;
 
 struct df_info
 {
+	HANDLE xev;
 	int read_fds;
 	DFBResult err;
 	IDirectFB* dfb;
