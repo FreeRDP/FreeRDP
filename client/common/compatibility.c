@@ -237,8 +237,6 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 		args->argv = (char**) calloc(argc, sizeof(char*));
 		args->argc = 1;
 
-		args->argv[0] = _strdup(argv[t]);
-
 		if ((index < argc - 1) && strcmp("--data", argv[index + 1]) == 0)
 		{
 			i = 0;
@@ -248,6 +246,7 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 			{
 				args_handled ++;
 				args->argc = 1;
+				args->argv[0] = _strdup(argv[t]);
 
 				for (j = 0, p = (char*) argv[index]; (j < 4) && (p != NULL); j++)
 				{
@@ -295,6 +294,9 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 					free(args->argv[i]);
 				memset(args->argv, 0, argc * sizeof(char*));
 
+				for (i = 0; i < args->argc; i++)
+					free(args->argv[i]);
+				memset(args->argv, 0, argc * sizeof(char*));
 				index++;
 				i++;
 			}
