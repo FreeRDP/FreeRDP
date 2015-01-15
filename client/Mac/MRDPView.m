@@ -56,7 +56,6 @@ void mac_begin_paint(rdpContext* context);
 void mac_end_paint(rdpContext* context);
 void mac_desktop_resize(rdpContext* context);
 
-static void update_activity_cb(freerdp* instance);
 static void input_activity_cb(freerdp* instance);
 
 DWORD mac_client_thread(void* param);
@@ -180,42 +179,19 @@ DWORD mac_client_thread(void* param)
 
 		events[nCount++] = mfc->stopEvent;
 
-		if (settings->AsyncUpdate)
-		{
-			updateThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mac_client_update_thread, context, 0, NULL);
-		}
-		else
-		{
-			events[nCount++] = updateEvent = freerdp_get_message_queue_event_handle(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-		}
-
 		if (settings->AsyncInput)
 		{
 			inputThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) mac_client_input_thread, context, 0, NULL);
 		}
-		else
-		{
-			events[nCount++] = inputEvent = freerdp_get_message_queue_event_handle(instance, FREERDP_INPUT_MESSAGE_QUEUE);
-		}
-
-		events[nCount++] = channelsEvent = freerdp_channels_get_event_handle(instance);
 
 		while (1)
 		{
-			status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+			status = freerdp_wait_for_events(instance, INFINITE);
 
 			if (WaitForSingleObject(mfc->stopEvent, 0) == WAIT_OBJECT_0)
 			{
 				freerdp_disconnect(instance);
 				break;
-			}
-
-			if (!settings->AsyncUpdate)
-			{
-				if (WaitForSingleObject(updateEvent, 0) == WAIT_OBJECT_0)
-				{
-					update_activity_cb(instance);
-				}
 			}
 
 			if (!settings->AsyncInput)
@@ -225,19 +201,6 @@ DWORD mac_client_thread(void* param)
 					input_activity_cb(instance);
 				}
 			}
-
-			if (WaitForSingleObject(channelsEvent, 0) == WAIT_OBJECT_0)
-			{
-				freerdp_channels_process_pending_messages(instance);
-			}
-		}
-
-		if (settings->AsyncUpdate)
-		{
-			wMessageQueue* updateQueue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-			MessageQueue_PostQuit(updateQueue, 0);
-			WaitForSingleObject(updateThread, INFINITE);
-			CloseHandle(updateThread);
 		}
 
 		if (settings->AsyncInput)
@@ -1126,30 +1089,6 @@ void mac_desktop_resize(rdpContext* context)
 	mfc->height = settings->DesktopHeight;
 	gdi_resize(context->gdi, mfc->width, mfc->height);
 	view->bitmap_context = mac_create_bitmap_context(context);
-}
-
-static void update_activity_cb(freerdp* instance)
-{
-	int status;
-	wMessage message;
-	wMessageQueue* queue;
-	status = 1;
-	queue = freerdp_get_message_queue(instance, FREERDP_UPDATE_MESSAGE_QUEUE);
-
-	if (queue)
-	{
-		while (MessageQueue_Peek(queue, &message, TRUE))
-		{
-			status = freerdp_message_queue_process_message(instance, FREERDP_UPDATE_MESSAGE_QUEUE, &message);
-
-			if (!status)
-				break;
-		}
-	}
-	else
-	{
-		WLog_ERR(TAG,  "update_activity_cb: No queue!");
-	}
 }
 
 static void input_activity_cb(freerdp* instance)
