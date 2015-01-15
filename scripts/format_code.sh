@@ -30,9 +30,9 @@ if [ $# -le 0 ]; then
   exit 2
 fi
 
-$ASTYLE --lineend=linux --mode=c --indent=force-tab=4 --brackets=linux --pad-header \
+$ASTYLE --lineend=linux --mode=c --indent=force-tab=4 --pad-header \
 							   --indent-switches --indent-cases --indent-preprocessor \
 							   --indent-col1-comments --delete-empty-lines --break-closing-brackets \
-							   --align-pointer=type --indent-labels --brackets=break \
+							   --align-pointer=type --indent-labels \
 							   --unpad-paren --break-blocks $@
 							   exit $?
