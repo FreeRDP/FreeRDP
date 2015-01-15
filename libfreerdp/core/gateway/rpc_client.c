@@ -93,7 +93,6 @@ int rpc_client_receive_pool_return(rdpRpc* rpc, RPC_PDU* pdu)
 int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 {
 	BYTE* buffer;
-	UINT32 result;
 	UINT32 StubOffset;
 	UINT32 StubLength;
 	wStream* fragment;
@@ -161,12 +160,10 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	if (StubLength == 4)
 	{
-		//WLog_DBG(TAG, "Got stub length 4 with flags %d and callid %d", header->common.pfc_flags, header->common.call_id);
-
 		/* received a disconnect request from the server? */
 		if ((header->common.call_id == rpc->PipeCallId) && (header->common.pfc_flags & PFC_LAST_FRAG))
 		{
-			result = *((UINT32*) &buffer[StubOffset]); /* TODO: use this status code */
+			rpc->result = *((UINT32*) &buffer[StubOffset]);
 			
 			TerminateEventArgs e;
 			rpc->context->rdp->disconnect = TRUE;
@@ -242,10 +239,7 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 					RPC_COMMON_FIELDS_LENGTH - Stream_GetPosition(rpc->client->RecvFrag));
 
 			if (status < 0)
-			{
-				WLog_ERR(TAG, "rpc_client_frag_read: error reading header");
 				return -1;
-			}
 
 			if (!status)
 				return 0;

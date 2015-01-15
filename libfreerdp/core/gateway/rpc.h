@@ -721,6 +721,8 @@ typedef struct rpc_client RpcClient;
 struct rdp_rpc
 {
 	RPC_CLIENT_STATE State;
+	
+	UINT32 result;
 
 	rdpTls* TlsIn;
 	rdpTls* TlsOut;
