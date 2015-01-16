@@ -365,12 +365,9 @@ int shadow_client_send_surface_bits(rdpShadowClient* client, rdpShadowSurface* s
 	if (server->shareSubRect)
 	{
 		int subX, subY;
-		int subWidth, subHeight;
 
 		subX = server->subRect.left;
 		subY = server->subRect.top;
-		subWidth = server->subRect.right - server->subRect.left;
-		subHeight = server->subRect.bottom - server->subRect.top;
 
 		nXSrc -= subX;
 		nYSrc -= subY;
@@ -483,14 +480,12 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 	UINT32 updateSizeEstimate;
 	BITMAP_DATA* bitmapData;
 	BITMAP_UPDATE bitmapUpdate;
-	rdpShadowServer* server;
 	rdpShadowEncoder* encoder;
 
 	context = (rdpContext*) client;
 	update = context->update;
 	settings = context->settings;
 
-	server = client->server;
 	encoder = client->encoder;
 
 	maxUpdateSize = settings->MultifragMaxRequestSize;
@@ -638,7 +633,6 @@ int shadow_client_send_bitmap_update(rdpShadowClient* client, rdpShadowSurface* 
 				if ((i + 1) >= k)
 				{
 					CopyMemory(&fragBitmapData[j++], &bitmapData[i++], sizeof(BITMAP_DATA));
-					updateSize = newUpdateSize;
 				}
 				
 				bitmapUpdate.count = bitmapUpdate.number = j;
@@ -669,7 +663,6 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 	rdpSettings* settings;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
-	rdpShadowEncoder* encoder;
 	REGION16 invalidRegion;
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* extents;
@@ -677,7 +670,6 @@ int shadow_client_send_surface_update(rdpShadowClient* client)
 	context = (rdpContext*) client;
 	settings = context->settings;
 	server = client->server;
-	encoder = client->encoder;
 
 	surface = client->inLobby ? client->lobby : server->surface;
 
@@ -909,21 +901,15 @@ void* shadow_client_thread(rdpShadowClient* client)
 	HANDLE UpdateEvent;
 	freerdp_peer* peer;
 	rdpContext* context;
-	rdpSettings* settings;
 	rdpShadowServer* server;
-	rdpShadowScreen* screen;
-	rdpShadowEncoder* encoder;
 	rdpShadowSubsystem* subsystem;
 	wMessagePipe* MsgPipe = client->subsystem->MsgPipe;
 
 	server = client->server;
-	screen = server->screen;
-	encoder = client->encoder;
 	subsystem = server->subsystem;
 
 	context = (rdpContext*) client;
 	peer = context->peer;
-	settings = peer->settings;
 
 	peer->Capabilities = shadow_client_capabilities;
 	peer->PostConnect = shadow_client_post_connect;
@@ -952,6 +938,8 @@ void* shadow_client_thread(rdpShadowClient* client)
 		events[nCount++] = MessageQueue_Event(MsgPipe->Out);
 
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		if (WAIT_FAILED == status)
+			break;
 
 		if (WaitForSingleObject(StopEvent, 0) == WAIT_OBJECT_0)
 		{
