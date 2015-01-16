@@ -26,7 +26,6 @@
 
 int shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 {
-	UINT32 frameId;
 	int inFlightFrames;
 	SURFACE_FRAME* frame;
 
@@ -52,7 +51,6 @@ int shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 	if (!frame)
 		return -1;
 
-	frameId = frame->frameId = ++encoder->frameId;
 	ListDictionary_Add(encoder->frameList, (void*) (size_t) frame->frameId, frame);
 
 	return (int) frame->frameId;
