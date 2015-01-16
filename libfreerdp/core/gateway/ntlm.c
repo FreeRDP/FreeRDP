@@ -121,14 +121,13 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 {
-	int length;
 	DWORD status;
 	DWORD SpnLength;
 	LPTSTR hostnameX;
 
-	length = 0;
-
 #ifdef UNICODE
+	int length;
+
 	length = strlen(hostname);
 	hostnameX = (LPWSTR) malloc((length + 1)* sizeof(TCHAR));
 	MultiByteToWideChar(CP_UTF8, 0, hostname, length, hostnameX, length);
