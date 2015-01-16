@@ -205,6 +205,8 @@ static void* rdpsnd_server_thread(void* arg)
 	while (doRun)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		if (WAIT_FAILED == status)
+			break;
 
 		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
 			break;
