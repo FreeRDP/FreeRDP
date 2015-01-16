@@ -3346,7 +3346,6 @@ TRIO_ARGS6((self, number, flags, width, precision, base),
 
   if (!keepTrailingZeroes)
     {
-      trailingZeroes = 0;
       workFractionNumber = fractionNumber;
       workFractionAdjust = fractionAdjust;
       fractionDigitsInspect = fractionDigits;
@@ -5944,7 +5943,6 @@ TRIO_ARGS4((format, offsetPointer, flagsPointer, characterclass),
 	    {
 	      /* Trailing minus is included */
 	      characterclass[(int)ch]++;
-	      ch = range_end;
 	      break; /* for */
 	    }
 	  if (range_end == NIL)
@@ -5955,7 +5953,6 @@ TRIO_ARGS4((format, offsetPointer, flagsPointer, characterclass),
 	  for (i = (int)range_begin; i <= (int)range_end; i++)
 	    characterclass[i]++;
 	    
-	  ch = range_end;
 	  break;
 	  
 #if TRIO_EXTENSION
@@ -6786,7 +6783,6 @@ TRIO_ARGS3((data, format, parameters),
   if (format[0] == NIL)
     return 0;
 
-  status = 0;
   assignment = 0;
   i = 0;
   offset = 0;
