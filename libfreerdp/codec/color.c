@@ -1430,7 +1430,6 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 {
 	int x, y;
 	BOOL vFlip;
-	BOOL invert;
 	int srcFlip;
 	int dstFlip;
 	int nDstPad;
@@ -1457,7 +1456,6 @@ int freerdp_image_copy_from_pointer_data(BYTE* pDstData, UINT32 DstFormat, int n
 	srcFlip = (xorBpp == 1) ? FREERDP_PIXEL_FLIP_NONE : FREERDP_PIXEL_FLIP_VERTICAL;
 
 	vFlip = (srcFlip != dstFlip) ? TRUE : FALSE;
-	invert = (FREERDP_PIXEL_FORMAT_IS_ABGR(DstFormat)) ? TRUE : FALSE;
 
 	andStep = (nWidth + 7) / 8;
 	andStep += (andStep % 2);
@@ -1635,7 +1633,6 @@ int freerdp_image8_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst
 	int dstFlip;
 	int nSrcPad;
 	int nDstPad;
-	int srcBitsPerPixel;
 	int srcBytesPerPixel;
 	int dstBitsPerPixel;
 	int dstBytesPerPixel;
@@ -1645,7 +1642,6 @@ int freerdp_image8_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDst
 	if (!palette)
 		return -1;
 
-	srcBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(SrcFormat);
 	srcBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(SrcFormat) / 8);
 	srcFlip = FREERDP_PIXEL_FORMAT_FLIP(SrcFormat);
 
@@ -1980,7 +1976,6 @@ int freerdp_image15_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 	int nSrcPad;
 	int nDstPad;
 	BYTE r, g, b;
-	int srcBitsPerPixel;
 	int srcBytesPerPixel;
 	int dstBitsPerPixel;
 	int dstBytesPerPixel;
@@ -1988,7 +1983,6 @@ int freerdp_image15_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 	BOOL vFlip = FALSE;
 	BOOL invert = FALSE;
 
-	srcBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(SrcFormat);
 	srcBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(SrcFormat) / 8);
 	srcFlip = FREERDP_PIXEL_FORMAT_FLIP(SrcFormat);
 	srcType = FREERDP_PIXEL_FORMAT_TYPE(SrcFormat);
@@ -2314,7 +2308,6 @@ int freerdp_image16_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 	int nSrcPad;
 	int nDstPad;
 	BYTE r, g, b;
-	int srcBitsPerPixel;
 	int srcBytesPerPixel;
 	int dstBitsPerPixel;
 	int dstBytesPerPixel;
@@ -2322,7 +2315,6 @@ int freerdp_image16_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 	BOOL vFlip = FALSE;
 	BOOL invert = FALSE;
 
-	srcBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(SrcFormat);
 	srcBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(SrcFormat) / 8);
 	srcFlip = FREERDP_PIXEL_FORMAT_FLIP(SrcFormat);
 	srcType = FREERDP_PIXEL_FORMAT_TYPE(SrcFormat);
@@ -2631,7 +2623,6 @@ int freerdp_image24_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 	int dstFlip;
 	int nSrcPad;
 	int nDstPad;
-	int srcBitsPerPixel;
 	int srcBytesPerPixel;
 	int dstBitsPerPixel;
 	int dstBytesPerPixel;
@@ -2639,7 +2630,6 @@ int freerdp_image24_copy(BYTE* pDstData, DWORD DstFormat, int nDstStep, int nXDs
 	BOOL vFlip = FALSE;
 	BOOL invert = FALSE;
 
-	srcBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(SrcFormat);
 	srcBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(SrcFormat) / 8);
 	srcFlip = FREERDP_PIXEL_FORMAT_FLIP(SrcFormat);
 	srcType = FREERDP_PIXEL_FORMAT_TYPE(SrcFormat);
@@ -3474,18 +3464,14 @@ int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat, int nDstStep
 	int x, y;
 	int nSrcPad;
 	int nDstPad;
-	int srcBitsPerPixel;
 	int srcBytesPerPixel;
-	int dstBitsPerPixel;
 	int dstBytesPerPixel;
 	
-	srcBitsPerPixel = 24;
 	srcBytesPerPixel = 8;
 	
 	if (nSrcStep < 0)
 		nSrcStep = srcBytesPerPixel * nWidth;
 	
-	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(DstFormat);
 	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(DstFormat) / 8);
 	
 	if (nDstStep < 0)
