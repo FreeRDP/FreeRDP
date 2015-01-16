@@ -529,13 +529,12 @@ static void urbdrc_udevman_register_devices(UDEVMAN* udevman, char* devices)
 
 static void urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, ADDIN_ARGV* args)
 {
-	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+	CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			urbdrc_udevman_args, flags, udevman, NULL, NULL);
 
 	arg = urbdrc_udevman_args;
