@@ -848,10 +848,8 @@ BOOL mcs_send_attach_user_confirm(rdpMcs* mcs)
 	wStream* s;
 	int status;
 	UINT16 length = 11;
-	rdpSettings* settings;
 	
 	s = Stream_New(NULL, length);
-	settings = mcs->transport->settings;
 
 	mcs->userId = mcs->baseChannelId++;
 
