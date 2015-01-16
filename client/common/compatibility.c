@@ -245,7 +245,6 @@ int freerdp_client_old_command_line_pre_filter(void* context, int index, int arg
 
 		if ((index < argc - 1) && strcmp("--data", argv[index + 1]) == 0)
 		{
-			i = 0;
 			index += 2;
 
 			while ((index < argc) && (strcmp("--", argv[index]) != 0))
