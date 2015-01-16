@@ -154,7 +154,7 @@ void input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UI
 	rdp_send_client_input_pdu(rdp, s);
 }
 
-void input_send_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y)
+void input_send_focus_in_event(rdpInput* input, UINT16 toggleStates)
 {
 	/* send a tab up like mstsc.exe */
 	input_send_keyboard_event(input, KBD_FLAGS_RELEASE, 0x0f);
@@ -164,9 +164,6 @@ void input_send_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, U
 
 	/* send another tab up like mstsc.exe */
 	input_send_keyboard_event(input, KBD_FLAGS_RELEASE, 0x0f);
-
-	/* finish with a mouse pointer position like mstsc.exe */
-	input_send_mouse_event(input, PTR_FLAGS_MOVE, x, y);
 }
 
 static void input_send_keyboard_pause_event(rdpInput* input)
@@ -245,7 +242,7 @@ void input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 flags, UIN
 	fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
-void input_send_fastpath_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y)
+void input_send_fastpath_focus_in_event(rdpInput* input, UINT16 toggleStates)
 {
 	wStream* s;
 	rdpRdp* rdp = input->context->rdp;
@@ -266,12 +263,7 @@ void input_send_fastpath_focus_in_event(rdpInput* input, UINT16 toggleStates, UI
 	Stream_Write_UINT8(s, eventFlags); /* Key Release event (1 byte) */
 	Stream_Write_UINT8(s, 0x0f); /* keyCode (1 byte) */
 
-	/* finish with a mouse pointer position like mstsc.exe */
-	eventFlags = 0 | FASTPATH_INPUT_EVENT_MOUSE << 5;
-	Stream_Write_UINT8(s, eventFlags); /* Mouse Pointer event (1 byte) */
-	input_write_extended_mouse_event(s, PTR_FLAGS_MOVE, x, y);
-
-	fastpath_send_multiple_input_pdu(rdp->fastpath, s, 4);
+	fastpath_send_multiple_input_pdu(rdp->fastpath, s, 3);
 }
 
 static void input_send_fastpath_keyboard_pause_event(rdpInput* input)
@@ -548,9 +540,9 @@ void freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT
 	IFCALL(input->ExtendedMouseEvent, input, flags, x, y);
 }
 
-void freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates, UINT16 x, UINT16 y)
+void freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates)
 {
-	IFCALL(input->FocusInEvent, input, toggleStates, x, y);
+	IFCALL(input->FocusInEvent, input, toggleStates);
 }
 
 void freerdp_input_send_keyboard_pause_event(rdpInput* input)

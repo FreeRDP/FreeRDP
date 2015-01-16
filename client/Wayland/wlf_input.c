@@ -137,7 +137,8 @@ static void wl_keyboard_enter(void* data, struct wl_keyboard* keyboard, uint32_t
 	x = input_w->last_x;
 	y = input_w->last_y;
 
-	input->FocusInEvent(input, 0, x, y);
+	input->FocusInEvent(input, 0);
+	input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 }
 
 static void wl_keyboard_leave(void* data, struct wl_keyboard* keyboard, uint32_t serial, struct wl_surface* surface)
