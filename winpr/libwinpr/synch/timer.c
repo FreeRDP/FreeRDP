@@ -282,14 +282,13 @@ BOOL SetWaitableTimerEx(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPer
 {
 	ULONG Type;
 	PVOID Object;
-	WINPR_TIMER* timer;
 
 	if (!winpr_Handle_GetInfo(hTimer, &Type, &Object))
 		return FALSE;
 
 	if (Type == HANDLE_TYPE_TIMER)
 	{
-		timer = (WINPR_TIMER*) Object;
+		(void) Object;
 		return TRUE;
 	}
 
@@ -475,7 +474,6 @@ int FireExpiredTimerQueueTimers(WINPR_TIMER_QUEUE* timerQueue)
 
 static void* TimerQueueThread(void* arg)
 {
-	int status;
 	struct timespec timeout;
 	WINPR_TIMER_QUEUE* timerQueue = (WINPR_TIMER_QUEUE*) arg;
 
@@ -496,7 +494,7 @@ static void* TimerQueueThread(void* arg)
 			}
 		}
 
-		status = pthread_cond_timedwait(&(timerQueue->cond), &(timerQueue->cond_mutex), &timeout);
+		pthread_cond_timedwait(&(timerQueue->cond), &(timerQueue->cond_mutex), &timeout);
 		FireExpiredTimerQueueTimers(timerQueue);
 		pthread_mutex_unlock(&(timerQueue->cond_mutex));
 
