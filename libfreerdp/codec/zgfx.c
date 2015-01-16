@@ -324,7 +324,7 @@ int zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, BYTE* pbSegment, UINT32 cbSegmen
 
 int zgfx_decompress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
-	int status;
+	int status = -1;
 	BYTE descriptor;
 
 	if (SrcSize < 1)
@@ -371,12 +371,8 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** p
 			pConcatenated += zgfx->OutputCount;
 		}
 	}
-	else
-	{
-		return -1;
-	}
 
-	return 1;
+	return status;
 }
 
 int zgfx_compress(ZGFX_CONTEXT* zgfx, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
