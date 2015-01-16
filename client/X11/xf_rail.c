@@ -537,7 +537,6 @@ static void xf_rail_window_delete(rdpContext* context, WINDOW_ORDER_INFO* orderI
 
 static void xf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_ICON_ORDER* windowIcon)
 {
-	BOOL bigIcon;
 	xfAppWindow* railWindow;
 	xfContext* xfc = (xfContext*) context;
 
@@ -546,8 +545,6 @@ static void xf_rail_window_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInf
 
 	if (!railWindow)
 		return;
-
-	bigIcon = (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_ICON_BIG) ? TRUE : FALSE;
 }
 
 static void xf_rail_window_cached_icon(rdpContext* context, WINDOW_ORDER_INFO* orderInfo, WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
