@@ -740,10 +740,7 @@ wStream* fastpath_input_pdu_init_header(rdpFastPath* fastpath)
 
 wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE eventCode)
 {
-	rdpRdp *rdp;
 	wStream* s;
-
-	rdp = fastpath->rdp;
 
 	s = fastpath_input_pdu_init_header(fastpath);
 	Stream_Write_UINT8(s, eventFlags | (eventCode << 5)); /* eventHeader (1 byte) */
