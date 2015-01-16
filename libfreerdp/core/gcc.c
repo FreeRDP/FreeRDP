@@ -694,7 +694,6 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		if (blockLength < 4)
 			break;
 		Stream_Read_UINT32(s, deviceScaleFactor); /* deviceScaleFactor (4 bytes) */
-		blockLength -= 4;
 
 		if (settings->SelectedProtocol != serverSelectedProtocol)
 			return FALSE;
