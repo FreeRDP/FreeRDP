@@ -41,7 +41,7 @@ int TestInterlockedSList(int argc, char* argv[])
 		}
 
 		pProgramItem->Signature = Count;
-		pFirstEntry = InterlockedPushEntrySList(pListHead, &(pProgramItem->ItemEntry));
+		InterlockedPushEntrySList(pListHead, &(pProgramItem->ItemEntry));
 	}
 
 	/* Remove 10 items from the list and display the signature. */
@@ -69,7 +69,7 @@ int TestInterlockedSList(int argc, char* argv[])
 	}
 
 	/* Flush the list and verify that the items are gone. */
-	pListEntry = InterlockedFlushSList(pListHead);
+	InterlockedFlushSList(pListHead);
 	pFirstEntry = InterlockedPopEntrySList(pListHead);
 
 	if (pFirstEntry)
