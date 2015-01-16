@@ -122,6 +122,12 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
 
 	DeviceBasePath = GetDeviceFileUnixDomainSocketBaseFilePathA();
 
+	(void)DriverObject;
+	(void)DeviceExtensionSize;
+	(void)DeviceType;
+	(void)DeviceCharacteristics;
+	(void)Exclusive;
+
 	if (!PathFileExistsA(DeviceBasePath))
 	{
 		if (!mkdir(DeviceBasePath, S_IRUSR | S_IWUSR | S_IXUSR))
@@ -150,6 +156,8 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
 	}
 
 	status = mkfifo(pDeviceObjectEx->DeviceFileName, 0666);
+	if (status)
+		return STATUS_ACCESS_DENIED;
 
 	*((ULONG_PTR*) (DeviceObject)) = (ULONG_PTR) pDeviceObjectEx;
 
