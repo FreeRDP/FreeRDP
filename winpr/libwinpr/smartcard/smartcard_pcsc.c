@@ -608,7 +608,7 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	int index;
 	int size;
 	int length;
-	int ctoken;
+	int ctoken = 0;
 	int ntokens;
 	char* p, *q;
 	char* tokens[64][2];
@@ -664,6 +664,7 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	ntokens = 0;
 	p = q = (char*) name;
 
+	memset(tokens, 0, sizeof(tokens));
 	while (*p)
 	{
 		if (*p == ' ')
@@ -684,7 +685,6 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	if (ntokens < 2)
 		return NULL;
 
-	slot = index = -1;
 	ctoken = ntokens - 1;
 	slot = PCSC_AtoiWithLength(tokens[ctoken][0], (int)(tokens[ctoken][1] - tokens[ctoken][0]));
 	ctoken--;
@@ -761,7 +761,6 @@ char* PCSC_ConvertReaderNamesToWinSCard(const char* names, LPDWORD pcchReaders)
 	DWORD cchReaders;
 	char* nameWinSCard;
 	char* namesWinSCard;
-	p = (char*) names;
 	cchReaders = *pcchReaders;
 	namesWinSCard = (char*) malloc(cchReaders * 2);
 
@@ -806,7 +805,6 @@ char* PCSC_ConvertReaderNamesToPCSC(const char* names, LPDWORD pcchReaders)
 	char* namePCSC;
 	char* namesPCSC;
 	DWORD cchReaders;
-	p = (char*) names;
 	cchReaders = *pcchReaders;
 	namesPCSC = (char*) malloc(cchReaders * 2);
 
@@ -2131,6 +2129,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard,
 	IoCtlAccess = ACCESS_FROM_CTL_CODE(dwControlCode);
 	IoCtlDeviceType = DEVICE_TYPE_FROM_CTL_CODE(dwControlCode);
 
+	(void)IoCtlMethod;
+	(void)IoCtlAccess;
+
 	if (dwControlCode == IOCTL_SMARTCARD_GET_FEATURE_REQUEST)
 		getFeatureRequest = TRUE;
 
@@ -2253,7 +2254,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 		if (status != SCARD_S_SUCCESS)
 			return status;
 
-		length = ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) pbAttrW, *pcbAttrLen, (char**) &pbAttrA, 0, NULL, NULL);
+		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) pbAttrW, *pcbAttrLen, (char**) &pbAttrA, 0, NULL, NULL);
 		namePCSC = pbAttrA;
 		PCSC_SCardFreeMemory_Internal(hContext, pbAttrW);
 	}
@@ -2287,10 +2288,12 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 	{
 		/* length here includes null terminator */
 		length = ConvertToUnicode(CP_UTF8, 0, (char*) friendlyNameA, -1, &friendlyNameW, 0);
-		free(friendlyNameA);
 
 		if (!friendlyNameW)
+		{
+			free(friendlyNameA);
 			return SCARD_E_NO_MEMORY;
+		}
 
 		if (cbAttrLen == SCARD_AUTOALLOCATE)
 		{
@@ -2302,6 +2305,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 		{
 			if ((length * 2) > cbAttrLen)
 			{
+				free(friendlyNameA);
 				free(friendlyNameW);
 				return SCARD_E_INSUFFICIENT_BUFFER;
 			}
@@ -2332,12 +2336,14 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 			{
 				CopyMemory(pbAttr, (BYTE*) friendlyNameA, length + 1);
 				*pcbAttrLen = length;
-				free(friendlyNameA);
+				if (nameWinSCard)
+					free(friendlyNameA);
 			}
 		}
 	}
 
-	free(namePCSC);
+	if (namePCSC)
+		free(namePCSC);
 
 	return status;
 }
