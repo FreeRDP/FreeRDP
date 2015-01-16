@@ -301,13 +301,9 @@ void* shadow_server_thread(rdpShadowServer* server)
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[32];
-	HANDLE StopEvent;
 	freerdp_listener* listener;
-	rdpShadowSubsystem* subsystem;
 
 	listener = server->listener;
-	StopEvent = server->StopEvent;
-	subsystem = server->subsystem;
 
 	shadow_subsystem_start(server->subsystem);
 
@@ -324,6 +320,8 @@ void* shadow_server_thread(rdpShadowServer* server)
 		events[nCount++] = server->StopEvent;
 
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		if (WAIT_FAILED == status)
+			break;
 
 		if (WaitForSingleObject(server->StopEvent, 0) == WAIT_OBJECT_0)
 		{
