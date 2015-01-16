@@ -706,8 +706,6 @@ BOOL region16_intersects_rect(const REGION16 *src, const RECTANGLE_16 *arg2)
 	if (!rectangles_intersects(srcExtents, arg2))
 		return FALSE;
 
-	endPtr = rect + nbRects;
-
 	for (endPtr = rect + nbRects; (rect < endPtr) && (arg2->bottom > rect->top); rect++)
 	{
 		if (rectangles_intersects(rect, arg2))
