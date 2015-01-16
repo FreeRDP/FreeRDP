@@ -52,7 +52,6 @@ void wl_end_paint(rdpContext* context)
 	wlfDisplay* display;
 	wlfWindow* window;
 	wlfContext* context_w;
-	void* data;
 	INT32 x, y;
 	UINT32 w, h;
 	int i;
