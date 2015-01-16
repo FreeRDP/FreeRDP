@@ -122,6 +122,6 @@ int TestGdiEllipse(int argc, char* argv[])
 	gdi_BitBlt(hdc, 0, 0, 16, 16, hdc, 0, 0, GDI_WHITENESS);
 	gdi_Ellipse(hdc, 0, 0, 16, 16);
 
-	return 0;
+	return (hBmp_Ellipse_1 && hBmp_Ellipse_2 && hBmp_Ellipse_3) ? 0 : -1;
 }
 
