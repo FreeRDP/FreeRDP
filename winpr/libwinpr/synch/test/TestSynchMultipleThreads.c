@@ -150,5 +150,5 @@ int TestSynchMultipleThreads(int argc, char *argv[])
 	if (close_threads(THREADS, threads))
 		return -1;
 
-	return 0;
+	return rc;
 }
