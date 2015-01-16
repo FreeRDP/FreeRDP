@@ -52,16 +52,13 @@ static void nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, BYTE* data, int
 	__m128i co_val;
 	__m128i cg_val;
 	UINT32 tempWidth;
-	UINT32 tempHeight;
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
-	tempHeight = ROUND_UP_TO(context->height, 2);
 	rw = (context->ChromaSubsamplingLevel > 0 ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
 	yplane = context->priv->PlaneBuffers[0];
 	coplane = context->priv->PlaneBuffers[1];
 	cgplane = context->priv->PlaneBuffers[2];
-	aplane = context->priv->PlaneBuffers[3];
 
 	for (y = 0; y < context->height; y++)
 	{
