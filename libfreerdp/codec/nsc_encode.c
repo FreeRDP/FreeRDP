@@ -89,16 +89,13 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, BYTE* data, int scan
 	INT16 b_val;
 	BYTE a_val;
 	UINT32 tempWidth;
-	UINT32 tempHeight;
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
-	tempHeight = ROUND_UP_TO(context->height, 2);
 	rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
 	yplane = context->priv->PlaneBuffers[0];
 	coplane = context->priv->PlaneBuffers[1];
 	cgplane = context->priv->PlaneBuffers[2];
-	aplane = context->priv->PlaneBuffers[3];
 
 	for (y = 0; y < context->height; y++)
 	{
@@ -388,7 +385,6 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, int x, int y,
 	int MaxRegionHeight;
 	UINT32 ByteCount[4];
 	UINT32 MaxPlaneSize;
-	UINT32 MaxMessageSize;
 	NSC_MESSAGE* messages;
 	UINT32 PaddedMaxPlaneSize;
 
@@ -402,9 +398,6 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, int x, int y,
 	*numMessages = rows * cols;
 
 	MaxPlaneSize = nsc_compute_byte_count(context, (UINT32*) ByteCount, width, height);
-	MaxMessageSize = ByteCount[0] + ByteCount[1] + ByteCount[2] + ByteCount[3] + 20;
-
-	maxDataSize -= 1024; /* reserve enough space for headers */
 
 	messages = (NSC_MESSAGE*) calloc(*numMessages, sizeof(NSC_MESSAGE));
 
