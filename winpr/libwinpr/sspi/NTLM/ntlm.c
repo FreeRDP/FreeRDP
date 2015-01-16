@@ -203,7 +203,7 @@ NTLM_CONTEXT* ntlm_ContextNew()
 				return NULL;
 			}
 
-			status = RegQueryValueExA(hKey, "WorkstationName", NULL, &dwType, (BYTE*) workstation, &dwSize);
+			RegQueryValueExA(hKey, "WorkstationName", NULL, &dwType, (BYTE*) workstation, &dwSize);
 			workstation[dwSize] = '\0';
 
 			if (ntlm_SetContextWorkstation(context, workstation) < 0)
@@ -409,6 +409,8 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(PCredHandle phCredential, P
 			return SEC_E_INVALID_TOKEN;
 
 		status = ntlm_read_NegotiateMessage(context, input_buffer);
+		if (SEC_I_CONTINUE_NEEDED != status)
+			return status;
 
 		if (context->state == NTLM_STATE_CHALLENGE)
 		{
@@ -558,6 +560,9 @@ SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(PCredHandle phCredenti
 		if (context->state == NTLM_STATE_CHALLENGE)
 		{
 			status = ntlm_read_ChallengeMessage(context, input_buffer);
+
+			if (SEC_I_CONTINUE_NEEDED != status)
+				return status;
 
 			if (!pOutput)
 				return SEC_E_INVALID_TOKEN;
