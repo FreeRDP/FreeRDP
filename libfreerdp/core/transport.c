@@ -713,7 +713,6 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	int position;
 	int pduLength;
 	BYTE* header;
-	position = 0;
 	pduLength = 0;
 
 	if (!transport)
@@ -1143,6 +1142,14 @@ static void* transport_client_thread(void* arg)
 	handles[nCount++] = transport->stopEvent;
 	handles[nCount++] = transport->connectedEvent;
 	status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+	if (WAIT_FAILED == status)
+	{
+		WLog_Print(transport->log, WLOG_ERROR,
+				   "WaitForMultipleObjects failed with %08lX, terminating.",
+				   GetLastError());
+		ExitThread(-1);
+		return NULL;
+	}
 
 	if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
 	{
