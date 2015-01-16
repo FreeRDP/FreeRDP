@@ -124,7 +124,6 @@ static BOOL audin_alsa_thread_receive(AudinALSADevice* alsa, BYTE* src, int size
 		frames = alsa->dsp_context->resampled_frames;
 		DEBUG_DVC("resampled %d frames at %d to %d frames at %d",
 			size / rbytes_per_frame, alsa->actual_rate, frames, alsa->target_rate);
-		size = frames * tbytes_per_frame;
 		src = alsa->dsp_context->resampled_buffer;
 	}
 
@@ -190,14 +189,12 @@ static void* audin_alsa_thread_func(void* arg)
 	int error;
 	BYTE* buffer;
 	int rbytes_per_frame;
-	int tbytes_per_frame;
 	snd_pcm_t* capture_handle = NULL;
 	AudinALSADevice* alsa = (AudinALSADevice*) arg;
 
 	DEBUG_DVC("in");
 
 	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
-	tbytes_per_frame = alsa->target_channels * alsa->bytes_per_channel;
 	buffer = (BYTE*) malloc(rbytes_per_frame * alsa->frames_per_packet);
 	ZeroMemory(buffer, rbytes_per_frame * alsa->frames_per_packet);
 	freerdp_dsp_context_reset_adpcm(alsa->dsp_context);
@@ -328,7 +325,6 @@ static void audin_alsa_set_format(IAudinDevice* device, audinFormat* format, UIN
 
 static void audin_alsa_open(IAudinDevice* device, AudinReceive receive, void* user_data)
 {
-	int rbytes_per_frame;
 	int tbytes_per_frame;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
 
@@ -337,7 +333,6 @@ static void audin_alsa_open(IAudinDevice* device, AudinReceive receive, void* us
 	alsa->receive = receive;
 	alsa->user_data = user_data;
 
-	rbytes_per_frame = alsa->actual_channels * alsa->bytes_per_channel;
 	tbytes_per_frame = alsa->target_channels * alsa->bytes_per_channel;
 	alsa->buffer = (BYTE*) malloc(tbytes_per_frame * alsa->frames_per_packet);
 	ZeroMemory(alsa->buffer, tbytes_per_frame * alsa->frames_per_packet);
@@ -382,14 +377,13 @@ COMMAND_LINE_ARGUMENT_A audin_alsa_args[] =
 
 static void audin_alsa_parse_addin_args(AudinALSADevice* device, ADDIN_ARGV* args)
 {
-	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinALSADevice* alsa = (AudinALSADevice*) device;
 
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, audin_alsa_args, flags, alsa, NULL, NULL);
+	CommandLineParseArgumentsA(args->argc, (const char**) args->argv, audin_alsa_args, flags, alsa, NULL, NULL);
 
 	arg = audin_alsa_args;
 
