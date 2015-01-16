@@ -39,8 +39,6 @@ int rdtk_font_draw_glyph(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* f
 	int nHeight;
 	int nSrcStep;
 	int nDstStep;
-	int nSrcPad;
-	int nDstPad;
 	BYTE* pSrcData;
 	BYTE* pSrcPixel;
 	BYTE* pDstData;
@@ -61,12 +59,6 @@ int rdtk_font_draw_glyph(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* f
 
 	pDstData = surface->data;
 	nDstStep = surface->scanline;
-
-	nSrcPad = (nSrcStep - (nWidth * 4));
-	nDstPad = (nDstStep - (nWidth * 4));
-
-	pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
-	pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -109,9 +101,6 @@ int rdtk_font_draw_glyph(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* f
 			pDstPixel[3] = 0xFF;
 			pDstPixel += 4;
 		}
-
-		pSrcPixel += nSrcPad;
-		pDstPixel += nDstPad;
 	}
 
 	return 1;
@@ -552,8 +541,6 @@ int rdtk_font_parse_descriptor_buffer(rdtkFont* font, BYTE* buffer, int size)
 		*q = '\0';
 		rdtk_font_convert_descriptor_code_to_utf8(p, glyph->code);
 		*q = '"';
-
-		p = q + 1;
 
 		/* finish parsing glyph */
 
