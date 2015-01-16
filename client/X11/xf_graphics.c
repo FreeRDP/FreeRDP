@@ -53,7 +53,6 @@ void xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 
 	xf_lock_x11(xfc, FALSE);
 
-	data = bitmap->data;
 	depth = (bitmap->bpp >= 24) ? 24 : bitmap->bpp;
 
 	pixmap = XCreatePixmap(xfc->display, xfc->drawable, bitmap->width, bitmap->height, xfc->depth);
@@ -141,10 +140,8 @@ void xf_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	BYTE* pDstData;
 	UINT32 SrcSize;
 	UINT32 SrcFormat;
-	UINT32 bytesPerPixel;
 	xfContext* xfc = (xfContext*) context;
 
-	bytesPerPixel = (bpp + 7) / 8;
 	size = width * height * 4;
 
 	bitmap->data = (BYTE*) _aligned_malloc(size, 16);
