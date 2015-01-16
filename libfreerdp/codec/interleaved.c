@@ -242,18 +242,14 @@ int interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pSrcDa
 		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nXDst, int nYDst, int nWidth, int nHeight, BYTE* palette)
 {
 	int status;
-	BOOL vFlip;
 	int scanline;
 	BYTE* pDstData;
 	UINT32 SrcFormat;
 	UINT32 BufferSize;
-	int dstBitsPerPixel;
 	int dstBytesPerPixel;
 
 	pDstData = *ppDstData;
-	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(DstFormat);
 	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(DstFormat) / 8);
-	vFlip = FREERDP_PIXEL_FORMAT_FLIP(DstFormat) ? TRUE : FALSE;
 
 	if (!interleaved)
 		return -1;
