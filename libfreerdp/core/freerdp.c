@@ -191,11 +191,7 @@ BOOL freerdp_add_handle(freerdp* instance, HANDLE handle)
 {
 	int rc = FALSE;
 	rdpContext* ctx = (rdpContext*)instance->context;
-	/* Need to signal here to avoid starvation.
-	 * The functions freerdp_add_handle, freerdp_remove_handle and freerdp_wait_for_event
-	 * are called from different threads and freerdp_wait_for_event may block
-	 * for an indefinite time. The event insertHandle will break that loop until the new handle is added.
-	 */
+
 	SetEvent(ctx->insertHandle);
 	ArrayList_Lock(ctx->eventHandles);
 
@@ -221,24 +217,18 @@ BOOL freerdp_remove_handle(freerdp* instance, HANDLE handle)
 	return rc;
 }
 
-DWORD freerdp_wait_for_event(freerdp* instance, DWORD timeout)
+DWORD freerdp_get_and_lock_handles(freerdp* instance, HANDLE** handles)
 {
-	DWORD rc = WAIT_FAILED;
-	int count;
-	HANDLE* handles = NULL;
-	DWORD ev;
 	rdpContext* ctx = (rdpContext*)instance->context;
 	ArrayList_Lock(ctx->eventHandles);
-	count = ArrayList_Items(ctx->eventHandles, (ULONG_PTR**)&handles);
+	return ArrayList_Items(ctx->eventHandles, (ULONG_PTR**)handles);
+}
 
-	if (count > 0)
-	{
-		rc = TRUE;
-		ev = WaitForMultipleObjects(count, handles, FALSE, timeout);
-	}
-
+DWORD freerdp_unlock_handles(freerdp* instance, HANDLE* handles, DWORD count)
+{
+	rdpContext* ctx = (rdpContext*)instance->context;
 	ArrayList_Unlock(ctx->eventHandles);
-	return rc;
+	return 0;
 }
 
 BOOL freerdp_check_handles(freerdp* instance)

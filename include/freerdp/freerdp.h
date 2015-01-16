@@ -248,9 +248,9 @@ FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_reconnect(freerdp* instance);
 
-/* Wait for a handle registered with freerdp_add_handle to be signalled.
- * If return is FALSE, quit the event loop. */
-FREERDP_API DWORD freerdp_wait_for_event(freerdp* instance, DWORD timeout);
+FREERDP_API DWORD freerdp_get_and_lock_handles(freerdp* instance, HANDLE** handles);
+FREERDP_API DWORD freerdp_unlock_handles(freerdp* instance, HANDLE* handles, DWORD count);
+
 /* Process pending events in main loop. */
 FREERDP_API BOOL freerdp_check_handles(freerdp* instance);
 
