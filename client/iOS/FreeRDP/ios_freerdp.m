@@ -106,9 +106,17 @@ int ios_run_freerdp(freerdp* instance)
 	while (!freerdp_shall_disconnect(instance))
 	{
 		DWORD ev;
+		DWORD count;
+		HANDLE *handles;
 		pool = [[NSAutoreleasePool alloc] init];
 
-		ev = freerdp_wait_for_event(instance, INFINITE);
+		count = freerdp_get_and_lock_handles(instance, &handles);
+		if (count > 0)
+		{
+			ev = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+			freerdp_unlock_handles(instance, handles, count);
+		}
+
 		// timeout?
 		if (WAIT_TIMEOUT == ev)
 		{
@@ -116,7 +124,7 @@ int ios_run_freerdp(freerdp* instance)
 		}
 		else if (WAIT_FAILED == ev)
 		{
-			NSLog(@"%s: freerdp_wait_for_event failed!", __func__);
+			NSLog(@"%s: WaitForMultipleObjects failed!", __func__);
 			break;
 		}
 

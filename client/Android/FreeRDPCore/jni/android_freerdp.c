@@ -336,13 +336,21 @@ static int android_freerdp_run(freerdp* instance)
 	while (!freerdp_shall_disconnect(instance))
 	{
 		DWORD ev;
-		ev = freerdp_wait_for_event(instance, INFINITE);
+		DWORD count;
+		HANDLE *handles;
+
+		count = freerdp_get_and_lock_handles(instance, &handles);
+		if (count > 0)
+		{
+			ev = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+			freerdp_unlock_handles(instance, handles, count);
+		}
 
 		if (WAIT_TIMEOUT == ev)
 			continue;
 		else if (WAIT_FAILED == ev)
 		{
-			DEBUG_ANDROID("android_run: select failed");
+			DEBUG_ANDROID("android_run: WaitForMultipleObjects failed");
 			break;
 		}
 

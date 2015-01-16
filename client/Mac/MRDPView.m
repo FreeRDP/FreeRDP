@@ -150,7 +150,15 @@ DWORD mac_client_thread(void* param)
 
 		while (1)
 		{
-			status = freerdp_wait_for_event(instance, INFINITE);
+			DWORD count;
+			HANDLE *handles;
+
+			count = freerdp_get_and_lock_handles(instance, &handles);
+			if (count > 0)
+			{
+				status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+				freerdp_unlock_handles(instance, handles, count);
+			}
 
 			if (WaitForSingleObject(mfc->stopEvent, 0) == WAIT_OBJECT_0)
 			{

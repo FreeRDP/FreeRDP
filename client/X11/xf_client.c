@@ -1397,6 +1397,8 @@ void* xf_thread(void* param)
 	while (!xfc->disconnect && !freerdp_shall_disconnect(instance))
 	{
 		DWORD ev;
+		DWORD count;
+		HANDLE *handles;
 
 		/*
 		 * win8 and server 2k12 seem to have some timing issue/race condition
@@ -1409,11 +1411,16 @@ void* xf_thread(void* param)
 			xf_keyboard_focus_in(xfc);
 		}
 
-		ev = freerdp_wait_for_event(instance, INFINITE);
+		count = freerdp_get_and_lock_handles(instance, &handles);
+		if (count > 0)
+		{
+			ev = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+			freerdp_unlock_handles(instance, handles, count);
+		}
 
 		if (WAIT_FAILED == ev)
 		{
-			WLog_INFO(TAG,  "Quit due to freerdp_wait_for_event");
+			WLog_INFO(TAG,  "Quit due to WaitForMultipleObjects");
 			break;
 		}
 

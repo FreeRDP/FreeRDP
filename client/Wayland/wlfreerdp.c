@@ -156,11 +156,20 @@ int wlfreerdp_run(freerdp* instance)
 
 	while (1)
 	{
-		DWORD ev = freerdp_wait_for_event(instance, INFINITE);
+		DWORD ev;
+		DWORD count;
+		HANDLE *handles;
+
+		count = freerdp_get_and_lock_handles(instance, &handles);
+		if (count > 0)
+		{
+			ev = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+			freerdp_unlock_handles(instance, handles, count);
+		}
 
 		if (WAIT_FAILED == ev)
 		{
-			WLog_INFO(TAG,  "Quit due to freerdp_wait_for_event");
+			WLog_INFO(TAG,  "Quit due to WaitForMultipleObjects");
 			break;
 		}
 

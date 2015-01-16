@@ -675,6 +675,8 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	while (1)
 	{
 		DWORD ev;
+		DWORD count;
+		HANDLE *handles;
 
 		if (freerdp_focus_required(instance))
 		{
@@ -682,7 +684,12 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 			wf_event_focus_in(wfc);
 		}
 
-		ev = freerdp_wait_for_event(instance, INFINITE);
+		count = freerdp_get_and_lock_handles(instance, &handles);
+		if (count > 0)
+		{
+			ev = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
+			freerdp_unlock_handles(instance, handles, count);
+		}
 
 		if (!async_transport)
 		{
