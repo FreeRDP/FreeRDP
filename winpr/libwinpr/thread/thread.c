@@ -285,12 +285,13 @@ static void winpr_StartThread(WINPR_THREAD *thread)
 	if (thread->dwStackSize > 0)
 		pthread_attr_setstacksize(&attr, (size_t) thread->dwStackSize);
 
-	pthread_create(&thread->thread, &attr, thread_launcher, thread);
-	pthread_attr_destroy(&attr);
-	reset_event(thread);
-	ListDictionary_Add(thread_list, &thread->thread, thread);
-	dump_thread(thread);
 	thread->started = TRUE;
+	reset_event(thread);
+
+	pthread_create(&thread->thread, &attr, thread_launcher, thread);
+	ListDictionary_Add(thread_list, &thread->thread, thread);
+	pthread_attr_destroy(&attr);
+	dump_thread(thread);
 }
 
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
