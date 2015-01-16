@@ -294,7 +294,6 @@ static void* named_pipe_single_thread(void* arg)
 		ZeroMemory(sndbuf, sizeof(sndbuf));
 		ZeroMemory(rcvbuf, sizeof(rcvbuf));
 		sprintf_s(sndbuf, sizeof(sndbuf), "CLIENT->SERVER ON PIPE #%05d", i);
-		p = servers[i];
 
 		if (!WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
 				dwWritten != sizeof(sndbuf))
@@ -321,7 +320,6 @@ static void* named_pipe_single_thread(void* arg)
 		ZeroMemory(sndbuf, sizeof(sndbuf));
 		ZeroMemory(rcvbuf, sizeof(rcvbuf));
 		sprintf_s(sndbuf, sizeof(sndbuf), "SERVER->CLIENT ON PIPE #%05d", i);
-		p = servers[i];
 
 		if (!WriteFile(servers[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
 				dwWritten != sizeof(sndbuf))
@@ -420,7 +418,6 @@ static void* named_pipe_single_thread(void* arg)
 		CloseHandle(clients[i]);
 	}
 
-	numPipes = 0;
 	bSuccess = TRUE;
 out:
 
