@@ -1948,7 +1948,7 @@ int update_message_queue_process_message(rdpUpdate* update, wMessage* message)
 	if (status < 0)
 		status = -1;
 
-	return 1;
+	return status;
 }
 
 int update_message_queue_free_message(wMessage *message)
@@ -1970,7 +1970,7 @@ int update_message_queue_free_message(wMessage *message)
 	if (status < 0)
 		status = -1;
 
-	return 1;
+	return status;
 }
 
 int update_message_queue_process_pending_messages(rdpUpdate* update)
