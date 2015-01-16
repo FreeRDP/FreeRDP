@@ -30,17 +30,9 @@ int rdtk_image_copy_alpha_blend(BYTE* pDstData, int nDstStep, int nXDst, int nYD
 		int nWidth, int nHeight, BYTE* pSrcData, int nSrcStep, int nXSrc, int nYSrc)
 {
 	int x, y;
-	int nSrcPad;
-	int nDstPad;
 	BYTE* pSrcPixel;
 	BYTE* pDstPixel;
 	BYTE A, R, G, B;
-
-	nSrcPad = (nSrcStep - (nWidth * 4));
-	nDstPad = (nDstStep - (nWidth * 4));
-
-	pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
-	pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
 
 	for (y = 0; y < nHeight; y++)
 	{
@@ -75,9 +67,6 @@ int rdtk_image_copy_alpha_blend(BYTE* pDstData, int nDstStep, int nXDst, int nYD
 			pDstPixel[3] = 0xFF;
 			pDstPixel += 4;
 		}
-
-		pSrcPixel += nSrcPad;
-		pDstPixel += nDstPad;
 	}
 
 	return 1;
@@ -95,7 +84,6 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	BYTE* pSrcData;
 	BYTE* pDstData;
 	int scaleWidth;
-	int scaleHeight;
 
 	if (nWidth < ninePatch->width)
 		nWidth = ninePatch->width;
@@ -104,7 +92,6 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 		nHeight = ninePatch->height;
 
 	scaleWidth = nWidth - (ninePatch->width - ninePatch->scaleWidth);
-	scaleHeight = nHeight - (ninePatch->height - ninePatch->scaleHeight);
 
 	nSrcStep = ninePatch->scanline;
 	pSrcData = ninePatch->data;
@@ -133,7 +120,6 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 
 	nXSrc = ninePatch->scaleLeft;
 	nYSrc = 0;
-	width = ninePatch->scaleWidth;
 	height = ninePatch->scaleTop;
 
 	while (x < (nXSrc + scaleWidth))
@@ -180,7 +166,6 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 
 	nXSrc = ninePatch->scaleLeft;
 	nYSrc = ninePatch->scaleTop;
-	width = ninePatch->scaleWidth;
 	height = ninePatch->scaleHeight;
 
 	while (x < (nXSrc + scaleWidth))
@@ -227,7 +212,6 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 
 	nXSrc = ninePatch->scaleLeft;
 	nYSrc = ninePatch->scaleBottom;
-	width = ninePatch->scaleWidth;
 	height = ninePatch->height - ninePatch->scaleBottom;
 
 	while (x < (nXSrc + scaleWidth))
