@@ -35,7 +35,6 @@ static UINT32 g_ClientId = 0;
 static int rdpdr_server_send_announce_request(RdpdrServerContext* context)
 {
 	wStream* s;
-	BOOL status;
 	RDPDR_HEADER header;
 	ULONG written;
 	WLog_DBG(TAG, "RdpdrServerSendAnnounceRequest");
@@ -48,7 +47,7 @@ static int rdpdr_server_send_announce_request(RdpdrServerContext* context)
 	Stream_Write_UINT16(s, context->priv->VersionMinor); /* VersionMinor (2 bytes) */
 	Stream_Write_UINT32(s, context->priv->ClientId); /* ClientId (4 bytes) */
 	Stream_SealLength(s);
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
+	WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 	Stream_Free(s, TRUE);
 	return 0;
 }
@@ -258,7 +257,6 @@ static int rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* conte
 static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context)
 {
 	wStream* s;
-	BOOL status;
 	RDPDR_HEADER header;
 	UINT16 numCapabilities;
 	ULONG written;
@@ -277,7 +275,7 @@ static int rdpdr_server_send_core_capability_request(RdpdrServerContext* context
 	rdpdr_server_write_drive_capability_set(context, s);
 	rdpdr_server_write_smartcard_capability_set(context, s);
 	Stream_SealLength(s);
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
+	WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 	Stream_Free(s, TRUE);
 	return 0;
 }
@@ -329,7 +327,6 @@ static int rdpdr_server_receive_core_capability_response(RdpdrServerContext* con
 static int rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 {
 	wStream* s;
-	BOOL status;
 	RDPDR_HEADER header;
 	ULONG written;
 	WLog_DBG(TAG, "RdpdrServerSendClientIdConfirm");
@@ -342,7 +339,7 @@ static int rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 	Stream_Write_UINT16(s, context->priv->VersionMinor); /* VersionMinor (2 bytes) */
 	Stream_Write_UINT32(s, context->priv->ClientId); /* ClientId (4 bytes) */
 	Stream_SealLength(s);
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
+	WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 	Stream_Free(s, TRUE);
 	return 0;
 }
@@ -398,7 +395,6 @@ static int rdpdr_server_receive_device_list_announce_request(RdpdrServerContext*
 static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 {
 	wStream* s;
-	BOOL status;
 	RDPDR_HEADER header;
 	ULONG written;
 	WLog_DBG(TAG, "%s");
@@ -408,7 +404,7 @@ static int rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 	Stream_Write_UINT16(s, header.Component); /* Component (2 bytes) */
 	Stream_Write_UINT16(s, header.PacketId); /* PacketId (2 bytes) */
 	Stream_SealLength(s);
-	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
+	WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR) Stream_Buffer(s), Stream_Length(s), &written);
 	Stream_Free(s, TRUE);
 	return 0;
 }
@@ -519,6 +515,8 @@ static void* rdpdr_server_thread(void* arg)
 	{
 		BytesReturned = 0;
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		if (WAIT_FAILED == status)
+			break;
 
 		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
 		{
