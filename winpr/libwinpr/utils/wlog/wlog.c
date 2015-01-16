@@ -257,10 +257,9 @@ int WLog_PrintMessageVA(wLog* log, wLogMessage* message, va_list args)
 
 void WLog_PrintMessage(wLog* log, wLogMessage* message, ...)
 {
-	int status;
 	va_list args;
 	va_start(args, message);
-	status = WLog_PrintMessageVA(log, message, args);
+	WLog_PrintMessageVA(log, message, args);
 	va_end(args);
 }
 
@@ -380,7 +379,7 @@ int WLog_ParseFilters()
 	if (!env)
 		return -1;
 
-	nSize = GetEnvironmentVariableA("WLOG_FILTER", env, nSize);
+	GetEnvironmentVariableA("WLOG_FILTER", env, nSize);
 	count = 1;
 	p = env;
 
@@ -555,7 +554,7 @@ wLog* WLog_New(LPCSTR name, wLog* rootLogger)
 			if (nSize)
 			{
 				env = (LPSTR) malloc(nSize);
-				nSize = GetEnvironmentVariableA("WLOG_LEVEL", env, nSize);
+				GetEnvironmentVariableA("WLOG_LEVEL", env, nSize);
 				iLevel = WLog_ParseLogLevel(env);
 
 				if (iLevel >= 0)
@@ -611,7 +610,7 @@ wLog* WLog_GetRoot()
 		if (nSize)
 		{
 			env = (LPSTR) malloc(nSize);
-			nSize = GetEnvironmentVariableA("WLOG_APPENDER", env, nSize);
+			GetEnvironmentVariableA("WLOG_APPENDER", env, nSize);
 
 			if (env)
 			{
