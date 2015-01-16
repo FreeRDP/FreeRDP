@@ -286,7 +286,6 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	}
 
 	formatId = 0;
-	altFormatId = 0;
 
 	switch (format->formatId)
 	{
