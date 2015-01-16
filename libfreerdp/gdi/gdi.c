@@ -524,6 +524,11 @@ static void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 			status = freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
 						nWidth, nHeight, pSrcData, SrcFormat, -1, 0, 0, gdi->palette);
+			if (status < 0)
+			{
+				WLog_ERR(TAG, "bitmap copy failure");
+				return;
+			}
 
 			pSrcData = gdi->bitmap_buffer;
 		}
@@ -538,6 +543,11 @@ static void gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 		status = freerdp_image_copy(pDstData, gdi->format, nDstStep, nXDst, nYDst,
 				nWidth, nHeight, pSrcData, gdi->format, nSrcStep, nXSrc, nYSrc, gdi->palette);
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "bitmap copy failure");
+			return;
+		}
 
 		gdi_InvalidateRegion(gdi->primary->hdc, nXDst, nYDst, nWidth, nHeight);
 	}
