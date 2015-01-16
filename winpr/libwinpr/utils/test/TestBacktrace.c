@@ -20,7 +20,7 @@ int TestBacktrace(int argc, char* argv[])
 			printf("%zd: %s\n", x, msg[x]);
 		rc = 0;
 	}
-	winpr_backtrace_symbols_fd(stack, stdout);
+	winpr_backtrace_symbols_fd(stack, fileno(stdout));
 	
 	winpr_backtrace_free(stack);
 	
