@@ -52,6 +52,8 @@ void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
 	while (1)
 	{
 		status = WaitForMultipleObjects(nCount, hEvents, FALSE, INFINITE);
+		if (WAIT_FAILED == status)
+			break;
 
 		if (WaitForSingleObject(MessageQueue_Event(pContext->IrpQueue), 0) == WAIT_OBJECT_0)
 		{
@@ -409,6 +411,8 @@ static void* smartcard_thread_func(void* arg)
 	while (1)
 	{
 		status = WaitForMultipleObjects(nCount, hEvents, FALSE, INFINITE);
+		if (WAIT_FAILED == status)
+			break;
 
 		if (WaitForSingleObject(MessageQueue_Event(smartcard->IrpQueue), 0) == WAIT_OBJECT_0)
 		{
