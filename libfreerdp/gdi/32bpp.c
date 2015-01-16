@@ -420,7 +420,6 @@ static int BitBlt_DSPDxax_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	BYTE* srcp8;
 	UINT32 src32;
 	UINT32 color32;
-	HGDI_BITMAP hSrcBmp;
 
 	if (!hdcDest || !hdcSrc)
 		return 1;
@@ -430,7 +429,6 @@ static int BitBlt_DSPDxax_32bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	color32 = gdi_get_color_32bpp(hdcDest, hdcDest->textColor);
 
 	patp = (UINT32*) &color32;
-	hSrcBmp = (HGDI_BITMAP) hdcSrc->selectedObject;
 
 	if (hdcSrc->bytesPerPixel == 1)
 	{
