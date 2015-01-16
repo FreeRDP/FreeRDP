@@ -300,7 +300,6 @@ BOOL xf_generic_ButtonPress(xfContext* xfc, int x, int y, int button, Window win
 	rdpInput* input;
 	Window childWindow;
 
-	flags = 0;
 	wheel = FALSE;
 	extended = FALSE;
 	input = xfc->instance->input;
@@ -400,8 +399,6 @@ BOOL xf_generic_ButtonRelease(xfContext* xfc, int x, int y, int button, Window w
 	rdpInput* input;
 	Window childWindow;
 
-	flags = 0;
-	wheel = FALSE;
 	extended = FALSE;
 	input = xfc->instance->input;
 
