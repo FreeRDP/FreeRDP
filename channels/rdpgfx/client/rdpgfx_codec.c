@@ -160,7 +160,7 @@ int rdpgfx_decode_progressive(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 
 int rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
-	int status;
+	int status = -1;
 
 	switch (cmd->codecId)
 	{
@@ -196,5 +196,5 @@ int rdpgfx_decode(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 			break;
 	}
 
-	return 1;
+	return status;
 }
