@@ -783,7 +783,7 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	offset = 24;
 	offset += rts_version_command_read(rpc, &buffer[offset], length - offset) + 4;
 	offset += rts_receive_window_size_command_read(rpc, &buffer[offset], length - offset, &ReceiveWindowSize) + 4;
-	offset += rts_connection_timeout_command_read(rpc, &buffer[offset], length - offset, &ConnectionTimeout) + 4;
+	rts_connection_timeout_command_read(rpc, &buffer[offset], length - offset, &ConnectionTimeout) + 4;
 
 	WLog_DBG(TAG, "ConnectionTimeout: %d", ConnectionTimeout);
 	WLog_DBG(TAG, "ReceiveWindowSize: %d", ReceiveWindowSize);
@@ -887,7 +887,7 @@ int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	BYTE ChannelCookie[16];
 
 	offset = 24;
-	offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
+	rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
@@ -928,7 +928,7 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 
 	offset = 24;
 	offset += rts_destination_command_read(rpc, &buffer[offset], length - offset, &Destination) + 4;
-	offset += rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
+	rts_flow_control_ack_command_read(rpc, &buffer[offset], length - offset,
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
@@ -1098,7 +1098,7 @@ int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	UINT32 Destination = 0;
 
 	offset = 24;
-	offset += rts_destination_command_read(rpc, &buffer[offset], length - offset, &Destination) + 4;
+	rts_destination_command_read(rpc, &buffer[offset], length - offset, &Destination) + 4;
 
 	WLog_DBG(TAG, "Destination: %d", Destination);
 
