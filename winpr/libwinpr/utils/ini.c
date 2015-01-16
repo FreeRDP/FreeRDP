@@ -293,7 +293,6 @@ int IniFile_Load(wIniFile* ini)
 	char* value;
 	char* separator;
 	char *beg, *end;
-	wIniFileKey* key = NULL;
 	wIniFileSection* section = NULL;
 
 	while (IniFile_Load_HasNextLine(ini))
@@ -348,7 +347,6 @@ int IniFile_Load(wIniFile* ini)
 			value = beg;
 
 			IniFile_AddKey(ini, section, name, value);
-			key = section->keys[section->nKeys - 1];
 		}
 	}
 
@@ -612,7 +610,6 @@ char* IniFile_WriteBuffer(wIniFile* ini)
 	}
 
 	buffer[offset] = '\0';
-	size += 1;
 
 	return buffer;
 }
