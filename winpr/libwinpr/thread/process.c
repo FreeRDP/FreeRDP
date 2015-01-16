@@ -152,7 +152,7 @@ char* FindApplicationPath(char* application)
 		return application;
 
 	lpSystemPath = (LPSTR) malloc(nSize);
-	nSize = GetEnvironmentVariableA("PATH", lpSystemPath, nSize);
+	GetEnvironmentVariableA("PATH", lpSystemPath, nSize);
 
 	save = NULL;
 	path = strtok_s(lpSystemPath, ":", &save);
@@ -186,7 +186,6 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 		LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
 	pid_t pid;
-	int flags;
 	int numArgs;
 	LPSTR* pArgs = NULL;
 	char** envp = NULL;
@@ -197,13 +196,10 @@ BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags,
 	LPTCH lpszEnvironmentBlock;
 	BOOL ret = FALSE;
 
-	pid = 0;
 	numArgs = 0;
 	lpszEnvironmentBlock = NULL;
 
 	pArgs = CommandLineToArgvA(lpCommandLine, &numArgs);
-
-	flags = 0;
 
 	token = (WINPR_ACCESS_TOKEN*) hToken;
 
