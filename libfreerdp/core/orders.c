@@ -2421,7 +2421,6 @@ BOOL update_compress_brush(wStream* s, BYTE* input, BYTE bpp)
 BOOL update_read_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush, UINT16 flags)
 {
 	int i;
-	int size;
 	BYTE iBitmapFormat;
 	BOOL compressed = FALSE;
 
@@ -2440,8 +2439,6 @@ BOOL update_read_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush, U
 
 	if ((cache_brush->cx == 8) && (cache_brush->cy == 8))
 	{
-		size = (cache_brush->bpp == 1) ? 8 : 8 * 8 * cache_brush->bpp;
-
 		if (cache_brush->bpp == 1)
 		{
 			if (cache_brush->length != 8)
@@ -2501,7 +2498,6 @@ int update_approximate_cache_brush_order(CACHE_BRUSH_ORDER* cache_brush, UINT16*
 BOOL update_write_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush, UINT16* flags)
 {
 	int i;
-	int size;
 	BYTE iBitmapFormat;
 	BOOL compressed = FALSE;
 
@@ -2519,8 +2515,6 @@ BOOL update_write_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush, 
 
 	if ((cache_brush->cx == 8) && (cache_brush->cy == 8))
 	{
-		size = (cache_brush->bpp == 1) ? 8 : 8 * 8 * cache_brush->bpp;
-
 		if (cache_brush->bpp == 1)
 		{
 			if (cache_brush->length != 8)
