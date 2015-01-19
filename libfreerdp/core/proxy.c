@@ -18,13 +18,13 @@
  */
 
 
+#include "proxy.h"
 #include "freerdp/settings.h"
 #include "tcp.h"
 
 #include "winpr/environment.h"
 /* For GetEnvironmentVariableA */
 
-/* TODO move into core/tcp.c? */
 void http_proxy_read_environment(rdpSettings *settings, char *envname)
 {
 	char env[256];
@@ -60,7 +60,7 @@ void http_proxy_read_environment(rdpSettings *settings, char *envname)
 	freerdp_set_param_string(settings, FreeRDP_HTTPProxyHostname, hostname);
 }
 
-BOOL http_proxy_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
+BOOL http_proxy_connect(BIO* bio, const char* hostname, UINT16 port)
 {
 	int status;
 	wStream* s;
@@ -84,7 +84,7 @@ BOOL http_proxy_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
 	send_length = Stream_GetPosition(s);
 	Stream_SetPosition(s, 0);
 	while (send_length > 0) {
-		status = tcp_write(tcp, Stream_Pointer(s), send_length);
+		status = BIO_write(bio, Stream_Pointer(s), send_length);
 		if (status < 0) {
 			fprintf(stderr, "HTTP Proxy connection: error while writing: %d\n", status);
 			return FALSE;
@@ -111,14 +111,14 @@ BOOL http_proxy_connect(rdpTcp* tcp, const char* hostname, UINT16 port)
 			return FALSE;
 		}
 
-		status = tcp_read(tcp, (BYTE*)str + resultsize, sizeof(str)-resultsize-1);
+		status = BIO_read(bio, (BYTE*)str + resultsize, sizeof(str)-resultsize-1);
 		if (status < 0) {
 			/* Error? */
 			return FALSE;
 		}
 		else if (status == 0) {
 			/* Error? */
-			fprintf(stderr, "tcp_read() returned zero\n");
+			fprintf(stderr, "BIO_read() returned zero\n");
 			return FALSE;
 		}
 		fprintf(stderr, "HTTP Proxy: received %d bytes\n", status);

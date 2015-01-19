@@ -20,7 +20,10 @@
 #ifndef __HTTP_PROXY_H
 #define __HTTP_PROXY_H
 
+#include "freerdp/settings.h"
+#include <openssl/bio.h>
+
 void http_proxy_read_environment(rdpSettings *settings, char *envname);
-BOOL http_proxy_connect(rdpTcp* tcp, const char* hostname, UINT16 port);
+BOOL http_proxy_connect(BIO *bio, const char* hostname, UINT16 port);
 
 #endif

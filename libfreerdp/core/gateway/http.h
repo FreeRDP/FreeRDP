@@ -84,7 +84,8 @@ struct _http_response
 
 	wListDictionary *Authenticates;
 	int ContentLength;
-	char* Content;
+	BYTE *BodyContent;
+	int bodyLen;
 };
 
 void http_response_print(HttpResponse* http_response);

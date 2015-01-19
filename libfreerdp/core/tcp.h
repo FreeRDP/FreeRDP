@@ -31,9 +31,14 @@
 #include <winpr/stream.h>
 #include <winpr/winsock.h>
 
+#include <freerdp/utils/ringbuffer.h>
+#include <openssl/bio.h>
+
 #ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL 0
 #endif
+
+#define BIO_TYPE_BUFFERED	66
 
 typedef struct rdp_tcp rdpTcp;
 
@@ -46,6 +51,12 @@ struct rdp_tcp
 #ifdef _WIN32
 	WSAEVENT wsa_event;
 #endif
+	BIO *socketBio;
+	BIO *bufferedBio;
+	RingBuffer xmitBuffer;
+	BOOL writeBlocked;
+	BOOL readBlocked;
+
 	HANDLE event;
 };
 
