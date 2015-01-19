@@ -182,8 +182,8 @@ void rdp_write_security_header(wStream* s, UINT16 flags);
 BOOL rdp_read_share_control_header(wStream* s, UINT16* length, UINT16* type, UINT16* channel_id);
 void rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type, UINT16 channel_id);
 
-BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* share_id, 
-			BYTE *compressed_type, UINT16 *compressed_len);
+BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type, UINT32* share_id,
+								BYTE* compressed_type, UINT16* compressed_len);
 
 void rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id);
 
@@ -214,7 +214,7 @@ int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
 void rdp_read_flow_control_pdu(wStream* s, UINT16* type);
 
 void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking);
-int rdp_check_fds(rdpRdp* rdp);
+int rdp_check_handles(rdpRdp* rdp);
 
 rdpRdp* rdp_new(rdpContext* context);
 void rdp_reset(rdpRdp* rdp);

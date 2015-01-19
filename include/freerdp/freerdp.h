@@ -49,6 +49,7 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <freerdp/extension.h>
 
 #include <winpr/stream.h>
+#include <winpr/collections.h>
 
 #include <freerdp/input.h>
 #include <freerdp/update.h>
@@ -127,7 +128,9 @@ struct rdp_context
 	ALIGN64 rdpMetrics* metrics; /* 41 */
 	ALIGN64 rdpCodecs* codecs; /* 42 */
 	ALIGN64 rdpAutoDetect* autodetect; /* 43 */
-	UINT64 paddingC[64 - 44]; /* 44 */
+	ALIGN64 wArrayList* eventHandles; /* 44 */
+	ALIGN64 HANDLE insertHandle; /* 45 */
+	UINT64 paddingC[64 - 46]; /* 46 */
 
 	UINT64 paddingD[96 - 64]; /* 64 */
 	UINT64 paddingE[128 - 96]; /* 96 */
@@ -207,7 +210,7 @@ struct rdp_freerdp
 											   Callback for certificate validation.
 											   Used to verify that an unknown certificate is trusted. */
 	ALIGN64 pVerifyChangedCertificate VerifyChangedCertificate; /**< (offset 52)
-															 Callback for changed certificate validation. 
+															 Callback for changed certificate validation.
 															 Used when a certificate differs from stored fingerprint.
 															 If returns TRUE, the new fingerprint will be trusted and old thrown out. */
 
@@ -245,8 +248,15 @@ FREERDP_API BOOL freerdp_shall_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_disconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_reconnect(freerdp* instance);
 
-FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
-FREERDP_API BOOL freerdp_check_fds(freerdp* instance);
+FREERDP_API DWORD freerdp_get_and_lock_handles(freerdp* instance, HANDLE** handles);
+FREERDP_API DWORD freerdp_unlock_handles(freerdp* instance, HANDLE* handles, DWORD count);
+
+/* Process pending events in main loop. */
+FREERDP_API BOOL freerdp_check_handles(freerdp* instance);
+
+/* Register / Unregister event sources for main loop. */
+FREERDP_API BOOL freerdp_add_handle(freerdp* instance, HANDLE handle);
+FREERDP_API BOOL freerdp_remove_handle(freerdp* instance, HANDLE handle);
 
 FREERDP_API wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id);
 FREERDP_API HANDLE freerdp_get_message_queue_event_handle(freerdp* instance, DWORD id);

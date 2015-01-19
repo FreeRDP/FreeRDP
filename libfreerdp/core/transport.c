@@ -86,6 +86,8 @@ void transport_stop(rdpTransport* transport)
 		{
 			SetEvent(transport->stopEvent);
 			WaitForSingleObject(transport->thread, INFINITE);
+			freerdp_remove_handle(transport->context->instance, transport->stopEvent);
+			freerdp_remove_handle(transport->context->instance, transport->thread);
 			CloseHandle(transport->thread);
 			CloseHandle(transport->stopEvent);
 			transport->thread = NULL;
@@ -125,7 +127,11 @@ BOOL transport_disconnect(rdpTransport* transport)
 	}
 
 	if (transport->TcpOut != transport->TcpIn)
+	{
+		freerdp_remove_handle(transport->context->instance,
+							  freerdp_tcp_get_event_handle(transport->TcpIn));
 		freerdp_tcp_free(transport->TcpOut);
+	}
 
 	transport->TcpOut = NULL;
 
@@ -134,8 +140,8 @@ BOOL transport_disconnect(rdpTransport* transport)
 		tls_free(transport->TsgTls);
 		transport->TsgTls = NULL;
 	}
-	transport->layer = TRANSPORT_LAYER_TCP;
 
+	transport->layer = TRANSPORT_LAYER_TCP;
 	return status;
 }
 
@@ -481,6 +487,8 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		transport->layer = TRANSPORT_LAYER_TSG;
 		transport->SplitInputOutput = TRUE;
 		transport->TcpOut = freerdp_tcp_new(settings);
+		freerdp_add_handle(transport->context->instance,
+						   freerdp_tcp_get_event_handle(transport->TcpOut));
 
 		if (!freerdp_tcp_connect(transport->TcpIn, settings->GatewayHostname, settings->GatewayPort, timeout) ||
 				!freerdp_tcp_set_blocking_mode(transport->TcpIn, FALSE))
@@ -510,6 +518,8 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 			transport->thread = CreateThread(NULL, 0,
 											 (LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
+			freerdp_add_handle(transport->context->instance, transport->stopEvent);
+			freerdp_add_handle(transport->context->instance, transport->thread);
 		}
 	}
 
@@ -933,51 +943,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 	return status;
 }
 
-void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
-{
-	void* pfd;
-#ifdef _WIN32
-	rfds[*rcount] = transport->TcpIn->event;
-	(*rcount)++;
-
-	if (transport->SplitInputOutput)
-	{
-		rfds[*rcount] = transport->TcpOut->event;
-		(*rcount)++;
-	}
-
-#else
-	rfds[*rcount] = (void*)(long)(transport->TcpIn->sockfd);
-	(*rcount)++;
-
-	if (transport->SplitInputOutput)
-	{
-		rfds[*rcount] = (void*)(long)(transport->TcpOut->sockfd);
-		(*rcount)++;
-	}
-
-#endif
-	pfd = GetEventWaitObject(transport->ReceiveEvent);
-
-	if (pfd)
-	{
-		rfds[*rcount] = pfd;
-		(*rcount)++;
-	}
-
-	if (transport->GatewayEvent)
-	{
-		pfd = GetEventWaitObject(transport->GatewayEvent);
-
-		if (pfd)
-		{
-			rfds[*rcount] = pfd;
-			(*rcount)++;
-		}
-	}
-}
-
-void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count)
+static void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count)
 {
 	events[*count] = freerdp_tcp_get_event_handle(transport->TcpIn);
 	(*count)++;
@@ -1035,7 +1001,7 @@ int tranport_drain_output_buffer(rdpTransport* transport)
 	return ret;
 }
 
-int transport_check_fds(rdpTransport* transport)
+int transport_check_handles(rdpTransport* transport)
 {
 	int status;
 	int recv_status;
@@ -1171,7 +1137,7 @@ static void* transport_client_thread(void* arg)
 			if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
 				break;
 
-			if (!freerdp_check_fds(instance))
+			if (!freerdp_check_handles(instance))
 			{
 			}
 		}
@@ -1203,6 +1169,7 @@ rdpTransport* transport_new(rdpContext* context)
 	if (!transport->TcpIn)
 		goto out_free;
 
+	freerdp_add_handle(context->instance, freerdp_tcp_get_event_handle(transport->TcpIn));
 	/* a small 0.1ms delay when transport is blocking. */
 	transport->SleepInterval = 100;
 	transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
@@ -1221,11 +1188,13 @@ rdpTransport* transport_new(rdpContext* context)
 	if (!transport->ReceiveEvent || transport->ReceiveEvent == INVALID_HANDLE_VALUE)
 		goto out_free_receivebuffer;
 
+	freerdp_add_handle(transport->context->instance, transport->ReceiveEvent);
 	transport->connectedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	if (!transport->connectedEvent || transport->connectedEvent == INVALID_HANDLE_VALUE)
 		goto out_free_receiveEvent;
 
+	freerdp_add_handle(transport->context->instance, transport->connectedEvent);
 	transport->blocking = TRUE;
 	transport->GatewayEnabled = FALSE;
 	transport->layer = TRANSPORT_LAYER_TCP;
@@ -1240,14 +1209,17 @@ rdpTransport* transport_new(rdpContext* context)
 out_free_readlock:
 	DeleteCriticalSection(&(transport->ReadLock));
 out_free_connectedEvent:
+	freerdp_remove_handle(transport->context->instance, transport->connectedEvent);
 	CloseHandle(transport->connectedEvent);
 out_free_receiveEvent:
+	freerdp_remove_handle(transport->context->instance, transport->ReceiveEvent);
 	CloseHandle(transport->ReceiveEvent);
 out_free_receivebuffer:
 	StreamPool_Return(transport->ReceivePool, transport->ReceiveBuffer);
 out_free_receivepool:
 	StreamPool_Free(transport->ReceivePool);
 out_free_tcpin:
+	freerdp_remove_handle(context->instance, freerdp_tcp_get_event_handle(transport->TcpIn));
 	freerdp_tcp_free(transport->TcpIn);
 out_free:
 	free(transport);
@@ -1262,13 +1234,19 @@ void transport_free(rdpTransport* transport)
 	transport_disconnect(transport);
 
 	if (transport->TcpIn)
+	{
+		freerdp_remove_handle(transport->context->instance,
+							  freerdp_tcp_get_event_handle(transport->TcpIn));
 		freerdp_tcp_free(transport->TcpIn);
+	}
 
 	if (transport->ReceiveBuffer)
 		Stream_Release(transport->ReceiveBuffer);
 
 	StreamPool_Free(transport->ReceivePool);
+	freerdp_remove_handle(transport->context->instance, transport->ReceiveEvent);
 	CloseHandle(transport->ReceiveEvent);
+	freerdp_remove_handle(transport->context->instance, transport->connectedEvent);
 	CloseHandle(transport->connectedEvent);
 	DeleteCriticalSection(&(transport->ReadLock));
 	DeleteCriticalSection(&(transport->WriteLock));

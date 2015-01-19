@@ -31,48 +31,27 @@
 #include "android_freerdp.h"
 #include "android_cliprdr.h"
 
-int android_is_event_set(ANDROID_EVENT_QUEUE * queue)
+int android_is_event_set(ANDROID_EVENT_QUEUE* queue)
 {
-	fd_set rfds;
-	int num_set;
-	struct timeval time;
-
-	FD_ZERO(&rfds);
-	FD_SET(queue->pipe_fd[0], &rfds);
-	memset(&time, 0, sizeof(time));
-	num_set = select(queue->pipe_fd[0] + 1, &rfds, 0, 0, &time);
-
-	return (num_set == 1);
+	DWORD ev = WaitForSingleObject(queue->event, 0);
+	return (ev == WAIT_OBJECT_0);
 }
 
-void android_set_event(ANDROID_EVENT_QUEUE * queue)
+void android_set_event(ANDROID_EVENT_QUEUE* queue)
 {
-	int length;
-
-	length = write(queue->pipe_fd[1], "sig", 4);
-
-	if (length != 4)
-		WLog_ERR(TAG, "android_set_event: error");
+	SetEvent(queue->event);
 }
 
 
-void android_clear_event(ANDROID_EVENT_QUEUE * queue)
+void android_clear_event(ANDROID_EVENT_QUEUE* queue)
 {
-	int length;
-
-	while (android_is_event_set(queue))
-	{
-		length = read(queue->pipe_fd[0], &length, 4);
-
-		if (length != 4)
-			WLog_ERR(TAG, "android_clear_event: error");
-	}
+	ResetEvent(queue->event);
 }
 
-void android_push_event(freerdp * inst, ANDROID_EVENT* event)
+void android_push_event(freerdp* inst, ANDROID_EVENT* event)
 {
-
 	androidContext* aCtx = (androidContext*)inst->context;
+
 	if (aCtx->event_queue->count >= aCtx->event_queue->size)
 	{
 		aCtx->event_queue->size = aCtx->event_queue->size * 2;
@@ -80,11 +59,10 @@ void android_push_event(freerdp * inst, ANDROID_EVENT* event)
 	}
 
 	aCtx->event_queue->events[(aCtx->event_queue->count)++] = event;
-
 	android_set_event(aCtx->event_queue);
 }
 
-ANDROID_EVENT* android_peek_event(ANDROID_EVENT_QUEUE * queue)
+ANDROID_EVENT* android_peek_event(ANDROID_EVENT_QUEUE* queue)
 {
 	ANDROID_EVENT* event;
 
@@ -92,11 +70,10 @@ ANDROID_EVENT* android_peek_event(ANDROID_EVENT_QUEUE * queue)
 		return NULL;
 
 	event = queue->events[0];
-
 	return event;
 }
 
-ANDROID_EVENT* android_pop_event(ANDROID_EVENT_QUEUE * queue)
+ANDROID_EVENT* android_pop_event(ANDROID_EVENT_QUEUE* queue)
 {
 	int i;
 	ANDROID_EVENT* event;
@@ -149,9 +126,7 @@ int android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 			UINT32 size;
 			UINT32 formatId;
 			ANDROID_EVENT_CLIPBOARD* clipboard_event = (ANDROID_EVENT_CLIPBOARD*) event;
-
 			formatId = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
-
 			size = clipboard_event->data_length;
 
 			if (size)
@@ -162,7 +137,6 @@ int android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 					return -1;
 
 				CopyMemory(data, clipboard_event->data, size);
-
 				ClipboardSetData(afc->clipboard, formatId, (void*) data, size);
 			}
 			else
@@ -171,7 +145,6 @@ int android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 			}
 
 			android_cliprdr_send_client_format_list(afc->cliprdr);
-
 			android_event_clipboard_free(clipboard_event);
 		}
 		else if (event->type == EVENT_TYPE_DISCONNECT)
@@ -184,30 +157,18 @@ int android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 	return 0;
 }
 
-BOOL android_get_fds(freerdp * inst, void ** read_fds,
-		int * read_count, void ** write_fds, int * write_count)
-{
-	androidContext* aCtx = (androidContext*)inst->context;
-	if (aCtx->event_queue->pipe_fd[0] == -1)
-		return TRUE;
-
-	read_fds[*read_count] = (void *)(long) aCtx->event_queue->pipe_fd[0];
-
-	(*read_count)++;
-	return TRUE;
-}
-
-BOOL android_check_fds(freerdp * inst)
+BOOL android_check_handles(freerdp* inst)
 {
 	androidContext* aCtx = (androidContext*)inst->context;
 
-	if (aCtx->event_queue->pipe_fd[0] == -1)
+	if (!aCtx->event_queue->event)
 		return TRUE;
 
 	if (android_is_event_set(aCtx->event_queue))
 	{
 		android_clear_event(aCtx->event_queue);
-		if(android_process_event(aCtx->event_queue, inst) != 0)
+
+		if (android_process_event(aCtx->event_queue, inst) != 0)
 			return FALSE;
 	}
 
@@ -217,14 +178,11 @@ BOOL android_check_fds(freerdp * inst)
 ANDROID_EVENT_KEY* android_event_key_new(int flags, UINT16 scancode)
 {
 	ANDROID_EVENT_KEY* event;
-
 	event = (ANDROID_EVENT_KEY*) malloc(sizeof(ANDROID_EVENT_KEY));
 	memset(event, 0, sizeof(ANDROID_EVENT_KEY));
-
 	event->type = EVENT_TYPE_KEY;
 	event->flags = flags;
 	event->scancode = scancode;
-
 	return event;
 }
 
@@ -237,13 +195,10 @@ void android_event_key_free(ANDROID_EVENT_KEY* event)
 ANDROID_EVENT_KEY* android_event_unicodekey_new(UINT16 key)
 {
 	ANDROID_EVENT_KEY* event;
-
 	event = (ANDROID_EVENT_KEY*) malloc(sizeof(ANDROID_EVENT_KEY));
 	memset(event, 0, sizeof(ANDROID_EVENT_KEY));
-
 	event->type = EVENT_TYPE_KEY_UNICODE;
 	event->scancode = key;
-
 	return event;
 }
 
@@ -256,15 +211,12 @@ void android_event_unicodekey_free(ANDROID_EVENT_KEY* event)
 ANDROID_EVENT_CURSOR* android_event_cursor_new(UINT16 flags, UINT16 x, UINT16 y)
 {
 	ANDROID_EVENT_CURSOR* event;
-
 	event = (ANDROID_EVENT_CURSOR*) malloc(sizeof(ANDROID_EVENT_CURSOR));
 	memset(event, 0, sizeof(ANDROID_EVENT_CURSOR));
-
 	event->type = EVENT_TYPE_CURSOR;
 	event->x = x;
 	event->y = y;
 	event->flags = flags;
-
 	return event;
 }
 
@@ -277,10 +229,8 @@ void android_event_cursor_free(ANDROID_EVENT_CURSOR* event)
 ANDROID_EVENT* android_event_disconnect_new()
 {
 	ANDROID_EVENT* event;
-
 	event = (ANDROID_EVENT*) malloc(sizeof(ANDROID_EVENT));
 	memset(event, 0, sizeof(ANDROID_EVENT));
-
 	event->type = EVENT_TYPE_DISCONNECT;
 	return event;
 }
@@ -294,11 +244,10 @@ void android_event_disconnect_free(ANDROID_EVENT* event)
 ANDROID_EVENT_CLIPBOARD* android_event_clipboard_new(void* data, int data_length)
 {
 	ANDROID_EVENT_CLIPBOARD* event;
-
 	event = (ANDROID_EVENT_CLIPBOARD*) malloc(sizeof(ANDROID_EVENT_CLIPBOARD));
 	memset(event, 0, sizeof(ANDROID_EVENT_CLIPBOARD));
-
 	event->type = EVENT_TYPE_CLIPBOARD;
+
 	if (data)
 	{
 		event->data = malloc(data_length);
@@ -317,40 +266,40 @@ void android_event_clipboard_free(ANDROID_EVENT_CLIPBOARD* event)
 		{
 			free(event->data);
 		}
+
 		free(event);
 	}
 }
 
-void android_event_queue_init(freerdp * inst)
+void android_event_queue_init(freerdp* inst)
 {
 	androidContext* aCtx = (androidContext*)inst->context;
-
 	aCtx->event_queue = (ANDROID_EVENT_QUEUE*) malloc(sizeof(ANDROID_EVENT_QUEUE));
 	memset(aCtx->event_queue, 0, sizeof(ANDROID_EVENT_QUEUE));
+	aCtx->event_queue->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-	aCtx->event_queue->pipe_fd[0] = -1;
-	aCtx->event_queue->pipe_fd[1] = -1;
+	if (!inst->context->settings->AsyncInput)
+	{
+		freerdp_add_handle(inst, aCtx->event_queue->event);
+	}
 
 	aCtx->event_queue->size = 16;
 	aCtx->event_queue->count = 0;
 	aCtx->event_queue->events = (ANDROID_EVENT**) malloc(sizeof(ANDROID_EVENT*) * aCtx->event_queue->size);
-
-	if (pipe(aCtx->event_queue->pipe_fd) < 0)
-		WLog_ERR(TAG, "android_pre_connect: pipe failed");
 }
 
-void android_event_queue_uninit(freerdp * inst)
+void android_event_queue_uninit(freerdp* inst)
 {
 	androidContext* aCtx = (androidContext*)inst->context;
 
-	if (aCtx->event_queue->pipe_fd[0] != -1)
+	if (aCtx->event_queue->event)
 	{
-		close(aCtx->event_queue->pipe_fd[0]);
-		aCtx->event_queue->pipe_fd[0] = -1;
-	}
-	if (aCtx->event_queue->pipe_fd[1] != -1)
-	{
-		close(aCtx->event_queue->pipe_fd[1]);
-		aCtx->event_queue->pipe_fd[1] = -1;
+		if (!inst->context->settings->AsyncInput)
+		{
+			freerdp_remove_handle(inst, aCtx->event_queue->event);
+		}
+
+		CloseHandle(aCtx->event_queue->event);
+		aCtx->event_queue->event = NULL;
 	}
 }

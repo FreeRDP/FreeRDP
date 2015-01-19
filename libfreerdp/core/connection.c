@@ -210,9 +210,9 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			domain = settings->ComputerName;
 
 		domain_length = strlen(domain);
-
 		cookie_length = domain_length + 1 + user_length;
 		cookie = (char*) malloc(cookie_length + 1);
+
 		if (!cookie)
 			return FALSE;
 
@@ -224,7 +224,6 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			CopyMemory(&cookie[domain_length + 1], user, user_length);
 
 		cookie[cookie_length] = '\0';
-
 		ret = nego_set_cookie(rdp->nego, cookie);
 		free(cookie);
 	}
@@ -239,13 +238,10 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_set_send_preconnection_pdu(rdp->nego, settings->SendPreconnectionPdu);
 	nego_set_preconnection_id(rdp->nego, settings->PreconnectionId);
 	nego_set_preconnection_blob(rdp->nego, settings->PreconnectionBlob);
-
 	nego_set_negotiation_enabled(rdp->nego, settings->NegotiateSecurityLayer);
 	nego_set_restricted_admin_mode_required(rdp->nego, settings->RestrictedAdminModeRequired);
-
 	nego_set_gateway_enabled(rdp->nego, settings->GatewayEnabled);
 	nego_set_gateway_bypass_local(rdp->nego, settings->GatewayBypassLocal);
-
 	nego_enable_rdp(rdp->nego, settings->RdpSecurity);
 	nego_enable_tls(rdp->nego, settings->TlsSecurity);
 	nego_enable_nla(rdp->nego, settings->NlaSecurity);
@@ -276,12 +272,11 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	if ((rdp->nego->selected_protocol & PROTOCOL_TLS) || (rdp->nego->selected_protocol == PROTOCOL_RDP))
 	{
 		if ((settings->Username != NULL) && ((settings->Password != NULL) ||
-				(settings->RedirectionPassword != NULL && settings->RedirectionPasswordLength > 0)))
+											 (settings->RedirectionPassword != NULL && settings->RedirectionPasswordLength > 0)))
 			settings->AutoLogonEnabled = TRUE;
 	}
 
 	rdp_set_blocking_mode(rdp, FALSE);
-
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO);
 	rdp->finalize_sc_pdus = 0;
 
@@ -303,7 +298,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	while (rdp->state != CONNECTION_STATE_ACTIVE)
 	{
-		if (rdp_check_fds(rdp) < 0)
+		if (rdp_check_handles(rdp) < 0)
 		{
 			if (!freerdp_get_last_error(rdp->context))
 			{
@@ -337,7 +332,6 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 {
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
-
 	rdp_client_disconnect(rdp);
 	rdp_redirection_apply_settings(rdp);
 
@@ -377,7 +371,6 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	}
 
 	status = rdp_client_connect(rdp);
-
 	return status;
 }
 
@@ -394,7 +387,6 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	BOOL ret = FALSE;
 	rdpSettings* settings;
 	BYTE* crypt_client_random = NULL;
-
 	settings = rdp->settings;
 
 	if (!settings->UseRdpSecurityLayer)
@@ -418,7 +410,6 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	key_len = settings->RdpServerCertificate->cert_info.ModulusLength;
 	mod = settings->RdpServerCertificate->cert_info.Modulus;
 	exp = settings->RdpServerCertificate->cert_info.exponent;
-
 	/*
 	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
 	 * for details
@@ -429,19 +420,15 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		return FALSE;
 
 	crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, key_len, mod, exp, crypt_client_random);
-
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
 	s = Stream_New(NULL, length);
-
 	rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
 	rdp_write_security_header(s, SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC);
 	length = key_len + 8;
-
 	Stream_Write_UINT32(s, length);
 	Stream_Write(s, crypt_client_random, length);
 	Stream_SealLength(s);
-
 	status = transport_write(rdp->mcs->transport, s);
 	Stream_Free(s, TRUE);
 
@@ -462,12 +449,15 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
+
 		if (!rdp->fips_encrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
 			goto end;
 		}
+
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
+
 		if (!rdp->fips_decrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
@@ -475,16 +465,19 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		}
 
 		rdp->fips_hmac = crypto_hmac_new();
+
 		if (!rdp->fips_hmac)
 		{
 			WLog_ERR(TAG, "unable to allocate fips hmac");
 			goto end;
 		}
+
 		ret = TRUE;
 		goto end;
 	}
 
 	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
+
 	if (!rdp->rc4_decrypt_key)
 	{
 		WLog_ERR(TAG, "unable to allocate rc4 decrypt key");
@@ -492,15 +485,19 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	}
 
 	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
+
 	if (!rdp->rc4_encrypt_key)
 	{
 		WLog_ERR(TAG, "unable to allocate rc4 encrypt key");
 		goto end;
 	}
+
 	ret = TRUE;
 end:
+
 	if (crypt_client_random)
 		free(crypt_client_random);
+
 	return ret;
 }
 
@@ -551,6 +548,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
 	client_random = malloc(key_len);
+
 	if (!client_random)
 		return FALSE;
 
@@ -561,10 +559,11 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 
 	crypt_client_random = calloc(1, rand_len);
+
 	if (!crypt_client_random)
 		goto end2;
-	Stream_Read(s, crypt_client_random, rand_len);
 
+	Stream_Read(s, crypt_client_random, rand_len);
 	mod = rdp->settings->RdpServerRsaKey->Modulus;
 	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
 	crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp, client_random);
@@ -580,6 +579,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		rdp->fips_encrypt = crypto_des3_encrypt_init(rdp->fips_encrypt_key, fips_ivec);
+
 		if (!rdp->fips_encrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 encrypt key");
@@ -587,6 +587,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		}
 
 		rdp->fips_decrypt = crypto_des3_decrypt_init(rdp->fips_decrypt_key, fips_ivec);
+
 		if (!rdp->fips_decrypt)
 		{
 			WLog_ERR(TAG, "unable to allocate des3 decrypt key");
@@ -594,16 +595,19 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		}
 
 		rdp->fips_hmac = crypto_hmac_new();
+
 		if (!rdp->fips_hmac)
 		{
 			WLog_ERR(TAG, "unable to allocate fips hmac");
 			goto end;
 		}
+
 		ret = TRUE;
 		goto end;
 	}
 
 	rdp->rc4_decrypt_key = crypto_rc4_init(rdp->decrypt_key, rdp->rc4_key_len);
+
 	if (!rdp->rc4_decrypt_key)
 	{
 		WLog_ERR(TAG, "unable to allocate rc4 decrypt key");
@@ -611,16 +615,21 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 
 	rdp->rc4_encrypt_key = crypto_rc4_init(rdp->encrypt_key, rdp->rc4_key_len);
+
 	if (!rdp->rc4_encrypt_key)
 	{
 		WLog_ERR(TAG, "unable to allocate rc4 encrypt key");
 		goto end;
 	}
+
 	ret = TRUE;
 end:
+
 	if (crypt_client_random)
 		free(crypt_client_random);
+
 end2:
+
 	if (client_random)
 		free(client_random);
 
@@ -642,7 +651,6 @@ BOOL rdp_client_connect_mcs_connect_response(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_ATTACH_USER);
-
 	return TRUE;
 }
 
@@ -655,7 +663,6 @@ BOOL rdp_client_connect_mcs_attach_user_confirm(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN);
-
 	return TRUE;
 }
 
@@ -730,7 +737,6 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 				return FALSE;
 
 			mcs->channels[i].joined = TRUE;
-
 			break;
 		}
 
@@ -787,7 +793,6 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 int rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 {
 	int status;
-
 	status = license_recv(rdp->license, s);
 
 	if (status < 0)
@@ -812,24 +817,19 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	BYTE* mark;
 	UINT16 width;
 	UINT16 height;
-
 	width = rdp->settings->DesktopWidth;
 	height = rdp->settings->DesktopHeight;
-
 	Stream_GetPointer(s, mark);
 
 	if (!rdp_recv_demand_active(rdp, s))
 	{
 		UINT16 channelId;
-
 		Stream_SetPointer(s, mark);
 		rdp_recv_get_active_header(rdp, s, &channelId);
-
 		/* Was Stream_Seek(s, RDP_PACKET_HEADER_MAX_LENGTH);
 		 * but the headers aren't always that length,
 		 * so that could result in a bad offset.
 		 */
-
 		return rdp_recv_out_of_sequence_pdu(rdp, s);
 	}
 
@@ -851,7 +851,6 @@ int rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 	}
 
 	rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION);
-
 	return rdp_client_connect_finalize(rdp);
 }
 
@@ -862,7 +861,6 @@ int rdp_client_connect_finalize(rdpRdp* rdp)
 	 * The client-to-server PDUs sent during this phase have no dependencies on any of the server-to-
 	 * client PDUs; they may be sent as a single batch, provided that sequencing is maintained.
 	 */
-
 	if (!rdp_send_client_synchronize_pdu(rdp))
 		return -1;
 
@@ -871,6 +869,7 @@ int rdp_client_connect_finalize(rdpRdp* rdp)
 
 	if (!rdp_send_client_control_pdu(rdp, CTRLACTION_REQUEST_CONTROL))
 		return -1;
+
 	/**
 	 * [MS-RDPBCGR] 2.2.1.17
 	 * Client persistent key list must be sent if a bitmap is
@@ -966,8 +965,7 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 {
 	BOOL status;
 	rdpSettings* settings = rdp->settings;
-	rdpNego *nego = rdp->nego;
-
+	rdpNego* nego = rdp->nego;
 	transport_set_blocking_mode(rdp->transport, TRUE);
 
 	if (!nego_read_request(nego, s))
@@ -975,12 +973,12 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 
 	nego->selected_protocol = 0;
 	WLog_INFO(TAG,  "Client Security: NLA:%d TLS:%d RDP:%d",
-			 (nego->requested_protocols & PROTOCOL_NLA) ? 1 : 0,
-			 (nego->requested_protocols & PROTOCOL_TLS) ? 1 : 0,
-			 (nego->requested_protocols == PROTOCOL_RDP) ? 1 : 0
-			);
+			  (nego->requested_protocols & PROTOCOL_NLA) ? 1 : 0,
+			  (nego->requested_protocols & PROTOCOL_TLS) ? 1 : 0,
+			  (nego->requested_protocols == PROTOCOL_RDP) ? 1 : 0
+			 );
 	WLog_INFO(TAG,  "Server Security: NLA:%d TLS:%d RDP:%d",
-			 settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
+			  settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
 
 	if ((settings->NlaSecurity) && (nego->requested_protocols & PROTOCOL_NLA))
 	{
@@ -1000,10 +998,10 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	}
 
 	WLog_INFO(TAG,  "Negotiated Security: NLA:%d TLS:%d RDP:%d",
-			 (nego->selected_protocol & PROTOCOL_NLA) ? 1 : 0,
-			 (nego->selected_protocol & PROTOCOL_TLS) ? 1 : 0,
-			 (nego->selected_protocol == PROTOCOL_RDP) ? 1: 0
-			);
+			  (nego->selected_protocol & PROTOCOL_NLA) ? 1 : 0,
+			  (nego->selected_protocol & PROTOCOL_TLS) ? 1 : 0,
+			  (nego->selected_protocol == PROTOCOL_RDP) ? 1: 0
+			 );
 
 	if (!nego_send_negotiation_response(nego))
 		return FALSE;
@@ -1021,9 +1019,7 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	transport_set_blocking_mode(rdp->transport, FALSE);
-
 	rdp_server_transition_to_state(rdp, CONNECTION_STATE_NEGO);
-
 	return TRUE;
 }
 
@@ -1047,7 +1043,6 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CONNECT);
-
 	return TRUE;
 }
 
@@ -1057,7 +1052,6 @@ BOOL rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_ERECT_DOMAIN);
-
 	return TRUE;
 }
 
@@ -1070,7 +1064,6 @@ BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_ATTACH_USER);
-
 	return TRUE;
 }
 

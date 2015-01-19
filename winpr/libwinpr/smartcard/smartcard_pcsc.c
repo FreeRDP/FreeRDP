@@ -306,8 +306,17 @@ void PCSC_ReaderAliasFree(PCSC_READER* reader)
 	if (!reader)
 		return;
 
-	free(reader->namePCSC);
-	free(reader->nameWinSCard);
+	if (reader->namePCSC)
+	{
+		free(reader->namePCSC);
+		reader->namePCSC = NULL;
+	}
+
+	if (reader->nameWinSCard)
+	{
+		free(reader->nameWinSCard);
+		reader->nameWinSCard = NULL;
+	}
 }
 
 PCSC_SCARDCONTEXT* PCSC_GetCardContextData(SCARDCONTEXT hContext)
@@ -613,6 +622,7 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	char* p, *q;
 	char* tokens[64][2];
 	char* nameWinSCard;
+
 	/**
 	 * pcsc-lite reader name format:
 	 * name [interface] (serial) index slot
@@ -655,7 +665,7 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 	 */
 	if (!name)
 		return NULL;
-		
+
 	length = strlen(name);
 
 	if (length < 10)
@@ -745,7 +755,6 @@ char* PCSC_ConvertReaderNameToWinSCard(const char* name)
 char* PCSC_GetReaderAliasFromName(char* namePCSC)
 {
 	char* nameWinSCard = NULL;
-
 	nameWinSCard = PCSC_ConvertReaderNameToWinSCard(namePCSC);
 
 	if (nameWinSCard)
@@ -976,6 +985,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext,
 	/* FIXME: unicode conversion */
 	status = (LONG) g_PCSC.pfnSCardListReaderGroups(hContext, (LPSTR) mszGroups, &pcsc_cchGroups);
 	status = PCSC_MapErrorCodeToWinSCard(status);
+
 	if (pcchGroups)
 		*pcchGroups = (DWORD) pcsc_cchGroups;
 
@@ -1412,7 +1422,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 
 	/* pcsc-lite interprets value 0 as INFINITE, work around the problem by using value 1 */
 	pcsc_dwTimeout = pcsc_dwTimeout ? pcsc_dwTimeout : 1;
-
 	/**
 	 * Apple's SmartCard Services (not vanilla pcsc-lite) appears to have trouble with the
 	 * "\\\\?PnP?\\Notification" reader name. I am always getting EXC_BAD_ACCESS with it.
@@ -1435,7 +1444,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 
 	if (!states)
 	{
-		free (map);
+		free(map);
 		return SCARD_E_NO_MEMORY;
 	}
 
@@ -1486,7 +1495,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 		rgReaderStates[i].dwCurrentState = states[j].dwCurrentState;
 		rgReaderStates[i].cbAtr = states[j].cbAtr;
 		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
-
 		dwEventState = states[j].dwEventState & ~SCARD_STATE_CHANGED;
 
 		if (dwEventState != rgReaderStates[i].dwCurrentState)
@@ -1512,6 +1520,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext
 
 	free(map);
 	free(states);
+
 	if ((status == SCARD_S_SUCCESS) && !stateChanged)
 		status = SCARD_E_TIMEOUT;
 	else if ((status == SCARD_E_TIMEOUT) && stateChanged)
@@ -1636,8 +1645,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnect_Internal(SCARDCONTEXT hContext,
 		pcsc_dwPreferredProtocols = (PCSC_DWORD) PCSC_ConvertProtocolsFromWinSCard(dwPreferredProtocols);
 
 	status = (LONG) g_PCSC.pfnSCardConnect(hPrivateContext, szReaderPCSC,
-				pcsc_dwShareMode, pcsc_dwPreferredProtocols, phCard, &pcsc_dwActiveProtocol);
-
+										   pcsc_dwShareMode, pcsc_dwPreferredProtocols, phCard, &pcsc_dwActiveProtocol);
 	status = PCSC_MapErrorCodeToWinSCard(status);
 
 	if (status == SCARD_S_SUCCESS)
@@ -1663,7 +1671,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectA(SCARDCONTEXT hContext,
 		return SCARD_E_INVALID_HANDLE;
 
 	status = PCSC_SCardConnect_Internal(hContext, szReader, dwShareMode,
-					dwPreferredProtocols, phCard, pdwActiveProtocol);
+										dwPreferredProtocols, phCard, pdwActiveProtocol);
 
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
@@ -1685,7 +1693,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardConnectW(SCARDCONTEXT hContext,
 		ConvertFromUnicode(CP_UTF8, 0, szReader, -1, &szReaderA, 0, NULL, NULL);
 
 	status = PCSC_SCardConnect_Internal(hContext, szReaderA, dwShareMode,
-					dwPreferredProtocols, phCard, pdwActiveProtocol);
+										dwPreferredProtocols, phCard, pdwActiveProtocol);
 	free(szReaderA);
 
 	if (!PCSC_UnlockCardContext(hContext))
@@ -1888,11 +1896,13 @@ WINSCARDAPI LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard,
 			if (pcchReaderLenAlloc)
 			{
 #ifdef __MAXOSX__
+
 				/**
 				* Workaround for SCardStatus Bug in MAC OS X Yosemite
 				*/
 				if (OSXVersion == 0x10100000)
 					pcsc_cchReaderLen++;
+
 #endif
 				*pMszReaderNames = (LPSTR) calloc(1, pcsc_cchReaderLen);
 
@@ -2067,7 +2077,8 @@ WINSCARDAPI LONG WINAPI PCSC_SCardTransmit(SCARDHANDLE hCard,
 		if (!pcsc_pioRecvPci)
 		{
 			if (pioSendPci)
-				free (pcsc_pioSendPci);
+				free(pcsc_pioSendPci);
+
 			return SCARD_E_NO_MEMORY;
 		}
 
@@ -2125,7 +2136,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard,
 	 * Converting Windows Feature Request IOCTL code to the pcsc-lite control code:
 	 * http://musclecard.996296.n3.nabble.com/Converting-Windows-Feature-Request-IOCTL-code-to-the-pcsc-lite-control-code-td4906.html
 	 */
-
 	IoCtlMethod = METHOD_FROM_CTL_CODE(dwControlCode);
 	IoCtlFunction = FUNCTION_FROM_CTL_CODE(dwControlCode);
 	IoCtlAccess = ACCESS_FROM_CTL_CODE(dwControlCode);
@@ -2138,11 +2148,9 @@ WINSCARDAPI LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard,
 		dwControlCode = PCSC_SCARD_CTL_CODE(IoCtlFunction);
 
 	pcsc_dwControlCode = (PCSC_DWORD) dwControlCode;
-
 	status = (LONG) g_PCSC.pfnSCardControl(hCard,
-				pcsc_dwControlCode, lpInBuffer, pcsc_cbInBufferSize,
-				lpOutBuffer, pcsc_cbOutBufferSize, &pcsc_BytesReturned);
-
+										   pcsc_dwControlCode, lpInBuffer, pcsc_cbInBufferSize,
+										   lpOutBuffer, pcsc_cbOutBufferSize, &pcsc_BytesReturned);
 	status = PCSC_MapErrorCodeToWinSCard(status);
 	*lpBytesReturned = (DWORD) pcsc_BytesReturned;
 
@@ -2225,7 +2233,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dw
 WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr, LPDWORD pcbAttrLen)
 {
 	int length = 0;
-	char* namePCSC;
+	char* namePCSC = NULL;
 	char* nameWinSCard;
 	DWORD cbAttrLen = 0;
 	char* pbAttrA = NULL;
@@ -2288,6 +2296,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 		/* length here includes null terminator */
 		length = ConvertToUnicode(CP_UTF8, 0, (char*) friendlyNameA, -1, &friendlyNameW, 0);
 		free(friendlyNameA);
+		friendlyNameA = NULL;
 
 		if (!friendlyNameW)
 			return SCARD_E_NO_MEMORY;
@@ -2310,6 +2319,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 				CopyMemory(pbAttr, (BYTE*) friendlyNameW, (length * 2));
 				*pcbAttrLen = length * 2;
 				free(friendlyNameW);
+				friendlyNameW = NULL;
 			}
 		}
 	}
@@ -2333,11 +2343,16 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 				CopyMemory(pbAttr, (BYTE*) friendlyNameA, length + 1);
 				*pcbAttrLen = length;
 				free(friendlyNameA);
+				friendlyNameA = NULL;
 			}
 		}
 	}
 
-	free(namePCSC);
+	if (namePCSC && (friendlyNameA || nameWinSCard))
+	{
+		free(namePCSC);
+		namePCSC = NULL;
+	}
 
 	return status;
 }
@@ -2349,7 +2364,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 	BOOL pcbAttrLenAlloc = FALSE;
 	LONG status = SCARD_S_SUCCESS;
 	LPBYTE* pPbAttr = (LPBYTE*) pbAttr;
-
 	cbAttrLen = *pcbAttrLen;
 
 	if (*pcbAttrLen == SCARD_AUTOALLOCATE)
@@ -2363,7 +2377,6 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 		 * pcsc-lite returns SCARD_E_INSUFFICIENT_BUFFER if the given
 		 * buffer size is larger than PCSC_MAX_BUFFER_SIZE (264)
 		 */
-
 		if (*pcbAttrLen > PCSC_MAX_BUFFER_SIZE)
 			*pcbAttrLen = PCSC_MAX_BUFFER_SIZE;
 	}
@@ -2609,91 +2622,103 @@ WINSCARDAPI LONG WINAPI PCSC_SCardAudit(SCARDCONTEXT hContext, DWORD dwEvent)
 #ifdef __MACOSX__
 unsigned int determineMacOSXVersion()
 {
-    int mib[2];
-    size_t len = 0;
-    char *kernelVersion = NULL;
-    char *tok = NULL;
-    unsigned int version = 0;
-    int majorVersion = 0;
-    int minorVersion = 0;
-    int patchVersion = 0;
-    int count = 0;
+	int mib[2];
+	size_t len = 0;
+	char* kernelVersion = NULL;
+	char* tok = NULL;
+	unsigned int version = 0;
+	int majorVersion = 0;
+	int minorVersion = 0;
+	int patchVersion = 0;
+	int count = 0;
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_OSRELEASE;
+	sysctl(mib, 2, NULL, &len, NULL, 0);
+	kernelVersion = calloc(len, sizeof(char));
+	sysctl(mib, 2, kernelVersion, &len, NULL, 0);
+	tok = strtok(kernelVersion,".");
 
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_OSRELEASE;
-    sysctl(mib, 2, NULL, &len, NULL, 0);
-    kernelVersion = calloc(len, sizeof(char));
-    sysctl(mib, 2, kernelVersion, &len, NULL, 0);
+	while (tok)
+	{
+		switch (count)
+		{
+			case 0:
+				majorVersion = atoi(tok);
+				break;
 
-    tok = strtok(kernelVersion,".");
-    while (tok)
-    {
-        switch(count)
-        {
-            case 0:
-                majorVersion = atoi(tok);
-                break;
-            case 1:
-                minorVersion = atoi(tok);
-                break;
-            case 2:
-                patchVersion = atoi(tok);
-                break;
-        }
-        tok = strtok(NULL, ".");
-        count++;
-    }
+			case 1:
+				minorVersion = atoi(tok);
+				break;
 
-    /**
-     * Source : http://en.wikipedia.org/wiki/Darwin_(operating_system)
-     **/
-    if (majorVersion < 5)
-    {
-        if (minorVersion < 4)
-            version = 0x10000000;
-        else
-            version = 0x10010000;
-    }
-    else
-    {
-        switch (majorVersion)
-        {
-            case 5:
-                version = 0x10010000;
-                break;
-            case 6:
-                version = 0x10020000;
-                break;
-            case 7:
-                version = 0x10030000;
-                break;
-            case 8:
-                version = 0x10040000;
-                break;
-            case 9:
-                version = 0x10050000;
-                break;
-            case 10:
-                version = 0x10060000;
-                break;
-            case 11:
-                version = 0x10070000;
-                break;
-            case 12:
-                version = 0x10080000;
-                break;
-            case 13:
-                version = 0x10090000;
-                break;
-            default:
-                version = 0x10100000;
-                break;
-        }
-        version |= (minorVersion << 8) | (patchVersion);
-    }
+			case 2:
+				patchVersion = atoi(tok);
+				break;
+		}
 
-    free(kernelVersion);
-    return version;
+		tok = strtok(NULL, ".");
+		count++;
+	}
+
+	/**
+	 * Source : http://en.wikipedia.org/wiki/Darwin_(operating_system)
+	 **/
+	if (majorVersion < 5)
+	{
+		if (minorVersion < 4)
+			version = 0x10000000;
+		else
+			version = 0x10010000;
+	}
+	else
+	{
+		switch (majorVersion)
+		{
+			case 5:
+				version = 0x10010000;
+				break;
+
+			case 6:
+				version = 0x10020000;
+				break;
+
+			case 7:
+				version = 0x10030000;
+				break;
+
+			case 8:
+				version = 0x10040000;
+				break;
+
+			case 9:
+				version = 0x10050000;
+				break;
+
+			case 10:
+				version = 0x10060000;
+				break;
+
+			case 11:
+				version = 0x10070000;
+				break;
+
+			case 12:
+				version = 0x10080000;
+				break;
+
+			case 13:
+				version = 0x10090000;
+				break;
+
+			default:
+				version = 0x10100000;
+				break;
+		}
+
+		version |= (minorVersion << 8) | (patchVersion);
+	}
+
+	free(kernelVersion);
+	return version;
 }
 #endif
 
@@ -2820,7 +2845,7 @@ int PCSC_InitializeSCardApi(void)
 #endif
 #ifdef __MACOSX__
 	g_PCSCModule = LoadLibraryA("/System/Library/Frameworks/PCSC.framework/PCSC");
-    OSXVersion = determineMacOSXVersion();
+	OSXVersion = determineMacOSXVersion();
 #else
 	g_PCSCModule = LoadLibraryA("libpcsclite.so.1");
 
@@ -2843,10 +2868,12 @@ int PCSC_InitializeSCardApi(void)
 	g_PCSC.pfnSCardStatus = (void*) GetProcAddress(g_PCSCModule, "SCardStatus");
 	g_PCSC.pfnSCardGetStatusChange = (void*) GetProcAddress(g_PCSCModule, "SCardGetStatusChange");
 #ifdef __MACOSX__
+
 	if (OSXVersion >= 0x10050600)
 		g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl132");
 	else
 		g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl");
+
 #else
 	g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl");
 #endif
