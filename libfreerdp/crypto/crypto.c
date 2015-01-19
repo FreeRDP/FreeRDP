@@ -28,6 +28,8 @@
 CryptoSha1 crypto_sha1_init(void)
 {
 	CryptoSha1 sha1 = malloc(sizeof(*sha1));
+	if (!sha1)
+		return NULL;
 	SHA1_Init(&sha1->sha_ctx);
 	return sha1;
 }
@@ -46,6 +48,8 @@ void crypto_sha1_final(CryptoSha1 sha1, BYTE* out_data)
 CryptoMd5 crypto_md5_init(void)
 {
 	CryptoMd5 md5 = malloc(sizeof(*md5));
+	if (!md5)
+		return NULL;
 	MD5_Init(&md5->md5_ctx);
 	return md5;
 }
@@ -64,6 +68,8 @@ void crypto_md5_final(CryptoMd5 md5, BYTE* out_data)
 CryptoRc4 crypto_rc4_init(const BYTE* key, UINT32 length)
 {
 	CryptoRc4 rc4 = malloc(sizeof(*rc4));
+	if (!rc4)
+		return NULL;
 	RC4_set_key(&rc4->rc4_key, length, key);
 	return rc4;
 }
@@ -82,6 +88,9 @@ void crypto_rc4_free(CryptoRc4 rc4)
 CryptoDes3 crypto_des3_encrypt_init(const BYTE* key, const BYTE* ivec)
 {
 	CryptoDes3 des3 = malloc(sizeof(*des3));
+	if (!des3)
+		return NULL;
+
 	EVP_CIPHER_CTX_init(&des3->des3_ctx);
 	EVP_EncryptInit_ex(&des3->des3_ctx, EVP_des_ede3_cbc(), NULL, key, ivec);
 	EVP_CIPHER_CTX_set_padding(&des3->des3_ctx, 0);
@@ -91,6 +100,9 @@ CryptoDes3 crypto_des3_encrypt_init(const BYTE* key, const BYTE* ivec)
 CryptoDes3 crypto_des3_decrypt_init(const BYTE* key, const BYTE* ivec)
 {
 	CryptoDes3 des3 = malloc(sizeof(*des3));
+	if (!des3)
+		return NULL;
+
 	EVP_CIPHER_CTX_init(&des3->des3_ctx);
 	EVP_DecryptInit_ex(&des3->des3_ctx, EVP_des_ede3_cbc(), NULL, key, ivec);
 	EVP_CIPHER_CTX_set_padding(&des3->des3_ctx, 0);
@@ -123,6 +135,9 @@ void crypto_des3_free(CryptoDes3 des3)
 CryptoHmac crypto_hmac_new(void)
 {
 	CryptoHmac hmac = malloc(sizeof(*hmac));
+	if (!hmac)
+		return NULL;
+
 	HMAC_CTX_init(&hmac->hmac_ctx);
 	return hmac;
 }
@@ -159,6 +174,9 @@ void crypto_hmac_free(CryptoHmac hmac)
 CryptoCert crypto_cert_read(BYTE* data, UINT32 length)
 {
 	CryptoCert cert = malloc(sizeof(*cert));
+	if (!cert)
+		return NULL;
+
 	/* this will move the data pointer but we don't care, we don't use it again */
 	cert->px509 = d2i_X509(NULL, (D2I_X509_CONST BYTE **) &data, length);
 	return cert;
@@ -182,19 +200,17 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 	EVP_PKEY* pkey = NULL;
 
 	pkey = X509_get_pubkey(cert->px509);
-
 	if (!pkey)
 	{
-		fprintf(stderr, "crypto_cert_get_public_key: X509_get_pubkey() failed\n");
+		fprintf(stderr, "%s: X509_get_pubkey() failed\n", __FUNCTION__);
 		status = FALSE;
 		goto exit;
 	}
 
 	length = i2d_PublicKey(pkey, NULL);
-
 	if (length < 1)
 	{
-		fprintf(stderr, "crypto_cert_get_public_key: i2d_PublicKey() failed\n");
+		fprintf(stderr, "%s: i2d_PublicKey() failed\n", __FUNCTION__);
 		status = FALSE;
 		goto exit;
 	}
@@ -215,13 +231,15 @@ exit:
 static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, const BYTE* modulus, const BYTE* exponent, int exponent_size, BYTE* output)
 {
 	BN_CTX* ctx;
-	int output_length;
+	int output_length = -1;
 	BYTE* input_reverse;
 	BYTE* modulus_reverse;
 	BYTE* exponent_reverse;
 	BIGNUM mod, exp, x, y;
 
 	input_reverse = (BYTE*) malloc(2 * key_length + exponent_size);
+	if (!input_reverse)
+		return -1;
 	modulus_reverse = input_reverse + key_length;
 	exponent_reverse = modulus_reverse + key_length;
 
@@ -233,6 +251,8 @@ static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, c
 	crypto_reverse(input_reverse, length);
 
 	ctx = BN_CTX_new();
+	if (!ctx)
+		goto out_free_input_reverse;
 	BN_init(&mod);
 	BN_init(&exp);
 	BN_init(&x);
@@ -254,6 +274,8 @@ static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, c
 	BN_free(&exp);
 	BN_free(&mod);
 	BN_CTX_free(ctx);
+
+out_free_input_reverse:
 	free(input_reverse);
 
 	return output_length;
@@ -322,11 +344,11 @@ char* crypto_cert_fingerprint(X509* xcert)
 
 	X509_digest(xcert, EVP_sha1(), fp, &fp_len);
 
-	fp_buffer = (char*) malloc(3 * fp_len);
-	ZeroMemory(fp_buffer, 3 * fp_len);
+	fp_buffer = (char*) calloc(3, fp_len);
+	if (!fp_buffer)
+		return NULL;
 
 	p = fp_buffer;
-
 	for (i = 0; i < (int) (fp_len - 1); i++)
 	{
 		sprintf(p, "%02x:", fp[i]);
@@ -527,6 +549,9 @@ rdpCertificateData* crypto_get_certificate_data(X509* xcert, char* hostname)
 	rdpCertificateData* certdata;
 
 	fp = crypto_cert_fingerprint(xcert);
+	if (!fp)
+		return NULL;
+
 	certdata = certificate_data_new(hostname, fp);
 	free(fp);
 
@@ -542,6 +567,11 @@ void crypto_cert_print_info(X509* xcert)
 	subject = crypto_cert_subject(xcert);
 	issuer = crypto_cert_issuer(xcert);
 	fp = crypto_cert_fingerprint(xcert);
+	if (!fp)
+	{
+		fprintf(stderr, "%s: error computing fingerprint\n", __FUNCTION__);
+		goto out_free_issuer;
+	}
 
 	fprintf(stderr, "Certificate details:\n");
 	fprintf(stderr, "\tSubject: %s\n", subject);
@@ -551,7 +581,8 @@ void crypto_cert_print_info(X509* xcert)
 			"the CA certificate in your certificate store, or the certificate has expired. "
 			"Please look at the documentation on how to create local certificate store for a private CA.\n");
 
-	free(subject);
-	free(issuer);
 	free(fp);
+out_free_issuer:
+	free(issuer);
+	free(subject);
 }

@@ -1,6 +1,6 @@
 message("PRELOADING android cache")
 set(CMAKE_TOOLCHAIN_FILE "cmake/AndroidToolchain.cmake" CACHE PATH "ToolChain file")
-set(FREERDP_ANDROID_EXTERNAL_SSL_PATH $ENV{ANDROID_SSL_PATH} CACHE PATH "android ssl")
+set(FREERDP_EXTERNAL_SSL_PATH $ENV{ANDROID_SSL_PATH} CACHE PATH "android ssl")
 # ANDROID_NDK and ANDROID_SDK must be set as environment variable
 #set(ANDROID_NDK $ENV{ANDROID_SDK} CACHE PATH "Android NDK")
 #set(ANDROID_SDK "${ANDROID_NDK}" CACHE PATH "android SDK")

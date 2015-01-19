@@ -23,7 +23,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathAllocCombine status: 0x%08lX\n"), status);
+		_tprintf(_T("PathAllocCombine status: 0x%08X\n"), status);
 		return -1;
 	}
 
@@ -41,7 +41,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathAllocCombine status: 0x%08lX\n"), status);
+		_tprintf(_T("PathAllocCombine status: 0x%08X\n"), status);
 		return -1;
 	}
 
@@ -59,7 +59,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathAllocCombine status: 0x%08lX\n"), status);
+		_tprintf(_T("PathAllocCombine status: 0x%08X\n"), status);
 		return -1;
 	}
 
@@ -77,7 +77,7 @@ int TestPathAllocCombine(int argc, char* argv[])
 
 	if (status != S_OK)
 	{
-		_tprintf(_T("PathAllocCombine status: 0x%08lX\n"), status);
+		_tprintf(_T("PathAllocCombine status: 0x%08X\n"), status);
 		return -1;
 	}
 

@@ -35,6 +35,9 @@
 
 static void irp_free(IRP* irp)
 {
+	if (!irp)
+		return;
+
 	Stream_Free(irp->input, TRUE);
 	Stream_Free(irp->output, TRUE);
 
@@ -44,13 +47,16 @@ static void irp_free(IRP* irp)
 static void irp_complete(IRP* irp)
 {
 	int pos;
+	rdpdrPlugin* rdpdr;
+
+	rdpdr = (rdpdrPlugin*) irp->devman->plugin;
 
 	pos = (int) Stream_GetPosition(irp->output);
-	Stream_SetPosition(irp->output, 12);
-	Stream_Write_UINT32(irp->output, irp->IoStatus);
+	Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4);
+	Stream_Write_UINT32(irp->output, irp->IoStatus); /* IoStatus (4 bytes) */
 	Stream_SetPosition(irp->output, pos);
 
-	rdpdr_send((rdpdrPlugin*) irp->devman->plugin, irp->output);
+	rdpdr_send(rdpdr, irp->output);
 	irp->output = NULL;
 
 	irp_free(irp);
@@ -59,37 +65,39 @@ static void irp_complete(IRP* irp)
 IRP* irp_new(DEVMAN* devman, wStream* s)
 {
 	IRP* irp;
-	UINT32 DeviceId;
 	DEVICE* device;
+	UINT32 DeviceId;
 
-	Stream_Read_UINT32(s, DeviceId);
+	Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
 	device = devman_get_device_by_id(devman, DeviceId);
 
 	if (!device)
-	{
 		return NULL;
-	}
 
 	irp = (IRP*) _aligned_malloc(sizeof(IRP), MEMORY_ALLOCATION_ALIGNMENT);
 	ZeroMemory(irp, sizeof(IRP));
 
+	irp->input = s;
 	irp->device = device;
 	irp->devman = devman;
-	Stream_Read_UINT32(s, irp->FileId);
-	Stream_Read_UINT32(s, irp->CompletionId);
-	Stream_Read_UINT32(s, irp->MajorFunction);
-	Stream_Read_UINT32(s, irp->MinorFunction);
-	irp->input = s;
+
+	Stream_Read_UINT32(s, irp->FileId); /* FileId (4 bytes) */
+	Stream_Read_UINT32(s, irp->CompletionId); /* CompletionId (4 bytes) */
+	Stream_Read_UINT32(s, irp->MajorFunction); /* MajorFunction (4 bytes) */
+	Stream_Read_UINT32(s, irp->MinorFunction); /* MinorFunction (4 bytes) */
 
 	irp->output = Stream_New(NULL, 256);
-	Stream_Write_UINT16(irp->output, RDPDR_CTYP_CORE);
-	Stream_Write_UINT16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION);
-	Stream_Write_UINT32(irp->output, DeviceId);
-	Stream_Write_UINT32(irp->output, irp->CompletionId);
-	Stream_Seek_UINT32(irp->output); /* IoStatus */
+	Stream_Write_UINT16(irp->output, RDPDR_CTYP_CORE); /* Component (2 bytes) */
+	Stream_Write_UINT16(irp->output, PAKID_CORE_DEVICE_IOCOMPLETION); /* PacketId (2 bytes) */
+	Stream_Write_UINT32(irp->output, DeviceId); /* DeviceId (4 bytes) */
+	Stream_Write_UINT32(irp->output, irp->CompletionId); /* CompletionId (4 bytes) */
+	Stream_Write_UINT32(irp->output, 0); /* IoStatus (4 bytes) */
 
 	irp->Complete = irp_complete;
 	irp->Discard = irp_free;
+
+	irp->thread = NULL;
+	irp->cancelled = FALSE;
 
 	return irp;
 }

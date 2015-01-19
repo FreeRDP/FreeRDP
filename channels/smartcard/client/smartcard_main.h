@@ -21,101 +21,89 @@
 #ifndef FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H
 
-#include <freerdp/utils/list.h>
 #include <freerdp/utils/debug.h>
 #include <freerdp/channels/rdpdr.h>
 
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 #include <winpr/synch.h>
+#include <winpr/smartcard.h>
+#include <winpr/collections.h>
 
-/* 
- * When using Windows Server 2008 R2 as the Terminal Services (TS)
- * server, and with a smart card reader connected to the TS client machine 
- * and used to authenticate to an existing login session, the TS server 
- * will initiate the protocol initialization of MS-RDPEFS, Section 1.3.1, 
- * twice as it re-establishes a connection.  The TS server starts both 
- * initializations with a "Server Announce Request" message.
- * When the TS client receives this message, as per Section 3.2.5.1.2,
- * 
- * 	The client SHOULD treat this packet as the beginning 
- *	of a new sequence. The client SHOULD also cancel all 
- * 	outstanding requests and release previous references to 
- * 	all devices.
- *
- * As of this writing, the code does not cancel all outstanding requests.
- * This leads to a problem where, after the first MS-RDPEFS initialization,
- * the TS server sends an SCARD_IOCTL_GETSTATUSCHANGEx control in a message
- * that uses an available "CompletionID".  The 
- * TS client doesn't respond immediately because it is blocking while 
- * waiting for a change in the smart card's status in the reader.
- * Then the TS server initiates a second MS-RDPEFS initialization sequence.
- * As noted above, this should cancel the outstanding 
- * SCARD_IOCTL_GETSTATUSCHANGEx request, but it does not.
- * At this point, the TS server is free to reuse the previously used
- * "CompletionID", and it does reuse it for other SCARD_IOCTLs.
- * Therefore, when the user removes (for example) the card from the reader, 
- * the TS client sends an "IOCompetion" message in response to the 
- * GETSTATUSCHANGEx using the original "CompletionID".  The TS server does not 
- * expect this "CompletionID" and so, as per Section 3.1.5.2 of MS-RDPEFS, 
- * it treats that "IOCompletion" message as an error and terminates the
- * virtual channel.
- *
- * The following structure is part of a work-around for this missing
- * capability of canceling outstanding requests.  This work-around 
- * allows the TS client to send an "IOCompletion" back to the
- * TS server for the second (and subsequent) SCARD_IOCTLs that use 
- * the same "CompletionID" as the still outstanding 
- * SCARD_IOCTL_GETSTATUSCHANGEx.  The work-around in the TS client 
- * prevents the client from sending the "IOCompletion" back (when
- * the user removes the card) for the SCARD_IOCTL_GETSTATUSCHANGEx.
- * 
- * This TS client expects the responses from the PCSC daemon for the second  
- * and subsequent SCARD_IOCTLs that use the same "CompletionID"
- * to arrive at the TS client before the daemon's response to the 
- * SCARD_IOCTL_GETSTATUSCHANGEx.  This is a race condition.
- *
- * The "CompletionIDs" are a global pool of IDs across all "DeviceIDs".  
- * However, this problem of duplicate "CompletionIDs" only affects smart cards.
- *
- * This structure tracks outstanding Terminal Services server "CompletionIDs"
- * used by the redirected smart card device.
- */
+#define RDP_SCARD_CTL_CODE(code)	CTL_CODE(FILE_DEVICE_FILE_SYSTEM, (code), METHOD_BUFFERED, FILE_ANY_ACCESS)
 
-struct _COMPLETIONIDINFO
-{
-        UINT32 ID;              /* CompletionID */
-        BOOL duplicate;      /* Indicates whether or not this 
-				 * CompletionID is a duplicate of an 
-                                 * earlier, outstanding, CompletionID.
-                                 */
-};
-typedef struct _COMPLETIONIDINFO COMPLETIONIDINFO;
+#define SCARD_IOCTL_ESTABLISHCONTEXT		RDP_SCARD_CTL_CODE(5)	/* SCardEstablishContext */
+#define SCARD_IOCTL_RELEASECONTEXT		RDP_SCARD_CTL_CODE(6)	/* SCardReleaseContext */
+#define SCARD_IOCTL_ISVALIDCONTEXT		RDP_SCARD_CTL_CODE(7)	/* SCardIsValidContext */
+#define SCARD_IOCTL_LISTREADERGROUPSA		RDP_SCARD_CTL_CODE(8)	/* SCardListReaderGroupsA */
+#define SCARD_IOCTL_LISTREADERGROUPSW		RDP_SCARD_CTL_CODE(9)	/* SCardListReaderGroupsW */
+#define SCARD_IOCTL_LISTREADERSA		RDP_SCARD_CTL_CODE(10)	/* SCardListReadersA */
+#define SCARD_IOCTL_LISTREADERSW		RDP_SCARD_CTL_CODE(11)	/* SCardListReadersW */
+#define SCARD_IOCTL_INTRODUCEREADERGROUPA	RDP_SCARD_CTL_CODE(20)	/* SCardIntroduceReaderGroupA */
+#define SCARD_IOCTL_INTRODUCEREADERGROUPW	RDP_SCARD_CTL_CODE(21)	/* SCardIntroduceReaderGroupW */
+#define SCARD_IOCTL_FORGETREADERGROUPA		RDP_SCARD_CTL_CODE(22)	/* SCardForgetReaderGroupA */
+#define SCARD_IOCTL_FORGETREADERGROUPW		RDP_SCARD_CTL_CODE(23)	/* SCardForgetReaderGroupW */
+#define SCARD_IOCTL_INTRODUCEREADERA		RDP_SCARD_CTL_CODE(24)	/* SCardIntroduceReaderA */
+#define SCARD_IOCTL_INTRODUCEREADERW		RDP_SCARD_CTL_CODE(25)	/* SCardIntroduceReaderW */
+#define SCARD_IOCTL_FORGETREADERA		RDP_SCARD_CTL_CODE(26)	/* SCardForgetReaderA */
+#define SCARD_IOCTL_FORGETREADERW		RDP_SCARD_CTL_CODE(27)	/* SCardForgetReaderW */
+#define SCARD_IOCTL_ADDREADERTOGROUPA		RDP_SCARD_CTL_CODE(28)	/* SCardAddReaderToGroupA */
+#define SCARD_IOCTL_ADDREADERTOGROUPW		RDP_SCARD_CTL_CODE(29)	/* SCardAddReaderToGroupW */
+#define SCARD_IOCTL_REMOVEREADERFROMGROUPA	RDP_SCARD_CTL_CODE(30)	/* SCardRemoveReaderFromGroupA */
+#define SCARD_IOCTL_REMOVEREADERFROMGROUPW	RDP_SCARD_CTL_CODE(31)	/* SCardRemoveReaderFromGroupW */
+#define SCARD_IOCTL_LOCATECARDSA		RDP_SCARD_CTL_CODE(38)	/* SCardLocateCardsA */
+#define SCARD_IOCTL_LOCATECARDSW		RDP_SCARD_CTL_CODE(39)	/* SCardLocateCardsW */
+#define SCARD_IOCTL_GETSTATUSCHANGEA		RDP_SCARD_CTL_CODE(40)	/* SCardGetStatusChangeA */
+#define SCARD_IOCTL_GETSTATUSCHANGEW		RDP_SCARD_CTL_CODE(41)	/* SCardGetStatusChangeW */
+#define SCARD_IOCTL_CANCEL			RDP_SCARD_CTL_CODE(42)	/* SCardCancel */
+#define SCARD_IOCTL_CONNECTA			RDP_SCARD_CTL_CODE(43)	/* SCardConnectA */
+#define SCARD_IOCTL_CONNECTW			RDP_SCARD_CTL_CODE(44)	/* SCardConnectW */
+#define SCARD_IOCTL_RECONNECT			RDP_SCARD_CTL_CODE(45)	/* SCardReconnect */
+#define SCARD_IOCTL_DISCONNECT			RDP_SCARD_CTL_CODE(46)	/* SCardDisconnect */
+#define SCARD_IOCTL_BEGINTRANSACTION		RDP_SCARD_CTL_CODE(47)	/* SCardBeginTransaction */
+#define SCARD_IOCTL_ENDTRANSACTION		RDP_SCARD_CTL_CODE(48)	/* SCardEndTransaction */
+#define SCARD_IOCTL_STATE			RDP_SCARD_CTL_CODE(49)	/* SCardState */
+#define SCARD_IOCTL_STATUSA			RDP_SCARD_CTL_CODE(50)	/* SCardStatusA */
+#define SCARD_IOCTL_STATUSW			RDP_SCARD_CTL_CODE(51)	/* SCardStatusW */
+#define SCARD_IOCTL_TRANSMIT			RDP_SCARD_CTL_CODE(52)	/* SCardTransmit */
+#define SCARD_IOCTL_CONTROL			RDP_SCARD_CTL_CODE(53)	/* SCardControl */
+#define SCARD_IOCTL_GETATTRIB			RDP_SCARD_CTL_CODE(54)	/* SCardGetAttrib */
+#define SCARD_IOCTL_SETATTRIB			RDP_SCARD_CTL_CODE(55)	/* SCardSetAttrib */
+#define SCARD_IOCTL_ACCESSSTARTEDEVENT		RDP_SCARD_CTL_CODE(56)	/* SCardAccessStartedEvent */
+#define SCARD_IOCTL_LOCATECARDSBYATRA		RDP_SCARD_CTL_CODE(58)	/* SCardLocateCardsByATRA */
+#define SCARD_IOCTL_LOCATECARDSBYATRW		RDP_SCARD_CTL_CODE(59)	/* SCardLocateCardsByATRW */
+#define SCARD_IOCTL_READCACHEA			RDP_SCARD_CTL_CODE(60)	/* SCardReadCacheA */
+#define SCARD_IOCTL_READCACHEW			RDP_SCARD_CTL_CODE(61)	/* SCardReadCacheW */
+#define SCARD_IOCTL_WRITECACHEA			RDP_SCARD_CTL_CODE(62)	/* SCardWriteCacheA */
+#define SCARD_IOCTL_WRITECACHEW			RDP_SCARD_CTL_CODE(63)	/* SCardWriteCacheW */
+#define SCARD_IOCTL_GETTRANSMITCOUNT		RDP_SCARD_CTL_CODE(64)	/* SCardGetTransmitCount */
+#define SCARD_IOCTL_RELEASESTARTEDEVENT		RDP_SCARD_CTL_CODE(66)	/* SCardReleaseStartedEvent */
+#define SCARD_IOCTL_GETREADERICON		RDP_SCARD_CTL_CODE(67)	/* SCardGetReaderIconA */
+#define SCARD_IOCTL_GETDEVICETYPEID		RDP_SCARD_CTL_CODE(68)	/* SCardGetDeviceTypeIdA */
 
 struct _SMARTCARD_DEVICE
 {
 	DEVICE device;
 
+	wLog* log;
+
 	char* name;
 	char* path;
 
-	PSLIST_HEADER pIrpList;
-
 	HANDLE thread;
-	HANDLE irpEvent;
-	HANDLE stopEvent;
-
-        LIST* CompletionIds;
-        HANDLE CompletionIdsMutex;
+	wMessageQueue* IrpQueue;
+	wQueue* CompletedIrpQueue;
+	wListDictionary* rgSCardContextList;
+	wListDictionary* rgOutstandingMessages;
 };
 typedef struct _SMARTCARD_DEVICE SMARTCARD_DEVICE;
 
-#ifdef WITH_DEBUG_SCARD
-#define DEBUG_SCARD(fmt, ...) DEBUG_CLASS(SCARD, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_SCARD(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
+void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
+void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
 
-BOOL smartcard_async_op(IRP*);
-void smartcard_device_control(SMARTCARD_DEVICE*, IRP*);
+void smartcard_irp_device_control(SMARTCARD_DEVICE* smartcard, IRP* irp);
+void smartcard_irp_device_control_peek_io_control_code(SMARTCARD_DEVICE* smartcard, IRP* irp, UINT32* ioControlCode);
+
+#include "smartcard_pack.h"
 
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H */

@@ -434,15 +434,16 @@ static void* drive_hotplug_thread_func(void* arg)
 	struct timeval tv;
 	int rv;
 
-	rdpdr = (rdpdrPlugin *)arg;
+	rdpdr = (rdpdrPlugin*) arg;
 
-	rdpdr->stop_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	rdpdr->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	mfd = open("/proc/mounts", O_RDONLY, 0);
+
 	if (mfd < 0)
 	{
-	    fprintf(stderr, "ERROR: Unable to open /proc/mounts.");
-	    return NULL;
+		fprintf(stderr, "ERROR: Unable to open /proc/mounts.");
+		return NULL;
 	}
 
 	FD_ZERO(&rfds);
@@ -452,7 +453,7 @@ static void* drive_hotplug_thread_func(void* arg)
 
 	while ((rv = select(mfd+1, NULL, NULL, &rfds, &tv)) >= 0)
 	{
-		if (WaitForSingleObject(rdpdr->stop_event, 0) == WAIT_OBJECT_0)
+		if (WaitForSingleObject(rdpdr->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
 		if (FD_ISSET(mfd, &rfds))
@@ -467,13 +468,19 @@ static void* drive_hotplug_thread_func(void* arg)
 		tv.tv_usec = 0;
 	}
 
-    return NULL;
+	return NULL;
 }
 
 static void drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
 {
-	if (rdpdr->stop_event)
-		SetEvent(rdpdr->stop_event);
+	if (rdpdr->hotplugThread)
+	{
+		if (rdpdr->stopEvent)
+			SetEvent(rdpdr->stopEvent);
+
+		WaitForSingleObject(rdpdr->hotplugThread, INFINITE);
+		rdpdr->hotplugThread = NULL;
+	}
 }
 
 #endif
@@ -493,11 +500,14 @@ static void rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	for (index = 0; index < settings->DeviceCount; index++)
 	{
 		device = settings->DeviceArray[index];
-		if (strcmp(device->Name, "*") == 0)
+
+		if (device->Name && (strcmp(device->Name, "*") == 0))
 		{
-			rdpdr->hotplug_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)drive_hotplug_thread_func, rdpdr, 0, NULL);
+			rdpdr->hotplugThread = CreateThread(NULL, 0,
+					(LPTHREAD_START_ROUTINE) drive_hotplug_thread_func, rdpdr, 0, NULL);
 			continue;
 		}
+
 		devman_load_device_service(rdpdr->devman, device);
 	}
 }
@@ -507,6 +517,8 @@ static void rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s
 	Stream_Read_UINT16(s, rdpdr->versionMajor);
 	Stream_Read_UINT16(s, rdpdr->versionMinor);
 	Stream_Read_UINT32(s, rdpdr->clientID);
+
+	rdpdr->sequenceId++;
 }
 
 static void rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
@@ -670,6 +682,26 @@ static BOOL rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 	return TRUE;
 }
 
+static void rdpdr_process_init(rdpdrPlugin* rdpdr)
+{
+	int index;
+	int keyCount;
+	DEVICE* device;
+	ULONG_PTR* pKeys;
+
+	pKeys = NULL;
+	keyCount = ListDictionary_GetKeys(rdpdr->devman->devices, &pKeys);
+
+	for (index = 0; index < keyCount; index++)
+	{
+		device = (DEVICE*) ListDictionary_GetItemValue(rdpdr->devman->devices, (void*) pKeys[index]);
+
+		IFCALL(device->Init, device);
+	}
+
+	free(pKeys);
+}
+
 static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT16 component;
@@ -688,6 +720,7 @@ static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 				rdpdr_process_server_announce_request(rdpdr, s);
 				rdpdr_send_client_announce_reply(rdpdr);
 				rdpdr_send_client_name_request(rdpdr);
+				rdpdr_process_init(rdpdr);
 				break;
 
 			case PAKID_CORE_SERVER_CAPABILITY:
@@ -939,8 +972,6 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 
 	drive_hotplug_thread_terminate(rdpdr);
 
-	WaitForSingleObject(rdpdr->hotplug_thread, INFINITE);
-
 	rdpdr->channelEntryPoints.pVirtualChannelClose(rdpdr->OpenHandle);
 
 	if (rdpdr->data_in)
@@ -1004,6 +1035,8 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 			CHANNEL_OPTION_COMPRESS_RDP;
 
 	strcpy(rdpdr->channelDef.name, "rdpdr");
+
+	rdpdr->sequenceId = 0;
 
 	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 

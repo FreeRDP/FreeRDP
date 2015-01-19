@@ -325,7 +325,7 @@ static BOOL test_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec,
 {
 	INT32 sec, usec;
 
-	if (*old_sec==0 && *old_usec==0)
+	if ((*old_sec == 0) && (*old_usec == 0))
 	{
 		*old_sec = new_sec;
 		*old_usec = new_usec;
@@ -335,7 +335,7 @@ static BOOL test_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec,
 	sec = new_sec - *old_sec;
 	usec = new_usec - *old_usec;
 
-	if (sec<0 || (sec==0 && usec<0))
+	if ((sec < 0) || ((sec == 0) && (usec < 0)))
 	{
 		printf("Invalid time stamp detected.\n");
 		return FALSE;
@@ -393,6 +393,9 @@ void tf_peer_dump_rfx(freerdp_peer* client)
 			break;
 
 		update->SurfaceCommand(update->context, s);
+
+		if (client->CheckFileDescriptor(client) != TRUE)
+			break;
 	}
 }
 
@@ -443,7 +446,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 		Stream_SetPosition(s, BytesReturned);
 
-		printf("got %d bytes\n", BytesReturned);
+		printf("got %lu bytes\n", BytesReturned);
 	}
 
 	Stream_Free(s, TRUE);
@@ -527,6 +530,10 @@ BOOL tf_peer_activate(freerdp_peer* client)
 
 	rfx_context_reset(context->rfx_context);
 	context->activated = TRUE;
+
+	//client->settings->CompressionLevel = PACKET_COMPR_TYPE_8K;
+	//client->settings->CompressionLevel = PACKET_COMPR_TYPE_64K;
+	client->settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
 
 	if (test_pcap_file != NULL)
 	{

@@ -103,21 +103,30 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 	}
 	else
 	{
-		if (settings->RedirectionFlags & LB_TARGET_FQDN)
-		{
-			free(settings->RedirectionTargetFQDN);
-			settings->RedirectionTargetFQDN = _strdup(redirection->TargetFQDN);
-		}
-		else if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
-		{
-			free(settings->TargetNetAddress);
-			settings->TargetNetAddress = _strdup(redirection->TargetNetAddress);
-		}
-		else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
-		{
-			free(settings->RedirectionTargetNetBiosName);
-			settings->RedirectionTargetNetBiosName = _strdup(redirection->TargetNetBiosName);
-		}
+		/**
+		 * Free previous LoadBalanceInfo, if any, otherwise it may end up
+		 * being reused for the redirected session, which is not what we want.
+		 */
+
+		free(settings->LoadBalanceInfo);
+		settings->LoadBalanceInfo = NULL;
+		settings->LoadBalanceInfoLength = 0;
+	}
+
+	if (settings->RedirectionFlags & LB_TARGET_FQDN)
+	{
+		free(settings->RedirectionTargetFQDN);
+		settings->RedirectionTargetFQDN = _strdup(redirection->TargetFQDN);
+	}
+	else if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+	{
+		free(settings->TargetNetAddress);
+		settings->TargetNetAddress = _strdup(redirection->TargetNetAddress);
+	}
+	else if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
+	{
+		free(settings->RedirectionTargetNetBiosName);
+		settings->RedirectionTargetNetBiosName = _strdup(redirection->TargetNetBiosName);
 	}
 
 	if (settings->RedirectionFlags & LB_USERNAME)
@@ -314,7 +323,7 @@ BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_NOREDIRECT)
 		return 0;
 
-	return rdp_client_redirect(rdp);
+	return 1;
 }
 
 int rdp_recv_redirection_packet(rdpRdp* rdp, wStream* s)
@@ -346,12 +355,10 @@ rdpRedirection* redirection_new()
 {
 	rdpRedirection* redirection;
 
-	redirection = (rdpRedirection*) malloc(sizeof(rdpRedirection));
+	redirection = (rdpRedirection*) calloc(1, sizeof(rdpRedirection));
 
 	if (redirection)
 	{
-		ZeroMemory(redirection, sizeof(rdpRedirection));
-
 		WLog_Init();
 		redirection->log = WLog_Get("com.freerdp.core.redirection");
 

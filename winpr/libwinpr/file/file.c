@@ -862,7 +862,7 @@ int GetNamePipeFileDescriptor(HANDLE hNamedPipe)
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;
 
-	if (!pNamedPipe)
+	if (!pNamedPipe || pNamedPipe->Type != HANDLE_TYPE_NAMED_PIPE)
 		return -1;
 
 	fd = (pNamedPipe->ServerMode) ? pNamedPipe->serverfd : pNamedPipe->clientfd;

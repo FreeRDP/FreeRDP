@@ -40,6 +40,12 @@
 #include <netinet/tcp.h>
 #include <net/if.h>
 
+#ifdef __FreeBSD__
+#ifndef SOL_TCP
+#define SOL_TCP	IPPROTO_TCP
+#endif
+#endif
+
 #ifdef __APPLE__
 #ifndef SOL_TCP
 #define SOL_TCP	IPPROTO_TCP
@@ -285,6 +291,14 @@ BOOL tcp_set_keep_alive_mode(rdpTcp* tcp)
 #endif
 #endif
 
+#ifdef __MACOSX__
+	option_value = 1;
+	option_len = sizeof(option_value);
+	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void *) &option_value, option_len) < 0)
+	{
+		perror("setsockopt() SOL_SOCKET, SO_NOSIGPIPE:");
+	}
+#endif
 	return TRUE;
 }
 

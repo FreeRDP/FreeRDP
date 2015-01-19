@@ -77,7 +77,8 @@ int TestListDictionary(int argc, char* argv[])
 
 	if (strcmp(value, val1) != 0)
 	{
-		printf("ListDictionary_GetItemValue: Expected : %d, Actual: %d\n", val1, value);
+		printf("ListDictionary_GetItemValue: Expected : %d, Actual: %d\n",
+				(int) (size_t) val1, (int) (size_t) value);
 		return -1;
 	}
 
@@ -85,7 +86,8 @@ int TestListDictionary(int argc, char* argv[])
 
 	if (strcmp(value, val2) != 0)
 	{
-		printf("ListDictionary_GetItemValue: Expected : %d, Actual: %d\n", val2, value);
+		printf("ListDictionary_GetItemValue: Expected : %d, Actual: %d\n",
+				(int) (size_t) val2, (int) (size_t) value);
 		return -1;
 	}
 
@@ -93,7 +95,8 @@ int TestListDictionary(int argc, char* argv[])
 
 	if (strcmp(value, val3) != 0)
 	{
-		printf("ListDictionary_GetItemValue: Expected : %d, Actual: %d\n", val3, value);
+		printf("ListDictionary_GetItemValue: Expected : %d, Actual: %d\n",
+				(int) (size_t) val3, (int) (size_t) value);
 		return -1;
 	}
 
@@ -103,7 +106,7 @@ int TestListDictionary(int argc, char* argv[])
 
 	if (strcmp(value, "apple") != 0)
 	{
-		printf("ListDictionary_GetItemValue: Expected : %d, Actual: %d\n", "apple", value);
+		printf("ListDictionary_GetItemValue: Expected : %s, Actual: %s\n", "apple", value);
 		return -1;
 	}
 
@@ -144,7 +147,7 @@ int TestListDictionary(int argc, char* argv[])
 	value = ListDictionary_Remove_Head(list);
 	if (value)
 	{
-		printf("ListDictionary_Remove_Head: Expected : (null), Actual: %s Count: %d\n", value);
+		printf("ListDictionary_Remove_Head: Expected : (null), Actual: %s\n", value);
 		return -1;
 	}
 

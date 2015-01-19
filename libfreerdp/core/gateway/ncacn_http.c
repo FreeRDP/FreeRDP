@@ -92,23 +92,27 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 
 int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
 {
-	int ntlm_token_length;
-	BYTE* ntlm_token_data;
+	int ntlm_token_length = 0;
+	BYTE* ntlm_token_data = NULL;
 	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
 
 	http_response = http_response_recv(rpc->TlsIn);
 
-	if (http_response->AuthParam)
+	if (ListDictionary_Contains(http_response->Authenticates, "NTLM"))
 	{
-		ntlm_token_data = NULL;
-		crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
-				&ntlm_token_data, &ntlm_token_length);
+		char *token64 = ListDictionary_GetItemValue(http_response->Authenticates, "NTLM");
+		if (!token64)
+			goto out;
 
-		ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
-		ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
+		ntlm_token_data = NULL;
+		crypto_base64_decode(token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
 	}
 
+	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
+	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
+
+out:
 	http_response_free(http_response);
 
 	return 0;
@@ -231,10 +235,10 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 	http_response = http_response_recv(rpc->TlsOut);
 
 	ntlm_token_data = NULL;
-	if (http_response && http_response->AuthParam)
+	if (http_response && ListDictionary_Contains(http_response->Authenticates, "NTLM"))
 	{
-		crypto_base64_decode((BYTE*) http_response->AuthParam, strlen(http_response->AuthParam),
-				&ntlm_token_data, &ntlm_token_length);
+		char *token64 = ListDictionary_GetItemValue(http_response->Authenticates, "NTLM");
+		crypto_base64_decode(token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
 	}
 
 	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
@@ -307,25 +311,35 @@ rdpNtlmHttp* ntlm_http_new()
 {
 	rdpNtlmHttp* ntlm_http;
 
-	ntlm_http = (rdpNtlmHttp*) malloc(sizeof(rdpNtlmHttp));
+	ntlm_http = (rdpNtlmHttp *)calloc(1, sizeof(rdpNtlmHttp));
 
-	if (ntlm_http != NULL)
-	{
-		ZeroMemory(ntlm_http, sizeof(rdpNtlmHttp));
-		ntlm_http->ntlm = ntlm_new();
-		ntlm_http->context = http_context_new();
-	}
+	if (!ntlm_http)
+		return NULL;
+
+	ntlm_http->ntlm = ntlm_new();
+	if (!ntlm_http->ntlm)
+		goto out_free;
+
+	ntlm_http->context = http_context_new();
+	if (!ntlm_http->context)
+		goto out_free_ntlm;
 
 	return ntlm_http;
+
+out_free_ntlm:
+	ntlm_free(ntlm_http->ntlm);
+out_free:
+	free(ntlm_http);
+	return NULL;
 }
 
 void ntlm_http_free(rdpNtlmHttp* ntlm_http)
 {
-	if (ntlm_http != NULL)
-	{
-		ntlm_free(ntlm_http->ntlm);
-		http_context_free(ntlm_http->context);
+	if (!ntlm_http)
+		return;
 
-		free(ntlm_http);
-	}
+	ntlm_free(ntlm_http->ntlm);
+	http_context_free(ntlm_http->context);
+
+	free(ntlm_http);
 }

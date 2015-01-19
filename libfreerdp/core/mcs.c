@@ -1037,7 +1037,7 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs)
 
 	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_DisconnectProviderUltimatum, length, 1);
 
-	per_write_enumerated(s, 0, 0); /* reason */
+	per_write_enumerated(s, 0x80, 0);
 
 	status = transport_write(mcs->transport, s);
 
@@ -1056,26 +1056,29 @@ rdpMcs* mcs_new(rdpTransport* transport)
 {
 	rdpMcs* mcs;
 
-	mcs = (rdpMcs*) malloc(sizeof(rdpMcs));
+	mcs = (rdpMcs *)calloc(1, sizeof(rdpMcs));
+	if (!mcs)
+		return NULL;
 
-	if (mcs)
-	{
-		ZeroMemory(mcs, sizeof(rdpMcs));
+	mcs->transport = transport;
+	mcs->settings = transport->settings;
 
-		mcs->transport = transport;
-		mcs->settings = transport->settings;
+	mcs_init_domain_parameters(&mcs->targetParameters, 34, 2, 0, 0xFFFF);
+	mcs_init_domain_parameters(&mcs->minimumParameters, 1, 1, 1, 0x420);
+	mcs_init_domain_parameters(&mcs->maximumParameters, 0xFFFF, 0xFC17, 0xFFFF, 0xFFFF);
+	mcs_init_domain_parameters(&mcs->domainParameters, 0, 0, 0, 0xFFFF);
 
-		mcs_init_domain_parameters(&mcs->targetParameters, 34, 2, 0, 0xFFFF);
-		mcs_init_domain_parameters(&mcs->minimumParameters, 1, 1, 1, 0x420);
-		mcs_init_domain_parameters(&mcs->maximumParameters, 0xFFFF, 0xFC17, 0xFFFF, 0xFFFF);
-		mcs_init_domain_parameters(&mcs->domainParameters, 0, 0, 0, 0xFFFF);
-
-		mcs->channelCount = 0;
-		mcs->channelMaxCount = CHANNEL_MAX_COUNT;
-		mcs->channels = (rdpMcsChannel*) calloc(mcs->channelMaxCount, sizeof(rdpMcsChannel));
-	}
+	mcs->channelCount = 0;
+	mcs->channelMaxCount = CHANNEL_MAX_COUNT;
+	mcs->channels = (rdpMcsChannel *)calloc(mcs->channelMaxCount, sizeof(rdpMcsChannel));
+	if (!mcs->channels)
+		goto out_free;
 
 	return mcs;
+
+out_free:
+	free(mcs);
+	return NULL;
 }
 
 /**
@@ -1087,6 +1090,7 @@ void mcs_free(rdpMcs* mcs)
 {
 	if (mcs)
 	{
+		free(mcs->channels);
 		free(mcs);
 	}
 }

@@ -49,7 +49,7 @@
 #include "xf_update.h"
 #include "xf_monitors.h"
 
-#include "makecert.h"
+#include <winpr/tools/makecert.h>
 
 #include "xf_peer.h"
 

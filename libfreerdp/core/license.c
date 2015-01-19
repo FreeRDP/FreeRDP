@@ -3,6 +3,7 @@
  * RDP Licensing
  *
  * Copyright 2011-2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,8 +164,15 @@ wStream* license_send_stream_init(rdpLicense* license)
 {
 	wStream* s;
 
-	s = Stream_New(NULL, 4096);
-	Stream_Seek(s, LICENSE_PACKET_HEADER_MAX_LENGTH);
+	license->rdp->sec_flags = SEC_LICENSE_PKT;
+	if (license->rdp->do_crypt)
+			license->rdp->sec_flags |= SEC_LICENSE_ENCRYPT_CS;
+
+	s = transport_send_stream_init(license->rdp->transport, 4096);
+	rdp_init_stream(license->rdp, s);
+
+	license->PacketHeaderLength = Stream_GetPosition(s);
+	Stream_Seek(s, LICENSE_PREAMBLE_LENGTH);
 
 	return s;
 }
@@ -181,15 +189,13 @@ BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 	int length;
 	BYTE flags;
 	UINT16 wMsgSize;
-	UINT16 sec_flags;
+	rdpRdp* rdp = license->rdp;
 
 	DEBUG_LICENSE("Sending %s Packet", LICENSE_MESSAGE_STRINGS[type & 0x1F]);
 
 	length = Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
-
-	sec_flags = SEC_LICENSE_PKT;
-	wMsgSize = length - LICENSE_PACKET_HEADER_MAX_LENGTH + 4;
+	wMsgSize = length - license->PacketHeaderLength;
+	Stream_SetPosition(s, license->PacketHeaderLength);
 
 	flags = PREAMBLE_VERSION_3_0;
 
@@ -198,25 +204,20 @@ BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 	 * running in server mode! This flag seems to be incorrectly documented.
 	 */
 
-	if (!license->rdp->settings->ServerMode)
+	if (!rdp->settings->ServerMode)
 		flags |= EXTENDED_ERROR_MSG_SUPPORTED;
 
-	rdp_write_header(license->rdp, s, length, MCS_GLOBAL_CHANNEL_ID);
-	rdp_write_security_header(s, sec_flags);
 	license_write_preamble(s, type, flags, wMsgSize);
 
 #ifdef WITH_DEBUG_LICENSE
 	fprintf(stderr, "Sending %s Packet, length %d\n", LICENSE_MESSAGE_STRINGS[type & 0x1F], wMsgSize);
-	winpr_HexDump(Stream_Pointer(s) - 4, wMsgSize);
+	winpr_HexDump(Stream_Pointer(s) - LICENSE_PREAMBLE_LENGTH, wMsgSize);
 #endif
 
 	Stream_SetPosition(s, length);
-	Stream_SealLength(s);
+	rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
 
-	if (transport_write(license->rdp->transport, s) < 0)
-		return FALSE;
-
-	Stream_Free(s, TRUE);
+	rdp->sec_flags = 0;
 
 	return TRUE;
 }
@@ -240,7 +241,7 @@ int license_recv(rdpLicense* license, wStream* s)
 
 	if (!rdp_read_header(license->rdp, s, &length, &channelId))
 	{
-		fprintf(stderr, "Incorrect RDP header.\n");
+		fprintf(stderr, "%s: Incorrect RDP header.\n", __FUNCTION__);
 		return -1;
 	}
 
@@ -251,7 +252,7 @@ int license_recv(rdpLicense* license, wStream* s)
 	{
 		if (!rdp_decrypt(license->rdp, s, length - 4, securityFlags))
 		{
-			fprintf(stderr, "rdp_decrypt failed\n");
+			fprintf(stderr, "%s: rdp_decrypt failed\n", __FUNCTION__);
 			return -1;
 		}
 	}
@@ -267,7 +268,7 @@ int license_recv(rdpLicense* license, wStream* s)
 
 		if (status < 0)
 		{
-			fprintf(stderr, "Unexpected license packet.\n");
+			fprintf(stderr, "%s: unexpected license packet.\n", __FUNCTION__);
 			return status;
 		}
 
@@ -307,7 +308,7 @@ int license_recv(rdpLicense* license, wStream* s)
 			break;
 
 		default:
-			fprintf(stderr, "invalid bMsgType:%d\n", bMsgType);
+			fprintf(stderr, "%s: invalid bMsgType:%d\n", __FUNCTION__, bMsgType);
 			return FALSE;
 	}
 
@@ -392,6 +393,12 @@ void license_generate_hwid(rdpLicense* license)
 	mac_address = license->rdp->transport->TcpIn->mac_address;
 
 	md5 = crypto_md5_init();
+	if (!md5)
+	{
+		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		return;
+	}
+
 	crypto_md5_update(md5, mac_address, 6);
 	crypto_md5_final(md5, &license->HardwareId[HWID_PLATFORM_ID_LENGTH]);
 }
@@ -458,6 +465,11 @@ void license_decrypt_platform_challenge(rdpLicense* license)
 	license->PlatformChallenge->length = license->EncryptedPlatformChallenge->length;
 
 	rc4 = crypto_rc4_init(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
+	if (!rc4)
+	{
+		fprintf(stderr, "%s: unable to allocate a rc4\n", __FUNCTION__);
+		return;
+	}
 
 	crypto_rc4(rc4, license->EncryptedPlatformChallenge->length,
 			license->EncryptedPlatformChallenge->data,
@@ -763,7 +775,7 @@ BOOL license_read_license_request_packet(rdpLicense* license, wStream* s)
 
 	/* Parse Server Certificate */
 	if (!certificate_read_server_certificate(license->certificate,
-			license->ServerCertificate->data, license->ServerCertificate->length) < 0)
+			license->ServerCertificate->data, license->ServerCertificate->length))
 		return FALSE;
 
 	license_generate_keys(license);
@@ -1042,6 +1054,12 @@ void license_send_platform_challenge_response_packet(rdpLicense* license)
 
 	buffer = (BYTE*) malloc(HWID_LENGTH);
 	rc4 = crypto_rc4_init(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
+	if (!rc4)
+	{
+		fprintf(stderr, "%s: unable to allocate a rc4\n", __FUNCTION__);
+		free(buffer);
+		return;
+	}
 	crypto_rc4(rc4, HWID_LENGTH, license->HardwareId, buffer);
 	crypto_rc4_free(rc4);
 

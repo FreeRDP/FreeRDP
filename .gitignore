@@ -42,6 +42,9 @@ include/freerdp/version.h
 *.cproject
 *.settings
 
+nbproject/
+compile_commands.json
+
 # .rdp files
 *.rdp
 *.RDP
@@ -68,6 +71,7 @@ Release-*
 *.vcxproj.*
 *.vcproj
 *.vcproj.*
+*.aps
 *.sdf
 *.sln
 *.suo

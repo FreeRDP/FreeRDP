@@ -36,7 +36,7 @@
  * http://download.microsoft.com/download/9/8/6/9863C72A-A3AA-4DDB-B1BA-CA8D17EFD2D4/RIFFNEW.pdf
  */
 
-static void freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
+static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 	const BYTE* src, int bytes_per_sample,
 	UINT32 schan, UINT32 srate, int sframes,
 	UINT32 rchan, UINT32 rrate)
@@ -56,8 +56,12 @@ static void freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 
 	if (rsize > (int) context->resampled_maxlength)
 	{
+		BYTE *newBuffer = (BYTE*) realloc(context->resampled_buffer, rsize + 1024);
+		if (!newBuffer)
+			return FALSE;
+
 		context->resampled_maxlength = rsize + 1024;
-		context->resampled_buffer = (BYTE*) realloc(context->resampled_buffer, context->resampled_maxlength);
+		context->resampled_buffer = newBuffer;
 	}
 	dst = context->resampled_buffer;
 
@@ -83,6 +87,7 @@ static void freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context,
 
 	context->resampled_frames = rframes;
 	context->resampled_size = rsize;
+	return TRUE;
 }
 
 /**
@@ -149,7 +154,7 @@ static UINT16 dsp_decode_ima_adpcm_sample(ADPCM* adpcm,
 	return (UINT16) d;
 }
 
-static void freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
+static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 	const BYTE* src, int size, int channels, int block_size)
 {
 	BYTE* dst;
@@ -163,8 +168,12 @@ static void freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 
 	if (out_size > context->adpcm_maxlength)
 	{
+		BYTE *newBuffer = realloc(context->adpcm_buffer, out_size + 1024);
+		if (!newBuffer)
+			return FALSE;
+
 		context->adpcm_maxlength = out_size + 1024;
-		context->adpcm_buffer = realloc(context->adpcm_buffer, context->adpcm_maxlength);
+		context->adpcm_buffer = newBuffer;
 	}
 
 	dst = context->adpcm_buffer;
@@ -228,6 +237,7 @@ static void freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 	}
 
 	context->adpcm_size = dst - context->adpcm_buffer;
+	return TRUE;
 }
 
 /**
@@ -326,7 +336,7 @@ static BYTE dsp_encode_ima_adpcm_sample(ADPCM* adpcm, int channel, INT16 sample)
 	return enc;
 }
 
-static void freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
+static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 	const BYTE* src, int size, int channels, int block_size)
 {
 	int i;
@@ -339,8 +349,12 @@ static void freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 
 	if (out_size > context->adpcm_maxlength)
 	{
+		BYTE *newBuffer = realloc(context->adpcm_buffer, out_size + 1024);
+		if (!newBuffer)
+			return FALSE;
+
 		context->adpcm_maxlength = out_size + 1024;
-		context->adpcm_buffer = realloc(context->adpcm_buffer, context->adpcm_maxlength);
+		context->adpcm_buffer = newBuffer;
 	}
 
 	dst = context->adpcm_buffer;
@@ -392,6 +406,7 @@ static void freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context,
 	}
 	
 	context->adpcm_size = dst - context->adpcm_buffer;
+	return TRUE;
 }
 
 /**
@@ -443,7 +458,7 @@ static INLINE INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* adpcm, BYTE sample
 	return (INT16) presample;
 }
 
-static void freerdp_dsp_decode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
+static BOOL freerdp_dsp_decode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 	const BYTE* src, int size, int channels, int block_size)
 {
 	BYTE* dst;
@@ -454,8 +469,12 @@ static void freerdp_dsp_decode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 
 	if (out_size > context->adpcm_maxlength)
 	{
+		BYTE *newBuffer = realloc(context->adpcm_buffer, out_size + 1024);
+		if (!newBuffer)
+			return FALSE;
+
 		context->adpcm_maxlength = out_size + 1024;
-		context->adpcm_buffer = realloc(context->adpcm_buffer, context->adpcm_maxlength);
+		context->adpcm_buffer = newBuffer;
 	}
 
 	dst = context->adpcm_buffer;
@@ -537,6 +556,7 @@ static void freerdp_dsp_decode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 	}
 
 	context->adpcm_size = dst - context->adpcm_buffer;
+	return TRUE;
 }
 
 static BYTE freerdp_dsp_encode_ms_adpcm_sample(ADPCM* adpcm, INT32 sample, int channel)
@@ -573,7 +593,7 @@ static BYTE freerdp_dsp_encode_ms_adpcm_sample(ADPCM* adpcm, INT32 sample, int c
 	return ((BYTE) errordelta) & 0x0F;
 }
 
-static void freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
+static BOOL freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 	const BYTE* src, int size, int channels, int block_size)
 {
 	BYTE* dst;
@@ -584,8 +604,12 @@ static void freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 
 	if (out_size > context->adpcm_maxlength)
 	{
+		BYTE *newBuffer = realloc(context->adpcm_buffer, out_size + 1024);
+		if (!newBuffer)
+			return FALSE;
+
 		context->adpcm_maxlength = out_size + 1024;
-		context->adpcm_buffer = realloc(context->adpcm_buffer, context->adpcm_maxlength);
+		context->adpcm_buffer = newBuffer;
 	}
 
 	dst = context->adpcm_buffer;
@@ -646,14 +670,16 @@ static void freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context,
 	}
 	
 	context->adpcm_size = dst - context->adpcm_buffer;
+	return TRUE;
 }
 
 FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(void)
 {
 	FREERDP_DSP_CONTEXT* context;
 
-	context = (FREERDP_DSP_CONTEXT*) malloc(sizeof(FREERDP_DSP_CONTEXT));
-	ZeroMemory(context, sizeof(FREERDP_DSP_CONTEXT));
+	context = (FREERDP_DSP_CONTEXT*) calloc(1, sizeof(FREERDP_DSP_CONTEXT));
+	if (!context)
+		return NULL;
 
 	context->resample = freerdp_dsp_resample;
 	context->decode_ima_adpcm = freerdp_dsp_decode_ima_adpcm;

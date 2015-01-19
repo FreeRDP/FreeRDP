@@ -35,7 +35,7 @@ int TestDsMakeSpn(int argc, char* argv[])
 
 	if (SpnLength != 37)
 	{
-		_tprintf(_T("DsMakeSpn: SpnLength mismatch: Actual: %ld, Expected: %d\n"), SpnLength, 37);
+		_tprintf(_T("DsMakeSpn: SpnLength mismatch: Actual: %d, Expected: %d\n"), SpnLength, 37);
 		return -1;
 	}
 

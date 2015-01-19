@@ -23,6 +23,7 @@
 #ifndef _WIN32
 
 #include <winpr/pipe.h>
+#include <winpr/collections.h>
 
 #include "../handle/handle.h"
 
@@ -34,9 +35,17 @@ struct winpr_pipe
 };
 typedef struct winpr_pipe WINPR_PIPE;
 
+typedef struct winpr_named_pipe WINPR_NAMED_PIPE;
+
+typedef void ( * fnRemoveBaseNamedPipeFromList)(WINPR_NAMED_PIPE* pNamedPipe);
+
 struct winpr_named_pipe
 {
 	WINPR_HANDLE_DEF();
+
+	WINPR_NAMED_PIPE* pBaseNamedPipe;
+
+	DWORD dwRefCount;
 
 	int clientfd;
 	int serverfd;
@@ -54,8 +63,9 @@ struct winpr_named_pipe
 	DWORD nDefaultTimeOut;
 	DWORD dwFlagsAndAttributes;
 	LPOVERLAPPED lpOverlapped;
+
+	fnRemoveBaseNamedPipeFromList pfnRemoveBaseNamedPipeFromList;
 };
-typedef struct winpr_named_pipe WINPR_NAMED_PIPE;
 
 #endif
 

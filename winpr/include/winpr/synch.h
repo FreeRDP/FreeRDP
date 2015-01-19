@@ -297,7 +297,7 @@ WINPR_API BOOL DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE Com
 
 #endif
 
-#if ((_WIN32) && (_WIN32_WINNT < 0x0403))
+#if ((defined _WIN32) && (_WIN32_WINNT < 0x0403))
 
 WINPR_API BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwSpinCount, DWORD Flags);
 

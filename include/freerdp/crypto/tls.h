@@ -84,7 +84,7 @@ struct rdp_tls
 	int alertDescription;
 };
 
-FREERDP_API BOOL tls_connect(rdpTls* tls);
+FREERDP_API int tls_connect(rdpTls* tls);
 FREERDP_API BOOL tls_accept(rdpTls* tls, const char* cert_file, const char* privatekey_file);
 FREERDP_API BOOL tls_disconnect(rdpTls* tls);
 
@@ -99,7 +99,7 @@ FREERDP_API int tls_wait_write(rdpTls* tls);
 FREERDP_API int tls_set_alert_code(rdpTls* tls, int level, int description);
 
 FREERDP_API BOOL tls_match_hostname(char *pattern, int pattern_length, char *hostname);
-FREERDP_API BOOL tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int port);
+FREERDP_API int tls_verify_certificate(rdpTls* tls, CryptoCert cert, char* hostname, int port);
 FREERDP_API void tls_print_certificate_error(char* hostname, char* fingerprint, char* hosts_file);
 FREERDP_API void tls_print_certificate_name_mismatch_error(char* hostname, char* common_name, char** alt_names, int alt_names_count);
 

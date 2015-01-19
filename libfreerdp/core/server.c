@@ -300,7 +300,7 @@ static int wts_write_variable_uint(wStream* stream, UINT32 val)
 	}
 	else
 	{
-		cb = 3;
+		cb = 2;
 		Stream_Write_UINT32(stream, val);
 	}
 
@@ -463,27 +463,132 @@ HANDLE WTSVirtualChannelManagerGetEventHandle(HANDLE hServer)
 	return MessageQueue_Event(vcm->queue);
 }
 
-BOOL WTSVirtualChannelManagerIsChannelJoined(HANDLE hServer, const char* name)
+static rdpMcsChannel* wts_get_joined_channel_by_name(rdpMcs *mcs, const char *channel_name)
 {
-	rdpMcs* mcs;
 	UINT32 index;
-	BOOL joined = FALSE;
-	WTSVirtualChannelManager* vcm = (WTSVirtualChannelManager*) hServer;
-
-	mcs = vcm->rdp->mcs;
+	if (!mcs || !channel_name || !strlen(channel_name))
+		return NULL;
 
 	for (index = 0; index < mcs->channelCount; index++)
 	{
 		if (mcs->channels[index].joined)
 		{
-			if (strncmp(mcs->channels[index].Name, name, strlen(name)) == 0)
-			{
-				joined = TRUE;
-			}
-		}
-	}
+			if (_strnicmp(mcs->channels[index].Name, channel_name, strlen(channel_name)) == 0)
+				return &mcs->channels[index];
+    }
+  }
+  return NULL;
+}
 
-	return joined;
+static rdpMcsChannel* wts_get_joined_channel_by_id(rdpMcs *mcs, const UINT16 channel_id)
+{
+	UINT32 index;
+	if (!mcs || !channel_id)
+		return NULL;
+
+	for (index = 0; index < mcs->channelCount; index++)
+	{
+		if (mcs->channels[index].joined)
+		{
+			if (mcs->channels[index].ChannelId == channel_id)
+				return &mcs->channels[index];
+    }
+  }
+  return NULL;
+}
+
+BOOL WTSIsChannelJoinedByName(freerdp_peer *client, const char *channel_name)
+{
+	if (!client || !client->context || !client->context->rdp)
+		return FALSE;
+
+	return wts_get_joined_channel_by_name(client->context->rdp->mcs, channel_name) == NULL ? FALSE : TRUE;
+}
+
+BOOL WTSIsChannelJoinedById(freerdp_peer *client, const UINT16 channel_id)
+{
+	if (!client || !client->context || !client->context->rdp)
+		return FALSE;
+
+	return wts_get_joined_channel_by_id(client->context->rdp->mcs, channel_id) == NULL ? FALSE : TRUE;
+}
+
+BOOL WTSVirtualChannelManagerIsChannelJoined(HANDLE hServer, const char* name)
+{
+	WTSVirtualChannelManager* vcm = (WTSVirtualChannelManager*) hServer;
+
+	if (!vcm || !vcm->rdp)
+		return FALSE;
+
+	return wts_get_joined_channel_by_name(vcm->rdp->mcs, name) == NULL ? FALSE : TRUE;
+}
+
+UINT16 WTSChannelGetId(freerdp_peer *client, const char *channel_name)
+{
+	rdpMcsChannel *channel;
+
+	if (!client || !client->context || !client->context->rdp)
+		return 0;
+
+	channel = wts_get_joined_channel_by_name(client->context->rdp->mcs, channel_name);
+	if (!channel)
+		return 0;
+
+	return channel->ChannelId;
+}
+
+BOOL WTSChannelSetHandleByName(freerdp_peer *client, const char *channel_name, void *handle)
+{
+	rdpMcsChannel *channel;
+	if (!client || !client->context || !client->context->rdp)
+		return FALSE;
+
+	channel = wts_get_joined_channel_by_name(client->context->rdp->mcs, channel_name);
+	if (!channel)
+		return FALSE;
+
+	channel->handle = handle;
+	return TRUE;
+}
+
+BOOL WTSChannelSetHandleById(freerdp_peer *client, const UINT16 channel_id, void *handle)
+{
+	rdpMcsChannel *channel;
+	if (!client || !client->context || !client->context->rdp)
+		return FALSE;
+
+	channel = wts_get_joined_channel_by_id(client->context->rdp->mcs, channel_id);
+	if (!channel)
+		return FALSE;
+
+	channel->handle = handle;
+	return TRUE;
+}
+
+void *WTSChannelGetHandleByName(freerdp_peer *client, const char *channel_name)
+{
+	rdpMcsChannel *channel;
+	if (!client || !client->context || !client->context->rdp)
+		return NULL;
+
+	channel = wts_get_joined_channel_by_name(client->context->rdp->mcs, channel_name);
+	if (!channel)
+		return NULL;
+
+	return channel->handle;
+}
+
+void *WTSChannelGetHandleById(freerdp_peer *client, const UINT16 channel_id)
+{
+	rdpMcsChannel *channel;
+	if (!client || !client->context || !client->context->rdp)
+		return NULL;
+
+	channel = wts_get_joined_channel_by_id(client->context->rdp->mcs, channel_id);
+	if (!channel)
+		return NULL;
+
+	return channel->handle;
 }
 
 BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionW(LPWSTR pTargetServerName, ULONG TargetLogonId, BYTE HotkeyVk, USHORT HotkeyModifiers)
@@ -866,7 +971,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 	WTSVirtualChannelWrite(vcm->drdynvc_channel, (PCHAR) Stream_Buffer(s), Stream_GetPosition(s), NULL);
 	Stream_Free(s, TRUE);
 
-	return NULL;
+	return channel;
 }
 
 BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)

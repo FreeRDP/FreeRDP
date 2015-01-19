@@ -2997,7 +2997,7 @@ int test_individual_planes_encoding_rle()
 	if (dstSizes[1] != sizeof(TEST_64X64_RED_PLANE_RLE))
 	{
 		printf("RedPlaneRle unexpected size: actual: %d, expected: %d\n",
-				dstSizes[1], sizeof(TEST_64X64_RED_PLANE_RLE));
+				dstSizes[1], (int) sizeof(TEST_64X64_RED_PLANE_RLE));
 		//return -1;
 	}
 
@@ -3007,7 +3007,7 @@ int test_individual_planes_encoding_rle()
 	{
 		printf("RedPlaneRle doesn't match expected output\n");
 
-		printf("RedPlaneRle Expected (%d):\n", sizeof(TEST_64X64_RED_PLANE_RLE));
+		printf("RedPlaneRle Expected (%d):\n", (int) sizeof(TEST_64X64_RED_PLANE_RLE));
 		//winpr_HexDump((BYTE*) TEST_64X64_RED_PLANE_RLE, sizeof(TEST_64X64_RED_PLANE_RLE));
 
 		printf("RedPlaneRle Actual (%d):\n", dstSizes[1]);
@@ -3033,7 +3033,7 @@ int test_individual_planes_encoding_rle()
 	if (dstSizes[2] != sizeof(TEST_64X64_GREEN_PLANE_RLE))
 	{
 		printf("GreenPlaneRle unexpected size: actual: %d, expected: %d\n",
-				dstSizes[1], sizeof(TEST_64X64_GREEN_PLANE_RLE));
+				dstSizes[1], (int) sizeof(TEST_64X64_GREEN_PLANE_RLE));
 		return -1;
 	}
 
@@ -3043,8 +3043,8 @@ int test_individual_planes_encoding_rle()
 	{
 		printf("GreenPlaneRle doesn't match expected output\n");
 
-		printf("GreenPlaneRle Expected (%d):\n", sizeof(TEST_64X64_GREEN_PLANE_RLE));
-		winpr_HexDump((BYTE*) TEST_64X64_GREEN_PLANE_RLE, sizeof(TEST_64X64_GREEN_PLANE_RLE));
+		printf("GreenPlaneRle Expected (%d):\n", (int) sizeof(TEST_64X64_GREEN_PLANE_RLE));
+		winpr_HexDump((BYTE*) TEST_64X64_GREEN_PLANE_RLE, (int) sizeof(TEST_64X64_GREEN_PLANE_RLE));
 
 		printf("GreenPlaneRle Actual (%d):\n", dstSizes[2]);
 		winpr_HexDump(planar->rlePlanes[2], dstSizes[2]);
@@ -3069,7 +3069,7 @@ int test_individual_planes_encoding_rle()
 	if (dstSizes[3] != sizeof(TEST_64X64_BLUE_PLANE_RLE))
 	{
 		printf("BluePlaneRle unexpected size: actual: %d, expected: %d\n",
-				dstSizes[1], sizeof(TEST_64X64_BLUE_PLANE_RLE));
+				dstSizes[1], (int) sizeof(TEST_64X64_BLUE_PLANE_RLE));
 		return -1;
 	}
 
@@ -3079,8 +3079,8 @@ int test_individual_planes_encoding_rle()
 	{
 		printf("BluePlaneRle doesn't match expected output\n");
 
-		printf("BluePlaneRle Expected (%d):\n", sizeof(TEST_64X64_BLUE_PLANE_RLE));
-		winpr_HexDump((BYTE*) TEST_64X64_BLUE_PLANE_RLE, sizeof(TEST_64X64_BLUE_PLANE_RLE));
+		printf("BluePlaneRle Expected (%d):\n", (int) sizeof(TEST_64X64_BLUE_PLANE_RLE));
+		winpr_HexDump((BYTE*) TEST_64X64_BLUE_PLANE_RLE, (int) sizeof(TEST_64X64_BLUE_PLANE_RLE));
 
 		printf("BluePlaneRle Actual (%d):\n", dstSizes[3]);
 		winpr_HexDump(planar->rlePlanes[3], dstSizes[3]);

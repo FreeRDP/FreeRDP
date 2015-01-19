@@ -45,6 +45,39 @@
 #include "pipe.h"
 
 /*
+ * Since the WinPR implementation of named pipes makes use of UNIX domain
+ * sockets, it is not possible to bind the same name more than once (i.e.,
+ * SO_REUSEADDR does not work with UNIX domain sockets).  As a result, the
+ * first call to CreateNamedPipe must create the UNIX domain socket and
+ * subsequent calls to CreateNamedPipe will reference the first named pipe
+ * handle and duplicate the socket descriptor.
+ *
+ * The following array keeps track of the named pipe handles for the first
+ * instance.  If multiple instances are created, subsequent instances store
+ * a pointer to the first instance and a reference count is maintained.  When
+ * the last instance is closed, the named pipe handle is removed from the list.
+ */
+
+static wArrayList* g_BaseNamedPipeList = NULL;
+
+static BOOL g_Initialized = FALSE;
+
+static void InitWinPRPipeModule()
+{
+	if (g_Initialized)
+		return;
+
+	g_BaseNamedPipeList = ArrayList_New(TRUE);
+
+	g_Initialized = TRUE;
+}
+
+void WinPR_RemoveBaseNamedPipeFromList(WINPR_NAMED_PIPE* pNamedPipe)
+{
+	ArrayList_Remove(g_BaseNamedPipeList, pNamedPipe);
+}
+
+/*
  * Unnamed pipe
  */
 
@@ -96,19 +129,43 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,
 		DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
+	int index;
 	int status;
 	HANDLE hNamedPipe;
 	char* lpPipePath;
 	struct sockaddr_un s;
 	WINPR_NAMED_PIPE* pNamedPipe;
+	WINPR_NAMED_PIPE* pBaseNamedPipe;
 
 	if (!lpName)
 		return INVALID_HANDLE_VALUE;
+
+	InitWinPRPipeModule();
+
+	/* Find the base named pipe instance (i.e., the first instance). */
+	pBaseNamedPipe = NULL;
+
+	ArrayList_Lock(g_BaseNamedPipeList);
+
+	for (index = 0; index < ArrayList_Count(g_BaseNamedPipeList); index++)
+	{
+		WINPR_NAMED_PIPE* p = (WINPR_NAMED_PIPE*) ArrayList_GetItem(g_BaseNamedPipeList, index);
+
+		if (strcmp(p->name, lpName) == 0)
+		{
+			pBaseNamedPipe = p;
+			break;
+		}
+	}
+
+	ArrayList_Unlock(g_BaseNamedPipeList);
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) malloc(sizeof(WINPR_NAMED_PIPE));
 	hNamedPipe = (HANDLE) pNamedPipe;
 
 	WINPR_HANDLE_SET_TYPE(pNamedPipe, HANDLE_TYPE_NAMED_PIPE);
+
+	pNamedPipe->pfnRemoveBaseNamedPipeFromList = WinPR_RemoveBaseNamedPipeFromList;
 
 	pNamedPipe->name = _strdup(lpName);
 	pNamedPipe->dwOpenMode = dwOpenMode;
@@ -122,53 +179,72 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	pNamedPipe->lpFileName = GetNamedPipeNameWithoutPrefixA(lpName);
 	pNamedPipe->lpFilePath = GetNamedPipeUnixDomainSocketFilePathA(lpName);
 
-	lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
-
-	if (!PathFileExistsA(lpPipePath))
-	{
-		CreateDirectoryA(lpPipePath, 0);
-		UnixChangeFileMode(lpPipePath, 0xFFFF);
-	}
-
-	free(lpPipePath);
-
-	if (PathFileExistsA(pNamedPipe->lpFilePath))
-	{
-		DeleteFileA(pNamedPipe->lpFilePath);
-	}
-
 	pNamedPipe->clientfd = -1;
 	pNamedPipe->ServerMode = TRUE;
 
-	pNamedPipe->serverfd = socket(AF_UNIX, SOCK_STREAM, 0);
+	pNamedPipe->pBaseNamedPipe = pBaseNamedPipe;
+	pNamedPipe->dwRefCount = 1;
 
-	if (pNamedPipe->serverfd == -1)
+	/* If this is the first instance of the named pipe... */
+	if (pBaseNamedPipe == NULL)
 	{
-		fprintf(stderr, "CreateNamedPipeA: socket error, %s\n", strerror(errno));
-		return INVALID_HANDLE_VALUE;
+		/* Create the UNIX domain socket and start listening. */
+		lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
+
+		if (!PathFileExistsA(lpPipePath))
+		{
+			CreateDirectoryA(lpPipePath, 0);
+			UnixChangeFileMode(lpPipePath, 0xFFFF);
+		}
+
+		free(lpPipePath);
+
+		if (PathFileExistsA(pNamedPipe->lpFilePath))
+		{
+			DeleteFileA(pNamedPipe->lpFilePath);
+		}
+
+		pNamedPipe->serverfd = socket(AF_UNIX, SOCK_STREAM, 0);
+
+		if (pNamedPipe->serverfd == -1)
+		{
+			fprintf(stderr, "CreateNamedPipeA: socket error, %s\n", strerror(errno));
+			goto err_out;
+		}
+
+		ZeroMemory(&s, sizeof(struct sockaddr_un));
+		s.sun_family = AF_UNIX;
+		strcpy(s.sun_path, pNamedPipe->lpFilePath);
+
+		status = bind(pNamedPipe->serverfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
+
+		if (status != 0)
+		{
+			fprintf(stderr, "CreateNamedPipeA: bind error, %s\n", strerror(errno));
+			goto err_out;
+		}
+
+		status = listen(pNamedPipe->serverfd, 2);
+
+		if (status != 0)
+		{
+			fprintf(stderr, "CreateNamedPipeA: listen error, %s\n", strerror(errno));
+			goto err_out;
+		}
+
+		UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
+
+		/* Add the named pipe to the list of base named pipe instances. */
+		ArrayList_Add(g_BaseNamedPipeList, pNamedPipe);
 	}
-
-	ZeroMemory(&s, sizeof(struct sockaddr_un));
-	s.sun_family = AF_UNIX;
-	strcpy(s.sun_path, pNamedPipe->lpFilePath);
-
-	status = bind(pNamedPipe->serverfd, (struct sockaddr*) &s, sizeof(struct sockaddr_un));
-
-	if (status != 0)
+	else
 	{
-		fprintf(stderr, "CreateNamedPipeA: bind error, %s\n", strerror(errno));
-		return INVALID_HANDLE_VALUE;
+		/* Duplicate the file handle for the UNIX domain socket in the first instance. */
+		pNamedPipe->serverfd = dup(pBaseNamedPipe->serverfd);
+
+		/* Update the reference count in the base named pipe instance. */
+		pBaseNamedPipe->dwRefCount++;
 	}
-
-	status = listen(pNamedPipe->serverfd, 2);
-
-	if (status != 0)
-	{
-		fprintf(stderr, "CreateNamedPipeA: listen error, %s\n", strerror(errno));
-		return INVALID_HANDLE_VALUE;
-	}
-
-	UnixChangeFileMode(pNamedPipe->lpFilePath, 0xFFFF);
 
 	if (dwOpenMode & FILE_FLAG_OVERLAPPED)
 	{
@@ -181,6 +257,14 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	}
 
 	return hNamedPipe;
+
+err_out:
+	if (pNamedPipe) {
+		if (pNamedPipe->serverfd != -1)
+			close(pNamedPipe->serverfd);
+		free(pNamedPipe);
+	}
+	return INVALID_HANDLE_VALUE;
 }
 
 HANDLE CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD nMaxInstances,
@@ -308,7 +392,7 @@ BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout)
 {
 	int fd;
-	unsigned long flags;
+	int flags;
 	WINPR_NAMED_PIPE* pNamedPipe;
 
 	pNamedPipe = (WINPR_NAMED_PIPE*) hNamedPipe;

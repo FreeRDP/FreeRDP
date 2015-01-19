@@ -481,7 +481,7 @@ void wf_gdi_line_to(wfContext* wfc, LINE_TO_ORDER* line_to)
 	int x, y, w, h;
 	UINT32 pen_color;
 
-	pen_color = freerdp_color_convert_bgr(line_to->penColor, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
+	pen_color = freerdp_color_convert_var_bgr(line_to->penColor, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
 
 	pen = CreatePen(line_to->penStyle, line_to->penWidth, pen_color);
 
@@ -512,7 +512,7 @@ void wf_gdi_polyline(wfContext* wfc, POLYLINE_ORDER* polyline)
 	HPEN org_hpen;
 	UINT32 pen_color;
 
-	pen_color = freerdp_color_convert_bgr(polyline->penColor, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
+	pen_color = freerdp_color_convert_var_bgr(polyline->penColor, wfc->srcBpp, wfc->dstBpp, wfc->clrconv);
 
 	hpen = CreatePen(0, 1, pen_color);
 	org_rop2 = wf_set_rop2(wfc->drawing->hdc, polyline->bRop2);

@@ -31,7 +31,7 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-#include "makecert.h"
+#include <winpr/tools/makecert.h>
 
 struct _MAKECERT_CONTEXT
 {

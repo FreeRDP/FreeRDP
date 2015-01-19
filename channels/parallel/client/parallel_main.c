@@ -285,10 +285,10 @@ static void parallel_free(DEVICE* device)
 
 	MessageQueue_PostQuit(parallel->queue, 0);
 	WaitForSingleObject(parallel->thread, INFINITE);
+	CloseHandle(parallel->thread);
 
 	Stream_Free(parallel->device.data, TRUE);
 	MessageQueue_Free(parallel->queue);
-	CloseHandle(parallel->thread);
 
 	free(parallel);
 }
@@ -309,10 +309,18 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	name = device->Name;
 	path = device->Path;
 
+	if (!name || (name[0] == '*'))
+	{
+		/* TODO: implement auto detection of parallel ports */
+		return 0;
+	}
+
 	if (name[0] && path[0])
 	{
-		parallel = (PARALLEL_DEVICE*) malloc(sizeof(PARALLEL_DEVICE));
-		ZeroMemory(parallel, sizeof(PARALLEL_DEVICE));
+		parallel = (PARALLEL_DEVICE*) calloc(1, sizeof(PARALLEL_DEVICE));
+
+		if (!parallel)
+			return -1;
 
 		parallel->device.type = RDPDR_DTYP_PARALLEL;
 		parallel->device.name = name;

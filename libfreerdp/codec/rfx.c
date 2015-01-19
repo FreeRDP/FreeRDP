@@ -619,7 +619,20 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 
 	if (message->numRects < 1)
 	{
-		DEBUG_WARN("no rects.");
+		/* Unfortunately, it isn't documented.
+		It seems that server asks to clip whole session when numRects = 0.
+		Issue: https://github.com/FreeRDP/FreeRDP/issues/1738 */
+
+		DEBUG_WARN("no rects. Clip whole session.");
+		message->numRects = 1;
+		message->rects = (RFX_RECT*) realloc(message->rects, message->numRects * sizeof(RFX_RECT));
+		if (!message->rects)
+			return FALSE;
+		message->rects->x = 0;
+		message->rects->y = 0;
+		message->rects->width = context->width;
+		message->rects->height = context->height;
+
 		return TRUE;
 	}
 

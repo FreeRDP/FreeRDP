@@ -34,14 +34,20 @@
  * Methods
  */
 
-void BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
+BOOL BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
 {
 	if (count > 0)
 	{
 		if (pool->aSize + count > pool->aCapacity)
 		{
-			pool->aCapacity *= 2;
-			pool->aArray = (wBufferPoolItem*) realloc(pool->aArray, sizeof(wBufferPoolItem) * pool->aCapacity);
+			wBufferPoolItem *newArray;
+			int newCapacity = pool->aCapacity * 2;
+
+			newArray = (wBufferPoolItem*) realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
+			if (!newArray)
+				return FALSE;
+			pool->aArray = newArray;
+			pool->aCapacity = newCapacity;
 		}
 
 		MoveMemory(&pool->aArray[index + count], &pool->aArray[index], (pool->aSize - index) * sizeof(wBufferPoolItem));
@@ -52,16 +58,21 @@ void BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
 		MoveMemory(&pool->aArray[index], &pool->aArray[index - count], (pool->aSize - index) * sizeof(wBufferPoolItem));
 		pool->aSize += count;
 	}
+	return TRUE;
 }
 
-void BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
+BOOL BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
 {
 	if (count > 0)
 	{
 		if (pool->uSize + count > pool->uCapacity)
 		{
-			pool->uCapacity *= 2;
-			pool->uArray = (wBufferPoolItem*) realloc(pool->uArray, sizeof(wBufferPoolItem) * pool->uCapacity);
+			int newUCapacity = pool->uCapacity * 2;
+			wBufferPoolItem *newUArray = (wBufferPoolItem *)realloc(pool->uArray, sizeof(wBufferPoolItem) *newUCapacity);
+			if (!newUArray)
+				return FALSE;
+			pool->uCapacity = newUCapacity;
+			pool->uArray = newUArray;
 		}
 
 		MoveMemory(&pool->uArray[index + count], &pool->uArray[index], (pool->uSize - index) * sizeof(wBufferPoolItem));
@@ -72,6 +83,7 @@ void BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
 		MoveMemory(&pool->uArray[index], &pool->uArray[index - count], (pool->uSize - index) * sizeof(wBufferPoolItem));
 		pool->uSize += count;
 	}
+	return TRUE;
 }
 
 /**
@@ -172,6 +184,9 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 			else
 				buffer = malloc(pool->fixedSize);
 		}
+
+		if (!buffer)
+			goto out_error;
 	}
 	else
 	{
@@ -225,17 +240,30 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 				}
 				else
 				{
-					buffer = realloc(buffer, size);
+					void *newBuffer = realloc(buffer, size);
+					if (!newBuffer)
+						goto out_error;
+
+					buffer = newBuffer;
 				}
 			}
 
-			BufferPool_ShiftAvailable(pool, foundIndex, -1);
+			if (!BufferPool_ShiftAvailable(pool, foundIndex, -1))
+				goto out_error;
 		}
+
+		if (!buffer)
+			goto out_error;
 
 		if (pool->uSize + 1 > pool->uCapacity)
 		{
-			pool->uCapacity *= 2;
-			pool->uArray = (wBufferPoolItem*) realloc(pool->uArray, sizeof(wBufferPoolItem) * pool->uCapacity);
+			int newUCapacity = pool->uCapacity * 2;
+			wBufferPoolItem *newUArray = (wBufferPoolItem *)realloc(pool->uArray, sizeof(wBufferPoolItem) * newUCapacity);
+			if (!newUArray)
+				goto out_error;
+
+			pool->uCapacity = newUCapacity;
+			pool->uArray = newUArray;
 		}
 
 		pool->uArray[pool->uSize].buffer = buffer;
@@ -247,13 +275,21 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 		LeaveCriticalSection(&pool->lock);
 
 	return buffer;
+
+out_error:
+	if (buffer)
+		free(buffer);
+
+	if (pool->synchronized)
+		LeaveCriticalSection(&pool->lock);
+	return NULL;
 }
 
 /**
  * Returns a buffer to the pool.
  */
 
-void BufferPool_Return(wBufferPool* pool, void* buffer)
+BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 {
 	int size = 0;
 	int index = 0;
@@ -268,8 +304,13 @@ void BufferPool_Return(wBufferPool* pool, void* buffer)
 
 		if ((pool->size + 1) >= pool->capacity)
 		{
-			pool->capacity *= 2;
-			pool->array = (void**) realloc(pool->array, sizeof(void*) * pool->capacity);
+			int newCapacity = pool->capacity * 2;
+			void **newArray = (void **)realloc(pool->array, sizeof(void*) * newCapacity);
+			if (!newArray)
+				goto out_error;
+
+			pool->capacity = newCapacity;
+			pool->array = newArray;
 		}
 
 		pool->array[(pool->size)++] = buffer;
@@ -290,15 +331,21 @@ void BufferPool_Return(wBufferPool* pool, void* buffer)
 		if (found)
 		{
 			size = pool->uArray[index].size;
-			BufferPool_ShiftUsed(pool, index, -1);
+			if (!BufferPool_ShiftUsed(pool, index, -1))
+				goto out_error;
 		}
 
 		if (size)
 		{
 			if ((pool->aSize + 1) >= pool->aCapacity)
 			{
-				pool->aCapacity *= 2;
-				pool->aArray = (wBufferPoolItem*) realloc(pool->aArray, sizeof(wBufferPoolItem) * pool->aCapacity);
+				int newCapacity = pool->aCapacity * 2;
+				wBufferPoolItem *newArray = (wBufferPoolItem*) realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
+				if (!newArray)
+					goto out_error;
+
+				pool->aCapacity = newCapacity;
+				pool->aArray = newArray;
 			}
 
 			pool->aArray[pool->aSize].buffer = buffer;
@@ -309,6 +356,12 @@ void BufferPool_Return(wBufferPool* pool, void* buffer)
 
 	if (pool->synchronized)
 		LeaveCriticalSection(&pool->lock);
+	return TRUE;
+
+out_error:
+	if (pool->synchronized)
+		LeaveCriticalSection(&pool->lock);
+	return FALSE;
 }
 
 /**

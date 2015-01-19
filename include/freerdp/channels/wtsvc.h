@@ -54,8 +54,18 @@ extern "C" {
 FREERDP_API void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* fds_count);
 FREERDP_API BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer);
 FREERDP_API HANDLE WTSVirtualChannelManagerGetEventHandle(HANDLE hServer);
-
 FREERDP_API BOOL WTSVirtualChannelManagerIsChannelJoined(HANDLE hServer, const char* name);
+
+/**
+ * Extended FreeRDP WTS functions for channel handling
+ */
+FREERDP_API UINT16 WTSChannelGetId(freerdp_peer *client, const char *channel_name);
+FREERDP_API BOOL WTSIsChannelJoinedByName(freerdp_peer *client, const char *channel_name);
+FREERDP_API BOOL WTSIsChannelJoinedById(freerdp_peer *client, const UINT16 channel_id);
+FREERDP_API BOOL WTSChannelSetHandleByName(freerdp_peer *client, const char *channel_name, void *handle);
+FREERDP_API BOOL WTSChannelSetHandleById(freerdp_peer *client, const UINT16 channel_id, void *handle);
+FREERDP_API void *WTSChannelGetHandleByName(freerdp_peer *client, const char *channel_name);
+FREERDP_API void *WTSChannelGetHandleById(freerdp_peer *client, const UINT16 channel_id);
 
 #ifdef __cplusplus
 }

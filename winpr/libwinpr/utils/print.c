@@ -30,9 +30,9 @@
 
 #include "trio.h"
 
-void winpr_HexDump(BYTE* data, int length)
+void winpr_HexDump(const BYTE* data, int length)
 {
-	BYTE* p = data;
+	const BYTE* p = data;
 	int i, line, offset = 0;
 
 	while (offset < length)
@@ -60,9 +60,9 @@ void winpr_HexDump(BYTE* data, int length)
 	}
 }
 
-void winpr_CArrayDump(BYTE* data, int length, int width)
+void winpr_CArrayDump(const BYTE* data, int length, int width)
 {
-	BYTE* p = data;
+	const BYTE* p = data;
 	int i, line, offset = 0;
 
 	while (offset < length)
@@ -84,6 +84,35 @@ void winpr_CArrayDump(BYTE* data, int length, int width)
 	}
 
 	printf("\n");
+}
+
+char* winpr_BinToHexString(const BYTE* data, int length, BOOL space)
+{
+	int i;
+	int n;
+	char* p;
+	int ln, hn;
+	char bin2hex[] = "0123456789ABCDEF";
+
+	n = space ? 3 : 2;
+
+	p = (char*) malloc((length + 1) * n);
+
+	for (i = 0; i < length; i++)
+	{
+		ln = data[i] & 0xF;
+		hn = (data[i] >> 4) & 0xF;
+
+		p[i * n] = bin2hex[hn];
+		p[(i * n) + 1] = bin2hex[ln];
+
+		if (space)
+			p[(i * n) + 2] = ' ';
+	}
+
+	p[length * n] = '\0';
+
+	return p;
 }
 
 int wvprintfx(const char *fmt, va_list args)

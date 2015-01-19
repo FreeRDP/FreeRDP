@@ -167,16 +167,26 @@ BOOL CloseHandle(HANDLE hObject)
 
 		pipe = (WINPR_NAMED_PIPE*) Object;
 
-		if (pipe->clientfd != -1)
-			close(pipe->clientfd);
+		if (--pipe->dwRefCount == 0)
+		{
+			pipe->pfnRemoveBaseNamedPipeFromList(pipe);
 
-		if (pipe->serverfd != -1)
-			close(pipe->serverfd);
+			if (pipe->pBaseNamedPipe)
+			{
+				CloseHandle((HANDLE) pipe->pBaseNamedPipe);
+			}
 
-		free((char *)pipe->lpFileName);
-		free((char *)pipe->lpFilePath);
-		free((char *)pipe->name);
-		free(pipe);
+			if (pipe->clientfd != -1)
+				close(pipe->clientfd);
+
+			if (pipe->serverfd != -1)
+				close(pipe->serverfd);
+
+			free((char *)pipe->lpFileName);
+			free((char *)pipe->lpFilePath);
+			free((char *)pipe->name);
+			free(pipe);
+		}
 
 		return TRUE;
 	}

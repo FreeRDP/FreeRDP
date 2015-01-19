@@ -5,6 +5,7 @@ set(MODULE_PREFIX "TEST_WINPR_UTILS")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
+	TestIni.c
 	TestQueue.c
 	TestPrint.c
 	TestPubSub.c

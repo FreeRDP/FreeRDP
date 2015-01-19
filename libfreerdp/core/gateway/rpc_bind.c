@@ -300,27 +300,25 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	auth_3_pdu->pfc_flags = PFC_FIRST_FRAG | PFC_LAST_FRAG | PFC_CONC_MPX;
 	auth_3_pdu->call_id = 2;
 
-	offset = 20;
-
 	auth_3_pdu->max_xmit_frag = rpc->max_xmit_frag;
 	auth_3_pdu->max_recv_frag = rpc->max_recv_frag;
 
-	offset += 4;
+	offset = 20;
 	auth_3_pdu->auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
 
 	auth_3_pdu->auth_verifier.auth_type = RPC_C_AUTHN_WINNT;
 	auth_3_pdu->auth_verifier.auth_level = RPC_C_AUTHN_LEVEL_PKT_INTEGRITY;
 	auth_3_pdu->auth_verifier.auth_reserved = 0x00;
 	auth_3_pdu->auth_verifier.auth_context_id = 0x00000000;
+	offset += (8 + auth_3_pdu->auth_length);
 
-	auth_3_pdu->frag_length = 20 + 4 +
-			auth_3_pdu->auth_verifier.auth_pad_length + auth_3_pdu->auth_length + 8;
+	auth_3_pdu->frag_length = offset;
 
 	buffer = (BYTE*) malloc(auth_3_pdu->frag_length);
 
-	CopyMemory(buffer, auth_3_pdu, 24);
+	CopyMemory(buffer, auth_3_pdu, 20);
 
-	offset = 24;
+	offset = 20;
 	rpc_offset_pad(&offset, auth_3_pdu->auth_verifier.auth_pad_length);
 
 	CopyMemory(&buffer[offset], &auth_3_pdu->auth_verifier.auth_type, 8);

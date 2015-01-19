@@ -497,20 +497,27 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 {
-	RpcVirtualConnection* connection = (RpcVirtualConnection*) malloc(sizeof(RpcVirtualConnection));
+	RpcVirtualConnection* connection = (RpcVirtualConnection*) calloc(1, sizeof(RpcVirtualConnection));
 
-	if (connection != NULL)
-	{
-		ZeroMemory(connection, sizeof(RpcVirtualConnection));
-		connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
-		connection->DefaultInChannel = (RpcInChannel*) malloc(sizeof(RpcInChannel));
-		connection->DefaultOutChannel = (RpcOutChannel*) malloc(sizeof(RpcOutChannel));
-		ZeroMemory(connection->DefaultInChannel, sizeof(RpcInChannel));
-		ZeroMemory(connection->DefaultOutChannel, sizeof(RpcOutChannel));
-		rpc_client_virtual_connection_init(rpc, connection);
-	}
+	if (!connection)
+		return NULL;
+
+	connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
+	connection->DefaultInChannel = (RpcInChannel *)calloc(1, sizeof(RpcInChannel));
+	if (!connection->DefaultInChannel)
+		goto out_free;
+	connection->DefaultOutChannel = (RpcOutChannel*)calloc(1, sizeof(RpcOutChannel));
+	if (!connection->DefaultOutChannel)
+		goto out_default_in;
+	rpc_client_virtual_connection_init(rpc, connection);
 
 	return connection;
+
+out_default_in:
+	free(connection->DefaultInChannel);
+out_free:
+	free(connection);
+	return NULL;
 }
 
 void rpc_client_virtual_connection_free(RpcVirtualConnection* virtual_connection)
@@ -525,64 +532,84 @@ void rpc_client_virtual_connection_free(RpcVirtualConnection* virtual_connection
 
 rdpRpc* rpc_new(rdpTransport* transport)
 {
-	rdpRpc* rpc = (rdpRpc*) malloc(sizeof(rdpRpc));
+	rdpRpc* rpc = (rdpRpc*) calloc(1, sizeof(rdpRpc));
+	if (!rpc)
+		return NULL;
 
-	if (rpc != NULL)
-	{
-		ZeroMemory(rpc, sizeof(rdpRpc));
+	rpc->State = RPC_CLIENT_STATE_INITIAL;
 
-		rpc->State = RPC_CLIENT_STATE_INITIAL;
+	rpc->transport = transport;
+	rpc->settings = transport->settings;
 
-		rpc->transport = transport;
-		rpc->settings = transport->settings;
+	rpc->SendSeqNum = 0;
+	rpc->ntlm = ntlm_new();
+	if (!rpc->ntlm)
+		goto out_free;
 
-		rpc->SendSeqNum = 0;
-		rpc->ntlm = ntlm_new();
+	rpc->NtlmHttpIn = ntlm_http_new();
+	if (!rpc->NtlmHttpIn)
+		goto out_free_ntlm;
+	rpc->NtlmHttpOut = ntlm_http_new();
+	if (!rpc->NtlmHttpOut)
+		goto out_free_ntlm_http_in;
 
-		rpc->NtlmHttpIn = ntlm_http_new();
-		rpc->NtlmHttpOut = ntlm_http_new();
+	rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpIn, TSG_CHANNEL_IN);
+	rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpOut, TSG_CHANNEL_OUT);
 
-		rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpIn, TSG_CHANNEL_IN);
-		rpc_ntlm_http_init_channel(rpc, rpc->NtlmHttpOut, TSG_CHANNEL_OUT);
+	rpc->PipeCallId = 0;
 
-		rpc->PipeCallId = 0;
+	rpc->StubCallId = 0;
+	rpc->StubFragCount = 0;
 
-		rpc->StubCallId = 0;
-		rpc->StubFragCount = 0;
+	rpc->rpc_vers = 5;
+	rpc->rpc_vers_minor = 0;
 
-		rpc->rpc_vers = 5;
-		rpc->rpc_vers_minor = 0;
+	/* little-endian data representation */
+	rpc->packed_drep[0] = 0x10;
+	rpc->packed_drep[1] = 0x00;
+	rpc->packed_drep[2] = 0x00;
+	rpc->packed_drep[3] = 0x00;
 
-		/* little-endian data representation */
-		rpc->packed_drep[0] = 0x10;
-		rpc->packed_drep[1] = 0x00;
-		rpc->packed_drep[2] = 0x00;
-		rpc->packed_drep[3] = 0x00;
+	rpc->max_xmit_frag = 0x0FF8;
+	rpc->max_recv_frag = 0x0FF8;
 
-		rpc->max_xmit_frag = 0x0FF8;
-		rpc->max_recv_frag = 0x0FF8;
+	rpc->ReceiveWindow = 0x00010000;
 
-		rpc->ReceiveWindow = 0x00010000;
+	rpc->ChannelLifetime = 0x40000000;
+	rpc->ChannelLifetimeSet = 0;
 
-		rpc->ChannelLifetime = 0x40000000;
-		rpc->ChannelLifetimeSet = 0;
+	rpc->KeepAliveInterval = 300000;
+	rpc->CurrentKeepAliveInterval = rpc->KeepAliveInterval;
+	rpc->CurrentKeepAliveTime = 0;
 
-		rpc->KeepAliveInterval = 300000;
-		rpc->CurrentKeepAliveInterval = rpc->KeepAliveInterval;
-		rpc->CurrentKeepAliveTime = 0;
+	rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
+	if (!rpc->VirtualConnection)
+		goto out_free_ntlm_http_out;
 
-		rpc->VirtualConnection = rpc_client_virtual_connection_new(rpc);
-		rpc->VirtualConnectionCookieTable = ArrayList_New(TRUE);
+	rpc->VirtualConnectionCookieTable = ArrayList_New(TRUE);
+	if (!rpc->VirtualConnectionCookieTable)
+		goto out_free_virtual_connection;
 
-		rpc->CallId = 2;
+	rpc->CallId = 2;
 
-		rpc_client_new(rpc);
+	rpc_client_new(rpc);
 
-		rpc->client->SynchronousSend = TRUE;
-		rpc->client->SynchronousReceive = TRUE;
-	}
+	rpc->client->SynchronousSend = TRUE;
+	rpc->client->SynchronousReceive = TRUE;
 
 	return rpc;
+
+out_free_virtual_connection:
+	rpc_client_virtual_connection_free(rpc->VirtualConnection);
+out_free_ntlm_http_out:
+	ntlm_http_free(rpc->NtlmHttpOut);
+out_free_ntlm_http_in:
+	ntlm_http_free(rpc->NtlmHttpIn);
+out_free_ntlm:
+	ntlm_free(rpc->ntlm);
+out_free:
+	free(rpc);
+	return NULL;
 }
 
 void rpc_free(rdpRpc* rpc)

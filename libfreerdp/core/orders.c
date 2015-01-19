@@ -203,6 +203,7 @@ static INLINE BOOL update_write_coord(wStream* s, INT32 coord)
 	return TRUE;
 }
 
+#if 0
 static INLINE BOOL update_write_coord_delta(wStream* s, INT32 prevCoord, INT32 nextCoord)
 {
 	INT8 lsi8;
@@ -212,6 +213,7 @@ static INLINE BOOL update_write_coord_delta(wStream* s, INT32 prevCoord, INT32 n
 
 	return TRUE;
 }
+#endif
 
 static INLINE BOOL update_read_color(wStream* s, UINT32* color)
 {
@@ -473,7 +475,7 @@ static INLINE BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
 		byte = (value & 0xFF);
 		Stream_Write_UINT8(s, byte);
 	}
-	else if (value <= 0x3FFFFF)
+	else if (value <= 0x3FFFFFFF)
 	{
 		byte = (value >> 24) & 0x3F;
 		Stream_Write_UINT8(s, byte | 0xC0);
@@ -513,6 +515,7 @@ static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 	return TRUE;
 }
 
+#if 0
 static INLINE void update_read_glyph_delta(wStream* s, UINT16* value)
 {
 	BYTE byte;
@@ -534,6 +537,7 @@ static INLINE void update_seek_glyph_delta(wStream* s)
 	if (byte & 0x80)
 		Stream_Seek_UINT8(s);
 }
+#endif
 
 static INLINE BOOL update_read_brush(wStream* s, rdpBrush* brush, BYTE fieldFlags)
 {

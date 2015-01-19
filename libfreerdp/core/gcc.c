@@ -407,16 +407,17 @@ void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 
 	if (settings->NegotiationFlags & EXTENDED_CLIENT_DATA_SUPPORTED)
 	{
-		if (settings->SpanMonitors)
+		if (settings->UseMultimon && !settings->SpanMonitors)
 		{
 			gcc_write_client_monitor_data(s, mcs);
 		}
+
 		gcc_write_client_message_channel_data(s, mcs);
 		gcc_write_client_multitransport_channel_data(s, mcs);
 	}
 	else
 	{
-		if (settings->UseMultimon)
+		if (settings->UseMultimon && !settings->SpanMonitors)
 		{
 			fprintf(stderr, "WARNING: true multi monitor support was not advertised by server!\n");
 
@@ -915,6 +916,8 @@ BOOL gcc_read_client_security_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		Stream_Read_UINT32(s, settings->EncryptionMethods); /* encryptionMethods */
 		if (settings->EncryptionMethods == 0)
 			Stream_Read_UINT32(s, settings->EncryptionMethods); /* extEncryptionMethods */
+		else
+			Stream_Seek(s, 4);
 	}
 	else
 	{
@@ -979,37 +982,31 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	if (Stream_GetRemainingLength(s) < settings->ServerRandomLength + settings->ServerCertificateLength)
 		return FALSE;
 
-	if (settings->ServerRandomLength > 0)
-	{
-		/* serverRandom */
-		settings->ServerRandom = (BYTE*) malloc(settings->ServerRandomLength);
-		Stream_Read(s, settings->ServerRandom, settings->ServerRandomLength);
-	}
-	else
-	{
+	if ((settings->ServerRandomLength <= 0) || (settings->ServerCertificateLength <= 0))
 		return FALSE;
-	}
 
-	if (settings->ServerCertificateLength > 0)
-	{
-		/* serverCertificate */
-		settings->ServerCertificate = (BYTE*) malloc(settings->ServerCertificateLength);
-		Stream_Read(s, settings->ServerCertificate, settings->ServerCertificateLength);
-
-		certificate_free(settings->RdpServerCertificate);
-		settings->RdpServerCertificate = certificate_new();
-		data = settings->ServerCertificate;
-		length = settings->ServerCertificateLength;
-
-		if (certificate_read_server_certificate(settings->RdpServerCertificate, data, length) < 1)
-			return FALSE;
-	}
-	else
-	{
+	/* serverRandom */
+	settings->ServerRandom = (BYTE*) malloc(settings->ServerRandomLength);
+	if (!settings->ServerRandom)
 		return FALSE;
-	}
+	Stream_Read(s, settings->ServerRandom, settings->ServerRandomLength);
 
-	return TRUE;
+
+	/* serverCertificate */
+	settings->ServerCertificate = (BYTE*) malloc(settings->ServerCertificateLength);
+	if (!settings->ServerCertificate)
+		return FALSE;
+	Stream_Read(s, settings->ServerCertificate, settings->ServerCertificateLength);
+
+	certificate_free(settings->RdpServerCertificate);
+	settings->RdpServerCertificate = certificate_new();
+	if (!settings->RdpServerCertificate)
+		return FALSE;
+
+	data = settings->ServerCertificate;
+	length = settings->ServerCertificateLength;
+
+	return certificate_read_server_certificate(settings->RdpServerCertificate, data, length);
 }
 
 static const BYTE initial_signature[] =
@@ -1080,6 +1077,10 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_128BIT) != 0)
 	{
 		settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
+	}
+	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_56BIT) != 0)
+	{
+		settings->EncryptionMethods = ENCRYPTION_METHOD_56BIT;
 	}
 	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_40BIT) != 0)
 	{
@@ -1166,11 +1167,17 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	sigDataLen = Stream_Pointer(s) - sigData;
 
 	Stream_Write_UINT16(s, BB_RSA_SIGNATURE_BLOB); /* wSignatureBlobType */
-	Stream_Write_UINT16(s, keyLen + 8); /* wSignatureBlobLen */
+	Stream_Write_UINT16(s, sizeof(encryptedSignature) + 8); /* wSignatureBlobLen */
 
 	memcpy(signature, initial_signature, sizeof(initial_signature));
 
 	md5 = crypto_md5_init();
+	if (!md5)
+	{
+		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		return;
+	}
+
 	crypto_md5_update(md5, sigData, sigDataLen);
 	crypto_md5_final(md5, signature);
 

@@ -26,7 +26,7 @@ int TestCredUICmdLinePromptForCredentials(int argc, char* argv[])
 
 	if (status != NO_ERROR)
 	{
-		printf("CredUIPromptForCredentials unexpected status: 0x%08lX\n", status);
+		printf("CredUIPromptForCredentials unexpected status: 0x%08X\n", status);
 		return -1;
 	}
 
