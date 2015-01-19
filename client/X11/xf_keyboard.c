@@ -314,28 +314,30 @@ UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc)
 void xf_keyboard_focus_in(xfContext* xfc)
 {
 	rdpInput* input;
-	UINT32 syncFlags = 0;
-	int dummy, mouseX = 0, mouseY = 0;
-	Window wdummy;
-	UINT32 state = 0;
+	UINT32 syncFlags, state;
+	Window w;
+	int d, x, y;
 
-	if (xfc->display && xfc->window)
+	if (!xfc->display || !xfc->window)
+		return;
+
+	input = xfc->instance->input;
+	syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
+
+	input->FocusInEvent(input, syncFlags);
+
+	/* finish with a mouse pointer position like mstsc.exe if required */
+
+	if (xfc->remote_app)
+		return;
+
+	if (XQueryPointer(xfc->display, xfc->window->handle, &w, &w, &d, &d, &x, &y, &state))
 	{
-		input = xfc->instance->input;
-		syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
-
-		if (!xfc->remote_app)
+		if (x >= 0 && x < xfc->window->width && y >= 0 && y < xfc->window->height)
 		{
-			XQueryPointer(xfc->display, xfc->window->handle, &wdummy, &wdummy,
-					&mouseX, &mouseY, &dummy, &dummy, &state);
+			xf_event_adjust_coordinates(xfc, &x, &y);
+			input->MouseEvent(input, PTR_FLAGS_MOVE, x, y);
 		}
-		else
-		{
-			XQueryPointer(xfc->display, DefaultRootWindow(xfc->display),
-				&wdummy, &wdummy, &dummy, &dummy, &dummy, &dummy, &state);
-		}
-
-		input->FocusInEvent(input, syncFlags, mouseX, mouseY);
 	}
 }
 

@@ -157,7 +157,8 @@ void wf_event_focus_in(wfContext* wfc)
 {
 	UINT16 syncFlags;
 	rdpInput* input;
-	UINT16 mouseX, mouseY;
+	POINT pt;
+	RECT rc;
 
 	input = wfc->instance->input;
 
@@ -175,10 +176,15 @@ void wf_event_focus_in(wfContext* wfc)
 	if (GetKeyState(VK_KANA))
 		syncFlags |= KBD_SYNC_KANA_LOCK;
 
-	mouseX = 0;
-	mouseY = 0;
+	input->FocusInEvent(input, syncFlags);
 
-	input->FocusInEvent(input, syncFlags, mouseX, mouseY);
+	/* send pointer position if the cursor is currently inside our client area */
+	GetCursorPos(&pt);
+	ScreenToClient(wfc->hwnd, &pt);
+	GetClientRect(wfc->hwnd, &rc);
+
+	if (pt.x >= rc.left && pt.x < rc.right && pt.y >= rc.top && pt.y < rc.bottom)
+		input->MouseEvent(input, PTR_FLAGS_MOVE, (UINT16)pt.x, (UINT16)pt.y);
 }
 
 static int wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)

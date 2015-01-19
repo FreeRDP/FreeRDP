@@ -194,7 +194,6 @@ BOOL nego_connect(rdpNego* nego)
 
 BOOL nego_disconnect(rdpNego* nego)
 {
-	rdpSettings* settings = nego->transport->settings;
 	nego->state = NEGO_STATE_INITIAL;
 	return nego_transport_disconnect(nego);
 }
