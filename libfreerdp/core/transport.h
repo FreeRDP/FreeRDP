@@ -92,6 +92,7 @@ BOOL transport_connect_tsg(rdpTransport* transport);
 BOOL transport_accept_rdp(rdpTransport* transport);
 BOOL transport_accept_tls(rdpTransport* transport);
 BOOL transport_accept_nla(rdpTransport* transport);
+void transport_stop(rdpTransport* transport);
 int transport_read(rdpTransport* transport, wStream* s);
 int transport_write(rdpTransport* transport, wStream* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);

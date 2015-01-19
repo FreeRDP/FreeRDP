@@ -1167,10 +1167,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 
 	if (!(flags & PACKET_COMPRESSED))
 	{
-		CopyMemory(HistoryPtr, pSrcData, SrcSize);
-		HistoryPtr += SrcSize;
-		ncrush->HistoryPtr = HistoryPtr;
-		*ppDstData = HistoryPtr;
+		*ppDstData = pSrcData;
 		*pDstSize = SrcSize;
 		return 1;
 	}
