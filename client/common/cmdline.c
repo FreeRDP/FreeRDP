@@ -1355,9 +1355,11 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				settings->GatewayHostname = _strdup(settings->ServerHostname);
 			}
 
-			settings->GatewayUsageMethod = TSC_PROXY_MODE_DIRECT;
 			settings->GatewayUseSameCredentials = TRUE;
+
+			settings->GatewayUsageMethod = TSC_PROXY_MODE_DETECT;
 			settings->GatewayEnabled = TRUE;
+			settings->GatewayBypassLocal = TRUE;
 		}
 		CommandLineSwitchCase(arg, "http-proxy")
 		{

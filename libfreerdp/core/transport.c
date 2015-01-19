@@ -396,7 +396,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	transport->async = settings->AsyncTransport;
 
 	/* For TSGateway, find the system HTTPS proxy automatically */
-	if (settings->GatewayEnabled) {
+	if (transport->GatewayEnabled) {
 		if (!transport->settings->HTTPProxyEnabled)
 			http_proxy_read_environment(settings, "https_proxy");
 
@@ -404,7 +404,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			http_proxy_read_environment(settings, "HTTPS_PROXY");
 	}
 
-	if (transport->settings->GatewayEnabled)
+	if (transport->GatewayEnabled)
 	{
 		transport->layer = TRANSPORT_LAYER_TSG;
 		transport->TcpOut = tcp_new(settings);
@@ -585,8 +585,9 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 			status = tcp_read(transport->TcpIn, data + read, bytes - read);
 		else if (transport->layer == TRANSPORT_LAYER_TSG)
 			status = tsg_read(transport->tsg, data + read, bytes - read);
-		else if (transport->layer == TRANSPORT_LAYER_TSG_TLS)
+		else if (transport->layer == TRANSPORT_LAYER_TSG_TLS) {
 			status = tls_read(transport->TsgTls, data + read, bytes - read);
+		}
 
 		/* blocking means that we can't continue until this is read */
 
@@ -1044,6 +1045,11 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 	return status;
 }
 
+BOOL transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled)
+{
+	transport->GatewayEnabled = GatewayEnabled;
+}
+
 static void* transport_client_thread(void* arg)
 {
 	DWORD status;
@@ -1139,6 +1145,7 @@ rdpTransport* transport_new(rdpSettings* settings)
 		transport->connectedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 		transport->blocking = TRUE;
+		transport->GatewayEnabled = FALSE;
 
 		InitializeCriticalSectionAndSpinCount(&(transport->ReadLock), 4000);
 		InitializeCriticalSectionAndSpinCount(&(transport->WriteLock), 4000);

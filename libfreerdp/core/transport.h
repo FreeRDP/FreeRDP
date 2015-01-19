@@ -75,6 +75,7 @@ struct rdp_transport
 	HANDLE stopEvent;
 	HANDLE thread;
 	BOOL async;
+	BOOL GatewayEnabled;
 	CRITICAL_SECTION ReadLock;
 	CRITICAL_SECTION WriteLock;
 	wLog* log;
@@ -88,7 +89,6 @@ BOOL transport_disconnect(rdpTransport* transport);
 BOOL transport_connect_rdp(rdpTransport* transport);
 BOOL transport_connect_tls(rdpTransport* transport);
 BOOL transport_connect_nla(rdpTransport* transport);
-BOOL transport_connect_tsg(rdpTransport* transport);
 BOOL transport_accept_rdp(rdpTransport* transport);
 BOOL transport_accept_tls(rdpTransport* transport);
 BOOL transport_accept_nla(rdpTransport* transport);
@@ -98,6 +98,7 @@ int transport_write(rdpTransport* transport, wStream* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport* transport);
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
+BOOL transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled);
 void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count);
 
 wStream* transport_receive_pool_take(rdpTransport* transport);

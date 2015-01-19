@@ -746,6 +746,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->GatewayEnabled;
 			break;
 
+		case FreeRDP_GatewayBypassLocal:
+			return settings->GatewayBypassLocal;
+			break;
+
 		case FreeRDP_HTTPProxyEnabled:
 			return settings->HTTPProxyEnabled;
 			break;
@@ -1222,6 +1226,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->GatewayEnabled = param;
 			break;
 
+		case FreeRDP_GatewayBypassLocal:
+			settings->GatewayBypassLocal = param;
+			break;
+
 		case FreeRDP_HTTPProxyEnabled:
 			settings->HTTPProxyEnabled = param;
 			break;
@@ -1611,10 +1619,6 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 			return settings->GatewayCredentialsSource;
 			break;
 
-		case FreeRDP_HTTPProxyPort:
-			return settings->HTTPProxyPort;
-			break;
-
 		case FreeRDP_RemoteAppNumIconCaches:
 			return settings->RemoteAppNumIconCaches;
 			break;
@@ -1921,10 +1925,6 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 
 		case FreeRDP_GatewayCredentialsSource:
 			settings->GatewayCredentialsSource = param;
-			break;
-
-		case FreeRDP_HTTPProxyPort:
-			settings->HTTPProxyPort = param;
 			break;
 
 		case FreeRDP_RemoteAppNumIconCaches:
@@ -2249,10 +2249,6 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 			return settings->GatewayDomain;
 			break;
 
-		case FreeRDP_HTTPProxyHostname:
-			return settings->HTTPProxyHostname;
-			break;
-
 		case FreeRDP_RemoteApplicationName:
 			return settings->RemoteApplicationName;
 			break;
@@ -2455,11 +2451,6 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 		case FreeRDP_GatewayDomain:
 			free(settings->GatewayDomain);
 			settings->GatewayDomain = _strdup(param);
-			break;
-
-		case FreeRDP_HTTPProxyHostname:
-			free(settings->HTTPProxyHostname);
-			settings->HTTPProxyHostname = _strdup(param);
 			break;
 
 		case FreeRDP_RemoteApplicationName:

@@ -866,14 +866,36 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	{
 		freerdp_set_param_uint32(settings, FreeRDP_GatewayUsageMethod, file->GatewayUsageMethod);
 
-		if (file->GatewayUsageMethod == TSC_PROXY_MODE_DIRECT)
-			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
-		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_DETECT)
-			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
-		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_DEFAULT)
-			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
-		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_NONE_DETECT)
+		if (file->GatewayUsageMethod == TSC_PROXY_MODE_NONE_DIRECT)
+		{
 			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE);
+			freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE);
+		}
+		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_DIRECT)
+		{
+			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
+			freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE);
+		}
+		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_DETECT)
+		{
+			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, TRUE);
+			freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, TRUE);
+		}
+		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_DEFAULT)
+		{
+			/**
+			 * This corresponds to "Automatically detect RD Gateway server settings",
+			 * which means the client attempts to use gateway group policy settings
+			 * http://technet.microsoft.com/en-us/library/cc770601.aspx
+			 */
+			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE);
+			freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE);
+		}
+		else if (file->GatewayUsageMethod == TSC_PROXY_MODE_NONE_DETECT)
+		{
+			freerdp_set_param_bool(settings, FreeRDP_GatewayEnabled, FALSE);
+			freerdp_set_param_bool(settings, FreeRDP_GatewayBypassLocal, FALSE);
+		}
 	}
 
 	if (~file->PromptCredentialOnce)
