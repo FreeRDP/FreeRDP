@@ -2246,7 +2246,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		if (ioRecvPci.cbExtraBytes > 1024)
 		{
 			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call ioRecvPci.cbExtraBytes is out of bounds: %d (max: %d)",
-					(int) ioSendPci.cbExtraBytes, 1024);
+					(int) ioRecvPci.cbExtraBytes, 1024);
 			return STATUS_INVALID_PARAMETER;
 		}
 
