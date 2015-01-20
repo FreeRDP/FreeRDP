@@ -64,6 +64,7 @@ struct rdpsnd_plugin
 	wMessagePipe* MsgPipe;
 
 	wLog* log;
+	HANDLE stopEvent;
 	HANDLE ScheduleThread;
 
 	BYTE cBlockNo;
@@ -104,12 +105,13 @@ static void* rdpsnd_schedule_thread(void* arg)
 	UINT16 wCurrentTime;
 	RDPSND_WAVE* wave;
 	rdpsndPlugin* rdpsnd = (rdpsndPlugin*) arg;
+	HANDLE events[2];
 
-	while (1)
+	events[0] = MessageQueue_Event(rdpsnd->MsgPipe->Out);
+	events[1] = rdpsnd->stopEvent;
+
+	while (WaitForMultipleObjects(2, events, FALSE, INFINITE) == WAIT_OBJECT_0)
 	{
-		if (!MessageQueue_Wait(rdpsnd->MsgPipe->Out))
-			break;
-
 		if (!MessageQueue_Peek(rdpsnd->MsgPipe->Out, &message, TRUE))
 			break;
 
@@ -132,6 +134,7 @@ static void* rdpsnd_schedule_thread(void* arg)
 		free(wave);
 	}
 
+	ExitThread(0);
 	return NULL;
 }
 
@@ -151,7 +154,7 @@ void rdpsnd_send_quality_mode_pdu(rdpsndPlugin* rdpsnd)
 	rdpsnd_virtual_channel_write(rdpsnd, pdu);
 }
 
-void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
+static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 {
 	int index;
 	AUDIO_FORMAT* serverFormat;
@@ -197,10 +200,10 @@ void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 #if 0
 	WLog_ERR(TAG,  "Server ");
 	rdpsnd_print_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
-	WLog_ERR(TAG,  "\n");
+	WLog_ERR(TAG,  "");
 	WLog_ERR(TAG,  "Client ");
 	rdpsnd_print_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
-	WLog_ERR(TAG,  "\n");
+	WLog_ERR(TAG,  "");
 #endif
 }
 
@@ -543,7 +546,7 @@ static void rdpsnd_recv_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 	Stream_Seek_UINT8(s); /* bPad */
 	Stream_Read_UINT16(s, BodySize);
 
-	//WLog_ERR(TAG,  "msgType %d BodySize %d\n", msgType, BodySize);
+	//WLog_ERR(TAG,  "msgType %d BodySize %d", msgType, BodySize);
 
 	switch (msgType)
 	{
@@ -800,18 +803,29 @@ static void rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 
 	if (!rdpsnd->device->DisableConfirmThread)
 	{
+		rdpsnd->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 		rdpsnd->ScheduleThread = CreateThread(NULL, 0,
 			(LPTHREAD_START_ROUTINE) rdpsnd_schedule_thread,
 			(void*) rdpsnd, 0, NULL);
 	}
 }
 
+static void rdpsnd_process_disconnect(rdpsndPlugin* rdpsnd)
+{
+	if (rdpsnd->ScheduleThread)
+	{
+		SetEvent(rdpsnd->stopEvent);
+		WaitForSingleObject(rdpsnd->ScheduleThread, INFINITE);
+		CloseHandle(rdpsnd->ScheduleThread);
+		CloseHandle(rdpsnd->stopEvent);
+	}
+}
 
 /****************************************************************************************/
 
 
-static wListDictionary* g_InitHandles;
-static wListDictionary* g_OpenHandles;
+static wListDictionary* g_InitHandles = NULL;
+static wListDictionary* g_OpenHandles = NULL;
 
 void rdpsnd_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
@@ -831,6 +845,11 @@ void* rdpsnd_get_init_handle_data(void* pInitHandle)
 void rdpsnd_remove_init_handle_data(void* pInitHandle)
 {
 	ListDictionary_Remove(g_InitHandles, pInitHandle);
+	if (ListDictionary_Count(g_InitHandles) < 1)
+	{
+		ListDictionary_Free(g_InitHandles);
+		g_InitHandles = NULL;
+	}
 }
 
 void rdpsnd_add_open_handle_data(DWORD openHandle, void* pUserData)
@@ -855,6 +874,11 @@ void rdpsnd_remove_open_handle_data(DWORD openHandle)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+	if (ListDictionary_Count(g_OpenHandles) < 1)
+	{
+		ListDictionary_Free(g_OpenHandles);
+		g_OpenHandles = NULL;
+	}
 }
 
 int rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
@@ -874,7 +898,8 @@ int rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "rdpdr_virtual_channel_write: VirtualChannelWrite failed %d\n", status);
+		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 	}
 
 	return status;
@@ -906,7 +931,7 @@ static void rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin,
 	{
 		if (Stream_Capacity(s) != Stream_GetPosition(s))
 		{
-			WLog_ERR(TAG,  "rdpsnd_virtual_channel_event_data_received: read error\n");
+			WLog_ERR(TAG,  "rdpsnd_virtual_channel_event_data_received: read error");
 		}
 
 		plugin->data_in = NULL;
@@ -926,7 +951,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT e
 
 	if (!rdpsnd)
 	{
-		WLog_ERR(TAG, "rdpsnd_virtual_channel_open_event: error no match");
+		WLog_ERR(TAG,  "rdpsnd_virtual_channel_open_event: error no match");
 		return;
 	}
 
@@ -938,6 +963,9 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_open_event(DWORD openHandle, UINT e
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			Stream_Free((wStream*) pData, TRUE);
+			break;
+
+		case CHANNEL_EVENT_USER:
 			break;
 	}
 }
@@ -968,12 +996,7 @@ static void* rdpsnd_virtual_channel_client_thread(void* arg)
 		}
 	}
 
-	if (rdpsnd->ScheduleThread)
-	{
-		WaitForSingleObject(rdpsnd->ScheduleThread, INFINITE);
-		CloseHandle(rdpsnd->ScheduleThread);
-		rdpsnd->ScheduleThread = NULL;
-	}
+	rdpsnd_process_disconnect(rdpsnd);
 
 	ExitThread(0);
 	return NULL;
@@ -990,7 +1013,8 @@ static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID 
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "rdpsnd_virtual_channel_event_connected: open failed: status: %d\n", status);
+		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 		return;
 	}
 
@@ -1000,21 +1024,22 @@ static void rdpsnd_virtual_channel_event_connected(rdpsndPlugin* plugin, LPVOID 
 			(LPTHREAD_START_ROUTINE) rdpsnd_virtual_channel_client_thread, (void*) plugin, 0, NULL);
 }
 
-static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
+static void rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 {
-	if (rdpsnd->MsgPipe)
+	UINT rc;
+
+	MessagePipe_PostQuit(rdpsnd->MsgPipe, 0);
+	WaitForSingleObject(rdpsnd->thread, INFINITE);
+
+	CloseHandle(rdpsnd->thread);
+	rdpsnd->thread = NULL;
+
+	rc = rdpsnd->channelEntryPoints.pVirtualChannelClose(rdpsnd->OpenHandle);
+	if (CHANNEL_RC_OK != rc)
 	{
-		MessagePipe_PostQuit(rdpsnd->MsgPipe, 0);
-		WaitForSingleObject(rdpsnd->thread, INFINITE);
-
-		MessagePipe_Free(rdpsnd->MsgPipe);
-		rdpsnd->MsgPipe = NULL;
-
-		CloseHandle(rdpsnd->thread);
-		rdpsnd->thread = NULL;
+		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
+				 WTSErrorToString(rc), rc);
 	}
-
-	rdpsnd->channelEntryPoints.pVirtualChannelClose(rdpsnd->OpenHandle);
 
 	if (rdpsnd->data_in)
 	{
@@ -1022,24 +1047,40 @@ static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
 		rdpsnd->data_in = NULL;
 	}
 
-	if (rdpsnd->device)
-		IFCALL(rdpsnd->device->Free, rdpsnd->device);
-
-	free(rdpsnd->subsystem);
-	rdpsnd->subsystem = NULL;
-
-	free(rdpsnd->device_name);
-	rdpsnd->device_name = NULL;
-
-	rdpsnd_free_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
-	rdpsnd->NumberOfServerFormats = 0;
-	rdpsnd->ServerFormats = NULL;
+	MessagePipe_Free(rdpsnd->MsgPipe);
+	rdpsnd->MsgPipe = NULL;
 
 	rdpsnd_free_audio_formats(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
 	rdpsnd->NumberOfClientFormats = 0;
 	rdpsnd->ClientFormats = NULL;
 
+	rdpsnd_free_audio_formats(rdpsnd->ServerFormats, rdpsnd->NumberOfServerFormats);
+	rdpsnd->NumberOfServerFormats = 0;
+	rdpsnd->ServerFormats = NULL;
+
+	if (rdpsnd->device)
+	{
+		IFCALL(rdpsnd->device->Free, rdpsnd->device);
+		rdpsnd->device = NULL;
+	}
+
+	if (rdpsnd->subsystem)
+	{
+		free(rdpsnd->subsystem);
+		rdpsnd->subsystem = NULL;
+	}
+
+	if (rdpsnd->device_name)
+	{
+		free(rdpsnd->device_name);
+		rdpsnd->device_name = NULL;
+	}
+
 	rdpsnd_remove_open_handle_data(rdpsnd->OpenHandle);
+}
+
+static void rdpsnd_virtual_channel_event_terminated(rdpsndPlugin* rdpsnd)
+{
 	rdpsnd_remove_init_handle_data(rdpsnd->InitHandle);
 
 	free(rdpsnd);
@@ -1053,7 +1094,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT
 
 	if (!plugin)
 	{
-		WLog_ERR(TAG,  "rdpsnd_virtual_channel_init_event: error no match\n");
+		WLog_ERR(TAG,  "rdpsnd_virtual_channel_init_event: error no match");
 		return;
 	}
 
@@ -1064,6 +1105,7 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
+			rdpsnd_virtual_channel_event_disconnected(plugin);
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
@@ -1077,6 +1119,8 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event(LPVOID pInitHandle, UINT
 
 BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
+	UINT rc;
+
 	rdpsndPlugin* rdpsnd;
 
 	rdpsnd = (rdpsndPlugin*) calloc(1, sizeof(rdpsndPlugin));
@@ -1102,8 +1146,15 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 		rdpsnd->log = WLog_Get("com.freerdp.channels.rdpsnd.client");
 		
-		rdpsnd->channelEntryPoints.pVirtualChannelInit(&rdpsnd->InitHandle,
+		rc = rdpsnd->channelEntryPoints.pVirtualChannelInit(&rdpsnd->InitHandle,
 			&rdpsnd->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpsnd_virtual_channel_init_event);
+		if (CHANNEL_RC_OK != rc)
+		{
+			WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
+					 WTSErrorToString(rc), rc);
+			free(rdpsnd);
+			return -1;
+		}
 
 		rdpsnd_add_init_handle_data(rdpsnd->InitHandle, (void*) rdpsnd);
 	}

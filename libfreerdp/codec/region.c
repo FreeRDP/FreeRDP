@@ -240,7 +240,7 @@ void region16_print(const REGION16 *region)
 		if (rects->top != currentBandY)
 		{
 			currentBandY = rects->top;
-			WLog_DBG(TAG,  "\nband %d: ", currentBandY);
+			WLog_DBG(TAG,  "band %d: ", currentBandY);
 		}
 
 		WLog_DBG(TAG,  "(%d,%d-%d,%d)", rects->left, rects->top, rects->right, rects->bottom);

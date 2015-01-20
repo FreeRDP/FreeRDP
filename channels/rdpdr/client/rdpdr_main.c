@@ -762,18 +762,18 @@ static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 				break;
 
 			default:
-				WLog_ERR(TAG, "rdpdr_process_receive: RDPDR_CTYP_CORE unknown PacketId: 0x%04X", packetId);
+				WLog_ERR(TAG, "RDPDR_CTYP_CORE unknown PacketId: 0x%04X", packetId);
 				break;
 
 		}
 	}
 	else if (component == RDPDR_CTYP_PRN)
 	{
-		WLog_ERR(TAG, "rdpdr_process_receive: RDPDR_CTYP_PRN unknown PacketId: 0x%04X", packetId);
+		WLog_ERR(TAG, "RDPDR_CTYP_PRN unknown PacketId: 0x%04X", packetId);
 	}
 	else
 	{
-		WLog_ERR(TAG, "rdpdr_process_receive: unknown message: Component: 0x%04X PacketId: 0x%04X",
+		WLog_ERR(TAG, "unknown message: Component: 0x%04X PacketId: 0x%04X",
 				component, packetId);
 	}
 
@@ -784,8 +784,8 @@ static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 /****************************************************************************************/
 
 
-static wListDictionary* g_InitHandles;
-static wListDictionary* g_OpenHandles;
+static wListDictionary* g_InitHandles = NULL;
+static wListDictionary* g_OpenHandles = NULL;
 
 void rdpdr_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
@@ -805,6 +805,11 @@ void* rdpdr_get_init_handle_data(void* pInitHandle)
 void rdpdr_remove_init_handle_data(void* pInitHandle)
 {
 	ListDictionary_Remove(g_InitHandles, pInitHandle);
+	if (ListDictionary_Count(g_InitHandles) < 1)
+	{
+		ListDictionary_Free(g_InitHandles);
+		g_InitHandles = NULL;
+	}
 }
 
 void rdpdr_add_open_handle_data(DWORD openHandle, void* pUserData)
@@ -829,6 +834,11 @@ void rdpdr_remove_open_handle_data(DWORD openHandle)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+	if (ListDictionary_Count(g_OpenHandles) < 1)
+	{
+		ListDictionary_Free(g_OpenHandles);
+		g_OpenHandles = NULL;
+	}
 }
 
 int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
@@ -849,7 +859,8 @@ int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG, "rdpdr_send: VirtualChannelWrite failed %d", status);
+		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 	}
 
 	return status;
@@ -873,7 +884,7 @@ static void rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
-		if (rdpdr->data_in)
+		if (rdpdr->data_in != NULL)
 			Stream_Free(rdpdr->data_in, TRUE);
 
 		rdpdr->data_in = Stream_New(NULL, totalLength);
@@ -887,7 +898,7 @@ static void rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr,
 	{
 		if (Stream_Capacity(data_in) != Stream_GetPosition(data_in))
 		{
-			WLog_ERR(TAG, "rdpdr_virtual_channel_event_data_received: read error\n");
+			WLog_ERR(TAG, "rdpdr_virtual_channel_event_data_received: read error");
 		}
 
 		rdpdr->data_in = NULL;
@@ -907,7 +918,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle, UINT ev
 
 	if (!rdpdr)
 	{
-		WLog_ERR(TAG, "rdpdr_virtual_channel_open_event: error no match\n");
+		WLog_ERR(TAG,  "rdpdr_virtual_channel_open_event: error no match");
 		return;
 	}
 
@@ -919,6 +930,9 @@ static VOID VCAPITYPE rdpdr_virtual_channel_open_event(DWORD openHandle, UINT ev
 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			Stream_Free((wStream*) pData, TRUE);
+			break;
+
+		case CHANNEL_EVENT_USER:
 			break;
 	}
 }
@@ -964,7 +978,8 @@ static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "rdpdr_virtual_channel_event_connected: open failed: status: %d\n", status);
+		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 		return;
 	}
 
@@ -974,23 +989,27 @@ static void rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 			(LPTHREAD_START_ROUTINE) rdpdr_virtual_channel_client_thread, (void*) rdpdr, 0, NULL);
 }
 
-static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
+static void rdpdr_virtual_channel_event_disconnected(rdpdrPlugin* rdpdr)
 {
-	if (rdpdr->queue)
-	{
-		MessageQueue_PostQuit(rdpdr->queue, 0);
-		WaitForSingleObject(rdpdr->thread, INFINITE);
+	UINT rc;
 
-		MessageQueue_Free(rdpdr->queue);
-		rdpdr->queue = NULL;
+	MessageQueue_PostQuit(rdpdr->queue, 0);
+	WaitForSingleObject(rdpdr->thread, INFINITE);
 
-		CloseHandle(rdpdr->thread);
-		rdpdr->thread = NULL;
-	}
+	MessageQueue_Free(rdpdr->queue);
+	CloseHandle(rdpdr->thread);
+
+	rdpdr->queue = NULL;
+	rdpdr->thread = NULL;
 
 	drive_hotplug_thread_terminate(rdpdr);
 
-	rdpdr->channelEntryPoints.pVirtualChannelClose(rdpdr->OpenHandle);
+	rc = rdpdr->channelEntryPoints.pVirtualChannelClose(rdpdr->OpenHandle);
+	if (CHANNEL_RC_OK != rc)
+	{
+		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
+				 WTSErrorToString(rc), rc);
+	}
 
 	if (rdpdr->data_in)
 	{
@@ -1005,6 +1024,10 @@ static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
 	}
 
 	rdpdr_remove_open_handle_data(rdpdr->OpenHandle);
+}
+
+static void rdpdr_virtual_channel_event_terminated(rdpdrPlugin* rdpdr)
+{
 	rdpdr_remove_init_handle_data(rdpdr->InitHandle);
 
 	free(rdpdr);
@@ -1029,6 +1052,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT 
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
+			rdpdr_virtual_channel_event_disconnected(rdpdr);
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
@@ -1042,6 +1066,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event(LPVOID pInitHandle, UINT 
 
 BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
+	UINT rc;
 	rdpdrPlugin* rdpdr;
 
 	rdpdr = (rdpdrPlugin*) calloc(1, sizeof(rdpdrPlugin));
@@ -1060,8 +1085,15 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 
-	rdpdr->channelEntryPoints.pVirtualChannelInit(&rdpdr->InitHandle,
+	rc = rdpdr->channelEntryPoints.pVirtualChannelInit(&rdpdr->InitHandle,
 		&rdpdr->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rdpdr_virtual_channel_init_event);
+	if (CHANNEL_RC_OK != rc)
+	{
+		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
+				 WTSErrorToString(rc), rc);
+		free(rdpdr);
+		return -1;
+	}
 
 	rdpdr_add_init_handle_data(rdpdr->InitHandle, (void*) rdpdr);
 

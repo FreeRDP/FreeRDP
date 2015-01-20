@@ -212,6 +212,9 @@ int tfreerdp_run(freerdp* instance)
 		}
 	}
 
+	freerdp_channels_disconnect(channels, instance);
+	freerdp_disconnect(instance);
+
 	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(channels);
 	freerdp_free(instance);

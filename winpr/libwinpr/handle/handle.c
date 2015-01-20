@@ -219,13 +219,13 @@ BOOL CloseHandle(HANDLE hObject)
 
 		if (pNamedPipe->clientfd != -1)
 		{
-			//WLOG_DBG(TAG, "%s: closing clientfd %d\n", __FUNCTION__, pNamedPipe->clientfd);
+			//WLOG_DBG(TAG, "closing clientfd %d", pNamedPipe->clientfd);
 			close(pNamedPipe->clientfd);
 		}
 
 		if (pNamedPipe->serverfd != -1)
 		{
-			//WLOG_DBG(TAG, "%s: closing serverfd %d\n", __FUNCTION__, pNamedPipe->serverfd);
+			//WLOG_DBG(TAG, "closing serverfd %d", pNamedPipe->serverfd);
 			close(pNamedPipe->serverfd);
 		}
 

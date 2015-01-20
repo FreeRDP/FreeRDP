@@ -854,7 +854,7 @@ DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	}
 
 	/* cleanup */
-	freerdp_channels_close(channels, instance);
+	freerdp_channels_disconnect(channels, instance);
 
 	if (async_input)
 	{
@@ -1134,9 +1134,12 @@ int wfreerdp_client_new(freerdp* instance, rdpContext* context)
 
 void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
+	rdpChannels *channels = context->channels;
+
 	if (context->cache)
 		cache_free(context->cache);
 
+	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(context->channels);
 }
 

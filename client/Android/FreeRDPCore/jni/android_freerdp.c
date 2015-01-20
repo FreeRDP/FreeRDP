@@ -57,6 +57,7 @@ int android_context_new(freerdp* instance, rdpContext* context)
 
 void android_context_free(freerdp* instance, rdpContext* context)
 {
+	freerdp_channels_close(instance->context->channels, instance);
 	freerdp_channels_free(context->channels);
 	android_event_queue_uninit(instance);
 }
@@ -541,7 +542,7 @@ static int android_freerdp_run(freerdp* instance)
 	freerdp_callback("OnDisconnecting", "(I)V", instance);
 	
 	DEBUG_ANDROID("Close channels...");
-	freerdp_channels_close(instance->context->channels, instance);
+	freerdp_channels_disconnect(instance->context->channels, instance);
 
 	DEBUG_ANDROID("Cleanup threads...");
 

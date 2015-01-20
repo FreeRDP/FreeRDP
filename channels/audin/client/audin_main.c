@@ -412,7 +412,6 @@ static int audin_plugin_terminated(IWTSPlugin* pPlugin)
 
 	if (audin->device)
 	{
-		IFCALL(audin->device->Close, audin->device);
 		IFCALL(audin->device->Free, audin->device);
 		audin->device = NULL;
 	}

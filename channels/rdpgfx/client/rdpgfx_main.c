@@ -343,7 +343,7 @@ int rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, pdu.timestamp); /* timestamp (4 bytes) */
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
 
-	WLog_Print(gfx->log, WLOG_DEBUG, "RecvStartFramePdu: frameId: %d timestamp: 0x%04X\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvStartFramePdu: frameId: %d timestamp: 0x%04X",
 			pdu.frameId, pdu.timestamp);
 
 	if (context && context->StartFrame)
@@ -368,7 +368,7 @@ int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
 
-	WLog_Print(gfx->log, WLOG_DEBUG, "RecvEndFramePdu: frameId: %d\n", pdu.frameId);
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvEndFramePdu: frameId: %d", pdu.frameId);
 
 	if (context && context->EndFrame)
 	{

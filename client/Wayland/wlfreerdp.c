@@ -245,6 +245,9 @@ int wlfreerdp_run(freerdp* instance)
 	wlf_DestroyInput(context, context->input);
 	wlf_DestroyDisplay(context, context->display);
 
+	freerdp_channels_disconnect(instance->context->channels, instance);
+	freerdp_disconnect(instance);
+
 	freerdp_channels_close(instance->context->channels, instance);
 	freerdp_channels_free(instance->context->channels);
 	freerdp_free(instance);

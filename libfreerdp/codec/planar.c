@@ -1045,7 +1045,7 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, BYTE* data,
 
 			context->rlePlanes[3] = &context->rlePlanesBuffer[offset];
 			offset += dstSizes[3];
-			//WLog_DBG(TAG, "R: [%d/%d] G: [%d/%d] B: [%d/%d]\n",
+			//WLog_DBG(TAG, "R: [%d/%d] G: [%d/%d] B: [%d/%d]",
 			//		dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3], planeSize);
 		}
 	}
