@@ -197,7 +197,7 @@ ConversionResult ConvertUTF16toUTF32(
 
 	if (result == sourceIllegal)
 	{
-		WLOG_WARN(TAG, "ConvertUTF16toUTF32 illegal seq 0x%04x,%04x\n", ch, ch2);
+		WLOG_WARN(TAG, "ConvertUTF16toUTF32 illegal seq 0x%04x,%04x", ch, ch2);
 	}
 
 #endif
