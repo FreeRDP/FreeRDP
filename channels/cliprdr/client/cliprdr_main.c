@@ -716,8 +716,8 @@ int cliprdr_client_file_contents_response(CliprdrClientContext* context, CLIPRDR
 
 /****************************************************************************************/
 
-static wListDictionary* g_InitHandles;
-static wListDictionary* g_OpenHandles;
+static wListDictionary* g_InitHandles = NULL;
+static wListDictionary* g_OpenHandles = NULL;
 
 void cliprdr_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
