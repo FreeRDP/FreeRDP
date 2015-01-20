@@ -2811,8 +2811,27 @@ extern int PCSC_InitializeSCardApi_Link(void);
 
 int PCSC_InitializeSCardApi(void)
 {
+	DWORD nSize;
+	char* env = NULL;
+
+	nSize = GetEnvironmentVariableA("WINPR_WINSCARD_LOCK_TRANSACTIONS", NULL, 0);
+
+	if (nSize)
+	{
+		env = (LPSTR) malloc(nSize);
+		nSize = GetEnvironmentVariableA("WINPR_WINSCARD_LOCK_TRANSACTIONS", env, nSize);
+
+		if (strcmp(env, "1") == 0)
+			g_LockTransactions = TRUE;
+		else if (strcmp(env, "0") == 0)
+			g_LockTransactions = FALSE;
+
+		free(env);
+	}
+
 	/* Disable pcsc-lite's (poor) blocking so we can handle it ourselves */
 	SetEnvironmentVariableA("PCSCLITE_NO_BLOCKING", "1");
+
 #ifndef DISABLE_PCSC_LINK
 
 	if (PCSC_InitializeSCardApi_Link() >= 0)

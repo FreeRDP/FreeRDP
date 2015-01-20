@@ -2091,6 +2091,13 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	Stream_Read_UINT32(s, call->fpbRecvBufferIsNULL); /* fpbRecvBufferIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbRecvLength); /* cbRecvLength (4 bytes) */
 
+	if (pioRecvPciNdrPtr)
+	{
+		WLog_WARN(TAG, "Transmit_Call with pioRecvPci:");
+		winpr_HexDump(TAG, WLOG_WARN, Stream_Pointer(s) - 32,
+				Stream_GetRemainingLength(s) + 32);
+	}
+
 	if (ioSendPci.cbExtraBytes > 1024)
 	{
 		WLog_WARN(TAG, "Transmit_Call ioSendPci.cbExtraBytes is out of bounds: %d (max: %d)",
