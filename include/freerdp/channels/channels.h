@@ -35,7 +35,7 @@ extern "C" {
 FREERDP_API rdpChannels* freerdp_channels_new(void);
 FREERDP_API void freerdp_channels_free(rdpChannels* channels);
 FREERDP_API int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,
-		void* entry, void* data);
+		PVIRTUALCHANNELENTRY entry, void* data);
 FREERDP_API int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings,
 	const char* name, void* data);
 FREERDP_API int freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance);
