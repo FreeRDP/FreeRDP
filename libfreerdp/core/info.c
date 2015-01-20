@@ -755,7 +755,7 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	Stream_Read_UINT32(s, infoType); /* infoType (4 bytes) */
 
-	//WLog_ERR(TAG,  "%s\n", INFO_TYPE_LOGON_STRINGS[infoType]);
+	//WLog_ERR(TAG,  "%s", INFO_TYPE_LOGON_STRINGS[infoType]);
 
 	switch (infoType)
 	{
