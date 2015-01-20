@@ -32,7 +32,6 @@ typedef struct rdp_redirection rdpRedirection;
 
 struct rdp_redirection
 {
-	wLog* log;
 	UINT32 flags;
 	UINT32 sessionID;
 	BYTE* TsvUrl;

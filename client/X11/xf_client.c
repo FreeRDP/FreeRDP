@@ -925,6 +925,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 			(pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
 
+	freerdp_client_load_addins(channels, instance->settings);
 	freerdp_channels_pre_connect(channels, instance);
 
 	if (!settings->Username)
@@ -1812,7 +1813,6 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	settings = instance->settings;
 	xfc->settings = instance->context->settings;
 
-	freerdp_client_load_addins(context->channels, instance->settings);
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
 
 #ifdef WITH_XRENDER

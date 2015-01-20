@@ -2218,7 +2218,10 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dw
 	}
 
 	status = PCSC_MapErrorCodeToWinSCard(status);
-	*pcbAttrLen = (DWORD) pcsc_cbAttrLen;
+
+	if (status == SCARD_S_SUCCESS)
+		*pcbAttrLen = (DWORD) pcsc_cbAttrLen;
+
 	return status;
 }
 
@@ -2338,6 +2341,7 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWOR
 	}
 
 	free(namePCSC);
+	free(nameWinSCard);
 
 	return status;
 }
@@ -2407,27 +2411,44 @@ WINSCARDAPI LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, L
 	{
 		if (dwAttrId == SCARD_ATTR_CURRENT_PROTOCOL_TYPE)
 		{
-			PCSC_DWORD dwState = 0;
-			PCSC_DWORD cbAtrLen = 0;
-			PCSC_DWORD dwProtocol = 0;
-			PCSC_DWORD cchReaderLen = 0;
-			status = (LONG) g_PCSC.pfnSCardStatus(hCard, NULL, &cchReaderLen, &dwState, &dwProtocol, NULL, &cbAtrLen);
-
-			if (status == SCARD_S_SUCCESS)
+			if (!pcbAttrLenAlloc)
 			{
-				LPDWORD pdwProtocol = (LPDWORD) pbAttr;
+				PCSC_DWORD dwState = 0;
+				PCSC_DWORD cbAtrLen = 0;
+				PCSC_DWORD dwProtocol = 0;
+				PCSC_DWORD cchReaderLen = 0;
+
+				status = (LONG) g_PCSC.pfnSCardStatus(hCard, NULL, &cchReaderLen, &dwState, &dwProtocol, NULL, &cbAtrLen);
+
+				if (status == SCARD_S_SUCCESS)
+				{
+					LPDWORD pdwProtocol = (LPDWORD) pbAttr;
+
+					if (cbAttrLen < sizeof(DWORD))
+						return SCARD_E_INSUFFICIENT_BUFFER;
+
+					*pdwProtocol = PCSC_ConvertProtocolsToWinSCard(dwProtocol);
+					*pcbAttrLen = sizeof(DWORD);
+				}
+			}
+		}
+		else if (dwAttrId == SCARD_ATTR_CHANNEL_ID)
+		{
+			if (!pcbAttrLenAlloc)
+			{
+				UINT16 channelType = 0x20; /* USB */
+				UINT16 channelNumber = 0;
 
 				if (cbAttrLen < sizeof(DWORD))
 					return SCARD_E_INSUFFICIENT_BUFFER;
 
-				*pdwProtocol = PCSC_ConvertProtocolsToWinSCard(dwProtocol);
+				status = SCARD_S_SUCCESS;
+
+				*((DWORD*) pbAttr) = (channelType << 16) | channelNumber;
 				*pcbAttrLen = sizeof(DWORD);
 			}
 		}
 		else if (dwAttrId == SCARD_ATTR_VENDOR_IFD_TYPE)
-		{
-		}
-		else if (dwAttrId == SCARD_ATTR_CHANNEL_ID)
 		{
 		}
 		else if (dwAttrId == SCARD_ATTR_DEFAULT_CLK)
