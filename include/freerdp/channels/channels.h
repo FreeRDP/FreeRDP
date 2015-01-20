@@ -40,6 +40,7 @@ FREERDP_API int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings*
 	const char* name, void* data);
 FREERDP_API int freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance);
 FREERDP_API int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance);
+FREERDP_API int freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance);
 FREERDP_API BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
 	int* read_count, void** write_fds, int* write_count);
 FREERDP_API BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance);
