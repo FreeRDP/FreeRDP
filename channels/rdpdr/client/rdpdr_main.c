@@ -784,8 +784,8 @@ static void rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 /****************************************************************************************/
 
 
-static wListDictionary* g_InitHandles;
-static wListDictionary* g_OpenHandles;
+static wListDictionary* g_InitHandles = NULL;
+static wListDictionary* g_OpenHandles = NULL;
 
 void rdpdr_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
@@ -805,6 +805,11 @@ void* rdpdr_get_init_handle_data(void* pInitHandle)
 void rdpdr_remove_init_handle_data(void* pInitHandle)
 {
 	ListDictionary_Remove(g_InitHandles, pInitHandle);
+	if (ListDictionary_Count(g_InitHandles) < 1)
+	{
+		ListDictionary_Free(g_InitHandles);
+		g_InitHandles = NULL;
+	}
 }
 
 void rdpdr_add_open_handle_data(DWORD openHandle, void* pUserData)
@@ -829,6 +834,11 @@ void rdpdr_remove_open_handle_data(DWORD openHandle)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+	if (ListDictionary_Count(g_OpenHandles) < 1)
+	{
+		ListDictionary_Free(g_OpenHandles);
+		g_OpenHandles = NULL;
+	}
 }
 
 int rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
