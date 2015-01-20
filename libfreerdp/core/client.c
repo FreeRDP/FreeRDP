@@ -642,6 +642,21 @@ UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData, ULONG
 	return CHANNEL_RC_OK;
 }
 
+static BOOL freerdp_channels_is_loaded(rdpChannels* channels, PVIRTUALCHANNELENTRY entry)
+{
+	int i;
+
+	for (i=0; i<channels->clientDataCount; i++)
+	{
+		CHANNEL_CLIENT_DATA* pChannelClientData = &channels->clientDataList[i];
+
+		if (pChannelClientData->entry == entry)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, PVIRTUALCHANNELENTRY entry, void* data)
 {
 	int status;
@@ -652,6 +667,12 @@ int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings, P
 	{
 		WLog_ERR(TAG,  "error: too many channels");
 		return 1;
+	}
+
+	if (freerdp_channels_is_loaded(channels, entry))
+	{
+		WLog_WARN(TAG, "Skipping, channel already loaded");
+		return 0;
 	}
 
 	pChannelClientData = &channels->clientDataList[channels->clientDataCount];
