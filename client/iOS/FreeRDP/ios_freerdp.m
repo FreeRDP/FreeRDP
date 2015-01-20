@@ -252,7 +252,7 @@ int ios_context_new(freerdp* instance, rdpContext* context)
 void ios_context_free(freerdp* instance, rdpContext* context)
 {
 	mfInfo* mfi = ((mfContext*) context)->mfi;
-	freerdp_channels_close(channels, instance);
+	freerdp_channels_close(context->channels, instance);
 	freerdp_channels_free(context->channels);
 	ios_events_free_pipe(mfi);
 	free(mfi);
