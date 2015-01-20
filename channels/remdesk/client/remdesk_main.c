@@ -520,8 +520,8 @@ static void remdesk_process_connect(remdeskPlugin* remdesk)
 
 /****************************************************************************************/
 
-static wListDictionary* g_InitHandles;
-static wListDictionary* g_OpenHandles;
+static wListDictionary* g_InitHandles = NULL;
+static wListDictionary* g_OpenHandles = NULL;
 
 void remdesk_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
@@ -541,6 +541,11 @@ void* remdesk_get_init_handle_data(void* pInitHandle)
 void remdesk_remove_init_handle_data(void* pInitHandle)
 {
 	ListDictionary_Remove(g_InitHandles, pInitHandle);
+	if (ListDictionary_Count(g_InitHandles) < 1)
+	{
+		ListDictionary_Free(g_InitHandles);
+		g_InitHandles = NULL;
+	}
 }
 
 void remdesk_add_open_handle_data(DWORD openHandle, void* pUserData)
@@ -565,6 +570,11 @@ void remdesk_remove_open_handle_data(DWORD openHandle)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+	if (ListDictionary_Count(g_OpenHandles) < 1)
+	{
+		ListDictionary_Free(g_OpenHandles);
+		g_OpenHandles = NULL;
+	}
 }
 
 int remdesk_send(remdeskPlugin* remdesk, wStream* s)
