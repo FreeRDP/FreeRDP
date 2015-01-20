@@ -883,8 +883,8 @@ static void drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s)
 
 /****************************************************************************************/
 
-static wListDictionary* g_InitHandles;
-static wListDictionary* g_OpenHandles;
+static wListDictionary* g_InitHandles = NULL;
+static wListDictionary* g_OpenHandles = NULL;
 
 void drdynvc_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
@@ -904,6 +904,11 @@ void* drdynvc_get_init_handle_data(void* pInitHandle)
 void drdynvc_remove_init_handle_data(void* pInitHandle)
 {
 	ListDictionary_Remove(g_InitHandles, pInitHandle);
+	if (ListDictionary_Count(g_InitHandles) < 1)
+	{
+		ListDictionary_Free(g_InitHandles);
+		g_InitHandles = NULL;
+	}
 }
 
 void drdynvc_add_open_handle_data(DWORD openHandle, void* pUserData)
@@ -928,6 +933,11 @@ void drdynvc_remove_open_handle_data(DWORD openHandle)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+	if (ListDictionary_Count(g_OpenHandles) < 1)
+	{
+		ListDictionary_Free(g_OpenHandles);
+		g_OpenHandles = NULL;
+	}
 }
 
 static void drdynvc_virtual_channel_event_data_received(drdynvcPlugin* drdynvc,
