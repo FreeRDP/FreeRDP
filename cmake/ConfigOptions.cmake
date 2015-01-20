@@ -54,6 +54,8 @@ if(MSVC)
 	option(WITH_WIN8 "Use Windows 8 libraries" OFF)
 endif()
 
+option(WITH_SMARTCARD_INSPECT "Enable SmartCard API Inspector" OFF)
+
 option(BUILD_TESTING "Build unit tests" OFF)
 option(WITH_SAMPLE "Build sample code" OFF)
 

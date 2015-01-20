@@ -1,6 +1,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/wnd.h>
+#include <winpr/tchar.h>
 #include <winpr/wtsapi.h>
 #include <winpr/library.h>
 

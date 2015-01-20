@@ -1,25 +1,27 @@
 
-set(MODULE_NAME "TestFreeRDPutils")
+set(MODULE_NAME "TestFreeRDPUtils")
 set(MODULE_PREFIX "TEST_FREERDP_UTILS")
 
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestRingBuffer.c
-)
+	TestRingBuffer.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
-	${${MODULE_PREFIX}_TESTS}
-)
+	${${MODULE_PREFIX}_TESTS})
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
 	MONOLITHIC ${MONOLITHIC_BUILD}
 	MODULE winpr
-	MODULES winpr-thread winpr-synch winpr-file winpr-utils winpr-crt freerdp-utils
-)
+	MODULES winpr-thread winpr-synch winpr-file winpr-utils winpr-crt)
+
+set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
+	MONOLITHIC ${MONOLITHIC_BUILD}
+	MODULE freerdp
+	MODULES freerdp-utils)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

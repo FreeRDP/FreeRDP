@@ -52,14 +52,19 @@ const char* bulk_get_compression_flags_string(UINT32 flags)
 UINT32 bulk_compression_level(rdpBulk* bulk)
 {
 	rdpSettings* settings = bulk->context->settings;
-	bulk->CompressionLevel = (settings->CompressionLevel >= 2) ? 2 : settings->CompressionLevel;
+
+	bulk->CompressionLevel = (settings->CompressionLevel >= PACKET_COMPR_TYPE_RDP61) ?
+			PACKET_COMPR_TYPE_RDP61 : settings->CompressionLevel;
+
 	return bulk->CompressionLevel;
 }
 
 UINT32 bulk_compression_max_size(rdpBulk* bulk)
 {
 	bulk_compression_level(bulk);
-	bulk->CompressionMaxSize = (bulk->CompressionLevel < 1) ? 8192 : 65536;
+
+	bulk->CompressionMaxSize = (bulk->CompressionLevel < PACKET_COMPR_TYPE_64K) ? 8192 : 65536;
+
 	return bulk->CompressionMaxSize;
 }
 
@@ -112,8 +117,12 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 {
 	UINT32 type;
 	int status = -1;
+	rdpMetrics* metrics;
 	UINT32 CompressedBytes;
 	UINT32 UncompressedBytes;
+	double CompressionRatio;
+
+	metrics = bulk->context->metrics;
 
 	bulk_compression_max_size(bulk);
 	type = flags & BULK_COMPRESSION_TYPE_MASK;
@@ -157,21 +166,15 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 		CompressedBytes = SrcSize;
 		UncompressedBytes = *pDstSize;
 
-		bulk->TotalUncompressedBytes += UncompressedBytes;
-		bulk->TotalCompressedBytes += CompressedBytes;
+		CompressionRatio = metrics_write_bytes(metrics, UncompressedBytes, CompressedBytes);
 
 #ifdef WITH_BULK_DEBUG
 		{
-			double CompressionRatio;
-			double TotalCompressionRatio;
-
-			CompressionRatio = ((double) CompressedBytes) / ((double) UncompressedBytes);
-			TotalCompressionRatio = ((double) bulk->TotalCompressedBytes) / ((double) bulk->TotalUncompressedBytes);
-
-			printf("Decompress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%d / %d)\n",
+			printf("Decompress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)\n",
 					type, bulk_get_compression_flags_string(flags), flags,
 					CompressionRatio, CompressedBytes, UncompressedBytes,
-					TotalCompressionRatio, bulk->TotalCompressedBytes, bulk->TotalUncompressedBytes);
+					metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,
+					(UINT32) metrics->TotalUncompressedBytes);
 		}
 #endif
 	}
@@ -186,8 +189,12 @@ int bulk_decompress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstD
 int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
 	int status = -1;
+	rdpMetrics* metrics;
 	UINT32 CompressedBytes;
 	UINT32 UncompressedBytes;
+	double CompressionRatio;
+
+	metrics = bulk->context->metrics;
 
 	if ((SrcSize <= 50) || (SrcSize >= 16384))
 	{
@@ -202,39 +209,39 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 	bulk_compression_level(bulk);
 	bulk_compression_max_size(bulk);
 	
-	if (bulk->CompressionLevel < PACKET_COMPR_TYPE_RDP6)
+	if ((bulk->CompressionLevel == PACKET_COMPR_TYPE_8K) ||
+			(bulk->CompressionLevel == PACKET_COMPR_TYPE_64K))
 	{
 		mppc_set_compression_level(bulk->mppcSend, bulk->CompressionLevel);
 		status = mppc_compress(bulk->mppcSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
 	}
-	else
+	else if (bulk->CompressionLevel == PACKET_COMPR_TYPE_RDP6)
 	{
 		status = ncrush_compress(bulk->ncrushSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
 	}
-	
+	else if (bulk->CompressionLevel == PACKET_COMPR_TYPE_RDP61)
+	{
+		status = xcrush_compress(bulk->xcrushSend, pSrcData, SrcSize, ppDstData, pDstSize, pFlags);
+	}
+	else
+	{
+		status = -1;
+	}
+
 	if (status >= 0)
 	{
 		CompressedBytes = *pDstSize;
 		UncompressedBytes = SrcSize;
 
-		bulk->TotalUncompressedBytes += UncompressedBytes;
-		bulk->TotalCompressedBytes += CompressedBytes;
+		CompressionRatio = metrics_write_bytes(metrics, UncompressedBytes, CompressedBytes);
 
 #ifdef WITH_BULK_DEBUG
 		{
-			UINT32 type;
-			double CompressionRatio;
-			double TotalCompressionRatio;
-
-			type = bulk->CompressionLevel;
-
-			CompressionRatio = ((double) CompressedBytes) / ((double) UncompressedBytes);
-			TotalCompressionRatio = ((double) bulk->TotalCompressedBytes) / ((double) bulk->TotalUncompressedBytes);
-
-			printf("Compress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%d / %d)\n",
-					type, bulk_get_compression_flags_string(*pFlags), *pFlags,
+			printf("Compress Type: %d Flags: %s (0x%04X) Compression Ratio: %f (%d / %d), Total: %f (%u / %u)\n",
+					bulk->CompressionLevel, bulk_get_compression_flags_string(*pFlags), *pFlags,
 					CompressionRatio, CompressedBytes, UncompressedBytes,
-					TotalCompressionRatio, bulk->TotalCompressedBytes, bulk->TotalUncompressedBytes);
+					metrics->TotalCompressionRatio, (UINT32) metrics->TotalCompressedBytes,
+					(UINT32) metrics->TotalUncompressedBytes);
 		}
 #endif
 	}
@@ -249,14 +256,14 @@ int bulk_compress(rdpBulk* bulk, BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstDat
 
 void bulk_reset(rdpBulk* bulk)
 {
-	mppc_context_reset(bulk->mppcSend);
-	mppc_context_reset(bulk->mppcRecv);
+	mppc_context_reset(bulk->mppcSend, FALSE);
+	mppc_context_reset(bulk->mppcRecv, FALSE);
 
-	ncrush_context_reset(bulk->ncrushRecv);
-	ncrush_context_reset(bulk->ncrushSend);
+	ncrush_context_reset(bulk->ncrushRecv, FALSE);
+	ncrush_context_reset(bulk->ncrushSend, FALSE);
 
-	xcrush_context_reset(bulk->xcrushRecv);
-	xcrush_context_reset(bulk->xcrushSend);
+	xcrush_context_reset(bulk->xcrushRecv, FALSE);
+	xcrush_context_reset(bulk->xcrushSend, FALSE);
 }
 
 rdpBulk* bulk_new(rdpContext* context)
@@ -279,9 +286,6 @@ rdpBulk* bulk_new(rdpContext* context)
 		bulk->xcrushSend = xcrush_context_new(TRUE);
 
 		bulk->CompressionLevel = context->settings->CompressionLevel;
-
-		bulk->TotalCompressedBytes = 0;
-		bulk->TotalUncompressedBytes = 0;
 	}
 
 	return bulk;

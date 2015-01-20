@@ -121,7 +121,7 @@ PSCardApiFunctionTable WinSCard_GetSCardApiFunctionTable(void)
 
 int WinSCard_InitializeSCardApi(void)
 {
-	g_WinSCardModule = LoadLibraryA("winscard.dll");
+	g_WinSCardModule = LoadLibraryA("WinSCard.dll");
 
 	if (!g_WinSCardModule)
 		return -1;

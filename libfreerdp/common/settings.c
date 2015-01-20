@@ -618,6 +618,20 @@ void freerdp_set_gateway_usage_method(rdpSettings* settings, UINT32 GatewayUsage
 	}
 }
 
+void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEnabled, UINT32 GatewayBypassLocal)
+{
+	UINT32 GatewayUsageMethod = 0;
+
+	if (!GatewayEnabled && !GatewayBypassLocal)
+		GatewayUsageMethod = TSC_PROXY_MODE_NONE_DIRECT;
+	else if (GatewayEnabled && !GatewayBypassLocal)
+		GatewayUsageMethod = TSC_PROXY_MODE_DIRECT;
+	else if (GatewayEnabled && GatewayBypassLocal)
+		GatewayUsageMethod = TSC_PROXY_MODE_DETECT;
+
+	freerdp_set_gateway_usage_method(settings, GatewayUsageMethod);
+}
+
 /**
  * Partially Generated Code
  */
@@ -822,6 +836,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			return settings->DisableCredentialsDelegation;
 			break;
 
+		case FreeRDP_AuthenticationLevel:
+			return settings->AuthenticationLevel;
+			break;
+
 		case FreeRDP_MstscCookieMode:
 			return settings->MstscCookieMode;
 			break;
@@ -872,6 +890,10 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 
 		case FreeRDP_AsyncChannels:
 			return settings->AsyncChannels;
+			break;
+
+		case FreeRDP_AsyncTransport:
+			return settings->AsyncTransport;
 			break;
 
 		case FreeRDP_ToggleFullscreen:
@@ -1095,6 +1117,7 @@ BOOL freerdp_get_param_bool(rdpSettings* settings, int id)
 			break;
 
 		default:
+			fprintf(stderr, "freerdp_get_param_bool: unknown id: %d\n", id);
 			return -1;
 			break;
 	}
@@ -1302,6 +1325,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			settings->DisableCredentialsDelegation = param;
 			break;
 
+		case FreeRDP_AuthenticationLevel:
+			settings->AuthenticationLevel = param;
+			break;
+
 		case FreeRDP_MstscCookieMode:
 			settings->MstscCookieMode = param;
 			break;
@@ -1352,6 +1379,10 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 
 		case FreeRDP_AsyncChannels:
 			settings->AsyncChannels = param;
+			break;
+
+		case FreeRDP_AsyncTransport:
+			settings->AsyncTransport = param;
 			break;
 
 		case FreeRDP_ToggleFullscreen:
@@ -1575,6 +1606,7 @@ int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 			break;
 
 		default:
+			fprintf(stderr, "freerdp_set_param_bool: unknown id %d (param = %d)\n", id, param);
 			return -1;
 			break;
 	}
@@ -1598,6 +1630,7 @@ int freerdp_get_param_int(rdpSettings* settings, int id)
 			break;
 
 		default:
+			fprintf(stderr, "freerdp_get_param_int: unknown id: %d\n", id);
 			return 0;
 			break;
 	}
@@ -1618,6 +1651,7 @@ int freerdp_set_param_int(rdpSettings* settings, int id, int param)
 			break;
 
 		default:
+			fprintf(stderr, "freerdp_set_param_int: unknown id %d (param = %d)\n", id, param);
 			return -1;
 			break;
 	}
@@ -1928,6 +1962,7 @@ UINT32 freerdp_get_param_uint32(rdpSettings* settings, int id)
 			break;
 
 		default:
+			fprintf(stderr, "freerdp_get_param_uint32: unknown id: %d\n", id);
 			return 0;
 			break;
 	}
@@ -2236,6 +2271,7 @@ int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 			break;
 
 		default:
+			fprintf(stderr, "freerdp_set_param_uint32: unknown id %d (param = %u)\n", id, param);
 			return -1;
 			break;
 	}
@@ -2255,6 +2291,7 @@ UINT64 freerdp_get_param_uint64(rdpSettings* settings, int id)
 			break;
 
 		default:
+			fprintf(stderr, "freerdp_get_param_uint64: unknown id: %d\n", id);
 			return -1;
 			break;
 	}
@@ -2271,6 +2308,7 @@ int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 			break;
 
 		default:
+			fprintf(stderr, "freerdp_set_param_uint64: unknown id %d (param = %u)\n", id, (UINT32) param);
 			return -1;
 			break;
 	}
@@ -2446,6 +2484,7 @@ char* freerdp_get_param_string(rdpSettings* settings, int id)
 			break;
 
 		default:
+			fprintf(stderr, "freerdp_get_param_string: unknown id: %d\n", id);
 			return NULL;
 			break;
 	}
@@ -2658,6 +2697,7 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 			break;
 
 		default:
+			fprintf(stderr, "freerdp_set_param_string: unknown id %d (param = %s)\n", id, param);
 			return -1;
 			break;
 	}
@@ -2677,6 +2717,7 @@ double freerdp_get_param_double(rdpSettings* settings, int id)
 			break;
 
 		default:
+			fprintf(stderr, "freerdp_get_param_double: unknown id: %d\n", id);
 			return 0;
 			break;
 	}

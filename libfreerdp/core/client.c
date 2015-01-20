@@ -55,7 +55,7 @@ CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpChannels* 
 /* returns rdpChannel for the channel name passed in */
 rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const char* name)
 {
-	int index;
+	UINT32 index;
 	rdpMcsChannel* channel;
 	rdpMcs* mcs = rdp->mcs;
 
@@ -221,7 +221,7 @@ int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 
 int freerdp_channels_data(freerdp* instance, UINT16 channelId, BYTE* data, int dataSize, int flags, int totalSize)
 {
-	int index;
+	UINT32 index;
 	rdpMcs* mcs;
 	rdpChannels* channels;
 	rdpMcsChannel* channel = NULL;

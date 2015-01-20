@@ -105,7 +105,7 @@ void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled)
 void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode);
 void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count);
 BOOL tranport_is_write_blocked(rdpTransport* transport);
-BOOL tranport_drain_output_buffer(rdpTransport* transport);
+int tranport_drain_output_buffer(rdpTransport* transport);
 
 wStream* transport_receive_pool_take(rdpTransport* transport);
 int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);

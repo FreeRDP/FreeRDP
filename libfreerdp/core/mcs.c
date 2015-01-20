@@ -186,7 +186,7 @@ static const char* const mcs_result_enumerated[] =
 
 int mcs_initialize_client_channels(rdpMcs* mcs, rdpSettings* settings)
 {
-	int index;
+	UINT32 index;
 	mcs->channelCount = settings->ChannelCount;
 
 	if (mcs->channelCount > mcs->channelMaxCount)

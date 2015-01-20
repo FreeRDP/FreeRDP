@@ -358,7 +358,7 @@ static void WTSProcessChannelData(rdpPeerChannel* channel, UINT16 channelId, BYT
 
 static int WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, BYTE* data, int size, int flags, int totalSize)
 {
-	int i;
+	UINT32 i;
 	BOOL status = FALSE;
 	rdpPeerChannel* channel;
 	rdpMcs* mcs = client->context->rdp->mcs;
@@ -846,8 +846,8 @@ BOOL WINAPI FreeRDP_WTSWaitSystemEvent(HANDLE hServer, DWORD EventMask, DWORD* p
 
 HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPSTR pVirtualName)
 {
-	int index;
 	int length;
+	UINT32 index;
 	rdpMcs* mcs;
 	BOOL joined = FALSE;
 	freerdp_peer* client;
@@ -910,7 +910,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 
 HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualName, DWORD flags)
 {
-	int index;
+	UINT32 index;
 	wStream* s;
 	rdpMcs* mcs;
 	BOOL joined = FALSE;

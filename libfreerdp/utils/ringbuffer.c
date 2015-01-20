@@ -1,24 +1,20 @@
 /**
- * Copyright © 2014 Thincast Technologies GmbH
- * Copyright © 2014 Hardening <contact@hardening-consulting.com>
+ * FreeRDP: A Remote Desktop Protocol Implementation
  *
- * Permission to use, copy, modify, distribute, and sell this software and
- * its documentation for any purpose is hereby granted without fee, provided
- * that the above copyright notice appear in all copies and that both that
- * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of the copyright holders not be used in
- * advertising or publicity pertaining to distribution of the software
- * without specific, written prior permission.  The copyright holders make
- * no representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
+ * Copyright 2014 Thincast Technologies GmbH
+ * Copyright 2014 Hardening <contact@hardening-consulting.com>
  *
- * THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
- * SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS, IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
- * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
- * CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
- * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 #include <freerdp/utils/ringbuffer.h>
@@ -69,6 +65,7 @@ static BOOL ringbuffer_realloc(RingBuffer *rb, size_t targetSize)
 		if (!newData)
 			return FALSE;
 		rb->readPtr = rb->writePtr = 0;
+		rb->buffer = newData;
 	}
 	else if ((rb->writePtr >= rb->readPtr) && (rb->writePtr < targetSize))
 	{
@@ -118,6 +115,7 @@ static BOOL ringbuffer_realloc(RingBuffer *rb, size_t targetSize)
 		}
 		rb->writePtr = rb->size - rb->freeSize;
 		rb->readPtr = 0;
+		free(rb->buffer);
 		rb->buffer = newData;
 	}
 
@@ -133,8 +131,11 @@ static BOOL ringbuffer_realloc(RingBuffer *rb, size_t targetSize)
  * @param sz
  * @return
  */
-BOOL ringbuffer_write(RingBuffer *rb, const void *ptr, size_t sz)
+BOOL ringbuffer_write(RingBuffer *rb, const BYTE *ptr, size_t sz)
 {
+	size_t toWrite;
+	size_t remaining;
+
 	if ((rb->freeSize <= sz) && !ringbuffer_realloc(rb, rb->size + sz))
 		return FALSE;
 
@@ -144,8 +145,8 @@ BOOL ringbuffer_write(RingBuffer *rb, const void *ptr, size_t sz)
 	 *      v               v
 	 * [    ################        ]
 	 */
-	size_t toWrite = sz;
-	size_t remaining = sz;
+	toWrite = sz;
+	remaining = sz;
 	if (rb->size - rb->writePtr < sz)
 		toWrite = rb->size - rb->writePtr;
 

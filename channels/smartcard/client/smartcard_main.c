@@ -35,6 +35,85 @@
 
 #include "smartcard_main.h"
 
+void* smartcard_context_thread(SMARTCARD_CONTEXT* pContext)
+{
+	DWORD nCount;
+	DWORD status;
+	HANDLE hEvents[2];
+	wMessage message;
+	SMARTCARD_DEVICE* smartcard;
+	SMARTCARD_OPERATION* operation;
+
+	smartcard = pContext->smartcard;
+
+	nCount = 0;
+	hEvents[nCount++] = MessageQueue_Event(pContext->IrpQueue);
+
+	while (1)
+	{
+		status = WaitForMultipleObjects(nCount, hEvents, FALSE, INFINITE);
+
+		if (WaitForSingleObject(MessageQueue_Event(pContext->IrpQueue), 0) == WAIT_OBJECT_0)
+		{
+			if (!MessageQueue_Peek(pContext->IrpQueue, &message, TRUE))
+				break;
+
+			if (message.id == WMQ_QUIT)
+				break;
+
+			operation = (SMARTCARD_OPERATION*) message.wParam;
+
+			if (operation)
+			{
+				status = smartcard_irp_device_control_call(smartcard, operation);
+
+				Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) operation->irp);
+
+				free(operation);
+			}
+		}
+	}
+
+	ExitThread(0);
+	return NULL;
+}
+
+SMARTCARD_CONTEXT* smartcard_context_new(SMARTCARD_DEVICE* smartcard, SCARDCONTEXT hContext)
+{
+	SMARTCARD_CONTEXT* pContext;
+
+	pContext = (SMARTCARD_CONTEXT*) calloc(1, sizeof(SMARTCARD_CONTEXT));
+
+	if (!pContext)
+		return pContext;
+
+	pContext->smartcard = smartcard;
+
+	pContext->hContext = hContext;
+
+	pContext->IrpQueue = MessageQueue_New(NULL);
+
+	pContext->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) smartcard_context_thread,
+			pContext, 0, NULL);
+
+	return pContext;
+}
+
+void smartcard_context_free(SMARTCARD_CONTEXT* pContext)
+{
+	if (!pContext)
+		return;
+
+	MessageQueue_PostQuit(pContext->IrpQueue, 0);
+	WaitForSingleObject(pContext->thread, INFINITE);
+	CloseHandle(pContext->thread);
+
+	MessageQueue_Free(pContext->IrpQueue);
+
+	free(pContext);
+}
+
 static void smartcard_free(DEVICE* device)
 {
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
@@ -51,6 +130,12 @@ static void smartcard_free(DEVICE* device)
 	ListDictionary_Free(smartcard->rgOutstandingMessages);
 	Queue_Free(smartcard->CompletedIrpQueue);
 
+	if (smartcard->StartedEvent)
+	{
+		SCardReleaseStartedEvent();
+		smartcard->StartedEvent = NULL;
+	}
+
 	free(device);
 }
 
@@ -65,7 +150,7 @@ static void smartcard_init(DEVICE* device)
 	int keyCount;
 	ULONG_PTR* pKeys;
 	SCARDCONTEXT hContext;
-
+	SMARTCARD_CONTEXT* pContext;
 	SMARTCARD_DEVICE* smartcard = (SMARTCARD_DEVICE*) device;
 
 	/**
@@ -86,7 +171,12 @@ static void smartcard_init(DEVICE* device)
 
 		for (index = 0; index < keyCount; index++)
 		{
-			hContext = (SCARDCONTEXT) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
+			pContext = (SMARTCARD_CONTEXT*) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
+
+			if (!pContext)
+				continue;
+
+			hContext = pContext->hContext;
 
 			if (SCardIsValidContext(hContext))
 			{
@@ -108,8 +198,12 @@ static void smartcard_init(DEVICE* device)
 
 		for (index = 0; index < keyCount; index++)
 		{
-			hContext = (SCARDCONTEXT) ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) pKeys[index]);
-			ListDictionary_Remove(smartcard->rgSCardContextList, (void*) pKeys[index]);
+			pContext = (SMARTCARD_CONTEXT*) ListDictionary_Remove(smartcard->rgSCardContextList, (void*) pKeys[index]);
+
+			if (!pContext)
+				continue;
+
+			hContext = pContext->hContext;
 
 			if (SCardIsValidContext(hContext))
 			{
@@ -131,15 +225,20 @@ void smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	irp->Complete(irp);
 }
 
-void* smartcard_process_irp_worker_proc(IRP* irp)
+void* smartcard_process_irp_worker_proc(SMARTCARD_OPERATION* operation)
 {
+	IRP* irp;
+	UINT32 status;
 	SMARTCARD_DEVICE* smartcard;
 
+	irp = operation->irp;
 	smartcard = (SMARTCARD_DEVICE*) irp->device;
 
-	smartcard_irp_device_control(smartcard, irp);
+	status = smartcard_irp_device_control_call(smartcard, operation);
 
 	Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
+
+	free(operation);
 
 	ExitThread(0);
 	return NULL;
@@ -153,18 +252,33 @@ void* smartcard_process_irp_worker_proc(IRP* irp)
 void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 {
 	void* key;
+	UINT32 status;
 	BOOL asyncIrp = FALSE;
-	UINT32 ioControlCode = 0;
+	SMARTCARD_CONTEXT* pContext = NULL;
+	SMARTCARD_OPERATION* operation = NULL;
 
 	key = (void*) (size_t) irp->CompletionId;
 	ListDictionary_Add(smartcard->rgOutstandingMessages, key, irp);
 
 	if (irp->MajorFunction == IRP_MJ_DEVICE_CONTROL)
 	{
-		smartcard_irp_device_control_peek_io_control_code(smartcard, irp, &ioControlCode);
+		operation = (SMARTCARD_OPERATION*) calloc(1, sizeof(SMARTCARD_OPERATION));
 
-		if (!ioControlCode)
+		if (!operation)
 			return;
+
+		operation->irp = irp;
+
+		status = smartcard_irp_device_control_decode(smartcard, operation);
+
+		if (status != SCARD_S_SUCCESS)
+		{
+			irp->IoStatus = STATUS_UNSUCCESSFUL;
+
+			Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
+
+			return;
+		}
 
 		asyncIrp = TRUE;
 
@@ -174,7 +288,7 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		 * those expected to return fast synchronously.
 		 */
 
-		switch (ioControlCode)
+		switch (operation->ioControlCode)
 		{
 			case SCARD_IOCTL_ESTABLISHCONTEXT:
 			case SCARD_IOCTL_RELEASECONTEXT:
@@ -237,17 +351,23 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 				break;
 		}
 
+		pContext = ListDictionary_GetItemValue(smartcard->rgSCardContextList, (void*) operation->hContext);
+
+		if (!pContext)
+			asyncIrp = FALSE;
+
 		if (!asyncIrp)
 		{
-			smartcard_irp_device_control(smartcard, irp);
-
+			status = smartcard_irp_device_control_call(smartcard, operation);
 			Queue_Enqueue(smartcard->CompletedIrpQueue, (void*) irp);
+			free(operation);
 		}
 		else
 		{
-			irp->thread = CreateThread(NULL, 0,
-					(LPTHREAD_START_ROUTINE) smartcard_process_irp_worker_proc,
-					irp, 0, NULL);
+			if (pContext)
+			{
+				MessageQueue_Post(pContext->IrpQueue, NULL, 0, (void*) operation, NULL);
+			}
 		}
 	}
 	else
@@ -389,7 +509,7 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 	smartcard->log = WLog_Get("com.freerdp.channel.smartcard.client");
 
-	WLog_SetLogLevel(smartcard->log, WLOG_DEBUG);
+	//WLog_SetLogLevel(smartcard->log, WLOG_DEBUG);
 
 	smartcard->IrpQueue = MessageQueue_New(NULL);
 	smartcard->rgSCardContextList = ListDictionary_New(TRUE);

@@ -65,8 +65,8 @@ static void rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 
 static void rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 count, UINT32 ids[])
 {
+	UINT32 i;
 	wStream* s;
-	int i;
 
 	s = Stream_New(NULL, 256);
 
@@ -307,6 +307,7 @@ static char* get_word(char* str, unsigned int* offset)
 {
 	char* p;
 	char* tmp;
+	char* word;
 	int wlen;
 
 	if (*offset >= strlen(str))
@@ -325,7 +326,15 @@ static char* get_word(char* str, unsigned int* offset)
 	while (*(str + *offset) == ' ')
 		(*offset)++;
 
-	return strndup(p, wlen);
+	word = malloc(wlen + 1);
+	
+	if (word != NULL)
+	{
+		CopyMemory(word, p, wlen);
+		word[wlen] = '\0';
+	}
+	
+	return word;
 }
 
 static void handle_hotplug(rdpdrPlugin* rdpdr)

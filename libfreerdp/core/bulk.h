@@ -40,8 +40,6 @@ struct rdp_bulk
 	XCRUSH_CONTEXT* xcrushRecv;
 	XCRUSH_CONTEXT* xcrushSend;
 	BYTE OutputBuffer[65536];
-	UINT64 TotalCompressedBytes;
-	UINT64 TotalUncompressedBytes;
 };
 
 #define BULK_COMPRESSION_FLAGS_MASK	0xE0

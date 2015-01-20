@@ -214,7 +214,13 @@ WINPR_API BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation);
 #define GetVersionEx	GetVersionExA
 #endif
 
+WINPR_API void GetSystemTime(LPSYSTEMTIME lpSystemTime);
+WINPR_API BOOL SetSystemTime(CONST SYSTEMTIME* lpSystemTime);
+WINPR_API VOID GetLocalTime(LPSYSTEMTIME lpSystemTime);
+WINPR_API BOOL SetLocalTime(CONST SYSTEMTIME* lpSystemTime);
+
 WINPR_API VOID GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime);
+WINPR_API BOOL GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement, PBOOL lpTimeAdjustmentDisabled);
 
 WINPR_API DWORD GetTickCount(void);
 

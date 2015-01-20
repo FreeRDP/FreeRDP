@@ -1,8 +1,8 @@
 /**
  * WinPR: Windows Portable Runtime
- * Synchronization Functions
+ * Smart Card API
  *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,12 @@
  * limitations under the License.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef WINPR_SMARTCARD_INSPECT_PRIVATE_H
+#define WINPR_SMARTCARD_INSPECT_PRIVATE_H
 
-#include <winpr/synch.h>
+#include <winpr/platform.h>
+#include <winpr/smartcard.h>
 
+PSCardApiFunctionTable Inspect_RegisterSCardApi(PSCardApiFunctionTable pSCardApi);
+
+#endif /* WINPR_SMARTCARD_INSPECT_PRIVATE_H */

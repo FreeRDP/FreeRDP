@@ -80,13 +80,13 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	DataChunk chunks[2];
 
 	ret = num;
-	BIO_clear_retry_flags(bio);
+	BIO_clear_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_IO_SPECIAL));
 	tcp->writeBlocked = FALSE;
 
 	/* we directly append extra bytes in the xmit buffer, this could be prevented
 	 * but for now it makes the code more simple.
 	 */
-	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, buf, num))
+	if (buf && num && !ringbuffer_write(&tcp->xmitBuffer, (const BYTE *)buf, num))
 	{
 		fprintf(stderr, "%s: an error occured when writing(toWrite=%d)\n", __FUNCTION__, num);
 		return -1;
@@ -133,7 +133,7 @@ static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 	rdpTcp *tcp = (rdpTcp *)bio->ptr;
 
 	tcp->readBlocked = FALSE;
-	BIO_clear_retry_flags(bio);
+	BIO_clear_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_IO_SPECIAL));
 
 	status = BIO_read(bio->next_bio, buf, size);
 	/*fprintf(stderr, "%s: size=%d status=%d shouldRetry=%d\n", __FUNCTION__, size, status, BIO_should_retry(bio->next_bio)); */
@@ -528,13 +528,17 @@ rdpTcp* tcp_new(rdpSettings* settings)
 	tcp->sockfd = -1;
 	tcp->settings = settings;
 
+#ifndef _WIN32
 	tcp->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, tcp->sockfd);
 	if (!tcp->event || tcp->event == INVALID_HANDLE_VALUE)
 		goto out_ringbuffer;
+#endif
 
 	return tcp;
+#ifndef _WIN32
 out_ringbuffer:
 	ringbuffer_destroy(&tcp->xmitBuffer);
+#endif
 out_free:
 	free(tcp);
 	return NULL;

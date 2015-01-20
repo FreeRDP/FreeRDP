@@ -436,6 +436,8 @@ void freerdp_peer_context_new(freerdp_peer* client)
 
 	client->context->ServerMode = TRUE;
 
+	client->context->metrics = metrics_new(client->context);
+
 	rdp = rdp_new(client->context);
 
 	client->input = rdp->input;
@@ -474,8 +476,7 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 {
 	freerdp_peer* client;
 
-	client = (freerdp_peer*) malloc(sizeof(freerdp_peer));
-	ZeroMemory(client, sizeof(freerdp_peer));
+	client = (freerdp_peer*) calloc(1, sizeof(freerdp_peer));
 
 	freerdp_tcp_set_no_delay(sockfd, TRUE);
 

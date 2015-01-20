@@ -779,18 +779,18 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~file->SessionBpp)
 		freerdp_set_param_uint32(settings, FreeRDP_ColorDepth, file->SessionBpp);
 	if (~file->ConnectToConsole)
-		freerdp_set_param_uint32(settings, FreeRDP_ConsoleSession, file->ConnectToConsole);
+		freerdp_set_param_bool(settings, FreeRDP_ConsoleSession, file->ConnectToConsole);
 	if (~file->AdministrativeSession)
-		freerdp_set_param_uint32(settings, FreeRDP_ConsoleSession, file->AdministrativeSession);
+		freerdp_set_param_bool(settings, FreeRDP_ConsoleSession, file->AdministrativeSession);
 	if (~file->NegotiateSecurityLayer)
-		freerdp_set_param_uint32(settings, FreeRDP_NegotiateSecurityLayer, file->NegotiateSecurityLayer);
+		freerdp_set_param_bool(settings, FreeRDP_NegotiateSecurityLayer, file->NegotiateSecurityLayer);
 	if (~file->EnableCredSSPSupport)
-		freerdp_set_param_uint32(settings, FreeRDP_NlaSecurity, file->EnableCredSSPSupport);
+		freerdp_set_param_bool(settings, FreeRDP_NlaSecurity, file->EnableCredSSPSupport);
 	if (~((size_t) file->AlternateShell))
 		freerdp_set_param_string(settings, FreeRDP_AlternateShell, file->AlternateShell);
 	if (~((size_t) file->ShellWorkingDirectory))
 		freerdp_set_param_string(settings, FreeRDP_ShellWorkingDirectory, file->ShellWorkingDirectory);
-	
+
 	if (~file->ScreenModeId)
 	{
 		/**
@@ -808,6 +808,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 
 		freerdp_set_param_bool(settings, FreeRDP_Fullscreen,
 				(file->ScreenModeId == 1) ? TRUE : FALSE);
+	}
+
+	if (~((size_t) file->SmartSizing))
+	{
+		freerdp_set_param_bool(settings, FreeRDP_SmartSizing,
+				(file->SmartSizing == 1) ? TRUE : FALSE);
 	}
 
 	if (~((size_t) file->LoadBalanceInfo))
@@ -864,7 +870,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		freerdp_set_param_string(settings, FreeRDP_GatewayHostname, file->GatewayHostname);
 
 	if (~file->GatewayUsageMethod)
-		freerdp_set_gateway_usage_method(settings, settings->GatewayUsageMethod);
+		freerdp_set_gateway_usage_method(settings, file->GatewayUsageMethod);
 
 	if (~file->PromptCredentialOnce)
 		freerdp_set_param_bool(settings, FreeRDP_GatewayUseSameCredentials, file->PromptCredentialOnce);

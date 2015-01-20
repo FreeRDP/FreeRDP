@@ -32,6 +32,22 @@
 
 #ifndef _WIN32
 
+static INLINE UINT32 _rotl(UINT32 value, int shift) {
+	return (value << shift) | (value >> (32 - shift));
+}
+
+static INLINE UINT64 _rotl64(UINT64 value, int shift) {
+	return (value << shift) | (value >> (64 - shift));
+}
+
+static INLINE UINT32 _rotr(UINT32 value, int shift) {
+	return (value >> shift) | (value << (32 - shift));
+}
+
+static INLINE UINT64 _rotr64(UINT64 value, int shift) {
+	return (value >> shift) | (value << (64 - shift));
+}
+
 #if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2))
 
 #define _byteswap_ushort(_val)	__builtin_bswap16(_val)

@@ -212,9 +212,14 @@ BOOL freerdp_check_fds(freerdp* instance)
 	int status;
 	rdpRdp* rdp;
 
-	assert(instance);
-	assert(instance->context);
-	assert(instance->context->rdp);
+	if (!instance)
+		return FALSE;
+
+	if (!instance->context)
+		return FALSE;
+
+	if (!instance->context->rdp)
+		return FALSE;
 
 	rdp = instance->context->rdp;
 
@@ -405,6 +410,8 @@ int freerdp_context_new(freerdp* instance)
 	context->pubSub = PubSub_New(TRUE);
 	PubSub_AddEventTypes(context->pubSub, FreeRDP_Events, sizeof(FreeRDP_Events) / sizeof(wEventType));
 
+	context->metrics = metrics_new(context);
+
 	rdp = rdp_new(context);
 	instance->input = rdp->input;
 	instance->update = rdp->update;
@@ -457,6 +464,8 @@ void freerdp_context_free(freerdp* instance)
 	instance->context->graphics = NULL;
 
 	PubSub_Free(instance->context->pubSub);
+
+	metrics_free(instance->context->metrics);
 
 	free(instance->context);
 	instance->context = NULL;

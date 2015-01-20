@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/error.h>
 
 /**
  * api-ms-win-core-com-l1-1-0.dll:
@@ -110,6 +111,14 @@
 
 #ifndef _WIN32
 
+HRESULT CoInitializeEx(LPVOID pvReserved, DWORD dwCoInit)
+{
+	return S_OK;
+}
 
+void CoUninitialize(void)
+{
+
+}
 
 #endif

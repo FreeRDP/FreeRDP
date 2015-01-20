@@ -73,6 +73,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
+	{ "gateway-usage-method", COMMAND_LINE_VALUE_REQUIRED, "<direct|detect>", NULL, NULL, -1, NULL, "Gateway usage method" },
 	{ "http-proxy", COMMAND_LINE_VALUE_REQUIRED, "<host>:<port>", NULL, NULL, -1, NULL, "HTTP Proxy" },
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info string>", NULL, NULL, -1, NULL, "Load balance info" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "<executable path> or <||alias>", NULL, NULL, -1, NULL, "Remote application program" },
@@ -1096,19 +1097,19 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD);
 			printf("\nKeyboard Layouts\n");
 			for (i = 0; layouts[i].code; i++)
-				printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
 
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_VARIANT);
 			printf("\nKeyboard Layout Variants\n");
 			for (i = 0; layouts[i].code; i++)
-				printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
 
 			layouts = freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_IME);
 			printf("\nKeyboard Input Method Editors (IMEs)\n");
 			for (i = 0; layouts[i].code; i++)
-				printf("0x%08X\t%s\n", layouts[i].code, layouts[i].name);
+				printf("0x%08X\t%s\n", (int) layouts[i].code, layouts[i].name);
 			free(layouts);
 
 			printf("\n");
@@ -1394,11 +1395,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				settings->GatewayHostname = _strdup(settings->ServerHostname);
 			}
 
+			settings->GatewayEnabled = TRUE;
 			settings->GatewayUseSameCredentials = TRUE;
 
-			settings->GatewayUsageMethod = TSC_PROXY_MODE_DETECT;
-			settings->GatewayEnabled = TRUE;
-			settings->GatewayBypassLocal = TRUE;
+			freerdp_set_gateway_usage_method(settings, TSC_PROXY_MODE_DETECT);
 		}
 		CommandLineSwitchCase(arg, "http-proxy")
 		{
@@ -1444,6 +1444,27 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		{
 			settings->GatewayPassword = _strdup(arg->Value);
 			settings->GatewayUseSameCredentials = FALSE;
+		}
+		CommandLineSwitchCase(arg, "gateway-usage-method")
+		{
+			int type;
+			char* pEnd;
+
+			type = strtol(arg->Value, &pEnd, 10);
+
+			if (type == 0)
+			{
+				if (_stricmp(arg->Value, "none") == 0)
+					type = TSC_PROXY_MODE_NONE_DIRECT;
+				else if (_stricmp(arg->Value, "direct") == 0)
+					type = TSC_PROXY_MODE_DIRECT;
+				else if (_stricmp(arg->Value, "detect") == 0)
+					type = TSC_PROXY_MODE_DETECT;
+				else if (_stricmp(arg->Value, "default") == 0)
+					type = TSC_PROXY_MODE_DEFAULT;
+			}
+
+			freerdp_set_gateway_usage_method(settings, (UINT32) type);
 		}
 		CommandLineSwitchCase(arg, "app")
 		{
