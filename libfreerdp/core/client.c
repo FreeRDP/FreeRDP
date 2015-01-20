@@ -29,7 +29,7 @@
 
 #define TAG FREERDP_TAG("core.client")
 
-static void* g_pInterface;
+static void* g_pInterface = NULL;
 static CHANNEL_INIT_DATA g_ChannelInitData;
 
 static wHashTable* g_OpenHandles = NULL;
@@ -122,6 +122,8 @@ void freerdp_channels_free(rdpChannels* channels)
 	{
 		HashTable_Free(g_OpenHandles);
 		DeleteCriticalSection(&g_channels_lock);
+
+		g_OpenHandles = NULL;
 	}
 
 	free(channels);
