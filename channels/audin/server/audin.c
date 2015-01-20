@@ -387,7 +387,7 @@ static void* audin_server_thread_func(void* arg)
 				break;
 
 			default:
-				WLog_ERR(TAG,  "audin_server_thread_func: unknown MessageId %d\n", MessageId);
+				WLog_ERR(TAG,  "audin_server_thread_func: unknown MessageId %d", MessageId);
 				break;
 		}
 	}
