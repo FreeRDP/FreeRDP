@@ -227,9 +227,6 @@ int credssp_ntlm_client_init(rdpCredssp* credssp)
 
 int credssp_ntlm_server_init(rdpCredssp* credssp)
 {
-	freerdp* instance;
-	rdpSettings* settings = credssp->settings;
-	instance = (freerdp*) settings->instance;
 	sspi_SecBufferAlloc(&credssp->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
 	CopyMemory(credssp->PublicKey.pvBuffer, credssp->transport->TlsIn->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
 	return 1;
@@ -250,7 +247,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 	SecBufferDesc output_buffer_desc;
 	BOOL have_context;
 	BOOL have_input_buffer;
-	BOOL have_pub_key_auth;
 	sspi_GlobalInit();
 
 	if (credssp_ntlm_client_init(credssp) == 0)
@@ -277,7 +273,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 	have_context = FALSE;
 	have_input_buffer = FALSE;
-	have_pub_key_auth = FALSE;
 	ZeroMemory(&input_buffer, sizeof(SecBuffer));
 	ZeroMemory(&output_buffer, sizeof(SecBuffer));
 	ZeroMemory(&credssp->ContextSizes, sizeof(SecPkgContext_Sizes));
@@ -323,8 +318,6 @@ int credssp_client_authenticate(rdpCredssp* credssp)
 
 		if (status == SEC_E_OK)
 		{
-			have_pub_key_auth = TRUE;
-
 			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
 			{
 				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
@@ -421,8 +414,7 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	SecBufferDesc input_buffer_desc;
 	SecBufferDesc output_buffer_desc;
 	BOOL have_context;
-	BOOL have_input_buffer;
-	BOOL have_pub_key_auth;
+
 	sspi_GlobalInit();
 
 	if (credssp_ntlm_server_init(credssp) == 0)
@@ -471,8 +463,6 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 	}
 
 	have_context = FALSE;
-	have_input_buffer = FALSE;
-	have_pub_key_auth = FALSE;
 	ZeroMemory(&input_buffer, sizeof(SecBuffer));
 	ZeroMemory(&output_buffer, sizeof(SecBuffer));
 	ZeroMemory(&input_buffer_desc, sizeof(SecBufferDesc));
@@ -547,8 +537,6 @@ int credssp_server_authenticate(rdpCredssp* credssp)
 
 		if (status == SEC_E_OK)
 		{
-			have_pub_key_auth = TRUE;
-
 			if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK)
 			{
 				WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
@@ -1048,6 +1036,7 @@ void credssp_send(rdpCredssp* credssp)
 		length -= ber_write_sequence_tag(s, ber_sizeof_sequence(ber_sizeof_sequence_octet_string(credssp->negoToken.cbBuffer))); /* SEQUENCE OF NegoDataItem */
 		length -= ber_write_sequence_tag(s, ber_sizeof_sequence_octet_string(credssp->negoToken.cbBuffer)); /* NegoDataItem */
 		length -= ber_write_sequence_octet_string(s, 0, (BYTE*) credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);  /* OCTET STRING */
+		(void)length;
 		// assert length == 0
 	}
 
@@ -1056,6 +1045,7 @@ void credssp_send(rdpCredssp* credssp)
 	{
 		length = auth_info_length;
 		length -= ber_write_sequence_octet_string(s, 2, credssp->authInfo.pvBuffer, credssp->authInfo.cbBuffer);
+		(void)length;
 		// assert length == 0
 	}
 
@@ -1064,6 +1054,7 @@ void credssp_send(rdpCredssp* credssp)
 	{
 		length = pub_key_auth_length;
 		length -= ber_write_sequence_octet_string(s, 3, credssp->pubKeyAuth.pvBuffer, credssp->pubKeyAuth.cbBuffer);
+		(void)length;
 		// assert length == 0
 	}
 

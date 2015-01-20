@@ -530,7 +530,7 @@ int xcrush_optimize_matches(XCRUSH_CONTEXT* xcrush)
 	XCRUSH_MATCH_INFO* OriginalMatches;
 	XCRUSH_MATCH_INFO* OptimizedMatches;
 
-	i = j = 0;
+	j = 0;
 	PrevMatchEnd = 0;
 	TotalMatchLength = 0;
 
@@ -538,7 +538,6 @@ int xcrush_optimize_matches(XCRUSH_CONTEXT* xcrush)
 	OriginalMatchCount = xcrush->OriginalMatchCount;
 
 	OptimizedMatches = xcrush->OptimizedMatches;
-	OptimizedMatchCount = xcrush->OptimizedMatchCount;
 
 	for (i = 0; i < OriginalMatchCount; i++)
 	{

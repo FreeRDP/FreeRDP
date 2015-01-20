@@ -330,8 +330,6 @@ void xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 	int status;
 	int nXDst;
 	int nYDst;
-	int nXSrc;
-	int nYSrc;
 	int nWidth;
 	int nHeight;
 	UINT32 index;
@@ -342,7 +340,6 @@ void xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 	BOOL compressed;
 	UINT32 SrcFormat;
 	UINT32 bitsPerPixel;
-	UINT32 bytesPerPixel;
 	BITMAP_DATA* bitmap;
 	rdpCodecs* codecs = context->codecs;
 	xfContext* xfc = (xfContext*) context;
@@ -350,9 +347,6 @@ void xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 	for (index = 0; index < bitmapUpdate->number; index++)
 	{
 		bitmap = &(bitmapUpdate->rectangles[index]);
-
-		nXSrc = 0;
-		nYSrc = 0;
 
 		nXDst = bitmap->destLeft;
 		nYDst = bitmap->destTop;
@@ -365,7 +359,6 @@ void xf_gdi_bitmap_update(rdpContext* context, BITMAP_UPDATE* bitmapUpdate)
 
 		compressed = bitmap->compressed;
 		bitsPerPixel = bitmap->bitsPerPixel;
-		bytesPerPixel = (bitsPerPixel + 7) / 8;
 
 		SrcFormat = gdi_get_pixel_format(bitsPerPixel, TRUE);
 

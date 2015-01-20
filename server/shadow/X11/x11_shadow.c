@@ -402,11 +402,6 @@ int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 {
 	int x, y, n, k;
-	rdpShadowServer* server;
-	rdpShadowSurface* surface;
-
-	server = subsystem->server;
-	surface = server->surface;
 
 	if (getImage)
 	{
@@ -527,8 +522,6 @@ int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	int nHeight;
 	int nSrcStep;
 	int nDstStep;
-	int nSrcPad;
-	int nDstPad;
 	BYTE* pSrcData;
 	BYTE* pDstData;
 	BYTE* pSrcPixel;
@@ -589,12 +582,6 @@ int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	pDstData = surface->data;
 	nDstStep = surface->scanline;
 
-	nSrcPad = (nSrcStep - (nWidth * 4));
-	nDstPad = (nDstStep - (nWidth * 4));
-
-	pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
-	pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
-
 	for (y = 0; y < nHeight; y++)
 	{
 		pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
@@ -623,9 +610,6 @@ int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 			pDstPixel[3] = 0xFF;
 			pDstPixel += 4;
 		}
-
-		pSrcPixel += nSrcPad;
-		pDstPixel += nDstPad;
 	}
 
 	return 1;
@@ -638,7 +622,6 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	int x, y;
 	int width, height;
 	XImage* image;
-	rdpShadowScreen* screen;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
 	RECTANGLE_16 invalidRect;
@@ -647,7 +630,6 @@ int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 	server = subsystem->server;
 	surface = server->surface;
-	screen = server->screen;
 
 	count = ArrayList_Count(server->clients);
 

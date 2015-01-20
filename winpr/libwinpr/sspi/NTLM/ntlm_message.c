@@ -710,7 +710,6 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 			return SEC_E_INVALID_TOKEN;
 
 		Stream_Read(s, message->MessageIntegrityCheck, 16);
-		PayloadBufferOffset += 16;
 	}
 
 #ifdef WITH_DEBUG_NTLM

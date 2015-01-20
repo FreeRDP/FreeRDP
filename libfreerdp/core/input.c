@@ -101,7 +101,6 @@ void input_write_unicode_keyboard_event(wStream* s, UINT16 flags, UINT16 code)
 void input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	wStream* s;
-	UINT16 keyboardFlags = 0;
 	rdpRdp* rdp = input->context->rdp;
 
 	/*
@@ -113,8 +112,6 @@ void input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 cod
 	 * key is pressed.
 	 * There is no KBD_FLAGS_EXTENDED flag in TS_UNICODE_KEYBOARD_EVENT.
 	 */
-	keyboardFlags |= (flags & KBD_FLAGS_RELEASE) ? KBD_FLAGS_RELEASE : 0;
-
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_UNICODE);
 	input_write_unicode_keyboard_event(s, flags, code);
 	rdp_send_client_input_pdu(rdp, s);

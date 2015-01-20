@@ -50,8 +50,11 @@ CRITICAL_SECTION cs = { NULL, 0, 0, NULL, NULL, 0 };
 
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCWSTR lpName)
 {
+	HANDLE handle;
 	WINPR_EVENT* event;
-	event = (WINPR_EVENT*) calloc(1, sizeof(WINPR_EVENT));
+
+	handle = (HANDLE) calloc(1, sizeof(WINPR_EVENT));
+	event = (WINPR_EVENT*)handle;
 
 	if (event)
 	{
@@ -71,7 +74,7 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 		if (event->pipe_fd[0] < 0)
 		{
 			WLog_ERR(TAG, "failed to create event");
-			free(event);
+			free(handle);
 			return NULL;
 		}
 
@@ -80,7 +83,7 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 		if (pipe(event->pipe_fd) < 0)
 		{
 			WLog_ERR(TAG, "failed to create event");
-			free(event);
+			free(handle);
 			return NULL;
 		}
 
@@ -94,7 +97,7 @@ HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 	if (!cs.LockSemaphore)
 		InitializeCriticalSection(&cs);
 
-	return (HANDLE)event;
+	return handle;
 }
 
 HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName)

@@ -114,14 +114,12 @@ void* freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPath, LPCSTR pszE
 	if (bHasExt)
 	{
 		pszAddinFile = _strdup(pszFileName);
-		cchAddinFile = strlen(pszAddinFile);
 	}
 	else
 	{
 		cchAddinFile = cchFileName + cchExt + 2 + sizeof(CMAKE_SHARED_LIBRARY_PREFIX);
 		pszAddinFile = (LPSTR) malloc(cchAddinFile + 1);
 		sprintf_s(pszAddinFile, cchAddinFile, CMAKE_SHARED_LIBRARY_PREFIX"%s%s", pszFileName, pszExt);
-		cchAddinFile = strlen(pszAddinFile);
 	}
 
 	CopyMemory(pszFilePath, pszAddinInstallPath, cchAddinInstallPath);
@@ -162,21 +160,18 @@ void* freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LPSTR pszSubsyste
 		cchFileName += strlen(pszName) + strlen(pszSubsystem) + strlen(pszType) + strlen(pszExtension);
 		pszFileName = (LPSTR) malloc(cchFileName);
 		sprintf_s(pszFileName, cchFileName, "%s%s-client-%s-%s.%s", pszPrefix, pszName, pszSubsystem, pszType, pszExtension);
-		cchFileName = strlen(pszFileName);
 	}
 	else if (pszName && pszSubsystem)
 	{
 		cchFileName += strlen(pszName) + strlen(pszSubsystem) + strlen(pszExtension);
 		pszFileName = (LPSTR) malloc(cchFileName);
 		sprintf_s(pszFileName, cchFileName, "%s%s-client-%s.%s", pszPrefix, pszName, pszSubsystem, pszExtension);
-		cchFileName = strlen(pszFileName);
 	}
 	else if (pszName)
 	{
 		cchFileName += strlen(pszName) + strlen(pszExtension);
 		pszFileName = (LPSTR) malloc(cchFileName);
 		sprintf_s(pszFileName, cchFileName, "%s%s-client.%s", pszPrefix, pszName, pszExtension);
-		cchFileName = strlen(pszFileName);
 	}
 	else
 	{

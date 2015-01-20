@@ -490,12 +490,10 @@ static void progressive_rfx_idwt_y(INT16* pLowBand, int nLowStep, INT16* pHighBa
 				pX += nDstStep;
 
 				*pX = X2 + (2 * H0);
-				pX += nDstStep;
 			}
 			else
 			{
 				L0 = *pL;
-				pL += nLowStep;
 
 				X0 = L0 - H0;
 
@@ -506,7 +504,6 @@ static void progressive_rfx_idwt_y(INT16* pLowBand, int nLowStep, INT16* pHighBa
 				pX += nDstStep;
 
 				*pX = X0;
-				pX += nDstStep;
 			}
 		}
 		else
@@ -526,10 +523,8 @@ static void progressive_rfx_idwt_y(INT16* pLowBand, int nLowStep, INT16* pHighBa
 			pX += nDstStep;
 
 			L0 = *pL;
-			pL += nLowStep;
 
 			*pX = (X0 + L0) / 2;
-			pX += nDstStep;
 		}
 
 		pLowBand++;
@@ -586,7 +581,6 @@ static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* temp, int 
 	offset += (nBandH * nBandH);
 
 	LL = &buffer[offset];
-	offset += (nBandL * nBandL);
 
 	nDstStepX = (nBandL + nBandH);
 	nDstStepY = (nBandL + nBandH);
@@ -597,7 +591,6 @@ static void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* temp, int 
 	offset += (nBandL * nDstStepX);
 
 	H = &temp[offset];
-	offset += (nBandH * nDstStepX);
 
 	LLx = &buffer[0];
 
@@ -970,13 +963,11 @@ int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* state, INT16* b
 {
 	int index;
 	INT16 input;
-	wBitStream* srl;
 	wBitStream* raw;
 
 	if (!numBits)
 		return 1;
 
-	srl = state->srl;
 	raw = state->raw;
 
 	if (!state->nonLL)

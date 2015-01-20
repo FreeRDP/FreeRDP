@@ -456,14 +456,13 @@ static COMMAND_LINE_ARGUMENT_A audin_pulse_args[] =
 
 static void audin_pulse_parse_addin_args(AudinPulseDevice* device, ADDIN_ARGV* args)
 {
-	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AudinPulseDevice* pulse = (AudinPulseDevice*) device;
 
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv, audin_pulse_args, flags, pulse, NULL, NULL);
+	CommandLineParseArgumentsA(args->argc, (const char**) args->argv, audin_pulse_args, flags, pulse, NULL, NULL);
 
 	arg = audin_pulse_args;
 

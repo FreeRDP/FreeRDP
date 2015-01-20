@@ -65,10 +65,8 @@ static int planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize, int nWidt
 
 			pRLE += cRawBytes;
 			x += cRawBytes;
-			cRawBytes = 0;
 
 			x += nRunLength;
-			nRunLength = 0;
 
 			if (x > nWidth)
 				return -1;
@@ -96,7 +94,6 @@ static int planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 SrcSize, BYT
 	BYTE* previousScanline;
 	const BYTE* srcp = pSrcData;
 
-	dstp = pDstData;
 	previousScanline = NULL;
 
 	if (vFlip)
@@ -296,7 +293,6 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 	int rawHeights[4];
 	BYTE FormatHeader;
 	BOOL useTempBuffer;
-	int dstBitsPerPixel;
 	int dstBytesPerPixel;
 	const BYTE* planes[4];
 	UINT32 UncompressedSize;
@@ -305,7 +301,6 @@ int planar_decompress(BITMAP_PLANAR_CONTEXT* planar, BYTE* pSrcData, UINT32 SrcS
 	if ((nWidth < 0) || (nHeight < 0))
 		return -1;
 
-	dstBitsPerPixel = FREERDP_PIXEL_FORMAT_DEPTH(DstFormat);
 	dstBytesPerPixel = (FREERDP_PIXEL_FORMAT_BPP(DstFormat) / 8);
 
 	if (nDstStep < 0)
@@ -953,9 +948,6 @@ int freerdp_bitmap_planar_compress_planes_rle(BYTE* inPlanes[4], int width, int 
 
 	if (!freerdp_bitmap_planar_compress_plane_rle(inPlanes[3], width, height, outPlanes, &dstSizes[3]))
 		return 0;
-
-	outPlanes += dstSizes[3];
-	outPlanesSize -= dstSizes[3];
 
 	return 1;
 }

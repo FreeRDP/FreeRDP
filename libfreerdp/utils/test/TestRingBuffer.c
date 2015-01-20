@@ -61,7 +61,6 @@ BOOL test_overlaps(void)
 
 	if (!ringbuffer_write(&rb, &bytes[counter], 6)) /* [56789ab....] */
 		goto error;
-	counter += 6;
 
 	ringbuffer_commit_read_bytes(&rb, 6); /* [......b....] */
 	nchunks = ringbuffer_peek(&rb, chunks, 10);

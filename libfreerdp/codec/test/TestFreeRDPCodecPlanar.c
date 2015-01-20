@@ -3039,8 +3039,6 @@ int test_individual_planes_encoding_rle()
 	}
 
 	planar->rlePlanes[3] = pOutput;
-	pOutput += dstSizes[3];
-	availableSize -= dstSizes[3];
 
 	if (dstSizes[3] != sizeof(TEST_64X64_BLUE_PLANE_RLE))
 	{

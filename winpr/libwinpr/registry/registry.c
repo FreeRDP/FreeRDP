@@ -275,6 +275,10 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName,
 
 	pValue = key->values;
 
+	(void)reg;
+	(void)lpReserved;
+	(void)lpType;
+
 	while (pValue != NULL)
 	{
 		if (strcmp(pValue->name, lpValueName) == 0)

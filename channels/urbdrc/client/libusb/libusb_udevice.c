@@ -1694,7 +1694,7 @@ static void udev_load_interface(UDEVICE* pdev)
 
 static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 {
-	int status, num;
+	int status;
 	LIBUSB_DEVICE_DESCRIPTOR* devDescriptor;
 	LIBUSB_CONFIG_DESCRIPTOR* config_temp;
 	LIBUSB_INTERFACE_DESCRIPTOR interface_temp;
@@ -1716,8 +1716,6 @@ static IUDEVICE* udev_init(UDEVICE* pdev, UINT16 bus_number, UINT16 dev_number)
 		zfree(pdev);
 		return NULL;
 	}
-
-	num = pdev->devDescriptor->bNumConfigurations;
 
 	status = libusb_get_active_config_descriptor (pdev->libusb_dev, &pdev->LibusbConfig);
 
@@ -1830,8 +1828,6 @@ int udev_new_by_id(UINT16 idVendor, UINT16 idProduct, IUDEVICE*** devArray)
 
 		if ((descriptor->idVendor == idVendor) && (descriptor->idProduct == idProduct))
 		{
-			bus_number = 0;
-			dev_number = 0;
 			array[num] = (PUDEVICE) malloc(sizeof(UDEVICE));
 			array[num]->libusb_dev = libusb_list[i];
 

@@ -256,7 +256,6 @@ CLIENT_CALL_RETURN NdrClientCall(PMIDL_STUB_DESC pStubDescriptor, PFORMAT_STRING
 	NDR_PROC_HEADER* procHeader;
 	NDR_OI2_PROC_HEADER* oi2ProcHeader;
 	CLIENT_CALL_RETURN client_call_return;
-	procNum = stackSize = numberParams = 0;
 	procHeader = (NDR_PROC_HEADER*) &pFormat[0];
 	client_call_return.Pointer = NULL;
 	handleType = procHeader->HandleType;

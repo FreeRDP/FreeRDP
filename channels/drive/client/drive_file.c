@@ -182,7 +182,6 @@ static void drive_file_set_fullpath(DRIVE_FILE* file, char* fullpath)
 static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 CreateDisposition, UINT32 CreateOptions)
 {
 	struct STAT st;
-	BOOL exists;
 #ifdef WIN32
 	const static int mode = _S_IREAD | _S_IWRITE ;
 #else
@@ -203,7 +202,6 @@ static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 Creat
 		if (st.st_size > (unsigned long) 0x07FFFFFFF)
 			largeFile = TRUE;
 #endif
-		exists = TRUE;
 	}
 	else
 	{
@@ -220,7 +218,6 @@ static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 Creat
 				}
 			}
 		}
-		exists = FALSE;
 	}
 
 	if (file->is_dir)
@@ -495,8 +492,6 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 	UINT64 LastWriteTime;
 	UINT32 FileAttributes;
 	UINT32 FileNameLength;
-
-	m = 0;
 
 	switch (FsInformationClass)
 	{

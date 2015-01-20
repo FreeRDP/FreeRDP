@@ -292,7 +292,6 @@ static int remdesk_recv_ctl_authenticate_pdu(RemdeskServerContext* context, wStr
 
 static int remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
-	int status;
 	int cbExpertBlobW = 0;
 	WCHAR* expertBlobW = NULL;
 	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu;
@@ -304,7 +303,7 @@ static int remdesk_recv_ctl_verify_password_pdu(RemdeskServerContext* context, w
 	expertBlobW = (WCHAR*) Stream_Pointer(s);
 	cbExpertBlobW = header->DataLength - 4;
 
-	status = ConvertFromUnicode(CP_UTF8, 0, expertBlobW, cbExpertBlobW / 2, &pdu.expertBlob, 0, NULL, NULL);
+	ConvertFromUnicode(CP_UTF8, 0, expertBlobW, cbExpertBlobW / 2, &pdu.expertBlob, 0, NULL, NULL);
 	WLog_INFO(TAG, "ExpertBlob: %s", pdu.expertBlob);
 	remdesk_send_ctl_result_pdu(context, 0);
 
@@ -450,6 +449,8 @@ static void* remdesk_server_thread(void* arg)
 	while (1)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		if (WAIT_FAILED == status)
+			break;
 
 		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
 		{

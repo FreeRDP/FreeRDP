@@ -179,13 +179,16 @@ void cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	if (context->ServerFormatList)
 		context->ServerFormatList(context, &formatList);
 
-	for (index = 0; index < formatList.numFormats; index++)
+	if (formats)
 	{
-		if (formats[index].formatName)
-			free(formats[index].formatName);
-	}
+		for (index = 0; index < formatList.numFormats; index++)
+		{
+			if (formats[index].formatName)
+				free(formats[index].formatName);
+		}
 
-	free(formats);
+		free(formats);
+	}
 }
 
 void cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen, UINT16 msgFlags)

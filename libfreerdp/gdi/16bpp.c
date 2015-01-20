@@ -401,7 +401,6 @@ static int BitBlt_DSPDxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	UINT16* dstp;
 	UINT16 src16;
 	UINT16 color16;
-	HGDI_BITMAP hSrcBmp;
 
 	if (!hdcDest || !hdcSrc)
 		return 1;
@@ -410,8 +409,6 @@ static int BitBlt_DSPDxax_16bpp(HGDI_DC hdcDest, int nXDest, int nYDest, int nWi
 	/* DSPDxax, used to draw glyphs */
 
 	color16 = gdi_get_color_16bpp(hdcDest, hdcDest->textColor);
-
-	hSrcBmp = (HGDI_BITMAP) hdcSrc->selectedObject;
 
 	if (hdcSrc->bytesPerPixel != 1)
 	{

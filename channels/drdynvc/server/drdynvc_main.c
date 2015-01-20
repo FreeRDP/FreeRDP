@@ -61,6 +61,8 @@ static void* drdynvc_server_thread(void* arg)
 	while (1)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
+		if (WAIT_FAILED == status)
+			break;
 
 		if (WaitForSingleObject(context->priv->StopEvent, 0) == WAIT_OBJECT_0)
 		{

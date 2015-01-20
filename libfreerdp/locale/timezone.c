@@ -1677,6 +1677,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 	local_time = localtime(&t);
 
 #ifdef HAVE_TM_GMTOFF
+	(void)local_time;
 	#if defined(__FreeBSD__)
 		/*not the best solution, but could not get the right tyepcast*/
 		clientTimeZone->bias = 0;
@@ -1690,6 +1691,7 @@ void freerdp_time_zone_detect(TIME_ZONE_INFO* clientTimeZone)
 	else
 		clientTimeZone->bias = (UINT32) (timezone / 3600);
 #else
+	(void)local_time;
 	clientTimeZone->bias = 0;
 #endif
 

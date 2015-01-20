@@ -372,14 +372,13 @@ COMMAND_LINE_ARGUMENT_A tsmf_args[] =
 
 static void tsmf_process_addin_args(IWTSPlugin *pPlugin, ADDIN_ARGV *args)
 {
-	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	TSMF_PLUGIN* tsmf = (TSMF_PLUGIN*) pPlugin;
 
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+	CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 						tsmf_args, flags, tsmf, NULL, NULL);
 	arg = tsmf_args;
 

@@ -47,7 +47,6 @@ int TestInterlockedDList(int argc, char* argv[])
 	for (Count = 10; Count >= 1; Count -= 1)
 	{
 		pListEntry = RemoveHeadList(pListHead);
-		pListItem = (PLIST_ITEM) pListEntry;
 		_aligned_free(pListEntry);
 	}
 
@@ -65,7 +64,6 @@ int TestInterlockedDList(int argc, char* argv[])
 	for (Count = 10; Count >= 1; Count -= 1)
 	{
 		pListEntry = RemoveTailList(pListHead);
-		pListItem = (PLIST_ITEM) pListEntry;
 		_aligned_free(pListEntry);
 	}
 

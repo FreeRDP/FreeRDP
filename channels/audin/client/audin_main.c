@@ -494,14 +494,13 @@ COMMAND_LINE_ARGUMENT_A audin_args[] =
 
 static BOOL audin_process_addin_args(IWTSPlugin* pPlugin, ADDIN_ARGV* args)
 {
-	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*) pPlugin;
 
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+	CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			audin_args, flags, audin, NULL, NULL);
 
 	arg = audin_args;

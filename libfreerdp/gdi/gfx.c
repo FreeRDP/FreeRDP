@@ -324,7 +324,7 @@ int gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_
 	if (!gdi->inGfxFrame)
 		gdi_OutputUpdate(gdi);
 
-	return 1;
+	return status;
 }
 
 int gdi_SurfaceCommand_H264(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
@@ -332,14 +332,11 @@ int gdi_SurfaceCommand_H264(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_SU
 	int status;
 	UINT32 i;
 	BYTE* DstData = NULL;
-	H264_CONTEXT* h264;
 	gdiGfxSurface* surface;
 	RDPGFX_H264_METABLOCK* meta;
 	RDPGFX_H264_BITMAP_STREAM* bs;
 
 	freerdp_client_codecs_prepare(gdi->codecs, FREERDP_CODEC_H264);
-
-	h264 = gdi->codecs->h264;
 
 	bs = (RDPGFX_H264_BITMAP_STREAM*) cmd->extra;
 
@@ -504,7 +501,7 @@ int gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* context, RD
 
 int gdi_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd)
 {
-	int status = 1;
+	int status = -1;
 	rdpGdi* gdi = (rdpGdi*) context->custom;
 
 	switch (cmd->codecId)
@@ -541,7 +538,7 @@ int gdi_SurfaceCommand(RdpgfxClientContext* context, RDPGFX_SURFACE_COMMAND* cmd
 			break;
 	}
 
-	return 1;
+	return status;
 }
 
 int gdi_DeleteEncodingContext(RdpgfxClientContext* context, RDPGFX_DELETE_ENCODING_CONTEXT_PDU* deleteEncodingContext)
@@ -664,7 +661,6 @@ int gdi_SurfaceToSurface(RdpgfxClientContext* context, RDPGFX_SURFACE_TO_SURFACE
 	rdpGdi* gdi = (rdpGdi*) context->custom;
 
 	rectSrc = &(surfaceToSurface->rectSrc);
-	destPt = &surfaceToSurface->destPts[0];
 
 	surfaceSrc = (gdiGfxSurface*) context->GetSurfaceData(context, surfaceToSurface->surfaceIdSrc);
 

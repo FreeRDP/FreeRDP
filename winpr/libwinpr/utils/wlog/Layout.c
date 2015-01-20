@@ -350,7 +350,7 @@ wLogLayout* WLog_Layout_New(wLog* log)
 		if (nSize)
 		{
 			env = (LPSTR) malloc(nSize);
-			nSize = GetEnvironmentVariableA("WLOG_PREFIX", env, nSize);
+			GetEnvironmentVariableA("WLOG_PREFIX", env, nSize);
 		}
 
 		if (env)

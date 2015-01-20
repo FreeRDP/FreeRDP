@@ -476,8 +476,6 @@ static void* urbdrc_search_usb_device(void* arg)
 	while (1)
 	{
 		WLog_VRB(TAG, "=======  SEARCH  ======= ");
-		busnum = 0;
-		devnum = 0;
 		sdev = NULL;
 		pdev = NULL;
 		dvc_channel = NULL;   
@@ -635,7 +633,6 @@ static void* urbdrc_search_usb_device(void* arg)
 
 					if (pdev && on_close && dvc_channel && pdev->isSigToEnd(pdev) && !(pdev->isChannelClosed(pdev)))
 					{
-						on_close = 0;
 						dvc_channel->Close(dvc_channel);
 					}
 				}
@@ -1037,13 +1034,12 @@ COMMAND_LINE_ARGUMENT_A urbdrc_args[] =
 
 static void urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, ADDIN_ARGV* args)
 {
-	int status;
 	DWORD flags;
 	COMMAND_LINE_ARGUMENT_A* arg;
 
 	flags = COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON;
 
-	status = CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
+	CommandLineParseArgumentsA(args->argc, (const char**) args->argv,
 			urbdrc_args, flags, urbdrc, NULL, NULL);
 
 	arg = urbdrc_args;

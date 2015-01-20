@@ -51,10 +51,8 @@ void NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemo
 	 * member_layout<>
 	 * FC_END
 	 */
-	unsigned char type;
 	unsigned char alignment;
 	unsigned short memory_size;
-	type = pFormat[0];
 	alignment = pFormat[1] + 1;
 	memory_size = *(unsigned short*) &pFormat[2];
 	NdrpAlignLength(&(pStubMsg->BufferLength), alignment);
@@ -221,7 +219,6 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	unsigned char* pMemoryCopy;
 	unsigned char type;
 	unsigned char alignment;
-	unsigned short memory_size;
 	unsigned char* pointer_layout;
 	unsigned char* conformant_array_description;
 	unsigned short offset_to_pointer_layout;
@@ -237,7 +234,6 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	}
 
 	alignment = pFormat[1] + 1;
-	memory_size = *(unsigned short*) &pFormat[2];
 	NdrpAlignLength(&(pStubMsg->BufferLength), alignment);
 
 	if (!pStubMsg->IgnoreEmbeddedPointers && !pStubMsg->PointerLength)
@@ -261,7 +257,10 @@ void NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMem
 	offset_to_pointer_layout = *(unsigned short*) &pFormat[0];
 
 	if (offset_to_pointer_layout)
+	{
 		pointer_layout = (unsigned char*) pFormat + offset_to_pointer_layout;
+		(void)pointer_layout;
+	}
 
 	pFormat += 2;
 	pStubMsg->Memory = pMemory;

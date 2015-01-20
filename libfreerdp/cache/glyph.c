@@ -39,10 +39,8 @@ void update_process_glyph(rdpContext* context, BYTE* data, int* index,
 	int offset;
 	rdpGlyph* glyph;
 	UINT32 cacheIndex;
-	rdpGraphics* graphics;
 	rdpGlyphCache* glyph_cache;
 
-	graphics = context->graphics;
 	glyph_cache = context->cache->glyph;
 
 	cacheIndex = data[*index];
@@ -86,10 +84,8 @@ void update_process_glyph_fragments(rdpContext* context, BYTE* data, UINT32 leng
 	UINT32 size;
 	int index = 0;
 	BYTE* fragments;
-	rdpGraphics* graphics;
 	rdpGlyphCache* glyph_cache;
 
-	graphics = context->graphics;
 	glyph_cache = context->cache->glyph;
 
 	if (opX + opWidth > context->settings->DesktopWidth)
@@ -201,10 +197,7 @@ void update_process_glyph_fragments(rdpContext* context, BYTE* data, UINT32 leng
 
 void update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyphIndex)
 {
-	rdpGlyphCache* glyph_cache;
 	int bkWidth, bkHeight, opWidth, opHeight;
-
-	glyph_cache = context->cache->glyph;
 
 	bkWidth = glyphIndex->bkRight - glyphIndex->bkLeft;
 	opWidth = glyphIndex->opRight - glyphIndex->opLeft;
@@ -224,9 +217,6 @@ void update_gdi_fast_index(rdpContext* context, FAST_INDEX_ORDER* fastIndex)
 	INT32 x, y;
 	INT32 opLeft, opTop;
 	INT32 opRight, opBottom;
-	rdpGlyphCache* glyph_cache;
-
-	glyph_cache = context->cache->glyph;
 
 	opLeft = fastIndex->opLeft;
 	opTop = fastIndex->opTop;

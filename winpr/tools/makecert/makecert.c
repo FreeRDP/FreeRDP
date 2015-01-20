@@ -515,7 +515,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 				return -1;
 			}
 
-			status = i2d_PKCS12_bio(bio, context->pkcs12);
+			i2d_PKCS12_bio(bio, context->pkcs12);
 
 			offset = 0;
 			length = 2048;
@@ -582,7 +582,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 				return -1;
 			}
 
-			status = PEM_write_bio_X509(bio, context->x509);
+			PEM_write_bio_X509(bio, context->x509);
 
 			offset = 0;
 			length = 2048;
@@ -642,7 +642,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 					return -1;
 				}
 
-				status = PEM_write_bio_PrivateKey(bio, context->pkey, NULL, NULL, 0, NULL, NULL);
+				PEM_write_bio_PrivateKey(bio, context->pkey, NULL, NULL, 0, NULL, NULL);
 
 				offset = 0;
 				length = 2048;
@@ -726,7 +726,6 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 	filename = malloc(length + 8);
 	strcpy(filename, context->output_file);
 	strcpy(&filename[length], ".key");
-	length = strlen(filename);
 
 	if (path)
 		fullpath = GetCombinedPath(path, filename);
@@ -750,7 +749,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 			return -1;
 		}
 
-		status = PEM_write_bio_PrivateKey(bio, context->pkey, NULL, NULL, 0, NULL, NULL);
+		PEM_write_bio_PrivateKey(bio, context->pkey, NULL, NULL, 0, NULL, NULL);
 
 		offset = 0;
 		length = 2048;
@@ -965,7 +964,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		if (!bio)
 			return -1;
 
-		status = X509_print(bio, context->x509);
+		X509_print(bio, context->x509);
 
 		offset = 0;
 		length = 2048;

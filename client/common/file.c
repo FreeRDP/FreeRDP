@@ -402,7 +402,7 @@ BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE* buffe
 	char* type;
 	char* context;
 	char *d1, *d2;
-	char *beg, *end;
+	char *beg;
 	char *name, *value;
 
 	index = 0;
@@ -415,7 +415,6 @@ BOOL freerdp_client_parse_rdp_file_buffer_ascii(rdpFile* file, const BYTE* buffe
 		if (length > 1)
 		{
 			beg = line;
-			end = &line[length - 1];
 
 			freerdp_client_parse_rdp_file_add_line_ascii(file, line, index);
 
@@ -477,7 +476,7 @@ BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BYTE* buf
 	WCHAR* type;
 	WCHAR* context;
 	WCHAR *d1, *d2;
-	WCHAR *beg, *end;
+	WCHAR *beg;
 	WCHAR *name, *value;
 
 	index = 0;
@@ -490,7 +489,6 @@ BOOL freerdp_client_parse_rdp_file_buffer_unicode(rdpFile* file, const BYTE* buf
 		if (length > 1)
 		{
 			beg = line;
-			end = &line[length - 1];
 
 			freerdp_client_parse_rdp_file_add_line_unicode(file, line, index);
 
@@ -700,7 +698,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 			fwrite(buffer, 1, length, fp);
 		}
 
-		status = fflush(fp);
+		fflush(fp);
 		status = fclose(fp);
 	}
 

@@ -480,8 +480,6 @@ static void tsmf_sample_playback(TSMF_SAMPLE* sample)
 			sample->pixfmt = pixfmt;
 		}
 
-		ret = FALSE;
-
 		if (stream->decoder->GetDecodedDimension)
 		{
 			ret = stream->decoder->GetDecodedDimension(stream->decoder, &width, &height);

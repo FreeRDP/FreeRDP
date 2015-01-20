@@ -246,7 +246,6 @@ UINT32 rpc_offset_pad(UINT32* offset, UINT32 pad)
 
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* length)
 {
-	UINT32 alloc_hint = 0;
 	rpcconn_hdr_t* header;
 	UINT32 frag_length;
 	UINT32 auth_length;
@@ -261,12 +260,10 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 		case PTYPE_RESPONSE:
 			*offset += 8;
 			rpc_offset_align(offset, 8);
-			alloc_hint = header->response.alloc_hint;
 			break;
 		case PTYPE_REQUEST:
 			*offset += 4;
 			rpc_offset_align(offset, 8);
-			alloc_hint = header->request.alloc_hint;
 			break;
 		case PTYPE_RTS:
 			*offset += 4;
@@ -403,7 +400,6 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	request_pdu->stub_data = data;
 	offset = 24;
-	stub_data_pad = 0;
 	stub_data_pad = rpc_offset_align(&offset, 8);
 	offset += length;
 	request_pdu->auth_verifier.auth_pad_length = rpc_offset_align(&offset, 4);
