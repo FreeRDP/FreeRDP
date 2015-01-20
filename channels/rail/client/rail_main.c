@@ -314,8 +314,8 @@ int rail_server_get_appid_response(RailClientContext* context, RAIL_GET_APPID_RE
 
 /****************************************************************************************/
 
-static wListDictionary* g_InitHandles;
-static wListDictionary* g_OpenHandles;
+static wListDictionary* g_InitHandles = NULL;
+static wListDictionary* g_OpenHandles = NULL;
 
 void rail_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
@@ -335,6 +335,11 @@ void* rail_get_init_handle_data(void* pInitHandle)
 void rail_remove_init_handle_data(void* pInitHandle)
 {
 	ListDictionary_Remove(g_InitHandles, pInitHandle);
+	if (ListDictionary_Count(g_InitHandles) < 1)
+	{
+		ListDictionary_Free(g_InitHandles);
+		g_InitHandles = NULL;
+	}
 }
 
 void rail_add_open_handle_data(DWORD openHandle, void* pUserData)
@@ -359,6 +364,11 @@ void rail_remove_open_handle_data(DWORD openHandle)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+	if (ListDictionary_Count(g_OpenHandles) < 1)
+	{
+		ListDictionary_Free(g_OpenHandles);
+		g_OpenHandles = NULL;
+	}
 }
 
 static void rail_virtual_channel_event_data_received(railPlugin* rail,
