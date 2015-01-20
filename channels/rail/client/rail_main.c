@@ -55,7 +55,8 @@ int rail_send(railPlugin* rail, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "rail_send: VirtualChannelWrite failed %d", status);
+		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 	}
 
 	return status;
@@ -419,6 +420,9 @@ static VOID VCAPITYPE rail_virtual_channel_open_event(DWORD openHandle, UINT eve
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			Stream_Free((wStream*) pData, TRUE);
 			break;
+
+		case CHANNEL_EVENT_USER:
+			break;
 	}
 }
 
@@ -461,7 +465,8 @@ static void rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "rail_virtual_channel_event_connected: open failed: status: %d", status);
+		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 		return;
 	}
 
@@ -471,21 +476,24 @@ static void rail_virtual_channel_event_connected(railPlugin* rail, LPVOID pData,
 			(LPTHREAD_START_ROUTINE) rail_virtual_channel_client_thread, (void*) rail, 0, NULL);
 }
 
-static void rail_virtual_channel_event_terminated(railPlugin* rail)
+static void rail_virtual_channel_event_disconnected(railPlugin* rail)
 {
-	if (rail->queue)
+	UINT rc;
+	MessageQueue_PostQuit(rail->queue, 0);
+	WaitForSingleObject(rail->thread, INFINITE);
+
+	MessageQueue_Free(rail->queue);
+	CloseHandle(rail->thread);
+
+	rail->queue = NULL;
+	rail->thread = NULL;
+
+	rc = rail->channelEntryPoints.pVirtualChannelClose(rail->OpenHandle);
+	if (CHANNEL_RC_OK != rc)
 	{
-		MessageQueue_PostQuit(rail->queue, 0);
-		WaitForSingleObject(rail->thread, INFINITE);
-
-		MessageQueue_Free(rail->queue);
-		rail->queue = NULL;
-
-		CloseHandle(rail->thread);
-		rail->thread = NULL;
+		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
+				 WTSErrorToString(rc), rc);
 	}
-
-	rail->channelEntryPoints.pVirtualChannelClose(rail->OpenHandle);
 
 	if (rail->data_in)
 	{
@@ -494,10 +502,11 @@ static void rail_virtual_channel_event_terminated(railPlugin* rail)
 	}
 
 	rail_remove_open_handle_data(rail->OpenHandle);
+}
+
+static void rail_virtual_channel_event_terminated(railPlugin* rail)
+{
 	rail_remove_init_handle_data(rail->InitHandle);
-
-	free(rail->context);
-
 	free(rail);
 }
 
@@ -520,6 +529,7 @@ static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT e
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
+			rail_virtual_channel_event_disconnected(rail);
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
@@ -533,6 +543,7 @@ static VOID VCAPITYPE rail_virtual_channel_init_event(LPVOID pInitHandle, UINT e
 
 BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
+	UINT rc;
 	railPlugin* rail;
 	RailClientContext* context;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
@@ -589,8 +600,15 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	CopyMemory(&(rail->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 
-	rail->channelEntryPoints.pVirtualChannelInit(&rail->InitHandle,
+	rc = rail->channelEntryPoints.pVirtualChannelInit(&rail->InitHandle,
 		&rail->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, rail_virtual_channel_init_event);
+	if (CHANNEL_RC_OK != rc)
+	{
+		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
+				 WTSErrorToString(rc), rc);
+		free(rail);
+		return -1;
+	}
 
 	rail->channelEntryPoints.pInterface = *(rail->channelEntryPoints.ppInterface);
 	rail->channelEntryPoints.ppInterface = &(rail->channelEntryPoints.pInterface);
