@@ -19,14 +19,9 @@ define_channel_client("drdynvc")
 
 set(${MODULE_PREFIX}_SRCS
 	drdynvc_main.c
-	drdynvc_main.h
-	drdynvc_types.h
-	dvcman.c
-	dvcman.h)
+	drdynvc_main.h)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntry")
-
-
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)
 	

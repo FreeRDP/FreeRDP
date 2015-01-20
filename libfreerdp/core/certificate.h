@@ -53,6 +53,8 @@ BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate
 BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, wStream* s);
 BOOL certificate_read_server_certificate(rdpCertificate* certificate, BYTE* server_cert, int length);
 
+rdpCertificate* certificate_clone(rdpCertificate* certificate);
+
 rdpCertificate* certificate_new(void);
 void certificate_free(rdpCertificate* certificate);
 

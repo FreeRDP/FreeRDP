@@ -28,10 +28,12 @@
 
 find_path(XRANDR_INCLUDE_DIR NAMES X11/extensions/Xrandr.h
           PATH_SUFFIXES X11/extensions
+          PATHS /opt/X11/include
           DOC "The XRANDR include directory"
 )
 
 find_library(XRANDR_LIBRARY NAMES Xrandr
+          PATHS /opt/X11/lib
           DOC "The XRANDR library"
 )
 

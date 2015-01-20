@@ -529,7 +529,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_SupportGraphicsPipeline				142
 #define FreeRDP_SupportDynamicTimeZone				143
 #define FreeRDP_SupportHeartbeatPdu				144
-#define FreeRDP_DisableEncryption				192
+#define FreeRDP_UseRdpSecurityLayer				192
 #define FreeRDP_EncryptionMethods				193
 #define FreeRDP_ExtEncryptionMethods				194
 #define FreeRDP_EncryptionLevel					195
@@ -615,6 +615,7 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_AuthenticationServiceClass 			1098
 #define FreeRDP_DisableCredentialsDelegation 			1099
 #define FreeRDP_AuthenticationLevel				1100
+#define FreeRDP_AllowedTlsCiphers				1101
 #define FreeRDP_MstscCookieMode					1152
 #define FreeRDP_CookieMaxLength					1153
 #define FreeRDP_PreconnectionId					1154
@@ -664,7 +665,8 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_SmartSizing					1551
 #define FreeRDP_XPan						1552
 #define FreeRDP_YPan						1553
-#define FreeRDP_ScalingFactor					1554
+#define FreeRDP_SmartSizingWidth				1554
+#define FreeRDP_SmartSizingHeight				1555
 #define FreeRDP_SoftwareGdi					1601
 #define FreeRDP_LocalConnection					1602
 #define FreeRDP_AuthenticationOnly				1603
@@ -859,7 +861,7 @@ struct rdp_settings
 	UINT64 padding0192[192 - 145]; /* 145 */
 
 	/* Client/Server Security Data */
-	ALIGN64 BOOL DisableEncryption; /* 192 */
+	ALIGN64 BOOL UseRdpSecurityLayer; /* 192 */
 	ALIGN64 UINT32 EncryptionMethods; /* 193 */
 	ALIGN64 UINT32 ExtEncryptionMethods; /* 194 */
 	ALIGN64 UINT32 EncryptionLevel; /* 195 */
@@ -997,7 +999,7 @@ struct rdp_settings
 	ALIGN64 char* AuthenticationServiceClass; /* 1098 */
 	ALIGN64 BOOL DisableCredentialsDelegation; /* 1099 */
 	ALIGN64 BOOL AuthenticationLevel; /* 1100 */
-	ALIGN64 char* PermittedTLSCiphers; /* 1101 */
+	ALIGN64 char* AllowedTlsCiphers; /* 1101 */
 	UINT64 padding1152[1152 - 1102]; /* 1102 */
 
 	/* Connection Cookie */
@@ -1074,8 +1076,9 @@ struct rdp_settings
 	ALIGN64 BOOL SmartSizing; /* 1551 */
 	ALIGN64 int XPan; /* 1552 */
 	ALIGN64 int YPan; /* 1553 */
-	ALIGN64 double ScalingFactor; /* 1554 */
-	UINT64 padding1601[1601 - 1555]; /* 1555 */
+	ALIGN64 UINT32 SmartSizingWidth; /* 1554 */
+	ALIGN64 UINT32 SmartSizingHeight; /* 1555 */
+	UINT64 padding1601[1601 - 1556]; /* 1556 */
 
 	/* Miscellaneous */
 	ALIGN64 BOOL SoftwareGdi; /* 1601 */
@@ -1458,9 +1461,6 @@ FREERDP_API int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 p
 
 FREERDP_API char* freerdp_get_param_string(rdpSettings* settings, int id);
 FREERDP_API int freerdp_set_param_string(rdpSettings* settings, int id, const char* param);
-
-FREERDP_API double freerdp_get_param_double(rdpSettings* settings, int id);
-FREERDP_API int freerdp_set_param_double(rdpSettings* settings, int id, double param);
 
 #ifdef __cplusplus
 }

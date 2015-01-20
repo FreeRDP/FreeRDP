@@ -28,7 +28,6 @@ endif()
 set(${MODULE_PREFIX}_SRCS
 	smartcard.c
 	smartcard.h
-	smartcard_link.c
 	smartcard_pcsc.c
 	smartcard_pcsc.h
 	smartcard_inspect.c

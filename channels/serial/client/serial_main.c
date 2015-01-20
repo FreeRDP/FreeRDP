@@ -805,13 +805,13 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 				assert(FALSE);
 
 				WLog_Print(serial->log, WLOG_DEBUG, "Unknown server's serial driver: %s. SerCx2 will be used", driver);
-				serial->ServerSerialDriverId = SerialDriverSerCx2Sys;
+				serial->ServerSerialDriverId = SerialDriverSerialSys;
 			}
 		}
 		else
 		{
 			/* default driver */
-			serial->ServerSerialDriverId = SerialDriverSerCx2Sys;
+			serial->ServerSerialDriverId = SerialDriverSerialSys;
 		}
 
 

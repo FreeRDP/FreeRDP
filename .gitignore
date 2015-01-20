@@ -27,16 +27,6 @@ include/freerdp/version.h
 *_dummy.c
 *_dummy.c.base
 
-# Packages
-*.zip
-*.exe
-*.sh
-*.deb
-*.rpm
-*.dmg
-*.tar.Z
-*.tar.gz
-
 # Eclipse
 *.project
 *.cproject
@@ -89,6 +79,7 @@ RelWithDebInfo
 *.resource.txt
 *.embed.manifest*
 *.intermediate.manifest*
+version.rc
 
 # Binaries
 *.a
@@ -128,3 +119,16 @@ default.log
 
 # etags
 TAGS
+
+# generated packages
+*.zip
+*.exe
+*.sh
+*.deb
+*.rpm
+*.dmg
+*.tar.Z
+*.tar.gz
+
+# packaging related files
+!packaging/scripts/prepare_deb_freerdp-nightly.sh

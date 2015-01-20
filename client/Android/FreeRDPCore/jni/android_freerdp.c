@@ -57,6 +57,7 @@ int android_context_new(freerdp* instance, rdpContext* context)
 
 void android_context_free(freerdp* instance, rdpContext* context)
 {
+	freerdp_channels_close(instance->context->channels, instance);
 	freerdp_channels_free(context->channels);
 	android_event_queue_uninit(instance);
 }
@@ -541,7 +542,7 @@ static int android_freerdp_run(freerdp* instance)
 	freerdp_callback("OnDisconnecting", "(I)V", instance);
 	
 	DEBUG_ANDROID("Close channels...");
-	freerdp_channels_close(instance->context->channels, instance);
+	freerdp_channels_disconnect(instance->context->channels, instance);
 
 	DEBUG_ANDROID("Cleanup threads...");
 
@@ -745,9 +746,7 @@ JNIEXPORT void JNICALL jni_freerdp_set_connection_info(JNIEnv *env, jclass cls, 
 			settings->TlsSecurity = FALSE;
 			settings->NlaSecurity = FALSE;
 			settings->ExtSecurity = FALSE;
-			settings->DisableEncryption = TRUE;
-			settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-			settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+			settings->UseRdpSecurityLayer = TRUE;
 			break;
 
 		case 2:

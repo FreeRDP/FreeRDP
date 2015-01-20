@@ -35,6 +35,7 @@
 #include <freerdp/codec/jpeg.h>
 
 #include "xf_graphics.h"
+#include "xf_gdi.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
@@ -318,6 +319,35 @@ void xf_Pointer_SetDefault(rdpContext* context)
 #endif
 }
 
+void xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
+{
+	xfContext* xfc = (xfContext*) context;
+	XWindowAttributes current;
+	XSetWindowAttributes tmp;
+
+	if (!xfc->focused || !xfc->window)
+		return;
+
+	xf_lock_x11(xfc, FALSE);
+
+	if (XGetWindowAttributes(xfc->display, xfc->window->handle, &current) == 0)
+		goto out;
+
+	tmp.event_mask = (current.your_event_mask & ~(PointerMotionMask));
+	if (XChangeWindowAttributes(xfc->display, xfc->window->handle, CWEventMask, &tmp) == 0)
+		goto out;
+
+	XWarpPointer(xfc->display, None, xfc->window->handle, 0, 0, 0, 0, x, y);
+
+	tmp.event_mask = current.your_event_mask;
+	XChangeWindowAttributes(xfc->display, xfc->window->handle, CWEventMask, &tmp);
+
+out:
+		xf_unlock_x11(xfc, FALSE);
+		return;
+
+}
+
 /* Glyph Class */
 
 void xf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
@@ -381,8 +411,8 @@ void xf_Glyph_BeginDraw(rdpContext* context, int x, int y, int width, int height
 {
 	xfContext* xfc = (xfContext*) context;
 
-	bgcolor = freerdp_convert_gdi_order_color(bgcolor, context->settings->ColorDepth, xfc->format, xfc->palette);
-	fgcolor = freerdp_convert_gdi_order_color(fgcolor, context->settings->ColorDepth, xfc->format, xfc->palette);
+	bgcolor = xf_convert_rdp_order_color(xfc, bgcolor);
+	fgcolor = xf_convert_rdp_order_color(xfc, fgcolor);
 
 	xf_lock_x11(xfc, FALSE);
 
@@ -453,6 +483,7 @@ void xf_register_graphics(rdpGraphics* graphics)
 	pointer->Set = xf_Pointer_Set;
 	pointer->SetNull = xf_Pointer_SetNull;
 	pointer->SetDefault = xf_Pointer_SetDefault;
+	pointer->SetPosition = xf_Pointer_SetPosition;
 
 	graphics_register_pointer(graphics, pointer);
 	free(pointer);

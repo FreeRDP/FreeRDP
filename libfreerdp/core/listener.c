@@ -132,9 +132,6 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 
 		inet_ntop(ai->ai_family, sin_addr, addr, sizeof(addr));
 
-		if (strcmp(addr, "::") == 0)
-			continue;
-
 		option_value = 1;
 
 		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void*) &option_value, sizeof(option_value)) == -1)
@@ -152,7 +149,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 		if (status != 0)
 		{
 #ifdef _WIN32
-			WLog_ERR("bind() failed with error: %u", WSAGetLastError());
+			WLog_ERR(TAG, "bind() failed with error: %d", (int) WSAGetLastError());
 			WSACleanup();
 #else
 			WLog_ERR(TAG, "bind");

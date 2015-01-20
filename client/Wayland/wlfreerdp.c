@@ -48,33 +48,31 @@ void wl_begin_paint(rdpContext* context)
 
 void wl_end_paint(rdpContext* context)
 {
-	char *data;
 	rdpGdi* gdi;
 	wlfDisplay* display;
 	wlfWindow* window;
 	wlfContext* context_w;
+	INT32 x, y;
+	UINT32 w, h;
+	int i;
 
 	gdi = context->gdi;
 	if (gdi->primary->hdc->hwnd->invalid->null)
 		return;
 
+	x = gdi->primary->hdc->hwnd->invalid->x;
+	y = gdi->primary->hdc->hwnd->invalid->y;
+	w = gdi->primary->hdc->hwnd->invalid->w;
+	h = gdi->primary->hdc->hwnd->invalid->h;
+
 	context_w = (wlfContext*) context;
 	display = context_w->display;
 	window = context_w->window;
 
-	data = realloc(window->data, gdi->width * gdi->height * 4);
-
-	if (!data)
-	{
-		if (window->data)
-			free(window->data);
-		window->data = NULL;
-	}
-	else
-	{
-		window->data = data;
-		memcpy(window->data, (void*) gdi->primary_buffer, gdi->width * gdi->height * 4);
-	}
+	for (i = 0; i < h; i++)
+		memcpy(window->data + ((i+y)*(gdi->width*4)) + x*4,
+		       gdi->primary_buffer + ((i+y)*(gdi->width*4)) + x*4,
+		       w*4);
 
 	wlf_RefreshDisplay(display);
 }
@@ -245,6 +243,9 @@ int wlfreerdp_run(freerdp* instance)
 	wlf_DestroyWindow(context, context->window);
 	wlf_DestroyInput(context, context->input);
 	wlf_DestroyDisplay(context, context->display);
+
+	freerdp_channels_disconnect(instance->context->channels, instance);
+	freerdp_disconnect(instance);
 
 	freerdp_channels_close(instance->context->channels, instance);
 	freerdp_channels_free(instance->context->channels);

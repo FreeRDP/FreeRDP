@@ -369,6 +369,7 @@ int WLog_ParseFilters()
 	DWORD nSize;
 	int status;
 	char** strs;
+
 	nSize = GetEnvironmentVariableA("WLOG_FILTER", NULL, 0);
 
 	if (nSize < 1)
@@ -393,6 +394,13 @@ int WLog_ParseFilters()
 	p = env;
 	count = 0;
 	strs = (char**) calloc(g_FilterCount, sizeof(char*));
+
+	if (!strs)
+	{
+		free(env);
+		return -1;
+	}
+
 	strs[count++] = p;
 
 	while ((p = strchr(p, ',')) != NULL)
@@ -407,6 +415,7 @@ int WLog_ParseFilters()
 	if (!g_Filters)
 	{
 		free(strs);
+		free(env);
 		return -1;
 	}
 
@@ -417,11 +426,14 @@ int WLog_ParseFilters()
 		if (status < 0)
 		{
 			free(strs);
+			free(env);
 			return -1;
 		}
 	}
 
 	free(strs);
+	free(env);
+
 	return 0;
 }
 
@@ -700,9 +712,9 @@ void WLog_Init()
 
 void WLog_Uninit()
 {
-	wLog* root = WLog_GetRoot();
 	DWORD index;
 	wLog* child = NULL;
+	wLog* root = WLog_GetRoot();
 
 	for (index = 0; index < root->ChildrenCount; index++)
 	{

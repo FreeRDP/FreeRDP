@@ -29,11 +29,13 @@
 #=============================================================================
 
 find_path(XINERAMA_INCLUDE_DIR NAMES X11/extensions/Xinerama.h
+          PATHS /opt/X11/include
           PATH_SUFFIXES X11/extensions
           DOC "The Xinerama include directory"
 )
 
 find_library(XINERAMA_LIBRARY NAMES Xinerama
+          PATHS /opt/X11/lib
           DOC "The Xinerama library"
 )
 

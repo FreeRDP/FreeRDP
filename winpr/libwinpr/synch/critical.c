@@ -155,7 +155,7 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 
 #endif
 
-	/* First try the fastest posssible path to get the lock. */
+	/* First try the fastest possible path to get the lock. */
 	if (InterlockedIncrement(&lpCriticalSection->LockCount))
 	{
 		/* Section is already locked. Check if it is owned by the current thread. */

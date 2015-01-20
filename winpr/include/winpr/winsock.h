@@ -74,8 +74,14 @@ PCSTR inet_ntop(INT Family, PVOID pAddr, PSTR pStringBuf, size_t StringBufSize);
 #include <netinet/tcp.h>
 #include <net/if.h>
 
+#include <winpr/io.h>
 #include <winpr/error.h>
 #include <winpr/platform.h>
+
+#define WSAEVENT	HANDLE
+#define LPWSAEVENT	LPHANDLE
+#define WSAOVERLAPPED	OVERLAPPED
+typedef OVERLAPPED*	LPWSAOVERLAPPED;
 
 typedef UINT_PTR SOCKET;
 typedef struct sockaddr_storage SOCKADDR_STORAGE;
@@ -86,6 +92,39 @@ typedef struct sockaddr_storage SOCKADDR_STORAGE;
 
 #define WSADESCRIPTION_LEN	256
 #define WSASYS_STATUS_LEN	128
+
+#define FD_READ_BIT				0
+#define FD_READ					(1 << FD_READ_BIT)
+
+#define FD_WRITE_BIT				1
+#define FD_WRITE				(1 << FD_WRITE_BIT)
+
+#define FD_OOB_BIT				2
+#define FD_OOB					(1 << FD_OOB_BIT)
+
+#define FD_ACCEPT_BIT				3
+#define FD_ACCEPT				(1 << FD_ACCEPT_BIT)
+
+#define FD_CONNECT_BIT				4
+#define FD_CONNECT				(1 << FD_CONNECT_BIT)
+
+#define FD_CLOSE_BIT				5
+#define FD_CLOSE				(1 << FD_CLOSE_BIT)
+
+#define FD_QOS_BIT				6
+#define FD_QOS					(1 << FD_QOS_BIT)
+
+#define FD_GROUP_QOS_BIT			7
+#define FD_GROUP_QOS				(1 << FD_GROUP_QOS_BIT)
+
+#define FD_ROUTING_INTERFACE_CHANGE_BIT		8
+#define FD_ROUTING_INTERFACE_CHANGE		(1 << FD_ROUTING_INTERFACE_CHANGE_BIT)
+
+#define FD_ADDRESS_LIST_CHANGE_BIT		9
+#define FD_ADDRESS_LIST_CHANGE			(1 << FD_ADDRESS_LIST_CHANGE_BIT)
+
+#define FD_MAX_EVENTS				10
+#define FD_ALL_EVENTS				((1 << FD_MAX_EVENTS) - 1)
 
 #define SD_RECEIVE		0
 #define SD_SEND			1
@@ -125,6 +164,16 @@ WINPR_API int WSACleanup(void);
 
 WINPR_API void WSASetLastError(int iError);
 WINPR_API int WSAGetLastError(void);
+
+WINPR_API HANDLE WSACreateEvent(void);
+WINPR_API BOOL WSASetEvent(HANDLE hEvent);
+WINPR_API BOOL WSAResetEvent(HANDLE hEvent);
+WINPR_API BOOL WSACloseEvent(HANDLE hEvent);
+
+WINPR_API int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents);
+
+WINPR_API DWORD WSAWaitForMultipleEvents(DWORD cEvents,
+		const HANDLE* lphEvents, BOOL fWaitAll, DWORD dwTimeout, BOOL fAlertable);
 
 WINPR_API SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen);
 WINPR_API int _bind(SOCKET s, const struct sockaddr* addr, int namelen);

@@ -252,7 +252,7 @@ static void* thread_launcher(void* arg)
 
 		if (!fkt)
 		{
-			WLog_ERR(TAG, "Thread function argument is %p\n", fkt);
+			WLog_ERR(TAG, "Thread function argument is %p", fkt);
 			goto exit;
 		}
 
@@ -285,12 +285,13 @@ static void winpr_StartThread(WINPR_THREAD *thread)
 	if (thread->dwStackSize > 0)
 		pthread_attr_setstacksize(&attr, (size_t) thread->dwStackSize);
 
-	pthread_create(&thread->thread, &attr, thread_launcher, thread);
-	pthread_attr_destroy(&attr);
-	reset_event(thread);
-	ListDictionary_Add(thread_list, &thread->thread, thread);
-	dump_thread(thread);
 	thread->started = TRUE;
+	reset_event(thread);
+
+	pthread_create(&thread->thread, &attr, thread_launcher, thread);
+	ListDictionary_Add(thread_list, &thread->thread, thread);
+	pthread_attr_destroy(&attr);
+	dump_thread(thread);
 }
 
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
@@ -579,6 +580,7 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 	WLog_ERR(TAG, "Function not supported on this platform!");
 #endif
 	pthread_mutex_unlock(&thread->mutex);
+	set_event(thread);
 	return TRUE;
 }
 
@@ -609,7 +611,7 @@ VOID DumpThreadHandles(void)
 		ULONG_PTR *keys = NULL;
 		ListDictionary_Lock(thread_list);
 		int x, count = ListDictionary_GetKeys(thread_list, &keys);
-		WLog_DBG(TAG, "Dumping %d elements\n", count);
+		WLog_DBG(TAG, "Dumping %d elements", count);
 
 		for (x = 0; x < count; x++)
 		{

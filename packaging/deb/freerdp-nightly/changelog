@@ -1,0 +1,11 @@
+freerdp-nightly (1.2.1) unstable; urgency=low
+
+  * Update version to 1.2.1
+
+ -- FreeRDP <team@freerdp.com>  Tue, 03 Feb 2015 13:44:33 +0100
+
+freerdp-nightly (1.2.0) unstable; urgency=medium
+
+  * Initial version of freerdp-nightly
+
+ -- FreeRDP <team@freerdp.com>  Wed, 07 Jan 2015 10:09:32 +0100

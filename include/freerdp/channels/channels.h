@@ -35,15 +35,15 @@ extern "C" {
 FREERDP_API rdpChannels* freerdp_channels_new(void);
 FREERDP_API void freerdp_channels_free(rdpChannels* channels);
 FREERDP_API int freerdp_channels_client_load(rdpChannels* channels, rdpSettings* settings,
-		void* entry, void* data);
+		PVIRTUALCHANNELENTRY entry, void* data);
 FREERDP_API int freerdp_channels_load_plugin(rdpChannels* channels, rdpSettings* settings,
 	const char* name, void* data);
 FREERDP_API int freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance);
 FREERDP_API int freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance);
+FREERDP_API int freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance);
 FREERDP_API BOOL freerdp_channels_get_fds(rdpChannels* channels, freerdp* instance, void** read_fds,
 	int* read_count, void** write_fds, int* write_count);
 FREERDP_API BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance);
-FREERDP_API wMessage* freerdp_channels_pop_event(rdpChannels* channels);
 FREERDP_API void freerdp_channels_close(rdpChannels* channels, freerdp* instance);
 
 FREERDP_API void* freerdp_channels_get_static_channel_interface(rdpChannels* channels, const char* name);

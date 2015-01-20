@@ -35,7 +35,7 @@ UINT32 smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream*
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "CommonTypeHeader is too short: %d",
+		WLog_WARN(TAG, "CommonTypeHeader is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -49,25 +49,25 @@ UINT32 smartcard_unpack_common_type_header(SMARTCARD_DEVICE* smartcard, wStream*
 
 	if (version != 1)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Unsupported CommonTypeHeader Version %d", version);
+		WLog_WARN(TAG, "Unsupported CommonTypeHeader Version %d", version);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (endianness != 0x10)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Unsupported CommonTypeHeader Endianness %d", endianness);
+		WLog_WARN(TAG, "Unsupported CommonTypeHeader Endianness %d", endianness);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (commonHeaderLength != 8)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Unsupported CommonTypeHeader CommonHeaderLength %d", commonHeaderLength);
+		WLog_WARN(TAG, "Unsupported CommonTypeHeader CommonHeaderLength %d", commonHeaderLength);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (filler != 0xCCCCCCCC)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Unexpected CommonTypeHeader Filler 0x%08X", filler);
+		WLog_WARN(TAG, "Unexpected CommonTypeHeader Filler 0x%08X", filler);
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -91,7 +91,7 @@ UINT32 smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "PrivateTypeHeader is too short: %d",
+		WLog_WARN(TAG, "PrivateTypeHeader is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -101,13 +101,13 @@ UINT32 smartcard_unpack_private_type_header(SMARTCARD_DEVICE* smartcard, wStream
 
 	if (filler != 0x00000000)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Unexpected PrivateTypeHeader Filler 0x%08X", filler);
+		WLog_WARN(TAG, "Unexpected PrivateTypeHeader Filler 0x%08X", filler);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (objectBufferLength != Stream_GetRemainingLength(s))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "PrivateTypeHeader ObjectBufferLength mismatch: Actual: %d, Expected: %d",
+		WLog_WARN(TAG, "PrivateTypeHeader ObjectBufferLength mismatch: Actual: %d, Expected: %d",
 				(int) objectBufferLength, Stream_GetRemainingLength(s));
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -157,9 +157,8 @@ SCARDCONTEXT smartcard_scard_context_native_from_redir(SMARTCARD_DEVICE* smartca
 
 	if ((context->cbContext != sizeof(ULONG_PTR)) && (context->cbContext != 0))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN,
-			"REDIR_SCARDCONTEXT does not match native size: Actual: %d, Expected: %d",
-			context->cbContext, sizeof(ULONG_PTR));
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT does not match native size: Actual: %d, Expected: %d",
+				context->cbContext, sizeof(ULONG_PTR));
 		return 0;
 	}
 
@@ -184,9 +183,8 @@ SCARDHANDLE smartcard_scard_handle_native_from_redir(SMARTCARD_DEVICE* smartcard
 
 	if (handle->cbHandle != sizeof(ULONG_PTR))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN,
-			"REDIR_SCARDHANDLE does not match native size: Actual: %d, Expected: %d",
-			handle->cbHandle, sizeof(ULONG_PTR));
+		WLog_WARN(TAG, "REDIR_SCARDHANDLE does not match native size: Actual: %d, Expected: %d",
+				handle->cbHandle, sizeof(ULONG_PTR));
 		return 0;
 	}
 
@@ -211,7 +209,7 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: %d",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -220,14 +218,14 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 
 	if (Stream_GetRemainingLength(s) < context->cbContext)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), context->cbContext);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	if ((context->cbContext != 0) && (context->cbContext != 4) && (context->cbContext != 8))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length is not 0, 4 or 8: %d\n", context->cbContext);
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT length is not 0, 4 or 8: %d", context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -235,14 +233,14 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 
 	if (((context->cbContext == 0) && pbContextNdrPtr) || ((context->cbContext != 0) && !pbContextNdrPtr))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT cbContext (%d) pbContextNdrPtr (%d) inconsistency",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT cbContext (%d) pbContextNdrPtr (%d) inconsistency",
 				(int) context->cbContext, (int) pbContextNdrPtr);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (context->cbContext > Stream_GetRemainingLength(s))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too long: Actual: %d, Expected: %d",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too long: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -271,7 +269,7 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d\n",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), 4);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -280,20 +278,20 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 
 	if (length != context->cbContext)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length (%d) cbContext (%d) mismatch\n",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT length (%d) cbContext (%d) mismatch",
 			length, context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((context->cbContext != 0) && (context->cbContext != 4) && (context->cbContext != 8))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length is not 4 or 8: %d\n", context->cbContext);
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT length is not 4 or 8: %d", context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (Stream_GetRemainingLength(s) < context->cbContext)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d\n",
+		WLog_WARN(TAG, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), context->cbContext);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -326,7 +324,7 @@ UINT32 smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream*
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "SCARDHANDLE is too short: %d",
+		WLog_WARN(TAG, "SCARDHANDLE is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -335,7 +333,7 @@ UINT32 smartcard_unpack_redir_scard_handle(SMARTCARD_DEVICE* smartcard, wStream*
 
 	if ((Stream_GetRemainingLength(s) < handle->cbHandle) || (!handle->cbHandle))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "SCARDHANDLE is too short: Actual: %d, Expected: %d",
+		WLog_WARN(TAG, "SCARDHANDLE is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), handle->cbHandle);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -363,7 +361,7 @@ UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStr
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d\n",
+		WLog_WARN(TAG, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), 4);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -372,20 +370,20 @@ UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStr
 
 	if (length != handle->cbHandle)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE length (%d) cbHandle (%d) mismatch\n",
+		WLog_WARN(TAG, "REDIR_SCARDHANDLE length (%d) cbHandle (%d) mismatch",
 			length, handle->cbHandle);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((handle->cbHandle != 4) && (handle->cbHandle != 8))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE length is not 4 or 8: %d\n", handle->cbHandle);
+		WLog_WARN(TAG, "REDIR_SCARDHANDLE length is not 4 or 8: %d", handle->cbHandle);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((Stream_GetRemainingLength(s) < handle->cbHandle) || (!handle->cbHandle))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d\n",
+		WLog_WARN(TAG, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), handle->cbHandle);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -410,7 +408,7 @@ UINT32 smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStr
 {
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "EstablishContext_Call is too short: Actual: %d, Expected: %d\n",
+		WLog_WARN(TAG, "EstablishContext_Call is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), 4);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -422,15 +420,15 @@ UINT32 smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStr
 
 void smartcard_trace_establish_context_call(SMARTCARD_DEVICE* smartcard, EstablishContext_Call* call)
 {
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "EstablishContext_Call {");
+	WLog_DBG(TAG, "EstablishContext_Call {");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "dwScope: %s (0x%08X)",
+	WLog_DBG(TAG, "dwScope: %s (0x%08X)",
 			SCardGetScopeString(call->dwScope), call->dwScope);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_pack_establish_context_return(SMARTCARD_DEVICE* smartcard, wStream* s, EstablishContext_Return* ret)
@@ -454,28 +452,28 @@ void smartcard_trace_establish_context_return(SMARTCARD_DEVICE* smartcard, Estab
 {
 	BYTE* pb;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "EstablishContext_Return {");
+	WLog_DBG(TAG, "EstablishContext_Return {");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
 		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
 	pb = (BYTE*) &(ret->hContext.pbContext);
 
 	if (ret->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], ret->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], ret->hContext.cbContext);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_unpack_context_call(SMARTCARD_DEVICE* smartcard, wStream* s, Context_Call* call)
@@ -499,38 +497,38 @@ void smartcard_trace_context_call(SMARTCARD_DEVICE* smartcard, Context_Call* cal
 {
 	BYTE* pb;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "%s_Call {", name);
+	WLog_DBG(TAG, "%s_Call {", name);
 
 	pb = (BYTE*) &(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 void smartcard_trace_long_return(SMARTCARD_DEVICE* smartcard, Long_Return* ret, const char* name)
 {
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "%s_Return {", name);
+	WLog_DBG(TAG, "%s_Return {", name);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
 		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* s, ListReaders_Call* call)
@@ -548,7 +546,7 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 
 	if (Stream_GetRemainingLength(s) < 16)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call is too short: %d",
+		WLog_WARN(TAG, "ListReaders_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -565,9 +563,8 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 	
 	if ((mszGroupsNdrPtr && !call->cBytes) || (!mszGroupsNdrPtr && call->cBytes))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN,
-			   "ListReaders_Call mszGroupsNdrPtr (0x%08X) and cBytes (0x%08X) inconsistency",
-			   (int) mszGroupsNdrPtr, (int) call->cBytes);
+		WLog_WARN(TAG, "ListReaders_Call mszGroupsNdrPtr (0x%08X) and cBytes (0x%08X) inconsistency",
+				(int) mszGroupsNdrPtr, (int) call->cBytes);
 		return STATUS_INVALID_PARAMETER;
 	}
 	
@@ -577,15 +574,14 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 		
 		if (count != call->cBytes)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN,
-				   "ListReaders_Call NdrCount (0x%08X) and cBytes (0x%08X) inconsistency",
-				   (int) count, (int) call->cBytes);
+			WLog_WARN(TAG, "ListReaders_Call NdrCount (0x%08X) and cBytes (0x%08X) inconsistency",
+					(int) count, (int) call->cBytes);
 			return STATUS_INVALID_PARAMETER;
 		}
 		
 		if (Stream_GetRemainingLength(s) < call->cBytes)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call is too short: Actual: %d, Expected: %d",
+			WLog_WARN(TAG, "ListReaders_Call is too short: Actual: %d, Expected: %d",
 				   (int) Stream_GetRemainingLength(s), call->cBytes);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
@@ -594,7 +590,7 @@ UINT32 smartcard_unpack_list_readers_call(SMARTCARD_DEVICE* smartcard, wStream* 
 		
 		if (!call->mszGroups)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "ListReaders_Call out of memory error (mszGroups)");
+			WLog_WARN(TAG, "ListReaders_Call out of memory error (mszGroups)");
 			return STATUS_NO_MEMORY;
 		}
 		
@@ -611,32 +607,31 @@ void smartcard_trace_list_readers_call(SMARTCARD_DEVICE* smartcard, ListReaders_
 	BYTE* pb;
 	char* mszGroupsA = NULL;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
 	if (unicode)
 		ConvertFromUnicode(CP_UTF8, 0, (WCHAR*) call->mszGroups, call->cBytes / 2, &mszGroupsA, 0, NULL, NULL);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ListReaders%S_Call {", unicode ? "W" : "A");
+	WLog_DBG(TAG, "ListReaders%S_Call {", unicode ? "W" : "A");
 
 	pb = (BYTE*) &(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG,
-		"cBytes: %d mszGroups: %s fmszReadersIsNULL: %d cchReaders: 0x%08X",
-		call->cBytes, mszGroupsA, call->fmszReadersIsNULL, call->cchReaders);
+	WLog_DBG(TAG, "cBytes: %d mszGroups: %s fmszReadersIsNULL: %d cchReaders: 0x%08X",
+			call->cBytes, mszGroupsA, call->fmszReadersIsNULL, call->cchReaders);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 
 	if (unicode)
 		free(mszGroupsA);
@@ -674,7 +669,7 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReader
 	int length;
 	char* mszA = NULL;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
 	if (unicode)
@@ -695,14 +690,14 @@ void smartcard_trace_list_readers_return(SMARTCARD_DEVICE* smartcard, ListReader
 			mszA[index] = ',';
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ListReaders%s_Return {", unicode ? "W" : "A");
+	WLog_DBG(TAG, "ListReaders%s_Return {", unicode ? "W" : "A");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
 		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "cBytes: %d msz: %s", ret->cBytes, mszA);
+	WLog_DBG(TAG, "cBytes: %d msz: %s", ret->cBytes, mszA);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 
 	free(mszA);
 }
@@ -713,7 +708,7 @@ UINT32 smartcard_unpack_connect_common(SMARTCARD_DEVICE* smartcard, wStream* s, 
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Connect_Common is too short: %d",
+		WLog_WARN(TAG, "Connect_Common is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -738,7 +733,7 @@ UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "ConnectA_Call is too short: %d",
+		WLog_WARN(TAG, "ConnectA_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -760,7 +755,7 @@ UINT32 smartcard_unpack_connect_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 
 	if (!call->szReader)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "ConnectA_Call out of memory error (call->szReader)");
+		WLog_WARN(TAG, "ConnectA_Call out of memory error (call->szReader)");
 		return STATUS_NO_MEMORY;
 	}
 
@@ -777,29 +772,29 @@ void smartcard_trace_connect_a_call(SMARTCARD_DEVICE* smartcard, ConnectA_Call* 
 {
 	BYTE* pb;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectA_Call {");
+	WLog_DBG(TAG, "ConnectA_Call {");
 
 	pb = (BYTE*) &(call->Common.hContext.pbContext);
 
 	if (call->Common.hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Common.hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->Common.hContext.cbContext);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: %s (0x%08X) dwPreferredProtocols: %s (0x%08X)",
+	WLog_DBG(TAG, "szReader: %s dwShareMode: %s (0x%08X) dwPreferredProtocols: %s (0x%08X)",
 		call->szReader, SCardGetShareModeString(call->Common.dwShareMode), call->Common.dwShareMode,
 		SCardGetProtocolString(call->Common.dwPreferredProtocols), call->Common.dwPreferredProtocols);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, ConnectW_Call* call)
@@ -811,7 +806,7 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "ConnectW_Call is too short: %d",
+		WLog_WARN(TAG, "ConnectW_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -833,7 +828,7 @@ UINT32 smartcard_unpack_connect_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 
 	if (!call->szReader)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "ConnectW_Call out of memory error (call->szReader)");
+		WLog_WARN(TAG, "ConnectW_Call out of memory error (call->szReader)");
 		return STATUS_NO_MEMORY;
 	}
 
@@ -851,31 +846,31 @@ void smartcard_trace_connect_w_call(SMARTCARD_DEVICE* smartcard, ConnectW_Call* 
 	BYTE* pb;
 	char* szReaderA = NULL;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
 	ConvertFromUnicode(CP_UTF8, 0, call->szReader, -1, &szReaderA, 0, NULL, NULL);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ConnectW_Call {");
+	WLog_DBG(TAG, "ConnectW_Call {");
 
 	pb = (BYTE*) &(call->Common.hContext.pbContext);
 
 	if (call->Common.hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->Common.hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->Common.hContext.cbContext);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "szReader: %s dwShareMode: %s (0x%08X) dwPreferredProtocols: %s (0x%08X)",
+	WLog_DBG(TAG, "szReader: %s dwShareMode: %s (0x%08X) dwPreferredProtocols: %s (0x%08X)",
 		szReaderA, SCardGetShareModeString(call->Common.dwShareMode), call->Common.dwShareMode,
 		SCardGetProtocolString(call->Common.dwPreferredProtocols), call->Common.dwPreferredProtocols);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 
 	free(szReaderA);
 }
@@ -913,24 +908,24 @@ void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, Connect_Return*
 {
 	BYTE* pb;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "Connect_Return {");
+	WLog_DBG(TAG, "Connect_Return {");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
 		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
 	pb = (BYTE*) &(ret->hContext.pbContext);
 
 	if (ret->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], ret->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], ret->hContext.cbContext);
 	}
 
@@ -938,19 +933,19 @@ void smartcard_trace_connect_return(SMARTCARD_DEVICE* smartcard, Connect_Return*
 
 	if (ret->hCard.cbHandle > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], ret->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], ret->hCard.cbHandle);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "dwActiveProtocol: %s (0x%08X)",
+	WLog_DBG(TAG, "dwActiveProtocol: %s (0x%08X)",
 		SCardGetProtocolString(ret->dwActiveProtocol), ret->dwActiveProtocol);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, Reconnect_Call* call)
@@ -969,7 +964,7 @@ UINT32 smartcard_unpack_reconnect_call(SMARTCARD_DEVICE* smartcard, wStream* s, 
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Reconnect_Call is too short: %d",
+		WLog_WARN(TAG, "Reconnect_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -995,21 +990,21 @@ void smartcard_trace_reconnect_call(SMARTCARD_DEVICE* smartcard, Reconnect_Call*
 {
 	BYTE* pb;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "Reconnect_Call {");
+	WLog_DBG(TAG, "Reconnect_Call {");
 
 	pb = (BYTE*) &(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
@@ -1017,22 +1012,21 @@ void smartcard_trace_reconnect_call(SMARTCARD_DEVICE* smartcard, Reconnect_Call*
 
 	if (call->hCard.cbHandle > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG,
-		"dwShareMode: %s (0x%08X) dwPreferredProtocols: %s (0x%08X) dwInitialization: %s (0x%08X)",
+	WLog_DBG(TAG, "dwShareMode: %s (0x%08X) dwPreferredProtocols: %s (0x%08X) dwInitialization: %s (0x%08X)",
 		SCardGetShareModeString(call->dwShareMode), call->dwShareMode,
 		SCardGetProtocolString(call->dwPreferredProtocols), call->dwPreferredProtocols,
 		SCardGetDispositionString(call->dwInitialization), call->dwInitialization);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_pack_reconnect_return(SMARTCARD_DEVICE* smartcard, wStream* s, Reconnect_Return* ret)
@@ -1044,18 +1038,18 @@ UINT32 smartcard_pack_reconnect_return(SMARTCARD_DEVICE* smartcard, wStream* s, 
 
 void smartcard_trace_reconnect_return(SMARTCARD_DEVICE* smartcard, Reconnect_Return* ret)
 {
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "Reconnect_Return {");
+	WLog_DBG(TAG, "Reconnect_Return {");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
 		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "dwActiveProtocol: %s (0x%08X)",
+	WLog_DBG(TAG, "dwActiveProtocol: %s (0x%08X)",
 		SCardGetProtocolString(ret->dwActiveProtocol), ret->dwActiveProtocol);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, wStream* s, HCardAndDisposition_Call* call)
@@ -1074,7 +1068,7 @@ UINT32 smartcard_unpack_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, 
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "HCardAndDisposition_Call is too short: %d",
+		WLog_WARN(TAG, "HCardAndDisposition_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1098,21 +1092,21 @@ void smartcard_trace_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, HCa
 {
 	BYTE* pb;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "%s_Call {", name);
+	WLog_DBG(TAG, "%s_Call {", name);
 
 	pb = (BYTE*) &(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
@@ -1120,19 +1114,19 @@ void smartcard_trace_hcard_and_disposition_call(SMARTCARD_DEVICE* smartcard, HCa
 
 	if (call->hCard.cbHandle > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "dwDisposition: %s (0x%08X)",
+	WLog_DBG(TAG, "dwDisposition: %s (0x%08X)",
 		SCardGetDispositionString(call->dwDisposition), call->dwDisposition);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChangeA_Call* call)
@@ -1155,7 +1149,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+		WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1171,7 +1165,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+		WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1180,8 +1174,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if (count != call->cReaders)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN,
-				"GetStatusChangeA_Call unexpected reader count: Actual: %d, Expected: %d",
+		WLog_WARN(TAG, "GetStatusChangeA_Call unexpected reader count: Actual: %d, Expected: %d",
 				(int) count, call->cReaders);
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -1192,7 +1185,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 		if (!call->rgReaderStates)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call out of memory error (call->rgReaderStates)");
+			WLog_WARN(TAG, "GetStatusChangeA_Call out of memory error (call->rgReaderStates)");
 			return STATUS_NO_MEMORY;
 		}
 
@@ -1202,7 +1195,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (Stream_GetRemainingLength(s) < 52)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
@@ -1221,7 +1214,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (Stream_GetRemainingLength(s) < 12)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
@@ -1232,7 +1225,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (Stream_GetRemainingLength(s) < count)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
@@ -1241,8 +1234,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (!readerState->szReader)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN,
-					"GetStatusChangeA_Call out of memory error (readerState->szReader)");
+				WLog_WARN(TAG, "GetStatusChangeA_Call out of memory error (readerState->szReader)");
 				return STATUS_NO_MEMORY;
 			}
 
@@ -1252,7 +1244,7 @@ UINT32 smartcard_unpack_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (!readerState->szReader)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call null reader name");
+				WLog_WARN(TAG, "GetStatusChangeA_Call null reader name");
 				return STATUS_INVALID_PARAMETER;
 			}
 		}
@@ -1269,51 +1261,48 @@ void smartcard_trace_get_status_change_a_call(SMARTCARD_DEVICE* smartcard, GetSt
 	char* szCurrentState;
 	LPSCARD_READERSTATEA readerState;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChangeA_Call {");
+	WLog_DBG(TAG, "GetStatusChangeA_Call {");
 
 	pb = (BYTE*) &(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "dwTimeOut: 0x%08X cReaders: %d",
+	WLog_DBG(TAG, "dwTimeOut: 0x%08X cReaders: %d",
 		call->dwTimeOut, call->cReaders);
 
 	for (index = 0; index < call->cReaders; index++)
 	{
 		readerState = &call->rgReaderStates[index];
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: szReader: %s cbAtr: %d",
+		WLog_DBG(TAG, "\t[%d]: szReader: %s cbAtr: %d",
 			index, readerState->szReader, readerState->cbAtr);
 
 		szCurrentState = SCardGetReaderStateString(readerState->dwCurrentState);
 		szEventState = SCardGetReaderStateString(readerState->dwEventState);
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: dwCurrentState: %s (0x%08X)",
+		WLog_DBG(TAG, "\t[%d]: dwCurrentState: %s (0x%08X)",
 			index, szCurrentState, readerState->dwCurrentState);
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: dwEventState: %s (0x%08X)",
+		WLog_DBG(TAG, "\t[%d]: dwEventState: %s (0x%08X)",
 			index, szEventState, readerState->dwEventState);
 
 		free(szCurrentState);
 		free(szEventState);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChangeW_Call* call)
@@ -1336,7 +1325,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
+		WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1352,7 +1341,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
+		WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1365,7 +1354,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 		if (!call->rgReaderStates)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call out of memory error (call->rgReaderStates)");
+			WLog_WARN(TAG, "GetStatusChangeW_Call out of memory error (call->rgReaderStates)");
 			return STATUS_NO_MEMORY;
 		}
 
@@ -1375,7 +1364,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (Stream_GetRemainingLength(s) < 52)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
+				WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
@@ -1394,7 +1383,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (Stream_GetRemainingLength(s) < 12)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
+				WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
@@ -1405,7 +1394,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (Stream_GetRemainingLength(s) < (count * 2))
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call is too short: %d",
+				WLog_WARN(TAG, "GetStatusChangeW_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
@@ -1414,8 +1403,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (!readerState->szReader)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN,
-					"GetStatusChangeW_Call out of memory error (readerState->szReader)");
+				WLog_WARN(TAG, "GetStatusChangeW_Call out of memory error (readerState->szReader)");
 				return STATUS_NO_MEMORY;
 			}
 
@@ -1425,7 +1413,7 @@ UINT32 smartcard_unpack_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, wS
 
 			if (!readerState->szReader)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeW_Call null reader name");
+				WLog_WARN(TAG, "GetStatusChangeW_Call null reader name");
 				return STATUS_INVALID_PARAMETER;
 			}
 		}
@@ -1442,25 +1430,25 @@ void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, GetSt
 	char* szCurrentState;
 	LPSCARD_READERSTATEW readerState;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChangeW_Call {");
+	WLog_DBG(TAG, "GetStatusChangeW_Call {");
 
 	pb = (BYTE*) &(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "dwTimeOut: 0x%08X cReaders: %d",
+	WLog_DBG(TAG, "dwTimeOut: 0x%08X cReaders: %d",
 		call->dwTimeOut, call->cReaders);
 
 	for (index = 0; index < call->cReaders; index++)
@@ -1471,19 +1459,16 @@ void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, GetSt
 
 		ConvertFromUnicode(CP_UTF8, 0, readerState->szReader, -1, &szReaderA, 0, NULL, NULL);
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: szReader: %s cbAtr: %d",
+		WLog_DBG(TAG, "\t[%d]: szReader: %s cbAtr: %d",
 			index, szReaderA, readerState->cbAtr);
 
 		szCurrentState = SCardGetReaderStateString(readerState->dwCurrentState);
 		szEventState = SCardGetReaderStateString(readerState->dwEventState);
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: dwCurrentState: %s (0x%08X)",
+		WLog_DBG(TAG, "\t[%d]: dwCurrentState: %s (0x%08X)",
 			index, szCurrentState, readerState->dwCurrentState);
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: dwEventState: %s (0x%08X)",
+		WLog_DBG(TAG, "\t[%d]: dwEventState: %s (0x%08X)",
 			index, szEventState, readerState->dwEventState);
 
 		free(szCurrentState);
@@ -1492,7 +1477,7 @@ void smartcard_trace_get_status_change_w_call(SMARTCARD_DEVICE* smartcard, GetSt
 		free(szReaderA);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_pack_get_status_change_return(SMARTCARD_DEVICE* smartcard, wStream* s, GetStatusChange_Return* ret)
@@ -1525,15 +1510,15 @@ void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetSt
 	char* szCurrentState;
 	ReaderState_Return* rgReaderState;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "GetStatusChange%s_Return {", unicode ? "W" : "A");
+	WLog_DBG(TAG, "GetStatusChange%s_Return {", unicode ? "W" : "A");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
 		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "cReaders: %d", ret->cReaders);
+	WLog_DBG(TAG, "cReaders: %d", ret->cReaders);
 
 	for (index = 0; index < ret->cReaders; index++)
 	{
@@ -1543,16 +1528,13 @@ void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetSt
 		szEventState = SCardGetReaderStateString(rgReaderState->dwEventState);
 		rgbAtr = winpr_BinToHexString((BYTE*) &(rgReaderState->rgbAtr), rgReaderState->cbAtr, FALSE);
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: dwCurrentState: %s (0x%08X)",
+		WLog_DBG(TAG, "\t[%d]: dwCurrentState: %s (0x%08X)",
 			index, szCurrentState, rgReaderState->dwCurrentState);
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: dwEventState: %s (0x%08X)",
+		WLog_DBG(TAG, "\t[%d]: dwEventState: %s (0x%08X)",
 			index, szEventState, rgReaderState->dwEventState);
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: cbAtr: %d rgbAtr: %s",
+		WLog_DBG(TAG, "\t[%d]: cbAtr: %d rgbAtr: %s",
 			index, rgReaderState->cbAtr, rgbAtr);
 
 		free(szCurrentState);
@@ -1560,7 +1542,7 @@ void smartcard_trace_get_status_change_return(SMARTCARD_DEVICE* smartcard, GetSt
 		free(rgbAtr);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, State_Call* call)
@@ -1579,7 +1561,7 @@ UINT32 smartcard_unpack_state_call(SMARTCARD_DEVICE* smartcard, wStream* s, Stat
 
 	if (Stream_GetRemainingLength(s) < 8)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "State_Call is too short: %d",
+		WLog_WARN(TAG, "State_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1630,7 +1612,7 @@ UINT32 smartcard_unpack_status_call(SMARTCARD_DEVICE* smartcard, wStream* s, Sta
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Status_Call is too short: %d",
+		WLog_WARN(TAG, "Status_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1656,21 +1638,21 @@ void smartcard_trace_status_call(SMARTCARD_DEVICE* smartcard, Status_Call* call,
 {
 	BYTE* pb;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "Status%s_Call {", unicode ? "W" : "A");
+	WLog_DBG(TAG, "Status%s_Call {", unicode ? "W" : "A");
 
 	pb = (BYTE*) &(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
@@ -1678,19 +1660,19 @@ void smartcard_trace_status_call(SMARTCARD_DEVICE* smartcard, Status_Call* call,
 
 	if (call->hCard.cbHandle > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "fmszReaderNamesIsNULL: %d cchReaderLen: %d cbAtrLen: %d",
+	WLog_DBG(TAG, "fmszReaderNamesIsNULL: %d cchReaderLen: %d cbAtrLen: %d",
 		call->fmszReaderNamesIsNULL, call->cchReaderLen, call->cbAtrLen);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_pack_status_return(SMARTCARD_DEVICE* smartcard, wStream* s, Status_Return* ret)
@@ -1723,7 +1705,7 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 	char* pbAtr = NULL;
 	char* mszReaderNamesA = NULL;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
 	if (unicode)
@@ -1752,25 +1734,24 @@ void smartcard_trace_status_return(SMARTCARD_DEVICE* smartcard, Status_Return* r
 
 	pbAtr = winpr_BinToHexString(ret->pbAtr, ret->cbAtrLen, FALSE);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "Status%s_Return {", unicode ? "W" : "A");
+	WLog_DBG(TAG, "Status%s_Return {", unicode ? "W" : "A");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
 		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "dwState: %s (0x%08X) dwProtocol: %s (0x%08X)",
+	WLog_DBG(TAG, "dwState: %s (0x%08X) dwProtocol: %s (0x%08X)",
 		SCardGetCardStateString(ret->dwState), ret->dwState,
 		SCardGetProtocolString(ret->dwProtocol), ret->dwProtocol);
 
 	if (mszReaderNamesA)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "cBytes: %d mszReaderNames: %s",
+		WLog_DBG(TAG, "cBytes: %d mszReaderNames: %s",
 			ret->cBytes, mszReaderNamesA);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG,
-		"cbAtrLen: %d pbAtr: %s", ret->cbAtrLen, pbAtr);
+	WLog_DBG(TAG, "cbAtrLen: %d pbAtr: %s", ret->cbAtrLen, pbAtr);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 
 	free(mszReaderNamesA);
 	free(pbAtr);
@@ -1792,7 +1773,7 @@ UINT32 smartcard_unpack_get_attrib_call(SMARTCARD_DEVICE* smartcard, wStream* s,
 
 	if (Stream_GetRemainingLength(s) < 12)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "GetAttrib_Call is too short: %d",
+		WLog_WARN(TAG, "GetAttrib_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1818,21 +1799,21 @@ void smartcard_trace_get_attrib_call(SMARTCARD_DEVICE* smartcard, GetAttrib_Call
 {
 	BYTE* pb;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "GetAttrib_Call {");
+	WLog_DBG(TAG, "GetAttrib_Call {");
 
 	pb = (BYTE*) &(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
@@ -1840,19 +1821,19 @@ void smartcard_trace_get_attrib_call(SMARTCARD_DEVICE* smartcard, GetAttrib_Call
 
 	if (call->hCard.cbHandle > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "dwAttrId: %s (0x%08X) fpbAttrIsNULL: %d cbAttrLen: 0x%08X",
+	WLog_DBG(TAG, "dwAttrId: %s (0x%08X) fpbAttrIsNULL: %d cbAttrLen: 0x%08X",
 		SCardGetAttributeString(call->dwAttrId), call->dwAttrId, call->fpbAttrIsNULL, call->cbAttrLen);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s, GetAttrib_Return* ret)
@@ -1875,29 +1856,29 @@ UINT32 smartcard_pack_get_attrib_return(SMARTCARD_DEVICE* smartcard, wStream* s,
 
 void smartcard_trace_get_attrib_return(SMARTCARD_DEVICE* smartcard, GetAttrib_Return* ret, DWORD dwAttrId)
 {
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "GetAttrib_Return {");
+	WLog_DBG(TAG, "GetAttrib_Return {");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
 		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "dwAttrId: %s (0x%08X) cbAttrLen: 0x%08X",
+	WLog_DBG(TAG, "dwAttrId: %s (0x%08X) cbAttrLen: 0x%08X",
 		SCardGetAttributeString(dwAttrId), dwAttrId, ret->cbAttrLen);
 
 	if (dwAttrId == SCARD_ATTR_VENDOR_NAME)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pbAttr: %.*s", ret->cbAttrLen, (char*) ret->pbAttr);
+		WLog_DBG(TAG, "pbAttr: %.*s", ret->cbAttrLen, (char*) ret->pbAttr);
 	}
 	else if (dwAttrId == SCARD_ATTR_CURRENT_PROTOCOL_TYPE)
 	{
 		UINT32 dwProtocolType = *((UINT32*) ret->pbAttr);
-		WLog_Print(smartcard->log, WLOG_DEBUG, "dwProtocolType: %s (0x%04X)",
+		WLog_DBG(TAG, "dwProtocolType: %s (0x%04X)",
 				SCardGetProtocolString(dwProtocolType), dwProtocolType);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Control_Call* call)
@@ -1919,7 +1900,7 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 	if (Stream_GetRemainingLength(s) < 20)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Control_Call is too short: %d",
+		WLog_WARN(TAG, "Control_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -1944,7 +1925,7 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Control_Call is too short: %d",
+			WLog_WARN(TAG, "Control_Call is too short: %d",
 					(int) Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
@@ -1953,7 +1934,7 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 		if (Stream_GetRemainingLength(s) < length)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Control_Call is too short: %d",
+			WLog_WARN(TAG, "Control_Call is too short: %d",
 					(int) Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
@@ -1962,7 +1943,7 @@ UINT32 smartcard_unpack_control_call(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 		if (!call->pvInBuffer)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Control_Call out of memory error (call->pvInBuffer)");
+			WLog_WARN(TAG, "Control_Call out of memory error (call->pvInBuffer)");
 			return STATUS_NO_MEMORY;
 		}
 
@@ -1978,21 +1959,21 @@ void smartcard_trace_control_call(SMARTCARD_DEVICE* smartcard, Control_Call* cal
 {
 	BYTE* pb;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "Control_Call {");
+	WLog_DBG(TAG, "Control_Call {");
 
 	pb = (BYTE*) &(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
@@ -2000,31 +1981,30 @@ void smartcard_trace_control_call(SMARTCARD_DEVICE* smartcard, Control_Call* cal
 
 	if (call->hCard.cbHandle > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG,
-			"dwControlCode: 0x%08X cbInBufferSize: %d fpvOutBufferIsNULL: %d cbOutBufferSize: %d",
-			call->dwControlCode, call->cbInBufferSize, call->fpvOutBufferIsNULL, call->cbOutBufferSize);
+	WLog_DBG(TAG, "dwControlCode: 0x%08X cbInBufferSize: %d fpvOutBufferIsNULL: %d cbOutBufferSize: %d",
+		call->dwControlCode, call->cbInBufferSize, call->fpvOutBufferIsNULL, call->cbOutBufferSize);
 
 	if (call->pvInBuffer)
 	{
 		char* szInBuffer = winpr_BinToHexString(call->pvInBuffer, call->cbInBufferSize, TRUE);
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pbInBuffer: %s", szInBuffer);
+		WLog_DBG(TAG, "pbInBuffer: %s", szInBuffer);
 		free(szInBuffer);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pvInBuffer: null");
+		WLog_DBG(TAG, "pvInBuffer: null");
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_pack_control_return(SMARTCARD_DEVICE* smartcard, wStream* s, Control_Return* ret)
@@ -2046,28 +2026,28 @@ UINT32 smartcard_pack_control_return(SMARTCARD_DEVICE* smartcard, wStream* s, Co
 
 void smartcard_trace_control_return(SMARTCARD_DEVICE* smartcard, Control_Return* ret)
 {
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "Control_Return {");
+	WLog_DBG(TAG, "Control_Return {");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
 		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "cbOutBufferSize: %d", ret->cbOutBufferSize);
+	WLog_DBG(TAG, "cbOutBufferSize: %d", ret->cbOutBufferSize);
 
 	if (ret->pvOutBuffer)
 	{
 		char* szOutBuffer = winpr_BinToHexString(ret->pvOutBuffer, ret->cbOutBufferSize, TRUE);
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pvOutBuffer: %s", szOutBuffer);
+		WLog_DBG(TAG, "pvOutBuffer: %s", szOutBuffer);
 		free(szOutBuffer);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pvOutBuffer: null");
+		WLog_DBG(TAG, "pvOutBuffer: null");
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, Transmit_Call* call)
@@ -2097,7 +2077,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 	if (Stream_GetRemainingLength(s) < 32)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: Actual: %d, Expected: %d",
+		WLog_WARN(TAG, "Transmit_Call is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), 32);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -2111,16 +2091,23 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	Stream_Read_UINT32(s, call->fpbRecvBufferIsNULL); /* fpbRecvBufferIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbRecvLength); /* cbRecvLength (4 bytes) */
 
+	if (pioRecvPciNdrPtr)
+	{
+		WLog_DBG(TAG, "Transmit_Call with pioRecvPci:");
+		winpr_HexDump(TAG, WLOG_WARN, Stream_Pointer(s) - 32,
+				Stream_GetRemainingLength(s) + 32);
+	}
+
 	if (ioSendPci.cbExtraBytes > 1024)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call ioSendPci.cbExtraBytes is out of bounds: %d (max: %d)",
+		WLog_WARN(TAG, "Transmit_Call ioSendPci.cbExtraBytes is out of bounds: %d (max: %d)",
 				(int) ioSendPci.cbExtraBytes, 1024);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (call->cbSendLength > 66560)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call cbSendLength is out of bounds: %d (max: %d)",
+		WLog_WARN(TAG, "Transmit_Call cbSendLength is out of bounds: %d (max: %d)",
 				(int) ioSendPci.cbExtraBytes, 66560);
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -2137,8 +2124,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 	if (ioSendPci.cbExtraBytes && !pbExtraBytesNdrPtr)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN,
-				"Transmit_Call cbExtraBytes is non-zero but pbExtraBytesNdrPtr is null");
+		WLog_WARN(TAG, "Transmit_Call ioSendPci.cbExtraBytes is non-zero but pbExtraBytesNdrPtr is null");
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -2146,7 +2132,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
+			WLog_WARN(TAG, "Transmit_Call is too short: %d (ioSendPci.pbExtraBytes)",
 					(int) Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
@@ -2155,8 +2141,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		if (Stream_GetRemainingLength(s) < ioSendPci.cbExtraBytes)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN,
-					"Transmit_Call is too short: Actual: %d, Expected: %d (ioSendPci.cbExtraBytes)",
+			WLog_WARN(TAG, "Transmit_Call is too short: Actual: %d, Expected: %d (ioSendPci.cbExtraBytes)",
 					(int) Stream_GetRemainingLength(s), (int) ioSendPci.cbExtraBytes);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
@@ -2167,7 +2152,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		if (!call->pioSendPci)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call out of memory error (pioSendPci)");
+			WLog_WARN(TAG, "Transmit_Call out of memory error (pioSendPci)");
 			return STATUS_NO_MEMORY;
 		}
 
@@ -2176,6 +2161,8 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		pbExtraBytes = &((BYTE*) call->pioSendPci)[sizeof(SCARD_IO_REQUEST)];
 		Stream_Read(s, pbExtraBytes, ioSendPci.cbExtraBytes);
+
+		smartcard_unpack_read_size_align(smartcard, s, ioSendPci.cbExtraBytes, 4);
 	}
 	else
 	{
@@ -2183,7 +2170,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		if (!call->pioSendPci)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call out of memory error (pioSendPci)");
+			WLog_WARN(TAG, "Transmit_Call out of memory error (pioSendPci)");
 			return STATUS_NO_MEMORY;
 		}
 
@@ -2195,7 +2182,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: %d",
+			WLog_WARN(TAG, "Transmit_Call is too short: %d",
 					(int) Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
@@ -2204,16 +2191,14 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		if (length != call->cbSendLength)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN,
-					"Transmit_Call unexpected length: Actual: %d, Expected: %d (cbSendLength)",
+			WLog_WARN(TAG, "Transmit_Call unexpected length: Actual: %d, Expected: %d (cbSendLength)",
 					(int) length, (int) call->cbSendLength);
 			return STATUS_INVALID_PARAMETER;
 		}
 
 		if (Stream_GetRemainingLength(s) < call->cbSendLength)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN,
-					"Transmit_Call is too short: Actual: %d, Expected: %d (cbSendLength)",
+			WLog_WARN(TAG, "Transmit_Call is too short: Actual: %d, Expected: %d (cbSendLength)",
 					(int) Stream_GetRemainingLength(s), (int) call->cbSendLength);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
@@ -2222,65 +2207,97 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		if (!call->pbSendBuffer)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call out of memory error (pbSendBuffer)");
+			WLog_WARN(TAG, "Transmit_Call out of memory error (pbSendBuffer)");
 			return STATUS_NO_MEMORY;
 		}
 
 		Stream_Read(s, call->pbSendBuffer, call->cbSendLength);
+
+		smartcard_unpack_read_size_align(smartcard, s, call->cbSendLength, 4);
 	}
 
 	if (pioRecvPciNdrPtr)
 	{
-		if (Stream_GetRemainingLength(s) < 8)
+		if (Stream_GetRemainingLength(s) < 12)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call is too short: Actual: %d, Expected: %d",
-					(int) Stream_GetRemainingLength(s), 16);
+			WLog_WARN(TAG, "Transmit_Call is too short: Actual: %d, Expected: %d",
+					(int) Stream_GetRemainingLength(s), 12);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
-
-		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
 		Stream_Read_UINT32(s, ioRecvPci.dwProtocol); /* dwProtocol (4 bytes) */
 		Stream_Read_UINT32(s, ioRecvPci.cbExtraBytes); /* cbExtraBytes (4 bytes) */
+		Stream_Read_UINT32(s, pbExtraBytesNdrPtr); /* pbExtraBytesNdrPtr (4 bytes) */
 
-		if (ioRecvPci.cbExtraBytes > 1024)
+		if (ioRecvPci.cbExtraBytes && !pbExtraBytesNdrPtr)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call ioRecvPci.cbExtraBytes is out of bounds: %d (max: %d)",
-					(int) ioSendPci.cbExtraBytes, 1024);
+			WLog_WARN(TAG, "Transmit_Call ioRecvPci.cbExtraBytes is non-zero but pbExtraBytesNdrPtr is null");
 			return STATUS_INVALID_PARAMETER;
 		}
 
-		if (length < ioRecvPci.cbExtraBytes)
+		if (pbExtraBytesNdrPtr)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN,
-					"Transmit_Call unexpected length: Actual: %d, Expected: %d (ioRecvPci.cbExtraBytes)",
-					(int) length, (int) ioRecvPci.cbExtraBytes);
-			return STATUS_INVALID_PARAMETER;
-		}
+			if (Stream_GetRemainingLength(s) < 4)
+			{
+				WLog_WARN(TAG, "Transmit_Call is too short: %d (ioRecvPci.pbExtraBytes)",
+						(int) Stream_GetRemainingLength(s));
+				return STATUS_BUFFER_TOO_SMALL;
+			}
 
-		if (Stream_GetRemainingLength(s) < ioRecvPci.cbExtraBytes)
+			Stream_Read_UINT32(s, length); /* Length (4 bytes) */
+
+			if (ioRecvPci.cbExtraBytes > 1024)
+			{
+				WLog_WARN(TAG, "Transmit_Call ioRecvPci.cbExtraBytes is out of bounds: %d (max: %d)",
+						(int) ioRecvPci.cbExtraBytes, 1024);
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			if (length != ioRecvPci.cbExtraBytes)
+			{
+				WLog_WARN(TAG, "Transmit_Call unexpected length: Actual: %d, Expected: %d (ioRecvPci.cbExtraBytes)",
+						(int) length, (int) ioRecvPci.cbExtraBytes);
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			if (Stream_GetRemainingLength(s) < ioRecvPci.cbExtraBytes)
+			{
+				WLog_WARN(TAG, "Transmit_Call is too short: Actual: %d, Expected: %d (ioRecvPci.cbExtraBytes)",
+						(int) Stream_GetRemainingLength(s), (int) ioRecvPci.cbExtraBytes);
+				return STATUS_BUFFER_TOO_SMALL;
+			}
+
+			ioRecvPci.pbExtraBytes = (BYTE*) Stream_Pointer(s);
+
+			call->pioRecvPci = (LPSCARD_IO_REQUEST) malloc(sizeof(SCARD_IO_REQUEST) + ioRecvPci.cbExtraBytes);
+
+			if (!call->pioRecvPci)
+			{
+				WLog_WARN(TAG, "Transmit_Call out of memory error (pioRecvPci)");
+				return STATUS_NO_MEMORY;
+			}
+
+			call->pioRecvPci->dwProtocol = ioRecvPci.dwProtocol;
+			call->pioRecvPci->cbPciLength = ioRecvPci.cbExtraBytes + sizeof(SCARD_IO_REQUEST);
+
+			pbExtraBytes = &((BYTE*) call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
+			Stream_Read(s, pbExtraBytes, ioRecvPci.cbExtraBytes);
+
+			smartcard_unpack_read_size_align(smartcard, s, ioRecvPci.cbExtraBytes, 4);
+		}
+		else
 		{
-			WLog_Print(smartcard->log, WLOG_WARN,
-					"Transmit_Call is too short: Actual: %d, Expected: %d (ioRecvPci.cbExtraBytes)",
-					(int) Stream_GetRemainingLength(s), (int) ioRecvPci.cbExtraBytes);
-			return STATUS_BUFFER_TOO_SMALL;
+			call->pioRecvPci = (LPSCARD_IO_REQUEST) calloc(1, sizeof(SCARD_IO_REQUEST));
+
+			if (!call->pioRecvPci)
+			{
+				WLog_WARN(TAG, "Transmit_Call out of memory error (pioRecvPci)");
+				return STATUS_NO_MEMORY;
+			}
+
+			call->pioRecvPci->dwProtocol = ioRecvPci.dwProtocol;
+			call->pioRecvPci->cbPciLength = sizeof(SCARD_IO_REQUEST);
 		}
-
-		ioRecvPci.pbExtraBytes = (BYTE*) Stream_Pointer(s);
-
-		call->pioRecvPci = (LPSCARD_IO_REQUEST) malloc(sizeof(SCARD_IO_REQUEST) + ioRecvPci.cbExtraBytes);
-
-		if (!call->pioRecvPci)
-		{
-			WLog_Print(smartcard->log, WLOG_WARN, "Transmit_Call out of memory error (pioRecvPci)");
-			return STATUS_NO_MEMORY;
-		}
-
-		call->pioRecvPci->dwProtocol = ioRecvPci.dwProtocol;
-		call->pioRecvPci->cbPciLength = ioRecvPci.cbExtraBytes + sizeof(SCARD_IO_REQUEST);
-
-		pbExtraBytes = &((BYTE*) call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
-		Stream_Read(s, pbExtraBytes, ioRecvPci.cbExtraBytes);
 	}
 
 	return SCARD_S_SUCCESS;
@@ -2292,21 +2309,21 @@ void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, Transmit_Call* c
 	UINT32 cbExtraBytes;
 	BYTE* pbExtraBytes;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "Transmit_Call {");
+	WLog_DBG(TAG, "Transmit_Call {");
 
 	pb = (BYTE*) &(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
@@ -2314,12 +2331,12 @@ void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, Transmit_Call* c
 
 	if (call->hCard.cbHandle > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hCard.cbHandle);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hCard: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hCard: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hCard.cbHandle);
 	}
 
@@ -2328,32 +2345,32 @@ void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, Transmit_Call* c
 		cbExtraBytes = call->pioSendPci->cbPciLength - sizeof(SCARD_IO_REQUEST);
 		pbExtraBytes = &((BYTE*) call->pioSendPci)[sizeof(SCARD_IO_REQUEST)];
 
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pioSendPci: dwProtocol: %d cbExtraBytes: %d",
+		WLog_DBG(TAG, "pioSendPci: dwProtocol: %d cbExtraBytes: %d",
 				call->pioSendPci->dwProtocol, cbExtraBytes);
 
 		if (cbExtraBytes)
 		{
 			char* szExtraBytes = winpr_BinToHexString(pbExtraBytes, cbExtraBytes, TRUE);
-			WLog_Print(smartcard->log, WLOG_DEBUG, "pbExtraBytes: %s", szExtraBytes);
+			WLog_DBG(TAG, "pbExtraBytes: %s", szExtraBytes);
 			free(szExtraBytes);
 		}
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pioSendPci: null");
+		WLog_DBG(TAG, "pioSendPci: null");
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "cbSendLength: %d", call->cbSendLength);
+	WLog_DBG(TAG, "cbSendLength: %d", call->cbSendLength);
 
 	if (call->pbSendBuffer)
 	{
 		char* szSendBuffer = winpr_BinToHexString(call->pbSendBuffer, call->cbSendLength, TRUE);
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pbSendBuffer: %s", szSendBuffer);
+		WLog_DBG(TAG, "pbSendBuffer: %s", szSendBuffer);
 		free(szSendBuffer);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pbSendBuffer: null");
+		WLog_DBG(TAG, "pbSendBuffer: null");
 	}
 
 	if (call->pioRecvPci)
@@ -2361,25 +2378,25 @@ void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, Transmit_Call* c
 		cbExtraBytes = call->pioRecvPci->cbPciLength - sizeof(SCARD_IO_REQUEST);
 		pbExtraBytes = &((BYTE*) call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
 
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pioRecvPci: dwProtocol: %d cbExtraBytes: %d",
+		WLog_DBG(TAG, "pioRecvPci: dwProtocol: %d cbExtraBytes: %d",
 				call->pioRecvPci->dwProtocol, cbExtraBytes);
 
 		if (cbExtraBytes)
 		{
 			char* szExtraBytes = winpr_BinToHexString(pbExtraBytes, cbExtraBytes, TRUE);
-			WLog_Print(smartcard->log, WLOG_DEBUG, "pbExtraBytes: %s", szExtraBytes);
+			WLog_DBG(TAG, "pbExtraBytes: %s", szExtraBytes);
 			free(szExtraBytes);
 		}
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pioRecvPci: null");
+		WLog_DBG(TAG, "pioRecvPci: null");
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "fpbRecvBufferIsNULL: %d cbRecvLength: 0x%08X",
+	WLog_DBG(TAG, "fpbRecvBufferIsNULL: %d cbRecvLength: %d",
 			call->fpbRecvBufferIsNULL, call->cbRecvLength);
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_pack_transmit_return(SMARTCARD_DEVICE* smartcard, wStream* s, Transmit_Return* ret)
@@ -2428,12 +2445,12 @@ void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, Transmit_Retur
 	UINT32 cbExtraBytes;
 	BYTE* pbExtraBytes;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "Transmit_Return {");
+	WLog_DBG(TAG, "Transmit_Return {");
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "ReturnCode: %s (0x%08X)",
+	WLog_DBG(TAG, "ReturnCode: %s (0x%08X)",
 		SCardGetErrorString(ret->ReturnCode), ret->ReturnCode);
 
 	if (ret->pioRecvPci)
@@ -2441,35 +2458,35 @@ void smartcard_trace_transmit_return(SMARTCARD_DEVICE* smartcard, Transmit_Retur
 		cbExtraBytes = ret->pioRecvPci->cbPciLength - sizeof(SCARD_IO_REQUEST);
 		pbExtraBytes = &((BYTE*) ret->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
 
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pioRecvPci: dwProtocol: %d cbExtraBytes: %d",
+		WLog_DBG(TAG, "pioRecvPci: dwProtocol: %d cbExtraBytes: %d",
 				ret->pioRecvPci->dwProtocol, cbExtraBytes);
 
 		if (cbExtraBytes)
 		{
 			char* szExtraBytes = winpr_BinToHexString(pbExtraBytes, cbExtraBytes, TRUE);
-			WLog_Print(smartcard->log, WLOG_DEBUG, "pbExtraBytes: %s", szExtraBytes);
+			WLog_DBG(TAG, "pbExtraBytes: %s", szExtraBytes);
 			free(szExtraBytes);
 		}
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pioRecvPci: null");
+		WLog_DBG(TAG, "pioRecvPci: null");
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "cbRecvLength: %d", ret->cbRecvLength);
+	WLog_DBG(TAG, "cbRecvLength: %d", ret->cbRecvLength);
 
 	if (ret->pbRecvBuffer)
 	{
 		char* szRecvBuffer = winpr_BinToHexString(ret->pbRecvBuffer, ret->cbRecvLength, TRUE);
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pbRecvBuffer: %s", szRecvBuffer);
+		WLog_DBG(TAG, "pbRecvBuffer: %s", szRecvBuffer);
 		free(szRecvBuffer);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "pbRecvBuffer: null");
+		WLog_DBG(TAG, "pbRecvBuffer: null");
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }
 
 UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, wStream* s, LocateCardsByATRA_Call* call)
@@ -2493,7 +2510,7 @@ UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, 
 
 	if (Stream_GetRemainingLength(s) < 16)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call is too short: %d",
+		WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -2510,15 +2527,14 @@ UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, 
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call is too short: %d",
+		WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: %d",
 				(int) Stream_GetRemainingLength(s));
 		return STATUS_BUFFER_TOO_SMALL;
 	}
 
 	if ((rgAtrMasksNdrPtr && !call->cAtrs) || (!rgAtrMasksNdrPtr && call->cAtrs))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN,
-				"LocateCardsByATRA_Call rgAtrMasksNdrPtr (0x%08X) and cAtrs (0x%08X) inconsistency",
+		WLog_WARN(TAG, "LocateCardsByATRA_Call rgAtrMasksNdrPtr (0x%08X) and cAtrs (0x%08X) inconsistency",
 				(int) rgAtrMasksNdrPtr, (int) call->cAtrs);
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -2529,15 +2545,14 @@ UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, 
 
 		if (count != call->cAtrs)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN,
-					"LocateCardsByATRA_Call NdrCount (0x%08X) and cAtrs (0x%08X) inconsistency",
+			WLog_WARN(TAG, "LocateCardsByATRA_Call NdrCount (0x%08X) and cAtrs (0x%08X) inconsistency",
 					(int) count, (int) call->cAtrs);
 			return STATUS_INVALID_PARAMETER;
 		}
 
 		if (Stream_GetRemainingLength(s) < call->cAtrs)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call is too short: Actual: %d, Expected: %d",
+			WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: Actual: %d, Expected: %d",
 					(int) Stream_GetRemainingLength(s), call->cAtrs);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
@@ -2545,7 +2560,7 @@ UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, 
 		call->rgAtrMasks = calloc(call->cAtrs, sizeof(SCARD_ATRMASK));
 		if (!call->rgAtrMasks)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call out of memory error (call->rgAtrMasks)");
+			WLog_WARN(TAG, "LocateCardsByATRA_Call out of memory error (call->rgAtrMasks)");
 			return STATUS_NO_MEMORY;
 		}
 
@@ -2561,8 +2576,7 @@ UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, 
 
 	if (count != call->cReaders)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN,
-				"GetStatusChangeA_Call unexpected reader count: Actual: %d, Expected: %d",
+		WLog_WARN(TAG, "GetStatusChangeA_Call unexpected reader count: Actual: %d, Expected: %d",
 				(int) count, call->cReaders);
 		return STATUS_INVALID_PARAMETER;
 	}
@@ -2573,7 +2587,7 @@ UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, 
 
 		if (!call->rgReaderStates)
 		{
-			WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call out of memory error (call->rgReaderStates)");
+			WLog_WARN(TAG, "LocateCardsByATRA_Call out of memory error (call->rgReaderStates)");
 			return STATUS_NO_MEMORY;
 		}
 
@@ -2583,7 +2597,7 @@ UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, 
 
 			if (Stream_GetRemainingLength(s) < 52)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "LocateCardsByATRA_Call is too short: %d",
+				WLog_WARN(TAG, "LocateCardsByATRA_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
@@ -2602,7 +2616,7 @@ UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, 
 
 			if (Stream_GetRemainingLength(s) < 12)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
@@ -2613,7 +2627,7 @@ UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, 
 
 			if (Stream_GetRemainingLength(s) < count)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call is too short: %d",
+				WLog_WARN(TAG, "GetStatusChangeA_Call is too short: %d",
 						(int) Stream_GetRemainingLength(s));
 				return STATUS_BUFFER_TOO_SMALL;
 			}
@@ -2622,8 +2636,7 @@ UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, 
 
 			if (!readerState->szReader)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN,
-						"GetStatusChangeA_Call out of memory error (readerState->szReader)");
+				WLog_WARN(TAG, "GetStatusChangeA_Call out of memory error (readerState->szReader)");
 				return STATUS_NO_MEMORY;
 			}
 
@@ -2633,7 +2646,7 @@ UINT32 smartcard_unpack_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, 
 
 			if (!readerState->szReader)
 			{
-				WLog_Print(smartcard->log, WLOG_WARN, "GetStatusChangeA_Call null reader name");
+				WLog_WARN(TAG, "GetStatusChangeA_Call null reader name");
 				return STATUS_INVALID_PARAMETER;
 			}
 		}
@@ -2651,21 +2664,21 @@ void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, Loc
 	char* rgbAtr;
 	LPSCARD_READERSTATEA readerState;
 
-	if (!WLog_IsLevelActive(smartcard->log, WLOG_DEBUG))
+	if (!WLog_IsLevelActive(WLog_Get(TAG), WLOG_DEBUG))
 		return;
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "LocateCardsByATRA_Call {");
+	WLog_DBG(TAG, "LocateCardsByATRA_Call {");
 
 	pb = (BYTE*) &(call->hContext.pbContext);
 
 	if (call->hContext.cbContext > 4)
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], pb[4], pb[5], pb[6], pb[7], call->hContext.cbContext);
 	}
 	else
 	{
-		WLog_Print(smartcard->log, WLOG_DEBUG, "hContext: 0x%02X%02X%02X%02X (%d)",
+		WLog_DBG(TAG, "hContext: 0x%02X%02X%02X%02X (%d)",
 			pb[0], pb[1], pb[2], pb[3], call->hContext.cbContext);
 	}
 
@@ -2673,38 +2686,33 @@ void smartcard_trace_locate_cards_by_atr_a_call(SMARTCARD_DEVICE* smartcard, Loc
 	{
 		readerState = (LPSCARD_READERSTATEA) &call->rgReaderStates[index];
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: szReader: %s cbAtr: %d",
+		WLog_DBG(TAG, "\t[%d]: szReader: %s cbAtr: %d",
 			index, readerState->szReader, readerState->cbAtr);
 
 		szCurrentState = SCardGetReaderStateString(readerState->dwCurrentState);
 		szEventState = SCardGetReaderStateString(readerState->dwEventState);
 		rgbAtr = winpr_BinToHexString((BYTE*) &(readerState->rgbAtr), readerState->cbAtr, FALSE);
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: dwCurrentState: %s (0x%08X)",
+		WLog_DBG(TAG, "\t[%d]: dwCurrentState: %s (0x%08X)",
 			index, szCurrentState, readerState->dwCurrentState);
 
-		WLog_Print(smartcard->log, WLOG_DEBUG,
-			"\t[%d]: dwEventState: %s (0x%08X)",
+		WLog_DBG(TAG, "\t[%d]: dwEventState: %s (0x%08X)",
 			index, szEventState, readerState->dwEventState);
 
 		if (rgbAtr)
 		{
-			WLog_Print(smartcard->log, WLOG_DEBUG,
-						"\t[%d]: cbAtr: %d rgbAtr: %s",
-						index, readerState->cbAtr, rgbAtr);
+			WLog_DBG(TAG, "\t[%d]: cbAtr: %d rgbAtr: %s",
+				index, readerState->cbAtr, rgbAtr);
 		}
 		else
 		{
-			WLog_Print(smartcard->log, WLOG_DEBUG,
-									"\t[%d]: cbAtr: %d rgbAtr: %s",
-									index, 0, "");
+			WLog_DBG(TAG, "\t[%d]: cbAtr: %d rgbAtr: %s",
+				index, 0, "");
 		}
 
 		free(szCurrentState);
 		free(szEventState);
 		free(rgbAtr);
 	}
-	WLog_Print(smartcard->log, WLOG_DEBUG, "}");
+	WLog_DBG(TAG, "}");
 }

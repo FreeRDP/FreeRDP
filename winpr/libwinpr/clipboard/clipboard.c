@@ -157,6 +157,8 @@ BOOL ClipboardEmpty(wClipboard* clipboard)
 	}
 
 	clipboard->size = 0;
+
+	clipboard->formatId = 0;
 	clipboard->sequenceNumber++;
 
 	return TRUE;
@@ -539,6 +541,10 @@ void ClipboardDestroy(wClipboard* clipboard)
 			format->numSynthesizers = 0;
 		}
 	}
+
+	free((void*) clipboard->data);
+	clipboard->data = NULL;
+	clipboard->size = 0;
 
 	clipboard->numFormats = 0;
 	free(clipboard->formats);

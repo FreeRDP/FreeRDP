@@ -691,7 +691,7 @@ HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 
 		vcm->queue = MessageQueue_New(NULL);
 
-		vcm->dvc_channel_id_seq = 1;
+		vcm->dvc_channel_id_seq = 0;
 		vcm->dynamicVirtualChannels = ArrayList_New(TRUE);
 
 		client->ReceiveChannelData = WTSReceiveChannelData;
@@ -991,7 +991,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 	channel->receiveData = Stream_New(NULL, client->settings->VirtualChannelChunkSize);
 	channel->queue = MessageQueue_New(NULL);
 
-	channel->channelId = vcm->dvc_channel_id_seq++;
+	channel->channelId = InterlockedIncrement(&vcm->dvc_channel_id_seq);
 	ArrayList_Add(vcm->dynamicVirtualChannels, channel);
 
 	s = Stream_New(NULL, 64);

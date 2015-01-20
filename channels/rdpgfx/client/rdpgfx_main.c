@@ -22,9 +22,6 @@
 #endif
 
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -343,7 +340,7 @@ int rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 	Stream_Read_UINT32(s, pdu.timestamp); /* timestamp (4 bytes) */
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
 
-	WLog_Print(gfx->log, WLOG_DEBUG, "RecvStartFramePdu: frameId: %d timestamp: 0x%04X\n",
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvStartFramePdu: frameId: %d timestamp: 0x%04X",
 			pdu.frameId, pdu.timestamp);
 
 	if (context && context->StartFrame)
@@ -368,7 +365,7 @@ int rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream* s)
 
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
 
-	WLog_Print(gfx->log, WLOG_DEBUG, "RecvEndFramePdu: frameId: %d\n", pdu.frameId);
+	WLog_Print(gfx->log, WLOG_DEBUG, "RecvEndFramePdu: frameId: %d", pdu.frameId);
 
 	if (context && context->EndFrame)
 	{
@@ -955,9 +952,16 @@ static int rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 	WLog_Print(gfx->log, WLOG_DEBUG, "Terminated");
 
 	if (gfx->listener_callback)
+	{
 		free(gfx->listener_callback);
+		gfx->listener_callback = NULL;
+	}
 
-	zgfx_context_free(gfx->zgfx);
+	if (gfx->zgfx)
+	{
+		zgfx_context_free(gfx->zgfx);
+		gfx->zgfx = NULL;
+	}
 
 	count = HashTable_GetKeys(gfx->SurfaceTable, &pKeys);
 
@@ -993,6 +997,8 @@ static int rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 			gfx->CacheSlots[index] = NULL;
 		}
 	}
+
+	free(context);
 
 	free(gfx);
 
@@ -1105,7 +1111,7 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 		if (!context)
 		{
-			free (gfx);
+			free(gfx);
 			return -1;
 		}
 
@@ -1122,8 +1128,8 @@ int DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 
 		if (!gfx->zgfx)
 		{
-			free (gfx);
-			free (context);
+			free(gfx);
+			free(context);
 			return -1;
 		}
 

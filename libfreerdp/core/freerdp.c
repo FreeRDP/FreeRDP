@@ -1,8 +1,9 @@
-/*
+/**
  * FreeRDP: A Remote Desktop Protocol Implementation
  * FreeRDP Core
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +62,8 @@
 BOOL freerdp_connect(freerdp* instance)
 {
 	rdpRdp* rdp;
+	BOOL status = TRUE;
 	rdpSettings* settings;
-	BOOL status = FALSE;
 	ConnectionResultEventArgs e;
 
 	/* We always set the return code to 0 before we start the connect sequence*/
@@ -116,6 +117,7 @@ BOOL freerdp_connect(freerdp* instance)
 		}
 
 		IFCALLRET(instance->PostConnect, status, instance);
+
 		update_post_connect(instance->update);
 
 		if (!status)
@@ -240,6 +242,33 @@ BOOL freerdp_check_fds(freerdp* instance)
 	return TRUE;
 }
 
+DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events)
+{
+	DWORD nCount = 0;
+
+	nCount += transport_get_event_handles(context->rdp->transport, events);
+
+	if (events)
+		events[nCount] = freerdp_channels_get_event_handle(context->instance);
+	nCount++;
+
+	return nCount;
+}
+
+BOOL freerdp_check_event_handles(rdpContext* context)
+{
+	BOOL status;
+
+	status = freerdp_check_fds(context->instance);
+
+	if (!status)
+		return FALSE;
+
+	status = freerdp_channels_check_fds(context->channels, context->instance);
+
+	return status;
+}
+
 wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id)
 {
 	wMessageQueue* queue = NULL;
@@ -317,9 +346,10 @@ BOOL freerdp_disconnect(freerdp* instance)
 	rdpRdp* rdp;
 
 	rdp = instance->context->rdp;
-	transport_disconnect(rdp->transport);
 
+	rdp_client_disconnect(rdp);
 	update_post_disconnect(instance->update);
+
 	IFCALL(instance->PostDisconnect, instance);
 
 	if (instance->update->pcap_rfx)
@@ -334,7 +364,12 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 BOOL freerdp_reconnect(freerdp* instance)
 {
-	return rdp_client_reconnect(instance->context->rdp);
+	BOOL status;
+	rdpRdp* rdp = instance->context->rdp;
+
+	status = rdp_client_reconnect(rdp);
+
+	return status;
 }
 
 BOOL freerdp_shall_disconnect(freerdp* instance)
@@ -385,7 +420,7 @@ static wEventType FreeRDP_Events[] =
 		DEFINE_EVENT_ENTRY(LocalResizeWindow)
 		DEFINE_EVENT_ENTRY(EmbedWindow)
 		DEFINE_EVENT_ENTRY(PanningChange)
-		DEFINE_EVENT_ENTRY(ScalingFactorChange)
+		DEFINE_EVENT_ENTRY(ZoomingChange)
 		DEFINE_EVENT_ENTRY(ErrorInfo)
 		DEFINE_EVENT_ENTRY(Terminate)
 		DEFINE_EVENT_ENTRY(ConnectionResult)
@@ -489,6 +524,10 @@ void freerdp_context_free(freerdp* instance)
 UINT32 freerdp_error_info(freerdp* instance)
 {
 	return instance->context->rdp->errorInfo;
+}
+
+void freerdp_set_error_info(rdpRdp* rdp, UINT32 error) {
+	rdp->errorInfo = error;
 }
 
 UINT32 freerdp_get_last_error(rdpContext* context)

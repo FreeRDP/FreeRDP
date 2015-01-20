@@ -34,7 +34,7 @@
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/log.h>
 
-#define TAG CHANNELS_TAG("rdprd.client")
+#define TAG CHANNELS_TAG("rdpdr.client")
 
 typedef struct rdpdr_plugin rdpdrPlugin;
 
@@ -47,7 +47,7 @@ struct rdpdr_plugin
 	wStream* data_in;
 	void* InitHandle;
 	DWORD OpenHandle;
-	wMessagePipe* MsgPipe;
+	wMessageQueue* queue;
 
 	DEVMAN* devman;
 

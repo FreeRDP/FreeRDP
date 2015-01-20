@@ -3,6 +3,7 @@
  * RDP Core
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -653,6 +654,9 @@ BOOL rdp_recv_server_auto_reconnect_status_pdu(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	Stream_Read_UINT32(s, arcStatus); /* arcStatus (4 bytes) */
+
+	WLog_WARN(TAG, "AutoReconnectStatus: 0x%04X", arcStatus);
+
 	return TRUE;
 }
 
@@ -1040,7 +1044,7 @@ static int rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 		rdp->autodetect->bandwidthMeasureByteCount += length;
 	}
 
-	if (rdp->settings->DisableEncryption)
+	if (rdp->settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(s, &securityFlags))
 			return -1;
@@ -1235,6 +1239,23 @@ int rdp_send_channel_data(rdpRdp* rdp, UINT16 channelId, BYTE* data, int size)
 	return freerdp_channel_send(rdp, channelId, data, size);
 }
 
+BOOL rdp_send_error_info(rdpRdp* rdp)
+{
+	wStream* s;
+	BOOL status;
+
+	if (rdp->errorInfo == ERRINFO_SUCCESS)
+		return TRUE;
+
+	s = rdp_data_pdu_init(rdp);
+
+	Stream_Write_UINT32(s, rdp->errorInfo); /* error id (4 bytes) */
+
+	status = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SET_ERROR_INFO, 0);
+
+	return status;
+}
+
 /**
  * Set non-blocking mode information.
  * @param rdp RDP module
@@ -1250,8 +1271,22 @@ void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking)
 int rdp_check_fds(rdpRdp* rdp)
 {
 	int status;
+	rdpTransport* transport = rdp->transport;
 
-	status = transport_check_fds(rdp->transport);
+	if (transport->tsg)
+	{
+		rdpTsg* tsg = transport->tsg;
+
+		status = tsg_check(tsg);
+
+		if (status < 0)
+			return -1;
+
+		if (tsg->state != TSG_STATE_PIPE_CREATED)
+			return status;
+	}
+
+	status = transport_check_fds(transport);
 
 	if (status == 1)
 	{
@@ -1273,6 +1308,7 @@ rdpRdp* rdp_new(rdpContext* context)
 	BOOL newSettings = FALSE;
 
 	rdp = (rdpRdp*) calloc(1, sizeof(rdpRdp));
+
 	if (!rdp)
 		return NULL;
 
@@ -1298,7 +1334,8 @@ rdpRdp* rdp_new(rdpContext* context)
 	if (context->instance)
 		context->instance->settings = rdp->settings;
 
-	rdp->transport = transport_new(rdp->settings);
+	rdp->transport = transport_new(context);
+
 	if (!rdp->transport)
 		goto out_free_settings;
 	
@@ -1382,41 +1419,78 @@ out_free:
 
 void rdp_reset(rdpRdp* rdp)
 {
+	rdpContext* context;
 	rdpSettings* settings;
 
+	context = rdp->context;
 	settings = rdp->settings;
 
 	bulk_reset(rdp->bulk);
 
-	crypto_rc4_free(rdp->rc4_decrypt_key);
-	rdp->rc4_decrypt_key = NULL;
-	crypto_rc4_free(rdp->rc4_encrypt_key);
-	rdp->rc4_encrypt_key = NULL;
-	crypto_des3_free(rdp->fips_encrypt);
-	rdp->fips_encrypt = NULL;
-	crypto_des3_free(rdp->fips_decrypt);
-	rdp->fips_decrypt = NULL;
-	crypto_hmac_free(rdp->fips_hmac);
-	rdp->fips_hmac = NULL;
+	if (rdp->rc4_decrypt_key)
+	{
+		crypto_rc4_free(rdp->rc4_decrypt_key);
+		rdp->rc4_decrypt_key = NULL;
+	}
+
+	if (rdp->rc4_encrypt_key)
+	{
+		crypto_rc4_free(rdp->rc4_encrypt_key);
+		rdp->rc4_encrypt_key = NULL;
+	}
+
+	if (rdp->fips_encrypt)
+	{
+		crypto_des3_free(rdp->fips_encrypt);
+		rdp->fips_encrypt = NULL;
+	}
+
+	if (rdp->fips_decrypt)
+	{
+		crypto_des3_free(rdp->fips_decrypt);
+		rdp->fips_decrypt = NULL;
+	}
+
+	if (rdp->fips_hmac)
+	{
+		crypto_hmac_free(rdp->fips_hmac);
+		rdp->fips_hmac = NULL;
+	}
+
+	if (settings->ServerRandom)
+	{
+		free(settings->ServerRandom);
+		settings->ServerRandom = NULL;
+		settings->ServerRandomLength = 0;
+	}
+
+	if (settings->ServerCertificate)
+	{
+		free(settings->ServerCertificate);
+		settings->ServerCertificate = NULL;
+	}
+
+	if (settings->ClientAddress)
+	{
+		free(settings->ClientAddress);
+		settings->ClientAddress = NULL;
+	}
 
 	mcs_free(rdp->mcs);
 	nego_free(rdp->nego);
 	license_free(rdp->license);
 	transport_free(rdp->transport);
 
-	free(settings->ServerRandom);
-	settings->ServerRandom = NULL;
-	free(settings->ServerCertificate);
-	settings->ServerCertificate = NULL;
-	free(settings->ClientAddress);
-	settings->ClientAddress = NULL;
-
-	rdp->transport = transport_new(rdp->settings);
+	rdp->transport = transport_new(context);
 	rdp->transport->rdp = rdp;
 	rdp->license = license_new(rdp);
 	rdp->nego = nego_new(rdp->transport);
 	rdp->mcs = mcs_new(rdp->transport);
 	rdp->transport->layer = TRANSPORT_LAYER_TCP;
+	rdp->disconnect = FALSE;
+	rdp->errorInfo = 0;
+	rdp->deactivation_reactivation = 0;
+	rdp->finalize_sc_pdus = 0;
 }
 
 /**

@@ -32,6 +32,9 @@
 #cmakedefine HAVE_VALGRIND_MEMCHECK_H
 #cmakedefine HAVE_EXECINFO_H
 
+/* Features */
+#cmakedefine HAVE_ALIGNED_REQUIRED
+
 /* Options */
 #cmakedefine WITH_PROFILER
 #cmakedefine WITH_GPROF
@@ -91,4 +94,5 @@
 #cmakedefine WITH_DEBUG_X11_LOCAL_MOVESIZE
 #cmakedefine WITH_DEBUG_XV
 #cmakedefine WITH_DEBUG_ANDROID_JNI
+#cmakedefine WITH_DEBUG_RINGBUFFER
 #endif

@@ -25,6 +25,13 @@
 
 #include <freerdp/gdi/gfx.h>
 
+enum xf_gfx_mapping_mode
+{
+    GFX_MAP_NONE,
+    GFX_MAP_OUTPUT
+};
+typedef enum xf_gfx_mapping_mode xfGfxMappingMode;
+
 struct xf_gfx_surface
 {
 	UINT16 surfaceId;
@@ -37,6 +44,19 @@ struct xf_gfx_surface
 	int scanline;
 	int stageStep;
 	UINT32 format;
+	struct
+	{
+		xfGfxMappingMode mode;
+		union
+		{
+			struct
+			{
+				UINT32 originX;
+				UINT32 originY;
+			} output;
+		};
+	} mapping;
+	REGION16 invalidRegion;
 };
 typedef struct xf_gfx_surface xfGfxSurface;
 

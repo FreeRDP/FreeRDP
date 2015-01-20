@@ -240,7 +240,7 @@ void region16_print(const REGION16 *region)
 		if (rects->top != currentBandY)
 		{
 			currentBandY = rects->top;
-			WLog_DBG(TAG,  "\nband %d: ", currentBandY);
+			WLog_DBG(TAG,  "band %d: ", currentBandY);
 		}
 
 		WLog_DBG(TAG,  "(%d,%d-%d,%d)", rects->left, rects->top, rects->right, rects->bottom);
@@ -798,10 +798,12 @@ BOOL region16_intersect_rect(REGION16 *dst, const REGION16 *src, const RECTANGLE
 void region16_uninit(REGION16 *region)
 {
 	assert(region);
-	assert(region->data);
 
-	if (region->data->size)
-		free(region->data);
+	if (region->data)
+	{
+		if (region->data->size)
+			free(region->data);
 
-	region->data = NULL;
+		region->data = NULL;
+	}
 }

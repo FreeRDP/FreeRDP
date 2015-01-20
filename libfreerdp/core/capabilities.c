@@ -3309,8 +3309,6 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 	UINT16 length;
 	BYTE *bm, *em;
 
-	BOOL foundMultifragmentUpdate = FALSE;
-
 	Stream_GetPointer(s, mark);
 	count = numberCapabilities;
 
@@ -3457,7 +3455,6 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 			case CAPSET_TYPE_MULTI_FRAGMENT_UPDATE:
 				if (!rdp_read_multifragment_update_capability_set(s, length, settings))
 					return FALSE;
-				foundMultifragmentUpdate = TRUE;
 				break;
 
 			case CAPSET_TYPE_LARGE_POINTER:
@@ -3506,15 +3503,6 @@ BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 numberCa
 				 count-numberCapabilities, count);
 	}
 
-	/**
-	 * If we never received a multifragment update capability set,
-	 * then the peer doesn't support fragmentation.
-	 */
-	if (!foundMultifragmentUpdate)
-	{
-		settings->MultifragMaxRequestSize = 0;
-	}
-
 #ifdef WITH_DEBUG_CAPABILITIES
 	Stream_GetPointer(s, em);
 	Stream_SetPointer(s, mark);
@@ -3537,7 +3525,7 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId)
 	if (rdp->disconnect)
 		return TRUE;
 
-	if (rdp->settings->DisableEncryption)
+	if (rdp->settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(s, &securityFlags))
 			return FALSE;

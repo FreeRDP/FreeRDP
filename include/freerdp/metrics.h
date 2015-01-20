@@ -31,10 +31,18 @@ struct rdp_metrics
 	double TotalCompressionRatio;
 };
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API double metrics_write_bytes(rdpMetrics* metrics, UINT32 UncompressedBytes, UINT32 CompressedBytes);
 
 FREERDP_API rdpMetrics* metrics_new(rdpContext* context);
 FREERDP_API void metrics_free(rdpMetrics* metrics);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_METRICS_H */
 

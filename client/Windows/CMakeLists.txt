@@ -40,7 +40,7 @@ set(${MODULE_PREFIX}_SRCS
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
-if (WIN32)
+if (WIN32 AND BUILD_SHARED_LIBS)
   set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
   set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
   set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})

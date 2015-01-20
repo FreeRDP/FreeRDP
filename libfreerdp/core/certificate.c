@@ -572,7 +572,7 @@ BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate,
 		if (Stream_GetRemainingLength(s) < certLength)
 			return FALSE;
 
-		DEBUG_CERTIFICATE("\nX.509 Certificate #%d, length:%d", i + 1, certLength);
+		DEBUG_CERTIFICATE("X.509 Certificate #%d, length:%d", i + 1, certLength);
 		certificate->x509_cert_chain->array[i].data = (BYTE*) malloc(certLength);
 
 		if (!certificate->x509_cert_chain->array[i].data)
@@ -771,6 +771,49 @@ void key_free(rdpRsaKey* key)
 
 	free(key->PrivateExponent);
 	free(key);
+}
+
+rdpCertificate* certificate_clone(rdpCertificate* certificate)
+{
+	int index;
+	rdpCertificate* _certificate = (rdpCertificate*) calloc(1, sizeof(rdpCertificate));
+
+	if (!_certificate)
+		return NULL;
+
+	CopyMemory(_certificate, certificate, sizeof(rdpCertificate));
+
+	if (certificate->cert_info.ModulusLength)
+	{
+		_certificate->cert_info.Modulus = (BYTE*) malloc(certificate->cert_info.ModulusLength);
+		CopyMemory(_certificate->cert_info.Modulus, certificate->cert_info.Modulus, certificate->cert_info.ModulusLength);
+		_certificate->cert_info.ModulusLength = certificate->cert_info.ModulusLength;
+	}
+
+	if (certificate->x509_cert_chain)
+	{
+		_certificate->x509_cert_chain = (rdpX509CertChain*) malloc(sizeof(rdpX509CertChain));
+		CopyMemory(_certificate->x509_cert_chain, certificate->x509_cert_chain, sizeof(rdpX509CertChain));
+
+		if (certificate->x509_cert_chain->count)
+		{
+			_certificate->x509_cert_chain->array = (rdpCertBlob*) calloc(certificate->x509_cert_chain->count, sizeof(rdpCertBlob));
+
+			for (index = 0; index < certificate->x509_cert_chain->count; index++)
+			{
+				_certificate->x509_cert_chain->array[index].length = certificate->x509_cert_chain->array[index].length;
+
+				if (certificate->x509_cert_chain->array[index].length)
+				{
+					_certificate->x509_cert_chain->array[index].data = (BYTE*) malloc(certificate->x509_cert_chain->array[index].length);
+					CopyMemory(_certificate->x509_cert_chain->array[index].data, certificate->x509_cert_chain->array[index].data,
+							_certificate->x509_cert_chain->array[index].length);
+				}
+			}
+		}
+	}
+
+	return _certificate;
 }
 
 /**

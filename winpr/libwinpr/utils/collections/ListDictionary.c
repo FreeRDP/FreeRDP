@@ -181,6 +181,7 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value)
 		EnterCriticalSection(&listDictionary->lock);
 
 	item = (wListDictionaryItem*) malloc(sizeof(wListDictionaryItem));
+
 	if (!item)
 		return FALSE;
 
@@ -205,6 +206,7 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value)
 
 	if (listDictionary->synchronized)
 		LeaveCriticalSection(&listDictionary->lock);
+
 	return TRUE;
 }
 
@@ -227,8 +229,13 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 		while (item)
 		{
 			nextItem = item->next;
+
+			if (listDictionary->objectKey.fnObjectFree)
+				listDictionary->objectKey.fnObjectFree(item->key);
+
 			if (listDictionary->objectValue.fnObjectFree)
 				listDictionary->objectValue.fnObjectFree(item->value);
+
 			free(item);
 			item = nextItem;
 		}
@@ -250,7 +257,7 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key)
 	OBJECT_EQUALS_FN keyEquals;
 
 	if (listDictionary->synchronized)
-		EnterCriticalSection(&listDictionary->lock);
+		EnterCriticalSection(&(listDictionary->lock));
 
 	keyEquals = listDictionary->objectKey.fnObjectEquals;
 	item = listDictionary->head;
@@ -264,7 +271,7 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key)
 	}
 
 	if (listDictionary->synchronized)
-		LeaveCriticalSection(&listDictionary->lock);
+		LeaveCriticalSection(&(listDictionary->lock));
 
 	return (item) ? TRUE : FALSE;
 }
@@ -427,12 +434,13 @@ wListDictionary* ListDictionary_New(BOOL synchronized)
 	wListDictionary* listDictionary = NULL;
 
 	listDictionary = (wListDictionary*) calloc(1, sizeof(wListDictionary));
+
 	if (!listDictionary)
 		return NULL;
 
 	listDictionary->synchronized = synchronized;
 
-	if (!InitializeCriticalSectionAndSpinCount(&listDictionary->lock, 4000))
+	if (!InitializeCriticalSectionAndSpinCount(&(listDictionary->lock), 4000))
 	{
 		free(listDictionary);
 		return NULL;
@@ -440,6 +448,7 @@ wListDictionary* ListDictionary_New(BOOL synchronized)
 
 	listDictionary->objectKey.fnObjectEquals = default_equal_function;
 	listDictionary->objectValue.fnObjectEquals = default_equal_function;
+
 	return listDictionary;
 }
 

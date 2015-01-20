@@ -3,6 +3,7 @@
  * RDP Server Peer
  *
  * Copyright 2011 Vic Lee
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -348,7 +349,7 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	if (rdp->disconnect)
 		return 0;
  
-	if (rdp->settings->DisableEncryption)
+	if (rdp->settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(s, &securityFlags))
 			return -1;
@@ -450,7 +451,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			if (!rdp_server_accept_nego(rdp, s))
 				return -1;
 
-			if (rdp->nego->selected_protocol & PROTOCOL_NLA)
+			if (rdp->nego->SelectedProtocol & PROTOCOL_NLA)
 			{
 				sspi_CopyAuthIdentity(&client->identity, &(rdp->nego->transport->credssp->identity));
 				IFCALLRET(client->Logon, client->authenticated, client, &client->identity, TRUE);
@@ -485,7 +486,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT:
-			if (rdp->settings->DisableEncryption)
+			if (rdp->settings->UseRdpSecurityLayer)
 			{
 				if (!rdp_server_establish_keys(rdp, s))
 					return -1;
@@ -573,6 +574,10 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 	 */
 	if (!rdp_send_deactivate_all(client->context->rdp))
 		return FALSE;
+
+	if (freerdp_get_param_bool(client->settings, FreeRDP_SupportErrorInfoPdu) ) {
+		rdp_send_error_info(client->context->rdp);
+	}
 
 	return mcs_send_disconnect_provider_ultimatum(client->context->rdp->mcs);
 }

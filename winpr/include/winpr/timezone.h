@@ -25,6 +25,10 @@
 
 #include <winpr/windows.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _WIN32
 
 typedef struct _TIME_ZONE_INFORMATION
@@ -89,6 +93,10 @@ WINPR_API DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex, PDYNAMIC_TIM
 WINPR_API DWORD GetDynamicTimeZoneInformationEffectiveYears(const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation,
 		LPDWORD FirstYear, LPDWORD LastYear);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* WINPR_TIMEZONE_H */

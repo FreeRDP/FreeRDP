@@ -404,6 +404,9 @@ int dfreerdp_run(freerdp* instance)
 		df_process_channel_event(channels, instance);
 	}
 
+	freerdp_channels_disconnect(channels, instance);
+	freerdp_disconnect(instance);
+
 	freerdp_channels_close(channels, instance);
 	freerdp_channels_free(channels);
 	df_free(dfi);

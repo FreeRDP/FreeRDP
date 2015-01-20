@@ -3,6 +3,7 @@
  * FreeRDP Client Command-Line Interface
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +67,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL, "List detected monitors" },
 	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "Window title" },
 	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, NULL, BoolValueTrue, -1, NULL, "Window decorations" },
-	{ "smart-sizing", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Scale remote desktop to window size" },
+	{ "smart-sizing", COMMAND_LINE_VALUE_OPTIONAL, "<width>x<height>", NULL, NULL, -1, NULL, "Scale remote desktop to window size" },
 	{ "a", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, "addin", "Addin" },
 	{ "vc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Static virtual channel" },
 	{ "dvc", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "Dynamic virtual channel" },
@@ -77,7 +78,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[<domain>\\]<user> or <user>[@<domain>]", NULL, NULL, -1, NULL, "Gateway username" },
 	{ "gp", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Gateway password" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Gateway domain" },
-	{ "gateway-usage-method", COMMAND_LINE_VALUE_REQUIRED, "<direct|detect>", NULL, NULL, -1, NULL, "Gateway usage method" },
+	{ "gateway-usage-method", COMMAND_LINE_VALUE_REQUIRED, "<direct|detect>", NULL, NULL, -1, "gum", "Gateway usage method" },
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info string>", NULL, NULL, -1, NULL, "Load balance info" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED, "<executable path> or <||alias>", NULL, NULL, -1, NULL, "Remote application program" },
 	{ "app-name", COMMAND_LINE_VALUE_REQUIRED, "<app name>", NULL, NULL, -1, NULL, "Remote application name for user interface" },
@@ -131,8 +132,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "sec-tls", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "tls protocol security" },
 	{ "sec-nla", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "nla protocol security" },
 	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "nla extended protocol security" },
-	{ "tls-ciphers", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "List of permitted openssl ciphers - see ciphers(1)" },
-	{ "tls-ciphers-netmon", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use tls ciphers that netmon can parse" },
+	{ "tls-ciphers", COMMAND_LINE_VALUE_REQUIRED, "<netmon|ma|ciphers>", NULL, NULL, -1, NULL, "Allowed TLS ciphers" },
 	{ "cert-name", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL, "certificate name" },
 	{ "cert-ignore", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "ignore certificate" },
 	{ "pcb", COMMAND_LINE_VALUE_REQUIRED, "<blob>", NULL, NULL, -1, NULL, "Preconnection Blob" },
@@ -167,6 +167,7 @@ COMMAND_LINE_ARGUMENT_A args[] =
 	{ "heartbeat", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support heartbeat PDUs" },
 	{ "multitransport", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "Support multitransport protocol" },
 	{ "assistance", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Remote assistance password" },
+	{ "encryption-methods", COMMAND_LINE_VALUE_REQUIRED, "<40,56,128,FIPS>", NULL, NULL, -1, NULL, "RDP standard security encryption methods" },
 	{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 };
 
@@ -507,7 +508,7 @@ static char** freerdp_command_line_parse_comma_separated_values(char* list, int*
 	int index;
 	int nCommas;
 
-	nArgs = nCommas = 0;
+	nCommas = 0;
 
 	assert(NULL != count);
 
@@ -1078,8 +1079,10 @@ BOOL freerdp_client_detect_command_line(int argc, char** argv, DWORD* flags)
 	if (posix_cli_status <= COMMAND_LINE_STATUS_PRINT)
 		return compatibility;
 
-	if (windows_cli_count >= posix_cli_count)
+	/* Check, if this may be windows style syntax... */
+	if ((windows_cli_count && (windows_cli_count >= posix_cli_count)) || (windows_cli_status <= COMMAND_LINE_STATUS_PRINT))
 	{
+		windows_cli_count = 1;
 		*flags = COMMAND_LINE_SEPARATOR_COLON;
 		*flags |= COMMAND_LINE_SIGIL_SLASH | COMMAND_LINE_SIGIL_PLUS_MINUS;
 	}
@@ -1187,7 +1190,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			return status;
 	}
 
-	arg = CommandLineFindArgumentA(args, "v");
+	CommandLineFindArgumentA(args, "v");
 
 	arg = args;
 
@@ -1226,7 +1229,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					continue;
 
 				length = p2 - p;
-				settings->ServerHostname = (char*) malloc(length);
+				settings->ServerHostname = (char*) calloc(length, sizeof(char));
 				strncpy(settings->ServerHostname, p+1, length-1);
 				if (*(p2 + 1) == ':')
 				{
@@ -1344,7 +1347,19 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "smart-sizing")
 		{
-			settings->SmartSizing = arg->Value ? TRUE : FALSE;
+			settings->SmartSizing = TRUE;
+
+			if (arg->Value)
+			{
+				str = _strdup(arg->Value);
+				if ((p = strchr(str, 'x')))
+				{
+					*p = '\0';
+					settings->SmartSizingWidth = atoi(str);
+					settings->SmartSizingHeight = atoi(&p[1]);
+				}
+				free(str);
+			}
 		}
 		CommandLineSwitchCase(arg, "bpp")
 		{
@@ -1448,7 +1463,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			settings->GatewayEnabled = TRUE;
 			settings->GatewayUseSameCredentials = TRUE;
 
-			freerdp_set_gateway_usage_method(settings, TSC_PROXY_MODE_DETECT);
+			freerdp_set_gateway_usage_method(settings, TSC_PROXY_MODE_DIRECT);
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
@@ -1721,9 +1736,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				settings->TlsSecurity = FALSE;
 				settings->NlaSecurity = FALSE;
 				settings->ExtSecurity = FALSE;
-				settings->DisableEncryption = TRUE;
-				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT| ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+				settings->UseRdpSecurityLayer = TRUE;
 			}
 			else if (strcmp("tls", arg->Value) == 0) /* TLS */
 			{
@@ -1751,6 +1764,33 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				WLog_ERR(TAG,  "unknown protocol security: %s", arg->Value);
 			}
 		}
+		CommandLineSwitchCase(arg, "encryption-methods")
+		{
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				UINT32 i;
+				char** p;
+				int count = 0;
+
+				p = freerdp_command_line_parse_comma_separated_values(arg->Value, &count);
+
+				for (i = 0; i < count; i++)
+				{
+					if (!strcmp(p[i], "40"))
+						settings->EncryptionMethods |= ENCRYPTION_METHOD_40BIT;
+					else if (!strcmp(p[i], "56"))
+						settings->EncryptionMethods |= ENCRYPTION_METHOD_56BIT;
+					else if (!strcmp(p[i], "128"))
+						settings->EncryptionMethods |= ENCRYPTION_METHOD_128BIT;
+					else if (!strcmp(p[i], "FIPS"))
+						settings->EncryptionMethods |= ENCRYPTION_METHOD_FIPS;
+					else
+						WLog_ERR(TAG,  "unknown encryption method '%s'", p[i]);
+				}
+
+				free(p);
+			}
+		}
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{
 			settings->RdpSecurity = arg->Value ? TRUE : FALSE;
@@ -1769,11 +1809,18 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "tls-ciphers")
 		{
-			settings->PermittedTLSCiphers = _strdup(arg->Value);
-		}
-		CommandLineSwitchCase(arg, "tls-ciphers-netmon")
-		{
-			settings->PermittedTLSCiphers = arg->Value ? _strdup("ALL:!ECDH") : NULL;
+			if (strcmp(arg->Value, "netmon") == 0)
+			{
+				settings->AllowedTlsCiphers = _strdup("ALL:!ECDH");
+			}
+			else if (strcmp(arg->Value, "ma") == 0)
+			{
+				settings->AllowedTlsCiphers = _strdup("AES128-SHA");
+			}
+			else
+			{
+				settings->AllowedTlsCiphers = _strdup(arg->Value);
+			}
 		}
 		CommandLineSwitchCase(arg, "cert-name")
 		{
@@ -1789,7 +1836,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "encryption")
 		{
-			settings->DisableEncryption = arg->Value ? FALSE : TRUE;
+			settings->UseRdpSecurityLayer = arg->Value ? FALSE : TRUE;
 		}
 		CommandLineSwitchCase(arg, "grab-keyboard")
 		{
@@ -1971,6 +2018,7 @@ int freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	UINT32 index;
 	ADDIN_ARGV* args;
 
+	settings->DynamicChannelCount = 0;
 	if ((freerdp_static_channel_collection_find(settings, "rdpsnd")) ||
 			(freerdp_dynamic_channel_collection_find(settings, "tsmf")))
 	{

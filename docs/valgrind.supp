@@ -10,11 +10,16 @@
    fun:_nss_dns_gethostbyname4_r
    fun:gaih_inet
    fun:getaddrinfo
-   fun:freerdp_tcp_connect
-   fun:tcp_connect
-   fun:transport_connect
-   fun:nego_tcp_connect
-   fun:nego_transport_connect
+}
+
+{
+   ignore pcsc-lite SCardConnect
+   Memcheck:Param
+   socketcall.sendto(msg)
+   fun:send
+   fun:MessageSend
+   fun:MessageSendWithHeader
+   fun:SCardConnect
 }
 
 {
@@ -80,4 +85,48 @@
   fun:BIO_write
   fun:ssl3_write_pending
   fun:ssl3_write_bytes
+}
+
+{
+   g_type_init
+   Memcheck:Leak
+   ...
+   fun:g_type_init_with_debug_flags
+}
+{
+   gobject_init_ctor
+   Memcheck:Leak
+   ...
+   fun:gobject_init_ctor
+}
+{
+   g_type_register_static
+   Memcheck:Leak
+   ...
+   fun:g_type_register_static
+}
+{
+   g_type_register_fundamental
+   Memcheck:Leak
+   ...
+   fun:g_type_register_fundamental
+}
+{
+   g_type_add_interface_static
+   Memcheck:Leak
+   ...
+   fun:g_type_add_interface_static
+}
+{
+   g_type_class_ref
+   Memcheck:Leak
+   ...
+   fun:g_type_class_ref
+}
+
+{
+  XGetDefault
+  Memcheck:Leak
+  ...
+  fun:XGetDefault
 }

@@ -31,13 +31,10 @@ typedef struct rdp_ntlm_http rdpNtlmHttp;
 #include "rts.h"
 #include "http.h"
 
-#include <time.h>
-#include <winpr/sspi.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
-
 
 #include <winpr/sspi.h>
 #include <winpr/print.h>

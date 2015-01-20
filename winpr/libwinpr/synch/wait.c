@@ -61,6 +61,7 @@
 
 #ifndef _WIN32
 
+#include <alloca.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -108,7 +109,7 @@ static long long ts_difftime(const struct timespec *o,
 #if !defined(HAVE_PTHREAD_GNU_EXT)
 #include <pthread.h>
 
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(sun)
 /*the only way to get it work is to remove the static*/
 int pthread_mutex_timedlock(pthread_mutex_t *mutex, const struct timespec *timeout)
 #else
@@ -411,8 +412,6 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 	assert(0);
 	return WAIT_OBJECT_0;
 }
-
-#define MAXIMUM_WAIT_OBJECTS 64
 
 DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
 {
@@ -740,9 +739,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
 {
-	WLog_ERR(TAG, "[ERROR] %s: Function not implemented.");
-	assert(0);
-	return 0;
+	return WaitForMultipleObjects(nCount, lpHandles, bWaitAll, dwMilliseconds);
 }
 
 DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable)

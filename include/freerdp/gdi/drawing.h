@@ -23,6 +23,10 @@
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API int gdi_GetROP2(HGDI_DC hdc);
 FREERDP_API int gdi_SetROP2(HGDI_DC hdc, int fnDrawMode);
 FREERDP_API GDI_COLOR gdi_GetBkColor(HGDI_DC hdc);
@@ -30,5 +34,9 @@ FREERDP_API GDI_COLOR gdi_SetBkColor(HGDI_DC hdc, GDI_COLOR crColor);
 FREERDP_API int gdi_GetBkMode(HGDI_DC hdc);
 FREERDP_API int gdi_SetBkMode(HGDI_DC hdc, int iBkMode);
 FREERDP_API GDI_COLOR gdi_SetTextColor(HGDI_DC hdc, GDI_COLOR crColor);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_GDI_DRAWING_H */

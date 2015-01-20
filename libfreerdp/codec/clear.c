@@ -169,7 +169,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 	subcodecByteCount = *((UINT32*) &pSrcData[offset + 8]);
 	offset += 12;
 
-	//WLog_DBG(TAG, "residualByteCount: %d bandsByteCount: %d subcodecByteCount: %d\n",
+	//WLog_DBG(TAG, "residualByteCount: %d bandsByteCount: %d subcodecByteCount: %d",
 	//		residualByteCount, bandsByteCount, subcodecByteCount);
 
 	if (residualByteCount > 0)
@@ -554,7 +554,7 @@ int clear_decompress(CLEAR_CONTEXT* clear, BYTE* pSrcData, UINT32 SrcSize,
 			subcodecId = subcodecs[suboffset + 12];
 			suboffset += 13;
 
-			//WLog_DBG(TAG, "bitmapDataByteCount: %d subcodecByteCount: %d suboffset: %d subCodecId: %d\n",
+			//WLog_DBG(TAG, "bitmapDataByteCount: %d subcodecByteCount: %d suboffset: %d subCodecId: %d",
 			//		bitmapDataByteCount, subcodecByteCount, suboffset, subcodecId);
 
 			if ((subcodecByteCount - suboffset) < bitmapDataByteCount)

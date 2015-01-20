@@ -34,12 +34,14 @@ struct cliprdr_plugin
 	CHANNEL_DEF channelDef;
 	CHANNEL_ENTRY_POINTS_FREERDP channelEntryPoints;
 
+	CliprdrClientContext* context;
+
 	wLog* log;
 	HANDLE thread;
 	wStream* data_in;
 	void* InitHandle;
 	DWORD OpenHandle;
-	wMessagePipe* MsgPipe;
+	wMessageQueue* queue;
 
 	BOOL capabilitiesReceived;
 	BOOL useLongFormatNames;

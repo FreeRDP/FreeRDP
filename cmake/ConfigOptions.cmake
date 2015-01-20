@@ -6,8 +6,10 @@ elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64") AND (CMAKE_SIZEOF_VOID_P 
 elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "i386") AND (CMAKE_SIZEOF_VOID_P EQUAL 8) AND (APPLE))
 	# Mac is weird like that.
 	set(TARGET_ARCH "x64")
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm*")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm*")
 	set(TARGET_ARCH "ARM")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "sparc")
+	set(TARGET_ARCH "sparc")
 endif()
 
 option(WITH_MANPAGES "Generate manpages." ON)
@@ -116,6 +118,7 @@ option(WITH_DEBUG_X11_CLIPRDR "Print X11 clipboard redirection debug messages" $
 option(WITH_DEBUG_X11_LOCAL_MOVESIZE "Print X11 Client local movesize debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_X11 "Print X11 Client debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_XV "Print XVideo debug messages" ${DEFAULT_DEBUG_OPTION})
+option(WITH_DEBUG_RINGBUFFER "Enable Ringbuffer debug messages" ${DEFAULT_DEBUG_OPTION})
 
 if(ANDROID)
 include(ConfigOptionsAndroid)

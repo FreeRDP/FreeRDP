@@ -109,7 +109,7 @@ static BOOL rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, wStrea
 
 	Stream_Read_UINT16(s, quality);
 	Stream_Seek_UINT16(s); // reserved
-	WLog_ERR(TAG,  "Client requested sound quality: %#0X\n", quality);
+	WLog_ERR(TAG,  "Client requested sound quality: %#0X", quality);
 	return TRUE;
 }
 
@@ -138,7 +138,7 @@ static BOOL rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 
 	if (!context->num_client_formats)
 	{
-		WLog_ERR(TAG,  "%s: client doesn't support any format!\n", __FUNCTION__);
+		WLog_ERR(TAG,  "client doesn't support any format!");
 		return FALSE;
 	}
 
@@ -175,7 +175,7 @@ static BOOL rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 
 	if (!context->num_client_formats)
 	{
-		WLog_ERR(TAG,  "%s: client doesn't support any known format!\n", __FUNCTION__);
+		WLog_ERR(TAG,  "client doesn't support any known format!");
 		goto out_free;
 	}
 
@@ -231,7 +231,7 @@ static BOOL rdpsnd_server_select_format(RdpsndServerContext* context, int client
 
 	if (client_format_index < 0 || client_format_index >= context->num_client_formats)
 	{
-		WLog_ERR(TAG,  "%s: index %d is not correct.\n", __FUNCTION__, client_format_index);
+		WLog_ERR(TAG,  "index %d is not correct.", client_format_index);
 		return FALSE;
 	}
 	
@@ -243,7 +243,7 @@ static BOOL rdpsnd_server_select_format(RdpsndServerContext* context, int client
 	
 	if (format->nSamplesPerSec == 0)
 	{
-		WLog_ERR(TAG,  "%s: invalid Client Sound Format!!\n", __FUNCTION__);
+		WLog_ERR(TAG,  "invalid Client Sound Format!!");
 		return FALSE;
 	}
 
@@ -476,8 +476,8 @@ static int rdpsnd_server_start(RdpsndServerContext* context)
 
 	if (!WTSVirtualChannelQuery(priv->ChannelHandle, WTSVirtualEventHandle, &buffer, &bytesReturned) || (bytesReturned != sizeof(HANDLE)))
 	{
-		WLog_ERR(TAG,  "%s: error during WTSVirtualChannelQuery(WTSVirtualEventHandle) or invalid returned size(%d)\n",
-				 __FUNCTION__, bytesReturned);
+		WLog_ERR(TAG,  "error during WTSVirtualChannelQuery(WTSVirtualEventHandle) or invalid returned size(%d)",
+				 bytesReturned);
 
 		if (buffer)
 			WTSFreeMemory(buffer);
@@ -527,8 +527,12 @@ static int rdpsnd_server_stop(RdpsndServerContext* context)
 
 			WaitForSingleObject(context->priv->Thread, INFINITE);
 			CloseHandle(context->priv->Thread);
+			CloseHandle(context->priv->StopEvent);
 		}
 	}
+
+	if (context->priv->rdpsnd_pdu)
+		Stream_Free(context->priv->rdpsnd_pdu, TRUE);
 
 	return 0;
 }
@@ -591,23 +595,17 @@ void rdpsnd_server_context_reset(RdpsndServerContext *context)
 
 void rdpsnd_server_context_free(RdpsndServerContext* context)
 {
-	if (!context->priv->StopEvent)
-	{
-		SetEvent(context->priv->StopEvent);
-		WaitForSingleObject(context->priv->Thread, INFINITE);
-	}
-
 	if (context->priv->ChannelHandle)
 		WTSVirtualChannelClose(context->priv->ChannelHandle);
-
-	if (context->priv->rdpsnd_pdu)
-		Stream_Free(context->priv->rdpsnd_pdu, TRUE);
 
 	if (context->priv->out_buffer)
 		free(context->priv->out_buffer);
 
 	if (context->priv->dsp_context)
 		freerdp_dsp_context_free(context->priv->dsp_context);
+
+  if (context->priv->input_stream)
+    Stream_Free(context->priv->input_stream, TRUE);
 
 	if (context->client_formats)
 		free(context->client_formats);
@@ -642,7 +640,7 @@ int rdpsnd_server_handle_messages(RdpsndServerContext *context)
 		if (GetLastError() == ERROR_NO_DATA)
 			return -1;
 
-		WLog_ERR(TAG,  "%s: channel connection closed\n", __FUNCTION__);
+		WLog_ERR(TAG,  "channel connection closed");
 		return 0;
 	}
 	priv->expectedBytes -= bytesReturned;
@@ -699,7 +697,7 @@ int rdpsnd_server_handle_messages(RdpsndServerContext *context)
 			break;
 
 		default:
-			WLog_ERR(TAG,  "%s: UNKOWN MESSAGE TYPE!! (%#0X)\n\n", __FUNCTION__, priv->msgType);
+			WLog_ERR(TAG,  "UNKOWN MESSAGE TYPE!! (%#0X)", priv->msgType);
 			ret = FALSE;
 			break;
 	}

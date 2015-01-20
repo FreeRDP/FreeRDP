@@ -47,8 +47,16 @@ struct _remdesk_server_context
 	RemdeskServerPrivate* priv;
 };
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API RemdeskServerContext* remdesk_server_context_new(HANDLE vcm);
 FREERDP_API void remdesk_server_context_free(RemdeskServerContext* context);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_CHANNEL_SERVER_REMDESK_H */
 
