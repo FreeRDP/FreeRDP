@@ -824,8 +824,8 @@ static void rdpsnd_process_disconnect(rdpsndPlugin* rdpsnd)
 /****************************************************************************************/
 
 
-static wListDictionary* g_InitHandles;
-static wListDictionary* g_OpenHandles;
+static wListDictionary* g_InitHandles = NULL;
+static wListDictionary* g_OpenHandles = NULL;
 
 void rdpsnd_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
@@ -845,6 +845,11 @@ void* rdpsnd_get_init_handle_data(void* pInitHandle)
 void rdpsnd_remove_init_handle_data(void* pInitHandle)
 {
 	ListDictionary_Remove(g_InitHandles, pInitHandle);
+	if (ListDictionary_Count(g_InitHandles) < 1)
+	{
+		ListDictionary_Free(g_InitHandles);
+		g_InitHandles = NULL;
+	}
 }
 
 void rdpsnd_add_open_handle_data(DWORD openHandle, void* pUserData)
@@ -869,6 +874,11 @@ void rdpsnd_remove_open_handle_data(DWORD openHandle)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+	if (ListDictionary_Count(g_OpenHandles) < 1)
+	{
+		ListDictionary_Free(g_OpenHandles);
+		g_OpenHandles = NULL;
+	}
 }
 
 int rdpsnd_virtual_channel_write(rdpsndPlugin* rdpsnd, wStream* s)
