@@ -547,7 +547,8 @@ int drdynvc_send(drdynvcPlugin* drdynvc, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "drdynvc_send: VirtualChannelWrite failed %d", status);
+		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 	}
 
 	return status;
@@ -636,7 +637,8 @@ int drdynvc_write_data(drdynvcPlugin* drdynvc, UINT32 ChannelId, BYTE* data, UIN
 	if (status != CHANNEL_RC_OK)
 	{
 		drdynvc->channel_error = status;
-		WLog_ERR(TAG, "VirtualChannelWrite failed %d", status);
+		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 		return 1;
 	}
 
@@ -656,7 +658,8 @@ static int drdynvc_send_capability_response(drdynvcPlugin* drdynvc)
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "VirtualChannelWrite failed %d", status);
+		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 		return 1;
 	}
 
@@ -761,7 +764,8 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "VirtualChannelWrite failed %d", status);
+		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 		return 1;
 	}
 
@@ -824,7 +828,8 @@ static int drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cbC
 	
 	if (error != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "VirtualChannelWrite failed %d", error);
+		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+				 WTSErrorToString(error), error);
 		return 1;
 	}
 	
@@ -984,6 +989,9 @@ static VOID VCAPITYPE drdynvc_virtual_channel_open_event(DWORD openHandle, UINT 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			Stream_Free((wStream*) pData, TRUE);
 			break;
+
+		case CHANNEL_EVENT_USER:
+			break;
 	}
 }
 
@@ -1030,7 +1038,8 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "drdynvc_virtual_channel_event_connected: open failed: status: %d", status);
+		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 		return;
 	}
 
@@ -1055,21 +1064,25 @@ static void drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 			(LPTHREAD_START_ROUTINE) drdynvc_virtual_channel_client_thread, (void*) drdynvc, 0, NULL);
 }
 
-static void drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
+static void drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 {
-	if (drdynvc->queue)
+	UINT rc;
+
+	MessageQueue_PostQuit(drdynvc->queue, 0);
+	WaitForSingleObject(drdynvc->thread, INFINITE);
+
+	MessageQueue_Free(drdynvc->queue);
+	CloseHandle(drdynvc->thread);
+
+	drdynvc->queue = NULL;
+	drdynvc->thread = NULL;
+
+	rc = drdynvc->channelEntryPoints.pVirtualChannelClose(drdynvc->OpenHandle);
+	if (CHANNEL_RC_OK != rc)
 	{
-		MessageQueue_PostQuit(drdynvc->queue, 0);
-		WaitForSingleObject(drdynvc->thread, INFINITE);
-
-		MessageQueue_Free(drdynvc->queue);
-		drdynvc->queue = NULL;
-
-		CloseHandle(drdynvc->thread);
-		drdynvc->thread = NULL;
+		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
+				 WTSErrorToString(rc), rc);
 	}
-
-	drdynvc->channelEntryPoints.pVirtualChannelClose(drdynvc->OpenHandle);
 
 	if (drdynvc->data_in)
 	{
@@ -1084,8 +1097,11 @@ static void drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 	}
 
 	drdynvc_remove_open_handle_data(drdynvc->OpenHandle);
-	drdynvc_remove_init_handle_data(drdynvc->InitHandle);
+}
 
+static void drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
+{
+	drdynvc_remove_init_handle_data(drdynvc->InitHandle);
 	free(drdynvc);
 }
 
@@ -1108,6 +1124,7 @@ static VOID VCAPITYPE drdynvc_virtual_channel_init_event(LPVOID pInitHandle, UIN
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
+			drdynvc_virtual_channel_event_disconnected(drdynvc);
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
@@ -1131,6 +1148,7 @@ int drdynvc_get_version(DrdynvcClientContext* context)
 
 BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
+	UINT rc;
 	drdynvcPlugin* drdynvc;
 	DrdynvcClientContext* context;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
@@ -1178,8 +1196,15 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	CopyMemory(&(drdynvc->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 
-	drdynvc->channelEntryPoints.pVirtualChannelInit(&drdynvc->InitHandle,
+	rc = drdynvc->channelEntryPoints.pVirtualChannelInit(&drdynvc->InitHandle,
 		&drdynvc->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, drdynvc_virtual_channel_init_event);
+	if (CHANNEL_RC_OK != rc)
+	{
+		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
+				 WTSErrorToString(rc), rc);
+		free(drdynvc);
+		return -1;
+	}
 
 	drdynvc->channelEntryPoints.pInterface = *(drdynvc->channelEntryPoints.ppInterface);
 	drdynvc->channelEntryPoints.ppInterface = &(drdynvc->channelEntryPoints.pInterface);
