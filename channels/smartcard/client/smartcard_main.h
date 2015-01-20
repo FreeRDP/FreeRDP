@@ -108,8 +108,6 @@ struct _SMARTCARD_DEVICE
 {
 	DEVICE device;
 
-	wLog* log;
-
 	char* name;
 	char* path;
 
