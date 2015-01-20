@@ -1357,6 +1357,7 @@ extern "C" {
 #endif
 
 WINPR_API BOOL WTSRegisterWtsApiFunctionTable(PWtsApiFunctionTable table);
+WINPR_API const CHAR* WTSErrorToString(UINT error);
 
 #ifdef __cplusplus
 }

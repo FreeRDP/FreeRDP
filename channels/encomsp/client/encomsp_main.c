@@ -92,7 +92,8 @@ int encomsp_virtual_channel_write(encomspPlugin* encomsp, wStream* s)
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "encomsp_virtual_channel_write: VirtualChannelWrite failed %d", status);
+		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 		return -1;
 	}
 
@@ -658,8 +659,8 @@ static void encomsp_process_connect(encomspPlugin* encomsp)
 
 /****************************************************************************************/
 
-static wListDictionary* g_InitHandles;
-static wListDictionary* g_OpenHandles;
+static wListDictionary* g_InitHandles = NULL;
+static wListDictionary* g_OpenHandles = NULL;
 
 void encomsp_add_init_handle_data(void* pInitHandle, void* pUserData)
 {
@@ -679,6 +680,11 @@ void* encomsp_get_init_handle_data(void* pInitHandle)
 void encomsp_remove_init_handle_data(void* pInitHandle)
 {
 	ListDictionary_Remove(g_InitHandles, pInitHandle);
+	if (ListDictionary_Count(g_InitHandles) < 1)
+	{
+		ListDictionary_Free(g_InitHandles);
+		g_InitHandles = NULL;
+	}
 }
 
 void encomsp_add_open_handle_data(DWORD openHandle, void* pUserData)
@@ -703,6 +709,11 @@ void encomsp_remove_open_handle_data(DWORD openHandle)
 {
 	void* pOpenHandle = (void*) (size_t) openHandle;
 	ListDictionary_Remove(g_OpenHandles, pOpenHandle);
+	if (ListDictionary_Count(g_OpenHandles) < 1)
+	{
+		ListDictionary_Free(g_OpenHandles);
+		g_OpenHandles = NULL;
+	}
 }
 
 int encomsp_send(encomspPlugin* encomsp, wStream* s)
@@ -723,7 +734,8 @@ int encomsp_send(encomspPlugin* encomsp, wStream* s)
 	if (status != CHANNEL_RC_OK)
 	{
 		Stream_Free(s, TRUE);
-		WLog_ERR(TAG,  "encomsp_send: VirtualChannelWrite failed %d", status);
+		WLog_ERR(TAG,  "VirtualChannelWrite failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 	}
 
 	return status;
@@ -788,6 +800,9 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event(DWORD openHandle, UINT 
 		case CHANNEL_EVENT_WRITE_COMPLETE:
 			Stream_Free((wStream*) pData, TRUE);
 			break;
+
+		case CHANNEL_EVENT_USER:
+			break;
 	}
 }
 
@@ -832,7 +847,8 @@ static void encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 
 	if (status != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG,  "encomsp_virtual_channel_event_connected: open failed: status: %d", status);
+		WLog_ERR(TAG,  "pVirtualChannelOpen failed with %s [%08X]",
+				 WTSErrorToString(status), status);
 		return;
 	}
 
@@ -842,21 +858,24 @@ static void encomsp_virtual_channel_event_connected(encomspPlugin* encomsp, LPVO
 			(LPTHREAD_START_ROUTINE) encomsp_virtual_channel_client_thread, (void*) encomsp, 0, NULL);
 }
 
-static void encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
+static void encomsp_virtual_channel_event_disconnected(encomspPlugin* encomsp)
 {
-	if (encomsp->queue)
+	UINT rc;
+	MessageQueue_PostQuit(encomsp->queue, 0);
+	WaitForSingleObject(encomsp->thread, INFINITE);
+
+	MessageQueue_Free(encomsp->queue);
+	CloseHandle(encomsp->thread);
+
+	encomsp->queue = NULL;
+	encomsp->thread = NULL;
+
+	rc = encomsp->channelEntryPoints.pVirtualChannelClose(encomsp->OpenHandle);
+	if (CHANNEL_RC_OK != rc)
 	{
-		MessageQueue_PostQuit(encomsp->queue, 0);
-		WaitForSingleObject(encomsp->thread, INFINITE);
-
-		MessageQueue_Free(encomsp->queue);
-		encomsp->queue = NULL;
-
-		CloseHandle(encomsp->thread);
-		encomsp->thread = NULL;
+		WLog_ERR(TAG, "pVirtualChannelClose failed with %s [%08X]",
+				 WTSErrorToString(rc), rc);
 	}
-
-	encomsp->channelEntryPoints.pVirtualChannelClose(encomsp->OpenHandle);
 
 	if (encomsp->data_in)
 	{
@@ -865,10 +884,12 @@ static void encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
 	}
 
 	encomsp_remove_open_handle_data(encomsp->OpenHandle);
+}
+
+
+static void encomsp_virtual_channel_event_terminated(encomspPlugin* encomsp)
+{
 	encomsp_remove_init_handle_data(encomsp->InitHandle);
-
-	free(encomsp->context);
-
 	free(encomsp);
 }
 
@@ -891,6 +912,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UIN
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
+			encomsp_virtual_channel_event_disconnected(encomsp);
 			break;
 
 		case CHANNEL_EVENT_TERMINATED:
@@ -904,6 +926,7 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event(LPVOID pInitHandle, UIN
 
 BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 {
+	UINT rc;
 	encomspPlugin* encomsp;
 	EncomspClientContext* context;
 	CHANNEL_ENTRY_POINTS_FREERDP* pEntryPointsEx;
@@ -945,9 +968,15 @@ BOOL VCAPITYPE VirtualChannelEntry(PCHANNEL_ENTRY_POINTS pEntryPoints)
 
 	CopyMemory(&(encomsp->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP));
 
-	encomsp->channelEntryPoints.pVirtualChannelInit(&encomsp->InitHandle,
+	rc = encomsp->channelEntryPoints.pVirtualChannelInit(&encomsp->InitHandle,
 		&encomsp->channelDef, 1, VIRTUAL_CHANNEL_VERSION_WIN2000, encomsp_virtual_channel_init_event);
-
+	if (CHANNEL_RC_OK != rc)
+	{
+		WLog_ERR(TAG, "pVirtualChannelInit failed with %s [%08X]",
+				 WTSErrorToString(rc), rc);
+		free(encomsp);
+		return -1;
+	}
 	encomsp->channelEntryPoints.pInterface = *(encomsp->channelEntryPoints.ppInterface);
 	encomsp->channelEntryPoints.ppInterface = &(encomsp->channelEntryPoints.pInterface);
 

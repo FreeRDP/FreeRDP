@@ -227,7 +227,7 @@ UINT32 smartcard_unpack_redir_scard_context(SMARTCARD_DEVICE* smartcard, wStream
 
 	if ((context->cbContext != 0) && (context->cbContext != 4) && (context->cbContext != 8))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length is not 0, 4 or 8: %d\n", context->cbContext);
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length is not 0, 4 or 8: %d", context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -271,7 +271,7 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d\n",
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), 4);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -280,20 +280,20 @@ UINT32 smartcard_unpack_redir_scard_context_ref(SMARTCARD_DEVICE* smartcard, wSt
 
 	if (length != context->cbContext)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length (%d) cbContext (%d) mismatch\n",
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length (%d) cbContext (%d) mismatch",
 			length, context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((context->cbContext != 0) && (context->cbContext != 4) && (context->cbContext != 8))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length is not 4 or 8: %d\n", context->cbContext);
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT length is not 4 or 8: %d", context->cbContext);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if (Stream_GetRemainingLength(s) < context->cbContext)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d\n",
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDCONTEXT is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), context->cbContext);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -363,7 +363,7 @@ UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStr
 
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d\n",
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), 4);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -372,20 +372,20 @@ UINT32 smartcard_unpack_redir_scard_handle_ref(SMARTCARD_DEVICE* smartcard, wStr
 
 	if (length != handle->cbHandle)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE length (%d) cbHandle (%d) mismatch\n",
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE length (%d) cbHandle (%d) mismatch",
 			length, handle->cbHandle);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((handle->cbHandle != 4) && (handle->cbHandle != 8))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE length is not 4 or 8: %d\n", handle->cbHandle);
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE length is not 4 or 8: %d", handle->cbHandle);
 		return STATUS_INVALID_PARAMETER;
 	}
 
 	if ((Stream_GetRemainingLength(s) < handle->cbHandle) || (!handle->cbHandle))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d\n",
+		WLog_Print(smartcard->log, WLOG_WARN, "REDIR_SCARDHANDLE is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), handle->cbHandle);
 		return STATUS_BUFFER_TOO_SMALL;
 	}
@@ -410,7 +410,7 @@ UINT32 smartcard_unpack_establish_context_call(SMARTCARD_DEVICE* smartcard, wStr
 {
 	if (Stream_GetRemainingLength(s) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "EstablishContext_Call is too short: Actual: %d, Expected: %d\n",
+		WLog_Print(smartcard->log, WLOG_WARN, "EstablishContext_Call is too short: Actual: %d, Expected: %d",
 				(int) Stream_GetRemainingLength(s), 4);
 		return STATUS_BUFFER_TOO_SMALL;
 	}

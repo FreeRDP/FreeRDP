@@ -788,6 +788,7 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 static void xf_post_disconnect(freerdp* instance)
 {
 	xfContext* xfc;
+	rdpChannels* channels = channels = instance->context->channels;
 
 	if (!instance || !instance->context || !instance->settings)
 		return;
@@ -924,7 +925,6 @@ BOOL xf_pre_connect(freerdp* instance)
 	PubSub_SubscribeChannelDisconnected(instance->context->pubSub,
 			(pChannelDisconnectedEventHandler) xf_OnChannelDisconnectedEventHandler);
 
-	freerdp_client_load_addins(channels, instance->settings);
 	freerdp_channels_pre_connect(channels, instance);
 
 	if (!settings->Username)
@@ -1638,7 +1638,7 @@ void* xf_thread(void *param)
 	}
 	/* Close the channels first. This will signal the internal message pipes
 	 * that the threads should quit. */
-	freerdp_channels_close(channels, instance);
+	freerdp_channels_disconnect(channels, instance);
 
 	if (async_input)
 	{
@@ -1812,6 +1812,7 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	settings = instance->settings;
 	xfc->settings = instance->context->settings;
 
+	freerdp_client_load_addins(context->channels, instance->settings);
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);
 
 #ifdef WITH_XRENDER
@@ -1838,6 +1839,7 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 
 		if (context->channels)
 		{
+			freerdp_channels_close(context->channels, instance);
 			freerdp_channels_free(context->channels);
 			context->channels = NULL;
 		}

@@ -252,7 +252,7 @@ static void* thread_launcher(void* arg)
 
 		if (!fkt)
 		{
-			WLog_ERR(TAG, "Thread function argument is %p\n", fkt);
+			WLog_ERR(TAG, "Thread function argument is %p", fkt);
 			goto exit;
 		}
 
@@ -610,7 +610,7 @@ VOID DumpThreadHandles(void)
 		ULONG_PTR *keys = NULL;
 		ListDictionary_Lock(thread_list);
 		int x, count = ListDictionary_GetKeys(thread_list, &keys);
-		WLog_DBG(TAG, "Dumping %d elements\n", count);
+		WLog_DBG(TAG, "Dumping %d elements", count);
 
 		for (x = 0; x < count; x++)
 		{
