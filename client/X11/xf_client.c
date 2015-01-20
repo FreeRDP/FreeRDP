@@ -788,6 +788,7 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 static void xf_post_disconnect(freerdp* instance)
 {
 	xfContext* xfc;
+	rdpChannels* channels = channels = instance->context->channels;
 
 	if (!instance || !instance->context || !instance->settings)
 		return;
@@ -1638,7 +1639,7 @@ void* xf_thread(void *param)
 	}
 	/* Close the channels first. This will signal the internal message pipes
 	 * that the threads should quit. */
-	freerdp_channels_close(channels, instance);
+	freerdp_channels_disconnect(channels, instance);
 
 	if (async_input)
 	{
@@ -1838,6 +1839,7 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 
 		if (context->channels)
 		{
+			freerdp_channels_close(context->channels, instance);
 			freerdp_channels_free(context->channels);
 			context->channels = NULL;
 		}
