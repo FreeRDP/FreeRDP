@@ -1073,7 +1073,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 	switch (Msg)
 	{
 		case WM_CREATE:
-			DEBUG_CLIPRDR("info: %s - WM_CREATE", __FUNCTION__);
+			DEBUG_CLIPRDR("info: WM_CREATE");
 			clipboard = (wfClipboard*)((CREATESTRUCT*) lParam)->lpCreateParams;
 			if (!AddClipboardFormatListener(hWnd)) {
 				DEBUG_CLIPRDR("error: AddClipboardFormatListener failed with %#x.", GetLastError());
@@ -1082,12 +1082,12 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			break;
 
 		case WM_CLOSE:
-			DEBUG_CLIPRDR("info: %s - WM_CLOSE", __FUNCTION__);
+			DEBUG_CLIPRDR("info: WM_CLOSE");
 			RemoveClipboardFormatListener(hWnd);
 			break;
 
 		case WM_CLIPBOARDUPDATE:
-			DEBUG_CLIPRDR("info: %s - WM_CLIPBOARDUPDATE", __FUNCTION__);
+			DEBUG_CLIPRDR("info: WM_CLIPBOARDUPDATE");
 			if (clipboard->sync)
 			{
 				if ((GetClipboardOwner() != clipboard->hwnd) &&
@@ -1105,7 +1105,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			break;
 
 		case WM_RENDERALLFORMATS:
-			DEBUG_CLIPRDR("info: %s - WM_RENDERALLFORMATS", __FUNCTION__);
+			DEBUG_CLIPRDR("info: WM_RENDERALLFORMATS");
 			/* discard all contexts in clipboard */
 			if (!OpenClipboard(clipboard->hwnd))
 			{
@@ -1117,7 +1117,7 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			break;
 
 		case WM_RENDERFORMAT:
-			DEBUG_CLIPRDR("info: %s - WM_RENDERFORMAT", __FUNCTION__);
+			DEBUG_CLIPRDR("info: WM_RENDERFORMAT");
 			if (cliprdr_send_data_request(clipboard, (UINT32) wParam) != 0)
 			{
 				DEBUG_CLIPRDR("error: cliprdr_send_data_request failed.");
@@ -1138,11 +1138,11 @@ static LRESULT CALLBACK cliprdr_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 			break;
 
 		case WM_CLIPRDR_MESSAGE:
-			DEBUG_CLIPRDR("info: %s - WM_CLIPRDR_MESSAGE", __FUNCTION__);
+			DEBUG_CLIPRDR("info: WM_CLIPRDR_MESSAGE");
 			switch (wParam)
 			{
 				case OLE_SETCLIPBOARD:
-					DEBUG_CLIPRDR("info: %s - OLE_SETCLIPBOARD", __FUNCTION__);
+					DEBUG_CLIPRDR("info: OLE_SETCLIPBOARD");
 					if (wf_create_file_obj(clipboard, &clipboard->data_obj))
 					{
 						if (OleSetClipboard(clipboard->data_obj) != S_OK)
