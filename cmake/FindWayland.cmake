@@ -28,7 +28,7 @@
 # limitations under the License.
 #=============================================================================
 
-set(REQUIRED_WAYLAND_CLIENT_VERSION 0.95)
+set(REQUIRED_WAYLAND_CLIENT_VERSION 1.3.0)
 include(FindPkgConfig)
 
 if(PKG_CONFIG_FOUND)
