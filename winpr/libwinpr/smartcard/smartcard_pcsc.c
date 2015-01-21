@@ -2806,9 +2806,6 @@ PSCardApiFunctionTable PCSC_GetSCardApiFunctionTable(void)
 	return &PCSC_SCardApiFunctionTable;
 }
 
-extern PCSCFunctionTable g_PCSC_Link;
-extern int PCSC_InitializeSCardApi_Link(void);
-
 int PCSC_InitializeSCardApi(void)
 {
 	DWORD nSize;
@@ -2832,41 +2829,14 @@ int PCSC_InitializeSCardApi(void)
 	/* Disable pcsc-lite's (poor) blocking so we can handle it ourselves */
 	SetEnvironmentVariableA("PCSCLITE_NO_BLOCKING", "1");
 
-#ifndef DISABLE_PCSC_LINK
-
-	if (PCSC_InitializeSCardApi_Link() >= 0)
-	{
-		g_PCSC.pfnSCardEstablishContext = g_PCSC_Link.pfnSCardEstablishContext;
-		g_PCSC.pfnSCardReleaseContext = g_PCSC_Link.pfnSCardReleaseContext;
-		g_PCSC.pfnSCardIsValidContext = g_PCSC_Link.pfnSCardIsValidContext;
-		g_PCSC.pfnSCardConnect = g_PCSC_Link.pfnSCardConnect;
-		g_PCSC.pfnSCardReconnect = g_PCSC_Link.pfnSCardReconnect;
-		g_PCSC.pfnSCardDisconnect = g_PCSC_Link.pfnSCardDisconnect;
-		g_PCSC.pfnSCardBeginTransaction = g_PCSC_Link.pfnSCardBeginTransaction;
-		g_PCSC.pfnSCardEndTransaction = g_PCSC_Link.pfnSCardEndTransaction;
-		g_PCSC.pfnSCardStatus = g_PCSC_Link.pfnSCardStatus;
-		g_PCSC.pfnSCardGetStatusChange = g_PCSC_Link.pfnSCardGetStatusChange;
-		g_PCSC.pfnSCardControl = g_PCSC_Link.pfnSCardControl;
-		g_PCSC.pfnSCardTransmit = g_PCSC_Link.pfnSCardTransmit;
-		g_PCSC.pfnSCardListReaderGroups = g_PCSC_Link.pfnSCardListReaderGroups;
-		g_PCSC.pfnSCardListReaders = g_PCSC_Link.pfnSCardListReaders;
-		g_PCSC.pfnSCardFreeMemory = g_PCSC_Link.pfnSCardFreeMemory;
-		g_PCSC.pfnSCardCancel = g_PCSC_Link.pfnSCardCancel;
-		g_PCSC.pfnSCardGetAttrib = g_PCSC_Link.pfnSCardGetAttrib;
-		g_PCSC.pfnSCardSetAttrib = g_PCSC_Link.pfnSCardSetAttrib;
-		return 1;
-	}
-
-#endif
 #ifdef __MACOSX__
 	g_PCSCModule = LoadLibraryA("/System/Library/Frameworks/PCSC.framework/PCSC");
-    OSXVersion = determineMacOSXVersion();
+	OSXVersion = determineMacOSXVersion();
 #else
 	g_PCSCModule = LoadLibraryA("libpcsclite.so.1");
 
 	if (!g_PCSCModule)
 		g_PCSCModule = LoadLibraryA("libpcsclite.so");
-
 #endif
 
 	if (!g_PCSCModule)
@@ -2882,6 +2852,7 @@ int PCSC_InitializeSCardApi(void)
 	g_PCSC.pfnSCardEndTransaction = (void*) GetProcAddress(g_PCSCModule, "SCardEndTransaction");
 	g_PCSC.pfnSCardStatus = (void*) GetProcAddress(g_PCSCModule, "SCardStatus");
 	g_PCSC.pfnSCardGetStatusChange = (void*) GetProcAddress(g_PCSCModule, "SCardGetStatusChange");
+
 #ifdef __MACOSX__
 	if (OSXVersion >= 0x10050600)
 		g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl132");
@@ -2890,12 +2861,14 @@ int PCSC_InitializeSCardApi(void)
 #else
 	g_PCSC.pfnSCardControl = (void*) GetProcAddress(g_PCSCModule, "SCardControl");
 #endif
+
 	g_PCSC.pfnSCardTransmit = (void*) GetProcAddress(g_PCSCModule, "SCardTransmit");
 	g_PCSC.pfnSCardListReaderGroups = (void*) GetProcAddress(g_PCSCModule, "SCardListReaderGroups");
 	g_PCSC.pfnSCardListReaders = (void*) GetProcAddress(g_PCSCModule, "SCardListReaders");
 	g_PCSC.pfnSCardCancel = (void*) GetProcAddress(g_PCSCModule, "SCardCancel");
 	g_PCSC.pfnSCardGetAttrib = (void*) GetProcAddress(g_PCSCModule, "SCardGetAttrib");
 	g_PCSC.pfnSCardSetAttrib = (void*) GetProcAddress(g_PCSCModule, "SCardSetAttrib");
+
 	g_PCSC.pfnSCardFreeMemory = NULL;
 #ifndef __APPLE__
 	g_PCSC.pfnSCardFreeMemory = (void*) GetProcAddress(g_PCSCModule, "SCardFreeMemory");
@@ -2908,9 +2881,11 @@ int PCSC_InitializeSCardApi(void)
 	g_PCSC.pfnSCardFreeMemory = NULL;
 	g_SCardAutoAllocate = FALSE;
 #endif
+
 #ifdef __APPLE__
 	g_PnP_Notification = FALSE;
 #endif
+
 	return 1;
 }
 
