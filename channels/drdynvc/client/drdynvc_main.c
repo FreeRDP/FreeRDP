@@ -28,6 +28,8 @@
 
 #define TAG CHANNELS_TAG("drdynvc.client")
 
+static void dvcman_channel_free(DVCMAN_CHANNEL* channel);
+
 static int dvcman_get_configuration(IWTSListener* pListener, void** ppPropertyBag)
 {
 	*ppPropertyBag = NULL;
@@ -182,6 +184,7 @@ IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	dvcman->iface.GetChannelId = dvcman_get_channel_id;
 	dvcman->drdynvc = plugin;
 	dvcman->channels = ArrayList_New(TRUE);
+	dvcman->channels->object.fnObjectFree = dvcman_channel_free;
 	dvcman->pool = StreamPool_New(TRUE, 10);
 
 	return (IWTSVirtualChannelManager*) dvcman;
@@ -231,10 +234,13 @@ static DVCMAN_CHANNEL* dvcman_channel_new(IWTSVirtualChannelManager* pChannelMgr
 	return channel;
 }
 
-static void dvcman_channel_free(DVCMAN_CHANNEL* channel)
+void dvcman_channel_free(DVCMAN_CHANNEL* channel)
 {
 	if (channel->channel_callback)
+	{
 		channel->channel_callback->OnClose(channel->channel_callback);
+		channel->channel_callback = NULL;
+	}
 
 	if (channel->dvc_data)
 	{
@@ -244,8 +250,11 @@ static void dvcman_channel_free(DVCMAN_CHANNEL* channel)
 
 	DeleteCriticalSection(&(channel->lock));
 
-	free(channel->channel_name);
-	channel->channel_name = NULL;
+	if (channel->channel_name)
+	{
+		free(channel->channel_name);
+		channel->channel_name = NULL;
+	}
 
 	free(channel);
 }
@@ -253,23 +262,9 @@ static void dvcman_channel_free(DVCMAN_CHANNEL* channel)
 void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
 {
 	int i;
-	int count;
 	IWTSPlugin* pPlugin;
 	DVCMAN_LISTENER* listener;
-	DVCMAN_CHANNEL* channel;
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
-
-	ArrayList_Lock(dvcman->channels);
-
-	count = ArrayList_Count(dvcman->channels);
-
-	for (i = 0; i < count; i++)
-	{
-		channel = (DVCMAN_CHANNEL*) ArrayList_GetItem(dvcman->channels, i);
-		dvcman_channel_free(channel);
-	}
-
-	ArrayList_Unlock(dvcman->channels);
 
 	ArrayList_Free(dvcman->channels);
 
@@ -331,7 +326,6 @@ static int dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
 	WLog_DBG(TAG, "id=%d", channel->channel_id);
 
 	ArrayList_Remove(dvcman->channels, channel);
-	dvcman_channel_free(channel);
 
 	return 1;
 }
@@ -435,9 +429,6 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 		if (ichannel->Close)
 			ichannel->Close(ichannel);
 	}
-
-	ArrayList_Remove(dvcman->channels, channel);
-	dvcman_channel_free(channel);
 
 	return 0;
 }
