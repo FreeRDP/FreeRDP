@@ -321,11 +321,8 @@ static int dvcman_write_channel(IWTSVirtualChannel* pChannel, UINT32 cbSize, BYT
 static int dvcman_close_channel_iface(IWTSVirtualChannel* pChannel)
 {
 	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) pChannel;
-	DVCMAN* dvcman = channel->dvcman;
 
 	WLog_DBG(TAG, "id=%d", channel->channel_id);
-
-	ArrayList_Remove(dvcman->channels, channel);
 
 	return 1;
 }
@@ -429,6 +426,8 @@ int dvcman_close_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 ChannelI
 		if (ichannel->Close)
 			ichannel->Close(ichannel);
 	}
+
+	ArrayList_Remove(dvcman->channels, channel);
 
 	return 0;
 }
