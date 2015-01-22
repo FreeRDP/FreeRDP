@@ -289,6 +289,7 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 {
 	UINT32 option_value;
 	socklen_t option_len;
+	BOOL connected_to_proxy = FALSE;
 
 	if (!hostname)
 		return FALSE;
@@ -315,19 +316,14 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 					BIO_set_conn_int_port(tcp->socketBio, &tcp->settings->HTTPProxyPort) < 0)
 				return FALSE;
 
-			if (BIO_do_connect(tcp->socketBio) <= 0)
-				return FALSE;
-
-			if (!http_proxy_connect(tcp->socketBio, hostname, port))
-				return FALSE;
+			connected_to_proxy = TRUE;
 		} else {
-			printf("HTTP Proxy disabled\n");
 			if (BIO_set_conn_hostname(tcp->socketBio, hostname) < 0 ||	BIO_set_conn_int_port(tcp->socketBio, &port) < 0)
 				return FALSE;
-
-			if (BIO_do_connect(tcp->socketBio) <= 0)
-				return FALSE;
 		}
+
+		if (BIO_do_connect(tcp->socketBio) <= 0)
+			return FALSE;
 
 		tcp->sockfd = BIO_get_fd(tcp->socketBio, NULL);
 	}
@@ -366,6 +362,12 @@ BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port)
 	tcp->bufferedBio->ptr = tcp;
 
 	tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
+
+	if (connected_to_proxy) {
+		if (!http_proxy_connect(tcp->bufferedBio, hostname, port))
+			return FALSE;
+	}
+
 	return TRUE;
 }
 

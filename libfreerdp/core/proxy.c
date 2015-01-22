@@ -17,13 +17,17 @@
  * limitations under the License.
  */
 
+/* Probably this is more portable */
+#define TRIO_REPLACE_STDIO
 
 #include "proxy.h"
 #include "freerdp/settings.h"
 #include "tcp.h"
 
-#include "winpr/environment.h"
-/* For GetEnvironmentVariableA */
+#include "winpr/libwinpr/utils/trio/trio.h"	/* asprintf */
+#include "winpr/environment.h"	/* For GetEnvironmentVariableA */
+
+#define CRLF "\r\n"
 
 void http_proxy_read_environment(rdpSettings *settings, char *envname)
 {
@@ -60,58 +64,45 @@ void http_proxy_read_environment(rdpSettings *settings, char *envname)
 	freerdp_set_param_string(settings, FreeRDP_HTTPProxyHostname, hostname);
 }
 
-BOOL http_proxy_connect(BIO* bio, const char* hostname, UINT16 port)
+BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 {
 	int status;
-	wStream* s;
-	char str[256], *eol;
+	char *send_buf, recv_buf[512], *eol;
 	int resultsize;
 	int send_length;
 
-	_itoa_s(port, str, sizeof(str), 10);
+	send_length = trio_asprintf(&send_buf,
+			"CONNECT %s:%d HTTP/1.1" CRLF CRLF
+			"Host: %s:%d" CRLF CRLF,
+			hostname, port,
+			hostname, port);
 
-	s = Stream_New(NULL, 200);
-	Stream_Write(s, "CONNECT ", 8);
-	Stream_Write(s, hostname, strlen(hostname));
-	Stream_Write_UINT8(s, ':');
-	Stream_Write(s, str, strlen(str));
-	Stream_Write(s, " HTTP/1.1\r\n\r\nHost: ", 19);
-	Stream_Write(s, hostname, strlen(hostname));
-	Stream_Write_UINT8(s, ':');
-	Stream_Write(s, str, strlen(str));
-	Stream_Write(s, "\r\n\r\n", 4);
-
-	send_length = Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
-	while (send_length > 0) {
-		status = BIO_write(bio, Stream_Pointer(s), send_length);
-		if (status < 0) {
-			fprintf(stderr, "HTTP Proxy connection: error while writing: %d\n", status);
-			return FALSE;
-		}
-		if (status == 0) {
-			fprintf(stderr, "HTTP Proxy blocking?\n");
-			return FALSE;
-		}
-		fprintf(stderr, "HTTP Proxy: sent %d bytes\n", status);
-		send_length -= status;
+	if (send_length <= 0) {
+		fprintf(stderr, "HTTP proxy: failed to allocate memory\n");
+		return FALSE;
 	}
 
-	Stream_Free(s, TRUE);
-	s = NULL;
+	status = BIO_write(bufferedBio, send_buf, send_length);
+	free(send_buf);
+	send_buf = NULL;
+
+	if (status != send_length) {
+		fprintf(stderr, "HTTP proxy: failed to write CONNECT request\n");
+		return FALSE;
+	}
 
 	/* Read result until CR-LF-CR-LF.
-	 * Keep str a null-terminated string. */
+	 * Keep recv_buf a null-terminated string. */
 
-	memset(str, '\0', sizeof(str));
+	memset(recv_buf, '\0', sizeof(recv_buf));
 	resultsize = 0;
-	while ( strstr(str, "\r\n\r\n") == NULL ) {
-		if (resultsize >= sizeof(str)-1) {
+	while ( strstr(recv_buf, "\r\n\r\n") == NULL ) {
+		if (resultsize >= sizeof(recv_buf)-1) {
 			fprintf(stderr, "HTTP Reply headers too long.\n");
 			return FALSE;
 		}
 
-		status = BIO_read(bio, (BYTE*)str + resultsize, sizeof(str)-resultsize-1);
+		status = BIO_read(bufferedBio, (BYTE*)recv_buf + resultsize, sizeof(recv_buf)-resultsize-1);
 		if (status < 0) {
 			/* Error? */
 			return FALSE;
@@ -121,12 +112,11 @@ BOOL http_proxy_connect(BIO* bio, const char* hostname, UINT16 port)
 			fprintf(stderr, "BIO_read() returned zero\n");
 			return FALSE;
 		}
-		fprintf(stderr, "HTTP Proxy: received %d bytes\n", status);
 		resultsize += status;
 	}
 
 	/* Extract HTTP status line */
-	eol = strchr(str, '\r');
+	eol = strchr(recv_buf, '\r');
 	if (!eol) {
 		/* should never happen */
 		return FALSE;
@@ -134,14 +124,14 @@ BOOL http_proxy_connect(BIO* bio, const char* hostname, UINT16 port)
 
 	*eol = '\0';
 
-	fprintf(stderr, "HTTP proxy: %s\n", str);
+	fprintf(stderr, "HTTP proxy: %s\n", recv_buf);
 
-	if (strlen(str) < 12) {
+	if (strlen(recv_buf) < 12) {
 		return FALSE;
 	}
 
-	str[7] = 'X';
-	if (strncmp(str, "HTTP/1.X 200", 12))
+	recv_buf[7] = 'X';
+	if (strncmp(recv_buf, "HTTP/1.X 200", 12))
 		return FALSE;
 	
 	return TRUE;
