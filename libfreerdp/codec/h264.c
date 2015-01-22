@@ -435,7 +435,6 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	int width, height;
 	BYTE* pYUVPoint[3];
 	RDPGFX_RECT16* rect;
-	int UncompressedSize;
 	primitives_t *prims = primitives_get();
 
 	if (!h264)
@@ -451,11 +450,6 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 
 	if ((status = h264->subsystem->Decompress(h264, pSrcData, SrcSize)) < 0)
 		return status;
-
-	UncompressedSize = h264->width * h264->height * 4;
-
-	if (UncompressedSize > (nDstStep * nDstHeight))
-		return -1;
 
 	pYUVData = h264->pYUVData;
 	iStride = h264->iStride;
