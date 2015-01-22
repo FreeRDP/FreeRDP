@@ -423,7 +423,8 @@ static H264_CONTEXT_SUBSYSTEM g_Subsystem_libavcodec =
 #endif
 
 int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
-		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nDstHeight, RDPGFX_RECT16* regionRects, int numRegionRects)
+		BYTE** ppDstData, DWORD DstFormat, int nDstStep, int nDstWidth,
+		int nDstHeight, RDPGFX_RECT16* regionRects, int numRegionRects)
 {
 	int index;
 	int status;
@@ -457,6 +458,18 @@ int h264_decompress(H264_CONTEXT* h264, BYTE* pSrcData, UINT32 SrcSize,
 	for (index = 0; index < numRegionRects; index++)
 	{
 		rect = &(regionRects[index]);
+
+		/* Check, if the ouput rectangle is valid in decoded h264 frame. */
+		if ((rect->right > h264->width) || (rect->left > h264->width))
+			return -1;
+		if ((rect->top > h264->height) || (rect->bottom > h264->height))
+			return -1;
+
+		/* Check, if the output rectangle is valid in destination buffer. */
+		if ((rect->right > nDstWidth) || (rect->left > nDstWidth))
+			return -1;
+		if ((rect->bottom > nDstHeight) || (rect->top > nDstHeight))
+			return -1;
 
 		width = rect->right - rect->left;
 		height = rect->bottom - rect->top;
