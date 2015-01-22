@@ -1,0 +1,53 @@
+#!/usr/bin/make -f
+
+DEB_HOST_ARCH=$(shell dpkg-architecture -qDEB_HOST_ARCH)
+ifneq (,$(filter armhf,$(DEB_HOST_ARCH)))
+ARM_FLOAT_ABI = -DARM_FP_ABI=hard
+else
+ARM_FLOAT_ABI =
+endif
+NULL =
+
+DEB_CMAKE_EXTRA_FLAGS :=  -DCMAKE_SKIP_RPATH=FALSE \
+                          -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
+                          -DWITH_PULSE=ON \
+                          -DWITH_CHANNELS=ON \
+                          -DSTATIC_CHANNELS=ON \
+                          -DWITH_CUPS=ON \
+                          -DWITH_PCSC=ON \
+                          -DWITH_JPEG=ON \
+                          -DWITH_GSTREAMER_0_10=ON \
+                          -DWITH_GSM=ON \
+                          -DCHANNEL_URBDRC=ON \
+                          -DCHANNEL_URBDRC_CLIENT=ON \
+                          -DWITH_SERVER=ON \
+                          -DBUILD_TESTING=OFF \
+                          -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
+                          -DCMAKE_INSTALL_PREFIX=/opt/freerdp-nightly/ \
+                          -DCMAKE_INSTALL_INCLUDEDIR=include \
+                          -DCMAKE_INSTALL_LIBDIR=lib \
+                          $(ARM_FLOAT_ABI) \
+                          $(NULL)
+
+%:
+	dh $@ --parallel
+
+override_dh_auto_configure:
+	dh_auto_configure -- $(DEB_CMAKE_EXTRA_FLAGS)
+
+override_dh_shlibdeps:
+	dh_shlibdeps -l /opt/freerdp-nightly/lib/
+
+override_dh_strip:
+	dh_strip --dbg-package=freerdp-nightly-dbg
+
+override_dh_install:
+	rm -f debian/tmp/opt/freerdp-nightly/lib/libwinpr-makecert-tool.a
+	rm -f debian/tmp/opt/freerdp-nightly/lib/freerdp/*.a
+	mkdir -p debian/tmp/opt/freerdp-nightly/lib/cmake/
+
+	dh_install --fail-missing
+
+override_dh_clean:
+	rm -f config.h
+	dh_clean
