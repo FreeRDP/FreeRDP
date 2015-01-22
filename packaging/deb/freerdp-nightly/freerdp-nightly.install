@@ -1,0 +1,3 @@
+opt/freerdp-nightly/lib/*.so.*
+opt/freerdp-nightly/bin
+opt/freerdp-nightly/share/man/man1/xfreerdp.1*

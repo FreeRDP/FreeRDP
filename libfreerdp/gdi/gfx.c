@@ -356,7 +356,8 @@ int gdi_SurfaceCommand_H264(rdpGdi* gdi, RdpgfxClientContext* context, RDPGFX_SU
 	DstData = surface->data;
 
 	status = h264_decompress(gdi->codecs->h264, bs->data, bs->length, &DstData,
-			PIXEL_FORMAT_XRGB32, surface->scanline , surface->height, meta->regionRects, meta->numRegionRects);
+			PIXEL_FORMAT_XRGB32, surface->scanline , surface->width, surface->height,
+			meta->regionRects, meta->numRegionRects);
 
 	if (status < 0)
 	{
