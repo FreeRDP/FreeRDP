@@ -24,7 +24,8 @@ DEB_CMAKE_EXTRA_FLAGS :=  -DCMAKE_SKIP_RPATH=FALSE \
                           -DBUILD_TESTING=OFF \
                           -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
                           -DCMAKE_INSTALL_PREFIX=/opt/freerdp-nightly/ \
-                          -DCMAKE_INSTALL_INCLUDEDIR=include/$(shell dpkg-architecture -qDEB_BUILD_MULTIARCH) \
+                          -DCMAKE_INSTALL_INCLUDEDIR=include \
+                          -DCMAKE_INSTALL_LIBDIR=lib \
                           $(ARM_FLOAT_ABI) \
                           $(NULL)
 
@@ -35,19 +36,16 @@ override_dh_auto_configure:
 	dh_auto_configure -- $(DEB_CMAKE_EXTRA_FLAGS)
 
 override_dh_shlibdeps:
-	dh_shlibdeps -l /opt/freerdp-nightly/lib/$(shell dpkg-architecture -qDEB_BUILD_MULTIARCH)/
+	dh_shlibdeps -l /opt/freerdp-nightly/lib/
 
 override_dh_strip:
 	dh_strip --dbg-package=freerdp-nightly-dbg
 
 override_dh_install:
-	rm -f debian/tmp/opt/freerdp-nightly/lib/$(shell dpkg-architecture -qDEB_BUILD_MULTIARCH)/libwinpr-makecert-tool.a
-	rm -f debian/tmp/opt/freerdp-nightly/lib/$(shell dpkg-architecture -qDEB_BUILD_MULTIARCH)/freerdp/*.a
 	rm -f debian/tmp/opt/freerdp-nightly/lib/libwinpr-makecert-tool.a
 	rm -f debian/tmp/opt/freerdp-nightly/lib/freerdp/*.a
 	dh_install --fail-missing
 
 override_dh_clean:
-	rm -f include/version.h
 	rm -f config.h
 	dh_clean
