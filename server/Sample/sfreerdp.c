@@ -4,6 +4,7 @@
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2011 Vic Lee
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,26 +23,27 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <signal.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <winpr/winsock.h>
+
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
 
-
 #include <freerdp/constants.h>
-#include <freerdp/utils/tcp.h>
 #include <freerdp/server/rdpsnd.h>
 
 #include "sf_audin.h"
 #include "sf_rdpsnd.h"
+#include "sf_encomsp.h"
 
 #include "sfreerdp.h"
+
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("sample")
 
 #define SAMPLE_SERVER_USE_CLIENT_RESOLUTION 1
 #define SAMPLE_SERVER_DEFAULT_WIDTH 1024
@@ -95,6 +97,9 @@ void test_peer_context_free(freerdp_peer* client, testPeerContext* context)
 
 		if (context->rdpsnd)
 			rdpsnd_server_context_free(context->rdpsnd);
+
+		if (context->encomsp)
+			encomsp_server_context_free(context->encomsp);
 
 		WTSCloseServer((HANDLE) context->vcm);
 	}
@@ -337,25 +342,25 @@ static BOOL test_sleep_tsdiff(UINT32 *old_sec, UINT32 *old_usec, UINT32 new_sec,
 
 	if ((sec < 0) || ((sec == 0) && (usec < 0)))
 	{
-		printf("Invalid time stamp detected.\n");
+		WLog_ERR(TAG, "Invalid time stamp detected.");
 		return FALSE;
 	}
 
 	*old_sec = new_sec;
 	*old_usec = new_usec;
-	
-	while (usec < 0) 
+
+	while (usec < 0)
 	{
 		usec += 1000000;
 		sec--;
 	}
-	
+
 	if (sec > 0)
 		Sleep(sec * 1000);
-	
+
 	if (usec > 0)
 		USleep(usec);
-	
+
 	return TRUE;
 }
 
@@ -405,6 +410,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 	wStream* s;
 	void* buffer;
 	DWORD BytesReturned = 0;
+	ULONG written;
 	testPeerContext* context = (testPeerContext*) arg;
 
 	if (WTSVirtualChannelQuery(context->debug_channel, WTSVirtualFileHandle, &buffer, &BytesReturned) == TRUE)
@@ -417,7 +423,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 
 	s = Stream_New(NULL, 4096);
 
-	WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test1", 5, NULL);
+	WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test1", 5, &written);
 
 	while (1)
 	{
@@ -445,8 +451,7 @@ static void* tf_debug_channel_thread_func(void* arg)
 		}
 
 		Stream_SetPosition(s, BytesReturned);
-
-		printf("got %lu bytes\n", BytesReturned);
+		WLog_DBG(TAG, "got %lu bytes", BytesReturned);
 	}
 
 	Stream_Free(s, TRUE);
@@ -464,31 +469,28 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	 * The server may start sending graphics output and receiving keyboard/mouse input after this
 	 * callback returns.
 	 */
-
-	printf("Client %s is activated (osMajorType %d osMinorType %d)", client->local ? "(local)" : client->hostname,
-			client->settings->OsMajorType, client->settings->OsMinorType);
+	WLog_DBG(TAG, "Client %s is activated (osMajorType %d osMinorType %d)", client->local ? "(local)" : client->hostname,
+			 client->settings->OsMajorType, client->settings->OsMinorType);
 
 	if (client->settings->AutoLogonEnabled)
 	{
-		printf(" and wants to login automatically as %s\\%s",
-			client->settings->Domain ? client->settings->Domain : "",
-			client->settings->Username);
-
+		WLog_DBG(TAG, " and wants to login automatically as %s\\%s",
+				 client->settings->Domain ? client->settings->Domain : "",
+				 client->settings->Username);
 		/* A real server may perform OS login here if NLA is not executed previously. */
 	}
-	printf("\n");
 
-	printf("Client requested desktop: %dx%dx%d\n",
-		client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
-
+	WLog_DBG(TAG, "");
+	WLog_DBG(TAG, "Client requested desktop: %dx%dx%d",
+			 client->settings->DesktopWidth, client->settings->DesktopHeight, client->settings->ColorDepth);
 #if (SAMPLE_SERVER_USE_CLIENT_RESOLUTION == 1)
 	context->rfx_context->width = client->settings->DesktopWidth;
 	context->rfx_context->height = client->settings->DesktopHeight;
-	printf("Using resolution requested by client.\n");
+	WLog_DBG(TAG, "Using resolution requested by client.");
 #else
 	client->settings->DesktopWidth = context->rfx_context->width;
 	client->settings->DesktopHeight = context->rfx_context->height;
-	printf("Resizing client to %dx%d\n", client->settings->DesktopWidth, client->settings->DesktopHeight);
+	WLog_DBG(TAG, "Resizing client to %dx%d", client->settings->DesktopWidth, client->settings->DesktopHeight);
 	client->update->DesktopResize(client->update->context);
 #endif
 
@@ -501,8 +503,7 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 
 		if (context->debug_channel != NULL)
 		{
-			printf("Open channel rdpdbg.\n");
-
+			WLog_DBG(TAG, "Open channel rdpdbg.");
 			context->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 			context->debug_channel_thread = CreateThread(NULL, 0,
@@ -513,6 +514,11 @@ BOOL tf_peer_post_connect(freerdp_peer* client)
 	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "rdpsnd"))
 	{
 		sf_peer_rdpsnd_init(context); /* Audio Output */
+	}
+
+	if (WTSVirtualChannelManagerIsChannelJoined(context->vcm, "encomsp"))
+	{
+		sf_peer_encomsp_init(context); /* Lync Multiparty */
 	}
 
 	/* Dynamic Virtual Channels */
@@ -551,7 +557,7 @@ BOOL tf_peer_activate(freerdp_peer* client)
 
 void tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	printf("Client sent a synchronize event (flags:0x%X)\n", flags);
+	WLog_DBG(TAG, "Client sent a synchronize event (flags:0x%X)", flags);
 }
 
 void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
@@ -559,8 +565,7 @@ void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	freerdp_peer* client = input->context->peer;
 	rdpUpdate* update = client->update;
 	testPeerContext* context = (testPeerContext*) input->context;
-
-	printf("Client sent a keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+	WLog_DBG(TAG, "Client sent a keyboard event (flags:0x%X code:0x%X)", flags, code);
 
 	if ((flags & 0x4000) && code == 0x22) /* 'g' key */
 	{
@@ -583,7 +588,8 @@ void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 	{
 		if (context->debug_channel)
 		{
-			WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test2", 5, NULL);
+			ULONG written;
+			WTSVirtualChannelWrite(context->debug_channel, (PCHAR) "test2", 5, &written);
 		}
 	}
 	else if ((flags & 0x4000) && code == 0x2D) /* 'x' key */
@@ -611,30 +617,28 @@ void tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 
 void tf_peer_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	printf("Client sent a unicode keyboard event (flags:0x%X code:0x%X)\n", flags, code);
+	WLog_DBG(TAG, "Client sent a unicode keyboard event (flags:0x%X code:0x%X)", flags, code);
 }
 
 void tf_peer_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	//printf("Client sent a mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
-
+	//WLog_DBG(TAG, "Client sent a mouse event (flags:0x%X pos:%d,%d)", flags, x, y);
 	test_peer_draw_icon(input->context->peer, x + 10, y);
 }
 
 void tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	//printf("Client sent an extended mouse event (flags:0x%X pos:%d,%d)\n", flags, x, y);
+	//WLog_DBG(TAG, "Client sent an extended mouse event (flags:0x%X pos:%d,%d)", flags, x, y);
 }
 
 static void tf_peer_refresh_rect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
 {
 	BYTE i;
-
-	printf("Client requested to refresh:\n");
+	WLog_DBG(TAG, "Client requested to refresh:");
 
 	for (i = 0; i < count; i++)
 	{
-		printf("  (%d, %d) (%d, %d)\n", areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
+		WLog_DBG(TAG, "  (%d, %d) (%d, %d)", areas[i].left, areas[i].top, areas[i].right, areas[i].bottom);
 	}
 }
 
@@ -642,11 +646,11 @@ static void tf_peer_suppress_output(rdpContext* context, BYTE allow, RECTANGLE_1
 {
 	if (allow > 0)
 	{
-		printf("Client restore output (%d, %d) (%d, %d).\n", area->left, area->top, area->right, area->bottom);
+		WLog_DBG(TAG, "Client restore output (%d, %d) (%d, %d).", area->left, area->top, area->right, area->bottom);
 	}
 	else
 	{
-		printf("Client minimized and suppress output.\n");
+		WLog_DBG(TAG, "Client minimized and suppress output.");
 	}
 }
 
@@ -666,7 +670,15 @@ static void* test_peer_mainloop(void* arg)
 	/* Initialize the real server settings here */
 	client->settings->CertificateFile = _strdup("server.crt");
 	client->settings->PrivateKeyFile = _strdup("server.key");
+	client->settings->RdpKeyFile = _strdup("server.key");
+	client->settings->RdpSecurity = TRUE;
+	client->settings->TlsSecurity = TRUE;
 	client->settings->NlaSecurity = FALSE;
+	client->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_HIGH; */
+	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_LOW; */
+	/* client->settings->EncryptionLevel = ENCRYPTION_LEVEL_FIPS; */
+
 	client->settings->RemoteFxCodec = TRUE;
 	client->settings->ColorDepth = 32;
 	client->settings->SuppressOutput = TRUE;
@@ -688,8 +700,7 @@ static void* test_peer_mainloop(void* arg)
 
 	client->Initialize(client);
 	context = (testPeerContext*) client->context;
-
-	printf("We've got a client %s\n", client->local ? "(local)" : client->hostname);
+	WLog_INFO(TAG, "We've got a client %s", client->local ? "(local)" : client->hostname);
 
 	while (1)
 	{
@@ -698,7 +709,7 @@ static void* test_peer_mainloop(void* arg)
 		memset(rfds, 0, sizeof(rfds));
 		if (client->GetFileDescriptor(client, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
@@ -732,7 +743,7 @@ static void* test_peer_mainloop(void* arg)
 				(wsa_error == WSAEINPROGRESS) ||
 				(wsa_error == WSAEINTR)))
 			{
-				printf("select failed (WSAGetLastError: %d)\n", wsa_error);
+				WLog_ERR(TAG, "select failed (WSAGetLastError: %d)", wsa_error);
 				break;
 			}
 #else
@@ -742,7 +753,7 @@ static void* test_peer_mainloop(void* arg)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("select failed (errno: %d)\n", errno);
+				WLog_ERR(TAG, "select failed (errno: %d)", errno);
 				break;
 			}
 #endif
@@ -755,8 +766,7 @@ static void* test_peer_mainloop(void* arg)
 			break;
 	}
 
-	printf("Client %s disconnected.\n", client->local ? "(local)" : client->hostname);
-
+	WLog_INFO(TAG, "Client %s disconnected.", client->local ? "(local)" : client->hostname);
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
@@ -788,7 +798,7 @@ static void test_server_mainloop(freerdp_listener* instance)
 		memset(rfds, 0, sizeof(rfds));
 		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
@@ -816,14 +826,14 @@ static void test_server_mainloop(freerdp_listener* instance)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("select failed\n");
+				WLog_ERR(TAG, "select failed");
 				break;
 			}
 		}
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
 	}
@@ -833,6 +843,7 @@ static void test_server_mainloop(freerdp_listener* instance)
 
 int main(int argc, char* argv[])
 {
+	WSADATA wsaData;
 	freerdp_listener* instance;
 
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
@@ -842,21 +853,25 @@ int main(int argc, char* argv[])
 
 	if (argc > 1)
 		test_pcap_file = argv[1];
-	
+
 	if (argc > 2 && !strcmp(argv[2], "--fast"))
 		test_dump_rfx_realtime = FALSE;
 
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		return 0;
+
 	/* Open the server socket and start listening. */
-	freerdp_wsa_startup();
+
 	if (instance->Open(instance, NULL, 3389) &&
 		instance->OpenLocal(instance, "/tmp/tfreerdp-server.0"))
 	{
 		/* Entering the server main loop. In a real server the listener can be run in its own thread. */
 		test_server_mainloop(instance);
 	}
-	freerdp_wsa_cleanup();
 
 	freerdp_listener_free(instance);
+
+	WSACleanup();
 
 	return 0;
 }

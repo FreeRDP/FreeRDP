@@ -31,11 +31,14 @@
 #include <winpr/tchar.h>
 #include <winpr/dsparse.h>
 
+#include <freerdp/log.h>
 #include <openssl/rand.h>
 
 #include "http.h"
 
 #include "ntlm.h"
+
+#define TAG FREERDP_TAG("core.gateway.ntlm")
 
 BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* password, SecPkgContext_Bindings* Bindings)
 {
@@ -71,7 +74,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "QuerySecurityPackageInfo status: 0x%08X\n", status);
+		WLog_ERR(TAG,  "QuerySecurityPackageInfo status: 0x%08X", status);
 		return FALSE;
 	}
 
@@ -82,7 +85,7 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 
 	if (status != SEC_E_OK)
 	{
-		fprintf(stderr, "AcquireCredentialsHandle status: 0x%08X\n", status);
+		WLog_ERR(TAG,  "AcquireCredentialsHandle status: 0x%08X", status);
 		return FALSE;
 	}
 
@@ -214,6 +217,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 	ntlm->outputBuffer[0].BufferType = SECBUFFER_TOKEN;
 	ntlm->outputBuffer[0].cbBuffer = ntlm->cbMaxToken;
 	ntlm->outputBuffer[0].pvBuffer = malloc(ntlm->outputBuffer[0].cbBuffer);
+
 	if (!ntlm->outputBuffer[0].pvBuffer)
 		return FALSE;
 
@@ -235,7 +239,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 	if ((!ntlm) || (!ntlm->table))
 	{
-		fprintf(stderr, "ntlm_authenticate: invalid ntlm context\n");
+		WLog_ERR(TAG,  "ntlm_authenticate: invalid ntlm context");
 		return FALSE;
 	}
 
@@ -254,7 +258,7 @@ BOOL ntlm_authenticate(rdpNtlm* ntlm)
 
 		if (ntlm->table->QueryContextAttributes(&ntlm->context, SECPKG_ATTR_SIZES, &ntlm->ContextSizes) != SEC_E_OK)
 		{
-			fprintf(stderr, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+			WLog_ERR(TAG,  "QueryContextAttributes SECPKG_ATTR_SIZES failure");
 			return FALSE;
 		}
 
@@ -292,13 +296,19 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 
 rdpNtlm* ntlm_new()
 {
-	return (rdpNtlm *)calloc(1, sizeof(rdpNtlm));
+	return (rdpNtlm*) calloc(1, sizeof(rdpNtlm));
 }
 
 void ntlm_free(rdpNtlm* ntlm)
 {
-	if (ntlm != NULL)
+	if (ntlm)
 	{
+		if (ntlm->outputBuffer[0].pvBuffer)
+		{
+			free(ntlm->outputBuffer[0].pvBuffer);
+			ntlm->outputBuffer[0].pvBuffer = NULL;
+		}
+
 		free(ntlm);
 	}
 }

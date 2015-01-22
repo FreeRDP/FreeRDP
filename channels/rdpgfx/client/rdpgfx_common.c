@@ -26,12 +26,95 @@
 
 #include "rdpgfx_common.h"
 
-int rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* point16)
+const char* RDPGFX_CMDID_STRINGS[] =
 {
-	Stream_Read_UINT16(s, point16->x); /* x (2 bytes) */
-	Stream_Read_UINT16(s, point16->y); /* y (2 bytes) */
+	"RDPGFX_CMDID_UNUSED_0000",
+	"RDPGFX_CMDID_WIRETOSURFACE_1",
+	"RDPGFX_CMDID_WIRETOSURFACE_2",
+	"RDPGFX_CMDID_DELETEENCODINGCONTEXT",
+	"RDPGFX_CMDID_SOLIDFILL",
+	"RDPGFX_CMDID_SURFACETOSURFACE",
+	"RDPGFX_CMDID_SURFACETOCACHE",
+	"RDPGFX_CMDID_CACHETOSURFACE",
+	"RDPGFX_CMDID_EVICTCACHEENTRY",
+	"RDPGFX_CMDID_CREATESURFACE",
+	"RDPGFX_CMDID_DELETESURFACE",
+	"RDPGFX_CMDID_STARTFRAME",
+	"RDPGFX_CMDID_ENDFRAME",
+	"RDPGFX_CMDID_FRAMEACKNOWLEDGE",
+	"RDPGFX_CMDID_RESETGRAPHICS",
+	"RDPGFX_CMDID_MAPSURFACETOOUTPUT",
+	"RDPGFX_CMDID_CACHEIMPORTOFFER",
+	"RDPGFX_CMDID_CACHEIMPORTREPLY",
+	"RDPGFX_CMDID_CAPSADVERTISE",
+	"RDPGFX_CMDID_CAPSCONFIRM",
+	"RDPGFX_CMDID_UNUSED_0014",
+	"RDPGFX_CMDID_MAPSURFACETOWINDOW"
+};
 
-	return 0;
+const char* rdpgfx_get_cmd_id_string(UINT16 cmdId)
+{
+	if (cmdId <= RDPGFX_CMDID_MAPSURFACETOWINDOW)
+		return RDPGFX_CMDID_STRINGS[cmdId];
+	else
+		return "RDPGFX_CMDID_UNKNOWN";
+}
+
+const char* rdpgfx_get_codec_id_string(UINT16 codecId)
+{
+	switch (codecId)
+	{
+		case RDPGFX_CODECID_UNCOMPRESSED:
+			return "RDPGFX_CODECID_UNCOMPRESSED";
+		case RDPGFX_CODECID_CAVIDEO:
+			return "RDPGFX_CODECID_CAVIDEO";
+		case RDPGFX_CODECID_CLEARCODEC:
+			return "RDPGFX_CODECID_CLEARCODEC";
+		case RDPGFX_CODECID_PLANAR:
+			return "RDPGFX_CODECID_PLANAR";
+		case RDPGFX_CODECID_H264:
+			return "RDPGFX_CODECID_H264";
+		case RDPGFX_CODECID_ALPHA:
+			return "RDPGFX_CODECID_ALPHA";
+		case RDPGFX_CODECID_CAPROGRESSIVE:
+			return "RDPGFX_CODECID_CAPROGRESSIVE";
+		case RDPGFX_CODECID_CAPROGRESSIVE_V2:
+			return "RDPGFX_CODECID_CAPROGRESSIVE_V2";
+	}
+
+	return "RDPGFX_CODECID_UNKNOWN";
+}
+
+int rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
+{
+	if (Stream_GetRemainingLength(s) < 8)
+		return -1;
+
+	Stream_Read_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
+	Stream_Read_UINT16(s, header->flags); /* flags (2 bytes) */
+	Stream_Read_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
+
+	return 1;
+}
+
+int rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header)
+{
+	Stream_Write_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
+	Stream_Write_UINT16(s, header->flags); /* flags (2 bytes) */
+	Stream_Write_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
+
+	return 1;
+}
+
+int rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16)
+{
+	if (Stream_GetRemainingLength(s) < 4)
+		return -1;
+
+	Stream_Read_UINT16(s, pt16->x); /* x (2 bytes) */
+	Stream_Read_UINT16(s, pt16->y); /* y (2 bytes) */
+
+	return 1;
 }
 
 int rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16)
@@ -39,17 +122,20 @@ int rdpgfx_write_point16(wStream* s, RDPGFX_POINT16* point16)
 	Stream_Write_UINT16(s, point16->x); /* x (2 bytes) */
 	Stream_Write_UINT16(s, point16->y); /* y (2 bytes) */
 
-	return 0;
+	return 1;
 }
 
 int rdpgfx_read_rect16(wStream* s, RDPGFX_RECT16* rect16)
 {
+	if (Stream_GetRemainingLength(s) < 8)
+		return -1;
+
 	Stream_Read_UINT16(s, rect16->left); /* left (2 bytes) */
 	Stream_Read_UINT16(s, rect16->top); /* top (2 bytes) */
 	Stream_Read_UINT16(s, rect16->right); /* right (2 bytes) */
 	Stream_Read_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
 
-	return 0;
+	return 1;
 }
 
 int rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16)
@@ -59,17 +145,20 @@ int rdpgfx_write_rect16(wStream* s, RDPGFX_RECT16* rect16)
 	Stream_Write_UINT16(s, rect16->right); /* right (2 bytes) */
 	Stream_Write_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
 
-	return 0;
+	return 1;
 }
 
 int rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
 {
+	if (Stream_GetRemainingLength(s) < 4)
+		return -1;
+
 	Stream_Read_UINT8(s, color32->B); /* B (1 byte) */
 	Stream_Read_UINT8(s, color32->G); /* G (1 byte) */
 	Stream_Read_UINT8(s, color32->R); /* R (1 byte) */
 	Stream_Read_UINT8(s, color32->XA); /* XA (1 byte) */
 
-	return 0;
+	return 1;
 }
 
 int rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32)
@@ -79,23 +168,5 @@ int rdpgfx_write_color32(wStream* s, RDPGFX_COLOR32* color32)
 	Stream_Write_UINT8(s, color32->R); /* R (1 byte) */
 	Stream_Write_UINT8(s, color32->XA); /* XA (1 byte) */
 
-	return 0;
-}
-
-int rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
-{
-	Stream_Read_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
-	Stream_Read_UINT16(s, header->flags); /* flags (2 bytes) */
-	Stream_Read_UINT16(s, header->pduLength); /* pduLength (4 bytes) */
-
-	return 0;
-}
-
-int rdpgfx_write_header(wStream* s, RDPGFX_HEADER* header)
-{
-	Stream_Write_UINT16(s, header->cmdId); /* cmdId (2 bytes) */
-	Stream_Write_UINT16(s, header->flags); /* flags (2 bytes) */
-	Stream_Write_UINT16(s, header->pduLength); /* pduLength (4 bytes) */
-
-	return 0;
+	return 1;
 }

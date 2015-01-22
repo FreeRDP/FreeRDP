@@ -138,7 +138,7 @@ DWORD KEYCODE_TO_VKCODE_APPLE[256] =
 	VK_NUMPAD9, /* APPLE_VK_ANSI_Keypad9 (0x5C) */
 	0, /* APPLE_VK_JIS_Yen (0x5D) */
 	0, /* APPLE_VK_JIS_Underscore (0x5E) */
-	0, /* APPLE_VK_JIS_KeypadComma (0x5F) */
+	VK_DECIMAL, /* APPLE_VK_JIS_KeypadComma (0x5F) */
 	VK_F5, /* APPLE_VK_F5 (0x60) */
 	VK_F6, /* APPLE_VK_F6 (0x61) */
 	VK_F7, /* APPLE_VK_F7 (0x62) */

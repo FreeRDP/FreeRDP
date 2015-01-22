@@ -33,6 +33,127 @@
 #endif /* !MINMAX */
 
 /* ------------------------------------------------------------------------- */
+
+pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
+		BYTE* pDst, int dstStep, const prim_size_t* roi)
+{
+	int x, y;
+	INT16 R, G, B;
+	float Y, Cb, Cr;
+	BYTE* pRGB = pDst;
+	const INT16* pY  = pSrc[0];
+	const INT16* pCb = pSrc[1];
+	const INT16* pCr = pSrc[2];
+	int srcPad = (srcStep - (roi->width * 2)) / 2;
+	int dstPad = (dstStep - (roi->width * 4)) / 4;
+
+	for (y = 0; y < roi->height; y++)
+	{
+		for (x = 0; x < roi->width; x++)
+		{
+			Y = (float) (pY[0] + 4096);
+			Cb = (float) (pCb[0]);
+			Cr = (float) (pCr[0]);
+
+			R = ((INT16) (((Cr * 1.402525f) + Y + 16.0f)) >> 5);
+			G = ((INT16) ((Y - (Cb * 0.343730f) - (Cr * 0.714401f) + 16.0f)) >> 5);
+			B = ((INT16) (((Cb * 1.769905f) + Y + 16.0f)) >> 5);
+
+			if (R < 0)
+				R = 0;
+			else if (R > 255)
+				R = 255;
+
+			if (G < 0)
+				G = 0;
+			else if (G > 255)
+				G = 255;
+
+			if (B < 0)
+				B = 0;
+			else if (B > 255)
+				B = 255;
+
+			*pRGB++ = (BYTE) B;
+			*pRGB++ = (BYTE) G;
+			*pRGB++ = (BYTE) R;
+			*pRGB++ = 0xFF;
+
+			pY++;
+			pCb++;
+			pCr++;
+		}
+
+		pY += srcPad;
+		pCb += srcPad;
+		pCr += srcPad;
+		pRGB += dstPad;
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+pstatus_t general_yCbCrToBGR_16s8u_P3AC4R(const INT16* pSrc[3], int srcStep,
+		BYTE* pDst, int dstStep, const prim_size_t* roi)
+{
+	int x, y;
+	INT16 R, G, B;
+	float Y, Cb, Cr;
+	BYTE* pRGB = pDst;
+	const INT16* pY  = pSrc[0];
+	const INT16* pCb = pSrc[1];
+	const INT16* pCr = pSrc[2];
+	int srcPad = (srcStep - (roi->width * 2)) / 2;
+	int dstPad = (dstStep - (roi->width * 4)) / 4;
+
+	for (y = 0; y < roi->height; y++)
+	{
+		for (x = 0; x < roi->width; x++)
+		{
+			Y = (float) (pY[0] + 4096);
+			Cb = (float) (pCb[0]);
+			Cr = (float) (pCr[0]);
+
+			R = ((INT16) (((Cr * 1.402525f) + Y + 16.0f)) >> 5);
+			G = ((INT16) ((Y - (Cb * 0.343730f) - (Cr * 0.714401f) + 16.0f)) >> 5);
+			B = ((INT16) (((Cb * 1.769905f) + Y + 16.0f)) >> 5);
+
+			if (R < 0)
+				R = 0;
+			else if (R > 255)
+				R = 255;
+
+			if (G < 0)
+				G = 0;
+			else if (G > 255)
+				G = 255;
+
+			if (B < 0)
+				B = 0;
+			else if (B > 255)
+				B = 255;
+
+			*pRGB++ = (BYTE) R;
+			*pRGB++ = (BYTE) G;
+			*pRGB++ = (BYTE) B;
+			*pRGB++ = 0xFF;
+
+			pY++;
+			pCb++;
+			pCr++;
+		}
+
+		pY += srcPad;
+		pCb += srcPad;
+		pCr += srcPad;
+		pRGB += dstPad;
+	}
+
+	return PRIMITIVES_SUCCESS;
+}
+
+/* ------------------------------------------------------------------------- */
+
 pstatus_t general_yCbCrToRGB_16s16s_P3P3(
 	const INT16 *pSrc[3],  INT32 srcStep,
 	INT16 *pDst[3],  INT32 dstStep,
@@ -217,9 +338,11 @@ pstatus_t general_RGBToRGB_16s8u_P3AC4R(
 /* ------------------------------------------------------------------------- */
 void primitives_init_colors(primitives_t* prims)
 {
-	prims->RGBToRGB_16s8u_P3AC4R  = general_RGBToRGB_16s8u_P3AC4R;
+	prims->yCbCrToRGB_16s8u_P3AC4R = general_yCbCrToRGB_16s8u_P3AC4R;
+	prims->yCbCrToBGR_16s8u_P3AC4R = general_yCbCrToBGR_16s8u_P3AC4R;
 	prims->yCbCrToRGB_16s16s_P3P3 = general_yCbCrToRGB_16s16s_P3P3;
 	prims->RGBToYCbCr_16s16s_P3P3 = general_RGBToYCbCr_16s16s_P3P3;
+	prims->RGBToRGB_16s8u_P3AC4R  = general_RGBToRGB_16s8u_P3AC4R;
 
 	primitives_init_colors_opt(prims);
 }

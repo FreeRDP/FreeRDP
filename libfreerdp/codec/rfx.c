@@ -36,6 +36,7 @@
 #include <winpr/registry.h>
 #include <winpr/tchar.h>
 
+#include <freerdp/log.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/constants.h>
 #include <freerdp/primitives.h>
@@ -52,6 +53,7 @@
 #include "rfx_sse2.h"
 #include "rfx_neon.h"
 
+#define TAG FREERDP_TAG("codec")
 
 #ifndef RFX_INIT_SIMD
 #define RFX_INIT_SIMD(_rfx_context) do { } while (0)
@@ -330,8 +332,6 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 	context->quantization_encode = rfx_quantization_encode;	
 	context->dwt_2d_decode = rfx_dwt_2d_decode;
 	context->dwt_2d_encode = rfx_dwt_2d_encode;
-	context->rlgr_decode = rfx_rlgr_decode;
-	context->rlgr_encode = rfx_rlgr_encode;
 
 	RFX_INIT_SIMD(context);
 	
@@ -378,7 +378,7 @@ void rfx_context_free(RFX_CONTEXT* context)
 			free(priv->tileWorkParams);
 
 #ifdef WITH_PROFILER
-		fprintf(stderr, "\nWARNING: Profiling results probably unusable with multithreaded RemoteFX codec!\n");
+		WLog_VRB(TAG,  "WARNING: Profiling results probably unusable with multithreaded RemoteFX codec!");
 #endif
 	}
 
@@ -418,10 +418,11 @@ void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_f
 	}
 }
 
-void rfx_context_reset(RFX_CONTEXT* context)
+int rfx_context_reset(RFX_CONTEXT* context)
 {
 	context->state = RFX_STATE_SEND_HEADERS;
 	context->frameIdx = 0;
+	return 1;
 }
 
 static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
@@ -431,14 +432,14 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 	/* RFX_SYNC */
 	if (Stream_GetRemainingLength(s) < 6)
 	{
-		DEBUG_WARN("RfxSync packet too small");
+		WLog_ERR(TAG, "RfxSync packet too small");
 		return FALSE;
 	}
 	Stream_Read_UINT32(s, magic); /* magic (4 bytes), 0xCACCACCA */
 
 	if (magic != WF_MAGIC)
 	{
-		DEBUG_WARN("invalid magic number 0x%X", magic);
+		WLog_ERR(TAG, "invalid magic number 0x%X", magic);
 		return FALSE;
 	}
 
@@ -446,7 +447,7 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 
 	if (context->version != WF_VERSION_1_0)
 	{
-		DEBUG_WARN("unknown version number 0x%X", context->version);
+		WLog_ERR(TAG, "unknown version number 0x%X", context->version);
 		return FALSE;
 	}
 
@@ -461,20 +462,20 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
-		DEBUG_WARN("RfxCodecVersion packet too small");
+		WLog_ERR(TAG, "RfxCodecVersion packet too small");
 		return FALSE;
 	}
 	Stream_Read_UINT8(s, numCodecs); /* numCodecs (1 byte), must be set to 0x01 */
 
 	if (numCodecs != 1)
 	{
-		DEBUG_WARN("numCodecs: %d, expected:1", numCodecs);
+		WLog_ERR(TAG, "numCodecs: %d, expected:1", numCodecs);
 		return FALSE;
 	}
 
 	if (Stream_GetRemainingLength(s) < (size_t) (2 * numCodecs))
 	{
-		DEBUG_WARN("RfxCodecVersion packet too small for numCodecs=%d", numCodecs);
+		WLog_ERR(TAG, "RfxCodecVersion packet too small for numCodecs=%d", numCodecs);
 		return FALSE;
 	}
 
@@ -494,7 +495,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
-		DEBUG_WARN("RfxMessageChannels packet too small");
+		WLog_ERR(TAG, "RfxMessageChannels packet too small");
 		return FALSE;
 	}
 
@@ -505,13 +506,13 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 	 */
 	if (numChannels < 1)
 	{
-		DEBUG_WARN("numChannels:%d, expected:1", numChannels);
+		WLog_ERR(TAG, "numChannels:%d, expected:1", numChannels);
 		return TRUE;
 	}
 
 	if (Stream_GetRemainingLength(s) < (size_t) (numChannels * 5))
 	{
-		DEBUG_WARN("RfxMessageChannels packet too small for numChannels=%d", numChannels);
+		WLog_ERR(TAG, "RfxMessageChannels packet too small for numChannels=%d", numChannels);
 		return FALSE;
 	}
 
@@ -537,7 +538,7 @@ static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 
 	if (Stream_GetRemainingLength(s) < 5)
 	{
-		DEBUG_WARN("RfxMessageContext packet too small");
+		WLog_ERR(TAG, "RfxMessageContext packet too small");
 		return FALSE;
 	}
 
@@ -573,7 +574,7 @@ static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 			break;
 
 		default:
-			DEBUG_WARN("unknown RLGR algorithm.");
+			WLog_ERR(TAG, "unknown RLGR algorithm.");
 			break;
 	}
 
@@ -587,7 +588,7 @@ static BOOL rfx_process_message_frame_begin(RFX_CONTEXT* context, RFX_MESSAGE* m
 
 	if (Stream_GetRemainingLength(s) < 6)
 	{
-		DEBUG_WARN("RfxMessageFrameBegin packet too small");
+		WLog_ERR(TAG, "RfxMessageFrameBegin packet too small");
 		return FALSE;
 	}
 
@@ -610,7 +611,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 
 	if (Stream_GetRemainingLength(s) < 3)
 	{
-		DEBUG_WARN("RfxMessageRegion packet too small");
+		WLog_ERR(TAG, "RfxMessageRegion packet too small");
 		return FALSE;
 	}
 
@@ -622,8 +623,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		/* Unfortunately, it isn't documented.
 		It seems that server asks to clip whole session when numRects = 0.
 		Issue: https://github.com/FreeRDP/FreeRDP/issues/1738 */
-
-		DEBUG_WARN("no rects. Clip whole session.");
+		WLog_ERR(TAG, "no rects. Clip whole session.");
 		message->numRects = 1;
 		message->rects = (RFX_RECT*) realloc(message->rects, message->numRects * sizeof(RFX_RECT));
 		if (!message->rects)
@@ -638,7 +638,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 
 	if (Stream_GetRemainingLength(s) < (size_t) (8 * message->numRects))
 	{
-		DEBUG_WARN("RfxMessageRegion packet too small for num_rects=%d", message->numRects);
+		WLog_ERR(TAG, "RfxMessageRegion packet too small for num_rects=%d", message->numRects);
 		return FALSE;
 	}
 
@@ -693,7 +693,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	if (Stream_GetRemainingLength(s) < 14)
 	{
-		DEBUG_WARN("RfxMessageTileSet packet too small");
+		WLog_ERR(TAG, "RfxMessageTileSet packet too small");
 		return FALSE;
 	}
 
@@ -701,7 +701,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	if (subtype != CBT_TILESET)
 	{
-		DEBUG_WARN("invalid subtype, expected CBT_TILESET.");
+		WLog_ERR(TAG, "invalid subtype, expected CBT_TILESET.");
 		return FALSE;
 	}
 
@@ -713,7 +713,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	if (context->numQuant < 1)
 	{
-		DEBUG_WARN("no quantization value.");
+		WLog_ERR(TAG, "no quantization value.");
 		return TRUE;
 	}
 
@@ -721,7 +721,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	if (message->numTiles < 1)
 	{
-		DEBUG_WARN("no tiles.");
+		WLog_ERR(TAG, "no tiles.");
 		return TRUE;
 	}
 
@@ -734,7 +734,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	/* quantVals */
 	if (Stream_GetRemainingLength(s) < (size_t) (context->numQuant * 5))
 	{
-		DEBUG_WARN("RfxMessageTileSet packet too small for num_quants=%d", context->numQuant);
+		WLog_ERR(TAG, "RfxMessageTileSet packet too small for num_quants=%d", context->numQuant);
 		return FALSE;
 	}
 
@@ -802,7 +802,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		/* RFX_TILE */
 		if (Stream_GetRemainingLength(s) < 6)
 		{
-			DEBUG_WARN("RfxMessageTileSet packet too small to read tile %d/%d", i, message->numTiles);
+			WLog_ERR(TAG, "RfxMessageTileSet packet too small to read tile %d/%d", i, message->numTiles);
 			rc = FALSE;
 			break;
 		}
@@ -812,8 +812,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 		if (Stream_GetRemainingLength(s) < blockLen - 6)
 		{
-			DEBUG_WARN("RfxMessageTileSet not enough bytes to read tile %d/%d with blocklen=%d",
-					i, message->numTiles, blockLen);
+			WLog_ERR(TAG, "RfxMessageTileSet not enough bytes to read tile %d/%d with blocklen=%d",
+					 i, message->numTiles, blockLen);
 			rc = FALSE;
 			break;
 		}
@@ -822,7 +822,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 		if (blockType != CBT_TILE)
 		{
-			DEBUG_WARN("unknown block type 0x%X, expected CBT_TILE (0xCAC3).", blockType);
+			WLog_ERR(TAG, "unknown block type 0x%X, expected CBT_TILE (0xCAC3).", blockType);
 			break;
 		}
 
@@ -915,13 +915,13 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 
 		if (blockLen == 0)
 		{
-			DEBUG_WARN("zero blockLen");
+			WLog_ERR(TAG, "zero blockLen");
 			break;
 		}
 
 		if (Stream_GetRemainingLength(s) < blockLen - 6)
 		{
-			DEBUG_WARN("rfx_process_message: packet too small for blocklen=%d", blockLen);
+			WLog_ERR(TAG, "rfx_process_message: packet too small for blocklen=%d", blockLen);
 			break;
 		}
 
@@ -935,7 +935,7 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 			/* channelId (1 byte) must be set to 0x00 */
 			if (!Stream_SafeSeek(s, 2))
 			{
-				DEBUG_WARN("rfx_process_message: unable to skip RFX_CODEC_CHANNELT");
+				WLog_ERR(TAG, "rfx_process_message: unable to skip RFX_CODEC_CHANNELT");
 				break;
 			}
 		}
@@ -975,7 +975,7 @@ RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length
 				break;
 
 			default:
-				DEBUG_WARN("unknown blockType 0x%X", blockType);
+				WLog_ERR(TAG, "unknown blockType 0x%X", blockType);
 				break;
 		}
 
@@ -1186,18 +1186,19 @@ BOOL setupWorkers(RFX_CONTEXT *context, int nbTiles)
 	if (!context->priv->UseThreads)
 		return TRUE;
 
-	priv->workObjects = (PTP_WORK *)realloc(priv->workObjects, sizeof(PTP_WORK) * nbTiles);
-	if (!priv->workObjects)
-	 return FALSE;
+	priv->workObjects = (PTP_WORK*) realloc(priv->workObjects, sizeof(PTP_WORK) * nbTiles);
 
-	priv->tileWorkParams = (RFX_TILE_COMPOSE_WORK_PARAM *)
+	if (!priv->workObjects)
+		return FALSE;
+
+	priv->tileWorkParams = (RFX_TILE_COMPOSE_WORK_PARAM*)
 			realloc(priv->tileWorkParams, sizeof(RFX_TILE_COMPOSE_WORK_PARAM) * nbTiles);
+
 	if (!priv->tileWorkParams)
 		return FALSE;
 
 	return TRUE;
 }
-
 
 RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int numRects,
 		BYTE* data, int width, int height, int scanline)
@@ -1223,7 +1224,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 	assert(height > 0);
 	assert(scanline > 0);
 
-	message = (RFX_MESSAGE *)calloc(1, sizeof(RFX_MESSAGE));
+	message = (RFX_MESSAGE*)calloc(1, sizeof(RFX_MESSAGE));
+
 	if (!message)
 		return NULL;
 
@@ -1231,6 +1233,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 		rfx_update_context_properties(context);
 
 	message->frameIdx = context->frameIdx++;
+
 	if (!context->numQuant)
 	{
 		context->numQuant = 1;
@@ -1240,12 +1243,14 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 		context->quantIdxCb = 0;
 		context->quantIdxCr = 0;
 	}
+
 	message->numQuant = context->numQuant;
 	message->quantVals = context->quants;
 
 	bytesPerPixel = (context->bits_per_pixel / 8);
 
 	region16_init(&rectsRegion);
+
 	if (!computeRegion(rects, numRects, &rectsRegion, width, height))
 		goto out_free_message;
 
@@ -1258,6 +1263,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 	maxNbTiles = maxTilesX * maxTilesY;
 
 	message->tiles = calloc(maxNbTiles, sizeof(RFX_TILE*));
+
 	if (!message->tiles)
 		goto out_free_message;
 
@@ -1272,8 +1278,10 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 
 	regionRect = region16_rects(&rectsRegion, &regionNbRects);
 	message->rects = rfxRect = calloc(regionNbRects, sizeof(RFX_RECT));
+
 	if (!message->rects)
 		goto out_clean_tiles;
+
 	message->numRects = regionNbRects;
 
 	region16_init(&tilesRegion);
@@ -1295,6 +1303,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 		for (yIdx = startTileY, gridRelY = startTileY * 64; yIdx <= endTileY; yIdx++, gridRelY += 64 )
 		{
 			int tileHeight = 64;
+
 			if ((yIdx == endTileY) && (gridRelY + 64 > height))
 				tileHeight = height - gridRelY;
 
@@ -1304,6 +1313,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 			for (xIdx = startTileX, gridRelX = startTileX * 64; xIdx <= endTileX; xIdx++, gridRelX += 64)
 			{
 				int tileWidth = 64;
+
 				if ((xIdx == endTileX) && (gridRelX + 64 > width))
 					tileWidth = width - gridRelX;
 
@@ -1314,7 +1324,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 				if (region16_intersects_rect(&tilesRegion, &currentTileRect))
 					continue;
 
-				tile = (RFX_TILE *)ObjectPool_Take(context->priv->TilePool);
+				tile = (RFX_TILE*) ObjectPool_Take(context->priv->TilePool);
+
 				if (!tile)
 					goto out_clean_rects;;
 
@@ -1328,6 +1339,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 
 				ax = gridRelX;
 				ay = gridRelY;
+
 				if (tile->data && tile->allocated)
 				{
 					free(tile->data);
@@ -1356,7 +1368,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 
 					*workObject = CreateThreadpoolWork(
 							(PTP_WORK_CALLBACK)rfx_compose_message_tile_work_callback,
-							(void *)workParam,
+							(void*) workParam,
 							&context->priv->ThreadPoolEnv
 					);
 
@@ -1381,7 +1393,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 
 	if (message->numTiles != maxNbTiles)
 	{
-		message->tiles = realloc(message->tiles, sizeof(RFX_TILE *) * message->numTiles);
+		message->tiles = realloc(message->tiles, sizeof(RFX_TILE*) * message->numTiles);
+
 		if (!message->tiles)
 			goto out_clean_rects;
 	}
@@ -1391,6 +1404,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, int
 	/* when using threads ensure all computations are done */
 	message->tilesDataSize = 0;
 	workObject = context->priv->workObjects;
+
 	for (i = 0; i < message->numTiles; i++)
 	{
 		tile = message->tiles[i];
@@ -1414,7 +1428,7 @@ out_clean_tiles:
 	free(message->tiles);
 	region16_uninit(&tilesRegion);
 out_free_message:
-	fprintf(stderr, "remoteFx error\n");
+	WLog_ERR(TAG,  "remoteFx error");
 	region16_uninit(&rectsRegion);
 	free(message);
 	return 0;
@@ -1431,8 +1445,10 @@ RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message, int* 
 
 	*numMessages = ((message->tilesDataSize + maxDataSize) / maxDataSize) * 4;
 
-	messages = (RFX_MESSAGE*) malloc(sizeof(RFX_MESSAGE) * (*numMessages));
-	ZeroMemory(messages, sizeof(RFX_MESSAGE) * (*numMessages));
+	messages = (RFX_MESSAGE*) calloc((*numMessages), sizeof(RFX_MESSAGE));
+
+	if (!messages)
+		return NULL;
 
 	j = 0;
 
@@ -1604,4 +1620,3 @@ void rfx_compose_message(RFX_CONTEXT* context, wStream* s,
 
 	rfx_message_free(context, message);
 }
-

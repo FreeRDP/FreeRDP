@@ -12,10 +12,19 @@
 #  android_setup_build_env.sh <source root>
 
 OPENSSL_SCM=https://github.com/akallabeth/openssl-android.git
+OPENSSL_TAG=1.0.1h-fips-2.0.7
 NDK_PROFILER_SCM=https://github.com/richq/android-ndk-profiler.git
 JPEG_LIBRARY_SCM=https://github.com/akallabeth/jpeg8d.git
 
-SCRIPT_NAME=`basename $0`
+SCRIPT_NAME=$(basename $0)
+
+if [ -x $ANDROID_NDK/ndk-build ]; then
+  NDK_BUILD=$ANDROID_NDK/ndk-build
+else
+  echo "ndk-build not found in NDK directory $ANDROID_NDK"
+  echo "assuming ndk-build is in path..."
+  NDK_BUILD=ndk-build
+fi
 
 if [ $# -ne 1 ]; then
 
@@ -36,7 +45,7 @@ echo "Preparing OpenSSL..."
 OPENSSL_SRC=$ROOT/openssl-build
 if [ -d $OPENSSL_SRC ]; then
 	cd $OPENSSL_SRC
-	git pull
+	git fetch
 	RETVAL=$?
 else
 	git clone $OPENSSL_SCM $OPENSSL_SRC
@@ -47,13 +56,15 @@ if [ $RETVAL -ne 0 ]; then
 	exit -3
 fi
 cd $OPENSSL_SRC
+
+# We want to build a specific TAG
+git checkout $OPENSSL_TAG
+
 make clean
 # The makefile has a bug, which aborts during
 # first compilation. Rerun make to build the whole lib.
 make
-make
-make
-RETVAL=0 # TODO: Check, why 2 is returned.
+RETVAL=$?
 if [ $RETVAL -ne 0 ]; then
 	echo "Failed to execute make command [$RETVAL]"
 	exit -4
@@ -86,11 +97,11 @@ if [ $RETVAL -ne 0 ]; then
 	exit -5
 fi
 cd $NDK_PROFILER_SRC
-ndk-build V=1 APP_ABI=armeabi-v7a clean
-ndk-build V=1 APP_ABI=armeabi-v7a
+$NDK_BUILD V=1 APP_ABI=armeabi-v7a clean
+$NDK_BUILD V=1 APP_ABI=armeabi-v7a
 RETVAL=$?
 if [ $RETVAL -ne 0 ]; then
-	echo "Failed to execute ndk-build command [$RETVAL]"
+	echo "Failed to execute $NDK_BUILD command [$RETVAL]"
 	exit -6
 fi
 
@@ -109,11 +120,11 @@ if [ $RETVAL -ne 0 ]; then
 	exit -6
 fi
 cd $JPEG_LIBRARY_SRC
-ndk-build V=1 APP_ABI=armeabi-v7a clean
-ndk-build V=1 APP_ABI=armeabi-v7a
+$NDK_BUILD V=1 APP_ABI=armeabi-v7a clean
+$NDK_BUILD V=1 APP_ABI=armeabi-v7a
 RETVAL=$?
 if [ $RETVAL -ne 0 ]; then
-	echo "Failed to execute ndk-build command [$RETVAL]"
+	echo "Failed to execute $NDK_BUILD command [$RETVAL]"
 	exit -7
 fi
 mkdir -p $JPEG_LIBRARY_SRC/lib

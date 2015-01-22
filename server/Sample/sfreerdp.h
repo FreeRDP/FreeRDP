@@ -27,6 +27,7 @@
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/server/audin.h>
 #include <freerdp/server/rdpsnd.h>
+#include <freerdp/server/encomsp.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -55,6 +56,7 @@ struct test_peer_context
 	BOOL audin_open;
 	UINT32 frame_id;
 	RdpsndServerContext* rdpsnd;
+	EncomspServerContext* encomsp;
 };
 typedef struct test_peer_context testPeerContext;
 

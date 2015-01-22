@@ -182,6 +182,11 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 		pool->aCapacity *= 2;
 		pool->aArray = (wStream**) realloc(pool->aArray, sizeof(wStream*) * pool->aCapacity);
 	}
+	else if ((pool->aSize + 1) * 3 < pool->aCapacity)
+	{
+		pool->aCapacity /= 2;
+		pool->aArray = (wStream**) realloc(pool->aArray, sizeof(wStream*) * pool->aCapacity);
+	}
 
 	pool->aArray[(pool->aSize)++] = s;
 	StreamPool_RemoveUsed(pool, s);
@@ -336,14 +341,21 @@ wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize)
 		pool->aArray = (wStream**) calloc(pool->aCapacity, sizeof(wStream*));
 
 		if (!pool->aArray)
+		{
+			free(pool);
 			return NULL;
+		}
 
 		pool->uSize = 0;
 		pool->uCapacity = 32;
 		pool->uArray = (wStream**) calloc(pool->uCapacity, sizeof(wStream*));
 
 		if (!pool->uArray)
+		{
+			free(pool->aArray);
+			free(pool);
 			return NULL;
+		}
 
 		InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 	}

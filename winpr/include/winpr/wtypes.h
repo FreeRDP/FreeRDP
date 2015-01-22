@@ -379,4 +379,6 @@ typedef WORD LANGID;
 
 #endif
 
+#include <winpr/user.h>
+
 #endif /* WINPR_WTYPES_H */

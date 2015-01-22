@@ -18,6 +18,7 @@
 # Servers
 
 add_subdirectory(common)
+add_subdirectory(shadow)
 
 if(FREERDP_VENDOR)
 	if(WITH_SAMPLE)
@@ -25,18 +26,18 @@ if(FREERDP_VENDOR)
 	endif()
 
 	if(NOT WIN32)
-		if(WITH_X11)
-			add_subdirectory(X11)
-		endif()
-
 		if(APPLE AND (NOT IOS))
-			add_subdirectory(Mac)
+			#add_subdirectory(Mac)
 		endif()
 	else()
-		add_subdirectory(Windows)
+		#add_subdirectory(Windows)
 	endif()
 
-	if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/FreeRDS")
+	if(NOT DEFINED WITH_FREERDS)
+		set(WITH_FREERDS 1)
+	endif()
+
+	if(WITH_FREERDS AND (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/FreeRDS"))
 		add_subdirectory("FreeRDS")
 	endif()
 endif()
@@ -47,8 +48,8 @@ set(FILENAME "ModuleOptions.cmake")
 file(GLOB FILEPATHS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*/${FILENAME}")
 
 foreach(FILEPATH ${FILEPATHS})
-	if(${FILEPATH} MATCHES "^([^/]*)//${FILENAME}")
-		string(REGEX REPLACE "^([^/]*)//${FILENAME}" "\\1" FREERDP_SERVER ${FILEPATH})
+	if(${FILEPATH} MATCHES "^([^/]*)/+${FILENAME}")
+		string(REGEX REPLACE "^([^/]*)/+${FILENAME}" "\\1" FREERDP_SERVER ${FILEPATH})
 		set(FREERDP_SERVER_ENABLED 0)
 		include(${FILEPATH})
 		if(FREERDP_SERVER_ENABLED)
@@ -62,3 +63,4 @@ endforeach()
 foreach(FREERDP_SERVER ${FREERDP_EXTRA_SERVERS})
 	add_subdirectory(${FREERDP_SERVER})
 endforeach()
+

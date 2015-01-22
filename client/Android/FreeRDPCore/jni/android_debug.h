@@ -16,12 +16,13 @@
 #include "config.h"
 #endif
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
+#define ANDROID_TAG CLIENT_TAG("android")
 #ifdef WITH_DEBUG_ANDROID_JNI
-#define DEBUG_ANDROID(fmt, ...)	DEBUG_CLASS(JNI, fmt, ## __VA_ARGS__)
+#define DEBUG_ANDROID(fmt, ...)	WLog_DBG(ANDROID_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_ANDROID(fmt, ...)	DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_ANDROID(fmt, ...) do { } while (0)
 #endif
 
 

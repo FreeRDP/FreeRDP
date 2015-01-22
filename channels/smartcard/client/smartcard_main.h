@@ -21,7 +21,7 @@
 #ifndef FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_SMARTCARD_CLIENT_MAIN_H
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/channels/rdpdr.h>
 
 #include <winpr/crt.h>
@@ -29,6 +29,8 @@
 #include <winpr/synch.h>
 #include <winpr/smartcard.h>
 #include <winpr/collections.h>
+
+#define TAG CHANNELS_TAG("smartcard.client")
 
 #define RDP_SCARD_CTL_CODE(code)	CTL_CODE(FILE_DEVICE_FILE_SYSTEM, (code), METHOD_BUFFERED, FILE_ANY_ACCESS)
 

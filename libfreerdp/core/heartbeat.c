@@ -40,17 +40,18 @@ int rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT8(s, count1); /* count1 (1 byte) */
 	Stream_Read_UINT8(s, count2); /* count2 (1 byte) */
 
-	DEBUG_HEARTBEAT("received Heartbeat PDU -> period=%u, count1=%u, count2=%u", period, count1, count2);
+	WLog_DBG(HEARTBEAT_TAG, "received Heartbeat PDU -> period=%u, count1=%u, count2=%u", period, count1, count2);
 
 	return 0;
 }
 
 rdpHeartbeat* heartbeat_new(void)
 {
-	rdpHeartbeat* heartbeat = (rdpHeartbeat*)malloc(sizeof(rdpHeartbeat));
+	rdpHeartbeat* heartbeat = (rdpHeartbeat*) calloc(1, sizeof(rdpHeartbeat));
+
 	if (heartbeat)
 	{
-		ZeroMemory(heartbeat, sizeof(rdpHeartbeat));
+
 	}
 	
 	return heartbeat;

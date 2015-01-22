@@ -27,9 +27,11 @@
 #=============================================================================
 
 find_path(XRENDER_INCLUDE_DIR NAMES X11/extensions/Xrender.h
+          PATHS /opt/X11/include
           DOC "The Xrender include directory")
 
 find_library(XRENDER_LIBRARY NAMES Xrender
+          PATHS /opt/X11/lib
           DOC "The Xrender library")
 
 include(FindPackageHandleStandardArgs)

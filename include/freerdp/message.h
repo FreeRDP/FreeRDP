@@ -54,6 +54,7 @@
 #define Update_SurfaceBits					12
 #define Update_SurfaceFrameMarker				13
 #define Update_SurfaceFrameAcknowledge				14
+#define Update_SetKeyboardIndicators				15
 
 #define FREERDP_UPDATE_BEGIN_PAINT				MakeMessageId(Update, BeginPaint)
 #define FREERDP_UPDATE_	END_PAINT				MakeMessageId(Update, EndPaint)
@@ -69,6 +70,7 @@
 #define FREERDP_UPDATE_SURFACE_BITS				MakeMessageId(Update, SurfaceBits)
 #define FREERDP_UPDATE_SURFACE_FRAME_MARKER			MakeMessageId(Update, SurfaceFrameMarker)
 #define FREERDP_UPDATE_SURFACE_FRAME_ACKNOWLEDGE		MakeMessageId(Update, SurfaceFrameAcknowledge)
+#define FREERDP_UPDATE_SET_KEYBOARD_INDICATORS			MakeMessageId(Update, SetKeyboardIndicators)
 
 /* Primary Update */
 
@@ -229,12 +231,16 @@
 #define Input_UnicodeKeyboardEvent				3
 #define Input_MouseEvent					4
 #define Input_ExtendedMouseEvent				5
+#define Input_FocusInEvent					6
+#define Input_KeyboardPauseEvent				7
 
 #define FREERDP_INPUT_SYNCHRONIZE_EVENT				MakeMessageId(Input, SynchronizeEvent)
 #define FREERDP_INPUT_KEYBOARD_EVENT				MakeMessageId(Input, KeyboardEvent)
 #define FREERDP_INPUT_UNICODE_KEYBOARD_EVENT			MakeMessageId(Input, UnicodeKeyboardEvent)
 #define FREERDP_INPUT_MOUSE_EVENT				MakeMessageId(Input, MouseEvent)
 #define FREERDP_INPUT_EXTENDED_MOUSE_EVENT			MakeMessageId(Input, ExtendedMouseEvent)
+#define FREERDP_INPUT_FOCUS_IN_EVENT				MakeMessageId(Input, FocusInEvent)
+#define FREERDP_INPUT_KEYBOARD_PAUSE_EVENT			MakeMessageId(Input, KeyboardPauseEvent)
 
 /**
  * Static Channel Message Queues

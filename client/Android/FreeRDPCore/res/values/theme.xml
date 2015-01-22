@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <resources>
-    <style name="Theme.Settings" parent="android:Theme.Light">
+    <style name="Theme.Settings" parent="@style/Theme.AppCompat.Light.DarkActionBar">
   		<item name="android:listSeparatorTextViewStyle">@style/SettingsCategory</item>
     </style>
-    <style name="Theme.Main" parent="android:Theme.Light">
+    <style name="Theme.Main" parent="@style/Theme.AppCompat.Light.DarkActionBar">
     </style>
     <style name="SettingsCategory">
         <item name="android:layout_width">match_parent</item>
@@ -13,12 +13,10 @@
         <item name="android:textSize">14sp</item>
         <item name="android:gravity">center_vertical</item>
         <item name="android:paddingLeft">5sp</item>        
-        <item name="android:textColor">@color/separator_text_color</item>
         <item name="android:layout_margin">2dp</item>
 		<item name="android:background">@drawable/separator_background</item>
         </style>
     <style name="ButtonText">
-        <item name="android:textColor">@color/button_text_color</item>
         <item name="android:gravity">center</item>
         <item name="android:layout_margin">2dp</item>
         <item name="android:textSize">18dp</item>

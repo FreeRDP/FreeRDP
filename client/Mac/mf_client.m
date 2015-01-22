@@ -33,12 +33,11 @@
 void mfreerdp_client_global_init()
 {
 	freerdp_handle_signals();
-	freerdp_channels_global_init();
 }
 
 void mfreerdp_client_global_uninit()
 {
-	freerdp_channels_global_uninit();
+
 }
 
 int mfreerdp_client_start(rdpContext* context)
@@ -100,10 +99,8 @@ int mfreerdp_client_new(freerdp* instance, rdpContext* context)
 	settings = instance->settings;
 
 	settings->AsyncTransport = TRUE;
-	
 	settings->AsyncUpdate = TRUE;
 	settings->AsyncInput = TRUE;
-	settings->AsyncChannels = TRUE;
 
 	return 0;
 }

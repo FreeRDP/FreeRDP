@@ -25,6 +25,9 @@
 #ifdef _WIN32
 
 #include <specstrings.h>
+#ifndef _COM_Outptr_
+#define _COM_Outptr_
+#endif
 
 #else
 
@@ -71,24 +74,6 @@
 #ifndef __declspec
 #define __declspec(e) __attribute__((e))
 #endif
-#endif
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-  #ifdef __GNUC__
-    #define DECLSPEC_EXPORT __attribute__((dllexport))
-    #define DECLSPEC_IMPORT __attribute__((dllimport))
-  #else
-    #define DECLSPEC_EXPORT __declspec(dllexport)
-    #define DECLSPEC_IMPORT __declspec(dllimport)
-  #endif
-#else
-  #if defined(__GNUC__) && __GNUC__ >= 4
-    #define DECLSPEC_EXPORT __attribute__ ((visibility("default")))
-    #define DECLSPEC_IMPORT
-  #else
-    #define DECLSPEC_EXPORT
-    #define DECLSPEC_IMPORT
-  #endif
 #endif
 
 #ifndef DECLSPEC_NORETURN
@@ -969,6 +954,24 @@ char (*__countof_helper(_CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
 #define CONTAINING_RECORD(address, type, field) \
 	((type *)((PCHAR)(address) - (ULONG_PTR)(&((type *)0)->field)))
 
+#endif
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+  #ifdef __GNUC__
+    #define DECLSPEC_EXPORT __attribute__((dllexport))
+    #define DECLSPEC_IMPORT __attribute__((dllimport))
+  #else
+    #define DECLSPEC_EXPORT __declspec(dllexport)
+    #define DECLSPEC_IMPORT __declspec(dllimport)
+  #endif
+#else
+  #if defined(__GNUC__) && __GNUC__ >= 4
+    #define DECLSPEC_EXPORT __attribute__ ((visibility("default")))
+    #define DECLSPEC_IMPORT
+  #else
+    #define DECLSPEC_EXPORT
+    #define DECLSPEC_IMPORT
+  #endif
 #endif
 
 #endif /* WINPR_SPEC_H */

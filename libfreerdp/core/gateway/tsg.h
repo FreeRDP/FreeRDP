@@ -31,13 +31,14 @@ typedef struct rdp_tsg rdpTsg;
 #include <winpr/rpc.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/synch.h>
 #include <winpr/error.h>
 
 #include <time.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
 enum _TSG_STATE
 {
@@ -315,11 +316,5 @@ BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking);
 
 rdpTsg* tsg_new(rdpTransport* transport);
 void tsg_free(rdpTsg* tsg);
-
-#ifdef WITH_DEBUG_TSG
-#define DEBUG_TSG(fmt, ...) DEBUG_CLASS(TSG, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_TSG(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
 
 #endif /* FREERDP_CORE_TSG_H */

@@ -25,6 +25,7 @@
 		android:xlargeScreens="true" />
 
 	<application
+		android:theme="@style/Theme.Main"
 		android:debuggable="@ANDROID_DEBUG_ENABLE@">
 
 		<!-- Activity to create shortcuts -->
@@ -65,7 +66,7 @@
 				android:windowSoftInputMode="stateHidden">
 			</activity>
 			<activity android:name=".presentation.SessionActivity"
-				android:theme="@android:style/Theme.Black.NoTitleBar"
+				android:theme="@style/Theme.Main"
 				android:configChanges="orientation|keyboardHidden|keyboard"
 				android:windowSoftInputMode="adjustResize">
 			</activity>

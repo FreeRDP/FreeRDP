@@ -45,7 +45,15 @@ struct _rdpdr_server_context
 	RdpdrServerPrivate* priv;
 };
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm);
 FREERDP_API void rdpdr_server_context_free(RdpdrServerContext* context);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_CHANNEL_SERVER_RDPDR_H */

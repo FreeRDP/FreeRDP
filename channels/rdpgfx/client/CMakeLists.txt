@@ -20,6 +20,8 @@ define_channel_client("rdpgfx")
 set(${MODULE_PREFIX}_SRCS
 	rdpgfx_main.c
 	rdpgfx_main.h
+	rdpgfx_codec.c
+	rdpgfx_codec.h
 	rdpgfx_common.c
 	rdpgfx_common.h)
 
@@ -27,19 +29,9 @@ include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-common freerdp-utils)
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-sysinfo)	
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} winpr freerdp)
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${FREERDP_ADDIN_PATH} EXPORT FreeRDPTargets)
 

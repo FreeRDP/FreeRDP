@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * HTTP Proxy support
  *
- * Copyright 2014 Christian Plattner <ccpp@gmx.at>
+ * Copyright 2015 Christian Plattner <ccpp@gmx.at>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 port)
 	int send_length;
 
 	send_length = trio_asprintf(&send_buf,
-			"CONNECT %s:%d HTTP/1.1" CRLF CRLF
+			"CONNECT %s:%d HTTP/1.1" CRLF
 			"Host: %s:%d" CRLF CRLF,
 			hostname, port,
 			hostname, port);

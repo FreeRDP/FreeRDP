@@ -21,7 +21,11 @@
 #include "config.h"
 #endif
 
+#include <freerdp/log.h>
+
 #include "rpc_fault.h"
+
+#define TAG FREERDP_TAG("core.gateway.rpc")
 
 extern const RPC_FAULT_CODE RPC_TSG_FAULT_CODES[];
 
@@ -314,16 +318,14 @@ int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 {
 	int index;
 	UINT32 code;
-
-	fprintf(stderr, "RPC Fault PDU:\n");
-
+	WLog_ERR(TAG,  "RPC Fault PDU:");
 	code = rpc_map_status_code_to_win32_error_code(header->fault.status);
 
 	for (index = 0; RPC_FAULT_CODES[index].name != NULL; index++)
 	{
 		if (RPC_FAULT_CODES[index].code == code)
 		{
-			fprintf(stderr, "status: %s (0x%08X)\n", RPC_FAULT_CODES[index].name, code);
+			WLog_ERR(TAG,  "status: %s (0x%08X)", RPC_FAULT_CODES[index].name, code);
 			return 0;
 		}
 	}
@@ -332,12 +334,11 @@ int rpc_recv_fault_pdu(rpcconn_hdr_t* header)
 	{
 		if (RPC_TSG_FAULT_CODES[index].code == code)
 		{
-			fprintf(stderr, "status: %s (0x%08X)\n", RPC_TSG_FAULT_CODES[index].name, code);
+			WLog_ERR(TAG,  "status: %s (0x%08X)", RPC_TSG_FAULT_CODES[index].name, code);
 			return 0;
 		}
 	}
 
-	fprintf(stderr, "status: %s (0x%08X)\n", "UNKNOWN", code);
-
+	WLog_ERR(TAG,  "status: %s (0x%08X)", "UNKNOWN", code);
 	return 0;
 }

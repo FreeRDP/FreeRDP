@@ -30,6 +30,10 @@
 
 #include "wlog/ConsoleAppender.h"
 
+#ifdef ANDROID
+#include <android/log.h>
+#endif
+
 /**
  * Console Appender
  */
@@ -68,13 +72,61 @@ int WLog_ConsoleAppender_WriteMessage(wLog* log, wLogConsoleAppender* appender, 
 	FILE* fp;
 	char prefix[WLOG_MAX_PREFIX_SIZE];
 
-	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;
-
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
-	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
+#ifdef _WIN32
+	if (appender->outputStream == WLOG_CONSOLE_DEBUG)
+	{
+		char MessageString[4096];
 
+		sprintf_s(MessageString, sizeof(MessageString), "%s%s\n",
+			  message->PrefixString, message->TextString);
+
+		OutputDebugStringA(MessageString);
+
+		return 1;
+	}
+#endif
+#ifdef ANDROID
+	(void)fp;
+	android_LogPriority level;
+	switch(message->Level)
+	{
+		case WLOG_TRACE:
+			level = ANDROID_LOG_VERBOSE;
+			break;
+		case WLOG_DEBUG:
+			level = ANDROID_LOG_DEBUG;
+			break;
+		case WLOG_INFO:
+			level = ANDROID_LOG_INFO;
+			break;
+		case WLOG_WARN:
+			level = ANDROID_LOG_WARN;
+			break;
+		case WLOG_ERROR:
+			level = ANDROID_LOG_ERROR;
+			break;
+		case WLOG_FATAL:
+			level = ANDROID_LOG_FATAL;
+			break;
+		case WLOG_OFF:
+			level = ANDROID_LOG_SILENT;
+			break;
+		default:
+			level = ANDROID_LOG_FATAL;
+			break;
+	}
+
+	if (level != ANDROID_LOG_SILENT)
+		__android_log_print(level, log->Name, "%s%s", message->PrefixString, message->TextString);
+
+#else
+	fp = (appender->outputStream == WLOG_CONSOLE_STDERR) ? stderr : stdout;
+
+	fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
+#endif
 	return 1;
 }
 
@@ -129,8 +181,9 @@ int WLog_ConsoleAppender_WritePacketMessage(wLog* log, wLogConsoleAppender* appe
 		free(FullFileName);
 	}
 
-	WLog_PacketMessage_Write((wPcap*) appender->PacketMessageContext,
-			message->PacketData, message->PacketLength, message->PacketFlags);
+	if (appender->PacketMessageContext)
+		WLog_PacketMessage_Write((wPcap*) appender->PacketMessageContext,
+				message->PacketData, message->PacketLength, message->PacketFlags);
 
 	return PacketId;
 }
@@ -160,6 +213,11 @@ wLogConsoleAppender* WLog_ConsoleAppender_New(wLog* log)
 				(WLOG_APPENDER_WRITE_PACKET_MESSAGE_FN) WLog_ConsoleAppender_WritePacketMessage;
 
 		ConsoleAppender->outputStream = WLOG_CONSOLE_STDOUT;
+
+#ifdef _WIN32
+		if (IsDebuggerPresent())
+			ConsoleAppender->outputStream = WLOG_CONSOLE_DEBUG;
+#endif
 	}
 
 	return ConsoleAppender;

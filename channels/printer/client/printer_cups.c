@@ -31,7 +31,6 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/svc_plugin.h>
 #include <freerdp/channels/rdpdr.h>
 
 #include "printer_main.h"
@@ -87,15 +86,12 @@ static void printer_cups_write_printjob(rdpPrintJob* printjob, BYTE* data, int s
 
 		fp = fopen((const char*) cups_printjob->printjob_object, "a+b");
 
-		if (fp == NULL)
-		{
-			DEBUG_WARN("failed to open file %s", (char*) cups_printjob->printjob_object);
+		if (!fp)
 			return;
-		}
 
 		if (fwrite(data, 1, size, fp) < size)
 		{
-			DEBUG_WARN("failed to write file %s", (char*) cups_printjob->printjob_object);
+
 		}
 
 		fclose(fp);
@@ -121,7 +117,7 @@ static void printer_cups_close_printjob(rdpPrintJob* printjob)
 
 		if (cupsPrintFile(printjob->printer->name, (const char*) cups_printjob->printjob_object, buf, 0, NULL) == 0)
 		{
-			DEBUG_WARN("cupsPrintFile: %s", cupsLastErrorString());
+
 		}
 
 		unlink(cups_printjob->printjob_object);
@@ -167,20 +163,19 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 
 		cups_printjob->printjob_object = httpConnectEncrypt(cupsServer(), ippPort(), HTTP_ENCRYPT_IF_REQUESTED);
 
-		if (cups_printjob->printjob_object == NULL)
+		if (!cups_printjob->printjob_object)
 		{
-			DEBUG_WARN("httpConnectEncrypt: %s", cupsLastErrorString());
 			free(cups_printjob);
 			return NULL;
 		}
 
 		printer_cups_get_printjob_name(buf, sizeof(buf));
+
 		cups_printjob->printjob_id = cupsCreateJob((http_t*) cups_printjob->printjob_object,
 			printer->name, buf, 0, NULL);
 
-		if (cups_printjob->printjob_id == 0)
+		if (!cups_printjob->printjob_id)
 		{
-			DEBUG_WARN("cupsCreateJob: %s", cupsLastErrorString());
 			httpClose((http_t*) cups_printjob->printjob_object);
 			free(cups_printjob);
 			return NULL;
@@ -281,19 +276,15 @@ rdpPrinterDriver* printer_cups_get_driver(void)
 {
 	if (cups_driver == NULL)
 	{
-		cups_driver = (rdpCupsPrinterDriver*) malloc(sizeof(rdpCupsPrinterDriver));
-		ZeroMemory(cups_driver, sizeof(rdpCupsPrinterDriver));
+		cups_driver = (rdpCupsPrinterDriver*) calloc(1, sizeof(rdpCupsPrinterDriver));
+
+		if (!cups_driver)
+			return NULL;
 
 		cups_driver->driver.EnumPrinters = printer_cups_enum_printers;
 		cups_driver->driver.GetPrinter = printer_cups_get_printer;
 
 		cups_driver->id_sequence = 1;
-
-#ifdef _CUPS_API_1_4
-		DEBUG_SVC("using CUPS API 1.4");
-#else
-		DEBUG_SVC("using CUPS API 1.2");
-#endif
 	}
 
 	return (rdpPrinterDriver*) cups_driver;

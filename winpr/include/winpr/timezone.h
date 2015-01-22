@@ -25,6 +25,10 @@
 
 #include <winpr/windows.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _WIN32
 
 typedef struct _TIME_ZONE_INFORMATION
@@ -62,7 +66,11 @@ WINPR_API BOOL TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZon
 
 #endif
 
-#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0600)) /* Windows Vista */
+/*
+ * GetDynamicTimeZoneInformation is provided by the SDK if _WIN32_WINNT >= 0x0600 in SDKs above 7.1A
+ * and incorrectly if _WIN32_WINNT >= 0x0501 in older SDKs
+ */
+#if !defined(_WIN32) || (defined(_WIN32) && (defined(NTDDI_WIN8) && _WIN32_WINNT < 0x0600 || !defined(NTDDI_WIN8) && _WIN32_WINNT < 0x0501)) /* Windows Vista */
 
 WINPR_API DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInformation);
 WINPR_API BOOL SetDynamicTimeZoneInformation(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation);
@@ -85,6 +93,10 @@ WINPR_API DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex, PDYNAMIC_TIM
 WINPR_API DWORD GetDynamicTimeZoneInformationEffectiveYears(const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation,
 		LPDWORD FirstYear, LPDWORD LastYear);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* WINPR_TIMEZONE_H */

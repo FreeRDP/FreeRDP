@@ -356,7 +356,13 @@ wLogLayout* WLog_Layout_New(wLog* log)
 		if (env)
 			layout->FormatString = env;
 		else
+		{
+#ifdef ANDROID
+			layout->FormatString = _strdup("[pid=%pid:tid=%tid] - ");
+#else
 			layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - ");
+#endif
+		}
 	}
 
 	return layout;

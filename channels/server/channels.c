@@ -43,10 +43,12 @@
 #include <freerdp/server/audin.h>
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/server/cliprdr.h>
+#include <freerdp/server/echo.h>
 #include <freerdp/server/rdpdr.h>
+#include <freerdp/server/rdpei.h>
 #include <freerdp/server/drdynvc.h>
 
-void freerdp_channels_dummy()
+void freerdp_channels_dummy() 
 {
 	audin_server_context_new(NULL);
 	audin_server_context_free(NULL);
@@ -57,11 +59,17 @@ void freerdp_channels_dummy()
 	cliprdr_server_context_new(NULL);
 	cliprdr_server_context_free(NULL);
 
+	echo_server_context_new(NULL);
+	echo_server_context_free(NULL);
+
 	rdpdr_server_context_new(NULL);
 	rdpdr_server_context_free(NULL);
 
 	drdynvc_server_context_new(NULL);
 	drdynvc_server_context_free(NULL);
+
+	rdpei_server_context_new(NULL);
+	rdpei_server_context_free(NULL);
 }
 
 /**

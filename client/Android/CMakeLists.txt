@@ -42,6 +42,11 @@ if(ANDROID_BUILD_JAVA)
 	endif()
 endif(ANDROID_BUILD_JAVA)
 
+set(ANDROID_COMMAND "${ANDROID_SDK}/tools/android")
+if(NOT EXISTS ${ANDROID_COMMAND})
+	message(FATAL_ERROR "android not found but required to build android java")
+endif()
+
 if(ANDROID_BUILD_JAVA_DEBUG)
 	set(ANDROID_BUILD_TYPE "debug")
 else()
@@ -54,6 +59,23 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 else()
 	set(ANDROID_DEBUG_ENABLE "false")
 	set(NDK_DEBUG "0")
+endif()
+
+set(APPCOMPAT_DIR "${CMAKE_CURRENT_BINARY_DIR}/appcompat_v7")
+set(supportdir "${ANDROID_SDK}/extras/android/support/v7/appcompat")
+set(compatibilitydir "${ANDROID_SDK}/extras/android/compatibility/v7/appcompat")
+if(EXISTS "${supportdir}" AND IS_DIRECTORY "${supportdir}")
+       add_custom_target(copy_appcompat ALL
+               COMMAND ${CMAKE_COMMAND} -E copy_directory "${supportdir}" ${APPCOMPAT_DIR}
+               COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR} -t android-${ANDROID_APP_TARGET_SDK}
+       )
+elseif(EXISTS "${compatibilitydir}" AND IS_DIRECTORY "${compatibilitydir}")
+       add_custom_target(copy_appcompat ALL
+               COMMAND ${CMAKE_COMMAND} -E copy_directory "${compatibilitydir}" ${APPCOMPAT_DIR}
+               COMMAND ${ANDROID_COMMAND} update lib-project -p ${APPCOMPAT_DIR} -t android-${ANDROID_APP_TARGET_SDK}
+       )
+else()
+	message( FATAL_ERROR "${ANDROID_SDK}/extras/android/{support|compatibility}/v7/appcompat directory not found.  Please install a recent version of Android Support Library, CMake will now exit." )
 endif()
 
 add_subdirectory(FreeRDPCore)

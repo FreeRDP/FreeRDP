@@ -10,14 +10,21 @@ typedef struct mf_context mfContext;
 
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/gfx.h>
 #include <freerdp/gdi/region.h>
-#include <freerdp/rail/rail.h>
 #include <freerdp/cache/cache.h>
 #include <freerdp/channels/channels.h>
+
+#include <freerdp/client/channels.h>
+#include <freerdp/client/rdpei.h>
+#include <freerdp/client/rdpgfx.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/client/encomsp.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/clipboard.h>
 
 #include "MRDPView.h"
 #include "Keyboard.h"
@@ -57,6 +64,15 @@ struct mf_context
 	DWORD keyboardThreadId;
 	BOOL disconnect;
 	BOOL sw_gdi;
+	
+	BOOL clipboardSync;
+	wClipboard* clipboard;
+	UINT32 numServerFormats;
+	UINT32 requestedFormatId;
+	HANDLE clipboardRequestEvent;
+	CLIPRDR_FORMAT* serverFormats;
+	CliprdrClientContext* cliprdr;
+	UINT32 clipboardCapabilities;
 
 	rdpFile* connectionRdpFile;
 

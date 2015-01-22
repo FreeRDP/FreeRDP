@@ -38,7 +38,7 @@
 #include "rfx_decode.h"
 
 /* stride is bytes between rows in the output buffer. */
-static void rfx_decode_format_rgb(INT16* r_buf, INT16* g_buf, INT16* b_buf,
+void rfx_decode_format_rgb(INT16* r_buf, INT16* g_buf, INT16* b_buf,
 	RDP_PIXEL_FORMAT pixel_format, BYTE* dst_buf, int stride)
 {
 	primitives_t *prims = primitives_get();
@@ -103,7 +103,7 @@ static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 	PROFILER_ENTER(context->priv->prof_rfx_decode_component);
 
 	PROFILER_ENTER(context->priv->prof_rfx_rlgr_decode);
-		context->rlgr_decode(context->mode, data, size, buffer, 4096);
+		rfx_rlgr_decode(data, size, buffer, 4096, (context->mode == RLGR1) ? 1 : 3);
 	PROFILER_EXIT(context->priv->prof_rfx_rlgr_decode);
 
 	PROFILER_ENTER(context->priv->prof_rfx_differential_decode);
@@ -146,9 +146,7 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, BYTE* rgb_buffer, int 
 	pSrcDst[2] = (INT16*)((BYTE*)(&pBuffer[((8192 + 32) * 2) + 16])); /* cr_b_buffer */
 
 	rfx_decode_component(context, y_quants, tile->YData, tile->YLen, pSrcDst[0]); /* YData */
-
 	rfx_decode_component(context, cb_quants, tile->CbData, tile->CbLen, pSrcDst[1]); /* CbData */
-
 	rfx_decode_component(context, cr_quants, tile->CrData, tile->CrLen, pSrcDst[2]); /* CrData */
 
 	PROFILER_ENTER(context->priv->prof_rfx_ycbcr_to_rgb);

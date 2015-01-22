@@ -26,6 +26,9 @@
 #include <winpr/crt.h>
 
 #include <freerdp/utils/signal.h>
+#include <freerdp/log.h>
+
+#define TAG FREERDP_TAG("utils")
 
 #ifdef _WIN32
 
@@ -48,8 +51,7 @@ static void fatal_handler(int signum)
 {
 	struct sigaction default_sigaction;
 	sigset_t this_mask;
-
-	printf("fatal_handler: signum=%d\n", signum);
+	WLog_DBG(TAG, "fatal_handler: signum=%d", signum);
 
 	if (terminal_needs_reset)
 		tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);

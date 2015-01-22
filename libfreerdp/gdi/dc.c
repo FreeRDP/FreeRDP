@@ -59,7 +59,7 @@ HGDI_DC gdi_GetDC()
  * @return new device context
  */
 
-HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp)
+HGDI_DC gdi_CreateDC(UINT32 flags, int bpp)
 {
 	HGDI_DC hDC = (HGDI_DC) malloc(sizeof(GDI_DC));
 
@@ -71,9 +71,9 @@ HGDI_DC gdi_CreateDC(HCLRCONV clrconv, int bpp)
 	hDC->bitsPerPixel = bpp;
 	hDC->bytesPerPixel = bpp / 8;
 
-	hDC->alpha = clrconv->alpha;
-	hDC->invert = clrconv->invert;
-	hDC->rgb555 = clrconv->rgb555;
+	hDC->alpha = (flags & CLRCONV_ALPHA) ? TRUE : FALSE;
+	hDC->invert = (flags & CLRCONV_INVERT) ? TRUE : FALSE;
+	hDC->rgb555 = (flags & CLRCONV_RGB555) ? TRUE : FALSE;
 
 	hDC->hwnd = (HGDI_WND) malloc(sizeof(GDI_WND));
 	hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0);
@@ -163,15 +163,15 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 
 int gdi_DeleteObject(HGDIOBJECT hgdiobject)
 {
-	if (hgdiobject == NULL)
+	if (!hgdiobject)
 		return 0;
 
 	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
 	{
 		HGDI_BITMAP hBitmap = (HGDI_BITMAP) hgdiobject;
 
-		if (hBitmap->data != NULL)
-			free(hBitmap->data);
+		if (hBitmap->data)
+			_aligned_free(hBitmap->data);
 
 		free(hBitmap);
 	}

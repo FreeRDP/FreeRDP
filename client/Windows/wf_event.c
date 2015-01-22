@@ -27,11 +27,12 @@
 
 #include <freerdp/freerdp.h>
 
-#include "wf_interface.h"
+#include "wf_client.h"
 
 #include "wf_gdi.h"
 #include "wf_event.h"
-#include "freerdp/event.h"
+
+#include <freerdp/event.h>
 
 static HWND g_focus_hWnd;
 
@@ -131,8 +132,8 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				freerdp_input_send_keyboard_event_ex(input, !(p->flags & LLKHF_UP), rdp_scancode);
 
-				if (p->vkCode == VK_CAPITAL)
-					DEBUG_KBD("caps lock is processed on client side too to toggle caps lock indicator");
+				if (p->vkCode == VK_NUMLOCK || p->vkCode == VK_CAPITAL || p->vkCode == VK_SCROLL || p->vkCode == VK_KANA)
+					DEBUG_KBD("lock keys are processed on client side too to toggle their indicators");
 				else
 					return 1;
 
@@ -150,6 +151,40 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	}
 
 	return CallNextHookEx(NULL, nCode, wParam, lParam);
+}
+
+void wf_event_focus_in(wfContext* wfc)
+{
+	UINT16 syncFlags;
+	rdpInput* input;
+	POINT pt;
+	RECT rc;
+
+	input = wfc->instance->input;
+
+	syncFlags = 0;
+
+	if (GetKeyState(VK_NUMLOCK))
+		syncFlags |= KBD_SYNC_NUM_LOCK;
+
+	if (GetKeyState(VK_CAPITAL))
+		syncFlags |= KBD_SYNC_CAPS_LOCK;
+
+	if (GetKeyState(VK_SCROLL))
+		syncFlags |= KBD_SYNC_SCROLL_LOCK;
+
+	if (GetKeyState(VK_KANA))
+		syncFlags |= KBD_SYNC_KANA_LOCK;
+
+	input->FocusInEvent(input, syncFlags);
+
+	/* send pointer position if the cursor is currently inside our client area */
+	GetCursorPos(&pt);
+	ScreenToClient(wfc->hwnd, &pt);
+	GetClientRect(wfc->hwnd, &rc);
+
+	if (pt.x >= rc.left && pt.x < rc.right && pt.y >= rc.top && pt.y < rc.bottom)
+		input->MouseEvent(input, PTR_FLAGS_MOVE, (UINT16)pt.x, (UINT16)pt.y);
 }
 
 static int wf_event_process_WM_MOUSEWHEEL(wfContext* wfc, HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -229,6 +264,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 	ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	wfc = (wfContext*) ptr;
 
+
 	if (wfc != NULL)
 	{
 		input = wfc->instance->input;
@@ -255,7 +291,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					// Set maximum window size for resizing
 
 					minmax = (MINMAXINFO*) lParam;
-					wf_update_canvas_diff(wfc);
+
+					//always use the last determined canvas diff, because it could be
+					//that the window is minimized when this gets called
+					//wf_update_canvas_diff(wfc);
 
 					if (!wfc->fullscreen)
 					{
@@ -281,11 +320,14 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					wfc->client_y = windowRect.top;
 				}
 				
-				wf_size_scrollbars(wfc, LOWORD(lParam), HIWORD(lParam));
+				if (wfc->client_width && wfc->client_height)
+				{
+					wf_size_scrollbars(wfc, LOWORD(lParam), HIWORD(lParam));
 
-				// Workaround: when the window is maximized, the call to "ShowScrollBars" returns TRUE but has no effect.
-				if (wParam == SIZE_MAXIMIZED && !wfc->fullscreen)
-					SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, SWP_NOMOVE | SWP_FRAMECHANGED);
+					// Workaround: when the window is maximized, the call to "ShowScrollBars" returns TRUE but has no effect.
+					if (wParam == SIZE_MAXIMIZED && !wfc->fullscreen)
+						SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, SWP_NOMOVE | SWP_FRAMECHANGED);
+				}
 
 				break;
 
@@ -533,6 +575,7 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			if (alt_ctrl_down())
 				g_flipping_in = TRUE;
 			g_focus_hWnd = hWnd;
+			freerdp_set_focus(wfc->instance);
 			break;
 
 		case WM_KILLFOCUS:

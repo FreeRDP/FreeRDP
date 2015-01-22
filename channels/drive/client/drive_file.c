@@ -49,7 +49,14 @@
 #endif
 
 #ifdef HAVE_FCNTL_H
+#define __USE_GNU /* for O_PATH */
 #include <fcntl.h>
+#undef __USE_GNU
+#endif
+
+#ifdef _WIN32
+#pragma comment(lib, "Shlwapi.lib")
+#include <Shlwapi.h>
 #endif
 
 #include "drive_file.h"
@@ -187,6 +194,11 @@ static BOOL drive_file_init(DRIVE_FILE* file, UINT32 DesiredAccess, UINT32 Creat
 	if (STAT(file->fullpath, &st) == 0)
 	{
 		file->is_dir = (S_ISDIR(st.st_mode) ? TRUE : FALSE);
+		if (!file->is_dir && !S_ISREG(st.st_mode))
+		{
+			file->err = EPERM;
+			return TRUE;
+		}
 #ifndef WIN32
 		if (st.st_size > (unsigned long) 0x07FFFFFFF)
 			largeFile = TRUE;
@@ -300,6 +312,25 @@ DRIVE_FILE* drive_file_new(const char* base_path, const char* path, UINT32 id,
 		drive_file_free(file);
 		return NULL;
 	}
+
+#if defined(__linux__) && defined(O_PATH)
+	if (file->fd < 0 && file->err == EACCES)
+	{
+		/**
+		 * We have no access permissions for the file or directory but if the
+		 * peer is only interested in reading the object's attributes we can try
+		 * to obtain a file descriptor who's only purpose is to perform
+		 * operations that act purely at the file descriptor level.
+		 * See open(2)
+		 **/
+		 {
+			if ((file->fd = OPEN(file->fullpath, O_PATH)) >= 0)
+			{
+				file->err = 0;
+			}
+		 }
+	}
+#endif
 
 	return file;
 }
@@ -425,6 +456,29 @@ BOOL drive_file_query_information(DRIVE_FILE* file, UINT32 FsInformationClass, w
 	return TRUE;
 }
 
+int dir_empty(const char *path)
+{
+#ifdef _WIN32
+	return PathIsDirectoryEmptyA(path);
+#else
+	struct dirent *dp;
+	int empty = 1;
+
+	DIR *dir = opendir(path);
+	if (dir == NULL) //Not a directory or doesn't exist
+		return 1;
+
+	while ((dp = readdir(dir)) != NULL) {
+		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
+			continue;    /* Skip . and .. */
+
+		empty = 0;
+		break;
+	}
+	closedir(dir);
+	return empty;
+#endif
+}
 BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UINT32 Length, wStream* input)
 {
 	char* s = NULL;
@@ -433,7 +487,11 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 	int status;
 	char* fullpath;
 	struct STAT st;
+#if defined(__linux__) && !defined(ANDROID)
+	struct timespec tv[2];
+#else
 	struct timeval tv[2];
+#endif
 	UINT64 LastWriteTime;
 	UINT32 FileAttributes;
 	UINT32 FileNameLength;
@@ -454,14 +512,20 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 				return FALSE;
 
 			tv[0].tv_sec = st.st_atime;
-			tv[0].tv_usec = 0;
 			tv[1].tv_sec = (LastWriteTime > 0 ? FILE_TIME_RDP_TO_SYSTEM(LastWriteTime) : st.st_mtime);
-			tv[1].tv_usec = 0;
 #ifndef WIN32
 			/* TODO on win32 */
 #ifdef ANDROID
+			tv[0].tv_usec = 0;
+			tv[1].tv_usec = 0;
 			utimes(file->fullpath, tv);
+#elif defined (__linux__)
+			tv[0].tv_nsec = 0;
+			tv[1].tv_nsec = 0;			
+			futimens(file->fd, tv);
 #else
+			tv[0].tv_usec = 0;
+			tv[1].tv_usec = 0;
 			futimes(file->fd, tv);
 #endif
 
@@ -492,6 +556,9 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 		case FileDispositionInformation:
 			/* http://msdn.microsoft.com/en-us/library/cc232098.aspx */
 			/* http://msdn.microsoft.com/en-us/library/cc241371.aspx */
+			if (file->is_dir && !dir_empty(file->fullpath))
+				break;
+
 			if (Length)
 				Stream_Read_UINT8(input, file->delete_pending);
 			else

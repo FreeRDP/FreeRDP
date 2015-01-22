@@ -32,7 +32,6 @@
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/region.h>
-#include <freerdp/rail/rail.h>
 #include <freerdp/cache/cache.h>
 #include <freerdp/channels/channels.h>
 

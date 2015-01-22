@@ -3,6 +3,7 @@
  * RDP Server Peer
  *
  * Copyright 2011 Vic Lee
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,41 +23,203 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/winsock.h>
 
 #include "info.h"
 #include "certificate.h"
 
-#include <freerdp/utils/tcp.h>
+#include <freerdp/log.h>
 
 #include "peer.h"
+
+#define TAG FREERDP_TAG("core.peer")
 
 #ifdef WITH_DEBUG_RDP
 extern const char* DATA_PDU_TYPE_STRINGS[80];
 #endif
 
+static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char* name, UINT32 flags)
+{
+	int length;
+	UINT32 index;
+	BOOL joined = FALSE;
+	rdpMcsChannel* mcsChannel = NULL;
+	rdpPeerChannel* peerChannel = NULL;
+	rdpMcs* mcs = client->context->rdp->mcs;
+
+	if (flags & WTS_CHANNEL_OPTION_DYNAMIC)
+		return NULL; /* not yet supported */
+
+	length = strlen(name);
+
+	if (length > 8)
+		return NULL; /* SVC maximum name length is 8 */
+
+	for (index = 0; index < mcs->channelCount; index++)
+	{
+		mcsChannel = &(mcs->channels[index]);
+
+		if (!mcsChannel->joined)
+			continue;
+
+		if (strncmp(name, mcsChannel->Name, length) == 0)
+		{
+			joined = TRUE;
+			break;
+		}
+	}
+
+	if (!joined)
+		return NULL; /* channel is not joined */
+
+	peerChannel = (rdpPeerChannel*) mcsChannel->handle;
+
+	if (peerChannel)
+	{
+		/* channel is already open */
+		return (HANDLE) peerChannel;
+	}
+
+	peerChannel = (rdpPeerChannel*) calloc(1, sizeof(rdpPeerChannel));
+
+	if (peerChannel)
+	{
+		peerChannel->index = index;
+		peerChannel->client = client;
+		peerChannel->channelFlags = flags;
+		peerChannel->channelId = mcsChannel->ChannelId;
+		peerChannel->mcsChannel = mcsChannel;
+		mcsChannel->handle = (void*) peerChannel;
+	}
+
+	return (HANDLE) peerChannel;
+}
+
+static BOOL freerdp_peer_virtual_channel_close(freerdp_peer* client, HANDLE hChannel)
+{
+	rdpMcsChannel* mcsChannel = NULL;
+	rdpPeerChannel* peerChannel = NULL;
+
+	if (!hChannel)
+		return FALSE;
+
+	peerChannel = (rdpPeerChannel*) hChannel;
+	mcsChannel = peerChannel->mcsChannel;
+
+	mcsChannel->handle = NULL;
+	free(peerChannel);
+
+	return TRUE;
+}
+
+int freerdp_peer_virtual_channel_read(freerdp_peer* client, HANDLE hChannel, BYTE* buffer, UINT32 length)
+{
+	return 0; /* this needs to be implemented by the server application */
+}
+
+static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChannel, BYTE* buffer, UINT32 length)
+{
+	wStream* s;
+	UINT32 flags;
+	UINT32 chunkSize;
+	UINT32 maxChunkSize;
+	UINT32 totalLength;
+	rdpPeerChannel* peerChannel;
+	rdpMcsChannel* mcsChannel;
+	rdpRdp* rdp = client->context->rdp;
+
+	if (!hChannel)
+		return -1;
+
+	peerChannel = (rdpPeerChannel*) hChannel;
+	mcsChannel = peerChannel->mcsChannel;
+
+	if (peerChannel->channelFlags & WTS_CHANNEL_OPTION_DYNAMIC)
+		return -1; /* not yet supported */
+
+	maxChunkSize = rdp->settings->VirtualChannelChunkSize;
+
+	totalLength = length;
+	flags = CHANNEL_FLAG_FIRST;
+
+	while (length > 0)
+	{
+		s = rdp_send_stream_init(rdp);
+
+		if (length > maxChunkSize)
+		{
+			chunkSize = rdp->settings->VirtualChannelChunkSize;
+		}
+		else
+		{
+			chunkSize = length;
+			flags |= CHANNEL_FLAG_LAST;
+		}
+
+		if (mcsChannel->options & CHANNEL_OPTION_SHOW_PROTOCOL)
+			flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
+
+		Stream_Write_UINT32(s, totalLength);
+		Stream_Write_UINT32(s, flags);
+		Stream_EnsureRemainingCapacity(s, chunkSize);
+		Stream_Write(s, buffer, chunkSize);
+
+		rdp_send(rdp, s, peerChannel->channelId);
+
+		buffer += chunkSize;
+		length -= chunkSize;
+		flags = 0;
+	}
+
+	return 1;
+}
+
+void* freerdp_peer_virtual_channel_get_data(freerdp_peer* client, HANDLE hChannel)
+{
+	rdpPeerChannel* peerChannel = (rdpPeerChannel*) hChannel;
+
+	if (!hChannel)
+		return NULL;
+
+	return peerChannel->extra;
+}
+
+int freerdp_peer_virtual_channel_set_data(freerdp_peer* client, HANDLE hChannel, void* data)
+{
+	rdpPeerChannel* peerChannel = (rdpPeerChannel*) hChannel;
+
+	if (!hChannel)
+		return -1;
+
+	peerChannel->extra = data;
+
+	return 1;
+}
+
 static BOOL freerdp_peer_initialize(freerdp_peer* client)
 {
-	rdpRdp *rdp = client->context->rdp;
-	rdpSettings *settings = rdp->settings;
+	rdpRdp* rdp = client->context->rdp;
+	rdpSettings* settings = rdp->settings;
 
 	settings->ServerMode = TRUE;
 	settings->FrameAcknowledge = 0;
 	settings->LocalConnection = client->local;
 	rdp->state = CONNECTION_STATE_INITIAL;
 
-	if (settings->RdpKeyFile != NULL)
+	if (settings->RdpKeyFile)
 	{
 		settings->RdpServerRsaKey = key_new(settings->RdpKeyFile);
+
 		if (!settings->RdpServerRsaKey)
 		{
-			fprintf(stderr, "%s: inavlid RDP key file %s\n", __FUNCTION__, settings->RdpKeyFile);
+			WLog_ERR(TAG, "inavlid RDP key file %s", settings->RdpKeyFile);
 			return FALSE;
 		}
 
 		if (settings->RdpServerRsaKey->ModulusLength > 256)
 		{
-			fprintf(stderr, "%s: Key sizes > 2048 are currently not supported for RDP security.\n", __FUNCTION__);
-			fprintf(stderr, "%s: Set a different key file than %s\n", __FUNCTION__, settings->RdpKeyFile);
+			WLog_ERR(TAG, "Key sizes > 2048 are currently not supported for RDP security.");
+			WLog_ERR(TAG, "Set a different key file than %s", settings->RdpKeyFile);
 			exit(1);
 		}
 	}
@@ -76,7 +239,6 @@ static HANDLE freerdp_peer_get_event_handle(freerdp_peer* client)
 {
 	return client->context->rdp->transport->TcpIn->event;
 }
-
 
 static BOOL freerdp_peer_check_fds(freerdp_peer* peer)
 {
@@ -105,8 +267,8 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 		return FALSE;
 
 #ifdef WITH_DEBUG_RDP
-	printf("recv %s Data PDU (0x%02X), length: %d\n",
-		type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
+	WLog_DBG(TAG, "recv %s Data PDU (0x%02X), length: %d",
+			 type < ARRAYSIZE(DATA_PDU_TYPE_STRINGS) ? DATA_PDU_TYPE_STRINGS[type] : "???", type, length);
 #endif
 
 	switch (type)
@@ -159,7 +321,7 @@ static BOOL peer_recv_data_pdu(freerdp_peer* client, wStream* s)
 			break;
 
 		default:
-			fprintf(stderr, "Data PDU type %d\n", type);
+			WLog_ERR(TAG,  "Data PDU type %d", type);
 			break;
 	}
 
@@ -180,11 +342,14 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 	{
-		fprintf(stderr, "Incorrect RDP header.\n");
+		WLog_ERR(TAG,  "Incorrect RDP header.");
 		return -1;
 	}
 
-	if (rdp->settings->DisableEncryption)
+	if (rdp->disconnect)
+		return 0;
+ 
+	if (rdp->settings->UseRdpSecurityLayer)
 	{
 		if (!rdp_read_security_header(s, &securityFlags))
 			return -1;
@@ -193,18 +358,13 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 		{
 			if (!rdp_decrypt(rdp, s, length - 4, securityFlags))
 			{
-				fprintf(stderr, "rdp_decrypt failed\n");
+				WLog_ERR(TAG,  "rdp_decrypt failed");
 				return -1;
 			}
 		}
 	}
 
-	if (channelId != MCS_GLOBAL_CHANNEL_ID)
-	{
-		if (!freerdp_channel_peer_process(client, s, channelId))
-			return -1;
-	}
-	else
+	if (channelId == MCS_GLOBAL_CHANNEL_ID)
 	{
 		if (!rdp_read_share_control_header(s, &pduLength, &pduType, &pduSource))
 			return -1;
@@ -223,10 +383,24 @@ static int peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 					return -1;
 				break;
 
+			case PDU_TYPE_FLOW_RESPONSE:
+			case PDU_TYPE_FLOW_STOP:
+			case PDU_TYPE_FLOW_TEST:
+				break;
+
 			default:
-				fprintf(stderr, "Client sent pduType %d\n", pduType);
+				WLog_ERR(TAG,  "Client sent pduType %d", pduType);
 				return -1;
 		}
+	}
+	else if (rdp->mcs->messageChannelId && channelId == rdp->mcs->messageChannelId)
+	{
+		return rdp_recv_message_channel_pdu(rdp, s);
+	}
+	else
+	{
+		if (!freerdp_channel_peer_process(client, s, channelId))
+			return -1;
 	}
 
 	return 0;
@@ -245,7 +419,7 @@ static int peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 
 	if ((length == 0) || (length > Stream_GetRemainingLength(s)))
 	{
-		fprintf(stderr, "incorrect FastPath PDU header length %d\n", length);
+		WLog_ERR(TAG,  "incorrect FastPath PDU header length %d", length);
 		return -1;
 	}
 
@@ -312,7 +486,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		case CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT:
-			if (rdp->settings->DisableEncryption)
+			if (rdp->settings->UseRdpSecurityLayer)
 			{
 				if (!rdp_server_establish_keys(rdp, s))
 					return -1;
@@ -384,7 +558,7 @@ static int peer_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 			break;
 
 		default:
-			fprintf(stderr, "Invalid state %d\n", rdp->state);
+			WLog_ERR(TAG,  "Invalid state %d", rdp->state);
 			return -1;
 	}
 
@@ -400,6 +574,10 @@ static BOOL freerdp_peer_close(freerdp_peer* client)
 	 */
 	if (!rdp_send_deactivate_all(client->context->rdp))
 		return FALSE;
+
+	if (freerdp_get_param_bool(client->settings, FreeRDP_SupportErrorInfoPdu) ) {
+		rdp_send_error_info(client->context->rdp);
+	}
 
 	return mcs_send_disconnect_provider_ultimatum(client->context->rdp->mcs);
 }
@@ -421,8 +599,7 @@ static BOOL freerdp_peer_is_write_blocked(freerdp_peer* peer)
 
 static int freerdp_peer_drain_output_buffer(freerdp_peer* peer)
 {
-
-	rdpTransport *transport = peer->context->rdp->transport;
+	rdpTransport* transport = peer->context->rdp->transport;
 
 	return tranport_drain_output_buffer(transport);
 }
@@ -431,8 +608,7 @@ void freerdp_peer_context_new(freerdp_peer* client)
 {
 	rdpRdp* rdp;
 
-	client->context = (rdpContext*) malloc(client->ContextSize);
-	ZeroMemory(client->context, client->ContextSize);
+	client->context = (rdpContext*) calloc(1, client->ContextSize);
 
 	client->context->ServerMode = TRUE;
 
@@ -443,17 +619,21 @@ void freerdp_peer_context_new(freerdp_peer* client)
 	client->input = rdp->input;
 	client->update = rdp->update;
 	client->settings = rdp->settings;
+	client->autodetect = rdp->autodetect;
 
 	client->context->rdp = rdp;
 	client->context->peer = client;
 	client->context->input = client->input;
 	client->context->update = client->update;
 	client->context->settings = client->settings;
+	client->context->autodetect = client->autodetect;
 
 	client->update->context = client->context;
 	client->input->context = client->context;
+	client->autodetect->context = client->context;
 
 	update_register_server_callbacks(client->update);
+	autodetect_register_server_callbacks(client->autodetect);
 
 	transport_attach(rdp->transport, client->sockfd);
 
@@ -470,15 +650,25 @@ void freerdp_peer_context_new(freerdp_peer* client)
 void freerdp_peer_context_free(freerdp_peer* client)
 {
 	IFCALL(client->ContextFree, client, client->context);
+
+	metrics_free(client->context->metrics);
 }
 
 freerdp_peer* freerdp_peer_new(int sockfd)
 {
+	UINT32 option_value;
+	socklen_t option_len;
 	freerdp_peer* client;
 
 	client = (freerdp_peer*) calloc(1, sizeof(freerdp_peer));
 
-	freerdp_tcp_set_no_delay(sockfd, TRUE);
+	if (!client)
+		return NULL;
+
+	option_value = TRUE;
+	option_len = sizeof(option_value);
+
+	setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*) &option_value, option_len);
 
 	if (client)
 	{
@@ -493,6 +683,12 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 		client->SendChannelData = freerdp_peer_send_channel_data;
 		client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 		client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
+		client->VirtualChannelOpen = freerdp_peer_virtual_channel_open;
+		client->VirtualChannelClose = freerdp_peer_virtual_channel_close;
+		client->VirtualChannelWrite = freerdp_peer_virtual_channel_write;
+		client->VirtualChannelRead = NULL; /* must be defined by server application */
+		client->VirtualChannelGetData = freerdp_peer_virtual_channel_get_data;
+		client->VirtualChannelSetData = freerdp_peer_virtual_channel_set_data;
 	}
 
 	return client;

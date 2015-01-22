@@ -20,11 +20,11 @@
 #ifndef __AUTODETECT_H
 #define __AUTODETECT_H
 
-typedef struct rdp_autodetect rdpAutoDetect;
-
 #include "rdp.h"
 
 #include <freerdp/freerdp.h>
+#include <freerdp/autodetect.h>
+#include <freerdp/log.h>
 
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>
@@ -32,27 +32,18 @@ typedef struct rdp_autodetect rdpAutoDetect;
 #define TYPE_ID_AUTODETECT_REQUEST	0x00
 #define TYPE_ID_AUTODETECT_RESPONSE	0x01
 
-struct rdp_autodetect
-{
-	/* Bandwidth measurement */
-	UINT32 bandwidthMeasureStartTime;
-	UINT32 bandwidthMeasureByteCount;
-
-	/* Network characteristics (as reported by server) */
-	UINT32 netCharBandwidth;
-	UINT32 netCharBaseRTT;
-	UINT32 netCharAverageRTT;
-};
-
-int rdp_recv_autodetect_packet(rdpRdp* rdp, wStream* s);
+int rdp_recv_autodetect_request_packet(rdpRdp* rdp, wStream* s);
+int rdp_recv_autodetect_response_packet(rdpRdp* rdp, wStream* s);
 
 rdpAutoDetect* autodetect_new(void);
 void autodetect_free(rdpAutoDetect* autodetect);
 
-#ifdef WITH_DEBUG_AUTODETECT
-#define DEBUG_AUTODETECT(fmt, ...) DEBUG_CLASS(AUTODETECT, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_AUTODETECT(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
+void autodetect_register_server_callbacks(rdpAutoDetect* autodetect);
+BOOL autodetect_send_connecttime_rtt_measure_request(rdpContext* context, UINT16 sequenceNumber);
+BOOL autodetect_send_connecttime_bandwidth_measure_start(rdpContext* context, UINT16 sequenceNumber);
+BOOL autodetect_send_bandwidth_measure_payload(rdpContext* context, UINT16 payloadLength, UINT16 sequenceNumber);
+BOOL autodetect_send_connecttime_bandwidth_measure_stop(rdpContext* context, UINT16 payloadLength, UINT16 sequenceNumber);
+
+#define AUTODETECT_TAG FREERDP_TAG("core.autodetect")
 
 #endif /* __AUTODETECT_H */

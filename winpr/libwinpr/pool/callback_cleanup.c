@@ -62,6 +62,8 @@ static void module_init()
 
 #endif
 
+#ifdef WINPR_THREAD_POOL
+
 VOID SetEventWhenCallbackReturns(PTP_CALLBACK_INSTANCE pci, HANDLE evt)
 {
 #ifdef _WIN32
@@ -128,5 +130,5 @@ VOID DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE pci)
 #endif
 }
 
-
+#endif
 

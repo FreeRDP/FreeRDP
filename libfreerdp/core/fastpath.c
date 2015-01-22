@@ -30,6 +30,7 @@
 #include <winpr/stream.h>
 
 #include <freerdp/api.h>
+#include <freerdp/log.h>
 #include <freerdp/crypto/per.h>
 
 #include "orders.h"
@@ -37,6 +38,8 @@
 #include "surface.h"
 #include "fastpath.h"
 #include "rdp.h"
+
+#define TAG FREERDP_TAG("core.fastpath")
 
 /**
  * Fast-Path packet format is defined in [MS-RDPBCGR] 2.2.9.1.2, which revises
@@ -48,7 +51,6 @@
  * two less significant bits of the first byte.
  */
 
-#define FASTPATH_MAX_PACKET_SIZE 0x3FFF
 
 #ifdef WITH_DEBUG_RDP
 static const char* const FASTPATH_UPDATETYPE_STRINGS[] =
@@ -272,7 +274,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 
 		case FASTPATH_UPDATETYPE_SYNCHRONIZE:
 			if (!fastpath_recv_update_synchronize(fastpath, s))
-				fprintf(stderr, "fastpath_recv_update_synchronize failure but we continue\n");
+				WLog_ERR(TAG,  "fastpath_recv_update_synchronize failure but we continue");
 			else
 				IFCALL(update->Synchronize, context);			
 			break;
@@ -299,7 +301,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 			break;
 
 		case FASTPATH_UPDATETYPE_COLOR:
-			if (!update_read_pointer_color(s, &pointer->pointer_color))
+			if (!update_read_pointer_color(s, &pointer->pointer_color, 24))
 				return -1;
 			IFCALL(pointer->PointerColor, context, &pointer->pointer_color);
 			break;
@@ -317,7 +319,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, UINT32 s
 			break;
 
 		default:
-			DEBUG_WARN("unknown updateCode 0x%X", updateCode);
+			WLog_ERR(TAG, "unknown updateCode 0x%X", updateCode);
 			break;
 	}
 
@@ -378,7 +380,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 	if (bulkStatus < 0)
 	{
-		fprintf(stderr, "bulk_decompress() failed\n");
+		WLog_ERR(TAG,  "bulk_decompress() failed");
 		return -1;
 	}
 
@@ -399,7 +401,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	{
 		if (fastpath->fragmentation != -1)
 		{
-			fprintf(stderr, "Unexpected FASTPATH_FRAGMENT_SINGLE\n");
+			WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_SINGLE");
 			return -1;
 		}
 
@@ -415,7 +417,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 		{
 			if (fastpath->fragmentation != -1)
 			{
-				fprintf(stderr, "Unexpected FASTPATH_FRAGMENT_FIRST\n");
+				WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_FIRST");
 				return -1;
 			}
 
@@ -425,8 +427,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				fprintf(stderr, "Total size (%d) exceeds MultifragMaxRequestSize (%d)\n",
-						totalSize, transport->settings->MultifragMaxRequestSize);
+				WLog_ERR(TAG,  "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+						 totalSize, transport->settings->MultifragMaxRequestSize);
 				return -1;
 			}
 
@@ -440,7 +442,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			if ((fastpath->fragmentation != FASTPATH_FRAGMENT_FIRST) &&
 					(fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
 			{
-				fprintf(stderr, "Unexpected FASTPATH_FRAGMENT_NEXT\n");
+				WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_NEXT");
 				return -1;
 			}
 
@@ -450,8 +452,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				fprintf(stderr, "Total size (%d) exceeds MultifragMaxRequestSize (%d)\n",
-						totalSize, transport->settings->MultifragMaxRequestSize);
+				WLog_ERR(TAG,  "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+						 totalSize, transport->settings->MultifragMaxRequestSize);
 				return -1;
 			}
 
@@ -464,7 +466,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 			if ((fastpath->fragmentation != FASTPATH_FRAGMENT_FIRST) &&
 					(fastpath->fragmentation != FASTPATH_FRAGMENT_NEXT))
 			{
-				fprintf(stderr, "Unexpected FASTPATH_FRAGMENT_LAST\n");
+				WLog_ERR(TAG,  "Unexpected FASTPATH_FRAGMENT_LAST");
 				return -1;
 			}
 
@@ -474,8 +476,8 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 
 			if (totalSize > transport->settings->MultifragMaxRequestSize)
 			{
-				fprintf(stderr, "Total size (%d) exceeds MultifragMaxRequestSize (%d)\n",
-						totalSize, transport->settings->MultifragMaxRequestSize);
+				WLog_ERR(TAG,  "Total size (%d) exceeds MultifragMaxRequestSize (%d)",
+						 totalSize, transport->settings->MultifragMaxRequestSize);
 				return -1;
 			}
 
@@ -662,7 +664,7 @@ static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, wStream* s)
 			break;
 
 		default:
-			fprintf(stderr, "Unknown eventCode %d\n", eventCode);
+			WLog_ERR(TAG,  "Unknown eventCode %d", eventCode);
 			break;
 	}
 
@@ -769,7 +771,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, int iNu
 
 	if (length >= (2 << 14))
 	{
-		fprintf(stderr, "Maximum FastPath PDU length is 32767\n");
+		WLog_ERR(TAG,  "Maximum FastPath PDU length is 32767");
 		return FALSE;
 	}
 
@@ -863,7 +865,7 @@ wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath)
 	return s;
 }
 
-BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s)
+BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s, BOOL skipCompression)
 {
 	int fragment;
 	UINT16 maxLength;
@@ -884,11 +886,39 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 	maxLength = FASTPATH_MAX_PACKET_SIZE - 20;
 
-	if (settings->CompressionEnabled)
+	if (settings->CompressionEnabled && !skipCompression)
 	{
 		CompressionMaxSize = bulk_compression_max_size(rdp->bulk);
 		maxLength = (maxLength < CompressionMaxSize) ? maxLength : CompressionMaxSize;
 		maxLength -= 20;
+	}
+
+	totalLength = Stream_GetPosition(s);
+	Stream_SetPosition(s, 0);
+
+	/**
+	 * TEMPORARY FIX
+	 *
+	 * FreeRDP always sends updates using fast-path without regard to the client settings
+	 * for 1) FASTPATH_OUTPUT_SUPPORTED in the extraFlags field of the general capability
+	 * set or 2) the MaxRequestSize field in the Multifragment Update capability set.
+	 *
+	 * As a temporary workaround to clients that do not support fragmentation, this code
+	 * determines if fragmentation is needed and/or exceeds the size advertised maximum
+	 * request size from the client.  In this case, slow-path is utilized.
+	 *
+	 */
+
+	if ((totalLength > maxLength) && (totalLength > settings->MultifragMaxRequestSize))
+	{
+		wStream* sps;
+
+		/* Use slow-path to send the PDU */
+		sps = transport_send_stream_init(rdp->transport, totalLength + 50);
+		rdp_init_stream_data_pdu(rdp, sps);
+		Stream_Copy(sps, s, totalLength);
+
+		return rdp_send_data_pdu(rdp, sps, DATA_PDU_TYPE_UPDATE, MCS_GLOBAL_CHANNEL_ID);
 	}
 
 	if (rdp->do_crypt)
@@ -898,9 +928,6 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		if (rdp->do_secure_checksum)
 			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
 	}
-
-	totalLength = Stream_GetPosition(s);
-	Stream_SetPosition(s, 0);
 
 	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
@@ -928,7 +955,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
 			fpUpdatePduHeader.secFlags |= FASTPATH_OUTPUT_SECURE_CHECKSUM;
 
-		if (settings->CompressionEnabled)
+		if (settings->CompressionEnabled && !skipCompression)
 		{
 			if (bulk_compress(rdp->bulk, pSrcData, SrcSize, &pDstData, &DstSize, &compressionFlags) >= 0)
 			{
@@ -1027,18 +1054,21 @@ rdpFastPath* fastpath_new(rdpRdp* rdp)
 {
 	rdpFastPath* fastpath;
 
-	fastpath = (rdpFastPath*) malloc(sizeof(rdpFastPath));
+	fastpath = (rdpFastPath*) calloc(1, sizeof(rdpFastPath));
+	if (!fastpath)
+		return NULL;
 
-	if (fastpath)
-	{
-		ZeroMemory(fastpath, sizeof(rdpFastPath));
-
-		fastpath->rdp = rdp;
-		fastpath->fragmentation = -1;
-		fastpath->fs = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
-	}
+	fastpath->rdp = rdp;
+	fastpath->fragmentation = -1;
+	fastpath->fs = Stream_New(NULL, FASTPATH_MAX_PACKET_SIZE);
+	if (!fastpath->fs)
+		goto out_free;
 
 	return fastpath;
+
+out_free:
+	free(fastpath);
+	return NULL;
 }
 
 void fastpath_free(rdpFastPath* fastpath)

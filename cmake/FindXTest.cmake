@@ -30,10 +30,12 @@
 
 find_path(XTEST_INCLUDE_DIR NAMES X11/extensions/XTest.h
           PATH_SUFFIXES X11/extensions
+          PATHS /opt/X11/include
           DOC "The XTest include directory"
 )
 
 find_library(XTEST_LIBRARY NAMES Xtst
+          PATHS /opt/X11/lib
           DOC "The XTest library"
 )
 

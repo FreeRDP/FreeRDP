@@ -26,7 +26,7 @@
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
 
-#include <freerdp/utils/debug.h>
+
 
 #include <winpr/stream.h>
 
@@ -36,6 +36,8 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc);
 BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc);
 
 void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL channel);
+
+int rpc_http_send_replacement_out_channel_request(rdpRpc* rpc);
 
 rdpNtlmHttp* ntlm_http_new(void);
 void ntlm_http_free(rdpNtlmHttp* ntlm_http);

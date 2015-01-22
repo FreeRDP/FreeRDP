@@ -25,14 +25,10 @@ include_directories(${PULSE_INCLUDE_DIR})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-codec freerdp-utils)
 
 list(APPEND ${MODULE_PREFIX}_LIBS ${PULSE_LIBRARY})
+list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
 
 if(GSM_FOUND)
 	list(APPEND ${MODULE_PREFIX}_LIBS ${GSM_LIBRARIES})

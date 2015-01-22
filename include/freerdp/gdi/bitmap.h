@@ -23,6 +23,10 @@
 #include <freerdp/api.h>
 #include <freerdp/gdi/gdi.h>
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 FREERDP_API GDI_COLOR gdi_GetPixel(HGDI_DC hdc, int nXPos, int nYPos);
 FREERDP_API GDI_COLOR gdi_SetPixel(HGDI_DC hdc, int X, int Y, GDI_COLOR crColor);
 FREERDP_API BYTE gdi_GetPixel_8bpp(HGDI_BITMAP hBmp, int X, int Y);
@@ -39,5 +43,9 @@ FREERDP_API HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int 
 FREERDP_API int gdi_BitBlt(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
 
 typedef int (*p_BitBlt)(HGDI_DC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HGDI_DC hdcSrc, int nXSrc, int nYSrc, int rop);
+
+#ifdef __cplusplus
+ }
+#endif
 
 #endif /* FREERDP_GDI_BITMAP_H */

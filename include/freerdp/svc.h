@@ -29,8 +29,6 @@
 
 #define CHANNEL_EXPORT_FUNC_NAME "VirtualChannelEntry"
 
-typedef UINT (FREERDP_CC * PVIRTUALCHANNELEVENTPUSH)(DWORD openHandle, wMessage* event);
-
 #define FREERDP_CHANNEL_MAGIC_NUMBER	0x46524450
 
 struct _CHANNEL_ENTRY_POINTS_FREERDP
@@ -47,7 +45,6 @@ struct _CHANNEL_ENTRY_POINTS_FREERDP
 	void* pExtendedData; /* extended initial data */
 	void* pInterface; /* channel callback interface, use after initialization */
 	void** ppInterface; /* channel callback interface, use for initialization */
-	PVIRTUALCHANNELEVENTPUSH pVirtualChannelEventPush;
 };
 typedef struct _CHANNEL_ENTRY_POINTS_FREERDP CHANNEL_ENTRY_POINTS_FREERDP;
 typedef CHANNEL_ENTRY_POINTS_FREERDP* PCHANNEL_ENTRY_POINTS_FREERDP;

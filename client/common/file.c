@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 
@@ -41,6 +42,8 @@
 #endif
 
 #include <winpr/crt.h>
+#include <freerdp/log.h>
+#define TAG CLIENT_TAG("common")
 
 //#define DEBUG_CLIENT_FILE	1
 
@@ -54,7 +57,7 @@ BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, int va
 	BOOL bStandard = TRUE;
 
 #ifdef DEBUG_CLIENT_FILE
-	fprintf(stderr, "%s:i:%d\n", name, value);
+	WLog_DBG(TAG,  "%s:i:%d", name, value);
 #endif
 
 	if (_stricmp(name, "use multimon") == 0)
@@ -63,7 +66,7 @@ BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name, int va
 		file->ScreenModeId = value;
 	else if (_stricmp(name, "span monitors") == 0)
 		file->SpanMonitors = value;
-	else if (_stricmp(name, "smartsizing") == 0)
+	else if (_stricmp(name, "smart sizing") == 0)
 		file->SmartSizing = value;
 	else if (_stricmp(name, "enablesuperpan") == 0)
 		file->EnableSuperSpan = value;
@@ -240,7 +243,7 @@ BOOL freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, const c
 	BOOL bStandard = TRUE;
 
 #ifdef DEBUG_CLIENT_FILE
-	fprintf(stderr, "%s:s:%s\n", name, value);
+	WLog_DBG(TAG,  "%s:s:%s", name, value);
 #endif
 
 	if (_stricmp(name, "username") == 0)
@@ -665,7 +668,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 
 	if (length < 0)
 	{
-		fprintf(stderr, "freerdp_client_write_rdp_file: error determining buffer size.\n");
+		WLog_ERR(TAG,  "freerdp_client_write_rdp_file: error determining buffer size.");
 		return FALSE;
 	}
 
@@ -673,7 +676,7 @@ BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL u
 
 	if (freerdp_client_write_rdp_file_buffer(file, buffer, length + 1) != length)
 	{
-		fprintf(stderr, "freerdp_client_write_rdp_file: error writing to output buffer\n");
+		WLog_ERR(TAG,  "freerdp_client_write_rdp_file: error writing to output buffer");
 		free(buffer);
 		return FALSE;
 	}
@@ -767,10 +770,23 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			free(domain);
 	}
 
+	if (~((size_t) file->FullAddress))
+	{
+		int port = -1;
+		char* host = NULL;
+
+		freerdp_parse_hostname(file->FullAddress, &host, &port);
+
+		freerdp_set_param_string(settings, FreeRDP_ServerHostname, host);
+
+		if (port > 0)
+			freerdp_set_param_uint32(settings, FreeRDP_ServerPort, (UINT32) port);
+
+		free(host);
+	}
+
 	if (~file->ServerPort)
 		freerdp_set_param_uint32(settings, FreeRDP_ServerPort, file->ServerPort);
-	if (~((size_t) file->FullAddress))
-		freerdp_set_param_string(settings, FreeRDP_ServerHostname, file->FullAddress);
 
 	if (~file->DesktopWidth)
 		freerdp_set_param_uint32(settings, FreeRDP_DesktopWidth, file->DesktopWidth);
@@ -802,12 +818,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 *
 		 * Values:
 		 *
-		 * 0: The remote session will appear in a window.
-		 * 1: The remote session will appear full screen.
+		 * 1: The remote session will appear in a window.
+		 * 2: The remote session will appear full screen.
 		 */
 
 		freerdp_set_param_bool(settings, FreeRDP_Fullscreen,
-				(file->ScreenModeId == 1) ? TRUE : FALSE);
+				(file->ScreenModeId == 2) ? TRUE : FALSE);
 	}
 
 	if (~((size_t) file->SmartSizing))
@@ -867,7 +883,19 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		freerdp_set_param_bool(settings, FreeRDP_CompressionEnabled, file->Compression);
 
 	if (~((size_t) file->GatewayHostname))
-		freerdp_set_param_string(settings, FreeRDP_GatewayHostname, file->GatewayHostname);
+	{
+		int port = -1;
+		char* host = NULL;
+
+		freerdp_parse_hostname(file->GatewayHostname, &host, &port);
+
+		freerdp_set_param_string(settings, FreeRDP_GatewayHostname, host);
+
+		if (port > 0)
+			freerdp_set_param_uint32(settings, FreeRDP_GatewayPort, (UINT32) port);
+
+		free(host);
+	}
 
 	if (~file->GatewayUsageMethod)
 		freerdp_set_gateway_usage_method(settings, file->GatewayUsageMethod);
@@ -986,6 +1014,11 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		 */
 
 		freerdp_set_param_bool(settings, FreeRDP_RedirectDrives, TRUE);
+	}
+
+	if (~file->KeyboardHook)
+	{
+		freerdp_set_param_uint32(settings, FreeRDP_KeyboardHook, file->KeyboardHook);
 	}
 
 	if (file->argc > 1)

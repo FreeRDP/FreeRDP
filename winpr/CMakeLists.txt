@@ -38,7 +38,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
 # Check for cmake compatibility (enable/disable features)
 include(CheckCmakeCompat)
 include(FindFeature)
-include(ComplexLibrary)
 include(AutoVersioning)
 include(ConfigOptions)
 include(CheckCCompilerFlag)
@@ -51,6 +50,7 @@ set(WINPR_VERSION_MINOR "1")
 set(WINPR_VERSION_REVISION "0")
 set(WINPR_VERSION "${WINPR_VERSION_MAJOR}.${WINPR_VERSION_MINOR}")
 set(WINPR_VERSION_FULL "${WINPR_VERSION}.${WINPR_VERSION_REVISION}")
+set(WINPR_VERSION_FULL ${WINPR_VERSION_FULL} PARENT_SCOPE)
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -66,9 +66,6 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWINPR_EXPORTS")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/winpr/config.h.in 
-	${CMAKE_CURRENT_BINARY_DIR}/include/winpr/config.h)
 
 add_subdirectory(include)
 
@@ -87,7 +84,8 @@ if(${CMAKE_VERSION} VERSION_GREATER "2.8.10")
 	set(WINPR_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/WinPR")
 
 	set(WINPR_INCLUDE_DIR "include")
-	set(WINPR_MONOLITHIC_BUILD ${MONOLITHIC_BUILD})
+	# Keep this for legacy builds
+	set(WINPR_MONOLITHIC_BUILD OFF)
 
 	configure_package_config_file(WinPRConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/WinPRConfig.cmake
 		INSTALL_DESTINATION ${WINPR_CMAKE_INSTALL_DIR}

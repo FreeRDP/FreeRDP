@@ -24,18 +24,49 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/rail.h>
+#include <freerdp/log.h>
 
 #include "window.h"
 
+#define TAG FREERDP_TAG("core.window")
+
+static BOOL rail_read_unicode_string(wStream* s, RAIL_UNICODE_STRING* unicode_string)
+{
+	if (Stream_GetRemainingLength(s) < 2)
+		return FALSE;
+
+	Stream_Read_UINT16(s, unicode_string->length); /* cbString (2 bytes) */
+
+	if (Stream_GetRemainingLength(s) < unicode_string->length)
+		return FALSE;
+
+	if (!unicode_string->string)
+		unicode_string->string = (BYTE*) malloc(unicode_string->length);
+	else
+		unicode_string->string = (BYTE*) realloc(unicode_string->string, unicode_string->length);
+
+	Stream_Read(s, unicode_string->string, unicode_string->length);
+
+	return TRUE;
+}
+
 BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 {
+	BYTE* newBitMask;
+
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
 	Stream_Read_UINT16(s, iconInfo->cacheEntry); /* cacheEntry (2 bytes) */
 	Stream_Read_UINT8(s, iconInfo->cacheId); /* cacheId (1 byte) */
 	Stream_Read_UINT8(s, iconInfo->bpp); /* bpp (1 byte) */
+
+	if ((iconInfo->bpp < 1) || (iconInfo->bpp > 32))
+	{
+		WLog_ERR(TAG, "invalid bpp value %d", iconInfo->bpp);
+		return FALSE;
+	}
+
 	Stream_Read_UINT16(s, iconInfo->width); /* width (2 bytes) */
 	Stream_Read_UINT16(s, iconInfo->height); /* height (2 bytes) */
 
@@ -62,10 +93,10 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 		return FALSE;
 
 	/* bitsMask */
-	if (iconInfo->bitsMask == NULL)
-		iconInfo->bitsMask = (BYTE*) malloc(iconInfo->cbBitsMask);
-	else
-		iconInfo->bitsMask = (BYTE*) realloc(iconInfo->bitsMask, iconInfo->cbBitsMask);
+	newBitMask = (BYTE*) realloc(iconInfo->bitsMask, iconInfo->cbBitsMask);
+	if (!newBitMask)
+		return FALSE;
+	iconInfo->bitsMask = newBitMask;
 
 	Stream_Read(s, iconInfo->bitsMask, iconInfo->cbBitsMask);
 
@@ -89,10 +120,10 @@ BOOL update_read_icon_info(wStream* s, ICON_INFO* iconInfo)
 		Stream_Read(s, iconInfo->colorTable, iconInfo->cbColorTable);
 
 	/* bitsColor */
-	if (iconInfo->bitsColor == NULL)
-		iconInfo->bitsColor = (BYTE*) malloc(iconInfo->cbBitsColor);
-	else
-		iconInfo->bitsColor = (BYTE*) realloc(iconInfo->bitsColor, iconInfo->cbBitsColor);
+	newBitMask = (BYTE *)realloc(iconInfo->bitsColor, iconInfo->cbBitsColor);
+	if (!newBitMask)
+		return FALSE;
+	iconInfo->bitsColor = newBitMask;
 
 	Stream_Read(s, iconInfo->bitsColor, iconInfo->cbBitsColor);
 

@@ -20,6 +20,11 @@
 #ifndef FREERDP_CODEC_REMOTEFX_H
 #define FREERDP_CODEC_REMOTEFX_H
 
+typedef struct _RFX_RECT RFX_RECT;
+typedef struct _RFX_TILE RFX_TILE;
+typedef struct _RFX_MESSAGE RFX_MESSAGE;
+typedef struct _RFX_CONTEXT RFX_CONTEXT;
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/freerdp.h>
@@ -45,7 +50,6 @@ struct _RFX_RECT
 	UINT16 width;
 	UINT16 height;
 };
-typedef struct _RFX_RECT RFX_RECT;
 
 struct _RFX_TILE
 {
@@ -69,7 +73,6 @@ struct _RFX_TILE
 	BYTE* CrData;
 	BYTE* YCbCrData;
 };
-typedef struct _RFX_TILE RFX_TILE;
 
 struct _RFX_MESSAGE
 {
@@ -99,7 +102,6 @@ struct _RFX_MESSAGE
 
 	BOOL freeArray;
 };
-typedef struct _RFX_MESSAGE RFX_MESSAGE;
 
 typedef struct _RFX_CONTEXT_PRIV RFX_CONTEXT_PRIV;
 
@@ -146,18 +148,14 @@ struct _RFX_CONTEXT
 	void (*quantization_encode)(INT16* buffer, const UINT32* quantization_values);
 	void (*dwt_2d_decode)(INT16* buffer, INT16* dwt_buffer);
 	void (*dwt_2d_encode)(INT16* buffer, INT16* dwt_buffer);
-	int (*rlgr_decode)(RLGR_MODE mode, const BYTE* data, int data_size, INT16* buffer, int buffer_size);
-	int (*rlgr_encode)(RLGR_MODE mode, const INT16* data, int data_size, BYTE* buffer, int buffer_size);
 
 	/* private definitions */
 	RFX_CONTEXT_PRIV* priv;
 };
-typedef struct _RFX_CONTEXT RFX_CONTEXT;
 
-FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
-FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
 FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, RDP_PIXEL_FORMAT pixel_format);
-FREERDP_API void rfx_context_reset(RFX_CONTEXT* context);
+
+FREERDP_API int rfx_rlgr_decode(const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData, UINT32 DstSize, int mode);
 
 FREERDP_API RFX_MESSAGE* rfx_process_message(RFX_CONTEXT* context, BYTE* data, UINT32 length);
 FREERDP_API UINT16 rfx_message_get_tile_count(RFX_MESSAGE* message);
@@ -175,6 +173,11 @@ FREERDP_API RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT
 FREERDP_API RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, int numRects,
 		BYTE* data, int width, int height, int scanline, int* numMessages, int maxDataSize);
 FREERDP_API void rfx_write_message(RFX_CONTEXT* context, wStream* s, RFX_MESSAGE* message);
+
+FREERDP_API int rfx_context_reset(RFX_CONTEXT* context);
+
+FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
+FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
 
 #ifdef __cplusplus
 }

@@ -21,18 +21,21 @@
 #include "config.h"
 #endif
 
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <winpr/crt.h>
+
+#define __USE_XOPEN
+#include <time.h>
+
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 #include "liblocale.h"
 
-#include <freerdp/utils/time.h>
-
+#include <freerdp/log.h>
 #include <freerdp/locale/timezone.h>
+
+#define TAG FREERDP_TAG("locale")
 
 /* Time Zone Redirection table generated with TimeZones.cs script */
 
@@ -1489,6 +1492,17 @@ const WINDOWS_TZID_ENTRY WindowsTimeZoneIdTable[] =
 	{ "Yakutsk Standard Time", "Asia/Yakutsk" }
 };
 
+static UINT64 freerdp_windows_gmtime()
+{
+	time_t unix_time;
+	UINT64 windows_time;
+
+	time(&unix_time);
+	windows_time = ((UINT64) unix_time * 10000000) + 621355968000000000ULL;
+
+	return windows_time;
+}
+
 char* freerdp_get_unix_timezone_identifier()
 {
 #ifndef _WIN32
@@ -1565,7 +1579,7 @@ char* freerdp_get_unix_timezone_identifier()
 		return tzid;	
 	}
 
-	fprintf(stderr, "Unable to detect time zone\n");
+	WLog_ERR(TAG,  "Unable to detect time zone");
 	return tzid;
 #else
 	return 0;
@@ -1626,7 +1640,7 @@ TIME_ZONE_ENTRY* freerdp_detect_windows_time_zone(UINT32 bias)
 		}
 	}
 
-	fprintf(stderr, "Unable to find a match for unix timezone: %s\n", tzid);
+	WLog_ERR(TAG,  "Unable to find a match for unix timezone: %s", tzid);
 	free(tzid);
 	return NULL;
 }
@@ -1642,12 +1656,12 @@ TIME_ZONE_RULE_ENTRY* freerdp_get_current_time_zone_rule(TIME_ZONE_RULE_ENTRY* r
 	{
 		if ((rules[i].TicksStart >= windows_time) && (windows_time >= rules[i].TicksEnd))
 		{
-			/*fprintf(stderr, "Got rule %d from table at %p with count %u\n", i, rules, count);*/
+			/*WLog_ERR(TAG,  "Got rule %d from table at %p with count %u", i, rules, count);*/
 			return &rules[i];
 		}
 	}
 
-	fprintf(stderr, "Unable to get current timezone rule\n");
+	WLog_ERR(TAG,  "Unable to get current timezone rule");
 	return NULL;
 }
 

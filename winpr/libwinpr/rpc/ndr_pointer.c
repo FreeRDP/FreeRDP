@@ -62,13 +62,11 @@ PFORMAT_STRING NdrpSkipPointerLayout(PFORMAT_STRING pFormat)
 			 * FC_PAD
 			 * pointer_instance<8>
 			 */
-
 			pFormat += 10;
 		}
 		else if (*pFormat == FC_FIXED_REPEAT)
 		{
 			unsigned short number_of_pointers;
-
 			/**
 			 * FC_FIXED_REPEAT
 			 * FC_PAD
@@ -78,7 +76,6 @@ PFORMAT_STRING NdrpSkipPointerLayout(PFORMAT_STRING pFormat)
 			 * number_of_pointers<2>
 			 * { pointer_instance<8> }*
 			 */
-
 			pFormat += 8;
 			number_of_pointers = *(unsigned short*) pFormat;
 			pFormat += 2 + (number_of_pointers * 8);
@@ -86,7 +83,6 @@ PFORMAT_STRING NdrpSkipPointerLayout(PFORMAT_STRING pFormat)
 		else if (*pFormat == FC_VARIABLE_REPEAT)
 		{
 			unsigned short number_of_pointers;
-
 			/**
 			 * FC_VARIABLE_REPEAT (FC_FIXED_OFFSET | FC_VARIABLE_OFFSET)
 			 * FC_PAD ?!
@@ -95,14 +91,13 @@ PFORMAT_STRING NdrpSkipPointerLayout(PFORMAT_STRING pFormat)
 			 * number_of_pointers<2>
 			 * { pointer_instance<8> }*
 			 */
-
 			pFormat += 6;
 			number_of_pointers = *(unsigned short*) pFormat;
 			pFormat += 2 + (number_of_pointers * 8);
 		}
 		else
 		{
-			fprintf(stderr, "error: NdrpSkipPointerLayout unexpected 0x%02X\n", *pFormat);
+			WLog_ERR(TAG, "error: NdrpSkipPointerLayout unexpected 0x%02X", *pFormat);
 			break;
 		}
 	}
@@ -131,7 +126,6 @@ void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL
 	unsigned char attributes;
 	PFORMAT_STRING pNextFormat;
 	NDR_TYPE_SIZE_ROUTINE pfnSizeRoutine;
-
 	type = pFormat[0];
 	attributes = pFormat[1];
 	pFormat += 2;
@@ -145,7 +139,6 @@ void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL
 	{
 		case FC_RP: /* Reference Pointer */
 			break;
-
 		case FC_UP: /* Unique Pointer */
 		case FC_OP: /* Unique Pointer in an object interface */
 
@@ -153,13 +146,12 @@ void NdrpPointerBufferSize(unsigned char* pMemory, PFORMAT_STRING pFormat, PMIDL
 				return;
 
 			break;
-
 		case FC_FP: /* Full Pointer */
-			fprintf(stderr, "warning: FC_FP unimplemented\n");
+			WLog_ERR(TAG, "warning: FC_FP unimplemented");
 			break;
 	}
 
-	if (attributes & FC_POINTER_DEREF)
+	if ((attributes & FC_POINTER_DEREF) && pMemory)
 		pMemory = *(unsigned char**) pMemory;
 
 	pfnSizeRoutine = pfnSizeRoutines[*pNextFormat];
@@ -180,7 +172,6 @@ PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, 
 	unsigned short pointer_count;
 	unsigned short offset_to_array;
 	unsigned short number_of_pointers;
-
 	Memory = pStubMsg->Memory;
 	MemoryCopy = pStubMsg->Memory;
 
@@ -201,22 +192,18 @@ PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, 
 
 		if (pFormat[1] == FC_VARIABLE_OFFSET)
 		{
-			pMemory += pStubMsg->Offset * *((unsigned short*) &pFormat[1]);
+			pMemory += pStubMsg->Offset * (*(unsigned short*) &pFormat[1]);
 		}
 	}
 
 	pFormat += 2;
 	increment = *(unsigned short*) pFormat;
-
 	pFormat += 2;
 	offset_to_array = *(unsigned short*) pFormat;
 	pStubMsg->Memory = Memory + offset_to_array;
-
 	pFormat += 2;
 	number_of_pointers = *(unsigned short*) pFormat;
-
 	pFormat += 2;
-
 	pFormatPointers = pFormat;
 
 	if (MaxCount)
@@ -249,7 +236,6 @@ PFORMAT_STRING NdrpEmbeddedRepeatPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, 
 
 	pFormat = pFormatPointers + (number_of_pointers * 8);
 	pStubMsg->Memory = Memory;
-
 	return pFormat;
 }
 
@@ -264,7 +250,6 @@ PFORMAT_STRING NdrpEmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsign
 	unsigned long BufferLengthCopy = 0;
 	unsigned long PointerLength;
 	unsigned char* pMemoryPtr = NULL;
-
 	pFormatCopy = pFormat;
 
 	if (!pStubMsg->IgnoreEmbeddedPointers)
@@ -296,7 +281,6 @@ PFORMAT_STRING NdrpEmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsign
 
 			pStubMsg->Offset = Offset;
 			pStubMsg->MaxCount = MaxCount;
-
 			NdrpEmbeddedRepeatPointerBufferSize(pStubMsg, pMemory, pFormat, &pMemoryPtr);
 		}
 
@@ -325,7 +309,7 @@ void NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, P
 
 void NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory, PFORMAT_STRING pFormat)
 {
-	fprintf(stderr, "warning: NdrByteCountPointerBufferSize unimplemented\n");
+	WLog_ERR(TAG, "warning: NdrByteCountPointerBufferSize unimplemented");
 }
 
 #endif

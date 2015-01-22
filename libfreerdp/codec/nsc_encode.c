@@ -57,7 +57,7 @@ static void nsc_context_initialize_encode(NSC_CONTEXT* context)
 		context->priv->PlaneBuffersLength = length;
 	}
 
-	if (context->nsc_stream.ChromaSubSamplingLevel > 0)
+	if (context->ChromaSubsamplingLevel)
 	{
 		context->OrgByteCount[0] = tempWidth * context->height;
 		context->OrgByteCount[1] = tempWidth * tempHeight / 4;
@@ -93,8 +93,8 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, BYTE* data, int scan
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
-	rw = (context->nsc_stream.ChromaSubSamplingLevel > 0 ? tempWidth : context->width);
-	ccl = context->nsc_stream.ColorLossLevel;
+	rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
+	ccl = context->ColorLossLevel;
 	yplane = context->priv->PlaneBuffers[0];
 	coplane = context->priv->PlaneBuffers[1];
 	cgplane = context->priv->PlaneBuffers[2];
@@ -201,7 +201,7 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, BYTE* data, int scan
 			*aplane++ = a_val;
 		}
 
-		if (context->nsc_stream.ChromaSubSamplingLevel > 0 && (x % 2) == 1)
+		if (context->ChromaSubsamplingLevel && (x % 2) == 1)
 		{
 			*yplane = *(yplane - 1);
 			*coplane = *(coplane - 1);
@@ -209,7 +209,7 @@ static void nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, BYTE* data, int scan
 		}
 	}
 
-	if (context->nsc_stream.ChromaSubSamplingLevel > 0 && (y % 2) == 1)
+	if (context->ChromaSubsamplingLevel && (y % 2) == 1)
 	{
 		CopyMemory(yplane + rw, yplane, rw);
 		CopyMemory(coplane + rw, coplane, rw);
@@ -260,7 +260,7 @@ void nsc_encode(NSC_CONTEXT* context, BYTE* bmpdata, int rowstride)
 {
 	nsc_encode_argb_to_aycocg(context, bmpdata, rowstride);
 
-	if (context->nsc_stream.ChromaSubSamplingLevel > 0)
+	if (context->ChromaSubsamplingLevel)
 	{
 		nsc_encode_subsampling(context);
 	}
@@ -344,7 +344,7 @@ static void nsc_rle_compress_data(NSC_CONTEXT* context)
 				planeSize = originalSize;
 		}
 
-		context->nsc_stream.PlaneByteCount[i] = planeSize;
+		context->PlaneByteCount[i] = planeSize;
 	}
 }
 
@@ -359,7 +359,7 @@ UINT32 nsc_compute_byte_count(NSC_CONTEXT* context, UINT32* ByteCount, UINT32 wi
 
 	maxPlaneSize = tempWidth * tempHeight + 16;
 
-	if (context->nsc_stream.ChromaSubSamplingLevel > 0)
+	if (context->ChromaSubsamplingLevel)
 	{
 		ByteCount[0] = tempWidth * height;
 		ByteCount[1] = tempWidth * tempHeight / 4;
@@ -406,8 +406,10 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, int x, int y,
 
 	maxDataSize -= 1024; /* reserve enough space for headers */
 
-	messages = (NSC_MESSAGE*) malloc(sizeof(NSC_MESSAGE) * (*numMessages));
-	ZeroMemory(messages, sizeof(NSC_MESSAGE) * (*numMessages));
+	messages = (NSC_MESSAGE*) calloc(*numMessages, sizeof(NSC_MESSAGE));
+
+	if (!messages)
+		return NULL;
 
 	for (i = 0; i < rows; i++)
 	{
@@ -467,10 +469,12 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, int x, int y,
 		nsc_rle_compress_data(context);
 		PROFILER_EXIT(context->priv->prof_nsc_rle_compress_data);
 
-		messages[i].PlaneByteCount[0] = context->nsc_stream.PlaneByteCount[0];
-		messages[i].PlaneByteCount[1] = context->nsc_stream.PlaneByteCount[1];
-		messages[i].PlaneByteCount[2] = context->nsc_stream.PlaneByteCount[2];
-		messages[i].PlaneByteCount[3] = context->nsc_stream.PlaneByteCount[3];
+		messages[i].LumaPlaneByteCount = context->PlaneByteCount[0];
+		messages[i].OrangeChromaPlaneByteCount = context->PlaneByteCount[1];
+		messages[i].GreenChromaPlaneByteCount = context->PlaneByteCount[2];
+		messages[i].AlphaPlaneByteCount = context->PlaneByteCount[3];
+		messages[i].ColorLossLevel = context->ColorLossLevel;
+		messages[i].ChromaSubsamplingLevel = context->ChromaSubsamplingLevel;
 	}
 
 	context->priv->PlaneBuffers[0] = NULL;
@@ -484,25 +488,31 @@ NSC_MESSAGE* nsc_encode_messages(NSC_CONTEXT* context, BYTE* data, int x, int y,
 
 int nsc_write_message(NSC_CONTEXT* context, wStream* s, NSC_MESSAGE* message)
 {
-	int i;
+	UINT32 totalPlaneByteCount;
 
-	Stream_EnsureRemainingCapacity(s, 20);
-	Stream_Write_UINT32(s, message->PlaneByteCount[0]); /* LumaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT32(s, message->PlaneByteCount[1]); /* OrangeChromaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT32(s, message->PlaneByteCount[2]); /* GreenChromaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT32(s, message->PlaneByteCount[3]); /* AlphaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT8(s, context->nsc_stream.ColorLossLevel); /* ColorLossLevel (1 byte) */
-	Stream_Write_UINT8(s, context->nsc_stream.ChromaSubSamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
+	totalPlaneByteCount = message->LumaPlaneByteCount + message->OrangeChromaPlaneByteCount +
+			message->GreenChromaPlaneByteCount + message->AlphaPlaneByteCount;
+
+	Stream_EnsureRemainingCapacity(s, 20 + totalPlaneByteCount);
+	Stream_Write_UINT32(s, message->LumaPlaneByteCount); /* LumaPlaneByteCount (4 bytes) */
+	Stream_Write_UINT32(s, message->OrangeChromaPlaneByteCount); /* OrangeChromaPlaneByteCount (4 bytes) */
+	Stream_Write_UINT32(s, message->GreenChromaPlaneByteCount); /* GreenChromaPlaneByteCount (4 bytes) */
+	Stream_Write_UINT32(s, message->AlphaPlaneByteCount); /* AlphaPlaneByteCount (4 bytes) */
+	Stream_Write_UINT8(s, message->ColorLossLevel); /* ColorLossLevel (1 byte) */
+	Stream_Write_UINT8(s, message->ChromaSubsamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
 	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes) */
 
-	for (i = 0; i < 4; i++)
-	{
-		if (message->PlaneByteCount[i] > 0)
-		{
-			Stream_EnsureRemainingCapacity(s, (int) message->PlaneByteCount[i]);
-			Stream_Write(s, message->PlaneBuffers[i], message->PlaneByteCount[i]);
-		}
-	}
+	if (message->LumaPlaneByteCount)
+		Stream_Write(s, message->PlaneBuffers[0], message->LumaPlaneByteCount); /* LumaPlane */
+
+	if (message->OrangeChromaPlaneByteCount)
+		Stream_Write(s, message->PlaneBuffers[1], message->OrangeChromaPlaneByteCount); /* OrangeChromaPlane */
+
+	if (message->GreenChromaPlaneByteCount)
+		Stream_Write(s, message->PlaneBuffers[2], message->GreenChromaPlaneByteCount); /* GreenChromaPlane */
+
+	if (message->AlphaPlaneByteCount)
+		Stream_Write(s, message->PlaneBuffers[3], message->AlphaPlaneByteCount); /* AlphaPlane */
 
 	return 0;
 }
@@ -515,7 +525,8 @@ int nsc_message_free(NSC_CONTEXT* context, NSC_MESSAGE* message)
 
 void nsc_compose_message(NSC_CONTEXT* context, wStream* s, BYTE* data, int width, int height, int scanline)
 {
-	int i;
+	NSC_MESSAGE s_message = { 0 };
+	NSC_MESSAGE* message = &s_message;
 
 	context->width = width;
 	context->height = height;
@@ -531,22 +542,17 @@ void nsc_compose_message(NSC_CONTEXT* context, wStream* s, BYTE* data, int width
 	nsc_rle_compress_data(context);
 	PROFILER_EXIT(context->priv->prof_nsc_rle_compress_data);
 
-	/* Assemble the NSCodec message into stream */
-	Stream_EnsureRemainingCapacity(s, 20);
-	Stream_Write_UINT32(s, context->nsc_stream.PlaneByteCount[0]); /* LumaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT32(s, context->nsc_stream.PlaneByteCount[1]); /* OrangeChromaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT32(s, context->nsc_stream.PlaneByteCount[2]); /* GreenChromaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT32(s, context->nsc_stream.PlaneByteCount[3]); /* AlphaPlaneByteCount (4 bytes) */
-	Stream_Write_UINT8(s, context->nsc_stream.ColorLossLevel); /* ColorLossLevel (1 byte) */
-	Stream_Write_UINT8(s, context->nsc_stream.ChromaSubSamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
-	Stream_Write_UINT16(s, 0); /* Reserved (2 bytes) */
+	message->PlaneBuffers[0] = context->priv->PlaneBuffers[0];
+	message->PlaneBuffers[1] = context->priv->PlaneBuffers[1];
+	message->PlaneBuffers[2] = context->priv->PlaneBuffers[2];
+	message->PlaneBuffers[3] = context->priv->PlaneBuffers[3];
 
-	for (i = 0; i < 4; i++)
-	{
-		if (context->nsc_stream.PlaneByteCount[i] > 0)
-		{
-			Stream_EnsureRemainingCapacity(s, (int) context->nsc_stream.PlaneByteCount[i]);
-			Stream_Write(s, context->priv->PlaneBuffers[i], context->nsc_stream.PlaneByteCount[i]);
-		}
-	}
+	message->LumaPlaneByteCount = context->PlaneByteCount[0];
+	message->OrangeChromaPlaneByteCount = context->PlaneByteCount[1];
+	message->GreenChromaPlaneByteCount = context->PlaneByteCount[2];
+	message->AlphaPlaneByteCount = context->PlaneByteCount[3];
+	message->ColorLossLevel = context->ColorLossLevel;
+	message->ChromaSubsamplingLevel = context->ChromaSubsamplingLevel;
+
+	nsc_write_message(context, s, message);
 }

@@ -24,10 +24,14 @@
 #include <winpr/crt.h>
 #include <winpr/winhttp.h>
 
+#include <freerdp/log.h>
+
 #include "ncacn_http.h"
 #include "rpc_client.h"
 
 #include "rts.h"
+
+#define TAG FREERDP_TAG("core.gateway")
 
 /**
  * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
@@ -61,6 +65,8 @@ BOOL rts_connect(rdpRpc* rpc)
 	RPC_PDU* pdu;
 	rpcconn_rts_hdr_t* rts;
 	HttpResponse* http_response;
+	freerdp* instance = (freerdp*) rpc->settings->instance;
+	rdpContext* context = instance->context;
 
 	/**
 	 * Connection Opening
@@ -86,37 +92,37 @@ BOOL rts_connect(rdpRpc* rpc)
 	 */
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
-	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_INITIAL");
+	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_INITIAL");
 
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
 
 	if (!rpc_ntlm_http_out_connect(rpc))
 	{
-		fprintf(stderr, "%s: rpc_out_connect_http error!\n", __FUNCTION__);
+		WLog_ERR(TAG, "rpc_out_connect_http error!");
 		return FALSE;
 	}
 
 	if (rts_send_CONN_A1_pdu(rpc) != 0)
 	{
-		fprintf(stderr, "%s: rpc_send_CONN_A1_pdu error!\n", __FUNCTION__);
+		WLog_ERR(TAG, "rpc_send_CONN_A1_pdu error!");
 		return FALSE;
 	}
 
 	if (!rpc_ntlm_http_in_connect(rpc))
 	{
-		fprintf(stderr, "%s: rpc_in_connect_http error!\n", __FUNCTION__);
+		WLog_ERR(TAG, "rpc_in_connect_http error!");
 		return FALSE;
 	}
 
 	if (rts_send_CONN_B1_pdu(rpc) < 0)
 	{
-		fprintf(stderr, "%s: rpc_send_CONN_B1_pdu error!\n", __FUNCTION__);
+		WLog_ERR(TAG, "rpc_send_CONN_B1_pdu error!");
 		return FALSE;
 	}
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT;
-	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT");
+	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT");
 
 	/**
 	 * Receive OUT Channel Response
@@ -149,13 +155,13 @@ BOOL rts_connect(rdpRpc* rpc)
 	http_response = http_response_recv(rpc->TlsOut);
 	if (!http_response)
 	{
-		fprintf(stderr, "%s: unable to retrieve OUT Channel Response!\n", __FUNCTION__);
+		WLog_ERR(TAG, "unable to retrieve OUT Channel Response!");
 		return FALSE;
 	}
 
 	if (http_response->StatusCode != HTTP_STATUS_OK)
 	{
-		fprintf(stderr, "%s: error! Status Code: %d\n", __FUNCTION__, http_response->StatusCode);
+		WLog_ERR(TAG, "error! Status Code: %d", http_response->StatusCode);
 		http_response_print(http_response);
 		http_response_free(http_response);
 
@@ -166,9 +172,9 @@ BOOL rts_connect(rdpRpc* rpc)
 				connectErrorCode = AUTHENTICATIONERROR;
 			}
 
-			if (!freerdp_get_last_error(((freerdp*)(rpc->settings->instance))->context))
+			if (!freerdp_get_last_error(context))
 			{
-				freerdp_set_last_error(((freerdp*)(rpc->settings->instance))->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+				freerdp_set_last_error(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 			}
 		}
 
@@ -187,7 +193,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	http_response_free(http_response);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_A3W;
-	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_WAIT_A3W");
+	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_A3W");
 
 	/**
 	 * Receive CONN_A3 RTS PDU
@@ -208,6 +214,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc_client_start(rpc);
 
 	pdu = rpc_recv_dequeue_pdu(rpc);
+
 	if (!pdu)
 		return FALSE;
 
@@ -215,7 +222,7 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_A3_SIGNATURE, rts))
 	{
-		fprintf(stderr, "%s: unexpected RTS PDU: Expected CONN/A3\n", __FUNCTION__);
+		WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/A3");
 		return FALSE;
 	}
 
@@ -224,7 +231,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc_client_receive_pool_return(rpc, pdu);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_C2;
-	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_WAIT_C2");
+	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_C2");
 
 	/**
 	 * Receive CONN_C2 RTS PDU
@@ -255,7 +262,7 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
 	{
-		fprintf(stderr, "%s: unexpected RTS PDU: Expected CONN/C2\n", __FUNCTION__);
+		WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/C2");
 		return FALSE;
 	}
 
@@ -264,7 +271,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc_client_receive_pool_return(rpc, pdu);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
-	DEBUG_RTS("VIRTUAL_CONNECTION_STATE_OPENED");
+	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_OPENED");
 
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
@@ -272,9 +279,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	return TRUE;
 }
 
-#ifdef WITH_DEBUG_RTS
-
-static const char* const RTS_CMD_STRINGS[] =
+const char* const RTS_CMD_STRINGS[] =
 {
 	"ReceiveWindowSize",
 	"FlowControlAck",
@@ -292,8 +297,6 @@ static const char* const RTS_CMD_STRINGS[] =
 	"Destination",
 	"PingTrafficSentNotify"
 };
-
-#endif
 
 /**
  * RTS PDU Header
@@ -683,7 +686,7 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_NONE;
 	header.NumberOfCommands = 4;
 
-	DEBUG_RPC("Sending CONN_A1 RTS PDU");
+	WLog_DBG(TAG, "Sending CONN_A1 RTS PDU");
 
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->Cookie));
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
@@ -715,7 +718,7 @@ int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	rts_connection_timeout_command_read(rpc, &buffer[24], length - 24, &ConnectionTimeout);
 
-	DEBUG_RTS("ConnectionTimeout: %d", ConnectionTimeout);
+	WLog_DBG(TAG, "ConnectionTimeout: %d", ConnectionTimeout);
 
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
 
@@ -739,7 +742,7 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_NONE;
 	header.NumberOfCommands = 6;
 
-	DEBUG_RPC("Sending CONN_B1 RTS PDU");
+	WLog_DBG(TAG, "Sending CONN_B1 RTS PDU");
 
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie));
 	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->AssociationGroupId));
@@ -782,8 +785,8 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	offset += rts_receive_window_size_command_read(rpc, &buffer[offset], length - offset, &ReceiveWindowSize) + 4;
 	offset += rts_connection_timeout_command_read(rpc, &buffer[offset], length - offset, &ConnectionTimeout) + 4;
 
-	DEBUG_RTS("ConnectionTimeout: %d", ConnectionTimeout);
-	DEBUG_RTS("ReceiveWindowSize: %d", ReceiveWindowSize);
+	WLog_DBG(TAG, "ConnectionTimeout: %d", ConnectionTimeout);
+	WLog_DBG(TAG, "ReceiveWindowSize: %d", ReceiveWindowSize);
 
 	/* TODO: verify if this is the correct protocol variable */
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
@@ -809,7 +812,7 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_OTHER_CMD;
 	header.NumberOfCommands = 1;
 
-	DEBUG_RPC("Sending Keep-Alive RTS PDU");
+	WLog_DBG(TAG, "Sending Keep-Alive RTS PDU");
 
 	buffer = (BYTE*) malloc(header.frag_length);
 	if (!buffer)
@@ -820,7 +823,10 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc)
 	length = header.frag_length;
 
 	if (rpc_in_write(rpc, buffer, length) < 0)
+	{
+		free (buffer);
 		return -1;
+	}
 	free(buffer);
 
 	return length;
@@ -840,7 +846,7 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_OTHER_CMD;
 	header.NumberOfCommands = 2;
 
-	DEBUG_RPC("Sending FlowControlAck RTS PDU");
+	WLog_DBG(TAG, "Sending FlowControlAck RTS PDU");
 
 	BytesReceived = rpc->VirtualConnection->DefaultOutChannel->BytesReceived;
 	AvailableWindow = rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
@@ -850,6 +856,7 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 			rpc->VirtualConnection->DefaultOutChannel->AvailableWindowAdvertised;
 
 	buffer = (BYTE*) malloc(header.frag_length);
+
 	if (!buffer)
 		return -1;
 
@@ -862,7 +869,11 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 	length = header.frag_length;
 
 	if (rpc_in_write(rpc, buffer, length) < 0)
+	{
+		free(buffer);
 		return -1;
+	}
+
 	free(buffer);
 
 	return 0;
@@ -880,9 +891,9 @@ int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	fprintf(stderr, "BytesReceived: %d AvailableWindow: %d\n",
-			BytesReceived, AvailableWindow);
-	fprintf(stderr, "ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	WLog_ERR(TAG,  "BytesReceived: %d AvailableWindow: %d",
+			 BytesReceived, AvailableWindow);
+	WLog_ERR(TAG,  "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -921,9 +932,9 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	fprintf(stderr, "Destination: %d BytesReceived: %d AvailableWindow: %d\n",
-			Destination, BytesReceived, AvailableWindow);
-	fprintf(stderr, "ChannelCookie: " RPC_UUID_FORMAT_STRING "\n", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	WLog_ERR(TAG, "Destination: %d BytesReceived: %d AvailableWindow: %d",
+			 Destination, BytesReceived, AvailableWindow);
+	WLog_ERR(TAG, "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
@@ -943,9 +954,10 @@ int rts_send_ping_pdu(rdpRpc* rpc)
 	header.Flags = RTS_FLAG_PING;
 	header.NumberOfCommands = 0;
 
-	DEBUG_RPC("Sending Ping RTS PDU");
+	WLog_DBG(TAG, "Sending Ping RTS PDU");
 
 	buffer = (BYTE*) malloc(header.frag_length);
+
 	if (!buffer)
 		return -1;
 
@@ -954,7 +966,10 @@ int rts_send_ping_pdu(rdpRpc* rpc)
 	length = header.frag_length;
 
 	if (rpc_in_write(rpc, buffer, length) < 0)
+	{
+		free (buffer);
 		return -1;
+	}
 	free(buffer);
 
 	return length;
@@ -1027,12 +1042,73 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 			break;
 
 		default:
-			fprintf(stderr, "Error: Unknown RTS Command Type: 0x%x\n", CommandType);
+			WLog_ERR(TAG,  "Error: Unknown RTS Command Type: 0x%x", CommandType);
 			return -1;
 			break;
 	}
 
 	return CommandLength;
+}
+
+int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
+{
+	BYTE* buffer;
+	rpcconn_rts_hdr_t header;
+	UINT32 ReceiveWindowSize;
+	BYTE* VirtualConnectionCookie;
+	BYTE* PredecessorChannelCookie;
+	BYTE* SuccessorChannelCookie;
+
+	rts_pdu_header_init(&header);
+	header.frag_length = 96;
+	header.Flags = RTS_FLAG_RECYCLE_CHANNEL;
+	header.NumberOfCommands = 5;
+
+	WLog_DBG(TAG, "Sending OUT R1/A3 RTS PDU");
+
+	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->NonDefaultOutChannelCookie));
+
+	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
+	PredecessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
+	SuccessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->NonDefaultOutChannelCookie);
+	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
+
+	buffer = (BYTE*) malloc(header.frag_length);
+
+	if (!buffer)
+		return -1;
+
+	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
+	rts_version_command_write(&buffer[20]); /* Version (8 bytes) */
+	rts_cookie_command_write(&buffer[28], VirtualConnectionCookie); /* VirtualConnectionCookie (20 bytes) */
+	rts_cookie_command_write(&buffer[48], PredecessorChannelCookie); /* PredecessorChannelCookie (20 bytes) */
+	rts_cookie_command_write(&buffer[68], SuccessorChannelCookie); /* SuccessorChannelCookie (20 bytes) */
+	rts_receive_window_size_command_write(&buffer[88], ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
+
+	rpc_out_write(rpc, buffer, header.frag_length);
+
+	free(buffer);
+
+	return 0;
+}
+
+int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
+{
+	UINT32 offset;
+	UINT32 Destination = 0;
+
+	offset = 24;
+	offset += rts_destination_command_read(rpc, &buffer[offset], length - offset, &Destination) + 4;
+
+	WLog_DBG(TAG, "Destination: %d", Destination);
+
+	WLog_ERR(TAG, "TS Gateway channel recycling is incomplete");
+
+	rpc_http_send_replacement_out_channel_request(rpc);
+
+	rts_send_OUT_R1_A3_pdu(rpc);
+
+	return 0;
 }
 
 int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
@@ -1050,12 +1126,18 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	{
 		case RTS_PDU_FLOW_CONTROL_ACK:
 			return rts_recv_flow_control_ack_pdu(rpc, buffer, length);
+
 		case RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION:
 			return rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
+
 		case RTS_PDU_PING:
 			return rts_send_ping_pdu(rpc);
+
+		case RTS_PDU_OUT_R1_A2:
+			return rts_recv_OUT_R1_A2_pdu(rpc, buffer, length);
+
 		default:
-			fprintf(stderr, "%s: unimplemented signature id: 0x%08X\n", __FUNCTION__, SignatureId);
+			WLog_ERR(TAG, "unimplemented signature id: 0x%08X", SignatureId);
 			rts_print_pdu_signature(rpc, &signature);
 			break;
 	}

@@ -26,10 +26,13 @@
 #include <string.h>
 
 #include <winpr/crt.h>
+#include <freerdp/log.h>
 
 #include "rpc_client.h"
 
 #include "rpc_bind.h"
+
+#define TAG FREERDP_TAG("core.gateway")
 
 /**
  * Connection-Oriented RPC Protocol Client Details:
@@ -100,9 +103,16 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	BOOL promptPassword = FALSE;
 	freerdp* instance = (freerdp*) settings->instance;
 
-	DEBUG_RPC("Sending bind PDU");
+	WLog_DBG(TAG, "Sending bind PDU");
+
+	if (rpc->ntlm)
+	{
+		ntlm_free(rpc->ntlm);
+		rpc->ntlm = NULL;
+	}
 
 	rpc->ntlm = ntlm_new();
+
 	if (!rpc->ntlm)
 		return -1;
 
@@ -226,9 +236,15 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	clientCall = rpc_client_call_new(bind_pdu->call_id, 0);
 	if (!clientCall)
+	{
+		free(buffer);
 		return -1;
+	}
 	if (ArrayList_Add(rpc->client->ClientCallList, clientCall) < 0)
+	{
+		free(buffer);
 		return -1;
+	}
 
 	if (rpc_send_enqueue_pdu(rpc, buffer, length) != 0)
 		length = -1;
@@ -300,10 +316,12 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	RpcClientCall* clientCall;
 	rpcconn_rpc_auth_3_hdr_t* auth_3_pdu;
 
-	DEBUG_RPC("Sending rpc_auth_3 PDU");
+	WLog_DBG(TAG, "Sending rpc_auth_3 PDU");
 
-	auth_3_pdu = (rpcconn_rpc_auth_3_hdr_t*) malloc(sizeof(rpcconn_rpc_auth_3_hdr_t));
-	ZeroMemory(auth_3_pdu, sizeof(rpcconn_rpc_auth_3_hdr_t));
+	auth_3_pdu = (rpcconn_rpc_auth_3_hdr_t*) calloc(1, sizeof(rpcconn_rpc_auth_3_hdr_t));
+
+	if (!auth_3_pdu)
+		return -1;
 
 	rpc_pdu_header_init(rpc, (rpcconn_hdr_t*) auth_3_pdu);
 
@@ -329,6 +347,9 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	auth_3_pdu->frag_length = offset;
 
 	buffer = (BYTE*) malloc(auth_3_pdu->frag_length);
+
+	if (!buffer)
+		return -1;
 
 	CopyMemory(buffer, auth_3_pdu, 20);
 
@@ -391,7 +412,7 @@ int rpc_secure_bind(rdpRpc* rpc)
 
 			if (status <= 0)
 			{
-				fprintf(stderr, "rpc_secure_bind: error sending bind pdu!\n");
+				WLog_ERR(TAG,  "rpc_secure_bind: error sending bind pdu!");
 				return -1;
 			}
 
@@ -403,13 +424,13 @@ int rpc_secure_bind(rdpRpc* rpc)
 
 			if (!pdu)
 			{
-				fprintf(stderr, "rpc_secure_bind: error receiving bind ack pdu!\n");
+				WLog_ERR(TAG,  "rpc_secure_bind: error receiving bind ack pdu!");
 				return -1;
 			}
 
 			if (rpc_recv_bind_ack_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s)) <= 0)
 			{
-				fprintf(stderr, "rpc_secure_bind: error receiving bind ack pdu!\n");
+				WLog_ERR(TAG,  "rpc_secure_bind: error receiving bind ack pdu!");
 				return -1;
 			}
 
@@ -417,7 +438,7 @@ int rpc_secure_bind(rdpRpc* rpc)
 
 			if (rpc_send_rpc_auth_3_pdu(rpc) <= 0)
 			{
-				fprintf(stderr, "rpc_secure_bind: error sending rpc_auth_3 pdu!\n");
+				WLog_ERR(TAG,  "rpc_secure_bind: error sending rpc_auth_3 pdu!");
 				return -1;
 			}
 
@@ -425,7 +446,7 @@ int rpc_secure_bind(rdpRpc* rpc)
 		}
 		else
 		{
-			fprintf(stderr, "rpc_secure_bind: invalid state: %d\n", rpc->State);
+			WLog_ERR(TAG,  "rpc_secure_bind: invalid state: %d", rpc->State);
 			return -1;
 		}
 	}

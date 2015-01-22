@@ -25,7 +25,7 @@ typedef struct rdp_redirection rdpRedirection;
 #include "rdp.h"
 
 #include <freerdp/freerdp.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
 #include <winpr/wlog.h>
 #include <winpr/stream.h>
@@ -57,10 +57,11 @@ int rdp_redirection_apply_settings(rdpRdp* rdp);
 rdpRedirection* redirection_new(void);
 void redirection_free(rdpRedirection* redirection);
 
+#define REDIR_TAG FREERDP_TAG("core.redirection")
 #ifdef WITH_DEBUG_REDIR
-#define DEBUG_REDIR(fmt, ...) DEBUG_CLASS(REDIR, fmt, ## __VA_ARGS__)
+#define DEBUG_REDIR(fmt, ...) WLog_DBG(REDIR_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_REDIR(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_REDIR(fmt, ...) do { } while (0)
 #endif
 
 #endif /* __REDIRECTION_H */

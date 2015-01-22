@@ -26,6 +26,7 @@
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 #include <winpr/interlocked.h>
+#include <freerdp/log.h>
 
 typedef struct rdp_rpc rdpRpc;
 
@@ -76,7 +77,7 @@ typedef struct _RPC_PDU
 #include <freerdp/settings.h>
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
-#include <freerdp/utils/debug.h>
+
 #include <winpr/print.h>
 
 /**
@@ -720,6 +721,8 @@ typedef struct rpc_client RpcClient;
 struct rdp_rpc
 {
 	RPC_CLIENT_STATE State;
+	
+	UINT32 result;
 
 	rdpTls* TlsIn;
 	rdpTls* TlsOut;
@@ -732,6 +735,7 @@ struct rdp_rpc
 	rdpNtlmHttp* NtlmHttpIn;
 	rdpNtlmHttp* NtlmHttpOut;
 
+	rdpContext* context;
 	rdpSettings* settings;
 	rdpTransport* transport;
 
@@ -781,15 +785,5 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
 
 rdpRpc* rpc_new(rdpTransport* transport);
 void rpc_free(rdpRpc* rpc);
-
-#ifdef WITH_DEBUG_TSG
-#define WITH_DEBUG_RPC
-#endif
-
-#ifdef WITH_DEBUG_RPC
-#define DEBUG_RPC(fmt, ...) DEBUG_CLASS(RPC, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_RPC(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
-#endif
 
 #endif /* FREERDP_CORE_RPC_H */

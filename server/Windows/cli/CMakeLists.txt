@@ -24,6 +24,20 @@ set(${MODULE_PREFIX}_SRCS
 	wfreerdp.c
 	wfreerdp.h)
 
+# On windows create dll version information.
+# Vendor, product and year are already set in top level CMakeLists.txt
+set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
+set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
+set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
+set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
+
+configure_file(
+  ${CMAKE_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+  @ONLY)
+
+set (${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "wfreerdp-server")

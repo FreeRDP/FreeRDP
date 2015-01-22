@@ -29,13 +29,14 @@
 #include <winpr/wlog.h>
 #include <winpr/collections.h>
 
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 #include <freerdp/utils/profiler.h>
 
+#define RFX_TAG FREERDP_TAG("codec.rfx")
 #ifdef WITH_DEBUG_RFX
-#define DEBUG_RFX(fmt, ...) DEBUG_CLASS(RFX, fmt, ## __VA_ARGS__)
+#define DEBUG_RFX(fmt, ...) WLog_DBG(RFX_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_RFX(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_RFX(fmt, ...) do { } while (0)
 #endif
 
 typedef struct _RFX_TILE_COMPOSE_WORK_PARAM RFX_TILE_COMPOSE_WORK_PARAM;

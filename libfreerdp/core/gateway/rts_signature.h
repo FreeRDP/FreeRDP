@@ -37,6 +37,7 @@ struct rts_pdu_signature
 struct _RTS_PDU_SIGNATURE_ENTRY
 {
 	UINT32 SignatureId;
+	BOOL SignatureClient;
 	RtsPduSignature* Signature;
 	const char* PduName;
 };

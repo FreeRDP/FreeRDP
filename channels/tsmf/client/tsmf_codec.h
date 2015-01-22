@@ -23,7 +23,7 @@
 #include "tsmf_types.h"
 
 BOOL tsmf_codec_parse_media_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s);
-BOOL tsmf_codec_check_media_type(wStream* s);
+BOOL tsmf_codec_check_media_type(const char* decoder_name, wStream* s);
 
 #endif
 

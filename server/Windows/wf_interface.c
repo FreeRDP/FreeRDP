@@ -24,11 +24,11 @@
 
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
+#include <winpr/winsock.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
 #include <freerdp/constants.h>
-#include <freerdp/utils/tcp.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
 
@@ -102,7 +102,7 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 
 		if (instance->GetFileDescriptor(instance, rfds, &rcount) != TRUE)
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
 
@@ -127,13 +127,12 @@ DWORD WINAPI wf_server_main_loop(LPVOID lpParam)
 
 		if (instance->CheckFileDescriptor(instance) != TRUE)
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
 	}
 
-	printf("wf_server_main_loop terminating\n");
-
+	WLog_INFO(TAG, "wf_server_main_loop terminating");
 	instance->Close(instance);
 
 	return 0;
@@ -163,8 +162,7 @@ BOOL wfreerdp_server_stop(wfServer* server)
 	wfInfo* wfi;
 
 	wfi = wf_info_get_instance();
-
-	printf("Stopping server\n");
+	WLog_INFO(TAG, "Stopping server");
 	wfi->force_all_disconnect = TRUE;
 	server->instance->Close(server->instance);
 	return TRUE;
@@ -172,12 +170,13 @@ BOOL wfreerdp_server_stop(wfServer* server)
 
 wfServer* wfreerdp_server_new()
 {
+	WSADATA wsaData;
 	wfServer* server;
 
-	server = (wfServer*) malloc(sizeof(wfServer));
-	ZeroMemory(server, sizeof(wfServer));
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		return NULL;
 
-	freerdp_wsa_startup();
+	server = (wfServer*) calloc(1, sizeof(wfServer));
 
 	if (server)
 	{
@@ -198,9 +197,8 @@ void wfreerdp_server_free(wfServer* server)
 		free(server);
 	}
 
-	freerdp_wsa_cleanup();
+	WSACleanup();
 }
-
 
 FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server)
 {
@@ -210,7 +208,7 @@ FREERDP_API BOOL wfreerdp_server_is_running(wfServer* server)
 	bRet = GetExitCodeThread(server->thread, &tStatus);
 	if (bRet == 0)
 	{
-		printf("Error in call to GetExitCodeThread\n");
+		WLog_ERR(TAG, "Error in call to GetExitCodeThread");
 		return FALSE;
 	}
 
@@ -245,7 +243,7 @@ FREERDP_API UINT32 wfreerdp_server_get_peer_hostname(int pId, wchar_t * dstStr)
 	}
 	else
 	{
-		printf("nonexistent peer id=%d\n", pId);
+		WLog_WARN(TAG, "nonexistent peer id=%d", pId);
 		return 0;
 	}
 }

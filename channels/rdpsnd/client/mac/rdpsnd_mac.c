@@ -29,7 +29,6 @@
 
 #include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
-#include <freerdp/utils/svc_plugin.h>
 
 #include <AudioToolbox/AudioToolbox.h>
 #include <AudioToolbox/AudioQueue.h>
@@ -122,7 +121,7 @@ static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	
 	if (status != 0)
 	{
-		fprintf(stderr, "AudioQueueNewOutput failure\n");
+		WLog_ERR(TAG,  "AudioQueueNewOutput failure\n");
 		return;
 	}
 	
@@ -136,7 +135,7 @@ static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 	
 	if (status != 0)
 	{
-		printf("AudioQueueGetProperty failure: kAudioQueueProperty_DecodeBufferSizeFrames\n");
+		WLog_DBG(TAG, "AudioQueueGetProperty failure: kAudioQueueProperty_DecodeBufferSizeFrames\n");
 	}
     
 	for (index = 0; index < MAC_AUDIO_QUEUE_NUM_BUFFERS; index++)
@@ -145,7 +144,7 @@ static void rdpsnd_mac_open(rdpsndDevicePlugin* device, AUDIO_FORMAT* format, in
 		
 		if (status != 0)
 		{
-			fprintf(stderr, "AudioQueueAllocateBuffer failed\n");
+			WLog_ERR(TAG,  "AudioQueueAllocateBuffer failed\n");
 		}
 	}
     
@@ -220,7 +219,7 @@ static void rdpsnd_mac_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	
 	if (status != 0)
 	{
-		fprintf(stderr, "AudioQueueSetParameter kAudioQueueParam_Volume failed: %f\n", fVolume);
+		WLog_ERR(TAG,  "AudioQueueSetParameter kAudioQueueParam_Volume failed: %f\n", fVolume);
 	}
 }
 
@@ -239,7 +238,7 @@ static void rdpsnd_mac_start(rdpsndDevicePlugin* device)
 		
 		if (status != 0)
 		{
-			fprintf(stderr, "AudioQueueStart failed\n");
+			WLog_ERR(TAG,  "AudioQueueStart failed\n");
 		}
 		
 		mac->isPlaying = TRUE;
@@ -282,23 +281,21 @@ int freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pE
 {
 	rdpsndMacPlugin* mac;
     
-	mac = (rdpsndMacPlugin*) malloc(sizeof(rdpsndMacPlugin));
+	mac = (rdpsndMacPlugin*) calloc(1, sizeof(rdpsndMacPlugin));
 	
-	if (mac)
-	{
-		ZeroMemory(mac, sizeof(rdpsndMacPlugin));
+	if (!mac)
+		return -1;
 	
-		mac->device.Open = rdpsnd_mac_open;
-		mac->device.FormatSupported = rdpsnd_mac_format_supported;
-		mac->device.SetFormat = rdpsnd_mac_set_format;
-		mac->device.SetVolume = rdpsnd_mac_set_volume;
-		mac->device.Play = rdpsnd_mac_play;
-		mac->device.Start = rdpsnd_mac_start;
-		mac->device.Close = rdpsnd_mac_close;
-		mac->device.Free = rdpsnd_mac_free;
+	mac->device.Open = rdpsnd_mac_open;
+	mac->device.FormatSupported = rdpsnd_mac_format_supported;
+	mac->device.SetFormat = rdpsnd_mac_set_format;
+	mac->device.SetVolume = rdpsnd_mac_set_volume;
+	mac->device.Play = rdpsnd_mac_play;
+	mac->device.Start = rdpsnd_mac_start;
+	mac->device.Close = rdpsnd_mac_close;
+	mac->device.Free = rdpsnd_mac_free;
 
-		pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) mac);
-	}
+	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*) mac);
 
 	return 0;
 }

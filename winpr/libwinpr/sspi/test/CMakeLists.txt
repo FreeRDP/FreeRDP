@@ -9,8 +9,9 @@ set(${MODULE_PREFIX}_TESTS
 	TestEnumerateSecurityPackages.c
 	TestInitializeSecurityContext.c
 	TestAcquireCredentialsHandle.c
-	TestNTLM.c
-	)
+	TestCredSSP.c
+	TestSchannel.c
+	TestNTLM.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
@@ -29,12 +30,7 @@ if(WIN32)
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} secur32 crypt32)
 endif()
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE winpr
-	MODULES winpr-sspi winpr-thread winpr-pipe winpr-file winpr-crypto winpr-utils)
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} winpr)
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 

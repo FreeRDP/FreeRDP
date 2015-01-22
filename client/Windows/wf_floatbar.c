@@ -17,14 +17,14 @@
  * limitations under the License.
  */
 
-#include <Windows.h>
-#include <stdlib.h>
+#include <winpr/crt.h>
+#include <winpr/windows.h>
 
-#include "wf_interface.h"
-#include "wf_floatbar.h"
-#include "wf_window.h"
-#include "wf_gdi.h"
 #include "resource.h"
+
+#include "wf_client.h"
+#include "wf_floatbar.h"
+#include "wf_gdi.h"
 
 typedef struct _Button Button;
 

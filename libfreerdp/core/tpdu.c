@@ -24,7 +24,11 @@
 #include <stdio.h>
 #include <winpr/print.h>
 
+#include <freerdp/log.h>
+
 #include "tpdu.h"
+
+#define TAG FREERDP_TAG("core")
 
 /**
  * TPDUs are defined in:
@@ -130,7 +134,7 @@ BOOL tpdu_read_connection_request(wStream* s, BYTE* li)
 
 	if (code != X224_TPDU_CONNECTION_REQUEST)
 	{
-		fprintf(stderr, "Error: expected X224_TPDU_CONNECTION_REQUEST\n");
+		WLog_ERR(TAG,  "Error: expected X224_TPDU_CONNECTION_REQUEST");
 		return FALSE;
 	}
 
@@ -157,17 +161,30 @@ void tpdu_write_connection_request(wStream* s, UINT16 length)
 BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li)
 {
 	BYTE code;
+	int position;
+	int bytes_read = 0;
+
+	/* save the position to determine the number of bytes read */
+	position = Stream_GetPosition(s);
 
 	if (!tpdu_read_header(s, &code, li))
 		return FALSE;
 
 	if (code != X224_TPDU_CONNECTION_CONFIRM)
 	{
-		fprintf(stderr, "Error: expected X224_TPDU_CONNECTION_CONFIRM\n");
+		WLog_ERR(TAG,  "Error: expected X224_TPDU_CONNECTION_CONFIRM");
 		return FALSE;
 	}
+	/*
+	 * To ensure that there are enough bytes remaining for processing
+	 * check against the length indicator (li). Already read bytes need
+	 * to be taken into account.
+	 * The -1 is because li was read but isn't included in the TPDU size.
+	 * For reference see ITU-T Rec. X.224 - 13.2.1
+	 */
+	bytes_read = (Stream_GetPosition(s) - position) - 1;
 
-	return (Stream_GetRemainingLength(s) >= *li);
+	return (Stream_GetRemainingLength(s) >= (size_t) (*li - bytes_read));
 }
 
 /**

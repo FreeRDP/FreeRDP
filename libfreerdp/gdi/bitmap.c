@@ -158,12 +158,16 @@ HGDI_BITMAP gdi_CreateBitmap(int nWidth, int nHeight, int cBitsPerPixel, BYTE* d
 HGDI_BITMAP gdi_CreateCompatibleBitmap(HGDI_DC hdc, int nWidth, int nHeight)
 {
 	HGDI_BITMAP hBitmap = (HGDI_BITMAP) malloc(sizeof(GDI_BITMAP));
+
+	if (!hBitmap)
+		return NULL;
+
 	hBitmap->objectType = GDIOBJECT_BITMAP;
 	hBitmap->bytesPerPixel = hdc->bytesPerPixel;
 	hBitmap->bitsPerPixel = hdc->bitsPerPixel;
 	hBitmap->width = nWidth;
 	hBitmap->height = nHeight;
-	hBitmap->data = malloc(nWidth * nHeight * hBitmap->bytesPerPixel);
+	hBitmap->data = _aligned_malloc(nWidth * nHeight * hBitmap->bytesPerPixel, 16);
 	hBitmap->scanline = nWidth * hBitmap->bytesPerPixel;
 	return hBitmap;
 }

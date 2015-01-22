@@ -62,6 +62,7 @@ struct rdp_transport
 	rdpTls* TlsIn;
 	rdpTls* TlsOut;
 	rdpTls* TsgTls;
+	rdpContext* context;
 	rdpCredssp* credssp;
 	rdpSettings* settings;
 	UINT32 SleepInterval;
@@ -86,7 +87,7 @@ struct rdp_transport
 };
 
 wStream* transport_send_stream_init(rdpTransport* transport, int size);
-BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port);
+BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, int timeout);
 void transport_attach(rdpTransport* transport, int sockfd);
 BOOL transport_disconnect(rdpTransport* transport);
 BOOL transport_connect_rdp(rdpTransport* transport);
@@ -96,7 +97,7 @@ BOOL transport_accept_rdp(rdpTransport* transport);
 BOOL transport_accept_tls(rdpTransport* transport);
 BOOL transport_accept_nla(rdpTransport* transport);
 void transport_stop(rdpTransport* transport);
-int transport_read(rdpTransport* transport, wStream* s);
+int transport_read_pdu(rdpTransport* transport, wStream* s);
 int transport_write(rdpTransport* transport, wStream* s);
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport* transport);
@@ -110,7 +111,7 @@ int tranport_drain_output_buffer(rdpTransport* transport);
 wStream* transport_receive_pool_take(rdpTransport* transport);
 int transport_receive_pool_return(rdpTransport* transport, wStream* pdu);
 
-rdpTransport* transport_new(rdpSettings* settings);
+rdpTransport* transport_new(rdpContext* context);
 void transport_free(rdpTransport* transport);
 
 #endif

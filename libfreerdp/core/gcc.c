@@ -3,6 +3,8 @@
  * T.124 Generic Conference Control (GCC)
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +25,12 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
+
 #include "gcc.h"
 #include "certificate.h"
+
+#define TAG FREERDP_TAG("core.gcc")
 
 /**
  * T.124 GCC is defined in:
@@ -274,7 +280,7 @@ BOOL gcc_read_conference_create_response(wStream* s, rdpMcs* mcs)
 
 	if (!gcc_read_server_data_blocks(s, mcs, length))
 	{
-		fprintf(stderr, "gcc_read_conference_create_response: gcc_read_server_data_blocks failed\n");
+		WLog_ERR(TAG,  "gcc_read_conference_create_response: gcc_read_server_data_blocks failed");
 		return FALSE;
 	}
 
@@ -288,7 +294,8 @@ void gcc_write_conference_create_response(wStream* s, wStream* userData)
 	per_write_object_identifier(s, t124_02_98_oid);
 
 	/* ConnectData::connectPDU (OCTET_STRING) */
-	per_write_length(s, Stream_GetPosition(userData) + 2);
+	/* This length MUST be ignored by the client according to [MS-RDPBCGR] */
+	per_write_length(s, 0x2A);
 
 	/* ConnectGCCPDU */
 	per_write_choice(s, 0x14);
@@ -368,13 +375,14 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
 					return FALSE;
 				break;
 
+			case 0xC009:
 			case CS_MULTITRANSPORT:
 				if (!gcc_read_client_multitransport_channel_data(s, mcs, blockLength - 4))
 					return FALSE;
 				break;
 
 			default:
-				fprintf(stderr, "Unknown GCC client data block: 0x%04X\n", type);
+				WLog_ERR(TAG,  "Unknown GCC client data block: 0x%04X", type);
 				Stream_Seek(s, blockLength - 4);
 				break;
 		}
@@ -383,7 +391,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, int length)
 
 		if (endPos != (begPos + blockLength))
 		{
-			fprintf(stderr, "Error parsing GCC client data block 0x%04X: Actual Offset: %d Expected Offset: %d\n",
+			WLog_ERR(TAG,  "Error parsing GCC client data block 0x%04X: Actual Offset: %d Expected Offset: %d",
 					type, endPos, begPos + blockLength);
 		}
 
@@ -419,16 +427,16 @@ void gcc_write_client_data_blocks(wStream* s, rdpMcs* mcs)
 	{
 		if (settings->UseMultimon && !settings->SpanMonitors)
 		{
-			fprintf(stderr, "WARNING: true multi monitor support was not advertised by server!\n");
+			WLog_ERR(TAG,  "WARNING: true multi monitor support was not advertised by server!");
 
 			if (settings->ForceMultimon)
 			{
-				fprintf(stderr, "Sending multi monitor information anyway (may break connectivity!)\n");
+				WLog_ERR(TAG,  "Sending multi monitor information anyway (may break connectivity!)");
 				gcc_write_client_monitor_data(s, mcs);
 			}
 			else
 			{
-				fprintf(stderr, "Use /multimon:force to force sending multi monitor information\n");
+				WLog_ERR(TAG,  "Use /multimon:force to force sending multi monitor information");
 			}
 		}
 	}
@@ -447,7 +455,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 
 		if (!gcc_read_user_data_header(s, &type, &blockLength))
 		{
-			fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_user_data_header failed\n");
+			WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_user_data_header failed");
 			return FALSE;
 		}
 
@@ -456,7 +464,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 			case SC_CORE:
 				if (!gcc_read_server_core_data(s, mcs))
 				{
-					fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_server_core_data failed\n");
+					WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_server_core_data failed");
 					return FALSE;
 				}
 				break;
@@ -464,7 +472,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 			case SC_SECURITY:
 				if (!gcc_read_server_security_data(s, mcs))
 				{
-					fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_server_security_data failed\n");
+					WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_server_security_data failed");
 					return FALSE;
 				}
 				break;
@@ -472,7 +480,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 			case SC_NET:
 				if (!gcc_read_server_network_data(s, mcs))
 				{
-					fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_server_network_data failed\n");
+					WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_server_network_data failed");
 					return FALSE;
 				}
 				break;
@@ -480,7 +488,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 			case SC_MCS_MSGCHANNEL:
 				if (!gcc_read_server_message_channel_data(s, mcs))
 				{
-					fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_server_message_channel_data failed\n");
+					WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_server_message_channel_data failed");
 					return FALSE;
 				}
 				break;
@@ -488,13 +496,13 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, int length)
 			case SC_MULTITRANSPORT:
 				if (!gcc_read_server_multitransport_channel_data(s, mcs))
 				{
-					fprintf(stderr, "gcc_read_server_data_blocks: gcc_read_server_multitransport_channel_data failed\n");
+					WLog_ERR(TAG,  "gcc_read_server_data_blocks: gcc_read_server_multitransport_channel_data failed");
 					return FALSE;
 				}
 				break;
 
 			default:
-				fprintf(stderr, "gcc_read_server_data_blocks: ignoring type=%hu\n", type);
+				WLog_ERR(TAG,  "gcc_read_server_data_blocks: ignoring type=%hu", type);
 				break;
 		}
 		offset += blockLength;
@@ -509,9 +517,9 @@ void gcc_write_server_data_blocks(wStream* s, rdpMcs* mcs)
 	gcc_write_server_core_data(s, mcs); /* serverCoreData */
 	gcc_write_server_network_data(s, mcs); /* serverNetworkData */
 	gcc_write_server_security_data(s, mcs); /* serverSecurityData */
+	gcc_write_server_message_channel_data(s, mcs); /* serverMessageChannelData */
 
 	/* TODO: Send these GCC data blocks only when the client sent them */
-	//gcc_write_server_message_channel_data(s, settings); /* serverMessageChannelData */
 	//gcc_write_server_multitransport_channel_data(s, settings); /* serverMultitransportChannelData */
 }
 
@@ -554,7 +562,8 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 {
 	char* str = NULL;
 	UINT32 version;
-	UINT32 color_depth;
+	BYTE connectionType = 0;
+	UINT32 clientColorDepth;
 	UINT16 colorDepth = 0;
 	UINT16 postBeta2ColorDepth = 0;
 	UINT16 highColorDepth = 0;
@@ -565,6 +574,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	UINT16 desktopOrientation = 0;
 	UINT32 desktopScaleFactor = 0;
 	UINT32 deviceScaleFactor = 0;
+	UINT16 earlyCapabilityFlags = 0;
 	rdpSettings* settings = mcs->settings;
 
 	/* Length of all required fields, until imeFileName */
@@ -633,7 +643,8 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 		if (blockLength < 2)
 			break;
-		Stream_Read_UINT16(s, settings->EarlyCapabilityFlags); /* earlyCapabilityFlags (2 bytes) */
+		Stream_Read_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags (2 bytes) */
+		settings->EarlyCapabilityFlags = (UINT32) earlyCapabilityFlags;
 		blockLength -= 2;
 
 		if (blockLength < 64)
@@ -647,7 +658,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 		if (blockLength < 1)
 			break;
-		Stream_Read_UINT8(s, settings->PerformanceFlags); /* connectionType (1 byte) */
+		Stream_Read_UINT8(s, connectionType); /* connectionType (1 byte) */
 		blockLength -= 1;
 
 		if (blockLength < 1)
@@ -691,29 +702,29 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	if (highColorDepth > 0)
 	{
-		if (settings->EarlyCapabilityFlags & RNS_UD_CS_WANT_32BPP_SESSION)
-			color_depth = 32;
+		if (earlyCapabilityFlags & RNS_UD_CS_WANT_32BPP_SESSION)
+			clientColorDepth = 32;
 		else
-			color_depth = highColorDepth;
+			clientColorDepth = highColorDepth;
 	}
 	else if (postBeta2ColorDepth > 0)
 	{
 		switch (postBeta2ColorDepth)
 		{
 			case RNS_UD_COLOR_4BPP:
-				color_depth = 4;
+				clientColorDepth = 4;
 				break;
 			case RNS_UD_COLOR_8BPP:
-				color_depth = 8;
+				clientColorDepth = 8;
 				break;
 			case RNS_UD_COLOR_16BPP_555:
-				color_depth = 15;
+				clientColorDepth = 15;
 				break;
 			case RNS_UD_COLOR_16BPP_565:
-				color_depth = 16;
+				clientColorDepth = 16;
 				break;
 			case RNS_UD_COLOR_24BPP:
-				color_depth = 24;
+				clientColorDepth = 24;
 				break;
 			default:
 				return FALSE;
@@ -724,10 +735,10 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		switch (colorDepth)
 		{
 			case RNS_UD_COLOR_4BPP:
-				color_depth = 4;
+				clientColorDepth = 4;
 				break;
 			case RNS_UD_COLOR_8BPP:
-				color_depth = 8;
+				clientColorDepth = 8;
 				break;
 			default:
 				return FALSE;
@@ -738,8 +749,27 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	 * If we are in server mode, accept client's color depth only if
 	 * it is smaller than ours. This is what Windows server does.
 	 */
-	if ((color_depth < settings->ColorDepth) || !settings->ServerMode)
-		settings->ColorDepth = color_depth;
+	if ((clientColorDepth < settings->ColorDepth) || !settings->ServerMode)
+		settings->ColorDepth = clientColorDepth;
+
+	if (settings->NetworkAutoDetect)
+		settings->NetworkAutoDetect = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_NETWORK_AUTODETECT) ? TRUE : FALSE;
+
+	if (settings->SupportHeartbeatPdu)
+		settings->SupportHeartbeatPdu = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_HEARTBEAT_PDU) ? TRUE : FALSE;
+
+	if (settings->SupportGraphicsPipeline)
+		settings->SupportGraphicsPipeline = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL) ? TRUE : FALSE;
+
+	if (settings->SupportDynamicTimeZone)
+		settings->SupportDynamicTimeZone = (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE) ? TRUE : FALSE;
+
+	if (!(earlyCapabilityFlags & RNS_UD_CS_VALID_CONNECTION_TYPE))
+		connectionType = 0;
+
+	settings->SupportErrorInfoPdu = earlyCapabilityFlags & RNS_UD_CS_SUPPORT_ERRINFO_PDU;
+
+	settings->ConnectionType = connectionType;
 
 	return TRUE;
 }
@@ -784,7 +814,7 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 	if (clientNameLength >= 16)
 	{
 		clientNameLength = 16;
-		clientName[clientNameLength-1] = 0;
+		clientName[clientNameLength - 1] = 0;
 	}
 
 	Stream_Write(s, clientName, (clientNameLength * 2));
@@ -808,13 +838,17 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 			RNS_UD_16BPP_SUPPORT |
 			RNS_UD_15BPP_SUPPORT;
 
-	connectionType = settings->ConnectionType;
 	earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU;
 
-	if (settings->RemoteFxCodec)
-		connectionType = CONNECTION_TYPE_LAN;
+	if (settings->NetworkAutoDetect)
+		settings->ConnectionType = CONNECTION_TYPE_AUTODETECT;
 
-	if (connectionType != 0)
+	if (settings->RemoteFxCodec && !settings->NetworkAutoDetect)
+		settings->ConnectionType = CONNECTION_TYPE_LAN;
+
+	connectionType = settings->ConnectionType;
+
+	if (connectionType)
 		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;
 
 	if (settings->ColorDepth == 32)
@@ -844,7 +878,7 @@ void gcc_write_client_core_data(wStream* s, rdpMcs* mcs)
 	if (clientDigProductIdLength >= 32)
 	{
 		clientDigProductIdLength = 32;
-		clientDigProductId[clientDigProductIdLength-1] = 0;
+		clientDigProductId[clientDigProductIdLength - 1] = 0;
 	}
 	Stream_Write(s, clientDigProductId, (clientDigProductIdLength * 2) );
 	Stream_Zero(s, 64 - (clientDigProductIdLength * 2) );
@@ -888,13 +922,20 @@ BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs)
 
 void gcc_write_server_core_data(wStream* s, rdpMcs* mcs)
 {
+	UINT32 version;
+	UINT32 earlyCapabilityFlags = 0;
 	rdpSettings* settings = mcs->settings;
 
 	gcc_write_user_data_header(s, SC_CORE, 16);
 
-	Stream_Write_UINT32(s, settings->RdpVersion == 4 ? RDP_VERSION_4 : RDP_VERSION_5_PLUS);
-	Stream_Write_UINT32(s, settings->RequestedProtocols); /* clientRequestedProtocols */
-	Stream_Write_UINT32(s, settings->EarlyCapabilityFlags); /* earlyCapabilityFlags */
+	version = settings->RdpVersion == 4 ? RDP_VERSION_4 : RDP_VERSION_5_PLUS;
+
+	if (settings->SupportDynamicTimeZone)
+		earlyCapabilityFlags |= RNS_UD_SC_DYNAMIC_DST_SUPPORTED;
+
+	Stream_Write_UINT32(s, version); /* version (4 bytes) */
+	Stream_Write_UINT32(s, settings->RequestedProtocols); /* clientRequestedProtocols (4 bytes) */
+	Stream_Write_UINT32(s, earlyCapabilityFlags); /* earlyCapabilityFlags (4 bytes) */
 }
 
 /**
@@ -911,7 +952,7 @@ BOOL gcc_read_client_security_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	if (blockLength < 8)
 		return FALSE;
 
-	if (settings->DisableEncryption)
+	if (settings->UseRdpSecurityLayer)
 	{
 		Stream_Read_UINT32(s, settings->EncryptionMethods); /* encryptionMethods */
 		if (settings->EncryptionMethods == 0)
@@ -939,7 +980,7 @@ void gcc_write_client_security_data(wStream* s, rdpMcs* mcs)
 
 	gcc_write_user_data_header(s, CS_SECURITY, 12);
 
-	if (settings->DisableEncryption)
+	if (settings->UseRdpSecurityLayer)
 	{
 		Stream_Write_UINT32(s, settings->EncryptionMethods); /* encryptionMethods */
 		Stream_Write_UINT32(s, 0); /* extEncryptionMethods */
@@ -957,19 +998,87 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	BYTE* data;
 	UINT32 length;
 	rdpSettings* settings = mcs->settings;
+	BOOL validCryptoConfig = FALSE;
+	UINT32 serverEncryptionMethod;
 
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
-	Stream_Read_UINT32(s, settings->EncryptionMethods); /* encryptionMethod */
+	Stream_Read_UINT32(s, serverEncryptionMethod); /* encryptionMethod */
 	Stream_Read_UINT32(s, settings->EncryptionLevel); /* encryptionLevel */
 
-	if (settings->EncryptionMethods == 0 && settings->EncryptionLevel == 0)
+	/* Only accept valid/known encryption methods */
+	switch (serverEncryptionMethod)
 	{
-		/* serverRandom and serverRandom must not be present */
-		settings->DisableEncryption = FALSE;
-		settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
-		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
+		case ENCRYPTION_METHOD_NONE:
+			WLog_DBG(TAG, "Server rdp encryption method: NONE");
+			break;
+		case ENCRYPTION_METHOD_40BIT:
+			WLog_DBG(TAG, "Server rdp encryption method: 40BIT");
+			break;
+		case ENCRYPTION_METHOD_56BIT:
+			WLog_DBG(TAG, "Server rdp encryption method: 56BIT");
+			break;
+		case ENCRYPTION_METHOD_128BIT:
+			WLog_DBG(TAG, "Server rdp encryption method: 128BIT");
+			break;
+		case ENCRYPTION_METHOD_FIPS:
+			WLog_DBG(TAG, "Server rdp encryption method: FIPS");
+			break;
+		default:
+			WLog_ERR(TAG, "Received unknown encryption method %08X", serverEncryptionMethod);
+			return FALSE;
+	}
+
+	if (settings->UseRdpSecurityLayer && !(settings->EncryptionMethods & serverEncryptionMethod))
+	{
+		WLog_WARN(TAG, "Server uses non-advertised encryption method 0x%08X", serverEncryptionMethod);
+		/* FIXME: Should we return FALSE; in this case ?? */
+	}
+
+	settings->EncryptionMethods = serverEncryptionMethod;
+
+	/* Verify encryption level/method combinations according to MS-RDPBCGR Section 5.3.2 */
+	switch (settings->EncryptionLevel)
+	{
+		case ENCRYPTION_LEVEL_NONE:
+			if (settings->EncryptionMethods == ENCRYPTION_METHOD_NONE)
+			{
+				validCryptoConfig = TRUE;
+			}
+			break;
+		case ENCRYPTION_LEVEL_FIPS:
+			if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			{
+				validCryptoConfig = TRUE;
+			}
+			break;
+		case ENCRYPTION_LEVEL_LOW:
+		case ENCRYPTION_LEVEL_HIGH:
+		case ENCRYPTION_LEVEL_CLIENT_COMPATIBLE:
+			if (settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT ||
+			    settings->EncryptionMethods == ENCRYPTION_METHOD_56BIT ||
+			    settings->EncryptionMethods == ENCRYPTION_METHOD_128BIT ||
+			    settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
+			{
+				validCryptoConfig = TRUE;
+			}
+			break;
+		default:
+			WLog_ERR(TAG, "Received unknown encryption level %08X", settings->EncryptionLevel);
+	}
+
+	if (!validCryptoConfig)
+	{
+		WLog_ERR(TAG, "Received invalid cryptographic configuration (level=0x%08X method=0x%08X)",
+			settings->EncryptionLevel, settings->EncryptionMethods);
+		return FALSE;
+	}
+
+	if (settings->EncryptionLevel == ENCRYPTION_LEVEL_NONE)
+	{
+		/* serverRandomLen and serverCertLen must not be present */
+		settings->UseRdpSecurityLayer = FALSE;
 		return TRUE;
 	}
 
@@ -1065,30 +1174,111 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	UINT32 headerLen, serverRandomLen, serverCertLen, wPublicKeyBlobLen;
 	rdpSettings* settings = mcs->settings;
 
-	if (!settings->DisableEncryption)
+	/**
+	 * Re: settings->EncryptionLevel:
+	 * This is configured/set by the server implementation and serves the same
+	 * purpose as the "Encryption Level" setting in the RDP-Tcp configuration
+	 * dialog of Microsoft's Remote Desktop Session Host Configuration.
+	 * Re: settings->EncryptionMethods:
+	 * at this point this setting contains the client's supported encryption
+	 * methods we've received in gcc_read_client_security_data()
+	 */
+
+	if (!settings->UseRdpSecurityLayer)
 	{
-		settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
+		/* TLS/NLA is used: disable rdp style encryption */
 		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 	}
-	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_FIPS) != 0)
+
+	/* verify server encryption level value */
+	switch (settings->EncryptionLevel)
 	{
-		settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
-	}
-	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_128BIT) != 0)
-	{
-		settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
-	}
-	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_56BIT) != 0)
-	{
-		settings->EncryptionMethods = ENCRYPTION_METHOD_56BIT;
-	}
-	else if ((settings->EncryptionMethods & ENCRYPTION_METHOD_40BIT) != 0)
-	{
-		settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT;
+		case ENCRYPTION_LEVEL_NONE:
+			WLog_INFO(TAG, "Active rdp encryption level: NONE");
+			break;
+		case ENCRYPTION_LEVEL_FIPS:
+			WLog_INFO(TAG, "Active rdp encryption level: FIPS Compliant");
+			break;
+		case ENCRYPTION_LEVEL_HIGH:
+			WLog_INFO(TAG, "Active rdp encryption level: HIGH");
+			break;
+		case ENCRYPTION_LEVEL_LOW:
+			WLog_INFO(TAG, "Active rdp encryption level: LOW");
+			break;
+		case ENCRYPTION_LEVEL_CLIENT_COMPATIBLE:
+			WLog_INFO(TAG, "Active rdp encryption level: CLIENT-COMPATIBLE");
+			break;
+		default:
+			WLog_ERR(TAG, "Invalid server encryption level 0x%08X", settings->EncryptionLevel);
+			WLog_ERR(TAG, "Switching to encryption level CLIENT-COMPATIBLE");
+			settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 	}
 
-	if (settings->EncryptionMethods != ENCRYPTION_METHOD_NONE)
-		settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+	/* choose rdp encryption method based on server level and client methods */
+	switch (settings->EncryptionLevel)
+	{
+		case ENCRYPTION_LEVEL_NONE:
+			/* The only valid method is NONE in this case */
+			settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
+			break;
+		case ENCRYPTION_LEVEL_FIPS:
+			/* The only valid method is FIPS in this case */
+			if (!(settings->EncryptionMethods & ENCRYPTION_METHOD_FIPS))
+			{
+				WLog_WARN(TAG, "client does not support FIPS as required by server configuration");
+			}
+			settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
+			break;
+		case ENCRYPTION_LEVEL_HIGH:
+			/* Maximum key strength supported by the server must be used (128 bit)*/
+			if (!(settings->EncryptionMethods & ENCRYPTION_METHOD_128BIT))
+			{
+				WLog_WARN(TAG, "client does not support 128 bit encryption method as required by server configuration");
+			}
+			settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
+			break;
+		case ENCRYPTION_LEVEL_LOW:
+		case ENCRYPTION_LEVEL_CLIENT_COMPATIBLE:
+			/* Maximum key strength supported by the client must be used */
+			if (settings->EncryptionMethods & ENCRYPTION_METHOD_128BIT)
+				settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
+			else if (settings->EncryptionMethods & ENCRYPTION_METHOD_56BIT)
+				settings->EncryptionMethods = ENCRYPTION_METHOD_56BIT;
+			else if (settings->EncryptionMethods & ENCRYPTION_METHOD_40BIT)
+				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT;
+			else if (settings->EncryptionMethods & ENCRYPTION_METHOD_FIPS)
+				settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
+			else
+			{
+				WLog_WARN(TAG, "client has not announced any supported encryption methods");
+				settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
+			}
+			break;
+		default:
+			WLog_ERR(TAG, "internal error: unknown encryption level");
+	}
+
+	/* log selected encryption method */
+	switch (settings->EncryptionMethods)
+	{
+		case ENCRYPTION_METHOD_NONE:
+			WLog_INFO(TAG, "Selected rdp encryption method: NONE");
+			break;
+		case ENCRYPTION_METHOD_40BIT:
+			WLog_INFO(TAG, "Selected rdp encryption method: 40BIT");
+			break;
+		case ENCRYPTION_METHOD_56BIT:
+			WLog_INFO(TAG, "Selected rdp encryption method: 56BIT");
+			break;
+		case ENCRYPTION_METHOD_128BIT:
+			WLog_INFO(TAG, "Selected rdp encryption method: 128BIT");
+			break;
+		case ENCRYPTION_METHOD_FIPS:
+			WLog_INFO(TAG, "Selected rdp encryption method: FIPS");
+			break;
+		default:
+			WLog_ERR(TAG, "internal error: unknown encryption method");
+	}
 
 	headerLen = 12;
 	keyLen = 0;
@@ -1096,8 +1286,7 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	serverRandomLen = 0;
 	serverCertLen = 0;
 
-	if (settings->EncryptionMethods != ENCRYPTION_METHOD_NONE ||
-	    settings->EncryptionLevel != ENCRYPTION_LEVEL_NONE)
+	if (settings->EncryptionMethods != ENCRYPTION_METHOD_NONE)
 	{
 		serverRandomLen = 32;
 
@@ -1133,8 +1322,7 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	Stream_Write_UINT32(s, settings->EncryptionMethods); /* encryptionMethod */
 	Stream_Write_UINT32(s, settings->EncryptionLevel); /* encryptionLevel */
 
-	if (settings->EncryptionMethods == ENCRYPTION_METHOD_NONE &&
-	    settings->EncryptionLevel == ENCRYPTION_LEVEL_NONE)
+	if (settings->EncryptionMethods == ENCRYPTION_METHOD_NONE)
 	{
 		return;
 	}
@@ -1174,7 +1362,7 @@ void gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	md5 = crypto_md5_init();
 	if (!md5)
 	{
-		fprintf(stderr, "%s: unable to allocate a md5\n", __FUNCTION__);
+		WLog_ERR(TAG,  "unable to allocate a md5");
 		return;
 	}
 
@@ -1206,7 +1394,7 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	if (blockLength < 4 + mcs->channelCount * 12)
 		return FALSE;
-	
+
 	if (mcs->channelCount > 16)
 		return FALSE;
 
@@ -1216,7 +1404,7 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		/* CHANNEL_DEF */
 		Stream_Read(s, mcs->channels[i].Name, 8); /* name (8 bytes) */
 		Stream_Read_UINT32(s, mcs->channels[i].options); /* options (4 bytes) */
-		mcs->channels[i].ChannelId = MCS_GLOBAL_CHANNEL_ID + 1 + i;
+		mcs->channels[i].ChannelId = mcs->baseChannelId++;
 	}
 
 	return TRUE;
@@ -1269,8 +1457,8 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 
 	if (channelCount != mcs->channelCount)
 	{
-		fprintf(stderr, "requested %d channels, got %d instead\n",
-				mcs->channelCount, channelCount);
+		WLog_ERR(TAG,  "requested %d channels, got %d instead",
+				 mcs->channelCount, channelCount);
 
 		/* we ensure that the response is not bigger than the request */
 
@@ -1332,6 +1520,15 @@ BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	if (flags & REDIRECTED_SESSIONID_FIELD_VALID)
 		settings->RedirectedSessionId = redirectedSessionId;
+
+	if (blockLength != 8)
+	{
+		if (Stream_GetRemainingLength(s) >= (blockLength - 8))
+		{
+			/* The old Microsoft Mac RDP client can send a pad here */
+			Stream_Seek(s, (blockLength - 8));
+		}
+	}
 
 	return TRUE;
 }
@@ -1497,6 +1694,8 @@ BOOL gcc_read_client_message_channel_data(wStream* s, rdpMcs* mcs, UINT16 blockL
 
 	Stream_Read_UINT32(s, flags);
 
+	mcs->messageChannelId = mcs->baseChannelId++;
+
 	return TRUE;
 }
 
@@ -1538,11 +1737,12 @@ BOOL gcc_read_server_message_channel_data(wStream* s, rdpMcs* mcs)
 
 void gcc_write_server_message_channel_data(wStream* s, rdpMcs* mcs)
 {
-	UINT16 mcsChannelId = 0;
+	if (mcs->messageChannelId == 0)
+		return;
 
 	gcc_write_user_data_header(s, SC_MCS_MSGCHANNEL, 6);
 
-	Stream_Write_UINT16(s, mcsChannelId); /* mcsChannelId (2 bytes) */
+	Stream_Write_UINT16(s, mcs->messageChannelId); /* mcsChannelId (2 bytes) */
 }
 
 /**

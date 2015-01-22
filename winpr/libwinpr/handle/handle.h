@@ -21,6 +21,7 @@
 #define WINPR_HANDLE_PRIVATE_H
 
 #include <winpr/handle.h>
+#include <winpr/file.h>
 
 #define HANDLE_TYPE_NONE			0
 #define HANDLE_TYPE_PROCESS			1
@@ -35,6 +36,7 @@
 #define HANDLE_TYPE_FILE			10
 #define HANDLE_TYPE_TIMER_QUEUE			11
 #define HANDLE_TYPE_TIMER_QUEUE_TIMER		12
+#define HANDLE_TYPE_COMM			13
 
 #define WINPR_HANDLE_DEF() \
 	ULONG Type
@@ -48,11 +50,11 @@ typedef struct winpr_handle WINPR_HANDLE;
 #define WINPR_HANDLE_SET_TYPE(_handle, _type) \
 	_handle->Type = _type
 
-static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject)
+static INLINE BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObject)
 {
 	WINPR_HANDLE* wHandle;
 
-	if (handle == NULL)
+	if (handle == NULL || handle == INVALID_HANDLE_VALUE)
 		return FALSE;
 
 	wHandle = (WINPR_HANDLE*) handle;
@@ -62,5 +64,16 @@ static inline BOOL winpr_Handle_GetInfo(HANDLE handle, ULONG* pType, PVOID* pObj
 
 	return TRUE;
 }
+
+typedef BOOL (*pcIsHandled)(HANDLE handle);
+typedef BOOL (*pcCloseHandle)(HANDLE handle);
+
+typedef struct _HANDLE_CLOSE_CB
+{
+	pcIsHandled IsHandled;
+	pcCloseHandle CloseHandle;
+} HANDLE_CLOSE_CB;
+
+BOOL RegisterHandleCloseCb(HANDLE_CLOSE_CB *pHandleClose);
 
 #endif /* WINPR_HANDLE_PRIVATE_H */

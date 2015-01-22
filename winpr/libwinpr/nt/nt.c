@@ -366,6 +366,8 @@ typedef NTSTATUS (WINAPI * NT_DEVICE_IO_CONTROL_FILE_FN)(HANDLE FileHandle, HAND
 
 typedef NTSTATUS (WINAPI * NT_CLOSE_FN)(HANDLE Handle);
 
+typedef NTSTATUS (WINAPI * NT_WAIT_FOR_SINGLE_OBJECT_FN)(HANDLE Handle, BOOLEAN Alertable, PLARGE_INTEGER Timeout);
+
 static RTL_INIT_ANSI_STRING_FN pRtlInitAnsiString = NULL;
 static RTL_INIT_UNICODE_STRING_FN pRtlInitUnicodeString = NULL;
 static RTL_ANSI_STRING_TO_UNICODE_STRING_FN pRtlAnsiStringToUnicodeString = NULL;
@@ -377,6 +379,7 @@ static NT_READ_FILE_FN pNtReadFile = NULL;
 static NT_WRITE_FILE_FN pNtWriteFile = NULL;
 static NT_DEVICE_IO_CONTROL_FILE_FN pNtDeviceIoControlFile = NULL;
 static NT_CLOSE_FN pNtClose = NULL;
+static NT_WAIT_FOR_SINGLE_OBJECT_FN pNtWaitForSingleObject = NULL;
 
 static void NtdllModuleInit()
 {
@@ -402,6 +405,7 @@ static void NtdllModuleInit()
 	pNtWriteFile = (NT_WRITE_FILE_FN) GetProcAddress(NtdllModule, "NtWriteFile");
 	pNtDeviceIoControlFile = (NT_DEVICE_IO_CONTROL_FILE_FN) GetProcAddress(NtdllModule, "NtDeviceIoControlFile");
 	pNtClose = (NT_CLOSE_FN) GetProcAddress(NtdllModule, "NtClose");
+	pNtWaitForSingleObject = (NT_WAIT_FOR_SINGLE_OBJECT_FN) GetProcAddress(NtdllModule, "NtWaitForSingleObject");
 }
 
 VOID _RtlInitAnsiString(PANSI_STRING DestinationString, PCSZ SourceString)
@@ -531,6 +535,16 @@ NTSTATUS _NtClose(HANDLE Handle)
 		return STATUS_INTERNAL_ERROR;
 
 	return pNtClose(Handle);
+}
+
+NTSTATUS _NtWaitForSingleObject(HANDLE Handle, BOOLEAN Alertable, PLARGE_INTEGER Timeout)
+{
+	NtdllModuleInit();
+
+	if (!pNtWaitForSingleObject)
+		return STATUS_INTERNAL_ERROR;
+
+	return pNtWaitForSingleObject(Handle, Alertable, Timeout);
 }
 
 #endif

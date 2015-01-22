@@ -27,12 +27,14 @@
 #include "message.h"
 #include "transport.h"
 
+#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
+#define TAG FREERDP_TAG("core.message")
 #define WITH_STREAM_POOL	1
 
 /* Update */
@@ -123,6 +125,12 @@ static void update_message_PlaySound(rdpContext* context, PLAY_SOUND_UPDATE* pla
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(Update, PlaySound), (void*) wParam, NULL);
+}
+
+static void update_message_SetKeyboardIndicators(rdpContext* context, UINT16 led_flags)
+{
+	MessageQueue_Post(context->update->queue, (void*) context,
+			MakeMessageId(Update, SetKeyboardIndicators), (void*)(size_t)led_flags, NULL);
 }
 
 static void update_message_RefreshRect(rdpContext* context, BYTE count, RECTANGLE_16* areas)
@@ -335,8 +343,8 @@ static void update_message_Polyline(rdpContext* context, POLYLINE_ORDER* polylin
 	wParam = (POLYLINE_ORDER*) malloc(sizeof(POLYLINE_ORDER));
 	CopyMemory(wParam, polyline, sizeof(POLYLINE_ORDER));
 
-	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numPoints);
-	CopyMemory(wParam->points, polyline->points, sizeof(DELTA_POINT) * wParam->numPoints);
+	wParam->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * wParam->numDeltaEntries);
+	CopyMemory(wParam->points, polyline->points, sizeof(DELTA_POINT) * wParam->numDeltaEntries);
 
 	MessageQueue_Post(context->update->queue, (void*) context,
 			MakeMessageId(PrimaryUpdate, Polyline), (void*) wParam, NULL);
@@ -762,7 +770,7 @@ static void update_message_WindowIcon(rdpContext* context, WINDOW_ORDER_INFO* or
 	lParam = (WINDOW_ICON_ORDER*) malloc(sizeof(WINDOW_ICON_ORDER));
 	CopyMemory(lParam, windowIcon, sizeof(WINDOW_ICON_ORDER));
 
-	fprintf(stderr, "update_message_WindowIcon\n");
+	WLog_VRB(TAG,  "update_message_WindowIcon");
 
 	if (windowIcon->iconInfo->cbBitsColor > 0)
 	{
@@ -1059,6 +1067,7 @@ static int update_message_free_update_class(wMessage* msg, int type)
 			break;
 
 		case Update_SurfaceFrameAcknowledge:
+		case Update_SetKeyboardIndicators:
 			break;
 
 		default:
@@ -1132,6 +1141,10 @@ static int update_message_process_update_class(rdpUpdateProxy* proxy, wMessage* 
 
 		case Update_SurfaceFrameAcknowledge:
 			IFCALL(proxy->SurfaceFrameAcknowledge, msg->context, (UINT32) (size_t) msg->wParam);
+			break;
+
+		case Update_SetKeyboardIndicators:
+			IFCALL(proxy->SetKeyboardIndicators, msg->context, (UINT16) (size_t) msg->wParam);
 			break;
 
 		default:
@@ -1871,7 +1884,7 @@ static int update_message_free_class(wMessage*msg, int msgClass, int msgType)
 	}
 
 	if (status < 0)
-		fprintf(stderr, "Unknown message: class: %d type: %d\n", msgClass, msgType);
+		WLog_ERR(TAG,  "Unknown message: class: %d type: %d", msgClass, msgType);
 
 	return status;
 }
@@ -1912,7 +1925,7 @@ static int update_message_process_class(rdpUpdateProxy* proxy, wMessage* msg, in
 	}
 
 	if (status < 0)
-		fprintf(stderr, "Unknown message: class: %d type: %d\n", msgClass, msgType);
+		WLog_ERR(TAG,  "Unknown message: class: %d type: %d", msgClass, msgType);
 
 	return status;
 }
@@ -2004,6 +2017,7 @@ void update_message_register_interface(rdpUpdateProxy* message, rdpUpdate* updat
 	message->BitmapUpdate = update->BitmapUpdate;
 	message->Palette = update->Palette;
 	message->PlaySound = update->PlaySound;
+	message->SetKeyboardIndicators = update->SetKeyboardIndicators;
 	message->RefreshRect = update->RefreshRect;
 	message->SuppressOutput = update->SuppressOutput;
 	message->SurfaceCommand = update->SurfaceCommand;
@@ -2019,6 +2033,7 @@ void update_message_register_interface(rdpUpdateProxy* message, rdpUpdate* updat
 	update->BitmapUpdate = update_message_BitmapUpdate;
 	update->Palette = update_message_Palette;
 	update->PlaySound = update_message_PlaySound;
+	update->SetKeyboardIndicators = update_message_SetKeyboardIndicators;
 	update->RefreshRect = update_message_RefreshRect;
 	update->SuppressOutput = update_message_SuppressOutput;
 	update->SurfaceCommand = update_message_SurfaceCommand;
@@ -2159,11 +2174,37 @@ void update_message_register_interface(rdpUpdateProxy* message, rdpUpdate* updat
 	pointer->PointerCached = update_message_PointerCached;
 }
 
-rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update)
+static void *update_message_proxy_thread(void *arg)
 {
-	rdpUpdateProxy* message;
+	rdpUpdate *update = (rdpUpdate *)arg;
+	wMessage message;
 
-	message = (rdpUpdateProxy*) malloc(sizeof(rdpUpdateProxy));
+	if (!update || !update->queue)
+	{
+		WLog_ERR(TAG, "update=%p, update->queue=%p", update, update ? update->queue : NULL);
+		ExitThread(-1);
+		return NULL;
+	}
+
+	while (MessageQueue_Wait(update->queue))
+	{
+		int status = 0;
+
+		if (MessageQueue_Peek(update->queue, &message, TRUE))
+			status = update_message_queue_process_message(update, &message);
+
+		if (!status)
+			break;
+	}
+
+	ExitThread(0);
+	return NULL;
+}
+
+rdpUpdateProxy *update_message_proxy_new(rdpUpdate *update)
+{
+	rdpUpdateProxy *message;
+	message = (rdpUpdateProxy *) malloc(sizeof(rdpUpdateProxy));
 
 	if (message)
 	{
@@ -2171,6 +2212,7 @@ rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update)
 
 		message->update = update;
 		update_message_register_interface(message, update);
+		message->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) update_message_proxy_thread, update, 0, NULL);
 	}
 
 	return message;
@@ -2180,6 +2222,9 @@ void update_message_proxy_free(rdpUpdateProxy* message)
 {
 	if (message)
 	{
+		MessageQueue_PostQuit(message->update->queue, 0);
+		WaitForSingleObject(message->thread, INFINITE);
+		CloseHandle(message->thread);
 		free(message);
 	}
 }
@@ -2220,6 +2265,18 @@ static void input_message_ExtendedMouseEvent(rdpInput* input, UINT16 flags, UINT
 			MakeMessageId(Input, ExtendedMouseEvent), (void*) (size_t) flags, (void*) (size_t) pos);
 }
 
+static void input_message_FocusInEvent(rdpInput* input, UINT16 toggleStates)
+{
+	MessageQueue_Post(input->queue, (void*) input,
+			MakeMessageId(Input, FocusInEvent), (void*) (size_t) toggleStates, NULL);
+}
+
+static void input_message_KeyboardPauseEvent(rdpInput* input)
+{
+	MessageQueue_Post(input->queue, (void*) input,
+			MakeMessageId(Input, KeyboardPauseEvent), NULL, NULL);
+}
+
 /* Event Queue */
 static int input_message_free_input_class(wMessage* msg, int type)
 {
@@ -2240,6 +2297,12 @@ static int input_message_free_input_class(wMessage* msg, int type)
 			break;
 
 		case Input_ExtendedMouseEvent:
+			break;
+
+		case Input_FocusInEvent:
+			break;
+
+		case Input_KeyboardPauseEvent:
 			break;
 
 		default:
@@ -2294,6 +2357,14 @@ static int input_message_process_input_class(rdpInputProxy* proxy, wMessage* msg
 			}
 			break;
 
+		case Input_FocusInEvent:
+			IFCALL(proxy->FocusInEvent, msg->context, (UINT16) (size_t) msg->wParam);
+			break;
+
+		case Input_KeyboardPauseEvent:
+			IFCALL(proxy->KeyboardPauseEvent, msg->context);
+			break;
+
 		default:
 			status = -1;
 			break;
@@ -2318,7 +2389,7 @@ static int input_message_free_class(wMessage* msg, int msgClass, int msgType)
 	}
 
 	if (status < 0)
-		fprintf(stderr, "Unknown event: class: %d type: %d\n", msgClass, msgType);
+		WLog_ERR(TAG,  "Unknown event: class: %d type: %d", msgClass, msgType);
 
 	return status;
 }
@@ -2339,7 +2410,7 @@ static int input_message_process_class(rdpInputProxy* proxy, wMessage* msg, int 
 	}
 
 	if (status < 0)
-		fprintf(stderr, "Unknown event: class: %d type: %d\n", msgClass, msgType);
+		WLog_ERR(TAG,  "Unknown event: class: %d type: %d", msgClass, msgType);
 
 	return status;
 }
@@ -2418,12 +2489,16 @@ void input_message_proxy_register(rdpInputProxy* proxy, rdpInput* input)
 	proxy->UnicodeKeyboardEvent = input->UnicodeKeyboardEvent;
 	proxy->MouseEvent = input->MouseEvent;
 	proxy->ExtendedMouseEvent = input->ExtendedMouseEvent;
+	proxy->FocusInEvent = input->FocusInEvent;
+	proxy->KeyboardPauseEvent = input->KeyboardPauseEvent;
 
 	input->SynchronizeEvent = input_message_SynchronizeEvent;
 	input->KeyboardEvent = input_message_KeyboardEvent;
 	input->UnicodeKeyboardEvent = input_message_UnicodeKeyboardEvent;
 	input->MouseEvent = input_message_MouseEvent;
 	input->ExtendedMouseEvent = input_message_ExtendedMouseEvent;
+	input->FocusInEvent = input_message_FocusInEvent;
+	input->KeyboardPauseEvent = input_message_KeyboardPauseEvent;
 }
 
 rdpInputProxy* input_message_proxy_new(rdpInput* input)

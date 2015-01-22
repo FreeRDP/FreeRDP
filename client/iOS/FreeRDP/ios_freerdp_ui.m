@@ -106,7 +106,8 @@ void ios_ui_end_paint(rdpContext * context)
 	rdpGdi *gdi = context->gdi;
 	CGRect dirty_rect = CGRectMake(gdi->primary->hdc->hwnd->invalid->x, gdi->primary->hdc->hwnd->invalid->y, gdi->primary->hdc->hwnd->invalid->w, gdi->primary->hdc->hwnd->invalid->h);
 	
-	[mfi->session performSelectorOnMainThread:@selector(setNeedsDisplayInRectAsValue:) withObject:[NSValue valueWithCGRect:dirty_rect] waitUntilDone:NO];
+	if (gdi->primary->hdc->hwnd->invalid->null == 0)
+		[mfi->session performSelectorOnMainThread:@selector(setNeedsDisplayInRectAsValue:) withObject:[NSValue valueWithCGRect:dirty_rect] waitUntilDone:NO];
 }
 
 

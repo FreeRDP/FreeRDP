@@ -25,6 +25,7 @@
 #include "wlog/FileAppender.h"
 #include "wlog/BinaryAppender.h"
 #include "wlog/ConsoleAppender.h"
+#include "wlog/CallbackAppender.h"
 
 void WLog_Appender_Free(wLog* log, wLogAppender* appender);
 

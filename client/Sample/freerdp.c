@@ -38,7 +38,6 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/utils/event.h>
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 #include <freerdp/client/cliprdr.h>
@@ -46,28 +45,15 @@
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
+#include <freerdp/log.h>
 
-struct tf_info
-{
-	void* data;
-};
-typedef struct tf_info tfInfo;
+#define TAG CLIENT_TAG("sample")
 
 struct tf_context
 {
 	rdpContext _p;
-
-	tfInfo* tfi;
 };
 typedef struct tf_context tfContext;
-
-HANDLE g_sem;
-static int g_thread_count = 0;
-
-struct thread_data
-{
-	freerdp* instance;
-};
 
 int tf_context_new(freerdp* instance, rdpContext* context)
 {
@@ -94,59 +80,12 @@ void tf_end_paint(rdpContext* context)
 		return;
 }
 
-int tf_receive_channel_data(freerdp* instance, UINT16 channelId, BYTE* data, int size, int flags, int total_size)
-{
-	return freerdp_channels_data(instance, channelId, data, size, flags, total_size);
-}
-
-void tf_process_cb_monitor_ready_event(rdpChannels* channels, freerdp* instance)
-{
-	wMessage* event;
-	RDP_CB_FORMAT_LIST_EVENT* format_list_event;
-
-	event = freerdp_event_new(CliprdrChannel_Class, CliprdrChannel_FormatList, NULL, NULL);
-
-	format_list_event = (RDP_CB_FORMAT_LIST_EVENT*) event;
-	format_list_event->num_formats = 0;
-
-	freerdp_channels_send_event(channels, event);
-}
-
-void tf_process_channel_event(rdpChannels* channels, freerdp* instance)
-{
-	wMessage* event;
-
-	event = freerdp_channels_pop_event(channels);
-
-	if (event)
-	{
-		switch (GetMessageType(event->id))
-		{
-			case CliprdrChannel_MonitorReady:
-				tf_process_cb_monitor_ready_event(channels, instance);
-				break;
-
-			default:
-				printf("tf_process_channel_event: unknown event type %d\n", GetMessageType(event->id));
-				break;
-		}
-
-		freerdp_event_free(event);
-	}
-}
-
 BOOL tf_pre_connect(freerdp* instance)
 {
-	tfInfo* tfi;
-	tfContext* context;
+	tfContext* tfc;
 	rdpSettings* settings;
 
-	context = (tfContext*) instance->context;
-
-	tfi = (tfInfo*) malloc(sizeof(tfInfo));
-	ZeroMemory(tfi, sizeof(tfInfo));
-
-	context->tfi = tfi;
+	tfc = (tfContext*) instance->context;
 
 	settings = instance->settings;
 
@@ -217,14 +156,16 @@ int tfreerdp_run(freerdp* instance)
 
 		ZeroMemory(rfds, sizeof(rfds));
 		ZeroMemory(wfds, sizeof(wfds));
-		if (freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount) != TRUE)
+
+		if (!freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount))
 		{
-			printf("Failed to get FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
 			break;
 		}
-		if (freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount) != TRUE)
+
+		if (!freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount))
 		{
-			printf("Failed to get channel manager file descriptor\n");
+			WLog_ERR(TAG, "Failed to get channel manager file descriptor");
 			break;
 		}
 
@@ -253,22 +194,22 @@ int tfreerdp_run(freerdp* instance)
 				(errno == EINPROGRESS) ||
 				(errno == EINTR))) /* signal occurred */
 			{
-				printf("tfreerdp_run: select failed\n");
+				WLog_ERR(TAG, "tfreerdp_run: select failed");
 				break;
 			}
 		}
 
-		if (freerdp_check_fds(instance) != TRUE)
+		if (!freerdp_check_fds(instance))
 		{
-			printf("Failed to check FreeRDP file descriptor\n");
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
 			break;
 		}
-		if (freerdp_channels_check_fds(channels, instance) != TRUE)
+
+		if (!freerdp_channels_check_fds(channels, instance))
 		{
-			printf("Failed to check channel manager file descriptor\n");
+			WLog_ERR(TAG, "Failed to check channel manager file descriptor");
 			break;
 		}
-		tf_process_channel_event(channels, instance);
 	}
 
 	freerdp_channels_close(channels, instance);
@@ -278,41 +219,104 @@ int tfreerdp_run(freerdp* instance)
 	return 0;
 }
 
-void* thread_func(void* param)
+void* tf_client_thread_proc(freerdp* instance)
 {
-	struct thread_data* data;
-	data = (struct thread_data*) param;
+	int i;
+	int fds;
+	int max_fds;
+	int rcount;
+	int wcount;
+	void* rfds[32];
+	void* wfds[32];
+	fd_set rfds_set;
+	fd_set wfds_set;
+	rdpChannels* channels;
 
-	tfreerdp_run(data->instance);
+	channels = instance->context->channels;
 
-	free(data);
+	freerdp_connect(instance);
 
-	pthread_detach(pthread_self());
+	while (1)
+	{
+		rcount = 0;
+		wcount = 0;
 
-	g_thread_count--;
+		ZeroMemory(rfds, sizeof(rfds));
+		ZeroMemory(wfds, sizeof(wfds));
 
-        if (g_thread_count < 1)
-        	ReleaseSemaphore(g_sem, 1, NULL);
+		if (!freerdp_get_fds(instance, rfds, &rcount, wfds, &wcount))
+		{
+			WLog_ERR(TAG, "Failed to get FreeRDP file descriptor");
+			break;
+		}
 
+		if (!freerdp_channels_get_fds(channels, instance, rfds, &rcount, wfds, &wcount))
+		{
+			WLog_ERR(TAG, "Failed to get channel manager file descriptor");
+			break;
+		}
+
+		max_fds = 0;
+		FD_ZERO(&rfds_set);
+		FD_ZERO(&wfds_set);
+
+		for (i = 0; i < rcount; i++)
+		{
+			fds = (int)(long)(rfds[i]);
+
+			if (fds > max_fds)
+				max_fds = fds;
+
+			FD_SET(fds, &rfds_set);
+		}
+
+		if (max_fds == 0)
+			break;
+
+		if (select(max_fds + 1, &rfds_set, &wfds_set, NULL, NULL) == -1)
+		{
+			/* these are not really errors */
+			if (!((errno == EAGAIN) ||
+				(errno == EWOULDBLOCK) ||
+				(errno == EINPROGRESS) ||
+				(errno == EINTR))) /* signal occurred */
+			{
+				WLog_ERR(TAG, "tfreerdp_run: select failed");
+				break;
+			}
+		}
+
+		if (!freerdp_check_fds(instance))
+		{
+			WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
+			break;
+		}
+
+		if (!freerdp_channels_check_fds(channels, instance))
+		{
+			WLog_ERR(TAG, "Failed to check channel manager file descriptor");
+			break;
+		}
+	}
+
+	freerdp_channels_close(channels, instance);
+	freerdp_channels_free(channels);
+	freerdp_free(instance);
+
+	ExitThread(0);
 	return NULL;
 }
 
 int main(int argc, char* argv[])
 {
 	int status;
-	pthread_t thread;
+	HANDLE thread;
 	freerdp* instance;
 	rdpChannels* channels;
-	struct thread_data* data;
-
-	freerdp_channels_global_init();
-
-	g_sem = CreateSemaphore(NULL, 0, 1, NULL);
 
 	instance = freerdp_new();
 	instance->PreConnect = tf_pre_connect;
 	instance->PostConnect = tf_post_connect;
-	instance->ReceiveChannelData = tf_receive_channel_data;
 
 	instance->ContextSize = sizeof(tfContext);
 	instance->ContextNew = tf_context_new;
@@ -324,24 +328,16 @@ int main(int argc, char* argv[])
 	status = freerdp_client_settings_parse_command_line(instance->settings, argc, argv);
 
 	if (status < 0)
+	{
 		exit(0);
+	}
 
 	freerdp_client_load_addins(instance->context->channels, instance->settings);
 
-	data = (struct thread_data*) malloc(sizeof(struct thread_data));
-	ZeroMemory(data, sizeof(sizeof(struct thread_data)));
+	thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)
+			tf_client_thread_proc, instance, 0, NULL);
 
-	data->instance = instance;
-
-	g_thread_count++;
-	pthread_create(&thread, 0, thread_func, data);
-
-	while (g_thread_count > 0)
-	{
-		WaitForSingleObject(g_sem, INFINITE);
-	}
-
-	freerdp_channels_global_uninit();
+	WaitForSingleObject(thread, INFINITE);
 
 	return 0;
 }

@@ -1,3 +1,3 @@
-LIBRARY		"libfreerdp-client"
+LIBRARY		"freerdp-client"
 EXPORTS
 

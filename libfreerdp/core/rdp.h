@@ -3,6 +3,7 @@
  * RDP Core
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +47,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
-#include <freerdp/utils/debug.h>
+#include <freerdp/log.h>
 
 #include <winpr/stream.h>
 
@@ -82,6 +83,10 @@
 #define PDU_TYPE_DEACTIVATE_ALL					0x6
 #define PDU_TYPE_DATA						0x7
 #define PDU_TYPE_SERVER_REDIRECTION				0xA
+
+#define PDU_TYPE_FLOW_TEST					0x41
+#define PDU_TYPE_FLOW_RESPONSE					0x42
+#define PDU_TYPE_FLOW_STOP					0x43
 
 #define FINALIZE_SC_SYNCHRONIZE_PDU				0x01
 #define FINALIZE_SC_CONTROL_COOPERATE_PDU			0x02
@@ -151,6 +156,7 @@ struct rdp_rdp
 	struct crypto_hmac_struct* fips_hmac;
 	UINT32 sec_flags;
 	BOOL do_crypt;
+	BOOL do_crypt_license;
 	BOOL do_secure_checksum;
 	BYTE sign_key[16];
 	BYTE decrypt_key[16];
@@ -191,6 +197,7 @@ int rdp_init_stream_pdu(rdpRdp* rdp, wStream* s);
 BOOL rdp_send_pdu(rdpRdp* rdp, wStream* s, UINT16 type, UINT16 channel_id);
 
 wStream* rdp_data_pdu_init(rdpRdp* rdp);
+int rdp_init_stream_data_pdu(rdpRdp* rdp, wStream* s);
 BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id);
 int rdp_recv_data_pdu(rdpRdp* rdp, wStream* s);
 
@@ -204,6 +211,8 @@ int rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s);
 
 int rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s);
 
+void rdp_read_flow_control_pdu(wStream* s, UINT16* type);
+
 void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking);
 int rdp_check_fds(rdpRdp* rdp);
 
@@ -211,14 +220,16 @@ rdpRdp* rdp_new(rdpContext* context);
 void rdp_reset(rdpRdp* rdp);
 void rdp_free(rdpRdp* rdp);
 
+#define RDP_TAG FREERDP_TAG("core.rdp")
 #ifdef WITH_DEBUG_RDP
-#define DEBUG_RDP(fmt, ...) DEBUG_CLASS(RDP, fmt, ## __VA_ARGS__)
+#define DEBUG_RDP(fmt, ...) WLog_DBG(RDP_TAG, fmt, ## __VA_ARGS__)
 #else
-#define DEBUG_RDP(fmt, ...) DEBUG_NULL(fmt, ## __VA_ARGS__)
+#define DEBUG_RDP(fmt, ...) do { } while (0)
 #endif
 
 BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, int length, UINT16 securityFlags);
 
 BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo);
+BOOL rdp_send_error_info(rdpRdp* rdp);
 
 #endif /* __RDP_H */

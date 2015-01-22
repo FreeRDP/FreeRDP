@@ -122,7 +122,7 @@ int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
 {
 	int index;
 	int count;
-	ULONG_PTR* pKeys;
+	ULONG_PTR* pKeys = NULL;
 	wListDictionaryItem* item;
 
 	if (!ppKeys)
@@ -144,8 +144,8 @@ int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
 		}
 	}
 
-	pKeys = (ULONG_PTR*) malloc(sizeof(ULONG_PTR) * count);
-	ZeroMemory(pKeys, sizeof(ULONG_PTR) * count);
+	if (count)
+		pKeys = (ULONG_PTR*) calloc(count, sizeof(ULONG_PTR));
 
 	index = 0;
 
@@ -181,6 +181,7 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value)
 		EnterCriticalSection(&listDictionary->lock);
 
 	item = (wListDictionaryItem*) malloc(sizeof(wListDictionaryItem));
+
 	if (!item)
 		return FALSE;
 
@@ -205,6 +206,7 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, void* key, void* value)
 
 	if (listDictionary->synchronized)
 		LeaveCriticalSection(&listDictionary->lock);
+
 	return TRUE;
 }
 
@@ -227,8 +229,13 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 		while (item)
 		{
 			nextItem = item->next;
+
+			if (listDictionary->objectKey.fnObjectFree)
+				listDictionary->objectKey.fnObjectFree(item->key);
+
 			if (listDictionary->objectValue.fnObjectFree)
 				listDictionary->objectValue.fnObjectFree(item->value);
+
 			free(item);
 			item = nextItem;
 		}

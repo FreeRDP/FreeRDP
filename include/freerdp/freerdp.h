@@ -3,6 +3,8 @@
  * FreeRDP Interface
  *
  * Copyright 2009-2011 Jay Sorg
+ * Copyright 2014 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +29,7 @@ typedef struct rdp_cache rdpCache;
 typedef struct rdp_channels rdpChannels;
 typedef struct rdp_graphics rdpGraphics;
 typedef struct rdp_metrics rdpMetrics;
+typedef struct rdp_codecs rdpCodecs;
 
 typedef struct rdp_freerdp freerdp;
 typedef struct rdp_context rdpContext;
@@ -40,6 +43,7 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <freerdp/types.h>
 #include <freerdp/error.h>
 #include <freerdp/event.h>
+#include <freerdp/codecs.h>
 #include <freerdp/metrics.h>
 #include <freerdp/settings.h>
 #include <freerdp/extension.h>
@@ -49,6 +53,7 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <freerdp/input.h>
 #include <freerdp/update.h>
 #include <freerdp/message.h>
+#include <freerdp/autodetect.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -120,7 +125,9 @@ struct rdp_context
 	ALIGN64 rdpUpdate* update; /* 39 */
 	ALIGN64 rdpSettings* settings; /* 40 */
 	ALIGN64 rdpMetrics* metrics; /* 41 */
-	UINT64 paddingC[64 - 42]; /* 42 */
+	ALIGN64 rdpCodecs* codecs; /* 42 */
+	ALIGN64 rdpAutoDetect* autodetect; /* 43 */
+	UINT64 paddingC[64 - 44]; /* 44 */
 
 	UINT64 paddingD[96 - 64]; /* 64 */
 	UINT64 paddingE[128 - 96]; /* 96 */
@@ -158,7 +165,10 @@ struct rdp_freerdp
 	ALIGN64 rdpSettings* settings; /**< (offset 18)
 								Pointer to a rdpSettings structure. Will be used to maintain the required RDP settings.
 								Will be initialized by a call to freerdp_context_new() */
-	UINT64 paddingB[32 - 19]; /* 19 */
+	ALIGN64 rdpAutoDetect* autodetect; /* (offset 19)
+									Auto-Detect handle for the connection.
+									Will be initialized by a call to freerdp_context_new() */
+	UINT64 paddingB[32 - 20]; /* 20 */
 
 	ALIGN64 size_t ContextSize; /* (offset 32)
 							Specifies the size of the 'context' field. freerdp_context_new() will use this size to allocate the context buffer.
@@ -244,6 +254,7 @@ FREERDP_API int freerdp_message_queue_process_message(freerdp* instance, DWORD i
 FREERDP_API int freerdp_message_queue_process_pending_messages(freerdp* instance, DWORD id);
 
 FREERDP_API UINT32 freerdp_error_info(freerdp* instance);
+FREERDP_API void freerdp_set_error_info(rdpRdp* rdp, UINT32 error);
 
 FREERDP_API void freerdp_get_version(int* major, int* minor, int* revision);
 
@@ -251,6 +262,7 @@ FREERDP_API freerdp* freerdp_new(void);
 FREERDP_API void freerdp_free(freerdp* instance);
 
 FREERDP_API BOOL freerdp_focus_required(freerdp* instance);
+FREERDP_API void freerdp_set_focus(freerdp* instance);
 
 FREERDP_API UINT32 freerdp_get_last_error(rdpContext* context);
 FREERDP_API void freerdp_set_last_error(rdpContext* context, UINT32 lastError);

@@ -25,12 +25,7 @@ include_directories(${FFMPEG_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
-set_target_properties(${MODULE_NAME} PROPERTIES PREFIX "")
 
-set_complex_link_libraries(VARIABLE ${MODULE_PREFIX}_LIBS
-	MONOLITHIC ${MONOLITHIC_BUILD}
-	MODULE freerdp
-	MODULES freerdp-utils)
 
 if(APPLE)
     # For this to work on apple, we need to add some frameworks
@@ -38,7 +33,7 @@ if(APPLE)
     FIND_LIBRARY(COREVIDEO_LIBRARY CoreVideo)
     FIND_LIBRARY(COREVIDEODECODE_LIBRARY VideoDecodeAcceleration)
     set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${FFMPEG_LIBRARIES} ${COREFOUNDATION_LIBRARY} ${COREVIDEO_LIBRARY} ${COREVIDEODECODE_LIBRARY})
-    target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+    target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} freerdp)
 else()
     set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${FFMPEG_LIBRARIES})
     target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})

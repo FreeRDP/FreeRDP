@@ -100,11 +100,13 @@ static void* thread_pool_work_func(void* arg)
 		}
 	}
 
+	ExitThread(0);
 	return NULL;
 }
 
 static void threads_close(void *thread)
 {
+	WaitForSingleObject(thread, INFINITE);
 	CloseHandle(thread);
 }
 
@@ -150,6 +152,8 @@ PTP_POOL GetDefaultThreadpool()
 
 #endif
 
+#ifdef WINPR_THREAD_POOL
+
 PTP_POOL CreateThreadpool(PVOID reserved)
 {
 	PTP_POOL pool = NULL;
@@ -177,19 +181,7 @@ VOID CloseThreadpool(PTP_POOL ptpp)
 	if (pCloseThreadpool)
 		pCloseThreadpool(ptpp);
 #else
-	int index;
-	HANDLE thread;
-
 	SetEvent(ptpp->TerminateEvent);
-
-	index = ArrayList_Count(ptpp->Threads) - 1;
-
-	while (index >= 0)
-	{
-		thread = (HANDLE) ArrayList_GetItem(ptpp->Threads, index);
-		WaitForSingleObject(thread, INFINITE);
-		index--;
-	}
 
 	ArrayList_Free(ptpp->Threads);
 	Queue_Free(ptpp->PendingQueue);
@@ -235,6 +227,8 @@ VOID SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost)
 	ptpp->Maximum = cthrdMost;
 #endif
 }
+
+#endif
 
 /* dummy */
 

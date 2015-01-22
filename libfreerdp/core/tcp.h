@@ -38,40 +38,38 @@
 #define MSG_NOSIGNAL 0
 #endif
 
-#define BIO_TYPE_BUFFERED	66
+#define BIO_TYPE_SIMPLE		66
+#define BIO_TYPE_BUFFERED	67
 
 typedef struct rdp_tcp rdpTcp;
 
 struct rdp_tcp
 {
 	int sockfd;
+	BOOL ipcSocket;
 	char ip_address[32];
 	BYTE mac_address[6];
 	rdpSettings* settings;
-#ifdef _WIN32
-	WSAEVENT wsa_event;
-#endif
-	BIO *socketBio;
-	BIO *bufferedBio;
+	BIO* socketBio;
+	BIO* bufferedBio;
 	RingBuffer xmitBuffer;
 	BOOL writeBlocked;
 	BOOL readBlocked;
-
 	HANDLE event;
 };
 
-BOOL tcp_connect(rdpTcp* tcp, const char* hostname, int port);
-BOOL tcp_disconnect(rdpTcp* tcp);
-int tcp_read(rdpTcp* tcp, BYTE* data, int length);
-int tcp_write(rdpTcp* tcp, BYTE* data, int length);
-int tcp_wait_read(rdpTcp* tcp);
-int tcp_wait_write(rdpTcp* tcp);
-BOOL tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking);
-BOOL tcp_set_keep_alive_mode(rdpTcp* tcp);
-int tcp_attach(rdpTcp* tcp, int sockfd);
-HANDLE tcp_get_event_handle(rdpTcp* tcp);
+BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeout);
+BOOL freerdp_tcp_disconnect(rdpTcp* tcp);
+int freerdp_tcp_read(rdpTcp* tcp, BYTE* data, int length);
+int freerdp_tcp_write(rdpTcp* tcp, BYTE* data, int length);
+int freerdp_tcp_wait_read(rdpTcp* tcp, DWORD dwMilliSeconds);
+int freerdp_tcp_wait_write(rdpTcp* tcp, DWORD dwMilliSeconds);
+BOOL freerdp_tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking);
+BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp);
+int freerdp_tcp_attach(rdpTcp* tcp, int sockfd);
+HANDLE freerdp_tcp_get_event_handle(rdpTcp* tcp);
 
-rdpTcp* tcp_new(rdpSettings* settings);
-void tcp_free(rdpTcp* tcp);
+rdpTcp* freerdp_tcp_new(rdpSettings* settings);
+void freerdp_tcp_free(rdpTcp* tcp);
 
 #endif /* __TCP_H */

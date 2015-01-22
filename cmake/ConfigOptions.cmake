@@ -1,5 +1,5 @@
 
-if((CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686|x86") AND (CMAKE_SIZEOF_VOID_P EQUAL 4))
+if((CMAKE_SYSTEM_PROCESSOR MATCHES "i386|i686|x86|AMD64") AND (CMAKE_SIZEOF_VOID_P EQUAL 4))
 	set(TARGET_ARCH "x86")
 elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64") AND (CMAKE_SIZEOF_VOID_P EQUAL 8))
 	set(TARGET_ARCH "x64")
@@ -59,14 +59,6 @@ option(WITH_SMARTCARD_INSPECT "Enable SmartCard API Inspector" OFF)
 option(BUILD_TESTING "Build unit tests" OFF)
 option(WITH_SAMPLE "Build sample code" OFF)
 
-if(${CMAKE_VERSION} VERSION_GREATER 2.8.8)
-	if(ANDROID)
-		option(MONOLITHIC_BUILD "Use monolithic build" ON)
-	else()
-		option(MONOLITHIC_BUILD "Use monolithic build" OFF)
-	endif()
-endif()
-
 option(WITH_CLIENT "Build client binaries" ON)
 option(WITH_SERVER "Build server binaries" OFF)
 
@@ -100,6 +92,7 @@ option(WITH_DEBUG_CAPABILITIES "Print capability negotiation debug messages." ${
 option(WITH_DEBUG_CHANNELS "Print channel manager debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_CLIPRDR "Print clipboard redirection debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_DVC "Print dynamic virtual channel debug messages." ${DEFAULT_DEBUG_OPTION})
+option(WITH_DEBUG_TSMF "Print TSMF virtual channel debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_GDI "Print graphics debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_KBD "Print keyboard related debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_LICENSE "Print license debug messages." ${DEFAULT_DEBUG_OPTION})
@@ -116,6 +109,7 @@ option(WITH_DEBUG_SCARD "Print smartcard debug messages" ${DEFAULT_DEBUG_OPTION}
 option(WITH_DEBUG_SND "Print rdpsnd debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_SVC "Print static virtual channel debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_TRANSPORT "Print transport debug messages." ${DEFAULT_DEBUG_OPTION})
+option(WITH_DEBUG_THREADS "Print thread debug messages, enables handle dump" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_TIMEZONE "Print timezone debug messages." ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_WND "Print window order debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_X11_CLIPRDR "Print X11 clipboard redirection debug messages" ${DEFAULT_DEBUG_OPTION})

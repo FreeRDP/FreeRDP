@@ -26,9 +26,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-//#include <util.h>
 
 #include "mf_event.h"
+
+#include <freerdp/log.h>
+#define TAG SERVER_TAG("mac")
 
 int mf_is_event_set(mfEventQueue* event_queue)
 {
@@ -51,7 +53,7 @@ void mf_signal_event(mfEventQueue* event_queue)
 	length = write(event_queue->pipe_fd[1], "sig", 4);
 	
 	if (length != 4)
-		fprintf(stderr, "mf_signal_event: error\n");
+		WLog_ERR(TAG,  "mf_signal_event: error");
 }
 
 void mf_set_event(mfEventQueue* event_queue)
@@ -61,7 +63,7 @@ void mf_set_event(mfEventQueue* event_queue)
 	length = write(event_queue->pipe_fd[1], "sig", 4);
 	
 	if (length != 4)
-		fprintf(stderr, "mf_set_event: error\n");
+		WLog_ERR(TAG,  "mf_set_event: error");
 }
 
 void mf_clear_events(mfEventQueue* event_queue)
@@ -73,7 +75,7 @@ void mf_clear_events(mfEventQueue* event_queue)
 		length = read(event_queue->pipe_fd[0], &length, 4);
 		
 		if (length != 4)
-			fprintf(stderr, "mf_clear_event: error\n");
+			WLog_ERR(TAG,  "mf_clear_event: error");
 	}
 }
 
@@ -84,7 +86,7 @@ void mf_clear_event(mfEventQueue* event_queue)
 	length = read(event_queue->pipe_fd[0], &length, 4);
 	
 	if (length != 4)
-		fprintf(stderr, "mf_clear_event: error\n");
+		WLog_ERR(TAG,  "mf_clear_event: error");
 }
 
 void mf_event_push(mfEventQueue* event_queue, mfEvent* event)
@@ -188,7 +190,7 @@ mfEventQueue* mf_event_queue_new()
 		event_queue->events = (mfEvent**) malloc(sizeof(mfEvent*) * event_queue->size);
 		
 		if (pipe(event_queue->pipe_fd) < 0)
-			fprintf(stderr, "mf_event_queue_new: pipe failed\n");
+			return NULL;
 		
 		pthread_mutex_init(&(event_queue->mutex), NULL);
 	}

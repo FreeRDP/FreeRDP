@@ -26,10 +26,13 @@
 #include <winpr/crt.h>
 
 #include <freerdp/api.h>
+#include <freerdp/log.h>
 #include <freerdp/graphics.h>
 #include <freerdp/codec/bitmap.h>
 
 #include "orders.h"
+
+#define TAG FREERDP_TAG("core.orders")
 
 #ifdef WITH_DEBUG_ORDERS
 
@@ -223,11 +226,11 @@ static INLINE BOOL update_read_color(wStream* s, UINT32* color)
 		return FALSE;
 
 	Stream_Read_UINT8(s, byte);
-	*color = byte;
+	*color = (UINT32) byte << 16;
 	Stream_Read_UINT8(s, byte);
-	*color |= (byte << 8);
+	*color |= ((UINT32) byte << 8);
 	Stream_Read_UINT8(s, byte);
-	*color |= (byte << 16);
+	*color |= (UINT32) byte;
 
 	return TRUE;
 }
@@ -749,7 +752,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (Stream_GetRemainingLength(s) < 1) {\
-				fprintf(stderr, "%s: error reading %s\n", __FUNCTION__, #TARGET); \
+				WLog_ERR(TAG, "error reading %s", #TARGET); \
 				return FALSE; \
 			} \
 			Stream_Read_UINT8(s, TARGET); \
@@ -761,7 +764,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (Stream_GetRemainingLength(s) < 2) { \
-				fprintf(stderr, "%s: error reading %s or %s\n", __FUNCTION__, #TARGET1, #TARGET2); \
+				WLog_ERR(TAG, "error reading %s or %s", #TARGET1, #TARGET2); \
 				return FALSE; \
 			} \
 			Stream_Read_UINT8(s, TARGET1); \
@@ -774,7 +777,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (Stream_GetRemainingLength(s) < 2) { \
-				fprintf(stderr, "%s: error reading %s\n", __FUNCTION__, #TARGET); \
+				WLog_ERR(TAG, "error reading %s", #TARGET); \
 				return FALSE; \
 			} \
 			Stream_Read_UINT16(s, TARGET); \
@@ -785,7 +788,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 		if (orderInfo->fieldFlags & (1 << (NO-1))) \
 		{ \
 			if (Stream_GetRemainingLength(s) < 4) { \
-				fprintf(stderr, "%s: error reading %s\n", __FUNCTION__, #TARGET); \
+				WLog_ERR(TAG, "error reading %s", #TARGET); \
 				return FALSE; \
 			} \
 			Stream_Read_UINT32(s, TARGET); \
@@ -795,14 +798,14 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 #define ORDER_FIELD_COORD(NO, TARGET) \
 	do { \
 		if ((orderInfo->fieldFlags & (1 << (NO-1))) && !update_read_coord(s, &TARGET, orderInfo->deltaCoordinates)) { \
-			fprintf(stderr, "%s: error reading %s\n", __FUNCTION__, #TARGET); \
+			WLog_ERR(TAG, "error reading %s", #TARGET); \
 			return FALSE; \
 		} \
 	} while(0)
 #define ORDER_FIELD_COLOR(NO, TARGET) \
 	do { \
 		if ((orderInfo->fieldFlags & (1 << (NO-1))) && !update_read_color(s, &TARGET)) { \
-			fprintf(stderr, "%s: error reading %s\n", __FUNCTION__, #TARGET); \
+			WLog_ERR(TAG, "error reading %s", #TARGET); \
 			return FALSE; \
 		} \
 	} while(0)
@@ -811,12 +814,12 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 #define FIELD_SKIP_BUFFER16(s, TARGET_LEN) \
 	do { \
 		if (Stream_GetRemainingLength(s) < 2) {\
-			fprintf(stderr, "%s: error reading length %s\n", __FUNCTION__, #TARGET_LEN); \
+			WLog_ERR(TAG, "error reading length %s", #TARGET_LEN); \
 			return FALSE; \
 		}\
 		Stream_Read_UINT16(s, TARGET_LEN); \
 		if (!Stream_SafeSeek(s, TARGET_LEN)) { \
-			fprintf(stderr, "%s: error skipping %d bytes\n", __FUNCTION__, TARGET_LEN); \
+			WLog_ERR(TAG, "error skipping %d bytes", TARGET_LEN); \
 			return FALSE; \
 		} \
 	} while(0)
@@ -979,7 +982,7 @@ BOOL update_read_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_REC
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		opaque_rect->color = (opaque_rect->color & 0xFFFFFF00) | byte;
+		opaque_rect->color = (opaque_rect->color & 0xFF00FFFF) | ((UINT32) byte << 16);
 	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_06)
@@ -988,7 +991,7 @@ BOOL update_read_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_REC
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		opaque_rect->color = (opaque_rect->color & 0xFFFF00FF) | (byte << 8);
+		opaque_rect->color = (opaque_rect->color & 0xFFFF00FF) | ((UINT32) byte << 8);
 	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
@@ -997,7 +1000,7 @@ BOOL update_read_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, OPAQUE_REC
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		opaque_rect->color = (opaque_rect->color & 0xFF00FFFF) | (byte << 16);
+		opaque_rect->color = (opaque_rect->color & 0xFFFFFF00) | (UINT32) byte;
 	}
 
 	return TRUE;
@@ -1178,7 +1181,7 @@ BOOL update_read_multi_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, MULT
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFFFF00) | byte;
+		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFF00FFFF) | ((UINT32) byte << 16);
 	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_06)
@@ -1187,7 +1190,7 @@ BOOL update_read_multi_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, MULT
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFF00FF) | (byte << 8);
+		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFF00FF) | ((UINT32) byte << 8);
 	}
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
@@ -1196,7 +1199,7 @@ BOOL update_read_multi_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo, MULT
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFF00FFFF) | (byte << 16);
+		multi_opaque_rect->color = (multi_opaque_rect->color & 0xFFFFFF00) | (UINT32) byte;
 	}
 
 	ORDER_FIELD_BYTE(8, multi_opaque_rect->numRectangles);
@@ -1317,7 +1320,7 @@ BOOL update_read_polyline_order(wStream* s, ORDER_INFO* orderInfo, POLYLINE_ORDE
 	ORDER_FIELD_BYTE(3, polyline->bRop2);
 	ORDER_FIELD_UINT16(4, word);
 	ORDER_FIELD_COLOR(5, polyline->penColor);
-	ORDER_FIELD_BYTE(6, polyline->numPoints);
+	ORDER_FIELD_BYTE(6, polyline->numDeltaEntries);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_07)
 	{
@@ -1326,11 +1329,11 @@ BOOL update_read_polyline_order(wStream* s, ORDER_INFO* orderInfo, POLYLINE_ORDE
 		Stream_Read_UINT8(s, polyline->cbData);
 
 		if (polyline->points == NULL)
-			polyline->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * polyline->numPoints);
+			polyline->points = (DELTA_POINT*) malloc(sizeof(DELTA_POINT) * polyline->numDeltaEntries);
 		else
-			polyline->points = (DELTA_POINT*) realloc(polyline->points, sizeof(DELTA_POINT) * polyline->numPoints);
+			polyline->points = (DELTA_POINT*) realloc(polyline->points, sizeof(DELTA_POINT) * polyline->numDeltaEntries);
 
-		return update_read_delta_points(s, polyline->points, polyline->numPoints, polyline->xStart, polyline->yStart);
+		return update_read_delta_points(s, polyline->points, polyline->numDeltaEntries, polyline->xStart, polyline->yStart);
 	}
 
 	return TRUE;
@@ -1620,47 +1623,46 @@ BOOL update_write_fast_index_order(wStream* s, ORDER_INFO* orderInfo, FAST_INDEX
 	return TRUE;
 }
 
-BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fast_glyph)
+BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fastGlyph)
 {
 	BYTE* phold;
-	GLYPH_DATA_V2* glyph;
+	GLYPH_DATA_V2* glyph = &fastGlyph->glyphData;
 
-	ORDER_FIELD_BYTE(1, fast_glyph->cacheId);
-	ORDER_FIELD_2BYTE(2, fast_glyph->ulCharInc, fast_glyph->flAccel);
-	ORDER_FIELD_COLOR(3, fast_glyph->backColor);
-	ORDER_FIELD_COLOR(4, fast_glyph->foreColor);
-	ORDER_FIELD_COORD(5, fast_glyph->bkLeft);
-	ORDER_FIELD_COORD(6, fast_glyph->bkTop);
-	ORDER_FIELD_COORD(7, fast_glyph->bkRight);
-	ORDER_FIELD_COORD(8, fast_glyph->bkBottom);
-	ORDER_FIELD_COORD(9, fast_glyph->opLeft);
-	ORDER_FIELD_COORD(10, fast_glyph->opTop);
-	ORDER_FIELD_COORD(11, fast_glyph->opRight);
-	ORDER_FIELD_COORD(12, fast_glyph->opBottom);
-	ORDER_FIELD_COORD(13, fast_glyph->x);
-	ORDER_FIELD_COORD(14, fast_glyph->y);
+	ORDER_FIELD_BYTE(1, fastGlyph->cacheId);
+	ORDER_FIELD_2BYTE(2, fastGlyph->ulCharInc, fastGlyph->flAccel);
+	ORDER_FIELD_COLOR(3, fastGlyph->backColor);
+	ORDER_FIELD_COLOR(4, fastGlyph->foreColor);
+	ORDER_FIELD_COORD(5, fastGlyph->bkLeft);
+	ORDER_FIELD_COORD(6, fastGlyph->bkTop);
+	ORDER_FIELD_COORD(7, fastGlyph->bkRight);
+	ORDER_FIELD_COORD(8, fastGlyph->bkBottom);
+	ORDER_FIELD_COORD(9, fastGlyph->opLeft);
+	ORDER_FIELD_COORD(10, fastGlyph->opTop);
+	ORDER_FIELD_COORD(11, fastGlyph->opRight);
+	ORDER_FIELD_COORD(12, fastGlyph->opBottom);
+	ORDER_FIELD_COORD(13, fastGlyph->x);
+	ORDER_FIELD_COORD(14, fastGlyph->y);
 
 	if (orderInfo->fieldFlags & ORDER_FIELD_15)
 	{
 		if (Stream_GetRemainingLength(s) < 1)
 			return FALSE;
 
-		Stream_Read_UINT8(s, fast_glyph->cbData);
+		Stream_Read_UINT8(s, fastGlyph->cbData);
 
-		if (Stream_GetRemainingLength(s) < fast_glyph->cbData)
+		if (Stream_GetRemainingLength(s) < fastGlyph->cbData)
 			return FALSE;
 
-		CopyMemory(fast_glyph->data, Stream_Pointer(s), fast_glyph->cbData);
+		CopyMemory(fastGlyph->data, Stream_Pointer(s), fastGlyph->cbData);
 		phold = Stream_Pointer(s);
 
 		if (!Stream_SafeSeek(s, 1))
 			return FALSE;
 
-		if (fast_glyph->cbData > 1)
+		if (fastGlyph->cbData > 1)
 		{
 			/* parse optional glyph data */
-			glyph = &fast_glyph->glyphData;
-			glyph->cacheIndex = fast_glyph->data[0];
+			glyph->cacheIndex = fastGlyph->data[0];
 
 			if (!update_read_2byte_signed(s, &glyph->x) ||
 				!update_read_2byte_signed(s, &glyph->y) ||
@@ -1674,17 +1676,14 @@ BOOL update_read_fast_glyph_order(wStream* s, ORDER_INFO* orderInfo, FAST_GLYPH_
 			if (Stream_GetRemainingLength(s) < glyph->cb)
 				return FALSE;
 
-			if (glyph->aj)
+			if (glyph->cb)
 			{
-				free(glyph->aj);
-				glyph->aj = NULL;
+				glyph->aj = (BYTE*) realloc(glyph->aj, glyph->cb);
+				Stream_Read(s, glyph->aj, glyph->cb);
 			}
-
-			glyph->aj = (BYTE*) malloc(glyph->cb);
-			Stream_Read(s, glyph->aj, glyph->cb);
 		}
 
-		Stream_Pointer(s) = phold + fast_glyph->cbData;
+		Stream_Pointer(s) = phold + fastGlyph->cbData;
 	}
 
 	return TRUE;
@@ -1840,6 +1839,11 @@ BOOL update_read_cache_bitmap_order(wStream* s, CACHE_BITMAP_ORDER* cache_bitmap
 	Stream_Read_UINT8(s, cache_bitmap->bitmapWidth); /* bitmapWidth (1 byte) */
 	Stream_Read_UINT8(s, cache_bitmap->bitmapHeight); /* bitmapHeight (1 byte) */
 	Stream_Read_UINT8(s, cache_bitmap->bitmapBpp); /* bitmapBpp (1 byte) */
+	if ((cache_bitmap->bitmapBpp < 1) || (cache_bitmap->bitmapBpp > 32))
+	{
+		WLog_ERR(TAG, "invalid bitmap bpp %d", cache_bitmap->bitmapBpp);
+		return FALSE;
+	}
 	Stream_Read_UINT16(s, cache_bitmap->bitmapLength); /* bitmapLength (2 bytes) */
 	Stream_Read_UINT16(s, cache_bitmap->cacheIndex); /* cacheIndex (2 bytes) */
 
@@ -2078,6 +2082,11 @@ BOOL update_read_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache_
 	bitmapData = &cache_bitmap_v3->bitmapData;
 
 	Stream_Read_UINT8(s, bitmapData->bpp);
+	if ((bitmapData->bpp < 1) || (bitmapData->bpp > 32))
+	{
+		WLog_ERR(TAG, "invalid bpp value %d", bitmapData->bpp);
+		return FALSE;
+	}
 	Stream_Seek_UINT8(s); /* reserved1 (1 byte) */
 	Stream_Seek_UINT8(s); /* reserved2 (1 byte) */
 	Stream_Read_UINT8(s, bitmapData->codecID); /* codecID (1 byte) */
@@ -2437,7 +2446,7 @@ BOOL update_read_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush, U
 		{
 			if (cache_brush->length != 8)
 			{
-				fprintf(stderr, "incompatible 1bpp brush of length:%d\n", cache_brush->length);
+				WLog_ERR(TAG,  "incompatible 1bpp brush of length:%d", cache_brush->length);
 				return TRUE; // should be FALSE ?
 			}
 
@@ -2516,7 +2525,7 @@ BOOL update_write_cache_brush_order(wStream* s, CACHE_BRUSH_ORDER* cache_brush, 
 		{
 			if (cache_brush->length != 8)
 			{
-				fprintf(stderr, "incompatible 1bpp brush of length:%d\n", cache_brush->length);
+				WLog_ERR(TAG,  "incompatible 1bpp brush of length:%d", cache_brush->length);
 				return FALSE;
 			}
 
@@ -2682,6 +2691,11 @@ BOOL update_read_create_nine_grid_bitmap_order(wStream* s, CREATE_NINE_GRID_BITM
 		return FALSE;
 
 	Stream_Read_UINT8(s, create_nine_grid_bitmap->bitmapBpp); /* bitmapBpp (1 byte) */
+	if ((create_nine_grid_bitmap->bitmapBpp < 1) || (create_nine_grid_bitmap->bitmapBpp > 32))
+	{
+		WLog_ERR(TAG, "invalid bpp value %d", create_nine_grid_bitmap->bitmapBpp);
+		return FALSE;
+	}
 	Stream_Read_UINT16(s, create_nine_grid_bitmap->bitmapId); /* bitmapId (2 bytes) */
 
 	nineGridInfo = &(create_nine_grid_bitmap->nineGridInfo);
@@ -2717,6 +2731,12 @@ BOOL update_read_stream_bitmap_first_order(wStream* s, STREAM_BITMAP_FIRST_ORDER
 
 	Stream_Read_UINT8(s, stream_bitmap_first->bitmapFlags); /* bitmapFlags (1 byte) */
 	Stream_Read_UINT8(s, stream_bitmap_first->bitmapBpp); /* bitmapBpp (1 byte) */
+	if ((stream_bitmap_first->bitmapBpp < 1) || (stream_bitmap_first->bitmapBpp > 32))
+	{
+		WLog_ERR(TAG, "invalid bpp value %d", stream_bitmap_first->bitmapBpp);
+		return FALSE;
+	}
+
 	Stream_Read_UINT16(s, stream_bitmap_first->bitmapType); /* bitmapType (2 bytes) */
 	Stream_Read_UINT16(s, stream_bitmap_first->bitmapWidth); /* bitmapWidth (2 bytes) */
 	Stream_Read_UINT16(s, stream_bitmap_first->bitmapHeight); /* bitmapHeigth (2 bytes) */
@@ -3055,7 +3075,7 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	if (orderInfo->orderType >= PRIMARY_DRAWING_ORDER_COUNT)
 	{
-		fprintf(stderr, "Invalid Primary Drawing Order (0x%02X)\n", orderInfo->orderType);
+		WLog_ERR(TAG,  "Invalid Primary Drawing Order (0x%02X)", orderInfo->orderType);
 		return FALSE;
 	}
 
@@ -3077,7 +3097,7 @@ BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 	orderInfo->deltaCoordinates = (flags & ORDER_DELTA_COORDINATES) ? TRUE : FALSE;
 
 #ifdef WITH_DEBUG_ORDERS
-	fprintf(stderr, "%s Primary Drawing Order (0x%02X)\n", PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
+	WLog_DBG(TAG,  "%s Primary Drawing Order (0x%02X)", PRIMARY_DRAWING_ORDER_STRINGS[orderInfo->orderType], orderInfo->orderType);
 #endif
 
 	switch (orderInfo->orderType)
@@ -3268,9 +3288,9 @@ BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 #ifdef WITH_DEBUG_ORDERS
 	if (orderType < SECONDARY_DRAWING_ORDER_COUNT)
-		fprintf(stderr, "%s Secondary Drawing Order (0x%02X)\n", SECONDARY_DRAWING_ORDER_STRINGS[orderType], orderType);
+		WLog_DBG(TAG,  "%s Secondary Drawing Order (0x%02X)", SECONDARY_DRAWING_ORDER_STRINGS[orderType], orderType);
 	else
-		fprintf(stderr, "Unknown Secondary Drawing Order (0x%02X)\n", orderType);
+		WLog_DBG(TAG,  "Unknown Secondary Drawing Order (0x%02X)", orderType);
 #endif
 
 	switch (orderType)
@@ -3360,9 +3380,9 @@ BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 #ifdef WITH_DEBUG_ORDERS
 	if (orderType < ALTSEC_DRAWING_ORDER_COUNT)
-		fprintf(stderr, "%s Alternate Secondary Drawing Order (0x%02X)\n", ALTSEC_DRAWING_ORDER_STRINGS[orderType], orderType);
+		WLog_DBG(TAG,  "%s Alternate Secondary Drawing Order (0x%02X)", ALTSEC_DRAWING_ORDER_STRINGS[orderType], orderType);
 	else
-		fprintf(stderr, "Unknown Alternate Secondary Drawing Order: 0x%02X\n", orderType);
+		WLog_DBG(TAG,  "Unknown Alternate Secondary Drawing Order: 0x%02X", orderType);
 #endif
 
 	switch (orderType)

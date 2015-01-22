@@ -34,7 +34,7 @@
  * Methods
  */
 
-BOOL BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
+static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
 {
 	if (count > 0)
 	{
@@ -61,7 +61,7 @@ BOOL BufferPool_ShiftAvailable(wBufferPool* pool, int index, int count)
 	return TRUE;
 }
 
-BOOL BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
+static BOOL BufferPool_ShiftUsed(wBufferPool* pool, int index, int count)
 {
 	if (count > 0)
 	{
@@ -222,7 +222,9 @@ void* BufferPool_Take(wBufferPool* pool, int size)
 
 		if (!found)
 		{
-			if (pool->alignment)
+			if (!size)
+				buffer = NULL;
+			else if (pool->alignment)
 				buffer = _aligned_malloc(size, pool->alignment);
 			else
 				buffer = malloc(size);

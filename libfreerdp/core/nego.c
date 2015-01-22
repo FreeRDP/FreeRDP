@@ -3,6 +3,7 @@
  * RDP Protocol Security Negotiation
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +27,17 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/log.h>
+
 #include "tpkt.h"
 
 #include "nego.h"
 
 #include "transport.h"
 
+#define TAG FREERDP_TAG("core.nego")
+
+#ifdef WITH_DEBUG_NEGO
 static const char* const NEGO_STATE_STRINGS[] =
 {
 	"NEGO_STATE_INITIAL",
@@ -55,8 +61,11 @@ static const char PROTOCOL_SECURITY_STRINGS[9][4] =
 	"UNK",
 	"EXT"
 };
+#endif /* WITH_DEBUG_NEGO */
 
-BOOL nego_security_connect(rdpNego* nego);
+static BOOL nego_transport_connect(rdpNego* nego);
+static BOOL nego_transport_disconnect(rdpNego* nego);
+static BOOL nego_security_connect(rdpNego* nego);
 
 /**
  * Negotiate protocol security and connect.
@@ -66,6 +75,8 @@ BOOL nego_security_connect(rdpNego* nego);
 
 BOOL nego_connect(rdpNego* nego)
 {
+	rdpSettings* settings = nego->transport->settings;
+
 	if (nego->state == NEGO_STATE_INITIAL)
 	{
 		if (nego->enabled_protocols[PROTOCOL_EXT])
@@ -150,15 +161,22 @@ BOOL nego_connect(rdpNego* nego)
 	DEBUG_NEGO("Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
 
 	/* update settings with negotiated protocol security */
-	nego->transport->settings->RequestedProtocols = nego->requested_protocols;
-	nego->transport->settings->SelectedProtocol = nego->selected_protocol;
-	nego->transport->settings->NegotiationFlags = nego->flags;
+	settings->RequestedProtocols = nego->requested_protocols;
+	settings->SelectedProtocol = nego->selected_protocol;
+	settings->NegotiationFlags = nego->flags;
 
 	if (nego->selected_protocol == PROTOCOL_RDP)
 	{
-		nego->transport->settings->DisableEncryption = TRUE;
-		nego->transport->settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
-		nego->transport->settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+		settings->UseRdpSecurityLayer = TRUE;
+
+		if (!settings->EncryptionMethods)
+		{
+			/**
+			 * Advertise all supported encryption methods if the client
+			 * implementation did not set any security methods
+			 */
+			settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+		}
 	}
 
 	/* finally connect security layer (if not already done) */
@@ -168,7 +186,16 @@ BOOL nego_connect(rdpNego* nego)
 		return FALSE;
 	}
 
+	if (!(nego->flags & DYNVC_GFX_PROTOCOL_SUPPORTED))
+		settings->NetworkAutoDetect = FALSE;
+
 	return TRUE;
+}
+
+BOOL nego_disconnect(rdpNego* nego)
+{
+	nego->state = NEGO_STATE_INITIAL;
+	return nego_transport_disconnect(nego);
 }
 
 /* connect to selected security layer */
@@ -219,19 +246,21 @@ BOOL nego_tcp_connect(rdpNego* nego)
 			if (nego->GatewayBypassLocal)
 			{
 				/* Attempt a direct connection first, and then fallback to using the gateway */
+				WLog_INFO(TAG, "Detecting if host can be reached locally. - This might take some time.");
+				WLog_INFO(TAG, "To disable auto detection use /gateway-usage-method:direct");
 				transport_set_gateway_enabled(nego->transport, FALSE);
-				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port, 1);
 			}
 
 			if (!nego->tcp_connected)
 			{
 				transport_set_gateway_enabled(nego->transport, TRUE);
-				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+				nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port, 15);
 			}
 		}
 		else
 		{
-			nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port);
+			nego->tcp_connected = transport_connect(nego->transport, nego->hostname, nego->port, 15);
 		}
 	}
 
@@ -260,7 +289,7 @@ BOOL nego_transport_connect(rdpNego* nego)
  * @return
  */
 
-int nego_transport_disconnect(rdpNego* nego)
+BOOL nego_transport_disconnect(rdpNego* nego)
 {
 	if (nego->tcp_connected)
 		transport_disconnect(nego->transport);
@@ -268,7 +297,7 @@ int nego_transport_disconnect(rdpNego* nego)
 	nego->tcp_connected = FALSE;
 	nego->security_connected = FALSE;
 
-	return 1;
+	return TRUE;
 }
 
 /**
@@ -500,10 +529,12 @@ BOOL nego_recv_response(rdpNego* nego)
 	wStream* s;
 
 	s = Stream_New(NULL, 1024);
+
 	if (!s)
 		return FALSE;
 
-	status = transport_read(nego->transport, s);
+	status = transport_read_pdu(nego->transport, s);
+
 	if (status < 0)
 	{
 		Stream_Free(s, TRUE);
@@ -593,7 +624,7 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 	}
 	else
 	{
-		fprintf(stderr, "invalid negotiation response\n");
+		WLog_ERR(TAG,  "invalid negotiation response");
 		nego->state = NEGO_STATE_FAIL;
 	}
 
@@ -619,7 +650,7 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 
 	if (li != Stream_GetRemainingLength(s) + 6)
 	{
-		fprintf(stderr, "Incorrect TPDU length indicator.\n");
+		WLog_ERR(TAG,  "Incorrect TPDU length indicator.");
 		return FALSE;
 	}
 
@@ -651,7 +682,7 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 
 		if (type != TYPE_RDP_NEG_REQ)
 		{
-			fprintf(stderr, "Incorrect negotiation request type %d\n", type);
+			WLog_ERR(TAG,  "Incorrect negotiation request type %d", type);
 			return FALSE;
 		}
 
@@ -890,35 +921,36 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	bm = Stream_GetPosition(s);
 	Stream_Seek(s, length);
 
-	if (nego->selected_protocol > PROTOCOL_RDP)
-	{
-		flags = EXTENDED_CLIENT_DATA_SUPPORTED;
-
-		if (settings->SupportGraphicsPipeline)
-			flags |= DYNVC_GFX_PROTOCOL_SUPPORTED;
-
-		/* RDP_NEG_DATA must be present for TLS and NLA */
-		Stream_Write_UINT8(s, TYPE_RDP_NEG_RSP);
-		Stream_Write_UINT8(s, flags); /* flags */
-		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
-		Stream_Write_UINT32(s, nego->selected_protocol); /* selectedProtocol */
-		length += 8;
-	}
-	else if (!settings->RdpSecurity)
+	if ((nego->selected_protocol == PROTOCOL_RDP) && !settings->RdpSecurity)
 	{
 		flags = 0;
 
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_FAILURE);
 		Stream_Write_UINT8(s, flags); /* flags */
 		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
+
 		/*
 		 * TODO: Check for other possibilities,
 		 *       like SSL_NOT_ALLOWED_BY_SERVER.
 		 */
-		fprintf(stderr, "%s: client supports only Standard RDP Security\n", __FUNCTION__);
+		WLog_ERR(TAG,  "client supports only Standard RDP Security");
 		Stream_Write_UINT32(s, SSL_REQUIRED_BY_SERVER);
 		length += 8;
 		status = FALSE;
+	}
+	else
+	{
+		flags = EXTENDED_CLIENT_DATA_SUPPORTED;
+
+		if (settings->SupportGraphicsPipeline)
+			flags |= DYNVC_GFX_PROTOCOL_SUPPORTED;
+
+		/* RDP_NEG_DATA must be present for TLS, NLA, and RDP */
+		Stream_Write_UINT8(s, TYPE_RDP_NEG_RSP);
+		Stream_Write_UINT8(s, flags); /* flags */
+		Stream_Write_UINT16(s, 8); /* RDP_NEG_DATA length (8) */
+		Stream_Write_UINT32(s, nego->selected_protocol); /* selectedProtocol */
+		length += 8;
 	}
 
 	em = Stream_GetPosition(s);
@@ -948,24 +980,42 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			settings->TlsSecurity = FALSE;
 			settings->NlaSecurity = FALSE;
 			settings->RdpSecurity = TRUE;
+			settings->UseRdpSecurityLayer = TRUE;
 
-			if (!settings->LocalConnection)
+			if (settings->EncryptionLevel == ENCRYPTION_LEVEL_NONE)
 			{
-				settings->DisableEncryption = TRUE;
-				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+				/**
+				 * If the server implementation did not explicitely set a
+				 * encryption level we default to client compatible
+				 */
 				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
 			}
 
-			if (settings->DisableEncryption && !settings->RdpServerRsaKey && !settings->RdpKeyFile)
+			if (settings->LocalConnection)
+			{
+				/**
+				 * Note: This hack was firstly introduced in commit 95f5e115 to
+				 * disable the unnecessary encryption with peers connecting to
+				 * 127.0.0.1 or local unix sockets.
+				 * This also affects connections via port tunnels! (e.g. ssh -L)
+				 */
+				WLog_INFO(TAG, "Turning off encryption for local peer with standard rdp security");
+				settings->UseRdpSecurityLayer = FALSE;
+				settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
+			}
+
+			if (!settings->RdpServerRsaKey && !settings->RdpKeyFile)
+			{
+				WLog_ERR(TAG, "Missing server certificate");
 				return FALSE;
+			}
 		}
 		else if (settings->SelectedProtocol == PROTOCOL_TLS)
 		{
 			settings->TlsSecurity = TRUE;
 			settings->NlaSecurity = FALSE;
 			settings->RdpSecurity = FALSE;
-			settings->DisableEncryption = FALSE;
-			settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
+			settings->UseRdpSecurityLayer = FALSE;
 			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		}
 		else if (settings->SelectedProtocol == PROTOCOL_NLA)
@@ -973,8 +1023,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			settings->TlsSecurity = TRUE;
 			settings->NlaSecurity = TRUE;
 			settings->RdpSecurity = FALSE;
-			settings->DisableEncryption = FALSE;
-			settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
+			settings->UseRdpSecurityLayer = FALSE;
 			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 		}
 	}
