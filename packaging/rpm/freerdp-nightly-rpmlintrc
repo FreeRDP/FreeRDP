@@ -1,0 +1,13 @@
+# files are on purpose in /opt - vendor package
+addFilter("dir-or-file-in-opt")
+# required in this case that the binaries work
+addFilter("binary-or-shlib-defines-rpath")
+# ldconfig run not required
+addFilter("library-without-ldconfig-postin")
+addFilter("library-without-ldconfig-postun")
+# keep debug symbols and so directly in the package
+addFilter("unstripped-binary-or-object /opt/freerdp-nightly/lib64/*")
+addFilter("unstripped-binary-or-object /opt/freerdp-nightly/bin/*")
+addFilter("no-documentation")
+addFilter("manpage-not-compressed")
+addFilter("suse-filelist-forbidden-opt")
