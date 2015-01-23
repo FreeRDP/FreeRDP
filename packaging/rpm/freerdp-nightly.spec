@@ -15,9 +15,9 @@ Summary:        Free implementation of the Remote Desktop Protocol (RDP)
 Url:            http://www.freerdp.com
 Group:          Productivity/Networking/Other
 Source0:        %{name}-%{version}.tar.bz2
-Source1:        %{name}-rpmlintrc
-BuildRequires: gcc-c++
-BuildRequires: cmake
+#Source1:        %{name}-rpmlintrc
+BuildRequires:   gcc-c++
+BuildRequires:  cmake >= 2.8.12
 BuildRequires: libxkbfile-devel
 BuildRequires: libX11-devel
 BuildRequires: libXrandr-devel
@@ -107,12 +107,14 @@ based on freerdp and winpr.
         -DBUILD_TESTING=OFF \
         -DCMAKE_BUILD_TYPE=RELWITHDEBINFO \
         -DCMAKE_INSTALL_PREFIX=%{INSTALL_PREFIX} \
+%if %{defined suse_version}
+	-DCMAKE_NO_BUILTIN_CHRPATH=ON \
+%endif
         -DCMAKE_INSTALL_LIBDIR=%{_lib}
 
 make %{?_smp_mflags}
 
 %install
-
 %if %{defined suse_version}
 %cmake_install
 %endif
@@ -127,6 +129,12 @@ export NO_BRP_CHECK_RPATH true
 
 %files
 %defattr(-,root,root)
+%dir %{INSTALL_PREFIX}
+%dir %{INSTALL_PREFIX}/%{_lib}
+%dir %{INSTALL_PREFIX}/bin
+%dir %{INSTALL_PREFIX}/share/
+%dir %{INSTALL_PREFIX}/share/man/
+%dir %{INSTALL_PREFIX}/share/man/man1
 %{INSTALL_PREFIX}/%{_lib}/*.so.*
 %{INSTALL_PREFIX}/bin/
 %{INSTALL_PREFIX}/share/man/man1/xfreerdp.1*
@@ -137,6 +145,12 @@ export NO_BRP_CHECK_RPATH true
 %{INSTALL_PREFIX}/include/
 %{INSTALL_PREFIX}/%{_lib}/pkgconfig/
 %{INSTALL_PREFIX}/%{_lib}/cmake/
+
+%post -p /sbin/ldconfig
+
+
+%postun -p /sbin/ldconfig
+
 
 %changelog
 * Fri Jan 23 2015 Bernhard Miklautz <bmiklautz+freerdp@shacknet.at> - 1.2.0-0
