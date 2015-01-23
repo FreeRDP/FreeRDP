@@ -2161,6 +2161,8 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		pbExtraBytes = &((BYTE*) call->pioSendPci)[sizeof(SCARD_IO_REQUEST)];
 		Stream_Read(s, pbExtraBytes, ioSendPci.cbExtraBytes);
+
+		smartcard_unpack_read_size_align(smartcard, s, ioSendPci.cbExtraBytes, 4);
 	}
 	else
 	{
@@ -2210,21 +2212,23 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 		}
 
 		Stream_Read(s, call->pbSendBuffer, call->cbSendLength);
+
+		smartcard_unpack_read_size_align(smartcard, s, call->cbSendLength, 4);
 	}
 
 	if (pioRecvPciNdrPtr)
 	{
-		if (Stream_GetRemainingLength(s) < 8)
+		if (Stream_GetRemainingLength(s) < 16)
 		{
 			WLog_WARN(TAG, "Transmit_Call is too short: Actual: %d, Expected: %d",
 					(int) Stream_GetRemainingLength(s), 16);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
-		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
-
 		Stream_Read_UINT32(s, ioRecvPci.dwProtocol); /* dwProtocol (4 bytes) */
 		Stream_Read_UINT32(s, ioRecvPci.cbExtraBytes); /* cbExtraBytes (4 bytes) */
+		Stream_Read_UINT32(s, pbExtraBytesNdrPtr); /* pbExtraBytesNdrPtr (4 bytes) */
+		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
 		if (ioRecvPci.cbExtraBytes > 1024)
 		{
@@ -2233,7 +2237,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 			return STATUS_INVALID_PARAMETER;
 		}
 
-		if (length < ioRecvPci.cbExtraBytes)
+		if (length != ioRecvPci.cbExtraBytes)
 		{
 			WLog_WARN(TAG, "Transmit_Call unexpected length: Actual: %d, Expected: %d (ioRecvPci.cbExtraBytes)",
 					(int) length, (int) ioRecvPci.cbExtraBytes);
@@ -2262,6 +2266,8 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 		pbExtraBytes = &((BYTE*) call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
 		Stream_Read(s, pbExtraBytes, ioRecvPci.cbExtraBytes);
+
+		smartcard_unpack_read_size_align(smartcard, s, ioRecvPci.cbExtraBytes, 4);
 	}
 
 	return SCARD_S_SUCCESS;
@@ -2357,7 +2363,7 @@ void smartcard_trace_transmit_call(SMARTCARD_DEVICE* smartcard, Transmit_Call* c
 		WLog_DBG(TAG, "pioRecvPci: null");
 	}
 
-	WLog_DBG(TAG, "fpbRecvBufferIsNULL: %d cbRecvLength: 0x%08X",
+	WLog_DBG(TAG, "fpbRecvBufferIsNULL: %d cbRecvLength: %d",
 			call->fpbRecvBufferIsNULL, call->cbRecvLength);
 
 	WLog_DBG(TAG, "}");
