@@ -1,5 +1,6 @@
 message("PRELOADING mac cache")
 set (WITH_MANPAGES OFF CACHE BOOL "man pages")
 set (CMAKE_BUILD_TYPE "Debug" CACHE STRING "build type")
-set (WITH_CUPS OFF CACHE BOOL "CUPS printing")
-set (BUILD_TESTING OFF CACHE BOOL "build testing")
+set (WITH_CUPS ON CACHE BOOL "CUPS printing")
+set (WITH_X11 ON CACHE BOOL "Enable X11")
+set (BUILD_TESTING ON CACHE BOOL "build testing")
