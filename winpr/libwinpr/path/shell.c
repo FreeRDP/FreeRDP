@@ -281,7 +281,7 @@ char* GetEnvironmentPath(char* name)
 	if (nSize)
 	{
 		env = (LPSTR) malloc(nSize);
-		nSize = GetEnvironmentVariableA(name, env, nSize);
+		GetEnvironmentVariableA(name, env, nSize);
 	}
 
 	return env;
@@ -307,7 +307,6 @@ char* GetEnvironmentSubPath(char* name, const char* path)
 char* GetCombinedPath(const char* basePath, const char* subPath)
 {
 	int length;
-	HRESULT status;
 	char* path = NULL;
 	char* subPathCpy;
 	int basePathLength = 0;
@@ -335,7 +334,7 @@ char* GetCombinedPath(const char* basePath, const char* subPath)
 	subPathCpy = _strdup(subPath);
 	PathCchConvertStyleA(subPathCpy, subPathLength, PATH_STYLE_NATIVE);
 
-	status = NativePathCchAppendA(path, length + 1, subPathCpy);
+	NativePathCchAppendA(path, length + 1, subPathCpy);
 
 	free(subPathCpy);
 

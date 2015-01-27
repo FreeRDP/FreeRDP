@@ -66,6 +66,15 @@ static void* named_pipe_client_thread(void* arg)
 	}
 
 	status = WaitForMultipleObjects(1, &hEvent, FALSE, INFINITE);
+	if (status == WAIT_FAILED)
+	{
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+		CloseHandle(hNamedPipe);
+		CloseHandle(hEvent);
+		return NULL;
+	}
+
 	NumberOfBytesTransferred = 0;
 	fSuccess = GetOverlappedResult(hNamedPipe, &overlapped, &NumberOfBytesTransferred, TRUE);
 	printf("Client GetOverlappedResult: fSuccess: %d NumberOfBytesTransferred: %d\n", fSuccess, NumberOfBytesTransferred);
@@ -87,6 +96,14 @@ static void* named_pipe_client_thread(void* arg)
 	}
 
 	status = WaitForMultipleObjects(1, &hEvent, FALSE, INFINITE);
+	if (status == WAIT_FAILED)
+	{
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+		CloseHandle(hNamedPipe);
+		CloseHandle(hEvent);
+		return NULL;
+	}
 	NumberOfBytesTransferred = 0;
 	fSuccess = GetOverlappedResult(hNamedPipe, &overlapped, &NumberOfBytesTransferred, TRUE);
 	printf("Client GetOverlappedResult: fSuccess: %d NumberOfBytesTransferred: %d\n", fSuccess, NumberOfBytesTransferred);
@@ -139,6 +156,13 @@ static void* named_pipe_server_thread(void* arg)
 		fConnected = (GetLastError() == ERROR_IO_PENDING);
 
 	status = WaitForMultipleObjects(1, &hEvent, FALSE, INFINITE);
+	if (WAIT_FAILED == status)
+	{
+		printf("WaitForMultipleObjects failure: %d\n", GetLastError());
+		CloseHandle(hNamedPipe);
+		CloseHandle(hEvent);
+		return NULL;
+	}
 	NumberOfBytesTransferred = 0;
 	fSuccess = GetOverlappedResult(hNamedPipe, &overlapped, &NumberOfBytesTransferred, TRUE);
 	printf("Server GetOverlappedResult: fSuccess: %d NumberOfBytesTransferred: %d\n", fSuccess, NumberOfBytesTransferred);
@@ -171,6 +195,15 @@ static void* named_pipe_server_thread(void* arg)
 	}
 
 	status = WaitForMultipleObjects(1, &hEvent, FALSE, INFINITE);
+	if (WAIT_FAILED == status)
+	{
+		printf("WaitForMultipleObjects failure: %d\n", GetLastError());
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+		CloseHandle(hNamedPipe);
+		CloseHandle(hEvent);
+		return NULL;
+	}
 	NumberOfBytesTransferred = 0;
 	fSuccess = GetOverlappedResult(hNamedPipe, &overlapped, &NumberOfBytesTransferred, TRUE);
 	printf("Server GetOverlappedResult: fSuccess: %d NumberOfBytesTransferred: %d\n", fSuccess, NumberOfBytesTransferred);
@@ -194,6 +227,15 @@ static void* named_pipe_server_thread(void* arg)
 	}
 
 	status = WaitForMultipleObjects(1, &hEvent, FALSE, INFINITE);
+	if (WAIT_FAILED == status)
+	{
+		printf("WaitForMultipleObjects failure: %d\n", GetLastError());
+		free(lpReadBuffer);
+		free(lpWriteBuffer);
+		CloseHandle(hNamedPipe);
+		CloseHandle(hEvent);
+		return NULL;
+	}
 	NumberOfBytesTransferred = 0;
 	fSuccess = GetOverlappedResult(hNamedPipe, &overlapped, &NumberOfBytesTransferred, TRUE);
 	printf("Server GetOverlappedResult: fSuccess: %d NumberOfBytesTransferred: %d\n", fSuccess, NumberOfBytesTransferred);

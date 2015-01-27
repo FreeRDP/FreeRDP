@@ -757,7 +757,7 @@ int test_MppcCompressBellsRdp5()
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
 	printf("Flags: 0x%04X DstSize: %d\n", Flags, DstSize);
 
-	if (DstSize != expectedSize)
+	if ((DstSize != expectedSize) || (status < 0))
 	{
 		printf("MppcCompressBellsRdp5: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
 		return -1;
@@ -797,7 +797,7 @@ int test_MppcCompressBellsRdp4()
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
-	if (DstSize != expectedSize)
+	if ((DstSize != expectedSize) || (status < 0))
 	{
 		printf("MppcCompressBellsRdp4: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
 		return -1;
@@ -835,7 +835,7 @@ int test_MppcDecompressBellsRdp5()
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
-	if (DstSize != expectedSize)
+	if ((DstSize != expectedSize) || (status < 0))
 	{
 		printf("MppcDecompressBellsRdp5: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
 		return -1;
@@ -869,7 +869,7 @@ int test_MppcDecompressBellsRdp4()
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
-	if (DstSize != expectedSize)
+	if ((DstSize != expectedSize) || (status < 0))
 	{
 		printf("MppcDecompressBellsRdp4: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
 		return -1;
@@ -905,7 +905,7 @@ int test_MppcCompressIslandRdp5()
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
 	printf("Flags: 0x%04X DstSize: %d\n", Flags, DstSize);
 
-	if (DstSize != expectedSize)
+	if ((DstSize != expectedSize) || (status < 0))
 	{
 		printf("MppcCompressIslandRdp5: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
 		return -1;
@@ -945,7 +945,7 @@ int test_MppcCompressBufferRdp5()
 	status = mppc_compress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, &Flags);
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
-	if (DstSize != expectedSize)
+	if ((DstSize != expectedSize) || (status < 0))
 	{
 		printf("MppcCompressBufferRdp5: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
 		return -1;
@@ -979,7 +979,7 @@ int test_MppcDecompressBufferRdp5()
 	status = mppc_decompress(mppc, pSrcData, SrcSize, &pDstData, &DstSize, Flags);
 	printf("flags: 0x%04X size: %d\n", Flags, DstSize);
 
-	if (DstSize != expectedSize)
+	if ((DstSize != expectedSize) || (status < 0))
 	{
 		printf("MppcDecompressBufferRdp5: output size mismatch: Actual: %d, Expected: %d\n", DstSize, expectedSize);
 		return -1;

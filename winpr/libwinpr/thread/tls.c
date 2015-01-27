@@ -38,13 +38,10 @@
 
 DWORD TlsAlloc(VOID)
 {
-	DWORD dwTlsIndex;
 	pthread_key_t key;
 
 	if (pthread_key_create(&key, NULL) != 0)
 		return TLS_OUT_OF_INDEXES;
-
-	dwTlsIndex = (DWORD) key;
 
 	return key;
 }

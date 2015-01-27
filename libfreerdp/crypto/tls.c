@@ -279,7 +279,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 
 		case BIO_CTRL_FLUSH:
 			BIO_clear_retry_flags(bio);
-			status = BIO_ctrl(tls->ssl->wbio, cmd, num, ptr);
+			BIO_ctrl(tls->ssl->wbio, cmd, num, ptr);
 			BIO_copy_next_retry(bio);
 			status = 1;
 			break;

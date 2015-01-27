@@ -21,6 +21,11 @@ int TestEnvironmentGetSetEB(int argc, char* argv[])
 	/* Get the variable itself */
 	p = (LPSTR) malloc(length);
 	length = GetEnvironmentVariableEBA(lpszEnvironmentBlock,"DISPLAY", p, length);
+	if (0 == length)
+	{
+		free (p);
+		return -1;
+	}
 
 	printf("GetEnvironmentVariableA(WINPR_TEST_VARIABLE) = %s\n" , p);
 

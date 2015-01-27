@@ -44,7 +44,6 @@ SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(PCredHandle phCrede
 		PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
 	CREDSSP_CONTEXT* context;
-	SSPI_CREDENTIALS* credentials;
 
 	context = (CREDSSP_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -55,7 +54,7 @@ SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(PCredHandle phCrede
 		if (!context)
 			return SEC_E_INSUFFICIENT_MEMORY;
 
-		credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		sspi_SecureHandleGetLowerPointer(phCredential);
 
 		sspi_SecureHandleSetLowerPointer(phNewContext, context);
 		sspi_SecureHandleSetUpperPointer(phNewContext, (void*) CREDSSP_PACKAGE_NAME);
@@ -138,9 +137,7 @@ SECURITY_STATUS SEC_ENTRY credssp_QueryCredentialsAttributesA(PCredHandle phCred
 {
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
-		SSPI_CREDENTIALS* credentials;
-
-		credentials = (SSPI_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		sspi_SecureHandleGetLowerPointer(phCredential);
 
 		return SEC_E_OK;
 	}

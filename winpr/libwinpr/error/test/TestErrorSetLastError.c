@@ -24,6 +24,7 @@
 #include <winpr/interlocked.h>
 
 #include <winpr/error.h>
+#include <winpr/wlog.h>
 
 static int status = 0;
 

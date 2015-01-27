@@ -82,10 +82,7 @@ void tf_end_paint(rdpContext* context)
 
 BOOL tf_pre_connect(freerdp* instance)
 {
-	tfContext* tfc;
 	rdpSettings* settings;
-
-	tfc = (tfContext*) instance->context;
 
 	settings = instance->settings;
 
@@ -119,10 +116,7 @@ BOOL tf_pre_connect(freerdp* instance)
 
 BOOL tf_post_connect(freerdp* instance)
 {
-	rdpGdi* gdi;
-
 	gdi_init(instance, CLRCONV_ALPHA | CLRCONV_INVERT | CLRBUF_16BPP | CLRBUF_32BPP, NULL);
-	gdi = instance->context->gdi;
 
 	instance->update->BeginPaint = tf_begin_paint;
 	instance->update->EndPaint = tf_end_paint;
@@ -315,7 +309,6 @@ int main(int argc, char* argv[])
 	int status;
 	HANDLE thread;
 	freerdp* instance;
-	rdpChannels* channels;
 
 	instance = freerdp_new();
 	instance->PreConnect = tf_pre_connect;
@@ -325,8 +318,6 @@ int main(int argc, char* argv[])
 	instance->ContextNew = tf_context_new;
 	instance->ContextFree = tf_context_free;
 	freerdp_context_new(instance);
-
-	channels = instance->context->channels;
 
 	status = freerdp_client_settings_parse_command_line(instance->settings, argc, argv);
 

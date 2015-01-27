@@ -181,7 +181,7 @@ SECURITY_STATUS SEC_ENTRY schannel_AcquireCredentialsHandleA(SEC_CHAR* pszPrinci
 	free(pszPrincipalW);
 	free(pszPackageW);
 
-	return SEC_E_OK;
+	return status;
 }
 
 SECURITY_STATUS SEC_ENTRY schannel_FreeCredentialsHandle(PCredHandle phCredential)
@@ -263,9 +263,7 @@ SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(PCredHandle phCredentia
 {
 	SECURITY_STATUS status;
 	SCHANNEL_CONTEXT* context;
-	SCHANNEL_CREDENTIALS* credentials;
 
-	status = SEC_E_OK;
 	context = (SCHANNEL_CONTEXT*) sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
@@ -275,7 +273,7 @@ SECURITY_STATUS SEC_ENTRY schannel_AcceptSecurityContext(PCredHandle phCredentia
 		if (!context)
 			return SEC_E_INSUFFICIENT_MEMORY;
 
-		credentials = (SCHANNEL_CREDENTIALS*) sspi_SecureHandleGetLowerPointer(phCredential);
+		sspi_SecureHandleGetLowerPointer(phCredential);
 
 		context->server = TRUE;
 

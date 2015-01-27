@@ -306,7 +306,6 @@ MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(BYTE* data, UINT32 data_size, UINT3
 	MsConfig->InitCompleted = 0;
 	MsConfig->MsOutSize = 0;
 	MsConfig->MsInterfaces = NULL;
-	offset = 0;
 	
 	if (NumInterfaces > 0)
 	{

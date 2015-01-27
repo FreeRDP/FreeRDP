@@ -156,10 +156,8 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 	BYTE* pDstData;
 	UINT32 SrcSize;
 	UINT32 SrcFormat;
-	UINT32 bytesPerPixel;
 	rdpGdi* gdi = context->gdi;
 
-	bytesPerPixel = (bpp + 7) / 8;
 	size = width * height * 4;
 
 	bitmap->data = (BYTE*) _aligned_malloc(size, 16);
@@ -197,6 +195,11 @@ void gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap,
 
 		status = freerdp_image_copy(pDstData, gdi->format, -1, 0, 0,
 				width, height, pSrcData, SrcFormat, -1, 0, 0, gdi->palette);
+		if (status < 0)
+		{
+			WLog_ERR(TAG, "Bitmap copy Failed");
+			return;
+		}
 	}
 
 	bitmap->compressed = FALSE;

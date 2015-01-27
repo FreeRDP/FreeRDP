@@ -147,7 +147,6 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	int length;
 	LPWSTR targetStart;
 	const BYTE* sourceStart;
-	ConversionResult result;
 
 	/* If cbMultiByte is 0, the function fails */
 
@@ -169,7 +168,7 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		sourceStart = (const BYTE*) lpMultiByteStr;
 		targetStart = (WCHAR*) NULL;
 
-		result = ConvertUTF8toUTF16(&sourceStart, &sourceStart[cbMultiByte],
+		ConvertUTF8toUTF16(&sourceStart, &sourceStart[cbMultiByte],
 				&targetStart, NULL, strictConversion);
 
 		length = targetStart - ((WCHAR*) NULL);
@@ -180,7 +179,7 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		sourceStart = (const BYTE*) lpMultiByteStr;
 		targetStart = lpWideCharStr;
 
-		result = ConvertUTF8toUTF16(&sourceStart, &sourceStart[cbMultiByte],
+		ConvertUTF8toUTF16(&sourceStart, &sourceStart[cbMultiByte],
 				&targetStart, &targetStart[cchWideChar], strictConversion);
 
 		length = targetStart - ((WCHAR*) lpWideCharStr);
@@ -231,7 +230,6 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 	int length;
 	BYTE* targetStart;
 	const WCHAR* sourceStart;
-	ConversionResult result;
 
 	/* If cchWideChar is 0, the function fails */
 
@@ -253,7 +251,7 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 		sourceStart = (WCHAR*) lpWideCharStr;
 		targetStart = (BYTE*) NULL;
 
-		result = ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar],
+		ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar],
 				&targetStart, NULL, strictConversion);
 
 		length = targetStart - ((BYTE*) NULL);
@@ -264,7 +262,7 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 		sourceStart = (WCHAR*) lpWideCharStr;
 		targetStart = (BYTE*) lpMultiByteStr;
 
-		result = ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar],
+		ConvertUTF16toUTF8(&sourceStart, &sourceStart[cchWideChar],
 				&targetStart, &targetStart[cbMultiByte], strictConversion);
 
 		length = targetStart - ((BYTE*) lpMultiByteStr);

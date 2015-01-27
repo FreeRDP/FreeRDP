@@ -54,8 +54,9 @@ int TestThreadCreateProcess(int argc, char* argv[])
 			lpCurrentDirectory,
 			&StartupInfo,
 			&ProcessInformation);
-
 	FreeEnvironmentStrings(lpszEnvironmentBlock);
+	if (!status)
+		return -1;
 
 	WaitForSingleObject(ProcessInformation.hProcess, INFINITE);
 

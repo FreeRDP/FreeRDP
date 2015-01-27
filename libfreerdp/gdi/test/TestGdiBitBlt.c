@@ -640,6 +640,12 @@ int test_gdi_BitBlt_32bpp(void)
 	data = (BYTE*) freerdp_image_convert((BYTE*) bmp_PATINVERT, NULL, 16, 16, 8, bitsPerPixel, clrconv);
 	hBmp_PATINVERT = gdi_CreateBitmap(16, 16, bitsPerPixel, data);
 
+	if (!hBmpSrc ||	!hBmpDst || !hBmpPat || !hBmp_SPna || !hBmp_BLACKNESS || !hBmp_WHITENESS ||
+		!hBmp_SRCCOPY || !hBmp_SRCAND || !hBmp_SRCPAINT || !hBmp_SRCINVERT || !hBmp_SRCERASE ||
+		!hBmp_NOTSRCCOPY || !hBmp_NOTSRCERASE || !hBmp_DSTINVERT || !hBmp_MERGECOPY ||
+		!hBmp_MERGEPAINT ||!hBmp_PATCOPY || !hBmp_PATPAINT || !hBmp_PATINVERT || !hBmpDstOriginal)
+		return -1;
+
 	gdi_SelectObject(hdcSrc, (HGDIOBJECT) hBmpSrc);
 	gdi_SelectObject(hdcDst, (HGDIOBJECT) hBmpDst);
 

@@ -113,7 +113,6 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 		return NULL;
 
 	pArgs = NULL;
-	numArgs = 0;
 	lpEscapedCmdLine = NULL;
 	cmdLineLength = strlen(lpCmdLine);
 	lpEscapedChars = (BOOL*) malloc((cmdLineLength + 1) * sizeof(BOOL));
@@ -137,7 +136,6 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 				length = strlen(p);
 				CopyMemory(pOutput, p, length);
 				pOutput += length;
-				p += length;
 				break;
 			}
 

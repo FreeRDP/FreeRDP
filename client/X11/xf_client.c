@@ -1013,13 +1013,11 @@ BOOL xf_post_connect(freerdp *instance)
 {
 	UINT32 flags;
 	XGCValues gcv;
-	rdpCache* cache;
 	rdpChannels* channels;
 	rdpSettings* settings;
 	ResizeWindowEventArgs e;
 	xfContext* xfc = (xfContext*) instance->context;
 
-	cache = instance->context->cache;
 	channels = instance->context->channels;
 	settings = instance->settings;
 
@@ -1310,7 +1308,9 @@ void* xf_input_thread(void *arg)
 	while(1)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
-		
+		if (WAIT_FAILED == status)
+			break;
+
 		if (WaitForSingleObject(events[0], 0) == WAIT_OBJECT_0)
 		{
 			if (MessageQueue_Peek(queue, &msg, FALSE))
@@ -1363,12 +1363,10 @@ void* xf_channels_thread(void *arg)
 	int status;
 	xfContext* xfc;
 	HANDLE event;
-	rdpChannels *channels;
 	freerdp *instance = (freerdp *) arg;
 	assert(NULL != instance);
 	xfc = (xfContext *) instance->context;
 	assert(NULL != xfc);
-	channels = instance->context->channels;
 	event = freerdp_channels_get_event_handle(instance);
 
 	while (WaitForSingleObject(event, INFINITE) == WAIT_OBJECT_0)
@@ -1798,7 +1796,6 @@ static int xfreerdp_client_stop(rdpContext* context)
 static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 {
 	xfContext* xfc;
-	rdpSettings* settings;
 
 	xfc = (xfContext*) instance->context;
 
@@ -1810,7 +1807,6 @@ static int xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->LogonErrorInfo = xf_logon_error_info;
 	context->channels = freerdp_channels_new();
 
-	settings = instance->settings;
 	xfc->settings = instance->context->settings;
 
 	PubSub_SubscribeTerminate(context->pubSub, (pTerminateEventHandler) xf_TerminateEventHandler);

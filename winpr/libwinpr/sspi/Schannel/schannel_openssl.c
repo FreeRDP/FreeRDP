@@ -56,7 +56,6 @@ char* openssl_get_ssl_error_string(int ssl_error)
 
 int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 {
-	int status;
 	long options = 0;
 	context->ctx = SSL_CTX_new(TLSv1_client_method());
 
@@ -109,7 +108,7 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 		return -1;
 	}
 
-	status = BIO_set_write_buf_size(context->bioRead, SCHANNEL_CB_MAX_TOKEN);
+	BIO_set_write_buf_size(context->bioRead, SCHANNEL_CB_MAX_TOKEN);
 	context->bioWrite = BIO_new(BIO_s_mem());
 
 	if (!context->bioWrite)
@@ -118,8 +117,8 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 		return -1;
 	}
 
-	status = BIO_set_write_buf_size(context->bioWrite, SCHANNEL_CB_MAX_TOKEN);
-	status = BIO_make_bio_pair(context->bioRead, context->bioWrite);
+	BIO_set_write_buf_size(context->bioWrite, SCHANNEL_CB_MAX_TOKEN);
+	BIO_make_bio_pair(context->bioRead, context->bioWrite);
 	SSL_set_bio(context->ssl, context->bioRead, context->bioWrite);
 	context->ReadBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
 	context->WriteBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
@@ -128,7 +127,6 @@ int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 
 int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 {
-	int status;
 	long options = 0;
 	//context->ctx = SSL_CTX_new(SSLv23_server_method());
 	context->ctx = SSL_CTX_new(TLSv1_server_method());
@@ -202,7 +200,7 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 		return -1;
 	}
 
-	status = BIO_set_write_buf_size(context->bioRead, SCHANNEL_CB_MAX_TOKEN);
+	BIO_set_write_buf_size(context->bioRead, SCHANNEL_CB_MAX_TOKEN);
 	context->bioWrite = BIO_new(BIO_s_mem());
 
 	if (!context->bioWrite)
@@ -211,8 +209,8 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 		return -1;
 	}
 
-	status = BIO_set_write_buf_size(context->bioWrite, SCHANNEL_CB_MAX_TOKEN);
-	status = BIO_make_bio_pair(context->bioRead, context->bioWrite);
+	BIO_set_write_buf_size(context->bioWrite, SCHANNEL_CB_MAX_TOKEN);
+	BIO_make_bio_pair(context->bioRead, context->bioWrite);
 	SSL_set_bio(context->ssl, context->bioRead, context->bioWrite);
 	context->ReadBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
 	context->WriteBuffer = (BYTE*) malloc(SCHANNEL_CB_MAX_TOKEN);
@@ -237,7 +235,7 @@ SECURITY_STATUS schannel_openssl_client_process_tokens(SCHANNEL_OPENSSL* context
 			if (!pBuffer)
 				return SEC_E_INVALID_TOKEN;
 
-			status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
+			BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
 		}
 
 		status = SSL_connect(context->ssl);
@@ -296,7 +294,7 @@ SECURITY_STATUS schannel_openssl_server_process_tokens(SCHANNEL_OPENSSL* context
 		if (!pBuffer)
 			return SEC_E_INVALID_TOKEN;
 
-		status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
+		BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
 		status = SSL_accept(context->ssl);
 
 		if (status < 0)
@@ -376,7 +374,6 @@ SECURITY_STATUS schannel_openssl_encrypt_message(SCHANNEL_OPENSSL* context, PSec
 		offset += length;
 		length = (pStreamTrailerBuffer->cbBuffer > (unsigned long) status) ? status : pStreamTrailerBuffer->cbBuffer;
 		CopyMemory(pStreamTrailerBuffer->pvBuffer, &context->ReadBuffer[offset], length);
-		status -= length;
 	}
 
 	return SEC_E_OK;
@@ -394,7 +391,7 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSec
 	if (!pBuffer)
 		return SEC_E_INVALID_TOKEN;
 
-	status = BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
+	BIO_write(context->bioRead, pBuffer->pvBuffer, pBuffer->cbBuffer);
 	status = SSL_read(context->ssl, pBuffer->pvBuffer, pBuffer->cbBuffer);
 
 	if (status < 0)
