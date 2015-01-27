@@ -28,7 +28,7 @@
 
 #define TAG CHANNELS_TAG("drdynvc.client")
 
-static void dvcman_channel_free(DVCMAN_CHANNEL* channel);
+static void dvcman_channel_free(void* channel);
 
 static int dvcman_get_configuration(IWTSListener* pListener, void** ppPropertyBag)
 {
@@ -220,6 +220,12 @@ static DVCMAN_CHANNEL* dvcman_channel_new(IWTSVirtualChannelManager* pChannelMgr
 {
 	DVCMAN_CHANNEL* channel;
 
+	if (dvcman_find_channel_by_id(pChannelMgr, ChannelId))
+	{
+		WLog_ERR(TAG, "Protocol error: Duplicated ChannelId %d (%s)!", ChannelId, ChannelName);
+		return NULL;
+	}
+
 	channel = (DVCMAN_CHANNEL*) calloc(1, sizeof(DVCMAN_CHANNEL));
 
 	if (!channel)
@@ -234,8 +240,10 @@ static DVCMAN_CHANNEL* dvcman_channel_new(IWTSVirtualChannelManager* pChannelMgr
 	return channel;
 }
 
-void dvcman_channel_free(DVCMAN_CHANNEL* channel)
+void dvcman_channel_free(void* arg)
 {
+	DVCMAN_CHANNEL* channel = (DVCMAN_CHANNEL*) arg;
+
 	if (channel->channel_callback)
 	{
 		channel->channel_callback->OnClose(channel->channel_callback);
@@ -338,6 +346,9 @@ int dvcman_create_channel(IWTSVirtualChannelManager* pChannelMgr, UINT32 Channel
 	DVCMAN* dvcman = (DVCMAN*) pChannelMgr;
 
 	channel = dvcman_channel_new(pChannelMgr, ChannelId, ChannelName);
+
+	if (!channel)
+		return 1;
 
 	channel->status = 1;
 	ArrayList_Add(dvcman->channels, channel);
@@ -748,6 +759,7 @@ static int drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cb
 	{
 		WLog_DBG(TAG, "no listener");
 		Stream_Write_UINT32(data_out, (UINT32)(-1));
+		dvcman_close_channel(drdynvc->channel_mgr, ChannelId);
 	}
 
 	status = drdynvc_send(drdynvc, data_out);
