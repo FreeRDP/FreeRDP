@@ -391,8 +391,10 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	freerdp* instance;
 	rdpContext* context;
 	rdpSettings* settings = transport->settings;
+
 	instance = (freerdp*) transport->settings->instance;
 	context = instance->context;
+
 	tsg = tsg_new(transport);
 
 	if (!tsg)
@@ -424,6 +426,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 	transport->TlsIn->hostname = transport->TlsOut->hostname = settings->GatewayHostname;
 	transport->TlsIn->port = transport->TlsOut->port = settings->GatewayPort;
+
 	transport->TlsIn->isGatewayTransport = TRUE;
 	tls_status = tls_connect(transport->TlsIn, transport->TcpIn->bufferedBio);
 
@@ -467,6 +470,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 	transport->frontBio = BIO_new(BIO_s_tsg());
 	transport->frontBio->ptr = tsg;
+
 	return TRUE;
 }
 

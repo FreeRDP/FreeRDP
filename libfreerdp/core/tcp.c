@@ -174,6 +174,56 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	int status = -1;
 
+	if (cmd == BIO_C_GET_EVENT)
+	{
+		if (!bio->init || !arg2)
+			return 0;
+
+#ifndef _WIN32
+		if (!bio->ptr)
+			bio->ptr = CreateFileDescriptorEvent(NULL, FALSE, FALSE, bio->num);
+#else
+		if (!bio->ptr)
+			bio->ptr = (void*) WSACreateEvent();
+
+		WSAEventSelect(bio->num, (HANDLE) bio->ptr, FD_READ);
+#endif
+
+		*((ULONG_PTR*) arg2) = (ULONG_PTR) bio->ptr;
+
+		return 1;
+	}
+	else if (cmd == BIO_C_SET_NONBLOCK)
+	{
+#ifndef _WIN32
+		int flags;
+
+		flags = fcntl(bio->num, F_GETFL);
+
+		if (flags == -1)
+			return 0;
+
+		if (arg1)
+			fcntl(bio->num, F_SETFL, flags | O_NONBLOCK);
+		else
+			fcntl(bio->num, F_SETFL, flags & ~(O_NONBLOCK));
+#else
+		if (arg1)
+		{
+			if (!bio->ptr)
+				bio->ptr = (void*) WSACreateEvent();
+
+			WSAEventSelect(bio->num, (HANDLE) bio->ptr, FD_READ);
+		}
+		else
+		{
+			if (bio->ptr)
+				WSAEventSelect(bio->num, (HANDLE) bio->ptr, 0);
+		}
+#endif
+		return 1;
+	}
+
 	switch (cmd)
 	{
 		case BIO_C_SET_FD:
@@ -228,6 +278,7 @@ static int transport_bio_simple_new(BIO* bio)
 	bio->num = 0;
 	bio->ptr = NULL;
 	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+
 	return 1;
 }
 
@@ -239,7 +290,15 @@ static int transport_bio_simple_free(BIO* bio)
 	if (bio->shutdown)
 	{
 		if (bio->init)
+		{
+			if (bio->ptr)
+			{
+				CloseHandle((HANDLE) bio->ptr);
+				bio->ptr = NULL;
+			}
+
 			closesocket((SOCKET) bio->num);
+		}
 
 		bio->init = 0;
 		bio->flags = 0;
@@ -931,7 +990,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 		BIO_set_fd(tcp->socketBio, tcp->sockfd, BIO_CLOSE);
 	}
 
-	SetEventFileDescriptor(tcp->event, tcp->sockfd);
+	BIO_get_event(tcp->socketBio, &tcp->event);
 
 	freerdp_tcp_get_ip_address(tcp);
 	freerdp_tcp_get_mac_address(tcp);
@@ -994,49 +1053,7 @@ BOOL freerdp_tcp_disconnect(rdpTcp* tcp)
 
 BOOL freerdp_tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 {
-#ifndef _WIN32
-	int flags;
-	flags = fcntl(tcp->sockfd, F_GETFL);
-
-	if (flags == -1)
-	{
-		WLog_ERR(TAG,  "fcntl failed, %s.", strerror(errno));
-		return FALSE;
-	}
-
-	if (blocking == TRUE)
-		fcntl(tcp->sockfd, F_SETFL, flags & ~(O_NONBLOCK));
-	else
-		fcntl(tcp->sockfd, F_SETFL, flags | O_NONBLOCK);
-#else
-	/**
-	 * ioctlsocket function:
-	 * msdn.microsoft.com/en-ca/library/windows/desktop/ms738573/
-	 * 
-	 * The WSAAsyncSelect and WSAEventSelect functions automatically set a socket to nonblocking mode.
-	 * If WSAAsyncSelect or WSAEventSelect has been issued on a socket, then any attempt to use
-	 * ioctlsocket to set the socket back to blocking mode will fail with WSAEINVAL.
-	 * 
-	 * To set the socket back to blocking mode, an application must first disable WSAAsyncSelect
-	 * by calling WSAAsyncSelect with the lEvent parameter equal to zero, or disable WSAEventSelect
-	 * by calling WSAEventSelect with the lNetworkEvents parameter equal to zero.
-	 */
-
-	if (blocking == TRUE)
-	{
-		if (tcp->event)
-			WSAEventSelect(tcp->sockfd, tcp->event, 0);
-	}
-	else
-	{
-		if (!tcp->event)
-			tcp->event = WSACreateEvent();
-
-		WSAEventSelect(tcp->sockfd, tcp->event, FD_READ);
-	}
-#endif
-
-	return TRUE;
+	return BIO_set_nonblock(tcp->socketBio, blocking ? 0 : 1) ? TRUE : FALSE;
 }
 
 BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp)
@@ -1102,7 +1119,6 @@ BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp)
 int freerdp_tcp_attach(rdpTcp* tcp, int sockfd)
 {
 	tcp->sockfd = sockfd;
-	SetEventFileDescriptor(tcp->event, tcp->sockfd);
 
 	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, ringbuffer_used(&tcp->xmitBuffer));
 
@@ -1133,7 +1149,9 @@ int freerdp_tcp_attach(rdpTcp* tcp, int sockfd)
 		tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
 	}
 
-	return 0;
+	BIO_get_event(tcp->socketBio, &tcp->event);
+
+	return 1;
 }
 
 HANDLE freerdp_tcp_get_event_handle(rdpTcp* tcp)
@@ -1235,19 +1253,8 @@ rdpTcp* freerdp_tcp_new(rdpSettings* settings)
 	tcp->sockfd = -1;
 	tcp->settings = settings;
 
-	if (0)
-		goto out_ringbuffer; /* avoid unreferenced label warning on Windows */
-
-#ifndef _WIN32
-	tcp->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, tcp->sockfd);
-
-	if (!tcp->event || tcp->event == INVALID_HANDLE_VALUE)
-		goto out_ringbuffer;
-#endif
-
 	return tcp;
-out_ringbuffer:
-	ringbuffer_destroy(&tcp->xmitBuffer);
+
 out_free:
 	free(tcp);
 	return NULL;
@@ -1259,6 +1266,18 @@ void freerdp_tcp_free(rdpTcp* tcp)
 		return;
 
 	ringbuffer_destroy(&tcp->xmitBuffer);
-	CloseHandle(tcp->event);
+
+	if (tcp->socketBio)
+	{
+		BIO_free(tcp->socketBio);
+		tcp->socketBio = NULL;
+	}
+
+	if (tcp->bufferedBio)
+	{
+		BIO_free(tcp->bufferedBio);
+		tcp->bufferedBio = NULL;
+	}
+
 	free(tcp);
 }

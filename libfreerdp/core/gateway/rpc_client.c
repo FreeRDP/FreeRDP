@@ -470,31 +470,22 @@ RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc)
 
 static void* rpc_client_thread(void* arg)
 {
-	int fd;
 	DWORD status;
 	DWORD nCount;
 	HANDLE events[3];
 	HANDLE ReadEvent;
 	rdpRpc* rpc = (rdpRpc*) arg;
 
-	fd = BIO_get_fd(rpc->TlsOut->bio, NULL);
-	ReadEvent = CreateFileDescriptorEvent(NULL, TRUE, FALSE, fd);
+	if (!BIO_get_event(rpc->TlsOut->bio, &ReadEvent))
+	{
+		WLog_ERR(TAG, "rpc_client_thread: failed to obtain read event from underlying BIO");
+		goto out;
+	}
 
 	nCount = 0;
 	events[nCount++] = rpc->client->StopEvent;
 	events[nCount++] = Queue_Event(rpc->client->SendQueue);
 	events[nCount++] = ReadEvent;
-
-	/* Do a first free run in case some bytes were set from the HTTP headers.
-	 * We also have to do it because most of the time the underlying socket has notified,
-	 * and the ssl layer has eaten all bytes, so we won't be notified any more even if the
-	 * bytes are buffered locally
-	 */
-	if (rpc_client_on_read_event(rpc) < 0)
-	{
-		WLog_ERR(TAG, "an error occurred when treating first packet");
-		goto out;
-	}
 
 	while (rpc->transport->layer != TRANSPORT_LAYER_CLOSED)
 	{
@@ -522,7 +513,6 @@ static void* rpc_client_thread(void* arg)
 	}
 
 out:
-	CloseHandle(ReadEvent);
 	return NULL;
 }
 
