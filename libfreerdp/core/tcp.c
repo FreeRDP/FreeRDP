@@ -1168,7 +1168,7 @@ int freerdp_tcp_attach(rdpTcp* tcp, int sockfd)
 
 	if (tcp->socketBio)
 	{
-		if (BIO_set_fd(tcp->socketBio, sockfd, 1) < 0)
+		if (BIO_set_fd(tcp->socketBio, sockfd, BIO_CLOSE) < 0)
 			return -1;
 	}
 	else

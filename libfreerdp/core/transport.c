@@ -398,7 +398,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		{
 			transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 			transport->thread = CreateThread(NULL, 0,
-											 (LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
+				(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
 		}
 	}
 
@@ -727,7 +727,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 #endif
 
 	if (Stream_GetPosition(s) >= pduLength)
-		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
+		WLog_Packet(WLog_Get(TAG), WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
 
 	Stream_SealLength(s);
 	Stream_SetPosition(s, 0);
@@ -755,7 +755,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 	if (length > 0)
 	{
-		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length, WLOG_PACKET_OUTBOUND);
+		WLog_Packet(WLog_Get(TAG), WLOG_TRACE, Stream_Buffer(s), length, WLOG_PACKET_OUTBOUND);
 	}
 
 	while (length > 0)
@@ -1027,20 +1027,23 @@ static void* transport_client_thread(void* arg)
 	rdpTransport* transport = (rdpTransport*) arg;
 	rdpContext* context = transport->context;
 	freerdp* instance = context->instance;
-	WLog_Print(transport->log, WLOG_DEBUG, "Starting transport thread");
+
+	WLog_DBG(TAG, "Starting transport thread");
+	
 	nCount = 0;
 	handles[nCount++] = transport->stopEvent;
 	handles[nCount++] = transport->connectedEvent;
+
 	status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 	if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
 	{
-		WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
+		WLog_DBG(TAG, "Terminating transport thread");
 		ExitThread(0);
 		return NULL;
 	}
 
-	WLog_Print(transport->log, WLOG_DEBUG, "Asynchronous transport activated");
+	WLog_DBG(TAG, "Asynchronous transport activated");
 
 	while (1)
 	{
@@ -1066,7 +1069,7 @@ static void* transport_client_thread(void* arg)
 		}
 	}
 
-	WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
+	WLog_DBG(TAG, "Terminating transport thread");
 	ExitThread(0);
 	return NULL;
 }
@@ -1074,6 +1077,7 @@ static void* transport_client_thread(void* arg)
 rdpTransport* transport_new(rdpContext* context)
 {
 	rdpTransport* transport;
+	
 	transport = (rdpTransport*) calloc(1, sizeof(rdpTransport));
 
 	if (!transport)
@@ -1081,11 +1085,6 @@ rdpTransport* transport_new(rdpContext* context)
 
 	transport->context = context;
 	transport->settings = context->settings;
-	WLog_Init();
-	transport->log = WLog_Get(TAG);
-
-	if (!transport->log)
-		goto out_free;
 
 	transport->TcpIn = freerdp_tcp_new(context->settings);
 

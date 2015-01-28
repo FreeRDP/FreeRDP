@@ -82,7 +82,6 @@ struct rdp_transport
 	BOOL GatewayEnabled;
 	CRITICAL_SECTION ReadLock;
 	CRITICAL_SECTION WriteLock;
-	wLog* log;
 	void* rdp;
 };
 
