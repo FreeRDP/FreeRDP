@@ -64,7 +64,7 @@ RPC_PDU* rpc_client_receive_pool_take(rdpRpc* rpc)
 
 	if (!pdu)
 	{
-		pdu = (RPC_PDU*)malloc(sizeof(RPC_PDU));
+		pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
 
 		if (!pdu)
 			return NULL;
@@ -311,9 +311,10 @@ RpcClientCall* rpc_client_call_find_by_id(rdpRpc* rpc, UINT32 CallId)
 {
 	int index;
 	int count;
-	RpcClientCall* clientCall;
+	RpcClientCall* clientCall = NULL;
+
 	ArrayList_Lock(rpc->client->ClientCallList);
-	clientCall = NULL;
+	
 	count = ArrayList_Count(rpc->client->ClientCallList);
 
 	for (index = 0; index < count; index++)
@@ -325,13 +326,15 @@ RpcClientCall* rpc_client_call_find_by_id(rdpRpc* rpc, UINT32 CallId)
 	}
 
 	ArrayList_Unlock(rpc->client->ClientCallList);
+
 	return clientCall;
 }
 
 RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum)
 {
 	RpcClientCall* clientCall;
-	clientCall = (RpcClientCall*) malloc(sizeof(RpcClientCall));
+
+	clientCall = (RpcClientCall*) calloc(1, sizeof(RpcClientCall));
 
 	if (!clientCall)
 		return NULL;
@@ -339,6 +342,7 @@ RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum)
 	clientCall->CallId = CallId;
 	clientCall->OpNum = OpNum;
 	clientCall->State = RPC_CLIENT_CALL_STATE_SEND_PDUS;
+	
 	return clientCall;
 }
 
@@ -349,8 +353,9 @@ void rpc_client_call_free(RpcClientCall* clientCall)
 
 int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
-	RPC_PDU* pdu;
 	int status;
+	RPC_PDU* pdu;
+
 	pdu = (RPC_PDU*) malloc(sizeof(RPC_PDU));
 
 	if (!pdu)
@@ -465,22 +470,26 @@ RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc)
 	if (result != WAIT_OBJECT_0)
 		return NULL;
 
-	return (RPC_PDU*)Queue_Peek(rpc->client->ReceiveQueue);
+	return (RPC_PDU*) Queue_Peek(rpc->client->ReceiveQueue);
 }
 
 static void* rpc_client_thread(void* arg)
 {
 	DWORD status;
 	DWORD nCount;
+	DWORD timeout;
 	HANDLE events[3];
-	HANDLE ReadEvent;
+	HANDLE ReadEvent = NULL;
 	rdpRpc* rpc = (rdpRpc*) arg;
 
-	if (!BIO_get_event(rpc->TlsOut->bio, &ReadEvent))
-	{
-		WLog_ERR(TAG, "rpc_client_thread: failed to obtain read event from underlying BIO");
-		goto out;
-	}
+	BIO_get_event(rpc->TlsOut->bio, &ReadEvent);
+
+#ifndef _WIN32
+	timeout = INFINITE;
+#else
+	timeout = 100;
+	BIO_set_nonblock(rpc->TlsOut->bio, TRUE);
+#endif
 
 	nCount = 0;
 	events[nCount++] = rpc->client->StopEvent;
@@ -489,15 +498,12 @@ static void* rpc_client_thread(void* arg)
 
 	while (rpc->transport->layer != TRANSPORT_LAYER_CLOSED)
 	{
-		status = WaitForMultipleObjects(nCount, events, FALSE, 100);
-
-		if (status == WAIT_TIMEOUT)
-			continue;
+		status = WaitForMultipleObjects(nCount, events, FALSE, timeout);
 
 		if (WaitForSingleObject(rpc->client->StopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
-		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
+		if ((WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0) || (status == WAIT_TIMEOUT))
 		{
 			if (rpc_client_on_read_event(rpc) < 0)
 			{
@@ -512,7 +518,6 @@ static void* rpc_client_thread(void* arg)
 		}
 	}
 
-out:
 	return NULL;
 }
 

@@ -318,4 +318,6 @@ BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking);
 rdpTsg* tsg_new(rdpTransport* transport);
 void tsg_free(rdpTsg* tsg);
 
+BIO_METHOD* BIO_s_tsg(void);
+
 #endif /* FREERDP_CORE_TSG_H */

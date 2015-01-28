@@ -87,7 +87,14 @@
 
 /* Simple Socket BIO */
 
-static int transport_bio_simple_init(BIO* bio, int sockfd, int shutdown);
+struct _WINPR_BIO_SIMPLE_SOCKET
+{
+	SOCKET socket;
+	HANDLE hEvent;
+};
+typedef struct _WINPR_BIO_SIMPLE_SOCKET WINPR_BIO_SIMPLE_SOCKET;
+
+static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown);
 static int transport_bio_simple_uninit(BIO* bio);
 
 long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
@@ -99,13 +106,14 @@ static int transport_bio_simple_write(BIO* bio, const char* buf, int size)
 {
 	int error;
 	int status = 0;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
 
 	if (!buf)
 		return 0;
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
-	status = _send((SOCKET) bio->num, buf, size, 0);
+	status = _send(ptr->socket, buf, size, 0);
 
 	if (status <= 0)
 	{
@@ -129,13 +137,15 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 {
 	int error;
 	int status = 0;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
 
 	if (!buf)
 		return 0;
 
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
-	status = _recv((SOCKET) bio->num, buf, size, 0);
+	status = _recv(ptr->socket, buf, size, 0);
+
 	if (status > 0)
 		return status;
 
@@ -173,13 +183,29 @@ static int transport_bio_simple_gets(BIO* bio, char* str, int size)
 static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	int status = -1;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
 
-	if (cmd == BIO_C_GET_EVENT)
+	if (cmd == BIO_C_SET_SOCKET)
+	{
+		transport_bio_simple_uninit(bio);
+		transport_bio_simple_init(bio, (SOCKET) arg2, (int) arg1);
+		return 1;
+	}
+	else if (cmd == BIO_C_GET_SOCKET)
 	{
 		if (!bio->init || !arg2)
 			return 0;
 
-		*((ULONG_PTR*) arg2) = (ULONG_PTR) bio->ptr;
+		*((ULONG_PTR*) arg2) = (ULONG_PTR) ptr->socket;
+
+		return 1;
+	}
+	else if (cmd == BIO_C_GET_EVENT)
+	{
+		if (!bio->init || !arg2)
+			return 0;
+
+		*((ULONG_PTR*) arg2) = (ULONG_PTR) ptr->hEvent;
 
 		return 1;
 	}
@@ -188,20 +214,20 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 #ifndef _WIN32
 		int flags;
 
-		flags = fcntl(bio->num, F_GETFL);
+		flags = fcntl((int) ptr->socket, F_GETFL);
 
 		if (flags == -1)
 			return 0;
 
 		if (arg1)
-			fcntl(bio->num, F_SETFL, flags | O_NONBLOCK);
+			fcntl((int) ptr->socket, F_SETFL, flags | O_NONBLOCK);
 		else
-			fcntl(bio->num, F_SETFL, flags & ~(O_NONBLOCK));
+			fcntl((int) ptr->socket, F_SETFL, flags & ~(O_NONBLOCK));
 #else
 		LONG lNetworkEvents = arg1 ? FD_READ : 0;
 
-		if (bio->ptr)
-			WSAEventSelect(bio->num, (HANDLE) bio->ptr, lNetworkEvents);
+		if (ptr->hEvent)
+			WSAEventSelect(ptr->socket, ptr->hEvent, lNetworkEvents);
 #endif
 		return 1;
 	}
@@ -212,7 +238,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			if (arg2)
 			{
 				transport_bio_simple_uninit(bio);
-				transport_bio_simple_init(bio, *((int*) arg2), (int) arg1);
+				transport_bio_simple_init(bio, (SOCKET) *((int*) arg2), (int) arg1);
 				status = 1;
 			}
 			break;
@@ -221,8 +247,8 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			if (bio->init)
 			{
 				if (arg2)
-					*((int*) arg2) = bio->num;
-				status = bio->num;
+					*((int*) arg2) = (int) ptr->socket;
+				status = (int) ptr->socket;
 			}
 			break;
 
@@ -251,17 +277,20 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	return status;
 }
 
-static int transport_bio_simple_init(BIO* bio, int sockfd, int shutdown)
+static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 {
-	bio->num = sockfd;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+
+	ptr->socket = socket;
+
 	bio->shutdown = shutdown;
 	bio->flags = BIO_FLAGS_SHOULD_RETRY;
 	bio->init = 1;
 
 #ifdef _WIN32
-	bio->ptr = (void*) CreateEvent(NULL, FALSE, FALSE, NULL);
+	ptr->hEvent = (void*) CreateEvent(NULL, FALSE, FALSE, NULL);
 #else
-	bio->ptr = (void*) CreateFileDescriptorEvent(NULL, FALSE, FALSE, bio->num);
+	ptr->hEvent = (void*) CreateFileDescriptorEvent(NULL, FALSE, FALSE, (int) ptr->socket);
 #endif
 
 	return 1;
@@ -269,19 +298,21 @@ static int transport_bio_simple_init(BIO* bio, int sockfd, int shutdown)
 
 static int transport_bio_simple_uninit(BIO* bio)
 {
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+
 	if (bio->shutdown)
 	{
 		if (bio->init)
 		{
-			closesocket((SOCKET) bio->num);
-			bio->num = 0;
+			closesocket(ptr->socket);
+			ptr->socket = 0;
 		}
 	}
 
-	if (bio->ptr)
+	if (ptr->hEvent)
 	{
-		CloseHandle((HANDLE) bio->ptr);
-		bio->ptr = NULL;
+		CloseHandle(ptr->hEvent);
+		ptr->hEvent = NULL;
 	}
 
 	bio->init = 0;
@@ -293,9 +324,13 @@ static int transport_bio_simple_uninit(BIO* bio)
 static int transport_bio_simple_new(BIO* bio)
 {
 	bio->init = 0;
-	bio->num = 0;
 	bio->ptr = NULL;
 	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+
+	bio->ptr = calloc(1, sizeof(WINPR_BIO_SIMPLE_SOCKET));
+
+	if (!bio->ptr)
+		return 0;
 
 	return 1;
 }
@@ -306,6 +341,12 @@ static int transport_bio_simple_free(BIO* bio)
 		return 0;
 
 	transport_bio_simple_uninit(bio);
+
+	if (bio->ptr)
+	{
+		free(bio->ptr);
+		bio->ptr = NULL;
+	}
 
 	return 1;
 }

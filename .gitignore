@@ -79,6 +79,7 @@ RelWithDebInfo
 *.resource.txt
 *.embed.manifest*
 *.intermediate.manifest*
+version.rc
 
 # Binaries
 *.a
