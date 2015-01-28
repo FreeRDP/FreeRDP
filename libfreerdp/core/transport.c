@@ -103,12 +103,6 @@ BOOL transport_disconnect(rdpTransport* transport)
 
 	transport_stop(transport);
 
-	if (transport->frontBio)
-	{
-		BIO_free_all(transport->frontBio);
-		transport->frontBio = NULL;
-	}
-
 	if (transport->TlsIn)
 		tls_free(transport->TlsIn);
 
@@ -468,8 +462,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	if (!tsg_connect(tsg, hostname, port))
 		return FALSE;
 
-	transport->frontBio = BIO_new(BIO_s_tsg());
-	transport->frontBio->ptr = tsg;
+	transport->frontBio = tsg->bio;
 
 	return TRUE;
 }

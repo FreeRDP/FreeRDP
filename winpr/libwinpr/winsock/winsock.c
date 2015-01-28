@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crt.h>
+#include <winpr/synch.h>
 
 #include <winpr/winsock.h>
 
@@ -594,6 +595,43 @@ int WSAGetLastError(void)
 	 */
 
 	return iError;
+}
+
+HANDLE WSACreateEvent(void)
+{
+	return CreateEvent(NULL, TRUE, FALSE, NULL);
+}
+
+BOOL WSASetEvent(HANDLE hEvent)
+{
+	return SetEvent(hEvent);
+}
+
+BOOL WSAResetEvent(HANDLE hEvent)
+{
+	return ResetEvent(hEvent);
+}
+
+BOOL WSACloseEvent(HANDLE hEvent)
+{
+	BOOL status;
+
+	status = CloseHandle(hEvent);
+
+	if (!status)
+		SetLastError(6);
+
+	return status;
+}
+
+int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents)
+{
+	return 0;
+}
+
+DWORD WSAWaitForMultipleEvents(DWORD cEvents, const HANDLE* lphEvents, BOOL fWaitAll, DWORD dwTimeout, BOOL fAlertable)
+{
+	return WaitForMultipleObjectsEx(cEvents, lphEvents, fWaitAll, dwTimeout, fAlertable);
 }
 
 SOCKET _accept(SOCKET s, struct sockaddr* addr, int* addrlen)

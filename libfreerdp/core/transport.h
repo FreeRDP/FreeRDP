@@ -55,7 +55,7 @@ typedef int (*TransportRecv) (rdpTransport* transport, wStream* stream, void* ex
 struct rdp_transport
 {
 	TRANSPORT_LAYER layer;
-	BIO *frontBio;
+	BIO* frontBio;
 	rdpTsg* tsg;
 	rdpTcp* TcpIn;
 	rdpTcp* TcpOut;

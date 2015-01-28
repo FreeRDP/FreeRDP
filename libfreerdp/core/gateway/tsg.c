@@ -1413,6 +1413,9 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
 
+	tsg->bio = BIO_new(BIO_s_tsg());
+	tsg->bio->ptr = tsg;
+
 	WLog_INFO(TAG,  "TS Gateway Connection Success");
 
 	return TRUE;
@@ -1602,6 +1605,12 @@ void tsg_free(rdpTsg* tsg)
 {
 	if (tsg)
 	{
+		if (tsg->bio)
+		{
+			BIO_free(tsg->bio);
+			tsg->bio = NULL;
+		}
+
 		rpc_free(tsg->rpc);
 		free(tsg->Hostname);
 		free(tsg->MachineName);

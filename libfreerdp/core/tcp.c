@@ -87,8 +87,8 @@
 
 /* Simple Socket BIO */
 
-static int transport_bio_simple_new(BIO* bio);
-static int transport_bio_simple_free(BIO* bio);
+static int transport_bio_simple_init(BIO* bio, int sockfd, int shutdown);
+static int transport_bio_simple_uninit(BIO* bio);
 
 long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
 {
@@ -179,16 +179,6 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		if (!bio->init || !arg2)
 			return 0;
 
-#ifndef _WIN32
-		if (!bio->ptr)
-			bio->ptr = CreateFileDescriptorEvent(NULL, FALSE, FALSE, bio->num);
-#else
-		if (!bio->ptr)
-			bio->ptr = (void*) WSACreateEvent();
-
-		WSAEventSelect(bio->num, (HANDLE) bio->ptr, FD_READ);
-#endif
-
 		*((ULONG_PTR*) arg2) = (ULONG_PTR) bio->ptr;
 
 		return 1;
@@ -208,18 +198,10 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		else
 			fcntl(bio->num, F_SETFL, flags & ~(O_NONBLOCK));
 #else
-		if (arg1)
-		{
-			if (!bio->ptr)
-				bio->ptr = (void*) WSACreateEvent();
+		LONG lNetworkEvents = arg1 ? FD_READ : 0;
 
-			WSAEventSelect(bio->num, (HANDLE) bio->ptr, FD_READ);
-		}
-		else
-		{
-			if (bio->ptr)
-				WSAEventSelect(bio->num, (HANDLE) bio->ptr, 0);
-		}
+		if (bio->ptr)
+			WSAEventSelect(bio->num, (HANDLE) bio->ptr, lNetworkEvents);
 #endif
 		return 1;
 	}
@@ -229,11 +211,8 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		case BIO_C_SET_FD:
 			if (arg2)
 			{
-				transport_bio_simple_free(bio);
-				bio->flags = BIO_FLAGS_SHOULD_RETRY;
-				bio->num = *((int*) arg2);
-				bio->shutdown = (int) arg1;
-				bio->init = 1;
+				transport_bio_simple_uninit(bio);
+				transport_bio_simple_init(bio, *((int*) arg2), (int) arg1);
 				status = 1;
 			}
 			break;
@@ -272,6 +251,45 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	return status;
 }
 
+static int transport_bio_simple_init(BIO* bio, int sockfd, int shutdown)
+{
+	bio->num = sockfd;
+	bio->shutdown = shutdown;
+	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+	bio->init = 1;
+
+#ifdef _WIN32
+	bio->ptr = (void*) CreateEvent(NULL, FALSE, FALSE, NULL);
+#else
+	bio->ptr = (void*) CreateFileDescriptorEvent(NULL, FALSE, FALSE, bio->num);
+#endif
+
+	return 1;
+}
+
+static int transport_bio_simple_uninit(BIO* bio)
+{
+	if (bio->shutdown)
+	{
+		if (bio->init)
+		{
+			closesocket((SOCKET) bio->num);
+			bio->num = 0;
+		}
+	}
+
+	if (bio->ptr)
+	{
+		CloseHandle((HANDLE) bio->ptr);
+		bio->ptr = NULL;
+	}
+
+	bio->init = 0;
+	bio->flags = 0;
+
+	return 1;
+}
+
 static int transport_bio_simple_new(BIO* bio)
 {
 	bio->init = 0;
@@ -287,22 +305,7 @@ static int transport_bio_simple_free(BIO* bio)
 	if (!bio)
 		return 0;
 
-	if (bio->shutdown)
-	{
-		if (bio->init)
-		{
-			if (bio->ptr)
-			{
-				CloseHandle((HANDLE) bio->ptr);
-				bio->ptr = NULL;
-			}
-
-			closesocket((SOCKET) bio->num);
-		}
-
-		bio->init = 0;
-		bio->flags = 0;
-	}
+	transport_bio_simple_uninit(bio);
 
 	return 1;
 }

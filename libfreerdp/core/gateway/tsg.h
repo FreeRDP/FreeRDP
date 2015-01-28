@@ -55,6 +55,7 @@ typedef enum _TSG_STATE TSG_STATE;
 
 struct rdp_tsg
 {
+	BIO* bio;
 	rdpRpc* rpc;
 	UINT16 Port;
 	RPC_PDU* pdu;
