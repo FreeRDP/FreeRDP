@@ -390,6 +390,7 @@ out_free_stream:
 	Stream_Free(pdu->s, TRUE);
 out_free:
 	free(pdu);
+	WLog_ERR(TAG, "rpc_send_enqueue_pdu failure");
 	return -1;
 }
 

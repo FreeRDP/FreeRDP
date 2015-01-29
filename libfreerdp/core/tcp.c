@@ -100,13 +100,13 @@ static int transport_bio_simple_uninit(BIO* bio);
 
 static void transport_bio_simple_check_reset_event(BIO* bio)
 {
-	ULONG nbytes = 0;
+	u_long nbytes = 0;
 	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
 
 	if (!ptr->win32)
 		return;
 
-	ioctlsocket(ptr->socket, FIONREAD, &nbytes);
+	_ioctlsocket(ptr->socket, FIONREAD, &nbytes);
 
 	if (nbytes < 1)
 		WSAResetEvent(ptr->hEvent);
