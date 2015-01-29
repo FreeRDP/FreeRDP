@@ -89,6 +89,7 @@
 
 struct _WINPR_BIO_SIMPLE_SOCKET
 {
+	BOOL win32;
 	SOCKET socket;
 	HANDLE hEvent;
 };
@@ -96,6 +97,20 @@ typedef struct _WINPR_BIO_SIMPLE_SOCKET WINPR_BIO_SIMPLE_SOCKET;
 
 static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown);
 static int transport_bio_simple_uninit(BIO* bio);
+
+static void transport_bio_simple_check_reset_event(BIO* bio)
+{
+	ULONG nbytes = 0;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+
+	if (!ptr->win32)
+		return;
+
+	ioctlsocket(ptr->socket, FIONREAD, &nbytes);
+
+	if (nbytes < 1)
+		WSAResetEvent(ptr->hEvent);
+}
 
 long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
 {
@@ -147,7 +162,10 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 	status = _recv(ptr->socket, buf, size, 0);
 
 	if (status > 0)
+	{
+		transport_bio_simple_check_reset_event(bio);
 		return status;
+	}
 
 	if (status == 0)
 	{
@@ -166,6 +184,8 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 	{
 		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	}
+
+	transport_bio_simple_check_reset_event(bio);
 
 	return -1;
 }
@@ -224,10 +244,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		else
 			fcntl((int) ptr->socket, F_SETFL, flags & ~(O_NONBLOCK));
 #else
-		LONG lNetworkEvents = arg1 ? FD_READ : 0;
-
-		if (ptr->hEvent)
-			WSAEventSelect(ptr->socket, ptr->hEvent, lNetworkEvents);
+		/* the internal socket is always non-blocking */
 #endif
 		return 1;
 	}
@@ -287,11 +304,23 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 	bio->flags = BIO_FLAGS_SHOULD_RETRY;
 	bio->init = 1;
 
-#ifdef _WIN32
-	ptr->hEvent = (void*) CreateEvent(NULL, FALSE, FALSE, NULL);
-#else
-	ptr->hEvent = (void*) CreateFileDescriptorEvent(NULL, FALSE, FALSE, (int) ptr->socket);
-#endif
+	if (ptr->win32)
+	{
+		ptr->hEvent = WSACreateEvent(); /* creates a manual reset event */
+
+		if (!ptr->hEvent)
+			return 0;
+
+		/* WSAEventSelect automatically sets the socket in non-blocking mode */
+		WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_CLOSE);
+	}
+	else
+	{
+		ptr->hEvent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, (int) ptr->socket);
+
+		if (!ptr->hEvent)
+			return 0;
+	}
 
 	return 1;
 }
@@ -323,14 +352,22 @@ static int transport_bio_simple_uninit(BIO* bio)
 
 static int transport_bio_simple_new(BIO* bio)
 {
+	WINPR_BIO_SIMPLE_SOCKET* ptr;
+
 	bio->init = 0;
 	bio->ptr = NULL;
 	bio->flags = BIO_FLAGS_SHOULD_RETRY;
 
-	bio->ptr = calloc(1, sizeof(WINPR_BIO_SIMPLE_SOCKET));
+	ptr = (WINPR_BIO_SIMPLE_SOCKET*) calloc(1, sizeof(WINPR_BIO_SIMPLE_SOCKET));
 
-	if (!bio->ptr)
+	if (!ptr)
 		return 0;
+
+	bio->ptr = ptr;
+
+#ifdef _WIN32
+	ptr->win32 = TRUE;
+#endif
 
 	return 1;
 }

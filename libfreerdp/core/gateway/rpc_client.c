@@ -439,19 +439,20 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 {
 	RPC_PDU* pdu;
+	DWORD waitStatus;
 	DWORD dwMilliseconds;
-	DWORD result;
 
 	dwMilliseconds = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT * 4 : 0;
-	result = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
 
-	if (result == WAIT_TIMEOUT)
+	waitStatus = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
+
+	if (waitStatus == WAIT_TIMEOUT)
 	{
 		WLog_ERR(TAG, "timed out waiting for receive event");
 		return NULL;
 	}
 
-	if (result != WAIT_OBJECT_0)
+	if (waitStatus != WAIT_OBJECT_0)
 		return NULL;
 
 	pdu = (RPC_PDU*) Queue_Dequeue(rpc->client->ReceiveQueue);
@@ -461,13 +462,14 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 
 RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc)
 {
+	DWORD waitStatus;
 	DWORD dwMilliseconds;
-	DWORD result;
 
 	dwMilliseconds = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT : 0;
-	result = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
 
-	if (result != WAIT_OBJECT_0)
+	waitStatus = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
+
+	if (waitStatus != WAIT_OBJECT_0)
 		return NULL;
 
 	return (RPC_PDU*) Queue_Peek(rpc->client->ReceiveQueue);
@@ -475,21 +477,13 @@ RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc)
 
 static void* rpc_client_thread(void* arg)
 {
-	DWORD status;
 	DWORD nCount;
-	DWORD timeout;
-	HANDLE events[3];
+	HANDLE events[8];
+	DWORD waitStatus;
 	HANDLE ReadEvent = NULL;
 	rdpRpc* rpc = (rdpRpc*) arg;
 
 	BIO_get_event(rpc->TlsOut->bio, &ReadEvent);
-
-#ifndef _WIN32
-	timeout = INFINITE;
-#else
-	timeout = 100;
-	BIO_set_nonblock(rpc->TlsOut->bio, TRUE);
-#endif
 
 	nCount = 0;
 	events[nCount++] = rpc->client->StopEvent;
@@ -498,12 +492,12 @@ static void* rpc_client_thread(void* arg)
 
 	while (rpc->transport->layer != TRANSPORT_LAYER_CLOSED)
 	{
-		status = WaitForMultipleObjects(nCount, events, FALSE, timeout);
+		waitStatus = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (WaitForSingleObject(rpc->client->StopEvent, 0) == WAIT_OBJECT_0)
 			break;
 
-		if ((WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0) || (status == WAIT_TIMEOUT))
+		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
 		{
 			if (rpc_client_on_read_event(rpc) < 0)
 			{
