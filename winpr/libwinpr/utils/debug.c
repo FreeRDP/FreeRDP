@@ -36,8 +36,10 @@
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
+#include <io.h>
 #include <Windows.h>
 #include <Dbghelp.h>
+#define write _write
 #endif
 
 #include <winpr/crt.h>
@@ -421,16 +423,18 @@ void winpr_backtrace_symbols_fd(void *buffer, int fd)
 	assert(data);
 	backtrace_symbols_fd(data->buffer, data->used, fd);
 #elif defined(_WIN32) || defined(_WIN64) || defined(ANDROID)
-    {
-        size_t used;
-        char **lines = winpr_backtrace_symbols(buffer, &used);
+	{
+		DWORD i;
+		size_t used;
+		char** lines;
+		
+		lines = winpr_backtrace_symbols(buffer, &used);
 
-        if (lines)
-        {
-            DWORD i;
-            for (i=0; i<used; i++)
-                write(fd, lines[i], strlen(lines[i]));
-        }
+		if (lines)
+		{
+			for (i = 0; i < used; i++)
+				write(fd, lines[i], strlen(lines[i]));
+		}
     }
 #else
 	LOGF(support_msg);

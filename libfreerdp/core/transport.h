@@ -55,7 +55,7 @@ typedef int (*TransportRecv) (rdpTransport* transport, wStream* stream, void* ex
 struct rdp_transport
 {
 	TRANSPORT_LAYER layer;
-	BIO *frontBio;
+	BIO* frontBio;
 	rdpTsg* tsg;
 	rdpTcp* TcpIn;
 	rdpTcp* TcpOut;
@@ -82,7 +82,6 @@ struct rdp_transport
 	BOOL GatewayEnabled;
 	CRITICAL_SECTION ReadLock;
 	CRITICAL_SECTION WriteLock;
-	wLog* log;
 	void* rdp;
 };
 

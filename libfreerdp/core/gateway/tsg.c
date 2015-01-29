@@ -1413,6 +1413,9 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
 
+	tsg->bio = BIO_new(BIO_s_tsg());
+	tsg->bio->ptr = tsg;
+
 	WLog_INFO(TAG,  "TS Gateway Connection Success");
 
 	return TRUE;
@@ -1602,9 +1605,121 @@ void tsg_free(rdpTsg* tsg)
 {
 	if (tsg)
 	{
+		if (tsg->bio)
+		{
+			BIO_free(tsg->bio);
+			tsg->bio = NULL;
+		}
+
 		rpc_free(tsg->rpc);
 		free(tsg->Hostname);
 		free(tsg->MachineName);
 		free(tsg);
 	}
+}
+
+long transport_bio_tsg_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
+{
+	return 1;
+}
+
+static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
+{
+	int status;
+	rdpTsg* tsg = (rdpTsg*) bio->ptr;
+	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+	status = tsg_write(tsg, (BYTE*) buf, num);
+
+	if (status < 0)
+	{
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	}
+	else if (status == 0)
+	{
+		BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		WSASetLastError(WSAEWOULDBLOCK);
+	}
+	else
+	{
+		BIO_set_flags(bio, BIO_FLAGS_WRITE);
+	}
+
+	return status >= 0 ? status : -1;
+}
+
+static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
+{
+	int status;
+	rdpTsg* tsg = (rdpTsg*) bio->ptr;
+	BIO_clear_flags(bio, BIO_FLAGS_READ);
+	status = tsg_read(tsg, (BYTE*) buf, size);
+
+	if (status < 0)
+	{
+		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	}
+	else if (status == 0)
+	{
+		BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		WSASetLastError(WSAEWOULDBLOCK);
+	}
+	else
+	{
+		BIO_set_flags(bio, BIO_FLAGS_READ);
+	}
+
+	return status > 0 ? status : -1;
+}
+
+static int transport_bio_tsg_puts(BIO* bio, const char* str)
+{
+	return 1;
+}
+
+static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
+{
+	return 1;
+}
+
+static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
+{
+	if (cmd == BIO_CTRL_FLUSH)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+static int transport_bio_tsg_new(BIO* bio)
+{
+	bio->init = 1;
+	bio->num = 0;
+	bio->ptr = NULL;
+	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+	return 1;
+}
+
+static int transport_bio_tsg_free(BIO* bio)
+{
+	return 1;
+}
+
+static BIO_METHOD transport_bio_tsg_methods =
+{
+	BIO_TYPE_TSG,
+	"TSGateway",
+	transport_bio_tsg_write,
+	transport_bio_tsg_read,
+	transport_bio_tsg_puts,
+	transport_bio_tsg_gets,
+	transport_bio_tsg_ctrl,
+	transport_bio_tsg_new,
+	transport_bio_tsg_free,
+	NULL,
+};
+
+BIO_METHOD* BIO_s_tsg(void)
+{
+	return &transport_bio_tsg_methods;
 }

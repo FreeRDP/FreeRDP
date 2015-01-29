@@ -23,10 +23,6 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <winpr/crt.h>
 #include <winpr/smartcard.h>
 #include <winpr/environment.h>
@@ -385,7 +381,7 @@ void smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 	}
 	else
 	{
-		WLog_ERR(TAG,  "Unexpected SmartCard IRP: MajorFunction 0x%08X MinorFunction: 0x%08X",
+		WLog_ERR(TAG, "Unexpected SmartCard IRP: MajorFunction 0x%08X MinorFunction: 0x%08X",
 				 irp->MajorFunction, irp->MinorFunction);
 		irp->IoStatus = STATUS_NOT_SUPPORTED;
 
@@ -520,8 +516,6 @@ int DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		else
 			smartcard->name = name;
 	}
-
-	smartcard->log = WLog_Get("com.freerdp.channel.smartcard.client");
 
 	smartcard->IrpQueue = MessageQueue_New(NULL);
 

@@ -103,12 +103,6 @@ BOOL transport_disconnect(rdpTransport* transport)
 
 	transport_stop(transport);
 
-	if (transport->frontBio)
-	{
-		BIO_free_all(transport->frontBio);
-		transport->frontBio = NULL;
-	}
-
 	if (transport->TlsIn)
 		tls_free(transport->TlsIn);
 
@@ -143,114 +137,6 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 {
 	/* RDP encryption */
 	return TRUE;
-}
-
-long transport_bio_tsg_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
-{
-	return 1;
-}
-
-static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
-{
-	int status;
-	rdpTsg* tsg = (rdpTsg*) bio->ptr;
-	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
-	status = tsg_write(tsg, (BYTE*) buf, num);
-
-	if (status < 0)
-	{
-		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-	}
-	else if (status == 0)
-	{
-		BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-		WSASetLastError(WSAEWOULDBLOCK);
-	}
-	else
-	{
-		BIO_set_flags(bio, BIO_FLAGS_WRITE);
-	}
-
-	return status >= 0 ? status : -1;
-}
-
-static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
-{
-	int status;
-	rdpTsg* tsg = (rdpTsg*) bio->ptr;
-	BIO_clear_flags(bio, BIO_FLAGS_READ);
-	status = tsg_read(tsg, (BYTE*) buf, size);
-
-	if (status < 0)
-	{
-		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-	}
-	else if (status == 0)
-	{
-		BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-		WSASetLastError(WSAEWOULDBLOCK);
-	}
-	else
-	{
-		BIO_set_flags(bio, BIO_FLAGS_READ);
-	}
-
-	return status > 0 ? status : -1;
-}
-
-static int transport_bio_tsg_puts(BIO* bio, const char* str)
-{
-	return 1;
-}
-
-static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
-{
-	return 1;
-}
-
-static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
-{
-	if (cmd == BIO_CTRL_FLUSH)
-	{
-		return 1;
-	}
-
-	return 0;
-}
-
-static int transport_bio_tsg_new(BIO* bio)
-{
-	bio->init = 1;
-	bio->num = 0;
-	bio->ptr = NULL;
-	bio->flags = BIO_FLAGS_SHOULD_RETRY;
-	return 1;
-}
-
-static int transport_bio_tsg_free(BIO* bio)
-{
-	return 1;
-}
-
-#define BIO_TYPE_TSG	65
-
-static BIO_METHOD transport_bio_tsg_methods =
-{
-	BIO_TYPE_TSG,
-	"TSGateway",
-	transport_bio_tsg_write,
-	transport_bio_tsg_read,
-	transport_bio_tsg_puts,
-	transport_bio_tsg_gets,
-	transport_bio_tsg_ctrl,
-	transport_bio_tsg_new,
-	transport_bio_tsg_free,
-	NULL,
-};
-
-BIO_METHOD* BIO_s_tsg(void)
-{
-	return &transport_bio_tsg_methods;
 }
 
 BOOL transport_connect_tls(rdpTransport* transport)
@@ -391,8 +277,10 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	freerdp* instance;
 	rdpContext* context;
 	rdpSettings* settings = transport->settings;
+
 	instance = (freerdp*) transport->settings->instance;
 	context = instance->context;
+
 	tsg = tsg_new(transport);
 
 	if (!tsg)
@@ -424,6 +312,7 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 	transport->TlsIn->hostname = transport->TlsOut->hostname = settings->GatewayHostname;
 	transport->TlsIn->port = transport->TlsOut->port = settings->GatewayPort;
+
 	transport->TlsIn->isGatewayTransport = TRUE;
 	tls_status = tls_connect(transport->TlsIn, transport->TcpIn->bufferedBio);
 
@@ -465,8 +354,8 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 	if (!tsg_connect(tsg, hostname, port))
 		return FALSE;
 
-	transport->frontBio = BIO_new(BIO_s_tsg());
-	transport->frontBio->ptr = tsg;
+	transport->frontBio = tsg->bio;
+
 	return TRUE;
 }
 
@@ -509,7 +398,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		{
 			transport->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 			transport->thread = CreateThread(NULL, 0,
-											 (LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
+				(LPTHREAD_START_ROUTINE) transport_client_thread, transport, 0, NULL);
 		}
 	}
 
@@ -838,7 +727,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 #endif
 
 	if (Stream_GetPosition(s) >= pduLength)
-		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
+		WLog_Packet(WLog_Get(TAG), WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
 
 	Stream_SealLength(s);
 	Stream_SetPosition(s, 0);
@@ -866,7 +755,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 	if (length > 0)
 	{
-		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), length, WLOG_PACKET_OUTBOUND);
+		WLog_Packet(WLog_Get(TAG), WLOG_TRACE, Stream_Buffer(s), length, WLOG_PACKET_OUTBOUND);
 	}
 
 	while (length > 0)
@@ -1138,20 +1027,23 @@ static void* transport_client_thread(void* arg)
 	rdpTransport* transport = (rdpTransport*) arg;
 	rdpContext* context = transport->context;
 	freerdp* instance = context->instance;
-	WLog_Print(transport->log, WLOG_DEBUG, "Starting transport thread");
+
+	WLog_DBG(TAG, "Starting transport thread");
+	
 	nCount = 0;
 	handles[nCount++] = transport->stopEvent;
 	handles[nCount++] = transport->connectedEvent;
+
 	status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 	if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
 	{
-		WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
+		WLog_DBG(TAG, "Terminating transport thread");
 		ExitThread(0);
 		return NULL;
 	}
 
-	WLog_Print(transport->log, WLOG_DEBUG, "Asynchronous transport activated");
+	WLog_DBG(TAG, "Asynchronous transport activated");
 
 	while (1)
 	{
@@ -1177,7 +1069,7 @@ static void* transport_client_thread(void* arg)
 		}
 	}
 
-	WLog_Print(transport->log, WLOG_DEBUG, "Terminating transport thread");
+	WLog_DBG(TAG, "Terminating transport thread");
 	ExitThread(0);
 	return NULL;
 }
@@ -1185,6 +1077,7 @@ static void* transport_client_thread(void* arg)
 rdpTransport* transport_new(rdpContext* context)
 {
 	rdpTransport* transport;
+	
 	transport = (rdpTransport*) calloc(1, sizeof(rdpTransport));
 
 	if (!transport)
@@ -1192,11 +1085,6 @@ rdpTransport* transport_new(rdpContext* context)
 
 	transport->context = context;
 	transport->settings = context->settings;
-	WLog_Init();
-	transport->log = WLog_Get(TAG);
-
-	if (!transport->log)
-		goto out_free;
 
 	transport->TcpIn = freerdp_tcp_new(context->settings);
 

@@ -310,9 +310,9 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	UINT32 offset;
-	UINT32 length;
 	RpcClientCall* clientCall;
 	rpcconn_rpc_auth_3_hdr_t* auth_3_pdu;
 
@@ -360,17 +360,17 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	CopyMemory(&buffer[offset + 8], auth_3_pdu->auth_verifier.auth_value, auth_3_pdu->auth_length);
 	offset += (8 + auth_3_pdu->auth_length);
 
-	length = auth_3_pdu->frag_length;
+	status = (int) auth_3_pdu->frag_length;
 
 	clientCall = rpc_client_call_new(auth_3_pdu->call_id, 0);
 	ArrayList_Add(rpc->client->ClientCallList, clientCall);
 
-	if (rpc_send_enqueue_pdu(rpc, buffer, length) != 0)
-		length = -1;
+	if (rpc_send_enqueue_pdu(rpc, buffer, (UINT32) status) != 0)
+		status = -1;
 
 	free(auth_3_pdu);
 
-	return length;
+	return status;
 }
 
 /**

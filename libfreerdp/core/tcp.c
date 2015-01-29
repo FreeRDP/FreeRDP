@@ -87,8 +87,30 @@
 
 /* Simple Socket BIO */
 
-static int transport_bio_simple_new(BIO* bio);
-static int transport_bio_simple_free(BIO* bio);
+struct _WINPR_BIO_SIMPLE_SOCKET
+{
+	BOOL win32;
+	SOCKET socket;
+	HANDLE hEvent;
+};
+typedef struct _WINPR_BIO_SIMPLE_SOCKET WINPR_BIO_SIMPLE_SOCKET;
+
+static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown);
+static int transport_bio_simple_uninit(BIO* bio);
+
+static void transport_bio_simple_check_reset_event(BIO* bio)
+{
+	u_long nbytes = 0;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+
+	if (!ptr->win32)
+		return;
+
+	_ioctlsocket(ptr->socket, FIONREAD, &nbytes);
+
+	if (nbytes < 1)
+		WSAResetEvent(ptr->hEvent);
+}
 
 long transport_bio_simple_callback(BIO* bio, int mode, const char* argp, int argi, long argl, long ret)
 {
@@ -99,13 +121,14 @@ static int transport_bio_simple_write(BIO* bio, const char* buf, int size)
 {
 	int error;
 	int status = 0;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
 
 	if (!buf)
 		return 0;
 
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
-	status = _send((SOCKET) bio->num, buf, size, 0);
+	status = _send(ptr->socket, buf, size, 0);
 
 	if (status <= 0)
 	{
@@ -129,15 +152,20 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 {
 	int error;
 	int status = 0;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
 
 	if (!buf)
 		return 0;
 
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
-	status = _recv((SOCKET) bio->num, buf, size, 0);
+	status = _recv(ptr->socket, buf, size, 0);
+
 	if (status > 0)
+	{
+		transport_bio_simple_check_reset_event(bio);
 		return status;
+	}
 
 	if (status == 0)
 	{
@@ -157,6 +185,8 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	}
 
+	transport_bio_simple_check_reset_event(bio);
+
 	return -1;
 }
 
@@ -173,17 +203,59 @@ static int transport_bio_simple_gets(BIO* bio, char* str, int size)
 static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	int status = -1;
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+
+	if (cmd == BIO_C_SET_SOCKET)
+	{
+		transport_bio_simple_uninit(bio);
+		transport_bio_simple_init(bio, (SOCKET) arg2, (int) arg1);
+		return 1;
+	}
+	else if (cmd == BIO_C_GET_SOCKET)
+	{
+		if (!bio->init || !arg2)
+			return 0;
+
+		*((ULONG_PTR*) arg2) = (ULONG_PTR) ptr->socket;
+
+		return 1;
+	}
+	else if (cmd == BIO_C_GET_EVENT)
+	{
+		if (!bio->init || !arg2)
+			return 0;
+
+		*((ULONG_PTR*) arg2) = (ULONG_PTR) ptr->hEvent;
+
+		return 1;
+	}
+	else if (cmd == BIO_C_SET_NONBLOCK)
+	{
+#ifndef _WIN32
+		int flags;
+
+		flags = fcntl((int) ptr->socket, F_GETFL);
+
+		if (flags == -1)
+			return 0;
+
+		if (arg1)
+			fcntl((int) ptr->socket, F_SETFL, flags | O_NONBLOCK);
+		else
+			fcntl((int) ptr->socket, F_SETFL, flags & ~(O_NONBLOCK));
+#else
+		/* the internal socket is always non-blocking */
+#endif
+		return 1;
+	}
 
 	switch (cmd)
 	{
 		case BIO_C_SET_FD:
 			if (arg2)
 			{
-				transport_bio_simple_free(bio);
-				bio->flags = BIO_FLAGS_SHOULD_RETRY;
-				bio->num = *((int*) arg2);
-				bio->shutdown = (int) arg1;
-				bio->init = 1;
+				transport_bio_simple_uninit(bio);
+				transport_bio_simple_init(bio, (SOCKET) *((int*) arg2), (int) arg1);
 				status = 1;
 			}
 			break;
@@ -192,8 +264,8 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			if (bio->init)
 			{
 				if (arg2)
-					*((int*) arg2) = bio->num;
-				status = bio->num;
+					*((int*) arg2) = (int) ptr->socket;
+				status = (int) ptr->socket;
 			}
 			break;
 
@@ -222,12 +294,81 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	return status;
 }
 
+static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
+{
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+
+	ptr->socket = socket;
+
+	bio->shutdown = shutdown;
+	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+	bio->init = 1;
+
+	if (ptr->win32)
+	{
+		ptr->hEvent = WSACreateEvent(); /* creates a manual reset event */
+
+		if (!ptr->hEvent)
+			return 0;
+
+		/* WSAEventSelect automatically sets the socket in non-blocking mode */
+		WSAEventSelect(ptr->socket, ptr->hEvent, FD_READ | FD_CLOSE);
+	}
+	else
+	{
+		ptr->hEvent = CreateFileDescriptorEvent(NULL, FALSE, FALSE, (int) ptr->socket);
+
+		if (!ptr->hEvent)
+			return 0;
+	}
+
+	return 1;
+}
+
+static int transport_bio_simple_uninit(BIO* bio)
+{
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) bio->ptr;
+
+	if (bio->shutdown)
+	{
+		if (bio->init)
+		{
+			closesocket(ptr->socket);
+			ptr->socket = 0;
+		}
+	}
+
+	if (ptr->hEvent)
+	{
+		CloseHandle(ptr->hEvent);
+		ptr->hEvent = NULL;
+	}
+
+	bio->init = 0;
+	bio->flags = 0;
+
+	return 1;
+}
+
 static int transport_bio_simple_new(BIO* bio)
 {
+	WINPR_BIO_SIMPLE_SOCKET* ptr;
+
 	bio->init = 0;
-	bio->num = 0;
 	bio->ptr = NULL;
 	bio->flags = BIO_FLAGS_SHOULD_RETRY;
+
+	ptr = (WINPR_BIO_SIMPLE_SOCKET*) calloc(1, sizeof(WINPR_BIO_SIMPLE_SOCKET));
+
+	if (!ptr)
+		return 0;
+
+	bio->ptr = ptr;
+
+#ifdef _WIN32
+	ptr->win32 = TRUE;
+#endif
+
 	return 1;
 }
 
@@ -236,13 +377,12 @@ static int transport_bio_simple_free(BIO* bio)
 	if (!bio)
 		return 0;
 
-	if (bio->shutdown)
-	{
-		if (bio->init)
-			closesocket((SOCKET) bio->num);
+	transport_bio_simple_uninit(bio);
 
-		bio->init = 0;
-		bio->flags = 0;
+	if (bio->ptr)
+	{
+		free(bio->ptr);
+		bio->ptr = NULL;
 	}
 
 	return 1;
@@ -931,7 +1071,7 @@ BOOL freerdp_tcp_connect(rdpTcp* tcp, const char* hostname, int port, int timeou
 		BIO_set_fd(tcp->socketBio, tcp->sockfd, BIO_CLOSE);
 	}
 
-	SetEventFileDescriptor(tcp->event, tcp->sockfd);
+	BIO_get_event(tcp->socketBio, &tcp->event);
 
 	freerdp_tcp_get_ip_address(tcp);
 	freerdp_tcp_get_mac_address(tcp);
@@ -994,49 +1134,7 @@ BOOL freerdp_tcp_disconnect(rdpTcp* tcp)
 
 BOOL freerdp_tcp_set_blocking_mode(rdpTcp* tcp, BOOL blocking)
 {
-#ifndef _WIN32
-	int flags;
-	flags = fcntl(tcp->sockfd, F_GETFL);
-
-	if (flags == -1)
-	{
-		WLog_ERR(TAG,  "fcntl failed, %s.", strerror(errno));
-		return FALSE;
-	}
-
-	if (blocking == TRUE)
-		fcntl(tcp->sockfd, F_SETFL, flags & ~(O_NONBLOCK));
-	else
-		fcntl(tcp->sockfd, F_SETFL, flags | O_NONBLOCK);
-#else
-	/**
-	 * ioctlsocket function:
-	 * msdn.microsoft.com/en-ca/library/windows/desktop/ms738573/
-	 * 
-	 * The WSAAsyncSelect and WSAEventSelect functions automatically set a socket to nonblocking mode.
-	 * If WSAAsyncSelect or WSAEventSelect has been issued on a socket, then any attempt to use
-	 * ioctlsocket to set the socket back to blocking mode will fail with WSAEINVAL.
-	 * 
-	 * To set the socket back to blocking mode, an application must first disable WSAAsyncSelect
-	 * by calling WSAAsyncSelect with the lEvent parameter equal to zero, or disable WSAEventSelect
-	 * by calling WSAEventSelect with the lNetworkEvents parameter equal to zero.
-	 */
-
-	if (blocking == TRUE)
-	{
-		if (tcp->event)
-			WSAEventSelect(tcp->sockfd, tcp->event, 0);
-	}
-	else
-	{
-		if (!tcp->event)
-			tcp->event = WSACreateEvent();
-
-		WSAEventSelect(tcp->sockfd, tcp->event, FD_READ);
-	}
-#endif
-
-	return TRUE;
+	return BIO_set_nonblock(tcp->socketBio, blocking ? 0 : 1) ? TRUE : FALSE;
 }
 
 BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp)
@@ -1102,13 +1200,12 @@ BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp)
 int freerdp_tcp_attach(rdpTcp* tcp, int sockfd)
 {
 	tcp->sockfd = sockfd;
-	SetEventFileDescriptor(tcp->event, tcp->sockfd);
 
 	ringbuffer_commit_read_bytes(&tcp->xmitBuffer, ringbuffer_used(&tcp->xmitBuffer));
 
 	if (tcp->socketBio)
 	{
-		if (BIO_set_fd(tcp->socketBio, sockfd, 1) < 0)
+		if (BIO_set_fd(tcp->socketBio, sockfd, BIO_CLOSE) < 0)
 			return -1;
 	}
 	else
@@ -1133,7 +1230,9 @@ int freerdp_tcp_attach(rdpTcp* tcp, int sockfd)
 		tcp->bufferedBio = BIO_push(tcp->bufferedBio, tcp->socketBio);
 	}
 
-	return 0;
+	BIO_get_event(tcp->socketBio, &tcp->event);
+
+	return 1;
 }
 
 HANDLE freerdp_tcp_get_event_handle(rdpTcp* tcp)
@@ -1235,19 +1334,8 @@ rdpTcp* freerdp_tcp_new(rdpSettings* settings)
 	tcp->sockfd = -1;
 	tcp->settings = settings;
 
-	if (0)
-		goto out_ringbuffer; /* avoid unreferenced label warning on Windows */
-
-#ifndef _WIN32
-	tcp->event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, tcp->sockfd);
-
-	if (!tcp->event || tcp->event == INVALID_HANDLE_VALUE)
-		goto out_ringbuffer;
-#endif
-
 	return tcp;
-out_ringbuffer:
-	ringbuffer_destroy(&tcp->xmitBuffer);
+
 out_free:
 	free(tcp);
 	return NULL;
@@ -1259,6 +1347,18 @@ void freerdp_tcp_free(rdpTcp* tcp)
 		return;
 
 	ringbuffer_destroy(&tcp->xmitBuffer);
-	CloseHandle(tcp->event);
+
+	if (tcp->socketBio)
+	{
+		BIO_free(tcp->socketBio);
+		tcp->socketBio = NULL;
+	}
+
+	if (tcp->bufferedBio)
+	{
+		BIO_free(tcp->bufferedBio);
+		tcp->bufferedBio = NULL;
+	}
+
 	free(tcp);
 }

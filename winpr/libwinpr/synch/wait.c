@@ -740,9 +740,7 @@ DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAl
 
 DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds, BOOL bAlertable)
 {
-	WLog_ERR(TAG, "[ERROR] %s: Function not implemented.");
-	assert(0);
-	return 0;
+	return WaitForMultipleObjects(nCount, lpHandles, bWaitAll, dwMilliseconds);
 }
 
 DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable)

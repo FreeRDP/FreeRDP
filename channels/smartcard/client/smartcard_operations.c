@@ -23,9 +23,6 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
 #include <winpr/crt.h>
@@ -1033,9 +1030,8 @@ static UINT32 smartcard_GetAttrib_Call(SMARTCARD_DEVICE* smartcard, SMARTCARD_OP
 
 	if (ret.ReturnCode)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN,
-				   "SCardGetAttrib: %s (0x%08X) cbAttrLen: %d",
-				   SCardGetAttributeString(call->dwAttrId), call->dwAttrId, call->cbAttrLen);
+		WLog_WARN(TAG, "SCardGetAttrib: %s (0x%08X) cbAttrLen: %d",
+				SCardGetAttributeString(call->dwAttrId), call->dwAttrId, call->cbAttrLen);
 		Stream_Zero(irp->output, 256);
 
 		free(ret.pbAttr);
@@ -1060,7 +1056,7 @@ static UINT32 smartcard_AccessStartedEvent_Decode(SMARTCARD_DEVICE* smartcard, S
 
 	if (Stream_GetRemainingLength(irp->input) < 4)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "AccessStartedEvent is too short: %d",
+		WLog_WARN(TAG, "AccessStartedEvent is too short: %d",
 				   (int) Stream_GetRemainingLength(irp->input));
 		return SCARD_F_INTERNAL_ERROR;
 	}
@@ -1207,7 +1203,7 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCAR
 
 	if (Stream_GetRemainingLength(irp->input) < 32)
 	{
-		WLog_Print(smartcard->log, WLOG_WARN, "Device Control Request is too short: %d",
+		WLog_WARN(TAG, "Device Control Request is too short: %d",
 				   (int) Stream_GetRemainingLength(irp->input));
 		return SCARD_F_INTERNAL_ERROR;
 	}
@@ -1220,18 +1216,14 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCAR
 
 	if (Stream_Length(irp->input) != (Stream_GetPosition(irp->input) + inputBufferLength))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN,
-				   "InputBufferLength mismatch: Actual: %d Expected: %d",
-				   Stream_Length(irp->input), Stream_GetPosition(irp->input) + inputBufferLength);
+		WLog_WARN(TAG, "InputBufferLength mismatch: Actual: %d Expected: %d",
+				Stream_Length(irp->input), Stream_GetPosition(irp->input) + inputBufferLength);
 		return SCARD_F_INTERNAL_ERROR;
 	}
 
-	WLog_Print(smartcard->log, WLOG_DEBUG, "%s (0x%08X) FileId: %d CompletionId: %d",
-			   smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
-#if 0
 	WLog_DBG(TAG, "%s (0x%08X) FileId: %d CompletionId: %d",
-			 smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, irp->FileId, irp->CompletionId);
-#endif
+		smartcard_get_ioctl_string(ioControlCode, TRUE),
+		ioControlCode, irp->FileId, irp->CompletionId);
 
 	if ((ioControlCode != SCARD_IOCTL_ACCESSSTARTEDEVENT) &&
 			(ioControlCode != SCARD_IOCTL_RELEASESTARTEDEVENT))
@@ -1482,10 +1474,9 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCAR
 	{
 		UINT32 difference;
 		difference = (int)(Stream_Length(irp->input) - Stream_GetPosition(irp->input));
-		WLog_Print(smartcard->log, WLOG_WARN,
-				   "IRP was not fully parsed %s (0x%08X): Actual: %d, Expected: %d, Difference: %d",
-				   smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
-				   (int) Stream_GetPosition(irp->input), (int) Stream_Length(irp->input), difference);
+		WLog_WARN(TAG, "IRP was not fully parsed %s (0x%08X): Actual: %d, Expected: %d, Difference: %d",
+				smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
+				(int) Stream_GetPosition(irp->input), (int) Stream_Length(irp->input), difference);
 		winpr_HexDump(TAG, WLOG_WARN, Stream_Pointer(irp->input), difference);
 	}
 
@@ -1493,10 +1484,9 @@ UINT32 smartcard_irp_device_control_decode(SMARTCARD_DEVICE* smartcard, SMARTCAR
 	{
 		UINT32 difference;
 		difference = (int)(Stream_GetPosition(irp->input) - Stream_Length(irp->input));
-		WLog_Print(smartcard->log, WLOG_WARN,
-				   "IRP was parsed beyond its end %s (0x%08X): Actual: %d, Expected: %d, Difference: %d",
-				   smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
-				   (int) Stream_GetPosition(irp->input), (int) Stream_Length(irp->input), difference);
+		WLog_WARN(TAG, "IRP was parsed beyond its end %s (0x%08X): Actual: %d, Expected: %d, Difference: %d",
+				smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
+				(int) Stream_GetPosition(irp->input), (int) Stream_Length(irp->input), difference);
 	}
 
 	if (status != SCARD_S_SUCCESS)
@@ -1756,10 +1746,9 @@ UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_
 	if ((result != SCARD_S_SUCCESS) && (result != SCARD_E_TIMEOUT) &&
 			(result != SCARD_E_NO_READERS_AVAILABLE) && (result != SCARD_E_NO_SERVICE))
 	{
-		WLog_Print(smartcard->log, WLOG_WARN,
-				   "IRP failure: %s (0x%08X), status: %s (0x%08X)",
-				   smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
-				   SCardGetErrorString(result), result);
+		WLog_WARN(TAG, "IRP failure: %s (0x%08X), status: %s (0x%08X)",
+			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode,
+			SCardGetErrorString(result), result);
 	}
 
 	irp->IoStatus = 0;
@@ -1769,9 +1758,8 @@ UINT32 smartcard_irp_device_control_call(SMARTCARD_DEVICE* smartcard, SMARTCARD_
 		/* NTSTATUS error */
 		irp->IoStatus = result;
 		Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH);
-		WLog_Print(smartcard->log, WLOG_WARN,
-				   "IRP failure: %s (0x%08X), ntstatus: 0x%08X",
-				   smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, result);
+		WLog_WARN(TAG, "IRP failure: %s (0x%08X), ntstatus: 0x%08X",
+			smartcard_get_ioctl_string(ioControlCode, TRUE), ioControlCode, result);
 	}
 
 	Stream_SealLength(irp->output);
