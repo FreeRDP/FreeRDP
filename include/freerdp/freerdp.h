@@ -248,6 +248,9 @@ FREERDP_API BOOL freerdp_reconnect(freerdp* instance);
 FREERDP_API BOOL freerdp_get_fds(freerdp* instance, void** rfds, int* rcount, void** wfds, int* wcount);
 FREERDP_API BOOL freerdp_check_fds(freerdp* instance);
 
+FREERDP_API DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events);
+FREERDP_API BOOL freerdp_check_event_handles(rdpContext* context);
+
 FREERDP_API wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id);
 FREERDP_API HANDLE freerdp_get_message_queue_event_handle(freerdp* instance, DWORD id);
 FREERDP_API int freerdp_message_queue_process_message(freerdp* instance, DWORD id, wMessage* message);

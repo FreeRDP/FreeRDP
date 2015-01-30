@@ -105,6 +105,7 @@ struct xf_context
 	BOOL grab_keyboard;
 	BOOL unobscured;
 	BOOL debug;
+	HANDLE x11event;
 	xfWindow* window;
 	xfAppWindow* appWindow;
 	xfPointer* pointer;

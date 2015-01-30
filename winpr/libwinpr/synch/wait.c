@@ -412,8 +412,6 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 	return WAIT_OBJECT_0;
 }
 
-#define MAXIMUM_WAIT_OBJECTS 64
-
 DWORD WaitForMultipleObjects(DWORD nCount, const HANDLE *lpHandles, BOOL bWaitAll, DWORD dwMilliseconds)
 {
 	struct timespec starttime;

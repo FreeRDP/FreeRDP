@@ -98,12 +98,15 @@ BOOL transport_accept_nla(rdpTransport* transport);
 void transport_stop(rdpTransport* transport);
 int transport_read_pdu(rdpTransport* transport, wStream* s);
 int transport_write(rdpTransport* transport, wStream* s);
+
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount);
 int transport_check_fds(rdpTransport* transport);
+
+DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events);
+
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
 void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled);
 void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode);
-void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count);
 BOOL tranport_is_write_blocked(rdpTransport* transport);
 int tranport_drain_output_buffer(rdpTransport* transport);
 
