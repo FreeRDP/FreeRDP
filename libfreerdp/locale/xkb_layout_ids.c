@@ -61,7 +61,7 @@ static const XKB_VARIANT us_variants[] =
 	{ "dvorak-l",		KBD_UNITED_STATES_DVORAK_FOR_LEFT_HAND }, /* Left handed Dvorak */
 	{ "dvorak-r",		KBD_UNITED_STATES_DVORAK_FOR_RIGHT_HAND }, /* Right handed Dvorak */
 	{ "dvorak-classic",	KBD_UNITED_STATES_DVORAK }, /* Classic Dvorak */
-	{ "dvp",		KBD_UNITED_STATES_DVORAK }, /* Programmer Dvorak */
+	{ "dvp",		KBD_UNITED_STATES_DVORAK_PROGRAMMER }, /* Programmer Dvorak */
 	{ "rus",		0 }, /* Russian phonetic */
 	{ "mac",		KBD_US }, /* Macintosh */
 	{ "altgr-intl",		KBD_UNITED_STATES_INTERNATIONAL }, /* International (AltGr dead keys) */
