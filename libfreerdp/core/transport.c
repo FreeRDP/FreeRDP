@@ -866,28 +866,36 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	}
 }
 
-void transport_get_read_handles(rdpTransport* transport, HANDLE* events, DWORD* count)
+DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events)
 {
-	events[*count] = freerdp_tcp_get_event_handle(transport->TcpIn);
-	(*count)++;
+	DWORD nCount = 0;
+
+	if (events)
+		events[nCount] = freerdp_tcp_get_event_handle(transport->TcpIn);
+	nCount++;
 
 	if (transport->SplitInputOutput)
 	{
-		events[*count] = freerdp_tcp_get_event_handle(transport->TcpOut);
-		(*count)++;
+		if (events)
+			events[nCount] = freerdp_tcp_get_event_handle(transport->TcpOut);
+		nCount++;
 	}
 
 	if (transport->ReceiveEvent)
 	{
-		events[*count] = transport->ReceiveEvent;
-		(*count)++;
+		if (events)
+			events[nCount] = transport->ReceiveEvent;
+		nCount++;
 	}
 
 	if (transport->GatewayEvent)
 	{
-		events[*count] = transport->GatewayEvent;
-		(*count)++;
+		if (events)
+			events[nCount] = transport->GatewayEvent;
+		nCount++;
 	}
+
+	return nCount;
 }
 
 BOOL tranport_is_write_blocked(rdpTransport* transport)
@@ -1049,7 +1057,8 @@ static void* transport_client_thread(void* arg)
 	{
 		nCount = 0;
 		handles[nCount++] = transport->stopEvent;
-		transport_get_read_handles(transport, (HANDLE*) &handles, &nCount);
+		nCount += transport_get_event_handles(transport, &handles[nCount]);
+		
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (transport->layer == TRANSPORT_LAYER_CLOSED)
@@ -1058,14 +1067,12 @@ static void* transport_client_thread(void* arg)
 			rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
 			break;
 		}
-		else if (status != WAIT_TIMEOUT)
-		{
-			if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
+
+		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
 				break;
 
-			if (!freerdp_check_fds(instance))
-			{
-			}
+		if (!freerdp_check_fds(instance))
+		{
 		}
 	}
 

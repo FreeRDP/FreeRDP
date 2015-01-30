@@ -241,6 +241,16 @@ BOOL freerdp_check_fds(freerdp* instance)
 	return TRUE;
 }
 
+DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events)
+{
+	return transport_get_event_handles(context->rdp->transport, events);
+}
+
+BOOL freerdp_check_event_handles(rdpContext* context)
+{
+	return freerdp_check_fds(context->instance);
+}
+
 wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id)
 {
 	wMessageQueue* queue = NULL;
