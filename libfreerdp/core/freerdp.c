@@ -243,12 +243,29 @@ BOOL freerdp_check_fds(freerdp* instance)
 
 DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events)
 {
-	return transport_get_event_handles(context->rdp->transport, events);
+	DWORD nCount = 0;
+
+	nCount += transport_get_event_handles(context->rdp->transport, events);
+
+	if (events)
+		events[nCount] = freerdp_channels_get_event_handle(context->instance);
+	nCount++;
+
+	return nCount;
 }
 
 BOOL freerdp_check_event_handles(rdpContext* context)
 {
-	return freerdp_check_fds(context->instance);
+	BOOL status;
+
+	status = freerdp_check_fds(context->instance);
+
+	if (!status)
+		return FALSE;
+
+	status = freerdp_channels_check_fds(context->channels, context->instance);
+
+	return status;
 }
 
 wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id)

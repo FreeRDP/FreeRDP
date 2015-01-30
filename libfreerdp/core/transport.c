@@ -1031,10 +1031,10 @@ static void* transport_client_thread(void* arg)
 {
 	DWORD status;
 	DWORD nCount;
-	HANDLE handles[8];
+	HANDLE handles[64];
 	rdpTransport* transport = (rdpTransport*) arg;
 	rdpContext* context = transport->context;
-	freerdp* instance = context->instance;
+	rdpRdp* rdp = (rdpRdp*) transport->rdp;
 
 	WLog_DBG(TAG, "Starting transport thread");
 	
@@ -1057,13 +1057,12 @@ static void* transport_client_thread(void* arg)
 	{
 		nCount = 0;
 		handles[nCount++] = transport->stopEvent;
-		nCount += transport_get_event_handles(transport, &handles[nCount]);
+		nCount += freerdp_get_event_handles(context, &handles[nCount]);
 		
 		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (transport->layer == TRANSPORT_LAYER_CLOSED)
 		{
-			rdpRdp* rdp = (rdpRdp*) transport->rdp;
 			rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
 			break;
 		}
@@ -1071,8 +1070,13 @@ static void* transport_client_thread(void* arg)
 		if (WaitForSingleObject(transport->stopEvent, 0) == WAIT_OBJECT_0)
 				break;
 
-		if (!freerdp_check_fds(instance))
+		if (WaitForMultipleObjects(nCount - 1, &handles[1], FALSE, 0) != WAIT_TIMEOUT)
 		{
+			if (!freerdp_check_event_handles(context))
+			{
+				rdp_set_error_info(rdp, ERRINFO_PEER_DISCONNECTED);
+				break;
+			}
 		}
 	}
 
