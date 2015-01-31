@@ -64,7 +64,7 @@ BOOL rts_connect(rdpRpc* rpc)
 {
 	RPC_PDU* pdu;
 	rpcconn_rts_hdr_t* rts;
-	HttpResponse* http_response;
+	HttpResponse* httpResponse;
 	freerdp* instance = (freerdp*) rpc->settings->instance;
 	rdpContext* context = instance->context;
 
@@ -130,7 +130,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	 * A client implementation MUST NOT accept the OUT channel HTTP response in any state other than
 	 * Out Channel Wait. If received in any other state, this HTTP response is a protocol error. Therefore,
 	 * the client MUST consider the virtual connection opening a failure and indicate this to higher layers
-	 * in an implementation-specific way. The Microsoft Windows® implementation returns
+	 * in an implementation-specific way. The Microsoft Windows implementation returns
 	 * RPC_S_PROTOCOL_ERROR, as specified in [MS-ERREF], to higher-layer protocols.
 	 *
 	 * If this HTTP response is received in Out Channel Wait state, the client MUST process the fields of
@@ -152,20 +152,21 @@ BOOL rts_connect(rdpRpc* rpc)
 	 *
 	 */
 
-	http_response = http_response_recv(rpc->TlsOut);
-	if (!http_response)
+	httpResponse = http_response_recv(rpc->TlsOut);
+
+	if (!httpResponse)
 	{
 		WLog_ERR(TAG, "unable to retrieve OUT Channel Response!");
 		return FALSE;
 	}
 
-	if (http_response->StatusCode != HTTP_STATUS_OK)
+	if (httpResponse->StatusCode != HTTP_STATUS_OK)
 	{
-		WLog_ERR(TAG, "error! Status Code: %d", http_response->StatusCode);
-		http_response_print(http_response);
-		http_response_free(http_response);
+		WLog_ERR(TAG, "error! Status Code: %d", httpResponse->StatusCode);
+		http_response_print(httpResponse);
+		http_response_free(httpResponse);
 
-		if (http_response->StatusCode == HTTP_STATUS_DENIED)
+		if (httpResponse->StatusCode == HTTP_STATUS_DENIED)
 		{
 			if (!connectErrorCode)
 			{
@@ -181,16 +182,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	if (http_response->bodyLen)
-	{
-		/* inject bytes we have read in the body as a received packet for the RPC client */
-		rpc->client->RecvFrag = rpc_client_fragment_pool_take(rpc);
-		Stream_EnsureCapacity(rpc->client->RecvFrag, http_response->bodyLen);
-		CopyMemory(rpc->client->RecvFrag, http_response->BodyContent,  http_response->bodyLen);
-	}
-
-	//http_response_print(http_response);
-	http_response_free(http_response);
+	http_response_free(httpResponse);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_A3W;
 	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_A3W");
@@ -255,6 +247,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	 */
 
 	pdu = rpc_recv_dequeue_pdu(rpc);
+
 	if (!pdu)
 		return FALSE;
 

@@ -30,6 +30,8 @@
 
 typedef struct rdp_rpc rdpRpc;
 
+#pragma pack(push, 1)
+
 #define DEFINE_RPC_COMMON_FIELDS() \
 	BYTE rpc_vers; \
 	BYTE rpc_vers_minor; \
@@ -57,9 +59,12 @@ typedef struct
 typedef struct _RPC_PDU
 {
 	wStream* s;
-	DWORD Flags;
-	DWORD CallId;
+	UINT32 Type;
+	UINT32 Flags;
+	UINT32 CallId;
 } RPC_PDU, *PRPC_PDU;
+
+#pragma pack(pop)
 
 #include "../tcp.h"
 #include "../transport.h"
@@ -130,6 +135,8 @@ typedef struct _RPC_PDU
  * that use it (request, response, fault)
  */
 #define RPC_PDU_HEADER_MAX_LENGTH   32
+
+#pragma pack(push, 1)
 
 typedef struct
 {
@@ -532,6 +539,8 @@ typedef union
 	rpcconn_rts_hdr_t rts;
 } rpcconn_hdr_t;
 
+#pragma pack(pop)
+
 struct _RPC_SECURITY_PROVIDER_INFO
 {
 	UINT32 Id;
@@ -706,8 +715,6 @@ struct rpc_client
 	wQueue* ReceiveQueue;
 
 	wStream* RecvFrag;
-	wQueue* FragmentPool;
-	wQueue* FragmentQueue;
 
 	wArrayList* ClientCallList;
 

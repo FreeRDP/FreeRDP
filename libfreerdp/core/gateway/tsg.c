@@ -1512,7 +1512,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 	{
 		tsg->pdu = rpc_recv_peek_pdu(rpc);
 
-		/* there is a pdu to process - move on*/
+		/* there is a pdu to process - move on */
 		if (tsg->pdu)
 			break;
 

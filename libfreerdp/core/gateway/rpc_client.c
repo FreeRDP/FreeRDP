@@ -34,26 +34,8 @@
 #include "../rdp.h"
 
 #define TAG FREERDP_TAG("core.gateway")
+
 #define SYNCHRONOUS_TIMEOUT 5000
-
-wStream* rpc_client_fragment_pool_take(rdpRpc* rpc)
-{
-	wStream* fragment = NULL;
-
-	if (WaitForSingleObject(Queue_Event(rpc->client->FragmentPool), 0) == WAIT_OBJECT_0)
-		fragment = Queue_Dequeue(rpc->client->FragmentPool);
-
-	if (!fragment)
-		fragment = Stream_New(NULL, rpc->max_recv_frag);
-
-	return fragment;
-}
-
-int rpc_client_fragment_pool_return(rdpRpc* rpc, wStream* fragment)
-{
-	Queue_Enqueue(rpc->client->FragmentPool, fragment);
-	return 0;
-}
 
 RPC_PDU* rpc_client_receive_pool_take(rdpRpc* rpc)
 {
@@ -90,32 +72,35 @@ int rpc_client_receive_pool_return(rdpRpc* rpc, RPC_PDU* pdu)
 	return Queue_Enqueue(rpc->client->ReceivePool, pdu) == TRUE ? 0 : -1;
 }
 
-int rpc_client_on_fragment_received_event(rdpRpc* rpc)
+int rpc_client_on_pdu_received_event(rdpRpc* rpc)
+{
+	Queue_Enqueue(rpc->client->ReceiveQueue, rpc->client->pdu);
+	rpc->client->pdu = NULL;
+	return 1;
+}
+
+int rpc_client_on_fragment_received_event(rdpRpc* rpc, wStream* fragment)
 {
 	BYTE* buffer;
 	UINT32 StubOffset;
 	UINT32 StubLength;
-	wStream* fragment;
 	rpcconn_hdr_t* header;
 
 	if (!rpc->client->pdu)
 		rpc->client->pdu = rpc_client_receive_pool_take(rpc);
 
-	fragment = Queue_Dequeue(rpc->client->FragmentQueue);
 	buffer = (BYTE*) Stream_Buffer(fragment);
 	header = (rpcconn_hdr_t*) Stream_Buffer(fragment);
 
 	if (rpc->State < RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
 		rpc->client->pdu->Flags = 0;
+		rpc->client->pdu->Type = header->common.ptype;
 		rpc->client->pdu->CallId = header->common.call_id;
 		Stream_EnsureCapacity(rpc->client->pdu->s, Stream_Length(fragment));
 		Stream_Write(rpc->client->pdu->s, buffer, Stream_Length(fragment));
-		Stream_Length(rpc->client->pdu->s) = Stream_GetPosition(rpc->client->pdu->s);
-		rpc_client_fragment_pool_return(rpc, fragment);
-		Queue_Enqueue(rpc->client->ReceiveQueue, rpc->client->pdu);
-		SetEvent(rpc->transport->ReceiveEvent);
-		rpc->client->pdu = NULL;
+		Stream_SealLength(rpc->client->pdu->s);
+		rpc_client_on_pdu_received_event(rpc);
 		return 0;
 	}
 
@@ -131,12 +116,10 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 			WLog_DBG(TAG, "Receiving Out-of-Sequence RTS PDU");
 			rts_recv_out_of_sequence_pdu(rpc, buffer, header->common.frag_length);
-			rpc_client_fragment_pool_return(rpc, fragment);
 			return 0;
 
 		case PTYPE_FAULT:
 			rpc_recv_fault_pdu(header);
-			Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
 			return -1;
 
 		case PTYPE_RESPONSE:
@@ -144,9 +127,10 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 		default:
 			WLog_ERR(TAG, "unexpected RPC PDU type %d", header->common.ptype);
-			Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
 			return -1;
 	}
+
+	/* PTYPE_RESPONSE */
 
 	rpc->VirtualConnection->DefaultOutChannel->BytesReceived += header->common.frag_length;
 	rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow -= header->common.frag_length;
@@ -154,7 +138,6 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	if (!rpc_get_stub_data_info(rpc, buffer, &StubOffset, &StubLength))
 	{
 		WLog_ERR(TAG, "expected stub");
-		Queue_Enqueue(rpc->client->ReceiveQueue, NULL);
 		return -1;
 	}
 
@@ -174,7 +157,6 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 			PubSub_OnTerminate(rpc->context->pubSub, rpc->context, &e);
 		}
 
-		rpc_client_fragment_pool_return(rpc, fragment);
 		return 0;
 	}
 
@@ -193,7 +175,6 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 
 	Stream_Write(rpc->client->pdu->s, &buffer[StubOffset], StubLength);
 	rpc->StubFragCount++;
-	rpc_client_fragment_pool_return(rpc, fragment);
 
 	if (rpc->VirtualConnection->DefaultOutChannel->ReceiverAvailableWindow < (rpc->ReceiveWindow / 2))
 	{
@@ -209,12 +190,12 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc)
 	if (header->response.alloc_hint == StubLength)
 	{
 		rpc->client->pdu->Flags = RPC_PDU_FLAG_STUB;
+		rpc->client->pdu->Type = PTYPE_RESPONSE;
 		rpc->client->pdu->CallId = rpc->StubCallId;
-		Stream_Length(rpc->client->pdu->s) = Stream_GetPosition(rpc->client->pdu->s);
+		Stream_SealLength(rpc->client->pdu->s);
 		rpc->StubFragCount = 0;
 		rpc->StubCallId = 0;
-		Queue_Enqueue(rpc->client->ReceiveQueue, rpc->client->pdu);
-		rpc->client->pdu = NULL;
+		rpc_client_on_pdu_received_event(rpc);
 		return 0;
 	}
 
@@ -229,9 +210,6 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 
 	while (1)
 	{
-		if (!rpc->client->RecvFrag)
-			rpc->client->RecvFrag = rpc_client_fragment_pool_take(rpc);
-
 		position = Stream_GetPosition(rpc->client->RecvFrag);
 
 		while (Stream_GetPosition(rpc->client->RecvFrag) < RPC_COMMON_FIELDS_LENGTH)
@@ -286,13 +264,16 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 		if (Stream_GetPosition(rpc->client->RecvFrag) >= header->frag_length)
 		{
 			/* complete fragment received */
-			Stream_Length(rpc->client->RecvFrag) = Stream_GetPosition(rpc->client->RecvFrag);
-			Stream_SetPosition(rpc->client->RecvFrag, 0);
-			Queue_Enqueue(rpc->client->FragmentQueue, rpc->client->RecvFrag);
-			rpc->client->RecvFrag = NULL;
 
-			if (rpc_client_on_fragment_received_event(rpc) < 0)
-				return -1;
+			Stream_SealLength(rpc->client->RecvFrag);
+			Stream_SetPosition(rpc->client->RecvFrag, 0);
+
+			status = rpc_client_on_fragment_received_event(rpc, rpc->client->RecvFrag);
+
+			if (status < 0)
+				return status;
+
+			Stream_SetPosition(rpc->client->RecvFrag, 0);
 		}
 
 		if (WaitForSingleObject(Queue_Event(rpc->client->SendQueue), 0) == WAIT_OBJECT_0)
@@ -440,12 +421,12 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 {
 	RPC_PDU* pdu;
+	DWORD timeout;
 	DWORD waitStatus;
-	DWORD dwMilliseconds;
 
-	dwMilliseconds = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT * 4 : 0;
+	timeout = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT * 4 : 0;
 
-	waitStatus = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
+	waitStatus = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), timeout);
 
 	if (waitStatus == WAIT_TIMEOUT)
 	{
@@ -463,17 +444,20 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 
 RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc)
 {
+	RPC_PDU* pdu;
+	DWORD timeout;
 	DWORD waitStatus;
-	DWORD dwMilliseconds;
 
-	dwMilliseconds = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT : 0;
+	timeout = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT : 0;
 
-	waitStatus = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), dwMilliseconds);
+	waitStatus = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), timeout);
 
 	if (waitStatus != WAIT_OBJECT_0)
 		return NULL;
 
-	return (RPC_PDU*) Queue_Peek(rpc->client->ReceiveQueue);
+	pdu = (RPC_PDU*) Queue_Peek(rpc->client->ReceiveQueue);
+
+	return pdu;
 }
 
 static void* rpc_client_thread(void* arg)
@@ -525,11 +509,6 @@ static void rpc_pdu_free(RPC_PDU* pdu)
 	free(pdu);
 }
 
-static void rpc_fragment_free(wStream* fragment)
-{
-	Stream_Free(fragment, TRUE);
-}
-
 int rpc_client_new(rdpRpc* rpc)
 {
 	RpcClient* client;
@@ -557,32 +536,25 @@ int rpc_client_new(rdpRpc* rpc)
 		return -1;
 
 	Queue_Object(client->SendQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
+
 	client->pdu = NULL;
+
 	client->ReceivePool = Queue_New(TRUE, -1, -1);
 
 	if (!client->ReceivePool)
 		return -1;
 
 	Queue_Object(client->ReceivePool)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
+
 	client->ReceiveQueue = Queue_New(TRUE, -1, -1);
 
 	if (!client->ReceiveQueue)
 		return -1;
 
 	Queue_Object(client->ReceiveQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
-	client->RecvFrag = NULL;
-	client->FragmentPool = Queue_New(TRUE, -1, -1);
 
-	if (!client->FragmentPool)
-		return -1;
+	client->RecvFrag = Stream_New(NULL, rpc->max_recv_frag);
 
-	Queue_Object(client->FragmentPool)->fnObjectFree = (OBJECT_FREE_FN) rpc_fragment_free;
-	client->FragmentQueue = Queue_New(TRUE, -1, -1);
-
-	if (!client->FragmentQueue)
-		return -1;
-
-	Queue_Object(client->FragmentQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_fragment_free;
 	client->ClientCallList = ArrayList_New(TRUE);
 
 	if (!client->ClientCallList)
@@ -625,13 +597,7 @@ int rpc_client_free(rdpRpc* rpc)
 		Queue_Free(client->SendQueue);
 
 	if (client->RecvFrag)
-		rpc_fragment_free(client->RecvFrag);
-
-	if (client->FragmentPool)
-		Queue_Free(client->FragmentPool);
-
-	if (client->FragmentQueue)
-		Queue_Free(client->FragmentQueue);
+		Stream_Free(client->RecvFrag, TRUE);
 
 	if (client->pdu)
 		rpc_pdu_free(client->pdu);

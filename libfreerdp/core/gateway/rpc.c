@@ -253,6 +253,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 	UINT32 auth_pad_length;
 	UINT32 sec_trailer_offset;
 	rpc_sec_trailer* sec_trailer;
+
 	*offset = RPC_COMMON_FIELDS_LENGTH;
 	header = ((rpcconn_hdr_t*) buffer);
 
@@ -309,7 +310,7 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 
 	if ((frag_length - (sec_trailer_offset + 8)) != auth_length)
 	{
-		WLog_ERR(TAG,  "invalid auth_length: actual: %d, expected: %d", auth_length,
+		WLog_ERR(TAG, "invalid auth_length: actual: %d, expected: %d", auth_length,
 				 (frag_length - (sec_trailer_offset + 8)));
 	}
 
@@ -445,7 +446,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 
 	if (encrypt_status != SEC_E_OK)
 	{
-		WLog_ERR(TAG,  "EncryptMessage status: 0x%08X", encrypt_status);
+		WLog_ERR(TAG, "EncryptMessage status: 0x%08X", encrypt_status);
 		goto out_free_pdu;
 	}
 
@@ -475,7 +476,7 @@ BOOL rpc_connect(rdpRpc* rpc)
 
 	if (!rts_connect(rpc))
 	{
-		WLog_ERR(TAG,  "rts_connect error!");
+		WLog_ERR(TAG, "rts_connect error!");
 		return FALSE;
 	}
 
@@ -483,7 +484,7 @@ BOOL rpc_connect(rdpRpc* rpc)
 
 	if (rpc_secure_bind(rpc) != 0)
 	{
-		WLog_ERR(TAG,  "rpc_secure_bind error!");
+		WLog_ERR(TAG, "rpc_secure_bind error!");
 		return FALSE;
 	}
 
