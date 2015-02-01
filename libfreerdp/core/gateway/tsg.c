@@ -1059,7 +1059,6 @@ BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	UINT32 length;
 	UINT32 offset;
 	rdpRpc* rpc = tsg->rpc;
-	pdu = rpc_recv_dequeue_pdu(rpc);
 
 	if (!pdu)
 		return FALSE;
@@ -1072,6 +1071,7 @@ BOOL TsProxyCloseChannelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	offset = 0;
 	rpc_client_receive_pool_return(rpc, pdu);
+
 	return TRUE;
 }
 
@@ -1092,6 +1092,8 @@ HRESULT TsProxyCloseChannel(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* co
 		WLog_ERR(TAG, "error writing request");
 		return FALSE;
 	}
+
+	pdu = rpc_recv_dequeue_pdu(tsg->rpc);
 
 	if (!TsProxyCloseChannelReadResponse(tsg, pdu))
 	{
@@ -1134,8 +1136,6 @@ BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	UINT32 offset;
 	rdpRpc* rpc = tsg->rpc;
 
-	pdu = rpc_recv_dequeue_pdu(rpc);
-
 	if (!pdu)
 		return FALSE;
 
@@ -1147,6 +1147,7 @@ BOOL TsProxyCloseTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 
 	offset = 0;
 	rpc_client_receive_pool_return(rpc, pdu);
+
 	return TRUE;
 }
 
@@ -1167,6 +1168,8 @@ HRESULT TsProxyCloseTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZE* contex
 		WLog_ERR(TAG, "error writing request");
 		return FALSE;
 	}
+
+	pdu = rpc_recv_dequeue_pdu(tsg->rpc);
 
 	if (!TsProxyCloseTunnelReadResponse(tsg, pdu))
 	{
@@ -1230,10 +1233,131 @@ BOOL TsProxySetupReceivePipe(handle_t IDL_handle, BYTE* pRpcMessage)
 	return TRUE;
 }
 
+int tsg_check(rdpTsg* tsg)
+{
+	RPC_PDU* pdu;
+	RpcClientCall* call;
+	rdpRpc* rpc = tsg->rpc;
+
+	switch (tsg->state)
+	{
+		case TSG_STATE_INITIAL:
+
+			if (!TsProxyCreateTunnel(tsg, NULL, NULL, NULL, NULL))
+			{
+				WLog_ERR(TAG, "TsProxyCreateTunnel failure");
+				tsg->state = TSG_STATE_FINAL;
+				return -1;
+			}
+
+			pdu = rpc_recv_dequeue_pdu(rpc);
+
+			if (!TsProxyCreateTunnelReadResponse(tsg, pdu))
+			{
+				WLog_ERR(TAG, "TsProxyCreateTunnelReadResponse failure");
+				return -1;
+			}
+
+			tsg->state = TSG_STATE_CONNECTED;
+
+			break;
+
+		case TSG_STATE_CONNECTED:
+
+			if (!TsProxyAuthorizeTunnel(tsg, &tsg->TunnelContext, NULL, NULL))
+			{
+				WLog_ERR(TAG, "TsProxyAuthorizeTunnel failure");
+				tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
+				return -1;
+			}
+
+			pdu = rpc_recv_dequeue_pdu(rpc);
+
+			if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
+			{
+				WLog_ERR(TAG, "TsProxyAuthorizeTunnelReadResponse failure");
+				return -1;
+			}
+
+			tsg->state = TSG_STATE_AUTHORIZED;
+
+			break;
+
+		case TSG_STATE_AUTHORIZED:
+
+			if (!TsProxyMakeTunnelCall(tsg, &tsg->TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST, NULL, NULL))
+			{
+				WLog_ERR(TAG, "TsProxyMakeTunnelCall failure");
+				return -1;
+			}
+
+			if (!TsProxyCreateChannel(tsg, &tsg->TunnelContext, NULL, NULL, NULL))
+			{
+				WLog_ERR(TAG, "TsProxyCreateChannel failure");
+				return -1;
+			}
+
+			pdu = rpc_recv_dequeue_pdu(rpc);
+
+			if (!pdu)
+			{
+				WLog_ERR(TAG, "rpc_recv_dequeue_pdu failure");
+				return -1;
+			}
+
+			call = rpc_client_call_find_by_id(rpc, pdu->CallId);
+
+			if (call->OpNum == TsProxyMakeTunnelCallOpnum)
+			{
+				if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
+				{
+					WLog_ERR(TAG, "TsProxyMakeTunnelCallReadResponse failure");
+					return -1;
+				}
+
+				pdu = rpc_recv_dequeue_pdu(rpc);
+			}
+
+			if (!TsProxyCreateChannelReadResponse(tsg, pdu))
+			{
+				WLog_ERR(TAG, "TsProxyCreateChannelReadResponse failure");
+				return -1;
+			}
+
+			tsg->state = TSG_STATE_CHANNEL_CREATED;
+
+			break;
+
+		case TSG_STATE_CHANNEL_CREATED:
+
+			if (!TsProxySetupReceivePipe((handle_t) tsg, NULL))
+			{
+				WLog_ERR(TAG, "TsProxySetupReceivePipe failure");
+				return -1;
+			}
+
+			tsg->state = TSG_STATE_PIPE_CREATED;
+
+			break;
+
+		case TSG_STATE_PIPE_CREATED:
+			break;
+
+		case TSG_STATE_TUNNEL_CLOSE_PENDING:
+			break;
+
+		case TSG_STATE_CHANNEL_CLOSE_PENDING:
+			break;
+
+		case TSG_STATE_FINAL:
+			break;
+	}
+
+	return 1;
+}
+
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 {
-	RPC_PDU* pdu = NULL;
-	RpcClientCall* call;
 	rdpRpc* rpc = tsg->rpc;
 	rdpSettings* settings = rpc->settings;
 
@@ -1247,206 +1371,21 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	tsg->MachineName = NULL;
 	ConvertToUnicode(CP_UTF8, 0, settings->ComputerName, -1, &tsg->MachineName, 0);
 
-	if (!rpc_connect(rpc))
-	{
-		WLog_ERR(TAG, "rpc_connect failed!");
-		return FALSE;
-	}
-
-	WLog_DBG(TAG, "rpc_connect success");
-
 	tsg->state = TSG_STATE_INITIAL;
-	rpc->client->SynchronousSend = TRUE;
-	rpc->client->SynchronousReceive = TRUE;
 
-	/*
-	 *     Sequential processing rules for connection process:
-	 *
-	 *  1. The RDG client MUST call TsProxyCreateTunnel to create a tunnel to the gateway.
-	 *
-	 *  2. If the call fails, the RDG client MUST end the protocol and MUST NOT perform the following steps.
-	 *
-	 *  3. The RDG client MUST initialize the following ADM elements using TsProxyCreateTunnel out parameters:
-	 *
-	 * 	a. The RDG client MUST initialize the ADM element Tunnel id with the tunnelId out parameter.
-	 *
-	 * 	b. The RDG client MUST initialize the ADM element Tunnel Context Handle with the tunnelContext
-	 * 	   out parameter. This Tunnel Context Handle is used for subsequent tunnel-related calls.
-	 *
-	 * 	c. If TSGPacketResponse->packetId is TSG_PACKET_TYPE_CAPS_RESPONSE, where TSGPacketResponse is an out parameter,
-	 *
-	 * 		 i. The RDG client MUST initialize the ADM element Nonce with TSGPacketResponse->
-	 * 		    TSGPacket.packetCapsResponse->pktQuarEncResponse.nonce.
-	 *
-	 * 		ii. The RDG client MUST initialize the ADM element Negotiated Capabilities with TSGPacketResponse->
-	 * 		    TSGPacket.packetCapsResponse->pktQuarEncResponse.versionCaps->TSGCaps[0].TSGPacket.TSGCapNap.capabilities.
-	 *
-	 * 	d. If TSGPacketResponse->packetId is TSG_PACKET_TYPE_QUARENC_RESPONSE, where TSGPacketResponse is an out parameter,
-	 *
-	 * 		 i. The RDG client MUST initialize the ADM element Nonce with TSGPacketResponse->
-	 * 		    TSGPacket.packetQuarEncResponse->nonce.
-	 *
-	 * 		ii. The RDG client MUST initialize the ADM element Negotiated Capabilities with TSGPacketResponse->
-	 * 		    TSGPacket.packetQuarEncResponse->versionCaps->TSGCaps[0].TSGPacket.TSGCapNap.capabilities.
-	 *
-	 *  4. The RDG client MUST get its statement of health (SoH) by calling NAP EC API.<49> Details of the SoH format are
-	 *     specified in [TNC-IF-TNCCSPBSoH]. If the SoH is received successfully, then the RDG client MUST encrypt the SoH
-	 *     using the Triple Data Encryption Standard algorithm and encode it using one of PKCS #7 or X.509 encoding types,
-	 *     whichever is supported by the RDG server certificate context available in the ADM element CertChainData.
-	 *
-	 *  5. The RDG client MUST copy the ADM element Nonce to TSGPacket.packetQuarRequest->data and append the encrypted SoH
-	 *     message into TSGPacket.packetQuarRequest->data. The RDG client MUST set the TSGPacket.packetQuarRequest->dataLen
-	 *     to the sum of the number of bytes in the encrypted SoH message and number of bytes in the ADM element Nonce, where
-	 *     TSGpacket is an input parameter of TsProxyAuthorizeTunnel. The format of the packetQuarRequest field is specified
-	 *     in section 2.2.9.2.1.4.
-	 */
-
-	if (!TsProxyCreateTunnel(tsg, NULL, NULL, NULL, NULL))
+	while (tsg->state != TSG_STATE_PIPE_CREATED)
 	{
-		tsg->state = TSG_STATE_FINAL;
-		return FALSE;
-	}
-
-	pdu = rpc_recv_dequeue_pdu(rpc);
-
-	if (!TsProxyCreateTunnelReadResponse(tsg, pdu))
-	{
-		WLog_ERR(TAG, "error reading response");
-		return FALSE;
-	}
-
-	tsg->state = TSG_STATE_CONNECTED;
-
-	/**
-	 *     Sequential processing rules for connection process (continued):
-	 *
-	 *  6. The RDG client MUST call TsProxyAuthorizeTunnel to authorize the tunnel.
-	 *
-	 *  7. If the call succeeds or fails with error E_PROXY_QUARANTINE_ACCESSDENIED, follow the steps later in this section.
-	 *     Else, the RDG client MUST end the protocol and MUST NOT follow the steps later in this section.
-	 *
-	 *  8. If the ADM element Negotiated Capabilities contains TSG_NAP_CAPABILITY_IDLE_TIMEOUT, then the ADM element Idle
-	 *     Timeout Value SHOULD be initialized with first 4 bytes of TSGPacketResponse->TSGPacket.packetResponse->responseData
-	 *     and the Statement of health response variable should be initialized with the remaining bytes of responseData, where
-	 *     TSGPacketResponse is an out parameter of TsProxyAuthorizeTunnel. The format of the responseData member is specified
-	 *     in section 2.2.9.2.1.5.1.
-	 *
-	 *  9. If the ADM element Negotiated Capabilities doesn't contain TSG_NAP_CAPABILITY_IDLE_TIMEOUT, then the ADM element Idle
-	 *     Timeout Value SHOULD be initialized to zero and the Statement of health response variable should be initialized with all
-	 *     the bytes of TSGPacketResponse->TSGPacket.packetResponse->responseData.
-	 *
-	 * 10. Verify the signature of the Statement of health response variable using SHA-1 hash and decode it using the RDG server
-	 *     certificate context available in the ADM element CertChainData using one of PKCS #7 or X.509 encoding types, whichever
-	 *     is supported by the RDG Server certificate. The SoHR is processed by calling the NAP EC API
-	 *     INapEnforcementClientConnection::GetSoHResponse.
-	 *
-	 * 11. If the call TsProxyAuthorizeTunnel fails with error E_PROXY_QUARANTINE_ACCESSDENIED, the RDG client MUST end the protocol
-	 *     and MUST NOT follow the steps later in this section.
-	 *
-	 * 12. If the ADM element Idle Timeout Value is nonzero, the RDG client SHOULD start the idle time processing as specified in
-	 *     section 3.6.2.1.1 and SHOULD end the protocol when the connection has been idle for the specified Idle Timeout Value.
-	 */
-
-	if (!TsProxyAuthorizeTunnel(tsg, &tsg->TunnelContext, NULL, NULL))
-	{
-		tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
-		return FALSE;
-	}
-
-	pdu = rpc_recv_dequeue_pdu(rpc);
-
-	if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
-	{
-		WLog_ERR(TAG, "error reading response");
-		return FALSE;
-	}
-
-	tsg->state = TSG_STATE_AUTHORIZED;
-
-	/**
-	 *     Sequential processing rules for connection process (continued):
-	 *
-	 * 13. If the ADM element Negotiated Capabilities contains TSG_MESSAGING_CAP_SERVICE_MSG, a TsProxyMakeTunnelCall call MAY be
-	 *     made by the client, with TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST as the parameter, to receive messages from the RDG server.
-	 *
-	 */
-
-	if (!TsProxyMakeTunnelCall(tsg, &tsg->TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST, NULL, NULL))
-		return FALSE;
-
-	/**
-	 *     Sequential processing rules for connection process (continued):
-	 *
-	 * 14. The RDG client MUST call TsProxyCreateChannel to create a channel to the target server name as specified by the ADM
-	 *     element Target Server Name (section 3.5.1).
-	 *
-	 * 15. If the call fails, the RDG client MUST end the protocol and MUST not follow the below steps.
-	 *
-	 * 16. The RDG client MUST initialize the following ADM elements using TsProxyCreateChannel out parameters.
-	 *
-	 * 	a. The RDG client MUST initialize the ADM element Channel id with the channelId out parameter.
-	 *
-	 * 	b. The RDG client MUST initialize the ADM element Channel Context Handle with the channelContext
-	 * 	   out parameter. This Channel Context Handle is used for subsequent channel-related calls.
-	 */
-
-	if (!TsProxyCreateChannel(tsg, &tsg->TunnelContext, NULL, NULL, NULL))
-		return FALSE;
-
-	pdu = rpc_recv_dequeue_pdu(rpc);
-
-	if (!pdu)
-	{
-		WLog_ERR(TAG, "error reading response");
-		return FALSE;
-	}
-
-	call = rpc_client_call_find_by_id(rpc, pdu->CallId);
-
-	if (call->OpNum == TsProxyMakeTunnelCallOpnum)
-	{
-		if (!TsProxyMakeTunnelCallReadResponse(tsg, pdu))
+		if (tsg_check(tsg) < 0)
 		{
-			WLog_ERR(TAG, "error reading response");
+			WLog_ERR(TAG, "tsg_connect error");
 			return FALSE;
 		}
-
-		pdu = rpc_recv_dequeue_pdu(rpc);
 	}
-
-	if (!TsProxyCreateChannelReadResponse(tsg, pdu))
-	{
-		WLog_ERR(TAG, "error reading response");
-		return FALSE;
-	}
-
-	tsg->state = TSG_STATE_CHANNEL_CREATED;
-
-	/**
-	 *  Sequential processing rules for data transfer:
-	 *
-	 *  1. The RDG client MUST call TsProxySetupReceivePipe to receive data from the target server, via the RDG server.
-	 *
-	 *  2. The RDG client MUST call TsProxySendToServer to send data to the target server via the RDG server, and if
-	 *     the Idle Timeout Timer is started, the RDG client SHOULD reset the Idle Timeout Timer.
-	 *
-	 *  3. If TsProxyMakeTunnelCall is returned, the RDG client MUST process the message and MAY call TsProxyMakeTunnelCall
-	 *     again with TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST as the parameter.
-	 *
-	 *  4. The RDG client MUST end the protocol after it receives the final response to TsProxySetupReceivePipe.
-	 *     The final response format is specified in section 2.2.9.4.3.
-	 */
-
-	if (!TsProxySetupReceivePipe((handle_t) tsg, NULL))
-		return FALSE;
-
-	rpc->client->SynchronousSend = TRUE;
-	rpc->client->SynchronousReceive = TRUE;
 
 	tsg->bio = BIO_new(BIO_s_tsg());
 	tsg->bio->ptr = tsg;
 
-	WLog_INFO(TAG,  "TS Gateway Connection Success");
+	WLog_INFO(TAG, "TS Gateway Connection Success");
 
 	return TRUE;
 }

@@ -351,6 +351,14 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 		return FALSE;
 	}
 
+	if (!rpc_connect(tsg->rpc))
+	{
+		WLog_ERR(TAG, "rpc_connect failed!");
+		return FALSE;
+	}
+
+	WLog_DBG(TAG, "rpc_connect success");
+
 	if (!tsg_connect(tsg, hostname, port))
 		return FALSE;
 
