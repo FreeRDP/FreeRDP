@@ -94,9 +94,6 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
 	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_INITIAL");
 
-	rpc->client->SynchronousSend = TRUE;
-	rpc->client->SynchronousReceive = TRUE;
-
 	if (!rpc_ntlm_http_out_connect(rpc))
 	{
 		WLog_ERR(TAG, "rpc_out_connect_http error!");
@@ -184,8 +181,6 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	http_response_free(httpResponse);
 
-	rpc_client_start(rpc);
-
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_A3W;
 	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_A3W");
 
@@ -205,7 +200,9 @@ BOOL rts_connect(rdpRpc* rpc)
 	 *
 	 */
 
-	pdu = rpc_recv_dequeue_pdu(rpc);
+	rpc_client_start(rpc);
+
+	pdu = rpc_recv_dequeue_pdu(rpc, TRUE);
 
 	if (!pdu)
 		return FALSE;
@@ -246,7 +243,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	 *
 	 */
 
-	pdu = rpc_recv_dequeue_pdu(rpc);
+	pdu = rpc_recv_dequeue_pdu(rpc, TRUE);
 
 	if (!pdu)
 		return FALSE;
@@ -266,8 +263,7 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
 	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_OPENED");
 
-	rpc->client->SynchronousSend = TRUE;
-	rpc->client->SynchronousReceive = TRUE;
+	rpc->State = RPC_CLIENT_STATE_ESTABLISHED;
 
 	return TRUE;
 }

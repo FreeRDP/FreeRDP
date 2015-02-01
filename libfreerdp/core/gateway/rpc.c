@@ -387,6 +387,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	request_pdu->alloc_hint = length;
 	request_pdu->p_cont_id = 0x0000;
 	request_pdu->opnum = opnum;
+
 	clientCall = rpc_client_call_new(request_pdu->call_id, request_pdu->opnum);
 
 	if (!clientCall)
@@ -465,7 +466,56 @@ out_free_pdu:
 	return -1;
 }
 
-BOOL rpc_connect(rdpRpc* rpc)
+int rpc_check(rdpRpc* rpc)
+{
+	RPC_PDU* pdu;
+
+	if (rpc->State == RPC_CLIENT_STATE_ESTABLISHED)
+	{
+		if (rpc_send_bind_pdu(rpc) < 0)
+		{
+			WLog_ERR(TAG, "rpc_send_bind_pdu failure");
+			return -1;
+		}
+
+		rpc->State = RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK;
+	}
+	else if (rpc->State ==  RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK)
+	{
+		pdu = rpc_recv_dequeue_pdu(rpc, TRUE);
+
+		if (!pdu)
+		{
+			WLog_ERR(TAG, "rpc_recv_dequeue_pdu failure");
+			return -1;
+		}
+
+		if (rpc_recv_bind_ack_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s)) <= 0)
+		{
+			WLog_ERR(TAG, "rpc_recv_bind_ack_pdu failure");
+			return -1;
+		}
+
+		rpc_client_receive_pool_return(rpc, pdu);
+
+		if (rpc_send_rpc_auth_3_pdu(rpc) <= 0)
+		{
+			WLog_ERR(TAG, "rpc_secure_bind: error sending rpc_auth_3 pdu!");
+			return -1;
+		}
+
+		rpc->State = RPC_CLIENT_STATE_CONTEXT_NEGOTIATED;
+	}
+	else
+	{
+		WLog_ERR(TAG, "rpc_check: invalid state: %d", rpc->State);
+		return -1;
+	}
+
+	return 1;
+}
+
+int rpc_connect(rdpRpc* rpc)
 {
 	rpc->TlsIn = rpc->transport->TlsIn;
 	rpc->TlsOut = rpc->transport->TlsOut;
@@ -473,18 +523,19 @@ BOOL rpc_connect(rdpRpc* rpc)
 	if (!rts_connect(rpc))
 	{
 		WLog_ERR(TAG, "rts_connect error!");
-		return FALSE;
+		return -1;
 	}
 
-	rpc->State = RPC_CLIENT_STATE_ESTABLISHED;
-
-	if (rpc_secure_bind(rpc) != 0)
+	while (rpc->State != RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
-		WLog_ERR(TAG, "rpc_secure_bind error!");
-		return FALSE;
+		if (rpc_check(rpc) < 0)
+		{
+			WLog_ERR(TAG, "rpc_check failure");
+			return -1;
+		}
 	}
 
-	return TRUE;
+	return 1;
 }
 
 void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* connection)
@@ -494,7 +545,6 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 	connection->DefaultInChannel->SenderAvailableWindow = rpc->ReceiveWindow;
 	connection->DefaultInChannel->PingOriginator.ConnectionTimeout = 30;
 	connection->DefaultInChannel->PingOriginator.KeepAliveInterval = 0;
-	connection->DefaultInChannel->Mutex = CreateMutex(NULL, FALSE, NULL);
 
 	connection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_INITIAL;
 	connection->DefaultOutChannel->BytesReceived = 0;
@@ -502,7 +552,6 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 	connection->DefaultOutChannel->ReceiveWindow = rpc->ReceiveWindow;
 	connection->DefaultOutChannel->ReceiveWindowSize = rpc->ReceiveWindow;
 	connection->DefaultOutChannel->AvailableWindowAdvertised = rpc->ReceiveWindow;
-	connection->DefaultOutChannel->Mutex = CreateMutex(NULL, FALSE, NULL);
 }
 
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
@@ -536,8 +585,6 @@ void rpc_client_virtual_connection_free(RpcVirtualConnection* virtualConnection)
 {
 	if (virtualConnection)
 	{
-		CloseHandle(virtualConnection->DefaultInChannel->Mutex);
-		CloseHandle(virtualConnection->DefaultOutChannel->Mutex);
 		free(virtualConnection->DefaultInChannel);
 		free(virtualConnection->DefaultOutChannel);
 		free(virtualConnection);

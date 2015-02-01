@@ -177,8 +177,6 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg)
 
 	*((UINT32*) &buffer[44]) = NapCapabilities; /* capabilities */
 
-	//CopyMemory(&buffer[48], TsProxyCreateTunnelUnknownTrailerBytes, 60);
-
 	/**
 	 * The following 60-byte structure is apparently undocumented,
 	 * but parts of it can be matched to known C706 data structures.
@@ -223,6 +221,7 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg)
 		return FALSE;
 
 	free(buffer);
+
 	return TRUE;
 }
 
@@ -1093,7 +1092,7 @@ HRESULT TsProxyCloseChannel(rdpTsg* tsg, PCHANNEL_CONTEXT_HANDLE_NOSERIALIZE* co
 		return FALSE;
 	}
 
-	pdu = rpc_recv_dequeue_pdu(tsg->rpc);
+	pdu = rpc_recv_dequeue_pdu(tsg->rpc, TRUE);
 
 	if (!TsProxyCloseChannelReadResponse(tsg, pdu))
 	{
@@ -1169,7 +1168,7 @@ HRESULT TsProxyCloseTunnel(rdpTsg* tsg, PTUNNEL_CONTEXT_HANDLE_SERIALIZE* contex
 		return FALSE;
 	}
 
-	pdu = rpc_recv_dequeue_pdu(tsg->rpc);
+	pdu = rpc_recv_dequeue_pdu(tsg->rpc, TRUE);
 
 	if (!TsProxyCloseTunnelReadResponse(tsg, pdu))
 	{
@@ -1250,7 +1249,7 @@ int tsg_check(rdpTsg* tsg)
 				return -1;
 			}
 
-			pdu = rpc_recv_dequeue_pdu(rpc);
+			pdu = rpc_recv_dequeue_pdu(rpc, TRUE);
 
 			if (!TsProxyCreateTunnelReadResponse(tsg, pdu))
 			{
@@ -1271,7 +1270,7 @@ int tsg_check(rdpTsg* tsg)
 				return -1;
 			}
 
-			pdu = rpc_recv_dequeue_pdu(rpc);
+			pdu = rpc_recv_dequeue_pdu(rpc, TRUE);
 
 			if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
 			{
@@ -1297,7 +1296,7 @@ int tsg_check(rdpTsg* tsg)
 				return -1;
 			}
 
-			pdu = rpc_recv_dequeue_pdu(rpc);
+			pdu = rpc_recv_dequeue_pdu(rpc, TRUE);
 
 			if (!pdu)
 			{
@@ -1315,7 +1314,7 @@ int tsg_check(rdpTsg* tsg)
 					return -1;
 				}
 
-				pdu = rpc_recv_dequeue_pdu(rpc);
+				pdu = rpc_recv_dequeue_pdu(rpc, TRUE);
 			}
 
 			if (!TsProxyCreateChannelReadResponse(tsg, pdu))

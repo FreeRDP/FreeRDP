@@ -39,7 +39,7 @@ int rpc_send_enqueue_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
 int rpc_send_dequeue_pdu(rdpRpc* rpc);
 
 int rpc_recv_enqueue_pdu(rdpRpc* rpc);
-RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc);
+RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc, BOOL blocking);
 
 int rpc_client_receive_pipe_read(rdpRpc* rpc, BYTE* buffer, size_t length);
 

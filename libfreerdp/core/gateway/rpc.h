@@ -618,8 +618,6 @@ struct rpc_in_channel
 
 	CLIENT_IN_CHANNEL_STATE State;
 
-	HANDLE Mutex;
-
 	UINT32 PlugState;
 	void* SendQueue;
 	UINT32 BytesSent;
@@ -650,8 +648,6 @@ struct rpc_out_channel
 	/* Receiving Channel */
 
 	CLIENT_OUT_CHANNEL_STATE State;
-
-	HANDLE Mutex;
 
 	UINT32 ReceiveWindow;
 	UINT32 ReceiveWindowSize;
@@ -778,7 +774,7 @@ struct rdp_rpc
 	wArrayList* VirtualConnectionCookieTable;
 };
 
-BOOL rpc_connect(rdpRpc* rpc);
+int rpc_connect(rdpRpc* rpc);
 
 void rpc_pdu_header_print(rpcconn_hdr_t* header);
 void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);

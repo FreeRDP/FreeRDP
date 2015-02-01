@@ -119,13 +119,13 @@ int rpc_client_receive_pipe_read(rdpRpc* rpc, BYTE* buffer, size_t length)
 	return status;
 }
 
-int rpc_client_on_pdu_received_event(rdpRpc* rpc, RPC_PDU* pdu)
+int rpc_client_on_pdu_received(rdpRpc* rpc, RPC_PDU* pdu)
 {
 	Queue_Enqueue(rpc->client->ReceiveQueue, pdu);
 	return 1;
 }
 
-int rpc_client_on_fragment_received_event(rdpRpc* rpc, wStream* fragment)
+int rpc_client_on_fragment_received(rdpRpc* rpc, wStream* fragment)
 {
 	BYTE* buffer;
 	RPC_PDU* pdu;
@@ -203,7 +203,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc, wStream* fragment)
 				pdu->Type = PTYPE_RESPONSE;
 				pdu->CallId = rpc->StubCallId;
 				Stream_SealLength(pdu->s);
-				rpc_client_on_pdu_received_event(rpc, pdu);
+				rpc_client_on_pdu_received(rpc, pdu);
 				rpc->client->pdu = NULL;
 				rpc->StubFragCount = 0;
 				rpc->StubCallId = 0;
@@ -238,7 +238,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc, wStream* fragment)
 			Stream_EnsureCapacity(pdu->s, Stream_Length(fragment));
 			Stream_Write(pdu->s, buffer, Stream_Length(fragment));
 			Stream_SealLength(pdu->s);
-			rpc_client_on_pdu_received_event(rpc, pdu);
+			rpc_client_on_pdu_received(rpc, pdu);
 			rpc->client->pdu = NULL;
 			return 0;
 		}
@@ -264,7 +264,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc, wStream* fragment)
 		Stream_EnsureCapacity(pdu->s, Stream_Length(fragment));
 		Stream_Write(pdu->s, buffer, Stream_Length(fragment));
 		Stream_SealLength(pdu->s);
-		rpc_client_on_pdu_received_event(rpc, pdu);
+		rpc_client_on_pdu_received(rpc, pdu);
 		rpc->client->pdu = NULL;
 		return 0;
 	}
@@ -281,7 +281,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc, wStream* fragment)
 	return 0;
 }
 
-int rpc_client_on_read_event(rdpRpc* rpc)
+int rpc_client_on_read(rdpRpc* rpc)
 {
 	int position;
 	int status = -1;
@@ -347,7 +347,7 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 			Stream_SealLength(rpc->client->ReceiveFragment);
 			Stream_SetPosition(rpc->client->ReceiveFragment, 0);
 
-			status = rpc_client_on_fragment_received_event(rpc, rpc->client->ReceiveFragment);
+			status = rpc_client_on_fragment_received(rpc, rpc->client->ReceiveFragment);
 
 			if (status < 0)
 				return status;
@@ -468,12 +468,10 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 		return 0;
 
 	inChannel = rpc->VirtualConnection->DefaultInChannel;
-	WaitForSingleObject(inChannel->Mutex, INFINITE);
 	status = rpc_in_write(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
 	header = (rpcconn_common_hdr_t*) Stream_Buffer(pdu->s);
 	clientCall = rpc_client_call_find_by_id(rpc, header->call_id);
 	clientCall->State = RPC_CLIENT_CALL_STATE_DISPATCHED;
-	ReleaseMutex(inChannel->Mutex);
 
 	/*
 	 * This protocol specifies that only RPC PDUs are subject to the flow control abstract
@@ -497,13 +495,13 @@ int rpc_send_dequeue_pdu(rdpRpc* rpc)
 	return status;
 }
 
-RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
+RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc, BOOL blocking)
 {
 	RPC_PDU* pdu;
 	DWORD timeout;
 	DWORD waitStatus;
 
-	timeout = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT * 4 : 0;
+	timeout = blocking ? SYNCHRONOUS_TIMEOUT * 4 : 0;
 
 	waitStatus = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), timeout);
 
@@ -543,7 +541,7 @@ static void* rpc_client_thread(void* arg)
 	 * the problem for now.
 	 */
 
-	if (rpc_client_on_read_event(rpc) < 0)
+	if (rpc_client_on_read(rpc) < 0)
 	{
 		rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
 		return NULL;
@@ -558,7 +556,7 @@ static void* rpc_client_thread(void* arg)
 
 		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
 		{
-			if (rpc_client_on_read_event(rpc) < 0)
+			if (rpc_client_on_read(rpc) < 0)
 			{
 				rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
 				break;

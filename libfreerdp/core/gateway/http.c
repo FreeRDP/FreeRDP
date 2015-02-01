@@ -502,6 +502,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 	char* content;
 	char* header_end;
 	HttpResponse* http_response;
+
 	nbytes = 0;
 	length = 10000;
 	content = NULL;
@@ -545,17 +546,18 @@ HttpResponse* http_response_recv(rdpTls* tls)
 
 		if (!header_end)
 		{
-			WLog_ERR(TAG, "invalid response:");
+			WLog_ERR(TAG, "invalid response");
 			winpr_HexDump(TAG, WLOG_ERROR, buffer, status);
 			goto out_error;
 		}
 
 		header_end += 2;
 
-		if (header_end != NULL)
+		if (header_end)
 		{
 			int count;
 			char* line;
+
 			header_end[0] = '\0';
 			header_end[1] = '\0';
 			content = header_end + 2;
@@ -581,7 +583,7 @@ HttpResponse* http_response_recv(rdpTls* tls)
 			count = 0;
 			line = strtok((char*) buffer, "\r\n");
 
-			while ((line != NULL) && http_response->lines)
+			while (line && http_response->lines)
 			{
 				http_response->lines[count] = _strdup(line);
 
