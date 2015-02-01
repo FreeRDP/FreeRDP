@@ -119,6 +119,8 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 	{
 		ntlm->ServicePrincipalName = (LPTSTR) _tcsdup(hostnameX);
 
+		free(hostnameX);
+
 		if (!ntlm->ServicePrincipalName)
 			return FALSE;
 		

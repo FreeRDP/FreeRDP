@@ -536,6 +536,19 @@ static void* rpc_client_thread(void* arg)
 	events[nCount++] = Queue_Event(rpc->client->SendQueue);
 	events[nCount++] = ReadEvent;
 
+	/*
+	 * OpenSSL buffers TLS records, which can sometimes cause
+	 * bytes to be buffered in OpenSSL without the TCP socket
+	 * being signaled for read. Do a first read to work around
+	 * the problem for now.
+	 */
+
+	if (rpc_client_on_read_event(rpc) < 0)
+	{
+		rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
+		return NULL;
+	}
+
 	while (rpc->transport->layer != TRANSPORT_LAYER_CLOSED)
 	{
 		waitStatus = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);

@@ -184,6 +184,8 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	http_response_free(httpResponse);
 
+	rpc_client_start(rpc);
+
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_A3W;
 	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_A3W");
 
@@ -202,8 +204,6 @@ BOOL rts_connect(rdpRpc* rpc)
 	 * machine to Wait_C2 state and wait for network events.
 	 *
 	 */
-
-	rpc_client_start(rpc);
 
 	pdu = rpc_recv_dequeue_pdu(rpc);
 
