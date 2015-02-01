@@ -22,16 +22,15 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <winpr/crt.h>
 #include <winpr/ndr.h>
 #include <winpr/error.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
+
 #include <freerdp/log.h>
+
+#include "rpc_bind.h"
 #include "rpc_client.h"
 #include "tsg.h"
 
@@ -42,16 +41,6 @@
  * Remote Procedure Call: http://msdn.microsoft.com/en-us/library/windows/desktop/aa378651/
  * RPC NDR Interface Reference: http://msdn.microsoft.com/en-us/library/windows/desktop/hh802752/
  */
-
-/* this might be a verification trailer */
-
-BYTE TsProxyCreateTunnelUnknownTrailerBytes[60] =
-{
-	0x8A, 0xE3, 0x13, 0x71, 0x02, 0xF4, 0x36, 0x71, 0x01, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
-	0x02, 0x40, 0x28, 0x00, 0xDD, 0x65, 0xE2, 0x44, 0xAF, 0x7D, 0xCD, 0x42, 0x85, 0x60, 0x3C, 0xDB,
-	0x6E, 0x7A, 0x27, 0x29, 0x01, 0x00, 0x03, 0x00, 0x04, 0x5D, 0x88, 0x8A, 0xEB, 0x1C, 0xC9, 0x11,
-	0x9F, 0xE8, 0x08, 0x00, 0x2B, 0x10, 0x48, 0x60, 0x02, 0x00, 0x00, 0x00
-};
 
 DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count, UINT32* lengths)
 {
@@ -68,6 +57,7 @@ DWORD TsProxySendToServer(handle_t IDL_handle, byte pRpcMessage[], UINT32 count,
 	UINT32 buffer3Length;
 	UINT32 numBuffers = 0;
 	UINT32 totalDataBytes = 0;
+
 	tsg = (rdpTsg*) IDL_handle;
 	buffer1Length = buffer2Length = buffer3Length = 0;
 
@@ -186,7 +176,47 @@ BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg)
 	 */
 
 	*((UINT32*) &buffer[44]) = NapCapabilities; /* capabilities */
-	CopyMemory(&buffer[48], TsProxyCreateTunnelUnknownTrailerBytes, 60);
+
+	//CopyMemory(&buffer[48], TsProxyCreateTunnelUnknownTrailerBytes, 60);
+
+	/**
+	 * The following 60-byte structure is apparently undocumented,
+	 * but parts of it can be matched to known C706 data structures.
+	 */
+
+	/*
+	 * 8-byte constant (8A E3 13 71 02 F4 36 71) also observed here:
+	 * http://lists.samba.org/archive/cifs-protocol/2010-July/001543.html
+	 */
+
+	buffer[48] = 0x8A;
+	buffer[49] = 0xE3;
+	buffer[50] = 0x13;
+	buffer[51] = 0x71;
+	buffer[52] = 0x02;
+	buffer[53] = 0xF4;
+	buffer[54] = 0x36;
+	buffer[55] = 0x71;
+
+	*((UINT32*) &buffer[56]) = 0x00040001; /* 1.4 (version?) */
+	*((UINT32*) &buffer[60]) = 0x00000001; /* 1 (element count?) */
+
+	/* p_cont_list_t */
+
+	buffer[64] = 2; /* ncontext_elem */
+	buffer[65] = 0x40; /* reserved1 */
+	*((UINT16*) &buffer[66]) = 0x0028; /* reserved2 */
+
+	/* p_syntax_id_t */
+
+	CopyMemory(&buffer[68], &TSGU_UUID, sizeof(p_uuid_t));
+	*((UINT32*) &buffer[84]) = TSGU_SYNTAX_IF_VERSION;
+
+	/* p_syntax_id_t */
+
+	CopyMemory(&buffer[88], &NDR_UUID, sizeof(p_uuid_t));
+	*((UINT32*) &buffer[104]) = NDR_SYNTAX_IF_VERSION;
+
 	status = rpc_write(rpc, buffer, length, TsProxyCreateTunnelOpnum);
 
 	if (status <= 0)

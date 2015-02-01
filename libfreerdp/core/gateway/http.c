@@ -26,8 +26,6 @@
 #include <winpr/stream.h>
 #include <winpr/string.h>
 
-
-
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 #endif
