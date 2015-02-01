@@ -1477,8 +1477,8 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 {
-	int CopyLength;
 	rdpRpc* rpc;
+	int status = 0;
 
 	if (!tsg)
 		return -1;
@@ -1491,65 +1491,31 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		return -1;
 	}
 
-	if (tsg->PendingPdu)
-	{
-		CopyLength = (length < tsg->BytesAvailable) ? length : tsg->BytesAvailable;
-		CopyMemory(data, &tsg->pdu->s->buffer[tsg->BytesRead], CopyLength);
-		tsg->BytesAvailable -= CopyLength;
-		tsg->BytesRead += CopyLength;
-
-		if (tsg->BytesAvailable < 1)
-		{
-			tsg->PendingPdu = FALSE;
-			rpc_recv_dequeue_pdu(rpc);
-			rpc_client_receive_pool_return(rpc, tsg->pdu);
-		}
-
-		return CopyLength;
-	}
-
 	do
 	{
-		tsg->pdu = rpc_recv_peek_pdu(rpc);
+		status = rpc_client_receive_pipe_read(rpc, data, (size_t) length);
 
-		/* there is a pdu to process - move on */
-		if (tsg->pdu)
-			break;
+		if (status < 0)
+			return -1;
 
-		/*
-		 * no pdu available and synchronous is not required
-		 * return 0 to indicate that there is no data
-		 * available at the moment
-		 */
-		if (!tsg->rpc->client->SynchronousReceive)
+		if (!status && !rpc->client->SynchronousReceive)
 			return 0;
 
-		/* ensure that the transport wasn't already closed - in case of a retry */
 		if (rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
 		{
 			WLog_ERR(TAG, "tsg_read error: connection lost");
 			return -1;
 		}
 
-	/* retry in case synchronous receive is required */
-	} while (tsg->rpc->client->SynchronousReceive);
+		if (status > 0)
+			break;
 
-	tsg->PendingPdu = TRUE;
-	tsg->BytesAvailable = Stream_Length(tsg->pdu->s);
-	tsg->BytesRead = 0;
-	CopyLength = (length < tsg->BytesAvailable) ? length : tsg->BytesAvailable;
-	CopyMemory(data, &tsg->pdu->s->buffer[tsg->BytesRead], CopyLength);
-	tsg->BytesAvailable -= CopyLength;
-	tsg->BytesRead += CopyLength;
-
-	if (tsg->BytesAvailable < 1)
-	{
-		tsg->PendingPdu = FALSE;
-		rpc_recv_dequeue_pdu(rpc);
-		rpc_client_receive_pool_return(rpc, tsg->pdu);
+		if (rpc->client->SynchronousReceive)
+			WaitForSingleObject(rpc->client->PipeEvent, 100);
 	}
+	while (rpc->client->SynchronousReceive);
 
-	return CopyLength;
+	return status;
 }
 
 int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
@@ -1574,7 +1540,7 @@ BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking)
 {
 	tsg->rpc->client->SynchronousSend = TRUE;
 	tsg->rpc->client->SynchronousReceive = blocking;
-	tsg->transport->GatewayEvent = Queue_Event(tsg->rpc->client->ReceiveQueue);
+	tsg->transport->GatewayEvent = tsg->rpc->client->PipeEvent;
 	return TRUE;
 }
 
@@ -1589,12 +1555,12 @@ rdpTsg* tsg_new(rdpTransport* transport)
 
 	tsg->transport = transport;
 	tsg->settings = transport->settings;
+
 	tsg->rpc = rpc_new(tsg->transport);
 
 	if (!tsg->rpc)
 		goto out_free;
 
-	tsg->PendingPdu = FALSE;
 	return tsg;
 out_free:
 	free(tsg);
@@ -1611,7 +1577,12 @@ void tsg_free(rdpTsg* tsg)
 			tsg->bio = NULL;
 		}
 
-		rpc_free(tsg->rpc);
+		if (tsg->rpc)
+		{
+			rpc_free(tsg->rpc);
+			tsg->rpc = NULL;
+		}
+
 		free(tsg->Hostname);
 		free(tsg->MachineName);
 		free(tsg);
@@ -1627,7 +1598,9 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 {
 	int status;
 	rdpTsg* tsg = (rdpTsg*) bio->ptr;
+
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+
 	status = tsg_write(tsg, (BYTE*) buf, num);
 
 	if (status < 0)
@@ -1651,7 +1624,9 @@ static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 {
 	int status;
 	rdpTsg* tsg = (rdpTsg*) bio->ptr;
+
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
+
 	status = tsg_read(tsg, (BYTE*) buf, size);
 
 	if (status < 0)

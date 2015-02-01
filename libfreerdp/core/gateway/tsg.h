@@ -58,15 +58,9 @@ struct rdp_tsg
 	BIO* bio;
 	rdpRpc* rpc;
 	UINT16 Port;
-	RPC_PDU* pdu;
 	LPWSTR Hostname;
 	LPWSTR MachineName;
 	TSG_STATE state;
-	BOOL PendingPdu;
-	UINT32 BytesRead;
-	UINT32 BytesAvailable;
-	UINT32 StubOffset;
-	UINT32 StubLength;
 	rdpSettings* settings;
 	rdpTransport* transport;
 	CONTEXT_HANDLE TunnelContext;

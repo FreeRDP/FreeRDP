@@ -72,10 +72,77 @@ int rpc_client_receive_pool_return(rdpRpc* rpc, RPC_PDU* pdu)
 	return Queue_Enqueue(rpc->client->ReceivePool, pdu) == TRUE ? 0 : -1;
 }
 
-int rpc_client_on_pdu_received_event(rdpRpc* rpc)
+int rpc_client_receive_pipe_write(rdpRpc* rpc, const BYTE* buffer, size_t length)
 {
-	Queue_Enqueue(rpc->client->ReceiveQueue, rpc->client->pdu);
-	rpc->client->pdu = NULL;
+	int status = 0;
+	RpcClient* client = rpc->client;
+
+	EnterCriticalSection(&(rpc->client->PipeLock));
+
+	if (ringbuffer_write(&(client->ReceivePipe), buffer, length))
+		status += (int) length;
+
+	if (ringbuffer_used(&(client->ReceivePipe)) > 0)
+		SetEvent(client->PipeEvent);
+
+	LeaveCriticalSection(&(rpc->client->PipeLock));
+
+	return status;
+}
+
+int rpc_client_receive_pipe_read(rdpRpc* rpc, BYTE* buffer, size_t length)
+{
+	int index = 0;
+	int status = 0;
+	int nchunks = 0;
+	DataChunk chunks[2];
+	RpcClient* client = rpc->client;
+
+	EnterCriticalSection(&(client->PipeLock));
+
+	nchunks = ringbuffer_peek(&(client->ReceivePipe), chunks, length);
+
+	for (index = 0; index < nchunks; index++)
+	{
+		CopyMemory(&buffer[status], chunks[index].data, chunks[index].size);
+		status += chunks[index].size;
+	}
+
+	if (status > 0)
+		ringbuffer_commit_read_bytes(&(client->ReceivePipe), status);
+
+	if (ringbuffer_used(&(client->ReceivePipe)) < 1)
+		ResetEvent(client->PipeEvent);
+
+	LeaveCriticalSection(&(client->PipeLock));
+
+	return status;
+}
+
+int rpc_client_on_pdu_received_event(rdpRpc* rpc, RPC_PDU* pdu)
+{
+	RpcClientCall* call;
+
+	if (pdu->Type != PTYPE_RESPONSE)
+	{
+		Queue_Enqueue(rpc->client->ReceiveQueue, pdu);
+		return 1;
+	}
+	else
+	{
+		call = rpc_client_call_find_by_id(rpc, pdu->CallId);
+
+		if (call->OpNum != TsProxySetupReceivePipeOpnum)
+		{
+			Queue_Enqueue(rpc->client->ReceiveQueue, pdu);
+		}
+		else
+		{
+			rpc_client_receive_pipe_write(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
+			rpc_client_receive_pool_return(rpc, pdu);
+		}
+	}
+
 	return 1;
 }
 
@@ -100,7 +167,8 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc, wStream* fragment)
 		Stream_EnsureCapacity(rpc->client->pdu->s, Stream_Length(fragment));
 		Stream_Write(rpc->client->pdu->s, buffer, Stream_Length(fragment));
 		Stream_SealLength(rpc->client->pdu->s);
-		rpc_client_on_pdu_received_event(rpc);
+		rpc_client_on_pdu_received_event(rpc, rpc->client->pdu);
+		rpc->client->pdu = NULL;
 		return 0;
 	}
 
@@ -160,10 +228,6 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc, wStream* fragment)
 		return 0;
 	}
 
-	Stream_EnsureCapacity(rpc->client->pdu->s, header->response.alloc_hint);
-	buffer = (BYTE*) Stream_Buffer(fragment);
-	header = (rpcconn_hdr_t*) Stream_Buffer(fragment);
-
 	if (rpc->StubFragCount == 0)
 		rpc->StubCallId = header->common.call_id;
 
@@ -173,6 +237,7 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc, wStream* fragment)
 				 rpc->StubCallId, header->common.call_id, rpc->StubFragCount);
 	}
 
+	Stream_EnsureCapacity(rpc->client->pdu->s, header->response.alloc_hint);
 	Stream_Write(rpc->client->pdu->s, &buffer[StubOffset], StubLength);
 	rpc->StubFragCount++;
 
@@ -195,7 +260,8 @@ int rpc_client_on_fragment_received_event(rdpRpc* rpc, wStream* fragment)
 		Stream_SealLength(rpc->client->pdu->s);
 		rpc->StubFragCount = 0;
 		rpc->StubCallId = 0;
-		rpc_client_on_pdu_received_event(rpc);
+		rpc_client_on_pdu_received_event(rpc, rpc->client->pdu);
+		rpc->client->pdu = NULL;
 		return 0;
 	}
 
@@ -210,12 +276,12 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 
 	while (1)
 	{
-		position = Stream_GetPosition(rpc->client->RecvFrag);
+		position = Stream_GetPosition(rpc->client->ReceiveFragment);
 
-		while (Stream_GetPosition(rpc->client->RecvFrag) < RPC_COMMON_FIELDS_LENGTH)
+		while (Stream_GetPosition(rpc->client->ReceiveFragment) < RPC_COMMON_FIELDS_LENGTH)
 		{
-			status = rpc_out_read(rpc, Stream_Pointer(rpc->client->RecvFrag),
-					RPC_COMMON_FIELDS_LENGTH - Stream_GetPosition(rpc->client->RecvFrag));
+			status = rpc_out_read(rpc, Stream_Pointer(rpc->client->ReceiveFragment),
+					RPC_COMMON_FIELDS_LENGTH - Stream_GetPosition(rpc->client->ReceiveFragment));
 
 			if (status < 0)
 				return -1;
@@ -223,26 +289,26 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 			if (!status)
 				return 0;
 
-			Stream_Seek(rpc->client->RecvFrag, status);
+			Stream_Seek(rpc->client->ReceiveFragment, status);
 		}
 
-		if (Stream_GetPosition(rpc->client->RecvFrag) < RPC_COMMON_FIELDS_LENGTH)
+		if (Stream_GetPosition(rpc->client->ReceiveFragment) < RPC_COMMON_FIELDS_LENGTH)
 			return status;
 
-		header = (rpcconn_common_hdr_t*) Stream_Buffer(rpc->client->RecvFrag);
+		header = (rpcconn_common_hdr_t*) Stream_Buffer(rpc->client->ReceiveFragment);
 
 		if (header->frag_length > rpc->max_recv_frag)
 		{
 			WLog_ERR(TAG, "rpc_client_frag_read: invalid fragment size: %d (max: %d)",
 					 header->frag_length, rpc->max_recv_frag);
-			winpr_HexDump(TAG, WLOG_ERROR, Stream_Buffer(rpc->client->RecvFrag), Stream_GetPosition(rpc->client->RecvFrag));
+			winpr_HexDump(TAG, WLOG_ERROR, Stream_Buffer(rpc->client->ReceiveFragment), Stream_GetPosition(rpc->client->ReceiveFragment));
 			return -1;
 		}
 
-		while (Stream_GetPosition(rpc->client->RecvFrag) < header->frag_length)
+		while (Stream_GetPosition(rpc->client->ReceiveFragment) < header->frag_length)
 		{
-			status = rpc_out_read(rpc, Stream_Pointer(rpc->client->RecvFrag),
-					header->frag_length - Stream_GetPosition(rpc->client->RecvFrag));
+			status = rpc_out_read(rpc, Stream_Pointer(rpc->client->ReceiveFragment),
+					header->frag_length - Stream_GetPosition(rpc->client->ReceiveFragment));
 
 			if (status < 0)
 			{
@@ -253,27 +319,27 @@ int rpc_client_on_read_event(rdpRpc* rpc)
 			if (!status)
 				return 0;
 
-			Stream_Seek(rpc->client->RecvFrag, status);
+			Stream_Seek(rpc->client->ReceiveFragment, status);
 		}
 
 		if (status < 0)
 			return -1;
 
-		status = Stream_GetPosition(rpc->client->RecvFrag) - position;
+		status = Stream_GetPosition(rpc->client->ReceiveFragment) - position;
 
-		if (Stream_GetPosition(rpc->client->RecvFrag) >= header->frag_length)
+		if (Stream_GetPosition(rpc->client->ReceiveFragment) >= header->frag_length)
 		{
 			/* complete fragment received */
 
-			Stream_SealLength(rpc->client->RecvFrag);
-			Stream_SetPosition(rpc->client->RecvFrag, 0);
+			Stream_SealLength(rpc->client->ReceiveFragment);
+			Stream_SetPosition(rpc->client->ReceiveFragment, 0);
 
-			status = rpc_client_on_fragment_received_event(rpc, rpc->client->RecvFrag);
+			status = rpc_client_on_fragment_received_event(rpc, rpc->client->ReceiveFragment);
 
 			if (status < 0)
 				return status;
 
-			Stream_SetPosition(rpc->client->RecvFrag, 0);
+			Stream_SetPosition(rpc->client->ReceiveFragment, 0);
 		}
 
 		if (WaitForSingleObject(Queue_Event(rpc->client->SendQueue), 0) == WAIT_OBJECT_0)
@@ -442,24 +508,6 @@ RPC_PDU* rpc_recv_dequeue_pdu(rdpRpc* rpc)
 	return pdu;
 }
 
-RPC_PDU* rpc_recv_peek_pdu(rdpRpc* rpc)
-{
-	RPC_PDU* pdu;
-	DWORD timeout;
-	DWORD waitStatus;
-
-	timeout = rpc->client->SynchronousReceive ? SYNCHRONOUS_TIMEOUT : 0;
-
-	waitStatus = WaitForSingleObject(Queue_Event(rpc->client->ReceiveQueue), timeout);
-
-	if (waitStatus != WAIT_OBJECT_0)
-		return NULL;
-
-	pdu = (RPC_PDU*) Queue_Peek(rpc->client->ReceiveQueue);
-
-	return pdu;
-}
-
 static void* rpc_client_thread(void* arg)
 {
 	DWORD nCount;
@@ -553,7 +601,21 @@ int rpc_client_new(rdpRpc* rpc)
 
 	Queue_Object(client->ReceiveQueue)->fnObjectFree = (OBJECT_FREE_FN) rpc_pdu_free;
 
-	client->RecvFrag = Stream_New(NULL, rpc->max_recv_frag);
+	client->ReceiveFragment = Stream_New(NULL, rpc->max_recv_frag);
+
+	if (!client->ReceiveFragment)
+		return -1;
+
+	client->PipeEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	if (!client->PipeEvent)
+		return -1;
+
+	if (!ringbuffer_init(&(client->ReceivePipe), 4096))
+		return -1;
+
+	if (!InitializeCriticalSectionAndSpinCount(&(client->PipeLock), 4000))
+		return -1;
 
 	client->ClientCallList = ArrayList_New(TRUE);
 
@@ -596,8 +658,15 @@ int rpc_client_free(rdpRpc* rpc)
 	if (client->SendQueue)
 		Queue_Free(client->SendQueue);
 
-	if (client->RecvFrag)
-		Stream_Free(client->RecvFrag, TRUE);
+	if (client->ReceiveFragment)
+		Stream_Free(client->ReceiveFragment, TRUE);
+
+	if (client->PipeEvent)
+		CloseHandle(client->PipeEvent);
+
+	ringbuffer_destroy(&(client->ReceivePipe));
+
+	DeleteCriticalSection(&(client->PipeLock));
 
 	if (client->pdu)
 		rpc_pdu_free(client->pdu);

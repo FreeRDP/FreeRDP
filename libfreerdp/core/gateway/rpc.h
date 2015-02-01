@@ -26,7 +26,9 @@
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 #include <winpr/interlocked.h>
+
 #include <freerdp/log.h>
+#include <freerdp/utils/ringbuffer.h>
 
 typedef struct rdp_rpc rdpRpc;
 
@@ -714,7 +716,10 @@ struct rpc_client
 	wQueue* ReceivePool;
 	wQueue* ReceiveQueue;
 
-	wStream* RecvFrag;
+	HANDLE PipeEvent;
+	RingBuffer ReceivePipe;
+	wStream* ReceiveFragment;
+	CRITICAL_SECTION PipeLock;
 
 	wArrayList* ClientCallList;
 
