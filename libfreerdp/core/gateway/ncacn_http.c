@@ -31,7 +31,7 @@
 
 #include <openssl/rand.h>
 
-#define TAG FREERDP_TAG("core.gateway")
+#define TAG FREERDP_TAG("core.gateway.ntlm")
 
 wStream* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_length, TSG_CHANNEL channel)
 {

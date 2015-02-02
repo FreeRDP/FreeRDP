@@ -46,7 +46,7 @@
 
 #include "rpc.h"
 
-#define TAG FREERDP_TAG("core.gateway")
+#define TAG FREERDP_TAG("core.gateway.rpc")
 
 /* Security Verification Trailer Signature */
 
@@ -463,6 +463,45 @@ out_free_pdu:
 	free(Buffers[1].pvBuffer);
 	free(request_pdu);
 	return -1;
+}
+
+int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
+		RpcVirtualConnection* connection, VIRTUAL_CONNECTION_STATE state)
+{
+	int status = 1;
+	const char* str = "VIRTUAL_CONNECTION_STATE_UNKNOWN";
+
+	switch (state)
+	{
+		case VIRTUAL_CONNECTION_STATE_INITIAL:
+			str = "VIRTUAL_CONNECTION_STATE_INITIAL";
+			break;
+
+		case VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT:
+			str = "VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT";
+			break;
+
+		case VIRTUAL_CONNECTION_STATE_WAIT_A3W:
+			str = "VIRTUAL_CONNECTION_STATE_WAIT_A3W";
+			break;
+
+		case VIRTUAL_CONNECTION_STATE_WAIT_C2:
+			str = "VIRTUAL_CONNECTION_STATE_WAIT_C2";
+			break;
+
+		case VIRTUAL_CONNECTION_STATE_OPENED:
+			str = "VIRTUAL_CONNECTION_STATE_OPENED";
+			break;
+
+		case VIRTUAL_CONNECTION_STATE_FINAL:
+			str = "VIRTUAL_CONNECTION_STATE_FINAL";
+			break;
+	}
+
+	connection->State = state;
+	WLog_DBG(TAG, "%s", str);
+
+	return status;
 }
 
 void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* connection)

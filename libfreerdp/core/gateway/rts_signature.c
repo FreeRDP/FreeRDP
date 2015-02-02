@@ -21,7 +21,7 @@
 
 #include "rts_signature.h"
 
-#define TAG FREERDP_TAG("core.gateway")
+#define TAG FREERDP_TAG("core.gateway.rts")
 
 RtsPduSignature RTS_PDU_CONN_A1_SIGNATURE = { RTS_FLAG_NONE, 4,
 		{ RTS_CMD_VERSION, RTS_CMD_COOKIE, RTS_CMD_COOKIE, RTS_CMD_RECEIVE_WINDOW_SIZE, 0, 0, 0, 0 } };

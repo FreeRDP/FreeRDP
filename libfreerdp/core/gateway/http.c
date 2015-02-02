@@ -26,13 +26,15 @@
 #include <winpr/stream.h>
 #include <winpr/string.h>
 
+#include <freerdp/log.h>
+
 #ifdef HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 #endif
 
 #include "http.h"
 
-#define TAG "gateway"
+#define TAG FREERDP_TAG("core.gateway.http")
 
 static char* string_strnstr(const char* str1, const char* str2, size_t slen)
 {

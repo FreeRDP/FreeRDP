@@ -29,7 +29,7 @@
 
 #include "rpc_bind.h"
 
-#define TAG FREERDP_TAG("core.gateway")
+#define TAG FREERDP_TAG("core.gateway.rpc")
 
 /**
  * Connection-Oriented RPC Protocol Client Details:
@@ -118,7 +118,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	BOOL promptPassword = FALSE;
 	freerdp* instance = (freerdp*) settings->instance;
 
-	WLog_DBG(TAG, "Sending bind PDU");
+	WLog_DBG(TAG, "Sending Bind PDU");
 
 	ntlm_free(rpc->ntlm);
 	rpc->ntlm = ntlm_new();
@@ -310,6 +310,8 @@ int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	header = (rpcconn_hdr_t*) buffer;
 
+	WLog_DBG(TAG, "Receiving BindAck PDU");
+
 	rpc->max_recv_frag = header->bind_ack.max_xmit_frag;
 	rpc->max_xmit_frag = header->bind_ack.max_recv_frag;
 
@@ -343,7 +345,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	RpcClientCall* clientCall;
 	rpcconn_rpc_auth_3_hdr_t* auth_3_pdu;
 
-	WLog_DBG(TAG, "Sending rpc_auth_3 PDU");
+	WLog_DBG(TAG, "Sending RpcAuth3 PDU");
 
 	auth_3_pdu = (rpcconn_rpc_auth_3_hdr_t*) calloc(1, sizeof(rpcconn_rpc_auth_3_hdr_t));
 

@@ -31,7 +31,7 @@
 
 #include "rts.h"
 
-#define TAG FREERDP_TAG("core.gateway")
+#define TAG FREERDP_TAG("core.gateway.rts")
 
 /**
  * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
@@ -66,8 +66,8 @@ BOOL rts_connect(rdpRpc* rpc)
 	freerdp* instance = (freerdp*) rpc->settings->instance;
 	rdpContext* context = instance->context;
 
-	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
-	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_INITIAL");
+	rpc_client_virtual_connection_transition_to_state(rpc,
+			rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_INITIAL);
 
 	if (!rpc_ntlm_http_out_connect(rpc))
 	{
@@ -93,8 +93,8 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT;
-	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT");
+	rpc_client_virtual_connection_transition_to_state(rpc,
+			rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
 
 	response = http_response_recv(rpc->TlsOut);
 
@@ -126,15 +126,10 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	WLog_DBG(TAG, "HTTP Body (%d):", response->BodyLength);
-
-	if (response->BodyLength)
-		winpr_HexDump(TAG, WLOG_DEBUG, response->BodyContent, response->BodyLength);
-
 	http_response_free(response);
 
-	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_A3W;
-	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_A3W");
+	rpc_client_virtual_connection_transition_to_state(rpc,
+			rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_WAIT_A3W);
 
 	return TRUE;
 }

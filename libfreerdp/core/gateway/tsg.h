@@ -304,6 +304,8 @@ BOOL TsProxyCreateTunnel(rdpTsg* tsg, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPac
 
 DWORD TsProxySendToServer(handle_t IDL_handle, BYTE pRpcMessage[], UINT32 count, UINT32* lengths);
 
+int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state);
+
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port);
 BOOL tsg_disconnect(rdpTsg* tsg);
 

@@ -773,6 +773,9 @@ int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length);
 
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length);
 
+int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
+		RpcVirtualConnection* connection, VIRTUAL_CONNECTION_STATE state);
+
 int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
 
 rdpRpc* rpc_new(rdpTransport* transport);

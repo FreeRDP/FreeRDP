@@ -34,9 +34,7 @@
 #include "rpc_client.h"
 #include "../rdp.h"
 
-#define TAG FREERDP_TAG("core.gateway")
-
-#define SYNCHRONOUS_TIMEOUT 5000
+#define TAG FREERDP_TAG("core.gateway.rpc")
 
 static void rpc_pdu_reset(RPC_PDU* pdu)
 {
@@ -124,8 +122,55 @@ int rpc_client_receive_pipe_read(rdpRpc* rpc, BYTE* buffer, size_t length)
 	return status;
 }
 
+int rpc_client_transition_to_state(rdpRpc* rpc, RPC_CLIENT_STATE state)
+{
+	int status = 1;
+	const char* str = "RPC_CLIENT_STATE_UNKNOWN";
+
+	switch (state)
+	{
+		case RPC_CLIENT_STATE_INITIAL:
+			str = "RPC_CLIENT_STATE_INITIAL";
+			break;
+
+		case RPC_CLIENT_STATE_ESTABLISHED:
+			str = "RPC_CLIENT_STATE_ESTABLISHED";
+			break;
+
+		case RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK:
+			str = "RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK";
+			break;
+
+		case RPC_CLIENT_STATE_WAIT_UNSECURE_BIND_ACK:
+			str = "RPC_CLIENT_STATE_WAIT_UNSECURE_BIND_ACK";
+			break;
+
+		case RPC_CLIENT_STATE_WAIT_SECURE_ALTER_CONTEXT_RESPONSE:
+			str = "RPC_CLIENT_STATE_WAIT_SECURE_ALTER_CONTEXT_RESPONSE";
+			break;
+
+		case RPC_CLIENT_STATE_CONTEXT_NEGOTIATED:
+			str = "RPC_CLIENT_STATE_CONTEXT_NEGOTIATED";
+			break;
+
+		case RPC_CLIENT_STATE_WAIT_RESPONSE:
+			str = "RPC_CLIENT_STATE_WAIT_RESPONSE";
+			break;
+
+		case RPC_CLIENT_STATE_FINAL:
+			str = "RPC_CLIENT_STATE_FINAL";
+			break;
+	}
+
+	rpc->State = state;
+	WLog_DBG(TAG, "%s", str);
+
+	return status;
+}
+
 int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 {
+	int status = -1;
 	rpcconn_rts_hdr_t* rts;
 	rdpTsg* tsg = rpc->transport->tsg;
 
@@ -151,8 +196,10 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 
 				rts_recv_CONN_A3_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
 
-				rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_C2;
-				WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_C2");
+				rpc_client_virtual_connection_transition_to_state(rpc,
+						rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_WAIT_C2);
+
+				status = 1;
 
 				break;
 
@@ -168,10 +215,10 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 
 				rts_recv_CONN_C2_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
 
-				rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
-				WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_OPENED");
+				rpc_client_virtual_connection_transition_to_state(rpc,
+						rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OPENED);
 
-				rpc->State = RPC_CLIENT_STATE_ESTABLISHED;
+				rpc_client_transition_to_state(rpc, RPC_CLIENT_STATE_ESTABLISHED);
 
 				if (rpc_send_bind_pdu(rpc) < 0)
 				{
@@ -179,7 +226,9 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 					return -1;
 				}
 
-				rpc->State = RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK;
+				rpc_client_transition_to_state(rpc, RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK);
+
+				status = 1;
 
 				break;
 
@@ -189,17 +238,22 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 			case VIRTUAL_CONNECTION_STATE_FINAL:
 				break;
 		}
-
-		return 1;
 	}
-
-	if (rpc->State < RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
+	else if (rpc->State < RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
-		if (rpc->State ==  RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK)
+		if (rpc->State == RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK)
 		{
-			if (rpc_recv_bind_ack_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s)) <= 0)
+			if (pdu->Type == PTYPE_BIND_ACK)
 			{
-				WLog_ERR(TAG, "rpc_recv_bind_ack_pdu failure");
+				if (rpc_recv_bind_ack_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s)) <= 0)
+				{
+					WLog_ERR(TAG, "rpc_recv_bind_ack_pdu failure");
+					return -1;
+				}
+			}
+			else
+			{
+				WLog_ERR(TAG, "RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK unexpected pdu type: 0x%04X", pdu->Type);
 				return -1;
 			}
 
@@ -209,7 +263,7 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 				return -1;
 			}
 
-			rpc->State = RPC_CLIENT_STATE_CONTEXT_NEGOTIATED;
+			rpc_client_transition_to_state(rpc, RPC_CLIENT_STATE_CONTEXT_NEGOTIATED);
 
 			if (!TsProxyCreateTunnel(tsg, NULL, NULL, NULL, NULL))
 			{
@@ -218,23 +272,24 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 				return -1;
 			}
 
-			tsg->state = TSG_STATE_INITIAL;
+			tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
+
+			status = 1;
 		}
 		else
 		{
 			WLog_ERR(TAG, "rpc_client_recv_pdu: invalid rpc->State: %d", rpc->State);
-			return -1;
 		}
-
-		return 1;
 	}
-
-	if (tsg->state != TSG_STATE_PIPE_CREATED)
+	else if (rpc->State >= RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
-		return tsg_recv_pdu(tsg, pdu);
+		if (tsg->state != TSG_STATE_PIPE_CREATED)
+		{
+			status = tsg_recv_pdu(tsg, pdu);
+		}
 	}
 
-	return 1;
+	return status;
 }
 
 int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
@@ -384,18 +439,18 @@ int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 
 int rpc_client_recv(rdpRpc* rpc)
 {
-	int position;
 	int status = -1;
+	wStream* fragment;
 	rpcconn_common_hdr_t* header;
+
+	fragment = rpc->client->ReceiveFragment;
 
 	while (1)
 	{
-		position = Stream_GetPosition(rpc->client->ReceiveFragment);
-
-		while (Stream_GetPosition(rpc->client->ReceiveFragment) < RPC_COMMON_FIELDS_LENGTH)
+		while (Stream_GetPosition(fragment) < RPC_COMMON_FIELDS_LENGTH)
 		{
-			status = rpc_out_read(rpc, Stream_Pointer(rpc->client->ReceiveFragment),
-					RPC_COMMON_FIELDS_LENGTH - Stream_GetPosition(rpc->client->ReceiveFragment));
+			status = rpc_out_read(rpc, Stream_Pointer(fragment),
+					RPC_COMMON_FIELDS_LENGTH - Stream_GetPosition(fragment));
 
 			if (status < 0)
 				return -1;
@@ -403,26 +458,26 @@ int rpc_client_recv(rdpRpc* rpc)
 			if (!status)
 				return 0;
 
-			Stream_Seek(rpc->client->ReceiveFragment, status);
+			Stream_Seek(fragment, status);
 		}
 
-		if (Stream_GetPosition(rpc->client->ReceiveFragment) < RPC_COMMON_FIELDS_LENGTH)
+		if (Stream_GetPosition(fragment) < RPC_COMMON_FIELDS_LENGTH)
 			return status;
 
-		header = (rpcconn_common_hdr_t*) Stream_Buffer(rpc->client->ReceiveFragment);
+		header = (rpcconn_common_hdr_t*) Stream_Buffer(fragment);
 
 		if (header->frag_length > rpc->max_recv_frag)
 		{
-			WLog_ERR(TAG, "rpc_client_frag_read: invalid fragment size: %d (max: %d)",
+			WLog_ERR(TAG, "rpc_client_recv: invalid fragment size: %d (max: %d)",
 					 header->frag_length, rpc->max_recv_frag);
-			winpr_HexDump(TAG, WLOG_ERROR, Stream_Buffer(rpc->client->ReceiveFragment), Stream_GetPosition(rpc->client->ReceiveFragment));
+			winpr_HexDump(TAG, WLOG_ERROR, Stream_Buffer(fragment), Stream_GetPosition(fragment));
 			return -1;
 		}
 
-		while (Stream_GetPosition(rpc->client->ReceiveFragment) < header->frag_length)
+		while (Stream_GetPosition(fragment) < header->frag_length)
 		{
-			status = rpc_out_read(rpc, Stream_Pointer(rpc->client->ReceiveFragment),
-					header->frag_length - Stream_GetPosition(rpc->client->ReceiveFragment));
+			status = rpc_out_read(rpc, Stream_Pointer(fragment),
+					header->frag_length - Stream_GetPosition(fragment));
 
 			if (status < 0)
 			{
@@ -433,27 +488,25 @@ int rpc_client_recv(rdpRpc* rpc)
 			if (!status)
 				return 0;
 
-			Stream_Seek(rpc->client->ReceiveFragment, status);
+			Stream_Seek(fragment, status);
 		}
 
 		if (status < 0)
 			return -1;
 
-		status = Stream_GetPosition(rpc->client->ReceiveFragment) - position;
-
-		if (Stream_GetPosition(rpc->client->ReceiveFragment) >= header->frag_length)
+		if (Stream_GetPosition(fragment) >= header->frag_length)
 		{
 			/* complete fragment received */
 
-			Stream_SealLength(rpc->client->ReceiveFragment);
-			Stream_SetPosition(rpc->client->ReceiveFragment, 0);
+			Stream_SealLength(fragment);
+			Stream_SetPosition(fragment, 0);
 
-			status = rpc_client_recv_fragment(rpc, rpc->client->ReceiveFragment);
+			status = rpc_client_recv_fragment(rpc, fragment);
 
 			if (status < 0)
 				return status;
 
-			Stream_SetPosition(rpc->client->ReceiveFragment, 0);
+			Stream_SetPosition(fragment, 0);
 		}
 	}
 

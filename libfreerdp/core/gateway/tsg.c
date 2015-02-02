@@ -1200,8 +1200,54 @@ BOOL TsProxySetupReceivePipe(handle_t IDL_handle, BYTE* pRpcMessage)
 	return TRUE;
 }
 
+int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
+{
+	const char* str = "TSG_STATE_UNKNOWN";
+
+	switch (tsg->state)
+	{
+		case TSG_STATE_INITIAL:
+			str = "TSG_STATE_INITIAL";
+			break;
+
+		case TSG_STATE_CONNECTED:
+			str = "TSG_STATE_CONNECTED";
+			break;
+
+		case TSG_STATE_AUTHORIZED:
+			str = "TSG_STATE_AUTHORIZED";
+			break;
+
+		case TSG_STATE_CHANNEL_CREATED:
+			str = "TSG_STATE_CHANNEL_CREATED";
+			break;
+
+		case TSG_STATE_PIPE_CREATED:
+			str = "TSG_STATE_PIPE_CREATED";
+			break;
+
+		case TSG_STATE_TUNNEL_CLOSE_PENDING:
+			str = "TSG_STATE_TUNNEL_CLOSE_PENDING";
+			break;
+
+		case TSG_STATE_CHANNEL_CLOSE_PENDING:
+			str = "TSG_STATE_CHANNEL_CLOSE_PENDING";
+			break;
+
+		case TSG_STATE_FINAL:
+			str = "TSG_STATE_FINAL";
+			break;
+	}
+
+	tsg->state = state;
+	WLog_DBG(TAG, "%s", str);
+
+	return 1;
+}
+
 int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 {
+	int status = -1;
 	RpcClientCall* call;
 	rdpRpc* rpc = tsg->rpc;
 
@@ -1215,14 +1261,15 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				return -1;
 			}
 
-			tsg->state = TSG_STATE_CONNECTED;
+			tsg_transition_to_state(tsg, TSG_STATE_CONNECTED);
 
 			if (!TsProxyAuthorizeTunnel(tsg, &tsg->TunnelContext, NULL, NULL))
 			{
 				WLog_ERR(TAG, "TsProxyAuthorizeTunnel failure");
-				tsg->state = TSG_STATE_TUNNEL_CLOSE_PENDING;
 				return -1;
 			}
+
+			status = 1;
 
 			break;
 
@@ -1234,7 +1281,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				return -1;
 			}
 
-			tsg->state = TSG_STATE_AUTHORIZED;
+			tsg_transition_to_state(tsg, TSG_STATE_AUTHORIZED);
 
 			if (!TsProxyMakeTunnelCall(tsg, &tsg->TunnelContext, TSG_TUNNEL_CALL_ASYNC_MSG_REQUEST, NULL, NULL))
 			{
@@ -1247,6 +1294,8 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				WLog_ERR(TAG, "TsProxyCreateChannel failure");
 				return -1;
 			}
+
+			status = 1;
 
 			break;
 
@@ -1261,6 +1310,8 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					WLog_ERR(TAG, "TsProxyMakeTunnelCallReadResponse failure");
 					return -1;
 				}
+
+				status = 1;
 			}
 			else if (call->OpNum == TsProxyCreateChannelOpnum)
 			{
@@ -1270,7 +1321,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					return -1;
 				}
 
-				tsg->state = TSG_STATE_CHANNEL_CREATED;
+				tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CREATED);
 
 				if (!TsProxySetupReceivePipe((handle_t) tsg, NULL))
 				{
@@ -1278,7 +1329,9 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 					return -1;
 				}
 
-				tsg->state = TSG_STATE_PIPE_CREATED;
+				tsg_transition_to_state(tsg, TSG_STATE_PIPE_CREATED);
+
+				status = 1;
 			}
 			else
 			{
@@ -1301,7 +1354,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				return FALSE;
 			}
 
-			tsg->state = TSG_STATE_CHANNEL_CLOSE_PENDING;
+			tsg_transition_to_state(tsg, TSG_STATE_CHANNEL_CLOSE_PENDING);
 
 			if (!TsProxyCloseChannelWriteRequest(tsg, NULL))
 			{
@@ -1315,6 +1368,8 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				return FALSE;
 			}
 
+			status = 1;
+
 			break;
 
 		case TSG_STATE_CHANNEL_CLOSE_PENDING:
@@ -1325,7 +1380,9 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 				return FALSE;
 			}
 
-			tsg->state = TSG_STATE_FINAL;
+			tsg_transition_to_state(tsg, TSG_STATE_FINAL);
+
+			status = 1;
 
 			break;
 
@@ -1333,7 +1390,7 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			break;
 	}
 
-	return 1;
+	return status;
 }
 
 int tsg_check(rdpTsg* tsg)
@@ -1379,8 +1436,9 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 		{
 			if (rpc_client_recv(rpc) < 0)
 			{
+				WLog_ERR(TAG, "tsg_connect: rpc_client_recv failure");
 				rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
-				break;
+				return FALSE;
 			}
 		}
 	}
