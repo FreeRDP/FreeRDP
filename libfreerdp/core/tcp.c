@@ -51,7 +51,9 @@
 #include <sys/select.h>
 #endif
 
+#ifdef __sun__
 #include <sys/filio.h>
+#endif
 
 #ifdef __FreeBSD__
 #ifndef SOL_TCP
