@@ -319,6 +319,21 @@ void xf_Pointer_SetDefault(rdpContext* context)
 #endif
 }
 
+void xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
+{
+	xfContext* xfc = (xfContext*) context;
+
+	if (!xfc->focused)
+		return;
+
+	xf_lock_x11(xfc, FALSE);
+
+	if (xfc->window)
+		XWarpPointer(xfc->display, None, xfc->window->handle, 0, 0, 0, 0, x, y);
+
+	xf_unlock_x11(xfc, FALSE);
+}
+
 /* Glyph Class */
 
 void xf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
@@ -454,6 +469,7 @@ void xf_register_graphics(rdpGraphics* graphics)
 	pointer->Set = xf_Pointer_Set;
 	pointer->SetNull = xf_Pointer_SetNull;
 	pointer->SetDefault = xf_Pointer_SetDefault;
+	pointer->SetPosition = xf_Pointer_SetPosition;
 
 	graphics_register_pointer(graphics, pointer);
 	free(pointer);
