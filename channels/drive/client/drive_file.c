@@ -487,7 +487,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 	int status;
 	char* fullpath;
 	struct STAT st;
-#if defined(__linux__) && !defined(ANDROID)
+#if defined(__linux__) && !defined(ANDROID) || defined(sun)
 	struct timespec tv[2];
 #else
 	struct timeval tv[2];
@@ -519,7 +519,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			tv[0].tv_usec = 0;
 			tv[1].tv_usec = 0;
 			utimes(file->fullpath, tv);
-#elif defined (__linux__)
+#elif defined (__linux__) || defined (sun)
 			tv[0].tv_nsec = 0;
 			tv[1].tv_nsec = 0;			
 			futimens(file->fd, tv);

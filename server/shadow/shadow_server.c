@@ -34,7 +34,7 @@
 
 #ifndef _WIN32
 #include <sys/select.h>
-#include <sys/signal.h>
+#include <signal.h>
 #endif
 
 #include "shadow.h"

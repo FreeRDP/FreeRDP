@@ -51,6 +51,8 @@
 #include <sys/select.h>
 #endif
 
+#include <sys/filio.h>
+
 #ifdef __FreeBSD__
 #ifndef SOL_TCP
 #define SOL_TCP	IPPROTO_TCP
