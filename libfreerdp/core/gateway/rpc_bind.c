@@ -120,12 +120,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 
 	WLog_DBG(TAG, "Sending bind PDU");
 
-	if (rpc->ntlm)
-	{
-		ntlm_free(rpc->ntlm);
-		rpc->ntlm = NULL;
-	}
-
+	ntlm_free(rpc->ntlm);
 	rpc->ntlm = ntlm_new();
 
 	if (!rpc->ntlm)
@@ -163,8 +158,13 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 		}
 	}
 
-	if (!ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain, settings->GatewayPassword, NULL) ||
-		!ntlm_client_make_spn(rpc->ntlm, NULL, settings->GatewayHostname) || !ntlm_authenticate(rpc->ntlm))
+	if (!ntlm_client_init(rpc->ntlm, FALSE, settings->GatewayUsername, settings->GatewayDomain, settings->GatewayPassword, NULL))
+		return -1;
+
+	if (!ntlm_client_make_spn(rpc->ntlm, NULL, settings->GatewayHostname))
+		return -1;
+
+	if (!ntlm_authenticate(rpc->ntlm))
 		return -1;
 
 	bind_pdu = (rpcconn_bind_hdr_t*) calloc(1, sizeof(rpcconn_bind_hdr_t));

@@ -311,8 +311,7 @@ int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length);
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length);
 
 int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu);
-
-BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking);
+int tsg_check(rdpTsg* tsg);
 
 rdpTsg* tsg_new(rdpTransport* transport);
 void tsg_free(rdpTsg* tsg);

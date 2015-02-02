@@ -138,7 +138,7 @@ void nego_process_negotiation_response(rdpNego* nego, wStream* s);
 void nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 BOOL nego_send_negotiation_response(rdpNego* nego);
 
-rdpNego* nego_new(struct rdp_transport* transport);
+rdpNego* nego_new(rdpTransport* transport);
 void nego_free(rdpNego* nego);
 
 void nego_init(rdpNego* nego);
@@ -157,12 +157,5 @@ void nego_set_cookie_max_length(rdpNego* nego, UINT32 cookie_max_length);
 void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL send_pcpdu);
 void nego_set_preconnection_id(rdpNego* nego, UINT32 id);
 void nego_set_preconnection_blob(rdpNego* nego, char* blob);
-
-#define NEGO_TAG FREERDP_TAG("core.nego")
-#ifdef WITH_DEBUG_NEGO
-#define DEBUG_NEGO(fmt, ...) WLog_DBG(NEGO_TAG, fmt, ## __VA_ARGS__)
-#else
-#define DEBUG_NEGO(fmt, ...) do { } while (0)
-#endif
 
 #endif /* __NEGO_H */

@@ -542,73 +542,6 @@ int rpc_send_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	return status;
 }
 
-static void* rpc_client_thread(void* arg)
-{
-	DWORD nCount;
-	HANDLE events[8];
-	DWORD waitStatus;
-	HANDLE ReadEvent = NULL;
-	rdpRpc* rpc = (rdpRpc*) arg;
-
-	BIO_get_event(rpc->TlsOut->bio, &ReadEvent);
-
-	nCount = 0;
-	events[nCount++] = rpc->client->StopEvent;
-	events[nCount++] = ReadEvent;
-
-	/*
-	 * OpenSSL buffers TLS records, which can sometimes cause
-	 * bytes to be buffered in OpenSSL without the TCP socket
-	 * being signaled for read. Do a first read to work around
-	 * the problem for now.
-	 */
-
-	if (rpc_client_recv(rpc) < 0)
-	{
-		rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
-		return NULL;
-	}
-
-	while (rpc->transport->layer != TRANSPORT_LAYER_CLOSED)
-	{
-		waitStatus = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
-
-		if (WaitForSingleObject(rpc->client->StopEvent, 0) == WAIT_OBJECT_0)
-			break;
-
-		if (WaitForSingleObject(ReadEvent, 0) == WAIT_OBJECT_0)
-		{
-			if (rpc_client_recv(rpc) < 0)
-			{
-				rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
-				break;
-			}
-		}
-	}
-
-	return NULL;
-}
-
-int rpc_client_start(rdpRpc* rpc)
-{
-	rpc->client->Thread = CreateThread(NULL, 0,
-		(LPTHREAD_START_ROUTINE) rpc_client_thread, rpc, 0, NULL);
-
-	return 0;
-}
-
-int rpc_client_stop(rdpRpc* rpc)
-{
-	if (rpc->client->Thread)
-	{
-		SetEvent(rpc->client->StopEvent);
-		WaitForSingleObject(rpc->client->Thread, INFINITE);
-		rpc->client->Thread = NULL;
-	}
-
-	return 0;
-}
-
 int rpc_client_new(rdpRpc* rpc)
 {
 	RpcClient* client;
@@ -618,11 +551,6 @@ int rpc_client_new(rdpRpc* rpc)
 	rpc->client = client;
 
 	if (!client)
-		return -1;
-
-	client->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
-	if (!client->StopEvent)
 		return -1;
 
 	client->pdu = rpc_pdu_new();
@@ -663,8 +591,6 @@ void rpc_client_free(rdpRpc* rpc)
 	if (!client)
 		return;
 
-	rpc_client_stop(rpc);
-
 	if (client->ReceiveFragment)
 		Stream_Free(client->ReceiveFragment, TRUE);
 
@@ -680,12 +606,6 @@ void rpc_client_free(rdpRpc* rpc)
 
 	if (client->ClientCallList)
 		ArrayList_Free(client->ClientCallList);
-
-	if (client->StopEvent)
-		CloseHandle(client->StopEvent);
-
-	if (client->Thread)
-		CloseHandle(client->Thread);
 
 	free(client);
 	rpc->client = NULL;

@@ -703,16 +703,12 @@ typedef struct rpc_virtual_connection_cookie_entry RpcVirtualConnectionCookieEnt
 
 struct rpc_client
 {
-	HANDLE Thread;
-	HANDLE StopEvent;
-
 	RPC_PDU* pdu;
 	HANDLE PipeEvent;
 	RingBuffer ReceivePipe;
 	wStream* ReceiveFragment;
 	CRITICAL_SECTION PipeLock;
 	wArrayList* ClientCallList;
-	BOOL SynchronousReceive;
 };
 typedef struct rpc_client RpcClient;
 

@@ -363,6 +363,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	if (!ntlm || !ntlm->table)
 	{
 		WLog_ERR(TAG, "invalid ntlm context");
+		fprintf(stderr, "invalid ntlm context: %p %p\n", ntlm, ntlm->table);
 		return -1;
 	}
 
@@ -584,7 +585,6 @@ rdpRpc* rpc_new(rdpTransport* transport)
 	if (rpc_client_new(rpc) < 0)
 		goto out_free_virtualConnectionCookieTable;
 
-	rpc->client->SynchronousReceive = TRUE;
 	return rpc;
 out_free_virtualConnectionCookieTable:
 	rpc_client_free(rpc);

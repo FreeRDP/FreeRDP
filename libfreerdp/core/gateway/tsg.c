@@ -1336,8 +1336,18 @@ int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 	return 1;
 }
 
+int tsg_check(rdpTsg* tsg)
+{
+	int status;
+
+	status = rpc_client_recv(tsg->rpc);
+
+	return status;
+}
+
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 {
+	HANDLE ReadEvent;
 	rdpRpc* rpc = tsg->rpc;
 	rdpSettings* settings = rpc->settings;
 
@@ -1360,17 +1370,26 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 		return -1;
 	}
 
-	rpc_client_start(rpc);
+	ReadEvent = NULL;
+	BIO_get_event(rpc->TlsOut->bio, &ReadEvent);
 
 	while (tsg->state != TSG_STATE_PIPE_CREATED)
 	{
-		USleep(100);
+		if (WaitForSingleObject(ReadEvent, 100) == WAIT_OBJECT_0)
+		{
+			if (rpc_client_recv(rpc) < 0)
+			{
+				rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
+				break;
+			}
+		}
 	}
 
+	WLog_INFO(TAG, "TS Gateway Connection Success");
+
+	tsg->transport->GatewayEvent = tsg->rpc->client->PipeEvent;
 	tsg->bio = BIO_new(BIO_s_tsg());
 	tsg->bio->ptr = tsg;
-
-	WLog_INFO(TAG, "TS Gateway Connection Success");
 
 	return TRUE;
 }
@@ -1443,7 +1462,7 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		if (status < 0)
 			return -1;
 
-		if (!status && !rpc->client->SynchronousReceive)
+		if (!status && !rpc->transport->blocking)
 			return 0;
 
 		if (rpc->transport->layer == TRANSPORT_LAYER_CLOSED)
@@ -1455,10 +1474,18 @@ int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length)
 		if (status > 0)
 			break;
 
-		if (rpc->client->SynchronousReceive)
-			WaitForSingleObject(rpc->client->PipeEvent, 100);
+		if (rpc->transport->blocking)
+		{
+			while (WaitForSingleObject(rpc->client->PipeEvent, 0) != WAIT_OBJECT_0)
+			{
+				if (tsg_check(tsg) < 0)
+					return -1;
+
+				WaitForSingleObject(rpc->client->PipeEvent, 100);
+			}
+		}
 	}
-	while (rpc->client->SynchronousReceive);
+	while (rpc->transport->blocking);
 
 	return status;
 }
@@ -1479,13 +1506,6 @@ int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
 		return -1;
 
 	return length;
-}
-
-BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking)
-{
-	tsg->rpc->client->SynchronousReceive = blocking;
-	tsg->transport->GatewayEvent = tsg->rpc->client->PipeEvent;
-	return TRUE;
 }
 
 rdpTsg* tsg_new(rdpTransport* transport)

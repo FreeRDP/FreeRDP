@@ -28,11 +28,11 @@ RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum);
 void rpc_client_call_free(RpcClientCall* client_call);
 
 int rpc_send_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
+int rpc_client_recv(rdpRpc* rpc);
+
 int rpc_client_receive_pipe_read(rdpRpc* rpc, BYTE* buffer, size_t length);
 
 int rpc_client_new(rdpRpc* rpc);
-int rpc_client_start(rdpRpc* rpc);
-int rpc_client_stop(rdpRpc* rpc);
 void rpc_client_free(rdpRpc* rpc);
 
 #endif /* FREERDP_CORE_RPC_CLIENT_H */
