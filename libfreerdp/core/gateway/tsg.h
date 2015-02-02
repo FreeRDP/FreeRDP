@@ -299,6 +299,9 @@ typedef struct _TSG_PACKET
 	TSG_PACKET_TYPE_UNION tsgPacket;
 } TSG_PACKET, *PTSG_PACKET;
 
+BOOL TsProxyCreateTunnel(rdpTsg* tsg, PTSG_PACKET tsgPacket, PTSG_PACKET* tsgPacketResponse,
+			PTUNNEL_CONTEXT_HANDLE_SERIALIZE* tunnelContext, UINT32* tunnelId);
+
 DWORD TsProxySendToServer(handle_t IDL_handle, BYTE pRpcMessage[], UINT32 count, UINT32* lengths);
 
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port);
@@ -306,6 +309,8 @@ BOOL tsg_disconnect(rdpTsg* tsg);
 
 int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length);
 int tsg_read(rdpTsg* tsg, BYTE* data, UINT32 length);
+
+int tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu);
 
 BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking);
 

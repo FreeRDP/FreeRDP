@@ -707,16 +707,11 @@ struct rpc_client
 	HANDLE StopEvent;
 
 	RPC_PDU* pdu;
-	wQueue* ReceivePool;
-	wQueue* ReceiveQueue;
-
 	HANDLE PipeEvent;
 	RingBuffer ReceivePipe;
 	wStream* ReceiveFragment;
 	CRITICAL_SECTION PipeLock;
-
 	wArrayList* ClientCallList;
-
 	BOOL SynchronousReceive;
 };
 typedef struct rpc_client RpcClient;
@@ -768,8 +763,6 @@ struct rdp_rpc
 
 	wArrayList* VirtualConnectionCookieTable;
 };
-
-int rpc_connect(rdpRpc* rpc);
 
 void rpc_pdu_header_print(rpcconn_hdr_t* header);
 void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);

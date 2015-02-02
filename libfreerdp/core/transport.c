@@ -22,9 +22,6 @@
 #endif
 
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -350,14 +347,6 @@ BOOL transport_tsg_connect(rdpTransport* transport, const char* hostname, UINT16
 
 		return FALSE;
 	}
-
-	if (rpc_connect(tsg->rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_connect failed!");
-		return FALSE;
-	}
-
-	WLog_DBG(TAG, "rpc_connect success");
 
 	if (!tsg_connect(tsg, hostname, port))
 		return FALSE;
