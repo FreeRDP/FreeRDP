@@ -83,6 +83,7 @@ struct _http_response
 	char* ReasonPhrase;
 
 	int ContentLength;
+	char* ContentType;
 
 	int BodyLength;
 	BYTE* BodyContent;

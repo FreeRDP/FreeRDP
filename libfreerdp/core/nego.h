@@ -95,20 +95,20 @@ struct rdp_nego
 	char* cookie;
 	BYTE* RoutingToken;
 	DWORD RoutingTokenLength;
-	BOOL send_preconnection_pdu;
-	UINT32 preconnection_id;
-	char* preconnection_blob;
+	BOOL SendPreconnectionPdu;
+	UINT32 PreconnectionId;
+	char* PreconnectionBlob;
 
 	NEGO_STATE state;
-	BOOL tcp_connected;
-	BOOL security_connected;
-	UINT32 cookie_max_length;
+	BOOL TcpConnected;
+	BOOL SecurityConnected;
+	UINT32 CookieMaxLength;
 
 	BOOL sendNegoData;
-	UINT32 selected_protocol;
-	UINT32 requested_protocols;
+	UINT32 SelectedProtocol;
+	UINT32 RequestedProtocols;
 	BOOL NegotiateSecurityLayer;
-	BYTE enabled_protocols[16];
+	BYTE EnabledProtocols[16];
 	BOOL RestrictedAdminModeRequired;
 	BOOL GatewayEnabled;
 	BOOL GatewayBypassLocal;
@@ -143,7 +143,7 @@ void nego_free(rdpNego* nego);
 
 void nego_init(rdpNego* nego);
 void nego_set_target(rdpNego* nego, char* hostname, int port);
-void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer_enabled);
+void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer);
 void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdminModeRequired);
 void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled);
 void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypassLocal);
@@ -153,9 +153,9 @@ void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
 void nego_enable_ext(rdpNego* nego, BOOL enable_ext);
 BOOL nego_set_routing_token(rdpNego* nego, BYTE* RoutingToken, DWORD RoutingTokenLength);
 BOOL nego_set_cookie(rdpNego* nego, char* cookie);
-void nego_set_cookie_max_length(rdpNego* nego, UINT32 cookie_max_length);
-void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL send_pcpdu);
-void nego_set_preconnection_id(rdpNego* nego, UINT32 id);
-void nego_set_preconnection_blob(rdpNego* nego, char* blob);
+void nego_set_cookie_max_length(rdpNego* nego, UINT32 CookieMaxLength);
+void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL SendPreconnectionPdu);
+void nego_set_preconnection_id(rdpNego* nego, UINT32 PreconnectionId);
+void nego_set_preconnection_blob(rdpNego* nego, char* PreconnectionBlob);
 
 #endif /* __NEGO_H */

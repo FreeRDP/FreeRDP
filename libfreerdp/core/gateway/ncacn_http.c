@@ -243,19 +243,19 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 {
 	char* token64;
+	HttpResponse* response;
 	int ntlm_token_length = 0;
 	BYTE* ntlm_token_data = NULL;
-	HttpResponse* http_response;
 	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
 
-	http_response = http_response_recv(rpc->TlsOut);
+	response = http_response_recv(rpc->TlsOut);
 
-	if (!http_response)
+	if (!response)
 		return -1;
 
-	if (ListDictionary_Contains(http_response->Authenticates, "NTLM"))
+	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
 	{
-		token64 = ListDictionary_GetItemValue(http_response->Authenticates, "NTLM");
+		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
 
 		if (!token64)
 			goto out;
@@ -266,7 +266,7 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 out:
 	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
 	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
-	http_response_free(http_response);
+	http_response_free(response);
 
 	return 1;
 }
@@ -297,15 +297,24 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 
 	/* Send OUT Channel Request */
 	if (rpc_ncacn_http_send_out_channel_request(rpc) <= 0)
+	{
+		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 		goto out;
+	}
 
 	/* Receive OUT Channel Response */
 	if (rpc_ncacn_http_recv_out_channel_response(rpc) <= 0)
+	{
+		WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
 		goto out;
+	}
 
 	/* Send OUT Channel Request */
 	if (rpc_ncacn_http_send_out_channel_request(rpc) <= 0)
+	{
+		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 		goto out;
+	}
 
 	status = TRUE;
 

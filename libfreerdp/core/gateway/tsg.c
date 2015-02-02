@@ -1367,7 +1367,7 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	if (!rts_connect(rpc))
 	{
 		WLog_ERR(TAG, "rts_connect error!");
-		return -1;
+		return FALSE;
 	}
 
 	ReadEvent = NULL;

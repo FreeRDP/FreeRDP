@@ -126,6 +126,11 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
+	WLog_DBG(TAG, "HTTP Body (%d):", response->BodyLength);
+
+	if (response->BodyLength)
+		winpr_HexDump(TAG, WLOG_DEBUG, response->BodyContent, response->BodyLength);
+
 	http_response_free(response);
 
 	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_A3W;
