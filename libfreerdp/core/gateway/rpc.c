@@ -350,16 +350,15 @@ int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length)
 
 int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 {
-	BYTE* buffer = NULL;
 	UINT32 offset;
-	rdpNtlm* ntlm;
+	BYTE* buffer = NULL;
 	UINT32 stub_data_pad;
 	SecBuffer Buffers[2];
 	SecBufferDesc Message;
 	RpcClientCall* clientCall;
 	SECURITY_STATUS encrypt_status;
 	rpcconn_request_hdr_t* request_pdu = NULL;
-	ntlm = rpc->ntlm;
+	rdpNtlm* ntlm = rpc->ntlm;
 
 	if (!ntlm || !ntlm->table)
 	{
@@ -411,6 +410,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	request_pdu->auth_verifier.auth_context_id = 0x00000000;
 	offset += (8 + request_pdu->auth_length);
 	request_pdu->frag_length = offset;
+
 	buffer = (BYTE*) calloc(1, request_pdu->frag_length);
 
 	if (!buffer)
@@ -432,9 +432,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	Buffers[1].pvBuffer = calloc(1, Buffers[1].cbBuffer);
 
 	if (!Buffers[1].pvBuffer)
-	{
 		goto out_free_pdu;
-	}
 
 	Message.cBuffers = 2;
 	Message.ulVersion = SECBUFFER_VERSION;
@@ -451,7 +449,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	offset += Buffers[1].cbBuffer;
 	free(Buffers[1].pvBuffer);
 
-	if (rpc_send_enqueue_pdu(rpc, buffer, request_pdu->frag_length) < 0)
+	if (rpc_send_pdu(rpc, buffer, request_pdu->frag_length) < 0)
 		length = -1;
 
 	free(request_pdu);
@@ -460,8 +458,8 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 out_free_clientCall:
 	rpc_client_call_free(clientCall);
 out_free_pdu:
-	free (buffer);
-	free (Buffers[1].pvBuffer);
+	free(buffer);
+	free(Buffers[1].pvBuffer);
 	free(request_pdu);
 	return -1;
 }
@@ -469,6 +467,77 @@ out_free_pdu:
 int rpc_check(rdpRpc* rpc)
 {
 	RPC_PDU* pdu;
+	rpcconn_rts_hdr_t* rts;
+
+	if (rpc->State < RPC_CLIENT_STATE_ESTABLISHED)
+	{
+		switch (rpc->VirtualConnection->State)
+		{
+			case VIRTUAL_CONNECTION_STATE_INITIAL:
+				break;
+
+			case VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT:
+				break;
+
+			case VIRTUAL_CONNECTION_STATE_WAIT_A3W:
+
+				pdu = rpc_recv_dequeue_pdu(rpc, TRUE);
+
+				if (!pdu)
+					return -1;
+
+				rts = (rpcconn_rts_hdr_t*) Stream_Buffer(pdu->s);
+
+				if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_A3_SIGNATURE, rts))
+				{
+					WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/A3");
+					return -1;
+				}
+
+				rts_recv_CONN_A3_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
+
+				rpc_client_receive_pool_return(rpc, pdu);
+
+				rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_C2;
+				WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_C2");
+
+				break;
+
+			case VIRTUAL_CONNECTION_STATE_WAIT_C2:
+
+				pdu = rpc_recv_dequeue_pdu(rpc, TRUE);
+
+				if (!pdu)
+					return FALSE;
+
+				rts = (rpcconn_rts_hdr_t*) Stream_Buffer(pdu->s);
+
+				if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
+				{
+					WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/C2");
+					return FALSE;
+				}
+
+				rts_recv_CONN_C2_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
+
+				rpc_client_receive_pool_return(rpc, pdu);
+
+				rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
+				WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_OPENED");
+
+				rpc->State = RPC_CLIENT_STATE_ESTABLISHED;
+
+				break;
+
+			case VIRTUAL_CONNECTION_STATE_OPENED:
+				break;
+
+			case VIRTUAL_CONNECTION_STATE_FINAL:
+				break;
+		}
+
+		return 1;
+	}
 
 	if (rpc->State == RPC_CLIENT_STATE_ESTABLISHED)
 	{
@@ -525,6 +594,8 @@ int rpc_connect(rdpRpc* rpc)
 		WLog_ERR(TAG, "rts_connect error!");
 		return -1;
 	}
+
+	rpc_client_start(rpc);
 
 	while (rpc->State != RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
 	{
@@ -658,7 +729,6 @@ rdpRpc* rpc_new(rdpTransport* transport)
 	if (rpc_client_new(rpc) < 0)
 		goto out_free_virtualConnectionCookieTable;
 
-	rpc->client->SynchronousSend = TRUE;
 	rpc->client->SynchronousReceive = TRUE;
 	return rpc;
 out_free_virtualConnectionCookieTable:

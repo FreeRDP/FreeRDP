@@ -107,6 +107,7 @@ const p_uuid_t BTFN_UUID =
 
 int rpc_send_bind_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	UINT32 offset;
 	UINT32 length;
@@ -269,15 +270,14 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 		return -1;
 	}
 
-	if (rpc_send_enqueue_pdu(rpc, buffer, length) != 0)
-		length = -1;
+	status = rpc_send_pdu(rpc, buffer, length);
 
 	free(bind_pdu->p_context_elem.p_cont_elem[0].transfer_syntaxes);
 	free(bind_pdu->p_context_elem.p_cont_elem[1].transfer_syntaxes);
 	free(bind_pdu->p_context_elem.p_cont_elem);
 	free(bind_pdu);
 
-	return length;
+	return status;
 }
 
 /**
@@ -339,6 +339,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	int status;
 	BYTE* buffer;
 	UINT32 offset;
+	UINT32 length;
 	RpcClientCall* clientCall;
 	rpcconn_rpc_auth_3_hdr_t* auth_3_pdu;
 
@@ -386,13 +387,12 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	CopyMemory(&buffer[offset + 8], auth_3_pdu->auth_verifier.auth_value, auth_3_pdu->auth_length);
 	offset += (8 + auth_3_pdu->auth_length);
 
-	status = (int) auth_3_pdu->frag_length;
+	length = auth_3_pdu->frag_length;
 
 	clientCall = rpc_client_call_new(auth_3_pdu->call_id, 0);
 	ArrayList_Add(rpc->client->ClientCallList, clientCall);
 
-	if (rpc_send_enqueue_pdu(rpc, buffer, (UINT32) status) != 0)
-		status = -1;
+	status = rpc_send_pdu(rpc, buffer, length);
 
 	free(auth_3_pdu);
 

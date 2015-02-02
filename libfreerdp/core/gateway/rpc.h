@@ -706,8 +706,6 @@ struct rpc_client
 	HANDLE Thread;
 	HANDLE StopEvent;
 
-	wQueue* SendQueue;
-
 	RPC_PDU* pdu;
 	wQueue* ReceivePool;
 	wQueue* ReceiveQueue;
@@ -719,9 +717,6 @@ struct rpc_client
 
 	wArrayList* ClientCallList;
 
-	HANDLE PduSentEvent;
-
-	BOOL SynchronousSend;
 	BOOL SynchronousReceive;
 };
 typedef struct rpc_client RpcClient;

@@ -1506,7 +1506,6 @@ int tsg_write(rdpTsg* tsg, BYTE* data, UINT32 length)
 
 BOOL tsg_set_blocking_mode(rdpTsg* tsg, BOOL blocking)
 {
-	tsg->rpc->client->SynchronousSend = TRUE;
 	tsg->rpc->client->SynchronousReceive = blocking;
 	tsg->transport->GatewayEvent = tsg->rpc->client->PipeEvent;
 	return TRUE;
