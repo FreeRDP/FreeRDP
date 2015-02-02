@@ -35,7 +35,7 @@
 
 void update_pointer_position(rdpContext* context, POINTER_POSITION_UPDATE* pointer_position)
 {
-
+	Pointer_SetPosition(context, pointer_position->xPos, pointer_position->yPos);
 }
 
 void update_pointer_system(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer_system)
