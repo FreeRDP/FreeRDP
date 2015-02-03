@@ -1434,9 +1434,9 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	{
 		if (WaitForSingleObject(ReadEvent, 100) == WAIT_OBJECT_0)
 		{
-			if (rpc_client_recv(rpc) < 0)
+			if (tsg_check(tsg) < 0)
 			{
-				WLog_ERR(TAG, "tsg_connect: rpc_client_recv failure");
+				WLog_ERR(TAG, "tsg_check failure");
 				rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
 				return FALSE;
 			}

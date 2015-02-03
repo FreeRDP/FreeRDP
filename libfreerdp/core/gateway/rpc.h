@@ -606,6 +606,9 @@ typedef struct rpc_ping_originator RpcPingOriginator;
 enum _CLIENT_IN_CHANNEL_STATE
 {
 	CLIENT_IN_CHANNEL_STATE_INITIAL,
+	CLIENT_IN_CHANNEL_STATE_CONNECTED,
+	CLIENT_IN_CHANNEL_STATE_SECURITY,
+	CLIENT_IN_CHANNEL_STATE_NEGOTIATED,
 	CLIENT_IN_CHANNEL_STATE_OPENED,
 	CLIENT_IN_CHANNEL_STATE_OPENED_A4W,
 	CLIENT_IN_CHANNEL_STATE_FINAL
@@ -635,6 +638,9 @@ typedef struct rpc_in_channel RpcInChannel;
 enum _CLIENT_OUT_CHANNEL_STATE
 {
 	CLIENT_OUT_CHANNEL_STATE_INITIAL,
+	CLIENT_OUT_CHANNEL_STATE_CONNECTED,
+	CLIENT_OUT_CHANNEL_STATE_SECURITY,
+	CLIENT_OUT_CHANNEL_STATE_NEGOTIATED,
 	CLIENT_OUT_CHANNEL_STATE_OPENED,
 	CLIENT_OUT_CHANNEL_STATE_OPENED_A6W,
 	CLIENT_OUT_CHANNEL_STATE_OPENED_A10W,
@@ -772,6 +778,9 @@ int rpc_out_write(rdpRpc* rpc, const BYTE* data, int length);
 int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length);
 
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length);
+
+int rpc_client_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state);
+int rpc_client_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state);
 
 int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
 		RpcVirtualConnection* connection, VIRTUAL_CONNECTION_STATE state);

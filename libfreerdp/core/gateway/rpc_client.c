@@ -174,7 +174,7 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 	rpcconn_rts_hdr_t* rts;
 	rdpTsg* tsg = rpc->transport->tsg;
 
-	if (rpc->State < RPC_CLIENT_STATE_ESTABLISHED)
+	if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 	{
 		switch (rpc->VirtualConnection->State)
 		{

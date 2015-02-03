@@ -469,6 +469,98 @@ out_free_pdu:
 	return -1;
 }
 
+int rpc_client_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state)
+{
+	int status = 1;
+	const char* str = "CLIENT_IN_CHANNEL_STATE_UNKNOWN";
+
+	switch (state)
+	{
+		case CLIENT_IN_CHANNEL_STATE_INITIAL:
+			str = "CLIENT_IN_CHANNEL_STATE_INITIAL";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_CONNECTED:
+			str = "CLIENT_IN_CHANNEL_STATE_CONNECTED";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_SECURITY:
+			str = "CLIENT_IN_CHANNEL_STATE_SECURITY";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_NEGOTIATED:
+			str = "CLIENT_IN_CHANNEL_STATE_NEGOTIATED";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_OPENED:
+			str = "CLIENT_IN_CHANNEL_STATE_OPENED";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_OPENED_A4W:
+			str = "CLIENT_IN_CHANNEL_STATE_OPENED_A4W";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_FINAL:
+			str = "CLIENT_IN_CHANNEL_STATE_FINAL";
+			break;
+	}
+
+	inChannel->State = state;
+	WLog_DBG(TAG, "%s", str);
+
+	return status;
+}
+
+int rpc_client_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state)
+{
+	int status = 1;
+	const char* str = "CLIENT_OUT_CHANNEL_STATE_UNKNOWN";
+
+	switch (state)
+	{
+		case CLIENT_OUT_CHANNEL_STATE_INITIAL:
+			str = "CLIENT_OUT_CHANNEL_STATE_INITIAL";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_CONNECTED:
+			str = "CLIENT_OUT_CHANNEL_STATE_CONNECTED";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_SECURITY:
+			str = "CLIENT_OUT_CHANNEL_STATE_SECURITY";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_NEGOTIATED:
+			str = "CLIENT_OUT_CHANNEL_STATE_NEGOTIATED";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_OPENED:
+			str = "CLIENT_OUT_CHANNEL_STATE_OPENED";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_OPENED_A6W:
+			str = "CLIENT_OUT_CHANNEL_STATE_OPENED_A6W";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_OPENED_A10W:
+			str = "CLIENT_OUT_CHANNEL_STATE_OPENED_A10W";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_OPENED_B3W:
+			str = "CLIENT_OUT_CHANNEL_STATE_OPENED_B3W";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_FINAL:
+			str = "CLIENT_OUT_CHANNEL_STATE_FINAL";
+			break;
+	}
+
+	outChannel->State = state;
+	WLog_DBG(TAG, "%s", str);
+
+	return status;
+}
+
 int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
 		RpcVirtualConnection* connection, VIRTUAL_CONNECTION_STATE state)
 {

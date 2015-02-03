@@ -88,11 +88,48 @@ BOOL rts_connect(rdpRpc* rpc)
 	rpc_client_virtual_connection_transition_to_state(rpc,
 			rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_INITIAL);
 
-	if (!rpc_ntlm_http_out_connect(rpc))
+	rpc_client_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel,
+			CLIENT_OUT_CHANNEL_STATE_CONNECTED);
+
+	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT) < 0)
+		return FALSE;
+
+	/* Send OUT Channel Request */
+
+	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
 	{
-		WLog_ERR(TAG, "rpc_out_connect_http error!");
+		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 		return FALSE;
 	}
+
+	rpc_client_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel,
+			CLIENT_OUT_CHANNEL_STATE_SECURITY);
+
+	/* Receive OUT Channel Response */
+
+	response = http_response_recv(rpc->TlsOut);
+
+	if (!response)
+		return FALSE;
+
+	if (rpc_ncacn_http_recv_out_channel_response(rpc, response) < 0)
+	{
+		WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
+		return FALSE;
+	}
+
+	/* Send OUT Channel Request */
+
+	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
+	{
+		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
+		return FALSE;
+	}
+
+	rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_OUT);
+
+	rpc_client_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel,
+			CLIENT_OUT_CHANNEL_STATE_NEGOTIATED);
 
 	/* Send CONN/A1 PDU over OUT channel */
 
@@ -102,11 +139,51 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
-	if (!rpc_ntlm_http_in_connect(rpc))
+	rpc_client_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel,
+			CLIENT_OUT_CHANNEL_STATE_OPENED);
+
+	rpc_client_in_channel_transition_to_state(rpc->VirtualConnection->DefaultInChannel,
+			CLIENT_IN_CHANNEL_STATE_CONNECTED);
+
+	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN) < 0)
+		return FALSE;
+
+	/* Send IN Channel Request */
+
+	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
 	{
-		WLog_ERR(TAG, "rpc_in_connect_http error!");
+		WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
 		return FALSE;
 	}
+
+	rpc_client_in_channel_transition_to_state(rpc->VirtualConnection->DefaultInChannel,
+			CLIENT_IN_CHANNEL_STATE_SECURITY);
+
+	/* Receive IN Channel Response */
+
+	response = http_response_recv(rpc->TlsIn);
+
+	if (!response)
+		return FALSE;
+
+	if (rpc_ncacn_http_recv_in_channel_response(rpc, response) < 0)
+	{
+		WLog_ERR(TAG, "rpc_ncacn_http_recv_in_channel_response failure");
+		return FALSE;
+	}
+
+	/* Send IN Channel Request */
+
+	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
+	{
+		WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
+		return FALSE;
+	}
+
+	rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_IN);
+
+	rpc_client_in_channel_transition_to_state(rpc->VirtualConnection->DefaultInChannel,
+			CLIENT_IN_CHANNEL_STATE_NEGOTIATED);
 
 	/* Send CONN/B1 PDU over IN channel */
 
@@ -115,6 +192,9 @@ BOOL rts_connect(rdpRpc* rpc)
 		WLog_ERR(TAG, "rpc_send_CONN_B1_pdu error!");
 		return FALSE;
 	}
+
+	rpc_client_in_channel_transition_to_state(rpc->VirtualConnection->DefaultInChannel,
+			CLIENT_IN_CHANNEL_STATE_OPENED);
 
 	rpc_client_virtual_connection_transition_to_state(rpc,
 			rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
@@ -138,9 +218,7 @@ BOOL rts_connect(rdpRpc* rpc)
 		if (response->StatusCode == HTTP_STATUS_DENIED)
 		{
 			if (!connectErrorCode)
-			{
 				connectErrorCode = AUTHENTICATIONERROR;
-			}
 
 			if (!freerdp_get_last_error(context))
 			{

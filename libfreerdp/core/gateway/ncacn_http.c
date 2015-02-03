@@ -101,19 +101,13 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 	return (status > 0) ? 1 : -1;
 }
 
-int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
+int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, HttpResponse* response)
 {
 	int status = -1;
 	char* token64 = NULL;
-	HttpResponse* response;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
 	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
-
-	response = http_response_recv(rpc->TlsIn);
-
-	if (!response)
-		return -1;
 
 	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
 	{
@@ -203,35 +197,6 @@ void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, TSG_CHANNEL channel)
 	}
 }
 
-BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
-{
-	BOOL status = FALSE;
-
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN) < 0)
-		goto out;
-
-	/* Send IN Channel Request */
-
-	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
-		goto out;
-
-	/* Receive IN Channel Response */
-
-	if (rpc_ncacn_http_recv_in_channel_response(rpc) < 0)
-		goto out;
-
-	/* Send IN Channel Request */
-
-	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
-		goto out;
-
-	status = TRUE;
-
-out:
-	rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_IN);
-	return status;
-}
-
 int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 {
 	wStream* s;
@@ -256,19 +221,13 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 	return (status > 0) ? 1 : -1;
 }
 
-int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
+int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, HttpResponse* response)
 {
 	int status = -1;
 	char* token64 = NULL;
-	HttpResponse* response;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
 	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
-
-	response = http_response_recv(rpc->TlsOut);
-
-	if (!response)
-		return -1;
 
 	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
 	{
@@ -312,41 +271,6 @@ int rpc_http_send_replacement_out_channel_request(rdpRpc* rpc)
 	return (status > 0) ? 1 : -1;
 }
 
-BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
-{
-	BOOL status = FALSE;
-
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT) < 0)
-		goto out;
-
-	/* Send OUT Channel Request */
-	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
-		goto out;
-	}
-
-	/* Receive OUT Channel Response */
-	if (rpc_ncacn_http_recv_out_channel_response(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
-		goto out;
-	}
-
-	/* Send OUT Channel Request */
-	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
-		goto out;
-	}
-
-	status = TRUE;
-
-out:
-	rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_OUT);
-	return status;
-}
-
 void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL channel)
 {
 	if (channel == TSG_CHANNEL_IN)
@@ -363,11 +287,13 @@ void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL
 
 	if (channel == TSG_CHANNEL_IN)
 	{
-		http_context_set_pragma(ntlm_http->context, "ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
+		http_context_set_pragma(ntlm_http->context,
+				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
 	}
 	else if (channel == TSG_CHANNEL_OUT)
 	{
-		http_context_set_pragma(ntlm_http->context, "ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
+		http_context_set_pragma(ntlm_http->context,
+				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
 				"SessionId=fbd9c34f-397d-471d-a109-1b08cc554624");
 	}
 }
