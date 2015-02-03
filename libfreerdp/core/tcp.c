@@ -51,7 +51,7 @@
 #include <sys/select.h>
 #endif
 
-#ifdef __sun__
+#ifdef HAVE_SYS_FILIO_H
 #include <sys/filio.h>
 #endif
 
