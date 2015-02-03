@@ -17,6 +17,10 @@
  * limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <freerdp/utils/ringbuffer.h>
 
 #include <stdlib.h>
@@ -28,6 +32,12 @@
 
 #define TAG FREERDP_TAG("utils.ringbuffer")
 
+#ifdef WITH_DEBUG_RINGBUFFER
+#define DEBUG_RINGBUFFER(fmt, ...) WLog_DBG(TAG, fmt, ## __VA_ARGS__)
+#else
+#define DEBUG_RINGBUFFER(fmt, ...) do { } while (0)
+#endif
+
 BOOL ringbuffer_init(RingBuffer* rb, size_t initialSize)
 {
 	rb->buffer = malloc(initialSize);
@@ -37,9 +47,9 @@ BOOL ringbuffer_init(RingBuffer* rb, size_t initialSize)
 
 	rb->readPtr = rb->writePtr = 0;
 	rb->initialSize = rb->size = rb->freeSize = initialSize;
-	
-	WLog_DBG(TAG, "ringbuffer_init(%p)", rb);
-	
+
+	DEBUG_RINGBUFFER("ringbuffer_init(%p)", rb);
+
 	return TRUE;
 }
 
@@ -55,7 +65,7 @@ size_t ringbuffer_capacity(const RingBuffer* rb)
 
 void ringbuffer_destroy(RingBuffer* rb)
 {
-	WLog_DBG(TAG, "ringbuffer_destroy(%p)", rb);
+	DEBUG_RINGBUFFER("ringbuffer_destroy(%p)", rb);
 	
 	free(rb->buffer);
 	rb->buffer = NULL;
@@ -65,7 +75,7 @@ static BOOL ringbuffer_realloc(RingBuffer* rb, size_t targetSize)
 {
 	BYTE* newData;
 	
-	WLog_DBG(TAG, "ringbuffer_realloc(%p): targetSize: %d", rb, targetSize);
+	DEBUG_RINGBUFFER("ringbuffer_realloc(%p): targetSize: %d", rb, targetSize);
 
 	if (rb->writePtr == rb->readPtr)
 	{
@@ -156,7 +166,7 @@ BOOL ringbuffer_write(RingBuffer* rb, const BYTE* ptr, size_t sz)
 	size_t toWrite;
 	size_t remaining;
 
-	WLog_DBG(TAG, "ringbuffer_write(%p): sz: %d", rb, sz);
+	DEBUG_RINGBUFFER("ringbuffer_write(%p): sz: %d", rb, sz);
 	
 	if ((rb->freeSize <= sz) && !ringbuffer_realloc(rb, rb->size + sz))
 		return FALSE;
@@ -191,8 +201,8 @@ BOOL ringbuffer_write(RingBuffer* rb, const BYTE* ptr, size_t sz)
 
 BYTE* ringbuffer_ensure_linear_write(RingBuffer* rb, size_t sz)
 {
-	WLog_DBG(TAG, "ringbuffer_ensure_linear_write(%p): sz: %d", rb, sz);
-	
+	DEBUG_RINGBUFFER("ringbuffer_ensure_linear_write(%p): sz: %d", rb, sz);
+
 	if (rb->freeSize < sz)
 	{
 		if (!ringbuffer_realloc(rb, rb->size + sz - rb->freeSize + 32))
@@ -222,7 +232,7 @@ BYTE* ringbuffer_ensure_linear_write(RingBuffer* rb, size_t sz)
 
 BOOL ringbuffer_commit_written_bytes(RingBuffer* rb, size_t sz)
 {
-	WLog_DBG(TAG, "ringbuffer_commit_written_bytes(%p): sz: %d", rb, sz);
+	DEBUG_RINGBUFFER("ringbuffer_commit_written_bytes(%p): sz: %d", rb, sz);
 	
 	if (sz < 1)
 		return TRUE;
@@ -243,7 +253,7 @@ int ringbuffer_peek(const RingBuffer* rb, DataChunk chunks[2], size_t sz)
 	int chunkIndex = 0;
 	int status = 0;
 	
-	WLog_DBG(TAG, "ringbuffer_peek(%p): sz: %d", rb, sz);
+	DEBUG_RINGBUFFER("ringbuffer_peek(%p): sz: %d", rb, sz);
 
 	if (sz < 1)
 		return 0;
@@ -277,7 +287,7 @@ int ringbuffer_peek(const RingBuffer* rb, DataChunk chunks[2], size_t sz)
 
 void ringbuffer_commit_read_bytes(RingBuffer* rb, size_t sz)
 {
-	WLog_DBG(TAG, "ringbuffer_commit_read_bytes(%p): sz: %d", rb, sz);
+	DEBUG_RINGBUFFER("ringbuffer_commit_read_bytes(%p): sz: %d", rb, sz);
 	
 	if (sz < 1)
 		return;
