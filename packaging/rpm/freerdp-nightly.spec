@@ -155,5 +155,5 @@ export NO_BRP_CHECK_RPATH true
 %changelog
 * Fri Jan 23 2015 Bernhard Miklautz <bmiklautz+freerdp@shacknet.at> - 1.2.0-0
 - Initial version
-* Fri Feb 03 2015 FreeRDP Team <team@freerdp.com> - 1.2.1-0
+* Tue Feb 03 2015 FreeRDP Team <team@freerdp.com> - 1.2.1-0
 - Update version information
