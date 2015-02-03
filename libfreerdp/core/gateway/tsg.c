@@ -1204,7 +1204,7 @@ int tsg_transition_to_state(rdpTsg* tsg, TSG_STATE state)
 {
 	const char* str = "TSG_STATE_UNKNOWN";
 
-	switch (tsg->state)
+	switch (state)
 	{
 		case TSG_STATE_INITIAL:
 			str = "TSG_STATE_INITIAL";
@@ -1397,14 +1397,22 @@ int tsg_check(rdpTsg* tsg)
 {
 	int status;
 
-	status = rpc_client_recv(tsg->rpc);
+	status = rpc_client_in_channel_recv(tsg->rpc);
+
+	if (status < 0)
+		return -1;
+
+	status = rpc_client_out_channel_recv(tsg->rpc);
+
+	if (status < 0)
+		return -1;
 
 	return status;
 }
 
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 {
-	HANDLE ReadEvent;
+	HANDLE events[2];
 	rdpRpc* rpc = tsg->rpc;
 	rdpSettings* settings = rpc->settings;
 
@@ -1427,19 +1435,18 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 		return FALSE;
 	}
 
-	ReadEvent = NULL;
-	BIO_get_event(rpc->TlsOut->bio, &ReadEvent);
+	BIO_get_event(rpc->TlsIn->bio, &events[0]);
+	BIO_get_event(rpc->TlsOut->bio, &events[1]);
 
 	while (tsg->state != TSG_STATE_PIPE_CREATED)
 	{
-		if (WaitForSingleObject(ReadEvent, 100) == WAIT_OBJECT_0)
+		WaitForMultipleObjects(2, events, FALSE, 100);
+
+		if (tsg_check(tsg) < 0)
 		{
-			if (tsg_check(tsg) < 0)
-			{
-				WLog_ERR(TAG, "tsg_check failure");
-				rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
-				return FALSE;
-			}
+			WLog_ERR(TAG, "tsg_check failure");
+			rpc->transport->layer = TRANSPORT_LAYER_CLOSED;
+			return FALSE;
 		}
 	}
 

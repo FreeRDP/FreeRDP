@@ -28,6 +28,7 @@ typedef struct _http_response HttpResponse;
 #include <freerdp/crypto/tls.h>
 
 #include <winpr/stream.h>
+#include <winpr/winhttp.h>
 
 struct _http_context
 {

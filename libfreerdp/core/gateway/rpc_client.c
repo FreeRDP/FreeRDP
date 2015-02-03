@@ -29,6 +29,9 @@
 #include <winpr/thread.h>
 #include <winpr/stream.h>
 
+#include "http.h"
+#include "ncacn_http.h"
+
 #include "rpc_bind.h"
 #include "rpc_fault.h"
 #include "rpc_client.h"
@@ -269,7 +272,7 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 				return -1;
 			}
 
-			if (rpc_send_rpc_auth_3_pdu(rpc) <= 0)
+			if (rpc_send_rpc_auth_3_pdu(rpc) < 0)
 			{
 				WLog_ERR(TAG, "rpc_secure_bind: error sending rpc_auth_3 pdu!");
 				return -1;
@@ -523,6 +526,159 @@ int rpc_client_recv(rdpRpc* rpc)
 	}
 
 	return 1;
+}
+
+int rpc_client_out_channel_recv(rdpRpc* rpc)
+{
+	int status = -1;
+	HttpResponse* response;
+	RpcOutChannel* outChannel;
+
+	outChannel = rpc->VirtualConnection->DefaultOutChannel;
+
+	if (outChannel->State < CLIENT_IN_CHANNEL_STATE_OPENED)
+	{
+		response = http_response_recv(rpc->TlsOut);
+
+		if (!response)
+			return -1;
+
+		if (outChannel->State == CLIENT_OUT_CHANNEL_STATE_SECURITY)
+		{
+			/* Receive OUT Channel Response */
+
+			if (rpc_ncacn_http_recv_out_channel_response(rpc, response) < 0)
+			{
+				WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
+				return -1;
+			}
+
+			/* Send OUT Channel Request */
+
+			if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
+			{
+				WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
+				return -1;
+			}
+
+			rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_OUT);
+
+			rpc_client_out_channel_transition_to_state(outChannel,
+					CLIENT_OUT_CHANNEL_STATE_NEGOTIATED);
+
+			/* Send CONN/A1 PDU over OUT channel */
+
+			if (rts_send_CONN_A1_pdu(rpc) < 0)
+			{
+				WLog_ERR(TAG, "rpc_send_CONN_A1_pdu error!");
+				return -1;
+			}
+
+			rpc_client_out_channel_transition_to_state(outChannel,
+					CLIENT_OUT_CHANNEL_STATE_OPENED);
+		}
+
+		http_response_free(response);
+	}
+	else if (rpc->VirtualConnection->State == VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT)
+	{
+		/* Receive OUT channel response */
+
+		response = http_response_recv(rpc->TlsOut);
+
+		if (!response)
+			return -1;
+
+		if (response->StatusCode != HTTP_STATUS_OK)
+		{
+			WLog_ERR(TAG, "error! Status Code: %d", response->StatusCode);
+			http_response_print(response);
+			http_response_free(response);
+
+			if (response->StatusCode == HTTP_STATUS_DENIED)
+			{
+				if (!connectErrorCode)
+					connectErrorCode = AUTHENTICATIONERROR;
+
+				if (!freerdp_get_last_error(rpc->context))
+				{
+					freerdp_set_last_error(rpc->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+				}
+			}
+
+			return -1;
+		}
+
+		http_response_free(response);
+
+		rpc_client_virtual_connection_transition_to_state(rpc,
+				rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_WAIT_A3W);
+	}
+	else
+	{
+		status = rpc_client_recv(rpc);
+	}
+
+	return status;
+}
+
+int rpc_client_in_channel_recv(rdpRpc* rpc)
+{
+	int status = -1;
+	HttpResponse* response;
+	RpcInChannel* inChannel;
+	HANDLE InChannelEvent = NULL;
+
+	inChannel = rpc->VirtualConnection->DefaultInChannel;
+	BIO_get_event(rpc->TlsIn->bio, &InChannelEvent);
+
+	if (WaitForSingleObject(InChannelEvent, 0) != WAIT_OBJECT_0)
+		return 1;
+
+	if (inChannel->State < CLIENT_IN_CHANNEL_STATE_OPENED)
+	{
+		response = http_response_recv(rpc->TlsIn);
+
+		if (!response)
+			return -1;
+
+		if (inChannel->State == CLIENT_IN_CHANNEL_STATE_SECURITY)
+		{
+			if (rpc_ncacn_http_recv_in_channel_response(rpc, response) < 0)
+			{
+				WLog_ERR(TAG, "rpc_ncacn_http_recv_in_channel_response failure");
+				return -1;
+			}
+
+			/* Send IN Channel Request */
+
+			if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
+			{
+				WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
+				return -1;
+			}
+
+			rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_IN);
+
+			rpc_client_in_channel_transition_to_state(inChannel,
+					CLIENT_IN_CHANNEL_STATE_NEGOTIATED);
+
+			/* Send CONN/B1 PDU over IN channel */
+
+			if (rts_send_CONN_B1_pdu(rpc) < 0)
+			{
+				WLog_ERR(TAG, "rpc_send_CONN_B1_pdu error!");
+				return -1;
+			}
+
+			rpc_client_in_channel_transition_to_state(inChannel,
+					CLIENT_IN_CHANNEL_STATE_OPENED);
+
+			status = 1;
+		}
+	}
+
+	return status;
 }
 
 /**

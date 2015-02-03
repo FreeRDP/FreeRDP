@@ -30,6 +30,9 @@ void rpc_client_call_free(RpcClientCall* client_call);
 int rpc_send_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
 int rpc_client_recv(rdpRpc* rpc);
 
+int rpc_client_in_channel_recv(rdpRpc* rpc);
+int rpc_client_out_channel_recv(rdpRpc* rpc);
+
 int rpc_client_receive_pipe_read(rdpRpc* rpc, BYTE* buffer, size_t length);
 
 int rpc_client_new(rdpRpc* rpc);
