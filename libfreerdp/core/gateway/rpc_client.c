@@ -194,7 +194,13 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 					return -1;
 				}
 
-				rts_recv_CONN_A3_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
+				status = rts_recv_CONN_A3_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
+
+				if (status < 0)
+				{
+					WLog_ERR(TAG, "rts_recv_CONN_A3_pdu failure");
+					return -1;
+				}
 
 				rpc_client_virtual_connection_transition_to_state(rpc,
 						rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_WAIT_C2);
@@ -210,10 +216,16 @@ int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 				if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
 				{
 					WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/C2");
-					return FALSE;
+					return -1;
 				}
 
-				rts_recv_CONN_C2_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
+				status = rts_recv_CONN_C2_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
+
+				if (status < 0)
+				{
+					WLog_ERR(TAG, "rts_recv_CONN_C2_pdu failure");
+					return -1;
+				}
 
 				rpc_client_virtual_connection_transition_to_state(rpc,
 						rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OPENED);
@@ -573,6 +585,9 @@ int rpc_send_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	status = rpc_in_write(rpc, buffer, length);
 
+	if (status <= 0)
+		return -1;
+
 	header = (rpcconn_common_hdr_t*) buffer;
 	clientCall = rpc_client_call_find_by_id(rpc, header->call_id);
 	clientCall->State = RPC_CLIENT_CALL_STATE_DISPATCHED;
@@ -589,8 +604,6 @@ int rpc_send_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 		inChannel->BytesSent += status;
 		inChannel->SenderAvailableWindow -= status;
 	}
-
-	free(buffer);
 
 	return status;
 }

@@ -33,6 +33,25 @@
 
 #define TAG FREERDP_TAG("core.gateway.rts")
 
+const char* const RTS_CMD_STRINGS[] =
+{
+	"ReceiveWindowSize",
+	"FlowControlAck",
+	"ConnectionTimeout",
+	"Cookie",
+	"ChannelLifetime",
+	"ClientKeepalive",
+	"Version",
+	"Empty",
+	"Padding",
+	"NegativeANCE",
+	"ANCE",
+	"ClientAddress",
+	"AssociationGroupId",
+	"Destination",
+	"PingTrafficSentNotify"
+};
+
 /**
  * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
  * http://msdn.microsoft.com/en-us/library/cc243950/
@@ -75,6 +94,8 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
+	/* Send CONN/A1 PDU over OUT channel */
+
 	if (rts_send_CONN_A1_pdu(rpc) < 0)
 	{
 		WLog_ERR(TAG, "rpc_send_CONN_A1_pdu error!");
@@ -87,6 +108,8 @@ BOOL rts_connect(rdpRpc* rpc)
 		return FALSE;
 	}
 
+	/* Send CONN/B1 PDU over IN channel */
+
 	if (rts_send_CONN_B1_pdu(rpc) < 0)
 	{
 		WLog_ERR(TAG, "rpc_send_CONN_B1_pdu error!");
@@ -95,6 +118,8 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	rpc_client_virtual_connection_transition_to_state(rpc,
 			rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
+
+	/* Receive OUT channel response */
 
 	response = http_response_recv(rpc->TlsOut);
 
@@ -133,25 +158,6 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	return TRUE;
 }
-
-const char* const RTS_CMD_STRINGS[] =
-{
-	"ReceiveWindowSize",
-	"FlowControlAck",
-	"ConnectionTimeout",
-	"Cookie",
-	"ChannelLifetime",
-	"ClientKeepalive",
-	"Version",
-	"Empty",
-	"Padding",
-	"NegativeANCE",
-	"ANCE",
-	"ClientAddress",
-	"AssociationGroupId",
-	"Destination",
-	"PingTrafficSentNotify"
-};
 
 /**
  * RTS PDU Header
@@ -530,6 +536,7 @@ void rts_generate_cookie(BYTE* cookie)
 
 int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
 	UINT32 ReceiveWindowSize;
@@ -561,11 +568,11 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	rts_cookie_command_write(&buffer[48], OUTChannelCookie); /* OUTChannelCookie (20 bytes) */
 	rts_receive_window_size_command_write(&buffer[68], ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
 
-	rpc_out_write(rpc, buffer, header.frag_length);
+	status = rpc_out_write(rpc, buffer, header.frag_length);
 
 	free(buffer);
 
-	return 0;
+	return (status > 0) ? 1 : -1;
 }
 
 int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
@@ -578,7 +585,7 @@ int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
 
-	return 0;
+	return 1;
 }
 
 /* CONN/B Sequence */
@@ -626,7 +633,7 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 	free(buffer);
 
-	return status;
+	return (status > 0) ? 1 : -1;
 }
 
 /* CONN/C Sequence */
@@ -653,13 +660,14 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	rpc->VirtualConnection->DefaultInChannel->State = CLIENT_IN_CHANNEL_STATE_OPENED;
 	rpc->VirtualConnection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_OPENED;
 
-	return 0;
+	return 1;
 }
 
 /* Out-of-Sequence PDUs */
 
 int rts_send_keep_alive_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
@@ -681,18 +689,16 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc)
 
 	length = header.frag_length;
 
-	if (rpc_in_write(rpc, buffer, length) < 0)
-	{
-		free (buffer);
-		return -1;
-	}
+	status = rpc_in_write(rpc, buffer, length);
+
 	free(buffer);
 
-	return length;
+	return (status > 0) ? 1 : -1;
 }
 
 int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
@@ -727,15 +733,11 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	length = header.frag_length;
 
-	if (rpc_in_write(rpc, buffer, length) < 0)
-	{
-		free(buffer);
-		return -1;
-	}
+	status = rpc_in_write(rpc, buffer, length);
 
 	free(buffer);
 
-	return 0;
+	return (status > 0) ? 1 : -1;
 }
 
 int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
@@ -750,15 +752,15 @@ int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	WLog_ERR(TAG,  "BytesReceived: %d AvailableWindow: %d",
+	WLog_ERR(TAG, "BytesReceived: %d AvailableWindow: %d",
 			 BytesReceived, AvailableWindow);
-	WLog_ERR(TAG,  "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	WLog_ERR(TAG, "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
 		AvailableWindow - (rpc->VirtualConnection->DefaultInChannel->BytesSent - BytesReceived);
 
-	return 0;
+	return 1;
 }
 
 int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
@@ -799,11 +801,12 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
 		AvailableWindow - (rpc->VirtualConnection->DefaultInChannel->BytesSent - BytesReceived);
 
-	return 0;
+	return 1;
 }
 
 int rts_send_ping_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
@@ -824,14 +827,11 @@ int rts_send_ping_pdu(rdpRpc* rpc)
 
 	length = header.frag_length;
 
-	if (rpc_in_write(rpc, buffer, length) < 0)
-	{
-		free (buffer);
-		return -1;
-	}
+	status = rpc_in_write(rpc, buffer, length);
+
 	free(buffer);
 
-	return length;
+	return (status > 0) ? 1 : -1;
 }
 
 int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 length)
@@ -901,7 +901,7 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 			break;
 
 		default:
-			WLog_ERR(TAG,  "Error: Unknown RTS Command Type: 0x%x", CommandType);
+			WLog_ERR(TAG, "Error: Unknown RTS Command Type: 0x%x", CommandType);
 			return -1;
 			break;
 	}
@@ -911,6 +911,7 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 
 int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
 	UINT32 ReceiveWindowSize;
@@ -944,15 +945,16 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	rts_cookie_command_write(&buffer[68], SuccessorChannelCookie); /* SuccessorChannelCookie (20 bytes) */
 	rts_receive_window_size_command_write(&buffer[88], ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
 
-	rpc_out_write(rpc, buffer, header.frag_length);
+	status = rpc_out_write(rpc, buffer, header.frag_length);
 
 	free(buffer);
 
-	return 0;
+	return (status > 0) ? 1 : -1;
 }
 
 int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
+	int status;
 	UINT32 offset;
 	UINT32 Destination = 0;
 
@@ -963,15 +965,22 @@ int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	WLog_ERR(TAG, "TS Gateway channel recycling is incomplete");
 
-	rpc_http_send_replacement_out_channel_request(rpc);
+	status = rpc_http_send_replacement_out_channel_request(rpc);
 
-	rts_send_OUT_R1_A3_pdu(rpc);
+	if (status < 0)
+		return -1;
 
-	return 0;
+	status = rts_send_OUT_R1_A3_pdu(rpc);
+
+	if (status < 0)
+		return -1;
+
+	return 1;
 }
 
 int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
+	int status = -1;
 	UINT32 SignatureId;
 	rpcconn_rts_hdr_t* rts;
 	RtsPduSignature signature;
@@ -984,16 +993,20 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	switch (SignatureId)
 	{
 		case RTS_PDU_FLOW_CONTROL_ACK:
-			return rts_recv_flow_control_ack_pdu(rpc, buffer, length);
+			status = rts_recv_flow_control_ack_pdu(rpc, buffer, length);
+			break;
 
 		case RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION:
-			return rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
+			status = rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
+			break;
 
 		case RTS_PDU_PING:
-			return rts_send_ping_pdu(rpc);
+			status = rts_send_ping_pdu(rpc);
+			break;
 
 		case RTS_PDU_OUT_R1_A2:
-			return rts_recv_OUT_R1_A2_pdu(rpc, buffer, length);
+			status = rts_recv_OUT_R1_A2_pdu(rpc, buffer, length);
+			break;
 
 		default:
 			WLog_ERR(TAG, "unimplemented signature id: 0x%08X", SignatureId);
@@ -1001,5 +1014,5 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 			break;
 	}
 
-	return 0;
+	return status;
 }

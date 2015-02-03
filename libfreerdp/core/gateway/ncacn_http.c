@@ -94,9 +94,8 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 	if (!s)
 		return -1;
 
-	WLog_DBG(TAG, "\n%s", Stream_Buffer(s));
-
 	status = rpc_in_write(rpc, Stream_Buffer(s), Stream_Length(s));
+
 	Stream_Free(s, TRUE);
 
 	return (status > 0) ? 1 : -1;
@@ -104,33 +103,39 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 
 int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
 {
-	char* token64;
-	int ntlm_token_length = 0;
-	BYTE* ntlm_token_data = NULL;
-	HttpResponse* http_response;
+	int status = -1;
+	char* token64 = NULL;
+	HttpResponse* response;
+	int ntlmTokenLength = 0;
+	BYTE* ntlmTokenData = NULL;
 	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
 
-	http_response = http_response_recv(rpc->TlsIn);
+	response = http_response_recv(rpc->TlsIn);
 
-	if (!http_response)
+	if (!response)
 		return -1;
 
-	if (ListDictionary_Contains(http_response->Authenticates, "NTLM"))
+	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
 	{
-		token64 = ListDictionary_GetItemValue(http_response->Authenticates, "NTLM");
+		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
 
 		if (!token64)
 			goto out;
 
-		crypto_base64_decode(token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
+		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
+	}
+
+	if (ntlmTokenData && ntlmTokenLength)
+	{
+		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
+		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
+		status = 1;
 	}
 
 out:
-	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
-	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
-	http_response_free(http_response);
+	http_response_free(response);
 
-	return 1;
+	return status;
 }
 
 int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
@@ -182,36 +187,48 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 	return 1;
 }
 
+void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, TSG_CHANNEL channel)
+{
+	if (channel == TSG_CHANNEL_IN)
+	{
+		ntlm_client_uninit(rpc->NtlmHttpIn->ntlm);
+		ntlm_free(rpc->NtlmHttpIn->ntlm);
+		rpc->NtlmHttpIn->ntlm = NULL;
+	}
+	else if (channel == TSG_CHANNEL_OUT)
+	{
+		ntlm_client_uninit(rpc->NtlmHttpOut->ntlm);
+		ntlm_free(rpc->NtlmHttpOut->ntlm);
+		rpc->NtlmHttpOut->ntlm = NULL;
+	}
+}
+
 BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
-	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
 
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN) <= 0)
+	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN) < 0)
 		goto out;
 
 	/* Send IN Channel Request */
 
-	if (rpc_ncacn_http_send_in_channel_request(rpc) <= 0)
+	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
 		goto out;
 
 	/* Receive IN Channel Response */
 
-	if (rpc_ncacn_http_recv_in_channel_response(rpc) <= 0)
+	if (rpc_ncacn_http_recv_in_channel_response(rpc) < 0)
 		goto out;
 
 	/* Send IN Channel Request */
 
-	if (rpc_ncacn_http_send_in_channel_request(rpc) <= 0)
+	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
 		goto out;
 
 	status = TRUE;
 
 out:
-	ntlm_client_uninit(ntlm);
-	ntlm_free(ntlm);
-	rpc->NtlmHttpIn->ntlm = NULL;
-
+	rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_IN);
 	return status;
 }
 
@@ -219,22 +236,21 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 {
 	wStream* s;
 	int status;
-	int content_length;
-	BOOL continue_needed;
+	int contentLength;
+	BOOL continueNeeded;
 	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
 
-	continue_needed = ntlm_authenticate(ntlm);
+	continueNeeded = ntlm_authenticate(ntlm);
 
-	content_length = (continue_needed) ? 0 : 76;
+	contentLength = (continueNeeded) ? 0 : 76;
 
-	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], content_length, TSG_CHANNEL_OUT);
+	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], contentLength, TSG_CHANNEL_OUT);
 
 	if (!s)
 		return -1;
 
-	WLog_DBG(TAG, "\n%s", Stream_Buffer(s));
-
 	status = rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
+
 	Stream_Free(s, TRUE);
 
 	return (status > 0) ? 1 : -1;
@@ -242,10 +258,11 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 
 int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 {
-	char* token64;
+	int status = -1;
+	char* token64 = NULL;
 	HttpResponse* response;
-	int ntlm_token_length = 0;
-	BYTE* ntlm_token_data = NULL;
+	int ntlmTokenLength = 0;
+	BYTE* ntlmTokenData = NULL;
 	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
 
 	response = http_response_recv(rpc->TlsOut);
@@ -260,57 +277,64 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
 		if (!token64)
 			goto out;
 
-		crypto_base64_decode(token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
+		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
+	}
+
+	if (ntlmTokenData && ntlmTokenLength)
+	{
+		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
+		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
+		status = 1;
 	}
 
 out:
-	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
-	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
 	http_response_free(response);
 
-	return 1;
+	return status;
 }
 
 int rpc_http_send_replacement_out_channel_request(rdpRpc* rpc)
 {
+	int status;
 	wStream* s;
-	int content_length;
 
-	content_length = 120;
+	s = rpc_ntlm_http_request(rpc, NULL, 120, TSG_CHANNEL_OUT);
 
-	s = rpc_ntlm_http_request(rpc, NULL, content_length, TSG_CHANNEL_OUT);
+	if (!s)
+		return -1;
 
 	WLog_DBG(TAG, "\n%s", Stream_Buffer(s));
-	rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
+
+	status = rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
+
 	Stream_Free(s, TRUE);
 
-	return 0;
+	return (status > 0) ? 1 : -1;
 }
 
 BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
-	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
 
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT) <= 0)
+	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT) < 0)
 		goto out;
 
 	/* Send OUT Channel Request */
-	if (rpc_ncacn_http_send_out_channel_request(rpc) <= 0)
+	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
 	{
 		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 		goto out;
 	}
 
 	/* Receive OUT Channel Response */
-	if (rpc_ncacn_http_recv_out_channel_response(rpc) <= 0)
+	if (rpc_ncacn_http_recv_out_channel_response(rpc) < 0)
 	{
 		WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
 		goto out;
 	}
 
 	/* Send OUT Channel Request */
-	if (rpc_ncacn_http_send_out_channel_request(rpc) <= 0)
+	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
 	{
 		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
 		goto out;
@@ -319,10 +343,7 @@ BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
 	status = TRUE;
 
 out:
-	ntlm_client_uninit(ntlm);
-	ntlm_free(ntlm);
-	rpc->NtlmHttpOut->ntlm = NULL;
-
+	rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_OUT);
 	return status;
 }
 

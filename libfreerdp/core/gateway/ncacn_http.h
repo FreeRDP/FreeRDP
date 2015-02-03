@@ -32,6 +32,9 @@
 
 #include "rpc.h"
 
+int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel);
+void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, TSG_CHANNEL channel);
+
 BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc);
 BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc);
 

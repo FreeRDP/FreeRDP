@@ -264,6 +264,7 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 		free(buffer);
 		return -1;
 	}
+
 	if (ArrayList_Add(rpc->client->ClientCallList, clientCall) < 0)
 	{
 		free(buffer);
@@ -277,7 +278,9 @@ int rpc_send_bind_pdu(rdpRpc* rpc)
 	free(bind_pdu->p_context_elem.p_cont_elem);
 	free(bind_pdu);
 
-	return status;
+	free(buffer);
+
+	return (status > 0) ? 1 : -1;
 }
 
 /**
@@ -397,6 +400,7 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	status = rpc_send_pdu(rpc, buffer, length);
 
 	free(auth_3_pdu);
+	free(buffer);
 
-	return status;
+	return (status > 0) ? 1 : -1;
 }

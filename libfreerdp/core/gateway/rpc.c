@@ -260,16 +260,19 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 			rpc_offset_align(offset, 8);
 			alloc_hint = header->response.alloc_hint;
 			break;
+
 		case PTYPE_REQUEST:
 			*offset += 4;
 			rpc_offset_align(offset, 8);
 			alloc_hint = header->request.alloc_hint;
 			break;
+
 		case PTYPE_RTS:
 			*offset += 4;
 			break;
+
 		default:
-			WLog_ERR(TAG, "unknown ptype=0x%x", header->common.ptype);
+			WLog_ERR(TAG, "Unknown PTYPE: 0x%04X", header->common.ptype);
 			return FALSE;
 	}
 
@@ -289,13 +292,12 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* buffer, UINT32* offset, UINT32* l
 	sec_trailer_offset = frag_length - auth_length - 8;
 	sec_trailer = (rpc_sec_trailer*) &buffer[sec_trailer_offset];
 	auth_pad_length = sec_trailer->auth_pad_length;
+
 #if 0
-	WLog_DBG(TAG,  "sec_trailer: type: %d level: %d pad_length: %d reserved: %d context_id: %d",
-			 sec_trailer->auth_type,
-			 sec_trailer->auth_level,
-			 sec_trailer->auth_pad_length,
-			 sec_trailer->auth_reserved,
-			 sec_trailer->auth_context_id);
+	WLog_DBG(TAG, "sec_trailer: type: %d level: %d pad_length: %d reserved: %d context_id: %d",
+			sec_trailer->auth_type, sec_trailer->auth_level,
+			sec_trailer->auth_pad_length, sec_trailer->auth_reserved,
+			sec_trailer->auth_context_id);
 #endif
 
 	/**
@@ -363,7 +365,6 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 	if (!ntlm || !ntlm->table)
 	{
 		WLog_ERR(TAG, "invalid ntlm context");
-		fprintf(stderr, "invalid ntlm context: %p %p\n", ntlm, ntlm->table);
 		return -1;
 	}
 
@@ -372,6 +373,7 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 		WLog_ERR(TAG, "QueryContextAttributes SECPKG_ATTR_SIZES failure");
 		return -1;
 	}
+
 	ZeroMemory(&Buffers, sizeof(Buffers));
 
 	request_pdu = (rpcconn_request_hdr_t*) calloc(1, sizeof(rpcconn_request_hdr_t));
@@ -454,6 +456,8 @@ int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum)
 		length = -1;
 
 	free(request_pdu);
+	free(buffer);
+
 	return length;
 
 out_free_clientCall:
@@ -522,12 +526,15 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 {
-	RpcVirtualConnection* connection = (RpcVirtualConnection*) calloc(1, sizeof(RpcVirtualConnection));
+	RpcVirtualConnection* connection;
+
+	connection = (RpcVirtualConnection*) calloc(1, sizeof(RpcVirtualConnection));
 
 	if (!connection)
 		return NULL;
 
 	connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
+
 	connection->DefaultInChannel = (RpcInChannel*) calloc(1, sizeof(RpcInChannel));
 
 	if (!connection->DefaultInChannel)
@@ -539,6 +546,7 @@ RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)
 		goto out_default_in;
 
 	rpc_client_virtual_connection_init(rpc, connection);
+
 	return connection;
 out_default_in:
 	free(connection->DefaultInChannel);
