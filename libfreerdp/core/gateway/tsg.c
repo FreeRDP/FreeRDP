@@ -1429,9 +1429,9 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port)
 	tsg->MachineName = NULL;
 	ConvertToUnicode(CP_UTF8, 0, settings->ComputerName, -1, &tsg->MachineName, 0);
 
-	if (!rts_connect(rpc))
+	if (!rpc_connect(rpc))
 	{
-		WLog_ERR(TAG, "rts_connect error!");
+		WLog_ERR(TAG, "rpc_connect error!");
 		return FALSE;
 	}
 

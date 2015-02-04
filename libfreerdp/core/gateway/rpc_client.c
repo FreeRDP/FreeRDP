@@ -579,7 +579,7 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 			rpc_client_out_channel_transition_to_state(outChannel,
 					CLIENT_OUT_CHANNEL_STATE_OPENED);
 
-			if (inChannel->State >= CLIENT_IN_CHANNEL_STATE_OPENED)
+			if (inChannel->State == CLIENT_IN_CHANNEL_STATE_OPENED)
 			{
 				rpc_client_virtual_connection_transition_to_state(rpc,
 					rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
@@ -689,7 +689,7 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 			rpc_client_in_channel_transition_to_state(inChannel,
 					CLIENT_IN_CHANNEL_STATE_OPENED);
 
-			if (outChannel->State >= CLIENT_OUT_CHANNEL_STATE_OPENED)
+			if (outChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED)
 			{
 				rpc_client_virtual_connection_transition_to_state(rpc,
 					rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
@@ -697,6 +697,8 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 			status = 1;
 		}
+
+		http_response_free(response);
 	}
 
 	return status;

@@ -53,241 +53,6 @@ const char* const RTS_CMD_STRINGS[] =
 };
 
 /**
- * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
- * http://msdn.microsoft.com/en-us/library/cc243950/
- */
-
-/**
- *                                      Connection Establishment\n
- *
- *     Client                  Outbound Proxy           Inbound Proxy                 Server\n
- *        |                         |                         |                         |\n
- *        |-----------------IN Channel Request--------------->|                         |\n
- *        |---OUT Channel Request-->|                         |<-Legacy Server Response-|\n
- *        |                         |<--------------Legacy Server Response--------------|\n
- *        |                         |                         |                         |\n
- *        |---------CONN_A1-------->|                         |                         |\n
- *        |----------------------CONN_B1--------------------->|                         |\n
- *        |                         |----------------------CONN_A2--------------------->|\n
- *        |                         |                         |                         |\n
- *        |<--OUT Channel Response--|                         |---------CONN_B2-------->|\n
- *        |<--------CONN_A3---------|                         |                         |\n
- *        |                         |<---------------------CONN_C1----------------------|\n
- *        |                         |                         |<--------CONN_B3---------|\n
- *        |<--------CONN_C2---------|                         |                         |\n
- *        |                         |                         |                         |\n
- *
- */
-
-BOOL rts_connect_sync(rdpRpc* rpc)
-{
-	HttpResponse* response;
-	freerdp* instance = (freerdp*) rpc->settings->instance;
-	rdpContext* context = instance->context;
-
-	rpc_client_virtual_connection_transition_to_state(rpc,
-			rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_INITIAL);
-
-	rpc_client_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel,
-			CLIENT_OUT_CHANNEL_STATE_CONNECTED);
-
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT) < 0)
-		return FALSE;
-
-	/* Send OUT Channel Request */
-
-	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
-		return FALSE;
-	}
-
-	rpc_client_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel,
-			CLIENT_OUT_CHANNEL_STATE_SECURITY);
-
-	/* Receive OUT Channel Response */
-
-	response = http_response_recv(rpc->TlsOut);
-
-	if (!response)
-		return FALSE;
-
-	if (rpc_ncacn_http_recv_out_channel_response(rpc, response) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_recv_out_channel_response failure");
-		return FALSE;
-	}
-
-	/* Send OUT Channel Request */
-
-	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
-		return FALSE;
-	}
-
-	rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_OUT);
-
-	rpc_client_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel,
-			CLIENT_OUT_CHANNEL_STATE_NEGOTIATED);
-
-	/* Send CONN/A1 PDU over OUT channel */
-
-	if (rts_send_CONN_A1_pdu(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_send_CONN_A1_pdu error!");
-		return FALSE;
-	}
-
-	rpc_client_out_channel_transition_to_state(rpc->VirtualConnection->DefaultOutChannel,
-			CLIENT_OUT_CHANNEL_STATE_OPENED);
-
-	rpc_client_in_channel_transition_to_state(rpc->VirtualConnection->DefaultInChannel,
-			CLIENT_IN_CHANNEL_STATE_CONNECTED);
-
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN) < 0)
-		return FALSE;
-
-	/* Send IN Channel Request */
-
-	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
-		return FALSE;
-	}
-
-	rpc_client_in_channel_transition_to_state(rpc->VirtualConnection->DefaultInChannel,
-			CLIENT_IN_CHANNEL_STATE_SECURITY);
-
-	/* Receive IN Channel Response */
-
-	response = http_response_recv(rpc->TlsIn);
-
-	if (!response)
-		return FALSE;
-
-	if (rpc_ncacn_http_recv_in_channel_response(rpc, response) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_recv_in_channel_response failure");
-		return FALSE;
-	}
-
-	/* Send IN Channel Request */
-
-	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
-		return FALSE;
-	}
-
-	rpc_ncacn_http_ntlm_uninit(rpc, TSG_CHANNEL_IN);
-
-	rpc_client_in_channel_transition_to_state(rpc->VirtualConnection->DefaultInChannel,
-			CLIENT_IN_CHANNEL_STATE_NEGOTIATED);
-
-	/* Send CONN/B1 PDU over IN channel */
-
-	if (rts_send_CONN_B1_pdu(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_send_CONN_B1_pdu error!");
-		return FALSE;
-	}
-
-	rpc_client_in_channel_transition_to_state(rpc->VirtualConnection->DefaultInChannel,
-			CLIENT_IN_CHANNEL_STATE_OPENED);
-
-	rpc_client_virtual_connection_transition_to_state(rpc,
-			rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT);
-
-	/* Receive OUT channel response */
-
-	response = http_response_recv(rpc->TlsOut);
-
-	if (!response)
-	{
-		WLog_ERR(TAG, "unable to retrieve OUT Channel Response!");
-		return FALSE;
-	}
-
-	if (response->StatusCode != HTTP_STATUS_OK)
-	{
-		WLog_ERR(TAG, "error! Status Code: %d", response->StatusCode);
-		http_response_print(response);
-		http_response_free(response);
-
-		if (response->StatusCode == HTTP_STATUS_DENIED)
-		{
-			if (!connectErrorCode)
-				connectErrorCode = AUTHENTICATIONERROR;
-
-			if (!freerdp_get_last_error(context))
-			{
-				freerdp_set_last_error(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
-			}
-		}
-
-		return FALSE;
-	}
-
-	http_response_free(response);
-
-	rpc_client_virtual_connection_transition_to_state(rpc,
-			rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_WAIT_A3W);
-
-	return TRUE;
-}
-
-BOOL rts_connect(rdpRpc* rpc)
-{
-	RpcInChannel* inChannel;
-	RpcOutChannel* outChannel;
-
-	/* use old connection code */
-	return rts_connect_sync(rpc);
-
-	inChannel = rpc->VirtualConnection->DefaultInChannel;
-	outChannel = rpc->VirtualConnection->DefaultOutChannel;
-
-	rpc_client_virtual_connection_transition_to_state(rpc, rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_INITIAL);
-
-	/* Connect IN Channel */
-
-	rpc_client_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_CONNECTED);
-
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN) < 0)
-		return FALSE;
-
-	/* Send IN Channel Request */
-
-	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
-		return FALSE;
-	}
-
-	rpc_client_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_SECURITY);
-
-	/* Connect OUT Channel */
-
-	rpc_client_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
-
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT) < 0)
-		return FALSE;
-
-	/* Send OUT Channel Request */
-
-	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
-		return FALSE;
-	}
-
-	rpc_client_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_SECURITY);
-
-	return TRUE;
-}
-
-/**
  * RTS PDU Header
  *
  * The RTS PDU Header has the same layout as the common header of the connection-oriented RPC
@@ -678,9 +443,6 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 
 	WLog_DBG(TAG, "Sending CONN_A1 RTS PDU");
 
-	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->Cookie));
-	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
-
 	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
 	OUTChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
 	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
@@ -734,9 +496,6 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 	header.NumberOfCommands = 6;
 
 	WLog_DBG(TAG, "Sending CONN_B1 RTS PDU");
-
-	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie));
-	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->AssociationGroupId));
 
 	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
 	INChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie);
@@ -1053,8 +812,6 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	header.NumberOfCommands = 5;
 
 	WLog_DBG(TAG, "Sending OUT R1/A3 RTS PDU");
-
-	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->NonDefaultOutChannelCookie));
 
 	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
 	PredecessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);

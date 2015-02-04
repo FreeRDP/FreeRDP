@@ -90,6 +90,80 @@ const RPC_SECURITY_PROVIDER_INFO RPC_SECURITY_PROVIDER_INFO_TABLE[] =
 	{ 0, -1, -1 }
 };
 
+/**
+ * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
+ * http://msdn.microsoft.com/en-us/library/cc243950/
+ */
+
+/**
+ *                                      Connection Establishment\n
+ *
+ *     Client                  Outbound Proxy           Inbound Proxy                 Server\n
+ *        |                         |                         |                         |\n
+ *        |-----------------IN Channel Request--------------->|                         |\n
+ *        |---OUT Channel Request-->|                         |<-Legacy Server Response-|\n
+ *        |                         |<--------------Legacy Server Response--------------|\n
+ *        |                         |                         |                         |\n
+ *        |---------CONN_A1-------->|                         |                         |\n
+ *        |----------------------CONN_B1--------------------->|                         |\n
+ *        |                         |----------------------CONN_A2--------------------->|\n
+ *        |                         |                         |                         |\n
+ *        |<--OUT Channel Response--|                         |---------CONN_B2-------->|\n
+ *        |<--------CONN_A3---------|                         |                         |\n
+ *        |                         |<---------------------CONN_C1----------------------|\n
+ *        |                         |                         |<--------CONN_B3---------|\n
+ *        |<--------CONN_C2---------|                         |                         |\n
+ *        |                         |                         |                         |\n
+ *
+ */
+
+BOOL rpc_connect(rdpRpc* rpc)
+{
+	RpcInChannel* inChannel;
+	RpcOutChannel* outChannel;
+
+	inChannel = rpc->VirtualConnection->DefaultInChannel;
+	outChannel = rpc->VirtualConnection->DefaultOutChannel;
+
+	rpc_client_virtual_connection_transition_to_state(rpc, rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_INITIAL);
+
+	/* Connect IN Channel */
+
+	rpc_client_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_CONNECTED);
+
+	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN) < 0)
+		return FALSE;
+
+	/* Send IN Channel Request */
+
+	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
+	{
+		WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
+		return FALSE;
+	}
+
+	rpc_client_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_SECURITY);
+
+	/* Connect OUT Channel */
+
+	rpc_client_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
+
+	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT) < 0)
+		return FALSE;
+
+	/* Send OUT Channel Request */
+
+	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
+	{
+		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
+		return FALSE;
+	}
+
+	rpc_client_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_SECURITY);
+
+	return TRUE;
+}
+
 void rpc_pdu_header_print(rpcconn_hdr_t* header)
 {
 	WLog_INFO(TAG,  "rpc_vers: %d", header->common.rpc_vers);
@@ -602,11 +676,16 @@ int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
 
 void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* connection)
 {
+	rts_generate_cookie((BYTE*) &(connection->Cookie));
+	rts_generate_cookie((BYTE*) &(connection->AssociationGroupId));
+
 	connection->DefaultInChannel->State = CLIENT_IN_CHANNEL_STATE_INITIAL;
 	connection->DefaultInChannel->BytesSent = 0;
 	connection->DefaultInChannel->SenderAvailableWindow = rpc->ReceiveWindow;
 	connection->DefaultInChannel->PingOriginator.ConnectionTimeout = 30;
 	connection->DefaultInChannel->PingOriginator.KeepAliveInterval = 0;
+	rts_generate_cookie((BYTE*) &(connection->DefaultInChannelCookie));
+	rts_generate_cookie((BYTE*) &(connection->NonDefaultInChannelCookie));
 
 	connection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_INITIAL;
 	connection->DefaultOutChannel->BytesReceived = 0;
@@ -614,6 +693,8 @@ void rpc_client_virtual_connection_init(rdpRpc* rpc, RpcVirtualConnection* conne
 	connection->DefaultOutChannel->ReceiveWindow = rpc->ReceiveWindow;
 	connection->DefaultOutChannel->ReceiveWindowSize = rpc->ReceiveWindow;
 	connection->DefaultOutChannel->AvailableWindowAdvertised = rpc->ReceiveWindow;
+	rts_generate_cookie((BYTE*) &(connection->DefaultOutChannelCookie));
+	rts_generate_cookie((BYTE*) &(connection->NonDefaultOutChannelCookie));
 }
 
 RpcVirtualConnection* rpc_client_virtual_connection_new(rdpRpc* rpc)

@@ -787,6 +787,8 @@ int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
 
 int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
 
+BOOL rpc_connect(rdpRpc* rpc);
+
 rdpRpc* rpc_new(rdpTransport* transport);
 void rpc_free(rdpRpc* rpc);
 
