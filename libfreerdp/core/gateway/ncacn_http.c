@@ -103,7 +103,6 @@ int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 
 int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, HttpResponse* response)
 {
-	int status = -1;
 	char* token64 = NULL;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
@@ -114,7 +113,7 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, HttpResponse* response)
 		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
 
 		if (!token64)
-			goto out;
+			return -1;
 
 		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
 	}
@@ -123,13 +122,9 @@ int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, HttpResponse* response)
 	{
 		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
 		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
-		status = 1;
 	}
 
-out:
-	http_response_free(response);
-
-	return status;
+	return 1;
 }
 
 int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
@@ -223,7 +218,6 @@ int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 
 int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, HttpResponse* response)
 {
-	int status = -1;
 	char* token64 = NULL;
 	int ntlmTokenLength = 0;
 	BYTE* ntlmTokenData = NULL;
@@ -234,7 +228,7 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, HttpResponse* response
 		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
 
 		if (!token64)
-			goto out;
+			return -1;
 
 		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
 	}
@@ -243,13 +237,9 @@ int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, HttpResponse* response
 	{
 		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
 		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
-		status = 1;
 	}
 
-out:
-	http_response_free(response);
-
-	return status;
+	return 1;
 }
 
 int rpc_http_send_replacement_out_channel_request(rdpRpc* rpc)

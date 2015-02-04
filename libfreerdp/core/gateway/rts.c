@@ -79,7 +79,7 @@ const char* const RTS_CMD_STRINGS[] =
  *
  */
 
-BOOL rts_connect(rdpRpc* rpc)
+BOOL rts_connect_sync(rdpRpc* rpc)
 {
 	HttpResponse* response;
 	freerdp* instance = (freerdp*) rpc->settings->instance;
@@ -233,6 +233,56 @@ BOOL rts_connect(rdpRpc* rpc)
 
 	rpc_client_virtual_connection_transition_to_state(rpc,
 			rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_WAIT_A3W);
+
+	return TRUE;
+}
+
+BOOL rts_connect(rdpRpc* rpc)
+{
+	RpcInChannel* inChannel;
+	RpcOutChannel* outChannel;
+
+	/* use old connection code */
+	return rts_connect_sync(rpc);
+
+	inChannel = rpc->VirtualConnection->DefaultInChannel;
+	outChannel = rpc->VirtualConnection->DefaultOutChannel;
+
+	rpc_client_virtual_connection_transition_to_state(rpc, rpc->VirtualConnection, VIRTUAL_CONNECTION_STATE_INITIAL);
+
+	/* Connect IN Channel */
+
+	rpc_client_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_CONNECTED);
+
+	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN) < 0)
+		return FALSE;
+
+	/* Send IN Channel Request */
+
+	if (rpc_ncacn_http_send_in_channel_request(rpc) < 0)
+	{
+		WLog_ERR(TAG, "rpc_ncacn_http_send_in_channel_request failure");
+		return FALSE;
+	}
+
+	rpc_client_in_channel_transition_to_state(inChannel, CLIENT_IN_CHANNEL_STATE_SECURITY);
+
+	/* Connect OUT Channel */
+
+	rpc_client_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_CONNECTED);
+
+	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT) < 0)
+		return FALSE;
+
+	/* Send OUT Channel Request */
+
+	if (rpc_ncacn_http_send_out_channel_request(rpc) < 0)
+	{
+		WLog_ERR(TAG, "rpc_ncacn_http_send_out_channel_request failure");
+		return FALSE;
+	}
+
+	rpc_client_out_channel_transition_to_state(outChannel, CLIENT_OUT_CHANNEL_STATE_SECURITY);
 
 	return TRUE;
 }
