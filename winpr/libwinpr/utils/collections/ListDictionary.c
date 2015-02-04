@@ -257,7 +257,7 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key)
 	OBJECT_EQUALS_FN keyEquals;
 
 	if (listDictionary->synchronized)
-		EnterCriticalSection(&listDictionary->lock);
+		EnterCriticalSection(&(listDictionary->lock));
 
 	keyEquals = listDictionary->objectKey.fnObjectEquals;
 	item = listDictionary->head;
@@ -271,7 +271,7 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, void* key)
 	}
 
 	if (listDictionary->synchronized)
-		LeaveCriticalSection(&listDictionary->lock);
+		LeaveCriticalSection(&(listDictionary->lock));
 
 	return (item) ? TRUE : FALSE;
 }
@@ -434,12 +434,13 @@ wListDictionary* ListDictionary_New(BOOL synchronized)
 	wListDictionary* listDictionary = NULL;
 
 	listDictionary = (wListDictionary*) calloc(1, sizeof(wListDictionary));
+
 	if (!listDictionary)
 		return NULL;
 
 	listDictionary->synchronized = synchronized;
 
-	if (!InitializeCriticalSectionAndSpinCount(&listDictionary->lock, 4000))
+	if (!InitializeCriticalSectionAndSpinCount(&(listDictionary->lock), 4000))
 	{
 		free(listDictionary);
 		return NULL;
@@ -447,6 +448,7 @@ wListDictionary* ListDictionary_New(BOOL synchronized)
 
 	listDictionary->objectKey.fnObjectEquals = default_equal_function;
 	listDictionary->objectValue.fnObjectEquals = default_equal_function;
+
 	return listDictionary;
 }
 

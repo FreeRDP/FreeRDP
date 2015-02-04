@@ -1152,8 +1152,7 @@ BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*) &option_value, option_len) < 0)
 	{
-		WLog_ERR(TAG, "setsockopt() SOL_SOCKET, SO_KEEPALIVE:");
-		return FALSE;
+		WLog_WARN(TAG, "setsockopt() SOL_SOCKET, SO_KEEPALIVE");
 	}
 
 #ifdef TCP_KEEPIDLE
@@ -1162,8 +1161,7 @@ BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp)
 
 	if (setsockopt(tcp->sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (void*) &option_value, option_len) < 0)
 	{
-		WLog_ERR(TAG, "setsockopt() IPPROTO_TCP, TCP_KEEPIDLE:");
-		return FALSE;
+		WLog_WARN(TAG, "setsockopt() IPPROTO_TCP, TCP_KEEPIDLE");
 	}
 #endif
 
@@ -1171,10 +1169,9 @@ BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp)
 	option_value = 3;
 	option_len = sizeof(option_value);
 
-	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPCNT, (void *) &option_value, option_len) < 0)
+	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPCNT, (void*) &option_value, option_len) < 0)
 	{
-		WLog_ERR(TAG, "setsockopt() SOL_TCP, TCP_KEEPCNT:");
-		return FALSE;
+		WLog_WARN(TAG, "setsockopt() SOL_TCP, TCP_KEEPCNT");
 	}
 #endif
 
@@ -1182,10 +1179,9 @@ BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp)
 	option_value = 2;
 	option_len = sizeof(option_value);
 
-	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPINTVL, (void *) &option_value, option_len) < 0)
+	if (setsockopt(tcp->sockfd, SOL_TCP, TCP_KEEPINTVL, (void*) &option_value, option_len) < 0)
 	{
-		WLog_ERR(TAG, "setsockopt() SOL_TCP, TCP_KEEPINTVL:");
-		return FALSE;
+		WLog_WARN(TAG, "setsockopt() SOL_TCP, TCP_KEEPINTVL");
 	}
 #endif
 #endif
@@ -1193,9 +1189,9 @@ BOOL freerdp_tcp_set_keep_alive_mode(rdpTcp* tcp)
 #if defined(__MACOSX__) || defined(__IOS__)
 	option_value = 1;
 	option_len = sizeof(option_value);
-	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void *) &option_value, option_len) < 0)
+	if (setsockopt(tcp->sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void*) &option_value, option_len) < 0)
 	{
-		WLog_ERR(TAG, "setsockopt() SOL_SOCKET, SO_NOSIGPIPE:");
+		WLog_WARN(TAG, "setsockopt() SOL_SOCKET, SO_NOSIGPIPE");
 	}
 #endif
 	return TRUE;

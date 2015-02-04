@@ -24,10 +24,17 @@
 
 #include <winpr/wtypes.h>
 
+const p_uuid_t TSGU_UUID;
+#define TSGU_SYNTAX_IF_VERSION	0x00030001
+
+const p_uuid_t NDR_UUID;
+#define NDR_SYNTAX_IF_VERSION	0x00000002
+
+const p_uuid_t BTFN_UUID;
+#define BTFN_SYNTAX_IF_VERSION	0x00000001
+
 int rpc_send_bind_pdu(rdpRpc* rpc);
 int rpc_recv_bind_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length);
 int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc);
-
-int rpc_secure_bind(rdpRpc* rpc);
 
 #endif /* FREERDP_CORE_RPC_BIND_H */

@@ -26,9 +26,13 @@
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 #include <winpr/interlocked.h>
+
 #include <freerdp/log.h>
+#include <freerdp/utils/ringbuffer.h>
 
 typedef struct rdp_rpc rdpRpc;
+
+#pragma pack(push, 1)
 
 #define DEFINE_RPC_COMMON_FIELDS() \
 	BYTE rpc_vers; \
@@ -57,9 +61,12 @@ typedef struct
 typedef struct _RPC_PDU
 {
 	wStream* s;
-	DWORD Flags;
-	DWORD CallId;
+	UINT32 Type;
+	UINT32 Flags;
+	UINT32 CallId;
 } RPC_PDU, *PRPC_PDU;
+
+#pragma pack(pop)
 
 #include "../tcp.h"
 #include "../transport.h"
@@ -130,6 +137,8 @@ typedef struct _RPC_PDU
  * that use it (request, response, fault)
  */
 #define RPC_PDU_HEADER_MAX_LENGTH   32
+
+#pragma pack(push, 1)
 
 typedef struct
 {
@@ -532,6 +541,8 @@ typedef union
 	rpcconn_rts_hdr_t rts;
 } rpcconn_hdr_t;
 
+#pragma pack(pop)
+
 struct _RPC_SECURITY_PROVIDER_INFO
 {
 	UINT32 Id;
@@ -595,6 +606,9 @@ typedef struct rpc_ping_originator RpcPingOriginator;
 enum _CLIENT_IN_CHANNEL_STATE
 {
 	CLIENT_IN_CHANNEL_STATE_INITIAL,
+	CLIENT_IN_CHANNEL_STATE_CONNECTED,
+	CLIENT_IN_CHANNEL_STATE_SECURITY,
+	CLIENT_IN_CHANNEL_STATE_NEGOTIATED,
 	CLIENT_IN_CHANNEL_STATE_OPENED,
 	CLIENT_IN_CHANNEL_STATE_OPENED_A4W,
 	CLIENT_IN_CHANNEL_STATE_FINAL
@@ -606,8 +620,6 @@ struct rpc_in_channel
 	/* Sending Channel */
 
 	CLIENT_IN_CHANNEL_STATE State;
-
-	HANDLE Mutex;
 
 	UINT32 PlugState;
 	void* SendQueue;
@@ -626,6 +638,9 @@ typedef struct rpc_in_channel RpcInChannel;
 enum _CLIENT_OUT_CHANNEL_STATE
 {
 	CLIENT_OUT_CHANNEL_STATE_INITIAL,
+	CLIENT_OUT_CHANNEL_STATE_CONNECTED,
+	CLIENT_OUT_CHANNEL_STATE_SECURITY,
+	CLIENT_OUT_CHANNEL_STATE_NEGOTIATED,
 	CLIENT_OUT_CHANNEL_STATE_OPENED,
 	CLIENT_OUT_CHANNEL_STATE_OPENED_A6W,
 	CLIENT_OUT_CHANNEL_STATE_OPENED_A10W,
@@ -639,8 +654,6 @@ struct rpc_out_channel
 	/* Receiving Channel */
 
 	CLIENT_OUT_CHANNEL_STATE State;
-
-	HANDLE Mutex;
 
 	UINT32 ReceiveWindow;
 	UINT32 ReceiveWindowSize;
@@ -696,25 +709,12 @@ typedef struct rpc_virtual_connection_cookie_entry RpcVirtualConnectionCookieEnt
 
 struct rpc_client
 {
-	HANDLE Thread;
-	HANDLE StopEvent;
-
-	wQueue* SendQueue;
-
 	RPC_PDU* pdu;
-	wQueue* ReceivePool;
-	wQueue* ReceiveQueue;
-
-	wStream* RecvFrag;
-	wQueue* FragmentPool;
-	wQueue* FragmentQueue;
-
+	HANDLE PipeEvent;
+	RingBuffer ReceivePipe;
+	wStream* ReceiveFragment;
+	CRITICAL_SECTION PipeLock;
 	wArrayList* ClientCallList;
-
-	HANDLE PduSentEvent;
-
-	BOOL SynchronousSend;
-	BOOL SynchronousReceive;
 };
 typedef struct rpc_client RpcClient;
 
@@ -766,8 +766,6 @@ struct rdp_rpc
 	wArrayList* VirtualConnectionCookieTable;
 };
 
-BOOL rpc_connect(rdpRpc* rpc);
-
 void rpc_pdu_header_print(rpcconn_hdr_t* header);
 void rpc_pdu_header_init(rdpRpc* rpc, rpcconn_hdr_t* header);
 
@@ -781,7 +779,15 @@ int rpc_in_write(rdpRpc* rpc, const BYTE* data, int length);
 
 BOOL rpc_get_stub_data_info(rdpRpc* rpc, BYTE* header, UINT32* offset, UINT32* length);
 
+int rpc_client_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state);
+int rpc_client_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state);
+
+int rpc_client_virtual_connection_transition_to_state(rdpRpc* rpc,
+		RpcVirtualConnection* connection, VIRTUAL_CONNECTION_STATE state);
+
 int rpc_write(rdpRpc* rpc, BYTE* data, int length, UINT16 opnum);
+
+BOOL rpc_connect(rdpRpc* rpc);
 
 rdpRpc* rpc_new(rdpTransport* transport);
 void rpc_free(rdpRpc* rpc);

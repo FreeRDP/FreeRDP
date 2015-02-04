@@ -26,14 +26,19 @@
 #include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
 
-
-
 #include <winpr/stream.h>
 
 #include "rpc.h"
+#include "http.h"
 
-BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc);
-BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc);
+int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel);
+void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, TSG_CHANNEL channel);
+
+int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc);
+int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, HttpResponse* response);
+
+int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc);
+int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, HttpResponse* response);
 
 void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL channel);
 

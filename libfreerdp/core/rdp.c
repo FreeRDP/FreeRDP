@@ -1268,8 +1268,22 @@ void rdp_set_blocking_mode(rdpRdp* rdp, BOOL blocking)
 int rdp_check_fds(rdpRdp* rdp)
 {
 	int status;
+	rdpTransport* transport = rdp->transport;
 
-	status = transport_check_fds(rdp->transport);
+	if (transport->tsg)
+	{
+		rdpTsg* tsg = transport->tsg;
+
+		status = tsg_check(tsg);
+
+		if (status < 0)
+			return -1;
+
+		if (tsg->state != TSG_STATE_PIPE_CREATED)
+			return status;
+	}
+
+	status = transport_check_fds(transport);
 
 	if (status == 1)
 	{

@@ -23,10 +23,6 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/dsparse.h>
@@ -48,6 +44,9 @@ BOOL ntlm_client_init(rdpNtlm* ntlm, BOOL http, char* user, char* domain, char* 
 	ntlm->Bindings = Bindings;
 
 	ntlm->table = InitSecurityInterfaceEx(SSPI_INTERFACE_WINPR);
+
+	if (!ntlm->table)
+		return FALSE;
 
 	sspi_SetAuthIdentity(&(ntlm->identity), user, domain, password);
 
@@ -118,6 +117,8 @@ BOOL ntlm_client_make_spn(rdpNtlm* ntlm, LPCTSTR ServiceClass, char* hostname)
 	if (!ServiceClass)
 	{
 		ntlm->ServicePrincipalName = (LPTSTR) _tcsdup(hostnameX);
+
+		free(hostnameX);
 
 		if (!ntlm->ServicePrincipalName)
 			return FALSE;
@@ -277,24 +278,29 @@ void ntlm_client_uninit(rdpNtlm* ntlm)
 		ntlm->table->FreeCredentialsHandle(&ntlm->credentials);
 		ntlm->table->FreeContextBuffer(ntlm->pPackageInfo);
 		ntlm->table->DeleteSecurityContext(&ntlm->context);
+		ntlm->table = NULL;
 	}
 }
 
 rdpNtlm* ntlm_new()
 {
-	return (rdpNtlm*) calloc(1, sizeof(rdpNtlm));
+	rdpNtlm* ntlm;
+
+	ntlm = (rdpNtlm*) calloc(1, sizeof(rdpNtlm));
+
+	return ntlm;
 }
 
 void ntlm_free(rdpNtlm* ntlm)
 {
-	if (ntlm)
-	{
-		if (ntlm->outputBuffer[0].pvBuffer)
-		{
-			free(ntlm->outputBuffer[0].pvBuffer);
-			ntlm->outputBuffer[0].pvBuffer = NULL;
-		}
+	if (!ntlm)
+		return;
 
-		free(ntlm);
+	if (ntlm->outputBuffer[0].pvBuffer)
+	{
+		free(ntlm->outputBuffer[0].pvBuffer);
+		ntlm->outputBuffer[0].pvBuffer = NULL;
 	}
+
+	free(ntlm);
 }

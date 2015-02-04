@@ -28,6 +28,7 @@ typedef struct _http_response HttpResponse;
 #include <freerdp/crypto/tls.h>
 
 #include <winpr/stream.h>
+#include <winpr/winhttp.h>
 
 struct _http_context
 {
@@ -41,17 +42,17 @@ struct _http_context
 	char* Pragma;
 };
 
-void http_context_set_method(HttpContext* http_context, char* method);
-void http_context_set_uri(HttpContext* http_context, char* uri);
-void http_context_set_user_agent(HttpContext* http_context, char* user_agent);
-void http_context_set_host(HttpContext* http_context, char* host);
-void http_context_set_accept(HttpContext* http_context, char* accept);
-void http_context_set_cache_control(HttpContext* http_context, char* cache_control);
-void http_context_set_connection(HttpContext* http_context, char* connection);
-void http_context_set_pragma(HttpContext* http_context, char* pragma);
+BOOL http_context_set_method(HttpContext* context, const char* Method);
+BOOL http_context_set_uri(HttpContext* context, const char* URI);
+BOOL http_context_set_user_agent(HttpContext* context, const char* UserAgent);
+BOOL http_context_set_host(HttpContext* context, const char* Host);
+BOOL http_context_set_accept(HttpContext* context, const char* Accept);
+BOOL http_context_set_cache_control(HttpContext* context, const char* CacheControl);
+BOOL http_context_set_connection(HttpContext* context, const char* Connection);
+BOOL http_context_set_pragma(HttpContext* context, const char* Pragma);
 
 HttpContext* http_context_new(void);
-void http_context_free(HttpContext* http_context);
+void http_context_free(HttpContext* context);
 
 struct _http_request
 {
@@ -64,15 +65,15 @@ struct _http_request
 	char* Content;
 };
 
-void http_request_set_method(HttpRequest* http_request, char* method);
-void http_request_set_uri(HttpRequest* http_request, char* uri);
-void http_request_set_auth_scheme(HttpRequest* http_request, char* auth_scheme);
-void http_request_set_auth_param(HttpRequest* http_request, char* auth_param);
+BOOL http_request_set_method(HttpRequest* request, const char* Method);
+BOOL http_request_set_uri(HttpRequest* request, const char* URI);
+BOOL http_request_set_auth_scheme(HttpRequest* request, const char* AuthScheme);
+BOOL http_request_set_auth_param(HttpRequest* request, const char* AuthParam);
 
-wStream* http_request_write(HttpContext* http_context, HttpRequest* http_request);
+wStream* http_request_write(HttpContext* context, HttpRequest* request);
 
 HttpRequest* http_request_new(void);
-void http_request_free(HttpRequest* http_request);
+void http_request_free(HttpRequest* request);
 
 struct _http_response
 {
@@ -82,17 +83,20 @@ struct _http_response
 	int StatusCode;
 	char* ReasonPhrase;
 
-	wListDictionary *Authenticates;
 	int ContentLength;
-	BYTE *BodyContent;
-	int bodyLen;
+	char* ContentType;
+
+	int BodyLength;
+	BYTE* BodyContent;
+
+	wListDictionary* Authenticates;
 };
 
-void http_response_print(HttpResponse* http_response);
+void http_response_print(HttpResponse* response);
 
 HttpResponse* http_response_recv(rdpTls* tls);
 
 HttpResponse* http_response_new(void);
-void http_response_free(HttpResponse* http_response);
+void http_response_free(HttpResponse* response);
 
 #endif /* FREERDP_CORE_HTTP_H */

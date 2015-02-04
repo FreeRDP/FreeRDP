@@ -31,253 +31,7 @@
 
 #include "rts.h"
 
-#define TAG FREERDP_TAG("core.gateway")
-
-/**
- * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
- * http://msdn.microsoft.com/en-us/library/cc243950/
- */
-
-/**
- *                                      Connection Establishment\n
- *
- *     Client                  Outbound Proxy           Inbound Proxy                 Server\n
- *        |                         |                         |                         |\n
- *        |-----------------IN Channel Request--------------->|                         |\n
- *        |---OUT Channel Request-->|                         |<-Legacy Server Response-|\n
- *        |                         |<--------------Legacy Server Response--------------|\n
- *        |                         |                         |                         |\n
- *        |---------CONN_A1-------->|                         |                         |\n
- *        |----------------------CONN_B1--------------------->|                         |\n
- *        |                         |----------------------CONN_A2--------------------->|\n
- *        |                         |                         |                         |\n
- *        |<--OUT Channel Response--|                         |---------CONN_B2-------->|\n
- *        |<--------CONN_A3---------|                         |                         |\n
- *        |                         |<---------------------CONN_C1----------------------|\n
- *        |                         |                         |<--------CONN_B3---------|\n
- *        |<--------CONN_C2---------|                         |                         |\n
- *        |                         |                         |                         |\n
- *
- */
-
-BOOL rts_connect(rdpRpc* rpc)
-{
-	RPC_PDU* pdu;
-	rpcconn_rts_hdr_t* rts;
-	HttpResponse* http_response;
-	freerdp* instance = (freerdp*) rpc->settings->instance;
-	rdpContext* context = instance->context;
-
-	/**
-	 * Connection Opening
-	 *
-	 * When opening a virtual connection to the server, an implementation of this protocol MUST perform
-	 * the following sequence of steps:
-	 *
-	 * 1. Send an IN channel request as specified in section 2.1.2.1.1, containing the connection timeout,
-	 *    ResourceType UUID, and Session UUID values, if any, supplied by the higher-layer protocol or application.
-	 *
-	 * 2. Send an OUT channel request as specified in section 2.1.2.1.2.
-	 *
-	 * 3. Send a CONN/A1 RTS PDU as specified in section 2.2.4.2
-	 *
-	 * 4. Send a CONN/B1 RTS PDU as specified in section 2.2.4.5
-	 *
-	 * 5. Wait for the connection establishment protocol sequence as specified in 3.2.1.5.3.1 to complete
-	 *
-	 * An implementation MAY execute steps 1 and 2 in parallel. An implementation SHOULD execute steps
-	 * 3 and 4 in parallel. An implementation MUST execute step 3 after completion of step 1 and execute
-	 * step 4 after completion of step 2.
-	 *
-	 */
-
-	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
-	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_INITIAL");
-
-	rpc->client->SynchronousSend = TRUE;
-	rpc->client->SynchronousReceive = TRUE;
-
-	if (!rpc_ntlm_http_out_connect(rpc))
-	{
-		WLog_ERR(TAG, "rpc_out_connect_http error!");
-		return FALSE;
-	}
-
-	if (rts_send_CONN_A1_pdu(rpc) != 0)
-	{
-		WLog_ERR(TAG, "rpc_send_CONN_A1_pdu error!");
-		return FALSE;
-	}
-
-	if (!rpc_ntlm_http_in_connect(rpc))
-	{
-		WLog_ERR(TAG, "rpc_in_connect_http error!");
-		return FALSE;
-	}
-
-	if (rts_send_CONN_B1_pdu(rpc) < 0)
-	{
-		WLog_ERR(TAG, "rpc_send_CONN_B1_pdu error!");
-		return FALSE;
-	}
-
-	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT;
-	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT");
-
-	/**
-	 * Receive OUT Channel Response
-	 *
-	 * A client implementation MUST NOT accept the OUT channel HTTP response in any state other than
-	 * Out Channel Wait. If received in any other state, this HTTP response is a protocol error. Therefore,
-	 * the client MUST consider the virtual connection opening a failure and indicate this to higher layers
-	 * in an implementation-specific way. The Microsoft Windows® implementation returns
-	 * RPC_S_PROTOCOL_ERROR, as specified in [MS-ERREF], to higher-layer protocols.
-	 *
-	 * If this HTTP response is received in Out Channel Wait state, the client MUST process the fields of
-	 * this response as defined in this section.
-	 *
-	 * First, the client MUST determine whether the response indicates a success or a failure. If the status
-	 * code is set to 200, the client MUST interpret this as a success, and it MUST do the following:
-	 *
-	 * 1. Ignore the values of all other header fields.
-	 *
-	 * 2. Transition to Wait_A3W state.
-	 *
-	 * 3. Wait for network events.
-	 *
-	 * 4. Skip the rest of the processing in this section.
-	 *
-	 * If the status code is not set to 200, the client MUST interpret this as a failure and follow the same
-	 * processing rules as specified in section 3.2.2.5.6.
-	 *
-	 */
-
-	http_response = http_response_recv(rpc->TlsOut);
-	if (!http_response)
-	{
-		WLog_ERR(TAG, "unable to retrieve OUT Channel Response!");
-		return FALSE;
-	}
-
-	if (http_response->StatusCode != HTTP_STATUS_OK)
-	{
-		WLog_ERR(TAG, "error! Status Code: %d", http_response->StatusCode);
-		http_response_print(http_response);
-		http_response_free(http_response);
-
-		if (http_response->StatusCode == HTTP_STATUS_DENIED)
-		{
-			if (!connectErrorCode)
-			{
-				connectErrorCode = AUTHENTICATIONERROR;
-			}
-
-			if (!freerdp_get_last_error(context))
-			{
-				freerdp_set_last_error(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
-			}
-		}
-
-		return FALSE;
-	}
-
-	if (http_response->bodyLen)
-	{
-		/* inject bytes we have read in the body as a received packet for the RPC client */
-		rpc->client->RecvFrag = rpc_client_fragment_pool_take(rpc);
-		Stream_EnsureCapacity(rpc->client->RecvFrag, http_response->bodyLen);
-		CopyMemory(rpc->client->RecvFrag, http_response->BodyContent,  http_response->bodyLen);
-	}
-
-	//http_response_print(http_response);
-	http_response_free(http_response);
-
-	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_A3W;
-	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_A3W");
-
-	/**
-	 * Receive CONN_A3 RTS PDU
-	 *
-	 * A client implementation MUST NOT accept the CONN/A3 RTS PDU in any state other than
-	 * Wait_A3W. If received in any other state, this PDU is a protocol error and the client
-	 * MUST consider the virtual connection opening a failure and indicate this to higher
-	 * layers in an implementation-specific way.
-	 *
-	 * Set the ConnectionTimeout in the Ping Originator of the Client's IN Channel to the
-	 * ConnectionTimeout in the CONN/A3 PDU.
-	 *
-	 * If this RTS PDU is received in Wait_A3W state, the client MUST transition the state
-	 * machine to Wait_C2 state and wait for network events.
-	 *
-	 */
-
-	rpc_client_start(rpc);
-
-	pdu = rpc_recv_dequeue_pdu(rpc);
-
-	if (!pdu)
-		return FALSE;
-
-	rts = (rpcconn_rts_hdr_t*) Stream_Buffer(pdu->s);
-
-	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_A3_SIGNATURE, rts))
-	{
-		WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/A3");
-		return FALSE;
-	}
-
-	rts_recv_CONN_A3_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
-
-	rpc_client_receive_pool_return(rpc, pdu);
-
-	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_WAIT_C2;
-	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_WAIT_C2");
-
-	/**
-	 * Receive CONN_C2 RTS PDU
-	 *
-	 * A client implementation MUST NOT accept the CONN/C2 RTS PDU in any state other than Wait_C2.
-	 * If received in any other state, this PDU is a protocol error and the client MUST consider the virtual
-	 * connection opening a failure and indicate this to higher layers in an implementation-specific way.
-	 *
-	 * If this RTS PDU is received in Wait_C2 state, the client implementation MUST do the following:
-	 *
-	 * 1. Transition the state machine to opened state.
-	 *
-	 * 2. Set the connection time-out protocol variable to the value of the ConnectionTimeout field from
-	 *    the CONN/C2 RTS PDU.
-	 *
-	 * 3. Set the PeerReceiveWindow value in the SendingChannel of the Client IN Channel to the
-	 *    ReceiveWindowSize value in the CONN/C2 PDU.
-	 *
-	 * 4. Indicate to higher-layer protocols that the virtual connection opening is a success.
-	 *
-	 */
-
-	pdu = rpc_recv_dequeue_pdu(rpc);
-	if (!pdu)
-		return FALSE;
-
-	rts = (rpcconn_rts_hdr_t*) Stream_Buffer(pdu->s);
-
-	if (!rts_match_pdu_signature(rpc, &RTS_PDU_CONN_C2_SIGNATURE, rts))
-	{
-		WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/C2");
-		return FALSE;
-	}
-
-	rts_recv_CONN_C2_pdu(rpc, Stream_Buffer(pdu->s), Stream_Length(pdu->s));
-
-	rpc_client_receive_pool_return(rpc, pdu);
-
-	rpc->VirtualConnection->State = VIRTUAL_CONNECTION_STATE_OPENED;
-	WLog_DBG(TAG, "VIRTUAL_CONNECTION_STATE_OPENED");
-
-	rpc->client->SynchronousSend = TRUE;
-	rpc->client->SynchronousReceive = TRUE;
-
-	return TRUE;
-}
+#define TAG FREERDP_TAG("core.gateway.rts")
 
 const char* const RTS_CMD_STRINGS[] =
 {
@@ -675,6 +429,7 @@ void rts_generate_cookie(BYTE* cookie)
 
 int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
 	UINT32 ReceiveWindowSize;
@@ -688,14 +443,12 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 
 	WLog_DBG(TAG, "Sending CONN_A1 RTS PDU");
 
-	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->Cookie));
-	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie));
-
 	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
 	OUTChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
 	ReceiveWindowSize = rpc->VirtualConnection->DefaultOutChannel->ReceiveWindow;
 
 	buffer = (BYTE*) malloc(header.frag_length);
+
 	if (!buffer)
 		return -1;
 
@@ -705,11 +458,11 @@ int rts_send_CONN_A1_pdu(rdpRpc* rpc)
 	rts_cookie_command_write(&buffer[48], OUTChannelCookie); /* OUTChannelCookie (20 bytes) */
 	rts_receive_window_size_command_write(&buffer[68], ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
 
-	rpc_out_write(rpc, buffer, header.frag_length);
+	status = rpc_out_write(rpc, buffer, header.frag_length);
 
 	free(buffer);
 
-	return 0;
+	return (status > 0) ? 1 : -1;
 }
 
 int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
@@ -722,20 +475,20 @@ int rts_recv_CONN_A3_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	rpc->VirtualConnection->DefaultInChannel->PingOriginator.ConnectionTimeout = ConnectionTimeout;
 
-	return 0;
+	return 1;
 }
 
 /* CONN/B Sequence */
 
 int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
 	BYTE* INChannelCookie;
 	BYTE* AssociationGroupId;
 	BYTE* VirtualConnectionCookie;
-	int status;
 
 	rts_pdu_header_init(&header);
 	header.frag_length = 104;
@@ -744,14 +497,12 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 	WLog_DBG(TAG, "Sending CONN_B1 RTS PDU");
 
-	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie));
-	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->AssociationGroupId));
-
 	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
 	INChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultInChannelCookie);
 	AssociationGroupId = (BYTE*) &(rpc->VirtualConnection->AssociationGroupId);
 
 	buffer = (BYTE*) malloc(header.frag_length);
+
 	if (!buffer)
 		return -1;
 
@@ -769,7 +520,7 @@ int rts_send_CONN_B1_pdu(rdpRpc* rpc)
 
 	free(buffer);
 
-	return status;
+	return (status > 0) ? 1 : -1;
 }
 
 /* CONN/C Sequence */
@@ -796,13 +547,14 @@ int rts_recv_CONN_C2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	rpc->VirtualConnection->DefaultInChannel->State = CLIENT_IN_CHANNEL_STATE_OPENED;
 	rpc->VirtualConnection->DefaultOutChannel->State = CLIENT_OUT_CHANNEL_STATE_OPENED;
 
-	return 0;
+	return 1;
 }
 
 /* Out-of-Sequence PDUs */
 
 int rts_send_keep_alive_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
@@ -815,25 +567,25 @@ int rts_send_keep_alive_pdu(rdpRpc* rpc)
 	WLog_DBG(TAG, "Sending Keep-Alive RTS PDU");
 
 	buffer = (BYTE*) malloc(header.frag_length);
+
 	if (!buffer)
 		return -1;
+
 	CopyMemory(buffer, ((BYTE*) &header), 20); /* RTS Header (20 bytes) */
 	rts_client_keepalive_command_write(&buffer[20], rpc->CurrentKeepAliveInterval); /* ClientKeepAlive (8 bytes) */
 
 	length = header.frag_length;
 
-	if (rpc_in_write(rpc, buffer, length) < 0)
-	{
-		free (buffer);
-		return -1;
-	}
+	status = rpc_in_write(rpc, buffer, length);
+
 	free(buffer);
 
-	return length;
+	return (status > 0) ? 1 : -1;
 }
 
 int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
@@ -868,15 +620,11 @@ int rts_send_flow_control_ack_pdu(rdpRpc* rpc)
 
 	length = header.frag_length;
 
-	if (rpc_in_write(rpc, buffer, length) < 0)
-	{
-		free(buffer);
-		return -1;
-	}
+	status = rpc_in_write(rpc, buffer, length);
 
 	free(buffer);
 
-	return 0;
+	return (status > 0) ? 1 : -1;
 }
 
 int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
@@ -891,15 +639,15 @@ int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 			&BytesReceived, &AvailableWindow, (BYTE*) &ChannelCookie) + 4;
 
 #if 0
-	WLog_ERR(TAG,  "BytesReceived: %d AvailableWindow: %d",
+	WLog_ERR(TAG, "BytesReceived: %d AvailableWindow: %d",
 			 BytesReceived, AvailableWindow);
-	WLog_ERR(TAG,  "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
+	WLog_ERR(TAG, "ChannelCookie: " RPC_UUID_FORMAT_STRING "", RPC_UUID_FORMAT_ARGUMENTS(ChannelCookie));
 #endif
 
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
 		AvailableWindow - (rpc->VirtualConnection->DefaultInChannel->BytesSent - BytesReceived);
 
-	return 0;
+	return 1;
 }
 
 int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
@@ -940,11 +688,12 @@ int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, BYTE* buffer, UI
 	rpc->VirtualConnection->DefaultInChannel->SenderAvailableWindow =
 		AvailableWindow - (rpc->VirtualConnection->DefaultInChannel->BytesSent - BytesReceived);
 
-	return 0;
+	return 1;
 }
 
 int rts_send_ping_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	UINT32 length;
 	rpcconn_rts_hdr_t header;
@@ -965,14 +714,11 @@ int rts_send_ping_pdu(rdpRpc* rpc)
 
 	length = header.frag_length;
 
-	if (rpc_in_write(rpc, buffer, length) < 0)
-	{
-		free (buffer);
-		return -1;
-	}
+	status = rpc_in_write(rpc, buffer, length);
+
 	free(buffer);
 
-	return length;
+	return (status > 0) ? 1 : -1;
 }
 
 int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 length)
@@ -1042,7 +788,7 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 			break;
 
 		default:
-			WLog_ERR(TAG,  "Error: Unknown RTS Command Type: 0x%x", CommandType);
+			WLog_ERR(TAG, "Error: Unknown RTS Command Type: 0x%x", CommandType);
 			return -1;
 			break;
 	}
@@ -1052,6 +798,7 @@ int rts_command_length(rdpRpc* rpc, UINT32 CommandType, BYTE* buffer, UINT32 len
 
 int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 {
+	int status;
 	BYTE* buffer;
 	rpcconn_rts_hdr_t header;
 	UINT32 ReceiveWindowSize;
@@ -1065,8 +812,6 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	header.NumberOfCommands = 5;
 
 	WLog_DBG(TAG, "Sending OUT R1/A3 RTS PDU");
-
-	rts_generate_cookie((BYTE*) &(rpc->VirtualConnection->NonDefaultOutChannelCookie));
 
 	VirtualConnectionCookie = (BYTE*) &(rpc->VirtualConnection->Cookie);
 	PredecessorChannelCookie = (BYTE*) &(rpc->VirtualConnection->DefaultOutChannelCookie);
@@ -1085,15 +830,16 @@ int rts_send_OUT_R1_A3_pdu(rdpRpc* rpc)
 	rts_cookie_command_write(&buffer[68], SuccessorChannelCookie); /* SuccessorChannelCookie (20 bytes) */
 	rts_receive_window_size_command_write(&buffer[88], ReceiveWindowSize); /* ReceiveWindowSize (8 bytes) */
 
-	rpc_out_write(rpc, buffer, header.frag_length);
+	status = rpc_out_write(rpc, buffer, header.frag_length);
 
 	free(buffer);
 
-	return 0;
+	return (status > 0) ? 1 : -1;
 }
 
 int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
+	int status;
 	UINT32 offset;
 	UINT32 Destination = 0;
 
@@ -1104,15 +850,22 @@ int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 
 	WLog_ERR(TAG, "TS Gateway channel recycling is incomplete");
 
-	rpc_http_send_replacement_out_channel_request(rpc);
+	status = rpc_http_send_replacement_out_channel_request(rpc);
 
-	rts_send_OUT_R1_A3_pdu(rpc);
+	if (status < 0)
+		return -1;
 
-	return 0;
+	status = rts_send_OUT_R1_A3_pdu(rpc);
+
+	if (status < 0)
+		return -1;
+
+	return 1;
 }
 
 int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 {
+	int status = -1;
 	UINT32 SignatureId;
 	rpcconn_rts_hdr_t* rts;
 	RtsPduSignature signature;
@@ -1125,16 +878,20 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 	switch (SignatureId)
 	{
 		case RTS_PDU_FLOW_CONTROL_ACK:
-			return rts_recv_flow_control_ack_pdu(rpc, buffer, length);
+			status = rts_recv_flow_control_ack_pdu(rpc, buffer, length);
+			break;
 
 		case RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION:
-			return rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
+			status = rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer, length);
+			break;
 
 		case RTS_PDU_PING:
-			return rts_send_ping_pdu(rpc);
+			status = rts_send_ping_pdu(rpc);
+			break;
 
 		case RTS_PDU_OUT_R1_A2:
-			return rts_recv_OUT_R1_A2_pdu(rpc, buffer, length);
+			status = rts_recv_OUT_R1_A2_pdu(rpc, buffer, length);
+			break;
 
 		default:
 			WLog_ERR(TAG, "unimplemented signature id: 0x%08X", SignatureId);
@@ -1142,5 +899,5 @@ int rts_recv_out_of_sequence_pdu(rdpRpc* rpc, BYTE* buffer, UINT32 length)
 			break;
 	}
 
-	return 0;
+	return status;
 }

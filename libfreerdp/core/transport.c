@@ -22,9 +22,6 @@
 #endif
 
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
@@ -256,7 +253,7 @@ BOOL transport_connect_nla(rdpTransport* transport)
 			freerdp_set_last_error(instance->context, FREERDP_ERROR_AUTHENTICATION_FAILED);
 		}
 
-		WLog_ERR(TAG,  "Authentication failure, check credentials."
+		WLog_ERR(TAG, "Authentication failure, check credentials."
 				 "If credentials are valid, the NTLMSSP implementation may be to blame.");
 		transport_set_nla_mode(transport, FALSE);
 		credssp_free(credSsp);
@@ -461,7 +458,7 @@ BOOL transport_accept_nla(rdpTransport* transport)
 
 	if (credssp_authenticate(transport->credssp) < 0)
 	{
-		WLog_ERR(TAG,  "client authentication failure");
+		WLog_ERR(TAG, "client authentication failure");
 		transport_set_nla_mode(transport, FALSE);
 		credssp_free(transport->credssp);
 		transport->credssp = NULL;
@@ -655,7 +652,7 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 				}
 				else
 				{
-					WLog_ERR(TAG,  "Error reading TSRequest!");
+					WLog_ERR(TAG, "Error reading TSRequest!");
 					return -1;
 				}
 			}
@@ -995,8 +992,8 @@ int transport_check_fds(rdpTransport* transport)
 
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 {
-	BOOL status;
-	status = TRUE;
+	BOOL status = TRUE;
+
 	transport->blocking = blocking;
 
 	if (transport->SplitInputOutput)
@@ -1007,11 +1004,6 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 	else
 	{
 		status &= freerdp_tcp_set_blocking_mode(transport->TcpIn, blocking);
-	}
-
-	if (transport->layer == TRANSPORT_LAYER_TSG || transport->layer == TRANSPORT_LAYER_TSG_TLS)
-	{
-		tsg_set_blocking_mode(transport->tsg, blocking);
 	}
 
 	return status;

@@ -273,7 +273,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		return FALSE;
 	}
 
-	if ((rdp->nego->selected_protocol & PROTOCOL_TLS) || (rdp->nego->selected_protocol == PROTOCOL_RDP))
+	if ((rdp->nego->SelectedProtocol & PROTOCOL_TLS) || (rdp->nego->SelectedProtocol == PROTOCOL_RDP))
 	{
 		if ((settings->Username != NULL) && ((settings->Password != NULL) ||
 				(settings->RedirectionPassword != NULL && settings->RedirectionPasswordLength > 0)))
@@ -973,26 +973,26 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	if (!nego_read_request(nego, s))
 		return FALSE;
 
-	nego->selected_protocol = 0;
+	nego->SelectedProtocol = 0;
 	WLog_INFO(TAG,  "Client Security: NLA:%d TLS:%d RDP:%d",
-			 (nego->requested_protocols & PROTOCOL_NLA) ? 1 : 0,
-			 (nego->requested_protocols & PROTOCOL_TLS) ? 1 : 0,
-			 (nego->requested_protocols == PROTOCOL_RDP) ? 1 : 0
+			 (nego->RequestedProtocols & PROTOCOL_NLA) ? 1 : 0,
+			 (nego->RequestedProtocols & PROTOCOL_TLS) ? 1 : 0,
+			 (nego->RequestedProtocols == PROTOCOL_RDP) ? 1 : 0
 			);
 	WLog_INFO(TAG,  "Server Security: NLA:%d TLS:%d RDP:%d",
 			 settings->NlaSecurity, settings->TlsSecurity, settings->RdpSecurity);
 
-	if ((settings->NlaSecurity) && (nego->requested_protocols & PROTOCOL_NLA))
+	if ((settings->NlaSecurity) && (nego->RequestedProtocols & PROTOCOL_NLA))
 	{
-		nego->selected_protocol = PROTOCOL_NLA;
+		nego->SelectedProtocol = PROTOCOL_NLA;
 	}
-	else if ((settings->TlsSecurity) && (nego->requested_protocols & PROTOCOL_TLS))
+	else if ((settings->TlsSecurity) && (nego->RequestedProtocols & PROTOCOL_TLS))
 	{
-		nego->selected_protocol = PROTOCOL_TLS;
+		nego->SelectedProtocol = PROTOCOL_TLS;
 	}
-	else if ((settings->RdpSecurity) && (nego->selected_protocol == PROTOCOL_RDP))
+	else if ((settings->RdpSecurity) && (nego->SelectedProtocol == PROTOCOL_RDP))
 	{
-		nego->selected_protocol = PROTOCOL_RDP;
+		nego->SelectedProtocol = PROTOCOL_RDP;
 	}
 	else
 	{
@@ -1000,9 +1000,9 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 	}
 
 	WLog_INFO(TAG,  "Negotiated Security: NLA:%d TLS:%d RDP:%d",
-			 (nego->selected_protocol & PROTOCOL_NLA) ? 1 : 0,
-			 (nego->selected_protocol & PROTOCOL_TLS) ? 1 : 0,
-			 (nego->selected_protocol == PROTOCOL_RDP) ? 1: 0
+			 (nego->SelectedProtocol & PROTOCOL_NLA) ? 1 : 0,
+			 (nego->SelectedProtocol & PROTOCOL_TLS) ? 1 : 0,
+			 (nego->SelectedProtocol == PROTOCOL_RDP) ? 1: 0
 			);
 
 	if (!nego_send_negotiation_response(nego))
@@ -1010,11 +1010,11 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 
 	status = FALSE;
 
-	if (nego->selected_protocol & PROTOCOL_NLA)
+	if (nego->SelectedProtocol & PROTOCOL_NLA)
 		status = transport_accept_nla(rdp->transport);
-	else if (nego->selected_protocol & PROTOCOL_TLS)
+	else if (nego->SelectedProtocol & PROTOCOL_TLS)
 		status = transport_accept_tls(rdp->transport);
-	else if (nego->selected_protocol == PROTOCOL_RDP) /* 0 */
+	else if (nego->SelectedProtocol == PROTOCOL_RDP) /* 0 */
 		status = transport_accept_rdp(rdp->transport);
 
 	if (!status)

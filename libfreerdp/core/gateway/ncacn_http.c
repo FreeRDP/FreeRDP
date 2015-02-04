@@ -31,7 +31,7 @@
 
 #include <openssl/rand.h>
 
-#define TAG FREERDP_TAG("core.gateway")
+#define TAG FREERDP_TAG("core.gateway.ntlm")
 
 wStream* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_length, TSG_CHANNEL channel)
 {
@@ -80,52 +80,51 @@ wStream* rpc_ntlm_http_request(rdpRpc* rpc, SecBuffer* ntlm_token, int content_l
 int rpc_ncacn_http_send_in_channel_request(rdpRpc* rpc)
 {
 	wStream* s;
-	int content_length;
-	BOOL continue_needed;
+	int status;
+	int contentLength;
+	BOOL continueNeeded;
 	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
 
-	continue_needed = ntlm_authenticate(ntlm);
+	continueNeeded = ntlm_authenticate(ntlm);
 
-	content_length = (continue_needed) ? 0 : 0x40000000;
+	contentLength = (continueNeeded) ? 0 : 0x40000000;
 
-	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], content_length, TSG_CHANNEL_IN);
+	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], contentLength, TSG_CHANNEL_IN);
 
-	WLog_DBG(TAG, "\n%s", Stream_Buffer(s));
-	rpc_in_write(rpc, Stream_Buffer(s), Stream_Length(s));
-	Stream_Free(s, TRUE);
-
-	return 0;
-}
-
-int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc)
-{
-	char* token64;
-	int ntlm_token_length = 0;
-	BYTE* ntlm_token_data = NULL;
-	HttpResponse* http_response;
-	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
-
-	http_response = http_response_recv(rpc->TlsIn);
-
-	if (!http_response)
+	if (!s)
 		return -1;
 
-	if (ListDictionary_Contains(http_response->Authenticates, "NTLM"))
+	status = rpc_in_write(rpc, Stream_Buffer(s), Stream_Length(s));
+
+	Stream_Free(s, TRUE);
+
+	return (status > 0) ? 1 : -1;
+}
+
+int rpc_ncacn_http_recv_in_channel_response(rdpRpc* rpc, HttpResponse* response)
+{
+	char* token64 = NULL;
+	int ntlmTokenLength = 0;
+	BYTE* ntlmTokenData = NULL;
+	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
+
+	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
 	{
-		token64 = ListDictionary_GetItemValue(http_response->Authenticates, "NTLM");
+		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
 
 		if (!token64)
-			goto out;
+			return -1;
 
-		crypto_base64_decode(token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
+		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
 	}
 
-out:
-	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
-	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
-	http_response_free(http_response);
+	if (ntlmTokenData && ntlmTokenLength)
+	{
+		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
+		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
+	}
 
-	return 0;
+	return 1;
 }
 
 int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
@@ -164,8 +163,7 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 	}
 
 	if (!ntlm_client_init(ntlm, TRUE, settings->GatewayUsername,
-			settings->GatewayDomain, settings->GatewayPassword,
-			rpc->TlsIn->Bindings))
+			settings->GatewayDomain, settings->GatewayPassword, rpc->TlsIn->Bindings))
 	{
 		return 0;
 	}
@@ -178,126 +176,89 @@ int rpc_ncacn_http_ntlm_init(rdpRpc* rpc, TSG_CHANNEL channel)
 	return 1;
 }
 
-BOOL rpc_ntlm_http_in_connect(rdpRpc* rpc)
+void rpc_ncacn_http_ntlm_uninit(rdpRpc* rpc, TSG_CHANNEL channel)
 {
-	BOOL success = FALSE;
-	rdpNtlm* ntlm = rpc->NtlmHttpIn->ntlm;
-
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_IN) == 1)
+	if (channel == TSG_CHANNEL_IN)
 	{
-		success = TRUE;
-
-		/* Send IN Channel Request */
-
-		rpc_ncacn_http_send_in_channel_request(rpc);
-
-		/* Receive IN Channel Response */
-
-		rpc_ncacn_http_recv_in_channel_response(rpc);
-
-		/* Send IN Channel Request */
-
-		rpc_ncacn_http_send_in_channel_request(rpc);
-
-		ntlm_client_uninit(ntlm);
+		ntlm_client_uninit(rpc->NtlmHttpIn->ntlm);
+		ntlm_free(rpc->NtlmHttpIn->ntlm);
+		rpc->NtlmHttpIn->ntlm = NULL;
 	}
-
-	ntlm_free(ntlm);
-
-	rpc->NtlmHttpIn->ntlm = NULL;
-
-	return success;
+	else if (channel == TSG_CHANNEL_OUT)
+	{
+		ntlm_client_uninit(rpc->NtlmHttpOut->ntlm);
+		ntlm_free(rpc->NtlmHttpOut->ntlm);
+		rpc->NtlmHttpOut->ntlm = NULL;
+	}
 }
 
 int rpc_ncacn_http_send_out_channel_request(rdpRpc* rpc)
 {
 	wStream* s;
-	int content_length;
-	BOOL continue_needed;
+	int status;
+	int contentLength;
+	BOOL continueNeeded;
 	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
 
-	continue_needed = ntlm_authenticate(ntlm);
+	continueNeeded = ntlm_authenticate(ntlm);
 
-	content_length = (continue_needed) ? 0 : 76;
+	contentLength = (continueNeeded) ? 0 : 76;
 
-	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], content_length, TSG_CHANNEL_OUT);
+	s = rpc_ntlm_http_request(rpc, &ntlm->outputBuffer[0], contentLength, TSG_CHANNEL_OUT);
 
-	WLog_DBG(TAG, "\n%s", Stream_Buffer(s));
-	rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
-	Stream_Free(s, TRUE);
-
-	return 0;
-}
-
-int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc)
-{
-	char* token64;
-	int ntlm_token_length = 0;
-	BYTE* ntlm_token_data = NULL;
-	HttpResponse* http_response;
-	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
-
-	http_response = http_response_recv(rpc->TlsOut);
-
-	if (!http_response)
+	if (!s)
 		return -1;
 
-	if (ListDictionary_Contains(http_response->Authenticates, "NTLM"))
+	status = rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
+
+	Stream_Free(s, TRUE);
+
+	return (status > 0) ? 1 : -1;
+}
+
+int rpc_ncacn_http_recv_out_channel_response(rdpRpc* rpc, HttpResponse* response)
+{
+	char* token64 = NULL;
+	int ntlmTokenLength = 0;
+	BYTE* ntlmTokenData = NULL;
+	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
+
+	if (ListDictionary_Contains(response->Authenticates, "NTLM"))
 	{
-		token64 = ListDictionary_GetItemValue(http_response->Authenticates, "NTLM");
-		crypto_base64_decode(token64, strlen(token64), &ntlm_token_data, &ntlm_token_length);
+		token64 = ListDictionary_GetItemValue(response->Authenticates, "NTLM");
+
+		if (!token64)
+			return -1;
+
+		crypto_base64_decode(token64, strlen(token64), &ntlmTokenData, &ntlmTokenLength);
 	}
 
-	ntlm->inputBuffer[0].pvBuffer = ntlm_token_data;
-	ntlm->inputBuffer[0].cbBuffer = ntlm_token_length;
-	
-	http_response_free(http_response);
+	if (ntlmTokenData && ntlmTokenLength)
+	{
+		ntlm->inputBuffer[0].pvBuffer = ntlmTokenData;
+		ntlm->inputBuffer[0].cbBuffer = ntlmTokenLength;
+	}
 
-	return 0;
+	return 1;
 }
 
 int rpc_http_send_replacement_out_channel_request(rdpRpc* rpc)
 {
+	int status;
 	wStream* s;
-	int content_length;
 
-	content_length = 120;
+	s = rpc_ntlm_http_request(rpc, NULL, 120, TSG_CHANNEL_OUT);
 
-	s = rpc_ntlm_http_request(rpc, NULL, content_length, TSG_CHANNEL_OUT);
+	if (!s)
+		return -1;
 
 	WLog_DBG(TAG, "\n%s", Stream_Buffer(s));
-	rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
+
+	status = rpc_out_write(rpc, Stream_Buffer(s), Stream_Length(s));
+
 	Stream_Free(s, TRUE);
 
-	return 0;
-}
-
-BOOL rpc_ntlm_http_out_connect(rdpRpc* rpc)
-{
-	rdpNtlm* ntlm = rpc->NtlmHttpOut->ntlm;
-	BOOL success = FALSE;
-
-	if (rpc_ncacn_http_ntlm_init(rpc, TSG_CHANNEL_OUT) == 1)
-	{
-		success = TRUE;
-
-		/* Send OUT Channel Request */
-		rpc_ncacn_http_send_out_channel_request(rpc);
-
-		/* Receive OUT Channel Response */
-		rpc_ncacn_http_recv_out_channel_response(rpc);
-
-		/* Send OUT Channel Request */
-		rpc_ncacn_http_send_out_channel_request(rpc);
-
-		ntlm_client_uninit(ntlm);
-	}
-
-	ntlm_free(ntlm);
-
-	rpc->NtlmHttpOut->ntlm = NULL;
-
-	return success;
+	return (status > 0) ? 1 : -1;
 }
 
 void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL channel)
@@ -316,11 +277,13 @@ void rpc_ntlm_http_init_channel(rdpRpc* rpc, rdpNtlmHttp* ntlm_http, TSG_CHANNEL
 
 	if (channel == TSG_CHANNEL_IN)
 	{
-		http_context_set_pragma(ntlm_http->context, "ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
+		http_context_set_pragma(ntlm_http->context,
+				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729");
 	}
 	else if (channel == TSG_CHANNEL_OUT)
 	{
-		http_context_set_pragma(ntlm_http->context, "ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
+		http_context_set_pragma(ntlm_http->context,
+				"ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
 				"SessionId=fbd9c34f-397d-471d-a109-1b08cc554624");
 	}
 }

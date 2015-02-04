@@ -2093,7 +2093,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 	if (pioRecvPciNdrPtr)
 	{
-		WLog_WARN(TAG, "Transmit_Call with pioRecvPci:");
+		WLog_DBG(TAG, "Transmit_Call with pioRecvPci:");
 		winpr_HexDump(TAG, WLOG_WARN, Stream_Pointer(s) - 32,
 				Stream_GetRemainingLength(s) + 32);
 	}
@@ -2124,7 +2124,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 	if (ioSendPci.cbExtraBytes && !pbExtraBytesNdrPtr)
 	{
-		WLog_WARN(TAG, "Transmit_Call cbExtraBytes is non-zero but pbExtraBytesNdrPtr is null");
+		WLog_WARN(TAG, "Transmit_Call ioSendPci.cbExtraBytes is non-zero but pbExtraBytesNdrPtr is null");
 		return STATUS_INVALID_PARAMETER;
 	}
 
@@ -2132,7 +2132,7 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 	{
 		if (Stream_GetRemainingLength(s) < 4)
 		{
-			WLog_WARN(TAG, "Transmit_Call is too short: %d",
+			WLog_WARN(TAG, "Transmit_Call is too short: %d (ioSendPci.pbExtraBytes)",
 					(int) Stream_GetRemainingLength(s));
 			return STATUS_BUFFER_TOO_SMALL;
 		}
@@ -2218,56 +2218,86 @@ UINT32 smartcard_unpack_transmit_call(SMARTCARD_DEVICE* smartcard, wStream* s, T
 
 	if (pioRecvPciNdrPtr)
 	{
-		if (Stream_GetRemainingLength(s) < 16)
+		if (Stream_GetRemainingLength(s) < 12)
 		{
 			WLog_WARN(TAG, "Transmit_Call is too short: Actual: %d, Expected: %d",
-					(int) Stream_GetRemainingLength(s), 16);
+					(int) Stream_GetRemainingLength(s), 12);
 			return STATUS_BUFFER_TOO_SMALL;
 		}
 
 		Stream_Read_UINT32(s, ioRecvPci.dwProtocol); /* dwProtocol (4 bytes) */
 		Stream_Read_UINT32(s, ioRecvPci.cbExtraBytes); /* cbExtraBytes (4 bytes) */
 		Stream_Read_UINT32(s, pbExtraBytesNdrPtr); /* pbExtraBytesNdrPtr (4 bytes) */
-		Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
-		if (ioRecvPci.cbExtraBytes > 1024)
+		if (ioRecvPci.cbExtraBytes && !pbExtraBytesNdrPtr)
 		{
-			WLog_WARN(TAG, "Transmit_Call ioRecvPci.cbExtraBytes is out of bounds: %d (max: %d)",
-					(int) ioRecvPci.cbExtraBytes, 1024);
+			WLog_WARN(TAG, "Transmit_Call ioRecvPci.cbExtraBytes is non-zero but pbExtraBytesNdrPtr is null");
 			return STATUS_INVALID_PARAMETER;
 		}
 
-		if (length != ioRecvPci.cbExtraBytes)
+		if (pbExtraBytesNdrPtr)
 		{
-			WLog_WARN(TAG, "Transmit_Call unexpected length: Actual: %d, Expected: %d (ioRecvPci.cbExtraBytes)",
-					(int) length, (int) ioRecvPci.cbExtraBytes);
-			return STATUS_INVALID_PARAMETER;
-		}
+			if (Stream_GetRemainingLength(s) < 4)
+			{
+				WLog_WARN(TAG, "Transmit_Call is too short: %d (ioRecvPci.pbExtraBytes)",
+						(int) Stream_GetRemainingLength(s));
+				return STATUS_BUFFER_TOO_SMALL;
+			}
 
-		if (Stream_GetRemainingLength(s) < ioRecvPci.cbExtraBytes)
+			Stream_Read_UINT32(s, length); /* Length (4 bytes) */
+
+			if (ioRecvPci.cbExtraBytes > 1024)
+			{
+				WLog_WARN(TAG, "Transmit_Call ioRecvPci.cbExtraBytes is out of bounds: %d (max: %d)",
+						(int) ioRecvPci.cbExtraBytes, 1024);
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			if (length != ioRecvPci.cbExtraBytes)
+			{
+				WLog_WARN(TAG, "Transmit_Call unexpected length: Actual: %d, Expected: %d (ioRecvPci.cbExtraBytes)",
+						(int) length, (int) ioRecvPci.cbExtraBytes);
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			if (Stream_GetRemainingLength(s) < ioRecvPci.cbExtraBytes)
+			{
+				WLog_WARN(TAG, "Transmit_Call is too short: Actual: %d, Expected: %d (ioRecvPci.cbExtraBytes)",
+						(int) Stream_GetRemainingLength(s), (int) ioRecvPci.cbExtraBytes);
+				return STATUS_BUFFER_TOO_SMALL;
+			}
+
+			ioRecvPci.pbExtraBytes = (BYTE*) Stream_Pointer(s);
+
+			call->pioRecvPci = (LPSCARD_IO_REQUEST) malloc(sizeof(SCARD_IO_REQUEST) + ioRecvPci.cbExtraBytes);
+
+			if (!call->pioRecvPci)
+			{
+				WLog_WARN(TAG, "Transmit_Call out of memory error (pioRecvPci)");
+				return STATUS_NO_MEMORY;
+			}
+
+			call->pioRecvPci->dwProtocol = ioRecvPci.dwProtocol;
+			call->pioRecvPci->cbPciLength = ioRecvPci.cbExtraBytes + sizeof(SCARD_IO_REQUEST);
+
+			pbExtraBytes = &((BYTE*) call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
+			Stream_Read(s, pbExtraBytes, ioRecvPci.cbExtraBytes);
+
+			smartcard_unpack_read_size_align(smartcard, s, ioRecvPci.cbExtraBytes, 4);
+		}
+		else
 		{
-			WLog_WARN(TAG, "Transmit_Call is too short: Actual: %d, Expected: %d (ioRecvPci.cbExtraBytes)",
-					(int) Stream_GetRemainingLength(s), (int) ioRecvPci.cbExtraBytes);
-			return STATUS_BUFFER_TOO_SMALL;
+			call->pioRecvPci = (LPSCARD_IO_REQUEST) calloc(1, sizeof(SCARD_IO_REQUEST));
+
+			if (!call->pioRecvPci)
+			{
+				WLog_WARN(TAG, "Transmit_Call out of memory error (pioRecvPci)");
+				return STATUS_NO_MEMORY;
+			}
+
+			call->pioRecvPci->dwProtocol = ioRecvPci.dwProtocol;
+			call->pioRecvPci->cbPciLength = sizeof(SCARD_IO_REQUEST);
 		}
-
-		ioRecvPci.pbExtraBytes = (BYTE*) Stream_Pointer(s);
-
-		call->pioRecvPci = (LPSCARD_IO_REQUEST) malloc(sizeof(SCARD_IO_REQUEST) + ioRecvPci.cbExtraBytes);
-
-		if (!call->pioRecvPci)
-		{
-			WLog_WARN(TAG, "Transmit_Call out of memory error (pioRecvPci)");
-			return STATUS_NO_MEMORY;
-		}
-
-		call->pioRecvPci->dwProtocol = ioRecvPci.dwProtocol;
-		call->pioRecvPci->cbPciLength = ioRecvPci.cbExtraBytes + sizeof(SCARD_IO_REQUEST);
-
-		pbExtraBytes = &((BYTE*) call->pioRecvPci)[sizeof(SCARD_IO_REQUEST)];
-		Stream_Read(s, pbExtraBytes, ioRecvPci.cbExtraBytes);
-
-		smartcard_unpack_read_size_align(smartcard, s, ioRecvPci.cbExtraBytes, 4);
 	}
 
 	return SCARD_S_SUCCESS;
