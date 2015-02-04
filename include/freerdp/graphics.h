@@ -88,6 +88,7 @@ typedef void (*pPointer_Free)(rdpContext* context, rdpPointer* pointer);
 typedef void (*pPointer_Set)(rdpContext* context, rdpPointer* pointer);
 typedef void (*pPointer_SetNull)(rdpContext* context);
 typedef void (*pPointer_SetDefault)(rdpContext* context);
+typedef void (*pPointer_SetPosition)(rdpContext* context, UINT32 x, UINT32 y);
 
 struct rdp_pointer
 {
@@ -97,7 +98,8 @@ struct rdp_pointer
 	pPointer_Set Set; /* 3 */
 	pPointer_SetNull SetNull; /* 4*/
 	pPointer_SetDefault SetDefault; /* 5 */
-	UINT32 paddingA[16 - 6]; /* 6 */
+	pPointer_SetPosition SetPosition; /* 6 */
+	UINT32 paddingA[16 - 7]; /* 7 */
 
 	UINT32 xPos; /* 16 */
 	UINT32 yPos; /* 17 */
@@ -117,6 +119,7 @@ FREERDP_API void Pointer_Free(rdpContext* context, rdpPointer* pointer);
 FREERDP_API void Pointer_Set(rdpContext* context, rdpPointer* pointer);
 FREERDP_API void Pointer_SetNull(rdpContext* context);
 FREERDP_API void Pointer_SetDefault(rdpContext* context);
+FREERDP_API void Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y);
 
 /* Glyph Class */
 
