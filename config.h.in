@@ -32,6 +32,9 @@
 #cmakedefine HAVE_VALGRIND_MEMCHECK_H
 #cmakedefine HAVE_EXECINFO_H
 
+/* Features */
+#cmakedefine HAVE_ALIGNED_REQUIRED
+
 /* Options */
 #cmakedefine WITH_PROFILER
 #cmakedefine WITH_GPROF

@@ -8,6 +8,8 @@ elseif((CMAKE_SYSTEM_PROCESSOR MATCHES "i386") AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(TARGET_ARCH "x64")
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm*")
 	set(TARGET_ARCH "ARM")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "sparc")
+	set(TARGET_ARCH "sparc")
 endif()
 
 option(WITH_MANPAGES "Generate manpages." ON)
