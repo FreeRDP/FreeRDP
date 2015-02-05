@@ -955,9 +955,16 @@ static int rdpgfx_plugin_terminated(IWTSPlugin* pPlugin)
 	WLog_Print(gfx->log, WLOG_DEBUG, "Terminated");
 
 	if (gfx->listener_callback)
+	{
 		free(gfx->listener_callback);
+		gfx->listener_callback = NULL;
+	}
 
-	zgfx_context_free(gfx->zgfx);
+	if (gfx->zgfx)
+	{
+		zgfx_context_free(gfx->zgfx);
+		gfx->zgfx = NULL;
+	}
 
 	count = HashTable_GetKeys(gfx->SurfaceTable, &pKeys);
 

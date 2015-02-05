@@ -582,6 +582,7 @@ BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int opt
 #endif
 {
 	tls->ctx = SSL_CTX_new(method);
+
 	if (!tls->ctx)
 	{
 		WLog_ERR(TAG,  "SSL_CTX_new failed");
@@ -593,8 +594,10 @@ BOOL tls_prepare(rdpTls* tls, BIO *underlying, const SSL_METHOD *method, int opt
 	SSL_CTX_set_options(tls->ctx, options);
 	SSL_CTX_set_read_ahead(tls->ctx, 1);
 
-	if (tls->settings->PermittedTLSCiphers) {
-		if(!SSL_CTX_set_cipher_list(tls->ctx, tls->settings->PermittedTLSCiphers)) {
+	if (tls->settings->PermittedTLSCiphers)
+	{
+		if (!SSL_CTX_set_cipher_list(tls->ctx, tls->settings->PermittedTLSCiphers))
+		{
 			WLog_ERR(TAG,  "SSL_CTX_set_cipher_list %s failed", tls->settings->PermittedTLSCiphers);
 			return FALSE;
 		}
@@ -754,8 +757,6 @@ int tls_connect(rdpTls* tls, BIO *underlying)
 
 	return tls_do_handshake(tls, TRUE);
 }
-
-
 
 BOOL tls_accept(rdpTls* tls, BIO *underlying, const char* cert_file, const char* privatekey_file)
 {
@@ -1390,6 +1391,12 @@ void tls_free(rdpTls* tls)
 	{
 		SSL_CTX_free(tls->ctx);
 		tls->ctx = NULL;
+	}
+
+	if (tls->bio)
+	{
+		BIO_free(tls->bio);
+		tls->bio = NULL;
 	}
 
 	if (tls->PublicKey)

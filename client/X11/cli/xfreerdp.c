@@ -71,7 +71,6 @@ int main(int argc, char* argv[])
 	thread = freerdp_client_get_thread(context);
 
 	WaitForSingleObject(thread, INFINITE);
-
 	GetExitCodeThread(thread, &dwExitCode);
 
 	freerdp_client_stop(context);

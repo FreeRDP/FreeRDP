@@ -283,6 +283,8 @@ void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
 		free(listener);
 	}
 
+	dvcman->num_listeners = 0;
+
 	for (i = 0; i < dvcman->num_plugins; i++)
 	{
 		pPlugin = dvcman->plugins[i];
@@ -291,7 +293,10 @@ void dvcman_free(IWTSVirtualChannelManager* pChannelMgr)
 			pPlugin->Terminated(pPlugin);
 	}
 
+	dvcman->num_plugins = 0;
+
 	StreamPool_Free(dvcman->pool);
+
 	free(dvcman);
 }
 

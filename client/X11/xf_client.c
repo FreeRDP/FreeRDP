@@ -203,7 +203,7 @@ void xf_draw_screen(xfContext* xfc, int x, int y, int w, int h)
 {
 	if (w == 0 || h == 0)
 	{
-		WLog_WARN(TAG,  "invalid width and/or height specified: w=%d h=%d", w, h);
+		WLog_WARN(TAG, "invalid width and/or height specified: w=%d h=%d", w, h);
 		return;
 	}
 
@@ -788,7 +788,6 @@ int _xf_error_handler(Display* d, XErrorEvent* ev)
 static void xf_post_disconnect(freerdp* instance)
 {
 	xfContext* xfc;
-	rdpChannels* channels = channels = instance->context->channels;
 
 	if (!instance || !instance->context || !instance->settings)
 		return;
@@ -895,7 +894,7 @@ BOOL xf_pre_connect(freerdp* instance)
 	{
 		if (!XInitThreads())
 		{
-			WLog_WARN(TAG,  "XInitThreads() failure");
+			WLog_WARN(TAG, "XInitThreads() failure");
 			xfc->UseXThreads = FALSE;
 		}
 	}
@@ -911,7 +910,7 @@ BOOL xf_pre_connect(freerdp* instance)
 
 	if (xfc->debug)
 	{
-		WLog_INFO(TAG,  "Enabling X11 debug mode.");
+		WLog_INFO(TAG, "Enabling X11 debug mode.");
 		XSynchronize(xfc->display, TRUE);
 		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
@@ -1127,6 +1126,7 @@ BOOL xf_post_connect(freerdp *instance)
 		palette_cache_register_callbacks(instance->update);
 		instance->update->BitmapUpdate = xf_gdi_bitmap_update;
 	}
+
 	instance->update->PlaySound = xf_play_sound;
 	instance->update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 
@@ -1360,39 +1360,44 @@ void* xf_input_thread(void *arg)
 
 BOOL xf_auto_reconnect(freerdp* instance)
 {
+	UINT32 maxRetries;
+	UINT32 numRetries = 0;
 	xfContext* xfc = (xfContext*) instance->context;
-	UINT32 num_retries = 0;
-	UINT32 max_retries = instance->settings->AutoReconnectMaxRetries;
+	rdpSettings* settings = xfc->settings;
+
+	maxRetries = settings->AutoReconnectMaxRetries;
 
 	/* Only auto reconnect on network disconnects. */
 	if (freerdp_error_info(instance) != 0)
 		return FALSE;
 
 	/* A network disconnect was detected */
-	WLog_INFO(TAG,  "Network disconnect!");
+	WLog_INFO(TAG, "Network disconnect!");
 
-	if (!instance->settings->AutoReconnectionEnabled)
+	if (!settings->AutoReconnectionEnabled)
 	{
 		/* No auto-reconnect - just quit */
 		return FALSE;
 	}
 
 	/* Perform an auto-reconnect. */
-	for (;;)
+	while (TRUE)
 	{
 		/* Quit retrying if max retries has been exceeded */
-		if (num_retries++ >= max_retries)
+		if (numRetries++ >= maxRetries)
 		{
 			return FALSE;
 		}
 
 		/* Attempt the next reconnect */
-		WLog_INFO(TAG,  "Attempting reconnect (%u of %u)", num_retries, max_retries);
+		WLog_INFO(TAG, "Attempting reconnect (%u of %u)", numRetries, maxRetries);
+
 		if (freerdp_reconnect(instance))
 		{
 			xfc->disconnect = FALSE;
 			return TRUE;
 		}
+
 		sleep(5);
 	}
 
@@ -1487,7 +1492,7 @@ void* xf_client_thread(void *param)
 			nCount += freerdp_get_event_handles(context, &handles[nCount]);
 		}
 
-		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+		waitStatus = WaitForMultipleObjects(nCount, handles, FALSE, 100);
 
 		if (!settings->AsyncTransport)
 		{
@@ -1642,9 +1647,13 @@ static int xfreerdp_client_start(rdpContext* context)
 		WLog_ERR(TAG, "error: server hostname was not specified with /v:<server>[:port]");
 		return -1;
 	}
+
 	xfc->disconnect = FALSE;
-	xfc->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) xf_client_thread,
-							   context->instance, 0, NULL);
+
+	xfc->thread = CreateThread(NULL, 0,
+			(LPTHREAD_START_ROUTINE) xf_client_thread,
+			context->instance, 0, NULL);
+
 	return 0;
 }
 
@@ -1654,8 +1663,10 @@ static int xfreerdp_client_stop(rdpContext* context)
 
 	if (context->settings->AsyncInput)
 	{
-		wMessageQueue *queue;
+		wMessageQueue* queue;
+
 		queue = freerdp_get_message_queue(context->instance, FREERDP_INPUT_MESSAGE_QUEUE);
+
 		if (queue)
 			MessageQueue_PostQuit(queue, 0);
 	}
@@ -1666,6 +1677,7 @@ static int xfreerdp_client_stop(rdpContext* context)
 
 	if (xfc->thread)
 	{
+		WaitForSingleObject(xfc->thread, INFINITE);
 		CloseHandle(xfc->thread);
 		xfc->thread = NULL;
 	}
@@ -1706,26 +1718,45 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
 	xfContext* xfc = (xfContext*) context;
 
-	if (context)
+	if (!context)
+		return;
+
+	xf_window_free(xfc);
+
+	if (xfc->bitmap_buffer)
 	{
-		xf_window_free(xfc);
-
-		if (xfc->bitmap_buffer)
-			_aligned_free(xfc->bitmap_buffer);
-
-		if (xfc->display)
-			XCloseDisplay(xfc->display);
-
-		if (xfc->x11event)
-			CloseHandle(xfc->x11event);
-
-		if (context->channels)
-		{
-			freerdp_channels_close(context->channels, instance);
-			freerdp_channels_free(context->channels);
-			context->channels = NULL;
-		}
+		_aligned_free(xfc->bitmap_buffer);
+		xfc->bitmap_buffer = NULL;
 	}
+
+	if (xfc->display)
+	{
+		XCloseDisplay(xfc->display);
+		xfc->display = NULL;
+	}
+
+	if (xfc->x11event)
+	{
+		CloseHandle(xfc->x11event);
+		xfc->x11event = NULL;
+	}
+
+	if (context->channels)
+	{
+		freerdp_channels_close(context->channels, instance);
+		freerdp_channels_free(context->channels);
+		context->channels = NULL;
+	}
+
+	if (xfc->mutex)
+	{
+		WaitForSingleObject(xfc->mutex, INFINITE);
+		CloseHandle(xfc->mutex);
+		xfc->mutex = NULL;
+	}
+
+	xf_monitors_free(xfc, instance->settings);
+	gdi_free(instance);
 }
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)

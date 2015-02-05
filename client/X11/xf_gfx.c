@@ -890,7 +890,4 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)
 {
 	region16_uninit(&(xfc->invalidRegion));
-
-	gfx->custom = NULL;
-	xfc->gfx = NULL;
 }
